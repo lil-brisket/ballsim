@@ -30,7 +30,7 @@ const V4_ATTRIBUTE_KEYS = [
 ] as const;
 
 describe("GameState schema migration", () => {
-  it("migrates schemaVersion 1 saves through to version 4", () => {
+  it("migrates schemaVersion 1 saves through to current schema version", () => {
     const modern = createInitialGameState({
       saveId: "save_migrate",
       rngSeed: 5,
@@ -117,9 +117,10 @@ describe("GameState schema migration", () => {
     expect(player.development).toEqual({ stage: "prime" });
     expect(player.contractId).toBe(contractId);
     expect("shooting" in player.attributes).toBe(false);
+    expect(player.archetype).toBe("three_and_d_wing");
   });
 
-  it("migrates schemaVersion 2 players to version 4 deterministically", () => {
+  it("migrates schemaVersion 2 players to current schema deterministically", () => {
     const modern = createInitialGameState({
       saveId: "save_v2",
       rngSeed: 9,
@@ -197,9 +198,10 @@ describe("GameState schema migration", () => {
     expect(player.contractId).toBe(contractId);
     expect(player.injury.kind).toBe("healthy");
     expect(player.development.stage).toBe("prime");
+    expect(player.archetype).toBe("floor_general");
   });
 
-  it("migrates schemaVersion 3 players to version 4 with distinguishable mappings", () => {
+  it("migrates schemaVersion 3 players to current schema with distinguishable mappings", () => {
     const modern = createInitialGameState({
       saveId: "save_v3",
       rngSeed: 11,
@@ -287,6 +289,78 @@ describe("GameState schema migration", () => {
     expect(player.potential.overall).toBe(88);
     expect(player.personality.workEthic).toBe(50);
     expect(player.contractId).toBe(contractId);
+    expect(player.archetype).toBe("three_and_d_wing");
+  });
+
+  it("migrates schemaVersion 4 players by adding deterministic archetype only", () => {
+    const modern = createInitialGameState({
+      saveId: "save_v4",
+      rngSeed: 17,
+      nowIso: "2026-08-13T12:00:00.000Z",
+    });
+
+    const playerId = asPlayerId("player_v4");
+    const teamId = modern.user.controlledTeamId;
+    const contractId = asContractId("contract_v4");
+
+    const attributes = Object.fromEntries(
+      V4_ATTRIBUTE_KEYS.map((key, index) => [key, 60 + index]),
+    );
+
+    const v4Player = {
+      id: playerId,
+      teamId,
+      firstName: "V4",
+      lastName: "Holdover",
+      position: "PF" as const,
+      age: 28,
+      heightInches: 81,
+      weightPounds: 240,
+      attributes,
+      potential: { overall: 86 },
+      personality: {
+        workEthic: 61,
+        loyalty: 52,
+        competitiveness: 70,
+        leadership: 48,
+        composure: 55,
+      },
+      contractId,
+      injury: { kind: "healthy" as const },
+      development: { stage: "prime" as const },
+    };
+
+    const v4Json = JSON.stringify({
+      ...modern,
+      meta: {
+        ...modern.meta,
+        schemaVersion: 4,
+        rngState: 12345,
+      },
+      world: {
+        ...modern.world,
+        players: {
+          [playerId]: v4Player,
+        },
+      },
+    });
+
+    const migrated = deserializeGameState(v4Json);
+    expect(migrated.meta.schemaVersion).toBe(GAME_STATE_SCHEMA_VERSION);
+    expect(migrated.meta.rngState).toBe(12345);
+
+    const player = migrated.world.players[playerId]!;
+    expect(player.archetype).toBe("two_way_forward");
+    expect(player.attributes).toEqual(attributes);
+    expect(player.potential).toEqual(v4Player.potential);
+    expect(player.personality).toEqual(v4Player.personality);
+    expect(player.injury).toEqual(v4Player.injury);
+    expect(player.development).toEqual(v4Player.development);
+    expect(player.firstName).toBe("V4");
+    expect(player.position).toBe("PF");
+    expect(player.heightInches).toBe(81);
+    expect(player.weightPounds).toBe(240);
+    expect(player.contractId).toBe(contractId);
   });
 
   it("sets contractId to null when zero or multiple contracts match", () => {
@@ -344,9 +418,9 @@ describe("GameState schema migration", () => {
     expect(migrated.world.players[playerId]!.contractId).toBeNull();
   });
 
-  it("round-trips schema version 4 including rngState", () => {
+  it("round-trips current schema version including rngState", () => {
     const state = createInitialGameState({
-      saveId: "save_v4",
+      saveId: "save_current",
       rngSeed: 9,
     });
     const restored = deserializeGameState(serializeGameState(state));

@@ -130,7 +130,11 @@ Players store current ability as category attributes on a **1–99** integer sca
 - Defensive: perimeter defense, interior defense, steal, block, rebounding
 - Mental: basketball IQ, offensive IQ, defensive IQ, consistency
 
-**Potential** is stored separately as a developmental ceiling (`potential.overall`, same 1–99 scale). It is not derived from current attributes at runtime.
+**Potential** is stored separately as a developmental ceiling (`potential.overall`, same 1–99 scale). It is not derived from current attributes at runtime. During roster generation:
+
+`potential.overall = min(99, round(mean of all 19 attributes) + rng.nextInt(0, 8))`
+
+**Position** (`PG` | `SG` | `SF` | `PF` | `C`) and **archetype** (machine-readable style tag such as `floor_general`) are stored on the player. Archetype influences how attributes are *generated* (position baseline + archetype modifiers + RNG). It is not the source of truth for ability and does not assign a stored overall rating. Attributes remain the ability model. Uncommon position/archetype pairs are allowed on stored players; compatibility is a generation constraint only.
 
 **Work ethic** is a personality trait only (`personality.workEthic`); it is not a current-ability attribute.
 

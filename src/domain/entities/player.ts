@@ -1,17 +1,23 @@
 import type { ContractId, PlayerId, TeamId } from "@/domain/ids";
+import {
+  isPlayerArchetype,
+  type PlayerArchetype,
+} from "@/domain/entities/player-archetype";
 
 export const RATING_MIN = 1;
 export const RATING_MAX = 99;
 
 export type PlayerPosition = "PG" | "SG" | "SF" | "PF" | "C";
 
-const PLAYER_POSITIONS: readonly PlayerPosition[] = [
+export const PLAYER_POSITIONS: readonly PlayerPosition[] = [
   "PG",
   "SG",
   "SF",
   "PF",
   "C",
 ];
+
+export type { PlayerArchetype };
 
 export type PlayerAttributes = {
   speed: number;
@@ -67,6 +73,7 @@ export type Player = {
   heightInches: number;
   weightPounds: number;
   position: PlayerPosition;
+  archetype: PlayerArchetype;
   attributes: PlayerAttributes;
   potential: PlayerPotential;
   personality: PlayerPersonality;
@@ -85,6 +92,7 @@ export type PlayerInput = {
   heightInches: number;
   weightPounds: number;
   position: PlayerPosition;
+  archetype: PlayerArchetype;
   attributes: PlayerAttributes;
   potential: PlayerPotential;
   personality: PlayerPersonality;
@@ -142,6 +150,7 @@ export function createPlayer(input: PlayerInput): Player {
   assertPositiveFinite(input.heightInches, "heightInches");
   assertPositiveFinite(input.weightPounds, "weightPounds");
   assertPlayerPosition(input.position);
+  assertPlayerArchetype(input.archetype);
   assertAttributes(input.attributes);
   assertPotential(input.potential);
   assertPersonality(input.personality);
@@ -158,6 +167,7 @@ export function createPlayer(input: PlayerInput): Player {
     heightInches: input.heightInches,
     weightPounds: input.weightPounds,
     position: input.position,
+    archetype: input.archetype,
     attributes: { ...input.attributes },
     potential: { ...input.potential },
     personality: { ...input.personality },
@@ -204,6 +214,14 @@ function assertPositiveFinite(value: number, field: string): void {
 function assertPlayerPosition(value: string): void {
   if (!PLAYER_POSITIONS.includes(value as PlayerPosition)) {
     throw new Error(`Player position must be one of ${PLAYER_POSITIONS.join(", ")}.`);
+  }
+}
+
+function assertPlayerArchetype(value: string): void {
+  if (!isPlayerArchetype(value)) {
+    throw new Error(
+      `Player archetype must be a valid PlayerArchetype identifier.`,
+    );
   }
 }
 

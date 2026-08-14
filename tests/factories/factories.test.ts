@@ -22,12 +22,14 @@ describe("createPlayer", () => {
       id: "player_custom",
       firstName: "Sam",
       age: 30,
+      archetype: "shot_creator",
       attributes: { finishing: 90 },
     });
 
     expect(player.id).toBe("player_custom");
     expect(player.firstName).toBe("Sam");
     expect(player.age).toBe(30);
+    expect(player.archetype).toBe("shot_creator");
     expect(player.attributes.finishing).toBe(90);
     expect(player.attributes.midRange).toBe(68);
     expect(player.attributes.passing).toBe(72);

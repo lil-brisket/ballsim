@@ -11,6 +11,7 @@ import {
   type DevelopmentState,
   type InjuryStatus,
   type Player,
+  type PlayerArchetype,
   type PlayerAttributes,
   type PlayerPersonality,
   type PlayerPosition,
@@ -23,6 +24,7 @@ export type CreatePlayerOverrides = {
   firstName?: string;
   lastName?: string;
   position?: PlayerPosition;
+  archetype?: PlayerArchetype;
   age?: number;
   heightInches?: number;
   weightPounds?: number;
@@ -88,6 +90,7 @@ export function createPlayer(overrides: CreatePlayerOverrides = {}): Player {
     firstName: overrides.firstName ?? "Alex",
     lastName: overrides.lastName ?? "Rivera",
     position: overrides.position ?? "PG",
+    archetype: overrides.archetype ?? "floor_general",
     age: overrides.age ?? 24,
     heightInches: overrides.heightInches ?? 75,
     weightPounds: overrides.weightPounds ?? 195,

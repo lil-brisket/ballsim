@@ -6,6 +6,7 @@ export type {
   Player,
   PlayerInput,
   PlayerPosition,
+  PlayerArchetype,
   PlayerAttributes,
   PlayerPotential,
   PlayerPersonality,
@@ -16,8 +17,25 @@ export type {
 export {
   RATING_MIN,
   RATING_MAX,
+  PLAYER_POSITIONS,
   createPlayer,
 } from "@/domain/entities/player";
+export {
+  PLAYER_ARCHETYPES,
+  ARCHETYPE_LABELS,
+  ARCHETYPE_COMPATIBLE_POSITIONS,
+  POSITION_ATTRIBUTE_WEIGHTS,
+  ARCHETYPE_ATTRIBUTE_WEIGHTS,
+  WEIGHT_WEAK,
+  WEIGHT_AVERAGE,
+  WEIGHT_SECONDARY,
+  WEIGHT_STRONG,
+  isPlayerArchetype,
+  isArchetypeCompatible,
+  compatibleArchetypesForPosition,
+  combinedAttributeWeights,
+} from "@/domain/entities/player-archetype";
+export type { AttributeWeights } from "@/domain/entities/player-archetype";
 export type { Coach } from "@/domain/entities/coach";
 export type { Staff, StaffRole } from "@/domain/entities/staff";
 export type { Contract } from "@/domain/entities/contract";

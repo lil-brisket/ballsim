@@ -1,9 +1,11 @@
 import { describe, expect, it } from "vitest";
 import {
   createPlayer,
+  PLAYER_POSITIONS,
   type PlayerAttributes,
   type PlayerInput,
 } from "@/domain/entities/player";
+import { PLAYER_ARCHETYPES } from "@/domain/entities/player-archetype";
 import {
   asContractId,
   asPlayerId,
@@ -42,6 +44,7 @@ function validInput(overrides: Partial<PlayerInput> = {}): PlayerInput {
     heightInches: 75,
     weightPounds: 195,
     position: "PG",
+    archetype: "floor_general",
     attributes: { ...VALID_ATTRIBUTES },
     potential: { overall: 82 },
     personality: {
@@ -68,7 +71,45 @@ describe("createPlayer", () => {
     expect(player.heightInches).toBe(75);
     expect(player.weightPounds).toBe(195);
     expect(player.position).toBe("PG");
+    expect(player.archetype).toBe("floor_general");
     expect(player.teamId).toBe("team_1");
+  });
+
+  it("accepts all five positions", () => {
+    for (const position of PLAYER_POSITIONS) {
+      expect(createPlayer(validInput({ position })).position).toBe(position);
+    }
+  });
+
+  it("rejects invalid positions", () => {
+    expect(() =>
+      createPlayer(validInput({ position: "XX" as PlayerInput["position"] })),
+    ).toThrow(/position/);
+  });
+
+  it("accepts all nine archetypes", () => {
+    for (const archetype of PLAYER_ARCHETYPES) {
+      expect(createPlayer(validInput({ archetype })).archetype).toBe(archetype);
+    }
+  });
+
+  it("rejects invalid archetypes", () => {
+    expect(() =>
+      createPlayer(
+        validInput({ archetype: "point_god" as PlayerInput["archetype"] }),
+      ),
+    ).toThrow(/archetype/);
+  });
+
+  it("accepts compatible and uncommon position/archetype pairs", () => {
+    expect(
+      createPlayer(validInput({ position: "PG", archetype: "floor_general" }))
+        .archetype,
+    ).toBe("floor_general");
+    expect(
+      createPlayer(validInput({ position: "PG", archetype: "rim_protector" }))
+        .archetype,
+    ).toBe("rim_protector");
   });
 
   it("does not mutate the input object", () => {
