@@ -75,6 +75,23 @@ export {
   type ResolveFreeThrowInput,
   type FreeThrowResult,
 } from "@/systems/free-throw-resolution";
+export {
+  resolvePossessionDecision,
+  type PossessionDecision,
+  type PossessionDecisionContext,
+  type ResolvedPossessionDecision,
+} from "@/systems/possession-decision";
+export {
+  applyPossessionResolution,
+  type PlayerStatsDelta,
+} from "@/systems/possession-stats";
+export {
+  resolvePossession,
+  type ResolvePossessionInput,
+  type PossessionStep,
+  type NextPossession,
+  type PossessionResolution,
+} from "@/systems/possession-resolution";
 export { generateSchedule } from "@/systems/schedule-generation";
 export { advanceCalendar } from "@/systems/calendar";
 export { simulateGamesForDate } from "@/systems/game-simulation";
