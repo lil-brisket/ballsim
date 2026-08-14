@@ -46,10 +46,15 @@ src/
   components/          # Presentational UI
   application/         # Use-cases / server commands
   domain/              # Entities, events, RNG, SystemResult
+  data/                # Static string pools (e.g. name lists); not typed domain catalogs
   state/               # GameState composition + factories + selectors
   systems/             # Simulation systems (added incrementally)
   persistence/         # Prisma client, repositories, mappers
 ```
+
+Typed domain catalogs such as `PlayerArchetype` and `PlayerNationality` live under `domain/entities/`, not `data/`. Name string pools (`first-names`, `last-names`) are expandable data under `src/data/names/`.
+
+`schemaVersion` 6 adds `Player.nationality`. Pre-nationality saves migrate with a fixed legacy default of `"USA"` (no RNG).
 
 ## GameState (composed slices)
 
@@ -66,7 +71,7 @@ GameState
 
 Slice boundaries may be refined as domain models grow, but composition remains mandatory to avoid one undifferentiated mega-object.
 
-`schemaVersion` enables save migrations as the model evolves.
+`schemaVersion` enables save migrations as the model evolves. Roster building blocks such as `player-name-generation` and `player-attribute-generation` accept an injected `Rng`. The player-generation engine composes those blocks into a full `Player` via `generatePlayer(seed)` / `generatePlayerWithRng(rng)`. Roster generation owns slots, contracts, and payroll, and calls the player generator per slot.
 
 ## Systems and state transitions
 
@@ -100,12 +105,16 @@ persisting. Games for the **current** date are processed before the calendar tic
 
 ## RNG
 
-`src/domain/rng` defines an `Rng` interface and a seeded implementation.
+`src/domain/rng` defines an `Rng` interface and a seeded Mulberry32 implementation.
 
 - All stochastic systems receive RNG explicitly.
+- `normalizeSeed` maps `number | string` to uint32 (`>>> 0` for numbers and
+  canonical integer strings including leading zeros; FNV-1a for other strings).
+- `Rng` exposes `next`, `nextInt`, `pick`, `chance`, and `getState`.
 - `meta.rngSeed` stores the original seed; `meta.rngState` stores the live PRNG
   internal state so consecutive advances continue the stream.
 - Reconstruct with `createSeededRng(state.meta.rngState)` after load.
+- Invariant: `generatePlayer(seed) ≡ generatePlayerWithRng(createSeededRng(seed))`.
 
 ## Domain events
 

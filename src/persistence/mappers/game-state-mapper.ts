@@ -10,6 +10,7 @@ import type {
   PlayerPotential,
 } from "@/domain/entities/player";
 import type { PlayerArchetype } from "@/domain/entities/player-archetype";
+import type { PlayerNationality } from "@/domain/entities/player-nationality";
 import type { ContractId, PlayerId, TeamId } from "@/domain/ids";
 import type { GameState } from "@/state/game-state";
 import { GAME_STATE_SCHEMA_VERSION } from "@/state/game-state";
@@ -38,21 +39,29 @@ export function deserializeGameState(stateJson: string): GameState {
   const envelope = gameStateEnvelopeSchema.parse(parsed);
 
   if (envelope.meta.schemaVersion === 1) {
-    return migrateV4ToV5(
-      migrateV3ToV4(migrateV2ToV3(migrateV1ToV2(parsed as GameStateV1))),
+    return migrateV5ToV6(
+      migrateV4ToV5(
+        migrateV3ToV4(migrateV2ToV3(migrateV1ToV2(parsed as GameStateV1))),
+      ),
     );
   }
 
   if (envelope.meta.schemaVersion === 2) {
-    return migrateV4ToV5(migrateV3ToV4(migrateV2ToV3(parsed as GameStateV2)));
+    return migrateV5ToV6(
+      migrateV4ToV5(migrateV3ToV4(migrateV2ToV3(parsed as GameStateV2))),
+    );
   }
 
   if (envelope.meta.schemaVersion === 3) {
-    return migrateV4ToV5(migrateV3ToV4(parsed as GameStateV3));
+    return migrateV5ToV6(migrateV4ToV5(migrateV3ToV4(parsed as GameStateV3)));
   }
 
   if (envelope.meta.schemaVersion === 4) {
-    return migrateV4ToV5(parsed as GameStateV4);
+    return migrateV5ToV6(migrateV4ToV5(parsed as GameStateV4));
+  }
+
+  if (envelope.meta.schemaVersion === 5) {
+    return migrateV5ToV6(parsed as GameStateV5);
   }
 
   if (envelope.meta.schemaVersion !== GAME_STATE_SCHEMA_VERSION) {
@@ -63,7 +72,7 @@ export function deserializeGameState(stateJson: string): GameState {
 
   const state = parsed as GameState;
   if (typeof state.meta.rngState !== "number") {
-    throw new Error("GameState meta.rngState is required for schemaVersion 5.");
+    throw new Error("GameState meta.rngState is required for schemaVersion 6.");
   }
 
   return state;
@@ -125,6 +134,25 @@ type PlayerV4 = {
   heightInches: number;
   weightPounds: number;
   position: PlayerPosition;
+  attributes: PlayerAttributes;
+  potential: PlayerPotential;
+  personality: PlayerPersonality;
+  contractId: ContractId | null;
+  injury: InjuryStatus;
+  development: DevelopmentState;
+};
+
+/** Schema v5 player: has archetype, no nationality. */
+type PlayerV5 = {
+  id: PlayerId;
+  teamId: TeamId | null;
+  firstName: string;
+  lastName: string;
+  age: number;
+  heightInches: number;
+  weightPounds: number;
+  position: PlayerPosition;
+  archetype: PlayerArchetype;
   attributes: PlayerAttributes;
   potential: PlayerPotential;
   personality: PlayerPersonality;
@@ -201,6 +229,23 @@ type GameStateV4 = {
   user: GameState["user"];
 };
 
+type GameStateV5 = {
+  meta: {
+    saveId: string;
+    schemaVersion: number;
+    createdAt: string;
+    updatedAt: string;
+    rngSeed: number;
+    rngState?: number;
+  };
+  world: {
+    players: Record<string, PlayerV5>;
+  } & Omit<GameState["world"], "players">;
+  competition: GameState["competition"];
+  business: GameState["business"];
+  user: GameState["user"];
+};
+
 const ARCHETYPE_FROM_POSITION: Record<PlayerPosition, PlayerArchetype> = {
   PG: "floor_general",
   SG: "scoring_guard",
@@ -208,6 +253,12 @@ const ARCHETYPE_FROM_POSITION: Record<PlayerPosition, PlayerArchetype> = {
   PF: "two_way_forward",
   C: "rim_protector",
 };
+
+/**
+ * Legacy compatibility: all pre-nationality players receive "USA".
+ * Fixed mapping only — migration never uses RNG.
+ */
+const LEGACY_PLAYER_NATIONALITY: PlayerNationality = "USA";
 
 function migrateV1ToV2(state: GameStateV1): GameStateV2 {
   const players: Record<string, PlayerV2> = {};
@@ -445,10 +496,52 @@ function migratePlayerV3ToV4(player: PlayerV3): PlayerV4 {
  * Deterministic v4 → v5: preserve all player data; only add archetype from position.
  * Does not consume RNG or alter rngState.
  */
-function migrateV4ToV5(state: GameStateV4): GameState {
-  const players: Record<string, Player> = {};
+function migrateV4ToV5(state: GameStateV4): GameStateV5 {
+  const players: Record<string, PlayerV5> = {};
   for (const [playerId, player] of Object.entries(state.world.players)) {
     players[playerId] = migratePlayerV4ToV5(player);
+  }
+
+  return {
+    meta: {
+      saveId: state.meta.saveId,
+      schemaVersion: 5,
+      createdAt: state.meta.createdAt,
+      updatedAt: state.meta.updatedAt,
+      rngSeed: state.meta.rngSeed,
+      rngState: state.meta.rngState ?? state.meta.rngSeed,
+    },
+    world: {
+      ...state.world,
+      players,
+    },
+    competition: state.competition,
+    business: state.business,
+    user: state.user,
+  };
+}
+
+function migratePlayerV4ToV5(player: PlayerV4): PlayerV5 {
+  return {
+    ...player,
+    attributes: { ...player.attributes },
+    potential: { ...player.potential },
+    personality: { ...player.personality },
+    injury: { ...player.injury },
+    development: { ...player.development },
+    archetype: ARCHETYPE_FROM_POSITION[player.position],
+  };
+}
+
+/**
+ * Deterministic v5 → v6: preserve all player data; only add nationality.
+ * Legacy compatibility: every pre-nationality player receives "USA".
+ * Does not consume RNG or alter rngState.
+ */
+function migrateV5ToV6(state: GameStateV5): GameState {
+  const players: Record<string, Player> = {};
+  for (const [playerId, player] of Object.entries(state.world.players)) {
+    players[playerId] = migratePlayerV5ToV6(player);
   }
 
   return {
@@ -470,7 +563,7 @@ function migrateV4ToV5(state: GameStateV4): GameState {
   };
 }
 
-function migratePlayerV4ToV5(player: PlayerV4): Player {
+function migratePlayerV5ToV6(player: PlayerV5): Player {
   return {
     ...player,
     attributes: { ...player.attributes },
@@ -478,7 +571,7 @@ function migratePlayerV4ToV5(player: PlayerV4): Player {
     personality: { ...player.personality },
     injury: { ...player.injury },
     development: { ...player.development },
-    archetype: ARCHETYPE_FROM_POSITION[player.position],
+    nationality: LEGACY_PLAYER_NATIONALITY,
   };
 }
 

@@ -130,11 +130,17 @@ Players store current ability as category attributes on a **1–99** integer sca
 - Defensive: perimeter defense, interior defense, steal, block, rebounding
 - Mental: basketball IQ, offensive IQ, defensive IQ, consistency
 
-**Potential** is stored separately as a developmental ceiling (`potential.overall`, same 1–99 scale). It is not derived from current attributes at runtime. During roster generation:
+**Potential** is stored separately as a developmental ceiling (`potential.overall`, same 1–99 scale). It is not derived from current attributes at runtime. During player generation:
 
-`potential.overall = min(99, round(mean of all 19 attributes) + rng.nextInt(0, 8))`
+1. Derive current overall from position + attributes (`calculatePlayerOverall`).
+2. Roll an age-banded gap: young (`age <= 24`) 4–22; prime (`25–30`) 1–10; veteran (`age >= 31`) 0–5.
+3. `potential.overall = clamp(currentOverall + gap, 1, 99)`.
+
+**Quality** is a generation-time latent attribute-center (40–85). It is not stored on `Player` and is not current overall or potential.
 
 **Position** (`PG` | `SG` | `SF` | `PF` | `C`) and **archetype** (machine-readable style tag such as `floor_general`) are stored on the player. Archetype influences how attributes are *generated* (position baseline + archetype modifiers + RNG). It is not the source of truth for ability and does not assign a stored overall rating. Attributes remain the ability model. Uncommon position/archetype pairs are allowed on stored players; compatibility is a generation constraint only.
+
+**Nationality** is a typed catalog field on the player (same ownership pattern as archetype). It is selected during name generation and stored for identity/flavor. It does **not** yet affect attributes, tendencies, or simulation. Pre-nationality saves (schema versions before 6) migrate every player to `"USA"` deterministically — a fixed legacy compatibility default, not RNG-based generation.
 
 **Work ethic** is a personality trait only (`personality.workEthic`); it is not a current-ability attribute.
 

@@ -1,4 +1,9 @@
 export { generateRosters } from "@/systems/roster-generation";
+export {
+  generatePlayer,
+  generatePlayerWithRng,
+  type GeneratePlayerOptions,
+} from "@/systems/player-generation";
 export { generateSchedule } from "@/systems/schedule-generation";
 export { advanceCalendar } from "@/systems/calendar";
 export { simulateGamesForDate } from "@/systems/game-simulation";

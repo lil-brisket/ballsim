@@ -5,6 +5,10 @@ import { bootstrapWorld, runWorldPipeline } from "@/systems/world-pipeline";
 import { generateRosters } from "@/systems/roster-generation";
 import { generateSchedule } from "@/systems/schedule-generation";
 import { resetDomainEventSequenceForTests } from "@/domain/events/domain-event";
+import {
+  isPlayerNationality,
+  PLAYER_NATIONALITIES,
+} from "@/domain/entities/player-nationality";
 
 describe("roster and schedule generation", () => {
   it("fills players and contracts for every team", () => {
@@ -21,6 +25,25 @@ describe("roster and schedule generation", () => {
     expect(Object.keys(result.state.business.contracts)).toHaveLength(
       teamCount * 10,
     );
+  });
+
+  it("assigns a valid nationality to every generated player", () => {
+    const state = createInitialGameState({
+      saveId: "save_roster_nationality",
+      rngSeed: 19,
+      nowIso: "2026-08-13T12:00:00.000Z",
+    });
+    const rng = createSeededRng(state.meta.rngState);
+    const result = generateRosters(state, rng);
+
+    const players = Object.values(result.state.world.players);
+    expect(players.length).toBeGreaterThan(0);
+    for (const player of players) {
+      expect(isPlayerNationality(player.nationality)).toBe(true);
+      expect(PLAYER_NATIONALITIES).toContain(player.nationality);
+      expect(player.firstName.length).toBeGreaterThan(0);
+      expect(player.lastName.length).toBeGreaterThan(0);
+    }
   });
 
   it("is idempotent when players already exist", () => {

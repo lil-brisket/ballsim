@@ -3,6 +3,10 @@ import {
   isPlayerArchetype,
   type PlayerArchetype,
 } from "@/domain/entities/player-archetype";
+import {
+  isPlayerNationality,
+  type PlayerNationality,
+} from "@/domain/entities/player-nationality";
 
 export const RATING_MIN = 1;
 export const RATING_MAX = 99;
@@ -18,6 +22,7 @@ export const PLAYER_POSITIONS: readonly PlayerPosition[] = [
 ];
 
 export type { PlayerArchetype };
+export type { PlayerNationality };
 
 export type PlayerAttributes = {
   speed: number;
@@ -69,6 +74,7 @@ export type Player = {
   teamId: TeamId | null;
   firstName: string;
   lastName: string;
+  nationality: PlayerNationality;
   age: number;
   heightInches: number;
   weightPounds: number;
@@ -88,6 +94,7 @@ export type PlayerInput = {
   teamId: TeamId | null;
   firstName: string;
   lastName: string;
+  nationality: PlayerNationality;
   age: number;
   heightInches: number;
   weightPounds: number;
@@ -146,6 +153,7 @@ export function createPlayer(input: PlayerInput): Player {
   assertOptionalId(input.teamId, "teamId");
   assertNonEmptyName(input.firstName, "firstName");
   assertNonEmptyName(input.lastName, "lastName");
+  assertPlayerNationality(input.nationality);
   assertNonNegativeInteger(input.age, "age");
   assertPositiveFinite(input.heightInches, "heightInches");
   assertPositiveFinite(input.weightPounds, "weightPounds");
@@ -163,6 +171,7 @@ export function createPlayer(input: PlayerInput): Player {
     teamId: input.teamId,
     firstName: input.firstName,
     lastName: input.lastName,
+    nationality: input.nationality,
     age: input.age,
     heightInches: input.heightInches,
     weightPounds: input.weightPounds,
@@ -221,6 +230,14 @@ function assertPlayerArchetype(value: string): void {
   if (!isPlayerArchetype(value)) {
     throw new Error(
       `Player archetype must be a valid PlayerArchetype identifier.`,
+    );
+  }
+}
+
+function assertPlayerNationality(value: string): void {
+  if (!isPlayerNationality(value)) {
+    throw new Error(
+      `Player nationality must be a valid PlayerNationality identifier.`,
     );
   }
 }

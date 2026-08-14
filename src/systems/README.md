@@ -13,7 +13,11 @@ Each system should:
 
 | Module | Role |
 | --- | --- |
-| `roster-generation` | World-gen: fictional players + contracts per team |
+| `player-name-generation` | Building block: first name, last name, nationality from pools + RNG |
+| `player-attribute-generation` | Building block: 1–99 attributes from position/archetype + RNG |
+| `player-generation-config` | Locked generation ranges (age, quality, potential gaps, body, personality) |
+| `player-generation` | Seeded engine: `generatePlayer(seed)` / `generatePlayerWithRng(rng)` → `Player` |
+| `roster-generation` | World-gen: roster slots + contracts; calls player-generation per slot |
 | `schedule-generation` | World-gen: double round-robin schedule |
 | `game-simulation` | Box-score sim for scheduled games on a date |
 | `standings` | Rebuild W/L from final games |

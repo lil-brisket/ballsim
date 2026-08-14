@@ -53,19 +53,23 @@ export function pickCompatibleArchetype(
 
 /**
  * Generate 1–99 attribute ratings from position + archetype weights and RNG.
+ * Optional `quality` replaces {@link GENERATION_BASE} as the attribute center
+ * (generation-time latent only; not stored on Player).
  * Clamps generation output only; createPlayer still rejects out-of-range input.
+ * Height/weight must not be passed here and do not affect ratings.
  */
 export function generatePlayerAttributes(
   position: PlayerPosition,
   archetype: PlayerArchetype,
   rng: Rng,
+  quality: number = GENERATION_BASE,
 ): PlayerAttributes {
   const weights = combinedAttributeWeights(position, archetype);
   const attributes = {} as PlayerAttributes;
 
   for (const key of ATTRIBUTE_KEYS) {
     const center = Math.round(
-      GENERATION_BASE + (weights[key] - 1) * GENERATION_SCALE,
+      quality + (weights[key] - 1) * GENERATION_SCALE,
     );
     const raw = rng.nextInt(center - GENERATION_SPREAD, center + GENERATION_SPREAD);
     attributes[key] = Math.min(RATING_MAX, Math.max(RATING_MIN, raw));

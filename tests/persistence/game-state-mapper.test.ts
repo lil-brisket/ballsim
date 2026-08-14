@@ -118,6 +118,14 @@ describe("GameState schema migration", () => {
     expect(player.contractId).toBe(contractId);
     expect("shooting" in player.attributes).toBe(false);
     expect(player.archetype).toBe("three_and_d_wing");
+    expect(player.firstName).toBe("Legacy");
+    expect(player.lastName).toBe("Player");
+    expect(player.position).toBe("SF");
+    expect(player.age).toBe(27);
+    expect(player.nationality).toBe("USA");
+    for (const migratedPlayer of Object.values(migrated.world.players)) {
+      expect(migratedPlayer.nationality).toBe("USA");
+    }
   });
 
   it("migrates schemaVersion 2 players to current schema deterministically", () => {
@@ -199,6 +207,7 @@ describe("GameState schema migration", () => {
     expect(player.injury.kind).toBe("healthy");
     expect(player.development.stage).toBe("prime");
     expect(player.archetype).toBe("floor_general");
+    expect(player.nationality).toBe("USA");
   });
 
   it("migrates schemaVersion 3 players to current schema with distinguishable mappings", () => {
@@ -290,6 +299,7 @@ describe("GameState schema migration", () => {
     expect(player.personality.workEthic).toBe(50);
     expect(player.contractId).toBe(contractId);
     expect(player.archetype).toBe("three_and_d_wing");
+    expect(player.nationality).toBe("USA");
   });
 
   it("migrates schemaVersion 4 players by adding deterministic archetype only", () => {
@@ -361,6 +371,87 @@ describe("GameState schema migration", () => {
     expect(player.heightInches).toBe(81);
     expect(player.weightPounds).toBe(240);
     expect(player.contractId).toBe(contractId);
+    expect(player.nationality).toBe("USA");
+  });
+
+  it("migrates schemaVersion 5 players by adding deterministic USA nationality only", () => {
+    const modern = createInitialGameState({
+      saveId: "save_v5",
+      rngSeed: 21,
+      nowIso: "2026-08-13T12:00:00.000Z",
+    });
+
+    const playerId = asPlayerId("player_v5");
+    const teamId = modern.user.controlledTeamId;
+    const contractId = asContractId("contract_v5");
+
+    const attributes = Object.fromEntries(
+      V4_ATTRIBUTE_KEYS.map((key, index) => [key, 55 + index]),
+    );
+
+    const v5Player = {
+      id: playerId,
+      teamId,
+      firstName: "V5",
+      lastName: "Holdover",
+      position: "SG" as const,
+      archetype: "scoring_guard" as const,
+      age: 25,
+      heightInches: 76,
+      weightPounds: 205,
+      attributes,
+      potential: { overall: 84 },
+      personality: {
+        workEthic: 63,
+        loyalty: 58,
+        competitiveness: 71,
+        leadership: 44,
+        composure: 60,
+      },
+      contractId,
+      injury: { kind: "healthy" as const },
+      development: { stage: "developing" as const },
+    };
+
+    const v5Json = JSON.stringify({
+      ...modern,
+      meta: {
+        ...modern.meta,
+        schemaVersion: 5,
+        rngState: 98765,
+      },
+      world: {
+        ...modern.world,
+        players: {
+          [playerId]: v5Player,
+        },
+      },
+    });
+
+    const migrated = deserializeGameState(v5Json);
+    expect(migrated.meta.schemaVersion).toBe(GAME_STATE_SCHEMA_VERSION);
+    expect(migrated.meta.rngState).toBe(98765);
+
+    const player = migrated.world.players[playerId]!;
+    expect(player.id).toBe(v5Player.id);
+    expect(player.teamId).toBe(v5Player.teamId);
+    expect(player.firstName).toBe("V5");
+    expect(player.lastName).toBe("Holdover");
+    expect(player.position).toBe("SG");
+    expect(player.archetype).toBe("scoring_guard");
+    expect(player.age).toBe(25);
+    expect(player.heightInches).toBe(76);
+    expect(player.weightPounds).toBe(205);
+    expect(player.attributes).toEqual(attributes);
+    expect(player.potential).toEqual(v5Player.potential);
+    expect(player.personality).toEqual(v5Player.personality);
+    expect(player.contractId).toBe(contractId);
+    expect(player.injury).toEqual(v5Player.injury);
+    expect(player.development).toEqual(v5Player.development);
+    expect(player.nationality).toBe("USA");
+    expect(Object.keys(player).sort()).toEqual(
+      [...Object.keys(v5Player), "nationality"].sort(),
+    );
   });
 
   it("sets contractId to null when zero or multiple contracts match", () => {

@@ -40,6 +40,7 @@ function validInput(overrides: Partial<PlayerInput> = {}): PlayerInput {
     teamId: asTeamId("team_1"),
     firstName: "Alex",
     lastName: "Rivera",
+    nationality: "USA",
     age: 24,
     heightInches: 75,
     weightPounds: 195,
@@ -67,6 +68,7 @@ describe("createPlayer", () => {
     expect(player.id).toBe("player_1");
     expect(player.firstName).toBe("Alex");
     expect(player.lastName).toBe("Rivera");
+    expect(player.nationality).toBe("USA");
     expect(player.age).toBe(24);
     expect(player.heightInches).toBe(75);
     expect(player.weightPounds).toBe(195);
@@ -99,6 +101,25 @@ describe("createPlayer", () => {
         validInput({ archetype: "point_god" as PlayerInput["archetype"] }),
       ),
     ).toThrow(/archetype/);
+  });
+
+  it("accepts valid nationalities", () => {
+    expect(createPlayer(validInput({ nationality: "Canada" })).nationality).toBe(
+      "Canada",
+    );
+    expect(createPlayer(validInput({ nationality: "Spain" })).nationality).toBe(
+      "Spain",
+    );
+  });
+
+  it("rejects invalid nationalities", () => {
+    expect(() =>
+      createPlayer(
+        validInput({
+          nationality: "Atlantis" as PlayerInput["nationality"],
+        }),
+      ),
+    ).toThrow(/nationality/);
   });
 
   it("accepts compatible and uncommon position/archetype pairs", () => {
