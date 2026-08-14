@@ -69,10 +69,10 @@ function simulateSingleGame(
   const homeRoster = rosterForTeam(state, game.homeTeamId);
   const awayRoster = rosterForTeam(state, game.awayTeamId);
 
-  const homeOffense = averageRating(homeRoster, "offense");
-  const homeDefense = averageRating(homeRoster, "defense");
-  const awayOffense = averageRating(awayRoster, "offense");
-  const awayDefense = averageRating(awayRoster, "defense");
+  const homeOffense = averageComposite(homeRoster, "offense");
+  const homeDefense = averageComposite(homeRoster, "defense");
+  const awayOffense = averageComposite(awayRoster, "offense");
+  const awayDefense = averageComposite(awayRoster, "defense");
 
   const homeScore = clampScore(
     Math.round(
@@ -111,10 +111,10 @@ function simulateSingleGame(
 function rosterForTeam(state: GameState, teamId: TeamId): Player[] {
   return Object.values(state.world.players)
     .filter((player) => player.teamId === teamId)
-    .sort((a, b) => b.ratings.overall - a.ratings.overall);
+    .sort((a, b) => compositeOverall(b) - compositeOverall(a));
 }
 
-function averageRating(
+function averageComposite(
   roster: Player[],
   key: "offense" | "defense",
 ): number {
@@ -122,7 +122,11 @@ function averageRating(
   if (starters.length === 0) {
     return 70;
   }
-  const sum = starters.reduce((acc, player) => acc + player.ratings[key], 0);
+  const sum = starters.reduce(
+    (acc, player) =>
+      acc + (key === "offense" ? compositeOffense(player) : compositeDefense(player)),
+    0,
+  );
   return sum / starters.length;
 }
 
@@ -136,7 +140,7 @@ function allocateBoxScore(
     return [];
   }
 
-  const weights = active.map((player) => Math.max(1, player.ratings.offense));
+  const weights = active.map((player) => Math.max(1, compositeOffense(player)));
   const weightSum = weights.reduce((a, b) => a + b, 0);
   let pointsLeft = teamScore;
   const stats: PlayerGameStats[] = [];
@@ -162,6 +166,63 @@ function allocateBoxScore(
   }
 
   return stats;
+}
+
+/** Equal-weight mean of offensive attributes. Temporary local composite only. */
+function compositeOffense(player: Player): number {
+  const {
+    finishing,
+    midRange,
+    threePoint,
+    freeThrow,
+    ballHandling,
+    passing,
+  } = player.attributes;
+  return Math.round(
+    (finishing + midRange + threePoint + freeThrow + ballHandling + passing) /
+      6,
+  );
+}
+
+/** Equal-weight mean of defensive attributes. Temporary local composite only. */
+function compositeDefense(player: Player): number {
+  const {
+    perimeterDefense,
+    interiorDefense,
+    steal,
+    block,
+    rebounding,
+  } = player.attributes;
+  return Math.round(
+    (perimeterDefense + interiorDefense + steal + block + rebounding) / 5,
+  );
+}
+
+/** Equal-weight mean of all attributes. Temporary local composite only. */
+function compositeOverall(player: Player): number {
+  const a = player.attributes;
+  return Math.round(
+    (a.speed +
+      a.strength +
+      a.athleticism +
+      a.stamina +
+      a.finishing +
+      a.midRange +
+      a.threePoint +
+      a.freeThrow +
+      a.ballHandling +
+      a.passing +
+      a.perimeterDefense +
+      a.interiorDefense +
+      a.steal +
+      a.block +
+      a.rebounding +
+      a.basketballIq +
+      a.offensiveIq +
+      a.defensiveIq +
+      a.consistency) /
+      19,
+  );
 }
 
 function clampScore(score: number): number {

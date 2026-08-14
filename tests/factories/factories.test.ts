@@ -12,23 +12,25 @@ describe("createPlayer", () => {
     expect(a).toEqual(b);
     expect(a.id).toBe("player_test");
     expect(a.firstName).toBe("Alex");
-    expect(a.ratings.overall).toBe(70);
+    expect(a.attributes.finishing).toBe(70);
+    expect(a.attributes.midRange).toBe(68);
+    expect(a.potential.overall).toBe(80);
   });
 
-  it("applies top-level and nested ratings overrides", () => {
+  it("applies top-level and nested attributes overrides", () => {
     const player = createPlayer({
       id: "player_custom",
       firstName: "Sam",
       age: 30,
-      ratings: { offense: 90 },
+      attributes: { finishing: 90 },
     });
 
     expect(player.id).toBe("player_custom");
     expect(player.firstName).toBe("Sam");
     expect(player.age).toBe(30);
-    expect(player.ratings.offense).toBe(90);
-    expect(player.ratings.defense).toBe(72);
-    expect(player.ratings.overall).toBe(70);
+    expect(player.attributes.finishing).toBe(90);
+    expect(player.attributes.midRange).toBe(68);
+    expect(player.attributes.passing).toBe(72);
   });
 });
 

@@ -121,6 +121,21 @@ Still deferred:
 - Dynasty Mode
 - Narrative / news feed UI beyond recent results on the dashboard
 
+## Player ability model
+
+Players store current ability as category attributes on a **1–99** integer scale:
+
+- Physical: speed, strength, athleticism, stamina
+- Offensive: finishing, mid range, three point, free throw, ball handling, passing
+- Defensive: perimeter defense, interior defense, steal, block, rebounding
+- Mental: basketball IQ, offensive IQ, defensive IQ, consistency
+
+**Potential** is stored separately as a developmental ceiling (`potential.overall`, same 1–99 scale). It is not derived from current attributes at runtime.
+
+**Work ethic** is a personality trait only (`personality.workEthic`); it is not a current-ability attribute.
+
+Personality, injury status, and development stage are player state only; they do not yet affect simulation composites or progression systems.
+
 ## Design rules
 
 - Prefer real, tested foundation pieces over fake "working" placeholders.

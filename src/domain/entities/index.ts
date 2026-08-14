@@ -4,8 +4,19 @@ export type { Division } from "@/domain/entities/division";
 export type { Team } from "@/domain/entities/team";
 export type {
   Player,
+  PlayerInput,
   PlayerPosition,
-  PlayerRatings,
+  PlayerAttributes,
+  PlayerPotential,
+  PlayerPersonality,
+  InjuryStatus,
+  DevelopmentStage,
+  DevelopmentState,
+} from "@/domain/entities/player";
+export {
+  RATING_MIN,
+  RATING_MAX,
+  createPlayer,
 } from "@/domain/entities/player";
 export type { Coach } from "@/domain/entities/coach";
 export type { Staff, StaffRole } from "@/domain/entities/staff";
