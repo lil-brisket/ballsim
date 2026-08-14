@@ -40,19 +40,21 @@ Near-term Owner Mode surfaces (UI destinations, not all implemented yet):
 
 ## World simulation (design intent)
 
-The user's team is not isolated. Future "advance day" processing should eventually be capable of updating the entire world, including:
+The user's team is not isolated. "Advance day" processing updates the entire
+world via `runWorldPipeline` in `src/systems/world-pipeline.ts`:
 
-- Other teams
-- Other games
-- AI team decisions
+- Bootstrap roster/schedule if missing
+- Simulate scheduled games for the current world date
+- Rebuild standings
+- Advance the calendar by one day
+
+Still future work within that pipeline:
+
+- Other AI team decisions
 - Player development
 - Injuries
-- Contracts
-- Finances
-- League events
-- News/events
-
-This world-processing pipeline is **not implemented** in the foundation phase.
+- Contract / finance ticks
+- League events / news
 
 ## AI / decision layer (design intent)
 
@@ -84,22 +86,30 @@ Entities expected in the long-term model:
 
 Systems expected later (do not treat as present until implemented):
 
-- Game simulation
-- Season simulation
-- Calendar / advance day
+- Game simulation — **implemented** (`src/systems/game-simulation.ts`)
+- Season simulation — partial (phase set to regular with schedule; playoffs TBD)
+- Calendar / advance day — **implemented** (`src/systems/world-pipeline.ts`)
 - Player development
 - Injuries
-- Finances
-- Standings
-- Schedule generation
-- Save/load (foundation persistence exists; simulation systems do not)
+- Finances — payroll set at roster gen; advanced ticks TBD
+- Standings — **implemented** (`src/systems/standings.ts`)
+- Schedule generation — **implemented** (`src/systems/schedule-generation.ts`)
+- Save/load (foundation persistence exists)
+- Roster generation — **implemented** (`src/systems/roster-generation.ts`)
 
-## Explicit non-goals for the foundation phase
+## Explicit non-goals for the foundation phase (superseded where implemented)
 
-Do not implement yet:
+The original foundation phase deferred simulation. The following are now
+**implemented** at a first-pass level:
 
-- Basketball game simulation
-- Season simulation
+- Roster generation (fictional players + contracts)
+- Schedule generation (double round-robin)
+- Calendar / advance day world pipeline
+- Game simulation (box-score engine)
+- Standings updates
+
+Still deferred:
+
 - Draft
 - Trades
 - Free agency
@@ -109,6 +119,7 @@ Do not implement yet:
 - AI team management
 - Career Mode
 - Dynasty Mode
+- Narrative / news feed UI beyond recent results on the dashboard
 
 ## Design rules
 

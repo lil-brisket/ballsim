@@ -19,8 +19,8 @@ export default async function HomePage() {
           Basketball
         </h1>
         <p className="max-w-xl text-zinc-400">
-          Create or continue a fictional franchise save. Simulation systems are
-          not active yet — this shell loads real persisted GameState only.
+          Create or continue a fictional franchise save. New saves bootstrap
+          rosters and a schedule; advance the world day from the dashboard.
         </p>
       </header>
 

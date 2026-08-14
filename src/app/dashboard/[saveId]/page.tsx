@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { advanceDayAction } from "@/application/actions";
 import { loadOwnerSave } from "@/application/game-service";
 
 type DashboardPageProps = {
@@ -29,13 +30,24 @@ export default async function DashboardPage({ params }: DashboardPageProps) {
         </p>
       </div>
 
-      <header className="space-y-2 border-b border-zinc-800 pb-6">
-        <h1 className="text-3xl font-semibold tracking-tight">
-          {dashboard.controlledTeam.city} {dashboard.controlledTeam.name}
-        </h1>
-        <p className="text-zinc-400">
-          {save.name} · {dashboard.leagueName}
-        </p>
+      <header className="flex flex-col gap-4 border-b border-zinc-800 pb-6 sm:flex-row sm:items-end sm:justify-between">
+        <div className="space-y-2">
+          <h1 className="text-3xl font-semibold tracking-tight">
+            {dashboard.controlledTeam.city} {dashboard.controlledTeam.name}
+          </h1>
+          <p className="text-zinc-400">
+            {save.name} · {dashboard.leagueName}
+          </p>
+        </div>
+        <form action={advanceDayAction}>
+          <input type="hidden" name="saveId" value={save.id} />
+          <button
+            type="submit"
+            className="rounded-md bg-amber-600 px-4 py-2 text-sm font-medium text-zinc-950 hover:bg-amber-500"
+          >
+            Advance day
+          </button>
+        </form>
       </header>
 
       <section className="grid gap-4 sm:grid-cols-2">
@@ -55,9 +67,13 @@ export default async function DashboardPage({ params }: DashboardPageProps) {
           </p>
         </div>
         <div className="rounded-xl border border-zinc-800 bg-zinc-900/60 p-5">
-          <h2 className="text-sm font-medium text-zinc-400">Controlled team</h2>
+          <h2 className="text-sm font-medium text-zinc-400">Record</h2>
           <p className="mt-2 text-2xl text-zinc-50">
-            {dashboard.controlledTeam.abbreviation}
+            {dashboard.controlledStanding.wins}-
+            {dashboard.controlledStanding.losses}
+            <span className="ml-2 text-base text-zinc-400">
+              {dashboard.controlledTeam.abbreviation}
+            </span>
           </p>
         </div>
         <div className="rounded-xl border border-zinc-800 bg-zinc-900/60 p-5">
@@ -65,16 +81,41 @@ export default async function DashboardPage({ params }: DashboardPageProps) {
           <p className="mt-2 text-2xl text-zinc-50">
             {dashboard.teamCount} teams
             <span className="block text-sm font-normal text-zinc-500">
-              {dashboard.playerCount} players (empty until roster generation)
+              {dashboard.playerCount} players
             </span>
           </p>
         </div>
       </section>
 
-      <p className="text-sm text-zinc-500">
-        Dashboard reads persisted GameState only. No simulation advance controls
-        are available in this foundation slice.
-      </p>
+      <section className="space-y-3">
+        <h2 className="text-lg font-medium text-zinc-100">Recent results</h2>
+        {dashboard.recentResults.length === 0 ? (
+          <p className="text-sm text-zinc-500">
+            No final games yet. Advance the day when games are scheduled.
+          </p>
+        ) : (
+          <ul className="space-y-2">
+            {dashboard.recentResults.map((result) => (
+              <li
+                key={`${result.date}-${result.opponentAbbreviation}-${result.home}`}
+                className="flex items-center justify-between rounded-lg border border-zinc-800 bg-zinc-900/50 px-4 py-3 text-sm"
+              >
+                <span className="font-mono text-zinc-500">{result.date}</span>
+                <span className="text-zinc-200">
+                  {result.home ? "vs" : "@"} {result.opponentAbbreviation}{" "}
+                  <span
+                    className={
+                      result.won ? "text-emerald-400" : "text-rose-400"
+                    }
+                  >
+                    {result.teamScore}-{result.opponentScore}
+                  </span>
+                </span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
     </main>
   );
 }

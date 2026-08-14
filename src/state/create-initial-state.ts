@@ -24,7 +24,7 @@ function createId(prefix: string): string {
 
 /**
  * Creates a minimal fictional universe for a new Owner Mode save.
- * No simulation systems are run; collections that are not needed yet stay empty.
+ * Application bootstrap fills rosters and schedule via systems.
  */
 export function createInitialGameState(
   input: CreateInitialGameStateInput,
@@ -106,6 +106,7 @@ export function createInitialGameState(
       createdAt: nowIso,
       updatedAt: nowIso,
       rngSeed,
+      rngState: rngSeed,
     },
     world: {
       calendar: {

@@ -17,6 +17,7 @@ describe("createInitialGameState", () => {
 
     expect(state.meta.schemaVersion).toBe(GAME_STATE_SCHEMA_VERSION);
     expect(state.meta.rngSeed).toBe(99);
+    expect(state.meta.rngState).toBe(99);
     expect(state.user.mode).toBe("owner");
     expect(state.world.league.abbreviation).toBe("CBL");
     expect(Object.keys(state.world.teams).length).toBeGreaterThan(0);
@@ -43,5 +44,7 @@ describe("createInitialGameState", () => {
     expect(snapshot.leagueName).toBe("Continental Basketball League");
     expect(snapshot.controlledTeam.name).toBe("Titans");
     expect(snapshot.currentDate).toBe("2026-10-01");
+    expect(snapshot.controlledStanding).toEqual({ wins: 0, losses: 0 });
+    expect(snapshot.recentResults).toEqual([]);
   });
 });

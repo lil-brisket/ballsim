@@ -2,11 +2,19 @@ export type { League } from "@/domain/entities/league";
 export type { Conference } from "@/domain/entities/conference";
 export type { Division } from "@/domain/entities/division";
 export type { Team } from "@/domain/entities/team";
-export type { Player, PlayerPosition } from "@/domain/entities/player";
+export type {
+  Player,
+  PlayerPosition,
+  PlayerRatings,
+} from "@/domain/entities/player";
 export type { Coach } from "@/domain/entities/coach";
 export type { Staff, StaffRole } from "@/domain/entities/staff";
 export type { Contract } from "@/domain/entities/contract";
-export type { Game, GameStatus } from "@/domain/entities/game";
+export type {
+  Game,
+  GameStatus,
+  PlayerGameStats,
+} from "@/domain/entities/game";
 export type { Season, SeasonPhase } from "@/domain/entities/season";
 export type { Schedule } from "@/domain/entities/schedule";
 export type { Standings, TeamStanding } from "@/domain/entities/standings";

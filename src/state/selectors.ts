@@ -17,6 +17,18 @@ export type DashboardSnapshot = {
   };
   teamCount: number;
   playerCount: number;
+  controlledStanding: {
+    wins: number;
+    losses: number;
+  };
+  recentResults: Array<{
+    date: string;
+    opponentAbbreviation: string;
+    home: boolean;
+    teamScore: number;
+    opponentScore: number;
+    won: boolean;
+  }>;
 };
 
 export function getControlledTeam(state: GameState): Team {
@@ -31,6 +43,38 @@ export function getControlledTeam(state: GameState): Team {
 
 export function toDashboardSnapshot(state: GameState): DashboardSnapshot {
   const team = getControlledTeam(state);
+  const standing = state.competition.standings.byTeamId[team.id] ?? {
+    teamId: team.id,
+    wins: 0,
+    losses: 0,
+  };
+
+  const recentResults = Object.values(state.competition.games)
+    .filter(
+      (game) =>
+        game.status === "final" &&
+        (game.homeTeamId === team.id || game.awayTeamId === team.id) &&
+        game.homeScore !== null &&
+        game.awayScore !== null,
+    )
+    .sort((a, b) => b.date.localeCompare(a.date))
+    .slice(0, 5)
+    .map((game) => {
+      const home = game.homeTeamId === team.id;
+      const teamScore = home ? game.homeScore! : game.awayScore!;
+      const opponentScore = home ? game.awayScore! : game.homeScore!;
+      const opponentId = home ? game.awayTeamId : game.homeTeamId;
+      const opponent = state.world.teams[opponentId];
+      return {
+        date: game.date,
+        opponentAbbreviation: opponent?.abbreviation ?? "???",
+        home,
+        teamScore,
+        opponentScore,
+        won: teamScore > opponentScore,
+      };
+    });
+
   return {
     saveId: state.meta.saveId,
     schemaVersion: state.meta.schemaVersion,
@@ -47,5 +91,10 @@ export function toDashboardSnapshot(state: GameState): DashboardSnapshot {
     },
     teamCount: Object.keys(state.world.teams).length,
     playerCount: Object.keys(state.world.players).length,
+    controlledStanding: {
+      wins: standing.wins,
+      losses: standing.losses,
+    },
+    recentResults,
   };
 }

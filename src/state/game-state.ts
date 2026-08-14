@@ -14,7 +14,7 @@ import type { Standings } from "@/domain/entities/standings";
 import type { Team } from "@/domain/entities/team";
 import type { SaveId, TeamId } from "@/domain/ids";
 
-export const GAME_STATE_SCHEMA_VERSION = 1;
+export const GAME_STATE_SCHEMA_VERSION = 2;
 
 export type GameMode = "owner";
 
@@ -23,8 +23,10 @@ export type MetaSlice = {
   schemaVersion: number;
   createdAt: string;
   updatedAt: string;
-  /** Seed for deterministic RNG reconstruction. */
+  /** Original seed for the save (reproducibility / debugging). */
   rngSeed: number;
+  /** Current PRNG internal state; resume streams across advances. */
+  rngState: number;
 };
 
 export type WorldSlice = {

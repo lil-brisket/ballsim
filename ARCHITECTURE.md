@@ -85,13 +85,27 @@ Preferences:
 - Deterministic, testable, reproducible behavior.
 - Stochastic systems must accept an injected `Rng` — never call `Math.random()` directly.
 
+### World pipeline (advance day)
+
+`src/systems/world-pipeline.ts` orchestrates:
+
+1. `bootstrapWorld` — roster generation + schedule generation when empty
+2. `simulateGamesForDate` — box-score engine for `calendar.currentDate`
+3. `updateStandings` — rebuild W/L from final games
+4. `advanceCalendar` — `currentDate + 1 day`
+
+Application layer (`advanceOwnerDay`) reconstructs `Rng` from `meta.rngState`,
+runs the pipeline, then writes `rng.getState()` back to `meta.rngState` before
+persisting. Games for the **current** date are processed before the calendar ticks.
+
 ## RNG
 
 `src/domain/rng` defines an `Rng` interface and a seeded implementation.
 
-- All future stochastic systems receive RNG explicitly.
-- Seeds live in `GameState.meta` so runs can be reproduced in tests and debugging.
-- Foundation establishes the capability only; complex simulation randomness is not implemented yet.
+- All stochastic systems receive RNG explicitly.
+- `meta.rngSeed` stores the original seed; `meta.rngState` stores the live PRNG
+  internal state so consecutive advances continue the stream.
+- Reconstruct with `createSeededRng(state.meta.rngState)` after load.
 
 ## Domain events
 
@@ -134,17 +148,15 @@ Load/save flow:
 
 ## Application ↔ UI communication
 
-1. UI issues commands (Server Actions) such as create save / load save.
-2. Application facades orchestrate persistence and (later) systems.
+1. UI issues commands (Server Actions) such as create save / load save / advance day.
+2. Application facades orchestrate persistence and systems.
 3. UI receives serializable DTOs / snapshots derived from `GameState`.
 4. UI never mutates domain state directly.
 
 ## World simulation & AI (architectural intent)
 
-Documented in `GAME_DESIGN.md` and mirrored here:
-
-- Future advance-day processing is a world pipeline, not a single-team update.
-- AI team decisions are an algorithmic layer under `systems/` (name TBD when introduced).
+- Advance-day processing is a world pipeline (`runWorldPipeline`), not a single-team update.
+- AI team decisions remain a future algorithmic layer under `systems/` (not implemented).
 - LLMs are out of scope for core sim/decision loops unless explicitly justified later.
 
 ## Testing
