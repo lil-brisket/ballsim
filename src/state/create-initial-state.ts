@@ -1,4 +1,7 @@
-import { createTeam } from "@/domain/entities/team";
+import {
+  createTeam,
+  NEUTRAL_TEAM_PLAY_STYLE,
+} from "@/domain/entities/team";
 import {
   asArenaId,
   asConferenceId,
@@ -46,6 +49,7 @@ function bootstrapTeam(
     finances: {},
     arenaId: asArenaId(`arena_${id}`),
     reputation: 50,
+    playStyle: { ...NEUTRAL_TEAM_PLAY_STYLE },
   });
 }
 

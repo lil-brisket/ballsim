@@ -11,6 +11,49 @@ import type {
 /** Placeholder for future team-owned financial state. */
 export type TeamFinanceState = Record<never, never>;
 
+/**
+ * Team-level offensive and defensive play-style tendencies (1–99).
+ * These are independent tendencies, not mutually exclusive probabilities.
+ * Simulation does not consume them yet; coaching may later produce a new
+ * TeamPlayStyle and a new Team via createTeam.
+ */
+export type TeamPlayStyle = {
+  /** Preference for faster/slower tempo; does not calculate possessions per game. */
+  pace: number;
+  /** Preference for three-point attempts; does not determine shot selection yet. */
+  threePointFrequency: number;
+  /** Preference for interior offense; does not determine shot selection yet. */
+  insideFrequency: number;
+  /** Preference for ball movement; does not determine pass probability yet. */
+  passing: number;
+  /** Preference for aggressive defense; does not modify defensive resolution yet. */
+  defensiveAggression: number;
+  /**
+   * How strongly offense is organized around primary priorities.
+   * Abstract for v1 — not an offensive-system or player-role enum.
+   */
+  offensiveFocus: number;
+};
+
+export const TEAM_PLAY_STYLE_KEYS: readonly (keyof TeamPlayStyle)[] = [
+  "pace",
+  "threePointFrequency",
+  "insideFrequency",
+  "passing",
+  "defensiveAggression",
+  "offensiveFocus",
+];
+
+/** Neutral / average tendencies (50). Call sites must spread: `{ ...NEUTRAL_TEAM_PLAY_STYLE }`. */
+export const NEUTRAL_TEAM_PLAY_STYLE: TeamPlayStyle = {
+  pace: 50,
+  threePointFrequency: 50,
+  insideFrequency: 50,
+  passing: 50,
+  defensiveAggression: 50,
+  offensiveFocus: 50,
+};
+
 export type Team = {
   id: TeamId;
   name: string;
@@ -23,6 +66,7 @@ export type Team = {
   finances: TeamFinanceState;
   arenaId: ArenaId;
   reputation: number;
+  playStyle: TeamPlayStyle;
 };
 
 /** Unvalidated construction payload for {@link createTeam}. */
@@ -38,6 +82,7 @@ export type TeamInput = {
   finances: TeamFinanceState;
   arenaId: ArenaId;
   reputation: number;
+  playStyle: TeamPlayStyle;
 };
 
 /**
@@ -56,6 +101,7 @@ export function createTeam(input: TeamInput): Team {
   assertFinances(input.finances);
   assertNonEmptyId(input.arenaId, "arenaId");
   assertRating(input.reputation, "reputation");
+  assertPlayStyle(input.playStyle);
 
   return {
     id: input.id,
@@ -69,6 +115,7 @@ export function createTeam(input: TeamInput): Team {
     finances: { ...input.finances },
     arenaId: input.arenaId,
     reputation: input.reputation,
+    playStyle: { ...input.playStyle },
   };
 }
 
@@ -106,6 +153,28 @@ function assertIdList(value: unknown, field: string): void {
 function assertFinances(value: unknown): void {
   if (value === null || typeof value !== "object" || Array.isArray(value)) {
     throw new Error("Team finances must be an object.");
+  }
+}
+
+function assertPlayStyle(value: unknown): void {
+  if (value === null || typeof value !== "object" || Array.isArray(value)) {
+    throw new Error("Team playStyle must be a non-null, non-array object.");
+  }
+  const playStyle = value as Record<string, unknown>;
+  const knownKeys = new Set<string>(TEAM_PLAY_STYLE_KEYS);
+  for (const key of Object.keys(playStyle)) {
+    if (!knownKeys.has(key)) {
+      throw new Error(`Team playStyle contains unknown key "${key}".`);
+    }
+  }
+  for (const key of TEAM_PLAY_STYLE_KEYS) {
+    const rating = playStyle[key];
+    if (typeof rating !== "number") {
+      throw new Error(
+        `Team playStyle.${key} must be an integer between ${RATING_MIN} and ${RATING_MAX}.`,
+      );
+    }
+    assertRating(rating, `playStyle.${key}`);
   }
 }
 

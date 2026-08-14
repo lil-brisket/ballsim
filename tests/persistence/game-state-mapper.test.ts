@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { NEUTRAL_TEAM_PLAY_STYLE } from "@/domain/entities/team";
 import { createInitialGameState } from "@/state/create-initial-state";
 import { GAME_STATE_SCHEMA_VERSION } from "@/state/game-state";
 import {
@@ -570,9 +571,62 @@ describe("GameState schema migration", () => {
     expect(migratedTeam.finances).toEqual({});
     expect(migratedTeam.arenaId).toBe(`arena_${controlledTeamId}`);
     expect(migratedTeam.reputation).toBe(50);
+    expect(migratedTeam.playStyle).toEqual(NEUTRAL_TEAM_PLAY_STYLE);
     expect(migratedTeam.name).toBe(controlledTeam.name);
     expect(migratedTeam.city).toBe(controlledTeam.city);
     expect(migratedTeam.abbreviation).toBe(controlledTeam.abbreviation);
+  });
+
+  it("migrates schemaVersion 10 teams by adding neutral playStyle only", () => {
+    const modern = createInitialGameState({
+      saveId: "save_v10_teams",
+      rngSeed: 14,
+      nowIso: "2026-08-14T12:00:00.000Z",
+    });
+
+    const teamIds = Object.keys(modern.world.teams);
+    expect(teamIds.length).toBeGreaterThanOrEqual(2);
+    const teamAId = teamIds[0]!;
+    const teamBId = teamIds[1]!;
+    const teamA = modern.world.teams[teamAId]!;
+    const teamB = modern.world.teams[teamBId]!;
+
+    const stripPlayStyle = (team: typeof teamA) => {
+      const { playStyle: _playStyle, ...rest } = team;
+      return rest;
+    };
+
+    const v10Teams = {
+      [teamAId]: stripPlayStyle(teamA),
+      [teamBId]: stripPlayStyle(teamB),
+    };
+
+    const v10Json = JSON.stringify({
+      ...modern,
+      meta: {
+        ...modern.meta,
+        schemaVersion: 10,
+      },
+      world: {
+        ...modern.world,
+        teams: v10Teams,
+      },
+    });
+
+    const migrated = deserializeGameState(v10Json);
+    expect(migrated.meta.schemaVersion).toBe(GAME_STATE_SCHEMA_VERSION);
+
+    const migratedA = migrated.world.teams[teamAId]!;
+    const migratedB = migrated.world.teams[teamBId]!;
+
+    expect(migratedA.playStyle).toEqual(NEUTRAL_TEAM_PLAY_STYLE);
+    expect(migratedB.playStyle).toEqual(NEUTRAL_TEAM_PLAY_STYLE);
+    expect(migratedA.playStyle).not.toBe(migratedB.playStyle);
+
+    const { playStyle: _a, ...fieldsA } = migratedA;
+    const { playStyle: _b, ...fieldsB } = migratedB;
+    expect(fieldsA).toEqual(v10Teams[teamAId]);
+    expect(fieldsB).toEqual(v10Teams[teamBId]);
   });
 
   it("migrates schemaVersion 7 games to score, events, and playerStats", () => {

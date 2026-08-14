@@ -84,6 +84,8 @@ Entities expected in the long-term model:
 - Game, Season, Schedule
 - Finances
 
+`Team.playStyle` holds six independent 1–99 play-style tendencies (`pace`, `threePointFrequency`, `insideFrequency`, `passing`, `defensiveAggression`, `offensiveFocus`). They are nested domain data only in v1 — simulation does not consume them yet. `offensiveFocus` stays abstract (not an offensive-system or player-role enum). All newly generated teams start neutral (`50`). Future coaching may produce a new `TeamPlayStyle` and a new `Team` via `createTeam`.
+
 Systems expected later (do not treat as present until implemented):
 
 - Game simulation — **implemented** (`src/systems/game-simulation.ts` possession orchestration → `GameResult`)

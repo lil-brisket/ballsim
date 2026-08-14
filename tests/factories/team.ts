@@ -11,8 +11,10 @@ import {
 } from "@/domain/ids";
 import {
   createTeam as createDomainTeam,
+  NEUTRAL_TEAM_PLAY_STYLE,
   type Team,
   type TeamInput,
+  type TeamPlayStyle,
 } from "@/domain/entities/team";
 
 export type CreateTeamOverrides = {
@@ -27,6 +29,7 @@ export type CreateTeamOverrides = {
   finances?: TeamInput["finances"];
   arenaId?: string;
   reputation?: number;
+  playStyle?: TeamPlayStyle;
 };
 
 /**
@@ -45,6 +48,9 @@ export function createTeam(overrides: CreateTeamOverrides = {}): Team {
     finances: overrides.finances ?? {},
     arenaId: asArenaId(overrides.arenaId ?? "arena_test"),
     reputation: overrides.reputation ?? 50,
+    playStyle: overrides.playStyle
+      ? { ...overrides.playStyle }
+      : { ...NEUTRAL_TEAM_PLAY_STYLE },
   });
 }
 

@@ -2,7 +2,10 @@ import { describe, expect, it } from "vitest";
 import { createConference } from "@/domain/entities/conference";
 import { createDivision } from "@/domain/entities/division";
 import { createLeague } from "@/domain/entities/league";
-import { createTeam } from "@/domain/entities/team";
+import {
+  createTeam,
+  NEUTRAL_TEAM_PLAY_STYLE,
+} from "@/domain/entities/team";
 import {
   asArenaId,
   asConferenceId,
@@ -29,6 +32,7 @@ function createLinkedTeam(input: {
     finances: {},
     arenaId: asArenaId(`arena_${input.id}`),
     reputation: 50,
+    playStyle: { ...NEUTRAL_TEAM_PLAY_STYLE },
   });
 }
 

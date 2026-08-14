@@ -9,7 +9,7 @@ import {
 import { createDivision, type Division } from "@/domain/entities/division";
 import { createLeague, type League } from "@/domain/entities/league";
 import { type Player } from "@/domain/entities/player";
-import { createTeam, type Team } from "@/domain/entities/team";
+import { createTeam, NEUTRAL_TEAM_PLAY_STYLE, type Team } from "@/domain/entities/team";
 import {
   asArenaId,
   asConferenceId,
@@ -159,6 +159,7 @@ export function generateLeague(
             finances: {},
             arenaId: asArenaId(`arena_${teamId}`),
             reputation: 50,
+            playStyle: { ...NEUTRAL_TEAM_PLAY_STYLE },
           }),
         );
         divisionTeamIds.push(teamId);
