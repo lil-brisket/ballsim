@@ -27,6 +27,17 @@ export {
   type GeneratePlayerOptions,
 } from "@/systems/player-generation";
 export { developPlayer } from "@/systems/player-development";
+export {
+  SHOT_RESOLUTION_CONFIG,
+  SHOT_TYPES,
+  type ShotType,
+} from "@/systems/shot-resolution-config";
+export {
+  calculateShotProbability,
+  resolveShot,
+  type ResolveShotInput,
+  type ShotResolution,
+} from "@/systems/shot-resolution";
 export { generateSchedule } from "@/systems/schedule-generation";
 export { advanceCalendar } from "@/systems/calendar";
 export { simulateGamesForDate } from "@/systems/game-simulation";

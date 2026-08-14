@@ -19,6 +19,8 @@ Each system should:
 | `player-generation` | Seeded engine: `generatePlayer(seed)` / `generatePlayerWithRng(rng)` → `Player` |
 | `player-development-config` | Annual development ranges (stage/category deltas, taper, work ethic, caps) |
 | `player-development` | Building block: `developPlayer(player, rng)` → new `Player` (one year, no aging) |
+| `shot-resolution-config` | Tunable make-probability bounds and shot/defense/fatigue coefficients |
+| `shot-resolution` | Building block: `calculateShotProbability(input)` / `resolveShot(input, rng)` → make/miss (no GameState) |
 | `roster-generation` | World-gen: roster slots + contracts; calls player-generation per slot |
 | `roster-rules` | Building block: configurable roster size/position/group validation; throws `Error`, not `SystemResult` |
 | `schedule-generation` | World-gen: double round-robin schedule |
