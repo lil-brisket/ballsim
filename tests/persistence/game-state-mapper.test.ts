@@ -98,7 +98,22 @@ describe("GameState schema migration", () => {
     const migrated = deserializeGameState(v1Json);
     expect(migrated.meta.schemaVersion).toBe(GAME_STATE_SCHEMA_VERSION);
     expect(migrated.meta.rngState).toBe(5);
-    expect(migrated.competition.games.game_legacy?.boxScore).toBeNull();
+    expect(migrated.competition.games.game_legacy?.playerStats).toEqual([]);
+    expect(migrated.competition.games.game_legacy?.score).toEqual({
+      home: 0,
+      away: 0,
+    });
+    expect(migrated.competition.games.game_legacy?.events).toEqual([]);
+    expect(migrated.competition.games.game_legacy?.status).toBe("scheduled");
+    expect(
+      "homeScore" in (migrated.competition.games.game_legacy ?? {}),
+    ).toBe(false);
+    expect(
+      "awayScore" in (migrated.competition.games.game_legacy ?? {}),
+    ).toBe(false);
+    expect(
+      "boxScore" in (migrated.competition.games.game_legacy ?? {}),
+    ).toBe(false);
 
     const player = migrated.world.players[playerId]!;
     expect(player.attributes.midRange).toBe(80);
@@ -558,6 +573,95 @@ describe("GameState schema migration", () => {
     expect(migratedTeam.name).toBe(controlledTeam.name);
     expect(migratedTeam.city).toBe(controlledTeam.city);
     expect(migratedTeam.abbreviation).toBe(controlledTeam.abbreviation);
+  });
+
+  it("migrates schemaVersion 7 games to score, events, and playerStats", () => {
+    const modern = createInitialGameState({
+      saveId: "save_v7_games",
+      rngSeed: 12,
+      nowIso: "2026-08-13T12:00:00.000Z",
+    });
+
+    const homeTeamId = modern.user.controlledTeamId;
+    const awayTeamId = Object.keys(modern.world.teams).find(
+      (id) => id !== homeTeamId,
+    )!;
+    const playerId = asPlayerId("player_box");
+
+    const v7Json = JSON.stringify({
+      ...modern,
+      meta: {
+        ...modern.meta,
+        schemaVersion: 7,
+      },
+      competition: {
+        ...modern.competition,
+        games: {
+          game_null_scores: {
+            id: "game_null_scores",
+            seasonId: modern.competition.season.id,
+            date: "2026-10-02",
+            homeTeamId,
+            awayTeamId,
+            status: "scheduled",
+            homeScore: null,
+            awayScore: null,
+            boxScore: null,
+          },
+          game_final: {
+            id: "game_final",
+            seasonId: modern.competition.season.id,
+            date: "2026-10-03",
+            homeTeamId,
+            awayTeamId,
+            status: "final",
+            homeScore: 110,
+            awayScore: 104,
+            boxScore: [
+              {
+                playerId,
+                minutes: 34,
+                points: 22,
+                rebounds: 6,
+                assists: 5,
+              },
+            ],
+          },
+        },
+      },
+    });
+
+    const migrated = deserializeGameState(v7Json);
+    expect(migrated.meta.schemaVersion).toBe(GAME_STATE_SCHEMA_VERSION);
+
+    const scheduled = migrated.competition.games.game_null_scores!;
+    expect(scheduled.status).toBe("scheduled");
+    expect(scheduled.score).toEqual({ home: 0, away: 0 });
+    expect(scheduled.events).toEqual([]);
+    expect(scheduled.playerStats).toEqual([]);
+    expect("homeScore" in scheduled).toBe(false);
+    expect("awayScore" in scheduled).toBe(false);
+    expect("boxScore" in scheduled).toBe(false);
+
+    const finalGame = migrated.competition.games.game_final!;
+    expect(finalGame.status).toBe("final");
+    expect(finalGame.score).toEqual({ home: 110, away: 104 });
+    expect(finalGame.events).toEqual([]);
+    expect(finalGame.playerStats).toEqual([
+      {
+        playerId,
+        minutes: 34,
+        points: 22,
+        rebounds: 6,
+        assists: 5,
+        steals: 0,
+        blocks: 0,
+        turnovers: 0,
+        fouls: 0,
+      },
+    ]);
+    expect("homeScore" in finalGame).toBe(false);
+    expect("boxScore" in finalGame).toBe(false);
   });
 
   it("round-trips current schema version including rngState", () => {

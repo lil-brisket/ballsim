@@ -69,8 +69,17 @@ export type { Staff, StaffRole } from "@/domain/entities/staff";
 export type { Contract } from "@/domain/entities/contract";
 export type {
   Game,
+  GameInput,
   GameStatus,
-  PlayerGameStats,
+  GameScore,
+  GameEvent,
+  GameEventType,
+  GamePlayerStats,
+} from "@/domain/entities/game";
+export {
+  GAME_STATUSES,
+  GAME_EVENT_TYPES,
+  createGame,
 } from "@/domain/entities/game";
 export type { Season, SeasonPhase } from "@/domain/entities/season";
 export type { Schedule } from "@/domain/entities/schedule";

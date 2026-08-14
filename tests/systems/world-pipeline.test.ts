@@ -71,7 +71,8 @@ describe("roster and schedule generation", () => {
     expect(result.state.competition.season.phase).toBe("regular");
     expect(
       Object.values(result.state.competition.games).every(
-        (game) => game.status === "scheduled" && game.boxScore === null,
+        (game) =>
+          game.status === "scheduled" && game.playerStats.length === 0,
       ),
     ).toBe(true);
   });

@@ -1,6 +1,6 @@
 import { addCalendarDays } from "@/domain/calendar-date";
 import { asGameId } from "@/domain/ids";
-import type { Game } from "@/domain/entities/game";
+import { createGame, type Game } from "@/domain/entities/game";
 import type { TeamId } from "@/domain/ids";
 import { systemResult, type SystemResult } from "@/domain/system-result";
 import type { GameState } from "@/state/game-state";
@@ -37,17 +37,17 @@ export function generateSchedule(state: GameState): SystemResult {
   for (let index = 0; index < pairs.length; index += 1) {
     const pair = pairs[index]!;
     const gameId = asGameId(`game_${state.competition.season.id}_${index}`);
-    games[gameId] = {
+    games[gameId] = createGame({
       id: gameId,
       seasonId: state.competition.season.id,
       date,
       homeTeamId: pair.home,
       awayTeamId: pair.away,
       status: "scheduled",
-      homeScore: null,
-      awayScore: null,
-      boxScore: null,
-    };
+      score: { home: 0, away: 0 },
+      events: [],
+      playerStats: [],
+    });
     gameIds.push(gameId);
     date = addCalendarDays(date, 1);
   }

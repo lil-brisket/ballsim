@@ -18,11 +18,7 @@ export function updateStandings(state: GameState): SystemResult {
   }
 
   for (const game of Object.values(state.competition.games)) {
-    if (
-      game.status !== "final" ||
-      game.homeScore === null ||
-      game.awayScore === null
-    ) {
+    if (game.status !== "final") {
       continue;
     }
 
@@ -32,10 +28,10 @@ export function updateStandings(state: GameState): SystemResult {
       continue;
     }
 
-    if (game.homeScore > game.awayScore) {
+    if (game.score.home > game.score.away) {
       home.wins += 1;
       away.losses += 1;
-    } else if (game.awayScore > game.homeScore) {
+    } else if (game.score.away > game.score.home) {
       away.wins += 1;
       home.losses += 1;
     }

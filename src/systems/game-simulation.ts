@@ -1,6 +1,6 @@
 import { createDomainEvent, type DomainEvent } from "@/domain/events";
 import type { Player } from "@/domain/entities/player";
-import type { Game, PlayerGameStats } from "@/domain/entities/game";
+import type { Game, GamePlayerStats } from "@/domain/entities/game";
 import type { TeamId } from "@/domain/ids";
 import type { Rng } from "@/domain/rng";
 import { systemResult, type SystemResult } from "@/domain/system-result";
@@ -38,8 +38,8 @@ export function simulateGamesForDate(
           gameId: simulated.game.id,
           homeTeamId: simulated.game.homeTeamId,
           awayTeamId: simulated.game.awayTeamId,
-          homeScore: simulated.game.homeScore,
-          awayScore: simulated.game.awayScore,
+          homeScore: simulated.game.score.home,
+          awayScore: simulated.game.score.away,
         },
       }),
     );
@@ -92,7 +92,7 @@ function simulateSingleGame(
     ),
   );
 
-  const boxScore = [
+  const playerStats = [
     ...allocateBoxScore(homeRoster, homeScore, rng),
     ...allocateBoxScore(awayRoster, awayScore, rng),
   ];
@@ -101,9 +101,8 @@ function simulateSingleGame(
     game: {
       ...game,
       status: "final",
-      homeScore,
-      awayScore,
-      boxScore,
+      score: { home: homeScore, away: awayScore },
+      playerStats,
     },
   };
 }
@@ -134,7 +133,7 @@ function allocateBoxScore(
   roster: Player[],
   teamScore: number,
   rng: Rng,
-): PlayerGameStats[] {
+): GamePlayerStats[] {
   const active = roster.slice(0, Math.min(9, Math.max(STARTERS, roster.length)));
   if (active.length === 0) {
     return [];
@@ -143,7 +142,7 @@ function allocateBoxScore(
   const weights = active.map((player) => Math.max(1, compositeOffense(player)));
   const weightSum = weights.reduce((a, b) => a + b, 0);
   let pointsLeft = teamScore;
-  const stats: PlayerGameStats[] = [];
+  const stats: GamePlayerStats[] = [];
 
   for (let i = 0; i < active.length; i += 1) {
     const player = active[i]!;
@@ -162,6 +161,10 @@ function allocateBoxScore(
       points: share,
       rebounds: rng.nextInt(1, 12),
       assists: rng.nextInt(0, 9),
+      steals: 0,
+      blocks: 0,
+      turnovers: 0,
+      fouls: 0,
     });
   }
 

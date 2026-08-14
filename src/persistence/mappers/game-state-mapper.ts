@@ -1,5 +1,6 @@
 import { z } from "zod";
 import type { Contract } from "@/domain/entities/contract";
+import type { Game } from "@/domain/entities/game";
 import type {
   DevelopmentState,
   InjuryStatus,
@@ -16,7 +17,9 @@ import type {
   ConferenceId,
   ContractId,
   DivisionId,
+  GameId,
   PlayerId,
+  SeasonId,
   TeamId,
 } from "@/domain/ids";
 import { asArenaId } from "@/domain/ids";
@@ -47,39 +50,51 @@ export function deserializeGameState(stateJson: string): GameState {
   const envelope = gameStateEnvelopeSchema.parse(parsed);
 
   if (envelope.meta.schemaVersion === 1) {
-    return migrateV6ToV7(
-      migrateV5ToV6(
-        migrateV4ToV5(
-          migrateV3ToV4(migrateV2ToV3(migrateV1ToV2(parsed as GameStateV1))),
+    return migrateV7ToV8(
+      migrateV6ToV7(
+        migrateV5ToV6(
+          migrateV4ToV5(
+            migrateV3ToV4(migrateV2ToV3(migrateV1ToV2(parsed as GameStateV1))),
+          ),
         ),
       ),
     );
   }
 
   if (envelope.meta.schemaVersion === 2) {
-    return migrateV6ToV7(
-      migrateV5ToV6(
-        migrateV4ToV5(migrateV3ToV4(migrateV2ToV3(parsed as GameStateV2))),
+    return migrateV7ToV8(
+      migrateV6ToV7(
+        migrateV5ToV6(
+          migrateV4ToV5(migrateV3ToV4(migrateV2ToV3(parsed as GameStateV2))),
+        ),
       ),
     );
   }
 
   if (envelope.meta.schemaVersion === 3) {
-    return migrateV6ToV7(
-      migrateV5ToV6(migrateV4ToV5(migrateV3ToV4(parsed as GameStateV3))),
+    return migrateV7ToV8(
+      migrateV6ToV7(
+        migrateV5ToV6(migrateV4ToV5(migrateV3ToV4(parsed as GameStateV3))),
+      ),
     );
   }
 
   if (envelope.meta.schemaVersion === 4) {
-    return migrateV6ToV7(migrateV5ToV6(migrateV4ToV5(parsed as GameStateV4)));
+    return migrateV7ToV8(
+      migrateV6ToV7(migrateV5ToV6(migrateV4ToV5(parsed as GameStateV4))),
+    );
   }
 
   if (envelope.meta.schemaVersion === 5) {
-    return migrateV6ToV7(migrateV5ToV6(parsed as GameStateV5));
+    return migrateV7ToV8(migrateV6ToV7(migrateV5ToV6(parsed as GameStateV5)));
   }
 
   if (envelope.meta.schemaVersion === 6) {
-    return migrateV6ToV7(parsed as GameStateV6);
+    return migrateV7ToV8(migrateV6ToV7(parsed as GameStateV6));
+  }
+
+  if (envelope.meta.schemaVersion === 7) {
+    return migrateV7ToV8(parsed as GameStateV7);
   }
 
   if (envelope.meta.schemaVersion !== GAME_STATE_SCHEMA_VERSION) {
@@ -90,11 +105,36 @@ export function deserializeGameState(stateJson: string): GameState {
 
   const state = parsed as GameState;
   if (typeof state.meta.rngState !== "number") {
-    throw new Error("GameState meta.rngState is required for schemaVersion 7.");
+    throw new Error("GameState meta.rngState is required for schemaVersion 8.");
   }
 
   return state;
 }
+
+/** Schema v7 game shape before score/events/playerStats. */
+type GameV7 = {
+  id: GameId;
+  seasonId: SeasonId;
+  date: string;
+  homeTeamId: TeamId;
+  awayTeamId: TeamId;
+  status: "scheduled" | "final";
+  homeScore: number | null;
+  awayScore: number | null;
+  boxScore:
+    | {
+        playerId: PlayerId;
+        minutes: number;
+        points: number;
+        rebounds: number;
+        assists: number;
+        steals?: number;
+        blocks?: number;
+        turnovers?: number;
+        fouls?: number;
+      }[]
+    | null;
+};
 
 type LegacyPlayerRatings = {
   overall: number;
@@ -187,12 +227,22 @@ type TeamV6 = {
   abbreviation: string;
 };
 
-type GameStateV6 = Omit<GameState, "meta" | "world"> & {
+type CompetitionWithLegacyGames = Omit<GameState["competition"], "games"> & {
+  games: Record<string, GameV7>;
+};
+
+type GameStateV7 = Omit<GameState, "meta" | "competition"> & {
+  meta: Omit<GameState["meta"], "schemaVersion"> & { schemaVersion: 7 };
+  competition: CompetitionWithLegacyGames;
+};
+
+type GameStateV6 = Omit<GameState, "meta" | "world" | "competition"> & {
   meta: Omit<GameState["meta"], "schemaVersion"> & { schemaVersion: 6 };
   world: Omit<GameState["world"], "players" | "teams"> & {
     players: Record<string, Player>;
     teams: Record<string, TeamV6>;
   };
+  competition: CompetitionWithLegacyGames;
 };
 
 type GameStateV1 = {
@@ -207,7 +257,7 @@ type GameStateV1 = {
   world: {
     players: Record<string, unknown>;
   } & Omit<GameState["world"], "players">;
-  competition: GameState["competition"];
+  competition: CompetitionWithLegacyGames;
   business: GameState["business"];
   user: GameState["user"];
 };
@@ -224,7 +274,7 @@ type GameStateV2 = {
   world: {
     players: Record<string, PlayerV2>;
   } & Omit<GameState["world"], "players">;
-  competition: GameState["competition"];
+  competition: CompetitionWithLegacyGames;
   business: GameState["business"];
   user: GameState["user"];
 };
@@ -241,7 +291,7 @@ type GameStateV3 = {
   world: {
     players: Record<string, PlayerV3>;
   } & Omit<GameState["world"], "players">;
-  competition: GameState["competition"];
+  competition: CompetitionWithLegacyGames;
   business: GameState["business"];
   user: GameState["user"];
 };
@@ -258,7 +308,7 @@ type GameStateV4 = {
   world: {
     players: Record<string, PlayerV4>;
   } & Omit<GameState["world"], "players">;
-  competition: GameState["competition"];
+  competition: CompetitionWithLegacyGames;
   business: GameState["business"];
   user: GameState["user"];
 };
@@ -275,7 +325,7 @@ type GameStateV5 = {
   world: {
     players: Record<string, PlayerV5>;
   } & Omit<GameState["world"], "players">;
-  competition: GameState["competition"];
+  competition: CompetitionWithLegacyGames;
   business: GameState["business"];
   user: GameState["user"];
 };
@@ -321,7 +371,7 @@ function migrateV1ToV2(state: GameStateV1): GameStateV2 {
     };
   }
 
-  const games: GameState["competition"]["games"] = {};
+  const games: Record<string, GameV7> = {};
   for (const [gameId, game] of Object.entries(state.competition.games)) {
     const legacy = game as {
       id: string;
@@ -332,14 +382,14 @@ function migrateV1ToV2(state: GameStateV1): GameStateV2 {
       status: "scheduled" | "final";
       homeScore: number | null;
       awayScore: number | null;
-      boxScore?: GameState["competition"]["games"][string]["boxScore"];
+      boxScore?: GameV7["boxScore"];
     };
     games[gameId] = {
       ...legacy,
-      id: legacy.id as GameState["competition"]["games"][string]["id"],
-      seasonId: legacy.seasonId as GameState["competition"]["games"][string]["seasonId"],
-      homeTeamId: legacy.homeTeamId as GameState["competition"]["games"][string]["homeTeamId"],
-      awayTeamId: legacy.awayTeamId as GameState["competition"]["games"][string]["awayTeamId"],
+      id: legacy.id as GameId,
+      seasonId: legacy.seasonId as SeasonId,
+      homeTeamId: legacy.homeTeamId as TeamId,
+      awayTeamId: legacy.awayTeamId as TeamId,
       boxScore: legacy.boxScore ?? null,
     };
   }
@@ -615,7 +665,7 @@ function migratePlayerV5ToV6(player: PlayerV5): Player {
  * placeholders. conferenceId comes from the team's division. Does not consume
  * RNG or alter rngState.
  */
-function migrateV6ToV7(state: GameStateV6): GameState {
+function migrateV6ToV7(state: GameStateV6): GameStateV7 {
   const teams: Record<string, Team> = {};
 
   for (const [teamId, team] of Object.entries(state.world.teams)) {
@@ -644,7 +694,7 @@ function migrateV6ToV7(state: GameStateV6): GameState {
   return {
     meta: {
       saveId: state.meta.saveId as GameState["meta"]["saveId"],
-      schemaVersion: GAME_STATE_SCHEMA_VERSION,
+      schemaVersion: 7,
       createdAt: state.meta.createdAt,
       updatedAt: state.meta.updatedAt,
       rngSeed: state.meta.rngSeed,
@@ -655,6 +705,60 @@ function migrateV6ToV7(state: GameStateV6): GameState {
       teams,
     },
     competition: state.competition,
+    business: state.business,
+    user: state.user,
+  };
+}
+
+/**
+ * Deterministic v7 → v8: convert nullable home/away scores and boxScore into
+ * score, events, and playerStats. Does not consume RNG or alter rngState.
+ */
+function migrateV7ToV8(state: GameStateV7): GameState {
+  const games: Record<string, Game> = {};
+
+  for (const [gameId, legacy] of Object.entries(state.competition.games)) {
+    const boxScore = legacy.boxScore ?? [];
+    games[gameId] = {
+      id: legacy.id,
+      seasonId: legacy.seasonId,
+      date: legacy.date,
+      homeTeamId: legacy.homeTeamId,
+      awayTeamId: legacy.awayTeamId,
+      status: legacy.status,
+      score: {
+        home: legacy.homeScore ?? 0,
+        away: legacy.awayScore ?? 0,
+      },
+      events: [],
+      playerStats: boxScore.map((entry) => ({
+        playerId: entry.playerId,
+        minutes: entry.minutes,
+        points: entry.points,
+        rebounds: entry.rebounds,
+        assists: entry.assists,
+        steals: entry.steals ?? 0,
+        blocks: entry.blocks ?? 0,
+        turnovers: entry.turnovers ?? 0,
+        fouls: entry.fouls ?? 0,
+      })),
+    };
+  }
+
+  return {
+    meta: {
+      saveId: state.meta.saveId as GameState["meta"]["saveId"],
+      schemaVersion: GAME_STATE_SCHEMA_VERSION,
+      createdAt: state.meta.createdAt,
+      updatedAt: state.meta.updatedAt,
+      rngSeed: state.meta.rngSeed,
+      rngState: state.meta.rngState ?? state.meta.rngSeed,
+    },
+    world: state.world,
+    competition: {
+      ...state.competition,
+      games,
+    },
     business: state.business,
     user: state.user,
   };

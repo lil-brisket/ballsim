@@ -53,16 +53,14 @@ export function toDashboardSnapshot(state: GameState): DashboardSnapshot {
     .filter(
       (game) =>
         game.status === "final" &&
-        (game.homeTeamId === team.id || game.awayTeamId === team.id) &&
-        game.homeScore !== null &&
-        game.awayScore !== null,
+        (game.homeTeamId === team.id || game.awayTeamId === team.id),
     )
     .sort((a, b) => b.date.localeCompare(a.date))
     .slice(0, 5)
     .map((game) => {
       const home = game.homeTeamId === team.id;
-      const teamScore = home ? game.homeScore! : game.awayScore!;
-      const opponentScore = home ? game.awayScore! : game.homeScore!;
+      const teamScore = home ? game.score.home : game.score.away;
+      const opponentScore = home ? game.score.away : game.score.home;
       const opponentId = home ? game.awayTeamId : game.homeTeamId;
       const opponent = state.world.teams[opponentId];
       return {
