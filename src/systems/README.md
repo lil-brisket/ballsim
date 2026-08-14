@@ -20,6 +20,7 @@ Each system should:
 | `player-development-config` | Annual development ranges (stage/category deltas, taper, work ethic, caps) |
 | `player-development` | Building block: `developPlayer(player, rng)` → new `Player` (one year, no aging) |
 | `roster-generation` | World-gen: roster slots + contracts; calls player-generation per slot |
+| `roster-rules` | Building block: configurable roster size/position/group validation; throws `Error`, not `SystemResult` |
 | `schedule-generation` | World-gen: double round-robin schedule |
 | `game-simulation` | Box-score sim for scheduled games on a date |
 | `standings` | Rebuild W/L from final games |
@@ -29,3 +30,5 @@ Each system should:
 Advance day processes games for the **current** calendar date, updates standings, then ticks the calendar. Stochastic steps use the injected `Rng`; callers persist `rng.getState()` to `GameState.meta.rngState`.
 
 `developPlayer` is a player-level building block (returns `Player`, not `SystemResult`). It recalculates `development.stage` from age, modifies attributes in `PLAYER_ATTRIBUTE_KEYS` order (19 RNG rolls), and leaves age unchanged. Injury status is ignored in v1. A future season tick should age players and then call this engine.
+
+`roster-rules` is a validation building block (`createRosterRulesConfig` / `validateRoster`). A fully assigned roster is a partition: `players.length === startingLineupSize + benchSize + inactiveSize`. Min/max roster size is independent of that composition sum. Validators throw `Error` and do not mutate input, accept a `Team`, or look up GameState.

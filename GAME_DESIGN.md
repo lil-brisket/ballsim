@@ -96,6 +96,7 @@ Systems expected later (do not treat as present until implemented):
 - Schedule generation — **implemented** (`src/systems/schedule-generation.ts`)
 - Save/load (foundation persistence exists)
 - Roster generation — **implemented** (`src/systems/roster-generation.ts`)
+- Roster rules validation — **implemented** as a building block (`src/systems/roster-rules.ts`)
 
 ## Explicit non-goals for the foundation phase (superseded where implemented)
 
@@ -108,6 +109,7 @@ The original foundation phase deferred simulation. The following are now
 - Game simulation (box-score engine)
 - Standings updates
 - Player development (annual attribute-level building block)
+- Roster rules validation (configurable size, positions, starters/bench/inactive)
 
 Still deferred:
 
