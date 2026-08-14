@@ -38,6 +38,18 @@ export {
   type ResolveShotInput,
   type ShotResolution,
 } from "@/systems/shot-resolution";
+export {
+  REBOUND_RESOLUTION_CONFIG,
+  POSITION_REBOUND_MODIFIERS,
+} from "@/systems/rebound-resolution-config";
+export {
+  playerReboundBaseStrength,
+  resolveRebound,
+  type ReboundType,
+  type ResolveReboundInput,
+  type ReboundCandidateScore,
+  type ReboundResult,
+} from "@/systems/rebound-resolution";
 export { generateSchedule } from "@/systems/schedule-generation";
 export { advanceCalendar } from "@/systems/calendar";
 export { simulateGamesForDate } from "@/systems/game-simulation";
