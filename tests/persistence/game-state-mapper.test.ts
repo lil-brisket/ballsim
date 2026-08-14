@@ -1051,7 +1051,7 @@ describe("GameState schema migration", () => {
         schemaVersion: 12,
       },
       competition: {
-        ...modern.competition,
+        season: modern.competition.season,
         schedule: {
           seasonId,
           gameIds: ["game_final_v12"],
@@ -1088,6 +1088,12 @@ describe("GameState schema migration", () => {
 
     const migrated = deserializeGameState(JSON.stringify(stateV12));
     expect(migrated.meta.schemaVersion).toBe(GAME_STATE_SCHEMA_VERSION);
+    expect(migrated.competition.playoffs).toEqual({
+      status: "not_started",
+      fieldSize: 0,
+      qualifiedTeams: [],
+      series: [],
+    });
 
     const home = migrated.competition.standings.byTeamId[homeTeamId]!;
     const away = migrated.competition.standings.byTeamId[awayTeamId]!;
@@ -1114,5 +1120,35 @@ describe("GameState schema migration", () => {
     expect(Object.keys(migrated.competition.standings.byTeamId).sort()).toEqual(
       teamIds,
     );
+  });
+
+  it("migrates schemaVersion 13 saves by adding empty playoffs", () => {
+    const modern = createInitialGameState({
+      saveId: "save_v13_playoffs",
+      rngSeed: 21,
+      nowIso: "2026-08-14T12:00:00.000Z",
+    });
+
+    const { playoffs: _removed, ...competitionWithoutPlayoffs } =
+      modern.competition;
+
+    const stateV13 = {
+      ...modern,
+      meta: {
+        ...modern.meta,
+        schemaVersion: 13,
+      },
+      competition: competitionWithoutPlayoffs,
+    };
+
+    const migrated = deserializeGameState(JSON.stringify(stateV13));
+    expect(migrated.meta.schemaVersion).toBe(GAME_STATE_SCHEMA_VERSION);
+    expect(migrated.competition.playoffs).toEqual({
+      status: "not_started",
+      fieldSize: 0,
+      qualifiedTeams: [],
+      series: [],
+    });
+    expect(migrated.meta.rngState).toBe(modern.meta.rngState);
   });
 });

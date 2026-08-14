@@ -2,6 +2,7 @@ import {
   createTeam,
   NEUTRAL_TEAM_PLAY_STYLE,
 } from "@/domain/entities/team";
+import { createEmptyPlayoffTournament } from "@/domain/entities/playoffs";
 import { createEmptyTeamStanding } from "@/domain/entities/standings";
 import { DEFAULT_COACHING_PHILOSOPHY } from "@/domain/coaching/coaching-philosophy";
 import {
@@ -213,6 +214,7 @@ export function createInitialGameState(
       },
       games: {},
       standings,
+      playoffs: createEmptyPlayoffTournament(),
     },
     business: {
       contracts: {},

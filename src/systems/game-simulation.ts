@@ -270,49 +270,9 @@ export function simulateGamesForDate(
       continue;
     }
 
-    const homePlayers = rosterForTeam(state, game.homeTeamId);
-    const awayPlayers = rosterForTeam(state, game.awayTeamId);
-    const homeTeam = state.world.teams[game.homeTeamId];
-    const awayTeam = state.world.teams[game.awayTeamId];
-    const result = simulateGame(
-      game,
-      {
-        homePlayers,
-        awayPlayers,
-        homeCoachingPhilosophy:
-          homeTeam?.coachingPhilosophy ?? DEFAULT_COACHING_PHILOSOPHY,
-        awayCoachingPhilosophy:
-          awayTeam?.coachingPhilosophy ?? DEFAULT_COACHING_PHILOSOPHY,
-      },
-      rng,
-    );
-
-    games[gameId] = createGame({
-      id: result.gameId,
-      seasonId: result.seasonId,
-      date: result.date,
-      homeTeamId: result.homeTeamId,
-      awayTeamId: result.awayTeamId,
-      status: "final",
-      score: { ...result.score },
-      periodScores: result.periodScores.map((period) => ({ ...period })),
-      events: result.events.map((event) => ({ ...event })),
-      playerStats: result.playerStats.map((stats) => ({ ...stats })),
-    });
-
-    events.push(
-      createDomainEvent({
-        type: "GameCompleted",
-        occurredOn: date,
-        payload: {
-          gameId: result.gameId,
-          homeTeamId: result.homeTeamId,
-          awayTeamId: result.awayTeamId,
-          homeScore: result.score.home,
-          awayScore: result.score.away,
-        },
-      }),
-    );
+    const { finalGame, event } = simulateScheduledGame(state, game, rng);
+    games[gameId] = finalGame;
+    events.push(event);
   }
 
   if (events.length === 0) {
@@ -329,6 +289,67 @@ export function simulateGamesForDate(
     },
     events,
   );
+}
+
+/**
+ * Simulates one scheduled game using {@link simulateGame} and returns the
+ * finalized Game plus a GameCompleted domain event.
+ * Shared by regular-season date sim and playoff series sim.
+ */
+export function simulateScheduledGame(
+  state: GameState,
+  game: Game,
+  rng: Rng,
+): { finalGame: Game; event: DomainEvent } {
+  if (game.status !== "scheduled") {
+    throw new Error(
+      `simulateScheduledGame requires status "scheduled"; ${game.id} is "${game.status}".`,
+    );
+  }
+
+  const homePlayers = rosterForTeam(state, game.homeTeamId);
+  const awayPlayers = rosterForTeam(state, game.awayTeamId);
+  const homeTeam = state.world.teams[game.homeTeamId];
+  const awayTeam = state.world.teams[game.awayTeamId];
+  const result = simulateGame(
+    game,
+    {
+      homePlayers,
+      awayPlayers,
+      homeCoachingPhilosophy:
+        homeTeam?.coachingPhilosophy ?? DEFAULT_COACHING_PHILOSOPHY,
+      awayCoachingPhilosophy:
+        awayTeam?.coachingPhilosophy ?? DEFAULT_COACHING_PHILOSOPHY,
+    },
+    rng,
+  );
+
+  const finalGame = createGame({
+    id: result.gameId,
+    seasonId: result.seasonId,
+    date: result.date,
+    homeTeamId: result.homeTeamId,
+    awayTeamId: result.awayTeamId,
+    status: "final",
+    score: { ...result.score },
+    periodScores: result.periodScores.map((period) => ({ ...period })),
+    events: result.events.map((event) => ({ ...event })),
+    playerStats: result.playerStats.map((stats) => ({ ...stats })),
+  });
+
+  const event = createDomainEvent({
+    type: "GameCompleted",
+    occurredOn: result.date,
+    payload: {
+      gameId: result.gameId,
+      homeTeamId: result.homeTeamId,
+      awayTeamId: result.awayTeamId,
+      homeScore: result.score.home,
+      awayScore: result.score.away,
+    },
+  });
+
+  return { finalGame, event };
 }
 
 function simulatePeriod(args: {

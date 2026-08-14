@@ -4,6 +4,11 @@ import type { Rng } from "@/domain/rng";
 import { systemResult, type SystemResult } from "@/domain/system-result";
 import type { GameState } from "@/state/game-state";
 import { simulateGamesForDate } from "@/systems/game-simulation";
+import { getPlayoffTeamCount } from "@/systems/playoff-config";
+import {
+  simulatePlayoffs,
+  startPlayoffs,
+} from "@/systems/playoff-simulation";
 import { generateSchedule } from "@/systems/schedule-generation";
 import { MIN_TEAM_COUNT } from "@/systems/schedule-generation-config";
 import { updateStandings } from "@/systems/standings";
@@ -11,6 +16,8 @@ import { updateStandings } from "@/systems/standings";
 /**
  * Simulates an entire regular season: ensure schedule, sim remaining scheduled
  * games via {@link simulateGamesForDate}, then rebuild standings.
+ * When the league is large enough for playoffs, continues into the postseason
+ * and produces a champion.
  *
  * Does not mutate the caller-provided state. Callers persist `rng.getState()`.
  */
@@ -23,6 +30,15 @@ export function simulateSeason(
 
   const events: DomainEvent[] = [];
   let current = state;
+
+  if (current.competition.playoffs.status === "complete") {
+    return systemResult(current);
+  }
+
+  if (current.competition.playoffs.status === "in_progress") {
+    const playoffResult = simulatePlayoffs(current, rng);
+    return systemResult(playoffResult.state, playoffResult.events);
+  }
 
   if (current.competition.schedule.gameIds.length === 0) {
     const scheduleResult = generateSchedule(current);
@@ -45,6 +61,20 @@ export function simulateSeason(
 
   assertAllScheduledGamesFinal(current);
 
+  const teamCount = Object.keys(current.world.teams).length;
+  const fieldSize = getPlayoffTeamCount(teamCount);
+  if (fieldSize === 0) {
+    return systemResult(current, events);
+  }
+
+  const started = startPlayoffs(current);
+  current = started.state;
+  events.push(...started.events);
+
+  const playoffResult = simulatePlayoffs(current, rng);
+  current = playoffResult.state;
+  events.push(...playoffResult.events);
+
   return systemResult(current, events);
 }
 
@@ -66,10 +96,17 @@ function validatePreSchedule(state: GameState, seasonId?: SeasonId): void {
 
   const { phase } = season;
   const scheduleEmpty = state.competition.schedule.gameIds.length === 0;
+  const playoffs = state.competition.playoffs;
 
-  if (phase === "playoffs" || phase === "offseason") {
+  if (phase === "offseason") {
     throw new Error(
       `simulateSeason cannot run while season phase is "${phase}".`,
+    );
+  }
+
+  if (phase === "playoffs" && playoffs.status === "not_started") {
+    throw new Error(
+      'simulateSeason: season phase "playoffs" with playoffs not started is inconsistent.',
     );
   }
 

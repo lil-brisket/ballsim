@@ -110,6 +110,7 @@ export { advanceCalendar } from "@/systems/calendar";
 export {
   simulateGame,
   simulateGamesForDate,
+  simulateScheduledGame,
   requestPossessionSeconds,
   type SimulateGameContext,
 } from "@/systems/game-simulation";
@@ -118,6 +119,34 @@ export {
   mergeGameSimulationConfig,
   type GameSimulationConfig,
 } from "@/systems/game-simulation-config";
+export {
+  MIN_PLAYOFF_LEAGUE_SIZE,
+  MAX_PLAYOFF_FIELD_SIZE,
+  SERIES_WINS_TO_CLINCH,
+  SUPPORTED_PLAYOFF_FIELD_SIZES,
+  getPlayoffTeamCount,
+  getHomeTeamForGame,
+  type HomeCourtSeriesParticipants,
+} from "@/systems/playoff-config";
+export { qualifyAndSeed } from "@/systems/playoff-qualification";
+export {
+  bracketSeedOrder,
+  generateBracket,
+} from "@/systems/playoff-bracket";
+export {
+  recordSeriesGameResult,
+  isSeriesComplete,
+  seriesGamesPlayed,
+} from "@/systems/playoff-series";
+export {
+  createNextPlayoffGame,
+  nextPlayoffGameDate,
+} from "@/systems/playoff-scheduling";
+export {
+  startPlayoffs,
+  simulateNextPlayoffGame,
+  simulatePlayoffs,
+} from "@/systems/playoff-simulation";
 export {
   createGameClock,
   consumeTime,
@@ -153,7 +182,7 @@ export {
   type PlayerUsageProfile,
   type NormalizedUsageShares,
 } from "@/systems/player-usage";
-export { calculateStandings, updateStandings } from "@/systems/standings";
+export { calculateStandings, updateStandings, compareStandings } from "@/systems/standings";
 export type { CalculateStandingsOptions } from "@/systems/standings";
 export { simulateSeason } from "@/systems/season-simulation";
 export {

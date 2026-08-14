@@ -113,6 +113,9 @@ function compareStandings(left: TeamStanding, right: TeamStanding): number {
   return left.teamId.localeCompare(right.teamId);
 }
 
+/** Deterministic standings order used for league ranks and playoff seeding. */
+export { compareStandings };
+
 /**
  * Pure, deterministic standings calculation from teams and completed games.
  * Does not mutate inputs or simulate games.
@@ -213,13 +216,19 @@ export function calculateStandings(
 }
 
 /**
- * Rebuilds standings from all final games for the current season.
+ * Rebuilds standings from final regular-season games for the current season.
+ * Only games listed in `schedule.gameIds` are counted so playoff games in
+ * `competition.games` cannot rewrite regular-season W-L.
  * Replaces the entire byTeamId map (never merges with the previous cache).
  */
 export function updateStandings(state: GameState): SystemResult {
+  const regularSeasonGames = state.competition.schedule.gameIds
+    .map((gameId) => state.competition.games[gameId])
+    .filter((game): game is NonNullable<typeof game> => game != null);
+
   const entries = calculateStandings(
     Object.values(state.world.teams),
-    Object.values(state.competition.games),
+    regularSeasonGames,
     {
       seasonId: state.competition.season.id,
       gameOrderIds: state.competition.schedule.gameIds,

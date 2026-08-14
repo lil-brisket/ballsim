@@ -7,6 +7,7 @@ import type { TeamFinances } from "@/domain/entities/finances";
 import type { Game } from "@/domain/entities/game";
 import type { League } from "@/domain/entities/league";
 import type { Player } from "@/domain/entities/player";
+import type { PlayoffTournament } from "@/domain/entities/playoffs";
 import type { Schedule } from "@/domain/entities/schedule";
 import type { Season } from "@/domain/entities/season";
 import type { Staff } from "@/domain/entities/staff";
@@ -14,7 +15,7 @@ import type { Standings } from "@/domain/entities/standings";
 import type { Team } from "@/domain/entities/team";
 import type { SaveId, TeamId } from "@/domain/ids";
 
-export const GAME_STATE_SCHEMA_VERSION = 13;
+export const GAME_STATE_SCHEMA_VERSION = 14;
 
 export type GameMode = "owner";
 
@@ -45,6 +46,7 @@ export type CompetitionSlice = {
   schedule: Schedule;
   games: Record<string, Game>;
   standings: Standings;
+  playoffs: PlayoffTournament;
 };
 
 export type BusinessSlice = {

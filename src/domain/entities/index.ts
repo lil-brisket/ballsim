@@ -140,6 +140,17 @@ export { FOUL_TYPES, createFoul } from "@/domain/entities/foul";
 export type { Season, SeasonPhase } from "@/domain/entities/season";
 export type { Schedule } from "@/domain/entities/schedule";
 export type {
+  PlayoffTournamentStatus,
+  PlayoffSeriesStatus,
+  PlayoffSeed,
+  PlayoffSeries,
+  PlayoffTournament,
+} from "@/domain/entities/playoffs";
+export {
+  createEmptyPlayoffTournament,
+  playoffRoundLabel,
+} from "@/domain/entities/playoffs";
+export type {
   StandingStreak,
   Standings,
   TeamStanding,

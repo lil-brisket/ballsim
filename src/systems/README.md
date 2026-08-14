@@ -39,15 +39,21 @@ Each system should:
 | `possession-decision-selection` | Building block: `choosePossessionDecision` → `PossessionDecision` (usage-weighted who; attribute-weighted what) |
 | `player-usage-config` | Tunable usage score mix, `USAGE_SCORE_FLOOR`, and modest role multipliers |
 | `player-usage` | Building block: derived usageScore / offensive role / shot+pass weights; canonical `pickByWeight` |
-| `game-simulation` | `simulateGame` (possession orchestration → `GameResult` including `possessionCounts`) + `simulateGamesForDate` for the world pipeline |
-
-Statistical box-score validation lives under `src/simulation/validation/` and is run via `npx tsx scripts/validate-simulation-stats.ts` (not a second simulation path).
-| `standings` | Rebuild standings from final games (`calculateStandings` + `updateStandings`) |
-| `season-simulation` | Season orchestration: ensure schedule, `simulateGamesForDate` per schedule date, `updateStandings` |
+| `game-simulation` | `simulateGame` (possession orchestration → `GameResult` including `possessionCounts`) + `simulateGamesForDate` / `simulateScheduledGame` for the world pipeline |
+| `standings` | Rebuild standings from final regular-season schedule games (`calculateStandings` + `updateStandings`) |
+| `playoff-config` | Field size (`getPlayoffTeamCount`), clinch threshold, home-court pattern (`getHomeTeamForGame`) |
+| `playoff-qualification` | Top-N seeding from standings (`qualifyAndSeed`) |
+| `playoff-bracket` | Fixed single-elim bracket (`generateBracket`, `N - 1` series) |
+| `playoff-series` | Pure series win recording / clinch |
+| `playoff-scheduling` | Lazy next playoff game creation with calendar dates |
+| `playoff-simulation` | `startPlayoffs` / `simulateNextPlayoffGame` / `simulatePlayoffs` via `simulateGame` |
+| `season-simulation` | Season orchestration: regular season, then playoffs when field size > 0 |
 | `calendar` | Advance world date by one day |
 | `world-pipeline` | `bootstrapWorld` + `runWorldPipeline({ type: "advanceDay" })` |
 
-Advance day processes games for the **current** calendar date, updates standings, then ticks the calendar. Stochastic steps use the injected `Rng`; callers persist `rng.getState()` to `GameState.meta.rngState`.
+Statistical box-score validation lives under `src/simulation/validation/` and is run via `npx tsx scripts/validate-simulation-stats.ts` (not a second simulation path).
+
+Advance day processes games for the **current** calendar date, optionally one playoff game when the regular season is complete, updates standings, then ticks the calendar. Stochastic steps use the injected `Rng`; callers persist `rng.getState()` to `GameState.meta.rngState`.
 
 `developPlayer` is a player-level building block (returns `Player`, not `SystemResult`). It recalculates `development.stage` from age, modifies attributes in `PLAYER_ATTRIBUTE_KEYS` order (19 RNG rolls), and leaves age unchanged. Injury status is ignored in v1. A future season tick should age players and then call this engine.
 
