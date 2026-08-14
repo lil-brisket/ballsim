@@ -509,6 +509,57 @@ describe("GameState schema migration", () => {
     expect(migrated.world.players[playerId]!.contractId).toBeNull();
   });
 
+  it("migrates schemaVersion 6 teams to schemaVersion 7 relationship fields", () => {
+    const modern = createInitialGameState({
+      saveId: "save_v6_teams",
+      rngSeed: 11,
+      nowIso: "2026-08-13T12:00:00.000Z",
+    });
+
+    const controlledTeamId = modern.user.controlledTeamId;
+    const controlledTeam = modern.world.teams[controlledTeamId]!;
+    const division = modern.world.divisions[controlledTeam.divisionId]!;
+
+    const v6Teams = Object.fromEntries(
+      Object.entries(modern.world.teams).map(([teamId, team]) => [
+        teamId,
+        {
+          id: team.id,
+          divisionId: team.divisionId,
+          city: team.city,
+          name: team.name,
+          abbreviation: team.abbreviation,
+        },
+      ]),
+    );
+
+    const v6Json = JSON.stringify({
+      ...modern,
+      meta: {
+        ...modern.meta,
+        schemaVersion: 6,
+      },
+      world: {
+        ...modern.world,
+        teams: v6Teams,
+      },
+    });
+
+    const migrated = deserializeGameState(v6Json);
+    expect(migrated.meta.schemaVersion).toBe(GAME_STATE_SCHEMA_VERSION);
+
+    const migratedTeam = migrated.world.teams[controlledTeamId]!;
+    expect(migratedTeam.conferenceId).toBe(division.conferenceId);
+    expect(migratedTeam.roster).toEqual([]);
+    expect(migratedTeam.staff).toEqual([]);
+    expect(migratedTeam.finances).toEqual({});
+    expect(migratedTeam.arenaId).toBe(`arena_${controlledTeamId}`);
+    expect(migratedTeam.reputation).toBe(50);
+    expect(migratedTeam.name).toBe(controlledTeam.name);
+    expect(migratedTeam.city).toBe(controlledTeam.city);
+    expect(migratedTeam.abbreviation).toBe(controlledTeam.abbreviation);
+  });
+
   it("round-trips current schema version including rngState", () => {
     const state = createInitialGameState({
       saveId: "save_current",

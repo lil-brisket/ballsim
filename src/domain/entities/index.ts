@@ -1,7 +1,12 @@
 export type { League } from "@/domain/entities/league";
 export type { Conference } from "@/domain/entities/conference";
 export type { Division } from "@/domain/entities/division";
-export type { Team } from "@/domain/entities/team";
+export type {
+  Team,
+  TeamInput,
+  TeamFinanceState,
+} from "@/domain/entities/team";
+export { createTeam } from "@/domain/entities/team";
 export type {
   Player,
   PlayerInput,

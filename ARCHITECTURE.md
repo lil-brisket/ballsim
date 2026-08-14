@@ -56,6 +56,8 @@ Typed domain catalogs such as `PlayerArchetype` and `PlayerNationality` live und
 
 `schemaVersion` 6 adds `Player.nationality`. Pre-nationality saves migrate with a fixed legacy default of `"USA"` (no RNG).
 
+`schemaVersion` 7 adds Team relationship fields: conference ID, roster references, staff references, team finance placeholder, arena ID, and reputation. Legacy teams migrate with conference derived from division, empty roster/staff, `{}` finances, deterministic `arena_${teamId}`, and reputation `50`.
+
 ## GameState (composed slices)
 
 `GameState` is the single source of truth for one save, composed of typed slices:

@@ -11,7 +11,15 @@ import type {
 } from "@/domain/entities/player";
 import type { PlayerArchetype } from "@/domain/entities/player-archetype";
 import type { PlayerNationality } from "@/domain/entities/player-nationality";
-import type { ContractId, PlayerId, TeamId } from "@/domain/ids";
+import type { Team } from "@/domain/entities/team";
+import type {
+  ConferenceId,
+  ContractId,
+  DivisionId,
+  PlayerId,
+  TeamId,
+} from "@/domain/ids";
+import { asArenaId } from "@/domain/ids";
 import type { GameState } from "@/state/game-state";
 import { GAME_STATE_SCHEMA_VERSION } from "@/state/game-state";
 
@@ -39,29 +47,39 @@ export function deserializeGameState(stateJson: string): GameState {
   const envelope = gameStateEnvelopeSchema.parse(parsed);
 
   if (envelope.meta.schemaVersion === 1) {
-    return migrateV5ToV6(
-      migrateV4ToV5(
-        migrateV3ToV4(migrateV2ToV3(migrateV1ToV2(parsed as GameStateV1))),
+    return migrateV6ToV7(
+      migrateV5ToV6(
+        migrateV4ToV5(
+          migrateV3ToV4(migrateV2ToV3(migrateV1ToV2(parsed as GameStateV1))),
+        ),
       ),
     );
   }
 
   if (envelope.meta.schemaVersion === 2) {
-    return migrateV5ToV6(
-      migrateV4ToV5(migrateV3ToV4(migrateV2ToV3(parsed as GameStateV2))),
+    return migrateV6ToV7(
+      migrateV5ToV6(
+        migrateV4ToV5(migrateV3ToV4(migrateV2ToV3(parsed as GameStateV2))),
+      ),
     );
   }
 
   if (envelope.meta.schemaVersion === 3) {
-    return migrateV5ToV6(migrateV4ToV5(migrateV3ToV4(parsed as GameStateV3)));
+    return migrateV6ToV7(
+      migrateV5ToV6(migrateV4ToV5(migrateV3ToV4(parsed as GameStateV3))),
+    );
   }
 
   if (envelope.meta.schemaVersion === 4) {
-    return migrateV5ToV6(migrateV4ToV5(parsed as GameStateV4));
+    return migrateV6ToV7(migrateV5ToV6(migrateV4ToV5(parsed as GameStateV4)));
   }
 
   if (envelope.meta.schemaVersion === 5) {
-    return migrateV5ToV6(parsed as GameStateV5);
+    return migrateV6ToV7(migrateV5ToV6(parsed as GameStateV5));
+  }
+
+  if (envelope.meta.schemaVersion === 6) {
+    return migrateV6ToV7(parsed as GameStateV6);
   }
 
   if (envelope.meta.schemaVersion !== GAME_STATE_SCHEMA_VERSION) {
@@ -72,7 +90,7 @@ export function deserializeGameState(stateJson: string): GameState {
 
   const state = parsed as GameState;
   if (typeof state.meta.rngState !== "number") {
-    throw new Error("GameState meta.rngState is required for schemaVersion 6.");
+    throw new Error("GameState meta.rngState is required for schemaVersion 7.");
   }
 
   return state;
@@ -159,6 +177,22 @@ type PlayerV5 = {
   contractId: ContractId | null;
   injury: InjuryStatus;
   development: DevelopmentState;
+};
+
+type TeamV6 = {
+  id: TeamId;
+  divisionId: DivisionId;
+  city: string;
+  name: string;
+  abbreviation: string;
+};
+
+type GameStateV6 = Omit<GameState, "meta" | "world"> & {
+  meta: Omit<GameState["meta"], "schemaVersion"> & { schemaVersion: 6 };
+  world: Omit<GameState["world"], "players" | "teams"> & {
+    players: Record<string, Player>;
+    teams: Record<string, TeamV6>;
+  };
 };
 
 type GameStateV1 = {
@@ -538,7 +572,7 @@ function migratePlayerV4ToV5(player: PlayerV4): PlayerV5 {
  * Legacy compatibility: every pre-nationality player receives "USA".
  * Does not consume RNG or alter rngState.
  */
-function migrateV5ToV6(state: GameStateV5): GameState {
+function migrateV5ToV6(state: GameStateV5): GameStateV6 {
   const players: Record<string, Player> = {};
   for (const [playerId, player] of Object.entries(state.world.players)) {
     players[playerId] = migratePlayerV5ToV6(player);
@@ -547,7 +581,7 @@ function migrateV5ToV6(state: GameStateV5): GameState {
   return {
     meta: {
       saveId: state.meta.saveId as GameState["meta"]["saveId"],
-      schemaVersion: GAME_STATE_SCHEMA_VERSION,
+      schemaVersion: 6,
       createdAt: state.meta.createdAt,
       updatedAt: state.meta.updatedAt,
       rngSeed: state.meta.rngSeed,
@@ -556,6 +590,7 @@ function migrateV5ToV6(state: GameStateV5): GameState {
     world: {
       ...state.world,
       players,
+      teams: state.world.teams as Record<string, TeamV6>,
     },
     competition: state.competition,
     business: state.business,
@@ -572,6 +607,56 @@ function migratePlayerV5ToV6(player: PlayerV5): Player {
     injury: { ...player.injury },
     development: { ...player.development },
     nationality: LEGACY_PLAYER_NATIONALITY,
+  };
+}
+
+/**
+ * Deterministic v6 → v7: preserve all team identity fields; add relationship
+ * placeholders. conferenceId comes from the team's division. Does not consume
+ * RNG or alter rngState.
+ */
+function migrateV6ToV7(state: GameStateV6): GameState {
+  const teams: Record<string, Team> = {};
+
+  for (const [teamId, team] of Object.entries(state.world.teams)) {
+    const division = state.world.divisions[team.divisionId];
+    if (!division) {
+      throw new Error(
+        `Team ${teamId} references missing division ${team.divisionId}.`,
+      );
+    }
+
+    teams[teamId] = {
+      id: team.id,
+      name: team.name,
+      city: team.city,
+      abbreviation: team.abbreviation,
+      conferenceId: division.conferenceId as ConferenceId,
+      divisionId: team.divisionId,
+      roster: [],
+      staff: [],
+      finances: {},
+      arenaId: asArenaId(`arena_${team.id}`),
+      reputation: 50,
+    };
+  }
+
+  return {
+    meta: {
+      saveId: state.meta.saveId as GameState["meta"]["saveId"],
+      schemaVersion: GAME_STATE_SCHEMA_VERSION,
+      createdAt: state.meta.createdAt,
+      updatedAt: state.meta.updatedAt,
+      rngSeed: state.meta.rngSeed,
+      rngState: state.meta.rngState ?? state.meta.rngSeed,
+    },
+    world: {
+      ...state.world,
+      teams,
+    },
+    competition: state.competition,
+    business: state.business,
+    user: state.user,
   };
 }
 

@@ -8,6 +8,7 @@ export type DivisionId = Brand<string, "DivisionId">;
 export type ContractId = Brand<string, "ContractId">;
 export type CoachId = Brand<string, "CoachId">;
 export type StaffId = Brand<string, "StaffId">;
+export type ArenaId = Brand<string, "ArenaId">;
 export type GameId = Brand<string, "GameId">;
 export type SeasonId = Brand<string, "SeasonId">;
 export type DomainEventId = Brand<string, "DomainEventId">;
@@ -43,6 +44,10 @@ export function asCoachId(value: string): CoachId {
 
 export function asStaffId(value: string): StaffId {
   return value as StaffId;
+}
+
+export function asArenaId(value: string): ArenaId {
+  return value as ArenaId;
 }
 
 export function asGameId(value: string): GameId {

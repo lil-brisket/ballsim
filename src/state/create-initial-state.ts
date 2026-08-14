@@ -1,10 +1,14 @@
+import { createTeam } from "@/domain/entities/team";
 import {
+  asArenaId,
   asConferenceId,
   asDivisionId,
   asLeagueId,
   asSaveId,
   asSeasonId,
   asTeamId,
+  type ConferenceId,
+  type DivisionId,
   type TeamId,
 } from "@/domain/ids";
 import {
@@ -20,6 +24,29 @@ export type CreateInitialGameStateInput = {
 
 function createId(prefix: string): string {
   return `${prefix}_${crypto.randomUUID()}`;
+}
+
+function bootstrapTeam(
+  id: TeamId,
+  divisionId: DivisionId,
+  conferenceId: ConferenceId,
+  city: string,
+  name: string,
+  abbreviation: string,
+) {
+  return createTeam({
+    id,
+    divisionId,
+    conferenceId,
+    city,
+    name,
+    abbreviation,
+    roster: [],
+    staff: [],
+    finances: {},
+    arenaId: asArenaId(`arena_${id}`),
+    reputation: 50,
+  });
 }
 
 /**
@@ -49,34 +76,38 @@ export function createInitialGameState(
   const seasonId = asSeasonId(createId("season"));
 
   const teams = {
-    [userTeamId]: {
-      id: userTeamId,
-      divisionId: eastNorthId,
-      city: "Harbor",
-      name: "Titans",
-      abbreviation: "HAR",
-    },
-    [rivalTeamId]: {
-      id: rivalTeamId,
-      divisionId: eastNorthId,
-      city: "Summit",
-      name: "Wolves",
-      abbreviation: "SUM",
-    },
-    [westTeamAId]: {
-      id: westTeamAId,
-      divisionId: westNorthId,
-      city: "Canyon",
-      name: "Coyotes",
-      abbreviation: "CAN",
-    },
-    [westTeamBId]: {
-      id: westTeamBId,
-      divisionId: westSouthId,
-      city: "Pacific",
-      name: "Breakers",
-      abbreviation: "PAC",
-    },
+    [userTeamId]: bootstrapTeam(
+      userTeamId,
+      eastNorthId,
+      eastId,
+      "Harbor",
+      "Titans",
+      "HAR",
+    ),
+    [rivalTeamId]: bootstrapTeam(
+      rivalTeamId,
+      eastNorthId,
+      eastId,
+      "Summit",
+      "Wolves",
+      "SUM",
+    ),
+    [westTeamAId]: bootstrapTeam(
+      westTeamAId,
+      westNorthId,
+      westId,
+      "Canyon",
+      "Coyotes",
+      "CAN",
+    ),
+    [westTeamBId]: bootstrapTeam(
+      westTeamBId,
+      westSouthId,
+      westId,
+      "Pacific",
+      "Breakers",
+      "PAC",
+    ),
   };
 
   const finances = Object.fromEntries(
