@@ -68,6 +68,8 @@ Typed domain catalogs such as `PlayerArchetype` and `PlayerNationality` live und
 
 `schemaVersion` 12 adds `Team.coachingPhilosophy` (discrete pace / offensiveEmphasis / defensiveApproach). Pre-v12 teams migrate with all-balanced defaults. Existing `playStyle` values are preserved exactly.
 
+`schemaVersion` 13 expands `TeamStanding` (win %, points for/against/differential, streak, conference/division records). Pre-v13 saves recompute standings via `calculateStandings` from teams, games, and schedule.
+
 ## GameState (composed slices)
 
 `GameState` is the single source of truth for one save, composed of typed slices:
@@ -108,7 +110,7 @@ Preferences:
 
 1. `bootstrapWorld` — roster generation + schedule generation when empty
 2. `simulateGamesForDate` — possession-based `simulateGame` for each scheduled game on `calendar.currentDate`
-3. `updateStandings` — rebuild W/L from final games
+3. `updateStandings` — rebuild standings from final games via `calculateStandings`
 4. `advanceCalendar` — `currentDate + 1 day`
 
 Application layer (`advanceOwnerDay`) reconstructs `Rng` from `meta.rngState`,

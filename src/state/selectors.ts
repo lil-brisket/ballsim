@@ -1,4 +1,5 @@
 import type { Team } from "@/domain/entities/team";
+import { createEmptyTeamStanding } from "@/domain/entities/standings";
 import type { GameState } from "@/state/game-state";
 
 export type DashboardSnapshot = {
@@ -43,11 +44,9 @@ export function getControlledTeam(state: GameState): Team {
 
 export function toDashboardSnapshot(state: GameState): DashboardSnapshot {
   const team = getControlledTeam(state);
-  const standing = state.competition.standings.byTeamId[team.id] ?? {
-    teamId: team.id,
-    wins: 0,
-    losses: 0,
-  };
+  const standing =
+    state.competition.standings.byTeamId[team.id] ??
+    createEmptyTeamStanding(team.id);
 
   const recentResults = Object.values(state.competition.games)
     .filter(

@@ -153,7 +153,8 @@ export {
   type PlayerUsageProfile,
   type NormalizedUsageShares,
 } from "@/systems/player-usage";
-export { updateStandings } from "@/systems/standings";
+export { calculateStandings, updateStandings } from "@/systems/standings";
+export type { CalculateStandingsOptions } from "@/systems/standings";
 export {
   bootstrapWorld,
   runWorldPipeline,

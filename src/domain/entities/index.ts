@@ -139,6 +139,11 @@ export type { Foul, FoulInput, FoulType } from "@/domain/entities/foul";
 export { FOUL_TYPES, createFoul } from "@/domain/entities/foul";
 export type { Season, SeasonPhase } from "@/domain/entities/season";
 export type { Schedule } from "@/domain/entities/schedule";
-export type { Standings, TeamStanding } from "@/domain/entities/standings";
+export type {
+  StandingStreak,
+  Standings,
+  TeamStanding,
+} from "@/domain/entities/standings";
+export { createEmptyTeamStanding } from "@/domain/entities/standings";
 export type { TeamFinances } from "@/domain/entities/finances";
 export type { Calendar } from "@/domain/entities/calendar";

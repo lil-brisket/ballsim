@@ -1027,4 +1027,92 @@ describe("GameState schema migration", () => {
     expect(restored.meta.rngState).toBe(state.meta.rngState);
     expect(restored).toEqual(state);
   });
+
+  it("migrates schemaVersion 12 standings by recomputing expanded TeamStanding", () => {
+    const modern = createInitialGameState({
+      saveId: "save_v12_standings",
+      rngSeed: 17,
+      nowIso: "2026-08-14T12:00:00.000Z",
+    });
+
+    const teamIds = Object.keys(modern.world.teams).sort();
+    const homeTeamId = teamIds[0]!;
+    const awayTeamId = teamIds[1]!;
+    const seasonId = modern.competition.season.id;
+
+    const v12Standings = Object.fromEntries(
+      teamIds.map((teamId) => [teamId, { teamId, wins: 0, losses: 0 }]),
+    );
+
+    const stateV12 = {
+      ...modern,
+      meta: {
+        ...modern.meta,
+        schemaVersion: 12,
+      },
+      competition: {
+        ...modern.competition,
+        schedule: {
+          seasonId,
+          gameIds: ["game_final_v12"],
+        },
+        games: {
+          game_final_v12: {
+            id: "game_final_v12",
+            seasonId,
+            date: "2026-10-01",
+            homeTeamId,
+            awayTeamId,
+            status: "final",
+            score: { home: 110, away: 100 },
+            periodScores: [],
+            events: [],
+            playerStats: [],
+          },
+          game_scheduled_v12: {
+            id: "game_scheduled_v12",
+            seasonId,
+            date: "2026-10-02",
+            homeTeamId,
+            awayTeamId,
+            status: "scheduled",
+            score: { home: 0, away: 0 },
+            periodScores: [],
+            events: [],
+            playerStats: [],
+          },
+        },
+        standings: { byTeamId: v12Standings },
+      },
+    };
+
+    const migrated = deserializeGameState(JSON.stringify(stateV12));
+    expect(migrated.meta.schemaVersion).toBe(GAME_STATE_SCHEMA_VERSION);
+
+    const home = migrated.competition.standings.byTeamId[homeTeamId]!;
+    const away = migrated.competition.standings.byTeamId[awayTeamId]!;
+    expect(home).toMatchObject({
+      teamId: homeTeamId,
+      wins: 1,
+      losses: 0,
+      winPercentage: 1,
+      pointsFor: 110,
+      pointsAgainst: 100,
+      pointDifferential: 10,
+      streak: { type: "W", count: 1 },
+    });
+    expect(away).toMatchObject({
+      teamId: awayTeamId,
+      wins: 0,
+      losses: 1,
+      winPercentage: 0,
+      pointsFor: 100,
+      pointsAgainst: 110,
+      pointDifferential: -10,
+      streak: { type: "L", count: 1 },
+    });
+    expect(Object.keys(migrated.competition.standings.byTeamId).sort()).toEqual(
+      teamIds,
+    );
+  });
 });

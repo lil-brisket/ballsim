@@ -29,6 +29,7 @@ import type {
 import { asArenaId } from "@/domain/ids";
 import type { GameState } from "@/state/game-state";
 import { GAME_STATE_SCHEMA_VERSION } from "@/state/game-state";
+import { calculateStandings } from "@/systems/standings";
 
 const gameStateEnvelopeSchema = z.object({
   meta: z.object({
@@ -54,15 +55,17 @@ export function deserializeGameState(stateJson: string): GameState {
   const envelope = gameStateEnvelopeSchema.parse(parsed);
 
   if (envelope.meta.schemaVersion === 1) {
-    return migrateV11ToV12(
-      migrateV10ToV11(
-        migrateV9ToV10(
-          migrateV8ToV9(
-            migrateV7ToV8(
-              migrateV6ToV7(
-                migrateV5ToV6(
-                  migrateV4ToV5(
-                    migrateV3ToV4(migrateV2ToV3(migrateV1ToV2(parsed as GameStateV1))),
+    return migrateV12ToV13(
+      migrateV11ToV12(
+        migrateV10ToV11(
+          migrateV9ToV10(
+            migrateV8ToV9(
+              migrateV7ToV8(
+                migrateV6ToV7(
+                  migrateV5ToV6(
+                    migrateV4ToV5(
+                      migrateV3ToV4(migrateV2ToV3(migrateV1ToV2(parsed as GameStateV1))),
+                    ),
                   ),
                 ),
               ),
@@ -74,14 +77,16 @@ export function deserializeGameState(stateJson: string): GameState {
   }
 
   if (envelope.meta.schemaVersion === 2) {
-    return migrateV11ToV12(
-      migrateV10ToV11(
-        migrateV9ToV10(
-          migrateV8ToV9(
-            migrateV7ToV8(
-              migrateV6ToV7(
-                migrateV5ToV6(
-                  migrateV4ToV5(migrateV3ToV4(migrateV2ToV3(parsed as GameStateV2))),
+    return migrateV12ToV13(
+      migrateV11ToV12(
+        migrateV10ToV11(
+          migrateV9ToV10(
+            migrateV8ToV9(
+              migrateV7ToV8(
+                migrateV6ToV7(
+                  migrateV5ToV6(
+                    migrateV4ToV5(migrateV3ToV4(migrateV2ToV3(parsed as GameStateV2))),
+                  ),
                 ),
               ),
             ),
@@ -92,13 +97,15 @@ export function deserializeGameState(stateJson: string): GameState {
   }
 
   if (envelope.meta.schemaVersion === 3) {
-    return migrateV11ToV12(
-      migrateV10ToV11(
-        migrateV9ToV10(
-          migrateV8ToV9(
-            migrateV7ToV8(
-              migrateV6ToV7(
-                migrateV5ToV6(migrateV4ToV5(migrateV3ToV4(parsed as GameStateV3))),
+    return migrateV12ToV13(
+      migrateV11ToV12(
+        migrateV10ToV11(
+          migrateV9ToV10(
+            migrateV8ToV9(
+              migrateV7ToV8(
+                migrateV6ToV7(
+                  migrateV5ToV6(migrateV4ToV5(migrateV3ToV4(parsed as GameStateV3))),
+                ),
               ),
             ),
           ),
@@ -108,12 +115,14 @@ export function deserializeGameState(stateJson: string): GameState {
   }
 
   if (envelope.meta.schemaVersion === 4) {
-    return migrateV11ToV12(
-      migrateV10ToV11(
-        migrateV9ToV10(
-          migrateV8ToV9(
-            migrateV7ToV8(
-              migrateV6ToV7(migrateV5ToV6(migrateV4ToV5(parsed as GameStateV4))),
+    return migrateV12ToV13(
+      migrateV11ToV12(
+        migrateV10ToV11(
+          migrateV9ToV10(
+            migrateV8ToV9(
+              migrateV7ToV8(
+                migrateV6ToV7(migrateV5ToV6(migrateV4ToV5(parsed as GameStateV4))),
+              ),
             ),
           ),
         ),
@@ -122,11 +131,13 @@ export function deserializeGameState(stateJson: string): GameState {
   }
 
   if (envelope.meta.schemaVersion === 5) {
-    return migrateV11ToV12(
-      migrateV10ToV11(
-        migrateV9ToV10(
-          migrateV8ToV9(
-            migrateV7ToV8(migrateV6ToV7(migrateV5ToV6(parsed as GameStateV5))),
+    return migrateV12ToV13(
+      migrateV11ToV12(
+        migrateV10ToV11(
+          migrateV9ToV10(
+            migrateV8ToV9(
+              migrateV7ToV8(migrateV6ToV7(migrateV5ToV6(parsed as GameStateV5))),
+            ),
           ),
         ),
       ),
@@ -134,41 +145,55 @@ export function deserializeGameState(stateJson: string): GameState {
   }
 
   if (envelope.meta.schemaVersion === 6) {
-    return migrateV11ToV12(
-      migrateV10ToV11(
-        migrateV9ToV10(
-          migrateV8ToV9(migrateV7ToV8(migrateV6ToV7(parsed as GameStateV6))),
+    return migrateV12ToV13(
+      migrateV11ToV12(
+        migrateV10ToV11(
+          migrateV9ToV10(
+            migrateV8ToV9(migrateV7ToV8(migrateV6ToV7(parsed as GameStateV6))),
+          ),
         ),
       ),
     );
   }
 
   if (envelope.meta.schemaVersion === 7) {
-    return migrateV11ToV12(
-      migrateV10ToV11(
-        migrateV9ToV10(migrateV8ToV9(migrateV7ToV8(parsed as GameStateV7))),
+    return migrateV12ToV13(
+      migrateV11ToV12(
+        migrateV10ToV11(
+          migrateV9ToV10(migrateV8ToV9(migrateV7ToV8(parsed as GameStateV7))),
+        ),
       ),
     );
   }
 
   if (envelope.meta.schemaVersion === 8) {
-    return migrateV11ToV12(
-      migrateV10ToV11(migrateV9ToV10(migrateV8ToV9(parsed as GameStateV8))),
+    return migrateV12ToV13(
+      migrateV11ToV12(
+        migrateV10ToV11(migrateV9ToV10(migrateV8ToV9(parsed as GameStateV8))),
+      ),
     );
   }
 
   if (envelope.meta.schemaVersion === 9) {
-    return migrateV11ToV12(
-      migrateV10ToV11(migrateV9ToV10(parsed as GameStateV9)),
+    return migrateV12ToV13(
+      migrateV11ToV12(
+        migrateV10ToV11(migrateV9ToV10(parsed as GameStateV9)),
+      ),
     );
   }
 
   if (envelope.meta.schemaVersion === 10) {
-    return migrateV11ToV12(migrateV10ToV11(parsed as GameStateV10));
+    return migrateV12ToV13(
+      migrateV11ToV12(migrateV10ToV11(parsed as GameStateV10)),
+    );
   }
 
   if (envelope.meta.schemaVersion === 11) {
-    return migrateV11ToV12(parsed as GameStateV11);
+    return migrateV12ToV13(migrateV11ToV12(parsed as GameStateV11));
+  }
+
+  if (envelope.meta.schemaVersion === 12) {
+    return migrateV12ToV13(parsed as GameStateV12);
   }
 
   if (envelope.meta.schemaVersion !== GAME_STATE_SCHEMA_VERSION) {
@@ -179,7 +204,7 @@ export function deserializeGameState(stateJson: string): GameState {
 
   const state = parsed as GameState;
   if (typeof state.meta.rngState !== "number") {
-    throw new Error("GameState meta.rngState is required for schemaVersion 12.");
+    throw new Error("GameState meta.rngState is required for schemaVersion 13.");
   }
 
   return state;
@@ -876,6 +901,21 @@ function migrateV7ToV8(state: GameStateV7): GameStateV8 {
   };
 }
 
+/** Schema v8–v12 standings before expanded TeamStanding fields. */
+type TeamStandingV12 = {
+  teamId: TeamId;
+  wins: number;
+  losses: number;
+};
+
+type StandingsV12 = {
+  byTeamId: Record<string, TeamStandingV12>;
+};
+
+type CompetitionV12 = Omit<GameState["competition"], "standings"> & {
+  standings: StandingsV12;
+};
+
 /** Schema v8 game shape before periodScores and extended box-score fields. */
 type GameV8 = {
   id: GameId;
@@ -913,7 +953,7 @@ type GameStateV8 = {
     season: GameState["competition"]["season"];
     schedule: GameState["competition"]["schedule"];
     games: Record<string, GameV8>;
-    standings: GameState["competition"]["standings"];
+    standings: StandingsV12;
   };
   business: GameState["business"];
   user: GameState["user"];
@@ -1024,7 +1064,7 @@ type GameStateV9 = {
     season: GameState["competition"]["season"];
     schedule: GameState["competition"]["schedule"];
     games: Record<string, GameV9>;
-    standings: GameState["competition"]["standings"];
+    standings: StandingsV12;
   };
   business: GameState["business"];
   user: GameState["user"];
@@ -1088,7 +1128,7 @@ type GameStateV10 = {
     season: GameState["competition"]["season"];
     schedule: GameState["competition"]["schedule"];
     games: Record<string, Game>;
-    standings: GameState["competition"]["standings"];
+    standings: StandingsV12;
   };
   business: GameState["business"];
   user: GameState["user"];
@@ -1140,7 +1180,18 @@ type GameStateV11 = {
     rngState: number;
   };
   world: WorldWithTeamV11;
-  competition: GameState["competition"];
+  competition: CompetitionV12;
+  business: GameState["business"];
+  user: GameState["user"];
+};
+
+type GameStateV12 = {
+  meta: Omit<GameState["meta"], "schemaVersion"> & {
+    schemaVersion: 12;
+    rngState: number;
+  };
+  world: GameState["world"];
+  competition: CompetitionV12;
   business: GameState["business"];
   user: GameState["user"];
 };
@@ -1150,7 +1201,7 @@ type GameStateV11 = {
  * Preserves every existing team field including playStyle value-for-value.
  * Does not reconstruct through createTeam or consume RNG.
  */
-function migrateV11ToV12(state: GameStateV11): GameState {
+function migrateV11ToV12(state: GameStateV11): GameStateV12 {
   const teams: Record<string, Team> = Object.fromEntries(
     Object.entries(state.world.teams).map(([id, team]) => [
       id,
@@ -1165,7 +1216,7 @@ function migrateV11ToV12(state: GameStateV11): GameState {
   return {
     meta: {
       saveId: state.meta.saveId as GameState["meta"]["saveId"],
-      schemaVersion: GAME_STATE_SCHEMA_VERSION,
+      schemaVersion: 12,
       createdAt: state.meta.createdAt,
       updatedAt: state.meta.updatedAt,
       rngSeed: state.meta.rngSeed,
@@ -1176,6 +1227,44 @@ function migrateV11ToV12(state: GameStateV11): GameState {
       teams,
     },
     competition: state.competition,
+    business: state.business,
+    user: state.user,
+  };
+}
+
+/**
+ * Deterministic v12 → v13: expand TeamStanding via calculateStandings.
+ * Recomputes from the migrated state's teams, games, and schedule.
+ */
+function migrateV12ToV13(state: GameStateV12): GameState {
+  const entries = calculateStandings(
+    Object.values(state.world.teams),
+    Object.values(state.competition.games),
+    {
+      seasonId: state.competition.season.id,
+      gameOrderIds: state.competition.schedule.gameIds,
+    },
+  );
+
+  const byTeamId: GameState["competition"]["standings"]["byTeamId"] = {};
+  for (const entry of entries) {
+    byTeamId[entry.teamId] = entry;
+  }
+
+  return {
+    meta: {
+      saveId: state.meta.saveId,
+      schemaVersion: GAME_STATE_SCHEMA_VERSION,
+      createdAt: state.meta.createdAt,
+      updatedAt: state.meta.updatedAt,
+      rngSeed: state.meta.rngSeed,
+      rngState: state.meta.rngState,
+    },
+    world: state.world,
+    competition: {
+      ...state.competition,
+      standings: { byTeamId },
+    },
     business: state.business,
     user: state.user,
   };

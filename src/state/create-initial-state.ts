@@ -2,6 +2,7 @@ import {
   createTeam,
   NEUTRAL_TEAM_PLAY_STYLE,
 } from "@/domain/entities/team";
+import { createEmptyTeamStanding } from "@/domain/entities/standings";
 import { DEFAULT_COACHING_PHILOSOPHY } from "@/domain/coaching/coaching-philosophy";
 import {
   asArenaId,
@@ -131,7 +132,7 @@ export function createInitialGameState(
     byTeamId: Object.fromEntries(
       Object.keys(teams).map((teamId) => [
         teamId,
-        { teamId: teamId as TeamId, wins: 0, losses: 0 },
+        createEmptyTeamStanding(teamId as TeamId),
       ]),
     ),
   };

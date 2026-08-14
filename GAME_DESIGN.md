@@ -96,7 +96,7 @@ Systems expected later (do not treat as present until implemented):
 - Player development — **implemented** as a building block (`src/systems/player-development.ts`); not yet called from the world pipeline
 - Injuries
 - Finances — payroll set at roster gen; advanced ticks TBD
-- Standings — **implemented** (`src/systems/standings.ts`)
+- Standings — **implemented** (`src/systems/standings.ts` — `calculateStandings` / `updateStandings`)
 - Schedule generation — **implemented** as building block `generateSeasonSchedule` + world adapter `generateSchedule` (`src/systems/schedule-generation.ts`); validates via `validateSeasonSchedule`
 - Save/load (foundation persistence exists)
 - Roster generation — **implemented** (`src/systems/roster-generation.ts`)

@@ -42,7 +42,7 @@ Each system should:
 | `game-simulation` | `simulateGame` (possession orchestration → `GameResult` including `possessionCounts`) + `simulateGamesForDate` for the world pipeline |
 
 Statistical box-score validation lives under `src/simulation/validation/` and is run via `npx tsx scripts/validate-simulation-stats.ts` (not a second simulation path).
-| `standings` | Rebuild W/L from final games |
+| `standings` | Rebuild standings from final games (`calculateStandings` + `updateStandings`) |
 | `calendar` | Advance world date by one day |
 | `world-pipeline` | `bootstrapWorld` + `runWorldPipeline({ type: "advanceDay" })` |
 
