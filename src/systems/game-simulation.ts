@@ -19,6 +19,14 @@ import {
 import type { Rng } from "@/domain/rng";
 import { createDomainEvent, type DomainEvent } from "@/domain/events";
 import { systemResult, type SystemResult } from "@/domain/system-result";
+import {
+  DEFAULT_COACHING_PHILOSOPHY,
+  type CoachingPhilosophy,
+} from "@/domain/coaching/coaching-philosophy";
+import {
+  getCoachingModifiers,
+  type CoachingModifiers,
+} from "@/domain/coaching/coaching-philosophy-config";
 import type { GameState } from "@/state/game-state";
 import {
   consumeTime,
@@ -43,6 +51,10 @@ export type SimulateGameContext = {
   homePlayers: readonly Player[];
   awayPlayers: readonly Player[];
   config?: Partial<GameSimulationConfig>;
+  /** Home team coaching philosophy; defaults to all balanced. */
+  homeCoachingPhilosophy?: CoachingPhilosophy;
+  /** Away team coaching philosophy; defaults to all balanced. */
+  awayCoachingPhilosophy?: CoachingPhilosophy;
   /**
    * Optional decision injector for tests. Production uses choosePossessionDecision.
    */
@@ -53,6 +65,8 @@ export type SimulateGameContext = {
       offensivePlayers: readonly Player[];
       defensivePlayers: readonly Player[];
       config: GameSimulationConfig;
+      shotSelectionModifiers?: CoachingModifiers["shotSelection"];
+      foulActionWeightMultiplier?: number;
     },
     rng: Rng,
   ) => PossessionDecision;
@@ -258,9 +272,18 @@ export function simulateGamesForDate(
 
     const homePlayers = rosterForTeam(state, game.homeTeamId);
     const awayPlayers = rosterForTeam(state, game.awayTeamId);
+    const homeTeam = state.world.teams[game.homeTeamId];
+    const awayTeam = state.world.teams[game.awayTeamId];
     const result = simulateGame(
       game,
-      { homePlayers, awayPlayers },
+      {
+        homePlayers,
+        awayPlayers,
+        homeCoachingPhilosophy:
+          homeTeam?.coachingPhilosophy ?? DEFAULT_COACHING_PHILOSOPHY,
+        awayCoachingPhilosophy:
+          awayTeam?.coachingPhilosophy ?? DEFAULT_COACHING_PHILOSOPHY,
+      },
       rng,
     );
 
@@ -344,6 +367,19 @@ function simulatePeriod(args: {
 
     const chooseDecision =
       args.context.chooseDecision ?? choosePossessionDecision;
+    const offensivePhilosophy = philosophyForTeam(
+      offensiveTeamId,
+      currentGame,
+      args.context,
+    );
+    const defensivePhilosophy = philosophyForTeam(
+      defensiveTeamId,
+      currentGame,
+      args.context,
+    );
+    const offensiveModifiers = getCoachingModifiers(offensivePhilosophy);
+    const defensiveModifiers = getCoachingModifiers(defensivePhilosophy);
+
     const decision = chooseDecision(
       {
         offensiveTeamId,
@@ -351,6 +387,9 @@ function simulatePeriod(args: {
         offensivePlayers,
         defensivePlayers,
         config: args.config,
+        shotSelectionModifiers: offensiveModifiers.shotSelection,
+        foulActionWeightMultiplier:
+          defensiveModifiers.foulActionWeightMultiplier,
       },
       args.rng,
     );
@@ -374,6 +413,8 @@ function simulatePeriod(args: {
         decision,
         eventSequenceStart,
         fatigue: 0,
+        defensivePressureMultiplier:
+          defensiveModifiers.defensivePressureMultiplier,
       },
       args.rng,
     );
@@ -395,6 +436,7 @@ function simulatePeriod(args: {
       resolution,
       args.config,
       args.rng,
+      offensiveModifiers.possessionSecondsDelta,
     );
     const consumed = consumeTime(clock, requestedSeconds);
     clock = consumed.clock;
@@ -462,23 +504,43 @@ function nextEventSequenceStart(
   return maxSequence + 1;
 }
 
-function requestPossessionSeconds(
+/**
+ * Rolls possession clock cost, then applies offensive pace delta.
+ * Delta of 0 (balanced) matches pre-coaching behavior exactly.
+ */
+export function requestPossessionSeconds(
   resolution: PossessionResolution,
   config: GameSimulationConfig,
   rng: Rng,
+  possessionSecondsDelta = 0,
 ): number {
   const times = config.possessionTimeSeconds;
   const action = resolution.possession.action;
+  let seconds: number;
   if (action === "turnover") {
-    return rng.nextInt(times.turnoverMin, times.turnoverMax);
+    seconds = rng.nextInt(times.turnoverMin, times.turnoverMax);
+  } else if (action === "foul") {
+    seconds = rng.nextInt(times.foulMin, times.foulMax);
+  } else if (action === "free_throw") {
+    seconds = rng.nextInt(times.freeThrowMin, times.freeThrowMax);
+  } else {
+    seconds = rng.nextInt(times.defaultMin, times.defaultMax);
   }
-  if (action === "foul") {
-    return rng.nextInt(times.foulMin, times.foulMax);
+  return Math.max(1, seconds + possessionSecondsDelta);
+}
+
+function philosophyForTeam(
+  teamId: TeamId,
+  game: Game,
+  context: SimulateGameContext,
+): CoachingPhilosophy {
+  if (teamId === game.homeTeamId) {
+    return context.homeCoachingPhilosophy ?? DEFAULT_COACHING_PHILOSOPHY;
   }
-  if (action === "free_throw") {
-    return rng.nextInt(times.freeThrowMin, times.freeThrowMax);
+  if (teamId === game.awayTeamId) {
+    return context.awayCoachingPhilosophy ?? DEFAULT_COACHING_PHILOSOPHY;
   }
-  return rng.nextInt(times.defaultMin, times.defaultMax);
+  return DEFAULT_COACHING_PHILOSOPHY;
 }
 
 function addSecondsToOnCourtPlayers(

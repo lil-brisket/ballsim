@@ -10,6 +10,7 @@ import { createDivision, type Division } from "@/domain/entities/division";
 import { createLeague, type League } from "@/domain/entities/league";
 import { type Player } from "@/domain/entities/player";
 import { createTeam, NEUTRAL_TEAM_PLAY_STYLE, type Team } from "@/domain/entities/team";
+import { DEFAULT_COACHING_PHILOSOPHY } from "@/domain/coaching/coaching-philosophy";
 import {
   asArenaId,
   asConferenceId,
@@ -160,6 +161,7 @@ export function generateLeague(
             arenaId: asArenaId(`arena_${teamId}`),
             reputation: 50,
             playStyle: { ...NEUTRAL_TEAM_PLAY_STYLE },
+            coachingPhilosophy: { ...DEFAULT_COACHING_PHILOSOPHY },
           }),
         );
         divisionTeamIds.push(teamId);

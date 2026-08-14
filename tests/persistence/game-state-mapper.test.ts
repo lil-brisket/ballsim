@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { NEUTRAL_TEAM_PLAY_STYLE } from "@/domain/entities/team";
+import { DEFAULT_COACHING_PHILOSOPHY } from "@/domain/coaching/coaching-philosophy";
 import { createInitialGameState } from "@/state/create-initial-state";
 import { GAME_STATE_SCHEMA_VERSION } from "@/state/game-state";
 import {
@@ -572,6 +573,7 @@ describe("GameState schema migration", () => {
     expect(migratedTeam.arenaId).toBe(`arena_${controlledTeamId}`);
     expect(migratedTeam.reputation).toBe(50);
     expect(migratedTeam.playStyle).toEqual(NEUTRAL_TEAM_PLAY_STYLE);
+    expect(migratedTeam.coachingPhilosophy).toEqual(DEFAULT_COACHING_PHILOSOPHY);
     expect(migratedTeam.name).toBe(controlledTeam.name);
     expect(migratedTeam.city).toBe(controlledTeam.city);
     expect(migratedTeam.abbreviation).toBe(controlledTeam.abbreviation);
@@ -591,14 +593,18 @@ describe("GameState schema migration", () => {
     const teamA = modern.world.teams[teamAId]!;
     const teamB = modern.world.teams[teamBId]!;
 
-    const stripPlayStyle = (team: typeof teamA) => {
-      const { playStyle: _playStyle, ...rest } = team;
+    const stripToV10 = (team: typeof teamA) => {
+      const {
+        playStyle: _playStyle,
+        coachingPhilosophy: _coachingPhilosophy,
+        ...rest
+      } = team;
       return rest;
     };
 
     const v10Teams = {
-      [teamAId]: stripPlayStyle(teamA),
-      [teamBId]: stripPlayStyle(teamB),
+      [teamAId]: stripToV10(teamA),
+      [teamBId]: stripToV10(teamB),
     };
 
     const v10Json = JSON.stringify({
@@ -622,11 +628,98 @@ describe("GameState schema migration", () => {
     expect(migratedA.playStyle).toEqual(NEUTRAL_TEAM_PLAY_STYLE);
     expect(migratedB.playStyle).toEqual(NEUTRAL_TEAM_PLAY_STYLE);
     expect(migratedA.playStyle).not.toBe(migratedB.playStyle);
+    expect(migratedA.coachingPhilosophy).toEqual(DEFAULT_COACHING_PHILOSOPHY);
+    expect(migratedB.coachingPhilosophy).toEqual(DEFAULT_COACHING_PHILOSOPHY);
 
-    const { playStyle: _a, ...fieldsA } = migratedA;
-    const { playStyle: _b, ...fieldsB } = migratedB;
+    const {
+      playStyle: _a,
+      coachingPhilosophy: _ca,
+      ...fieldsA
+    } = migratedA;
+    const {
+      playStyle: _b,
+      coachingPhilosophy: _cb,
+      ...fieldsB
+    } = migratedB;
     expect(fieldsA).toEqual(v10Teams[teamAId]);
     expect(fieldsB).toEqual(v10Teams[teamBId]);
+  });
+
+  it("migrates schemaVersion 11 teams by adding balanced coachingPhilosophy only", () => {
+    const modern = createInitialGameState({
+      saveId: "save_v11_teams",
+      rngSeed: 15,
+      nowIso: "2026-08-14T12:00:00.000Z",
+    });
+
+    const teamIds = Object.keys(modern.world.teams);
+    expect(teamIds.length).toBeGreaterThanOrEqual(2);
+    const teamAId = teamIds[0]!;
+    const teamBId = teamIds[1]!;
+    const teamA = modern.world.teams[teamAId]!;
+    const teamB = modern.world.teams[teamBId]!;
+
+    const customPlayStyleA = {
+      ...NEUTRAL_TEAM_PLAY_STYLE,
+      pace: 72,
+      threePointFrequency: 81,
+    };
+    const customPlayStyleB = {
+      ...NEUTRAL_TEAM_PLAY_STYLE,
+      defensiveAggression: 33,
+      insideFrequency: 61,
+    };
+
+    const stripCoaching = (team: typeof teamA, playStyle: typeof customPlayStyleA) => {
+      const { coachingPhilosophy: _coachingPhilosophy, ...rest } = team;
+      return { ...rest, playStyle: { ...playStyle } };
+    };
+
+    const v11Teams = {
+      [teamAId]: stripCoaching(teamA, customPlayStyleA),
+      [teamBId]: stripCoaching(teamB, customPlayStyleB),
+    };
+
+    const v11Json = JSON.stringify({
+      ...modern,
+      meta: {
+        ...modern.meta,
+        schemaVersion: 11,
+      },
+      world: {
+        ...modern.world,
+        teams: v11Teams,
+      },
+    });
+
+    const migrated = deserializeGameState(v11Json);
+    expect(migrated.meta.schemaVersion).toBe(GAME_STATE_SCHEMA_VERSION);
+
+    const migratedA = migrated.world.teams[teamAId]!;
+    const migratedB = migrated.world.teams[teamBId]!;
+
+    expect(migratedA.playStyle).toEqual(customPlayStyleA);
+    expect(migratedB.playStyle).toEqual(customPlayStyleB);
+    expect(migratedA.coachingPhilosophy).toEqual(DEFAULT_COACHING_PHILOSOPHY);
+    expect(migratedB.coachingPhilosophy).toEqual(DEFAULT_COACHING_PHILOSOPHY);
+    expect(migratedA.coachingPhilosophy).not.toBe(migratedB.coachingPhilosophy);
+
+    const { coachingPhilosophy: _ca, ...fieldsA } = migratedA;
+    const { coachingPhilosophy: _cb, ...fieldsB } = migratedB;
+    expect(fieldsA).toEqual(v11Teams[teamAId]);
+    expect(fieldsB).toEqual(v11Teams[teamBId]);
+  });
+
+  it("serializes coachingPhilosophy on current teams", () => {
+    const modern = createInitialGameState({
+      saveId: "save_current_coaching",
+      rngSeed: 16,
+      nowIso: "2026-08-14T12:00:00.000Z",
+    });
+    const json = serializeGameState(modern);
+    const restored = deserializeGameState(json);
+    const team = Object.values(restored.world.teams)[0]!;
+    expect(team.coachingPhilosophy).toEqual(DEFAULT_COACHING_PHILOSOPHY);
   });
 
   it("migrates schemaVersion 7 games to score, events, and playerStats", () => {

@@ -12,13 +12,63 @@ import {
   type PlayerUsageProfile,
 } from "@/systems/player-usage";
 
+export type ShotSelectionModifiers = {
+  readonly threePoint: number;
+  readonly finishing: number;
+};
+
+export type ShotSelectionWeight = {
+  kind: "three" | "mid" | "finish";
+  weight: number;
+};
+
+/** Identity shot-selection multipliers (balanced / pre-coaching). */
+export const NEUTRAL_SHOT_SELECTION_MODIFIERS: ShotSelectionModifiers = {
+  threePoint: 1,
+  finishing: 1,
+};
+
 export type ChoosePossessionDecisionInput = {
   offensiveTeamId: TeamId;
   defensiveTeamId: TeamId;
   offensivePlayers: readonly Player[];
   defensivePlayers: readonly Player[];
   config: GameSimulationConfig;
+  /** Offensive team's shot-selection multipliers. Defaults to identity. */
+  shotSelectionModifiers?: ShotSelectionModifiers;
+  /** Defensive team's foul action-weight multiplier. Defaults to 1. */
+  foulActionWeightMultiplier?: number;
 };
+
+/**
+ * Pure shot-selection weights from player attributes and coaching multipliers.
+ * Does not consume RNG. midRange is never scaled by coaching.
+ */
+export function getShotSelectionWeights(
+  shooter: Player,
+  shotSelectionModifiers: ShotSelectionModifiers = NEUTRAL_SHOT_SELECTION_MODIFIERS,
+): ShotSelectionWeight[] {
+  return [
+    {
+      kind: "three" as const,
+      weight: Math.max(
+        1,
+        shooter.attributes.threePoint * shotSelectionModifiers.threePoint,
+      ),
+    },
+    {
+      kind: "mid" as const,
+      weight: Math.max(1, shooter.attributes.midRange),
+    },
+    {
+      kind: "finish" as const,
+      weight: Math.max(
+        1,
+        shooter.attributes.finishing * shotSelectionModifiers.finishing,
+      ),
+    },
+  ];
+}
 
 /**
  * Selects a PossessionDecision for the current possession.
@@ -37,9 +87,18 @@ export function choosePossessionDecision(
     throw new Error("choosePossessionDecision requires defensive players.");
   }
 
+  const shotSelectionModifiers =
+    input.shotSelectionModifiers ?? NEUTRAL_SHOT_SELECTION_MODIFIERS;
+  const foulActionWeightMultiplier = input.foulActionWeightMultiplier ?? 1;
+
   const profiles = buildOffensiveUsageProfiles(input.offensivePlayers);
   const primary = pickWeightedPlayer(profiles, "involvementWeight", rng);
-  const action = pickWeightedAction(primary, input.config, rng);
+  const action = pickWeightedAction(
+    primary,
+    input.config,
+    foulActionWeightMultiplier,
+    rng,
+  );
 
   switch (action) {
     case "shot": {
@@ -49,7 +108,7 @@ export function choosePossessionDecision(
         action: "shot",
         shooterId: shooter.id,
         defenderId: defender.id,
-        shotType: chooseShotType(shooter, rng),
+        shotType: chooseShotType(shooter, shotSelectionModifiers, rng),
       };
     }
     case "pass": {
@@ -74,7 +133,13 @@ export function choosePossessionDecision(
         playerId: primary.id,
       };
     case "foul":
-      return chooseFoulDecision(input, primary, profiles, rng);
+      return chooseFoulDecision(
+        input,
+        primary,
+        profiles,
+        shotSelectionModifiers,
+        rng,
+      );
     default: {
       const exhaustive: never = action;
       throw new Error(`Unsupported possession action: ${String(exhaustive)}`);
@@ -87,6 +152,7 @@ type ActionKind = "shot" | "pass" | "turnover" | "foul";
 function pickWeightedAction(
   player: Player,
   config: GameSimulationConfig,
+  foulActionWeightMultiplier: number,
   rng: Rng,
 ): ActionKind {
   const shootingRating =
@@ -131,23 +197,23 @@ function pickWeightedAction(
     },
     {
       action: "foul",
-      weight: clampWeight(config.actionBaseWeights.foul, config),
+      weight: clampWeight(
+        config.actionBaseWeights.foul * foulActionWeightMultiplier,
+        config,
+      ),
     },
   ];
 
   return pickByWeight(weights, rng).action;
 }
 
-function chooseShotType(shooter: Player, rng: Rng): ShotType {
+function chooseShotType(
+  shooter: Player,
+  shotSelectionModifiers: ShotSelectionModifiers,
+  rng: Rng,
+): ShotType {
   const location = pickByWeight(
-    [
-      { kind: "three" as const, weight: Math.max(1, shooter.attributes.threePoint) },
-      { kind: "mid" as const, weight: Math.max(1, shooter.attributes.midRange) },
-      {
-        kind: "finish" as const,
-        weight: Math.max(1, shooter.attributes.finishing),
-      },
-    ],
+    getShotSelectionWeights(shooter, shotSelectionModifiers),
     rng,
   ).kind;
   return location === "three" ? "three_point" : "two_point";
@@ -157,6 +223,7 @@ function chooseFoulDecision(
   input: ChoosePossessionDecisionInput,
   primaryOffense: Player,
   profiles: readonly PlayerUsageProfile[],
+  shotSelectionModifiers: ShotSelectionModifiers,
   rng: Rng,
 ): PossessionDecision {
   const subtype = pickByWeight(
@@ -204,7 +271,7 @@ function chooseFoulDecision(
         fouledPlayerId: fouled.id,
         foulType: "shooting",
       }),
-      shotType: chooseShotType(fouled, rng),
+      shotType: chooseShotType(fouled, shotSelectionModifiers, rng),
     };
   }
 

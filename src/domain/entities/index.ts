@@ -16,6 +16,27 @@ export {
   NEUTRAL_TEAM_PLAY_STYLE,
 } from "@/domain/entities/team";
 export type {
+  PacePhilosophy,
+  OffensiveEmphasis,
+  DefensiveApproach,
+  CoachingPhilosophy,
+} from "@/domain/coaching/coaching-philosophy";
+export {
+  PACE_PHILOSOPHIES,
+  OFFENSIVE_EMPHASES,
+  DEFENSIVE_APPROACHES,
+  DEFAULT_COACHING_PHILOSOPHY,
+  isPacePhilosophy,
+  isOffensiveEmphasis,
+  isDefensiveApproach,
+  isCoachingPhilosophy,
+} from "@/domain/coaching/coaching-philosophy";
+export type { CoachingModifiers } from "@/domain/coaching/coaching-philosophy-config";
+export {
+  COACHING_PHILOSOPHY_CONFIG,
+  getCoachingModifiers,
+} from "@/domain/coaching/coaching-philosophy-config";
+export type {
   Player,
   PlayerInput,
   PlayerPosition,

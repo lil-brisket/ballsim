@@ -1,3 +1,7 @@
+import {
+  isCoachingPhilosophy,
+  type CoachingPhilosophy,
+} from "@/domain/coaching/coaching-philosophy";
 import { RATING_MAX, RATING_MIN } from "@/domain/entities/player";
 import type {
   ArenaId,
@@ -14,8 +18,8 @@ export type TeamFinanceState = Record<never, never>;
 /**
  * Team-level offensive and defensive play-style tendencies (1–99).
  * These are independent tendencies, not mutually exclusive probabilities.
- * Simulation does not consume them yet; coaching may later produce a new
- * TeamPlayStyle and a new Team via createTeam.
+ * Simulation does not consume them yet. Discrete coaching uses
+ * Team.coachingPhilosophy instead.
  */
 export type TeamPlayStyle = {
   /** Preference for faster/slower tempo; does not calculate possessions per game. */
@@ -67,6 +71,7 @@ export type Team = {
   arenaId: ArenaId;
   reputation: number;
   playStyle: TeamPlayStyle;
+  coachingPhilosophy: CoachingPhilosophy;
 };
 
 /** Unvalidated construction payload for {@link createTeam}. */
@@ -83,6 +88,7 @@ export type TeamInput = {
   arenaId: ArenaId;
   reputation: number;
   playStyle: TeamPlayStyle;
+  coachingPhilosophy: CoachingPhilosophy;
 };
 
 /**
@@ -102,6 +108,7 @@ export function createTeam(input: TeamInput): Team {
   assertNonEmptyId(input.arenaId, "arenaId");
   assertRating(input.reputation, "reputation");
   assertPlayStyle(input.playStyle);
+  assertCoachingPhilosophy(input.coachingPhilosophy);
 
   return {
     id: input.id,
@@ -116,6 +123,7 @@ export function createTeam(input: TeamInput): Team {
     arenaId: input.arenaId,
     reputation: input.reputation,
     playStyle: { ...input.playStyle },
+    coachingPhilosophy: { ...input.coachingPhilosophy },
   };
 }
 
@@ -186,6 +194,14 @@ function assertRating(value: number, field: string): void {
   ) {
     throw new Error(
       `Team ${field} must be an integer between ${RATING_MIN} and ${RATING_MAX}.`,
+    );
+  }
+}
+
+function assertCoachingPhilosophy(value: unknown): void {
+  if (!isCoachingPhilosophy(value)) {
+    throw new Error(
+      "Team coachingPhilosophy must be a valid CoachingPhilosophy object.",
     );
   }
 }

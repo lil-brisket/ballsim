@@ -16,6 +16,10 @@ import {
   type TeamInput,
   type TeamPlayStyle,
 } from "@/domain/entities/team";
+import {
+  DEFAULT_COACHING_PHILOSOPHY,
+  type CoachingPhilosophy,
+} from "@/domain/coaching/coaching-philosophy";
 
 export type CreateTeamOverrides = {
   id?: TeamId | string;
@@ -30,6 +34,7 @@ export type CreateTeamOverrides = {
   arenaId?: string;
   reputation?: number;
   playStyle?: TeamPlayStyle;
+  coachingPhilosophy?: CoachingPhilosophy;
 };
 
 /**
@@ -51,6 +56,9 @@ export function createTeam(overrides: CreateTeamOverrides = {}): Team {
     playStyle: overrides.playStyle
       ? { ...overrides.playStyle }
       : { ...NEUTRAL_TEAM_PLAY_STYLE },
+    coachingPhilosophy: overrides.coachingPhilosophy
+      ? { ...overrides.coachingPhilosophy }
+      : { ...DEFAULT_COACHING_PHILOSOPHY },
   });
 }
 

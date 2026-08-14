@@ -98,6 +98,7 @@ export { advanceCalendar } from "@/systems/calendar";
 export {
   simulateGame,
   simulateGamesForDate,
+  requestPossessionSeconds,
   type SimulateGameContext,
 } from "@/systems/game-simulation";
 export {
@@ -112,7 +113,11 @@ export {
   isPeriodOver,
   type GameClock,
 } from "@/systems/game-clock";
-export { choosePossessionDecision } from "@/systems/possession-decision-selection";
+export { choosePossessionDecision, getShotSelectionWeights } from "@/systems/possession-decision-selection";
+export type {
+  ShotSelectionModifiers,
+  ShotSelectionWeight,
+} from "@/systems/possession-decision-selection";
 export {
   PLAYER_USAGE_CONFIG,
   USAGE_SCORE_FLOOR,

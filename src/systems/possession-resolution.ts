@@ -4,7 +4,11 @@ import {
   type PossessionAction,
   type PossessionOutcome,
 } from "@/domain/entities/possession";
-import type { Player } from "@/domain/entities/player";
+import {
+  RATING_MAX,
+  RATING_MIN,
+  type Player,
+} from "@/domain/entities/player";
 import type { GameEvent } from "@/domain/entities/game";
 import type { PlayerId, PossessionId, TeamId } from "@/domain/ids";
 import type { Rng } from "@/domain/rng";
@@ -73,6 +77,11 @@ export type ResolvePossessionInput = {
   eventSequenceStart?: number;
   fatigue?: number;
   foulRules?: FoulRules;
+  /**
+   * Already-derived defensive pressure multiplier (coaching).
+   * Applied to perimeterDefense before resolvePass; defaults to 1 (no-op).
+   */
+  defensivePressureMultiplier?: number;
 };
 
 export type PossessionStep =
@@ -362,7 +371,10 @@ function resolvePassBranch(ctx: ExecutionContext): void {
     {
       passer,
       receiver,
-      defensivePressure: defender.attributes.perimeterDefense,
+      defensivePressure: clampDefensivePressure(
+        defender.attributes.perimeterDefense *
+          (ctx.input.defensivePressureMultiplier ?? 1),
+      ),
     },
     ctx.rng,
   );
@@ -649,4 +661,9 @@ function flipPossession(ctx: ExecutionContext): void {
     offensiveTeamId: ctx.input.defensiveTeamId,
     defensiveTeamId: ctx.input.offensiveTeamId,
   };
+}
+
+/** Keeps resolvePass defensivePressure within the existing 1–99 contract. */
+function clampDefensivePressure(value: number): number {
+  return Math.min(RATING_MAX, Math.max(RATING_MIN, value));
 }

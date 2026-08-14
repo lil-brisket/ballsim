@@ -2,6 +2,7 @@ import {
   createTeam,
   NEUTRAL_TEAM_PLAY_STYLE,
 } from "@/domain/entities/team";
+import { DEFAULT_COACHING_PHILOSOPHY } from "@/domain/coaching/coaching-philosophy";
 import {
   asArenaId,
   asConferenceId,
@@ -50,6 +51,7 @@ function bootstrapTeam(
     arenaId: asArenaId(`arena_${id}`),
     reputation: 50,
     playStyle: { ...NEUTRAL_TEAM_PLAY_STYLE },
+    coachingPhilosophy: { ...DEFAULT_COACHING_PHILOSOPHY },
   });
 }
 

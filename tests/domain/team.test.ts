@@ -7,6 +7,10 @@ import {
   type TeamPlayStyle,
 } from "@/domain/entities/team";
 import {
+  DEFAULT_COACHING_PHILOSOPHY,
+  type CoachingPhilosophy,
+} from "@/domain/coaching/coaching-philosophy";
+import {
   asArenaId,
   asConferenceId,
   asDivisionId,
@@ -29,6 +33,7 @@ function validInput(overrides: Partial<TeamInput> = {}): TeamInput {
     arenaId: asArenaId("arena_1"),
     reputation: 50,
     playStyle: { ...NEUTRAL_TEAM_PLAY_STYLE },
+    coachingPhilosophy: { ...DEFAULT_COACHING_PHILOSOPHY },
     ...overrides,
   };
 }
@@ -48,6 +53,37 @@ describe("createTeam", () => {
     expect(team.arenaId).toBe("arena_1");
     expect(team.reputation).toBe(50);
     expect(team.playStyle).toEqual(NEUTRAL_TEAM_PLAY_STYLE);
+    expect(team.coachingPhilosophy).toEqual(DEFAULT_COACHING_PHILOSOPHY);
+  });
+
+  it("preserves supplied coaching philosophy", () => {
+    const coachingPhilosophy: CoachingPhilosophy = {
+      pace: "fast",
+      offensiveEmphasis: "threePointHeavy",
+      defensiveApproach: "aggressive",
+    };
+    const team = createTeam(validInput({ coachingPhilosophy }));
+    expect(team.coachingPhilosophy).toEqual(coachingPhilosophy);
+  });
+
+  it("rejects invalid coaching philosophy", () => {
+    expect(() =>
+      createTeam(
+        validInput({
+          coachingPhilosophy: {
+            pace: "sprint",
+            offensiveEmphasis: "balanced",
+            defensiveApproach: "balanced",
+          } as unknown as CoachingPhilosophy,
+        }),
+      ),
+    ).toThrow(/coachingPhilosophy/);
+  });
+
+  it("returns a distinct coachingPhilosophy object from input", () => {
+    const input = validInput();
+    const team = createTeam(input);
+    expect(team.coachingPhilosophy).not.toBe(input.coachingPhilosophy);
   });
 
   it("preserves supplied values", () => {

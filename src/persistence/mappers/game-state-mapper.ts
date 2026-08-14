@@ -12,8 +12,9 @@ import type {
 } from "@/domain/entities/player";
 import type { PlayerArchetype } from "@/domain/entities/player-archetype";
 import type { PlayerNationality } from "@/domain/entities/player-nationality";
-import type { Team } from "@/domain/entities/team";
+import type { Team, TeamPlayStyle } from "@/domain/entities/team";
 import { NEUTRAL_TEAM_PLAY_STYLE } from "@/domain/entities/team";
+import { DEFAULT_COACHING_PHILOSOPHY } from "@/domain/coaching/coaching-philosophy";
 import type {
   ArenaId,
   ConferenceId,
@@ -53,14 +54,16 @@ export function deserializeGameState(stateJson: string): GameState {
   const envelope = gameStateEnvelopeSchema.parse(parsed);
 
   if (envelope.meta.schemaVersion === 1) {
-    return migrateV10ToV11(
-      migrateV9ToV10(
-        migrateV8ToV9(
-          migrateV7ToV8(
-            migrateV6ToV7(
-              migrateV5ToV6(
-                migrateV4ToV5(
-                  migrateV3ToV4(migrateV2ToV3(migrateV1ToV2(parsed as GameStateV1))),
+    return migrateV11ToV12(
+      migrateV10ToV11(
+        migrateV9ToV10(
+          migrateV8ToV9(
+            migrateV7ToV8(
+              migrateV6ToV7(
+                migrateV5ToV6(
+                  migrateV4ToV5(
+                    migrateV3ToV4(migrateV2ToV3(migrateV1ToV2(parsed as GameStateV1))),
+                  ),
                 ),
               ),
             ),
@@ -71,13 +74,15 @@ export function deserializeGameState(stateJson: string): GameState {
   }
 
   if (envelope.meta.schemaVersion === 2) {
-    return migrateV10ToV11(
-      migrateV9ToV10(
-        migrateV8ToV9(
-          migrateV7ToV8(
-            migrateV6ToV7(
-              migrateV5ToV6(
-                migrateV4ToV5(migrateV3ToV4(migrateV2ToV3(parsed as GameStateV2))),
+    return migrateV11ToV12(
+      migrateV10ToV11(
+        migrateV9ToV10(
+          migrateV8ToV9(
+            migrateV7ToV8(
+              migrateV6ToV7(
+                migrateV5ToV6(
+                  migrateV4ToV5(migrateV3ToV4(migrateV2ToV3(parsed as GameStateV2))),
+                ),
               ),
             ),
           ),
@@ -87,12 +92,14 @@ export function deserializeGameState(stateJson: string): GameState {
   }
 
   if (envelope.meta.schemaVersion === 3) {
-    return migrateV10ToV11(
-      migrateV9ToV10(
-        migrateV8ToV9(
-          migrateV7ToV8(
-            migrateV6ToV7(
-              migrateV5ToV6(migrateV4ToV5(migrateV3ToV4(parsed as GameStateV3))),
+    return migrateV11ToV12(
+      migrateV10ToV11(
+        migrateV9ToV10(
+          migrateV8ToV9(
+            migrateV7ToV8(
+              migrateV6ToV7(
+                migrateV5ToV6(migrateV4ToV5(migrateV3ToV4(parsed as GameStateV3))),
+              ),
             ),
           ),
         ),
@@ -101,11 +108,13 @@ export function deserializeGameState(stateJson: string): GameState {
   }
 
   if (envelope.meta.schemaVersion === 4) {
-    return migrateV10ToV11(
-      migrateV9ToV10(
-        migrateV8ToV9(
-          migrateV7ToV8(
-            migrateV6ToV7(migrateV5ToV6(migrateV4ToV5(parsed as GameStateV4))),
+    return migrateV11ToV12(
+      migrateV10ToV11(
+        migrateV9ToV10(
+          migrateV8ToV9(
+            migrateV7ToV8(
+              migrateV6ToV7(migrateV5ToV6(migrateV4ToV5(parsed as GameStateV4))),
+            ),
           ),
         ),
       ),
@@ -113,39 +122,53 @@ export function deserializeGameState(stateJson: string): GameState {
   }
 
   if (envelope.meta.schemaVersion === 5) {
-    return migrateV10ToV11(
-      migrateV9ToV10(
-        migrateV8ToV9(
-          migrateV7ToV8(migrateV6ToV7(migrateV5ToV6(parsed as GameStateV5))),
+    return migrateV11ToV12(
+      migrateV10ToV11(
+        migrateV9ToV10(
+          migrateV8ToV9(
+            migrateV7ToV8(migrateV6ToV7(migrateV5ToV6(parsed as GameStateV5))),
+          ),
         ),
       ),
     );
   }
 
   if (envelope.meta.schemaVersion === 6) {
-    return migrateV10ToV11(
-      migrateV9ToV10(
-        migrateV8ToV9(migrateV7ToV8(migrateV6ToV7(parsed as GameStateV6))),
+    return migrateV11ToV12(
+      migrateV10ToV11(
+        migrateV9ToV10(
+          migrateV8ToV9(migrateV7ToV8(migrateV6ToV7(parsed as GameStateV6))),
+        ),
       ),
     );
   }
 
   if (envelope.meta.schemaVersion === 7) {
-    return migrateV10ToV11(
-      migrateV9ToV10(migrateV8ToV9(migrateV7ToV8(parsed as GameStateV7))),
+    return migrateV11ToV12(
+      migrateV10ToV11(
+        migrateV9ToV10(migrateV8ToV9(migrateV7ToV8(parsed as GameStateV7))),
+      ),
     );
   }
 
   if (envelope.meta.schemaVersion === 8) {
-    return migrateV10ToV11(migrateV9ToV10(migrateV8ToV9(parsed as GameStateV8)));
+    return migrateV11ToV12(
+      migrateV10ToV11(migrateV9ToV10(migrateV8ToV9(parsed as GameStateV8))),
+    );
   }
 
   if (envelope.meta.schemaVersion === 9) {
-    return migrateV10ToV11(migrateV9ToV10(parsed as GameStateV9));
+    return migrateV11ToV12(
+      migrateV10ToV11(migrateV9ToV10(parsed as GameStateV9)),
+    );
   }
 
   if (envelope.meta.schemaVersion === 10) {
-    return migrateV10ToV11(parsed as GameStateV10);
+    return migrateV11ToV12(migrateV10ToV11(parsed as GameStateV10));
+  }
+
+  if (envelope.meta.schemaVersion === 11) {
+    return migrateV11ToV12(parsed as GameStateV11);
   }
 
   if (envelope.meta.schemaVersion !== GAME_STATE_SCHEMA_VERSION) {
@@ -156,7 +179,7 @@ export function deserializeGameState(stateJson: string): GameState {
 
   const state = parsed as GameState;
   if (typeof state.meta.rngState !== "number") {
-    throw new Error("GameState meta.rngState is required for schemaVersion 11.");
+    throw new Error("GameState meta.rngState is required for schemaVersion 12.");
   }
 
   return state;
@@ -291,6 +314,22 @@ type TeamV10 = {
   finances: Record<never, never>;
   arenaId: ArenaId;
   reputation: number;
+};
+
+/** Explicit v11 team shape before Team.coachingPhilosophy. Do not derive from current Team. */
+type TeamV11 = {
+  id: TeamId;
+  name: string;
+  city: string;
+  abbreviation: string;
+  conferenceId: ConferenceId;
+  divisionId: DivisionId;
+  roster: PlayerId[];
+  staff: StaffId[];
+  finances: Record<never, never>;
+  arenaId: ArenaId;
+  reputation: number;
+  playStyle: TeamPlayStyle;
 };
 
 type CompetitionWithLegacyGames = Omit<GameState["competition"], "games"> & {
@@ -1061,8 +1100,8 @@ type GameStateV10 = {
  * field value-for-value. Does not reconstruct through createTeam, apply other
  * defaults, consume RNG, or normalize.
  */
-function migrateV10ToV11(state: GameStateV10): GameState {
-  const teams: Record<string, Team> = Object.fromEntries(
+function migrateV10ToV11(state: GameStateV10): GameStateV11 {
+  const teams: Record<string, TeamV11> = Object.fromEntries(
     Object.entries(state.world.teams).map(([id, team]) => [
       id,
       {
@@ -1075,11 +1114,62 @@ function migrateV10ToV11(state: GameStateV10): GameState {
   return {
     meta: {
       saveId: state.meta.saveId as GameState["meta"]["saveId"],
-      schemaVersion: GAME_STATE_SCHEMA_VERSION,
+      schemaVersion: 11,
       createdAt: state.meta.createdAt,
       updatedAt: state.meta.updatedAt,
       rngSeed: state.meta.rngSeed,
       rngState: state.meta.rngState ?? state.meta.rngSeed,
+    },
+    world: {
+      ...state.world,
+      teams,
+    },
+    competition: state.competition,
+    business: state.business,
+    user: state.user,
+  };
+}
+
+type WorldWithTeamV11 = Omit<GameState["world"], "teams"> & {
+  teams: Record<string, TeamV11>;
+};
+
+type GameStateV11 = {
+  meta: Omit<GameState["meta"], "schemaVersion"> & {
+    schemaVersion: 11;
+    rngState: number;
+  };
+  world: WorldWithTeamV11;
+  competition: GameState["competition"];
+  business: GameState["business"];
+  user: GameState["user"];
+};
+
+/**
+ * Deterministic v11 → v12: add default Team.coachingPhilosophy.
+ * Preserves every existing team field including playStyle value-for-value.
+ * Does not reconstruct through createTeam or consume RNG.
+ */
+function migrateV11ToV12(state: GameStateV11): GameState {
+  const teams: Record<string, Team> = Object.fromEntries(
+    Object.entries(state.world.teams).map(([id, team]) => [
+      id,
+      {
+        ...team,
+        playStyle: { ...team.playStyle },
+        coachingPhilosophy: { ...DEFAULT_COACHING_PHILOSOPHY },
+      },
+    ]),
+  );
+
+  return {
+    meta: {
+      saveId: state.meta.saveId as GameState["meta"]["saveId"],
+      schemaVersion: GAME_STATE_SCHEMA_VERSION,
+      createdAt: state.meta.createdAt,
+      updatedAt: state.meta.updatedAt,
+      rngSeed: state.meta.rngSeed,
+      rngState: state.meta.rngState,
     },
     world: {
       ...state.world,

@@ -66,6 +66,8 @@ Typed domain catalogs such as `PlayerArchetype` and `PlayerNationality` live und
 
 `schemaVersion` 11 adds `Team.playStyle` (six 1–99 tendencies). Pre-v11 teams migrate with all-neutral values (`50`). The migration is lossless except for adding `playStyle` (no RNG, no other field changes).
 
+`schemaVersion` 12 adds `Team.coachingPhilosophy` (discrete pace / offensiveEmphasis / defensiveApproach). Pre-v12 teams migrate with all-balanced defaults. Existing `playStyle` values are preserved exactly.
+
 ## GameState (composed slices)
 
 `GameState` is the single source of truth for one save, composed of typed slices:
