@@ -23,6 +23,8 @@ Each system should:
 | `shot-resolution` | Building block: `calculateShotProbability(input)` / `resolveShot(input, rng)` → make/miss (no GameState) |
 | `rebound-resolution-config` | Tunable position modifiers, variance amplitude, and defensive positioning multiplier |
 | `rebound-resolution` | Building block: `playerReboundBaseStrength` / `resolveRebound(input, rng)` → OREB/DREB + rebounder (no GameState) |
+| `pass-resolution-config` | Tunable pass-success and assist-opportunity bounds and coefficients (gameplay tuning, not realism) |
+| `pass-resolution` | Building block: `calculatePassProbabilities(input)` / `resolvePass(input, rng)` → complete/turnover + assist-opportunity precursor (no GameState) |
 | `roster-generation` | World-gen: roster slots + contracts; calls player-generation per slot |
 | `roster-rules` | Building block: configurable roster size/position/group validation; throws `Error`, not `SystemResult` |
 | `schedule-generation` | World-gen: double round-robin schedule |

@@ -50,6 +50,14 @@ export {
   type ReboundCandidateScore,
   type ReboundResult,
 } from "@/systems/rebound-resolution";
+export { PASS_RESOLUTION_CONFIG } from "@/systems/pass-resolution-config";
+export {
+  calculatePassProbabilities,
+  resolvePass,
+  type ResolvePassInput,
+  type PassProbabilities,
+  type PassResolution,
+} from "@/systems/pass-resolution";
 export { generateSchedule } from "@/systems/schedule-generation";
 export { advanceCalendar } from "@/systems/calendar";
 export { simulateGamesForDate } from "@/systems/game-simulation";
