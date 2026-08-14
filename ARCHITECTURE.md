@@ -164,6 +164,7 @@ Load/save flow:
 - Vitest covers domain/state/persistence pure logic first.
 - Important simulation logic must gain tests when introduced.
 - Prefer testing systems with seeded `Rng` for reproducibility.
+- Conventions, factories, React/jsdom isolation, and CI: [`docs/testing.md`](./docs/testing.md).
 
 ## Risks
 
