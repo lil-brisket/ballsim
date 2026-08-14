@@ -50,12 +50,14 @@ export function deserializeGameState(stateJson: string): GameState {
   const envelope = gameStateEnvelopeSchema.parse(parsed);
 
   if (envelope.meta.schemaVersion === 1) {
-    return migrateV8ToV9(
-      migrateV7ToV8(
-        migrateV6ToV7(
-          migrateV5ToV6(
-            migrateV4ToV5(
-              migrateV3ToV4(migrateV2ToV3(migrateV1ToV2(parsed as GameStateV1))),
+    return migrateV9ToV10(
+      migrateV8ToV9(
+        migrateV7ToV8(
+          migrateV6ToV7(
+            migrateV5ToV6(
+              migrateV4ToV5(
+                migrateV3ToV4(migrateV2ToV3(migrateV1ToV2(parsed as GameStateV1))),
+              ),
             ),
           ),
         ),
@@ -64,11 +66,13 @@ export function deserializeGameState(stateJson: string): GameState {
   }
 
   if (envelope.meta.schemaVersion === 2) {
-    return migrateV8ToV9(
-      migrateV7ToV8(
-        migrateV6ToV7(
-          migrateV5ToV6(
-            migrateV4ToV5(migrateV3ToV4(migrateV2ToV3(parsed as GameStateV2))),
+    return migrateV9ToV10(
+      migrateV8ToV9(
+        migrateV7ToV8(
+          migrateV6ToV7(
+            migrateV5ToV6(
+              migrateV4ToV5(migrateV3ToV4(migrateV2ToV3(parsed as GameStateV2))),
+            ),
           ),
         ),
       ),
@@ -76,39 +80,51 @@ export function deserializeGameState(stateJson: string): GameState {
   }
 
   if (envelope.meta.schemaVersion === 3) {
-    return migrateV8ToV9(
-      migrateV7ToV8(
-        migrateV6ToV7(
-          migrateV5ToV6(migrateV4ToV5(migrateV3ToV4(parsed as GameStateV3))),
+    return migrateV9ToV10(
+      migrateV8ToV9(
+        migrateV7ToV8(
+          migrateV6ToV7(
+            migrateV5ToV6(migrateV4ToV5(migrateV3ToV4(parsed as GameStateV3))),
+          ),
         ),
       ),
     );
   }
 
   if (envelope.meta.schemaVersion === 4) {
-    return migrateV8ToV9(
-      migrateV7ToV8(
-        migrateV6ToV7(migrateV5ToV6(migrateV4ToV5(parsed as GameStateV4))),
+    return migrateV9ToV10(
+      migrateV8ToV9(
+        migrateV7ToV8(
+          migrateV6ToV7(migrateV5ToV6(migrateV4ToV5(parsed as GameStateV4))),
+        ),
       ),
     );
   }
 
   if (envelope.meta.schemaVersion === 5) {
-    return migrateV8ToV9(
-      migrateV7ToV8(migrateV6ToV7(migrateV5ToV6(parsed as GameStateV5))),
+    return migrateV9ToV10(
+      migrateV8ToV9(
+        migrateV7ToV8(migrateV6ToV7(migrateV5ToV6(parsed as GameStateV5))),
+      ),
     );
   }
 
   if (envelope.meta.schemaVersion === 6) {
-    return migrateV8ToV9(migrateV7ToV8(migrateV6ToV7(parsed as GameStateV6)));
+    return migrateV9ToV10(
+      migrateV8ToV9(migrateV7ToV8(migrateV6ToV7(parsed as GameStateV6))),
+    );
   }
 
   if (envelope.meta.schemaVersion === 7) {
-    return migrateV8ToV9(migrateV7ToV8(parsed as GameStateV7));
+    return migrateV9ToV10(migrateV8ToV9(migrateV7ToV8(parsed as GameStateV7)));
   }
 
   if (envelope.meta.schemaVersion === 8) {
-    return migrateV8ToV9(parsed as GameStateV8);
+    return migrateV9ToV10(migrateV8ToV9(parsed as GameStateV8));
+  }
+
+  if (envelope.meta.schemaVersion === 9) {
+    return migrateV9ToV10(parsed as GameStateV9);
   }
 
   if (envelope.meta.schemaVersion !== GAME_STATE_SCHEMA_VERSION) {
@@ -119,7 +135,7 @@ export function deserializeGameState(stateJson: string): GameState {
 
   const state = parsed as GameState;
   if (typeof state.meta.rngState !== "number") {
-    throw new Error("GameState meta.rngState is required for schemaVersion 9.");
+    throw new Error("GameState meta.rngState is required for schemaVersion 10.");
   }
 
   return state;
@@ -825,8 +841,8 @@ type GameStateV8 = {
  * Deterministic v8 → v9: add periodScores and extended player stat fields.
  * Does not consume RNG or alter rngState.
  */
-function migrateV8ToV9(state: GameStateV8): GameState {
-  const games: Record<string, Game> = {};
+function migrateV8ToV9(state: GameStateV8): GameStateV9 {
+  const games: Record<string, GameV9> = {};
 
   for (const [gameId, legacy] of Object.entries(state.competition.games)) {
     games[gameId] = {
@@ -857,6 +873,102 @@ function migrateV8ToV9(state: GameStateV8): GameState {
         threePointersAttempted: 0,
         freeThrowsMade: 0,
         freeThrowsAttempted: 0,
+      })),
+    };
+  }
+
+  return {
+    meta: {
+      saveId: state.meta.saveId as GameState["meta"]["saveId"],
+      schemaVersion: 9,
+      createdAt: state.meta.createdAt,
+      updatedAt: state.meta.updatedAt,
+      rngSeed: state.meta.rngSeed,
+      rngState: state.meta.rngState ?? state.meta.rngSeed,
+    },
+    world: state.world,
+    competition: {
+      ...state.competition,
+      games,
+    },
+    business: state.business,
+    user: state.user,
+  };
+}
+
+/** Schema v9 game shape before touches on playerStats. */
+type GameV9 = {
+  id: GameId;
+  seasonId: SeasonId;
+  date: string;
+  homeTeamId: TeamId;
+  awayTeamId: TeamId;
+  status: "scheduled" | "in_progress" | "final";
+  score: { home: number; away: number };
+  periodScores: Game["periodScores"];
+  events: Game["events"];
+  playerStats: Array<{
+    playerId: PlayerId;
+    minutes: number;
+    points: number;
+    rebounds: number;
+    offensiveRebounds: number;
+    defensiveRebounds: number;
+    assists: number;
+    steals: number;
+    blocks: number;
+    turnovers: number;
+    fouls: number;
+    fieldGoalsMade: number;
+    fieldGoalsAttempted: number;
+    threePointersMade: number;
+    threePointersAttempted: number;
+    freeThrowsMade: number;
+    freeThrowsAttempted: number;
+  }>;
+};
+
+type GameStateV9 = {
+  meta: {
+    saveId: string;
+    schemaVersion: number;
+    createdAt: string;
+    updatedAt: string;
+    rngSeed: number;
+    rngState?: number;
+  };
+  world: GameState["world"];
+  competition: {
+    season: GameState["competition"]["season"];
+    schedule: GameState["competition"]["schedule"];
+    games: Record<string, GameV9>;
+    standings: GameState["competition"]["standings"];
+  };
+  business: GameState["business"];
+  user: GameState["user"];
+};
+
+/**
+ * Deterministic v9 → v10: add touches to player box-score rows.
+ * Does not consume RNG or alter rngState.
+ */
+function migrateV9ToV10(state: GameStateV9): GameState {
+  const games: Record<string, Game> = {};
+
+  for (const [gameId, legacy] of Object.entries(state.competition.games)) {
+    games[gameId] = {
+      id: legacy.id,
+      seasonId: legacy.seasonId,
+      date: legacy.date,
+      homeTeamId: legacy.homeTeamId,
+      awayTeamId: legacy.awayTeamId,
+      status: legacy.status,
+      score: { ...legacy.score },
+      periodScores: legacy.periodScores.map((period) => ({ ...period })),
+      events: legacy.events.map((event) => ({ ...event })),
+      playerStats: legacy.playerStats.map((entry) => ({
+        ...entry,
+        touches: 0,
       })),
     };
   }

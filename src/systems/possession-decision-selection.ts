@@ -1,10 +1,16 @@
 import { createFoul } from "@/domain/entities/foul";
 import type { Player } from "@/domain/entities/player";
-import type { PlayerId, TeamId } from "@/domain/ids";
+import type { TeamId } from "@/domain/ids";
 import type { Rng } from "@/domain/rng";
 import type { PossessionDecision } from "@/systems/possession-decision";
 import type { GameSimulationConfig } from "@/systems/game-simulation-config";
 import type { ShotType } from "@/systems/shot-resolution-config";
+import {
+  buildOffensiveUsageProfiles,
+  pickByWeight,
+  pickWeightedPlayer,
+  type PlayerUsageProfile,
+} from "@/systems/player-usage";
 
 export type ChoosePossessionDecisionInput = {
   offensiveTeamId: TeamId;
@@ -17,6 +23,8 @@ export type ChoosePossessionDecisionInput = {
 /**
  * Selects a PossessionDecision for the current possession.
  * Does not resolve make/miss/rebound/foul consequences.
+ * Who is selected uses usage/role-weighted distributions; what happens still
+ * uses attribute-driven action and shot-type weights.
  */
 export function choosePossessionDecision(
   input: ChoosePossessionDecisionInput,
@@ -29,25 +37,33 @@ export function choosePossessionDecision(
     throw new Error("choosePossessionDecision requires defensive players.");
   }
 
-  const primary = rng.pick(input.offensivePlayers);
+  const profiles = buildOffensiveUsageProfiles(input.offensivePlayers);
+  const primary = pickWeightedPlayer(profiles, "involvementWeight", rng);
   const action = pickWeightedAction(primary, input.config, rng);
 
   switch (action) {
     case "shot": {
+      const shooter = pickWeightedPlayer(profiles, "shotWeight", rng);
       const defender = rng.pick(input.defensivePlayers);
       return {
         action: "shot",
-        shooterId: primary.id,
+        shooterId: shooter.id,
         defenderId: defender.id,
-        shotType: chooseShotType(primary, rng),
+        shotType: chooseShotType(shooter, rng),
       };
     }
     case "pass": {
-      const receiver = pickDifferentPlayer(input.offensivePlayers, primary.id, rng);
+      const passer = pickWeightedPlayer(profiles, "passWeight", rng);
+      const receiver = pickWeightedPlayer(
+        profiles,
+        "shotWeight",
+        rng,
+        passer.id,
+      );
       const defender = rng.pick(input.defensivePlayers);
       return {
         action: "pass",
-        passerId: primary.id,
+        passerId: passer.id,
         receiverId: receiver.id,
         defenderId: defender.id,
       };
@@ -58,7 +74,7 @@ export function choosePossessionDecision(
         playerId: primary.id,
       };
     case "foul":
-      return chooseFoulDecision(input, primary, rng);
+      return chooseFoulDecision(input, primary, profiles, rng);
     default: {
       const exhaustive: never = action;
       throw new Error(`Unsupported possession action: ${String(exhaustive)}`);
@@ -140,6 +156,7 @@ function chooseShotType(shooter: Player, rng: Rng): ShotType {
 function chooseFoulDecision(
   input: ChoosePossessionDecisionInput,
   primaryOffense: Player,
+  profiles: readonly PlayerUsageProfile[],
   rng: Rng,
 ): PossessionDecision {
   const subtype = pickByWeight(
@@ -173,7 +190,12 @@ function chooseFoulDecision(
   }
 
   const fouler = rng.pick(input.defensivePlayers);
-  const fouled = rng.pick(input.offensivePlayers);
+  // Shooting-foul victim is independent of primary; biased toward scoring threats.
+  // Non-shooting defensive foul keeps uniform offense pick.
+  const fouled =
+    subtype === "defensiveShooting"
+      ? pickWeightedPlayer(profiles, "shotWeight", rng)
+      : rng.pick(input.offensivePlayers);
   if (subtype === "defensiveShooting") {
     return {
       action: "foul",
@@ -205,36 +227,4 @@ function clampWeight(value: number, config: GameSimulationConfig): number {
     config.actionWeightMax,
     Math.max(config.actionWeightMin, value),
   );
-}
-
-function pickDifferentPlayer(
-  players: readonly Player[],
-  excludeId: PlayerId,
-  rng: Rng,
-): Player {
-  const others = players.filter((player) => player.id !== excludeId);
-  if (others.length === 0) {
-    throw new Error(
-      "choosePossessionDecision pass requires at least two offensive players.",
-    );
-  }
-  return rng.pick(others);
-}
-
-function pickByWeight<T extends { weight: number }>(
-  items: readonly T[],
-  rng: Rng,
-): T {
-  const total = items.reduce((sum, item) => sum + item.weight, 0);
-  if (total <= 0) {
-    throw new Error("Weighted pick requires a positive total weight.");
-  }
-  let roll = rng.next() * total;
-  for (const item of items) {
-    roll -= item.weight;
-    if (roll < 0) {
-      return item;
-    }
-  }
-  return items[items.length - 1]!;
 }

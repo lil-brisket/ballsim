@@ -666,6 +666,7 @@ describe("GameState schema migration", () => {
         threePointersAttempted: 0,
         freeThrowsMade: 0,
         freeThrowsAttempted: 0,
+        touches: 0,
       },
     ]);
     expect(finalGame.periodScores).toEqual([]);
@@ -760,6 +761,112 @@ describe("GameState schema migration", () => {
       threePointersAttempted: 0,
       freeThrowsMade: 0,
       freeThrowsAttempted: 0,
+      touches: 0,
+    });
+  });
+
+  it("migrates schemaVersion 9 games by adding touches only", () => {
+    const playerId = "player_v9";
+    const stateV9 = {
+      meta: {
+        saveId: "save_v9",
+        schemaVersion: 9,
+        createdAt: "2026-08-14T12:00:00.000Z",
+        updatedAt: "2026-08-14T12:00:00.000Z",
+        rngSeed: 9,
+        rngState: 9,
+      },
+      world: {
+        calendar: { currentDate: "2026-10-01" },
+        league: {
+          id: "league_1",
+          name: "Test",
+          abbreviation: "TST",
+          conferenceIds: [],
+        },
+        conferences: {},
+        divisions: {},
+        teams: {},
+        players: {},
+        coaches: {},
+        staff: {},
+      },
+      competition: {
+        season: {
+          id: "season_1",
+          leagueId: "league_1",
+          year: 2026,
+          phase: "regular",
+        },
+        schedule: { seasonId: "season_1", gameIds: ["game_v9"] },
+        games: {
+          game_v9: {
+            id: "game_v9",
+            seasonId: "season_1",
+            date: "2026-10-15",
+            homeTeamId: "team_h",
+            awayTeamId: "team_a",
+            status: "final",
+            score: { home: 110, away: 108 },
+            periodScores: [
+              { home: 28, away: 27 },
+              { home: 26, away: 25 },
+              { home: 30, away: 28 },
+              { home: 26, away: 28 },
+            ],
+            events: [],
+            playerStats: [
+              {
+                playerId,
+                minutes: 32,
+                points: 20,
+                rebounds: 5,
+                offensiveRebounds: 1,
+                defensiveRebounds: 4,
+                assists: 4,
+                steals: 1,
+                blocks: 0,
+                turnovers: 2,
+                fouls: 2,
+                fieldGoalsMade: 8,
+                fieldGoalsAttempted: 16,
+                threePointersMade: 2,
+                threePointersAttempted: 5,
+                freeThrowsMade: 2,
+                freeThrowsAttempted: 2,
+              },
+            ],
+          },
+        },
+        standings: { seasonId: "season_1", byTeamId: {} },
+      },
+      business: { contracts: {}, finances: {} },
+      user: { controlledTeamId: "team_h", mode: "owner" },
+    };
+
+    const migrated = deserializeGameState(JSON.stringify(stateV9));
+    expect(migrated.meta.schemaVersion).toBe(GAME_STATE_SCHEMA_VERSION);
+    const game = migrated.competition.games.game_v9!;
+    expect(game.periodScores).toHaveLength(4);
+    expect(game.playerStats[0]).toEqual({
+      playerId,
+      minutes: 32,
+      points: 20,
+      rebounds: 5,
+      offensiveRebounds: 1,
+      defensiveRebounds: 4,
+      assists: 4,
+      steals: 1,
+      blocks: 0,
+      turnovers: 2,
+      fouls: 2,
+      fieldGoalsMade: 8,
+      fieldGoalsAttempted: 16,
+      threePointersMade: 2,
+      threePointersAttempted: 5,
+      freeThrowsMade: 2,
+      freeThrowsAttempted: 2,
+      touches: 0,
     });
   });
 

@@ -62,6 +62,8 @@ Typed domain catalogs such as `PlayerArchetype` and `PlayerNationality` live und
 
 `schemaVersion` 9 extends `Game` with `periodScores` and expanded `GamePlayerStats` (FG/3PT/FT, OREB/DREB). Pre-v9 saves migrate with zeros and empty `periodScores`.
 
+`schemaVersion` 10 adds `touches` to `GamePlayerStats`. Pre-v10 saves migrate with `touches: 0`.
+
 ## GameState (composed slices)
 
 `GameState` is the single source of truth for one save, composed of typed slices:

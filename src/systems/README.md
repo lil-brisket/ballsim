@@ -34,7 +34,9 @@ Each system should:
 | `schedule-generation` | World-gen: double round-robin schedule |
 | `game-simulation-config` | Tunable period lengths, possession time costs, decision weights |
 | `game-clock` | Building block: simulated integer-second period clock (`consumeTime`) |
-| `possession-decision-selection` | Building block: `choosePossessionDecision` → `PossessionDecision` (not outcome resolution) |
+| `possession-decision-selection` | Building block: `choosePossessionDecision` → `PossessionDecision` (usage-weighted who; attribute-weighted what) |
+| `player-usage-config` | Tunable usage score mix, `USAGE_SCORE_FLOOR`, and modest role multipliers |
+| `player-usage` | Building block: derived usageScore / offensive role / shot+pass weights; canonical `pickByWeight` |
 | `game-simulation` | `simulateGame` (possession orchestration → `GameResult` including `possessionCounts`) + `simulateGamesForDate` for the world pipeline |
 
 Statistical box-score validation lives under `src/simulation/validation/` and is run via `npx tsx scripts/validate-simulation-stats.ts` (not a second simulation path).

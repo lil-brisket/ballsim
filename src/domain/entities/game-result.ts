@@ -279,6 +279,7 @@ function assertPlayerStats(playerStats: unknown): void {
       "threePointersAttempted",
       "freeThrowsMade",
       "freeThrowsAttempted",
+      "touches",
     ];
     for (const field of fields) {
       if (field === "playerId") {

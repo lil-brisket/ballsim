@@ -152,6 +152,7 @@ function emptyDelta(
     threePointersAttempted: 0,
     freeThrowsMade: 0,
     freeThrowsAttempted: 0,
+    touches: 0,
     ...overrides,
   };
 }
@@ -204,6 +205,7 @@ describe("resolvePossession made shots", () => {
         points: 2,
         fieldGoalsMade: 1,
         fieldGoalsAttempted: 1,
+        touches: 1,
       }),
     ]);
     expect(result.events.map((e) => e.type)).toEqual(["shot_made"]);
@@ -368,7 +370,7 @@ describe("resolvePossession pass and assist", () => {
     expect(result.possession.outcome).toBe("turnover");
     expect(result.events.map((e) => e.type)).toEqual(["turnover"]);
     expect(result.playerStats).toEqual([
-      emptyDelta("off_1", { turnovers: 1 }),
+      emptyDelta("off_1", { turnovers: 1, touches: 1 }),
     ]);
     expect(result.nextPossession.offensiveTeamId).toBe(DEFENSE);
   });
@@ -389,6 +391,76 @@ describe("resolvePossession turnover", () => {
     expect(result.scoringTeamId).toBeNull();
     expect(result.events.map((e) => e.type)).toEqual(["turnover"]);
     expect(result.nextPossession.offensiveTeamId).toBe(DEFENSE);
+  });
+});
+
+describe("resolvePossession touch credits", () => {
+  it("credits the passer once on a pass turnover", () => {
+    const result = resolvePossession(
+      baseInput({
+        action: "pass",
+        passerId: asPlayerId("off_1"),
+        receiverId: asPlayerId("off_2"),
+        defenderId: asPlayerId("def_1"),
+      }),
+      createStubRng([0.99]),
+    );
+    expect(result.playerStats).toEqual([
+      emptyDelta("off_1", { turnovers: 1, touches: 1 }),
+    ]);
+  });
+
+  it("credits passer and receiver once each on a completed pass without shot", () => {
+    const result = resolvePossession(
+      baseInput({
+        action: "pass",
+        passerId: asPlayerId("off_1"),
+        receiverId: asPlayerId("off_2"),
+        defenderId: asPlayerId("def_1"),
+      }),
+      createStubRng([0, 0.99]),
+    );
+    expect(result.playerStats).toEqual(
+      expect.arrayContaining([
+        emptyDelta("off_1", { touches: 1 }),
+        emptyDelta("off_2", { touches: 1 }),
+      ]),
+    );
+    expect(result.playerStats).toHaveLength(2);
+  });
+
+  it("does not double-count the receiver on assist-opportunity catch-and-shoot", () => {
+    const result = resolvePossession(
+      baseInput({
+        action: "pass",
+        passerId: asPlayerId("off_1"),
+        receiverId: asPlayerId("off_2"),
+        defenderId: asPlayerId("def_1"),
+      }),
+      createStubRng([0, 0, 0]),
+    );
+    const receiver = result.playerStats.find((row) => row.playerId === "off_2");
+    const passer = result.playerStats.find((row) => row.playerId === "off_1");
+    expect(receiver?.touches).toBe(1);
+    expect(passer?.touches).toBe(1);
+  });
+
+  it("credits the fouled shooter once on a shooting foul with FGA", () => {
+    const result = resolvePossession(
+      baseInput({
+        action: "foul",
+        foul: createFoul({
+          foulingPlayerId: asPlayerId("def_1"),
+          fouledPlayerId: asPlayerId("off_1"),
+          foulType: "shooting",
+        }),
+        shotType: "two_point",
+      }),
+      createStubRng([0.99, 0, 0]),
+    );
+    const fouled = result.playerStats.find((row) => row.playerId === "off_1");
+    expect(fouled?.touches).toBe(1);
+    expect(fouled?.fieldGoalsAttempted).toBe(1);
   });
 });
 
@@ -536,7 +608,7 @@ describe("resolvePossession fouls", () => {
     expect(result.defensiveTeamFoulsAfter).toBe(before);
     expect(result.events.map((e) => e.type)).toEqual(["foul"]);
     expect(result.playerStats).toEqual([
-      emptyDelta("off_1", { fouls: 1 }),
+      emptyDelta("off_1", { fouls: 1, touches: 1 }),
     ]);
     expect(result.scoringTeamId).toBeNull();
     expect(result.nextPossession.offensiveTeamId).toBe(DEFENSE);

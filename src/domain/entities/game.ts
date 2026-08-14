@@ -64,6 +64,8 @@ export type GamePlayerStats = {
   threePointersAttempted: number;
   freeThrowsMade: number;
   freeThrowsAttempted: number;
+  /** Meaningful on-ball offensive involvement; at most one credit per possession. */
+  touches: number;
 };
 
 export type Game = {
@@ -147,6 +149,7 @@ export function createEmptyGamePlayerStats(playerId: PlayerId): GamePlayerStats 
     threePointersAttempted: 0,
     freeThrowsMade: 0,
     freeThrowsAttempted: 0,
+    touches: 0,
   };
 }
 
@@ -282,5 +285,6 @@ function assertPlayerStats(playerStats: unknown): void {
       stats.freeThrowsAttempted,
       `playerStats[${index}].freeThrowsAttempted`,
     );
+    assertNonNegativeInteger(stats.touches, `playerStats[${index}].touches`);
   }
 }

@@ -46,6 +46,12 @@ export {
   combinedAttributeWeights,
 } from "@/domain/entities/player-archetype";
 export type { AttributeWeights } from "@/domain/entities/player-archetype";
+export type { OffensiveRole } from "@/domain/entities/offensive-role";
+export {
+  OFFENSIVE_ROLES,
+  OFFENSIVE_ROLE_LABELS,
+  isOffensiveRole,
+} from "@/domain/entities/offensive-role";
 export {
   PLAYER_NATIONALITIES,
   NATIONALITY_LABELS,

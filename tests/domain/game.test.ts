@@ -57,6 +57,7 @@ function sampleStats(overrides: Partial<GamePlayerStats> = {}): GamePlayerStats 
     threePointersAttempted: 5,
     freeThrowsMade: 2,
     freeThrowsAttempted: 2,
+    touches: 0,
     ...overrides,
   };
 }

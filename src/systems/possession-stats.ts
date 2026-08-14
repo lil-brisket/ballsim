@@ -22,11 +22,14 @@ export type PlayerStatsDelta = {
   threePointersAttempted: number;
   freeThrowsMade: number;
   freeThrowsAttempted: number;
+  touches: number;
 };
 
 export type PossessionStatsAccumulator = {
   events: GameEvent[];
   deltas: Map<string, PlayerStatsDelta>;
+  /** Players already credited a touch this possession (dedup). */
+  touchedPlayerIds: Set<string>;
   pointsScored: number;
   nextSequence: number;
 };
@@ -45,6 +48,7 @@ export function createPossessionStatsAccumulator(
   return {
     events: [],
     deltas: new Map(),
+    touchedPlayerIds: new Set(),
     pointsScored: 0,
     nextSequence: eventSequenceStart,
   };
@@ -148,6 +152,21 @@ export function addFoul(
   ensureDelta(accumulator, playerId).fouls += 1;
 }
 
+/**
+ * Credits one touch for meaningful on-ball offensive involvement.
+ * At most one touch per player per possession (overlapping events dedup).
+ */
+export function addTouch(
+  accumulator: PossessionStatsAccumulator,
+  playerId: PlayerId,
+): void {
+  if (accumulator.touchedPlayerIds.has(playerId)) {
+    return;
+  }
+  accumulator.touchedPlayerIds.add(playerId);
+  ensureDelta(accumulator, playerId).touches += 1;
+}
+
 export function finalizePlayerStatsDeltas(
   accumulator: PossessionStatsAccumulator,
 ): PlayerStatsDelta[] {
@@ -166,7 +185,8 @@ export function finalizePlayerStatsDeltas(
       delta.threePointersMade !== 0 ||
       delta.threePointersAttempted !== 0 ||
       delta.freeThrowsMade !== 0 ||
-      delta.freeThrowsAttempted !== 0
+      delta.freeThrowsAttempted !== 0 ||
+      delta.touches !== 0
     ) {
       result.push({ ...delta });
     }
@@ -238,6 +258,7 @@ export function applyPossessionResolution(
         row.threePointersAttempted + delta.threePointersAttempted,
       freeThrowsMade: row.freeThrowsMade + delta.freeThrowsMade,
       freeThrowsAttempted: row.freeThrowsAttempted + delta.freeThrowsAttempted,
+      touches: row.touches + delta.touches,
     };
   }
 
@@ -278,6 +299,7 @@ function ensureDelta(
     threePointersAttempted: 0,
     freeThrowsMade: 0,
     freeThrowsAttempted: 0,
+    touches: 0,
   };
   accumulator.deltas.set(playerId, created);
   return created;

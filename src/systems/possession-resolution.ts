@@ -42,6 +42,7 @@ import {
   addFreeThrow,
   addPoints,
   addRebound,
+  addTouch,
   addTurnover,
   createPossessionStatsAccumulator,
   fieldGoalPoints,
@@ -318,6 +319,7 @@ function resolveShotBranch(ctx: ExecutionContext): void {
     ctx.rng,
   );
   ctx.steps.push({ type: "shot", result: shot });
+  addTouch(ctx.stats, shooter.id);
 
   if (shot.made) {
     const points = fieldGoalPoints(decision.shotType);
@@ -365,6 +367,7 @@ function resolvePassBranch(ctx: ExecutionContext): void {
     ctx.rng,
   );
   ctx.steps.push({ type: "pass", result: pass });
+  addTouch(ctx.stats, passer.id);
 
   if (pass.outcome === "turnover") {
     addTurnover(ctx.stats, passer.id);
@@ -382,6 +385,7 @@ function resolvePassBranch(ctx: ExecutionContext): void {
 
   ctx.possessionAction = "pass";
   ctx.possessionOutcome = "pass_completed";
+  addTouch(ctx.stats, receiver.id);
 
   if (!pass.assistOpportunity) {
     // Possession continues; no shot in this call.
@@ -401,6 +405,7 @@ function resolvePassBranch(ctx: ExecutionContext): void {
   );
   ctx.steps.push({ type: "shot", result: shot });
   ctx.primaryOffensivePlayerId = receiver.id;
+  // Receiver already credited on completed pass; no second touch.
 
   if (shot.made) {
     const points = fieldGoalPoints(shotType);
@@ -439,6 +444,7 @@ function resolveTurnoverBranch(ctx: ExecutionContext): void {
   ctx.primaryDefensivePlayerId = null;
   ctx.possessionAction = "turnover";
   ctx.possessionOutcome = "turnover";
+  addTouch(ctx.stats, player.id);
   addTurnover(ctx.stats, player.id);
   pushEvent(
     ctx.stats,
@@ -462,6 +468,7 @@ function resolveFoulBranch(ctx: ExecutionContext): void {
     ctx.primaryDefensivePlayerId = fouled.id;
     ctx.possessionAction = "foul";
     ctx.possessionOutcome = "offensive_foul";
+    addTouch(ctx.stats, fouler.id);
     addFoul(ctx.stats, fouler.id);
     pushEvent(
       ctx.stats,
@@ -511,6 +518,9 @@ function resolveFoulBranch(ctx: ExecutionContext): void {
       ctx.input.defensiveTeamId,
     );
 
+    // Shooting foul credits the fouled shooter whether or not FGA is recorded;
+    // if FGA is also recorded below, dedup keeps a single touch.
+    addTouch(ctx.stats, fouled.id);
     addFieldGoal(ctx.stats, fouled.id, shotType, foulResult.basketCounts);
     if (foulResult.basketCounts) {
       addPoints(ctx.stats, fouled.id, fieldGoalPoints(shotType));

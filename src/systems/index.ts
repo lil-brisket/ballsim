@@ -83,6 +83,7 @@ export {
 } from "@/systems/possession-decision";
 export {
   applyPossessionResolution,
+  addTouch,
   type PlayerStatsDelta,
 } from "@/systems/possession-stats";
 export {
@@ -112,6 +113,29 @@ export {
   type GameClock,
 } from "@/systems/game-clock";
 export { choosePossessionDecision } from "@/systems/possession-decision-selection";
+export {
+  PLAYER_USAGE_CONFIG,
+  USAGE_SCORE_FLOOR,
+  mergePlayerUsageConfig,
+  type PlayerUsageConfig,
+} from "@/systems/player-usage-config";
+export {
+  scoringAbility,
+  creationAbility,
+  calculateUsageScore,
+  roleMultiplier,
+  computeShotWeight,
+  computePassWeight,
+  computeInvolvementWeight,
+  assignOffensiveRoles,
+  buildOffensiveUsageProfiles,
+  normalizeShares,
+  normalizeUsageProfiles,
+  pickByWeight,
+  pickWeightedPlayer,
+  type PlayerUsageProfile,
+  type NormalizedUsageShares,
+} from "@/systems/player-usage";
 export { updateStandings } from "@/systems/standings";
 export {
   bootstrapWorld,

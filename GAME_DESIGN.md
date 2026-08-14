@@ -165,6 +165,33 @@ Each of the 19 attributes in `PLAYER_ATTRIBUTE_KEYS` receives one seeded integer
 
 Constants live in `src/systems/player-development-config.ts`.
 
+## Offensive usage and role (v1)
+
+Offensive involvement is differentiated among the **on-court eligible pool** passed into `choosePossessionDecision`. There is no second simulation path: usage changes **who** is selected; existing shot/pass/rebound/foul/FT resolvers and `actionBaseWeights` are unchanged.
+
+Conceptual layers (do not collapse them):
+
+```text
+Player attributes
+      ↓
+  usageScore          general offensive-involvement score (not a shot/pass %)
+      ↓
+ offensive role       derived, ephemeral rank in the eligible pool
+      ↓
+ ┌────┴────┐
+ ↓         ↓
+shot      pass        usageScore × roleMult × scoring|creation, then normalize
+weight    weight
+```
+
+- **usageScore** mixes scoring ability, creation ability, ball handling, and offensive IQ (config in `player-usage-config.ts`), floored by `USAGE_SCORE_FLOOR`.
+- **Roles** (`primary_creator`, `secondary_creator`, `scorer`, `role_player`, `low_usage`) are assigned by usageScore rank inside the pool. Players outside the pool are `bench` and are not ranked. Roles are never stored on `Player`.
+- Role multipliers are modest so attributes dominate (e.g. a 90-rated role player still out-weights a 50-rated primary).
+- **Receiver** selection uses shot weight (passes toward scoring threats) and does **not** change pass completion probability.
+- Team depth is the normalize step: adding another high-usage teammate reduces existing shares. No fixed superstar percentages.
+
+**Touches** are box-score instrumentation only (`GamePlayerStats.touches`). A touch is meaningful on-ball offensive involvement. A player gets **at most one touch per possession** (overlapping events dedup). Touches do not influence selection or resolution. Shooting fouls credit the fouled shooter once whether or not an FGA is recorded; completed-pass receivers are the only success-dependent credit.
+
 ## Design rules
 
 - Prefer real, tested foundation pieces over fake "working" placeholders.
