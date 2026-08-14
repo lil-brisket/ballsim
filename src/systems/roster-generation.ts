@@ -1,29 +1,14 @@
 import { asContractId, asPlayerId } from "@/domain/ids";
-import {
-  type Player,
-  type PlayerAttributes,
-  type PlayerPosition,
-} from "@/domain/entities/player";
+import { type Player, type PlayerAttributes } from "@/domain/entities/player";
 import type { Contract } from "@/domain/entities/contract";
 import type { Rng } from "@/domain/rng";
 import { systemResult, type SystemResult } from "@/domain/system-result";
 import type { GameState } from "@/state/game-state";
 import { generatePlayerWithRng } from "@/systems/player-generation";
-
-const PLAYERS_PER_TEAM = 10;
-
-const POSITION_SLOT: PlayerPosition[] = [
-  "PG",
-  "SG",
-  "SF",
-  "PF",
-  "C",
-  "PG",
-  "SG",
-  "SF",
-  "PF",
-  "C",
-];
+import {
+  DEFAULT_ROSTER_SIZE,
+  rosterPositionForSlot,
+} from "@/systems/roster-generation-config";
 
 /**
  * Fills empty team rosters with fictional players and starter contracts.
@@ -46,9 +31,9 @@ export function generateRosters(state: GameState, rng: Rng): SystemResult {
   for (const teamId of teamIds) {
     let teamPayroll = finances[teamId]?.payroll ?? 0;
 
-    for (let slot = 0; slot < PLAYERS_PER_TEAM; slot += 1) {
+    for (let slot = 0; slot < DEFAULT_ROSTER_SIZE; slot += 1) {
       const playerId = asPlayerId(`player_${teamId}_${slot}`);
-      const position = POSITION_SLOT[slot] ?? "SF";
+      const position = rosterPositionForSlot(slot);
       const contractId = asContractId(`contract_${playerId}`);
 
       const player = generatePlayerWithRng(rng, {
