@@ -81,6 +81,17 @@ export {
   GAME_EVENT_TYPES,
   createGame,
 } from "@/domain/entities/game";
+export type {
+  Possession,
+  PossessionInput,
+  PossessionAction,
+  PossessionOutcome,
+} from "@/domain/entities/possession";
+export {
+  POSSESSION_ACTIONS,
+  POSSESSION_OUTCOMES,
+  createPossession,
+} from "@/domain/entities/possession";
 export type { Season, SeasonPhase } from "@/domain/entities/season";
 export type { Schedule } from "@/domain/entities/schedule";
 export type { Standings, TeamStanding } from "@/domain/entities/standings";

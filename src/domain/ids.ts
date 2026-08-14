@@ -10,6 +10,7 @@ export type CoachId = Brand<string, "CoachId">;
 export type StaffId = Brand<string, "StaffId">;
 export type ArenaId = Brand<string, "ArenaId">;
 export type GameId = Brand<string, "GameId">;
+export type PossessionId = Brand<string, "PossessionId">;
 export type SeasonId = Brand<string, "SeasonId">;
 export type DomainEventId = Brand<string, "DomainEventId">;
 export type SaveId = Brand<string, "SaveId">;
@@ -52,6 +53,10 @@ export function asArenaId(value: string): ArenaId {
 
 export function asGameId(value: string): GameId {
   return value as GameId;
+}
+
+export function asPossessionId(value: string): PossessionId {
+  return value as PossessionId;
 }
 
 export function asSeasonId(value: string): SeasonId {
