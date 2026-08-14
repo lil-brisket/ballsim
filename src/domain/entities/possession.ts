@@ -1,12 +1,18 @@
 import type { PlayerId, PossessionId } from "@/domain/ids";
 
-export type PossessionAction = "shot" | "pass" | "turnover" | "foul";
+export type PossessionAction =
+  | "shot"
+  | "pass"
+  | "turnover"
+  | "foul"
+  | "free_throw";
 
 export const POSSESSION_ACTIONS: readonly PossessionAction[] = [
   "shot",
   "pass",
   "turnover",
   "foul",
+  "free_throw",
 ];
 
 export type PossessionOutcome =
@@ -15,7 +21,11 @@ export type PossessionOutcome =
   | "pass_completed"
   | "turnover"
   | "offensive_foul"
-  | "defensive_foul";
+  | "defensive_foul"
+  | "shooting_foul"
+  | "non_shooting_foul"
+  | "free_throw_made"
+  | "free_throw_missed";
 
 export const POSSESSION_OUTCOMES: readonly PossessionOutcome[] = [
   "shot_made",
@@ -24,6 +34,10 @@ export const POSSESSION_OUTCOMES: readonly PossessionOutcome[] = [
   "turnover",
   "offensive_foul",
   "defensive_foul",
+  "shooting_foul",
+  "non_shooting_foul",
+  "free_throw_made",
+  "free_throw_missed",
 ];
 
 const COMPATIBLE_OUTCOMES: Record<
@@ -33,7 +47,13 @@ const COMPATIBLE_OUTCOMES: Record<
   shot: ["shot_made", "shot_missed"],
   pass: ["pass_completed"],
   turnover: ["turnover"],
-  foul: ["offensive_foul", "defensive_foul"],
+  foul: [
+    "offensive_foul",
+    "defensive_foul",
+    "shooting_foul",
+    "non_shooting_foul",
+  ],
+  free_throw: ["free_throw_made", "free_throw_missed"],
 };
 
 export type Possession = {

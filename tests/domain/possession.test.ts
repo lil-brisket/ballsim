@@ -58,9 +58,19 @@ describe("createPossession", () => {
       { action: "turnover", outcome: "turnover" },
       { action: "foul", outcome: "offensive_foul" },
       { action: "foul", outcome: "defensive_foul" },
+      { action: "foul", outcome: "shooting_foul" },
+      { action: "foul", outcome: "non_shooting_foul" },
+      { action: "free_throw", outcome: "free_throw_made" },
+      { action: "free_throw", outcome: "free_throw_missed" },
     ];
 
-    expect(POSSESSION_ACTIONS).toEqual(["shot", "pass", "turnover", "foul"]);
+    expect(POSSESSION_ACTIONS).toEqual([
+      "shot",
+      "pass",
+      "turnover",
+      "foul",
+      "free_throw",
+    ]);
 
     for (const { action, outcome } of cases) {
       const possession = createPossession(validInput({ action, outcome }));
@@ -78,7 +88,9 @@ describe("createPossession", () => {
             ? "pass_completed"
             : action === "turnover"
               ? "turnover"
-              : "defensive_foul";
+              : action === "free_throw"
+                ? "free_throw_made"
+                : "defensive_foul";
       const possession = createPossession(
         validInput({
           action,
@@ -192,6 +204,16 @@ describe("createPossession", () => {
     expect(() =>
       createPossession(
         validInput({ action: "foul", outcome: "turnover" }),
+      ),
+    ).toThrow(/not compatible/);
+    expect(() =>
+      createPossession(
+        validInput({ action: "free_throw", outcome: "shot_made" }),
+      ),
+    ).toThrow(/not compatible/);
+    expect(() =>
+      createPossession(
+        validInput({ action: "foul", outcome: "free_throw_made" }),
       ),
     ).toThrow(/not compatible/);
   });

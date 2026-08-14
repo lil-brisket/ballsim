@@ -92,6 +92,8 @@ export {
   POSSESSION_OUTCOMES,
   createPossession,
 } from "@/domain/entities/possession";
+export type { Foul, FoulInput, FoulType } from "@/domain/entities/foul";
+export { FOUL_TYPES, createFoul } from "@/domain/entities/foul";
 export type { Season, SeasonPhase } from "@/domain/entities/season";
 export type { Schedule } from "@/domain/entities/schedule";
 export type { Standings, TeamStanding } from "@/domain/entities/standings";

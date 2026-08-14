@@ -58,6 +58,23 @@ export {
   type PassProbabilities,
   type PassResolution,
 } from "@/systems/pass-resolution";
+export {
+  FOUL_RESOLUTION_CONFIG,
+  type FoulRules,
+} from "@/systems/foul-resolution-config";
+export {
+  resolveFoul,
+  validateFoulRules,
+  type ResolveFoulInput,
+  type FoulResolution,
+} from "@/systems/foul-resolution";
+export { FREE_THROW_RESOLUTION_CONFIG } from "@/systems/free-throw-resolution-config";
+export {
+  calculateFreeThrowProbability,
+  resolveFreeThrow,
+  type ResolveFreeThrowInput,
+  type FreeThrowResult,
+} from "@/systems/free-throw-resolution";
 export { generateSchedule } from "@/systems/schedule-generation";
 export { advanceCalendar } from "@/systems/calendar";
 export { simulateGamesForDate } from "@/systems/game-simulation";

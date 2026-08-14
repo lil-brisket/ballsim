@@ -25,6 +25,10 @@ Each system should:
 | `rebound-resolution` | Building block: `playerReboundBaseStrength` / `resolveRebound(input, rng)` → OREB/DREB + rebounder (no GameState) |
 | `pass-resolution-config` | Tunable pass-success and assist-opportunity bounds and coefficients (gameplay tuning, not realism) |
 | `pass-resolution` | Building block: `calculatePassProbabilities(input)` / `resolvePass(input, rng)` → complete/turnover + assist-opportunity precursor (no GameState) |
+| `foul-resolution-config` | Tunable team-foul bonus thresholds and free-throw counts (generic defaults, not NBA rules) |
+| `foul-resolution` | Building block: `resolveFoul(input)` → consequences (`teamFoulsAfter`, `freeThrowsAwarded`, `basketCounts`); no RNG, no GameState, no Game mutation |
+| `free-throw-resolution-config` | Tunable free-throw make-probability bounds |
+| `free-throw-resolution` | Building block: `calculateFreeThrowProbability(input)` / `resolveFreeThrow(input, rng)` using `Player.attributes.freeThrow` (not `resolveShot`) |
 | `roster-generation` | World-gen: roster slots + contracts; calls player-generation per slot |
 | `roster-rules` | Building block: configurable roster size/position/group validation; throws `Error`, not `SystemResult` |
 | `schedule-generation` | World-gen: double round-robin schedule |
@@ -38,3 +42,5 @@ Advance day processes games for the **current** calendar date, updates standings
 `developPlayer` is a player-level building block (returns `Player`, not `SystemResult`). It recalculates `development.stage` from age, modifies attributes in `PLAYER_ATTRIBUTE_KEYS` order (19 RNG rolls), and leaves age unchanged. Injury status is ignored in v1. A future season tick should age players and then call this engine.
 
 `roster-rules` is a validation building block (`createRosterRulesConfig` / `validateRoster`). A fully assigned roster is a partition: `players.length === startingLineupSize + benchSize + inactiveSize`. Min/max roster size is independent of that composition sum. Validators throw `Error` and do not mutate input, accept a `Team`, or look up GameState.
+
+`resolveFoul` / `resolveFreeThrow` are resolution building blocks only (v1). They do not mutate `Game`, `Game.playerStats.fouls`, or `GameEventType`, and they do not emit simulation or play-by-play events. Free throws use the existing `freeThrow` attribute; they do not call `resolveShot()`. Callers persist `teamFoulsAfter` and wire events in a later simulation task.
