@@ -108,7 +108,7 @@ export type PlayerInput = {
   development: DevelopmentState;
 };
 
-const ATTRIBUTE_KEYS: readonly (keyof PlayerAttributes)[] = [
+export const PLAYER_ATTRIBUTE_KEYS: readonly (keyof PlayerAttributes)[] = [
   "speed",
   "strength",
   "athleticism",
@@ -258,13 +258,13 @@ function assertAttributes(attributes: PlayerAttributes): void {
   if (attributes === null || typeof attributes !== "object") {
     throw new Error("Player attributes must be an object.");
   }
-  const knownKeys = new Set<string>(ATTRIBUTE_KEYS);
+  const knownKeys = new Set<string>(PLAYER_ATTRIBUTE_KEYS);
   for (const key of Object.keys(attributes)) {
     if (!knownKeys.has(key)) {
       throw new Error(`Player attributes contains unknown key "${key}".`);
     }
   }
-  for (const key of ATTRIBUTE_KEYS) {
+  for (const key of PLAYER_ATTRIBUTE_KEYS) {
     assertRating(attributes[key], `attributes.${key}`);
   }
 }

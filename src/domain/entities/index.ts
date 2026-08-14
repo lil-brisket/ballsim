@@ -19,6 +19,7 @@ export {
   RATING_MIN,
   RATING_MAX,
   PLAYER_POSITIONS,
+  PLAYER_ATTRIBUTE_KEYS,
   createPlayer,
 } from "@/domain/entities/player";
 export {

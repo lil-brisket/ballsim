@@ -4,6 +4,7 @@ export {
   generatePlayerWithRng,
   type GeneratePlayerOptions,
 } from "@/systems/player-generation";
+export { developPlayer } from "@/systems/player-development";
 export { generateSchedule } from "@/systems/schedule-generation";
 export { advanceCalendar } from "@/systems/calendar";
 export { simulateGamesForDate } from "@/systems/game-simulation";

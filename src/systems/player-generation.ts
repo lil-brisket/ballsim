@@ -4,7 +4,6 @@ import {
   PLAYER_POSITIONS,
   RATING_MAX,
   RATING_MIN,
-  type DevelopmentStage,
   type Player,
   type PlayerPosition,
 } from "@/domain/entities/player";
@@ -27,6 +26,7 @@ import {
   MIN_PLAYER_QUALITY,
   MIN_PERSONALITY,
   POSITION_BODY_RANGES,
+  developmentStageForAge,
   potentialGapBandForAge,
 } from "@/systems/player-generation-config";
 
@@ -132,14 +132,4 @@ export function generatePlayerWithRng(
 
 function clampRating(value: number): number {
   return Math.min(RATING_MAX, Math.max(RATING_MIN, value));
-}
-
-function developmentStageForAge(age: number): DevelopmentStage {
-  if (age < 25) {
-    return "developing";
-  }
-  if (age > 30) {
-    return "declining";
-  }
-  return "prime";
 }

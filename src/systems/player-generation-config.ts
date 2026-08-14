@@ -1,4 +1,7 @@
-import type { PlayerPosition } from "@/domain/entities/player";
+import type {
+  DevelopmentStage,
+  PlayerPosition,
+} from "@/domain/entities/player";
 
 /** Inclusive age range for generated players (roster / free-agent pool). */
 export const MIN_PLAYER_AGE = 20;
@@ -76,6 +79,20 @@ export type PotentialGapBand = {
   min: number;
   max: number;
 };
+
+/**
+ * Development stage from age. Authoritative bands:
+ * developing age < 25; prime 25–30; declining age > 30.
+ */
+export function developmentStageForAge(age: number): DevelopmentStage {
+  if (age < 25) {
+    return "developing";
+  }
+  if (age > 30) {
+    return "declining";
+  }
+  return "prime";
+}
 
 /** Potential gap range for a generated age. */
 export function potentialGapBandForAge(age: number): PotentialGapBand {

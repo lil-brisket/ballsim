@@ -8,6 +8,7 @@ import {
 } from "@/domain/ids";
 import {
   createPlayer as createDomainPlayer,
+  PLAYER_ATTRIBUTE_KEYS,
   type DevelopmentState,
   type InjuryStatus,
   type Player,
@@ -113,6 +114,98 @@ export function createPlayer(overrides: CreatePlayerOverrides = {}): Player {
     injury: overrides.injury ?? { kind: "healthy" },
     development: {
       stage: "developing",
+      ...overrides.development,
+    },
+  });
+}
+
+export function uniformPlayerAttributes(rating: number): PlayerAttributes {
+  const attributes = {} as PlayerAttributes;
+  for (const key of PLAYER_ATTRIBUTE_KEYS) {
+    attributes[key] = rating;
+  }
+  return attributes;
+}
+
+export function createYoungHighPotentialPlayer(
+  overrides: CreatePlayerOverrides = {},
+): Player {
+  return createPlayer({
+    ...overrides,
+    age: overrides.age ?? 21,
+    attributes: {
+      ...uniformPlayerAttributes(60),
+      ...overrides.attributes,
+    },
+    potential: {
+      overall: 85,
+      ...overrides.potential,
+    },
+    development: {
+      stage: "developing",
+      ...overrides.development,
+    },
+  });
+}
+
+export function createYoungNearPotentialPlayer(
+  overrides: CreatePlayerOverrides = {},
+): Player {
+  return createPlayer({
+    ...overrides,
+    age: overrides.age ?? 22,
+    attributes: {
+      ...uniformPlayerAttributes(78),
+      ...overrides.attributes,
+    },
+    potential: {
+      overall: 80,
+      ...overrides.potential,
+    },
+    development: {
+      stage: "developing",
+      ...overrides.development,
+    },
+  });
+}
+
+export function createPrimeDevelopmentPlayer(
+  overrides: CreatePlayerOverrides = {},
+): Player {
+  return createPlayer({
+    ...overrides,
+    age: overrides.age ?? 27,
+    attributes: {
+      ...uniformPlayerAttributes(75),
+      ...overrides.attributes,
+    },
+    potential: {
+      overall: 78,
+      ...overrides.potential,
+    },
+    development: {
+      stage: "prime",
+      ...overrides.development,
+    },
+  });
+}
+
+export function createVeteranPlayer(
+  overrides: CreatePlayerOverrides = {},
+): Player {
+  return createPlayer({
+    ...overrides,
+    age: overrides.age ?? 33,
+    attributes: {
+      ...uniformPlayerAttributes(80),
+      ...overrides.attributes,
+    },
+    potential: {
+      overall: 80,
+      ...overrides.potential,
+    },
+    development: {
+      stage: "declining",
       ...overrides.development,
     },
   });

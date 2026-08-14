@@ -71,7 +71,7 @@ GameState
 
 Slice boundaries may be refined as domain models grow, but composition remains mandatory to avoid one undifferentiated mega-object.
 
-`schemaVersion` enables save migrations as the model evolves. Roster building blocks such as `player-name-generation` and `player-attribute-generation` accept an injected `Rng`. The player-generation engine composes those blocks into a full `Player` via `generatePlayer(seed)` / `generatePlayerWithRng(rng)`. Roster generation owns slots, contracts, and payroll, and calls the player generator per slot.
+`schemaVersion` enables save migrations as the model evolves. Roster building blocks such as `player-name-generation` and `player-attribute-generation` accept an injected `Rng`. The player-generation engine composes those blocks into a full `Player` via `generatePlayer(seed)` / `generatePlayerWithRng(rng)`. Roster generation owns slots, contracts, and payroll, and calls the player generator per slot. Annual player development is a building block: `developPlayer(player, rng)` returns a new `Player` (attribute-level change, derived overall, stage from age). It does not increment age; a future season tick should age players and then call `developPlayer`. It is not wired into `runWorldPipeline` yet.
 
 ## Systems and state transitions
 
@@ -115,6 +115,7 @@ persisting. Games for the **current** date are processed before the calendar tic
   internal state so consecutive advances continue the stream.
 - Reconstruct with `createSeededRng(state.meta.rngState)` after load.
 - Invariant: `generatePlayer(seed) ≡ generatePlayerWithRng(createSeededRng(seed))`.
+- Invariant: `developPlayer(player, createSeededRng(seed))` is reproducible for the same player and seed. Development consumes exactly 19 `nextInt` rolls in `PLAYER_ATTRIBUTE_KEYS` order.
 
 ## Domain events
 

@@ -51,7 +51,7 @@ world via `runWorldPipeline` in `src/systems/world-pipeline.ts`:
 Still future work within that pipeline:
 
 - Other AI team decisions
-- Player development
+- Player development season tick (engine exists: `developPlayer`)
 - Injuries
 - Contract / finance ticks
 - League events / news
@@ -89,7 +89,7 @@ Systems expected later (do not treat as present until implemented):
 - Game simulation — **implemented** (`src/systems/game-simulation.ts`)
 - Season simulation — partial (phase set to regular with schedule; playoffs TBD)
 - Calendar / advance day — **implemented** (`src/systems/world-pipeline.ts`)
-- Player development
+- Player development — **implemented** as a building block (`src/systems/player-development.ts`); not yet called from the world pipeline
 - Injuries
 - Finances — payroll set at roster gen; advanced ticks TBD
 - Standings — **implemented** (`src/systems/standings.ts`)
@@ -107,13 +107,14 @@ The original foundation phase deferred simulation. The following are now
 - Calendar / advance day world pipeline
 - Game simulation (box-score engine)
 - Standings updates
+- Player development (annual attribute-level building block)
 
 Still deferred:
 
 - Draft
 - Trades
 - Free agency
-- Player development
+- Player development season tick / aging operation
 - Injuries
 - Advanced finances
 - AI team management
@@ -142,9 +143,25 @@ Players store current ability as category attributes on a **1–99** integer sca
 
 **Nationality** is a typed catalog field on the player (same ownership pattern as archetype). It is selected during name generation and stored for identity/flavor. It does **not** yet affect attributes, tendencies, or simulation. Pre-nationality saves (schema versions before 6) migrate every player to `"USA"` deterministically — a fixed legacy compatibility default, not RNG-based generation.
 
-**Work ethic** is a personality trait only (`personality.workEthic`); it is not a current-ability attribute.
+**Work ethic** is a personality trait (`personality.workEthic`); it is not a current-ability attribute. It modestly scales **positive** development deltas only.
 
-Personality, injury status, and development stage are player state only; they do not yet affect simulation composites or progression systems.
+Personality, injury status, and development stage are stored on the player. Development stage is derived from age (`< 25` developing, `25–30` prime, `> 30` declining) during generation and again on each `developPlayer` call. Injury status does not affect v1 development. Other personality traits besides work ethic are reserved.
+
+## Player development
+
+`developPlayer(player, rng)` applies **one year** of development at the player's current age. It does not increment age. A future season/aging system should advance age, then call this engine.
+
+Current ability develops toward `potential.overall`, which is a ceiling (not raised by normal development). After a development step, derived overall must remain `<= potential.overall`. Overall is never stored or edited directly; attributes change, then `calculatePlayerOverall` is recomputed.
+
+Behavior by stage:
+
+- **Developing** (age < 25): strongest positive opportunity, tapered by remaining potential (`potential.overall - currentOverall`).
+- **Prime** (25–30): generally stable, with small improvement, hold, or isolated decline.
+- **Declining** (age > 30): gradual decline; physical attributes trend down more than skills; mental attributes are more stable. A 31-year-old should not collapse in one year.
+
+Each of the 19 attributes in `PLAYER_ATTRIBUTE_KEYS` receives one seeded integer roll. Positive deltas are scaled by remaining-potential taper and work ethic, then clamped. High work ethic does not guarantee improvement; low work ethic does not forbid it.
+
+Constants live in `src/systems/player-development-config.ts`.
 
 ## Design rules
 
