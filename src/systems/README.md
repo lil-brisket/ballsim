@@ -31,7 +31,9 @@ Each system should:
 | `free-throw-resolution` | Building block: `calculateFreeThrowProbability(input)` / `resolveFreeThrow(input, rng)` using `Player.attributes.freeThrow` (not `resolveShot`) |
 | `roster-generation` | World-gen: roster slots + contracts; calls player-generation per slot |
 | `roster-rules` | Building block: configurable roster size/position/group validation; throws `Error`, not `SystemResult` |
-| `schedule-generation` | World-gen: double round-robin schedule |
+| `schedule-generation-config` | Season schedule config (`teamIds`, `seasonLength` games/team), `defaultSeasonLength`, `expectedRoundCount` |
+| `schedule-validation` | Building block: `validateSeasonSchedule` invariants (no GameState) |
+| `schedule-generation` | Building block `generateSeasonSchedule` (circle/Berger rounds + home/away); world adapter `generateSchedule` defaults to double RR and maps each round to one calendar day |
 | `game-simulation-config` | Tunable period lengths, possession time costs, decision weights |
 | `game-clock` | Building block: simulated integer-second period clock (`consumeTime`) |
 | `possession-decision-selection` | Building block: `choosePossessionDecision` → `PossessionDecision` (usage-weighted who; attribute-weighted what) |

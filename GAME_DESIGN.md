@@ -97,7 +97,7 @@ Systems expected later (do not treat as present until implemented):
 - Injuries
 - Finances — payroll set at roster gen; advanced ticks TBD
 - Standings — **implemented** (`src/systems/standings.ts`)
-- Schedule generation — **implemented** (`src/systems/schedule-generation.ts`)
+- Schedule generation — **implemented** as building block `generateSeasonSchedule` + world adapter `generateSchedule` (`src/systems/schedule-generation.ts`); validates via `validateSeasonSchedule`
 - Save/load (foundation persistence exists)
 - Roster generation — **implemented** (`src/systems/roster-generation.ts`)
 - Roster rules validation — **implemented** as a building block (`src/systems/roster-rules.ts`)
@@ -108,7 +108,7 @@ The original foundation phase deferred simulation. The following are now
 **implemented** at a first-pass level:
 
 - Roster generation (fictional players + contracts)
-- Schedule generation (double round-robin)
+- Schedule generation (configurable games-per-team round robin; default double RR via world adapter)
 - Calendar / advance day world pipeline
 - Game simulation (possession-based engine with quarters/OT and `GameResult`)
 - Standings updates

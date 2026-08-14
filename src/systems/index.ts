@@ -93,7 +93,19 @@ export {
   type NextPossession,
   type PossessionResolution,
 } from "@/systems/possession-resolution";
-export { generateSchedule } from "@/systems/schedule-generation";
+export {
+  generateSchedule,
+  generateSeasonSchedule,
+} from "@/systems/schedule-generation";
+export {
+  MIN_TEAM_COUNT,
+  defaultSeasonLength,
+  expectedRoundCount,
+  validateSeasonScheduleConfig,
+  type SeasonScheduleConfig,
+  type SeasonScheduleAssignment,
+} from "@/systems/schedule-generation-config";
+export { validateSeasonSchedule } from "@/systems/schedule-validation";
 export { advanceCalendar } from "@/systems/calendar";
 export {
   simulateGame,

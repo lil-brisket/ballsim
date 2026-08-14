@@ -75,6 +75,37 @@ describe("roster and schedule generation", () => {
           game.status === "scheduled" && game.playerStats.length === 0,
       ),
     ).toBe(true);
+
+    // First round games share one calendar date (day after currentDate)
+    const firstDate = "2026-10-02";
+    const firstRoundGames = Object.values(result.state.competition.games).filter(
+      (game) => game.date === firstDate,
+    );
+    expect(firstRoundGames.length).toBe(teamCount / 2);
+  });
+
+  it("throws when the empty schedule has fewer than two teams", () => {
+    const state = createInitialGameState({
+      saveId: "save_sched_empty",
+      rngSeed: 14,
+      nowIso: "2026-08-13T12:00:00.000Z",
+    });
+    const emptyTeams = {
+      ...state,
+      world: {
+        ...state.world,
+        teams: {},
+      },
+      competition: {
+        ...state.competition,
+        schedule: {
+          seasonId: state.competition.season.id,
+          gameIds: [],
+        },
+        games: {},
+      },
+    };
+    expect(() => generateSchedule(emptyTeams)).toThrow(/at least 2 teams/);
   });
 });
 
