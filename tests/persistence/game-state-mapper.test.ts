@@ -653,15 +653,114 @@ describe("GameState schema migration", () => {
         minutes: 34,
         points: 22,
         rebounds: 6,
+        offensiveRebounds: 0,
+        defensiveRebounds: 0,
         assists: 5,
         steals: 0,
         blocks: 0,
         turnovers: 0,
         fouls: 0,
+        fieldGoalsMade: 0,
+        fieldGoalsAttempted: 0,
+        threePointersMade: 0,
+        threePointersAttempted: 0,
+        freeThrowsMade: 0,
+        freeThrowsAttempted: 0,
       },
     ]);
+    expect(finalGame.periodScores).toEqual([]);
     expect("homeScore" in finalGame).toBe(false);
     expect("boxScore" in finalGame).toBe(false);
+  });
+
+  it("migrates schemaVersion 8 games to periodScores and extended player stats", () => {
+    const playerId = "player_v8";
+    const stateV8 = {
+      meta: {
+        saveId: "save_v8",
+        schemaVersion: 8,
+        createdAt: "2026-08-13T12:00:00.000Z",
+        updatedAt: "2026-08-13T12:00:00.000Z",
+        rngSeed: 8,
+        rngState: 8,
+      },
+      world: {
+        calendar: { currentDate: "2026-10-01" },
+        league: {
+          id: "league_1",
+          name: "Test",
+          abbreviation: "TST",
+          conferenceIds: [],
+        },
+        conferences: {},
+        divisions: {},
+        teams: {},
+        players: {},
+        coaches: {},
+        staff: {},
+      },
+      competition: {
+        season: {
+          id: "season_1",
+          leagueId: "league_1",
+          year: 2026,
+          phase: "regular",
+        },
+        schedule: { seasonId: "season_1", gameIds: ["game_v8"] },
+        games: {
+          game_v8: {
+            id: "game_v8",
+            seasonId: "season_1",
+            date: "2026-10-15",
+            homeTeamId: "team_h",
+            awayTeamId: "team_a",
+            status: "final",
+            score: { home: 100, away: 98 },
+            events: [],
+            playerStats: [
+              {
+                playerId,
+                minutes: 30,
+                points: 15,
+                rebounds: 4,
+                assists: 3,
+                steals: 1,
+                blocks: 0,
+                turnovers: 2,
+                fouls: 1,
+              },
+            ],
+          },
+        },
+        standings: { seasonId: "season_1", byTeamId: {} },
+      },
+      business: { contracts: {}, finances: {} },
+      user: { controlledTeamId: "team_h", mode: "owner" },
+    };
+
+    const migrated = deserializeGameState(JSON.stringify(stateV8));
+    expect(migrated.meta.schemaVersion).toBe(GAME_STATE_SCHEMA_VERSION);
+    const game = migrated.competition.games.game_v8!;
+    expect(game.periodScores).toEqual([]);
+    expect(game.playerStats[0]).toEqual({
+      playerId,
+      minutes: 30,
+      points: 15,
+      rebounds: 4,
+      offensiveRebounds: 0,
+      defensiveRebounds: 0,
+      assists: 3,
+      steals: 1,
+      blocks: 0,
+      turnovers: 2,
+      fouls: 1,
+      fieldGoalsMade: 0,
+      fieldGoalsAttempted: 0,
+      threePointersMade: 0,
+      threePointersAttempted: 0,
+      freeThrowsMade: 0,
+      freeThrowsAttempted: 0,
+    });
   });
 
   it("round-trips current schema version including rngState", () => {

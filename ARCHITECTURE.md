@@ -49,6 +49,8 @@ src/
   data/                # Static string pools (e.g. name lists); not typed domain catalogs
   state/               # GameState composition + factories + selectors
   systems/             # Simulation systems (added incrementally)
+  simulation/
+    validation/        # Statistical validation harness (box-score aggregates; uses production simulateGame)
   persistence/         # Prisma client, repositories, mappers
 ```
 
@@ -57,6 +59,8 @@ Typed domain catalogs such as `PlayerArchetype` and `PlayerNationality` live und
 `schemaVersion` 6 adds `Player.nationality`. Pre-nationality saves migrate with a fixed legacy default of `"USA"` (no RNG).
 
 `schemaVersion` 7 adds Team relationship fields: conference ID, roster references, staff references, team finance placeholder, arena ID, and reputation. Legacy teams migrate with conference derived from division, empty roster/staff, `{}` finances, deterministic `arena_${teamId}`, and reputation `50`.
+
+`schemaVersion` 9 extends `Game` with `periodScores` and expanded `GamePlayerStats` (FG/3PT/FT, OREB/DREB). Pre-v9 saves migrate with zeros and empty `periodScores`.
 
 ## GameState (composed slices)
 
@@ -97,7 +101,7 @@ Preferences:
 `src/systems/world-pipeline.ts` orchestrates:
 
 1. `bootstrapWorld` — roster generation + schedule generation when empty
-2. `simulateGamesForDate` — box-score engine for `calendar.currentDate`
+2. `simulateGamesForDate` — possession-based `simulateGame` for each scheduled game on `calendar.currentDate`
 3. `updateStandings` — rebuild W/L from final games
 4. `advanceCalendar` — `currentDate + 1 day`
 

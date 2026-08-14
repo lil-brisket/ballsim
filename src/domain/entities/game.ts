@@ -51,11 +51,19 @@ export type GamePlayerStats = {
   minutes: number;
   points: number;
   rebounds: number;
+  offensiveRebounds: number;
+  defensiveRebounds: number;
   assists: number;
   steals: number;
   blocks: number;
   turnovers: number;
   fouls: number;
+  fieldGoalsMade: number;
+  fieldGoalsAttempted: number;
+  threePointersMade: number;
+  threePointersAttempted: number;
+  freeThrowsMade: number;
+  freeThrowsAttempted: number;
 };
 
 export type Game = {
@@ -66,6 +74,8 @@ export type Game = {
   awayTeamId: TeamId;
   status: GameStatus;
   score: GameScore;
+  /** Points scored per completed period (not cumulative). Empty while scheduled. */
+  periodScores: GameScore[];
   events: GameEvent[];
   playerStats: GamePlayerStats[];
 };
@@ -79,6 +89,7 @@ export type GameInput = {
   date: string;
   score: GameScore;
   status: GameStatus;
+  periodScores: GameScore[];
   events: GameEvent[];
   playerStats: GamePlayerStats[];
 };
@@ -98,6 +109,7 @@ export function createGame(input: GameInput): Game {
   assertDate(input.date);
   assertStatus(input.status);
   assertScore(input.score);
+  assertPeriodScores(input.periodScores);
   assertEvents(input.events);
   assertPlayerStats(input.playerStats);
 
@@ -109,8 +121,32 @@ export function createGame(input: GameInput): Game {
     awayTeamId: input.awayTeamId,
     status: input.status,
     score: { ...input.score },
+    periodScores: input.periodScores.map((period) => ({ ...period })),
     events: input.events.map((event) => ({ ...event })),
     playerStats: input.playerStats.map((stats) => ({ ...stats })),
+  };
+}
+
+/** Zeroed box-score row for a player (DNP or pre-tip). */
+export function createEmptyGamePlayerStats(playerId: PlayerId): GamePlayerStats {
+  return {
+    playerId,
+    minutes: 0,
+    points: 0,
+    rebounds: 0,
+    offensiveRebounds: 0,
+    defensiveRebounds: 0,
+    assists: 0,
+    steals: 0,
+    blocks: 0,
+    turnovers: 0,
+    fouls: 0,
+    fieldGoalsMade: 0,
+    fieldGoalsAttempted: 0,
+    threePointersMade: 0,
+    threePointersAttempted: 0,
+    freeThrowsMade: 0,
+    freeThrowsAttempted: 0,
   };
 }
 
@@ -153,12 +189,24 @@ function assertNonNegativeInteger(value: number, field: string): void {
   }
 }
 
-function assertScore(score: GameScore): void {
+function assertScore(score: GameScore, fieldPrefix = "score"): void {
   if (score === null || typeof score !== "object" || Array.isArray(score)) {
-    throw new Error("Game score must be an object.");
+    throw new Error(`Game ${fieldPrefix} must be an object.`);
   }
-  assertNonNegativeInteger(score.home, "score.home");
-  assertNonNegativeInteger(score.away, "score.away");
+  assertNonNegativeInteger(score.home, `${fieldPrefix}.home`);
+  assertNonNegativeInteger(score.away, `${fieldPrefix}.away`);
+}
+
+function assertPeriodScores(periodScores: unknown): void {
+  if (!Array.isArray(periodScores)) {
+    throw new Error("Game periodScores must be an array.");
+  }
+  for (let index = 0; index < periodScores.length; index += 1) {
+    assertScore(
+      periodScores[index] as GameScore,
+      `periodScores[${index}]`,
+    );
+  }
 }
 
 function assertEvents(events: unknown): void {
@@ -194,6 +242,14 @@ function assertPlayerStats(playerStats: unknown): void {
     assertNonNegativeInteger(stats.minutes, `playerStats[${index}].minutes`);
     assertNonNegativeInteger(stats.points, `playerStats[${index}].points`);
     assertNonNegativeInteger(stats.rebounds, `playerStats[${index}].rebounds`);
+    assertNonNegativeInteger(
+      stats.offensiveRebounds,
+      `playerStats[${index}].offensiveRebounds`,
+    );
+    assertNonNegativeInteger(
+      stats.defensiveRebounds,
+      `playerStats[${index}].defensiveRebounds`,
+    );
     assertNonNegativeInteger(stats.assists, `playerStats[${index}].assists`);
     assertNonNegativeInteger(stats.steals, `playerStats[${index}].steals`);
     assertNonNegativeInteger(stats.blocks, `playerStats[${index}].blocks`);
@@ -202,5 +258,29 @@ function assertPlayerStats(playerStats: unknown): void {
       `playerStats[${index}].turnovers`,
     );
     assertNonNegativeInteger(stats.fouls, `playerStats[${index}].fouls`);
+    assertNonNegativeInteger(
+      stats.fieldGoalsMade,
+      `playerStats[${index}].fieldGoalsMade`,
+    );
+    assertNonNegativeInteger(
+      stats.fieldGoalsAttempted,
+      `playerStats[${index}].fieldGoalsAttempted`,
+    );
+    assertNonNegativeInteger(
+      stats.threePointersMade,
+      `playerStats[${index}].threePointersMade`,
+    );
+    assertNonNegativeInteger(
+      stats.threePointersAttempted,
+      `playerStats[${index}].threePointersAttempted`,
+    );
+    assertNonNegativeInteger(
+      stats.freeThrowsMade,
+      `playerStats[${index}].freeThrowsMade`,
+    );
+    assertNonNegativeInteger(
+      stats.freeThrowsAttempted,
+      `playerStats[${index}].freeThrowsAttempted`,
+    );
   }
 }

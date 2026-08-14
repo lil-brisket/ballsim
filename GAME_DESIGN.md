@@ -86,7 +86,7 @@ Entities expected in the long-term model:
 
 Systems expected later (do not treat as present until implemented):
 
-- Game simulation — **implemented** (`src/systems/game-simulation.ts`)
+- Game simulation — **implemented** (`src/systems/game-simulation.ts` possession orchestration → `GameResult`)
 - Season simulation — partial (phase set to regular with schedule; playoffs TBD)
 - Calendar / advance day — **implemented** (`src/systems/world-pipeline.ts`)
 - Player development — **implemented** as a building block (`src/systems/player-development.ts`); not yet called from the world pipeline
@@ -106,7 +106,7 @@ The original foundation phase deferred simulation. The following are now
 - Roster generation (fictional players + contracts)
 - Schedule generation (double round-robin)
 - Calendar / advance day world pipeline
-- Game simulation (box-score engine)
+- Game simulation (possession-based engine with quarters/OT and `GameResult`)
 - Standings updates
 - Player development (annual attribute-level building block)
 - Roster rules validation (configurable size, positions, starters/bench/inactive)

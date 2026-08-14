@@ -37,7 +37,9 @@ import {
 import type { ShotType } from "@/systems/shot-resolution-config";
 import {
   addAssist,
+  addFieldGoal,
   addFoul,
+  addFreeThrow,
   addPoints,
   addRebound,
   addTurnover,
@@ -319,6 +321,7 @@ function resolveShotBranch(ctx: ExecutionContext): void {
 
   if (shot.made) {
     const points = fieldGoalPoints(decision.shotType);
+    addFieldGoal(ctx.stats, shooter.id, decision.shotType, true);
     addPoints(ctx.stats, shooter.id, points);
     pushEvent(
       ctx.stats,
@@ -331,6 +334,7 @@ function resolveShotBranch(ctx: ExecutionContext): void {
     return;
   }
 
+  addFieldGoal(ctx.stats, shooter.id, decision.shotType, false);
   pushEvent(
     ctx.stats,
     "shot_missed",
@@ -400,6 +404,7 @@ function resolvePassBranch(ctx: ExecutionContext): void {
 
   if (shot.made) {
     const points = fieldGoalPoints(shotType);
+    addFieldGoal(ctx.stats, receiver.id, shotType, true);
     addPoints(ctx.stats, receiver.id, points);
     pushEvent(
       ctx.stats,
@@ -418,6 +423,7 @@ function resolvePassBranch(ctx: ExecutionContext): void {
     return;
   }
 
+  addFieldGoal(ctx.stats, receiver.id, shotType, false);
   pushEvent(
     ctx.stats,
     "shot_missed",
@@ -505,6 +511,7 @@ function resolveFoulBranch(ctx: ExecutionContext): void {
       ctx.input.defensiveTeamId,
     );
 
+    addFieldGoal(ctx.stats, fouled.id, shotType, foulResult.basketCounts);
     if (foulResult.basketCounts) {
       addPoints(ctx.stats, fouled.id, fieldGoalPoints(shotType));
     }
@@ -573,6 +580,7 @@ function resolveFreeThrowSequence(
       shooter.id,
       ctx.input.offensiveTeamId,
     );
+    addFreeThrow(ctx.stats, shooter.id, ft.made);
     if (ft.made) {
       addPoints(ctx.stats, shooter.id, 1);
       lastMade = true;
@@ -607,7 +615,7 @@ function resolveReboundAfterMiss(ctx: ExecutionContext): void {
     ctx.rng,
   );
   ctx.steps.push({ type: "rebound", result: rebound });
-  addRebound(ctx.stats, rebound.playerId);
+  addRebound(ctx.stats, rebound.playerId, rebound.type);
   pushEvent(
     ctx.stats,
     "rebound",

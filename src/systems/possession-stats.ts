@@ -11,9 +11,17 @@ export type PlayerStatsDelta = {
   playerId: PlayerId;
   points: number;
   rebounds: number;
+  offensiveRebounds: number;
+  defensiveRebounds: number;
   assists: number;
   turnovers: number;
   fouls: number;
+  fieldGoalsMade: number;
+  fieldGoalsAttempted: number;
+  threePointersMade: number;
+  threePointersAttempted: number;
+  freeThrowsMade: number;
+  freeThrowsAttempted: number;
 };
 
 export type PossessionStatsAccumulator = {
@@ -74,11 +82,49 @@ export function addPoints(
   accumulator.pointsScored += points;
 }
 
+export function addFieldGoal(
+  accumulator: PossessionStatsAccumulator,
+  playerId: PlayerId,
+  shotType: ShotType,
+  made: boolean,
+): void {
+  const delta = ensureDelta(accumulator, playerId);
+  delta.fieldGoalsAttempted += 1;
+  if (shotType === "three_point") {
+    delta.threePointersAttempted += 1;
+  }
+  if (made) {
+    delta.fieldGoalsMade += 1;
+    if (shotType === "three_point") {
+      delta.threePointersMade += 1;
+    }
+  }
+}
+
+export function addFreeThrow(
+  accumulator: PossessionStatsAccumulator,
+  playerId: PlayerId,
+  made: boolean,
+): void {
+  const delta = ensureDelta(accumulator, playerId);
+  delta.freeThrowsAttempted += 1;
+  if (made) {
+    delta.freeThrowsMade += 1;
+  }
+}
+
 export function addRebound(
   accumulator: PossessionStatsAccumulator,
   playerId: PlayerId,
+  type: "offensive" | "defensive",
 ): void {
-  ensureDelta(accumulator, playerId).rebounds += 1;
+  const delta = ensureDelta(accumulator, playerId);
+  delta.rebounds += 1;
+  if (type === "offensive") {
+    delta.offensiveRebounds += 1;
+  } else {
+    delta.defensiveRebounds += 1;
+  }
 }
 
 export function addAssist(
@@ -110,9 +156,17 @@ export function finalizePlayerStatsDeltas(
     if (
       delta.points !== 0 ||
       delta.rebounds !== 0 ||
+      delta.offensiveRebounds !== 0 ||
+      delta.defensiveRebounds !== 0 ||
       delta.assists !== 0 ||
       delta.turnovers !== 0 ||
-      delta.fouls !== 0
+      delta.fouls !== 0 ||
+      delta.fieldGoalsMade !== 0 ||
+      delta.fieldGoalsAttempted !== 0 ||
+      delta.threePointersMade !== 0 ||
+      delta.threePointersAttempted !== 0 ||
+      delta.freeThrowsMade !== 0 ||
+      delta.freeThrowsAttempted !== 0
     ) {
       result.push({ ...delta });
     }
@@ -172,9 +226,18 @@ export function applyPossessionResolution(
       ...row,
       points: row.points + delta.points,
       rebounds: row.rebounds + delta.rebounds,
+      offensiveRebounds: row.offensiveRebounds + delta.offensiveRebounds,
+      defensiveRebounds: row.defensiveRebounds + delta.defensiveRebounds,
       assists: row.assists + delta.assists,
       turnovers: row.turnovers + delta.turnovers,
       fouls: row.fouls + delta.fouls,
+      fieldGoalsMade: row.fieldGoalsMade + delta.fieldGoalsMade,
+      fieldGoalsAttempted: row.fieldGoalsAttempted + delta.fieldGoalsAttempted,
+      threePointersMade: row.threePointersMade + delta.threePointersMade,
+      threePointersAttempted:
+        row.threePointersAttempted + delta.threePointersAttempted,
+      freeThrowsMade: row.freeThrowsMade + delta.freeThrowsMade,
+      freeThrowsAttempted: row.freeThrowsAttempted + delta.freeThrowsAttempted,
     };
   }
 
@@ -186,6 +249,7 @@ export function applyPossessionResolution(
     date: game.date,
     status: game.status,
     score,
+    periodScores: game.periodScores.map((period) => ({ ...period })),
     events: [...game.events, ...result.events.map((event) => ({ ...event }))],
     playerStats,
   });
@@ -203,9 +267,17 @@ function ensureDelta(
     playerId,
     points: 0,
     rebounds: 0,
+    offensiveRebounds: 0,
+    defensiveRebounds: 0,
     assists: 0,
     turnovers: 0,
     fouls: 0,
+    fieldGoalsMade: 0,
+    fieldGoalsAttempted: 0,
+    threePointersMade: 0,
+    threePointersAttempted: 0,
+    freeThrowsMade: 0,
+    freeThrowsAttempted: 0,
   };
   accumulator.deltas.set(playerId, created);
   return created;

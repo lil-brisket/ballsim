@@ -45,6 +45,7 @@ export function generateSchedule(state: GameState): SystemResult {
       awayTeamId: pair.away,
       status: "scheduled",
       score: { home: 0, away: 0 },
+      periodScores: [],
       events: [],
       playerStats: [],
     });

@@ -80,7 +80,18 @@ export {
   GAME_STATUSES,
   GAME_EVENT_TYPES,
   createGame,
+  createEmptyGamePlayerStats,
 } from "@/domain/entities/game";
+export type {
+  GameResult,
+  GameResultInput,
+  GameTeamStats,
+  PossessionCounts,
+} from "@/domain/entities/game-result";
+export {
+  createGameResult,
+  aggregateTeamStats,
+} from "@/domain/entities/game-result";
 export type {
   Possession,
   PossessionInput,

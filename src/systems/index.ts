@@ -94,7 +94,24 @@ export {
 } from "@/systems/possession-resolution";
 export { generateSchedule } from "@/systems/schedule-generation";
 export { advanceCalendar } from "@/systems/calendar";
-export { simulateGamesForDate } from "@/systems/game-simulation";
+export {
+  simulateGame,
+  simulateGamesForDate,
+  type SimulateGameContext,
+} from "@/systems/game-simulation";
+export {
+  GAME_SIMULATION_CONFIG,
+  mergeGameSimulationConfig,
+  type GameSimulationConfig,
+} from "@/systems/game-simulation-config";
+export {
+  createGameClock,
+  consumeTime,
+  resetPeriodClock,
+  isPeriodOver,
+  type GameClock,
+} from "@/systems/game-clock";
+export { choosePossessionDecision } from "@/systems/possession-decision-selection";
 export { updateStandings } from "@/systems/standings";
 export {
   bootstrapWorld,

@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { createFoul } from "@/domain/entities/foul";
 import { createGame, type GamePlayerStats } from "@/domain/entities/game";
+import { createEmptyGamePlayerStats } from "@/domain/entities/game";
+import type { PlayerStatsDelta } from "@/systems/possession-stats";
 import type { Rng } from "@/domain/rng";
 import {
   asGameId,
@@ -128,16 +130,29 @@ function baseInput(
 }
 
 function emptyStats(playerId: string): GamePlayerStats {
+  return createEmptyGamePlayerStats(asPlayerId(playerId));
+}
+
+function emptyDelta(
+  playerId: string,
+  overrides: Partial<PlayerStatsDelta> = {},
+): PlayerStatsDelta {
   return {
     playerId: asPlayerId(playerId),
-    minutes: 0,
     points: 0,
     rebounds: 0,
+    offensiveRebounds: 0,
+    defensiveRebounds: 0,
     assists: 0,
-    steals: 0,
-    blocks: 0,
     turnovers: 0,
     fouls: 0,
+    fieldGoalsMade: 0,
+    fieldGoalsAttempted: 0,
+    threePointersMade: 0,
+    threePointersAttempted: 0,
+    freeThrowsMade: 0,
+    freeThrowsAttempted: 0,
+    ...overrides,
   };
 }
 
@@ -185,14 +200,11 @@ describe("resolvePossession made shots", () => {
     expect(result.pointsScored).toBe(2);
     expect(result.scoringTeamId).toBe(OFFENSE);
     expect(result.playerStats).toEqual([
-      {
-        playerId: "off_1",
+      emptyDelta("off_1", {
         points: 2,
-        rebounds: 0,
-        assists: 0,
-        turnovers: 0,
-        fouls: 0,
-      },
+        fieldGoalsMade: 1,
+        fieldGoalsAttempted: 1,
+      }),
     ]);
     expect(result.events.map((e) => e.type)).toEqual(["shot_made"]);
     expect(result.nextPossession).toEqual({
@@ -356,14 +368,7 @@ describe("resolvePossession pass and assist", () => {
     expect(result.possession.outcome).toBe("turnover");
     expect(result.events.map((e) => e.type)).toEqual(["turnover"]);
     expect(result.playerStats).toEqual([
-      {
-        playerId: "off_1",
-        points: 0,
-        rebounds: 0,
-        assists: 0,
-        turnovers: 1,
-        fouls: 0,
-      },
+      emptyDelta("off_1", { turnovers: 1 }),
     ]);
     expect(result.nextPossession.offensiveTeamId).toBe(DEFENSE);
   });
@@ -531,14 +536,7 @@ describe("resolvePossession fouls", () => {
     expect(result.defensiveTeamFoulsAfter).toBe(before);
     expect(result.events.map((e) => e.type)).toEqual(["foul"]);
     expect(result.playerStats).toEqual([
-      {
-        playerId: "off_1",
-        points: 0,
-        rebounds: 0,
-        assists: 0,
-        turnovers: 0,
-        fouls: 1,
-      },
+      emptyDelta("off_1", { fouls: 1 }),
     ]);
     expect(result.scoringTeamId).toBeNull();
     expect(result.nextPossession.offensiveTeamId).toBe(DEFENSE);
@@ -793,6 +791,7 @@ describe("applyPossessionResolution", () => {
       date: "2026-10-15",
       status: "in_progress",
       score: { home: 10, away: 8 },
+      periodScores: [],
       events: [],
       playerStats: [emptyStats("off_1"), emptyStats("def_1")],
     });

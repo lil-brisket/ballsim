@@ -32,7 +32,12 @@ Each system should:
 | `roster-generation` | World-gen: roster slots + contracts; calls player-generation per slot |
 | `roster-rules` | Building block: configurable roster size/position/group validation; throws `Error`, not `SystemResult` |
 | `schedule-generation` | World-gen: double round-robin schedule |
-| `game-simulation` | Box-score sim for scheduled games on a date |
+| `game-simulation-config` | Tunable period lengths, possession time costs, decision weights |
+| `game-clock` | Building block: simulated integer-second period clock (`consumeTime`) |
+| `possession-decision-selection` | Building block: `choosePossessionDecision` → `PossessionDecision` (not outcome resolution) |
+| `game-simulation` | `simulateGame` (possession orchestration → `GameResult` including `possessionCounts`) + `simulateGamesForDate` for the world pipeline |
+
+Statistical box-score validation lives under `src/simulation/validation/` and is run via `npx tsx scripts/validate-simulation-stats.ts` (not a second simulation path).
 | `standings` | Rebuild W/L from final games |
 | `calendar` | Advance world date by one day |
 | `world-pipeline` | `bootstrapWorld` + `runWorldPipeline({ type: "advanceDay" })` |
@@ -43,4 +48,4 @@ Advance day processes games for the **current** calendar date, updates standings
 
 `roster-rules` is a validation building block (`createRosterRulesConfig` / `validateRoster`). A fully assigned roster is a partition: `players.length === startingLineupSize + benchSize + inactiveSize`. Min/max roster size is independent of that composition sum. Validators throw `Error` and do not mutate input, accept a `Team`, or look up GameState.
 
-`resolveFoul` / `resolveFreeThrow` are resolution building blocks only (v1). They do not mutate `Game`, `Game.playerStats.fouls`, or `GameEventType`, and they do not emit simulation or play-by-play events. Free throws use the existing `freeThrow` attribute; they do not call `resolveShot()`. Callers persist `teamFoulsAfter` and wire events in a later simulation task.
+`resolveFoul` / `resolveFreeThrow` are resolution building blocks. Possession resolution composes them and emits `GameEvent`s / `PlayerStatsDelta`s. `simulateGame` applies each `PossessionResolution` exactly once via `applyPossessionResolution`, advances a simulated clock, and returns a self-contained `GameResult` for box scores.
