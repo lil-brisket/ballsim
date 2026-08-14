@@ -43,6 +43,7 @@ Each system should:
 
 Statistical box-score validation lives under `src/simulation/validation/` and is run via `npx tsx scripts/validate-simulation-stats.ts` (not a second simulation path).
 | `standings` | Rebuild standings from final games (`calculateStandings` + `updateStandings`) |
+| `season-simulation` | Season orchestration: ensure schedule, `simulateGamesForDate` per schedule date, `updateStandings` |
 | `calendar` | Advance world date by one day |
 | `world-pipeline` | `bootstrapWorld` + `runWorldPipeline({ type: "advanceDay" })` |
 

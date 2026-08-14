@@ -155,6 +155,7 @@ export {
 } from "@/systems/player-usage";
 export { calculateStandings, updateStandings } from "@/systems/standings";
 export type { CalculateStandingsOptions } from "@/systems/standings";
+export { simulateSeason } from "@/systems/season-simulation";
 export {
   bootstrapWorld,
   runWorldPipeline,
