@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { createSeededRng } from "@/domain/rng";
 import { createInitialGameState } from "@/state/create-initial-state";
+import { CBL_GAME_SETTINGS } from "@/domain/game-settings";
 import { bootstrapWorld } from "@/systems/world-pipeline";
 import { advanceSimulation } from "@/systems/simulation/advance-simulation";
 import { getIsoWeekId } from "@/domain/calendar-date";
@@ -10,9 +11,10 @@ describe("advanceSimulation", () => {
   it("advances one day, sims the opener on the first preseason advance, and reports metadata", () => {
     resetDomainEventSequenceForTests();
     const state = createInitialGameState({
-      saveId: "adv_opener",
+    saveId: "adv_opener",
       rngSeed: 7,
-    });
+    settings: CBL_GAME_SETTINGS,
+  });
     const rng = createSeededRng(state.meta.rngState);
     const bootstrapped = bootstrapWorld(state, rng).state;
 
@@ -37,7 +39,10 @@ describe("advanceSimulation", () => {
   });
 
   it("rejects re-simulating the same calendar date", () => {
-    const state = createInitialGameState({ saveId: "adv_twice", rngSeed: 8 });
+    const state = createInitialGameState({
+    saveId: "adv_twice", rngSeed: 8,
+    settings: CBL_GAME_SETTINGS,
+  });
     const rng = createSeededRng(state.meta.rngState);
     let current = bootstrapWorld(state, rng).state;
     current = advanceSimulation(current, rng).state;
@@ -61,9 +66,10 @@ describe("advanceSimulation", () => {
     resetDomainEventSequenceForTests();
     // Sunday 2026-08-09 → Monday 2026-08-10 crosses weeks.
     let state = createInitialGameState({
-      saveId: "adv_week",
+    saveId: "adv_week",
       rngSeed: 9,
-    });
+    settings: CBL_GAME_SETTINGS,
+  });
     state = {
       ...state,
       world: {
@@ -93,7 +99,10 @@ describe("advanceSimulation", () => {
   });
 
   it("rejects non-positive day counts", () => {
-    const state = createInitialGameState({ saveId: "adv_bad_days" });
+    const state = createInitialGameState({
+    saveId: "adv_bad_days",
+    settings: CBL_GAME_SETTINGS,
+  });
     const rng = createSeededRng(state.meta.rngState);
     expect(() => advanceSimulation(state, rng, { days: 0 })).toThrow(
       /days must be an integer >= 1/,

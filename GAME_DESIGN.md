@@ -28,7 +28,7 @@ The player controls one team inside a larger simulated basketball world.
 
 Canonical simulation state remains `GameState`. Owner-specific persisted data lives on `user.objectives` (plus team finances in `business.finances`). `toOwnerGameState` builds a derived, non-persisted management-layer view with live references into that state — it is not a second global game state or save schema.
 
-New Owner games create a **12-team** CBL (2 conferences × 2 divisions × 3 teams) so playoff field size is 8 (qualify and miss are both possible). Team selection sets `user.controlledTeamId` before the first time advance.
+New Owner games open **Game Setup** first. The Standard preset is **30 teams / 82 games / 16 playoff teams / best-of-7**. The CBL preset remains available as **12 / 22 / 8**. League rules live on top-level `GameState.settings` (configuration only — not runtime). `settings.league.teamCount` is the size at career creation; live size is always `Object.keys(world.teams).length`. Team selection sets `user.controlledTeamId` before the first time advance.
 
 Owner Mode surfaces (minimal vertical-slice UI exists for dashboard/roster/standings/trade/FA/draft):
 

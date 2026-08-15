@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { createSeededRng } from "@/domain/rng";
 import { createInitialGameState } from "@/state/create-initial-state";
+import { CBL_GAME_SETTINGS } from "@/domain/game-settings";
 import { bootstrapWorld, runWorldPipeline } from "@/systems/world-pipeline";
 import { generateRosters } from "@/systems/roster-generation";
 import { generateSchedule } from "@/systems/schedule-generation";
@@ -13,10 +14,11 @@ import {
 describe("roster and schedule generation", () => {
   it("fills players and contracts for every team", () => {
     const state = createInitialGameState({
-      saveId: "save_roster",
+    saveId: "save_roster",
       rngSeed: 11,
       nowIso: "2026-08-13T12:00:00.000Z",
-    });
+    settings: CBL_GAME_SETTINGS,
+  });
     const rng = createSeededRng(state.meta.rngState);
     const result = generateRosters(state, rng);
 
@@ -29,10 +31,11 @@ describe("roster and schedule generation", () => {
 
   it("assigns a valid nationality to every generated player", () => {
     const state = createInitialGameState({
-      saveId: "save_roster_nationality",
+    saveId: "save_roster_nationality",
       rngSeed: 19,
       nowIso: "2026-08-13T12:00:00.000Z",
-    });
+    settings: CBL_GAME_SETTINGS,
+  });
     const rng = createSeededRng(state.meta.rngState);
     const result = generateRosters(state, rng);
 
@@ -48,9 +51,10 @@ describe("roster and schedule generation", () => {
 
   it("is idempotent when players already exist", () => {
     const state = createInitialGameState({
-      saveId: "save_roster_once",
+    saveId: "save_roster_once",
       rngSeed: 12,
-    });
+    settings: CBL_GAME_SETTINGS,
+  });
     const rng = createSeededRng(state.meta.rngState);
     const first = generateRosters(state, rng);
     const second = generateRosters(first.state, rng);
@@ -59,10 +63,11 @@ describe("roster and schedule generation", () => {
 
   it("writes Team.roster so player.teamId and roster membership stay consistent", () => {
     const state = createInitialGameState({
-      saveId: "save_roster_dual",
+    saveId: "save_roster_dual",
       rngSeed: 21,
       nowIso: "2026-08-13T12:00:00.000Z",
-    });
+    settings: CBL_GAME_SETTINGS,
+  });
     const rng = createSeededRng(state.meta.rngState);
     const result = generateRosters(state, rng);
 
@@ -85,10 +90,11 @@ describe("roster and schedule generation", () => {
 
   it("builds a double round-robin without changing season phase", () => {
     const state = createInitialGameState({
-      saveId: "save_sched",
+    saveId: "save_sched",
       rngSeed: 13,
       nowIso: "2026-08-13T12:00:00.000Z",
-    });
+    settings: CBL_GAME_SETTINGS,
+  });
     const result = generateSchedule(state);
     const teamCount = Object.keys(state.world.teams).length;
     const expectedGames = teamCount * (teamCount - 1);
@@ -112,10 +118,11 @@ describe("roster and schedule generation", () => {
 
   it("throws when the empty schedule has fewer than two teams", () => {
     const state = createInitialGameState({
-      saveId: "save_sched_empty",
+    saveId: "save_sched_empty",
       rngSeed: 14,
       nowIso: "2026-08-13T12:00:00.000Z",
-    });
+    settings: CBL_GAME_SETTINGS,
+  });
     const emptyTeams = {
       ...state,
       world: {
@@ -139,10 +146,11 @@ describe("world pipeline advanceDay", () => {
   it("bootstraps, sims games on current date when any exist, then advances calendar", () => {
     resetDomainEventSequenceForTests();
     const state = createInitialGameState({
-      saveId: "save_advance",
+    saveId: "save_advance",
       rngSeed: 42,
       nowIso: "2026-08-13T12:00:00.000Z",
-    });
+    settings: CBL_GAME_SETTINGS,
+  });
     const rng = createSeededRng(state.meta.rngState);
     const bootstrapped = bootstrapWorld(state, rng);
 
@@ -178,9 +186,10 @@ describe("world pipeline advanceDay", () => {
 
   it("continues the RNG stream across advances via getState", () => {
     const state = createInitialGameState({
-      saveId: "save_rng_cont",
+    saveId: "save_rng_cont",
       rngSeed: 7,
-    });
+    settings: CBL_GAME_SETTINGS,
+  });
     const rngA = createSeededRng(state.meta.rngState);
     const first = runWorldPipeline(state, rngA, { type: "advanceDay" });
     const midState = rngA.getState();

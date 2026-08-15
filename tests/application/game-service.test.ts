@@ -19,6 +19,7 @@ import {
   MAX_OWNER_SAVE_SLOTS,
   saveOwnerGame,
 } from "@/application/game-service";
+import { CBL_GAME_SETTINGS } from "@/domain/game-settings";
 import { createMemorySaveGameStore } from "@/persistence/memory-save-game-store";
 import { validateGameState } from "@/persistence/validate-game-state";
 import type { GameState } from "@/state/game-state";
@@ -52,8 +53,7 @@ describe("game-service load / save", () => {
   });
 
   it("createNewOwnerSave → discard DTO → store.load returns valid GameState", async () => {
-    const created = await createNewOwnerSave(
-      { name: "Owner Franchise", rngSeed: TEST_RNG_SEED },
+    const created = await createNewOwnerSave({ settings: CBL_GAME_SETTINGS, name: "Owner Franchise", rngSeed: TEST_RNG_SEED },
       store,
     );
     expect(created.ok).toBe(true);
@@ -78,8 +78,7 @@ describe("game-service load / save", () => {
   });
 
   it("save A → mutate to B → save → discard → load equals B not A", async () => {
-    const created = await createNewOwnerSave(
-      { name: "Overwrite Franchise", rngSeed: TEST_RNG_SEED },
+    const created = await createNewOwnerSave({ settings: CBL_GAME_SETTINGS, name: "Overwrite Franchise", rngSeed: TEST_RNG_SEED },
       store,
     );
     expect(created.ok).toBe(true);
@@ -137,8 +136,7 @@ describe("game-service load / save", () => {
   });
 
   it("create → deleteOwnerSave → loadOwnerSave returns null", async () => {
-    const created = await createNewOwnerSave(
-      { name: "Delete Me", rngSeed: TEST_RNG_SEED },
+    const created = await createNewOwnerSave({ settings: CBL_GAME_SETTINGS, name: "Delete Me", rngSeed: TEST_RNG_SEED },
       store,
     );
     expect(created.ok).toBe(true);
@@ -165,8 +163,7 @@ describe("MAX_OWNER_SAVE_SLOTS", () => {
 
   it("creates successfully when 9 saves already exist", async () => {
     await seedSaveSlots(store, MAX_OWNER_SAVE_SLOTS - 1);
-    const created = await createNewOwnerSave(
-      { name: "Tenth Slot", rngSeed: TEST_RNG_SEED },
+    const created = await createNewOwnerSave({ settings: CBL_GAME_SETTINGS, name: "Tenth Slot", rngSeed: TEST_RNG_SEED },
       store,
     );
     expect(created.ok).toBe(true);
@@ -182,8 +179,7 @@ describe("MAX_OWNER_SAVE_SLOTS", () => {
     const before = await store.list();
     const bootstrapSpy = vi.spyOn(worldPipeline, "bootstrapWorld");
 
-    const created = await createNewOwnerSave(
-      { name: "Over Cap", rngSeed: TEST_RNG_SEED },
+    const created = await createNewOwnerSave({ settings: CBL_GAME_SETTINGS, name: "Over Cap", rngSeed: TEST_RNG_SEED },
       store,
     );
 
@@ -210,8 +206,7 @@ describe("MAX_OWNER_SAVE_SLOTS", () => {
     expect(removed).toBe(true);
     expect(await store.list()).toHaveLength(MAX_OWNER_SAVE_SLOTS - 1);
 
-    const created = await createNewOwnerSave(
-      { name: "After Delete", rngSeed: TEST_RNG_SEED },
+    const created = await createNewOwnerSave({ settings: CBL_GAME_SETTINGS, name: "After Delete", rngSeed: TEST_RNG_SEED },
       store,
     );
     expect(created.ok).toBe(true);
@@ -222,3 +217,4 @@ describe("MAX_OWNER_SAVE_SLOTS", () => {
     expect(await store.list()).toHaveLength(MAX_OWNER_SAVE_SLOTS);
   });
 });
+

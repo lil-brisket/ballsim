@@ -9,6 +9,7 @@ import {
 } from "@/domain/ids";
 import { createSeededRng } from "@/domain/rng";
 import { createInitialGameState } from "@/state/create-initial-state";
+import { CBL_GAME_SETTINGS } from "@/domain/game-settings";
 import {
   applyGameplayFinancialConsequences,
   hasAppliedGameplayConsequence,
@@ -21,7 +22,10 @@ import { bootstrapWorld } from "@/systems/world-pipeline";
 
 describe("gameplay financial consequences", () => {
   it("applies loss operations expense once per game key (no win ticket revenue)", () => {
-    let state = createInitialGameState({ saveId: "fin_loss", rngSeed: 3 });
+    let state = createInitialGameState({
+    saveId: "fin_loss", rngSeed: 3,
+    settings: CBL_GAME_SETTINGS,
+  });
     const rng = createSeededRng(state.meta.rngState);
     state = bootstrapWorld(state, rng).state;
     const teamId = state.user.controlledTeamId;
@@ -67,7 +71,10 @@ describe("gameplay financial consequences", () => {
   });
 
   it("applies objective reward once via consequence keys", () => {
-    let state = createInitialGameState({ saveId: "fin_obj", rngSeed: 4 });
+    let state = createInitialGameState({
+    saveId: "fin_obj", rngSeed: 4,
+    settings: CBL_GAME_SETTINGS,
+  });
     const rng = createSeededRng(state.meta.rngState);
     state = bootstrapWorld(state, rng).state;
     const teamId = state.user.controlledTeamId;

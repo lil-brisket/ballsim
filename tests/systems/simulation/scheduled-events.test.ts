@@ -1,6 +1,7 @@
 import { describe, expect, it, afterEach } from "vitest";
 import { createSeededRng } from "@/domain/rng";
 import { createInitialGameState } from "@/state/create-initial-state";
+import { CBL_GAME_SETTINGS } from "@/domain/game-settings";
 import { bootstrapWorld } from "@/systems/world-pipeline";
 import {
   processScheduledEvents,
@@ -19,7 +20,10 @@ describe("scheduled events", () => {
   });
 
   function baseState() {
-    const state = createInitialGameState({ saveId: "sched_evt", rngSeed: 3 });
+    const state = createInitialGameState({
+    saveId: "sched_evt", rngSeed: 3,
+    settings: CBL_GAME_SETTINGS,
+  });
     const rng = createSeededRng(state.meta.rngState);
     return { state: bootstrapWorld(state, rng).state, rng };
   }

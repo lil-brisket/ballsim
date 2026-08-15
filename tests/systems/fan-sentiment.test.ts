@@ -3,6 +3,7 @@ import { createGame } from "@/domain/entities/game";
 import { asGameId, asSeasonId, asTeamId } from "@/domain/ids";
 import { createSeededRng } from "@/domain/rng";
 import { createInitialGameState } from "@/state/create-initial-state";
+import { CBL_GAME_SETTINGS } from "@/domain/game-settings";
 import {
   processDailyFanSentimentAfterGames,
   updateFanSentimentForTeam,
@@ -11,7 +12,10 @@ import { bootstrapWorld } from "@/systems/world-pipeline";
 
 describe("fan sentiment", () => {
   it("updateFanSentimentForTeam smooths toward target", () => {
-    let state = createInitialGameState({ saveId: "sent_test", rngSeed: 9 });
+    let state = createInitialGameState({
+    saveId: "sent_test", rngSeed: 9,
+    settings: CBL_GAME_SETTINGS,
+  });
     const rng = createSeededRng(state.meta.rngState);
     state = bootstrapWorld(state, rng).state;
     const teamId = state.user.controlledTeamId;
@@ -36,7 +40,10 @@ describe("fan sentiment", () => {
   });
 
   it("processDailyFanSentimentAfterGames bumps home winner", () => {
-    let state = createInitialGameState({ saveId: "sent_game", rngSeed: 10 });
+    let state = createInitialGameState({
+    saveId: "sent_game", rngSeed: 10,
+    settings: CBL_GAME_SETTINGS,
+  });
     const rng = createSeededRng(state.meta.rngState);
     state = bootstrapWorld(state, rng).state;
     const teamId = state.user.controlledTeamId;

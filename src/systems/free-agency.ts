@@ -364,7 +364,10 @@ export function acceptOffer(
     offer.terms.startYear,
     state,
   );
-  if (firstYearSalary > capSpace) {
+  if (
+    state.settings.financialRules.salaryCapEnabled &&
+    firstYearSalary > capSpace
+  ) {
     throw new Error(
       `Team "${offer.teamId}" cannot afford offer "${offerId}": first-year salary ${firstYearSalary} exceeds cap space ${capSpace} for ${offer.terms.startYear}.`,
     );

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { createSeededRng } from "@/domain/rng";
 import { createInitialGameState, createFourTeamInitialGameState } from "@/state/create-initial-state";
+import { CBL_GAME_SETTINGS } from "@/domain/game-settings";
 import { bootstrapWorld } from "@/systems/world-pipeline";
 import { simulateGamesForDate } from "@/systems/game-simulation";
 import { updateStandings } from "@/systems/standings";
@@ -25,7 +26,10 @@ import { createPhaseEBusinessDefaults } from "@/state/phase-e-defaults";
 
 describe("season lifecycle", () => {
   it("transitions preseason → regular and generates a same-day opener schedule", () => {
-    const state = createInitialGameState({ saveId: "life_pre", rngSeed: 1 });
+    const state = createInitialGameState({
+    saveId: "life_pre", rngSeed: 1,
+    settings: CBL_GAME_SETTINGS,
+  });
     const rng = createSeededRng(state.meta.rngState);
     const bootstrapped = bootstrapWorld(state, rng).state;
 
@@ -40,14 +44,17 @@ describe("season lifecycle", () => {
   });
 
   it("does not treat an empty schedule as a completed regular season", () => {
-    let state = createInitialGameState({ saveId: "life_empty" });
+    let state = createInitialGameState({
+    saveId: "life_empty",
+    settings: CBL_GAME_SETTINGS,
+  });
     state = transitionPhase(state, "regular").state;
     expect(isRegularSeasonComplete(state)).toBe(false);
     const result = processSeasonLifecycle(state);
     expect(result.state.competition.season.phase).toBe("regular");
   });
 
-  it("moves regular → postseason when playoff field size is 0", () => {
+  it("moves regular → playoffs for four-team leagues (field size 4)", () => {
     const { state: rostered, rng } = (() => {
       const state = createFourTeamInitialGameState({
         saveId: "life_post_4",
@@ -72,11 +79,15 @@ describe("season lifecycle", () => {
     expect(isRegularSeasonComplete(current)).toBe(true);
 
     const result = processSeasonLifecycle(current);
-    expect(result.state.competition.season.phase).toBe("postseason");
+    expect(result.state.competition.season.phase).toBe("playoffs");
+    expect(result.state.competition.playoffs.fieldSize).toBe(4);
   });
 
   it("moves postseason → offseason with season_finalization stage", () => {
-    let state = createInitialGameState({ saveId: "life_off" });
+    let state = createInitialGameState({
+    saveId: "life_off",
+    settings: CBL_GAME_SETTINGS,
+  });
     state = transitionPhase(state, "regular").state;
     state = transitionPhase(state, "postseason").state;
     const result = processSeasonLifecycle(state);
@@ -136,6 +147,20 @@ describe("season lifecycle", () => {
         updatedAt: "2026-08-13T12:00:00.000Z",
         rngSeed: 42,
         rngState: rng.getState(),
+      },
+      settings: {
+        ...CBL_GAME_SETTINGS,
+        league: {
+          teamCount: 16,
+          conferenceCount: 2,
+          divisionsEnabled: true,
+        },
+        regularSeason: { gamesPerTeam: 30 },
+        playoffs: {
+          playoffTeams: 8,
+          seriesLength: 7,
+          playInEnabled: false,
+        },
       },
       world: {
         calendar: {

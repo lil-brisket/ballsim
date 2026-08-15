@@ -1,4 +1,5 @@
 import { createInitialGameState } from "@/state/create-initial-state";
+import { CBL_GAME_SETTINGS } from "@/domain/game-settings";
 import type { GameState } from "@/state/game-state";
 import { generateDraftPicksForSeason } from "@/domain/draft-picks/generate-draft-picks";
 import { createPlayer } from "../../factories/player";
@@ -28,6 +29,7 @@ export function createDraftFixture(
     saveId: "save_draft",
     rngSeed: TEST_RNG_SEED,
     nowIso: TEST_NOW_ISO,
+    settings: CBL_GAME_SETTINGS,
   });
 
   const year = base.competition.season.year;

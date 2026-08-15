@@ -68,7 +68,7 @@ describe("qualifyAndSeed", () => {
     "returns exactly %i unique seeds 1..N in standings order",
     (fieldSize) => {
       const standings = standingsForSeeds(fieldSize + 2);
-      const qualified = qualifyAndSeed(standings, fieldSize + 2);
+      const qualified = qualifyAndSeed(standings, fieldSize);
       expect(qualified).toHaveLength(fieldSize);
       expect(qualified.map((entry) => entry.seed)).toEqual(
         Array.from({ length: fieldSize }, (_, index) => index + 1),
@@ -83,13 +83,15 @@ describe("qualifyAndSeed", () => {
 
   it("is deterministic for identical standings", () => {
     const standings = standingsForSeeds(10);
-    expect(qualifyAndSeed(standings, 10)).toEqual(
-      qualifyAndSeed(standings, 10),
+    expect(qualifyAndSeed(standings, 8)).toEqual(
+      qualifyAndSeed(standings, 8),
     );
   });
 
-  it("throws when league is too small", () => {
-    expect(() => qualifyAndSeed(standingsForSeeds(4), 4)).toThrow(/8 teams/);
+  it("throws when standings are fewer than playoffTeams", () => {
+    expect(() => qualifyAndSeed(standingsForSeeds(4), 8)).toThrow(
+      /at least 8 standing/,
+    );
   });
 });
 

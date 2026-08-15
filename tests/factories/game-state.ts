@@ -1,3 +1,4 @@
+import { CBL_GAME_SETTINGS } from "@/domain/game-settings";
 import {
   createInitialGameState,
   type CreateInitialGameStateInput,
@@ -12,10 +13,7 @@ export type CreateTestGameStateInput = Partial<CreateInitialGameStateInput> & {
 /**
  * Thin wrapper around createInitialGameState that always supplies
  * deterministic saveId, rngSeed, and nowIso unless overridden.
- *
- * Note: createInitialGameState still uses crypto.randomUUID for league/team
- * IDs (production bootstrap). Prefer createPlayer / createTeam for stable
- * entity fixtures in unit tests.
+ * Defaults to CBL (12-team) settings for fast tests; pass settings for other shapes.
  */
 export function createTestGameState(
   input: CreateTestGameStateInput = {},
@@ -24,5 +22,6 @@ export function createTestGameState(
     saveId: input.saveId ?? "save_test",
     rngSeed: input.rngSeed ?? TEST_RNG_SEED,
     nowIso: input.nowIso ?? TEST_NOW_ISO,
+    settings: input.settings ?? CBL_GAME_SETTINGS,
   });
 }

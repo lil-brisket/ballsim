@@ -4,13 +4,17 @@ import { createStaff } from "@/domain/entities/staff";
 import { asStaffContractId, asStaffId } from "@/domain/ids";
 import { createSeededRng } from "@/domain/rng";
 import { createInitialGameState } from "@/state/create-initial-state";
+import { CBL_GAME_SETTINGS } from "@/domain/game-settings";
 import { STAFF_PAYROLL_WEEKS_PER_YEAR } from "@/systems/staff-config";
 import { processWeeklyStaffPayroll } from "@/systems/staff";
 import { bootstrapWorld } from "@/systems/world-pipeline";
 
 describe("staff payroll", () => {
   it("processWeeklyStaffPayroll deducts floor(annual/52) per active contract", () => {
-    let state = createInitialGameState({ saveId: "payroll_test", rngSeed: 5 });
+    let state = createInitialGameState({
+    saveId: "payroll_test", rngSeed: 5,
+    settings: CBL_GAME_SETTINGS,
+  });
     const rng = createSeededRng(state.meta.rngState);
     state = bootstrapWorld(state, rng).state;
     const teamId = state.user.controlledTeamId;

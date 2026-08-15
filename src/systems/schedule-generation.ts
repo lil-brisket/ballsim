@@ -4,7 +4,6 @@ import { createGame, type Game } from "@/domain/entities/game";
 import { systemResult, type SystemResult } from "@/domain/system-result";
 import type { GameState } from "@/state/game-state";
 import {
-  defaultSeasonLength,
   validateSeasonScheduleConfig,
   type SeasonScheduleAssignment,
   type SeasonScheduleConfig,
@@ -52,7 +51,7 @@ export function generateSchedule(state: GameState): SystemResult {
     );
   }
 
-  const seasonLength = defaultSeasonLength(teamIds.length);
+  const seasonLength = state.settings.regularSeason.gamesPerTeam;
   const assignments = generateSeasonSchedule({ teamIds, seasonLength });
 
   const games: Record<string, Game> = {};

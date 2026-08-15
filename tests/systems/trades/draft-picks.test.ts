@@ -11,6 +11,7 @@ import {
   serializeGameState,
 } from "@/persistence/mappers/game-state-mapper";
 import { createInitialGameState } from "@/state/create-initial-state";
+import { CBL_GAME_SETTINGS } from "@/domain/game-settings";
 import {
   GAME_STATE_SCHEMA_VERSION,
   type GameState,
@@ -50,10 +51,11 @@ describe("draft pick generation", () => {
 
   it("ensureDraftPicks is idempotent and extends horizon", () => {
     const state = createInitialGameState({
-      saveId: "save_picks",
+    saveId: "save_picks",
       rngSeed: TEST_RNG_SEED,
       nowIso: TEST_NOW_ISO,
-    });
+    settings: CBL_GAME_SETTINGS,
+  });
     const once = ensureDraftPicks(state);
     const twice = ensureDraftPicks(once);
     expect(Object.keys(once.world.draftPicks).length).toBe(
@@ -80,10 +82,11 @@ describe("draft pick generation", () => {
 describe("schema v17 → v18 migration", () => {
   it("migrates v17 saves to draft picks and empty trade blocks", () => {
     const modern = createInitialGameState({
-      saveId: "save_v17_migrate",
+    saveId: "save_v17_migrate",
       rngSeed: TEST_RNG_SEED,
       nowIso: TEST_NOW_ISO,
-    });
+    settings: CBL_GAME_SETTINGS,
+  });
     const v17 = {
       ...modern,
       meta: { ...modern.meta, schemaVersion: 17 },
@@ -120,10 +123,11 @@ describe("schema v17 → v18 migration", () => {
 
   it("does not duplicate picks when loading a v18 save", () => {
     const state = createInitialGameState({
-      saveId: "save_v18_roundtrip",
+    saveId: "save_v18_roundtrip",
       rngSeed: TEST_RNG_SEED,
       nowIso: TEST_NOW_ISO,
-    });
+    settings: CBL_GAME_SETTINGS,
+  });
     const withPicks = ensureDraftPicks(state);
     const restored = deserializeGameState(serializeGameState(withPicks));
     expect(Object.keys(restored.world.draftPicks)).toEqual(

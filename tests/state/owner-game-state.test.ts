@@ -18,6 +18,7 @@ import {
 } from "@/persistence/mappers/game-state-mapper";
 import { validateGameState } from "@/persistence/validate-game-state";
 import { createInitialGameState } from "@/state/create-initial-state";
+import { CBL_GAME_SETTINGS } from "@/domain/game-settings";
 import type { GameState } from "@/state/game-state";
 import { toOwnerGameState } from "@/state/owner-game-state";
 
@@ -48,6 +49,7 @@ function baseState(): GameState {
     saveId: "save_owner_view",
     rngSeed: 7,
     nowIso: "2026-08-13T12:00:00.000Z",
+    settings: CBL_GAME_SETTINGS,
   });
 }
 

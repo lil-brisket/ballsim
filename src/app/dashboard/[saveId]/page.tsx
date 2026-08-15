@@ -30,6 +30,11 @@ export default async function DashboardPage({
 
   const { save, dashboard } = view;
   const returnPath = `/dashboard/${saveId}`;
+  const preferWeekly = dashboard.simulationFrequency === "weekly";
+  const primaryAdvanceClass =
+    "rounded-md bg-amber-600 px-4 py-2 text-sm font-medium text-zinc-950 hover:bg-amber-500 disabled:opacity-40";
+  const secondaryAdvanceClass =
+    "rounded-md border border-zinc-700 px-4 py-2 text-sm text-zinc-200 hover:border-amber-600 disabled:opacity-40";
 
   return (
     <>
@@ -44,7 +49,9 @@ export default async function DashboardPage({
               <button
                 type="submit"
                 disabled={dashboard.userOnDraftClock}
-                className="rounded-md bg-amber-600 px-4 py-2 text-sm font-medium text-zinc-950 hover:bg-amber-500 disabled:opacity-40"
+                className={
+                  preferWeekly ? secondaryAdvanceClass : primaryAdvanceClass
+                }
               >
                 Advance day
               </button>
@@ -55,7 +62,9 @@ export default async function DashboardPage({
               <button
                 type="submit"
                 disabled={dashboard.userOnDraftClock}
-                className="rounded-md border border-zinc-700 px-4 py-2 text-sm text-zinc-200 hover:border-amber-600 disabled:opacity-40"
+                className={
+                  preferWeekly ? primaryAdvanceClass : secondaryAdvanceClass
+                }
               >
                 Advance 7 days
               </button>

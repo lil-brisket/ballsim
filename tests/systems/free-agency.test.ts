@@ -16,6 +16,7 @@ import {
 } from "@/persistence/mappers/game-state-mapper";
 import { validateGameState } from "@/persistence/validate-game-state";
 import { createInitialGameState } from "@/state/create-initial-state";
+import { CBL_GAME_SETTINGS } from "@/domain/game-settings";
 import {
   GAME_STATE_SCHEMA_VERSION,
   type GameState,
@@ -44,6 +45,7 @@ function baseState(): GameState {
     saveId: "save_fa",
     rngSeed: TEST_RNG_SEED,
     nowIso: TEST_NOW_ISO,
+    settings: CBL_GAME_SETTINGS,
   });
 }
 
@@ -688,10 +690,11 @@ describe("free-agency accept", () => {
 describe("free-agency persistence", () => {
   it("migrates schemaVersion 16 saves to empty freeAgency offers", () => {
     const modern = createInitialGameState({
-      saveId: "save_v16_fa",
+    saveId: "save_v16_fa",
       rngSeed: 41,
       nowIso: TEST_NOW_ISO,
-    });
+    settings: CBL_GAME_SETTINGS,
+  });
     const { freeAgency: _freeAgency, ...businessV16 } = modern.business;
     const stateV16 = {
       ...modern,

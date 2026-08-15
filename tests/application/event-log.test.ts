@@ -17,6 +17,7 @@ import {
   createNewOwnerSave,
   saveOwnerGame,
 } from "@/application/game-service";
+import { CBL_GAME_SETTINGS } from "@/domain/game-settings";
 import { createDomainEvent } from "@/domain/events";
 import { createMemorySaveGameStore } from "@/persistence/memory-save-game-store";
 import {
@@ -40,8 +41,7 @@ describe("eventLog persistence", () => {
   });
 
   it("appends newly emitted events exactly once across save/reload", async () => {
-    const created = await createNewOwnerSave(
-      { name: "Event Log Franchise", rngSeed: TEST_RNG_SEED },
+    const created = await createNewOwnerSave({ settings: CBL_GAME_SETTINGS, name: "Event Log Franchise", rngSeed: TEST_RNG_SEED },
       store,
     );
     expect(created.ok).toBe(true);
@@ -104,8 +104,7 @@ describe("eventLog persistence", () => {
   });
 
   it("migrates schema 22 saves with empty eventLog", async () => {
-    const created = await createNewOwnerSave(
-      { name: "Migrate Event Log", rngSeed: TEST_RNG_SEED },
+    const created = await createNewOwnerSave({ settings: CBL_GAME_SETTINGS, name: "Migrate Event Log", rngSeed: TEST_RNG_SEED },
       store,
     );
     expect(created.ok).toBe(true);
@@ -134,3 +133,4 @@ describe("eventLog persistence", () => {
     expect(serializeGameState(migrated)).toContain("eventLog");
   });
 });
+

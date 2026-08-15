@@ -4,13 +4,17 @@ import { createOwnerObjective } from "@/domain/entities/owner-objective";
 import { asOwnerNotificationId, asOwnerObjectiveId } from "@/domain/ids";
 import { createSeededRng } from "@/domain/rng";
 import { createInitialGameState } from "@/state/create-initial-state";
+import { CBL_GAME_SETTINGS } from "@/domain/game-settings";
 import { generateOwnerNotifications } from "@/systems/owner-notifications";
 import { SIGNIFICANT_FINANCIAL_CHANGE } from "@/systems/owner-objectives-config";
 import { bootstrapWorld } from "@/systems/world-pipeline";
 
 describe("owner notifications", () => {
   it("emits objective completed and failed notifications without duplicates", () => {
-    let state = createInitialGameState({ saveId: "notif_obj", rngSeed: 5 });
+    let state = createInitialGameState({
+    saveId: "notif_obj", rngSeed: 5,
+    settings: CBL_GAME_SETTINGS,
+  });
     const rng = createSeededRng(state.meta.rngState);
     state = bootstrapWorld(state, rng).state;
     const year = state.competition.season.year;
@@ -53,7 +57,10 @@ describe("owner notifications", () => {
   });
 
   it("emits playoff qualification and season milestone notifications", () => {
-    let state = createInitialGameState({ saveId: "notif_po", rngSeed: 6 });
+    let state = createInitialGameState({
+    saveId: "notif_po", rngSeed: 6,
+    settings: CBL_GAME_SETTINGS,
+  });
     const rng = createSeededRng(state.meta.rngState);
     state = bootstrapWorld(state, rng).state;
     const teamId = state.user.controlledTeamId;
@@ -79,7 +86,10 @@ describe("owner notifications", () => {
   });
 
   it("emits significant financial change from pre/post cash delta", () => {
-    let state = createInitialGameState({ saveId: "notif_cash", rngSeed: 7 });
+    let state = createInitialGameState({
+    saveId: "notif_cash", rngSeed: 7,
+    settings: CBL_GAME_SETTINGS,
+  });
     const rng = createSeededRng(state.meta.rngState);
     state = bootstrapWorld(state, rng).state;
     const teamId = state.user.controlledTeamId;
@@ -106,7 +116,10 @@ describe("owner notifications", () => {
   });
 
   it("skips existing dedupeKey", () => {
-    let state = createInitialGameState({ saveId: "notif_dedupe", rngSeed: 8 });
+    let state = createInitialGameState({
+    saveId: "notif_dedupe", rngSeed: 8,
+    settings: CBL_GAME_SETTINGS,
+  });
     const rng = createSeededRng(state.meta.rngState);
     state = bootstrapWorld(state, rng).state;
     const year = state.competition.season.year;

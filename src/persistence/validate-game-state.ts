@@ -48,6 +48,7 @@ import {
 } from "@/domain/entities/scheduled-event";
 import type { GameState, GameMode } from "@/state/game-state";
 import { GAME_STATE_SCHEMA_VERSION } from "@/state/game-state";
+import { validateGameSettings } from "@/domain/game-settings-validation";
 import {
   asContractId,
   asOfferId,
@@ -95,7 +96,14 @@ function assertNumber(value: unknown, path: string): asserts value is number {
 export function validateGameState(state: unknown): asserts state is GameState {
   assertRecord(state, "GameState");
 
-  for (const key of ["meta", "world", "competition", "business", "user"] as const) {
+  for (const key of [
+    "meta",
+    "settings",
+    "world",
+    "competition",
+    "business",
+    "user",
+  ] as const) {
     if (!(key in state)) {
       fail(`missing required root field "${key}".`);
     }
@@ -120,6 +128,15 @@ export function validateGameState(state: unknown): asserts state is GameState {
   if (!Number.isInteger(meta.rngState)) {
     fail("meta.rngState must be an integer.");
   }
+
+  const settingsResult = validateGameSettings(state.settings, {
+    mode: "persisted",
+  });
+  if (!settingsResult.ok) {
+    fail(`settings: ${settingsResult.errors.join("; ")}`);
+  }
+  // Intentionally do NOT require settings.league.teamCount === live team count
+  // (expansion / relocation may change world.teams after career creation).
 
   const world = state.world;
   assertRecord(world, "world");

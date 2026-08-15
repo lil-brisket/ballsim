@@ -26,8 +26,19 @@ export type PlayoffSeries = {
   lowerSeed: number | null;
   higherSeedTeamId: TeamId | null;
   lowerSeedTeamId: TeamId | null;
-  /** Present for non-opening rounds; winners of these series fill this one. */
-  feederSeriesIds?: [PlayoffSeriesId, PlayoffSeriesId];
+  /**
+   * Feeders that fill this series. Length 1 (bye + feeder) or 2 (two winners).
+   * Opening-round series omit this.
+   */
+  feederSeriesIds?: PlayoffSeriesId[];
+  /**
+   * Bye participant already known for this series (no fake opening series).
+   * Combined with a single feeder when that feeder completes.
+   */
+  byeParticipant?: {
+    seed: number;
+    teamId: TeamId;
+  };
   wins: Record<string, number>;
   gameIds: GameId[];
   status: PlayoffSeriesStatus;

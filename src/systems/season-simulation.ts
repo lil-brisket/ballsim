@@ -4,7 +4,6 @@ import type { Rng } from "@/domain/rng";
 import { systemResult, type SystemResult } from "@/domain/system-result";
 import type { GameState } from "@/state/game-state";
 import { simulateGamesForDate } from "@/systems/game-simulation";
-import { getPlayoffTeamCount } from "@/systems/playoff-config";
 import {
   simulatePlayoffs,
   startPlayoffs,
@@ -67,13 +66,13 @@ export function simulateSeason(
 
   assertAllScheduledGamesFinal(current);
 
-  const teamCount = Object.keys(current.world.teams).length;
-  const fieldSize = getPlayoffTeamCount(teamCount);
-  if (fieldSize === 0) {
+  const playoffTeams = current.settings.playoffs.playoffTeams;
+  const liveTeamCount = Object.keys(current.world.teams).length;
+  if (playoffTeams <= 0 || playoffTeams > liveTeamCount) {
     return systemResult(current, events);
   }
 
-  const started = startPlayoffs(current);
+  const started = startPlayoffs(current, rng);
   current = started.state;
   events.push(...started.events);
 

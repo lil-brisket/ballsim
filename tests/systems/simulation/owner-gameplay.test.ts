@@ -5,6 +5,7 @@ import {
   serializeGameState,
 } from "@/persistence/mappers/game-state-mapper";
 import { createInitialGameState } from "@/state/create-initial-state";
+import { CBL_GAME_SETTINGS } from "@/domain/game-settings";
 import { advanceSimulation } from "@/systems/simulation/advance-simulation";
 import { runOwnerGameplay } from "@/systems/simulation/owner-gameplay";
 import { bootstrapWorld } from "@/systems/world-pipeline";
@@ -13,7 +14,10 @@ import { resetDomainEventSequenceForTests } from "@/domain/events/domain-event";
 describe("owner gameplay integration", () => {
   it("generates objectives when advancing from preseason", () => {
     resetDomainEventSequenceForTests();
-    let state = createInitialGameState({ saveId: "gp_obj", rngSeed: 31 });
+    let state = createInitialGameState({
+    saveId: "gp_obj", rngSeed: 31,
+    settings: CBL_GAME_SETTINGS,
+  });
     const rng = createSeededRng(state.meta.rngState);
     state = bootstrapWorld(state, rng).state;
     const result = advanceSimulation(state, rng, { days: 1 });
@@ -30,7 +34,10 @@ describe("owner gameplay integration", () => {
 
   it("persists gameplay state through save/load", () => {
     resetDomainEventSequenceForTests();
-    let state = createInitialGameState({ saveId: "gp_persist", rngSeed: 32 });
+    let state = createInitialGameState({
+    saveId: "gp_persist", rngSeed: 32,
+    settings: CBL_GAME_SETTINGS,
+  });
     const rng = createSeededRng(state.meta.rngState);
     state = bootstrapWorld(state, rng).state;
     state = advanceSimulation(state, rng, { days: 1 }).state;
@@ -45,7 +52,10 @@ describe("owner gameplay integration", () => {
 
   it("is idempotent when runOwnerGameplay is invoked twice on the same day", () => {
     resetDomainEventSequenceForTests();
-    let state = createInitialGameState({ saveId: "gp_idem", rngSeed: 33 });
+    let state = createInitialGameState({
+    saveId: "gp_idem", rngSeed: 33,
+    settings: CBL_GAME_SETTINGS,
+  });
     const rng = createSeededRng(state.meta.rngState);
     state = bootstrapWorld(state, rng).state;
     state = advanceSimulation(state, rng, { days: 1 }).state;

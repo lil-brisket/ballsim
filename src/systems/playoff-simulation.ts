@@ -3,49 +3,158 @@ import type {
   PlayoffSeries,
   PlayoffTournament,
 } from "@/domain/entities/playoffs";
+import type { SeriesLength } from "@/domain/game-settings";
 import type { Rng } from "@/domain/rng";
 import { systemResult, type SystemResult } from "@/domain/system-result";
 import type { GameState } from "@/state/game-state";
 import { generateBracket } from "@/systems/playoff-bracket";
-import { getPlayoffTeamCount } from "@/systems/playoff-config";
-import { qualifyAndSeed } from "@/systems/playoff-qualification";
+import {
+  applyPlayInResults,
+  playInMatchups,
+  qualifyAndSeed,
+} from "@/systems/playoff-qualification";
 import {
   createNextPlayoffGame,
   nextPlayoffGameDate,
 } from "@/systems/playoff-scheduling";
 import { recordSeriesGameResult } from "@/systems/playoff-series";
 import { simulateScheduledGame } from "@/systems/game-simulation";
+import { asGameId, asTeamId, type TeamId } from "@/domain/ids";
+import { createGame } from "@/domain/entities/game";
 
 /**
- * Qualifies teams and builds the playoff bracket.
+ * Qualifies teams and builds the playoff bracket from settings.
  * Does not mutate season.phase — callers use transitionPhase("playoffs").
  * Idempotent when playoffs are already in_progress or complete.
+ *
+ * Play-in (when enabled): resolves both bubble games deterministically via RNG
+ * in this call, then builds the N-team bracket. No fake bye series.
  */
-export function startPlayoffs(state: GameState): SystemResult {
+export function startPlayoffs(state: GameState, rng?: Rng): SystemResult {
   const playoffs = state.competition.playoffs;
   if (playoffs.status === "complete" || playoffs.status === "in_progress") {
     return systemResult(state);
   }
 
-  const teamCount = Object.keys(state.world.teams).length;
-  const fieldSize = getPlayoffTeamCount(teamCount);
-  if (fieldSize === 0) {
+  const playoffTeams = state.settings.playoffs.playoffTeams;
+  const standings = Object.values(state.competition.standings.byTeamId);
+  const liveTeamCount = Object.keys(state.world.teams).length;
+  if (playoffTeams > liveTeamCount) {
     throw new Error(
-      `startPlayoffs requires getPlayoffTeamCount > 0; teamCount=${teamCount}.`,
+      `startPlayoffs playoffTeams (${playoffTeams}) exceeds live team count (${liveTeamCount}).`,
     );
   }
 
-  const standings = Object.values(state.competition.standings.byTeamId);
-  const qualified = qualifyAndSeed(standings, teamCount);
+  let qualified;
+  let current = state;
+  const events: DomainEvent[] = [];
+
+  if (state.settings.playoffs.playInEnabled) {
+    if (!rng) {
+      throw new Error("startPlayoffs with play-in requires an Rng.");
+    }
+    const matchups = playInMatchups(standings, playoffTeams);
+    const playIn = simulatePlayInGames(current, matchups, rng);
+    current = playIn.state;
+    events.push(...playIn.events);
+    qualified = applyPlayInResults(
+      standings,
+      playoffTeams,
+      playIn.gameAWinner,
+      playIn.gameBWinner,
+    );
+  } else {
+    qualified = qualifyAndSeed(standings, playoffTeams);
+  }
+
   const tournament = generateBracket(qualified);
 
-  return systemResult({
-    ...state,
-    competition: {
-      ...state.competition,
-      playoffs: tournament,
+  return systemResult(
+    {
+      ...current,
+      competition: {
+        ...current.competition,
+        playoffs: tournament,
+      },
     },
+    events,
+  );
+}
+
+function simulatePlayInGames(
+  state: GameState,
+  matchups: ReturnType<typeof playInMatchups>,
+  rng: Rng,
+): {
+  state: GameState;
+  events: DomainEvent[];
+  gameAWinner: TeamId;
+  gameBWinner: TeamId;
+} {
+  const events: DomainEvent[] = [];
+  let current = state;
+  let games = { ...current.competition.games };
+
+  const date = current.world.calendar.currentDate;
+  const seasonId = current.competition.season.id;
+
+  const gameA = createGame({
+    id: asGameId(`playin_a_${seasonId}`),
+    seasonId,
+    date,
+    homeTeamId: matchups.gameA.homeTeamId,
+    awayTeamId: matchups.gameA.awayTeamId,
+    status: "scheduled",
+    score: { home: 0, away: 0 },
+    periodScores: [],
+    events: [],
+    playerStats: [],
   });
+  const gameB = createGame({
+    id: asGameId(`playin_b_${seasonId}`),
+    seasonId,
+    date,
+    homeTeamId: matchups.gameB.homeTeamId,
+    awayTeamId: matchups.gameB.awayTeamId,
+    status: "scheduled",
+    score: { home: 0, away: 0 },
+    periodScores: [],
+    events: [],
+    playerStats: [],
+  });
+
+  games[gameA.id] = gameA;
+  games[gameB.id] = gameB;
+  current = {
+    ...current,
+    competition: { ...current.competition, games },
+  };
+
+  const simA = simulateScheduledGame(current, gameA, rng);
+  games = { ...games, [simA.finalGame.id]: simA.finalGame };
+  current = { ...current, competition: { ...current.competition, games } };
+  events.push(simA.event);
+
+  const simB = simulateScheduledGame(current, gameB, rng);
+  games = { ...games, [simB.finalGame.id]: simB.finalGame };
+  current = { ...current, competition: { ...current.competition, games } };
+  events.push(simB.event);
+
+  const gameAWinner =
+    simA.finalGame.score.home > simA.finalGame.score.away
+      ? simA.finalGame.homeTeamId
+      : simA.finalGame.awayTeamId;
+  const gameBWinner =
+    simB.finalGame.score.home > simB.finalGame.score.away
+      ? simB.finalGame.homeTeamId
+      : simB.finalGame.awayTeamId;
+
+  return {
+    state: current,
+    events,
+    gameAWinner: asTeamId(gameAWinner),
+    gameBWinner: asTeamId(gameBWinner),
+  };
 }
 
 /**
@@ -67,6 +176,7 @@ export function simulateNextPlayoffGame(
     return systemResult(state);
   }
 
+  const seriesLength = state.settings.playoffs.seriesLength;
   const seriesList = playoffs.series.map((series) => ({ ...series }));
   fillReadySeries(seriesList, playoffs);
 
@@ -86,6 +196,7 @@ export function simulateNextPlayoffGame(
     series: nextSeries,
     seasonId: state.competition.season.id,
     nextDate,
+    seriesLength,
   });
 
   const games = {
@@ -124,12 +235,13 @@ export function simulateNextPlayoffGame(
     seriesList[seriesIndex]!,
     finalGame.id,
     winnerTeamId,
+    seriesLength,
   );
   seriesList[seriesIndex] = updatedSeries;
 
   fillReadySeries(seriesList, playoffs);
 
-  const finalRound = Math.log2(playoffs.fieldSize) - 1;
+  const finalRound = Math.max(...seriesList.map((s) => s.round));
   const finalSeries = seriesList.find(
     (series) => series.round === finalRound && series.slot === 0,
   );
@@ -168,14 +280,16 @@ export function simulatePlayoffs(state: GameState, rng: Rng): SystemResult {
   let current = state;
 
   if (current.competition.playoffs.status === "not_started") {
-    const started = startPlayoffs(current);
+    const started = startPlayoffs(current, rng);
     current = started.state;
     events.push(...started.events);
   }
 
   let guard = 0;
+  const seriesLength = current.settings.playoffs.seriesLength;
   const maxGames =
-    current.competition.playoffs.fieldSize * 7 || Number.MAX_SAFE_INTEGER;
+    current.competition.playoffs.series.length * seriesLength ||
+    Number.MAX_SAFE_INTEGER;
 
   while (current.competition.playoffs.status !== "complete") {
     guard += 1;
@@ -205,8 +319,8 @@ function pickNextActiveSeries(seriesList: PlayoffSeries[]): PlayoffSeries | null
 }
 
 /**
- * When both feeder series are complete, fill the next-round series and
- * activate it. Uses original seeds of the two winners (no reseeding).
+ * When feeder(s) are complete, fill the next-round series and activate it.
+ * Supports byeParticipant + one feeder, or two feeders. No reseeding.
  */
 function fillReadySeries(
   seriesList: PlayoffSeries[],
@@ -223,27 +337,39 @@ function fillReadySeries(
       continue;
     }
 
-    const feederA = byId.get(series.feederSeriesIds[0]);
-    const feederB = byId.get(series.feederSeriesIds[1]);
-    if (
-      !feederA ||
-      !feederB ||
-      feederA.status !== "complete" ||
-      feederB.status !== "complete" ||
-      !feederA.winnerTeamId ||
-      !feederB.winnerTeamId
-    ) {
+    const feeders = series.feederSeriesIds.map((id) => byId.get(id));
+    if (feeders.some((f) => !f || f.status !== "complete" || !f.winnerTeamId)) {
       continue;
     }
 
-    const teamA = feederA.winnerTeamId;
-    const teamB = feederB.winnerTeamId;
-    const seedA = seedByTeam.get(teamA);
-    const seedB = seedByTeam.get(teamB);
-    if (seedA === undefined || seedB === undefined) {
-      throw new Error(
-        `fillReadySeries: missing original seed for ${teamA} or ${teamB}.`,
-      );
+    let teamA: TeamId;
+    let teamB: TeamId;
+    let seedA: number;
+    let seedB: number;
+
+    if (series.byeParticipant && feeders.length === 1) {
+      teamA = series.byeParticipant.teamId;
+      seedA = series.byeParticipant.seed;
+      teamB = feeders[0]!.winnerTeamId!;
+      const feederSeed = seedByTeam.get(teamB);
+      if (feederSeed === undefined) {
+        throw new Error(`fillReadySeries: missing original seed for ${teamB}.`);
+      }
+      seedB = feederSeed;
+    } else if (feeders.length === 2) {
+      teamA = feeders[0]!.winnerTeamId!;
+      teamB = feeders[1]!.winnerTeamId!;
+      const resolvedA = seedByTeam.get(teamA);
+      const resolvedB = seedByTeam.get(teamB);
+      if (resolvedA === undefined || resolvedB === undefined) {
+        throw new Error(
+          `fillReadySeries: missing original seed for ${teamA} or ${teamB}.`,
+        );
+      }
+      seedA = resolvedA;
+      seedB = resolvedB;
+    } else {
+      continue;
     }
 
     const higherSeed = Math.min(seedA, seedB);

@@ -1,8 +1,8 @@
 import type { DomainEvent } from "@/domain/events";
 import type { OffseasonStage } from "@/domain/entities/season";
+import { createSeededRng } from "@/domain/rng";
 import { systemResult, type SystemResult } from "@/domain/system-result";
 import type { GameState } from "@/state/game-state";
-import { getPlayoffTeamCount } from "@/systems/playoff-config";
 import { startPlayoffs } from "@/systems/playoff-simulation";
 import { generateSchedule } from "@/systems/schedule-generation";
 import { transitionPhase } from "@/systems/simulation/phase-machine";
@@ -67,12 +67,19 @@ export function processSeasonLifecycle(state: GameState): SystemResult {
   }
 
   if (phase === "regular" && isRegularSeasonComplete(current)) {
-    const teamCount = Object.keys(current.world.teams).length;
-    const fieldSize = getPlayoffTeamCount(teamCount);
+    const playoffTeams = current.settings.playoffs.playoffTeams;
+    const liveTeamCount = Object.keys(current.world.teams).length;
 
-    if (fieldSize > 0) {
-      const started = startPlayoffs(current);
-      current = started.state;
+    if (playoffTeams > 0 && playoffTeams <= liveTeamCount) {
+      const rng = createSeededRng(current.meta.rngState);
+      const started = startPlayoffs(current, rng);
+      current = {
+        ...started.state,
+        meta: {
+          ...started.state.meta,
+          rngState: rng.getState(),
+        },
+      };
       events.push(...started.events);
       const phaseResult = transitionPhase(current, "playoffs");
       current = phaseResult.state;

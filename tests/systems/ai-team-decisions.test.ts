@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { createSeededRng } from "@/domain/rng";
 import { createInitialGameState } from "@/state/create-initial-state";
+import { CBL_GAME_SETTINGS } from "@/domain/game-settings";
 import { runAiTeamDecisions } from "@/systems/ai-team-decisions";
 import { DEFAULT_ROSTER_SIZE } from "@/systems/roster-generation-config";
 import {
@@ -66,7 +67,10 @@ function toFreeAgency(state: GameState, rng: ReturnType<typeof createSeededRng>)
 
 describe("AI team decisions", () => {
   it("does not modify the user-controlled team during free agency", () => {
-    let state = createInitialGameState({ saveId: "ai_fa_user", rngSeed: 21 });
+    let state = createInitialGameState({
+    saveId: "ai_fa_user", rngSeed: 21,
+    settings: CBL_GAME_SETTINGS,
+  });
     const rng = createSeededRng(state.meta.rngState);
     state = bootstrapWorld(state, rng).state;
     state = toFreeAgency(state, rng);
@@ -96,7 +100,10 @@ describe("AI team decisions", () => {
   });
 
   it("can sign a free agent for an AI team with roster need", () => {
-    let state = createInitialGameState({ saveId: "ai_fa_sign", rngSeed: 22 });
+    let state = createInitialGameState({
+    saveId: "ai_fa_sign", rngSeed: 22,
+    settings: CBL_GAME_SETTINGS,
+  });
     const rng = createSeededRng(state.meta.rngState);
     state = bootstrapWorld(state, rng).state;
     state = toFreeAgency(state, rng);
@@ -120,7 +127,10 @@ describe("AI team decisions", () => {
   });
 
   it("is deterministic for the same RNG state", () => {
-    let state = createInitialGameState({ saveId: "ai_det", rngSeed: 23 });
+    let state = createInitialGameState({
+    saveId: "ai_det", rngSeed: 23,
+    settings: CBL_GAME_SETTINGS,
+  });
     const rngA = createSeededRng(state.meta.rngState);
     state = bootstrapWorld(state, rngA).state;
     state = toFreeAgency(state, rngA);
@@ -136,7 +146,10 @@ describe("AI team decisions", () => {
   });
 
   it("does not churn trade blocks every day beyond one surplus listing", () => {
-    let state = createInitialGameState({ saveId: "ai_tb", rngSeed: 24 });
+    let state = createInitialGameState({
+    saveId: "ai_tb", rngSeed: 24,
+    settings: CBL_GAME_SETTINGS,
+  });
     const rng = createSeededRng(state.meta.rngState);
     state = bootstrapWorld(state, rng).state;
     const aiTeamId = aiTeamIds(state)[0]!;
@@ -150,7 +163,10 @@ describe("AI team decisions", () => {
   });
 
   it("stops draft selection when the user team is on the clock", () => {
-    let state = createInitialGameState({ saveId: "ai_draft", rngSeed: 25 });
+    let state = createInitialGameState({
+    saveId: "ai_draft", rngSeed: 25,
+    settings: CBL_GAME_SETTINGS,
+  });
     const rng = createSeededRng(state.meta.rngState);
     state = bootstrapWorld(state, rng).state;
     state = toFreeAgency(state, rng);
@@ -198,7 +214,10 @@ describe("AI team decisions", () => {
   });
 
   it("AI drafts an eligible prospect when a non-user team is on the clock", () => {
-    let state = createInitialGameState({ saveId: "ai_draft_pick", rngSeed: 26 });
+    let state = createInitialGameState({
+    saveId: "ai_draft_pick", rngSeed: 26,
+    settings: CBL_GAME_SETTINGS,
+  });
     const rng = createSeededRng(state.meta.rngState);
     state = bootstrapWorld(state, rng).state;
     state = toFreeAgency(state, rng);

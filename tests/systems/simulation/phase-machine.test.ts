@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { createInitialGameState } from "@/state/create-initial-state";
+import { CBL_GAME_SETTINGS } from "@/domain/game-settings";
 import {
   isValidPhaseTransition,
   transitionPhase,
@@ -10,7 +11,10 @@ import { SEASON_PHASES } from "@/domain/entities/season";
 
 describe("phase machine", () => {
   it("starts new saves in preseason", () => {
-    const state = createInitialGameState({ saveId: "phase_initial" });
+    const state = createInitialGameState({
+    saveId: "phase_initial",
+    settings: CBL_GAME_SETTINGS,
+  });
     expect(state.competition.season.phase).toBe("preseason");
     expect(state.competition.season.offseasonStage).toBe("none");
   });
@@ -27,7 +31,10 @@ describe("phase machine", () => {
   });
 
   it("succeeds for each allowed transition", () => {
-    let state = createInitialGameState({ saveId: "phase_ok" });
+    let state = createInitialGameState({
+    saveId: "phase_ok",
+    settings: CBL_GAME_SETTINGS,
+  });
     const path: SeasonPhase[] = [
       "regular",
       "playoffs",
@@ -42,14 +49,20 @@ describe("phase machine", () => {
   });
 
   it("allows regular → postseason structurally", () => {
-    let state = createInitialGameState({ saveId: "phase_skip_playoffs" });
+    let state = createInitialGameState({
+    saveId: "phase_skip_playoffs",
+    settings: CBL_GAME_SETTINGS,
+  });
     state = transitionPhase(state, "regular").state;
     state = transitionPhase(state, "postseason").state;
     expect(state.competition.season.phase).toBe("postseason");
   });
 
   it("rejects illegal transitions", () => {
-    const state = createInitialGameState({ saveId: "phase_bad" });
+    const state = createInitialGameState({
+    saveId: "phase_bad",
+    settings: CBL_GAME_SETTINGS,
+  });
     expect(() => transitionPhase(state, "playoffs")).toThrow(
       /Invalid season phase transition/,
     );
@@ -59,7 +72,10 @@ describe("phase machine", () => {
   });
 
   it("no-ops when already in the target phase", () => {
-    const state = createInitialGameState({ saveId: "phase_noop" });
+    const state = createInitialGameState({
+    saveId: "phase_noop",
+    settings: CBL_GAME_SETTINGS,
+  });
     const result = transitionPhase(state, "preseason");
     expect(result.state).toBe(state);
   });

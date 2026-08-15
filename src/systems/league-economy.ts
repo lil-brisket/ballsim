@@ -74,6 +74,10 @@ export function processMonthlyBroadcastRevenue(state: GameState): SystemResult {
     return systemResult(state);
   }
 
+  if (!state.settings.financialRules.revenueSharingEnabled) {
+    return systemResult(state);
+  }
+
   const pool =
     state.business.leagueEconomy.broadcastValue *
     state.business.leagueEconomy.popularity *

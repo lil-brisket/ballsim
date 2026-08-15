@@ -1,5 +1,5 @@
+import Link from "next/link";
 import {
-  createSaveAction,
   deleteSaveAction,
   openSaveAction,
 } from "@/application/actions";
@@ -31,9 +31,8 @@ export default async function HomePage({ searchParams }: HomePageProps) {
           Basketball
         </h1>
         <p className="max-w-xl text-zinc-400">
-          Create or continue a fictional franchise save. New saves open team
-          selection, then the Owner Mode dashboard for roster, trades, and
-          season advance.
+          Create or continue a fictional franchise save. New saves open game
+          setup, then team selection, then the Owner Mode dashboard.
         </p>
       </header>
 
@@ -45,27 +44,14 @@ export default async function HomePage({ searchParams }: HomePageProps) {
           <ErrorState
             message={`Owner Mode allows at most ${MAX_OWNER_SAVE_SLOTS} saves. Delete a save to create another.`}
           />
-        ) : null}
-        <form action={createSaveAction} className="flex flex-col gap-3 sm:flex-row">
-          <label className="sr-only" htmlFor="name">
-            Save name
-          </label>
-          <input
-            id="name"
-            name="name"
-            type="text"
-            defaultValue="Harbor Franchise"
-            disabled={atSaveLimit}
-            className="flex-1 rounded-md border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-100 outline-none ring-amber-500/40 focus:ring-2 disabled:cursor-not-allowed disabled:opacity-50"
-          />
-          <button
-            type="submit"
-            disabled={atSaveLimit}
-            className="rounded-md bg-amber-600 px-4 py-2 text-sm font-medium text-zinc-950 hover:bg-amber-500 disabled:cursor-not-allowed disabled:opacity-50"
+        ) : (
+          <Link
+            href="/new/setup"
+            className="inline-flex rounded-md bg-amber-600 px-4 py-2 text-sm font-medium text-zinc-950 hover:bg-amber-500"
           >
-            Create save
-          </button>
-        </form>
+            Configure league and create
+          </Link>
+        )}
       </section>
 
       <section className="space-y-4">

@@ -23,6 +23,7 @@ import {
   selectOwnerTeam,
   signOwnerFreeAgent,
 } from "@/application/game-service";
+import { CBL_GAME_SETTINGS } from "@/domain/game-settings";
 import { createMemorySaveGameStore } from "@/persistence/memory-save-game-store";
 import {
   deserializeGameState,
@@ -45,8 +46,7 @@ describe("Owner Mode vertical slice", () => {
   it(
     "new game + team selection survive save/load smoke test",
     async () => {
-      const created = await createNewOwnerSave(
-        { name: "Smoke Franchise", rngSeed: TEST_RNG_SEED },
+      const created = await createNewOwnerSave({ settings: CBL_GAME_SETTINGS, name: "Smoke Franchise", rngSeed: TEST_RNG_SEED },
         store,
       );
       expect(created.ok).toBe(true);
@@ -96,8 +96,7 @@ describe("Owner Mode vertical slice", () => {
   it(
     "rejects invalid free agency and draft actions in preseason",
     async () => {
-      const created = await createNewOwnerSave(
-        { name: "Guard Franchise", rngSeed: TEST_RNG_SEED },
+      const created = await createNewOwnerSave({ settings: CBL_GAME_SETTINGS, name: "Guard Franchise", rngSeed: TEST_RNG_SEED },
         store,
       );
       expect(created.ok).toBe(true);
@@ -127,8 +126,7 @@ describe("Owner Mode vertical slice", () => {
   it(
     "final acceptance: Season 1 through Season 2 with save/load",
     async () => {
-      const created = await createNewOwnerSave(
-        { name: "Vertical Slice", rngSeed: TEST_RNG_SEED },
+      const created = await createNewOwnerSave({ settings: CBL_GAME_SETTINGS, name: "Vertical Slice", rngSeed: TEST_RNG_SEED },
         store,
       );
       expect(created.ok).toBe(true);
@@ -366,9 +364,7 @@ describe("Owner Mode vertical slice", () => {
         if (outcomes.qualify && outcomes.miss) {
           break;
         }
-        const created = await createNewOwnerSave(
-          {
-            name: `PlayoffOutcome ${teamIndex}`,
+        const created = await createNewOwnerSave({ settings: CBL_GAME_SETTINGS, name: `PlayoffOutcome ${teamIndex}`,
             rngSeed: TEST_RNG_SEED + teamIndex,
           },
           store,
@@ -423,3 +419,4 @@ describe("Owner Mode vertical slice", () => {
     LONG_TIMEOUT_MS,
   );
 });
+

@@ -3,6 +3,7 @@ import { createOwnerObjective } from "@/domain/entities/owner-objective";
 import { asOwnerObjectiveId } from "@/domain/ids";
 import { createSeededRng } from "@/domain/rng";
 import { createInitialGameState } from "@/state/create-initial-state";
+import { CBL_GAME_SETTINGS } from "@/domain/game-settings";
 import {
   evaluateOwnerObjectives,
   generateOwnerObjectives,
@@ -13,7 +14,10 @@ import { bootstrapWorld } from "@/systems/world-pipeline";
 import { applyCashAndBooksImpact } from "@/systems/team-finances";
 
 function bootstrappedState(saveId: string) {
-  const state = createInitialGameState({ saveId, rngSeed: 11 });
+  const state = createInitialGameState({
+    saveId, rngSeed: 11,
+    settings: CBL_GAME_SETTINGS,
+  });
   const rng = createSeededRng(state.meta.rngState);
   return bootstrapWorld(state, rng).state;
 }

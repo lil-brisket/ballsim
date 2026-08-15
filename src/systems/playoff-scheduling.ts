@@ -18,8 +18,10 @@ export function createNextPlayoffGame(input: {
   seasonId: SeasonId;
   nextDate: string;
   gameId?: GameId;
+  seriesLength?: 1 | 3 | 5 | 7;
 }): Game {
   const { series, seasonId, nextDate } = input;
+  const seriesLength = input.seriesLength ?? 7;
   if (series.status !== "active") {
     throw new Error(
       `createNextPlayoffGame requires an active series; ${series.id} is "${series.status}".`,
@@ -39,6 +41,7 @@ export function createNextPlayoffGame(input: {
         lowerSeedTeamId: series.lowerSeedTeamId,
       },
       gameIndex,
+      seriesLength,
     ),
   );
   const awayTeamId =

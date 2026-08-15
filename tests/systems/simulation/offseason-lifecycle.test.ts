@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { createSeededRng } from "@/domain/rng";
 import { createInitialGameState } from "@/state/create-initial-state";
+import { CBL_GAME_SETTINGS } from "@/domain/game-settings";
 import { bootstrapWorld } from "@/systems/world-pipeline";
 import {
   advanceOffseasonStage,
@@ -15,9 +16,10 @@ import { draftYearForSeason } from "@/systems/draft";
 describe("offseason lifecycle", () => {
   function enterOffseason() {
     let state = createInitialGameState({
-      saveId: "off_life",
+    saveId: "off_life",
       rngSeed: 21,
-    });
+    settings: CBL_GAME_SETTINGS,
+  });
     const rng = createSeededRng(state.meta.rngState);
     state = bootstrapWorld(state, rng).state;
     state = transitionPhase(state, "regular").state;

@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { createInitialGameState } from "@/state/create-initial-state";
+import { CBL_GAME_SETTINGS } from "@/domain/game-settings";
 import { GAME_STATE_SCHEMA_VERSION } from "@/state/game-state";
 import { toDashboardSnapshot } from "@/state/selectors";
 import {
@@ -10,10 +11,11 @@ import {
 describe("createInitialGameState", () => {
   it("creates composed slices with owner mode defaults", () => {
     const state = createInitialGameState({
-      saveId: "save_test",
+    saveId: "save_test",
       rngSeed: 99,
       nowIso: "2026-08-13T12:00:00.000Z",
-    });
+    settings: CBL_GAME_SETTINGS,
+  });
 
     expect(state.meta.schemaVersion).toBe(GAME_STATE_SCHEMA_VERSION);
     expect(state.meta.rngSeed).toBe(99);
@@ -26,10 +28,11 @@ describe("createInitialGameState", () => {
 
   it("round-trips through serialize/deserialize", () => {
     const state = createInitialGameState({
-      saveId: "save_roundtrip",
+    saveId: "save_roundtrip",
       rngSeed: 3,
       nowIso: "2026-08-13T12:00:00.000Z",
-    });
+    settings: CBL_GAME_SETTINGS,
+  });
 
     const restored = deserializeGameState(serializeGameState(state));
     expect(restored).toEqual(state);
@@ -37,10 +40,11 @@ describe("createInitialGameState", () => {
 
   it("builds a dashboard snapshot from state", () => {
     const state = createInitialGameState({
-      saveId: "save_dash",
+    saveId: "save_dash",
       rngSeed: 1,
       nowIso: "2026-08-13T12:00:00.000Z",
-    });
+    settings: CBL_GAME_SETTINGS,
+  });
     const snapshot = toDashboardSnapshot(state);
     expect(snapshot.leagueName).toBe("Continental Basketball League");
     expect(snapshot.currentDate).toBe("2026-10-01");

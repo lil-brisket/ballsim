@@ -3,6 +3,7 @@ import { createGame } from "@/domain/entities/game";
 import { asGameId, asSeasonId, asTeamId } from "@/domain/ids";
 import { createSeededRng } from "@/domain/rng";
 import { createInitialGameState } from "@/state/create-initial-state";
+import { CBL_GAME_SETTINGS } from "@/domain/game-settings";
 import {
   hasAppliedGameplayConsequence,
 } from "@/systems/gameplay-financial-consequences";
@@ -14,7 +15,10 @@ import { bootstrapWorld } from "@/systems/world-pipeline";
 
 describe("ticket revenue", () => {
   it("posts ticket and merchandise revenue once per home game", () => {
-    let state = createInitialGameState({ saveId: "tix_test", rngSeed: 7 });
+    let state = createInitialGameState({
+    saveId: "tix_test", rngSeed: 7,
+    settings: CBL_GAME_SETTINGS,
+  });
     const rng = createSeededRng(state.meta.rngState);
     state = bootstrapWorld(state, rng).state;
     const teamId = state.user.controlledTeamId;

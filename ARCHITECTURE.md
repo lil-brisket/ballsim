@@ -113,6 +113,8 @@ GameState
 
 `schemaVersion` 24 adds Phase E franchise depth under `business`: `staffContracts`, `sponsorships`, `franchiseOps` (operational knobs + slow metrics only — not a miscellaneous bucket), `leagueEconomy`, `relocationByTeamId`, `expansion`, and `franchiseHistory`. Calendar gains `lastSimulatedMonthId`. Facility upgrades post through existing `expenses.facilities` (no separate capex ledger). Live franchise value is a selector (`calculateFranchiseValue`), never a mutable live field. Demand is the sole attendance calculator. Media is event-driven only.
 
+`schemaVersion` 25 adds top-level `GameState.settings` (`GameSettings`): league size/structure, regular-season games per team, playoff field/series/play-in, simulation frequency, AI difficulty (persisted for later use), and financial rule toggles. Pre-v25 saves reconstruct settings from the live league (e.g. 12-team CBL → 22 games / 8 playoff teams) rather than stamping Standard 30/82/16. Settings are configuration; runtime remains on world/competition/business/user. After expansion, do not treat `settings.league.teamCount` as the live team count.
+
 `schemaVersion` 14 adds `competition.playoffs` (`PlayoffTournament`). Pre-v14 saves migrate with `createEmptyPlayoffTournament()` (`not_started`, empty field). Empty/inactive playoffs are valid; a missing or null `playoffs` field is not.
 
 `schemaVersion` 15 adds owner objectives on `user.objectives` and extends `business.finances` with `revenue` and `expenses`. `toOwnerGameState(state)` derives a live-reference Owner Mode view (selected team, finances, roster, staff ids, league grouping). It must not be persisted independently.

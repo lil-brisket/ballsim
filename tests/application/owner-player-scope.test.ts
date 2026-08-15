@@ -17,6 +17,7 @@ import {
   loadOwnerPlayerView,
   selectOwnerTeam,
 } from "@/application/game-service";
+import { CBL_GAME_SETTINGS } from "@/domain/game-settings";
 import { createMemorySaveGameStore } from "@/persistence/memory-save-game-store";
 import { TEST_RNG_SEED } from "../helpers/determinism";
 
@@ -28,8 +29,7 @@ describe("owner player scope", () => {
   });
 
   it("returns null for missing or out-of-scope playerId", async () => {
-    const created = await createNewOwnerSave(
-      { name: "Scope Franchise", rngSeed: TEST_RNG_SEED },
+    const created = await createNewOwnerSave({ settings: CBL_GAME_SETTINGS, name: "Scope Franchise", rngSeed: TEST_RNG_SEED },
       store,
     );
     expect(created.ok).toBe(true);
@@ -73,3 +73,4 @@ describe("owner player scope", () => {
     expect(inScope!.player.playerId).toBe(ownPlayerId);
   });
 });
+

@@ -11,6 +11,7 @@ import {
 import { createMemorySaveGameStore } from "@/persistence/memory-save-game-store";
 import { validateGameState } from "@/persistence/validate-game-state";
 import { createInitialGameState } from "@/state/create-initial-state";
+import { CBL_GAME_SETTINGS } from "@/domain/game-settings";
 import { createPhaseEBusinessDefaults } from "@/state/phase-e-defaults";
 import {
   GAME_STATE_SCHEMA_VERSION,
@@ -69,6 +70,26 @@ function createEightTeamPopulatedState(rngSeed: number): GameState {
       updatedAt: TEST_NOW_ISO,
       rngSeed,
       rngState: rng.getState(),
+    },
+    settings: {
+      league: {
+        teamCount: 8,
+        conferenceCount: 2,
+        divisionsEnabled: true,
+      },
+      regularSeason: { gamesPerTeam: 14 },
+      playoffs: {
+        playoffTeams: 8,
+        seriesLength: 7,
+        playInEnabled: false,
+      },
+      simulation: { frequency: "daily" },
+      ai: { difficulty: "normal" },
+      financialRules: {
+        salaryCapEnabled: true,
+        luxuryTaxEnabled: true,
+        revenueSharingEnabled: true,
+      },
     },
     world: {
       calendar: {
@@ -822,10 +843,11 @@ describe("validateGameState / deserialize invalid saves", () => {
 describe("serializeGameState", () => {
   it("does not call deserialize and leaves state unchanged", () => {
     const state = createInitialGameState({
-      saveId: "save_serialize_only",
+    saveId: "save_serialize_only",
       rngSeed: 1,
       nowIso: TEST_NOW_ISO,
-    });
+    settings: CBL_GAME_SETTINGS,
+  });
     const snapshot = structuredClone(state);
     const json = serializeGameState(state);
     expect(state).toEqual(snapshot);

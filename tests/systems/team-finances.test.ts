@@ -13,6 +13,7 @@ import {
 } from "@/persistence/mappers/game-state-mapper";
 import { validateGameState } from "@/persistence/validate-game-state";
 import { createInitialGameState } from "@/state/create-initial-state";
+import { CBL_GAME_SETTINGS } from "@/domain/game-settings";
 import type { GameState } from "@/state/game-state";
 import { getTeamPayroll } from "@/systems/salary-cap";
 import {
@@ -31,6 +32,7 @@ function baseState(): GameState {
     saveId: "save_team_finances",
     rngSeed: TEST_RNG_SEED,
     nowIso: TEST_NOW_ISO,
+    settings: CBL_GAME_SETTINGS,
   });
 }
 

@@ -29,6 +29,12 @@ import { createInitialGameState } from "@/state/create-initial-state";
 import type { GameState } from "@/state/game-state";
 import { appendEventLog } from "@/state/game-state";
 import {
+  cloneGameSettings,
+  DEFAULT_GAME_SETTINGS,
+  type GameSettings,
+} from "@/domain/game-settings";
+import { validateGameSettings } from "@/domain/game-settings-validation";
+import {
   isPlayerInOwnerScope,
   listTeamsForSelection,
   toContractsView,
@@ -236,6 +242,7 @@ export async function createNewOwnerSave(
   input: {
     name: string;
     rngSeed?: number;
+    settings?: GameSettings;
   },
   store?: SaveGameStore,
 ): Promise<OwnerCommandResult> {
@@ -247,12 +254,21 @@ export async function createNewOwnerSave(
     );
   }
 
+  const settingsInput = cloneGameSettings(
+    input.settings ?? DEFAULT_GAME_SETTINGS,
+  );
+  const validated = validateGameSettings(settingsInput);
+  if (!validated.ok) {
+    return fail(`Invalid game settings: ${validated.errors.join("; ")}`);
+  }
+
   const saveId = crypto.randomUUID();
   const nowIso = new Date().toISOString();
   let state = createInitialGameState({
     saveId,
     rngSeed: input.rngSeed,
     nowIso,
+    settings: validated.settings,
   });
 
   const rng = createSeededRng(state.meta.rngState);

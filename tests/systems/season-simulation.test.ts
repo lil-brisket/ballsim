@@ -3,6 +3,7 @@ import { createGame } from "@/domain/entities/game";
 import { asPlayerId, asTeamId } from "@/domain/ids";
 import { createSeededRng } from "@/domain/rng";
 import { createInitialGameState } from "@/state/create-initial-state";
+import { CBL_GAME_SETTINGS } from "@/domain/game-settings";
 import { generateRosters } from "@/systems/roster-generation";
 import { generateSchedule } from "@/systems/schedule-generation";
 import { simulateGamesForDate } from "@/systems/game-simulation";
@@ -15,6 +16,7 @@ function bootstrapRosters(saveId: string, rngSeed: number) {
     saveId,
     rngSeed,
     nowIso: "2026-08-13T12:00:00.000Z",
+    settings: CBL_GAME_SETTINGS,
   });
   const rng = createSeededRng(state.meta.rngState);
   const afterRosters = generateRosters(state, rng);

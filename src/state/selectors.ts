@@ -70,6 +70,8 @@ export type DashboardSnapshot = {
     userQualified: boolean;
     championTeamId: string | null;
   };
+  /** Preferred Owner Mode advance cadence from GameSettings. */
+  simulationFrequency: "daily" | "weekly";
 };
 
 export type ObjectiveView = {
@@ -890,6 +892,7 @@ export function toDashboardSnapshot(state: GameState): DashboardSnapshot {
       userQualified,
       championTeamId: playoffs.championTeamId ?? null,
     },
+    simulationFrequency: state.settings.simulation.frequency,
   };
 }
 

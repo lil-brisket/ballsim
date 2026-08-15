@@ -17,6 +17,7 @@ import { isPlayerNationality } from "@/domain/entities/player-nationality";
 import { calculatePlayerOverall } from "@/domain/player-overall-rating";
 import { createSeededRng } from "@/domain/rng";
 import { createInitialGameState } from "@/state/create-initial-state";
+import { CBL_GAME_SETTINGS } from "@/domain/game-settings";
 import {
   generatePlayer,
   generatePlayerWithRng,
@@ -470,10 +471,11 @@ describe("player generation", () => {
 describe("generateRosters with player generation engine", () => {
   it("fills each team with ten players in fixed position slots", () => {
     const state = createInitialGameState({
-      saveId: "save_roster_slots",
+    saveId: "save_roster_slots",
       rngSeed: 21,
       nowIso: "2026-08-13T12:00:00.000Z",
-    });
+    settings: CBL_GAME_SETTINGS,
+  });
     const result = generateRosters(state, createSeededRng(state.meta.rngState));
     const teamCount = Object.keys(state.world.teams).length;
     const players = Object.values(result.state.world.players);

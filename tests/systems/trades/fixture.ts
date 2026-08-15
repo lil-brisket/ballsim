@@ -9,6 +9,7 @@ import {
   type TeamId,
 } from "@/domain/ids";
 import { createInitialGameState } from "@/state/create-initial-state";
+import { CBL_GAME_SETTINGS } from "@/domain/game-settings";
 import type { GameState } from "@/state/game-state";
 import { generateDraftPicksForSeason } from "@/domain/draft-picks/generate-draft-picks";
 import { createPlayer } from "../../factories/player";
@@ -35,6 +36,7 @@ export function createTradeFixture(
     saveId: "save_trade",
     rngSeed: TEST_RNG_SEED,
     nowIso: TEST_NOW_ISO,
+    settings: CBL_GAME_SETTINGS,
   });
 
   // Reuse two existing teams from bootstrap for conference/division consistency.

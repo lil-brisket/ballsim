@@ -3,6 +3,7 @@ import { createDefaultFranchiseOps } from "@/domain/entities/franchise-ops";
 import { asTeamId } from "@/domain/ids";
 import { createSeededRng } from "@/domain/rng";
 import { createInitialGameState } from "@/state/create-initial-state";
+import { CBL_GAME_SETTINGS } from "@/domain/game-settings";
 import {
   arenaCapacity,
   facilityDevelopmentMultiplier,
@@ -14,7 +15,10 @@ import { bootstrapWorld } from "@/systems/world-pipeline";
 
 describe("facilities", () => {
   function bootstrapped() {
-    let state = createInitialGameState({ saveId: "fac_test", rngSeed: 11 });
+    let state = createInitialGameState({
+    saveId: "fac_test", rngSeed: 11,
+    settings: CBL_GAME_SETTINGS,
+  });
     const rng = createSeededRng(state.meta.rngState);
     state = bootstrapWorld(state, rng).state;
     return state;

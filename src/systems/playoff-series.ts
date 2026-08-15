@@ -1,16 +1,21 @@
 import type { PlayoffSeries } from "@/domain/entities/playoffs";
+import type { SeriesLength } from "@/domain/game-settings";
+import { seriesWinsToClinch } from "@/domain/game-settings";
 import type { GameId, TeamId } from "@/domain/ids";
-import { SERIES_WINS_TO_CLINCH } from "@/systems/playoff-config";
 
 /**
- * Records one completed game into a series. Stops at SERIES_WINS_TO_CLINCH.
+ * Records one completed game into a series.
  * Does not decide home court or create games.
  */
 export function recordSeriesGameResult(
   series: PlayoffSeries,
   gameId: GameId,
   winnerTeamId: TeamId,
+  seriesLength: SeriesLength = 7,
 ): PlayoffSeries {
+  const winsToClinch = seriesWinsToClinch(seriesLength);
+  const maxGames = seriesLength;
+
   if (series.status === "complete") {
     throw new Error(
       `Series ${series.id} is complete and cannot accept additional games.`,
@@ -39,18 +44,15 @@ export function recordSeriesGameResult(
       `Series ${series.id} already includes game ${gameId}.`,
     );
   }
-  if (series.gameIds.length >= 7) {
+  if (series.gameIds.length >= maxGames) {
     throw new Error(
-      `Series ${series.id} already has 7 games; cannot record another.`,
+      `Series ${series.id} already has ${maxGames} games; cannot record another.`,
     );
   }
 
   const higherWins = series.wins[series.higherSeedTeamId] ?? 0;
   const lowerWins = series.wins[series.lowerSeedTeamId] ?? 0;
-  if (
-    higherWins >= SERIES_WINS_TO_CLINCH ||
-    lowerWins >= SERIES_WINS_TO_CLINCH
-  ) {
+  if (higherWins >= winsToClinch || lowerWins >= winsToClinch) {
     throw new Error(
       `Series ${series.id} already has a clinched winner and cannot accept games.`,
     );
@@ -61,14 +63,14 @@ export function recordSeriesGameResult(
     [winnerTeamId]: (series.wins[winnerTeamId] ?? 0) + 1,
   };
 
-  if ((nextWins[winnerTeamId] ?? 0) > SERIES_WINS_TO_CLINCH) {
+  if ((nextWins[winnerTeamId] ?? 0) > winsToClinch) {
     throw new Error(
-      `Series ${series.id}: team ${winnerTeamId} would exceed ${SERIES_WINS_TO_CLINCH} wins.`,
+      `Series ${series.id}: team ${winnerTeamId} would exceed ${winsToClinch} wins.`,
     );
   }
 
   const nextGameIds = [...series.gameIds, gameId];
-  const clinched = (nextWins[winnerTeamId] ?? 0) >= SERIES_WINS_TO_CLINCH;
+  const clinched = (nextWins[winnerTeamId] ?? 0) >= winsToClinch;
 
   return {
     ...series,

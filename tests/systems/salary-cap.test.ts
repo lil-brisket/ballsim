@@ -7,6 +7,7 @@ import {
   type Contract,
 } from "@/domain/entities/contract";
 import { createInitialGameState } from "@/state/create-initial-state";
+import { CBL_GAME_SETTINGS } from "@/domain/game-settings";
 import type { GameState } from "@/state/game-state";
 import { asContractId, asPlayerId } from "@/domain/ids";
 import {
@@ -24,6 +25,7 @@ function baseState(): GameState {
     saveId: "save_cap",
     rngSeed: TEST_RNG_SEED,
     nowIso: TEST_NOW_ISO,
+    settings: CBL_GAME_SETTINGS,
   });
 }
 

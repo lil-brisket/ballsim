@@ -127,29 +127,31 @@ export function validateTrade(
     }
   }
 
-  // Salary
-  const salaryA = applyTradeSalaryRule({
-    currentPayroll: getTeamPayroll(sideA.teamId, seasonYear, state),
-    outgoingSalary: sumPlayerSalaries(state, sideA.playerIds, seasonYear),
-    incomingSalary: sumPlayerSalaries(state, sideB.playerIds, seasonYear),
-  });
-  if (!salaryA.valid) {
-    errors.push({
-      code: "SALARY_VIOLATION",
-      message: `Team "${sideA.teamId}": ${salaryA.reason ?? "salary matching failed."}`,
+  // Salary (skipped when salary cap is disabled in game settings)
+  if (state.settings.financialRules.salaryCapEnabled) {
+    const salaryA = applyTradeSalaryRule({
+      currentPayroll: getTeamPayroll(sideA.teamId, seasonYear, state),
+      outgoingSalary: sumPlayerSalaries(state, sideA.playerIds, seasonYear),
+      incomingSalary: sumPlayerSalaries(state, sideB.playerIds, seasonYear),
     });
-  }
+    if (!salaryA.valid) {
+      errors.push({
+        code: "SALARY_VIOLATION",
+        message: `Team "${sideA.teamId}": ${salaryA.reason ?? "salary matching failed."}`,
+      });
+    }
 
-  const salaryB = applyTradeSalaryRule({
-    currentPayroll: getTeamPayroll(sideB.teamId, seasonYear, state),
-    outgoingSalary: sumPlayerSalaries(state, sideB.playerIds, seasonYear),
-    incomingSalary: sumPlayerSalaries(state, sideA.playerIds, seasonYear),
-  });
-  if (!salaryB.valid) {
-    errors.push({
-      code: "SALARY_VIOLATION",
-      message: `Team "${sideB.teamId}": ${salaryB.reason ?? "salary matching failed."}`,
+    const salaryB = applyTradeSalaryRule({
+      currentPayroll: getTeamPayroll(sideB.teamId, seasonYear, state),
+      outgoingSalary: sumPlayerSalaries(state, sideB.playerIds, seasonYear),
+      incomingSalary: sumPlayerSalaries(state, sideA.playerIds, seasonYear),
     });
+    if (!salaryB.valid) {
+      errors.push({
+        code: "SALARY_VIOLATION",
+        message: `Team "${sideB.teamId}": ${salaryB.reason ?? "salary matching failed."}`,
+      });
+    }
   }
 
   // Roster size — picks have zero roster impact

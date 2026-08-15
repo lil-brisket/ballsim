@@ -7,6 +7,14 @@ import {
 import { DEFAULT_COACHING_PHILOSOPHY } from "@/domain/coaching/coaching-philosophy";
 import { createSeededRng } from "@/domain/rng";
 import {
+  cloneGameSettings,
+  CBL_GAME_SETTINGS,
+  DEFAULT_GAME_SETTINGS,
+  isSupportedTeamCount,
+  type GameSettings,
+} from "@/domain/game-settings";
+import { validateGameSettings } from "@/domain/game-settings-validation";
+import {
   asArenaId,
   asConferenceId,
   asDivisionId,
@@ -24,12 +32,15 @@ import {
 } from "@/state/game-state";
 import { createPhaseEBusinessDefaults } from "@/state/phase-e-defaults";
 import { generateLeague } from "@/systems/league-generation";
+import { leagueGenerationConfigFromSettings } from "@/systems/league-shape";
 import { generateLeagueStaff } from "@/systems/staff-generation";
 
 export type CreateInitialGameStateInput = {
   saveId: string;
   rngSeed?: number;
   nowIso?: string;
+  /** Career configuration; defaults to Standard (30/82/16). */
+  settings?: GameSettings;
 };
 
 function createId(prefix: string): string {
@@ -62,7 +73,8 @@ function bootstrapTeam(
 }
 
 /**
- * Production Owner Mode new-game universe: 12 teams (2×2×3), empty rosters.
+ * Production Owner Mode new-game universe from GameSettings.
+ * Defaults to Standard (30 teams). Pass CBL_GAME_SETTINGS for 12-team tests.
  * Application bootstrap fills players/contracts via generateRosters.
  * Placeholder controlledTeamId is the first sorted team id until selectOwnerTeam.
  */
@@ -74,16 +86,29 @@ export function createInitialGameState(
   const rngSeed = input.rngSeed ?? 1;
   const rng = createSeededRng(rngSeed);
 
+  const settingsInput = cloneGameSettings(input.settings ?? DEFAULT_GAME_SETTINGS);
+  const validated = validateGameSettings(settingsInput, {
+    mode: isSupportedTeamCount(settingsInput.league.teamCount)
+      ? "newSave"
+      : "persisted",
+  });
+  if (!validated.ok) {
+    throw new Error(
+      `Invalid GameSettings: ${validated.errors.join("; ")}`,
+    );
+  }
+  const settings = validated.settings;
+
   const generated = generateLeague(
-    {
+    leagueGenerationConfigFromSettings({
       leagueId: `league_${saveId}`,
       leagueName: "Continental Basketball League",
       leagueAbbreviation: "CBL",
-      conferenceCount: 2,
-      divisionsPerConference: 2,
-      teamsPerDivision: 3,
+      teamCount: settings.league.teamCount,
+      conferenceCount: settings.league.conferenceCount,
+      divisionsEnabled: settings.league.divisionsEnabled,
       rosterSize: 0,
-    },
+    }),
     rng,
   );
 
@@ -130,6 +155,7 @@ export function createInitialGameState(
       rngSeed,
       rngState: rng.getState(),
     },
+    settings: cloneGameSettings(settings),
     world: {
       calendar: {
         currentDate: "2026-10-01",
@@ -192,9 +218,18 @@ export function createInitialGameState(
   };
 }
 
+/** Convenience for tests that need the classic 12-team CBL. */
+export function createCblInitialGameState(
+  input: Omit<CreateInitialGameStateInput, "settings">,
+): GameState {
+  return createInitialGameState({
+    ...input,
+    settings: CBL_GAME_SETTINGS,
+  });
+}
+
 /**
- * Four-team fixture for tests that assert the no-playoff path
- * (getPlayoffTeamCount(4) === 0 → regular → postseason).
+ * Four-team fixture for small-league tests (4-team playoffs).
  * Not used for production Owner Mode new games.
  */
 export function createFourTeamInitialGameState(
@@ -278,6 +313,33 @@ export function createFourTeamInitialGameState(
   const teamIds = Object.keys(teams) as TeamId[];
   const phaseE = createPhaseEBusinessDefaults(teamIds);
 
+  const fourTeamSettings: GameSettings = input.settings ?? {
+    league: {
+      teamCount: 4,
+      conferenceCount: 2,
+      divisionsEnabled: false,
+    },
+    regularSeason: {
+      gamesPerTeam: 14,
+    },
+    playoffs: {
+      playoffTeams: 4,
+      seriesLength: 7,
+      playInEnabled: false,
+    },
+    simulation: {
+      frequency: "daily",
+    },
+    ai: {
+      difficulty: "normal",
+    },
+    financialRules: {
+      salaryCapEnabled: true,
+      luxuryTaxEnabled: true,
+      revenueSharingEnabled: true,
+    },
+  };
+
   return {
     meta: {
       saveId,
@@ -287,6 +349,7 @@ export function createFourTeamInitialGameState(
       rngSeed,
       rngState: rngSeed,
     },
+    settings: cloneGameSettings(fourTeamSettings),
     world: {
       calendar: {
         currentDate: "2026-10-01",

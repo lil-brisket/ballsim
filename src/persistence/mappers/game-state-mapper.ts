@@ -37,6 +37,7 @@ import { validateGameState } from "@/persistence/validate-game-state";
 import { generateDraftPicksForSeason } from "@/domain/draft-picks/generate-draft-picks";
 import type { OffseasonStage, SeasonPhase } from "@/domain/entities/season";
 import { createPhaseEBusinessDefaults } from "@/state/phase-e-defaults";
+import { reconstructGameSettingsFromState } from "@/state/reconstruct-game-settings";
 import type { StaffRole, StaffStrength, StaffWeakness } from "@/domain/entities/staff";
 import { asStaffId } from "@/domain/ids";
 
@@ -116,10 +117,11 @@ const MIGRATE_ONE_STEP: Record<number, (state: unknown) => unknown> = {
   21: (state) => migrateV21ToV22(state as GameStateV21),
   22: (state) => migrateV22ToV23(state as GameStateV22),
   23: (state) => migrateV23ToV24(state as GameStateV23),
+  24: (state) => migrateV24ToV25(state as GameStateV24),
 };
 
 /**
- * Parse → migrate (v1–v23 → current) → validate → return GameState.
+ * Parse → migrate (v1–v24 → current) → validate → return GameState.
  * Does not call serializeGameState.
  */
 export function deserializeGameState(stateJson: string): GameState {
@@ -1943,7 +1945,7 @@ type GameStateV23 = {
  * Deterministic v23 → v24: Phase E franchise business slices + calendar month id.
  * Emits literal schemaVersion 24. No RNG.
  */
-function migrateV23ToV24(state: GameStateV23): GameState {
+function migrateV23ToV24(state: GameStateV23): GameStateV24 {
   const teamIds = Object.keys(state.world.teams) as TeamId[];
   const phaseE = createPhaseEBusinessDefaults(teamIds);
 
@@ -2018,6 +2020,37 @@ function migrateV23ToV24(state: GameStateV23): GameState {
       ...state.business,
       ...phaseE,
     },
+    user: state.user,
+  };
+}
+
+type GameStateV24 = {
+  meta: Omit<GameState["meta"], "schemaVersion"> & {
+    schemaVersion: 24;
+    rngState: number;
+  };
+  world: GameState["world"];
+  competition: GameState["competition"];
+  business: GameState["business"];
+  user: GameState["user"];
+};
+
+/**
+ * Deterministic v24 → v25: add top-level GameSettings reconstructed from league.
+ * Does not overwrite old CBL careers with Standard 30/82/16.
+ * Emits literal schemaVersion 25. No RNG.
+ */
+function migrateV24ToV25(state: GameStateV24): GameState {
+  const settings = reconstructGameSettingsFromState(state);
+  return {
+    meta: {
+      ...state.meta,
+      schemaVersion: 25,
+    },
+    settings,
+    world: state.world,
+    competition: state.competition,
+    business: state.business,
     user: state.user,
   };
 }

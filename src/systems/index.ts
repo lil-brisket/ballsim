@@ -125,6 +125,7 @@ export {
   SERIES_WINS_TO_CLINCH,
   SUPPORTED_PLAYOFF_FIELD_SIZES,
   getPlayoffTeamCount,
+  getLegacyPlayoffTeamCount,
   getHomeTeamForGame,
   type HomeCourtSeriesParticipants,
 } from "@/systems/playoff-config";

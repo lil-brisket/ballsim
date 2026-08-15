@@ -78,6 +78,26 @@ function createEightTeamGameState(rngSeed: number): {
       rngSeed,
       rngState: rng.getState(),
     },
+    settings: {
+      league: {
+        teamCount: 8,
+        conferenceCount: 2,
+        divisionsEnabled: true,
+      },
+      regularSeason: { gamesPerTeam: 14 },
+      playoffs: {
+        playoffTeams: 8,
+        seriesLength: 7,
+        playInEnabled: false,
+      },
+      simulation: { frequency: "daily" },
+      ai: { difficulty: "normal" },
+      financialRules: {
+        salaryCapEnabled: true,
+        luxuryTaxEnabled: true,
+        revenueSharingEnabled: true,
+      },
+    },
     world: {
       calendar: {
         currentDate: "2026-10-01",
@@ -216,10 +236,10 @@ describe("playoffs season integration", () => {
     );
   });
 
-  it("keeps 4-team seasons on regular phase without a champion", () => {
+  it("runs 4-team seasons through playoffs to a champion", () => {
     resetDomainEventSequenceForTests();
     const base = createFourTeamInitialGameState({
-      saveId: "save_four_team_no_playoffs",
+      saveId: "save_four_team_playoffs",
       rngSeed: 55,
       nowIso: TEST_NOW_ISO,
     });
@@ -228,8 +248,9 @@ describe("playoffs season integration", () => {
     expect(Object.keys(rostered.world.teams)).toHaveLength(4);
 
     const result = simulateSeason(rostered, rng);
-    expect(result.state.competition.season.phase).toBe("regular");
-    expect(result.state.competition.playoffs.status).toBe("not_started");
-    expect(result.state.competition.playoffs.championTeamId).toBeUndefined();
+    expect(result.state.competition.season.phase).toBe("playoffs");
+    expect(result.state.competition.playoffs.status).toBe("complete");
+    expect(result.state.competition.playoffs.fieldSize).toBe(4);
+    expect(result.state.competition.playoffs.championTeamId).toBeDefined();
   });
 });

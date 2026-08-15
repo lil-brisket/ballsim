@@ -31,6 +31,8 @@ import {
   withdrawOwnerFreeAgentOffer,
 } from "@/application/game-service";
 import type { FacilityCategory } from "@/domain/entities/franchise-ops";
+import { validateGameSettings } from "@/domain/game-settings-validation";
+import { DEFAULT_GAME_SETTINGS } from "@/domain/game-settings";
 
 function ownerBase(saveId: string): string {
   return `/dashboard/${saveId}`;
@@ -55,9 +57,23 @@ function returnPath(formData: FormData, saveId: string): string {
 
 export async function createSaveAction(formData: FormData): Promise<void> {
   const name = String(formData.get("name") ?? "New Franchise");
-  const result = await createNewOwnerSave({ name });
+  const settingsJson = String(formData.get("settingsJson") ?? "");
+  let settings = DEFAULT_GAME_SETTINGS;
+  if (settingsJson) {
+    try {
+      const parsed = JSON.parse(settingsJson) as unknown;
+      const validated = validateGameSettings(parsed);
+      if (!validated.ok) {
+        redirectWithError("/new/setup", validated.errors.join("; "));
+      }
+      settings = validated.settings;
+    } catch {
+      redirectWithError("/new/setup", "Invalid game settings payload.");
+    }
+  }
+  const result = await createNewOwnerSave({ name, settings });
   if (!result.ok) {
-    redirectWithError("/", result.error);
+    redirectWithError("/new/setup", result.error);
   }
   revalidatePath("/");
   redirect(`/new/${result.save.id}/team`);

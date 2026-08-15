@@ -27,10 +27,11 @@ import type { Standings } from "@/domain/entities/standings";
 import type { Team } from "@/domain/entities/team";
 import type { ScheduledEvent } from "@/domain/entities/scheduled-event";
 import type { TradeBlock } from "@/domain/entities/trade-block";
+import type { GameSettings } from "@/domain/game-settings";
 import type { DomainEvent } from "@/domain/events";
 import type { SaveId, TeamId } from "@/domain/ids";
 
-export const GAME_STATE_SCHEMA_VERSION = 24;
+export const GAME_STATE_SCHEMA_VERSION = 25;
 
 /** Bounded recent history for Owner Mode activity / transactions UI. */
 export const EVENT_LOG_MAX = 1_000;
@@ -110,9 +111,15 @@ export type UserSlice = {
 /**
  * Authoritative game model for one save.
  * Composed of typed slices to avoid a single undifferentiated object.
+ *
+ * `settings` is career configuration (how the league works).
+ * Other slices hold runtime state (what has happened).
+ * `settings.league.teamCount` is the size at career creation — after expansion
+ * use `Object.keys(world.teams).length` for the live league size.
  */
 export type GameState = {
   meta: MetaSlice;
+  settings: GameSettings;
   world: WorldSlice;
   competition: CompetitionSlice;
   business: BusinessSlice;

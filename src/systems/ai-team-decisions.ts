@@ -98,7 +98,9 @@ function runAiFreeAgency(state: GameState): SystemResult {
       continue;
     }
 
-    const capSpace = getTeamCapSpace(teamId, seasonYear, current);
+    const capSpace = current.settings.financialRules.salaryCapEnabled
+      ? getTeamCapSpace(teamId, seasonYear, current)
+      : Number.MAX_SAFE_INTEGER;
     if (capSpace < AI_FA_MIN_SALARY) {
       current = withAppliedGameplayConsequence(current, key);
       continue;
