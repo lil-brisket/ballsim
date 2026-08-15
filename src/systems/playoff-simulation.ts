@@ -17,7 +17,8 @@ import { recordSeriesGameResult } from "@/systems/playoff-series";
 import { simulateScheduledGame } from "@/systems/game-simulation";
 
 /**
- * Qualifies teams, builds the bracket, and sets season phase to playoffs.
+ * Qualifies teams and builds the playoff bracket.
+ * Does not mutate season.phase — callers use transitionPhase("playoffs").
  * Idempotent when playoffs are already in_progress or complete.
  */
 export function startPlayoffs(state: GameState): SystemResult {
@@ -42,10 +43,6 @@ export function startPlayoffs(state: GameState): SystemResult {
     ...state,
     competition: {
       ...state.competition,
-      season: {
-        ...state.competition.season,
-        phase: "playoffs",
-      },
       playoffs: tournament,
     },
   });
@@ -157,10 +154,6 @@ export function simulateNextPlayoffGame(
         ...state.competition,
         games,
         playoffs: nextPlayoffs,
-        season: {
-          ...state.competition.season,
-          phase: "playoffs",
-        },
       },
     },
     events,

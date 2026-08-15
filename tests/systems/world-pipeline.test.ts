@@ -83,7 +83,7 @@ describe("roster and schedule generation", () => {
     }
   });
 
-  it("builds a double round-robin and moves season to regular", () => {
+  it("builds a double round-robin without changing season phase", () => {
     const state = createInitialGameState({
       saveId: "save_sched",
       rngSeed: 13,
@@ -94,7 +94,7 @@ describe("roster and schedule generation", () => {
     const expectedGames = teamCount * (teamCount - 1);
 
     expect(result.state.competition.schedule.gameIds).toHaveLength(expectedGames);
-    expect(result.state.competition.season.phase).toBe("regular");
+    expect(result.state.competition.season.phase).toBe("preseason");
     expect(
       Object.values(result.state.competition.games).every(
         (game) =>
@@ -102,8 +102,8 @@ describe("roster and schedule generation", () => {
       ),
     ).toBe(true);
 
-    // First round games share one calendar date (day after currentDate)
-    const firstDate = "2026-10-02";
+    // Round 1 lands on currentDate when scheduleStartOffsetDays is 0
+    const firstDate = "2026-10-01";
     const firstRoundGames = Object.values(result.state.competition.games).filter(
       (game) => game.date === firstDate,
     );
@@ -146,37 +146,33 @@ describe("world pipeline advanceDay", () => {
     const rng = createSeededRng(state.meta.rngState);
     const bootstrapped = bootstrapWorld(state, rng);
 
-    // Move a scheduled game onto the current date so the first advance sims it.
-    const firstGameId = bootstrapped.state.competition.schedule.gameIds[0]!;
-    const firstGame = bootstrapped.state.competition.games[firstGameId]!;
-    const prepared = {
-      ...bootstrapped.state,
-      competition: {
-        ...bootstrapped.state.competition,
-        games: {
-          ...bootstrapped.state.competition.games,
-          [firstGameId]: {
-            ...firstGame,
-            date: bootstrapped.state.world.calendar.currentDate,
-          },
-        },
-      },
-    };
+    expect(bootstrapped.state.competition.schedule.gameIds).toHaveLength(0);
+    expect(bootstrapped.state.competition.season.phase).toBe("preseason");
 
-    const advanced = runWorldPipeline(prepared, rng, { type: "advanceDay" });
+    const advanced = runWorldPipeline(bootstrapped.state, rng, {
+      type: "advanceDay",
+    });
 
     expect(advanced.state.world.calendar.currentDate).toBe("2026-10-02");
-    expect(advanced.state.competition.games[firstGameId]?.status).toBe("final");
+    expect(advanced.state.competition.season.phase).toBe("regular");
+    expect(advanced.state.competition.schedule.gameIds.length).toBeGreaterThan(0);
     expect(
       advanced.events.some((event) => event.type === "GameCompleted"),
     ).toBe(true);
+
+    const openerGames = Object.values(advanced.state.competition.games).filter(
+      (game) => game.date === "2026-10-01",
+    );
+    expect(openerGames.length).toBeGreaterThan(0);
+    expect(openerGames.every((game) => game.status === "final")).toBe(true);
 
     const standing = Object.values(advanced.state.competition.standings.byTeamId);
     const totalDecisions = standing.reduce(
       (acc, row) => acc + row.wins + row.losses,
       0,
     );
-    expect(totalDecisions).toBe(2);
+    // 4 teams → 2 games per round; opener round contributes 4 decisions (2 wins + 2 losses).
+    expect(totalDecisions).toBe(4);
   });
 
   it("continues the RNG stream across advances via getState", () => {

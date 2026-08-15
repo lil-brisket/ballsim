@@ -191,6 +191,26 @@ export {
   type WorldPipelineCommand,
 } from "@/systems/world-pipeline";
 export {
+  advanceSimulation,
+  transitionPhase,
+  isValidPhaseTransition,
+  VALID_PHASE_TRANSITIONS,
+  processSeasonLifecycle,
+  isRegularSeasonComplete,
+  processOffseasonLifecycle,
+  advanceOffseasonStage,
+  initializeNewSeason,
+  scheduleEvent,
+  processScheduledEvents,
+  registerScheduledEventHandler,
+  runDailyPipeline,
+  runWeeklyPipeline,
+  SEASON_LIFECYCLE_CONFIG,
+  type AdvanceSimulationResult,
+  type AdvanceSimulationOptions,
+} from "@/systems/simulation";
+export { ensureDraftPicks } from "@/systems/world-pipeline";
+export {
   FREE_AGENCY_INTEREST_CONFIG,
   type FreeAgencyInterestConfig,
 } from "@/systems/free-agency-config";
@@ -241,7 +261,6 @@ export {
   mergeDraftPicksForSeason,
   DRAFT_PICK_HORIZON_YEARS,
 } from "@/domain/draft-picks/generate-draft-picks";
-export { ensureDraftPicks } from "@/systems/world-pipeline";
 export {
   MIN_DRAFT_PROSPECT_AGE,
   MAX_DRAFT_PROSPECT_AGE,

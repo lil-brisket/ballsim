@@ -6,10 +6,9 @@ import { createInitialGameState } from "@/state/create-initial-state";
 import { toDashboardSnapshot } from "@/state/selectors";
 import type { DashboardSnapshot } from "@/state/selectors";
 import type { GameState } from "@/state/game-state";
-import {
-  bootstrapWorld,
-  runWorldPipeline,
-} from "@/systems/world-pipeline";
+import { bootstrapWorld } from "@/systems/world-pipeline";
+import { advanceSimulation } from "@/systems/simulation/advance-simulation";
+import type { AdvanceSimulationResult } from "@/systems/simulation/types";
 import { prismaSaveGameStore } from "@/persistence/save-game-repository";
 import type {
   LoadedSaveGame,
@@ -24,6 +23,7 @@ export type CreateGameResult = {
 
 export type AdvanceDayResult = CreateGameResult & {
   events: DomainEvent[];
+  simulation: Omit<AdvanceSimulationResult, "state" | "events">;
 };
 
 function toSaveSummary(loaded: LoadedSaveGame): SaveGameSummary {
@@ -127,7 +127,7 @@ export async function advanceOwnerDay(
 
   const nowIso = new Date().toISOString();
   const rng = createSeededRng(loaded.state.meta.rngState);
-  const result = runWorldPipeline(loaded.state, rng, { type: "advanceDay" });
+  const result = advanceSimulation(loaded.state, rng, { days: 1 });
 
   const nextState = {
     ...result.state,
@@ -143,9 +143,16 @@ export async function advanceOwnerDay(
     state: nextState,
   });
 
+  const {
+    state: _state,
+    events,
+    ...simulation
+  } = result;
+
   return {
     save: toSaveSummary(saved),
     dashboard: toDashboardSnapshot(saved.state),
-    events: result.events,
+    events,
+    simulation,
   };
 }

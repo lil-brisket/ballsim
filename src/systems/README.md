@@ -48,8 +48,9 @@ Each system should:
 | `playoff-scheduling` | Lazy next playoff game creation with calendar dates |
 | `playoff-simulation` | `startPlayoffs` / `simulateNextPlayoffGame` / `simulatePlayoffs` via `simulateGame` |
 | `season-simulation` | Season orchestration: regular season, then playoffs when field size > 0 |
-| `calendar` | Advance world date by one day |
-| `world-pipeline` | `bootstrapWorld` + `runWorldPipeline({ type: "advanceDay" })`; bootstrap also ensures draft picks |
+| `calendar` | Advance world date by one day (preserves lastSimulated* markers) |
+| `simulation/*` | Owner Mode backbone: `advanceSimulation`, phase machine, daily/weekly pipelines, scheduled events, season/offseason lifecycle |
+| `world-pipeline` | `bootstrapWorld` (rosters + draft picks) + thin `runWorldPipeline({ type: "advanceDay" })` → `advanceSimulation` |
 | `trades-config` | Trade roster bounds, salary-matching percent, finder cap, pick values, trade-block bonus |
 | `trades/*` | Trade engine: `validateTrade`, `executeTrade`, Trade Block, Finder, evaluation, AI proposal |
 | `draft-config` | Prospect age band, extra-prospect count, scouting noise, fixed rookie contract years |
@@ -58,7 +59,11 @@ Each system should:
 
 Statistical box-score validation lives under `src/simulation/validation/` and is run via `npx tsx scripts/validate-simulation-stats.ts` (not a second simulation path).
 
-Advance day processes games for the **current** calendar date, optionally one playoff game when the regular season is complete, updates standings, then ticks the calendar. Stochastic steps use the injected `Rng`; callers persist `rng.getState()` to `GameState.meta.rngState`.
+Advance day is owned by `advanceSimulation`: lifecycle (before daily work) →
+scheduled events → daily pipeline → calendar +1 → weekly pipeline on ISO week
+boundary. `currentDate` is the date being simulated. `transitionPhase` is the
+only writer of `season.phase`. Stochastic steps use the injected `Rng`; callers
+persist `rng.getState()` to `GameState.meta.rngState`.
 
 `developPlayer` is a player-level building block (returns `Player`, not `SystemResult`). It recalculates `development.stage` from age, modifies attributes in `PLAYER_ATTRIBUTE_KEYS` order (19 RNG rolls), and leaves age unchanged. Injury status is ignored in v1. A future season tick should age players and then call this engine.
 

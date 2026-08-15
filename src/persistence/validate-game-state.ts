@@ -20,22 +20,29 @@ import {
   isTradeBlockStatus,
   type TradeBlockAsset,
 } from "@/domain/entities/trade-block";
-import type { SeasonPhase } from "@/domain/entities/season";
+import type {
+  OffseasonStage,
+  SeasonPhase,
+} from "@/domain/entities/season";
+import {
+  OFFSEASON_STAGES,
+  SEASON_PHASES,
+} from "@/domain/entities/season";
+import {
+  SCHEDULED_EVENT_STATUSES,
+  SCHEDULED_EVENT_TYPES,
+  type ScheduledEventStatus,
+  type ScheduledEventType,
+} from "@/domain/entities/scheduled-event";
 import type { GameState, GameMode } from "@/state/game-state";
 import { GAME_STATE_SCHEMA_VERSION } from "@/state/game-state";
 import {
   asContractId,
   asOfferId,
   asPlayerId,
+  asScheduledEventId,
   asTeamId,
 } from "@/domain/ids";
-
-const SEASON_PHASES: readonly SeasonPhase[] = [
-  "preseason",
-  "regular",
-  "playoffs",
-  "offseason",
-];
 
 const GAME_MODES: readonly GameMode[] = ["owner"];
 
@@ -115,6 +122,7 @@ export function validateGameState(state: unknown): asserts state is GameState {
     "staff",
     "draftPicks",
     "drafts",
+    "scheduledEvents",
   ] as const) {
     if (!(key in world)) {
       fail(`world missing required field "${key}".`);
@@ -133,6 +141,37 @@ export function validateGameState(state: unknown): asserts state is GameState {
     );
   }
 
+  if (world.calendar.lastSimulatedDate === null) {
+    // ok — never simulated
+  } else if (typeof world.calendar.lastSimulatedDate === "string") {
+    assertNonEmptyString(
+      world.calendar.lastSimulatedDate,
+      "world.calendar.lastSimulatedDate",
+    );
+    try {
+      parseCalendarDate(world.calendar.lastSimulatedDate);
+    } catch (error) {
+      fail(
+        error instanceof Error
+          ? `world.calendar.lastSimulatedDate: ${error.message}`
+          : "world.calendar.lastSimulatedDate is invalid.",
+      );
+    }
+  } else {
+    fail("world.calendar.lastSimulatedDate must be a YYYY-MM-DD string or null.");
+  }
+
+  if (world.calendar.lastSimulatedWeekId === null) {
+    // ok
+  } else if (typeof world.calendar.lastSimulatedWeekId === "string") {
+    assertNonEmptyString(
+      world.calendar.lastSimulatedWeekId,
+      "world.calendar.lastSimulatedWeekId",
+    );
+  } else {
+    fail("world.calendar.lastSimulatedWeekId must be a non-empty string or null.");
+  }
+
   assertRecord(world.league, "world.league");
   assertNonEmptyString(world.league.id, "world.league.id");
   assertRecord(world.conferences, "world.conferences");
@@ -143,6 +182,8 @@ export function validateGameState(state: unknown): asserts state is GameState {
   assertRecord(world.staff, "world.staff");
   assertRecord(world.draftPicks, "world.draftPicks");
   assertRecord(world.drafts, "world.drafts");
+  assertRecord(world.scheduledEvents, "world.scheduledEvents");
+  validateScheduledEvents(world.scheduledEvents);
 
   const competition = state.competition;
   assertRecord(competition, "competition");
@@ -167,6 +208,16 @@ export function validateGameState(state: unknown): asserts state is GameState {
   ) {
     fail(
       `competition.season.phase must be one of ${SEASON_PHASES.join(", ")}.`,
+    );
+  }
+  if (
+    typeof competition.season.offseasonStage !== "string" ||
+    !OFFSEASON_STAGES.includes(
+      competition.season.offseasonStage as OffseasonStage,
+    )
+  ) {
+    fail(
+      `competition.season.offseasonStage must be one of ${OFFSEASON_STAGES.join(", ")}.`,
     );
   }
 
@@ -1254,5 +1305,51 @@ function validateTeamFinanceBooksByYear(
         `${booksPath}.expenses.${category}`,
       );
     }
+  }
+}
+
+function validateScheduledEvents(events: unknown): void {
+  assertRecord(events, "world.scheduledEvents");
+  for (const [key, value] of Object.entries(events)) {
+    const path = `world.scheduledEvents[${key}]`;
+    assertRecord(value, path);
+    assertNonEmptyString(value.id, `${path}.id`);
+    if (value.id !== key) {
+      fail(`${path}.id must equal record key "${key}".`);
+    }
+    asScheduledEventId(value.id);
+
+    if (
+      typeof value.type !== "string" ||
+      !(SCHEDULED_EVENT_TYPES as readonly string[]).includes(value.type)
+    ) {
+      fail(
+        `${path}.type must be one of ${SCHEDULED_EVENT_TYPES.join(", ")}.`,
+      );
+    }
+    void (value.type as ScheduledEventType);
+
+    assertNonEmptyString(value.triggerDate, `${path}.triggerDate`);
+    try {
+      parseCalendarDate(value.triggerDate);
+    } catch (error) {
+      fail(
+        error instanceof Error
+          ? `${path}.triggerDate: ${error.message}`
+          : `${path}.triggerDate is invalid.`,
+      );
+    }
+
+    if (
+      typeof value.status !== "string" ||
+      !(SCHEDULED_EVENT_STATUSES as readonly string[]).includes(value.status)
+    ) {
+      fail(
+        `${path}.status must be one of ${SCHEDULED_EVENT_STATUSES.join(", ")}.`,
+      );
+    }
+    void (value.status as ScheduledEventStatus);
+
+    assertRecord(value.payload, `${path}.payload`);
   }
 }

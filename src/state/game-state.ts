@@ -17,10 +17,11 @@ import type { Season } from "@/domain/entities/season";
 import type { Staff } from "@/domain/entities/staff";
 import type { Standings } from "@/domain/entities/standings";
 import type { Team } from "@/domain/entities/team";
+import type { ScheduledEvent } from "@/domain/entities/scheduled-event";
 import type { TradeBlock } from "@/domain/entities/trade-block";
 import type { SaveId, TeamId } from "@/domain/ids";
 
-export const GAME_STATE_SCHEMA_VERSION = 20;
+export const GAME_STATE_SCHEMA_VERSION = 21;
 
 export type GameMode = "owner";
 
@@ -46,6 +47,7 @@ export type WorldSlice = {
   staff: Record<string, Staff>;
   draftPicks: Record<string, DraftPick>;
   drafts: Record<string, DraftClass>;
+  scheduledEvents: Record<string, ScheduledEvent>;
 };
 
 export type CompetitionSlice = {

@@ -66,7 +66,10 @@ describe("game-service load / save", () => {
       ...stateA,
       world: {
         ...stateA.world,
-        calendar: { currentDate: "2026-11-20" },
+        calendar: {
+          ...stateA.world.calendar,
+          currentDate: "2026-11-20",
+        },
       },
       competition: {
         ...stateA.competition,

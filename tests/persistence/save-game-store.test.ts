@@ -70,7 +70,11 @@ function createEightTeamPopulatedState(rngSeed: number): GameState {
       rngState: rng.getState(),
     },
     world: {
-      calendar: { currentDate: "2026-10-01" },
+      calendar: {
+        currentDate: "2026-10-01",
+        lastSimulatedDate: null,
+        lastSimulatedWeekId: null,
+      },
       league: generated.league,
       conferences,
       divisions,
@@ -80,12 +84,14 @@ function createEightTeamPopulatedState(rngSeed: number): GameState {
       staff: {},
       draftPicks: {},
       drafts: {},
+      scheduledEvents: {},
     },
     competition: {
       season: {
         id: seasonId,
         year: 2026,
         phase: "preseason",
+        offseasonStage: "none",
       },
       schedule: {
         seasonId,
@@ -295,7 +301,10 @@ describe("MemorySaveGameStore", () => {
       ...first,
       world: {
         ...first.world,
-        calendar: { currentDate: "2026-11-15" },
+        calendar: {
+          ...first.world.calendar,
+          currentDate: "2026-11-15",
+        },
       },
       competition: {
         ...first.competition,
@@ -336,7 +345,10 @@ describe("MemorySaveGameStore", () => {
       ...baseB,
       world: {
         ...baseB.world,
-        calendar: { currentDate: "2026-12-25" },
+        calendar: {
+          ...baseB.world.calendar,
+          currentDate: "2026-12-25",
+        },
       },
       competition: {
         ...baseB.competition,

@@ -10,6 +10,7 @@ import {
   type SeasonScheduleConfig,
 } from "@/systems/schedule-generation-config";
 import { validateSeasonSchedule } from "@/systems/schedule-validation";
+import { SEASON_LIFECYCLE_CONFIG } from "@/systems/simulation/season-lifecycle-config";
 
 type UnorderedPair = {
   round: number;
@@ -35,8 +36,9 @@ export function generateSeasonSchedule(
 /**
  * Builds a double round-robin regular-season schedule into GameState.
  * Idempotent: no-op when schedule.gameIds is already non-empty.
+ * Does not mutate season.phase — callers use transitionPhase("regular").
  * Uses {@link generateSeasonSchedule} with defaultSeasonLength; each round
- * maps to one calendar day (all games in a round share a date).
+ * maps to one calendar day. Round 1 lands on currentDate + scheduleStartOffsetDays.
  */
 export function generateSchedule(state: GameState): SystemResult {
   if (state.competition.schedule.gameIds.length > 0) {
@@ -57,11 +59,16 @@ export function generateSchedule(state: GameState): SystemResult {
   const gameIds: Game["id"][] = [];
   const seasonId = state.competition.season.id;
   const currentDate = state.world.calendar.currentDate;
+  const startOffset = SEASON_LIFECYCLE_CONFIG.scheduleStartOffsetDays;
 
   for (let index = 0; index < assignments.length; index += 1) {
     const assignment = assignments[index]!;
     const gameId = asGameId(`game_${seasonId}_${index}`);
-    const date = addCalendarDays(currentDate, assignment.round);
+    // Rounds are 1-based; offset 0 places round 1 on currentDate.
+    const date = addCalendarDays(
+      currentDate,
+      assignment.round - 1 + startOffset,
+    );
     games[gameId] = createGame({
       id: gameId,
       seasonId,
@@ -81,10 +88,6 @@ export function generateSchedule(state: GameState): SystemResult {
     ...state,
     competition: {
       ...state.competition,
-      season: {
-        ...state.competition.season,
-        phase: "regular",
-      },
       schedule: {
         seasonId,
         gameIds,

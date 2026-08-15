@@ -151,6 +151,8 @@ export function createInitialGameState(
     world: {
       calendar: {
         currentDate: "2026-10-01",
+        lastSimulatedDate: null,
+        lastSimulatedWeekId: null,
       },
       league: {
         id: leagueId,
@@ -204,12 +206,14 @@ export function createInitialGameState(
       staff: {},
       draftPicks: {},
       drafts: {},
+      scheduledEvents: {},
     },
     competition: {
       season: {
         id: seasonId,
         year: 2026,
         phase: "preseason",
+        offseasonStage: "none",
       },
       schedule: {
         seasonId,

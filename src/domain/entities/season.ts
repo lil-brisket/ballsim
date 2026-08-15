@@ -4,10 +4,51 @@ export type SeasonPhase =
   | "preseason"
   | "regular"
   | "playoffs"
+  | "postseason"
   | "offseason";
+
+export const SEASON_PHASES: readonly SeasonPhase[] = [
+  "preseason",
+  "regular",
+  "playoffs",
+  "postseason",
+  "offseason",
+] as const;
+
+export type OffseasonStage =
+  | "none"
+  | "season_finalization"
+  | "contract_expiration"
+  | "free_agency"
+  | "draft"
+  | "league_initialization";
+
+export const OFFSEASON_STAGES: readonly OffseasonStage[] = [
+  "none",
+  "season_finalization",
+  "contract_expiration",
+  "free_agency",
+  "draft",
+  "league_initialization",
+] as const;
 
 export type Season = {
   id: SeasonId;
   year: number;
   phase: SeasonPhase;
+  offseasonStage: OffseasonStage;
 };
+
+export function isSeasonPhase(value: unknown): value is SeasonPhase {
+  return (
+    typeof value === "string" &&
+    (SEASON_PHASES as readonly string[]).includes(value)
+  );
+}
+
+export function isOffseasonStage(value: unknown): value is OffseasonStage {
+  return (
+    typeof value === "string" &&
+    (OFFSEASON_STAGES as readonly string[]).includes(value)
+  );
+}

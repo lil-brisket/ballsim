@@ -7,6 +7,7 @@ import { generateRosters } from "@/systems/roster-generation";
 import { generateSchedule } from "@/systems/schedule-generation";
 import { simulateGamesForDate } from "@/systems/game-simulation";
 import { simulateSeason } from "@/systems/season-simulation";
+import { transitionPhase } from "@/systems/simulation/phase-machine";
 import { resetDomainEventSequenceForTests } from "@/domain/events/domain-event";
 
 function bootstrapRosters(saveId: string, rngSeed: number) {
@@ -18,6 +19,11 @@ function bootstrapRosters(saveId: string, rngSeed: number) {
   const rng = createSeededRng(state.meta.rngState);
   const afterRosters = generateRosters(state, rng);
   return { state: afterRosters.state, rng };
+}
+
+function scheduleRegularSeason(state: ReturnType<typeof createInitialGameState>) {
+  const phased = transitionPhase(state, "regular").state;
+  return generateSchedule(phased).state;
 }
 
 function snapshotScheduledGames(state: ReturnType<typeof createInitialGameState>) {
@@ -86,7 +92,7 @@ describe("simulateSeason", () => {
   it("simulates only remaining scheduled games in a partial season", () => {
     resetDomainEventSequenceForTests();
     const { state: rostered, rng } = bootstrapRosters("save_season_partial", 102);
-    const scheduled = generateSchedule(rostered).state;
+    const scheduled = scheduleRegularSeason(rostered);
 
     const firstFourIds = scheduled.competition.schedule.gameIds.slice(0, 4);
     const dates = [
@@ -145,7 +151,7 @@ describe("simulateSeason", () => {
 
   it("throws on an unknown home team reference", () => {
     const { state: rostered, rng } = bootstrapRosters("save_season_bad_team", 104);
-    const scheduled = generateSchedule(rostered).state;
+    const scheduled = scheduleRegularSeason(rostered);
     const gameId = scheduled.competition.schedule.gameIds[0]!;
     const game = scheduled.competition.games[gameId]!;
 
@@ -171,7 +177,7 @@ describe("simulateSeason", () => {
       "save_season_missing_game",
       105,
     );
-    const scheduled = generateSchedule(rostered).state;
+    const scheduled = scheduleRegularSeason(rostered);
     const gameId = scheduled.competition.schedule.gameIds[0]!;
     const { [gameId]: _removed, ...remainingGames } = scheduled.competition.games;
 
@@ -211,7 +217,7 @@ describe("simulateSeason", () => {
       "save_season_dangling_roster",
       107,
     );
-    const scheduled = generateSchedule(rostered).state;
+    const scheduled = scheduleRegularSeason(rostered);
     const teamId = Object.keys(scheduled.world.teams)[0]!;
     const team = scheduled.world.teams[teamId]!;
 
@@ -237,7 +243,7 @@ describe("simulateSeason", () => {
       "save_season_atomic",
       108,
     );
-    const scheduled = generateSchedule(rostered).state;
+    const scheduled = scheduleRegularSeason(rostered);
     const snapshot = structuredClone(scheduled);
     const gameId = scheduled.competition.schedule.gameIds[0]!;
     const game = scheduled.competition.games[gameId]!;

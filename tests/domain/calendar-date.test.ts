@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { addCalendarDays, parseCalendarDate } from "@/domain/calendar-date";
+import {
+  addCalendarDays,
+  getIsoWeekId,
+  parseCalendarDate,
+} from "@/domain/calendar-date";
 
 describe("calendar-date", () => {
   it("parses and formats YYYY-MM-DD", () => {
@@ -13,6 +17,11 @@ describe("calendar-date", () => {
   it("adds days across month boundaries", () => {
     expect(addCalendarDays("2026-10-31", 1)).toBe("2026-11-01");
     expect(addCalendarDays("2026-10-01", 0)).toBe("2026-10-01");
+  });
+
+  it("computes ISO week ids", () => {
+    expect(getIsoWeekId("2026-08-09")).toBe("2026-W32");
+    expect(getIsoWeekId("2026-08-10")).toBe("2026-W33");
   });
 
   it("rejects invalid dates", () => {

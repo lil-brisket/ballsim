@@ -46,6 +46,23 @@ export function addCalendarDays(isoDate: string, days: number): string {
   );
 }
 
+/**
+ * ISO week id for a YYYY-MM-DD calendar date (e.g. "2026-W32").
+ * Weeks start on Monday; week 1 is the week containing the year's first Thursday.
+ */
+export function getIsoWeekId(isoDate: string): string {
+  const { year, month, day } = parseCalendarDate(isoDate);
+  const utc = new Date(Date.UTC(year, month - 1, day, 12, 0, 0));
+  // Thursday of this week determines the ISO week-year.
+  const dayOfWeek = utc.getUTCDay() || 7;
+  utc.setUTCDate(utc.getUTCDate() + 4 - dayOfWeek);
+  const isoYear = utc.getUTCFullYear();
+  const yearStart = new Date(Date.UTC(isoYear, 0, 1, 12, 0, 0));
+  const week =
+    Math.floor((utc.getTime() - yearStart.getTime()) / 86_400_000 / 7) + 1;
+  return `${String(isoYear).padStart(4, "0")}-W${String(week).padStart(2, "0")}`;
+}
+
 function assertValidYmd(
   year: number,
   month: number,

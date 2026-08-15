@@ -43,19 +43,27 @@ Near-term Owner Mode surfaces (UI destinations, not all implemented yet):
 ## World simulation (design intent)
 
 The user's team is not isolated. "Advance day" processing updates the entire
-world via `runWorldPipeline` in `src/systems/world-pipeline.ts`:
+world via `advanceSimulation` (`src/systems/simulation/`), wrapped by
+`runWorldPipeline` / `advanceOwnerDay`:
 
-- Bootstrap roster/schedule if missing
-- Simulate scheduled games for the current world date
+- Evaluate season/offseason lifecycle (phase transitions, schedule generation)
+- Process due scheduled events
+- Simulate games for the current world date (regular or playoffs)
 - Rebuild standings
 - Advance the calendar by one day
+- Run weekly extension points when crossing an ISO week boundary
+
+`competition.season.phase` is authoritative (`preseason` → `regular` →
+`playoffs`/`postseason` → `offseason` → `preseason`). Free agency is a
+persistent offseason stage exited via `advanceOffseasonStage`.
 
 Still future work within that pipeline:
 
 - Other AI team decisions
 - Player development season tick (engine exists: `developPlayer`)
 - Injuries
-- Contract / finance ticks
+- Contract / finance auto ticks
+- Offseason calendar deadlines
 - League events / news
 
 ## AI / decision layer (design intent)
@@ -93,8 +101,8 @@ Entities expected in the long-term model:
 Systems expected later (do not treat as present until implemented):
 
 - Game simulation — **implemented** (`src/systems/game-simulation.ts` possession orchestration → `GameResult`)
-- Season simulation — partial (phase set to regular with schedule; playoffs TBD)
-- Calendar / advance day — **implemented** (`src/systems/world-pipeline.ts`)
+- Season simulation — regular season + playoffs via `simulateSeason`; Owner Mode day loop uses `advanceSimulation`
+- Calendar / advance day — **implemented** (`src/systems/simulation/advance-simulation.ts` + `world-pipeline` wrapper)
 - Player development — **implemented** as a building block (`src/systems/player-development.ts`); not yet called from the world pipeline
 - Injuries
 - Finances — period-keyed revenue/expense books on `business.finances` (`booksByYear`); financial statements derive totals and player salaries from contracts (`getTeamPayroll`); payroll snapshot still set at roster gen; salary-cap space derived from contracts vs a flat cap; cash mutation / auto ticks TBD

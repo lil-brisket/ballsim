@@ -12,6 +12,7 @@ import {
 import { generateSchedule } from "@/systems/schedule-generation";
 import { MIN_TEAM_COUNT } from "@/systems/schedule-generation-config";
 import { updateStandings } from "@/systems/standings";
+import { transitionPhase } from "@/systems/simulation/phase-machine";
 
 /**
  * Simulates an entire regular season: ensure schedule, sim remaining scheduled
@@ -41,6 +42,11 @@ export function simulateSeason(
   }
 
   if (current.competition.schedule.gameIds.length === 0) {
+    if (current.competition.season.phase === "preseason") {
+      const phaseResult = transitionPhase(current, "regular");
+      current = phaseResult.state;
+      events.push(...phaseResult.events);
+    }
     const scheduleResult = generateSchedule(current);
     current = scheduleResult.state;
     events.push(...scheduleResult.events);
@@ -70,6 +76,12 @@ export function simulateSeason(
   const started = startPlayoffs(current);
   current = started.state;
   events.push(...started.events);
+
+  if (current.competition.season.phase === "regular") {
+    const phaseResult = transitionPhase(current, "playoffs");
+    current = phaseResult.state;
+    events.push(...phaseResult.events);
+  }
 
   const playoffResult = simulatePlayoffs(current, rng);
   current = playoffResult.state;

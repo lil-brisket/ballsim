@@ -28,12 +28,14 @@ import type {
   TeamId,
 } from "@/domain/ids";
 import { asArenaId } from "@/domain/ids";
+import { addCalendarDays } from "@/domain/calendar-date";
 import type { GameState } from "@/state/game-state";
 import { GAME_STATE_SCHEMA_VERSION } from "@/state/game-state";
 import { createEmptyPlayoffTournament } from "@/domain/entities/playoffs";
 import { calculateStandings } from "@/systems/standings";
 import { validateGameState } from "@/persistence/validate-game-state";
 import { generateDraftPicksForSeason } from "@/domain/draft-picks/generate-draft-picks";
+import type { OffseasonStage, SeasonPhase } from "@/domain/entities/season";
 
 const gameStateEnvelopeSchema = z.object({
   meta: z.object({
@@ -107,10 +109,11 @@ const MIGRATE_ONE_STEP: Record<number, (state: unknown) => unknown> = {
   17: (state) => migrateV17ToV18(state as GameStateV17),
   18: (state) => migrateV18ToV19(state as GameStateV18),
   19: (state) => migrateV19ToV20(state as GameStateV19),
+  20: (state) => migrateV20ToV21(state as GameStateV20),
 };
 
 /**
- * Parse → migrate (v1–v19 → current) → validate → return GameState.
+ * Parse → migrate (v1–v20 → current) → validate → return GameState.
  * Does not call serializeGameState.
  */
 export function deserializeGameState(stateJson: string): GameState {
@@ -1394,9 +1397,42 @@ type GameStateV19 = {
     schemaVersion: 19;
     rngState: number;
   };
-  world: GameState["world"];
-  competition: GameState["competition"];
+  world: {
+    calendar: { currentDate: string };
+    league: GameState["world"]["league"];
+    conferences: GameState["world"]["conferences"];
+    divisions: GameState["world"]["divisions"];
+    teams: GameState["world"]["teams"];
+    players: GameState["world"]["players"];
+    coaches: GameState["world"]["coaches"];
+    staff: GameState["world"]["staff"];
+    draftPicks: GameState["world"]["draftPicks"];
+    drafts: GameState["world"]["drafts"];
+  };
+  competition: {
+    season: {
+      id: SeasonId;
+      year: number;
+      phase: string;
+    };
+    schedule: GameState["competition"]["schedule"];
+    games: GameState["competition"]["games"];
+    standings: GameState["competition"]["standings"];
+    playoffs: GameState["competition"]["playoffs"];
+  };
   business: BusinessSliceV18;
+  user: GameState["user"];
+};
+
+/** Schema v20 before simulation backbone fields (calendar progress, offseason stage, scheduled events). */
+type GameStateV20 = {
+  meta: Omit<GameState["meta"], "schemaVersion"> & {
+    schemaVersion: 20;
+    rngState: number;
+  };
+  world: GameStateV19["world"];
+  competition: GameStateV19["competition"];
+  business: GameState["business"];
   user: GameState["user"];
 };
 
@@ -1633,7 +1669,7 @@ function migrateV18ToV19(state: GameStateV18): GameStateV19 {
  * Non-zero legacy revenue maps to other; non-zero expenses map to operations.
  * Zero values are discarded. Emits literal schemaVersion 20. No RNG.
  */
-function migrateV19ToV20(state: GameStateV19): GameState {
+function migrateV19ToV20(state: GameStateV19): GameStateV20 {
   if (typeof state.meta.rngState !== "number") {
     throw new Error("GameState meta.rngState is required for schemaVersion 19.");
   }
@@ -1685,6 +1721,55 @@ function migrateV19ToV20(state: GameStateV19): GameState {
       ...state.business,
       finances,
     },
+    user: state.user,
+  };
+}
+
+/**
+ * Deterministic v20 → v21: simulation backbone fields.
+ * - calendar.lastSimulatedDate / lastSimulatedWeekId
+ * - season.offseasonStage
+ * - world.scheduledEvents
+ * Emits literal schemaVersion 21. No RNG.
+ */
+function migrateV20ToV21(state: GameStateV20): GameState {
+  if (typeof state.meta.rngState !== "number") {
+    throw new Error("GameState meta.rngState is required for schemaVersion 20.");
+  }
+
+  const currentDate = state.world.calendar.currentDate;
+  const lastSimulatedDate = addCalendarDays(currentDate, -1);
+  const phase = state.competition.season.phase as SeasonPhase;
+  const offseasonStage: OffseasonStage =
+    phase === "offseason" ? "season_finalization" : "none";
+
+  return {
+    meta: {
+      saveId: state.meta.saveId,
+      schemaVersion: 21,
+      createdAt: state.meta.createdAt,
+      updatedAt: state.meta.updatedAt,
+      rngSeed: state.meta.rngSeed,
+      rngState: state.meta.rngState,
+    },
+    world: {
+      ...state.world,
+      calendar: {
+        currentDate,
+        lastSimulatedDate,
+        lastSimulatedWeekId: null,
+      },
+      scheduledEvents: {},
+    },
+    competition: {
+      ...state.competition,
+      season: {
+        ...state.competition.season,
+        phase,
+        offseasonStage,
+      },
+    },
+    business: state.business,
     user: state.user,
   };
 }

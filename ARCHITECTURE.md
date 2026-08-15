@@ -84,6 +84,8 @@ Typed domain catalogs such as `PlayerArchetype` and `PlayerNationality` live und
 
 `schemaVersion` 20 replaces scalar `TeamFinances.revenue` / `expenses` with period-keyed `booksByYear` (category revenue and posted expenses). Pre-v20 non-zero `revenue` maps to `books[seasonYear].revenue.other`; non-zero `expenses` maps to `books[seasonYear].expenses.operations`. Zeros are discarded. Player salary expense on financial statements is derived from contracts via `getTeamPayroll`; it is never stored in books. `cash` is unchanged by revenue/expense posting.
 
+`schemaVersion` 21 adds the Owner Mode simulation backbone: `calendar.lastSimulatedDate` / `lastSimulatedWeekId`, `season.offseasonStage`, `world.scheduledEvents`, and `postseason` on `SeasonPhase`.
+
 ## GameState (composed slices)
 
 `GameState` is the single source of truth for one save, composed of typed slices:
@@ -91,8 +93,8 @@ Typed domain catalogs such as `PlayerArchetype` and `PlayerNationality` live und
 ```text
 GameState
 ├── meta          # save identity, schemaVersion, timestamps, rng seed/state
-├── world         # calendar, league structure, teams, people, draft picks, drafts
-├── competition   # season, schedule, games, standings, playoffs
+├── world         # calendar, league structure, teams, people, draft picks, drafts, scheduledEvents
+├── competition   # season (phase + offseasonStage), schedule, games, standings, playoffs
 ├── business      # contracts, finances, free agency, trade blocks
 └── user          # controlled team, mode, owner objectives
 ```
@@ -130,18 +132,47 @@ Preferences:
 - Deterministic, testable, reproducible behavior.
 - Stochastic systems must accept an injected `Rng` — never call `Math.random()` directly.
 
+### Simulation ownership rule
+
+Systems may calculate and return state changes. **Only** `advanceSimulation`
+(`src/systems/simulation/advance-simulation.ts`) controls simulation ordering
+and calendar advancement. Domain systems must not call `advanceCalendar`.
+
+`transitionPhase` is the **sole writer** of `competition.season.phase`.
+`generateSchedule` and `startPlayoffs` do not mutate phase.
+
+Hierarchy:
+
+```text
+Application (advanceOwnerDay)
+  → advanceSimulation
+    → season/offseason lifecycle → scheduled events → daily pipeline
+    → advanceCalendar → weekly pipeline (completed ISO week only)
+```
+
 ### World pipeline (advance day)
 
-`src/systems/world-pipeline.ts` orchestrates:
+`runWorldPipeline({ type: "advanceDay" })` is a thin wrapper over
+`advanceSimulation`. Per-day order:
 
-1. `bootstrapWorld` — roster generation + schedule generation when empty
-2. `simulateGamesForDate` — possession-based `simulateGame` for each scheduled game on `calendar.currentDate`
-3. `updateStandings` — rebuild standings from final games via `calculateStandings`
-4. `advanceCalendar` — `currentDate + 1 day`
+1. Bootstrap rosters/draft picks if missing (not schedule)
+2. Season + offseason lifecycle (may `transitionPhase`, generate schedule, start playoffs)
+3. Process due `world.scheduledEvents` in `(triggerDate, id)` order
+4. Daily pipeline — regular games and/or one playoff step; rebuild standings
+5. Record `calendar.lastSimulatedDate`
+6. `advanceCalendar` — `currentDate + 1` (preserves progress markers)
+7. Weekly pipeline when the new date’s ISO week differs from the simulated date’s week (`lastSimulatedWeekId` = completed week)
+
+`currentDate` is the date being simulated; after advance it is the next unprocessed day.
+
+Season phases: `preseason | regular | playoffs | postseason | offseason`.
+Allowed transitions only: preseason→regular, regular→playoffs|postseason,
+playoffs→postseason, postseason→offseason, offseason→preseason.
 
 Application layer (`advanceOwnerDay`) reconstructs `Rng` from `meta.rngState`,
-runs the pipeline, then writes `rng.getState()` back to `meta.rngState` before
-persisting. Games for the **current** date are processed before the calendar ticks.
+runs `advanceSimulation`, then writes `rng.getState()` back to `meta.rngState`
+before persisting. Result metadata (`phaseChanged`, `gamesSimulated`, …) is
+returned for future Owner Mode UI.
 
 ## RNG
 

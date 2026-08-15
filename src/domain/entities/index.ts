@@ -230,7 +230,28 @@ export {
 } from "@/domain/entities/possession";
 export type { Foul, FoulInput, FoulType } from "@/domain/entities/foul";
 export { FOUL_TYPES, createFoul } from "@/domain/entities/foul";
-export type { Season, SeasonPhase } from "@/domain/entities/season";
+export type {
+  Season,
+  SeasonPhase,
+  OffseasonStage,
+} from "@/domain/entities/season";
+export {
+  SEASON_PHASES,
+  OFFSEASON_STAGES,
+  isSeasonPhase,
+  isOffseasonStage,
+} from "@/domain/entities/season";
+export type {
+  ScheduledEvent,
+  ScheduledEventType,
+  ScheduledEventStatus,
+} from "@/domain/entities/scheduled-event";
+export {
+  SCHEDULED_EVENT_TYPES,
+  SCHEDULED_EVENT_STATUSES,
+  isScheduledEventType,
+  isScheduledEventStatus,
+} from "@/domain/entities/scheduled-event";
 export type { Schedule } from "@/domain/entities/schedule";
 export type {
   PlayoffTournamentStatus,
