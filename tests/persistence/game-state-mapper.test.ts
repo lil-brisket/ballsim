@@ -7,7 +7,8 @@ import {
   deserializeGameState,
   serializeGameState,
 } from "@/persistence/mappers/game-state-mapper";
-import { asContractId, asPlayerId, asTeamId } from "@/domain/ids";
+import { asContractId, asPlayerId, asTeamId, type ContractId, type PlayerId } from "@/domain/ids";
+import type { Player, PlayerAttributes } from "@/domain/entities/player";
 
 const V4_ATTRIBUTE_KEYS = [
   "speed",
@@ -1578,7 +1579,7 @@ describe("GameState schema migration", () => {
 
     const attributeDefaults = Object.fromEntries(
       V4_ATTRIBUTE_KEYS.map((key) => [key, 70]),
-    );
+    ) as PlayerAttributes;
     const personality = {
       workEthic: 50,
       loyalty: 50,
@@ -1588,9 +1589,9 @@ describe("GameState schema migration", () => {
     };
 
     const withPlayer = (
-      id: string,
-      contractId: string,
-    ) => ({
+      id: PlayerId,
+      contractId: ContractId,
+    ): Player => ({
       id,
       teamId,
       firstName: "Opt",

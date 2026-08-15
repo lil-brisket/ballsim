@@ -123,6 +123,10 @@ export function createMemorySaveGameStore(): MemorySaveGameStore {
       return toLoaded(row);
     },
 
+    async delete(id: string): Promise<boolean> {
+      return rows.delete(id);
+    },
+
     /**
      * Test-only escape hatch: insert a raw persisted blob without running
      * serialize/validate. Lets tests represent historical schema versions

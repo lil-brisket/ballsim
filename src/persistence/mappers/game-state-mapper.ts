@@ -1455,7 +1455,7 @@ type GameStateV20 = {
   };
   world: GameStateV19["world"];
   competition: GameStateV19["competition"];
-  business: GameState["business"];
+  business: GameStateV23["business"];
   user: UserSliceV21;
 };
 
@@ -1465,9 +1465,9 @@ type GameStateV21 = {
     schemaVersion: 21;
     rngState: number;
   };
-  world: GameState["world"];
+  world: GameStateV23["world"];
   competition: GameState["competition"];
-  business: GameState["business"];
+  business: GameStateV23["business"];
   user: UserSliceV21;
 };
 

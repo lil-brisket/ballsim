@@ -8,6 +8,7 @@ vi.mock("@/persistence/save-game-repository", () => ({
     create: vi.fn(),
     load: vi.fn(),
     save: vi.fn(),
+    delete: vi.fn(),
   },
 }));
 

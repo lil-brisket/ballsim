@@ -289,21 +289,33 @@ export function validateGameState(state: unknown): asserts state is GameState {
   assertRecord(business.freeAgency.offers, "business.freeAgency.offers");
   assertRecord(business.tradeBlocks, "business.tradeBlocks");
 
-  for (const key of [
-    "staffContracts",
-    "sponsorships",
-    "franchiseOps",
-    "relocationByTeamId",
-    "franchiseHistory",
-  ] as const) {
-    if (!(key in business)) {
-      fail(`business.${key} is required.`);
-    }
-    assertRecord(
-      (business as Record<string, unknown>)[key],
-      `business.${key}`,
-    );
+  const staffContracts = (business as Record<string, unknown>).staffContracts;
+  const sponsorships = (business as Record<string, unknown>).sponsorships;
+  const franchiseOps = (business as Record<string, unknown>).franchiseOps;
+  const relocationByTeamId = (business as Record<string, unknown>)
+    .relocationByTeamId;
+  const franchiseHistory = (business as Record<string, unknown>)
+    .franchiseHistory;
+  if (staffContracts == null) {
+    fail("business.staffContracts is required.");
   }
+  if (sponsorships == null) {
+    fail("business.sponsorships is required.");
+  }
+  if (franchiseOps == null) {
+    fail("business.franchiseOps is required.");
+  }
+  if (relocationByTeamId == null) {
+    fail("business.relocationByTeamId is required.");
+  }
+  if (franchiseHistory == null) {
+    fail("business.franchiseHistory is required.");
+  }
+  assertRecord(staffContracts, "business.staffContracts");
+  assertRecord(sponsorships, "business.sponsorships");
+  assertRecord(franchiseOps, "business.franchiseOps");
+  assertRecord(relocationByTeamId, "business.relocationByTeamId");
+  assertRecord(franchiseHistory, "business.franchiseHistory");
   if (!("leagueEconomy" in business) || business.leagueEconomy == null) {
     fail("business.leagueEconomy is required.");
   }
@@ -314,13 +326,13 @@ export function validateGameState(state: unknown): asserts state is GameState {
   assertRecord(business.expansion, "business.expansion");
 
   for (const teamId of Object.keys(world.teams)) {
-    if (!(teamId in business.franchiseOps)) {
+    if (!(teamId in franchiseOps)) {
       fail(`business.franchiseOps missing team "${teamId}".`);
     }
-    if (!(teamId in business.relocationByTeamId)) {
+    if (!(teamId in relocationByTeamId)) {
       fail(`business.relocationByTeamId missing team "${teamId}".`);
     }
-    if (!(teamId in business.franchiseHistory)) {
+    if (!(teamId in franchiseHistory)) {
       fail(`business.franchiseHistory missing team "${teamId}".`);
     }
   }
@@ -364,6 +376,7 @@ export function validateGameState(state: unknown): asserts state is GameState {
   }
 
   for (const [teamId, teamValue] of Object.entries(world.teams)) {
+    assertRecord(teamValue, `world.teams[${teamId}]`);
     for (const staffId of teamValue.staff as string[]) {
       if (!(staffId in world.staff)) {
         fail(
