@@ -32,6 +32,9 @@ import { mergeDraftPicksForSeason } from "@/domain/draft-picks/generate-draft-pi
  * 7. advanceCalendar +1 (orchestrator only)
  * 8. Weekly pipeline when crossing into a new ISO week
  *
+ * When `stopOnPhaseChange` is true, stops immediately after the first day
+ * that changes `{ phase, offseasonStage, year }`. Never bypasses lifecycle.
+ *
  * Callers must persist rng.getState() into meta.rngState after this runs.
  */
 export function advanceSimulation(
@@ -48,11 +51,13 @@ export function advanceSimulation(
 
   const phaseBefore = state.competition.season.phase;
   const previousDate = state.world.calendar.currentDate;
+  const identityBefore = lifecycleIdentity(state);
   const allEvents: DomainEvent[] = [];
   let current = state;
   let scheduledEventsProcessed = 0;
   let gamesSimulated = 0;
   let weeklyPipelineRan = false;
+  let daysAdvanced = 0;
 
   for (let dayIndex = 0; dayIndex < days; dayIndex += 1) {
     const dayResult = advanceOneDay(current, rng);
@@ -61,6 +66,14 @@ export function advanceSimulation(
     scheduledEventsProcessed += dayResult.scheduledEventsProcessed;
     gamesSimulated += dayResult.gamesSimulated;
     weeklyPipelineRan = weeklyPipelineRan || dayResult.weeklyPipelineRan;
+    daysAdvanced += 1;
+
+    if (
+      options.stopOnPhaseChange &&
+      lifecycleIdentity(current) !== identityBefore
+    ) {
+      break;
+    }
   }
 
   const phaseAfter = current.competition.season.phase;
@@ -70,7 +83,7 @@ export function advanceSimulation(
     events: allEvents,
     previousDate,
     currentDate: current.world.calendar.currentDate,
-    daysAdvanced: days,
+    daysAdvanced,
     phaseBefore,
     phaseAfter,
     phaseChanged: phaseBefore !== phaseAfter,
@@ -78,6 +91,11 @@ export function advanceSimulation(
     gamesSimulated,
     weeklyPipelineRan,
   };
+}
+
+function lifecycleIdentity(state: GameState): string {
+  const season = state.competition.season;
+  return `${season.phase}|${season.offseasonStage}|${season.year}`;
 }
 
 type OneDayResult = {

@@ -180,3 +180,34 @@ export function stripTradedAssetsFromTradeBlocks(
 
   return next;
 }
+
+/**
+ * Removes the given players from every team's persisted trade block.
+ * Used when players leave a roster outside of executeTrade (e.g. free agency).
+ */
+export function stripPlayersFromAllTradeBlocks(
+  tradeBlocks: Record<string, TradeBlock>,
+  playerIds: readonly PlayerId[],
+): Record<string, TradeBlock> {
+  if (playerIds.length === 0) {
+    return tradeBlocks;
+  }
+  const playerSet = new Set(playerIds.map(String));
+  let changed = false;
+  const next: Record<string, TradeBlock> = { ...tradeBlocks };
+
+  for (const [teamId, block] of Object.entries(tradeBlocks)) {
+    const assets = block.assets.filter((asset) => {
+      if (asset.kind === "player") {
+        return !playerSet.has(asset.playerId);
+      }
+      return true;
+    });
+    if (assets.length !== block.assets.length) {
+      next[teamId] = { teamId: block.teamId, assets };
+      changed = true;
+    }
+  }
+
+  return changed ? next : tradeBlocks;
+}

@@ -232,7 +232,7 @@ function validateConfig(config: LeagueGenerationConfig): ResolvedConfig {
   const rosterSize =
     config.rosterSize === undefined ? DEFAULT_ROSTER_SIZE : config.rosterSize;
   if (config.rosterSize !== undefined) {
-    assertPositiveInteger(config.rosterSize, "rosterSize");
+    assertNonNegativeInteger(config.rosterSize, "rosterSize");
   }
 
   const leagueAbbreviation =
@@ -255,6 +255,14 @@ function assertPositiveInteger(value: number, field: string): void {
   if (!Number.isInteger(value) || value <= 0) {
     throw new Error(
       `League generation ${field} must be a positive integer.`,
+    );
+  }
+}
+
+function assertNonNegativeInteger(value: number, field: string): void {
+  if (!Number.isInteger(value) || value < 0) {
+    throw new Error(
+      `League generation ${field} must be a non-negative integer.`,
     );
   }
 }

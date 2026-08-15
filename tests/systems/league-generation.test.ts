@@ -207,12 +207,22 @@ describe("league generation", () => {
       { field: "divisionsPerConference", value: -2 },
       { field: "teamsPerDivision", value: 0 },
       { field: "teamsPerDivision", value: -3 },
-      { field: "rosterSize", value: 0 },
       { field: "rosterSize", value: -1 },
     ] as const)("rejects invalid $field=$value", ({ field, value }) => {
       expect(() =>
         generateLeague(config({ [field]: value }), createSeededRng(1)),
-      ).toThrow(/League generation .+ must be a positive integer/);
+      ).toThrow(/League generation/);
+    });
+
+    it("allows rosterSize 0 for empty-roster hierarchy generation", () => {
+      const generated = generateLeague(
+        config({ rosterSize: 0 }),
+        createSeededRng(1),
+      );
+      expect(generated.players).toHaveLength(0);
+      expect(generated.teams.every((team) => team.roster.length === 0)).toBe(
+        true,
+      );
     });
 
     it("rejects empty league name", () => {

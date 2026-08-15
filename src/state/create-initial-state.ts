@@ -1,10 +1,11 @@
+import { createEmptyPlayoffTournament } from "@/domain/entities/playoffs";
+import { createEmptyTeamStanding } from "@/domain/entities/standings";
 import {
   createTeam,
   NEUTRAL_TEAM_PLAY_STYLE,
 } from "@/domain/entities/team";
-import { createEmptyPlayoffTournament } from "@/domain/entities/playoffs";
-import { createEmptyTeamStanding } from "@/domain/entities/standings";
 import { DEFAULT_COACHING_PHILOSOPHY } from "@/domain/coaching/coaching-philosophy";
+import { createSeededRng } from "@/domain/rng";
 import {
   asArenaId,
   asConferenceId,
@@ -21,6 +22,7 @@ import {
   GAME_STATE_SCHEMA_VERSION,
   type GameState,
 } from "@/state/game-state";
+import { generateLeague } from "@/systems/league-generation";
 
 export type CreateInitialGameStateInput = {
   saveId: string;
@@ -58,10 +60,129 @@ function bootstrapTeam(
 }
 
 /**
- * Creates a minimal fictional universe for a new Owner Mode save.
- * Application bootstrap fills rosters and schedule via systems.
+ * Production Owner Mode new-game universe: 12 teams (2×2×3), empty rosters.
+ * Application bootstrap fills players/contracts via generateRosters.
+ * Placeholder controlledTeamId is the first sorted team id until selectOwnerTeam.
  */
 export function createInitialGameState(
+  input: CreateInitialGameStateInput,
+): GameState {
+  const nowIso = input.nowIso ?? new Date().toISOString();
+  const saveId = asSaveId(input.saveId);
+  const rngSeed = input.rngSeed ?? 1;
+  const rng = createSeededRng(rngSeed);
+
+  const generated = generateLeague(
+    {
+      leagueId: `league_${saveId}`,
+      leagueName: "Continental Basketball League",
+      leagueAbbreviation: "CBL",
+      conferenceCount: 2,
+      divisionsPerConference: 2,
+      teamsPerDivision: 3,
+      rosterSize: 0,
+    },
+    rng,
+  );
+
+  const teams = Object.fromEntries(
+    generated.teams.map((team) => [team.id, team]),
+  );
+  const conferences = Object.fromEntries(
+    generated.conferences.map((conference) => [conference.id, conference]),
+  );
+  const divisions = Object.fromEntries(
+    generated.divisions.map((division) => [division.id, division]),
+  );
+
+  const teamIds = Object.keys(teams).sort() as TeamId[];
+  const controlledTeamId = teamIds[0]!;
+
+  const finances = Object.fromEntries(
+    teamIds.map((teamId) => [
+      teamId,
+      {
+        teamId,
+        cash: 50_000_000,
+        payroll: 0,
+        booksByYear: {},
+      },
+    ]),
+  );
+
+  const standings = {
+    byTeamId: Object.fromEntries(
+      teamIds.map((teamId) => [teamId, createEmptyTeamStanding(teamId)]),
+    ),
+  };
+
+  const seasonId = asSeasonId(`season_${saveId}_2026`);
+
+  return {
+    meta: {
+      saveId,
+      schemaVersion: GAME_STATE_SCHEMA_VERSION,
+      createdAt: nowIso,
+      updatedAt: nowIso,
+      rngSeed,
+      rngState: rng.getState(),
+    },
+    world: {
+      calendar: {
+        currentDate: "2026-10-01",
+        lastSimulatedDate: null,
+        lastSimulatedWeekId: null,
+      },
+      league: generated.league,
+      conferences,
+      divisions,
+      teams,
+      players: {},
+      coaches: {},
+      staff: {},
+      draftPicks: {},
+      drafts: {},
+      scheduledEvents: {},
+    },
+    competition: {
+      season: {
+        id: seasonId,
+        year: 2026,
+        phase: "preseason",
+        offseasonStage: "none",
+      },
+      schedule: {
+        seasonId,
+        gameIds: [],
+      },
+      games: {},
+      standings,
+      playoffs: createEmptyPlayoffTournament(),
+    },
+    business: {
+      contracts: {},
+      finances,
+      freeAgency: {
+        offers: {},
+      },
+      tradeBlocks: {},
+    },
+    user: {
+      controlledTeamId,
+      mode: "owner",
+      objectives: [],
+      notifications: [],
+      appliedGameplayConsequenceKeys: {},
+    },
+  };
+}
+
+/**
+ * Four-team fixture for tests that assert the no-playoff path
+ * (getPlayoffTeamCount(4) === 0 → regular → postseason).
+ * Not used for production Owner Mode new games.
+ */
+export function createFourTeamInitialGameState(
   input: CreateInitialGameStateInput,
 ): GameState {
   const nowIso = input.nowIso ?? new Date().toISOString();
@@ -240,4 +361,3 @@ export function createInitialGameState(
     },
   };
 }
-

@@ -19,8 +19,9 @@ export default async function HomePage() {
           Basketball
         </h1>
         <p className="max-w-xl text-zinc-400">
-          Create or continue a fictional franchise save. New saves bootstrap
-          rosters and a schedule; advance the world day from the dashboard.
+          Create or continue a fictional franchise save. New saves open team
+          selection, then the Owner Mode dashboard for roster, trades, and
+          season advance.
         </p>
       </header>
 

@@ -352,7 +352,7 @@ function selectProspectForTeam(
   teamId: TeamId,
 ): PlayerId | undefined {
   const available = Object.values(draft.prospects).filter(
-    (prospect) => prospect.status === "available",
+    (prospect) => prospect.status === "eligible",
   );
   if (available.length === 0) {
     return undefined;

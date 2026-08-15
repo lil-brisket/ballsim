@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { createSeededRng } from "@/domain/rng";
-import { createInitialGameState } from "@/state/create-initial-state";
+import { createInitialGameState, createFourTeamInitialGameState } from "@/state/create-initial-state";
 import { bootstrapWorld } from "@/systems/world-pipeline";
 import { simulateGamesForDate } from "@/systems/game-simulation";
 import { updateStandings } from "@/systems/standings";
@@ -48,7 +48,7 @@ describe("season lifecycle", () => {
 
   it("moves regular → postseason when playoff field size is 0", () => {
     const { state: rostered, rng } = (() => {
-      const state = createInitialGameState({
+      const state = createFourTeamInitialGameState({
         saveId: "life_post_4",
         rngSeed: 11,
       });

@@ -22,6 +22,7 @@ import { systemResult, type SystemResult } from "@/domain/system-result";
 import type { GameState } from "@/state/game-state";
 import { FREE_AGENCY_INTEREST_CONFIG } from "@/systems/free-agency-config";
 import { getTeamCapSpace, getTeamPayroll } from "@/systems/salary-cap";
+import { stripPlayersFromAllTradeBlocks } from "@/systems/trades/trade-block";
 
 export type FreeAgentPoolView = {
   playerIds: PlayerId[];
@@ -124,7 +125,16 @@ export function releasePlayerToFreeAgency(
   }
 
   const formerTeamId = player.teamId;
-  const next = clearPlayerTeamMembership(state, playerId);
+  let next = clearPlayerTeamMembership(state, playerId);
+  next = {
+    ...next,
+    business: {
+      ...next.business,
+      tradeBlocks: stripPlayersFromAllTradeBlocks(next.business.tradeBlocks, [
+        playerId,
+      ]),
+    },
+  };
   const withOffers =
     formerTeamId === null
       ? next
@@ -151,6 +161,8 @@ export function releasePlayerToFreeAgency(
 export function releaseExpiredContracts(state: GameState): SystemResult {
   let current = state;
   const events = [];
+  const year = current.competition.season.year;
+  const offseason = current.competition.season.phase === "offseason";
 
   const playerIds = Object.keys(current.world.players).sort();
   for (const playerIdKey of playerIds) {
@@ -162,7 +174,13 @@ export function releaseExpiredContracts(state: GameState): SystemResult {
     if (contract === undefined) {
       continue;
     }
-    if (isContractActive(contract, current.competition.season.year)) {
+
+    // During the offseason after a completed season year, contracts whose
+    // endYear is that season year are finished and become free agents.
+    const stillBound = offseason
+      ? year < contract.endYear
+      : isContractActive(contract, year);
+    if (stillBound) {
       continue;
     }
 
@@ -507,7 +525,15 @@ function playerHasActiveContract(player: Player, state: GameState): boolean {
   if (contract === undefined) {
     return false;
   }
-  return isContractActive(contract, state.competition.season.year);
+  const year = state.competition.season.year;
+  // After the season year concludes, contracts ending that year are no longer binding.
+  if (
+    state.competition.season.phase === "offseason" &&
+    year >= contract.endYear
+  ) {
+    return false;
+  }
+  return isContractActive(contract, year);
 }
 
 function playerOnAnyRoster(state: GameState, playerId: PlayerId): boolean {

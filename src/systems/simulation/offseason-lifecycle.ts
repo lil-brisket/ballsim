@@ -10,6 +10,7 @@ import { systemResult, type SystemResult } from "@/domain/system-result";
 import type { GameState } from "@/state/game-state";
 import {
   activateDraft,
+  completeDraft,
   createDraft,
   draftYearForSeason,
 } from "@/systems/draft";
@@ -127,9 +128,19 @@ export function initializeNewSeason(state: GameState): SystemResult {
   return systemResult(phaseResult.state, phaseResult.events);
 }
 
+function isDraftOrderFullyUsed(state: GameState, draftClassId: string): boolean {
+  const draft = state.world.drafts[draftClassId];
+  if (draft === undefined || draft.order.length === 0) {
+    return false;
+  }
+  return draft.order.every((slot) => slot.status === "used");
+}
+
 /**
  * Stateful offseason stage evaluation.
  * Immediate stages may chain in one call; free_agency and draft persist.
+ * When every draft order slot is used, auto-completes the draft then
+ * advances to league_initialization → new season.
  */
 export function processOffseasonLifecycle(
   state: GameState,
@@ -169,6 +180,17 @@ export function processOffseasonLifecycle(
       const activated = activateDraft(current, draftClassId);
       current = activated.state;
       events.push(...activated.events);
+      draft = current.world.drafts[draftClassId];
+    }
+
+    if (
+      draft !== undefined &&
+      draft.status === "active" &&
+      isDraftOrderFullyUsed(current, draftClassId)
+    ) {
+      const completed = completeDraft(current, draftClassId);
+      current = completed.state;
+      events.push(...completed.events);
       draft = current.world.drafts[draftClassId];
     }
 

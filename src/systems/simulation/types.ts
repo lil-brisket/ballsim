@@ -21,6 +21,12 @@ export type AdvanceSimulationResult = {
 };
 
 export type AdvanceSimulationOptions = {
-  /** Number of calendar days to advance. Defaults to 1. */
+  /** Number of calendar days to advance. Defaults to 1. Also acts as max when stopOnPhaseChange is set. */
   days?: number;
+  /**
+   * Stop after the first day that changes Owner lifecycle identity
+   * `{ season.phase, season.offseasonStage, season.year }`.
+   * Does not treat draft-clock as a lifecycle identity change.
+   */
+  stopOnPhaseChange?: boolean;
 };

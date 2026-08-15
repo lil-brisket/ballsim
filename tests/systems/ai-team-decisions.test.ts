@@ -196,4 +196,44 @@ describe("AI team decisions", () => {
     ).length;
     expect(userSelectionsAfter).toBe(userSelectionsBefore);
   });
+
+  it("AI drafts an eligible prospect when a non-user team is on the clock", () => {
+    let state = createInitialGameState({ saveId: "ai_draft_pick", rngSeed: 26 });
+    const rng = createSeededRng(state.meta.rngState);
+    state = bootstrapWorld(state, rng).state;
+    state = toFreeAgency(state, rng);
+    state = advanceOffseasonStage(state).state;
+    state = processOffseasonLifecycle(state, rng).state;
+
+    const draftBefore = Object.values(state.world.drafts)[0]!;
+    const userTeamId = state.user.controlledTeamId;
+    const aiTeamId = aiTeamIds(state)[0]!;
+    const firstAvailableIndex = draftBefore.order.findIndex(
+      (slot) => slot.status === "available",
+    );
+    const order = draftBefore.order.map((slot, index) =>
+      index === firstAvailableIndex
+        ? { ...slot, ownerTeamId: aiTeamId }
+        : slot.ownerTeamId === aiTeamId && index !== firstAvailableIndex
+          ? { ...slot, ownerTeamId: userTeamId }
+          : slot,
+    );
+    state = {
+      ...state,
+      world: {
+        ...state.world,
+        drafts: {
+          ...state.world.drafts,
+          [draftBefore.id]: { ...draftBefore, order },
+        },
+      },
+    };
+
+    const usedBefore = draftBefore.order.filter((s) => s.status === "used").length;
+    const result = runAiTeamDecisions(state, rng).state;
+    const draft = Object.values(result.world.drafts)[0]!;
+    const usedAfter = draft.order.filter((s) => s.status === "used").length;
+    expect(usedAfter).toBeGreaterThan(usedBefore);
+    expect(draft.selections.length).toBeGreaterThan(0);
+  });
 });

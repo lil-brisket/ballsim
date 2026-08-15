@@ -28,7 +28,9 @@ The player controls one team inside a larger simulated basketball world.
 
 Canonical simulation state remains `GameState`. Owner-specific persisted data lives on `user.objectives` (plus team finances in `business.finances`). `toOwnerGameState` builds a derived, non-persisted management-layer view with live references into that state — it is not a second global game state or save schema.
 
-Near-term Owner Mode surfaces (UI destinations, not all implemented yet):
+New Owner games create a **12-team** CBL (2 conferences × 2 divisions × 3 teams) so playoff field size is 8 (qualify and miss are both possible). Team selection sets `user.controlledTeamId` before the first time advance.
+
+Owner Mode surfaces (minimal vertical-slice UI exists for dashboard/roster/standings/trade/FA/draft):
 
 - Dashboard
 - Roster
@@ -44,7 +46,7 @@ Near-term Owner Mode surfaces (UI destinations, not all implemented yet):
 
 The player's team is not isolated. "Advance day" processing updates the entire
 world via `advanceSimulation` (`src/systems/simulation/`), wrapped by
-`runWorldPipeline` / `advanceOwnerDay`:
+`runWorldPipeline` / `advanceOwnerTime`:
 
 - Evaluate season/offseason lifecycle (phase transitions, schedule generation)
 - Process due scheduled events
@@ -55,8 +57,10 @@ world via `advanceSimulation` (`src/systems/simulation/`), wrapped by
 - Run weekly extension points when crossing an ISO week boundary (no AI/gameplay re-run)
 
 `competition.season.phase` is authoritative (`preseason` → `regular` →
-`playoffs`/`postseason` → `offseason` → `preseason`). Free agency is a
-persistent offseason stage exited via `advanceOffseasonStage`.
+`playoffs` → `postseason` → `offseason` → `preseason`). Free agency is a
+persistent offseason stage exited via `advanceOffseasonStage` (`finishFreeAgency`).
+Contracts whose `endYear` equals the completed season year release during
+offseason contract expiration. Draft auto-completes when all order slots are used.
 
 Owner Mode gameplay (Phase B):
 

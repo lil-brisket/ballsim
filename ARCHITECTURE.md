@@ -88,6 +88,14 @@ Typed domain catalogs such as `PlayerArchetype` and `PlayerNationality` live und
 
 `schemaVersion` 22 adds Owner Mode gameplay: objective `status` / `seasonYear` / `consequenceApplied` (replacing `completed`), `user.notifications`, and `user.appliedGameplayConsequenceKeys` for idempotent financial and AI consequence guards.
 
+### Owner Mode vertical slice (Phase C)
+
+Production new games use a **12-team** league via `generateLeague` (`rosterSize: 0`) then `bootstrapWorld` / `generateRosters`. Placeholder `user.controlledTeamId` is the first sorted team id until `selectOwnerTeam` (allowed only while `calendar.lastSimulatedDate === null`).
+
+Owner mutations go through transactional application commands in `game-service.ts` (load → restore RNG → validate/execute on a working copy → validate → write RNG → persist once; failures persist nothing). UI and Server Actions must not mutate `GameState` directly.
+
+Rapid advance uses `advanceSimulation({ days, stopOnPhaseChange })` only. `stopOnPhaseChange` stops after the first day that changes `{ phase, offseasonStage, year }`. Do not use `simulateSeason` for Owner Mode. Draft-clock state is derived from the active draft order (never persisted). Offseason FA→draft uses `advanceOffseasonStage`; drafts auto-`completeDraft` when every order slot is used.
+
 ## GameState (composed slices)
 
 `GameState` is the single source of truth for one save, composed of typed slices:
