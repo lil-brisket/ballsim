@@ -123,7 +123,8 @@ export function runExpansionDraft(state: GameState, rng: Rng): SystemResult {
     throw new Error("runExpansionDraft: expansion team must exist first.");
   }
 
-  const pick = lowestOvrUnprotectedPlayer(state, expansion.newTeamId);
+  const newTeamId = asTeamId(expansion.newTeamId);
+  const pick = lowestOvrUnprotectedPlayer(state, newTeamId);
   if (!pick) {
     return systemResult(
       {
@@ -138,7 +139,7 @@ export function runExpansionDraft(state: GameState, rng: Rng): SystemResult {
   }
 
   const fromTeam = state.world.teams[pick.teamId]!;
-  const toTeam = state.world.teams[expansion.newTeamId]!;
+  const toTeam = state.world.teams[newTeamId]!;
   const player = state.world.players[pick.playerId]!;
 
   let current: GameState = {
@@ -147,7 +148,7 @@ export function runExpansionDraft(state: GameState, rng: Rng): SystemResult {
       ...state.world,
       players: {
         ...state.world.players,
-        [pick.playerId]: { ...player, teamId: expansion.newTeamId },
+        [pick.playerId]: { ...player, teamId: newTeamId },
       },
       teams: {
         ...state.world.teams,
@@ -155,7 +156,7 @@ export function runExpansionDraft(state: GameState, rng: Rng): SystemResult {
           ...fromTeam,
           roster: fromTeam.roster.filter((id) => id !== pick.playerId),
         },
-        [expansion.newTeamId]: {
+        [newTeamId]: {
           ...toTeam,
           roster: [...toTeam.roster, pick.playerId],
         },

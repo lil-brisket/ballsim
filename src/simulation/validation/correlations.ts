@@ -92,7 +92,7 @@ export function evaluatePlayerCorrelations(
       midRange: attrs.midRange,
       threePoint: attrs.threePoint,
       offensiveIq: attrs.offensiveIq,
-      rebounding: attrs.rebinding,
+      rebounding: attrs.rebounding,
       passing: attrs.passing,
       perimeterDefense: attrs.perimeterDefense,
       interiorDefense: attrs.interiorDefense,

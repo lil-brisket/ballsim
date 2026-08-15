@@ -72,6 +72,7 @@ describe("advanceSimulation", () => {
           currentDate: "2026-08-09",
           lastSimulatedDate: null,
           lastSimulatedWeekId: null,
+          lastSimulatedMonthId: null,
         },
       },
     };

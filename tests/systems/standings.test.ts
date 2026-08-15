@@ -15,7 +15,9 @@ const SEASON_A = asSeasonId("season_a");
 const SEASON_B = asSeasonId("season_b");
 
 function finalGame(
-  overrides: Partial<GameInput> & {
+  overrides: Partial<
+    Omit<GameInput, "id" | "homeTeamId" | "awayTeamId">
+  > & {
     id: string;
     homeTeamId: string;
     awayTeamId: string;

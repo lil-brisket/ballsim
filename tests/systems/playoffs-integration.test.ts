@@ -17,6 +17,7 @@ import {
 } from "@/systems/playoff-config";
 import { simulateSeason } from "@/systems/season-simulation";
 import { updateStandings } from "@/systems/standings";
+import { createPhaseEBusinessDefaults } from "@/state/phase-e-defaults";
 import { TEST_NOW_ISO, TEST_RNG_SEED } from "../helpers/determinism";
 
 function createEightTeamGameState(rngSeed: number): {
@@ -82,6 +83,7 @@ function createEightTeamGameState(rngSeed: number): {
         currentDate: "2026-10-01",
         lastSimulatedDate: null,
         lastSimulatedWeekId: null,
+        lastSimulatedMonthId: null,
       },
       league: generated.league,
       conferences,
@@ -116,6 +118,9 @@ function createEightTeamGameState(rngSeed: number): {
         offers: {},
       },
       tradeBlocks: {},
+      ...createPhaseEBusinessDefaults(
+        generated.teams.map((team) => team.id as TeamId),
+      ),
     },
     user: {
       controlledTeamId,

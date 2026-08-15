@@ -21,6 +21,7 @@ import {
 } from "@/domain/ids";
 import { GAME_STATE_SCHEMA_VERSION, type GameState } from "@/state/game-state";
 import { createEmptyTeamFinanceBooks } from "@/domain/entities/finances";
+import { createPhaseEBusinessDefaults } from "@/state/phase-e-defaults";
 
 describe("season lifecycle", () => {
   it("transitions preseason → regular and generates a same-day opener schedule", () => {
@@ -141,6 +142,7 @@ describe("season lifecycle", () => {
           currentDate: "2026-10-01",
           lastSimulatedDate: null,
           lastSimulatedWeekId: null,
+          lastSimulatedMonthId: null,
         },
         league: generated.league,
         conferences,
@@ -170,6 +172,9 @@ describe("season lifecycle", () => {
         finances,
         freeAgency: { offers: {} },
         tradeBlocks: {},
+        ...createPhaseEBusinessDefaults(
+          generated.teams.map((team) => team.id as TeamId),
+        ),
       },
       user: {
         controlledTeamId: generated.teams[0]!.id as TeamId,

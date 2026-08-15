@@ -109,7 +109,13 @@ describe("createRosterRulesConfig", () => {
   });
 
   it("accepts a frozen allowedPositions array", () => {
-    const allowedPositions = Object.freeze(["PG", "SG", "SF", "PF", "C"]);
+    const allowedPositions = Object.freeze([
+      "PG",
+      "SG",
+      "SF",
+      "PF",
+      "C",
+    ] as const);
     const rules = createRosterRulesConfig(
       validInput({ allowedPositions }),
     );
