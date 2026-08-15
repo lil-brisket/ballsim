@@ -114,6 +114,7 @@ function createEightTeamPopulatedState(rngSeed: number): GameState {
       mode: "owner",
       objectives: [],
       notifications: [],
+      eventLog: [],
       appliedGameplayConsequenceKeys: {},
     },
   };

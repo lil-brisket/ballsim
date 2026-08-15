@@ -176,6 +176,7 @@ describe("season lifecycle", () => {
         mode: "owner",
         objectives: [],
         notifications: [],
+        eventLog: [],
         appliedGameplayConsequenceKeys: {},
       },
     };

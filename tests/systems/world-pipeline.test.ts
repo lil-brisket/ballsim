@@ -171,8 +171,9 @@ describe("world pipeline advanceDay", () => {
       (acc, row) => acc + row.wins + row.losses,
       0,
     );
-    // 4 teams → 2 games per round; opener round contributes 4 decisions (2 wins + 2 losses).
-    expect(totalDecisions).toBe(4);
+    // 12 teams → 6 games per round; opener contributes 12 decisions (6 wins + 6 losses).
+    const teamCount = Object.keys(bootstrapped.state.world.teams).length;
+    expect(totalDecisions).toBe(teamCount);
   });
 
   it("continues the RNG stream across advances via getState", () => {

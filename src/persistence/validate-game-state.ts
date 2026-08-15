@@ -25,6 +25,10 @@ import {
   OWNER_NOTIFICATION_TYPES,
 } from "@/domain/entities/owner-notification";
 import {
+  DOMAIN_EVENT_TYPES,
+  isDomainEventType,
+} from "@/domain/events";
+import {
   isTradeBlockStatus,
   type TradeBlockAsset,
 } from "@/domain/entities/trade-block";
@@ -293,6 +297,11 @@ export function validateGameState(state: unknown): asserts state is GameState {
     fail("user.notifications must be an array.");
   }
   validateOwnerNotifications(user.notifications);
+
+  if (!("eventLog" in user) || !Array.isArray(user.eventLog)) {
+    fail("user.eventLog must be an array.");
+  }
+  validateEventLog(user.eventLog);
 
   if (
     !("appliedGameplayConsequenceKeys" in user) ||
@@ -1359,6 +1368,39 @@ function validateOwnerNotifications(notifications: unknown[]): void {
         notificationValue.relatedTeamId,
         `${path}.relatedTeamId`,
       );
+    }
+  }
+}
+
+function validateEventLog(events: unknown[]): void {
+  const seenIds = new Set<string>();
+  for (const [index, eventValue] of events.entries()) {
+    const path = `user.eventLog[${index}]`;
+    assertRecord(eventValue, path);
+    assertNonEmptyString(eventValue.id, `${path}.id`);
+    if (seenIds.has(eventValue.id)) {
+      fail(`user.eventLog contains duplicate id "${eventValue.id}".`);
+    }
+    seenIds.add(eventValue.id);
+
+    if (
+      typeof eventValue.type !== "string" ||
+      !isDomainEventType(eventValue.type)
+    ) {
+      fail(
+        `${path}.type must be one of ${DOMAIN_EVENT_TYPES.join(", ")}.`,
+      );
+    }
+
+    assertNonEmptyString(eventValue.occurredOn, `${path}.occurredOn`);
+    parseCalendarDate(eventValue.occurredOn);
+
+    if (
+      eventValue.payload == null ||
+      typeof eventValue.payload !== "object" ||
+      Array.isArray(eventValue.payload)
+    ) {
+      fail(`${path}.payload must be a record.`);
     }
   }
 }

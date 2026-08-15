@@ -52,7 +52,8 @@ describe("simulateSeason", () => {
     const teamCount = Object.keys(state.world.teams).length;
     const expectedGames = teamCount * (teamCount - 1);
 
-    expect(result.state.competition.season.phase).toBe("regular");
+    expect(result.state.competition.season.phase).toBe("playoffs");
+    expect(result.state.competition.playoffs.status).toBe("complete");
     expect(result.state.competition.schedule.gameIds).toHaveLength(expectedGames);
 
     for (const gameId of result.state.competition.schedule.gameIds) {
@@ -112,7 +113,14 @@ describe("simulateSeason", () => {
     const remainingScheduled = current.competition.schedule.gameIds.filter(
       (gameId) => current.competition.games[gameId]?.status === "scheduled",
     );
-    expect(remainingScheduled).toHaveLength(8);
+    const finalizedOnSelectedDates = current.competition.schedule.gameIds.filter(
+      (gameId) => current.competition.games[gameId]?.status === "final",
+    );
+    expect(remainingScheduled.length).toBe(
+      scheduled.competition.schedule.gameIds.length -
+        finalizedOnSelectedDates.length,
+    );
+    expect(remainingScheduled.length).toBeGreaterThan(0);
 
     const firstFourSnapshot = firstFourIds.map((gameId) =>
       structuredClone(current.competition.games[gameId]!),

@@ -172,6 +172,7 @@ export function createInitialGameState(
       mode: "owner",
       objectives: [],
       notifications: [],
+      eventLog: [],
       appliedGameplayConsequenceKeys: {},
     },
   };
@@ -357,6 +358,7 @@ export function createFourTeamInitialGameState(
       mode: "owner",
       objectives: [],
       notifications: [],
+      eventLog: [],
       appliedGameplayConsequenceKeys: {},
     },
   };

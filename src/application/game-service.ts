@@ -1,6 +1,10 @@
 import "server-only";
 
 import type { ContractInput } from "@/domain/entities/contract";
+import {
+  declineTeamOption,
+  exerciseTeamOption,
+} from "@/domain/entities/contract";
 import type { TradeProposal } from "@/domain/entities/trade-proposal";
 import type { DomainEvent } from "@/domain/events";
 import {
@@ -21,17 +25,36 @@ import type {
 } from "@/persistence/save-game-store";
 import { createInitialGameState } from "@/state/create-initial-state";
 import type { GameState } from "@/state/game-state";
+import { appendEventLog } from "@/state/game-state";
 import {
+  isPlayerInOwnerScope,
   listTeamsForSelection,
+  toContractsView,
   toDashboardSnapshot,
   toDraftBoardView,
+  toEventLogView,
+  toFinancesView,
   toFreeAgentViews,
+  toFreeAgencyOfferViews,
+  toNotificationsView,
+  toObjectivesView,
+  toOpenFreeAgencyOfferViews,
+  toPlayerDetailView,
   toRosterView,
+  toScheduleView,
   toStandingsView,
+  type ContractRowView,
   type DashboardSnapshot,
   type DraftBoardView,
+  type EventLogEntryView,
+  type FinancesView,
+  type FreeAgencyOfferView,
   type FreeAgentView,
+  type NotificationView,
+  type ObjectiveView,
+  type PlayerDetailView,
   type RosterPlayerView,
+  type ScheduleGameView,
   type StandingRowView,
   type TeamListEntry,
 } from "@/state/selectors";
@@ -47,6 +70,7 @@ import {
   acceptOffer,
   listFreeAgents,
   makeOffer,
+  withdrawOffer,
 } from "@/systems/free-agency";
 import { advanceSimulation } from "@/systems/simulation/advance-simulation";
 import { advanceOffseasonStage } from "@/systems/simulation/offseason-lifecycle";
@@ -92,8 +116,16 @@ export type OwnerSaveView = CreateGameResult & {
   roster: RosterPlayerView[];
   standings: StandingRowView[];
   freeAgents: FreeAgentView[];
+  freeAgencyOffers: FreeAgencyOfferView[];
+  openFreeAgencyOffers: FreeAgencyOfferView[];
   draftBoard: DraftBoardView | null;
   tradeCandidates: TradeFinderCandidate[];
+  objectives: ObjectiveView[];
+  notifications: NotificationView[];
+  eventLog: EventLogEntryView[];
+  schedule: ScheduleGameView[];
+  contracts: ContractRowView[];
+  finances: FinancesView;
 };
 
 function toSaveSummary(loaded: LoadedSaveGame): SaveGameSummary {
@@ -129,19 +161,22 @@ function withDashboard(
 /**
  * Persist working state after successful command validation.
  * Writes RNG only on the working copy being saved.
+ * Appends newlyEmittedEvents exactly once into user.eventLog (bounded).
  */
 async function persistWorkingState(
   saveId: string,
   working: GameState,
   rngState: number,
   store: SaveGameStore,
+  newlyEmittedEvents: readonly DomainEvent[] = [],
 ): Promise<LoadedSaveGame> {
-  validateGameState(working);
+  const withEvents = appendEventLog(working, newlyEmittedEvents);
+  validateGameState(withEvents);
   const nowIso = new Date().toISOString();
   const nextState: GameState = {
-    ...working,
+    ...withEvents,
     meta: {
-      ...working.meta,
+      ...withEvents.meta,
       rngState,
       updatedAt: nowIso,
     },
@@ -233,8 +268,40 @@ export async function loadOwnerSaveView(
     roster,
     standings: toStandingsView(state),
     freeAgents: toFreeAgentViews(state),
+    freeAgencyOffers: toFreeAgencyOfferViews(state),
+    openFreeAgencyOffers: toOpenFreeAgencyOfferViews(state),
     draftBoard: toDraftBoardView(state),
     tradeCandidates,
+    objectives: toObjectivesView(state),
+    notifications: toNotificationsView(state),
+    eventLog: toEventLogView(state),
+    schedule: toScheduleView(state),
+    contracts: toContractsView(state),
+    finances: toFinancesView(state),
+  };
+}
+
+export async function loadOwnerPlayerView(
+  saveId: string,
+  playerId: string,
+  store?: SaveGameStore,
+): Promise<(CreateGameResult & { player: PlayerDetailView }) | null> {
+  const loaded = await getStore(store).load(saveId);
+  if (!loaded) {
+    return null;
+  }
+  const typedId = asPlayerId(playerId);
+  if (!isPlayerInOwnerScope(loaded.state, typedId)) {
+    return null;
+  }
+  const player = toPlayerDetailView(loaded.state, typedId);
+  if (!player) {
+    return null;
+  }
+  return {
+    save: toSaveSummary(loaded),
+    dashboard: toDashboardSnapshot(loaded.state),
+    player,
   };
 }
 
@@ -343,6 +410,7 @@ export async function advanceOwnerTime(
       result.state,
       rng.getState(),
       saveStore,
+      result.events,
     );
 
     const { state: _state, events, ...simulation } = result;
@@ -513,6 +581,7 @@ export async function executeOwnerTrade(
       executed.state,
       rng.getState(),
       saveStore,
+      executed.events,
     );
     return withDashboard(saved);
   } catch (error) {
@@ -578,18 +647,19 @@ export async function signOwnerFreeAgent(
 
   const rng = createSeededRng(state.meta.rngState);
   try {
-    let working = makeOffer(state, {
+    const offered = makeOffer(state, {
       id: offerId,
       playerId,
       teamId,
       terms,
-    }).state;
-    working = acceptOffer(working, offerId).state;
+    });
+    const accepted = acceptOffer(offered.state, offerId);
     const saved = await persistWorkingState(
       saveId,
-      working,
+      accepted.state,
       rng.getState(),
       saveStore,
+      [...offered.events, ...accepted.events],
     );
     return withDashboard(saved);
   } catch (error) {
@@ -617,13 +687,11 @@ export async function finishFreeAgency(
   const rng = createSeededRng(loaded.state.meta.rngState);
   try {
     const advanced = advanceOffseasonStage(loaded.state);
-    // Enter draft stage processing so create/activate runs on next advance —
-    // also run one offseason lifecycle via advanceSimulation day 0 path:
-    // Call advanceSimulation for 1 day after stage change so draft activates,
-    // but only if user is not immediately on the clock after create/activate.
     let working = advanced.state;
+    const emitted = [...advanced.events];
     const dayResult = advanceSimulation(working, rng, { days: 1 });
     working = dayResult.state;
+    emitted.push(...dayResult.events);
 
     if (isUserOnDraftClock(working)) {
       // Persist stopped at draft clock without requiring another advance.
@@ -634,6 +702,7 @@ export async function finishFreeAgency(
       working,
       rng.getState(),
       saveStore,
+      emitted,
     );
     return withDashboard(saved);
   } catch (error) {
@@ -686,31 +755,32 @@ export async function selectOwnerDraftProspect(
     }
 
     let working = selection.state;
-    // AI fills until user is on the clock again or draft completes.
-    // Never selects for the user-controlled team.
+    const emitted: DomainEvent[] = [...selection.events];
     const ai = runAiTeamDecisions(working, rng);
     working = ai.state;
+    emitted.push(...ai.events);
 
-    // If draft order is fully used, advanceSimulation will auto-complete on next day.
-    // Run lifecycle via a single advance day when user is not on the clock.
     if (!isUserOnDraftClock(working)) {
       const advanced = advanceSimulation(working, rng, {
         days: 1,
         stopOnPhaseChange: true,
       });
       working = advanced.state;
-      // Continue AI after lifecycle create if still in draft and not on clock
+      emitted.push(...advanced.events);
       if (
         working.competition.season.offseasonStage === "draft" &&
         !isUserOnDraftClock(working)
       ) {
-        working = runAiTeamDecisions(working, rng).state;
+        const aiAgain = runAiTeamDecisions(working, rng);
+        working = aiAgain.state;
+        emitted.push(...aiAgain.events);
         if (!isUserOnDraftClock(working)) {
           const again = advanceSimulation(working, rng, {
             days: 1,
             stopOnPhaseChange: true,
           });
           working = again.state;
+          emitted.push(...again.events);
         }
       }
     }
@@ -719,6 +789,211 @@ export async function selectOwnerDraftProspect(
       saveId,
       working,
       rng.getState(),
+      saveStore,
+      emitted,
+    );
+    return withDashboard(saved);
+  } catch (error) {
+    return fail(error instanceof Error ? error.message : String(error));
+  }
+}
+
+export async function makeOwnerFreeAgentOffer(
+  saveId: string,
+  input: { playerId: string; salary?: number; years?: number },
+  store?: SaveGameStore,
+): Promise<OwnerCommandResult> {
+  const saveStore = getStore(store);
+  const loaded = await saveStore.load(saveId);
+  if (!loaded) {
+    return fail("Save not found.");
+  }
+  const state = loaded.state;
+  if (
+    state.competition.season.phase !== "offseason" ||
+    state.competition.season.offseasonStage !== "free_agency"
+  ) {
+    return fail(
+      "Free agent offers are only allowed during offseason free agency.",
+    );
+  }
+  const playerId = asPlayerId(input.playerId);
+  const teamId = state.user.controlledTeamId;
+  const year = state.competition.season.year;
+  if (!listFreeAgents(state).playerIds.includes(playerId)) {
+    return fail("Player is not an available free agent.");
+  }
+  const salary = input.salary ?? 2_000_000;
+  const years = input.years ?? 1;
+  if (!Number.isInteger(years) || years < 1) {
+    return fail("Contract years must be an integer >= 1.");
+  }
+  const endYear = year + years - 1;
+  const salaryByYear: Record<string, number> = {};
+  for (let y = year; y <= endYear; y += 1) {
+    salaryByYear[String(y)] = salary;
+  }
+  const offerId = asOfferId(
+    `offer_owner_${teamId}_${playerId}_${state.world.calendar.currentDate}_${crypto.randomUUID()}`,
+  );
+  const contractId = asContractId(
+    `contract_owner_${playerId}_${year}_${crypto.randomUUID()}`,
+  );
+  const terms: ContractInput = {
+    id: contractId,
+    playerId,
+    teamId,
+    startYear: year,
+    endYear,
+    salaryByYear,
+  };
+  const rng = createSeededRng(state.meta.rngState);
+  try {
+    const offered = makeOffer(state, { id: offerId, playerId, teamId, terms });
+    const saved = await persistWorkingState(
+      saveId,
+      offered.state,
+      rng.getState(),
+      saveStore,
+      offered.events,
+    );
+    return withDashboard(saved);
+  } catch (error) {
+    return fail(error instanceof Error ? error.message : String(error));
+  }
+}
+
+export async function withdrawOwnerFreeAgentOffer(
+  saveId: string,
+  offerId: string,
+  store?: SaveGameStore,
+): Promise<OwnerCommandResult> {
+  const saveStore = getStore(store);
+  const loaded = await saveStore.load(saveId);
+  if (!loaded) {
+    return fail("Save not found.");
+  }
+  const typedOfferId = asOfferId(offerId);
+  const offer = loaded.state.business.freeAgency.offers[typedOfferId];
+  if (!offer) {
+    return fail("Offer not found.");
+  }
+  if (offer.teamId !== loaded.state.user.controlledTeamId) {
+    return fail("Offer does not belong to your team.");
+  }
+  const rng = createSeededRng(loaded.state.meta.rngState);
+  try {
+    const withdrawn = withdrawOffer(loaded.state, typedOfferId);
+    const saved = await persistWorkingState(
+      saveId,
+      withdrawn.state,
+      rng.getState(),
+      saveStore,
+      withdrawn.events,
+    );
+    return withDashboard(saved);
+  } catch (error) {
+    return fail(error instanceof Error ? error.message : String(error));
+  }
+}
+
+export async function markOwnerNotificationsRead(
+  saveId: string,
+  notificationIds?: string[],
+  store?: SaveGameStore,
+): Promise<OwnerCommandResult> {
+  const saveStore = getStore(store);
+  const loaded = await saveStore.load(saveId);
+  if (!loaded) {
+    return fail("Save not found.");
+  }
+  const idSet =
+    notificationIds === undefined
+      ? null
+      : new Set(notificationIds.filter((id) => id.length > 0));
+  const notifications = loaded.state.user.notifications.map((notification) => {
+    if (idSet !== null && !idSet.has(notification.id)) {
+      return notification;
+    }
+    if (notification.read) {
+      return notification;
+    }
+    return { ...notification, read: true };
+  });
+  const working: GameState = {
+    ...loaded.state,
+    user: { ...loaded.state.user, notifications },
+  };
+  try {
+    const saved = await persistWorkingState(
+      saveId,
+      working,
+      loaded.state.meta.rngState,
+      saveStore,
+    );
+    return withDashboard(saved);
+  } catch (error) {
+    return fail(error instanceof Error ? error.message : String(error));
+  }
+}
+
+export async function exerciseOwnerTeamOption(
+  saveId: string,
+  contractId: string,
+  store?: SaveGameStore,
+): Promise<OwnerCommandResult> {
+  return applyOwnerContractOption(saveId, contractId, "exercise", store);
+}
+
+export async function declineOwnerTeamOption(
+  saveId: string,
+  contractId: string,
+  store?: SaveGameStore,
+): Promise<OwnerCommandResult> {
+  return applyOwnerContractOption(saveId, contractId, "decline", store);
+}
+
+async function applyOwnerContractOption(
+  saveId: string,
+  contractId: string,
+  action: "exercise" | "decline",
+  store?: SaveGameStore,
+): Promise<OwnerCommandResult> {
+  const saveStore = getStore(store);
+  const loaded = await saveStore.load(saveId);
+  if (!loaded) {
+    return fail("Save not found.");
+  }
+  const typedId = asContractId(contractId);
+  const contract = loaded.state.business.contracts[typedId];
+  if (!contract) {
+    return fail("Contract not found.");
+  }
+  if (contract.teamId !== loaded.state.user.controlledTeamId) {
+    return fail("Contract does not belong to your team.");
+  }
+  if (contract.teamOption?.status !== "pending") {
+    return fail("Contract has no pending team option.");
+  }
+  try {
+    const nextContract =
+      action === "exercise"
+        ? exerciseTeamOption(contract)
+        : declineTeamOption(contract);
+    const working: GameState = {
+      ...loaded.state,
+      business: {
+        ...loaded.state.business,
+        contracts: {
+          ...loaded.state.business.contracts,
+          [typedId]: nextContract,
+        },
+      },
+    };
+    const saved = await persistWorkingState(
+      saveId,
+      working,
+      loaded.state.meta.rngState,
       saveStore,
     );
     return withDashboard(saved);

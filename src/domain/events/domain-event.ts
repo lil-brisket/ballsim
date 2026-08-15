@@ -20,6 +20,25 @@ export type DomainEventType =
   | "RevenueRecorded"
   | "ExpenseRecorded";
 
+export const DOMAIN_EVENT_TYPES: readonly DomainEventType[] = [
+  "GameCompleted",
+  "PlayerInjured",
+  "PlayerDeveloped",
+  "PlayerDeclined",
+  "ContractSigned",
+  "PlayerTraded",
+  "PlayerReleased",
+  "DraftPickMade",
+  "FreeAgentSigned",
+  "CoachHired",
+  "RevenueRecorded",
+  "ExpenseRecorded",
+];
+
+export function isDomainEventType(value: string): value is DomainEventType {
+  return (DOMAIN_EVENT_TYPES as readonly string[]).includes(value);
+}
+
 export type DomainEvent = {
   id: DomainEventId;
   type: DomainEventType;
@@ -28,6 +47,7 @@ export type DomainEvent = {
   payload: Record<string, unknown>;
 };
 
+/** Test-only counter; production IDs use crypto.randomUUID for cross-process uniqueness. */
 let eventSequence = 0;
 
 export function createDomainEvent(input: {
@@ -36,8 +56,12 @@ export function createDomainEvent(input: {
   payload?: Record<string, unknown>;
 }): DomainEvent {
   eventSequence += 1;
+  const unique =
+    typeof crypto !== "undefined" && typeof crypto.randomUUID === "function"
+      ? crypto.randomUUID()
+      : `seq_${eventSequence}`;
   return {
-    id: asDomainEventId(`evt_${eventSequence}_${input.type}`),
+    id: asDomainEventId(`evt_${unique}_${input.type}`),
     type: input.type,
     occurredOn: input.occurredOn,
     payload: input.payload ?? {},

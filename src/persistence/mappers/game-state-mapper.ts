@@ -111,10 +111,11 @@ const MIGRATE_ONE_STEP: Record<number, (state: unknown) => unknown> = {
   19: (state) => migrateV19ToV20(state as GameStateV19),
   20: (state) => migrateV20ToV21(state as GameStateV20),
   21: (state) => migrateV21ToV22(state as GameStateV21),
+  22: (state) => migrateV22ToV23(state as GameStateV22),
 };
 
 /**
- * Parse → migrate (v1–v21 → current) → validate → return GameState.
+ * Parse → migrate (v1–v22 → current) → validate → return GameState.
  * Does not call serializeGameState.
  */
 export function deserializeGameState(stateJson: string): GameState {
@@ -1811,7 +1812,7 @@ function migrateV20ToV21(state: GameStateV20): GameStateV21 {
  * - user.appliedGameplayConsequenceKeys
  * Emits literal schemaVersion 22. No RNG.
  */
-function migrateV21ToV22(state: GameStateV21): GameState {
+function migrateV21ToV22(state: GameStateV21): GameStateV22 {
   if (typeof state.meta.rngState !== "number") {
     throw new Error("GameState meta.rngState is required for schemaVersion 21.");
   }
@@ -1856,6 +1857,51 @@ function migrateV21ToV22(state: GameStateV21): GameState {
     },
   };
 }
+
+/**
+ * Deterministic v22 → v23: add empty user.eventLog for Owner activity history.
+ * Emits literal schemaVersion 23. No RNG.
+ */
+function migrateV22ToV23(state: GameStateV22): GameState {
+  if (typeof state.meta.rngState !== "number") {
+    throw new Error("GameState meta.rngState is required for schemaVersion 22.");
+  }
+
+  return {
+    meta: {
+      saveId: state.meta.saveId,
+      schemaVersion: 23,
+      createdAt: state.meta.createdAt,
+      updatedAt: state.meta.updatedAt,
+      rngSeed: state.meta.rngSeed,
+      rngState: state.meta.rngState,
+    },
+    world: state.world,
+    competition: state.competition,
+    business: state.business,
+    user: {
+      ...state.user,
+      eventLog: [],
+    },
+  };
+}
+
+type GameStateV22 = {
+  meta: Omit<GameState["meta"], "schemaVersion"> & {
+    schemaVersion: 22;
+    rngState: number;
+  };
+  world: GameState["world"];
+  competition: GameState["competition"];
+  business: GameState["business"];
+  user: {
+    controlledTeamId: GameState["user"]["controlledTeamId"];
+    mode: GameState["user"]["mode"];
+    objectives: GameState["user"]["objectives"];
+    notifications: GameState["user"]["notifications"];
+    appliedGameplayConsequenceKeys: GameState["user"]["appliedGameplayConsequenceKeys"];
+  };
+};
 
 function findUniqueContractId(
   playerId: PlayerId,

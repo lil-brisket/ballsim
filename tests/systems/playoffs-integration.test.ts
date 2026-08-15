@@ -4,7 +4,7 @@ import { createEmptyTeamStanding } from "@/domain/entities/standings";
 import { resetDomainEventSequenceForTests } from "@/domain/events/domain-event";
 import { asSaveId, asSeasonId, type TeamId } from "@/domain/ids";
 import { createSeededRng } from "@/domain/rng";
-import { createInitialGameState } from "@/state/create-initial-state";
+import { createFourTeamInitialGameState } from "@/state/create-initial-state";
 import {
   GAME_STATE_SCHEMA_VERSION,
   type GameState,
@@ -122,6 +122,7 @@ function createEightTeamGameState(rngSeed: number): {
       mode: "owner",
       objectives: [],
       notifications: [],
+      eventLog: [],
       appliedGameplayConsequenceKeys: {},
     },
   };
@@ -212,7 +213,7 @@ describe("playoffs season integration", () => {
 
   it("keeps 4-team seasons on regular phase without a champion", () => {
     resetDomainEventSequenceForTests();
-    const base = createInitialGameState({
+    const base = createFourTeamInitialGameState({
       saveId: "save_four_team_no_playoffs",
       rngSeed: 55,
       nowIso: TEST_NOW_ISO,
