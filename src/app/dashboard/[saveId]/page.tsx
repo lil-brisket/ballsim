@@ -1,10 +1,12 @@
 import { notFound } from "next/navigation";
-import {
-  advanceDayAction,
-  advanceUntilPhaseAction,
-  advanceWeekAction,
-} from "@/application/actions";
 import { loadOwnerSaveView } from "@/application/game-service";
+import { AdvanceTimeControls } from "@/components/game/AdvanceTimeControls";
+import { EventCard } from "@/components/game/EventCard";
+import { ObjectiveCard } from "@/components/game/ObjectiveCard";
+import {
+  NextActionPanel,
+  resolveNextActionPresentation,
+} from "@/components/game/NextActionPanel";
 import { EmptyState, ErrorState } from "@/components/owner/EmptyState";
 import { MoneyDisplay } from "@/components/owner/MoneyDisplay";
 import { PageHeader } from "@/components/owner/PageHeader";
@@ -30,11 +32,7 @@ export default async function DashboardPage({
 
   const { save, dashboard } = view;
   const returnPath = `/dashboard/${saveId}`;
-  const preferWeekly = dashboard.simulationFrequency === "weekly";
-  const primaryAdvanceClass =
-    "rounded-md bg-amber-600 px-4 py-2 text-sm font-medium text-zinc-950 hover:bg-amber-500 disabled:opacity-40";
-  const secondaryAdvanceClass =
-    "rounded-md border border-zinc-700 px-4 py-2 text-sm text-zinc-200 hover:border-amber-600 disabled:opacity-40";
+  const nextAction = resolveNextActionPresentation(dashboard, saveId);
 
   return (
     <>
@@ -42,52 +40,24 @@ export default async function DashboardPage({
         title={`${dashboard.controlledTeam.city} ${dashboard.controlledTeam.name}`}
         subtitle={`${save.name} · ${dashboard.leagueName}`}
         actions={
-          <>
-            <form action={advanceDayAction}>
-              <input type="hidden" name="saveId" value={save.id} />
-              <input type="hidden" name="returnPath" value={returnPath} />
-              <button
-                type="submit"
-                disabled={dashboard.userOnDraftClock}
-                className={
-                  preferWeekly ? secondaryAdvanceClass : primaryAdvanceClass
-                }
-              >
-                Advance day
-              </button>
-            </form>
-            <form action={advanceWeekAction}>
-              <input type="hidden" name="saveId" value={save.id} />
-              <input type="hidden" name="returnPath" value={returnPath} />
-              <button
-                type="submit"
-                disabled={dashboard.userOnDraftClock}
-                className={
-                  preferWeekly ? primaryAdvanceClass : secondaryAdvanceClass
-                }
-              >
-                Advance 7 days
-              </button>
-            </form>
-            <form action={advanceUntilPhaseAction}>
-              <input type="hidden" name="saveId" value={save.id} />
-              <input type="hidden" name="returnPath" value={returnPath} />
-              <button
-                type="submit"
-                disabled={dashboard.userOnDraftClock}
-                className="rounded-md border border-zinc-700 px-4 py-2 text-sm text-zinc-200 hover:border-amber-600 disabled:opacity-40"
-              >
-                Until next phase
-              </button>
-            </form>
-          </>
+          <AdvanceTimeControls
+            saveId={save.id}
+            returnPath={returnPath}
+            simulationFrequency={dashboard.simulationFrequency}
+            disabled={dashboard.userOnDraftClock}
+          />
         }
       />
 
       {error ? <ErrorState message={error} /> : null}
 
+      <NextActionPanel action={nextAction} />
+
       {dashboard.userOnDraftClock ? (
-        <p className="rounded-md border border-amber-700/50 bg-amber-950/40 px-4 py-3 text-sm text-amber-200">
+        <p
+          role="status"
+          className="rounded-md border border-amber-700/50 bg-amber-950/40 px-4 py-3 text-sm text-amber-200"
+        >
           Your team is on the draft clock. Make a selection on the Draft screen
           before advancing time.
         </p>
@@ -121,6 +91,10 @@ export default async function DashboardPage({
           value={<MoneyDisplay amount={dashboard.payroll} />}
         />
         <StatCard
+          label="Net income"
+          value={<MoneyDisplay amount={dashboard.netIncome} />}
+        />
+        <StatCard
           label="Fan sentiment"
           value={`${view.franchiseBusiness.fanSentiment}`}
         />
@@ -132,10 +106,6 @@ export default async function DashboardPage({
           label="Franchise value"
           value={<MoneyDisplay amount={view.franchiseBusiness.franchiseValue} />}
         />
-        <StatCard
-          label="Arena capacity"
-          value={`${view.franchiseBusiness.arenaCapacity}`}
-        />
       </section>
 
       <Section title="Owner objectives">
@@ -144,66 +114,72 @@ export default async function DashboardPage({
         ) : (
           <ul className="space-y-2">
             {dashboard.objectives.map((objective) => (
-              <li
+              <ObjectiveCard
                 key={objective.id}
-                className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-zinc-800 bg-zinc-900/50 px-4 py-3"
-              >
-                <div>
-                  <p className="text-zinc-100">{objective.description}</p>
-                  <p className="mt-1 text-xs text-zinc-500">
-                    {objective.seasonYear}
-                    {objective.target !== null
-                      ? ` · target ${objective.target}`
-                      : ""}
-                    {objective.progress !== null
-                      ? ` · progress ${objective.progress}`
-                      : ""}
-                    {objective.consequenceApplied ? " · consequence applied" : ""}
-                  </p>
-                </div>
-                <StatusBadge label={objective.status} tone={objective.status} />
-              </li>
+                description={objective.description}
+                seasonYear={objective.seasonYear}
+                status={objective.status}
+                target={objective.target}
+                progress={objective.progress}
+                consequenceApplied={objective.consequenceApplied}
+              />
             ))}
           </ul>
         )}
       </Section>
 
       <div className="grid gap-8 lg:grid-cols-2">
+        <Section title="Notifications">
+          {dashboard.notifications.length === 0 ? (
+            <EmptyState message="No recent notifications." />
+          ) : (
+            <ul className="space-y-2">
+              {dashboard.notifications.map((notification) => (
+                <EventCard
+                  key={notification.id}
+                  title={notification.message}
+                  type={notification.type}
+                  severity={notification.severity}
+                  read={notification.read}
+                />
+              ))}
+            </ul>
+          )}
+        </Section>
+
         <Section title="Recent activity">
           {dashboard.recentActivity.length === 0 ? (
             <EmptyState message="No events yet. Advance the day to generate activity." />
           ) : (
             <ul className="space-y-2">
               {dashboard.recentActivity.map((entry) => (
-                <li
+                <EventCard
                   key={entry.id}
-                  className="flex items-center justify-between gap-3 rounded-lg border border-zinc-800 px-4 py-2 text-sm"
-                >
-                  <div>
-                    <p className="text-zinc-200">{entry.description}</p>
-                    <p className="font-mono text-xs text-zinc-600">
-                      {entry.occurredOn} · {entry.type}
-                    </p>
-                  </div>
-                  {entry.amount !== null ? (
-                    <MoneyDisplay amount={entry.amount} className="text-zinc-400" />
-                  ) : null}
-                </li>
+                  title={entry.description}
+                  date={entry.occurredOn}
+                  type={entry.type}
+                  amount={entry.amount}
+                />
               ))}
             </ul>
           )}
         </Section>
+      </div>
 
+      <div className="grid gap-8 lg:grid-cols-2">
         <Section title="Upcoming">
           <div className="space-y-3">
-            <div className="rounded-lg border border-zinc-800 bg-zinc-900/40 px-4 py-3 text-sm text-zinc-300">
-              Phase: {dashboard.seasonPhase}
-              {dashboard.offseasonStage !== "none"
-                ? ` / ${dashboard.offseasonStage}`
-                : ""}
-              {" · "}
-              Playoffs: {dashboard.playoffs.status}
-              {dashboard.playoffs.userQualified ? " (qualified)" : ""}
+            <div className="flex flex-wrap items-center gap-2 rounded-lg border border-zinc-800 bg-zinc-900/40 px-4 py-3 text-sm text-zinc-300">
+              <span>
+                Phase: {dashboard.seasonPhase}
+                {dashboard.offseasonStage !== "none"
+                  ? ` / ${dashboard.offseasonStage}`
+                  : ""}
+              </span>
+              <StatusBadge
+                label={`Playoffs: ${dashboard.playoffs.status}`}
+                tone={dashboard.playoffs.userQualified ? "success" : "info"}
+              />
             </div>
             {dashboard.upcomingGames.length === 0 ? (
               <EmptyState message="No upcoming scheduled games." />
@@ -224,34 +200,34 @@ export default async function DashboardPage({
             )}
           </div>
         </Section>
-      </div>
 
-      <Section title="Recent results">
-        {dashboard.recentResults.length === 0 ? (
-          <EmptyState message="No final games yet." />
-        ) : (
-          <ul className="space-y-2">
-            {dashboard.recentResults.map((result) => (
-              <li
-                key={`${result.date}-${result.opponentAbbreviation}-${result.home}`}
-                className="flex items-center justify-between rounded-lg border border-zinc-800 bg-zinc-900/50 px-4 py-3 text-sm"
-              >
-                <span className="font-mono text-zinc-500">{result.date}</span>
-                <span className="text-zinc-200">
-                  {result.home ? "vs" : "@"} {result.opponentAbbreviation}{" "}
-                  <span
-                    className={
-                      result.won ? "text-emerald-400" : "text-rose-400"
-                    }
-                  >
-                    {result.teamScore}-{result.opponentScore}
+        <Section title="Recent results">
+          {dashboard.recentResults.length === 0 ? (
+            <EmptyState message="No final games yet." />
+          ) : (
+            <ul className="space-y-2">
+              {dashboard.recentResults.map((result) => (
+                <li
+                  key={`${result.date}-${result.opponentAbbreviation}-${result.home}`}
+                  className="flex items-center justify-between rounded-lg border border-zinc-800 bg-zinc-900/50 px-4 py-3 text-sm"
+                >
+                  <span className="font-mono text-zinc-500">{result.date}</span>
+                  <span className="text-zinc-200">
+                    {result.home ? "vs" : "@"} {result.opponentAbbreviation}{" "}
+                    <span
+                      className={
+                        result.won ? "text-emerald-400" : "text-rose-400"
+                      }
+                    >
+                      {result.teamScore}-{result.opponentScore}
+                    </span>
                   </span>
-                </span>
-              </li>
-            ))}
-          </ul>
-        )}
-      </Section>
+                </li>
+              ))}
+            </ul>
+          )}
+        </Section>
+      </div>
     </>
   );
 }

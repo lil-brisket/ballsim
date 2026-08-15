@@ -11,7 +11,7 @@ import { createEmptyTeamStanding } from "@/domain/entities/standings";
 import { calculatePlayerOverall } from "@/domain/player-overall-rating";
 import type { DomainEvent } from "@/domain/events";
 import type { PlayerId, TeamId } from "@/domain/ids";
-import type { GameState } from "@/state/game-state";
+import type { GameMode, GameState } from "@/state/game-state";
 import { draftYearForSeason } from "@/systems/draft";
 import { isUserOnDraftClock } from "@/systems/draft/draft-clock";
 import { listFreeAgents } from "@/systems/free-agency";
@@ -26,7 +26,7 @@ export type DashboardSnapshot = {
   seasonPhase: string;
   offseasonStage: string;
   leagueName: string;
-  mode: string;
+  mode: GameMode;
   teamSelectionLocked: boolean;
   userOnDraftClock: boolean;
   controlledTeam: {

@@ -15,6 +15,7 @@ vi.mock("@/persistence/save-game-repository", () => ({
 import {
   createNewOwnerSave,
   deleteOwnerSave,
+  listOwnerSavePreviews,
   loadOwnerSave,
   MAX_OWNER_SAVE_SLOTS,
   saveOwnerGame,
@@ -151,6 +152,54 @@ describe("game-service load / save", () => {
   it("deleteOwnerSave returns false for a nonexistent id", async () => {
     const removed = await deleteOwnerSave("does-not-exist", store);
     expect(removed).toBe(false);
+  });
+
+  it("listOwnerSavePreviews maps valid saves and isolates unloadable ones", async () => {
+    const created = await createNewOwnerSave(
+      { settings: CBL_GAME_SETTINGS, name: "Preview Franchise", rngSeed: TEST_RNG_SEED },
+      store,
+    );
+    expect(created.ok).toBe(true);
+    if (!created.ok) {
+      return;
+    }
+
+    await store.create({
+      id: "save_broken",
+      name: "Broken Save",
+      state: createTestGameState({ saveId: "save_broken" }),
+    });
+    const originalLoad = store.load.bind(store);
+    store.load = async (id: string) => {
+      if (id === "save_broken") {
+        throw new Error("corrupt");
+      }
+      return originalLoad(id);
+    };
+
+    const previews = await listOwnerSavePreviews(store);
+    expect(previews.length).toBeGreaterThanOrEqual(2);
+
+    const ok = previews.find((p) => p.id === created.save.id);
+    expect(ok?.ok).toBe(true);
+    if (ok?.ok) {
+      expect(ok.name).toBe("Preview Franchise");
+      expect(ok.mode).toBe("owner");
+      expect(ok.controlledTeam).toBeDefined();
+      expect(ok.currentDate).toBeTruthy();
+      expect(ok.seasonYear).toBeGreaterThan(0);
+    }
+
+    const broken = previews.find((p) => p.id === "save_broken");
+    expect(broken?.ok).toBe(false);
+    if (broken && !broken.ok) {
+      expect(broken.error).toMatch(/incompatible|corrupted/i);
+    }
+
+    // Preview path must not delete the broken save.
+    expect(await store.load("save_broken").catch(() => null)).toBeNull();
+    const stillListed = (await store.list()).some((s) => s.id === "save_broken");
+    expect(stillListed).toBe(true);
   });
 });
 

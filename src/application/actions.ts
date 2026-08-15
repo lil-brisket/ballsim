@@ -64,16 +64,22 @@ export async function createSaveAction(formData: FormData): Promise<void> {
       const parsed = JSON.parse(settingsJson) as unknown;
       const validated = validateGameSettings(parsed);
       if (!validated.ok) {
-        redirectWithError("/new/setup", validated.errors.join("; "));
+        redirectWithError(
+          "/new/setup?mode=owner",
+          validated.errors.join("; "),
+        );
       }
       settings = validated.settings;
     } catch {
-      redirectWithError("/new/setup", "Invalid game settings payload.");
+      redirectWithError(
+        "/new/setup?mode=owner",
+        "Invalid game settings payload.",
+      );
     }
   }
   const result = await createNewOwnerSave({ name, settings });
   if (!result.ok) {
-    redirectWithError("/new/setup", result.error);
+    redirectWithError("/new/setup?mode=owner", result.error);
   }
   revalidatePath("/");
   redirect(`/new/${result.save.id}/team`);

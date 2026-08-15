@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Basketball — Owner Mode",
+  title: "Basketball",
   description: "Fictional basketball simulation and franchise management.",
 };
 

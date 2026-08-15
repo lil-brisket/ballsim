@@ -20,40 +20,60 @@ export default async function SchedulePage({
     notFound();
   }
 
+  const currentDate = view.dashboard.currentDate;
+
   return (
     <>
       <PageHeader
         title="Schedule"
-        subtitle="Controlled team games from competition.games"
+        subtitle={`World date ${currentDate} · controlled team games`}
       />
       {error ? <ErrorState message={error} /> : null}
       {view.schedule.length === 0 ? (
         <EmptyState message="No games on the schedule yet." />
       ) : (
         <DataTable headers={["Date", "Matchup", "Status", "Result"]}>
-          {view.schedule.map((game) => (
-            <tr key={game.gameId} className="border-t border-zinc-800">
-              <td className="px-3 py-2 font-mono text-zinc-500">{game.date}</td>
-              <td className="px-3 py-2 text-zinc-100">
-                {game.home ? "vs" : "@"} {game.opponentName} (
-                {game.opponentAbbreviation})
-              </td>
-              <td className="px-3 py-2 text-zinc-400">{game.status}</td>
-              <td className="px-3 py-2">
-                {game.teamScore !== null && game.opponentScore !== null ? (
-                  <span
-                    className={
-                      game.won ? "text-emerald-400" : "text-rose-400"
-                    }
-                  >
-                    {game.teamScore}-{game.opponentScore}
-                  </span>
-                ) : (
-                  <span className="text-zinc-600">—</span>
-                )}
-              </td>
-            </tr>
-          ))}
+          {view.schedule.map((game) => {
+            const isCurrent = game.date === currentDate;
+            const isPast = game.date < currentDate;
+            return (
+              <tr
+                key={game.gameId}
+                className={`border-t border-zinc-800 ${
+                  isCurrent
+                    ? "bg-amber-950/30"
+                    : isPast
+                      ? "opacity-70"
+                      : ""
+                }`}
+              >
+                <td className="px-3 py-2 font-mono text-zinc-500">
+                  {game.date}
+                  {isCurrent ? (
+                    <span className="ml-2 text-xs text-amber-400">today</span>
+                  ) : null}
+                </td>
+                <td className="px-3 py-2 text-zinc-100">
+                  {game.home ? "vs" : "@"} {game.opponentName} (
+                  {game.opponentAbbreviation})
+                </td>
+                <td className="px-3 py-2 text-zinc-400">{game.status}</td>
+                <td className="px-3 py-2">
+                  {game.teamScore !== null && game.opponentScore !== null ? (
+                    <span
+                      className={
+                        game.won ? "text-emerald-400" : "text-rose-400"
+                      }
+                    >
+                      {game.teamScore}-{game.opponentScore}
+                    </span>
+                  ) : (
+                    <span className="text-zinc-600">—</span>
+                  )}
+                </td>
+              </tr>
+            );
+          })}
         </DataTable>
       )}
     </>

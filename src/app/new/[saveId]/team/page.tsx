@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { selectTeamAction } from "@/application/actions";
 import { loadOwnerSaveView } from "@/application/game-service";
+import { OnboardingShell } from "@/components/game/OnboardingShell";
 
 type TeamPickPageProps = {
   params: Promise<{ saveId: string }>;
@@ -17,12 +18,10 @@ export default async function TeamPickPage({ params }: TeamPickPageProps) {
   if (view.dashboard.teamSelectionLocked) {
     return (
       <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-6 px-6 py-12">
-        <p className="text-zinc-300">
-          Team selection is locked for this save.
-        </p>
+        <p className="text-zinc-300">Team selection is locked for this save.</p>
         <Link
           href={`/dashboard/${saveId}`}
-          className="text-amber-400 hover:underline"
+          className="text-amber-400 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-500"
         >
           Open dashboard
         </Link>
@@ -31,20 +30,11 @@ export default async function TeamPickPage({ params }: TeamPickPageProps) {
   }
 
   return (
-    <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-8 px-6 py-12">
-      <header className="space-y-2">
-        <p className="font-mono text-xs uppercase tracking-[0.18em] text-amber-500">
-          New Game
-        </p>
-        <h1 className="text-3xl font-semibold tracking-tight text-zinc-50">
-          Pick your team
-        </h1>
-        <p className="text-zinc-400">
-          Choose one franchise to control. You can change this until the first
-          time advance.
-        </p>
-      </header>
-
+    <OnboardingShell
+      step="franchise"
+      title="Pick your team"
+      subtitle="Choose one franchise to control. You can change this until the first time advance. This does not create another save."
+    >
       <ul className="space-y-2">
         {view.teams.map((team) => (
           <li
@@ -67,7 +57,7 @@ export default async function TeamPickPage({ params }: TeamPickPageProps) {
               <input type="hidden" name="teamId" value={team.id} />
               <button
                 type="submit"
-                className="rounded-md bg-amber-600 px-3 py-1.5 text-sm font-medium text-zinc-950 hover:bg-amber-500"
+                className="rounded-md bg-amber-600 px-3 py-1.5 text-sm font-medium text-zinc-950 hover:bg-amber-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-500"
               >
                 Select
               </button>
@@ -75,6 +65,6 @@ export default async function TeamPickPage({ params }: TeamPickPageProps) {
           </li>
         ))}
       </ul>
-    </main>
+    </OnboardingShell>
   );
 }

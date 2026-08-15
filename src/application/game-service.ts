@@ -179,6 +179,8 @@ export type OwnerSaveView = CreateGameResult & {
   relocation: RelocationProcess;
   expansion: ExpansionState;
   franchiseHistory: FranchiseHistoryView;
+  /** Persisted career settings from GameState.settings (read-only for UI). */
+  settings: GameSettings;
 };
 
 function toSaveSummary(loaded: LoadedSaveGame): SaveGameSummary {
@@ -353,6 +355,7 @@ export async function loadOwnerSaveView(
     relocation: toRelocationView(state),
     expansion: toExpansionView(state),
     franchiseHistory: toFranchiseHistoryView(state),
+    settings: state.settings,
   };
 }
 
@@ -384,6 +387,88 @@ export async function listOwnerSaves(
   store?: SaveGameStore,
 ): Promise<SaveGameSummary[]> {
   return getStore(store).list();
+}
+
+/**
+ * Home / Load screen preview for one save.
+ * Built from existing load + toDashboardSnapshot — not a second validation path.
+ * Unloadable saves are represented as error entries; they are never deleted here.
+ */
+export type OwnerSavePreview =
+  | {
+      ok: true;
+      id: string;
+      name: string;
+      updatedAt: Date;
+      createdAt: Date;
+      mode: DashboardSnapshot["mode"];
+      controlledTeam: DashboardSnapshot["controlledTeam"];
+      seasonYear: number;
+      currentDate: string;
+      seasonPhase: DashboardSnapshot["seasonPhase"];
+      teamSelectionLocked: boolean;
+    }
+  | {
+      ok: false;
+      id: string;
+      name: string;
+      updatedAt: Date;
+      createdAt: Date;
+      error: string;
+    };
+
+/**
+ * List save previews for Home / Load. Isolates per-save load failures so one
+ * malformed save cannot break the rest. Does not migrate, repair, or delete.
+ */
+export async function listOwnerSavePreviews(
+  store?: SaveGameStore,
+): Promise<OwnerSavePreview[]> {
+  const saveStore = getStore(store);
+  const summaries = await saveStore.list();
+  const previews: OwnerSavePreview[] = [];
+
+  for (const summary of summaries) {
+    try {
+      const loaded = await saveStore.load(summary.id);
+      if (!loaded) {
+        previews.push({
+          ok: false,
+          id: summary.id,
+          name: summary.name,
+          updatedAt: summary.updatedAt,
+          createdAt: summary.createdAt,
+          error: "Save could not be loaded.",
+        });
+        continue;
+      }
+      const dashboard = toDashboardSnapshot(loaded.state);
+      previews.push({
+        ok: true,
+        id: loaded.id,
+        name: loaded.name,
+        updatedAt: loaded.updatedAt,
+        createdAt: loaded.createdAt,
+        mode: dashboard.mode,
+        controlledTeam: dashboard.controlledTeam,
+        seasonYear: dashboard.seasonYear,
+        currentDate: dashboard.currentDate,
+        seasonPhase: dashboard.seasonPhase,
+        teamSelectionLocked: dashboard.teamSelectionLocked,
+      });
+    } catch {
+      previews.push({
+        ok: false,
+        id: summary.id,
+        name: summary.name,
+        updatedAt: summary.updatedAt,
+        createdAt: summary.createdAt,
+        error: "Save is incompatible or corrupted.",
+      });
+    }
+  }
+
+  return previews;
 }
 
 /**
