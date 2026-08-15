@@ -108,72 +108,93 @@ function createEightTeamPopulatedState(rngSeed: number): GameState {
   return simulateSeason(rostered, rng).state;
 }
 
+function assertPopulatedFixture(state: GameState): void {
+  expect(Object.keys(state.world.teams).length).toBeGreaterThan(1);
+  expect(Object.keys(state.world.players).length).toBeGreaterThan(0);
+
+  const sampleTeam = Object.values(state.world.teams)[0]!;
+  expect(sampleTeam.playStyle).toBeDefined();
+  expect(sampleTeam.coachingPhilosophy).toBeDefined();
+  expect(sampleTeam.playStyle.pace).toBeTypeOf("number");
+  expect(sampleTeam.coachingPhilosophy.pace).toBeTruthy();
+
+  const samplePlayer = Object.values(state.world.players)[0]!;
+  expect(samplePlayer.attributes).toBeDefined();
+  expect(samplePlayer.attributes.speed).toBeTypeOf("number");
+  expect(samplePlayer.firstName.length).toBeGreaterThan(0);
+
+  expect(Object.keys(state.competition.standings.byTeamId).length).toBeGreaterThan(
+    1,
+  );
+  expect(state.competition.schedule.gameIds.length).toBeGreaterThan(0);
+
+  const finalGames = Object.values(state.competition.games).filter(
+    (game) => game.status === "final",
+  );
+  expect(finalGames.length).toBeGreaterThan(0);
+  expect(finalGames.some((game) => game.events.length > 0)).toBe(true);
+  expect(finalGames.some((game) => game.playerStats.length > 0)).toBe(true);
+
+  expect(Object.keys(state.business.contracts).length).toBeGreaterThan(0);
+  expect(Object.keys(state.business.finances).length).toBeGreaterThan(1);
+
+  expect(state.competition.playoffs.status).toBe("complete");
+  expect(state.competition.playoffs.series.length).toBeGreaterThan(0);
+
+  expect(state.competition.season.year).toBeGreaterThan(0);
+  expect(state.world.calendar.currentDate.length).toBeGreaterThan(0);
+  expect(state.meta.rngSeed).toBeTypeOf("number");
+  expect(state.meta.rngState).toBeTypeOf("number");
+  expect(state.meta.schemaVersion).toBe(GAME_STATE_SCHEMA_VERSION);
+}
+
 describe("MemorySaveGameStore", () => {
   it("round-trips minimal GameState with deep equality", async () => {
     const store = createMemorySaveGameStore();
     const state = createTestGameState({ saveId: "save_minimal" });
 
-    const created = await store.create({
+    await store.create({
       id: state.meta.saveId,
       name: "Minimal",
       state,
     });
-    expect(created.state).toEqual(state);
 
-    const loaded = await store.load(state.meta.saveId);
+    const expected = structuredClone(state);
+    let runtimeState: GameState | undefined = state;
+    runtimeState = undefined;
+    void runtimeState;
+
+    const loaded = await store.load(expected.meta.saveId);
     expect(loaded).not.toBeNull();
-    expect(loaded!.state).toEqual(state);
+    expect(loaded!.state).toEqual(expected);
+    expect(loaded!.state).not.toBe(expected);
   });
 
-  it("round-trips a fully populated simulated GameState", async () => {
+  it("save → discard runtime → load preserves fully populated GameState", async () => {
     resetDomainEventSequenceForTests();
     const store = createMemorySaveGameStore();
-    const state = createEightTeamPopulatedState(TEST_RNG_SEED);
+    let runtimeState: GameState | undefined =
+      createEightTeamPopulatedState(TEST_RNG_SEED);
 
-    expect(Object.keys(state.world.teams).length).toBe(8);
-    expect(Object.keys(state.world.players).length).toBeGreaterThan(0);
-    expect(Object.keys(state.business.contracts).length).toBeGreaterThan(0);
-    expect(Object.keys(state.business.finances).length).toBe(8);
-    expect(state.competition.schedule.gameIds.length).toBeGreaterThan(0);
-    expect(
-      Object.values(state.competition.games).some((game) => game.status === "final"),
-    ).toBe(true);
-    expect(
-      Object.values(state.competition.games).some(
-        (game) => game.playerStats.length > 0,
-      ),
-    ).toBe(true);
-    expect(Object.keys(state.competition.standings.byTeamId).length).toBe(8);
-    expect(state.competition.playoffs.status).toBe("complete");
-    expect(state.world.calendar.currentDate.length).toBeGreaterThan(0);
+    assertPopulatedFixture(runtimeState);
 
-    const created = await store.create({
-      id: state.meta.saveId,
+    const saveId = runtimeState.meta.saveId;
+    await store.create({
+      id: saveId,
       name: "Full Season",
-      state,
+      state: runtimeState,
     });
-    expect(created.state).toEqual(state);
 
-    const loaded = await store.load(state.meta.saveId);
-    expect(loaded!.state).toEqual(state);
-    expect(loaded!.state.world.league).toEqual(state.world.league);
-    expect(loaded!.state.world.teams).toEqual(state.world.teams);
-    expect(loaded!.state.world.players).toEqual(state.world.players);
-    expect(loaded!.state.competition.standings).toEqual(
-      state.competition.standings,
-    );
-    expect(loaded!.state.competition.schedule).toEqual(
-      state.competition.schedule,
-    );
-    expect(loaded!.state.competition.games).toEqual(state.competition.games);
-    expect(loaded!.state.business.contracts).toEqual(state.business.contracts);
-    expect(loaded!.state.business.finances).toEqual(state.business.finances);
-    expect(loaded!.state.world.calendar).toEqual(state.world.calendar);
-    expect(loaded!.state.competition.season).toEqual(state.competition.season);
-    expect(loaded!.state.competition.playoffs).toEqual(
-      state.competition.playoffs,
-    );
-    expect(loaded!.state.meta.rngState).toBe(state.meta.rngState);
+    const expected = structuredClone(runtimeState);
+    runtimeState = undefined;
+
+    const loaded = await store.load(saveId);
+    expect(loaded).not.toBeNull();
+    expect(loaded!.id).toBe(saveId);
+    expect(loaded!.name).toBe("Full Season");
+    expect(loaded!.state).toEqual(expected);
+    expect(loaded!.state).not.toBe(expected);
+    expect(() => validateGameState(loaded!.state)).not.toThrow();
   });
 
   it("does not mutate input on successful save", async () => {
@@ -281,6 +302,124 @@ describe("MemorySaveGameStore", () => {
     const loaded = await store.load(first.meta.saveId);
     expect(loaded!.state).toEqual(second);
     expect(loaded!.state.world.calendar.currentDate).toBe("2026-11-15");
+  });
+
+  it("returns null for a missing save and throws when saving a missing id", async () => {
+    const store = createMemorySaveGameStore();
+    const missing = await store.load("does-not-exist");
+    expect(missing).toBeNull();
+
+    const state = createTestGameState({ saveId: "save_orphan" });
+    await expect(
+      store.save({ id: "does-not-exist", state }),
+    ).rejects.toThrow(/not found/);
+  });
+
+  it("loads distinct states and envelope identity for multiple saves", async () => {
+    const store = createMemorySaveGameStore();
+    const stateA = createTestGameState({ saveId: "save_multi_a" });
+    const baseB = createTestGameState({ saveId: "save_multi_b" });
+    const stateB: GameState = {
+      ...baseB,
+      world: {
+        ...baseB.world,
+        calendar: { currentDate: "2026-12-25" },
+      },
+      competition: {
+        ...baseB.competition,
+        season: {
+          ...baseB.competition.season,
+          phase: "regular",
+          year: 2027,
+        },
+      },
+    };
+
+    await store.create({
+      id: stateA.meta.saveId,
+      name: "Save Alpha",
+      state: stateA,
+    });
+    await store.create({
+      id: stateB.meta.saveId,
+      name: "Save Beta",
+      state: stateB,
+    });
+
+    const expectedA = structuredClone(stateA);
+    const expectedB = structuredClone(stateB);
+
+    const loadedA = await store.load(stateA.meta.saveId);
+    const loadedB = await store.load(stateB.meta.saveId);
+
+    expect(loadedA).not.toBeNull();
+    expect(loadedB).not.toBeNull();
+    expect(loadedA!.id).toBe(stateA.meta.saveId);
+    expect(loadedA!.name).toBe("Save Alpha");
+    expect(loadedA!.state).toEqual(expectedA);
+    expect(loadedB!.id).toBe(stateB.meta.saveId);
+    expect(loadedB!.name).toBe("Save Beta");
+    expect(loadedB!.state).toEqual(expectedB);
+    expect(loadedA!.state).not.toEqual(loadedB!.state);
+  });
+
+  it("fails load when persisted blob is malformed JSON", async () => {
+    const store = createMemorySaveGameStore();
+    store.seedPersistedBlob({
+      id: "save_malformed_json",
+      name: "Malformed",
+      schemaVersion: GAME_STATE_SCHEMA_VERSION,
+      stateJson: "{not-json",
+    });
+
+    await expect(store.load("save_malformed_json")).rejects.toThrow(
+      /Malformed GameState JSON/,
+    );
+  });
+
+  it("fails load when persisted JSON has an invalid GameState envelope", async () => {
+    const store = createMemorySaveGameStore();
+    store.seedPersistedBlob({
+      id: "save_invalid_envelope",
+      name: "Invalid Envelope",
+      schemaVersion: GAME_STATE_SCHEMA_VERSION,
+      stateJson: JSON.stringify({ meta: { schemaVersion: 1 } }),
+    });
+
+    await expect(store.load("save_invalid_envelope")).rejects.toThrow(
+      /Invalid GameState envelope|missing required/,
+    );
+  });
+
+  it("loads a v13 persisted blob through deserialize → migrate → validate", async () => {
+    const store = createMemorySaveGameStore();
+    const modern = createTestGameState({ saveId: "save_v13_through_load" });
+    const { playoffs: _removed, ...competitionWithoutPlayoffs } =
+      modern.competition;
+
+    const stateV13 = {
+      ...modern,
+      meta: {
+        ...modern.meta,
+        schemaVersion: 13,
+      },
+      competition: competitionWithoutPlayoffs,
+    };
+
+    store.seedPersistedBlob({
+      id: modern.meta.saveId,
+      name: "Legacy v13",
+      schemaVersion: 13,
+      stateJson: JSON.stringify(stateV13),
+    });
+
+    const loaded = await store.load(modern.meta.saveId);
+    expect(loaded).not.toBeNull();
+    expect(loaded!.state.meta.schemaVersion).toBe(GAME_STATE_SCHEMA_VERSION);
+    expect(loaded!.state.competition.playoffs).toEqual(
+      createEmptyPlayoffTournament(),
+    );
+    expect(() => validateGameState(loaded!.state)).not.toThrow();
   });
 });
 

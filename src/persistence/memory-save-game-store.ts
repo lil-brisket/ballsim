@@ -19,11 +19,27 @@ type MemorySaveRow = {
   updatedAt: Date;
 };
 
+export type SeedPersistedBlobInput = {
+  id: string;
+  name: string;
+  schemaVersion: number;
+  stateJson: string;
+};
+
+/**
+ * Memory adapter plus a test-only escape hatch for seeding raw persisted
+ * blobs that the public create/save API correctly refuses (historical or
+ * corrupt storage). Not part of SaveGameStore.
+ */
+export type MemorySaveGameStore = SaveGameStore & {
+  seedPersistedBlob(input: SeedPersistedBlobInput): void;
+};
+
 /**
  * In-memory SaveGameStore for tests. Replaces the whole blob in one
  * assignment. Does not leak stateJson outside LoadedSaveGame.state.
  */
-export function createMemorySaveGameStore(): SaveGameStore {
+export function createMemorySaveGameStore(): MemorySaveGameStore {
   const rows = new Map<string, MemorySaveRow>();
 
   function prepareStateJson(state: GameState): string {
@@ -104,6 +120,27 @@ export function createMemorySaveGameStore(): SaveGameStore {
       };
       rows.set(input.id, row);
       return toLoaded(row);
+    },
+
+    /**
+     * Test-only escape hatch: insert a raw persisted blob without running
+     * serialize/validate. Lets tests represent historical schema versions
+     * or corrupt storage that create/save correctly refuse.
+     * Not exposed on SaveGameStore.
+     */
+    seedPersistedBlob(input: SeedPersistedBlobInput): void {
+      if (rows.has(input.id)) {
+        throw new Error(`SaveGame "${input.id}" already exists.`);
+      }
+      const now = new Date();
+      rows.set(input.id, {
+        id: input.id,
+        name: input.name,
+        schemaVersion: input.schemaVersion,
+        stateJson: input.stateJson,
+        createdAt: now,
+        updatedAt: now,
+      });
     },
   };
 }
