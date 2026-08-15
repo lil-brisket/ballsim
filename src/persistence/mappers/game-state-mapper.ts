@@ -82,7 +82,27 @@ export function serializeGameState(state: GameState): string {
 }
 
 /**
- * Parse → migrate (v1–v13 → v14) → validate → return GameState.
+ * One-step upgrades keyed by the source schema version.
+ * Current version is never keyed here — no nonexistent N→N+1 step.
+ */
+const MIGRATE_ONE_STEP: Record<number, (state: unknown) => unknown> = {
+  1: (state) => migrateV1ToV2(state as GameStateV1),
+  2: (state) => migrateV2ToV3(state as GameStateV2),
+  3: (state) => migrateV3ToV4(state as GameStateV3),
+  4: (state) => migrateV4ToV5(state as GameStateV4),
+  5: (state) => migrateV5ToV6(state as GameStateV5),
+  6: (state) => migrateV6ToV7(state as GameStateV6),
+  7: (state) => migrateV7ToV8(state as GameStateV7),
+  8: (state) => migrateV8ToV9(state as GameStateV8),
+  9: (state) => migrateV9ToV10(state as GameStateV9),
+  10: (state) => migrateV10ToV11(state as GameStateV10),
+  11: (state) => migrateV11ToV12(state as GameStateV11),
+  12: (state) => migrateV12ToV13(state as GameStateV12),
+  13: (state) => migrateV13ToV14(state as GameStateV13),
+};
+
+/**
+ * Parse → migrate (v1–v13 → current) → validate → return GameState.
  * Does not call serializeGameState.
  */
 export function deserializeGameState(stateJson: string): GameState {
@@ -106,152 +126,30 @@ export function deserializeGameState(stateJson: string): GameState {
     throw error;
   }
 
-  let state: GameState;
+  let version = envelope.meta.schemaVersion;
 
-  if (envelope.meta.schemaVersion === 1) {
-    state = migrateV13ToV14(
-      migrateV12ToV13(
-        migrateV11ToV12(
-          migrateV10ToV11(
-            migrateV9ToV10(
-              migrateV8ToV9(
-                migrateV7ToV8(
-                  migrateV6ToV7(
-                    migrateV5ToV6(
-                      migrateV4ToV5(
-                        migrateV3ToV4(migrateV2ToV3(migrateV1ToV2(parsed as GameStateV1))),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  } else if (envelope.meta.schemaVersion === 2) {
-    state = migrateV13ToV14(
-      migrateV12ToV13(
-        migrateV11ToV12(
-          migrateV10ToV11(
-            migrateV9ToV10(
-              migrateV8ToV9(
-                migrateV7ToV8(
-                  migrateV6ToV7(
-                    migrateV5ToV6(
-                      migrateV4ToV5(migrateV3ToV4(migrateV2ToV3(parsed as GameStateV2))),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  } else if (envelope.meta.schemaVersion === 3) {
-    state = migrateV13ToV14(
-      migrateV12ToV13(
-        migrateV11ToV12(
-          migrateV10ToV11(
-            migrateV9ToV10(
-              migrateV8ToV9(
-                migrateV7ToV8(
-                  migrateV6ToV7(
-                    migrateV5ToV6(migrateV4ToV5(migrateV3ToV4(parsed as GameStateV3))),
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  } else if (envelope.meta.schemaVersion === 4) {
-    state = migrateV13ToV14(
-      migrateV12ToV13(
-        migrateV11ToV12(
-          migrateV10ToV11(
-            migrateV9ToV10(
-              migrateV8ToV9(
-                migrateV7ToV8(
-                  migrateV6ToV7(migrateV5ToV6(migrateV4ToV5(parsed as GameStateV4))),
-                ),
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  } else if (envelope.meta.schemaVersion === 5) {
-    state = migrateV13ToV14(
-      migrateV12ToV13(
-        migrateV11ToV12(
-          migrateV10ToV11(
-            migrateV9ToV10(
-              migrateV8ToV9(
-                migrateV7ToV8(migrateV6ToV7(migrateV5ToV6(parsed as GameStateV5))),
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  } else if (envelope.meta.schemaVersion === 6) {
-    state = migrateV13ToV14(
-      migrateV12ToV13(
-        migrateV11ToV12(
-          migrateV10ToV11(
-            migrateV9ToV10(
-              migrateV8ToV9(migrateV7ToV8(migrateV6ToV7(parsed as GameStateV6))),
-            ),
-          ),
-        ),
-      ),
-    );
-  } else if (envelope.meta.schemaVersion === 7) {
-    state = migrateV13ToV14(
-      migrateV12ToV13(
-        migrateV11ToV12(
-          migrateV10ToV11(
-            migrateV9ToV10(migrateV8ToV9(migrateV7ToV8(parsed as GameStateV7))),
-          ),
-        ),
-      ),
-    );
-  } else if (envelope.meta.schemaVersion === 8) {
-    state = migrateV13ToV14(
-      migrateV12ToV13(
-        migrateV11ToV12(
-          migrateV10ToV11(migrateV9ToV10(migrateV8ToV9(parsed as GameStateV8))),
-        ),
-      ),
-    );
-  } else if (envelope.meta.schemaVersion === 9) {
-    state = migrateV13ToV14(
-      migrateV12ToV13(
-        migrateV11ToV12(migrateV10ToV11(migrateV9ToV10(parsed as GameStateV9))),
-      ),
-    );
-  } else if (envelope.meta.schemaVersion === 10) {
-    state = migrateV13ToV14(
-      migrateV12ToV13(migrateV11ToV12(migrateV10ToV11(parsed as GameStateV10))),
-    );
-  } else if (envelope.meta.schemaVersion === 11) {
-    state = migrateV13ToV14(
-      migrateV12ToV13(migrateV11ToV12(parsed as GameStateV11)),
-    );
-  } else if (envelope.meta.schemaVersion === 12) {
-    state = migrateV13ToV14(migrateV12ToV13(parsed as GameStateV12));
-  } else if (envelope.meta.schemaVersion === 13) {
-    state = migrateV13ToV14(parsed as GameStateV13);
-  } else if (envelope.meta.schemaVersion === GAME_STATE_SCHEMA_VERSION) {
-    state = parsed as GameState;
-  } else {
+  if (version > GAME_STATE_SCHEMA_VERSION) {
     throw new Error(
-      `Unsupported GameState schemaVersion ${envelope.meta.schemaVersion}; expected ${GAME_STATE_SCHEMA_VERSION}.`,
+      `Save schema version ${version} is newer than the supported version ${GAME_STATE_SCHEMA_VERSION}.\nThis save was created by a newer version of the game.`,
     );
+  }
+
+  if (version < 1) {
+    throw new Error(
+      `Unsupported GameState schemaVersion ${version}; expected a version between 1 and ${GAME_STATE_SCHEMA_VERSION}.`,
+    );
+  }
+
+  let state: unknown = parsed;
+  while (version < GAME_STATE_SCHEMA_VERSION) {
+    const migrateStep = MIGRATE_ONE_STEP[version];
+    if (!migrateStep) {
+      throw new Error(
+        `Unsupported GameState schemaVersion ${version}; expected a version between 1 and ${GAME_STATE_SCHEMA_VERSION}.`,
+      );
+    }
+    state = migrateStep(state);
+    version += 1;
   }
 
   validateGameState(state);

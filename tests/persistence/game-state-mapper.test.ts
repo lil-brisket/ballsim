@@ -1281,6 +1281,22 @@ describe("GameState schema migration", () => {
     expect(restored).toEqual(state);
   });
 
+  it("rejects a future schemaVersion without attempting migration", () => {
+    const state = createInitialGameState({
+      saveId: "save_future",
+      rngSeed: 3,
+    });
+    const futureJson = JSON.stringify({
+      ...state,
+      meta: { ...state.meta, schemaVersion: GAME_STATE_SCHEMA_VERSION + 1 },
+    });
+    expect(() => deserializeGameState(futureJson)).toThrow(
+      new RegExp(
+        `Save schema version ${GAME_STATE_SCHEMA_VERSION + 1} is newer than the supported version ${GAME_STATE_SCHEMA_VERSION}`,
+      ),
+    );
+  });
+
   it("migrates schemaVersion 12 standings by recomputing expanded TeamStanding", () => {
     const modern = createInitialGameState({
       saveId: "save_v12_standings",

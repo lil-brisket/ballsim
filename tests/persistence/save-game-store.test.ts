@@ -153,11 +153,14 @@ describe("MemorySaveGameStore", () => {
     const store = createMemorySaveGameStore();
     const state = createTestGameState({ saveId: "save_minimal" });
 
-    await store.create({
+    const created = await store.create({
       id: state.meta.saveId,
       name: "Minimal",
       state,
     });
+
+    expect(created.schemaVersion).toBe(GAME_STATE_SCHEMA_VERSION);
+    expect(created.state.meta.schemaVersion).toBe(GAME_STATE_SCHEMA_VERSION);
 
     const expected = structuredClone(state);
     let runtimeState: GameState | undefined = state;
@@ -166,6 +169,7 @@ describe("MemorySaveGameStore", () => {
 
     const loaded = await store.load(expected.meta.saveId);
     expect(loaded).not.toBeNull();
+    expect(loaded!.schemaVersion).toBe(GAME_STATE_SCHEMA_VERSION);
     expect(loaded!.state).toEqual(expected);
     expect(loaded!.state).not.toBe(expected);
   });
@@ -179,11 +183,12 @@ describe("MemorySaveGameStore", () => {
     assertPopulatedFixture(runtimeState);
 
     const saveId = runtimeState.meta.saveId;
-    await store.create({
+    const created = await store.create({
       id: saveId,
       name: "Full Season",
       state: runtimeState,
     });
+    expect(created.schemaVersion).toBe(GAME_STATE_SCHEMA_VERSION);
 
     const expected = structuredClone(runtimeState);
     runtimeState = undefined;
@@ -192,12 +197,13 @@ describe("MemorySaveGameStore", () => {
     expect(loaded).not.toBeNull();
     expect(loaded!.id).toBe(saveId);
     expect(loaded!.name).toBe("Full Season");
+    expect(loaded!.schemaVersion).toBe(GAME_STATE_SCHEMA_VERSION);
     expect(loaded!.state).toEqual(expected);
     expect(loaded!.state).not.toBe(expected);
     expect(() => validateGameState(loaded!.state)).not.toThrow();
   });
 
-  it("does not mutate input on successful save", async () => {
+  it("does not mutate input on successful create or save", async () => {
     const store = createMemorySaveGameStore();
     const state = createTestGameState({ saveId: "save_no_mutate" });
     const snapshot = structuredClone(state);
@@ -415,11 +421,108 @@ describe("MemorySaveGameStore", () => {
 
     const loaded = await store.load(modern.meta.saveId);
     expect(loaded).not.toBeNull();
+    expect(loaded!.schemaVersion).toBe(13);
     expect(loaded!.state.meta.schemaVersion).toBe(GAME_STATE_SCHEMA_VERSION);
     expect(loaded!.state.competition.playoffs).toEqual(
       createEmptyPlayoffTournament(),
     );
     expect(() => validateGameState(loaded!.state)).not.toThrow();
+  });
+
+  it("loads a v12 persisted blob through deserialize → migrate → validate", async () => {
+    const store = createMemorySaveGameStore();
+    const modern = createTestGameState({ saveId: "save_v12_through_load" });
+    const { playoffs: _removed, ...competitionWithoutPlayoffs } =
+      modern.competition;
+
+    const v12Standings = Object.fromEntries(
+      Object.keys(modern.world.teams).map((teamId) => [
+        teamId,
+        { teamId, wins: 0, losses: 0 },
+      ]),
+    );
+
+    const stateV12 = {
+      ...modern,
+      meta: {
+        ...modern.meta,
+        schemaVersion: 12,
+      },
+      competition: {
+        ...competitionWithoutPlayoffs,
+        standings: { byTeamId: v12Standings },
+      },
+    };
+
+    store.seedPersistedBlob({
+      id: modern.meta.saveId,
+      name: "Legacy v12",
+      schemaVersion: 12,
+      stateJson: JSON.stringify(stateV12),
+    });
+
+    const loaded = await store.load(modern.meta.saveId);
+    expect(loaded).not.toBeNull();
+    expect(loaded!.schemaVersion).toBe(12);
+    expect(loaded!.state.meta.schemaVersion).toBe(GAME_STATE_SCHEMA_VERSION);
+    expect(loaded!.state.competition.playoffs).toEqual(
+      createEmptyPlayoffTournament(),
+    );
+    expect(() => validateGameState(loaded!.state)).not.toThrow();
+  });
+
+  it("migrates from JSON schemaVersion even when envelope schemaVersion is current", async () => {
+    const store = createMemorySaveGameStore();
+    const modern = createTestGameState({ saveId: "save_envelope_ignored" });
+    const { playoffs: _removed, ...competitionWithoutPlayoffs } =
+      modern.competition;
+
+    const stateV13 = {
+      ...modern,
+      meta: {
+        ...modern.meta,
+        schemaVersion: 13,
+      },
+      competition: competitionWithoutPlayoffs,
+    };
+
+    store.seedPersistedBlob({
+      id: modern.meta.saveId,
+      name: "Stale Envelope",
+      schemaVersion: GAME_STATE_SCHEMA_VERSION,
+      stateJson: JSON.stringify(stateV13),
+    });
+
+    const loaded = await store.load(modern.meta.saveId);
+    expect(loaded).not.toBeNull();
+    expect(loaded!.schemaVersion).toBe(GAME_STATE_SCHEMA_VERSION);
+    expect(loaded!.state.meta.schemaVersion).toBe(GAME_STATE_SCHEMA_VERSION);
+    expect(loaded!.state.competition.playoffs).toEqual(
+      createEmptyPlayoffTournament(),
+    );
+    expect(() => validateGameState(loaded!.state)).not.toThrow();
+  });
+
+  it("rejects a future-version persisted blob on load", async () => {
+    const store = createMemorySaveGameStore();
+    const modern = createTestGameState({ saveId: "save_future_load" });
+    const futureJson = JSON.stringify({
+      ...modern,
+      meta: { ...modern.meta, schemaVersion: 15 },
+    });
+
+    store.seedPersistedBlob({
+      id: modern.meta.saveId,
+      name: "Future",
+      schemaVersion: 15,
+      stateJson: futureJson,
+    });
+
+    await expect(store.load(modern.meta.saveId)).rejects.toThrow(
+      new RegExp(
+        `Save schema version 15 is newer than the supported version ${GAME_STATE_SCHEMA_VERSION}`,
+      ),
+    );
   });
 });
 
@@ -436,22 +539,44 @@ describe("validateGameState / deserialize invalid saves", () => {
     );
   });
 
-  it("rejects unsupported schemaVersion", () => {
+  it("rejects future schemaVersion with a clear newer-save error", () => {
     const state = createTestGameState();
     const json = JSON.stringify({
       ...state,
-      meta: { ...state.meta, schemaVersion: 99 },
+      meta: { ...state.meta, schemaVersion: 15 },
     });
-    expect(() => deserializeGameState(json)).toThrow(/Unsupported GameState schemaVersion/);
+    expect(() => deserializeGameState(json)).toThrow(
+      new RegExp(
+        `Save schema version 15 is newer than the supported version ${GAME_STATE_SCHEMA_VERSION}`,
+      ),
+    );
+    expect(() => deserializeGameState(json)).toThrow(
+      /This save was created by a newer version of the game/,
+    );
   });
 
-  it("rejects schemaVersion 0", () => {
+  it("rejects schemaVersion 0 without treating it as a future save", () => {
     const state = createTestGameState();
     const json = JSON.stringify({
       ...state,
       meta: { ...state.meta, schemaVersion: 0 },
     });
-    expect(() => deserializeGameState(json)).toThrow(/Unsupported GameState schemaVersion/);
+    expect(() => deserializeGameState(json)).toThrow(
+      /Unsupported GameState schemaVersion 0/,
+    );
+    expect(() => deserializeGameState(json)).not.toThrow(
+      /newer version of the game/,
+    );
+  });
+
+  it("rejects missing schemaVersion via envelope validation", () => {
+    const state = createTestGameState();
+    const { schemaVersion: _removed, ...metaWithoutVersion } = state.meta;
+    const json = JSON.stringify({
+      ...state,
+      meta: metaWithoutVersion,
+    });
+    expect(() => deserializeGameState(json)).toThrow(/Invalid GameState envelope/);
   });
 
   it("rejects invalid calendar date", () => {

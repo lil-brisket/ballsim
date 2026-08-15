@@ -1,6 +1,7 @@
 import "server-only";
 
 import type { GameState } from "@/state/game-state";
+import { GAME_STATE_SCHEMA_VERSION } from "@/state/game-state";
 import {
   deserializeGameState,
   serializeGameState,
@@ -68,7 +69,7 @@ export function createPrismaSaveGameStore(): SaveGameStore {
         data: {
           id: input.id,
           name: input.name,
-          schemaVersion: input.state.meta.schemaVersion,
+          schemaVersion: GAME_STATE_SCHEMA_VERSION,
           stateJson,
         },
       });
@@ -91,7 +92,7 @@ export function createPrismaSaveGameStore(): SaveGameStore {
       const row = await prisma.saveGame.update({
         where: { id: input.id },
         data: {
-          schemaVersion: input.state.meta.schemaVersion,
+          schemaVersion: GAME_STATE_SCHEMA_VERSION,
           stateJson,
         },
       });

@@ -1,4 +1,5 @@
 import type { GameState } from "@/state/game-state";
+import { GAME_STATE_SCHEMA_VERSION } from "@/state/game-state";
 import {
   deserializeGameState,
   serializeGameState,
@@ -86,7 +87,7 @@ export function createMemorySaveGameStore(): MemorySaveGameStore {
       const row: MemorySaveRow = {
         id: input.id,
         name: input.name,
-        schemaVersion: input.state.meta.schemaVersion,
+        schemaVersion: GAME_STATE_SCHEMA_VERSION,
         stateJson,
         createdAt: now,
         updatedAt: now,
@@ -114,7 +115,7 @@ export function createMemorySaveGameStore(): MemorySaveGameStore {
       const stateJson = prepareStateJson(input.state);
       const row: MemorySaveRow = {
         ...existing,
-        schemaVersion: input.state.meta.schemaVersion,
+        schemaVersion: GAME_STATE_SCHEMA_VERSION,
         stateJson,
         updatedAt: new Date(),
       };
