@@ -46,7 +46,7 @@ export function ConfirmDialog(props: {
               >
                 Cancel
               </button>
-              <div onClick={() => setOpen(false)}>{props.children}</div>
+              {props.children}
             </div>
           </div>
         </div>

@@ -91,4 +91,36 @@ describe("Owner UI primitives", () => {
     expect(onSubmit).not.toHaveBeenCalled();
     unmount();
   });
+
+  it("confirm submit keeps the form mounted so the action can run", () => {
+    const onSubmit = vi.fn((event: Event) => {
+      event.preventDefault();
+    });
+    const { unmount } = render(
+      <ConfirmDialog
+        title="Delete save?"
+        description="Delete this save?"
+        confirmLabel="Delete"
+      >
+        <form
+          onSubmit={(event) => {
+            onSubmit(event.nativeEvent);
+          }}
+        >
+          <input type="hidden" name="saveId" value="save_test" />
+          <button type="submit">Confirm delete</button>
+        </form>
+      </ConfirmDialog>,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Delete" }));
+    const confirmButton = screen.getByRole("button", { name: "Confirm delete" });
+    const form = confirmButton.closest("form");
+    expect(form).not.toBeNull();
+
+    fireEvent.click(confirmButton);
+    expect(form!.isConnected).toBe(true);
+    expect(onSubmit).toHaveBeenCalledTimes(1);
+    unmount();
+  });
 });
