@@ -40,6 +40,8 @@ export type GeneratePlayerOptions = {
   contractId?: ContractId | null;
   position?: PlayerPosition;
   archetype?: PlayerArchetype;
+  /** When set, skips the age RNG roll. */
+  age?: number;
 };
 
 /**
@@ -83,7 +85,21 @@ export function generatePlayerWithRng(
     archetype = pickCompatibleArchetype(position, rng);
   }
 
-  const age = rng.nextInt(MIN_PLAYER_AGE, MAX_PLAYER_AGE);
+  let age: number;
+  if (options.age !== undefined) {
+    if (
+      !Number.isInteger(options.age) ||
+      options.age < MIN_PLAYER_AGE ||
+      options.age > MAX_PLAYER_AGE
+    ) {
+      throw new Error(
+        `Player age must be an integer between ${MIN_PLAYER_AGE} and ${MAX_PLAYER_AGE}.`,
+      );
+    }
+    age = options.age;
+  } else {
+    age = rng.nextInt(MIN_PLAYER_AGE, MAX_PLAYER_AGE);
+  }
   const { firstName, lastName, nationality } = generatePlayerName(rng);
 
   const body = POSITION_BODY_RANGES[position];

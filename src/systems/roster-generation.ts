@@ -1,9 +1,10 @@
 import { asContractId, asPlayerId, asTeamId } from "@/domain/ids";
-import { type Player, type PlayerAttributes } from "@/domain/entities/player";
+import { type Player } from "@/domain/entities/player";
 import { createContract, type Contract } from "@/domain/entities/contract";
 import type { Rng } from "@/domain/rng";
 import { systemResult, type SystemResult } from "@/domain/system-result";
 import type { GameState } from "@/state/game-state";
+import { attributeBasedAnnualSalary } from "@/systems/attribute-salary";
 import { generatePlayerWithRng } from "@/systems/player-generation";
 import {
   DEFAULT_ROSTER_SIZE,
@@ -49,8 +50,7 @@ export function generateRosters(state: GameState, rng: Rng): SystemResult {
       players[playerId] = player;
       rosterPlayerIds.push(playerId);
 
-      const attributeMean = meanAttributes(player.attributes);
-      const salaryPerYear = 500_000 + attributeMean * 80_000;
+      const salaryPerYear = attributeBasedAnnualSalary(player.attributes);
       const yearsRemaining = rng.nextInt(1, 4);
       const startYear = currentYear;
       const endYear = currentYear + yearsRemaining - 1;
@@ -109,10 +109,4 @@ export function generateRosters(state: GameState, rng: Rng): SystemResult {
       finances,
     },
   });
-}
-
-function meanAttributes(attributes: PlayerAttributes): number {
-  const values = Object.values(attributes);
-  const sum = values.reduce((acc, value) => acc + value, 0);
-  return Math.round(sum / values.length);
 }

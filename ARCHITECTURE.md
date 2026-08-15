@@ -80,6 +80,8 @@ Typed domain catalogs such as `PlayerArchetype` and `PlayerNationality` live und
 
 `schemaVersion` 18 adds `world.draftPicks` and `business.tradeBlocks`. Pre-v18 saves migrate with empty trade blocks and deterministic draft picks for the next three seasons via pure `generateDraftPicksForSeason` (no RNG). `originalTeamId` is immutable; only `ownerTeamId` changes in trades.
 
+`schemaVersion` 19 adds `world.drafts` (draft class aggregates: prospects, order, scouting, selections). Pre-v19 saves migrate with empty `drafts: {}`. Prospect snapshots live on the draft class until selection; selection inserts the reserved player id into `world.players`.
+
 ## GameState (composed slices)
 
 `GameState` is the single source of truth for one save, composed of typed slices:
@@ -87,7 +89,7 @@ Typed domain catalogs such as `PlayerArchetype` and `PlayerNationality` live und
 ```text
 GameState
 ├── meta          # save identity, schemaVersion, timestamps, rng seed/state
-├── world         # calendar, league structure, teams, people, draft picks
+├── world         # calendar, league structure, teams, people, draft picks, drafts
 ├── competition   # season, schedule, games, standings, playoffs
 ├── business      # contracts, finances, free agency, trade blocks
 └── user          # controlled team, mode, owner objectives
@@ -100,6 +102,8 @@ GameState
 `schemaVersion` 16 expands contracts under `business.contracts` to multi-year `salaryByYear` with optional team/player options. Cap space helpers derive payroll from contracts only.
 
 `schemaVersion` 18 stores draft picks under `world.draftPicks` and trade-block listings under `business.tradeBlocks`. Trade Block entries are references to existing players/picks (status on the entry only). The trade engine (`validateTrade` / `executeTrade`) is the only authoritative mutation path for player/pick trades.
+
+`schemaVersion` 19 stores draft classes under `world.drafts`. `createDraft` / `activateDraft` / `makeDraftSelection` / `completeDraft` own draft lifecycle. Selection does not consume RNG; order ownership for an active draft is `DraftOrderSlot.ownerTeamId` (pick-asset ownership is not mutated by the draft system).
 
 Slice boundaries may be refined as domain models grow, but composition remains mandatory to avoid one undifferentiated mega-object.
 

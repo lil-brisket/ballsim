@@ -4,6 +4,7 @@ import type { Conference } from "@/domain/entities/conference";
 import type { Contract } from "@/domain/entities/contract";
 import type { Division } from "@/domain/entities/division";
 import type { DraftPick } from "@/domain/entities/draft-pick";
+import type { DraftClass } from "@/domain/entities/draft";
 import type { FreeAgencyOffer } from "@/domain/entities/free-agency-offer";
 import type { TeamFinances } from "@/domain/entities/finances";
 import type { Game } from "@/domain/entities/game";
@@ -19,7 +20,7 @@ import type { Team } from "@/domain/entities/team";
 import type { TradeBlock } from "@/domain/entities/trade-block";
 import type { SaveId, TeamId } from "@/domain/ids";
 
-export const GAME_STATE_SCHEMA_VERSION = 18;
+export const GAME_STATE_SCHEMA_VERSION = 19;
 
 export type GameMode = "owner";
 
@@ -44,6 +45,7 @@ export type WorldSlice = {
   coaches: Record<string, Coach>;
   staff: Record<string, Staff>;
   draftPicks: Record<string, DraftPick>;
+  drafts: Record<string, DraftClass>;
 };
 
 export type CompetitionSlice = {

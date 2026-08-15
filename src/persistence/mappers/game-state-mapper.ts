@@ -103,10 +103,11 @@ const MIGRATE_ONE_STEP: Record<number, (state: unknown) => unknown> = {
   15: (state) => migrateV15ToV16(state as GameStateV15),
   16: (state) => migrateV16ToV17(state as GameStateV16),
   17: (state) => migrateV17ToV18(state as GameStateV17),
+  18: (state) => migrateV18ToV19(state as GameStateV18),
 };
 
 /**
- * Parse → migrate (v1–v17 → current) → validate → return GameState.
+ * Parse → migrate (v1–v18 → current) → validate → return GameState.
  * Does not call serializeGameState.
  */
 export function deserializeGameState(stateJson: string): GameState {
@@ -1344,6 +1345,30 @@ type GameStateV17 = {
   user: GameState["user"];
 };
 
+/** Schema 18 world before drafts. */
+type WorldSliceV18 = {
+  calendar: GameState["world"]["calendar"];
+  league: GameState["world"]["league"];
+  conferences: GameState["world"]["conferences"];
+  divisions: GameState["world"]["divisions"];
+  teams: GameState["world"]["teams"];
+  players: GameState["world"]["players"];
+  coaches: GameState["world"]["coaches"];
+  staff: GameState["world"]["staff"];
+  draftPicks: GameState["world"]["draftPicks"];
+};
+
+type GameStateV18 = {
+  meta: Omit<GameState["meta"], "schemaVersion"> & {
+    schemaVersion: 18;
+    rngState: number;
+  };
+  world: WorldSliceV18;
+  competition: GameState["competition"];
+  business: GameState["business"];
+  user: GameState["user"];
+};
+
 /**
  * Deterministic v13 → v14: add empty playoff tournament under competition.
  */
@@ -1509,7 +1534,7 @@ function migrateV16ToV17(state: GameStateV16): GameStateV17 {
  * Uses pure generateDraftPicksForSeason (no RNG, no bootstrap).
  * Emits literal schemaVersion 18.
  */
-function migrateV17ToV18(state: GameStateV17): GameState {
+function migrateV17ToV18(state: GameStateV17): GameStateV18 {
   if (typeof state.meta.rngState !== "number") {
     throw new Error("GameState meta.rngState is required for schemaVersion 17.");
   }
@@ -1540,6 +1565,34 @@ function migrateV17ToV18(state: GameStateV17): GameState {
       freeAgency: state.business.freeAgency,
       tradeBlocks: {},
     },
+    user: state.user,
+  };
+}
+
+/**
+ * Deterministic v18 → v19: add empty world.drafts.
+ * Emits literal schemaVersion 19. No RNG.
+ */
+function migrateV18ToV19(state: GameStateV18): GameState {
+  if (typeof state.meta.rngState !== "number") {
+    throw new Error("GameState meta.rngState is required for schemaVersion 18.");
+  }
+
+  return {
+    meta: {
+      saveId: state.meta.saveId,
+      schemaVersion: 19,
+      createdAt: state.meta.createdAt,
+      updatedAt: state.meta.updatedAt,
+      rngSeed: state.meta.rngSeed,
+      rngState: state.meta.rngState,
+    },
+    world: {
+      ...state.world,
+      drafts: {},
+    },
+    competition: state.competition,
+    business: state.business,
     user: state.user,
   };
 }

@@ -52,6 +52,9 @@ Each system should:
 | `world-pipeline` | `bootstrapWorld` + `runWorldPipeline({ type: "advanceDay" })`; bootstrap also ensures draft picks |
 | `trades-config` | Trade roster bounds, salary-matching percent, finder cap, pick values, trade-block bonus |
 | `trades/*` | Trade engine: `validateTrade`, `executeTrade`, Trade Block, Finder, evaluation, AI proposal |
+| `draft-config` | Prospect age band, extra-prospect count, scouting noise, fixed rookie contract years |
+| `draft/*` | Draft engine: `createDraft`, order/scouting generation, `activateDraft` / `completeDraft`, `validateDraftSelection` / `makeDraftSelection` |
+| `attribute-salary` | Shared attribute-mean annual salary used by roster gen and draft rookies |
 
 Statistical box-score validation lives under `src/simulation/validation/` and is run via `npx tsx scripts/validate-simulation-stats.ts` (not a second simulation path).
 
@@ -62,5 +65,7 @@ Advance day processes games for the **current** calendar date, optionally one pl
 `roster-rules` is a validation building block (`createRosterRulesConfig` / `validateRoster`). A fully assigned roster is a partition: `players.length === startingLineupSize + benchSize + inactiveSize`. Min/max roster size is independent of that composition sum. Validators throw `Error` and do not mutate input, accept a `Team`, or look up GameState.
 
 Trade systems: every user/AI/Finder proposal becomes a `TradeProposal`, passes `validateTrade`, and only `executeTrade` mutates ownership. Trade Block and Trade Finder never write roster/pick ownership. Pure `generateDraftPicksForSeason` is used by migrations and bootstrap merge.
+
+Draft systems: `createDraft` builds prospects + order + scouting in memory and inserts a complete `DraftClass` only on success. Prospects are not in `world.players` until `makeDraftSelection`, which inserts the reserved `playerId` snapshot (no second `generatePlayerWithRng` call, no RNG). Undrafted eligible prospects never enter the free-agent pool.
 
 `resolveFoul` / `resolveFreeThrow` are resolution building blocks. Possession resolution composes them and emits `GameEvent`s / `PlayerStatsDelta`s. `simulateGame` applies each `PossessionResolution` exactly once via `applyPossessionResolution`, advances a simulated clock, and returns a self-contained `GameResult` for box scores.

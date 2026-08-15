@@ -1,4 +1,9 @@
 import { parseCalendarDate } from "@/domain/calendar-date";
+import {
+  isDraftLifecycleStatus,
+  isDraftOrderSlotStatus,
+  isDraftProspectStatus,
+} from "@/domain/entities/draft";
 import { assertContractShape } from "@/domain/entities/contract";
 import {
   assertFreeAgencyOfferShape,
@@ -109,6 +114,7 @@ export function validateGameState(state: unknown): asserts state is GameState {
     "coaches",
     "staff",
     "draftPicks",
+    "drafts",
   ] as const) {
     if (!(key in world)) {
       fail(`world missing required field "${key}".`);
@@ -136,6 +142,7 @@ export function validateGameState(state: unknown): asserts state is GameState {
   assertRecord(world.coaches, "world.coaches");
   assertRecord(world.staff, "world.staff");
   assertRecord(world.draftPicks, "world.draftPicks");
+  assertRecord(world.drafts, "world.drafts");
 
   const competition = state.competition;
   assertRecord(competition, "competition");
@@ -551,6 +558,272 @@ export function validateGameState(state: unknown): asserts state is GameState {
     }
     if (pickValue.round !== 1 && pickValue.round !== 2) {
       fail(`world.draftPicks[${pickId}].round must be 1 or 2.`);
+    }
+  }
+
+  const selectedPlayerIds = new Set<string>();
+  for (const [draftId, draftValue] of Object.entries(world.drafts)) {
+    assertRecord(draftValue, `world.drafts[${draftId}]`);
+    assertNonEmptyString(draftValue.id, `world.drafts[${draftId}].id`);
+    if (draftValue.id !== draftId) {
+      fail(`world.drafts key "${draftId}" does not match draft.id.`);
+    }
+    assertNumber(draftValue.seasonYear, `world.drafts[${draftId}].seasonYear`);
+    if (!Number.isInteger(draftValue.seasonYear)) {
+      fail(`world.drafts[${draftId}].seasonYear must be an integer.`);
+    }
+    if (!isDraftLifecycleStatus(draftValue.status)) {
+      fail(`world.drafts[${draftId}].status is invalid.`);
+    }
+    assertRecord(draftValue.prospects, `world.drafts[${draftId}].prospects`);
+    if (!Array.isArray(draftValue.order)) {
+      fail(`world.drafts[${draftId}].order must be an array.`);
+    }
+    if (!Array.isArray(draftValue.scouting)) {
+      fail(`world.drafts[${draftId}].scouting must be an array.`);
+    }
+    if (!Array.isArray(draftValue.selections)) {
+      fail(`world.drafts[${draftId}].selections must be an array.`);
+    }
+
+    const prospectIds = new Set(Object.keys(draftValue.prospects));
+    for (const [prospectId, prospectValue] of Object.entries(
+      draftValue.prospects as Record<string, Record<string, unknown>>,
+    )) {
+      assertRecord(
+        prospectValue,
+        `world.drafts[${draftId}].prospects[${prospectId}]`,
+      );
+      assertNonEmptyString(
+        prospectValue.playerId,
+        `world.drafts[${draftId}].prospects[${prospectId}].playerId`,
+      );
+      if (prospectValue.playerId !== prospectId) {
+        fail(
+          `world.drafts[${draftId}].prospects key "${prospectId}" does not match prospect.playerId.`,
+        );
+      }
+      assertRecord(
+        prospectValue.player,
+        `world.drafts[${draftId}].prospects[${prospectId}].player`,
+      );
+      const prospectPlayer = prospectValue.player as Record<string, unknown>;
+      assertNonEmptyString(
+        prospectPlayer.id,
+        `world.drafts[${draftId}].prospects[${prospectId}].player.id`,
+      );
+      if (prospectPlayer.id !== prospectValue.playerId) {
+        fail(
+          `world.drafts[${draftId}].prospects[${prospectId}].playerId must equal player.id.`,
+        );
+      }
+      if (prospectPlayer.teamId != null) {
+        fail(
+          `world.drafts[${draftId}].prospects[${prospectId}].player.teamId must be null.`,
+        );
+      }
+      if (prospectPlayer.contractId != null) {
+        fail(
+          `world.drafts[${draftId}].prospects[${prospectId}].player.contractId must be null.`,
+        );
+      }
+      assertNumber(
+        prospectValue.ranking,
+        `world.drafts[${draftId}].prospects[${prospectId}].ranking`,
+      );
+      if (
+        !Number.isInteger(prospectValue.ranking) ||
+        (prospectValue.ranking as number) < 1
+      ) {
+        fail(
+          `world.drafts[${draftId}].prospects[${prospectId}].ranking must be an integer >= 1.`,
+        );
+      }
+      if (!isDraftProspectStatus(prospectValue.status)) {
+        fail(
+          `world.drafts[${draftId}].prospects[${prospectId}].status is invalid.`,
+        );
+      }
+      if (prospectValue.status === "selected") {
+        if (selectedPlayerIds.has(prospectId)) {
+          fail(
+            `Draft selected player "${prospectId}" appears more than once across drafts.`,
+          );
+        }
+        selectedPlayerIds.add(prospectId);
+        if (!playerIds.has(prospectId)) {
+          fail(
+            `world.drafts[${draftId}] selected prospect "${prospectId}" is missing from world.players.`,
+          );
+        }
+        const worldPlayer = world.players[prospectId] as {
+          teamId: string | null;
+        };
+        if (worldPlayer.teamId == null) {
+          fail(
+            `world.drafts[${draftId}] selected prospect "${prospectId}" must have a teamId on world.players.`,
+          );
+        }
+      } else if (playerIds.has(prospectId)) {
+        fail(
+          `world.drafts[${draftId}] eligible prospect "${prospectId}" must not appear in world.players.`,
+        );
+      }
+    }
+
+    const orderPickIds = new Set<string>();
+    for (let index = 0; index < draftValue.order.length; index += 1) {
+      const slot = draftValue.order[index] as Record<string, unknown>;
+      assertRecord(slot, `world.drafts[${draftId}].order[${index}]`);
+      assertNonEmptyString(
+        slot.draftPickId,
+        `world.drafts[${draftId}].order[${index}].draftPickId`,
+      );
+      const draftPickId = slot.draftPickId as string;
+      if (!draftPickIds.has(draftPickId)) {
+        fail(
+          `world.drafts[${draftId}].order[${index}].draftPickId "${draftPickId}" is missing from world.draftPicks.`,
+        );
+      }
+      if (orderPickIds.has(draftPickId)) {
+        fail(
+          `world.drafts[${draftId}].order duplicates draftPickId "${draftPickId}".`,
+        );
+      }
+      orderPickIds.add(draftPickId);
+      const pickAsset = world.draftPicks[draftPickId] as {
+        seasonYear: number;
+        round: number;
+      };
+      if (pickAsset.seasonYear !== draftValue.seasonYear) {
+        fail(
+          `world.drafts[${draftId}].order[${index}] pick year must match draft.seasonYear.`,
+        );
+      }
+      assertNumber(
+        slot.overallPick,
+        `world.drafts[${draftId}].order[${index}].overallPick`,
+      );
+      if (
+        !Number.isInteger(slot.overallPick) ||
+        (slot.overallPick as number) < 1
+      ) {
+        fail(
+          `world.drafts[${draftId}].order[${index}].overallPick must be an integer >= 1.`,
+        );
+      }
+      if (slot.round !== 1 && slot.round !== 2) {
+        fail(`world.drafts[${draftId}].order[${index}].round must be 1 or 2.`);
+      }
+      if (slot.round !== pickAsset.round) {
+        fail(
+          `world.drafts[${draftId}].order[${index}].round must match draftPick.round.`,
+        );
+      }
+      assertNonEmptyString(
+        slot.ownerTeamId,
+        `world.drafts[${draftId}].order[${index}].ownerTeamId`,
+      );
+      if (!teamIds.has(slot.ownerTeamId as string)) {
+        fail(
+          `world.drafts[${draftId}].order[${index}].ownerTeamId is missing from world.teams.`,
+        );
+      }
+      if (!isDraftOrderSlotStatus(slot.status)) {
+        fail(`world.drafts[${draftId}].order[${index}].status is invalid.`);
+      }
+      if (slot.status === "used") {
+        assertNonEmptyString(
+          slot.selectedPlayerId,
+          `world.drafts[${draftId}].order[${index}].selectedPlayerId`,
+        );
+        if (!prospectIds.has(slot.selectedPlayerId as string)) {
+          fail(
+            `world.drafts[${draftId}].order[${index}].selectedPlayerId is not in draft prospects.`,
+          );
+        }
+      }
+    }
+
+    for (let index = 0; index < draftValue.scouting.length; index += 1) {
+      const report = draftValue.scouting[index] as Record<string, unknown>;
+      assertRecord(report, `world.drafts[${draftId}].scouting[${index}]`);
+      assertNonEmptyString(
+        report.teamId,
+        `world.drafts[${draftId}].scouting[${index}].teamId`,
+      );
+      if (!teamIds.has(report.teamId as string)) {
+        fail(
+          `world.drafts[${draftId}].scouting[${index}].teamId is missing from world.teams.`,
+        );
+      }
+      assertNonEmptyString(
+        report.prospectPlayerId,
+        `world.drafts[${draftId}].scouting[${index}].prospectPlayerId`,
+      );
+      if (!prospectIds.has(report.prospectPlayerId as string)) {
+        fail(
+          `world.drafts[${draftId}].scouting[${index}].prospectPlayerId is not in draft prospects.`,
+        );
+      }
+      assertRecord(
+        report.estimatedAttributes,
+        `world.drafts[${draftId}].scouting[${index}].estimatedAttributes`,
+      );
+      assertNumber(
+        report.estimatedPotentialOverall,
+        `world.drafts[${draftId}].scouting[${index}].estimatedPotentialOverall`,
+      );
+      assertNumber(
+        report.projectedRank,
+        `world.drafts[${draftId}].scouting[${index}].projectedRank`,
+      );
+    }
+
+    for (let index = 0; index < draftValue.selections.length; index += 1) {
+      const selection = draftValue.selections[index] as Record<string, unknown>;
+      assertRecord(selection, `world.drafts[${draftId}].selections[${index}]`);
+      assertNonEmptyString(
+        selection.draftClassId,
+        `world.drafts[${draftId}].selections[${index}].draftClassId`,
+      );
+      if (selection.draftClassId !== draftId) {
+        fail(
+          `world.drafts[${draftId}].selections[${index}].draftClassId must match draft id.`,
+        );
+      }
+      assertNonEmptyString(
+        selection.draftPickId,
+        `world.drafts[${draftId}].selections[${index}].draftPickId`,
+      );
+      if (!orderPickIds.has(selection.draftPickId as string)) {
+        fail(
+          `world.drafts[${draftId}].selections[${index}].draftPickId is not in draft order.`,
+        );
+      }
+      assertNonEmptyString(
+        selection.teamId,
+        `world.drafts[${draftId}].selections[${index}].teamId`,
+      );
+      if (!teamIds.has(selection.teamId as string)) {
+        fail(
+          `world.drafts[${draftId}].selections[${index}].teamId is missing from world.teams.`,
+        );
+      }
+      assertNonEmptyString(
+        selection.playerId,
+        `world.drafts[${draftId}].selections[${index}].playerId`,
+      );
+      if (!prospectIds.has(selection.playerId as string)) {
+        fail(
+          `world.drafts[${draftId}].selections[${index}].playerId is not in draft prospects.`,
+        );
+      }
+      if (!playerIds.has(selection.playerId as string)) {
+        fail(
+          `world.drafts[${draftId}].selections[${index}].playerId is missing from world.players.`,
+        );
+      }
     }
   }
 

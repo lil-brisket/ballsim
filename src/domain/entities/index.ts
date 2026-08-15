@@ -130,6 +130,30 @@ export {
   draftPickIdFor,
 } from "@/domain/entities/draft-pick";
 export type {
+  DraftClass,
+  DraftLifecycleStatus,
+  DraftOrderSlot,
+  DraftOrderSlotStatus,
+  DraftProspect,
+  DraftProspectStatus,
+  DraftScoutReport,
+  DraftSelection,
+} from "@/domain/entities/draft";
+export {
+  DRAFT_LIFECYCLE_STATUSES,
+  DRAFT_ORDER_SLOT_STATUSES,
+  DRAFT_PROSPECT_STATUSES,
+  createDraftOrderSlot,
+  createDraftProspect,
+  createDraftScoutReport,
+  createDraftSelection,
+  createEmptyDraftClass,
+  draftClassIdFor,
+  isDraftLifecycleStatus,
+  isDraftOrderSlotStatus,
+  isDraftProspectStatus,
+} from "@/domain/entities/draft";
+export type {
   TradeBlock,
   TradeBlockAsset,
   TradeBlockStatus,

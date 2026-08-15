@@ -87,6 +87,7 @@ function createEightTeamGameState(rngSeed: number): {
       coaches: {},
       staff: {},
       draftPicks: {},
+      drafts: {},
     },
     competition: {
       season: {

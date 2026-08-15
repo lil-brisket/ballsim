@@ -204,6 +204,7 @@ export function createInitialGameState(
       coaches: {},
       staff: {},
       draftPicks: {},
+      drafts: {},
     },
     competition: {
       season: {
