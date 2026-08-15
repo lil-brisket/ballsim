@@ -9,7 +9,7 @@ export default function DashboardNotFound() {
         valid save.
       </p>
       <Link
-        href="/"
+        href="/home"
         className="text-sm text-amber-400 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-500"
       >
         ← Home

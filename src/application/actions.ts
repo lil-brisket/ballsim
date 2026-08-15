@@ -81,7 +81,7 @@ export async function createSaveAction(formData: FormData): Promise<void> {
   if (!result.ok) {
     redirectWithError("/new/setup?mode=owner", result.error);
   }
-  revalidatePath("/");
+  revalidatePath("/home");
   redirect(`/new/${result.save.id}/team`);
 }
 
@@ -103,7 +103,8 @@ export async function deleteSaveAction(formData: FormData): Promise<void> {
     throw new Error("Save id is required.");
   }
   await deleteOwnerSave(saveId);
-  revalidatePath("/");
+  revalidatePath("/home");
+  revalidatePath("/saves");
 }
 
 export async function selectTeamAction(formData: FormData): Promise<void> {

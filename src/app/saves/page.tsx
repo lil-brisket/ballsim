@@ -20,7 +20,7 @@ export default async function SavesPage({ searchParams }: SavesPageProps) {
     <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-8 px-6 py-12">
       <header className="space-y-2">
         <Link
-          href="/"
+          href="/home"
           className="text-sm text-zinc-400 hover:text-amber-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-500"
         >
           ← Home

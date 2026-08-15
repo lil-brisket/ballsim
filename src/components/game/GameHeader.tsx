@@ -17,7 +17,7 @@ export function GameHeader(props: {
     <div className="flex flex-col gap-4 rounded-xl border border-zinc-800 bg-zinc-900/50 p-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <Link
-          href="/"
+          href="/home"
           className="text-sm text-zinc-400 hover:text-amber-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-500"
         >
           ← Home
