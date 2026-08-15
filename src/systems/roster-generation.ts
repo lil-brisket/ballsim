@@ -26,11 +26,15 @@ export function generateRosters(state: GameState, rng: Rng): SystemResult {
 
   const players: Record<string, Player> = {};
   const contracts: Record<string, Contract> = { ...state.business.contracts };
+  const teams: Record<string, (typeof state.world.teams)[string]> = {
+    ...state.world.teams,
+  };
   const currentYear = state.competition.season.year;
 
   const teamIds = Object.keys(state.world.teams).sort();
 
   for (const teamId of teamIds) {
+    const rosterPlayerIds: ReturnType<typeof asPlayerId>[] = [];
     for (let slot = 0; slot < DEFAULT_ROSTER_SIZE; slot += 1) {
       const playerId = asPlayerId(`player_${teamId}_${slot}`);
       const position = rosterPositionForSlot(slot);
@@ -43,6 +47,7 @@ export function generateRosters(state: GameState, rng: Rng): SystemResult {
         position,
       });
       players[playerId] = player;
+      rosterPlayerIds.push(playerId);
 
       const attributeMean = meanAttributes(player.attributes);
       const salaryPerYear = 500_000 + attributeMean * 80_000;
@@ -62,6 +67,10 @@ export function generateRosters(state: GameState, rng: Rng): SystemResult {
         salaryByYear,
       });
     }
+    teams[teamId] = {
+      ...teams[teamId]!,
+      roster: rosterPlayerIds,
+    };
   }
 
   const stateWithContracts: GameState = {
@@ -69,6 +78,7 @@ export function generateRosters(state: GameState, rng: Rng): SystemResult {
     world: {
       ...state.world,
       players,
+      teams,
     },
     business: {
       ...state.business,

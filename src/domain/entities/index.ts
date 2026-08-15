@@ -120,6 +120,32 @@ export {
   isContractExpired,
 } from "@/domain/entities/contract";
 export type {
+  DraftPick,
+  DraftPickInput,
+  DraftPickRound,
+} from "@/domain/entities/draft-pick";
+export {
+  DRAFT_PICK_ROUNDS,
+  createDraftPick,
+  draftPickIdFor,
+} from "@/domain/entities/draft-pick";
+export type {
+  TradeBlock,
+  TradeBlockAsset,
+  TradeBlockStatus,
+} from "@/domain/entities/trade-block";
+export {
+  TRADE_BLOCK_STATUSES,
+  DEFAULT_TRADE_BLOCK_STATUS,
+  createEmptyTradeBlock,
+  isTradeBlockStatus,
+} from "@/domain/entities/trade-block";
+export type {
+  TradeProposal,
+  TradeSide,
+} from "@/domain/entities/trade-proposal";
+export { tradeSideAssetCount } from "@/domain/entities/trade-proposal";
+export type {
   FreeAgencyOffer,
   FreeAgencyOfferInput,
   FreeAgencyOfferStatus,

@@ -86,6 +86,7 @@ function createEightTeamGameState(rngSeed: number): {
       players,
       coaches: {},
       staff: {},
+      draftPicks: {},
     },
     competition: {
       season: {
@@ -107,6 +108,7 @@ function createEightTeamGameState(rngSeed: number): {
       freeAgency: {
         offers: {},
       },
+      tradeBlocks: {},
     },
     user: {
       controlledTeamId,

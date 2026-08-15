@@ -76,6 +76,10 @@ Typed domain catalogs such as `PlayerArchetype` and `PlayerNationality` live und
 
 `schemaVersion` 16 expands `Contract` from `salaryPerYear` / `yearsRemaining` to `startYear` / `endYear` / `salaryByYear` plus optional `teamOption` / `playerOption`. Pre-v16 contracts migrate using `competition.season.year` as `startYear`, expand flat salary across remaining years, and never invent options. Historical migration steps emit literal target schema versions (not the current `GAME_STATE_SCHEMA_VERSION` constant). Contract status is derived (not persisted). Salary-cap payroll is derived from contracts; `TeamFinances.payroll` remains a snapshot only.
 
+`schemaVersion` 17 adds `business.freeAgency.offers`. Pre-v17 saves migrate with empty offers.
+
+`schemaVersion` 18 adds `world.draftPicks` and `business.tradeBlocks`. Pre-v18 saves migrate with empty trade blocks and deterministic draft picks for the next three seasons via pure `generateDraftPicksForSeason` (no RNG). `originalTeamId` is immutable; only `ownerTeamId` changes in trades.
+
 ## GameState (composed slices)
 
 `GameState` is the single source of truth for one save, composed of typed slices:
@@ -83,9 +87,9 @@ Typed domain catalogs such as `PlayerArchetype` and `PlayerNationality` live und
 ```text
 GameState
 ├── meta          # save identity, schemaVersion, timestamps, rng seed/state
-├── world         # calendar, league structure, teams, people
+├── world         # calendar, league structure, teams, people, draft picks
 ├── competition   # season, schedule, games, standings, playoffs
-├── business      # contracts, finances
+├── business      # contracts, finances, free agency, trade blocks
 └── user          # controlled team, mode, owner objectives
 ```
 
@@ -94,6 +98,8 @@ GameState
 `schemaVersion` 15 adds owner objectives on `user.objectives` and extends `business.finances` with `revenue` and `expenses`. `toOwnerGameState(state)` derives a live-reference Owner Mode view (selected team, finances, roster, staff ids, league grouping). It must not be persisted independently.
 
 `schemaVersion` 16 expands contracts under `business.contracts` to multi-year `salaryByYear` with optional team/player options. Cap space helpers derive payroll from contracts only.
+
+`schemaVersion` 18 stores draft picks under `world.draftPicks` and trade-block listings under `business.tradeBlocks`. Trade Block entries are references to existing players/picks (status on the entry only). The trade engine (`validateTrade` / `executeTrade`) is the only authoritative mutation path for player/pick trades.
 
 Slice boundaries may be refined as domain models grow, but composition remains mandatory to avoid one undifferentiated mega-object.
 

@@ -78,6 +78,7 @@ function createEightTeamPopulatedState(rngSeed: number): GameState {
       players: {},
       coaches: {},
       staff: {},
+      draftPicks: {},
     },
     competition: {
       season: {
@@ -99,6 +100,7 @@ function createEightTeamPopulatedState(rngSeed: number): GameState {
       freeAgency: {
         offers: {},
       },
+      tradeBlocks: {},
     },
     user: {
       controlledTeamId: generated.teams[0]!.id as TeamId,

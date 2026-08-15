@@ -31,6 +31,7 @@ import { GAME_STATE_SCHEMA_VERSION } from "@/state/game-state";
 import { createEmptyPlayoffTournament } from "@/domain/entities/playoffs";
 import { calculateStandings } from "@/systems/standings";
 import { validateGameState } from "@/persistence/validate-game-state";
+import { generateDraftPicksForSeason } from "@/domain/draft-picks/generate-draft-picks";
 
 const gameStateEnvelopeSchema = z.object({
   meta: z.object({
@@ -101,10 +102,11 @@ const MIGRATE_ONE_STEP: Record<number, (state: unknown) => unknown> = {
   14: (state) => migrateV14ToV15(state as GameStateV14),
   15: (state) => migrateV15ToV16(state as GameStateV15),
   16: (state) => migrateV16ToV17(state as GameStateV16),
+  17: (state) => migrateV17ToV18(state as GameStateV17),
 };
 
 /**
- * Parse → migrate (v1–v16 → current) → validate → return GameState.
+ * Parse → migrate (v1–v17 → current) → validate → return GameState.
  * Does not call serializeGameState.
  */
 export function deserializeGameState(stateJson: string): GameState {
@@ -1306,9 +1308,39 @@ type GameStateV16 = {
     schemaVersion: 16;
     rngState: number;
   };
-  world: GameState["world"];
+  world: WorldSliceV17;
   competition: GameState["competition"];
   business: BusinessSliceV16;
+  user: GameState["user"];
+};
+
+/** Schema 17 world before draftPicks. */
+type WorldSliceV17 = {
+  calendar: GameState["world"]["calendar"];
+  league: GameState["world"]["league"];
+  conferences: GameState["world"]["conferences"];
+  divisions: GameState["world"]["divisions"];
+  teams: GameState["world"]["teams"];
+  players: GameState["world"]["players"];
+  coaches: GameState["world"]["coaches"];
+  staff: GameState["world"]["staff"];
+};
+
+/** Schema 17 business before tradeBlocks. */
+type BusinessSliceV17 = {
+  contracts: GameState["business"]["contracts"];
+  finances: GameState["business"]["finances"];
+  freeAgency: GameState["business"]["freeAgency"];
+};
+
+type GameStateV17 = {
+  meta: Omit<GameState["meta"], "schemaVersion"> & {
+    schemaVersion: 17;
+    rngState: number;
+  };
+  world: WorldSliceV17;
+  competition: GameState["competition"];
+  business: BusinessSliceV17;
   user: GameState["user"];
 };
 
@@ -1445,7 +1477,7 @@ function migrateV15ToV16(state: GameStateV15): GameStateV16 {
  * Deterministic v16 → v17: add empty freeAgency offers under business.
  * Emits literal schemaVersion 17.
  */
-function migrateV16ToV17(state: GameStateV16): GameState {
+function migrateV16ToV17(state: GameStateV16): GameStateV17 {
   if (typeof state.meta.rngState !== "number") {
     throw new Error("GameState meta.rngState is required for schemaVersion 16.");
   }
@@ -1467,6 +1499,46 @@ function migrateV16ToV17(state: GameStateV16): GameState {
       freeAgency: {
         offers: {},
       },
+    },
+    user: state.user,
+  };
+}
+
+/**
+ * Deterministic v17 → v18: add world.draftPicks and business.tradeBlocks.
+ * Uses pure generateDraftPicksForSeason (no RNG, no bootstrap).
+ * Emits literal schemaVersion 18.
+ */
+function migrateV17ToV18(state: GameStateV17): GameState {
+  if (typeof state.meta.rngState !== "number") {
+    throw new Error("GameState meta.rngState is required for schemaVersion 17.");
+  }
+
+  const teams = Object.values(state.world.teams) as Team[];
+  const draftPicks = generateDraftPicksForSeason(
+    teams,
+    state.competition.season.year,
+  );
+
+  return {
+    meta: {
+      saveId: state.meta.saveId,
+      schemaVersion: 18,
+      createdAt: state.meta.createdAt,
+      updatedAt: state.meta.updatedAt,
+      rngSeed: state.meta.rngSeed,
+      rngState: state.meta.rngState,
+    },
+    world: {
+      ...state.world,
+      draftPicks,
+    },
+    competition: state.competition,
+    business: {
+      contracts: state.business.contracts,
+      finances: state.business.finances,
+      freeAgency: state.business.freeAgency,
+      tradeBlocks: {},
     },
     user: state.user,
   };

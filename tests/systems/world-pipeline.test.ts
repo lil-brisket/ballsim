@@ -57,6 +57,32 @@ describe("roster and schedule generation", () => {
     expect(second.state.world.players).toEqual(first.state.world.players);
   });
 
+  it("writes Team.roster so player.teamId and roster membership stay consistent", () => {
+    const state = createInitialGameState({
+      saveId: "save_roster_dual",
+      rngSeed: 21,
+      nowIso: "2026-08-13T12:00:00.000Z",
+    });
+    const rng = createSeededRng(state.meta.rngState);
+    const result = generateRosters(state, rng);
+
+    for (const team of Object.values(result.state.world.teams)) {
+      expect(team.roster).toHaveLength(10);
+      for (const playerId of team.roster) {
+        const player = result.state.world.players[playerId];
+        expect(player).toBeDefined();
+        expect(player!.teamId).toBe(team.id);
+      }
+    }
+
+    for (const player of Object.values(result.state.world.players)) {
+      expect(player.teamId).not.toBeNull();
+      const team = result.state.world.teams[player.teamId!];
+      expect(team).toBeDefined();
+      expect(team!.roster).toContain(player.id);
+    }
+  });
+
   it("builds a double round-robin and moves season to regular", () => {
     const state = createInitialGameState({
       saveId: "save_sched",

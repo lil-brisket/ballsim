@@ -2,6 +2,7 @@ import type { Rng } from "@/domain/rng";
 import { systemResult, type SystemResult } from "@/domain/system-result";
 import type { DomainEvent } from "@/domain/events";
 import type { GameState } from "@/state/game-state";
+import { mergeDraftPicksForSeason } from "@/domain/draft-picks/generate-draft-picks";
 import { generateRosters } from "@/systems/roster-generation";
 import { generateSchedule } from "@/systems/schedule-generation";
 import { simulateGamesForDate } from "@/systems/game-simulation";
@@ -18,16 +19,48 @@ export type WorldPipelineCommand = {
 };
 
 /**
- * Ensures roster and schedule exist (world-gen bootstrap).
+ * Ensures roster, draft picks, and schedule exist (world-gen bootstrap).
  * Idempotent; safe before advance day or on new save creation.
  */
 export function bootstrapWorld(state: GameState, rng: Rng): SystemResult {
   const afterRosters = generateRosters(state, rng);
-  const afterSchedule = generateSchedule(afterRosters.state);
+  const afterPicks = ensureDraftPicks(afterRosters.state);
+  const afterSchedule = generateSchedule(afterPicks);
   return systemResult(afterSchedule.state, [
     ...afterRosters.events,
     ...afterSchedule.events,
   ]);
+}
+
+/**
+ * Idempotently ensures every team has picks for the next three seasons
+ * relative to competition.season.year. Preserves existing picks.
+ */
+export function ensureDraftPicks(state: GameState): GameState {
+  const teams = Object.values(state.world.teams);
+  const draftPicks = mergeDraftPicksForSeason(
+    state.world.draftPicks,
+    teams,
+    state.competition.season.year,
+  );
+  if (draftPicks === state.world.draftPicks) {
+    return state;
+  }
+  const existingKeys = Object.keys(state.world.draftPicks);
+  const nextKeys = Object.keys(draftPicks);
+  if (
+    existingKeys.length === nextKeys.length &&
+    existingKeys.every((key) => draftPicks[key] === state.world.draftPicks[key])
+  ) {
+    return state;
+  }
+  return {
+    ...state,
+    world: {
+      ...state.world,
+      draftPicks,
+    },
+  };
 }
 
 /**

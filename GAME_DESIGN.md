@@ -120,16 +120,22 @@ The original foundation phase deferred simulation. The following are now
 
 Still deferred:
 
-- Draft
-- Trades
-- Free agency
+- Draft lottery / draft night simulation (`DraftPick` assets and ownership exist for trades)
+- Full NBA CBA trade exceptions
+- Free agency (pool/offers — foundation implemented; advanced negotiation TBD)
 - Player development season tick / aging operation
 - Injuries
 - Advanced finances
-- AI team management
+- Full AI team management (basic trade AI offer generation exists)
 - Career Mode
 - Dynasty Mode
 - Narrative / news feed UI beyond recent results on the dashboard
+
+Implemented trade foundation:
+
+- Two-team `TradeProposal` (`sideA` / `sideB`) with shared `validateTrade` / `executeTrade`
+- Trade Block, Trade Finder (candidates only), basic `evaluateTradeOffer` / `generateAiTradeProposal`
+- Draft pick ownership (`world.draftPicks`) with a rolling three-season horizon
 
 ## Player ability model
 

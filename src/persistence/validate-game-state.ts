@@ -11,6 +11,10 @@ import {
   isOwnerObjectiveType,
   OWNER_OBJECTIVE_TYPES,
 } from "@/domain/entities/owner-objective";
+import {
+  isTradeBlockStatus,
+  type TradeBlockAsset,
+} from "@/domain/entities/trade-block";
 import type { SeasonPhase } from "@/domain/entities/season";
 import type { GameState, GameMode } from "@/state/game-state";
 import { GAME_STATE_SCHEMA_VERSION } from "@/state/game-state";
@@ -104,6 +108,7 @@ export function validateGameState(state: unknown): asserts state is GameState {
     "players",
     "coaches",
     "staff",
+    "draftPicks",
   ] as const) {
     if (!(key in world)) {
       fail(`world missing required field "${key}".`);
@@ -130,6 +135,7 @@ export function validateGameState(state: unknown): asserts state is GameState {
   assertRecord(world.players, "world.players");
   assertRecord(world.coaches, "world.coaches");
   assertRecord(world.staff, "world.staff");
+  assertRecord(world.draftPicks, "world.draftPicks");
 
   const competition = state.competition;
   assertRecord(competition, "competition");
@@ -184,9 +190,12 @@ export function validateGameState(state: unknown): asserts state is GameState {
   if (
     !("contracts" in business) ||
     !("finances" in business) ||
-    !("freeAgency" in business)
+    !("freeAgency" in business) ||
+    !("tradeBlocks" in business)
   ) {
-    fail("business must include contracts, finances, and freeAgency.");
+    fail(
+      "business must include contracts, finances, freeAgency, and tradeBlocks.",
+    );
   }
   assertRecord(business.contracts, "business.contracts");
   assertRecord(business.finances, "business.finances");
@@ -195,6 +204,7 @@ export function validateGameState(state: unknown): asserts state is GameState {
     fail("business.freeAgency.offers is required.");
   }
   assertRecord(business.freeAgency.offers, "business.freeAgency.offers");
+  assertRecord(business.tradeBlocks, "business.tradeBlocks");
 
   const user = state.user;
   assertRecord(user, "user");
@@ -507,6 +517,117 @@ export function validateGameState(state: unknown): asserts state is GameState {
         );
       }
       rosterMembership.set(rosterPlayerId, teamId);
+    }
+  }
+
+  const draftPickIds = new Set(Object.keys(world.draftPicks));
+  for (const [pickId, pickValue] of Object.entries(world.draftPicks)) {
+    assertRecord(pickValue, `world.draftPicks[${pickId}]`);
+    assertNonEmptyString(pickValue.id, `world.draftPicks[${pickId}].id`);
+    if (pickValue.id !== pickId) {
+      fail(`world.draftPicks key "${pickId}" does not match draftPick.id.`);
+    }
+    assertNonEmptyString(
+      pickValue.originalTeamId,
+      `world.draftPicks[${pickId}].originalTeamId`,
+    );
+    assertNonEmptyString(
+      pickValue.ownerTeamId,
+      `world.draftPicks[${pickId}].ownerTeamId`,
+    );
+    if (!teamIds.has(pickValue.originalTeamId as string)) {
+      fail(
+        `world.draftPicks[${pickId}].originalTeamId "${pickValue.originalTeamId}" is missing from world.teams.`,
+      );
+    }
+    if (!teamIds.has(pickValue.ownerTeamId as string)) {
+      fail(
+        `world.draftPicks[${pickId}].ownerTeamId "${pickValue.ownerTeamId}" is missing from world.teams.`,
+      );
+    }
+    assertNumber(pickValue.seasonYear, `world.draftPicks[${pickId}].seasonYear`);
+    if (!Number.isInteger(pickValue.seasonYear)) {
+      fail(`world.draftPicks[${pickId}].seasonYear must be an integer.`);
+    }
+    if (pickValue.round !== 1 && pickValue.round !== 2) {
+      fail(`world.draftPicks[${pickId}].round must be 1 or 2.`);
+    }
+  }
+
+  for (const [blockTeamId, blockValue] of Object.entries(business.tradeBlocks)) {
+    assertRecord(blockValue, `business.tradeBlocks[${blockTeamId}]`);
+    assertNonEmptyString(
+      blockValue.teamId,
+      `business.tradeBlocks[${blockTeamId}].teamId`,
+    );
+    if (blockValue.teamId !== blockTeamId) {
+      fail(
+        `business.tradeBlocks key "${blockTeamId}" does not match tradeBlock.teamId.`,
+      );
+    }
+    if (!teamIds.has(blockTeamId)) {
+      fail(
+        `business.tradeBlocks[${blockTeamId}] team is missing from world.teams.`,
+      );
+    }
+    if (!Array.isArray(blockValue.assets)) {
+      fail(`business.tradeBlocks[${blockTeamId}].assets must be an array.`);
+    }
+    for (let index = 0; index < blockValue.assets.length; index += 1) {
+      const asset = blockValue.assets[index] as TradeBlockAsset;
+      assertRecord(
+        asset,
+        `business.tradeBlocks[${blockTeamId}].assets[${index}]`,
+      );
+      if (
+        typeof asset.status !== "string" ||
+        !isTradeBlockStatus(asset.status)
+      ) {
+        fail(
+          `business.tradeBlocks[${blockTeamId}].assets[${index}].status is invalid.`,
+        );
+      }
+      if (asset.kind === "player") {
+        assertNonEmptyString(
+          asset.playerId,
+          `business.tradeBlocks[${blockTeamId}].assets[${index}].playerId`,
+        );
+        if (!playerIds.has(asset.playerId)) {
+          fail(
+            `business.tradeBlocks[${blockTeamId}] player "${asset.playerId}" is missing from world.players.`,
+          );
+        }
+        const player = world.players[asset.playerId] as {
+          teamId: string | null;
+        };
+        if (player.teamId !== blockTeamId) {
+          fail(
+            `business.tradeBlocks[${blockTeamId}] player "${asset.playerId}" is not owned by that team.`,
+          );
+        }
+      } else if (asset.kind === "draftPick") {
+        assertNonEmptyString(
+          asset.draftPickId,
+          `business.tradeBlocks[${blockTeamId}].assets[${index}].draftPickId`,
+        );
+        if (!draftPickIds.has(asset.draftPickId)) {
+          fail(
+            `business.tradeBlocks[${blockTeamId}] pick "${asset.draftPickId}" is missing from world.draftPicks.`,
+          );
+        }
+        const pick = world.draftPicks[asset.draftPickId] as {
+          ownerTeamId: string;
+        };
+        if (pick.ownerTeamId !== blockTeamId) {
+          fail(
+            `business.tradeBlocks[${blockTeamId}] pick "${asset.draftPickId}" is not owned by that team.`,
+          );
+        }
+      } else {
+        fail(
+          `business.tradeBlocks[${blockTeamId}].assets[${index}].kind must be "player" or "draftPick".`,
+        );
+      }
     }
   }
 

@@ -203,6 +203,7 @@ export function createInitialGameState(
       players: {},
       coaches: {},
       staff: {},
+      draftPicks: {},
     },
     competition: {
       season: {
@@ -224,6 +225,7 @@ export function createInitialGameState(
       freeAgency: {
         offers: {},
       },
+      tradeBlocks: {},
     },
     user: {
       controlledTeamId: userTeamId,

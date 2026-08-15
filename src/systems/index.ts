@@ -211,3 +211,34 @@ export {
   type FreeAgentPoolView,
   type MakeOfferInput,
 } from "@/systems/free-agency";
+export {
+  TRADE_ROSTER_RULES,
+  TRADE_SALARY_MATCHING_PERCENT,
+  TRADE_FINDER_MAX_CANDIDATES,
+  DRAFT_PICK_VALUE_ROUND_1,
+  DRAFT_PICK_VALUE_ROUND_2,
+  TRADE_BLOCK_VALUE_BONUS,
+} from "@/systems/trades-config";
+export {
+  calculateDraftPickValue,
+  applyTradeSalaryRule,
+  validateTrade,
+  executeTrade,
+  getTradeBlock,
+  addToTradeBlock,
+  removeFromTradeBlock,
+  findTrades,
+  evaluateTradeOffer,
+  generateAiTradeProposal,
+  type TradeValidationResult,
+  type TradeExecutionResult,
+  type FindTradesInput,
+  type TradeFinderCandidate,
+  type TradeOfferEvaluation,
+} from "@/systems/trades";
+export {
+  generateDraftPicksForSeason,
+  mergeDraftPicksForSeason,
+  DRAFT_PICK_HORIZON_YEARS,
+} from "@/domain/draft-picks/generate-draft-picks";
+export { ensureDraftPicks } from "@/systems/world-pipeline";
