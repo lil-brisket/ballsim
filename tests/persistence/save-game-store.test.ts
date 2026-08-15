@@ -343,6 +343,32 @@ describe("MemorySaveGameStore", () => {
     ).rejects.toThrow(/not found/);
   });
 
+  it("deletes an existing save and leaves unrelated saves intact", async () => {
+    const store = createMemorySaveGameStore();
+    const stateA = createTestGameState({ saveId: "save_delete_a" });
+    const stateB = createTestGameState({ saveId: "save_delete_b" });
+    await store.create({ id: stateA.meta.saveId, name: "Keep", state: stateA });
+    await store.create({
+      id: stateB.meta.saveId,
+      name: "Remove",
+      state: stateB,
+    });
+
+    const removed = await store.delete(stateB.meta.saveId);
+    expect(removed).toBe(true);
+    expect(await store.load(stateB.meta.saveId)).toBeNull();
+    expect(await store.load(stateA.meta.saveId)).not.toBeNull();
+
+    const listed = await store.list();
+    expect(listed.map((row) => row.id)).toEqual([stateA.meta.saveId]);
+  });
+
+  it("returns false when deleting a missing save", async () => {
+    const store = createMemorySaveGameStore();
+    const removed = await store.delete("does-not-exist");
+    expect(removed).toBe(false);
+  });
+
   it("loads distinct states and envelope identity for multiple saves", async () => {
     const store = createMemorySaveGameStore();
     const stateA = createTestGameState({ saveId: "save_multi_a" });

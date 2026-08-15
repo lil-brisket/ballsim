@@ -9,6 +9,7 @@ import {
   completeOwnerExpansion,
   createNewOwnerSave,
   declineOwnerTeamOption,
+  deleteOwnerSave,
   executeOwnerTrade,
   exerciseOwnerTeamOption,
   finishFreeAgency,
@@ -69,6 +70,15 @@ export async function openSaveAction(formData: FormData): Promise<void> {
     redirect(`/new/${loaded.save.id}/team`);
   }
   redirect(`/dashboard/${loaded.save.id}`);
+}
+
+export async function deleteSaveAction(formData: FormData): Promise<void> {
+  const saveId = String(formData.get("saveId") ?? "").trim();
+  if (!saveId) {
+    throw new Error("Save id is required.");
+  }
+  await deleteOwnerSave(saveId);
+  revalidatePath("/");
 }
 
 export async function selectTeamAction(formData: FormData): Promise<void> {

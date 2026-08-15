@@ -38,7 +38,7 @@ describe("Owner UI primitives", () => {
   });
 
   it("confirm dialog opens and exposes form children without mutating", () => {
-    render(
+    const { unmount } = render(
       <ConfirmDialog
         title="Trade?"
         description="Confirm trade"
@@ -55,5 +55,40 @@ describe("Owner UI primitives", () => {
     expect(
       screen.getByRole("button", { name: "Confirm trade" }),
     ).toBeTruthy();
+    unmount();
+  });
+
+  it("delete save confirm exposes submit and cancel closes without submit", () => {
+    const onSubmit = vi.fn((event: Event) => {
+      event.preventDefault();
+    });
+    const { unmount } = render(
+      <ConfirmDialog
+        title="Delete save?"
+        description='Delete “Harbor Franchise”? This cannot be undone.'
+        confirmLabel="Delete"
+      >
+        <form
+          onSubmit={(event) => {
+            onSubmit(event.nativeEvent);
+          }}
+        >
+          <input type="hidden" name="saveId" value="save_test" />
+          <button type="submit">Confirm delete</button>
+        </form>
+      </ConfirmDialog>,
+    );
+
+    expect(screen.queryByRole("dialog")).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Delete" }));
+    expect(screen.getByRole("dialog")).toBeTruthy();
+    expect(
+      screen.getByRole("button", { name: "Confirm delete" }),
+    ).toBeTruthy();
+
+    fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
+    expect(screen.queryByRole("dialog")).toBeNull();
+    expect(onSubmit).not.toHaveBeenCalled();
+    unmount();
   });
 });
