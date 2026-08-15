@@ -17,7 +17,7 @@ import {
   type PlayerId,
   type TeamId,
 } from "@/domain/ids";
-import { createSeededRng } from "@/domain/rng";
+import { createSeededRng, type Rng } from "@/domain/rng";
 import { validateGameState } from "@/persistence/validate-game-state";
 import { prismaSaveGameStore } from "@/persistence/save-game-repository";
 import type {
@@ -1125,7 +1125,10 @@ function findSurplusPlayer(
 
 async function runOwnerFranchiseCommand(
   saveId: string,
-  mutate: (state: GameState) => { state: GameState; events: DomainEvent[] },
+  mutate: (
+    state: GameState,
+    rng: Rng,
+  ) => { state: GameState; events: DomainEvent[] },
   store?: SaveGameStore,
 ): Promise<OwnerCommandResult> {
   const activeStore = getStore(store);
@@ -1134,11 +1137,12 @@ async function runOwnerFranchiseCommand(
     return fail("Save not found.");
   }
   try {
-    const result = mutate(loaded.state);
+    const rng = createSeededRng(loaded.state.meta.rngState);
+    const result = mutate(loaded.state, rng);
     const persisted = await persistWorkingState(
       saveId,
       result.state,
-      loaded.state.meta.rngState,
+      rng.getState(),
       activeStore,
       result.events,
     );
@@ -1308,12 +1312,20 @@ export async function runOwnerExpansionDraft(
   saveId: string,
   store?: SaveGameStore,
 ): Promise<OwnerCommandResult> {
-  return runOwnerFranchiseCommand(saveId, (state) => runExpansionDraft(state), store);
+  return runOwnerFranchiseCommand(
+    saveId,
+    (state, rng) => runExpansionDraft(state, rng),
+    store,
+  );
 }
 
 export async function completeOwnerExpansion(
   saveId: string,
   store?: SaveGameStore,
 ): Promise<OwnerCommandResult> {
-  return runOwnerFranchiseCommand(saveId, (state) => completeExpansion(state), store);
+  return runOwnerFranchiseCommand(
+    saveId,
+    (state, rng) => completeExpansion(state, rng),
+    store,
+  );
 }
