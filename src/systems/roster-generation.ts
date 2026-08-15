@@ -1,6 +1,6 @@
-import { asContractId, asPlayerId } from "@/domain/ids";
+import { asContractId, asPlayerId, asTeamId } from "@/domain/ids";
 import { type Player, type PlayerAttributes } from "@/domain/entities/player";
-import type { Contract } from "@/domain/entities/contract";
+import { createContract, type Contract } from "@/domain/entities/contract";
 import type { Rng } from "@/domain/rng";
 import { systemResult, type SystemResult } from "@/domain/system-result";
 import type { GameState } from "@/state/game-state";
@@ -9,6 +9,7 @@ import {
   DEFAULT_ROSTER_SIZE,
   rosterPositionForSlot,
 } from "@/systems/roster-generation-config";
+import { getTeamPayroll } from "@/systems/salary-cap";
 
 /**
  * Fills empty team rosters with fictional players and starter contracts.
@@ -16,6 +17,7 @@ import {
  *
  * Player identity, attributes, potential, and personality come from
  * {@link generatePlayerWithRng}. Contracts and payroll remain roster-owned.
+ * Payroll snapshots are derived from contracts after all contracts exist.
  */
 export function generateRosters(state: GameState, rng: Rng): SystemResult {
   if (Object.keys(state.world.players).length > 0) {
@@ -24,13 +26,11 @@ export function generateRosters(state: GameState, rng: Rng): SystemResult {
 
   const players: Record<string, Player> = {};
   const contracts: Record<string, Contract> = { ...state.business.contracts };
-  const finances = { ...state.business.finances };
+  const currentYear = state.competition.season.year;
 
   const teamIds = Object.keys(state.world.teams).sort();
 
   for (const teamId of teamIds) {
-    let teamPayroll = finances[teamId]?.payroll ?? 0;
-
     for (let slot = 0; slot < DEFAULT_ROSTER_SIZE; slot += 1) {
       const playerId = asPlayerId(`player_${teamId}_${slot}`);
       const position = rosterPositionForSlot(slot);
@@ -47,26 +47,24 @@ export function generateRosters(state: GameState, rng: Rng): SystemResult {
       const attributeMean = meanAttributes(player.attributes);
       const salaryPerYear = 500_000 + attributeMean * 80_000;
       const yearsRemaining = rng.nextInt(1, 4);
-      contracts[contractId] = {
+      const startYear = currentYear;
+      const endYear = currentYear + yearsRemaining - 1;
+      const salaryByYear: Record<string, number> = {};
+      for (let year = startYear; year <= endYear; year += 1) {
+        salaryByYear[String(year)] = salaryPerYear;
+      }
+      contracts[contractId] = createContract({
         id: contractId,
         playerId,
         teamId: state.world.teams[teamId]!.id,
-        salaryPerYear,
-        yearsRemaining,
-      };
-      teamPayroll += salaryPerYear;
-    }
-
-    const existingFinance = finances[teamId];
-    if (existingFinance) {
-      finances[teamId] = {
-        ...existingFinance,
-        payroll: teamPayroll,
-      };
+        startYear,
+        endYear,
+        salaryByYear,
+      });
     }
   }
 
-  return systemResult({
+  const stateWithContracts: GameState = {
     ...state,
     world: {
       ...state.world,
@@ -75,6 +73,29 @@ export function generateRosters(state: GameState, rng: Rng): SystemResult {
     business: {
       ...state.business,
       contracts,
+      finances: { ...state.business.finances },
+    },
+  };
+
+  const finances = { ...stateWithContracts.business.finances };
+  for (const teamId of teamIds) {
+    const existingFinance = finances[teamId];
+    if (existingFinance) {
+      finances[teamId] = {
+        ...existingFinance,
+        payroll: getTeamPayroll(
+          asTeamId(teamId),
+          currentYear,
+          stateWithContracts,
+        ),
+      };
+    }
+  }
+
+  return systemResult({
+    ...stateWithContracts,
+    business: {
+      ...stateWithContracts.business,
       finances,
     },
   });

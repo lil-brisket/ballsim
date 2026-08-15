@@ -16,7 +16,7 @@ import type { Standings } from "@/domain/entities/standings";
 import type { Team } from "@/domain/entities/team";
 import type { SaveId, TeamId } from "@/domain/ids";
 
-export const GAME_STATE_SCHEMA_VERSION = 15;
+export const GAME_STATE_SCHEMA_VERSION = 16;
 
 export type GameMode = "owner";
 

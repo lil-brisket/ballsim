@@ -1,5 +1,4 @@
 import { z } from "zod";
-import type { Contract } from "@/domain/entities/contract";
 import type { Game } from "@/domain/entities/game";
 import type {
   DevelopmentState,
@@ -100,10 +99,11 @@ const MIGRATE_ONE_STEP: Record<number, (state: unknown) => unknown> = {
   12: (state) => migrateV12ToV13(state as GameStateV12),
   13: (state) => migrateV13ToV14(state as GameStateV13),
   14: (state) => migrateV14ToV15(state as GameStateV14),
+  15: (state) => migrateV15ToV16(state as GameStateV15),
 };
 
 /**
- * Parse → migrate (v1–v14 → current) → validate → return GameState.
+ * Parse → migrate (v1–v15 → current) → validate → return GameState.
  * Does not call serializeGameState.
  */
 export function deserializeGameState(stateJson: string): GameState {
@@ -539,7 +539,7 @@ function migrateV2ToV3(state: GameStateV2): GameStateV3 {
  */
 function migratePlayerV2ToV3(
   player: PlayerV2,
-  contracts: Record<string, Contract>,
+  contracts: Record<string, ContractV15>,
 ): PlayerV3 {
   const { overall, offense, defense } = player.ratings;
 
@@ -868,6 +868,15 @@ type CompetitionV12 = {
   standings: StandingsV12;
 };
 
+/** Schema ≤15 contracts before startYear / salaryByYear / options. */
+type ContractV15 = {
+  id: ContractId;
+  playerId: PlayerId;
+  teamId: TeamId;
+  salaryPerYear: number;
+  yearsRemaining: number;
+};
+
 /** Schema ≤14 finances before revenue/expenses. */
 type TeamFinancesV14 = {
   teamId: TeamId;
@@ -876,8 +885,13 @@ type TeamFinancesV14 = {
 };
 
 type BusinessSliceV14 = {
-  contracts: GameState["business"]["contracts"];
+  contracts: Record<string, ContractV15>;
   finances: Record<string, TeamFinancesV14>;
+};
+
+type BusinessSliceV15 = {
+  contracts: Record<string, ContractV15>;
+  finances: GameState["business"]["finances"];
 };
 
 /** Schema ≤14 user slice before owner objectives. */
@@ -1269,6 +1283,17 @@ type GameStateV14 = {
   user: UserSliceV14;
 };
 
+type GameStateV15 = {
+  meta: Omit<GameState["meta"], "schemaVersion"> & {
+    schemaVersion: 15;
+    rngState: number;
+  };
+  world: GameState["world"];
+  competition: GameState["competition"];
+  business: BusinessSliceV15;
+  user: GameState["user"];
+};
+
 /**
  * Deterministic v13 → v14: add empty playoff tournament under competition.
  */
@@ -1301,8 +1326,9 @@ function migrateV13ToV14(state: GameStateV13): GameStateV14 {
 
 /**
  * Deterministic v14 → v15: add empty owner objectives and finance revenue/expenses.
+ * Emits literal schemaVersion 15 (not GAME_STATE_SCHEMA_VERSION).
  */
-function migrateV14ToV15(state: GameStateV14): GameState {
+function migrateV14ToV15(state: GameStateV14): GameStateV15 {
   if (typeof state.meta.rngState !== "number") {
     throw new Error("GameState meta.rngState is required for schemaVersion 14.");
   }
@@ -1323,7 +1349,7 @@ function migrateV14ToV15(state: GameStateV14): GameState {
   return {
     meta: {
       saveId: state.meta.saveId,
-      schemaVersion: GAME_STATE_SCHEMA_VERSION,
+      schemaVersion: 15,
       createdAt: state.meta.createdAt,
       updatedAt: state.meta.updatedAt,
       rngSeed: state.meta.rngSeed,
@@ -1343,9 +1369,63 @@ function migrateV14ToV15(state: GameStateV14): GameState {
   };
 }
 
+/**
+ * Deterministic v15 → v16: expand contracts to startYear/endYear/salaryByYear.
+ * v15 has no options; migrated contracts never include teamOption or playerOption.
+ * Emits literal schemaVersion 16.
+ */
+function migrateV15ToV16(state: GameStateV15): GameState {
+  if (typeof state.meta.rngState !== "number") {
+    throw new Error("GameState meta.rngState is required for schemaVersion 15.");
+  }
+
+  const startYear = state.competition.season.year;
+  const contracts: GameState["business"]["contracts"] = {};
+
+  for (const [contractId, legacy] of Object.entries(state.business.contracts)) {
+    const yearsRemaining =
+      typeof legacy.yearsRemaining === "number" &&
+      Number.isInteger(legacy.yearsRemaining) &&
+      legacy.yearsRemaining >= 1
+        ? legacy.yearsRemaining
+        : 1;
+    const endYear = startYear + yearsRemaining - 1;
+    const salaryByYear: Record<string, number> = {};
+    for (let year = startYear; year <= endYear; year += 1) {
+      salaryByYear[String(year)] = legacy.salaryPerYear;
+    }
+    contracts[contractId] = {
+      id: legacy.id,
+      playerId: legacy.playerId,
+      teamId: legacy.teamId,
+      startYear,
+      endYear,
+      salaryByYear,
+    };
+  }
+
+  return {
+    meta: {
+      saveId: state.meta.saveId,
+      schemaVersion: 16,
+      createdAt: state.meta.createdAt,
+      updatedAt: state.meta.updatedAt,
+      rngSeed: state.meta.rngSeed,
+      rngState: state.meta.rngState,
+    },
+    world: state.world,
+    competition: state.competition,
+    business: {
+      contracts,
+      finances: state.business.finances,
+    },
+    user: state.user,
+  };
+}
+
 function findUniqueContractId(
   playerId: PlayerId,
-  contracts: Record<string, Contract>,
+  contracts: Record<string, ContractV15>,
 ): ContractId | null {
   const matches = Object.values(contracts).filter(
     (contract) => contract.playerId === playerId,

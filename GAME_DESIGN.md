@@ -97,12 +97,13 @@ Systems expected later (do not treat as present until implemented):
 - Calendar / advance day — **implemented** (`src/systems/world-pipeline.ts`)
 - Player development — **implemented** as a building block (`src/systems/player-development.ts`); not yet called from the world pipeline
 - Injuries
-- Finances — payroll set at roster gen; advanced ticks TBD
+- Finances — payroll snapshot set at roster gen from contract-derived payroll; salary-cap space is derived from contracts vs a flat cap; advanced ticks TBD
 - Standings — **implemented** (`src/systems/standings.ts` — `calculateStandings` / `updateStandings`)
 - Schedule generation — **implemented** as building block `generateSeasonSchedule` + world adapter `generateSchedule` (`src/systems/schedule-generation.ts`); validates via `validateSeasonSchedule`
 - Save/load (foundation persistence exists)
 - Roster generation — **implemented** (`src/systems/roster-generation.ts`)
 - Roster rules validation — **implemented** as a building block (`src/systems/roster-rules.ts`)
+- Contracts — **implemented** foundation (`startYear`/`endYear`/`salaryByYear`, team/player options, derived status, salary-cap helpers); negotiations / free agency TBD
 
 ## Explicit non-goals for the foundation phase (superseded where implemented)
 

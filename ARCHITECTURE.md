@@ -74,6 +74,8 @@ Typed domain catalogs such as `PlayerArchetype` and `PlayerNationality` live und
 
 `schemaVersion` 15 adds `user.objectives` and `TeamFinances.revenue` / `expenses`. Pre-v15 saves migrate with `objectives: []` and `revenue: 0` / `expenses: 0`. Owner Mode exposes a derived non-persisted `OwnerGameState` view via `toOwnerGameState` — it is never a field on `GameState` and has no separate schema version.
 
+`schemaVersion` 16 expands `Contract` from `salaryPerYear` / `yearsRemaining` to `startYear` / `endYear` / `salaryByYear` plus optional `teamOption` / `playerOption`. Pre-v16 contracts migrate using `competition.season.year` as `startYear`, expand flat salary across remaining years, and never invent options. Historical migration steps emit literal target schema versions (not the current `GAME_STATE_SCHEMA_VERSION` constant). Contract status is derived (not persisted). Salary-cap payroll is derived from contracts; `TeamFinances.payroll` remains a snapshot only.
+
 ## GameState (composed slices)
 
 `GameState` is the single source of truth for one save, composed of typed slices:
@@ -90,6 +92,8 @@ GameState
 `schemaVersion` 14 adds `competition.playoffs` (`PlayoffTournament`). Pre-v14 saves migrate with `createEmptyPlayoffTournament()` (`not_started`, empty field). Empty/inactive playoffs are valid; a missing or null `playoffs` field is not.
 
 `schemaVersion` 15 adds owner objectives on `user.objectives` and extends `business.finances` with `revenue` and `expenses`. `toOwnerGameState(state)` derives a live-reference Owner Mode view (selected team, finances, roster, staff ids, league grouping). It must not be persisted independently.
+
+`schemaVersion` 16 expands contracts under `business.contracts` to multi-year `salaryByYear` with optional team/player options. Cap space helpers derive payroll from contracts only.
 
 Slice boundaries may be refined as domain models grow, but composition remains mandatory to avoid one undifferentiated mega-object.
 
@@ -179,7 +183,7 @@ Application code depends on `SaveGameStore` (`list` / `create` / `load` / `save`
 Compatibility wrappers (`createSaveGame`, `getSaveGame`, `updateSaveGameState`, etc.) delegate to the Prisma store.
 
 Save pipeline: `serializeGameState` (JSON.stringify) → parse clone → `validateGameState` → write blob.  
-Load pipeline: read `stateJson` → JSON.parse → migrate v1→v15 → `validateGameState` → return `GameState`.
+Load pipeline: read `stateJson` → JSON.parse → migrate v1→v16 → `validateGameState` → return `GameState`.
 
 `serializeGameState` and `deserializeGameState` must not call each other. Crash consistency beyond Prisma/SQLite’s existing guarantees is out of scope.
 

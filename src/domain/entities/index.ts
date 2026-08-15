@@ -98,7 +98,27 @@ export type {
 } from "@/domain/player-overall-rating";
 export type { Coach } from "@/domain/entities/coach";
 export type { Staff, StaffRole } from "@/domain/entities/staff";
-export type { Contract } from "@/domain/entities/contract";
+export type {
+  Contract,
+  ContractInput,
+  ContractOption,
+  ContractOptionStatus,
+  ContractStatus,
+} from "@/domain/entities/contract";
+export {
+  CONTRACT_OPTION_STATUSES,
+  assertContractShape,
+  createContract,
+  declinePlayerOption,
+  declineTeamOption,
+  exercisePlayerOption,
+  exerciseTeamOption,
+  getContractLength,
+  getContractSalaryForYear,
+  getContractStatus,
+  isContractActive,
+  isContractExpired,
+} from "@/domain/entities/contract";
 export type {
   Game,
   GameInput,

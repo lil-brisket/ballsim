@@ -1,4 +1,5 @@
 import { parseCalendarDate } from "@/domain/calendar-date";
+import { assertContractShape } from "@/domain/entities/contract";
 import { GAME_STATUSES, type Game } from "@/domain/entities/game";
 import type { PlayoffTournament } from "@/domain/entities/playoffs";
 import {
@@ -8,6 +9,7 @@ import {
 import type { SeasonPhase } from "@/domain/entities/season";
 import type { GameState, GameMode } from "@/state/game-state";
 import { GAME_STATE_SCHEMA_VERSION } from "@/state/game-state";
+import { asContractId, asPlayerId, asTeamId } from "@/domain/ids";
 
 const SEASON_PHASES: readonly SeasonPhase[] = [
   "preseason",
@@ -231,6 +233,16 @@ export function validateGameState(state: unknown): asserts state is GameState {
           `world.players[${playerId}].contractId "${playerValue.contractId}" is missing from business.contracts.`,
         );
       }
+      const linkedContract = business.contracts[playerValue.contractId];
+      assertRecord(
+        linkedContract,
+        `business.contracts[${playerValue.contractId}]`,
+      );
+      if (linkedContract.playerId !== playerId) {
+        fail(
+          `world.players[${playerId}].contractId "${playerValue.contractId}" must reference a contract whose playerId matches the player.`,
+        );
+      }
     }
   }
 
@@ -260,6 +272,33 @@ export function validateGameState(state: unknown): asserts state is GameState {
       fail(
         `business.contracts[${contractId}].teamId "${contractValue.teamId}" is missing from world.teams.`,
       );
+    }
+    try {
+      assertContractShape({
+        id: asContractId(contractValue.id as string),
+        playerId: asPlayerId(contractValue.playerId as string),
+        teamId: asTeamId(contractValue.teamId as string),
+        startYear: contractValue.startYear as number,
+        endYear: contractValue.endYear as number,
+        salaryByYear: contractValue.salaryByYear as Record<string, number>,
+        teamOption: contractValue.teamOption as
+          | {
+              year: number;
+              salary: number;
+              status: "pending" | "exercised" | "declined";
+            }
+          | undefined,
+        playerOption: contractValue.playerOption as
+          | {
+              year: number;
+              salary: number;
+              status: "pending" | "exercised" | "declined";
+            }
+          | undefined,
+      });
+    } catch (error) {
+      const detail = error instanceof Error ? error.message : String(error);
+      fail(`business.contracts[${contractId}]: ${detail}`);
     }
   }
 

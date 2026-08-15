@@ -143,6 +143,20 @@ describe("GameState schema migration", () => {
     for (const migratedPlayer of Object.values(migrated.world.players)) {
       expect(migratedPlayer.nationality).toBe("USA");
     }
+
+    const migratedContract = migrated.business.contracts[contractId]!;
+    expect(migratedContract.startYear).toBe(migrated.competition.season.year);
+    expect(migratedContract.endYear).toBe(
+      migrated.competition.season.year + 1,
+    );
+    expect(migratedContract.salaryByYear).toEqual({
+      [String(migrated.competition.season.year)]: 1_000_000,
+      [String(migrated.competition.season.year + 1)]: 1_000_000,
+    });
+    expect(migratedContract.teamOption).toBeUndefined();
+    expect(migratedContract.playerOption).toBeUndefined();
+    expect("salaryPerYear" in migratedContract).toBe(false);
+    expect("yearsRemaining" in migratedContract).toBe(false);
   });
 
   it("migrates schemaVersion 2 players to current schema deterministically", () => {
@@ -1464,5 +1478,211 @@ describe("GameState schema migration", () => {
       expect(finance.payroll).toBe(0);
     }
     expect(migrated.meta.rngState).toBe(modern.meta.rngState);
+  });
+
+  it("migrates schemaVersion 15 contracts to startYear/endYear/salaryByYear without options", () => {
+    const modern = createInitialGameState({
+      saveId: "save_v15_contracts",
+      rngSeed: 29,
+      nowIso: "2026-08-14T12:00:00.000Z",
+    });
+    const teamId = modern.user.controlledTeamId;
+    const playerId = asPlayerId("player_v15");
+    const contractId = asContractId("contract_v15");
+    const seasonYear = modern.competition.season.year;
+
+    const stateV15 = {
+      ...modern,
+      meta: {
+        ...modern.meta,
+        schemaVersion: 15,
+      },
+      world: {
+        ...modern.world,
+        players: {
+          [playerId]: {
+            id: playerId,
+            teamId,
+            firstName: "V15",
+            lastName: "Player",
+            nationality: "USA",
+            age: 24,
+            heightInches: 78,
+            weightPounds: 210,
+            position: "SF",
+            archetype: "three_and_d_wing",
+            attributes: Object.fromEntries(
+              V4_ATTRIBUTE_KEYS.map((key) => [key, 70]),
+            ),
+            potential: { overall: 75 },
+            personality: {
+              workEthic: 50,
+              loyalty: 50,
+              competitiveness: 50,
+              leadership: 50,
+              composure: 50,
+            },
+            contractId,
+            injury: { kind: "healthy" },
+            development: { stage: "developing" },
+          },
+        },
+      },
+      business: {
+        ...modern.business,
+        contracts: {
+          [contractId]: {
+            id: contractId,
+            playerId,
+            teamId,
+            salaryPerYear: 4_000_000,
+            yearsRemaining: 3,
+          },
+        },
+      },
+    };
+
+    const migrated = deserializeGameState(JSON.stringify(stateV15));
+    expect(migrated.meta.schemaVersion).toBe(16);
+    const contract = migrated.business.contracts[contractId]!;
+    expect(contract.startYear).toBe(seasonYear);
+    expect(contract.endYear).toBe(seasonYear + 2);
+    expect(contract.salaryByYear).toEqual({
+      [String(seasonYear)]: 4_000_000,
+      [String(seasonYear + 1)]: 4_000_000,
+      [String(seasonYear + 2)]: 4_000_000,
+    });
+    expect(contract.teamOption).toBeUndefined();
+    expect(contract.playerOption).toBeUndefined();
+    expect("salaryPerYear" in contract).toBe(false);
+    expect("yearsRemaining" in contract).toBe(false);
+  });
+
+  it("round-trips contracts with team and player options", () => {
+    const state = createInitialGameState({
+      saveId: "save_contract_options",
+      rngSeed: 31,
+      nowIso: "2026-08-14T12:00:00.000Z",
+    });
+    const teamId = state.user.controlledTeamId;
+    const year = state.competition.season.year;
+
+    const pendingId = asContractId("contract_pending");
+    const exercisedId = asContractId("contract_exercised");
+    const declinedId = asContractId("contract_declined");
+    const playerPending = asPlayerId("player_pending");
+    const playerExercised = asPlayerId("player_exercised");
+    const playerDeclined = asPlayerId("player_declined");
+
+    const attributeDefaults = Object.fromEntries(
+      V4_ATTRIBUTE_KEYS.map((key) => [key, 70]),
+    );
+    const personality = {
+      workEthic: 50,
+      loyalty: 50,
+      competitiveness: 50,
+      leadership: 50,
+      composure: 50,
+    };
+
+    const withPlayer = (
+      id: string,
+      contractId: string,
+    ) => ({
+      id,
+      teamId,
+      firstName: "Opt",
+      lastName: id,
+      nationality: "USA",
+      age: 25,
+      heightInches: 78,
+      weightPounds: 210,
+      position: "SF",
+      archetype: "three_and_d_wing",
+      attributes: attributeDefaults,
+      potential: { overall: 75 },
+      personality,
+      contractId,
+      injury: { kind: "healthy" },
+      development: { stage: "prime" },
+    });
+
+    const full: typeof state = {
+      ...state,
+      world: {
+        ...state.world,
+        players: {
+          [playerPending]: withPlayer(playerPending, pendingId),
+          [playerExercised]: withPlayer(playerExercised, exercisedId),
+          [playerDeclined]: withPlayer(playerDeclined, declinedId),
+        },
+      },
+      business: {
+        ...state.business,
+        contracts: {
+          [pendingId]: {
+            id: pendingId,
+            playerId: playerPending,
+            teamId,
+            startYear: year,
+            endYear: year,
+            salaryByYear: { [String(year)]: 10_000_000 },
+            teamOption: {
+              year: year + 1,
+              salary: 20_000_000,
+              status: "pending",
+            },
+          },
+          [exercisedId]: {
+            id: exercisedId,
+            playerId: playerExercised,
+            teamId,
+            startYear: year,
+            endYear: year + 1,
+            salaryByYear: {
+              [String(year)]: 8_000_000,
+              [String(year + 1)]: 12_000_000,
+            },
+            playerOption: {
+              year: year + 1,
+              salary: 12_000_000,
+              status: "exercised",
+            },
+          },
+          [declinedId]: {
+            id: declinedId,
+            playerId: playerDeclined,
+            teamId,
+            startYear: year,
+            endYear: year,
+            salaryByYear: { [String(year)]: 9_000_000 },
+            teamOption: {
+              year: year + 1,
+              salary: 11_000_000,
+              status: "declined",
+            },
+          },
+        },
+      },
+    };
+
+    const restored = deserializeGameState(serializeGameState(full));
+    expect(restored.meta.schemaVersion).toBe(GAME_STATE_SCHEMA_VERSION);
+    expect(restored.business.contracts[pendingId]).toEqual(
+      full.business.contracts[pendingId],
+    );
+    expect(restored.business.contracts[exercisedId]).toEqual(
+      full.business.contracts[exercisedId],
+    );
+    expect(restored.business.contracts[declinedId]).toEqual(
+      full.business.contracts[declinedId],
+    );
+    expect(restored.world.players[playerPending]?.contractId).toBe(pendingId);
+    expect(restored.world.players[playerExercised]?.contractId).toBe(
+      exercisedId,
+    );
+    expect(restored.world.players[playerDeclined]?.contractId).toBe(
+      declinedId,
+    );
   });
 });
