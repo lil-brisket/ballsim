@@ -175,6 +175,8 @@ describe("season lifecycle", () => {
         controlledTeamId: generated.teams[0]!.id as TeamId,
         mode: "owner",
         objectives: [],
+        notifications: [],
+        appliedGameplayConsequenceKeys: {},
       },
     };
 

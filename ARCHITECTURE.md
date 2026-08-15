@@ -86,6 +86,8 @@ Typed domain catalogs such as `PlayerArchetype` and `PlayerNationality` live und
 
 `schemaVersion` 21 adds the Owner Mode simulation backbone: `calendar.lastSimulatedDate` / `lastSimulatedWeekId`, `season.offseasonStage`, `world.scheduledEvents`, and `postseason` on `SeasonPhase`.
 
+`schemaVersion` 22 adds Owner Mode gameplay: objective `status` / `seasonYear` / `consequenceApplied` (replacing `completed`), `user.notifications`, and `user.appliedGameplayConsequenceKeys` for idempotent financial and AI consequence guards.
+
 ## GameState (composed slices)
 
 `GameState` is the single source of truth for one save, composed of typed slices:
@@ -96,7 +98,7 @@ GameState
 ├── world         # calendar, league structure, teams, people, draft picks, drafts, scheduledEvents
 ├── competition   # season (phase + offseasonStage), schedule, games, standings, playoffs
 ├── business      # contracts, finances, free agency, trade blocks
-└── user          # controlled team, mode, owner objectives
+└── user          # controlled team, mode, objectives, notifications, appliedGameplayConsequenceKeys
 ```
 
 `schemaVersion` 14 adds `competition.playoffs` (`PlayoffTournament`). Pre-v14 saves migrate with `createEmptyPlayoffTournament()` (`not_started`, empty field). Empty/inactive playoffs are valid; a missing or null `playoffs` field is not.
@@ -109,7 +111,9 @@ GameState
 
 `schemaVersion` 19 stores draft classes under `world.drafts`. `createDraft` / `activateDraft` / `makeDraftSelection` / `completeDraft` own draft lifecycle. Selection does not consume RNG; order ownership for an active draft is `DraftOrderSlot.ownerTeamId` (pick-asset ownership is not mutated by the draft system).
 
-`schemaVersion` 20 stores team accounting books under `business.finances[*].booksByYear`. `recordRevenue` / `recordExpense` are additive posts; `getFinancialStatement` derives totals and contract-based player salaries. Totals and `playerSalaries` are never persisted.
+`schemaVersion` 20 stores team accounting books under `business.finances[*].booksByYear`. `recordRevenue` / `recordExpense` are additive posts; `getFinancialStatement` derives totals and contract-based player salaries. Totals and `playerSalaries` are never persisted. `applyCashAndBooksImpact` posts books and adjusts `cash` by the same signed amount for gameplay consequences.
+
+`schemaVersion` 22 stores owner notifications and applied gameplay consequence keys on `user`. Phase B gameplay order inside `advanceSimulation` is: daily pipeline → AI team decisions → financial consequences → owner objectives → owner notifications.
 
 Slice boundaries may be refined as domain models grow, but composition remains mandatory to avoid one undifferentiated mega-object.
 
@@ -147,6 +151,7 @@ Hierarchy:
 Application (advanceOwnerDay)
   → advanceSimulation
     → season/offseason lifecycle → scheduled events → daily pipeline
+    → owner gameplay (AI → finances → objectives → notifications)
     → advanceCalendar → weekly pipeline (completed ISO week only)
 ```
 
@@ -159,9 +164,10 @@ Application (advanceOwnerDay)
 2. Season + offseason lifecycle (may `transitionPhase`, generate schedule, start playoffs)
 3. Process due `world.scheduledEvents` in `(triggerDate, id)` order
 4. Daily pipeline — regular games and/or one playoff step; rebuild standings
-5. Record `calendar.lastSimulatedDate`
-6. `advanceCalendar` — `currentDate + 1` (preserves progress markers)
-7. Weekly pipeline when the new date’s ISO week differs from the simulated date’s week (`lastSimulatedWeekId` = completed week)
+5. Owner gameplay — AI decisions, financial consequences, objective evaluation, notifications
+6. Record `calendar.lastSimulatedDate`
+7. `advanceCalendar` — `currentDate + 1` (preserves progress markers)
+8. Weekly pipeline when the new date’s ISO week differs from the simulated date’s week (`lastSimulatedWeekId` = completed week; no AI/gameplay re-run)
 
 `currentDate` is the date being simulated; after advance it is the next unprocessed day.
 

@@ -205,9 +205,11 @@ export {
   registerScheduledEventHandler,
   runDailyPipeline,
   runWeeklyPipeline,
+  runOwnerGameplay,
   SEASON_LIFECYCLE_CONFIG,
   type AdvanceSimulationResult,
   type AdvanceSimulationOptions,
+  type OwnerGameplayResult,
 } from "@/systems/simulation";
 export { ensureDraftPicks } from "@/systems/world-pipeline";
 export {
@@ -291,8 +293,39 @@ export {
 export {
   recordRevenue,
   recordExpense,
+  applyCashAndBooksImpact,
   getFinancialStatement,
   getTotalRevenue,
   getTotalExpenses,
   getNetIncome,
 } from "@/systems/team-finances";
+export {
+  generateOwnerObjectives,
+  evaluateOwnerObjectives,
+  resolveSeasonObjectives,
+} from "@/systems/owner-objectives";
+export {
+  OWNER_OBJECTIVE_STRONG_OVERALL,
+  OWNER_OBJECTIVE_MID_OVERALL,
+  OWNER_OBJECTIVE_WIN_TARGET_MID,
+  OWNER_OBJECTIVE_WIN_TARGET_WEAK,
+  OWNER_OBJECTIVE_PAYROLL_LIMIT,
+  OWNER_STREAK_NOTIFICATION_THRESHOLD,
+  SIGNIFICANT_FINANCIAL_CHANGE,
+  GAMEPLAY_WIN_REVENUE,
+  GAMEPLAY_LOSS_EXPENSE,
+  GAMEPLAY_PLAYOFF_QUALIFICATION_REVENUE,
+  GAMEPLAY_PLAYOFF_SERIES_WIN_REVENUE,
+  GAMEPLAY_OBJECTIVE_REWARD,
+  GAMEPLAY_OBJECTIVE_PENALTY,
+} from "@/systems/owner-objectives-config";
+export {
+  applyGameplayFinancialConsequences,
+  hasAppliedGameplayConsequence,
+  withAppliedGameplayConsequence,
+} from "@/systems/gameplay-financial-consequences";
+export { generateOwnerNotifications } from "@/systems/owner-notifications";
+export {
+  runAiTeamDecisions,
+  isUserControlledTeam,
+} from "@/systems/ai-team-decisions";

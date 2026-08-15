@@ -1,0 +1,261 @@
+import {
+  createOwnerNotification,
+  type OwnerNotification,
+} from "@/domain/entities/owner-notification";
+import { asOwnerNotificationId, type TeamId } from "@/domain/ids";
+import { systemResult, type SystemResult } from "@/domain/system-result";
+import type { GameState } from "@/state/game-state";
+import {
+  OWNER_STREAK_NOTIFICATION_THRESHOLD,
+  SIGNIFICANT_FINANCIAL_CHANGE,
+} from "@/systems/owner-objectives-config";
+
+export type GenerateOwnerNotificationsOptions = {
+  /** Controlled-team cash before applyGameplayFinancialConsequences in this pass. */
+  previousCash?: number;
+};
+
+/**
+ * Appends owner-facing notifications for state transitions.
+ * Idempotent via dedupeKey (identity only; not a snapshot store).
+ */
+export function generateOwnerNotifications(
+  state: GameState,
+  options: GenerateOwnerNotificationsOptions = {},
+): SystemResult {
+  const teamId = state.user.controlledTeamId;
+  const date = state.world.calendar.currentDate;
+  const existingKeys = new Set(
+    state.user.notifications.map((notification) => notification.dedupeKey),
+  );
+  const additions: OwnerNotification[] = [];
+
+  const append = (notification: OwnerNotification): void => {
+    if (existingKeys.has(notification.dedupeKey)) {
+      return;
+    }
+    existingKeys.add(notification.dedupeKey);
+    additions.push(notification);
+  };
+
+  for (const objective of state.user.objectives) {
+    if (objective.status === "completed") {
+      append(
+        createOwnerNotification({
+          id: asOwnerNotificationId(`notif_obj_complete_${objective.id}`),
+          type: "objective_completed",
+          title: "Objective completed",
+          message: objective.description,
+          occurredOn: date,
+          severity: "success",
+          read: false,
+          dedupeKey: `objective_completed:${objective.id}`,
+          relatedObjectiveId: objective.id,
+          relatedTeamId: teamId,
+        }),
+      );
+    }
+    if (objective.status === "failed") {
+      append(
+        createOwnerNotification({
+          id: asOwnerNotificationId(`notif_obj_failed_${objective.id}`),
+          type: "objective_failed",
+          title: "Objective failed",
+          message: objective.description,
+          occurredOn: date,
+          severity: "warning",
+          read: false,
+          dedupeKey: `objective_failed:${objective.id}`,
+          relatedObjectiveId: objective.id,
+          relatedTeamId: teamId,
+        }),
+      );
+    }
+  }
+
+  if (
+    state.competition.playoffs.qualifiedTeams.some(
+      (seed) => seed.teamId === teamId,
+    )
+  ) {
+    append(
+      createOwnerNotification({
+        id: asOwnerNotificationId(
+          `notif_playoff_qualified_${teamId}_${state.competition.season.year}`,
+        ),
+        type: "playoff_qualified",
+        title: "Playoff qualification",
+        message: "Your team has qualified for the playoffs.",
+        occurredOn: date,
+        severity: "success",
+        read: false,
+        dedupeKey: `playoff_qualified:${teamId}:${state.competition.season.year}`,
+        relatedTeamId: teamId,
+      }),
+    );
+  }
+
+  if (isPlayoffEliminated(state, teamId)) {
+    append(
+      createOwnerNotification({
+        id: asOwnerNotificationId(
+          `notif_playoff_eliminated_${teamId}_${state.competition.season.year}`,
+        ),
+        type: "playoff_eliminated",
+        title: "Playoff elimination",
+        message: "Your team has been eliminated from the playoffs.",
+        occurredOn: date,
+        severity: "warning",
+        read: false,
+        dedupeKey: `playoff_eliminated:${teamId}:${state.competition.season.year}`,
+        relatedTeamId: teamId,
+      }),
+    );
+  }
+
+  const streak = state.competition.standings.byTeamId[teamId]?.streak;
+  if (
+    streak &&
+    streak.type === "W" &&
+    streak.count >= OWNER_STREAK_NOTIFICATION_THRESHOLD
+  ) {
+    append(
+      createOwnerNotification({
+        id: asOwnerNotificationId(
+          `notif_win_streak_${teamId}_${state.competition.season.year}_${streak.count}`,
+        ),
+        type: "winning_streak",
+        title: "Winning streak",
+        message: `Your team has won ${streak.count} games in a row.`,
+        occurredOn: date,
+        severity: "info",
+        read: false,
+        dedupeKey: `winning_streak:${teamId}:${state.competition.season.year}:${streak.count}`,
+        relatedTeamId: teamId,
+      }),
+    );
+  }
+  if (
+    streak &&
+    streak.type === "L" &&
+    streak.count >= OWNER_STREAK_NOTIFICATION_THRESHOLD
+  ) {
+    append(
+      createOwnerNotification({
+        id: asOwnerNotificationId(
+          `notif_lose_streak_${teamId}_${state.competition.season.year}_${streak.count}`,
+        ),
+        type: "losing_streak",
+        title: "Losing streak",
+        message: `Your team has lost ${streak.count} games in a row.`,
+        occurredOn: date,
+        severity: "warning",
+        read: false,
+        dedupeKey: `losing_streak:${teamId}:${state.competition.season.year}:${streak.count}`,
+        relatedTeamId: teamId,
+      }),
+    );
+  }
+
+  if (options.previousCash !== undefined) {
+    const currentCash = state.business.finances[teamId]?.cash ?? 0;
+    const delta = currentCash - options.previousCash;
+    if (Math.abs(delta) >= SIGNIFICANT_FINANCIAL_CHANGE) {
+      append(
+        createOwnerNotification({
+          id: asOwnerNotificationId(
+            `notif_fin_change_${teamId}_${date}`,
+          ),
+          type: "significant_financial_change",
+          title: "Significant financial change",
+          message:
+            delta > 0
+              ? `Team cash increased by ${delta}.`
+              : `Team cash decreased by ${Math.abs(delta)}.`,
+          occurredOn: date,
+          severity: delta > 0 ? "success" : "warning",
+          read: false,
+          dedupeKey: `significant_financial_change:${teamId}:${date}`,
+          relatedTeamId: teamId,
+        }),
+      );
+    }
+  }
+
+  const phase = state.competition.season.phase;
+  if (phase === "postseason" || phase === "offseason") {
+    append(
+      createOwnerNotification({
+        id: asOwnerNotificationId(
+          `notif_season_completed_${state.competition.season.year}`,
+        ),
+        type: "season_completed",
+        title: "Season completed",
+        message: `The ${state.competition.season.year} season has concluded.`,
+        occurredOn: date,
+        severity: "info",
+        read: false,
+        dedupeKey: `season_completed:${state.competition.season.year}`,
+        relatedTeamId: teamId,
+      }),
+    );
+  }
+  if (phase === "offseason") {
+    append(
+      createOwnerNotification({
+        id: asOwnerNotificationId(
+          `notif_offseason_began_${state.competition.season.year}`,
+        ),
+        type: "offseason_began",
+        title: "Offseason began",
+        message: "The offseason has begun.",
+        occurredOn: date,
+        severity: "info",
+        read: false,
+        dedupeKey: `offseason_began:${state.competition.season.year}`,
+        relatedTeamId: teamId,
+      }),
+    );
+  }
+
+  if (additions.length === 0) {
+    return systemResult(state);
+  }
+
+  return systemResult({
+    ...state,
+    user: {
+      ...state.user,
+      notifications: [...state.user.notifications, ...additions],
+    },
+  });
+}
+
+function isPlayoffEliminated(state: GameState, teamId: TeamId): boolean {
+  const playoffs = state.competition.playoffs;
+  if (playoffs.status === "not_started") {
+    return false;
+  }
+  const qualified = playoffs.qualifiedTeams.some(
+    (seed) => seed.teamId === teamId,
+  );
+  if (!qualified) {
+    return false;
+  }
+  if (playoffs.championTeamId === teamId) {
+    return false;
+  }
+  for (const series of playoffs.series) {
+    const participates =
+      series.higherSeedTeamId === teamId || series.lowerSeedTeamId === teamId;
+    if (
+      participates &&
+      series.status === "complete" &&
+      series.winnerTeamId !== undefined &&
+      series.winnerTeamId !== teamId
+    ) {
+      return true;
+    }
+  }
+  return playoffs.status === "complete" && playoffs.championTeamId !== teamId;
+}

@@ -1,5 +1,6 @@
 import type { Game } from "@/domain/entities/game";
 import type { League } from "@/domain/entities/league";
+import type { OwnerNotification } from "@/domain/entities/owner-notification";
 import type { OwnerObjective } from "@/domain/entities/owner-objective";
 import type { TeamFinances } from "@/domain/entities/finances";
 import type { PlayoffTournament } from "@/domain/entities/playoffs";
@@ -44,22 +45,27 @@ export type OwnerLeagueState = {
  * Derived management-layer view over GameState.
  * Must never be added as a field on GameState, serialized independently,
  * or given its own schema version.
+ *
+ * Read-only projection: arrays/objects are live references for convenience.
+ * Callers must not mutate them; all writes go through GameState systems.
  */
 export type OwnerGameState = {
   currentDate: string;
   currentSeasonId: SeasonId;
   selectedTeamId: TeamId;
-  objectives: OwnerObjective[];
+  objectives: readonly OwnerObjective[];
+  notifications: readonly OwnerNotification[];
   finances: TeamFinances;
   staff: OwnerStaffState;
-  roster: PlayerId[];
+  roster: readonly PlayerId[];
   leagueState: OwnerLeagueState;
 };
 
 /**
  * Builds a live-reference Owner Mode view from the authoritative GameState.
- * Does not deep-clone canonical state. objectives, finances, roster, and
- * OwnerLeagueState collections preserve references to their canonical sources.
+ * Does not deep-clone canonical state. objectives, notifications, finances,
+ * roster, and OwnerLeagueState collections preserve references to their
+ * canonical sources. Callers must not mutate those references.
  */
 export function toOwnerGameState(state: GameState): OwnerGameState {
   const selectedTeamId = state.user.controlledTeamId;
@@ -117,6 +123,7 @@ export function toOwnerGameState(state: GameState): OwnerGameState {
     currentSeasonId: season.id,
     selectedTeamId,
     objectives: state.user.objectives,
+    notifications: state.user.notifications,
     finances,
     staff: {
       coachIds,

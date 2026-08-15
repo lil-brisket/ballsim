@@ -4,6 +4,7 @@ export {
   runWeeklyPipeline,
   completedWeekIdForSimulatedDate,
 } from "@/systems/simulation/weekly-pipeline";
+export { runOwnerGameplay } from "@/systems/simulation/owner-gameplay";
 export {
   scheduleEvent,
   processScheduledEvents,
@@ -25,3 +26,4 @@ export type {
   AdvanceSimulationResult,
   AdvanceSimulationOptions,
 } from "@/systems/simulation/types";
+export type { OwnerGameplayResult } from "@/systems/simulation/owner-gameplay";

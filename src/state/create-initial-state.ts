@@ -235,6 +235,8 @@ export function createInitialGameState(
       controlledTeamId: userTeamId,
       mode: "owner",
       objectives: [],
+      notifications: [],
+      appliedGameplayConsequenceKeys: {},
     },
   };
 }

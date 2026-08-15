@@ -13,9 +13,17 @@ import {
 import { GAME_STATUSES, type Game } from "@/domain/entities/game";
 import type { PlayoffTournament } from "@/domain/entities/playoffs";
 import {
+  isOwnerObjectiveStatus,
   isOwnerObjectiveType,
+  OWNER_OBJECTIVE_STATUSES,
   OWNER_OBJECTIVE_TYPES,
 } from "@/domain/entities/owner-objective";
+import {
+  isOwnerNotificationSeverity,
+  isOwnerNotificationType,
+  OWNER_NOTIFICATION_SEVERITIES,
+  OWNER_NOTIFICATION_TYPES,
+} from "@/domain/entities/owner-notification";
 import {
   isTradeBlockStatus,
   type TradeBlockAsset,
@@ -280,6 +288,32 @@ export function validateGameState(state: unknown): asserts state is GameState {
     fail("user.objectives must be an array.");
   }
   validateOwnerObjectives(user.objectives);
+
+  if (!("notifications" in user) || !Array.isArray(user.notifications)) {
+    fail("user.notifications must be an array.");
+  }
+  validateOwnerNotifications(user.notifications);
+
+  if (
+    !("appliedGameplayConsequenceKeys" in user) ||
+    user.appliedGameplayConsequenceKeys == null ||
+    typeof user.appliedGameplayConsequenceKeys !== "object" ||
+    Array.isArray(user.appliedGameplayConsequenceKeys)
+  ) {
+    fail("user.appliedGameplayConsequenceKeys must be a record.");
+  }
+  for (const [key, value] of Object.entries(
+    user.appliedGameplayConsequenceKeys as Record<string, unknown>,
+  )) {
+    if (key.trim().length === 0) {
+      fail("user.appliedGameplayConsequenceKeys keys must be non-empty.");
+    }
+    if (value !== true) {
+      fail(
+        `user.appliedGameplayConsequenceKeys["${key}"] must be true.`,
+      );
+    }
+  }
 
   const teamIds = new Set(Object.keys(world.teams));
   const playerIds = new Set(Object.keys(world.players));
@@ -1235,8 +1269,22 @@ function validateOwnerObjectives(objectives: unknown[]): void {
       fail(`${path}.description cannot be whitespace-only.`);
     }
 
-    if (typeof objectiveValue.completed !== "boolean") {
-      fail(`${path}.completed must be a boolean.`);
+    if (
+      typeof objectiveValue.status !== "string" ||
+      !isOwnerObjectiveStatus(objectiveValue.status)
+    ) {
+      fail(
+        `${path}.status must be one of ${OWNER_OBJECTIVE_STATUSES.join(", ")}.`,
+      );
+    }
+
+    assertNumber(objectiveValue.seasonYear, `${path}.seasonYear`);
+    if (!Number.isInteger(objectiveValue.seasonYear)) {
+      fail(`${path}.seasonYear must be an integer.`);
+    }
+
+    if (typeof objectiveValue.consequenceApplied !== "boolean") {
+      fail(`${path}.consequenceApplied must be a boolean.`);
     }
 
     if (objectiveValue.target !== undefined) {
@@ -1248,6 +1296,69 @@ function validateOwnerObjectives(objectives: unknown[]): void {
       if (objectiveValue.progress < 0) {
         fail(`${path}.progress must be >= 0.`);
       }
+    }
+  }
+}
+
+function validateOwnerNotifications(notifications: unknown[]): void {
+  const seenIds = new Set<string>();
+  const seenDedupeKeys = new Set<string>();
+
+  for (const [index, notificationValue] of notifications.entries()) {
+    const path = `user.notifications[${index}]`;
+    assertRecord(notificationValue, path);
+    assertNonEmptyString(notificationValue.id, `${path}.id`);
+    if (seenIds.has(notificationValue.id)) {
+      fail(`user.notifications contains duplicate id "${notificationValue.id}".`);
+    }
+    seenIds.add(notificationValue.id);
+
+    if (
+      typeof notificationValue.type !== "string" ||
+      !isOwnerNotificationType(notificationValue.type)
+    ) {
+      fail(
+        `${path}.type must be one of ${OWNER_NOTIFICATION_TYPES.join(", ")}.`,
+      );
+    }
+
+    assertNonEmptyString(notificationValue.title, `${path}.title`);
+    assertNonEmptyString(notificationValue.message, `${path}.message`);
+    assertNonEmptyString(notificationValue.occurredOn, `${path}.occurredOn`);
+    parseCalendarDate(notificationValue.occurredOn);
+
+    if (
+      typeof notificationValue.severity !== "string" ||
+      !isOwnerNotificationSeverity(notificationValue.severity)
+    ) {
+      fail(
+        `${path}.severity must be one of ${OWNER_NOTIFICATION_SEVERITIES.join(", ")}.`,
+      );
+    }
+
+    if (typeof notificationValue.read !== "boolean") {
+      fail(`${path}.read must be a boolean.`);
+    }
+
+    assertNonEmptyString(notificationValue.dedupeKey, `${path}.dedupeKey`);
+    if (seenDedupeKeys.has(notificationValue.dedupeKey)) {
+      fail(
+        `user.notifications contains duplicate dedupeKey "${notificationValue.dedupeKey}".`,
+      );
+    }
+    seenDedupeKeys.add(notificationValue.dedupeKey);
+
+    if (notificationValue.relatedObjectiveId !== undefined) {
+      assertNonEmptyString(
+        notificationValue.relatedObjectiveId,
+        `${path}.relatedObjectiveId`,
+      );
+    }
+    if (notificationValue.relatedTeamId !== undefined) {
+      assertNonEmptyString(
+        notificationValue.relatedTeamId,
+        `${path}.relatedTeamId`,
+      );
     }
   }
 }

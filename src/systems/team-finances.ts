@@ -8,7 +8,10 @@ import {
   type TeamFinancialStatement,
   type TeamFinances,
 } from "@/domain/entities/finances";
-import { createDomainEvent } from "@/domain/events/domain-event";
+import {
+  createDomainEvent,
+  type DomainEvent,
+} from "@/domain/events/domain-event";
 import type { TeamId } from "@/domain/ids";
 import { systemResult, type SystemResult } from "@/domain/system-result";
 import type { GameState } from "@/state/game-state";
@@ -78,6 +81,74 @@ export function recordExpense(
       payload: { teamId, category, amount, year },
     }),
   ]);
+}
+
+/**
+ * Posts books and adjusts cash by the same signed integer amount.
+ * Positive amount → revenue category + cash increase.
+ * Negative amount → expense category + cash decrease (absolute value posted).
+ * Zero is a no-op.
+ */
+export function applyCashAndBooksImpact(
+  state: GameState,
+  teamId: TeamId,
+  amount: number,
+  year: number,
+  options: {
+    revenueCategory?: RevenueCategory;
+    expenseCategory?: ExpenseCategory;
+  } = {},
+): SystemResult {
+  assertTeamAndFinanceExist(state, teamId);
+  assertSeasonYear(year);
+  if (typeof amount !== "number" || !Number.isFinite(amount)) {
+    throw new Error("Cash/books impact amount must be a finite number.");
+  }
+  if (!Number.isInteger(amount)) {
+    throw new Error("Cash/books impact amount must be an integer.");
+  }
+  if (amount === 0) {
+    return systemResult(state);
+  }
+
+  const revenueCategory = options.revenueCategory ?? "other";
+  const expenseCategory = options.expenseCategory ?? "operations";
+  let next = state;
+  const events: DomainEvent[] = [];
+
+  if (amount > 0) {
+    const posted = recordRevenue(next, teamId, revenueCategory, amount, year);
+    next = posted.state;
+    events.push(...posted.events);
+  } else {
+    const posted = recordExpense(
+      next,
+      teamId,
+      expenseCategory,
+      Math.abs(amount),
+      year,
+    );
+    next = posted.state;
+    events.push(...posted.events);
+  }
+
+  const existing = next.business.finances[teamId]!;
+  const nextCash = existing.cash + amount;
+  next = {
+    ...next,
+    business: {
+      ...next.business,
+      finances: {
+        ...next.business.finances,
+        [teamId]: {
+          ...existing,
+          cash: nextCash,
+        },
+      },
+    },
+  };
+
+  return systemResult(next, events);
 }
 
 /**

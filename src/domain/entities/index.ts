@@ -288,10 +288,26 @@ export type { Calendar } from "@/domain/entities/calendar";
 export type {
   OwnerObjective,
   OwnerObjectiveInput,
+  OwnerObjectiveStatus,
   OwnerObjectiveType,
 } from "@/domain/entities/owner-objective";
 export {
   OWNER_OBJECTIVE_TYPES,
+  OWNER_OBJECTIVE_STATUSES,
   isOwnerObjectiveType,
+  isOwnerObjectiveStatus,
   createOwnerObjective,
 } from "@/domain/entities/owner-objective";
+export type {
+  OwnerNotification,
+  OwnerNotificationInput,
+  OwnerNotificationSeverity,
+  OwnerNotificationType,
+} from "@/domain/entities/owner-notification";
+export {
+  OWNER_NOTIFICATION_TYPES,
+  OWNER_NOTIFICATION_SEVERITIES,
+  isOwnerNotificationType,
+  isOwnerNotificationSeverity,
+  createOwnerNotification,
+} from "@/domain/entities/owner-notification";

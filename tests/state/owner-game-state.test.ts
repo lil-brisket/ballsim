@@ -83,13 +83,20 @@ describe("toOwnerGameState", () => {
       id: asOwnerObjectiveId("obj_playoffs"),
       type: "make_playoffs",
       description: "Make the playoffs",
-      completed: false,
+      status: "active",
+      seasonYear: state.competition.season.year,
+      consequenceApplied: false,
     });
     state.user.objectives.push(objective);
     const owner = toOwnerGameState(state);
     expect(owner.objectives).toBe(state.user.objectives);
     expect(owner.objectives).toHaveLength(1);
     expect(owner.objectives[0]!.type).toBe("make_playoffs");
+  });
+
+  it("preserves live notifications array reference", () => {
+    const state = baseState();
+    expect(toOwnerGameState(state).notifications).toBe(state.user.notifications);
   });
 
   it("preserves live finances reference", () => {
@@ -240,7 +247,9 @@ describe("Owner Mode GameState round-trip", () => {
         description: "Win 40 games",
         target: 40,
         progress: 0,
-        completed: false,
+        status: "active",
+        seasonYear: state.competition.season.year,
+        consequenceApplied: false,
       }),
     ];
     state.business.finances[state.user.controlledTeamId] = {

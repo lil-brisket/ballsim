@@ -42,7 +42,7 @@ Near-term Owner Mode surfaces (UI destinations, not all implemented yet):
 
 ## World simulation (design intent)
 
-The user's team is not isolated. "Advance day" processing updates the entire
+The player's team is not isolated. "Advance day" processing updates the entire
 world via `advanceSimulation` (`src/systems/simulation/`), wrapped by
 `runWorldPipeline` / `advanceOwnerDay`:
 
@@ -50,40 +50,43 @@ world via `advanceSimulation` (`src/systems/simulation/`), wrapped by
 - Process due scheduled events
 - Simulate games for the current world date (regular or playoffs)
 - Rebuild standings
+- Run Owner Mode gameplay: AI team decisions → financial consequences → owner objectives → owner notifications
 - Advance the calendar by one day
-- Run weekly extension points when crossing an ISO week boundary
+- Run weekly extension points when crossing an ISO week boundary (no AI/gameplay re-run)
 
 `competition.season.phase` is authoritative (`preseason` → `regular` →
 `playoffs`/`postseason` → `offseason` → `preseason`). Free agency is a
 persistent offseason stage exited via `advanceOffseasonStage`.
 
+Owner Mode gameplay (Phase B):
+
+- Season objectives on `user.objectives` (`status`, `seasonYear`, progress from standings/playoffs/payroll/net income)
+- Financial consequences via `business.finances` (`applyCashAndBooksImpact` + `user.appliedGameplayConsequenceKeys`)
+- Owner notifications on `user.notifications`
+- Basic AI free agency, draft, and trades for non-user teams only
+
 Still future work within that pipeline:
 
-- Other AI team decisions
+- Deeper AI (lineups, development, staff)
 - Player development season tick (engine exists: `developPlayer`)
 - Injuries
-- Contract / finance auto ticks
+- Broader finance auto ticks
 - Offseason calendar deadlines
-- League events / news
+- League events / news UI
 
 ## AI / decision layer (design intent)
 
-Computer-controlled teams will eventually use an algorithmic decision layer for:
+Computer-controlled teams use an algorithmic decision layer. v1 covers:
 
-- Trades
-- Free agency
-- Draft decisions
-- Lineups
-- Player development
-- Contracts
-- Staff decisions
+- Free agency signings when roster size or a required position (`PG`/`SG`/`SF`/`PF`/`C`) is missing
+- Draft selections ranked by missing position, fewest at position, overall, then id
+- Simple AI–AI trades via existing trade-block / evaluation helpers
 
 Constraints:
 
 - Do **not** use an LLM for core basketball simulation or basic team decision logic unless a specific future feature clearly benefits from generative AI.
 - Core simulation must remain deterministic, algorithmic, testable, and performant.
-
-This AI decision layer is **not implemented** in the foundation phase.
+- The user-controlled team (`user.controlledTeamId`) is never modified by AI decisions.
 
 ## Domain concepts (planned)
 
@@ -105,7 +108,7 @@ Systems expected later (do not treat as present until implemented):
 - Calendar / advance day — **implemented** (`src/systems/simulation/advance-simulation.ts` + `world-pipeline` wrapper)
 - Player development — **implemented** as a building block (`src/systems/player-development.ts`); not yet called from the world pipeline
 - Injuries
-- Finances — period-keyed revenue/expense books on `business.finances` (`booksByYear`); financial statements derive totals and player salaries from contracts (`getTeamPayroll`); payroll snapshot still set at roster gen; salary-cap space derived from contracts vs a flat cap; cash mutation / auto ticks TBD
+- Finances — period-keyed revenue/expense books on `business.finances` (`booksByYear`); financial statements derive totals and player salaries from contracts (`getTeamPayroll`); payroll snapshot still set at roster gen; salary-cap space derived from contracts vs a flat cap; gameplay may adjust `cash` via `applyCashAndBooksImpact` (books + cash together); broader auto ticks TBD
 - Standings — **implemented** (`src/systems/standings.ts` — `calculateStandings` / `updateStandings`)
 - Schedule generation — **implemented** as building block `generateSeasonSchedule` + world adapter `generateSchedule` (`src/systems/schedule-generation.ts`); validates via `validateSeasonSchedule`
 - Save/load (foundation persistence exists)
@@ -134,7 +137,7 @@ Still deferred:
 - Player development season tick / aging operation
 - Injuries
 - Advanced finances
-- Full AI team management (basic trade AI offer generation exists)
+- Full AI team management (v1 free agency / draft / trade AI exists; lineups/staff/development AI do not)
 - Career Mode
 - Dynasty Mode
 - Narrative / news feed UI beyond recent results on the dashboard

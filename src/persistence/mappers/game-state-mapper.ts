@@ -110,10 +110,11 @@ const MIGRATE_ONE_STEP: Record<number, (state: unknown) => unknown> = {
   18: (state) => migrateV18ToV19(state as GameStateV18),
   19: (state) => migrateV19ToV20(state as GameStateV19),
   20: (state) => migrateV20ToV21(state as GameStateV20),
+  21: (state) => migrateV21ToV22(state as GameStateV21),
 };
 
 /**
- * Parse → migrate (v1–v20 → current) → validate → return GameState.
+ * Parse → migrate (v1–v21 → current) → validate → return GameState.
  * Does not call serializeGameState.
  */
 export function deserializeGameState(stateJson: string): GameState {
@@ -1316,7 +1317,24 @@ type GameStateV15 = {
   world: GameState["world"];
   competition: GameState["competition"];
   business: BusinessSliceV15;
-  user: GameState["user"];
+  user: UserSliceV21;
+};
+
+/** Schema 15–21 user objectives before status/notifications/consequence keys. */
+type OwnerObjectiveV21 = {
+  id: string;
+  type: string;
+  description: string;
+  completed: boolean;
+  target?: number;
+  progress?: number;
+  seasonYear?: number;
+};
+
+type UserSliceV21 = {
+  controlledTeamId: TeamId;
+  mode: GameState["user"]["mode"];
+  objectives: OwnerObjectiveV21[];
 };
 
 type GameStateV16 = {
@@ -1327,7 +1345,7 @@ type GameStateV16 = {
   world: WorldSliceV17;
   competition: GameState["competition"];
   business: BusinessSliceV16;
-  user: GameState["user"];
+  user: UserSliceV21;
 };
 
 /** Schema 17 world before draftPicks. */
@@ -1357,7 +1375,7 @@ type GameStateV17 = {
   world: WorldSliceV17;
   competition: GameState["competition"];
   business: BusinessSliceV17;
-  user: GameState["user"];
+  user: UserSliceV21;
 };
 
 /** Schema 18 world before drafts. */
@@ -1389,7 +1407,7 @@ type GameStateV18 = {
   world: WorldSliceV18;
   competition: GameState["competition"];
   business: BusinessSliceV18;
-  user: GameState["user"];
+  user: UserSliceV21;
 };
 
 type GameStateV19 = {
@@ -1421,7 +1439,7 @@ type GameStateV19 = {
     playoffs: GameState["competition"]["playoffs"];
   };
   business: BusinessSliceV18;
-  user: GameState["user"];
+  user: UserSliceV21;
 };
 
 /** Schema v20 before simulation backbone fields (calendar progress, offseason stage, scheduled events). */
@@ -1433,7 +1451,19 @@ type GameStateV20 = {
   world: GameStateV19["world"];
   competition: GameStateV19["competition"];
   business: GameState["business"];
-  user: GameState["user"];
+  user: UserSliceV21;
+};
+
+/** Schema v21 before owner gameplay notifications / objective status. */
+type GameStateV21 = {
+  meta: Omit<GameState["meta"], "schemaVersion"> & {
+    schemaVersion: 21;
+    rngState: number;
+  };
+  world: GameState["world"];
+  competition: GameState["competition"];
+  business: GameState["business"];
+  user: UserSliceV21;
 };
 
 /**
@@ -1732,7 +1762,7 @@ function migrateV19ToV20(state: GameStateV19): GameStateV20 {
  * - world.scheduledEvents
  * Emits literal schemaVersion 21. No RNG.
  */
-function migrateV20ToV21(state: GameStateV20): GameState {
+function migrateV20ToV21(state: GameStateV20): GameStateV21 {
   if (typeof state.meta.rngState !== "number") {
     throw new Error("GameState meta.rngState is required for schemaVersion 20.");
   }
@@ -1771,6 +1801,59 @@ function migrateV20ToV21(state: GameStateV20): GameState {
     },
     business: state.business,
     user: state.user,
+  };
+}
+
+/**
+ * Deterministic v21 → v22: owner gameplay fields.
+ * - objectives: status / seasonYear / consequenceApplied (drop completed)
+ * - user.notifications
+ * - user.appliedGameplayConsequenceKeys
+ * Emits literal schemaVersion 22. No RNG.
+ */
+function migrateV21ToV22(state: GameStateV21): GameState {
+  if (typeof state.meta.rngState !== "number") {
+    throw new Error("GameState meta.rngState is required for schemaVersion 21.");
+  }
+
+  const seasonYear = state.competition.season.year;
+  const objectives = state.user.objectives.map((objective) => {
+    const { completed, seasonYear: existingSeasonYear, ...rest } = objective;
+    const nextSeasonYear =
+      typeof existingSeasonYear === "number" && Number.isInteger(existingSeasonYear)
+        ? existingSeasonYear
+        : seasonYear;
+    return {
+      id: rest.id,
+      type: rest.type,
+      description: rest.description,
+      status: completed ? ("completed" as const) : ("active" as const),
+      seasonYear: nextSeasonYear,
+      consequenceApplied: false,
+      ...(rest.target !== undefined ? { target: rest.target } : {}),
+      ...(rest.progress !== undefined ? { progress: rest.progress } : {}),
+    };
+  });
+
+  return {
+    meta: {
+      saveId: state.meta.saveId,
+      schemaVersion: 22,
+      createdAt: state.meta.createdAt,
+      updatedAt: state.meta.updatedAt,
+      rngSeed: state.meta.rngSeed,
+      rngState: state.meta.rngState,
+    },
+    world: state.world,
+    competition: state.competition,
+    business: state.business,
+    user: {
+      controlledTeamId: state.user.controlledTeamId,
+      mode: state.user.mode,
+      objectives: objectives as GameState["user"]["objectives"],
+      notifications: [],
+      appliedGameplayConsequenceKeys: {},
+    },
   };
 }
 

@@ -9,6 +9,7 @@ import type { FreeAgencyOffer } from "@/domain/entities/free-agency-offer";
 import type { TeamFinances } from "@/domain/entities/finances";
 import type { Game } from "@/domain/entities/game";
 import type { League } from "@/domain/entities/league";
+import type { OwnerNotification } from "@/domain/entities/owner-notification";
 import type { OwnerObjective } from "@/domain/entities/owner-objective";
 import type { Player } from "@/domain/entities/player";
 import type { PlayoffTournament } from "@/domain/entities/playoffs";
@@ -21,7 +22,7 @@ import type { ScheduledEvent } from "@/domain/entities/scheduled-event";
 import type { TradeBlock } from "@/domain/entities/trade-block";
 import type { SaveId, TeamId } from "@/domain/ids";
 
-export const GAME_STATE_SCHEMA_VERSION = 21;
+export const GAME_STATE_SCHEMA_VERSION = 22;
 
 export type GameMode = "owner";
 
@@ -74,6 +75,9 @@ export type UserSlice = {
   controlledTeamId: TeamId;
   mode: GameMode;
   objectives: OwnerObjective[];
+  notifications: OwnerNotification[];
+  /** Deterministic keys for applied gameplay/AI consequences (idempotency). */
+  appliedGameplayConsequenceKeys: Record<string, true>;
 };
 
 /**

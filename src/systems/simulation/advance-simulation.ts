@@ -6,6 +6,7 @@ import { advanceCalendar } from "@/systems/calendar";
 import { generateRosters } from "@/systems/roster-generation";
 import { runDailyPipeline } from "@/systems/simulation/daily-pipeline";
 import { processOffseasonLifecycle } from "@/systems/simulation/offseason-lifecycle";
+import { runOwnerGameplay } from "@/systems/simulation/owner-gameplay";
 import { processScheduledEvents } from "@/systems/simulation/scheduled-events";
 import { processSeasonLifecycle } from "@/systems/simulation/season-lifecycle";
 import type {
@@ -26,9 +27,10 @@ import { mergeDraftPicksForSeason } from "@/domain/draft-picks/generate-draft-pi
  * 2. Season + offseason lifecycle (may change phase / generate schedule)
  * 3. Scheduled events due on currentDate
  * 4. Daily pipeline (uses post-lifecycle phase)
- * 5. Record lastSimulatedDate
- * 6. advanceCalendar +1 (orchestrator only)
- * 7. Weekly pipeline when crossing into a new ISO week
+ * 5. Owner gameplay: AI → finances → objectives → notifications
+ * 6. Record lastSimulatedDate
+ * 7. advanceCalendar +1 (orchestrator only)
+ * 8. Weekly pipeline when crossing into a new ISO week
  *
  * Callers must persist rng.getState() into meta.rngState after this runs.
  */
@@ -112,6 +114,10 @@ function advanceOneDay(state: GameState, rng: Rng): OneDayResult {
   const daily = runDailyPipeline(current, rng);
   current = daily.state;
   events.push(...daily.events);
+
+  const gameplay = runOwnerGameplay(current, rng);
+  current = gameplay.state;
+  events.push(...gameplay.events);
 
   current = {
     ...current,
