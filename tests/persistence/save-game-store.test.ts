@@ -48,7 +48,7 @@ function createEightTeamPopulatedState(rngSeed: number): GameState {
   const finances = Object.fromEntries(
     generated.teams.map((team) => [
       team.id,
-      { teamId: team.id, cash: 50_000_000, payroll: 0 },
+      { teamId: team.id, cash: 50_000_000, revenue: 0, expenses: 0, payroll: 0 },
     ]),
   );
   const standings = {
@@ -100,6 +100,7 @@ function createEightTeamPopulatedState(rngSeed: number): GameState {
     user: {
       controlledTeamId: generated.teams[0]!.id as TeamId,
       mode: "owner",
+      objectives: [],
     },
   };
 
@@ -508,19 +509,19 @@ describe("MemorySaveGameStore", () => {
     const modern = createTestGameState({ saveId: "save_future_load" });
     const futureJson = JSON.stringify({
       ...modern,
-      meta: { ...modern.meta, schemaVersion: 15 },
+      meta: { ...modern.meta, schemaVersion: GAME_STATE_SCHEMA_VERSION + 1 },
     });
 
     store.seedPersistedBlob({
       id: modern.meta.saveId,
       name: "Future",
-      schemaVersion: 15,
+      schemaVersion: GAME_STATE_SCHEMA_VERSION + 1,
       stateJson: futureJson,
     });
 
     await expect(store.load(modern.meta.saveId)).rejects.toThrow(
       new RegExp(
-        `Save schema version 15 is newer than the supported version ${GAME_STATE_SCHEMA_VERSION}`,
+        `Save schema version ${GAME_STATE_SCHEMA_VERSION + 1} is newer than the supported version ${GAME_STATE_SCHEMA_VERSION}`,
       ),
     );
   });
@@ -543,11 +544,11 @@ describe("validateGameState / deserialize invalid saves", () => {
     const state = createTestGameState();
     const json = JSON.stringify({
       ...state,
-      meta: { ...state.meta, schemaVersion: 15 },
+      meta: { ...state.meta, schemaVersion: GAME_STATE_SCHEMA_VERSION + 1 },
     });
     expect(() => deserializeGameState(json)).toThrow(
       new RegExp(
-        `Save schema version 15 is newer than the supported version ${GAME_STATE_SCHEMA_VERSION}`,
+        `Save schema version ${GAME_STATE_SCHEMA_VERSION + 1} is newer than the supported version ${GAME_STATE_SCHEMA_VERSION}`,
       ),
     );
     expect(() => deserializeGameState(json)).toThrow(
@@ -658,6 +659,89 @@ describe("validateGameState / deserialize invalid saves", () => {
       },
     });
     expect(() => deserializeGameState(json)).toThrow(/controlledTeamId/);
+  });
+
+  it("rejects duplicate owner objective ids", () => {
+    const state = createTestGameState();
+    const json = JSON.stringify({
+      ...state,
+      user: {
+        ...state.user,
+        objectives: [
+          {
+            id: "obj_dup",
+            type: "make_playoffs",
+            description: "Make playoffs",
+            completed: false,
+          },
+          {
+            id: "obj_dup",
+            type: "win_championship",
+            description: "Win title",
+            completed: false,
+          },
+        ],
+      },
+    });
+    expect(() => deserializeGameState(json)).toThrow(/duplicate id/);
+  });
+
+  it("rejects invalid owner objective type", () => {
+    const state = createTestGameState();
+    const json = JSON.stringify({
+      ...state,
+      user: {
+        ...state.user,
+        objectives: [
+          {
+            id: "obj_bad",
+            type: "win_lottery",
+            description: "Invalid",
+            completed: false,
+          },
+        ],
+      },
+    });
+    expect(() => deserializeGameState(json)).toThrow(/type must be one of/);
+  });
+
+  it("rejects negative objective progress", () => {
+    const state = createTestGameState();
+    const json = JSON.stringify({
+      ...state,
+      user: {
+        ...state.user,
+        objectives: [
+          {
+            id: "obj_prog",
+            type: "minimum_win_total",
+            description: "Wins",
+            progress: -1,
+            completed: false,
+          },
+        ],
+      },
+    });
+    expect(() => deserializeGameState(json)).toThrow(/progress must be >= 0/);
+  });
+
+  it("rejects non-finite finance revenue", () => {
+    const state = createTestGameState();
+    const teamId = state.user.controlledTeamId;
+    const json = JSON.stringify({
+      ...state,
+      business: {
+        ...state.business,
+        finances: {
+          ...state.business.finances,
+          [teamId]: {
+            ...state.business.finances[teamId],
+            revenue: Number.NaN,
+          },
+        },
+      },
+    });
+    expect(() => deserializeGameState(json)).toThrow(/revenue/);
   });
 });
 

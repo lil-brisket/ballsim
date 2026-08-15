@@ -1420,4 +1420,49 @@ describe("GameState schema migration", () => {
     });
     expect(migrated.meta.rngState).toBe(modern.meta.rngState);
   });
+
+  it("migrates schemaVersion 14 saves by adding objectives and finance revenue/expenses", () => {
+    const modern = createInitialGameState({
+      saveId: "save_v14_owner",
+      rngSeed: 23,
+      nowIso: "2026-08-14T12:00:00.000Z",
+    });
+
+    const financesV14 = Object.fromEntries(
+      Object.entries(modern.business.finances).map(([teamId, finance]) => [
+        teamId,
+        {
+          teamId: finance.teamId,
+          cash: finance.cash,
+          payroll: finance.payroll,
+        },
+      ]),
+    );
+
+    const { objectives: _removed, ...userWithoutObjectives } = modern.user;
+
+    const stateV14 = {
+      ...modern,
+      meta: {
+        ...modern.meta,
+        schemaVersion: 14,
+      },
+      business: {
+        ...modern.business,
+        finances: financesV14,
+      },
+      user: userWithoutObjectives,
+    };
+
+    const migrated = deserializeGameState(JSON.stringify(stateV14));
+    expect(migrated.meta.schemaVersion).toBe(GAME_STATE_SCHEMA_VERSION);
+    expect(migrated.user.objectives).toEqual([]);
+    for (const finance of Object.values(migrated.business.finances)) {
+      expect(finance.revenue).toBe(0);
+      expect(finance.expenses).toBe(0);
+      expect(finance.cash).toBe(50_000_000);
+      expect(finance.payroll).toBe(0);
+    }
+    expect(migrated.meta.rngState).toBe(modern.meta.rngState);
+  });
 });

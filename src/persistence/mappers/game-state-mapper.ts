@@ -99,10 +99,11 @@ const MIGRATE_ONE_STEP: Record<number, (state: unknown) => unknown> = {
   11: (state) => migrateV11ToV12(state as GameStateV11),
   12: (state) => migrateV12ToV13(state as GameStateV12),
   13: (state) => migrateV13ToV14(state as GameStateV13),
+  14: (state) => migrateV14ToV15(state as GameStateV14),
 };
 
 /**
- * Parse → migrate (v1–v13 → current) → validate → return GameState.
+ * Parse → migrate (v1–v14 → current) → validate → return GameState.
  * Does not call serializeGameState.
  */
 export function deserializeGameState(stateJson: string): GameState {
@@ -315,17 +316,19 @@ type GameStateV7 = {
   meta: Omit<GameState["meta"], "schemaVersion"> & { schemaVersion: 7 };
   world: WorldWithTeamV10;
   competition: CompetitionWithLegacyGames;
-  business: GameState["business"];
-  user: GameState["user"];
+  business: BusinessSliceV14;
+  user: UserSliceV14;
 };
 
-type GameStateV6 = Omit<GameState, "meta" | "world" | "competition"> & {
+type GameStateV6 = Omit<GameState, "meta" | "world" | "competition" | "business" | "user"> & {
   meta: Omit<GameState["meta"], "schemaVersion"> & { schemaVersion: 6 };
   world: Omit<GameState["world"], "players" | "teams"> & {
     players: Record<string, Player>;
     teams: Record<string, TeamV6>;
   };
   competition: CompetitionWithLegacyGames;
+  business: BusinessSliceV14;
+  user: UserSliceV14;
 };
 
 type GameStateV1 = {
@@ -341,8 +344,8 @@ type GameStateV1 = {
     players: Record<string, unknown>;
   } & Omit<GameState["world"], "players">;
   competition: CompetitionWithLegacyGames;
-  business: GameState["business"];
-  user: GameState["user"];
+  business: BusinessSliceV14;
+  user: UserSliceV14;
 };
 
 type GameStateV2 = {
@@ -358,8 +361,8 @@ type GameStateV2 = {
     players: Record<string, PlayerV2>;
   } & Omit<GameState["world"], "players">;
   competition: CompetitionWithLegacyGames;
-  business: GameState["business"];
-  user: GameState["user"];
+  business: BusinessSliceV14;
+  user: UserSliceV14;
 };
 
 type GameStateV3 = {
@@ -375,8 +378,8 @@ type GameStateV3 = {
     players: Record<string, PlayerV3>;
   } & Omit<GameState["world"], "players">;
   competition: CompetitionWithLegacyGames;
-  business: GameState["business"];
-  user: GameState["user"];
+  business: BusinessSliceV14;
+  user: UserSliceV14;
 };
 
 type GameStateV4 = {
@@ -392,8 +395,8 @@ type GameStateV4 = {
     players: Record<string, PlayerV4>;
   } & Omit<GameState["world"], "players">;
   competition: CompetitionWithLegacyGames;
-  business: GameState["business"];
-  user: GameState["user"];
+  business: BusinessSliceV14;
+  user: UserSliceV14;
 };
 
 type GameStateV5 = {
@@ -409,8 +412,8 @@ type GameStateV5 = {
     players: Record<string, PlayerV5>;
   } & Omit<GameState["world"], "players">;
   competition: CompetitionWithLegacyGames;
-  business: GameState["business"];
-  user: GameState["user"];
+  business: BusinessSliceV14;
+  user: UserSliceV14;
 };
 
 const ARCHETYPE_FROM_POSITION: Record<PlayerPosition, PlayerArchetype> = {
@@ -858,8 +861,29 @@ type StandingsV12 = {
   byTeamId: Record<string, TeamStandingV12>;
 };
 
-type CompetitionV12 = Omit<GameState["competition"], "standings"> & {
+type CompetitionV12 = {
+  season: GameState["competition"]["season"];
+  schedule: GameState["competition"]["schedule"];
+  games: Record<string, Game>;
   standings: StandingsV12;
+};
+
+/** Schema ≤14 finances before revenue/expenses. */
+type TeamFinancesV14 = {
+  teamId: TeamId;
+  cash: number;
+  payroll: number;
+};
+
+type BusinessSliceV14 = {
+  contracts: GameState["business"]["contracts"];
+  finances: Record<string, TeamFinancesV14>;
+};
+
+/** Schema ≤14 user slice before owner objectives. */
+type UserSliceV14 = {
+  controlledTeamId: TeamId;
+  mode: GameState["user"]["mode"];
 };
 
 /** Schema v8 game shape before periodScores and extended box-score fields. */
@@ -901,8 +925,8 @@ type GameStateV8 = {
     games: Record<string, GameV8>;
     standings: StandingsV12;
   };
-  business: GameState["business"];
-  user: GameState["user"];
+  business: BusinessSliceV14;
+  user: UserSliceV14;
 };
 
 /**
@@ -1012,8 +1036,8 @@ type GameStateV9 = {
     games: Record<string, GameV9>;
     standings: StandingsV12;
   };
-  business: GameState["business"];
-  user: GameState["user"];
+  business: BusinessSliceV14;
+  user: UserSliceV14;
 };
 
 /**
@@ -1076,8 +1100,8 @@ type GameStateV10 = {
     games: Record<string, Game>;
     standings: StandingsV12;
   };
-  business: GameState["business"];
-  user: GameState["user"];
+  business: BusinessSliceV14;
+  user: UserSliceV14;
 };
 
 /**
@@ -1127,8 +1151,8 @@ type GameStateV11 = {
   };
   world: WorldWithTeamV11;
   competition: CompetitionV12;
-  business: GameState["business"];
-  user: GameState["user"];
+  business: BusinessSliceV14;
+  user: UserSliceV14;
 };
 
 type GameStateV12 = {
@@ -1138,8 +1162,8 @@ type GameStateV12 = {
   };
   world: GameState["world"];
   competition: CompetitionV12;
-  business: GameState["business"];
-  user: GameState["user"];
+  business: BusinessSliceV14;
+  user: UserSliceV14;
 };
 
 /**
@@ -1230,14 +1254,25 @@ type GameStateV13 = {
     games: GameState["competition"]["games"];
     standings: GameState["competition"]["standings"];
   };
-  business: GameState["business"];
-  user: GameState["user"];
+  business: BusinessSliceV14;
+  user: UserSliceV14;
+};
+
+type GameStateV14 = {
+  meta: Omit<GameState["meta"], "schemaVersion"> & {
+    schemaVersion: 14;
+    rngState: number;
+  };
+  world: GameState["world"];
+  competition: GameState["competition"];
+  business: BusinessSliceV14;
+  user: UserSliceV14;
 };
 
 /**
  * Deterministic v13 → v14: add empty playoff tournament under competition.
  */
-function migrateV13ToV14(state: GameStateV13): GameState {
+function migrateV13ToV14(state: GameStateV13): GameStateV14 {
   if (typeof state.meta.rngState !== "number") {
     throw new Error("GameState meta.rngState is required for schemaVersion 13.");
   }
@@ -1245,7 +1280,7 @@ function migrateV13ToV14(state: GameStateV13): GameState {
   return {
     meta: {
       saveId: state.meta.saveId,
-      schemaVersion: GAME_STATE_SCHEMA_VERSION,
+      schemaVersion: 14,
       createdAt: state.meta.createdAt,
       updatedAt: state.meta.updatedAt,
       rngSeed: state.meta.rngSeed,
@@ -1261,6 +1296,50 @@ function migrateV13ToV14(state: GameStateV13): GameState {
     },
     business: state.business,
     user: state.user,
+  };
+}
+
+/**
+ * Deterministic v14 → v15: add empty owner objectives and finance revenue/expenses.
+ */
+function migrateV14ToV15(state: GameStateV14): GameState {
+  if (typeof state.meta.rngState !== "number") {
+    throw new Error("GameState meta.rngState is required for schemaVersion 14.");
+  }
+
+  const finances: GameState["business"]["finances"] = Object.fromEntries(
+    Object.entries(state.business.finances).map(([teamId, finance]) => [
+      teamId,
+      {
+        teamId: finance.teamId,
+        cash: finance.cash,
+        revenue: 0,
+        expenses: 0,
+        payroll: finance.payroll,
+      },
+    ]),
+  );
+
+  return {
+    meta: {
+      saveId: state.meta.saveId,
+      schemaVersion: GAME_STATE_SCHEMA_VERSION,
+      createdAt: state.meta.createdAt,
+      updatedAt: state.meta.updatedAt,
+      rngSeed: state.meta.rngSeed,
+      rngState: state.meta.rngState,
+    },
+    world: state.world,
+    competition: state.competition,
+    business: {
+      contracts: state.business.contracts,
+      finances,
+    },
+    user: {
+      controlledTeamId: state.user.controlledTeamId,
+      mode: state.user.mode,
+      objectives: [],
+    },
   };
 }
 

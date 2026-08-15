@@ -15,6 +15,7 @@ export type SeasonId = Brand<string, "SeasonId">;
 export type PlayoffSeriesId = Brand<string, "PlayoffSeriesId">;
 export type DomainEventId = Brand<string, "DomainEventId">;
 export type SaveId = Brand<string, "SaveId">;
+export type OwnerObjectiveId = Brand<string, "OwnerObjectiveId">;
 
 export function asPlayerId(value: string): PlayerId {
   return value as PlayerId;
@@ -74,4 +75,8 @@ export function asDomainEventId(value: string): DomainEventId {
 
 export function asSaveId(value: string): SaveId {
   return value as SaveId;
+}
+
+export function asOwnerObjectiveId(value: string): OwnerObjectiveId {
+  return value as OwnerObjectiveId;
 }

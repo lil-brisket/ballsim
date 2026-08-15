@@ -1,6 +1,10 @@
 import { parseCalendarDate } from "@/domain/calendar-date";
 import { GAME_STATUSES, type Game } from "@/domain/entities/game";
 import type { PlayoffTournament } from "@/domain/entities/playoffs";
+import {
+  isOwnerObjectiveType,
+  OWNER_OBJECTIVE_TYPES,
+} from "@/domain/entities/owner-objective";
 import type { SeasonPhase } from "@/domain/entities/season";
 import type { GameState, GameMode } from "@/state/game-state";
 import { GAME_STATE_SCHEMA_VERSION } from "@/state/game-state";
@@ -158,7 +162,7 @@ export function validateGameState(state: unknown): asserts state is GameState {
   assertRecord(competition.standings.byTeamId, "competition.standings.byTeamId");
 
   if (competition.playoffs === null || competition.playoffs === undefined) {
-    fail("competition.playoffs is required for schemaVersion 14.");
+    fail("competition.playoffs is required.");
   }
   assertRecord(competition.playoffs, "competition.playoffs");
   validatePlayoffs(competition.playoffs);
@@ -183,6 +187,10 @@ export function validateGameState(state: unknown): asserts state is GameState {
   ) {
     fail(`user.mode must be one of ${GAME_MODES.join(", ")}.`);
   }
+  if (!("objectives" in user) || !Array.isArray(user.objectives)) {
+    fail("user.objectives must be an array.");
+  }
+  validateOwnerObjectives(user.objectives);
 
   const teamIds = new Set(Object.keys(world.teams));
   const playerIds = new Set(Object.keys(world.players));
@@ -266,6 +274,19 @@ export function validateGameState(state: unknown): asserts state is GameState {
         `business.finances entry "${financeKey}" must key and teamId match an existing team.`,
       );
     }
+    assertNumber(financeValue.cash, `business.finances[${financeKey}].cash`);
+    assertNumber(
+      financeValue.revenue,
+      `business.finances[${financeKey}].revenue`,
+    );
+    assertNumber(
+      financeValue.expenses,
+      `business.finances[${financeKey}].expenses`,
+    );
+    assertNumber(
+      financeValue.payroll,
+      `business.finances[${financeKey}].payroll`,
+    );
   }
 
   for (const [standingKey, standingValue] of Object.entries(
@@ -514,6 +535,52 @@ function validatePlayoffReferences(
         fail(
           `competition.playoffs.series "${series.id}" wins key "${teamId}" is missing from world.teams.`,
         );
+      }
+    }
+  }
+}
+
+/**
+ * Structural validation only — no objective-type-specific business rules.
+ */
+function validateOwnerObjectives(objectives: unknown[]): void {
+  const seenIds = new Set<string>();
+
+  for (const [index, objectiveValue] of objectives.entries()) {
+    const path = `user.objectives[${index}]`;
+    assertRecord(objectiveValue, path);
+    assertNonEmptyString(objectiveValue.id, `${path}.id`);
+    if (seenIds.has(objectiveValue.id)) {
+      fail(`user.objectives contains duplicate id "${objectiveValue.id}".`);
+    }
+    seenIds.add(objectiveValue.id);
+
+    if (
+      typeof objectiveValue.type !== "string" ||
+      !isOwnerObjectiveType(objectiveValue.type)
+    ) {
+      fail(
+        `${path}.type must be one of ${OWNER_OBJECTIVE_TYPES.join(", ")}.`,
+      );
+    }
+
+    assertNonEmptyString(objectiveValue.description, `${path}.description`);
+    if (objectiveValue.description.trim().length === 0) {
+      fail(`${path}.description cannot be whitespace-only.`);
+    }
+
+    if (typeof objectiveValue.completed !== "boolean") {
+      fail(`${path}.completed must be a boolean.`);
+    }
+
+    if (objectiveValue.target !== undefined) {
+      assertNumber(objectiveValue.target, `${path}.target`);
+    }
+
+    if (objectiveValue.progress !== undefined) {
+      assertNumber(objectiveValue.progress, `${path}.progress`);
+      if (objectiveValue.progress < 0) {
+        fail(`${path}.progress must be >= 0.`);
       }
     }
   }

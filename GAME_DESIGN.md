@@ -26,6 +26,8 @@ Working product title: **Basketball** (subject to rename).
 
 The player controls one team inside a larger simulated basketball world.
 
+Canonical simulation state remains `GameState`. Owner-specific persisted data lives on `user.objectives` (plus team finances in `business.finances`). `toOwnerGameState` builds a derived, non-persisted management-layer view with live references into that state — it is not a second global game state or save schema.
+
 Near-term Owner Mode surfaces (UI destinations, not all implemented yet):
 
 - Dashboard

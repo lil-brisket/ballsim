@@ -158,3 +158,13 @@ export type {
 export { createEmptyTeamStanding } from "@/domain/entities/standings";
 export type { TeamFinances } from "@/domain/entities/finances";
 export type { Calendar } from "@/domain/entities/calendar";
+export type {
+  OwnerObjective,
+  OwnerObjectiveInput,
+  OwnerObjectiveType,
+} from "@/domain/entities/owner-objective";
+export {
+  OWNER_OBJECTIVE_TYPES,
+  isOwnerObjectiveType,
+  createOwnerObjective,
+} from "@/domain/entities/owner-objective";
