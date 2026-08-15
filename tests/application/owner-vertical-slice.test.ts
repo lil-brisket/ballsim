@@ -49,6 +49,10 @@ describe("Owner Mode vertical slice", () => {
         { name: "Smoke Franchise", rngSeed: TEST_RNG_SEED },
         store,
       );
+      expect(created.ok).toBe(true);
+      if (!created.ok) {
+        return;
+      }
       expect(created.dashboard.teamCount).toBe(12);
       expect(created.dashboard.playerCount).toBeGreaterThan(0);
       expect(created.dashboard.teamSelectionLocked).toBe(false);
@@ -96,6 +100,10 @@ describe("Owner Mode vertical slice", () => {
         { name: "Guard Franchise", rngSeed: TEST_RNG_SEED },
         store,
       );
+      expect(created.ok).toBe(true);
+      if (!created.ok) {
+        return;
+      }
       const fa = await signOwnerFreeAgent(
         created.save.id,
         { playerId: "player_missing" },
@@ -123,6 +131,10 @@ describe("Owner Mode vertical slice", () => {
         { name: "Vertical Slice", rngSeed: TEST_RNG_SEED },
         store,
       );
+      expect(created.ok).toBe(true);
+      if (!created.ok) {
+        return;
+      }
       const saveId = created.save.id;
       const loaded0 = await store.load(saveId);
       expect(loaded0).not.toBeNull();
@@ -361,6 +373,10 @@ describe("Owner Mode vertical slice", () => {
           },
           store,
         );
+        expect(created.ok).toBe(true);
+        if (!created.ok) {
+          return;
+        }
         const loaded = await store.load(created.save.id);
         const teamIds = Object.keys(loaded!.state.world.teams).sort();
         const teamId = teamIds[teamIndex % teamIds.length]!;

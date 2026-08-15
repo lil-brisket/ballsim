@@ -56,6 +56,9 @@ function returnPath(formData: FormData, saveId: string): string {
 export async function createSaveAction(formData: FormData): Promise<void> {
   const name = String(formData.get("name") ?? "New Franchise");
   const result = await createNewOwnerSave({ name });
+  if (!result.ok) {
+    redirectWithError("/", result.error);
+  }
   revalidatePath("/");
   redirect(`/new/${result.save.id}/team`);
 }

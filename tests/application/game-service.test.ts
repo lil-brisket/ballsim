@@ -16,12 +16,33 @@ import {
   createNewOwnerSave,
   deleteOwnerSave,
   loadOwnerSave,
+  MAX_OWNER_SAVE_SLOTS,
   saveOwnerGame,
 } from "@/application/game-service";
 import { createMemorySaveGameStore } from "@/persistence/memory-save-game-store";
 import { validateGameState } from "@/persistence/validate-game-state";
 import type { GameState } from "@/state/game-state";
+import * as worldPipeline from "@/systems/world-pipeline";
+import { createTestGameState } from "../factories/game-state";
 import { TEST_RNG_SEED } from "../helpers/determinism";
+
+async function seedSaveSlots(
+  store: ReturnType<typeof createMemorySaveGameStore>,
+  count: number,
+): Promise<string[]> {
+  const ids: string[] = [];
+  for (let index = 0; index < count; index += 1) {
+    const saveId = `save_slot_${index}`;
+    const state = createTestGameState({ saveId });
+    await store.create({
+      id: saveId,
+      name: `Seeded ${index}`,
+      state,
+    });
+    ids.push(saveId);
+  }
+  return ids;
+}
 
 describe("game-service load / save", () => {
   let store: ReturnType<typeof createMemorySaveGameStore>;
@@ -35,6 +56,10 @@ describe("game-service load / save", () => {
       { name: "Owner Franchise", rngSeed: TEST_RNG_SEED },
       store,
     );
+    expect(created.ok).toBe(true);
+    if (!created.ok) {
+      return;
+    }
     const saveId = created.save.id;
     expect(created.dashboard).toBeDefined();
 
@@ -57,6 +82,10 @@ describe("game-service load / save", () => {
       { name: "Overwrite Franchise", rngSeed: TEST_RNG_SEED },
       store,
     );
+    expect(created.ok).toBe(true);
+    if (!created.ok) {
+      return;
+    }
     const saveId = created.save.id;
 
     const loadedA = await store.load(saveId);
@@ -112,6 +141,10 @@ describe("game-service load / save", () => {
       { name: "Delete Me", rngSeed: TEST_RNG_SEED },
       store,
     );
+    expect(created.ok).toBe(true);
+    if (!created.ok) {
+      return;
+    }
     const removed = await deleteOwnerSave(created.save.id, store);
     expect(removed).toBe(true);
     expect(await loadOwnerSave(created.save.id, store)).toBeNull();
@@ -120,5 +153,72 @@ describe("game-service load / save", () => {
   it("deleteOwnerSave returns false for a nonexistent id", async () => {
     const removed = await deleteOwnerSave("does-not-exist", store);
     expect(removed).toBe(false);
+  });
+});
+
+describe("MAX_OWNER_SAVE_SLOTS", () => {
+  let store: ReturnType<typeof createMemorySaveGameStore>;
+
+  beforeEach(() => {
+    store = createMemorySaveGameStore();
+  });
+
+  it("creates successfully when 9 saves already exist", async () => {
+    await seedSaveSlots(store, MAX_OWNER_SAVE_SLOTS - 1);
+    const created = await createNewOwnerSave(
+      { name: "Tenth Slot", rngSeed: TEST_RNG_SEED },
+      store,
+    );
+    expect(created.ok).toBe(true);
+    if (!created.ok) {
+      return;
+    }
+    expect(created.save.name).toBe("Tenth Slot");
+    expect(await store.list()).toHaveLength(MAX_OWNER_SAVE_SLOTS);
+  });
+
+  it("rejects create at the cap without bootstrapping and leaves existing saves intact", async () => {
+    const seededIds = await seedSaveSlots(store, MAX_OWNER_SAVE_SLOTS);
+    const before = await store.list();
+    const bootstrapSpy = vi.spyOn(worldPipeline, "bootstrapWorld");
+
+    const created = await createNewOwnerSave(
+      { name: "Over Cap", rngSeed: TEST_RNG_SEED },
+      store,
+    );
+
+    expect(created.ok).toBe(false);
+    if (created.ok) {
+      return;
+    }
+    expect(created.error).toMatch(/at most 10 saves/i);
+    expect(bootstrapSpy).not.toHaveBeenCalled();
+    expect(await store.list()).toHaveLength(MAX_OWNER_SAVE_SLOTS);
+    expect((await store.list()).map((row) => row.id).sort()).toEqual(
+      [...seededIds].sort(),
+    );
+    expect((await store.list()).map((row) => row.name).sort()).toEqual(
+      before.map((row) => row.name).sort(),
+    );
+
+    bootstrapSpy.mockRestore();
+  });
+
+  it("allows create again after deleting one save at the cap", async () => {
+    const seededIds = await seedSaveSlots(store, MAX_OWNER_SAVE_SLOTS);
+    const removed = await deleteOwnerSave(seededIds[0]!, store);
+    expect(removed).toBe(true);
+    expect(await store.list()).toHaveLength(MAX_OWNER_SAVE_SLOTS - 1);
+
+    const created = await createNewOwnerSave(
+      { name: "After Delete", rngSeed: TEST_RNG_SEED },
+      store,
+    );
+    expect(created.ok).toBe(true);
+    if (!created.ok) {
+      return;
+    }
+    expect(created.save.name).toBe("After Delete");
+    expect(await store.list()).toHaveLength(MAX_OWNER_SAVE_SLOTS);
   });
 });
