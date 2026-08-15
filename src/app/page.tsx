@@ -3,13 +3,23 @@ import {
   deleteSaveAction,
   openSaveAction,
 } from "@/application/actions";
-import { listOwnerSaves } from "@/application/game-service";
+import {
+  listOwnerSaves,
+  MAX_OWNER_SAVE_SLOTS,
+} from "@/application/game-service";
 import { ConfirmDialog } from "@/components/owner/ConfirmDialog";
+import { ErrorState } from "@/components/owner/EmptyState";
 
 export const dynamic = "force-dynamic";
 
-export default async function HomePage() {
+type HomePageProps = {
+  searchParams: Promise<{ error?: string }>;
+};
+
+export default async function HomePage({ searchParams }: HomePageProps) {
+  const { error } = await searchParams;
   const saves = await listOwnerSaves();
+  const atSaveLimit = saves.length >= MAX_OWNER_SAVE_SLOTS;
 
   return (
     <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-10 px-6 py-16">
@@ -27,8 +37,15 @@ export default async function HomePage() {
         </p>
       </header>
 
+      {error ? <ErrorState message={error} /> : null}
+
       <section className="space-y-4 rounded-xl border border-zinc-800 bg-zinc-900/70 p-6">
         <h2 className="text-lg font-medium text-zinc-100">New save</h2>
+        {atSaveLimit ? (
+          <ErrorState
+            message={`Owner Mode allows at most ${MAX_OWNER_SAVE_SLOTS} saves. Delete a save to create another.`}
+          />
+        ) : null}
         <form action={createSaveAction} className="flex flex-col gap-3 sm:flex-row">
           <label className="sr-only" htmlFor="name">
             Save name
@@ -38,11 +55,13 @@ export default async function HomePage() {
             name="name"
             type="text"
             defaultValue="Harbor Franchise"
-            className="flex-1 rounded-md border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-100 outline-none ring-amber-500/40 focus:ring-2"
+            disabled={atSaveLimit}
+            className="flex-1 rounded-md border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-100 outline-none ring-amber-500/40 focus:ring-2 disabled:cursor-not-allowed disabled:opacity-50"
           />
           <button
             type="submit"
-            className="rounded-md bg-amber-600 px-4 py-2 text-sm font-medium text-zinc-950 hover:bg-amber-500"
+            disabled={atSaveLimit}
+            className="rounded-md bg-amber-600 px-4 py-2 text-sm font-medium text-zinc-950 hover:bg-amber-500 disabled:cursor-not-allowed disabled:opacity-50"
           >
             Create save
           </button>
@@ -50,7 +69,9 @@ export default async function HomePage() {
       </section>
 
       <section className="space-y-4">
-        <h2 className="text-lg font-medium text-zinc-100">Existing saves</h2>
+        <h2 className="text-lg font-medium text-zinc-100">
+          Existing saves ({saves.length}/{MAX_OWNER_SAVE_SLOTS})
+        </h2>
         {saves.length === 0 ? (
           <p className="text-sm text-zinc-500">No saves yet.</p>
         ) : (

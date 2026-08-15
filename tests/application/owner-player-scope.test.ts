@@ -32,6 +32,10 @@ describe("owner player scope", () => {
       { name: "Scope Franchise", rngSeed: TEST_RNG_SEED },
       store,
     );
+    expect(created.ok).toBe(true);
+    if (!created.ok) {
+      return;
+    }
     const saveId = created.save.id;
     const teams = Object.values(
       (await store.load(saveId))!.state.world.teams,

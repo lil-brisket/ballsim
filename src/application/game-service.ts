@@ -122,6 +122,9 @@ import {
 import { PLAYER_POSITIONS, type PlayerPosition } from "@/domain/entities/player";
 import { bootstrapWorld } from "@/systems/world-pipeline";
 
+/** Max Owner Mode SaveGame rows. Current-count cap, not a lifetime counter. */
+export const MAX_OWNER_SAVE_SLOTS = 10;
+
 export type CreateGameResult = {
   save: SaveGameSummary;
   dashboard: DashboardSnapshot;
@@ -235,8 +238,15 @@ export async function createNewOwnerSave(
     rngSeed?: number;
   },
   store?: SaveGameStore,
-): Promise<CreateGameResult> {
+): Promise<OwnerCommandResult> {
   const saveStore = getStore(store);
+  const existing = await saveStore.list();
+  if (existing.length >= MAX_OWNER_SAVE_SLOTS) {
+    return fail(
+      `Owner Mode allows at most ${MAX_OWNER_SAVE_SLOTS} saves. Delete a save to create another.`,
+    );
+  }
+
   const saveId = crypto.randomUUID();
   const nowIso = new Date().toISOString();
   let state = createInitialGameState({
@@ -263,10 +273,7 @@ export async function createNewOwnerSave(
     state,
   });
 
-  return {
-    save: toSaveSummary(loaded),
-    dashboard: toDashboardSnapshot(loaded.state),
-  };
+  return withDashboard(loaded);
 }
 
 export async function loadOwnerSave(

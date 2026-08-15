@@ -44,6 +44,10 @@ describe("eventLog persistence", () => {
       { name: "Event Log Franchise", rngSeed: TEST_RNG_SEED },
       store,
     );
+    expect(created.ok).toBe(true);
+    if (!created.ok) {
+      return;
+    }
     const saveId = created.save.id;
 
     const advanced = await advanceOwnerTime(saveId, { days: 1 }, store);
@@ -104,6 +108,10 @@ describe("eventLog persistence", () => {
       { name: "Migrate Event Log", rngSeed: TEST_RNG_SEED },
       store,
     );
+    expect(created.ok).toBe(true);
+    if (!created.ok) {
+      return;
+    }
     const loaded = await store.load(created.save.id);
     expect(loaded).not.toBeNull();
 

@@ -247,6 +247,8 @@ Compatibility wrappers (`createSaveGame`, `getSaveGame`, `updateSaveGameState`, 
 
 Save deletion is by `SaveGame.id` only. There is no user/session ownership check because the current save model is local/single-user; do not introduce a parallel authorization model here.
 
+Owner Mode new-save is rejected when the current `SaveGame` row count is `>= MAX_OWNER_SAVE_SLOTS` (10). This is a current-row check in `createNewOwnerSave` (`list` then `create`), not a lifetime creation counter and not an atomic database constraint. Concurrent creates could theoretically exceed the cap; that is accepted for the current single-user local SQLite model. Multiplayer or multi-process creation would need an atomic reservation/transaction.
+
 Save pipeline: `serializeGameState` (JSON.stringify) → parse clone → `validateGameState` → write blob.  
 Load pipeline: read `stateJson` → JSON.parse → migrate v1→v16 → `validateGameState` → return `GameState`.
 
