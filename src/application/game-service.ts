@@ -364,6 +364,18 @@ export async function listOwnerSaves(
 }
 
 /**
+ * Delete a save by SaveGame.id. No user/session ownership check — the
+ * current save model is local/single-user. Do not introduce a parallel
+ * authorization model here.
+ */
+export async function deleteOwnerSave(
+  saveId: string,
+  store?: SaveGameStore,
+): Promise<boolean> {
+  return getStore(store).delete(saveId);
+}
+
+/**
  * Persist GameState without running simulation. Does not mutate input state.
  */
 export async function saveOwnerGame(

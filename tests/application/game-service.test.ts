@@ -8,11 +8,13 @@ vi.mock("@/persistence/save-game-repository", () => ({
     create: vi.fn(),
     load: vi.fn(),
     save: vi.fn(),
+    delete: vi.fn(),
   },
 }));
 
 import {
   createNewOwnerSave,
+  deleteOwnerSave,
   loadOwnerSave,
   saveOwnerGame,
 } from "@/application/game-service";
@@ -103,5 +105,20 @@ describe("game-service load / save", () => {
   it("loadOwnerSave returns null for a missing save", async () => {
     const result = await loadOwnerSave("does-not-exist", store);
     expect(result).toBeNull();
+  });
+
+  it("create → deleteOwnerSave → loadOwnerSave returns null", async () => {
+    const created = await createNewOwnerSave(
+      { name: "Delete Me", rngSeed: TEST_RNG_SEED },
+      store,
+    );
+    const removed = await deleteOwnerSave(created.save.id, store);
+    expect(removed).toBe(true);
+    expect(await loadOwnerSave(created.save.id, store)).toBeNull();
+  });
+
+  it("deleteOwnerSave returns false for a nonexistent id", async () => {
+    const removed = await deleteOwnerSave("does-not-exist", store);
+    expect(removed).toBe(false);
   });
 });

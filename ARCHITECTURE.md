@@ -238,12 +238,14 @@ Initial `SaveGame` Prisma record:
 | `createdAt` | Created timestamp |
 | `updatedAt` | Updated timestamp |
 
-Application code depends on `SaveGameStore` (`list` / `create` / `load` / `save`). Adapters:
+Application code depends on `SaveGameStore` (`list` / `create` / `load` / `save` / `delete`). Adapters:
 
-- `PrismaSaveGameStore` — production (single-row create/update of `stateJson`)
+- `PrismaSaveGameStore` — production (single-row create/update of `stateJson`; `deleteMany` by id)
 - `MemorySaveGameStore` — tests
 
-Compatibility wrappers (`createSaveGame`, `getSaveGame`, `updateSaveGameState`, etc.) delegate to the Prisma store.
+Compatibility wrappers (`createSaveGame`, `getSaveGame`, `updateSaveGameState`, `deleteSaveGame`, etc.) delegate to the Prisma store.
+
+Save deletion is by `SaveGame.id` only. There is no user/session ownership check because the current save model is local/single-user; do not introduce a parallel authorization model here.
 
 Save pipeline: `serializeGameState` (JSON.stringify) → parse clone → `validateGameState` → write blob.  
 Load pipeline: read `stateJson` → JSON.parse → migrate v1→v16 → `validateGameState` → return `GameState`.

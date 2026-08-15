@@ -25,4 +25,6 @@ export type SaveGameStore = {
   }): Promise<LoadedSaveGame>;
   load(id: string): Promise<LoadedSaveGame | null>;
   save(input: { id: string; state: GameState }): Promise<LoadedSaveGame>;
+  /** true if a row was removed; false if the id was already gone. */
+  delete(id: string): Promise<boolean>;
 };

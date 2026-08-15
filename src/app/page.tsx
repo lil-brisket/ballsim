@@ -1,8 +1,10 @@
 import {
   createSaveAction,
+  deleteSaveAction,
   openSaveAction,
 } from "@/application/actions";
 import { listOwnerSaves } from "@/application/game-service";
+import { ConfirmDialog } from "@/components/owner/ConfirmDialog";
 
 export const dynamic = "force-dynamic";
 
@@ -64,15 +66,32 @@ export default async function HomePage() {
                     schema v{save.schemaVersion} · {save.id}
                   </p>
                 </div>
-                <form action={openSaveAction}>
-                  <input type="hidden" name="saveId" value={save.id} />
-                  <button
-                    type="submit"
-                    className="rounded-md border border-zinc-700 px-3 py-1.5 text-sm text-zinc-200 hover:border-amber-600 hover:text-amber-400"
+                <div className="flex items-center gap-3">
+                  <form action={openSaveAction}>
+                    <input type="hidden" name="saveId" value={save.id} />
+                    <button
+                      type="submit"
+                      className="rounded-md border border-zinc-700 px-3 py-1.5 text-sm text-zinc-200 hover:border-amber-600 hover:text-amber-400"
+                    >
+                      Open
+                    </button>
+                  </form>
+                  <ConfirmDialog
+                    title="Delete save?"
+                    description={`Delete “${save.name}”? This cannot be undone.`}
+                    confirmLabel="Delete"
                   >
-                    Open
-                  </button>
-                </form>
+                    <form action={deleteSaveAction}>
+                      <input type="hidden" name="saveId" value={save.id} />
+                      <button
+                        type="submit"
+                        className="rounded-md bg-red-700 px-3 py-1.5 text-sm font-medium text-zinc-50 hover:bg-red-600"
+                      >
+                        Confirm delete
+                      </button>
+                    </form>
+                  </ConfirmDialog>
+                </div>
               </li>
             ))}
           </ul>

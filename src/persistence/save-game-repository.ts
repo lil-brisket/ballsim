@@ -98,6 +98,11 @@ export function createPrismaSaveGameStore(): SaveGameStore {
       });
       return toLoaded(row);
     },
+
+    async delete(id: string): Promise<boolean> {
+      const result = await prisma.saveGame.deleteMany({ where: { id } });
+      return result.count > 0;
+    },
   };
 }
 
@@ -137,6 +142,10 @@ export async function saveGame(input: {
 
 export async function loadGame(id: string): Promise<LoadedSaveGame | null> {
   return defaultStore.load(id);
+}
+
+export async function deleteSaveGame(id: string): Promise<boolean> {
+  return defaultStore.delete(id);
 }
 
 export type { LoadedSaveGame, SaveGameSummary, SaveGameStore };
