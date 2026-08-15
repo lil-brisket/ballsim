@@ -1,0 +1,520 @@
+import { parseCalendarDate } from "@/domain/calendar-date";
+import { GAME_STATUSES, type Game } from "@/domain/entities/game";
+import type { PlayoffTournament } from "@/domain/entities/playoffs";
+import type { SeasonPhase } from "@/domain/entities/season";
+import type { GameState, GameMode } from "@/state/game-state";
+import { GAME_STATE_SCHEMA_VERSION } from "@/state/game-state";
+
+const SEASON_PHASES: readonly SeasonPhase[] = [
+  "preseason",
+  "regular",
+  "playoffs",
+  "offseason",
+];
+
+const GAME_MODES: readonly GameMode[] = ["owner"];
+
+const PLAYOFF_TOURNAMENT_STATUSES = [
+  "not_started",
+  "in_progress",
+  "complete",
+] as const;
+
+const PLAYOFF_SERIES_STATUSES = ["pending", "active", "complete"] as const;
+
+function fail(message: string): never {
+  throw new Error(`Invalid GameState: ${message}`);
+}
+
+function assertRecord(value: unknown, path: string): asserts value is Record<string, unknown> {
+  if (value === null || typeof value !== "object" || Array.isArray(value)) {
+    fail(`${path} must be an object.`);
+  }
+}
+
+function assertNonEmptyString(value: unknown, path: string): asserts value is string {
+  if (typeof value !== "string" || value.length === 0) {
+    fail(`${path} must be a non-empty string.`);
+  }
+}
+
+function assertNumber(value: unknown, path: string): asserts value is number {
+  if (typeof value !== "number" || !Number.isFinite(value)) {
+    fail(`${path} must be a finite number.`);
+  }
+}
+
+/**
+ * Validates structural and referential integrity of a GameState at the
+ * persistence boundary. Does not mutate input. Throws on failure.
+ */
+export function validateGameState(state: unknown): asserts state is GameState {
+  assertRecord(state, "GameState");
+
+  for (const key of ["meta", "world", "competition", "business", "user"] as const) {
+    if (!(key in state)) {
+      fail(`missing required root field "${key}".`);
+    }
+  }
+
+  const meta = state.meta;
+  assertRecord(meta, "meta");
+  assertNonEmptyString(meta.saveId, "meta.saveId");
+  assertNumber(meta.schemaVersion, "meta.schemaVersion");
+  if (meta.schemaVersion !== GAME_STATE_SCHEMA_VERSION) {
+    fail(
+      `meta.schemaVersion must be ${GAME_STATE_SCHEMA_VERSION}; got ${meta.schemaVersion}.`,
+    );
+  }
+  assertNonEmptyString(meta.createdAt, "meta.createdAt");
+  assertNonEmptyString(meta.updatedAt, "meta.updatedAt");
+  assertNumber(meta.rngSeed, "meta.rngSeed");
+  if (!Number.isInteger(meta.rngSeed)) {
+    fail("meta.rngSeed must be an integer.");
+  }
+  assertNumber(meta.rngState, "meta.rngState");
+  if (!Number.isInteger(meta.rngState)) {
+    fail("meta.rngState must be an integer.");
+  }
+
+  const world = state.world;
+  assertRecord(world, "world");
+  for (const key of [
+    "calendar",
+    "league",
+    "conferences",
+    "divisions",
+    "teams",
+    "players",
+    "coaches",
+    "staff",
+  ] as const) {
+    if (!(key in world)) {
+      fail(`world missing required field "${key}".`);
+    }
+  }
+
+  assertRecord(world.calendar, "world.calendar");
+  assertNonEmptyString(world.calendar.currentDate, "world.calendar.currentDate");
+  try {
+    parseCalendarDate(world.calendar.currentDate);
+  } catch (error) {
+    fail(
+      error instanceof Error
+        ? `world.calendar.currentDate: ${error.message}`
+        : "world.calendar.currentDate is invalid.",
+    );
+  }
+
+  assertRecord(world.league, "world.league");
+  assertNonEmptyString(world.league.id, "world.league.id");
+  assertRecord(world.conferences, "world.conferences");
+  assertRecord(world.divisions, "world.divisions");
+  assertRecord(world.teams, "world.teams");
+  assertRecord(world.players, "world.players");
+  assertRecord(world.coaches, "world.coaches");
+  assertRecord(world.staff, "world.staff");
+
+  const competition = state.competition;
+  assertRecord(competition, "competition");
+  for (const key of [
+    "season",
+    "schedule",
+    "games",
+    "standings",
+    "playoffs",
+  ] as const) {
+    if (!(key in competition)) {
+      fail(`competition missing required field "${key}".`);
+    }
+  }
+
+  assertRecord(competition.season, "competition.season");
+  assertNonEmptyString(competition.season.id, "competition.season.id");
+  assertNumber(competition.season.year, "competition.season.year");
+  if (
+    typeof competition.season.phase !== "string" ||
+    !SEASON_PHASES.includes(competition.season.phase as SeasonPhase)
+  ) {
+    fail(
+      `competition.season.phase must be one of ${SEASON_PHASES.join(", ")}.`,
+    );
+  }
+
+  assertRecord(competition.schedule, "competition.schedule");
+  assertNonEmptyString(
+    competition.schedule.seasonId,
+    "competition.schedule.seasonId",
+  );
+  if (competition.schedule.seasonId !== competition.season.id) {
+    fail("competition.schedule.seasonId must match competition.season.id.");
+  }
+  if (!Array.isArray(competition.schedule.gameIds)) {
+    fail("competition.schedule.gameIds must be an array.");
+  }
+
+  assertRecord(competition.games, "competition.games");
+  assertRecord(competition.standings, "competition.standings");
+  assertRecord(competition.standings.byTeamId, "competition.standings.byTeamId");
+
+  if (competition.playoffs === null || competition.playoffs === undefined) {
+    fail("competition.playoffs is required for schemaVersion 14.");
+  }
+  assertRecord(competition.playoffs, "competition.playoffs");
+  validatePlayoffs(competition.playoffs);
+
+  const business = state.business;
+  assertRecord(business, "business");
+  if (!("contracts" in business) || !("finances" in business)) {
+    fail("business must include contracts and finances.");
+  }
+  assertRecord(business.contracts, "business.contracts");
+  assertRecord(business.finances, "business.finances");
+
+  const user = state.user;
+  assertRecord(user, "user");
+  if (!("controlledTeamId" in user) || user.controlledTeamId == null) {
+    fail("user.controlledTeamId is required.");
+  }
+  assertNonEmptyString(user.controlledTeamId, "user.controlledTeamId");
+  if (
+    typeof user.mode !== "string" ||
+    !GAME_MODES.includes(user.mode as GameMode)
+  ) {
+    fail(`user.mode must be one of ${GAME_MODES.join(", ")}.`);
+  }
+
+  const teamIds = new Set(Object.keys(world.teams));
+  const playerIds = new Set(Object.keys(world.players));
+  const contractIds = new Set(Object.keys(business.contracts));
+  const gameIds = new Set(Object.keys(competition.games));
+  const seasonId = competition.season.id;
+
+  if (!teamIds.has(user.controlledTeamId)) {
+    fail(
+      `user.controlledTeamId "${user.controlledTeamId}" is missing from world.teams.`,
+    );
+  }
+
+  for (const [playerId, playerValue] of Object.entries(world.players)) {
+    assertRecord(playerValue, `world.players[${playerId}]`);
+    assertNonEmptyString(playerValue.id, `world.players[${playerId}].id`);
+    if (playerValue.id !== playerId) {
+      fail(`world.players key "${playerId}" does not match player.id.`);
+    }
+    if (playerValue.teamId != null) {
+      assertNonEmptyString(
+        playerValue.teamId,
+        `world.players[${playerId}].teamId`,
+      );
+      if (!teamIds.has(playerValue.teamId)) {
+        fail(
+          `world.players[${playerId}].teamId "${playerValue.teamId}" is missing from world.teams.`,
+        );
+      }
+    }
+    if (playerValue.contractId != null) {
+      assertNonEmptyString(
+        playerValue.contractId,
+        `world.players[${playerId}].contractId`,
+      );
+      if (!contractIds.has(playerValue.contractId)) {
+        fail(
+          `world.players[${playerId}].contractId "${playerValue.contractId}" is missing from business.contracts.`,
+        );
+      }
+    }
+  }
+
+  for (const [contractId, contractValue] of Object.entries(business.contracts)) {
+    assertRecord(contractValue, `business.contracts[${contractId}]`);
+    assertNonEmptyString(
+      contractValue.id,
+      `business.contracts[${contractId}].id`,
+    );
+    if (contractValue.id !== contractId) {
+      fail(`business.contracts key "${contractId}" does not match contract.id.`);
+    }
+    assertNonEmptyString(
+      contractValue.playerId,
+      `business.contracts[${contractId}].playerId`,
+    );
+    assertNonEmptyString(
+      contractValue.teamId,
+      `business.contracts[${contractId}].teamId`,
+    );
+    if (!playerIds.has(contractValue.playerId)) {
+      fail(
+        `business.contracts[${contractId}].playerId "${contractValue.playerId}" is missing from world.players.`,
+      );
+    }
+    if (!teamIds.has(contractValue.teamId)) {
+      fail(
+        `business.contracts[${contractId}].teamId "${contractValue.teamId}" is missing from world.teams.`,
+      );
+    }
+  }
+
+  for (const [financeKey, financeValue] of Object.entries(business.finances)) {
+    assertRecord(financeValue, `business.finances[${financeKey}]`);
+    assertNonEmptyString(
+      financeValue.teamId,
+      `business.finances[${financeKey}].teamId`,
+    );
+    if (!teamIds.has(financeKey) || financeValue.teamId !== financeKey) {
+      fail(
+        `business.finances entry "${financeKey}" must key and teamId match an existing team.`,
+      );
+    }
+  }
+
+  for (const [standingKey, standingValue] of Object.entries(
+    competition.standings.byTeamId,
+  )) {
+    assertRecord(standingValue, `competition.standings.byTeamId[${standingKey}]`);
+    assertNonEmptyString(
+      standingValue.teamId,
+      `competition.standings.byTeamId[${standingKey}].teamId`,
+    );
+    if (!teamIds.has(standingKey) || standingValue.teamId !== standingKey) {
+      fail(
+        `competition.standings.byTeamId entry "${standingKey}" must key and teamId match an existing team.`,
+      );
+    }
+  }
+
+  for (const gameId of competition.schedule.gameIds) {
+    if (typeof gameId !== "string" || gameId.length === 0) {
+      fail("competition.schedule.gameIds entries must be non-empty strings.");
+    }
+    if (!gameIds.has(gameId)) {
+      fail(
+        `competition.schedule.gameIds entry "${gameId}" is missing from competition.games.`,
+      );
+    }
+  }
+
+  for (const [gameKey, gameValue] of Object.entries(competition.games)) {
+    validateGame(
+      gameKey,
+      gameValue,
+      seasonId,
+      teamIds,
+      playerIds,
+    );
+  }
+
+  validatePlayoffReferences(
+    competition.playoffs as PlayoffTournament,
+    teamIds,
+    gameIds,
+  );
+}
+
+function validateGame(
+  gameKey: string,
+  gameValue: unknown,
+  seasonId: string,
+  teamIds: Set<string>,
+  playerIds: Set<string>,
+): void {
+  assertRecord(gameValue, `competition.games[${gameKey}]`);
+  const game = gameValue as Partial<Game>;
+  assertNonEmptyString(game.id, `competition.games[${gameKey}].id`);
+  if (game.id !== gameKey) {
+    fail(`competition.games key "${gameKey}" does not match game.id.`);
+  }
+  assertNonEmptyString(game.seasonId, `competition.games[${gameKey}].seasonId`);
+  if (game.seasonId !== seasonId) {
+    fail(
+      `competition.games[${gameKey}].seasonId must match competition.season.id.`,
+    );
+  }
+  assertNonEmptyString(game.date, `competition.games[${gameKey}].date`);
+  try {
+    parseCalendarDate(game.date);
+  } catch (error) {
+    fail(
+      error instanceof Error
+        ? `competition.games[${gameKey}].date: ${error.message}`
+        : `competition.games[${gameKey}].date is invalid.`,
+    );
+  }
+  assertNonEmptyString(
+    game.homeTeamId,
+    `competition.games[${gameKey}].homeTeamId`,
+  );
+  assertNonEmptyString(
+    game.awayTeamId,
+    `competition.games[${gameKey}].awayTeamId`,
+  );
+  if (!teamIds.has(game.homeTeamId)) {
+    fail(
+      `competition.games[${gameKey}].homeTeamId "${game.homeTeamId}" is missing from world.teams.`,
+    );
+  }
+  if (!teamIds.has(game.awayTeamId)) {
+    fail(
+      `competition.games[${gameKey}].awayTeamId "${game.awayTeamId}" is missing from world.teams.`,
+    );
+  }
+  if (
+    typeof game.status !== "string" ||
+    !GAME_STATUSES.includes(game.status as (typeof GAME_STATUSES)[number])
+  ) {
+    fail(
+      `competition.games[${gameKey}].status must be one of ${GAME_STATUSES.join(", ")}.`,
+    );
+  }
+
+  if (!Array.isArray(game.playerStats)) {
+    fail(`competition.games[${gameKey}].playerStats must be an array.`);
+  }
+  for (const [index, stats] of game.playerStats.entries()) {
+    assertRecord(stats, `competition.games[${gameKey}].playerStats[${index}]`);
+    assertNonEmptyString(
+      stats.playerId,
+      `competition.games[${gameKey}].playerStats[${index}].playerId`,
+    );
+    if (!playerIds.has(stats.playerId as string)) {
+      fail(
+        `competition.games[${gameKey}].playerStats[${index}].playerId "${stats.playerId}" is missing from world.players.`,
+      );
+    }
+  }
+
+  if (!Array.isArray(game.events)) {
+    fail(`competition.games[${gameKey}].events must be an array.`);
+  }
+  for (const [index, event] of game.events.entries()) {
+    assertRecord(event, `competition.games[${gameKey}].events[${index}]`);
+    if (event.playerId != null) {
+      assertNonEmptyString(
+        event.playerId,
+        `competition.games[${gameKey}].events[${index}].playerId`,
+      );
+      if (!playerIds.has(event.playerId as string)) {
+        fail(
+          `competition.games[${gameKey}].events[${index}].playerId "${event.playerId}" is missing from world.players.`,
+        );
+      }
+    }
+    if (event.teamId != null) {
+      assertNonEmptyString(
+        event.teamId,
+        `competition.games[${gameKey}].events[${index}].teamId`,
+      );
+      if (!teamIds.has(event.teamId as string)) {
+        fail(
+          `competition.games[${gameKey}].events[${index}].teamId "${event.teamId}" is missing from world.teams.`,
+        );
+      }
+    }
+  }
+}
+
+function validatePlayoffs(playoffs: Record<string, unknown>): void {
+  if (
+    typeof playoffs.status !== "string" ||
+    !PLAYOFF_TOURNAMENT_STATUSES.includes(
+      playoffs.status as (typeof PLAYOFF_TOURNAMENT_STATUSES)[number],
+    )
+  ) {
+    fail(
+      `competition.playoffs.status must be one of ${PLAYOFF_TOURNAMENT_STATUSES.join(", ")}.`,
+    );
+  }
+  assertNumber(playoffs.fieldSize, "competition.playoffs.fieldSize");
+  if (!Array.isArray(playoffs.qualifiedTeams)) {
+    fail("competition.playoffs.qualifiedTeams must be an array.");
+  }
+  if (!Array.isArray(playoffs.series)) {
+    fail("competition.playoffs.series must be an array.");
+  }
+  for (const [index, series] of playoffs.series.entries()) {
+    assertRecord(series, `competition.playoffs.series[${index}]`);
+    assertNonEmptyString(
+      series.id,
+      `competition.playoffs.series[${index}].id`,
+    );
+    if (
+      typeof series.status !== "string" ||
+      !PLAYOFF_SERIES_STATUSES.includes(
+        series.status as (typeof PLAYOFF_SERIES_STATUSES)[number],
+      )
+    ) {
+      fail(
+        `competition.playoffs.series[${index}].status must be one of ${PLAYOFF_SERIES_STATUSES.join(", ")}.`,
+      );
+    }
+  }
+}
+
+function validatePlayoffReferences(
+  playoffs: PlayoffTournament,
+  teamIds: Set<string>,
+  gameIds: Set<string>,
+): void {
+  for (const [index, seed] of playoffs.qualifiedTeams.entries()) {
+    if (!teamIds.has(seed.teamId)) {
+      fail(
+        `competition.playoffs.qualifiedTeams[${index}].teamId "${seed.teamId}" is missing from world.teams.`,
+      );
+    }
+  }
+
+  if (playoffs.championTeamId != null && !teamIds.has(playoffs.championTeamId)) {
+    fail(
+      `competition.playoffs.championTeamId "${playoffs.championTeamId}" is missing from world.teams.`,
+    );
+  }
+
+  const seriesIds = new Set(playoffs.series.map((series) => series.id));
+
+  for (const series of playoffs.series) {
+    if (
+      series.higherSeedTeamId != null &&
+      !teamIds.has(series.higherSeedTeamId)
+    ) {
+      fail(
+        `competition.playoffs.series "${series.id}" higherSeedTeamId is missing from world.teams.`,
+      );
+    }
+    if (
+      series.lowerSeedTeamId != null &&
+      !teamIds.has(series.lowerSeedTeamId)
+    ) {
+      fail(
+        `competition.playoffs.series "${series.id}" lowerSeedTeamId is missing from world.teams.`,
+      );
+    }
+    if (series.winnerTeamId != null && !teamIds.has(series.winnerTeamId)) {
+      fail(
+        `competition.playoffs.series "${series.id}" winnerTeamId is missing from world.teams.`,
+      );
+    }
+    for (const gameId of series.gameIds) {
+      if (!gameIds.has(gameId)) {
+        fail(
+          `competition.playoffs.series "${series.id}" gameId "${gameId}" is missing from competition.games.`,
+        );
+      }
+    }
+    if (series.feederSeriesIds) {
+      for (const feederId of series.feederSeriesIds) {
+        if (!seriesIds.has(feederId)) {
+          fail(
+            `competition.playoffs.series "${series.id}" feederSeriesId "${feederId}" is missing from series.`,
+          );
+        }
+      }
+    }
+    for (const teamId of Object.keys(series.wins)) {
+      if (!teamIds.has(teamId)) {
+        fail(
+          `competition.playoffs.series "${series.id}" wins key "${teamId}" is missing from world.teams.`,
+        );
+      }
+    }
+  }
+}

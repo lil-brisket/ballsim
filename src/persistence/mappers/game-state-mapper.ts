@@ -31,6 +31,7 @@ import type { GameState } from "@/state/game-state";
 import { GAME_STATE_SCHEMA_VERSION } from "@/state/game-state";
 import { createEmptyPlayoffTournament } from "@/domain/entities/playoffs";
 import { calculateStandings } from "@/systems/standings";
+import { validateGameState } from "@/persistence/validate-game-state";
 
 const gameStateEnvelopeSchema = z.object({
   meta: z.object({
@@ -41,22 +42,74 @@ const gameStateEnvelopeSchema = z.object({
     rngSeed: z.number().int(),
     rngState: z.number().int().optional(),
   }),
-  world: z.object({}).passthrough(),
-  competition: z.object({}).passthrough(),
-  business: z.object({}).passthrough(),
-  user: z.object({}).passthrough(),
+  world: z
+    .object({
+      calendar: z.unknown(),
+      league: z.unknown(),
+      conferences: z.unknown(),
+      divisions: z.unknown(),
+      teams: z.unknown(),
+      players: z.unknown(),
+      coaches: z.unknown(),
+      staff: z.unknown(),
+    })
+    .passthrough(),
+  competition: z
+    .object({
+      season: z.unknown(),
+      schedule: z.unknown(),
+      games: z.unknown(),
+      standings: z.unknown(),
+    })
+    .passthrough(),
+  business: z
+    .object({
+      contracts: z.unknown(),
+      finances: z.unknown(),
+    })
+    .passthrough(),
+  user: z
+    .object({
+      controlledTeamId: z.unknown(),
+      mode: z.unknown(),
+    })
+    .passthrough(),
 });
 
+/** JSON.stringify only. Does not validate or mutate state. */
 export function serializeGameState(state: GameState): string {
   return JSON.stringify(state);
 }
 
+/**
+ * Parse → migrate (v1–v13 → v14) → validate → return GameState.
+ * Does not call serializeGameState.
+ */
 export function deserializeGameState(stateJson: string): GameState {
-  const parsed: unknown = JSON.parse(stateJson);
-  const envelope = gameStateEnvelopeSchema.parse(parsed);
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(stateJson);
+  } catch (error) {
+    const detail = error instanceof Error ? error.message : String(error);
+    throw new Error(`Malformed GameState JSON: ${detail}`);
+  }
+
+  let envelope: z.infer<typeof gameStateEnvelopeSchema>;
+  try {
+    envelope = gameStateEnvelopeSchema.parse(parsed);
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      throw new Error(
+        `Invalid GameState envelope: ${error.issues.map((issue) => issue.message).join("; ")}`,
+      );
+    }
+    throw error;
+  }
+
+  let state: GameState;
 
   if (envelope.meta.schemaVersion === 1) {
-    return migrateV13ToV14(
+    state = migrateV13ToV14(
       migrateV12ToV13(
         migrateV11ToV12(
           migrateV10ToV11(
@@ -77,10 +130,8 @@ export function deserializeGameState(stateJson: string): GameState {
         ),
       ),
     );
-  }
-
-  if (envelope.meta.schemaVersion === 2) {
-    return migrateV13ToV14(
+  } else if (envelope.meta.schemaVersion === 2) {
+    state = migrateV13ToV14(
       migrateV12ToV13(
         migrateV11ToV12(
           migrateV10ToV11(
@@ -99,10 +150,8 @@ export function deserializeGameState(stateJson: string): GameState {
         ),
       ),
     );
-  }
-
-  if (envelope.meta.schemaVersion === 3) {
-    return migrateV13ToV14(
+  } else if (envelope.meta.schemaVersion === 3) {
+    state = migrateV13ToV14(
       migrateV12ToV13(
         migrateV11ToV12(
           migrateV10ToV11(
@@ -119,10 +168,8 @@ export function deserializeGameState(stateJson: string): GameState {
         ),
       ),
     );
-  }
-
-  if (envelope.meta.schemaVersion === 4) {
-    return migrateV13ToV14(
+  } else if (envelope.meta.schemaVersion === 4) {
+    state = migrateV13ToV14(
       migrateV12ToV13(
         migrateV11ToV12(
           migrateV10ToV11(
@@ -137,10 +184,8 @@ export function deserializeGameState(stateJson: string): GameState {
         ),
       ),
     );
-  }
-
-  if (envelope.meta.schemaVersion === 5) {
-    return migrateV13ToV14(
+  } else if (envelope.meta.schemaVersion === 5) {
+    state = migrateV13ToV14(
       migrateV12ToV13(
         migrateV11ToV12(
           migrateV10ToV11(
@@ -153,10 +198,8 @@ export function deserializeGameState(stateJson: string): GameState {
         ),
       ),
     );
-  }
-
-  if (envelope.meta.schemaVersion === 6) {
-    return migrateV13ToV14(
+  } else if (envelope.meta.schemaVersion === 6) {
+    state = migrateV13ToV14(
       migrateV12ToV13(
         migrateV11ToV12(
           migrateV10ToV11(
@@ -167,10 +210,8 @@ export function deserializeGameState(stateJson: string): GameState {
         ),
       ),
     );
-  }
-
-  if (envelope.meta.schemaVersion === 7) {
-    return migrateV13ToV14(
+  } else if (envelope.meta.schemaVersion === 7) {
+    state = migrateV13ToV14(
       migrateV12ToV13(
         migrateV11ToV12(
           migrateV10ToV11(
@@ -179,66 +220,41 @@ export function deserializeGameState(stateJson: string): GameState {
         ),
       ),
     );
-  }
-
-  if (envelope.meta.schemaVersion === 8) {
-    return migrateV13ToV14(
+  } else if (envelope.meta.schemaVersion === 8) {
+    state = migrateV13ToV14(
       migrateV12ToV13(
         migrateV11ToV12(
           migrateV10ToV11(migrateV9ToV10(migrateV8ToV9(parsed as GameStateV8))),
         ),
       ),
     );
-  }
-
-  if (envelope.meta.schemaVersion === 9) {
-    return migrateV13ToV14(
+  } else if (envelope.meta.schemaVersion === 9) {
+    state = migrateV13ToV14(
       migrateV12ToV13(
-        migrateV11ToV12(
-          migrateV10ToV11(migrateV9ToV10(parsed as GameStateV9)),
-        ),
+        migrateV11ToV12(migrateV10ToV11(migrateV9ToV10(parsed as GameStateV9))),
       ),
     );
-  }
-
-  if (envelope.meta.schemaVersion === 10) {
-    return migrateV13ToV14(
-      migrateV12ToV13(
-        migrateV11ToV12(migrateV10ToV11(parsed as GameStateV10)),
-      ),
+  } else if (envelope.meta.schemaVersion === 10) {
+    state = migrateV13ToV14(
+      migrateV12ToV13(migrateV11ToV12(migrateV10ToV11(parsed as GameStateV10))),
     );
-  }
-
-  if (envelope.meta.schemaVersion === 11) {
-    return migrateV13ToV14(
+  } else if (envelope.meta.schemaVersion === 11) {
+    state = migrateV13ToV14(
       migrateV12ToV13(migrateV11ToV12(parsed as GameStateV11)),
     );
-  }
-
-  if (envelope.meta.schemaVersion === 12) {
-    return migrateV13ToV14(migrateV12ToV13(parsed as GameStateV12));
-  }
-
-  if (envelope.meta.schemaVersion === 13) {
-    return migrateV13ToV14(parsed as GameStateV13);
-  }
-
-  if (envelope.meta.schemaVersion !== GAME_STATE_SCHEMA_VERSION) {
+  } else if (envelope.meta.schemaVersion === 12) {
+    state = migrateV13ToV14(migrateV12ToV13(parsed as GameStateV12));
+  } else if (envelope.meta.schemaVersion === 13) {
+    state = migrateV13ToV14(parsed as GameStateV13);
+  } else if (envelope.meta.schemaVersion === GAME_STATE_SCHEMA_VERSION) {
+    state = parsed as GameState;
+  } else {
     throw new Error(
       `Unsupported GameState schemaVersion ${envelope.meta.schemaVersion}; expected ${GAME_STATE_SCHEMA_VERSION}.`,
     );
   }
 
-  const state = parsed as GameState;
-  if (typeof state.meta.rngState !== "number") {
-    throw new Error("GameState meta.rngState is required for schemaVersion 14.");
-  }
-  if (state.competition.playoffs == null) {
-    throw new Error(
-      "GameState competition.playoffs is required for schemaVersion 14.",
-    );
-  }
-
+  validateGameState(state);
   return state;
 }
 

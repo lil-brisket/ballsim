@@ -5,17 +5,17 @@ import type { DomainEvent } from "@/domain/events";
 import { createInitialGameState } from "@/state/create-initial-state";
 import { toDashboardSnapshot } from "@/state/selectors";
 import type { DashboardSnapshot } from "@/state/selectors";
+import type { GameState } from "@/state/game-state";
 import {
   bootstrapWorld,
   runWorldPipeline,
 } from "@/systems/world-pipeline";
-import {
-  createSaveGame,
-  getSaveGame,
-  listSaveGames,
-  updateSaveGameState,
-  type SaveGameSummary,
-} from "@/persistence/save-game-repository";
+import { prismaSaveGameStore } from "@/persistence/save-game-repository";
+import type {
+  LoadedSaveGame,
+  SaveGameStore,
+  SaveGameSummary,
+} from "@/persistence/save-game-store";
 
 export type CreateGameResult = {
   save: SaveGameSummary;
@@ -26,13 +26,7 @@ export type AdvanceDayResult = CreateGameResult & {
   events: DomainEvent[];
 };
 
-function toSaveSummary(loaded: {
-  id: string;
-  name: string;
-  schemaVersion: number;
-  createdAt: Date;
-  updatedAt: Date;
-}): SaveGameSummary {
+function toSaveSummary(loaded: LoadedSaveGame): SaveGameSummary {
   return {
     id: loaded.id,
     name: loaded.name,
@@ -42,10 +36,18 @@ function toSaveSummary(loaded: {
   };
 }
 
-export async function createNewOwnerSave(input: {
-  name: string;
-  rngSeed?: number;
-}): Promise<CreateGameResult> {
+function getStore(store?: SaveGameStore): SaveGameStore {
+  return store ?? prismaSaveGameStore;
+}
+
+export async function createNewOwnerSave(
+  input: {
+    name: string;
+    rngSeed?: number;
+  },
+  store?: SaveGameStore,
+): Promise<CreateGameResult> {
+  const saveStore = getStore(store);
   const saveId = crypto.randomUUID();
   const nowIso = new Date().toISOString();
   let state = createInitialGameState({
@@ -65,7 +67,7 @@ export async function createNewOwnerSave(input: {
     },
   };
 
-  const loaded = await createSaveGame({
+  const loaded = await saveStore.create({
     id: saveId,
     name: input.name.trim() || "New Franchise",
     state,
@@ -79,8 +81,9 @@ export async function createNewOwnerSave(input: {
 
 export async function loadOwnerSave(
   saveId: string,
+  store?: SaveGameStore,
 ): Promise<CreateGameResult | null> {
-  const loaded = await getSaveGame(saveId);
+  const loaded = await getStore(store).load(saveId);
   if (!loaded) {
     return null;
   }
@@ -91,14 +94,33 @@ export async function loadOwnerSave(
   };
 }
 
-export async function listOwnerSaves(): Promise<SaveGameSummary[]> {
-  return listSaveGames();
+export async function listOwnerSaves(
+  store?: SaveGameStore,
+): Promise<SaveGameSummary[]> {
+  return getStore(store).list();
+}
+
+/**
+ * Persist GameState without running simulation. Does not mutate input state.
+ */
+export async function saveOwnerGame(
+  saveId: string,
+  state: GameState,
+  store?: SaveGameStore,
+): Promise<CreateGameResult> {
+  const saved = await getStore(store).save({ id: saveId, state });
+  return {
+    save: toSaveSummary(saved),
+    dashboard: toDashboardSnapshot(saved.state),
+  };
 }
 
 export async function advanceOwnerDay(
   saveId: string,
+  store?: SaveGameStore,
 ): Promise<AdvanceDayResult | null> {
-  const loaded = await getSaveGame(saveId);
+  const saveStore = getStore(store);
+  const loaded = await saveStore.load(saveId);
   if (!loaded) {
     return null;
   }
@@ -116,7 +138,7 @@ export async function advanceOwnerDay(
     },
   };
 
-  const saved = await updateSaveGameState({
+  const saved = await saveStore.save({
     id: saveId,
     state: nextState,
   });

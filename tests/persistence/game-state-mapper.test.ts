@@ -283,6 +283,18 @@ describe("GameState schema migration", () => {
           },
         },
       },
+      business: {
+        ...modern.business,
+        contracts: {
+          [contractId]: {
+            id: contractId,
+            playerId,
+            teamId,
+            salaryPerYear: 1_000_000,
+            yearsRemaining: 2,
+          },
+        },
+      },
     });
 
     const migrated = deserializeGameState(v3Json);
@@ -370,6 +382,18 @@ describe("GameState schema migration", () => {
           [playerId]: v4Player,
         },
       },
+      business: {
+        ...modern.business,
+        contracts: {
+          [contractId]: {
+            id: contractId,
+            playerId,
+            teamId,
+            salaryPerYear: 1_200_000,
+            yearsRemaining: 3,
+          },
+        },
+      },
     });
 
     const migrated = deserializeGameState(v4Json);
@@ -441,6 +465,18 @@ describe("GameState schema migration", () => {
         ...modern.world,
         players: {
           [playerId]: v5Player,
+        },
+      },
+      business: {
+        ...modern.business,
+        contracts: {
+          [contractId]: {
+            id: contractId,
+            playerId,
+            teamId,
+            salaryPerYear: 900_000,
+            yearsRemaining: 1,
+          },
         },
       },
     });
@@ -617,6 +653,26 @@ describe("GameState schema migration", () => {
         ...modern.world,
         teams: v10Teams,
       },
+      competition: {
+        ...modern.competition,
+        standings: {
+          byTeamId: {
+            [teamAId]: modern.competition.standings.byTeamId[teamAId]!,
+            [teamBId]: modern.competition.standings.byTeamId[teamBId]!,
+          },
+        },
+      },
+      business: {
+        ...modern.business,
+        finances: {
+          [teamAId]: modern.business.finances[teamAId]!,
+          [teamBId]: modern.business.finances[teamBId]!,
+        },
+      },
+      user: {
+        ...modern.user,
+        controlledTeamId: teamAId,
+      },
     });
 
     const migrated = deserializeGameState(v10Json);
@@ -690,6 +746,26 @@ describe("GameState schema migration", () => {
         ...modern.world,
         teams: v11Teams,
       },
+      competition: {
+        ...modern.competition,
+        standings: {
+          byTeamId: {
+            [teamAId]: modern.competition.standings.byTeamId[teamAId]!,
+            [teamBId]: modern.competition.standings.byTeamId[teamBId]!,
+          },
+        },
+      },
+      business: {
+        ...modern.business,
+        finances: {
+          [teamAId]: modern.business.finances[teamAId]!,
+          [teamBId]: modern.business.finances[teamBId]!,
+        },
+      },
+      user: {
+        ...modern.user,
+        controlledTeamId: teamAId,
+      },
     });
 
     const migrated = deserializeGameState(v11Json);
@@ -740,6 +816,37 @@ describe("GameState schema migration", () => {
       meta: {
         ...modern.meta,
         schemaVersion: 7,
+      },
+      world: {
+        ...modern.world,
+        players: {
+          [playerId]: {
+            id: playerId,
+            teamId: homeTeamId,
+            firstName: "Box",
+            lastName: "Score",
+            nationality: "USA",
+            position: "SG",
+            archetype: "scoring_guard",
+            age: 24,
+            heightInches: 76,
+            weightPounds: 200,
+            attributes: Object.fromEntries(
+              V4_ATTRIBUTE_KEYS.map((key) => [key, 70]),
+            ),
+            potential: { overall: 80 },
+            personality: {
+              workEthic: 50,
+              loyalty: 50,
+              competitiveness: 50,
+              leadership: 50,
+              composure: 50,
+            },
+            contractId: null,
+            injury: { kind: "healthy" },
+            development: { stage: "prime" },
+          },
+        },
       },
       competition: {
         ...modern.competition,
@@ -842,8 +949,62 @@ describe("GameState schema migration", () => {
         },
         conferences: {},
         divisions: {},
-        teams: {},
-        players: {},
+        teams: {
+          team_h: {
+            id: "team_h",
+            conferenceId: "conf_1",
+            divisionId: "div_1",
+            city: "Home",
+            name: "Homers",
+            abbreviation: "HOM",
+            roster: [],
+            staff: [],
+            finances: {},
+            arenaId: "arena_team_h",
+            reputation: 50,
+          },
+          team_a: {
+            id: "team_a",
+            conferenceId: "conf_1",
+            divisionId: "div_1",
+            city: "Away",
+            name: "Aways",
+            abbreviation: "AWY",
+            roster: [],
+            staff: [],
+            finances: {},
+            arenaId: "arena_team_a",
+            reputation: 50,
+          },
+        },
+        players: {
+          [playerId]: {
+            id: playerId,
+            teamId: "team_h",
+            firstName: "V8",
+            lastName: "Player",
+            nationality: "USA",
+            position: "PG",
+            archetype: "floor_general",
+            age: 24,
+            heightInches: 74,
+            weightPounds: 190,
+            attributes: Object.fromEntries(
+              V4_ATTRIBUTE_KEYS.map((key) => [key, 70]),
+            ),
+            potential: { overall: 80 },
+            personality: {
+              workEthic: 50,
+              loyalty: 50,
+              competitiveness: 50,
+              leadership: 50,
+              composure: 50,
+            },
+            contractId: null,
+            injury: { kind: "healthy" },
+            development: { stage: "prime" },
+          },
+        },
         coaches: {},
         staff: {},
       },
@@ -880,9 +1041,28 @@ describe("GameState schema migration", () => {
             ],
           },
         },
-        standings: { seasonId: "season_1", byTeamId: {} },
+        standings: {
+          byTeamId: {
+            team_h: {
+              teamId: "team_h",
+              wins: 0,
+              losses: 0,
+            },
+            team_a: {
+              teamId: "team_a",
+              wins: 0,
+              losses: 0,
+            },
+          },
+        },
       },
-      business: { contracts: {}, finances: {} },
+      business: {
+        contracts: {},
+        finances: {
+          team_h: { teamId: "team_h", cash: 50_000_000, payroll: 0 },
+          team_a: { teamId: "team_a", cash: 50_000_000, payroll: 0 },
+        },
+      },
       user: { controlledTeamId: "team_h", mode: "owner" },
     };
 
@@ -933,8 +1113,62 @@ describe("GameState schema migration", () => {
         },
         conferences: {},
         divisions: {},
-        teams: {},
-        players: {},
+        teams: {
+          team_h: {
+            id: "team_h",
+            conferenceId: "conf_1",
+            divisionId: "div_1",
+            city: "Home",
+            name: "Homers",
+            abbreviation: "HOM",
+            roster: [],
+            staff: [],
+            finances: {},
+            arenaId: "arena_team_h",
+            reputation: 50,
+          },
+          team_a: {
+            id: "team_a",
+            conferenceId: "conf_1",
+            divisionId: "div_1",
+            city: "Away",
+            name: "Aways",
+            abbreviation: "AWY",
+            roster: [],
+            staff: [],
+            finances: {},
+            arenaId: "arena_team_a",
+            reputation: 50,
+          },
+        },
+        players: {
+          [playerId]: {
+            id: playerId,
+            teamId: "team_h",
+            firstName: "V9",
+            lastName: "Player",
+            nationality: "USA",
+            position: "SG",
+            archetype: "scoring_guard",
+            age: 25,
+            heightInches: 76,
+            weightPounds: 200,
+            attributes: Object.fromEntries(
+              V4_ATTRIBUTE_KEYS.map((key) => [key, 70]),
+            ),
+            potential: { overall: 80 },
+            personality: {
+              workEthic: 50,
+              loyalty: 50,
+              competitiveness: 50,
+              leadership: 50,
+              composure: 50,
+            },
+            contractId: null,
+            injury: { kind: "healthy" },
+            development: { stage: "prime" },
+          },
+        },
         coaches: {},
         staff: {},
       },
@@ -985,9 +1219,28 @@ describe("GameState schema migration", () => {
             ],
           },
         },
-        standings: { seasonId: "season_1", byTeamId: {} },
+        standings: {
+          byTeamId: {
+            team_h: {
+              teamId: "team_h",
+              wins: 0,
+              losses: 0,
+            },
+            team_a: {
+              teamId: "team_a",
+              wins: 0,
+              losses: 0,
+            },
+          },
+        },
       },
-      business: { contracts: {}, finances: {} },
+      business: {
+        contracts: {},
+        finances: {
+          team_h: { teamId: "team_h", cash: 50_000_000, payroll: 0 },
+          team_a: { teamId: "team_a", cash: 50_000_000, payroll: 0 },
+        },
+      },
       user: { controlledTeamId: "team_h", mode: "owner" },
     };
 

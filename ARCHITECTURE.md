@@ -70,18 +70,22 @@ Typed domain catalogs such as `PlayerArchetype` and `PlayerNationality` live und
 
 `schemaVersion` 13 expands `TeamStanding` (win %, points for/against/differential, streak, conference/division records). Pre-v13 saves recompute standings via `calculateStandings` from teams, games, and schedule.
 
+`schemaVersion` 14 adds `competition.playoffs`. Pre-v14 saves migrate with an empty `PlayoffTournament` (`not_started`).
+
 ## GameState (composed slices)
 
 `GameState` is the single source of truth for one save, composed of typed slices:
 
 ```text
 GameState
-├── meta          # save identity, schemaVersion, timestamps, rng seed
+├── meta          # save identity, schemaVersion, timestamps, rng seed/state
 ├── world         # calendar, league structure, teams, people
-├── competition   # season, schedule, games, standings
+├── competition   # season, schedule, games, standings, playoffs
 ├── business      # contracts, finances
 └── user          # controlled team, mode
 ```
+
+`schemaVersion` 14 adds `competition.playoffs` (`PlayoffTournament`). Pre-v14 saves migrate with `createEmptyPlayoffTournament()` (`not_started`, empty field). Empty/inactive playoffs are valid; a missing or null `playoffs` field is not.
 
 Slice boundaries may be refined as domain models grow, but composition remains mandatory to avoid one undifferentiated mega-object.
 
@@ -163,12 +167,24 @@ Initial `SaveGame` Prisma record:
 | `createdAt` | Created timestamp |
 | `updatedAt` | Updated timestamp |
 
+Application code depends on `SaveGameStore` (`list` / `create` / `load` / `save`). Adapters:
+
+- `PrismaSaveGameStore` — production (single-row create/update of `stateJson`)
+- `MemorySaveGameStore` — tests
+
+Compatibility wrappers (`createSaveGame`, `getSaveGame`, `updateSaveGameState`, etc.) delegate to the Prisma store.
+
+Save pipeline: `serializeGameState` (JSON.stringify) → parse clone → `validateGameState` → write blob.  
+Load pipeline: read `stateJson` → JSON.parse → migrate v1→v14 → `validateGameState` → return `GameState`.
+
+`serializeGameState` and `deserializeGameState` must not call each other. Crash consistency beyond Prisma/SQLite’s existing guarantees is out of scope.
+
 Load/save flow:
 
-1. Application loads `SaveGame`
-2. Mapper deserializes `stateJson` -> `GameState`
+1. Application loads via `SaveGameStore`
+2. Mapper deserializes `stateJson` → migrate → validate → `GameState`
 3. Systems produce `SystemResult`
-4. Mapper serializes `GameState` back to `stateJson` and updates the row
+4. Store validates a serialized clone, then writes `stateJson` in a single row update
 
 ## Application ↔ UI communication
 

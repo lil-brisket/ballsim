@@ -1,0 +1,109 @@
+import type { GameState } from "@/state/game-state";
+import {
+  deserializeGameState,
+  serializeGameState,
+} from "@/persistence/mappers/game-state-mapper";
+import { validateGameState } from "@/persistence/validate-game-state";
+import type {
+  LoadedSaveGame,
+  SaveGameStore,
+  SaveGameSummary,
+} from "@/persistence/save-game-store";
+
+type MemorySaveRow = {
+  id: string;
+  name: string;
+  schemaVersion: number;
+  stateJson: string;
+  createdAt: Date;
+  updatedAt: Date;
+};
+
+/**
+ * In-memory SaveGameStore for tests. Replaces the whole blob in one
+ * assignment. Does not leak stateJson outside LoadedSaveGame.state.
+ */
+export function createMemorySaveGameStore(): SaveGameStore {
+  const rows = new Map<string, MemorySaveRow>();
+
+  function prepareStateJson(state: GameState): string {
+    const stateJson = serializeGameState(state);
+    const clone: unknown = JSON.parse(stateJson);
+    validateGameState(clone);
+    return stateJson;
+  }
+
+  function toLoaded(row: MemorySaveRow): LoadedSaveGame {
+    return {
+      id: row.id,
+      name: row.name,
+      schemaVersion: row.schemaVersion,
+      createdAt: row.createdAt,
+      updatedAt: row.updatedAt,
+      state: deserializeGameState(row.stateJson),
+    };
+  }
+
+  return {
+    async list(): Promise<SaveGameSummary[]> {
+      return [...rows.values()]
+        .sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime())
+        .map((row) => ({
+          id: row.id,
+          name: row.name,
+          schemaVersion: row.schemaVersion,
+          createdAt: row.createdAt,
+          updatedAt: row.updatedAt,
+        }));
+    },
+
+    async create(input: {
+      id: string;
+      name: string;
+      state: GameState;
+    }): Promise<LoadedSaveGame> {
+      if (rows.has(input.id)) {
+        throw new Error(`SaveGame "${input.id}" already exists.`);
+      }
+      const stateJson = prepareStateJson(input.state);
+      const now = new Date();
+      const row: MemorySaveRow = {
+        id: input.id,
+        name: input.name,
+        schemaVersion: input.state.meta.schemaVersion,
+        stateJson,
+        createdAt: now,
+        updatedAt: now,
+      };
+      rows.set(input.id, row);
+      return toLoaded(row);
+    },
+
+    async load(id: string): Promise<LoadedSaveGame | null> {
+      const row = rows.get(id);
+      if (!row) {
+        return null;
+      }
+      return toLoaded(row);
+    },
+
+    async save(input: {
+      id: string;
+      state: GameState;
+    }): Promise<LoadedSaveGame> {
+      const existing = rows.get(input.id);
+      if (!existing) {
+        throw new Error(`SaveGame "${input.id}" not found.`);
+      }
+      const stateJson = prepareStateJson(input.state);
+      const row: MemorySaveRow = {
+        ...existing,
+        schemaVersion: input.state.meta.schemaVersion,
+        stateJson,
+        updatedAt: new Date(),
+      };
+      rows.set(input.id, row);
+      return toLoaded(row);
+    },
+  };
+}
