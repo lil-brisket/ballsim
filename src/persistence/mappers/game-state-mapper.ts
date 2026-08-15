@@ -100,10 +100,11 @@ const MIGRATE_ONE_STEP: Record<number, (state: unknown) => unknown> = {
   13: (state) => migrateV13ToV14(state as GameStateV13),
   14: (state) => migrateV14ToV15(state as GameStateV14),
   15: (state) => migrateV15ToV16(state as GameStateV15),
+  16: (state) => migrateV16ToV17(state as GameStateV16),
 };
 
 /**
- * Parse → migrate (v1–v15 → current) → validate → return GameState.
+ * Parse → migrate (v1–v16 → current) → validate → return GameState.
  * Does not call serializeGameState.
  */
 export function deserializeGameState(stateJson: string): GameState {
@@ -894,6 +895,12 @@ type BusinessSliceV15 = {
   finances: GameState["business"]["finances"];
 };
 
+/** Schema 16 business before freeAgency offers. */
+type BusinessSliceV16 = {
+  contracts: GameState["business"]["contracts"];
+  finances: GameState["business"]["finances"];
+};
+
 /** Schema ≤14 user slice before owner objectives. */
 type UserSliceV14 = {
   controlledTeamId: TeamId;
@@ -1294,6 +1301,17 @@ type GameStateV15 = {
   user: GameState["user"];
 };
 
+type GameStateV16 = {
+  meta: Omit<GameState["meta"], "schemaVersion"> & {
+    schemaVersion: 16;
+    rngState: number;
+  };
+  world: GameState["world"];
+  competition: GameState["competition"];
+  business: BusinessSliceV16;
+  user: GameState["user"];
+};
+
 /**
  * Deterministic v13 → v14: add empty playoff tournament under competition.
  */
@@ -1374,7 +1392,7 @@ function migrateV14ToV15(state: GameStateV14): GameStateV15 {
  * v15 has no options; migrated contracts never include teamOption or playerOption.
  * Emits literal schemaVersion 16.
  */
-function migrateV15ToV16(state: GameStateV15): GameState {
+function migrateV15ToV16(state: GameStateV15): GameStateV16 {
   if (typeof state.meta.rngState !== "number") {
     throw new Error("GameState meta.rngState is required for schemaVersion 15.");
   }
@@ -1418,6 +1436,37 @@ function migrateV15ToV16(state: GameStateV15): GameState {
     business: {
       contracts,
       finances: state.business.finances,
+    },
+    user: state.user,
+  };
+}
+
+/**
+ * Deterministic v16 → v17: add empty freeAgency offers under business.
+ * Emits literal schemaVersion 17.
+ */
+function migrateV16ToV17(state: GameStateV16): GameState {
+  if (typeof state.meta.rngState !== "number") {
+    throw new Error("GameState meta.rngState is required for schemaVersion 16.");
+  }
+
+  return {
+    meta: {
+      saveId: state.meta.saveId,
+      schemaVersion: 17,
+      createdAt: state.meta.createdAt,
+      updatedAt: state.meta.updatedAt,
+      rngSeed: state.meta.rngSeed,
+      rngState: state.meta.rngState,
+    },
+    world: state.world,
+    competition: state.competition,
+    business: {
+      contracts: state.business.contracts,
+      finances: state.business.finances,
+      freeAgency: {
+        offers: {},
+      },
     },
     user: state.user,
   };

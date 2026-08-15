@@ -190,3 +190,24 @@ export {
   runWorldPipeline,
   type WorldPipelineCommand,
 } from "@/systems/world-pipeline";
+export {
+  FREE_AGENCY_INTEREST_CONFIG,
+  type FreeAgencyInterestConfig,
+} from "@/systems/free-agency-config";
+export {
+  acceptOffer,
+  defaultEvaluatePlayerInterest,
+  getFreeAgent,
+  getPlayerInterest,
+  isFreeAgent,
+  listFreeAgents,
+  makeOffer,
+  negotiateOffer,
+  rejectOffer,
+  releaseExpiredContracts,
+  releasePlayerToFreeAgency,
+  withdrawOffer,
+  type FreeAgencyWriteOptions,
+  type FreeAgentPoolView,
+  type MakeOfferInput,
+} from "@/systems/free-agency";

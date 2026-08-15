@@ -120,6 +120,29 @@ export {
   isContractExpired,
 } from "@/domain/entities/contract";
 export type {
+  FreeAgencyOffer,
+  FreeAgencyOfferInput,
+  FreeAgencyOfferStatus,
+} from "@/domain/entities/free-agency-offer";
+export {
+  FREE_AGENCY_OFFER_STATUSES,
+  OPEN_FREE_AGENCY_OFFER_STATUSES,
+  TERMINAL_FREE_AGENCY_OFFER_STATUSES,
+  assertFreeAgencyOfferShape,
+  createFreeAgencyOffer,
+  isOpenOffer,
+  isTerminalOffer,
+} from "@/domain/entities/free-agency-offer";
+export type {
+  PlayerInterest,
+  PlayerInterestFactor,
+  EvaluatePlayerInterest,
+} from "@/domain/free-agency/player-interest";
+export {
+  PLAYER_INTEREST_FACTORS,
+  emptyInterestFactors,
+} from "@/domain/free-agency/player-interest";
+export type {
   Game,
   GameInput,
   GameStatus,

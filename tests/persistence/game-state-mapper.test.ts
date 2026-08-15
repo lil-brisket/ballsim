@@ -1543,7 +1543,8 @@ describe("GameState schema migration", () => {
     };
 
     const migrated = deserializeGameState(JSON.stringify(stateV15));
-    expect(migrated.meta.schemaVersion).toBe(16);
+    expect(migrated.meta.schemaVersion).toBe(GAME_STATE_SCHEMA_VERSION);
+    expect(migrated.business.freeAgency.offers).toEqual({});
     const contract = migrated.business.contracts[contractId]!;
     expect(contract.startYear).toBe(seasonYear);
     expect(contract.endYear).toBe(seasonYear + 2);

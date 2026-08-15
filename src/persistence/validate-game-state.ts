@@ -1,5 +1,10 @@
 import { parseCalendarDate } from "@/domain/calendar-date";
 import { assertContractShape } from "@/domain/entities/contract";
+import {
+  assertFreeAgencyOfferShape,
+  isOpenOffer,
+  type FreeAgencyOfferStatus,
+} from "@/domain/entities/free-agency-offer";
 import { GAME_STATUSES, type Game } from "@/domain/entities/game";
 import type { PlayoffTournament } from "@/domain/entities/playoffs";
 import {
@@ -9,7 +14,12 @@ import {
 import type { SeasonPhase } from "@/domain/entities/season";
 import type { GameState, GameMode } from "@/state/game-state";
 import { GAME_STATE_SCHEMA_VERSION } from "@/state/game-state";
-import { asContractId, asPlayerId, asTeamId } from "@/domain/ids";
+import {
+  asContractId,
+  asOfferId,
+  asPlayerId,
+  asTeamId,
+} from "@/domain/ids";
 
 const SEASON_PHASES: readonly SeasonPhase[] = [
   "preseason",
@@ -171,11 +181,20 @@ export function validateGameState(state: unknown): asserts state is GameState {
 
   const business = state.business;
   assertRecord(business, "business");
-  if (!("contracts" in business) || !("finances" in business)) {
-    fail("business must include contracts and finances.");
+  if (
+    !("contracts" in business) ||
+    !("finances" in business) ||
+    !("freeAgency" in business)
+  ) {
+    fail("business must include contracts, finances, and freeAgency.");
   }
   assertRecord(business.contracts, "business.contracts");
   assertRecord(business.finances, "business.finances");
+  assertRecord(business.freeAgency, "business.freeAgency");
+  if (!("offers" in business.freeAgency)) {
+    fail("business.freeAgency.offers is required.");
+  }
+  assertRecord(business.freeAgency.offers, "business.freeAgency.offers");
 
   const user = state.user;
   assertRecord(user, "user");
@@ -326,6 +345,169 @@ export function validateGameState(state: unknown): asserts state is GameState {
       financeValue.payroll,
       `business.finances[${financeKey}].payroll`,
     );
+  }
+
+  const openOfferPairs = new Set<string>();
+  for (const [offerId, offerValue] of Object.entries(
+    business.freeAgency.offers,
+  )) {
+    assertRecord(offerValue, `business.freeAgency.offers[${offerId}]`);
+    assertNonEmptyString(
+      offerValue.id,
+      `business.freeAgency.offers[${offerId}].id`,
+    );
+    if (offerValue.id !== offerId) {
+      fail(
+        `business.freeAgency.offers key "${offerId}" does not match offer.id.`,
+      );
+    }
+    assertNonEmptyString(
+      offerValue.playerId,
+      `business.freeAgency.offers[${offerId}].playerId`,
+    );
+    assertNonEmptyString(
+      offerValue.teamId,
+      `business.freeAgency.offers[${offerId}].teamId`,
+    );
+    if (!playerIds.has(offerValue.playerId as string)) {
+      fail(
+        `business.freeAgency.offers[${offerId}].playerId "${offerValue.playerId}" is missing from world.players.`,
+      );
+    }
+    if (!teamIds.has(offerValue.teamId as string)) {
+      fail(
+        `business.freeAgency.offers[${offerId}].teamId "${offerValue.teamId}" is missing from world.teams.`,
+      );
+    }
+
+    const terms = offerValue.terms;
+    assertRecord(terms, `business.freeAgency.offers[${offerId}].terms`);
+
+    try {
+      assertFreeAgencyOfferShape({
+        id: asOfferId(offerValue.id as string),
+        playerId: asPlayerId(offerValue.playerId as string),
+        teamId: asTeamId(offerValue.teamId as string),
+        terms: {
+          id: asContractId(terms.id as string),
+          playerId: asPlayerId(terms.playerId as string),
+          teamId: asTeamId(terms.teamId as string),
+          startYear: terms.startYear as number,
+          endYear: terms.endYear as number,
+          salaryByYear: terms.salaryByYear as Record<string, number>,
+          teamOption: terms.teamOption as
+            | {
+                year: number;
+                salary: number;
+                status: "pending" | "exercised" | "declined";
+              }
+            | undefined,
+          playerOption: terms.playerOption as
+            | {
+                year: number;
+                salary: number;
+                status: "pending" | "exercised" | "declined";
+              }
+            | undefined,
+        },
+        status: offerValue.status as FreeAgencyOfferStatus,
+        contractId:
+          offerValue.contractId === undefined
+            ? undefined
+            : asContractId(offerValue.contractId as string),
+        createdOn: offerValue.createdOn as string,
+        updatedOn: offerValue.updatedOn as string,
+      });
+    } catch (error) {
+      const detail = error instanceof Error ? error.message : String(error);
+      fail(`business.freeAgency.offers[${offerId}]: ${detail}`);
+    }
+
+    if (isOpenOffer(offerValue.status as FreeAgencyOfferStatus)) {
+      const pairKey = `${offerValue.playerId}|${offerValue.teamId}`;
+      if (openOfferPairs.has(pairKey)) {
+        fail(
+          `business.freeAgency.offers has multiple open offers for player "${offerValue.playerId}" and team "${offerValue.teamId}".`,
+        );
+      }
+      openOfferPairs.add(pairKey);
+    }
+
+    if (offerValue.status === "accepted") {
+      const acceptedContractId = offerValue.contractId as string;
+      if (!contractIds.has(acceptedContractId)) {
+        fail(
+          `business.freeAgency.offers[${offerId}].contractId "${acceptedContractId}" is missing from business.contracts.`,
+        );
+      }
+      const linkedContract = business.contracts[acceptedContractId];
+      assertRecord(
+        linkedContract,
+        `business.contracts[${acceptedContractId}]`,
+      );
+      if (linkedContract.playerId !== offerValue.playerId) {
+        fail(
+          `business.freeAgency.offers[${offerId}] accepted contract playerId must match offer.playerId.`,
+        );
+      }
+      if (linkedContract.teamId !== offerValue.teamId) {
+        fail(
+          `business.freeAgency.offers[${offerId}] accepted contract teamId must match offer.teamId.`,
+        );
+      }
+      const signedPlayer = world.players[offerValue.playerId as string];
+      assertRecord(
+        signedPlayer,
+        `world.players[${offerValue.playerId}]`,
+      );
+      if (signedPlayer.contractId !== acceptedContractId) {
+        fail(
+          `business.freeAgency.offers[${offerId}] accepted: player.contractId must equal offer.contractId.`,
+        );
+      }
+      if (signedPlayer.teamId !== offerValue.teamId) {
+        fail(
+          `business.freeAgency.offers[${offerId}] accepted: player.teamId must equal offer.teamId.`,
+        );
+      }
+      const signingTeam = world.teams[offerValue.teamId as string];
+      assertRecord(signingTeam, `world.teams[${offerValue.teamId}]`);
+      if (!Array.isArray(signingTeam.roster)) {
+        fail(`world.teams[${offerValue.teamId}].roster must be an array.`);
+      }
+      if (!(signingTeam.roster as unknown[]).includes(offerValue.playerId)) {
+        fail(
+          `business.freeAgency.offers[${offerId}] accepted: player must be on signing team roster.`,
+        );
+      }
+    }
+  }
+
+  const rosterMembership = new Map<string, string>();
+  for (const [teamId, teamValue] of Object.entries(world.teams)) {
+    assertRecord(teamValue, `world.teams[${teamId}]`);
+    if (!Array.isArray(teamValue.roster)) {
+      fail(`world.teams[${teamId}].roster must be an array.`);
+    }
+    for (const rosterPlayerId of teamValue.roster as unknown[]) {
+      if (typeof rosterPlayerId !== "string" || rosterPlayerId.length === 0) {
+        fail(
+          `world.teams[${teamId}].roster entries must be non-empty strings.`,
+        );
+      }
+      if (!playerIds.has(rosterPlayerId)) {
+        fail(
+          `world.teams[${teamId}].roster entry "${rosterPlayerId}" is missing from world.players.`,
+        );
+      }
+      const existingTeamId = rosterMembership.get(rosterPlayerId);
+      if (existingTeamId !== undefined) {
+        fail(
+          `Player "${rosterPlayerId}" appears on multiple team rosters ("${existingTeamId}" and "${teamId}").`,
+        );
+      }
+      rosterMembership.set(rosterPlayerId, teamId);
+    }
   }
 
   for (const [standingKey, standingValue] of Object.entries(

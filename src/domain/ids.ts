@@ -6,6 +6,7 @@ export type LeagueId = Brand<string, "LeagueId">;
 export type ConferenceId = Brand<string, "ConferenceId">;
 export type DivisionId = Brand<string, "DivisionId">;
 export type ContractId = Brand<string, "ContractId">;
+export type OfferId = Brand<string, "OfferId">;
 export type CoachId = Brand<string, "CoachId">;
 export type StaffId = Brand<string, "StaffId">;
 export type ArenaId = Brand<string, "ArenaId">;
@@ -39,6 +40,10 @@ export function asDivisionId(value: string): DivisionId {
 
 export function asContractId(value: string): ContractId {
   return value as ContractId;
+}
+
+export function asOfferId(value: string): OfferId {
+  return value as OfferId;
 }
 
 export function asCoachId(value: string): CoachId {

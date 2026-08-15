@@ -221,6 +221,9 @@ export function createInitialGameState(
     business: {
       contracts: {},
       finances,
+      freeAgency: {
+        offers: {},
+      },
     },
     user: {
       controlledTeamId: userTeamId,

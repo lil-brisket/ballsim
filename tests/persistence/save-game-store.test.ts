@@ -96,6 +96,9 @@ function createEightTeamPopulatedState(rngSeed: number): GameState {
     business: {
       contracts: {},
       finances,
+      freeAgency: {
+        offers: {},
+      },
     },
     user: {
       controlledTeamId: generated.teams[0]!.id as TeamId,

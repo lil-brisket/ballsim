@@ -104,6 +104,9 @@ function createEightTeamGameState(rngSeed: number): {
     business: {
       contracts: {},
       finances,
+      freeAgency: {
+        offers: {},
+      },
     },
     user: {
       controlledTeamId,
