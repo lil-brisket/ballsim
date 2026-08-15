@@ -16,7 +16,9 @@ export type DomainEventType =
   | "PlayerReleased"
   | "DraftPickMade"
   | "FreeAgentSigned"
-  | "CoachHired";
+  | "CoachHired"
+  | "RevenueRecorded"
+  | "ExpenseRecorded";
 
 export type DomainEvent = {
   id: DomainEventId;

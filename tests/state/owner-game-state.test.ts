@@ -98,8 +98,7 @@ describe("toOwnerGameState", () => {
     const teamId = owner.selectedTeamId;
     expect(owner.finances).toBe(state.business.finances[teamId]);
     expect(owner.finances.cash).toBe(50_000_000);
-    expect(owner.finances.revenue).toBe(0);
-    expect(owner.finances.expenses).toBe(0);
+    expect(owner.finances.booksByYear).toEqual({});
     expect(owner.finances.payroll).toBe(0);
   });
 
@@ -246,8 +245,22 @@ describe("Owner Mode GameState round-trip", () => {
     ];
     state.business.finances[state.user.controlledTeamId] = {
       ...state.business.finances[state.user.controlledTeamId]!,
-      revenue: 1_000_000,
-      expenses: 250_000,
+      booksByYear: {
+        [String(state.competition.season.year)]: {
+          revenue: {
+            tickets: 0,
+            sponsorships: 0,
+            merchandise: 0,
+            other: 1_000_000,
+          },
+          expenses: {
+            staff: 0,
+            facilities: 0,
+            operations: 250_000,
+            marketing: 0,
+          },
+        },
+      },
     };
 
     const restored = deserializeGameState(serializeGameState(state));
@@ -256,7 +269,10 @@ describe("Owner Mode GameState round-trip", () => {
 
     const owner = toOwnerGameState(restored);
     expect(owner.objectives).toBe(restored.user.objectives);
-    expect(owner.finances.revenue).toBe(1_000_000);
-    expect(owner.finances.expenses).toBe(250_000);
+    const yearKey = String(restored.competition.season.year);
+    expect(owner.finances.booksByYear[yearKey]!.revenue.other).toBe(1_000_000);
+    expect(owner.finances.booksByYear[yearKey]!.expenses.operations).toBe(
+      250_000,
+    );
   });
 });

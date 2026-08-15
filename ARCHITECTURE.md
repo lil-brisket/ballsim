@@ -82,6 +82,8 @@ Typed domain catalogs such as `PlayerArchetype` and `PlayerNationality` live und
 
 `schemaVersion` 19 adds `world.drafts` (draft class aggregates: prospects, order, scouting, selections). Pre-v19 saves migrate with empty `drafts: {}`. Prospect snapshots live on the draft class until selection; selection inserts the reserved player id into `world.players`.
 
+`schemaVersion` 20 replaces scalar `TeamFinances.revenue` / `expenses` with period-keyed `booksByYear` (category revenue and posted expenses). Pre-v20 non-zero `revenue` maps to `books[seasonYear].revenue.other`; non-zero `expenses` maps to `books[seasonYear].expenses.operations`. Zeros are discarded. Player salary expense on financial statements is derived from contracts via `getTeamPayroll`; it is never stored in books. `cash` is unchanged by revenue/expense posting.
+
 ## GameState (composed slices)
 
 `GameState` is the single source of truth for one save, composed of typed slices:
@@ -104,6 +106,8 @@ GameState
 `schemaVersion` 18 stores draft picks under `world.draftPicks` and trade-block listings under `business.tradeBlocks`. Trade Block entries are references to existing players/picks (status on the entry only). The trade engine (`validateTrade` / `executeTrade`) is the only authoritative mutation path for player/pick trades.
 
 `schemaVersion` 19 stores draft classes under `world.drafts`. `createDraft` / `activateDraft` / `makeDraftSelection` / `completeDraft` own draft lifecycle. Selection does not consume RNG; order ownership for an active draft is `DraftOrderSlot.ownerTeamId` (pick-asset ownership is not mutated by the draft system).
+
+`schemaVersion` 20 stores team accounting books under `business.finances[*].booksByYear`. `recordRevenue` / `recordExpense` are additive posts; `getFinancialStatement` derives totals and contract-based player salaries. Totals and `playerSalaries` are never persisted.
 
 Slice boundaries may be refined as domain models grow, but composition remains mandatory to avoid one undifferentiated mega-object.
 

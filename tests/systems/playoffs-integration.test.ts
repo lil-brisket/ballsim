@@ -53,7 +53,7 @@ function createEightTeamGameState(rngSeed: number): {
   const finances = Object.fromEntries(
     generated.teams.map((team) => [
       team.id,
-      { teamId: team.id, cash: 50_000_000, revenue: 0, expenses: 0, payroll: 0 },
+      { teamId: team.id, cash: 50_000_000, payroll: 0, booksByYear: {} },
     ]),
   );
 

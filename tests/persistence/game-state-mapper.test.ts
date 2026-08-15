@@ -1472,10 +1472,11 @@ describe("GameState schema migration", () => {
     expect(migrated.meta.schemaVersion).toBe(GAME_STATE_SCHEMA_VERSION);
     expect(migrated.user.objectives).toEqual([]);
     for (const finance of Object.values(migrated.business.finances)) {
-      expect(finance.revenue).toBe(0);
-      expect(finance.expenses).toBe(0);
+      expect(finance.booksByYear).toEqual({});
       expect(finance.cash).toBe(50_000_000);
       expect(finance.payroll).toBe(0);
+      expect("revenue" in finance).toBe(false);
+      expect("expenses" in finance).toBe(false);
     }
     expect(migrated.meta.rngState).toBe(modern.meta.rngState);
   });
@@ -1685,5 +1686,111 @@ describe("GameState schema migration", () => {
     expect(restored.world.players[playerDeclined]?.contractId).toBe(
       declinedId,
     );
+  });
+
+  it("migrates schemaVersion 19 scalar finances to booksByYear preserving non-zero totals", () => {
+    const modern = createInitialGameState({
+      saveId: "save_v19_finances",
+      rngSeed: 41,
+      nowIso: "2026-08-14T12:00:00.000Z",
+    });
+    const seasonYear = modern.competition.season.year;
+    const yearKey = String(seasonYear);
+    const teamIds = Object.keys(modern.business.finances);
+    const teamA = teamIds[0]!;
+    const teamB = teamIds[1]!;
+    const teamC = teamIds[2]!;
+    const teamD = teamIds[3]!;
+
+    const financesV19 = Object.fromEntries(
+      Object.entries(modern.business.finances).map(([teamId, finance]) => {
+        let revenue = 0;
+        let expenses = 0;
+        if (teamId === teamA) {
+          revenue = 500;
+          expenses = 300;
+        } else if (teamId === teamB) {
+          revenue = 0;
+          expenses = 300;
+        } else if (teamId === teamC) {
+          revenue = 500;
+          expenses = 0;
+        }
+        return [
+          teamId,
+          {
+            teamId: finance.teamId,
+            cash: finance.cash,
+            revenue,
+            expenses,
+            payroll: finance.payroll,
+          },
+        ];
+      }),
+    );
+
+    const stateV19 = {
+      ...modern,
+      meta: {
+        ...modern.meta,
+        schemaVersion: 19,
+      },
+      business: {
+        ...modern.business,
+        finances: financesV19,
+      },
+    };
+
+    const migrated = deserializeGameState(JSON.stringify(stateV19));
+    expect(migrated.meta.schemaVersion).toBe(GAME_STATE_SCHEMA_VERSION);
+
+    expect(migrated.business.finances[teamA]!.booksByYear[yearKey]).toEqual({
+      revenue: {
+        tickets: 0,
+        sponsorships: 0,
+        merchandise: 0,
+        other: 500,
+      },
+      expenses: {
+        staff: 0,
+        facilities: 0,
+        operations: 300,
+        marketing: 0,
+      },
+    });
+    expect(migrated.business.finances[teamB]!.booksByYear[yearKey]).toEqual({
+      revenue: {
+        tickets: 0,
+        sponsorships: 0,
+        merchandise: 0,
+        other: 0,
+      },
+      expenses: {
+        staff: 0,
+        facilities: 0,
+        operations: 300,
+        marketing: 0,
+      },
+    });
+    expect(migrated.business.finances[teamC]!.booksByYear[yearKey]).toEqual({
+      revenue: {
+        tickets: 0,
+        sponsorships: 0,
+        merchandise: 0,
+        other: 500,
+      },
+      expenses: {
+        staff: 0,
+        facilities: 0,
+        operations: 0,
+        marketing: 0,
+      },
+    });
+    expect(migrated.business.finances[teamD]!.booksByYear).toEqual({});
+
+    for (const finance of Object.values(migrated.business.finances)) {
+      expect("revenue" in finance).toBe(false);
+      expect("expenses" in finance).toBe(false);
+    }
   });
 });

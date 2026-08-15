@@ -48,7 +48,7 @@ function createEightTeamPopulatedState(rngSeed: number): GameState {
   const finances = Object.fromEntries(
     generated.teams.map((team) => [
       team.id,
-      { teamId: team.id, cash: 50_000_000, revenue: 0, expenses: 0, payroll: 0 },
+      { teamId: team.id, cash: 50_000_000, payroll: 0, booksByYear: {} },
     ]),
   );
   const standings = {
@@ -731,9 +731,10 @@ describe("validateGameState / deserialize invalid saves", () => {
     expect(() => deserializeGameState(json)).toThrow(/progress must be >= 0/);
   });
 
-  it("rejects non-finite finance revenue", () => {
+  it("rejects non-finite finance book amounts", () => {
     const state = createTestGameState();
     const teamId = state.user.controlledTeamId;
+    const year = state.competition.season.year;
     const json = JSON.stringify({
       ...state,
       business: {
@@ -742,12 +743,27 @@ describe("validateGameState / deserialize invalid saves", () => {
           ...state.business.finances,
           [teamId]: {
             ...state.business.finances[teamId],
-            revenue: Number.NaN,
+            booksByYear: {
+              [String(year)]: {
+                revenue: {
+                  tickets: Number.NaN,
+                  sponsorships: 0,
+                  merchandise: 0,
+                  other: 0,
+                },
+                expenses: {
+                  staff: 0,
+                  facilities: 0,
+                  operations: 0,
+                  marketing: 0,
+                },
+              },
+            },
           },
         },
       },
     });
-    expect(() => deserializeGameState(json)).toThrow(/revenue/);
+    expect(() => deserializeGameState(json)).toThrow(/tickets/);
   });
 });
 

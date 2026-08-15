@@ -124,9 +124,8 @@ export function createInitialGameState(
       {
         teamId: teamId as TeamId,
         cash: 50_000_000,
-        revenue: 0,
-        expenses: 0,
         payroll: 0,
+        booksByYear: {},
       },
     ]),
   );

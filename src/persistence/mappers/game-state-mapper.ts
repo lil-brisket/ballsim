@@ -13,6 +13,8 @@ import type { PlayerArchetype } from "@/domain/entities/player-archetype";
 import type { PlayerNationality } from "@/domain/entities/player-nationality";
 import type { Team, TeamPlayStyle } from "@/domain/entities/team";
 import { NEUTRAL_TEAM_PLAY_STYLE } from "@/domain/entities/team";
+import { createEmptyTeamFinanceBooks } from "@/domain/entities/finances";
+import type { TeamFinances } from "@/domain/entities/finances";
 import { DEFAULT_COACHING_PHILOSOPHY } from "@/domain/coaching/coaching-philosophy";
 import type {
   ArenaId,
@@ -104,10 +106,11 @@ const MIGRATE_ONE_STEP: Record<number, (state: unknown) => unknown> = {
   16: (state) => migrateV16ToV17(state as GameStateV16),
   17: (state) => migrateV17ToV18(state as GameStateV17),
   18: (state) => migrateV18ToV19(state as GameStateV18),
+  19: (state) => migrateV19ToV20(state as GameStateV19),
 };
 
 /**
- * Parse → migrate (v1–v18 → current) → validate → return GameState.
+ * Parse → migrate (v1–v19 → current) → validate → return GameState.
  * Does not call serializeGameState.
  */
 export function deserializeGameState(stateJson: string): GameState {
@@ -888,6 +891,15 @@ type TeamFinancesV14 = {
   payroll: number;
 };
 
+/** Schema 15–19 finances before period books (scalar revenue/expenses). */
+type TeamFinancesV15ThroughV19 = {
+  teamId: TeamId;
+  cash: number;
+  revenue: number;
+  expenses: number;
+  payroll: number;
+};
+
 type BusinessSliceV14 = {
   contracts: Record<string, ContractV15>;
   finances: Record<string, TeamFinancesV14>;
@@ -895,13 +907,13 @@ type BusinessSliceV14 = {
 
 type BusinessSliceV15 = {
   contracts: Record<string, ContractV15>;
-  finances: GameState["business"]["finances"];
+  finances: Record<string, TeamFinancesV15ThroughV19>;
 };
 
 /** Schema 16 business before freeAgency offers. */
 type BusinessSliceV16 = {
   contracts: GameState["business"]["contracts"];
-  finances: GameState["business"]["finances"];
+  finances: Record<string, TeamFinancesV15ThroughV19>;
 };
 
 /** Schema ≤14 user slice before owner objectives. */
@@ -1330,7 +1342,7 @@ type WorldSliceV17 = {
 /** Schema 17 business before tradeBlocks. */
 type BusinessSliceV17 = {
   contracts: GameState["business"]["contracts"];
-  finances: GameState["business"]["finances"];
+  finances: Record<string, TeamFinancesV15ThroughV19>;
   freeAgency: GameState["business"]["freeAgency"];
 };
 
@@ -1358,6 +1370,14 @@ type WorldSliceV18 = {
   draftPicks: GameState["world"]["draftPicks"];
 };
 
+/** Schema 18–19 business before booksByYear. */
+type BusinessSliceV18 = {
+  contracts: GameState["business"]["contracts"];
+  finances: Record<string, TeamFinancesV15ThroughV19>;
+  freeAgency: GameState["business"]["freeAgency"];
+  tradeBlocks: GameState["business"]["tradeBlocks"];
+};
+
 type GameStateV18 = {
   meta: Omit<GameState["meta"], "schemaVersion"> & {
     schemaVersion: 18;
@@ -1365,7 +1385,18 @@ type GameStateV18 = {
   };
   world: WorldSliceV18;
   competition: GameState["competition"];
-  business: GameState["business"];
+  business: BusinessSliceV18;
+  user: GameState["user"];
+};
+
+type GameStateV19 = {
+  meta: Omit<GameState["meta"], "schemaVersion"> & {
+    schemaVersion: 19;
+    rngState: number;
+  };
+  world: GameState["world"];
+  competition: GameState["competition"];
+  business: BusinessSliceV18;
   user: GameState["user"];
 };
 
@@ -1408,7 +1439,7 @@ function migrateV14ToV15(state: GameStateV14): GameStateV15 {
     throw new Error("GameState meta.rngState is required for schemaVersion 14.");
   }
 
-  const finances: GameState["business"]["finances"] = Object.fromEntries(
+  const finances: Record<string, TeamFinancesV15ThroughV19> = Object.fromEntries(
     Object.entries(state.business.finances).map(([teamId, finance]) => [
       teamId,
       {
@@ -1573,7 +1604,7 @@ function migrateV17ToV18(state: GameStateV17): GameStateV18 {
  * Deterministic v18 → v19: add empty world.drafts.
  * Emits literal schemaVersion 19. No RNG.
  */
-function migrateV18ToV19(state: GameStateV18): GameState {
+function migrateV18ToV19(state: GameStateV18): GameStateV19 {
   if (typeof state.meta.rngState !== "number") {
     throw new Error("GameState meta.rngState is required for schemaVersion 18.");
   }
@@ -1593,6 +1624,67 @@ function migrateV18ToV19(state: GameStateV18): GameState {
     },
     competition: state.competition,
     business: state.business,
+    user: state.user,
+  };
+}
+
+/**
+ * Deterministic v19 → v20: replace scalar revenue/expenses with booksByYear.
+ * Non-zero legacy revenue maps to other; non-zero expenses map to operations.
+ * Zero values are discarded. Emits literal schemaVersion 20. No RNG.
+ */
+function migrateV19ToV20(state: GameStateV19): GameState {
+  if (typeof state.meta.rngState !== "number") {
+    throw new Error("GameState meta.rngState is required for schemaVersion 19.");
+  }
+
+  const seasonYear = state.competition.season.year;
+  const yearKey = String(seasonYear);
+
+  const finances: Record<string, TeamFinances> = Object.fromEntries(
+    Object.entries(state.business.finances).map(([teamId, finance]) => {
+      const booksByYear: TeamFinances["booksByYear"] = {};
+      const hasRevenue = finance.revenue > 0;
+      const hasExpenses = finance.expenses > 0;
+
+      if (hasRevenue || hasExpenses) {
+        const books = createEmptyTeamFinanceBooks();
+        if (hasRevenue) {
+          books.revenue.other = finance.revenue;
+        }
+        if (hasExpenses) {
+          books.expenses.operations = finance.expenses;
+        }
+        booksByYear[yearKey] = books;
+      }
+
+      return [
+        teamId,
+        {
+          teamId: finance.teamId,
+          cash: finance.cash,
+          payroll: finance.payroll,
+          booksByYear,
+        },
+      ];
+    }),
+  );
+
+  return {
+    meta: {
+      saveId: state.meta.saveId,
+      schemaVersion: 20,
+      createdAt: state.meta.createdAt,
+      updatedAt: state.meta.updatedAt,
+      rngSeed: state.meta.rngSeed,
+      rngState: state.meta.rngState,
+    },
+    world: state.world,
+    competition: state.competition,
+    business: {
+      ...state.business,
+      finances,
+    },
     user: state.user,
   };
 }

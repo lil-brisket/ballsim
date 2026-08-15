@@ -249,7 +249,20 @@ export type {
   TeamStanding,
 } from "@/domain/entities/standings";
 export { createEmptyTeamStanding } from "@/domain/entities/standings";
-export type { TeamFinances } from "@/domain/entities/finances";
+export type {
+  ExpenseCategory,
+  RevenueCategory,
+  TeamFinanceBooks,
+  TeamFinances,
+  TeamFinancialStatement,
+} from "@/domain/entities/finances";
+export {
+  EXPENSE_CATEGORIES,
+  REVENUE_CATEGORIES,
+  createEmptyTeamFinanceBooks,
+  isExpenseCategory,
+  isRevenueCategory,
+} from "@/domain/entities/finances";
 export type { Calendar } from "@/domain/entities/calendar";
 export type {
   OwnerObjective,

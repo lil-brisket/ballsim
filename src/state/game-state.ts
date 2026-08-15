@@ -20,7 +20,7 @@ import type { Team } from "@/domain/entities/team";
 import type { TradeBlock } from "@/domain/entities/trade-block";
 import type { SaveId, TeamId } from "@/domain/ids";
 
-export const GAME_STATE_SCHEMA_VERSION = 19;
+export const GAME_STATE_SCHEMA_VERSION = 20;
 
 export type GameMode = "owner";
 

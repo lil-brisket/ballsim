@@ -269,3 +269,11 @@ export {
   ATTRIBUTE_SALARY_BASE,
   ATTRIBUTE_SALARY_PER_MEAN_POINT,
 } from "@/systems/attribute-salary";
+export {
+  recordRevenue,
+  recordExpense,
+  getFinancialStatement,
+  getTotalRevenue,
+  getTotalExpenses,
+  getNetIncome,
+} from "@/systems/team-finances";
