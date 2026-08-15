@@ -63,6 +63,12 @@ export function getIsoWeekId(isoDate: string): string {
   return `${String(isoYear).padStart(4, "0")}-W${String(week).padStart(2, "0")}`;
 }
 
+/** Calendar month id for a YYYY-MM-DD date (e.g. "2026-08"). */
+export function getCalendarMonthId(isoDate: string): string {
+  const { year, month } = parseCalendarDate(isoDate);
+  return `${String(year).padStart(4, "0")}-${String(month).padStart(2, "0")}`;
+}
+
 function assertValidYmd(
   year: number,
   month: number,

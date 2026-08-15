@@ -96,8 +96,32 @@ export type {
   MentalAttributeKey,
   CategoryMix,
 } from "@/domain/player-overall-rating";
-export type { Coach } from "@/domain/entities/coach";
-export type { Staff, StaffRole } from "@/domain/entities/staff";
+export type { Coach, CoachInput } from "@/domain/entities/coach";
+export { createCoach } from "@/domain/entities/coach";
+export type {
+  Staff,
+  StaffRole,
+  StaffStrength,
+  StaffWeakness,
+  StaffInput,
+} from "@/domain/entities/staff";
+export {
+  STAFF_ROLES,
+  TIER1_STAFF_ROLES,
+  createStaff,
+  assertStaffShape,
+  isStaffRole,
+} from "@/domain/entities/staff";
+export type {
+  StaffContract,
+  StaffContractInput,
+} from "@/domain/entities/staff-contract";
+export {
+  createStaffContract,
+  assertStaffContractShape,
+  getStaffContractSalaryForYear,
+  isStaffContractActive,
+} from "@/domain/entities/staff-contract";
 export type {
   Contract,
   ContractInput,

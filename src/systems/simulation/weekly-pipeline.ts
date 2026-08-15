@@ -1,6 +1,15 @@
 import { getIsoWeekId } from "@/domain/calendar-date";
 import { systemResult, type SystemResult } from "@/domain/system-result";
 import type { GameState } from "@/state/game-state";
+import {
+  processWeeklyFacilityOpex,
+  processWeeklyFacilityUpgrades,
+} from "@/systems/facilities";
+import { processWeeklyMarketing } from "@/systems/marketing";
+import { processWeeklyMediaDecay } from "@/systems/media";
+import { processWeeklyStaffPayroll } from "@/systems/staff";
+import { runAiFranchiseDecisions } from "@/systems/ai-franchise-decisions";
+import { createSeededRng } from "@/domain/rng";
 
 export type WeeklyPipelineResult = SystemResult & {
   weeklyPipelineRan: boolean;
@@ -12,8 +21,6 @@ export type WeeklyPipelineResult = SystemResult & {
  *
  * `completedWeekId` is the week that just ended (not the current calendar week).
  * Example: after simulating Sunday and advancing to Monday, process the Sunday's week.
- *
- * Gameplay steps are intentionally empty until weekly systems exist.
  */
 export function runWeeklyPipeline(
   state: GameState,
@@ -27,19 +34,50 @@ export function runWeeklyPipeline(
     };
   }
 
-  // Extension point: weekly financial / reporting systems go here in order.
+  let current = state;
+  const events: SystemResult["events"] = [];
+
+  const payroll = processWeeklyStaffPayroll(current);
+  current = payroll.state;
+  events.push(...payroll.events);
+
+  const facilityOpex = processWeeklyFacilityOpex(current);
+  current = facilityOpex.state;
+  events.push(...facilityOpex.events);
+
+  const facilityUpgrades = processWeeklyFacilityUpgrades(current);
+  current = facilityUpgrades.state;
+  events.push(...facilityUpgrades.events);
+
+  const marketing = processWeeklyMarketing(current);
+  current = marketing.state;
+  events.push(...marketing.events);
+
+  const media = processWeeklyMediaDecay(current);
+  current = media.state;
+  events.push(...media.events);
+
+  // Mark week before AI so idempotency keys include the completed week id.
+  current = {
+    ...current,
+    world: {
+      ...current.world,
+      calendar: {
+        ...current.world.calendar,
+        lastSimulatedWeekId: completedWeekId,
+      },
+    },
+  };
+
+  const ai = runAiFranchiseDecisions(
+    current,
+    createSeededRng(current.meta.rngState),
+  );
+  current = ai.state;
+  events.push(...ai.events);
 
   return {
-    ...systemResult({
-      ...state,
-      world: {
-        ...state.world,
-        calendar: {
-          ...state.world.calendar,
-          lastSimulatedWeekId: completedWeekId,
-        },
-      },
-    }),
+    ...systemResult(current, events),
     weeklyPipelineRan: true,
     completedWeekId,
   };

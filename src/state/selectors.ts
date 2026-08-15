@@ -615,6 +615,22 @@ function describeDomainEvent(event: DomainEvent): string {
       return `Player declined${payload.playerId ? `: ${String(payload.playerId)}` : ""}`;
     case "CoachHired":
       return `Coach hired${payload.coachId ? `: ${String(payload.coachId)}` : ""}`;
+    case "StaffHired":
+      return `Staff hired${payload.staffId ? `: ${String(payload.staffId)}` : ""}`;
+    case "StaffFired":
+      return `Staff fired${payload.staffId ? `: ${String(payload.staffId)}` : ""}`;
+    case "FacilityUpgradeStarted":
+      return `Facility upgrade started${payload.category ? ` (${String(payload.category)})` : ""}`;
+    case "FacilityUpgradeCompleted":
+      return `Facility upgrade completed${payload.category ? ` (${String(payload.category)})` : ""}`;
+    case "SponsorshipSigned":
+      return `Sponsorship signed${payload.sponsorshipId ? `: ${String(payload.sponsorshipId)}` : ""}`;
+    case "SponsorshipExpired":
+      return `Sponsorship expired${payload.sponsorshipId ? `: ${String(payload.sponsorshipId)}` : ""}`;
+    case "RelocationStageChanged":
+      return `Relocation stage: ${String(payload.stage ?? "?")}`;
+    case "ExpansionStageChanged":
+      return `Expansion stage: ${String(payload.stage ?? "?")}`;
     default:
       return event.type;
   }

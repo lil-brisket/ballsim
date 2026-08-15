@@ -11,4 +11,10 @@ export type Calendar = {
    * (not the current calendar week). Null until the first weekly run.
    */
   lastSimulatedWeekId: string | null;
+  /**
+   * Calendar month id (YYYY-MM) of the most recently completed monthly
+   * processing window. Null until the first monthly run.
+   * Not a second clock — advanceSimulation remains the only calendar writer.
+   */
+  lastSimulatedMonthId: string | null;
 };

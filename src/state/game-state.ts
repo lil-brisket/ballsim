@@ -5,17 +5,24 @@ import type { Contract } from "@/domain/entities/contract";
 import type { Division } from "@/domain/entities/division";
 import type { DraftPick } from "@/domain/entities/draft-pick";
 import type { DraftClass } from "@/domain/entities/draft";
+import type { ExpansionState } from "@/domain/entities/expansion";
 import type { FreeAgencyOffer } from "@/domain/entities/free-agency-offer";
+import type { FranchiseHistory } from "@/domain/entities/franchise-history";
+import type { FranchiseOps } from "@/domain/entities/franchise-ops";
 import type { TeamFinances } from "@/domain/entities/finances";
 import type { Game } from "@/domain/entities/game";
 import type { League } from "@/domain/entities/league";
+import type { LeagueEconomy } from "@/domain/entities/league-economy";
 import type { OwnerNotification } from "@/domain/entities/owner-notification";
 import type { OwnerObjective } from "@/domain/entities/owner-objective";
 import type { Player } from "@/domain/entities/player";
 import type { PlayoffTournament } from "@/domain/entities/playoffs";
+import type { RelocationProcess } from "@/domain/entities/relocation";
 import type { Schedule } from "@/domain/entities/schedule";
 import type { Season } from "@/domain/entities/season";
+import type { Sponsorship } from "@/domain/entities/sponsorship";
 import type { Staff } from "@/domain/entities/staff";
+import type { StaffContract } from "@/domain/entities/staff-contract";
 import type { Standings } from "@/domain/entities/standings";
 import type { Team } from "@/domain/entities/team";
 import type { ScheduledEvent } from "@/domain/entities/scheduled-event";
@@ -23,7 +30,7 @@ import type { TradeBlock } from "@/domain/entities/trade-block";
 import type { DomainEvent } from "@/domain/events";
 import type { SaveId, TeamId } from "@/domain/ids";
 
-export const GAME_STATE_SCHEMA_VERSION = 23;
+export const GAME_STATE_SCHEMA_VERSION = 24;
 
 /** Bounded recent history for Owner Mode activity / transactions UI. */
 export const EVENT_LOG_MAX = 1_000;
@@ -73,6 +80,16 @@ export type BusinessSlice = {
   finances: Record<string, TeamFinances>;
   freeAgency: FreeAgencyState;
   tradeBlocks: Record<string, TradeBlock>;
+  /** Staff employment terms (separate from player contracts). */
+  staffContracts: Record<string, StaffContract>;
+  /** Commercial sponsorships (separate from player/staff contracts). */
+  sponsorships: Record<string, Sponsorship>;
+  /** Per-team operational knobs + slow franchise metrics. */
+  franchiseOps: Record<string, FranchiseOps>;
+  leagueEconomy: LeagueEconomy;
+  relocationByTeamId: Record<string, RelocationProcess>;
+  expansion: ExpansionState;
+  franchiseHistory: Record<string, FranchiseHistory>;
 };
 
 export type UserSlice = {

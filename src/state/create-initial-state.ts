@@ -22,7 +22,9 @@ import {
   GAME_STATE_SCHEMA_VERSION,
   type GameState,
 } from "@/state/game-state";
+import { createPhaseEBusinessDefaults } from "@/state/phase-e-defaults";
 import { generateLeague } from "@/systems/league-generation";
+import { generateLeagueStaff } from "@/systems/staff-generation";
 
 export type CreateInitialGameStateInput = {
   saveId: string;
@@ -117,8 +119,9 @@ export function createInitialGameState(
   };
 
   const seasonId = asSeasonId(`season_${saveId}_2026`);
+  const phaseE = createPhaseEBusinessDefaults(teamIds);
 
-  return {
+  let state: GameState = {
     meta: {
       saveId,
       schemaVersion: GAME_STATE_SCHEMA_VERSION,
@@ -132,6 +135,7 @@ export function createInitialGameState(
         currentDate: "2026-10-01",
         lastSimulatedDate: null,
         lastSimulatedWeekId: null,
+        lastSimulatedMonthId: null,
       },
       league: generated.league,
       conferences,
@@ -166,6 +170,7 @@ export function createInitialGameState(
         offers: {},
       },
       tradeBlocks: {},
+      ...phaseE,
     },
     user: {
       controlledTeamId,
@@ -174,6 +179,15 @@ export function createInitialGameState(
       notifications: [],
       eventLog: [],
       appliedGameplayConsequenceKeys: {},
+    },
+  };
+
+  state = generateLeagueStaff(state, rng);
+  return {
+    ...state,
+    meta: {
+      ...state.meta,
+      rngState: rng.getState(),
     },
   };
 }
@@ -261,6 +275,9 @@ export function createFourTeamInitialGameState(
     ),
   };
 
+  const teamIds = Object.keys(teams) as TeamId[];
+  const phaseE = createPhaseEBusinessDefaults(teamIds);
+
   return {
     meta: {
       saveId,
@@ -275,6 +292,7 @@ export function createFourTeamInitialGameState(
         currentDate: "2026-10-01",
         lastSimulatedDate: null,
         lastSimulatedWeekId: null,
+        lastSimulatedMonthId: null,
       },
       league: {
         id: leagueId,
@@ -352,6 +370,7 @@ export function createFourTeamInitialGameState(
         offers: {},
       },
       tradeBlocks: {},
+      ...phaseE,
     },
     user: {
       controlledTeamId: userTeamId,

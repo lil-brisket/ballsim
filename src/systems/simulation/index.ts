@@ -4,6 +4,10 @@ export {
   runWeeklyPipeline,
   completedWeekIdForSimulatedDate,
 } from "@/systems/simulation/weekly-pipeline";
+export {
+  runMonthlyPipeline,
+  completedMonthIdForSimulatedDate,
+} from "@/systems/simulation/monthly-pipeline";
 export { runOwnerGameplay } from "@/systems/simulation/owner-gameplay";
 export {
   scheduleEvent,

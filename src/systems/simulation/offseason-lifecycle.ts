@@ -15,6 +15,10 @@ import {
   draftYearForSeason,
 } from "@/systems/draft";
 import { releaseExpiredContracts } from "@/systems/free-agency";
+import { appendAllFranchiseSeasonRecords } from "@/systems/franchise-history";
+import { processSeasonalLeagueEconomy } from "@/systems/league-economy";
+import { tickRelocationCooldowns } from "@/systems/relocation";
+import { expireSponsorshipsAtSeason } from "@/systems/sponsorships";
 import { transitionPhase } from "@/systems/simulation/phase-machine";
 
 function setOffseasonStage(
@@ -154,6 +158,22 @@ export function processOffseasonLifecycle(
   let current = state;
 
   if (current.competition.season.offseasonStage === "season_finalization") {
+    const history = appendAllFranchiseSeasonRecords(current);
+    current = history.state;
+    events.push(...history.events);
+
+    const sponsorships = expireSponsorshipsAtSeason(current);
+    current = sponsorships.state;
+    events.push(...sponsorships.events);
+
+    const economy = processSeasonalLeagueEconomy(current);
+    current = economy.state;
+    events.push(...economy.events);
+
+    const relocation = tickRelocationCooldowns(current);
+    current = relocation.state;
+    events.push(...relocation.events);
+
     current = setOffseasonStage(current, "contract_expiration");
   }
 

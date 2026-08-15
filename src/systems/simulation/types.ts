@@ -18,6 +18,7 @@ export type AdvanceSimulationResult = {
   scheduledEventsProcessed: number;
   gamesSimulated: number;
   weeklyPipelineRan: boolean;
+  monthlyPipelineRan: boolean;
 };
 
 export type AdvanceSimulationOptions = {

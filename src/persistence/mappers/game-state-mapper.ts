@@ -36,6 +36,9 @@ import { calculateStandings } from "@/systems/standings";
 import { validateGameState } from "@/persistence/validate-game-state";
 import { generateDraftPicksForSeason } from "@/domain/draft-picks/generate-draft-picks";
 import type { OffseasonStage, SeasonPhase } from "@/domain/entities/season";
+import { createPhaseEBusinessDefaults } from "@/state/phase-e-defaults";
+import type { StaffRole, StaffStrength, StaffWeakness } from "@/domain/entities/staff";
+import { asStaffId } from "@/domain/ids";
 
 const gameStateEnvelopeSchema = z.object({
   meta: z.object({
@@ -112,10 +115,11 @@ const MIGRATE_ONE_STEP: Record<number, (state: unknown) => unknown> = {
   20: (state) => migrateV20ToV21(state as GameStateV20),
   21: (state) => migrateV21ToV22(state as GameStateV21),
   22: (state) => migrateV22ToV23(state as GameStateV22),
+  23: (state) => migrateV23ToV24(state as GameStateV23),
 };
 
 /**
- * Parse → migrate (v1–v22 → current) → validate → return GameState.
+ * Parse → migrate (v1–v23 → current) → validate → return GameState.
  * Does not call serializeGameState.
  */
 export function deserializeGameState(stateJson: string): GameState {
@@ -1862,7 +1866,7 @@ function migrateV21ToV22(state: GameStateV21): GameStateV22 {
  * Deterministic v22 → v23: add empty user.eventLog for Owner activity history.
  * Emits literal schemaVersion 23. No RNG.
  */
-function migrateV22ToV23(state: GameStateV22): GameState {
+function migrateV22ToV23(state: GameStateV22): GameStateV23 {
   if (typeof state.meta.rngState !== "number") {
     throw new Error("GameState meta.rngState is required for schemaVersion 22.");
   }
@@ -1891,9 +1895,9 @@ type GameStateV22 = {
     schemaVersion: 22;
     rngState: number;
   };
-  world: GameState["world"];
+  world: GameStateV23["world"];
   competition: GameState["competition"];
-  business: GameState["business"];
+  business: GameStateV23["business"];
   user: {
     controlledTeamId: GameState["user"]["controlledTeamId"];
     mode: GameState["user"]["mode"];
@@ -1902,6 +1906,121 @@ type GameStateV22 = {
     appliedGameplayConsequenceKeys: GameState["user"]["appliedGameplayConsequenceKeys"];
   };
 };
+
+type GameStateV23 = {
+  meta: Omit<GameState["meta"], "schemaVersion"> & {
+    schemaVersion: 23;
+    rngState: number;
+  };
+  world: {
+    calendar: {
+      currentDate: string;
+      lastSimulatedDate: string | null;
+      lastSimulatedWeekId: string | null;
+    };
+    league: GameState["world"]["league"];
+    conferences: GameState["world"]["conferences"];
+    divisions: GameState["world"]["divisions"];
+    teams: GameState["world"]["teams"];
+    players: GameState["world"]["players"];
+    coaches: GameState["world"]["coaches"];
+    staff: GameState["world"]["staff"];
+    draftPicks: GameState["world"]["draftPicks"];
+    drafts: GameState["world"]["drafts"];
+    scheduledEvents: GameState["world"]["scheduledEvents"];
+  };
+  competition: GameState["competition"];
+  business: {
+    contracts: GameState["business"]["contracts"];
+    finances: GameState["business"]["finances"];
+    freeAgency: GameState["business"]["freeAgency"];
+    tradeBlocks: GameState["business"]["tradeBlocks"];
+  };
+  user: GameState["user"];
+};
+
+/**
+ * Deterministic v23 → v24: Phase E franchise business slices + calendar month id.
+ * Emits literal schemaVersion 24. No RNG.
+ */
+function migrateV23ToV24(state: GameStateV23): GameState {
+  const teamIds = Object.keys(state.world.teams) as TeamId[];
+  const phaseE = createPhaseEBusinessDefaults(teamIds);
+
+  // Upgrade legacy staff role "other" → "assistant_coach" and fill missing attrs.
+  // Orphan teamIds (common when fixtures strip teams) become unemployed.
+  const staff: GameState["world"]["staff"] = {};
+  for (const [id, raw] of Object.entries(state.world.staff)) {
+    const s = raw as Record<string, unknown>;
+    const role =
+      s.role === "other" || s.role === undefined
+        ? "assistant_coach"
+        : (s.role as StaffRole);
+    let teamId = (s.teamId as TeamId | null) ?? null;
+    if (teamId !== null && !(teamId in state.world.teams)) {
+      teamId = null;
+    }
+    staff[id] = {
+      id: asStaffId(String(s.id ?? id)),
+      teamId,
+      firstName: String(s.firstName ?? "Unknown"),
+      lastName: String(s.lastName ?? "Staff"),
+      role,
+      quality: typeof s.quality === "number" ? s.quality : 50,
+      experience: typeof s.experience === "number" ? s.experience : 5,
+      strengths: Array.isArray(s.strengths)
+        ? (s.strengths as StaffStrength[])
+        : [],
+      weaknesses: Array.isArray(s.weaknesses)
+        ? (s.weaknesses as StaffWeakness[])
+        : [],
+    };
+  }
+
+  const teams: GameState["world"]["teams"] = {};
+  for (const [teamId, team] of Object.entries(state.world.teams)) {
+    teams[teamId] = {
+      ...team,
+      staff: team.staff.filter((staffId) => {
+        const member = staff[staffId];
+        return member !== undefined && member.teamId === teamId;
+      }),
+    };
+  }
+
+  // Drop orphan coaches whose teamId is missing.
+  const coaches: GameState["world"]["coaches"] = {};
+  for (const [coachId, coach] of Object.entries(state.world.coaches)) {
+    if (coach.teamId !== null && !(coach.teamId in state.world.teams)) {
+      coaches[coachId] = { ...coach, teamId: null };
+    } else {
+      coaches[coachId] = coach;
+    }
+  }
+
+  return {
+    meta: {
+      ...state.meta,
+      schemaVersion: 24,
+    },
+    world: {
+      ...state.world,
+      calendar: {
+        ...state.world.calendar,
+        lastSimulatedMonthId: null,
+      },
+      teams,
+      staff,
+      coaches,
+    },
+    competition: state.competition,
+    business: {
+      ...state.business,
+      ...phaseE,
+    },
+    user: state.user,
+  };
+}
 
 function findUniqueContractId(
   playerId: PlayerId,

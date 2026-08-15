@@ -11,6 +11,7 @@ import {
 import { createMemorySaveGameStore } from "@/persistence/memory-save-game-store";
 import { validateGameState } from "@/persistence/validate-game-state";
 import { createInitialGameState } from "@/state/create-initial-state";
+import { createPhaseEBusinessDefaults } from "@/state/phase-e-defaults";
 import {
   GAME_STATE_SCHEMA_VERSION,
   type GameState,
@@ -74,6 +75,7 @@ function createEightTeamPopulatedState(rngSeed: number): GameState {
         currentDate: "2026-10-01",
         lastSimulatedDate: null,
         lastSimulatedWeekId: null,
+        lastSimulatedMonthId: null,
       },
       league: generated.league,
       conferences,
@@ -108,6 +110,7 @@ function createEightTeamPopulatedState(rngSeed: number): GameState {
         offers: {},
       },
       tradeBlocks: {},
+      ...createPhaseEBusinessDefaults(generated.teams.map((t) => t.id as TeamId)),
     },
     user: {
       controlledTeamId: generated.teams[0]!.id as TeamId,

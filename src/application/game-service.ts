@@ -11,6 +11,8 @@ import {
   asContractId,
   asOfferId,
   asPlayerId,
+  asSponsorshipId,
+  asStaffId,
   asTeamId,
   type PlayerId,
   type TeamId,
@@ -58,6 +60,40 @@ import {
   type StandingRowView,
   type TeamListEntry,
 } from "@/state/selectors";
+import {
+  toExpansionView,
+  toFacilitiesView,
+  toFranchiseBusinessView,
+  toFranchiseHistoryView,
+  toLeagueEconomyView,
+  toRelocationView,
+  toSponsorshipsView,
+  toStaffView,
+  type FacilityRowView,
+  type FranchiseBusinessView,
+  type FranchiseHistoryView,
+  type SponsorshipView,
+} from "@/state/franchise-selectors";
+import type { ExpansionState } from "@/domain/entities/expansion";
+import type { LeagueEconomy } from "@/domain/entities/league-economy";
+import type { RelocationProcess } from "@/domain/entities/relocation";
+import { hireStaff, fireStaff } from "@/systems/staff";
+import { startFacilityUpgrade } from "@/systems/facilities";
+import type { FacilityCategory } from "@/domain/entities/franchise-ops";
+import { setMarketingBudget } from "@/systems/marketing";
+import { setTicketPrice } from "@/systems/ticket-pricing";
+import {
+  advanceRelocationStage,
+  cancelRelocation,
+} from "@/systems/relocation";
+import type { RelocationTarget } from "@/domain/entities/relocation";
+import { signSponsorship } from "@/systems/sponsorships";
+import {
+  approveExpansion,
+  completeExpansion,
+  proposeExpansion,
+  runExpansionDraft,
+} from "@/systems/expansion";
 import { runAiTeamDecisions } from "@/systems/ai-team-decisions";
 import {
   draftYearForSeason,
@@ -126,6 +162,14 @@ export type OwnerSaveView = CreateGameResult & {
   schedule: ScheduleGameView[];
   contracts: ContractRowView[];
   finances: FinancesView;
+  staff: ReturnType<typeof toStaffView>;
+  facilities: FacilityRowView[];
+  franchiseBusiness: FranchiseBusinessView;
+  sponsorships: SponsorshipView[];
+  leagueEconomy: LeagueEconomy;
+  relocation: RelocationProcess;
+  expansion: ExpansionState;
+  franchiseHistory: FranchiseHistoryView;
 };
 
 function toSaveSummary(loaded: LoadedSaveGame): SaveGameSummary {
@@ -278,6 +322,14 @@ export async function loadOwnerSaveView(
     schedule: toScheduleView(state),
     contracts: toContractsView(state),
     finances: toFinancesView(state),
+    staff: toStaffView(state),
+    facilities: toFacilitiesView(state),
+    franchiseBusiness: toFranchiseBusinessView(state),
+    sponsorships: toSponsorshipsView(state),
+    leagueEconomy: toLeagueEconomyView(state),
+    relocation: toRelocationView(state),
+    expansion: toExpansionView(state),
+    franchiseHistory: toFranchiseHistoryView(state),
   };
 }
 
@@ -1069,4 +1121,199 @@ function findSurplusPlayer(
     })
     .sort((a, b) => (a < b ? -1 : a > b ? 1 : 0));
   return candidates[0];
+}
+
+async function runOwnerFranchiseCommand(
+  saveId: string,
+  mutate: (state: GameState) => { state: GameState; events: DomainEvent[] },
+  store?: SaveGameStore,
+): Promise<OwnerCommandResult> {
+  const activeStore = getStore(store);
+  const loaded = await activeStore.load(saveId);
+  if (!loaded) {
+    return fail("Save not found.");
+  }
+  try {
+    const result = mutate(loaded.state);
+    const persisted = await persistWorkingState(
+      saveId,
+      result.state,
+      loaded.state.meta.rngState,
+      activeStore,
+      result.events,
+    );
+    return withDashboard(persisted);
+  } catch (error) {
+    return fail(error instanceof Error ? error.message : String(error));
+  }
+}
+
+export async function hireOwnerStaff(
+  saveId: string,
+  staffId: string,
+  store?: SaveGameStore,
+): Promise<OwnerCommandResult> {
+  return runOwnerFranchiseCommand(
+    saveId,
+    (state) =>
+      hireStaff(state, state.user.controlledTeamId, asStaffId(staffId)),
+    store,
+  );
+}
+
+export async function fireOwnerStaff(
+  saveId: string,
+  staffId: string,
+  store?: SaveGameStore,
+): Promise<OwnerCommandResult> {
+  return runOwnerFranchiseCommand(
+    saveId,
+    (state) =>
+      fireStaff(state, state.user.controlledTeamId, asStaffId(staffId)),
+    store,
+  );
+}
+
+export async function upgradeOwnerFacility(
+  saveId: string,
+  category: FacilityCategory,
+  store?: SaveGameStore,
+): Promise<OwnerCommandResult> {
+  return runOwnerFranchiseCommand(
+    saveId,
+    (state) =>
+      startFacilityUpgrade(state, state.user.controlledTeamId, category),
+    store,
+  );
+}
+
+export async function setOwnerTicketPrice(
+  saveId: string,
+  ticketPrice: number,
+  store?: SaveGameStore,
+): Promise<OwnerCommandResult> {
+  return runOwnerFranchiseCommand(
+    saveId,
+    (state) =>
+      setTicketPrice(state, state.user.controlledTeamId, ticketPrice),
+    store,
+  );
+}
+
+export async function setOwnerMarketingBudget(
+  saveId: string,
+  budget: number,
+  store?: SaveGameStore,
+): Promise<OwnerCommandResult> {
+  return runOwnerFranchiseCommand(
+    saveId,
+    (state) =>
+      setMarketingBudget(state, state.user.controlledTeamId, budget),
+    store,
+  );
+}
+
+export async function signOwnerSponsorship(
+  saveId: string,
+  input: {
+    sponsorName: string;
+    annualValue: number;
+    years: number;
+  },
+  store?: SaveGameStore,
+): Promise<OwnerCommandResult> {
+  return runOwnerFranchiseCommand(saveId, (state) => {
+    const year = state.competition.season.year;
+    const teamId = state.user.controlledTeamId;
+    return signSponsorship(state, teamId, {
+      id: asSponsorshipId(`sponsor_${teamId}_${year}_${input.sponsorName}`),
+      sponsorName: input.sponsorName,
+      annualValue: input.annualValue,
+      startYear: year,
+      endYear: year + Math.max(1, input.years) - 1,
+      reputationFloor: 30,
+      playoffBonus: Math.round(input.annualValue * 0.1),
+    });
+  }, store);
+}
+
+export async function advanceOwnerRelocation(
+  saveId: string,
+  targetJson?: string,
+  store?: SaveGameStore,
+): Promise<OwnerCommandResult> {
+  return runOwnerFranchiseCommand(saveId, (state) => {
+    const target = targetJson
+      ? (JSON.parse(targetJson) as RelocationTarget)
+      : undefined;
+    return advanceRelocationStage(state, state.user.controlledTeamId, target);
+  }, store);
+}
+
+export async function cancelOwnerRelocation(
+  saveId: string,
+  store?: SaveGameStore,
+): Promise<OwnerCommandResult> {
+  return runOwnerFranchiseCommand(
+    saveId,
+    (state) => cancelRelocation(state, state.user.controlledTeamId),
+    store,
+  );
+}
+
+export async function proposeOwnerExpansion(
+  saveId: string,
+  store?: SaveGameStore,
+): Promise<OwnerCommandResult> {
+  return runOwnerFranchiseCommand(saveId, (state) => {
+    const divisions = Object.values(state.world.divisions);
+    const division = divisions[0];
+    if (!division) {
+      throw new Error("proposeOwnerExpansion: no divisions available.");
+    }
+    return proposeExpansion(state, [
+      {
+        city: "Summit",
+        name: "Skyhawks",
+        abbreviation: "SUM",
+        marketSize: 58,
+        conferenceId: division.conferenceId,
+        divisionId: division.id,
+      },
+      {
+        city: "Canyon",
+        name: "Rattlers",
+        abbreviation: "CAN",
+        marketSize: 52,
+        conferenceId: division.conferenceId,
+        divisionId: division.id,
+      },
+    ]);
+  }, store);
+}
+
+export async function approveOwnerExpansion(
+  saveId: string,
+  candidateIndex: number,
+  store?: SaveGameStore,
+): Promise<OwnerCommandResult> {
+  return runOwnerFranchiseCommand(
+    saveId,
+    (state) => approveExpansion(state, candidateIndex),
+    store,
+  );
+}
+
+export async function runOwnerExpansionDraft(
+  saveId: string,
+  store?: SaveGameStore,
+): Promise<OwnerCommandResult> {
+  return runOwnerFranchiseCommand(saveId, (state) => runExpansionDraft(state), store);
+}
+
+export async function completeOwnerExpansion(
+  saveId: string,
+  store?: SaveGameStore,
+): Promise<OwnerCommandResult> {
+  return runOwnerFranchiseCommand(saveId, (state) => completeExpansion(state), store);
 }

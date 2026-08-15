@@ -14,14 +14,14 @@ import {
   hasAppliedGameplayConsequence,
 } from "@/systems/gameplay-financial-consequences";
 import {
+  GAMEPLAY_LOSS_EXPENSE,
   GAMEPLAY_OBJECTIVE_REWARD,
-  GAMEPLAY_WIN_REVENUE,
 } from "@/systems/owner-objectives-config";
 import { bootstrapWorld } from "@/systems/world-pipeline";
 
 describe("gameplay financial consequences", () => {
-  it("applies win revenue to cash and books once per game key", () => {
-    let state = createInitialGameState({ saveId: "fin_win", rngSeed: 3 });
+  it("applies loss operations expense once per game key (no win ticket revenue)", () => {
+    let state = createInitialGameState({ saveId: "fin_loss", rngSeed: 3 });
     const rng = createSeededRng(state.meta.rngState);
     state = bootstrapWorld(state, rng).state;
     const teamId = state.user.controlledTeamId;
@@ -30,7 +30,7 @@ describe("gameplay financial consequences", () => {
     )!;
     const date = state.world.calendar.currentDate;
     const year = state.competition.season.year;
-    const gameId = asGameId("game_fin_1");
+    const gameId = asGameId("game_fin_loss");
     const game = createGame({
       id: gameId,
       seasonId: asSeasonId(state.competition.season.id),
@@ -38,7 +38,7 @@ describe("gameplay financial consequences", () => {
       homeTeamId: teamId,
       awayTeamId: asTeamId(otherTeamId),
       status: "final",
-      score: { home: 110, away: 100 },
+      score: { home: 90, away: 110 },
       periodScores: [],
       playerStats: [],
       events: [],
@@ -53,7 +53,7 @@ describe("gameplay financial consequences", () => {
     const before = state.business.finances[teamId]!.cash;
     const once = applyGameplayFinancialConsequences(state);
     expect(once.state.business.finances[teamId]!.cash).toBe(
-      before + GAMEPLAY_WIN_REVENUE,
+      before - GAMEPLAY_LOSS_EXPENSE,
     );
     expect(
       hasAppliedGameplayConsequence(
@@ -61,12 +61,9 @@ describe("gameplay financial consequences", () => {
         `game_result:${teamId}:${gameId}`,
       ),
     ).toBe(true);
-    const twice = applyGameplayFinancialConsequences(once.state);
-    expect(twice.state.business.finances[teamId]!.cash).toBe(
-      once.state.business.finances[teamId]!.cash,
-    );
-    const books = twice.state.business.finances[teamId]!.booksByYear[String(year)];
-    expect(books?.revenue.tickets).toBe(GAMEPLAY_WIN_REVENUE);
+    const books = once.state.business.finances[teamId]!.booksByYear[String(year)];
+    expect(books?.revenue.tickets).toBe(0);
+    expect(books?.expenses.operations).toBe(GAMEPLAY_LOSS_EXPENSE);
   });
 
   it("applies objective reward once via consequence keys", () => {

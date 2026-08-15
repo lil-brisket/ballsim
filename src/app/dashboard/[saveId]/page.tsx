@@ -111,6 +111,22 @@ export default async function DashboardPage({
           label="Payroll"
           value={<MoneyDisplay amount={dashboard.payroll} />}
         />
+        <StatCard
+          label="Fan sentiment"
+          value={`${view.franchiseBusiness.fanSentiment}`}
+        />
+        <StatCard
+          label="Reputation"
+          value={`${view.franchiseBusiness.reputation}`}
+        />
+        <StatCard
+          label="Franchise value"
+          value={<MoneyDisplay amount={view.franchiseBusiness.franchiseValue} />}
+        />
+        <StatCard
+          label="Arena capacity"
+          value={`${view.franchiseBusiness.arenaCapacity}`}
+        />
       </section>
 
       <Section title="Owner objectives">

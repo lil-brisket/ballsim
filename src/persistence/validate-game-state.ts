@@ -184,6 +184,19 @@ export function validateGameState(state: unknown): asserts state is GameState {
     fail("world.calendar.lastSimulatedWeekId must be a non-empty string or null.");
   }
 
+  if (world.calendar.lastSimulatedMonthId === null) {
+    // ok
+  } else if (typeof world.calendar.lastSimulatedMonthId === "string") {
+    assertNonEmptyString(
+      world.calendar.lastSimulatedMonthId,
+      "world.calendar.lastSimulatedMonthId",
+    );
+  } else {
+    fail(
+      "world.calendar.lastSimulatedMonthId must be a non-empty string or null.",
+    );
+  }
+
   assertRecord(world.league, "world.league");
   assertNonEmptyString(world.league.id, "world.league.id");
   assertRecord(world.conferences, "world.conferences");
@@ -275,6 +288,90 @@ export function validateGameState(state: unknown): asserts state is GameState {
   }
   assertRecord(business.freeAgency.offers, "business.freeAgency.offers");
   assertRecord(business.tradeBlocks, "business.tradeBlocks");
+
+  for (const key of [
+    "staffContracts",
+    "sponsorships",
+    "franchiseOps",
+    "relocationByTeamId",
+    "franchiseHistory",
+  ] as const) {
+    if (!(key in business)) {
+      fail(`business.${key} is required.`);
+    }
+    assertRecord(
+      (business as Record<string, unknown>)[key],
+      `business.${key}`,
+    );
+  }
+  if (!("leagueEconomy" in business) || business.leagueEconomy == null) {
+    fail("business.leagueEconomy is required.");
+  }
+  assertRecord(business.leagueEconomy, "business.leagueEconomy");
+  if (!("expansion" in business) || business.expansion == null) {
+    fail("business.expansion is required.");
+  }
+  assertRecord(business.expansion, "business.expansion");
+
+  for (const teamId of Object.keys(world.teams)) {
+    if (!(teamId in business.franchiseOps)) {
+      fail(`business.franchiseOps missing team "${teamId}".`);
+    }
+    if (!(teamId in business.relocationByTeamId)) {
+      fail(`business.relocationByTeamId missing team "${teamId}".`);
+    }
+    if (!(teamId in business.franchiseHistory)) {
+      fail(`business.franchiseHistory missing team "${teamId}".`);
+    }
+  }
+
+  for (const [staffId, staffValue] of Object.entries(world.staff)) {
+    assertRecord(staffValue, `world.staff[${staffId}]`);
+    assertNonEmptyString(staffValue.id, `world.staff[${staffId}].id`);
+    if (staffValue.id !== staffId) {
+      fail(`world.staff key "${staffId}" does not match staff.id.`);
+    }
+    if (
+      typeof staffValue.role !== "string" ||
+      ![
+        "general_manager",
+        "head_coach",
+        "assistant_coach",
+        "scout",
+        "trainer",
+        "finance",
+        "marketing",
+      ].includes(staffValue.role)
+    ) {
+      fail(`world.staff[${staffId}].role is invalid.`);
+    }
+    assertIntegerInRange(staffValue.quality, 1, 99, `world.staff[${staffId}].quality`);
+    if (
+      typeof staffValue.experience !== "number" ||
+      !Number.isInteger(staffValue.experience) ||
+      staffValue.experience < 0
+    ) {
+      fail(`world.staff[${staffId}].experience must be a non-negative integer.`);
+    }
+    if (staffValue.teamId !== null) {
+      assertNonEmptyString(staffValue.teamId, `world.staff[${staffId}].teamId`);
+      if (!(staffValue.teamId in world.teams)) {
+        fail(
+          `world.staff[${staffId}].teamId "${staffValue.teamId}" is missing from world.teams.`,
+        );
+      }
+    }
+  }
+
+  for (const [teamId, teamValue] of Object.entries(world.teams)) {
+    for (const staffId of teamValue.staff as string[]) {
+      if (!(staffId in world.staff)) {
+        fail(
+          `world.teams[${teamId}].staff contains "${staffId}" missing from world.staff.`,
+        );
+      }
+    }
+  }
 
   const user = state.user;
   assertRecord(user, "user");
@@ -1414,6 +1511,21 @@ function assertNonNegativeIntegerMoney(value: unknown, path: string): void {
   }
   if (value < 0) {
     fail(`${path} must be >= 0.`);
+  }
+}
+
+function assertIntegerInRange(
+  value: unknown,
+  min: number,
+  max: number,
+  path: string,
+): asserts value is number {
+  assertNumber(value, path);
+  if (!Number.isInteger(value)) {
+    fail(`${path} must be an integer.`);
+  }
+  if (value < min || value > max) {
+    fail(`${path} must be between ${min} and ${max}.`);
   }
 }
 

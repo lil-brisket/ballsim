@@ -126,9 +126,14 @@ describe("toOwnerGameState", () => {
       firstName: "Sam",
       lastName: "Scout",
       role: "scout",
+      quality: 60,
+      experience: 8,
+      strengths: ["scouting"],
+      weaknesses: [],
     };
-    state.world.coaches[coachId] = coach;
-    state.world.staff[staffId] = staffMember;
+    // Isolate catalogs for this assertion (initial state seeds staff/coaches).
+    state.world.coaches = { [coachId]: coach };
+    state.world.staff = { [staffId]: staffMember };
     state.world.teams[teamId] = {
       ...state.world.teams[teamId]!,
       staff: [staffId],

@@ -5,6 +5,7 @@ import type { GameState } from "@/state/game-state";
 import { TRADE_BLOCK_VALUE_BONUS } from "@/systems/trades-config";
 import { calculateDraftPickValue } from "@/systems/trades/draft-pick-value";
 import { getTradeBlock } from "@/systems/trades/trade-block";
+import { gmTradeAcceptanceThreshold } from "@/systems/staff-effects";
 
 export type TradeOfferEvaluation = {
   accepted: boolean;
@@ -15,7 +16,8 @@ export type TradeOfferEvaluation = {
 };
 
 /**
- * Deterministic AI acceptance: accept iff netValue >= 0.
+ * Deterministic AI acceptance: accept iff netValue >= threshold.
+ * Threshold defaults to 0; better GM softens acceptance (negative threshold).
  * netValue = incomingValue - outgoingValue (+ trade-block bonuses).
  * Not a second validator — legality is validateTrade's job.
  */
@@ -65,8 +67,9 @@ export function evaluateTradeOffer(
   }
 
   const netValue = incomingValue + tradeBlockBonus - outgoingValue;
+  const threshold = gmTradeAcceptanceThreshold(state, evaluatingTeamId);
   return {
-    accepted: netValue >= 0,
+    accepted: netValue >= threshold,
     netValue,
     incomingValue,
     outgoingValue,

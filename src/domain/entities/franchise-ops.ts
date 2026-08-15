@@ -1,0 +1,115 @@
+/**
+ * Per-team owner operational knobs and slow franchise metrics.
+ *
+ * Boundary: franchiseOps must not become a miscellaneous bucket.
+ * Any new field requires an explicit Phase E subsystem owner and justification
+ * (see ARCHITECTURE.md / Phase E plan). Not allowed: contracts, cash/books,
+ * relocation process, expansion, league economy, franchise history, mutable
+ * franchiseValue.
+ */
+
+export type FacilityCategory =
+  | "arena"
+  | "practice"
+  | "training"
+  | "medical"
+  | "youth"
+  | "fan";
+
+export const FACILITY_CATEGORIES: readonly FacilityCategory[] = [
+  "arena",
+  "practice",
+  "training",
+  "medical",
+  "youth",
+  "fan",
+] as const;
+
+export const FACILITY_LEVEL_MIN = 1;
+export const FACILITY_LEVEL_MAX = 5;
+
+export type FacilityState = {
+  level: number;
+  /** Remaining weeks until an in-progress upgrade completes; 0 = idle. */
+  upgradeWeeksRemaining: number;
+};
+
+export type FacilitiesState = Record<FacilityCategory, FacilityState>;
+
+export type MarketingState = {
+  /** Annual marketing budget (integer dollars). Weekly burn posts expenses.marketing. */
+  budget: number;
+  /** Slow demand input 0–100. */
+  awareness: number;
+};
+
+export type AiProfile =
+  | "conservative"
+  | "win_now"
+  | "development"
+  | "aggressive"
+  | "market_growth";
+
+export const AI_PROFILES: readonly AiProfile[] = [
+  "conservative",
+  "win_now",
+  "development",
+  "aggressive",
+  "market_growth",
+] as const;
+
+/**
+ * Canonical per-team franchise operations record under business.franchiseOps.
+ */
+export type FranchiseOps = {
+  /** E2 — infrastructure levels (not a world arena catalog). */
+  facilities: FacilitiesState;
+  /** E4 — owner ticket pricing knob (integer dollars). */
+  ticketPrice: number;
+  /** E6 — budget + awareness. */
+  marketing: MarketingState;
+  /** E5 — fanbase support 0–100. */
+  fanSentiment: number;
+  /** E8 — visibility 0–100; event-driven bumps + weekly decay. */
+  mediaAttention: number;
+  /** E3/E11 — demand input 1–99; relocation may change it. */
+  marketSize: number;
+  /** E14 — AI operational tendency. */
+  aiProfile: AiProfile;
+};
+
+export function isFacilityCategory(value: unknown): value is FacilityCategory {
+  return (
+    typeof value === "string" &&
+    (FACILITY_CATEGORIES as readonly string[]).includes(value)
+  );
+}
+
+export function isAiProfile(value: unknown): value is AiProfile {
+  return (
+    typeof value === "string" &&
+    (AI_PROFILES as readonly string[]).includes(value)
+  );
+}
+
+export function createDefaultFacilities(): FacilitiesState {
+  const facilities = {} as FacilitiesState;
+  for (const category of FACILITY_CATEGORIES) {
+    facilities[category] = { level: FACILITY_LEVEL_MIN, upgradeWeeksRemaining: 0 };
+  }
+  return facilities;
+}
+
+export function createDefaultFranchiseOps(
+  overrides: Partial<FranchiseOps> = {},
+): FranchiseOps {
+  return {
+    facilities: overrides.facilities ?? createDefaultFacilities(),
+    ticketPrice: overrides.ticketPrice ?? 45,
+    marketing: overrides.marketing ?? { budget: 2_000_000, awareness: 40 },
+    fanSentiment: overrides.fanSentiment ?? 50,
+    mediaAttention: overrides.mediaAttention ?? 30,
+    marketSize: overrides.marketSize ?? 50,
+    aiProfile: overrides.aiProfile ?? "conservative",
+  };
+}

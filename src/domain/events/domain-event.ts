@@ -17,6 +17,14 @@ export type DomainEventType =
   | "DraftPickMade"
   | "FreeAgentSigned"
   | "CoachHired"
+  | "StaffHired"
+  | "StaffFired"
+  | "FacilityUpgradeStarted"
+  | "FacilityUpgradeCompleted"
+  | "SponsorshipSigned"
+  | "SponsorshipExpired"
+  | "RelocationStageChanged"
+  | "ExpansionStageChanged"
   | "RevenueRecorded"
   | "ExpenseRecorded";
 
@@ -31,6 +39,14 @@ export const DOMAIN_EVENT_TYPES: readonly DomainEventType[] = [
   "DraftPickMade",
   "FreeAgentSigned",
   "CoachHired",
+  "StaffHired",
+  "StaffFired",
+  "FacilityUpgradeStarted",
+  "FacilityUpgradeCompleted",
+  "SponsorshipSigned",
+  "SponsorshipExpired",
+  "RelocationStageChanged",
+  "ExpansionStageChanged",
   "RevenueRecorded",
   "ExpenseRecorded",
 ];

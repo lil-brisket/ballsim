@@ -17,10 +17,12 @@ import {
 } from "@/systems/draft-config";
 import { teamIdsSorted } from "@/systems/draft/draft-order";
 import type { GameState } from "@/state/game-state";
+import { scoutNoiseScale } from "@/systems/staff-effects";
 
 /**
  * Team-specific noisy scouting reports. Never mutates prospect snapshots.
  * One report per team × prospect. Deterministic for a given rng stream.
+ * Scout quality reduces noise amplitude (Tier 1 staff effect).
  */
 export function generateDraftScouting(
   state: GameState,
@@ -41,9 +43,16 @@ export function generateDraftScouting(
 
   const reports: DraftScoutReport[] = [];
   for (const teamId of teamIds) {
+    const noiseScale = scoutNoiseScale(state, teamId);
     for (const prospect of prospectList) {
       reports.push(
-        createScoutReportForTeam(teamId, prospect, classSize, rng),
+        createScoutReportForTeam(
+          teamId,
+          prospect,
+          classSize,
+          rng,
+          noiseScale,
+        ),
       );
     }
   }
@@ -55,29 +64,30 @@ function createScoutReportForTeam(
   prospect: DraftProspect,
   classSize: number,
   rng: Rng,
+  noiseScale: number,
 ): DraftScoutReport {
+  const attrNoise = Math.max(
+    1,
+    Math.round(DRAFT_SCOUT_ATTRIBUTE_NOISE * noiseScale),
+  );
+  const rankNoise = Math.max(
+    1,
+    Math.round(DRAFT_SCOUT_RANK_NOISE * noiseScale),
+  );
+
   const estimatedAttributes = {} as PlayerAttributes;
   for (const key of PLAYER_ATTRIBUTE_KEYS) {
     const trueValue = prospect.player.attributes[key];
-    const offset = rng.nextInt(
-      -DRAFT_SCOUT_ATTRIBUTE_NOISE,
-      DRAFT_SCOUT_ATTRIBUTE_NOISE,
-    );
+    const offset = rng.nextInt(-attrNoise, attrNoise);
     estimatedAttributes[key] = clampRating(trueValue + offset);
   }
 
-  const potentialOffset = rng.nextInt(
-    -DRAFT_SCOUT_ATTRIBUTE_NOISE,
-    DRAFT_SCOUT_ATTRIBUTE_NOISE,
-  );
+  const potentialOffset = rng.nextInt(-attrNoise, attrNoise);
   const estimatedPotentialOverall = clampRating(
     prospect.player.potential.overall + potentialOffset,
   );
 
-  const rankOffset = rng.nextInt(
-    -DRAFT_SCOUT_RANK_NOISE,
-    DRAFT_SCOUT_RANK_NOISE,
-  );
+  const rankOffset = rng.nextInt(-rankNoise, rankNoise);
   const projectedRank = clampInt(
     prospect.ranking + rankOffset,
     1,

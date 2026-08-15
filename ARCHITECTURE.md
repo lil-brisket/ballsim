@@ -105,9 +105,13 @@ GameState
 ├── meta          # save identity, schemaVersion, timestamps, rng seed/state
 ├── world         # calendar, league structure, teams, people, draft picks, drafts, scheduledEvents
 ├── competition   # season (phase + offseasonStage), schedule, games, standings, playoffs
-├── business      # contracts, finances, free agency, trade blocks
-└── user          # controlled team, mode, objectives, notifications, appliedGameplayConsequenceKeys
+├── business      # contracts, finances, free agency, trade blocks,
+#                   staffContracts, sponsorships, franchiseOps, leagueEconomy,
+#                   relocationByTeamId, expansion, franchiseHistory
+└── user          # controlled team, mode, objectives, notifications, eventLog, appliedGameplayConsequenceKeys
 ```
+
+`schemaVersion` 24 adds Phase E franchise depth under `business`: `staffContracts`, `sponsorships`, `franchiseOps` (operational knobs + slow metrics only — not a miscellaneous bucket), `leagueEconomy`, `relocationByTeamId`, `expansion`, and `franchiseHistory`. Calendar gains `lastSimulatedMonthId`. Facility upgrades post through existing `expenses.facilities` (no separate capex ledger). Live franchise value is a selector (`calculateFranchiseValue`), never a mutable live field. Demand is the sole attendance calculator. Media is event-driven only.
 
 `schemaVersion` 14 adds `competition.playoffs` (`PlayoffTournament`). Pre-v14 saves migrate with `createEmptyPlayoffTournament()` (`not_started`, empty field). Empty/inactive playoffs are valid; a missing or null `playoffs` field is not.
 

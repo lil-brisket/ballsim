@@ -1,10 +1,14 @@
-import { getIsoWeekId } from "@/domain/calendar-date";
+import { getCalendarMonthId, getIsoWeekId } from "@/domain/calendar-date";
 import type { DomainEvent } from "@/domain/events";
 import type { Rng } from "@/domain/rng";
 import type { GameState } from "@/state/game-state";
 import { advanceCalendar } from "@/systems/calendar";
 import { generateRosters } from "@/systems/roster-generation";
 import { runDailyPipeline } from "@/systems/simulation/daily-pipeline";
+import {
+  completedMonthIdForSimulatedDate,
+  runMonthlyPipeline,
+} from "@/systems/simulation/monthly-pipeline";
 import { processOffseasonLifecycle } from "@/systems/simulation/offseason-lifecycle";
 import { runOwnerGameplay } from "@/systems/simulation/owner-gameplay";
 import { processScheduledEvents } from "@/systems/simulation/scheduled-events";
@@ -18,6 +22,9 @@ import {
   runWeeklyPipeline,
 } from "@/systems/simulation/weekly-pipeline";
 import { mergeDraftPicksForSeason } from "@/domain/draft-picks/generate-draft-picks";
+import { processDailyFanSentimentAfterGames } from "@/systems/fan-sentiment";
+import { applyMediaFromDomainEvents } from "@/systems/media";
+import { processHomeGameTicketRevenue } from "@/systems/ticket-revenue";
 
 /**
  * Canonical Owner Mode simulation advance.
@@ -57,6 +64,7 @@ export function advanceSimulation(
   let scheduledEventsProcessed = 0;
   let gamesSimulated = 0;
   let weeklyPipelineRan = false;
+  let monthlyPipelineRan = false;
   let daysAdvanced = 0;
 
   for (let dayIndex = 0; dayIndex < days; dayIndex += 1) {
@@ -66,6 +74,7 @@ export function advanceSimulation(
     scheduledEventsProcessed += dayResult.scheduledEventsProcessed;
     gamesSimulated += dayResult.gamesSimulated;
     weeklyPipelineRan = weeklyPipelineRan || dayResult.weeklyPipelineRan;
+    monthlyPipelineRan = monthlyPipelineRan || dayResult.monthlyPipelineRan;
     daysAdvanced += 1;
 
     if (
@@ -90,6 +99,7 @@ export function advanceSimulation(
     scheduledEventsProcessed,
     gamesSimulated,
     weeklyPipelineRan,
+    monthlyPipelineRan,
   };
 }
 
@@ -104,6 +114,7 @@ type OneDayResult = {
   scheduledEventsProcessed: number;
   gamesSimulated: number;
   weeklyPipelineRan: boolean;
+  monthlyPipelineRan: boolean;
 };
 
 function advanceOneDay(state: GameState, rng: Rng): OneDayResult {
@@ -133,9 +144,21 @@ function advanceOneDay(state: GameState, rng: Rng): OneDayResult {
   current = daily.state;
   events.push(...daily.events);
 
+  const tickets = processHomeGameTicketRevenue(current);
+  current = tickets.state;
+  events.push(...tickets.events);
+
+  const sentiment = processDailyFanSentimentAfterGames(current);
+  current = sentiment.state;
+  events.push(...sentiment.events);
+
   const gameplay = runOwnerGameplay(current, rng);
   current = gameplay.state;
   events.push(...gameplay.events);
+
+  const media = applyMediaFromDomainEvents(current, events);
+  current = media.state;
+  events.push(...media.events);
 
   current = {
     ...current,
@@ -154,6 +177,7 @@ function advanceOneDay(state: GameState, rng: Rng): OneDayResult {
 
   const newDate = current.world.calendar.currentDate;
   let weeklyRan = false;
+  let monthlyRan = false;
   if (getIsoWeekId(newDate) !== getIsoWeekId(simulatedDate)) {
     const completedWeekId = completedWeekIdForSimulatedDate(simulatedDate);
     const weekly = runWeeklyPipeline(current, completedWeekId);
@@ -162,12 +186,21 @@ function advanceOneDay(state: GameState, rng: Rng): OneDayResult {
     weeklyRan = weekly.weeklyPipelineRan;
   }
 
+  if (getCalendarMonthId(newDate) !== getCalendarMonthId(simulatedDate)) {
+    const completedMonthId = completedMonthIdForSimulatedDate(simulatedDate);
+    const monthly = runMonthlyPipeline(current, completedMonthId);
+    current = monthly.state;
+    events.push(...monthly.events);
+    monthlyRan = monthly.monthlyPipelineRan;
+  }
+
   return {
     state: current,
     events,
     scheduledEventsProcessed: scheduled.scheduledEventsProcessed,
     gamesSimulated: daily.gamesSimulated,
     weeklyPipelineRan: weeklyRan,
+    monthlyPipelineRan: monthlyRan,
   };
 }
 

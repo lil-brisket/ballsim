@@ -25,8 +25,13 @@ import { developmentStageForAge } from "@/systems/player-generation-config";
  * One deterministic annual development step at the player's current age.
  * Does not increment age. Does not mutate the input player.
  * Injury status is ignored (no injury development penalty in v1).
+ * @param trainerMultiplier Tier 1 trainer quality scale (default 1).
  */
-export function developPlayer(player: Player, rng: Rng): Player {
+export function developPlayer(
+  player: Player,
+  rng: Rng,
+  trainerMultiplier: number = 1,
+): Player {
   const stage = developmentStageForAge(player.age);
   const currentOverall = calculatePlayerOverall(
     player.position,
@@ -41,8 +46,9 @@ export function developPlayer(player: Player, rng: Rng): Player {
       ? 0
       : Math.min(1, remainingPotential / POTENTIAL_TAPER_GAP);
   const workEthicModifier =
-    1 +
-    (player.personality.workEthic - WORK_ETHIC_CENTER) / WORK_ETHIC_SCALE;
+    (1 +
+      (player.personality.workEthic - WORK_ETHIC_CENTER) / WORK_ETHIC_SCALE) *
+    trainerMultiplier;
 
   const nextAttributes: PlayerAttributes = { ...player.attributes };
 

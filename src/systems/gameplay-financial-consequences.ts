@@ -8,7 +8,6 @@ import {
   GAMEPLAY_OBJECTIVE_REWARD,
   GAMEPLAY_PLAYOFF_QUALIFICATION_REVENUE,
   GAMEPLAY_PLAYOFF_SERIES_WIN_REVENUE,
-  GAMEPLAY_WIN_REVENUE,
 } from "@/systems/owner-objectives-config";
 import { applyCashAndBooksImpact } from "@/systems/team-finances";
 
@@ -71,13 +70,16 @@ export function applyGameplayFinancialConsequences(
     const userScore = isHome ? game.score.home : game.score.away;
     const oppScore = isHome ? game.score.away : game.score.home;
     const won = userScore > oppScore;
-    const amount = won ? GAMEPLAY_WIN_REVENUE : -GAMEPLAY_LOSS_EXPENSE;
-    const impact = applyCashAndBooksImpact(current, teamId, amount, seasonYear, {
-      revenueCategory: "tickets",
-      expenseCategory: "operations",
-    });
-    current = withAppliedGameplayConsequence(impact.state, key);
-    events.push(...impact.events);
+    if (!won) {
+      const amount = -GAMEPLAY_LOSS_EXPENSE;
+      const impact = applyCashAndBooksImpact(current, teamId, amount, seasonYear, {
+        expenseCategory: "operations",
+      });
+      current = withAppliedGameplayConsequence(impact.state, key);
+      events.push(...impact.events);
+    } else {
+      current = withAppliedGameplayConsequence(current, key);
+    }
   }
 
   const playoffs = current.competition.playoffs;
