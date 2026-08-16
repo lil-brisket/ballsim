@@ -23,3 +23,81 @@ body {
   color: var(--foreground);
   font-family: var(--font-geist-sans), ui-sans-serif, sans-serif;
 }
+
+/* Splash / landing court atmosphere */
+.splash-court {
+  background:
+    radial-gradient(
+      ellipse 80% 60% at 50% 40%,
+      rgba(217, 119, 6, 0.08) 0%,
+      transparent 55%
+    ),
+    linear-gradient(
+      180deg,
+      #0c0a09 0%,
+      #18181b 45%,
+      #09090b 100%
+    );
+}
+
+.splash-vignette {
+  background: radial-gradient(
+    ellipse 70% 70% at 50% 45%,
+    transparent 30%,
+    rgba(9, 9, 11, 0.85) 100%
+  );
+}
+
+@keyframes splash-fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes splash-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes splash-court-drift {
+  from {
+    transform: scale(1.02) translateY(0);
+  }
+  to {
+    transform: scale(1) translateY(-4px);
+  }
+}
+
+.splash-enter-brand {
+  animation: splash-fade-up 0.7s ease-out both;
+}
+
+.splash-enter-tagline {
+  animation: splash-fade-up 0.7s ease-out 0.15s both;
+}
+
+.splash-enter-action {
+  animation: splash-fade-in 0.6s ease-out 0.35s both;
+}
+
+.splash-court-animate {
+  animation: splash-court-drift 8s ease-in-out alternate infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .splash-enter-brand,
+  .splash-enter-tagline,
+  .splash-enter-action,
+  .splash-court-animate {
+    animation: none;
+  }
+}

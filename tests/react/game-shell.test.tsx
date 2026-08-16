@@ -84,10 +84,15 @@ describe("game shell UI", () => {
     );
     expect(screen.getByText("Owner Mode")).toBeTruthy();
     expect(
-      screen.getByRole("link", { name: /Select Owner Mode/i }).getAttribute("href"),
-    ).toBe("/new/setup?mode=owner");
+      screen.getByRole("link", { name: /Owner Mode/i }).getAttribute("href"),
+    ).toBe("/owner");
+    expect(screen.queryByRole("link", { name: /Select Owner Mode/i })).toBeNull();
     expect(screen.getByText("Career Mode")).toBeTruthy();
-    expect(screen.getAllByText("Not available yet.").length).toBeGreaterThan(0);
+    expect(screen.getByText("Dynasty Mode")).toBeTruthy();
+    expect(screen.getAllByText("Coming Soon").length).toBeGreaterThan(0);
+    expect(screen.queryByRole("link", { name: /Career Mode/i })).toBeNull();
+    expect(screen.queryByRole("link", { name: /Dynasty Mode/i })).toBeNull();
+    expect(screen.queryByText("Continue")).toBeNull();
     unmount();
   });
 

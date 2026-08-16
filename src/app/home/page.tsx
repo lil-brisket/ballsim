@@ -1,129 +1,52 @@
 import Link from "next/link";
-import { openSaveAction } from "@/application/actions";
-import {
-  listOwnerSavePreviews,
-  MAX_OWNER_SAVE_SLOTS,
-  type OwnerSavePreview,
-} from "@/application/game-service";
-import { SaveCard } from "@/components/game/SaveCard";
-import { EmptyState, ErrorState } from "@/components/owner/EmptyState";
-
-export const dynamic = "force-dynamic";
+import { listGameModeDefinitions } from "@/application/game-mode-catalog";
+import { GameBrand } from "@/components/game/GameBrand";
+import { GameModeCard } from "@/components/game/GameModeCard";
+import { SplashBackground } from "@/components/game/SplashBackground";
+import { ErrorState } from "@/components/owner/EmptyState";
 
 type HomePageProps = {
   searchParams: Promise<{ error?: string }>;
 };
 
-function mostRecentValidSave(
-  previews: OwnerSavePreview[],
-): OwnerSavePreview & { ok: true } | null {
-  const valid = previews.filter(
-    (preview): preview is OwnerSavePreview & { ok: true } => preview.ok,
-  );
-  if (valid.length === 0) {
-    return null;
-  }
-  return valid.reduce((latest, preview) =>
-    preview.updatedAt > latest.updatedAt ? preview : latest,
-  );
-}
-
 export default async function HomePage({ searchParams }: HomePageProps) {
   const { error } = await searchParams;
-  const previews = await listOwnerSavePreviews();
-  const atSaveLimit = previews.length >= MAX_OWNER_SAVE_SLOTS;
-  const continueSave = mostRecentValidSave(previews);
-  const recent = previews.filter((p) => p.ok).slice(0, 3);
+  const modes = listGameModeDefinitions();
 
   return (
-    <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-10 px-6 py-16">
-      <header className="space-y-3">
-        <p className="font-mono text-xs uppercase tracking-[0.2em] text-amber-500">
-          Basketball
-        </p>
-        <h1 className="text-4xl font-semibold tracking-tight text-zinc-50">
-          Franchise Simulation
-        </h1>
-        <p className="max-w-xl text-zinc-400">
-          Own a team, manage the franchise, and guide your organization through
-          seasons of fictional basketball.
-        </p>
-      </header>
+    <main className="relative flex flex-1 flex-col overflow-hidden">
+      <SplashBackground />
+      <div className="relative z-10 mx-auto flex w-full max-w-5xl flex-1 flex-col gap-10 px-6 py-12 sm:py-16">
+        <header className="space-y-3 text-center sm:text-left">
+          <GameBrand />
+          <p className="mx-auto max-w-xl text-zinc-400 sm:mx-0">
+            Build your basketball story.
+          </p>
+          <h2 className="pt-2 text-lg font-medium text-zinc-200">
+            Choose your mode
+          </h2>
+        </header>
 
-      {error ? <ErrorState message={error} /> : null}
+        {error ? <ErrorState message={error} /> : null}
 
-      <section
-        className="grid gap-3 sm:grid-cols-2"
-        aria-label="Primary actions"
-      >
-        {atSaveLimit ? (
-          <div className="sm:col-span-2">
-            <ErrorState
-              message={`At most ${MAX_OWNER_SAVE_SLOTS} saves are allowed. Delete a save to create another.`}
-            />
-          </div>
-        ) : (
-          <Link
-            href="/new/mode"
-            className="inline-flex items-center justify-center rounded-md bg-amber-600 px-4 py-3 text-sm font-medium text-zinc-950 hover:bg-amber-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-500"
-          >
-            New Game
-          </Link>
-        )}
-
-        {continueSave ? (
-          <form action={openSaveAction} className="contents">
-            <input type="hidden" name="saveId" value={continueSave.id} />
-            <button
-              type="submit"
-              className="inline-flex items-center justify-center rounded-md border border-zinc-700 px-4 py-3 text-sm font-medium text-zinc-100 hover:border-amber-600 hover:text-amber-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-500"
-            >
-              Continue
-            </button>
-          </form>
-        ) : (
-          <span
-            className="inline-flex cursor-not-allowed items-center justify-center rounded-md border border-zinc-800 px-4 py-3 text-sm text-zinc-600"
-            aria-disabled="true"
-          >
-            Continue
-          </span>
-        )}
-
-        <Link
-          href="/saves"
-          className="inline-flex items-center justify-center rounded-md border border-zinc-700 px-4 py-3 text-sm font-medium text-zinc-100 hover:border-amber-600 hover:text-amber-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-500"
+        <section
+          className="grid gap-4 md:grid-cols-2 lg:grid-cols-3"
+          aria-label="Game modes"
         >
-          Load Game
-        </Link>
-        <Link
-          href="/settings"
-          className="inline-flex items-center justify-center rounded-md border border-zinc-700 px-4 py-3 text-sm font-medium text-zinc-100 hover:border-amber-600 hover:text-amber-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-500"
-        >
-          Settings
-        </Link>
-      </section>
+          {modes.map((mode) => (
+            <GameModeCard key={mode.id} mode={mode} />
+          ))}
+        </section>
 
-      <section className="space-y-4">
-        <div className="flex items-center justify-between gap-3">
-          <h2 className="text-lg font-medium text-zinc-100">Recent saves</h2>
+        <footer className="flex justify-center sm:justify-start">
           <Link
-            href="/saves"
-            className="text-sm text-amber-400 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-500"
+            href="/settings"
+            className="text-sm text-zinc-500 hover:text-amber-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-500"
           >
-            View all ({previews.length}/{MAX_OWNER_SAVE_SLOTS})
+            Settings
           </Link>
-        </div>
-        {recent.length === 0 ? (
-          <EmptyState message="No saves yet. Start a new game to create your first franchise." />
-        ) : (
-          <ul className="space-y-2">
-            {recent.map((preview) => (
-              <SaveCard key={preview.id} preview={preview} />
-            ))}
-          </ul>
-        )}
-      </section>
+        </footer>
+      </div>
     </main>
   );
 }

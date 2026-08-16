@@ -18,7 +18,7 @@ export default async function GameSetupPage({ searchParams }: SetupPageProps) {
 
   // Mode must be chosen explicitly; catalog-only modes never reach create.
   if (mode !== "owner") {
-    redirect("/new/mode");
+    redirect("/home");
   }
 
   const saves = await listOwnerSaves();

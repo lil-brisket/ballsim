@@ -10,57 +10,71 @@ export type GameModeCatalogId = GameMode | "career" | "dynasty";
 export type GameModeDefinition = {
   id: GameModeCatalogId;
   name: string;
+  tagline: string;
   description: string;
   features: string[];
   available: boolean;
   statusLabel: "Available" | "Coming Soon";
+  actionLabel: string;
+  /** Mode-entry screen (Continue / Load / New Game). Null when coming soon. */
+  entryHref: string | null;
+  /** New-game setup destination. Null when coming soon. */
   href: string | null;
 };
 
 const OWNER_DEFINITION: GameModeDefinition = {
   id: "owner",
   name: "Owner Mode",
+  tagline: "Run the franchise.",
   description:
-    "Own and operate a basketball franchise. Control franchise-level decisions, manage finances, and guide the organization over multiple seasons.",
+    "Control the business. Make the decisions that shape your organization — finances, staff, facilities, marketing, and long-term franchise development.",
   features: [
     "Franchise ownership and organizational decisions",
     "Finances, payroll, and cap management",
     "Staff, facilities, marketing, and sponsorships",
-    "Multi-season franchise guidance",
-    "League, schedule, and roster oversight",
+    "Ticket pricing, fan sentiment, and media",
+    "League economics and multi-season development",
   ],
   available: true,
   statusLabel: "Available",
+  actionLabel: "Enter",
+  entryHref: "/owner",
   href: "/new/setup?mode=owner",
 };
 
 const CAREER_DEFINITION: GameModeDefinition = {
   id: "career",
   name: "Career Mode",
+  tagline: "Build your career.",
   description:
-    "Player or staff career progression through the league. Not available yet.",
+    "Start as a basketball professional and work your way through the league. Not available yet.",
   features: [
-    "Player or staff career path",
-    "Season-to-season progression",
-    "Role-based gameplay",
+    "Player, coach, or general-manager path",
+    "Personal decisions and reputation",
+    "Career development and opportunities",
   ],
   available: false,
   statusLabel: "Coming Soon",
+  actionLabel: "Coming Soon",
+  entryHref: null,
   href: null,
 };
 
 const DYNASTY_DEFINITION: GameModeDefinition = {
   id: "dynasty",
   name: "Dynasty Mode",
+  tagline: "Build something that lasts.",
   description:
-    "Long-horizon franchise legacy play across generations. Not available yet.",
+    "Shape your franchise and create a legacy across generations. Not available yet.",
   features: [
-    "Multi-decade franchise legacy",
-    "Long-horizon planning",
-    "Dynasty milestones",
+    "Long-term franchise building",
+    "Multiple eras and organizational legacy",
+    "Historical records and generational progression",
   ],
   available: false,
   statusLabel: "Coming Soon",
+  actionLabel: "Coming Soon",
+  entryHref: null,
   href: null,
 };
 

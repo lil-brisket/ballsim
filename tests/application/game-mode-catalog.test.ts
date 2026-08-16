@@ -13,8 +13,16 @@ describe("game-mode-catalog", () => {
     const owner = modes.find((m) => m.id === "owner");
     expect(owner?.available).toBe(true);
     expect(owner?.href).toBe("/new/setup?mode=owner");
+    expect(owner?.entryHref).toBe("/owner");
     expect(modes.find((m) => m.id === "career")?.available).toBe(false);
+    expect(modes.find((m) => m.id === "career")?.entryHref).toBeNull();
     expect(modes.find((m) => m.id === "dynasty")?.available).toBe(false);
+    expect(modes.find((m) => m.id === "dynasty")?.href).toBeNull();
+  });
+
+  it("does not treat continue as a catalog mode", () => {
+    const ids = listGameModeDefinitions().map((m) => m.id);
+    expect(ids).not.toContain("continue");
   });
 
   it("getGameModeDefinition accepts only persisted GameMode", () => {
