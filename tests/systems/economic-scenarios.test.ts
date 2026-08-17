@@ -10,7 +10,12 @@ import { ARENA_CAPACITY_BY_LEVEL } from "@/systems/facilities-config";
 import { processWeeklyMarketing, setMarketingBudget } from "@/systems/marketing";
 import { setTicketPrice } from "@/systems/ticket-pricing";
 import { bootstrapWorld } from "@/systems/world-pipeline";
-import { runEconomyScenario } from "@/systems/economy/scenario-harness";
+import { getTeamPayroll } from "@/systems/salary-cap";
+import {
+  assertCashFlowInvariants,
+  bootstrapEconomyScenario,
+  runEconomyScenario,
+} from "@/systems/economy/scenario-harness";
 
 function withOps(
   state: GameState,
@@ -205,6 +210,26 @@ describe("economic scenarios (Phase 2 harness)", () => {
       expect(a.seasons[0]!.wins).toBe(b.seasons[0]!.wins);
       expect(a.seasons[0]!.revenue.shares.broadcast).toBeDefined();
       expect(a.actions[0]!.payroll).toBeGreaterThan(0);
+      expect(a.seed).toBe(77);
+    },
+  );
+
+  it(
+    "baseline cash-flow invariants hold and unclassified is zero",
+    { timeout: 180_000 },
+    () => {
+      const result = runEconomyScenario("baseline", 1, { seed: 77 });
+      const season = result.seasons[0]!;
+      assertCashFlowInvariants(season);
+      expect(season.cashFlow.revenue.unclassified).toBe(0);
+      expect(season.cashFlow.costs.unclassified).toBe(0);
+      expect(season.cashFlow.minCash).toBeGreaterThanOrEqual(0);
+      expect(season.cashFlow.revenue.gate).toBe(season.revenue.gate);
+      expect(season.cashFlow.revenue.merchandise).toBe(season.revenue.merchandise);
+      expect(season.revenue.gate).toBe(season.statementTickets);
+      expect(season.revenue.merchandise).toBe(season.statementMerchandise);
+      expect(season.fillRateMean).not.toBeNull();
+      expect(season.capacityMean).not.toBeNull();
     },
   );
 
@@ -236,7 +261,7 @@ describe("economic scenarios (Phase 2 harness)", () => {
   );
 
   it(
-    "recovery spends less on marketing than frozen distress",
+    "recovery spends less on marketing than frozen distress and is not fully healed",
     { timeout: 180_000 },
     () => {
       const distress = runEconomyScenario("distress", 1, { seed: 77 });
@@ -247,6 +272,86 @@ describe("economic scenarios (Phase 2 harness)", () => {
       expect(recovery.seasons[0]!.cash).toBeGreaterThan(
         distress.seasons[0]!.cash,
       );
+      expect(recovery.seasons[0]!.health).not.toBe("healthy");
     },
   );
+
+  it(
+    "aggressive spends more and ends with less cash than baseline without requiring insolvency",
+    { timeout: 180_000 },
+    () => {
+      const baseline = runEconomyScenario("baseline", 1, { seed: 77 });
+      const aggressive = runEconomyScenario("aggressive", 1, { seed: 77 });
+      const season = aggressive.seasons[0]!;
+      const action = aggressive.actions[0]!;
+      expect(season.payroll).toBeGreaterThan(baseline.seasons[0]!.payroll);
+      expect(season.marketingBudget).toBeGreaterThan(
+        baseline.seasons[0]!.marketingBudget,
+      );
+      expect(season.cash).toBeLessThan(baseline.seasons[0]!.cash);
+      expect(action.capitalAttempts.length).toBeGreaterThan(0);
+      expect(
+        action.capitalAttempts.some(
+          (attempt) =>
+            attempt.kind === "facility_upgrade" ||
+            attempt.kind === "marketing_increase",
+        ),
+      ).toBe(true);
+      if (season.cashFlow.minCash < 0) {
+        expect(action.capitalRestricted).toBe(true);
+      }
+      assertCashFlowInvariants(season);
+    },
+  );
+
+  it("high_market and low_market only change marketSize", () => {
+    const baseline = bootstrapEconomyScenario("baseline", { seed: 77 });
+    const high = bootstrapEconomyScenario("high_market", { seed: 77 });
+    const low = bootstrapEconomyScenario("low_market", { seed: 77 });
+    const baseTeamId = baseline.state.user.controlledTeamId;
+    const highTeamId = high.state.user.controlledTeamId;
+    const lowTeamId = low.state.user.controlledTeamId;
+    const year = baseline.state.competition.season.year;
+
+    const baseOps = baseline.state.business.franchiseOps[baseTeamId]!;
+    const highOps = high.state.business.franchiseOps[highTeamId]!;
+    const lowOps = low.state.business.franchiseOps[lowTeamId]!;
+
+    expect(highOps.marketSize).toBe(80);
+    expect(lowOps.marketSize).toBe(25);
+    expect(baseOps.marketSize).not.toBe(80);
+    expect(baseOps.marketSize).not.toBe(25);
+
+    expect(highOps.ticketPrice).toBe(baseOps.ticketPrice);
+    expect(lowOps.ticketPrice).toBe(baseOps.ticketPrice);
+    expect(highOps.marketing.budget).toBe(baseOps.marketing.budget);
+    expect(lowOps.marketing.budget).toBe(baseOps.marketing.budget);
+    expect(facilityLevelsOf(highOps)).toEqual(facilityLevelsOf(baseOps));
+    expect(facilityLevelsOf(lowOps)).toEqual(facilityLevelsOf(baseOps));
+    expect(getTeamPayroll(highTeamId as TeamId, year, high.state)).toBe(
+      getTeamPayroll(baseTeamId as TeamId, year, baseline.state),
+    );
+    expect(getTeamPayroll(lowTeamId as TeamId, year, low.state)).toBe(
+      getTeamPayroll(baseTeamId as TeamId, year, baseline.state),
+    );
+    expect(high.state.world.teams[highTeamId]!.roster.length).toBe(
+      baseline.state.world.teams[baseTeamId]!.roster.length,
+    );
+    expect(low.state.world.teams[lowTeamId]!.roster.length).toBe(
+      baseline.state.world.teams[baseTeamId]!.roster.length,
+    );
+  });
 });
+
+function facilityLevelsOf(
+  ops: GameState["business"]["franchiseOps"][string],
+): Record<string, number> {
+  return {
+    arena: ops.facilities.arena.level,
+    practice: ops.facilities.practice.level,
+    training: ops.facilities.training.level,
+    medical: ops.facilities.medical.level,
+    youth: ops.facilities.youth.level,
+    fan: ops.facilities.fan.level,
+  };
+}

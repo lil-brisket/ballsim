@@ -3,6 +3,7 @@ import type { DraftClass } from "@/domain/entities/draft";
 import { draftClassIdFor } from "@/domain/entities/draft";
 import {
   FACILITY_CATEGORIES,
+  FACILITY_LEVEL_MAX,
   type FacilityCategory,
   type FranchiseOps,
 } from "@/domain/entities/franchise-ops";
@@ -34,9 +35,16 @@ import { setMarketingBudget } from "@/systems/marketing";
 import { setTicketPrice } from "@/systems/ticket-pricing";
 import { getFinancialStatement } from "@/systems/team-finances";
 import {
+  facilityUpgradeCost,
+} from "@/systems/facilities-config";
+import { startFacilityUpgrade } from "@/systems/facilities";
+import { estimateMonthlyBroadcastShare } from "@/systems/league-economy";
+import {
   GAMEPLAY_OBJECTIVE_REWARD,
   GAMEPLAY_PLAYOFF_QUALIFICATION_REVENUE,
   GAMEPLAY_PLAYOFF_SERIES_WIN_REVENUE,
+  POOR_ATTENDANCE_FILL_RATE_PCT,
+  SELLOUT_FILL_RATE_PCT,
 } from "@/systems/owner-objectives-config";
 import { bootstrapWorld } from "@/systems/world-pipeline";
 import type { TeamId } from "@/domain/ids";
@@ -48,6 +56,9 @@ export const ECONOMY_SCENARIOS = [
   "development",
   "distress",
   "recovery",
+  "aggressive",
+  "high_market",
+  "low_market",
 ] as const;
 
 export type EconomyScenarioId = (typeof ECONOMY_SCENARIOS)[number];
@@ -60,8 +71,27 @@ export type RevenueMix = {
   broadcast: number;
   playoffs: number;
   other: number;
+  unclassified: number;
   total: number;
-  shares: Record<keyof Omit<RevenueMix, "shares" | "total">, number>;
+  shares: Record<
+    keyof Omit<RevenueMix, "shares" | "total">,
+    number
+  >;
+};
+
+export type CapitalAttemptKind = "facility_upgrade" | "marketing_increase";
+
+export type CapitalAttemptOutcome =
+  | "succeeded"
+  | "rejected"
+  | "skipped_unaffordable";
+
+export type CapitalAttempt = {
+  kind: CapitalAttemptKind;
+  target: string;
+  amount: number;
+  outcome: CapitalAttemptOutcome;
+  restrictedReason?: string;
 };
 
 export type OwnerActionLogEntry = {
@@ -72,6 +102,49 @@ export type OwnerActionLogEntry = {
   facilityLevels: Record<FacilityCategory, number>;
   endingCash: number;
   health: FinancialHealthState;
+  capitalAttempts: CapitalAttempt[];
+  capitalRestricted: boolean;
+  attemptedCapitalSpend: number;
+  succeededCapitalSpend: number;
+};
+
+export type SeasonCashFlow = {
+  startingCash: number;
+  endingCash: number;
+  /** endingCash - startingCash */
+  netCash: number;
+  revenue: {
+    gate: number;
+    merchandise: number;
+    concessions: number;
+    sponsorship: number;
+    broadcast: number;
+    playoffs: number;
+    other: number;
+    unclassified: number;
+    total: number;
+  };
+  costs: {
+    playerPayroll: number;
+    staff: number;
+    facilityOpex: number;
+    facilityInvestment: number;
+    marketing: number;
+    other: number;
+    unclassified: number;
+    total: number;
+  };
+  /**
+   * Recurring operating revenue − recurring operating cash costs.
+   * Excludes playoffs, objectives, unclassified, and facility capex.
+   */
+  netOperatingCashFlow: number;
+  /** Playoffs + objectives + unclassified revenue − unclassified expenses. */
+  nonOperatingCashFlow: number;
+  minCash: number;
+  firstNegativeDate: string | null;
+  daysNegative: number;
+  endedNegative: boolean;
 };
 
 export type SeasonEconomySnapshot = {
@@ -99,22 +172,56 @@ export type SeasonEconomySnapshot = {
     marketing: number;
     total: number;
   };
+  cashFlow: SeasonCashFlow;
   runwayWeeks: number | null;
   projectedCash: number;
   health: FinancialHealthState;
   attendanceMean: number | null;
+  capacityMean: number | null;
+  fillRateMean: number | null;
+  selloutGames: number;
+  lowAttendanceGames: number;
   homeGames: number;
+  /** Statement tickets at snapshot time — for double-count invariants. */
+  statementTickets: number;
+  statementMerchandise: number;
+};
+
+export type RecoveryDelta = {
+  fromSeasonYear: number;
+  toSeasonYear: number;
+  cash: { from: number; to: number; delta: number };
+  runwayWeeks: { from: number | null; to: number | null };
+  health: { from: FinancialHealthState; to: FinancialHealthState };
+  netOperatingCashFlow: { from: number; to: number; delta: number };
+  improved: boolean;
 };
 
 export type EconomyHarnessResult = {
   scenario: EconomyScenarioId;
+  seed: number;
   seasons: SeasonEconomySnapshot[];
   actions: OwnerActionLogEntry[];
   finalState: GameState;
+  recoveryDelta: RecoveryDelta | null;
 };
 
 const MAX_DAYS_PER_SEASON = 500;
 const HARNESS_SEED = 77;
+const AGGRESSIVE_MARKETING_BUDGET = 7_000_000;
+const AGGRESSIVE_TICKET_PRICE = 90;
+/** Keep at least this much cash after optional third upgrade. */
+const AGGRESSIVE_LIQUIDITY_BUFFER = 5_000_000;
+const HIGH_MARKET_SIZE = 80;
+const LOW_MARKET_SIZE = 25;
+
+const HEALTH_RANK: Record<FinancialHealthState, number> = {
+  insolvent: 0,
+  critical: 1,
+  warning: 2,
+  stable: 3,
+  healthy: 4,
+};
 
 type MixAccumulator = {
   gate: number;
@@ -124,8 +231,26 @@ type MixAccumulator = {
   broadcast: number;
   playoffs: number;
   other: number;
+  unclassifiedRevenue: number;
   attendanceSum: number;
+  capacitySum: number;
+  fillRateSum: number;
+  selloutGames: number;
+  lowAttendanceGames: number;
   homeGames: number;
+  playerPayroll: number;
+  staff: number;
+  facilitiesBooks: number;
+  facilityInvestment: number;
+  marketing: number;
+  otherOpex: number;
+  unclassifiedExpenses: number;
+};
+
+type CashSignTracker = {
+  minCash: number;
+  firstNegativeDate: string | null;
+  daysNegative: number;
 };
 
 function emptyMix(): MixAccumulator {
@@ -137,8 +262,20 @@ function emptyMix(): MixAccumulator {
     broadcast: 0,
     playoffs: 0,
     other: 0,
+    unclassifiedRevenue: 0,
     attendanceSum: 0,
+    capacitySum: 0,
+    fillRateSum: 0,
+    selloutGames: 0,
+    lowAttendanceGames: 0,
     homeGames: 0,
+    playerPayroll: 0,
+    staff: 0,
+    facilitiesBooks: 0,
+    facilityInvestment: 0,
+    marketing: 0,
+    otherOpex: 0,
+    unclassifiedExpenses: 0,
   };
 }
 
@@ -301,6 +438,186 @@ function shiftTeamAges(
   };
 }
 
+function teamCash(state: GameState, teamId: string): number {
+  return state.business.finances[teamId]?.cash ?? 0;
+}
+
+function emptyCapitalRollup(): {
+  capitalAttempts: CapitalAttempt[];
+  capitalRestricted: boolean;
+  attemptedCapitalSpend: number;
+  succeededCapitalSpend: number;
+} {
+  return {
+    capitalAttempts: [],
+    capitalRestricted: false,
+    attemptedCapitalSpend: 0,
+    succeededCapitalSpend: 0,
+  };
+}
+
+function pushCapitalAttempt(
+  rollup: ReturnType<typeof emptyCapitalRollup>,
+  attempt: CapitalAttempt,
+): void {
+  rollup.capitalAttempts.push(attempt);
+  if (attempt.outcome === "rejected") {
+    rollup.capitalRestricted = true;
+  }
+  if (
+    attempt.outcome === "succeeded" ||
+    attempt.outcome === "rejected" ||
+    attempt.outcome === "skipped_unaffordable"
+  ) {
+    if (attempt.outcome !== "skipped_unaffordable") {
+      rollup.attemptedCapitalSpend += attempt.amount;
+    }
+  }
+  if (attempt.outcome === "succeeded") {
+    rollup.succeededCapitalSpend += attempt.amount;
+  }
+}
+
+function tryMarketingIncrease(
+  state: GameState,
+  teamId: TeamId,
+  annualBudget: number,
+  rollup: ReturnType<typeof emptyCapitalRollup>,
+): GameState {
+  const current = state.business.franchiseOps[teamId]?.marketing.budget ?? 0;
+  if (annualBudget <= current) {
+    const result = setMarketingBudget(state, teamId, annualBudget);
+    return result.state;
+  }
+  try {
+    const result = setMarketingBudget(state, teamId, annualBudget);
+    pushCapitalAttempt(rollup, {
+      kind: "marketing_increase",
+      target: "marketing",
+      amount: annualBudget - current,
+      outcome: "succeeded",
+    });
+    return result.state;
+  } catch (error) {
+    pushCapitalAttempt(rollup, {
+      kind: "marketing_increase",
+      target: "marketing",
+      amount: annualBudget - current,
+      outcome: "rejected",
+      restrictedReason: error instanceof Error ? error.message : String(error),
+    });
+    return state;
+  }
+}
+
+function tryFacilityUpgrade(
+  state: GameState,
+  teamId: TeamId,
+  category: FacilityCategory,
+  rollup: ReturnType<typeof emptyCapitalRollup>,
+  options: { requireLiquidityBuffer: boolean },
+): GameState {
+  const ops = state.business.franchiseOps[teamId];
+  if (!ops) {
+    return state;
+  }
+  const facility = ops.facilities[category];
+  if (
+    facility.upgradeWeeksRemaining > 0 ||
+    facility.level >= FACILITY_LEVEL_MAX
+  ) {
+    return state;
+  }
+  const cost = facilityUpgradeCost(category, facility.level);
+  const cash = teamCash(state, teamId);
+  const required =
+    cost + (options.requireLiquidityBuffer ? AGGRESSIVE_LIQUIDITY_BUFFER : 0);
+  if (cash < required) {
+    pushCapitalAttempt(rollup, {
+      kind: "facility_upgrade",
+      target: category,
+      amount: cost,
+      outcome: "skipped_unaffordable",
+    });
+    return state;
+  }
+  try {
+    const result = startFacilityUpgrade(state, teamId, category);
+    pushCapitalAttempt(rollup, {
+      kind: "facility_upgrade",
+      target: category,
+      amount: cost,
+      outcome: "succeeded",
+    });
+    return result.state;
+  } catch (error) {
+    pushCapitalAttempt(rollup, {
+      kind: "facility_upgrade",
+      target: category,
+      amount: cost,
+      outcome: "rejected",
+      restrictedReason: error instanceof Error ? error.message : String(error),
+    });
+    return state;
+  }
+}
+
+/**
+ * Aggressive capital attempts: arena first, then practice or fan, optional third
+ * only with liquidity buffer. Does not teleport facility levels.
+ */
+function applyAggressivePolicy(
+  state: GameState,
+  teamId: TeamId,
+  rollup: ReturnType<typeof emptyCapitalRollup>,
+): GameState {
+  let next = tryMarketingIncrease(
+    state,
+    teamId,
+    AGGRESSIVE_MARKETING_BUDGET,
+    rollup,
+  );
+  next = setTicketPrice(next, teamId, AGGRESSIVE_TICKET_PRICE).state;
+
+  next = tryFacilityUpgrade(next, teamId, "arena", rollup, {
+    requireLiquidityBuffer: false,
+  });
+
+  const afterArena = next;
+  const practiceLevel = afterArena.business.franchiseOps[teamId]!.facilities.practice;
+  const fanLevel = afterArena.business.franchiseOps[teamId]!.facilities.fan;
+  const practiceAffordable =
+    practiceLevel.upgradeWeeksRemaining === 0 &&
+    practiceLevel.level < FACILITY_LEVEL_MAX &&
+    teamCash(afterArena, teamId) >=
+      facilityUpgradeCost("practice", practiceLevel.level);
+  const fanAffordable =
+    fanLevel.upgradeWeeksRemaining === 0 &&
+    fanLevel.level < FACILITY_LEVEL_MAX &&
+    teamCash(afterArena, teamId) >= facilityUpgradeCost("fan", fanLevel.level);
+
+  if (practiceAffordable) {
+    next = tryFacilityUpgrade(next, teamId, "practice", rollup, {
+      requireLiquidityBuffer: false,
+    });
+  } else if (fanAffordable) {
+    next = tryFacilityUpgrade(next, teamId, "fan", rollup, {
+      requireLiquidityBuffer: false,
+    });
+  }
+
+  // Optional third: the other of practice/fan, only with liquidity buffer.
+  const triedPractice = rollup.capitalAttempts.some(
+    (a) => a.kind === "facility_upgrade" && a.target === "practice",
+  );
+  const third: FacilityCategory = triedPractice ? "fan" : "practice";
+  next = tryFacilityUpgrade(next, teamId, third, rollup, {
+    requireLiquidityBuffer: true,
+  });
+
+  return next;
+}
+
 function applyRecoveryPolicy(state: GameState, teamId: TeamId): GameState {
   let next = setMarketingBudget(state, teamId, 250_000).state;
   next = setTicketPrice(next, teamId, 45).state;
@@ -310,6 +627,9 @@ function applyRecoveryPolicy(state: GameState, teamId: TeamId): GameState {
 export function applyEconomyScenario(
   state: GameState,
   scenario: EconomyScenarioId,
+  options: {
+    capitalRollup?: ReturnType<typeof emptyCapitalRollup>;
+  } = {},
 ): GameState {
   const teamId = state.user.controlledTeamId as TeamId;
   if (scenario === "baseline") {
@@ -356,11 +676,29 @@ export function applyEconomyScenario(
     next = setTicketPrice(next, teamId, 95).state;
     return next;
   }
-  let next = applyEconomyScenario(state, "distress");
-  return applyRecoveryPolicy(next, teamId);
+  if (scenario === "recovery") {
+    let next = applyEconomyScenario(state, "distress");
+    return applyRecoveryPolicy(next, teamId);
+  }
+  if (scenario === "aggressive") {
+    const rollup = options.capitalRollup ?? emptyCapitalRollup();
+    let next = scaleTeamContracts(state, teamId, 1.35);
+    next = applyAggressivePolicy(next, teamId, rollup);
+    return next;
+  }
+  if (scenario === "high_market") {
+    return patchOps(state, teamId, { marketSize: HIGH_MARKET_SIZE });
+  }
+  if (scenario === "low_market") {
+    return patchOps(state, teamId, { marketSize: LOW_MARKET_SIZE });
+  }
+  return state;
 }
 
-function pickBestProspect(state: GameState, draft: DraftClass): string | undefined {
+function pickBestProspect(
+  state: GameState,
+  draft: DraftClass,
+): DraftClass["prospects"][string]["playerId"] | undefined {
   const available = Object.values(draft.prospects).filter(
     (prospect) => prospect.status === "eligible",
   );
@@ -405,32 +743,102 @@ function autoPickUserDraft(state: GameState): GameState {
   return result.success ? result.state : state;
 }
 
+/**
+ * Classify season cash movements from domain events.
+ * HomeGameDaySettled is the aggregate source of truth for game-day revenue;
+ * matching RevenueRecorded tickets/merchandise/concessions are skipped.
+ * Unknown other revenue is unclassified — never guessed as broadcast.
+ */
 function absorbEvents(
   mix: MixAccumulator,
   events: readonly DomainEvent[],
   teamId: string,
+  broadcastShare: number,
 ): void {
+  const concessionAmounts = new Set<number>();
+  for (const event of events) {
+    if (event.type === "HomeGameDaySettled" && event.payload.teamId === teamId) {
+      const concessions = Number(event.payload.concessionsRevenue) || 0;
+      if (concessions > 0) {
+        concessionAmounts.add(concessions);
+      }
+    }
+  }
+
   for (const event of events) {
     if (event.type === "HomeGameDaySettled" && event.payload.teamId === teamId) {
       mix.gate += Number(event.payload.ticketRevenue) || 0;
       mix.merchandise += Number(event.payload.merchRevenue) || 0;
       mix.concessions += Number(event.payload.concessionsRevenue) || 0;
-      mix.attendanceSum += Number(event.payload.attendance) || 0;
+      const attendance = Number(event.payload.attendance) || 0;
+      const capacity = Number(event.payload.capacity) || 0;
+      mix.attendanceSum += attendance;
+      mix.capacitySum += capacity;
       mix.homeGames += 1;
+      if (capacity > 0) {
+        const fillPct = (attendance / capacity) * 100;
+        mix.fillRateSum += fillPct;
+        if (fillPct >= SELLOUT_FILL_RATE_PCT && attendance >= capacity) {
+          mix.selloutGames += 1;
+        }
+        if (fillPct < POOR_ATTENDANCE_FILL_RATE_PCT) {
+          mix.lowAttendanceGames += 1;
+        }
+      }
       continue;
     }
+
+    if (
+      event.type === "FacilityUpgradeStarted" &&
+      event.payload.teamId === teamId
+    ) {
+      mix.facilityInvestment += Number(event.payload.cost) || 0;
+      continue;
+    }
+
+    if (
+      event.type === "PlayerPayrollPaid" &&
+      event.payload.teamId === teamId
+    ) {
+      mix.playerPayroll += Math.abs(Number(event.payload.amount) || 0);
+      continue;
+    }
+
+    if (event.type === "ExpenseRecorded" && event.payload.teamId === teamId) {
+      const amount = Number(event.payload.amount) || 0;
+      const category = event.payload.category;
+      if (category === "staff") {
+        mix.staff += amount;
+      } else if (category === "facilities") {
+        mix.facilitiesBooks += amount;
+      } else if (category === "marketing") {
+        mix.marketing += amount;
+      } else if (category === "operations") {
+        mix.otherOpex += amount;
+      } else {
+        mix.unclassifiedExpenses += amount;
+      }
+      continue;
+    }
+
     if (event.type !== "RevenueRecorded" || event.payload.teamId !== teamId) {
       continue;
     }
     const category = event.payload.category;
     const amount = Number(event.payload.amount) || 0;
-    if (category === "tickets") {
-      mix.gate += amount;
-    } else if (category === "merchandise") {
-      mix.merchandise += amount;
-    } else if (category === "sponsorships") {
+    if (category === "tickets" || category === "merchandise") {
+      // Side effect of HomeGameDaySettled — do not double-count.
+      continue;
+    }
+    if (category === "sponsorships") {
       mix.sponsorship += amount;
-    } else if (category === "other") {
+      continue;
+    }
+    if (category === "other") {
+      if (concessionAmounts.has(amount)) {
+        concessionAmounts.delete(amount);
+        continue;
+      }
       if (
         amount === GAMEPLAY_PLAYOFF_QUALIFICATION_REVENUE ||
         amount === GAMEPLAY_PLAYOFF_SERIES_WIN_REVENUE
@@ -438,8 +846,10 @@ function absorbEvents(
         mix.playoffs += amount;
       } else if (amount === GAMEPLAY_OBJECTIVE_REWARD) {
         mix.other += amount;
-      } else {
+      } else if (broadcastShare > 0 && amount === broadcastShare) {
         mix.broadcast += amount;
+      } else {
+        mix.unclassifiedRevenue += amount;
       }
     }
   }
@@ -453,7 +863,8 @@ function toRevenueMix(mix: MixAccumulator): RevenueMix {
     mix.sponsorship +
     mix.broadcast +
     mix.playoffs +
-    mix.other;
+    mix.other +
+    mix.unclassifiedRevenue;
   const pct = (value: number): number =>
     total <= 0 ? 0 : Math.round((value / total) * 1000) / 10;
   return {
@@ -464,6 +875,7 @@ function toRevenueMix(mix: MixAccumulator): RevenueMix {
     broadcast: mix.broadcast,
     playoffs: mix.playoffs,
     other: mix.other,
+    unclassified: mix.unclassifiedRevenue,
     total,
     shares: {
       gate: pct(mix.gate),
@@ -473,13 +885,110 @@ function toRevenueMix(mix: MixAccumulator): RevenueMix {
       broadcast: pct(mix.broadcast),
       playoffs: pct(mix.playoffs),
       other: pct(mix.other),
+      unclassified: pct(mix.unclassifiedRevenue),
     },
   };
+}
+
+function buildCashFlow(
+  mix: MixAccumulator,
+  startingCash: number,
+  endingCash: number,
+  tracker: CashSignTracker,
+): SeasonCashFlow {
+  // Capex counted once via FacilityUpgradeStarted; strip from books for opex.
+  const facilityOpex = Math.max(0, mix.facilitiesBooks - mix.facilityInvestment);
+  const recurringRevenue =
+    mix.gate +
+    mix.merchandise +
+    mix.concessions +
+    mix.sponsorship +
+    mix.broadcast;
+  const recurringCosts =
+    mix.playerPayroll +
+    mix.staff +
+    facilityOpex +
+    mix.marketing +
+    mix.otherOpex;
+  const nonOperatingCashFlow =
+    mix.playoffs +
+    mix.other +
+    mix.unclassifiedRevenue -
+    mix.unclassifiedExpenses;
+  const costsTotal =
+    mix.playerPayroll +
+    mix.staff +
+    facilityOpex +
+    mix.facilityInvestment +
+    mix.marketing +
+    mix.otherOpex +
+    mix.unclassifiedExpenses;
+  const revenueTotal =
+    mix.gate +
+    mix.merchandise +
+    mix.concessions +
+    mix.sponsorship +
+    mix.broadcast +
+    mix.playoffs +
+    mix.other +
+    mix.unclassifiedRevenue;
+
+  return {
+    startingCash,
+    endingCash,
+    netCash: endingCash - startingCash,
+    revenue: {
+      gate: mix.gate,
+      merchandise: mix.merchandise,
+      concessions: mix.concessions,
+      sponsorship: mix.sponsorship,
+      broadcast: mix.broadcast,
+      playoffs: mix.playoffs,
+      other: mix.other,
+      unclassified: mix.unclassifiedRevenue,
+      total: revenueTotal,
+    },
+    costs: {
+      playerPayroll: mix.playerPayroll,
+      staff: mix.staff,
+      facilityOpex,
+      facilityInvestment: mix.facilityInvestment,
+      marketing: mix.marketing,
+      other: mix.otherOpex,
+      unclassified: mix.unclassifiedExpenses,
+      total: costsTotal,
+    },
+    netOperatingCashFlow: recurringRevenue - recurringCosts,
+    nonOperatingCashFlow,
+    minCash: tracker.minCash,
+    firstNegativeDate: tracker.firstNegativeDate,
+    daysNegative: tracker.daysNegative,
+    endedNegative: endingCash < 0,
+  };
+}
+
+function observeCash(
+  tracker: CashSignTracker,
+  state: GameState,
+  teamId: string,
+): void {
+  const cash = teamCash(state, teamId);
+  if (cash < tracker.minCash) {
+    tracker.minCash = cash;
+  }
+  if (cash < 0) {
+    tracker.daysNegative += 1;
+    if (tracker.firstNegativeDate === null) {
+      tracker.firstNegativeDate = state.world.calendar.currentDate;
+    }
+  }
 }
 
 function snapshotSeason(
   state: GameState,
   mix: MixAccumulator,
+  startingCash: number,
+  tracker: CashSignTracker,
 ): SeasonEconomySnapshot {
   const teamId = state.user.controlledTeamId;
   const year = state.competition.season.year;
@@ -489,7 +998,7 @@ function snapshotSeason(
   const history = state.business.franchiseHistory[teamId];
   const lastHistory = history?.seasons[history.seasons.length - 1];
   const projection = projectCashHorizon(state, teamId);
-  const cash = state.business.finances[teamId]?.cash ?? 0;
+  const cash = teamCash(state, teamId);
   const health = calculateFinancialHealth({
     cash,
     weeklyOutflow: projection.weeklyOutflow,
@@ -522,6 +1031,7 @@ function snapshotSeason(
       marketing: statement.expenses.marketing,
       total: statement.expenses.total,
     },
+    cashFlow: buildCashFlow(mix, startingCash, cash, tracker),
     runwayWeeks: projection.runwayWeeks,
     projectedCash: projection.projectedCash,
     health,
@@ -529,7 +1039,19 @@ function snapshotSeason(
       mix.homeGames > 0
         ? Math.round(mix.attendanceSum / mix.homeGames)
         : null,
+    capacityMean:
+      mix.homeGames > 0
+        ? Math.round(mix.capacitySum / mix.homeGames)
+        : null,
+    fillRateMean:
+      mix.homeGames > 0
+        ? Math.round((mix.fillRateSum / mix.homeGames) * 10) / 10
+        : null,
+    selloutGames: mix.selloutGames,
+    lowAttendanceGames: mix.lowAttendanceGames,
     homeGames: mix.homeGames,
+    statementTickets: statement.revenue.tickets,
+    statementMerchandise: statement.revenue.merchandise,
   };
 }
 
@@ -567,6 +1089,13 @@ function simulateOneSeason(
 ): { state: GameState; snapshot: SeasonEconomySnapshot } {
   const mix = emptyMix();
   let current = persistRng(state, rng);
+  const startingCash = teamCash(current, teamId);
+  const tracker: CashSignTracker = {
+    minCash: startingCash,
+    firstNegativeDate: null,
+    daysNegative: 0,
+  };
+  observeCash(tracker, current, teamId);
   const startYear = current.competition.season.year;
   let days = 0;
   while (days < MAX_DAYS_PER_SEASON) {
@@ -574,11 +1103,14 @@ function simulateOneSeason(
     if (isUserOnDraftClock(current)) {
       current = persistRng(autoPickUserDraft(current), rng);
       current = persistRng(runAiTeamDecisions(current, rng).state, rng);
+      observeCash(tracker, current, teamId);
       continue;
     }
+    const broadcastShare = estimateMonthlyBroadcastShare(current);
     const advanced = advanceSimulation(current, rng, { days: 1 });
     current = persistRng(advanced.state, rng);
-    absorbEvents(mix, advanced.events, teamId);
+    absorbEvents(mix, advanced.events, teamId, broadcastShare);
+    observeCash(tracker, current, teamId);
     const season = current.competition.season;
     if (
       season.year === startYear &&
@@ -592,7 +1124,7 @@ function simulateOneSeason(
       break;
     }
   }
-  const snapshot = snapshotSeason(current, mix);
+  const snapshot = snapshotSeason(current, mix, startingCash, tracker);
   current = resolveOffseason(current, rng);
   return { state: current, snapshot };
 }
@@ -600,7 +1132,7 @@ function simulateOneSeason(
 export function bootstrapEconomyScenario(
   scenario: EconomyScenarioId,
   options: { seed?: number } = {},
-): { state: GameState; rng: Rng } {
+): { state: GameState; rng: Rng; capitalRollup: ReturnType<typeof emptyCapitalRollup> } {
   const seed = options.seed ?? HARNESS_SEED;
   let state = createInitialGameState({
     saveId: `econ_${scenario}`,
@@ -609,8 +1141,49 @@ export function bootstrapEconomyScenario(
   });
   const rng = createSeededRng(state.meta.rngState);
   state = persistRng(bootstrapWorld(state, rng).state, rng);
-  state = applyEconomyScenario(state, scenario);
-  return { state, rng };
+  const capitalRollup = emptyCapitalRollup();
+  state = applyEconomyScenario(state, scenario, { capitalRollup });
+  return { state, rng, capitalRollup };
+}
+
+function computeRecoveryDelta(
+  seasons: SeasonEconomySnapshot[],
+): RecoveryDelta | null {
+  if (seasons.length < 2) {
+    return null;
+  }
+  const first = seasons[0]!;
+  const last = seasons[seasons.length - 1]!;
+  const cashDelta = last.cash - first.cash;
+  const opDelta =
+    last.cashFlow.netOperatingCashFlow - first.cashFlow.netOperatingCashFlow;
+  const runwayImproved =
+    first.runwayWeeks !== null &&
+    last.runwayWeeks !== null &&
+    last.runwayWeeks > first.runwayWeeks;
+  const runwayRecovered =
+    first.runwayWeeks !== null && last.runwayWeeks === null;
+  const healthImproved =
+    HEALTH_RANK[last.health] > HEALTH_RANK[first.health];
+  const improved =
+    cashDelta > 0 ||
+    opDelta > 0 ||
+    runwayImproved ||
+    runwayRecovered ||
+    healthImproved;
+  return {
+    fromSeasonYear: first.seasonYear,
+    toSeasonYear: last.seasonYear,
+    cash: { from: first.cash, to: last.cash, delta: cashDelta },
+    runwayWeeks: { from: first.runwayWeeks, to: last.runwayWeeks },
+    health: { from: first.health, to: last.health },
+    netOperatingCashFlow: {
+      from: first.cashFlow.netOperatingCashFlow,
+      to: last.cashFlow.netOperatingCashFlow,
+      delta: opDelta,
+    },
+    improved,
+  };
 }
 
 export function runEconomyScenario(
@@ -621,13 +1194,23 @@ export function runEconomyScenario(
   if (!Number.isInteger(seasonCount) || seasonCount < 1) {
     throw new Error("runEconomyScenario: seasonCount must be an integer >= 1.");
   }
-  let { state, rng } = bootstrapEconomyScenario(scenario, options);
+  const seed = options.seed ?? HARNESS_SEED;
+  let { state, rng, capitalRollup } = bootstrapEconomyScenario(scenario, {
+    seed,
+  });
   const teamId = state.user.controlledTeamId;
   const seasons: SeasonEconomySnapshot[] = [];
   const actions: OwnerActionLogEntry[] = [];
   for (let index = 0; index < seasonCount; index += 1) {
+    const seasonRollup =
+      index === 0 && scenario === "aggressive"
+        ? capitalRollup
+        : emptyCapitalRollup();
     if (scenario === "recovery" && index > 0) {
       state = applyRecoveryPolicy(state, teamId as TeamId);
+    }
+    if (scenario === "aggressive" && index > 0) {
+      state = applyAggressivePolicy(state, teamId as TeamId, seasonRollup);
     }
     const result = simulateOneSeason(state, rng, teamId);
     state = result.state;
@@ -640,7 +1223,74 @@ export function runEconomyScenario(
       facilityLevels: result.snapshot.facilityLevels,
       endingCash: result.snapshot.cash,
       health: result.snapshot.health,
+      capitalAttempts: seasonRollup.capitalAttempts,
+      capitalRestricted: seasonRollup.capitalRestricted,
+      attemptedCapitalSpend: seasonRollup.attemptedCapitalSpend,
+      succeededCapitalSpend: seasonRollup.succeededCapitalSpend,
     });
   }
-  return { scenario, seasons, actions, finalState: state };
+  return {
+    scenario,
+    seed,
+    seasons,
+    actions,
+    finalState: state,
+    recoveryDelta:
+      scenario === "recovery" ? computeRecoveryDelta(seasons) : null,
+  };
+}
+
+/** Assert cash-flow snapshot identities (throws on violation). */
+export function assertCashFlowInvariants(snapshot: SeasonEconomySnapshot): void {
+  const { cashFlow, revenue } = snapshot;
+  if (cashFlow.netCash !== cashFlow.endingCash - cashFlow.startingCash) {
+    throw new Error(
+      `cashFlow.netCash mismatch: ${cashFlow.netCash} !== ${cashFlow.endingCash} - ${cashFlow.startingCash}`,
+    );
+  }
+  const revenueSum =
+    cashFlow.revenue.gate +
+    cashFlow.revenue.merchandise +
+    cashFlow.revenue.concessions +
+    cashFlow.revenue.sponsorship +
+    cashFlow.revenue.broadcast +
+    cashFlow.revenue.playoffs +
+    cashFlow.revenue.other +
+    cashFlow.revenue.unclassified;
+  if (cashFlow.revenue.total !== revenueSum || revenue.total !== revenueSum) {
+    throw new Error(
+      `revenue.total mismatch: cashFlow=${cashFlow.revenue.total} mix=${revenue.total} sum=${revenueSum}`,
+    );
+  }
+  const costsSum =
+    cashFlow.costs.playerPayroll +
+    cashFlow.costs.staff +
+    cashFlow.costs.facilityOpex +
+    cashFlow.costs.facilityInvestment +
+    cashFlow.costs.marketing +
+    cashFlow.costs.other +
+    cashFlow.costs.unclassified;
+  if (cashFlow.costs.total !== costsSum) {
+    throw new Error(
+      `costs.total mismatch: ${cashFlow.costs.total} !== ${costsSum}`,
+    );
+  }
+  // Capex must not also sit in opex (facilityOpex already strips investment).
+  if (
+    cashFlow.costs.facilityInvestment > 0 &&
+    cashFlow.costs.facilityOpex + cashFlow.costs.facilityInvestment <
+      cashFlow.costs.facilityInvestment
+  ) {
+    throw new Error("facilityInvestment incorrectly reduced facilityOpex below zero path");
+  }
+  if (snapshot.revenue.gate !== snapshot.statementTickets) {
+    throw new Error(
+      `gate double-count or miss: mix=${snapshot.revenue.gate} statement=${snapshot.statementTickets}`,
+    );
+  }
+  if (snapshot.revenue.merchandise !== snapshot.statementMerchandise) {
+    throw new Error(
+      `merchandise mismatch: mix=${snapshot.revenue.merchandise} statement=${snapshot.statementMerchandise}`,
+    );
+  }
 }

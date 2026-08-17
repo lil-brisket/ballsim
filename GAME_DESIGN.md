@@ -154,6 +154,9 @@ Phase 2 measures whether the existing economy produces believable franchise path
 | Development | Weaker near-term wins/cash | Overall up vs baseline without collapse | Slow build |
 | Distress | Negative operating cash | Warning/critical possible | Constrained, not a second economy |
 | Recovery | Starts distressed with cuts | Cash/health improve without debt | Return toward stable |
+| Aggressive | Cash pressure from real upgrade attempts; restrictions possible | Constraint without requiring insolvency | Overspend slows; not unbounded collapse |
+| High market | Market-size-only boost to demand | Higher gate vs baseline | Market advantage without roster change |
+| Low market | Market-size-only demand drag | Lower gate vs baseline | Market disadvantage without roster change |
 
 Direct per-win cash bonuses are not used; winning already pays through attendance, demand, reputation, sponsorship, and playoffs.
 

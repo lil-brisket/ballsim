@@ -342,6 +342,8 @@ export { projectCashHorizon } from "@/systems/cash-projection";
 export {
   runEconomyScenario,
   applyEconomyScenario,
+  bootstrapEconomyScenario,
+  assertCashFlowInvariants,
   ECONOMY_SCENARIOS,
 } from "@/systems/economy/scenario-harness";
 export {
