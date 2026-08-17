@@ -25,7 +25,8 @@ import type { GameState } from "@/state/game-state";
 import { annualSalaryForStaff } from "@/systems/staff-effects";
 import { STAFF_DEFAULT_CONTRACT_YEARS } from "@/systems/staff-config";
 
-const STARTER_ROLES: readonly StaffRole[] = [
+/** Roles assigned to every team by generateLeagueStaff. */
+export const STARTER_ROLES: readonly StaffRole[] = [
   "general_manager",
   "head_coach",
   "scout",

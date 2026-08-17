@@ -19,10 +19,12 @@ import {
   NextActionPanel,
   resolveNextActionPresentation,
 } from "@/components/game/NextActionPanel";
+import { ActionQueue } from "@/components/owner/dashboard/ActionQueue";
 import { SaveCard } from "@/components/game/SaveCard";
 import { listGameModeDefinitions } from "@/application/game-mode-catalog";
 import { OWNER_NAV_GROUPS } from "@/application/owner-nav-config";
 import type { DashboardSnapshot } from "@/state/selectors";
+import type { OwnerDashboardActionItem } from "@/state/owner-dashboard";
 import type { OwnerSavePreview } from "@/application/game-service";
 
 function baseDashboard(
@@ -194,6 +196,32 @@ describe("game shell UI", () => {
         }}
       />,
     );
+    expect(
+      screen.getByRole("link", { name: "Open Draft" }).getAttribute("href"),
+    ).toBe("/dashboard/save_test/draft");
+    unmount();
+  });
+
+  it("ActionQueue renders good-shape empty state and action CTAs", () => {
+    const { unmount: unmountEmpty } = render(<ActionQueue items={[]} />);
+    expect(screen.getByText(/You're in good shape/i)).toBeTruthy();
+    unmountEmpty();
+
+    const items: OwnerDashboardActionItem[] = [
+      {
+        id: "action_draft",
+        category: "draft",
+        severity: "critical",
+        title: "Draft clock",
+        what: "Your team is on the draft clock.",
+        why: "You must select a prospect before advancing time.",
+        evidence: ["Draft pick waiting"],
+        href: "/dashboard/save_test/draft",
+        hrefLabel: "Open Draft",
+      },
+    ];
+    const { unmount } = render(<ActionQueue items={items} />);
+    expect(screen.getByText("Why it matters:")).toBeTruthy();
     expect(
       screen.getByRole("link", { name: "Open Draft" }).getAttribute("href"),
     ).toBe("/dashboard/save_test/draft");

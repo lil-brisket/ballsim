@@ -80,6 +80,10 @@ import {
   type FranchiseHistoryView,
   type SponsorshipView,
 } from "@/state/franchise-selectors";
+import {
+  toOwnerDashboardView,
+  type OwnerDashboardView,
+} from "@/state/owner-dashboard";
 import type { ExpansionState } from "@/domain/entities/expansion";
 import type { LeagueEconomy } from "@/domain/entities/league-economy";
 import type { RelocationProcess } from "@/domain/entities/relocation";
@@ -179,6 +183,7 @@ export type OwnerSaveView = CreateGameResult & {
   relocation: RelocationProcess;
   expansion: ExpansionState;
   franchiseHistory: FranchiseHistoryView;
+  ownerDashboard: OwnerDashboardView;
   /** Persisted career settings from GameState.settings (read-only for UI). */
   settings: GameSettings;
 };
@@ -355,6 +360,7 @@ export async function loadOwnerSaveView(
     relocation: toRelocationView(state),
     expansion: toExpansionView(state),
     franchiseHistory: toFranchiseHistoryView(state),
+    ownerDashboard: toOwnerDashboardView(state),
     settings: state.settings,
   };
 }

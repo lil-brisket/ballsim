@@ -2,10 +2,10 @@ import {
   createOwnerObjective,
   type OwnerObjective,
 } from "@/domain/entities/owner-objective";
-import { calculatePlayerOverall } from "@/domain/player-overall-rating";
 import { asOwnerObjectiveId, type TeamId } from "@/domain/ids";
 import { systemResult, type SystemResult } from "@/domain/system-result";
 import type { GameState } from "@/state/game-state";
+import { meanRosterOverall } from "@/state/roster-strength";
 import {
   OWNER_OBJECTIVE_MID_OVERALL,
   OWNER_OBJECTIVE_PAYROLL_LIMIT,
@@ -306,22 +306,4 @@ function evaluatePayrollLimit(
     return { ...objective, progress: payroll, status: "completed" };
   }
   return { ...objective, progress: payroll };
-}
-
-function meanRosterOverall(state: GameState, teamId: TeamId): number {
-  const team = state.world.teams[teamId];
-  if (!team || team.roster.length === 0) {
-    return 0;
-  }
-  let total = 0;
-  let count = 0;
-  for (const playerId of team.roster) {
-    const player = state.world.players[playerId];
-    if (!player) {
-      continue;
-    }
-    total += calculatePlayerOverall(player.position, player.attributes);
-    count += 1;
-  }
-  return count === 0 ? 0 : total / count;
 }
