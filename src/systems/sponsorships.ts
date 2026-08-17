@@ -8,6 +8,10 @@ import {
   sponsorshipClimateFactor,
   sponsorshipMediaFactor,
 } from "@/systems/sponsorships-config";
+import {
+  hasAppliedGameplayConsequence,
+  withAppliedGameplayConsequence,
+} from "@/systems/gameplay-financial-consequences";
 import { applyCashAndBooksImpact } from "@/systems/team-finances";
 
 export type SignSponsorshipInput = {
@@ -69,9 +73,51 @@ function isTeamInPlayoffs(state: GameState, teamId: TeamId): boolean {
   );
 }
 
+export function playoffSponsorshipBonusKey(
+  teamId: TeamId,
+  year: number,
+  sponsorshipId: string,
+): string {
+  return `playoff_sponsor_bonus:${teamId}:${year}:${sponsorshipId}`;
+}
+
+/** Monthly scaled base payout for a team (no playoff bonus). */
+export function estimateMonthlySponsorshipPayout(
+  state: GameState,
+  teamId: string,
+): number {
+  const year = state.competition.season.year;
+  const climate = state.business.leagueEconomy.sponsorshipClimate;
+  const team = state.world.teams[teamId];
+  const ops = state.business.franchiseOps[teamId];
+  const mediaAttention = ops?.mediaAttention ?? 50;
+  let monthlyBase = 0;
+  for (const sponsorship of Object.values(state.business.sponsorships)) {
+    if (sponsorship.status !== "active") {
+      continue;
+    }
+    if (sponsorship.teamId !== teamId) {
+      continue;
+    }
+    if (year < sponsorship.startYear || year > sponsorship.endYear) {
+      continue;
+    }
+    if (!team || team.reputation < sponsorship.reputationFloor) {
+      continue;
+    }
+    monthlyBase += Math.floor(sponsorship.annualValue / 12);
+  }
+  return Math.round(
+    monthlyBase *
+      sponsorshipMediaFactor(mediaAttention) *
+      sponsorshipClimateFactor(climate),
+  );
+}
+
 /**
  * Monthly sponsorship cash. Scales payout by media + league climate
- * without mutating stored annualValue. Playoff bonus is not scaled.
+ * without mutating stored annualValue. Playoff bonus is paid once per
+ * deal per season when the team is qualified — not every month.
  */
 export function processMonthlySponsorshipRevenue(
   state: GameState,
@@ -114,7 +160,21 @@ export function processMonthlySponsorshipRevenue(
     );
     let amount = scaledBase;
     if (isTeamInPlayoffs(current, teamId)) {
-      amount += sponsorships.reduce((sum, s) => sum + s.playoffBonus, 0);
+      for (const sponsorship of sponsorships) {
+        if (sponsorship.playoffBonus <= 0) {
+          continue;
+        }
+        const bonusKey = playoffSponsorshipBonusKey(
+          teamId,
+          year,
+          sponsorship.id,
+        );
+        if (hasAppliedGameplayConsequence(current, bonusKey)) {
+          continue;
+        }
+        amount += sponsorship.playoffBonus;
+        current = withAppliedGameplayConsequence(current, bonusKey);
+      }
     }
     if (amount <= 0) {
       continue;

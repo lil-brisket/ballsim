@@ -63,6 +63,31 @@ describe("marketing", () => {
     expect(afterDecay).toBeGreaterThanOrEqual(50);
   });
 
+  it("moves awareness toward 50 even when the weekly delta would round to zero", () => {
+    let state = createInitialGameState({
+      saveId: "mkt_round",
+      rngSeed: 6,
+      settings: CBL_GAME_SETTINGS,
+    });
+    state = bootstrapWorld(state, createSeededRng(state.meta.rngState)).state;
+    const teamId = state.user.controlledTeamId;
+    state = {
+      ...state,
+      business: {
+        ...state.business,
+        franchiseOps: {
+          ...state.business.franchiseOps,
+          [teamId]: {
+            ...state.business.franchiseOps[teamId]!,
+            marketing: { budget: 0, awareness: 51 },
+          },
+        },
+      },
+    };
+    state = processWeeklyMarketing(state).state;
+    expect(state.business.franchiseOps[teamId]!.marketing.awareness).toBe(50);
+  });
+
   it("marketing spend reduces cash and does not create cash", () => {
     let state = createInitialGameState({
       saveId: "mkt_cash",

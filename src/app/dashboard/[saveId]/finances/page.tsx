@@ -37,51 +37,79 @@ export default async function FinancesPage({
     <>
       <PageHeader
         title="Finances"
-        subtitle={`Season ${statement.year} — cash, runway, and statement are separate concepts`}
+        subtitle={`Season ${statement.year} — if current pricing, demand, sponsorship, broadcast, and spending continue`}
       />
       {error ? <ErrorState message={error} /> : null}
 
       <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard
+          label="Financial health"
+          value={cashRunway.health.replaceAll("_", " ")}
+        />
+        <StatCard
           label="Cash balance"
           value={<MoneyDisplay amount={finances.cash} />}
+        />
+        <StatCard
+          label={
+            cashRunway.horizonKind === "season"
+              ? "Projected cash at season end"
+              : "Projected cash (near term)"
+          }
+          value={<MoneyDisplay amount={cashRunway.projectedCash} />}
         />
         <StatCard
           label="Cash runway"
           value={
             cashRunway.runwayWeeks === null
-              ? "No net burn"
+              ? "Positive through horizon"
               : `${cashRunway.runwayWeeks} weeks`
           }
         />
-        <StatCard
-          label="Payroll (annual, derived)"
-          value={<MoneyDisplay amount={statement.expenses.playerSalaries} />}
-        />
-        <StatCard
-          label="Net income (annual)"
-          value={<MoneyDisplay amount={statement.netIncome} />}
-        />
       </section>
 
-      <Section title="Cash flow estimate (weekly)">
+      <Section title="Decision support">
         <ul className="space-y-2 text-sm text-zinc-300">
           <li className="flex justify-between">
-            <span>Weekly outflow (staff / facilities / marketing)</span>
+            <span>Weekly outflow (payroll, staff, facilities, marketing)</span>
             <MoneyDisplay amount={cashRunway.weeklyOutflow} />
           </li>
           <li className="flex justify-between">
-            <span>Expected weekly inflow (approx. from forecast)</span>
+            <span>Player payroll (weekly)</span>
+            <MoneyDisplay amount={cashRunway.outflowBreakdown.playerPayroll} />
+          </li>
+          <li className="flex justify-between">
+            <span>Expected weekly inflow (horizon average)</span>
             <MoneyDisplay amount={cashRunway.expectedWeeklyInflow} />
           </li>
           <li className="flex justify-between">
-            <span>Net weekly burn</span>
-            <MoneyDisplay amount={cashRunway.netWeeklyBurn} />
+            <span>Horizon gate / sponsorship / broadcast</span>
+            <span>
+              <MoneyDisplay amount={cashRunway.inflowBreakdown.gate} />
+              {" / "}
+              <MoneyDisplay amount={cashRunway.inflowBreakdown.sponsorship} />
+              {" / "}
+              <MoneyDisplay amount={cashRunway.inflowBreakdown.broadcast} />
+            </span>
+          </li>
+          <li className="flex justify-between">
+            <span>Primary pressure</span>
+            <span className="capitalize">
+              {cashRunway.primaryPressure.replace("_", " ")}
+              {cashRunway.weeklyOutflow > 0
+                ? ` (${Math.round(
+                    (cashRunway.outflowBreakdown[cashRunway.primaryPressure] /
+                      cashRunway.weeklyOutflow) *
+                      100,
+                  )}% of outflow)`
+                : ""}
+            </span>
           </li>
         </ul>
         <p className="mt-2 text-xs text-zinc-500">
-          Player salaries appear on the annual statement from contracts. Periodic
-          cash payroll is separate when enabled.
+          Projection is constant-condition — it does not simulate future
+          attendance. Annual statement player salaries are the contract
+          obligation; cash payroll is the weekly drain included in outflow.
         </p>
       </Section>
 

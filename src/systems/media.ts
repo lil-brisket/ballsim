@@ -3,6 +3,7 @@ import type { TeamId } from "@/domain/ids";
 import { systemResult, type SystemResult } from "@/domain/system-result";
 import type { GameState } from "@/state/game-state";
 import { MEDIA_EVENT_BUMPS, MEDIA_WEEKLY_DECAY } from "@/systems/media-config";
+import { stepTowardNeutral } from "@/systems/neutral-decay";
 
 function clampMedia(value: number): number {
   return Math.max(0, Math.min(100, value));
@@ -82,9 +83,7 @@ export function processWeeklyMediaDecay(state: GameState): SystemResult {
       continue;
     }
     const next = clampMedia(
-      Math.round(
-        ops.mediaAttention + (50 - ops.mediaAttention) * MEDIA_WEEKLY_DECAY,
-      ),
+      stepTowardNeutral(ops.mediaAttention, 0, MEDIA_WEEKLY_DECAY),
     );
     if (next !== ops.mediaAttention) {
       franchiseOps = {

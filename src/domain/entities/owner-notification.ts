@@ -30,7 +30,8 @@ export type OwnerNotificationType =
   | "home_sellout"
   | "poor_attendance"
   | "awareness_band"
-  | "cash_runway_warning";
+  | "cash_runway_warning"
+  | "financial_health_changed";
 
 export const OWNER_NOTIFICATION_TYPES: readonly OwnerNotificationType[] = [
   "objective_completed",
@@ -46,6 +47,7 @@ export const OWNER_NOTIFICATION_TYPES: readonly OwnerNotificationType[] = [
   "poor_attendance",
   "awareness_band",
   "cash_runway_warning",
+  "financial_health_changed",
 ];
 
 export function isOwnerNotificationType(

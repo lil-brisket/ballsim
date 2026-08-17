@@ -142,6 +142,21 @@ Still deferred:
 - Narrative / news feed UI beyond recent results on the dashboard
 - Fan facility → sentiment (deferred)
 
+## Owner Mode Phase 2 — multi-season trajectory intent
+
+Phase 2 measures whether the existing economy produces believable franchise paths. Baseline is the **unmodified** CBL starting franchise. Other scenarios are deltas from that baseline.
+
+| Scenario | 1 season | 3–5 seasons | 10 seasons |
+| --- | --- | --- | --- |
+| Baseline | Modest cash drift | Survivable; no insolvency | No forced fire sale |
+| Win-now | Payroll pressure; gate helps if they win | Playoff cash only if contention lasts | Thin cash or a crash |
+| Conservative | Cash preservation | Growing cash, lagging brand | High cash, lower value if they never invest |
+| Development | Weaker near-term wins/cash | Overall up vs baseline without collapse | Slow build |
+| Distress | Negative operating cash | Warning/critical possible | Constrained, not a second economy |
+| Recovery | Starts distressed with cuts | Cash/health improve without debt | Return toward stable |
+
+Direct per-win cash bonuses are not used; winning already pays through attendance, demand, reputation, sponsorship, and playoffs.
+
 Implemented trade foundation:
 
 - Two-team `TradeProposal` (`sideA` / `sideB`) with shared `validateTrade` / `executeTrade`

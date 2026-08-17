@@ -10,6 +10,7 @@ import { ARENA_CAPACITY_BY_LEVEL } from "@/systems/facilities-config";
 import { processWeeklyMarketing, setMarketingBudget } from "@/systems/marketing";
 import { setTicketPrice } from "@/systems/ticket-pricing";
 import { bootstrapWorld } from "@/systems/world-pipeline";
+import { runEconomyScenario } from "@/systems/economy/scenario-harness";
 
 function withOps(
   state: GameState,
@@ -191,4 +192,61 @@ describe("economic scenarios (Phase 1A)", () => {
     expect(view.forecast.capacity).toBe(level3);
     expect(view.forecast.attendance).toBeLessThanOrEqual(level3);
   });
+});
+
+describe("economic scenarios (Phase 2 harness)", () => {
+  it(
+    "is deterministic for the same seed",
+    { timeout: 180_000 },
+    () => {
+      const a = runEconomyScenario("baseline", 1, { seed: 77 });
+      const b = runEconomyScenario("baseline", 1, { seed: 77 });
+      expect(a.seasons[0]!.cash).toBe(b.seasons[0]!.cash);
+      expect(a.seasons[0]!.wins).toBe(b.seasons[0]!.wins);
+      expect(a.seasons[0]!.revenue.shares.broadcast).toBeDefined();
+      expect(a.actions[0]!.payroll).toBeGreaterThan(0);
+    },
+  );
+
+  it(
+    "distress ends with less cash and higher payroll than conservative",
+    { timeout: 180_000 },
+    () => {
+      const conservative = runEconomyScenario("conservative", 1, { seed: 77 });
+      const distress = runEconomyScenario("distress", 1, { seed: 77 });
+      expect(distress.seasons[0]!.payroll).toBeGreaterThan(
+        conservative.seasons[0]!.payroll,
+      );
+      expect(distress.seasons[0]!.cash).toBeLessThan(
+        conservative.seasons[0]!.cash,
+      );
+    },
+  );
+
+  it(
+    "win-now payroll exceeds baseline",
+    { timeout: 180_000 },
+    () => {
+      const baseline = runEconomyScenario("baseline", 1, { seed: 77 });
+      const winNow = runEconomyScenario("win_now", 1, { seed: 77 });
+      expect(winNow.seasons[0]!.payroll).toBeGreaterThan(
+        baseline.seasons[0]!.payroll,
+      );
+    },
+  );
+
+  it(
+    "recovery spends less on marketing than frozen distress",
+    { timeout: 180_000 },
+    () => {
+      const distress = runEconomyScenario("distress", 1, { seed: 77 });
+      const recovery = runEconomyScenario("recovery", 1, { seed: 77 });
+      expect(recovery.seasons[0]!.marketingBudget).toBeLessThan(
+        distress.seasons[0]!.marketingBudget,
+      );
+      expect(recovery.seasons[0]!.cash).toBeGreaterThan(
+        distress.seasons[0]!.cash,
+      );
+    },
+  );
 });

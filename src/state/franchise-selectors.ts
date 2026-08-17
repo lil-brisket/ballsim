@@ -15,25 +15,18 @@ import {
 } from "@/domain/entities/staff-contract";
 import type { GameState } from "@/state/game-state";
 import { calculateFranchiseValue } from "@/state/franchise-value";
-import type { TeamId } from "@/domain/ids";
-import {
-  explainTicketDemand,
-  type DemandContribution,
-} from "@/systems/demand/calculate-demand";
-import {
-  concessionsFromAttendance,
-  merchandiseFromAttendance,
-  resolveAttendance,
-  revenuePerAttendee,
-} from "@/systems/demand/resolve-attendance";
+import type { DemandContribution } from "@/systems/demand/calculate-demand";
+import { explainTicketDemand } from "@/systems/demand/calculate-demand";
+import { forecastNextHomeGameDay } from "@/systems/demand/forecast-game-day";
+import { revenuePerAttendee } from "@/systems/demand/resolve-attendance";
 import { arenaCapacity } from "@/systems/facilities";
-import {
-  facilityUpgradeCost,
-  facilityWeeklyOpex,
-} from "@/systems/facilities-config";
+import { facilityUpgradeCost } from "@/systems/facilities-config";
 import { MARKETING_WEEKS_PER_YEAR } from "@/systems/marketing-config";
-import { PLAYER_PAYROLL_WEEKS_PER_YEAR } from "@/systems/player-payroll";
-import { getTeamPayroll } from "@/systems/salary-cap";
+import { projectCashHorizon } from "@/systems/cash-projection";
+import {
+  calculateFinancialHealth,
+  type FinancialHealthState,
+} from "@/systems/financial-health";
 
 export type StaffMemberView = {
   staffId: string;
@@ -105,8 +98,24 @@ export type CashRunwayView = {
   weeklyOutflow: number;
   expectedWeeklyInflow: number;
   netWeeklyBurn: number;
-  /** null when net burn <= 0 (no immediate runway problem). */
+  /** First horizon week projected cash is <= 0; null if cash stays positive. */
   runwayWeeks: number | null;
+  projectedCash: number;
+  horizonEndDate: string;
+  horizonKind: "season" | "near_term";
+  inflowBreakdown: {
+    gate: number;
+    sponsorship: number;
+    broadcast: number;
+  };
+  outflowBreakdown: {
+    playerPayroll: number;
+    staff: number;
+    facilities: number;
+    marketing: number;
+  };
+  primaryPressure: "player_payroll" | "staff" | "facilities" | "marketing";
+  health: FinancialHealthState;
 };
 
 export type FranchiseBusinessView = {
@@ -242,46 +251,18 @@ function buildForecast(
   teamId: string,
   ops: FranchiseOps,
 ): GameDayForecastView {
-  const team = state.world.teams[teamId]!;
-  const capacity = arenaCapacity(state, teamId);
+  const forecast = forecastNextHomeGameDay(state, teamId, ops);
   const explanation = explainTicketDemand({
     marketSize: ops.marketSize,
     fanSentiment: ops.fanSentiment,
-    reputation: team.reputation,
+    reputation: state.world.teams[teamId]?.reputation ?? 50,
     awareness: ops.marketing.awareness,
     mediaAttention: ops.mediaAttention,
     leaguePopularity: state.business.leagueEconomy.popularity,
     winPct: teamWinPct(state, teamId),
   });
-  const attendance = resolveAttendance(
-    explanation.score,
-    ops.ticketPrice,
-    capacity,
-  );
-  const ticketRevenue = attendance * ops.ticketPrice;
-  const merchRevenue = merchandiseFromAttendance(attendance, ops.fanSentiment);
-  const concessionsRevenue = concessionsFromAttendance(
-    attendance,
-    ops.fanSentiment,
-  );
-  const totalGameDayRevenue = ticketRevenue + merchRevenue + concessionsRevenue;
   return {
-    demandScore: explanation.score,
-    attendance,
-    capacity,
-    fillRatePct:
-      capacity > 0 ? Math.round((attendance / capacity) * 100) : 0,
-    ticketPrice: ops.ticketPrice,
-    ticketRevenue,
-    merchRevenue,
-    concessionsRevenue,
-    totalGameDayRevenue,
-    revenuePerAttendee: revenuePerAttendee(
-      attendance,
-      ticketRevenue,
-      merchRevenue,
-      concessionsRevenue,
-    ),
+    ...forecast,
     demandContributors: toContributorViews(explanation.contributions),
   };
 }
@@ -342,66 +323,35 @@ function readLastGameDay(
 }
 
 /**
- * Cash runway from net weekly burn (outflow − expected recurring inflow).
- * When net burn <= 0 there is no immediate runway problem.
+ * Cash runway from a constant-condition horizon walk of known cadences.
+ * Does not simulate future games.
  */
 export function calculateCashRunway(
   state: GameState,
   teamId: string,
 ): CashRunwayView {
-  const ops = state.business.franchiseOps[teamId];
   const cash = state.business.finances[teamId]?.cash ?? 0;
-  if (!ops) {
-    return {
-      cash,
-      weeklyOutflow: 0,
-      expectedWeeklyInflow: 0,
-      netWeeklyBurn: 0,
-      runwayWeeks: null,
-    };
-  }
-
-  const year = state.competition.season.year;
-  let staffWeekly = 0;
-  for (const contract of Object.values(state.business.staffContracts)) {
-    if (contract.teamId !== teamId || !isStaffContractActive(contract, year)) {
-      continue;
-    }
-    const annual = getStaffContractSalaryForYear(contract, year) ?? 0;
-    staffWeekly += Math.floor(annual / 52);
-  }
-
-  let facilityWeekly = 0;
-  for (const category of FACILITY_CATEGORIES) {
-    facilityWeekly += facilityWeeklyOpex(
-      category,
-      ops.facilities[category].level,
-    );
-  }
-
-  const marketingWeekly = Math.floor(
-    ops.marketing.budget / MARKETING_WEEKS_PER_YEAR,
-  );
-  const playerPayrollWeekly = Math.floor(
-    getTeamPayroll(teamId as TeamId, year, state) / PLAYER_PAYROLL_WEEKS_PER_YEAR,
-  );
-  const weeklyOutflow =
-    staffWeekly + facilityWeekly + marketingWeekly + playerPayrollWeekly;
-
-  const forecast = buildForecast(state, teamId, ops);
-  // Rough recurring inflow: ~1 home game every ~2 weeks in a typical schedule.
-  const expectedWeeklyInflow = Math.round(forecast.totalGameDayRevenue / 2);
-
-  const netWeeklyBurn = weeklyOutflow - expectedWeeklyInflow;
-  const runwayWeeks =
-    netWeeklyBurn > 0 ? Math.floor(cash / netWeeklyBurn) : null;
-
+  const projection = projectCashHorizon(state, teamId);
+  const health = calculateFinancialHealth({
+    cash,
+    weeklyOutflow: projection.weeklyOutflow,
+    netWeeklyBurn: projection.netWeeklyBurn,
+    runwayWeeks: projection.runwayWeeks,
+    projectedCash: projection.projectedCash,
+  });
   return {
     cash,
-    weeklyOutflow,
-    expectedWeeklyInflow,
-    netWeeklyBurn,
-    runwayWeeks,
+    weeklyOutflow: projection.weeklyOutflow,
+    expectedWeeklyInflow: projection.expectedWeeklyInflow,
+    netWeeklyBurn: projection.netWeeklyBurn,
+    runwayWeeks: projection.runwayWeeks,
+    projectedCash: projection.projectedCash,
+    horizonEndDate: projection.horizonEndDate,
+    horizonKind: projection.horizonKind,
+    inflowBreakdown: projection.inflowBreakdown,
+    outflowBreakdown: projection.outflowBreakdown,
+    primaryPressure: projection.primaryPressure,
+    health,
   };
 }
 

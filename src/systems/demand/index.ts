@@ -23,3 +23,7 @@ export {
   resolveAttendance,
   revenuePerAttendee,
 } from "@/systems/demand/resolve-attendance";
+export {
+  forecastNextHomeGameDay,
+  type GameDayForecast,
+} from "@/systems/demand/forecast-game-day";

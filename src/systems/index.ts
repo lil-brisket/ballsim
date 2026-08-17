@@ -322,7 +322,6 @@ export {
   OWNER_OBJECTIVE_PAYROLL_LIMIT,
   OWNER_STREAK_NOTIFICATION_THRESHOLD,
   SIGNIFICANT_FINANCIAL_CHANGE,
-  GAMEPLAY_WIN_REVENUE,
   GAMEPLAY_LOSS_EXPENSE,
   GAMEPLAY_PLAYOFF_QUALIFICATION_REVENUE,
   GAMEPLAY_PLAYOFF_SERIES_WIN_REVENUE,
@@ -335,6 +334,16 @@ export {
   withAppliedGameplayConsequence,
 } from "@/systems/gameplay-financial-consequences";
 export { generateOwnerNotifications } from "@/systems/owner-notifications";
+export {
+  calculateFinancialHealth,
+  isCapitalSpendingRestricted,
+} from "@/systems/financial-health";
+export { projectCashHorizon } from "@/systems/cash-projection";
+export {
+  runEconomyScenario,
+  applyEconomyScenario,
+  ECONOMY_SCENARIOS,
+} from "@/systems/economy/scenario-harness";
 export {
   runAiTeamDecisions,
   isUserControlledTeam,

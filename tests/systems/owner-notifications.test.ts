@@ -8,6 +8,7 @@ import { CBL_GAME_SETTINGS } from "@/domain/game-settings";
 import { generateOwnerNotifications } from "@/systems/owner-notifications";
 import { SIGNIFICANT_FINANCIAL_CHANGE } from "@/systems/owner-objectives-config";
 import { bootstrapWorld } from "@/systems/world-pipeline";
+import { createDomainEvent } from "@/domain/events";
 
 describe("owner notifications", () => {
   it("emits objective completed and failed notifications without duplicates", () => {
@@ -148,6 +149,86 @@ describe("owner notifications", () => {
     expect(
       result.state.user.notifications.filter(
         (n) => n.dedupeKey === `season_completed:${year}`,
+      ),
+    ).toHaveLength(1);
+  });
+
+  it("emits sellout and poor attendance from HomeGameDaySettled", () => {
+    let state = createInitialGameState({
+      saveId: "notif_att",
+      rngSeed: 9,
+      settings: CBL_GAME_SETTINGS,
+    });
+    const rng = createSeededRng(state.meta.rngState);
+    state = bootstrapWorld(state, rng).state;
+    const teamId = state.user.controlledTeamId;
+    const date = state.world.calendar.currentDate;
+    const sellout = generateOwnerNotifications(state, {
+      dayEvents: [
+        createDomainEvent({
+          type: "HomeGameDaySettled",
+          occurredOn: date,
+          payload: {
+            teamId,
+            gameId: "g1",
+            attendance: 12_000,
+            capacity: 12_000,
+          },
+        }),
+      ],
+    });
+    expect(
+      sellout.state.user.notifications.some((n) => n.type === "home_sellout"),
+    ).toBe(true);
+
+    const poor = generateOwnerNotifications(state, {
+      dayEvents: [
+        createDomainEvent({
+          type: "HomeGameDaySettled",
+          occurredOn: date,
+          payload: {
+            teamId,
+            gameId: "g2",
+            attendance: 1_000,
+            capacity: 12_000,
+          },
+        }),
+      ],
+    });
+    expect(
+      poor.state.user.notifications.some((n) => n.type === "poor_attendance"),
+    ).toBe(true);
+  });
+
+  it("emits financial health transition when cash is insolvent", () => {
+    let state = createInitialGameState({
+      saveId: "notif_health",
+      rngSeed: 10,
+      settings: CBL_GAME_SETTINGS,
+    });
+    const rng = createSeededRng(state.meta.rngState);
+    state = bootstrapWorld(state, rng).state;
+    const teamId = state.user.controlledTeamId;
+    state = {
+      ...state,
+      business: {
+        ...state.business,
+        finances: {
+          ...state.business.finances,
+          [teamId]: { ...state.business.finances[teamId]!, cash: -1 },
+        },
+      },
+    };
+    const once = generateOwnerNotifications(state);
+    expect(
+      once.state.user.notifications.some(
+        (n) => n.type === "financial_health_changed",
+      ),
+    ).toBe(true);
+    const twice = generateOwnerNotifications(once.state);
+    expect(
+      twice.state.user.notifications.filter(
+        (n) => n.type === "financial_health_changed",
       ),
     ).toHaveLength(1);
   });

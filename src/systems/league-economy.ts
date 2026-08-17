@@ -64,6 +64,23 @@ export function processSeasonalLeagueEconomy(state: GameState): SystemResult {
   });
 }
 
+/** Equal monthly broadcast share per team (0 if sharing is off). */
+export function estimateMonthlyBroadcastShare(state: GameState): number {
+  const teamCount = Object.keys(state.world.teams).length;
+  if (teamCount === 0 || !state.settings.financialRules.revenueSharingEnabled) {
+    return 0;
+  }
+  const pool =
+    state.business.leagueEconomy.broadcastValue *
+    state.business.leagueEconomy.popularity *
+    10_000;
+  const shareRate = state.business.leagueEconomy.revenueSharingRate;
+  const equalShare = Math.floor((pool * shareRate) / teamCount);
+  const remaining = pool - equalShare * teamCount;
+  const performanceShare = Math.floor(remaining / teamCount);
+  return equalShare + performanceShare;
+}
+
 /**
  * Distributes monthly national broadcast pool to all teams via revenue.other.
  */
@@ -74,24 +91,12 @@ export function processMonthlyBroadcastRevenue(state: GameState): SystemResult {
     return systemResult(state);
   }
 
-  if (!state.settings.financialRules.revenueSharingEnabled) {
-    return systemResult(state);
-  }
-
-  const pool =
-    state.business.leagueEconomy.broadcastValue *
-    state.business.leagueEconomy.popularity *
-    10_000;
-  const shareRate = state.business.leagueEconomy.revenueSharingRate;
-  const equalShare = Math.floor((pool * shareRate) / teamCount);
-  const remaining = pool - equalShare * teamCount;
-  const performanceShare = Math.floor(remaining / teamCount);
+  const amount = estimateMonthlyBroadcastShare(state);
 
   let current = state;
   const events: SystemResult["events"] = [];
 
   for (const teamId of Object.keys(current.world.teams).sort()) {
-    const amount = equalShare + performanceShare;
     if (amount <= 0) {
       continue;
     }

@@ -69,4 +69,43 @@ describe("sponsorships media/climate scaling", () => {
     expect(highGain).toBeGreaterThan(lowGain);
     expect(lowGain).toBeGreaterThan(0);
   });
+
+  it("pays playoff bonus once per deal per season", () => {
+    let state = createInitialGameState({
+      saveId: "sponsor_playoff_once",
+      rngSeed: 19,
+      settings: CBL_GAME_SETTINGS,
+    });
+    state = bootstrapWorld(state, createSeededRng(state.meta.rngState)).state;
+    const teamId = asTeamId(state.user.controlledTeamId);
+    const year = state.competition.season.year;
+    state = signSponsorship(state, teamId, {
+      id: asSponsorshipId("sp_po_1"),
+      sponsorName: "Playoff Co",
+      annualValue: 1_200_000,
+      startYear: year,
+      endYear: year + 1,
+      reputationFloor: 1,
+      playoffBonus: 5_000_000,
+    }).state;
+    state = {
+      ...state,
+      competition: {
+        ...state.competition,
+        playoffs: {
+          ...state.competition.playoffs,
+          qualifiedTeams: [{ teamId, seed: 1 }],
+          status: "in_progress",
+        },
+      },
+    };
+    const cash0 = state.business.finances[teamId]!.cash;
+    state = processMonthlySponsorshipRevenue(state).state;
+    const afterFirst = state.business.finances[teamId]!.cash - cash0;
+    state = processMonthlySponsorshipRevenue(state).state;
+    const afterSecond = state.business.finances[teamId]!.cash - cash0;
+    expect(afterFirst).toBeGreaterThan(5_000_000);
+    expect(afterSecond - afterFirst).toBeLessThan(5_000_000);
+    expect(afterSecond - afterFirst).toBeGreaterThan(0);
+  });
 });

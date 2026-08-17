@@ -7,7 +7,9 @@ import {
   MARKETING_MAX_WEEKLY_AWARENESS_GAIN,
   MARKETING_WEEKS_PER_YEAR,
 } from "@/systems/marketing-config";
+import { stepTowardNeutral } from "@/systems/neutral-decay";
 import { applyCashAndBooksImpact } from "@/systems/team-finances";
+import { assertCapitalSpendingAllowed } from "@/systems/financial-spending";
 
 function clampAwareness(value: number): number {
   return Math.max(0, Math.min(100, value));
@@ -24,6 +26,9 @@ export function setMarketingBudget(
   const ops = state.business.franchiseOps[teamId];
   if (!ops) {
     throw new Error(`setMarketingBudget: franchiseOps missing for "${teamId}".`);
+  }
+  if (annualBudget > ops.marketing.budget) {
+    assertCapitalSpendingAllowed(state, teamId, "Increasing the marketing budget");
   }
   return systemResult({
     ...state,
@@ -69,10 +74,12 @@ export function processWeeklyMarketing(state: GameState): SystemResult {
       MARKETING_MAX_WEEKLY_AWARENESS_GAIN,
       Math.sqrt(Math.max(0, weeklySpend)) * MARKETING_AWARENESS_SCALE * 1_000,
     );
-    const decayTowardNeutral =
-      (50 - ops.marketing.awareness) * MARKETING_AWARENESS_DECAY;
     const awareness = clampAwareness(
-      Math.round(ops.marketing.awareness + diminishingGain + decayTowardNeutral),
+      stepTowardNeutral(
+        ops.marketing.awareness,
+        diminishingGain,
+        MARKETING_AWARENESS_DECAY,
+      ),
     );
 
     if (awareness !== ops.marketing.awareness) {

@@ -6,10 +6,13 @@ import type { DomainEvent } from "@/domain/events";
 import { asOwnerNotificationId, type TeamId } from "@/domain/ids";
 import { systemResult, type SystemResult } from "@/domain/system-result";
 import type { GameState } from "@/state/game-state";
-import { calculateCashRunway } from "@/state/franchise-selectors";
+import { projectCashHorizon } from "@/systems/cash-projection";
+import {
+  calculateFinancialHealth,
+  type FinancialHealthState,
+} from "@/systems/financial-health";
 import {
   AWARENESS_NOTIFICATION_BANDS,
-  CASH_RUNWAY_WARNING_WEEKS,
   OWNER_STREAK_NOTIFICATION_THRESHOLD,
   POOR_ATTENDANCE_FILL_RATE_PCT,
   SIGNIFICANT_FINANCIAL_CHANGE,
@@ -164,7 +167,14 @@ export function generateOwnerNotifications(
     );
   }
 
-  if (options.previousCash !== undefined) {
+  const healthChanged = appendFinancialHealthTransition(
+    state,
+    teamId,
+    date,
+    append,
+  );
+
+  if (options.previousCash !== undefined && !healthChanged) {
     const currentCash = state.business.finances[teamId]?.cash ?? 0;
     const delta = currentCash - options.previousCash;
     if (Math.abs(delta) >= SIGNIFICANT_FINANCIAL_CHANGE) {
@@ -197,7 +207,6 @@ export function generateOwnerNotifications(
     append,
   );
   appendAwarenessBandNotification(state, teamId, date, append);
-  appendCashRunwayWarning(state, teamId, date, append);
 
   const phase = state.competition.season.phase;
   if (phase === "postseason" || phase === "offseason") {
@@ -341,33 +350,126 @@ function appendAwarenessBandNotification(
   }
 }
 
-function appendCashRunwayWarning(
+function lastRecordedHealth(
+  state: GameState,
+  teamId: TeamId,
+): FinancialHealthState | null {
+  for (let index = state.user.notifications.length - 1; index >= 0; index -= 1) {
+    const notification = state.user.notifications[index]!;
+    if (notification.type !== "financial_health_changed") {
+      continue;
+    }
+    if (notification.relatedTeamId !== teamId) {
+      continue;
+    }
+    const parts = notification.dedupeKey.split(":");
+    const health = parts[parts.length - 1];
+    if (
+      health === "healthy" ||
+      health === "stable" ||
+      health === "warning" ||
+      health === "critical" ||
+      health === "insolvent"
+    ) {
+      return health;
+    }
+  }
+  return null;
+}
+
+function healthMessage(
+  health: FinancialHealthState,
+  pressure: string,
+  projectedCash: number,
+  runwayWeeks: number | null,
+): { title: string; message: string; severity: OwnerNotification["severity"] } {
+  const pressureLabel =
+    pressure === "player_payroll"
+      ? "player payroll"
+      : pressure;
+  const runwayText =
+    runwayWeeks === null
+      ? "Projected cash stays non-negative over the current horizon if conditions hold."
+      : `At current conditions, cash is projected to run out in about ${runwayWeeks} weeks.`;
+  if (health === "insolvent") {
+    return {
+      title: "Franchise insolvent",
+      message: `Cash is at or below zero. ${pressureLabel} is the largest operating outflow. Facility upgrades and marketing increases are blocked until inflows recover.`,
+      severity: "critical",
+    };
+  }
+  if (health === "critical") {
+    return {
+      title: "Critical financial risk",
+      message: `Projected cash at season/horizon is ${projectedCash < 0 ? "negative" : "thin"} because ${pressureLabel} dominates spending. ${runwayText} Cut spending or raise game-day revenue.`,
+      severity: "critical",
+    };
+  }
+  if (health === "warning") {
+    return {
+      title: "Financial warning",
+      message: `${pressureLabel} is the primary cost pressure. ${runwayText} Further spending increases would add risk.`,
+      severity: "warning",
+    };
+  }
+  if (health === "healthy") {
+    return {
+      title: "Financial health improved",
+      message: `Operating cash flow covers spending with a liquidity buffer. ${runwayText}`,
+      severity: "success",
+    };
+  }
+  return {
+    title: "Finances stabilized",
+    message: `The franchise has limited margin but is no longer in immediate distress. ${runwayText}`,
+    severity: "success",
+  };
+}
+
+function appendFinancialHealthTransition(
   state: GameState,
   teamId: TeamId,
   date: string,
   append: (notification: OwnerNotification) => void,
-): void {
-  const runway = calculateCashRunway(state, teamId);
-  if (runway.netWeeklyBurn <= 0 || runway.runwayWeeks === null) {
-    return;
+): boolean {
+  const projection = projectCashHorizon(state, teamId);
+  const cash = state.business.finances[teamId]?.cash ?? 0;
+  const health = calculateFinancialHealth({
+    cash,
+    weeklyOutflow: projection.weeklyOutflow,
+    netWeeklyBurn: projection.netWeeklyBurn,
+    runwayWeeks: projection.runwayWeeks,
+    projectedCash: projection.projectedCash,
+  });
+  const previous = lastRecordedHealth(state, teamId);
+  if (previous === health) {
+    return false;
   }
-  if (runway.runwayWeeks > CASH_RUNWAY_WARNING_WEEKS) {
-    return;
+  if (previous === null && (health === "healthy" || health === "stable")) {
+    return false;
   }
-  const weekId = state.world.calendar.lastSimulatedWeekId ?? date;
+  const copy = healthMessage(
+    health,
+    projection.primaryPressure,
+    projection.projectedCash,
+    projection.runwayWeeks,
+  );
   append(
     createOwnerNotification({
-      id: asOwnerNotificationId(`notif_runway_${teamId}_${weekId}`),
-      type: "cash_runway_warning",
-      title: "Cash runway warning",
-      message: `At the current net weekly burn, cash covers about ${runway.runwayWeeks} weeks.`,
+      id: asOwnerNotificationId(
+        `notif_health_${teamId}_${date}_${health}`,
+      ),
+      type: "financial_health_changed",
+      title: copy.title,
+      message: copy.message,
       occurredOn: date,
-      severity: runway.runwayWeeks <= 2 ? "critical" : "warning",
+      severity: copy.severity,
       read: false,
-      dedupeKey: `cash_runway_warning:${teamId}:${weekId}`,
+      dedupeKey: `financial_health_changed:${teamId}:${date}:${health}`,
       relatedTeamId: teamId,
     }),
   );
+  return true;
 }
 
 function isPlayoffEliminated(state: GameState, teamId: TeamId): boolean {
