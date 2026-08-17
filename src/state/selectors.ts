@@ -633,6 +633,20 @@ function describeDomainEvent(event: DomainEvent): string {
       return `Relocation stage: ${String(payload.stage ?? "?")}`;
     case "ExpansionStageChanged":
       return `Expansion stage: ${String(payload.stage ?? "?")}`;
+    case "HomeGameDaySettled": {
+      const attendance = payload.attendance;
+      return `Home game-day settled${
+        typeof attendance === "number"
+          ? ` (${attendance.toLocaleString()} attendance)`
+          : ""
+      }`;
+    }
+    case "PlayerPayrollPaid":
+      return `Player payroll paid${
+        typeof payload.amount === "number"
+          ? ` (${payload.amount})`
+          : ""
+      }`;
     default:
       return event.type;
   }

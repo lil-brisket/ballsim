@@ -71,12 +71,10 @@ Owner Mode gameplay (Phase B):
 
 Still future work within that pipeline:
 
-- Deeper AI (lineups, development, staff)
-- Player development season tick (engine exists: `developPlayer`)
+- Deeper AI (lineups, staff)
 - Injuries
-- Broader finance auto ticks
 - Offseason calendar deadlines
-- League events / news UI
+- League events / news feed UI
 
 ## AI / decision layer (design intent)
 
@@ -110,9 +108,9 @@ Systems expected later (do not treat as present until implemented):
 - Game simulation — **implemented** (`src/systems/game-simulation.ts` possession orchestration → `GameResult`)
 - Season simulation — regular season + playoffs via `simulateSeason`; Owner Mode day loop uses `advanceSimulation`
 - Calendar / advance day — **implemented** (`src/systems/simulation/advance-simulation.ts` + `world-pipeline` wrapper)
-- Player development — **implemented** as a building block (`src/systems/player-development.ts`); not yet called from the world pipeline
+- Player development — **implemented** building block (`developPlayer`) and offseason season tick (`processSeasonPlayerDevelopment` ages + develops; facilities/trainers scale positive deltas only)
 - Injuries
-- Finances — period-keyed revenue/expense books on `business.finances` (`booksByYear`); financial statements derive totals and player salaries from contracts (`getTeamPayroll`); payroll snapshot still set at roster gen; salary-cap space derived from contracts vs a flat cap; gameplay may adjust `cash` via `applyCashAndBooksImpact` (books + cash together); broader auto ticks TBD
+- Finances — period-keyed revenue/expense books on `business.finances` (`booksByYear`); financial statements derive totals and player salaries from contracts (`getTeamPayroll`); home game-day posts tickets, merchandise, and concessions (`other`); `HomeGameDaySettled` is the historical attendance record; weekly player payroll is cash-only (`PlayerPayrollPaid`, not posted to books); marketing/awareness and media/climate sponsorship modifiers are live
 - Standings — **implemented** (`src/systems/standings.ts` — `calculateStandings` / `updateStandings`)
 - Schedule generation — **implemented** as building block `generateSeasonSchedule` + world adapter `generateSchedule` (`src/systems/schedule-generation.ts`); validates via `validateSeasonSchedule`
 - Save/load (foundation persistence exists)
@@ -138,13 +136,11 @@ Still deferred:
 - Draft lottery (draft class / order / selection / scouting v1 is implemented; lottery rules are not)
 - Full NBA CBA trade exceptions
 - Free agency (pool/offers — foundation implemented; advanced negotiation TBD)
-- Player development season tick / aging operation
 - Injuries
-- Advanced finances
-- Full AI team management (v1 free agency / draft / trade AI exists; lineups/staff/development AI do not)
 - Career Mode
 - Dynasty Mode
 - Narrative / news feed UI beyond recent results on the dashboard
+- Fan facility → sentiment (deferred)
 
 Implemented trade foundation:
 
@@ -187,7 +183,9 @@ Personality, injury status, and development stage are stored on the player. Deve
 
 ## Player development
 
-`developPlayer(player, rng)` applies **one year** of development at the player's current age. It does not increment age. A future season/aging system should advance age, then call this engine.
+`developPlayer(player, rng, trainerMultiplier?)` applies **one year** of development at the player's current age. It does not increment age. Positive attribute deltas are scaled by the multiplier; negative deltas are not boosted — facilities cannot guarantee improvement.
+
+`processSeasonPlayerDevelopment` runs during offseason `season_finalization` **after** franchise history snapshots: age every player +1, then call `developPlayer` with facility × trainer × optional youth (developing-stage only) multipliers.
 
 Current ability develops toward `potential.overall`, which is a ceiling (not raised by normal development). After a development step, derived overall must remain `<= potential.overall`. Overall is never stored or edited directly; attributes change, then `calculatePlayerOverall` is recomputed.
 

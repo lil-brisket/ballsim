@@ -1,11 +1,14 @@
 import type { DomainEvent } from "@/domain/events";
+import { createDomainEvent } from "@/domain/events";
 import type { GameId, TeamId } from "@/domain/ids";
 import { systemResult, type SystemResult } from "@/domain/system-result";
 import type { GameState } from "@/state/game-state";
 import { calculateTicketDemand } from "@/systems/demand/calculate-demand";
 import {
+  concessionsFromAttendance,
   merchandiseFromAttendance,
   resolveAttendance,
+  revenuePerAttendee,
 } from "@/systems/demand/resolve-attendance";
 import { arenaCapacity } from "@/systems/facilities";
 import {
@@ -31,8 +34,8 @@ function teamWinPct(state: GameState, teamId: TeamId): number {
 }
 
 /**
- * Posts ticket and merchandise revenue for all final home games on currentDate.
- * Idempotent via appliedGameplayConsequenceKeys.
+ * Posts ticket, merchandise, and concessions revenue for all final home games on currentDate.
+ * Emits HomeGameDaySettled as the historical record. Idempotent via appliedGameplayConsequenceKeys.
  */
 export function processHomeGameTicketRevenue(state: GameState): SystemResult {
   const date = state.world.calendar.currentDate;
@@ -78,6 +81,10 @@ export function processHomeGameTicketRevenue(state: GameState): SystemResult {
       attendance,
       ops.fanSentiment,
     );
+    const concessionsRevenue = concessionsFromAttendance(
+      attendance,
+      ops.fanSentiment,
+    );
 
     if (ticketRevenue > 0) {
       const ticketImpact = applyCashAndBooksImpact(
@@ -102,6 +109,43 @@ export function processHomeGameTicketRevenue(state: GameState): SystemResult {
       current = merchImpact.state;
       events.push(...merchImpact.events);
     }
+
+    if (concessionsRevenue > 0) {
+      const concessionsImpact = applyCashAndBooksImpact(
+        current,
+        teamId,
+        concessionsRevenue,
+        year,
+        { revenueCategory: "other" },
+      );
+      current = concessionsImpact.state;
+      events.push(...concessionsImpact.events);
+    }
+
+    events.push(
+      createDomainEvent({
+        type: "HomeGameDaySettled",
+        occurredOn: date,
+        payload: {
+          teamId,
+          gameId: game.id,
+          attendance,
+          capacity,
+          demandScore: demand.score,
+          ticketPrice: ops.ticketPrice,
+          ticketRevenue,
+          merchRevenue,
+          concessionsRevenue,
+          revenuePerAttendee: revenuePerAttendee(
+            attendance,
+            ticketRevenue,
+            merchRevenue,
+            concessionsRevenue,
+          ),
+          contributions: demand.contributions,
+        },
+      }),
+    );
 
     current = withAppliedGameplayConsequence(current, key);
   }

@@ -164,9 +164,13 @@ Hierarchy:
 ```text
 Application (advanceOwnerDay)
   → advanceSimulation
-    → season/offseason lifecycle → scheduled events → daily pipeline
+    → season/offseason lifecycle (season_finalization includes development tick)
+    → scheduled events → daily pipeline
+    → home ticket/merch/concessions revenue → fan sentiment
     → owner gameplay (AI → finances → objectives → notifications)
-    → advanceCalendar → weekly pipeline (completed ISO week only)
+    → media from day events
+    → advanceCalendar → weekly pipeline (staff + player payroll + facilities + marketing + media + AI franchise)
+    → monthly pipeline on month boundary
 ```
 
 ### World pipeline (advance day)
@@ -178,10 +182,14 @@ Application (advanceOwnerDay)
 2. Season + offseason lifecycle (may `transitionPhase`, generate schedule, start playoffs)
 3. Process due `world.scheduledEvents` in `(triggerDate, id)` order
 4. Daily pipeline — regular games and/or one playoff step; rebuild standings
-5. Owner gameplay — AI decisions, financial consequences, objective evaluation, notifications
-6. Record `calendar.lastSimulatedDate`
-7. `advanceCalendar` — `currentDate + 1` (preserves progress markers)
-8. Weekly pipeline when the new date’s ISO week differs from the simulated date’s week (`lastSimulatedWeekId` = completed week; no AI/gameplay re-run)
+5. Home game ticket / merchandise / concessions revenue (`HomeGameDaySettled`)
+6. Daily fan sentiment
+7. Owner gameplay — AI decisions, financial consequences, objective evaluation, notifications
+8. Media bumps from the day's domain events
+9. Record `calendar.lastSimulatedDate`
+10. `advanceCalendar` — `currentDate + 1` (preserves progress markers)
+11. Weekly pipeline when crossing ISO week (`lastSimulatedWeekId` = completed week): staff payroll, **player payroll cash**, facility opex/upgrades, marketing, media decay, AI franchise ops
+12. Monthly pipeline on month boundary (sponsorships, reputation, broadcast, league economy)
 
 `currentDate` is the date being simulated; after advance it is the next unprocessed day.
 

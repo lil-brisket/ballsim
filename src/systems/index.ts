@@ -28,6 +28,14 @@ export {
 } from "@/systems/player-generation";
 export { developPlayer } from "@/systems/player-development";
 export {
+  processSeasonPlayerDevelopment,
+  combinedDevelopmentMultiplier,
+} from "@/systems/season-player-development";
+export {
+  processWeeklyPlayerPayroll,
+  PLAYER_PAYROLL_WEEKS_PER_YEAR,
+} from "@/systems/player-payroll";
+export {
   SHOT_RESOLUTION_CONFIG,
   SHOT_TYPES,
   type ShotType,
@@ -295,6 +303,7 @@ export {
   recordRevenue,
   recordExpense,
   applyCashAndBooksImpact,
+  applyCashOnlyImpact,
   getFinancialStatement,
   getTotalRevenue,
   getTotalExpenses,

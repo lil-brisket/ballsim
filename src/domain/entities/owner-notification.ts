@@ -26,7 +26,11 @@ export type OwnerNotificationType =
   | "losing_streak"
   | "significant_financial_change"
   | "season_completed"
-  | "offseason_began";
+  | "offseason_began"
+  | "home_sellout"
+  | "poor_attendance"
+  | "awareness_band"
+  | "cash_runway_warning";
 
 export const OWNER_NOTIFICATION_TYPES: readonly OwnerNotificationType[] = [
   "objective_completed",
@@ -38,6 +42,10 @@ export const OWNER_NOTIFICATION_TYPES: readonly OwnerNotificationType[] = [
   "significant_financial_change",
   "season_completed",
   "offseason_began",
+  "home_sellout",
+  "poor_attendance",
+  "awareness_band",
+  "cash_runway_warning",
 ];
 
 export function isOwnerNotificationType(

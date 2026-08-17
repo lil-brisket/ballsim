@@ -21,3 +21,14 @@ export const MERCHANDISE_PER_ATTENDEE_BASE = 8;
 /** Sentiment multiplier range for merchandise (at 0 and 100 sentiment). */
 export const MERCHANDISE_SENTIMENT_MIN = 0.7;
 export const MERCHANDISE_SENTIMENT_MAX = 1.35;
+
+/**
+ * Concessions spend per attendee (integer dollars, before sentiment).
+ * Phase 1A: intentionally simple — attendance × base × sentiment.
+ * Market/franchise modifiers are deferred; do not build a second demand model.
+ */
+export const CONCESSIONS_PER_ATTENDEE_BASE = 12;
+
+/** Sentiment multiplier range for concessions (at 0 and 100 sentiment). */
+export const CONCESSIONS_SENTIMENT_MIN = 0.8;
+export const CONCESSIONS_SENTIMENT_MAX = 1.2;

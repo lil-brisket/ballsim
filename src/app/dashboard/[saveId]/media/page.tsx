@@ -26,12 +26,15 @@ export default async function MediaPage({
   }
 
   const biz = view.franchiseBusiness;
+  const mediaContributor = biz.forecast.demandContributors.find(
+    (c) => c.key === "mediaAttention",
+  );
 
   return (
     <>
       <PageHeader
         title="Media"
-        subtitle="Current media attention and related franchise metrics (informational)"
+        subtitle="Media attention feeds demand and can scale monthly sponsorship payouts"
       />
       {error ? <ErrorState message={error} /> : null}
 
@@ -42,8 +45,24 @@ export default async function MediaPage({
         <StatCard label="Reputation" value={`${biz.reputation}`} />
       </section>
 
+      <Section title="How media affects the franchise">
+        <ul className="space-y-2 text-sm text-zinc-300">
+          <li>
+            Demand contribution (forecast):{" "}
+            {mediaContributor ? mediaContributor.weighted : "—"} weighted points
+          </li>
+          <li>
+            Higher media attention slightly increases monthly sponsorship cash
+            (tuning range ~0.85–1.25). It does not guarantee ROI.
+          </li>
+          <li>
+            Media rises from simulation events and decays weekly toward neutral.
+          </li>
+        </ul>
+      </Section>
+
       <Section title="About">
-        <EmptyState message="Media attention is updated by simulation events and weekly decay. There is no separate news desk in this build." />
+        <EmptyState message="There is no separate news desk in this build. Attention is updated by simulation events and weekly decay." />
       </Section>
     </>
   );

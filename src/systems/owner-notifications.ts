@@ -2,17 +2,24 @@ import {
   createOwnerNotification,
   type OwnerNotification,
 } from "@/domain/entities/owner-notification";
+import type { DomainEvent } from "@/domain/events";
 import { asOwnerNotificationId, type TeamId } from "@/domain/ids";
 import { systemResult, type SystemResult } from "@/domain/system-result";
 import type { GameState } from "@/state/game-state";
+import { calculateCashRunway } from "@/state/franchise-selectors";
 import {
+  AWARENESS_NOTIFICATION_BANDS,
+  CASH_RUNWAY_WARNING_WEEKS,
   OWNER_STREAK_NOTIFICATION_THRESHOLD,
+  POOR_ATTENDANCE_FILL_RATE_PCT,
   SIGNIFICANT_FINANCIAL_CHANGE,
 } from "@/systems/owner-objectives-config";
 
 export type GenerateOwnerNotificationsOptions = {
   /** Controlled-team cash before applyGameplayFinancialConsequences in this pass. */
   previousCash?: number;
+  /** Same-day events not yet appended to user.eventLog. */
+  dayEvents?: readonly DomainEvent[];
 };
 
 /**
@@ -182,6 +189,16 @@ export function generateOwnerNotifications(
     }
   }
 
+  appendGameDayAttendanceNotifications(
+    state,
+    teamId,
+    date,
+    options.dayEvents ?? [],
+    append,
+  );
+  appendAwarenessBandNotification(state, teamId, date, append);
+  appendCashRunwayWarning(state, teamId, date, append);
+
   const phase = state.competition.season.phase;
   if (phase === "postseason" || phase === "offseason") {
     append(
@@ -229,6 +246,128 @@ export function generateOwnerNotifications(
       notifications: [...state.user.notifications, ...additions],
     },
   });
+}
+
+function appendGameDayAttendanceNotifications(
+  state: GameState,
+  teamId: TeamId,
+  date: string,
+  dayEvents: readonly DomainEvent[],
+  append: (notification: OwnerNotification) => void,
+): void {
+  const candidates = [
+    ...dayEvents,
+    ...state.user.eventLog,
+  ].filter(
+    (event) =>
+      event.type === "HomeGameDaySettled" &&
+      event.payload.teamId === teamId &&
+      event.occurredOn === date,
+  );
+
+  const seenGames = new Set<string>();
+  for (const event of candidates) {
+    const gameId = String(event.payload.gameId ?? event.id);
+    if (seenGames.has(gameId)) {
+      continue;
+    }
+    seenGames.add(gameId);
+
+    const attendance = Number(event.payload.attendance) || 0;
+    const capacity = Number(event.payload.capacity) || 0;
+    if (capacity <= 0) {
+      continue;
+    }
+    const fillPct = Math.round((attendance / capacity) * 100);
+    if (attendance >= capacity) {
+      append(
+        createOwnerNotification({
+          id: asOwnerNotificationId(`notif_sellout_${teamId}_${gameId}`),
+          type: "home_sellout",
+          title: "Home sellout",
+          message: `The arena sold out (${attendance.toLocaleString()} / ${capacity.toLocaleString()}).`,
+          occurredOn: date,
+          severity: "success",
+          read: false,
+          dedupeKey: `home_sellout:${teamId}:${gameId}`,
+          relatedTeamId: teamId,
+        }),
+      );
+    } else if (fillPct < POOR_ATTENDANCE_FILL_RATE_PCT) {
+      append(
+        createOwnerNotification({
+          id: asOwnerNotificationId(`notif_poor_att_${teamId}_${gameId}`),
+          type: "poor_attendance",
+          title: "Poor attendance",
+          message: `Home attendance was only ${fillPct}% of capacity (${attendance.toLocaleString()} / ${capacity.toLocaleString()}).`,
+          occurredOn: date,
+          severity: "warning",
+          read: false,
+          dedupeKey: `poor_attendance:${teamId}:${gameId}`,
+          relatedTeamId: teamId,
+        }),
+      );
+    }
+  }
+}
+
+function appendAwarenessBandNotification(
+  state: GameState,
+  teamId: TeamId,
+  date: string,
+  append: (notification: OwnerNotification) => void,
+): void {
+  const awareness =
+    state.business.franchiseOps[teamId]?.marketing.awareness ?? 0;
+  for (const band of AWARENESS_NOTIFICATION_BANDS) {
+    if (awareness < band) {
+      continue;
+    }
+    append(
+      createOwnerNotification({
+        id: asOwnerNotificationId(
+          `notif_awareness_${teamId}_${state.competition.season.year}_${band}`,
+        ),
+        type: "awareness_band",
+        title: "Awareness milestone",
+        message: `Franchise awareness reached ${band} (currently ${awareness}).`,
+        occurredOn: date,
+        severity: "info",
+        read: false,
+        dedupeKey: `awareness_band:${teamId}:${state.competition.season.year}:${band}`,
+        relatedTeamId: teamId,
+      }),
+    );
+  }
+}
+
+function appendCashRunwayWarning(
+  state: GameState,
+  teamId: TeamId,
+  date: string,
+  append: (notification: OwnerNotification) => void,
+): void {
+  const runway = calculateCashRunway(state, teamId);
+  if (runway.netWeeklyBurn <= 0 || runway.runwayWeeks === null) {
+    return;
+  }
+  if (runway.runwayWeeks > CASH_RUNWAY_WARNING_WEEKS) {
+    return;
+  }
+  const weekId = state.world.calendar.lastSimulatedWeekId ?? date;
+  append(
+    createOwnerNotification({
+      id: asOwnerNotificationId(`notif_runway_${teamId}_${weekId}`),
+      type: "cash_runway_warning",
+      title: "Cash runway warning",
+      message: `At the current net weekly burn, cash covers about ${runway.runwayWeeks} weeks.`,
+      occurredOn: date,
+      severity: runway.runwayWeeks <= 2 ? "critical" : "warning",
+      read: false,
+      dedupeKey: `cash_runway_warning:${teamId}:${weekId}`,
+      relatedTeamId: teamId,
+    }),
+  );
 }
 
 function isPlayoffEliminated(state: GameState, teamId: TeamId): boolean {

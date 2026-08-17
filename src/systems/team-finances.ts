@@ -152,6 +152,58 @@ export function applyCashAndBooksImpact(
 }
 
 /**
+ * Adjusts cash without posting books. Used for player payroll cash flow
+ * (annual obligation remains derived on the statement via getTeamPayroll).
+ * Emits PlayerPayrollPaid — never ExpenseRecorded / recordExpense.
+ */
+export function applyCashOnlyImpact(
+  state: GameState,
+  teamId: TeamId,
+  amount: number,
+  options: { period: string } = { period: "weekly" },
+): SystemResult {
+  assertTeamAndFinanceExist(state, teamId);
+  if (typeof amount !== "number" || !Number.isFinite(amount)) {
+    throw new Error("Cash-only impact amount must be a finite number.");
+  }
+  if (!Number.isInteger(amount)) {
+    throw new Error("Cash-only impact amount must be an integer.");
+  }
+  if (amount === 0) {
+    return systemResult(state);
+  }
+
+  const existing = state.business.finances[teamId]!;
+  const nextCash = existing.cash + amount;
+  const next: GameState = {
+    ...state,
+    business: {
+      ...state.business,
+      finances: {
+        ...state.business.finances,
+        [teamId]: {
+          ...existing,
+          cash: nextCash,
+        },
+      },
+    },
+  };
+
+  return systemResult(next, [
+    createDomainEvent({
+      type: "PlayerPayrollPaid",
+      occurredOn: state.world.calendar.currentDate,
+      payload: {
+        teamId,
+        amount: Math.abs(amount),
+        period: options.period,
+        signedAmount: amount,
+      },
+    }),
+  ]);
+}
+
+/**
  * Derived financial statement for a team and season year.
  * playerSalaries come from contracts via getTeamPayroll; never from books.
  */

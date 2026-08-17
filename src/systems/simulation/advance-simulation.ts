@@ -152,7 +152,9 @@ function advanceOneDay(state: GameState, rng: Rng): OneDayResult {
   current = sentiment.state;
   events.push(...sentiment.events);
 
-  const gameplay = runOwnerGameplay(current, rng);
+  const gameplay = runOwnerGameplay(current, rng, {
+    dayEvents: tickets.events,
+  });
   current = gameplay.state;
   events.push(...gameplay.events);
 

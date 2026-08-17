@@ -1,4 +1,7 @@
 import {
+  CONCESSIONS_PER_ATTENDEE_BASE,
+  CONCESSIONS_SENTIMENT_MAX,
+  CONCESSIONS_SENTIMENT_MIN,
   DEMAND_PRICE_ELASTICITY,
   DEMAND_REFERENCE_TICKET_PRICE,
   MERCHANDISE_PER_ATTENDEE_BASE,
@@ -39,4 +42,39 @@ export function merchandiseFromAttendance(
     MERCHANDISE_SENTIMENT_MIN +
     (sentiment / 100) * (MERCHANDISE_SENTIMENT_MAX - MERCHANDISE_SENTIMENT_MIN);
   return Math.round(attendance * MERCHANDISE_PER_ATTENDEE_BASE * sentimentFactor);
+}
+
+/**
+ * Simple concessions: attendance × base spend × sentiment modifier.
+ * Does not use a separate demand model.
+ */
+export function concessionsFromAttendance(
+  attendance: number,
+  fanSentiment: number,
+): number {
+  if (attendance <= 0) {
+    return 0;
+  }
+  const sentiment = Math.max(0, Math.min(100, fanSentiment));
+  const sentimentFactor =
+    CONCESSIONS_SENTIMENT_MIN +
+    (sentiment / 100) * (CONCESSIONS_SENTIMENT_MAX - CONCESSIONS_SENTIMENT_MIN);
+  return Math.round(
+    attendance * CONCESSIONS_PER_ATTENDEE_BASE * sentimentFactor,
+  );
+}
+
+/** Game-day yield: (tickets + merch + concessions) / attendance when attendance > 0. */
+export function revenuePerAttendee(
+  attendance: number,
+  ticketRevenue: number,
+  merchRevenue: number,
+  concessionsRevenue: number,
+): number | null {
+  if (attendance <= 0) {
+    return null;
+  }
+  return Math.round(
+    (ticketRevenue + merchRevenue + concessionsRevenue) / attendance,
+  );
 }

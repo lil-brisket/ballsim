@@ -7,6 +7,7 @@ import {
 } from "@/systems/facilities";
 import { processWeeklyMarketing } from "@/systems/marketing";
 import { processWeeklyMediaDecay } from "@/systems/media";
+import { processWeeklyPlayerPayroll } from "@/systems/player-payroll";
 import { processWeeklyStaffPayroll } from "@/systems/staff";
 import { runAiFranchiseDecisions } from "@/systems/ai-franchise-decisions";
 import { createSeededRng } from "@/domain/rng";
@@ -40,6 +41,10 @@ export function runWeeklyPipeline(
   const payroll = processWeeklyStaffPayroll(current);
   current = payroll.state;
   events.push(...payroll.events);
+
+  const playerPayroll = processWeeklyPlayerPayroll(current);
+  current = playerPayroll.state;
+  events.push(...playerPayroll.events);
 
   const facilityOpex = processWeeklyFacilityOpex(current);
   current = facilityOpex.state;

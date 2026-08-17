@@ -1,4 +1,7 @@
 export {
+  CONCESSIONS_PER_ATTENDEE_BASE,
+  CONCESSIONS_SENTIMENT_MAX,
+  CONCESSIONS_SENTIMENT_MIN,
   DEMAND_CONTRIBUTOR_WEIGHTS,
   DEMAND_PRICE_ELASTICITY,
   DEMAND_REFERENCE_TICKET_PRICE,
@@ -15,6 +18,8 @@ export {
   type TicketDemandResult,
 } from "@/systems/demand/calculate-demand";
 export {
+  concessionsFromAttendance,
   merchandiseFromAttendance,
   resolveAttendance,
+  revenuePerAttendee,
 } from "@/systems/demand/resolve-attendance";

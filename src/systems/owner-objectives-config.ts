@@ -16,6 +16,18 @@ export const OWNER_STREAK_NOTIFICATION_THRESHOLD = 5;
 
 export const SIGNIFICANT_FINANCIAL_CHANGE = 500_000;
 
+/** Fill rate at or above this (and capacity full) → sellout notification. */
+export const SELLOUT_FILL_RATE_PCT = 100;
+
+/** Fill rate below this → poor attendance notification. */
+export const POOR_ATTENDANCE_FILL_RATE_PCT = 40;
+
+/** Awareness band boundaries for sparse notifications. */
+export const AWARENESS_NOTIFICATION_BANDS = [25, 50, 75] as const;
+
+/** Warn when runway weeks are at or below this and net burn > 0. */
+export const CASH_RUNWAY_WARNING_WEEKS = 8;
+
 export const GAMEPLAY_WIN_REVENUE = 150_000;
 export const GAMEPLAY_LOSS_EXPENSE = 50_000;
 export const GAMEPLAY_PLAYOFF_QUALIFICATION_REVENUE = 2_000_000;

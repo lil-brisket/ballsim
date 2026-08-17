@@ -11,6 +11,11 @@ export type OwnerGameplayResult = SystemResult & {
   previousCash: number;
 };
 
+export type RunOwnerGameplayOptions = {
+  /** Same-day domain events not yet in user.eventLog (e.g. HomeGameDaySettled). */
+  dayEvents?: readonly DomainEvent[];
+};
+
 /**
  * Owner Mode Phase B gameplay for one simulated day.
  *
@@ -26,6 +31,7 @@ export type OwnerGameplayResult = SystemResult & {
 export function runOwnerGameplay(
   state: GameState,
   rng: Rng,
+  options: RunOwnerGameplayOptions = {},
 ): OwnerGameplayResult {
   const events: DomainEvent[] = [];
   let current = state;
@@ -49,7 +55,10 @@ export function runOwnerGameplay(
   current = financesAfterObjectives.state;
   events.push(...financesAfterObjectives.events);
 
-  const notifications = generateOwnerNotifications(current, { previousCash });
+  const notifications = generateOwnerNotifications(current, {
+    previousCash,
+    dayEvents: options.dayEvents,
+  });
   current = notifications.state;
   events.push(...notifications.events);
 

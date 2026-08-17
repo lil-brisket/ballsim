@@ -27,9 +27,24 @@ export default async function FacilitiesPage({
     <>
       <PageHeader
         title="Facilities"
-        subtitle="Infrastructure upgrades post as facilities expense (v1, no separate capex ledger)"
+        subtitle="Arena sets capacity; practice/training/medical improve next offseason development odds — not instant ratings"
       />
       {error ? <ErrorState message={error} /> : null}
+
+      <Section title="How facilities help">
+        <ul className="mb-4 list-disc space-y-1 pl-5 text-sm text-zinc-400">
+          <li>Arena level raises maximum attendance (capacity).</li>
+          <li>
+            Practice, training, and medical improve the distribution of player
+            development in the offseason — they do not guarantee overall gains.
+          </li>
+          <li>
+            Youth facilities slightly help developing players. Fan facilities do
+            not yet change sentiment in this build.
+          </li>
+          <li>Upgrades cost cash up front and raise weekly operating expense.</li>
+        </ul>
+      </Section>
 
       <Section title="Facility levels">
         {view.facilities.length === 0 ? (

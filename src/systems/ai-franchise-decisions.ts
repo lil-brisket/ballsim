@@ -13,6 +13,7 @@ import {
 } from "@/systems/gameplay-financial-consequences";
 import { setMarketingBudget } from "@/systems/marketing";
 import { signSponsorship } from "@/systems/sponsorships";
+import { AI_SPONSOR_MEDIA_VALUE_PER_POINT } from "@/systems/sponsorships-config";
 import { setTicketPrice } from "@/systems/ticket-pricing";
 
 /**
@@ -78,7 +79,10 @@ export function runAiFranchiseDecisions(
           id: asSponsorshipId(`sponsor_ai_${teamId}_${year}`),
           sponsorName: `Regional Partners ${year}`,
           annualValue: Math.round(
-            1_500_000 + ops.marketSize * 40_000 + ops.fanSentiment * 10_000,
+            1_500_000 +
+              ops.marketSize * 40_000 +
+              ops.fanSentiment * 10_000 +
+              ops.mediaAttention * AI_SPONSOR_MEDIA_VALUE_PER_POINT,
           ),
           startYear: year,
           endYear: year + 2,

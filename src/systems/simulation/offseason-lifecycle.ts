@@ -18,6 +18,7 @@ import { releaseExpiredContracts } from "@/systems/free-agency";
 import { appendAllFranchiseSeasonRecords } from "@/systems/franchise-history";
 import { processSeasonalLeagueEconomy } from "@/systems/league-economy";
 import { tickRelocationCooldowns } from "@/systems/relocation";
+import { processSeasonPlayerDevelopment } from "@/systems/season-player-development";
 import { expireSponsorshipsAtSeason } from "@/systems/sponsorships";
 import { transitionPhase } from "@/systems/simulation/phase-machine";
 
@@ -161,6 +162,10 @@ export function processOffseasonLifecycle(
     const history = appendAllFranchiseSeasonRecords(current);
     current = history.state;
     events.push(...history.events);
+
+    const development = processSeasonPlayerDevelopment(current, rng);
+    current = development.state;
+    events.push(...development.events);
 
     const sponsorships = expireSponsorshipsAtSeason(current);
     current = sponsorships.state;

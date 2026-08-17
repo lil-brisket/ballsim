@@ -4,6 +4,10 @@ import { createDomainEvent } from "@/domain/events";
 import type { SponsorshipId, TeamId } from "@/domain/ids";
 import { systemResult, type SystemResult } from "@/domain/system-result";
 import type { GameState } from "@/state/game-state";
+import {
+  sponsorshipClimateFactor,
+  sponsorshipMediaFactor,
+} from "@/systems/sponsorships-config";
 import { applyCashAndBooksImpact } from "@/systems/team-finances";
 
 export type SignSponsorshipInput = {
@@ -65,10 +69,15 @@ function isTeamInPlayoffs(state: GameState, teamId: TeamId): boolean {
   );
 }
 
+/**
+ * Monthly sponsorship cash. Scales payout by media + league climate
+ * without mutating stored annualValue. Playoff bonus is not scaled.
+ */
 export function processMonthlySponsorshipRevenue(
   state: GameState,
 ): SystemResult {
   const year = state.competition.season.year;
+  const climate = state.business.leagueEconomy.sponsorshipClimate;
   let current = state;
   const events: DomainEvent[] = [];
 
@@ -96,7 +105,14 @@ export function processMonthlySponsorshipRevenue(
       (sum, s) => sum + Math.floor(s.annualValue / 12),
       0,
     );
-    let amount = monthlyBase;
+    const ops = current.business.franchiseOps[teamId];
+    const mediaAttention = ops?.mediaAttention ?? 50;
+    const scaledBase = Math.round(
+      monthlyBase *
+        sponsorshipMediaFactor(mediaAttention) *
+        sponsorshipClimateFactor(climate),
+    );
+    let amount = scaledBase;
     if (isTeamInPlayoffs(current, teamId)) {
       amount += sponsorships.reduce((sum, s) => sum + s.playoffBonus, 0);
     }
