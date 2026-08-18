@@ -6,6 +6,16 @@ import { TRADE_BLOCK_VALUE_BONUS } from "@/systems/trades-config";
 import { calculateDraftPickValue } from "@/systems/trades/draft-pick-value";
 import { getTradeBlock } from "@/systems/trades/trade-block";
 import { gmTradeAcceptanceThreshold } from "@/systems/staff-effects";
+import {
+  resolveFranchisePreferences,
+  type EffectivePreferences,
+} from "@/systems/franchise-ai-preferences";
+import {
+  AI_VETERAN_AGE_MIN,
+  AI_YOUTH_AGE_MAX,
+  boundedPreferenceMultiplier,
+  PREFERENCE_VALUE_MODIFIER_BAND,
+} from "@/systems/franchise-ai-preferences-config";
 
 export type TradeOfferEvaluation = {
   accepted: boolean;
@@ -13,13 +23,14 @@ export type TradeOfferEvaluation = {
   incomingValue: number;
   outgoingValue: number;
   tradeBlockBonus: number;
+  /** Objective net before organizational preference adjustment. */
+  objectiveNetValue?: number;
 };
 
 /**
- * Deterministic AI acceptance: accept iff netValue >= threshold.
- * Threshold defaults to 0; better GM softens acceptance (negative threshold).
- * netValue = incomingValue - outgoingValue (+ trade-block bonuses).
- * Not a second validator — legality is validateTrade's job.
+ * Deterministic AI acceptance: accept iff organizational netValue >= threshold.
+ * Objective player/pick value is computed first; a single bounded preference
+ * modifier adjusts that franchise's valuation. Legality remains validateTrade's job.
  */
 export function evaluateTradeOffer(
   state: GameState,
@@ -29,20 +40,23 @@ export function evaluateTradeOffer(
   const { incomingPlayerIds, outgoingPlayerIds, incomingPickIds, outgoingPickIds } =
     assetsFromPerspective(evaluatingTeamId, proposal);
 
+  const resolved = resolveFranchisePreferences(state, evaluatingTeamId);
+  const prefs = resolved?.preferences;
+
   let incomingValue = 0;
   let outgoingValue = 0;
 
   for (const playerId of incomingPlayerIds) {
-    incomingValue += playerValue(state, playerId);
+    incomingValue += organizationalPlayerValue(state, playerId, prefs);
   }
   for (const playerId of outgoingPlayerIds) {
-    outgoingValue += playerValue(state, playerId);
+    outgoingValue += organizationalPlayerValue(state, playerId, prefs);
   }
   for (const pickId of incomingPickIds) {
-    incomingValue += pickValue(state, pickId);
+    incomingValue += organizationalPickValue(state, pickId, prefs);
   }
   for (const pickId of outgoingPickIds) {
-    outgoingValue += pickValue(state, pickId);
+    outgoingValue += organizationalPickValue(state, pickId, prefs);
   }
 
   const block = getTradeBlock(state, evaluatingTeamId);
@@ -66,6 +80,15 @@ export function evaluateTradeOffer(
     }
   }
 
+  const objectiveIncoming =
+    incomingPlayerIds.reduce((s, id) => s + objectivePlayerValue(state, id), 0) +
+    incomingPickIds.reduce((s, id) => s + objectivePickValue(state, id), 0);
+  const objectiveOutgoing =
+    outgoingPlayerIds.reduce((s, id) => s + objectivePlayerValue(state, id), 0) +
+    outgoingPickIds.reduce((s, id) => s + objectivePickValue(state, id), 0);
+  const objectiveNetValue =
+    objectiveIncoming + tradeBlockBonus - objectiveOutgoing;
+
   const netValue = incomingValue + tradeBlockBonus - outgoingValue;
   const threshold = gmTradeAcceptanceThreshold(state, evaluatingTeamId);
   return {
@@ -74,6 +97,7 @@ export function evaluateTradeOffer(
     incomingValue,
     outgoingValue,
     tradeBlockBonus,
+    objectiveNetValue,
   };
 }
 
@@ -107,7 +131,7 @@ function assetsFromPerspective(
   );
 }
 
-function playerValue(state: GameState, playerId: PlayerId): number {
+function objectivePlayerValue(state: GameState, playerId: PlayerId): number {
   const player = state.world.players[playerId];
   if (player === undefined) {
     return 0;
@@ -115,10 +139,58 @@ function playerValue(state: GameState, playerId: PlayerId): number {
   return calculatePlayerOverall(player.position, player.attributes);
 }
 
-function pickValue(state: GameState, pickId: DraftPickId): number {
+function objectivePickValue(state: GameState, pickId: DraftPickId): number {
   const pick = state.world.draftPicks[pickId];
   if (pick === undefined) {
     return 0;
   }
   return calculateDraftPickValue(pick);
+}
+
+/**
+ * One bounded organizational adjustment of objective player value.
+ * Uses youth / established / win-now pressures — not a stack of risk multipliers.
+ */
+export function organizationalPlayerValue(
+  state: GameState,
+  playerId: PlayerId,
+  prefs: EffectivePreferences | undefined,
+): number {
+  const objective = objectivePlayerValue(state, playerId);
+  if (!prefs || objective === 0) {
+    return objective;
+  }
+  const player = state.world.players[playerId];
+  if (!player) {
+    return objective;
+  }
+  let preference01 = 0.5;
+  if (player.age <= AI_YOUTH_AGE_MAX) {
+    preference01 = prefs.youthValue;
+  } else if (player.age >= AI_VETERAN_AGE_MIN) {
+    preference01 =
+      prefs.establishedPlayerValue * 0.7 + prefs.winNowPressure * 0.3;
+  } else {
+    preference01 =
+      prefs.establishedPlayerValue * 0.4 +
+      prefs.youthValue * 0.3 +
+      prefs.winNowPressure * 0.3;
+  }
+  return objective * boundedPreferenceMultiplier(preference01);
+}
+
+/** Draft-asset strategy: preference adjusts pick valuation (not prospect sort). */
+export function organizationalPickValue(
+  state: GameState,
+  pickId: DraftPickId,
+  prefs: EffectivePreferences | undefined,
+): number {
+  const objective = objectivePickValue(state, pickId);
+  if (!prefs || objective === 0) {
+    return objective;
+  }
+  return (
+    objective *
+    boundedPreferenceMultiplier(prefs.pickValue, PREFERENCE_VALUE_MODIFIER_BAND)
+  );
 }

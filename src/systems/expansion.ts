@@ -23,6 +23,7 @@ import type { Rng } from "@/domain/rng";
 import { systemResult, type SystemResult } from "@/domain/system-result";
 import type { GameState } from "@/state/game-state";
 import { createEmptyTeamFinanceBooks } from "@/domain/entities/finances";
+import { generateFranchiseIdentity } from "@/systems/franchise-identity-generation";
 import { generateLeagueStaffForTeam } from "@/systems/staff-generation";
 
 function emitExpansionStage(
@@ -227,10 +228,21 @@ export function completeExpansion(state: GameState, rng: Rng): SystemResult {
         },
         franchiseOps: {
           ...current.business.franchiseOps,
-          [teamId]: createDefaultFranchiseOps({
-            marketSize: candidate.marketSize,
-            aiProfile: "market_growth",
-          }),
+          [teamId]: (() => {
+            const identity = generateFranchiseIdentity({
+              rngSeed: current.meta.rngSeed,
+              teamId,
+              marketSize: candidate.marketSize,
+              forceProfile: "market_growth",
+            });
+            return createDefaultFranchiseOps({
+              marketSize: candidate.marketSize,
+              aiProfile: identity.aiProfile,
+              spendingTolerance: identity.spendingTolerance,
+              patience: identity.patience,
+              riskTolerance: identity.riskTolerance,
+            });
+          })(),
         },
         relocationByTeamId: {
           ...current.business.relocationByTeamId,

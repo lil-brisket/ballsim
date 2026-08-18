@@ -131,6 +131,9 @@ export type FranchiseBusinessView = {
   franchiseValue: number;
   arenaCapacity: number;
   aiProfile: string;
+  spendingTolerance: number;
+  patience: number;
+  riskTolerance: number;
   /** Forecast only — current knobs. */
   forecast: GameDayForecastView;
   /** Historical only — last HomeGameDaySettled, or null. */
@@ -373,6 +376,9 @@ export function toFranchiseBusinessView(state: GameState): FranchiseBusinessView
     franchiseValue: calculateFranchiseValue(state, teamId),
     arenaCapacity: arenaCapacity(state, teamId),
     aiProfile: ops.aiProfile,
+    spendingTolerance: ops.spendingTolerance,
+    patience: ops.patience,
+    riskTolerance: ops.riskTolerance,
     forecast: buildForecast(state, teamId, ops),
     lastGameDay: readLastGameDay(state, teamId),
     cashRunway: calculateCashRunway(state, teamId),

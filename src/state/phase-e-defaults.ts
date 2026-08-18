@@ -2,26 +2,24 @@ import { createIdleExpansionState } from "@/domain/entities/expansion";
 import { createEmptyFranchiseHistory } from "@/domain/entities/franchise-history";
 import {
   createDefaultFranchiseOps,
-  type AiProfile,
   type FranchiseOps,
 } from "@/domain/entities/franchise-ops";
 import { createDefaultLeagueEconomy } from "@/domain/entities/league-economy";
 import { createIdleRelocation } from "@/domain/entities/relocation";
 import type { TeamId } from "@/domain/ids";
-
-const AI_PROFILE_CYCLE: readonly AiProfile[] = [
-  "conservative",
-  "win_now",
-  "development",
-  "aggressive",
-  "market_growth",
-];
+import { generateFranchiseIdentity } from "@/systems/franchise-identity-generation";
 
 /**
  * Builds Phase E business maps for every team (ops, relocation, history).
  * Used by create-initial-state and schema migration defaults.
+ *
+ * @param rngSeed — save meta.rngSeed for deterministic identity; 0 is allowed
+ *   for pure structural migrations that will be re-seeded later.
  */
-export function createPhaseEBusinessDefaults(teamIds: readonly TeamId[]): {
+export function createPhaseEBusinessDefaults(
+  teamIds: readonly TeamId[],
+  rngSeed = 0,
+): {
   staffContracts: Record<string, never>;
   sponsorships: Record<string, never>;
   franchiseOps: Record<string, FranchiseOps>;
@@ -43,15 +41,23 @@ export function createPhaseEBusinessDefaults(teamIds: readonly TeamId[]): {
   const sorted = [...teamIds].sort();
   for (let i = 0; i < sorted.length; i += 1) {
     const teamId = sorted[i]!;
-    // Deterministic market size from team id hash + profile cycle
+    // Deterministic market size from team id hash
     let hash = 0;
     for (let c = 0; c < teamId.length; c += 1) {
       hash = (hash + teamId.charCodeAt(c) * (c + 1)) % 997;
     }
     const marketSize = 35 + (hash % 45);
+    const identity = generateFranchiseIdentity({
+      rngSeed,
+      teamId,
+      marketSize,
+    });
     franchiseOps[teamId] = createDefaultFranchiseOps({
       marketSize,
-      aiProfile: AI_PROFILE_CYCLE[i % AI_PROFILE_CYCLE.length]!,
+      aiProfile: identity.aiProfile,
+      spendingTolerance: identity.spendingTolerance,
+      patience: identity.patience,
+      riskTolerance: identity.riskTolerance,
     });
     relocationByTeamId[teamId] = createIdleRelocation(teamId);
     franchiseHistory[teamId] = createEmptyFranchiseHistory(teamId);

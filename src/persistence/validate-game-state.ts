@@ -25,6 +25,10 @@ import {
   OWNER_OBJECTIVE_TYPES,
 } from "@/domain/entities/owner-objective";
 import {
+  isAiProfile,
+  isOwnershipAxis,
+} from "@/domain/entities/franchise-ops";
+import {
   isOwnerPhilosophy,
   OWNER_PATIENCE_MAX,
   OWNER_PATIENCE_MIN,
@@ -357,6 +361,28 @@ export function validateGameState(state: unknown): asserts state is GameState {
   for (const teamId of Object.keys(world.teams)) {
     if (!(teamId in franchiseOps)) {
       fail(`business.franchiseOps missing team "${teamId}".`);
+    }
+    const ops = (franchiseOps as Record<string, unknown>)[teamId];
+    assertRecord(ops, `business.franchiseOps[${teamId}]`);
+    if (!isAiProfile(ops.aiProfile)) {
+      fail(
+        `business.franchiseOps[${teamId}].aiProfile must be a valid AiProfile.`,
+      );
+    }
+    if (!isOwnershipAxis(ops.spendingTolerance)) {
+      fail(
+        `business.franchiseOps[${teamId}].spendingTolerance must be an integer 1–99.`,
+      );
+    }
+    if (!isOwnershipAxis(ops.patience)) {
+      fail(
+        `business.franchiseOps[${teamId}].patience must be an integer 1–99.`,
+      );
+    }
+    if (!isOwnershipAxis(ops.riskTolerance)) {
+      fail(
+        `business.franchiseOps[${teamId}].riskTolerance must be an integer 1–99.`,
+      );
     }
     if (!(teamId in relocationByTeamId)) {
       fail(`business.relocationByTeamId missing team "${teamId}".`);

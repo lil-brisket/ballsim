@@ -489,7 +489,7 @@ describe("owner mandate persistence", () => {
       return next;
     });
     const restored = deserializeGameState(JSON.stringify(json));
-    expect(restored.meta.schemaVersion).toBe(26);
+    expect(restored.meta.schemaVersion).toBe(GAME_STATE_SCHEMA_VERSION);
     expect(restored.user.ownerPhilosophy).toBe("balanced");
     expect(restored.user.ownerPatience).toBeGreaterThan(0);
     for (const objective of restored.user.objectives) {

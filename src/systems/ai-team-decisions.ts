@@ -24,9 +24,19 @@ import {
   withAppliedGameplayConsequence,
 } from "@/systems/gameplay-financial-consequences";
 import {
+  resolveFranchisePreferences,
+  type EffectivePreferences,
+} from "@/systems/franchise-ai-preferences";
+import {
+  AI_FA_CAP_FRACTION_MAX,
+  AI_FA_CAP_FRACTION_MIN,
+  AI_VETERAN_AGE_MIN,
+  AI_YOUTH_AGE_MAX,
+  boundedPreferenceDelta,
+} from "@/systems/franchise-ai-preferences-config";
+import {
   AI_FA_MAX_SALARY,
   AI_FA_MIN_SALARY,
-  AI_FA_SALARY_CAP_FRACTION,
 } from "@/systems/owner-objectives-config";
 import { DEFAULT_ROSTER_SIZE } from "@/systems/roster-generation-config";
 import { getTeamCapSpace } from "@/systems/salary-cap";
@@ -52,8 +62,9 @@ export function isUserControlledTeam(
 }
 
 /**
- * Minimal deterministic AI decisions for non-user teams.
- * Never mutates the user-controlled team.
+ * Deterministic AI decisions for non-user teams.
+ * Uses shared EffectivePreferences with owner AI. Never mutates the user team.
+ * Cap/legality remain hard constraints. Inaction is valid.
  */
 export function runAiTeamDecisions(state: GameState, _rng: Rng): SystemResult {
   const events: DomainEvent[] = [];
@@ -98,6 +109,20 @@ function runAiFreeAgency(state: GameState): SystemResult {
       continue;
     }
 
+    const resolved = resolveFranchisePreferences(current, teamId);
+    const prefs = resolved?.preferences;
+    // Conservative / cash-preserving: may skip non-urgent FA (inaction)
+    if (
+      prefs &&
+      prefs.cashPreservation > 0.7 &&
+      prefs.spendWillingness < 0.4 &&
+      prefs.patiencePressure < 0.55 &&
+      !teamUrgentlyNeedsSigning(current, teamId)
+    ) {
+      current = withAppliedGameplayConsequence(current, key);
+      continue;
+    }
+
     const capSpace = current.settings.financialRules.salaryCapEnabled
       ? getTeamCapSpace(teamId, seasonYear, current)
       : Number.MAX_SAFE_INTEGER;
@@ -106,18 +131,21 @@ function runAiFreeAgency(state: GameState): SystemResult {
       continue;
     }
 
-    const candidate = pickBestAffordableFreeAgent(current, teamId, capSpace);
+    const candidate = pickBestAffordableFreeAgent(
+      current,
+      teamId,
+      capSpace,
+      prefs,
+    );
     if (candidate === undefined) {
       current = withAppliedGameplayConsequence(current, key);
       continue;
     }
 
+    const fraction = faSalaryCapFraction(prefs);
     const salary = Math.min(
       AI_FA_MAX_SALARY,
-      Math.max(
-        AI_FA_MIN_SALARY,
-        Math.floor(capSpace * AI_FA_SALARY_CAP_FRACTION),
-      ),
+      Math.max(AI_FA_MIN_SALARY, Math.floor(capSpace * fraction)),
     );
     if (salary > capSpace) {
       current = withAppliedGameplayConsequence(current, key);
@@ -158,6 +186,17 @@ function runAiFreeAgency(state: GameState): SystemResult {
   return systemResult(current, events);
 }
 
+function faSalaryCapFraction(prefs: EffectivePreferences | undefined): number {
+  if (!prefs) {
+    return (AI_FA_CAP_FRACTION_MIN + AI_FA_CAP_FRACTION_MAX) / 2;
+  }
+  const t = prefs.spendWillingness;
+  return (
+    AI_FA_CAP_FRACTION_MIN +
+    (AI_FA_CAP_FRACTION_MAX - AI_FA_CAP_FRACTION_MIN) * t
+  );
+}
+
 function runAiDraft(state: GameState): SystemResult {
   const events: DomainEvent[] = [];
   let current = state;
@@ -182,7 +221,11 @@ function runAiDraft(state: GameState): SystemResult {
       break;
     }
 
-    const prospectId = selectProspectForTeam(current, draft, onClock.ownerTeamId);
+    const prospectId = selectProspectForTeam(
+      current,
+      draft,
+      onClock.ownerTeamId,
+    );
     if (prospectId === undefined) {
       current = withAppliedGameplayConsequence(current, key);
       break;
@@ -219,7 +262,19 @@ function runAiTrades(state: GameState): SystemResult {
     .sort((a, b) => (a < b ? -1 : a > b ? 1 : 0));
 
   for (const teamId of teamIds) {
-    current = ensureSurplusOnBlock(current, teamId);
+    const resolved = resolveFranchisePreferences(current, teamId);
+    const prefs = resolved?.preferences;
+    // Low risk appetite + low patience pressure → often skip trading (inaction)
+    if (
+      prefs &&
+      prefs.riskAppetite < 0.35 &&
+      prefs.patiencePressure < 0.45 &&
+      prefs.winNowPressure < 0.55
+    ) {
+      continue;
+    }
+
+    current = ensureSurplusOnBlock(current, teamId, prefs);
 
     const proposal = generateAiTradeProposal(current, teamId);
     if (proposal === undefined) {
@@ -249,12 +304,16 @@ function runAiTrades(state: GameState): SystemResult {
   return systemResult(withAppliedGameplayConsequence(current, key));
 }
 
-function ensureSurplusOnBlock(state: GameState, teamId: TeamId): GameState {
+function ensureSurplusOnBlock(
+  state: GameState,
+  teamId: TeamId,
+  prefs: EffectivePreferences | undefined,
+): GameState {
   const block = getTradeBlock(state, teamId);
   if (block.assets.some((asset) => asset.kind === "player")) {
     return state;
   }
-  const surplus = findSurplusPlayer(state, teamId);
+  const surplus = findSurplusPlayer(state, teamId, prefs);
   if (surplus === undefined) {
     return state;
   }
@@ -280,6 +339,17 @@ function teamNeedsSigning(state: GameState, teamId: TeamId): boolean {
     return true;
   }
   return missingPositions(state, teamId).length > 0;
+}
+
+function teamUrgentlyNeedsSigning(state: GameState, teamId: TeamId): boolean {
+  const team = state.world.teams[teamId];
+  if (!team) {
+    return false;
+  }
+  return (
+    team.roster.length < DEFAULT_ROSTER_SIZE - 2 ||
+    missingPositions(state, teamId).length > 0
+  );
 }
 
 function missingPositions(state: GameState, teamId: TeamId): PlayerPosition[] {
@@ -309,10 +379,29 @@ function positionCounts(
   return counts;
 }
 
+function freeAgentPreferenceScore(
+  player: Player,
+  prefs: EffectivePreferences | undefined,
+): number {
+  const overall = calculatePlayerOverall(player.position, player.attributes);
+  if (!prefs) {
+    return overall;
+  }
+  let score = overall;
+  if (player.age <= AI_YOUTH_AGE_MAX) {
+    score += boundedPreferenceDelta(prefs.youthValue, 8);
+  } else if (player.age >= AI_VETERAN_AGE_MIN) {
+    score += boundedPreferenceDelta(prefs.establishedPlayerValue, 8);
+    score += boundedPreferenceDelta(prefs.winNowPressure, 4);
+  }
+  return score;
+}
+
 function pickBestAffordableFreeAgent(
   state: GameState,
   teamId: TeamId,
   capSpace: number,
+  prefs: EffectivePreferences | undefined,
 ): Player | undefined {
   const missing = missingPositions(state, teamId);
   const pool = listFreeAgents(state).playerIds
@@ -325,21 +414,19 @@ function pickBestAffordableFreeAgent(
     if (aMissing !== bMissing) {
       return aMissing - bMissing;
     }
-    const overallA = calculatePlayerOverall(a.position, a.attributes);
-    const overallB = calculatePlayerOverall(b.position, b.attributes);
-    if (overallA !== overallB) {
-      return overallB - overallA;
+    const scoreA = freeAgentPreferenceScore(a, prefs);
+    const scoreB = freeAgentPreferenceScore(b, prefs);
+    if (scoreA !== scoreB) {
+      return scoreB - scoreA;
     }
     return a.id < b.id ? -1 : a.id > b.id ? 1 : 0;
   });
 
+  const fraction = faSalaryCapFraction(prefs);
   for (const player of ranked) {
     const salary = Math.min(
       AI_FA_MAX_SALARY,
-      Math.max(
-        AI_FA_MIN_SALARY,
-        Math.floor(capSpace * AI_FA_SALARY_CAP_FRACTION),
-      ),
+      Math.max(AI_FA_MIN_SALARY, Math.floor(capSpace * fraction)),
     );
     if (salary <= capSpace) {
       return player;
@@ -348,7 +435,11 @@ function pickBestAffordableFreeAgent(
   return undefined;
 }
 
-function selectProspectForTeam(
+/**
+ * Draft *selection* preference: overall vs potential / youth / floor-ceiling.
+ * Does NOT bake pick accumulation into prospect ranking (that is trade-asset strategy).
+ */
+export function selectProspectForTeam(
   state: GameState,
   draft: DraftClass,
   teamId: TeamId,
@@ -359,6 +450,7 @@ function selectProspectForTeam(
   if (available.length === 0) {
     return undefined;
   }
+  const prefs = resolveFranchisePreferences(state, teamId)?.preferences;
   const counts = positionCounts(state, teamId);
   available.sort((a, b) => {
     const posA = a.player.position;
@@ -373,19 +465,49 @@ function selectProspectForTeam(
     if (countA !== countB) {
       return countA - countB;
     }
-    const overallA = calculatePlayerOverall(a.player.position, a.player.attributes);
-    const overallB = calculatePlayerOverall(b.player.position, b.player.attributes);
-    if (overallA !== overallB) {
-      return overallB - overallA;
+    const scoreA = draftProspectScore(a.player, prefs);
+    const scoreB = draftProspectScore(b.player, prefs);
+    if (scoreA !== scoreB) {
+      return scoreB - scoreA;
     }
     return a.playerId < b.playerId ? -1 : a.playerId > b.playerId ? 1 : 0;
   });
   return available[0]!.playerId;
 }
 
+function draftProspectScore(
+  player: Player,
+  prefs: EffectivePreferences | undefined,
+): number {
+  const overall = calculatePlayerOverall(player.position, player.attributes);
+  const potential = player.potential.overall;
+  const upside = Math.max(0, potential - overall);
+  if (!prefs) {
+    return overall;
+  }
+  // Win-now / established: weight overall. Development/rebuild: potential/upside.
+  const overallWeight =
+    0.45 +
+    boundedPreferenceDelta(prefs.winNowPressure, 0.2) +
+    boundedPreferenceDelta(prefs.establishedPlayerValue, 0.1);
+  const potentialWeight =
+    0.35 +
+    boundedPreferenceDelta(prefs.youthValue, 0.15) +
+    boundedPreferenceDelta(prefs.developmentPriority, 0.1);
+  const upsideWeight =
+    0.2 + boundedPreferenceDelta(prefs.riskAppetite, 0.15);
+  // Conservative → high floor (overall); aggressive → ceiling (potential)
+  return (
+    overall * Math.max(0.2, overallWeight) +
+    potential * Math.max(0.15, potentialWeight) +
+    upside * Math.max(0.05, upsideWeight)
+  );
+}
+
 function findSurplusPlayer(
   state: GameState,
   teamId: TeamId,
+  prefs: EffectivePreferences | undefined,
 ): PlayerId | undefined {
   const counts = positionCounts(state, teamId);
   let maxCount = 0;
@@ -409,6 +531,24 @@ function findSurplusPlayer(
     .filter((player): player is Player => player !== undefined)
     .filter((player) => surplusPositions.includes(player.position))
     .sort((a, b) => {
+      // Rebuild / cash-poor: prefer trading older / lower youth value first
+      if (prefs) {
+        const ageBiasA =
+          a.age >= AI_VETERAN_AGE_MIN
+            ? -boundedPreferenceDelta(prefs.rebuildPressure, 5)
+            : boundedPreferenceDelta(prefs.youthValue, 3);
+        const ageBiasB =
+          b.age >= AI_VETERAN_AGE_MIN
+            ? -boundedPreferenceDelta(prefs.rebuildPressure, 5)
+            : boundedPreferenceDelta(prefs.youthValue, 3);
+        const scoreA =
+          calculatePlayerOverall(a.position, a.attributes) + ageBiasA;
+        const scoreB =
+          calculatePlayerOverall(b.position, b.attributes) + ageBiasB;
+        if (scoreA !== scoreB) {
+          return scoreA - scoreB;
+        }
+      }
       const overallA = calculatePlayerOverall(a.position, a.attributes);
       const overallB = calculatePlayerOverall(b.position, b.attributes);
       if (overallA !== overallB) {

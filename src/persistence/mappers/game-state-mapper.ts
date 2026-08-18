@@ -38,6 +38,12 @@ import { generateDraftPicksForSeason } from "@/domain/draft-picks/generate-draft
 import type { OffseasonStage, SeasonPhase } from "@/domain/entities/season";
 import { createPhaseEBusinessDefaults } from "@/state/phase-e-defaults";
 import { reconstructGameSettingsFromState } from "@/state/reconstruct-game-settings";
+import { generateAxesForExistingProfile } from "@/systems/franchise-identity-generation";
+import {
+  isAiProfile,
+  type AiProfile,
+  type FranchiseOps,
+} from "@/domain/entities/franchise-ops";
 import type { StaffRole, StaffStrength, StaffWeakness } from "@/domain/entities/staff";
 import { asStaffId } from "@/domain/ids";
 import type {
@@ -128,10 +134,11 @@ const MIGRATE_ONE_STEP: Record<number, (state: unknown) => unknown> = {
   23: (state) => migrateV23ToV24(state as GameStateV23),
   24: (state) => migrateV24ToV25(state as GameStateV24),
   25: (state) => migrateV25ToV26(state as GameStateV25),
+  26: (state) => migrateV26ToV27(state as GameStateV26),
 };
 
 /**
- * Parse → migrate (v1–v25 → current) → validate → return GameState.
+ * Parse → migrate (v1–v26 → current) → validate → return GameState.
  * Does not call serializeGameState.
  */
 export function deserializeGameState(stateJson: string): GameState {
@@ -2158,7 +2165,7 @@ function legacyObjectiveMeta(type: OwnerObjectiveType): {
  * category/lifecycle/role. Does not regenerate seasonal objectives.
  * Emits literal schemaVersion 26. No RNG.
  */
-function migrateV25ToV26(state: GameStateV25): GameState {
+function migrateV25ToV26(state: GameStateV25): GameStateV26 {
   const objectives = state.user.objectives.map((objective) => {
     const meta = legacyObjectiveMeta(objective.type);
     return {
@@ -2204,6 +2211,73 @@ function migrateV25ToV26(state: GameStateV25): GameState {
       appliedGameplayConsequenceKeys:
         state.user.appliedGameplayConsequenceKeys,
     },
+  };
+}
+
+/** Schema v26 before franchise ownership axes on FranchiseOps. */
+type GameStateV26 = {
+  meta: Omit<GameState["meta"], "schemaVersion"> & {
+    schemaVersion: 26;
+    rngState: number;
+  };
+  settings: GameState["settings"];
+  world: GameState["world"];
+  competition: GameState["competition"];
+  business: GameState["business"];
+  user: GameState["user"];
+};
+
+/**
+ * Deterministic v26 → v27: add spendingTolerance / patience / riskTolerance
+ * on every FranchiseOps. Keeps existing aiProfile; fills axes from seed+teamId.
+ * Allows "rebuild" in the type system for new saves only (does not rewrite
+ * legacy profiles). Emits literal schemaVersion 27. No RNG stream consumption.
+ */
+function migrateV26ToV27(state: GameStateV26): GameState {
+  const franchiseOps: Record<string, FranchiseOps> = {};
+  for (const [teamId, ops] of Object.entries(state.business.franchiseOps)) {
+    const raw = ops as FranchiseOps & {
+      spendingTolerance?: number;
+      patience?: number;
+      riskTolerance?: number;
+    };
+    const profile: AiProfile = isAiProfile(raw.aiProfile)
+      ? raw.aiProfile
+      : "conservative";
+    const axes = generateAxesForExistingProfile({
+      rngSeed: state.meta.rngSeed,
+      teamId,
+      aiProfile: profile,
+    });
+    franchiseOps[teamId] = {
+      ...raw,
+      aiProfile: profile,
+      spendingTolerance:
+        typeof raw.spendingTolerance === "number"
+          ? raw.spendingTolerance
+          : axes.spendingTolerance,
+      patience:
+        typeof raw.patience === "number" ? raw.patience : axes.patience,
+      riskTolerance:
+        typeof raw.riskTolerance === "number"
+          ? raw.riskTolerance
+          : axes.riskTolerance,
+    };
+  }
+
+  return {
+    meta: {
+      ...state.meta,
+      schemaVersion: 27,
+    },
+    settings: state.settings,
+    world: state.world,
+    competition: state.competition,
+    business: {
+      ...state.business,
+      franchiseOps,
+    },
+    user: state.user,
   };
 }
 

@@ -1294,3 +1294,13 @@ export function assertCashFlowInvariants(snapshot: SeasonEconomySnapshot): void 
     );
   }
 }
+
+export {
+  snapshotAllFranchiseIdentities,
+  meanFingerprintsByProfile,
+  captureIdentityAxes,
+  assertIdentityAxesUnchanged,
+  personalityCoherenceScores,
+} from "@/systems/economy/franchise-identity-metrics";
+export { runIdentityLeagueObservation } from "@/systems/economy/identity-league-observation";
+
