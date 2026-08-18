@@ -15,6 +15,7 @@ import type { League } from "@/domain/entities/league";
 import type { LeagueEconomy } from "@/domain/entities/league-economy";
 import type { OwnerNotification } from "@/domain/entities/owner-notification";
 import type { OwnerObjective } from "@/domain/entities/owner-objective";
+import type { OwnerPhilosophy } from "@/domain/entities/owner-philosophy";
 import type { Player } from "@/domain/entities/player";
 import type { PlayoffTournament } from "@/domain/entities/playoffs";
 import type { RelocationProcess } from "@/domain/entities/relocation";
@@ -31,7 +32,7 @@ import type { GameSettings } from "@/domain/game-settings";
 import type { DomainEvent } from "@/domain/events";
 import type { SaveId, TeamId } from "@/domain/ids";
 
-export const GAME_STATE_SCHEMA_VERSION = 25;
+export const GAME_STATE_SCHEMA_VERSION = 26;
 
 /** Bounded recent history for Owner Mode activity / transactions UI. */
 export const EVENT_LOG_MAX = 1_000;
@@ -96,6 +97,10 @@ export type BusinessSlice = {
 export type UserSlice = {
   controlledTeamId: TeamId;
   mode: GameMode;
+  /** Ownership mandate; chosen at team pick. Migrated saves default to balanced. */
+  ownerPhilosophy: OwnerPhilosophy;
+  /** 0–100 mandate patience; starts from philosophy profile default. */
+  ownerPatience: number;
   objectives: OwnerObjective[];
   notifications: OwnerNotification[];
   /**

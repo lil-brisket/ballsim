@@ -1,6 +1,5 @@
 import { describe, expect, it } from "vitest";
 import { createGame } from "@/domain/entities/game";
-import { createOwnerObjective } from "@/domain/entities/owner-objective";
 import {
   asGameId,
   asOwnerObjectiveId,
@@ -19,6 +18,7 @@ import {
   GAMEPLAY_OBJECTIVE_REWARD,
 } from "@/systems/owner-objectives-config";
 import { bootstrapWorld } from "@/systems/world-pipeline";
+import { testOwnerObjective as createOwnerObjective } from "../helpers/owner-objective";
 
 describe("gameplay financial consequences", () => {
   it("applies loss operations expense once per game key (no win ticket revenue)", () => {

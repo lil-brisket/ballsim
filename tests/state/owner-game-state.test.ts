@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { createOwnerObjective } from "@/domain/entities/owner-objective";
+import { testOwnerObjective } from "../helpers/owner-objective";
 import { createPlayer } from "@/domain/entities/player";
 import type { Coach } from "@/domain/entities/coach";
 import type { Staff } from "@/domain/entities/staff";
@@ -81,7 +81,7 @@ describe("toOwnerGameState", () => {
 
   it("preserves live objectives array reference", () => {
     const state = baseState();
-    const objective = createOwnerObjective({
+    const objective = testOwnerObjective({
       id: asOwnerObjectiveId("obj_playoffs"),
       type: "make_playoffs",
       description: "Make the playoffs",
@@ -248,7 +248,7 @@ describe("Owner Mode GameState round-trip", () => {
   it("survives serialize/deserialize with objectives and finance fields", () => {
     const state = baseState();
     state.user.objectives = [
-      createOwnerObjective({
+      testOwnerObjective({
         id: asOwnerObjectiveId("obj_wins"),
         type: "minimum_win_total",
         description: "Win 40 games",

@@ -40,6 +40,15 @@ import { createPhaseEBusinessDefaults } from "@/state/phase-e-defaults";
 import { reconstructGameSettingsFromState } from "@/state/reconstruct-game-settings";
 import type { StaffRole, StaffStrength, StaffWeakness } from "@/domain/entities/staff";
 import { asStaffId } from "@/domain/ids";
+import type {
+  OwnerObjective,
+  OwnerObjectiveCategory,
+  OwnerObjectiveLifecycle,
+  OwnerObjectiveRole,
+  OwnerObjectiveType,
+} from "@/domain/entities/owner-objective";
+import { DEFAULT_OWNER_PHILOSOPHY } from "@/domain/entities/owner-philosophy";
+import { defaultOwnerPatience } from "@/systems/owner-philosophy-config";
 
 const gameStateEnvelopeSchema = z.object({
   meta: z.object({
@@ -118,10 +127,11 @@ const MIGRATE_ONE_STEP: Record<number, (state: unknown) => unknown> = {
   22: (state) => migrateV22ToV23(state as GameStateV22),
   23: (state) => migrateV23ToV24(state as GameStateV23),
   24: (state) => migrateV24ToV25(state as GameStateV24),
+  25: (state) => migrateV25ToV26(state as GameStateV25),
 };
 
 /**
- * Parse → migrate (v1–v24 → current) → validate → return GameState.
+ * Parse → migrate (v1–v25 → current) → validate → return GameState.
  * Does not call serializeGameState.
  */
 export function deserializeGameState(stateJson: string): GameState {
@@ -1857,7 +1867,7 @@ function migrateV21ToV22(state: GameStateV21): GameStateV22 {
     user: {
       controlledTeamId: state.user.controlledTeamId,
       mode: state.user.mode,
-      objectives: objectives as GameState["user"]["objectives"],
+      objectives: objectives as UserSlicePreV26["objectives"],
       notifications: [],
       appliedGameplayConsequenceKeys: {},
     },
@@ -1903,7 +1913,7 @@ type GameStateV22 = {
   user: {
     controlledTeamId: GameState["user"]["controlledTeamId"];
     mode: GameState["user"]["mode"];
-    objectives: GameState["user"]["objectives"];
+    objectives: UserSlicePreV26["objectives"];
     notifications: GameState["user"]["notifications"];
     appliedGameplayConsequenceKeys: GameState["user"]["appliedGameplayConsequenceKeys"];
   };
@@ -1938,7 +1948,7 @@ type GameStateV23 = {
     freeAgency: GameState["business"]["freeAgency"];
     tradeBlocks: GameState["business"]["tradeBlocks"];
   };
-  user: GameState["user"];
+  user: UserSlicePreV26;
 };
 
 /**
@@ -2024,6 +2034,26 @@ function migrateV23ToV24(state: GameStateV23): GameStateV24 {
   };
 }
 
+type UserSlicePreV26 = {
+  controlledTeamId: GameState["user"]["controlledTeamId"];
+  mode: GameState["user"]["mode"];
+  objectives: Array<
+    Omit<
+      OwnerObjective,
+      "category" | "lifecycle" | "role" | "horizonYears" | "baseline"
+    > & {
+      category?: OwnerObjectiveCategory;
+      lifecycle?: OwnerObjectiveLifecycle;
+      role?: OwnerObjectiveRole;
+      horizonYears?: number;
+      baseline?: number;
+    }
+  >;
+  notifications: GameState["user"]["notifications"];
+  eventLog: GameState["user"]["eventLog"];
+  appliedGameplayConsequenceKeys: GameState["user"]["appliedGameplayConsequenceKeys"];
+};
+
 type GameStateV24 = {
   meta: Omit<GameState["meta"], "schemaVersion"> & {
     schemaVersion: 24;
@@ -2032,7 +2062,19 @@ type GameStateV24 = {
   world: GameState["world"];
   competition: GameState["competition"];
   business: GameState["business"];
-  user: GameState["user"];
+  user: UserSlicePreV26;
+};
+
+type GameStateV25 = {
+  meta: Omit<GameState["meta"], "schemaVersion"> & {
+    schemaVersion: 25;
+    rngState: number;
+  };
+  settings: GameState["settings"];
+  world: GameState["world"];
+  competition: GameState["competition"];
+  business: GameState["business"];
+  user: UserSlicePreV26;
 };
 
 /**
@@ -2040,7 +2082,7 @@ type GameStateV24 = {
  * Does not overwrite old CBL careers with Standard 30/82/16.
  * Emits literal schemaVersion 25. No RNG.
  */
-function migrateV24ToV25(state: GameStateV24): GameState {
+function migrateV24ToV25(state: GameStateV24): GameStateV25 {
   const settings = reconstructGameSettingsFromState(state);
   return {
     meta: {
@@ -2052,6 +2094,116 @@ function migrateV24ToV25(state: GameStateV24): GameState {
     competition: state.competition,
     business: state.business,
     user: state.user,
+  };
+}
+
+function legacyObjectiveMeta(type: OwnerObjectiveType): {
+  category: OwnerObjectiveCategory;
+  lifecycle: OwnerObjectiveLifecycle;
+  role: OwnerObjectiveRole;
+} {
+  switch (type) {
+    case "make_playoffs":
+    case "minimum_win_total":
+    case "playoff_round":
+    case "win_championship":
+    case "playoff_seed":
+      return {
+        category: "competitive",
+        lifecycle: "seasonal",
+        role:
+          type === "make_playoffs" || type === "minimum_win_total"
+            ? "primary"
+            : "secondary",
+      };
+    case "improve_finances":
+    case "payroll_limit":
+    case "revenue_target":
+    case "positive_cash":
+      return {
+        category: "financial",
+        lifecycle: "seasonal",
+        role: type === "payroll_limit" ? "secondary" : "primary",
+      };
+    case "develop_young_players":
+    case "roster_direction":
+      return {
+        category: "strategic",
+        lifecycle: "seasonal",
+        role: "secondary",
+      };
+    case "attendance":
+    case "fan_sentiment":
+    case "awareness":
+    case "reputation":
+    case "arena_level":
+      return {
+        category: "franchise",
+        lifecycle: "seasonal",
+        role: "secondary",
+      };
+    case "franchise_value":
+    case "championship_count":
+    case "playoff_count":
+      return {
+        category: "long_term",
+        lifecycle: "career",
+        role: "long_term",
+      };
+  }
+}
+
+/**
+ * Deterministic v25 → v26: owner philosophy + patience; backfill objective
+ * category/lifecycle/role. Does not regenerate seasonal objectives.
+ * Emits literal schemaVersion 26. No RNG.
+ */
+function migrateV25ToV26(state: GameStateV25): GameState {
+  const objectives = state.user.objectives.map((objective) => {
+    const meta = legacyObjectiveMeta(objective.type);
+    return {
+      id: objective.id,
+      type: objective.type,
+      description: objective.description,
+      status: objective.status,
+      seasonYear: objective.seasonYear,
+      consequenceApplied: objective.consequenceApplied,
+      category: objective.category ?? meta.category,
+      lifecycle: objective.lifecycle ?? meta.lifecycle,
+      role: objective.role ?? meta.role,
+      ...(objective.target !== undefined ? { target: objective.target } : {}),
+      ...(objective.progress !== undefined
+        ? { progress: objective.progress }
+        : {}),
+      ...(objective.horizonYears !== undefined
+        ? { horizonYears: objective.horizonYears }
+        : {}),
+      ...(objective.baseline !== undefined
+        ? { baseline: objective.baseline }
+        : {}),
+    } satisfies OwnerObjective;
+  });
+
+  return {
+    meta: {
+      ...state.meta,
+      schemaVersion: 26,
+    },
+    settings: state.settings,
+    world: state.world,
+    competition: state.competition,
+    business: state.business,
+    user: {
+      controlledTeamId: state.user.controlledTeamId,
+      mode: state.user.mode,
+      ownerPhilosophy: DEFAULT_OWNER_PHILOSOPHY,
+      ownerPatience: defaultOwnerPatience(DEFAULT_OWNER_PHILOSOPHY),
+      objectives,
+      notifications: state.user.notifications,
+      eventLog: state.user.eventLog,
+      appliedGameplayConsequenceKeys:
+        state.user.appliedGameplayConsequenceKeys,
+    },
   };
 }
 

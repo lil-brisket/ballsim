@@ -18,6 +18,9 @@ function validInput(
     description: "Make the playoffs",
     status: "active",
     seasonYear: 2026,
+    category: "competitive",
+    lifecycle: "seasonal",
+    role: "primary",
     consequenceApplied: false,
     ...overrides,
   };
@@ -31,6 +34,9 @@ describe("createOwnerObjective", () => {
     expect(objective.description).toBe("Make the playoffs");
     expect(objective.status).toBe("active");
     expect(objective.seasonYear).toBe(2026);
+    expect(objective.category).toBe("competitive");
+    expect(objective.lifecycle).toBe("seasonal");
+    expect(objective.role).toBe("primary");
     expect(objective.consequenceApplied).toBe(false);
     expect(objective.target).toBeUndefined();
     expect(objective.progress).toBeUndefined();

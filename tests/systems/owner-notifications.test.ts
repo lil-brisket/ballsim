@@ -1,6 +1,5 @@
 import { describe, expect, it } from "vitest";
 import { createOwnerNotification } from "@/domain/entities/owner-notification";
-import { createOwnerObjective } from "@/domain/entities/owner-objective";
 import { asOwnerNotificationId, asOwnerObjectiveId } from "@/domain/ids";
 import { createSeededRng } from "@/domain/rng";
 import { createInitialGameState } from "@/state/create-initial-state";
@@ -9,6 +8,7 @@ import { generateOwnerNotifications } from "@/systems/owner-notifications";
 import { SIGNIFICANT_FINANCIAL_CHANGE } from "@/systems/owner-objectives-config";
 import { bootstrapWorld } from "@/systems/world-pipeline";
 import { createDomainEvent } from "@/domain/events";
+import { testOwnerObjective as createOwnerObjective } from "../helpers/owner-objective";
 
 describe("owner notifications", () => {
   it("emits objective completed and failed notifications without duplicates", () => {

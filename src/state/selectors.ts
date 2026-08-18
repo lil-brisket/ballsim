@@ -80,8 +80,13 @@ export type ObjectiveView = {
   description: string;
   status: string;
   seasonYear: number;
+  category: string;
+  lifecycle: string;
+  role: string;
   target: number | null;
   progress: number | null;
+  horizonYears: number | null;
+  baseline: number | null;
   consequenceApplied: boolean;
 };
 
@@ -559,8 +564,13 @@ export function toObjectivesView(state: GameState): ObjectiveView[] {
     description: objective.description,
     status: objective.status,
     seasonYear: objective.seasonYear,
+    category: objective.category,
+    lifecycle: objective.lifecycle,
+    role: objective.role,
     target: objective.target ?? null,
     progress: objective.progress ?? null,
+    horizonYears: objective.horizonYears ?? null,
+    baseline: objective.baseline ?? null,
     consequenceApplied: objective.consequenceApplied,
   }));
 }

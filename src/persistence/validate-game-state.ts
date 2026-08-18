@@ -13,11 +13,23 @@ import {
 import { GAME_STATUSES, type Game } from "@/domain/entities/game";
 import type { PlayoffTournament } from "@/domain/entities/playoffs";
 import {
+  isOwnerObjectiveCategory,
+  isOwnerObjectiveLifecycle,
+  isOwnerObjectiveRole,
   isOwnerObjectiveStatus,
   isOwnerObjectiveType,
+  OWNER_OBJECTIVE_CATEGORIES,
+  OWNER_OBJECTIVE_LIFECYCLES,
+  OWNER_OBJECTIVE_ROLES,
   OWNER_OBJECTIVE_STATUSES,
   OWNER_OBJECTIVE_TYPES,
 } from "@/domain/entities/owner-objective";
+import {
+  isOwnerPhilosophy,
+  OWNER_PATIENCE_MAX,
+  OWNER_PATIENCE_MIN,
+  OWNER_PHILOSOPHIES,
+} from "@/domain/entities/owner-philosophy";
 import {
   isOwnerNotificationSeverity,
   isOwnerNotificationType,
@@ -414,6 +426,24 @@ export function validateGameState(state: unknown): asserts state is GameState {
     !GAME_MODES.includes(user.mode as GameMode)
   ) {
     fail(`user.mode must be one of ${GAME_MODES.join(", ")}.`);
+  }
+  if (
+    typeof user.ownerPhilosophy !== "string" ||
+    !isOwnerPhilosophy(user.ownerPhilosophy)
+  ) {
+    fail(
+      `user.ownerPhilosophy must be one of ${OWNER_PHILOSOPHIES.join(", ")}.`,
+    );
+  }
+  assertNumber(user.ownerPatience, "user.ownerPatience");
+  if (
+    !Number.isInteger(user.ownerPatience) ||
+    user.ownerPatience < OWNER_PATIENCE_MIN ||
+    user.ownerPatience > OWNER_PATIENCE_MAX
+  ) {
+    fail(
+      `user.ownerPatience must be an integer between ${OWNER_PATIENCE_MIN} and ${OWNER_PATIENCE_MAX}.`,
+    );
   }
   if (!("objectives" in user) || !Array.isArray(user.objectives)) {
     fail("user.objectives must be an array.");
@@ -1423,6 +1453,33 @@ function validateOwnerObjectives(objectives: unknown[]): void {
       fail(`${path}.consequenceApplied must be a boolean.`);
     }
 
+    if (
+      typeof objectiveValue.category !== "string" ||
+      !isOwnerObjectiveCategory(objectiveValue.category)
+    ) {
+      fail(
+        `${path}.category must be one of ${OWNER_OBJECTIVE_CATEGORIES.join(", ")}.`,
+      );
+    }
+
+    if (
+      typeof objectiveValue.lifecycle !== "string" ||
+      !isOwnerObjectiveLifecycle(objectiveValue.lifecycle)
+    ) {
+      fail(
+        `${path}.lifecycle must be one of ${OWNER_OBJECTIVE_LIFECYCLES.join(", ")}.`,
+      );
+    }
+
+    if (
+      typeof objectiveValue.role !== "string" ||
+      !isOwnerObjectiveRole(objectiveValue.role)
+    ) {
+      fail(
+        `${path}.role must be one of ${OWNER_OBJECTIVE_ROLES.join(", ")}.`,
+      );
+    }
+
     if (objectiveValue.target !== undefined) {
       assertNumber(objectiveValue.target, `${path}.target`);
     }
@@ -1432,6 +1489,20 @@ function validateOwnerObjectives(objectives: unknown[]): void {
       if (objectiveValue.progress < 0) {
         fail(`${path}.progress must be >= 0.`);
       }
+    }
+
+    if (objectiveValue.horizonYears !== undefined) {
+      assertNumber(objectiveValue.horizonYears, `${path}.horizonYears`);
+      if (
+        !Number.isInteger(objectiveValue.horizonYears) ||
+        objectiveValue.horizonYears < 1
+      ) {
+        fail(`${path}.horizonYears must be an integer >= 1.`);
+      }
+    }
+
+    if (objectiveValue.baseline !== undefined) {
+      assertNumber(objectiveValue.baseline, `${path}.baseline`);
     }
   }
 }

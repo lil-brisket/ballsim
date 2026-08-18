@@ -1,8 +1,8 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { selectTeamAction } from "@/application/actions";
 import { loadOwnerSaveView } from "@/application/game-service";
 import { OnboardingShell } from "@/components/game/OnboardingShell";
+import { OwnerTeamPick } from "@/components/owner/OwnerTeamPick";
 
 type TeamPickPageProps = {
   params: Promise<{ saveId: string }>;
@@ -33,38 +33,9 @@ export default async function TeamPickPage({ params }: TeamPickPageProps) {
     <OnboardingShell
       step="franchise"
       title="Pick your team"
-      subtitle="Choose one franchise to control. You can change this until the first time advance. This does not create another save."
+      subtitle="Choose an ownership philosophy and one franchise to control. You can change both until the first time advance. This does not create another save."
     >
-      <ul className="space-y-2">
-        {view.teams.map((team) => (
-          <li
-            key={team.id}
-            className="flex items-center justify-between gap-4 rounded-lg border border-zinc-800 bg-zinc-900/50 px-4 py-3"
-          >
-            <div>
-              <p className="font-medium text-zinc-100">
-                {team.city} {team.name}{" "}
-                <span className="font-mono text-xs text-zinc-500">
-                  ({team.abbreviation})
-                </span>
-              </p>
-              <p className="text-xs text-zinc-500">
-                {team.conferenceName} · {team.divisionName}
-              </p>
-            </div>
-            <form action={selectTeamAction}>
-              <input type="hidden" name="saveId" value={saveId} />
-              <input type="hidden" name="teamId" value={team.id} />
-              <button
-                type="submit"
-                className="rounded-md bg-amber-600 px-3 py-1.5 text-sm font-medium text-zinc-950 hover:bg-amber-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-500"
-              >
-                Select
-              </button>
-            </form>
-          </li>
-        ))}
-      </ul>
+      <OwnerTeamPick saveId={saveId} teams={view.teams} />
     </OnboardingShell>
   );
 }

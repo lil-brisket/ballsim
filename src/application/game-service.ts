@@ -35,6 +35,11 @@ import {
 } from "@/domain/game-settings";
 import { validateGameSettings } from "@/domain/game-settings-validation";
 import {
+  isOwnerPhilosophy,
+  OWNER_PHILOSOPHIES,
+} from "@/domain/entities/owner-philosophy";
+import { defaultOwnerPatience } from "@/systems/owner-philosophy-config";
+import {
   isPlayerInOwnerScope,
   listTeamsForSelection,
   toContractsView,
@@ -509,6 +514,7 @@ export async function selectOwnerTeam(
   saveId: string,
   teamId: string,
   store?: SaveGameStore,
+  options: { ownerPhilosophy?: string } = {},
 ): Promise<OwnerCommandResult> {
   const saveStore = getStore(store);
   const loaded = await saveStore.load(saveId);
@@ -521,8 +527,24 @@ export async function selectOwnerTeam(
     return fail(`Team "${teamId}" does not exist.`);
   }
 
+  const requestedPhilosophy = options.ownerPhilosophy;
+  let nextPhilosophy = loaded.state.user.ownerPhilosophy;
+  let nextPatience = loaded.state.user.ownerPatience;
+  if (requestedPhilosophy !== undefined && requestedPhilosophy.length > 0) {
+    if (!isOwnerPhilosophy(requestedPhilosophy)) {
+      return fail(
+        `Owner philosophy must be one of: ${OWNER_PHILOSOPHIES.join(", ")}.`,
+      );
+    }
+    nextPhilosophy = requestedPhilosophy;
+    nextPatience = defaultOwnerPatience(requestedPhilosophy);
+  }
+
   if (loaded.state.world.calendar.lastSimulatedDate !== null) {
-    if (loaded.state.user.controlledTeamId === typedTeamId) {
+    if (
+      loaded.state.user.controlledTeamId === typedTeamId &&
+      loaded.state.user.ownerPhilosophy === nextPhilosophy
+    ) {
       return withDashboard(loaded);
     }
     return fail(
@@ -530,7 +552,10 @@ export async function selectOwnerTeam(
     );
   }
 
-  if (loaded.state.user.controlledTeamId === typedTeamId) {
+  if (
+    loaded.state.user.controlledTeamId === typedTeamId &&
+    loaded.state.user.ownerPhilosophy === nextPhilosophy
+  ) {
     return withDashboard(loaded);
   }
 
@@ -539,6 +564,8 @@ export async function selectOwnerTeam(
     user: {
       ...loaded.state.user,
       controlledTeamId: typedTeamId,
+      ownerPhilosophy: nextPhilosophy,
+      ownerPatience: nextPatience,
     },
   };
 

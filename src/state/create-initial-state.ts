@@ -5,6 +5,7 @@ import {
   NEUTRAL_TEAM_PLAY_STYLE,
 } from "@/domain/entities/team";
 import { DEFAULT_COACHING_PHILOSOPHY } from "@/domain/coaching/coaching-philosophy";
+import { DEFAULT_OWNER_PHILOSOPHY } from "@/domain/entities/owner-philosophy";
 import { createSeededRng } from "@/domain/rng";
 import {
   cloneGameSettings,
@@ -34,6 +35,7 @@ import { createPhaseEBusinessDefaults } from "@/state/phase-e-defaults";
 import { generateLeague } from "@/systems/league-generation";
 import { leagueGenerationConfigFromSettings } from "@/systems/league-shape";
 import { generateLeagueStaff } from "@/systems/staff-generation";
+import { defaultOwnerPatience } from "@/systems/owner-philosophy-config";
 
 export type CreateInitialGameStateInput = {
   saveId: string;
@@ -201,6 +203,8 @@ export function createInitialGameState(
     user: {
       controlledTeamId,
       mode: "owner",
+      ownerPhilosophy: DEFAULT_OWNER_PHILOSOPHY,
+      ownerPatience: defaultOwnerPatience(DEFAULT_OWNER_PHILOSOPHY),
       objectives: [],
       notifications: [],
       eventLog: [],
@@ -438,6 +442,8 @@ export function createFourTeamInitialGameState(
     user: {
       controlledTeamId: userTeamId,
       mode: "owner",
+      ownerPhilosophy: DEFAULT_OWNER_PHILOSOPHY,
+      ownerPatience: defaultOwnerPatience(DEFAULT_OWNER_PHILOSOPHY),
       objectives: [],
       notifications: [],
       eventLog: [],

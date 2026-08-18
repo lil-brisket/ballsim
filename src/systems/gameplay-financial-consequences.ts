@@ -8,6 +8,7 @@ import {
   GAMEPLAY_OBJECTIVE_REWARD,
   GAMEPLAY_PLAYOFF_QUALIFICATION_REVENUE,
   GAMEPLAY_PLAYOFF_SERIES_WIN_REVENUE,
+  objectiveAppliesCashConsequence,
 } from "@/systems/owner-objectives-config";
 import { applyCashAndBooksImpact } from "@/systems/team-finances";
 
@@ -124,34 +125,39 @@ export function applyGameplayFinancialConsequences(
     if (objective.consequenceApplied || objective.status === "active") {
       continue;
     }
+    const applyCash = objectiveAppliesCashConsequence(objective.type);
     if (objective.status === "completed") {
-      const rewardKey = `objective_reward:${objective.id}`;
-      if (!hasAppliedGameplayConsequence(current, rewardKey)) {
-        const impact = applyCashAndBooksImpact(
-          current,
-          teamId,
-          GAMEPLAY_OBJECTIVE_REWARD,
-          seasonYear,
-          { revenueCategory: "other" },
-        );
-        current = withAppliedGameplayConsequence(impact.state, rewardKey);
-        events.push(...impact.events);
+      if (applyCash) {
+        const rewardKey = `objective_reward:${objective.id}`;
+        if (!hasAppliedGameplayConsequence(current, rewardKey)) {
+          const impact = applyCashAndBooksImpact(
+            current,
+            teamId,
+            GAMEPLAY_OBJECTIVE_REWARD,
+            seasonYear,
+            { revenueCategory: "other" },
+          );
+          current = withAppliedGameplayConsequence(impact.state, rewardKey);
+          events.push(...impact.events);
+        }
       }
       current = markObjectiveConsequenceApplied(current, objective.id);
       continue;
     }
     if (objective.status === "failed") {
-      const penaltyKey = `objective_penalty:${objective.id}`;
-      if (!hasAppliedGameplayConsequence(current, penaltyKey)) {
-        const impact = applyCashAndBooksImpact(
-          current,
-          teamId,
-          -GAMEPLAY_OBJECTIVE_PENALTY,
-          seasonYear,
-          { expenseCategory: "operations" },
-        );
-        current = withAppliedGameplayConsequence(impact.state, penaltyKey);
-        events.push(...impact.events);
+      if (applyCash) {
+        const penaltyKey = `objective_penalty:${objective.id}`;
+        if (!hasAppliedGameplayConsequence(current, penaltyKey)) {
+          const impact = applyCashAndBooksImpact(
+            current,
+            teamId,
+            -GAMEPLAY_OBJECTIVE_PENALTY,
+            seasonYear,
+            { expenseCategory: "operations" },
+          );
+          current = withAppliedGameplayConsequence(impact.state, penaltyKey);
+          events.push(...impact.events);
+        }
       }
       current = markObjectiveConsequenceApplied(current, objective.id);
     }

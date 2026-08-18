@@ -315,11 +315,28 @@ export {
   resolveSeasonObjectives,
 } from "@/systems/owner-objectives";
 export {
+  getOwnerObjectiveDefinition,
+  definitionAppliesCashConsequence,
+  evaluateOwnerObjectiveMetric,
+  getTeamPlayoffSeed,
+  countCareerChampionships,
+  countCareerPlayoffAppearances,
+} from "@/systems/owner-objective-definitions";
+export {
+  OWNER_PHILOSOPHY_PROFILES,
+  getOwnerPhilosophyProfile,
+  clampOwnerPatience,
+  defaultOwnerPatience,
+  mandatePriorityLabels,
+} from "@/systems/owner-philosophy-config";
+export {
   OWNER_OBJECTIVE_STRONG_OVERALL,
   OWNER_OBJECTIVE_MID_OVERALL,
   OWNER_OBJECTIVE_WIN_TARGET_MID,
   OWNER_OBJECTIVE_WIN_TARGET_WEAK,
   OWNER_OBJECTIVE_PAYROLL_LIMIT,
+  OWNER_OBJECTIVE_CASH_CONSEQUENCE_TYPES,
+  objectiveAppliesCashConsequence,
   OWNER_STREAK_NOTIFICATION_THRESHOLD,
   SIGNIFICANT_FINANCIAL_CHANGE,
   GAMEPLAY_LOSS_EXPENSE,

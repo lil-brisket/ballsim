@@ -145,6 +145,8 @@ function createEightTeamGameState(rngSeed: number): {
     user: {
       controlledTeamId,
       mode: "owner",
+      ownerPhilosophy: "balanced",
+      ownerPatience: 55,
       objectives: [],
       notifications: [],
       eventLog: [],

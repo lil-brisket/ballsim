@@ -1,5 +1,6 @@
 import type { FinancialHealthState } from "@/systems/financial-health";
 import { POOR_ATTENDANCE_FILL_RATE_PCT } from "@/systems/owner-objectives-config";
+import { mandatePriorityLabels } from "@/systems/owner-philosophy-config";
 import { getTeamPayroll } from "@/systems/salary-cap";
 import { STARTER_ROLES } from "@/systems/staff-generation";
 import { getFinancialStatement } from "@/systems/team-finances";
@@ -8,6 +9,10 @@ import {
   TICKET_PRICE_MIN,
 } from "@/systems/ticket-pricing";
 import type { GameState } from "@/state/game-state";
+import {
+  toOwnerCareerEvaluation,
+  type OwnerCareerEvaluation,
+} from "@/state/owner-career-evaluation";
 import {
   toFacilitiesView,
   toFranchiseBusinessView,
@@ -115,9 +120,17 @@ export type OwnerDashboardTeam = {
 };
 
 export type OwnerDashboardOwner = {
+  philosophy: string;
+  patience: number;
   objectives: ObjectiveView[];
+  primaryObjectives: ObjectiveView[];
+  secondaryObjectives: ObjectiveView[];
+  longTermObjectives: ObjectiveView[];
+  completedObjectives: ObjectiveView[];
+  failedObjectives: ObjectiveView[];
   priorities: string[];
   franchiseReputation: number;
+  career: OwnerCareerEvaluation;
 };
 
 export type OwnerDashboardFlags = {
@@ -404,13 +417,35 @@ function buildTeam(data: CanonicalDashboardData): OwnerDashboardTeam {
 
 function buildOwner(
   data: CanonicalDashboardData,
-  actionItems: OwnerDashboardActionItem[],
-  health: OwnerDashboardHealth,
+  _actionItems: OwnerDashboardActionItem[],
+  _health: OwnerDashboardHealth,
 ): OwnerDashboardOwner {
+  const objectives = data.snapshot.objectives;
+  const active = objectives.filter((objective) => objective.status === "active");
   return {
-    objectives: data.snapshot.objectives,
-    priorities: buildPriorities(actionItems, health),
+    philosophy: data.state.user.ownerPhilosophy,
+    patience: data.state.user.ownerPatience,
+    objectives,
+    primaryObjectives: active.filter((objective) => objective.role === "primary"),
+    secondaryObjectives: active.filter(
+      (objective) => objective.role === "secondary",
+    ),
+    longTermObjectives: active.filter(
+      (objective) =>
+        objective.role === "long_term" ||
+        objective.lifecycle === "career" ||
+        objective.lifecycle === "multi_season" ||
+        objective.lifecycle === "milestone",
+    ),
+    completedObjectives: objectives.filter(
+      (objective) => objective.status === "completed",
+    ),
+    failedObjectives: objectives.filter(
+      (objective) => objective.status === "failed",
+    ),
+    priorities: [...mandatePriorityLabels(data.state.user.ownerPhilosophy)],
     franchiseReputation: data.business.reputation,
+    career: toOwnerCareerEvaluation(data.state),
   };
 }
 
@@ -705,29 +740,7 @@ function buildInsights(
   return insights;
 }
 
-function buildPriorities(
-  actionItems: OwnerDashboardActionItem[],
-  health: OwnerDashboardHealth,
-): string[] {
-  const priorities: string[] = [];
-  const cats = new Set(actionItems.map((a) => a.category));
-  if (cats.has("financial") || health.financialHealth === "insolvent") {
-    priorities.push("Stabilize cash flow");
-  }
-  if (cats.has("attendance") || cats.has("marketing")) {
-    priorities.push("Improve attendance");
-  }
-  if (cats.has("team") || cats.has("roster")) {
-    priorities.push("Improve team performance");
-  }
-  if (health.fanSentiment < 45) {
-    priorities.push("Improve fan sentiment");
-  }
-  if (cats.has("draft")) {
-    priorities.push("Make draft selection");
-  }
-  return priorities.slice(0, 4);
-}
+
 
 function sortAndCapActionItems(
   items: OwnerDashboardActionItem[],

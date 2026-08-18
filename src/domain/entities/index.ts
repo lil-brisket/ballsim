@@ -311,17 +311,34 @@ export {
 export type { Calendar } from "@/domain/entities/calendar";
 export type {
   OwnerObjective,
+  OwnerObjectiveCategory,
   OwnerObjectiveInput,
+  OwnerObjectiveLifecycle,
+  OwnerObjectiveRole,
   OwnerObjectiveStatus,
   OwnerObjectiveType,
 } from "@/domain/entities/owner-objective";
 export {
   OWNER_OBJECTIVE_TYPES,
   OWNER_OBJECTIVE_STATUSES,
+  OWNER_OBJECTIVE_CATEGORIES,
+  OWNER_OBJECTIVE_LIFECYCLES,
+  OWNER_OBJECTIVE_ROLES,
   isOwnerObjectiveType,
   isOwnerObjectiveStatus,
+  isOwnerObjectiveCategory,
+  isOwnerObjectiveLifecycle,
+  isOwnerObjectiveRole,
   createOwnerObjective,
 } from "@/domain/entities/owner-objective";
+export type { OwnerPhilosophy } from "@/domain/entities/owner-philosophy";
+export {
+  OWNER_PHILOSOPHIES,
+  DEFAULT_OWNER_PHILOSOPHY,
+  OWNER_PATIENCE_MIN,
+  OWNER_PATIENCE_MAX,
+  isOwnerPhilosophy,
+} from "@/domain/entities/owner-philosophy";
 export type {
   OwnerNotification,
   OwnerNotificationInput,

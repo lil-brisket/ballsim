@@ -204,6 +204,8 @@ describe("season lifecycle", () => {
       user: {
         controlledTeamId: generated.teams[0]!.id as TeamId,
         mode: "owner",
+        ownerPhilosophy: "balanced",
+        ownerPatience: 55,
         objectives: [],
         notifications: [],
         eventLog: [],
