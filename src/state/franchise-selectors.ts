@@ -16,7 +16,10 @@ import {
 import type { GameState } from "@/state/game-state";
 import { calculateFranchiseValue } from "@/state/franchise-value";
 import type { DemandContribution } from "@/systems/demand/calculate-demand";
-import { explainTicketDemand } from "@/systems/demand/calculate-demand";
+import {
+  explainTicketDemand,
+  fanFacilityDemandRaw,
+} from "@/systems/demand/calculate-demand";
 import { forecastNextHomeGameDay } from "@/systems/demand/forecast-game-day";
 import { revenuePerAttendee } from "@/systems/demand/resolve-attendance";
 import { arenaCapacity } from "@/systems/facilities";
@@ -62,10 +65,15 @@ export type DemandContributorView = {
 export type GameDayForecastView = {
   demandScore: number;
   attendance: number;
+  gaAttendance: number;
+  premiumOccupancy: number;
   capacity: number;
+  premiumCapacity: number;
   fillRatePct: number;
   ticketPrice: number;
+  premiumTicketPrice: number;
   ticketRevenue: number;
+  premiumRevenue: number;
   merchRevenue: number;
   concessionsRevenue: number;
   totalGameDayRevenue: number;
@@ -81,11 +89,16 @@ export type LastGameDayView = {
   gameId: string;
   occurredOn: string;
   attendance: number;
+  gaAttendance: number;
+  premiumOccupancy: number;
   capacity: number;
+  premiumCapacity: number;
   fillRatePct: number;
   demandScore: number;
   ticketPrice: number;
+  premiumTicketPrice: number;
   ticketRevenue: number;
+  premiumRevenue: number;
   merchRevenue: number;
   concessionsRevenue: number;
   totalGameDayRevenue: number;
@@ -120,6 +133,7 @@ export type CashRunwayView = {
 
 export type FranchiseBusinessView = {
   ticketPrice: number;
+  premiumTicketPrice: number;
   fanSentiment: number;
   mediaAttention: number;
   marketSize: number;
@@ -263,6 +277,8 @@ function buildForecast(
     mediaAttention: ops.mediaAttention,
     leaguePopularity: state.business.leagueEconomy.popularity,
     winPct: teamWinPct(state, teamId),
+    fanFacility: fanFacilityDemandRaw(ops.facilities.fan.level),
+    opponentWinPct: 0.5,
   });
   return {
     ...forecast,
@@ -284,12 +300,16 @@ function readLastGameDay(
       continue;
     }
     const attendance = Number(payload.attendance) || 0;
+    const gaAttendance = Number(payload.gaAttendance) || attendance;
+    const premiumOccupancy = Number(payload.premiumOccupancy) || 0;
     const capacity = Number(payload.capacity) || 0;
+    const premiumCapacity = Number(payload.premiumCapacity) || 0;
     const ticketRevenue = Number(payload.ticketRevenue) || 0;
+    const premiumRevenue = Number(payload.premiumRevenue) || 0;
     const merchRevenue = Number(payload.merchRevenue) || 0;
     const concessionsRevenue = Number(payload.concessionsRevenue) || 0;
     const totalGameDayRevenue =
-      ticketRevenue + merchRevenue + concessionsRevenue;
+      ticketRevenue + premiumRevenue + merchRevenue + concessionsRevenue;
     const contributions =
       payload.contributions &&
       typeof payload.contributions === "object" &&
@@ -301,12 +321,17 @@ function readLastGameDay(
       gameId: String(payload.gameId ?? ""),
       occurredOn: event.occurredOn,
       attendance,
+      gaAttendance,
+      premiumOccupancy,
       capacity,
+      premiumCapacity,
       fillRatePct:
         capacity > 0 ? Math.round((attendance / capacity) * 100) : 0,
       demandScore: Number(payload.demandScore) || 0,
       ticketPrice: Number(payload.ticketPrice) || 0,
+      premiumTicketPrice: Number(payload.premiumTicketPrice) || 0,
       ticketRevenue,
+      premiumRevenue,
       merchRevenue,
       concessionsRevenue,
       totalGameDayRevenue,
@@ -318,6 +343,7 @@ function readLastGameDay(
               ticketRevenue,
               merchRevenue,
               concessionsRevenue,
+              premiumRevenue,
             ),
       demandContributors: toContributorViews(contributions),
     };
@@ -364,6 +390,7 @@ export function toFranchiseBusinessView(state: GameState): FranchiseBusinessView
   const team = state.world.teams[teamId]!;
   return {
     ticketPrice: ops.ticketPrice,
+    premiumTicketPrice: ops.premiumTicketPrice,
     fanSentiment: ops.fanSentiment,
     mediaAttention: ops.mediaAttention,
     marketSize: ops.marketSize,

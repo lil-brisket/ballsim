@@ -26,7 +26,11 @@ import {
 import { setMarketingBudget } from "@/systems/marketing";
 import { signSponsorship } from "@/systems/sponsorships";
 import { AI_SPONSOR_MEDIA_VALUE_PER_POINT } from "@/systems/sponsorships-config";
-import { setTicketPrice } from "@/systems/ticket-pricing";
+import { setPremiumTicketPrice, setTicketPrice } from "@/systems/ticket-pricing";
+import {
+  PREMIUM_TICKET_PRICE_MAX,
+  PREMIUM_TICKET_PRICE_MIN,
+} from "@/systems/demand/demand-config";
 
 export type AiFranchiseDecisionTrace = {
   teamId: TeamId;
@@ -80,6 +84,20 @@ export function runAiFranchiseDecisions(
       const priceResult = setTicketPrice(current, teamId, ticketTarget);
       current = priceResult.state;
       events.push(...priceResult.events);
+    }
+
+    const premiumTarget = premiumTicketPriceFromPreferences(
+      ops.premiumTicketPrice,
+      prefs,
+    );
+    if (premiumTarget !== ops.premiumTicketPrice) {
+      const premiumResult = setPremiumTicketPrice(
+        current,
+        teamId,
+        premiumTarget,
+      );
+      current = premiumResult.state;
+      events.push(...premiumResult.events);
     }
 
     const marketingTarget = marketingBudgetFromPreferences(
@@ -170,6 +188,29 @@ export function ticketPriceFromPreferences(
     return current;
   }
   return Math.round(Math.max(20, Math.min(120, current + step)));
+}
+
+export function premiumTicketPriceFromPreferences(
+  current: number,
+  prefs: EffectivePreferences,
+): number {
+  const attendancePull = (prefs.attendancePriority - 0.5) * 2;
+  const revenuePull = prefs.spendWillingness - prefs.cashPreservation;
+  const rawStep =
+    -attendancePull * 15 + revenuePull * 20;
+  let step = Math.round(Math.max(-25, Math.min(25, rawStep)));
+  if (prefs.cashPreservation > 0.65 && Math.abs(step) <= 5) {
+    return current;
+  }
+  if (step === 0) {
+    return current;
+  }
+  return Math.round(
+    Math.max(
+      PREMIUM_TICKET_PRICE_MIN,
+      Math.min(PREMIUM_TICKET_PRICE_MAX, current + step),
+    ),
+  );
 }
 
 export function marketingBudgetFromPreferences(

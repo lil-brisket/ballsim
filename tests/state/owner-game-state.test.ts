@@ -265,18 +265,25 @@ describe("Owner Mode GameState round-trip", () => {
         [String(state.competition.season.year)]: {
           revenue: {
             tickets: 0,
-            sponsorships: 0,
+            premium: 0,
             merchandise: 0,
+            concessions: 0,
+            sponsorships: 0,
+            broadcast: 0,
+            playoffs: 0,
             other: 1_000_000,
           },
           expenses: {
             staff: 0,
             facilities: 0,
+            capital: 0,
             operations: 250_000,
             marketing: 0,
           },
         },
       },
+      booksByMonth: {},
+      cashLedgerByMonth: {},
     };
 
     const restored = deserializeGameState(serializeGameState(state));

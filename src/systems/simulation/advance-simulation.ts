@@ -24,6 +24,7 @@ import {
 import { mergeDraftPicksForSeason } from "@/domain/draft-picks/generate-draft-picks";
 import { processDailyFanSentimentAfterGames } from "@/systems/fan-sentiment";
 import { applyMediaFromDomainEvents } from "@/systems/media";
+import { processLeaguePlayoffBonuses } from "@/systems/playoff-financial-bonuses";
 import { processHomeGameTicketRevenue } from "@/systems/ticket-revenue";
 
 /**
@@ -147,6 +148,10 @@ function advanceOneDay(state: GameState, rng: Rng): OneDayResult {
   const tickets = processHomeGameTicketRevenue(current);
   current = tickets.state;
   events.push(...tickets.events);
+
+  const playoffBonuses = processLeaguePlayoffBonuses(current);
+  current = playoffBonuses.state;
+  events.push(...playoffBonuses.events);
 
   const sentiment = processDailyFanSentimentAfterGames(current);
   current = sentiment.state;

@@ -6,8 +6,6 @@ import {
   GAMEPLAY_LOSS_EXPENSE,
   GAMEPLAY_OBJECTIVE_PENALTY,
   GAMEPLAY_OBJECTIVE_REWARD,
-  GAMEPLAY_PLAYOFF_QUALIFICATION_REVENUE,
-  GAMEPLAY_PLAYOFF_SERIES_WIN_REVENUE,
   objectiveAppliesCashConsequence,
 } from "@/systems/owner-objectives-config";
 import { applyCashAndBooksImpact } from "@/systems/team-finances";
@@ -84,42 +82,9 @@ export function applyGameplayFinancialConsequences(
   }
 
   const playoffs = current.competition.playoffs;
-  if (
-    playoffs.qualifiedTeams.some((seed) => seed.teamId === teamId) &&
-    playoffs.status !== "not_started"
-  ) {
-    const key = `playoff_qualification:${teamId}:${seasonYear}`;
-    if (!hasAppliedGameplayConsequence(current, key)) {
-      const impact = applyCashAndBooksImpact(
-        current,
-        teamId,
-        GAMEPLAY_PLAYOFF_QUALIFICATION_REVENUE,
-        seasonYear,
-        { revenueCategory: "other" },
-      );
-      current = withAppliedGameplayConsequence(impact.state, key);
-      events.push(...impact.events);
-    }
-  }
-
-  for (const series of playoffs.series) {
-    if (series.status !== "complete" || series.winnerTeamId !== teamId) {
-      continue;
-    }
-    const key = `playoff_series_win:${teamId}:${seasonYear}:${series.round}`;
-    if (hasAppliedGameplayConsequence(current, key)) {
-      continue;
-    }
-    const impact = applyCashAndBooksImpact(
-      current,
-      teamId,
-      GAMEPLAY_PLAYOFF_SERIES_WIN_REVENUE,
-      seasonYear,
-      { revenueCategory: "other" },
-    );
-    current = withAppliedGameplayConsequence(impact.state, key);
-    events.push(...impact.events);
-  }
+  // Playoff qualification / series-win bonuses are league-wide — see
+  // processLeaguePlayoffBonuses. Owner module only handles user loss fees
+  // and objective cash consequences.
 
   for (const objective of current.user.objectives) {
     if (objective.consequenceApplied || objective.status === "active") {

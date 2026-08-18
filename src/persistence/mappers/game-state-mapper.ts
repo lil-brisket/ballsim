@@ -13,7 +13,7 @@ import type { PlayerArchetype } from "@/domain/entities/player-archetype";
 import type { PlayerNationality } from "@/domain/entities/player-nationality";
 import type { Team, TeamPlayStyle } from "@/domain/entities/team";
 import { NEUTRAL_TEAM_PLAY_STYLE } from "@/domain/entities/team";
-import { createEmptyTeamFinanceBooks } from "@/domain/entities/finances";
+import { createEmptyTeamFinanceBooks, normalizeTeamFinanceBooks } from "@/domain/entities/finances";
 import type { TeamFinances } from "@/domain/entities/finances";
 import { DEFAULT_COACHING_PHILOSOPHY } from "@/domain/coaching/coaching-philosophy";
 import type {
@@ -135,10 +135,11 @@ const MIGRATE_ONE_STEP: Record<number, (state: unknown) => unknown> = {
   24: (state) => migrateV24ToV25(state as GameStateV24),
   25: (state) => migrateV25ToV26(state as GameStateV25),
   26: (state) => migrateV26ToV27(state as GameStateV26),
+  27: (state) => migrateV27ToV28(state as GameStateV27),
 };
 
 /**
- * Parse → migrate (v1–v26 → current) → validate → return GameState.
+ * Parse → migrate (v1–v27 → current) → validate → return GameState.
  * Does not call serializeGameState.
  */
 export function deserializeGameState(stateJson: string): GameState {
@@ -1755,6 +1756,8 @@ function migrateV19ToV20(state: GameStateV19): GameStateV20 {
           cash: finance.cash,
           payroll: finance.payroll,
           booksByYear,
+          booksByMonth: {},
+          cashLedgerByMonth: {},
         },
       ];
     }),
@@ -2233,13 +2236,14 @@ type GameStateV26 = {
  * Allows "rebuild" in the type system for new saves only (does not rewrite
  * legacy profiles). Emits literal schemaVersion 27. No RNG stream consumption.
  */
-function migrateV26ToV27(state: GameStateV26): GameState {
+function migrateV26ToV27(state: GameStateV26): GameStateV27 {
   const franchiseOps: Record<string, FranchiseOps> = {};
   for (const [teamId, ops] of Object.entries(state.business.franchiseOps)) {
     const raw = ops as FranchiseOps & {
       spendingTolerance?: number;
       patience?: number;
       riskTolerance?: number;
+      premiumTicketPrice?: number;
     };
     const profile: AiProfile = isAiProfile(raw.aiProfile)
       ? raw.aiProfile
@@ -2262,6 +2266,10 @@ function migrateV26ToV27(state: GameStateV26): GameState {
         typeof raw.riskTolerance === "number"
           ? raw.riskTolerance
           : axes.riskTolerance,
+      premiumTicketPrice:
+        typeof raw.premiumTicketPrice === "number"
+          ? raw.premiumTicketPrice
+          : 180,
     };
   }
 
@@ -2275,6 +2283,82 @@ function migrateV26ToV27(state: GameStateV26): GameState {
     competition: state.competition,
     business: {
       ...state.business,
+      franchiseOps,
+    },
+    user: state.user,
+  };
+}
+
+/** Schema v27 before chart-of-accounts expansion / booksByMonth. */
+type GameStateV27 = {
+  meta: Omit<GameState["meta"], "schemaVersion"> & {
+    schemaVersion: 27;
+    rngState: number;
+  };
+  settings: GameState["settings"];
+  world: GameState["world"];
+  competition: GameState["competition"];
+  business: GameState["business"];
+  user: GameState["user"];
+};
+
+/**
+ * Deterministic v27 → v28: expand finance categories, add booksByMonth and
+ * cashLedgerByMonth, ensure premiumTicketPrice on FranchiseOps.
+ * Does not rewrite historical "other" lumping. Emits schemaVersion 28.
+ */
+function migrateV27ToV28(state: GameStateV27): GameState {
+  const finances: Record<string, TeamFinances> = {};
+  for (const [teamId, finance] of Object.entries(state.business.finances)) {
+    const booksByYear: TeamFinances["booksByYear"] = {};
+    for (const [yearKey, books] of Object.entries(finance.booksByYear ?? {})) {
+      booksByYear[yearKey] = normalizeTeamFinanceBooks(
+        books as Parameters<typeof normalizeTeamFinanceBooks>[0],
+      );
+    }
+    const booksByMonth: TeamFinances["booksByMonth"] = {};
+    const rawMonths =
+      (finance as TeamFinances & { booksByMonth?: TeamFinances["booksByMonth"] })
+        .booksByMonth ?? {};
+    for (const [monthKey, books] of Object.entries(rawMonths)) {
+      booksByMonth[monthKey] = normalizeTeamFinanceBooks(
+        books as Parameters<typeof normalizeTeamFinanceBooks>[0],
+      );
+    }
+    finances[teamId] = {
+      teamId: finance.teamId,
+      cash: finance.cash,
+      payroll: finance.payroll,
+      booksByYear,
+      booksByMonth,
+      cashLedgerByMonth:
+        (finance as TeamFinances).cashLedgerByMonth ?? {},
+    };
+  }
+
+  const franchiseOps: Record<string, FranchiseOps> = {};
+  for (const [teamId, ops] of Object.entries(state.business.franchiseOps)) {
+    const raw = ops as FranchiseOps & { premiumTicketPrice?: number };
+    franchiseOps[teamId] = {
+      ...raw,
+      premiumTicketPrice:
+        typeof raw.premiumTicketPrice === "number"
+          ? raw.premiumTicketPrice
+          : 180,
+    };
+  }
+
+  return {
+    meta: {
+      ...state.meta,
+      schemaVersion: 28,
+    },
+    settings: state.settings,
+    world: state.world,
+    competition: state.competition,
+    business: {
+      ...state.business,
+      finances,
       franchiseOps,
     },
     user: state.user,

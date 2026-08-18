@@ -374,7 +374,7 @@ describe("team-finances immutability and validation", () => {
     const state = baseState();
     const teamId = state.user.controlledTeamId;
     expect(() =>
-      recordRevenue(state, teamId, "broadcast" as never, 1, 2026),
+      recordRevenue(state, teamId, "not_a_category" as never, 1, 2026),
     ).toThrow(/Invalid revenue category/);
   });
 

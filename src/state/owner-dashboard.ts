@@ -8,6 +8,8 @@ import {
   TICKET_PRICE_MAX,
   TICKET_PRICE_MIN,
 } from "@/systems/ticket-pricing";
+import type { TeamId } from "@/domain/ids";
+import { asTeamId } from "@/domain/ids";
 import type { GameState } from "@/state/game-state";
 import {
   toOwnerCareerEvaluation,
@@ -896,7 +898,7 @@ function meanLeaguePayroll(state: GameState, year: number): number | null {
   }
   let total = 0;
   for (const teamId of teamIds) {
-    total += getTeamPayroll(teamId, year, state);
+    total += getTeamPayroll(asTeamId(teamId), year, state);
   }
   return total / teamIds.length;
 }
@@ -908,7 +910,7 @@ function meanLeagueStrength(state: GameState): number | null {
   }
   let total = 0;
   for (const teamId of teamIds) {
-    total += meanRosterOverall(state, teamId);
+    total += meanRosterOverall(state, asTeamId(teamId));
   }
   return total / teamIds.length;
 }
@@ -932,12 +934,17 @@ function readHomeGameDays(
       gameId: String(payload.gameId ?? ""),
       occurredOn: event.occurredOn,
       attendance,
+      gaAttendance: Number(payload.gaAttendance) || attendance,
+      premiumOccupancy: Number(payload.premiumOccupancy) || 0,
       capacity,
+      premiumCapacity: Number(payload.premiumCapacity) || 0,
       fillRatePct:
         capacity > 0 ? Math.round((attendance / capacity) * 100) : 0,
       demandScore: Number(payload.demandScore) || 0,
       ticketPrice: Number(payload.ticketPrice) || 0,
+      premiumTicketPrice: Number(payload.premiumTicketPrice) || 0,
       ticketRevenue: Number(payload.ticketRevenue) || 0,
+      premiumRevenue: Number(payload.premiumRevenue) || 0,
       merchRevenue: Number(payload.merchRevenue) || 0,
       concessionsRevenue: Number(payload.concessionsRevenue) || 0,
       totalGameDayRevenue: 0,

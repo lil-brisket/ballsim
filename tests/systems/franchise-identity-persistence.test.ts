@@ -72,13 +72,14 @@ describe("franchise identity persistence", () => {
     };
     const json = JSON.stringify(v26);
     const migrated = deserializeGameState(json);
-    expect(migrated.meta.schemaVersion).toBe(27);
+    expect(migrated.meta.schemaVersion).toBe(GAME_STATE_SCHEMA_VERSION);
     for (const teamId of Object.keys(migrated.world.teams) as TeamId[]) {
       const ops = migrated.business.franchiseOps[teamId]!;
       expect(ops.aiProfile).toBe(preserved[teamId]);
       expect(isOwnershipAxis(ops.spendingTolerance)).toBe(true);
       expect(isOwnershipAxis(ops.patience)).toBe(true);
       expect(isOwnershipAxis(ops.riskTolerance)).toBe(true);
+      expect(ops.premiumTicketPrice).toBeGreaterThan(0);
     }
   });
 

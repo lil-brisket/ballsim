@@ -76,6 +76,8 @@ export type FranchiseOps = {
   facilities: FacilitiesState;
   /** E4 — owner ticket pricing knob (integer dollars). */
   ticketPrice: number;
+  /** Premium / club seating price (integer dollars). Own inventory, not a ticket multiplier. */
+  premiumTicketPrice: number;
   /** E6 — budget + awareness. */
   marketing: MarketingState;
   /** E5 — fanbase support 0–100. */
@@ -131,6 +133,7 @@ export function createDefaultFranchiseOps(
   return {
     facilities: overrides.facilities ?? createDefaultFacilities(),
     ticketPrice: overrides.ticketPrice ?? 45,
+    premiumTicketPrice: overrides.premiumTicketPrice ?? 180,
     marketing: overrides.marketing ?? { budget: 2_000_000, awareness: 40 },
     fanSentiment: overrides.fanSentiment ?? 50,
     mediaAttention: overrides.mediaAttention ?? 30,

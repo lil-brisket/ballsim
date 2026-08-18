@@ -639,6 +639,22 @@ export function validateGameState(state: unknown): asserts state is GameState {
       financeValue.booksByYear,
       `business.finances[${financeKey}].booksByYear`,
     );
+    assertRecord(
+      financeValue.booksByMonth,
+      `business.finances[${financeKey}].booksByMonth`,
+    );
+    validateTeamFinanceBooksByMonth(
+      financeValue.booksByMonth,
+      `business.finances[${financeKey}].booksByMonth`,
+    );
+    assertRecord(
+      financeValue.cashLedgerByMonth,
+      `business.finances[${financeKey}].cashLedgerByMonth`,
+    );
+    validateCashLedgerByMonth(
+      financeValue.cashLedgerByMonth,
+      `business.finances[${financeKey}].cashLedgerByMonth`,
+    );
   }
 
   const openOfferPairs = new Set<string>();
@@ -1669,34 +1685,78 @@ function validateTeamFinanceBooksByYear(
       fail(`${path} key "${yearKey}" must represent a finite integer year.`);
     }
 
-    const booksPath = `${path}[${yearKey}]`;
-    assertRecord(booksValue, booksPath);
-    assertRecord(booksValue.revenue, `${booksPath}.revenue`);
-    assertRecord(booksValue.expenses, `${booksPath}.expenses`);
+    validateTeamFinanceBooksShape(booksValue, `${path}[${yearKey}]`);
+  }
+}
 
-    for (const category of [
-      "tickets",
-      "sponsorships",
-      "merchandise",
-      "other",
-    ] as const) {
-      assertNonNegativeIntegerMoney(
-        booksValue.revenue[category],
-        `${booksPath}.revenue.${category}`,
-      );
-    }
+const BOOKS_BY_MONTH_KEY_PATTERN = /^\d{4}-\d{2}$/;
 
-    for (const category of [
-      "staff",
-      "facilities",
-      "operations",
-      "marketing",
-    ] as const) {
-      assertNonNegativeIntegerMoney(
-        booksValue.expenses[category],
-        `${booksPath}.expenses.${category}`,
-      );
+function validateTeamFinanceBooksByMonth(
+  booksByMonth: Record<string, unknown>,
+  path: string,
+): void {
+  for (const [monthKey, booksValue] of Object.entries(booksByMonth)) {
+    if (!BOOKS_BY_MONTH_KEY_PATTERN.test(monthKey)) {
+      fail(`${path} key "${monthKey}" must match YYYY-MM.`);
     }
+    validateTeamFinanceBooksShape(booksValue, `${path}[${monthKey}]`);
+  }
+}
+
+function validateCashLedgerByMonth(
+  ledger: Record<string, unknown>,
+  path: string,
+): void {
+  for (const [monthKey, entry] of Object.entries(ledger)) {
+    if (!BOOKS_BY_MONTH_KEY_PATTERN.test(monthKey)) {
+      fail(`${path} key "${monthKey}" must match YYYY-MM.`);
+    }
+    const entryPath = `${path}[${monthKey}]`;
+    assertRecord(entry, entryPath);
+    assertNumber(entry.openCash, `${entryPath}.openCash`);
+    assertNonNegativeIntegerMoney(
+      entry.playerPayrollOutflow,
+      `${entryPath}.playerPayrollOutflow`,
+    );
+    assertNumber(entry.netCashChange, `${entryPath}.netCashChange`);
+    if (!Number.isInteger(entry.netCashChange)) {
+      fail(`${entryPath}.netCashChange must be an integer.`);
+    }
+  }
+}
+
+function validateTeamFinanceBooksShape(booksValue: unknown, booksPath: string): void {
+  assertRecord(booksValue, booksPath);
+  assertRecord(booksValue.revenue, `${booksPath}.revenue`);
+  assertRecord(booksValue.expenses, `${booksPath}.expenses`);
+
+  for (const category of [
+    "tickets",
+    "premium",
+    "merchandise",
+    "concessions",
+    "sponsorships",
+    "broadcast",
+    "playoffs",
+    "other",
+  ] as const) {
+    assertNonNegativeIntegerMoney(
+      booksValue.revenue[category],
+      `${booksPath}.revenue.${category}`,
+    );
+  }
+
+  for (const category of [
+    "staff",
+    "facilities",
+    "capital",
+    "operations",
+    "marketing",
+  ] as const) {
+    assertNonNegativeIntegerMoney(
+      booksValue.expenses[category],
+      `${booksPath}.expenses.${category}`,
+    );
   }
 }
 

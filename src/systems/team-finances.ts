@@ -2,12 +2,15 @@ import {
   createEmptyTeamFinanceBooks,
   isExpenseCategory,
   isRevenueCategory,
+  normalizeTeamFinanceBooks,
   type ExpenseCategory,
   type RevenueCategory,
+  type TeamCashMonthLedger,
   type TeamFinanceBooks,
   type TeamFinancialStatement,
   type TeamFinances,
 } from "@/domain/entities/finances";
+import { getCalendarMonthId } from "@/domain/calendar-date";
 import {
   createDomainEvent,
   type DomainEvent,
@@ -19,6 +22,7 @@ import { getTeamPayroll } from "@/systems/salary-cap";
 
 /**
  * Additive revenue posting. Does not mutate cash or payroll.
+ * Posts to both booksByYear and booksByMonth (accounting only).
  * Does not auto-create missing finance records.
  */
 export function recordRevenue(
@@ -33,7 +37,8 @@ export function recordRevenue(
   assertNonNegativeIntegerAmount(amount, "revenue amount");
   assertSeasonYear(year);
 
-  const next = addToBooks(state, teamId, year, (books) => ({
+  const monthId = getCalendarMonthId(state.world.calendar.currentDate);
+  const next = addToBooks(state, teamId, year, monthId, (books) => ({
     ...books,
     revenue: {
       ...books.revenue,
@@ -52,7 +57,7 @@ export function recordRevenue(
 
 /**
  * Additive posted-expense posting. Does not accept playerSalaries.
- * Does not mutate cash or payroll. Does not auto-create finance records.
+ * Posts to both booksByYear and booksByMonth. Does not mutate cash.
  */
 export function recordExpense(
   state: GameState,
@@ -66,7 +71,8 @@ export function recordExpense(
   assertNonNegativeIntegerAmount(amount, "expense amount");
   assertSeasonYear(year);
 
-  const next = addToBooks(state, teamId, year, (books) => ({
+  const monthId = getCalendarMonthId(state.world.calendar.currentDate);
+  const next = addToBooks(state, teamId, year, monthId, (books) => ({
     ...books,
     expenses: {
       ...books.expenses,
@@ -88,6 +94,8 @@ export function recordExpense(
  * Positive amount → revenue category + cash increase.
  * Negative amount → expense category + cash decrease (absolute value posted).
  * Zero is a no-op.
+ *
+ * Cash ledger journal is updated for liquidity reporting; books never invent cash.
  */
 export function applyCashAndBooksImpact(
   state: GameState,
@@ -132,22 +140,7 @@ export function applyCashAndBooksImpact(
     events.push(...posted.events);
   }
 
-  const existing = next.business.finances[teamId]!;
-  const nextCash = existing.cash + amount;
-  next = {
-    ...next,
-    business: {
-      ...next.business,
-      finances: {
-        ...next.business.finances,
-        [teamId]: {
-          ...existing,
-          cash: nextCash,
-        },
-      },
-    },
-  };
-
+  next = applyCashDelta(next, teamId, amount, { playerPayroll: false });
   return systemResult(next, events);
 }
 
@@ -155,6 +148,7 @@ export function applyCashAndBooksImpact(
  * Adjusts cash without posting books. Used for player payroll cash flow
  * (annual obligation remains derived on the statement via getTeamPayroll).
  * Emits PlayerPayrollPaid — never ExpenseRecorded / recordExpense.
+ * Updates cashLedgerByMonth.playerPayrollOutflow for monthly liquidity reporting.
  */
 export function applyCashOnlyImpact(
   state: GameState,
@@ -173,21 +167,7 @@ export function applyCashOnlyImpact(
     return systemResult(state);
   }
 
-  const existing = state.business.finances[teamId]!;
-  const nextCash = existing.cash + amount;
-  const next: GameState = {
-    ...state,
-    business: {
-      ...state.business,
-      finances: {
-        ...state.business.finances,
-        [teamId]: {
-          ...existing,
-          cash: nextCash,
-        },
-      },
-    },
-  };
+  const next = applyCashDelta(state, teamId, amount, { playerPayroll: true });
 
   return systemResult(next, [
     createDomainEvent({
@@ -216,30 +196,48 @@ export function getFinancialStatement(
   assertSeasonYear(year);
 
   const finances = state.business.finances[teamId]!;
-  const books =
-    finances.booksByYear[String(year)] ?? createEmptyTeamFinanceBooks();
+  const books = normalizeTeamFinanceBooks(
+    finances.booksByYear[String(year)] ?? createEmptyTeamFinanceBooks(),
+  );
   const playerSalaries = getTeamPayroll(teamId, year, state);
 
   const tickets = books.revenue.tickets;
-  const sponsorships = books.revenue.sponsorships;
+  const premium = books.revenue.premium;
   const merchandise = books.revenue.merchandise;
+  const concessions = books.revenue.concessions;
+  const sponsorships = books.revenue.sponsorships;
+  const broadcast = books.revenue.broadcast;
+  const playoffs = books.revenue.playoffs;
   const other = books.revenue.other;
-  const revenueTotal = tickets + sponsorships + merchandise + other;
+  const revenueTotal =
+    tickets +
+    premium +
+    merchandise +
+    concessions +
+    sponsorships +
+    broadcast +
+    playoffs +
+    other;
 
   const staff = books.expenses.staff;
   const facilities = books.expenses.facilities;
+  const capital = books.expenses.capital;
   const operations = books.expenses.operations;
   const marketing = books.expenses.marketing;
   const expensesTotal =
-    playerSalaries + staff + facilities + operations + marketing;
+    playerSalaries + staff + facilities + capital + operations + marketing;
 
   return {
     teamId,
     year,
     revenue: {
       tickets,
-      sponsorships,
+      premium,
       merchandise,
+      concessions,
+      sponsorships,
+      broadcast,
+      playoffs,
       other,
       total: revenueTotal,
     },
@@ -247,6 +245,7 @@ export function getFinancialStatement(
       playerSalaries,
       staff,
       facilities,
+      capital,
       operations,
       marketing,
       total: expensesTotal,
@@ -279,19 +278,69 @@ export function getNetIncome(
   return getFinancialStatement(state, teamId, year).netIncome;
 }
 
+function applyCashDelta(
+  state: GameState,
+  teamId: TeamId,
+  amount: number,
+  options: { playerPayroll: boolean },
+): GameState {
+  const existing = state.business.finances[teamId]!;
+  const monthId = getCalendarMonthId(state.world.calendar.currentDate);
+  const ledger = existing.cashLedgerByMonth ?? {};
+  const prior = ledger[monthId];
+  const openCash = prior?.openCash ?? existing.cash;
+  const nextLedgerEntry: TeamCashMonthLedger = {
+    openCash,
+    playerPayrollOutflow:
+      (prior?.playerPayrollOutflow ?? 0) +
+      (options.playerPayroll ? Math.abs(amount) : 0),
+    netCashChange: (prior?.netCashChange ?? 0) + amount,
+  };
+
+  return {
+    ...state,
+    business: {
+      ...state.business,
+      finances: {
+        ...state.business.finances,
+        [teamId]: {
+          ...existing,
+          cash: existing.cash + amount,
+          booksByMonth: existing.booksByMonth ?? {},
+          cashLedgerByMonth: {
+            ...ledger,
+            [monthId]: nextLedgerEntry,
+          },
+        },
+      },
+    },
+  };
+}
+
 function addToBooks(
   state: GameState,
   teamId: TeamId,
   year: number,
+  monthId: string,
   update: (books: TeamFinanceBooks) => TeamFinanceBooks,
 ): GameState {
   const yearKey = String(year);
   const existingFinance = state.business.finances[teamId]!;
-  const existingBooks =
-    existingFinance.booksByYear[yearKey] ?? createEmptyTeamFinanceBooks();
-  const nextBooks = update({
-    revenue: { ...existingBooks.revenue },
-    expenses: { ...existingBooks.expenses },
+  const existingYearBooks = normalizeTeamFinanceBooks(
+    existingFinance.booksByYear[yearKey] ?? createEmptyTeamFinanceBooks(),
+  );
+  const nextYearBooks = update({
+    revenue: { ...existingYearBooks.revenue },
+    expenses: { ...existingYearBooks.expenses },
+  });
+
+  const booksByMonth = existingFinance.booksByMonth ?? {};
+  const existingMonthBooks = normalizeTeamFinanceBooks(
+    booksByMonth[monthId] ?? createEmptyTeamFinanceBooks(),
+  );
+  const nextMonthBooks = update({
+    revenue: { ...existingMonthBooks.revenue },
+    expenses: { ...existingMonthBooks.expenses },
   });
 
   const nextFinance: TeamFinances = {
@@ -300,8 +349,13 @@ function addToBooks(
     payroll: existingFinance.payroll,
     booksByYear: {
       ...existingFinance.booksByYear,
-      [yearKey]: nextBooks,
+      [yearKey]: nextYearBooks,
     },
+    booksByMonth: {
+      ...booksByMonth,
+      [monthId]: nextMonthBooks,
+    },
+    cashLedgerByMonth: existingFinance.cashLedgerByMonth ?? {},
   };
 
   return {

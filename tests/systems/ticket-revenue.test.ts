@@ -72,7 +72,8 @@ describe("ticket revenue", () => {
     const books = twice.state.business.finances[teamId]!.booksByYear[String(year)];
     expect(books?.revenue.tickets).toBeGreaterThan(0);
     expect(books?.revenue.merchandise).toBeGreaterThan(0);
-    expect(books?.revenue.other).toBeGreaterThan(0);
+    expect(books?.revenue.concessions).toBeGreaterThan(0);
+    expect(books?.revenue.other).toBe(0);
   });
 
   it("forecast and lastGameDay stay separate after settling", () => {

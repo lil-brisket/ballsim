@@ -254,7 +254,7 @@ describe("playoff brackets and play-in", () => {
 });
 
 describe("financial toggles", () => {
-  it("revenue sharing disabled skips equal-share distribution", () => {
+  it("revenue sharing disabled still pays market-weighted broadcast (no equal slice)", () => {
     const state = createInitialGameState({
       saveId: "rev_off",
       settings: {
@@ -265,9 +265,16 @@ describe("financial toggles", () => {
         },
       },
     });
-    const before = structuredClone(state.business.finances);
+    const teamId = Object.keys(state.world.teams)[0]!;
+    const before = state.business.finances[teamId]!.cash;
     const result = processMonthlyBroadcastRevenue(state);
-    expect(result.state.business.finances).toEqual(before);
+    // Pool still pays; sharing off means 100% market-weighted remainder.
+    expect(result.state.business.finances[teamId]!.cash).toBeGreaterThan(before);
+    const year = state.competition.season.year;
+    expect(
+      result.state.business.finances[teamId]!.booksByYear[String(year)]!
+        .revenue.broadcast,
+    ).toBeGreaterThan(0);
   });
 
   it("revenue sharing enabled distributes cash", () => {

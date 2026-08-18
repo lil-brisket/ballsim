@@ -22,9 +22,11 @@ export default async function FinancesPage({
     notFound();
   }
 
-  const { finances, eventLog, franchiseBusiness } = view;
+  const { finances, eventLog, franchiseBusiness, franchisePnL } = view;
   const statement = finances.statement;
   const { lastGameDay, cashRunway, forecast } = franchiseBusiness;
+  const season = franchisePnL.seasonToDate;
+  const month = franchisePnL.currentMonth;
   const financeEvents = eventLog.filter(
     (entry) =>
       entry.type === "RevenueRecorded" ||
@@ -37,7 +39,7 @@ export default async function FinancesPage({
     <>
       <PageHeader
         title="Finances"
-        subtitle={`Season ${statement.year} — if current pricing, demand, sponsorship, broadcast, and spending continue`}
+        subtitle={`Season ${statement.year} — profitability, liquidity, and investment`}
       />
       {error ? <ErrorState message={error} /> : null}
 
@@ -98,7 +100,11 @@ export default async function FinancesPage({
               {cashRunway.primaryPressure.replace("_", " ")}
               {cashRunway.weeklyOutflow > 0
                 ? ` (${Math.round(
-                    (cashRunway.outflowBreakdown[cashRunway.primaryPressure] /
+                    ((cashRunway.primaryPressure === "player_payroll"
+                      ? cashRunway.outflowBreakdown.playerPayroll
+                      : cashRunway.outflowBreakdown[
+                          cashRunway.primaryPressure
+                        ]) /
                       cashRunway.weeklyOutflow) *
                       100,
                   )}% of outflow)`
@@ -110,28 +116,61 @@ export default async function FinancesPage({
           Projection is constant-condition — it does not simulate future
           attendance. Annual statement player salaries are the contract
           obligation; cash payroll is the weekly drain included in outflow.
+          Profit ≠ cash: capital investment reduces cash without being an
+          operating expense.
         </p>
       </Section>
 
-      <div className="grid gap-8 lg:grid-cols-2">
-        <Section title="Revenue">
+      <div className="grid gap-8 lg:grid-cols-3">
+        <Section title="Profitability (season)">
           <CategoryList
             rows={[
-              ["Tickets", statement.revenue.tickets],
-              ["Sponsorships", statement.revenue.sponsorships],
-              ["Merchandise", statement.revenue.merchandise],
-              ["Other (incl. concessions)", statement.revenue.other],
+              ["Tickets", season.profitability.revenue.tickets],
+              ["Premium", season.profitability.revenue.premium],
+              ["Merchandise", season.profitability.revenue.merchandise],
+              ["Concessions", season.profitability.revenue.concessions],
+              ["Sponsorships", season.profitability.revenue.sponsorships],
+              ["Broadcast", season.profitability.revenue.broadcast],
+              ["Playoff bonuses", season.profitability.revenue.playoffs],
+              ["Other", season.profitability.revenue.other],
+              ["Total revenue", season.profitability.revenue.total],
+              [
+                "Player salaries (derived)",
+                season.profitability.playerSalaries ?? 0,
+              ],
+              ["Staff", season.profitability.operatingExpenses.staff],
+              ["Facilities (opex)", season.profitability.operatingExpenses.facilities],
+              ["Operations", season.profitability.operatingExpenses.operations],
+              ["Marketing", season.profitability.operatingExpenses.marketing],
+              ["Net income", season.profitability.netIncome],
             ]}
           />
         </Section>
-        <Section title="Expenses">
+        <Section title={`Liquidity (month ${month.periodKey})`}>
           <CategoryList
             rows={[
-              ["Player salaries (derived)", statement.expenses.playerSalaries],
-              ["Staff", statement.expenses.staff],
-              ["Facilities", statement.expenses.facilities],
-              ["Operations", statement.expenses.operations],
-              ["Marketing", statement.expenses.marketing],
+              ["Cash", month.liquidity.cash],
+              ["Month cash change", month.liquidity.netCashChange],
+              [
+                "Player payroll (cash, this month)",
+                month.liquidity.playerPayrollOutflow,
+              ],
+              [
+                "Month open cash",
+                month.liquidity.openCash ?? 0,
+              ],
+            ]}
+          />
+        </Section>
+        <Section title="Investment">
+          <CategoryList
+            rows={[
+              ["Capital (season)", season.investment.capital],
+              ["Capital (month)", month.investment.capital],
+              [
+                "Month operating net",
+                month.profitability.netIncome,
+              ],
             ]}
           />
         </Section>
@@ -154,8 +193,19 @@ export default async function FinancesPage({
               </span>
             </li>
             <li className="flex justify-between">
+              <span>GA / Premium seats</span>
+              <span>
+                {lastGameDay.gaAttendance.toLocaleString()} /{" "}
+                {lastGameDay.premiumOccupancy.toLocaleString()}
+              </span>
+            </li>
+            <li className="flex justify-between">
               <span>Tickets</span>
               <MoneyDisplay amount={lastGameDay.ticketRevenue} />
+            </li>
+            <li className="flex justify-between">
+              <span>Premium</span>
+              <MoneyDisplay amount={lastGameDay.premiumRevenue} />
             </li>
             <li className="flex justify-between">
               <span>Merchandise</span>

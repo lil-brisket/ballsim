@@ -86,6 +86,10 @@ import {
   type SponsorshipView,
 } from "@/state/franchise-selectors";
 import {
+  toFranchisePnLView,
+  type FranchisePnLView,
+} from "@/state/franchise-pnl";
+import {
   toOwnerDashboardView,
   type OwnerDashboardView,
 } from "@/state/owner-dashboard";
@@ -183,6 +187,7 @@ export type OwnerSaveView = CreateGameResult & {
   staff: ReturnType<typeof toStaffView>;
   facilities: FacilityRowView[];
   franchiseBusiness: FranchiseBusinessView;
+  franchisePnL: FranchisePnLView;
   sponsorships: SponsorshipView[];
   leagueEconomy: LeagueEconomy;
   relocation: RelocationProcess;
@@ -360,6 +365,7 @@ export async function loadOwnerSaveView(
     staff: toStaffView(state),
     facilities: toFacilitiesView(state),
     franchiseBusiness: toFranchiseBusinessView(state),
+    franchisePnL: toFranchisePnLView(state),
     sponsorships: toSponsorshipsView(state),
     leagueEconomy: toLeagueEconomyView(state),
     relocation: toRelocationView(state),

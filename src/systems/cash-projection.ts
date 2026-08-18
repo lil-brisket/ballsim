@@ -135,7 +135,7 @@ export function projectCashHorizon(
     : { totalGameDayRevenue: 0 };
   const gameDayRevenue = forecast.totalGameDayRevenue;
   const monthlySponsorship = estimateMonthlySponsorshipPayout(state, teamId);
-  const monthlyBroadcast = estimateMonthlyBroadcastShare(state);
+  const monthlyBroadcast = estimateMonthlyBroadcastShare(state, teamId as TeamId);
   const homeDates = remainingHomeGameDates(state, teamId);
   const currentDate = state.world.calendar.currentDate;
   const lastGameDate = homeDates[homeDates.length - 1];

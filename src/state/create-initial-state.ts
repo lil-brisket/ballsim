@@ -135,6 +135,8 @@ export function createInitialGameState(
         cash: 50_000_000,
         payroll: 0,
         booksByYear: {},
+        booksByMonth: {},
+        cashLedgerByMonth: {},
       },
     ]),
   );
@@ -301,6 +303,8 @@ export function createFourTeamInitialGameState(
         cash: 50_000_000,
         payroll: 0,
         booksByYear: {},
+        booksByMonth: {},
+        cashLedgerByMonth: {},
       },
     ]),
   );

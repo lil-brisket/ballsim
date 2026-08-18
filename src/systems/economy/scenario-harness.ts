@@ -41,8 +41,6 @@ import { startFacilityUpgrade } from "@/systems/facilities";
 import { estimateMonthlyBroadcastShare } from "@/systems/league-economy";
 import {
   GAMEPLAY_OBJECTIVE_REWARD,
-  GAMEPLAY_PLAYOFF_QUALIFICATION_REVENUE,
-  GAMEPLAY_PLAYOFF_SERIES_WIN_REVENUE,
   POOR_ATTENDANCE_FILL_RATE_PCT,
   SELLOUT_FILL_RATE_PCT,
 } from "@/systems/owner-objectives-config";
@@ -753,21 +751,13 @@ function absorbEvents(
   mix: MixAccumulator,
   events: readonly DomainEvent[],
   teamId: string,
-  broadcastShare: number,
+  _broadcastShare: number,
 ): void {
-  const concessionAmounts = new Set<number>();
   for (const event of events) {
     if (event.type === "HomeGameDaySettled" && event.payload.teamId === teamId) {
-      const concessions = Number(event.payload.concessionsRevenue) || 0;
-      if (concessions > 0) {
-        concessionAmounts.add(concessions);
-      }
-    }
-  }
-
-  for (const event of events) {
-    if (event.type === "HomeGameDaySettled" && event.payload.teamId === teamId) {
-      mix.gate += Number(event.payload.ticketRevenue) || 0;
+      mix.gate +=
+        (Number(event.payload.ticketRevenue) || 0) +
+        (Number(event.payload.premiumRevenue) || 0);
       mix.merchandise += Number(event.payload.merchRevenue) || 0;
       mix.concessions += Number(event.payload.concessionsRevenue) || 0;
       const attendance = Number(event.payload.attendance) || 0;
@@ -811,6 +801,8 @@ function absorbEvents(
         mix.staff += amount;
       } else if (category === "facilities") {
         mix.facilitiesBooks += amount;
+      } else if (category === "capital") {
+        // Capex is tracked via FacilityUpgradeStarted cost — do not double-count.
       } else if (category === "marketing") {
         mix.marketing += amount;
       } else if (category === "operations") {
@@ -826,7 +818,12 @@ function absorbEvents(
     }
     const category = event.payload.category;
     const amount = Number(event.payload.amount) || 0;
-    if (category === "tickets" || category === "merchandise") {
+    if (
+      category === "tickets" ||
+      category === "premium" ||
+      category === "merchandise" ||
+      category === "concessions"
+    ) {
       // Side effect of HomeGameDaySettled — do not double-count.
       continue;
     }
@@ -834,20 +831,17 @@ function absorbEvents(
       mix.sponsorship += amount;
       continue;
     }
+    if (category === "broadcast") {
+      mix.broadcast += amount;
+      continue;
+    }
+    if (category === "playoffs") {
+      mix.playoffs += amount;
+      continue;
+    }
     if (category === "other") {
-      if (concessionAmounts.has(amount)) {
-        concessionAmounts.delete(amount);
-        continue;
-      }
-      if (
-        amount === GAMEPLAY_PLAYOFF_QUALIFICATION_REVENUE ||
-        amount === GAMEPLAY_PLAYOFF_SERIES_WIN_REVENUE
-      ) {
-        mix.playoffs += amount;
-      } else if (amount === GAMEPLAY_OBJECTIVE_REWARD) {
+      if (amount === GAMEPLAY_OBJECTIVE_REWARD) {
         mix.other += amount;
-      } else if (broadcastShare > 0 && amount === broadcastShare) {
-        mix.broadcast += amount;
       } else {
         mix.unclassifiedRevenue += amount;
       }
@@ -1050,7 +1044,7 @@ function snapshotSeason(
     selloutGames: mix.selloutGames,
     lowAttendanceGames: mix.lowAttendanceGames,
     homeGames: mix.homeGames,
-    statementTickets: statement.revenue.tickets,
+    statementTickets: statement.revenue.tickets + statement.revenue.premium,
     statementMerchandise: statement.revenue.merchandise,
   };
 }
@@ -1285,7 +1279,7 @@ export function assertCashFlowInvariants(snapshot: SeasonEconomySnapshot): void 
   }
   if (snapshot.revenue.gate !== snapshot.statementTickets) {
     throw new Error(
-      `gate double-count or miss: mix=${snapshot.revenue.gate} statement=${snapshot.statementTickets}`,
+      `gate double-count or miss: mix=${snapshot.revenue.gate} statement tickets+premium=${snapshot.statementTickets}`,
     );
   }
   if (snapshot.revenue.merchandise !== snapshot.statementMerchandise) {

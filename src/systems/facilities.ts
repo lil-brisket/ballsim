@@ -72,7 +72,7 @@ export function startFacilityUpgrade(
   let current = state;
 
   const impact = applyCashAndBooksImpact(current, teamId, -cost, year, {
-    expenseCategory: "facilities",
+    expenseCategory: "capital",
   });
   current = impact.state;
   events.push(...impact.events);

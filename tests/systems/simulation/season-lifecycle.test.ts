@@ -135,6 +135,8 @@ describe("season lifecycle", () => {
           cash: 0,
           payroll: 0,
           booksByYear: { "2026": createEmptyTeamFinanceBooks() },
+          booksByMonth: {},
+          cashLedgerByMonth: {},
         },
       ]),
     );

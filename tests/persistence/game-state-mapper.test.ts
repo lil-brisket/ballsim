@@ -1768,13 +1768,18 @@ describe("GameState schema migration", () => {
     expect(migrated.business.finances[teamA]!.booksByYear[yearKey]).toEqual({
       revenue: {
         tickets: 0,
-        sponsorships: 0,
+        premium: 0,
         merchandise: 0,
+        concessions: 0,
+        sponsorships: 0,
+        broadcast: 0,
+        playoffs: 0,
         other: 500,
       },
       expenses: {
         staff: 0,
         facilities: 0,
+        capital: 0,
         operations: 300,
         marketing: 0,
       },
@@ -1782,13 +1787,18 @@ describe("GameState schema migration", () => {
     expect(migrated.business.finances[teamB]!.booksByYear[yearKey]).toEqual({
       revenue: {
         tickets: 0,
-        sponsorships: 0,
+        premium: 0,
         merchandise: 0,
+        concessions: 0,
+        sponsorships: 0,
+        broadcast: 0,
+        playoffs: 0,
         other: 0,
       },
       expenses: {
         staff: 0,
         facilities: 0,
+        capital: 0,
         operations: 300,
         marketing: 0,
       },
@@ -1796,13 +1806,18 @@ describe("GameState schema migration", () => {
     expect(migrated.business.finances[teamC]!.booksByYear[yearKey]).toEqual({
       revenue: {
         tickets: 0,
-        sponsorships: 0,
+        premium: 0,
         merchandise: 0,
+        concessions: 0,
+        sponsorships: 0,
+        broadcast: 0,
+        playoffs: 0,
         other: 500,
       },
       expenses: {
         staff: 0,
         facilities: 0,
+        capital: 0,
         operations: 0,
         marketing: 0,
       },
@@ -1812,6 +1827,8 @@ describe("GameState schema migration", () => {
     for (const finance of Object.values(migrated.business.finances)) {
       expect("revenue" in finance).toBe(false);
       expect("expenses" in finance).toBe(false);
+      expect(finance.booksByMonth).toEqual({});
+      expect(finance.cashLedgerByMonth).toEqual({});
     }
   });
 });
