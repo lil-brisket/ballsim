@@ -1,5 +1,8 @@
 import {
   isAiDifficulty,
+  isDraftMode,
+  isLeagueArea,
+  isLeagueHistoryMode,
   isSimulationFrequency,
   isSupportedConferenceCount,
   isSupportedGamesPerTeam,
@@ -45,6 +48,10 @@ export function validateGameSettings(
   const simulation = asRecord(raw.simulation, "simulation", errors);
   const ai = asRecord(raw.ai, "ai", errors);
   const financialRules = asRecord(raw.financialRules, "financialRules", errors);
+  const draft =
+    raw.draft === undefined ? {} : asRecord(raw.draft, "draft", errors);
+  const history =
+    raw.history === undefined ? {} : asRecord(raw.history, "history", errors);
 
   if (
     errors.length > 0 ||
@@ -53,7 +60,9 @@ export function validateGameSettings(
     !playoffs ||
     !simulation ||
     !ai ||
-    !financialRules
+    !financialRules ||
+    !draft ||
+    !history
   ) {
     return { ok: false, errors };
   }
@@ -84,6 +93,17 @@ export function validateGameSettings(
   const divisionsEnabled = league.divisionsEnabled;
   if (typeof divisionsEnabled !== "boolean") {
     errors.push("league.divisionsEnabled must be a boolean.");
+  }
+
+  if (league.area !== undefined && !isLeagueArea(league.area)) {
+    errors.push('league.area must be "north_america", "europe", or "global".');
+  }
+
+  if (
+    raw.injuriesEnabled !== undefined &&
+    typeof raw.injuriesEnabled !== "boolean"
+  ) {
+    errors.push("injuriesEnabled must be a boolean.");
   }
 
   const gamesPerTeam = regularSeason.gamesPerTeam;
@@ -149,6 +169,43 @@ export function validateGameSettings(
     errors.push("financialRules.revenueSharingEnabled must be a boolean.");
   }
 
+  const draftMode = draft.mode;
+  const userPickPosition = draft.userPickPosition;
+  const randomizeUserPick = draft.randomizeUserPick;
+  if (draftMode !== undefined && !isDraftMode(draftMode)) {
+    errors.push('draft.mode must be "standard" or "fantasy".');
+  }
+  if (
+    userPickPosition !== undefined &&
+    userPickPosition !== null &&
+    (typeof userPickPosition !== "number" ||
+      !Number.isInteger(userPickPosition) ||
+      userPickPosition < 1 ||
+      (typeof teamCount === "number" && userPickPosition > teamCount))
+  ) {
+    errors.push("draft.userPickPosition must be null or within the league.");
+  }
+  if (
+    randomizeUserPick !== undefined &&
+    typeof randomizeUserPick !== "boolean"
+  ) {
+    errors.push("draft.randomizeUserPick must be a boolean.");
+  }
+  if (
+    draftMode === "standard" &&
+    userPickPosition !== undefined &&
+    userPickPosition !== null
+  ) {
+    errors.push("draft.userPickPosition requires fantasy draft mode.");
+  }
+  if (draftMode === "standard" && randomizeUserPick === true) {
+    errors.push("draft.randomizeUserPick requires fantasy draft mode.");
+  }
+
+  if (history.mode !== undefined && !isLeagueHistoryMode(history.mode)) {
+    errors.push('history.mode must be "new" or "generated".');
+  }
+
   if (
     typeof teamCount === "number" &&
     typeof playoffTeams === "number" &&
@@ -208,7 +265,11 @@ export function validateGameSettings(
       teamCount: teamCount as number,
       conferenceCount: conferenceCount as number,
       divisionsEnabled: divisionsEnabled as boolean,
+      area: (league.area as GameSettings["league"]["area"] | undefined) ??
+        "north_america",
     },
+    injuriesEnabled:
+      (raw.injuriesEnabled as boolean | undefined) ?? true,
     regularSeason: {
       gamesPerTeam: gamesPerTeam as number,
     },
@@ -227,6 +288,15 @@ export function validateGameSettings(
       salaryCapEnabled: salaryCapEnabled as boolean,
       luxuryTaxEnabled: luxuryTaxEnabled as boolean,
       revenueSharingEnabled: revenueSharingEnabled as boolean,
+    },
+    draft: {
+      mode: (draftMode as GameSettings["draft"]["mode"] | undefined) ?? "standard",
+      userPickPosition: (userPickPosition as number | null | undefined) ?? null,
+      randomizeUserPick: (randomizeUserPick as boolean | undefined) ?? false,
+    },
+    history: {
+      mode:
+        (history.mode as GameSettings["history"]["mode"] | undefined) ?? "new",
     },
   };
 

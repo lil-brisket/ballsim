@@ -26,9 +26,9 @@ export function GameSetupForm({
   atSaveLimit,
   defaultName = "Harbor Franchise",
 }: GameSetupFormProps) {
-  const [preset, setPreset] = useState<LeagueSetupPresetId>("standard");
+  const [preset, setPreset] = useState<LeagueSetupPresetId>("custom");
   const [settings, setSettings] = useState<GameSettings>(() =>
-    settingsForPreset("standard"),
+    settingsForPreset("custom"),
   );
   const [name, setName] = useState(defaultName);
   const [step, setStep] = useState<"configure" | "confirm">("configure");
@@ -91,6 +91,14 @@ export function GameSetupForm({
             value={settings.league.divisionsEnabled ? "Enabled" : "Disabled"}
           />
           <ReviewRow
+            label="League area"
+            value={leagueAreaLabel(settings.league.area ?? "north_america")}
+          />
+          <ReviewRow
+            label="Injuries"
+            value={settings.injuriesEnabled ? "On" : "Off"}
+          />
+          <ReviewRow
             label="Games per team"
             value={String(settings.regularSeason.gamesPerTeam)}
           />
@@ -111,6 +119,19 @@ export function GameSetupForm({
             value={settings.simulation.frequency}
           />
           <ReviewRow label="AI difficulty" value={settings.ai.difficulty} />
+          <ReviewRow label="Draft" value={settings.draft.mode} />
+          {settings.draft.mode === "fantasy" ? (
+            <ReviewRow
+              label="Fantasy pick"
+              value={settings.draft.randomizeUserPick
+                ? "Randomized"
+                : String(settings.draft.userPickPosition ?? "Not selected")}
+            />
+          ) : null}
+          <ReviewRow
+            label="League history"
+            value={settings.history.mode === "generated" ? "Generated" : "New league"}
+          />
           <ReviewRow
             label="Salary cap"
             value={settings.financialRules.salaryCapEnabled ? "On" : "Off"}
@@ -163,13 +184,18 @@ export function GameSetupForm({
       </div>
 
       <fieldset className="space-y-3">
-        <legend className="text-sm font-medium text-zinc-200">Preset</legend>
+        <legend className="text-sm font-medium text-zinc-200">
+          League configuration
+        </legend>
+        <p className="text-sm text-zinc-400">
+          Build your league below, or start from an optional template.
+        </p>
         <div className="flex flex-wrap gap-2">
           {(
             [
-              ["standard", "Standard — 30 / 82 / 16"],
-              ["cbl", "CBL — 12 / 22 / 8"],
-              ["custom", "Custom"],
+              ["custom", "Custom league"],
+              ["standard", "Standard template — 30 / 82 / 16"],
+              ["cbl", "CBL template — 12 / 22 / 8"],
             ] as const
           ).map(([id, label]) => (
             <button
@@ -227,6 +253,34 @@ export function GameSetupForm({
                   ...settings,
                   league: { ...settings.league, divisionsEnabled: checked },
                 })
+              }
+            />
+            <SelectField
+              label="League area"
+              value={leagueAreaIndex(settings.league.area ?? "north_america")}
+              options={[
+                { value: 0, label: "North America" },
+                { value: 1, label: "Europe" },
+                { value: 2, label: "Global" },
+              ]}
+              onChange={(value) =>
+                updateSettings({
+                  ...settings,
+                  league: {
+                    ...settings.league,
+                    area: value === 0 ? "north_america" : value === 1 ? "europe" : "global",
+                  },
+                })
+              }
+            />
+          </Section>
+
+          <Section title="League rules">
+            <ToggleField
+              label="Injuries"
+              checked={settings.injuriesEnabled}
+              onChange={(checked) =>
+                updateSettings({ ...settings, injuriesEnabled: checked })
               }
             />
           </Section>
@@ -338,6 +392,74 @@ export function GameSetupForm({
             />
           </Section>
 
+          <Section title="Draft">
+            <SelectField
+              label="Startup draft"
+              value={settings.draft.mode === "standard" ? 0 : 1}
+              options={[
+                { value: 0, label: "Standard rosters" },
+                { value: 1, label: "Fantasy draft" },
+              ]}
+              onChange={(value) =>
+                updateSettings({
+                  ...settings,
+                  draft: {
+                    ...settings.draft,
+                    mode: value === 0 ? "standard" : "fantasy",
+                    userPickPosition:
+                      value === 0 ? null : settings.draft.userPickPosition ?? 1,
+                    randomizeUserPick: value === 0 ? false : settings.draft.randomizeUserPick,
+                  },
+                })
+              }
+            />
+            {settings.draft.mode === "fantasy" ? (
+              <>
+                <SelectField
+                  label="Your draft position"
+                  value={settings.draft.userPickPosition ?? 1}
+                  options={Array.from({ length: settings.league.teamCount }, (_, index) => ({
+                    value: index + 1,
+                    label: `Pick ${index + 1}`,
+                  }))}
+                  onChange={(value) =>
+                    updateSettings({
+                      ...settings,
+                      draft: { ...settings.draft, userPickPosition: value },
+                    })
+                  }
+                />
+                <ToggleField
+                  label="Randomize my draft position"
+                  checked={settings.draft.randomizeUserPick}
+                  onChange={(checked) =>
+                    updateSettings({
+                      ...settings,
+                      draft: { ...settings.draft, randomizeUserPick: checked },
+                    })
+                  }
+                />
+              </>
+            ) : null}
+          </Section>
+
+          <Section title="League history">
+            <SelectField
+              label="Starting world"
+              value={settings.history.mode === "new" ? 0 : 1}
+              options={[
+                { value: 0, label: "Completely new league" },
+                { value: 1, label: "Generate prior history" },
+              ]}
+              onChange={(value) =>
+                updateSettings({
+                  ...settings,
+                  history: { mode: value === 0 ? "new" : "generated" },
+                })
+              }
+            />
+          </Section>
+
           <Section title="Financial rules">
             <ToggleField
               label="Salary cap"
@@ -421,6 +543,18 @@ function presetLabel(preset: LeagueSetupPresetId): string {
   if (preset === "standard") return "Standard";
   if (preset === "cbl") return "CBL";
   return "Custom";
+}
+
+function leagueAreaIndex(area: NonNullable<GameSettings["league"]["area"]>): number {
+  return area === "north_america" ? 0 : area === "europe" ? 1 : 2;
+}
+
+function leagueAreaLabel(area: NonNullable<GameSettings["league"]["area"]>): string {
+  return area === "north_america"
+    ? "North America"
+    : area === "europe"
+      ? "Europe"
+      : "Global";
 }
 
 function Section({

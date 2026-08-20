@@ -111,7 +111,9 @@ export function reconstructGameSettingsFromState(
       teamCount: teamCount > 0 ? teamCount : DEFAULT_GAME_SETTINGS.league.teamCount,
       conferenceCount: resolvedConferenceCount,
       divisionsEnabled,
+      area: DEFAULT_GAME_SETTINGS.league.area,
     },
+    injuriesEnabled: DEFAULT_GAME_SETTINGS.injuriesEnabled,
     regularSeason: {
       gamesPerTeam,
     },
@@ -131,6 +133,8 @@ export function reconstructGameSettingsFromState(
       luxuryTaxEnabled: true,
       revenueSharingEnabled: true,
     },
+    draft: { ...DEFAULT_GAME_SETTINGS.draft },
+    history: { ...DEFAULT_GAME_SETTINGS.history },
   };
 }
 
