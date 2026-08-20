@@ -76,7 +76,9 @@ function createEightTeamPopulatedState(rngSeed: number): GameState {
         teamCount: 8,
         conferenceCount: 2,
         divisionsEnabled: true,
+        area: "north_america",
       },
+      injuriesEnabled: true,
       regularSeason: { gamesPerTeam: 14 },
       playoffs: {
         playoffTeams: 8,
@@ -90,6 +92,12 @@ function createEightTeamPopulatedState(rngSeed: number): GameState {
         luxuryTaxEnabled: true,
         revenueSharingEnabled: true,
       },
+      draft: {
+        mode: "standard",
+        userPickPosition: null,
+        randomizeUserPick: false,
+      },
+      history: { mode: "new" },
     },
     world: {
       calendar: {

@@ -26,13 +26,18 @@ export type SupportedConferenceCount =
 
 export type SimulationFrequency = "daily" | "weekly";
 export type AiDifficulty = "easy" | "normal" | "hard";
+export type LeagueArea = "north_america" | "europe" | "global";
+export type DraftMode = "standard" | "fantasy";
+export type LeagueHistoryMode = "new" | "generated";
 
 export type GameSettings = {
   league: {
     teamCount: number;
     conferenceCount: number;
     divisionsEnabled: boolean;
+    area?: LeagueArea;
   };
+  injuriesEnabled: boolean;
   regularSeason: {
     gamesPerTeam: number;
   };
@@ -57,6 +62,14 @@ export type GameSettings = {
     luxuryTaxEnabled: boolean;
     revenueSharingEnabled: boolean;
   };
+  draft: {
+    mode: DraftMode;
+    userPickPosition: number | null;
+    randomizeUserPick: boolean;
+  };
+  history: {
+    mode: LeagueHistoryMode;
+  };
 };
 
 /** Standard new-save defaults: 30 teams / 82 games / 16 playoff teams. */
@@ -65,7 +78,9 @@ export const DEFAULT_GAME_SETTINGS: GameSettings = {
     teamCount: 30,
     conferenceCount: 2,
     divisionsEnabled: true,
+    area: "north_america",
   },
+  injuriesEnabled: true,
   regularSeason: {
     gamesPerTeam: 82,
   },
@@ -85,6 +100,14 @@ export const DEFAULT_GAME_SETTINGS: GameSettings = {
     luxuryTaxEnabled: true,
     revenueSharingEnabled: true,
   },
+  draft: {
+    mode: "standard",
+    userPickPosition: null,
+    randomizeUserPick: false,
+  },
+  history: {
+    mode: "new",
+  },
 };
 
 /** Classic CBL: 12 teams / 22 games / 8 playoff teams. */
@@ -93,7 +116,9 @@ export const CBL_GAME_SETTINGS: GameSettings = {
     teamCount: 12,
     conferenceCount: 2,
     divisionsEnabled: true,
+    area: "north_america",
   },
+  injuriesEnabled: true,
   regularSeason: {
     gamesPerTeam: 22,
   },
@@ -112,6 +137,14 @@ export const CBL_GAME_SETTINGS: GameSettings = {
     salaryCapEnabled: true,
     luxuryTaxEnabled: true,
     revenueSharingEnabled: true,
+  },
+  draft: {
+    mode: "standard",
+    userPickPosition: null,
+    randomizeUserPick: false,
+  },
+  history: {
+    mode: "new",
   },
 };
 
@@ -160,13 +193,30 @@ export function isAiDifficulty(value: unknown): value is AiDifficulty {
   return value === "easy" || value === "normal" || value === "hard";
 }
 
+export function isLeagueArea(value: unknown): value is LeagueArea {
+  return value === "north_america" || value === "europe" || value === "global";
+}
+
+export function isDraftMode(value: unknown): value is DraftMode {
+  return value === "standard" || value === "fantasy";
+}
+
+export function isLeagueHistoryMode(
+  value: unknown,
+): value is LeagueHistoryMode {
+  return value === "new" || value === "generated";
+}
+
 export function cloneGameSettings(settings: GameSettings): GameSettings {
   return {
     league: { ...settings.league },
+    injuriesEnabled: settings.injuriesEnabled ?? true,
     regularSeason: { ...settings.regularSeason },
     playoffs: { ...settings.playoffs },
     simulation: { ...settings.simulation },
     ai: { ...settings.ai },
     financialRules: { ...settings.financialRules },
+    draft: { ...settings.draft },
+    history: { ...settings.history },
   };
 }

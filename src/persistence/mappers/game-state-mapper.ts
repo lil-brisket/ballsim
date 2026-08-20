@@ -356,7 +356,7 @@ type GameStateV7 = {
   user: UserSliceV14;
 };
 
-type GameStateV6 = Omit<GameState, "meta" | "world" | "competition" | "business" | "user"> & {
+type GameStateV6 = Omit<GameState, "meta" | "settings" | "world" | "competition" | "business" | "user"> & {
   meta: Omit<GameState["meta"], "schemaVersion"> & { schemaVersion: 6 };
   world: Omit<GameState["world"], "players" | "teams"> & {
     players: Record<string, Player>;
@@ -2301,6 +2301,7 @@ type GameStateV27 = {
   business: GameState["business"];
   user: GameState["user"];
 };
+
 
 /**
  * Deterministic v27 → v28: expand finance categories, add booksByMonth and

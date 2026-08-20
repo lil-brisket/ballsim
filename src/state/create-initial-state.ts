@@ -326,7 +326,9 @@ export function createFourTeamInitialGameState(
       teamCount: 4,
       conferenceCount: 2,
       divisionsEnabled: false,
+      area: "north_america",
     },
+    injuriesEnabled: true,
     regularSeason: {
       gamesPerTeam: 14,
     },
@@ -345,6 +347,14 @@ export function createFourTeamInitialGameState(
       salaryCapEnabled: true,
       luxuryTaxEnabled: true,
       revenueSharingEnabled: true,
+    },
+    draft: {
+      mode: "standard",
+      userPickPosition: null,
+      randomizeUserPick: false,
+    },
+    history: {
+      mode: "new",
     },
   };
 
