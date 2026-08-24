@@ -75,6 +75,8 @@ export type NarrativeSituationAction = {
   id: string;
   label: string;
   href?: string;
+  /** Plain-language tradeoff for the dashboard. */
+  effectSummary?: string;
 };
 
 export type NarrativeSituationUpdate = {

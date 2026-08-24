@@ -13,6 +13,17 @@ export const PREFERENCE_MAX = 1;
  */
 export const PREFERENCE_VALUE_MODIFIER_BAND = 0.25;
 
+/**
+ * Max absolute additive shift posture/trajectory may apply relative to
+ * identity baseline preferences. Protects organizational identity inertia.
+ */
+export const IDENTITY_INERTIA_MODIFIER_CAP = 0.28;
+
+/**
+ * Catastrophic financial stress allows a larger identity shift (still capped).
+ */
+export const IDENTITY_INERTIA_CATASTROPHIC_CAP = 0.42;
+
 /** Max absolute ticket price step per weekly AI decision. */
 export const AI_TICKET_PRICE_STEP_MAX = 5;
 
@@ -38,6 +49,19 @@ export function clampPreference(value: number): number {
     return PREFERENCE_MIN;
   }
   return Math.max(PREFERENCE_MIN, Math.min(PREFERENCE_MAX, value));
+}
+
+/**
+ * Clamp a modulated preference so it cannot drift more than `cap` from baseline.
+ */
+export function applyIdentityInertia(
+  baseline: number,
+  modulated: number,
+  cap: number = IDENTITY_INERTIA_MODIFIER_CAP,
+): number {
+  const lo = baseline - cap;
+  const hi = baseline + cap;
+  return clampPreference(Math.max(lo, Math.min(hi, modulated)));
 }
 
 /**

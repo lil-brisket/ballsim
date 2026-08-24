@@ -67,6 +67,7 @@ export function FranchiseSituations(props: {
                 <form
                   key={action.id}
                   action={resolveNarrativeSituationAction}
+                  className="max-w-xs"
                 >
                   <input type="hidden" name="saveId" value={props.saveId} />
                   <input
@@ -86,6 +87,11 @@ export function FranchiseSituations(props: {
                   >
                     {action.label}
                   </button>
+                  {action.effectSummary ? (
+                    <p className="mt-1 text-[11px] leading-snug text-zinc-500">
+                      {action.effectSummary}
+                    </p>
+                  ) : null}
                 </form>
               ))}
               <form action={acknowledgeNarrativeSituationAction}>

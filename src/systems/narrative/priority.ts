@@ -22,6 +22,10 @@ export function priorityForDetectorKey(detectorKey: string): number {
       return NARRATIVE_PRIORITY.critical_financial;
     case "expectation_gap":
       return NARRATIVE_PRIORITY.expectation_gap;
+    case "sponsor_visibility_concern":
+      return NARRATIVE_PRIORITY.major_sponsor;
+    case "media_ownership_pressure":
+      return NARRATIVE_PRIORITY.expectation_gap;
     case "sponsor_opportunity":
       return NARRATIVE_PRIORITY.major_sponsor;
     case "sponsor_expiry":

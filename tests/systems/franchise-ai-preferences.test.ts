@@ -151,6 +151,9 @@ describe("resolveFranchisePreferences", () => {
     for (const teamId of Object.keys(state.world.teams) as TeamId[]) {
       const resolved = resolveFranchisePreferences(state, teamId);
       expect(resolved).not.toBeNull();
+      expect(resolved!.posture).toBeTruthy();
+      expect(resolved!.trajectory.competitiveWindow).toBeGreaterThanOrEqual(0);
+      expect(resolved!.pressure.financialStress).toBeGreaterThanOrEqual(0);
       expect(resolved!.debug.primaryInfluences.length).toBeGreaterThan(0);
     }
   });

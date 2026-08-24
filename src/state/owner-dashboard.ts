@@ -198,7 +198,7 @@ export type OwnerDashboardSituationView = {
   body: string;
   updatedOn: string;
   evidence: Record<string, number | boolean | string>;
-  actions: { id: string; label: string; href?: string }[];
+  actions: { id: string; label: string; href?: string; effectSummary?: string }[];
 };
 
 export type OwnerDashboardView = {
@@ -893,6 +893,9 @@ function buildSituationsView(state: GameState): OwnerDashboardSituationView[] {
         id: action.id,
         label: action.label,
         ...(action.href ? { href: action.href } : {}),
+        ...(action.effectSummary
+          ? { effectSummary: action.effectSummary }
+          : {}),
       })),
     }));
 }

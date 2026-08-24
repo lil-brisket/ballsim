@@ -8,7 +8,12 @@ import {
 } from "@/systems/narrative/lifecycle";
 import { setMarketingBudget } from "@/systems/marketing";
 import { signSponsorship } from "@/systems/sponsorships";
-import { setTicketPrice, TICKET_PRICE_MIN } from "@/systems/ticket-pricing";
+import {
+  setPremiumTicketPrice,
+  setTicketPrice,
+  TICKET_PRICE_MIN,
+} from "@/systems/ticket-pricing";
+import { PREMIUM_TICKET_PRICE_MIN } from "@/systems/demand/demand-config";
 
 export type NarrativeActionTransition =
   | "acknowledge"
@@ -22,16 +27,21 @@ export type NarrativeActionDefinition = {
 };
 
 const TICKET_PRICE_REDUCTION = 5;
+const PREMIUM_TICKET_PRICE_REDUCTION = 15;
 const MARKETING_BUDGET_BUMP = 500_000;
 
 /**
  * Application catalog: actionId → existing command adapters.
  * Narrative situations never store command strings.
+ *
+ * Rule: actions must invoke an existing gameplay command OR navigate to a
+ * meaningful review page. Avoid narrative-only hidden modifiers.
  */
 export const NARRATIVE_ACTION_CATALOG: Record<string, NarrativeActionDefinition> =
   {
     review_facilities: { transition: "acknowledge" },
     review_finances: { transition: "acknowledge" },
+    review_relocation: { transition: "acknowledge" },
     open_free_agency: { transition: "acknowledge" },
     stay_the_course: { transition: "acknowledge" },
     reduce_ticket_price: {
@@ -42,6 +52,19 @@ export const NARRATIVE_ACTION_CATALOG: Record<string, NarrativeActionDefinition>
           state.business.franchiseOps[teamId]?.ticketPrice ?? 45;
         const next = Math.max(TICKET_PRICE_MIN, current - TICKET_PRICE_REDUCTION);
         return setTicketPrice(state, teamId, next);
+      },
+    },
+    reduce_premium_ticket_price: {
+      transition: "take_action",
+      run: (state) => {
+        const teamId = state.user.controlledTeamId;
+        const current =
+          state.business.franchiseOps[teamId]?.premiumTicketPrice ?? 180;
+        const next = Math.max(
+          PREMIUM_TICKET_PRICE_MIN,
+          current - PREMIUM_TICKET_PRICE_REDUCTION,
+        );
+        return setPremiumTicketPrice(state, teamId, next);
       },
     },
     increase_marketing: {
@@ -135,6 +158,7 @@ export function applyNarrativeAction(
       return resolveSituation(entry, date);
     }
     // take_action — keep active/acknowledged; do not auto-resolve.
+    // Underlying detectors resolve when simulation conditions improve.
     return {
       ...entry,
       status: entry.status === "escalated" ? "active" : entry.status,

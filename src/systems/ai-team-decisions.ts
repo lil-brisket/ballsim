@@ -414,9 +414,21 @@ function freeAgentPreferenceScore(
   let score = overall;
   if (player.age <= AI_YOUTH_AGE_MAX) {
     score += boundedPreferenceDelta(prefs.youthValue, 8);
+    // Development orgs prefer high-potential / early-stage players.
+    score += boundedPreferenceDelta(prefs.developmentPriority, 4);
+    const potentialGap = player.potential.overall - overall;
+    if (potentialGap > 0) {
+      score += potentialGap * prefs.youthValue * 0.35;
+    }
+    if (player.development.stage === "developing") {
+      score += boundedPreferenceDelta(prefs.developmentPriority, 3);
+    }
   } else if (player.age >= AI_VETERAN_AGE_MIN) {
     score += boundedPreferenceDelta(prefs.establishedPlayerValue, 8);
     score += boundedPreferenceDelta(prefs.winNowPressure, 4);
+    // Asset/rebuild orgs discount veterans more heavily.
+    score -= boundedPreferenceDelta(prefs.rebuildPressure, 5);
+    score -= boundedPreferenceDelta(prefs.pickValue, 2);
   }
   return score;
 }

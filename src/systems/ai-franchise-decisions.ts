@@ -169,16 +169,21 @@ export function ticketPriceFromPreferences(
   prefs: EffectivePreferences,
 ): number {
   // attendancePriority → lower prices; spendWillingness → higher gate.
+  // Fan price friction is already baked into attendancePriority via pressure signals.
   const attendancePull = (prefs.attendancePriority - 0.5) * 2; // -1..1
-  const revenuePull = (prefs.spendWillingness - prefs.cashPreservation) ; // roughly -1..1
+  const revenuePull = prefs.spendWillingness - prefs.cashPreservation; // roughly -1..1
   const rawStep =
-    -attendancePull * AI_TICKET_PRICE_STEP_MAX * 0.6 +
-    revenuePull * AI_TICKET_PRICE_STEP_MAX * 0.4;
+    -attendancePull * AI_TICKET_PRICE_STEP_MAX * 0.65 +
+    revenuePull * AI_TICKET_PRICE_STEP_MAX * 0.35;
   let step = Math.round(
     Math.max(-AI_TICKET_PRICE_STEP_MAX, Math.min(AI_TICKET_PRICE_STEP_MAX, rawStep)),
   );
   if (sentiment < 35 && step > 0) {
     step = Math.min(step, 0);
+  }
+  // High attendance priority under pressure: prefer cutting prices.
+  if (prefs.attendancePriority > 0.7 && step >= 0) {
+    step = Math.min(step, -1);
   }
   // Conservative / high cash preservation: prefer no-op when step tiny
   if (prefs.cashPreservation > 0.65 && Math.abs(step) <= 1) {
@@ -273,17 +278,22 @@ export function facilityUpgradeFromPreferences(
     },
     {
       category: "arena",
-      score: prefs.marketingPriority * 0.4 + prefs.attendancePriority * 0.4,
+      score:
+        prefs.marketingPriority * 0.35 +
+        prefs.attendancePriority * 0.35 +
+        prefs.winNowPressure * 0.15,
     },
     {
       category: "fan",
-      score: prefs.attendancePriority * 0.7 + prefs.marketingPriority * 0.2,
+      score: prefs.attendancePriority * 0.7 + prefs.marketingPriority * 0.25,
     },
   ];
 
+  // Prestige / win-now orgs lower the facility score threshold (overspend failure mode).
+  const minScore = prefs.spendWillingness >= 0.65 ? 0.32 : 0.4;
   scores.sort((a, b) => b.score - a.score);
   for (const { category, score } of scores) {
-    if (score < 0.4) {
+    if (score < minScore) {
       continue;
     }
     const f = ops.facilities[category];

@@ -38,6 +38,8 @@ export type DetectorCandidate = {
   relatedRivalTeamId?: TeamId;
   /** When true, resolve an existing active situation of this key. */
   resolve?: boolean;
+  /** When set, new situations receive expiresOn = date + N days. */
+  expiresAfterDays?: number;
 };
 
 export type ObjectiveGapView = {

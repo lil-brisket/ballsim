@@ -26,6 +26,11 @@ import {
   detectExpansionDiscussion,
 } from "@/systems/narrative/detectors";
 import {
+  detectMediaOwnershipPressure,
+  detectSponsorVisibilityConcern,
+  enrichAttendanceDeclineActions,
+} from "@/systems/narrative/attendance-crisis-chain";
+import {
   applyCandidateToSituations,
   expireDueSituations,
 } from "@/systems/narrative/lifecycle";
@@ -145,7 +150,26 @@ export function processNarrativeLayer(
   };
 
   const raw = runDetectors(current, options.cadences, options.dayEvents ?? []);
-  const aggregated = aggregateCandidates(raw);
+  // Attendance crisis chain: escalate on inaction + persistent evidence.
+  for (const cadence of options.cadences) {
+    const chainContext = buildNarrativeContext(current, {
+      cadence,
+      dayEvents: options.dayEvents,
+    });
+    const sponsor = detectSponsorVisibilityConcern(chainContext, situations);
+    if (sponsor && !raw.some((c) => c.detectorKey === sponsor.detectorKey)) {
+      raw.push(sponsor);
+    }
+    const media = detectMediaOwnershipPressure(chainContext, situations);
+    if (media && !raw.some((c) => c.detectorKey === media.detectorKey)) {
+      raw.push(media);
+    }
+  }
+
+  const enriched = raw.map((candidate) =>
+    enrichAttendanceDeclineActions(candidate),
+  );
+  const aggregated = aggregateCandidates(enriched);
   const filtered = applySpamFilters(aggregated, contextForSpam);
   const selected = selectDailyStories(filtered);
 

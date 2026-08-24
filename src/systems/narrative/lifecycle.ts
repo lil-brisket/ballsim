@@ -1,4 +1,5 @@
 import { addCalendarDays } from "@/domain/calendar-date";
+// expiresAfterDays applied below when creating situations
 import {
   createNarrativeSituation,
   NARRATIVE_SITUATIONS_MAX,
@@ -248,6 +249,12 @@ export function applyCandidateToSituations(
   }
 
   const id = situationIdFor(storageKey, teamId, `${monthId}_s${candidate.stage}`);
+  const expiresOn =
+    candidate.expiresAfterDays !== undefined &&
+    Number.isInteger(candidate.expiresAfterDays) &&
+    candidate.expiresAfterDays > 0
+      ? addCalendarDays(date, candidate.expiresAfterDays)
+      : undefined;
   const created = createNarrativeSituation({
     id,
     detectorKey: storageKey,
@@ -260,6 +267,7 @@ export function applyCandidateToSituations(
     body: rendered.body,
     createdOn: date,
     updatedOn: date,
+    ...(expiresOn ? { expiresOn } : {}),
     evidence: candidate.evidence,
     actions: candidate.actions,
     updates: [updateEntry],

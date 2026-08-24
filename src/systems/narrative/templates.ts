@@ -56,6 +56,38 @@ export function renderNarrative(
         body: `Ticket prices sit ${num(ctx, "vsLeagueTicketPricePct")}% above the league average while attendance is down ${num(ctx, "attendanceDownPct")}% and fan sentiment has shifted ${num(ctx, "sentimentChange")}.`,
         severity,
       };
+    case "sponsor_visibility_concern":
+      if (candidate.resolve) {
+        return {
+          title: "Sponsor visibility concern eased",
+          summary: "Commercial partners are no longer escalating visibility worries.",
+          body: "Attendance and demand signals have recovered enough that sponsor pressure is no longer active.",
+          severity: "informational",
+        };
+      }
+      return {
+        title: "Sponsors question visibility",
+        summary:
+          "Partners are asking whether the franchise still delivers the audience they paid for.",
+        body: `Attendance pressure has persisted for ${num(ctx, "daysSinceAttendanceAlert")} days. Sponsor risk sits near ${Math.round(num(ctx, "sponsorRisk") * 100)}% with media attention at ${num(ctx, "mediaAttention")}. Ignoring this may invite harder public criticism.`,
+        severity,
+      };
+    case "media_ownership_pressure":
+      if (candidate.resolve) {
+        return {
+          title: "Media ownership pressure eased",
+          summary: "Coverage of ownership has cooled as commercial conditions improved.",
+          body: "Local media is no longer amplifying an unresolved attendance and sponsor spiral.",
+          severity: "informational",
+        };
+      }
+      return {
+        title: "Local media turns on ownership",
+        summary:
+          "Coverage is framing ownership as slow to respond to a developing commercial crisis.",
+        body: `Sponsor concern has been open for ${num(ctx, "daysSinceSponsorAlert")} days. Fan sentiment is ${num(ctx, "fanSentiment")} and media attention is ${num(ctx, "mediaAttention")}. The story is no longer just soft attendance — it is about leadership.`,
+        severity,
+      };
     case "losing_slide":
       if (candidate.resolve) {
         return {

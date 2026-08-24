@@ -1988,6 +1988,12 @@ function validateNarrativeSituation(
       if (actionValue.href !== undefined) {
         assertNonEmptyString(actionValue.href, `${actionPath}.href`);
       }
+      if (actionValue.effectSummary !== undefined) {
+        assertNonEmptyString(
+          actionValue.effectSummary,
+          `${actionPath}.effectSummary`,
+        );
+      }
     }
   }
   if (value.related !== undefined) {
