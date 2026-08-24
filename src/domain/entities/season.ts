@@ -37,6 +37,11 @@ export type Season = {
   year: number;
   phase: SeasonPhase;
   offseasonStage: OffseasonStage;
+  /**
+   * Calendar date when this season entered the regular phase (YYYY-MM-DD).
+   * Null until preseason → regular. Used for league trade-deadline rules.
+   */
+  regularSeasonStartDate: string | null;
 };
 
 export function isSeasonPhase(value: unknown): value is SeasonPhase {

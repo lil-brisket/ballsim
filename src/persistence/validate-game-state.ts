@@ -278,6 +278,16 @@ export function validateGameState(state: unknown): asserts state is GameState {
       `competition.season.offseasonStage must be one of ${OFFSEASON_STAGES.join(", ")}.`,
     );
   }
+  if (
+    competition.season.regularSeasonStartDate !== null &&
+    competition.season.regularSeasonStartDate !== undefined
+  ) {
+    if (typeof competition.season.regularSeasonStartDate !== "string") {
+      fail("competition.season.regularSeasonStartDate must be a string or null.");
+    }
+  } else if (competition.season.regularSeasonStartDate === undefined) {
+    fail("competition.season.regularSeasonStartDate is required (string or null).");
+  }
 
   assertRecord(competition.schedule, "competition.schedule");
   assertNonEmptyString(

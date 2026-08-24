@@ -116,6 +116,7 @@ export function reconstructGameSettingsFromState(
     injuriesEnabled: DEFAULT_GAME_SETTINGS.injuriesEnabled,
     regularSeason: {
       gamesPerTeam,
+      tradeDeadlineRule: { ...DEFAULT_GAME_SETTINGS.regularSeason.tradeDeadlineRule },
     },
     playoffs: {
       playoffTeams,

@@ -17,6 +17,7 @@ import {
   POOR_ATTENDANCE_FILL_RATE_PCT,
   SIGNIFICANT_FINANCIAL_CHANGE,
 } from "@/systems/owner-objectives-config";
+import { getCalendarContext } from "@/systems/simulation/calendar-context";
 
 export type GenerateOwnerNotificationsOptions = {
   /** Controlled-team cash before applyGameplayFinancialConsequences in this pass. */
@@ -207,42 +208,7 @@ export function generateOwnerNotifications(
     append,
   );
   appendAwarenessBandNotification(state, teamId, date, append);
-
-  const phase = state.competition.season.phase;
-  if (phase === "postseason" || phase === "offseason") {
-    append(
-      createOwnerNotification({
-        id: asOwnerNotificationId(
-          `notif_season_completed_${state.competition.season.year}`,
-        ),
-        type: "season_completed",
-        title: "Season completed",
-        message: `The ${state.competition.season.year} season has concluded.`,
-        occurredOn: date,
-        severity: "info",
-        read: false,
-        dedupeKey: `season_completed:${state.competition.season.year}`,
-        relatedTeamId: teamId,
-      }),
-    );
-  }
-  if (phase === "offseason") {
-    append(
-      createOwnerNotification({
-        id: asOwnerNotificationId(
-          `notif_offseason_began_${state.competition.season.year}`,
-        ),
-        type: "offseason_began",
-        title: "Offseason began",
-        message: "The offseason has begun.",
-        occurredOn: date,
-        severity: "info",
-        read: false,
-        dedupeKey: `offseason_began:${state.competition.season.year}`,
-        relatedTeamId: teamId,
-      }),
-    );
-  }
+  appendCalendarStoryNotifications(state, teamId, date, append);
 
   if (additions.length === 0) {
     return systemResult(state);
@@ -499,4 +465,134 @@ function isPlayoffEliminated(state: GameState, teamId: TeamId): boolean {
     }
   }
   return playoffs.status === "complete" && playoffs.championTeamId !== teamId;
+}
+
+function appendCalendarStoryNotifications(
+  state: GameState,
+  teamId: TeamId,
+  date: string,
+  append: (notification: OwnerNotification) => void,
+): void {
+  const calendar = getCalendarContext(state);
+  const year = state.competition.season.year;
+  const phase = calendar.lifecyclePhase;
+
+  if (phase === "postseason") {
+    append(
+      createOwnerNotification({
+        id: asOwnerNotificationId(`notif_season_completed_${year}`),
+        type: "season_completed",
+        title: "Season review",
+        message:
+          calendar.seasonStory ||
+          `The ${year} season has concluded. Review results before opening the offseason.`,
+        occurredOn: date,
+        severity: "info",
+        read: false,
+        dedupeKey: `season_completed:${year}`,
+        relatedTeamId: teamId,
+      }),
+    );
+    return;
+  }
+
+  if (phase === "offseason") {
+    append(
+      createOwnerNotification({
+        id: asOwnerNotificationId(`notif_offseason_began_${year}`),
+        type: "offseason_began",
+        title: "Offseason began",
+        message:
+          calendar.seasonStory ||
+          "The offseason has begun. Plan staff, contracts, and roster moves.",
+        occurredOn: date,
+        severity: "info",
+        read: false,
+        dedupeKey: `offseason_began:${year}`,
+        relatedTeamId: teamId,
+      }),
+    );
+  }
+
+  if (calendar.seasonSegment === "deadline_window" && calendar.tradesOpen) {
+    const days = calendar.daysUntilTradeDeadline ?? 0;
+    append(
+      createOwnerNotification({
+        id: asOwnerNotificationId(
+          `notif_deadline_window_${year}_${days <= 3 ? "final" : "open"}`,
+        ),
+        type: "calendar_milestone",
+        title: "Trade deadline approaching",
+        message:
+          calendar.seasonStory ||
+          `Trade deadline in ${days} day${days === 1 ? "" : "s"}.`,
+        occurredOn: date,
+        severity: days <= 3 ? "warning" : "info",
+        read: false,
+        dedupeKey: `deadline_window:${year}:${days <= 3 ? "final" : "open"}`,
+        relatedTeamId: teamId,
+      }),
+    );
+  }
+
+  if (
+    calendar.seasonSegment === "late" &&
+    calendar.daysUntilTradeDeadline !== null &&
+    calendar.daysUntilTradeDeadline < 0
+  ) {
+    append(
+      createOwnerNotification({
+        id: asOwnerNotificationId(`notif_deadline_passed_${year}`),
+        type: "calendar_milestone",
+        title: "Trade deadline passed",
+        message:
+          calendar.seasonStory ||
+          "The trade deadline has passed. Player trades are closed until the offseason.",
+        occurredOn: date,
+        severity: "info",
+        read: false,
+        dedupeKey: `deadline_passed:${year}`,
+        relatedTeamId: teamId,
+      }),
+    );
+  }
+
+  if (
+    calendar.seasonSegment === "early" &&
+    calendar.regularSeasonProgress >= 0.08 &&
+    calendar.regularSeasonProgress < 0.2 &&
+    calendar.seasonStory
+  ) {
+    append(
+      createOwnerNotification({
+        id: asOwnerNotificationId(`notif_early_story_${year}`),
+        type: "calendar_milestone",
+        title: "Early season",
+        message: calendar.seasonStory,
+        occurredOn: date,
+        severity: "info",
+        read: false,
+        dedupeKey: `early_season_story:${year}`,
+        relatedTeamId: teamId,
+      }),
+    );
+  }
+
+  if (calendar.playoffRace === "bubble" && phase === "regular") {
+    append(
+      createOwnerNotification({
+        id: asOwnerNotificationId(`notif_playoff_bubble_${year}`),
+        type: "calendar_milestone",
+        title: "Playoff race",
+        message:
+          calendar.seasonStory ||
+          "Your team is in a playoff bubble — remaining games carry extra weight.",
+        occurredOn: date,
+        severity: "warning",
+        read: false,
+        dedupeKey: `playoff_bubble:${year}`,
+        relatedTeamId: teamId,
+      }),
+    );
+  }
 }

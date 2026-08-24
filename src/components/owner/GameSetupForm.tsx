@@ -296,7 +296,10 @@ export function GameSetupForm({
               onChange={(value) =>
                 updateSettings({
                   ...settings,
-                  regularSeason: { gamesPerTeam: value },
+                  regularSeason: {
+                    ...settings.regularSeason,
+                    gamesPerTeam: value,
+                  },
                 })
               }
             />

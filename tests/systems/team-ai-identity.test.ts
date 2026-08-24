@@ -64,6 +64,9 @@ function ctx(): FranchiseContext {
     marketingAwareness: 40,
     draftAssetCount: 3,
     performancePressure: 0.4,
+    calendarUrgency: 0,
+    deadlineWindow: false,
+    offseasonPlanning: false,
   };
 }
 

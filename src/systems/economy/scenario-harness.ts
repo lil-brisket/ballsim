@@ -30,6 +30,7 @@ import {
 import { getTeamPayroll } from "@/systems/salary-cap";
 import { advanceSimulation } from "@/systems/simulation/advance-simulation";
 import { advanceOffseasonStage } from "@/systems/simulation/offseason-lifecycle";
+import { enterOffseasonFromPostseason } from "@/systems/simulation/season-lifecycle";
 import { runAiTeamDecisions } from "@/systems/ai-team-decisions";
 import { setMarketingBudget } from "@/systems/marketing";
 import { setTicketPrice } from "@/systems/ticket-pricing";
@@ -1051,17 +1052,25 @@ function snapshotSeason(
 
 function resolveOffseason(state: GameState, rng: Rng): GameState {
   let current = persistRng(state, rng);
-  if (
-    current.competition.season.phase === "offseason" &&
-    current.competition.season.offseasonStage === "free_agency"
-  ) {
-    current = persistRng(advanceOffseasonStage(current).state, rng);
+  if (current.competition.season.phase === "postseason") {
+    current = persistRng(enterOffseasonFromPostseason(current).state, rng);
   }
   let guard = 0;
   while (guard < 80) {
     guard += 1;
     if (current.competition.season.phase === "preseason") {
       return current;
+    }
+    if (current.competition.season.phase === "postseason") {
+      current = persistRng(enterOffseasonFromPostseason(current).state, rng);
+      continue;
+    }
+    if (
+      current.competition.season.phase === "offseason" &&
+      current.competition.season.offseasonStage === "free_agency"
+    ) {
+      current = persistRng(advanceOffseasonStage(current).state, rng);
+      continue;
     }
     if (isUserOnDraftClock(current)) {
       current = persistRng(autoPickUserDraft(current), rng);
@@ -1106,6 +1115,9 @@ function simulateOneSeason(
     absorbEvents(mix, advanced.events, teamId, broadcastShare);
     observeCash(tracker, current, teamId);
     const season = current.competition.season;
+    if (season.year === startYear && season.phase === "postseason") {
+      break;
+    }
     if (
       season.year === startYear &&
       season.phase === "offseason" &&

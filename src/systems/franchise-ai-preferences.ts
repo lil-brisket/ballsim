@@ -201,18 +201,26 @@ export function resolveFranchisePreferencesFromParts(
   );
 
   // Situation pressures (do not rewrite stored strategy)
+  // Calendar urgency scales existing pressures — it must not flip identity.
+  const calendarScale = 1 + context.calendarUrgency * 0.2;
   let winNowPressure = clampPreference(
-    base.winNowBias * 0.65 +
+    (base.winNowBias * 0.65 +
       patiencePressure * 0.2 +
       (context.rosterStrength >= 60 ? 0.15 : 0) +
-      (context.winPct >= 0.55 ? 0.1 : 0),
+      (context.winPct >= 0.55 ? 0.1 : 0)) *
+      (context.deadlineWindow && base.winNowBias >= base.rebuildBias
+        ? calendarScale
+        : 1),
   );
   let rebuildPressure = clampPreference(
-    base.rebuildBias * 0.65 +
+    (base.rebuildBias * 0.65 +
       (1 - patiencePressure) * 0.1 +
       (context.youngRosterSharePct >= 50 ? 0.1 : 0) +
       (context.draftAssetCount >= 4 ? 0.1 : 0) +
-      (context.rosterStrength > 0 && context.rosterStrength < 48 ? 0.15 : 0),
+      (context.rosterStrength > 0 && context.rosterStrength < 48 ? 0.15 : 0)) *
+      (context.deadlineWindow && base.rebuildBias > base.winNowBias
+        ? calendarScale
+        : 1),
   );
   // Soft normalize so they don't both sit at 1
   const pressureSum = winNowPressure + rebuildPressure;
@@ -247,7 +255,8 @@ export function resolveFranchisePreferencesFromParts(
   const marketingPriority = clampPreference(
     base.marketingPriority * 0.75 +
       spendWillingness * 0.15 -
-      cashPreservation * 0.2,
+      cashPreservation * 0.2 +
+      (context.offseasonPlanning ? 0.08 : 0),
   );
   const attendancePriority = clampPreference(
     base.attendancePriority * 0.8 + cashPreservation * 0.1,
@@ -255,7 +264,8 @@ export function resolveFranchisePreferencesFromParts(
   const developmentPriority = clampPreference(
     base.developmentPriority * 0.75 +
       youthValue * 0.15 +
-      (spendWillingness - cashPreservation) * 0.05,
+      (spendWillingness - cashPreservation) * 0.05 +
+      (context.offseasonPlanning ? 0.1 : 0),
   );
 
   const preferences: EffectivePreferences = {

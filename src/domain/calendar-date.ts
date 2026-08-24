@@ -69,6 +69,18 @@ export function getCalendarMonthId(isoDate: string): string {
   return `${String(year).padStart(4, "0")}-${String(month).padStart(2, "0")}`;
 }
 
+/**
+ * Whole calendar days from `from` to `to` (to - from).
+ * Negative when `to` is before `from`.
+ */
+export function calendarDaysBetween(from: string, to: string): number {
+  const a = parseCalendarDate(from);
+  const b = parseCalendarDate(to);
+  const utcA = Date.UTC(a.year, a.month - 1, a.day, 12, 0, 0);
+  const utcB = Date.UTC(b.year, b.month - 1, b.day, 12, 0, 0);
+  return Math.round((utcB - utcA) / 86_400_000);
+}
+
 function assertValidYmd(
   year: number,
   month: number,

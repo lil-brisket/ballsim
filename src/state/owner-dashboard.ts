@@ -1,7 +1,7 @@
 import type { FinancialHealthState } from "@/systems/financial-health";
 import { POOR_ATTENDANCE_FILL_RATE_PCT } from "@/systems/owner-objectives-config";
 import { mandatePriorityLabels } from "@/systems/owner-philosophy-config";
-import { getTeamPayroll } from "@/systems/salary-cap";
+import { getTeamCapSpace, getTeamPayroll } from "@/systems/salary-cap";
 import { STARTER_ROLES } from "@/systems/staff-generation";
 import { getFinancialStatement } from "@/systems/team-finances";
 import {
@@ -27,6 +27,7 @@ import type {
   FranchiseStanding,
   FranchiseValueDriverKey,
 } from "@/state/franchise-value";
+import { calculateFranchiseValue } from "@/state/franchise-value";
 import {
   ACTION_QUEUE_CAP,
   DASHBOARD_ACTIVITY_CAP,
@@ -49,6 +50,12 @@ import {
   type ObjectiveView,
   type ScheduleGameView,
 } from "@/state/selectors";
+import {
+  getCalendarContext,
+  type CalendarContext,
+} from "@/systems/simulation/calendar-context";
+import { isContractActive } from "@/domain/entities/contract";
+import { derivePlayoffResults } from "@/systems/franchise-history";
 
 export type OwnerDashboardActionSeverity = "critical" | "warning" | "info";
 
@@ -62,7 +69,11 @@ export type OwnerDashboardActionCategory =
   | "facilities"
   | "marketing"
   | "sponsorship"
-  | "notifications";
+  | "notifications"
+  | "calendar"
+  | "contracts"
+  | "free_agency"
+  | "relocation";
 
 export type OwnerDashboardActionItem = {
   id: string;
@@ -147,6 +158,21 @@ export type OwnerDashboardFlags = {
   hasLastGameDay: boolean;
   hasUpcomingGames: boolean;
   isNewFranchise: boolean;
+  /** Season Review checkpoint — time advance blocked until beginOffseason. */
+  seasonReviewPending: boolean;
+};
+
+export type OwnerDashboardSeasonRecap = {
+  record: string;
+  playoffResult: string;
+  revenue: number;
+  expenses: number;
+  netIncome: number;
+  cash: number;
+  franchiseValue: number;
+  completedObjectives: number;
+  failedObjectives: number;
+  story: string;
 };
 
 export type OwnerDashboardView = {
@@ -154,6 +180,13 @@ export type OwnerDashboardView = {
   currentDate: string;
   seasonPhase: string;
   offseasonStage: string;
+  calendarDisplayLabel: string;
+  seasonSegment: string;
+  seasonStory: string;
+  tradesOpen: boolean;
+  daysUntilTradeDeadline: number | null;
+  offseasonPriorities: readonly string[];
+  seasonRecap: OwnerDashboardSeasonRecap | null;
   leagueName: string;
   controlledTeam: {
     id: string;
@@ -201,16 +234,20 @@ type CanonicalDashboardData = {
 };
 
 const CATEGORY_PRIORITY: Record<OwnerDashboardActionCategory, number> = {
-  draft: 0,
-  financial: 1,
-  attendance: 2,
-  team: 3,
-  roster: 4,
-  staff: 5,
-  facilities: 6,
-  marketing: 7,
-  sponsorship: 8,
-  notifications: 9,
+  calendar: 0,
+  draft: 1,
+  free_agency: 2,
+  contracts: 3,
+  financial: 4,
+  attendance: 5,
+  team: 6,
+  roster: 7,
+  staff: 8,
+  facilities: 9,
+  marketing: 10,
+  sponsorship: 11,
+  relocation: 12,
+  notifications: 13,
 };
 
 const SEVERITY_PRIORITY: Record<OwnerDashboardActionSeverity, number> = {
@@ -245,16 +282,28 @@ export function toOwnerDashboardView(state: GameState): OwnerDashboardView {
   const team = buildTeam(canonical);
   const notifications = buildNotifications(state);
   const activity = buildActivity(state);
-  const actionItems = buildActionItems(canonical, health, team);
+  const calendar = getCalendarContext(state);
+  const actionItems = buildActionItems(canonical, health, team, calendar);
   const insights = buildInsights(canonical, health, team);
   const owner = buildOwner(canonical, actionItems, health);
   const flags = buildFlags(canonical);
+  const seasonRecap =
+    calendar.lifecyclePhase === "postseason"
+      ? buildSeasonRecap(canonical, health, calendar)
+      : null;
 
   return {
     saveId: canonical.saveId,
     currentDate: canonical.snapshot.currentDate,
     seasonPhase: canonical.snapshot.seasonPhase,
     offseasonStage: canonical.snapshot.offseasonStage,
+    calendarDisplayLabel: calendar.displayLabel,
+    seasonSegment: calendar.seasonSegment,
+    seasonStory: calendar.seasonStory,
+    tradesOpen: calendar.tradesOpen,
+    daysUntilTradeDeadline: calendar.daysUntilTradeDeadline,
+    offseasonPriorities: calendar.offseasonPriorities,
+    seasonRecap,
     leagueName: canonical.snapshot.leagueName,
     controlledTeam: canonical.snapshot.controlledTeam,
     simulationFrequency: canonical.snapshot.simulationFrequency,
@@ -489,6 +538,36 @@ function buildFlags(data: CanonicalDashboardData): OwnerDashboardFlags {
       data.snapshot.controlledStanding.wins +
         data.snapshot.controlledStanding.losses ===
         0,
+    seasonReviewPending: data.state.competition.season.phase === "postseason",
+  };
+}
+
+function buildSeasonRecap(
+  data: CanonicalDashboardData,
+  health: OwnerDashboardHealth,
+  calendar: CalendarContext,
+): OwnerDashboardSeasonRecap {
+  const teamId = asTeamId(data.teamId);
+  const standing = data.snapshot.controlledStanding;
+  const playoffMap = derivePlayoffResults(data.state);
+  const playoffResult = playoffMap[teamId] ?? "missed";
+  const completed = data.state.user.objectives.filter(
+    (o) => o.status === "completed" && o.seasonYear === data.year,
+  ).length;
+  const failed = data.state.user.objectives.filter(
+    (o) => o.status === "failed" && o.seasonYear === data.year,
+  ).length;
+  return {
+    record: `${standing.wins}–${standing.losses}`,
+    playoffResult,
+    revenue: health.revenue,
+    expenses: health.expenses,
+    netIncome: health.netIncome,
+    cash: health.cash,
+    franchiseValue: calculateFranchiseValue(data.state, teamId),
+    completedObjectives: completed,
+    failedObjectives: failed,
+    story: calendar.seasonStory,
   };
 }
 
@@ -496,9 +575,13 @@ function buildActionItems(
   data: CanonicalDashboardData,
   health: OwnerDashboardHealth,
   team: OwnerDashboardTeam,
+  calendar: CalendarContext,
 ): OwnerDashboardActionItem[] {
   const saveId = data.saveId;
   const items: OwnerDashboardActionItem[] = [];
+
+  // Calendar-first decisions — what the owner should think about now.
+  items.push(...buildCalendarActionItems(data, health, team, calendar));
 
   if (data.snapshot.userOnDraftClock) {
     items.push({
@@ -701,7 +784,148 @@ function buildActionItems(
     }
   }
 
-  return sortAndCapActionItems(items);
+  return sortAndCapActionItems(items, calendar);
+}
+
+function buildCalendarActionItems(
+  data: CanonicalDashboardData,
+  health: OwnerDashboardHealth,
+  team: OwnerDashboardTeam,
+  calendar: CalendarContext,
+): OwnerDashboardActionItem[] {
+  const saveId = data.saveId;
+  const items: OwnerDashboardActionItem[] = [];
+  const teamId = asTeamId(data.teamId);
+  const year = data.year;
+
+  if (calendar.lifecyclePhase === "postseason") {
+    items.push({
+      id: "action_season_review",
+      category: "calendar",
+      severity: "critical",
+      title: "Season review",
+      what: calendar.seasonStory || "Review the season before opening the offseason.",
+      why: "Ownership evaluation and offseason decisions start after you acknowledge this review.",
+      evidence: [
+        `Record: ${team.wins}–${team.losses}`,
+        `Net income: ${formatCompactMoney(health.netIncome)}`,
+      ],
+      href: `/dashboard/${saveId}`,
+      hrefLabel: "Begin Offseason",
+    });
+  }
+
+  if (calendar.deadlineWindow && calendar.tradesOpen) {
+    const days = calendar.daysUntilTradeDeadline ?? 0;
+    items.push({
+      id: "action_trade_deadline",
+      category: "calendar",
+      severity: days <= 3 ? "critical" : "warning",
+      title: "Trade deadline",
+      what: `Trade deadline in ${days} day${days === 1 ? "" : "s"}.`,
+      why: "This is the last meaningful window to reshape the roster before the deadline.",
+      evidence: [
+        calendar.playoffRace !== "not_applicable"
+          ? `Playoff race: ${calendar.playoffRace}`
+          : `Record: ${team.wins}–${team.losses}`,
+        `Games remaining (league): ${calendar.gamesRemaining}`,
+      ],
+      href: `/dashboard/${saveId}/transactions`,
+      hrefLabel: "Open Transactions",
+    });
+  }
+
+  if (calendar.lifecyclePhase === "offseason") {
+    if (calendar.offseasonStage === "free_agency") {
+      items.push({
+        id: "action_free_agency",
+        category: "free_agency",
+        severity: "critical",
+        title: "Free agency open",
+        what: "Shape next season's roster while free agency is open.",
+        why: "AI teams are signing; finishing free agency advances to the draft.",
+        evidence: calendar.offseasonPriorities.map(String),
+        href: `/dashboard/${saveId}/free-agency`,
+        hrefLabel: "Open Free Agency",
+      });
+    }
+    if (calendar.offseasonStage === "draft") {
+      items.push({
+        id: "action_draft_stage",
+        category: "draft",
+        severity: "warning",
+        title: "Draft in progress",
+        what: "The draft board is active.",
+        why: "Prospect selection locks in long-term roster construction.",
+        evidence: ["Offseason stage: draft"],
+        href: `/dashboard/${saveId}/draft`,
+        hrefLabel: "Open Draft",
+      });
+    }
+  }
+
+  const expiring = Object.values(data.state.business.contracts).filter(
+    (contract) =>
+      contract.teamId === teamId &&
+      isContractActive(contract, year) &&
+      contract.endYear <= year + 1,
+  );
+  if (
+    (calendar.lifecyclePhase === "offseason" ||
+      calendar.deadlineWindow) &&
+    expiring.length > 0
+  ) {
+    items.push({
+      id: "action_contracts",
+      category: "contracts",
+      severity: "warning",
+      title: "Contracts expiring",
+      what: `${expiring.length} contract${expiring.length === 1 ? "" : "s"} end within the next season.`,
+      why: "Salary commitments and roster continuity need an owner decision.",
+      evidence: expiring.slice(0, 3).map((c) => `Ends ${c.endYear}`),
+      href: `/dashboard/${saveId}/contracts`,
+      hrefLabel: "Review Contracts",
+    });
+  }
+
+  if (calendar.deadlineWindow) {
+    const capEnabled = data.state.settings.financialRules.salaryCapEnabled;
+    if (capEnabled) {
+      const capSpace = getTeamCapSpace(teamId, year, data.state);
+      if (Number.isFinite(capSpace)) {
+        items.push({
+          id: "action_cap_deadline",
+          category: "calendar",
+          severity: "info",
+          title: "Cap flexibility",
+          what: `About ${formatCompactMoney(capSpace)} in cap space available.`,
+          why: "Deadline deals need legal salary matching and space.",
+          evidence: [`Cap space: ${formatCompactMoney(capSpace)}`],
+          href: `/dashboard/${saveId}/contracts`,
+          hrefLabel: "Review Cap",
+        });
+      }
+    }
+  }
+
+  if (
+    calendar.lifecyclePhase === "offseason" &&
+    calendar.offseasonPriorities.includes("facilities")
+  ) {
+    items.push({
+      id: "action_offseason_facilities",
+      category: "facilities",
+      severity: "info",
+      title: "Offseason facility planning",
+      what: "Capital investment windows are strongest in the offseason.",
+      why: "Facility levels affect development, capacity, and franchise value next season.",
+      evidence: data.facilities.slice(0, 2).map((f) => `${f.category}: L${f.level}`),
+      href: `/dashboard/${saveId}/facilities`,
+      hrefLabel: "Manage Facilities",
+    });
+  }
+
+  return items;
 }
 
 function buildInsights(
@@ -756,11 +980,23 @@ function buildInsights(
 
 function sortAndCapActionItems(
   items: OwnerDashboardActionItem[],
+  calendar: CalendarContext,
 ): OwnerDashboardActionItem[] {
-  const draft = items.filter((i) => i.category === "draft");
+  const boost = calendarBoostCategories(calendar);
+  const criticalFirst = items.filter(
+    (i) =>
+      i.severity === "critical" ||
+      i.category === "draft" ||
+      i.category === "calendar",
+  );
   const rest = items
-    .filter((i) => i.category !== "draft")
+    .filter((i) => !criticalFirst.includes(i))
     .sort((a, b) => {
+      const aBoost = boost.has(a.category) ? 0 : 1;
+      const bBoost = boost.has(b.category) ? 0 : 1;
+      if (aBoost !== bBoost) {
+        return aBoost - bBoost;
+      }
       const sev = SEVERITY_PRIORITY[a.severity] - SEVERITY_PRIORITY[b.severity];
       if (sev !== 0) {
         return sev;
@@ -772,7 +1008,53 @@ function sortAndCapActionItems(
       }
       return a.id.localeCompare(b.id);
     });
-  return [...draft, ...rest].slice(0, ACTION_QUEUE_CAP);
+  const criticalSorted = [...criticalFirst].sort((a, b) => {
+    const sev = SEVERITY_PRIORITY[a.severity] - SEVERITY_PRIORITY[b.severity];
+    if (sev !== 0) {
+      return sev;
+    }
+    return CATEGORY_PRIORITY[a.category] - CATEGORY_PRIORITY[b.category];
+  });
+  // Deduplicate by id while preserving order.
+  const seen = new Set<string>();
+  const ordered: OwnerDashboardActionItem[] = [];
+  for (const item of [...criticalSorted, ...rest]) {
+    if (seen.has(item.id)) {
+      continue;
+    }
+    seen.add(item.id);
+    ordered.push(item);
+  }
+  return ordered.slice(0, ACTION_QUEUE_CAP);
+}
+
+function calendarBoostCategories(
+  calendar: CalendarContext,
+): Set<OwnerDashboardActionCategory> {
+  const boost = new Set<OwnerDashboardActionCategory>(["calendar"]);
+  if (calendar.deadlineWindow) {
+    boost.add("roster");
+    boost.add("contracts");
+    boost.add("team");
+  }
+  if (
+    calendar.lifecyclePhase === "offseason" ||
+    calendar.lifecyclePhase === "postseason"
+  ) {
+    boost.add("free_agency");
+    boost.add("draft");
+    boost.add("contracts");
+    boost.add("staff");
+    boost.add("facilities");
+    boost.add("sponsorship");
+    boost.add("marketing");
+  }
+  if (calendar.lifecyclePhase === "regular" && calendar.seasonSegment === "early") {
+    boost.add("attendance");
+    boost.add("marketing");
+    boost.add("team");
+  }
+  return boost;
 }
 
 function hasAttendanceProblem(

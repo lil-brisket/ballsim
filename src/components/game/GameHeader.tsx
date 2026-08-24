@@ -38,6 +38,7 @@ export function GameHeader(props: {
             <PhaseBadge
               seasonPhase={dashboard.seasonPhase}
               offseasonStage={dashboard.offseasonStage}
+              displayLabel={dashboard.calendarDisplayLabel}
             />
             <span className="text-sm text-zinc-400">
               Record {record} · #{dashboard.standingsRank}

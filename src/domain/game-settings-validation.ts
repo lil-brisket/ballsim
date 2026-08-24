@@ -1,4 +1,5 @@
 import {
+  DEFAULT_TRADE_DEADLINE_RULE,
   isAiDifficulty,
   isDraftMode,
   isLeagueArea,
@@ -9,7 +10,9 @@ import {
   isSupportedPlayoffTeamCount,
   isSupportedSeriesLength,
   isSupportedTeamCount,
+  isTradeDeadlineRule,
   type GameSettings,
+  type TradeDeadlineRule,
 } from "@/domain/game-settings";
 import { tryResolveLeagueShape } from "@/domain/league-shape";
 
@@ -111,6 +114,17 @@ export function validateGameSettings(
     errors.push(
       `regularSeason.gamesPerTeam must be one of ${[14, 20, 22, 30, 40, 60, 72, 82].join(", ")}.`,
     );
+  }
+
+  let tradeDeadlineRule: TradeDeadlineRule = DEFAULT_TRADE_DEADLINE_RULE;
+  if (regularSeason.tradeDeadlineRule !== undefined) {
+    if (!isTradeDeadlineRule(regularSeason.tradeDeadlineRule)) {
+      errors.push(
+        'regularSeason.tradeDeadlineRule must be { kind: "days_after_season_start", daysAfterSeasonStart } or { kind: "fraction_of_season_span", seasonSpanFraction }.',
+      );
+    } else {
+      tradeDeadlineRule = regularSeason.tradeDeadlineRule;
+    }
   }
 
   const playoffTeams = playoffs.playoffTeams;
@@ -272,6 +286,7 @@ export function validateGameSettings(
       (raw.injuriesEnabled as boolean | undefined) ?? true,
     regularSeason: {
       gamesPerTeam: gamesPerTeam as number,
+      tradeDeadlineRule,
     },
     playoffs: {
       playoffTeams: playoffTeams as number,

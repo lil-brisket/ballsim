@@ -184,6 +184,7 @@ export function createInitialGameState(
         year: 2026,
         phase: "preseason",
         offseasonStage: "none",
+        regularSeasonStartDate: null,
       },
       schedule: {
         seasonId,
@@ -331,6 +332,10 @@ export function createFourTeamInitialGameState(
     injuriesEnabled: true,
     regularSeason: {
       gamesPerTeam: 14,
+      tradeDeadlineRule: {
+        kind: "fraction_of_season_span",
+        seasonSpanFraction: 0.55,
+      },
     },
     playoffs: {
       playoffTeams: 4,
@@ -435,6 +440,7 @@ export function createFourTeamInitialGameState(
         year: 2026,
         phase: "preseason",
         offseasonStage: "none",
+        regularSeasonStartDate: null,
       },
       schedule: {
         seasonId,

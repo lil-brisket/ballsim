@@ -116,6 +116,7 @@ export function initializeNewSeason(state: GameState): SystemResult {
         year: nextYear,
         phase: "offseason",
         offseasonStage: "none",
+        regularSeasonStartDate: null,
       },
       schedule: {
         seasonId: nextSeasonId,

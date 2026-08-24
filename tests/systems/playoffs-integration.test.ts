@@ -86,7 +86,13 @@ function createEightTeamGameState(rngSeed: number): {
         area: "north_america",
       },
       injuriesEnabled: true,
-      regularSeason: { gamesPerTeam: 14 },
+      regularSeason: {
+        gamesPerTeam: 14,
+        tradeDeadlineRule: {
+          kind: "fraction_of_season_span",
+          seasonSpanFraction: 0.55,
+        },
+      },
       playoffs: {
         playoffTeams: 8,
         seriesLength: 7,
@@ -130,6 +136,7 @@ function createEightTeamGameState(rngSeed: number): {
         year: 2026,
         phase: "preseason",
         offseasonStage: "none",
+        regularSeasonStartDate: null,
       },
       schedule: {
         seasonId,

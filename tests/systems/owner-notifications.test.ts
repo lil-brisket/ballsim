@@ -65,13 +65,13 @@ describe("owner notifications", () => {
     const rng = createSeededRng(state.meta.rngState);
     state = bootstrapWorld(state, rng).state;
     const teamId = state.user.controlledTeamId;
-    state = {
+    const postseasonState = {
       ...state,
       competition: {
         ...state.competition,
-        season: { ...state.competition.season, phase: "offseason" },
+        season: { ...state.competition.season, phase: "postseason" as const },
         playoffs: {
-          status: "complete",
+          status: "complete" as const,
           fieldSize: 8,
           qualifiedTeams: [{ teamId, seed: 2 }],
           series: [],
@@ -79,11 +79,24 @@ describe("owner notifications", () => {
         },
       },
     };
-    const result = generateOwnerNotifications(state);
-    const types = result.state.user.notifications.map((n) => n.type);
-    expect(types).toContain("playoff_qualified");
-    expect(types).toContain("season_completed");
-    expect(types).toContain("offseason_began");
+    const review = generateOwnerNotifications(postseasonState);
+    const reviewTypes = review.state.user.notifications.map((n) => n.type);
+    expect(reviewTypes).toContain("playoff_qualified");
+    expect(reviewTypes).toContain("season_completed");
+
+    const offseasonState = {
+      ...postseasonState,
+      competition: {
+        ...postseasonState.competition,
+        season: {
+          ...postseasonState.competition.season,
+          phase: "offseason" as const,
+        },
+      },
+    };
+    const off = generateOwnerNotifications(offseasonState);
+    const offTypes = off.state.user.notifications.map((n) => n.type);
+    expect(offTypes).toContain("offseason_began");
   });
 
   it("emits significant financial change from pre/post cash delta", () => {

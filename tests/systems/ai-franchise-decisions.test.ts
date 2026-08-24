@@ -32,6 +32,9 @@ function ctx(overrides: Partial<FranchiseContext> = {}): FranchiseContext {
     marketingAwareness: 40,
     draftAssetCount: 2,
     performancePressure: 0.3,
+    calendarUrgency: 0,
+    deadlineWindow: false,
+    offseasonPlanning: false,
     ...overrides,
   };
 }

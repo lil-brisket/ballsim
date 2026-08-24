@@ -8,6 +8,7 @@ import { updateStandings } from "@/systems/standings";
 import {
   isRegularSeasonComplete,
   processSeasonLifecycle,
+  enterOffseasonFromPostseason,
 } from "@/systems/simulation/season-lifecycle";
 import { transitionPhase } from "@/systems/simulation/phase-machine";
 import { simulatePlayoffs } from "@/systems/playoff-simulation";
@@ -83,17 +84,35 @@ describe("season lifecycle", () => {
     expect(result.state.competition.playoffs.fieldSize).toBe(4);
   });
 
-  it("moves postseason → offseason with season_finalization stage", () => {
+  it("holds on postseason until enterOffseasonFromPostseason", () => {
     let state = createInitialGameState({
     saveId: "life_off",
     settings: CBL_GAME_SETTINGS,
   });
     state = transitionPhase(state, "regular").state;
     state = transitionPhase(state, "postseason").state;
-    const result = processSeasonLifecycle(state);
-    expect(result.state.competition.season.phase).toBe("offseason");
-    expect(result.state.competition.season.offseasonStage).toBe(
+    const held = processSeasonLifecycle(state);
+    expect(held.state.competition.season.phase).toBe("postseason");
+
+    const entered = enterOffseasonFromPostseason(held.state);
+    expect(entered.state.competition.season.phase).toBe("offseason");
+    expect(entered.state.competition.season.offseasonStage).toBe(
       "season_finalization",
+    );
+  });
+
+  it("records regularSeasonStartDate when leaving preseason", () => {
+    const state = createInitialGameState({
+      saveId: "life_start_date",
+      rngSeed: 3,
+      settings: CBL_GAME_SETTINGS,
+    });
+    const rng = createSeededRng(state.meta.rngState);
+    const bootstrapped = bootstrapWorld(state, rng).state;
+    const result = processSeasonLifecycle(bootstrapped);
+    expect(result.state.competition.season.phase).toBe("regular");
+    expect(result.state.competition.season.regularSeasonStartDate).toBe(
+      bootstrapped.world.calendar.currentDate,
     );
   });
 
@@ -157,7 +176,13 @@ describe("season lifecycle", () => {
           conferenceCount: 2,
           divisionsEnabled: true,
         },
-        regularSeason: { gamesPerTeam: 30 },
+        regularSeason: {
+          gamesPerTeam: 30,
+          tradeDeadlineRule: {
+            kind: "fraction_of_season_span",
+            seasonSpanFraction: 0.55,
+          },
+        },
         playoffs: {
           playoffTeams: 8,
           seriesLength: 7,
@@ -188,6 +213,7 @@ describe("season lifecycle", () => {
           year: 2026,
           phase: "preseason",
           offseasonStage: "none",
+          regularSeasonStartDate: null,
         },
         schedule: { seasonId, gameIds: [] },
         games: {},

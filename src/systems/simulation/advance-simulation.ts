@@ -13,6 +13,7 @@ import { processOffseasonLifecycle } from "@/systems/simulation/offseason-lifecy
 import { runOwnerGameplay } from "@/systems/simulation/owner-gameplay";
 import { processScheduledEvents } from "@/systems/simulation/scheduled-events";
 import { processSeasonLifecycle } from "@/systems/simulation/season-lifecycle";
+import { lifecycleIdentity } from "@/systems/simulation/calendar-context";
 import type {
   AdvanceSimulationOptions,
   AdvanceSimulationResult,
@@ -41,7 +42,7 @@ import { processHomeGameTicketRevenue } from "@/systems/ticket-revenue";
  * 8. Weekly pipeline when crossing into a new ISO week
  *
  * When `stopOnPhaseChange` is true, stops immediately after the first day
- * that changes `{ phase, offseasonStage, year }`. Never bypasses lifecycle.
+ * that changes `{ phase, offseasonStage, year, seasonSegment }`. Never bypasses lifecycle.
  *
  * Callers must persist rng.getState() into meta.rngState after this runs.
  */
@@ -102,11 +103,6 @@ export function advanceSimulation(
     weeklyPipelineRan,
     monthlyPipelineRan,
   };
-}
-
-function lifecycleIdentity(state: GameState): string {
-  const season = state.competition.season;
-  return `${season.phase}|${season.offseasonStage}|${season.year}`;
 }
 
 type OneDayResult = {

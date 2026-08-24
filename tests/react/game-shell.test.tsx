@@ -37,6 +37,7 @@ function baseDashboard(
     seasonYear: 2026,
     seasonPhase: "regular",
     offseasonStage: "none",
+    calendarDisplayLabel: "Regular Season",
     leagueName: "Test League",
     mode: "owner",
     teamSelectionLocked: true,

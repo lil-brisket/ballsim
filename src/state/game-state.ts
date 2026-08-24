@@ -32,7 +32,7 @@ import type { GameSettings } from "@/domain/game-settings";
 import type { DomainEvent } from "@/domain/events";
 import type { SaveId, TeamId } from "@/domain/ids";
 
-export const GAME_STATE_SCHEMA_VERSION = 28;
+export const GAME_STATE_SCHEMA_VERSION = 29;
 
 /** Bounded recent history for Owner Mode activity / transactions UI. */
 export const EVENT_LOG_MAX = 1_000;

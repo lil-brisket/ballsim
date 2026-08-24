@@ -30,6 +30,21 @@ export type LeagueArea = "north_america" | "europe" | "global";
 export type DraftMode = "standard" | "fantasy";
 export type LeagueHistoryMode = "new" | "generated";
 
+/**
+ * League-calendar rule for the trade deadline.
+ * Not derived from schedule completion fraction — schedule remaining is urgency only.
+ */
+export type TradeDeadlineRule =
+  | {
+      kind: "days_after_season_start";
+      daysAfterSeasonStart: number;
+    }
+  | {
+      kind: "fraction_of_season_span";
+      /** 0–1 along [regularSeasonStartDate, lastRegularSeasonGameDate]. */
+      seasonSpanFraction: number;
+    };
+
 export type GameSettings = {
   league: {
     teamCount: number;
@@ -40,6 +55,7 @@ export type GameSettings = {
   injuriesEnabled: boolean;
   regularSeason: {
     gamesPerTeam: number;
+    tradeDeadlineRule: TradeDeadlineRule;
   };
   playoffs: {
     playoffTeams: number;
@@ -83,6 +99,10 @@ export const DEFAULT_GAME_SETTINGS: GameSettings = {
   injuriesEnabled: true,
   regularSeason: {
     gamesPerTeam: 82,
+    tradeDeadlineRule: {
+      kind: "fraction_of_season_span",
+      seasonSpanFraction: 0.55,
+    },
   },
   playoffs: {
     playoffTeams: 16,
@@ -121,6 +141,10 @@ export const CBL_GAME_SETTINGS: GameSettings = {
   injuriesEnabled: true,
   regularSeason: {
     gamesPerTeam: 22,
+    tradeDeadlineRule: {
+      kind: "fraction_of_season_span",
+      seasonSpanFraction: 0.55,
+    },
   },
   playoffs: {
     playoffTeams: 8,
@@ -207,11 +231,43 @@ export function isLeagueHistoryMode(
   return value === "new" || value === "generated";
 }
 
+export const DEFAULT_TRADE_DEADLINE_RULE: TradeDeadlineRule = {
+  kind: "fraction_of_season_span",
+  seasonSpanFraction: 0.55,
+};
+
+export function isTradeDeadlineRule(
+  value: unknown,
+): value is TradeDeadlineRule {
+  if (value === null || typeof value !== "object" || Array.isArray(value)) {
+    return false;
+  }
+  const raw = value as Record<string, unknown>;
+  if (raw.kind === "days_after_season_start") {
+    return (
+      typeof raw.daysAfterSeasonStart === "number" &&
+      Number.isInteger(raw.daysAfterSeasonStart) &&
+      raw.daysAfterSeasonStart >= 0
+    );
+  }
+  if (raw.kind === "fraction_of_season_span") {
+    return (
+      typeof raw.seasonSpanFraction === "number" &&
+      raw.seasonSpanFraction >= 0 &&
+      raw.seasonSpanFraction <= 1
+    );
+  }
+  return false;
+}
+
 export function cloneGameSettings(settings: GameSettings): GameSettings {
   return {
     league: { ...settings.league },
     injuriesEnabled: settings.injuriesEnabled ?? true,
-    regularSeason: { ...settings.regularSeason },
+    regularSeason: {
+      ...settings.regularSeason,
+      tradeDeadlineRule: { ...settings.regularSeason.tradeDeadlineRule },
+    },
     playoffs: { ...settings.playoffs },
     simulation: { ...settings.simulation },
     ai: { ...settings.ai },

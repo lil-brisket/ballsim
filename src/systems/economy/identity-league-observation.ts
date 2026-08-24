@@ -19,6 +19,7 @@ import { draftClassIdFor } from "@/domain/entities/draft";
 import { draftYearForSeason } from "@/systems/draft";
 import { runAiTeamDecisions } from "@/systems/ai-team-decisions";
 import { advanceOffseasonStage } from "@/systems/simulation/offseason-lifecycle";
+import { enterOffseasonFromPostseason } from "@/systems/simulation/season-lifecycle";
 import {
   assertIdentityAxesUnchanged,
   captureIdentityAxes,
@@ -84,17 +85,25 @@ function autoPickUserDraft(state: GameState): GameState {
 /** Mirror economy harness: day-advance through offseason to preseason. */
 function resolveOffseason(state: GameState, rng: Rng): GameState {
   let current = persistRng(state, rng);
-  if (
-    current.competition.season.phase === "offseason" &&
-    current.competition.season.offseasonStage === "free_agency"
-  ) {
-    current = persistRng(advanceOffseasonStage(current).state, rng);
+  if (current.competition.season.phase === "postseason") {
+    current = persistRng(enterOffseasonFromPostseason(current).state, rng);
   }
   let guard = 0;
   while (guard < 80) {
     guard += 1;
     if (current.competition.season.phase === "preseason") {
       return current;
+    }
+    if (current.competition.season.phase === "postseason") {
+      current = persistRng(enterOffseasonFromPostseason(current).state, rng);
+      continue;
+    }
+    if (
+      current.competition.season.phase === "offseason" &&
+      current.competition.season.offseasonStage === "free_agency"
+    ) {
+      current = persistRng(advanceOffseasonStage(current).state, rng);
+      continue;
     }
     if (isUserOnDraftClock(current)) {
       current = persistRng(autoPickUserDraft(current), rng);
@@ -123,6 +132,9 @@ function simulateOneSeason(state: GameState, rng: Rng): GameState {
     const advanced = advanceSimulation(current, rng, { days: 1 });
     current = persistRng(advanced.state, rng);
     const season = current.competition.season;
+    if (season.year === startYear && season.phase === "postseason") {
+      break;
+    }
     if (
       season.year === startYear &&
       season.phase === "offseason" &&

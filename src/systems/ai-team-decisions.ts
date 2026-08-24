@@ -40,6 +40,7 @@ import {
 } from "@/systems/owner-objectives-config";
 import { DEFAULT_ROSTER_SIZE } from "@/systems/roster-generation-config";
 import { getTeamCapSpace } from "@/systems/salary-cap";
+import { getCalendarContext } from "@/systems/simulation/calendar-context";
 import {
   draftYearForSeason,
   makeDraftSelection,
@@ -83,9 +84,15 @@ export function runAiTeamDecisions(state: GameState, _rng: Rng): SystemResult {
     }
   }
 
-  const trade = runAiTrades(current);
-  current = trade.state;
-  events.push(...trade.events);
+  const calendar = getCalendarContext(current);
+  const phase = current.competition.season.phase;
+  const playerTradesAllowed =
+    calendar.tradesOpen || phase === "offseason" || phase === "preseason";
+  if (playerTradesAllowed) {
+    const trade = runAiTrades(current);
+    current = trade.state;
+    events.push(...trade.events);
+  }
 
   return systemResult(current, events);
 }
@@ -256,6 +263,7 @@ function runAiTrades(state: GameState): SystemResult {
     return systemResult(state);
   }
 
+  const calendar = getCalendarContext(state);
   let current = state;
   const teamIds = (Object.keys(current.world.teams) as TeamId[])
     .filter((teamId) => !isUserControlledTeam(current, teamId))
@@ -264,17 +272,33 @@ function runAiTrades(state: GameState): SystemResult {
   for (const teamId of teamIds) {
     const resolved = resolveFranchisePreferences(current, teamId);
     const prefs = resolved?.preferences;
-    // Low risk appetite + low patience pressure → often skip trading (inaction)
+    if (!prefs) {
+      continue;
+    }
+
+    // Calendar pressure modifies urgency; it does not override identity.
+    // Deadline window: lower skip thresholds without forcing every team to act.
+    const deadlineBoost = calendar.deadlineWindow ? 0.12 : 0;
+    const skipRisk = 0.35 - deadlineBoost * (prefs.riskAppetite > 0.5 ? 1 : 0.4);
+    const skipPatience =
+      0.45 - deadlineBoost * (prefs.patiencePressure > 0.4 ? 1 : 0.3);
+    const skipWinNow =
+      0.55 - deadlineBoost * (prefs.winNowPressure > prefs.rebuildPressure ? 1 : 0);
+
     if (
-      prefs &&
-      prefs.riskAppetite < 0.35 &&
-      prefs.patiencePressure < 0.45 &&
-      prefs.winNowPressure < 0.55
+      prefs.riskAppetite < skipRisk &&
+      prefs.patiencePressure < skipPatience &&
+      prefs.winNowPressure < skipWinNow
     ) {
       continue;
     }
 
-    current = ensureSurplusOnBlock(current, teamId, prefs);
+    // Rebuilders sell more readily near the deadline; contenders list less surplus.
+    if (calendar.deadlineWindow && prefs.rebuildPressure > prefs.winNowPressure) {
+      current = ensureSurplusOnBlock(current, teamId, prefs);
+    } else if (!calendar.deadlineWindow || prefs.winNowPressure >= 0.5) {
+      current = ensureSurplusOnBlock(current, teamId, prefs);
+    }
 
     const proposal = generateAiTradeProposal(current, teamId);
     if (proposal === undefined) {

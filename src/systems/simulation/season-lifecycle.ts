@@ -44,9 +44,31 @@ function setOffseasonStage(
   };
 }
 
+function withRegularSeasonStartDate(
+  state: GameState,
+  regularSeasonStartDate: string,
+): GameState {
+  if (state.competition.season.regularSeasonStartDate === regularSeasonStartDate) {
+    return state;
+  }
+  return {
+    ...state,
+    competition: {
+      ...state.competition,
+      season: {
+        ...state.competition.season,
+        regularSeasonStartDate,
+      },
+    },
+  };
+}
+
 /**
  * Evaluates season-phase transitions appropriate for the current competition state.
  * Does not advance the calendar. transitionPhase is the sole phase writer.
+ *
+ * Postseason is a player-paced Season Review checkpoint: it does NOT auto-advance
+ * to offseason. Callers use beginOffseason / enterOffseasonFromPostseason.
  */
 export function processSeasonLifecycle(state: GameState): SystemResult {
   const events: DomainEvent[] = [];
@@ -57,6 +79,11 @@ export function processSeasonLifecycle(state: GameState): SystemResult {
     const phaseResult = transitionPhase(current, "regular");
     current = phaseResult.state;
     events.push(...phaseResult.events);
+
+    current = withRegularSeasonStartDate(
+      current,
+      current.world.calendar.currentDate,
+    );
 
     if (current.competition.schedule.gameIds.length === 0) {
       const scheduleResult = generateSchedule(current);
@@ -103,13 +130,22 @@ export function processSeasonLifecycle(state: GameState): SystemResult {
     return systemResult(current, events);
   }
 
-  if (phase === "postseason") {
-    const phaseResult = transitionPhase(current, "offseason");
-    current = phaseResult.state;
-    events.push(...phaseResult.events);
-    current = setOffseasonStage(current, "season_finalization");
-    return systemResult(current, events);
-  }
-
+  // postseason: hold for player-paced Season Review (beginOffseason).
   return systemResult(current, events);
+}
+
+/**
+ * Player-paced exit from Season Review into offseason finalization.
+ * Does not run finalization processors — the next advanceSimulation day does.
+ */
+export function enterOffseasonFromPostseason(state: GameState): SystemResult {
+  if (state.competition.season.phase !== "postseason") {
+    throw new Error(
+      `enterOffseasonFromPostseason requires phase "postseason"; got "${state.competition.season.phase}".`,
+    );
+  }
+  const phaseResult = transitionPhase(state, "offseason");
+  let current = phaseResult.state;
+  current = setOffseasonStage(current, "season_finalization");
+  return systemResult(current, phaseResult.events);
 }

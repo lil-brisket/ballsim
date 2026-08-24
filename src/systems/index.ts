@@ -206,6 +206,7 @@ export {
   VALID_PHASE_TRANSITIONS,
   processSeasonLifecycle,
   isRegularSeasonComplete,
+  enterOffseasonFromPostseason,
   processOffseasonLifecycle,
   advanceOffseasonStage,
   initializeNewSeason,
@@ -216,9 +217,12 @@ export {
   runWeeklyPipeline,
   runOwnerGameplay,
   SEASON_LIFECYCLE_CONFIG,
+  getCalendarContext,
+  lifecycleIdentity,
   type AdvanceSimulationResult,
   type AdvanceSimulationOptions,
   type OwnerGameplayResult,
+  type CalendarContext,
 } from "@/systems/simulation";
 export { ensureDraftPicks } from "@/systems/world-pipeline";
 export {

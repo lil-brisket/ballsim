@@ -14,6 +14,7 @@ vi.mock("@/persistence/save-game-repository", () => ({
 
 import {
   advanceOwnerTime,
+  beginOffseason,
   createNewOwnerSave,
   executeOwnerTrade,
   finishFreeAgency,
@@ -35,6 +36,40 @@ import { listFreeAgents } from "@/systems/free-agency";
 import { TEST_RNG_SEED } from "../helpers/determinism";
 
 const LONG_TIMEOUT_MS = 600_000;
+
+async function advanceUntilSeasonPhase(
+  saveId: string,
+  store: ReturnType<typeof createMemorySaveGameStore>,
+  targetPhase: string,
+  maxAttempts = 40,
+): Promise<void> {
+  for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
+    const current = await loadOwnerSave(saveId, store);
+    expect(current).not.toBeNull();
+    if (current!.dashboard.seasonPhase === targetPhase) {
+      return;
+    }
+    if (current!.dashboard.seasonPhase === "postseason") {
+      const began = await beginOffseason(saveId, store);
+      if (!began.ok) {
+        throw new Error(began.error);
+      }
+      continue;
+    }
+    const result = await advanceOwnerTime(
+      saveId,
+      { days: 400, stopOnPhaseChange: true },
+      store,
+    );
+    if (!result.ok) {
+      throw new Error(result.error);
+    }
+  }
+  const final = await loadOwnerSave(saveId, store);
+  throw new Error(
+    `Did not reach phase ${targetPhase}; stuck at ${final?.dashboard.seasonPhase}/${final?.dashboard.offseasonStage}`,
+  );
+}
 
 describe("Owner Mode vertical slice", () => {
   let store: ReturnType<typeof createMemorySaveGameStore>;
@@ -177,17 +212,10 @@ describe("Owner Mode vertical slice", () => {
       }
       expect(phaseResult.dashboard.seasonPhase).toBe("regular");
 
-      // Complete regular season → playoffs
-      phaseResult = await advanceOwnerTime(
-        saveId,
-        { days: 400, stopOnPhaseChange: true },
-        store,
-      );
-      expect(phaseResult.ok).toBe(true);
-      if (!phaseResult.ok) {
-        throw new Error(phaseResult.error);
-      }
-      expect(phaseResult.dashboard.seasonPhase).toBe("playoffs");
+      // Complete regular season → playoffs (may stop at calendar segments first)
+      await advanceUntilSeasonPhase(saveId, store, "playoffs");
+      const phaseAtPlayoffs = await loadOwnerSave(saveId, store);
+      expect(phaseAtPlayoffs!.dashboard.seasonPhase).toBe("playoffs");
 
       const atPlayoffs = await store.load(saveId);
       expect(atPlayoffs).not.toBeNull();
@@ -196,17 +224,16 @@ describe("Owner Mode vertical slice", () => {
         (entry) => entry.teamId === controlledTeamId,
       );
 
-      // Finish playoffs → postseason (may chain toward offseason)
-      phaseResult = await advanceOwnerTime(
-        saveId,
-        { days: 400, stopOnPhaseChange: true },
-        store,
-      );
-      if (!phaseResult.ok) {
-        throw new Error(`after playoffs advance: ${phaseResult.error}`);
+      // Finish playoffs → Season Review (postseason checkpoint)
+      await advanceUntilSeasonPhase(saveId, store, "postseason");
+
+      // Begin offseason (player-paced) then continue until free_agency
+      const began = await beginOffseason(saveId, store);
+      expect(began.ok).toBe(true);
+      if (!began.ok) {
+        throw new Error(began.error);
       }
 
-      // Continue until free_agency
       let guard = 0;
       while (guard < 20) {
         const current = await loadOwnerSave(saveId, store);
@@ -216,6 +243,14 @@ describe("Owner Mode vertical slice", () => {
           current!.dashboard.offseasonStage === "free_agency"
         ) {
           break;
+        }
+        if (current!.dashboard.seasonPhase === "postseason") {
+          const again = await beginOffseason(saveId, store);
+          if (!again.ok) {
+            throw new Error(again.error);
+          }
+          guard += 1;
+          continue;
         }
         phaseResult = await advanceOwnerTime(
           saveId,
@@ -390,15 +425,10 @@ describe("Owner Mode vertical slice", () => {
         );
         expect(result.ok).toBe(true);
 
-        result = await advanceOwnerTime(
-          created.save.id,
-          { days: 400, stopOnPhaseChange: true },
-          store,
-        );
-        expect(result.ok).toBe(true);
-        if (!result.ok) {
-          continue;
-        }
+        await advanceUntilSeasonPhase(created.save.id, store, "playoffs");
+        result = await loadOwnerSave(created.save.id, store) as NonNullable<
+          Awaited<ReturnType<typeof loadOwnerSave>>
+        >;
         expect(result.dashboard.seasonPhase).toBe("playoffs");
 
         const atPlayoffs = await store.load(created.save.id);

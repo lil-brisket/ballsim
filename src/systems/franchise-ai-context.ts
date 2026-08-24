@@ -14,6 +14,7 @@ import {
 import { calculateCashRunway } from "@/state/franchise-selectors";
 import type { FinancialHealthState } from "@/systems/financial-health";
 import { getTeamCapSpace } from "@/systems/salary-cap";
+import { getCalendarContext } from "@/systems/simulation/calendar-context";
 
 export type FranchiseIdentitySnapshot = {
   aiProfile: AiProfile;
@@ -49,6 +50,12 @@ export type FranchiseContext = {
    * Used only as situation input into the resolver.
    */
   performancePressure: number;
+  /** Calendar urgency 0–1; never overrides identity — only retimes pressure. */
+  calendarUrgency: number;
+  /** True during regular-season trade deadline window. */
+  deadlineWindow: boolean;
+  /** True during offseason / preseason planning windows. */
+  offseasonPlanning: boolean;
 };
 
 export function readFranchiseIdentity(
@@ -112,6 +119,25 @@ export function buildFranchiseContext(
     Math.min(1, recordPressure * 0.6 + strengthPressure * 0.4),
   );
 
+  const calendar = getCalendarContext(state);
+  let calendarUrgency = 0;
+  if (calendar.deadlineWindow) {
+    const days = calendar.daysUntilTradeDeadline;
+    calendarUrgency =
+      days === null
+        ? 0.55
+        : Math.max(0.35, Math.min(1, 1 - days / 14));
+  } else if (calendar.seasonSegment === "late") {
+    calendarUrgency = 0.35;
+  } else if (calendar.lifecyclePhase === "offseason") {
+    calendarUrgency = 0.25;
+  }
+
+  const offseasonPlanning =
+    calendar.lifecyclePhase === "offseason" ||
+    calendar.lifecyclePhase === "preseason" ||
+    calendar.lifecyclePhase === "postseason";
+
   return {
     teamId,
     wins,
@@ -129,5 +155,8 @@ export function buildFranchiseContext(
     marketingAwareness: ops.marketing.awareness,
     draftAssetCount,
     performancePressure,
+    calendarUrgency,
+    deadlineWindow: calendar.deadlineWindow,
+    offseasonPlanning,
   };
 }

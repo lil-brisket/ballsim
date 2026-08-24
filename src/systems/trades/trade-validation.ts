@@ -14,6 +14,7 @@ import type { DraftPickId, PlayerId, TeamId } from "@/domain/ids";
 import type { GameState } from "@/state/game-state";
 import { createRosterRulesConfig, validateRosterSize } from "@/systems/roster-rules";
 import { getTeamPayroll } from "@/systems/salary-cap";
+import { getCalendarContext } from "@/systems/simulation/calendar-context";
 import { TRADE_ROSTER_RULES } from "@/systems/trades-config";
 import { checkPlayerTradeEligibility } from "@/systems/trades/trade-eligibility";
 import { applyTradeSalaryRule } from "@/systems/trades/trade-salary-rules";
@@ -34,6 +35,24 @@ export function validateTrade(
 ): TradeValidationResult {
   const errors: TradeValidationIssue[] = [];
   const warnings: TradeValidationIssue[] = [];
+
+  const playerAssets =
+    proposal.sideA.playerIds.length + proposal.sideB.playerIds.length;
+  if (playerAssets > 0) {
+    const calendar = getCalendarContext(state);
+    const phase = state.competition.season.phase;
+    const allowed =
+      calendar.tradesOpen ||
+      phase === "offseason" ||
+      phase === "preseason";
+    if (!allowed) {
+      errors.push({
+        code: "TRADE_DEADLINE_PASSED",
+        message:
+          "Player trades are closed after the trade deadline until the offseason.",
+      });
+    }
+  }
 
   const sideA = proposal.sideA;
   const sideB = proposal.sideB;

@@ -13,6 +13,7 @@ import {
   executeOwnerTrade,
   exerciseOwnerTeamOption,
   finishFreeAgency,
+  beginOffseason,
   fireOwnerStaff,
   hireOwnerStaff,
   loadOwnerSave,
@@ -241,6 +242,19 @@ export async function finishFreeAgencyAction(
   const saveId = String(formData.get("saveId") ?? "");
   const path = returnPath(formData, saveId);
   const result = await finishFreeAgency(saveId);
+  if (!result.ok) {
+    redirectWithError(path, result.error);
+  }
+  revalidateOwner(saveId);
+  redirect(path);
+}
+
+export async function beginOffseasonAction(
+  formData: FormData,
+): Promise<void> {
+  const saveId = String(formData.get("saveId") ?? "");
+  const path = returnPath(formData, saveId);
+  const result = await beginOffseason(saveId);
   if (!result.ok) {
     redirectWithError(path, result.error);
   }

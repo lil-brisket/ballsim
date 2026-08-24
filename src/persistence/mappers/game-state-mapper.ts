@@ -40,6 +40,11 @@ import { createPhaseEBusinessDefaults } from "@/state/phase-e-defaults";
 import { reconstructGameSettingsFromState } from "@/state/reconstruct-game-settings";
 import { generateAxesForExistingProfile } from "@/systems/franchise-identity-generation";
 import {
+  DEFAULT_TRADE_DEADLINE_RULE,
+  isTradeDeadlineRule,
+  type GameSettings,
+} from "@/domain/game-settings";
+import {
   isAiProfile,
   type AiProfile,
   type FranchiseOps,
@@ -136,10 +141,11 @@ const MIGRATE_ONE_STEP: Record<number, (state: unknown) => unknown> = {
   25: (state) => migrateV25ToV26(state as GameStateV25),
   26: (state) => migrateV26ToV27(state as GameStateV26),
   27: (state) => migrateV27ToV28(state as GameStateV27),
+  28: (state) => migrateV28ToV29(state as GameStateV28),
 };
 
 /**
- * Parse → migrate (v1–v27 → current) → validate → return GameState.
+ * Parse → migrate (v1–v28 → current) → validate → return GameState.
  * Does not call serializeGameState.
  */
 export function deserializeGameState(stateJson: string): GameState {
@@ -1824,6 +1830,9 @@ function migrateV20ToV21(state: GameStateV20): GameStateV21 {
         ...state.competition.season,
         phase,
         offseasonStage,
+        regularSeasonStartDate:
+          (state.competition.season as { regularSeasonStartDate?: string | null })
+            .regularSeasonStartDate ?? null,
       },
     },
     business: state.business,
@@ -2308,7 +2317,7 @@ type GameStateV27 = {
  * cashLedgerByMonth, ensure premiumTicketPrice on FranchiseOps.
  * Does not rewrite historical "other" lumping. Emits schemaVersion 28.
  */
-function migrateV27ToV28(state: GameStateV27): GameState {
+function migrateV27ToV28(state: GameStateV27): GameStateV28 {
   const finances: Record<string, TeamFinances> = {};
   for (const [teamId, finance] of Object.entries(state.business.finances)) {
     const booksByYear: TeamFinances["booksByYear"] = {};
@@ -2354,15 +2363,109 @@ function migrateV27ToV28(state: GameStateV27): GameState {
       ...state.meta,
       schemaVersion: 28,
     },
-    settings: state.settings,
+    settings: state.settings as GameStateV28["settings"],
     world: state.world,
-    competition: state.competition,
+    competition: state.competition as GameStateV28["competition"],
     business: {
       ...state.business,
       finances,
       franchiseOps,
     },
     user: state.user,
+  };
+}
+
+/** Schema v28 before calendar-context season start + trade deadline rule. */
+type GameStateV28 = {
+  meta: Omit<GameState["meta"], "schemaVersion"> & {
+    schemaVersion: 28;
+    rngState: number;
+  };
+  settings: {
+    league: GameSettings["league"];
+    injuriesEnabled: boolean;
+    regularSeason: {
+      gamesPerTeam: number;
+      tradeDeadlineRule?: GameSettings["regularSeason"]["tradeDeadlineRule"];
+    };
+    playoffs: GameSettings["playoffs"];
+    simulation: GameSettings["simulation"];
+    ai: GameSettings["ai"];
+    financialRules: GameSettings["financialRules"];
+    draft: GameSettings["draft"];
+    history: GameSettings["history"];
+  };
+  world: GameState["world"];
+  competition: {
+    season: {
+      id: GameState["competition"]["season"]["id"];
+      year: number;
+      phase: SeasonPhase;
+      offseasonStage: OffseasonStage;
+      regularSeasonStartDate?: string | null;
+    };
+    schedule: GameState["competition"]["schedule"];
+    games: GameState["competition"]["games"];
+    standings: GameState["competition"]["standings"];
+    playoffs: GameState["competition"]["playoffs"];
+  };
+  business: GameState["business"];
+  user: GameState["user"];
+};
+
+/**
+ * Deterministic v28 → v29: regularSeasonStartDate + tradeDeadlineRule defaults.
+ * Emits schemaVersion 29. No RNG.
+ */
+function migrateV28ToV29(state: GameStateV28): GameState {
+  let regularSeasonStartDate: string | null =
+    state.competition.season.regularSeasonStartDate ?? null;
+  if (
+    regularSeasonStartDate === null &&
+    state.competition.season.phase === "regular"
+  ) {
+    let earliest: string | null = null;
+    for (const gameId of state.competition.schedule.gameIds) {
+      const game = state.competition.games[gameId];
+      if (!game) {
+        continue;
+      }
+      if (earliest === null || game.date < earliest) {
+        earliest = game.date;
+      }
+    }
+    regularSeasonStartDate = earliest;
+  }
+
+  const tradeDeadlineRule = isTradeDeadlineRule(
+    state.settings.regularSeason.tradeDeadlineRule,
+  )
+    ? state.settings.regularSeason.tradeDeadlineRule
+    : DEFAULT_TRADE_DEADLINE_RULE;
+
+  return {
+    ...state,
+    meta: {
+      ...state.meta,
+      schemaVersion: 29,
+    },
+    settings: {
+      ...state.settings,
+      regularSeason: {
+        gamesPerTeam: state.settings.regularSeason.gamesPerTeam,
+        tradeDeadlineRule,
+      },
+    },
+    competition: {
+      ...state.competition,
+      season: {
+        id: state.competition.season.id,
+        year: state.competition.season.year,
+        phase: state.competition.season.phase,
+        offseasonStage: state.competition.season.offseasonStage,
+        regularSeasonStartDate,
+      },
+    },
   };
 }
 

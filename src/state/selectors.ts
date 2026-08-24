@@ -17,6 +17,7 @@ import { isUserOnDraftClock } from "@/systems/draft/draft-clock";
 import { listFreeAgents } from "@/systems/free-agency";
 import { getTeamCapSpace, getTeamPayroll } from "@/systems/salary-cap";
 import { getFinancialStatement } from "@/systems/team-finances";
+import { getCalendarContext } from "@/systems/simulation/calendar-context";
 
 export type DashboardSnapshot = {
   saveId: string;
@@ -25,6 +26,7 @@ export type DashboardSnapshot = {
   seasonYear: number;
   seasonPhase: string;
   offseasonStage: string;
+  calendarDisplayLabel: string;
   leagueName: string;
   mode: GameMode;
   teamSelectionLocked: boolean;
@@ -874,6 +876,7 @@ export function toDashboardSnapshot(state: GameState): DashboardSnapshot {
     seasonYear: year,
     seasonPhase: state.competition.season.phase,
     offseasonStage: state.competition.season.offseasonStage,
+    calendarDisplayLabel: getCalendarContext(state).displayLabel,
     leagueName: state.world.league.name,
     mode: state.user.mode,
     teamSelectionLocked: state.world.calendar.lastSimulatedDate !== null,

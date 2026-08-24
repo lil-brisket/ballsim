@@ -35,6 +35,9 @@ function baseContext(
     marketingAwareness: 40,
     draftAssetCount: 2,
     performancePressure: 0.4,
+    calendarUrgency: 0,
+    deadlineWindow: false,
+    offseasonPlanning: false,
     ...overrides,
   };
 }

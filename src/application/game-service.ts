@@ -129,6 +129,7 @@ import {
 } from "@/systems/free-agency";
 import { advanceSimulation } from "@/systems/simulation/advance-simulation";
 import { advanceOffseasonStage } from "@/systems/simulation/offseason-lifecycle";
+import { enterOffseasonFromPostseason } from "@/systems/simulation/season-lifecycle";
 import type { AdvanceSimulationResult } from "@/systems/simulation/types";
 import {
   addToTradeBlock,
@@ -605,6 +606,12 @@ export async function advanceOwnerTime(
     );
   }
 
+  if (loaded.state.competition.season.phase === "postseason") {
+    return fail(
+      "Season review is in progress. Begin the offseason from the dashboard before advancing time.",
+    );
+  }
+
   const days = options.days ?? 1;
   const rng = createSeededRng(loaded.state.meta.rngState);
 
@@ -907,6 +914,46 @@ export async function finishFreeAgency(
     if (isUserOnDraftClock(working)) {
       // Persist stopped at draft clock without requiring another advance.
     }
+
+    const saved = await persistWorkingState(
+      saveId,
+      working,
+      rng.getState(),
+      saveStore,
+      emitted,
+    );
+    return withDashboard(saved);
+  } catch (error) {
+    return fail(error instanceof Error ? error.message : String(error));
+  }
+}
+
+/**
+ * Player-paced Season Review → offseason. Runs one simulation day so
+ * season_finalization chains into free_agency exactly once.
+ */
+export async function beginOffseason(
+  saveId: string,
+  store?: SaveGameStore,
+): Promise<OwnerCommandResult> {
+  const saveStore = getStore(store);
+  const loaded = await saveStore.load(saveId);
+  if (!loaded) {
+    return fail("Save not found.");
+  }
+
+  if (loaded.state.competition.season.phase !== "postseason") {
+    return fail("Begin offseason requires the Season Review (postseason) phase.");
+  }
+
+  const rng = createSeededRng(loaded.state.meta.rngState);
+  try {
+    const entered = enterOffseasonFromPostseason(loaded.state);
+    let working = entered.state;
+    const emitted = [...entered.events];
+    const dayResult = advanceSimulation(working, rng, { days: 1 });
+    working = dayResult.state;
+    emitted.push(...dayResult.events);
 
     const saved = await persistWorkingState(
       saveId,
@@ -1406,10 +1453,22 @@ export async function advanceOwnerRelocation(
   store?: SaveGameStore,
 ): Promise<OwnerCommandResult> {
   return runOwnerFranchiseCommand(saveId, (state) => {
+    const teamId = state.user.controlledTeamId;
+    const process = state.business.relocationByTeamId[teamId];
+    const starting =
+      process === undefined || process.stage === "none";
+    if (starting) {
+      const phase = state.competition.season.phase;
+      if (phase !== "offseason" && phase !== "postseason") {
+        throw new Error(
+          "Relocation can only be started during Season Review or the offseason.",
+        );
+      }
+    }
     const target = targetJson
       ? (JSON.parse(targetJson) as RelocationTarget)
       : undefined;
-    return advanceRelocationStage(state, state.user.controlledTeamId, target);
+    return advanceRelocationStage(state, teamId, target);
   }, store);
 }
 

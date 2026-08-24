@@ -18,6 +18,7 @@ export {
 export {
   processSeasonLifecycle,
   isRegularSeasonComplete,
+  enterOffseasonFromPostseason,
 } from "@/systems/simulation/season-lifecycle";
 export {
   processOffseasonLifecycle,
@@ -26,6 +27,19 @@ export {
 } from "@/systems/simulation/offseason-lifecycle";
 export { advanceSimulation } from "@/systems/simulation/advance-simulation";
 export { SEASON_LIFECYCLE_CONFIG } from "@/systems/simulation/season-lifecycle-config";
+export {
+  getCalendarContext,
+  lifecycleIdentity,
+  areTradesOpen,
+  resolveTradeDeadlineDate,
+} from "@/systems/simulation/calendar-context";
+export type {
+  CalendarContext,
+  SeasonSegment,
+  PlayoffRaceStatus,
+  OffseasonPriorityKey,
+} from "@/systems/simulation/calendar-context";
+export { CALENDAR_CONTEXT_CONFIG } from "@/systems/simulation/calendar-context-config";
 export type {
   AdvanceSimulationResult,
   AdvanceSimulationOptions,
