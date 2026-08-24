@@ -18,6 +18,7 @@ import {
 import { simulateSeason } from "@/systems/season-simulation";
 import { updateStandings } from "@/systems/standings";
 import { createPhaseEBusinessDefaults } from "@/state/phase-e-defaults";
+import { createDefaultOwnershipConfidence } from "@/domain/entities/ownership-confidence";
 import { TEST_NOW_ISO, TEST_RNG_SEED } from "../helpers/determinism";
 
 function createEightTeamGameState(rngSeed: number): {
@@ -160,8 +161,10 @@ function createEightTeamGameState(rngSeed: number): {
     user: {
       controlledTeamId,
       mode: "owner",
+      ownerStartSeasonYear: 2026,
       ownerPhilosophy: "balanced",
       ownerPatience: 55,
+      ownershipConfidence: createDefaultOwnershipConfidence("2026-10-01"),
       objectives: [],
       notifications: [],
       eventLog: [],

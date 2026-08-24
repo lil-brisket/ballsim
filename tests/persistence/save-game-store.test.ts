@@ -13,6 +13,7 @@ import { validateGameState } from "@/persistence/validate-game-state";
 import { createInitialGameState } from "@/state/create-initial-state";
 import { CBL_GAME_SETTINGS } from "@/domain/game-settings";
 import { createPhaseEBusinessDefaults } from "@/state/phase-e-defaults";
+import { createDefaultOwnershipConfidence } from "@/domain/entities/ownership-confidence";
 import {
   GAME_STATE_SCHEMA_VERSION,
   type GameState,
@@ -156,6 +157,7 @@ function createEightTeamPopulatedState(rngSeed: number): GameState {
       ownerStartSeasonYear: 2026,
       ownerPhilosophy: "balanced",
       ownerPatience: 55,
+      ownershipConfidence: createDefaultOwnershipConfidence("2026-10-01"),
       objectives: [],
       notifications: [],
       eventLog: [],

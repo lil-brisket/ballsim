@@ -40,6 +40,17 @@ import {
   OWNER_PHILOSOPHIES,
 } from "@/domain/entities/owner-philosophy";
 import { defaultOwnerPatience } from "@/systems/owner-philosophy-config";
+import { createDefaultOwnershipConfidence } from "@/domain/entities/ownership-confidence";
+import {
+  recordOwnershipEvidence,
+} from "@/systems/ownership-confidence-engine";
+import {
+  scoreDraftSelection,
+  scoreFacilityUpgrade,
+  scoreFreeAgentSigning,
+  scoreMarketingBudgetChange,
+  scoreTradeDecision,
+} from "@/systems/ownership-alignment-signals";
 import {
   isPlayerInOwnerScope,
   listTeamsForSelection,
@@ -597,6 +608,12 @@ export async function selectOwnerTeam(
       controlledTeamId: typedTeamId,
       ownerPhilosophy: nextPhilosophy,
       ownerPatience: nextPatience,
+      ownershipConfidence:
+        nextPhilosophy !== loaded.state.user.ownerPhilosophy
+          ? createDefaultOwnershipConfidence(
+              loaded.state.world.calendar.currentDate,
+            )
+          : loaded.state.user.ownershipConfidence,
     },
   };
 
@@ -817,10 +834,15 @@ export async function executeOwnerTrade(
     );
   }
 
+  const withEvidence = recordOwnershipEvidence(
+    executed.state,
+    scoreTradeDecision(working, proposal),
+  );
+
   try {
     const saved = await persistWorkingState(
       saveId,
-      executed.state,
+      withEvidence,
       rng.getState(),
       saveStore,
       executed.events,
@@ -896,9 +918,13 @@ export async function signOwnerFreeAgent(
       terms,
     });
     const accepted = acceptOffer(offered.state, offerId);
+    const withEvidence = recordOwnershipEvidence(
+      accepted.state,
+      scoreFreeAgentSigning(state, playerId, salary, years),
+    );
     const saved = await persistWorkingState(
       saveId,
-      accepted.state,
+      withEvidence,
       rng.getState(),
       saveStore,
       [...offered.events, ...accepted.events],
@@ -1036,7 +1062,10 @@ export async function selectOwnerDraftProspect(
       );
     }
 
-    let working = selection.state;
+    let working = recordOwnershipEvidence(
+      selection.state,
+      scoreDraftSelection(loaded.state),
+    );
     const emitted: DomainEvent[] = [...selection.events];
     const ai = runAiTeamDecisions(working, rng);
     working = ai.state;
@@ -1449,8 +1478,20 @@ export async function upgradeOwnerFacility(
 ): Promise<OwnerCommandResult> {
   return runOwnerFranchiseCommand(
     saveId,
-    (state) =>
-      startFacilityUpgrade(state, state.user.controlledTeamId, category),
+    (state) => {
+      const result = startFacilityUpgrade(
+        state,
+        state.user.controlledTeamId,
+        category,
+      );
+      return {
+        state: recordOwnershipEvidence(
+          result.state,
+          scoreFacilityUpgrade(state, category),
+        ),
+        events: result.events,
+      };
+    },
     store,
   );
 }
@@ -1475,8 +1516,19 @@ export async function setOwnerMarketingBudget(
 ): Promise<OwnerCommandResult> {
   return runOwnerFranchiseCommand(
     saveId,
-    (state) =>
-      setMarketingBudget(state, state.user.controlledTeamId, budget),
+    (state) => {
+      const teamId = state.user.controlledTeamId;
+      const previous =
+        state.business.franchiseOps[teamId]?.marketing.budget ?? 0;
+      const result = setMarketingBudget(state, teamId, budget);
+      return {
+        state: recordOwnershipEvidence(
+          result.state,
+          scoreMarketingBudgetChange(state, previous, budget),
+        ),
+        events: result.events,
+      };
+    },
     store,
   );
 }

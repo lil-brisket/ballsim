@@ -333,6 +333,22 @@ export {
   defaultOwnerPatience,
   mandatePriorityLabels,
 } from "@/systems/owner-philosophy-config";
+export { buildOwnershipExpectations } from "@/systems/ownership-expectations";
+export {
+  recordOwnershipEvidence,
+  processOwnershipConfidence,
+  appendOwnershipSeasonNote,
+  confidenceAlignmentScore,
+  deriveAlignmentScore,
+} from "@/systems/ownership-confidence-engine";
+export { evaluateStrategicPosture } from "@/systems/ownership-strategic-posture";
+export {
+  scoreTradeDecision,
+  scoreFreeAgentSigning,
+  scoreDraftSelection,
+  scoreFacilityUpgrade,
+  scoreMarketingBudgetChange,
+} from "@/systems/ownership-alignment-signals";
 export {
   OWNER_OBJECTIVE_STRONG_OVERALL,
   OWNER_OBJECTIVE_MID_OVERALL,

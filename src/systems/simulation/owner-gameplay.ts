@@ -6,6 +6,7 @@ import { runAiTeamDecisions } from "@/systems/ai-team-decisions";
 import { applyGameplayFinancialConsequences } from "@/systems/gameplay-financial-consequences";
 import { evaluateOwnerObjectives } from "@/systems/owner-objectives";
 import { generateOwnerNotifications } from "@/systems/owner-notifications";
+import { processOwnershipConfidence } from "@/systems/ownership-confidence-engine";
 
 export type OwnerGameplayResult = SystemResult & {
   previousCash: number;
@@ -24,7 +25,8 @@ export type RunOwnerGameplayOptions = {
  * 2. Financial consequences
  * 3. Owner objective evaluation
  * 4. Objective financial consequences (second finance pass)
- * 5. Owner notifications
+ * 5. Ownership confidence / strategic posture
+ * 6. Owner notifications
  *
  * Idempotent for the same simulation state/date when guards are present.
  */
@@ -54,6 +56,10 @@ export function runOwnerGameplay(
   const financesAfterObjectives = applyGameplayFinancialConsequences(current);
   current = financesAfterObjectives.state;
   events.push(...financesAfterObjectives.events);
+
+  const confidence = processOwnershipConfidence(current);
+  current = confidence.state;
+  events.push(...confidence.events);
 
   const notifications = generateOwnerNotifications(current, {
     previousCash,

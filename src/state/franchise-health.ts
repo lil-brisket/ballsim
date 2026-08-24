@@ -1036,12 +1036,41 @@ function scoreStrategic(
     alignment = clamp(Math.round(alignment * 0.55 + rate * 100 * 0.45), 0, 100);
   }
 
+  const ownershipMood = state.user.ownershipConfidence.mood;
+  const moodBoost =
+    ownershipMood === "confident"
+      ? 8
+      : ownershipMood === "supportive"
+        ? 4
+        : ownershipMood === "watchful"
+          ? -2
+          : ownershipMood === "concerned"
+            ? -8
+            : -14;
+  alignment = clamp(Math.round(alignment * 0.85 + (alignment + moodBoost) * 0.15), 0, 100);
+
   drivers.push({
     key: "owner_patience",
     direction: patience >= 50 ? "positive" : "negative",
     impact: patience < 35 || patience >= 70 ? "major" : "moderate",
     label: `Ownership patience ${patience}`,
     explanation: `Owner mandate patience is ${patience}.`,
+  });
+
+  drivers.push({
+    key: "ownership_confidence",
+    direction:
+      ownershipMood === "confident" ||
+      ownershipMood === "supportive" ||
+      ownershipMood === "watchful"
+        ? "positive"
+        : "negative",
+    impact:
+      ownershipMood === "displeased" || ownershipMood === "confident"
+        ? "major"
+        : "moderate",
+    label: `Ownership confidence: ${ownershipMood}`,
+    explanation: `Ownership mood is ${ownershipMood}.`,
   });
 
   if (failed.length > completed.length && failed.length >= 2) {

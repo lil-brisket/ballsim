@@ -36,6 +36,7 @@ import { calculateStandings } from "@/systems/standings";
 import { validateGameState } from "@/persistence/validate-game-state";
 import { generateDraftPicksForSeason } from "@/domain/draft-picks/generate-draft-picks";
 import type { OffseasonStage, SeasonPhase } from "@/domain/entities/season";
+import { createDefaultOwnershipConfidence } from "@/domain/entities/ownership-confidence";
 import { createPhaseEBusinessDefaults } from "@/state/phase-e-defaults";
 import { reconstructGameSettingsFromState } from "@/state/reconstruct-game-settings";
 import { generateAxesForExistingProfile } from "@/systems/franchise-identity-generation";
@@ -145,10 +146,11 @@ const MIGRATE_ONE_STEP: Record<number, (state: unknown) => unknown> = {
   29: (state) => migrateV29ToV30(state as GameStateV29),
   30: (state) => migrateV30ToV31(state as GameStateV30),
   31: (state) => migrateV31ToV32(state as GameStateV31),
+  32: (state) => migrateV32ToV33(state as GameStateV32),
 };
 
 /**
- * Parse → migrate (v1–v31 → current) → validate → return GameState.
+ * Parse → migrate (v1–v32 → current) → validate → return GameState.
  * Does not call serializeGameState.
  */
 export function deserializeGameState(stateJson: string): GameState {
@@ -2226,7 +2228,7 @@ function migrateV25ToV26(state: GameStateV25): GameStateV26 {
       appliedGameplayConsequenceKeys:
         state.user.appliedGameplayConsequenceKeys,
     },
-  };
+  } as GameStateV26;
 }
 
 /** Schema v26 before franchise ownership axes on FranchiseOps. */
@@ -2589,14 +2591,14 @@ type GameStateV31 = {
   world: GameState["world"];
   competition: GameState["competition"];
   business: GameState["business"];
-  user: GameState["user"];
+  user: Omit<GameState["user"], "ownershipConfidence">;
 };
 
 /**
  * Deterministic v31 → v32: ownerStartSeasonYear, season attendance nulls,
  * finances.attendanceByYear. Emits schemaVersion 32. No RNG.
  */
-function migrateV31ToV32(state: GameStateV31): GameState {
+function migrateV31ToV32(state: GameStateV31): GameStateV32 {
   const seasonYear = state.competition.season.year;
   const rawOwnerStart = (state.user as { ownerStartSeasonYear?: unknown })
     .ownerStartSeasonYear;
@@ -2660,6 +2662,42 @@ function migrateV31ToV32(state: GameStateV31): GameState {
     user: {
       ...state.user,
       ownerStartSeasonYear,
+    },
+  };
+}
+
+type GameStateV32 = {
+  meta: GameState["meta"];
+  settings: GameState["settings"];
+  world: GameState["world"];
+  competition: GameState["competition"];
+  business: GameState["business"];
+  user: Omit<GameState["user"], "ownershipConfidence"> & {
+    ownershipConfidence?: GameState["user"]["ownershipConfidence"];
+  };
+};
+
+/**
+ * Deterministic v32 → v33: add ownershipConfidence defaults.
+ * Emits schemaVersion 33. No RNG.
+ */
+function migrateV32ToV33(state: GameStateV32): GameState {
+  const date = state.world.calendar.currentDate;
+  const existing = state.user.ownershipConfidence;
+  const ownershipConfidence =
+    existing != null && typeof existing === "object"
+      ? existing
+      : createDefaultOwnershipConfidence(date);
+
+  return {
+    ...state,
+    meta: {
+      ...state.meta,
+      schemaVersion: 33,
+    },
+    user: {
+      ...state.user,
+      ownershipConfidence,
     },
   };
 }

@@ -7,6 +7,7 @@ import {
   countCareerPlayoffAppearances,
 } from "@/systems/owner-objective-definitions";
 import { getOwnerPhilosophyProfile } from "@/systems/owner-philosophy-config";
+import { confidenceAlignmentScore } from "@/systems/ownership-confidence-engine";
 
 export type OwnerCareerBand =
   | "struggling"
@@ -16,7 +17,12 @@ export type OwnerCareerBand =
 
 export type OwnerCareerEvaluation = {
   band: OwnerCareerBand;
+  /** Blended objective + ownership-confidence alignment (0–100). */
   alignmentScore: number;
+  /** Objective-category alignment only. */
+  objectiveAlignmentScore: number;
+  /** Ownership confidence alignment contribution. */
+  strategicAlignmentScore: number;
   championships: number;
   playoffAppearances: number;
   completedObjectives: number;
@@ -30,7 +36,8 @@ export type OwnerCareerEvaluation = {
 
 /**
  * Derived ownership career evaluation — not a second reputation system.
- * Reads franchise history + objective records + mandate patience.
+ * Reads franchise history + objective records + mandate patience +
+ * modest ownership-confidence alignment (no philosophy-specific band overrides).
  */
 export function toOwnerCareerEvaluation(
   state: GameState,
@@ -50,10 +57,15 @@ export function toOwnerCareerEvaluation(
   const alignedCompleted = completed.filter((objective) =>
     topCategories.includes(objective.category),
   ).length;
-  const alignmentScore =
+  const objectiveAlignmentScore =
     completed.length === 0
       ? 50
       : Math.round((alignedCompleted / completed.length) * 100);
+
+  const strategicAlignmentScore = confidenceAlignmentScore(state);
+  const alignmentScore = Math.round(
+    objectiveAlignmentScore * 0.6 + strategicAlignmentScore * 0.4,
+  );
 
   const championships = countCareerChampionships(state, teamId);
   const playoffAppearances = countCareerPlayoffAppearances(state, teamId);
@@ -77,6 +89,8 @@ export function toOwnerCareerEvaluation(
   return {
     band,
     alignmentScore,
+    objectiveAlignmentScore,
+    strategicAlignmentScore,
     championships,
     playoffAppearances,
     completedObjectives: completed.length,
@@ -105,7 +119,10 @@ function resolveBand(input: {
   alignmentScore: number;
   patience: number;
 }): OwnerCareerBand {
-  if (input.championships >= 3 || (input.championships >= 1 && input.playoffAppearances >= 5)) {
+  if (
+    input.championships >= 3 ||
+    (input.championships >= 1 && input.playoffAppearances >= 5)
+  ) {
     return "legacy";
   }
   if (

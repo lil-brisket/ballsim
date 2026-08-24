@@ -16,6 +16,7 @@ import type { LeagueEconomy } from "@/domain/entities/league-economy";
 import type { OwnerNotification } from "@/domain/entities/owner-notification";
 import type { OwnerObjective } from "@/domain/entities/owner-objective";
 import type { OwnerPhilosophy } from "@/domain/entities/owner-philosophy";
+import type { OwnershipConfidenceState } from "@/domain/entities/ownership-confidence";
 import type { NarrativeState } from "@/domain/entities/narrative-situation";
 import type { Player } from "@/domain/entities/player";
 import type { PlayoffTournament } from "@/domain/entities/playoffs";
@@ -33,7 +34,7 @@ import type { GameSettings } from "@/domain/game-settings";
 import type { DomainEvent } from "@/domain/events";
 import type { SaveId, TeamId } from "@/domain/ids";
 
-export const GAME_STATE_SCHEMA_VERSION = 32;
+export const GAME_STATE_SCHEMA_VERSION = 33;
 
 /** Bounded recent history for Owner Mode activity / transactions UI. */
 export const EVENT_LOG_MAX = 1_000;
@@ -104,6 +105,11 @@ export type UserSlice = {
   ownerPhilosophy: OwnerPhilosophy;
   /** 0–100 mandate patience; starts from philosophy profile default. */
   ownerPatience: number;
+  /**
+   * Ownership confidence / strategic friction narrative.
+   * Expectations are derived; this stores evidence, mood, and season notes.
+   */
+  ownershipConfidence: OwnershipConfidenceState;
   objectives: OwnerObjective[];
   notifications: OwnerNotification[];
   /**

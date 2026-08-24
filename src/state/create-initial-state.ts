@@ -6,6 +6,7 @@ import {
 } from "@/domain/entities/team";
 import { DEFAULT_COACHING_PHILOSOPHY } from "@/domain/coaching/coaching-philosophy";
 import { DEFAULT_OWNER_PHILOSOPHY } from "@/domain/entities/owner-philosophy";
+import { createDefaultOwnershipConfidence } from "@/domain/entities/ownership-confidence";
 import { createSeededRng } from "@/domain/rng";
 import {
   cloneGameSettings,
@@ -211,6 +212,9 @@ export function createInitialGameState(
       ownerStartSeasonYear: startingSeasonYear,
       ownerPhilosophy: DEFAULT_OWNER_PHILOSOPHY,
       ownerPatience: defaultOwnerPatience(DEFAULT_OWNER_PHILOSOPHY),
+      ownershipConfidence: createDefaultOwnershipConfidence(
+        `${startingSeasonYear}-10-01`,
+      ),
       objectives: [],
       notifications: [],
       eventLog: [],
@@ -471,6 +475,9 @@ export function createFourTeamInitialGameState(
       ownerStartSeasonYear: startingSeasonYear,
       ownerPhilosophy: DEFAULT_OWNER_PHILOSOPHY,
       ownerPatience: defaultOwnerPatience(DEFAULT_OWNER_PHILOSOPHY),
+      ownershipConfidence: createDefaultOwnershipConfidence(
+        `${startingSeasonYear}-10-01`,
+      ),
       objectives: [],
       notifications: [],
       eventLog: [],

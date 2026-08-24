@@ -35,6 +35,24 @@ import {
   OWNER_PHILOSOPHIES,
 } from "@/domain/entities/owner-philosophy";
 import {
+  ALIGNMENT_DIMENSIONS,
+  ALIGNMENT_EVIDENCE_DIRECTIONS,
+  ALIGNMENT_EVIDENCE_KINDS,
+  ALIGNMENT_EVIDENCE_SIGNIFICANCES,
+  isAlignmentDimension,
+  isAlignmentEvidenceDirection,
+  isAlignmentEvidenceKind,
+  isAlignmentEvidenceSignificance,
+  isOwnershipMood,
+  OWNERSHIP_EVIDENCE_RING_MAX,
+  OWNERSHIP_MOODS,
+  OWNERSHIP_SEASON_NOTES_MAX,
+  type AlignmentEvidence,
+  type OwnershipConfidenceState,
+  type OwnershipSeasonNote,
+  type StrategicReversal,
+} from "@/domain/entities/ownership-confidence";
+import {
   isOwnerNotificationSeverity,
   isOwnerNotificationType,
   OWNER_NOTIFICATION_SEVERITIES,
@@ -529,6 +547,17 @@ export function validateGameState(state: unknown): asserts state is GameState {
       `user.ownerPatience must be an integer between ${OWNER_PATIENCE_MIN} and ${OWNER_PATIENCE_MAX}.`,
     );
   }
+  if (
+    !("ownershipConfidence" in user) ||
+    user.ownershipConfidence == null ||
+    typeof user.ownershipConfidence !== "object"
+  ) {
+    fail("user.ownershipConfidence is required.");
+  }
+  validateOwnershipConfidence(
+    user.ownershipConfidence as OwnershipConfidenceState,
+  );
+
   if (!("objectives" in user) || !Array.isArray(user.objectives)) {
     fail("user.objectives must be an array.");
   }
@@ -1527,6 +1556,150 @@ function validatePlayoffReferences(
 /**
  * Structural validation only — no objective-type-specific business rules.
  */
+function validateOwnershipConfidence(confidence: OwnershipConfidenceState): void {
+  const path = "user.ownershipConfidence";
+  if (
+    typeof confidence.mood !== "string" ||
+    !isOwnershipMood(confidence.mood)
+  ) {
+    fail(`${path}.mood must be one of ${OWNERSHIP_MOODS.join(", ")}.`);
+  }
+  assertNumber(confidence.concernLevel, `${path}.concernLevel`);
+  if (
+    !Number.isFinite(confidence.concernLevel) ||
+    confidence.concernLevel < 0 ||
+    confidence.concernLevel > 100
+  ) {
+    fail(`${path}.concernLevel must be between 0 and 100.`);
+  }
+  assertNumber(confidence.alignmentScore, `${path}.alignmentScore`);
+  if (
+    !Number.isFinite(confidence.alignmentScore) ||
+    confidence.alignmentScore < 0 ||
+    confidence.alignmentScore > 100
+  ) {
+    fail(`${path}.alignmentScore must be between 0 and 100.`);
+  }
+  if (!Array.isArray(confidence.recentEvidence)) {
+    fail(`${path}.recentEvidence must be an array.`);
+  }
+  if (confidence.recentEvidence.length > OWNERSHIP_EVIDENCE_RING_MAX) {
+    fail(
+      `${path}.recentEvidence must have at most ${OWNERSHIP_EVIDENCE_RING_MAX} entries.`,
+    );
+  }
+  for (const [index, evidence] of confidence.recentEvidence.entries()) {
+    validateAlignmentEvidence(evidence, `${path}.recentEvidence[${index}]`);
+  }
+  if (!Array.isArray(confidence.recentHelping)) {
+    fail(`${path}.recentHelping must be an array.`);
+  }
+  if (!Array.isArray(confidence.recentHurting)) {
+    fail(`${path}.recentHurting must be an array.`);
+  }
+  for (const [index, line] of confidence.recentHelping.entries()) {
+    assertNonEmptyString(line, `${path}.recentHelping[${index}]`);
+  }
+  for (const [index, line] of confidence.recentHurting.entries()) {
+    assertNonEmptyString(line, `${path}.recentHurting[${index}]`);
+  }
+  assertNonEmptyString(
+    confidence.lastConfidenceChangeOn,
+    `${path}.lastConfidenceChangeOn`,
+  );
+  if (confidence.lastPostureCheckOn !== undefined) {
+    assertNonEmptyString(
+      confidence.lastPostureCheckOn,
+      `${path}.lastPostureCheckOn`,
+    );
+  }
+  if (confidence.lastReversal !== undefined) {
+    validateStrategicReversal(confidence.lastReversal, `${path}.lastReversal`);
+  }
+  if (!Array.isArray(confidence.seasonNotes)) {
+    fail(`${path}.seasonNotes must be an array.`);
+  }
+  if (confidence.seasonNotes.length > OWNERSHIP_SEASON_NOTES_MAX) {
+    fail(
+      `${path}.seasonNotes must have at most ${OWNERSHIP_SEASON_NOTES_MAX} entries.`,
+    );
+  }
+  for (const [index, note] of confidence.seasonNotes.entries()) {
+    validateOwnershipSeasonNote(note, `${path}.seasonNotes[${index}]`);
+  }
+}
+
+function validateAlignmentEvidence(
+  evidence: AlignmentEvidence,
+  path: string,
+): void {
+  assertNonEmptyString(evidence.id, `${path}.id`);
+  assertNonEmptyString(evidence.occurredOn, `${path}.occurredOn`);
+  if (
+    typeof evidence.kind !== "string" ||
+    !isAlignmentEvidenceKind(evidence.kind)
+  ) {
+    fail(
+      `${path}.kind must be one of ${ALIGNMENT_EVIDENCE_KINDS.join(", ")}.`,
+    );
+  }
+  if (
+    typeof evidence.significance !== "string" ||
+    !isAlignmentEvidenceSignificance(evidence.significance)
+  ) {
+    fail(
+      `${path}.significance must be one of ${ALIGNMENT_EVIDENCE_SIGNIFICANCES.join(", ")}.`,
+    );
+  }
+  if (
+    typeof evidence.direction !== "string" ||
+    !isAlignmentEvidenceDirection(evidence.direction)
+  ) {
+    fail(
+      `${path}.direction must be one of ${ALIGNMENT_EVIDENCE_DIRECTIONS.join(", ")}.`,
+    );
+  }
+  assertNonEmptyString(evidence.summary, `${path}.summary`);
+  if (evidence.detail !== undefined) {
+    assertNonEmptyString(evidence.detail, `${path}.detail`);
+  }
+  if (
+    typeof evidence.dimension !== "string" ||
+    !isAlignmentDimension(evidence.dimension)
+  ) {
+    fail(
+      `${path}.dimension must be one of ${ALIGNMENT_DIMENSIONS.join(", ")}.`,
+    );
+  }
+}
+
+function validateStrategicReversal(
+  reversal: StrategicReversal,
+  path: string,
+): void {
+  assertNonEmptyString(reversal.priorDirection, `${path}.priorDirection`);
+  assertNonEmptyString(reversal.newDirection, `${path}.newDirection`);
+  if (typeof reversal.acknowledged !== "boolean") {
+    fail(`${path}.acknowledged must be a boolean.`);
+  }
+  assertNonEmptyString(reversal.summary, `${path}.summary`);
+  assertNonEmptyString(reversal.occurredOn, `${path}.occurredOn`);
+}
+
+function validateOwnershipSeasonNote(
+  note: OwnershipSeasonNote,
+  path: string,
+): void {
+  assertNumber(note.seasonYear, `${path}.seasonYear`);
+  if (!Number.isInteger(note.seasonYear)) {
+    fail(`${path}.seasonYear must be an integer.`);
+  }
+  if (typeof note.mood !== "string" || !isOwnershipMood(note.mood)) {
+    fail(`${path}.mood must be one of ${OWNERSHIP_MOODS.join(", ")}.`);
+  }
+  assertNonEmptyString(note.mandateSummary, `${path}.mandateSummary`);
+}
+
 function validateOwnerObjectives(objectives: unknown[]): void {
   const seenIds = new Set<string>();
 

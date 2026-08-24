@@ -23,6 +23,7 @@ import {
 } from "@/domain/ids";
 import { GAME_STATE_SCHEMA_VERSION, type GameState } from "@/state/game-state";
 import { createEmptyTeamFinanceBooks } from "@/domain/entities/finances";
+import { createDefaultOwnershipConfidence } from "@/domain/entities/ownership-confidence";
 import { createPhaseEBusinessDefaults } from "@/state/phase-e-defaults";
 
 describe("season lifecycle", () => {
@@ -232,8 +233,10 @@ describe("season lifecycle", () => {
       user: {
         controlledTeamId: generated.teams[0]!.id as TeamId,
         mode: "owner",
+        ownerStartSeasonYear: 2026,
         ownerPhilosophy: "balanced",
         ownerPatience: 55,
+        ownershipConfidence: createDefaultOwnershipConfidence("2026-10-01"),
         objectives: [],
         notifications: [],
         eventLog: [],

@@ -1,6 +1,5 @@
 import type { FinancialHealthState } from "@/systems/financial-health";
 import { POOR_ATTENDANCE_FILL_RATE_PCT } from "@/systems/owner-objectives-config";
-import { mandatePriorityLabels } from "@/systems/owner-philosophy-config";
 import { getTeamCapSpace, getTeamPayroll } from "@/systems/salary-cap";
 import { STARTER_ROLES } from "@/systems/staff-generation";
 import { getFinancialStatement } from "@/systems/team-finances";
@@ -19,6 +18,10 @@ import {
   toOwnerCareerEvaluation,
   type OwnerCareerEvaluation,
 } from "@/state/owner-career-evaluation";
+import {
+  toOwnershipConfidenceView,
+  type OwnershipConfidenceView,
+} from "@/state/ownership-confidence-view";
 import {
   toFacilitiesView,
   toFranchiseBusinessView,
@@ -159,6 +162,7 @@ export type OwnerDashboardOwner = {
   priorities: string[];
   franchiseReputation: number;
   career: OwnerCareerEvaluation;
+  ownership: OwnershipConfidenceView;
 };
 
 export type OwnerDashboardFlags = {
@@ -510,6 +514,7 @@ function buildOwner(
 ): OwnerDashboardOwner {
   const objectives = data.snapshot.objectives;
   const active = objectives.filter((objective) => objective.status === "active");
+  const ownership = toOwnershipConfidenceView(data.state);
   return {
     philosophy: data.state.user.ownerPhilosophy,
     patience: data.state.user.ownerPatience,
@@ -531,9 +536,10 @@ function buildOwner(
     failedObjectives: objectives.filter(
       (objective) => objective.status === "failed",
     ),
-    priorities: [...mandatePriorityLabels(data.state.user.ownerPhilosophy)],
+    priorities: ownership.priorityBullets,
     franchiseReputation: data.business.reputation,
     career: toOwnerCareerEvaluation(data.state),
+    ownership,
   };
 }
 
