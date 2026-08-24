@@ -2,12 +2,46 @@ import type {
   OwnerDashboardHealth,
   OwnerDashboardInsight,
 } from "@/state/owner-dashboard";
+import type { FranchiseValueDriverKey } from "@/state/franchise-value";
 import { MoneyDisplay } from "@/components/owner/MoneyDisplay";
 import {
   HealthToneBadge,
   MetricBlock,
   MoneyMetric,
 } from "@/components/owner/dashboard/MetricBlock";
+
+const STANDING_LABEL: Record<string, string> = {
+  emerging: "Emerging",
+  established: "Established",
+  major: "Major",
+  elite: "Elite",
+  legacy: "Legacy",
+};
+
+const DRIVER_LABEL: Record<FranchiseValueDriverKey, string> = {
+  market: "Market",
+  facilities: "Facilities",
+  brand: "Brand",
+  fanBase: "Fan base",
+  revenue: "Revenue",
+  profitability: "Profitability",
+  cash: "Cash",
+  performance: "Performance",
+  championships: "Championships",
+};
+
+function franchiseValueContext(health: OwnerDashboardHealth): string {
+  const standing =
+    STANDING_LABEL[health.franchiseStanding] ?? health.franchiseStanding;
+  const parts = [standing];
+  if (health.topPositiveDriver) {
+    parts.push(`Strength: ${DRIVER_LABEL[health.topPositiveDriver]}`);
+  }
+  if (health.topNegativeDriver) {
+    parts.push(`Weakness: ${DRIVER_LABEL[health.topNegativeDriver]}`);
+  }
+  return parts.join(" · ");
+}
 
 export function FranchiseHealthPanel(props: {
   health: OwnerDashboardHealth;
@@ -57,7 +91,11 @@ export function FranchiseHealthPanel(props: {
           <MoneyMetric label="Revenue" amount={health.revenue} />
           <MoneyMetric label="Expenses" amount={health.expenses} />
           <MoneyMetric label="Profit / loss" amount={health.netIncome} />
-          <MoneyMetric label="Franchise value" amount={health.franchiseValue} />
+          <MoneyMetric
+            label="Franchise value"
+            amount={health.franchiseValue}
+            context={franchiseValueContext(health)}
+          />
         </div>
       </div>
 
@@ -113,6 +151,7 @@ export function FranchiseHealthPanel(props: {
 
       <p className="sr-only">
         Franchise value <MoneyDisplay amount={health.franchiseValue} />
+        Standing {STANDING_LABEL[health.franchiseStanding]}
       </p>
     </section>
   );

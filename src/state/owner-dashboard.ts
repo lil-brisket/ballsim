@@ -23,6 +23,10 @@ import {
   type FranchiseBusinessView,
   type LastGameDayView,
 } from "@/state/franchise-selectors";
+import type {
+  FranchiseStanding,
+  FranchiseValueDriverKey,
+} from "@/state/franchise-value";
 import {
   ACTION_QUEUE_CAP,
   DASHBOARD_ACTIVITY_CAP,
@@ -89,6 +93,9 @@ export type OwnerDashboardHealth = {
   expenses: number;
   netIncome: number;
   franchiseValue: number;
+  franchiseStanding: FranchiseStanding;
+  topPositiveDriver: FranchiseValueDriverKey | null;
+  topNegativeDriver: FranchiseValueDriverKey | null;
   financialHealth: FinancialHealthState;
   cashContext: OwnerDashboardMetricContext | null;
   attendance: number | null;
@@ -384,6 +391,9 @@ function buildHealth(data: CanonicalDashboardData): OwnerDashboardHealth {
     expenses: statement.expenses.total,
     netIncome: statement.netIncome,
     franchiseValue: business.franchiseValue,
+    franchiseStanding: business.franchiseStanding,
+    topPositiveDriver: business.franchiseValueBreakdown.topPositiveDriver,
+    topNegativeDriver: business.franchiseValueBreakdown.topNegativeDriver,
     financialHealth: runway.health,
     cashContext,
     attendance: last?.attendance ?? null,

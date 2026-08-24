@@ -14,7 +14,11 @@ import {
   isStaffContractActive,
 } from "@/domain/entities/staff-contract";
 import type { GameState } from "@/state/game-state";
-import { calculateFranchiseValue } from "@/state/franchise-value";
+import {
+  explainFranchiseValue,
+  type FranchiseStanding,
+  type FranchiseValueExplanation,
+} from "@/state/franchise-value";
 import type { DemandContribution } from "@/systems/demand/calculate-demand";
 import {
   explainTicketDemand,
@@ -143,6 +147,10 @@ export type FranchiseBusinessView = {
   weeklyMarketingSpend: number;
   reputation: number;
   franchiseValue: number;
+  /** Explainable valuation breakdown (presentation / diagnostics). */
+  franchiseValueBreakdown: FranchiseValueExplanation;
+  /** Organizational stature — not owner career success. */
+  franchiseStanding: FranchiseStanding;
   arenaCapacity: number;
   aiProfile: string;
   spendingTolerance: number;
@@ -388,6 +396,7 @@ export function toFranchiseBusinessView(state: GameState): FranchiseBusinessView
   const teamId = state.user.controlledTeamId;
   const ops = requireOps(state, teamId);
   const team = state.world.teams[teamId]!;
+  const franchiseValueBreakdown = explainFranchiseValue(state, teamId);
   return {
     ticketPrice: ops.ticketPrice,
     premiumTicketPrice: ops.premiumTicketPrice,
@@ -400,7 +409,9 @@ export function toFranchiseBusinessView(state: GameState): FranchiseBusinessView
       ops.marketing.budget / MARKETING_WEEKS_PER_YEAR,
     ),
     reputation: team.reputation,
-    franchiseValue: calculateFranchiseValue(state, teamId),
+    franchiseValue: franchiseValueBreakdown.total,
+    franchiseValueBreakdown,
+    franchiseStanding: franchiseValueBreakdown.standing,
     arenaCapacity: arenaCapacity(state, teamId),
     aiProfile: ops.aiProfile,
     spendingTolerance: ops.spendingTolerance,

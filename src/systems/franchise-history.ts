@@ -7,6 +7,7 @@ import type {
   FranchiseSeasonRecord,
   PlayoffResultSnapshot,
 } from "@/domain/entities/franchise-history";
+import { playoffRoundLabel } from "@/domain/entities/playoffs";
 import type { DomainEvent } from "@/domain/events";
 import type { TeamId } from "@/domain/ids";
 import { systemResult, type SystemResult } from "@/domain/system-result";
@@ -123,14 +124,108 @@ export function appendAllFranchiseSeasonRecords(state: GameState): SystemResult 
   return systemResult(current, events);
 }
 
-function derivePlayoffResults(
+const PLAYOFF_RESULT_DEPTH: Record<PlayoffResultSnapshot, number> = {
+  missed: 0,
+  first_round: 1,
+  second_round: 2,
+  conference_finals: 3,
+  finals: 4,
+  champion: 5,
+};
+
+/**
+ * Maps the round a team was eliminated in to a history snapshot.
+ * Opening-round losses are always first_round; deeper rounds use
+ * playoffRoundLabel (semifinal → conference_finals, final → finals).
+ */
+export function eliminationSnapshotForRound(
+  round: number,
+  fieldSize: number,
+): PlayoffResultSnapshot {
+  if (fieldSize < 2 || (fieldSize & (fieldSize - 1)) !== 0) {
+    return round === 0 ? "first_round" : "second_round";
+  }
+  try {
+    const label = playoffRoundLabel(round, fieldSize);
+    if (label === "final") {
+      return "finals";
+    }
+    if (label === "semifinal") {
+      return "conference_finals";
+    }
+    if (label === "quarterfinal") {
+      return round === 0 ? "first_round" : "second_round";
+    }
+  } catch {
+    // Non-power-of-two or incomplete tournament metadata — fall through.
+  }
+  if (round <= 0) {
+    return "first_round";
+  }
+  if (round === 1) {
+    return "second_round";
+  }
+  return "conference_finals";
+}
+
+function seriesParticipantTeamIds(series: {
+  higherSeedTeamId: TeamId | null;
+  lowerSeedTeamId: TeamId | null;
+  byeParticipant?: { teamId: TeamId };
+}): TeamId[] {
+  const ids: TeamId[] = [];
+  if (series.higherSeedTeamId) {
+    ids.push(series.higherSeedTeamId);
+  }
+  if (series.lowerSeedTeamId) {
+    ids.push(series.lowerSeedTeamId);
+  }
+  if (series.byeParticipant?.teamId) {
+    ids.push(series.byeParticipant.teamId);
+  }
+  return [...new Set(ids)];
+}
+
+function upgradePlayoffResult(
+  results: Record<string, PlayoffResultSnapshot>,
+  teamId: TeamId,
+  next: PlayoffResultSnapshot,
+): void {
+  const current = results[teamId] ?? "missed";
+  if (PLAYOFF_RESULT_DEPTH[next] > PLAYOFF_RESULT_DEPTH[current]) {
+    results[teamId] = next;
+  }
+}
+
+/**
+ * Derives per-team playoff depth from completed series.
+ * Qualifiers default to first_round; losers are upgraded by elimination
+ * round; champion overrides. Exported for tests.
+ */
+export function derivePlayoffResults(
   state: GameState,
 ): Record<string, PlayoffResultSnapshot> {
   const results: Record<string, PlayoffResultSnapshot> = {};
   const playoffs = state.competition.playoffs;
+  const fieldSize = playoffs.fieldSize;
+
   for (const seed of playoffs.qualifiedTeams) {
     results[seed.teamId] = "first_round";
   }
+
+  for (const series of playoffs.series) {
+    if (series.status !== "complete" || series.winnerTeamId === undefined) {
+      continue;
+    }
+    const loserResult = eliminationSnapshotForRound(series.round, fieldSize);
+    for (const teamId of seriesParticipantTeamIds(series)) {
+      if (teamId === series.winnerTeamId) {
+        continue;
+      }
+      upgradePlayoffResult(results, teamId, loserResult);
+    }
+  }
+
   if (playoffs.championTeamId) {
     results[playoffs.championTeamId] = "champion";
   }
