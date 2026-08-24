@@ -12,6 +12,10 @@ import type { TeamId } from "@/domain/ids";
 import { asTeamId } from "@/domain/ids";
 import type { GameState } from "@/state/game-state";
 import {
+  calculateFranchiseHealth,
+  type FranchiseHealthView,
+} from "@/state/franchise-health";
+import {
   toOwnerCareerEvaluation,
   type OwnerCareerEvaluation,
 } from "@/state/owner-career-evaluation";
@@ -120,6 +124,8 @@ export type OwnerDashboardHealth = {
   franchiseReputation: number;
   marketSize: number;
   awareness: number;
+  /** Six-dimension Franchise Health analytical layer. */
+  franchiseHealth: FranchiseHealthView;
 };
 
 export type OwnerDashboardRosterProblem = {
@@ -474,6 +480,7 @@ function buildHealth(data: CanonicalDashboardData): OwnerDashboardHealth {
     franchiseReputation: business.reputation,
     marketSize: business.marketSize,
     awareness: business.awareness,
+    franchiseHealth: calculateFranchiseHealth(data.state),
   };
 }
 
