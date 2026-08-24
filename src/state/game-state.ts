@@ -16,6 +16,7 @@ import type { LeagueEconomy } from "@/domain/entities/league-economy";
 import type { OwnerNotification } from "@/domain/entities/owner-notification";
 import type { OwnerObjective } from "@/domain/entities/owner-objective";
 import type { OwnerPhilosophy } from "@/domain/entities/owner-philosophy";
+import type { NarrativeState } from "@/domain/entities/narrative-situation";
 import type { Player } from "@/domain/entities/player";
 import type { PlayoffTournament } from "@/domain/entities/playoffs";
 import type { RelocationProcess } from "@/domain/entities/relocation";
@@ -32,7 +33,7 @@ import type { GameSettings } from "@/domain/game-settings";
 import type { DomainEvent } from "@/domain/events";
 import type { SaveId, TeamId } from "@/domain/ids";
 
-export const GAME_STATE_SCHEMA_VERSION = 29;
+export const GAME_STATE_SCHEMA_VERSION = 30;
 
 /** Bounded recent history for Owner Mode activity / transactions UI. */
 export const EVENT_LOG_MAX = 1_000;
@@ -111,6 +112,8 @@ export type UserSlice = {
   eventLog: DomainEvent[];
   /** Deterministic keys for applied gameplay/AI consequences (idempotency). */
   appliedGameplayConsequenceKeys: Record<string, true>;
+  /** Owner narrative situations, month snapshots, and cooldowns. */
+  narrative: NarrativeState;
 };
 
 /**

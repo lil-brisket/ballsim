@@ -352,3 +352,29 @@ export {
   isOwnerNotificationSeverity,
   createOwnerNotification,
 } from "@/domain/entities/owner-notification";
+export type {
+  NarrativeCategory,
+  NarrativeEvidence,
+  NarrativeMonthSnapshot,
+  NarrativeSeverity,
+  NarrativeSituation,
+  NarrativeSituationAction,
+  NarrativeSituationInput,
+  NarrativeSituationRelated,
+  NarrativeSituationStatus,
+  NarrativeSituationUpdate,
+  NarrativeState,
+} from "@/domain/entities/narrative-situation";
+export {
+  NARRATIVE_CATEGORIES,
+  NARRATIVE_SEVERITIES,
+  NARRATIVE_SITUATION_STATUSES,
+  NARRATIVE_UPDATES_MAX,
+  NARRATIVE_SITUATIONS_MAX,
+  NARRATIVE_SNAPSHOTS_MAX,
+  isNarrativeCategory,
+  isNarrativeSeverity,
+  isNarrativeSituationStatus,
+  createNarrativeSituation,
+  createEmptyNarrativeState,
+} from "@/domain/entities/narrative-situation";

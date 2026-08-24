@@ -166,6 +166,7 @@ function createEightTeamGameState(rngSeed: number): {
       notifications: [],
       eventLog: [],
       appliedGameplayConsequenceKeys: {},
+      narrative: { situations: [], snapshots: [], cooldowns: {} },
     },
   };
 

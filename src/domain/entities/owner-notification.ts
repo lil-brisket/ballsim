@@ -1,4 +1,5 @@
 import type { OwnerNotificationId, OwnerObjectiveId, TeamId } from "@/domain/ids";
+import type { NarrativeSituationId } from "@/domain/ids";
 
 export type OwnerNotificationSeverity =
   | "info"
@@ -32,7 +33,8 @@ export type OwnerNotificationType =
   | "awareness_band"
   | "cash_runway_warning"
   | "financial_health_changed"
-  | "calendar_milestone";
+  | "calendar_milestone"
+  | "narrative";
 
 export const OWNER_NOTIFICATION_TYPES: readonly OwnerNotificationType[] = [
   "objective_completed",
@@ -50,6 +52,7 @@ export const OWNER_NOTIFICATION_TYPES: readonly OwnerNotificationType[] = [
   "cash_runway_warning",
   "financial_health_changed",
   "calendar_milestone",
+  "narrative",
 ];
 
 export function isOwnerNotificationType(
@@ -71,6 +74,7 @@ export type OwnerNotification = {
   dedupeKey: string;
   relatedObjectiveId?: OwnerObjectiveId;
   relatedTeamId?: TeamId;
+  relatedSituationId?: NarrativeSituationId;
 };
 
 export type OwnerNotificationInput = {
@@ -84,6 +88,7 @@ export type OwnerNotificationInput = {
   dedupeKey: string;
   relatedObjectiveId?: OwnerObjectiveId;
   relatedTeamId?: TeamId;
+  relatedSituationId?: NarrativeSituationId;
 };
 
 /**
@@ -128,6 +133,10 @@ export function createOwnerNotification(
   if (input.relatedTeamId !== undefined) {
     assertNonEmptyString(input.relatedTeamId, "relatedTeamId");
     notification.relatedTeamId = input.relatedTeamId;
+  }
+  if (input.relatedSituationId !== undefined) {
+    assertNonEmptyString(input.relatedSituationId, "relatedSituationId");
+    notification.relatedSituationId = input.relatedSituationId;
   }
   return notification;
 }

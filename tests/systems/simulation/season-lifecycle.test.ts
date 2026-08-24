@@ -238,6 +238,7 @@ describe("season lifecycle", () => {
         notifications: [],
         eventLog: [],
         appliedGameplayConsequenceKeys: {},
+        narrative: { situations: [], snapshots: [], cooldowns: {} },
       },
     };
 

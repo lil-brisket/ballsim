@@ -19,6 +19,8 @@ import {
   loadOwnerSave,
   makeOwnerFreeAgentOffer,
   markOwnerNotificationsRead,
+  acknowledgeOwnerNarrativeSituation,
+  resolveOwnerNarrativeSituation,
   proposeOwnerExpansion,
   advanceOwnerRelocation,
   runOwnerExpansionDraft,
@@ -283,6 +285,39 @@ export async function markNotificationsReadAction(
   const result = await markOwnerNotificationsRead(
     saveId,
     singleId.length > 0 ? [singleId] : undefined,
+  );
+  if (!result.ok) {
+    redirectWithError(path, result.error);
+  }
+  revalidateOwner(saveId);
+  redirect(path);
+}
+
+export async function acknowledgeNarrativeSituationAction(
+  formData: FormData,
+): Promise<void> {
+  const saveId = String(formData.get("saveId") ?? "");
+  const situationId = String(formData.get("situationId") ?? "");
+  const path = returnPath(formData, saveId);
+  const result = await acknowledgeOwnerNarrativeSituation(saveId, situationId);
+  if (!result.ok) {
+    redirectWithError(path, result.error);
+  }
+  revalidateOwner(saveId);
+  redirect(path);
+}
+
+export async function resolveNarrativeSituationAction(
+  formData: FormData,
+): Promise<void> {
+  const saveId = String(formData.get("saveId") ?? "");
+  const situationId = String(formData.get("situationId") ?? "");
+  const actionId = String(formData.get("actionId") ?? "");
+  const path = returnPath(formData, saveId);
+  const result = await resolveOwnerNarrativeSituation(
+    saveId,
+    situationId,
+    actionId,
   );
   if (!result.ok) {
     redirectWithError(path, result.error);

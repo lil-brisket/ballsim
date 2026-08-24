@@ -76,6 +76,50 @@ export default async function HistoryPage({
           </div>
         )}
       </Section>
+
+      <Section title="Franchise story">
+        {view.ownerDashboard.situations.length === 0 &&
+        !view.notifications.some((n) => n.type === "narrative") ? (
+          <EmptyState message="No narrative developments recorded yet." />
+        ) : (
+          <ul className="space-y-3">
+            {view.ownerDashboard.situations.map((situation) => (
+              <li
+                key={situation.id}
+                className="rounded-lg border border-zinc-800 px-4 py-3"
+              >
+                <p className="text-xs uppercase tracking-wide text-zinc-500">
+                  {situation.updatedOn} · {situation.category} ·{" "}
+                  {situation.status}
+                </p>
+                <p className="mt-1 font-medium text-zinc-100">
+                  {situation.title}
+                </p>
+                <p className="mt-1 text-sm text-zinc-400">{situation.summary}</p>
+              </li>
+            ))}
+            {view.notifications
+              .filter((notification) => notification.type === "narrative")
+              .slice(0, 12)
+              .map((notification) => (
+                <li
+                  key={notification.id}
+                  className="rounded-lg border border-zinc-900 px-4 py-3"
+                >
+                  <p className="text-xs uppercase tracking-wide text-zinc-500">
+                    {notification.occurredOn} · story
+                  </p>
+                  <p className="mt-1 font-medium text-zinc-200">
+                    {notification.title}
+                  </p>
+                  <p className="mt-1 text-sm text-zinc-500">
+                    {notification.message}
+                  </p>
+                </li>
+              ))}
+          </ul>
+        )}
+      </Section>
     </>
   );
 }

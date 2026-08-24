@@ -27,6 +27,7 @@ import { processDailyFanSentimentAfterGames } from "@/systems/fan-sentiment";
 import { applyMediaFromDomainEvents } from "@/systems/media";
 import { processLeaguePlayoffBonuses } from "@/systems/playoff-financial-bonuses";
 import { processHomeGameTicketRevenue } from "@/systems/ticket-revenue";
+import { processNarrativeLayer } from "@/systems/narrative";
 
 /**
  * Canonical Owner Mode simulation advance.
@@ -125,6 +126,8 @@ function advanceOneDay(state: GameState, rng: Rng): OneDayResult {
     );
   }
 
+  const identityBeforeLifecycle = lifecycleIdentity(current);
+
   const seasonLife = processSeasonLifecycle(current);
   current = seasonLife.state;
   events.push(...seasonLife.events);
@@ -163,6 +166,9 @@ function advanceOneDay(state: GameState, rng: Rng): OneDayResult {
   current = media.state;
   events.push(...media.events);
 
+  const lifecycleChanged =
+    lifecycleIdentity(current) !== identityBeforeLifecycle;
+
   current = {
     ...current,
     world: {
@@ -181,21 +187,43 @@ function advanceOneDay(state: GameState, rng: Rng): OneDayResult {
   const newDate = current.world.calendar.currentDate;
   let weeklyRan = false;
   let monthlyRan = false;
+  const narrativeCadences: Array<
+    "game" | "daily" | "weekly" | "monthly" | "offseason"
+  > = [daily.gamesSimulated > 0 ? "game" : "daily"];
+  if (lifecycleChanged) {
+    narrativeCadences.push("offseason");
+  }
+
   if (getIsoWeekId(newDate) !== getIsoWeekId(simulatedDate)) {
     const completedWeekId = completedWeekIdForSimulatedDate(simulatedDate);
     const weekly = runWeeklyPipeline(current, completedWeekId);
     current = weekly.state;
     events.push(...weekly.events);
     weeklyRan = weekly.weeklyPipelineRan;
+    if (weeklyRan) {
+      narrativeCadences.push("weekly");
+    }
   }
 
+  let completedMonthId: string | undefined;
   if (getCalendarMonthId(newDate) !== getCalendarMonthId(simulatedDate)) {
-    const completedMonthId = completedMonthIdForSimulatedDate(simulatedDate);
+    completedMonthId = completedMonthIdForSimulatedDate(simulatedDate);
     const monthly = runMonthlyPipeline(current, completedMonthId);
     current = monthly.state;
     events.push(...monthly.events);
     monthlyRan = monthly.monthlyPipelineRan;
+    if (monthlyRan) {
+      narrativeCadences.push("monthly");
+    }
   }
+
+  const narrative = processNarrativeLayer(current, rng, {
+    cadences: narrativeCadences,
+    dayEvents: events,
+    completedMonthId: monthlyRan ? completedMonthId : undefined,
+  });
+  current = narrative.state;
+  events.push(...narrative.events);
 
   return {
     state: current,

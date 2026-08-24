@@ -54,8 +54,8 @@ export function ActionQueue(props: {
             </p>
             {item.evidence.length > 0 ? (
               <ul className="mt-2 space-y-0.5 text-xs text-zinc-500">
-                {item.evidence.map((line) => (
-                  <li key={line}>· {line}</li>
+                {item.evidence.map((line, index) => (
+                  <li key={`${index}-${line}`}>· {line}</li>
                 ))}
               </ul>
             ) : null}

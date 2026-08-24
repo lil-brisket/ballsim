@@ -73,7 +73,8 @@ export type OwnerDashboardActionCategory =
   | "calendar"
   | "contracts"
   | "free_agency"
-  | "relocation";
+  | "relocation"
+  | "narrative";
 
 export type OwnerDashboardActionItem = {
   id: string;
@@ -175,6 +176,20 @@ export type OwnerDashboardSeasonRecap = {
   story: string;
 };
 
+export type OwnerDashboardSituationView = {
+  id: string;
+  detectorKey: string;
+  category: string;
+  severity: string;
+  status: string;
+  title: string;
+  summary: string;
+  body: string;
+  updatedOn: string;
+  evidence: Record<string, number | boolean | string>;
+  actions: { id: string; label: string; href?: string }[];
+};
+
 export type OwnerDashboardView = {
   saveId: string;
   currentDate: string;
@@ -203,6 +218,7 @@ export type OwnerDashboardView = {
   notifications: NotificationView[];
   activity: EventLogEntryView[];
   flags: OwnerDashboardFlags;
+  situations: OwnerDashboardSituationView[];
 };
 
 type CanonicalDashboardData = {
@@ -287,6 +303,7 @@ export function toOwnerDashboardView(state: GameState): OwnerDashboardView {
   const insights = buildInsights(canonical, health, team);
   const owner = buildOwner(canonical, actionItems, health);
   const flags = buildFlags(canonical);
+  const situations = buildSituationsView(state);
   const seasonRecap =
     calendar.lifecyclePhase === "postseason"
       ? buildSeasonRecap(canonical, health, calendar)
@@ -315,6 +332,7 @@ export function toOwnerDashboardView(state: GameState): OwnerDashboardView {
     notifications,
     activity,
     flags,
+    situations,
   };
 }
 
@@ -784,7 +802,84 @@ function buildActionItems(
     }
   }
 
+  items.push(...buildNarrativeActionItems(data.state, saveId));
+
   return sortAndCapActionItems(items, calendar);
+}
+
+function buildNarrativeActionItems(
+  state: GameState,
+  saveId: string,
+): OwnerDashboardActionItem[] {
+  const items: OwnerDashboardActionItem[] = [];
+  for (const situation of state.user.narrative.situations) {
+    if (
+      situation.status !== "active" &&
+      situation.status !== "escalated" &&
+      situation.status !== "acknowledged"
+    ) {
+      continue;
+    }
+    if (
+      situation.severity !== "important" &&
+      situation.severity !== "critical"
+    ) {
+      continue;
+    }
+    const primaryAction = situation.actions?.[0];
+    const href =
+      primaryAction?.href && primaryAction.href.length > 0
+        ? primaryAction.href.startsWith("/")
+          ? primaryAction.href.includes(saveId)
+            ? primaryAction.href
+            : `/dashboard/${saveId}${primaryAction.href.replace(/^\/dashboard\/?/, "/")}`
+          : `/dashboard/${saveId}/${primaryAction.href}`
+        : `/dashboard/${saveId}/notifications?type=narrative`;
+    const severity: OwnerDashboardActionSeverity =
+      situation.severity === "critical" ? "critical" : "warning";
+    const evidence = Object.entries(situation.evidence)
+      .slice(0, 4)
+      .map(([key, value]) => `${key}: ${String(value)}`);
+    items.push({
+      id: `action_narrative_${situation.id}`,
+      category: "narrative",
+      severity,
+      title: situation.title,
+      what: situation.summary,
+      why: situation.body,
+      evidence,
+      href,
+      hrefLabel: primaryAction?.label ?? "Review situation",
+    });
+  }
+  return items;
+}
+
+function buildSituationsView(state: GameState): OwnerDashboardSituationView[] {
+  return state.user.narrative.situations
+    .filter(
+      (situation) =>
+        situation.status === "active" ||
+        situation.status === "acknowledged" ||
+        situation.status === "escalated",
+    )
+    .map((situation) => ({
+      id: situation.id,
+      detectorKey: situation.detectorKey,
+      category: situation.category,
+      severity: situation.severity,
+      status: situation.status,
+      title: situation.title,
+      summary: situation.summary,
+      body: situation.body,
+      updatedOn: situation.updatedOn,
+      evidence: { ...situation.evidence },
+      actions: (situation.actions ?? []).map((action) => ({
+        id: action.id,
+        label: action.label,
+        ...(action.href ? { href: action.href } : {}),
+      })),
+    }));
 }
 
 function buildCalendarActionItems(

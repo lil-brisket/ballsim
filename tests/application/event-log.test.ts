@@ -84,6 +84,7 @@ describe("eventLog persistence", () => {
         notifications: [],
         eventLog: [],
         appliedGameplayConsequenceKeys: {},
+        narrative: { situations: [], snapshots: [], cooldowns: {} },
       },
     } as unknown as GameState;
 

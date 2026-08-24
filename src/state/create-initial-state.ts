@@ -212,6 +212,7 @@ export function createInitialGameState(
       notifications: [],
       eventLog: [],
       appliedGameplayConsequenceKeys: {},
+      narrative: { situations: [], snapshots: [], cooldowns: {} },
     },
   };
 
@@ -468,6 +469,7 @@ export function createFourTeamInitialGameState(
       notifications: [],
       eventLog: [],
       appliedGameplayConsequenceKeys: {},
+      narrative: { situations: [], snapshots: [], cooldowns: {} },
     },
   };
 }

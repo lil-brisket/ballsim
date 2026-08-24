@@ -9,6 +9,7 @@ import type { TradeProposal } from "@/domain/entities/trade-proposal";
 import type { DomainEvent } from "@/domain/events";
 import {
   asContractId,
+  asNarrativeSituationId,
   asOfferId,
   asPlayerId,
   asSponsorshipId,
@@ -107,6 +108,10 @@ import {
 } from "@/systems/relocation";
 import type { RelocationTarget } from "@/domain/entities/relocation";
 import { signSponsorship } from "@/systems/sponsorships";
+import {
+  acknowledgeNarrativeSituationInState,
+  applyNarrativeAction,
+} from "@/application/narrative-action-adapter";
 import {
   approveExpansion,
   completeExpansion,
@@ -1193,6 +1198,40 @@ export async function markOwnerNotificationsRead(
   } catch (error) {
     return fail(error instanceof Error ? error.message : String(error));
   }
+}
+
+export async function acknowledgeOwnerNarrativeSituation(
+  saveId: string,
+  situationId: string,
+  store?: SaveGameStore,
+): Promise<OwnerCommandResult> {
+  return runOwnerFranchiseCommand(
+    saveId,
+    (state) =>
+      acknowledgeNarrativeSituationInState(
+        state,
+        asNarrativeSituationId(situationId),
+      ),
+    store,
+  );
+}
+
+export async function resolveOwnerNarrativeSituation(
+  saveId: string,
+  situationId: string,
+  actionId: string,
+  store?: SaveGameStore,
+): Promise<OwnerCommandResult> {
+  return runOwnerFranchiseCommand(
+    saveId,
+    (state) =>
+      applyNarrativeAction(
+        state,
+        asNarrativeSituationId(situationId),
+        actionId,
+      ),
+    store,
+  );
 }
 
 export async function exerciseOwnerTeamOption(

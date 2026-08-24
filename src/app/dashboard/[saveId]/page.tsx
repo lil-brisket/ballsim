@@ -5,6 +5,7 @@ import { AdvanceTimeControls } from "@/components/game/AdvanceTimeControls";
 import { ActionQueue } from "@/components/owner/dashboard/ActionQueue";
 import { DashboardNotifications } from "@/components/owner/dashboard/DashboardNotifications";
 import { FranchiseHealthPanel } from "@/components/owner/dashboard/FranchiseHealthPanel";
+import { FranchiseSituations } from "@/components/owner/dashboard/FranchiseSituations";
 import { OwnerPanel } from "@/components/owner/dashboard/OwnerPanel";
 import { RecentActivity } from "@/components/owner/dashboard/RecentActivity";
 import { TeamDecisionPanel } from "@/components/owner/dashboard/TeamDecisionPanel";
@@ -124,8 +125,13 @@ export default async function DashboardPage({
             insights={dash.insights}
           />
         </div>
-        <div className="order-1 lg:order-2">
+        <div className="order-1 space-y-4 lg:order-2">
           <ActionQueue items={dash.actionItems} />
+          <FranchiseSituations
+            saveId={saveId}
+            situations={dash.situations}
+            returnPath={returnPath}
+          />
         </div>
       </div>
 

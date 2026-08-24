@@ -151,6 +151,7 @@ function createEightTeamPopulatedState(rngSeed: number): GameState {
       notifications: [],
       eventLog: [],
       appliedGameplayConsequenceKeys: {},
+      narrative: { situations: [], snapshots: [], cooldowns: {} },
     },
   };
 

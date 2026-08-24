@@ -142,10 +142,11 @@ const MIGRATE_ONE_STEP: Record<number, (state: unknown) => unknown> = {
   26: (state) => migrateV26ToV27(state as GameStateV26),
   27: (state) => migrateV27ToV28(state as GameStateV27),
   28: (state) => migrateV28ToV29(state as GameStateV28),
+  29: (state) => migrateV29ToV30(state as GameStateV29),
 };
 
 /**
- * Parse → migrate (v1–v28 → current) → validate → return GameState.
+ * Parse → migrate (v1–v29 → current) → validate → return GameState.
  * Does not call serializeGameState.
  */
 export function deserializeGameState(stateJson: string): GameState {
@@ -2417,7 +2418,7 @@ type GameStateV28 = {
  * Deterministic v28 → v29: regularSeasonStartDate + tradeDeadlineRule defaults.
  * Emits schemaVersion 29. No RNG.
  */
-function migrateV28ToV29(state: GameStateV28): GameState {
+function migrateV28ToV29(state: GameStateV28): GameStateV29 {
   let regularSeasonStartDate: string | null =
     state.competition.season.regularSeasonStartDate ?? null;
   if (
@@ -2464,6 +2465,40 @@ function migrateV28ToV29(state: GameStateV28): GameState {
         phase: state.competition.season.phase,
         offseasonStage: state.competition.season.offseasonStage,
         regularSeasonStartDate,
+      },
+    },
+  };
+}
+
+type GameStateV29 = {
+  meta: Omit<GameState["meta"], "schemaVersion"> & {
+    schemaVersion: 29;
+    rngState: number;
+  };
+  settings: GameSettings;
+  world: GameState["world"];
+  competition: GameState["competition"];
+  business: GameState["business"];
+  user: Omit<GameState["user"], "narrative">;
+};
+
+/**
+ * Deterministic v29 → v30: empty user.narrative store.
+ * Emits schemaVersion 30. No RNG.
+ */
+function migrateV29ToV30(state: GameStateV29): GameState {
+  return {
+    ...state,
+    meta: {
+      ...state.meta,
+      schemaVersion: 30,
+    },
+    user: {
+      ...state.user,
+      narrative: {
+        situations: [],
+        snapshots: [],
+        cooldowns: {},
       },
     },
   };

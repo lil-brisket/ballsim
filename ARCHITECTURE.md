@@ -108,8 +108,11 @@ GameState
 ├── business      # contracts, finances, free agency, trade blocks,
 #                   staffContracts, sponsorships, franchiseOps, leagueEconomy,
 #                   relocationByTeamId, expansion, franchiseHistory
-└── user          # controlled team, mode, objectives, notifications, eventLog, appliedGameplayConsequenceKeys
+└── user          # controlled team, mode, objectives, notifications, eventLog,
+#                   appliedGameplayConsequenceKeys, narrative
 ```
+
+`schemaVersion` 30 adds `user.narrative` (situations, lean month snapshots, cooldowns) for the owner narrative layer. Narrative interprets simulation state and emits stories/situations; it does not invent hidden simulation truth. Milestone `OwnerNotification`s remain separate.
 
 `schemaVersion` 24 adds Phase E franchise depth under `business`: `staffContracts`, `sponsorships`, `franchiseOps` (operational knobs + slow metrics only — not a miscellaneous bucket), `leagueEconomy`, `relocationByTeamId`, `expansion`, and `franchiseHistory`. Calendar gains `lastSimulatedMonthId`. Facility upgrades post through existing `expenses.facilities` (no separate capex ledger). Live franchise value is a selector (`calculateFranchiseValue`), never a mutable live field. Demand is the sole attendance calculator. Media is event-driven only.
 
@@ -171,6 +174,7 @@ Application (advanceOwnerDay)
     → media from day events
     → advanceCalendar → weekly pipeline (staff + player payroll + facilities + marketing + media + AI franchise)
     → monthly pipeline on month boundary
+    → narrative layer (once per day; cadences for daily/weekly/monthly/offseason; max 2 stories)
 ```
 
 ### World pipeline (advance day)
