@@ -3,9 +3,11 @@ import type {
   PlayoffSeries,
   PlayoffTournament,
 } from "@/domain/entities/playoffs";
-import { asPlayoffSeriesId, asTeamId, type TeamId } from "@/domain/ids";
+import { asPlayoffSeriesId, asSeasonId, asTeamId, type TeamId } from "@/domain/ids";
 import { createTestGameState } from "../factories/game-state";
 import {
+  appendAllFranchiseSeasonRecords,
+  appendFranchiseSeasonRecord,
   derivePlayoffResults,
   eliminationSnapshotForRound,
 } from "@/systems/franchise-history";
@@ -184,5 +186,137 @@ describe("derivePlayoffResults", () => {
     expect(results["team_16"]).toBe("first_round");
     expect(results["team_8"]).toBe("second_round");
     expect(results["team_1"]).toBe("champion");
+  });
+});
+
+describe("appendFranchiseSeasonRecord", () => {
+  it("captures finalized fields including attendance from attendanceByYear", () => {
+    let state = createTestGameState({ saveId: "fh_append" });
+    const teamId = state.user.controlledTeamId;
+    const year = state.competition.season.year;
+    state = {
+      ...state,
+      competition: {
+        ...state.competition,
+        standings: {
+          byTeamId: {
+            ...state.competition.standings.byTeamId,
+            [teamId]: {
+              ...state.competition.standings.byTeamId[teamId]!,
+              wins: 48,
+              losses: 34,
+            },
+          },
+        },
+        playoffs: {
+          ...state.competition.playoffs,
+          status: "complete",
+          championTeamId: teamId,
+          qualifiedTeams: [{ teamId, seed: 1 }],
+        },
+      },
+      business: {
+        ...state.business,
+        finances: {
+          ...state.business.finances,
+          [teamId]: {
+            ...state.business.finances[teamId]!,
+            attendanceByYear: { [String(year)]: 900_000 },
+          },
+        },
+        franchiseOps: {
+          ...state.business.franchiseOps,
+          [teamId]: {
+            ...state.business.franchiseOps[teamId]!,
+            fanSentiment: 72,
+          },
+        },
+      },
+      world: {
+        ...state.world,
+        teams: {
+          ...state.world.teams,
+          [teamId]: {
+            ...state.world.teams[teamId]!,
+            reputation: 68,
+          },
+        },
+      },
+    };
+
+    const once = appendAllFranchiseSeasonRecords(state);
+    const seasons = once.state.business.franchiseHistory[teamId]!.seasons;
+    expect(seasons).toHaveLength(1);
+    const record = seasons[0]!;
+    expect(record.wins).toBe(48);
+    expect(record.losses).toBe(34);
+    expect(record.playoffResult).toBe("champion");
+    expect(record.championship).toBe(true);
+    expect(record.attendance).toBe(900_000);
+    expect(record.fanSentiment).toBe(72);
+    expect(record.reputation).toBe(68);
+    expect(record.franchiseValue).toBeGreaterThan(0);
+    expect(typeof record.revenue).toBe("number");
+
+    const twice = appendAllFranchiseSeasonRecords(once.state);
+    expect(twice.state.business.franchiseHistory[teamId]!.seasons).toHaveLength(1);
+
+    const nextYear = year + 1;
+    let advanced = {
+      ...twice.state,
+      competition: {
+        ...twice.state.competition,
+        season: {
+          ...twice.state.competition.season,
+          id: asSeasonId(`season_${nextYear}`),
+          year: nextYear,
+        },
+        standings: {
+          byTeamId: {
+            ...twice.state.competition.standings.byTeamId,
+            [teamId]: {
+              ...twice.state.competition.standings.byTeamId[teamId]!,
+              wins: 30,
+              losses: 52,
+            },
+          },
+        },
+        playoffs: {
+          ...twice.state.competition.playoffs,
+          status: "complete" as const,
+          championTeamId: null,
+          qualifiedTeams: [],
+        },
+      },
+      business: {
+        ...twice.state.business,
+        finances: {
+          ...twice.state.business.finances,
+          [teamId]: {
+            ...twice.state.business.finances[teamId]!,
+            attendanceByYear: {
+              ...twice.state.business.finances[teamId]!.attendanceByYear,
+              [String(nextYear)]: 1_100_000,
+            },
+          },
+        },
+      },
+    };
+    advanced = appendAllFranchiseSeasonRecords(advanced).state;
+    const all = advanced.business.franchiseHistory[teamId]!.seasons;
+    expect(all).toHaveLength(2);
+    expect(all[0]!.attendance).toBe(900_000);
+    expect(all[0]!.wins).toBe(48);
+    expect(all[1]!.attendance).toBe(1_100_000);
+    expect(all[1]!.wins).toBe(30);
+  });
+
+  it("stores null attendance when accumulator key is missing", () => {
+    const state = createTestGameState({ saveId: "fh_null_att" });
+    const teamId = state.user.controlledTeamId;
+    const result = appendFranchiseSeasonRecord(state, { teamId });
+    expect(
+      result.state.business.franchiseHistory[teamId]!.seasons[0]!.attendance,
+    ).toBeNull();
   });
 });

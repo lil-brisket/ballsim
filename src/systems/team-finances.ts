@@ -351,6 +351,8 @@ function addToBooks(
       ...existingFinance.booksByYear,
       [yearKey]: nextYearBooks,
     },
+    /** Preserve durable season attendance keyed by stable teamId. */
+    attendanceByYear: existingFinance.attendanceByYear ?? {},
     booksByMonth: {
       ...booksByMonth,
       [monthId]: nextMonthBooks,

@@ -128,4 +128,162 @@ describe("ticket revenue", () => {
       state.business.franchiseOps[teamId]!.ticketPrice,
     );
   });
+
+  it("accumulates attendanceByYear and does not double-count on retry", () => {
+    let state = createInitialGameState({
+      saveId: "tix_attend",
+      rngSeed: 7,
+      settings: CBL_GAME_SETTINGS,
+    });
+    const rng = createSeededRng(state.meta.rngState);
+    state = bootstrapWorld(state, rng).state;
+    const teamId = state.user.controlledTeamId;
+    const otherTeamId = (Object.keys(state.world.teams) as string[]).find(
+      (id) => id !== teamId,
+    )!;
+    const date = state.world.calendar.currentDate;
+    const year = String(state.competition.season.year);
+    const gameId = asGameId("game_tix_attend");
+    state = {
+      ...state,
+      competition: {
+        ...state.competition,
+        games: {
+          ...state.competition.games,
+          [gameId]: createGame({
+            id: gameId,
+            seasonId: asSeasonId(state.competition.season.id),
+            date,
+            homeTeamId: teamId,
+            awayTeamId: asTeamId(otherTeamId),
+            status: "final",
+            score: { home: 105, away: 98 },
+            periodScores: [],
+            playerStats: [],
+            events: [],
+          }),
+        },
+      },
+    };
+
+    const once = processHomeGameTicketRevenue(state);
+    const attendanceOnce =
+      once.state.business.finances[teamId]!.attendanceByYear[year]!;
+    expect(attendanceOnce).toBeGreaterThan(0);
+
+    const twice = processHomeGameTicketRevenue(once.state);
+    expect(twice.state.business.finances[teamId]!.attendanceByYear[year]).toBe(
+      attendanceOnce,
+    );
+  });
+
+  it("includes playoff home games in attendanceByYear", () => {
+    let state = createInitialGameState({
+      saveId: "tix_po_attend",
+      rngSeed: 7,
+      settings: CBL_GAME_SETTINGS,
+    });
+    const rng = createSeededRng(state.meta.rngState);
+    state = bootstrapWorld(state, rng).state;
+    const teamId = state.user.controlledTeamId;
+    const otherTeamId = (Object.keys(state.world.teams) as string[]).find(
+      (id) => id !== teamId,
+    )!;
+    const date = state.world.calendar.currentDate;
+    const year = String(state.competition.season.year);
+    const gameId = asGameId("game_tix_po");
+    state = {
+      ...state,
+      competition: {
+        ...state.competition,
+        playoffs: {
+          ...state.competition.playoffs,
+          status: "in_progress",
+        },
+        games: {
+          ...state.competition.games,
+          [gameId]: createGame({
+            id: gameId,
+            seasonId: asSeasonId(state.competition.season.id),
+            date,
+            homeTeamId: teamId,
+            awayTeamId: asTeamId(otherTeamId),
+            status: "final",
+            score: { home: 110, away: 100 },
+            periodScores: [],
+            playerStats: [],
+            events: [],
+          }),
+        },
+      },
+    };
+
+    const result = processHomeGameTicketRevenue(state);
+    expect(
+      result.state.business.finances[teamId]!.attendanceByYear[year],
+    ).toBeGreaterThan(0);
+    expect(
+      result.events.some((event) => event.type === "HomeGameDaySettled"),
+    ).toBe(true);
+  });
+
+  it("preserves prior attendanceByYear keys after books posts", () => {
+    let state = createInitialGameState({
+      saveId: "tix_preserve",
+      rngSeed: 7,
+      settings: CBL_GAME_SETTINGS,
+    });
+    const rng = createSeededRng(state.meta.rngState);
+    state = bootstrapWorld(state, rng).state;
+    const teamId = state.user.controlledTeamId;
+    const finances = state.business.finances[teamId]!;
+    state = {
+      ...state,
+      business: {
+        ...state.business,
+        finances: {
+          ...state.business.finances,
+          [teamId]: {
+            ...finances,
+            attendanceByYear: { "2025": 1_200_000 },
+          },
+        },
+      },
+    };
+    const otherTeamId = (Object.keys(state.world.teams) as string[]).find(
+      (id) => id !== teamId,
+    )!;
+    const date = state.world.calendar.currentDate;
+    const year = String(state.competition.season.year);
+    const gameId = asGameId("game_tix_preserve");
+    state = {
+      ...state,
+      competition: {
+        ...state.competition,
+        games: {
+          ...state.competition.games,
+          [gameId]: createGame({
+            id: gameId,
+            seasonId: asSeasonId(state.competition.season.id),
+            date,
+            homeTeamId: teamId,
+            awayTeamId: asTeamId(otherTeamId),
+            status: "final",
+            score: { home: 100, away: 90 },
+            periodScores: [],
+            playerStats: [],
+            events: [],
+          }),
+        },
+      },
+    };
+
+    const result = processHomeGameTicketRevenue(state);
+    expect(result.state.business.finances[teamId]!.attendanceByYear["2025"]).toBe(
+      1_200_000,
+    );
+    expect(
+      result.state.business.finances[teamId]!.attendanceByYear[year],
+    ).toBeGreaterThan(0);
+  });
 });

@@ -50,7 +50,15 @@ function createEightTeamPopulatedState(rngSeed: number): GameState {
   const finances = Object.fromEntries(
     generated.teams.map((team) => [
       team.id,
-      { teamId: team.id, cash: 50_000_000, payroll: 0, booksByYear: {}, booksByMonth: {}, cashLedgerByMonth: {} },
+      {
+        teamId: team.id,
+        cash: 50_000_000,
+        payroll: 0,
+        booksByYear: {},
+        attendanceByYear: {},
+        booksByMonth: {},
+        cashLedgerByMonth: {},
+      },
     ]),
   );
   const standings = {
@@ -145,6 +153,7 @@ function createEightTeamPopulatedState(rngSeed: number): GameState {
     user: {
       controlledTeamId: generated.teams[0]!.id as TeamId,
       mode: "owner",
+      ownerStartSeasonYear: 2026,
       ownerPhilosophy: "balanced",
       ownerPatience: 55,
       objectives: [],

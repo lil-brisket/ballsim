@@ -15,6 +15,23 @@ export type PlayoffResultSnapshot =
   | "finals"
   | "champion";
 
+export const PLAYOFF_RESULT_DEPTH: Record<PlayoffResultSnapshot, number> = {
+  missed: 0,
+  first_round: 1,
+  second_round: 2,
+  conference_finals: 3,
+  finals: 4,
+  champion: 5,
+};
+
+export function isPlayoffAppearance(result: PlayoffResultSnapshot): boolean {
+  return result !== "missed";
+}
+
+export function playoffResultDepth(result: PlayoffResultSnapshot): number {
+  return PLAYOFF_RESULT_DEPTH[result];
+}
+
 export type FranchiseSeasonRecord = {
   seasonId: SeasonId;
   seasonYear: number;
@@ -23,6 +40,8 @@ export type FranchiseSeasonRecord = {
   playoffResult: PlayoffResultSnapshot;
   championship: boolean;
   revenue: number;
+  /** Total home attendance (regular + playoff) for the completed season. */
+  attendance: number | null;
   cash: number;
   fanSentiment: number;
   reputation: number;

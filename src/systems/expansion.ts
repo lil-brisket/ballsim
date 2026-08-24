@@ -310,6 +310,7 @@ export function completeExpansion(state: GameState, rng: Rng): SystemResult {
             booksByYear: {
               [String(year)]: createEmptyTeamFinanceBooks(),
             },
+            attendanceByYear: {},
             booksByMonth: {},
             cashLedgerByMonth: {},
           },

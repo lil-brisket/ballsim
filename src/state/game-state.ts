@@ -33,7 +33,7 @@ import type { GameSettings } from "@/domain/game-settings";
 import type { DomainEvent } from "@/domain/events";
 import type { SaveId, TeamId } from "@/domain/ids";
 
-export const GAME_STATE_SCHEMA_VERSION = 31;
+export const GAME_STATE_SCHEMA_VERSION = 32;
 
 /** Bounded recent history for Owner Mode activity / transactions UI. */
 export const EVENT_LOG_MAX = 1_000;
@@ -98,6 +98,8 @@ export type BusinessSlice = {
 export type UserSlice = {
   controlledTeamId: TeamId;
   mode: GameMode;
+  /** Earliest known season year the player controlled this franchise. */
+  ownerStartSeasonYear: number;
   /** Ownership mandate; chosen at team pick. Migrated saves default to balanced. */
   ownerPhilosophy: OwnerPhilosophy;
   /** 0–100 mandate patience; starts from philosophy profile default. */

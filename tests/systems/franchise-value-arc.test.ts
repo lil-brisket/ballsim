@@ -177,6 +177,7 @@ function seasonRecord(input: {
     playoffResult: input.playoffResult ?? "missed",
     championship: input.championship ?? false,
     revenue: input.revenue ?? 80_000_000,
+    attendance: null,
     cash: input.cash ?? 40_000_000,
     fanSentiment: input.fanSentiment ?? 50,
     reputation: input.reputation ?? 50,

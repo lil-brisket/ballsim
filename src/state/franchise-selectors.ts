@@ -4,6 +4,12 @@ import {
   type FranchiseOps,
 } from "@/domain/entities/franchise-ops";
 import type { FranchiseSeasonRecord } from "@/domain/entities/franchise-history";
+import {
+  computeFranchiseHistoryMilestones,
+  getSeasonHistoricalHighlights,
+  type FranchiseHistoryMilestones,
+  type HistoricalHighlight,
+} from "@/state/franchise-history-milestones";
 import type { LeagueEconomy } from "@/domain/entities/league-economy";
 import type { RelocationProcess } from "@/domain/entities/relocation";
 import type { ExpansionState } from "@/domain/entities/expansion";
@@ -174,9 +180,25 @@ export type SponsorshipView = {
   playoffBonus: number;
 };
 
-export type FranchiseHistoryView = {
-  seasons: FranchiseSeasonRecord[];
+export type FranchiseHistorySeasonRow = FranchiseSeasonRecord & {
+  playoffLabel: string;
+  highlights: HistoricalHighlight[];
 };
+
+export type FranchiseHistoryView = {
+  seasons: FranchiseHistorySeasonRow[];
+  milestones: FranchiseHistoryMilestones;
+  ownerTenureYears: number;
+};
+
+export function formatPlayoffResultLabel(
+  season: FranchiseSeasonRecord,
+): string {
+  if (season.championship) {
+    return "Champion";
+  }
+  return season.playoffResult.replaceAll("_", " ");
+}
 
 export function toStaffView(state: GameState): {
   roster: StaffMemberView[];
@@ -468,7 +490,22 @@ export function toExpansionView(state: GameState): ExpansionState {
 export function toFranchiseHistoryView(state: GameState): FranchiseHistoryView {
   const teamId = state.user.controlledTeamId;
   const history = state.business.franchiseHistory[teamId];
-  return { seasons: history ? [...history.seasons] : [] };
+  const seasons = history ? [...history.seasons] : [];
+  const milestones = computeFranchiseHistoryMilestones(
+    seasons,
+    state.user.ownerStartSeasonYear,
+    state.competition.season.year,
+  );
+  const highlightsByYear = getSeasonHistoricalHighlights(seasons);
+  return {
+    seasons: seasons.map((season) => ({
+      ...season,
+      playoffLabel: formatPlayoffResultLabel(season),
+      highlights: highlightsByYear.get(season.seasonYear) ?? [],
+    })),
+    milestones,
+    ownerTenureYears: milestones.currentOwnershipTenureYears,
+  };
 }
 
 function requireOps(state: GameState, teamId: string): FranchiseOps {

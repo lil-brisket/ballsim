@@ -73,6 +73,7 @@ export function appendFranchiseSeasonRecord(
     playoffResult: input.playoffResult ?? "missed",
     championship: input.championship ?? false,
     revenue: statement.revenue.total,
+    attendance: finances?.attendanceByYear[String(year)] ?? null,
     cash: finances?.cash ?? 0,
     fanSentiment: ops.fanSentiment,
     reputation: team.reputation,

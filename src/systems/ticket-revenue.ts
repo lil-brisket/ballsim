@@ -62,7 +62,9 @@ function rosterStarAverage(state: GameState, teamId: TeamId): number {
 /**
  * Posts ticket, premium, merchandise, and concessions revenue for all final
  * home games on currentDate. Emits HomeGameDaySettled as the historical record.
- * Idempotent via appliedGameplayConsequenceKeys.
+ * Accumulates durable season attendance on finances.attendanceByYear (regular
+ * + playoff home games). Idempotent via appliedGameplayConsequenceKeys —
+ * retries must not double-count attendance or revenue.
  *
  * Seat allocation: premium first, then GA against remaining capacity.
  * Playoff bonuses are NOT booked here — see processLeaguePlayoffBonuses.
@@ -224,6 +226,28 @@ export function processHomeGameTicketRevenue(state: GameState): SystemResult {
         },
       }),
     );
+
+    const yearKey = String(year);
+    const finances = current.business.finances[teamId];
+    if (finances) {
+      const priorAttendance = finances.attendanceByYear[yearKey] ?? 0;
+      current = {
+        ...current,
+        business: {
+          ...current.business,
+          finances: {
+            ...current.business.finances,
+            [teamId]: {
+              ...finances,
+              attendanceByYear: {
+                ...finances.attendanceByYear,
+                [yearKey]: priorAttendance + totalAttendance,
+              },
+            },
+          },
+        },
+      };
+    }
 
     current = withAppliedGameplayConsequence(current, key);
   }

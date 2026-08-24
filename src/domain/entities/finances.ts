@@ -86,6 +86,13 @@ export type TeamFinances = {
   payroll: number;
   /** Keys are String(seasonYear) matching contract salaryByYear convention. */
   booksByYear: Record<string, TeamFinanceBooks>;
+  /**
+   * Keys are String(seasonYear). Total home attendance (regular + playoff home
+   * games) for that completed/in-progress season. Keyed by stable teamId —
+   * relocation/rename does not re-key this map. Not pruned at season rollover;
+   * FranchiseSeasonRecord.attendance is the durable historical copy.
+   */
+  attendanceByYear: Record<string, number>;
   /** Keys are YYYY-MM calendar months. Accounting projection only. */
   booksByMonth: Record<string, TeamFinanceBooks>;
   /** Keys are YYYY-MM. Liquidity journal; never used to invent cash. */

@@ -135,6 +135,7 @@ export function createInitialGameState(
         cash: 50_000_000,
         payroll: 0,
         booksByYear: {},
+        attendanceByYear: {},
         booksByMonth: {},
         cashLedgerByMonth: {},
       },
@@ -148,7 +149,8 @@ export function createInitialGameState(
   };
 
   const seasonId = asSeasonId(`season_${saveId}_2026`);
-  const phaseE = createPhaseEBusinessDefaults(teamIds, rngSeed, 2026);
+  const startingSeasonYear = 2026;
+  const phaseE = createPhaseEBusinessDefaults(teamIds, rngSeed, startingSeasonYear);
 
   let state: GameState = {
     meta: {
@@ -181,7 +183,7 @@ export function createInitialGameState(
     competition: {
       season: {
         id: seasonId,
-        year: 2026,
+        year: startingSeasonYear,
         phase: "preseason",
         offseasonStage: "none",
         regularSeasonStartDate: null,
@@ -206,6 +208,7 @@ export function createInitialGameState(
     user: {
       controlledTeamId,
       mode: "owner",
+      ownerStartSeasonYear: startingSeasonYear,
       ownerPhilosophy: DEFAULT_OWNER_PHILOSOPHY,
       ownerPatience: defaultOwnerPatience(DEFAULT_OWNER_PHILOSOPHY),
       objectives: [],
@@ -305,6 +308,7 @@ export function createFourTeamInitialGameState(
         cash: 50_000_000,
         payroll: 0,
         booksByYear: {},
+        attendanceByYear: {},
         booksByMonth: {},
         cashLedgerByMonth: {},
       },
@@ -321,7 +325,8 @@ export function createFourTeamInitialGameState(
   };
 
   const teamIds = Object.keys(teams) as TeamId[];
-  const phaseE = createPhaseEBusinessDefaults(teamIds, rngSeed, 2026);
+  const startingSeasonYear = 2026;
+  const phaseE = createPhaseEBusinessDefaults(teamIds, rngSeed, startingSeasonYear);
 
   const fourTeamSettings: GameSettings = input.settings ?? {
     league: {
@@ -438,7 +443,7 @@ export function createFourTeamInitialGameState(
     competition: {
       season: {
         id: seasonId,
-        year: 2026,
+        year: startingSeasonYear,
         phase: "preseason",
         offseasonStage: "none",
         regularSeasonStartDate: null,
@@ -463,6 +468,7 @@ export function createFourTeamInitialGameState(
     user: {
       controlledTeamId: userTeamId,
       mode: "owner",
+      ownerStartSeasonYear: startingSeasonYear,
       ownerPhilosophy: DEFAULT_OWNER_PHILOSOPHY,
       ownerPatience: defaultOwnerPatience(DEFAULT_OWNER_PHILOSOPHY),
       objectives: [],

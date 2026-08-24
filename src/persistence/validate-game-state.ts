@@ -414,6 +414,35 @@ export function validateGameState(state: unknown): asserts state is GameState {
     }
   }
 
+  for (const [historyTeamId, historyValue] of Object.entries(
+    franchiseHistory as Record<string, unknown>,
+  )) {
+    assertRecord(historyValue, `business.franchiseHistory[${historyTeamId}]`);
+    if (!Array.isArray(historyValue.seasons)) {
+      fail(
+        `business.franchiseHistory[${historyTeamId}].seasons must be an array.`,
+      );
+    }
+    for (let index = 0; index < historyValue.seasons.length; index += 1) {
+      const season = historyValue.seasons[index];
+      assertRecord(
+        season,
+        `business.franchiseHistory[${historyTeamId}].seasons[${index}]`,
+      );
+      const attendancePath = `business.franchiseHistory[${historyTeamId}].seasons[${index}].attendance`;
+      if (!("attendance" in season)) {
+        fail(`${attendancePath} is required.`);
+      }
+      if (
+        season.attendance !== null &&
+        (typeof season.attendance !== "number" ||
+          !Number.isFinite(season.attendance))
+      ) {
+        fail(`${attendancePath} must be a finite number or null.`);
+      }
+    }
+  }
+
   for (const [staffId, staffValue] of Object.entries(world.staff)) {
     assertRecord(staffValue, `world.staff[${staffId}]`);
     assertNonEmptyString(staffValue.id, `world.staff[${staffId}].id`);
@@ -474,6 +503,13 @@ export function validateGameState(state: unknown): asserts state is GameState {
     !GAME_MODES.includes(user.mode as GameMode)
   ) {
     fail(`user.mode must be one of ${GAME_MODES.join(", ")}.`);
+  }
+  assertNumber(user.ownerStartSeasonYear, "user.ownerStartSeasonYear");
+  if (
+    !Number.isFinite(user.ownerStartSeasonYear) ||
+    !Number.isInteger(user.ownerStartSeasonYear)
+  ) {
+    fail("user.ownerStartSeasonYear must be a finite integer.");
   }
   if (
     typeof user.ownerPhilosophy !== "string" ||
@@ -666,6 +702,19 @@ export function validateGameState(state: unknown): asserts state is GameState {
       financeValue.booksByYear,
       `business.finances[${financeKey}].booksByYear`,
     );
+    assertRecord(
+      financeValue.attendanceByYear,
+      `business.finances[${financeKey}].attendanceByYear`,
+    );
+    for (const [yearKey, attendance] of Object.entries(
+      financeValue.attendanceByYear as Record<string, unknown>,
+    )) {
+      if (typeof attendance !== "number" || !Number.isFinite(attendance)) {
+        fail(
+          `business.finances[${financeKey}].attendanceByYear["${yearKey}"] must be a finite number.`,
+        );
+      }
+    }
     assertRecord(
       financeValue.booksByMonth,
       `business.finances[${financeKey}].booksByMonth`,

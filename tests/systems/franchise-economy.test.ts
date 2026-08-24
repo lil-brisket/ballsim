@@ -323,14 +323,14 @@ describe("schema 28 migration", () => {
   it("round-trips finances with new categories and premiumTicketPrice", () => {
     const state = bootstrap(31);
     const teamId = state.user.controlledTeamId;
-    expect(state.meta.schemaVersion).toBe(30);
+    expect(state.meta.schemaVersion).toBe(32);
     expect(state.business.franchiseOps[teamId]!.premiumTicketPrice).toBeGreaterThan(
       0,
     );
     expect(state.business.finances[teamId]!.booksByMonth).toEqual({});
     expect(state.business.finances[teamId]!.cashLedgerByMonth).toEqual({});
     const restored = deserializeGameState(serializeGameState(state));
-    expect(restored.meta.schemaVersion).toBe(30);
+    expect(restored.meta.schemaVersion).toBe(32);
     expect(
       restored.business.finances[teamId]!.booksByYear,
     ).toEqual(state.business.finances[teamId]!.booksByYear);

@@ -81,4 +81,43 @@ describe("offseason lifecycle", () => {
     expect(current.competition.schedule.gameIds).toHaveLength(0);
     expect(current.competition.playoffs.status).toBe("not_started");
   });
+
+  it("appends exactly one franchise history record during season_finalization", () => {
+    const { state, rng } = enterOffseason();
+    const teamId = state.user.controlledTeamId;
+    const year = state.competition.season.year;
+    const seeded = {
+      ...state,
+      business: {
+        ...state.business,
+        finances: {
+          ...state.business.finances,
+          [teamId]: {
+            ...state.business.finances[teamId]!,
+            attendanceByYear: { [String(year)]: 750_000 },
+          },
+        },
+      },
+    };
+    expect(seeded.business.franchiseHistory[teamId]!.seasons).toHaveLength(0);
+
+    const once = processOffseasonLifecycle(seeded, rng);
+    expect(once.state.business.franchiseHistory[teamId]!.seasons).toHaveLength(1);
+    expect(
+      once.state.business.franchiseHistory[teamId]!.seasons[0]!.attendance,
+    ).toBe(750_000);
+
+    const reentered = {
+      ...once.state,
+      competition: {
+        ...once.state.competition,
+        season: {
+          ...once.state.competition.season,
+          offseasonStage: "season_finalization" as const,
+        },
+      },
+    };
+    const twice = processOffseasonLifecycle(reentered, rng);
+    expect(twice.state.business.franchiseHistory[teamId]!.seasons).toHaveLength(1);
+  });
 });

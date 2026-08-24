@@ -144,10 +144,11 @@ const MIGRATE_ONE_STEP: Record<number, (state: unknown) => unknown> = {
   28: (state) => migrateV28ToV29(state as GameStateV28),
   29: (state) => migrateV29ToV30(state as GameStateV29),
   30: (state) => migrateV30ToV31(state as GameStateV30),
+  31: (state) => migrateV31ToV32(state as GameStateV31),
 };
 
 /**
- * Parse → migrate (v1–v30 → current) → validate → return GameState.
+ * Parse → migrate (v1–v31 → current) → validate → return GameState.
  * Does not call serializeGameState.
  */
 export function deserializeGameState(stateJson: string): GameState {
@@ -2578,6 +2579,87 @@ function migrateV30ToV31(state: GameStateV30): GameState {
       ...state.business,
       relocationByTeamId,
       franchiseHistory,
+    },
+  };
+}
+
+type GameStateV31 = {
+  meta: GameState["meta"];
+  settings: GameState["settings"];
+  world: GameState["world"];
+  competition: GameState["competition"];
+  business: GameState["business"];
+  user: GameState["user"];
+};
+
+/**
+ * Deterministic v31 → v32: ownerStartSeasonYear, season attendance nulls,
+ * finances.attendanceByYear. Emits schemaVersion 32. No RNG.
+ */
+function migrateV31ToV32(state: GameStateV31): GameState {
+  const seasonYear = state.competition.season.year;
+  const rawOwnerStart = (state.user as { ownerStartSeasonYear?: unknown })
+    .ownerStartSeasonYear;
+  const ownerStartSeasonYear =
+    typeof rawOwnerStart === "number" &&
+    Number.isFinite(rawOwnerStart) &&
+    Number.isInteger(rawOwnerStart)
+      ? rawOwnerStart
+      : seasonYear;
+
+  const finances: GameState["business"]["finances"] = {};
+  for (const [teamId, finance] of Object.entries(state.business.finances)) {
+    const attendanceByYear =
+      finance &&
+      typeof finance === "object" &&
+      "attendanceByYear" in finance &&
+      finance.attendanceByYear != null &&
+      typeof finance.attendanceByYear === "object" &&
+      !Array.isArray(finance.attendanceByYear)
+        ? (finance.attendanceByYear as Record<string, number>)
+        : {};
+    finances[teamId] = {
+      ...finance,
+      attendanceByYear,
+    };
+  }
+
+  const franchiseHistory: GameState["business"]["franchiseHistory"] = {};
+  for (const [teamId, history] of Object.entries(
+    state.business.franchiseHistory,
+  )) {
+    franchiseHistory[teamId] = {
+      teamId: history.teamId,
+      seasons: history.seasons.map((season) => {
+        const rawAttendance = (season as { attendance?: unknown }).attendance;
+        const attendance =
+          rawAttendance === null
+            ? null
+            : typeof rawAttendance === "number" && Number.isFinite(rawAttendance)
+              ? rawAttendance
+              : null;
+        return {
+          ...season,
+          attendance,
+        };
+      }),
+    };
+  }
+
+  return {
+    ...state,
+    meta: {
+      ...state.meta,
+      schemaVersion: 32,
+    },
+    business: {
+      ...state.business,
+      finances,
+      franchiseHistory,
+    },
+    user: {
+      ...state.user,
+      ownerStartSeasonYear,
     },
   };
 }
