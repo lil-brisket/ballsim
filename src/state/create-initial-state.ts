@@ -148,7 +148,7 @@ export function createInitialGameState(
   };
 
   const seasonId = asSeasonId(`season_${saveId}_2026`);
-  const phaseE = createPhaseEBusinessDefaults(teamIds, rngSeed);
+  const phaseE = createPhaseEBusinessDefaults(teamIds, rngSeed, 2026);
 
   let state: GameState = {
     meta: {
@@ -321,7 +321,7 @@ export function createFourTeamInitialGameState(
   };
 
   const teamIds = Object.keys(teams) as TeamId[];
-  const phaseE = createPhaseEBusinessDefaults(teamIds, rngSeed);
+  const phaseE = createPhaseEBusinessDefaults(teamIds, rngSeed, 2026);
 
   const fourTeamSettings: GameSettings = input.settings ?? {
     league: {

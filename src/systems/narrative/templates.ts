@@ -195,6 +195,29 @@ export function renderNarrative(
           : "League-wide popularity or broadcast conditions are soft, which can pressure franchise revenues league-wide.",
         severity,
       };
+    case "relocation_pressure":
+      return {
+        title: bool(ctx, "tenureBlocked")
+          ? "Relocation economics — tenure holds the franchise"
+          : "Relocation becoming a strategic question",
+        summary:
+          str(ctx, "primaryDriver") ||
+          "Market and franchise conditions are making relocation worth discussing.",
+        body: `Assessment status: ${str(ctx, "status")}. Basketball health is ${str(ctx, "basketballHealth")}; business health is ${str(ctx, "businessHealth")}; market size is ${num(ctx, "marketSize")}. Stay path: ${str(ctx, "stayAdvantage") || "invest locally or wait"}. Relocation remains an owner decision — never automatic.`,
+        severity,
+      };
+    case "expansion_discussion":
+      return {
+        title:
+          str(ctx, "status") === "opportunity"
+            ? "Expansion opportunity emerging"
+            : "Expansion discussion incomplete",
+        summary:
+          str(ctx, "summary") ||
+          "League gates for expansion are being reassessed.",
+        body: `League readiness ${bool(ctx, "leagueReady") ? "open" : "closed"}, markets ${bool(ctx, "marketsOpen") ? "open" : "closed"}, capacity ${bool(ctx, "capacityOpen") ? "open" : "closed"}. ${num(ctx, "marketCount")} candidate market(s) under review.`,
+        severity,
+      };
     default:
       return {
         title: "Franchise development",

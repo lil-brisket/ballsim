@@ -107,6 +107,17 @@ import {
   cancelRelocation,
 } from "@/systems/relocation";
 import type { RelocationTarget } from "@/domain/entities/relocation";
+import type { OwnerNavGroup } from "@/application/owner-nav-config";
+import { ownerNavGroupsForState } from "@/application/owner-nav-config";
+import {
+  assessRelocation,
+  type RelocationAssessment,
+} from "@/state/relocation-assessment";
+import {
+  assessExpansion,
+  type ExpansionAssessment,
+} from "@/state/expansion-assessment";
+import { EXPANSION_FEE_DEFAULT } from "@/systems/expansion-config";
 import { signSponsorship } from "@/systems/sponsorships";
 import {
   acknowledgeNarrativeSituationInState,
@@ -115,6 +126,7 @@ import {
 import {
   approveExpansion,
   completeExpansion,
+  pickExpansionDivisionId,
   proposeExpansion,
   runExpansionDraft,
 } from "@/systems/expansion";
@@ -153,6 +165,7 @@ export const MAX_OWNER_SAVE_SLOTS = 10;
 export type CreateGameResult = {
   save: SaveGameSummary;
   dashboard: DashboardSnapshot;
+  navGroups?: readonly OwnerNavGroup[];
 };
 
 export type OwnerCommandSuccess<T extends object = object> = {
@@ -198,6 +211,8 @@ export type OwnerSaveView = CreateGameResult & {
   leagueEconomy: LeagueEconomy;
   relocation: RelocationProcess;
   expansion: ExpansionState;
+  relocationAssessment: RelocationAssessment;
+  expansionAssessment: ExpansionAssessment;
   franchiseHistory: FranchiseHistoryView;
   ownerDashboard: OwnerDashboardView;
   /** Persisted career settings from GameState.settings (read-only for UI). */
@@ -327,6 +342,7 @@ export async function loadOwnerSave(
   return {
     save: toSaveSummary(loaded),
     dashboard: toDashboardSnapshot(loaded.state),
+    navGroups: ownerNavGroupsForState(loaded.state),
   };
 }
 
@@ -376,9 +392,12 @@ export async function loadOwnerSaveView(
     leagueEconomy: toLeagueEconomyView(state),
     relocation: toRelocationView(state),
     expansion: toExpansionView(state),
+    relocationAssessment: assessRelocation(state),
+    expansionAssessment: assessExpansion(state),
     franchiseHistory: toFranchiseHistoryView(state),
     ownerDashboard: toOwnerDashboardView(state),
     settings: state.settings,
+    navGroups: ownerNavGroupsForState(state),
   };
 }
 
@@ -1503,6 +1522,14 @@ export async function advanceOwnerRelocation(
           "Relocation can only be started during Season Review or the offseason.",
         );
       }
+      const assessment = assessRelocation(state, teamId);
+      if (!assessment.canStart) {
+        throw new Error(
+          assessment.status === "blocked_tenure"
+            ? "Relocation is blocked by franchise tenure or cooldown."
+            : "Relocation is not a relevant strategic option for this franchise right now.",
+        );
+      }
     }
     const target = targetJson
       ? (JSON.parse(targetJson) as RelocationTarget)
@@ -1527,29 +1554,40 @@ export async function proposeOwnerExpansion(
   store?: SaveGameStore,
 ): Promise<OwnerCommandResult> {
   return runOwnerFranchiseCommand(saveId, (state) => {
-    const divisions = Object.values(state.world.divisions);
-    const division = divisions[0];
-    if (!division) {
-      throw new Error("proposeOwnerExpansion: no divisions available.");
+    const phase = state.competition.season.phase;
+    if (phase !== "offseason" && phase !== "postseason") {
+      throw new Error(
+        "Expansion can only be proposed during Season Review or the offseason.",
+      );
     }
-    return proposeExpansion(state, [
-      {
-        city: "Summit",
-        name: "Skyhawks",
-        abbreviation: "SUM",
-        marketSize: 58,
+    const assessment = assessExpansion(state);
+    if (!assessment.canPropose || assessment.status === "in_progress") {
+      if (assessment.status === "in_progress") {
+        throw new Error("Expansion is already in progress.");
+      }
+      throw new Error(
+        assessment.summaryReasons[0] ??
+          "Expansion is not available given league readiness, markets, or capacity.",
+      );
+    }
+    const divisionId = pickExpansionDivisionId(state);
+    const division = state.world.divisions[divisionId]!;
+    const destinations = assessment.marketOpportunity.destinations.slice(0, 4);
+    if (destinations.length === 0) {
+      throw new Error("proposeOwnerExpansion: no expansion markets available.");
+    }
+    return proposeExpansion(
+      state,
+      destinations.map((destination) => ({
+        city: destination.city,
+        name: destination.name,
+        abbreviation: destination.abbreviation,
+        marketSize: destination.marketSize,
         conferenceId: division.conferenceId,
         divisionId: division.id,
-      },
-      {
-        city: "Canyon",
-        name: "Rattlers",
-        abbreviation: "CAN",
-        marketSize: 52,
-        conferenceId: division.conferenceId,
-        divisionId: division.id,
-      },
-    ]);
+      })),
+      EXPANSION_FEE_DEFAULT,
+    );
   }, store);
 }
 
@@ -1582,7 +1620,15 @@ export async function completeOwnerExpansion(
 ): Promise<OwnerCommandResult> {
   return runOwnerFranchiseCommand(
     saveId,
-    (state, rng) => completeExpansion(state, rng),
+    (state, rng) => {
+      const phase = state.competition.season.phase;
+      if (phase !== "offseason" && phase !== "postseason") {
+        throw new Error(
+          "Expansion can only be completed during Season Review or the offseason.",
+        );
+      }
+      return completeExpansion(state, rng);
+    },
     store,
   );
 }

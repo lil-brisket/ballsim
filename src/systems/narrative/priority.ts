@@ -39,6 +39,10 @@ export function priorityForDetectorKey(detectorKey: string): number {
       return NARRATIVE_PRIORITY.rival_strength;
     case "league_economy_shift":
       return NARRATIVE_PRIORITY.league_news;
+    case "relocation_pressure":
+      return NARRATIVE_PRIORITY.expectation_gap;
+    case "expansion_discussion":
+      return NARRATIVE_PRIORITY.league_news;
     case "facility_completed":
       return NARRATIVE_PRIORITY.facility_completed;
     case "franchise_value_move":

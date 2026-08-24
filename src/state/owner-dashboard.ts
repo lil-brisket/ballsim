@@ -28,6 +28,7 @@ import type {
   FranchiseValueDriverKey,
 } from "@/state/franchise-value";
 import { calculateFranchiseValue } from "@/state/franchise-value";
+import { assessRelocation } from "@/state/relocation-assessment";
 import {
   ACTION_QUEUE_CAP,
   DASHBOARD_ACTIVITY_CAP,
@@ -264,6 +265,7 @@ const CATEGORY_PRIORITY: Record<OwnerDashboardActionCategory, number> = {
   sponsorship: 11,
   relocation: 12,
   notifications: 13,
+  narrative: 14,
 };
 
 const SEVERITY_PRIORITY: Record<OwnerDashboardActionSeverity, number> = {
@@ -1018,6 +1020,43 @@ function buildCalendarActionItems(
       href: `/dashboard/${saveId}/facilities`,
       hrefLabel: "Manage Facilities",
     });
+  }
+
+  if (
+    calendar.offseasonPriorities.includes("relocation") ||
+    (calendar.lifecyclePhase === "offseason" ||
+      calendar.lifecyclePhase === "postseason")
+  ) {
+    const relocAssessment = assessRelocation(data.state);
+    if (
+      relocAssessment.status === "consider" ||
+      relocAssessment.status === "strong_case" ||
+      relocAssessment.status === "in_progress"
+    ) {
+      items.push({
+        id: "action_relocation",
+        category: "relocation",
+        severity:
+          relocAssessment.status === "strong_case" ? "warning" : "info",
+        title:
+          relocAssessment.status === "in_progress"
+            ? "Relocation in progress"
+            : "Relocation opportunity",
+        what:
+          relocAssessment.primaryDrivers[0] ??
+          "Market and franchise conditions make relocation a legitimate option.",
+        why:
+          relocAssessment.stayAdvantages[0] ??
+          "Compare staying and investing versus paying the cost to move.",
+        evidence: [
+          `Status: ${relocAssessment.status}`,
+          `Basketball: ${relocAssessment.basketballHealth}`,
+          `Business: ${relocAssessment.businessHealth}`,
+        ],
+        href: `/dashboard/${saveId}/relocation`,
+        hrefLabel: "Review Stay vs Move",
+      });
+    }
   }
 
   return items;

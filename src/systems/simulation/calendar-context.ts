@@ -15,6 +15,7 @@ import type { GameState } from "@/state/game-state";
 import { isContractActive } from "@/domain/entities/contract";
 import { STARTER_ROLES } from "@/systems/staff-generation";
 import { CALENDAR_CONTEXT_CONFIG } from "@/systems/simulation/calendar-context-config";
+import { assessRelocation } from "@/state/relocation-assessment";
 
 export type SeasonSegment =
   | "none"
@@ -433,12 +434,21 @@ function resolveOffseasonPriorities(
   }
 
   const relocation = state.business.relocationByTeamId[teamId];
-  if (
-    !relocation ||
-    relocation.cooldownSeasonsRemaining <= 0 ||
-    relocation.stage !== "none"
-  ) {
+  const relocInProgress =
+    relocation !== undefined &&
+    relocation.stage !== "none" &&
+    relocation.stage !== "complete" &&
+    relocation.stage !== "rejected";
+  if (relocInProgress) {
     priorities.push("relocation");
+  } else {
+    const assessment = assessRelocation(state, teamId);
+    if (
+      assessment.status === "consider" ||
+      assessment.status === "strong_case"
+    ) {
+      priorities.push("relocation");
+    }
   }
 
   return uniquePriorities(priorities);

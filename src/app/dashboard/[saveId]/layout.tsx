@@ -17,10 +17,15 @@ export default async function OwnerLayout({
     notFound();
   }
 
-  const { save, dashboard } = loaded;
+  const { save, dashboard, navGroups } = loaded;
 
   return (
-    <GameShell saveId={saveId} saveName={save.name} dashboard={dashboard}>
+    <GameShell
+      saveId={saveId}
+      saveName={save.name}
+      dashboard={dashboard}
+      navGroups={navGroups}
+    >
       {children}
     </GameShell>
   );

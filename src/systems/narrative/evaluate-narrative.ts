@@ -22,6 +22,8 @@ import {
   detectRivalStrengthChange,
   detectSponsorExpiry,
   detectSponsorOpportunity,
+  detectRelocationPressure,
+  detectExpansionDiscussion,
 } from "@/systems/narrative/detectors";
 import {
   applyCandidateToSituations,
@@ -73,6 +75,16 @@ function runDetectors(
     ];
     for (const detect of detectors) {
       const result = detect(context);
+      if (result && !seenKeys.has(result.detectorKey)) {
+        seenKeys.add(result.detectorKey);
+        candidates.push(result);
+      }
+    }
+    for (const detect of [
+      detectRelocationPressure,
+      detectExpansionDiscussion,
+    ] as const) {
+      const result = detect(state, context);
       if (result && !seenKeys.has(result.detectorKey)) {
         seenKeys.add(result.detectorKey);
         candidates.push(result);

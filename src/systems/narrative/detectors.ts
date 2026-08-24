@@ -1,6 +1,9 @@
 import type { NarrativeContext, DetectorCandidate } from "@/systems/narrative/types";
 import { priorityForDetectorKey } from "@/systems/narrative/priority";
 import { OWNER_STREAK_NOTIFICATION_THRESHOLD } from "@/systems/owner-objectives-config";
+import type { GameState } from "@/state/game-state";
+import { assessRelocation } from "@/state/relocation-assessment";
+import { assessExpansion } from "@/state/expansion-assessment";
 
 export function detectAttendanceDecline(
   context: NarrativeContext,
@@ -825,4 +828,103 @@ export function detectLeagueEconomyShift(
     };
   }
   return null;
+}
+
+/** Reads RelocationAssessment — does not invent thresholds. */
+export function detectRelocationPressure(
+  state: GameState,
+  context: NarrativeContext,
+): DetectorCandidate | null {
+  if (context.cadence !== "monthly" && context.cadence !== "offseason") {
+    return null;
+  }
+  const assessment = assessRelocation(state, context.teamId);
+  if (
+    assessment.status === "not_relevant" ||
+    assessment.status === "in_progress"
+  ) {
+    return null;
+  }
+  if (context.openDetectorKeys.has("relocation_pressure")) {
+    return null;
+  }
+
+  const severity =
+    assessment.status === "strong_case"
+      ? "important"
+      : assessment.status === "consider"
+        ? "notable"
+        : "informational";
+
+  return {
+    detectorKey: "relocation_pressure",
+    kind: "situation",
+    category: "ownership",
+    stage: assessment.status === "strong_case" ? 2 : 1,
+    severity,
+    priorityHint: priorityForDetectorKey("relocation_pressure"),
+    evidence: {
+      status: assessment.status,
+      economicStatus: assessment.economicStatus,
+      marketSize: assessment.marketConstraint.marketSize,
+      realization: assessment.marketConstraint.attendanceRealization,
+      basketballHealth: assessment.basketballHealth,
+      businessHealth: assessment.businessHealth,
+      tenureBlocked: assessment.tenure.blocked,
+    },
+    templateContext: {
+      status: assessment.status,
+      marketSize: assessment.marketConstraint.marketSize,
+      basketballHealth: assessment.basketballHealth,
+      businessHealth: assessment.businessHealth,
+      primaryDriver: assessment.primaryDrivers[0] ?? "",
+      stayAdvantage: assessment.stayAdvantages[0] ?? "",
+      tenureBlocked: assessment.tenure.blocked,
+    },
+    actions: [
+      { id: "review_relocation", label: "Review stay vs move", href: "/relocation" },
+      { id: "increase_marketing", label: "Increase marketing" },
+    ],
+  };
+}
+
+/** Reads ExpansionAssessment — three gates. */
+export function detectExpansionDiscussion(
+  state: GameState,
+  context: NarrativeContext,
+): DetectorCandidate | null {
+  if (context.cadence !== "monthly" && context.cadence !== "offseason") {
+    return null;
+  }
+  const assessment = assessExpansion(state);
+  if (assessment.status === "not_relevant" || assessment.status === "in_progress") {
+    return null;
+  }
+  if (context.openDetectorKeys.has("expansion_discussion")) {
+    return null;
+  }
+
+  return {
+    detectorKey: "expansion_discussion",
+    kind: "story",
+    category: "league",
+    stage: 0,
+    severity: assessment.status === "opportunity" ? "notable" : "informational",
+    priorityHint: priorityForDetectorKey("expansion_discussion"),
+    evidence: {
+      status: assessment.status,
+      leagueReadiness: assessment.leagueReadiness.status,
+      marketOpportunity: assessment.marketOpportunity.status,
+      structuralCapacity: assessment.structuralCapacity.status,
+      liveTeamCount: assessment.structuralCapacity.liveTeamCount,
+    },
+    templateContext: {
+      status: assessment.status,
+      leagueReady: assessment.leagueReadiness.status === "open",
+      marketsOpen: assessment.marketOpportunity.status === "open",
+      capacityOpen: assessment.structuralCapacity.status === "open",
+      summary: assessment.summaryReasons[0] ?? "",
+      marketCount: assessment.marketOpportunity.destinations.length,
+    },
+  };
 }

@@ -446,6 +446,7 @@ export function toLeagueEconomyView(state: GameState): LeagueEconomy {
 
 export function toRelocationView(state: GameState): RelocationProcess {
   const teamId = state.user.controlledTeamId;
+  const year = state.competition.season.year;
   return (
     state.business.relocationByTeamId[teamId] ?? {
       teamId,
@@ -453,6 +454,9 @@ export function toRelocationView(state: GameState): RelocationProcess {
       target: null,
       cooldownSeasonsRemaining: 0,
       fee: 0,
+      cityStartSeasonYear: year,
+      lastCompletedRelocationSeasonYear: null,
+      failedAttemptCooldownSeasonsRemaining: 0,
     }
   );
 }

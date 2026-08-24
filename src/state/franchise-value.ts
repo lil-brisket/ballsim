@@ -169,7 +169,7 @@ function blendTrailAndCurrent(
   return trailing * (1 - momentumWeight) + current * momentumWeight;
 }
 
-function readAttendanceRealization(
+export function readAttendanceRealization(
   state: GameState,
   teamId: TeamId,
 ): number {
@@ -196,7 +196,7 @@ function readAttendanceRealization(
   return clamp(fillSum / games, MARKET_REALIZATION_MIN, MARKET_REALIZATION_MAX);
 }
 
-function calculateMarketValue(
+export function calculateMarketValue(
   marketSize: number,
   realization: number,
 ): { market: number; marketPotential: number; attendanceRealization: number } {

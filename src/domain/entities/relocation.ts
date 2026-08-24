@@ -2,7 +2,7 @@ import type { TeamId } from "@/domain/ids";
 
 /**
  * Multi-stage relocation process (E11). Not a city field write.
- * Cancellable from explore/negotiate. Cooldown after completion.
+ * Cancellable from explore/negotiate. Generational cooldown after completion.
  */
 
 export type RelocationStage =
@@ -43,6 +43,12 @@ export type RelocationProcess = {
   cooldownSeasonsRemaining: number;
   /** Fee required at transition (integer dollars). */
   fee: number;
+  /** Season year when the franchise began its current city tenure. */
+  cityStartSeasonYear: number;
+  /** Season year of last completed relocation; null if never relocated. */
+  lastCompletedRelocationSeasonYear: number | null;
+  /** Seasons remaining after a failed/rejected/cancelled attempt. */
+  failedAttemptCooldownSeasonsRemaining: number;
 };
 
 export function isRelocationStage(value: unknown): value is RelocationStage {
@@ -52,12 +58,18 @@ export function isRelocationStage(value: unknown): value is RelocationStage {
   );
 }
 
-export function createIdleRelocation(teamId: TeamId): RelocationProcess {
+export function createIdleRelocation(
+  teamId: TeamId,
+  cityStartSeasonYear = 0,
+): RelocationProcess {
   return {
     teamId,
     stage: "none",
     target: null,
     cooldownSeasonsRemaining: 0,
     fee: 0,
+    cityStartSeasonYear,
+    lastCompletedRelocationSeasonYear: null,
+    failedAttemptCooldownSeasonsRemaining: 0,
   };
 }

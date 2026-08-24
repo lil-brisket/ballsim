@@ -15,6 +15,7 @@ import {
   asConferenceId,
   asDivisionId,
   asTeamId,
+  type DivisionId,
   type PlayerId,
   type TeamId,
 } from "@/domain/ids";
@@ -23,8 +24,13 @@ import type { Rng } from "@/domain/rng";
 import { systemResult, type SystemResult } from "@/domain/system-result";
 import type { GameState } from "@/state/game-state";
 import { createEmptyTeamFinanceBooks } from "@/domain/entities/finances";
+import {
+  EXPANSION_FEE_DEFAULT,
+  EXPANSION_STARTING_CASH,
+} from "@/systems/expansion-config";
 import { generateFranchiseIdentity } from "@/systems/franchise-identity-generation";
 import { generateLeagueStaffForTeam } from "@/systems/staff-generation";
+import { applyCashAndBooksImpact } from "@/systems/team-finances";
 
 function emitExpansionStage(
   state: GameState,
@@ -36,6 +42,26 @@ function emitExpansionStage(
     occurredOn: state.world.calendar.currentDate,
     payload: { stage, ...extra },
   });
+}
+
+/**
+ * Deterministic division placement: fewest teams, then stable id order.
+ * Geographic realignment is deferred — do not treat this as permanent architecture.
+ */
+export function pickExpansionDivisionId(state: GameState): DivisionId {
+  const divisions = Object.values(state.world.divisions).sort((a, b) =>
+    a.id.localeCompare(b.id),
+  );
+  if (divisions.length === 0) {
+    throw new Error("pickExpansionDivisionId: no divisions available.");
+  }
+  let best = divisions[0]!;
+  for (const division of divisions) {
+    if (division.teamIds.length < best.teamIds.length) {
+      best = division;
+    }
+  }
+  return best.id;
 }
 
 export function proposeExpansion(
@@ -58,7 +84,7 @@ export function proposeExpansion(
           stage: "proposed",
           candidates,
           selectedCandidateIndex: -1,
-          fee: fee ?? state.business.expansion.fee,
+          fee: fee ?? state.business.expansion.fee ?? EXPANSION_FEE_DEFAULT,
           newTeamId: null,
         },
       },
@@ -119,6 +145,7 @@ function lowestOvrUnprotectedPlayer(
 }
 
 export function runExpansionDraft(state: GameState, rng: Rng): SystemResult {
+  void rng;
   const expansion = state.business.expansion;
   if (expansion.stage !== "approved" || !expansion.newTeamId) {
     throw new Error("runExpansionDraft: expansion team must exist first.");
@@ -143,7 +170,7 @@ export function runExpansionDraft(state: GameState, rng: Rng): SystemResult {
   const toTeam = state.world.teams[newTeamId]!;
   const player = state.world.players[pick.playerId]!;
 
-  let current: GameState = {
+  const current: GameState = {
     ...state,
     world: {
       ...state.world,
@@ -178,6 +205,43 @@ export function runExpansionDraft(state: GameState, rng: Rng): SystemResult {
   ]);
 }
 
+function distributeExpansionFee(
+  state: GameState,
+  fee: number,
+  excludingTeamId: TeamId | null,
+): SystemResult {
+  const year = state.competition.season.year;
+  const recipients = (Object.keys(state.world.teams) as TeamId[])
+    .filter((id) => id !== excludingTeamId)
+    .sort();
+  if (recipients.length === 0 || fee <= 0) {
+    return systemResult(state);
+  }
+
+  const each = Math.floor(fee / recipients.length);
+  let leftover = fee - each * recipients.length;
+  let current = state;
+  const events: DomainEvent[] = [];
+
+  for (const teamId of recipients) {
+    let amount = each;
+    if (leftover > 0) {
+      amount += 1;
+      leftover -= 1;
+    }
+    if (amount <= 0) {
+      continue;
+    }
+    const impact = applyCashAndBooksImpact(current, teamId, amount, year, {
+      revenueCategory: "other",
+    });
+    current = impact.state;
+    events.push(...impact.events);
+  }
+
+  return systemResult(current, events);
+}
+
 export function completeExpansion(state: GameState, rng: Rng): SystemResult {
   const expansion = state.business.expansion;
   if (expansion.stage === "none" || expansion.stage === "complete") {
@@ -188,15 +252,28 @@ export function completeExpansion(state: GameState, rng: Rng): SystemResult {
   const events: DomainEvent[] = [];
 
   if (expansion.stage === "approved" && expansion.selectedCandidateIndex >= 0) {
-  const candidate = expansion.candidates[expansion.selectedCandidateIndex]!;
+    const candidate = expansion.candidates[expansion.selectedCandidateIndex]!;
     const teamId = asTeamId(`team_exp_${candidate.abbreviation.toLowerCase()}`);
+    const divisionId = asDivisionId(
+      candidate.divisionId || pickExpansionDivisionId(current),
+    );
+    const division = current.world.divisions[divisionId];
+    if (!division) {
+      throw new Error(`completeExpansion: division "${divisionId}" missing.`);
+    }
+    const conferenceId = asConferenceId(
+      candidate.conferenceId || division.conferenceId,
+    );
+
+    const preexistingIds = Object.keys(current.world.teams) as TeamId[];
+
     const team = createTeam({
       id: teamId,
       city: candidate.city,
       name: candidate.name,
       abbreviation: candidate.abbreviation,
-      conferenceId: asConferenceId(candidate.conferenceId),
-      divisionId: asDivisionId(candidate.divisionId),
+      conferenceId,
+      divisionId,
       roster: [],
       staff: [],
       finances: {},
@@ -207,11 +284,20 @@ export function completeExpansion(state: GameState, rng: Rng): SystemResult {
     });
 
     const year = current.competition.season.year;
+    const seasonYear = year;
+
     current = {
       ...current,
       world: {
         ...current.world,
         teams: { ...current.world.teams, [teamId]: team },
+        divisions: {
+          ...current.world.divisions,
+          [divisionId]: {
+            ...division,
+            teamIds: [...division.teamIds, teamId],
+          },
+        },
       },
       business: {
         ...current.business,
@@ -219,7 +305,7 @@ export function completeExpansion(state: GameState, rng: Rng): SystemResult {
           ...current.business.finances,
           [teamId]: {
             teamId,
-            cash: expansion.fee,
+            cash: EXPANSION_STARTING_CASH,
             payroll: 0,
             booksByYear: {
               [String(year)]: createEmptyTeamFinanceBooks(),
@@ -248,7 +334,7 @@ export function completeExpansion(state: GameState, rng: Rng): SystemResult {
         },
         relocationByTeamId: {
           ...current.business.relocationByTeamId,
-          [teamId]: createIdleRelocation(teamId),
+          [teamId]: createIdleRelocation(teamId, seasonYear),
         },
         franchiseHistory: {
           ...current.business.franchiseHistory,
@@ -261,6 +347,16 @@ export function completeExpansion(state: GameState, rng: Rng): SystemResult {
       },
     };
 
+    const feeShare = distributeExpansionFee(
+      current,
+      expansion.fee,
+      teamId,
+    );
+    // Fee goes to pre-existing clubs only — exclude new team (already excluded).
+    void preexistingIds;
+    current = feeShare.state;
+    events.push(...feeShare.events);
+
     const staffResult = generateLeagueStaffForTeam(current, rng, teamId);
     current = staffResult.state;
     events.push(...staffResult.events);
@@ -272,6 +368,7 @@ export function completeExpansion(state: GameState, rng: Rng): SystemResult {
     events.push(...draftResult.events);
   }
 
+  // Mark complete then reset so a later era can propose again when ready.
   current = {
     ...current,
     business: {
@@ -283,6 +380,10 @@ export function completeExpansion(state: GameState, rng: Rng): SystemResult {
     },
   };
   events.push(emitExpansionStage(current, "complete"));
+
+  const reset = resetExpansionState(current);
+  current = reset.state;
+  events.push(...reset.events);
 
   return systemResult(current, events);
 }

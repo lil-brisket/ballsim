@@ -31,7 +31,7 @@ export type ExpansionState = {
   candidates: ExpansionCandidateMarket[];
   /** Selected candidate index when approved; -1 if none. */
   selectedCandidateIndex: number;
-  /** Expansion fee (integer dollars) paid by new ownership / shared to league. */
+  /** Expansion fee (integer dollars) shared to pre-existing clubs. */
   fee: number;
   /** New team id once created; null until franchise exists. */
   newTeamId: string | null;

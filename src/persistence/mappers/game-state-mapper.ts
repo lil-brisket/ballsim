@@ -143,10 +143,11 @@ const MIGRATE_ONE_STEP: Record<number, (state: unknown) => unknown> = {
   27: (state) => migrateV27ToV28(state as GameStateV27),
   28: (state) => migrateV28ToV29(state as GameStateV28),
   29: (state) => migrateV29ToV30(state as GameStateV29),
+  30: (state) => migrateV30ToV31(state as GameStateV30),
 };
 
 /**
- * Parse → migrate (v1–v29 → current) → validate → return GameState.
+ * Parse → migrate (v1–v30 → current) → validate → return GameState.
  * Does not call serializeGameState.
  */
 export function deserializeGameState(stateJson: string): GameState {
@@ -2486,7 +2487,7 @@ type GameStateV29 = {
  * Deterministic v29 → v30: empty user.narrative store.
  * Emits schemaVersion 30. No RNG.
  */
-function migrateV29ToV30(state: GameStateV29): GameState {
+function migrateV29ToV30(state: GameStateV29): GameStateV30 {
   return {
     ...state,
     meta: {
@@ -2500,6 +2501,83 @@ function migrateV29ToV30(state: GameStateV29): GameState {
         snapshots: [],
         cooldowns: {},
       },
+    },
+  };
+}
+
+type GameStateV30 = {
+  meta: GameState["meta"];
+  settings: GameState["settings"];
+  world: GameState["world"];
+  competition: GameState["competition"];
+  business: GameState["business"];
+  user: GameState["user"];
+};
+
+/**
+ * Deterministic v30 → v31: relocation tenure fields + franchise history city/name.
+ * Emits schemaVersion 31. No RNG.
+ */
+function migrateV30ToV31(state: GameStateV30): GameState {
+  const year = state.competition.season.year;
+  const relocationByTeamId: GameState["business"]["relocationByTeamId"] = {};
+  for (const teamId of Object.keys(state.world.teams)) {
+    const existing = state.business.relocationByTeamId[teamId];
+    const historyLen =
+      state.business.franchiseHistory[teamId]?.seasons.length ?? 0;
+    const inferredStart = Math.max(1, year - Math.max(0, historyLen - 1));
+    relocationByTeamId[teamId] = {
+      teamId: teamId as GameState["user"]["controlledTeamId"],
+      stage: existing?.stage ?? "none",
+      target: existing?.target ?? null,
+      cooldownSeasonsRemaining: existing?.cooldownSeasonsRemaining ?? 0,
+      fee: existing?.fee ?? 0,
+      cityStartSeasonYear:
+        existing &&
+        typeof (existing as { cityStartSeasonYear?: number }).cityStartSeasonYear ===
+          "number" &&
+        (existing as { cityStartSeasonYear: number }).cityStartSeasonYear > 0
+          ? (existing as { cityStartSeasonYear: number }).cityStartSeasonYear
+          : inferredStart,
+      lastCompletedRelocationSeasonYear:
+        (existing as { lastCompletedRelocationSeasonYear?: number | null })
+          ?.lastCompletedRelocationSeasonYear ?? null,
+      failedAttemptCooldownSeasonsRemaining:
+        (existing as { failedAttemptCooldownSeasonsRemaining?: number })
+          ?.failedAttemptCooldownSeasonsRemaining ?? 0,
+    };
+  }
+
+  const franchiseHistory: GameState["business"]["franchiseHistory"] = {};
+  for (const teamId of Object.keys(state.business.franchiseHistory)) {
+    const history = state.business.franchiseHistory[teamId]!;
+    const team = state.world.teams[teamId];
+    franchiseHistory[teamId] = {
+      teamId: history.teamId,
+      seasons: history.seasons.map((season) => ({
+        ...season,
+        city:
+          typeof (season as { city?: string }).city === "string"
+            ? (season as { city: string }).city
+            : (team?.city ?? "Unknown"),
+        name:
+          typeof (season as { name?: string }).name === "string"
+            ? (season as { name: string }).name
+            : (team?.name ?? "Unknown"),
+      })),
+    };
+  }
+
+  return {
+    ...state,
+    meta: {
+      ...state.meta,
+      schemaVersion: 31,
+    },
+    business: {
+      ...state.business,
+      relocationByTeamId,
+      franchiseHistory,
     },
   };
 }

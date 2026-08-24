@@ -19,6 +19,7 @@ import { generateFranchiseIdentity } from "@/systems/franchise-identity-generati
 export function createPhaseEBusinessDefaults(
   teamIds: readonly TeamId[],
   rngSeed = 0,
+  cityStartSeasonYear = 0,
 ): {
   staffContracts: Record<string, never>;
   sponsorships: Record<string, never>;
@@ -59,7 +60,10 @@ export function createPhaseEBusinessDefaults(
       patience: identity.patience,
       riskTolerance: identity.riskTolerance,
     });
-    relocationByTeamId[teamId] = createIdleRelocation(teamId);
+    relocationByTeamId[teamId] = createIdleRelocation(
+      teamId,
+      cityStartSeasonYear,
+    );
     franchiseHistory[teamId] = createEmptyFranchiseHistory(teamId);
   }
 

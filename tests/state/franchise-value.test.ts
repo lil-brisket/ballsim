@@ -233,6 +233,8 @@ function seasonRecord(input: {
     reputation: input.reputation ?? 50,
     facilityLevels,
     relocated: false,
+    city: "Test City",
+    name: "Test Team",
     notableEventIds: [],
     franchiseValue: input.franchiseValue ?? 450_000_000,
   };

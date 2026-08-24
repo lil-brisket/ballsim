@@ -28,6 +28,10 @@ export type FranchiseSeasonRecord = {
   reputation: number;
   facilityLevels: Record<FacilityCategory, number>;
   relocated: boolean;
+  /** City identity at season end (continuity across relocation). */
+  city: string;
+  /** Nickname at season end. */
+  name: string;
   notableEventIds: string[];
   /** Derived franchise value at season end (historical copy only). */
   franchiseValue: number;

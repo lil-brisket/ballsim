@@ -55,6 +55,16 @@ export function appendFranchiseSeasonRecord(
   const statement = getFinancialStatement(state, teamId, year);
   const finances = state.business.finances[teamId];
 
+  const relocatedThisSeason =
+    input.relocated ??
+    (() => {
+      const process = state.business.relocationByTeamId[teamId];
+      return (
+        process?.stage === "complete" &&
+        process.lastCompletedRelocationSeasonYear === year
+      );
+    })();
+
   const record: FranchiseSeasonRecord = {
     seasonId: season.id,
     seasonYear: year,
@@ -67,7 +77,9 @@ export function appendFranchiseSeasonRecord(
     fanSentiment: ops.fanSentiment,
     reputation: team.reputation,
     facilityLevels: facilityLevelsSnapshot(state, teamId),
-    relocated: input.relocated ?? false,
+    relocated: relocatedThisSeason,
+    city: team.city,
+    name: team.name,
     notableEventIds: input.notableEventIds ?? [],
     franchiseValue: calculateFranchiseValue(state, teamId),
   };
@@ -115,8 +127,6 @@ export function appendAllFranchiseSeasonRecords(state: GameState): SystemResult 
       teamId,
       playoffResult: playoffResultByTeam[teamId] ?? "missed",
       championship: championId === teamId,
-      relocated:
-        current.business.relocationByTeamId[teamId]?.stage === "complete",
     });
     current = result.state;
     events.push(...result.events);

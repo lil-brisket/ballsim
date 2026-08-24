@@ -83,6 +83,7 @@ function NavGroups(props: {
 export function GameNavigation(props: {
   saveId: string;
   unreadCount: number;
+  groups?: readonly OwnerNavGroup[];
 }) {
   const [open, setOpen] = useState(false);
 
@@ -107,6 +108,7 @@ export function GameNavigation(props: {
             <NavGroups
               saveId={props.saveId}
               unreadCount={props.unreadCount}
+              groups={props.groups}
               onNavigate={() => setOpen(false)}
             />
           </nav>
@@ -117,7 +119,11 @@ export function GameNavigation(props: {
         className="hidden w-52 shrink-0 lg:block"
         aria-label="Owner Mode"
       >
-        <NavGroups saveId={props.saveId} unreadCount={props.unreadCount} />
+        <NavGroups
+          saveId={props.saveId}
+          unreadCount={props.unreadCount}
+          groups={props.groups}
+        />
       </nav>
     </>
   );

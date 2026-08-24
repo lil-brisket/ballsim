@@ -3,6 +3,9 @@
  * Only destinations with a real page and existing player-facing UI/actions.
  */
 
+import type { GameState } from "@/state/game-state";
+import { assessRelocation } from "@/state/relocation-assessment";
+
 export type OwnerNavItem = {
   href: string;
   label: string;
@@ -71,4 +74,30 @@ export const OWNER_NAV_GROUPS: readonly OwnerNavGroup[] = [
 
 export function flattenOwnerNavItems(): readonly OwnerNavItem[] {
   return OWNER_NAV_GROUPS.flatMap((group) => group.items);
+}
+
+/**
+ * Contextual nav: hide Relocation until consider/strong_case/in_progress.
+ * League page always stays (economy); expansion controls are gated on the page.
+ */
+export function ownerNavGroupsForState(state: GameState): OwnerNavGroup[] {
+  const relocation = assessRelocation(state);
+  const showRelocation =
+    relocation.status === "consider" ||
+    relocation.status === "strong_case" ||
+    relocation.status === "in_progress" ||
+    relocation.status === "blocked_tenure" ||
+    relocation.status === "watch";
+
+  return OWNER_NAV_GROUPS.map((group) => {
+    if (group.id !== "franchise") {
+      return { ...group, items: [...group.items] };
+    }
+    return {
+      ...group,
+      items: group.items.filter(
+        (item) => item.href !== "/relocation" || showRelocation,
+      ),
+    };
+  });
 }
