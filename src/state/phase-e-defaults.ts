@@ -29,6 +29,8 @@ export function createPhaseEBusinessDefaults(
   expansion: ReturnType<typeof createIdleExpansionState>;
   franchiseHistory: Record<string, ReturnType<typeof createEmptyFranchiseHistory>>;
   franchiseReportCache: Record<string, never>;
+  gameArchive: Record<string, never>;
+  playerHistory: Record<string, never>;
 } {
   const franchiseOps: Record<string, FranchiseOps> = {};
   const relocationByTeamId: Record<
@@ -78,5 +80,7 @@ export function createPhaseEBusinessDefaults(
     expansion: createIdleExpansionState(),
     franchiseHistory,
     franchiseReportCache: {},
+    gameArchive: {},
+    playerHistory: {},
   };
 }

@@ -170,6 +170,7 @@ describe("offseason lifecycle", () => {
 
     expect(Object.keys(current.competition.games)).toHaveLength(0);
     expect(current.competition.schedule.gameIds).toHaveLength(0);
+    expect(current.business.gameArchive[gameId]).toBeDefined();
     expect(
       current.business.franchiseHistory[teamId]!.seasons.some(
         (season) => season.seasonYear === historyYear,

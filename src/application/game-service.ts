@@ -80,12 +80,15 @@ import {
   type GameBoxScoreView,
   type NotificationView,
   type ObjectiveView,
-  type PlayerDetailView,
   type RosterPlayerView,
   type ScheduleGameView,
   type StandingRowView,
   type TeamListEntry,
 } from "@/state/selectors";
+import {
+  toPlayerProfileView,
+  type PlayerProfileView,
+} from "@/state/player-profile-selectors";
 import {
   toExpansionView,
   toFacilitiesView,
@@ -419,7 +422,7 @@ export async function loadOwnerPlayerView(
   saveId: string,
   playerId: string,
   store?: SaveGameStore,
-): Promise<(CreateGameResult & { player: PlayerDetailView }) | null> {
+): Promise<(CreateGameResult & { player: PlayerProfileView }) | null> {
   const loaded = await getStore(store).load(saveId);
   if (!loaded) {
     return null;
@@ -428,10 +431,11 @@ export async function loadOwnerPlayerView(
   if (!isPlayerInOwnerScope(loaded.state, typedId)) {
     return null;
   }
-  const player = toPlayerDetailView(loaded.state, typedId);
-  if (!player) {
+  const detail = toPlayerDetailView(loaded.state, typedId);
+  if (!detail) {
     return null;
   }
+  const player = toPlayerProfileView(loaded.state, typedId, detail);
   return {
     save: toSaveSummary(loaded),
     dashboard: toDashboardSnapshot(loaded.state),

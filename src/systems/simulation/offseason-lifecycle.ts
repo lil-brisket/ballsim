@@ -16,6 +16,10 @@ import {
 } from "@/systems/draft";
 import { releaseExpiredContracts } from "@/systems/free-agency";
 import { appendAllFranchiseSeasonRecords } from "@/systems/franchise-history";
+import {
+  appendAllPlayerSeasonRecords,
+  archiveCompletedSeasonGames,
+} from "@/systems/player-history";
 import { generateAndCacheAnnualReports } from "@/systems/franchise-report";
 import { processSeasonalLeagueEconomy } from "@/systems/league-economy";
 import { appendOwnershipSeasonNote } from "@/systems/ownership-confidence-engine";
@@ -162,6 +166,14 @@ export function processOffseasonLifecycle(
   let current = state;
 
   if (current.competition.season.offseasonStage === "season_finalization") {
+    const gameArchive = archiveCompletedSeasonGames(current);
+    current = gameArchive.state;
+    events.push(...gameArchive.events);
+
+    const playerHistory = appendAllPlayerSeasonRecords(current);
+    current = playerHistory.state;
+    events.push(...playerHistory.events);
+
     const history = appendAllFranchiseSeasonRecords(current);
     current = history.state;
     events.push(...history.events);
