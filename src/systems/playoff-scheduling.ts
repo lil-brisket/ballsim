@@ -59,11 +59,14 @@ export function createNextPlayoffGame(input: {
     date: nextDate,
     homeTeamId,
     awayTeamId,
+    competitionType: "playoffs",
     status: "scheduled",
     score: { home: 0, away: 0 },
     periodScores: [],
     events: [],
     playerStats: [],
+    homeTeamSnapshot: null,
+    awayTeamSnapshot: null,
   });
 }
 

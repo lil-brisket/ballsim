@@ -856,6 +856,9 @@ describe("resolvePossession invalid input", () => {
 describe("applyPossessionResolution", () => {
   it("returns a new Game and leaves the original unchanged", () => {
     const game = createGame({
+      competitionType: "regular_season",
+      homeTeamSnapshot: null,
+      awayTeamSnapshot: null,
       id: asGameId("game_1"),
       seasonId: asSeasonId("season_1"),
       homeTeamId: OFFENSE,

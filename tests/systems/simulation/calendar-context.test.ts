@@ -175,6 +175,9 @@ describe("calendar context", () => {
     const lateGameId = asGameId("game_cal_end");
     const teamIds = Object.keys(state.world.teams) as TeamId[];
     const lateGame = createGame({
+      competitionType: "regular_season",
+      homeTeamSnapshot: null,
+      awayTeamSnapshot: null,
       id: lateGameId,
       seasonId: state.competition.season.id,
       date: addCalendarDays(start, 80),

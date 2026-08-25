@@ -6,6 +6,8 @@ import {
 import { draftClassIdFor } from "@/domain/entities/draft";
 import { isOpenOffer } from "@/domain/entities/free-agency-offer";
 import type { TeamFinancialStatement } from "@/domain/entities/finances";
+import type { Game } from "@/domain/entities/game";
+import { aggregateTeamStats } from "@/domain/entities/game-result";
 import type { Team } from "@/domain/entities/team";
 import { createEmptyTeamStanding } from "@/domain/entities/standings";
 import { calculatePlayerOverall } from "@/domain/player-overall-rating";
@@ -48,6 +50,7 @@ export type DashboardSnapshot = {
   standingsRank: number;
   controlledStanding: { wins: number; losses: number };
   recentResults: Array<{
+    gameId: string;
     date: string;
     opponentAbbreviation: string;
     home: boolean;
@@ -860,6 +863,7 @@ export function toDashboardSnapshot(state: GameState): DashboardSnapshot {
       const opponentId = home ? game.awayTeamId : game.homeTeamId;
       const opponent = state.world.teams[opponentId];
       return {
+        gameId: game.id,
         date: game.date,
         opponentAbbreviation: opponent?.abbreviation ?? "???",
         home,
@@ -936,6 +940,253 @@ export function playerHasActiveContract(
     return false;
   }
   return isContractActive(contract, state.competition.season.year);
+}
+
+export type BoxScoreTeamStatsView = {
+  points: number;
+  fieldGoals: string;
+  threePointers: string;
+  freeThrows: string;
+  rebounds: number;
+  assists: number;
+  turnovers: number;
+  fouls: number;
+};
+
+export type PlayerBoxScoreRowView = {
+  playerId: string;
+  playerName: string;
+  minutes: number;
+  points: number;
+  fieldGoals: string;
+  threePointers: string;
+  freeThrows: string;
+  rebounds: number;
+  assists: number;
+  turnovers: number;
+  fouls: number;
+};
+
+export type BoxScoreSideView = {
+  teamId: string;
+  city: string;
+  name: string;
+  abbreviation: string;
+  score: number;
+  teamStats: BoxScoreTeamStatsView;
+  players: PlayerBoxScoreRowView[];
+};
+
+export type GameBoxScoreView = {
+  gameId: string;
+  date: string;
+  competitionTypeLabel: string;
+  seasonGameNumber: number | null;
+  home: BoxScoreSideView;
+  away: BoxScoreSideView;
+  winner: "home" | "away";
+  winnerName: string;
+  margin: number;
+  isCurrentSeason: boolean;
+};
+
+/** True when a finalized current-season game can open a box-score page. */
+export function canOpenGameBoxScore(
+  state: GameState,
+  gameId: string,
+): boolean {
+  const game = state.competition.games[gameId];
+  if (!game || game.status !== "final") {
+    return false;
+  }
+  return game.seasonId === state.competition.season.id;
+}
+
+/**
+ * Current-season finalized game box score.
+ * Returns null when missing, not final, or not current season.
+ */
+export function toGameBoxScoreView(
+  state: GameState,
+  gameId: string,
+): GameBoxScoreView | null {
+  const game = state.competition.games[gameId];
+  if (!game || game.status !== "final") {
+    return null;
+  }
+  if (game.seasonId !== state.competition.season.id) {
+    return null;
+  }
+
+  const homeTeamLive = state.world.teams[game.homeTeamId];
+  const awayTeamLive = state.world.teams[game.awayTeamId];
+  const homeIdentity = resolveTeamIdentity(
+    game.homeTeamSnapshot,
+    homeTeamLive,
+    game.homeTeamId,
+  );
+  const awayIdentity = resolveTeamIdentity(
+    game.awayTeamSnapshot,
+    awayTeamLive,
+    game.awayTeamId,
+  );
+
+  const { homeRows, awayRows } = partitionBoxScorePlayers(game);
+
+  const homeTeamStats = aggregateTeamStats(game.homeTeamId, homeRows);
+  const awayTeamStats = aggregateTeamStats(game.awayTeamId, awayRows);
+
+  const winner: "home" | "away" =
+    game.score.home > game.score.away ? "home" : "away";
+  const margin = Math.abs(game.score.home - game.score.away);
+  const winnerName =
+    winner === "home"
+      ? `${homeIdentity.city} ${homeIdentity.name}`
+      : `${awayIdentity.city} ${awayIdentity.name}`;
+
+  let seasonGameNumber: number | null = null;
+  if (game.competitionType === "regular_season") {
+    const index = state.competition.schedule.gameIds.indexOf(game.id);
+    if (index >= 0) {
+      seasonGameNumber = index + 1;
+    }
+  }
+
+  return {
+    gameId: game.id,
+    date: game.date,
+    competitionTypeLabel:
+      game.competitionType === "playoffs" ? "Playoffs" : "Regular Season",
+    seasonGameNumber,
+    home: {
+      teamId: homeIdentity.teamId,
+      city: homeIdentity.city,
+      name: homeIdentity.name,
+      abbreviation: homeIdentity.abbreviation,
+      score: game.score.home,
+      teamStats: toTeamStatsView(homeTeamStats),
+      players: homeRows.map((row) =>
+        toPlayerBoxScoreRow(state, row),
+      ),
+    },
+    away: {
+      teamId: awayIdentity.teamId,
+      city: awayIdentity.city,
+      name: awayIdentity.name,
+      abbreviation: awayIdentity.abbreviation,
+      score: game.score.away,
+      teamStats: toTeamStatsView(awayTeamStats),
+      players: awayRows.map((row) =>
+        toPlayerBoxScoreRow(state, row),
+      ),
+    },
+    winner,
+    winnerName,
+    margin,
+    isCurrentSeason: true,
+  };
+}
+
+function resolveTeamIdentity(
+  snapshot: Game["homeTeamSnapshot"],
+  live: GameState["world"]["teams"][string] | undefined,
+  teamId: string,
+): {
+  teamId: string;
+  city: string;
+  name: string;
+  abbreviation: string;
+} {
+  if (snapshot) {
+    return {
+      teamId: snapshot.teamId,
+      city: snapshot.city,
+      name: snapshot.name,
+      abbreviation: snapshot.abbreviation,
+    };
+  }
+  return {
+    teamId,
+    city: live?.city ?? "Unknown",
+    name: live?.name ?? "Team",
+    abbreviation: live?.abbreviation ?? "???",
+  };
+}
+
+function partitionBoxScorePlayers(game: Game): {
+  homeRows: Game["playerStats"];
+  awayRows: Game["playerStats"];
+} {
+  const withTeam = game.playerStats.filter((row) => row.teamId != null);
+  if (withTeam.length === game.playerStats.length && withTeam.length > 0) {
+    return {
+      homeRows: game.playerStats.filter(
+        (row) => row.teamId === game.homeTeamId,
+      ),
+      awayRows: game.playerStats.filter(
+        (row) => row.teamId === game.awayTeamId,
+      ),
+    };
+  }
+  // Legacy pre-v35: home-then-away array order is a display hint only.
+  const midpoint = Math.ceil(game.playerStats.length / 2);
+  return {
+    homeRows: game.playerStats.slice(0, midpoint),
+    awayRows: game.playerStats.slice(midpoint),
+  };
+}
+
+function toTeamStatsView(stats: {
+  points: number;
+  fieldGoalsMade: number;
+  fieldGoalsAttempted: number;
+  threePointersMade: number;
+  threePointersAttempted: number;
+  freeThrowsMade: number;
+  freeThrowsAttempted: number;
+  rebounds: number;
+  assists: number;
+  turnovers: number;
+  fouls: number;
+}): BoxScoreTeamStatsView {
+  return {
+    points: stats.points,
+    fieldGoals: `${stats.fieldGoalsMade}/${stats.fieldGoalsAttempted}`,
+    threePointers: `${stats.threePointersMade}/${stats.threePointersAttempted}`,
+    freeThrows: `${stats.freeThrowsMade}/${stats.freeThrowsAttempted}`,
+    rebounds: stats.rebounds,
+    assists: stats.assists,
+    turnovers: stats.turnovers,
+    fouls: stats.fouls,
+  };
+}
+
+function toPlayerBoxScoreRow(
+  state: GameState,
+  row: Game["playerStats"][number],
+): PlayerBoxScoreRowView {
+  let playerName: string;
+  if (row.firstName != null && row.lastName != null) {
+    playerName = `${row.firstName} ${row.lastName}`;
+  } else {
+    const live = state.world.players[row.playerId];
+    playerName = live
+      ? `${live.firstName} ${live.lastName}`
+      : row.playerId;
+  }
+  return {
+    playerId: row.playerId,
+    playerName,
+    minutes: row.minutes,
+    points: row.points,
+    fieldGoals: `${row.fieldGoalsMade}/${row.fieldGoalsAttempted}`,
+    threePointers: `${row.threePointersMade}/${row.threePointersAttempted}`,
+    freeThrows: `${row.freeThrowsMade}/${row.freeThrowsAttempted}`,
+    rebounds: row.rebounds,
+    assists: row.assists,
+    turnovers: row.turnovers,
+    fouls: row.fouls,
+  };
 }
 
 export type { TeamId };

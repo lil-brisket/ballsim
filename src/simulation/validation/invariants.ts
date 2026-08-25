@@ -1,6 +1,11 @@
 import type { GamePlayerStats } from "@/domain/entities/game";
 import type { GameResult } from "@/domain/entities/game-result";
 import type { GameTeamStats } from "@/domain/entities/game-result";
+import {
+  checkNonNegativeBoxScoreFields,
+  checkPlayerTeamAggregation,
+  checkShootingStatInvariants,
+} from "@/domain/entities/game-stat-invariants";
 import type {
   GameSnapshot,
   InvariantFailure,
@@ -33,41 +38,12 @@ function checkTeamInvariants(
     failures.push({ gameId, side, rule, detail });
   };
 
-  if (team.fieldGoalsMade > team.fieldGoalsAttempted) {
-    fail("FGM_LE_FGA", `FGM ${team.fieldGoalsMade} > FGA ${team.fieldGoalsAttempted}`);
-  }
-  if (team.threePointersMade > team.threePointersAttempted) {
-    fail(
-      "3PM_LE_3PA",
-      `3PM ${team.threePointersMade} > 3PA ${team.threePointersAttempted}`,
-    );
-  }
-  if (team.freeThrowsMade > team.freeThrowsAttempted) {
-    fail("FTM_LE_FTA", `FTM ${team.freeThrowsMade} > FTA ${team.freeThrowsAttempted}`);
-  }
-  if (team.threePointersMade > team.fieldGoalsMade) {
-    fail("3PM_LE_FGM", `3PM ${team.threePointersMade} > FGM ${team.fieldGoalsMade}`);
-  }
-  if (team.threePointersAttempted > team.fieldGoalsAttempted) {
-    fail(
-      "3PA_LE_FGA",
-      `3PA ${team.threePointersAttempted} > FGA ${team.fieldGoalsAttempted}`,
-    );
+  for (const failure of checkShootingStatInvariants(side, team)) {
+    fail(failure.rule, failure.detail.replace(`${side}: `, ""));
   }
 
-  const twoPointFgm = team.fieldGoalsMade - team.threePointersMade;
-  if (twoPointFgm < 0) {
-    fail("TWO_POINT_FGM_NONNEG", `FGM - 3PM = ${twoPointFgm}`);
-  }
-
-  if (
-    team.rebounds !==
-    team.offensiveRebounds + team.defensiveRebounds
-  ) {
-    fail(
-      "REB_SUM",
-      `REB ${team.rebounds} !== OREB ${team.offensiveRebounds} + DREB ${team.defensiveRebounds}`,
-    );
+  for (const failure of checkNonNegativeBoxScoreFields(side, team)) {
+    fail(failure.rule, failure.detail.replace(`${side}: `, ""));
   }
 
   if (
@@ -98,15 +74,6 @@ function checkTeamInvariants(
     fail("FT_PCT", `FT% inconsistent with FTM/FTA`);
   }
 
-  const expectedPoints =
-    2 * twoPointFgm + 3 * team.threePointersMade + team.freeThrowsMade;
-  if (team.points !== expectedPoints) {
-    fail(
-      "POINTS_IDENTITY",
-      `points ${team.points} !== 2*2PM + 3*3PM + FTM (= ${expectedPoints})`,
-    );
-  }
-
   if (team.points !== scoreSide) {
     fail(
       "POINTS_EQ_SCORE",
@@ -123,83 +90,6 @@ function checkTeamInvariants(
       "POSSESSIONS_POSITIVE",
       `possessions must be a positive integer, got ${team.possessions}`,
     );
-  }
-
-  const nonNegFields: Array<[string, number]> = [
-    ["points", team.points],
-    ["fieldGoalsMade", team.fieldGoalsMade],
-    ["fieldGoalsAttempted", team.fieldGoalsAttempted],
-    ["threePointersMade", team.threePointersMade],
-    ["threePointersAttempted", team.threePointersAttempted],
-    ["freeThrowsMade", team.freeThrowsMade],
-    ["freeThrowsAttempted", team.freeThrowsAttempted],
-    ["offensiveRebounds", team.offensiveRebounds],
-    ["defensiveRebounds", team.defensiveRebounds],
-    ["rebounds", team.rebounds],
-    ["assists", team.assists],
-    ["turnovers", team.turnovers],
-    ["fouls", team.fouls],
-  ];
-  for (const [name, value] of nonNegFields) {
-    if (!Number.isInteger(value) || value < 0) {
-      fail("NON_NEGATIVE", `${name}=${value}`);
-    }
-  }
-}
-
-function sumPlayerField(
-  rows: readonly GamePlayerStats[],
-  field: keyof GamePlayerStats,
-): number {
-  let total = 0;
-  for (const row of rows) {
-    const value = row[field];
-    if (typeof value === "number") {
-      total += value;
-    }
-  }
-  return total;
-}
-
-function checkPlayerTeamAggregation(
-  gameId: string,
-  side: TeamSide,
-  team: GameTeamStats,
-  playerRows: readonly GamePlayerStats[],
-  failures: InvariantFailure[],
-): void {
-  const fields: Array<keyof GameTeamStats> = [
-    "points",
-    "rebounds",
-    "offensiveRebounds",
-    "defensiveRebounds",
-    "assists",
-    "turnovers",
-    "fouls",
-    "fieldGoalsMade",
-    "fieldGoalsAttempted",
-    "threePointersMade",
-    "threePointersAttempted",
-    "freeThrowsMade",
-    "freeThrowsAttempted",
-  ];
-  for (const field of fields) {
-    if (field === "teamId") {
-      continue;
-    }
-    const fromPlayers = sumPlayerField(
-      playerRows,
-      field as keyof GamePlayerStats,
-    );
-    const fromTeam = team[field] as number;
-    if (fromPlayers !== fromTeam) {
-      failures.push({
-        gameId,
-        side,
-        rule: "PLAYER_SUM_EQ_TEAM",
-        detail: `${field}: players ${fromPlayers} !== team ${fromTeam}`,
-      });
-    }
   }
 }
 
@@ -262,20 +152,30 @@ export function checkGameInvariants(
   const awayRows = result.playerStats.filter((row) =>
     awayPlayerIds.has(row.playerId),
   );
-  checkPlayerTeamAggregation(
-    snapshot.gameId,
+  for (const failure of checkPlayerTeamAggregation(
     "home",
     result.teamStats.home,
     homeRows,
-    failures,
-  );
-  checkPlayerTeamAggregation(
-    snapshot.gameId,
+  )) {
+    failures.push({
+      gameId: snapshot.gameId,
+      side: "home",
+      rule: failure.rule,
+      detail: failure.detail.replace("home: ", ""),
+    });
+  }
+  for (const failure of checkPlayerTeamAggregation(
     "away",
     result.teamStats.away,
     awayRows,
-    failures,
-  );
+  )) {
+    failures.push({
+      gameId: snapshot.gameId,
+      side: "away",
+      rule: failure.rule,
+      detail: failure.detail.replace("away: ", ""),
+    });
+  }
 
   return failures;
 }
@@ -291,3 +191,6 @@ export function checkTeamSnapshotInvariants(
   checkTeamInvariants("synthetic", team.side, team, scoreSide, failures);
   return failures;
 }
+
+/** Re-export for callers that previously imported aggregation from this module. */
+export type { GameTeamStats, GamePlayerStats };

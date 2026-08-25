@@ -68,6 +68,8 @@ import {
   toRosterView,
   toScheduleView,
   toStandingsView,
+  toGameBoxScoreView,
+  canOpenGameBoxScore,
   type ContractRowView,
   type DashboardSnapshot,
   type DraftBoardView,
@@ -75,6 +77,7 @@ import {
   type FinancesView,
   type FreeAgencyOfferView,
   type FreeAgentView,
+  type GameBoxScoreView,
   type NotificationView,
   type ObjectiveView,
   type PlayerDetailView,
@@ -433,6 +436,29 @@ export async function loadOwnerPlayerView(
     save: toSaveSummary(loaded),
     dashboard: toDashboardSnapshot(loaded.state),
     player,
+  };
+}
+
+export async function loadOwnerGameBoxScoreView(
+  saveId: string,
+  gameId: string,
+  store?: SaveGameStore,
+): Promise<(CreateGameResult & { boxScore: GameBoxScoreView }) | null> {
+  const loaded = await getStore(store).load(saveId);
+  if (!loaded) {
+    return null;
+  }
+  if (!canOpenGameBoxScore(loaded.state, gameId)) {
+    return null;
+  }
+  const boxScore = toGameBoxScoreView(loaded.state, gameId);
+  if (!boxScore) {
+    return null;
+  }
+  return {
+    save: toSaveSummary(loaded),
+    dashboard: toDashboardSnapshot(loaded.state),
+    boxScore,
   };
 }
 

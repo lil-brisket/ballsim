@@ -19,11 +19,14 @@ function validInput(overrides: Partial<GameInput> = {}): GameInput {
     homeTeamId: asTeamId("team_home"),
     awayTeamId: asTeamId("team_away"),
     date: "2026-10-15",
+    competitionType: "regular_season",
     score: { home: 0, away: 0 },
     status: "scheduled",
     periodScores: [],
     events: [],
     playerStats: [],
+    homeTeamSnapshot: null,
+    awayTeamSnapshot: null,
     ...overrides,
   };
 }
@@ -41,6 +44,9 @@ function sampleEvent(overrides: Partial<GameEvent> = {}): GameEvent {
 function sampleStats(overrides: Partial<GamePlayerStats> = {}): GamePlayerStats {
   return {
     playerId: asPlayerId("player_1"),
+    teamId: null,
+    firstName: null,
+    lastName: null,
     minutes: 32,
     points: 18,
     rebounds: 5,
@@ -274,6 +280,9 @@ describe("createGame", () => {
   it("rejects non-array events", () => {
     expect(() =>
       createGame({
+        competitionType: "regular_season",
+        homeTeamSnapshot: null,
+        awayTeamSnapshot: null,
         ...validInput(),
         events: "not-an-array" as unknown as GameEvent[],
       }),
@@ -334,6 +343,9 @@ describe("createGame", () => {
   it("rejects non-array playerStats", () => {
     expect(() =>
       createGame({
+        competitionType: "regular_season",
+        homeTeamSnapshot: null,
+        awayTeamSnapshot: null,
         ...validInput(),
         playerStats: "not-an-array" as unknown as GamePlayerStats[],
       }),

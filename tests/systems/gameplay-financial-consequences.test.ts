@@ -36,6 +36,9 @@ describe("gameplay financial consequences", () => {
     const year = state.competition.season.year;
     const gameId = asGameId("game_fin_loss");
     const game = createGame({
+      competitionType: "regular_season",
+      homeTeamSnapshot: null,
+      awayTeamSnapshot: null,
       id: gameId,
       seasonId: asSeasonId(state.competition.season.id),
       date,

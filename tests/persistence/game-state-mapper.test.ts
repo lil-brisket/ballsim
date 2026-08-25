@@ -931,6 +931,9 @@ describe("GameState schema migration", () => {
     expect(finalGame.playerStats).toEqual([
       {
         playerId,
+        teamId: null,
+        firstName: null,
+        lastName: null,
         minutes: 34,
         points: 22,
         rebounds: 6,
@@ -1099,6 +1102,9 @@ describe("GameState schema migration", () => {
     expect(game.periodScores).toEqual([]);
     expect(game.playerStats[0]).toEqual({
       playerId,
+      teamId: null,
+      firstName: null,
+      lastName: null,
       minutes: 30,
       points: 15,
       rebounds: 4,
@@ -1277,6 +1283,9 @@ describe("GameState schema migration", () => {
     expect(game.periodScores).toHaveLength(4);
     expect(game.playerStats[0]).toEqual({
       playerId,
+      teamId: null,
+      firstName: null,
+      lastName: null,
       minutes: 32,
       points: 20,
       rebounds: 5,

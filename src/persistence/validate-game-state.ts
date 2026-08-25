@@ -10,7 +10,13 @@ import {
   isOpenOffer,
   type FreeAgencyOfferStatus,
 } from "@/domain/entities/free-agency-offer";
-import { GAME_STATUSES, type Game } from "@/domain/entities/game";
+import {
+  GAME_COMPETITION_TYPES,
+  GAME_STATUSES,
+  type Game,
+  type GameCompetitionType,
+  type GameTeamSnapshot,
+} from "@/domain/entities/game";
 import type { PlayoffTournament } from "@/domain/entities/playoffs";
 import {
   isOwnerObjectiveCategory,
@@ -1407,6 +1413,30 @@ function validateGame(
     );
   }
 
+  if (
+    typeof game.competitionType !== "string" ||
+    !GAME_COMPETITION_TYPES.includes(
+      game.competitionType as GameCompetitionType,
+    )
+  ) {
+    fail(
+      `competition.games[${gameKey}].competitionType must be one of ${GAME_COMPETITION_TYPES.join(", ")}.`,
+    );
+  }
+
+  validateTeamSnapshotField(
+    game.homeTeamSnapshot,
+    `competition.games[${gameKey}].homeTeamSnapshot`,
+    game.homeTeamId,
+    teamIds,
+  );
+  validateTeamSnapshotField(
+    game.awayTeamSnapshot,
+    `competition.games[${gameKey}].awayTeamSnapshot`,
+    game.awayTeamId,
+    teamIds,
+  );
+
   if (!Array.isArray(game.playerStats)) {
     fail(`competition.games[${gameKey}].playerStats must be an array.`);
   }
@@ -1419,6 +1449,35 @@ function validateGame(
     if (!playerIds.has(stats.playerId as string)) {
       fail(
         `competition.games[${gameKey}].playerStats[${index}].playerId "${stats.playerId}" is missing from world.players.`,
+      );
+    }
+    if (stats.teamId != null) {
+      assertNonEmptyString(
+        stats.teamId,
+        `competition.games[${gameKey}].playerStats[${index}].teamId`,
+      );
+      if (!teamIds.has(stats.teamId as string)) {
+        fail(
+          `competition.games[${gameKey}].playerStats[${index}].teamId "${stats.teamId}" is missing from world.teams.`,
+        );
+      }
+      if (
+        stats.teamId !== game.homeTeamId &&
+        stats.teamId !== game.awayTeamId
+      ) {
+        fail(
+          `competition.games[${gameKey}].playerStats[${index}].teamId must be home or away team.`,
+        );
+      }
+    }
+    if (stats.firstName != null && typeof stats.firstName !== "string") {
+      fail(
+        `competition.games[${gameKey}].playerStats[${index}].firstName must be a string or null.`,
+      );
+    }
+    if (stats.lastName != null && typeof stats.lastName !== "string") {
+      fail(
+        `competition.games[${gameKey}].playerStats[${index}].lastName must be a string or null.`,
       );
     }
   }
@@ -1450,6 +1509,28 @@ function validateGame(
         );
       }
     }
+  }
+}
+
+function validateTeamSnapshotField(
+  snapshot: GameTeamSnapshot | null | undefined,
+  fieldPath: string,
+  expectedTeamId: string | undefined,
+  teamIds: Set<string>,
+): void {
+  if (snapshot == null) {
+    return;
+  }
+  assertRecord(snapshot, fieldPath);
+  assertNonEmptyString(snapshot.teamId, `${fieldPath}.teamId`);
+  assertNonEmptyString(snapshot.city, `${fieldPath}.city`);
+  assertNonEmptyString(snapshot.name, `${fieldPath}.name`);
+  assertNonEmptyString(snapshot.abbreviation, `${fieldPath}.abbreviation`);
+  if (!teamIds.has(snapshot.teamId)) {
+    fail(`${fieldPath}.teamId "${snapshot.teamId}" is missing from world.teams.`);
+  }
+  if (expectedTeamId != null && snapshot.teamId !== expectedTeamId) {
+    fail(`${fieldPath}.teamId must match the game's team id.`);
   }
 }
 

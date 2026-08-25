@@ -78,6 +78,9 @@ function scheduledGame(
   awayTeamId: TeamId,
 ) {
   return createGame({
+    competitionType: "regular_season",
+    homeTeamSnapshot: null,
+    awayTeamSnapshot: null,
     id: asGameId(`val_game_${gameIndex}`),
     seasonId: SEASON_ID,
     homeTeamId,
@@ -247,6 +250,9 @@ export function runMatchupDiagnostic(
   for (let index = 0; index < games; index += 1) {
     const offenseGame = simulateGame(
       createGame({
+        competitionType: "regular_season",
+        homeTeamSnapshot: null,
+        awayTeamSnapshot: null,
         id: asGameId(`matchup_off_${index}`),
         seasonId: SEASON_ID,
         homeTeamId: strongHome,
@@ -269,6 +275,9 @@ export function runMatchupDiagnostic(
 
     const defenseGame = simulateGame(
       createGame({
+        competitionType: "regular_season",
+        homeTeamSnapshot: null,
+        awayTeamSnapshot: null,
         id: asGameId(`matchup_def_${index}`),
         seasonId: SEASON_ID,
         homeTeamId: strongHome,

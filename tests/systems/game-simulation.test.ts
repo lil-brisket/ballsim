@@ -9,8 +9,9 @@ import {
   asTeamId,
   type TeamId,
 } from "@/domain/ids";
-import type { Rng } from "@/domain/rng";
+import { createSeededRng, type Rng } from "@/domain/rng";
 import { createPlayer } from "../factories/player";
+import { createTestGameState } from "../factories/game-state";
 import { createTestRng } from "../helpers/determinism";
 import {
   consumeTime,
@@ -19,8 +20,10 @@ import {
 } from "@/systems/game-clock";
 import {
   simulateGame,
+  simulateScheduledGame,
   type SimulateGameContext,
 } from "@/systems/game-simulation";
+import { bootstrapWorld } from "@/systems/world-pipeline";
 
 const HOME = asTeamId("team_home");
 const AWAY = asTeamId("team_away");
@@ -40,6 +43,9 @@ function makeRoster(teamId: TeamId, prefix: string, count: number): Player[] {
 
 function scheduledGame() {
   return createGame({
+    competitionType: "regular_season",
+    homeTeamSnapshot: null,
+    awayTeamSnapshot: null,
     id: asGameId("game_sim_1"),
     seasonId: asSeasonId("season_1"),
     homeTeamId: HOME,
@@ -557,6 +563,70 @@ describe("simulateGame", () => {
       0,
     );
     expect(totalPoints).toBe(result.score.home + result.score.away);
+  });
+});
+
+describe("simulateScheduledGame finalization", () => {
+  it("snapshots team and player identity on the finalized Game", () => {
+    let state = createTestGameState({ saveId: "sim_final" });
+    const rng = createSeededRng(state.meta.rngState);
+    state = bootstrapWorld(state, rng).state;
+    const teamIds = Object.keys(state.world.teams);
+    const homeTeamId = asTeamId(teamIds[0]!);
+    const awayTeamId = asTeamId(teamIds[1]!);
+    const homeTeam = state.world.teams[homeTeamId]!;
+    const awayTeam = state.world.teams[awayTeamId]!;
+    const game = createGame({
+      id: asGameId("game_finalize_1"),
+      seasonId: state.competition.season.id,
+      date: state.world.calendar.currentDate,
+      homeTeamId,
+      awayTeamId,
+      competitionType: "regular_season",
+      status: "scheduled",
+      score: { home: 0, away: 0 },
+      periodScores: [],
+      events: [],
+      playerStats: [],
+      homeTeamSnapshot: null,
+      awayTeamSnapshot: null,
+    });
+    state = {
+      ...state,
+      competition: {
+        ...state.competition,
+        games: { [game.id]: game },
+      },
+    };
+
+    const { finalGame } = simulateScheduledGame(state, game, createTestRng(7));
+    expect(finalGame.status).toBe("final");
+    expect(finalGame.competitionType).toBe("regular_season");
+    expect(finalGame.homeTeamSnapshot).toEqual({
+      teamId: homeTeamId,
+      city: homeTeam.city,
+      name: homeTeam.name,
+      abbreviation: homeTeam.abbreviation,
+    });
+    expect(finalGame.awayTeamSnapshot!.abbreviation).toBe(
+      awayTeam.abbreviation,
+    );
+    expect(finalGame.playerStats.length).toBeGreaterThan(0);
+    for (const row of finalGame.playerStats) {
+      expect(row.teamId === homeTeamId || row.teamId === awayTeamId).toBe(
+        true,
+      );
+      expect(row.firstName).toBeTruthy();
+      expect(row.lastName).toBeTruthy();
+    }
+    const homePoints = finalGame.playerStats
+      .filter((row) => row.teamId === homeTeamId)
+      .reduce((sum, row) => sum + row.points, 0);
+    const awayPoints = finalGame.playerStats
+      .filter((row) => row.teamId === awayTeamId)
+      .reduce((sum, row) => sum + row.points, 0);
+    expect(homePoints).toBe(finalGame.score.home);
+    expect(awayPoints).toBe(finalGame.score.away);
   });
 });
 
