@@ -82,6 +82,101 @@ describe("offseason lifecycle", () => {
     expect(current.competition.playoffs.status).toBe("not_started");
   });
 
+  it("clears detailed game box scores on new season while preserving franchise history", () => {
+    const { state, rng } = enterOffseason();
+    const teamId = state.user.controlledTeamId;
+    const teamIds = Object.keys(state.world.teams);
+    const homeTeamId = teamIds[0]!;
+    const awayTeamId = teamIds.find((id) => id !== homeTeamId)!;
+    const gameId = `game_detail_${state.competition.season.id}`;
+
+    let current = {
+      ...state,
+      competition: {
+        ...state.competition,
+        games: {
+          [gameId]: {
+            id: gameId,
+            seasonId: state.competition.season.id,
+            date: state.world.calendar.currentDate,
+            homeTeamId,
+            awayTeamId,
+            competitionType: "regular_season" as const,
+            status: "final" as const,
+            score: { home: 100, away: 90 },
+            periodScores: [{ home: 100, away: 90 }],
+            events: [],
+            playerStats: [
+              {
+                playerId: Object.values(state.world.players).find(
+                  (p) => p.teamId === homeTeamId,
+                )!.id,
+                teamId: homeTeamId,
+                firstName: "Box",
+                lastName: "Score",
+                minutes: 30,
+                points: 100,
+                rebounds: 5,
+                offensiveRebounds: 2,
+                defensiveRebounds: 3,
+                assists: 4,
+                steals: 0,
+                blocks: 0,
+                turnovers: 1,
+                fouls: 2,
+                fieldGoalsMade: 40,
+                fieldGoalsAttempted: 80,
+                threePointersMade: 10,
+                threePointersAttempted: 30,
+                freeThrowsMade: 10,
+                freeThrowsAttempted: 12,
+                touches: 0,
+              },
+            ],
+            homeTeamSnapshot: {
+              teamId: homeTeamId,
+              city: "Home",
+              name: "Team",
+              abbreviation: "HOM",
+            },
+            awayTeamSnapshot: {
+              teamId: awayTeamId,
+              city: "Away",
+              name: "Club",
+              abbreviation: "AWY",
+            },
+          },
+        },
+        schedule: {
+          seasonId: state.competition.season.id,
+          gameIds: [gameId],
+        },
+      },
+    };
+
+    current = processOffseasonLifecycle(current, rng).state;
+    expect(
+      current.business.franchiseHistory[teamId]!.seasons.length,
+    ).toBeGreaterThan(0);
+    const historyYear =
+      current.business.franchiseHistory[teamId]!.seasons[0]!.seasonYear;
+
+    current = advanceOffseasonStage(current).state;
+    current = processOffseasonLifecycle(current, rng).state;
+    const draftYear = draftYearForSeason(current.competition.season.year);
+    const draftClassId = draftClassIdFor(draftYear);
+    current = completeDraft(current, draftClassId).state;
+    current = processOffseasonLifecycle(current, rng).state;
+
+    expect(Object.keys(current.competition.games)).toHaveLength(0);
+    expect(current.competition.schedule.gameIds).toHaveLength(0);
+    expect(
+      current.business.franchiseHistory[teamId]!.seasons.some(
+        (season) => season.seasonYear === historyYear,
+      ),
+    ).toBe(true);
+  });
+
   it("appends exactly one franchise history record during season_finalization", () => {
     const { state, rng } = enterOffseason();
     const teamId = state.user.controlledTeamId;

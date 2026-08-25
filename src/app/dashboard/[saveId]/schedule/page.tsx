@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { loadOwnerSaveView } from "@/application/game-service";
 import { DataTable } from "@/components/owner/DataTable";
 import { EmptyState, ErrorState } from "@/components/owner/EmptyState";
+import { GameResultLink } from "@/components/owner/GameResultLink";
 import { PageHeader } from "@/components/owner/PageHeader";
 
 type SchedulePageProps = {
@@ -36,6 +37,19 @@ export default async function SchedulePage({
           {view.schedule.map((game) => {
             const isCurrent = game.date === currentDate;
             const isPast = game.date < currentDate;
+            const isFinal = game.status === "final";
+            const resultCell =
+              game.teamScore !== null && game.opponentScore !== null ? (
+                <span
+                  className={
+                    game.won ? "text-emerald-400" : "text-rose-400"
+                  }
+                >
+                  {game.teamScore}-{game.opponentScore}
+                </span>
+              ) : (
+                <span className="text-zinc-600">—</span>
+              );
             return (
               <tr
                 key={game.gameId}
@@ -59,16 +73,17 @@ export default async function SchedulePage({
                 </td>
                 <td className="px-3 py-2 text-zinc-400">{game.status}</td>
                 <td className="px-3 py-2">
-                  {game.teamScore !== null && game.opponentScore !== null ? (
-                    <span
-                      className={
-                        game.won ? "text-emerald-400" : "text-rose-400"
-                      }
+                  {isFinal ? (
+                    <GameResultLink
+                      saveId={saveId}
+                      gameId={game.gameId}
+                      canOpen
+                      showHint
                     >
-                      {game.teamScore}-{game.opponentScore}
-                    </span>
+                      {resultCell}
+                    </GameResultLink>
                   ) : (
-                    <span className="text-zinc-600">—</span>
+                    resultCell
                   )}
                 </td>
               </tr>

@@ -9,6 +9,13 @@ export const GAME_STATUSES: readonly GameStatus[] = [
   "final",
 ];
 
+export type GameCompetitionType = "regular_season" | "playoffs";
+
+export const GAME_COMPETITION_TYPES: readonly GameCompetitionType[] = [
+  "regular_season",
+  "playoffs",
+];
+
 export type GameScore = {
   home: number;
   away: number;
@@ -46,8 +53,25 @@ export type GameEvent = {
   teamId: TeamId | null;
 };
 
+/** Team display identity captured when a game is finalized. */
+export type GameTeamSnapshot = {
+  teamId: TeamId;
+  city: string;
+  name: string;
+  abbreviation: string;
+};
+
 export type GamePlayerStats = {
   playerId: PlayerId;
+  /**
+   * Roster team at tip-off. Null only for pre-v35 legacy rows or
+   * scheduled/in-progress games before finalization.
+   */
+  teamId: TeamId | null;
+  /** Player first name at tip-off. Null for legacy / pre-finalization. */
+  firstName: string | null;
+  /** Player last name at tip-off. Null for legacy / pre-finalization. */
+  lastName: string | null;
   minutes: number;
   points: number;
   rebounds: number;
@@ -74,12 +98,18 @@ export type Game = {
   date: string;
   homeTeamId: TeamId;
   awayTeamId: TeamId;
+  /** Set at creation; single source of truth for regular season vs playoffs. */
+  competitionType: GameCompetitionType;
   status: GameStatus;
   score: GameScore;
   /** Points scored per completed period (not cumulative). Empty while scheduled. */
   periodScores: GameScore[];
   events: GameEvent[];
   playerStats: GamePlayerStats[];
+  /** Populated at finalization; null while scheduled/in_progress or legacy. */
+  homeTeamSnapshot: GameTeamSnapshot | null;
+  /** Populated at finalization; null while scheduled/in_progress or legacy. */
+  awayTeamSnapshot: GameTeamSnapshot | null;
 };
 
 /** Unvalidated construction payload for {@link createGame}. */
@@ -89,11 +119,14 @@ export type GameInput = {
   homeTeamId: TeamId;
   awayTeamId: TeamId;
   date: string;
+  competitionType: GameCompetitionType;
   score: GameScore;
   status: GameStatus;
   periodScores: GameScore[];
   events: GameEvent[];
   playerStats: GamePlayerStats[];
+  homeTeamSnapshot: GameTeamSnapshot | null;
+  awayTeamSnapshot: GameTeamSnapshot | null;
 };
 
 /**
@@ -109,11 +142,30 @@ export function createGame(input: GameInput): Game {
     throw new Error("Game homeTeamId and awayTeamId must be different.");
   }
   assertDate(input.date);
+  assertCompetitionType(input.competitionType);
   assertStatus(input.status);
   assertScore(input.score);
   assertPeriodScores(input.periodScores);
   assertEvents(input.events);
   assertPlayerStats(input.playerStats);
+  assertTeamSnapshot(input.homeTeamSnapshot, "homeTeamSnapshot");
+  assertTeamSnapshot(input.awayTeamSnapshot, "awayTeamSnapshot");
+  if (
+    input.homeTeamSnapshot != null &&
+    input.homeTeamSnapshot.teamId !== input.homeTeamId
+  ) {
+    throw new Error(
+      "Game homeTeamSnapshot.teamId must equal homeTeamId.",
+    );
+  }
+  if (
+    input.awayTeamSnapshot != null &&
+    input.awayTeamSnapshot.teamId !== input.awayTeamId
+  ) {
+    throw new Error(
+      "Game awayTeamSnapshot.teamId must equal awayTeamId.",
+    );
+  }
 
   return {
     id: input.id,
@@ -121,11 +173,18 @@ export function createGame(input: GameInput): Game {
     date: input.date,
     homeTeamId: input.homeTeamId,
     awayTeamId: input.awayTeamId,
+    competitionType: input.competitionType,
     status: input.status,
     score: { ...input.score },
     periodScores: input.periodScores.map((period) => ({ ...period })),
     events: input.events.map((event) => ({ ...event })),
     playerStats: input.playerStats.map((stats) => ({ ...stats })),
+    homeTeamSnapshot: input.homeTeamSnapshot
+      ? { ...input.homeTeamSnapshot }
+      : null,
+    awayTeamSnapshot: input.awayTeamSnapshot
+      ? { ...input.awayTeamSnapshot }
+      : null,
   };
 }
 
@@ -133,6 +192,9 @@ export function createGame(input: GameInput): Game {
 export function createEmptyGamePlayerStats(playerId: PlayerId): GamePlayerStats {
   return {
     playerId,
+    teamId: null,
+    firstName: null,
+    lastName: null,
     minutes: 0,
     points: 0,
     rebounds: 0,
@@ -175,6 +237,14 @@ function assertDate(value: string): void {
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     throw new Error(`Game date is invalid: ${message}`);
+  }
+}
+
+function assertCompetitionType(value: string): void {
+  if (!GAME_COMPETITION_TYPES.includes(value as GameCompetitionType)) {
+    throw new Error(
+      `Game competitionType must be one of ${GAME_COMPETITION_TYPES.join(", ")}.`,
+    );
   }
 }
 
@@ -232,6 +302,31 @@ function assertEvents(events: unknown): void {
   }
 }
 
+function assertTeamSnapshot(
+  snapshot: GameTeamSnapshot | null,
+  field: string,
+): void {
+  if (snapshot === null) {
+    return;
+  }
+  if (typeof snapshot !== "object" || Array.isArray(snapshot)) {
+    throw new Error(`Game ${field} must be an object or null.`);
+  }
+  assertNonEmptyId(snapshot.teamId, `${field}.teamId`);
+  if (typeof snapshot.city !== "string" || snapshot.city.length === 0) {
+    throw new Error(`Game ${field}.city must be a non-empty string.`);
+  }
+  if (typeof snapshot.name !== "string" || snapshot.name.length === 0) {
+    throw new Error(`Game ${field}.name must be a non-empty string.`);
+  }
+  if (
+    typeof snapshot.abbreviation !== "string" ||
+    snapshot.abbreviation.length === 0
+  ) {
+    throw new Error(`Game ${field}.abbreviation must be a non-empty string.`);
+  }
+}
+
 function assertPlayerStats(playerStats: unknown): void {
   if (!Array.isArray(playerStats)) {
     throw new Error("Game playerStats must be an array.");
@@ -242,6 +337,17 @@ function assertPlayerStats(playerStats: unknown): void {
       throw new Error(`Game playerStats[${index}] must be an object.`);
     }
     assertNonEmptyId(stats.playerId, `playerStats[${index}].playerId`);
+    assertOptionalId(stats.teamId, `playerStats[${index}].teamId`);
+    if (stats.firstName !== null && typeof stats.firstName !== "string") {
+      throw new Error(
+        `Game playerStats[${index}].firstName must be a string or null.`,
+      );
+    }
+    if (stats.lastName !== null && typeof stats.lastName !== "string") {
+      throw new Error(
+        `Game playerStats[${index}].lastName must be a string or null.`,
+      );
+    }
     assertNonNegativeInteger(stats.minutes, `playerStats[${index}].minutes`);
     assertNonNegativeInteger(stats.points, `playerStats[${index}].points`);
     assertNonNegativeInteger(stats.rebounds, `playerStats[${index}].rebounds`);

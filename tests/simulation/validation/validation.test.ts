@@ -237,6 +237,9 @@ describe("immutability", () => {
 
     simulateGame(
       createGame({
+        competitionType: "regular_season",
+        homeTeamSnapshot: null,
+        awayTeamSnapshot: null,
         id: asGameId("imm_1"),
         seasonId: asSeasonId("season_validation"),
         homeTeamId: asTeamId("team_validation_home"),
@@ -253,6 +256,9 @@ describe("immutability", () => {
     );
     simulateGame(
       createGame({
+        competitionType: "regular_season",
+        homeTeamSnapshot: null,
+        awayTeamSnapshot: null,
         id: asGameId("imm_2"),
         seasonId: asSeasonId("season_validation"),
         homeTeamId: asTeamId("team_validation_home"),
@@ -279,6 +285,9 @@ describe("possessionCounts", () => {
     const { homePlayers, awayPlayers } = generateValidationRosters(rng, 7);
     const result = simulateGame(
       createGame({
+        competitionType: "regular_season",
+        homeTeamSnapshot: null,
+        awayTeamSnapshot: null,
         id: asGameId("poss_1"),
         seasonId: asSeasonId("season_validation"),
         homeTeamId: asTeamId("team_validation_home"),

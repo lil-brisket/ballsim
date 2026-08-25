@@ -148,10 +148,11 @@ const MIGRATE_ONE_STEP: Record<number, (state: unknown) => unknown> = {
   31: (state) => migrateV31ToV32(state as GameStateV31),
   32: (state) => migrateV32ToV33(state as GameStateV32),
   33: (state) => migrateV33ToV34(state as GameStateV33),
+  34: (state) => migrateV34ToV35(state as GameStateV34),
 };
 
 /**
- * Parse → migrate (v1–v33 → current) → validate → return GameState.
+ * Parse → migrate (v1–v34 → current) → validate → return GameState.
  * Does not call serializeGameState.
  */
 export function deserializeGameState(stateJson: string): GameState {
@@ -2720,7 +2721,7 @@ type GameStateV33 = {
  * - expenses / netIncome / payroll / leagueRank on FranchiseSeasonRecord
  * Emits schemaVersion 34. No RNG.
  */
-function migrateV33ToV34(state: GameStateV33): GameState {
+function migrateV33ToV34(state: GameStateV33): GameStateV34 {
   const leagueStart =
     state.user.ownerStartSeasonYear ?? state.competition.season.year;
   const franchiseOps: GameState["business"]["franchiseOps"] = {};
@@ -2775,6 +2776,74 @@ function migrateV33ToV34(state: GameStateV33): GameState {
       franchiseOps,
       franchiseHistory,
       franchiseReportCache: state.business.franchiseReportCache ?? {},
+    },
+  };
+}
+
+type GameStateV34 = {
+  meta: Omit<GameState["meta"], "schemaVersion"> & {
+    schemaVersion: 34;
+  };
+  settings: GameState["settings"];
+  world: GameState["world"];
+  competition: GameState["competition"];
+  business: GameState["business"];
+  user: GameState["user"];
+};
+
+/**
+ * Deterministic v34 → v35: box-score historical identity fields on Game.
+ * - competitionType inferred from id prefix only (playoff_/playin_ → playoffs)
+ * - team snapshots null (do not backfill from live world.teams)
+ * - playerStats teamId/firstName/lastName null (do not backfill from current roster)
+ * Emits schemaVersion 35. No RNG.
+ */
+function migrateV34ToV35(state: GameStateV34): GameState {
+  const games: GameState["competition"]["games"] = {};
+  for (const [gameId, game] of Object.entries(state.competition.games)) {
+    const raw = game as typeof game & {
+      competitionType?: string;
+      homeTeamSnapshot?: unknown;
+      awayTeamSnapshot?: unknown;
+      playerStats: Array<
+        (typeof game.playerStats)[number] & {
+          teamId?: string | null;
+          firstName?: string | null;
+          lastName?: string | null;
+        }
+      >;
+    };
+    const competitionType =
+      raw.competitionType === "regular_season" ||
+      raw.competitionType === "playoffs"
+        ? raw.competitionType
+        : gameId.startsWith("playoff_") || gameId.startsWith("playin_")
+          ? "playoffs"
+          : "regular_season";
+
+    games[gameId] = {
+      ...raw,
+      competitionType,
+      homeTeamSnapshot: null,
+      awayTeamSnapshot: null,
+      playerStats: raw.playerStats.map((row) => ({
+        ...row,
+        teamId: null,
+        firstName: null,
+        lastName: null,
+      })),
+    };
+  }
+
+  return {
+    ...state,
+    meta: {
+      ...state.meta,
+      schemaVersion: 35,
+    },
+    competition: {
+      ...state.competition,
+      games,
     },
   };
 }

@@ -104,11 +104,14 @@ function simulatePlayInGames(
     date,
     homeTeamId: matchups.gameA.homeTeamId,
     awayTeamId: matchups.gameA.awayTeamId,
+    competitionType: "playoffs",
     status: "scheduled",
     score: { home: 0, away: 0 },
     periodScores: [],
     events: [],
     playerStats: [],
+    homeTeamSnapshot: null,
+    awayTeamSnapshot: null,
   });
   const gameB = createGame({
     id: asGameId(`playin_b_${seasonId}`),
@@ -116,11 +119,14 @@ function simulatePlayInGames(
     date,
     homeTeamId: matchups.gameB.homeTeamId,
     awayTeamId: matchups.gameB.awayTeamId,
+    competitionType: "playoffs",
     status: "scheduled",
     score: { home: 0, away: 0 },
     periodScores: [],
     events: [],
     playerStats: [],
+    homeTeamSnapshot: null,
+    awayTeamSnapshot: null,
   });
 
   games[gameA.id] = gameA;

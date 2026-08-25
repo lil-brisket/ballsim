@@ -224,13 +224,27 @@ export type {
   GameEvent,
   GameEventType,
   GamePlayerStats,
+  GameCompetitionType,
+  GameTeamSnapshot,
 } from "@/domain/entities/game";
 export {
   GAME_STATUSES,
   GAME_EVENT_TYPES,
+  GAME_COMPETITION_TYPES,
   createGame,
   createEmptyGamePlayerStats,
 } from "@/domain/entities/game";
+export type { StatInvariantFailure } from "@/domain/entities/game-stat-invariants";
+export {
+  checkShootingStatInvariants,
+  checkNonNegativeBoxScoreFields,
+  checkPlayerTeamAggregation,
+  checkPlayerPointsEqualScore,
+} from "@/domain/entities/game-stat-invariants";
+export {
+  validateCompletedGameBoxScore,
+  assertCompletedGameBoxScore,
+} from "@/domain/entities/game-box-score";
 export type {
   GameResult,
   GameResultInput,

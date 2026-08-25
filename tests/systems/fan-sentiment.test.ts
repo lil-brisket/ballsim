@@ -61,6 +61,9 @@ describe("fan sentiment", () => {
         games: {
           ...state.competition.games,
           [gameId]: createGame({
+            competitionType: "regular_season",
+            homeTeamSnapshot: null,
+            awayTeamSnapshot: null,
             id: gameId,
             seasonId: asSeasonId(state.competition.season.id),
             date,

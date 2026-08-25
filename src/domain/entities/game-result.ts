@@ -262,6 +262,19 @@ function assertPlayerStats(playerStats: unknown): void {
       throw new Error(`GameResult playerStats[${index}] must be an object.`);
     }
     assertNonEmptyId(stats.playerId, `playerStats[${index}].playerId`);
+    if (stats.teamId !== null) {
+      assertNonEmptyId(stats.teamId, `playerStats[${index}].teamId`);
+    }
+    if (stats.firstName !== null && typeof stats.firstName !== "string") {
+      throw new Error(
+        `GameResult playerStats[${index}].firstName must be a string or null.`,
+      );
+    }
+    if (stats.lastName !== null && typeof stats.lastName !== "string") {
+      throw new Error(
+        `GameResult playerStats[${index}].lastName must be a string or null.`,
+      );
+    }
     const fields: Array<keyof GamePlayerStats> = [
       "minutes",
       "points",

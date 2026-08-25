@@ -74,11 +74,14 @@ export function generateSchedule(state: GameState): SystemResult {
       date,
       homeTeamId: assignment.homeTeamId,
       awayTeamId: assignment.awayTeamId,
+      competitionType: "regular_season",
       status: "scheduled",
       score: { home: 0, away: 0 },
       periodScores: [],
       events: [],
       playerStats: [],
+      homeTeamSnapshot: null,
+      awayTeamSnapshot: null,
     });
     gameIds.push(gameId);
   }

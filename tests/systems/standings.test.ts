@@ -28,6 +28,9 @@ function finalGame(
   },
 ) {
   return createGame({
+    competitionType: "regular_season",
+    homeTeamSnapshot: null,
+    awayTeamSnapshot: null,
     id: asGameId(overrides.id),
     seasonId: overrides.seasonId ?? SEASON_A,
     homeTeamId: asTeamId(overrides.homeTeamId),
@@ -48,6 +51,9 @@ function scheduledGame(overrides: {
   date?: string;
 }) {
   return createGame({
+    competitionType: "regular_season",
+    homeTeamSnapshot: null,
+    awayTeamSnapshot: null,
     id: asGameId(overrides.id),
     seasonId: SEASON_A,
     homeTeamId: asTeamId(overrides.homeTeamId),
@@ -396,6 +402,9 @@ describe("calculateStandings", () => {
         awayTeamId: "team_west_a",
       }),
       createGame({
+        competitionType: "regular_season",
+        homeTeamSnapshot: null,
+        awayTeamSnapshot: null,
         id: asGameId("in_progress"),
         seasonId: SEASON_A,
         homeTeamId: asTeamId("team_east_a"),

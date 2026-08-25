@@ -4,12 +4,14 @@ import {
   type Game,
   type GamePlayerStats,
   type GameScore,
+  type GameTeamSnapshot,
 } from "@/domain/entities/game";
 import {
   aggregateTeamStats,
   createGameResult,
   type GameResult,
 } from "@/domain/entities/game-result";
+import { assertCompletedGameBoxScore } from "@/domain/entities/game-box-score";
 import type { Player } from "@/domain/entities/player";
 import { calculatePlayerOverall } from "@/domain/player-overall-rating";
 import {
@@ -135,11 +137,14 @@ export function simulateGame(
     date: game.date,
     homeTeamId: game.homeTeamId,
     awayTeamId: game.awayTeamId,
+    competitionType: game.competitionType,
     status: "in_progress",
     score: { home: 0, away: 0 },
     periodScores: [],
     events: [],
     playerStats,
+    homeTeamSnapshot: null,
+    awayTeamSnapshot: null,
   });
 
   const secondsOnCourt = new Map<string, number>();
@@ -324,17 +329,9 @@ export function simulateScheduledGame(
     rng,
   );
 
-  const finalGame = createGame({
-    id: result.gameId,
-    seasonId: result.seasonId,
-    date: result.date,
-    homeTeamId: result.homeTeamId,
-    awayTeamId: result.awayTeamId,
-    status: "final",
-    score: { ...result.score },
-    periodScores: result.periodScores.map((period) => ({ ...period })),
-    events: result.events.map((event) => ({ ...event })),
-    playerStats: result.playerStats.map((stats) => ({ ...stats })),
+  const finalGame = buildFinalizedGame(game, state, result, {
+    homePlayers,
+    awayPlayers,
   });
 
   const event = createDomainEvent({
@@ -350,6 +347,89 @@ export function simulateScheduledGame(
   });
 
   return { finalGame, event };
+}
+
+/**
+ * Builds a historically snapshotted finalized Game from a GameResult.
+ * Reads competitionType from the scheduled Game (single source of truth).
+ * Throws on box-score invariant failure (matches createGame strictness).
+ */
+export function buildFinalizedGame(
+  game: Game,
+  state: GameState,
+  result: GameResult,
+  rosters: { homePlayers: Player[]; awayPlayers: Player[] },
+): Game {
+  const homeTeam = state.world.teams[result.homeTeamId];
+  const awayTeam = state.world.teams[result.awayTeamId];
+  if (!homeTeam || !awayTeam) {
+    throw new Error(
+      `buildFinalizedGame: missing team for game ${result.gameId}.`,
+    );
+  }
+
+  const homeSnapshot = snapshotTeam(homeTeam);
+  const awaySnapshot = snapshotTeam(awayTeam);
+
+  const homeById = new Map(
+    rosters.homePlayers.map((player) => [player.id, player] as const),
+  );
+  const awayById = new Map(
+    rosters.awayPlayers.map((player) => [player.id, player] as const),
+  );
+
+  const playerStats: GamePlayerStats[] = result.playerStats.map((row) => {
+    const homePlayer = homeById.get(row.playerId);
+    const awayPlayer = awayById.get(row.playerId);
+    const player = homePlayer ?? awayPlayer;
+    if (!player) {
+      throw new Error(
+        `buildFinalizedGame: player ${row.playerId} not on either roster for ${result.gameId}.`,
+      );
+    }
+    const teamId = homePlayer
+      ? result.homeTeamId
+      : result.awayTeamId;
+    return {
+      ...row,
+      teamId,
+      firstName: player.firstName,
+      lastName: player.lastName,
+    };
+  });
+
+  const finalGame = createGame({
+    id: result.gameId,
+    seasonId: result.seasonId,
+    date: result.date,
+    homeTeamId: result.homeTeamId,
+    awayTeamId: result.awayTeamId,
+    competitionType: game.competitionType,
+    status: "final",
+    score: { ...result.score },
+    periodScores: result.periodScores.map((period) => ({ ...period })),
+    events: result.events.map((event) => ({ ...event })),
+    playerStats,
+    homeTeamSnapshot: homeSnapshot,
+    awayTeamSnapshot: awaySnapshot,
+  });
+
+  assertCompletedGameBoxScore(finalGame);
+  return finalGame;
+}
+
+function snapshotTeam(team: {
+  id: TeamId;
+  city: string;
+  name: string;
+  abbreviation: string;
+}): GameTeamSnapshot {
+  return {
+    teamId: team.id,
+    city: team.city,
+    name: team.name,
+    abbreviation: team.abbreviation,
+  };
 }
 
 function simulatePeriod(args: {

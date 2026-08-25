@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { loadOwnerSaveView } from "@/application/game-service";
 import { EmptyState, ErrorState } from "@/components/owner/EmptyState";
+import { GameResultLink } from "@/components/owner/GameResultLink";
 import { MoneyDisplay } from "@/components/owner/MoneyDisplay";
 import { PageHeader } from "@/components/owner/PageHeader";
 import { Section } from "@/components/owner/Section";
@@ -103,18 +104,28 @@ export default async function TeamOverviewPage({
             <ul className="space-y-2">
               {dashboard.recentResults.map((result) => (
                 <li
-                  key={`${result.date}-${result.opponentAbbreviation}-${result.home}`}
+                  key={result.gameId}
                   className="flex items-center justify-between rounded-lg border border-zinc-800 px-4 py-2 text-sm"
                 >
-                  <span className="font-mono text-zinc-500">{result.date}</span>
-                  <span
-                    className={
-                      result.won ? "text-emerald-400" : "text-rose-400"
-                    }
+                  <GameResultLink
+                    saveId={saveId}
+                    gameId={result.gameId}
+                    canOpen
+                    className="flex w-full items-center justify-between hover:text-amber-400"
+                    showHint
                   >
-                    {result.home ? "vs" : "@"} {result.opponentAbbreviation}{" "}
-                    {result.teamScore}-{result.opponentScore}
-                  </span>
+                    <span className="font-mono text-zinc-500">
+                      {result.date}
+                    </span>
+                    <span
+                      className={
+                        result.won ? "text-emerald-400" : "text-rose-400"
+                      }
+                    >
+                      {result.home ? "vs" : "@"} {result.opponentAbbreviation}{" "}
+                      {result.teamScore}-{result.opponentScore}
+                    </span>
+                  </GameResultLink>
                 </li>
               ))}
             </ul>

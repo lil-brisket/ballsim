@@ -268,11 +268,14 @@ export function applyPossessionResolution(
     homeTeamId: game.homeTeamId,
     awayTeamId: game.awayTeamId,
     date: game.date,
+    competitionType: game.competitionType,
     status: game.status,
     score,
     periodScores: game.periodScores.map((period) => ({ ...period })),
     events: [...game.events, ...result.events.map((event) => ({ ...event }))],
     playerStats,
+    homeTeamSnapshot: game.homeTeamSnapshot,
+    awayTeamSnapshot: game.awayTeamSnapshot,
   });
 }
 
