@@ -1,37 +1,69 @@
-import type {
-  AiAssistDomainMode,
-  AiAssistanceDomains,
-  GameSettings,
-} from "@/domain/game-settings";
+/**
+ * Thin compatibility shim — prefer management-policy.ts.
+ * @deprecated Use buildManagementPolicy / evaluateManagementAction.
+ */
 
-export type ResolvedAiAssistMode = Exclude<AiAssistDomainMode, "inherit">;
+import type { GameSettings } from "@/domain/game-settings";
+import {
+  buildManagementPolicy,
+  canAiExecute,
+  evaluateManagementAction,
+} from "@/systems/simulation/management-policy";
+import type { ManagementActionId } from "@/systems/simulation/management-actions";
+
+/** @deprecated Legacy domain keys mapped to representative actions. */
+export type LegacyAssistDomain =
+  | "freeAgency"
+  | "draft"
+  | "contracts"
+  | "rosterFilling"
+  | "rotations"
+  | "staffHiring"
+  | "trades"
+  | "injuryReplacement";
+
+const DOMAIN_TO_ACTION: Record<LegacyAssistDomain, ManagementActionId> = {
+  freeAgency: "SIGN_EMERGENCY_FA",
+  draft: "DRAFT_PICK",
+  contracts: "EXTEND_MINIMUM_CONTRACT",
+  rosterFilling: "MAINTAIN_MIN_ROSTER",
+  rotations: "FIX_INVALID_ROTATION",
+  staffHiring: "HIRE_REQUIRED_COACH",
+  trades: "EXECUTE_TRADE",
+  injuryReplacement: "SIGN_INJURY_REPLACEMENT",
+};
+
+export type ResolvedAiAssistMode = "off" | "smart" | "full";
 
 /**
- * Resolve a domain assist mode against the global managementMode.
- * `inherit` maps: off → off, smart_assist → smart, full_management → full.
+ * @deprecated Prefer evaluateManagementAction with a concrete action id.
  */
 export function resolveDomainAssistMode(
   settings: GameSettings,
-  domain: keyof AiAssistanceDomains,
+  domain: LegacyAssistDomain,
 ): ResolvedAiAssistMode {
-  const domainMode = settings.ai.assistance[domain];
-  if (domainMode !== "inherit") {
-    return domainMode;
+  const policy = buildManagementPolicy(settings);
+  const actionId = DOMAIN_TO_ACTION[domain];
+  const decision = evaluateManagementAction(settings, actionId);
+  if (decision.outcome === "DENY_CONTINUE" || decision.outcome === "DENY_BLOCK") {
+    return "off";
   }
-  switch (settings.ai.managementMode) {
-    case "off":
-      return "off";
-    case "full_management":
-      return "full";
-    case "smart_assist":
-    default:
-      return "smart";
+  const phaseMode = policy.phases[decision.phase];
+  if (phaseMode === "full") {
+    return "full";
   }
+  if (phaseMode === "off") {
+    return "off";
+  }
+  return "smart";
 }
 
+/**
+ * @deprecated Prefer canAiExecute / evaluateManagementAction.
+ */
 export function isAiAssistEnabledForDomain(
   settings: GameSettings,
-  domain: keyof AiAssistanceDomains,
+  domain: LegacyAssistDomain,
 ): boolean {
-  return resolveDomainAssistMode(settings, domain) !== "off";
+  return canAiExecute(settings, DOMAIN_TO_ACTION[domain]);
 }

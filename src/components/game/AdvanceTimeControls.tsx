@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { useFormStatus } from "react-dom";
 import {
   advanceDayAction,
@@ -66,6 +66,7 @@ export function AdvanceTimeControls(props: {
   letAiHandleAction?: (formData: FormData) => void | Promise<void>;
   continueAnywayAction?: (formData: FormData) => void | Promise<void>;
   goToHref?: string;
+  assistantSummary?: ReactNode;
 }) {
   const preferWeekly = props.simulationFrequency === "weekly";
   const untilLabel = props.untilPhaseLabel
@@ -77,6 +78,9 @@ export function AdvanceTimeControls(props: {
 
   return (
     <div className="space-y-2">
+      {props.assistantSummary ? (
+        <div className="mb-2">{props.assistantSummary}</div>
+      ) : null}
       {showWarning ? (
         <p
           role="status"

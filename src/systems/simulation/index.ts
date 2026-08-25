@@ -65,6 +65,26 @@ export type {
 } from "@/systems/simulation/phase-responsibility";
 export { runAiContinuity } from "@/systems/simulation/ai-continuity";
 export type { RunAiContinuityOptions } from "@/systems/simulation/ai-continuity";
+export {
+  runUserFranchiseAssist,
+} from "@/systems/simulation/user-franchise-assist";
+export type { RunUserFranchiseAssistOptions } from "@/systems/simulation/user-franchise-assist";
+export {
+  buildManagementPolicy,
+  evaluateManagementAction,
+  canAiExecute,
+  isUserAssistCompletelyOff,
+} from "@/systems/simulation/management-policy";
+export type {
+  PolicyOutcome,
+  PolicyDecision,
+  ResolvedManagementPolicy,
+} from "@/systems/simulation/management-policy";
+export {
+  MANAGEMENT_ACTIONS,
+  MANAGEMENT_ACTION_IDS,
+} from "@/systems/simulation/management-actions";
+export { detectManagementNeeds } from "@/systems/simulation/management-needs";
 export type {
   AdvanceSimulationResult,
   AdvanceSimulationOptions,

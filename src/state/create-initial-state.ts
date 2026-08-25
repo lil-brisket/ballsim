@@ -29,6 +29,7 @@ import {
   type TeamId,
 } from "@/domain/ids";
 import {
+  EMPTY_AI_ASSIST_STATE,
   GAME_STATE_SCHEMA_VERSION,
   type GameState,
 } from "@/state/game-state";
@@ -224,6 +225,10 @@ export function createInitialGameState(
       appliedGameplayConsequenceKeys: {},
       explicitDecisions: {},
       phaseSkips: [],
+      aiAssistState: {
+        resolvedNeeds: {},
+        seasonCounters: { ...EMPTY_AI_ASSIST_STATE.seasonCounters },
+      },
       narrative: { situations: [], snapshots: [], cooldowns: {} },
     },
   };
@@ -362,7 +367,7 @@ export function createFourTeamInitialGameState(
     },
     ai: {
       difficulty: "normal",
-      managementMode: "smart_assist",
+      managementPreset: DEFAULT_GAME_SETTINGS.ai.managementPreset,
       assistance: { ...DEFAULT_GAME_SETTINGS.ai.assistance },
     },
     financialRules: {
@@ -497,6 +502,10 @@ export function createFourTeamInitialGameState(
       appliedGameplayConsequenceKeys: {},
       explicitDecisions: {},
       phaseSkips: [],
+      aiAssistState: {
+        resolvedNeeds: {},
+        seasonCounters: { ...EMPTY_AI_ASSIST_STATE.seasonCounters },
+      },
       narrative: { situations: [], snapshots: [], cooldowns: {} },
     },
   };

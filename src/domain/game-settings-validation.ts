@@ -6,6 +6,7 @@ import {
   isAiAssistDomainMode,
   isAiDifficulty,
   isAiManagementMode,
+  isAiManagementPreset,
   isDraftMode,
   isLeagueArea,
   isLeagueHistoryMode,
@@ -16,9 +17,16 @@ import {
   isSupportedSeriesLength,
   isSupportedTeamCount,
   isTradeDeadlineRule,
+  isValidPhaseMode,
+  legacyManagementModeToPreset,
+  applyPreset,
+  DEFAULT_AI_MANAGEMENT_PRESET,
+  MANAGEMENT_PHASE_KEYS,
   type AiAssistanceDomains,
-  type AiManagementMode,
+  type AiAssistancePhases,
+  type AiManagementPreset,
   type GameSettings,
+  type ManagementPhase,
   type TradeDeadlineRule,
 } from "@/domain/game-settings";
 import { tryResolveLeagueShape } from "@/domain/league-shape";
@@ -154,7 +162,6 @@ export function validateGameSettings(
       !isSupportedPlayoffTeamCount(playoffTeams) &&
       playoffTeams !== teamCount)
   ) {
-    // Persisted: allow supported sizes, or playoffTeams === teamCount for tiny legacy leagues.
     if (typeof teamCount === "number" && playoffTeams !== teamCount) {
       errors.push(
         `playoffs.playoffTeams must be a supported size or equal teamCount for legacy saves.`,
@@ -182,39 +189,7 @@ export function validateGameSettings(
     errors.push('ai.difficulty must be "easy", "normal", or "hard".');
   }
 
-  let managementMode: AiManagementMode = "smart_assist";
-  if (ai.managementMode !== undefined) {
-    if (!isAiManagementMode(ai.managementMode)) {
-      errors.push(
-        'ai.managementMode must be "off", "smart_assist", or "full_management".',
-      );
-    } else {
-      managementMode = ai.managementMode;
-    }
-  }
-
-  let assistance: AiAssistanceDomains = { ...DEFAULT_AI_ASSISTANCE };
-  if (ai.assistance !== undefined) {
-    const assistanceRecord = asRecord(ai.assistance, "ai.assistance", errors);
-    if (assistanceRecord) {
-      const next: Partial<AiAssistanceDomains> = {};
-      for (const key of AI_ASSISTANCE_DOMAIN_KEYS) {
-        const value = assistanceRecord[key];
-        if (value === undefined) {
-          next[key] = "inherit";
-          continue;
-        }
-        if (!isAiAssistDomainMode(value)) {
-          errors.push(
-            `ai.assistance.${key} must be "inherit", "off", "smart", or "full".`,
-          );
-        } else {
-          next[key] = value;
-        }
-      }
-      assistance = { ...DEFAULT_AI_ASSISTANCE, ...next } as AiAssistanceDomains;
-    }
-  }
+  const { managementPreset, assistance } = resolveAiSettings(ai, errors);
 
   let freeAgencyDurationDays =
     DEFAULT_OFFSEASON_SETTINGS.freeAgency.durationDays;
@@ -380,7 +355,7 @@ export function validateGameSettings(
     },
     ai: {
       difficulty: difficulty as GameSettings["ai"]["difficulty"],
-      managementMode,
+      managementPreset,
       assistance,
     },
     financialRules: {
@@ -406,6 +381,154 @@ export function validateGameSettings(
   };
 
   return { ok: true, settings: validated };
+}
+
+function resolveAiSettings(
+  ai: Record<string, unknown>,
+  errors: string[],
+): { managementPreset: AiManagementPreset; assistance: AiAssistancePhases } {
+  let managementPreset: AiManagementPreset = DEFAULT_AI_MANAGEMENT_PRESET;
+
+  if (ai.managementPreset !== undefined) {
+    if (!isAiManagementPreset(ai.managementPreset)) {
+      errors.push(
+        'ai.managementPreset must be "off", "continuity", "smart", "full_management", or "custom".',
+      );
+    } else {
+      managementPreset = ai.managementPreset;
+    }
+  } else if (ai.managementMode !== undefined) {
+    // Cheap legacy acceptance during validation of pre-v38 payloads.
+    if (!isAiManagementMode(ai.managementMode)) {
+      errors.push(
+        'ai.managementMode must be "off", "smart_assist", or "full_management".',
+      );
+    } else {
+      managementPreset = legacyManagementModeToPreset(ai.managementMode);
+    }
+  }
+
+  let assistance: AiAssistancePhases = applyPreset(
+    managementPreset === "custom" ? "continuity" : managementPreset,
+  );
+
+  if (managementPreset !== "custom") {
+    assistance = applyPreset(managementPreset);
+  }
+
+  if (ai.assistance !== undefined) {
+    const assistanceRecord = asRecord(ai.assistance, "ai.assistance", errors);
+    if (assistanceRecord) {
+      // New phase-keyed shape
+      if (MANAGEMENT_PHASE_KEYS.some((key) => key in assistanceRecord)) {
+        const next = { ...assistance };
+        for (const key of MANAGEMENT_PHASE_KEYS) {
+          const value = assistanceRecord[key];
+          if (value === undefined) {
+            continue;
+          }
+          if (!isValidPhaseMode(key, value)) {
+            errors.push(`ai.assistance.${key} has an invalid mode.`);
+          } else {
+            (next as Record<string, string>)[key] = value as string;
+          }
+        }
+        assistance = next;
+        if (managementPreset !== "custom") {
+          // Custom overrides while still on a named preset → keep preset
+          // unless caller set custom; applying named preset already set base.
+        }
+      } else {
+        // Legacy domain keys — map cheaply into phases for migration acceptance.
+        const legacy = parseLegacyAssistance(assistanceRecord, errors);
+        assistance = mapLegacyDomainsToPhases(managementPreset, legacy);
+      }
+    }
+  }
+
+  if (managementPreset === "custom" && ai.assistance === undefined) {
+    assistance = applyPreset("continuity");
+  }
+
+  return { managementPreset, assistance };
+}
+
+function parseLegacyAssistance(
+  record: Record<string, unknown>,
+  errors: string[],
+): AiAssistanceDomains {
+  const next: Partial<AiAssistanceDomains> = {};
+  for (const key of AI_ASSISTANCE_DOMAIN_KEYS) {
+    const value = record[key];
+    if (value === undefined) {
+      next[key] = "inherit";
+      continue;
+    }
+    if (!isAiAssistDomainMode(value)) {
+      errors.push(
+        `ai.assistance.${key} must be "inherit", "off", "smart", or "full".`,
+      );
+    } else {
+      next[key] = value;
+    }
+  }
+  return { ...DEFAULT_AI_ASSISTANCE, ...next } as AiAssistanceDomains;
+}
+
+/**
+ * Cheap legacy domain → phase mapping for validation of pre-v38 payloads.
+ */
+function mapLegacyDomainsToPhases(
+  preset: AiManagementPreset,
+  legacy: AiAssistanceDomains,
+): AiAssistancePhases {
+  const base =
+    preset === "custom"
+      ? applyPreset("continuity")
+      : applyPreset(preset);
+
+  const mapDomain = (
+    mode: AiAssistanceDomains[keyof AiAssistanceDomains],
+  ): "off" | "continuity" | "routine" | "full" => {
+    if (mode === "inherit") {
+      return "continuity";
+    }
+    if (mode === "off") {
+      return "off";
+    }
+    if (mode === "smart") {
+      return "continuity";
+    }
+    return "full";
+  };
+
+  return {
+    ...base,
+    freeAgency: mapDomain(legacy.freeAgency),
+    injuriesEmergencyRoster: mapDomain(
+      legacy.injuryReplacement !== "inherit"
+        ? legacy.injuryReplacement
+        : legacy.rosterFilling,
+    ),
+    rotationsDepthChart: mapDomain(legacy.rotations),
+    contracts: mapDomain(legacy.contracts),
+    coachingStaff: mapDomain(legacy.staffHiring),
+    frontOfficeStaff: mapDomain(legacy.staffHiring),
+    draftSelection:
+      legacy.draft === "off"
+        ? "off"
+        : legacy.draft === "full"
+          ? "full"
+          : legacy.draft === "smart"
+            ? "recommend"
+            : base.draftSelection,
+    trades:
+      legacy.trades === "full"
+        ? "full"
+        : legacy.trades === "off"
+          ? "off"
+          : base.trades,
+  };
 }
 
 function asRecord(

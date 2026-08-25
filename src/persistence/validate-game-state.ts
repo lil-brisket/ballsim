@@ -675,6 +675,43 @@ export function validateGameState(state: unknown): asserts state is GameState {
     assertNonEmptyString(skip.reason, `${path}.reason`);
   }
 
+  if (
+    !("aiAssistState" in user) ||
+    user.aiAssistState == null ||
+    typeof user.aiAssistState !== "object" ||
+    Array.isArray(user.aiAssistState)
+  ) {
+    fail("user.aiAssistState must be an object.");
+  } else {
+    const assist = user.aiAssistState as Record<string, unknown>;
+    if (
+      assist.resolvedNeeds == null ||
+      typeof assist.resolvedNeeds !== "object" ||
+      Array.isArray(assist.resolvedNeeds)
+    ) {
+      fail("user.aiAssistState.resolvedNeeds must be a record.");
+    }
+    if (
+      assist.seasonCounters == null ||
+      typeof assist.seasonCounters !== "object" ||
+      Array.isArray(assist.seasonCounters)
+    ) {
+      fail("user.aiAssistState.seasonCounters must be an object.");
+    } else {
+      const counters = assist.seasonCounters as Record<string, unknown>;
+      assertNumber(counters.seasonYear, "user.aiAssistState.seasonCounters.seasonYear");
+      assertNumber(counters.decisions, "user.aiAssistState.seasonCounters.decisions");
+      assertNumber(
+        counters.rosterMoves,
+        "user.aiAssistState.seasonCounters.rosterMoves",
+      );
+      assertNumber(
+        counters.freeAgentSignings,
+        "user.aiAssistState.seasonCounters.freeAgentSignings",
+      );
+    }
+  }
+
   if (!("narrative" in user) || user.narrative == null) {
     fail("user.narrative is required.");
   }

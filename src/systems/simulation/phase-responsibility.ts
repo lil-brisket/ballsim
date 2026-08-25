@@ -1,27 +1,25 @@
 import { playoffRoundLabel } from "@/domain/entities/playoffs";
-import { draftClassIdFor } from "@/domain/entities/draft";
 import type { GameState } from "@/state/game-state";
-import { draftYearForSeason } from "@/systems/draft";
-import { DEFAULT_ROSTER_SIZE } from "@/systems/roster-generation-config";
-import { findTeamStaffByRole } from "@/systems/staff-effects";
-import { STARTER_ROLES } from "@/systems/staff-generation";
-import {
-  isAiAssistEnabledForDomain,
-  resolveDomainAssistMode,
-} from "@/systems/simulation/ai-assist-settings";
 import { getCalendarContext } from "@/systems/simulation/calendar-context";
+import {
+  detectManagementNeeds,
+  type ManagementNeed,
+} from "@/systems/simulation/management-needs";
+import {
+  buildManagementPolicy,
+  evaluateAction,
+  isUserAssistCompletelyOff,
+  type PolicyOutcome,
+} from "@/systems/simulation/management-policy";
+import type { ManagementPhase } from "@/domain/ai-management-presets";
 
 export type UnresolvedDecision = {
   id: string;
-  domain:
-    | "freeAgency"
-    | "draft"
-    | "staffHiring"
-    | "contracts"
-    | "rosterFilling";
+  domain: ManagementPhase | "rosterFilling" | "staffHiring" | "draft";
   severity: "critical" | "warning" | "info";
   title: string;
   detail: string;
+  policyOutcome?: PolicyOutcome;
 };
 
 export type PhaseResponsibility = {
@@ -33,25 +31,27 @@ export type PhaseResponsibility = {
 
 /**
  * Derived ownership of the current phase decisions for the user franchise.
+ * Does NOT implement AI permission logic — delegates to management-policy.
  */
 export function computePhaseResponsibility(
   state: GameState,
 ): PhaseResponsibility {
   const phaseKey = phaseKeyForResponsibility(state);
-  const unresolvedItems = collectUnresolvedDecisions(state);
+  const needs = detectManagementNeeds(state);
+  const unresolvedItems = toUnresolvedDecisions(state, needs);
   const unresolvedCount = unresolvedItems.length;
-  const managementMode = state.settings.ai.managementMode;
+  const preset = state.settings.ai.managementPreset;
 
   if (unresolvedCount === 0) {
     return {
       phaseKey,
-      owner: managementMode === "full_management" ? "ai" : "user",
+      owner: preset === "full_management" ? "ai" : "user",
       unresolvedCount: 0,
       unresolvedItems: [],
     };
   }
 
-  if (managementMode === "off") {
+  if (isUserAssistCompletelyOff(state.settings)) {
     return {
       phaseKey,
       owner: "user",
@@ -60,11 +60,32 @@ export function computePhaseResponsibility(
     };
   }
 
-  const allAiHandled = unresolvedItems.every((item) =>
-    isAiAssistEnabledForDomain(state.settings, item.domain),
+  const blocking = unresolvedItems.filter(
+    (item) =>
+      item.policyOutcome === "DENY_BLOCK" ||
+      item.policyOutcome === "RECOMMEND",
   );
 
-  if (managementMode === "full_management" && allAiHandled) {
+  if (preset === "full_management") {
+    const allAllowable = unresolvedItems.every(
+      (item) => item.policyOutcome === "ALLOW",
+    );
+    if (allAllowable) {
+      return {
+        phaseKey,
+        owner: "ai",
+        unresolvedCount,
+        unresolvedItems,
+      };
+    }
+    if (blocking.length > 0) {
+      return {
+        phaseKey,
+        owner: "unresolved",
+        unresolvedCount,
+        unresolvedItems,
+      };
+    }
     return {
       phaseKey,
       owner: "ai",
@@ -73,13 +94,24 @@ export function computePhaseResponsibility(
     };
   }
 
-  if (managementMode === "full_management") {
-    const anyFull = unresolvedItems.some(
-      (item) => resolveDomainAssistMode(state.settings, item.domain) === "full",
-    );
+  // Continuity / Smart / Custom: any DENY_BLOCK or RECOMMEND that still needs
+  // a user decision surfaces as unresolved.
+  if (blocking.length > 0) {
     return {
       phaseKey,
-      owner: anyFull ? "ai" : "unresolved",
+      owner: "unresolved",
+      unresolvedCount,
+      unresolvedItems,
+    };
+  }
+
+  const anyAllow = unresolvedItems.some(
+    (item) => item.policyOutcome === "ALLOW",
+  );
+  if (anyAllow && unresolvedItems.every((i) => i.policyOutcome === "ALLOW")) {
+    return {
+      phaseKey,
+      owner: "ai",
       unresolvedCount,
       unresolvedItems,
     };
@@ -91,6 +123,97 @@ export function computePhaseResponsibility(
     unresolvedCount,
     unresolvedItems,
   };
+}
+
+function toUnresolvedDecisions(
+  state: GameState,
+  needs: ManagementNeed[],
+): UnresolvedDecision[] {
+  if (needs.length === 0) {
+    return [];
+  }
+  const policy = buildManagementPolicy(state.settings);
+  const items: UnresolvedDecision[] = [];
+
+  for (const need of needs) {
+    // Draft scout is informational when on clock — don't double-count with pick.
+    if (need.actionId === "DRAFT_SCOUT") {
+      continue;
+    }
+
+    const decision = evaluateAction(policy, need.actionId);
+    // DENY_CONTINUE needs are not "unresolved" for the user — sim continues.
+    if (decision.outcome === "DENY_CONTINUE") {
+      continue;
+    }
+    // ALLOW means AI can handle — still list for full_management visibility,
+    // but critical user-facing unresolved are BLOCK/RECOMMEND.
+    if (
+      decision.outcome === "ALLOW" &&
+      state.settings.ai.managementPreset !== "full_management"
+    ) {
+      // Continuity/Smart will handle ALLOW needs; only surface if critical
+      // and we're in a mode where AI might not run before advance stops.
+      continue;
+    }
+
+    items.push({
+      id: need.id,
+      domain: legacyDomainAlias(need),
+      severity: need.severity,
+      title: need.title,
+      detail: need.detail,
+      policyOutcome: decision.outcome,
+    });
+  }
+
+  // Always surface DENY_BLOCK / RECOMMEND for mandatory needs (draft clock).
+  for (const need of needs) {
+    if (need.actionId === "DRAFT_SCOUT") {
+      continue;
+    }
+    const decision = evaluateAction(policy, need.actionId);
+    if (
+      decision.outcome === "DENY_BLOCK" ||
+      decision.outcome === "RECOMMEND"
+    ) {
+      if (!items.some((item) => item.id === need.id)) {
+        items.push({
+          id: need.id,
+          domain: legacyDomainAlias(need),
+          severity: need.severity,
+          title: need.title,
+          detail: need.detail,
+          policyOutcome: decision.outcome,
+        });
+      }
+    }
+  }
+
+  return items;
+}
+
+function legacyDomainAlias(
+  need: ManagementNeed,
+): UnresolvedDecision["domain"] {
+  switch (need.actionId) {
+    case "DRAFT_PICK":
+    case "DRAFT_SCOUT":
+      return "draft";
+    case "HIRE_REQUIRED_COACH":
+    case "HIRE_REQUIRED_FRONT_OFFICE":
+    case "HIRE_ROUTINE_STAFF":
+      return "staffHiring";
+    case "MAINTAIN_MIN_ROSTER":
+    case "SIGN_INJURY_REPLACEMENT":
+    case "SIGN_EMERGENCY_FA":
+    case "SIGN_ROUTINE_FA":
+      return "rosterFilling";
+    default:
+      return need.actionId === "FIX_INVALID_ROTATION"
+        ? "rotationsDepthChart"
+        : "injuriesEmergencyRoster";
+  }
 }
 
 function phaseKeyForResponsibility(state: GameState): string {
@@ -133,55 +256,4 @@ function phaseKeyForResponsibility(state: GameState): string {
     default:
       return "offseason";
   }
-}
-
-function collectUnresolvedDecisions(state: GameState): UnresolvedDecision[] {
-  const items: UnresolvedDecision[] = [];
-  const teamId = state.user.controlledTeamId;
-  const team = state.world.teams[teamId];
-  const season = state.competition.season;
-
-  if (team && team.roster.length < DEFAULT_ROSTER_SIZE) {
-    const inFa =
-      season.phase === "offseason" && season.offseasonStage === "free_agency";
-    items.push({
-      id: "roster_below_min",
-      domain: inFa ? "freeAgency" : "rosterFilling",
-      severity: "critical",
-      title: "Roster below minimum",
-      detail: `Roster has ${team.roster.length}/${DEFAULT_ROSTER_SIZE} players.`,
-    });
-  }
-
-  if (season.phase === "offseason" && season.offseasonStage === "draft") {
-    const draftYear = draftYearForSeason(season.year);
-    const draftClassId = draftClassIdFor(draftYear);
-    const draft = state.world.drafts[draftClassId];
-    if (draft !== undefined && draft.status === "active") {
-      const onClock = draft.order.find((slot) => slot.status === "available");
-      if (onClock !== undefined && onClock.ownerTeamId === teamId) {
-        items.push({
-          id: "draft_clock",
-          domain: "draft",
-          severity: "critical",
-          title: "Draft clock",
-          detail: "Your team is on the draft clock.",
-        });
-      }
-    }
-  }
-
-  for (const role of STARTER_ROLES) {
-    if (findTeamStaffByRole(state, teamId, role) === null) {
-      items.push({
-        id: `staff_gap_${role}`,
-        domain: "staffHiring",
-        severity: "warning",
-        title: "Staff gap",
-        detail: `Missing required staff role: ${role}.`,
-      });
-    }
-  }
-
-  return items;
 }

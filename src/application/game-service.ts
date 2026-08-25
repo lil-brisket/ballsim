@@ -165,7 +165,7 @@ import { advanceSimulation } from "@/systems/simulation/advance-simulation";
 import { advanceOffseasonStage } from "@/systems/simulation/offseason-lifecycle";
 import { enterOffseasonFromPostseason } from "@/systems/simulation/season-lifecycle";
 import { runAiContinuity } from "@/systems/simulation/ai-continuity";
-import { isAiAssistEnabledForDomain } from "@/systems/simulation/ai-assist-settings";
+import { canAiExecute } from "@/systems/simulation/management-policy";
 import { resolveSimulationPhaseKey } from "@/systems/simulation/simulation-phase";
 import type { AdvanceSimulationResult } from "@/systems/simulation/types";
 import {
@@ -679,7 +679,7 @@ export async function advanceOwnerTime(
   const preEvents: DomainEvent[] = [];
 
   if (isUserOnDraftClock(workingState)) {
-    if (!isAiAssistEnabledForDomain(workingState.settings, "draft")) {
+    if (!canAiExecute(workingState.settings, "DRAFT_PICK")) {
       return fail(
         "Cannot advance time while your team is on the draft clock. Make a draft selection first.",
       );
@@ -1043,8 +1043,8 @@ export async function letAiHandlePhaseAndAdvance(
   if (!loaded) {
     return fail("Save not found.");
   }
-  if (loaded.state.settings.ai.managementMode === "off") {
-    return fail("AI assistance is off. Enable Smart Assist or Full Management first.");
+  if (loaded.state.settings.ai.managementPreset === "off") {
+    return fail("AI assistance is off. Enable Continuity, Smart, or Full Management first.");
   }
 
   const rng = createSeededRng(loaded.state.meta.rngState);

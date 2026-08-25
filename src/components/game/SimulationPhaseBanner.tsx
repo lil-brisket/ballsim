@@ -62,7 +62,7 @@ export function SimulationPhaseBanner(props: {
             label={
               phase.responsibility === "ai"
                 ? "AI managing"
-                : "Smart Assist enabled"
+                : "AI assist enabled"
             }
             tone="info"
           />

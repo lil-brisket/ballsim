@@ -27,23 +27,47 @@ describe("multi-year unattended simulation (CI gate)", () => {
     async () => {
       const result = await runMultiYearSimulation({
         seasons: 1,
-        managementMode: "off",
+        managementPreset: "off",
         advanceMode: "until_phase",
         seed: TEST_RNG_SEED,
         saveReloadEachSeason: true,
       });
       expect(result.seasonsCompleted).toBe(1);
       expect(result.finalState.competition.season.phase).toBe("preseason");
+      const userAssistEvents = result.finalState.user.eventLog.filter(
+        (event) =>
+          event.type === "AiAssistAction" &&
+          (event.payload as { teamId?: string }).teamId ===
+            result.finalState.user.controlledTeamId,
+      );
+      expect(userAssistEvents.length).toBe(0);
     },
     LONG_TIMEOUT_MS,
   );
 
   it(
-    "Smart Assist completes 5 seasons with save/reload and mid-FA reload",
+    "Continuity completes 3 seasons with save/reload",
+    async () => {
+      const result = await runMultiYearSimulation({
+        seasons: 3,
+        managementPreset: "continuity",
+        advanceMode: "until_phase",
+        seed: TEST_RNG_SEED + 4,
+        saveReloadEachSeason: true,
+      });
+      expect(result.seasonsCompleted).toBe(3);
+      expect(result.finalState.competition.season.phase).toBe("preseason");
+      expect(result.finalState.settings.ai.managementPreset).toBe("continuity");
+    },
+    LONG_TIMEOUT_MS,
+  );
+
+  it(
+    "Smart completes 5 seasons with save/reload and mid-FA reload",
     async () => {
       const result = await runMultiYearSimulation({
         seasons: 5,
-        managementMode: "smart_assist",
+        managementPreset: "smart",
         advanceMode: "until_phase",
         seed: TEST_RNG_SEED + 1,
         saveReloadEachSeason: true,
@@ -51,7 +75,7 @@ describe("multi-year unattended simulation (CI gate)", () => {
       });
       expect(result.seasonsCompleted).toBe(5);
       expect(result.finalState.competition.season.phase).toBe("preseason");
-      expect(result.finalState.settings.ai.managementMode).toBe("smart_assist");
+      expect(result.finalState.settings.ai.managementPreset).toBe("smart");
     },
     LONG_TIMEOUT_MS,
   );
@@ -61,14 +85,14 @@ describe("multi-year unattended simulation (CI gate)", () => {
     async () => {
       const result = await runMultiYearSimulation({
         seasons: 5,
-        managementMode: "full_management",
+        managementPreset: "full_management",
         advanceMode: "until_phase",
         seed: TEST_RNG_SEED + 2,
         saveReloadEachSeason: true,
       });
       expect(result.seasonsCompleted).toBe(5);
       expect(result.finalState.competition.season.phase).toBe("preseason");
-      expect(result.finalState.settings.ai.managementMode).toBe(
+      expect(result.finalState.settings.ai.managementPreset).toBe(
         "full_management",
       );
     },
@@ -76,21 +100,21 @@ describe("multi-year unattended simulation (CI gate)", () => {
   );
 
   it(
-    "Smart Assist + FA domain override completes 5 seasons",
+    "Custom FA off + injuries continuity completes 3 seasons",
     async () => {
       const result = await runMultiYearSimulation({
-        seasons: 5,
-        managementMode: "smart_assist",
+        seasons: 3,
+        managementPreset: "continuity",
         assistanceOverrides: {
-          freeAgency: "full",
-          draft: "full",
-          rosterFilling: "full",
+          freeAgency: "off",
+          injuriesEmergencyRoster: "continuity",
         },
         advanceMode: "until_phase",
         seed: TEST_RNG_SEED + 3,
         saveReloadEachSeason: true,
       });
-      expect(result.seasonsCompleted).toBe(5);
+      expect(result.seasonsCompleted).toBe(3);
+      expect(result.finalState.settings.ai.managementPreset).toBe("custom");
     },
     LONG_TIMEOUT_MS,
   );

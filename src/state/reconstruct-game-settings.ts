@@ -128,7 +128,7 @@ export function reconstructGameSettingsFromState(
     },
     ai: {
       difficulty: "normal",
-      managementMode: "smart_assist",
+      managementPreset: DEFAULT_GAME_SETTINGS.ai.managementPreset,
       assistance: { ...DEFAULT_GAME_SETTINGS.ai.assistance },
     },
     financialRules: {

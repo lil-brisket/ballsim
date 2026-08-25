@@ -3,6 +3,45 @@
  * Settings describe how the league works; runtime state lives on other GameState slices.
  */
 
+import {
+  applyPreset,
+  DEFAULT_AI_MANAGEMENT_PRESET,
+  type AiAssistancePhases,
+  type AiManagementPreset,
+} from "@/domain/ai-management-presets";
+
+export type {
+  AiAssistancePhases,
+  AiManagementPreset,
+  ManagementPhase,
+  OperationalPhaseMode,
+  TradesPhaseMode,
+  DraftPhaseMode,
+  BinaryPhaseMode,
+  WaiversPhaseMode,
+} from "@/domain/ai-management-presets";
+
+export {
+  MANAGEMENT_PHASE_KEYS,
+  AI_MANAGEMENT_PRESETS,
+  PRESET_PHASE_TABLES,
+  DEFAULT_AI_ASSISTANCE_PHASES,
+  DEFAULT_AI_MANAGEMENT_PRESET,
+  applyPreset,
+  inferPreset,
+  resolveAssistancePhases,
+  phasesEqual,
+  isAiManagementPreset,
+  isOperationalPhaseMode,
+  isTradesPhaseMode,
+  isDraftPhaseMode,
+  isBinaryPhaseMode,
+  isWaiversPhaseMode,
+  isValidPhaseMode,
+  MANAGEMENT_PHASE_LABELS,
+  AI_MANAGEMENT_PRESET_LABELS,
+} from "@/domain/ai-management-presets";
+
 export const SUPPORTED_TEAM_COUNTS = [8, 10, 12, 16, 20, 24, 30, 32] as const;
 export type SupportedTeamCount = (typeof SUPPORTED_TEAM_COUNTS)[number];
 
@@ -26,8 +65,20 @@ export type SupportedConferenceCount =
 
 export type SimulationFrequency = "daily" | "weekly";
 export type AiDifficulty = "easy" | "normal" | "hard";
+
+/**
+ * @deprecated Prefer {@link AiManagementPreset}. Kept for cheap v37→v38 mapping.
+ */
 export type AiManagementMode = "off" | "smart_assist" | "full_management";
+
+/**
+ * @deprecated Prefer {@link AiAssistancePhases}. Kept for cheap v37→v38 mapping.
+ */
 export type AiAssistDomainMode = "inherit" | "off" | "smart" | "full";
+
+/**
+ * @deprecated Prefer {@link AiAssistancePhases}.
+ */
 export type AiAssistanceDomains = {
   freeAgency: AiAssistDomainMode;
   draft: AiAssistDomainMode;
@@ -38,10 +89,12 @@ export type AiAssistanceDomains = {
   trades: AiAssistDomainMode;
   injuryReplacement: AiAssistDomainMode;
 };
+
 export type LeagueArea = "north_america" | "europe" | "global";
 export type DraftMode = "standard" | "fantasy";
 export type LeagueHistoryMode = "new" | "generated";
 
+/** @deprecated Use MANAGEMENT_PHASE_KEYS. */
 export const AI_ASSISTANCE_DOMAIN_KEYS = [
   "freeAgency",
   "draft",
@@ -53,6 +106,7 @@ export const AI_ASSISTANCE_DOMAIN_KEYS = [
   "injuryReplacement",
 ] as const satisfies ReadonlyArray<keyof AiAssistanceDomains>;
 
+/** @deprecated Use DEFAULT_AI_ASSISTANCE_PHASES. */
 export const DEFAULT_AI_ASSISTANCE: AiAssistanceDomains = {
   freeAgency: "inherit",
   draft: "inherit",
@@ -105,9 +159,13 @@ export type GameSettings = {
    */
   ai: {
     difficulty: AiDifficulty;
-    /** Global assist posture; domain overrides resolve via inherit. */
-    managementMode: AiManagementMode;
-    assistance: AiAssistanceDomains;
+    /** Preset: Off / Continuity / Smart / Full / Custom. */
+    managementPreset: AiManagementPreset;
+    /**
+     * Phase-specific modes. When preset ≠ custom these match the preset table;
+     * when custom they are user overrides.
+     */
+    assistance: AiAssistancePhases;
   };
   financialRules: {
     salaryCapEnabled: boolean;
@@ -138,6 +196,14 @@ export const DEFAULT_OFFSEASON_SETTINGS: GameSettings["offseason"] = {
   },
 };
 
+function defaultAiSettings(): GameSettings["ai"] {
+  return {
+    difficulty: "normal",
+    managementPreset: DEFAULT_AI_MANAGEMENT_PRESET,
+    assistance: applyPreset("continuity"),
+  };
+}
+
 /** Standard new-save defaults: 30 teams / 82 games / 16 playoff teams. */
 export const DEFAULT_GAME_SETTINGS: GameSettings = {
   league: {
@@ -162,11 +228,7 @@ export const DEFAULT_GAME_SETTINGS: GameSettings = {
   simulation: {
     frequency: "daily",
   },
-  ai: {
-    difficulty: "normal",
-    managementMode: "smart_assist",
-    assistance: { ...DEFAULT_AI_ASSISTANCE },
-  },
+  ai: defaultAiSettings(),
   financialRules: {
     salaryCapEnabled: true,
     luxuryTaxEnabled: true,
@@ -212,11 +274,7 @@ export const CBL_GAME_SETTINGS: GameSettings = {
   simulation: {
     frequency: "daily",
   },
-  ai: {
-    difficulty: "normal",
-    managementMode: "smart_assist",
-    assistance: { ...DEFAULT_AI_ASSISTANCE },
-  },
+  ai: defaultAiSettings(),
   financialRules: {
     salaryCapEnabled: true,
     luxuryTaxEnabled: true,
@@ -298,6 +356,25 @@ export function isAiAssistDomainMode(
     value === "smart" ||
     value === "full"
   );
+}
+
+/**
+ * Map legacy v37 managementMode to a v38 preset.
+ * Cheap migration only — no extensive legacy matrix.
+ */
+export function legacyManagementModeToPreset(
+  mode: AiManagementMode | undefined,
+): Exclude<AiManagementPreset, "custom"> {
+  switch (mode) {
+    case "off":
+      return "off";
+    case "full_management":
+      return "full_management";
+    case "smart_assist":
+      return "smart";
+    default:
+      return "continuity";
+  }
 }
 
 export function isLeagueArea(value: unknown): value is LeagueArea {

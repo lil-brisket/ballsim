@@ -88,7 +88,7 @@ export default async function InGameSettingsPage({
           <SettingRow label="AI difficulty" value={ai.difficulty} />
           <SettingRow
             label="Team management assistance"
-            value={ai.managementMode.replaceAll("_", " ")}
+            value={ai.managementPreset.replaceAll("_", " ")}
           />
           <SettingRow
             label="Free agency duration"
@@ -101,18 +101,18 @@ export default async function InGameSettingsPage({
         </dl>
       </Section>
 
-      <Section title="AI assistance domains">
+      <Section title="AI assistance phases">
         <dl className="grid gap-3 text-sm sm:grid-cols-2">
           {(
             Object.entries(ai.assistance) as [
               string,
               string,
             ][]
-          ).map(([domain, mode]) => (
+          ).map(([phase, mode]) => (
             <SettingRow
-              key={domain}
-              label={domain.replace(/([A-Z])/g, " $1")}
-              value={mode}
+              key={phase}
+              label={phase.replace(/([A-Z])/g, " $1")}
+              value={mode.replaceAll("_", " ")}
             />
           ))}
         </dl>

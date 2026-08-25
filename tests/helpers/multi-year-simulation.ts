@@ -15,7 +15,10 @@ import {
 import {
   cloneGameSettings,
   CBL_GAME_SETTINGS,
+  applyPreset,
+  legacyManagementModeToPreset,
   type AiManagementMode,
+  type AiManagementPreset,
   type GameSettings,
 } from "@/domain/game-settings";
 import { createMemorySaveGameStore } from "@/persistence/memory-save-game-store";
@@ -27,13 +30,17 @@ import { validateGameState } from "@/persistence/validate-game-state";
 import type { GameState } from "@/state/game-state";
 import { isUserOnDraftClock } from "@/systems/draft";
 import { assertContinuityBoundary } from "@/systems/simulation/continuity-validation";
+import { canAiExecute } from "@/systems/simulation/management-policy";
 import { TEST_RNG_SEED } from "./determinism";
 
 export type AdvanceMode = "day" | "week" | "mixed" | "large_jumps" | "until_phase";
 
 export type MultiYearSimOptions = {
   seasons: number;
-  managementMode: AiManagementMode;
+  /** Preferred: new preset API. */
+  managementPreset?: AiManagementPreset;
+  /** @deprecated Prefer managementPreset. Mapped via legacyManagementModeToPreset. */
+  managementMode?: AiManagementMode;
   assistanceOverrides?: Partial<GameSettings["ai"]["assistance"]>;
   advanceMode: AdvanceMode;
   saveReloadEachSeason?: boolean;
@@ -178,7 +185,7 @@ function assertBoundaryInvariants(state: GameState): void {
 async function handleBlockedGates(
   saveId: string,
   store: ReturnType<typeof createMemorySaveGameStore>,
-  managementMode: AiManagementMode,
+  _managementPreset: AiManagementPreset,
 ): Promise<boolean> {
   const loaded = await store.load(saveId);
   if (!loaded) {
@@ -197,9 +204,11 @@ async function handleBlockedGates(
   if (
     state.competition.season.phase === "offseason" &&
     state.competition.season.offseasonStage === "free_agency" &&
-    managementMode === "off"
+    !canAiExecute(state.settings, "MAINTAIN_MIN_ROSTER") &&
+    !canAiExecute(state.settings, "SIGN_EMERGENCY_FA") &&
+    !canAiExecute(state.settings, "SIGN_ROUTINE_FA")
   ) {
-    // AI Off: finish FA explicitly so the loop can continue.
+    // AI cannot fill roster via FA: finish FA explicitly so the loop can continue.
     const finished = await finishFreeAgency(saveId, store);
     if (!finished.ok) {
       throw new Error(finished.error);
@@ -207,7 +216,7 @@ async function handleBlockedGates(
     return true;
   }
 
-  if (isUserOnDraftClock(state) && managementMode === "off") {
+  if (isUserOnDraftClock(state) && !canAiExecute(state.settings, "DRAFT_PICK")) {
     const view = await loadOwnerSave(saveId, store);
     if (!view) {
       throw new Error("Missing view for draft pick");
@@ -242,18 +251,28 @@ export async function runMultiYearSimulation(
   const store = createMemorySaveGameStore();
   const seed = options.seed ?? TEST_RNG_SEED;
   const settings = cloneGameSettings(options.settingsBase ?? CBL_GAME_SETTINGS);
-  settings.ai.managementMode = options.managementMode;
+  const managementPreset: AiManagementPreset =
+    options.managementPreset ??
+    (options.managementMode !== undefined
+      ? legacyManagementModeToPreset(options.managementMode)
+      : "continuity");
+  settings.ai.managementPreset = managementPreset;
+  if (managementPreset !== "custom") {
+    settings.ai.assistance = applyPreset(managementPreset);
+  }
   if (options.assistanceOverrides) {
     settings.ai.assistance = {
       ...settings.ai.assistance,
       ...options.assistanceOverrides,
     };
+    settings.ai.managementPreset = "custom";
   }
+  const effectivePreset = settings.ai.managementPreset;
 
   const created = await createNewOwnerSave(
     {
       settings,
-      name: `MultiYear ${options.managementMode} ${options.seasons}y`,
+      name: `MultiYear ${effectivePreset} ${options.seasons}y`,
       rngSeed: seed,
     },
     store,
@@ -356,7 +375,7 @@ export async function runMultiYearSimulation(
     const handled = await handleBlockedGates(
       saveId,
       store,
-      options.managementMode,
+      effectivePreset,
     );
     if (handled) {
       steps += 1;
@@ -393,7 +412,7 @@ export async function runMultiYearSimulation(
         const handledBlock = await handleBlockedGates(
           saveId,
           store,
-          options.managementMode,
+          effectivePreset,
         );
         if (handledBlock) {
           lastTransition = `blocked:${result.error}`;
@@ -415,7 +434,7 @@ export async function runMultiYearSimulation(
       const retryGate = await handleBlockedGates(
         saveId,
         store,
-        options.managementMode,
+        effectivePreset,
       );
       if (!retryGate) {
         failProgress(

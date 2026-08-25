@@ -6,6 +6,7 @@ import {
 } from "@/application/actions";
 import { loadOwnerSaveView } from "@/application/game-service";
 import { AdvanceTimeControls } from "@/components/game/AdvanceTimeControls";
+import { SimulationAssistantSummary } from "@/components/game/SimulationAssistantSummary";
 import { SimulationPhaseBanner } from "@/components/game/SimulationPhaseBanner";
 import { SimulationProgressBanner } from "@/components/game/SimulationProgressBanner";
 import { AttentionRequiredPanel } from "@/components/owner/dashboard/AttentionRequiredPanel";
@@ -34,7 +35,7 @@ export default async function DashboardPage({
     notFound();
   }
 
-  const { save, ownerDashboard: dash } = view;
+  const { save, ownerDashboard: dash, settings } = view;
   const returnPath = `/dashboard/${saveId}`;
   const timeDisabled =
     dash.flags.userOnDraftClock || dash.flags.seasonReviewPending;
@@ -75,6 +76,13 @@ export default async function DashboardPage({
             goToHref={goToHref}
             letAiHandleAction={letAiHandlePhaseAction}
             continueAnywayAction={continuePastPhaseAction}
+            assistantSummary={
+              <SimulationAssistantSummary
+                preset={settings.ai.managementPreset}
+                assistance={settings.ai.assistance}
+                compact
+              />
+            }
           />
         }
       />

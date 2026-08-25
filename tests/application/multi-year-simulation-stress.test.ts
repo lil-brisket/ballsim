@@ -28,7 +28,7 @@ describe.runIf(STRESS)("multi-year simulation stress soak", () => {
     async () => {
       const result = await runMultiYearSimulation({
         seasons: 25,
-        managementMode: "smart_assist",
+        managementPreset: "smart",
         advanceMode: "until_phase",
         seed: TEST_RNG_SEED + 99,
         saveReloadEachSeason: true,

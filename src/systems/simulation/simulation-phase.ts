@@ -2,8 +2,11 @@ import { calendarDaysBetween } from "@/domain/calendar-date";
 import { playoffRoundLabel } from "@/domain/entities/playoffs";
 import type { GameState } from "@/state/game-state";
 import { getCalendarContext } from "@/systems/simulation/calendar-context";
-import { isAiAssistEnabledForDomain } from "@/systems/simulation/ai-assist-settings";
 import { computePhaseResponsibility } from "@/systems/simulation/phase-responsibility";
+import {
+  canUserManageFranchise,
+  isAnyAiAssistEnabled,
+} from "@/systems/simulation/management-policy";
 
 export type SimulationPhaseContext = {
   primaryLabel: string;
@@ -46,14 +49,6 @@ export function resolveSimulationPhase(state: GameState): SimulationPhaseContext
       ? state.settings.offseason.freeAgency.durationDays
       : null;
 
-  const managementMode = state.settings.ai.managementMode;
-  const aiAssistEnabled =
-    managementMode !== "off" &&
-    (isAiAssistEnabledForDomain(state.settings, "freeAgency") ||
-      isAiAssistEnabledForDomain(state.settings, "draft") ||
-      isAiAssistEnabledForDomain(state.settings, "rosterFilling") ||
-      isAiAssistEnabledForDomain(state.settings, "staffHiring"));
-
   return {
     primaryLabel: labels.primaryLabel,
     subLabel: labels.subLabel,
@@ -61,10 +56,10 @@ export function resolveSimulationPhase(state: GameState): SimulationPhaseContext
     dayInPhase,
     phaseDurationDays,
     nextPhaseLabel: nextPhaseLabelFor(phaseKey, calendar.seasonSegment),
-    canUserManage: managementMode !== "full_management",
+    canUserManage: canUserManageFranchise(state.settings),
     unresolvedDecisionCount: responsibility.unresolvedCount,
     responsibility: responsibility.owner,
-    aiAssistEnabled,
+    aiAssistEnabled: isAnyAiAssistEnabled(state.settings),
   };
 }
 

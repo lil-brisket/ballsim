@@ -64,24 +64,27 @@ describe("migration then multi-year simulation", () => {
       delete settingsRaw.offseason;
       const ai = settingsRaw.ai as Record<string, unknown>;
       delete ai.managementMode;
+      delete ai.managementPreset;
       delete ai.assistance;
       const user = parsed.user as Record<string, unknown>;
       delete user.explicitDecisions;
       delete user.phaseSkips;
+      delete user.aiAssistState;
       return parsed;
     })();
 
     const migrated = deserializeGameState(JSON.stringify(parsedProbe));
     expect(migrated.meta.schemaVersion).toBe(GAME_STATE_SCHEMA_VERSION);
-    expect(migrated.settings.ai.managementMode).toBe("smart_assist");
+    expect(migrated.settings.ai.managementPreset).toBe("smart");
     expect(migrated.settings.offseason.freeAgency.durationDays).toBe(30);
     expect(migrated.user.explicitDecisions).toEqual({});
     expect(migrated.user.phaseSkips).toEqual([]);
+    expect(migrated.user.aiAssistState.resolvedNeeds).toEqual({});
     expect(() => validateGameState(migrated)).not.toThrow();
 
     const result = await runMultiYearSimulation({
       seasons: 5,
-      managementMode: "smart_assist",
+      managementPreset: "smart",
       advanceMode: "until_phase",
       seed: TEST_RNG_SEED + 41,
       saveReloadEachSeason: true,

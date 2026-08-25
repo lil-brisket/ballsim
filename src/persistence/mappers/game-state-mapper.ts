@@ -44,8 +44,13 @@ import {
   DEFAULT_GAME_SETTINGS,
   DEFAULT_TRADE_DEADLINE_RULE,
   isTradeDeadlineRule,
+  legacyManagementModeToPreset,
+  applyPreset,
+  type AiManagementMode,
+  type AiAssistanceDomains,
   type GameSettings,
 } from "@/domain/game-settings";
+import { EMPTY_AI_ASSIST_STATE } from "@/state/game-state";
 import {
   isAiProfile,
   type AiProfile,
@@ -152,10 +157,11 @@ const MIGRATE_ONE_STEP: Record<number, (state: unknown) => unknown> = {
   34: (state) => migrateV34ToV35(state as GameStateV34),
   35: (state) => migrateV35ToV36(state as GameStateV35),
   36: (state) => migrateV36ToV37(state as GameStateV36),
+  37: (state) => migrateV37ToV38(state as GameStateV37),
 };
 
 /**
- * Parse → migrate (v1–v36 → current) → validate → return GameState.
+ * Parse → migrate (v1–v37 → current) → validate → return GameState.
  * Does not call serializeGameState.
  */
 export function deserializeGameState(stateJson: string): GameState {
@@ -2472,13 +2478,20 @@ function migrateV28ToV29(state: GameStateV28): GameStateV29 {
       ai: {
         difficulty: state.settings.ai.difficulty,
         managementMode:
-          (state.settings.ai as { managementMode?: GameSettings["ai"]["managementMode"] })
+          (state.settings.ai as { managementMode?: AiManagementMode })
             .managementMode ?? "smart_assist",
         assistance: {
-          ...DEFAULT_GAME_SETTINGS.ai.assistance,
-          ...((state.settings.ai as { assistance?: GameSettings["ai"]["assistance"] })
+          freeAgency: "inherit",
+          draft: "inherit",
+          contracts: "inherit",
+          rosterFilling: "inherit",
+          rotations: "inherit",
+          staffHiring: "inherit",
+          trades: "inherit",
+          injuryReplacement: "inherit",
+          ...((state.settings.ai as { assistance?: Partial<AiAssistanceDomains> })
             .assistance ?? {}),
-        },
+        } as AiAssistanceDomains,
       },
       offseason: {
         freeAgency: {
@@ -2513,7 +2526,7 @@ function migrateV28ToV29(state: GameStateV28): GameStateV29 {
           }).freeAgencyExtendedUntil ?? null,
       },
     },
-  };
+  } as unknown as GameStateV29;
 }
 
 type GameStateV29 = {
@@ -2849,10 +2862,11 @@ type GameStateV36 = {
   meta: Omit<GameState["meta"], "schemaVersion"> & {
     schemaVersion: 36;
   };
-  settings: Omit<GameState["settings"], "offseason"> & {
-    ai: GameState["settings"]["ai"] & {
-      managementMode?: GameState["settings"]["ai"]["managementMode"];
-      assistance?: GameState["settings"]["ai"]["assistance"];
+  settings: Omit<GameState["settings"], "offseason" | "ai"> & {
+    ai: {
+      difficulty: GameSettings["ai"]["difficulty"];
+      managementMode?: AiManagementMode;
+      assistance?: Partial<AiAssistanceDomains>;
     };
     offseason?: GameState["settings"]["offseason"];
   };
@@ -2871,9 +2885,29 @@ type GameStateV36 = {
     playoffs: GameState["competition"]["playoffs"];
   };
   business: GameState["business"];
-  user: Omit<GameState["user"], "explicitDecisions" | "phaseSkips"> & {
+  user: Omit<GameState["user"], "explicitDecisions" | "phaseSkips" | "aiAssistState"> & {
     explicitDecisions?: GameState["user"]["explicitDecisions"];
     phaseSkips?: GameState["user"]["phaseSkips"];
+    aiAssistState?: GameState["user"]["aiAssistState"];
+  };
+};
+
+type GameStateV37 = {
+  meta: Omit<GameState["meta"], "schemaVersion"> & {
+    schemaVersion: 37;
+  };
+  settings: Omit<GameState["settings"], "ai"> & {
+    ai: {
+      difficulty: GameSettings["ai"]["difficulty"];
+      managementMode: AiManagementMode;
+      assistance: AiAssistanceDomains;
+    };
+  };
+  world: GameState["world"];
+  competition: GameState["competition"];
+  business: GameState["business"];
+  user: Omit<GameState["user"], "aiAssistState"> & {
+    aiAssistState?: GameState["user"]["aiAssistState"];
   };
 };
 
@@ -2951,7 +2985,7 @@ function migrateV35ToV36(state: GameStateV35): GameStateV36 {
       gameArchive: state.business.gameArchive ?? {},
       playerHistory: state.business.playerHistory ?? {},
     },
-  };
+  } as unknown as GameStateV36;
 }
 
 /**
@@ -2959,7 +2993,7 @@ function migrateV35ToV36(state: GameStateV35): GameStateV36 {
  * free-agency duration settings, explicit decisions / phase skips.
  * Emits schemaVersion 37. No RNG.
  */
-function migrateV36ToV37(state: GameStateV36): GameState {
+function migrateV36ToV37(state: GameStateV36): GameStateV37 {
   const season = state.competition.season;
   const inOffseasonStage =
     season.phase === "offseason" && season.offseasonStage !== "none";
@@ -2973,16 +3007,17 @@ function migrateV36ToV37(state: GameStateV36): GameState {
   const previousAi = state.settings.ai;
   const ai = {
     difficulty: previousAi.difficulty,
-    managementMode: previousAi.managementMode ?? "smart_assist",
+    managementMode: previousAi.managementMode ?? ("smart_assist" as const),
     assistance: {
-      freeAgency: previousAi.assistance?.freeAgency ?? "inherit",
-      draft: previousAi.assistance?.draft ?? "inherit",
-      contracts: previousAi.assistance?.contracts ?? "inherit",
-      rosterFilling: previousAi.assistance?.rosterFilling ?? "inherit",
-      rotations: previousAi.assistance?.rotations ?? "inherit",
-      staffHiring: previousAi.assistance?.staffHiring ?? "inherit",
-      trades: previousAi.assistance?.trades ?? "inherit",
-      injuryReplacement: previousAi.assistance?.injuryReplacement ?? "inherit",
+      freeAgency: previousAi.assistance?.freeAgency ?? ("inherit" as const),
+      draft: previousAi.assistance?.draft ?? ("inherit" as const),
+      contracts: previousAi.assistance?.contracts ?? ("inherit" as const),
+      rosterFilling: previousAi.assistance?.rosterFilling ?? ("inherit" as const),
+      rotations: previousAi.assistance?.rotations ?? ("inherit" as const),
+      staffHiring: previousAi.assistance?.staffHiring ?? ("inherit" as const),
+      trades: previousAi.assistance?.trades ?? ("inherit" as const),
+      injuryReplacement:
+        previousAi.assistance?.injuryReplacement ?? ("inherit" as const),
     },
   };
 
@@ -3018,6 +3053,38 @@ function migrateV36ToV37(state: GameStateV36): GameState {
       ...state.user,
       explicitDecisions: state.user.explicitDecisions ?? {},
       phaseSkips: state.user.phaseSkips ?? [],
+    },
+  };
+}
+
+/**
+ * Deterministic v37 → v38: phase-based management presets + aiAssistState.
+ * Cheap mapping: smart_assist → smart preset. No RNG.
+ */
+function migrateV37ToV38(state: GameStateV37): GameState {
+  const preset = legacyManagementModeToPreset(state.settings.ai.managementMode);
+  const assistance = applyPreset(preset);
+
+  return {
+    ...state,
+    meta: {
+      ...state.meta,
+      schemaVersion: 38,
+    },
+    settings: {
+      ...state.settings,
+      ai: {
+        difficulty: state.settings.ai.difficulty,
+        managementPreset: preset,
+        assistance,
+      },
+    },
+    user: {
+      ...state.user,
+      aiAssistState: state.user.aiAssistState ?? {
+        resolvedNeeds: {},
+        seasonCounters: { ...EMPTY_AI_ASSIST_STATE.seasonCounters },
+      },
     },
   };
 }

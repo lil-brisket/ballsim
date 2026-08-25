@@ -245,6 +245,15 @@ describe("season lifecycle", () => {
         appliedGameplayConsequenceKeys: {},
         explicitDecisions: {},
         phaseSkips: [],
+        aiAssistState: {
+          resolvedNeeds: {},
+          seasonCounters: {
+            seasonYear: 0,
+            decisions: 0,
+            rosterMoves: 0,
+            freeAgentSignings: 0,
+          },
+        },
         narrative: { situations: [], snapshots: [], cooldowns: {} },
       },
     };
