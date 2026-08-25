@@ -12,6 +12,7 @@ import type { FranchiseOps } from "@/domain/entities/franchise-ops";
 import type { FranchiseReportCache } from "@/domain/entities/annual-franchise-report";
 import type { TeamFinances } from "@/domain/entities/finances";
 import type { Game } from "@/domain/entities/game";
+import type { GameArchive } from "@/domain/entities/game-archive";
 import type { League } from "@/domain/entities/league";
 import type { LeagueEconomy } from "@/domain/entities/league-economy";
 import type { OwnerNotification } from "@/domain/entities/owner-notification";
@@ -20,6 +21,7 @@ import type { OwnerPhilosophy } from "@/domain/entities/owner-philosophy";
 import type { OwnershipConfidenceState } from "@/domain/entities/ownership-confidence";
 import type { NarrativeState } from "@/domain/entities/narrative-situation";
 import type { Player } from "@/domain/entities/player";
+import type { PlayerHistory } from "@/domain/entities/player-history";
 import type { PlayoffTournament } from "@/domain/entities/playoffs";
 import type { RelocationProcess } from "@/domain/entities/relocation";
 import type { Schedule } from "@/domain/entities/schedule";
@@ -35,7 +37,7 @@ import type { GameSettings } from "@/domain/game-settings";
 import type { DomainEvent } from "@/domain/events";
 import type { SaveId, TeamId } from "@/domain/ids";
 
-export const GAME_STATE_SCHEMA_VERSION = 35;
+export const GAME_STATE_SCHEMA_VERSION = 36;
 
 /** Bounded recent history for Owner Mode activity / transactions UI. */
 export const EVENT_LOG_MAX = 1_000;
@@ -100,6 +102,16 @@ export type BusinessSlice = {
    * Separate from franchiseHistory (facts vs interpretation).
    */
   franchiseReportCache: FranchiseReportCache;
+  /**
+   * Authoritative completed games across seasons.
+   * Populated at season_finalization before competition.games is wiped.
+   */
+  gameArchive: GameArchive;
+  /**
+   * Per-player season-end snapshots (not game logs).
+   * Career highs / stints are derived from gameArchive.
+   */
+  playerHistory: Record<string, PlayerHistory>;
 };
 
 export type UserSlice = {

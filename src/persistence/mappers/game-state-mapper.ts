@@ -149,10 +149,11 @@ const MIGRATE_ONE_STEP: Record<number, (state: unknown) => unknown> = {
   32: (state) => migrateV32ToV33(state as GameStateV32),
   33: (state) => migrateV33ToV34(state as GameStateV33),
   34: (state) => migrateV34ToV35(state as GameStateV34),
+  35: (state) => migrateV35ToV36(state as GameStateV35),
 };
 
 /**
- * Parse → migrate (v1–v34 → current) → validate → return GameState.
+ * Parse → migrate (v1–v35 → current) → validate → return GameState.
  * Does not call serializeGameState.
  */
 export function deserializeGameState(stateJson: string): GameState {
@@ -2787,7 +2788,21 @@ type GameStateV34 = {
   settings: GameState["settings"];
   world: GameState["world"];
   competition: GameState["competition"];
-  business: GameState["business"];
+  business: Omit<GameState["business"], "gameArchive" | "playerHistory">;
+  user: GameState["user"];
+};
+
+type GameStateV35 = {
+  meta: Omit<GameState["meta"], "schemaVersion"> & {
+    schemaVersion: 35;
+  };
+  settings: GameState["settings"];
+  world: GameState["world"];
+  competition: GameState["competition"];
+  business: Omit<GameState["business"], "gameArchive" | "playerHistory"> & {
+    gameArchive?: GameState["business"]["gameArchive"];
+    playerHistory?: GameState["business"]["playerHistory"];
+  };
   user: GameState["user"];
 };
 
@@ -2798,7 +2813,7 @@ type GameStateV34 = {
  * - playerStats teamId/firstName/lastName null (do not backfill from current roster)
  * Emits schemaVersion 35. No RNG.
  */
-function migrateV34ToV35(state: GameStateV34): GameState {
+function migrateV34ToV35(state: GameStateV34): GameStateV35 {
   const games: GameState["competition"]["games"] = {};
   for (const [gameId, game] of Object.entries(state.competition.games)) {
     const raw = game as typeof game & {
@@ -2844,6 +2859,26 @@ function migrateV34ToV35(state: GameStateV34): GameState {
     competition: {
       ...state.competition,
       games,
+    },
+  };
+}
+
+/**
+ * Deterministic v35 → v36: player history + game archive.
+ * Defaults empty; no backfill of prior seasons.
+ * Emits schemaVersion 36. No RNG.
+ */
+function migrateV35ToV36(state: GameStateV35): GameState {
+  return {
+    ...state,
+    meta: {
+      ...state.meta,
+      schemaVersion: 36,
+    },
+    business: {
+      ...state.business,
+      gameArchive: state.business.gameArchive ?? {},
+      playerHistory: state.business.playerHistory ?? {},
     },
   };
 }
