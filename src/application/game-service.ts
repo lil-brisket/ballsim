@@ -164,6 +164,9 @@ import {
 import { advanceSimulation } from "@/systems/simulation/advance-simulation";
 import { advanceOffseasonStage } from "@/systems/simulation/offseason-lifecycle";
 import { enterOffseasonFromPostseason } from "@/systems/simulation/season-lifecycle";
+import { runAiContinuity } from "@/systems/simulation/ai-continuity";
+import { isAiAssistEnabledForDomain } from "@/systems/simulation/ai-assist-settings";
+import { resolveSimulationPhaseKey } from "@/systems/simulation/simulation-phase";
 import type { AdvanceSimulationResult } from "@/systems/simulation/types";
 import {
   addToTradeBlock,
@@ -671,41 +674,61 @@ export async function advanceOwnerTime(
     return fail("Save not found.");
   }
 
-  if (isUserOnDraftClock(loaded.state)) {
-    return fail(
-      "Cannot advance time while your team is on the draft clock. Make a draft selection first.",
-    );
+  let workingState = loaded.state;
+  let rngState = loaded.state.meta.rngState;
+  const preEvents: DomainEvent[] = [];
+
+  if (isUserOnDraftClock(workingState)) {
+    if (!isAiAssistEnabledForDomain(workingState.settings, "draft")) {
+      return fail(
+        "Cannot advance time while your team is on the draft clock. Make a draft selection first.",
+      );
+    }
+    const rngDraft = createSeededRng(rngState);
+    try {
+      const continuity = runAiContinuity(workingState, rngDraft, {
+        forcePhase: `draft_clock:${workingState.world.calendar.currentDate}`,
+      });
+      workingState = continuity.state;
+      rngState = rngDraft.getState();
+      preEvents.push(...continuity.events);
+      if (isUserOnDraftClock(workingState)) {
+        return fail(
+          "Cannot advance time while your team is on the draft clock. Make a draft selection first.",
+        );
+      }
+    } catch (error) {
+      return fail(error instanceof Error ? error.message : String(error));
+    }
   }
 
-  if (loaded.state.competition.season.phase === "postseason") {
+  if (workingState.competition.season.phase === "postseason") {
     return fail(
       "Season review is in progress. Begin the offseason from the dashboard before advancing time.",
     );
   }
 
   const days = options.days ?? 1;
-  const rng = createSeededRng(loaded.state.meta.rngState);
+  const rng = createSeededRng(rngState);
 
   try {
-    const result = advanceSimulation(loaded.state, rng, {
+    const result = advanceSimulation(workingState, rng, {
       days,
       stopOnPhaseChange: options.stopOnPhaseChange,
     });
 
-    // If draft clock became active after a day, still persist (lifecycle may have entered draft).
-    // Further advances are blocked until the user picks.
     const saved = await persistWorkingState(
       saveId,
       result.state,
       rng.getState(),
       saveStore,
-      result.events,
+      [...preEvents, ...result.events],
     );
 
     const { state: _state, events, ...simulation } = result;
     return {
       ...withDashboard(saved),
-      events,
+      events: [...preEvents, ...events],
       simulation,
     };
   } catch (error) {
@@ -1001,6 +1024,119 @@ export async function finishFreeAgency(
       rng.getState(),
       saveStore,
       emitted,
+    );
+    return withDashboard(saved);
+  } catch (error) {
+    return fail(error instanceof Error ? error.message : String(error));
+  }
+}
+
+/**
+ * Run AI continuity for the user franchise, then advance until the next phase.
+ */
+export async function letAiHandlePhaseAndAdvance(
+  saveId: string,
+  store?: SaveGameStore,
+): Promise<OwnerCommandResult> {
+  const saveStore = getStore(store);
+  const loaded = await saveStore.load(saveId);
+  if (!loaded) {
+    return fail("Save not found.");
+  }
+  if (loaded.state.settings.ai.managementMode === "off") {
+    return fail("AI assistance is off. Enable Smart Assist or Full Management first.");
+  }
+
+  const rng = createSeededRng(loaded.state.meta.rngState);
+  try {
+    const phaseKey = resolveSimulationPhaseKey(loaded.state);
+    const continuity = runAiContinuity(loaded.state, rng, {
+      forcePhase: `handoff:${phaseKey}`,
+    });
+    let working = continuity.state;
+    const emitted = [...continuity.events];
+
+    if (
+      working.competition.season.phase === "offseason" &&
+      working.competition.season.offseasonStage === "free_agency"
+    ) {
+      const advanced = advanceOffseasonStage(working);
+      working = advanced.state;
+      emitted.push(...advanced.events);
+    }
+
+    const dayResult = advanceSimulation(working, rng, {
+      days: 400,
+      stopOnPhaseChange: true,
+    });
+    working = dayResult.state;
+    emitted.push(...dayResult.events);
+
+    const saved = await persistWorkingState(
+      saveId,
+      working,
+      rng.getState(),
+      saveStore,
+      emitted,
+    );
+    return withDashboard(saved);
+  } catch (error) {
+    return fail(error instanceof Error ? error.message : String(error));
+  }
+}
+
+/**
+ * Record that the user skipped unresolved phase decisions, then advance.
+ */
+export async function continuePastPhaseAnyway(
+  saveId: string,
+  store?: SaveGameStore,
+): Promise<OwnerCommandResult> {
+  const saveStore = getStore(store);
+  const loaded = await saveStore.load(saveId);
+  if (!loaded) {
+    return fail("Save not found.");
+  }
+
+  const phaseKey = resolveSimulationPhaseKey(loaded.state);
+  const today = loaded.state.world.calendar.currentDate;
+  let working: GameState = {
+    ...loaded.state,
+    user: {
+      ...loaded.state.user,
+      phaseSkips: [
+        ...loaded.state.user.phaseSkips,
+        {
+          phaseKey,
+          skippedOn: today,
+          reason: "User chose Continue Anyway",
+        },
+      ],
+    },
+  };
+
+  const rng = createSeededRng(working.meta.rngState);
+  try {
+    if (
+      working.competition.season.phase === "offseason" &&
+      working.competition.season.offseasonStage === "free_agency"
+    ) {
+      const advanced = advanceOffseasonStage(working);
+      working = advanced.state;
+    }
+
+    const dayResult = advanceSimulation(working, rng, {
+      days: 400,
+      stopOnPhaseChange: true,
+    });
+    working = dayResult.state;
+
+    const saved = await persistWorkingState(
+      saveId,
+      working,
+      rng.getState(),
+      saveStore,
+      dayResult.events,
     );
     return withDashboard(saved);
   } catch (error) {

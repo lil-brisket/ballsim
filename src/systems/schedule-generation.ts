@@ -9,6 +9,7 @@ import {
   type SeasonScheduleConfig,
 } from "@/systems/schedule-generation-config";
 import { validateSeasonSchedule } from "@/systems/schedule-validation";
+import { buildGameIdsByDate } from "@/systems/schedule-date-index";
 import { SEASON_LIFECYCLE_CONFIG } from "@/systems/simulation/season-lifecycle-config";
 
 type UnorderedPair = {
@@ -93,6 +94,7 @@ export function generateSchedule(state: GameState): SystemResult {
       schedule: {
         seasonId,
         gameIds,
+        gameIdsByDate: buildGameIdsByDate(games, gameIds),
       },
       games,
     },

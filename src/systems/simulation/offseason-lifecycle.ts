@@ -1,13 +1,14 @@
-import { createEmptyPlayoffTournament } from "@/domain/entities/playoffs";
-import { createEmptyTeamStanding } from "@/domain/entities/standings";
+import { calendarDaysBetween } from "@/domain/calendar-date";
 import type { OffseasonStage } from "@/domain/entities/season";
-import { draftClassIdFor } from "@/domain/entities/draft";
-import { mergeDraftPicksForSeason } from "@/domain/draft-picks/generate-draft-picks";
-import type { DomainEvent } from "@/domain/events";
-import { asSeasonId, type TeamId } from "@/domain/ids";
+import { createDomainEvent, type DomainEvent } from "@/domain/events";
 import type { Rng } from "@/domain/rng";
 import { systemResult, type SystemResult } from "@/domain/system-result";
 import type { GameState } from "@/state/game-state";
+import { createEmptyPlayoffTournament } from "@/domain/entities/playoffs";
+import { createEmptyTeamStanding } from "@/domain/entities/standings";
+import { draftClassIdFor } from "@/domain/entities/draft";
+import { mergeDraftPicksForSeason } from "@/domain/draft-picks/generate-draft-picks";
+import { asSeasonId, type TeamId } from "@/domain/ids";
 import {
   activateDraft,
   completeDraft,
@@ -42,6 +43,8 @@ function setOffseasonStage(
       season: {
         ...state.competition.season,
         offseasonStage,
+        offseasonStageEnteredDate: state.world.calendar.currentDate,
+        freeAgencyExtendedUntil: null,
       },
     },
   };
@@ -123,10 +126,13 @@ export function initializeNewSeason(state: GameState): SystemResult {
         phase: "offseason",
         offseasonStage: "none",
         regularSeasonStartDate: null,
+        offseasonStageEnteredDate: null,
+        freeAgencyExtendedUntil: null,
       },
       schedule: {
         seasonId: nextSeasonId,
         gameIds: [],
+        gameIdsByDate: {},
       },
       games: {},
       standings: { byTeamId: standingsByTeamId },
@@ -146,6 +152,28 @@ function isDraftOrderFullyUsed(state: GameState, draftClassId: string): boolean 
     return false;
   }
   return draft.order.every((slot) => slot.status === "used");
+}
+
+function shouldAutoAdvanceFreeAgency(state: GameState): boolean {
+  const season = state.competition.season;
+  if (season.offseasonStage !== "free_agency") {
+    return false;
+  }
+  const entered = season.offseasonStageEnteredDate;
+  if (entered === null) {
+    return false;
+  }
+  const currentDate = state.world.calendar.currentDate;
+  const daysElapsed = calendarDaysBetween(entered, currentDate);
+  const durationDays = state.settings.offseason.freeAgency.durationDays;
+  if (daysElapsed < durationDays) {
+    return false;
+  }
+  const extendedUntil = season.freeAgencyExtendedUntil;
+  if (extendedUntil !== null && currentDate < extendedUntil) {
+    return false;
+  }
+  return true;
 }
 
 /**
@@ -208,6 +236,24 @@ export function processOffseasonLifecycle(
     current = released.state;
     events.push(...released.events);
     current = setOffseasonStage(current, "free_agency");
+  }
+
+  if (shouldAutoAdvanceFreeAgency(current)) {
+    const fromStage = current.competition.season.offseasonStage;
+    const advanced = advanceOffseasonStage(current);
+    current = advanced.state;
+    events.push(...advanced.events);
+    events.push(
+      createDomainEvent({
+        type: "OffseasonStageAdvanced",
+        occurredOn: current.world.calendar.currentDate,
+        payload: {
+          from: fromStage,
+          to: current.competition.season.offseasonStage,
+          reason: "free_agency_duration_elapsed",
+        },
+      }),
+    );
   }
 
   if (current.competition.season.offseasonStage === "draft") {

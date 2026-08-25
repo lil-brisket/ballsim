@@ -1,6 +1,11 @@
 import {
+  AI_ASSISTANCE_DOMAIN_KEYS,
+  DEFAULT_AI_ASSISTANCE,
+  DEFAULT_OFFSEASON_SETTINGS,
   DEFAULT_TRADE_DEADLINE_RULE,
+  isAiAssistDomainMode,
   isAiDifficulty,
+  isAiManagementMode,
   isDraftMode,
   isLeagueArea,
   isLeagueHistoryMode,
@@ -11,6 +16,8 @@ import {
   isSupportedSeriesLength,
   isSupportedTeamCount,
   isTradeDeadlineRule,
+  type AiAssistanceDomains,
+  type AiManagementMode,
   type GameSettings,
   type TradeDeadlineRule,
 } from "@/domain/game-settings";
@@ -55,6 +62,10 @@ export function validateGameSettings(
     raw.draft === undefined ? {} : asRecord(raw.draft, "draft", errors);
   const history =
     raw.history === undefined ? {} : asRecord(raw.history, "history", errors);
+  const offseason =
+    raw.offseason === undefined
+      ? null
+      : asRecord(raw.offseason, "offseason", errors);
 
   if (
     errors.length > 0 ||
@@ -65,7 +76,8 @@ export function validateGameSettings(
     !ai ||
     !financialRules ||
     !draft ||
-    !history
+    !history ||
+    (raw.offseason !== undefined && !offseason)
   ) {
     return { ok: false, errors };
   }
@@ -168,6 +180,76 @@ export function validateGameSettings(
   const difficulty = ai.difficulty;
   if (!isAiDifficulty(difficulty)) {
     errors.push('ai.difficulty must be "easy", "normal", or "hard".');
+  }
+
+  let managementMode: AiManagementMode = "smart_assist";
+  if (ai.managementMode !== undefined) {
+    if (!isAiManagementMode(ai.managementMode)) {
+      errors.push(
+        'ai.managementMode must be "off", "smart_assist", or "full_management".',
+      );
+    } else {
+      managementMode = ai.managementMode;
+    }
+  }
+
+  let assistance: AiAssistanceDomains = { ...DEFAULT_AI_ASSISTANCE };
+  if (ai.assistance !== undefined) {
+    const assistanceRecord = asRecord(ai.assistance, "ai.assistance", errors);
+    if (assistanceRecord) {
+      const next: Partial<AiAssistanceDomains> = {};
+      for (const key of AI_ASSISTANCE_DOMAIN_KEYS) {
+        const value = assistanceRecord[key];
+        if (value === undefined) {
+          next[key] = "inherit";
+          continue;
+        }
+        if (!isAiAssistDomainMode(value)) {
+          errors.push(
+            `ai.assistance.${key} must be "inherit", "off", "smart", or "full".`,
+          );
+        } else {
+          next[key] = value;
+        }
+      }
+      assistance = { ...DEFAULT_AI_ASSISTANCE, ...next } as AiAssistanceDomains;
+    }
+  }
+
+  let freeAgencyDurationDays =
+    DEFAULT_OFFSEASON_SETTINGS.freeAgency.durationDays;
+  let freeAgencyAllowExtension =
+    DEFAULT_OFFSEASON_SETTINGS.freeAgency.allowExtension;
+  if (offseason !== null) {
+    const freeAgency =
+      offseason.freeAgency === undefined
+        ? null
+        : asRecord(offseason.freeAgency, "offseason.freeAgency", errors);
+    if (freeAgency) {
+      if (freeAgency.durationDays !== undefined) {
+        if (
+          typeof freeAgency.durationDays !== "number" ||
+          !Number.isInteger(freeAgency.durationDays) ||
+          freeAgency.durationDays < 1 ||
+          freeAgency.durationDays > 90
+        ) {
+          errors.push(
+            "offseason.freeAgency.durationDays must be an integer between 1 and 90.",
+          );
+        } else {
+          freeAgencyDurationDays = freeAgency.durationDays;
+        }
+      }
+      if (freeAgency.allowExtension !== undefined) {
+        if (typeof freeAgency.allowExtension !== "boolean") {
+          errors.push(
+            "offseason.freeAgency.allowExtension must be a boolean.",
+          );
+        } else {
+          freeAgencyAllowExtension = freeAgency.allowExtension;
+        }
+      }
+    }
   }
 
   const salaryCapEnabled = financialRules.salaryCapEnabled;
@@ -298,6 +380,8 @@ export function validateGameSettings(
     },
     ai: {
       difficulty: difficulty as GameSettings["ai"]["difficulty"],
+      managementMode,
+      assistance,
     },
     financialRules: {
       salaryCapEnabled: salaryCapEnabled as boolean,
@@ -312,6 +396,12 @@ export function validateGameSettings(
     history: {
       mode:
         (history.mode as GameSettings["history"]["mode"] | undefined) ?? "new",
+    },
+    offseason: {
+      freeAgency: {
+        durationDays: freeAgencyDurationDays,
+        allowExtension: freeAgencyAllowExtension,
+      },
     },
   };
 

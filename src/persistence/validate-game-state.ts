@@ -141,6 +141,20 @@ function assertNumber(value: unknown, path: string): asserts value is number {
   }
 }
 
+/** Null or a parseable YYYY-MM-DD calendar date. */
+function assertOptionalCalendarDate(value: unknown, path: string): void {
+  if (value === undefined) {
+    fail(`${path} is required (string or null).`);
+  }
+  if (value === null) {
+    return;
+  }
+  if (typeof value !== "string") {
+    fail(`${path} must be a YYYY-MM-DD string or null.`);
+  }
+  parseCalendarDate(value);
+}
+
 /**
  * Validates structural and referential integrity of a GameState at the
  * persistence boundary. Does not mutate input. Throws on failure.
@@ -324,6 +338,15 @@ export function validateGameState(state: unknown): asserts state is GameState {
   } else if (competition.season.regularSeasonStartDate === undefined) {
     fail("competition.season.regularSeasonStartDate is required (string or null).");
   }
+
+  assertOptionalCalendarDate(
+    competition.season.offseasonStageEnteredDate,
+    "competition.season.offseasonStageEnteredDate",
+  );
+  assertOptionalCalendarDate(
+    competition.season.freeAgencyExtendedUntil,
+    "competition.season.freeAgencyExtendedUntil",
+  );
 
   assertRecord(competition.schedule, "competition.schedule");
   assertNonEmptyString(
@@ -616,6 +639,42 @@ export function validateGameState(state: unknown): asserts state is GameState {
     }
   }
 
+  if (
+    !("explicitDecisions" in user) ||
+    user.explicitDecisions == null ||
+    typeof user.explicitDecisions !== "object" ||
+    Array.isArray(user.explicitDecisions)
+  ) {
+    fail("user.explicitDecisions must be a record.");
+  }
+  for (const [key, value] of Object.entries(
+    user.explicitDecisions as Record<string, unknown>,
+  )) {
+    if (key.trim().length === 0) {
+      fail("user.explicitDecisions keys must be non-empty.");
+    }
+    if (value !== true) {
+      fail(`user.explicitDecisions["${key}"] must be true.`);
+    }
+  }
+
+  if (!("phaseSkips" in user) || !Array.isArray(user.phaseSkips)) {
+    fail("user.phaseSkips must be an array.");
+  }
+  for (let index = 0; index < (user.phaseSkips as unknown[]).length; index += 1) {
+    const entry = (user.phaseSkips as unknown[])[index];
+    const path = `user.phaseSkips[${index}]`;
+    if (entry === null || typeof entry !== "object" || Array.isArray(entry)) {
+      fail(`${path} must be an object.`);
+      continue;
+    }
+    const skip = entry as Record<string, unknown>;
+    assertNonEmptyString(skip.phaseKey, `${path}.phaseKey`);
+    assertNonEmptyString(skip.skippedOn, `${path}.skippedOn`);
+    parseCalendarDate(skip.skippedOn as string);
+    assertNonEmptyString(skip.reason, `${path}.reason`);
+  }
+
   if (!("narrative" in user) || user.narrative == null) {
     fail("user.narrative is required.");
   }
@@ -897,25 +956,25 @@ export function validateGameState(state: unknown): asserts state is GameState {
         signedPlayer,
         `world.players[${offerValue.playerId}]`,
       );
-      if (signedPlayer.contractId !== acceptedContractId) {
-        fail(
-          `business.freeAgency.offers[${offerId}] accepted: player.contractId must equal offer.contractId.`,
-        );
-      }
-      if (signedPlayer.teamId !== offerValue.teamId) {
-        fail(
-          `business.freeAgency.offers[${offerId}] accepted: player.teamId must equal offer.teamId.`,
-        );
-      }
-      const signingTeam = world.teams[offerValue.teamId as string];
-      assertRecord(signingTeam, `world.teams[${offerValue.teamId}]`);
-      if (!Array.isArray(signingTeam.roster)) {
-        fail(`world.teams[${offerValue.teamId}].roster must be an array.`);
-      }
-      if (!(signingTeam.roster as unknown[]).includes(offerValue.playerId)) {
-        fail(
-          `business.freeAgency.offers[${offerId}] accepted: player must be on signing team roster.`,
-        );
+      // Accepted offers are historical records. Live membership invariants apply
+      // only while the offer's contract is still the player's current binding.
+      // After expiration/release/re-sign, player.contractId diverges — that is valid.
+      if (signedPlayer.contractId === acceptedContractId) {
+        if (signedPlayer.teamId !== offerValue.teamId) {
+          fail(
+            `business.freeAgency.offers[${offerId}] accepted: player.teamId must equal offer.teamId.`,
+          );
+        }
+        const signingTeam = world.teams[offerValue.teamId as string];
+        assertRecord(signingTeam, `world.teams[${offerValue.teamId}]`);
+        if (!Array.isArray(signingTeam.roster)) {
+          fail(`world.teams[${offerValue.teamId}].roster must be an array.`);
+        }
+        if (!(signingTeam.roster as unknown[]).includes(offerValue.playerId)) {
+          fail(
+            `business.freeAgency.offers[${offerId}] accepted: player must be on signing team roster.`,
+          );
+        }
       }
     }
   }
@@ -1079,7 +1138,12 @@ export function validateGameState(state: unknown): asserts state is GameState {
         const worldPlayer = world.players[prospectId] as {
           teamId: string | null;
         };
-        if (worldPlayer.teamId == null) {
+        // Active drafts require the draftee to be on a team. Completed drafts are
+        // historical — players may later become free agents (teamId null).
+        if (
+          draftValue.status === "active" &&
+          worldPlayer.teamId == null
+        ) {
           fail(
             `world.drafts[${draftId}] selected prospect "${prospectId}" must have a teamId on world.players.`,
           );

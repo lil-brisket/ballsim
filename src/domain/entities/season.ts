@@ -42,6 +42,16 @@ export type Season = {
    * Null until preseason → regular. Used for league trade-deadline rules.
    */
   regularSeasonStartDate: string | null;
+  /**
+   * Calendar date when the current offseasonStage was entered (YYYY-MM-DD).
+   * Null when offseasonStage is "none" or before first stage entry.
+   */
+  offseasonStageEnteredDate: string | null;
+  /**
+   * Optional absolute end date when the user extends free agency past durationDays.
+   * Null when not extended / not in free agency.
+   */
+  freeAgencyExtendedUntil: string | null;
 };
 
 export function isSeasonPhase(value: unknown): value is SeasonPhase {

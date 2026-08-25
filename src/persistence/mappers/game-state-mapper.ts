@@ -41,6 +41,7 @@ import { createPhaseEBusinessDefaults } from "@/state/phase-e-defaults";
 import { reconstructGameSettingsFromState } from "@/state/reconstruct-game-settings";
 import { generateAxesForExistingProfile } from "@/systems/franchise-identity-generation";
 import {
+  DEFAULT_GAME_SETTINGS,
   DEFAULT_TRADE_DEADLINE_RULE,
   isTradeDeadlineRule,
   type GameSettings,
@@ -150,10 +151,11 @@ const MIGRATE_ONE_STEP: Record<number, (state: unknown) => unknown> = {
   33: (state) => migrateV33ToV34(state as GameStateV33),
   34: (state) => migrateV34ToV35(state as GameStateV34),
   35: (state) => migrateV35ToV36(state as GameStateV35),
+  36: (state) => migrateV36ToV37(state as GameStateV36),
 };
 
 /**
- * Parse → migrate (v1–v35 → current) → validate → return GameState.
+ * Parse → migrate (v1–v36 → current) → validate → return GameState.
  * Does not call serializeGameState.
  */
 export function deserializeGameState(stateJson: string): GameState {
@@ -1841,6 +1843,14 @@ function migrateV20ToV21(state: GameStateV20): GameStateV21 {
         regularSeasonStartDate:
           (state.competition.season as { regularSeasonStartDate?: string | null })
             .regularSeasonStartDate ?? null,
+        offseasonStageEnteredDate:
+          (state.competition.season as {
+            offseasonStageEnteredDate?: string | null;
+          }).offseasonStageEnteredDate ?? null,
+        freeAgencyExtendedUntil:
+          (state.competition.season as {
+            freeAgencyExtendedUntil?: string | null;
+          }).freeAgencyExtendedUntil ?? null,
       },
     },
     business: state.business,
@@ -2459,6 +2469,27 @@ function migrateV28ToV29(state: GameStateV28): GameStateV29 {
     },
     settings: {
       ...state.settings,
+      ai: {
+        difficulty: state.settings.ai.difficulty,
+        managementMode:
+          (state.settings.ai as { managementMode?: GameSettings["ai"]["managementMode"] })
+            .managementMode ?? "smart_assist",
+        assistance: {
+          ...DEFAULT_GAME_SETTINGS.ai.assistance,
+          ...((state.settings.ai as { assistance?: GameSettings["ai"]["assistance"] })
+            .assistance ?? {}),
+        },
+      },
+      offseason: {
+        freeAgency: {
+          durationDays:
+            (state.settings as { offseason?: GameSettings["offseason"] }).offseason
+              ?.freeAgency.durationDays ?? 30,
+          allowExtension:
+            (state.settings as { offseason?: GameSettings["offseason"] }).offseason
+              ?.freeAgency.allowExtension ?? true,
+        },
+      },
       regularSeason: {
         gamesPerTeam: state.settings.regularSeason.gamesPerTeam,
         tradeDeadlineRule,
@@ -2472,6 +2503,14 @@ function migrateV28ToV29(state: GameStateV28): GameStateV29 {
         phase: state.competition.season.phase,
         offseasonStage: state.competition.season.offseasonStage,
         regularSeasonStartDate,
+        offseasonStageEnteredDate:
+          (state.competition.season as {
+            offseasonStageEnteredDate?: string | null;
+          }).offseasonStageEnteredDate ?? null,
+        freeAgencyExtendedUntil:
+          (state.competition.season as {
+            freeAgencyExtendedUntil?: string | null;
+          }).freeAgencyExtendedUntil ?? null,
       },
     },
   };
@@ -2806,6 +2845,38 @@ type GameStateV35 = {
   user: GameState["user"];
 };
 
+type GameStateV36 = {
+  meta: Omit<GameState["meta"], "schemaVersion"> & {
+    schemaVersion: 36;
+  };
+  settings: Omit<GameState["settings"], "offseason"> & {
+    ai: GameState["settings"]["ai"] & {
+      managementMode?: GameState["settings"]["ai"]["managementMode"];
+      assistance?: GameState["settings"]["ai"]["assistance"];
+    };
+    offseason?: GameState["settings"]["offseason"];
+  };
+  world: GameState["world"];
+  competition: {
+    season: Omit<
+      GameState["competition"]["season"],
+      "offseasonStageEnteredDate" | "freeAgencyExtendedUntil"
+    > & {
+      offseasonStageEnteredDate?: string | null;
+      freeAgencyExtendedUntil?: string | null;
+    };
+    schedule: GameState["competition"]["schedule"];
+    games: GameState["competition"]["games"];
+    standings: GameState["competition"]["standings"];
+    playoffs: GameState["competition"]["playoffs"];
+  };
+  business: GameState["business"];
+  user: Omit<GameState["user"], "explicitDecisions" | "phaseSkips"> & {
+    explicitDecisions?: GameState["user"]["explicitDecisions"];
+    phaseSkips?: GameState["user"]["phaseSkips"];
+  };
+};
+
 /**
  * Deterministic v34 → v35: box-score historical identity fields on Game.
  * - competitionType inferred from id prefix only (playoff_/playin_ → playoffs)
@@ -2868,7 +2939,7 @@ function migrateV34ToV35(state: GameStateV34): GameStateV35 {
  * Defaults empty; no backfill of prior seasons.
  * Emits schemaVersion 36. No RNG.
  */
-function migrateV35ToV36(state: GameStateV35): GameState {
+function migrateV35ToV36(state: GameStateV35): GameStateV36 {
   return {
     ...state,
     meta: {
@@ -2879,6 +2950,74 @@ function migrateV35ToV36(state: GameStateV35): GameState {
       ...state.business,
       gameArchive: state.business.gameArchive ?? {},
       playerHistory: state.business.playerHistory ?? {},
+    },
+  };
+}
+
+/**
+ * Deterministic v36 → v37: offseason stage dates, AI assist settings,
+ * free-agency duration settings, explicit decisions / phase skips.
+ * Emits schemaVersion 37. No RNG.
+ */
+function migrateV36ToV37(state: GameStateV36): GameState {
+  const season = state.competition.season;
+  const inOffseasonStage =
+    season.phase === "offseason" && season.offseasonStage !== "none";
+  const offseasonStageEnteredDate =
+    season.offseasonStageEnteredDate !== undefined
+      ? season.offseasonStageEnteredDate
+      : inOffseasonStage
+        ? state.world.calendar.currentDate
+        : null;
+
+  const previousAi = state.settings.ai;
+  const ai = {
+    difficulty: previousAi.difficulty,
+    managementMode: previousAi.managementMode ?? "smart_assist",
+    assistance: {
+      freeAgency: previousAi.assistance?.freeAgency ?? "inherit",
+      draft: previousAi.assistance?.draft ?? "inherit",
+      contracts: previousAi.assistance?.contracts ?? "inherit",
+      rosterFilling: previousAi.assistance?.rosterFilling ?? "inherit",
+      rotations: previousAi.assistance?.rotations ?? "inherit",
+      staffHiring: previousAi.assistance?.staffHiring ?? "inherit",
+      trades: previousAi.assistance?.trades ?? "inherit",
+      injuryReplacement: previousAi.assistance?.injuryReplacement ?? "inherit",
+    },
+  };
+
+  const offseason = {
+    freeAgency: {
+      durationDays:
+        state.settings.offseason?.freeAgency.durationDays ?? 30,
+      allowExtension:
+        state.settings.offseason?.freeAgency.allowExtension ?? true,
+    },
+  };
+
+  return {
+    ...state,
+    meta: {
+      ...state.meta,
+      schemaVersion: 37,
+    },
+    settings: {
+      ...state.settings,
+      ai,
+      offseason,
+    },
+    competition: {
+      ...state.competition,
+      season: {
+        ...season,
+        offseasonStageEnteredDate,
+        freeAgencyExtendedUntil: season.freeAgencyExtendedUntil ?? null,
+      },
+    },
+    user: {
+      ...state.user,
+      explicitDecisions: state.user.explicitDecisions ?? {},
+      phaseSkips: state.user.phaseSkips ?? [],
     },
   };
 }

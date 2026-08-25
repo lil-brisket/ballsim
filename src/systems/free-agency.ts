@@ -320,19 +320,20 @@ export function withdrawOffer(state: GameState, offerId: OfferId): SystemResult 
 /**
  * Accepts an open offer: creates a normal contract, assigns roster, withdraws competitors.
  * Uninterested players yield a rejected offer (business outcome), not a throw.
+ * Stale offers (player no longer free agent / terms invalid) are invalidated without
+ * crashing the simulation — no partial state is applied.
  */
 export function acceptOffer(
   state: GameState,
   offerId: OfferId,
   options: FreeAgencyWriteOptions = {},
 ): SystemResult {
-  const offer = assertOpenOffer(state, offerId);
-
-  if (!isFreeAgent(state, offer.playerId)) {
-    throw new Error(
-      `Cannot accept offer "${offerId}": player "${offer.playerId}" is not a free agent.`,
-    );
+  const stale = validateOfferAcceptable(state, offerId);
+  if (stale !== null) {
+    return invalidateStaleOffer(state, offerId, stale);
   }
+
+  const offer = assertOpenOffer(state, offerId);
 
   const evaluate =
     options.evaluateInterest ?? defaultEvaluatePlayerInterest;
@@ -354,7 +355,9 @@ export function acceptOffer(
     offer.terms.startYear,
   );
   if (firstYearSalary === undefined) {
-    throw new Error(
+    return invalidateStaleOffer(
+      state,
+      offerId,
       `Offer "${offerId}" terms are missing salary for startYear ${offer.terms.startYear}.`,
     );
   }
@@ -368,17 +371,22 @@ export function acceptOffer(
     state.settings.financialRules.salaryCapEnabled &&
     firstYearSalary > capSpace
   ) {
-    throw new Error(
+    return invalidateStaleOffer(
+      state,
+      offerId,
       `Team "${offer.teamId}" cannot afford offer "${offerId}": first-year salary ${firstYearSalary} exceeds cap space ${capSpace} for ${offer.terms.startYear}.`,
     );
   }
 
-  const contract = createContract(offer.terms);
-  if (state.business.contracts[contract.id] !== undefined) {
-    throw new Error(
-      `Contract "${contract.id}" already exists; cannot accept offer "${offerId}".`,
+  if (state.business.contracts[offer.terms.id] !== undefined) {
+    return invalidateStaleOffer(
+      state,
+      offerId,
+      `Contract "${offer.terms.id}" already exists; cannot accept offer "${offerId}".`,
     );
   }
+
+  const contract = createContract(offer.terms);
 
   let next: GameState = {
     ...state,
@@ -575,6 +583,70 @@ function assertOpenOffer(state: GameState, offerId: OfferId): FreeAgencyOffer {
     );
   }
   return offer;
+}
+
+/**
+ * Returns null when the offer can be accepted; otherwise a reason string.
+ * Does not mutate state.
+ */
+export function validateOfferAcceptable(
+  state: GameState,
+  offerId: OfferId,
+): string | null {
+  const offer = state.business.freeAgency.offers[offerId];
+  if (offer === undefined) {
+    return `Free-agency offer "${offerId}" does not exist.`;
+  }
+  if (!isOpenOffer(offer.status)) {
+    return `Free-agency offer "${offerId}" is already resolved with status "${offer.status}".`;
+  }
+  const player = state.world.players[offer.playerId];
+  if (player === undefined) {
+    return `Player "${offer.playerId}" does not exist.`;
+  }
+  if (!isFreeAgent(state, offer.playerId)) {
+    return `Player "${offer.playerId}" is not a free agent.`;
+  }
+  if (state.world.teams[offer.teamId] === undefined) {
+    return `Team "${offer.teamId}" does not exist.`;
+  }
+  return null;
+}
+
+/**
+ * Domain recovery for expected stale open offers: withdraw without applying a signing.
+ * Does not suppress unexpected invariant violations elsewhere.
+ */
+export function invalidateStaleOffer(
+  state: GameState,
+  offerId: OfferId,
+  reason: string,
+): SystemResult {
+  const offer = state.business.freeAgency.offers[offerId];
+  if (offer === undefined) {
+    throw new Error(`Free-agency offer "${offerId}" does not exist.`);
+  }
+  if (!isOpenOffer(offer.status)) {
+    return systemResult(state);
+  }
+  const today = state.world.calendar.currentDate;
+  const next = withOffer(state, {
+    ...offer,
+    status: "withdrawn",
+    updatedOn: today,
+  });
+  return systemResult(next, [
+    createDomainEvent({
+      type: "FreeAgencyOfferInvalidated",
+      occurredOn: today,
+      payload: {
+        offerId: offer.id,
+        playerId: offer.playerId,
+        teamId: offer.teamId,
+        reason,
+      },
+    }),
+  ]);
 }
 
 function withOffer(state: GameState, offer: FreeAgencyOffer): GameState {

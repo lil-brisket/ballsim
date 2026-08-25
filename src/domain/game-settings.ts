@@ -26,9 +26,43 @@ export type SupportedConferenceCount =
 
 export type SimulationFrequency = "daily" | "weekly";
 export type AiDifficulty = "easy" | "normal" | "hard";
+export type AiManagementMode = "off" | "smart_assist" | "full_management";
+export type AiAssistDomainMode = "inherit" | "off" | "smart" | "full";
+export type AiAssistanceDomains = {
+  freeAgency: AiAssistDomainMode;
+  draft: AiAssistDomainMode;
+  contracts: AiAssistDomainMode;
+  rosterFilling: AiAssistDomainMode;
+  rotations: AiAssistDomainMode;
+  staffHiring: AiAssistDomainMode;
+  trades: AiAssistDomainMode;
+  injuryReplacement: AiAssistDomainMode;
+};
 export type LeagueArea = "north_america" | "europe" | "global";
 export type DraftMode = "standard" | "fantasy";
 export type LeagueHistoryMode = "new" | "generated";
+
+export const AI_ASSISTANCE_DOMAIN_KEYS = [
+  "freeAgency",
+  "draft",
+  "contracts",
+  "rosterFilling",
+  "rotations",
+  "staffHiring",
+  "trades",
+  "injuryReplacement",
+] as const satisfies ReadonlyArray<keyof AiAssistanceDomains>;
+
+export const DEFAULT_AI_ASSISTANCE: AiAssistanceDomains = {
+  freeAgency: "inherit",
+  draft: "inherit",
+  contracts: "inherit",
+  rosterFilling: "inherit",
+  rotations: "inherit",
+  staffHiring: "inherit",
+  trades: "inherit",
+  injuryReplacement: "inherit",
+};
 
 /**
  * League-calendar rule for the trade deadline.
@@ -71,6 +105,9 @@ export type GameSettings = {
    */
   ai: {
     difficulty: AiDifficulty;
+    /** Global assist posture; domain overrides resolve via inherit. */
+    managementMode: AiManagementMode;
+    assistance: AiAssistanceDomains;
   };
   financialRules: {
     salaryCapEnabled: boolean;
@@ -86,6 +123,19 @@ export type GameSettings = {
   history: {
     mode: LeagueHistoryMode;
   };
+  offseason: {
+    freeAgency: {
+      durationDays: number;
+      allowExtension: boolean;
+    };
+  };
+};
+
+export const DEFAULT_OFFSEASON_SETTINGS: GameSettings["offseason"] = {
+  freeAgency: {
+    durationDays: 30,
+    allowExtension: true,
+  },
 };
 
 /** Standard new-save defaults: 30 teams / 82 games / 16 playoff teams. */
@@ -114,6 +164,8 @@ export const DEFAULT_GAME_SETTINGS: GameSettings = {
   },
   ai: {
     difficulty: "normal",
+    managementMode: "smart_assist",
+    assistance: { ...DEFAULT_AI_ASSISTANCE },
   },
   financialRules: {
     salaryCapEnabled: true,
@@ -127,6 +179,12 @@ export const DEFAULT_GAME_SETTINGS: GameSettings = {
   },
   history: {
     mode: "new",
+  },
+  offseason: {
+    freeAgency: {
+      durationDays: DEFAULT_OFFSEASON_SETTINGS.freeAgency.durationDays,
+      allowExtension: DEFAULT_OFFSEASON_SETTINGS.freeAgency.allowExtension,
+    },
   },
 };
 
@@ -156,6 +214,8 @@ export const CBL_GAME_SETTINGS: GameSettings = {
   },
   ai: {
     difficulty: "normal",
+    managementMode: "smart_assist",
+    assistance: { ...DEFAULT_AI_ASSISTANCE },
   },
   financialRules: {
     salaryCapEnabled: true,
@@ -169,6 +229,12 @@ export const CBL_GAME_SETTINGS: GameSettings = {
   },
   history: {
     mode: "new",
+  },
+  offseason: {
+    freeAgency: {
+      durationDays: DEFAULT_OFFSEASON_SETTINGS.freeAgency.durationDays,
+      allowExtension: DEFAULT_OFFSEASON_SETTINGS.freeAgency.allowExtension,
+    },
   },
 };
 
@@ -215,6 +281,23 @@ export function isSimulationFrequency(
 
 export function isAiDifficulty(value: unknown): value is AiDifficulty {
   return value === "easy" || value === "normal" || value === "hard";
+}
+
+export function isAiManagementMode(value: unknown): value is AiManagementMode {
+  return (
+    value === "off" || value === "smart_assist" || value === "full_management"
+  );
+}
+
+export function isAiAssistDomainMode(
+  value: unknown,
+): value is AiAssistDomainMode {
+  return (
+    value === "inherit" ||
+    value === "off" ||
+    value === "smart" ||
+    value === "full"
+  );
 }
 
 export function isLeagueArea(value: unknown): value is LeagueArea {
@@ -270,9 +353,15 @@ export function cloneGameSettings(settings: GameSettings): GameSettings {
     },
     playoffs: { ...settings.playoffs },
     simulation: { ...settings.simulation },
-    ai: { ...settings.ai },
+    ai: {
+      ...settings.ai,
+      assistance: { ...settings.ai.assistance },
+    },
     financialRules: { ...settings.financialRules },
     draft: { ...settings.draft },
     history: { ...settings.history },
+    offseason: {
+      freeAgency: { ...settings.offseason.freeAgency },
+    },
   };
 }

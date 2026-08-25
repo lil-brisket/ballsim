@@ -8,6 +8,7 @@ const TONE: Record<string, string> = {
   failed: "border-rose-700/50 bg-rose-950/40 text-rose-300",
   healthy: "border-emerald-700/50 bg-emerald-950/40 text-emerald-300",
   injured: "border-rose-700/50 bg-rose-950/40 text-rose-300",
+  neutral: "border-zinc-700 bg-zinc-900 text-zinc-400",
 };
 
 export function StatusBadge(props: {

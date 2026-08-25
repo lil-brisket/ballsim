@@ -119,6 +119,14 @@ export function GameSetupForm({
             value={settings.simulation.frequency}
           />
           <ReviewRow label="AI difficulty" value={settings.ai.difficulty} />
+          <ReviewRow
+            label="Team management assist"
+            value={settings.ai.managementMode.replaceAll("_", " ")}
+          />
+          <ReviewRow
+            label="Free agency length"
+            value={`${settings.offseason.freeAgency.durationDays} days`}
+          />
           <ReviewRow label="Draft" value={settings.draft.mode} />
           {settings.draft.mode === "fantasy" ? (
             <ReviewRow
@@ -387,8 +395,64 @@ export function GameSetupForm({
                 updateSettings({
                   ...settings,
                   ai: {
+                    ...settings.ai,
                     difficulty:
                       value === 0 ? "easy" : value === 1 ? "normal" : "hard",
+                  },
+                })
+              }
+            />
+            <SelectField
+              label="Team management assistance"
+              value={
+                settings.ai.managementMode === "off"
+                  ? 0
+                  : settings.ai.managementMode === "smart_assist"
+                    ? 1
+                    : 2
+              }
+              options={[
+                { value: 0, label: "Off — you handle everything" },
+                { value: 1, label: "Smart Assist — continuity only" },
+                { value: 2, label: "Full Management — AI runs the franchise" },
+              ]}
+              onChange={(value) =>
+                updateSettings({
+                  ...settings,
+                  ai: {
+                    ...settings.ai,
+                    managementMode:
+                      value === 0
+                        ? "off"
+                        : value === 1
+                          ? "smart_assist"
+                          : "full_management",
+                  },
+                })
+              }
+            />
+          </Section>
+
+          <Section title="Offseason">
+            <SelectField
+              label="Free agency duration"
+              value={settings.offseason.freeAgency.durationDays}
+              options={[
+                { value: 14, label: "14 days" },
+                { value: 21, label: "21 days" },
+                { value: 30, label: "30 days" },
+                { value: 45, label: "45 days" },
+                { value: 60, label: "60 days" },
+              ]}
+              onChange={(value) =>
+                updateSettings({
+                  ...settings,
+                  offseason: {
+                    ...settings.offseason,
+                    freeAgency: {
+                      ...settings.offseason.freeAgency,
+                      durationDays: value,
+                    },
                   },
                 })
               }

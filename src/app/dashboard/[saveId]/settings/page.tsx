@@ -25,8 +25,15 @@ export default async function InGameSettingsPage({
   }
 
   const { settings, dashboard } = view;
-  const { league, regularSeason, playoffs, simulation, ai, financialRules } =
-    settings;
+  const {
+    league,
+    regularSeason,
+    playoffs,
+    simulation,
+    ai,
+    financialRules,
+    offseason,
+  } = settings;
 
   return (
     <>
@@ -79,6 +86,35 @@ export default async function InGameSettingsPage({
         <dl className="grid gap-3 text-sm sm:grid-cols-2">
           <SettingRow label="Frequency" value={simulation.frequency} />
           <SettingRow label="AI difficulty" value={ai.difficulty} />
+          <SettingRow
+            label="Team management assistance"
+            value={ai.managementMode.replaceAll("_", " ")}
+          />
+          <SettingRow
+            label="Free agency duration"
+            value={`${offseason.freeAgency.durationDays} days`}
+          />
+          <SettingRow
+            label="FA extension allowed"
+            value={offseason.freeAgency.allowExtension ? "Yes" : "No"}
+          />
+        </dl>
+      </Section>
+
+      <Section title="AI assistance domains">
+        <dl className="grid gap-3 text-sm sm:grid-cols-2">
+          {(
+            Object.entries(ai.assistance) as [
+              string,
+              string,
+            ][]
+          ).map(([domain, mode]) => (
+            <SettingRow
+              key={domain}
+              label={domain.replace(/([A-Z])/g, " $1")}
+              value={mode}
+            />
+          ))}
         </dl>
       </Section>
 

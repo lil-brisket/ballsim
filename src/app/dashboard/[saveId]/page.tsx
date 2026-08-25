@@ -1,8 +1,14 @@
 import { notFound } from "next/navigation";
-import { beginOffseasonAction } from "@/application/actions";
+import {
+  beginOffseasonAction,
+  continuePastPhaseAction,
+  letAiHandlePhaseAction,
+} from "@/application/actions";
 import { loadOwnerSaveView } from "@/application/game-service";
 import { AdvanceTimeControls } from "@/components/game/AdvanceTimeControls";
-import { ActionQueue } from "@/components/owner/dashboard/ActionQueue";
+import { SimulationPhaseBanner } from "@/components/game/SimulationPhaseBanner";
+import { SimulationProgressBanner } from "@/components/game/SimulationProgressBanner";
+import { AttentionRequiredPanel } from "@/components/owner/dashboard/AttentionRequiredPanel";
 import { DashboardNotifications } from "@/components/owner/dashboard/DashboardNotifications";
 import { FranchiseHealthPanel } from "@/components/owner/dashboard/FranchiseHealthPanel";
 import { FranchiseSituations } from "@/components/owner/dashboard/FranchiseSituations";
@@ -32,6 +38,19 @@ export default async function DashboardPage({
   const returnPath = `/dashboard/${saveId}`;
   const timeDisabled =
     dash.flags.userOnDraftClock || dash.flags.seasonReviewPending;
+  const phase = dash.simulationPhase;
+  const unresolvedWarning =
+    phase.unresolvedDecisionCount > 0 && phase.responsibility === "unresolved"
+      ? `${phase.primaryLabel} has ${phase.unresolvedDecisionCount} unresolved decision${phase.unresolvedDecisionCount === 1 ? "" : "s"}`
+      : null;
+  const aiCanHandle =
+    phase.aiAssistEnabled && phase.unresolvedDecisionCount > 0;
+  const goToHref =
+    dash.offseasonStage === "free_agency"
+      ? `/dashboard/${saveId}/free-agency`
+      : dash.offseasonStage === "draft"
+        ? `/dashboard/${saveId}/draft`
+        : `/dashboard/${saveId}`;
 
   return (
     <>
@@ -44,11 +63,34 @@ export default async function DashboardPage({
             returnPath={returnPath}
             simulationFrequency={dash.simulationFrequency}
             disabled={timeDisabled}
+            untilPhaseLabel={phase.nextPhaseLabel ?? undefined}
+            unresolvedWarning={unresolvedWarning}
+            requiresConfirm={Boolean(unresolvedWarning)}
+            confirmTitle={`${phase.primaryLabel} is still active`}
+            confirmDescription={
+              unresolvedWarning
+                ? `${unresolvedWarning}. What would you like to do?`
+                : undefined
+            }
+            goToHref={goToHref}
+            letAiHandleAction={letAiHandlePhaseAction}
+            continueAnywayAction={continuePastPhaseAction}
           />
         }
       />
 
       {error ? <ErrorState message={error} /> : null}
+
+      <SimulationPhaseBanner
+        phase={phase}
+        currentDate={dash.currentDate}
+      />
+
+      <SimulationProgressBanner
+        seasonYear={dash.seasonYear}
+        phase={phase.primaryLabel}
+        currentDate={dash.currentDate}
+      />
 
       {dash.flags.userOnDraftClock ? (
         <p
@@ -100,20 +142,6 @@ export default async function DashboardPage({
         </div>
       ) : null}
 
-      <div className="flex flex-wrap items-center gap-2 text-sm text-zinc-400">
-        <span className="font-mono text-zinc-500">{dash.currentDate}</span>
-        <span className="rounded-full border border-zinc-700 px-2 py-0.5 text-zinc-200">
-          {dash.calendarDisplayLabel}
-        </span>
-        {dash.daysUntilTradeDeadline !== null &&
-        dash.tradesOpen &&
-        dash.daysUntilTradeDeadline <= 14 ? (
-          <span className="text-amber-400/90">
-            Deadline in {dash.daysUntilTradeDeadline}d
-          </span>
-        ) : null}
-      </div>
-
       {dash.seasonStory && !dash.flags.seasonReviewPending ? (
         <p className="text-sm text-zinc-400">{dash.seasonStory}</p>
       ) : null}
@@ -126,7 +154,14 @@ export default async function DashboardPage({
           />
         </div>
         <div className="order-1 space-y-4 lg:order-2">
-          <ActionQueue items={dash.actionItems} />
+          <AttentionRequiredPanel
+            items={dash.actionItems}
+            responsibility={dash.phaseResponsibility}
+            saveId={saveId}
+            returnPath={returnPath}
+            aiCanHandle={aiCanHandle}
+            letAiHandleAction={letAiHandlePhaseAction}
+          />
           <FranchiseSituations
             saveId={saveId}
             situations={dash.situations}

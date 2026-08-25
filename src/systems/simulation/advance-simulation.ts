@@ -17,6 +17,7 @@ import { lifecycleIdentity } from "@/systems/simulation/calendar-context";
 import type {
   AdvanceSimulationOptions,
   AdvanceSimulationResult,
+  SimulationProgress,
 } from "@/systems/simulation/types";
 import {
   completedWeekIdForSimulatedDate,
@@ -28,6 +29,8 @@ import { applyMediaFromDomainEvents } from "@/systems/media";
 import { processLeaguePlayoffBonuses } from "@/systems/playoff-financial-bonuses";
 import { processHomeGameTicketRevenue } from "@/systems/ticket-revenue";
 import { processNarrativeLayer } from "@/systems/narrative";
+import { assertContinuityBoundary } from "@/systems/simulation/continuity-validation";
+import type { SimulationProfiler } from "@/systems/simulation/simulation-profiler";
 
 /**
  * Canonical Owner Mode simulation advance.
@@ -71,7 +74,7 @@ export function advanceSimulation(
   let daysAdvanced = 0;
 
   for (let dayIndex = 0; dayIndex < days; dayIndex += 1) {
-    const dayResult = advanceOneDay(current, rng);
+    const dayResult = advanceOneDay(current, rng, options.profiler);
     current = dayResult.state;
     allEvents.push(...dayResult.events);
     scheduledEventsProcessed += dayResult.scheduledEventsProcessed;
@@ -79,6 +82,20 @@ export function advanceSimulation(
     weeklyPipelineRan = weeklyPipelineRan || dayResult.weeklyPipelineRan;
     monthlyPipelineRan = monthlyPipelineRan || dayResult.monthlyPipelineRan;
     daysAdvanced += 1;
+
+    if (options.onProgress) {
+      const progress: SimulationProgress = {
+        daysRequested: days,
+        daysAdvanced,
+        currentDate: current.world.calendar.currentDate,
+        phase: current.competition.season.phase,
+        offseasonStage: current.competition.season.offseasonStage,
+        seasonYear: current.competition.season.year,
+        gamesSimulated,
+        percentComplete: Math.min(100, (daysAdvanced / days) * 100),
+      };
+      options.onProgress(progress);
+    }
 
     if (
       options.stopOnPhaseChange &&
@@ -115,9 +132,14 @@ type OneDayResult = {
   monthlyPipelineRan: boolean;
 };
 
-function advanceOneDay(state: GameState, rng: Rng): OneDayResult {
+function advanceOneDay(
+  state: GameState,
+  rng: Rng,
+  profiler?: SimulationProfiler,
+): OneDayResult {
   const events: DomainEvent[] = [];
   let current = bootstrapRostersAndPicks(state, rng);
+  const dayStart = performance.now();
 
   const simulatedDate = current.world.calendar.currentDate;
   if (current.world.calendar.lastSimulatedDate === simulatedDate) {
@@ -128,6 +150,7 @@ function advanceOneDay(state: GameState, rng: Rng): OneDayResult {
 
   const identityBeforeLifecycle = lifecycleIdentity(current);
 
+  const lifecycleStart = performance.now();
   const seasonLife = processSeasonLifecycle(current);
   current = seasonLife.state;
   events.push(...seasonLife.events);
@@ -135,15 +158,19 @@ function advanceOneDay(state: GameState, rng: Rng): OneDayResult {
   const offseasonLife = processOffseasonLifecycle(current, rng);
   current = offseasonLife.state;
   events.push(...offseasonLife.events);
+  if (profiler) {
+    profiler.addSeason("lifecycleMs", performance.now() - lifecycleStart);
+  }
 
   const scheduled = processScheduledEvents(current, rng);
   current = scheduled.state;
   events.push(...scheduled.events);
 
-  const daily = runDailyPipeline(current, rng);
+  const daily = runDailyPipeline(current, rng, profiler);
   current = daily.state;
   events.push(...daily.events);
 
+  const ticketsStart = performance.now();
   const tickets = processHomeGameTicketRevenue(current);
   current = tickets.state;
   events.push(...tickets.events);
@@ -155,19 +182,34 @@ function advanceOneDay(state: GameState, rng: Rng): OneDayResult {
   const sentiment = processDailyFanSentimentAfterGames(current);
   current = sentiment.state;
   events.push(...sentiment.events);
+  if (profiler) {
+    profiler.addSeason("ticketsMs", performance.now() - ticketsStart);
+  }
 
+  const gameplayStart = performance.now();
   const gameplay = runOwnerGameplay(current, rng, {
     dayEvents: tickets.events,
   });
   current = gameplay.state;
   events.push(...gameplay.events);
-
-  const media = applyMediaFromDomainEvents(current, events);
-  current = media.state;
-  events.push(...media.events);
+  if (profiler) {
+    profiler.addSeason("ownerGameplayMs", performance.now() - gameplayStart);
+  }
 
   const lifecycleChanged =
     lifecycleIdentity(current) !== identityBeforeLifecycle;
+
+  if (lifecycleChanged) {
+    assertContinuityBoundary(current);
+  }
+
+  const mediaStart = performance.now();
+  const media = applyMediaFromDomainEvents(current, events);
+  current = media.state;
+  events.push(...media.events);
+  if (profiler) {
+    profiler.addSeason("mediaMs", performance.now() - mediaStart);
+  }
 
   current = {
     ...current,
@@ -196,7 +238,11 @@ function advanceOneDay(state: GameState, rng: Rng): OneDayResult {
 
   if (getIsoWeekId(newDate) !== getIsoWeekId(simulatedDate)) {
     const completedWeekId = completedWeekIdForSimulatedDate(simulatedDate);
+    const weeklyStart = performance.now();
     const weekly = runWeeklyPipeline(current, completedWeekId);
+    if (profiler) {
+      profiler.addSeason("weeklyMs", performance.now() - weeklyStart);
+    }
     current = weekly.state;
     events.push(...weekly.events);
     weeklyRan = weekly.weeklyPipelineRan;
@@ -208,7 +254,11 @@ function advanceOneDay(state: GameState, rng: Rng): OneDayResult {
   let completedMonthId: string | undefined;
   if (getCalendarMonthId(newDate) !== getCalendarMonthId(simulatedDate)) {
     completedMonthId = completedMonthIdForSimulatedDate(simulatedDate);
+    const monthlyStart = performance.now();
     const monthly = runMonthlyPipeline(current, completedMonthId);
+    if (profiler) {
+      profiler.addSeason("monthlyMs", performance.now() - monthlyStart);
+    }
     current = monthly.state;
     events.push(...monthly.events);
     monthlyRan = monthly.monthlyPipelineRan;
@@ -217,6 +267,7 @@ function advanceOneDay(state: GameState, rng: Rng): OneDayResult {
     }
   }
 
+  const narrativeStart = performance.now();
   const narrative = processNarrativeLayer(current, rng, {
     cadences: narrativeCadences,
     dayEvents: events,
@@ -224,6 +275,14 @@ function advanceOneDay(state: GameState, rng: Rng): OneDayResult {
   });
   current = narrative.state;
   events.push(...narrative.events);
+  if (profiler) {
+    profiler.addSeason("narrativeMs", performance.now() - narrativeStart);
+    const accounted =
+      performance.now() - dayStart;
+    // residual bucket for unclassified day work
+    void accounted;
+    profiler.bumpDay();
+  }
 
   return {
     state: current,

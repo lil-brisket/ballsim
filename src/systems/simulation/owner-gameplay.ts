@@ -7,6 +7,7 @@ import { applyGameplayFinancialConsequences } from "@/systems/gameplay-financial
 import { evaluateOwnerObjectives } from "@/systems/owner-objectives";
 import { generateOwnerNotifications } from "@/systems/owner-notifications";
 import { processOwnershipConfidence } from "@/systems/ownership-confidence-engine";
+import { runAiContinuity } from "@/systems/simulation/ai-continuity";
 
 export type OwnerGameplayResult = SystemResult & {
   previousCash: number;
@@ -21,12 +22,13 @@ export type RunOwnerGameplayOptions = {
  * Owner Mode Phase B gameplay for one simulated day.
  *
  * Order (required):
- * 1. AI decisions
- * 2. Financial consequences
- * 3. Owner objective evaluation
- * 4. Objective financial consequences (second finance pass)
- * 5. Ownership confidence / strategic posture
- * 6. Owner notifications
+ * 1. AI decisions (CPU teams)
+ * 2. AI continuity (user team)
+ * 3. Financial consequences
+ * 4. Owner objective evaluation
+ * 5. Objective financial consequences (second finance pass)
+ * 6. Ownership confidence / strategic posture
+ * 7. Owner notifications
  *
  * Idempotent for the same simulation state/date when guards are present.
  */
@@ -42,6 +44,10 @@ export function runOwnerGameplay(
   const ai = runAiTeamDecisions(current, rng);
   current = ai.state;
   events.push(...ai.events);
+
+  const continuity = runAiContinuity(current, rng);
+  current = continuity.state;
+  events.push(...continuity.events);
 
   const previousCash = current.business.finances[teamId]?.cash ?? 0;
 

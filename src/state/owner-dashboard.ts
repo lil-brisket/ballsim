@@ -65,6 +65,14 @@ import {
   getCalendarContext,
   type CalendarContext,
 } from "@/systems/simulation/calendar-context";
+import {
+  resolveSimulationPhase,
+  type SimulationPhaseContext,
+} from "@/systems/simulation/simulation-phase";
+import {
+  computePhaseResponsibility,
+  type PhaseResponsibility,
+} from "@/systems/simulation/phase-responsibility";
 import { isContractActive } from "@/domain/entities/contract";
 import { derivePlayoffResults } from "@/systems/franchise-history";
 
@@ -207,6 +215,7 @@ export type OwnerDashboardSituationView = {
 export type OwnerDashboardView = {
   saveId: string;
   currentDate: string;
+  seasonYear: number;
   seasonPhase: string;
   offseasonStage: string;
   calendarDisplayLabel: string;
@@ -239,6 +248,8 @@ export type OwnerDashboardView = {
   activity: EventLogEntryView[];
   flags: OwnerDashboardFlags;
   situations: OwnerDashboardSituationView[];
+  simulationPhase: SimulationPhaseContext;
+  phaseResponsibility: PhaseResponsibility;
 };
 
 type CanonicalDashboardData = {
@@ -320,6 +331,8 @@ export function toOwnerDashboardView(state: GameState): OwnerDashboardView {
   const notifications = buildNotifications(state);
   const activity = buildActivity(state);
   const calendar = getCalendarContext(state);
+  const simulationPhase = resolveSimulationPhase(state);
+  const phaseResponsibility = computePhaseResponsibility(state);
   const actionItems = buildActionItems(canonical, health, team, calendar);
   const insights = buildInsights(canonical, health, team);
   const owner = buildOwner(canonical, actionItems, health);
@@ -380,6 +393,7 @@ export function toOwnerDashboardView(state: GameState): OwnerDashboardView {
   return {
     saveId: canonical.saveId,
     currentDate: canonical.snapshot.currentDate,
+    seasonYear: canonical.year,
     seasonPhase: canonical.snapshot.seasonPhase,
     offseasonStage: canonical.snapshot.offseasonStage,
     calendarDisplayLabel: calendar.displayLabel,
@@ -404,6 +418,8 @@ export function toOwnerDashboardView(state: GameState): OwnerDashboardView {
     activity,
     flags,
     situations,
+    simulationPhase,
+    phaseResponsibility,
   };
 }
 

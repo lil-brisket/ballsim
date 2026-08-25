@@ -295,7 +295,7 @@ describe("relocation save migration fields", () => {
     state = withTenure(state, 10);
     const json = serializeGameState(state);
     const loaded = deserializeGameState(json);
-    expect(loaded.meta.schemaVersion).toBe(36);
+    expect(loaded.meta.schemaVersion).toBe(37);
     expect(
       loaded.business.relocationByTeamId[teamId]!.cityStartSeasonYear,
     ).toBeGreaterThan(0);

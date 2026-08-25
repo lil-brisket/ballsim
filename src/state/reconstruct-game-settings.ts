@@ -128,6 +128,8 @@ export function reconstructGameSettingsFromState(
     },
     ai: {
       difficulty: "normal",
+      managementMode: "smart_assist",
+      assistance: { ...DEFAULT_GAME_SETTINGS.ai.assistance },
     },
     financialRules: {
       salaryCapEnabled: true,
@@ -136,6 +138,9 @@ export function reconstructGameSettingsFromState(
     },
     draft: { ...DEFAULT_GAME_SETTINGS.draft },
     history: { ...DEFAULT_GAME_SETTINGS.history },
+    offseason: {
+      freeAgency: { ...DEFAULT_GAME_SETTINGS.offseason.freeAgency },
+    },
   };
 }
 

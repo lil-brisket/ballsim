@@ -191,7 +191,7 @@ export {
   type PlayerUsageProfile,
   type NormalizedUsageShares,
 } from "@/systems/player-usage";
-export { calculateStandings, updateStandings, compareStandings } from "@/systems/standings";
+export { calculateStandings, updateStandings, rebuildStandings, compareStandings } from "@/systems/standings";
 export type { CalculateStandingsOptions } from "@/systems/standings";
 export { simulateSeason } from "@/systems/season-simulation";
 export {
