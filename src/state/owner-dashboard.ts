@@ -36,6 +36,9 @@ import type {
 } from "@/state/franchise-value";
 import { calculateFranchiseValue } from "@/state/franchise-value";
 import { assessRelocation } from "@/state/relocation-assessment";
+import { getCachedAnnualReport } from "@/systems/franchise-report";
+import { activeGameplayMilestones } from "@/systems/historical-milestones";
+import { currentFranchiseEra } from "@/systems/franchise-eras";
 import {
   ACTION_QUEUE_CAP,
   DASHBOARD_ACTIVITY_CAP,
@@ -213,6 +216,12 @@ export type OwnerDashboardView = {
   daysUntilTradeDeadline: number | null;
   offseasonPriorities: readonly string[];
   seasonRecap: OwnerDashboardSeasonRecap | null;
+  /** Latest cached annual report for the controlled team, if any. */
+  annualReport: import("@/domain/entities/annual-franchise-report").AnnualFranchiseReport | null;
+  /** Active historical milestones (approaching / projected / achieved this season). */
+  historicalMilestones: import("@/domain/entities/historical-milestone").MilestoneResult[];
+  /** Current franchise era, if detectable. */
+  currentEra: import("@/domain/entities/franchise-era").FranchiseEra | null;
   leagueName: string;
   controlledTeam: {
     id: string;
@@ -321,6 +330,53 @@ export function toOwnerDashboardView(state: GameState): OwnerDashboardView {
       ? buildSeasonRecap(canonical, health, calendar)
       : null;
 
+  const teamId = asTeamId(canonical.teamId);
+  const history =
+    state.business.franchiseHistory[teamId]?.seasons ?? [];
+  const standing = state.competition.standings.byTeamId[teamId];
+  const wins = standing?.wins ?? 0;
+  const losses = standing?.losses ?? 0;
+  const games = wins + losses;
+  const projectedWins =
+    games > 0
+      ? Math.round((wins / games) * state.settings.league.gamesPerTeam)
+      : null;
+  const historicalMilestones = activeGameplayMilestones(history, {
+    seasonYear: canonical.year,
+    wins,
+    losses,
+    projectedWins,
+    attendanceToDate:
+      state.business.finances[teamId]?.attendanceByYear[String(canonical.year)] ??
+      null,
+    projectedAttendance: null,
+    franchiseValue: calculateFranchiseValue(state, teamId),
+    netIncome: health.netIncome,
+    playoffClinched: false,
+    championshipWon: false,
+    hasRelocatedBefore: history.some((s) => s.relocated),
+    seasonsSinceRelocation: null,
+  });
+  const annualReport = getCachedAnnualReport(state, teamId);
+  const currentEra = currentFranchiseEra(history, {
+    foundedSeasonYear:
+      state.business.franchiseOps[teamId]?.foundedSeasonYear,
+  });
+
+  // Surface top historical milestones as insights
+  for (const milestone of historicalMilestones.slice(0, 2)) {
+    insights.unshift({
+      id: `insight_milestone_${milestone.kind}`,
+      text: milestone.message,
+    });
+  }
+  if (currentEra) {
+    insights.unshift({
+      id: "insight_era",
+      text: `Current era: ${currentEra.label} (${currentEra.strength}, ${(currentEra.confidence * 100).toFixed(0)}% confidence).`,
+    });
+  }
+
   return {
     saveId: canonical.saveId,
     currentDate: canonical.snapshot.currentDate,
@@ -333,6 +389,9 @@ export function toOwnerDashboardView(state: GameState): OwnerDashboardView {
     daysUntilTradeDeadline: calendar.daysUntilTradeDeadline,
     offseasonPriorities: calendar.offseasonPriorities,
     seasonRecap,
+    annualReport,
+    historicalMilestones,
+    currentEra,
     leagueName: canonical.snapshot.leagueName,
     controlledTeam: canonical.snapshot.controlledTeam,
     simulationFrequency: canonical.snapshot.simulationFrequency,

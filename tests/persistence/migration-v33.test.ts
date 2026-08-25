@@ -22,7 +22,7 @@ describe("v32 → v33 migration", () => {
 
     const loaded = deserializeGameState(JSON.stringify(parsed));
     expect(loaded.meta.schemaVersion).toBe(GAME_STATE_SCHEMA_VERSION);
-    expect(GAME_STATE_SCHEMA_VERSION).toBe(33);
+    expect(GAME_STATE_SCHEMA_VERSION).toBe(34);
     expect(loaded.user.ownershipConfidence).toBeDefined();
     expect(loaded.user.ownershipConfidence.mood).toBe("supportive");
     expect(loaded.user.ownershipConfidence.recentEvidence).toEqual([]);

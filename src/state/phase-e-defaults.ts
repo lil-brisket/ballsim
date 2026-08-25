@@ -28,6 +28,7 @@ export function createPhaseEBusinessDefaults(
   relocationByTeamId: Record<string, ReturnType<typeof createIdleRelocation>>;
   expansion: ReturnType<typeof createIdleExpansionState>;
   franchiseHistory: Record<string, ReturnType<typeof createEmptyFranchiseHistory>>;
+  franchiseReportCache: Record<string, never>;
 } {
   const franchiseOps: Record<string, FranchiseOps> = {};
   const relocationByTeamId: Record<
@@ -59,6 +60,7 @@ export function createPhaseEBusinessDefaults(
       spendingTolerance: identity.spendingTolerance,
       patience: identity.patience,
       riskTolerance: identity.riskTolerance,
+      foundedSeasonYear: cityStartSeasonYear || 2026,
     });
     relocationByTeamId[teamId] = createIdleRelocation(
       teamId,
@@ -75,5 +77,6 @@ export function createPhaseEBusinessDefaults(
     relocationByTeamId,
     expansion: createIdleExpansionState(),
     franchiseHistory,
+    franchiseReportCache: {},
   };
 }

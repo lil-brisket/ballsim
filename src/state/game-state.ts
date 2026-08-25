@@ -9,6 +9,7 @@ import type { ExpansionState } from "@/domain/entities/expansion";
 import type { FreeAgencyOffer } from "@/domain/entities/free-agency-offer";
 import type { FranchiseHistory } from "@/domain/entities/franchise-history";
 import type { FranchiseOps } from "@/domain/entities/franchise-ops";
+import type { FranchiseReportCache } from "@/domain/entities/annual-franchise-report";
 import type { TeamFinances } from "@/domain/entities/finances";
 import type { Game } from "@/domain/entities/game";
 import type { League } from "@/domain/entities/league";
@@ -34,7 +35,7 @@ import type { GameSettings } from "@/domain/game-settings";
 import type { DomainEvent } from "@/domain/events";
 import type { SaveId, TeamId } from "@/domain/ids";
 
-export const GAME_STATE_SCHEMA_VERSION = 33;
+export const GAME_STATE_SCHEMA_VERSION = 34;
 
 /** Bounded recent history for Owner Mode activity / transactions UI. */
 export const EVENT_LOG_MAX = 1_000;
@@ -94,6 +95,11 @@ export type BusinessSlice = {
   relocationByTeamId: Record<string, RelocationProcess>;
   expansion: ExpansionState;
   franchiseHistory: Record<string, FranchiseHistory>;
+  /**
+   * Immutable annual report snapshots keyed by teamId → seasonYear.
+   * Separate from franchiseHistory (facts vs interpretation).
+   */
+  franchiseReportCache: FranchiseReportCache;
 };
 
 export type UserSlice = {

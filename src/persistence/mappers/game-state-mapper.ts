@@ -147,10 +147,11 @@ const MIGRATE_ONE_STEP: Record<number, (state: unknown) => unknown> = {
   30: (state) => migrateV30ToV31(state as GameStateV30),
   31: (state) => migrateV31ToV32(state as GameStateV31),
   32: (state) => migrateV32ToV33(state as GameStateV32),
+  33: (state) => migrateV33ToV34(state as GameStateV33),
 };
 
 /**
- * Parse → migrate (v1–v32 → current) → validate → return GameState.
+ * Parse → migrate (v1–v33 → current) → validate → return GameState.
  * Does not call serializeGameState.
  */
 export function deserializeGameState(stateJson: string): GameState {
@@ -2681,7 +2682,7 @@ type GameStateV32 = {
  * Deterministic v32 → v33: add ownershipConfidence defaults.
  * Emits schemaVersion 33. No RNG.
  */
-function migrateV32ToV33(state: GameStateV32): GameState {
+function migrateV32ToV33(state: GameStateV32): GameStateV33 {
   const date = state.world.calendar.currentDate;
   const existing = state.user.ownershipConfidence;
   const ownershipConfidence =
@@ -2698,6 +2699,82 @@ function migrateV32ToV33(state: GameStateV32): GameState {
     user: {
       ...state.user,
       ownershipConfidence,
+    },
+  };
+}
+
+type GameStateV33 = {
+  meta: Omit<GameState["meta"], "schemaVersion"> & {
+    schemaVersion: 33;
+  };
+  settings: GameState["settings"];
+  world: GameState["world"];
+  competition: GameState["competition"];
+  business: GameState["business"];
+  user: GameState["user"];
+};
+
+/**
+ * Deterministic v33 → v34:
+ * - foundedSeasonYear on FranchiseOps
+ * - expenses / netIncome / payroll / leagueRank on FranchiseSeasonRecord
+ * Emits schemaVersion 34. No RNG.
+ */
+function migrateV33ToV34(state: GameStateV33): GameState {
+  const leagueStart =
+    state.user.ownerStartSeasonYear ?? state.competition.season.year;
+  const franchiseOps: GameState["business"]["franchiseOps"] = {};
+  for (const [teamId, ops] of Object.entries(state.business.franchiseOps)) {
+    const raw = ops as FranchiseOps & { foundedSeasonYear?: number };
+    const history = state.business.franchiseHistory[teamId];
+    const firstYear = history?.seasons[0]?.seasonYear;
+    franchiseOps[teamId] = {
+      ...raw,
+      foundedSeasonYear:
+        typeof raw.foundedSeasonYear === "number"
+          ? raw.foundedSeasonYear
+          : firstYear ?? leagueStart,
+    };
+  }
+
+  const franchiseHistory: GameState["business"]["franchiseHistory"] = {};
+  for (const [teamId, history] of Object.entries(
+    state.business.franchiseHistory,
+  )) {
+    franchiseHistory[teamId] = {
+      teamId: history.teamId,
+      seasons: history.seasons.map((season) => {
+        const raw = season as typeof season & {
+          expenses?: number;
+          netIncome?: number;
+          payroll?: number;
+          leagueRank?: number | null;
+        };
+        return {
+          ...season,
+          expenses: typeof raw.expenses === "number" ? raw.expenses : 0,
+          netIncome: typeof raw.netIncome === "number" ? raw.netIncome : 0,
+          payroll: typeof raw.payroll === "number" ? raw.payroll : 0,
+          leagueRank:
+            raw.leagueRank === null || typeof raw.leagueRank === "number"
+              ? raw.leagueRank
+              : null,
+        };
+      }),
+    };
+  }
+
+  return {
+    ...state,
+    meta: {
+      ...state.meta,
+      schemaVersion: 34,
+    },
+    business: {
+      ...state.business,
+      franchiseOps,
+      franchiseHistory,
+      franchiseReportCache: state.business.franchiseReportCache ?? {},
     },
   };
 }

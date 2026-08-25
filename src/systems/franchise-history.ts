@@ -13,6 +13,7 @@ import type { TeamId } from "@/domain/ids";
 import { systemResult, type SystemResult } from "@/domain/system-result";
 import type { GameState } from "@/state/game-state";
 import { calculateFranchiseValue } from "@/state/franchise-value";
+import { getTeamPayroll } from "@/systems/salary-cap";
 import { getFinancialStatement } from "@/systems/team-finances";
 
 export type AppendFranchiseSeasonRecordInput = {
@@ -33,6 +34,24 @@ function facilityLevelsSnapshot(
     levels[category] = ops?.facilities[category].level ?? 1;
   }
   return levels;
+}
+
+function leagueRankForTeam(state: GameState, teamId: TeamId): number | null {
+  const standings = Object.values(state.competition.standings.byTeamId);
+  if (standings.length === 0) {
+    return null;
+  }
+  const sorted = [...standings].sort((a, b) => {
+    if (b.winPercentage !== a.winPercentage) {
+      return b.winPercentage - a.winPercentage;
+    }
+    if (b.wins !== a.wins) {
+      return b.wins - a.wins;
+    }
+    return a.teamId.localeCompare(b.teamId);
+  });
+  const index = sorted.findIndex((row) => row.teamId === teamId);
+  return index < 0 ? null : index + 1;
 }
 
 /**
@@ -73,6 +92,10 @@ export function appendFranchiseSeasonRecord(
     playoffResult: input.playoffResult ?? "missed",
     championship: input.championship ?? false,
     revenue: statement.revenue.total,
+    expenses: statement.expenses.total,
+    netIncome: statement.netIncome,
+    payroll: getTeamPayroll(teamId, year, state),
+    leagueRank: leagueRankForTeam(state, teamId),
     attendance: finances?.attendanceByYear[String(year)] ?? null,
     cash: finances?.cash ?? 0,
     fanSentiment: ops.fanSentiment,

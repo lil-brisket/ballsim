@@ -384,11 +384,17 @@ export function validateGameState(state: unknown): asserts state is GameState {
   if (franchiseHistory == null) {
     fail("business.franchiseHistory is required.");
   }
+  const franchiseReportCache = (business as Record<string, unknown>)
+    .franchiseReportCache;
+  if (franchiseReportCache == null) {
+    fail("business.franchiseReportCache is required.");
+  }
   assertRecord(staffContracts, "business.staffContracts");
   assertRecord(sponsorships, "business.sponsorships");
   assertRecord(franchiseOps, "business.franchiseOps");
   assertRecord(relocationByTeamId, "business.relocationByTeamId");
   assertRecord(franchiseHistory, "business.franchiseHistory");
+  assertRecord(franchiseReportCache, "business.franchiseReportCache");
   if (!("leagueEconomy" in business) || business.leagueEconomy == null) {
     fail("business.leagueEconomy is required.");
   }

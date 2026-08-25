@@ -86,6 +86,11 @@ export type FranchiseOps = {
   mediaAttention: number;
   /** E3/E11 — demand input 1–99; relocation may change it. */
   marketSize: number;
+  /**
+   * Season year the franchise entered this league (original clubs = league start;
+   * expansion clubs = expansion year). Historical fact for tenure / eras.
+   */
+  foundedSeasonYear: number;
   /** E14 — primary strategy (immutable during play in this feature). */
   aiProfile: AiProfile;
   /** E14 — spending willingness axis 1–99 (how aggressively it spends). */
@@ -138,6 +143,7 @@ export function createDefaultFranchiseOps(
     fanSentiment: overrides.fanSentiment ?? 50,
     mediaAttention: overrides.mediaAttention ?? 30,
     marketSize: overrides.marketSize ?? 50,
+    foundedSeasonYear: overrides.foundedSeasonYear ?? 2026,
     aiProfile: overrides.aiProfile ?? "conservative",
     spendingTolerance: overrides.spendingTolerance ?? 50,
     patience: overrides.patience ?? 50,

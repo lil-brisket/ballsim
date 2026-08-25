@@ -10,6 +10,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
+    "sanity:league": "tsx scripts/league-sanity-report.ts",
+    "sanity:compare": "tsx scripts/league-sanity-compare.ts",
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",
     "postinstall": "prisma generate"

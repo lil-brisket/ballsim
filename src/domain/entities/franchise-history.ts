@@ -40,6 +40,14 @@ export type FranchiseSeasonRecord = {
   playoffResult: PlayoffResultSnapshot;
   championship: boolean;
   revenue: number;
+  /** Season expenses total (historical fact). */
+  expenses: number;
+  /** Season net income (revenue − expenses). */
+  netIncome: number;
+  /** Season payroll from contracts. */
+  payroll: number;
+  /** League rank by win% at season end (1 = best); null if unknown. */
+  leagueRank: number | null;
   /** Total home attendance (regular + playoff) for the completed season. */
   attendance: number | null;
   cash: number;

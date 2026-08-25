@@ -16,6 +16,7 @@ import {
 } from "@/systems/draft";
 import { releaseExpiredContracts } from "@/systems/free-agency";
 import { appendAllFranchiseSeasonRecords } from "@/systems/franchise-history";
+import { generateAndCacheAnnualReports } from "@/systems/franchise-report";
 import { processSeasonalLeagueEconomy } from "@/systems/league-economy";
 import { appendOwnershipSeasonNote } from "@/systems/ownership-confidence-engine";
 import { tickRelocationCooldowns } from "@/systems/relocation";
@@ -164,6 +165,10 @@ export function processOffseasonLifecycle(
     const history = appendAllFranchiseSeasonRecords(current);
     current = history.state;
     events.push(...history.events);
+
+    const reports = generateAndCacheAnnualReports(current);
+    current = reports.state;
+    events.push(...reports.events);
 
     current = appendOwnershipSeasonNote(current);
 

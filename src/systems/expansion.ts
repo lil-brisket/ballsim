@@ -330,6 +330,7 @@ export function completeExpansion(state: GameState, rng: Rng): SystemResult {
               spendingTolerance: identity.spendingTolerance,
               patience: identity.patience,
               riskTolerance: identity.riskTolerance,
+              foundedSeasonYear: year,
             });
           })(),
         },
