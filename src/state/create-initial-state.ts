@@ -194,6 +194,7 @@ export function createInitialGameState(
       schedule: {
         seasonId,
         gameIds: [],
+        gameIdsByDate: {},
       },
       games: {},
       standings,
@@ -466,6 +467,7 @@ export function createFourTeamInitialGameState(
       schedule: {
         seasonId,
         gameIds: [],
+        gameIdsByDate: {},
       },
       games: {},
       standings,

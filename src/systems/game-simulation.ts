@@ -1,5 +1,4 @@
 import {
-  createEmptyGamePlayerStats,
   createGame,
   type Game,
   type GamePlayerStats,
@@ -41,13 +40,27 @@ import {
   mergeGameSimulationConfig,
   type GameSimulationConfig,
 } from "@/systems/game-simulation-config";
+import {
+  applyPossessionToSimState,
+  appendPeriodScore,
+  assertGameSimStatsConservation,
+  createGameSimState,
+  finalizeGameSimState,
+  finalizeMinutesOnSimState,
+  lineupCacheKey,
+  type GameSimState,
+} from "@/systems/game-sim-state";
 import { choosePossessionDecision } from "@/systems/possession-decision-selection";
 import type { PossessionDecision } from "@/systems/possession-decision";
 import {
-  applyPossessionResolution,
   resolvePossession,
   type PossessionResolution,
 } from "@/systems/possession-resolution";
+import {
+  buildGameIdsByDate,
+  scheduledGameIdsForDate,
+} from "@/systems/schedule-date-index";
+import type { SimulationProfiler } from "@/systems/simulation/simulation-profiler";
 
 export type SimulateGameContext = {
   homePlayers: readonly Player[];
@@ -72,6 +85,8 @@ export type SimulateGameContext = {
     },
     rng: Rng,
   ) => PossessionDecision;
+  /** Optional profiler for cost-model benchmarks. */
+  profiler?: SimulationProfiler;
 };
 
 type TeamFoulCounters = {
@@ -79,22 +94,23 @@ type TeamFoulCounters = {
   away: number;
 };
 
+type LineupTacticalCache = {
+  key: string;
+  offensiveModifiers: CoachingModifiers;
+  defensiveModifiers: CoachingModifiers;
+};
+
 type PeriodSimResult = {
-  game: Game;
   clock: GameClock;
-  eventSequenceStart: number;
-  possessionIndex: number;
-  secondsOnCourt: Map<string, number>;
   offensiveTeamId: TeamId;
   defensiveTeamId: TeamId;
-  possessionCounts: { home: number; away: number };
 };
 
 /**
  * Simulates a complete basketball game from tip-off through final buzzer.
  * Deterministic when supplied with a deterministic Rng.
- * resolvePossession is authoritative for points, stats, events, and nextPossession;
- * each resolution is applied exactly once via applyPossessionResolution.
+ * Uses mutable {@link GameSimState} as the canonical in-game representation;
+ * domain {@link Game} is validated once at finalize.
  */
 export function simulateGame(
   game: Game,
@@ -108,6 +124,12 @@ export function simulateGame(
     throw new Error("simulateGame requires home and away players.");
   }
 
+  const totalStart = performance.now();
+  let decisionSelectionMs = 0;
+  let resolutionMs = 0;
+  let statsMs = 0;
+  let validationMs = 0;
+
   const config = mergeGameSimulationConfig(context.config);
   const homeOnCourt = selectStartingLineup(
     context.homePlayers,
@@ -117,44 +139,15 @@ export function simulateGame(
     context.awayPlayers,
     config.startingLineupSize,
   );
-  const onCourtIds = new Set<string>([
-    ...homeOnCourt.map((player) => player.id),
-    ...awayOnCourt.map((player) => player.id),
-  ]);
 
-  const playerStats = [
-    ...context.homePlayers.map((player) =>
-      createEmptyGamePlayerStats(player.id),
-    ),
-    ...context.awayPlayers.map((player) =>
-      createEmptyGamePlayerStats(player.id),
-    ),
-  ];
-
-  let currentGame = createGame({
-    id: game.id,
-    seasonId: game.seasonId,
-    date: game.date,
-    homeTeamId: game.homeTeamId,
-    awayTeamId: game.awayTeamId,
-    competitionType: game.competitionType,
-    status: "in_progress",
-    score: { home: 0, away: 0 },
-    periodScores: [],
-    events: [],
-    playerStats,
-    homeTeamSnapshot: null,
-    awayTeamSnapshot: null,
+  const sim = createGameSimState({
+    game,
+    homePlayers: context.homePlayers,
+    awayPlayers: context.awayPlayers,
+    homeOnCourt,
+    awayOnCourt,
   });
 
-  const secondsOnCourt = new Map<string, number>();
-  for (const playerId of onCourtIds) {
-    secondsOnCourt.set(playerId, 0);
-  }
-
-  let eventSequenceStart = 0;
-  let possessionIndex = 0;
-  const possessionCounts = { home: 0, away: 0 };
   let offensiveTeamId: TeamId = rng.chance(0.5)
     ? game.homeTeamId
     : game.awayTeamId;
@@ -162,6 +155,9 @@ export function simulateGame(
     offensiveTeamId === game.homeTeamId ? game.awayTeamId : game.homeTeamId;
 
   let clock = createGameClock(config.regulationPeriodSeconds);
+  const lineupCache: { current: LineupTacticalCache | null } = {
+    current: null,
+  };
 
   for (let period = 0; period < config.regulationPeriodCount; period += 1) {
     if (period > 0) {
@@ -171,90 +167,125 @@ export function simulateGame(
       };
     }
     const periodResult = simulatePeriod({
-      game: currentGame,
+      sim,
       clock,
-      eventSequenceStart,
-      possessionIndex,
-      secondsOnCourt,
       offensiveTeamId,
       defensiveTeamId,
-      possessionCounts,
-      homeOnCourt,
-      awayOnCourt,
       config,
       context,
       rng,
+      lineupCache,
+      timers: {
+        addDecision: (ms) => {
+          decisionSelectionMs += ms;
+        },
+        addResolution: (ms) => {
+          resolutionMs += ms;
+        },
+        addStats: (ms) => {
+          statsMs += ms;
+        },
+      },
     });
-    currentGame = periodResult.game;
     clock = periodResult.clock;
-    eventSequenceStart = periodResult.eventSequenceStart;
-    possessionIndex = periodResult.possessionIndex;
     offensiveTeamId = periodResult.offensiveTeamId;
     defensiveTeamId = periodResult.defensiveTeamId;
   }
 
   let overtimePeriodCount = 0;
-  while (currentGame.score.home === currentGame.score.away) {
+  while (sim.homeScore === sim.awayScore) {
     overtimePeriodCount += 1;
     clock = resetPeriodClock(clock, config.overtimePeriodSeconds);
     const periodResult = simulatePeriod({
-      game: currentGame,
+      sim,
       clock,
-      eventSequenceStart,
-      possessionIndex,
-      secondsOnCourt,
       offensiveTeamId,
       defensiveTeamId,
-      possessionCounts,
-      homeOnCourt,
-      awayOnCourt,
       config,
       context,
       rng,
+      lineupCache,
+      timers: {
+        addDecision: (ms) => {
+          decisionSelectionMs += ms;
+        },
+        addResolution: (ms) => {
+          resolutionMs += ms;
+        },
+        addStats: (ms) => {
+          statsMs += ms;
+        },
+      },
     });
-    currentGame = periodResult.game;
     clock = periodResult.clock;
-    eventSequenceStart = periodResult.eventSequenceStart;
-    possessionIndex = periodResult.possessionIndex;
     offensiveTeamId = periodResult.offensiveTeamId;
     defensiveTeamId = periodResult.defensiveTeamId;
   }
 
-  const finalizedStats = finalizeMinutes(currentGame.playerStats, secondsOnCourt);
-  currentGame = createGame({
-    ...currentGame,
-    status: "final",
-    playerStats: finalizedStats,
-  });
+  finalizeMinutesOnSimState(sim);
 
+  const homePlayerIds = new Set(context.homePlayers.map((player) => player.id));
+  const awayPlayerIds = new Set(context.awayPlayers.map((player) => player.id));
+  assertGameSimStatsConservation(sim, homePlayerIds, awayPlayerIds);
+
+  const validationStart = performance.now();
+  const finalizedGame = finalizeGameSimState(sim, "final");
+  validationMs += performance.now() - validationStart;
+
+  const finalizedStats = finalizedGame.playerStats;
   const homePlayerStats = finalizedStats.filter((row) =>
-    context.homePlayers.some((player) => player.id === row.playerId),
+    homePlayerIds.has(row.playerId),
   );
   const awayPlayerStats = finalizedStats.filter((row) =>
-    context.awayPlayers.some((player) => player.id === row.playerId),
+    awayPlayerIds.has(row.playerId),
   );
 
-  return createGameResult({
-    gameId: currentGame.id,
-    seasonId: currentGame.seasonId,
-    date: currentGame.date,
-    homeTeamId: currentGame.homeTeamId,
-    awayTeamId: currentGame.awayTeamId,
+  const result = createGameResult({
+    gameId: finalizedGame.id,
+    seasonId: finalizedGame.seasonId,
+    date: finalizedGame.date,
+    homeTeamId: finalizedGame.homeTeamId,
+    awayTeamId: finalizedGame.awayTeamId,
     status: "final",
-    score: { ...currentGame.score },
-    periodScores: currentGame.periodScores.map((period) => ({ ...period })),
+    score: { ...finalizedGame.score },
+    periodScores: finalizedGame.periodScores.map((period) => ({ ...period })),
     overtimePeriodCount,
     possessionCounts: {
-      home: possessionCounts.home,
-      away: possessionCounts.away,
+      home: sim.possessionCounts.home,
+      away: sim.possessionCounts.away,
     },
     playerStats: finalizedStats,
     teamStats: {
-      home: aggregateTeamStats(currentGame.homeTeamId, homePlayerStats),
-      away: aggregateTeamStats(currentGame.awayTeamId, awayPlayerStats),
+      home: aggregateTeamStats(finalizedGame.homeTeamId, homePlayerStats),
+      away: aggregateTeamStats(finalizedGame.awayTeamId, awayPlayerStats),
     },
-    events: currentGame.events.map((event) => ({ ...event })),
+    events: finalizedGame.events.map((event) => ({ ...event })),
   });
+
+  const totalMs = performance.now() - totalStart;
+  const possessions = sim.possessionIndex;
+  const events = sim.events.length;
+  const accounted =
+    validationMs + decisionSelectionMs + resolutionMs + statsMs;
+  const otherMs = Math.max(0, totalMs - accounted);
+
+  if (context.profiler) {
+    context.profiler.recordGame({
+      possessions,
+      events,
+      playersInvolved: context.homePlayers.length + context.awayPlayers.length,
+      totalMs,
+      validationMs,
+      decisionSelectionMs,
+      statsMs,
+      resolutionMs,
+      otherMs,
+      msPerPossession: possessions > 0 ? totalMs / possessions : 0,
+      msPerEvent: events > 0 ? totalMs / events : 0,
+    });
+  }
+
+  return result;
 }
 
 /**
@@ -265,30 +296,59 @@ export function simulateGamesForDate(
   state: GameState,
   rng: Rng,
   date: string,
+  profiler?: SimulationProfiler,
 ): SystemResult {
   const games = { ...state.competition.games };
   const events: DomainEvent[] = [];
 
-  for (const gameId of state.competition.schedule.gameIds) {
+  let working = state;
+  if (
+    working.competition.schedule.gameIdsByDate == null ||
+    Object.keys(working.competition.schedule.gameIdsByDate).length === 0
+  ) {
+    working = {
+      ...working,
+      competition: {
+        ...working.competition,
+        schedule: {
+          ...working.competition.schedule,
+          gameIdsByDate: buildGameIdsByDate(
+            working.competition.games,
+            working.competition.schedule.gameIds,
+          ),
+        },
+      },
+    };
+  }
+
+  const gameIds = scheduledGameIdsForDate(working, date);
+
+  for (const gameId of gameIds) {
     const game = games[gameId];
-    if (!game || game.date !== date || game.status !== "scheduled") {
+    if (!game || game.status !== "scheduled") {
       continue;
     }
 
-    const { finalGame, event } = simulateScheduledGame(state, game, rng);
+    const gameStart = performance.now();
+    const { finalGame, event } = simulateScheduledGame(working, game, rng, {
+      profiler,
+    });
+    if (profiler) {
+      profiler.addSeason("gameSimMs", performance.now() - gameStart);
+    }
     games[gameId] = finalGame;
     events.push(event);
   }
 
   if (events.length === 0) {
-    return systemResult(state);
+    return systemResult(working === state ? state : working);
   }
 
   return systemResult(
     {
-      ...state,
+      ...working,
       competition: {
-        ...state.competition,
+        ...working.competition,
         games,
       },
     },
@@ -305,6 +365,7 @@ export function simulateScheduledGame(
   state: GameState,
   game: Game,
   rng: Rng,
+  options?: { profiler?: SimulationProfiler },
 ): { finalGame: Game; event: DomainEvent } {
   if (game.status !== "scheduled") {
     throw new Error(
@@ -325,6 +386,7 @@ export function simulateScheduledGame(
         homeTeam?.coachingPhilosophy ?? DEFAULT_COACHING_PHILOSOPHY,
       awayCoachingPhilosophy:
         awayTeam?.coachingPhilosophy ?? DEFAULT_COACHING_PHILOSOPHY,
+      profiler: options?.profiler,
     },
     rng,
   );
@@ -433,54 +495,61 @@ function snapshotTeam(team: {
 }
 
 function simulatePeriod(args: {
-  game: Game;
+  sim: GameSimState;
   clock: GameClock;
-  eventSequenceStart: number;
-  possessionIndex: number;
-  secondsOnCourt: Map<string, number>;
   offensiveTeamId: TeamId;
   defensiveTeamId: TeamId;
-  possessionCounts: { home: number; away: number };
-  homeOnCourt: readonly Player[];
-  awayOnCourt: readonly Player[];
   config: GameSimulationConfig;
   context: SimulateGameContext;
   rng: Rng;
+  lineupCache: { current: LineupTacticalCache | null };
+  timers: {
+    addDecision: (ms: number) => void;
+    addResolution: (ms: number) => void;
+    addStats: (ms: number) => void;
+  };
 }): PeriodSimResult {
-  let currentGame = args.game;
+  const sim = args.sim;
   let clock = args.clock;
-  let eventSequenceStart = args.eventSequenceStart;
-  let possessionIndex = args.possessionIndex;
   let offensiveTeamId = args.offensiveTeamId;
   let defensiveTeamId = args.defensiveTeamId;
   const teamFouls: TeamFoulCounters = { home: 0, away: 0 };
-  const scoreAtPeriodStart: GameScore = { ...currentGame.score };
+  const scoreAtPeriodStart: GameScore = {
+    home: sim.homeScore,
+    away: sim.awayScore,
+  };
 
   while (!isPeriodOver(clock)) {
     const offensivePlayers =
-      offensiveTeamId === currentGame.homeTeamId
-        ? args.homeOnCourt
-        : args.awayOnCourt;
+      offensiveTeamId === sim.homeTeamId ? sim.homeOnCourt : sim.awayOnCourt;
     const defensivePlayers =
-      defensiveTeamId === currentGame.homeTeamId
-        ? args.homeOnCourt
-        : args.awayOnCourt;
+      defensiveTeamId === sim.homeTeamId ? sim.homeOnCourt : sim.awayOnCourt;
 
     const chooseDecision =
       args.context.chooseDecision ?? choosePossessionDecision;
-    const offensivePhilosophy = philosophyForTeam(
-      offensiveTeamId,
-      currentGame,
-      args.context,
-    );
-    const defensivePhilosophy = philosophyForTeam(
-      defensiveTeamId,
-      currentGame,
-      args.context,
-    );
-    const offensiveModifiers = getCoachingModifiers(offensivePhilosophy);
-    const defensiveModifiers = getCoachingModifiers(defensivePhilosophy);
 
+    const cacheKey = lineupCacheKey(offensivePlayers, defensivePlayers);
+    let tactical = args.lineupCache.current;
+    if (tactical == null || tactical.key !== cacheKey) {
+      const offensivePhilosophy = philosophyForTeam(
+        offensiveTeamId,
+        sim,
+        args.context,
+      );
+      const defensivePhilosophy = philosophyForTeam(
+        defensiveTeamId,
+        sim,
+        args.context,
+      );
+      tactical = {
+        key: cacheKey,
+        offensiveModifiers: getCoachingModifiers(offensivePhilosophy),
+        defensiveModifiers: getCoachingModifiers(defensivePhilosophy),
+      };
+      args.lineupCache.current = tactical;
+    }
+
+    const decisionStart = performance.now();
     const decision = chooseDecision(
       {
         offensiveTeamId,
@@ -488,23 +557,23 @@ function simulatePeriod(args: {
         offensivePlayers,
         defensivePlayers,
         config: args.config,
-        shotSelectionModifiers: offensiveModifiers.shotSelection,
+        shotSelectionModifiers: tactical.offensiveModifiers.shotSelection,
         foulActionWeightMultiplier:
-          defensiveModifiers.foulActionWeightMultiplier,
+          tactical.defensiveModifiers.foulActionWeightMultiplier,
       },
       args.rng,
     );
+    args.timers.addDecision(performance.now() - decisionStart);
 
-    possessionIndex += 1;
+    sim.possessionIndex += 1;
     const defensiveFoulsBefore =
-      defensiveTeamId === currentGame.homeTeamId
-        ? teamFouls.home
-        : teamFouls.away;
+      defensiveTeamId === sim.homeTeamId ? teamFouls.home : teamFouls.away;
 
+    const resolutionStart = performance.now();
     const resolution = resolvePossession(
       {
         possessionId: asPossessionId(
-          `poss_${currentGame.id}_${possessionIndex}`,
+          `poss_${sim.id}_${sim.possessionIndex}`,
         ),
         offensiveTeamId,
         defensiveTeamId,
@@ -512,22 +581,25 @@ function simulatePeriod(args: {
         defensivePlayers,
         defensiveTeamFoulsBefore: defensiveFoulsBefore,
         decision,
-        eventSequenceStart,
+        eventSequenceStart: sim.eventSequenceStart,
         fatigue: 0,
         defensivePressureMultiplier:
-          defensiveModifiers.defensivePressureMultiplier,
+          tactical.defensiveModifiers.defensivePressureMultiplier,
       },
       args.rng,
     );
+    args.timers.addResolution(performance.now() - resolutionStart);
 
-    // Apply exactly once — do not add points/stats/events elsewhere in the loop.
-    currentGame = applyPossessionResolution(currentGame, resolution);
-    eventSequenceStart = nextEventSequenceStart(
-      eventSequenceStart,
+    const statsStart = performance.now();
+    applyPossessionToSimState(sim, resolution);
+    args.timers.addStats(performance.now() - statsStart);
+
+    sim.eventSequenceStart = nextEventSequenceStart(
+      sim.eventSequenceStart,
       resolution,
     );
 
-    if (defensiveTeamId === currentGame.homeTeamId) {
+    if (defensiveTeamId === sim.homeTeamId) {
       teamFouls.home = resolution.defensiveTeamFoulsAfter;
     } else {
       teamFouls.away = resolution.defensiveTeamFoulsAfter;
@@ -537,27 +609,22 @@ function simulatePeriod(args: {
       resolution,
       args.config,
       args.rng,
-      offensiveModifiers.possessionSecondsDelta,
+      tactical.offensiveModifiers.possessionSecondsDelta,
     );
     const consumed = consumeTime(clock, requestedSeconds);
     clock = consumed.clock;
     addSecondsToOnCourtPlayers(
-      args.secondsOnCourt,
-      args.homeOnCourt,
-      args.awayOnCourt,
+      sim.secondsOnCourt,
+      sim.homeOnCourt,
+      sim.awayOnCourt,
       consumed.elapsedSeconds,
     );
 
-    // Count completed offensive possessions when offense flips (not on
-    // continue/OREB/pass-keep). One resolvePossession that ends the
-    // possession increments exactly once for the team that had the ball.
-    if (
-      resolution.nextPossession.offensiveTeamId !== offensiveTeamId
-    ) {
-      if (offensiveTeamId === currentGame.homeTeamId) {
-        args.possessionCounts.home += 1;
+    if (resolution.nextPossession.offensiveTeamId !== offensiveTeamId) {
+      if (offensiveTeamId === sim.homeTeamId) {
+        sim.possessionCounts.home += 1;
       } else {
-        args.possessionCounts.away += 1;
+        sim.possessionCounts.away += 1;
       }
     }
 
@@ -565,27 +632,15 @@ function simulatePeriod(args: {
     defensiveTeamId = resolution.nextPossession.defensiveTeamId;
   }
 
-  const periodDelta: GameScore = {
-    home: currentGame.score.home - scoreAtPeriodStart.home,
-    away: currentGame.score.away - scoreAtPeriodStart.away,
-  };
-  currentGame = createGame({
-    ...currentGame,
-    periodScores: [
-      ...currentGame.periodScores.map((period) => ({ ...period })),
-      periodDelta,
-    ],
+  appendPeriodScore(sim, {
+    home: sim.homeScore - scoreAtPeriodStart.home,
+    away: sim.awayScore - scoreAtPeriodStart.away,
   });
 
   return {
-    game: currentGame,
     clock,
-    eventSequenceStart,
-    possessionIndex,
-    secondsOnCourt: args.secondsOnCourt,
     offensiveTeamId,
     defensiveTeamId,
-    possessionCounts: args.possessionCounts,
   };
 }
 
@@ -632,13 +687,13 @@ export function requestPossessionSeconds(
 
 function philosophyForTeam(
   teamId: TeamId,
-  game: Game,
+  sim: GameSimState,
   context: SimulateGameContext,
 ): CoachingPhilosophy {
-  if (teamId === game.homeTeamId) {
+  if (teamId === sim.homeTeamId) {
     return context.homeCoachingPhilosophy ?? DEFAULT_COACHING_PHILOSOPHY;
   }
-  if (teamId === game.awayTeamId) {
+  if (teamId === sim.awayTeamId) {
     return context.awayCoachingPhilosophy ?? DEFAULT_COACHING_PHILOSOPHY;
   }
   return DEFAULT_COACHING_PHILOSOPHY;
@@ -664,16 +719,6 @@ function addSecondsToOnCourtPlayers(
   }
 }
 
-function finalizeMinutes(
-  playerStats: readonly GamePlayerStats[],
-  secondsOnCourt: Map<string, number>,
-): GamePlayerStats[] {
-  return playerStats.map((row) => ({
-    ...row,
-    minutes: Math.floor((secondsOnCourt.get(row.playerId) ?? 0) / 60),
-  }));
-}
-
 function selectStartingLineup(
   roster: readonly Player[],
   size: number,
@@ -691,11 +736,25 @@ function selectStartingLineup(
 }
 
 function rosterForTeam(state: GameState, teamId: TeamId): Player[] {
-  return Object.values(state.world.players)
-    .filter((player) => player.teamId === teamId)
-    .sort(
-      (a, b) =>
-        calculatePlayerOverall(b.position, b.attributes) -
-        calculatePlayerOverall(a.position, a.attributes),
-    );
+  const team = state.world.teams[teamId];
+  const players: Player[] = [];
+  if (team != null && Array.isArray(team.roster) && team.roster.length > 0) {
+    for (const playerId of team.roster) {
+      const player = state.world.players[playerId];
+      if (player != null) {
+        players.push(player);
+      }
+    }
+  } else {
+    for (const player of Object.values(state.world.players)) {
+      if (player.teamId === teamId) {
+        players.push(player);
+      }
+    }
+  }
+  return players.sort(
+    (a, b) =>
+      calculatePlayerOverall(b.position, b.attributes) -
+      calculatePlayerOverall(a.position, a.attributes),
+  );
 }

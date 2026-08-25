@@ -10,6 +10,7 @@ import {
 
 function AdvanceButton(props: {
   label: string;
+  pendingLabel: string;
   primary?: boolean;
   disabled?: boolean;
 }) {
@@ -27,13 +28,30 @@ function AdvanceButton(props: {
       aria-busy={pending}
       className={props.primary ? primaryClass : secondaryClass}
     >
-      {pending ? "Advancing…" : props.label}
+      {pending ? props.pendingLabel : props.label}
     </button>
+  );
+}
+
+function SimulationProgressStatus(props: { message: string }) {
+  const { pending } = useFormStatus();
+  if (!pending) {
+    return null;
+  }
+  return (
+    <p
+      role="status"
+      aria-live="polite"
+      className="text-sm text-amber-300/90"
+    >
+      {props.message}
+    </p>
   );
 }
 
 /**
  * Phase-aware advance controls. Uses existing server actions only.
+ * Shows descriptive pending copy so longer jumps do not feel frozen.
  */
 export function AdvanceTimeControls(props: {
   saveId: string;
@@ -68,23 +86,27 @@ export function AdvanceTimeControls(props: {
         </p>
       ) : null}
       <div className="flex flex-wrap gap-2" role="group" aria-label="Advance time">
-        <form action={advanceDayAction}>
+        <form action={advanceDayAction} className="space-y-1">
           <input type="hidden" name="saveId" value={props.saveId} />
           <input type="hidden" name="returnPath" value={props.returnPath} />
           <AdvanceButton
             label="Advance day"
+            pendingLabel="Simulating day…"
             primary={!preferWeekly}
             disabled={props.disabled}
           />
+          <SimulationProgressStatus message="Simulating next day — games, standings, and franchise updates…" />
         </form>
-        <form action={advanceWeekAction}>
+        <form action={advanceWeekAction} className="space-y-1">
           <input type="hidden" name="saveId" value={props.saveId} />
           <input type="hidden" name="returnPath" value={props.returnPath} />
           <AdvanceButton
             label="Advance 7 days"
+            pendingLabel="Simulating week…"
             primary={preferWeekly}
             disabled={props.disabled}
           />
+          <SimulationProgressStatus message="Simulating 7 days — this may take a few seconds…" />
         </form>
         {props.requiresConfirm && showWarning ? (
           <button
@@ -96,10 +118,15 @@ export function AdvanceTimeControls(props: {
             {untilLabel}
           </button>
         ) : (
-          <form action={advanceUntilPhaseAction}>
+          <form action={advanceUntilPhaseAction} className="space-y-1">
             <input type="hidden" name="saveId" value={props.saveId} />
             <input type="hidden" name="returnPath" value={props.returnPath} />
-            <AdvanceButton label={untilLabel} disabled={props.disabled} />
+            <AdvanceButton
+              label={untilLabel}
+              pendingLabel="Simulating until next phase…"
+              disabled={props.disabled}
+            />
+            <SimulationProgressStatus message="Advancing until the next phase — progress continues in the background; please wait…" />
           </form>
         )}
       </div>

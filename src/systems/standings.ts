@@ -164,50 +164,13 @@ export function calculateStandings(
   );
 
   for (const game of countedGames) {
-    const homeTeam = teamById.get(game.homeTeamId)!;
-    const awayTeam = teamById.get(game.awayTeamId)!;
-    const home = mutableByTeamId.get(game.homeTeamId)!;
-    const away = mutableByTeamId.get(game.awayTeamId)!;
-
-    const homeWon = game.score.home > game.score.away;
-    const sameConference = homeTeam.conferenceId === awayTeam.conferenceId;
-    const sameDivision = homeTeam.divisionId === awayTeam.divisionId;
-
-    if (homeWon) {
-      home.wins += 1;
-      away.losses += 1;
-      home.pointsFor += game.score.home;
-      home.pointsAgainst += game.score.away;
-      away.pointsFor += game.score.away;
-      away.pointsAgainst += game.score.home;
-      home.results.push("W");
-      away.results.push("L");
-      if (sameConference) {
-        home.conferenceWins += 1;
-        away.conferenceLosses += 1;
-      }
-      if (sameDivision) {
-        home.divisionWins += 1;
-        away.divisionLosses += 1;
-      }
-    } else {
-      away.wins += 1;
-      home.losses += 1;
-      home.pointsFor += game.score.home;
-      home.pointsAgainst += game.score.away;
-      away.pointsFor += game.score.away;
-      away.pointsAgainst += game.score.home;
-      home.results.push("L");
-      away.results.push("W");
-      if (sameConference) {
-        away.conferenceWins += 1;
-        home.conferenceLosses += 1;
-      }
-      if (sameDivision) {
-        away.divisionWins += 1;
-        home.divisionLosses += 1;
-      }
-    }
+    applyFinalGameToMutable(
+      game,
+      teamById.get(game.homeTeamId)!,
+      teamById.get(game.awayTeamId)!,
+      mutableByTeamId.get(game.homeTeamId)!,
+      mutableByTeamId.get(game.awayTeamId)!,
+    );
   }
 
   const standings = [...mutableByTeamId.values()].map(finalizeStanding);
@@ -215,13 +178,147 @@ export function calculateStandings(
   return standings;
 }
 
+function applyFinalGameToMutable(
+  game: Game,
+  homeTeam: Team,
+  awayTeam: Team,
+  home: MutableStanding,
+  away: MutableStanding,
+): void {
+  const homeWon = game.score.home > game.score.away;
+  const sameConference = homeTeam.conferenceId === awayTeam.conferenceId;
+  const sameDivision = homeTeam.divisionId === awayTeam.divisionId;
+
+  if (homeWon) {
+    home.wins += 1;
+    away.losses += 1;
+    home.pointsFor += game.score.home;
+    home.pointsAgainst += game.score.away;
+    away.pointsFor += game.score.away;
+    away.pointsAgainst += game.score.home;
+    home.results.push("W");
+    away.results.push("L");
+    if (sameConference) {
+      home.conferenceWins += 1;
+      away.conferenceLosses += 1;
+    }
+    if (sameDivision) {
+      home.divisionWins += 1;
+      away.divisionLosses += 1;
+    }
+  } else {
+    away.wins += 1;
+    home.losses += 1;
+    home.pointsFor += game.score.home;
+    home.pointsAgainst += game.score.away;
+    away.pointsFor += game.score.away;
+    away.pointsAgainst += game.score.home;
+    home.results.push("L");
+    away.results.push("W");
+    if (sameConference) {
+      away.conferenceWins += 1;
+      home.conferenceLosses += 1;
+    }
+    if (sameDivision) {
+      away.divisionWins += 1;
+      home.divisionLosses += 1;
+    }
+  }
+}
+
+function standingFromPartial(
+  previous: TeamStanding | undefined,
+  teamId: TeamId,
+): TeamStanding {
+  return previous ?? createEmptyTeamStanding(teamId);
+}
+
+function applyResultToStanding(
+  standing: TeamStanding,
+  won: boolean,
+  pointsFor: number,
+  pointsAgainst: number,
+  conference: boolean,
+  division: boolean,
+): TeamStanding {
+  const wins = standing.wins + (won ? 1 : 0);
+  const losses = standing.losses + (won ? 0 : 1);
+  const gamesPlayed = wins + losses;
+  const result: "W" | "L" = won ? "W" : "L";
+  let streakType = standing.streak.type;
+  let streakCount = standing.streak.count;
+  if (streakType === result) {
+    streakCount += 1;
+  } else {
+    streakType = result;
+    streakCount = 1;
+  }
+  const nextPointsFor = standing.pointsFor + pointsFor;
+  const nextPointsAgainst = standing.pointsAgainst + pointsAgainst;
+  return {
+    teamId: standing.teamId,
+    wins,
+    losses,
+    winPercentage: gamesPlayed === 0 ? 0 : wins / gamesPlayed,
+    pointsFor: nextPointsFor,
+    pointsAgainst: nextPointsAgainst,
+    pointDifferential: nextPointsFor - nextPointsAgainst,
+    streak: { type: streakType, count: streakCount },
+    conferenceWins: standing.conferenceWins + (won && conference ? 1 : 0),
+    conferenceLosses: standing.conferenceLosses + (!won && conference ? 1 : 0),
+    divisionWins: standing.divisionWins + (won && division ? 1 : 0),
+    divisionLosses: standing.divisionLosses + (!won && division ? 1 : 0),
+  };
+}
+
 /**
- * Rebuilds standings from final regular-season games for the current season.
+ * Applies one finalized regular-season game into existing standings (hot path).
+ * Callers must ensure games are applied in chronological schedule order.
+ */
+export function applyFinalGameToStandings(
+  byTeamId: Record<string, TeamStanding>,
+  game: Game,
+  homeTeam: Team,
+  awayTeam: Team,
+): Record<string, TeamStanding> {
+  if (game.status !== "final" || game.score.home === game.score.away) {
+    return byTeamId;
+  }
+
+  const homeWon = game.score.home > game.score.away;
+  const sameConference = homeTeam.conferenceId === awayTeam.conferenceId;
+  const sameDivision = homeTeam.divisionId === awayTeam.divisionId;
+
+  const home = applyResultToStanding(
+    standingFromPartial(byTeamId[game.homeTeamId], game.homeTeamId),
+    homeWon,
+    game.score.home,
+    game.score.away,
+    sameConference,
+    sameDivision,
+  );
+  const away = applyResultToStanding(
+    standingFromPartial(byTeamId[game.awayTeamId], game.awayTeamId),
+    !homeWon,
+    game.score.away,
+    game.score.home,
+    sameConference,
+    sameDivision,
+  );
+
+  return {
+    ...byTeamId,
+    [game.homeTeamId]: home,
+    [game.awayTeamId]: away,
+  };
+}
+
+/**
+ * Full standings rebuild from schedule games (migration / debug / integrity).
  * Only games listed in `schedule.gameIds` are counted so playoff games in
  * `competition.games` cannot rewrite regular-season W-L.
- * Replaces the entire byTeamId map (never merges with the previous cache).
  */
-export function updateStandings(state: GameState): SystemResult {
+export function rebuildStandings(state: GameState): SystemResult {
   const regularSeasonGames = state.competition.schedule.gameIds
     .map((gameId) => state.competition.games[gameId])
     .filter((game): game is NonNullable<typeof game> => game != null);
@@ -240,6 +337,13 @@ export function updateStandings(state: GameState): SystemResult {
     byTeamId[entry.teamId] = entry;
   }
 
+  // Ensure every team has a row even with zero games.
+  for (const team of Object.values(state.world.teams)) {
+    if (byTeamId[team.id] == null) {
+      byTeamId[team.id] = createEmptyTeamStanding(team.id);
+    }
+  }
+
   return systemResult({
     ...state,
     competition: {
@@ -247,6 +351,77 @@ export function updateStandings(state: GameState): SystemResult {
       standings: { byTeamId },
     },
   });
+}
+
+/**
+ * Incremental standings update from newly finalized regular-season games.
+ * Falls back to {@link rebuildStandings} when no prior standings exist.
+ */
+export function updateStandingsIncremental(
+  state: GameState,
+  newlyFinalizedGames: readonly Game[],
+): SystemResult {
+  if (newlyFinalizedGames.length === 0) {
+    return systemResult(state);
+  }
+
+  const existing = state.competition.standings.byTeamId;
+  const teamCount = Object.keys(state.world.teams).length;
+  const standingCount = Object.keys(existing).length;
+  if (standingCount === 0 && teamCount > 0) {
+    // Seed empty rows so incremental apply has a baseline for all teams.
+    let seeded = state;
+    const byTeamId: Record<string, TeamStanding> = {};
+    for (const team of Object.values(state.world.teams)) {
+      byTeamId[team.id] = createEmptyTeamStanding(team.id);
+    }
+    seeded = {
+      ...state,
+      competition: {
+        ...state.competition,
+        standings: { byTeamId },
+      },
+    };
+    return updateStandingsIncremental(seeded, newlyFinalizedGames);
+  }
+
+  let byTeamId = { ...existing };
+  for (const game of newlyFinalizedGames) {
+    if (game.competitionType !== "regular_season") {
+      continue;
+    }
+    if (!state.competition.schedule.gameIds.includes(game.id)) {
+      continue;
+    }
+    const homeTeam = state.world.teams[game.homeTeamId];
+    const awayTeam = state.world.teams[game.awayTeamId];
+    if (homeTeam == null || awayTeam == null) {
+      continue;
+    }
+    byTeamId = applyFinalGameToStandings(byTeamId, game, homeTeam, awayTeam);
+  }
+
+  return systemResult({
+    ...state,
+    competition: {
+      ...state.competition,
+      standings: { byTeamId },
+    },
+  });
+}
+
+/**
+ * Hot-path standings update. Prefer incremental application of newly
+ * finalized games; use {@link rebuildStandings} for full correctness rebuilds.
+ */
+export function updateStandings(
+  state: GameState,
+  newlyFinalizedGames?: readonly Game[],
+): SystemResult {
+  if (newlyFinalizedGames !== undefined) {
+    return updateStandingsIncremental(state, newlyFinalizedGames);
+  }
+  return rebuildStandings(state);
 }
 
 export { createEmptyTeamStanding };

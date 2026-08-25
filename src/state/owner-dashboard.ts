@@ -215,6 +215,7 @@ export type OwnerDashboardSituationView = {
 export type OwnerDashboardView = {
   saveId: string;
   currentDate: string;
+  seasonYear: number;
   seasonPhase: string;
   offseasonStage: string;
   calendarDisplayLabel: string;
@@ -392,6 +393,7 @@ export function toOwnerDashboardView(state: GameState): OwnerDashboardView {
   return {
     saveId: canonical.saveId,
     currentDate: canonical.snapshot.currentDate,
+    seasonYear: canonical.year,
     seasonPhase: canonical.snapshot.seasonPhase,
     offseasonStage: canonical.snapshot.offseasonStage,
     calendarDisplayLabel: calendar.displayLabel,

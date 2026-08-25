@@ -68,5 +68,17 @@ export type { RunAiContinuityOptions } from "@/systems/simulation/ai-continuity"
 export type {
   AdvanceSimulationResult,
   AdvanceSimulationOptions,
+  SimulationProgress,
 } from "@/systems/simulation/types";
+export {
+  createSimulationProfiler,
+  formatGameCostModel,
+  formatSeasonProfiler,
+  averageGameCost,
+} from "@/systems/simulation/simulation-profiler";
+export type {
+  GameSimCostModel,
+  SeasonProfilerBuckets,
+  SimulationProfiler,
+} from "@/systems/simulation/simulation-profiler";
 export type { OwnerGameplayResult } from "@/systems/simulation/owner-gameplay";

@@ -7,6 +7,7 @@ import {
 import { loadOwnerSaveView } from "@/application/game-service";
 import { AdvanceTimeControls } from "@/components/game/AdvanceTimeControls";
 import { SimulationPhaseBanner } from "@/components/game/SimulationPhaseBanner";
+import { SimulationProgressBanner } from "@/components/game/SimulationProgressBanner";
 import { AttentionRequiredPanel } from "@/components/owner/dashboard/AttentionRequiredPanel";
 import { DashboardNotifications } from "@/components/owner/dashboard/DashboardNotifications";
 import { FranchiseHealthPanel } from "@/components/owner/dashboard/FranchiseHealthPanel";
@@ -82,6 +83,12 @@ export default async function DashboardPage({
 
       <SimulationPhaseBanner
         phase={phase}
+        currentDate={dash.currentDate}
+      />
+
+      <SimulationProgressBanner
+        seasonYear={dash.seasonYear}
+        phase={phase.primaryLabel}
         currentDate={dash.currentDate}
       />
 

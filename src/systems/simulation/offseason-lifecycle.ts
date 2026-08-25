@@ -132,6 +132,7 @@ export function initializeNewSeason(state: GameState): SystemResult {
       schedule: {
         seasonId: nextSeasonId,
         gameIds: [],
+        gameIdsByDate: {},
       },
       games: {},
       standings: { byTeamId: standingsByTeamId },
