@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { useFormStatus } from "react-dom";
 import {
   advanceDayAction,
@@ -32,42 +33,163 @@ function AdvanceButton(props: {
 }
 
 /**
- * Wraps existing advance day/week/phase server actions.
- * Does not implement a second time-advance mechanism.
+ * Phase-aware advance controls. Uses existing server actions only.
  */
 export function AdvanceTimeControls(props: {
   saveId: string;
   returnPath: string;
   simulationFrequency: string;
   disabled?: boolean;
+  untilPhaseLabel?: string;
+  unresolvedWarning?: string | null;
+  requiresConfirm?: boolean;
+  confirmTitle?: string;
+  confirmDescription?: string;
+  letAiHandleAction?: (formData: FormData) => void | Promise<void>;
+  continueAnywayAction?: (formData: FormData) => void | Promise<void>;
+  goToHref?: string;
 }) {
   const preferWeekly = props.simulationFrequency === "weekly";
+  const untilLabel = props.untilPhaseLabel
+    ? `Until ${props.untilPhaseLabel}`
+    : "Until next phase";
+  const [dialogOpen, setDialogOpen] = useState(false);
+
+  const showWarning = Boolean(props.unresolvedWarning);
 
   return (
-    <div className="flex flex-wrap gap-2" role="group" aria-label="Advance time">
-      <form action={advanceDayAction}>
-        <input type="hidden" name="saveId" value={props.saveId} />
-        <input type="hidden" name="returnPath" value={props.returnPath} />
-        <AdvanceButton
-          label="Advance day"
-          primary={!preferWeekly}
-          disabled={props.disabled}
-        />
-      </form>
-      <form action={advanceWeekAction}>
-        <input type="hidden" name="saveId" value={props.saveId} />
-        <input type="hidden" name="returnPath" value={props.returnPath} />
-        <AdvanceButton
-          label="Advance 7 days"
-          primary={preferWeekly}
-          disabled={props.disabled}
-        />
-      </form>
-      <form action={advanceUntilPhaseAction}>
-        <input type="hidden" name="saveId" value={props.saveId} />
-        <input type="hidden" name="returnPath" value={props.returnPath} />
-        <AdvanceButton label="Until next phase" disabled={props.disabled} />
-      </form>
+    <div className="space-y-2">
+      {showWarning ? (
+        <p
+          role="status"
+          className="text-sm text-amber-400"
+        >
+          ⚠ {props.unresolvedWarning}
+        </p>
+      ) : null}
+      <div className="flex flex-wrap gap-2" role="group" aria-label="Advance time">
+        <form action={advanceDayAction}>
+          <input type="hidden" name="saveId" value={props.saveId} />
+          <input type="hidden" name="returnPath" value={props.returnPath} />
+          <AdvanceButton
+            label="Advance day"
+            primary={!preferWeekly}
+            disabled={props.disabled}
+          />
+        </form>
+        <form action={advanceWeekAction}>
+          <input type="hidden" name="saveId" value={props.saveId} />
+          <input type="hidden" name="returnPath" value={props.returnPath} />
+          <AdvanceButton
+            label="Advance 7 days"
+            primary={preferWeekly}
+            disabled={props.disabled}
+          />
+        </form>
+        {props.requiresConfirm && showWarning ? (
+          <button
+            type="button"
+            disabled={props.disabled}
+            onClick={() => setDialogOpen(true)}
+            className="rounded-md border border-zinc-700 px-4 py-2 text-sm text-zinc-200 hover:border-amber-600 disabled:opacity-40"
+          >
+            {untilLabel}
+          </button>
+        ) : (
+          <form action={advanceUntilPhaseAction}>
+            <input type="hidden" name="saveId" value={props.saveId} />
+            <input type="hidden" name="returnPath" value={props.returnPath} />
+            <AdvanceButton label={untilLabel} disabled={props.disabled} />
+          </form>
+        )}
+      </div>
+
+      {dialogOpen ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="phase-transition-title"
+            className="w-full max-w-md rounded-xl border border-zinc-700 bg-zinc-900 p-5 shadow-xl"
+          >
+            <h3
+              id="phase-transition-title"
+              className="text-lg font-medium text-zinc-50"
+            >
+              {props.confirmTitle ?? "Unresolved decisions"}
+            </h3>
+            <p className="mt-2 text-sm text-zinc-400">
+              {props.confirmDescription ??
+                props.unresolvedWarning ??
+                "This phase still has unresolved decisions."}
+            </p>
+            <div className="mt-5 flex flex-wrap justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setDialogOpen(false)}
+                className="rounded-md border border-zinc-700 px-3 py-1.5 text-sm text-zinc-200 hover:border-zinc-500"
+              >
+                Cancel
+              </button>
+              {props.goToHref ? (
+                <a
+                  href={props.goToHref}
+                  className="rounded-md border border-amber-600/60 px-3 py-1.5 text-sm text-amber-300 hover:bg-amber-950/50"
+                >
+                  Handle manually
+                </a>
+              ) : null}
+              {props.letAiHandleAction ? (
+                <form action={props.letAiHandleAction}>
+                  <input type="hidden" name="saveId" value={props.saveId} />
+                  <input
+                    type="hidden"
+                    name="returnPath"
+                    value={props.returnPath}
+                  />
+                  <button
+                    type="submit"
+                    className="rounded-md bg-emerald-700 px-3 py-1.5 text-sm font-medium text-zinc-50 hover:bg-emerald-600"
+                  >
+                    Let AI Handle
+                  </button>
+                </form>
+              ) : null}
+              {props.continueAnywayAction ? (
+                <form action={props.continueAnywayAction}>
+                  <input type="hidden" name="saveId" value={props.saveId} />
+                  <input
+                    type="hidden"
+                    name="returnPath"
+                    value={props.returnPath}
+                  />
+                  <button
+                    type="submit"
+                    className="rounded-md bg-amber-600 px-3 py-1.5 text-sm font-medium text-zinc-950 hover:bg-amber-500"
+                  >
+                    Continue Anyway
+                  </button>
+                </form>
+              ) : (
+                <form action={advanceUntilPhaseAction}>
+                  <input type="hidden" name="saveId" value={props.saveId} />
+                  <input
+                    type="hidden"
+                    name="returnPath"
+                    value={props.returnPath}
+                  />
+                  <button
+                    type="submit"
+                    className="rounded-md bg-amber-600 px-3 py-1.5 text-sm font-medium text-zinc-950 hover:bg-amber-500"
+                  >
+                    Continue Anyway
+                  </button>
+                </form>
+              )}
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }

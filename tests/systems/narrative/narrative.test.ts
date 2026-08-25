@@ -384,6 +384,6 @@ describe("narrative migration", () => {
       snapshots: [],
       cooldowns: {},
     });
-    expect(state.meta.schemaVersion).toBe(36);
+    expect(state.meta.schemaVersion).toBe(37);
   });
 });

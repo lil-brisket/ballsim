@@ -118,6 +118,8 @@ GameState
 
 `schemaVersion` 25 adds top-level `GameState.settings` (`GameSettings`): league size/structure, regular-season games per team, playoff field/series/play-in, simulation frequency, AI difficulty (persisted for later use), and financial rule toggles. Pre-v25 saves reconstruct settings from the live league (e.g. 12-team CBL → 22 games / 8 playoff teams) rather than stamping Standard 30/82/16. Settings are configuration; runtime remains on world/competition/business/user. After expansion, do not treat `settings.league.teamCount` as the live team count.
 
+`schemaVersion` 37 adds offseason stage entry dates (`offseasonStageEnteredDate`, `freeAgencyExtendedUntil`), configurable free-agency duration under `settings.offseason.freeAgency`, AI management/assist settings (`ai.managementMode`, `ai.assistance`), and user continuity records (`explicitDecisions`, `phaseSkips`). Pre-v37 saves migrate with `smart_assist` defaults, FA duration 30 days, and stage entry date set to `currentDate` when already in an offseason stage.
+
 `schemaVersion` 14 adds `competition.playoffs` (`PlayoffTournament`). Pre-v14 saves migrate with `createEmptyPlayoffTournament()` (`not_started`, empty field). Empty/inactive playoffs are valid; a missing or null `playoffs` field is not.
 
 `schemaVersion` 15 adds owner objectives on `user.objectives` and extends `business.finances` with `revenue` and `expenses`. `toOwnerGameState(state)` derives a live-reference Owner Mode view (selected team, finances, roster, staff ids, league grouping). It must not be persisted independently.

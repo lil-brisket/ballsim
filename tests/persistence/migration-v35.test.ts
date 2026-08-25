@@ -144,7 +144,7 @@ describe("v34 → v35 migration", () => {
 
     const loaded = deserializeGameState(JSON.stringify(parsed));
     expect(loaded.meta.schemaVersion).toBe(GAME_STATE_SCHEMA_VERSION);
-    expect(GAME_STATE_SCHEMA_VERSION).toBe(36);
+    expect(GAME_STATE_SCHEMA_VERSION).toBe(37);
 
     const migrated = loaded.competition.games[game.id]!;
     expect(migrated.competitionType).toBe("regular_season");

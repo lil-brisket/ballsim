@@ -28,6 +28,7 @@ import { applyMediaFromDomainEvents } from "@/systems/media";
 import { processLeaguePlayoffBonuses } from "@/systems/playoff-financial-bonuses";
 import { processHomeGameTicketRevenue } from "@/systems/ticket-revenue";
 import { processNarrativeLayer } from "@/systems/narrative";
+import { assertContinuityBoundary } from "@/systems/simulation/continuity-validation";
 
 /**
  * Canonical Owner Mode simulation advance.
@@ -162,12 +163,16 @@ function advanceOneDay(state: GameState, rng: Rng): OneDayResult {
   current = gameplay.state;
   events.push(...gameplay.events);
 
+  const lifecycleChanged =
+    lifecycleIdentity(current) !== identityBeforeLifecycle;
+
+  if (lifecycleChanged) {
+    assertContinuityBoundary(current);
+  }
+
   const media = applyMediaFromDomainEvents(current, events);
   current = media.state;
   events.push(...media.events);
-
-  const lifecycleChanged =
-    lifecycleIdentity(current) !== identityBeforeLifecycle;
 
   current = {
     ...current,

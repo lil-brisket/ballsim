@@ -39,6 +39,8 @@ function setOffseasonStage(
       season: {
         ...state.competition.season,
         offseasonStage,
+        offseasonStageEnteredDate: state.world.calendar.currentDate,
+        freeAgencyExtendedUntil: null,
       },
     },
   };

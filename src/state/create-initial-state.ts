@@ -188,6 +188,8 @@ export function createInitialGameState(
         phase: "preseason",
         offseasonStage: "none",
         regularSeasonStartDate: null,
+        offseasonStageEnteredDate: null,
+        freeAgencyExtendedUntil: null,
       },
       schedule: {
         seasonId,
@@ -219,6 +221,8 @@ export function createInitialGameState(
       notifications: [],
       eventLog: [],
       appliedGameplayConsequenceKeys: {},
+      explicitDecisions: {},
+      phaseSkips: [],
       narrative: { situations: [], snapshots: [], cooldowns: {} },
     },
   };
@@ -357,6 +361,8 @@ export function createFourTeamInitialGameState(
     },
     ai: {
       difficulty: "normal",
+      managementMode: "smart_assist",
+      assistance: { ...DEFAULT_GAME_SETTINGS.ai.assistance },
     },
     financialRules: {
       salaryCapEnabled: true,
@@ -370,6 +376,9 @@ export function createFourTeamInitialGameState(
     },
     history: {
       mode: "new",
+    },
+    offseason: {
+      freeAgency: { ...DEFAULT_GAME_SETTINGS.offseason.freeAgency },
     },
   };
 
@@ -451,6 +460,8 @@ export function createFourTeamInitialGameState(
         phase: "preseason",
         offseasonStage: "none",
         regularSeasonStartDate: null,
+        offseasonStageEnteredDate: null,
+        freeAgencyExtendedUntil: null,
       },
       schedule: {
         seasonId,
@@ -482,6 +493,8 @@ export function createFourTeamInitialGameState(
       notifications: [],
       eventLog: [],
       appliedGameplayConsequenceKeys: {},
+      explicitDecisions: {},
+      phaseSkips: [],
       narrative: { situations: [], snapshots: [], cooldowns: {} },
     },
   };

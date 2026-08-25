@@ -559,7 +559,10 @@ describe("free-agency negotiation and reject", () => {
     }).state;
     const rejected = rejectOffer(offered, offerId).state;
     expect(() => rejectOffer(rejected, offerId)).toThrow(/already resolved/);
-    expect(() => acceptOffer(rejected, offerId)).toThrow(/already resolved/);
+    const acceptStale = acceptOffer(rejected, offerId);
+    expect(acceptStale.state.business.freeAgency.offers[offerId]!.status).toBe(
+      "rejected",
+    );
     expect(() => withdrawOffer(rejected, offerId)).toThrow(/already resolved/);
   });
 });
@@ -665,7 +668,7 @@ describe("free-agency accept", () => {
     ).toBe("accepted");
   });
 
-  it("throws when first-year salary exceeds cap space for startYear", () => {
+  it("invalidates offer when first-year salary exceeds cap space for startYear", () => {
     const { state, playerId } = withFreeAgent(baseState());
     const teamId = state.user.controlledTeamId;
     const startYear = state.competition.season.year;
@@ -683,7 +686,14 @@ describe("free-agency accept", () => {
         salary: capSpace + 1,
       }),
     }).state;
-    expect(() => acceptOffer(offered, offerId)).toThrow(/cannot afford/);
+    const result = acceptOffer(offered, offerId);
+    expect(result.state.business.freeAgency.offers[offerId]!.status).toBe(
+      "withdrawn",
+    );
+    expect(
+      result.events.some((e) => e.type === "FreeAgencyOfferInvalidated"),
+    ).toBe(true);
+    expect(result.state.world.players[playerId]!.contractId).toBeNull();
   });
 });
 
@@ -843,5 +853,130 @@ describe("isOpenOffer", () => {
     expect(isOpenOffer("accepted")).toBe(false);
     expect(isOpenOffer("rejected")).toBe(false);
     expect(isOpenOffer("withdrawn")).toBe(false);
+  });
+});
+
+describe("stale accepted offer after contract expiration", () => {
+  it("does not fail validateGameState after accept then releaseExpiredContracts", () => {
+    const { state, playerId } = withFreeAgent(baseState());
+    const teamId = state.user.controlledTeamId;
+    const year = state.competition.season.year;
+    const offerId = asOfferId("offer_expire_cycle");
+    const signed = acceptOffer(
+      makeOffer(state, {
+        id: offerId,
+        playerId,
+        teamId,
+        terms: contractTerms({
+          contractId: "contract_expire_cycle",
+          playerId,
+          teamId,
+          startYear: year,
+          salary: 2_000_000,
+        }),
+      }).state,
+      offerId,
+    ).state;
+
+    expect(signed.world.players[playerId]!.contractId).toBe(
+      "contract_expire_cycle",
+    );
+    expect(signed.business.freeAgency.offers[offerId]!.status).toBe("accepted");
+
+    const offseason: GameState = {
+      ...signed,
+      competition: {
+        ...signed.competition,
+        season: {
+          ...signed.competition.season,
+          phase: "offseason",
+          offseasonStage: "contract_expiration",
+        },
+      },
+    };
+    const released = releaseExpiredContracts(offseason).state;
+    expect(released.world.players[playerId]!.contractId).toBeNull();
+    expect(released.business.freeAgency.offers[offerId]!.status).toBe(
+      "accepted",
+    );
+    expect(released.business.freeAgency.offers[offerId]!.contractId).toBe(
+      "contract_expire_cycle",
+    );
+    expect(() => validateGameState(released)).not.toThrow();
+  });
+
+  it("invalidates stale open offers without crashing when player is no longer a free agent", () => {
+    const { state, playerId } = withFreeAgent(baseState());
+    const teamId = state.user.controlledTeamId;
+    const year = state.competition.season.year;
+    const offerId = asOfferId("offer_stale_open");
+
+    const offered = makeOffer(state, {
+      id: offerId,
+      playerId,
+      teamId,
+      terms: contractTerms({
+        contractId: "contract_stale_open",
+        playerId,
+        teamId,
+        startYear: year,
+        salary: 1_000_000,
+      }),
+    }).state;
+
+    const otherContractId = asContractId("contract_elsewhere");
+    const otherTeamId = asTeamId(
+      Object.keys(state.world.teams).find((id) => id !== teamId)!,
+    );
+    const raced: GameState = {
+      ...offered,
+      business: {
+        ...offered.business,
+        contracts: {
+          ...offered.business.contracts,
+          [otherContractId]: createContract({
+            id: otherContractId,
+            playerId,
+            teamId: otherTeamId,
+            startYear: year,
+            endYear: year,
+            salaryByYear: { [String(year)]: 1_500_000 },
+          }),
+        },
+      },
+      world: {
+        ...offered.world,
+        players: {
+          ...offered.world.players,
+          [playerId]: {
+            ...offered.world.players[playerId]!,
+            teamId: otherTeamId,
+            contractId: otherContractId,
+          },
+        },
+        teams: {
+          ...offered.world.teams,
+          [otherTeamId]: {
+            ...offered.world.teams[otherTeamId]!,
+            roster: [
+              ...offered.world.teams[otherTeamId]!.roster,
+              playerId,
+            ],
+          },
+        },
+      },
+    };
+
+    const staleResult = acceptOffer(raced, offerId);
+    expect(staleResult.state.business.freeAgency.offers[offerId]!.status).toBe(
+      "withdrawn",
+    );
+    expect(
+      staleResult.events.some((e) => e.type === "FreeAgencyOfferInvalidated"),
+    ).toBe(true);
+    expect(staleResult.state.world.players[playerId]!.contractId).toBe(
+      otherContractId,
+    );
+    expect(() => validateGameState(staleResult.state)).not.toThrow();
   });
 });

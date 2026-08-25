@@ -14,6 +14,8 @@ import {
   exerciseOwnerTeamOption,
   finishFreeAgency,
   beginOffseason,
+  letAiHandlePhaseAndAdvance,
+  continuePastPhaseAnyway,
   fireOwnerStaff,
   hireOwnerStaff,
   loadOwnerSave,
@@ -155,6 +157,32 @@ export async function advanceUntilPhaseAction(
     days: 400,
     stopOnPhaseChange: true,
   });
+  if (!result.ok) {
+    redirectWithError(path, result.error);
+  }
+  revalidateOwner(saveId);
+  redirect(path);
+}
+
+export async function letAiHandlePhaseAction(
+  formData: FormData,
+): Promise<void> {
+  const saveId = String(formData.get("saveId") ?? "");
+  const path = returnPath(formData, saveId);
+  const result = await letAiHandlePhaseAndAdvance(saveId);
+  if (!result.ok) {
+    redirectWithError(path, result.error);
+  }
+  revalidateOwner(saveId);
+  redirect(path);
+}
+
+export async function continuePastPhaseAction(
+  formData: FormData,
+): Promise<void> {
+  const saveId = String(formData.get("saveId") ?? "");
+  const path = returnPath(formData, saveId);
+  const result = await continuePastPhaseAnyway(saveId);
   if (!result.ok) {
     redirectWithError(path, result.error);
   }

@@ -215,6 +215,8 @@ describe("season lifecycle", () => {
           phase: "preseason",
           offseasonStage: "none",
           regularSeasonStartDate: null,
+          offseasonStageEnteredDate: null,
+          freeAgencyExtendedUntil: null,
         },
         schedule: { seasonId, gameIds: [] },
         games: {},
@@ -241,6 +243,8 @@ describe("season lifecycle", () => {
         notifications: [],
         eventLog: [],
         appliedGameplayConsequenceKeys: {},
+        explicitDecisions: {},
+        phaseSkips: [],
         narrative: { situations: [], snapshots: [], cooldowns: {} },
       },
     };

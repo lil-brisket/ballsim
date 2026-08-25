@@ -95,7 +95,20 @@ function createEightTeamPopulatedState(rngSeed: number): GameState {
         playInEnabled: false,
       },
       simulation: { frequency: "daily" },
-      ai: { difficulty: "normal" },
+      ai: {
+        difficulty: "normal",
+        managementMode: "smart_assist",
+        assistance: {
+          freeAgency: "inherit",
+          draft: "inherit",
+          contracts: "inherit",
+          rosterFilling: "inherit",
+          rotations: "inherit",
+          staffHiring: "inherit",
+          trades: "inherit",
+          injuryReplacement: "inherit",
+        },
+      },
       financialRules: {
         salaryCapEnabled: true,
         luxuryTaxEnabled: true,
@@ -107,6 +120,9 @@ function createEightTeamPopulatedState(rngSeed: number): GameState {
         randomizeUserPick: false,
       },
       history: { mode: "new" },
+      offseason: {
+        freeAgency: { durationDays: 30, allowExtension: true },
+      },
     },
     world: {
       calendar: {
@@ -133,6 +149,8 @@ function createEightTeamPopulatedState(rngSeed: number): GameState {
         phase: "preseason",
         offseasonStage: "none",
         regularSeasonStartDate: null,
+        offseasonStageEnteredDate: null,
+        freeAgencyExtendedUntil: null,
       },
       schedule: {
         seasonId,
@@ -162,6 +180,8 @@ function createEightTeamPopulatedState(rngSeed: number): GameState {
       notifications: [],
       eventLog: [],
       appliedGameplayConsequenceKeys: {},
+      explicitDecisions: {},
+      phaseSkips: [],
       narrative: { situations: [], snapshots: [], cooldowns: {} },
     },
   };

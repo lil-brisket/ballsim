@@ -37,7 +37,7 @@ import type { GameSettings } from "@/domain/game-settings";
 import type { DomainEvent } from "@/domain/events";
 import type { SaveId, TeamId } from "@/domain/ids";
 
-export const GAME_STATE_SCHEMA_VERSION = 36;
+export const GAME_STATE_SCHEMA_VERSION = 37;
 
 /** Bounded recent history for Owner Mode activity / transactions UI. */
 export const EVENT_LOG_MAX = 1_000;
@@ -138,6 +138,13 @@ export type UserSlice = {
   eventLog: DomainEvent[];
   /** Deterministic keys for applied gameplay/AI consequences (idempotency). */
   appliedGameplayConsequenceKeys: Record<string, true>;
+  /**
+   * Explicit owner decisions AI continuity must not override
+   * (e.g. declined_fa:${playerId}).
+   */
+  explicitDecisions: Record<string, true>;
+  /** Recorded phase skips when the owner continues past unresolved decisions. */
+  phaseSkips: Array<{ phaseKey: string; skippedOn: string; reason: string }>;
   /** Owner narrative situations, month snapshots, and cooldowns. */
   narrative: NarrativeState;
 };
