@@ -15,6 +15,10 @@ import type { Game } from "@/domain/entities/game";
 import type { GameArchive } from "@/domain/entities/game-archive";
 import type { League } from "@/domain/entities/league";
 import type { LeagueEconomy } from "@/domain/entities/league-economy";
+import type {
+  OwnerDecisionRecord,
+  PendingOwnerDecision,
+} from "@/domain/entities/owner-decision";
 import type { OwnerNotification } from "@/domain/entities/owner-notification";
 import type { OwnerObjective } from "@/domain/entities/owner-objective";
 import type { OwnerPhilosophy } from "@/domain/entities/owner-philosophy";
@@ -37,7 +41,7 @@ import type { GameSettings } from "@/domain/game-settings";
 import type { DomainEvent } from "@/domain/events";
 import type { SaveId, TeamId } from "@/domain/ids";
 
-export const GAME_STATE_SCHEMA_VERSION = 39;
+export const GAME_STATE_SCHEMA_VERSION = 40;
 
 /** Bounded recent history for Owner Mode activity / transactions UI. */
 export const EVENT_LOG_MAX = 1_000;
@@ -149,6 +153,13 @@ export type UserSlice = {
    * User-franchise AI assist cooldowns, season counters, and resolved-need fingerprints.
    */
   aiAssistState: AiAssistRuntimeState;
+  /**
+   * At most one active owner decision that pauses simulation
+   * (e.g. incoming trade offer).
+   */
+  pendingOwnerDecisions: PendingOwnerDecision[];
+  /** Bounded history of resolved owner decisions + rejection fingerprints. */
+  ownerDecisionHistory: OwnerDecisionRecord[];
   /** Owner narrative situations, month snapshots, and cooldowns. */
   narrative: NarrativeState;
 };

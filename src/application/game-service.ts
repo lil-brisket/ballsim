@@ -11,6 +11,7 @@ import {
   asContractId,
   asNarrativeSituationId,
   asOfferId,
+  asOwnerDecisionId,
   asPlayerId,
   asSponsorshipId,
   asStaffId,
@@ -176,6 +177,11 @@ import {
   getTradeBlock,
   type TradeFinderCandidate,
 } from "@/systems/trades";
+import {
+  getActiveOwnerDecision,
+  hasActiveOwnerDecision,
+  resolvePendingOwnerDecision,
+} from "@/systems/owner-decisions";
 import { PLAYER_POSITIONS, type PlayerPosition } from "@/domain/entities/player";
 import { bootstrapWorld } from "@/systems/world-pipeline";
 
@@ -678,6 +684,12 @@ export async function advanceOwnerTime(
   let rngState = loaded.state.meta.rngState;
   const preEvents: DomainEvent[] = [];
 
+  if (hasActiveOwnerDecision(workingState.user)) {
+    return fail(
+      "Cannot advance time while an owner decision is pending. Accept, decline, or ask AI first.",
+    );
+  }
+
   if (isUserOnDraftClock(workingState)) {
     if (!canAiExecute(workingState.settings, "DRAFT_PICK")) {
       return fail(
@@ -899,6 +911,136 @@ export async function executeOwnerTrade(
       rng.getState(),
       saveStore,
       executed.events,
+    );
+    return withDashboard(saved);
+  } catch (error) {
+    return fail(error instanceof Error ? error.message : String(error));
+  }
+}
+
+/**
+ * Accept a pending owner trade offer. Idempotent if already resolved.
+ */
+export async function acceptOwnerDecision(
+  saveId: string,
+  decisionId: string,
+  store?: SaveGameStore,
+): Promise<OwnerCommandResult> {
+  return resolveOwnerTradeDecision(saveId, decisionId, "accept", "owner", store);
+}
+
+/**
+ * Decline a pending owner trade offer. Idempotent if already resolved.
+ */
+export async function declineOwnerDecision(
+  saveId: string,
+  decisionId: string,
+  store?: SaveGameStore,
+): Promise<OwnerCommandResult> {
+  return resolveOwnerTradeDecision(saveId, decisionId, "decline", "owner", store);
+}
+
+/**
+ * Ask AI to accept/decline using evaluateTradeOffer for the user team.
+ */
+export async function delegateOwnerDecisionToAi(
+  saveId: string,
+  decisionId: string,
+  store?: SaveGameStore,
+): Promise<OwnerCommandResult> {
+  return resolveOwnerTradeDecision(
+    saveId,
+    decisionId,
+    "ask_ai",
+    "owner_ai",
+    store,
+  );
+}
+
+async function resolveOwnerTradeDecision(
+  saveId: string,
+  decisionIdRaw: string,
+  mode: "accept" | "decline" | "ask_ai",
+  decisionSource: "owner" | "owner_ai",
+  store?: SaveGameStore,
+): Promise<OwnerCommandResult> {
+  const saveStore = getStore(store);
+  const loaded = await saveStore.load(saveId);
+  if (!loaded) {
+    return fail("Save not found.");
+  }
+
+  const decisionId = asOwnerDecisionId(decisionIdRaw);
+  const pending = getActiveOwnerDecision(loaded.state.user);
+  if (!pending || pending.id !== decisionId) {
+    if (
+      loaded.state.user.ownerDecisionHistory.some((r) => r.id === decisionId)
+    ) {
+      return withDashboard(loaded);
+    }
+    return fail("No matching pending owner decision.");
+  }
+
+  if (pending.type !== "trade_offer") {
+    return fail("Unsupported owner decision type.");
+  }
+
+  let working = loaded.state;
+  const events: DomainEvent[] = [];
+  let shouldExecute = false;
+  let historyStatus: "accepted" | "declined" | "delegated";
+
+  if (mode === "accept") {
+    shouldExecute = true;
+    historyStatus = "accepted";
+  } else if (mode === "decline") {
+    shouldExecute = false;
+    historyStatus = "declined";
+  } else {
+    const evaluation = evaluateTradeOffer(
+      working,
+      working.user.controlledTeamId,
+      pending.payload.proposal,
+    );
+    shouldExecute = evaluation.accepted;
+    historyStatus = "delegated";
+  }
+
+  if (shouldExecute) {
+    const executed = executeTrade(working, pending.payload.proposal);
+    if (!executed.success) {
+      return fail(
+        executed.validation.errors[0]?.message ?? "Trade validation failed.",
+      );
+    }
+    working = recordOwnershipEvidence(
+      executed.state,
+      scoreTradeDecision(working, pending.payload.proposal),
+    );
+    events.push(...executed.events);
+  }
+
+  // Declines (owner or AI reject) get fingerprint cooldown via declined status.
+  const resolveStatus =
+    mode === "ask_ai" && !shouldExecute ? "declined" : historyStatus;
+
+  const resolved = resolvePendingOwnerDecision(working, {
+    decisionId,
+    status: resolveStatus,
+    decisionSource,
+  });
+  working = resolved.state;
+
+  // Preserve "delegated" in history when Ask AI accepted (executed).
+  // When Ask AI rejected we stored declined for cooldown; annotate source already set.
+
+  try {
+    const saved = await persistWorkingState(
+      saveId,
+      working,
+      loaded.state.meta.rngState,
+      saveStore,
+      events,
     );
     return withDashboard(saved);
   } catch (error) {

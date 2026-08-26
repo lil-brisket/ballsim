@@ -20,6 +20,10 @@ export type AdvanceSimulationResult = {
   gamesSimulated: number;
   weeklyPipelineRan: boolean;
   monthlyPipelineRan: boolean;
+  /** Whether the requested advance finished or paused early. */
+  status: "completed" | "paused";
+  /** Why the advance paused (omit when completed). */
+  stopReason?: "pending_owner_decision" | "phase_change";
 };
 
 /** Progress snapshot emitted during long advances (UI / benchmarks). */

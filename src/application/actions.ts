@@ -16,6 +16,9 @@ import {
   beginOffseason,
   letAiHandlePhaseAndAdvance,
   continuePastPhaseAnyway,
+  acceptOwnerDecision,
+  declineOwnerDecision,
+  delegateOwnerDecisionToAi,
   fireOwnerStaff,
   hireOwnerStaff,
   loadOwnerSave,
@@ -183,6 +186,48 @@ export async function continuePastPhaseAction(
   const saveId = String(formData.get("saveId") ?? "");
   const path = returnPath(formData, saveId);
   const result = await continuePastPhaseAnyway(saveId);
+  if (!result.ok) {
+    redirectWithError(path, result.error);
+  }
+  revalidateOwner(saveId);
+  redirect(path);
+}
+
+export async function acceptOwnerDecisionAction(
+  formData: FormData,
+): Promise<void> {
+  const saveId = String(formData.get("saveId") ?? "");
+  const decisionId = String(formData.get("decisionId") ?? "");
+  const path = returnPath(formData, saveId);
+  const result = await acceptOwnerDecision(saveId, decisionId);
+  if (!result.ok) {
+    redirectWithError(path, result.error);
+  }
+  revalidateOwner(saveId);
+  redirect(path);
+}
+
+export async function declineOwnerDecisionAction(
+  formData: FormData,
+): Promise<void> {
+  const saveId = String(formData.get("saveId") ?? "");
+  const decisionId = String(formData.get("decisionId") ?? "");
+  const path = returnPath(formData, saveId);
+  const result = await declineOwnerDecision(saveId, decisionId);
+  if (!result.ok) {
+    redirectWithError(path, result.error);
+  }
+  revalidateOwner(saveId);
+  redirect(path);
+}
+
+export async function askAiOwnerDecisionAction(
+  formData: FormData,
+): Promise<void> {
+  const saveId = String(formData.get("saveId") ?? "");
+  const decisionId = String(formData.get("decisionId") ?? "");
+  const path = returnPath(formData, saveId);
+  const result = await delegateOwnerDecisionToAi(saveId, decisionId);
   if (!result.ok) {
     redirectWithError(path, result.error);
   }

@@ -52,6 +52,10 @@ import {
   generateAiTradeProposal,
   getTradeBlock,
 } from "@/systems/trades";
+import {
+  getActiveOwnerDecision,
+  tryEnqueueCpuToUserTradeOffer,
+} from "@/systems/owner-decisions";
 
 const REQUIRED_POSITIONS: readonly PlayerPosition[] = PLAYER_POSITIONS;
 
@@ -269,6 +273,8 @@ function runAiTrades(state: GameState): SystemResult {
     .filter((teamId) => !isUserControlledTeam(current, teamId))
     .sort((a, b) => (a < b ? -1 : a > b ? 1 : 0));
 
+  let queuedUserOffer = false;
+
   for (const teamId of teamIds) {
     const resolved = resolveFranchisePreferences(current, teamId);
     const prefs = resolved?.preferences;
@@ -300,6 +306,18 @@ function runAiTrades(state: GameState): SystemResult {
       current = ensureSurplusOnBlock(current, teamId, prefs);
     }
 
+    // Prefer a meaningful offer to the user when none is already pending.
+    if (!queuedUserOffer && !getActiveOwnerDecision(current.user)) {
+      const userOffer = tryEnqueueCpuToUserTradeOffer(current, teamId);
+      if (userOffer.outcome === "queued") {
+        current = userOffer.state;
+        queuedUserOffer = true;
+        // Continue scanning for a possible CPU↔CPU trade the same day;
+        // user offer already caps further user-facing queues.
+        continue;
+      }
+    }
+
     const proposal = generateAiTradeProposal(current, teamId);
     if (proposal === undefined) {
       continue;
@@ -308,6 +326,7 @@ function runAiTrades(state: GameState): SystemResult {
       isUserControlledTeam(current, proposal.sideA.teamId) ||
       isUserControlledTeam(current, proposal.sideB.teamId)
     ) {
+      // User-involved proposals from the block finder are not auto-executed.
       continue;
     }
 

@@ -183,6 +183,17 @@ export type OwnerDashboardFlags = {
   isNewFranchise: boolean;
   /** Season Review checkpoint — time advance blocked until beginOffseason. */
   seasonReviewPending: boolean;
+  /** Incoming owner decision (e.g. trade offer) pauses simulation. */
+  pendingOwnerDecision: boolean;
+};
+
+export type OwnerDashboardPendingTradeOffer = {
+  decisionId: string;
+  offeringTeamId: string;
+  offeringTeamName: string;
+  createdOn: string;
+  youReceive: string[];
+  theyReceive: string[];
 };
 
 export type OwnerDashboardSeasonRecap = {
@@ -246,6 +257,8 @@ export type OwnerDashboardView = {
   notifications: NotificationView[];
   activity: EventLogEntryView[];
   flags: OwnerDashboardFlags;
+  /** Active trade offer requiring Accept / Decline / Ask AI, if any. */
+  pendingTradeOffer: OwnerDashboardPendingTradeOffer | null;
   situations: OwnerDashboardSituationView[];
   simulationPhase: SimulationPhaseContext;
   phaseResponsibility: PhaseResponsibility;
@@ -336,6 +349,7 @@ export function toOwnerDashboardView(state: GameState): OwnerDashboardView {
   const insights = buildInsights(canonical, health, team);
   const owner = buildOwner(canonical, actionItems, health);
   const flags = buildFlags(canonical);
+  const pendingTradeOffer = buildPendingTradeOfferView(state);
   const situations = buildSituationsView(state);
   const seasonRecap =
     calendar.lifecyclePhase === "postseason"
@@ -415,6 +429,7 @@ export function toOwnerDashboardView(state: GameState): OwnerDashboardView {
     notifications,
     activity,
     flags,
+    pendingTradeOffer,
     situations,
     simulationPhase,
     phaseResponsibility,
@@ -645,7 +660,63 @@ function buildFlags(data: CanonicalDashboardData): OwnerDashboardFlags {
         data.snapshot.controlledStanding.losses ===
         0,
     seasonReviewPending: data.state.competition.season.phase === "postseason",
+    pendingOwnerDecision: data.state.user.pendingOwnerDecisions.length > 0,
   };
+}
+
+function buildPendingTradeOfferView(
+  state: GameState,
+): OwnerDashboardPendingTradeOffer | null {
+  const pending = state.user.pendingOwnerDecisions.find(
+    (d) => d.type === "trade_offer",
+  );
+  if (!pending) {
+    return null;
+  }
+  const offeringTeam = state.world.teams[pending.payload.offeringTeamId];
+  const userTeamId = pending.payload.userTeamId;
+  const proposal = pending.payload.proposal;
+  const offeringSide =
+    proposal.sideA.teamId === pending.payload.offeringTeamId
+      ? proposal.sideA
+      : proposal.sideB;
+  const userSide =
+    proposal.sideA.teamId === userTeamId ? proposal.sideA : proposal.sideB;
+
+  return {
+    decisionId: pending.id,
+    offeringTeamId: pending.payload.offeringTeamId,
+    offeringTeamName: offeringTeam
+      ? `${offeringTeam.city} ${offeringTeam.name}`
+      : pending.payload.offeringTeamId,
+    createdOn: pending.createdOn,
+    youReceive: describeTradeSideAssets(state, offeringSide),
+    theyReceive: describeTradeSideAssets(state, userSide),
+  };
+}
+
+function describeTradeSideAssets(
+  state: GameState,
+  side: { playerIds: string[]; draftPickIds: string[] },
+): string[] {
+  const labels: string[] = [];
+  for (const playerId of side.playerIds) {
+    const player = state.world.players[playerId];
+    labels.push(
+      player
+        ? `${player.firstName} ${player.lastName}`
+        : `Player ${playerId}`,
+    );
+  }
+  for (const pickId of side.draftPickIds) {
+    const pick = state.world.draftPicks[pickId];
+    labels.push(
+      pick
+        ? `${pick.seasonYear} Round ${pick.round} pick`
+        : `Pick ${pickId}`,
+    );
+  }
+  return labels;
 }
 
 function buildSeasonRecap(

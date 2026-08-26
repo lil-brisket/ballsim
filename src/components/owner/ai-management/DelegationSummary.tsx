@@ -88,7 +88,10 @@ export function DelegationSummary({
             You handle
           </p>
           {youCategories.length === 0 ? (
-            <p className="mt-1 text-zinc-500">Nothing (all delegated)</p>
+            <p className="mt-1 text-zinc-500">
+              All areas delegated during simulation — you can still override
+              any AI move manually
+            </p>
           ) : (
             <ul className="mt-1 list-inside list-disc text-zinc-400">
               {youCategories.map((id) => (
@@ -112,7 +115,7 @@ export function DelegationSummary({
             <div className="mt-2 grid gap-3 sm:grid-cols-2">
               <div>
                 <p className="text-xs uppercase tracking-wide text-zinc-500">
-                  Delegated
+                  Delegated during simulation
                 </p>
                 <ul className="mt-1 list-inside list-disc text-zinc-400">
                   {aiPhases.map((phase) => (
@@ -128,7 +131,9 @@ export function DelegationSummary({
                 </p>
                 <ul className="mt-1 list-inside list-disc text-zinc-400">
                   {youPhases.length === 0 ? (
-                    <li>Nothing</li>
+                    <li>
+                      Manual overrides anytime — AI only acts during simulation
+                    </li>
                   ) : (
                     youPhases.map((phase) => (
                       <li key={phase}>

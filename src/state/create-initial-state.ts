@@ -229,6 +229,8 @@ export function createInitialGameState(
         resolvedNeeds: {},
         seasonCounters: { ...EMPTY_AI_ASSIST_STATE.seasonCounters },
       },
+      pendingOwnerDecisions: [],
+      ownerDecisionHistory: [],
       narrative: { situations: [], snapshots: [], cooldowns: {} },
     },
   };
@@ -506,6 +508,8 @@ export function createFourTeamInitialGameState(
         resolvedNeeds: {},
         seasonCounters: { ...EMPTY_AI_ASSIST_STATE.seasonCounters },
       },
+      pendingOwnerDecisions: [],
+      ownerDecisionHistory: [],
       narrative: { situations: [], snapshots: [], cooldowns: {} },
     },
   };

@@ -718,6 +718,46 @@ export function validateGameState(state: unknown): asserts state is GameState {
     }
   }
 
+  if (
+    !("pendingOwnerDecisions" in user) ||
+    !Array.isArray(user.pendingOwnerDecisions)
+  ) {
+    fail("user.pendingOwnerDecisions must be an array.");
+  } else if ((user.pendingOwnerDecisions as unknown[]).length > 1) {
+    fail("user.pendingOwnerDecisions may contain at most one active decision.");
+  } else {
+    for (
+      let index = 0;
+      index < (user.pendingOwnerDecisions as unknown[]).length;
+      index += 1
+    ) {
+      validatePendingOwnerDecision(
+        (user.pendingOwnerDecisions as unknown[])[index],
+        `user.pendingOwnerDecisions[${index}]`,
+        fail,
+      );
+    }
+  }
+
+  if (
+    !("ownerDecisionHistory" in user) ||
+    !Array.isArray(user.ownerDecisionHistory)
+  ) {
+    fail("user.ownerDecisionHistory must be an array.");
+  } else {
+    for (
+      let index = 0;
+      index < (user.ownerDecisionHistory as unknown[]).length;
+      index += 1
+    ) {
+      validateOwnerDecisionRecord(
+        (user.ownerDecisionHistory as unknown[])[index],
+        `user.ownerDecisionHistory[${index}]`,
+        fail,
+      );
+    }
+  }
+
   if (!("narrative" in user) || user.narrative == null) {
     fail("user.narrative is required.");
   }
@@ -2449,3 +2489,113 @@ function validateScheduledEvents(events: unknown): void {
     assertRecord(value.payload, `${path}.payload`);
   }
 }
+
+function validatePendingOwnerDecision(
+  value: unknown,
+  path: string,
+  failFn: (message: string) => never,
+): void {
+  if (value === null || typeof value !== "object" || Array.isArray(value)) {
+    failFn(`${path} must be an object.`);
+  }
+  const decision = value as Record<string, unknown>;
+  assertNonEmptyString(decision.id, `${path}.id`);
+  if (decision.type !== "trade_offer") {
+    failFn(`${path}.type must be "trade_offer".`);
+  }
+  assertNonEmptyString(decision.createdOn, `${path}.createdOn`);
+  parseCalendarDate(decision.createdOn as string);
+  validateTradeOfferDecisionPayload(decision.payload, `${path}.payload`, failFn);
+}
+
+function validateOwnerDecisionRecord(
+  value: unknown,
+  path: string,
+  failFn: (message: string) => never,
+): void {
+  if (value === null || typeof value !== "object" || Array.isArray(value)) {
+    failFn(`${path} must be an object.`);
+  }
+  const record = value as Record<string, unknown>;
+  assertNonEmptyString(record.id, `${path}.id`);
+  if (record.type !== "trade_offer") {
+    failFn(`${path}.type must be "trade_offer".`);
+  }
+  if (
+    record.status !== "accepted" &&
+    record.status !== "declined" &&
+    record.status !== "delegated"
+  ) {
+    failFn(
+      `${path}.status must be one of accepted, declined, delegated.`,
+    );
+  }
+  if (record.decisionSource !== "owner" && record.decisionSource !== "owner_ai") {
+    failFn(`${path}.decisionSource must be "owner" or "owner_ai".`);
+  }
+  assertNonEmptyString(record.createdOn, `${path}.createdOn`);
+  parseCalendarDate(record.createdOn as string);
+  assertNonEmptyString(record.resolvedOn, `${path}.resolvedOn`);
+  parseCalendarDate(record.resolvedOn as string);
+  assertNonEmptyString(record.fingerprint, `${path}.fingerprint`);
+  if (record.expiresOn !== undefined) {
+    assertNonEmptyString(record.expiresOn, `${path}.expiresOn`);
+    parseCalendarDate(record.expiresOn as string);
+  }
+  validateTradeOfferDecisionPayload(record.payload, `${path}.payload`, failFn);
+}
+
+function validateTradeOfferDecisionPayload(
+  value: unknown,
+  path: string,
+  failFn: (message: string) => never,
+): void {
+  if (value === null || typeof value !== "object" || Array.isArray(value)) {
+    failFn(`${path} must be an object.`);
+  }
+  const payload = value as Record<string, unknown>;
+  assertNonEmptyString(payload.offeringTeamId, `${path}.offeringTeamId`);
+  assertNonEmptyString(payload.userTeamId, `${path}.userTeamId`);
+  assertNonEmptyString(payload.fingerprint, `${path}.fingerprint`);
+  if (
+    payload.proposal === null ||
+    typeof payload.proposal !== "object" ||
+    Array.isArray(payload.proposal)
+  ) {
+    failFn(`${path}.proposal must be an object.`);
+  }
+  const proposal = payload.proposal as Record<string, unknown>;
+  validateTradeSide(proposal.sideA, `${path}.proposal.sideA`, failFn);
+  validateTradeSide(proposal.sideB, `${path}.proposal.sideB`, failFn);
+}
+
+function validateTradeSide(
+  value: unknown,
+  path: string,
+  failFn: (message: string) => never,
+): void {
+  if (value === null || typeof value !== "object" || Array.isArray(value)) {
+    failFn(`${path} must be an object.`);
+  }
+  const side = value as Record<string, unknown>;
+  assertNonEmptyString(side.teamId, `${path}.teamId`);
+  if (!Array.isArray(side.playerIds)) {
+    failFn(`${path}.playerIds must be an array.`);
+  }
+  if (!Array.isArray(side.draftPickIds)) {
+    failFn(`${path}.draftPickIds must be an array.`);
+  }
+  for (let i = 0; i < (side.playerIds as unknown[]).length; i += 1) {
+    assertNonEmptyString(
+      (side.playerIds as unknown[])[i],
+      `${path}.playerIds[${i}]`,
+    );
+  }
+  for (let i = 0; i < (side.draftPickIds as unknown[]).length; i += 1) {
+    assertNonEmptyString(
+      (side.draftPickIds as unknown[])[i],
+      `${path}.draftPickIds[${i}]`,
+    );
+  }
+}
+

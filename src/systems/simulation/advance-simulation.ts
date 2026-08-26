@@ -1,6 +1,7 @@
 import { getCalendarMonthId, getIsoWeekId } from "@/domain/calendar-date";
 import type { DomainEvent } from "@/domain/events";
 import type { Rng } from "@/domain/rng";
+import { hasActiveOwnerDecision } from "@/domain/entities/owner-decision";
 import type { GameState } from "@/state/game-state";
 import { advanceCalendar } from "@/systems/calendar";
 import { generateRosters } from "@/systems/roster-generation";
@@ -48,6 +49,9 @@ import type { SimulationProfiler } from "@/systems/simulation/simulation-profile
  * When `stopOnPhaseChange` is true, stops immediately after the first day
  * that changes `{ phase, offseasonStage, year, seasonSegment }`. Never bypasses lifecycle.
  *
+ * After each completed day, stops if an active owner decision is pending
+ * (e.g. incoming trade offer). Never interrupts mid-pipeline.
+ *
  * Callers must persist rng.getState() into meta.rngState after this runs.
  */
 export function advanceSimulation(
@@ -72,6 +76,7 @@ export function advanceSimulation(
   let weeklyPipelineRan = false;
   let monthlyPipelineRan = false;
   let daysAdvanced = 0;
+  let stopReason: AdvanceSimulationResult["stopReason"];
 
   for (let dayIndex = 0; dayIndex < days; dayIndex += 1) {
     const dayResult = advanceOneDay(current, rng, options.profiler);
@@ -97,15 +102,25 @@ export function advanceSimulation(
       options.onProgress(progress);
     }
 
+    // Owner decisions pause only after a fully completed day.
+    if (hasActiveOwnerDecision(current.user)) {
+      stopReason = "pending_owner_decision";
+      break;
+    }
+
     if (
       options.stopOnPhaseChange &&
       lifecycleIdentity(current) !== identityBefore
     ) {
+      stopReason = "phase_change";
       break;
     }
   }
 
   const phaseAfter = current.competition.season.phase;
+  const status: AdvanceSimulationResult["status"] = stopReason
+    ? "paused"
+    : "completed";
 
   return {
     state: current,
@@ -120,6 +135,8 @@ export function advanceSimulation(
     gamesSimulated,
     weeklyPipelineRan,
     monthlyPipelineRan,
+    status,
+    ...(stopReason ? { stopReason } : {}),
   };
 }
 

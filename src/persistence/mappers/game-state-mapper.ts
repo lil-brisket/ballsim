@@ -162,10 +162,11 @@ const MIGRATE_ONE_STEP: Record<number, (state: unknown) => unknown> = {
   36: (state) => migrateV36ToV37(state as GameStateV36),
   37: (state) => migrateV37ToV38(state as GameStateV37),
   38: (state) => migrateV38ToV39(state as GameStateV38),
+  39: (state) => migrateV39ToV40(state as GameStateV39),
 };
 
 /**
- * Parse → migrate (v1–v38 → current) → validate → return GameState.
+ * Parse → migrate (v1–v39 → current) → validate → return GameState.
  * Does not call serializeGameState.
  */
 export function deserializeGameState(stateJson: string): GameState {
@@ -2931,7 +2932,30 @@ type GameStateV38 = {
   world: GameState["world"];
   competition: GameState["competition"];
   business: GameState["business"];
-  user: GameState["user"];
+  user: Omit<
+    GameState["user"],
+    "pendingOwnerDecisions" | "ownerDecisionHistory"
+  > & {
+    pendingOwnerDecisions?: GameState["user"]["pendingOwnerDecisions"];
+    ownerDecisionHistory?: GameState["user"]["ownerDecisionHistory"];
+  };
+};
+
+type GameStateV39 = {
+  meta: Omit<GameState["meta"], "schemaVersion"> & {
+    schemaVersion: 39;
+  };
+  settings: GameState["settings"];
+  world: GameState["world"];
+  competition: GameState["competition"];
+  business: GameState["business"];
+  user: Omit<
+    GameState["user"],
+    "pendingOwnerDecisions" | "ownerDecisionHistory"
+  > & {
+    pendingOwnerDecisions?: GameState["user"]["pendingOwnerDecisions"];
+    ownerDecisionHistory?: GameState["user"]["ownerDecisionHistory"];
+  };
 };
 
 /**
@@ -3116,7 +3140,7 @@ function migrateV37ToV38(state: GameStateV37): GameStateV38 {
  * Deterministic v38 → v39: make assistance canonical for delegation UI.
  * Preserves exact phase modes (no upgrade to full). Preset kept for audit only.
  */
-function migrateV38ToV39(state: GameStateV38): GameState {
+function migrateV38ToV39(state: GameStateV38): GameStateV39 {
   const assistance = resolveAssistancePhasesLegacy(
     state.settings.ai.managementPreset,
     state.settings.ai.assistance,
@@ -3136,6 +3160,24 @@ function migrateV38ToV39(state: GameStateV38): GameState {
         managementPreset: state.settings.ai.managementPreset,
         assistance,
       },
+    },
+  };
+}
+
+/**
+ * Deterministic v39 → v40: owner decision queue + history for sim interrupts.
+ */
+function migrateV39ToV40(state: GameStateV39): GameState {
+  return {
+    ...state,
+    meta: {
+      ...state.meta,
+      schemaVersion: 40,
+    },
+    user: {
+      ...state.user,
+      pendingOwnerDecisions: state.user.pendingOwnerDecisions ?? [],
+      ownerDecisionHistory: state.user.ownerDecisionHistory ?? [],
     },
   };
 }

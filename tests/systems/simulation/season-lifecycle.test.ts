@@ -254,6 +254,8 @@ describe("season lifecycle", () => {
             freeAgentSignings: 0,
           },
         },
+        pendingOwnerDecisions: [],
+        ownerDecisionHistory: [],
         narrative: { situations: [], snapshots: [], cooldowns: {} },
       },
     };

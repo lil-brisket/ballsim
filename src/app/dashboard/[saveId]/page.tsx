@@ -14,6 +14,7 @@ import { DashboardNotifications } from "@/components/owner/dashboard/DashboardNo
 import { FranchiseHealthPanel } from "@/components/owner/dashboard/FranchiseHealthPanel";
 import { FranchiseSituations } from "@/components/owner/dashboard/FranchiseSituations";
 import { OwnerPanel } from "@/components/owner/dashboard/OwnerPanel";
+import { PendingOwnerDecisionPanel } from "@/components/owner/dashboard/PendingOwnerDecisionPanel";
 import { RecentActivity } from "@/components/owner/dashboard/RecentActivity";
 import { TeamDecisionPanel } from "@/components/owner/dashboard/TeamDecisionPanel";
 import { ErrorState } from "@/components/owner/EmptyState";
@@ -38,7 +39,9 @@ export default async function DashboardPage({
   const { save, ownerDashboard: dash, settings } = view;
   const returnPath = `/dashboard/${saveId}`;
   const timeDisabled =
-    dash.flags.userOnDraftClock || dash.flags.seasonReviewPending;
+    dash.flags.userOnDraftClock ||
+    dash.flags.seasonReviewPending ||
+    dash.flags.pendingOwnerDecision;
   const phase = dash.simulationPhase;
   const unresolvedWarning =
     phase.unresolvedDecisionCount > 0 && phase.responsibility === "unresolved"
@@ -87,6 +90,14 @@ export default async function DashboardPage({
       />
 
       {error ? <ErrorState message={error} /> : null}
+
+      {dash.pendingTradeOffer ? (
+        <PendingOwnerDecisionPanel
+          saveId={saveId}
+          returnPath={returnPath}
+          offer={dash.pendingTradeOffer}
+        />
+      ) : null}
 
       <SimulationPhaseBanner
         phase={phase}

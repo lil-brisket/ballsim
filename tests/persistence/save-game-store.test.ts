@@ -195,6 +195,8 @@ function createEightTeamPopulatedState(rngSeed: number): GameState {
           freeAgentSignings: 0,
         },
       },
+      pendingOwnerDecisions: [],
+      ownerDecisionHistory: [],
       narrative: { situations: [], snapshots: [], cooldowns: {} },
     },
   };

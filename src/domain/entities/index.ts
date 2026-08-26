@@ -194,6 +194,23 @@ export type {
 } from "@/domain/entities/trade-proposal";
 export { tradeSideAssetCount } from "@/domain/entities/trade-proposal";
 export type {
+  OwnerDecisionRecord,
+  OwnerDecisionSource,
+  OwnerDecisionStatus,
+  OwnerDecisionType,
+  PendingOwnerDecision,
+  TradeOfferDecisionPayload,
+} from "@/domain/entities/owner-decision";
+export {
+  OWNER_DECISION_HISTORY_MAX,
+  TRADE_OFFER_REJECTION_COOLDOWN_DAYS,
+  assetsRelativeToUser,
+  getActiveOwnerDecision,
+  getPendingTradeOffers,
+  hasActiveOwnerDecision,
+  tradeOfferFingerprint,
+} from "@/domain/entities/owner-decision";
+export type {
   FreeAgencyOffer,
   FreeAgencyOfferInput,
   FreeAgencyOfferStatus,

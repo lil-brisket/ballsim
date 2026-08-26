@@ -202,6 +202,8 @@ function createEightTeamGameState(rngSeed: number): {
           freeAgentSignings: 0,
         },
       },
+      pendingOwnerDecisions: [],
+      ownerDecisionHistory: [],
       narrative: { situations: [], snapshots: [], cooldowns: {} },
     },
   };
