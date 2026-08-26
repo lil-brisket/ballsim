@@ -33,6 +33,7 @@ export function GameHeader(props: {
             city={dashboard.controlledTeam.city}
             name={dashboard.controlledTeam.name}
             abbreviation={dashboard.controlledTeam.abbreviation}
+            branding={dashboard.controlledTeam.branding}
           />
           <div className="flex flex-wrap items-center gap-2">
             <PhaseBadge

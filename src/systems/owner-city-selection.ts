@@ -14,7 +14,6 @@ import {
 } from "@/data/league/city-locations";
 import type { LeagueArea } from "@/domain/game-settings";
 import type { TeamId } from "@/domain/ids";
-import { validateTeamNickname } from "@/domain/team-nickname";
 import type { GameState } from "@/state/game-state";
 import { uniqueTeamAbbreviation } from "@/systems/team-abbreviation";
 
@@ -45,11 +44,11 @@ function findTeamByCity(
 
 /**
  * Pure state transition for owner city selection on the new-game pick screen.
+ * Nickname customization happens on the subsequent team identity screen.
  */
 export function applyOwnerCitySelection(
   state: GameState,
   cityInput: string,
-  options?: { nickname?: string },
 ): ApplyOwnerCitySelectionResult {
   if (state.user.citySelectionConfirmed) {
     return {
@@ -89,28 +88,6 @@ export function applyOwnerCitySelection(
     };
   }
 
-  let nextName = placeholder.name;
-  if (options?.nickname !== undefined) {
-    const nick = validateTeamNickname(options.nickname, {
-      city: canonicalCity,
-      existingTeams: Object.values(state.world.teams).map((team) => ({
-        id: team.id,
-        city:
-          occupant &&
-          occupant.teamId !== placeholderId &&
-          team.id === occupant.teamId
-            ? placeholder.city
-            : team.city,
-        name: team.name,
-      })),
-      excludeTeamId: placeholderId,
-    });
-    if (!nick.ok) {
-      return { ok: false, error: nick.error };
-    }
-    nextName = nick.value;
-  }
-
   const nextTeams = { ...state.world.teams };
   const displacedId =
     occupant && occupant.teamId !== placeholderId ? occupant.teamId : null;
@@ -146,7 +123,6 @@ export function applyOwnerCitySelection(
   nextTeams[placeholderId] = {
     ...placeholder,
     city: canonicalCity,
-    name: nextName,
     abbreviation,
   };
 

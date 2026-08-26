@@ -66,7 +66,7 @@ describe("v30 → v31 migration", () => {
 
     const loaded = deserializeGameState(JSON.stringify(parsed));
     expect(loaded.meta.schemaVersion).toBe(GAME_STATE_SCHEMA_VERSION);
-    expect(GAME_STATE_SCHEMA_VERSION).toBe(41);
+    expect(GAME_STATE_SCHEMA_VERSION).toBe(42);
 
     for (const teamId of Object.keys(loaded.world.teams)) {
       const process = loaded.business.relocationByTeamId[teamId]!;

@@ -38,6 +38,11 @@ import { generateDraftPicksForSeason } from "@/domain/draft-picks/generate-draft
 import type { OffseasonStage, SeasonPhase } from "@/domain/entities/season";
 import { createDefaultOwnershipConfidence } from "@/domain/entities/ownership-confidence";
 import { createPhaseEBusinessDefaults } from "@/state/phase-e-defaults";
+import { deriveDefaultTeamBranding } from "@/systems/team-branding-generation";
+import { resolvePaletteIdFromBranding } from "@/domain/entities/team-branding";
+import { paletteLogoKey } from "@/domain/team-identity";
+import type { TeamBranding } from "@/domain/entities/team-branding";
+import type { TeamId as BrandTeamId } from "@/domain/ids";
 import { reconstructGameSettingsFromState } from "@/state/reconstruct-game-settings";
 import { generateAxesForExistingProfile } from "@/systems/franchise-identity-generation";
 import {
@@ -164,10 +169,11 @@ const MIGRATE_ONE_STEP: Record<number, (state: unknown) => unknown> = {
   38: (state) => migrateV38ToV39(state as GameStateV38),
   39: (state) => migrateV39ToV40(state as GameStateV39),
   40: (state) => migrateV40ToV41(state as GameStateV40),
+  41: (state) => migrateV41ToV42(state as GameStateV41),
 };
 
 /**
- * Parse → migrate (v1–v40 → current) → validate → return GameState.
+ * Parse → migrate (v1–current) → validate → return GameState.
  * Does not call serializeGameState.
  */
 export function deserializeGameState(stateJson: string): GameState {
@@ -1265,7 +1271,7 @@ type GameStateV12 = {
  * Does not reconstruct through createTeam or consume RNG.
  */
 function migrateV11ToV12(state: GameStateV11): GameStateV12 {
-  const teams: Record<string, Team> = Object.fromEntries(
+  const teams = Object.fromEntries(
     Object.entries(state.world.teams).map(([id, team]) => [
       id,
       {
@@ -1274,7 +1280,7 @@ function migrateV11ToV12(state: GameStateV11): GameStateV12 {
         coachingPhilosophy: { ...DEFAULT_COACHING_PHILOSOPHY },
       },
     ]),
-  );
+  ) as GameState["world"]["teams"];
 
   return {
     meta: {
@@ -3200,7 +3206,7 @@ function migrateV39ToV40(state: GameStateV39): GameStateV40 {
  * Deterministic v40 → v41: city selection confirmation flag for new-game pick.
  * Existing saves already past team pick are treated as confirmed.
  */
-function migrateV40ToV41(state: GameStateV40): GameState {
+function migrateV40ToV41(state: GameStateV40): GameStateV41 {
   const locked = state.world.calendar.lastSimulatedDate !== null;
   return {
     ...state,
@@ -3211,6 +3217,143 @@ function migrateV40ToV41(state: GameStateV40): GameState {
     user: {
       ...state.user,
       citySelectionConfirmed: state.user.citySelectionConfirmed ?? locked,
+    },
+  } as GameStateV41;
+}
+
+type TeamV41 = {
+  id: string;
+  name: string;
+  city: string;
+  abbreviation: string;
+  branding?: TeamBranding;
+  [key: string]: unknown;
+};
+
+type GameTeamSnapshotV41 = {
+  teamId: string;
+  city: string;
+  name: string;
+  abbreviation: string;
+  branding?: TeamBranding;
+};
+
+type GameStateV41 = {
+  meta: Omit<GameState["meta"], "schemaVersion"> & {
+    schemaVersion: 41;
+  };
+  settings: GameState["settings"];
+  world: Omit<GameState["world"], "teams"> & {
+    teams: Record<string, TeamV41>;
+  };
+  competition: {
+    season: GameState["competition"]["season"];
+    schedule: GameState["competition"]["schedule"];
+    standings: GameState["competition"]["standings"];
+    playoffs: GameState["competition"]["playoffs"];
+    games: Record<
+      string,
+      Omit<
+        GameState["competition"]["games"][string],
+        "homeTeamSnapshot" | "awayTeamSnapshot"
+      > & {
+        homeTeamSnapshot: GameTeamSnapshotV41 | null;
+        awayTeamSnapshot: GameTeamSnapshotV41 | null;
+      }
+    >;
+  };
+  business: GameState["business"];
+  user: Omit<GameState["user"], "franchiseIdentityConfirmed"> & {
+    citySelectionConfirmed: boolean;
+    franchiseIdentityConfirmed?: boolean;
+  };
+};
+
+/**
+ * Deterministic v41 → v42: team branding + franchise identity onboarding flag.
+ */
+function migrateV41ToV42(state: GameStateV41): GameState {
+  const usedPaletteLogoKeys = new Set<string>();
+  const teams: GameState["world"]["teams"] = {};
+  for (const [teamId, team] of Object.entries(state.world.teams)) {
+    let branding = team.branding;
+    if (!branding) {
+      branding = deriveDefaultTeamBranding(
+        teamId,
+        String(team.city ?? ""),
+        String(team.name ?? ""),
+        usedPaletteLogoKeys,
+      );
+    }
+    const paletteId = resolvePaletteIdFromBranding(branding);
+    if (paletteId) {
+      usedPaletteLogoKeys.add(paletteLogoKey(paletteId, branding.logoId));
+    }
+    teams[teamId] = {
+      ...(team as unknown as GameState["world"]["teams"][string]),
+      branding: {
+        primaryColor: branding.primaryColor,
+        secondaryColor: branding.secondaryColor,
+        accentColor: branding.accentColor,
+        logoId: branding.logoId,
+      },
+    };
+  }
+
+  const games: GameState["competition"]["games"] = {};
+  for (const [gameId, game] of Object.entries(state.competition.games)) {
+    games[gameId] = {
+      ...game,
+      homeTeamSnapshot: backfillSnapshotBranding(game.homeTeamSnapshot, teams),
+      awayTeamSnapshot: backfillSnapshotBranding(game.awayTeamSnapshot, teams),
+    } as GameState["competition"]["games"][string];
+  }
+
+  return {
+    ...state,
+    meta: {
+      ...state.meta,
+      schemaVersion: 42,
+    },
+    world: {
+      ...state.world,
+      teams,
+    },
+    competition: {
+      ...state.competition,
+      games,
+    },
+    user: {
+      ...state.user,
+      franchiseIdentityConfirmed:
+        state.user.franchiseIdentityConfirmed ??
+        state.user.citySelectionConfirmed === true,
+    },
+  };
+}
+
+function backfillSnapshotBranding(
+  snapshot: GameTeamSnapshotV41 | null,
+  teams: GameState["world"]["teams"],
+): GameState["competition"]["games"][string]["homeTeamSnapshot"] {
+  if (snapshot == null) {
+    return null;
+  }
+  const live = teams[snapshot.teamId];
+  const branding =
+    snapshot.branding ??
+    live?.branding ??
+    deriveDefaultTeamBranding(snapshot.teamId, snapshot.city, snapshot.name);
+  return {
+    teamId: snapshot.teamId as BrandTeamId,
+    city: snapshot.city,
+    name: snapshot.name,
+    abbreviation: snapshot.abbreviation,
+    branding: {
+      primaryColor: branding.primaryColor,
+      secondaryColor: branding.secondaryColor,
+      accentColor: branding.accentColor,
+      logoId: branding.logoId,
     },
   };
 }

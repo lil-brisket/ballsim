@@ -147,59 +147,40 @@ describe("applyOwnerCitySelection", () => {
     expect(result.ok).toBe(false);
   });
 
-  it("applies a custom nickname on an available city", () => {
+  it("preserves generated nickname when selecting a city", () => {
     const state = createNaState();
     const available = openCity(state);
     const placeholderId = state.user.controlledTeamId;
-    const result = applyOwnerCitySelection(state, available.city, {
-      nickname: "  Storm  ",
-    });
+    const beforeName = state.world.teams[placeholderId]!.name;
+    const beforeBranding = state.world.teams[placeholderId]!.branding;
+    const result = applyOwnerCitySelection(state, available.city);
     expect(result.ok).toBe(true);
     if (!result.ok) {
       return;
     }
     expect(result.state.world.teams[placeholderId]!.city).toBe(available.city);
-    expect(result.state.world.teams[placeholderId]!.name).toBe("Storm");
+    expect(result.state.world.teams[placeholderId]!.name).toBe(beforeName);
+    expect(result.state.world.teams[placeholderId]!.branding).toEqual(
+      beforeBranding,
+    );
+    expect(result.state.user.franchiseIdentityConfirmed).toBe(false);
   });
 
-  it("applies a custom nickname when taking a city that already has a team", () => {
+  it("preserves branding when taking a city that already has a team", () => {
     const state = createNaState();
     const target = otherTeamCity(state);
     const placeholderId = state.user.controlledTeamId;
-    const result = applyOwnerCitySelection(state, target.city, {
-      nickname: "Intruders",
-    });
+    const beforeName = state.world.teams[placeholderId]!.name;
+    const beforeBranding = state.world.teams[placeholderId]!.branding;
+    const result = applyOwnerCitySelection(state, target.city);
     expect(result.ok).toBe(true);
     if (!result.ok) {
       return;
     }
     expect(result.state.world.teams[placeholderId]!.city).toBe(target.city);
-    expect(result.state.world.teams[placeholderId]!.name).toBe("Intruders");
-    expect(result.state.world.teams[target.teamId]!.name).not.toBe("Intruders");
-  });
-
-  it("rejects empty custom nicknames", () => {
-    const state = createNaState();
-    const available = openCity(state);
-    const result = applyOwnerCitySelection(state, available.city, {
-      nickname: "   ",
-    });
-    expect(result.ok).toBe(false);
-  });
-
-  it("allows the same nickname in a different city", () => {
-    const state = createNaState();
-    const other = otherTeamCity(state);
-    const available = openCity(state);
-    const result = applyOwnerCitySelection(state, available.city, {
-      nickname: state.world.teams[other.teamId]!.name,
-    });
-    expect(result.ok).toBe(true);
-    if (!result.ok) {
-      return;
-    }
-    expect(result.state.world.teams[state.user.controlledTeamId]!.name).toBe(
-      state.world.teams[other.teamId]!.name,
+    expect(result.state.world.teams[placeholderId]!.name).toBe(beforeName);
+    expect(result.state.world.teams[placeholderId]!.branding).toEqual(
+      beforeBranding,
     );
   });
 });

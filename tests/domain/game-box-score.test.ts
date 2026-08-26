@@ -105,12 +105,24 @@ function finalGameInput(
       city: "Boston",
       name: "Celtics",
       abbreviation: "BOS",
+    branding: {
+      primaryColor: "#0B1F3A",
+      secondaryColor: "#C4CED4",
+      accentColor: "#F5B800",
+      logoId: "shield",
+    },
     },
     awayTeamSnapshot: {
       teamId: AWAY,
       city: "New York",
       name: "Knicks",
       abbreviation: "NYK",
+    branding: {
+      primaryColor: "#0B1F3A",
+      secondaryColor: "#C4CED4",
+      accentColor: "#F5B800",
+      logoId: "shield",
+    },
     },
     ...overrides,
   };

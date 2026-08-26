@@ -190,7 +190,9 @@ describe("relocation stages and completion", () => {
 
     expect(state.business.relocationByTeamId[teamId]!.stage).toBe("complete");
     expect(state.world.teams[teamId]!.city).toBe("Harbor");
-    expect(state.world.teams[teamId]!.name).toBe("Waves");
+    // Nickname + branding move with the franchise; only market/abbreviation change.
+    expect(state.world.teams[teamId]!.name).not.toBe("Waves");
+    expect(state.world.teams[teamId]!.abbreviation).toBe(TARGET.abbreviation);
     expect(state.business.franchiseOps[teamId]!.marketSize).toBe(72);
     expect(state.business.franchiseOps[teamId]!.fanSentiment).toBeLessThan(70);
     expect(state.business.finances[teamId]!.cash).toBeLessThan(100_000_000);
@@ -295,7 +297,7 @@ describe("relocation save migration fields", () => {
     state = withTenure(state, 10);
     const json = serializeGameState(state);
     const loaded = deserializeGameState(json);
-    expect(loaded.meta.schemaVersion).toBe(40);
+    expect(loaded.meta.schemaVersion).toBe(42);
     expect(
       loaded.business.relocationByTeamId[teamId]!.cityStartSeasonYear,
     ).toBeGreaterThan(0);

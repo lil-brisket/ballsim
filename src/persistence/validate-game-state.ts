@@ -766,6 +766,9 @@ export function validateGameState(state: unknown): asserts state is GameState {
   if (typeof user.citySelectionConfirmed !== "boolean") {
     fail("user.citySelectionConfirmed must be a boolean.");
   }
+  if (typeof user.franchiseIdentityConfirmed !== "boolean") {
+    fail("user.franchiseIdentityConfirmed must be a boolean.");
+  }
 
   const teamIds = new Set(Object.keys(world.teams));
   const playerIds = new Set(Object.keys(world.players));
@@ -1069,6 +1072,23 @@ export function validateGameState(state: unknown): asserts state is GameState {
   const rosterMembership = new Map<string, string>();
   for (const [teamId, teamValue] of Object.entries(world.teams)) {
     assertRecord(teamValue, `world.teams[${teamId}]`);
+    assertRecord(teamValue.branding, `world.teams[${teamId}].branding`);
+    assertNonEmptyString(
+      teamValue.branding.primaryColor,
+      `world.teams[${teamId}].branding.primaryColor`,
+    );
+    assertNonEmptyString(
+      teamValue.branding.secondaryColor,
+      `world.teams[${teamId}].branding.secondaryColor`,
+    );
+    assertNonEmptyString(
+      teamValue.branding.accentColor,
+      `world.teams[${teamId}].branding.accentColor`,
+    );
+    assertNonEmptyString(
+      teamValue.branding.logoId,
+      `world.teams[${teamId}].branding.logoId`,
+    );
     if (!Array.isArray(teamValue.roster)) {
       fail(`world.teams[${teamId}].roster must be an array.`);
     }
@@ -1687,6 +1707,23 @@ function validateTeamSnapshotField(
   assertNonEmptyString(snapshot.city, `${fieldPath}.city`);
   assertNonEmptyString(snapshot.name, `${fieldPath}.name`);
   assertNonEmptyString(snapshot.abbreviation, `${fieldPath}.abbreviation`);
+  assertRecord(snapshot.branding, `${fieldPath}.branding`);
+  assertNonEmptyString(
+    snapshot.branding.primaryColor,
+    `${fieldPath}.branding.primaryColor`,
+  );
+  assertNonEmptyString(
+    snapshot.branding.secondaryColor,
+    `${fieldPath}.branding.secondaryColor`,
+  );
+  assertNonEmptyString(
+    snapshot.branding.accentColor,
+    `${fieldPath}.branding.accentColor`,
+  );
+  assertNonEmptyString(
+    snapshot.branding.logoId,
+    `${fieldPath}.branding.logoId`,
+  );
   if (!teamIds.has(snapshot.teamId)) {
     fail(`${fieldPath}.teamId "${snapshot.teamId}" is missing from world.teams.`);
   }

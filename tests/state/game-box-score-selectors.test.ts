@@ -91,12 +91,24 @@ describe("game box score selectors", () => {
         city: "SnapCity",
         name: "Snappers",
         abbreviation: "SNP",
+      branding: {
+        primaryColor: "#0B1F3A",
+        secondaryColor: "#C4CED4",
+        accentColor: "#F5B800",
+        logoId: "shield",
+      },
       },
       awayTeamSnapshot: {
         teamId: awayTeamId,
         city: "Visit",
         name: "Visitors",
         abbreviation: "VIS",
+      branding: {
+        primaryColor: "#0B1F3A",
+        secondaryColor: "#C4CED4",
+        accentColor: "#F5B800",
+        logoId: "shield",
+      },
       },
     });
 

@@ -248,6 +248,12 @@ export type OwnerDashboardView = {
     city: string;
     name: string;
     abbreviation: string;
+    branding: {
+      primaryColor: string;
+      secondaryColor: string;
+      accentColor: string;
+      logoId: string;
+    };
   };
   health: OwnerDashboardHealth;
   team: OwnerDashboardTeam;

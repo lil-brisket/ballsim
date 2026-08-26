@@ -300,7 +300,7 @@ export function completeRelocationTransition(
         [teamId]: {
           ...team,
           city: target.city,
-          name: target.name,
+          // Nickname + branding move with the franchise; only market changes.
           abbreviation: target.abbreviation,
           reputation: nextReputation,
         },

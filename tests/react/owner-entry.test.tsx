@@ -22,6 +22,12 @@ function validSave(
       city: "Toronto",
       name: "Huskies",
       abbreviation: "TOR",
+      branding: {
+        primaryColor: "#0B1F3A",
+        secondaryColor: "#C4CED4",
+        accentColor: "#F5B800",
+        logoId: "shield",
+      },
     },
     seasonYear: 2028,
     currentDate: "2029-01-15",

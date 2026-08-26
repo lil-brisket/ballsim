@@ -31,6 +31,9 @@ import {
 import { generateFranchiseIdentity } from "@/systems/franchise-identity-generation";
 import { generateLeagueStaffForTeam } from "@/systems/staff-generation";
 import { applyCashAndBooksImpact } from "@/systems/team-finances";
+import { deriveDefaultTeamBranding } from "@/systems/team-branding-generation";
+import { resolvePaletteIdFromBranding } from "@/domain/entities/team-branding";
+import { paletteLogoKey } from "@/domain/team-identity";
 
 function emitExpansionStage(
   state: GameState,
@@ -266,6 +269,22 @@ export function completeExpansion(state: GameState, rng: Rng): SystemResult {
     );
 
     const preexistingIds = Object.keys(current.world.teams) as TeamId[];
+    const usedPaletteLogoKeys = new Set<string>();
+    for (const existing of Object.values(current.world.teams)) {
+      const paletteId = resolvePaletteIdFromBranding(existing.branding);
+      if (paletteId) {
+        usedPaletteLogoKeys.add(
+          paletteLogoKey(paletteId, existing.branding.logoId),
+        );
+      }
+    }
+
+    const branding = deriveDefaultTeamBranding(
+      teamId,
+      candidate.city,
+      candidate.name,
+      usedPaletteLogoKeys,
+    );
 
     const team = createTeam({
       id: teamId,
@@ -281,6 +300,7 @@ export function completeExpansion(state: GameState, rng: Rng): SystemResult {
       reputation: 45,
       playStyle: { ...NEUTRAL_TEAM_PLAY_STYLE },
       coachingPhilosophy: { ...DEFAULT_COACHING_PHILOSOPHY },
+      branding,
     });
 
     const year = current.competition.season.year;

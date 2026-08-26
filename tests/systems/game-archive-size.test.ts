@@ -97,12 +97,24 @@ describe("game archive size measurement", () => {
               city: "H",
               name: "T",
               abbreviation: "HOM",
+            branding: {
+              primaryColor: "#0B1F3A",
+              secondaryColor: "#C4CED4",
+              accentColor: "#F5B800",
+              logoId: "shield",
+            },
             },
             awayTeamSnapshot: {
               teamId: awayTeamId,
               city: "A",
               name: "T",
               abbreviation: "AWY",
+            branding: {
+              primaryColor: "#0B1F3A",
+              secondaryColor: "#C4CED4",
+              accentColor: "#F5B800",
+              logoId: "shield",
+            },
             },
           });
         }

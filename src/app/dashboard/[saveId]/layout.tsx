@@ -1,5 +1,6 @@
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { loadOwnerSave } from "@/application/game-service";
+import { resolveOnboardingRoute } from "@/application/onboarding-routing";
 import { GameShell } from "@/components/game/GameShell";
 
 type OwnerLayoutProps = {
@@ -15,6 +16,14 @@ export default async function OwnerLayout({
   const loaded = await loadOwnerSave(saveId);
   if (!loaded) {
     notFound();
+  }
+
+  const route = resolveOnboardingRoute(saveId, {
+    citySelectionConfirmed: loaded.dashboard.citySelectionConfirmed,
+    franchiseIdentityConfirmed: loaded.dashboard.franchiseIdentityConfirmed,
+  });
+  if (route.kind !== "dashboard") {
+    redirect(route.path);
   }
 
   const { save, dashboard, navGroups } = loaded;

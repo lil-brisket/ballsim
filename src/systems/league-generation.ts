@@ -10,6 +10,7 @@ import { createDivision, type Division } from "@/domain/entities/division";
 import { createLeague, type League } from "@/domain/entities/league";
 import { type Player } from "@/domain/entities/player";
 import { createTeam, NEUTRAL_TEAM_PLAY_STYLE, type Team } from "@/domain/entities/team";
+import { resolvePaletteIdFromBranding } from "@/domain/entities/team-branding";
 import { DEFAULT_COACHING_PHILOSOPHY } from "@/domain/coaching/coaching-philosophy";
 import type { LeagueArea } from "@/domain/game-settings";
 import {
@@ -26,12 +27,14 @@ import {
   type TeamId,
 } from "@/domain/ids";
 import type { Rng } from "@/domain/rng";
+import { paletteLogoKey } from "@/domain/team-identity";
 import { generatePlayerWithRng } from "@/systems/player-generation";
 import { uniqueTeamAbbreviation } from "@/systems/team-abbreviation";
 import {
   DEFAULT_ROSTER_SIZE,
   rosterPositionForSlot,
 } from "@/systems/roster-generation-config";
+import { generateTeamBranding } from "@/systems/team-branding-generation";
 
 const DEFAULT_LEAGUE_ID = "league_fictional";
 const DEFAULT_LEAGUE_AREA: LeagueArea = "north_america";
@@ -118,6 +121,7 @@ export function generateLeague(
   const teams: Team[] = [];
   const divisions: Division[] = [];
   const conferences: Conference[] = [];
+  const usedPaletteLogoKeys = new Set<string>();
 
   let teamNameIndex = 0;
 
@@ -158,6 +162,20 @@ export function generateLeague(
           rosterPlayerIds.push(playerId);
         }
 
+        const branding = generateTeamBranding(
+          {
+            teamId,
+            city: nameData.city,
+            name: nameData.nickname,
+            usedPaletteLogoKeys,
+          },
+          rng,
+        );
+        const paletteId = resolvePaletteIdFromBranding(branding);
+        if (paletteId) {
+          usedPaletteLogoKeys.add(paletteLogoKey(paletteId, branding.logoId));
+        }
+
         teams.push(
           createTeam({
             id: teamId,
@@ -173,6 +191,7 @@ export function generateLeague(
             reputation: 50,
             playStyle: { ...NEUTRAL_TEAM_PLAY_STYLE },
             coachingPhilosophy: { ...DEFAULT_COACHING_PHILOSOPHY },
+            branding,
           }),
         );
         divisionTeamIds.push(teamId);

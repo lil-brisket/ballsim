@@ -98,12 +98,24 @@ describe("v34 → v35 migration", () => {
         city: "Old City",
         name: "Old Name",
         abbreviation: "OLD",
+      branding: {
+        primaryColor: "#0B1F3A",
+        secondaryColor: "#C4CED4",
+        accentColor: "#F5B800",
+        logoId: "shield",
+      },
       },
       awayTeamSnapshot: {
         teamId: awayTeamId,
         city: "Other",
         name: "Side",
         abbreviation: "OTH",
+      branding: {
+        primaryColor: "#0B1F3A",
+        secondaryColor: "#C4CED4",
+        accentColor: "#F5B800",
+        logoId: "shield",
+      },
       },
     });
 
@@ -144,7 +156,7 @@ describe("v34 → v35 migration", () => {
 
     const loaded = deserializeGameState(JSON.stringify(parsed));
     expect(loaded.meta.schemaVersion).toBe(GAME_STATE_SCHEMA_VERSION);
-    expect(GAME_STATE_SCHEMA_VERSION).toBe(41);
+    expect(GAME_STATE_SCHEMA_VERSION).toBe(42);
 
     const migrated = loaded.competition.games[game.id]!;
     expect(migrated.competitionType).toBe("regular_season");

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { loadOwnerSaveView } from "@/application/game-service";
+import { resolveOnboardingRoute } from "@/application/onboarding-routing";
 import { OnboardingShell } from "@/components/game/OnboardingShell";
 import { CityMapPicker } from "@/components/owner/CityMapPicker";
 import { isLeagueArea } from "@/domain/game-settings";
@@ -16,8 +17,12 @@ export default async function TeamPickPage({ params }: TeamPickPageProps) {
     notFound();
   }
 
-  if (view.dashboard.citySelectionConfirmed) {
-    redirect(`/dashboard/${saveId}`);
+  const route = resolveOnboardingRoute(saveId, {
+    citySelectionConfirmed: view.dashboard.citySelectionConfirmed,
+    franchiseIdentityConfirmed: view.dashboard.franchiseIdentityConfirmed,
+  });
+  if (route.kind !== "city") {
+    redirect(route.path);
   }
 
   if (view.dashboard.teamSelectionLocked) {
@@ -45,13 +50,7 @@ export default async function TeamPickPage({ params }: TeamPickPageProps) {
       className="max-w-6xl"
       fillViewport
     >
-      <CityMapPicker
-        saveId={saveId}
-        area={area}
-        cities={view.cities}
-        placeholderNickname={view.dashboard.controlledTeam.name}
-        placeholderTeamId={view.dashboard.controlledTeam.id}
-      />
+      <CityMapPicker saveId={saveId} area={area} cities={view.cities} />
     </OnboardingShell>
   );
 }

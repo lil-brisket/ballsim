@@ -19,6 +19,12 @@ function validPreview(
       city: "Harbor",
       name: "Waves",
       abbreviation: "HAR",
+      branding: {
+        primaryColor: "#0B1F3A",
+        secondaryColor: "#C4CED4",
+        accentColor: "#F5B800",
+        logoId: "shield",
+      },
     },
     seasonYear: 2026,
     currentDate: "2026-11-01",
@@ -42,6 +48,12 @@ describe("save-preview-helpers", () => {
         city: "Toronto",
         name: "Huskies",
         abbreviation: "TOR",
+        branding: {
+          primaryColor: "#0B1F3A",
+          secondaryColor: "#C4CED4",
+          accentColor: "#F5B800",
+          logoId: "wolf",
+        },
       },
     });
     const invalid: OwnerSavePreview = {

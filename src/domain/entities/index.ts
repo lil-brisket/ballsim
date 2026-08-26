@@ -16,6 +16,23 @@ export {
   NEUTRAL_TEAM_PLAY_STYLE,
 } from "@/domain/entities/team";
 export type {
+  TeamBranding,
+  TeamBrandingValidation,
+  TeamColorPaletteId,
+  TeamLogoId,
+} from "@/domain/entities/team-branding";
+export {
+  assertTeamBranding,
+  brandingFromPalette,
+  isHexColor,
+  isTeamColorPaletteId,
+  isTeamLogoId,
+  isValidTeamBranding,
+  normalizeHexColor,
+  resolvePaletteIdFromBranding,
+  validateTeamBranding,
+} from "@/domain/entities/team-branding";
+export type {
   PacePhilosophy,
   OffensiveEmphasis,
   DefensiveApproach,

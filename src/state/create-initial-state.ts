@@ -38,6 +38,7 @@ import { generateLeague } from "@/systems/league-generation";
 import { leagueGenerationConfigFromSettings } from "@/systems/league-shape";
 import { generateLeagueStaff } from "@/systems/staff-generation";
 import { defaultOwnerPatience } from "@/systems/owner-philosophy-config";
+import { deriveDefaultTeamBranding } from "@/systems/team-branding-generation";
 
 export type CreateInitialGameStateInput = {
   saveId: string;
@@ -73,6 +74,7 @@ function bootstrapTeam(
     reputation: 50,
     playStyle: { ...NEUTRAL_TEAM_PLAY_STYLE },
     coachingPhilosophy: { ...DEFAULT_COACHING_PHILOSOPHY },
+    branding: deriveDefaultTeamBranding(id, city, name),
   });
 }
 
@@ -215,6 +217,7 @@ export function createInitialGameState(
       controlledTeamId,
       mode: "owner",
       citySelectionConfirmed: false,
+      franchiseIdentityConfirmed: false,
       ownerStartSeasonYear: startingSeasonYear,
       ownerPhilosophy: DEFAULT_OWNER_PHILOSOPHY,
       ownerPatience: defaultOwnerPatience(DEFAULT_OWNER_PHILOSOPHY),
@@ -495,6 +498,7 @@ export function createFourTeamInitialGameState(
       controlledTeamId: userTeamId,
       mode: "owner",
       citySelectionConfirmed: false,
+      franchiseIdentityConfirmed: false,
       ownerStartSeasonYear: startingSeasonYear,
       ownerPhilosophy: DEFAULT_OWNER_PHILOSOPHY,
       ownerPatience: defaultOwnerPatience(DEFAULT_OWNER_PHILOSOPHY),

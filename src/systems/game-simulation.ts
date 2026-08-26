@@ -485,12 +485,14 @@ function snapshotTeam(team: {
   city: string;
   name: string;
   abbreviation: string;
+  branding: GameTeamSnapshot["branding"];
 }): GameTeamSnapshot {
   return {
     teamId: team.id,
     city: team.city,
     name: team.name,
     abbreviation: team.abbreviation,
+    branding: { ...team.branding },
   };
 }
 

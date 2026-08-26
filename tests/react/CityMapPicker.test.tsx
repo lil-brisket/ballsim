@@ -53,153 +53,39 @@ const CITIES: CityPickOption[] = [
 describe("CityMapPicker", () => {
   it("treats every city as open for founding before confirmation", () => {
     const { unmount } = render(
-      <CityMapPicker
-        saveId="save_1"
-        area="north_america"
-        cities={CITIES}
-        placeholderNickname="Knights"
-      />,
+      <CityMapPicker saveId="save_1" area="north_america" cities={CITIES} />,
     );
 
     fireEvent.click(screen.getByRole("button", { name: "Toronto" }));
-    expect(screen.getByText("Your franchise")).toBeTruthy();
-    expect(screen.getByText("Toronto Knights")).toBeTruthy();
+    expect(screen.getByText("Selected market")).toBeTruthy();
     expect(
-      screen.getByRole("button", { name: "Select Toronto" }),
+      screen.getByRole("button", { name: "Continue with Toronto" }),
     ).toBeTruthy();
     expect(screen.queryByText("Existing franchise")).toBeNull();
     unmount();
   });
 
-  it("updates CTA and live preview for available cities", () => {
+  it("updates CTA for available cities", () => {
     const { unmount } = render(
-      <CityMapPicker
-        saveId="save_1"
-        area="north_america"
-        cities={CITIES}
-        placeholderNickname="Knights"
-      />,
+      <CityMapPicker saveId="save_1" area="north_america" cities={CITIES} />,
     );
 
     fireEvent.click(screen.getByRole("button", { name: "Monterrey" }));
-    expect(screen.getByText("Your franchise")).toBeTruthy();
-    expect(screen.getByText("Monterrey Knights")).toBeTruthy();
     expect(
-      screen.getByRole("button", { name: "Select Monterrey" }),
+      screen.getByRole("button", { name: "Continue with Monterrey" }),
     ).toBeTruthy();
-
-    fireEvent.change(screen.getByLabelText("Team name"), {
-      target: { value: "Suns" },
-    });
-    expect(screen.getByText("Monterrey Suns")).toBeTruthy();
-
-    const hiddenCity = document.querySelector(
-      'input[name="city"]',
-    ) as HTMLInputElement | null;
-    const hiddenNickname = document.querySelector(
-      'input[name="nickname"]',
-    ) as HTMLInputElement | null;
-    expect(hiddenCity?.value).toBe("Monterrey");
-    expect(hiddenNickname?.value).toBe("Suns");
+    expect(screen.queryByLabelText("Team name")).toBeNull();
     unmount();
   });
 
-  it("preserves a dirty nickname when switching available cities", () => {
-    const { unmount } = render(
-      <CityMapPicker
-        saveId="save_1"
-        area="north_america"
-        cities={[
-          ...CITIES,
-          {
-            city: "Austin",
-            lat: 30.27,
-            lng: -97.74,
-            country: "United States",
-            subdivision: "Texas",
-            locationLabel: "Texas, United States",
-            occupied: false,
-          },
-        ]}
-        placeholderNickname="Knights"
-      />,
+  it("submits city only without nickname field", () => {
+    const { container, unmount } = render(
+      <CityMapPicker saveId="save_1" area="north_america" cities={CITIES} />,
     );
 
-    fireEvent.click(screen.getByRole("button", { name: "Monterrey" }));
-    fireEvent.change(screen.getByLabelText("Team name"), {
-      target: { value: "Suns" },
-    });
-    fireEvent.click(screen.getByRole("button", { name: "Austin" }));
-    expect(screen.getByText("Austin Suns")).toBeTruthy();
-    expect((screen.getByLabelText("Team name") as HTMLInputElement).value).toBe(
-      "Suns",
-    );
-    unmount();
-  });
-
-  it("rejects an empty nickname inline", () => {
-    const { unmount } = render(
-      <CityMapPicker
-        saveId="save_1"
-        area="north_america"
-        cities={CITIES}
-        placeholderNickname="Knights"
-      />,
-    );
-    fireEvent.click(screen.getByRole("button", { name: "Monterrey" }));
-    fireEvent.change(screen.getByLabelText("Team name"), {
-      target: { value: "   " },
-    });
-    expect(screen.getByRole("alert").textContent).toBe(
-      "Team name cannot be empty.",
-    );
-    expect(
-      (screen.getByRole("button", { name: "Select Monterrey" }) as HTMLButtonElement)
-        .disabled,
-    ).toBe(true);
-    unmount();
-  });
-
-  it("filters the search list and selects a city from it", () => {
-    const { unmount } = render(
-      <CityMapPicker
-        saveId="save_1"
-        area="north_america"
-        cities={[
-          ...CITIES,
-          {
-            city: "Austin",
-            lat: 30.27,
-            lng: -97.74,
-            country: "United States",
-            subdivision: "Texas",
-            locationLabel: "Texas, United States",
-            occupied: false,
-          },
-        ]}
-        placeholderNickname="Knights"
-      />,
-    );
-    fireEvent.change(screen.getByPlaceholderText("Search cities..."), {
-      target: { value: "Austin" },
-    });
-    expect(screen.queryByText("Ontario, Canada")).toBeNull();
-    fireEvent.click(screen.getByText("Texas, United States").closest("button")!);
-    expect(screen.getByRole("button", { name: "Select Austin" })).toBeTruthy();
-    unmount();
-  });
-
-  it("shows the city pool size without occupancy", () => {
-    const { unmount } = render(
-      <CityMapPicker
-        saveId="save_1"
-        area="north_america"
-        cities={CITIES}
-        placeholderNickname="Knights"
-      />,
-    );
-    expect(screen.getByText("2 cities")).toBeTruthy();
-    expect(screen.getByText("North America")).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Toronto" }));
+    expect(container.querySelector('input[name="city"]')).toBeTruthy();
+    expect(container.querySelector('input[name="nickname"]')).toBeNull();
     unmount();
   });
 });

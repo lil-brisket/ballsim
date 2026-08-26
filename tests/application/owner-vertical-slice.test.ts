@@ -21,6 +21,7 @@ import {
   loadOwnerSave,
   loadOwnerSaveView,
   selectOwnerCity,
+  confirmOwnerTeamIdentity,
   selectOwnerDraftProspect,
   selectOwnerTeam,
   signOwnerFreeAgent,
@@ -181,7 +182,7 @@ describe("Owner Mode vertical slice", () => {
   );
 
   it(
-    "city pick: available city can take a customized nickname",
+    "city pick then team identity confirm customizes nickname and branding",
     async () => {
       const settings = cloneGameSettings(CBL_GAME_SETTINGS);
       settings.league.area = "north_america";
@@ -199,14 +200,30 @@ describe("Owner Mode vertical slice", () => {
         created.save.id,
         available.city,
         store,
-        "Falcons",
       );
       expect(selected.ok).toBe(true);
       if (!selected.ok) {
         return;
       }
       expect(selected.dashboard.controlledTeam.city).toBe(available.city);
-      expect(selected.dashboard.controlledTeam.name).toBe("Falcons");
+      expect(selected.dashboard.franchiseIdentityConfirmed).toBe(false);
+
+      const confirmed = await confirmOwnerTeamIdentity(
+        created.save.id,
+        {
+          nickname: "Falcons",
+          paletteId: "crimson_gold",
+          logoId: "eagle",
+        },
+        store,
+      );
+      expect(confirmed.ok).toBe(true);
+      if (!confirmed.ok) {
+        return;
+      }
+      expect(confirmed.dashboard.controlledTeam.name).toBe("Falcons");
+      expect(confirmed.dashboard.controlledTeam.branding.logoId).toBe("eagle");
+      expect(confirmed.dashboard.franchiseIdentityConfirmed).toBe(true);
     },
     LONG_TIMEOUT_MS,
   );
@@ -240,10 +257,23 @@ describe("Owner Mode vertical slice", () => {
         created.save.id,
         occupant.city,
         store,
-        "Intruders",
       );
       expect(selected.ok).toBe(true);
       if (!selected.ok) {
+        return;
+      }
+
+      const confirmed = await confirmOwnerTeamIdentity(
+        created.save.id,
+        {
+          nickname: "Intruders",
+          paletteId: "scarlet_black",
+          logoId: "wolf",
+        },
+        store,
+      );
+      expect(confirmed.ok).toBe(true);
+      if (!confirmed.ok) {
         return;
       }
 

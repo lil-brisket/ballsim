@@ -3,6 +3,10 @@ import {
   type CoachingPhilosophy,
 } from "@/domain/coaching/coaching-philosophy";
 import { RATING_MAX, RATING_MIN } from "@/domain/entities/player";
+import {
+  assertTeamBranding,
+  type TeamBranding,
+} from "@/domain/entities/team-branding";
 import type {
   ArenaId,
   ConferenceId,
@@ -72,6 +76,8 @@ export type Team = {
   reputation: number;
   playStyle: TeamPlayStyle;
   coachingPhilosophy: CoachingPhilosophy;
+  /** Visual identity (colours + logo). Persists across simulation. */
+  branding: TeamBranding;
 };
 
 /** Unvalidated construction payload for {@link createTeam}. */
@@ -89,6 +95,7 @@ export type TeamInput = {
   reputation: number;
   playStyle: TeamPlayStyle;
   coachingPhilosophy: CoachingPhilosophy;
+  branding: TeamBranding;
 };
 
 /**
@@ -109,6 +116,7 @@ export function createTeam(input: TeamInput): Team {
   assertRating(input.reputation, "reputation");
   assertPlayStyle(input.playStyle);
   assertCoachingPhilosophy(input.coachingPhilosophy);
+  const branding = assertTeamBranding(input.branding);
 
   return {
     id: input.id,
@@ -124,6 +132,7 @@ export function createTeam(input: TeamInput): Team {
     reputation: input.reputation,
     playStyle: { ...input.playStyle },
     coachingPhilosophy: { ...input.coachingPhilosophy },
+    branding: { ...branding },
   };
 }
 

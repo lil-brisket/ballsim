@@ -10,6 +10,7 @@ import {
   DEFAULT_COACHING_PHILOSOPHY,
   type CoachingPhilosophy,
 } from "@/domain/coaching/coaching-philosophy";
+import { DEFAULT_TEST_TEAM_BRANDING } from "@/domain/entities/default-team-branding";
 import {
   asArenaId,
   asConferenceId,
@@ -34,6 +35,7 @@ function validInput(overrides: Partial<TeamInput> = {}): TeamInput {
     reputation: 50,
     playStyle: { ...NEUTRAL_TEAM_PLAY_STYLE },
     coachingPhilosophy: { ...DEFAULT_COACHING_PHILOSOPHY },
+    branding: { ...DEFAULT_TEST_TEAM_BRANDING },
     ...overrides,
   };
 }
@@ -54,6 +56,7 @@ describe("createTeam", () => {
     expect(team.reputation).toBe(50);
     expect(team.playStyle).toEqual(NEUTRAL_TEAM_PLAY_STYLE);
     expect(team.coachingPhilosophy).toEqual(DEFAULT_COACHING_PHILOSOPHY);
+    expect(team.branding).toEqual(DEFAULT_TEST_TEAM_BRANDING);
   });
 
   it("preserves supplied coaching philosophy", () => {

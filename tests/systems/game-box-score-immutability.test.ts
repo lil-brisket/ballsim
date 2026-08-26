@@ -91,12 +91,14 @@ function seedFinalGame(state: GameState) {
       city: homeTeam.city,
       name: homeTeam.name,
       abbreviation: homeTeam.abbreviation,
+      branding: homeTeam.branding,
     },
     awayTeamSnapshot: {
       teamId: awayTeamId,
       city: awayTeam.city,
       name: awayTeam.name,
       abbreviation: awayTeam.abbreviation,
+      branding: awayTeam.branding,
     },
   });
 

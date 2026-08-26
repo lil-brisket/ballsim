@@ -4,57 +4,22 @@ import { useCallback, useMemo, useState } from "react";
 import { selectCityAction } from "@/application/actions";
 import { GeographicMap } from "@/components/map/GeographicMap";
 import type { MapCity } from "@/components/map/map-city";
-import { TeamNicknameField } from "@/components/team/TeamNicknameField";
-import { TEAM_NICKNAMES } from "@/data/league/team-nicknames";
 import {
   LEAGUE_AREA_LABELS,
   type LeagueArea,
 } from "@/domain/game-settings";
-import {
-  nextNicknameFromPool,
-  validateTeamNickname,
-} from "@/domain/team-nickname";
 import type { CityPickOption } from "@/state/selectors";
 
 export function CityMapPicker(props: {
   saveId: string;
   area: LeagueArea;
   cities: readonly CityPickOption[];
-  placeholderNickname: string;
-  placeholderTeamId?: string;
 }) {
   const [selectedCity, setSelectedCity] = useState<string | null>(null);
-  const [nickname, setNickname] = useState(props.placeholderNickname);
-  const [nicknameDirty, setNicknameDirty] = useState(false);
   const [query, setQuery] = useState("");
 
   const selected =
     props.cities.find((city) => city.city === selectedCity) ?? null;
-
-  const existingTeams = useMemo(
-    () =>
-      props.cities
-        .filter((city) => city.teamId && city.nickname)
-        .map((city) => ({
-          id: city.teamId!,
-          city: city.city,
-          name: city.nickname!,
-        })),
-    [props.cities],
-  );
-
-  const usedNicknames = useMemo(
-    () => existingTeams.map((team) => team.name),
-    [existingTeams],
-  );
-
-  const nicknameCheck = selected
-    ? validateTeamNickname(nickname, {
-        city: selected.city,
-        existingTeams,
-        excludeTeamId: props.placeholderTeamId,
-      })
-    : { ok: true as const, value: nickname };
 
   const mapCities: MapCity[] = useMemo(
     () =>
@@ -89,32 +54,14 @@ export function CityMapPicker(props: {
         return;
       }
       setSelectedCity(cityName);
-      if (!nicknameDirty) {
-        setNickname(props.placeholderNickname);
-      }
     },
-    [nicknameDirty, props.cities, props.placeholderNickname],
+    [props.cities],
   );
 
-  function onNicknameChange(value: string) {
-    setNickname(value);
-    setNicknameDirty(true);
-  }
-
-  function onRandomize() {
-    const next = nextNicknameFromPool(nickname, TEAM_NICKNAMES, usedNicknames);
-    if (next) {
-      setNickname(next);
-      setNicknameDirty(true);
-    }
-  }
-
-  const previewName = selected
-    ? `${selected.city} ${nicknameCheck.ok ? nicknameCheck.value : nickname}`
-    : null;
-
-  const ctaLabel = selected ? `Select ${selected.city}` : "Select a city";
-  const submitDisabled = !selected || !nicknameCheck.ok;
+  const ctaLabel = selected
+    ? `Continue with ${selected.city}`
+    : "Select a city";
+  const submitDisabled = !selected;
 
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-2">
@@ -180,33 +127,15 @@ export function CityMapPicker(props: {
           {selected ? (
             <div className="shrink-0 space-y-3 border-t border-zinc-800 pt-3">
               <div>
+                <p className="text-xs font-semibold uppercase tracking-wide text-amber-500/90">
+                  Selected market
+                </p>
                 <p className="text-lg font-medium text-zinc-100">{selected.city}</p>
                 <p className="text-sm text-zinc-400">{selected.locationLabel}</p>
-              </div>
-              <div className="space-y-3">
-                <div>
-                  <p className="text-xs font-semibold uppercase tracking-wide text-amber-500/90">
-                    Your franchise
-                  </p>
-                  <p className="text-base text-zinc-100">{previewName}</p>
-                </div>
-                <TeamNicknameField
-                  id="franchise-nickname"
-                  value={nickname}
-                  onChange={onNicknameChange}
-                  onRandomize={onRandomize}
-                  error={nicknameCheck.ok ? null : nicknameCheck.error}
-                  helperText="You can customize your team name."
-                />
               </div>
               <form action={selectCityAction}>
                 <input type="hidden" name="saveId" value={props.saveId} />
                 <input type="hidden" name="city" value={selected.city} />
-                <input
-                  type="hidden"
-                  name="nickname"
-                  value={nicknameCheck.ok ? nicknameCheck.value : nickname}
-                />
                 <button
                   type="submit"
                   disabled={submitDisabled}
@@ -218,7 +147,7 @@ export function CityMapPicker(props: {
             </div>
           ) : (
             <p className="shrink-0 text-sm text-zinc-500">
-              Select a city on the map or from the list.
+              Select a city on the map or from the list to continue.
             </p>
           )}
         </aside>

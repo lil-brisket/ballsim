@@ -1,4 +1,5 @@
 import { parseCalendarDate } from "@/domain/calendar-date";
+import type { TeamBranding } from "@/domain/entities/team-branding";
 import type { GameId, PlayerId, SeasonId, TeamId } from "@/domain/ids";
 
 export type GameStatus = "scheduled" | "in_progress" | "final";
@@ -59,6 +60,7 @@ export type GameTeamSnapshot = {
   city: string;
   name: string;
   abbreviation: string;
+  branding: TeamBranding;
 };
 
 export type GamePlayerStats = {

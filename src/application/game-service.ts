@@ -42,6 +42,7 @@ import {
 } from "@/domain/entities/owner-philosophy";
 import { defaultOwnerPatience } from "@/systems/owner-philosophy-config";
 import { applyOwnerCitySelection } from "@/systems/owner-city-selection";
+import { applyOwnerFranchiseBranding } from "@/systems/owner-franchise-branding";
 import { createDefaultOwnershipConfidence } from "@/domain/entities/ownership-confidence";
 import {
   recordOwnershipEvidence,
@@ -652,6 +653,8 @@ export async function selectOwnerTeam(
       controlledTeamId: typedTeamId,
       ownerPhilosophy: nextPhilosophy,
       ownerPatience: nextPatience,
+      citySelectionConfirmed: true,
+      franchiseIdentityConfirmed: true,
       ownershipConfidence:
         nextPhilosophy !== loaded.state.user.ownerPhilosophy
           ? createDefaultOwnershipConfidence(
@@ -678,7 +681,6 @@ export async function selectOwnerCity(
   saveId: string,
   city: string,
   store?: SaveGameStore,
-  nickname?: string,
 ): Promise<OwnerCommandResult> {
   const saveStore = getStore(store);
   const loaded = await saveStore.load(saveId);
@@ -686,7 +688,40 @@ export async function selectOwnerCity(
     return fail("Save not found.");
   }
 
-  const applied = applyOwnerCitySelection(loaded.state, city, { nickname });
+  const applied = applyOwnerCitySelection(loaded.state, city);
+  if (!applied.ok) {
+    return fail(applied.error);
+  }
+
+  try {
+    const saved = await persistWorkingState(
+      saveId,
+      applied.state,
+      loaded.state.meta.rngState,
+      saveStore,
+    );
+    return withDashboard(saved);
+  } catch (error) {
+    return fail(error instanceof Error ? error.message : String(error));
+  }
+}
+
+export async function confirmOwnerTeamIdentity(
+  saveId: string,
+  input: {
+    nickname: string;
+    paletteId: string;
+    logoId: string;
+  },
+  store?: SaveGameStore,
+): Promise<OwnerCommandResult> {
+  const saveStore = getStore(store);
+  const loaded = await saveStore.load(saveId);
+  if (!loaded) {
+    return fail("Save not found.");
+  }
+
+  const applied = applyOwnerFranchiseBranding(loaded.state, input);
   if (!applied.ok) {
     return fail(applied.error);
   }

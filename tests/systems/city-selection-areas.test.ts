@@ -15,7 +15,7 @@ const AREAS: LeagueArea[] = ["north_america", "europe", "global"];
 
 describe("city selection across league areas", () => {
   it.each(AREAS)(
-    "%s generates pool cities, projects them, and accepts a custom nickname",
+    "%s generates pool cities, projects them, and relocates into a city",
     (area) => {
       const settings = cloneGameSettings(CBL_GAME_SETTINGS);
       settings.league.area = area;
@@ -38,9 +38,9 @@ describe("city selection across league areas", () => {
 
       const available = cities.find((city) => !city.occupied);
       expect(available).toBeDefined();
-      const result = applyOwnerCitySelection(state, available!.city, {
-        nickname: "Storm",
-      });
+      const beforeName =
+        state.world.teams[state.user.controlledTeamId]!.name;
+      const result = applyOwnerCitySelection(state, available!.city);
       expect(result.ok).toBe(true);
       if (!result.ok) {
         return;
@@ -49,7 +49,7 @@ describe("city selection across league areas", () => {
         result.state.world.teams[result.state.user.controlledTeamId]!;
       expect(pool.includes(team.city)).toBe(true);
       expect(team.city).toBe(available!.city);
-      expect(team.name).toBe("Storm");
+      expect(team.name).toBe(beforeName);
     },
   );
 });

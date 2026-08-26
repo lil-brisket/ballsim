@@ -31,6 +31,7 @@ import {
   runOwnerExpansionDraft,
   selectOwnerDraftProspect,
   selectOwnerCity,
+  confirmOwnerTeamIdentity,
   selectOwnerTeam,
   setOwnerMarketingBudget,
   setOwnerTicketPrice,
@@ -100,11 +101,11 @@ export async function openSaveAction(formData: FormData): Promise<void> {
   if (!loaded) {
     throw new Error("Save not found.");
   }
-  if (
-    !loaded.dashboard.teamSelectionLocked &&
-    !loaded.dashboard.citySelectionConfirmed
-  ) {
-    redirect(`/new/${loaded.save.id}/team`);
+  if (!loaded.dashboard.franchiseIdentityConfirmed) {
+    if (!loaded.dashboard.citySelectionConfirmed) {
+      redirect(`/new/${loaded.save.id}/team`);
+    }
+    redirect(`/new/${loaded.save.id}/branding`);
   }
   redirect(`/dashboard/${loaded.save.id}`);
 }
@@ -133,14 +134,28 @@ export async function selectTeamAction(formData: FormData): Promise<void> {
 export async function selectCityAction(formData: FormData): Promise<void> {
   const saveId = String(formData.get("saveId") ?? "");
   const city = String(formData.get("city") ?? "");
-  const nicknameRaw = formData.get("nickname");
-  const nickname =
-    typeof nicknameRaw === "string" && nicknameRaw.length > 0
-      ? nicknameRaw
-      : undefined;
-  const result = await selectOwnerCity(saveId, city, undefined, nickname);
+  const result = await selectOwnerCity(saveId, city);
   if (!result.ok) {
     redirectWithError(`/new/${saveId}/team`, result.error);
+  }
+  revalidateOwner(saveId);
+  redirect(`/new/${saveId}/branding`);
+}
+
+export async function confirmTeamIdentityAction(
+  formData: FormData,
+): Promise<void> {
+  const saveId = String(formData.get("saveId") ?? "");
+  const nickname = String(formData.get("nickname") ?? "");
+  const paletteId = String(formData.get("paletteId") ?? "");
+  const logoId = String(formData.get("logoId") ?? "");
+  const result = await confirmOwnerTeamIdentity(saveId, {
+    nickname,
+    paletteId,
+    logoId,
+  });
+  if (!result.ok) {
+    redirectWithError(`/new/${saveId}/branding`, result.error);
   }
   revalidateOwner(saveId);
   redirect(`/dashboard/${saveId}`);

@@ -38,12 +38,19 @@ export type DashboardSnapshot = {
   mode: GameMode;
   teamSelectionLocked: boolean;
   citySelectionConfirmed: boolean;
+  franchiseIdentityConfirmed: boolean;
   userOnDraftClock: boolean;
   controlledTeam: {
     id: string;
     city: string;
     name: string;
     abbreviation: string;
+    branding: {
+      primaryColor: string;
+      secondaryColor: string;
+      accentColor: string;
+      logoId: string;
+    };
   };
   teamCount: number;
   playerCount: number;
@@ -952,12 +959,14 @@ export function toDashboardSnapshot(state: GameState): DashboardSnapshot {
     mode: state.user.mode,
     teamSelectionLocked: state.world.calendar.lastSimulatedDate !== null,
     citySelectionConfirmed: state.user.citySelectionConfirmed,
+    franchiseIdentityConfirmed: state.user.franchiseIdentityConfirmed,
     userOnDraftClock: isUserOnDraftClock(state),
     controlledTeam: {
       id: team.id,
       city: team.city,
       name: team.name,
       abbreviation: team.abbreviation,
+      branding: { ...team.branding },
     },
     teamCount: Object.keys(state.world.teams).length,
     playerCount: Object.keys(state.world.players).length,

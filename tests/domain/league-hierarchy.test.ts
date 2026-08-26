@@ -7,6 +7,7 @@ import {
   NEUTRAL_TEAM_PLAY_STYLE,
 } from "@/domain/entities/team";
 import { DEFAULT_COACHING_PHILOSOPHY } from "@/domain/coaching/coaching-philosophy";
+import { DEFAULT_TEST_TEAM_BRANDING } from "@/domain/entities/default-team-branding";
 import {
   asArenaId,
   asConferenceId,
@@ -35,6 +36,7 @@ function createLinkedTeam(input: {
     reputation: 50,
     playStyle: { ...NEUTRAL_TEAM_PLAY_STYLE },
     coachingPhilosophy: { ...DEFAULT_COACHING_PHILOSOPHY },
+    branding: { ...DEFAULT_TEST_TEAM_BRANDING },
   });
 }
 

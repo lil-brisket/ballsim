@@ -169,6 +169,28 @@ describe("league generation", () => {
       expect(new Set(allIds).size).toBe(allIds.length);
     });
 
+    it("assigns valid branding to every team with limited palette+logo reuse", () => {
+      const generated = generateLeague(config(), createSeededRng(42));
+      const keys = new Set<string>();
+      for (const team of generated.teams) {
+        expect(team.branding.logoId).toBeTruthy();
+        expect(team.branding.primaryColor).toMatch(/^#[0-9A-F]{6}$/);
+        keys.add(
+          `${team.branding.logoId}|${team.branding.primaryColor}|${team.branding.secondaryColor}|${team.branding.accentColor}`,
+        );
+      }
+      // Encourage diversity: unique full branding combos should be high for 30 teams
+      expect(keys.size).toBeGreaterThanOrEqual(20);
+    });
+
+    it("is deterministic for branding under the same seed", () => {
+      const a = generateLeague(config(), createSeededRng(99));
+      const b = generateLeague(config(), createSeededRng(99));
+      expect(a.teams.map((team) => team.branding)).toEqual(
+        b.teams.map((team) => team.branding),
+      );
+    });
+
     it("uses unique cities and nicknames for every team", () => {
       const generated = generateLeague(config(), createSeededRng(5));
       const cities = generated.teams.map((team) => team.city);

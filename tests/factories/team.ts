@@ -20,6 +20,8 @@ import {
   DEFAULT_COACHING_PHILOSOPHY,
   type CoachingPhilosophy,
 } from "@/domain/coaching/coaching-philosophy";
+import { DEFAULT_TEST_TEAM_BRANDING } from "@/domain/entities/default-team-branding";
+import type { TeamBranding } from "@/domain/entities/team-branding";
 
 export type CreateTeamOverrides = {
   id?: TeamId | string;
@@ -35,6 +37,7 @@ export type CreateTeamOverrides = {
   reputation?: number;
   playStyle?: TeamPlayStyle;
   coachingPhilosophy?: CoachingPhilosophy;
+  branding?: TeamBranding;
 };
 
 /**
@@ -59,6 +62,9 @@ export function createTeam(overrides: CreateTeamOverrides = {}): Team {
     coachingPhilosophy: overrides.coachingPhilosophy
       ? { ...overrides.coachingPhilosophy }
       : { ...DEFAULT_COACHING_PHILOSOPHY },
+    branding: overrides.branding
+      ? { ...overrides.branding }
+      : { ...DEFAULT_TEST_TEAM_BRANDING },
   });
 }
 

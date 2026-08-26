@@ -184,6 +184,7 @@ function createEightTeamGameState(rngSeed: number): {
       controlledTeamId,
       mode: "owner",
       citySelectionConfirmed: true,
+      franchiseIdentityConfirmed: true,
       ownerStartSeasonYear: 2026,
       ownerPhilosophy: "balanced",
       ownerPatience: 55,

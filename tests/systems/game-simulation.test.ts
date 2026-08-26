@@ -607,6 +607,7 @@ describe("simulateScheduledGame finalization", () => {
       city: homeTeam.city,
       name: homeTeam.name,
       abbreviation: homeTeam.abbreviation,
+      branding: homeTeam.branding,
     });
     expect(finalGame.awayTeamSnapshot!.abbreviation).toBe(
       awayTeam.abbreviation,
