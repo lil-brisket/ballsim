@@ -87,7 +87,7 @@ function createEightTeamPopulatedState(rngSeed: number): GameState {
         divisionsEnabled: true,
         area: "north_america",
       },
-      injuriesEnabled: true,
+      injuryFrequency: "medium",
       regularSeason: { gamesPerTeam: 14, tradeDeadlineRule: { kind: "fraction_of_season_span", seasonSpanFraction: 0.55 } },
       playoffs: {
         playoffTeams: 8,

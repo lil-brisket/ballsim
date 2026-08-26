@@ -2411,7 +2411,9 @@ type GameStateV28 = {
   };
   settings: {
     league: GameSettings["league"];
-    injuriesEnabled: boolean;
+    /** Present on historical v28 JSON; normalized to injuryFrequency on load. */
+    injuriesEnabled?: boolean;
+    injuryFrequency?: GameSettings["injuryFrequency"];
     regularSeason: {
       gamesPerTeam: number;
       tradeDeadlineRule?: GameSettings["regularSeason"]["tradeDeadlineRule"];

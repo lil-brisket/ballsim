@@ -11,22 +11,17 @@ import {
 function AdvanceButton(props: {
   label: string;
   pendingLabel: string;
-  primary?: boolean;
   disabled?: boolean;
 }) {
   const { pending } = useFormStatus();
   const disabled = props.disabled || pending;
-  const primaryClass =
-    "rounded-md bg-amber-600 px-4 py-2 text-sm font-medium text-zinc-950 hover:bg-amber-500 disabled:opacity-40 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-500";
-  const secondaryClass =
-    "rounded-md border border-zinc-700 px-4 py-2 text-sm text-zinc-200 hover:border-amber-600 disabled:opacity-40 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-500";
 
   return (
     <button
       type="submit"
       disabled={disabled}
       aria-busy={pending}
-      className={props.primary ? primaryClass : secondaryClass}
+      className="rounded-md border border-zinc-700 px-4 py-2 text-sm text-zinc-200 hover:border-amber-600 disabled:opacity-40 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-500"
     >
       {pending ? props.pendingLabel : props.label}
     </button>
@@ -52,11 +47,11 @@ function SimulationProgressStatus(props: { message: string }) {
 /**
  * Phase-aware advance controls. Uses existing server actions only.
  * Shows descriptive pending copy so longer jumps do not feel frozen.
+ * Day / 7-day / until-phase are equal-weight player choices (not league settings).
  */
 export function AdvanceTimeControls(props: {
   saveId: string;
   returnPath: string;
-  simulationFrequency: string;
   disabled?: boolean;
   untilPhaseLabel?: string;
   unresolvedWarning?: string | null;
@@ -68,7 +63,6 @@ export function AdvanceTimeControls(props: {
   goToHref?: string;
   assistantSummary?: ReactNode;
 }) {
-  const preferWeekly = props.simulationFrequency === "weekly";
   const untilLabel = props.untilPhaseLabel
     ? `Until ${props.untilPhaseLabel}`
     : "Until next phase";
@@ -89,14 +83,14 @@ export function AdvanceTimeControls(props: {
           ⚠ {props.unresolvedWarning}
         </p>
       ) : null}
+      <p className="text-xs uppercase tracking-wide text-zinc-500">Advance</p>
       <div className="flex flex-wrap gap-2" role="group" aria-label="Advance time">
         <form action={advanceDayAction} className="space-y-1">
           <input type="hidden" name="saveId" value={props.saveId} />
           <input type="hidden" name="returnPath" value={props.returnPath} />
           <AdvanceButton
-            label="Advance day"
+            label="Day"
             pendingLabel="Simulating day…"
-            primary={!preferWeekly}
             disabled={props.disabled}
           />
           <SimulationProgressStatus message="Simulating next day — games, standings, and franchise updates…" />
@@ -105,9 +99,8 @@ export function AdvanceTimeControls(props: {
           <input type="hidden" name="saveId" value={props.saveId} />
           <input type="hidden" name="returnPath" value={props.returnPath} />
           <AdvanceButton
-            label="Advance 7 days"
+            label="7 Days"
             pendingLabel="Simulating week…"
-            primary={preferWeekly}
             disabled={props.disabled}
           />
           <SimulationProgressStatus message="Simulating 7 days — this may take a few seconds…" />

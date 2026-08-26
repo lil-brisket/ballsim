@@ -73,8 +73,36 @@ export const SUPPORTED_CONFERENCE_COUNTS = [1, 2, 4] as const;
 export type SupportedConferenceCount =
   (typeof SUPPORTED_CONFERENCE_COUNTS)[number];
 
+/**
+ * @deprecated Legacy save compatibility. Not user-configurable. Always "daily".
+ * Advance pacing is a player control, not a league setting.
+ */
 export type SimulationFrequency = "daily" | "weekly";
+
+/**
+ * @deprecated Legacy save compatibility. Not user-configurable. Always "normal".
+ */
 export type AiDifficulty = "easy" | "normal" | "hard";
+
+/**
+ * How frequently players become injured during simulation.
+ *
+ * - `low` — injuries occur less frequently (very rare)
+ * - `medium` — baseline / default injury rate
+ * - `high` — injuries occur more frequently
+ *
+ * Persisted now but does not currently alter injury generation.
+ * Future injury simulation work will consume this field.
+ */
+export type InjuryFrequency = "low" | "medium" | "high";
+
+export const INJURY_FREQUENCIES = ["low", "medium", "high"] as const;
+
+export const INJURY_FREQUENCY_LABELS: Record<InjuryFrequency, string> = {
+  low: "Low",
+  medium: "Medium",
+  high: "High",
+};
 
 /**
  * @deprecated Prefer {@link AiManagementPreset}. Kept for cheap v37→v38 mapping.
@@ -150,7 +178,11 @@ export type GameSettings = {
     divisionsEnabled: boolean;
     area?: LeagueArea;
   };
-  injuriesEnabled: boolean;
+  /**
+   * Injury occurrence rate for future injury simulation.
+   * Persisted now; not yet consumed by the sim engine.
+   */
+  injuryFrequency: InjuryFrequency;
   regularSeason: {
     gamesPerTeam: number;
     tradeDeadlineRule: TradeDeadlineRule;
@@ -158,16 +190,15 @@ export type GameSettings = {
   playoffs: {
     playoffTeams: number;
     seriesLength: SeriesLength;
+    /** @deprecated Legacy save compatibility. Not user-configurable. Always false. */
     playInEnabled: boolean;
   };
   simulation: {
+    /** @deprecated Legacy save compatibility. Not user-configurable. Always "daily". */
     frequency: SimulationFrequency;
   };
-  /**
-   * AI difficulty is persisted for future consumption.
-   * Current AI uses franchise profiles, not this slider.
-   */
   ai: {
+    /** @deprecated Legacy save compatibility. Not user-configurable. Always "normal". */
     difficulty: AiDifficulty;
     /**
      * Legacy compatibility field. Canonical config is {@link assistance}.
@@ -196,6 +227,7 @@ export type GameSettings = {
   };
   offseason: {
     freeAgency: {
+      /** Canonical free-agency length. Always 30; not user-configurable. */
       durationDays: number;
       allowExtension: boolean;
     };
@@ -225,7 +257,7 @@ export const DEFAULT_GAME_SETTINGS: GameSettings = {
     divisionsEnabled: true,
     area: "north_america",
   },
-  injuriesEnabled: true,
+  injuryFrequency: "medium",
   regularSeason: {
     gamesPerTeam: 82,
     tradeDeadlineRule: {
@@ -271,7 +303,7 @@ export const CBL_GAME_SETTINGS: GameSettings = {
     divisionsEnabled: true,
     area: "north_america",
   },
-  injuriesEnabled: true,
+  injuryFrequency: "medium",
   regularSeason: {
     gamesPerTeam: 22,
     tradeDeadlineRule: {
@@ -352,6 +384,10 @@ export function isSimulationFrequency(
 
 export function isAiDifficulty(value: unknown): value is AiDifficulty {
   return value === "easy" || value === "normal" || value === "hard";
+}
+
+export function isInjuryFrequency(value: unknown): value is InjuryFrequency {
+  return value === "low" || value === "medium" || value === "high";
 }
 
 export function isAiManagementMode(value: unknown): value is AiManagementMode {
@@ -436,7 +472,7 @@ export function isTradeDeadlineRule(
 export function cloneGameSettings(settings: GameSettings): GameSettings {
   return {
     league: { ...settings.league },
-    injuriesEnabled: settings.injuriesEnabled ?? true,
+    injuryFrequency: settings.injuryFrequency ?? "medium",
     regularSeason: {
       ...settings.regularSeason,
       tradeDeadlineRule: { ...settings.regularSeason.tradeDeadlineRule },

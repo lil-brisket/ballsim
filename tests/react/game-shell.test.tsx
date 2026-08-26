@@ -70,7 +70,6 @@ function baseDashboard(
       userQualified: false,
       championTeamId: null,
     },
-    simulationFrequency: "daily",
     ...overrides,
   };
 }
@@ -164,11 +163,10 @@ describe("game shell UI", () => {
       <AdvanceTimeControls
         saveId="save_test"
         returnPath="/dashboard/save_test"
-        simulationFrequency="daily"
       />,
     );
-    expect(screen.getByRole("button", { name: "Advance day" })).toBeTruthy();
-    expect(screen.getByRole("button", { name: "Advance 7 days" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Day" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "7 Days" })).toBeTruthy();
     expect(
       screen.getByRole("button", { name: "Until next phase" }),
     ).toBeTruthy();

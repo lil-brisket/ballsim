@@ -113,7 +113,7 @@ export function reconstructGameSettingsFromState(
       divisionsEnabled,
       area: DEFAULT_GAME_SETTINGS.league.area,
     },
-    injuriesEnabled: DEFAULT_GAME_SETTINGS.injuriesEnabled,
+    injuryFrequency: DEFAULT_GAME_SETTINGS.injuryFrequency,
     regularSeason: {
       gamesPerTeam,
       tradeDeadlineRule: { ...DEFAULT_GAME_SETTINGS.regularSeason.tradeDeadlineRule },

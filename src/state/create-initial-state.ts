@@ -349,7 +349,7 @@ export function createFourTeamInitialGameState(
       divisionsEnabled: false,
       area: "north_america",
     },
-    injuriesEnabled: true,
+    injuryFrequency: "medium",
     regularSeason: {
       gamesPerTeam: 14,
       tradeDeadlineRule: {

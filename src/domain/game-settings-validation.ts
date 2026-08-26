@@ -4,13 +4,12 @@ import {
   DEFAULT_OFFSEASON_SETTINGS,
   DEFAULT_TRADE_DEADLINE_RULE,
   isAiAssistDomainMode,
-  isAiDifficulty,
   isAiManagementMode,
   isAiManagementPreset,
   isDraftMode,
+  isInjuryFrequency,
   isLeagueArea,
   isLeagueHistoryMode,
-  isSimulationFrequency,
   isSupportedConferenceCount,
   isSupportedGamesPerTeam,
   isSupportedPlayoffTeamCount,
@@ -27,6 +26,7 @@ import {
   type AiAssistancePhases,
   type AiManagementPreset,
   type GameSettings,
+  type InjuryFrequency,
   type ManagementPhase,
   type TradeDeadlineRule,
 } from "@/domain/game-settings";
@@ -123,12 +123,7 @@ export function validateGameSettings(
     errors.push('league.area must be "north_america", "europe", or "global".');
   }
 
-  if (
-    raw.injuriesEnabled !== undefined &&
-    typeof raw.injuriesEnabled !== "boolean"
-  ) {
-    errors.push("injuriesEnabled must be a boolean.");
-  }
+  const injuryFrequency = resolveInjuryFrequency(raw);
 
   const gamesPerTeam = regularSeason.gamesPerTeam;
   if (typeof gamesPerTeam !== "number" || !isSupportedGamesPerTeam(gamesPerTeam)) {
@@ -175,25 +170,14 @@ export function validateGameSettings(
     errors.push("playoffs.seriesLength must be 1, 3, 5, or 7.");
   }
 
-  const playInEnabled = playoffs.playInEnabled;
-  if (typeof playInEnabled !== "boolean") {
-    errors.push("playoffs.playInEnabled must be a boolean.");
-  }
-
-  const frequency = simulation.frequency;
-  if (!isSimulationFrequency(frequency)) {
-    errors.push('simulation.frequency must be "daily" or "weekly".');
-  }
-
-  const difficulty = ai.difficulty;
-  if (!isAiDifficulty(difficulty)) {
-    errors.push('ai.difficulty must be "easy", "normal", or "hard".');
-  }
+  // Canonical invariants: these fields are not user-configurable.
+  // Input values are ignored; validated output always uses fixed values.
+  const playInEnabled = false;
+  const frequency = "daily" as const;
+  const difficulty = "normal" as const;
 
   const { managementPreset, assistance } = resolveAiSettings(ai, errors);
 
-  let freeAgencyDurationDays =
-    DEFAULT_OFFSEASON_SETTINGS.freeAgency.durationDays;
   let freeAgencyAllowExtension =
     DEFAULT_OFFSEASON_SETTINGS.freeAgency.allowExtension;
   if (offseason !== null) {
@@ -202,20 +186,6 @@ export function validateGameSettings(
         ? null
         : asRecord(offseason.freeAgency, "offseason.freeAgency", errors);
     if (freeAgency) {
-      if (freeAgency.durationDays !== undefined) {
-        if (
-          typeof freeAgency.durationDays !== "number" ||
-          !Number.isInteger(freeAgency.durationDays) ||
-          freeAgency.durationDays < 1 ||
-          freeAgency.durationDays > 90
-        ) {
-          errors.push(
-            "offseason.freeAgency.durationDays must be an integer between 1 and 90.",
-          );
-        } else {
-          freeAgencyDurationDays = freeAgency.durationDays;
-        }
-      }
       if (freeAgency.allowExtension !== undefined) {
         if (typeof freeAgency.allowExtension !== "boolean") {
           errors.push(
@@ -227,6 +197,8 @@ export function validateGameSettings(
       }
     }
   }
+  const freeAgencyDurationDays =
+    DEFAULT_OFFSEASON_SETTINGS.freeAgency.durationDays;
 
   const salaryCapEnabled = financialRules.salaryCapEnabled;
   const luxuryTaxEnabled = financialRules.luxuryTaxEnabled;
@@ -291,20 +263,6 @@ export function validateGameSettings(
   }
 
   if (
-    typeof playInEnabled === "boolean" &&
-    playInEnabled &&
-    typeof teamCount === "number" &&
-    typeof playoffTeams === "number" &&
-    Number.isInteger(teamCount) &&
-    Number.isInteger(playoffTeams) &&
-    teamCount < playoffTeams + 2
-  ) {
-    errors.push(
-      `play-in requires at least playoffTeams + 2 teams; got teamCount=${teamCount}, playoffTeams=${playoffTeams}.`,
-    );
-  }
-
-  if (
     typeof teamCount === "number" &&
     typeof conferenceCount === "number" &&
     typeof divisionsEnabled === "boolean" &&
@@ -340,8 +298,7 @@ export function validateGameSettings(
       area: (league.area as GameSettings["league"]["area"] | undefined) ??
         "north_america",
     },
-    injuriesEnabled:
-      (raw.injuriesEnabled as boolean | undefined) ?? true,
+    injuryFrequency,
     regularSeason: {
       gamesPerTeam: gamesPerTeam as number,
       tradeDeadlineRule,
@@ -349,13 +306,13 @@ export function validateGameSettings(
     playoffs: {
       playoffTeams: playoffTeams as number,
       seriesLength: seriesLength as GameSettings["playoffs"]["seriesLength"],
-      playInEnabled: playInEnabled as boolean,
+      playInEnabled,
     },
     simulation: {
-      frequency: frequency as GameSettings["simulation"]["frequency"],
+      frequency,
     },
     ai: {
-      difficulty: difficulty as GameSettings["ai"]["difficulty"],
+      difficulty,
       managementPreset,
       assistance,
     },
@@ -382,6 +339,27 @@ export function validateGameSettings(
   };
 
   return { ok: true, settings: validated };
+}
+
+/**
+ * Resolve injury frequency from canonical or legacy payload fields.
+ *
+ * 1. Valid `injuryFrequency` → use it
+ * 2. Legacy `injuriesEnabled: false` → "low" (intentional: old "off" → very rare)
+ * 3. Legacy `injuriesEnabled: true` → "medium"
+ * 4. Invalid / missing → "medium"
+ */
+function resolveInjuryFrequency(raw: Record<string, unknown>): InjuryFrequency {
+  if (isInjuryFrequency(raw.injuryFrequency)) {
+    return raw.injuryFrequency;
+  }
+  if (raw.injuriesEnabled === false) {
+    return "low";
+  }
+  if (raw.injuriesEnabled === true) {
+    return "medium";
+  }
+  return "medium";
 }
 
 function resolveAiSettings(

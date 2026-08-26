@@ -62,7 +62,6 @@ export default async function DashboardPage({
           <AdvanceTimeControls
             saveId={save.id}
             returnPath={returnPath}
-            simulationFrequency={dash.simulationFrequency}
             disabled={timeDisabled}
             untilPhaseLabel={phase.nextPhaseLabel ?? undefined}
             unresolvedWarning={unresolvedWarning}

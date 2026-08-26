@@ -157,7 +157,10 @@ function assertOptionalCalendarDate(value: unknown, path: string): void {
 
 /**
  * Validates structural and referential integrity of a GameState at the
- * persistence boundary. Does not mutate input. Throws on failure.
+ * persistence boundary. Throws on failure.
+ *
+ * Settings are normalized to canonical form via {@link validateGameSettings}
+ * (fixed FA duration, play-in off, injury frequency migration, etc.).
  */
 export function validateGameState(state: unknown): asserts state is GameState {
   assertRecord(state, "GameState");
@@ -201,6 +204,9 @@ export function validateGameState(state: unknown): asserts state is GameState {
   if (!settingsResult.ok) {
     fail(`settings: ${settingsResult.errors.join("; ")}`);
   }
+  // Canonicalize settings so legacy / tampered fields converge on invariants.
+  (state as { settings: typeof settingsResult.settings }).settings =
+    settingsResult.settings;
   // Intentionally do NOT require settings.league.teamCount === live team count
   // (expansion / relocation may change world.teams after career creation).
 

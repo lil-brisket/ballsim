@@ -86,7 +86,7 @@ function createEightTeamGameState(rngSeed: number): {
         divisionsEnabled: true,
         area: "north_america",
       },
-      injuriesEnabled: true,
+      injuryFrequency: "medium",
       regularSeason: {
         gamesPerTeam: 14,
         tradeDeadlineRule: {

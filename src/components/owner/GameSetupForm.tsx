@@ -2,11 +2,14 @@
 
 import { useMemo, useState, useTransition, type ReactNode } from "react";
 import {
+  INJURY_FREQUENCIES,
+  INJURY_FREQUENCY_LABELS,
   SUPPORTED_GAMES_PER_TEAM,
   SUPPORTED_PLAYOFF_TEAM_COUNTS,
   SUPPORTED_SERIES_LENGTHS,
   SUPPORTED_TEAM_COUNTS,
   type GameSettings,
+  type InjuryFrequency,
   type SeriesLength,
 } from "@/domain/game-settings";
 import {
@@ -100,8 +103,8 @@ export function GameSetupForm({
             value={leagueAreaLabel(settings.league.area ?? "north_america")}
           />
           <ReviewRow
-            label="Injuries"
-            value={settings.injuriesEnabled ? "On" : "Off"}
+            label="Injury frequency"
+            value={INJURY_FREQUENCY_LABELS[settings.injuryFrequency]}
           />
           <ReviewRow
             label="Games per team"
@@ -116,21 +119,8 @@ export function GameSetupForm({
             value={`Best of ${settings.playoffs.seriesLength}`}
           />
           <ReviewRow
-            label="Play-in"
-            value={settings.playoffs.playInEnabled ? "On" : "Off"}
-          />
-          <ReviewRow
-            label="Simulation"
-            value={settings.simulation.frequency}
-          />
-          <ReviewRow label="AI difficulty" value={settings.ai.difficulty} />
-          <ReviewRow
             label="AI responsibilities"
             value={`${countDelegatedVisiblePhases(settings.ai.assistance)} of ${visibleDelegationPhaseCount()} delegated to AI`}
-          />
-          <ReviewRow
-            label="Free agency length"
-            value={`${settings.offseason.freeAgency.durationDays} days`}
           />
           <ReviewRow label="Draft" value={settings.draft.mode} />
           {settings.draft.mode === "fantasy" ? (
@@ -289,13 +279,14 @@ export function GameSetupForm({
           </Section>
 
           <Section title="League rules">
-            <ToggleField
-              label="Injuries"
-              checked={settings.injuriesEnabled}
-              onChange={(checked) =>
-                updateSettings({ ...settings, injuriesEnabled: checked })
-              }
-            />
+            <div className="sm:col-span-2">
+              <InjuryFrequencyField
+                value={settings.injuryFrequency}
+                onChange={(injuryFrequency) =>
+                  updateSettings({ ...settings, injuryFrequency })
+                }
+              />
+            </div>
           </Section>
 
           <Section title="Regular season">
@@ -350,63 +341,9 @@ export function GameSetupForm({
                 })
               }
             />
-            <ToggleField
-              label="Play-in tournament"
-              checked={settings.playoffs.playInEnabled}
-              onChange={(checked) =>
-                updateSettings({
-                  ...settings,
-                  playoffs: { ...settings.playoffs, playInEnabled: checked },
-                })
-              }
-            />
-          </Section>
-
-          <Section title="Simulation">
-            <SelectField
-              label="Advance frequency"
-              value={settings.simulation.frequency === "daily" ? 0 : 1}
-              options={[
-                { value: 0, label: "Daily" },
-                { value: 1, label: "Weekly" },
-              ]}
-              onChange={(value) =>
-                updateSettings({
-                  ...settings,
-                  simulation: {
-                    frequency: value === 0 ? "daily" : "weekly",
-                  },
-                })
-              }
-            />
           </Section>
 
           <Section title="AI">
-            <SelectField
-              label="Difficulty"
-              value={
-                settings.ai.difficulty === "easy"
-                  ? 0
-                  : settings.ai.difficulty === "normal"
-                    ? 1
-                    : 2
-              }
-              options={[
-                { value: 0, label: "Easy" },
-                { value: 1, label: "Normal" },
-                { value: 2, label: "Hard" },
-              ]}
-              onChange={(value) =>
-                updateSettings({
-                  ...settings,
-                  ai: {
-                    ...settings.ai,
-                    difficulty:
-                      value === 0 ? "easy" : value === 1 ? "normal" : "hard",
-                  },
-                })
-              }
-            />
             <div className="sm:col-span-2">
               <AiTeamManagementSection
                 assistance={settings.ai.assistance}
@@ -422,32 +359,6 @@ export function GameSetupForm({
                 }
               />
             </div>
-          </Section>
-
-          <Section title="Offseason">
-            <SelectField
-              label="Free agency duration"
-              value={settings.offseason.freeAgency.durationDays}
-              options={[
-                { value: 14, label: "14 days" },
-                { value: 21, label: "21 days" },
-                { value: 30, label: "30 days" },
-                { value: 45, label: "45 days" },
-                { value: 60, label: "60 days" },
-              ]}
-              onChange={(value) =>
-                updateSettings({
-                  ...settings,
-                  offseason: {
-                    ...settings.offseason,
-                    freeAgency: {
-                      ...settings.offseason.freeAgency,
-                      durationDays: value,
-                    },
-                  },
-                })
-              }
-            />
           </Section>
 
           <Section title="Draft">
@@ -678,6 +589,78 @@ function ToggleField({
       />
       {label}
     </label>
+  );
+}
+
+function InjuryFrequencyField({
+  value,
+  onChange,
+}: {
+  value: InjuryFrequency;
+  onChange: (value: InjuryFrequency) => void;
+}) {
+  const selectedIndex = INJURY_FREQUENCIES.indexOf(value);
+  const selectedLabel = INJURY_FREQUENCY_LABELS[value];
+
+  function setByIndex(index: number) {
+    const next = INJURY_FREQUENCIES[Math.max(0, Math.min(2, index))];
+    if (next) {
+      onChange(next);
+    }
+  }
+
+  return (
+    <div className="space-y-2 text-sm text-zinc-300">
+      <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+        <span className="font-medium text-zinc-200">
+          Injury frequency — {selectedLabel}
+        </span>
+      </div>
+      <p className="text-xs text-zinc-500">
+        Affects how frequently players become injured during simulation.
+      </p>
+      <div
+        role="radiogroup"
+        aria-label={`Injury frequency — ${selectedLabel}`}
+        className="flex rounded-md border border-zinc-700 bg-zinc-950 p-0.5"
+        onKeyDown={(event) => {
+          if (event.key === "ArrowLeft" || event.key === "ArrowDown") {
+            event.preventDefault();
+            setByIndex(selectedIndex - 1);
+          } else if (event.key === "ArrowRight" || event.key === "ArrowUp") {
+            event.preventDefault();
+            setByIndex(selectedIndex + 1);
+          } else if (event.key === "Home") {
+            event.preventDefault();
+            setByIndex(0);
+          } else if (event.key === "End") {
+            event.preventDefault();
+            setByIndex(2);
+          }
+        }}
+      >
+        {INJURY_FREQUENCIES.map((frequency) => {
+          const selected = frequency === value;
+          return (
+            <button
+              key={frequency}
+              type="button"
+              role="radio"
+              aria-checked={selected}
+              tabIndex={selected ? 0 : -1}
+              onClick={() => onChange(frequency)}
+              className={`flex-1 rounded px-3 py-2 text-center text-sm transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-500 ${
+                selected
+                  ? "bg-amber-600 font-medium text-zinc-950"
+                  : "text-zinc-400 hover:bg-zinc-900 hover:text-zinc-200"
+              }`}
+            >
+              {INJURY_FREQUENCY_LABELS[frequency]}
+            </button>
+          );
+        })}
+      </div>
+    </div>
   );
 }
 

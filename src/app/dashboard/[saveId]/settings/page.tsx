@@ -8,6 +8,7 @@ import {
   countDelegatedVisiblePhases,
   visibleDelegationPhaseCount,
 } from "@/domain/ai-management-delegation";
+import { INJURY_FREQUENCY_LABELS } from "@/domain/game-settings";
 
 type SettingsPageProps = {
   params: Promise<{ saveId: string }>;
@@ -34,10 +35,9 @@ export default async function InGameSettingsPage({
     league,
     regularSeason,
     playoffs,
-    simulation,
     ai,
     financialRules,
-    offseason,
+    injuryFrequency,
   } = settings;
 
   return (
@@ -80,33 +80,24 @@ export default async function InGameSettingsPage({
             label="Series length"
             value={`${playoffs.seriesLength}`}
           />
-          <SettingRow
-            label="Play-in"
-            value={playoffs.playInEnabled ? "On" : "Off"}
-          />
         </dl>
       </Section>
 
-      <Section title="Simulation">
+      <Section title="League rules">
         <dl className="grid gap-3 text-sm sm:grid-cols-2">
-          <SettingRow label="Frequency" value={simulation.frequency} />
-          <SettingRow label="AI difficulty" value={ai.difficulty} />
           <SettingRow
-            label="AI responsibilities"
-            value={`${countDelegatedVisiblePhases(ai.assistance)} of ${visibleDelegationPhaseCount()} delegated`}
-          />
-          <SettingRow
-            label="Free agency duration"
-            value={`${offseason.freeAgency.durationDays} days`}
-          />
-          <SettingRow
-            label="FA extension allowed"
-            value={offseason.freeAgency.allowExtension ? "Yes" : "No"}
+            label="Injury frequency"
+            value={INJURY_FREQUENCY_LABELS[injuryFrequency]}
+            description="Affects how frequently players become injured during simulation."
           />
         </dl>
       </Section>
 
       <Section title="AI Team Management">
+        <p className="mb-3 text-sm text-zinc-400">
+          {countDelegatedVisiblePhases(ai.assistance)} of{" "}
+          {visibleDelegationPhaseCount()} phases delegated to AI
+        </p>
         <DelegationSummary assistance={ai.assistance} readOnly />
       </Section>
 
@@ -130,13 +121,20 @@ export default async function InGameSettingsPage({
   );
 }
 
-function SettingRow(props: { label: string; value: string }) {
+function SettingRow(props: {
+  label: string;
+  value: string;
+  description?: string;
+}) {
   return (
     <div className="rounded-lg border border-zinc-800 px-4 py-3">
       <dt className="text-xs uppercase tracking-wide text-zinc-600">
         {props.label}
       </dt>
       <dd className="mt-1 text-zinc-100">{props.value}</dd>
+      {props.description ? (
+        <p className="mt-1 text-xs text-zinc-500">{props.description}</p>
+      ) : null}
     </div>
   );
 }

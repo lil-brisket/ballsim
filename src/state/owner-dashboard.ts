@@ -238,7 +238,6 @@ export type OwnerDashboardView = {
     name: string;
     abbreviation: string;
   };
-  simulationFrequency: "daily" | "weekly";
   health: OwnerDashboardHealth;
   team: OwnerDashboardTeam;
   owner: OwnerDashboardOwner;
@@ -408,7 +407,6 @@ export function toOwnerDashboardView(state: GameState): OwnerDashboardView {
     currentEra,
     leagueName: canonical.snapshot.leagueName,
     controlledTeam: canonical.snapshot.controlledTeam,
-    simulationFrequency: canonical.snapshot.simulationFrequency,
     health,
     team,
     owner,

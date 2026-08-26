@@ -44,6 +44,7 @@ import { createEmptyTeamStanding } from "@/domain/entities/standings";
 import { createNewOwnerSave } from "@/application/game-service";
 import { acceptOffer, makeOffer } from "@/systems/free-agency";
 import { DEFAULT_SALARY_CAP } from "@/systems/salary-cap-config";
+import { validateGameState } from "@/persistence/validate-game-state";
 import { createPlayer } from "../factories/player";
 
 describe("settings persistence and isolation", () => {
@@ -51,6 +52,43 @@ describe("settings persistence and isolation", () => {
     const state = createInitialGameState({ saveId: "std_default" });
     expect(state.settings).toEqual(DEFAULT_GAME_SETTINGS);
     expect(Object.keys(state.world.teams)).toHaveLength(30);
+  });
+
+  it("canonicalizes legacy injury and fixed fields on validateGameState", () => {
+    const state = createInitialGameState({ saveId: "legacy_settings" });
+    const { injuryFrequency: _removed, ...settingsWithoutInjury } =
+      state.settings;
+    const legacyPayload = {
+      ...state,
+      settings: {
+        ...settingsWithoutInjury,
+        injuriesEnabled: false,
+        playoffs: {
+          ...state.settings.playoffs,
+          playInEnabled: true,
+        },
+        offseason: {
+          freeAgency: {
+            durationDays: 60,
+            allowExtension: true,
+          },
+        },
+        ai: {
+          ...state.settings.ai,
+          difficulty: "hard" as const,
+        },
+        simulation: { frequency: "weekly" as const },
+      },
+    };
+    validateGameState(legacyPayload);
+    expect(legacyPayload.settings.injuryFrequency).toBe("low");
+    expect(legacyPayload.settings.offseason.freeAgency.durationDays).toBe(30);
+    expect(legacyPayload.settings.playoffs.playInEnabled).toBe(false);
+    expect(legacyPayload.settings.ai.difficulty).toBe("normal");
+    expect(legacyPayload.settings.simulation.frequency).toBe("daily");
+    expect(
+      "injuriesEnabled" in (legacyPayload.settings as object),
+    ).toBe(false);
   });
 
   it("CBL preset creates 12/22/8 via createNewOwnerSave", async () => {
