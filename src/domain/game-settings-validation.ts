@@ -21,6 +21,7 @@ import {
   legacyManagementModeToPreset,
   applyPreset,
   DEFAULT_AI_MANAGEMENT_PRESET,
+  DEFAULT_DELEGATED_ASSISTANCE,
   MANAGEMENT_PHASE_KEYS,
   type AiAssistanceDomains,
   type AiAssistancePhases,
@@ -408,18 +409,16 @@ function resolveAiSettings(
     }
   }
 
-  let assistance: AiAssistancePhases = applyPreset(
-    managementPreset === "custom" ? "continuity" : managementPreset,
-  );
-
-  if (managementPreset !== "custom") {
-    assistance = applyPreset(managementPreset);
-  }
+  // Default base: named presets expand from tables; custom uses delegation defaults.
+  let assistance: AiAssistancePhases =
+    managementPreset === "custom"
+      ? { ...DEFAULT_DELEGATED_ASSISTANCE }
+      : applyPreset(managementPreset);
 
   if (ai.assistance !== undefined) {
     const assistanceRecord = asRecord(ai.assistance, "ai.assistance", errors);
     if (assistanceRecord) {
-      // New phase-keyed shape
+      // Phase-keyed shape is canonical — use it as the source of truth.
       if (MANAGEMENT_PHASE_KEYS.some((key) => key in assistanceRecord)) {
         const next = { ...assistance };
         for (const key of MANAGEMENT_PHASE_KEYS) {
@@ -434,20 +433,14 @@ function resolveAiSettings(
           }
         }
         assistance = next;
-        if (managementPreset !== "custom") {
-          // Custom overrides while still on a named preset → keep preset
-          // unless caller set custom; applying named preset already set base.
-        }
       } else {
         // Legacy domain keys — map cheaply into phases for migration acceptance.
         const legacy = parseLegacyAssistance(assistanceRecord, errors);
         assistance = mapLegacyDomainsToPhases(managementPreset, legacy);
       }
     }
-  }
-
-  if (managementPreset === "custom" && ai.assistance === undefined) {
-    assistance = applyPreset("continuity");
+  } else if (managementPreset !== "custom") {
+    assistance = applyPreset(managementPreset);
   }
 
   return { managementPreset, assistance };

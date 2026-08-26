@@ -3,6 +3,11 @@ import { loadOwnerSaveView } from "@/application/game-service";
 import { ErrorState } from "@/components/owner/EmptyState";
 import { PageHeader } from "@/components/owner/PageHeader";
 import { Section } from "@/components/owner/Section";
+import { DelegationSummary } from "@/components/owner/ai-management/DelegationSummary";
+import {
+  countDelegatedVisiblePhases,
+  visibleDelegationPhaseCount,
+} from "@/domain/ai-management-delegation";
 
 type SettingsPageProps = {
   params: Promise<{ saveId: string }>;
@@ -87,8 +92,8 @@ export default async function InGameSettingsPage({
           <SettingRow label="Frequency" value={simulation.frequency} />
           <SettingRow label="AI difficulty" value={ai.difficulty} />
           <SettingRow
-            label="Team management assistance"
-            value={ai.managementPreset.replaceAll("_", " ")}
+            label="AI responsibilities"
+            value={`${countDelegatedVisiblePhases(ai.assistance)} of ${visibleDelegationPhaseCount()} delegated`}
           />
           <SettingRow
             label="Free agency duration"
@@ -101,21 +106,8 @@ export default async function InGameSettingsPage({
         </dl>
       </Section>
 
-      <Section title="AI assistance phases">
-        <dl className="grid gap-3 text-sm sm:grid-cols-2">
-          {(
-            Object.entries(ai.assistance) as [
-              string,
-              string,
-            ][]
-          ).map(([phase, mode]) => (
-            <SettingRow
-              key={phase}
-              label={phase.replace(/([A-Z])/g, " $1")}
-              value={mode.replaceAll("_", " ")}
-            />
-          ))}
-        </dl>
+      <Section title="AI Team Management">
+        <DelegationSummary assistance={ai.assistance} readOnly />
       </Section>
 
       <Section title="Financial rules">

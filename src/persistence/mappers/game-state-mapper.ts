@@ -46,8 +46,11 @@ import {
   isTradeDeadlineRule,
   legacyManagementModeToPreset,
   applyPreset,
+  resolveAssistancePhasesLegacy,
   type AiManagementMode,
   type AiAssistanceDomains,
+  type AiAssistancePhases,
+  type AiManagementPreset,
   type GameSettings,
 } from "@/domain/game-settings";
 import { EMPTY_AI_ASSIST_STATE } from "@/state/game-state";
@@ -158,10 +161,11 @@ const MIGRATE_ONE_STEP: Record<number, (state: unknown) => unknown> = {
   35: (state) => migrateV35ToV36(state as GameStateV35),
   36: (state) => migrateV36ToV37(state as GameStateV36),
   37: (state) => migrateV37ToV38(state as GameStateV37),
+  38: (state) => migrateV38ToV39(state as GameStateV38),
 };
 
 /**
- * Parse → migrate (v1–v37 → current) → validate → return GameState.
+ * Parse → migrate (v1–v38 → current) → validate → return GameState.
  * Does not call serializeGameState.
  */
 export function deserializeGameState(stateJson: string): GameState {
@@ -2911,6 +2915,23 @@ type GameStateV37 = {
   };
 };
 
+type GameStateV38 = {
+  meta: Omit<GameState["meta"], "schemaVersion"> & {
+    schemaVersion: 38;
+  };
+  settings: Omit<GameState["settings"], "ai"> & {
+    ai: {
+      difficulty: GameSettings["ai"]["difficulty"];
+      managementPreset: AiManagementPreset;
+      assistance: AiAssistancePhases;
+    };
+  };
+  world: GameState["world"];
+  competition: GameState["competition"];
+  business: GameState["business"];
+  user: GameState["user"];
+};
+
 /**
  * Deterministic v34 → v35: box-score historical identity fields on Game.
  * - competitionType inferred from id prefix only (playoff_/playin_ → playoffs)
@@ -3061,7 +3082,7 @@ function migrateV36ToV37(state: GameStateV36): GameStateV37 {
  * Deterministic v37 → v38: phase-based management presets + aiAssistState.
  * Cheap mapping: smart_assist → smart preset. No RNG.
  */
-function migrateV37ToV38(state: GameStateV37): GameState {
+function migrateV37ToV38(state: GameStateV37): GameStateV38 {
   const preset = legacyManagementModeToPreset(state.settings.ai.managementMode);
   const assistance = applyPreset(preset);
 
@@ -3084,6 +3105,34 @@ function migrateV37ToV38(state: GameStateV37): GameState {
       aiAssistState: state.user.aiAssistState ?? {
         resolvedNeeds: {},
         seasonCounters: { ...EMPTY_AI_ASSIST_STATE.seasonCounters },
+      },
+    },
+  };
+}
+
+/**
+ * Deterministic v38 → v39: make assistance canonical for delegation UI.
+ * Preserves exact phase modes (no upgrade to full). Preset kept for audit only.
+ */
+function migrateV38ToV39(state: GameStateV38): GameState {
+  const assistance = resolveAssistancePhasesLegacy(
+    state.settings.ai.managementPreset,
+    state.settings.ai.assistance,
+  );
+
+  return {
+    ...state,
+    meta: {
+      ...state.meta,
+      schemaVersion: 39,
+    },
+    settings: {
+      ...state.settings,
+      ai: {
+        difficulty: state.settings.ai.difficulty,
+        // Keep last preset name for audit; policy/UI use assistance only.
+        managementPreset: state.settings.ai.managementPreset,
+        assistance,
       },
     },
   };

@@ -42,6 +42,8 @@ export type MultiYearSimOptions = {
   /** @deprecated Prefer managementPreset. Mapped via legacyManagementModeToPreset. */
   managementMode?: AiManagementMode;
   assistanceOverrides?: Partial<GameSettings["ai"]["assistance"]>;
+  /** When set, replaces assistance entirely and forces managementPreset to custom. */
+  assistance?: GameSettings["ai"]["assistance"];
   advanceMode: AdvanceMode;
   saveReloadEachSeason?: boolean;
   saveReloadMidFa?: boolean;
@@ -259,6 +261,10 @@ export async function runMultiYearSimulation(
   settings.ai.managementPreset = managementPreset;
   if (managementPreset !== "custom") {
     settings.ai.assistance = applyPreset(managementPreset);
+  }
+  if (options.assistance) {
+    settings.ai.assistance = { ...options.assistance };
+    settings.ai.managementPreset = "custom";
   }
   if (options.assistanceOverrides) {
     settings.ai.assistance = {

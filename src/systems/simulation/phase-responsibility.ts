@@ -8,6 +8,7 @@ import {
 import {
   buildManagementPolicy,
   evaluateAction,
+  isFullDelegation,
   isUserAssistCompletelyOff,
   type PolicyOutcome,
 } from "@/systems/simulation/management-policy";
@@ -40,12 +41,12 @@ export function computePhaseResponsibility(
   const needs = detectManagementNeeds(state);
   const unresolvedItems = toUnresolvedDecisions(state, needs);
   const unresolvedCount = unresolvedItems.length;
-  const preset = state.settings.ai.managementPreset;
+  const aiOwnsAll = isFullDelegation(state.settings);
 
   if (unresolvedCount === 0) {
     return {
       phaseKey,
-      owner: preset === "full_management" ? "ai" : "user",
+      owner: aiOwnsAll ? "ai" : "user",
       unresolvedCount: 0,
       unresolvedItems: [],
     };
@@ -66,7 +67,7 @@ export function computePhaseResponsibility(
       item.policyOutcome === "RECOMMEND",
   );
 
-  if (preset === "full_management") {
+  if (aiOwnsAll) {
     const allAllowable = unresolvedItems.every(
       (item) => item.policyOutcome === "ALLOW",
     );
@@ -94,7 +95,7 @@ export function computePhaseResponsibility(
     };
   }
 
-  // Continuity / Smart / Custom: any DENY_BLOCK or RECOMMEND that still needs
+  // Partial delegation: any DENY_BLOCK or RECOMMEND that still needs
   // a user decision surfaces as unresolved.
   if (blocking.length > 0) {
     return {
@@ -146,13 +147,13 @@ function toUnresolvedDecisions(
     if (decision.outcome === "DENY_CONTINUE") {
       continue;
     }
-    // ALLOW means AI can handle — still list for full_management visibility,
+    // ALLOW means AI can handle — still list for full-delegation visibility,
     // but critical user-facing unresolved are BLOCK/RECOMMEND.
     if (
       decision.outcome === "ALLOW" &&
-      state.settings.ai.managementPreset !== "full_management"
+      !isFullDelegation(state.settings)
     ) {
-      // Continuity/Smart will handle ALLOW needs; only surface if critical
+      // Partial delegation will handle ALLOW needs; only surface if critical
       // and we're in a mode where AI might not run before advance stops.
       continue;
     }

@@ -10,6 +10,10 @@ import {
   type AiManagementPreset,
   type ManagementPhase,
 } from "@/domain/ai-management-presets";
+import {
+  areAllPhasesOff,
+  playerRetainsAnyVisibleResponsibility,
+} from "@/domain/ai-management-delegation";
 import type { GameSettings } from "@/domain/game-settings";
 import type { TeamId } from "@/domain/ids";
 import {
@@ -350,10 +354,15 @@ export function isUserFranchiseAssistTarget(
 }
 
 /**
- * Preset off short-circuit: skip all user-franchise assist work.
+ * Assist completely off: every management phase is "off".
+ * Does not consult the legacy managementPreset field.
  */
 export function isUserAssistCompletelyOff(settings: GameSettings): boolean {
-  return settings.ai.managementPreset === "off";
+  const phases = resolveAssistancePhases(
+    settings.ai.managementPreset,
+    settings.ai.assistance,
+  );
+  return areAllPhasesOff(phases);
 }
 
 /**
@@ -375,8 +384,19 @@ export function isAnyAiAssistEnabled(settings: GameSettings): boolean {
 }
 
 /**
- * Whether the user still owns management UI (not full_management preset with full phases).
+ * Whether the user still owns at least one visible management responsibility.
  */
 export function canUserManageFranchise(settings: GameSettings): boolean {
-  return settings.ai.managementPreset !== "full_management";
+  const phases = resolveAssistancePhases(
+    settings.ai.managementPreset,
+    settings.ai.assistance,
+  );
+  return playerRetainsAnyVisibleResponsibility(phases);
+}
+
+/**
+ * True when every player-visible responsibility is delegated (AI owns franchise ops).
+ */
+export function isFullDelegation(settings: GameSettings): boolean {
+  return !canUserManageFranchise(settings) && !isUserAssistCompletelyOff(settings);
 }

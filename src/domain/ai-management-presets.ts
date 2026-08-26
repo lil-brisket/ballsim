@@ -147,9 +147,16 @@ export const PRESET_PHASE_TABLES: Record<
   full_management: FULL_PHASES,
 };
 
-/** Recommended default for new saves: prevent franchise breakage without running the franchise. */
-export const DEFAULT_AI_MANAGEMENT_PRESET: AiManagementPreset = "continuity";
+/**
+ * Legacy preset field. New saves use `"custom"` with canonical `assistance`.
+ * Named presets remain for migration of older saves only.
+ */
+export const DEFAULT_AI_MANAGEMENT_PRESET: AiManagementPreset = "custom";
 
+/**
+ * @deprecated Prefer DEFAULT_DELEGATED_ASSISTANCE from ai-management-delegation.
+ * Kept as the continuity table for legacy preset resolution during migration.
+ */
 export const DEFAULT_AI_ASSISTANCE_PHASES: AiAssistancePhases = {
   ...CONTINUITY_PHASES,
 };
@@ -189,14 +196,35 @@ export function inferPreset(phases: AiAssistancePhases): AiManagementPreset {
   return "custom";
 }
 
+/**
+ * Resolve effective phase modes.
+ *
+ * Assistance is the canonical source of truth. Named presets are only applied
+ * when `assistanceCanonical` is false (legacy load / migration of pre-v39 saves).
+ */
 export function resolveAssistancePhases(
   preset: AiManagementPreset,
   customPhases: AiAssistancePhases,
+  options?: { assistanceCanonical?: boolean },
 ): AiAssistancePhases {
-  if (preset === "custom") {
+  const assistanceCanonical = options?.assistanceCanonical !== false;
+  if (assistanceCanonical || preset === "custom") {
     return { ...customPhases };
   }
   return applyPreset(preset);
+}
+
+/**
+ * Resolve phases for a pre-v39 save where named presets overwrite assistance.
+ * Used only by migration.
+ */
+export function resolveAssistancePhasesLegacy(
+  preset: AiManagementPreset,
+  customPhases: AiAssistancePhases,
+): AiAssistancePhases {
+  return resolveAssistancePhases(preset, customPhases, {
+    assistanceCanonical: false,
+  });
 }
 
 export function isAiManagementPreset(

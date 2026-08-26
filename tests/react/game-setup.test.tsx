@@ -36,4 +36,21 @@ describe("GameSetupForm", () => {
     expect(screen.getByLabelText("Randomize my draft position")).toBeTruthy();
     unmount();
   });
+
+  it("shows AI team management delegation cards instead of presets", () => {
+    const { unmount } = render(<GameSetupForm atSaveLimit={false} />);
+
+    expect(
+      screen.getByRole("heading", { name: "AI Team Management" }),
+    ).toBeTruthy();
+    expect(
+      screen.getByRole("checkbox", { name: /Injuries & Emergency Roster/ }),
+    ).toBeTruthy();
+    expect(screen.queryByLabelText("Team management assistance")).toBeNull();
+    expect(
+      screen.queryByText(/Custom — configure individual phases/),
+    ).toBeNull();
+
+    unmount();
+  });
 });

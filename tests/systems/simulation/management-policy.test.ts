@@ -2,7 +2,6 @@ import { describe, expect, it } from "vitest";
 import {
   applyPreset,
   inferPreset,
-  phasesEqual,
   type AiAssistancePhases,
 } from "@/domain/ai-management-presets";
 import {
@@ -20,6 +19,7 @@ import {
   buildManagementPolicy,
   evaluateAction,
   evaluateManagementAction,
+  isUserAssistCompletelyOff,
   type PolicyOutcome,
 } from "@/systems/simulation/management-policy";
 
@@ -73,14 +73,12 @@ describe("management action registry audit", () => {
 });
 
 describe("management presets", () => {
-  it("defaults new saves to continuity", () => {
-    expect(DEFAULT_GAME_SETTINGS.ai.managementPreset).toBe("continuity");
-    expect(
-      phasesEqual(
-        DEFAULT_GAME_SETTINGS.ai.assistance,
-        applyPreset("continuity"),
-      ),
-    ).toBe(true);
+  it("defaults new saves to conservative delegated assistance", () => {
+    expect(DEFAULT_GAME_SETTINGS.ai.managementPreset).toBe("custom");
+    expect(DEFAULT_GAME_SETTINGS.ai.assistance.injuriesEmergencyRoster).toBe(
+      "continuity",
+    );
+    expect(DEFAULT_GAME_SETTINGS.ai.assistance.freeAgency).toBe("off");
   });
 
   it("inferPreset returns custom when one phase differs", () => {
@@ -95,6 +93,13 @@ describe("management presets", () => {
     expect(legacyManagementModeToPreset("full_management")).toBe(
       "full_management",
     );
+  });
+
+  it("isUserAssistCompletelyOff derives from phases not preset name", () => {
+    const settings = settingsWithPreset("continuity");
+    settings.ai.managementPreset = "continuity";
+    settings.ai.assistance = applyPreset("off");
+    expect(isUserAssistCompletelyOff(settings)).toBe(true);
   });
 });
 

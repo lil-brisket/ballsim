@@ -74,6 +74,8 @@ export {
   evaluateManagementAction,
   canAiExecute,
   isUserAssistCompletelyOff,
+  canUserManageFranchise,
+  isFullDelegation,
 } from "@/systems/simulation/management-policy";
 export type {
   PolicyOutcome,

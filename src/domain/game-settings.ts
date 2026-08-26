@@ -4,11 +4,11 @@
  */
 
 import {
-  applyPreset,
   DEFAULT_AI_MANAGEMENT_PRESET,
   type AiAssistancePhases,
   type AiManagementPreset,
 } from "@/domain/ai-management-presets";
+import { DEFAULT_DELEGATED_ASSISTANCE } from "@/domain/ai-management-delegation";
 
 export type {
   AiAssistancePhases,
@@ -30,6 +30,7 @@ export {
   applyPreset,
   inferPreset,
   resolveAssistancePhases,
+  resolveAssistancePhasesLegacy,
   phasesEqual,
   isAiManagementPreset,
   isOperationalPhaseMode,
@@ -41,6 +42,15 @@ export {
   MANAGEMENT_PHASE_LABELS,
   AI_MANAGEMENT_PRESET_LABELS,
 } from "@/domain/ai-management-presets";
+
+export {
+  DEFAULT_DELEGATED_ASSISTANCE,
+  PLAYER_VISIBLE_DELEGATION_PHASES,
+  isPhaseDelegated,
+  setPhaseDelegated,
+  countDelegatedVisiblePhases,
+  visibleDelegationPhaseCount,
+} from "@/domain/ai-management-delegation";
 
 export const SUPPORTED_TEAM_COUNTS = [8, 10, 12, 16, 20, 24, 30, 32] as const;
 export type SupportedTeamCount = (typeof SUPPORTED_TEAM_COUNTS)[number];
@@ -159,11 +169,14 @@ export type GameSettings = {
    */
   ai: {
     difficulty: AiDifficulty;
-    /** Preset: Off / Continuity / Smart / Full / Custom. */
+    /**
+     * Legacy compatibility field. Canonical config is {@link assistance}.
+     * Kept for migration of pre-v39 saves; policy/UI must not branch on this.
+     */
     managementPreset: AiManagementPreset;
     /**
-     * Phase-specific modes. When preset ≠ custom these match the preset table;
-     * when custom they are user overrides.
+     * Canonical per-phase AI assistance modes.
+     * Player UI exposes boolean delegation; modes remain policy internals.
      */
     assistance: AiAssistancePhases;
   };
@@ -200,7 +213,7 @@ function defaultAiSettings(): GameSettings["ai"] {
   return {
     difficulty: "normal",
     managementPreset: DEFAULT_AI_MANAGEMENT_PRESET,
-    assistance: applyPreset("continuity"),
+    assistance: { ...DEFAULT_DELEGATED_ASSISTANCE },
   };
 }
 

@@ -6,15 +6,13 @@ import {
   SUPPORTED_PLAYOFF_TEAM_COUNTS,
   SUPPORTED_SERIES_LENGTHS,
   SUPPORTED_TEAM_COUNTS,
-  applyPreset as applyAiManagementPreset,
-  inferPreset,
-  MANAGEMENT_PHASE_LABELS,
-  AI_MANAGEMENT_PRESET_LABELS,
-  type AiManagementPreset,
   type GameSettings,
-  type ManagementPhase,
   type SeriesLength,
 } from "@/domain/game-settings";
+import {
+  countDelegatedVisiblePhases,
+  visibleDelegationPhaseCount,
+} from "@/domain/ai-management-delegation";
 import {
   resetSettingsForPreset,
   settingsForPreset,
@@ -22,6 +20,7 @@ import {
 } from "@/domain/game-settings-presets";
 import { validateGameSettings } from "@/domain/game-settings-validation";
 import { createSaveAction } from "@/application/actions";
+import { AiTeamManagementSection } from "@/components/owner/ai-management";
 
 type GameSetupFormProps = {
   atSaveLimit: boolean;
@@ -126,8 +125,8 @@ export function GameSetupForm({
           />
           <ReviewRow label="AI difficulty" value={settings.ai.difficulty} />
           <ReviewRow
-            label="Team management assist"
-            value={AI_MANAGEMENT_PRESET_LABELS[settings.ai.managementPreset]}
+            label="AI responsibilities"
+            value={`${countDelegatedVisiblePhases(settings.ai.assistance)} of ${visibleDelegationPhaseCount()} delegated to AI`}
           />
           <ReviewRow
             label="Free agency length"
@@ -408,124 +407,21 @@ export function GameSetupForm({
                 })
               }
             />
-            <SelectField
-              label="Team management assistance"
-              value={
-                settings.ai.managementPreset === "off"
-                  ? 0
-                  : settings.ai.managementPreset === "continuity"
-                    ? 1
-                    : settings.ai.managementPreset === "smart"
-                      ? 2
-                      : settings.ai.managementPreset === "full_management"
-                        ? 3
-                        : 4
-              }
-              options={[
-                { value: 0, label: AI_MANAGEMENT_PRESET_LABELS.off },
-                {
-                  value: 1,
-                  label: `${AI_MANAGEMENT_PRESET_LABELS.continuity} (recommended)`,
-                },
-                { value: 2, label: AI_MANAGEMENT_PRESET_LABELS.smart },
-                {
-                  value: 3,
-                  label: AI_MANAGEMENT_PRESET_LABELS.full_management,
-                },
-                { value: 4, label: AI_MANAGEMENT_PRESET_LABELS.custom },
-              ]}
-              onChange={(value) => {
-                const preset: AiManagementPreset =
-                  value === 0
-                    ? "off"
-                    : value === 1
-                      ? "continuity"
-                      : value === 2
-                        ? "smart"
-                        : value === 3
-                          ? "full_management"
-                          : "custom";
-                if (preset === "custom") {
+            <div className="sm:col-span-2">
+              <AiTeamManagementSection
+                assistance={settings.ai.assistance}
+                onAssistanceChange={(assistance) =>
                   updateSettings({
                     ...settings,
                     ai: {
                       ...settings.ai,
                       managementPreset: "custom",
-                      assistance: { ...settings.ai.assistance },
+                      assistance,
                     },
-                  });
-                  return;
+                  })
                 }
-                updateSettings({
-                  ...settings,
-                  ai: {
-                    ...settings.ai,
-                    managementPreset: preset,
-                    assistance: applyAiManagementPreset(preset),
-                  },
-                });
-              }}
-            />
-            {settings.ai.managementPreset === "custom" ? (
-              <div className="mt-4 space-y-3 rounded-md border border-zinc-800 bg-zinc-950/50 p-3">
-                <p className="text-sm font-medium text-zinc-200">
-                  Customize AI Responsibilities
-                </p>
-                <p className="text-xs text-zinc-500">
-                  Changing any phase keeps the preset on Custom.
-                </p>
-                {(
-                  [
-                    [
-                      "Roster",
-                      [
-                        "injuriesEmergencyRoster",
-                        "rotationsDepthChart",
-                        "waiversReleases",
-                      ],
-                    ],
-                    ["Free Agency & Contracts", ["freeAgency", "contracts"]],
-                    ["Trades", ["trades"]],
-                    ["Draft", ["draftScouting", "draftSelection"]],
-                    [
-                      "Coaching & Staff",
-                      ["coachingStaff", "frontOfficeStaff"],
-                    ],
-                    [
-                      "Strategy",
-                      ["strategicRosterDecisions", "longTermPlanning"],
-                    ],
-                  ] as const
-                ).map(([group, phases]) => (
-                  <div key={group} className="space-y-2">
-                    <p className="text-xs font-medium uppercase tracking-wide text-zinc-500">
-                      {group}
-                    </p>
-                    {phases.map((phase) => (
-                      <PhaseModeSelect
-                        key={phase}
-                        phase={phase}
-                        value={settings.ai.assistance[phase]}
-                        onChange={(mode) => {
-                          const assistance = {
-                            ...settings.ai.assistance,
-                            [phase]: mode,
-                          };
-                          updateSettings({
-                            ...settings,
-                            ai: {
-                              ...settings.ai,
-                              managementPreset: inferPreset(assistance),
-                              assistance,
-                            },
-                          });
-                        }}
-                      />
-                    ))}
-                  </div>
-                ))}
-              </div>
-            ) : null}
+              />
+            </div>
           </Section>
 
           <Section title="Offseason">
@@ -791,48 +687,5 @@ function ReviewRow({ label, value }: { label: string; value: string }) {
       <dt className="text-zinc-500">{label}</dt>
       <dd className="font-medium text-zinc-100">{value}</dd>
     </div>
-  );
-}
-
-const PHASE_MODE_OPTIONS: Record<ManagementPhase, string[]> = {
-  injuriesEmergencyRoster: ["off", "continuity", "routine", "full"],
-  rotationsDepthChart: ["off", "continuity", "routine", "full"],
-  freeAgency: ["off", "continuity", "routine", "full"],
-  trades: ["off", "user_only", "full"],
-  waiversReleases: ["off", "continuity", "full"],
-  contracts: ["off", "continuity", "routine", "full"],
-  draftScouting: ["off", "recommend", "full"],
-  draftSelection: ["off", "recommend", "full"],
-  coachingStaff: ["off", "continuity", "routine", "full"],
-  frontOfficeStaff: ["off", "continuity", "routine", "full"],
-  strategicRosterDecisions: ["off", "full"],
-  longTermPlanning: ["off", "full"],
-};
-
-function PhaseModeSelect({
-  phase,
-  value,
-  onChange,
-}: {
-  phase: ManagementPhase;
-  value: string;
-  onChange: (mode: string) => void;
-}) {
-  const options = PHASE_MODE_OPTIONS[phase];
-  return (
-    <label className="block space-y-1 text-sm text-zinc-300 sm:col-span-2">
-      <span>{MANAGEMENT_PHASE_LABELS[phase]}</span>
-      <select
-        value={value}
-        onChange={(event) => onChange(event.target.value)}
-        className="w-full rounded-md border border-zinc-700 bg-zinc-950 px-3 py-2 text-zinc-100"
-      >
-        {options.map((option) => (
-          <option key={option} value={option}>
-            {option.replaceAll("_", " ")}
-          </option>
-        ))}
-      </select>
-    </label>
   );
 }

@@ -165,7 +165,7 @@ import { advanceSimulation } from "@/systems/simulation/advance-simulation";
 import { advanceOffseasonStage } from "@/systems/simulation/offseason-lifecycle";
 import { enterOffseasonFromPostseason } from "@/systems/simulation/season-lifecycle";
 import { runAiContinuity } from "@/systems/simulation/ai-continuity";
-import { canAiExecute } from "@/systems/simulation/management-policy";
+import { canAiExecute, isUserAssistCompletelyOff } from "@/systems/simulation/management-policy";
 import { resolveSimulationPhaseKey } from "@/systems/simulation/simulation-phase";
 import type { AdvanceSimulationResult } from "@/systems/simulation/types";
 import {
@@ -1043,8 +1043,10 @@ export async function letAiHandlePhaseAndAdvance(
   if (!loaded) {
     return fail("Save not found.");
   }
-  if (loaded.state.settings.ai.managementPreset === "off") {
-    return fail("AI assistance is off. Enable Continuity, Smart, or Full Management first.");
+  if (isUserAssistCompletelyOff(loaded.state.settings)) {
+    return fail(
+      "AI assistance is off. Delegate at least one responsibility in settings first.",
+    );
   }
 
   const rng = createSeededRng(loaded.state.meta.rngState);

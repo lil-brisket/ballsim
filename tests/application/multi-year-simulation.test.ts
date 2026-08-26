@@ -14,6 +14,8 @@ vi.mock("@/persistence/save-game-repository", () => ({
 
 import { runMultiYearSimulation } from "../helpers/multi-year-simulation";
 import { TEST_RNG_SEED } from "../helpers/determinism";
+import { applyPreset } from "@/domain/ai-management-presets";
+import { selectAllVisiblePhases } from "@/domain/ai-management-delegation";
 
 const LONG_TIMEOUT_MS = 600_000;
 
@@ -118,4 +120,72 @@ describe("multi-year unattended simulation (CI gate)", () => {
     },
     LONG_TIMEOUT_MS,
   );
+});
+
+describe("multi-year delegation profiles", () => {
+  const allOff = applyPreset("off");
+  const rosterOnly = {
+    ...applyPreset("off"),
+    injuriesEmergencyRoster: "full" as const,
+    rotationsDepthChart: "full" as const,
+  };
+  const rosterAndFa = {
+    ...rosterOnly,
+    freeAgency: "full" as const,
+  };
+  const rosterFaCoaching = {
+    ...rosterAndFa,
+    coachingStaff: "full" as const,
+    frontOfficeStaff: "full" as const,
+  };
+  const allVisible = selectAllVisiblePhases(applyPreset("off"));
+
+  const profiles: Array<{
+    name: string;
+    assistance: typeof allOff;
+    seasons: number;
+    seedOffset: number;
+  }> = [
+    { name: "all off", assistance: allOff, seasons: 1, seedOffset: 10 },
+    { name: "roster only", assistance: rosterOnly, seasons: 1, seedOffset: 11 },
+    { name: "roster + FA", assistance: rosterAndFa, seasons: 1, seedOffset: 12 },
+    {
+      name: "roster + FA + coaching",
+      assistance: rosterFaCoaching,
+      seasons: 1,
+      seedOffset: 13,
+    },
+    {
+      name: "all visible supported",
+      assistance: allVisible,
+      seasons: 3,
+      seedOffset: 14,
+    },
+  ];
+
+  for (const profile of profiles) {
+    it(
+      `${profile.name} completes ${profile.seasons} season(s)`,
+      async () => {
+        const result = await runMultiYearSimulation({
+          seasons: profile.seasons,
+          assistance: profile.assistance,
+          managementPreset: "custom",
+          advanceMode: "until_phase",
+          seed: TEST_RNG_SEED + profile.seedOffset,
+          saveReloadEachSeason: true,
+        });
+        expect(result.seasonsCompleted).toBe(profile.seasons);
+        expect(result.finalState.competition.season.phase).toBe("preseason");
+        // No dead user team
+        const team =
+          result.finalState.world.teams[
+            result.finalState.user.controlledTeamId
+          ];
+        expect(team).toBeTruthy();
+        expect(team!.roster.length).toBeGreaterThan(0);
+      },
+      LONG_TIMEOUT_MS,
+    );
+  }
 });
