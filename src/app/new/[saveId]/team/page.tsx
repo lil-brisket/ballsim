@@ -33,7 +33,7 @@ export default async function TeamPickPage({ params }: TeamPickPageProps) {
     <OnboardingShell
       step="franchise"
       title="Pick your team"
-      subtitle="Choose an ownership philosophy and one franchise to control. You can change both until the first time advance. This does not create another save."
+      subtitle="Choose one franchise to control. You can change it until the first time advance. This does not create another save."
     >
       <OwnerTeamPick saveId={saveId} teams={view.teams} />
     </OnboardingShell>

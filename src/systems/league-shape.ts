@@ -1,3 +1,4 @@
+import type { LeagueArea } from "@/domain/game-settings";
 import {
   resolveLeagueShape,
   tryResolveLeagueShape,
@@ -18,6 +19,7 @@ export {
 /**
  * Builds LeagueGenerationConfig fields from settings.
  * Caller supplies league identity fields.
+ * Settings-shaped `area` is converted to config `leagueArea` at this boundary.
  */
 export function leagueGenerationConfigFromSettings(
   input: LeagueShapeInput & {
@@ -25,6 +27,7 @@ export function leagueGenerationConfigFromSettings(
     leagueName: string;
     leagueAbbreviation?: string;
     rosterSize?: number;
+    area?: LeagueArea;
   },
 ): LeagueGenerationConfig {
   const shape = resolveLeagueShape(input);
@@ -36,5 +39,6 @@ export function leagueGenerationConfigFromSettings(
     divisionsPerConference: shape.divisionsPerConference,
     teamsPerDivision: shape.teamsPerDivision,
     rosterSize: input.rosterSize,
+    leagueArea: input.area ?? "north_america",
   };
 }

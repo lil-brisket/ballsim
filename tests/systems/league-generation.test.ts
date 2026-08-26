@@ -1,8 +1,14 @@
 import { describe, expect, it, vi } from "vitest";
 import { CONFERENCE_NAMES } from "@/data/league/conference-names";
 import { DIVISION_NAMES } from "@/data/league/division-names";
-import { TEAM_CITIES } from "@/data/league/team-cities";
+import {
+  EUROPE_TEAM_CITIES,
+  getTeamCitiesForArea,
+  GLOBAL_TEAM_CITIES,
+  NORTH_AMERICA_TEAM_CITIES,
+} from "@/data/league/team-cities-by-area";
 import { TEAM_NICKNAMES } from "@/data/league/team-nicknames";
+import type { LeagueArea } from "@/domain/game-settings";
 import {
   isArchetypeCompatible,
   isPlayerArchetype,
@@ -30,6 +36,12 @@ const BASE_CONFIG: LeagueGenerationConfig = {
   teamsPerDivision: 5,
   rosterSize: 12,
 };
+
+const LEAGUE_AREAS: readonly LeagueArea[] = [
+  "north_america",
+  "europe",
+  "global",
+];
 
 function config(
   overrides: Partial<LeagueGenerationConfig> = {},
@@ -274,21 +286,28 @@ describe("league generation", () => {
     });
 
     it("throws when requesting more teams than unique cities", () => {
+      const cityPool = getTeamCitiesForArea("europe");
       expect(() =>
         generateLeague(
           config({
             conferenceCount: 1,
             divisionsPerConference: 1,
-            teamsPerDivision: TEAM_CITIES.length + 1,
+            teamsPerDivision: cityPool.length + 1,
             rosterSize: 1,
+            leagueArea: "europe",
           }),
           createSeededRng(1),
         ),
-      ).toThrow(/city name pool exhausted/);
+      ).toThrow(
+        new RegExp(
+          `Cannot generate ${cityPool.length + 1} teams for league area "europe": only ${cityPool.length} cities are available`,
+        ),
+      );
     });
 
     it("throws when requesting more teams than unique nicknames", () => {
-      expect(TEAM_NICKNAMES.length).toBeLessThan(TEAM_CITIES.length);
+      const cityPool = getTeamCitiesForArea("north_america");
+      expect(TEAM_NICKNAMES.length).toBeLessThan(cityPool.length);
       expect(() =>
         generateLeague(
           config({
@@ -296,10 +315,115 @@ describe("league generation", () => {
             divisionsPerConference: 1,
             teamsPerDivision: TEAM_NICKNAMES.length + 1,
             rosterSize: 1,
+            leagueArea: "north_america",
           }),
           createSeededRng(1),
         ),
       ).toThrow(/nickname name pool exhausted/);
+    });
+  });
+
+  describe("league area city pools", () => {
+    it.each(LEAGUE_AREAS)(
+      "%s pool has at least 40 unique cities",
+      (area) => {
+        const pool = getTeamCitiesForArea(area);
+        expect(pool.length).toBeGreaterThanOrEqual(40);
+        expect(new Set(pool).size).toBe(pool.length);
+      },
+    );
+
+    it.each(LEAGUE_AREAS)(
+      "%s generation uses only that area's cities with unique markets and franchise names",
+      (area) => {
+        const pool = new Set(getTeamCitiesForArea(area));
+        const generated = generateLeague(
+          config({ leagueArea: area, rosterSize: 0 }),
+          createSeededRng(42),
+        );
+
+        const cities = generated.teams.map((team) => team.city);
+        expect(new Set(cities).size).toBe(cities.length);
+
+        const fullNames = generated.teams.map(
+          (team) => `${team.city} ${team.name}`,
+        );
+        expect(new Set(fullNames).size).toBe(fullNames.length);
+
+        for (const city of cities) {
+          expect(pool.has(city)).toBe(true);
+        }
+      },
+    );
+
+    it("defaults omitted leagueArea to north_america city behavior", () => {
+      const omitted = generateLeague(
+        config({ leagueArea: undefined, rosterSize: 0 }),
+        createSeededRng(7),
+      );
+      const explicit = generateLeague(
+        config({ leagueArea: "north_america", rosterSize: 0 }),
+        createSeededRng(7),
+      );
+
+      expect(omitted.teams.map((team) => team.city)).toEqual(
+        explicit.teams.map((team) => team.city),
+      );
+      expect(omitted.teams.map((team) => team.name)).toEqual(
+        explicit.teams.map((team) => team.name),
+      );
+
+      const naPool = new Set(NORTH_AMERICA_TEAM_CITIES);
+      for (const team of omitted.teams) {
+        expect(naPool.has(team.city)).toBe(true);
+      }
+    });
+
+    it("same seed and same area produce identical cities", () => {
+      const first = generateLeague(
+        config({ leagueArea: "europe", rosterSize: 0 }),
+        createSeededRng(99),
+      );
+      const second = generateLeague(
+        config({ leagueArea: "europe", rosterSize: 0 }),
+        createSeededRng(99),
+      );
+      expect(first.teams.map((team) => team.city)).toEqual(
+        second.teams.map((team) => team.city),
+      );
+    });
+
+    it("europe and north_america pools are regionally distinct for membership checks", () => {
+      const europe = generateLeague(
+        config({ leagueArea: "europe", rosterSize: 0 }),
+        createSeededRng(15),
+      );
+      const northAmerica = generateLeague(
+        config({ leagueArea: "north_america", rosterSize: 0 }),
+        createSeededRng(15),
+      );
+      const europePool = new Set(EUROPE_TEAM_CITIES);
+      const naPool = new Set(NORTH_AMERICA_TEAM_CITIES);
+
+      for (const team of europe.teams) {
+        expect(europePool.has(team.city)).toBe(true);
+        expect(naPool.has(team.city)).toBe(false);
+      }
+      for (const team of northAmerica.teams) {
+        expect(naPool.has(team.city)).toBe(true);
+        expect(europePool.has(team.city)).toBe(false);
+      }
+    });
+
+    it("exposes global pool membership for worldwide markets", () => {
+      const generated = generateLeague(
+        config({ leagueArea: "global", rosterSize: 0 }),
+        createSeededRng(3),
+      );
+      const globalPool = new Set(GLOBAL_TEAM_CITIES);
+      for (const team of generated.teams) {
+        expect(globalPool.has(team.city)).toBe(true);
+      }
     });
   });
 

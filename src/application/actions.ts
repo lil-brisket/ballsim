@@ -118,10 +118,7 @@ export async function deleteSaveAction(formData: FormData): Promise<void> {
 export async function selectTeamAction(formData: FormData): Promise<void> {
   const saveId = String(formData.get("saveId") ?? "");
   const teamId = String(formData.get("teamId") ?? "");
-  const ownerPhilosophy = String(formData.get("ownerPhilosophy") ?? "");
-  const result = await selectOwnerTeam(saveId, teamId, undefined, {
-    ownerPhilosophy: ownerPhilosophy || undefined,
-  });
+  const result = await selectOwnerTeam(saveId, teamId);
   if (!result.ok) {
     redirectWithError(`/new/${saveId}/team`, result.error);
   }

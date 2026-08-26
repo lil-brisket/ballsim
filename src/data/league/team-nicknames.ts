@@ -1,6 +1,8 @@
 /**
  * Expandable nickname pool for fictional team generation.
  * Each nickname may be used only once within a generated league.
+ * Sized above max teamCount (32); kept slightly under regional city pools
+ * so exhaustion diagnostics can distinguish city vs nickname limits.
  */
 export const TEAM_NICKNAMES = [
   "Titans",
@@ -36,4 +38,11 @@ export const TEAM_NICKNAMES = [
   "Glaciers",
   "Rangers",
   "Outlaws",
+  "Knights",
+  "Phantoms",
+  "Specters",
+  "Legends",
+  "Dynamos",
+  "Fury",
+  "Pulse",
 ] as const;

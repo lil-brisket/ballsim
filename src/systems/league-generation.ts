@@ -1,6 +1,6 @@
 import { CONFERENCE_NAMES } from "@/data/league/conference-names";
 import { DIVISION_NAMES } from "@/data/league/division-names";
-import { TEAM_CITIES } from "@/data/league/team-cities";
+import { getTeamCitiesForArea } from "@/data/league/team-cities-by-area";
 import { TEAM_NICKNAMES } from "@/data/league/team-nicknames";
 import {
   createConference,
@@ -11,6 +11,7 @@ import { createLeague, type League } from "@/domain/entities/league";
 import { type Player } from "@/domain/entities/player";
 import { createTeam, NEUTRAL_TEAM_PLAY_STYLE, type Team } from "@/domain/entities/team";
 import { DEFAULT_COACHING_PHILOSOPHY } from "@/domain/coaching/coaching-philosophy";
+import type { LeagueArea } from "@/domain/game-settings";
 import {
   asArenaId,
   asConferenceId,
@@ -32,6 +33,7 @@ import {
 } from "@/systems/roster-generation-config";
 
 const DEFAULT_LEAGUE_ID = "league_fictional";
+const DEFAULT_LEAGUE_AREA: LeagueArea = "north_america";
 
 export type LeagueGenerationConfig = {
   leagueId?: string;
@@ -41,6 +43,8 @@ export type LeagueGenerationConfig = {
   divisionsPerConference: number;
   teamsPerDivision: number;
   rosterSize?: number;
+  /** Defaults to north_america when omitted. */
+  leagueArea?: LeagueArea;
 };
 
 export type GeneratedLeague = {
@@ -101,7 +105,13 @@ export function generateLeague(
     resolved.conferenceCount *
     resolved.divisionsPerConference *
     resolved.teamsPerDivision;
-  const teamNames = generateTeamNames(totalTeams, rng);
+  const cityPool = getTeamCitiesForArea(resolved.leagueArea);
+  const teamNames = generateTeamNames(
+    totalTeams,
+    cityPool,
+    resolved.leagueArea,
+    rng,
+  );
 
   const players: Player[] = [];
   const teams: Team[] = [];
@@ -214,6 +224,7 @@ type ResolvedConfig = {
   divisionsPerConference: number;
   teamsPerDivision: number;
   rosterSize: number;
+  leagueArea: LeagueArea;
 };
 
 function validateConfig(config: LeagueGenerationConfig): ResolvedConfig {
@@ -248,6 +259,7 @@ function validateConfig(config: LeagueGenerationConfig): ResolvedConfig {
     divisionsPerConference: config.divisionsPerConference,
     teamsPerDivision: config.teamsPerDivision,
     rosterSize,
+    leagueArea: config.leagueArea ?? DEFAULT_LEAGUE_AREA,
   };
 }
 
@@ -380,10 +392,15 @@ function takeUniqueNames(
   return selected;
 }
 
-function generateTeamNames(count: number, rng: Rng): TeamNameData[] {
-  if (count > TEAM_CITIES.length) {
+function generateTeamNames(
+  count: number,
+  cityPool: readonly string[],
+  leagueArea: LeagueArea,
+  rng: Rng,
+): TeamNameData[] {
+  if (count > cityPool.length) {
     throw new Error(
-      `League generation city name pool exhausted: need ${count}, have ${TEAM_CITIES.length}.`,
+      `Cannot generate ${count} teams for league area "${leagueArea}": only ${cityPool.length} cities are available.`,
     );
   }
   if (count > TEAM_NICKNAMES.length) {
@@ -392,7 +409,7 @@ function generateTeamNames(count: number, rng: Rng): TeamNameData[] {
     );
   }
 
-  const cities = takeUniqueNames(TEAM_CITIES, count, "city", rng);
+  const cities = takeUniqueNames(cityPool, count, "city", rng);
   const nicknames = takeUniqueNames(TEAM_NICKNAMES, count, "nickname", rng);
 
   const usedAbbreviations = new Set<string>();

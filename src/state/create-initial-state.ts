@@ -112,6 +112,7 @@ export function createInitialGameState(
       conferenceCount: settings.league.conferenceCount,
       divisionsEnabled: settings.league.divisionsEnabled,
       rosterSize: 0,
+      area: settings.league.area ?? "north_america",
     }),
     rng,
   );
