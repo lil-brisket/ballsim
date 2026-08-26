@@ -179,6 +179,37 @@ describe("Owner Mode vertical slice", () => {
   );
 
   it(
+    "city pick: available city can take a customized nickname",
+    async () => {
+      const settings = cloneGameSettings(CBL_GAME_SETTINGS);
+      settings.league.area = "north_america";
+      const created = await createNewOwnerSave(
+        { settings, name: "City Nickname", rngSeed: TEST_RNG_SEED },
+        store,
+      );
+      expect(created.ok).toBe(true);
+      if (!created.ok) {
+        return;
+      }
+      const view = await loadOwnerSaveView(created.save.id, store);
+      const available = view!.cities.find((c) => !c.occupied)!;
+      const selected = await selectOwnerCity(
+        created.save.id,
+        available.city,
+        store,
+        "Falcons",
+      );
+      expect(selected.ok).toBe(true);
+      if (!selected.ok) {
+        return;
+      }
+      expect(selected.dashboard.controlledTeam.city).toBe(available.city);
+      expect(selected.dashboard.controlledTeam.name).toBe("Falcons");
+    },
+    LONG_TIMEOUT_MS,
+  );
+
+  it(
     "city pick: occupied city controls existing franchise without relocation",
     async () => {
       const settings = cloneGameSettings(CBL_GAME_SETTINGS);

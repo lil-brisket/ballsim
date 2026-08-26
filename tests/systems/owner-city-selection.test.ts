@@ -145,6 +145,64 @@ describe("applyOwnerCitySelection", () => {
     const result = applyOwnerCitySelection(locked, cities[0]!.city);
     expect(result.ok).toBe(false);
   });
+
+  it("applies a custom nickname on an available city", () => {
+    const state = createNaState();
+    const available = listCitiesForTeamPick(state).find((city) => !city.occupied)!;
+    const placeholderId = state.user.controlledTeamId;
+    const result = applyOwnerCitySelection(state, available.city, {
+      nickname: "  Storm  ",
+    });
+    expect(result.ok).toBe(true);
+    if (!result.ok) {
+      return;
+    }
+    expect(result.state.world.teams[placeholderId]!.city).toBe(available.city);
+    expect(result.state.world.teams[placeholderId]!.name).toBe("Storm");
+  });
+
+  it("ignores nickname when taking control of an occupied franchise", () => {
+    const state = createNaState();
+    const occupied = listCitiesForTeamPick(state).find(
+      (city) => city.occupied && city.teamId,
+    )!;
+    const before = { ...state.world.teams[occupied.teamId!]! };
+    const result = applyOwnerCitySelection(state, occupied.city, {
+      nickname: "Intruders",
+    });
+    expect(result.ok).toBe(true);
+    if (!result.ok) {
+      return;
+    }
+    expect(result.state.world.teams[occupied.teamId!]!.name).toBe(before.name);
+  });
+
+  it("rejects empty custom nicknames", () => {
+    const state = createNaState();
+    const available = listCitiesForTeamPick(state).find((city) => !city.occupied)!;
+    const result = applyOwnerCitySelection(state, available.city, {
+      nickname: "   ",
+    });
+    expect(result.ok).toBe(false);
+  });
+
+  it("allows the same nickname in a different city", () => {
+    const state = createNaState();
+    const occupied = listCitiesForTeamPick(state).find(
+      (city) => city.occupied && city.nickname,
+    )!;
+    const available = listCitiesForTeamPick(state).find((city) => !city.occupied)!;
+    const result = applyOwnerCitySelection(state, available.city, {
+      nickname: occupied.nickname,
+    });
+    expect(result.ok).toBe(true);
+    if (!result.ok) {
+      return;
+    }
+    expect(result.state.world.teams[state.user.controlledTeamId]!.name).toBe(
+      occupied.nickname,
+    );
+  });
 });
 
 function settingsTeamCount(state: ReturnType<typeof createNaState>): number {

@@ -13,11 +13,16 @@ export function OnboardingShell(props: {
   title: string;
   subtitle?: string;
   children: React.ReactNode;
+  className?: string;
 }) {
   const stepIndex = STEPS.findIndex((s) => s.id === props.step);
 
   return (
-    <main className="mx-auto flex w-full max-w-4xl flex-1 flex-col gap-8 px-6 py-12">
+    <main
+      className={`mx-auto flex w-full flex-1 flex-col gap-8 px-6 py-12 ${
+        props.className ?? "max-w-4xl"
+      }`}
+    >
       <div className="flex flex-wrap items-center justify-between gap-3">
         <Link
           href="/owner"

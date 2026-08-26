@@ -133,7 +133,12 @@ export async function selectTeamAction(formData: FormData): Promise<void> {
 export async function selectCityAction(formData: FormData): Promise<void> {
   const saveId = String(formData.get("saveId") ?? "");
   const city = String(formData.get("city") ?? "");
-  const result = await selectOwnerCity(saveId, city);
+  const nicknameRaw = formData.get("nickname");
+  const nickname =
+    typeof nicknameRaw === "string" && nicknameRaw.length > 0
+      ? nicknameRaw
+      : undefined;
+  const result = await selectOwnerCity(saveId, city, undefined, nickname);
   if (!result.ok) {
     redirectWithError(`/new/${saveId}/team`, result.error);
   }

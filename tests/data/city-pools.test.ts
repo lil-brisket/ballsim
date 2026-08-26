@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   allKnownCities,
+  formatCityLocation,
   getCitiesForArea,
   getCityByName,
   isCityInArea,
@@ -36,6 +37,15 @@ describe("city pools data integrity", () => {
       expect(city!.lat).toBeLessThanOrEqual(90);
       expect(city!.lng).toBeGreaterThanOrEqual(-180);
       expect(city!.lng).toBeLessThanOrEqual(180);
+      expect(city!.country.length).toBeGreaterThan(0);
+    }
+  });
+
+  it("US cities in North America have a subdivision", () => {
+    for (const city of getCitiesForArea("north_america")) {
+      if (city.country === "United States") {
+        expect(city.subdivision, city.name).toBeTruthy();
+      }
     }
   });
 
@@ -112,6 +122,13 @@ describe("normalizeCityName", () => {
 
   it("allKnownCities is non-empty", () => {
     expect(allKnownCities().length).toBeGreaterThan(100);
+  });
+
+  it("formatCityLocation includes subdivision when present", () => {
+    expect(
+      formatCityLocation({ country: "United States", subdivision: "Georgia" }),
+    ).toBe("Georgia, United States");
+    expect(formatCityLocation({ country: "France" })).toBe("France");
   });
 });
 

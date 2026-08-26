@@ -40,10 +40,17 @@ export default async function TeamPickPage({ params }: TeamPickPageProps) {
   return (
     <OnboardingShell
       step="franchise"
-      title="Pick your city"
-      subtitle="Choose where your franchise will play. Occupied cities put you in control of that team; available cities move your franchise there."
+      title="Choose your franchise location"
+      subtitle="Pick a city on the map. Occupied markets put you in control of that team; available cities found a new franchise."
+      className="max-w-6xl"
     >
-      <CityMapPicker saveId={saveId} area={area} cities={view.cities} />
+      <CityMapPicker
+        saveId={saveId}
+        area={area}
+        cities={view.cities}
+        placeholderNickname={view.dashboard.controlledTeam.name}
+        placeholderTeamId={view.dashboard.controlledTeam.id}
+      />
     </OnboardingShell>
   );
 }

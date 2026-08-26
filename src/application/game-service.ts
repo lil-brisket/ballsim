@@ -678,6 +678,7 @@ export async function selectOwnerCity(
   saveId: string,
   city: string,
   store?: SaveGameStore,
+  nickname?: string,
 ): Promise<OwnerCommandResult> {
   const saveStore = getStore(store);
   const loaded = await saveStore.load(saveId);
@@ -685,7 +686,7 @@ export async function selectOwnerCity(
     return fail("Save not found.");
   }
 
-  const applied = applyOwnerCitySelection(loaded.state, city);
+  const applied = applyOwnerCitySelection(loaded.state, city, { nickname });
   if (!applied.ok) {
     return fail(applied.error);
   }

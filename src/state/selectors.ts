@@ -14,7 +14,11 @@ import { calculatePlayerOverall } from "@/domain/player-overall-rating";
 import type { DomainEvent } from "@/domain/events";
 import type { PlayerId, TeamId } from "@/domain/ids";
 import type { GameMode, GameState } from "@/state/game-state";
-import { getCitiesForArea, normalizeCityName } from "@/data/league/city-locations";
+import {
+  formatCityLocation,
+  getCitiesForArea,
+  normalizeCityName,
+} from "@/data/league/city-locations";
 import { draftYearForSeason } from "@/systems/draft";
 import { isUserOnDraftClock } from "@/systems/draft/draft-clock";
 import { listFreeAgents } from "@/systems/free-agency";
@@ -116,6 +120,9 @@ export type CityPickOption = {
   city: string;
   lat: number;
   lng: number;
+  country: string;
+  subdivision?: string;
+  locationLabel: string;
   occupied: boolean;
   teamId?: string;
   nickname?: string;
@@ -333,11 +340,17 @@ export function listCitiesForTeamPick(state: GameState): CityPickOption[] {
 
   const options: CityPickOption[] = getCitiesForArea(area).map((city) => {
     const occupied = byNormalizedCity.get(city.name);
+    const location = {
+      country: city.country,
+      subdivision: city.subdivision,
+      locationLabel: formatCityLocation(city),
+    };
     if (occupied) {
       return {
         city: city.name,
         lat: city.lat,
         lng: city.lng,
+        ...location,
         occupied: true,
         teamId: occupied.teamId,
         nickname: occupied.nickname,
@@ -347,6 +360,7 @@ export function listCitiesForTeamPick(state: GameState): CityPickOption[] {
       city: city.name,
       lat: city.lat,
       lng: city.lng,
+      ...location,
       occupied: false,
     };
   });
