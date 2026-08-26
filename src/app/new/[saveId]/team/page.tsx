@@ -1,8 +1,9 @@
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { loadOwnerSaveView } from "@/application/game-service";
 import { OnboardingShell } from "@/components/game/OnboardingShell";
-import { OwnerTeamPick } from "@/components/owner/OwnerTeamPick";
+import { CityMapPicker } from "@/components/owner/CityMapPicker";
+import { isLeagueArea } from "@/domain/game-settings";
 
 type TeamPickPageProps = {
   params: Promise<{ saveId: string }>;
@@ -13,6 +14,10 @@ export default async function TeamPickPage({ params }: TeamPickPageProps) {
   const view = await loadOwnerSaveView(saveId);
   if (!view) {
     notFound();
+  }
+
+  if (view.dashboard.citySelectionConfirmed) {
+    redirect(`/dashboard/${saveId}`);
   }
 
   if (view.dashboard.teamSelectionLocked) {
@@ -29,13 +34,16 @@ export default async function TeamPickPage({ params }: TeamPickPageProps) {
     );
   }
 
+  const areaRaw = view.settings.league.area ?? "north_america";
+  const area = isLeagueArea(areaRaw) ? areaRaw : "north_america";
+
   return (
     <OnboardingShell
       step="franchise"
-      title="Pick your team"
-      subtitle="Choose one franchise to control. You can change it until the first time advance. This does not create another save."
+      title="Pick your city"
+      subtitle="Choose where your franchise will play. Occupied cities put you in control of that team; available cities move your franchise there."
     >
-      <OwnerTeamPick saveId={saveId} teams={view.teams} />
+      <CityMapPicker saveId={saveId} area={area} cities={view.cities} />
     </OnboardingShell>
   );
 }

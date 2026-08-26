@@ -40,6 +40,9 @@ const BASE_CONFIG: LeagueGenerationConfig = {
 const LEAGUE_AREAS: readonly LeagueArea[] = [
   "north_america",
   "europe",
+  "africa",
+  "asia",
+  "south_america",
   "global",
 ];
 
@@ -373,7 +376,7 @@ describe("league generation", () => {
         explicit.teams.map((team) => team.name),
       );
 
-      const naPool = new Set(NORTH_AMERICA_TEAM_CITIES);
+      const naPool = new Set<string>(NORTH_AMERICA_TEAM_CITIES);
       for (const team of omitted.teams) {
         expect(naPool.has(team.city)).toBe(true);
       }
@@ -402,8 +405,8 @@ describe("league generation", () => {
         config({ leagueArea: "north_america", rosterSize: 0 }),
         createSeededRng(15),
       );
-      const europePool = new Set(EUROPE_TEAM_CITIES);
-      const naPool = new Set(NORTH_AMERICA_TEAM_CITIES);
+      const europePool = new Set<string>(EUROPE_TEAM_CITIES);
+      const naPool = new Set<string>(NORTH_AMERICA_TEAM_CITIES);
 
       for (const team of europe.teams) {
         expect(europePool.has(team.city)).toBe(true);
@@ -420,7 +423,7 @@ describe("league generation", () => {
         config({ leagueArea: "global", rosterSize: 0 }),
         createSeededRng(3),
       );
-      const globalPool = new Set(GLOBAL_TEAM_CITIES);
+      const globalPool = new Set<string>(GLOBAL_TEAM_CITIES);
       for (const team of generated.teams) {
         expect(globalPool.has(team.city)).toBe(true);
       }

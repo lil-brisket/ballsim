@@ -41,6 +41,7 @@ function baseDashboard(
     leagueName: "Test League",
     mode: "owner",
     teamSelectionLocked: true,
+    citySelectionConfirmed: true,
     userOnDraftClock: false,
     controlledTeam: {
       id: "team_1",

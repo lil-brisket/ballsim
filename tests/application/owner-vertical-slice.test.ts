@@ -20,11 +20,13 @@ import {
   finishFreeAgency,
   loadOwnerSave,
   loadOwnerSaveView,
+  selectOwnerCity,
   selectOwnerDraftProspect,
   selectOwnerTeam,
   signOwnerFreeAgent,
 } from "@/application/game-service";
-import { CBL_GAME_SETTINGS } from "@/domain/game-settings";
+import { CBL_GAME_SETTINGS, cloneGameSettings } from "@/domain/game-settings";
+import { getTeamCitiesForArea } from "@/data/league/team-cities-by-area";
 import { createMemorySaveGameStore } from "@/persistence/memory-save-game-store";
 import {
   deserializeGameState,
@@ -124,6 +126,103 @@ describe("Owner Mode vertical slice", () => {
         store,
       );
       expect(afterAdvance.ok).toBe(false);
+    },
+    LONG_TIMEOUT_MS,
+  );
+
+  it(
+    "city pick: unused city relocates placeholder and preserves teamCount",
+    async () => {
+      const settings = cloneGameSettings(CBL_GAME_SETTINGS);
+      settings.league.area = "north_america";
+      const created = await createNewOwnerSave(
+        { settings, name: "City Unused", rngSeed: TEST_RNG_SEED },
+        store,
+      );
+      expect(created.ok).toBe(true);
+      if (!created.ok) {
+        return;
+      }
+
+      const view = await loadOwnerSaveView(created.save.id, store);
+      expect(view).not.toBeNull();
+      const pool = getTeamCitiesForArea("north_america");
+      expect(view!.cities.length).toBe(pool.length);
+      expect(view!.cities.every((c) => pool.includes(c.city))).toBe(true);
+
+      const available = view!.cities.find((c) => !c.occupied);
+      expect(available).toBeDefined();
+      const before = await store.load(created.save.id);
+      const teamCount = Object.keys(before!.state.world.teams).length;
+      const placeholderId = before!.state.user.controlledTeamId;
+
+      const selected = await selectOwnerCity(
+        created.save.id,
+        available!.city,
+        store,
+      );
+      expect(selected.ok).toBe(true);
+      if (!selected.ok) {
+        return;
+      }
+
+      const after = await store.load(created.save.id);
+      expect(Object.keys(after!.state.world.teams).length).toBe(teamCount);
+      expect(after!.state.user.controlledTeamId).toBe(placeholderId);
+      expect(after!.state.world.teams[placeholderId]!.city).toBe(
+        available!.city,
+      );
+      expect(after!.state.user.citySelectionConfirmed).toBe(true);
+      expect(selected.dashboard.controlledTeam.city).toBe(available!.city);
+    },
+    LONG_TIMEOUT_MS,
+  );
+
+  it(
+    "city pick: occupied city controls existing franchise without relocation",
+    async () => {
+      const settings = cloneGameSettings(CBL_GAME_SETTINGS);
+      settings.league.area = "north_america";
+      const created = await createNewOwnerSave(
+        { settings, name: "City Occupied", rngSeed: TEST_RNG_SEED },
+        store,
+      );
+      expect(created.ok).toBe(true);
+      if (!created.ok) {
+        return;
+      }
+
+      const view = await loadOwnerSaveView(created.save.id, store);
+      const occupied = view!.cities.find((c) => c.occupied && c.teamId);
+      expect(occupied).toBeDefined();
+
+      const before = await store.load(created.save.id);
+      const placeholderId = before!.state.user.controlledTeamId;
+      const placeholderCity =
+        before!.state.world.teams[placeholderId]!.city;
+      const targetBefore = {
+        ...before!.state.world.teams[occupied!.teamId!]!,
+      };
+
+      const selected = await selectOwnerCity(
+        created.save.id,
+        occupied!.city,
+        store,
+      );
+      expect(selected.ok).toBe(true);
+      if (!selected.ok) {
+        return;
+      }
+
+      const after = await store.load(created.save.id);
+      expect(after!.state.user.controlledTeamId).toBe(occupied!.teamId);
+      expect(after!.state.world.teams[occupied!.teamId!]).toEqual(targetBefore);
+      if (placeholderId !== occupied!.teamId) {
+        expect(after!.state.world.teams[placeholderId]!.city).toBe(
+          placeholderCity,
+        );
+      }
+      expect(after!.state.user.citySelectionConfirmed).toBe(true);
     },
     LONG_TIMEOUT_MS,
   );

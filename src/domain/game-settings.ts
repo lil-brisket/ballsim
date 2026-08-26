@@ -128,7 +128,31 @@ export type AiAssistanceDomains = {
   injuryReplacement: AiAssistDomainMode;
 };
 
-export type LeagueArea = "north_america" | "europe" | "global";
+export type LeagueArea =
+  | "north_america"
+  | "europe"
+  | "africa"
+  | "asia"
+  | "south_america"
+  | "global";
+
+export const LEAGUE_AREA_LABELS: Record<LeagueArea, string> = {
+  north_america: "North America",
+  europe: "Europe",
+  africa: "Africa",
+  asia: "Asia",
+  south_america: "South America",
+  global: "Global",
+};
+
+export const LEAGUE_AREA_OPTIONS: readonly LeagueArea[] = [
+  "north_america",
+  "europe",
+  "africa",
+  "asia",
+  "south_america",
+  "global",
+] as const;
 export type DraftMode = "standard" | "fantasy";
 export type LeagueHistoryMode = "new" | "generated";
 
@@ -427,7 +451,14 @@ export function legacyManagementModeToPreset(
 }
 
 export function isLeagueArea(value: unknown): value is LeagueArea {
-  return value === "north_america" || value === "europe" || value === "global";
+  return (
+    value === "north_america" ||
+    value === "europe" ||
+    value === "africa" ||
+    value === "asia" ||
+    value === "south_america" ||
+    value === "global"
+  );
 }
 
 export function isDraftMode(value: unknown): value is DraftMode {

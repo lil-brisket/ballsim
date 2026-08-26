@@ -163,10 +163,11 @@ const MIGRATE_ONE_STEP: Record<number, (state: unknown) => unknown> = {
   37: (state) => migrateV37ToV38(state as GameStateV37),
   38: (state) => migrateV38ToV39(state as GameStateV38),
   39: (state) => migrateV39ToV40(state as GameStateV39),
+  40: (state) => migrateV40ToV41(state as GameStateV40),
 };
 
 /**
- * Parse → migrate (v1–v39 → current) → validate → return GameState.
+ * Parse → migrate (v1–v40 → current) → validate → return GameState.
  * Does not call serializeGameState.
  */
 export function deserializeGameState(stateJson: string): GameState {
@@ -2934,7 +2935,7 @@ type GameStateV38 = {
   business: GameState["business"];
   user: Omit<
     GameState["user"],
-    "pendingOwnerDecisions" | "ownerDecisionHistory"
+    "pendingOwnerDecisions" | "ownerDecisionHistory" | "citySelectionConfirmed"
   > & {
     pendingOwnerDecisions?: GameState["user"]["pendingOwnerDecisions"];
     ownerDecisionHistory?: GameState["user"]["ownerDecisionHistory"];
@@ -2951,10 +2952,23 @@ type GameStateV39 = {
   business: GameState["business"];
   user: Omit<
     GameState["user"],
-    "pendingOwnerDecisions" | "ownerDecisionHistory"
+    "pendingOwnerDecisions" | "ownerDecisionHistory" | "citySelectionConfirmed"
   > & {
     pendingOwnerDecisions?: GameState["user"]["pendingOwnerDecisions"];
     ownerDecisionHistory?: GameState["user"]["ownerDecisionHistory"];
+  };
+};
+
+type GameStateV40 = {
+  meta: Omit<GameState["meta"], "schemaVersion"> & {
+    schemaVersion: 40;
+  };
+  settings: GameState["settings"];
+  world: GameState["world"];
+  competition: GameState["competition"];
+  business: GameState["business"];
+  user: Omit<GameState["user"], "citySelectionConfirmed"> & {
+    citySelectionConfirmed?: boolean;
   };
 };
 
@@ -3167,7 +3181,7 @@ function migrateV38ToV39(state: GameStateV38): GameStateV39 {
 /**
  * Deterministic v39 → v40: owner decision queue + history for sim interrupts.
  */
-function migrateV39ToV40(state: GameStateV39): GameState {
+function migrateV39ToV40(state: GameStateV39): GameStateV40 {
   return {
     ...state,
     meta: {
@@ -3178,6 +3192,25 @@ function migrateV39ToV40(state: GameStateV39): GameState {
       ...state.user,
       pendingOwnerDecisions: state.user.pendingOwnerDecisions ?? [],
       ownerDecisionHistory: state.user.ownerDecisionHistory ?? [],
+    },
+  };
+}
+
+/**
+ * Deterministic v40 → v41: city selection confirmation flag for new-game pick.
+ * Existing saves already past team pick are treated as confirmed.
+ */
+function migrateV40ToV41(state: GameStateV40): GameState {
+  const locked = state.world.calendar.lastSimulatedDate !== null;
+  return {
+    ...state,
+    meta: {
+      ...state.meta,
+      schemaVersion: 41,
+    },
+    user: {
+      ...state.user,
+      citySelectionConfirmed: state.user.citySelectionConfirmed ?? locked,
     },
   };
 }

@@ -27,6 +27,7 @@ import {
 } from "@/domain/ids";
 import type { Rng } from "@/domain/rng";
 import { generatePlayerWithRng } from "@/systems/player-generation";
+import { uniqueTeamAbbreviation } from "@/systems/team-abbreviation";
 import {
   DEFAULT_ROSTER_SIZE,
   rosterPositionForSlot,
@@ -424,43 +425,6 @@ function generateTeamNames(
   }
 
   return result;
-}
-
-/**
- * Derives a unique 3-letter abbreviation from city with deterministic
- * collision suffixes (no RNG).
- */
-function uniqueTeamAbbreviation(
-  city: string,
-  used: ReadonlySet<string>,
-): string {
-  const letters = city.replace(/[^A-Za-z]/g, "").toUpperCase();
-  const base =
-    letters.length >= 3
-      ? letters.slice(0, 3)
-      : (letters + "XXX").slice(0, 3);
-
-  if (!used.has(base)) {
-    return base;
-  }
-
-  for (let suffix = 0; suffix < 10; suffix += 1) {
-    const candidate = `${base.slice(0, 2)}${suffix}`;
-    if (!used.has(candidate)) {
-      return candidate;
-    }
-  }
-
-  for (let code = 65; code <= 90; code += 1) {
-    const candidate = `${base.slice(0, 2)}${String.fromCharCode(code)}`;
-    if (!used.has(candidate)) {
-      return candidate;
-    }
-  }
-
-  throw new Error(
-    `League generation could not derive a unique abbreviation for city "${city}".`,
-  );
 }
 
 function assertGenerationIntegrity(result: GeneratedLeague): void {

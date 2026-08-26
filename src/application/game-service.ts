@@ -41,6 +41,7 @@ import {
   OWNER_PHILOSOPHIES,
 } from "@/domain/entities/owner-philosophy";
 import { defaultOwnerPatience } from "@/systems/owner-philosophy-config";
+import { applyOwnerCitySelection } from "@/systems/owner-city-selection";
 import { createDefaultOwnershipConfidence } from "@/domain/entities/ownership-confidence";
 import {
   recordOwnershipEvidence,
@@ -54,6 +55,7 @@ import {
 } from "@/systems/ownership-alignment-signals";
 import {
   isPlayerInOwnerScope,
+  listCitiesForTeamPick,
   listTeamsForSelection,
   toContractsView,
   toDashboardSnapshot,
@@ -84,6 +86,7 @@ import {
   type RosterPlayerView,
   type ScheduleGameView,
   type StandingRowView,
+  type CityPickOption,
   type TeamListEntry,
 } from "@/state/selectors";
 import {
@@ -216,6 +219,7 @@ export type AdvanceDayResult = CreateGameResult & {
 
 export type OwnerSaveView = CreateGameResult & {
   teams: TeamListEntry[];
+  cities: CityPickOption[];
   roster: RosterPlayerView[];
   standings: StandingRowView[];
   freeAgents: FreeAgentView[];
@@ -397,6 +401,7 @@ export async function loadOwnerSaveView(
     save: toSaveSummary(loaded),
     dashboard: toDashboardSnapshot(state),
     teams: listTeamsForSelection(state),
+    cities: listCitiesForTeamPick(state),
     roster,
     standings: toStandingsView(state),
     freeAgents: toFreeAgentViews(state),
@@ -660,6 +665,35 @@ export async function selectOwnerTeam(
     const saved = await persistWorkingState(
       saveId,
       working,
+      loaded.state.meta.rngState,
+      saveStore,
+    );
+    return withDashboard(saved);
+  } catch (error) {
+    return fail(error instanceof Error ? error.message : String(error));
+  }
+}
+
+export async function selectOwnerCity(
+  saveId: string,
+  city: string,
+  store?: SaveGameStore,
+): Promise<OwnerCommandResult> {
+  const saveStore = getStore(store);
+  const loaded = await saveStore.load(saveId);
+  if (!loaded) {
+    return fail("Save not found.");
+  }
+
+  const applied = applyOwnerCitySelection(loaded.state, city);
+  if (!applied.ok) {
+    return fail(applied.error);
+  }
+
+  try {
+    const saved = await persistWorkingState(
+      saveId,
+      applied.state,
       loaded.state.meta.rngState,
       saveStore,
     );

@@ -763,6 +763,10 @@ export function validateGameState(state: unknown): asserts state is GameState {
   }
   validateNarrativeState(user.narrative);
 
+  if (typeof user.citySelectionConfirmed !== "boolean") {
+    fail("user.citySelectionConfirmed must be a boolean.");
+  }
+
   const teamIds = new Set(Object.keys(world.teams));
   const playerIds = new Set(Object.keys(world.players));
   const contractIds = new Set(Object.keys(business.contracts));

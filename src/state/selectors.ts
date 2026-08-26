@@ -14,6 +14,7 @@ import { calculatePlayerOverall } from "@/domain/player-overall-rating";
 import type { DomainEvent } from "@/domain/events";
 import type { PlayerId, TeamId } from "@/domain/ids";
 import type { GameMode, GameState } from "@/state/game-state";
+import { getCitiesForArea, normalizeCityName } from "@/data/league/city-locations";
 import { draftYearForSeason } from "@/systems/draft";
 import { isUserOnDraftClock } from "@/systems/draft/draft-clock";
 import { listFreeAgents } from "@/systems/free-agency";
@@ -32,6 +33,7 @@ export type DashboardSnapshot = {
   leagueName: string;
   mode: GameMode;
   teamSelectionLocked: boolean;
+  citySelectionConfirmed: boolean;
   userOnDraftClock: boolean;
   controlledTeam: {
     id: string;
@@ -108,6 +110,15 @@ export type TeamListEntry = {
   abbreviation: string;
   conferenceName: string;
   divisionName: string;
+};
+
+export type CityPickOption = {
+  city: string;
+  lat: number;
+  lng: number;
+  occupied: boolean;
+  teamId?: string;
+  nickname?: string;
 };
 
 export type RosterPlayerView = {
@@ -302,6 +313,48 @@ export function listTeamsForSelection(state: GameState): TeamListEntry[] {
     return keyA < keyB ? -1 : keyA > keyB ? 1 : 0;
   });
   return entries;
+}
+
+/**
+ * Full regional city pool for new-game map/list pick, with occupancy metadata.
+ */
+export function listCitiesForTeamPick(state: GameState): CityPickOption[] {
+  const area = state.settings.league.area ?? "north_america";
+  const byNormalizedCity = new Map<
+    string,
+    { teamId: string; nickname: string }
+  >();
+  for (const team of Object.values(state.world.teams)) {
+    const key = normalizeCityName(team.city);
+    if (key !== null) {
+      byNormalizedCity.set(key, { teamId: team.id, nickname: team.name });
+    }
+  }
+
+  const options: CityPickOption[] = getCitiesForArea(area).map((city) => {
+    const occupied = byNormalizedCity.get(city.name);
+    if (occupied) {
+      return {
+        city: city.name,
+        lat: city.lat,
+        lng: city.lng,
+        occupied: true,
+        teamId: occupied.teamId,
+        nickname: occupied.nickname,
+      };
+    }
+    return {
+      city: city.name,
+      lat: city.lat,
+      lng: city.lng,
+      occupied: false,
+    };
+  });
+
+  options.sort((a, b) =>
+    a.city < b.city ? -1 : a.city > b.city ? 1 : 0,
+  );
+  return options;
 }
 
 export function toRosterView(state: GameState): RosterPlayerView[] {
@@ -882,6 +935,7 @@ export function toDashboardSnapshot(state: GameState): DashboardSnapshot {
     leagueName: state.world.league.name,
     mode: state.user.mode,
     teamSelectionLocked: state.world.calendar.lastSimulatedDate !== null,
+    citySelectionConfirmed: state.user.citySelectionConfirmed,
     userOnDraftClock: isUserOnDraftClock(state),
     controlledTeam: {
       id: team.id,

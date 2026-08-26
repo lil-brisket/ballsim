@@ -235,6 +235,7 @@ describe("season lifecycle", () => {
       user: {
         controlledTeamId: generated.teams[0]!.id as TeamId,
         mode: "owner",
+        citySelectionConfirmed: true,
         ownerStartSeasonYear: 2026,
         ownerPhilosophy: "balanced",
         ownerPatience: 55,

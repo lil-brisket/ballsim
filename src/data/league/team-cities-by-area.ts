@@ -6,9 +6,9 @@
  *   as the first part of a fictional franchise name.
  * - No suburbs, regions, countries, or obscure locations.
  * - One entry per market (no duplicate metros).
- * - North America: major US + Canadian markets.
- * - Europe: major European cities.
- * - Global: genuinely worldwide major markets (no continental restriction).
+ * - Regional pools (NA / Europe / Africa / Asia / South America) are disjoint.
+ * - Global is a curated worldwide mix (may overlap regional pools intentionally).
+ * - North America: major US + Canadian + Mexican markets.
  *
  * Target size: 40–50 cities per pool for headroom beyond max teamCount (32).
  */
@@ -60,6 +60,10 @@ export const NORTH_AMERICA_TEAM_CITIES = [
   "Pittsburgh",
   "Baltimore",
   "Austin",
+  "Mexico City",
+  "Guadalajara",
+  "Monterrey",
+  "Tijuana",
 ] as const;
 
 export const EUROPE_TEAM_CITIES = [
@@ -110,6 +114,154 @@ export const EUROPE_TEAM_CITIES = [
   "Nice",
 ] as const;
 
+export const AFRICA_TEAM_CITIES = [
+  "Cairo",
+  "Johannesburg",
+  "Lagos",
+  "Nairobi",
+  "Cape Town",
+  "Accra",
+  "Casablanca",
+  "Addis Ababa",
+  "Dar es Salaam",
+  "Durban",
+  "Pretoria",
+  "Alexandria",
+  "Tunis",
+  "Algiers",
+  "Dakar",
+  "Abidjan",
+  "Kampala",
+  "Lusaka",
+  "Harare",
+  "Maputo",
+  "Luanda",
+  "Kinshasa",
+  "Gaborone",
+  "Windhoek",
+  "Port Louis",
+  "Kigali",
+  "Bamako",
+  "Ouagadougou",
+  "Yaounde",
+  "Douala",
+  "Freetown",
+  "Monrovia",
+  "Tripoli",
+  "Khartoum",
+  "Mombasa",
+  "Ibadan",
+  "Kumasi",
+  "Bloemfontein",
+  "Port Elizabeth",
+  "Oran",
+  "Rabat",
+  "Marrakesh",
+  "Enugu",
+  "Abuja",
+  "Antananarivo",
+] as const;
+
+export const ASIA_TEAM_CITIES = [
+  "Tokyo",
+  "Shanghai",
+  "Beijing",
+  "Seoul",
+  "Hong Kong",
+  "Bangkok",
+  "Jakarta",
+  "Manila",
+  "Mumbai",
+  "Delhi",
+  "Bangalore",
+  "Osaka",
+  "Taipei",
+  "Kuala Lumpur",
+  "Ho Chi Minh City",
+  "Singapore",
+  "Dubai",
+  "Tel Aviv",
+  "Doha",
+  "Riyadh",
+  "Guangzhou",
+  "Shenzhen",
+  "Chengdu",
+  "Busan",
+  "Nagoya",
+  "Kyoto",
+  "Chennai",
+  "Hyderabad",
+  "Kolkata",
+  "Karachi",
+  "Lahore",
+  "Islamabad",
+  "Dhaka",
+  "Hanoi",
+  "Yangon",
+  "Phnom Penh",
+  "Vientiane",
+  "Ulaanbaatar",
+  "Almaty",
+  "Tashkent",
+  "Baku",
+  "Tbilisi",
+  "Yerevan",
+  "Kuwait City",
+  "Abu Dhabi",
+] as const;
+
+export const SOUTH_AMERICA_TEAM_CITIES = [
+  "São Paulo",
+  "Buenos Aires",
+  "Rio de Janeiro",
+  "Lima",
+  "Bogotá",
+  "Santiago",
+  "Caracas",
+  "Montevideo",
+  "Quito",
+  "La Paz",
+  "Asunción",
+  "Medellín",
+  "Cali",
+  "Barranquilla",
+  "Guayaquil",
+  "Córdoba",
+  "Rosario",
+  "Mendoza",
+  "Brasília",
+  "Belo Horizonte",
+  "Salvador",
+  "Recife",
+  "Fortaleza",
+  "Curitiba",
+  "Porto Alegre",
+  "Manaus",
+  "Valparaíso",
+  "Concepción",
+  "Arequipa",
+  "Trujillo",
+  "Maracaibo",
+  "Barquisimeto",
+  "Santa Cruz",
+  "Cochabamba",
+  "Cusco",
+  "Bucaramanga",
+  "Pereira",
+  "Cartagena",
+  "Mar del Plata",
+  "La Plata",
+  "Goiânia",
+  "Campinas",
+  "Belém",
+  "Natal",
+  "Florianópolis",
+] as const;
+
+/**
+ * Curated worldwide mix — not a union of all regional pools.
+ * Overlap with regional pools is intentional.
+ */
 export const GLOBAL_TEAM_CITIES = [
   "Tokyo",
   "Sydney",
@@ -158,6 +310,23 @@ export const GLOBAL_TEAM_CITIES = [
   "Miami",
 ] as const;
 
+export const LEAGUE_AREAS: readonly LeagueArea[] = [
+  "north_america",
+  "europe",
+  "africa",
+  "asia",
+  "south_america",
+  "global",
+] as const;
+
+export const REGIONAL_LEAGUE_AREAS = [
+  "north_america",
+  "europe",
+  "africa",
+  "asia",
+  "south_america",
+] as const satisfies ReadonlyArray<Exclude<LeagueArea, "global">>;
+
 /**
  * Returns the city pool for a league area.
  * Throws on unexpected runtime values rather than returning an empty pool.
@@ -168,6 +337,12 @@ export function getTeamCitiesForArea(area: LeagueArea): readonly string[] {
       return NORTH_AMERICA_TEAM_CITIES;
     case "europe":
       return EUROPE_TEAM_CITIES;
+    case "africa":
+      return AFRICA_TEAM_CITIES;
+    case "asia":
+      return ASIA_TEAM_CITIES;
+    case "south_america":
+      return SOUTH_AMERICA_TEAM_CITIES;
     case "global":
       return GLOBAL_TEAM_CITIES;
     default: {

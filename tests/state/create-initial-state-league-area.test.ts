@@ -31,6 +31,9 @@ import { TEST_RNG_SEED } from "../helpers/determinism";
 const LEAGUE_AREAS: readonly LeagueArea[] = [
   "north_america",
   "europe",
+  "africa",
+  "asia",
+  "south_america",
   "global",
 ];
 
@@ -110,6 +113,26 @@ describe("existing save does not regenerate team cities", () => {
 
     expect(citiesOnLoad).toEqual(citiesAtCreate);
   });
+
+  it.each(["north_america", "europe", "global"] as const)(
+    "legacy area %s loads and reaches team pick without migration errors",
+    async (area) => {
+      const settings = cloneGameSettings(CBL_GAME_SETTINGS);
+      settings.league.area = area;
+      const created = await createNewOwnerSave(
+        { name: `Legacy ${area}`, rngSeed: TEST_RNG_SEED, settings },
+        store,
+      );
+      expect(created.ok).toBe(true);
+      if (!created.ok) {
+        return;
+      }
+      expect(created.dashboard.teamSelectionLocked).toBe(false);
+      const loaded = await store.load(created.save.id);
+      expect(loaded!.state.user.citySelectionConfirmed).toBe(false);
+      expect(loaded!.state.settings.league.area).toBe(area);
+    },
+  );
 });
 
 describe("selectOwnerTeam philosophy regression", () => {

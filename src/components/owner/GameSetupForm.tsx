@@ -8,8 +8,11 @@ import {
   SUPPORTED_PLAYOFF_TEAM_COUNTS,
   SUPPORTED_SERIES_LENGTHS,
   SUPPORTED_TEAM_COUNTS,
+  LEAGUE_AREA_LABELS,
+  LEAGUE_AREA_OPTIONS,
   type GameSettings,
   type InjuryFrequency,
+  type LeagueArea,
   type SeriesLength,
 } from "@/domain/game-settings";
 import {
@@ -261,17 +264,16 @@ export function GameSetupForm({
             <SelectField
               label="League area"
               value={leagueAreaIndex(settings.league.area ?? "north_america")}
-              options={[
-                { value: 0, label: "North America" },
-                { value: 1, label: "Europe" },
-                { value: 2, label: "Global" },
-              ]}
+              options={LEAGUE_AREA_OPTIONS.map((area, index) => ({
+                value: index,
+                label: LEAGUE_AREA_LABELS[area],
+              }))}
               onChange={(value) =>
                 updateSettings({
                   ...settings,
                   league: {
                     ...settings.league,
-                    area: value === 0 ? "north_america" : value === 1 ? "europe" : "global",
+                    area: LEAGUE_AREA_OPTIONS[value] ?? "north_america",
                   },
                 })
               }
@@ -514,16 +516,13 @@ function presetLabel(preset: LeagueSetupPresetId): string {
   return "Custom";
 }
 
-function leagueAreaIndex(area: NonNullable<GameSettings["league"]["area"]>): number {
-  return area === "north_america" ? 0 : area === "europe" ? 1 : 2;
+function leagueAreaIndex(area: LeagueArea): number {
+  const index = LEAGUE_AREA_OPTIONS.indexOf(area);
+  return index >= 0 ? index : 0;
 }
 
-function leagueAreaLabel(area: NonNullable<GameSettings["league"]["area"]>): string {
-  return area === "north_america"
-    ? "North America"
-    : area === "europe"
-      ? "Europe"
-      : "Global";
+function leagueAreaLabel(area: LeagueArea): string {
+  return LEAGUE_AREA_LABELS[area];
 }
 
 function Section({

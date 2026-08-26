@@ -80,7 +80,7 @@ function bootstrapTeam(
  * Production Owner Mode new-game universe from GameSettings.
  * Defaults to Standard (30 teams). Pass CBL_GAME_SETTINGS for 12-team tests.
  * Application bootstrap fills players/contracts via generateRosters.
- * Placeholder controlledTeamId is the first sorted team id until selectOwnerTeam.
+ * Placeholder controlledTeamId is the first sorted team id until city/team selection.
  */
 export function createInitialGameState(
   input: CreateInitialGameStateInput,
@@ -214,6 +214,7 @@ export function createInitialGameState(
     user: {
       controlledTeamId,
       mode: "owner",
+      citySelectionConfirmed: false,
       ownerStartSeasonYear: startingSeasonYear,
       ownerPhilosophy: DEFAULT_OWNER_PHILOSOPHY,
       ownerPatience: defaultOwnerPatience(DEFAULT_OWNER_PHILOSOPHY),
@@ -493,6 +494,7 @@ export function createFourTeamInitialGameState(
     user: {
       controlledTeamId: userTeamId,
       mode: "owner",
+      citySelectionConfirmed: false,
       ownerStartSeasonYear: startingSeasonYear,
       ownerPhilosophy: DEFAULT_OWNER_PHILOSOPHY,
       ownerPatience: defaultOwnerPatience(DEFAULT_OWNER_PHILOSOPHY),

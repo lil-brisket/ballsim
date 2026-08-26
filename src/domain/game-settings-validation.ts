@@ -120,7 +120,9 @@ export function validateGameSettings(
   }
 
   if (league.area !== undefined && !isLeagueArea(league.area)) {
-    errors.push('league.area must be "north_america", "europe", or "global".');
+    errors.push(
+      'league.area must be "north_america", "europe", "africa", "asia", "south_america", or "global".',
+    );
   }
 
   const injuryFrequency = resolveInjuryFrequency(raw);

@@ -30,6 +30,7 @@ import {
   advanceOwnerRelocation,
   runOwnerExpansionDraft,
   selectOwnerDraftProspect,
+  selectOwnerCity,
   selectOwnerTeam,
   setOwnerMarketingBudget,
   setOwnerTicketPrice,
@@ -99,7 +100,10 @@ export async function openSaveAction(formData: FormData): Promise<void> {
   if (!loaded) {
     throw new Error("Save not found.");
   }
-  if (!loaded.dashboard.teamSelectionLocked) {
+  if (
+    !loaded.dashboard.teamSelectionLocked &&
+    !loaded.dashboard.citySelectionConfirmed
+  ) {
     redirect(`/new/${loaded.save.id}/team`);
   }
   redirect(`/dashboard/${loaded.save.id}`);
@@ -119,6 +123,17 @@ export async function selectTeamAction(formData: FormData): Promise<void> {
   const saveId = String(formData.get("saveId") ?? "");
   const teamId = String(formData.get("teamId") ?? "");
   const result = await selectOwnerTeam(saveId, teamId);
+  if (!result.ok) {
+    redirectWithError(`/new/${saveId}/team`, result.error);
+  }
+  revalidateOwner(saveId);
+  redirect(`/dashboard/${saveId}`);
+}
+
+export async function selectCityAction(formData: FormData): Promise<void> {
+  const saveId = String(formData.get("saveId") ?? "");
+  const city = String(formData.get("city") ?? "");
+  const result = await selectOwnerCity(saveId, city);
   if (!result.ok) {
     redirectWithError(`/new/${saveId}/team`, result.error);
   }
