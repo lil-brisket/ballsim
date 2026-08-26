@@ -14,16 +14,20 @@ export function OnboardingShell(props: {
   subtitle?: string;
   children: React.ReactNode;
   className?: string;
+  fillViewport?: boolean;
 }) {
   const stepIndex = STEPS.findIndex((s) => s.id === props.step);
+  const fillViewport = props.fillViewport === true;
 
   return (
     <main
-      className={`mx-auto flex w-full flex-1 flex-col gap-8 px-6 py-12 ${
-        props.className ?? "max-w-4xl"
-      }`}
+      className={`mx-auto flex w-full flex-col px-6 ${
+        fillViewport
+          ? "h-dvh max-h-dvh min-h-0 gap-3 overflow-hidden py-4 max-lg:h-auto max-lg:max-h-none max-lg:overflow-y-auto"
+          : "flex-1 gap-8 py-12"
+      } ${props.className ?? "max-w-4xl"}`}
     >
-      <div className="flex flex-wrap items-center justify-between gap-3">
+      <div className="flex shrink-0 flex-wrap items-center justify-between gap-3">
         <Link
           href="/owner"
           className="text-sm text-zinc-400 hover:text-amber-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-500"
@@ -53,19 +57,33 @@ export function OnboardingShell(props: {
         </nav>
       </div>
 
-      <header className="space-y-2">
+      <header className="shrink-0 space-y-1">
         <p className="font-mono text-xs uppercase tracking-[0.18em] text-amber-500">
           New Game
         </p>
-        <h1 className="text-3xl font-semibold tracking-tight text-zinc-50">
+        <h1
+          className={`${
+            fillViewport ? "text-2xl" : "text-3xl"
+          } font-semibold tracking-tight text-zinc-50`}
+        >
           {props.title}
         </h1>
         {props.subtitle ? (
-          <p className="max-w-2xl text-zinc-400">{props.subtitle}</p>
+          <p
+            className={`max-w-2xl text-zinc-400 ${
+              fillViewport ? "text-sm" : ""
+            }`}
+          >
+            {props.subtitle}
+          </p>
         ) : null}
       </header>
 
-      {props.children}
+      {fillViewport ? (
+        <div className="flex min-h-0 flex-1 flex-col">{props.children}</div>
+      ) : (
+        props.children
+      )}
     </main>
   );
 }

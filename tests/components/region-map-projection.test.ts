@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   cityProjectsInsideViewport,
+  getRegionAdmin1LineFeatures,
   projectCityToMap,
   REGION_MAP_CONFIG,
 } from "@/components/map/region-projection-config";
@@ -38,5 +39,17 @@ describe("region map projection", () => {
     const toronto = projectCityToMap(43.65, -79.38, "north_america");
     expect(seattle.x).toBeLessThan(boston.x);
     expect(miami.y).toBeGreaterThan(toronto.y);
+  });
+
+  it("includes US and Canadian interior state and province lines for North America", () => {
+    const lines = getRegionAdmin1LineFeatures("north_america");
+    expect(lines.length).toBeGreaterThan(80);
+  });
+
+  it("fits North American cities across most of the viewport", () => {
+    const seattle = projectCityToMap(47.61, -122.33, "north_america");
+    const boston = projectCityToMap(42.36, -71.06, "north_america");
+    const { width } = REGION_MAP_CONFIG.north_america.viewport;
+    expect(boston.x - seattle.x).toBeGreaterThan(width * 0.45);
   });
 });

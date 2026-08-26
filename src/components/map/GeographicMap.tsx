@@ -1,7 +1,7 @@
 "use client";
 
 import { geoPath } from "d3-geo";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, type CSSProperties } from "react";
 import { MapCityMarker } from "@/components/map/MapCityMarker";
 import { MapLegend } from "@/components/map/MapLegend";
 import type { MapCity } from "@/components/map/map-city";
@@ -12,6 +12,7 @@ import {
 import {
   createRegionProjection,
   getRegionGeoFeatures,
+  getRegionAdmin1LineFeatures,
   projectPoint,
   REGION_MAP_CONFIG,
 } from "@/components/map/region-projection-config";
@@ -20,28 +21,17 @@ import {
   type LeagueArea,
 } from "@/domain/game-settings";
 
-const HIT_RADIUS = 22;
-const MIN_SCALE = 1;
-const MAX_SCALE = 6;
-const ZOOM_STEP = 1.25;
-
-type ViewTransform = {
-  scale: number;
-  x: number;
-  y: number;
-};
-
-const IDENTITY: ViewTransform = { scale: 1, x: 0, y: 0 };
+const HIT_RADIUS = 8;
 
 export function GeographicMap(props: {
   area: LeagueArea;
   cities: readonly MapCity[];
   onSelectCity: (id: string) => void;
-  centerOnCityId?: string | null;
+  selectedCityId?: string | null;
   ariaLabel?: string;
+  fill?: boolean;
 }) {
   const viewport = REGION_MAP_CONFIG[props.area].viewport;
-  const [view, setView] = useState<ViewTransform>(IDENTITY);
 
   const projection = useMemo(
     () => createRegionProjection(props.area, viewport.width, viewport.height),
@@ -52,75 +42,100 @@ export function GeographicMap(props: {
     () => getRegionGeoFeatures(props.area),
     [props.area],
   );
+  const admin1Features = useMemo(
+    () => getRegionAdmin1LineFeatures(props.area),
+    [props.area],
+  );
+  const landPaths = useMemo(
+    () =>
+      features.map((entry, index) => ({
+        key: String(entry.properties?.name ?? index),
+        d: path(entry) ?? "",
+      })),
+    [features, path],
+  );
+  const subdivisionPaths = useMemo(
+    () =>
+      admin1Features.map((entry, index) => ({
+        key: `admin1-${entry.properties?.adm0 ?? "x"}-${index}`,
+        d: path(entry) ?? "",
+      })),
+    [admin1Features, path],
+  );
 
   const projected = useMemo(() => {
-    const rank = (status: MapCity["status"]) =>
-      status === "selected" ? 2 : status === "available" ? 1 : 0;
     const points = props.cities.flatMap((city) => {
       const point = projectPoint(projection, city.latitude, city.longitude);
       if (!point) {
         return [];
       }
-      return [{ city, ...point }];
+      return [
+        {
+          city,
+          x: Math.round(point.x * 10) / 10,
+          y: Math.round(point.y * 10) / 10,
+        },
+      ];
     });
     const laidOut = layoutMapMarkers(
       points.map((entry) => ({
         id: entry.city.id,
         x: entry.x,
         y: entry.y,
-        status: entry.city.status,
+        status: entry.city.status === "occupied" ? "occupied" : "available",
       })),
     );
     const byId = new Map(points.map((entry) => [entry.city.id, entry.city]));
-    return laidOut
-      .map((entry) => ({
-        ...entry,
-        city: byId.get(entry.id)!,
-      }))
-      .sort((a, b) => rank(a.city.status) - rank(b.city.status));
+    return laidOut.map((entry) => ({
+      ...entry,
+      city: byId.get(entry.id)!,
+    }));
   }, [projection, props.cities]);
 
-  useEffect(() => {
-    setView(IDENTITY);
-  }, [props.area]);
+  const selectedId = props.selectedCityId ?? null;
+  const markers = useMemo(() => {
+    const rank = (entry: (typeof projected)[number]) =>
+      entry.city.id === selectedId
+        ? 2
+        : entry.city.status === "available"
+          ? 1
+          : 0;
+    return [...projected].sort((a, b) => rank(a) - rank(b));
+  }, [projected, selectedId]);
 
-  useEffect(() => {
-    if (!props.centerOnCityId) {
-      return;
-    }
-    const target = projected.find((entry) => entry.city.id === props.centerOnCityId);
-    if (!target) {
-      return;
-    }
-    setView((current) => ({
-      scale: current.scale,
-      x: viewport.width / 2 - target.x * current.scale,
-      y: viewport.height / 2 - target.y * current.scale,
-    }));
-  }, [projected, props.centerOnCityId, viewport.height, viewport.width]);
-
-  const zoomAt = (nextScale: number) => {
-    const clamped = Math.min(MAX_SCALE, Math.max(MIN_SCALE, nextScale));
-    setView((current) => {
-      const cx = viewport.width / 2;
-      const cy = viewport.height / 2;
-      const worldX = (cx - current.x) / current.scale;
-      const worldY = (cy - current.y) / current.scale;
-      return {
-        scale: clamped,
-        x: cx - worldX * clamped,
-        y: cy - worldY * clamped,
-      };
-    });
-  };
+  const fill = props.fill === true;
 
   return (
-    <div className="space-y-3">
-      <div className="overflow-hidden rounded-lg border border-zinc-800 bg-zinc-950">
+    <div
+      className={
+        fill ? "flex h-full min-h-0 flex-col gap-2" : "space-y-3"
+      }
+    >
+      <div
+        className={
+          fill
+            ? "min-h-0 w-full overflow-hidden rounded-lg border border-zinc-800 bg-zinc-950 max-lg:aspect-[var(--map-ar)] lg:h-full lg:min-h-0 lg:flex-1 lg:aspect-auto"
+            : "overflow-hidden rounded-lg border border-zinc-800 bg-zinc-950"
+        }
+        style={
+          fill
+            ? ({
+                ["--map-ar"]: `${viewport.width} / ${viewport.height}`,
+              } as CSSProperties)
+            : undefined
+        }
+      >
         <svg
           viewBox={`0 0 ${viewport.width} ${viewport.height}`}
-          className="h-auto w-full min-h-[280px]"
+          preserveAspectRatio="xMidYMid meet"
+          className={fill ? "h-full w-full" : "h-auto w-full"}
+          style={
+            fill
+              ? undefined
+              : { aspectRatio: `${viewport.width} / ${viewport.height}` }
+          }
           role="img"
+          suppressHydrationWarning
           aria-label={
             props.ariaLabel ?? `${LEAGUE_AREA_LABELS[props.area]} city map`
           }
@@ -143,16 +158,23 @@ export function GeographicMap(props: {
             className="fill-zinc-950"
           />
           <g clipPath="url(#geo-map-frame)">
-            <g transform={`translate(${view.x} ${view.y}) scale(${view.scale})`}>
-            {features.map((entry, index) => (
+            {landPaths.map((entry) => (
               <path
-                key={entry.properties?.name ?? index}
-                d={path(entry) ?? ""}
-                className="fill-zinc-800/70 stroke-zinc-600/50"
-                strokeWidth={0.6}
+                key={entry.key}
+                d={entry.d}
+                className="pointer-events-none fill-zinc-800/80 stroke-zinc-400/80"
+                strokeWidth={0.85}
               />
             ))}
-            {projected
+            {subdivisionPaths.map((entry) => (
+              <path
+                key={entry.key}
+                d={entry.d}
+                className="pointer-events-none fill-none stroke-zinc-400/75"
+                strokeWidth={0.55}
+              />
+            ))}
+            {markers
               .filter((entry) => entry.offset >= MARKER_LEADER_THRESHOLD)
               .map((entry) => (
                 <line
@@ -161,50 +183,27 @@ export function GeographicMap(props: {
                   y1={entry.originY}
                   x2={entry.x}
                   y2={entry.y}
-                  className="stroke-zinc-500/80"
+                  className="pointer-events-none stroke-zinc-500/80"
                   strokeWidth={1}
                 />
               ))}
-            {projected.map((entry) => (
+            {markers.map((entry) => (
               <MapCityMarker
                 key={entry.city.id}
                 city={entry.city}
                 x={entry.x}
                 y={entry.y}
-                hitRadius={HIT_RADIUS / view.scale}
+                selected={entry.city.id === selectedId}
+                hitRadius={HIT_RADIUS}
                 onSelect={props.onSelectCity}
               />
             ))}
-            </g>
           </g>
         </svg>
       </div>
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <MapLegend />
-        <div className="flex gap-1">
-          <button
-            type="button"
-            className="rounded-md border border-zinc-700 bg-zinc-900 px-2 py-1 text-xs text-zinc-200 hover:bg-zinc-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-500"
-            onClick={() => zoomAt(view.scale * ZOOM_STEP)}
-          >
-            Zoom in
-          </button>
-          <button
-            type="button"
-            className="rounded-md border border-zinc-700 bg-zinc-900 px-2 py-1 text-xs text-zinc-200 hover:bg-zinc-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-500"
-            onClick={() => zoomAt(view.scale / ZOOM_STEP)}
-          >
-            Zoom out
-          </button>
-          <button
-            type="button"
-            className="rounded-md border border-zinc-700 bg-zinc-900 px-2 py-1 text-xs text-zinc-200 hover:bg-zinc-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-500"
-            onClick={() => setView(IDENTITY)}
-          >
-            Reset
-          </button>
-        </div>
-      </div>
+      <MapLegend
+        showOccupied={props.cities.some((city) => city.status === "occupied")}
+      />
     </div>
   );
 }

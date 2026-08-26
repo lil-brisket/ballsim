@@ -26,10 +26,11 @@ describe("applyOwnerCitySelection", () => {
     expect(teamCount).toBe(settingsTeamCount(state));
 
     const cities = listCitiesForTeamPick(state);
-    const occupied = cities.find((c) => c.occupied)!;
-    const available = cities.find((c) => !c.occupied)!;
+    expect(cities.every((city) => city.occupied === false)).toBe(true);
+    const occupiedCity = otherTeamCity(state).city;
+    const available = cities.find((c) => c.city !== occupiedCity) ?? cities[0]!;
 
-    const afterOccupied = applyOwnerCitySelection(state, occupied.city);
+    const afterOccupied = applyOwnerCitySelection(state, occupiedCity);
     expect(afterOccupied.ok).toBe(true);
     if (afterOccupied.ok) {
       expect(Object.keys(afterOccupied.state.world.teams).length).toBe(teamCount);
@@ -42,30 +43,30 @@ describe("applyOwnerCitySelection", () => {
     }
   });
 
-  it("occupied city sets controlledTeamId without mutating teams", () => {
+  it("relocates the placeholder into a city that already has a team", () => {
     const state = createNaState();
-    const cities = listCitiesForTeamPick(state);
-    const occupied = cities.find((c) => c.occupied && c.teamId)!;
+    const target = otherTeamCity(state);
     const placeholderId = state.user.controlledTeamId;
-    const placeholderBefore = { ...state.world.teams[placeholderId]! };
-    const targetBefore = { ...state.world.teams[occupied.teamId!]! };
+    const placeholderCity = state.world.teams[placeholderId]!.city;
+    const targetBefore = { ...state.world.teams[target.teamId]! };
 
-    const result = applyOwnerCitySelection(state, occupied.city);
+    const result = applyOwnerCitySelection(state, target.city);
     expect(result.ok).toBe(true);
     if (!result.ok) {
       return;
     }
 
-    expect(result.state.user.controlledTeamId).toBe(occupied.teamId);
+    expect(result.state.user.controlledTeamId).toBe(placeholderId);
     expect(result.state.user.citySelectionConfirmed).toBe(true);
-    expect(result.state.world.teams[occupied.teamId!]).toEqual(targetBefore);
-    expect(result.state.world.teams[placeholderId]).toEqual(placeholderBefore);
+    expect(result.state.world.teams[placeholderId]!.city).toBe(target.city);
+    expect(result.state.world.teams[target.teamId]!.city).toBe(placeholderCity);
+    expect(result.state.world.teams[target.teamId]!.name).toBe(targetBefore.name);
   });
 
   it("available city relocates only the placeholder franchise", () => {
     const state = createNaState();
     const cities = listCitiesForTeamPick(state);
-    const available = cities.find((c) => !c.occupied)!;
+    const available = openCity(state);
     const placeholderId = state.user.controlledTeamId;
     const otherIds = Object.keys(state.world.teams).filter(
       (id) => id !== placeholderId,
@@ -148,7 +149,7 @@ describe("applyOwnerCitySelection", () => {
 
   it("applies a custom nickname on an available city", () => {
     const state = createNaState();
-    const available = listCitiesForTeamPick(state).find((city) => !city.occupied)!;
+    const available = openCity(state);
     const placeholderId = state.user.controlledTeamId;
     const result = applyOwnerCitySelection(state, available.city, {
       nickname: "  Storm  ",
@@ -161,25 +162,25 @@ describe("applyOwnerCitySelection", () => {
     expect(result.state.world.teams[placeholderId]!.name).toBe("Storm");
   });
 
-  it("ignores nickname when taking control of an occupied franchise", () => {
+  it("applies a custom nickname when taking a city that already has a team", () => {
     const state = createNaState();
-    const occupied = listCitiesForTeamPick(state).find(
-      (city) => city.occupied && city.teamId,
-    )!;
-    const before = { ...state.world.teams[occupied.teamId!]! };
-    const result = applyOwnerCitySelection(state, occupied.city, {
+    const target = otherTeamCity(state);
+    const placeholderId = state.user.controlledTeamId;
+    const result = applyOwnerCitySelection(state, target.city, {
       nickname: "Intruders",
     });
     expect(result.ok).toBe(true);
     if (!result.ok) {
       return;
     }
-    expect(result.state.world.teams[occupied.teamId!]!.name).toBe(before.name);
+    expect(result.state.world.teams[placeholderId]!.city).toBe(target.city);
+    expect(result.state.world.teams[placeholderId]!.name).toBe("Intruders");
+    expect(result.state.world.teams[target.teamId]!.name).not.toBe("Intruders");
   });
 
   it("rejects empty custom nicknames", () => {
     const state = createNaState();
-    const available = listCitiesForTeamPick(state).find((city) => !city.occupied)!;
+    const available = openCity(state);
     const result = applyOwnerCitySelection(state, available.city, {
       nickname: "   ",
     });
@@ -188,22 +189,38 @@ describe("applyOwnerCitySelection", () => {
 
   it("allows the same nickname in a different city", () => {
     const state = createNaState();
-    const occupied = listCitiesForTeamPick(state).find(
-      (city) => city.occupied && city.nickname,
-    )!;
-    const available = listCitiesForTeamPick(state).find((city) => !city.occupied)!;
+    const other = otherTeamCity(state);
+    const available = openCity(state);
     const result = applyOwnerCitySelection(state, available.city, {
-      nickname: occupied.nickname,
+      nickname: state.world.teams[other.teamId]!.name,
     });
     expect(result.ok).toBe(true);
     if (!result.ok) {
       return;
     }
     expect(result.state.world.teams[state.user.controlledTeamId]!.name).toBe(
-      occupied.nickname,
+      state.world.teams[other.teamId]!.name,
     );
   });
 });
+
+function otherTeamCity(state: ReturnType<typeof createNaState>): {
+  teamId: string;
+  city: string;
+} {
+  const placeholderId = state.user.controlledTeamId;
+  const other = Object.values(state.world.teams).find(
+    (team) => team.id !== placeholderId,
+  )!;
+  return { teamId: other.id, city: other.city };
+}
+
+function openCity(state: ReturnType<typeof createNaState>) {
+  const taken = new Set(
+    Object.values(state.world.teams).map((team) => team.city),
+  );
+  return listCitiesForTeamPick(state).find((city) => !taken.has(city.city))!;
+}
 
 function settingsTeamCount(state: ReturnType<typeof createNaState>): number {
   return state.settings.league.teamCount;

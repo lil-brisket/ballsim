@@ -150,7 +150,9 @@ describe("Owner Mode vertical slice", () => {
       expect(view!.cities.length).toBe(pool.length);
       expect(view!.cities.every((c) => pool.includes(c.city))).toBe(true);
 
-      const available = view!.cities.find((c) => !c.occupied);
+      expect(view!.cities.every((c) => c.occupied === false)).toBe(true);
+
+      const available = view!.cities[0];
       expect(available).toBeDefined();
       const before = await store.load(created.save.id);
       const teamCount = Object.keys(before!.state.world.teams).length;
@@ -192,7 +194,7 @@ describe("Owner Mode vertical slice", () => {
         return;
       }
       const view = await loadOwnerSaveView(created.save.id, store);
-      const available = view!.cities.find((c) => !c.occupied)!;
+      const available = view!.cities[0]!;
       const selected = await selectOwnerCity(
         created.save.id,
         available.city,
@@ -210,7 +212,7 @@ describe("Owner Mode vertical slice", () => {
   );
 
   it(
-    "city pick: occupied city controls existing franchise without relocation",
+    "city pick: taking a generated-team city relocates the placeholder and swaps the occupant",
     async () => {
       const settings = cloneGameSettings(CBL_GAME_SETTINGS);
       settings.league.area = "north_america";
@@ -224,21 +226,21 @@ describe("Owner Mode vertical slice", () => {
       }
 
       const view = await loadOwnerSaveView(created.save.id, store);
-      const occupied = view!.cities.find((c) => c.occupied && c.teamId);
-      expect(occupied).toBeDefined();
+      expect(view!.cities.every((c) => c.occupied === false)).toBe(true);
 
       const before = await store.load(created.save.id);
       const placeholderId = before!.state.user.controlledTeamId;
-      const placeholderCity =
-        before!.state.world.teams[placeholderId]!.city;
-      const targetBefore = {
-        ...before!.state.world.teams[occupied!.teamId!]!,
-      };
+      const placeholderCity = before!.state.world.teams[placeholderId]!.city;
+      const occupant = Object.values(before!.state.world.teams).find(
+        (team) => team.id !== placeholderId,
+      )!;
+      const occupantName = occupant.name;
 
       const selected = await selectOwnerCity(
         created.save.id,
-        occupied!.city,
+        occupant.city,
         store,
+        "Intruders",
       );
       expect(selected.ok).toBe(true);
       if (!selected.ok) {
@@ -246,13 +248,11 @@ describe("Owner Mode vertical slice", () => {
       }
 
       const after = await store.load(created.save.id);
-      expect(after!.state.user.controlledTeamId).toBe(occupied!.teamId);
-      expect(after!.state.world.teams[occupied!.teamId!]).toEqual(targetBefore);
-      if (placeholderId !== occupied!.teamId) {
-        expect(after!.state.world.teams[placeholderId]!.city).toBe(
-          placeholderCity,
-        );
-      }
+      expect(after!.state.user.controlledTeamId).toBe(placeholderId);
+      expect(after!.state.world.teams[placeholderId]!.city).toBe(occupant.city);
+      expect(after!.state.world.teams[placeholderId]!.name).toBe("Intruders");
+      expect(after!.state.world.teams[occupant.id]!.city).toBe(placeholderCity);
+      expect(after!.state.world.teams[occupant.id]!.name).toBe(occupantName);
       expect(after!.state.user.citySelectionConfirmed).toBe(true);
     },
     LONG_TIMEOUT_MS,

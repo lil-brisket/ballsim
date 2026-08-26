@@ -2,8 +2,8 @@
  * Per-league-area geographic projection and country filtering.
  * Domain city pools remain authoritative in team-cities-by-area.ts.
  *
- * Geometry source: Natural Earth 50m (world-atlas countries-50m).
- * 110m is too coarse at Europe / North America franchise-picker zoom.
+ * Geometry source: Natural Earth 50m countries (world-atlas) plus interior
+ * admin-1 state/province lines.
  */
 import {
   geoAlbers,
@@ -15,8 +15,10 @@ import {
 import type { Feature, FeatureCollection, Geometry } from "geojson";
 import { feature } from "topojson-client";
 import type { GeometryCollection, Topology } from "topojson-specification";
+import { getCitiesForArea } from "@/data/league/city-locations";
 import type { LeagueArea } from "@/domain/game-settings";
 import worldAtlas from "@/data/geo/countries-50m.json";
+import admin1Lines from "@/data/geo/admin1-lines-50m.json";
 
 export type RegionMapBounds = {
   minLat: number;
@@ -40,7 +42,7 @@ export type RegionMapConfig = {
 export const REGION_MAP_CONFIG: Record<LeagueArea, RegionMapConfig> = {
   north_america: {
     bounds: { minLat: 14, maxLat: 62, minLng: -130, maxLng: -52 },
-    viewport: { width: 800, height: 520, pad: 20 },
+    viewport: { width: 680, height: 620, pad: 24 },
     projectionKind: "albers",
   },
   europe: {
@@ -70,7 +72,7 @@ export const REGION_MAP_CONFIG: Record<LeagueArea, RegionMapConfig> = {
   },
 };
 
-type CountryProperties = { name?: string };
+type CountryProperties = { name?: string; adm0?: string };
 
 type WorldTopology = Topology<{
   countries: GeometryCollection<CountryProperties>;
@@ -85,6 +87,67 @@ const countriesCollection = feature(
 
 let cachedFeatures: Partial<Record<LeagueArea, Feature<Geometry, CountryProperties>[]>> =
   {};
+let cachedAdmin1: Partial<Record<LeagueArea, Feature<Geometry, CountryProperties>[]>> =
+  {};
+
+function forEachPosition(
+  coords: unknown,
+  visit: (lng: number, lat: number) => boolean,
+): boolean {
+  if (!Array.isArray(coords) || coords.length === 0) {
+    return false;
+  }
+  if (typeof coords[0] === "number") {
+    return visit(Number(coords[0]), Number(coords[1]));
+  }
+  for (const child of coords) {
+    if (forEachPosition(child, visit)) {
+      return true;
+    }
+  }
+  return false;
+}
+
+function geometryIntersectsBounds(
+  geometry: Geometry,
+  bounds: RegionMapBounds,
+): boolean {
+  if (!("coordinates" in geometry)) {
+    return false;
+  }
+  return forEachPosition(geometry.coordinates, (lng, lat) => {
+    return (
+      lat >= bounds.minLat &&
+      lat <= bounds.maxLat &&
+      lng >= bounds.minLng &&
+      lng <= bounds.maxLng
+    );
+  });
+}
+
+const admin1Collection = admin1Lines as FeatureCollection<
+  Geometry,
+  { adm0?: string }
+>;
+
+export function getRegionAdmin1LineFeatures(
+  area: LeagueArea,
+): Feature<Geometry, CountryProperties>[] {
+  const cached = cachedAdmin1[area];
+  if (cached) {
+    return cached;
+  }
+  if (area === "global") {
+    cachedAdmin1[area] = [];
+    return [];
+  }
+  const bounds = REGION_MAP_CONFIG[area].bounds;
+  const filtered = admin1Collection.features.filter((entry) =>
+    geometryIntersectsBounds(entry.geometry, bounds),
+  );
+  cachedAdmin1[area] = filtered;
+  return filtered;
+}
 
 function createBaseProjection(kind: RegionMapConfig["projectionKind"]): GeoProjection {
   if (kind === "albers") {
@@ -139,22 +202,24 @@ export function getRegionGeoFeatures(
   return filtered;
 }
 
-function boundsAsFeature(bounds: RegionMapBounds): Feature<Geometry> {
+function regionFitCollection(area: LeagueArea): FeatureCollection<Geometry> {
+  const cities = getCitiesForArea(area);
+  if (cities.length > 0) {
+    return {
+      type: "FeatureCollection",
+      features: cities.map((city) => ({
+        type: "Feature",
+        properties: {},
+        geometry: {
+          type: "Point",
+          coordinates: [city.lng, city.lat],
+        },
+      })),
+    };
+  }
   return {
-    type: "Feature",
-    properties: {},
-    geometry: {
-      type: "Polygon",
-      coordinates: [
-        [
-          [bounds.minLng, bounds.minLat],
-          [bounds.maxLng, bounds.minLat],
-          [bounds.maxLng, bounds.maxLat],
-          [bounds.minLng, bounds.maxLat],
-          [bounds.minLng, bounds.minLat],
-        ],
-      ],
-    },
+    type: "FeatureCollection",
+    features: getRegionGeoFeatures(area),
   };
 }
 
@@ -171,8 +236,12 @@ export function createRegionProjection(
       [pad, pad],
       [width - pad, height - pad],
     ],
-    boundsAsFeature(config.bounds),
+    regionFitCollection(area),
   );
+  projection.clipExtent([
+    [0, 0],
+    [width, height],
+  ]);
   return projection;
 }
 

@@ -24,20 +24,41 @@ const CITIES: MapCity[] = [
 ];
 
 describe("GeographicMap", () => {
-  it("renders a North America map with legend, markers, and zoom controls", () => {
+  it("renders a North America map with legend and city markers", () => {
     const { unmount } = render(
       <GeographicMap
         area="north_america"
         cities={CITIES}
         onSelectCity={() => {}}
+        selectedCityId="Atlanta"
       />,
     );
     expect(screen.getByRole("img", { name: /North America city map/ })).toBeTruthy();
     expect(screen.getByText("Available")).toBeTruthy();
     expect(screen.getByText("Occupied")).toBeTruthy();
     expect(screen.getByRole("button", { name: /Atlanta/ })).toBeTruthy();
-    fireEvent.click(screen.getByRole("button", { name: "Zoom in" }));
-    fireEvent.click(screen.getByRole("button", { name: "Reset" }));
+    expect(screen.queryByRole("button", { name: "Zoom in" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Zoom out" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Reset" })).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: /Atlanta/ }));
+    unmount();
+  });
+
+  it("fills a bounded parent instead of growing with aspect ratio", () => {
+    const { container, unmount } = render(
+      <div style={{ height: 240 }}>
+        <GeographicMap
+          area="north_america"
+          cities={CITIES}
+          onSelectCity={() => {}}
+          fill
+        />
+      </div>,
+    );
+    const svg = container.querySelector("svg");
+    expect(svg?.className.baseVal ?? svg?.getAttribute("class") ?? "").toContain(
+      "h-full",
+    );
     unmount();
   });
 });

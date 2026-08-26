@@ -51,7 +51,7 @@ const CITIES: CityPickOption[] = [
 ];
 
 describe("CityMapPicker", () => {
-  it("updates selection panel and CTA for occupied cities", () => {
+  it("treats every city as open for founding before confirmation", () => {
     const { unmount } = render(
       <CityMapPicker
         saveId="save_1"
@@ -62,11 +62,12 @@ describe("CityMapPicker", () => {
     );
 
     fireEvent.click(screen.getByRole("button", { name: "Toronto" }));
-    expect(screen.getByText("Existing franchise")).toBeTruthy();
-    expect(screen.getByText("Toronto Huskies")).toBeTruthy();
+    expect(screen.getByText("Your franchise")).toBeTruthy();
+    expect(screen.getByText("Toronto Knights")).toBeTruthy();
     expect(
-      screen.getByRole("button", { name: "Control Huskies" }),
+      screen.getByRole("button", { name: "Select Toronto" }),
     ).toBeTruthy();
+    expect(screen.queryByText("Existing franchise")).toBeNull();
     unmount();
   });
 
@@ -188,7 +189,7 @@ describe("CityMapPicker", () => {
     unmount();
   });
 
-  it("shows available and occupied counts", () => {
+  it("shows the city pool size without occupancy", () => {
     const { unmount } = render(
       <CityMapPicker
         saveId="save_1"
@@ -197,7 +198,7 @@ describe("CityMapPicker", () => {
         placeholderNickname="Knights"
       />,
     );
-    expect(screen.getByText("1 available · 1 occupied")).toBeTruthy();
+    expect(screen.getByText("2 cities")).toBeTruthy();
     expect(screen.getByText("North America")).toBeTruthy();
     unmount();
   });

@@ -1,33 +1,33 @@
 "use client";
 
+import { memo } from "react";
 import type { MapCity } from "@/components/map/map-city";
 
-export function MapCityMarker(props: {
+export const MapCityMarker = memo(function MapCityMarker(props: {
   city: MapCity;
   x: number;
   y: number;
+  selected: boolean;
   hitRadius: number;
   onSelect: (id: string) => void;
 }) {
+  const status = props.selected ? "selected" : props.city.status;
   const visualRadius =
-    props.city.status === "selected" ? 7 : props.city.status === "occupied" ? 4 : 5;
-  const fill =
-    props.city.status === "occupied"
-      ? "fill-zinc-500"
-      : "fill-amber-500";
+    status === "selected" ? 7 : status === "occupied" ? 4 : 5;
+  const fill = status === "occupied" ? "fill-zinc-500" : "fill-amber-500";
   const statusText =
     props.city.status === "occupied"
       ? `${props.city.detail ?? "Existing franchise"}`
       : "Available";
   const label = `${props.city.label}. ${props.city.locationLabel ?? ""}. ${
-    props.city.status === "selected" ? "Selected. " : ""
+    status === "selected" ? "Selected. " : ""
   }${statusText}`.replace(/\s+/g, " ").trim();
 
   return (
     <g transform={`translate(${props.x} ${props.y})`} className="cursor-pointer">
-      <title>{`${props.city.label}\n${props.city.locationLabel ?? ""}\n${
+      <title>{`${props.city.label} — ${props.city.locationLabel ?? ""} — ${
         props.city.status === "occupied"
-          ? `${props.city.detail ?? ""}\nExisting franchise`
+          ? `${props.city.detail ?? ""} existing franchise`
           : "Available"
       }`}</title>
       <circle
@@ -37,7 +37,7 @@ export function MapCityMarker(props: {
         role="button"
         tabIndex={0}
         aria-label={label}
-        aria-pressed={props.city.status === "selected"}
+        aria-pressed={status === "selected"}
         onClick={(event) => {
           event.stopPropagation();
           props.onSelect(props.city.id);
@@ -49,23 +49,26 @@ export function MapCityMarker(props: {
           }
         }}
       />
-      {props.city.status === "selected" ? (
+      {status === "selected" ? (
         <circle
           r={visualRadius + 5}
-          className="fill-none stroke-amber-300/80"
+          className="pointer-events-none fill-none stroke-amber-300/80"
           strokeWidth={2}
         />
       ) : null}
-      {props.city.status === "selected" ? (
-        <circle r={visualRadius + 8} className="fill-amber-500/20" />
+      {status === "selected" ? (
+        <circle
+          r={visualRadius + 8}
+          className="pointer-events-none fill-amber-500/20"
+        />
       ) : null}
       <circle
         r={visualRadius}
-        className={`${fill} ${
-          props.city.status === "occupied" ? "stroke-zinc-400/50" : "stroke-amber-200/70"
+        className={`pointer-events-none ${fill} ${
+          status === "occupied" ? "stroke-zinc-400/50" : "stroke-amber-200/70"
         }`}
-        strokeWidth={props.city.status === "selected" ? 1.5 : 1}
+        strokeWidth={status === "selected" ? 1.5 : 1}
       />
     </g>
   );
-}
+});

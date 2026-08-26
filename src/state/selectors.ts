@@ -323,7 +323,8 @@ export function listTeamsForSelection(state: GameState): TeamListEntry[] {
 }
 
 /**
- * Full regional city pool for new-game map/list pick, with occupancy metadata.
+ * Full regional city pool for new-game map/list pick.
+ * Markets stay unoccupied until citySelectionConfirmed.
  */
 export function listCitiesForTeamPick(state: GameState): CityPickOption[] {
   const area = state.settings.league.area ?? "north_america";
@@ -338,22 +339,23 @@ export function listCitiesForTeamPick(state: GameState): CityPickOption[] {
     }
   }
 
+  const marketsOpen = !state.user.citySelectionConfirmed;
   const options: CityPickOption[] = getCitiesForArea(area).map((city) => {
-    const occupied = byNormalizedCity.get(city.name);
+    const occupant = byNormalizedCity.get(city.name);
     const location = {
       country: city.country,
       subdivision: city.subdivision,
       locationLabel: formatCityLocation(city),
     };
-    if (occupied) {
+    if (!marketsOpen && occupant) {
       return {
         city: city.name,
         lat: city.lat,
         lng: city.lng,
         ...location,
         occupied: true,
-        teamId: occupied.teamId,
-        nickname: occupied.nickname,
+        teamId: occupant.teamId,
+        nickname: occupant.nickname,
       };
     }
     return {
