@@ -9,10 +9,12 @@ export function TeamIdentityPreview(props: {
   secondaryColor: string;
   accentColor: string;
   logoId: TeamLogoId;
+  showUniformPreview?: boolean;
 }) {
   const textColor = readableTextOnBackground(props.primaryColor);
   const mutedColor =
     textColor === "#FFFFFF" ? "rgba(255,255,255,0.75)" : "rgba(10,10,10,0.7)";
+  const showUniforms = props.showUniformPreview !== false;
 
   return (
     <div
@@ -58,6 +60,52 @@ export function TeamIdentityPreview(props: {
           title="Accent"
         />
       </div>
+      {showUniforms ? (
+        <div
+          className="flex w-full max-w-xs gap-3"
+          aria-label="Home and away preview"
+        >
+          <UniformStrip
+            label="Home"
+            bodyColor={props.primaryColor}
+            trimColor={props.secondaryColor}
+            accentColor={props.accentColor}
+          />
+          <UniformStrip
+            label="Away"
+            bodyColor={props.secondaryColor}
+            trimColor={props.primaryColor}
+            accentColor={props.accentColor}
+          />
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+function UniformStrip(props: {
+  label: string;
+  bodyColor: string;
+  trimColor: string;
+  accentColor: string;
+}) {
+  return (
+    <div className="flex flex-1 flex-col items-center gap-1">
+      <div
+        className="flex h-14 w-full items-end justify-center rounded-md border border-white/20"
+        style={{ backgroundColor: props.bodyColor }}
+      >
+        <div
+          className="mb-2 h-8 w-10 rounded-sm"
+          style={{
+            backgroundColor: props.trimColor,
+            boxShadow: `inset 0 0 0 2px ${props.accentColor}`,
+          }}
+        />
+      </div>
+      <span className="text-[10px] uppercase tracking-wide text-white/75">
+        {props.label}
+      </span>
     </div>
   );
 }

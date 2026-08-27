@@ -8,6 +8,7 @@ import { validateGameState } from "@/persistence/validate-game-state";
 import { createSeededRng } from "@/domain/rng";
 import { GAME_STATE_SCHEMA_VERSION } from "@/state/game-state";
 import { bootstrapWorld } from "@/systems/world-pipeline";
+import { resolveOnboardingRoute } from "@/application/onboarding-routing";
 
 describe("v41 → v42 migration", () => {
   it("marks completed city selection as franchise identity confirmed", () => {
@@ -42,6 +43,12 @@ describe("v41 → v42 migration", () => {
       expect(team.branding.primaryColor).toMatch(/^#[0-9A-F]{6}$/);
     }
     expect(() => validateGameState(loaded)).not.toThrow();
+    expect(
+      resolveOnboardingRoute("mig_v42_done", {
+        citySelectionConfirmed: loaded.user.citySelectionConfirmed,
+        franchiseIdentityConfirmed: loaded.user.franchiseIdentityConfirmed,
+      }).kind,
+    ).toBe("dashboard");
   });
 
   it("keeps in-progress city selection on city step", () => {
@@ -71,5 +78,11 @@ describe("v41 → v42 migration", () => {
     expect(loaded.user.citySelectionConfirmed).toBe(false);
     expect(loaded.user.franchiseIdentityConfirmed).toBe(false);
     expect(Object.values(loaded.world.teams)[0]!.branding.logoId).toBeTruthy();
+    expect(
+      resolveOnboardingRoute("mig_v42_progress", {
+        citySelectionConfirmed: loaded.user.citySelectionConfirmed,
+        franchiseIdentityConfirmed: loaded.user.franchiseIdentityConfirmed,
+      }),
+    ).toEqual({ kind: "city", path: "/new/mig_v42_progress/team" });
   });
 });

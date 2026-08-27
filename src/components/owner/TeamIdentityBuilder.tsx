@@ -13,6 +13,7 @@ import {
   TEAM_LOGO_CATALOG,
   type TeamLogoId,
 } from "@/data/team-branding/logo-catalog";
+import { TEAM_BRANDING_PRESETS } from "@/data/team-branding/branding-presets";
 import { brandingFromPalette } from "@/domain/entities/team-branding";
 import { validateTeamNickname } from "@/domain/team-nickname";
 import { randomizeTeamIdentityDraft } from "@/systems/owner-franchise-branding";
@@ -87,6 +88,27 @@ export function TeamIdentityBuilder(props: {
       </div>
 
       <div className="flex min-h-0 flex-col gap-5 overflow-y-auto rounded-lg border border-zinc-800 bg-zinc-900/50 px-4 py-4">
+        <section className="space-y-3">
+          <h2 className="text-xs font-semibold uppercase tracking-wide text-amber-500">
+            Presets
+          </h2>
+          <div className="flex flex-wrap gap-2">
+            {TEAM_BRANDING_PRESETS.map((preset) => (
+              <button
+                key={preset.id}
+                type="button"
+                onClick={() => {
+                  setPaletteId(preset.paletteId);
+                  setLogoId(preset.logoId);
+                }}
+                className="rounded-md border border-zinc-700 bg-zinc-950 px-3 py-1.5 text-xs font-medium text-zinc-200 hover:border-amber-600/60 hover:text-amber-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-500"
+              >
+                {preset.label}
+              </button>
+            ))}
+          </div>
+        </section>
+
         <section className="space-y-3">
           <h2 className="text-xs font-semibold uppercase tracking-wide text-amber-500">
             Name

@@ -44,6 +44,28 @@ describe("TeamIdentityBuilder", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Randomize Identity" }));
     expect(screen.getByRole("button", { name: "Confirm Franchise" })).toBeTruthy();
+    expect(screen.getByText("Home")).toBeTruthy();
+    expect(screen.getByText("Away")).toBeTruthy();
+    unmount();
+  });
+
+  it("applies a branding preset without locking further edits", () => {
+    const { unmount } = render(
+      <TeamIdentityBuilder
+        saveId="save_1"
+        city="Toronto"
+        initialNickname="Huskies"
+        initialPaletteId="midnight_navy"
+        initialLogoId="wolf"
+        teamId="team_1"
+        existingTeams={[]}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Elite" }));
+    expect(screen.getByRole("button", { name: "Crown" })).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Wolf" }));
+    expect(screen.getByRole("button", { name: "Confirm Franchise" })).toBeTruthy();
     unmount();
   });
 });
