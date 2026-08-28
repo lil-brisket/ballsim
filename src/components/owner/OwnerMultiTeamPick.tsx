@@ -98,12 +98,18 @@ function buildConferenceOptions(
 
 function buildDivisionOptions(
   teams: readonly TeamListEntry[],
+  conferenceFilter: string | null,
 ): FilterOption[] {
+  const scoped =
+    conferenceFilter === null
+      ? teams
+      : teams.filter((team) => team.conferenceId === conferenceFilter);
+
   const byId = new Map<
     string,
     { name: string; conferenceName: string }
   >();
-  for (const team of teams) {
+  for (const team of scoped) {
     if (!byId.has(team.divisionId) && team.divisionName) {
       byId.set(team.divisionId, {
         name: team.divisionName,
@@ -116,9 +122,12 @@ function buildDivisionOptions(
     name: info.name,
     conferenceName: info.conferenceName,
   }));
+  // Only disambiguate when listing across conferences (All).
   const nameCounts = new Map<string, number>();
-  for (const entry of raw) {
-    nameCounts.set(entry.name, (nameCounts.get(entry.name) ?? 0) + 1);
+  if (conferenceFilter === null) {
+    for (const entry of raw) {
+      nameCounts.set(entry.name, (nameCounts.get(entry.name) ?? 0) + 1);
+    }
   }
   return raw
     .map((entry) => ({
@@ -221,9 +230,19 @@ export function OwnerMultiTeamPick(props: {
     [teams],
   );
   const divisionOptions = useMemo(
-    () => (divisionsEnabled ? buildDivisionOptions(teams) : []),
-    [teams, divisionsEnabled],
+    () =>
+      divisionsEnabled
+        ? buildDivisionOptions(teams, conferenceFilter)
+        : [],
+    [teams, divisionsEnabled, conferenceFilter],
   );
+
+  // Drop a division filter that no longer exists under the active conference.
+  const activeDivisionFilter =
+    divisionFilter !== null &&
+    divisionOptions.some((option) => option.id === divisionFilter)
+      ? divisionFilter
+      : null;
 
   const showConferenceFilter =
     controlledTeamCount > 1 && conferenceOptions.length >= 2;
@@ -248,7 +267,10 @@ export function OwnerMultiTeamPick(props: {
       if (conferenceFilter !== null && team.conferenceId !== conferenceFilter) {
         return false;
       }
-      if (divisionFilter !== null && team.divisionId !== divisionFilter) {
+      if (
+        activeDivisionFilter !== null &&
+        team.divisionId !== activeDivisionFilter
+      ) {
         return false;
       }
       return true;
@@ -258,7 +280,7 @@ export function OwnerMultiTeamPick(props: {
     selectedIdSet,
     controlledTeamCount,
     conferenceFilter,
-    divisionFilter,
+    activeDivisionFilter,
   ]);
 
   const selectedDrafts = useMemo(
@@ -532,14 +554,17 @@ export function OwnerMultiTeamPick(props: {
                   label="Conference"
                   options={conferenceOptions}
                   value={conferenceFilter}
-                  onChange={setConferenceFilter}
+                  onChange={(next) => {
+                    setConferenceFilter(next);
+                    setDivisionFilter(null);
+                  }}
                 />
               ) : null}
               {showDivisionFilter ? (
                 <FilterPillRow
                   label="Division"
                   options={divisionOptions}
-                  value={divisionFilter}
+                  value={activeDivisionFilter}
                   onChange={setDivisionFilter}
                 />
               ) : null}
