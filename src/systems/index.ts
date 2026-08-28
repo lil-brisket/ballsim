@@ -22,6 +22,20 @@ export {
   type RosterAssignment,
 } from "@/systems/roster-rules";
 export {
+  recommendRosterManagement,
+  reconcileRosterManagement,
+  getEmergencyLineup,
+  getRegulationTeamMinutesTarget,
+  validatePlannedMinutes,
+} from "@/systems/roster-management";
+export {
+  getPlayerAvailability,
+  isPlayerAvailable,
+} from "@/systems/player-availability";
+export {
+  applyRotationSubstitutions,
+} from "@/systems/rotation-simulation";
+export {
   generatePlayer,
   generatePlayerWithRng,
   type GeneratePlayerOptions,

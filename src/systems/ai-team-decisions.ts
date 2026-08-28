@@ -58,6 +58,11 @@ import {
 } from "@/systems/owner-decisions";
 import { tryEnqueueAnyOwnedTeamTradeOffer } from "@/systems/owner-decisions/owned-team-trade-offer";
 import { isUserControlledTeam } from "@/state/owner-context";
+import {
+  recommendRosterManagement,
+  reconcileRosterManagement,
+  withTeamRosterManagement,
+} from "@/systems/roster-management";
 
 export { isUserControlledTeam };
 
@@ -94,7 +99,36 @@ export function runAiTeamDecisions(state: GameState, _rng: Rng): SystemResult {
     events.push(...trade.events);
   }
 
+  current = maintainAiRosterManagement(current);
+
   return systemResult(current, events);
+}
+
+/**
+ * CPU teams: ensure rosterManagement stays valid after roster churn.
+ * Never touches user-controlled franchises.
+ */
+function maintainAiRosterManagement(state: GameState): GameState {
+  let current = state;
+  const teamIds = (Object.keys(current.world.teams) as TeamId[])
+    .filter((teamId) => !isUserControlledTeam(current, teamId))
+    .sort((a, b) => (a < b ? -1 : a > b ? 1 : 0));
+
+  for (const teamId of teamIds) {
+    const management = current.world.teams[teamId]?.rosterManagement;
+    if (management == null || management.startingLineup.length < 5) {
+      const recommended = recommendRosterManagement(current, teamId, {
+        configuredBy: "ai",
+      });
+      current = withTeamRosterManagement(current, teamId, recommended);
+      continue;
+    }
+    if (management.lastConfiguredBy === "user") {
+      continue;
+    }
+    current = reconcileRosterManagement(current, teamId);
+  }
+  return current;
 }
 
 function runAiFreeAgency(state: GameState): SystemResult {

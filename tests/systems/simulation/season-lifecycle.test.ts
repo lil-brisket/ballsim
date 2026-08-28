@@ -222,6 +222,7 @@ describe("season lifecycle", () => {
         games: {},
         standings,
         playoffs: createEmptyPlayoffTournament(),
+        seasonEventLog: [],
       },
       business: {
         contracts: {},

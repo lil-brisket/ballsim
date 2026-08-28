@@ -9,12 +9,30 @@ export type {
   TeamInput,
   TeamFinanceState,
   TeamPlayStyle,
+  TeamRosterManagement,
 } from "@/domain/entities/team";
 export {
   createTeam,
   TEAM_PLAY_STYLE_KEYS,
   NEUTRAL_TEAM_PLAY_STYLE,
 } from "@/domain/entities/team";
+export type {
+  LineupSlot,
+  RotationEntry,
+  RotationRole,
+  RotationStyle,
+  RosterConfiguredBy,
+} from "@/domain/entities/team-roster-management";
+export {
+  ROTATION_STYLES,
+  ROSTER_CONFIGURED_BY,
+  DEFAULT_ROTATION_STYLE,
+  emptyTeamRosterManagement,
+  cloneTeamRosterManagement,
+  isRotationStyle,
+  isRosterConfiguredBy,
+  isTeamRosterManagement,
+} from "@/domain/entities/team-roster-management";
 export type {
   TeamBranding,
   TeamBrandingValidation,

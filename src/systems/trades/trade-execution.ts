@@ -8,6 +8,8 @@ import { createDomainEvent, type DomainEvent } from "@/domain/events/domain-even
 import type { DraftPickId, PlayerId, TeamId } from "@/domain/ids";
 import type { GameState } from "@/state/game-state";
 import { getTeamPayroll } from "@/systems/salary-cap";
+import { reconcileRosterManagement } from "@/systems/roster-management";
+import { appendSeasonEventLog } from "@/state/game-state";
 import { stripTradedAssetsFromTradeBlocks } from "@/systems/trades/trade-block";
 import {
   validateTrade,
@@ -185,6 +187,10 @@ export function executeTrade(
     }
   }
 
+  for (const teamId of [teamIdA, teamIdB]) {
+    next = reconcileRosterManagement(next, teamId);
+  }
+
   const events: DomainEvent[] = [];
   const occurredOn = state.world.calendar.currentDate;
   for (const playerId of proposal.sideA.playerIds) {
@@ -213,6 +219,8 @@ export function executeTrade(
       }),
     );
   }
+
+  next = appendSeasonEventLog(next, events);
 
   return {
     success: true,

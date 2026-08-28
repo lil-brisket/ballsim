@@ -213,6 +213,7 @@ export function createInitialGameState(
       games: {},
       standings,
       playoffs: createEmptyPlayoffTournament(),
+      seasonEventLog: [],
     },
     business: {
       contracts: {},
@@ -490,6 +491,7 @@ export function createFourTeamInitialGameState(
       games: {},
       standings,
       playoffs: createEmptyPlayoffTournament(),
+      seasonEventLog: [],
     },
     business: {
       contracts: {},

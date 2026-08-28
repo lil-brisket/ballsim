@@ -11,6 +11,7 @@ import { systemResult, type SystemResult } from "@/domain/system-result";
 import type { Staff } from "@/domain/entities/staff";
 import { createStaffContract } from "@/domain/entities/staff-contract";
 import type { GameState } from "@/state/game-state";
+import { appendSeasonEventLog } from "@/state/game-state";
 import {
   STAFF_BUYOUT_FRACTION,
   STAFF_DEFAULT_CONTRACT_YEARS,
@@ -115,28 +116,31 @@ export function hireStaff(
   }
 
   return systemResult(
-    {
-      ...state,
-      world: {
-        ...state.world,
-        staff: { ...state.world.staff, [staffId]: nextStaff },
-        coaches,
-        teams: {
-          ...state.world.teams,
-          [teamId]: {
-            ...team,
-            staff: [...team.staff, staffId],
+    appendSeasonEventLog(
+      {
+        ...state,
+        world: {
+          ...state.world,
+          staff: { ...state.world.staff, [staffId]: nextStaff },
+          coaches,
+          teams: {
+            ...state.world.teams,
+            [teamId]: {
+              ...team,
+              staff: [...team.staff, staffId],
+            },
+          },
+        },
+        business: {
+          ...state.business,
+          staffContracts: {
+            ...state.business.staffContracts,
+            [contractId]: contract,
           },
         },
       },
-      business: {
-        ...state.business,
-        staffContracts: {
-          ...state.business.staffContracts,
-          [contractId]: contract,
-        },
-      },
-    },
+      events,
+    ),
     events,
   );
 }
@@ -221,24 +225,27 @@ export function fireStaff(
   );
 
   return systemResult(
-    {
-      ...current,
-      world: {
-        ...current.world,
-        coaches,
-        staff: {
-          ...current.world.staff,
-          [staffId]: { ...staff, teamId: null },
-        },
-        teams: {
-          ...current.world.teams,
-          [teamId]: {
-            ...team,
-            staff: team.staff.filter((id) => id !== staffId),
+    appendSeasonEventLog(
+      {
+        ...current,
+        world: {
+          ...current.world,
+          coaches,
+          staff: {
+            ...current.world.staff,
+            [staffId]: { ...staff, teamId: null },
+          },
+          teams: {
+            ...current.world.teams,
+            [teamId]: {
+              ...team,
+              staff: team.staff.filter((id) => id !== staffId),
+            },
           },
         },
       },
-    },
+      events,
+    ),
     events,
   );
 }

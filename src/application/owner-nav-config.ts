@@ -31,6 +31,7 @@ export const OWNER_NAV_GROUPS: readonly OwnerNavGroup[] = [
     label: "Team",
     items: [
       { href: "/team", label: "Team" },
+      { href: "/team-management", label: "Team Management" },
       { href: "/roster", label: "Roster" },
       { href: "/contracts", label: "Contracts" },
     ],

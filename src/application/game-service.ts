@@ -11,6 +11,22 @@ import {
   getOwnedFranchiseAssistance,
 } from "@/state/owner-context";
 import { createDefaultOwnedFranchiseState } from "@/state/owned-franchise-state";
+import {
+  toTeamManagementOverview,
+  toLineupView,
+  toRotationView,
+  toCoachingView,
+  toInjuryReportView,
+  toSeasonTransactionsView,
+} from "@/state/team-management-selectors";
+import {
+  applyCoachingPresetCommand,
+  applyLineupRecommendationCommand,
+  previewLineupRecommendation,
+  updateCoachingPhilosophyCommand,
+  updateLineupCommand,
+  updateRotationCommand,
+} from "@/systems/team-management-commands";
 
 import type { ContractInput } from "@/domain/entities/contract";
 import {
@@ -2244,6 +2260,219 @@ export async function completeOwnerExpansion(
       }
       return completeExpansion(state, rng);
     },
+    store,
+  );
+}
+
+export type TeamManagementView = CreateGameResult & {
+  overview: ReturnType<typeof toTeamManagementOverview>;
+  lineup: ReturnType<typeof toLineupView>;
+  rotation: ReturnType<typeof toRotationView>;
+  coaching: ReturnType<typeof toCoachingView>;
+  injuries: ReturnType<typeof toInjuryReportView>;
+  transactions: ReturnType<typeof toSeasonTransactionsView>;
+  recommendation: ReturnType<typeof previewLineupRecommendation>;
+};
+
+export async function loadTeamManagementView(
+  saveId: string,
+  transactionQuery?: {
+    scope?: "team" | "league";
+    type?: string;
+    sort?: string;
+    page?: number;
+  },
+  store?: SaveGameStore,
+): Promise<TeamManagementView | null> {
+  const loaded = await getStore(store).load(saveId);
+  if (!loaded) {
+    return null;
+  }
+  const state = loaded.state;
+  const scope =
+    transactionQuery?.scope === "league" ? "league" : "team";
+  const sort =
+    transactionQuery?.sort === "oldest" ||
+    transactionQuery?.sort === "type" ||
+    transactionQuery?.sort === "team" ||
+    transactionQuery?.sort === "player"
+      ? transactionQuery.sort
+      : "newest";
+  const type =
+    transactionQuery?.type && transactionQuery.type !== "all"
+      ? (transactionQuery.type as Parameters<
+          typeof toSeasonTransactionsView
+        >[1]["type"])
+      : "all";
+
+  return {
+    save: toSaveSummary(loaded),
+    dashboard: toDashboardSnapshot(state),
+    overview: toTeamManagementOverview(state),
+    lineup: toLineupView(state),
+    rotation: toRotationView(state),
+    coaching: toCoachingView(state),
+    injuries: toInjuryReportView(state),
+    transactions: toSeasonTransactionsView(state, {
+      scope,
+      type,
+      sort,
+      page: transactionQuery?.page ?? 0,
+      pageSize: 50,
+    }),
+    recommendation: previewLineupRecommendation(
+      state,
+      state.user.activeOwnerTeamId,
+    ),
+    navGroups: ownerNavGroupsForState(state),
+  };
+}
+
+async function runTeamManagementMutation(
+  saveId: string,
+  mutate: (state: GameState) =>
+    | { ok: true; state: GameState }
+    | { ok: false; error: string },
+  store?: SaveGameStore,
+): Promise<OwnerCommandResult> {
+  const saveStore = getStore(store);
+  const loaded = await saveStore.load(saveId);
+  if (!loaded) {
+    return fail("Save not found.");
+  }
+  const result = mutate(loaded.state);
+  if (!result.ok) {
+    return fail(result.error);
+  }
+  const saved = await persistWorkingState(
+    saveId,
+    result.state,
+    loaded.state.meta.rngState,
+    saveStore,
+  );
+  return withDashboard(saved);
+}
+
+export async function updateOwnerLineup(
+  saveId: string,
+  input: {
+    teamId: string;
+    startingLineup: Array<{ playerId: string; slot: string }>;
+    bench: string[];
+    inactive: string[];
+  },
+  store?: SaveGameStore,
+): Promise<OwnerCommandResult> {
+  return runTeamManagementMutation(
+    saveId,
+    (state) =>
+      updateLineupCommand(state, {
+        teamId: asTeamId(input.teamId),
+        startingLineup: input.startingLineup.map((slot) => ({
+          playerId: asPlayerId(slot.playerId),
+          slot: slot.slot as "PG" | "SG" | "SF" | "PF" | "C",
+        })),
+        bench: input.bench.map((id) => asPlayerId(id)),
+        inactive: input.inactive.map((id) => asPlayerId(id)),
+      }),
+    store,
+  );
+}
+
+export async function updateOwnerRotation(
+  saveId: string,
+  input: {
+    teamId: string;
+    rotation: Array<{
+      playerId: string;
+      plannedMinutes: number;
+      eligiblePositions: string[];
+      role: "starter" | "bench";
+    }>;
+    rotationStyle?: string;
+  },
+  store?: SaveGameStore,
+): Promise<OwnerCommandResult> {
+  return runTeamManagementMutation(
+    saveId,
+    (state) =>
+      updateRotationCommand(state, {
+        teamId: asTeamId(input.teamId),
+        rotation: input.rotation.map((entry) => ({
+          playerId: asPlayerId(entry.playerId),
+          plannedMinutes: entry.plannedMinutes,
+          eligiblePositions: entry.eligiblePositions as Array<
+            "PG" | "SG" | "SF" | "PF" | "C"
+          >,
+          role: entry.role,
+        })),
+        rotationStyle: input.rotationStyle as
+          | "tight"
+          | "balanced"
+          | "deep"
+          | undefined,
+      }),
+    store,
+  );
+}
+
+export async function applyOwnerLineupRecommendation(
+  saveId: string,
+  teamId: string,
+  store?: SaveGameStore,
+): Promise<OwnerCommandResult> {
+  return runTeamManagementMutation(
+    saveId,
+    (state) => applyLineupRecommendationCommand(state, asTeamId(teamId)),
+    store,
+  );
+}
+
+export async function updateOwnerCoachingPhilosophy(
+  saveId: string,
+  input: {
+    teamId: string;
+    pace: string;
+    offensiveEmphasis: string;
+    defensiveApproach: string;
+  },
+  store?: SaveGameStore,
+): Promise<OwnerCommandResult> {
+  return runTeamManagementMutation(
+    saveId,
+    (state) =>
+      updateCoachingPhilosophyCommand(state, {
+        teamId: asTeamId(input.teamId),
+        philosophy: {
+          pace: input.pace as "fast" | "balanced" | "halfCourt",
+          offensiveEmphasis: input.offensiveEmphasis as
+            | "threePointHeavy"
+            | "balanced"
+            | "inside",
+          defensiveApproach: input.defensiveApproach as
+            | "aggressive"
+            | "balanced"
+            | "conservative",
+        },
+      }),
+    store,
+  );
+}
+
+export async function applyOwnerCoachingPreset(
+  saveId: string,
+  input: { teamId: string; presetId: string },
+  store?: SaveGameStore,
+): Promise<OwnerCommandResult> {
+  return runTeamManagementMutation(
+    saveId,
+    (state) =>
+      applyCoachingPresetCommand(state, {
+        teamId: asTeamId(input.teamId),
+        presetId: input.presetId as Parameters<
+          typeof applyCoachingPresetCommand
+        >[1]["presetId"],
+      }),
     store,
   );
 }

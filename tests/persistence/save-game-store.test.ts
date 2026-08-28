@@ -164,6 +164,7 @@ function createEightTeamPopulatedState(rngSeed: number): GameState {
       games: {},
       standings,
       playoffs: createEmptyPlayoffTournament(),
+      seasonEventLog: [],
     },
     business: {
       contracts: {},

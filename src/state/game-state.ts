@@ -44,7 +44,7 @@ import type { GameSettings } from "@/domain/game-settings";
 import type { DomainEvent } from "@/domain/events";
 import type { SaveId, TeamId } from "@/domain/ids";
 
-export const GAME_STATE_SCHEMA_VERSION = 44;
+export const GAME_STATE_SCHEMA_VERSION = 45;
 
 /** Bounded recent history for Owner Mode activity / transactions UI. */
 export const EVENT_LOG_MAX = 1_000;
@@ -82,7 +82,16 @@ export type CompetitionSlice = {
   games: Record<string, Game>;
   standings: Standings;
   playoffs: PlayoffTournament;
+  /**
+   * League-wide transaction feed for the current season.
+   * Every transaction-level event (AI or user), regardless of active franchise.
+   * Cleared on season rollover. Bounded; not a finance/roster authority.
+   */
+  seasonEventLog: DomainEvent[];
 };
+
+/** Max entries retained in competition.seasonEventLog. */
+export const SEASON_EVENT_LOG_MAX = 2_000;
 
 export type FreeAgencyState = {
   /** Historical offers; resolution changes status, never deletes. */
@@ -271,6 +280,31 @@ export function appendEventLog(
           eventLog,
         },
       },
+    },
+  };
+}
+
+/**
+ * Append transaction-level events to the league-wide season feed.
+ * Call at command time after mutation — not inside persistence routing.
+ */
+export function appendSeasonEventLog(
+  state: GameState,
+  newlyEmitted: readonly DomainEvent[],
+): GameState {
+  if (newlyEmitted.length === 0) {
+    return state;
+  }
+  const merged = [...state.competition.seasonEventLog, ...newlyEmitted];
+  const seasonEventLog =
+    merged.length > SEASON_EVENT_LOG_MAX
+      ? merged.slice(merged.length - SEASON_EVENT_LOG_MAX)
+      : merged;
+  return {
+    ...state,
+    competition: {
+      ...state.competition,
+      seasonEventLog,
     },
   };
 }

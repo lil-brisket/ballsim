@@ -7,6 +7,12 @@ import {
   assertTeamBranding,
   type TeamBranding,
 } from "@/domain/entities/team-branding";
+import {
+  cloneTeamRosterManagement,
+  emptyTeamRosterManagement,
+  isTeamRosterManagement,
+  type TeamRosterManagement,
+} from "@/domain/entities/team-roster-management";
 import type {
   ArenaId,
   ConferenceId,
@@ -15,6 +21,8 @@ import type {
   StaffId,
   TeamId,
 } from "@/domain/ids";
+
+export type { TeamRosterManagement } from "@/domain/entities/team-roster-management";
 
 /** Placeholder for future team-owned financial state. */
 export type TeamFinanceState = Record<never, never>;
@@ -78,6 +86,11 @@ export type Team = {
   coachingPhilosophy: CoachingPhilosophy;
   /** Visual identity (colours + logo). Persists across simulation. */
   branding: TeamBranding;
+  /**
+   * Lineup / rotation configuration. Not roster membership —
+   * Team.roster + Player.teamId remain canonical for who is on the team.
+   */
+  rosterManagement: TeamRosterManagement;
 };
 
 /** Unvalidated construction payload for {@link createTeam}. */
@@ -96,6 +109,7 @@ export type TeamInput = {
   playStyle: TeamPlayStyle;
   coachingPhilosophy: CoachingPhilosophy;
   branding: TeamBranding;
+  rosterManagement?: TeamRosterManagement;
 };
 
 /**
@@ -117,6 +131,10 @@ export function createTeam(input: TeamInput): Team {
   assertPlayStyle(input.playStyle);
   assertCoachingPhilosophy(input.coachingPhilosophy);
   const branding = assertTeamBranding(input.branding);
+  const rosterManagement =
+    input.rosterManagement !== undefined
+      ? assertRosterManagement(input.rosterManagement)
+      : emptyTeamRosterManagement();
 
   return {
     id: input.id,
@@ -133,7 +151,19 @@ export function createTeam(input: TeamInput): Team {
     playStyle: { ...input.playStyle },
     coachingPhilosophy: { ...input.coachingPhilosophy },
     branding: { ...branding },
+    rosterManagement: cloneTeamRosterManagement(rosterManagement),
   };
+}
+
+function assertRosterManagement(
+  value: unknown,
+): TeamRosterManagement {
+  if (!isTeamRosterManagement(value)) {
+    throw new Error(
+      "Team rosterManagement must be a valid TeamRosterManagement object.",
+    );
+  }
+  return value;
 }
 
 function assertNonEmptyId(value: string, field: string): void {
