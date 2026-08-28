@@ -6,6 +6,7 @@ import type { Team } from "@/domain/entities/team";
 import { createDomainEvent, type DomainEvent } from "@/domain/events/domain-event";
 import { asContractId, type DraftClassId } from "@/domain/ids";
 import type { GameState } from "@/state/game-state";
+import { appendSeasonEventLog } from "@/state/game-state";
 import { attributeBasedAnnualSalary } from "@/systems/attribute-salary";
 import { DRAFT_ROOKIE_CONTRACT_YEARS } from "@/systems/draft-config";
 import {
@@ -13,6 +14,7 @@ import {
   type MakeDraftSelectionInput,
 } from "@/systems/draft/draft-validation";
 import type { DraftValidationResult } from "@/systems/draft/draft-types";
+import { reconcileRosterManagement } from "@/systems/roster-management";
 import { getTeamPayroll } from "@/systems/salary-cap";
 
 export type DraftSelectionResult = {
@@ -181,6 +183,9 @@ export function makeDraftSelection(
       },
     }),
   ];
+
+  next = reconcileRosterManagement(next, ownerTeamId);
+  next = appendSeasonEventLog(next, events);
 
   return {
     success: true,

@@ -137,6 +137,7 @@ export function initializeNewSeason(state: GameState): SystemResult {
       games: {},
       standings: { byTeamId: standingsByTeamId },
       playoffs: createEmptyPlayoffTournament(),
+      seasonEventLog: [],
     },
   };
 

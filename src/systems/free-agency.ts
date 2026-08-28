@@ -20,8 +20,10 @@ import {
 import type { OfferId, PlayerId, TeamId } from "@/domain/ids";
 import { systemResult, type SystemResult } from "@/domain/system-result";
 import type { GameState } from "@/state/game-state";
+import { appendSeasonEventLog } from "@/state/game-state";
 import { FREE_AGENCY_INTEREST_CONFIG } from "@/systems/free-agency-config";
 import { getTeamCapSpace, getTeamPayroll } from "@/systems/salary-cap";
+import { reconcileRosterManagement } from "@/systems/roster-management";
 import { stripPlayersFromAllTradeBlocks } from "@/systems/trades/trade-block";
 
 export type FreeAgentPoolView = {
@@ -525,6 +527,9 @@ export function acceptOffer(
     }),
   ];
 
+  next = reconcileRosterManagement(next, offer.teamId);
+  next = appendSeasonEventLog(next, events);
+
   return systemResult(next, events);
 }
 
@@ -670,21 +675,27 @@ function removePlayerFromAllRosters(
   playerId: PlayerId,
 ): GameState {
   const teams: Record<string, Team> = { ...state.world.teams };
+  const touched: string[] = [];
   for (const [teamId, team] of Object.entries(teams)) {
     if (team.roster.includes(playerId)) {
       teams[teamId] = {
         ...team,
         roster: team.roster.filter((id) => id !== playerId),
       };
+      touched.push(teamId);
     }
   }
-  return {
+  let next: GameState = {
     ...state,
     world: {
       ...state.world,
       teams,
     },
   };
+  for (const teamId of touched) {
+    next = reconcileRosterManagement(next, teamId as TeamId);
+  }
+  return next;
 }
 
 function clearPlayerTeamMembership(

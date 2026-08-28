@@ -10,6 +10,7 @@ import {
   DEFAULT_ROSTER_SIZE,
   rosterPositionForSlot,
 } from "@/systems/roster-generation-config";
+import { recommendRosterManagement } from "@/systems/roster-management";
 import { getTeamPayroll } from "@/systems/salary-cap";
 
 /**
@@ -73,7 +74,7 @@ export function generateRosters(state: GameState, rng: Rng): SystemResult {
     };
   }
 
-  const stateWithContracts: GameState = {
+  let stateWithContracts: GameState = {
     ...state,
     world: {
       ...state.world,
@@ -86,6 +87,27 @@ export function generateRosters(state: GameState, rng: Rng): SystemResult {
       finances: { ...state.business.finances },
     },
   };
+
+  for (const teamId of teamIds) {
+    const management = recommendRosterManagement(
+      stateWithContracts,
+      asTeamId(teamId),
+      { configuredBy: "default" },
+    );
+    stateWithContracts = {
+      ...stateWithContracts,
+      world: {
+        ...stateWithContracts.world,
+        teams: {
+          ...stateWithContracts.world.teams,
+          [teamId]: {
+            ...stateWithContracts.world.teams[teamId]!,
+            rosterManagement: management,
+          },
+        },
+      },
+    };
+  }
 
   const finances = { ...stateWithContracts.business.finances };
   for (const teamId of teamIds) {

@@ -309,6 +309,7 @@ export function validateGameState(state: unknown): asserts state is GameState {
     "games",
     "standings",
     "playoffs",
+    "seasonEventLog",
   ] as const) {
     if (!(key in competition)) {
       fail(`competition missing required field "${key}".`);
@@ -377,6 +378,11 @@ export function validateGameState(state: unknown): asserts state is GameState {
   }
   assertRecord(competition.playoffs, "competition.playoffs");
   validatePlayoffs(competition.playoffs);
+
+  if (!Array.isArray(competition.seasonEventLog)) {
+    fail("competition.seasonEventLog must be an array.");
+  }
+  validateEventLog(competition.seasonEventLog, "competition.seasonEventLog");
 
   const business = state.business;
   assertRecord(business, "business");
@@ -987,6 +993,13 @@ export function validateGameState(state: unknown): asserts state is GameState {
       teamValue.branding.logoId,
       `world.teams[${teamId}].branding.logoId`,
     );
+    if (
+      teamValue.rosterManagement === null ||
+      typeof teamValue.rosterManagement !== "object" ||
+      Array.isArray(teamValue.rosterManagement)
+    ) {
+      fail(`world.teams[${teamId}].rosterManagement must be an object.`);
+    }
     if (!Array.isArray(teamValue.roster)) {
       fail(`world.teams[${teamId}].roster must be an array.`);
     }
@@ -2235,14 +2248,17 @@ function validateNarrativeMonthSnapshot(value: unknown, path: string): void {
   assertNumber(value.franchiseValue, `${path}.franchiseValue`);
 }
 
-function validateEventLog(events: unknown[]): void {
+function validateEventLog(
+  events: unknown[],
+  pathPrefix = "user.eventLog",
+): void {
   const seenIds = new Set<string>();
   for (const [index, eventValue] of events.entries()) {
-    const path = `user.eventLog[${index}]`;
+    const path = `${pathPrefix}[${index}]`;
     assertRecord(eventValue, path);
     assertNonEmptyString(eventValue.id, `${path}.id`);
     if (seenIds.has(eventValue.id)) {
-      fail(`user.eventLog contains duplicate id "${eventValue.id}".`);
+      fail(`${pathPrefix} contains duplicate id "${eventValue.id}".`);
     }
     seenIds.add(eventValue.id);
 

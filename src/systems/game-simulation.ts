@@ -37,6 +37,7 @@ import {
   type GameClock,
 } from "@/systems/game-clock";
 import {
+  GAME_SIMULATION_CONFIG,
   mergeGameSimulationConfig,
   type GameSimulationConfig,
 } from "@/systems/game-simulation-config";
@@ -61,10 +62,19 @@ import {
   scheduledGameIdsForDate,
 } from "@/systems/schedule-date-index";
 import type { SimulationProfiler } from "@/systems/simulation/simulation-profiler";
+import { getEmergencyLineup } from "@/systems/roster-management";
+import {
+  applyRotationSubstitutions,
+  type RotationSimSide,
+} from "@/systems/rotation-simulation";
 
 export type SimulateGameContext = {
   homePlayers: readonly Player[];
   awayPlayers: readonly Player[];
+  /** When set, used instead of overall-sorted default starters. */
+  homeStartingLineup?: readonly Player[];
+  /** When set, used instead of overall-sorted default starters. */
+  awayStartingLineup?: readonly Player[];
   config?: Partial<GameSimulationConfig>;
   /** Home team coaching philosophy; defaults to all balanced. */
   homeCoachingPhilosophy?: CoachingPhilosophy;
@@ -87,6 +97,8 @@ export type SimulateGameContext = {
   ) => PossessionDecision;
   /** Optional profiler for cost-model benchmarks. */
   profiler?: SimulationProfiler;
+  /** Optional GameState for rotation substitutions mid-game. */
+  gameState?: GameState;
 };
 
 type TeamFoulCounters = {
@@ -131,14 +143,14 @@ export function simulateGame(
   let validationMs = 0;
 
   const config = mergeGameSimulationConfig(context.config);
-  const homeOnCourt = selectStartingLineup(
-    context.homePlayers,
-    config.startingLineupSize,
-  );
-  const awayOnCourt = selectStartingLineup(
-    context.awayPlayers,
-    config.startingLineupSize,
-  );
+  const homeOnCourt =
+    context.homeStartingLineup != null && context.homeStartingLineup.length > 0
+      ? [...context.homeStartingLineup]
+      : selectStartingLineup(context.homePlayers, config.startingLineupSize);
+  const awayOnCourt =
+    context.awayStartingLineup != null && context.awayStartingLineup.length > 0
+      ? [...context.awayStartingLineup]
+      : selectStartingLineup(context.awayPlayers, config.startingLineupSize);
 
   const sim = createGameSimState({
     game,
@@ -165,6 +177,7 @@ export function simulateGame(
         periodNumber: period + 1,
         remainingSeconds: config.regulationPeriodSeconds,
       };
+      maybeApplyPeriodSubstitutions(sim, context, period);
     }
     const periodResult = simulatePeriod({
       sim,
@@ -377,16 +390,21 @@ export function simulateScheduledGame(
   const awayPlayers = rosterForTeam(state, game.awayTeamId);
   const homeTeam = state.world.teams[game.homeTeamId];
   const awayTeam = state.world.teams[game.awayTeamId];
+  const homeLineup = getEmergencyLineup(state, game.homeTeamId);
+  const awayLineup = getEmergencyLineup(state, game.awayTeamId);
   const result = simulateGame(
     game,
     {
       homePlayers,
       awayPlayers,
+      homeStartingLineup: homeLineup.players,
+      awayStartingLineup: awayLineup.players,
       homeCoachingPhilosophy:
         homeTeam?.coachingPhilosophy ?? DEFAULT_COACHING_PHILOSOPHY,
       awayCoachingPhilosophy:
         awayTeam?.coachingPhilosophy ?? DEFAULT_COACHING_PHILOSOPHY,
       profiler: options?.profiler,
+      gameState: state,
     },
     rng,
   );
@@ -699,6 +717,70 @@ function philosophyForTeam(
     return context.awayCoachingPhilosophy ?? DEFAULT_COACHING_PHILOSOPHY;
   }
   return DEFAULT_COACHING_PHILOSOPHY;
+}
+
+function maybeApplyPeriodSubstitutions(
+  sim: GameSimState,
+  context: SimulateGameContext,
+  periodIndex: number,
+): void {
+  const state = context.gameState;
+  if (state == null) {
+    return;
+  }
+
+  const elapsedGameSeconds =
+    periodIndex * GAME_SIMULATION_CONFIG.regulationPeriodSeconds;
+
+  const homeResult = applyRotationSubstitutions({
+    state,
+    side: {
+      teamId: sim.homeTeamId,
+      onCourt: [...sim.homeOnCourt],
+      slots: sim.homeOnCourt.map((player) => player.position),
+    },
+    secondsOnCourt: sim.secondsOnCourt,
+    elapsedGameSeconds,
+  });
+  if (homeResult.substituted) {
+    sim.homeOnCourt = homeResult.onCourt;
+    if (homeResult.playerOutId && homeResult.playerInId) {
+      sim.events.push({
+        sequence: sim.events.length + 1,
+        type: "substitution",
+        teamId: sim.homeTeamId,
+        playerId: homeResult.playerInId,
+      });
+      if (!sim.secondsOnCourt.has(homeResult.playerInId)) {
+        sim.secondsOnCourt.set(homeResult.playerInId, 0);
+      }
+    }
+  }
+
+  const awayResult = applyRotationSubstitutions({
+    state,
+    side: {
+      teamId: sim.awayTeamId,
+      onCourt: [...sim.awayOnCourt],
+      slots: sim.awayOnCourt.map((player) => player.position),
+    },
+    secondsOnCourt: sim.secondsOnCourt,
+    elapsedGameSeconds,
+  });
+  if (awayResult.substituted) {
+    sim.awayOnCourt = awayResult.onCourt;
+    if (awayResult.playerOutId && awayResult.playerInId) {
+      sim.events.push({
+        sequence: sim.events.length + 1,
+        type: "substitution",
+        teamId: sim.awayTeamId,
+        playerId: awayResult.playerInId,
+      });
+      if (!sim.secondsOnCourt.has(awayResult.playerInId)) {
+        sim.secondsOnCourt.set(awayResult.playerInId, 0);
+      }
+    }
+  }
 }
 
 function addSecondsToOnCourtPlayers(

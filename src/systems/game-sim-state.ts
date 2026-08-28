@@ -35,8 +35,8 @@ export type GameSimState = {
   eventSequenceStart: number;
   possessionCounts: { home: number; away: number };
   secondsOnCourt: Map<string, number>;
-  homeOnCourt: readonly Player[];
-  awayOnCourt: readonly Player[];
+  homeOnCourt: Player[];
+  awayOnCourt: Player[];
 };
 
 export type CreateGameSimStateInput = {
@@ -90,8 +90,8 @@ export function createGameSimState(input: CreateGameSimStateInput): GameSimState
     eventSequenceStart: 0,
     possessionCounts: { home: 0, away: 0 },
     secondsOnCourt,
-    homeOnCourt: input.homeOnCourt,
-    awayOnCourt: input.awayOnCourt,
+    homeOnCourt: [...input.homeOnCourt],
+    awayOnCourt: [...input.awayOnCourt],
   };
 }
 

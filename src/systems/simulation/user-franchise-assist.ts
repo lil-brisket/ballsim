@@ -58,6 +58,10 @@ import {
   type ManagementNeed,
 } from "@/systems/simulation/management-needs";
 import {
+  recommendRosterManagement,
+  withTeamRosterManagement,
+} from "@/systems/roster-management";
+import {
   buildManagementPolicy,
   evaluateAction,
   isUserAssistCompletelyOff,
@@ -571,8 +575,10 @@ function logRotationRepair(
   need: ManagementNeed,
   decision: PolicyDecision,
 ): SystemResult & { didAct: boolean } {
-  // V1: selectStartingLineup already skips injured players at game time.
-  // Record that continuity acknowledged the validity issue.
+  const recommended = recommendRosterManagement(state, teamId, {
+    configuredBy: "ai",
+  });
+  const next = withTeamRosterManagement(state, teamId, recommended);
   const events = [
     createAiAssistLogEvent({
       decision,
@@ -581,10 +587,13 @@ function logRotationRepair(
       reason: need.detail,
       trigger: need.needKey,
       before: need.metadata ?? {},
-      after: { gameValidity: "deferred_to_game_lineup_selection" },
+      after: {
+        lastConfiguredBy: "ai",
+        starterCount: recommended.startingLineup.length,
+      },
     }),
   ];
-  return { ...systemResult(state, events), didAct: true };
+  return { ...systemResult(next, events), didAct: true };
 }
 
 function pickUnemployedStaff(

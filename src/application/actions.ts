@@ -43,6 +43,11 @@ import {
   signOwnerSponsorship,
   upgradeOwnerFacility,
   withdrawOwnerFreeAgentOffer,
+  updateOwnerLineup,
+  updateOwnerRotation,
+  applyOwnerLineupRecommendation,
+  updateOwnerCoachingPhilosophy,
+  applyOwnerCoachingPreset,
 } from "@/application/game-service";
 import type { FacilityCategory } from "@/domain/entities/franchise-ops";
 import { validateGameSettings } from "@/domain/game-settings-validation";
@@ -714,6 +719,115 @@ export async function completeExpansionAction(
   const saveId = String(formData.get("saveId") ?? "");
   const path = returnPath(formData, saveId);
   const result = await completeOwnerExpansion(saveId);
+  if (!result.ok) {
+    redirectWithError(path, result.error);
+  }
+  revalidateOwner(saveId);
+  redirect(path);
+}
+
+export async function updateLineupAction(formData: FormData): Promise<void> {
+  const saveId = String(formData.get("saveId") ?? "");
+  const teamId = String(formData.get("teamId") ?? "");
+  const path = returnPath(formData, saveId);
+  const startingLineupJson = String(formData.get("startingLineupJson") ?? "[]");
+  const benchJson = String(formData.get("benchJson") ?? "[]");
+  const inactiveJson = String(formData.get("inactiveJson") ?? "[]");
+  let startingLineup: Array<{ playerId: string; slot: string }> = [];
+  let bench: string[] = [];
+  let inactive: string[] = [];
+  try {
+    startingLineup = JSON.parse(startingLineupJson) as typeof startingLineup;
+    bench = JSON.parse(benchJson) as string[];
+    inactive = JSON.parse(inactiveJson) as string[];
+  } catch {
+    redirectWithError(path, "Invalid lineup payload.");
+  }
+  const result = await updateOwnerLineup(saveId, {
+    teamId,
+    startingLineup,
+    bench,
+    inactive,
+  });
+  if (!result.ok) {
+    redirectWithError(path, result.error);
+  }
+  revalidateOwner(saveId);
+  redirect(path);
+}
+
+export async function updateRotationAction(formData: FormData): Promise<void> {
+  const saveId = String(formData.get("saveId") ?? "");
+  const teamId = String(formData.get("teamId") ?? "");
+  const path = returnPath(formData, saveId);
+  const rotationJson = String(formData.get("rotationJson") ?? "[]");
+  const rotationStyle = String(formData.get("rotationStyle") ?? "");
+  let rotation: Array<{
+    playerId: string;
+    plannedMinutes: number;
+    eligiblePositions: string[];
+    role: "starter" | "bench";
+  }> = [];
+  try {
+    rotation = JSON.parse(rotationJson) as typeof rotation;
+  } catch {
+    redirectWithError(path, "Invalid rotation payload.");
+  }
+  const result = await updateOwnerRotation(saveId, {
+    teamId,
+    rotation,
+    rotationStyle: rotationStyle || undefined,
+  });
+  if (!result.ok) {
+    redirectWithError(path, result.error);
+  }
+  revalidateOwner(saveId);
+  redirect(path);
+}
+
+export async function applyLineupRecommendationAction(
+  formData: FormData,
+): Promise<void> {
+  const saveId = String(formData.get("saveId") ?? "");
+  const teamId = String(formData.get("teamId") ?? "");
+  const path = returnPath(formData, saveId);
+  const result = await applyOwnerLineupRecommendation(saveId, teamId);
+  if (!result.ok) {
+    redirectWithError(path, result.error);
+  }
+  revalidateOwner(saveId);
+  redirect(path);
+}
+
+export async function updateCoachingPhilosophyAction(
+  formData: FormData,
+): Promise<void> {
+  const saveId = String(formData.get("saveId") ?? "");
+  const teamId = String(formData.get("teamId") ?? "");
+  const path = returnPath(formData, saveId);
+  const result = await updateOwnerCoachingPhilosophy(saveId, {
+    teamId,
+    pace: String(formData.get("pace") ?? "balanced"),
+    offensiveEmphasis: String(formData.get("offensiveEmphasis") ?? "balanced"),
+    defensiveApproach: String(
+      formData.get("defensiveApproach") ?? "balanced",
+    ),
+  });
+  if (!result.ok) {
+    redirectWithError(path, result.error);
+  }
+  revalidateOwner(saveId);
+  redirect(path);
+}
+
+export async function applyCoachingPresetAction(
+  formData: FormData,
+): Promise<void> {
+  const saveId = String(formData.get("saveId") ?? "");
+  const teamId = String(formData.get("teamId") ?? "");
+  const presetId = String(formData.get("presetId") ?? "balanced");
+  const path = returnPath(formData, saveId);
+  const result = await applyOwnerCoachingPreset(saveId, { teamId, presetId });
   if (!result.ok) {
     redirectWithError(path, result.error);
   }

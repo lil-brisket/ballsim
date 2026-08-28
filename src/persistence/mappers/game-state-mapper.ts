@@ -16,6 +16,7 @@ import { NEUTRAL_TEAM_PLAY_STYLE } from "@/domain/entities/team";
 import { createEmptyTeamFinanceBooks, normalizeTeamFinanceBooks } from "@/domain/entities/finances";
 import type { TeamFinances } from "@/domain/entities/finances";
 import { DEFAULT_COACHING_PHILOSOPHY } from "@/domain/coaching/coaching-philosophy";
+import { emptyTeamRosterManagement } from "@/domain/entities/team-roster-management";
 import type {
   ArenaId,
   ConferenceId,
@@ -27,12 +28,13 @@ import type {
   StaffId,
   TeamId,
 } from "@/domain/ids";
-import { asArenaId } from "@/domain/ids";
+import { asArenaId, asTeamId } from "@/domain/ids";
 import { addCalendarDays } from "@/domain/calendar-date";
 import type { GameState } from "@/state/game-state";
 import { GAME_STATE_SCHEMA_VERSION } from "@/state/game-state";
 import { createEmptyPlayoffTournament } from "@/domain/entities/playoffs";
 import { calculateStandings } from "@/systems/standings";
+import { recommendRosterManagement } from "@/systems/roster-management";
 import { validateGameState } from "@/persistence/validate-game-state";
 import { generateDraftPicksForSeason } from "@/domain/draft-picks/generate-draft-picks";
 import type { OffseasonStage, SeasonPhase } from "@/domain/entities/season";
@@ -174,6 +176,7 @@ const MIGRATE_ONE_STEP: Record<number, (state: unknown) => unknown> = {
   41: (state) => migrateV41ToV42(state as GameStateV41),
   42: (state) => migrateV42ToV43(state as GameStateV42),
   43: (state) => migrateV43ToV44(state as GameStateV43),
+  44: (state) => migrateV44ToV45(state as GameStateV44),
 };
 
 function legacyUserRecord(user: unknown): Record<string, unknown> {
@@ -1599,6 +1602,7 @@ function migrateV13ToV14(state: GameStateV13): GameStateV14 {
       games: state.competition.games,
       standings: state.competition.standings,
       playoffs: createEmptyPlayoffTournament(),
+      seasonEventLog: [],
     },
     business: state.business,
     user: state.user,
@@ -1924,6 +1928,7 @@ function migrateV20ToV21(state: GameStateV20): GameStateV21 {
             freeAgencyExtendedUntil?: string | null;
           }).freeAgencyExtendedUntil ?? null,
       },
+      seasonEventLog: [],
     },
     business: state.business,
     user: state.user,
@@ -3195,6 +3200,9 @@ function migrateV36ToV37(state: GameStateV36): GameStateV37 {
         offseasonStageEnteredDate,
         freeAgencyExtendedUntil: season.freeAgencyExtendedUntil ?? null,
       },
+      seasonEventLog:
+        (state.competition as { seasonEventLog?: GameState["competition"]["seasonEventLog"] })
+          .seasonEventLog ?? [],
     },
     user: {
       ...state.user,
@@ -3679,7 +3687,7 @@ type GameStateV43 = {
  * Mandate weights now come from getDefaultOwnerMandateProfile().
  * Emits literal schemaVersion 44. No RNG.
  */
-function migrateV43ToV44(state: GameStateV43): GameState {
+function migrateV43ToV44(state: GameStateV43): GameStateV44 {
   const ownedFranchises: GameState["user"]["ownedFranchises"] = {};
   for (const [teamId, franchise] of Object.entries(state.user.ownedFranchises)) {
     const { ownerPhilosophy: _removed, ...rest } = franchise;
@@ -3715,6 +3723,89 @@ function migrateV43ToV44(state: GameStateV43): GameState {
       ownedFranchises,
     },
   };
+}
+
+type GameStateV44 = {
+  meta: Omit<GameState["meta"], "schemaVersion"> & {
+    schemaVersion: 44;
+  };
+  settings: GameState["settings"];
+  world: {
+    calendar: GameState["world"]["calendar"];
+    league: GameState["world"]["league"];
+    conferences: GameState["world"]["conferences"];
+    divisions: GameState["world"]["divisions"];
+    teams: Record<
+      string,
+      Omit<GameState["world"]["teams"][string], "rosterManagement"> & {
+        rosterManagement?: GameState["world"]["teams"][string]["rosterManagement"];
+      }
+    >;
+    players: GameState["world"]["players"];
+    coaches: GameState["world"]["coaches"];
+    staff: GameState["world"]["staff"];
+    draftPicks: GameState["world"]["draftPicks"];
+    drafts: GameState["world"]["drafts"];
+    scheduledEvents: GameState["world"]["scheduledEvents"];
+  };
+  competition: Omit<GameState["competition"], "seasonEventLog"> & {
+    seasonEventLog?: GameState["competition"]["seasonEventLog"];
+  };
+  business: GameState["business"];
+  user: GameState["user"];
+};
+
+/**
+ * Deterministic v44 → v45: add Team.rosterManagement + competition.seasonEventLog.
+ * Derives initial lineups from roster via recommendRosterManagement.
+ * Emits literal schemaVersion 45. No RNG.
+ */
+function migrateV44ToV45(state: GameStateV44): GameState {
+  let working: GameState = {
+    ...state,
+    meta: {
+      ...state.meta,
+      schemaVersion: 45,
+    },
+    world: {
+      ...state.world,
+      teams: Object.fromEntries(
+        Object.entries(state.world.teams).map(([id, team]) => [
+          id,
+          {
+            ...team,
+            rosterManagement:
+              team.rosterManagement ?? emptyTeamRosterManagement(),
+          },
+        ]),
+      ) as GameState["world"]["teams"],
+    },
+    competition: {
+      ...state.competition,
+      seasonEventLog: state.competition.seasonEventLog ?? [],
+    },
+  };
+
+  for (const teamId of Object.keys(working.world.teams)) {
+    const management = recommendRosterManagement(working, asTeamId(teamId), {
+      configuredBy: "default",
+    });
+    working = {
+      ...working,
+      world: {
+        ...working.world,
+        teams: {
+          ...working.world.teams,
+          [teamId]: {
+            ...working.world.teams[teamId]!,
+            rosterManagement: management,
+          },
+        },
+      },
+    };
+  }
+
+  return working;
 }
 
 function backfillSnapshotBranding(
