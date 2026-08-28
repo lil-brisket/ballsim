@@ -18,7 +18,7 @@ import {
 import { simulateSeason } from "@/systems/season-simulation";
 import { updateStandings } from "@/systems/standings";
 import { createPhaseEBusinessDefaults } from "@/state/phase-e-defaults";
-import { createDefaultOwnershipConfidence } from "@/domain/entities/ownership-confidence";
+import { createDefaultOwnedFranchiseState } from "@/state/owned-franchise-state";
 import { TEST_NOW_ISO, TEST_RNG_SEED } from "../helpers/determinism";
 
 function createEightTeamGameState(rngSeed: number): {
@@ -181,32 +181,20 @@ function createEightTeamGameState(rngSeed: number): {
       ),
     },
     user: {
-      controlledTeamId,
-      mode: "owner",
-      citySelectionConfirmed: true,
-      franchiseIdentityConfirmed: true,
-      ownerStartSeasonYear: 2026,
-      ownerPhilosophy: "balanced",
-      ownerPatience: 55,
-      ownershipConfidence: createDefaultOwnershipConfidence("2026-10-01"),
-      objectives: [],
-      notifications: [],
-      eventLog: [],
-      appliedGameplayConsequenceKeys: {},
-      explicitDecisions: {},
-      phaseSkips: [],
-      aiAssistState: {
-        resolvedNeeds: {},
-        seasonCounters: {
-          seasonYear: 0,
-          decisions: 0,
-          rosterMoves: 0,
-          freeAgentSignings: 0,
-        },
+      ownedTeamIds: [controlledTeamId],
+      activeOwnerTeamId: controlledTeamId,
+      ownedFranchises: {
+        [controlledTeamId]: createDefaultOwnedFranchiseState({
+          seasonYear: 2026,
+          currentDate: "2026-10-01",
+          citySelectionConfirmed: true,
+          franchiseIdentityConfirmed: true,
+          ownerPhilosophy: "balanced",
+        }),
       },
+      mode: "owner",
       pendingOwnerDecisions: [],
       ownerDecisionHistory: [],
-      narrative: { situations: [], snapshots: [], cooldowns: {} },
     },
   };
 

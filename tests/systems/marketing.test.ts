@@ -14,7 +14,7 @@ describe("marketing", () => {
       settings: CBL_GAME_SETTINGS,
     });
     state = bootstrapWorld(state, createSeededRng(state.meta.rngState)).state;
-    const teamId = state.user.controlledTeamId;
+    const teamId = state.user.activeOwnerTeamId;
 
     state = {
       ...state,
@@ -70,7 +70,7 @@ describe("marketing", () => {
       settings: CBL_GAME_SETTINGS,
     });
     state = bootstrapWorld(state, createSeededRng(state.meta.rngState)).state;
-    const teamId = state.user.controlledTeamId;
+    const teamId = state.user.activeOwnerTeamId;
     state = {
       ...state,
       business: {
@@ -95,7 +95,7 @@ describe("marketing", () => {
       settings: CBL_GAME_SETTINGS,
     });
     state = bootstrapWorld(state, createSeededRng(state.meta.rngState)).state;
-    const teamId = asTeamId(state.user.controlledTeamId);
+    const teamId = asTeamId(state.user.activeOwnerTeamId);
     state = setMarketingBudget(state, teamId, 2_600_000).state;
     const cashBefore = state.business.finances[teamId]!.cash;
     state = processWeeklyMarketing(state).state;

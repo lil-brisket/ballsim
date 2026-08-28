@@ -1,3 +1,4 @@
+import { getActiveOwnedFranchise } from "@/state/owner-context";
 /**
  * Strategic posture engine — organizational direction vs ownership expectations.
  * This is the heart of ownership strategic friction (weighted above individual decisions).
@@ -287,8 +288,8 @@ function detectReversal(
   observedRoster: RosterStance,
   observedCompetitive: CompetitiveStance,
 ): StrategicReversal | null {
-  const prior = state.user.ownershipConfidence.lastReversal;
-  const priorNote = state.user.ownershipConfidence.seasonNotes.at(-1);
+  const prior = getActiveOwnedFranchise(state).ownershipConfidence.lastReversal;
+  const priorNote = getActiveOwnedFranchise(state).ownershipConfidence.seasonNotes.at(-1);
   const priorDirection =
     priorNote?.mandateSummary.includes("youth") ||
     priorNote?.mandateSummary.includes("development") ||
@@ -346,7 +347,7 @@ function detectReversal(
  */
 export function evaluateStrategicPosture(
   state: GameState,
-  teamId: TeamId = state.user.controlledTeamId,
+  teamId: TeamId = state.user.activeOwnerTeamId,
 ): PostureEvaluation {
   const expectations = buildOwnershipExpectations(state, teamId);
   const current = snapshotPosture(state, teamId);

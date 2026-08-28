@@ -9,6 +9,7 @@ import {
 import { evaluateStrategicPosture } from "@/systems/ownership-strategic-posture";
 import type { AlignmentEvidence } from "@/domain/entities/ownership-confidence";
 import { createDefaultOwnershipConfidence } from "@/domain/entities/ownership-confidence";
+import { getActiveOwnedFranchise } from "@/state/owner-context";
 
 function evidence(
   partial: Partial<AlignmentEvidence> &
@@ -29,7 +30,7 @@ function evidence(
 describe("ownership confidence engine", () => {
   it("ignores minor decision evidence for mood movement", () => {
     const state = createTestGameState();
-    const before = state.user.ownershipConfidence.mood;
+    const before = getActiveOwnedFranchise(state).ownershipConfidence.mood;
     const next = recordOwnershipEvidence(
       state,
       evidence({
@@ -38,8 +39,8 @@ describe("ownership confidence engine", () => {
         summary: "Tiny move",
       }),
     );
-    expect(next.user.ownershipConfidence.mood).toBe(before);
-    expect(next.user.ownershipConfidence.recentEvidence).toHaveLength(1);
+    expect(getActiveOwnedFranchise(next).ownershipConfidence.mood).toBe(before);
+    expect(getActiveOwnedFranchise(next).ownershipConfidence.recentEvidence).toHaveLength(1);
   });
 
   it("does not jump to displeased from a single conflicting decision", () => {
@@ -53,7 +54,7 @@ describe("ownership confidence engine", () => {
         kind: "decision",
       }),
     );
-    expect(state.user.ownershipConfidence.mood).not.toBe("displeased");
+    expect(getActiveOwnedFranchise(state).ownershipConfidence.mood).not.toBe("displeased");
   });
 
   it("escalates mood after repeated conflicting meaningful evidence", () => {
@@ -71,7 +72,7 @@ describe("ownership confidence engine", () => {
       );
     }
     expect(["watchful", "concerned", "displeased"]).toContain(
-      state.user.ownershipConfidence.mood,
+      getActiveOwnedFranchise(state).ownershipConfidence.mood,
     );
   });
 

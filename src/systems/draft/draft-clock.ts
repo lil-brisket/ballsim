@@ -38,8 +38,13 @@ export function isTeamOnDraftClock(
 }
 
 /**
- * True when the user-controlled team is on the draft clock.
+ * True when any owned franchise is on the draft clock.
+ * Simulation / UI should key off ownedTeamIds, not only the active team.
  */
 export function isUserOnDraftClock(state: GameState): boolean {
-  return isTeamOnDraftClock(state, state.user.controlledTeamId);
+  const slot = getActiveDraftOnClockSlot(state);
+  if (slot === undefined) {
+    return false;
+  }
+  return state.user.ownedTeamIds.includes(slot.ownerTeamId);
 }

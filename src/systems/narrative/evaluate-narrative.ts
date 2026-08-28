@@ -43,6 +43,7 @@ import type {
   DetectorCandidate,
   NarrativeCadence,
 } from "@/systems/narrative/types";
+import { getActiveOwnedFranchise, withOwnedFranchise } from "@/state/owner-context";
 
 export type ProcessNarrativeOptions = {
   /** Cadences that apply for this evaluation (e.g. daily+weekly+monthly on month boundary). */
@@ -121,7 +122,7 @@ export function processNarrativeLayer(
   });
 
   let situations = expireDueSituations(
-    current.user.narrative.situations,
+    getActiveOwnedFranchise(current).narrative.situations,
     context.date,
   );
 
@@ -173,8 +174,8 @@ export function processNarrativeLayer(
   const filtered = applySpamFilters(aggregated, contextForSpam);
   const selected = selectDailyStories(filtered);
 
-  const notifications = [...current.user.notifications];
-  const cooldowns = { ...current.user.narrative.cooldowns };
+  const notifications = [...getActiveOwnedFranchise(current).notifications];
+  const cooldowns = { ...getActiveOwnedFranchise(current).narrative.cooldowns };
 
   for (const candidate of selected) {
     const actions = candidate.actions?.map((action) => ({
@@ -206,16 +207,13 @@ export function processNarrativeLayer(
     }
   }
 
-  return systemResult({
-    ...current,
-    user: {
-      ...current.user,
-      notifications,
-      narrative: {
-        ...current.user.narrative,
-        situations,
-        cooldowns,
-      },
+  return systemResult(withOwnedFranchise(current, current.user.activeOwnerTeamId, (franchise) => ({
+    ...franchise,
+    notifications,
+    narrative: {
+      ...franchise.narrative,
+      situations,
+      cooldowns,
     },
-  });
+  })));
 }

@@ -1,3 +1,4 @@
+import { getActiveOwnedFranchise } from "@/state/owner-context";
 /**
  * Generate immutable annual franchise reports from authoritative season data.
  * Does not import league-sanity.
@@ -194,14 +195,14 @@ export function generateAnnualFranchiseReport(
       meanFacilityLevel: facilityMetric,
     },
     ownership: {
-      patience: state.user.ownerPatience,
-      completedObjectives: state.user.objectives.filter(
+      patience: getActiveOwnedFranchise(state).ownerPatience,
+      completedObjectives: getActiveOwnedFranchise(state).objectives.filter(
         (o) => o.status === "completed" && o.seasonYear === year,
       ).length,
-      failedObjectives: state.user.objectives.filter(
+      failedObjectives: getActiveOwnedFranchise(state).objectives.filter(
         (o) => o.status === "failed" && o.seasonYear === year,
       ).length,
-      alignmentScore: state.user.ownershipConfidence?.alignmentScore ?? null,
+      alignmentScore: getActiveOwnedFranchise(state).ownershipConfidence?.alignmentScore ?? null,
     },
     franchiseValue: {
       starting: valueStarting,

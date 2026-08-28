@@ -44,7 +44,7 @@ describe("free-agency multi-season expire/re-sign cycles", () => {
       },
     };
 
-    const teamId = state.user.controlledTeamId;
+    const teamId = state.user.activeOwnerTeamId;
     let year = state.competition.season.year;
 
     for (let cycle = 0; cycle < 3; cycle += 1) {

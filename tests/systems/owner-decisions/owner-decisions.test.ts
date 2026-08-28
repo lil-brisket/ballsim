@@ -44,7 +44,7 @@ import type { PlayerId, TeamId } from "@/domain/ids";
 import { toOwnerDashboardView } from "@/state/owner-dashboard";
 
 function otherTeamId(state: GameState): TeamId {
-  const userId = state.user.controlledTeamId;
+  const userId = state.user.activeOwnerTeamId;
   const ids = (Object.keys(state.world.teams) as TeamId[])
     .filter((id) => id !== userId)
     .sort();
@@ -82,7 +82,7 @@ function meaningfulPlayerSwapProposal(state: GameState): {
   proposal: TradeProposal;
   offeringTeamId: TeamId;
 } {
-  const userTeamId = state.user.controlledTeamId;
+  const userTeamId = state.user.activeOwnerTeamId;
   const offeringTeamId = otherTeamId(state);
   const userPlayer = state.world.teams[userTeamId]!.roster[3]!;
   const cpuPlayer = state.world.teams[offeringTeamId]!.roster[3]!;
@@ -137,7 +137,7 @@ describe("owner trade offer enqueue", () => {
     state = built.state;
 
     const beforeUserRoster = [
-      ...state.world.teams[state.user.controlledTeamId]!.roster,
+      ...state.world.teams[state.user.activeOwnerTeamId]!.roster,
     ];
     const result = enqueueTradeOfferForOwner(
       state,
@@ -149,7 +149,7 @@ describe("owner trade offer enqueue", () => {
     expect(hasActiveOwnerDecision(result.state.user)).toBe(true);
     expect(result.state.user.pendingOwnerDecisions).toHaveLength(1);
     expect(result.state.user.pendingOwnerDecisions[0]?.type).toBe("trade_offer");
-    expect(result.state.world.teams[state.user.controlledTeamId]!.roster).toEqual(
+    expect(result.state.world.teams[state.user.activeOwnerTeamId]!.roster).toEqual(
       beforeUserRoster,
     );
   });
@@ -211,7 +211,7 @@ describe("owner trade offer enqueue", () => {
   it("rejects low-value packages as not interrupt-worthy", () => {
     let state = createTestGameState({ saveId: "od_quality" });
     state = bootstrapWorld(state, createSeededRng(state.meta.rngState)).state;
-    const userTeamId = state.user.controlledTeamId;
+    const userTeamId = state.user.activeOwnerTeamId;
     const offeringTeamId = otherTeamId(state);
     const userPlayer = state.world.teams[userTeamId]!.roster.at(-1)!;
     const cpuPlayer = state.world.teams[offeringTeamId]!.roster.at(-1)!;
@@ -360,7 +360,7 @@ describe("owner decision commands", () => {
     const before = await store.load("od_accept");
     const userPlayer = proposal.sideB.playerIds[0]!;
     expect(
-      before!.state.world.teams[before!.state.user.controlledTeamId]!.roster,
+      before!.state.world.teams[before!.state.user.activeOwnerTeamId]!.roster,
     ).toContain(userPlayer);
 
     const result = await acceptOwnerDecision("od_accept", decisionId, store);
@@ -369,7 +369,7 @@ describe("owner decision commands", () => {
     expect(after!.state.user.pendingOwnerDecisions).toHaveLength(0);
     expect(after!.state.user.ownerDecisionHistory[0]?.status).toBe("accepted");
     expect(
-      after!.state.world.teams[after!.state.user.controlledTeamId]!.roster,
+      after!.state.world.teams[after!.state.user.activeOwnerTeamId]!.roster,
     ).not.toContain(userPlayer);
 
     // Idempotent second accept
@@ -389,7 +389,7 @@ describe("owner decision commands", () => {
 
     const fingerprint = tradeOfferFingerprint(
       offeringTeamId,
-      after!.state.user.controlledTeamId,
+      after!.state.user.activeOwnerTeamId,
       proposal,
     );
     expect(after!.state.user.ownerDecisionHistory[0]?.fingerprint).toBe(
@@ -459,7 +459,7 @@ describe("interrupt-worthy with meaningful player", () => {
     expect(
       isInterruptWorthyTradeOffer(
         state,
-        state.user.controlledTeamId,
+        state.user.activeOwnerTeamId,
         built.proposal,
         evalResult,
       ),
@@ -474,7 +474,7 @@ describe("fingerprint stability", () => {
     const built = meaningfulPlayerSwapProposal(state);
     const fp1 = tradeOfferFingerprint(
       built.offeringTeamId,
-      built.state.user.controlledTeamId,
+      built.state.user.activeOwnerTeamId,
       built.proposal,
     );
     const flipped: TradeProposal = {
@@ -483,7 +483,7 @@ describe("fingerprint stability", () => {
     };
     const fp2 = tradeOfferFingerprint(
       built.offeringTeamId,
-      built.state.user.controlledTeamId,
+      built.state.user.activeOwnerTeamId,
       flipped,
     );
     expect(fp1).toBe(fp2);

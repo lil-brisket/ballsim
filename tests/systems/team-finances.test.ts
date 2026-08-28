@@ -61,7 +61,7 @@ function withContracts(state: GameState, contracts: Contract[]): GameState {
 describe("team-finances revenue", () => {
   it("records ticket revenue", () => {
     const state = baseState();
-    const teamId = state.user.controlledTeamId;
+    const teamId = state.user.activeOwnerTeamId;
     const year = state.competition.season.year;
     const result = recordRevenue(state, teamId, "tickets", 100_000, year);
     expect(
@@ -73,7 +73,7 @@ describe("team-finances revenue", () => {
 
   it("records sponsorship revenue", () => {
     const state = baseState();
-    const teamId = state.user.controlledTeamId;
+    const teamId = state.user.activeOwnerTeamId;
     const year = state.competition.season.year;
     const result = recordRevenue(state, teamId, "sponsorships", 50_000, year);
     expect(
@@ -84,7 +84,7 @@ describe("team-finances revenue", () => {
 
   it("records merchandise revenue", () => {
     const state = baseState();
-    const teamId = state.user.controlledTeamId;
+    const teamId = state.user.activeOwnerTeamId;
     const year = state.competition.season.year;
     const result = recordRevenue(state, teamId, "merchandise", 25_000, year);
     expect(
@@ -95,7 +95,7 @@ describe("team-finances revenue", () => {
 
   it("records other revenue", () => {
     const state = baseState();
-    const teamId = state.user.controlledTeamId;
+    const teamId = state.user.activeOwnerTeamId;
     const year = state.competition.season.year;
     const result = recordRevenue(state, teamId, "other", 10_000, year);
     expect(
@@ -106,7 +106,7 @@ describe("team-finances revenue", () => {
 
   it("sums revenue categories into total revenue", () => {
     let state = baseState();
-    const teamId = state.user.controlledTeamId;
+    const teamId = state.user.activeOwnerTeamId;
     const year = state.competition.season.year;
     state = recordRevenue(state, teamId, "tickets", 100, year).state;
     state = recordRevenue(state, teamId, "sponsorships", 200, year).state;
@@ -118,7 +118,7 @@ describe("team-finances revenue", () => {
 
   it("uses additive posting for duplicate revenue writes", () => {
     let state = baseState();
-    const teamId = state.user.controlledTeamId;
+    const teamId = state.user.activeOwnerTeamId;
     const year = state.competition.season.year;
     state = recordRevenue(state, teamId, "tickets", 100, year).state;
     state = recordRevenue(state, teamId, "tickets", 100, year).state;
@@ -132,7 +132,7 @@ describe("team-finances revenue", () => {
 describe("team-finances expenses", () => {
   it("records staff expense", () => {
     const state = baseState();
-    const teamId = state.user.controlledTeamId;
+    const teamId = state.user.activeOwnerTeamId;
     const year = state.competition.season.year;
     const result = recordExpense(state, teamId, "staff", 40_000, year);
     expect(
@@ -143,7 +143,7 @@ describe("team-finances expenses", () => {
 
   it("records facilities expense", () => {
     const state = baseState();
-    const teamId = state.user.controlledTeamId;
+    const teamId = state.user.activeOwnerTeamId;
     const year = state.competition.season.year;
     const result = recordExpense(state, teamId, "facilities", 30_000, year);
     expect(
@@ -154,7 +154,7 @@ describe("team-finances expenses", () => {
 
   it("records operations expense", () => {
     const state = baseState();
-    const teamId = state.user.controlledTeamId;
+    const teamId = state.user.activeOwnerTeamId;
     const year = state.competition.season.year;
     const result = recordExpense(state, teamId, "operations", 20_000, year);
     expect(
@@ -165,7 +165,7 @@ describe("team-finances expenses", () => {
 
   it("records marketing expense", () => {
     const state = baseState();
-    const teamId = state.user.controlledTeamId;
+    const teamId = state.user.activeOwnerTeamId;
     const year = state.competition.season.year;
     const result = recordExpense(state, teamId, "marketing", 15_000, year);
     expect(
@@ -176,7 +176,7 @@ describe("team-finances expenses", () => {
 
   it("sums posted expenses and contract-derived player salaries", () => {
     let state = baseState();
-    const teamId = state.user.controlledTeamId;
+    const teamId = state.user.activeOwnerTeamId;
     const year = state.competition.season.year;
     state = withContracts(state, [
       createContract({
@@ -197,7 +197,7 @@ describe("team-finances expenses", () => {
 
   it("uses additive posting for duplicate expense writes", () => {
     let state = baseState();
-    const teamId = state.user.controlledTeamId;
+    const teamId = state.user.activeOwnerTeamId;
     const year = state.competition.season.year;
     state = recordExpense(state, teamId, "staff", 50, year).state;
     state = recordExpense(state, teamId, "staff", 50, year).state;
@@ -209,7 +209,7 @@ describe("team-finances expenses", () => {
 
   it("rejects posting playerSalaries as an expense category", () => {
     const state = baseState();
-    const teamId = state.user.controlledTeamId;
+    const teamId = state.user.activeOwnerTeamId;
     const year = state.competition.season.year;
     expect(() =>
       recordExpense(
@@ -226,7 +226,7 @@ describe("team-finances expenses", () => {
 describe("team-finances financial statement", () => {
   it("builds correct revenue, expense, and net income totals", () => {
     let state = baseState();
-    const teamId = state.user.controlledTeamId;
+    const teamId = state.user.activeOwnerTeamId;
     const year = state.competition.season.year;
     state = withContracts(state, [
       createContract({
@@ -252,7 +252,7 @@ describe("team-finances financial statement", () => {
 
   it("reports a profitable team", () => {
     let state = baseState();
-    const teamId = state.user.controlledTeamId;
+    const teamId = state.user.activeOwnerTeamId;
     const year = state.competition.season.year;
     state = recordRevenue(state, teamId, "sponsorships", 1_000, year).state;
     state = recordExpense(state, teamId, "marketing", 200, year).state;
@@ -261,7 +261,7 @@ describe("team-finances financial statement", () => {
 
   it("reports a team operating at a loss", () => {
     let state = baseState();
-    const teamId = state.user.controlledTeamId;
+    const teamId = state.user.activeOwnerTeamId;
     const year = state.competition.season.year;
     state = recordRevenue(state, teamId, "other", 100, year).state;
     state = recordExpense(state, teamId, "facilities", 500, year).state;
@@ -270,7 +270,7 @@ describe("team-finances financial statement", () => {
 
   it("isolates multiple financial periods", () => {
     let state = baseState();
-    const teamId = state.user.controlledTeamId;
+    const teamId = state.user.activeOwnerTeamId;
     const year = state.competition.season.year;
     state = recordRevenue(state, teamId, "tickets", 100, year).state;
     state = recordRevenue(state, teamId, "tickets", 999, year + 1).state;
@@ -292,7 +292,7 @@ describe("team-finances financial statement", () => {
 
   it("derives player salary expense from contracts", () => {
     let state = baseState();
-    const teamId = state.user.controlledTeamId;
+    const teamId = state.user.activeOwnerTeamId;
     const year = state.competition.season.year;
     state = withContracts(state, [
       createContract({
@@ -319,7 +319,7 @@ describe("team-finances immutability and validation", () => {
   it("does not mutate input GameState on recordRevenue", () => {
     const state = baseState();
     const snapshot = structuredClone(state);
-    const teamId = state.user.controlledTeamId;
+    const teamId = state.user.activeOwnerTeamId;
     const year = state.competition.season.year;
     const otherTeamId = Object.keys(state.world.teams).find(
       (id) => id !== teamId,
@@ -341,7 +341,7 @@ describe("team-finances immutability and validation", () => {
   it("does not mutate input GameState on recordExpense", () => {
     const state = baseState();
     const snapshot = structuredClone(state);
-    const teamId = state.user.controlledTeamId;
+    const teamId = state.user.activeOwnerTeamId;
     const year = state.competition.season.year;
     const result = recordExpense(state, teamId, "staff", 10, year);
     expect(state).toEqual(snapshot);
@@ -350,7 +350,7 @@ describe("team-finances immutability and validation", () => {
 
   it("throws when finance record is missing and does not auto-create", () => {
     const state = baseState();
-    const teamId = state.user.controlledTeamId;
+    const teamId = state.user.activeOwnerTeamId;
     const year = state.competition.season.year;
     const { [teamId]: _removed, ...financesWithoutTeam } = state.business.finances;
     const broken: GameState = {
@@ -372,7 +372,7 @@ describe("team-finances immutability and validation", () => {
 
   it("throws for invalid revenue category", () => {
     const state = baseState();
-    const teamId = state.user.controlledTeamId;
+    const teamId = state.user.activeOwnerTeamId;
     expect(() =>
       recordRevenue(state, teamId, "not_a_category" as never, 1, 2026),
     ).toThrow(/Invalid revenue category/);
@@ -380,7 +380,7 @@ describe("team-finances immutability and validation", () => {
 
   it("throws for invalid expense category", () => {
     const state = baseState();
-    const teamId = state.user.controlledTeamId;
+    const teamId = state.user.activeOwnerTeamId;
     expect(() =>
       recordExpense(state, teamId, "travel" as never, 1, 2026),
     ).toThrow(/Invalid expense category/);
@@ -388,7 +388,7 @@ describe("team-finances immutability and validation", () => {
 
   it("throws for negative amounts", () => {
     const state = baseState();
-    const teamId = state.user.controlledTeamId;
+    const teamId = state.user.activeOwnerTeamId;
     expect(() =>
       recordRevenue(state, teamId, "tickets", -1, 2026),
     ).toThrow(/must be >= 0/);
@@ -396,7 +396,7 @@ describe("team-finances immutability and validation", () => {
 
   it("throws for non-integer year", () => {
     const state = baseState();
-    const teamId = state.user.controlledTeamId;
+    const teamId = state.user.activeOwnerTeamId;
     expect(() =>
       recordRevenue(state, teamId, "tickets", 1, 2026.5),
     ).toThrow(/year must be an integer/);
@@ -404,7 +404,7 @@ describe("team-finances immutability and validation", () => {
 
   it("rejects malformed booksByYear keys on load", () => {
     const state = baseState();
-    const teamId = state.user.controlledTeamId;
+    const teamId = state.user.activeOwnerTeamId;
     const json = JSON.stringify({
       ...state,
       business: {
@@ -427,7 +427,7 @@ describe("team-finances immutability and validation", () => {
 describe("team-finances persistence", () => {
   it("survives save/load round-trip", () => {
     let state = baseState();
-    const teamId = state.user.controlledTeamId;
+    const teamId = state.user.activeOwnerTeamId;
     const year = state.competition.season.year;
     state = recordRevenue(state, teamId, "tickets", 12_000, year).state;
     state = recordExpense(state, teamId, "marketing", 3_000, year).state;

@@ -3,6 +3,11 @@ import type { TeamId } from "@/domain/ids";
 import { systemResult, type SystemResult } from "@/domain/system-result";
 import type { GameState } from "@/state/game-state";
 import {
+  getActiveOwnedFranchise,
+  getActiveOwnerTeamId,
+  withOwnedFranchise,
+} from "@/state/owner-context";
+import {
   GAMEPLAY_LOSS_EXPENSE,
   GAMEPLAY_OBJECTIVE_PENALTY,
   GAMEPLAY_OBJECTIVE_REWARD,
@@ -13,32 +18,41 @@ import { applyCashAndBooksImpact } from "@/systems/team-finances";
 export function hasAppliedGameplayConsequence(
   state: GameState,
   key: string,
+  teamId?: TeamId,
 ): boolean {
-  return state.user.appliedGameplayConsequenceKeys[key] === true;
+  const targetId = teamId ?? state.user.ownedTeamIds[0];
+  if (!targetId) {
+    return false;
+  }
+  const franchise = state.user.ownedFranchises[targetId];
+  return franchise?.appliedGameplayConsequenceKeys[key] === true;
 }
 
 export function withAppliedGameplayConsequence(
   state: GameState,
   key: string,
+  teamId?: TeamId,
 ): GameState {
-  if (state.user.appliedGameplayConsequenceKeys[key] === true) {
+  const targetId = teamId ?? state.user.ownedTeamIds[0] ?? getActiveOwnerTeamId(state);
+  const franchise = state.user.ownedFranchises[targetId];
+  if (!franchise) {
     return state;
   }
-  return {
-    ...state,
-    user: {
-      ...state.user,
-      appliedGameplayConsequenceKeys: {
-        ...state.user.appliedGameplayConsequenceKeys,
-        [key]: true,
-      },
+  if (franchise.appliedGameplayConsequenceKeys[key] === true) {
+    return state;
+  }
+  return withOwnedFranchise(state, targetId, (current) => ({
+    ...current,
+    appliedGameplayConsequenceKeys: {
+      ...current.appliedGameplayConsequenceKeys,
+      [key]: true,
     },
-  };
+  }));
 }
 
 /**
  * Applies owner-team performance and objective financial consequences.
- * Uses deterministic keys in user.appliedGameplayConsequenceKeys for idempotency.
+ * Uses deterministic keys in franchise.appliedGameplayConsequenceKeys for idempotency.
  * Notifications are never consulted for money guards.
  *
  * Safe to call before and after objective evaluation: newly completed/failed
@@ -49,7 +63,7 @@ export function applyGameplayFinancialConsequences(
 ): SystemResult {
   const events: DomainEvent[] = [];
   let current = state;
-  const teamId = current.user.controlledTeamId;
+  const teamId = getActiveOwnerTeamId(current);
   const seasonYear = current.competition.season.year;
   const date = current.world.calendar.currentDate;
 
@@ -81,12 +95,11 @@ export function applyGameplayFinancialConsequences(
     }
   }
 
-  const playoffs = current.competition.playoffs;
   // Playoff qualification / series-win bonuses are league-wide — see
   // processLeaguePlayoffBonuses. Owner module only handles user loss fees
   // and objective cash consequences.
 
-  for (const objective of current.user.objectives) {
+  for (const objective of getActiveOwnedFranchise(current).objectives) {
     if (objective.consequenceApplied || objective.status === "active") {
       continue;
     }
@@ -135,17 +148,15 @@ function markObjectiveConsequenceApplied(
   state: GameState,
   objectiveId: string,
 ): GameState {
-  return {
-    ...state,
-    user: {
-      ...state.user,
-      objectives: state.user.objectives.map((objective) =>
-        objective.id === objectiveId
-          ? { ...objective, consequenceApplied: true }
-          : objective,
-      ),
-    },
-  };
+  const teamId = getActiveOwnerTeamId(state);
+  return withOwnedFranchise(state, teamId, (franchise) => ({
+    ...franchise,
+    objectives: franchise.objectives.map((objective) =>
+      objective.id === objectiveId
+        ? { ...objective, consequenceApplied: true }
+        : objective,
+    ),
+  }));
 }
 
 export function gameResultConsequenceKey(

@@ -24,7 +24,7 @@ describe("ticket revenue", () => {
     });
     const rng = createSeededRng(state.meta.rngState);
     state = bootstrapWorld(state, rng).state;
-    const teamId = state.user.controlledTeamId;
+    const teamId = state.user.activeOwnerTeamId;
     const otherTeamId = (Object.keys(state.world.teams) as string[]).find(
       (id) => id !== teamId,
     )!;
@@ -87,7 +87,7 @@ describe("ticket revenue", () => {
     });
     const rng = createSeededRng(state.meta.rngState);
     state = bootstrapWorld(state, rng).state;
-    const teamId = state.user.controlledTeamId;
+    const teamId = state.user.activeOwnerTeamId;
     const otherTeamId = (Object.keys(state.world.teams) as string[]).find(
       (id) => id !== teamId,
     )!;
@@ -143,7 +143,7 @@ describe("ticket revenue", () => {
     });
     const rng = createSeededRng(state.meta.rngState);
     state = bootstrapWorld(state, rng).state;
-    const teamId = state.user.controlledTeamId;
+    const teamId = state.user.activeOwnerTeamId;
     const otherTeamId = (Object.keys(state.world.teams) as string[]).find(
       (id) => id !== teamId,
     )!;
@@ -194,7 +194,7 @@ describe("ticket revenue", () => {
     });
     const rng = createSeededRng(state.meta.rngState);
     state = bootstrapWorld(state, rng).state;
-    const teamId = state.user.controlledTeamId;
+    const teamId = state.user.activeOwnerTeamId;
     const otherTeamId = (Object.keys(state.world.teams) as string[]).find(
       (id) => id !== teamId,
     )!;
@@ -247,7 +247,7 @@ describe("ticket revenue", () => {
     });
     const rng = createSeededRng(state.meta.rngState);
     state = bootstrapWorld(state, rng).state;
-    const teamId = state.user.controlledTeamId;
+    const teamId = state.user.activeOwnerTeamId;
     const finances = state.business.finances[teamId]!;
     state = {
       ...state,

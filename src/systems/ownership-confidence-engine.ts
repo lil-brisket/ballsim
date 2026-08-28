@@ -16,6 +16,11 @@ import {
 import type { DomainEvent } from "@/domain/events";
 import { systemResult, type SystemResult } from "@/domain/system-result";
 import type { GameState } from "@/state/game-state";
+import {
+  getActiveOwnedFranchise,
+  getActiveOwnerTeamId,
+  withOwnedFranchise,
+} from "@/state/owner-context";
 import { clampOwnerPatience } from "@/systems/owner-philosophy-config";
 import { buildOwnershipExpectations } from "@/systems/ownership-expectations";
 import { evaluateStrategicPosture } from "@/systems/ownership-strategic-posture";
@@ -229,16 +234,13 @@ export function recordOwnershipEvidence(
     return state;
   }
   const ownershipConfidence = applyEvidenceToConfidence(
-    state.user.ownershipConfidence,
+    getActiveOwnedFranchise(state).ownershipConfidence,
     evidence,
   );
-  return {
-    ...state,
-    user: {
-      ...state.user,
-      ownershipConfidence,
-    },
-  };
+  return withOwnedFranchise(state, getActiveOwnerTeamId(state), (franchise) => ({
+    ...franchise,
+    ownershipConfidence,
+  }));
 }
 
 function daysBetween(a: string, b: string): number {
@@ -256,7 +258,7 @@ export function processOwnershipConfidence(
   state: GameState,
 ): OwnershipConfidenceProcessResult {
   const date = state.world.calendar.currentDate;
-  const confidence = state.user.ownershipConfidence;
+  const confidence = getActiveOwnedFranchise(state).ownershipConfidence;
   const lastCheck = confidence.lastPostureCheckOn;
   const events: DomainEvent[] = [];
 
@@ -284,7 +286,7 @@ export function processOwnershipConfidence(
   }
 
   // Modest patience drift from mood only (capped).
-  let ownerPatience = state.user.ownerPatience;
+  let ownerPatience = getActiveOwnedFranchise(state).ownerPatience;
   if (nextConfidence.mood === "concerned") {
     ownerPatience = clampOwnerPatience(ownerPatience - 1);
   } else if (nextConfidence.mood === "displeased") {
@@ -296,14 +298,15 @@ export function processOwnershipConfidence(
     ownerPatience = clampOwnerPatience(ownerPatience + 1);
   }
 
-  let current: GameState = {
-    ...state,
-    user: {
-      ...state.user,
+  let current: GameState = withOwnedFranchise(
+    state,
+    getActiveOwnerTeamId(state),
+    (franchise) => ({
+      ...franchise,
       ownershipConfidence: nextConfidence,
       ownerPatience,
-    },
-  };
+    }),
+  );
 
   const notifs = generateOwnershipConfidenceNotifications(current, {
     previousMood: confidence.mood,
@@ -328,10 +331,10 @@ export function appendOwnershipSeasonNote(state: GameState): GameState {
   const expectations = buildOwnershipExpectations(state);
   const note: OwnershipSeasonNote = {
     seasonYear: state.competition.season.year,
-    mood: state.user.ownershipConfidence.mood,
+    mood: getActiveOwnedFranchise(state).ownershipConfidence.mood,
     mandateSummary: expectations.mandateSummary,
   };
-  const existing = state.user.ownershipConfidence.seasonNotes.filter(
+  const existing = getActiveOwnedFranchise(state).ownershipConfidence.seasonNotes.filter(
     (item) => item.seasonYear !== note.seasonYear,
   );
   const seasonNotes = [...existing, note];
@@ -340,24 +343,21 @@ export function appendOwnershipSeasonNote(state: GameState): GameState {
       ? seasonNotes.slice(seasonNotes.length - OWNERSHIP_SEASON_NOTES_MAX)
       : seasonNotes;
 
-  return {
-    ...state,
-    user: {
-      ...state.user,
-      ownershipConfidence: {
-        ...state.user.ownershipConfidence,
-        seasonNotes: trimmed,
-        lastReversal: state.user.ownershipConfidence.lastReversal
-          ? {
-              ...state.user.ownershipConfidence.lastReversal,
-              acknowledged: true,
-            }
-          : undefined,
-      },
+  return withOwnedFranchise(state, getActiveOwnerTeamId(state), (franchise) => ({
+    ...franchise,
+    ownershipConfidence: {
+      ...franchise.ownershipConfidence,
+      seasonNotes: trimmed,
+      lastReversal: franchise.ownershipConfidence.lastReversal
+        ? {
+            ...franchise.ownershipConfidence.lastReversal,
+            acknowledged: true,
+          }
+        : undefined,
     },
-  };
+  }));
 }
 
 export function confidenceAlignmentScore(state: GameState): number {
-  return state.user.ownershipConfidence.alignmentScore;
+  return getActiveOwnedFranchise(state).ownershipConfidence.alignmentScore;
 }

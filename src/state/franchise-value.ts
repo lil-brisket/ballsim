@@ -50,6 +50,7 @@ import {
   REVENUE_YEAR_WEIGHTS,
 } from "@/state/franchise-value-config";
 import { getFinancialStatement } from "@/systems/team-finances";
+import { getActiveOwnedFranchise } from "@/state/owner-context";
 
 /**
  * Pure derived franchise valuation — never stored as live mutable state.
@@ -175,7 +176,7 @@ export function readAttendanceRealization(
 ): number {
   let fillSum = 0;
   let games = 0;
-  for (const event of state.user.eventLog) {
+  for (const event of getActiveOwnedFranchise(state).eventLog) {
     if (event.type !== "HomeGameDaySettled") {
       continue;
     }

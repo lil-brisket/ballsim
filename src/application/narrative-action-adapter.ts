@@ -14,6 +14,7 @@ import {
   TICKET_PRICE_MIN,
 } from "@/systems/ticket-pricing";
 import { PREMIUM_TICKET_PRICE_MIN } from "@/systems/demand/demand-config";
+import { getActiveOwnedFranchise, withOwnedFranchise } from "@/state/owner-context";
 
 export type NarrativeActionTransition =
   | "acknowledge"
@@ -47,7 +48,7 @@ export const NARRATIVE_ACTION_CATALOG: Record<string, NarrativeActionDefinition>
     reduce_ticket_price: {
       transition: "take_action",
       run: (state) => {
-        const teamId = state.user.controlledTeamId;
+        const teamId = state.user.activeOwnerTeamId;
         const current =
           state.business.franchiseOps[teamId]?.ticketPrice ?? 45;
         const next = Math.max(TICKET_PRICE_MIN, current - TICKET_PRICE_REDUCTION);
@@ -57,7 +58,7 @@ export const NARRATIVE_ACTION_CATALOG: Record<string, NarrativeActionDefinition>
     reduce_premium_ticket_price: {
       transition: "take_action",
       run: (state) => {
-        const teamId = state.user.controlledTeamId;
+        const teamId = state.user.activeOwnerTeamId;
         const current =
           state.business.franchiseOps[teamId]?.premiumTicketPrice ?? 180;
         const next = Math.max(
@@ -70,7 +71,7 @@ export const NARRATIVE_ACTION_CATALOG: Record<string, NarrativeActionDefinition>
     increase_marketing: {
       transition: "take_action",
       run: (state) => {
-        const teamId = state.user.controlledTeamId;
+        const teamId = state.user.activeOwnerTeamId;
         const current =
           state.business.franchiseOps[teamId]?.marketing.budget ?? 0;
         return setMarketingBudget(
@@ -83,7 +84,7 @@ export const NARRATIVE_ACTION_CATALOG: Record<string, NarrativeActionDefinition>
     accept_sponsor_proposal: {
       transition: "resolve",
       run: (state) => {
-        const teamId = state.user.controlledTeamId;
+        const teamId = state.user.activeOwnerTeamId;
         const year = state.competition.season.year;
         const annualValue = 2_500_000;
         const signed = signSponsorship(state, teamId, {
@@ -122,7 +123,7 @@ export function applyNarrativeAction(
   actionId: string,
 ): SystemResult {
   const definition = getNarrativeActionDefinition(actionId);
-  const situation = state.user.narrative.situations.find(
+  const situation = getActiveOwnedFranchise(state).narrative.situations.find(
     (entry) => entry.id === situationId,
   );
   if (!situation) {
@@ -147,7 +148,7 @@ export function applyNarrativeAction(
   }
 
   const date = current.world.calendar.currentDate;
-  const situations = current.user.narrative.situations.map((entry) => {
+  const situations = getActiveOwnedFranchise(current).narrative.situations.map((entry) => {
     if (entry.id !== situationId) {
       return entry;
     }
@@ -167,16 +168,13 @@ export function applyNarrativeAction(
   });
 
   return systemResult(
-    {
-      ...current,
-      user: {
-        ...current.user,
-        narrative: {
-          ...current.user.narrative,
-          situations,
-        },
+    withOwnedFranchise(current, current.user.activeOwnerTeamId, (franchise) => ({
+      ...franchise,
+      narrative: {
+        ...franchise.narrative,
+        situations,
       },
-    },
+    })),
     events,
   );
 }
@@ -185,27 +183,26 @@ export function acknowledgeNarrativeSituationInState(
   state: GameState,
   situationId: NarrativeSituationId,
 ): SystemResult {
-  const situation = state.user.narrative.situations.find(
+  const situation = getActiveOwnedFranchise(state).narrative.situations.find(
     (entry) => entry.id === situationId,
   );
   if (!situation) {
     throw new Error(`Narrative situation "${situationId}" not found.`);
   }
   const date = state.world.calendar.currentDate;
-  return systemResult({
-    ...state,
-    user: {
-      ...state.user,
+  return systemResult(
+    withOwnedFranchise(state, state.user.activeOwnerTeamId, (franchise) => ({
+      ...franchise,
       narrative: {
-        ...state.user.narrative,
-        situations: state.user.narrative.situations.map((entry) =>
+        ...franchise.narrative,
+        situations: franchise.narrative.situations.map((entry) =>
           entry.id === situationId
             ? acknowledgeSituation(entry, date)
             : entry,
         ),
       },
-    },
-  });
+    })),
+  );
 }
 
 export { findOpenSituation };

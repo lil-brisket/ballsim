@@ -20,6 +20,7 @@ import type {
   NarrativeContext,
   ObjectiveGapView,
 } from "@/systems/narrative/types";
+import { getActiveOwnedFranchise, withOwnedFranchise } from "@/state/owner-context";
 
 function mean(values: number[]): number {
   if (values.length === 0) {
@@ -70,7 +71,7 @@ export function buildMonthSnapshot(
   state: GameState,
   monthId: string,
 ): NarrativeMonthSnapshot {
-  const teamId = state.user.controlledTeamId;
+  const teamId = state.user.activeOwnerTeamId;
   const ops = state.business.franchiseOps[teamId];
   const finances = state.business.finances[teamId];
   const standing = state.competition.standings.byTeamId[teamId];
@@ -79,7 +80,7 @@ export function buildMonthSnapshot(
   let attendanceSum = 0;
   let attendanceCount = 0;
   let capacitySum = 0;
-  for (const event of state.user.eventLog) {
+  for (const event of getActiveOwnedFranchise(state).eventLog) {
     if (event.type !== "HomeGameDaySettled") {
       continue;
     }
@@ -131,22 +132,19 @@ export function appendMonthSnapshot(
   state: GameState,
   monthId: string,
 ): GameState {
-  const existing = state.user.narrative.snapshots;
+  const existing = getActiveOwnedFranchise(state).narrative.snapshots;
   if (existing.some((snapshot) => snapshot.monthId === monthId)) {
     return state;
   }
   const snapshot = buildMonthSnapshot(state, monthId);
   const snapshots = [...existing, snapshot].slice(-NARRATIVE_SNAPSHOTS_MAX);
-  return {
-    ...state,
-    user: {
-      ...state.user,
-      narrative: {
-        ...state.user.narrative,
-        snapshots,
-      },
+  return withOwnedFranchise(state, state.user.activeOwnerTeamId, (franchise) => ({
+    ...franchise,
+    narrative: {
+      ...franchise.narrative,
+      snapshots,
     },
-  };
+  }));
 }
 
 function countConsecutiveDecline(
@@ -223,7 +221,7 @@ function buildLeagueRelative(state: GameState, teamId: TeamId): LeagueRelativeVi
   // League mean fill from recent HomeGameDaySettled in eventLog (current month).
   const monthId = getCalendarMonthId(state.world.calendar.currentDate);
   const fillByTeam = new Map<string, { att: number; cap: number }>();
-  for (const event of state.user.eventLog) {
+  for (const event of getActiveOwnedFranchise(state).eventLog) {
     if (event.type !== "HomeGameDaySettled") {
       continue;
     }
@@ -321,10 +319,10 @@ export function buildNarrativeContext(
   state: GameState,
   options: BuildNarrativeContextOptions,
 ): NarrativeContext {
-  const teamId = state.user.controlledTeamId;
+  const teamId = state.user.activeOwnerTeamId;
   const date = state.world.calendar.currentDate;
   const monthId = getCalendarMonthId(date);
-  const snapshots = state.user.narrative.snapshots;
+  const snapshots = getActiveOwnedFranchise(state).narrative.snapshots;
   const latest = snapshots[snapshots.length - 1];
   const prior = snapshots.length >= 2 ? snapshots[snapshots.length - 2] : null;
 
@@ -349,7 +347,7 @@ export function buildNarrativeContext(
     streak?.kind === "W" || streak?.kind === "L" ? streak.kind : "N";
   const streakLength = streak?.length ?? 0;
 
-  const objectives: ObjectiveGapView[] = state.user.objectives.map(
+  const objectives: ObjectiveGapView[] = getActiveOwnedFranchise(state).objectives.map(
     (objective) => {
       const target =
         typeof objective.target === "number" ? objective.target : null;
@@ -376,7 +374,7 @@ export function buildNarrativeContext(
 
   const openDetectorKeys = new Set<string>();
   const openSituationStages = new Map<string, number>();
-  for (const situation of state.user.narrative.situations) {
+  for (const situation of getActiveOwnedFranchise(state).narrative.situations) {
     if (
       situation.status === "active" ||
       situation.status === "acknowledged" ||
@@ -462,9 +460,9 @@ export function buildNarrativeContext(
     priorLeaguePopularity: null,
     openDetectorKeys,
     openSituationStages,
-    cooldowns: state.user.narrative.cooldowns,
+    cooldowns: getActiveOwnedFranchise(state).narrative.cooldowns,
     notificationDedupeKeys: new Set(
-      state.user.notifications.map((notification) => notification.dedupeKey),
+      getActiveOwnedFranchise(state).notifications.map((notification) => notification.dedupeKey),
     ),
   };
 }

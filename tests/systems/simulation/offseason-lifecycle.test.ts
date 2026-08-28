@@ -84,7 +84,7 @@ describe("offseason lifecycle", () => {
 
   it("clears detailed game box scores on new season while preserving franchise history", () => {
     const { state, rng } = enterOffseason();
-    const teamId = state.user.controlledTeamId;
+    const teamId = state.user.activeOwnerTeamId;
     const teamIds = Object.keys(state.world.teams);
     const homeTeamId = teamIds[0]!;
     const awayTeamId = teamIds.find((id) => id !== homeTeamId)!;
@@ -192,7 +192,7 @@ describe("offseason lifecycle", () => {
 
   it("appends exactly one franchise history record during season_finalization", () => {
     const { state, rng } = enterOffseason();
-    const teamId = state.user.controlledTeamId;
+    const teamId = state.user.activeOwnerTeamId;
     const year = state.competition.season.year;
     const seeded = {
       ...state,

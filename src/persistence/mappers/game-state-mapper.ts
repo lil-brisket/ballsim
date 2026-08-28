@@ -113,7 +113,9 @@ const gameStateEnvelopeSchema = z.object({
     .passthrough(),
   user: z
     .object({
-      controlledTeamId: z.unknown(),
+      ownedTeamIds: z.unknown().optional(),
+      activeOwnerTeamId: z.unknown().optional(),
+      controlledTeamId: z.unknown().optional(),
       mode: z.unknown(),
     })
     .passthrough(),
@@ -170,7 +172,54 @@ const MIGRATE_ONE_STEP: Record<number, (state: unknown) => unknown> = {
   39: (state) => migrateV39ToV40(state as GameStateV39),
   40: (state) => migrateV40ToV41(state as GameStateV40),
   41: (state) => migrateV41ToV42(state as GameStateV41),
+  42: (state) => migrateV42ToV43(state as GameStateV42),
 };
+
+function legacyUserRecord(user: unknown): Record<string, unknown> {
+  return user as Record<string, unknown>;
+}
+
+function hasModernOwnershipUser(user: Record<string, unknown>): boolean {
+  return (
+    Array.isArray(user.ownedTeamIds) &&
+    user.ownedTeamIds.length > 0 &&
+    typeof user.ownedTeamIds[0] === "string" &&
+    (user.ownedTeamIds[0] as string).length > 0 &&
+    user.ownedFranchises != null &&
+    typeof user.ownedFranchises === "object" &&
+    typeof user.activeOwnerTeamId === "string" &&
+    (user.activeOwnerTeamId as string).length > 0
+  );
+}
+
+function resolveLegacyControlledTeamId(
+  user: Record<string, unknown>,
+): TeamId | undefined {
+  if (
+    typeof user.controlledTeamId === "string" &&
+    user.controlledTeamId.length > 0
+  ) {
+    return user.controlledTeamId as TeamId;
+  }
+  if (
+    typeof user.activeOwnerTeamId === "string" &&
+    user.activeOwnerTeamId.length > 0
+  ) {
+    return user.activeOwnerTeamId as TeamId;
+  }
+  if (
+    Array.isArray(user.ownedTeamIds) &&
+    typeof user.ownedTeamIds[0] === "string" &&
+    (user.ownedTeamIds[0] as string).length > 0
+  ) {
+    return user.ownedTeamIds[0] as TeamId;
+  }
+  return undefined;
+}
+
+function legacyUserArray<T>(value: unknown): T[] {
+  return Array.isArray(value) ? (value as T[]) : [];
+}
 
 /**
  * Parse → migrate (v1–current) → validate → return GameState.
@@ -1592,11 +1641,15 @@ function migrateV14ToV15(state: GameStateV14): GameStateV15 {
       contracts: state.business.contracts,
       finances,
     },
-    user: {
-      controlledTeamId: state.user.controlledTeamId,
-      mode: state.user.mode,
-      objectives: [],
-    },
+    user: hasModernOwnershipUser(legacyUserRecord(state.user))
+      ? state.user
+      : {
+          controlledTeamId: resolveLegacyControlledTeamId(
+            legacyUserRecord(state.user),
+          ) as TeamId,
+          mode: state.user.mode,
+          objectives: [],
+        },
   };
 }
 
@@ -1888,8 +1941,20 @@ function migrateV21ToV22(state: GameStateV21): GameStateV22 {
     throw new Error("GameState meta.rngState is required for schemaVersion 21.");
   }
 
+  const userRecord = legacyUserRecord(state.user);
+  if (hasModernOwnershipUser(userRecord)) {
+    return {
+      ...state,
+      meta: {
+        ...state.meta,
+        schemaVersion: 22,
+      },
+    } as GameStateV22;
+  }
+
   const seasonYear = state.competition.season.year;
-  const objectives = state.user.objectives.map((objective) => {
+  const rawObjectives = legacyUserArray<OwnerObjectiveV21>(userRecord.objectives);
+  const objectives = rawObjectives.map((objective) => {
     const { completed, seasonYear: existingSeasonYear, ...rest } = objective;
     const nextSeasonYear =
       typeof existingSeasonYear === "number" && Number.isInteger(existingSeasonYear)
@@ -1920,7 +1985,7 @@ function migrateV21ToV22(state: GameStateV21): GameStateV22 {
     competition: state.competition,
     business: state.business,
     user: {
-      controlledTeamId: state.user.controlledTeamId,
+      controlledTeamId: resolveLegacyControlledTeamId(userRecord) as TeamId,
       mode: state.user.mode,
       objectives: objectives as UserSlicePreV26["objectives"],
       notifications: [],
@@ -1966,11 +2031,11 @@ type GameStateV22 = {
   competition: GameState["competition"];
   business: GameStateV23["business"];
   user: {
-    controlledTeamId: GameState["user"]["controlledTeamId"];
+    controlledTeamId: TeamId;
     mode: GameState["user"]["mode"];
     objectives: UserSlicePreV26["objectives"];
-    notifications: GameState["user"]["notifications"];
-    appliedGameplayConsequenceKeys: GameState["user"]["appliedGameplayConsequenceKeys"];
+    notifications: GameState["user"]["ownedFranchises"][string]["notifications"];
+    appliedGameplayConsequenceKeys: GameState["user"]["ownedFranchises"][string]["appliedGameplayConsequenceKeys"];
   };
 };
 
@@ -2090,7 +2155,7 @@ function migrateV23ToV24(state: GameStateV23): GameStateV24 {
 }
 
 type UserSlicePreV26 = {
-  controlledTeamId: GameState["user"]["controlledTeamId"];
+  controlledTeamId: TeamId;
   mode: GameState["user"]["mode"];
   objectives: Array<
     Omit<
@@ -2104,9 +2169,9 @@ type UserSlicePreV26 = {
       baseline?: number;
     }
   >;
-  notifications: GameState["user"]["notifications"];
-  eventLog: GameState["user"]["eventLog"];
-  appliedGameplayConsequenceKeys: GameState["user"]["appliedGameplayConsequenceKeys"];
+  notifications: GameState["user"]["ownedFranchises"][string]["notifications"];
+  eventLog: GameState["user"]["ownedFranchises"][string]["eventLog"];
+  appliedGameplayConsequenceKeys: GameState["user"]["ownedFranchises"][string]["appliedGameplayConsequenceKeys"];
 };
 
 type GameStateV24 = {
@@ -2214,7 +2279,20 @@ function legacyObjectiveMeta(type: OwnerObjectiveType): {
  * Emits literal schemaVersion 26. No RNG.
  */
 function migrateV25ToV26(state: GameStateV25): GameStateV26 {
-  const objectives = state.user.objectives.map((objective) => {
+  const userRecord = legacyUserRecord(state.user);
+  if (hasModernOwnershipUser(userRecord)) {
+    return {
+      ...state,
+      meta: {
+        ...state.meta,
+        schemaVersion: 26,
+      },
+    } as GameStateV26;
+  }
+
+  const objectives = legacyUserArray<
+    UserSlicePreV26["objectives"][number]
+  >(userRecord.objectives).map((objective) => {
     const meta = legacyObjectiveMeta(objective.type);
     return {
       id: objective.id,
@@ -2249,15 +2327,16 @@ function migrateV25ToV26(state: GameStateV25): GameStateV26 {
     competition: state.competition,
     business: state.business,
     user: {
-      controlledTeamId: state.user.controlledTeamId,
+      controlledTeamId: resolveLegacyControlledTeamId(userRecord) as TeamId,
       mode: state.user.mode,
       ownerPhilosophy: DEFAULT_OWNER_PHILOSOPHY,
       ownerPatience: defaultOwnerPatience(DEFAULT_OWNER_PHILOSOPHY),
       objectives,
-      notifications: state.user.notifications,
-      eventLog: state.user.eventLog,
+      notifications: legacyUserArray(userRecord.notifications),
+      eventLog: legacyUserArray(userRecord.eventLog),
       appliedGameplayConsequenceKeys:
-        state.user.appliedGameplayConsequenceKeys,
+        (userRecord.appliedGameplayConsequenceKeys as Record<string, true>) ??
+        {},
     },
   } as GameStateV26;
 }
@@ -2272,7 +2351,7 @@ type GameStateV26 = {
   world: GameState["world"];
   competition: GameState["competition"];
   business: GameState["business"];
-  user: GameState["user"];
+  user: Record<string, any>;
 };
 
 /**
@@ -2344,7 +2423,7 @@ type GameStateV27 = {
   world: GameState["world"];
   competition: GameState["competition"];
   business: GameState["business"];
-  user: GameState["user"];
+  user: Record<string, any>;
 };
 
 
@@ -2448,7 +2527,7 @@ type GameStateV28 = {
     playoffs: GameState["competition"]["playoffs"];
   };
   business: GameState["business"];
-  user: GameState["user"];
+  user: Record<string, any>;
 };
 
 /**
@@ -2552,7 +2631,7 @@ type GameStateV29 = {
   world: GameState["world"];
   competition: GameState["competition"];
   business: GameState["business"];
-  user: Omit<GameState["user"], "narrative">;
+  user: Record<string, any>;
 };
 
 /**
@@ -2560,6 +2639,17 @@ type GameStateV29 = {
  * Emits schemaVersion 30. No RNG.
  */
 function migrateV29ToV30(state: GameStateV29): GameStateV30 {
+  const userRecord = legacyUserRecord(state.user);
+  if (hasModernOwnershipUser(userRecord)) {
+    return {
+      ...state,
+      meta: {
+        ...state.meta,
+        schemaVersion: 30,
+      },
+    };
+  }
+
   return {
     ...state,
     meta: {
@@ -2583,7 +2673,7 @@ type GameStateV30 = {
   world: GameState["world"];
   competition: GameState["competition"];
   business: GameState["business"];
-  user: GameState["user"];
+  user: Record<string, any>;
 };
 
 /**
@@ -2599,7 +2689,7 @@ function migrateV30ToV31(state: GameStateV30): GameState {
       state.business.franchiseHistory[teamId]?.seasons.length ?? 0;
     const inferredStart = Math.max(1, year - Math.max(0, historyLen - 1));
     relocationByTeamId[teamId] = {
-      teamId: teamId as GameState["user"]["controlledTeamId"],
+      teamId: teamId as TeamId,
       stage: existing?.stage ?? "none",
       target: existing?.target ?? null,
       cooldownSeasonsRemaining: existing?.cooldownSeasonsRemaining ?? 0,
@@ -2651,7 +2741,7 @@ function migrateV30ToV31(state: GameStateV30): GameState {
       relocationByTeamId,
       franchiseHistory,
     },
-  };
+  } as unknown as GameState;
 }
 
 type GameStateV31 = {
@@ -2660,7 +2750,7 @@ type GameStateV31 = {
   world: GameState["world"];
   competition: GameState["competition"];
   business: GameState["business"];
-  user: Omit<GameState["user"], "ownershipConfidence">;
+  user: Record<string, any>;
 };
 
 /**
@@ -2741,9 +2831,7 @@ type GameStateV32 = {
   world: GameState["world"];
   competition: GameState["competition"];
   business: GameState["business"];
-  user: Omit<GameState["user"], "ownershipConfidence"> & {
-    ownershipConfidence?: GameState["user"]["ownershipConfidence"];
-  };
+  user: Record<string, any>;
 };
 
 /**
@@ -2751,8 +2839,19 @@ type GameStateV32 = {
  * Emits schemaVersion 33. No RNG.
  */
 function migrateV32ToV33(state: GameStateV32): GameStateV33 {
+  const userRecord = legacyUserRecord(state.user);
+  if (hasModernOwnershipUser(userRecord)) {
+    return {
+      ...state,
+      meta: {
+        ...state.meta,
+        schemaVersion: 33,
+      },
+    };
+  }
+
   const date = state.world.calendar.currentDate;
-  const existing = state.user.ownershipConfidence;
+  const existing = userRecord.ownershipConfidence;
   const ownershipConfidence =
     existing != null && typeof existing === "object"
       ? existing
@@ -2779,7 +2878,7 @@ type GameStateV33 = {
   world: GameState["world"];
   competition: GameState["competition"];
   business: GameState["business"];
-  user: GameState["user"];
+  user: Record<string, any>;
 };
 
 /**
@@ -2855,7 +2954,7 @@ type GameStateV34 = {
   world: GameState["world"];
   competition: GameState["competition"];
   business: Omit<GameState["business"], "gameArchive" | "playerHistory">;
-  user: GameState["user"];
+  user: Record<string, any>;
 };
 
 type GameStateV35 = {
@@ -2869,7 +2968,7 @@ type GameStateV35 = {
     gameArchive?: GameState["business"]["gameArchive"];
     playerHistory?: GameState["business"]["playerHistory"];
   };
-  user: GameState["user"];
+  user: Record<string, any>;
 };
 
 type GameStateV36 = {
@@ -2899,11 +2998,7 @@ type GameStateV36 = {
     playoffs: GameState["competition"]["playoffs"];
   };
   business: GameState["business"];
-  user: Omit<GameState["user"], "explicitDecisions" | "phaseSkips" | "aiAssistState"> & {
-    explicitDecisions?: GameState["user"]["explicitDecisions"];
-    phaseSkips?: GameState["user"]["phaseSkips"];
-    aiAssistState?: GameState["user"]["aiAssistState"];
-  };
+  user: Record<string, any>;
 };
 
 type GameStateV37 = {
@@ -2920,9 +3015,7 @@ type GameStateV37 = {
   world: GameState["world"];
   competition: GameState["competition"];
   business: GameState["business"];
-  user: Omit<GameState["user"], "aiAssistState"> & {
-    aiAssistState?: GameState["user"]["aiAssistState"];
-  };
+  user: Record<string, any>;
 };
 
 type GameStateV38 = {
@@ -2939,13 +3032,7 @@ type GameStateV38 = {
   world: GameState["world"];
   competition: GameState["competition"];
   business: GameState["business"];
-  user: Omit<
-    GameState["user"],
-    "pendingOwnerDecisions" | "ownerDecisionHistory" | "citySelectionConfirmed"
-  > & {
-    pendingOwnerDecisions?: GameState["user"]["pendingOwnerDecisions"];
-    ownerDecisionHistory?: GameState["user"]["ownerDecisionHistory"];
-  };
+  user: Record<string, any>;
 };
 
 type GameStateV39 = {
@@ -2956,13 +3043,7 @@ type GameStateV39 = {
   world: GameState["world"];
   competition: GameState["competition"];
   business: GameState["business"];
-  user: Omit<
-    GameState["user"],
-    "pendingOwnerDecisions" | "ownerDecisionHistory" | "citySelectionConfirmed"
-  > & {
-    pendingOwnerDecisions?: GameState["user"]["pendingOwnerDecisions"];
-    ownerDecisionHistory?: GameState["user"]["ownerDecisionHistory"];
-  };
+  user: Record<string, any>;
 };
 
 type GameStateV40 = {
@@ -2973,9 +3054,7 @@ type GameStateV40 = {
   world: GameState["world"];
   competition: GameState["competition"];
   business: GameState["business"];
-  user: Omit<GameState["user"], "citySelectionConfirmed"> & {
-    citySelectionConfirmed?: boolean;
-  };
+  user: Record<string, any>;
 };
 
 /**
@@ -3129,6 +3208,17 @@ function migrateV36ToV37(state: GameStateV36): GameStateV37 {
  * Cheap mapping: smart_assist → smart preset. No RNG.
  */
 function migrateV37ToV38(state: GameStateV37): GameStateV38 {
+  const userRecord = legacyUserRecord(state.user);
+  if (hasModernOwnershipUser(userRecord)) {
+    return {
+      ...state,
+      meta: {
+        ...state.meta,
+        schemaVersion: 38,
+      },
+    } as GameStateV38;
+  }
+
   const preset = legacyManagementModeToPreset(state.settings.ai.managementMode);
   const assistance = applyPreset(preset);
 
@@ -3148,7 +3238,7 @@ function migrateV37ToV38(state: GameStateV37): GameStateV38 {
     },
     user: {
       ...state.user,
-      aiAssistState: state.user.aiAssistState ?? {
+      aiAssistState: userRecord.aiAssistState ?? {
         resolvedNeeds: {},
         seasonCounters: { ...EMPTY_AI_ASSIST_STATE.seasonCounters },
       },
@@ -3218,7 +3308,7 @@ function migrateV40ToV41(state: GameStateV40): GameStateV41 {
       ...state.user,
       citySelectionConfirmed: state.user.citySelectionConfirmed ?? locked,
     },
-  } as GameStateV41;
+  } as unknown as GameStateV41;
 }
 
 type TeamV41 = {
@@ -3263,16 +3353,32 @@ type GameStateV41 = {
     >;
   };
   business: GameState["business"];
-  user: Omit<GameState["user"], "franchiseIdentityConfirmed"> & {
+  user: {
+    controlledTeamId: string;
+    mode: GameState["user"]["mode"];
     citySelectionConfirmed: boolean;
     franchiseIdentityConfirmed?: boolean;
+    ownerStartSeasonYear: number;
+    ownerPhilosophy: string;
+    ownerPatience: number;
+    ownershipConfidence: unknown;
+    objectives: unknown[];
+    notifications: unknown[];
+    eventLog: unknown[];
+    appliedGameplayConsequenceKeys: Record<string, true>;
+    explicitDecisions: Record<string, true>;
+    phaseSkips: unknown[];
+    aiAssistState: unknown;
+    pendingOwnerDecisions: unknown[];
+    ownerDecisionHistory: unknown[];
+    narrative: unknown;
   };
 };
 
 /**
  * Deterministic v41 → v42: team branding + franchise identity onboarding flag.
  */
-function migrateV41ToV42(state: GameStateV41): GameState {
+function migrateV41ToV42(state: GameStateV41): GameStateV42 {
   const usedPaletteLogoKeys = new Set<string>();
   const teams: GameState["world"]["teams"] = {};
   for (const [teamId, team] of Object.entries(state.world.teams)) {
@@ -3328,6 +3434,214 @@ function migrateV41ToV42(state: GameStateV41): GameState {
       franchiseIdentityConfirmed:
         state.user.franchiseIdentityConfirmed ??
         state.user.citySelectionConfirmed === true,
+    },
+  } as unknown as GameStateV42;
+}
+
+type GameStateV42 = {
+  meta: Omit<GameState["meta"], "schemaVersion"> & {
+    schemaVersion: 42;
+  };
+  settings: GameState["settings"];
+  world: GameState["world"];
+  competition: GameState["competition"];
+  business: GameState["business"];
+  user: {
+    controlledTeamId: string;
+    mode: GameState["user"]["mode"];
+    citySelectionConfirmed: boolean;
+    franchiseIdentityConfirmed: boolean;
+    ownerStartSeasonYear: number;
+    ownerPhilosophy: GameState["user"]["ownedFranchises"][string]["ownerPhilosophy"];
+    ownerPatience: number;
+    ownershipConfidence: GameState["user"]["ownedFranchises"][string]["ownershipConfidence"];
+    objectives: GameState["user"]["ownedFranchises"][string]["objectives"];
+    notifications: GameState["user"]["ownedFranchises"][string]["notifications"];
+    eventLog: GameState["user"]["ownedFranchises"][string]["eventLog"];
+    appliedGameplayConsequenceKeys: Record<string, true>;
+    explicitDecisions: Record<string, true>;
+    phaseSkips: GameState["user"]["ownedFranchises"][string]["phaseSkips"];
+    aiAssistState: GameState["user"]["ownedFranchises"][string]["aiAssistState"];
+    pendingOwnerDecisions: Array<{
+      id: string;
+      type: "trade_offer";
+      createdOn: string;
+      payload: {
+        offeringTeamId: string;
+        userTeamId: string;
+        proposal: unknown;
+        fingerprint: string;
+      };
+      blockingLevel?: "blocking" | "non_blocking";
+      primaryTeamId?: string;
+      participantTeamIds?: string[];
+    }>;
+    ownerDecisionHistory: Array<{
+      id: string;
+      type: "trade_offer";
+      status: "accepted" | "declined" | "delegated";
+      decisionSource: "owner" | "owner_ai";
+      createdOn: string;
+      resolvedOn: string;
+      fingerprint: string;
+      expiresOn?: string;
+      payload: {
+        offeringTeamId: string;
+        userTeamId: string;
+        proposal: unknown;
+        fingerprint: string;
+      };
+      blockingLevel?: "blocking" | "non_blocking";
+      primaryTeamId?: string;
+      participantTeamIds?: string[];
+    }>;
+    narrative: GameState["user"]["ownedFranchises"][string]["narrative"];
+  };
+};
+
+/**
+ * Deterministic v42 → v43: multi-team ownership.
+ * Moves owner fields into ownedFranchises[controlledTeamId].
+ * Pending decisions stay on UserSlice with participant metadata.
+ */
+function migrateV42ToV43(state: GameStateV42): GameState {
+  const userRecord = legacyUserRecord(state.user);
+  if (hasModernOwnershipUser(userRecord)) {
+    return {
+      ...state,
+      meta: {
+        ...state.meta,
+        schemaVersion: 43,
+      },
+    } as GameState;
+  }
+
+  const controlledTeamId = resolveLegacyControlledTeamId(userRecord) as TeamId;
+  const aiAssistance = {
+    ...state.settings.ai.assistance,
+  };
+  const managementPreset = state.settings.ai.managementPreset;
+
+  const franchise: GameState["user"]["ownedFranchises"][string] = {
+    ownerPhilosophy:
+      (userRecord.ownerPhilosophy as GameState["user"]["ownedFranchises"][string]["ownerPhilosophy"]) ??
+      DEFAULT_OWNER_PHILOSOPHY,
+    ownerPatience:
+      (userRecord.ownerPatience as number | undefined) ??
+      defaultOwnerPatience(DEFAULT_OWNER_PHILOSOPHY),
+    ownershipConfidence:
+      (userRecord.ownershipConfidence as GameState["user"]["ownedFranchises"][string]["ownershipConfidence"]) ??
+      createDefaultOwnershipConfidence(state.world.calendar.currentDate),
+    objectives: legacyUserArray(userRecord.objectives),
+    narrative:
+      (userRecord.narrative as GameState["user"]["ownedFranchises"][string]["narrative"]) ?? {
+        situations: [],
+        snapshots: [],
+        cooldowns: {},
+      },
+    notifications: legacyUserArray(userRecord.notifications),
+    eventLog: legacyUserArray(userRecord.eventLog),
+    appliedGameplayConsequenceKeys:
+      (userRecord.appliedGameplayConsequenceKeys as Record<string, true>) ?? {},
+    explicitDecisions:
+      (userRecord.explicitDecisions as Record<string, true>) ?? {},
+    phaseSkips: legacyUserArray(userRecord.phaseSkips),
+    aiAssistance,
+    managementPreset,
+    aiAssistState:
+      (userRecord.aiAssistState as GameState["user"]["ownedFranchises"][string]["aiAssistState"]) ?? {
+        resolvedNeeds: {},
+        seasonCounters: { ...EMPTY_AI_ASSIST_STATE.seasonCounters },
+      },
+    citySelectionConfirmed: Boolean(userRecord.citySelectionConfirmed),
+    franchiseIdentityConfirmed: Boolean(userRecord.franchiseIdentityConfirmed),
+    ownerStartSeasonYear:
+      (userRecord.ownerStartSeasonYear as number | undefined) ??
+      state.competition.season.year,
+  };
+
+  const pendingOwnerDecisions: GameState["user"]["pendingOwnerDecisions"] =
+    legacyUserArray(userRecord.pendingOwnerDecisions).map((decision) => {
+      const userTeamId = decision.payload.userTeamId as TeamId;
+      const offeringTeamId = decision.payload.offeringTeamId as TeamId;
+      const primaryTeamId =
+        (decision.primaryTeamId as TeamId | undefined) ?? userTeamId;
+      const participantTeamIds = decision.participantTeamIds
+        ? (decision.participantTeamIds as TeamId[])
+        : ([userTeamId, offeringTeamId].filter(
+            (id, index, arr) => arr.indexOf(id) === index,
+          ) as TeamId[]);
+      if (!participantTeamIds.includes(primaryTeamId)) {
+        participantTeamIds.unshift(primaryTeamId);
+      }
+      return {
+        id: decision.id as GameState["user"]["pendingOwnerDecisions"][number]["id"],
+        type: "trade_offer" as const,
+        createdOn: decision.createdOn,
+        blockingLevel: decision.blockingLevel ?? "blocking",
+        primaryTeamId,
+        participantTeamIds,
+        payload: {
+          offeringTeamId,
+          userTeamId,
+          proposal: decision.payload.proposal as GameState["user"]["pendingOwnerDecisions"][number]["payload"]["proposal"],
+          fingerprint: decision.payload.fingerprint,
+        },
+      };
+    });
+
+  const ownerDecisionHistory: GameState["user"]["ownerDecisionHistory"] =
+    legacyUserArray(userRecord.ownerDecisionHistory).map((record) => {
+      const userTeamId = record.payload.userTeamId as TeamId;
+      const offeringTeamId = record.payload.offeringTeamId as TeamId;
+      const primaryTeamId =
+        (record.primaryTeamId as TeamId | undefined) ?? userTeamId;
+      const participantTeamIds = record.participantTeamIds
+        ? (record.participantTeamIds as TeamId[])
+        : ([userTeamId, offeringTeamId].filter(
+            (id, index, arr) => arr.indexOf(id) === index,
+          ) as TeamId[]);
+      if (!participantTeamIds.includes(primaryTeamId)) {
+        participantTeamIds.unshift(primaryTeamId);
+      }
+      return {
+        id: record.id as GameState["user"]["ownerDecisionHistory"][number]["id"],
+        type: "trade_offer" as const,
+        status: record.status,
+        decisionSource: record.decisionSource,
+        createdOn: record.createdOn,
+        resolvedOn: record.resolvedOn,
+        fingerprint: record.fingerprint,
+        blockingLevel: record.blockingLevel ?? "blocking",
+        primaryTeamId,
+        participantTeamIds,
+        ...(record.expiresOn !== undefined
+          ? { expiresOn: record.expiresOn }
+          : {}),
+        payload: {
+          offeringTeamId,
+          userTeamId,
+          proposal: record.payload.proposal as GameState["user"]["ownerDecisionHistory"][number]["payload"]["proposal"],
+          fingerprint: record.payload.fingerprint,
+        },
+      };
+    });
+
+  return {
+    ...state,
+    meta: {
+      ...state.meta,
+      schemaVersion: 43,
+    },
+    user: {
+      ownedTeamIds: [controlledTeamId],
+      activeOwnerTeamId: controlledTeamId,
+      ownedFranchises: {
+        [controlledTeamId]: franchise,
+      },
+      mode: state.user.mode,
+      pendingOwnerDecisions,
+      ownerDecisionHistory,
     },
   };
 }

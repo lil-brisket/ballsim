@@ -18,6 +18,7 @@ import {
 } from "@/domain/entities/team-branding";
 import { createSeededRng } from "@/domain/rng";
 import { TEST_RNG_SEED } from "../helpers/determinism";
+import { getActiveOwnedFranchise } from "@/state/owner-context";
 
 function createStateAfterCity() {
   const settings = cloneGameSettings(CBL_GAME_SETTINGS);
@@ -38,7 +39,7 @@ function createStateAfterCity() {
 describe("applyOwnerFranchiseBranding", () => {
   it("confirms customized nickname and branding via paletteId fallback", () => {
     const state = createStateAfterCity();
-    const teamId = state.user.controlledTeamId;
+    const teamId = state.user.activeOwnerTeamId;
     const result = applyOwnerFranchiseBranding(state, {
       nickname: "Titans",
       paletteId: "crimson_gold",
@@ -52,12 +53,12 @@ describe("applyOwnerFranchiseBranding", () => {
     expect(team.name).toBe("Titans");
     expect(team.branding.logoId).toBe("wolf");
     expect(resolvePaletteIdFromBranding(team.branding)).toBe("crimson_gold");
-    expect(result.state.user.franchiseIdentityConfirmed).toBe(true);
+    expect(getActiveOwnedFranchise(result.state).franchiseIdentityConfirmed).toBe(true);
   });
 
   it("persists explicit hex colours when all three are present", () => {
     const state = createStateAfterCity();
-    const teamId = state.user.controlledTeamId;
+    const teamId = state.user.activeOwnerTeamId;
     const result = applyOwnerFranchiseBranding(state, {
       nickname: "Titans",
       logoId: "shield",
@@ -80,7 +81,7 @@ describe("applyOwnerFranchiseBranding", () => {
 
   it("persists a modified preset without reconstructing the original palette", () => {
     const state = createStateAfterCity();
-    const teamId = state.user.controlledTeamId;
+    const teamId = state.user.activeOwnerTeamId;
     const base = brandingFromPalette("royal_purple", "crown");
     const result = applyOwnerFranchiseBranding(state, {
       nickname: "Royals",
@@ -189,7 +190,7 @@ describe("randomizeTeamIdentityDraft", () => {
 describe("identity fingerprint stability after branding", () => {
   it("fingerprint reflects confirmed branding", () => {
     const state = createStateAfterCity();
-    const teamId = state.user.controlledTeamId;
+    const teamId = state.user.activeOwnerTeamId;
     const result = applyOwnerFranchiseBranding(state, {
       nickname: "Royals",
       paletteId: "royal_purple",

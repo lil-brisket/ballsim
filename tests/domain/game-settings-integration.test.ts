@@ -337,7 +337,7 @@ describe("financial toggles", () => {
         },
       },
     });
-    const teamId = state.user.controlledTeamId;
+    const teamId = state.user.activeOwnerTeamId;
     const year = state.competition.season.year;
     const freeAgentId = asPlayerId("fa_over_cap");
     const offerId = asOfferId("offer_over_cap");

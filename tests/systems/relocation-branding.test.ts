@@ -7,7 +7,7 @@ import { RELOCATION_MIN_SEASONS_IN_CITY } from "@/systems/relocation-config";
 import { brandingFromPalette } from "@/domain/entities/team-branding";
 
 function withTransition(state: GameState): GameState {
-  const teamId = state.user.controlledTeamId;
+  const teamId = state.user.activeOwnerTeamId;
   const year = state.competition.season.year;
   const process = state.business.relocationByTeamId[teamId]!;
   return {
@@ -36,7 +36,7 @@ function withTransition(state: GameState): GameState {
 describe("relocation preserves franchise identity", () => {
   it("keeps nickname and branding when city changes", () => {
     let state = createTestGameState({ saveId: "reloc_brand" });
-    const teamId = state.user.controlledTeamId;
+    const teamId = state.user.activeOwnerTeamId;
     const customBranding = brandingFromPalette("royal_purple", "crown");
     state = {
       ...state,

@@ -1,3 +1,4 @@
+import { getActiveOwnedFranchise, withOwnedFranchise } from "@/state/owner-context";
 /**
  * Owner franchise identity confirmation (new-game branding step).
  *
@@ -61,13 +62,13 @@ export function applyOwnerFranchiseBranding(
   state: GameState,
   input: ApplyOwnerFranchiseBrandingInput,
 ): ApplyOwnerFranchiseBrandingResult {
-  if (!state.user.citySelectionConfirmed) {
+  if (!getActiveOwnedFranchise(state).citySelectionConfirmed) {
     return {
       ok: false,
       error: "Choose a city before confirming team identity.",
     };
   }
-  if (state.user.franchiseIdentityConfirmed) {
+  if (getActiveOwnedFranchise(state).franchiseIdentityConfirmed) {
     return {
       ok: false,
       error: "Franchise identity is already confirmed for this save.",
@@ -85,7 +86,7 @@ export function applyOwnerFranchiseBranding(
     return { ok: false, error: `Unknown logo "${input.logoId}".` };
   }
 
-  const teamId = state.user.controlledTeamId;
+  const teamId = state.user.activeOwnerTeamId;
   const team = state.world.teams[teamId];
   if (!team) {
     return {
@@ -143,24 +144,27 @@ export function applyOwnerFranchiseBranding(
 
   return {
     ok: true,
-    state: {
-      ...state,
-      world: {
-        ...state.world,
-        teams: {
-          ...state.world.teams,
-          [teamId]: {
-            ...team,
-            name: nick.value,
-            branding,
+    state: withOwnedFranchise(
+      {
+        ...state,
+        world: {
+          ...state.world,
+          teams: {
+            ...state.world.teams,
+            [teamId]: {
+              ...team,
+              name: nick.value,
+              branding,
+            },
           },
         },
       },
-      user: {
-        ...state.user,
+      teamId,
+      (franchise) => ({
+        ...franchise,
         franchiseIdentityConfirmed: true,
-      },
-    },
+      }),
+    ),
   };
 }
 

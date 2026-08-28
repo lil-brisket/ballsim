@@ -6,6 +6,7 @@ import {
 } from "@/persistence/mappers/game-state-mapper";
 import { validateGameState } from "@/persistence/validate-game-state";
 import { GAME_STATE_SCHEMA_VERSION } from "@/state/game-state";
+import { getActiveOwnedFranchise } from "@/state/owner-context";
 
 describe("v32 → v33 migration", () => {
   it("adds ownershipConfidence defaults and validates", () => {
@@ -23,15 +24,15 @@ describe("v32 → v33 migration", () => {
     const loaded = deserializeGameState(JSON.stringify(parsed));
     expect(loaded.meta.schemaVersion).toBe(GAME_STATE_SCHEMA_VERSION);
     expect(GAME_STATE_SCHEMA_VERSION).toBe(42);
-    expect(loaded.user.ownershipConfidence).toBeDefined();
-    expect(loaded.user.ownershipConfidence.mood).toBe("supportive");
-    expect(loaded.user.ownershipConfidence.recentEvidence).toEqual([]);
-    expect(loaded.user.ownershipConfidence.seasonNotes).toEqual([]);
+    expect(getActiveOwnedFranchise(loaded).ownershipConfidence).toBeDefined();
+    expect(getActiveOwnedFranchise(loaded).ownershipConfidence.mood).toBe("supportive");
+    expect(getActiveOwnedFranchise(loaded).ownershipConfidence.recentEvidence).toEqual([]);
+    expect(getActiveOwnedFranchise(loaded).ownershipConfidence.seasonNotes).toEqual([]);
     expect(() => validateGameState(loaded)).not.toThrow();
 
     const roundTrip = deserializeGameState(serializeGameState(loaded));
-    expect(roundTrip.user.ownershipConfidence.mood).toBe(
-      loaded.user.ownershipConfidence.mood,
+    expect(getActiveOwnedFranchise(roundTrip).ownershipConfidence.mood).toBe(
+      getActiveOwnedFranchise(loaded).ownershipConfidence.mood,
     );
   });
 });

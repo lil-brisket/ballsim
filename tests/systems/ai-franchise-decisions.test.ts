@@ -58,7 +58,7 @@ describe("AI franchise decisions (owner ops)", () => {
         },
       },
     };
-    const userId = state.user.controlledTeamId;
+    const userId = state.user.activeOwnerTeamId;
     const before = structuredClone(state.business.franchiseOps[userId]);
     const result = runAiFranchiseDecisions(state, rng);
     expect(result.state.business.franchiseOps[userId]).toEqual(before);

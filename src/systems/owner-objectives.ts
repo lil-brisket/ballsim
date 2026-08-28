@@ -45,6 +45,10 @@ import {
 } from "@/systems/owner-philosophy-config";
 import { getFinancialStatement, getNetIncome } from "@/systems/team-finances";
 import { getTeamPayroll } from "@/systems/salary-cap";
+import {
+  getActiveOwnedFranchise,
+  withOwnedFranchise,
+} from "@/state/owner-context";
 
 /**
  * Creates mandate objectives for the controlled team when gaps exist.
@@ -52,11 +56,11 @@ import { getTeamPayroll } from "@/systems/salary-cap";
  */
 export function generateOwnerObjectives(state: GameState): SystemResult {
   const seasonYear = state.competition.season.year;
-  const teamId = state.user.controlledTeamId;
-  const profile = getOwnerPhilosophyProfile(state.user.ownerPhilosophy);
+  const teamId = state.user.activeOwnerTeamId;
+  const profile = getOwnerPhilosophyProfile(getActiveOwnedFranchise(state).ownerPhilosophy);
   const generated: OwnerObjective[] = [];
 
-  const hasSeasonalForYear = state.user.objectives.some(
+  const hasSeasonalForYear = getActiveOwnedFranchise(state).objectives.some(
     (objective) =>
       objective.lifecycle === "seasonal" &&
       objective.seasonYear === seasonYear,
@@ -68,7 +72,7 @@ export function generateOwnerObjectives(state: GameState): SystemResult {
     );
   }
 
-  const hasLongTermActive = state.user.objectives.some(
+  const hasLongTermActive = getActiveOwnedFranchise(state).objectives.some(
     (objective) =>
       (objective.lifecycle === "career" ||
         objective.lifecycle === "multi_season" ||
@@ -80,14 +84,14 @@ export function generateOwnerObjectives(state: GameState): SystemResult {
     const longTerm = buildLongTermObjective(state, teamId, seasonYear, profile);
     if (
       longTerm &&
-      !state.user.objectives.some((objective) => objective.id === longTerm.id) &&
+      !getActiveOwnedFranchise(state).objectives.some((objective) => objective.id === longTerm.id) &&
       !generated.some((objective) => objective.id === longTerm.id)
     ) {
       generated.push(longTerm);
     }
   }
 
-  const hasOpenMilestone = state.user.objectives.some(
+  const hasOpenMilestone = getActiveOwnedFranchise(state).objectives.some(
     (objective) =>
       objective.lifecycle === "milestone" && objective.status === "active",
   );
@@ -95,7 +99,7 @@ export function generateOwnerObjectives(state: GameState): SystemResult {
     const milestone = buildMilestoneObjective(state, teamId, seasonYear);
     if (
       milestone &&
-      !state.user.objectives.some((objective) => objective.id === milestone.id) &&
+      !getActiveOwnedFranchise(state).objectives.some((objective) => objective.id === milestone.id) &&
       !generated.some((objective) => objective.id === milestone.id)
     ) {
       generated.push(milestone);
@@ -106,13 +110,12 @@ export function generateOwnerObjectives(state: GameState): SystemResult {
     return systemResult(state);
   }
 
-  return systemResult({
-    ...state,
-    user: {
-      ...state.user,
-      objectives: [...state.user.objectives, ...generated],
-    },
-  });
+  return systemResult(
+    withOwnedFranchise(state, teamId, (franchise) => ({
+      ...franchise,
+      objectives: [...franchise.objectives, ...generated],
+    })),
+  );
 }
 
 /**
@@ -126,14 +129,14 @@ export function evaluateOwnerObjectives(state: GameState): SystemResult {
   const generated = generateOwnerObjectives(current);
   current = generated.state;
 
-  const teamId = current.user.controlledTeamId;
+  const teamId = current.user.activeOwnerTeamId;
   const seasonYear = current.competition.season.year;
-  const previous = current.user.objectives;
+  const previous = getActiveOwnedFranchise(current).objectives;
   const nextObjectives = previous.map((objective) =>
     evaluateOne(objective, current, teamId, seasonYear),
   );
 
-  let ownerPatience = current.user.ownerPatience;
+  let ownerPatience = getActiveOwnedFranchise(current).ownerPatience;
   for (let index = 0; index < nextObjectives.length; index += 1) {
     const before = previous[index]!;
     const after = nextObjectives[index]!;
@@ -145,19 +148,18 @@ export function evaluateOwnerObjectives(state: GameState): SystemResult {
   const objectivesChanged = nextObjectives.some(
     (objective, index) => objective !== previous[index],
   );
-  const patienceChanged = ownerPatience !== current.user.ownerPatience;
+  const patienceChanged = ownerPatience !== getActiveOwnedFranchise(current).ownerPatience;
   if (!objectivesChanged && !patienceChanged) {
     return systemResult(current);
   }
 
-  return systemResult({
-    ...current,
-    user: {
-      ...current.user,
+  return systemResult(
+    withOwnedFranchise(current, teamId, (franchise) => ({
+      ...franchise,
       objectives: nextObjectives,
       ownerPatience: clampOwnerPatience(ownerPatience),
-    },
-  });
+    })),
+  );
 }
 
 /**
@@ -396,7 +398,7 @@ function buildMilestoneObjective(
     state.business.franchiseOps[teamId]?.facilities.arena.level ?? 1;
 
   const completedMilestoneTypes = new Set(
-    state.user.objectives
+    getActiveOwnedFranchise(state).objectives
       .filter(
         (objective) =>
           objective.lifecycle === "milestone" &&
@@ -805,7 +807,7 @@ function winTargetForProfile(
     }
   }
 
-  if (state.user.ownerPatience < OWNER_PATIENCE_TIGHTEN_THRESHOLD) {
+  if (getActiveOwnedFranchise(state).ownerPatience < OWNER_PATIENCE_TIGHTEN_THRESHOLD) {
     target = Math.round(target * OWNER_PATIENCE_TIGHTEN_WIN_FACTOR);
   }
   return target;

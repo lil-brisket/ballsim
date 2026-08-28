@@ -8,6 +8,7 @@ import {
 import { createInitialGameState } from "@/state/create-initial-state";
 import { listCitiesForTeamPick } from "@/state/selectors";
 import { TEST_RNG_SEED } from "../helpers/determinism";
+import { getActiveOwnedFranchise } from "@/state/owner-context";
 
 function createNaState() {
   const settings = cloneGameSettings(CBL_GAME_SETTINGS);
@@ -46,7 +47,7 @@ describe("applyOwnerCitySelection", () => {
   it("relocates the placeholder into a city that already has a team", () => {
     const state = createNaState();
     const target = otherTeamCity(state);
-    const placeholderId = state.user.controlledTeamId;
+    const placeholderId = state.user.activeOwnerTeamId;
     const placeholderCity = state.world.teams[placeholderId]!.city;
     const targetBefore = { ...state.world.teams[target.teamId]! };
 
@@ -56,8 +57,8 @@ describe("applyOwnerCitySelection", () => {
       return;
     }
 
-    expect(result.state.user.controlledTeamId).toBe(placeholderId);
-    expect(result.state.user.citySelectionConfirmed).toBe(true);
+    expect(result.state.user.activeOwnerTeamId).toBe(placeholderId);
+    expect(getActiveOwnedFranchise(result.state).citySelectionConfirmed).toBe(true);
     expect(result.state.world.teams[placeholderId]!.city).toBe(target.city);
     expect(result.state.world.teams[target.teamId]!.city).toBe(placeholderCity);
     expect(result.state.world.teams[target.teamId]!.name).toBe(targetBefore.name);
@@ -67,7 +68,7 @@ describe("applyOwnerCitySelection", () => {
     const state = createNaState();
     const cities = listCitiesForTeamPick(state);
     const available = openCity(state);
-    const placeholderId = state.user.controlledTeamId;
+    const placeholderId = state.user.activeOwnerTeamId;
     const otherIds = Object.keys(state.world.teams).filter(
       (id) => id !== placeholderId,
     );
@@ -86,8 +87,8 @@ describe("applyOwnerCitySelection", () => {
       return;
     }
 
-    expect(result.state.user.controlledTeamId).toBe(placeholderId);
-    expect(result.state.user.citySelectionConfirmed).toBe(true);
+    expect(result.state.user.activeOwnerTeamId).toBe(placeholderId);
+    expect(getActiveOwnedFranchise(result.state).citySelectionConfirmed).toBe(true);
     expect(result.state.world.teams[placeholderId]!.city).toBe(available.city);
     expect(result.state.world.teams[placeholderId]!.abbreviation).toBe(
       expectedAbbr,
@@ -150,7 +151,7 @@ describe("applyOwnerCitySelection", () => {
   it("preserves generated nickname when selecting a city", () => {
     const state = createNaState();
     const available = openCity(state);
-    const placeholderId = state.user.controlledTeamId;
+    const placeholderId = state.user.activeOwnerTeamId;
     const beforeName = state.world.teams[placeholderId]!.name;
     const beforeBranding = state.world.teams[placeholderId]!.branding;
     const result = applyOwnerCitySelection(state, available.city);
@@ -163,13 +164,13 @@ describe("applyOwnerCitySelection", () => {
     expect(result.state.world.teams[placeholderId]!.branding).toEqual(
       beforeBranding,
     );
-    expect(result.state.user.franchiseIdentityConfirmed).toBe(false);
+    expect(getActiveOwnedFranchise(result.state).franchiseIdentityConfirmed).toBe(false);
   });
 
   it("preserves branding when taking a city that already has a team", () => {
     const state = createNaState();
     const target = otherTeamCity(state);
-    const placeholderId = state.user.controlledTeamId;
+    const placeholderId = state.user.activeOwnerTeamId;
     const beforeName = state.world.teams[placeholderId]!.name;
     const beforeBranding = state.world.teams[placeholderId]!.branding;
     const result = applyOwnerCitySelection(state, target.city);
@@ -189,7 +190,7 @@ function otherTeamCity(state: ReturnType<typeof createNaState>): {
   teamId: string;
   city: string;
 } {
-  const placeholderId = state.user.controlledTeamId;
+  const placeholderId = state.user.activeOwnerTeamId;
   const other = Object.values(state.world.teams).find(
     (team) => team.id !== placeholderId,
   )!;

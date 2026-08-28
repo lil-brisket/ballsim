@@ -14,6 +14,7 @@ import {
 import { objectiveAppliesCashConsequence } from "@/systems/owner-objectives-config";
 import { getNetIncome, getFinancialStatement } from "@/systems/team-finances";
 import { getTeamPayroll } from "@/systems/salary-cap";
+import { getActiveOwnedFranchise } from "@/state/owner-context";
 
 export type OwnerObjectiveDefinition = {
   type: OwnerObjectiveType;
@@ -226,8 +227,8 @@ function readLastAttendanceFillRate(
   teamId: TeamId,
 ): number | null {
   const teamIdStr = String(teamId);
-  for (let i = state.user.eventLog.length - 1; i >= 0; i -= 1) {
-    const event = state.user.eventLog[i]!;
+  for (let i = getActiveOwnedFranchise(state).eventLog.length - 1; i >= 0; i -= 1) {
+    const event = getActiveOwnedFranchise(state).eventLog[i]!;
     if (
       event.type === "HomeGameDaySettled" &&
       String(event.payload.teamId) === teamIdStr

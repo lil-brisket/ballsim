@@ -13,6 +13,9 @@ export type OwnerDecisionStatus = "accepted" | "declined" | "delegated";
 
 export type OwnerDecisionSource = "owner" | "owner_ai";
 
+/** Whether the decision pauses simulation advance. */
+export type OwnerDecisionBlockingLevel = "blocking" | "non_blocking";
+
 export type TradeOfferDecisionPayload = {
   offeringTeamId: TeamId;
   userTeamId: TeamId;
@@ -25,6 +28,12 @@ export type PendingOwnerDecision = {
   id: OwnerDecisionId;
   type: "trade_offer";
   createdOn: string;
+  /** Whether this decision pauses simulation advance. */
+  blockingLevel: OwnerDecisionBlockingLevel;
+  /** Primary franchise this decision is surfaced under / initiated for. */
+  primaryTeamId: TeamId;
+  /** All franchises involved (includes primaryTeamId). */
+  participantTeamIds: TeamId[];
   payload: TradeOfferDecisionPayload;
 };
 
@@ -36,6 +45,9 @@ export type OwnerDecisionRecord = {
   createdOn: string;
   resolvedOn: string;
   fingerprint: string;
+  blockingLevel: OwnerDecisionBlockingLevel;
+  primaryTeamId: TeamId;
+  participantTeamIds: TeamId[];
   /** Present for declines — blocks matching fingerprints until this date. */
   expiresOn?: string;
   payload: TradeOfferDecisionPayload;
@@ -53,8 +65,19 @@ export function getActiveOwnerDecision(
   return user.pendingOwnerDecisions[0];
 }
 
+/** True when any pending decision has blockingLevel === "blocking". */
+export function hasBlockingOwnerDecision(user: UserSliceRef): boolean {
+  return user.pendingOwnerDecisions.some(
+    (decision) => decision.blockingLevel === "blocking",
+  );
+}
+
+/**
+ * @deprecated Prefer {@link hasBlockingOwnerDecision}. Kept for call-site migration.
+ * True when any pending decision exists (legacy single-team pause semantics).
+ */
 export function hasActiveOwnerDecision(user: UserSliceRef): boolean {
-  return user.pendingOwnerDecisions.length > 0;
+  return hasBlockingOwnerDecision(user);
 }
 
 export function getPendingTradeOffers(
@@ -62,6 +85,24 @@ export function getPendingTradeOffers(
 ): PendingOwnerDecision[] {
   return user.pendingOwnerDecisions.filter(
     (decision) => decision.type === "trade_offer",
+  );
+}
+
+/** Pending decisions that involve the given franchise (no duplication). */
+export function getPendingDecisionsForTeam(
+  user: UserSliceRef,
+  teamId: TeamId,
+): PendingOwnerDecision[] {
+  return user.pendingOwnerDecisions.filter((decision) =>
+    decision.participantTeamIds.includes(teamId),
+  );
+}
+
+export function getBlockingOwnerDecisions(
+  user: UserSliceRef,
+): PendingOwnerDecision[] {
+  return user.pendingOwnerDecisions.filter(
+    (decision) => decision.blockingLevel === "blocking",
   );
 }
 

@@ -26,7 +26,7 @@ describe("facilities", () => {
 
   it("startFacilityUpgrade deducts cash and sets upgrade weeks", () => {
     const state = bootstrapped();
-    const teamId = state.user.controlledTeamId;
+    const teamId = state.user.activeOwnerTeamId;
     const cashBefore = state.business.finances[teamId]!.cash;
     const result = startFacilityUpgrade(state, teamId, "practice");
     const after = result.state.business.finances[teamId]!.cash;
@@ -42,7 +42,7 @@ describe("facilities", () => {
 
   it("processWeeklyFacilityUpgrades completes after remaining weeks", () => {
     let state = bootstrapped();
-    const teamId = state.user.controlledTeamId;
+    const teamId = state.user.activeOwnerTeamId;
     state = startFacilityUpgrade(state, teamId, "medical").state;
     for (let i = 0; i < FACILITY_UPGRADE_WEEKS; i += 1) {
       state = processWeeklyFacilityUpgrades(state).state;
@@ -54,7 +54,7 @@ describe("facilities", () => {
 
   it("arenaCapacity and development multiplier derive from levels", () => {
     const state = bootstrapped();
-    const teamId = state.user.controlledTeamId;
+    const teamId = state.user.activeOwnerTeamId;
     expect(arenaCapacity(state, teamId)).toBeGreaterThan(10_000);
     const mult = facilityDevelopmentMultiplier(state, teamId);
     expect(mult).toBeGreaterThanOrEqual(1);
@@ -63,7 +63,7 @@ describe("facilities", () => {
 
   it("rejects upgrade when already in progress", () => {
     const state = bootstrapped();
-    const teamId = state.user.controlledTeamId;
+    const teamId = state.user.activeOwnerTeamId;
     const started = startFacilityUpgrade(state, teamId, "arena");
     expect(() =>
       startFacilityUpgrade(started.state, teamId, "arena"),

@@ -17,7 +17,7 @@ describe("staff payroll", () => {
   });
     const rng = createSeededRng(state.meta.rngState);
     state = bootstrapWorld(state, rng).state;
-    const teamId = state.user.controlledTeamId;
+    const teamId = state.user.activeOwnerTeamId;
     const year = state.competition.season.year;
 
     const staffId = asStaffId("staff_payroll_test");

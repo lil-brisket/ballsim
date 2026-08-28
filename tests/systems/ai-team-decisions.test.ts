@@ -14,10 +14,11 @@ import { bootstrapWorld } from "@/systems/world-pipeline";
 import { listFreeAgents, releasePlayerToFreeAgency } from "@/systems/free-agency";
 import type { PlayerId, TeamId } from "@/domain/ids";
 import type { GameState } from "@/state/game-state";
+import { getActiveOwnedFranchise } from "@/state/owner-context";
 
 function aiTeamIds(state: GameState): TeamId[] {
   return (Object.keys(state.world.teams) as TeamId[]).filter(
-    (id) => id !== state.user.controlledTeamId,
+    (id) => id !== state.user.activeOwnerTeamId,
   );
 }
 
@@ -76,7 +77,7 @@ describe("AI team decisions", () => {
     state = toFreeAgency(state, rng);
     expect(state.competition.season.offseasonStage).toBe("free_agency");
 
-    const userTeamId = state.user.controlledTeamId;
+    const userTeamId = state.user.activeOwnerTeamId;
     const donorTeamId = aiTeamIds(state)[0]!;
     const donor = state.world.teams[donorTeamId]!;
     state = expireContractAndRelease(state, donor.roster[0]!);
@@ -139,8 +140,8 @@ describe("AI team decisions", () => {
     const rng2 = createSeededRng(42);
     const a = runAiTeamDecisions(state, rng1).state;
     const b = runAiTeamDecisions(state, rng2).state;
-    expect(a.user.appliedGameplayConsequenceKeys).toEqual(
-      b.user.appliedGameplayConsequenceKeys,
+    expect(getActiveOwnedFranchise(a).appliedGameplayConsequenceKeys).toEqual(
+      getActiveOwnedFranchise(b).appliedGameplayConsequenceKeys,
     );
     expect(a.business.freeAgency.offers).toEqual(b.business.freeAgency.offers);
   });
@@ -176,7 +177,7 @@ describe("AI team decisions", () => {
 
     const draftBefore = Object.values(state.world.drafts)[0]!;
     // Force the user team onto the clock as the first available slot.
-    const userTeamId = state.user.controlledTeamId;
+    const userTeamId = state.user.activeOwnerTeamId;
     const firstAvailableIndex = draftBefore.order.findIndex(
       (slot) => slot.status === "available",
     );
@@ -225,7 +226,7 @@ describe("AI team decisions", () => {
     state = processOffseasonLifecycle(state, rng).state;
 
     const draftBefore = Object.values(state.world.drafts)[0]!;
-    const userTeamId = state.user.controlledTeamId;
+    const userTeamId = state.user.activeOwnerTeamId;
     const aiTeamId = aiTeamIds(state)[0]!;
     const firstAvailableIndex = draftBefore.order.findIndex(
       (slot) => slot.status === "available",

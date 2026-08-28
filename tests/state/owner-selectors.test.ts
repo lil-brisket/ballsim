@@ -24,7 +24,7 @@ describe("owner selectors", () => {
       }),
     ]);
     const dash = toDashboardSnapshot(state);
-    expect(dash.controlledTeam.id).toBe(state.user.controlledTeamId);
+    expect(dash.controlledTeam.id).toBe(state.user.activeOwnerTeamId);
     expect(dash.currentDate).toBe(state.world.calendar.currentDate);
     expect(dash.standingsRank).toBeGreaterThan(0);
     expect(dash.cash).toBeTypeOf("number");
@@ -38,7 +38,7 @@ describe("owner selectors", () => {
     const view = toFinancesView(state);
     const statement = getFinancialStatement(
       state,
-      state.user.controlledTeamId,
+      state.user.activeOwnerTeamId,
       state.competition.season.year,
     );
     expect(view.statement).toEqual(statement);

@@ -6,6 +6,7 @@ import {
 } from "@/persistence/mappers/game-state-mapper";
 import { validateGameState } from "@/persistence/validate-game-state";
 import { GAME_STATE_SCHEMA_VERSION } from "@/state/game-state";
+import { getActiveOwnedFranchise } from "@/state/owner-context";
 
 describe("v31 → v32 migration", () => {
   it("migrates ownerStartSeasonYear and attendance, then validates", () => {
@@ -23,7 +24,7 @@ describe("v31 → v32 migration", () => {
         string,
         { cash: number }
       >
-    )[modern.user.controlledTeamId]!.cash;
+    )[modern.user.activeOwnerTeamId]!.cash;
     delete user.ownerStartSeasonYear;
 
     const business = parsed.business as Record<string, unknown>;
@@ -74,7 +75,7 @@ describe("v31 → v32 migration", () => {
     const loaded = deserializeGameState(JSON.stringify(parsed));
     expect(loaded.meta.schemaVersion).toBe(GAME_STATE_SCHEMA_VERSION);
     expect(GAME_STATE_SCHEMA_VERSION).toBe(42);
-    expect(loaded.user.ownerStartSeasonYear).toBe(
+    expect(getActiveOwnedFranchise(loaded).ownerStartSeasonYear).toBe(
       loaded.competition.season.year,
     );
     expect(
@@ -87,14 +88,14 @@ describe("v31 → v32 migration", () => {
       expect(loaded.business.finances[teamId]!.attendanceByYear).toEqual({});
     }
     expect(
-      loaded.business.finances[modern.user.controlledTeamId]!.cash,
+      loaded.business.finances[modern.user.activeOwnerTeamId]!.cash,
     ).toBe(preservedCash);
 
     expect(() => validateGameState(loaded)).not.toThrow();
 
     const roundTrip = deserializeGameState(serializeGameState(loaded));
-    expect(roundTrip.user.ownerStartSeasonYear).toBe(
-      loaded.user.ownerStartSeasonYear,
+    expect(getActiveOwnedFranchise(roundTrip).ownerStartSeasonYear).toBe(
+      getActiveOwnedFranchise(loaded).ownerStartSeasonYear,
     );
     expect(
       roundTrip.business.franchiseHistory[firstTeam]!.seasons[0]!.attendance,

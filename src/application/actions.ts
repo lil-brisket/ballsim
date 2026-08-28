@@ -33,6 +33,9 @@ import {
   selectOwnerCity,
   confirmOwnerTeamIdentity,
   selectOwnerTeam,
+  switchActiveOwnerTeam,
+  takeOverFranchise,
+  confirmOwnedFranchises,
   setOwnerMarketingBudget,
   setOwnerTicketPrice,
   signOwnerFreeAgent,
@@ -131,6 +134,47 @@ export async function selectTeamAction(formData: FormData): Promise<void> {
   redirect(`/dashboard/${saveId}`);
 }
 
+export async function switchActiveOwnerTeamAction(
+  formData: FormData,
+): Promise<void> {
+  const saveId = String(formData.get("saveId") ?? "");
+  const teamId = String(formData.get("teamId") ?? "");
+  const result = await switchActiveOwnerTeam(saveId, teamId);
+  if (!result.ok) {
+    redirectWithError(`/dashboard/${saveId}`, result.error);
+  }
+  revalidateOwner(saveId);
+}
+
+export async function takeOverFranchiseAction(
+  formData: FormData,
+): Promise<void> {
+  const saveId = String(formData.get("saveId") ?? "");
+  const teamId = String(formData.get("teamId") ?? "");
+  const result = await takeOverFranchise(saveId, teamId);
+  if (!result.ok) {
+    redirectWithError(`/dashboard/${saveId}/league`, result.error);
+  }
+  revalidateOwner(saveId);
+  redirect(`/dashboard/${saveId}`);
+}
+
+export async function confirmOwnedFranchisesAction(
+  formData: FormData,
+): Promise<void> {
+  const saveId = String(formData.get("saveId") ?? "");
+  const additional = formData
+    .getAll("additionalTeamId")
+    .map((value) => String(value))
+    .filter((value) => value.length > 0);
+  const result = await confirmOwnedFranchises(saveId, additional);
+  if (!result.ok) {
+    redirectWithError(`/new/${saveId}/franchises`, result.error);
+  }
+  revalidateOwner(saveId);
+  redirect(`/new/${saveId}/branding`);
+}
+
 export async function selectCityAction(formData: FormData): Promise<void> {
   const saveId = String(formData.get("saveId") ?? "");
   const city = String(formData.get("city") ?? "");
@@ -139,7 +183,7 @@ export async function selectCityAction(formData: FormData): Promise<void> {
     redirectWithError(`/new/${saveId}/team`, result.error);
   }
   revalidateOwner(saveId);
-  redirect(`/new/${saveId}/branding`);
+  redirect(`/new/${saveId}/franchises`);
 }
 
 export async function confirmTeamIdentityAction(

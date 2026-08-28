@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { withOwnedFranchise } from "@/state/owner-context";
 import { createTestGameState } from "../factories/game-state";
 import { buildOwnershipExpectations } from "@/systems/ownership-expectations";
 import {
@@ -10,7 +11,7 @@ import type { TeamId } from "@/domain/ids";
 
 function withWins(wins: number, losses = 20) {
   const state = createTestGameState();
-  const teamId = state.user.controlledTeamId;
+  const teamId = state.user.activeOwnerTeamId;
   const existing = state.competition.standings.byTeamId[teamId]!;
   return {
     ...state,
@@ -72,13 +73,10 @@ describe("ownership expectations", () => {
 
   it("financially conservative owners default toward cash preservation", () => {
     let state = createTestGameState();
-    state = {
-      ...state,
-      user: {
-        ...state.user,
-        ownerPhilosophy: "financially_conservative" as OwnerPhilosophy,
-      },
-    };
+    state = withOwnedFranchise(state, state.user.activeOwnerTeamId, (f) => ({
+      ...f,
+      ownerPhilosophy: "financially_conservative" as OwnerPhilosophy,
+    }));
     const expectations = buildOwnershipExpectations(state);
     expect(expectations.financialExpectation).toBe("preserve_cash");
     expect(expectations.tolerance.payrollGrowth).toBeLessThan(0.35);
@@ -86,14 +84,11 @@ describe("ownership expectations", () => {
 
   it("market expansion owners emphasize growth priorities", () => {
     let state = createTestGameState();
-    state = {
-      ...state,
-      user: {
-        ...state.user,
-        ownerPhilosophy: "market_expansion" as OwnerPhilosophy,
-      },
-    };
-    const teamId = state.user.controlledTeamId as TeamId;
+    state = withOwnedFranchise(state, state.user.activeOwnerTeamId, (f) => ({
+      ...f,
+      ownerPhilosophy: "market_expansion" as OwnerPhilosophy,
+    }));
+    const teamId = state.user.activeOwnerTeamId as TeamId;
     const ops = state.business.franchiseOps[teamId]!;
     state = {
       ...state,

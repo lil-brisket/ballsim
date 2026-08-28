@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { getActiveOwnedFranchise } from "@/state/owner-context";
 
 vi.mock("server-only", () => ({}));
 
@@ -58,7 +59,7 @@ describe("eventLog persistence", () => {
 
     const loaded = await store.load(saveId);
     expect(loaded).not.toBeNull();
-    const eventLog = loaded!.state.user.eventLog;
+    const eventLog = getActiveOwnedFranchise(loaded!.state).eventLog;
     expect(Array.isArray(eventLog)).toBe(true);
 
     const ids = eventLog.map((event) => event.id);
@@ -68,8 +69,8 @@ describe("eventLog persistence", () => {
 
     await saveOwnerGame(saveId, loaded!.state, store);
     const reloaded = await store.load(saveId);
-    expect(reloaded!.state.user.eventLog).toHaveLength(countAfterAdvance);
-    expect(reloaded!.state.user.eventLog.map((e) => e.id)).toEqual(ids);
+    expect(getActiveOwnedFranchise(reloaded!.state).eventLog).toHaveLength(countAfterAdvance);
+    expect(getActiveOwnedFranchise(reloaded!.state).eventLog.map((e) => e.id)).toEqual(ids);
 
     const view = toEventLogView(reloaded!.state);
     expect(view).toHaveLength(countAfterAdvance);
@@ -97,10 +98,10 @@ describe("eventLog persistence", () => {
     );
 
     const trimmed = appendEventLog(base, many);
-    expect(trimmed.user.eventLog).toHaveLength(EVENT_LOG_MAX);
-    expect(trimmed.user.eventLog[0]?.payload.index).toBe(50);
+    expect(getActiveOwnedFranchise(trimmed).eventLog).toHaveLength(EVENT_LOG_MAX);
+    expect(getActiveOwnedFranchise(trimmed).eventLog[0]?.payload.index).toBe(50);
     expect(
-      trimmed.user.eventLog[trimmed.user.eventLog.length - 1]?.payload.index,
+      getActiveOwnedFranchise(trimmed).eventLog[getActiveOwnedFranchise(trimmed).eventLog.length - 1]?.payload.index,
     ).toBe(EVENT_LOG_MAX + 49);
   });
 
@@ -119,18 +120,18 @@ describe("eventLog persistence", () => {
       ...loaded!.state,
       meta: { ...loaded!.state.meta, schemaVersion: 22 },
       user: {
-        controlledTeamId: loaded!.state.user.controlledTeamId,
+        controlledTeamId: loaded!.state.user.activeOwnerTeamId,
         mode: loaded!.state.user.mode,
-        objectives: loaded!.state.user.objectives,
-        notifications: loaded!.state.user.notifications,
+        objectives: getActiveOwnedFranchise(loaded!.state).objectives,
+        notifications: getActiveOwnedFranchise(loaded!.state).notifications,
         appliedGameplayConsequenceKeys:
-          loaded!.state.user.appliedGameplayConsequenceKeys,
+          getActiveOwnedFranchise(loaded!.state).appliedGameplayConsequenceKeys,
       },
     };
 
     const migrated = deserializeGameState(JSON.stringify(asV22));
     expect(migrated.meta.schemaVersion).toBe(GAME_STATE_SCHEMA_VERSION);
-    expect(migrated.user.eventLog).toEqual([]);
+    expect(getActiveOwnedFranchise(migrated).eventLog).toEqual([]);
     expect(serializeGameState(migrated)).toContain("eventLog");
   });
 });

@@ -134,10 +134,7 @@ export function createTradeFixture(
       finances,
       tradeBlocks: {},
     },
-    user: {
-      ...base.user,
-      controlledTeamId: teamAId,
-    },
+    user: base.user,
   };
 }
 

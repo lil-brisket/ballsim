@@ -1,5 +1,6 @@
 import { playoffRoundLabel } from "@/domain/entities/playoffs";
 import type { GameState } from "@/state/game-state";
+import { getOwnedFranchiseAssistance } from "@/state/owner-context";
 import { getCalendarContext } from "@/systems/simulation/calendar-context";
 import {
   detectManagementNeeds,
@@ -39,9 +40,10 @@ export function computePhaseResponsibility(
 ): PhaseResponsibility {
   const phaseKey = phaseKeyForResponsibility(state);
   const needs = detectManagementNeeds(state);
-  const unresolvedItems = toUnresolvedDecisions(state, needs);
+  const franchiseAssist = getOwnedFranchiseAssistance(state);
+  const unresolvedItems = toUnresolvedDecisions(state, needs, franchiseAssist);
   const unresolvedCount = unresolvedItems.length;
-  const aiOwnsAll = isFullDelegation(state.settings);
+  const aiOwnsAll = isFullDelegation(state.settings, franchiseAssist);
 
   if (unresolvedCount === 0) {
     return {
@@ -52,7 +54,7 @@ export function computePhaseResponsibility(
     };
   }
 
-  if (isUserAssistCompletelyOff(state.settings)) {
+  if (isUserAssistCompletelyOff(state.settings, franchiseAssist)) {
     return {
       phaseKey,
       owner: "user",
@@ -129,11 +131,12 @@ export function computePhaseResponsibility(
 function toUnresolvedDecisions(
   state: GameState,
   needs: ManagementNeed[],
+  franchiseAssist = getOwnedFranchiseAssistance(state),
 ): UnresolvedDecision[] {
   if (needs.length === 0) {
     return [];
   }
-  const policy = buildManagementPolicy(state.settings);
+  const policy = buildManagementPolicy(state.settings, franchiseAssist);
   const items: UnresolvedDecision[] = [];
 
   for (const need of needs) {
@@ -151,7 +154,7 @@ function toUnresolvedDecisions(
     // but critical user-facing unresolved are BLOCK/RECOMMEND.
     if (
       decision.outcome === "ALLOW" &&
-      !isFullDelegation(state.settings)
+      !isFullDelegation(state.settings, franchiseAssist)
     ) {
       // Partial delegation will handle ALLOW needs; only surface if critical
       // and we're in a mode where AI might not run before advance stops.

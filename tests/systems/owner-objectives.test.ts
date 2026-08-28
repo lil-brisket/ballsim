@@ -20,6 +20,29 @@ import {
 import { GAME_STATE_SCHEMA_VERSION } from "@/state/game-state";
 import { applyGameplayFinancialConsequences } from "@/systems/gameplay-financial-consequences";
 import { GAMEPLAY_OBJECTIVE_REWARD } from "@/systems/owner-objectives-config";
+import { getActiveOwnedFranchise, withOwnedFranchise } from "@/state/owner-context";
+import type { GameState } from "@/state/game-state";
+import type { OwnerObjective } from "@/domain/entities/owner-objective";
+import type { OwnerPhilosophy } from "@/domain/entities/owner-philosophy";
+
+function withObjectives(state: GameState, objectives: OwnerObjective[]): GameState {
+  return withOwnedFranchise(state, state.user.activeOwnerTeamId, (f) => ({
+    ...f,
+    objectives,
+  }));
+}
+
+function withPhilosophyAndObjectives(
+  state: GameState,
+  ownerPhilosophy: OwnerPhilosophy,
+  objectives: OwnerObjective[] = [],
+): GameState {
+  return withOwnedFranchise(state, state.user.activeOwnerTeamId, (f) => ({
+    ...f,
+    ownerPhilosophy,
+    objectives,
+  }));
+}
 
 function bootstrappedState(saveId: string) {
   const state = createInitialGameState({
@@ -42,7 +65,7 @@ describe("owner objectives", () => {
       },
     };
     const result = generateOwnerObjectives(state);
-    const active = result.state.user.objectives.filter(
+    const active = getActiveOwnedFranchise(result.state).objectives.filter(
       (objective) => objective.status === "active",
     );
     expect(active.some((objective) => objective.role === "primary")).toBe(true);
@@ -62,14 +85,14 @@ describe("owner objectives", () => {
     expect(active.length).toBeLessThanOrEqual(6);
 
     const again = generateOwnerObjectives(result.state);
-    expect(again.state.user.objectives).toHaveLength(
-      result.state.user.objectives.length,
+    expect(getActiveOwnedFranchise(again.state).objectives).toHaveLength(
+      getActiveOwnedFranchise(result.state).objectives.length,
     );
   });
 
   it("tracks win progress and completes minimum_win_total", () => {
     let state = bootstrappedState("obj_wins");
-    const teamId = state.user.controlledTeamId;
+    const teamId = state.user.activeOwnerTeamId;
     const year = state.competition.season.year;
     state = {
       ...state,
@@ -87,9 +110,8 @@ describe("owner objectives", () => {
           },
         },
       },
-      user: {
-        ...state.user,
-        objectives: [
+    };
+    state = withObjectives(state, [
           createOwnerObjective({
             id: asOwnerObjectiveId("obj_w"),
             type: "minimum_win_total",
@@ -100,18 +122,16 @@ describe("owner objectives", () => {
             progress: 0,
             consequenceApplied: false,
           }),
-        ],
-      },
-    };
+        ]);
     const result = evaluateOwnerObjectives(state);
-    const objective = result.state.user.objectives.find((o) => o.id === "obj_w")!;
+    const objective = getActiveOwnedFranchise(result.state).objectives.find((o) => o.id === "obj_w")!;
     expect(objective.status).toBe("completed");
     expect(objective.progress).toBe(40);
   });
 
   it("fails payroll_limit immediately and keeps failed when payroll drops", () => {
     let state = bootstrappedState("obj_pay");
-    const teamId = state.user.controlledTeamId;
+    const teamId = state.user.activeOwnerTeamId;
     const year = state.competition.season.year;
     const payroll = getTeamPayroll(teamId, year, state);
     state = {
@@ -120,9 +140,8 @@ describe("owner objectives", () => {
         ...state.competition,
         season: { ...state.competition.season, phase: "regular" },
       },
-      user: {
-        ...state.user,
-        objectives: [
+    };
+    state = withObjectives(state, [
           createOwnerObjective({
             id: asOwnerObjectiveId("obj_p"),
             type: "payroll_limit",
@@ -133,34 +152,29 @@ describe("owner objectives", () => {
             progress: payroll,
             consequenceApplied: false,
           }),
-        ],
-      },
-    };
+        ]);
     const failed = evaluateOwnerObjectives(state);
-    expect(failed.state.user.objectives.find((o) => o.id === "obj_p")!.status).toBe(
+    expect(getActiveOwnedFranchise(failed.state).objectives.find((o) => o.id === "obj_p")!.status).toBe(
       "failed",
     );
 
-    const stillFailed = {
-      ...failed.state,
-      user: {
-        ...failed.state.user,
-        objectives: failed.state.user.objectives.map((objective) =>
-          objective.id === "obj_p"
-            ? { ...objective, target: payroll + 1_000_000 }
-            : objective,
-        ),
-      },
-    };
+    const stillFailed = withObjectives(
+      failed.state,
+      getActiveOwnedFranchise(failed.state).objectives.map((objective) =>
+        objective.id === "obj_p"
+          ? { ...objective, target: payroll + 1_000_000 }
+          : objective,
+      ),
+    );
     const reeval = evaluateOwnerObjectives(stillFailed);
-    expect(reeval.state.user.objectives.find((o) => o.id === "obj_p")!.status).toBe(
+    expect(getActiveOwnedFranchise(reeval.state).objectives.find((o) => o.id === "obj_p")!.status).toBe(
       "failed",
     );
   });
 
   it("completes improve_finances from positive net income", () => {
     let state = bootstrappedState("obj_ni");
-    const teamId = state.user.controlledTeamId;
+    const teamId = state.user.activeOwnerTeamId;
     const year = state.competition.season.year;
     state = applyCashAndBooksImpact(state, teamId, 200_000_000, year, {
       revenueCategory: "other",
@@ -171,9 +185,8 @@ describe("owner objectives", () => {
         ...state.competition,
         season: { ...state.competition.season, phase: "regular" },
       },
-      user: {
-        ...state.user,
-        objectives: [
+    };
+    state = withObjectives(state, [
           createOwnerObjective({
             id: asOwnerObjectiveId("obj_f"),
             type: "improve_finances",
@@ -182,11 +195,9 @@ describe("owner objectives", () => {
             seasonYear: year,
             consequenceApplied: false,
           }),
-        ],
-      },
-    };
+        ]);
     const result = evaluateOwnerObjectives(state);
-    const financeObjective = result.state.user.objectives.find(
+    const financeObjective = getActiveOwnedFranchise(result.state).objectives.find(
       (objective) => objective.id === "obj_f",
     );
     expect(financeObjective?.status).toBe("completed");
@@ -194,7 +205,7 @@ describe("owner objectives", () => {
 
   it("completes make_playoffs only from qualifiedTeams", () => {
     let state = bootstrappedState("obj_po");
-    const teamId = state.user.controlledTeamId;
+    const teamId = state.user.activeOwnerTeamId;
     const year = state.competition.season.year;
     state = {
       ...state,
@@ -209,9 +220,8 @@ describe("owner objectives", () => {
           series: [],
         },
       },
-      user: {
-        ...state.user,
-        objectives: [
+    };
+    state = withObjectives(state, [
           createOwnerObjective({
             id: asOwnerObjectiveId("obj_mp"),
             type: "make_playoffs",
@@ -220,12 +230,10 @@ describe("owner objectives", () => {
             seasonYear: year,
             consequenceApplied: false,
           }),
-        ],
-      },
-    };
+        ]);
     const result = evaluateOwnerObjectives(state);
     expect(
-      result.state.user.objectives.find((o) => o.id === "obj_mp")!.status,
+      getActiveOwnedFranchise(result.state).objectives.find((o) => o.id === "obj_mp")!.status,
     ).toBe("completed");
   });
 
@@ -238,9 +246,8 @@ describe("owner objectives", () => {
         ...state.competition,
         season: { ...state.competition.season, phase: "postseason" },
       },
-      user: {
-        ...state.user,
-        objectives: [
+    };
+    state = withObjectives(state, [
           createOwnerObjective({
             id: asOwnerObjectiveId("obj_mpf"),
             type: "make_playoffs",
@@ -249,12 +256,10 @@ describe("owner objectives", () => {
             seasonYear: year,
             consequenceApplied: false,
           }),
-        ],
-      },
-    };
+        ]);
     const result = evaluateOwnerObjectives(state);
     expect(
-      result.state.user.objectives.find((o) => o.id === "obj_mpf")!.status,
+      getActiveOwnedFranchise(result.state).objectives.find((o) => o.id === "obj_mpf")!.status,
     ).toBe("failed");
   });
 
@@ -267,9 +272,8 @@ describe("owner objectives", () => {
         ...state.competition,
         season: { ...state.competition.season, phase: "regular" },
       },
-      user: {
-        ...state.user,
-        objectives: [
+    };
+    state = withObjectives(state, [
           createOwnerObjective({
             id: asOwnerObjectiveId("obj_y"),
             type: "develop_young_players",
@@ -281,12 +285,10 @@ describe("owner objectives", () => {
             progress: 0,
             consequenceApplied: false,
           }),
-        ],
-      },
-    };
+        ]);
     const result = evaluateOwnerObjectives(state);
     expect(
-      result.state.user.objectives.find((o) => o.id === "obj_y")!.status,
+      getActiveOwnedFranchise(result.state).objectives.find((o) => o.id === "obj_y")!.status,
     ).toBe("completed");
   });
 
@@ -303,9 +305,8 @@ describe("owner objectives", () => {
           phase: "regular",
         },
       },
-      user: {
-        ...state.user,
-        objectives: [
+    };
+    state = withObjectives(state, [
           createOwnerObjective({
             id: asOwnerObjectiveId("obj_career_championships"),
             type: "championship_count",
@@ -319,11 +320,9 @@ describe("owner objectives", () => {
             progress: 0,
             consequenceApplied: false,
           }),
-        ],
-      },
-    };
+        ]);
     const result = evaluateOwnerObjectives(state);
-    const career = result.state.user.objectives.find(
+    const career = getActiveOwnedFranchise(result.state).objectives.find(
       (o) => o.id === "obj_career_championships",
     )!;
     expect(career.status).toBe("active");
@@ -332,14 +331,10 @@ describe("owner objectives", () => {
 
   it("does not post cash for non-whitelisted objective completion", () => {
     let state = bootstrappedState("obj_nocash");
-    const teamId = state.user.controlledTeamId;
+    const teamId = state.user.activeOwnerTeamId;
     const year = state.competition.season.year;
     const before = state.business.finances[teamId]!.cash;
-    state = {
-      ...state,
-      user: {
-        ...state.user,
-        objectives: [
+    state = withObjectives(state, [
           createOwnerObjective({
             id: asOwnerObjectiveId("obj_aware"),
             type: "awareness",
@@ -348,24 +343,18 @@ describe("owner objectives", () => {
             seasonYear: year,
             consequenceApplied: false,
           }),
-        ],
-      },
-    };
+        ]);
     const once = applyGameplayFinancialConsequences(state);
     expect(once.state.business.finances[teamId]!.cash).toBe(before);
-    expect(once.state.user.objectives[0]!.consequenceApplied).toBe(true);
+    expect(getActiveOwnedFranchise(once.state).objectives[0]!.consequenceApplied).toBe(true);
   });
 
   it("still posts cash for whitelisted make_playoffs completion", () => {
     let state = bootstrappedState("obj_cash");
-    const teamId = state.user.controlledTeamId;
+    const teamId = state.user.activeOwnerTeamId;
     const year = state.competition.season.year;
     const before = state.business.finances[teamId]!.cash;
-    state = {
-      ...state,
-      user: {
-        ...state.user,
-        objectives: [
+    state = withObjectives(state, [
           createOwnerObjective({
             id: asOwnerObjectiveId("obj_mp_cash"),
             type: "make_playoffs",
@@ -374,9 +363,7 @@ describe("owner objectives", () => {
             seasonYear: year,
             consequenceApplied: false,
           }),
-        ],
-      },
-    };
+        ]);
     const once = applyGameplayFinancialConsequences(state);
     expect(once.state.business.finances[teamId]!.cash).toBe(
       before + GAMEPLAY_OBJECTIVE_REWARD,
@@ -416,7 +403,7 @@ describe("owner philosophy profiles", () => {
 
   it("generates different primary categories for win_now vs market_expansion in a small market", () => {
     let state = bootstrappedState("obj_phil");
-    const teamId = state.user.controlledTeamId;
+    const teamId = state.user.activeOwnerTeamId;
     state = {
       ...state,
       competition: {
@@ -435,23 +422,17 @@ describe("owner philosophy profiles", () => {
       },
     };
 
-    const winNow = generateOwnerObjectives({
-      ...state,
-      user: { ...state.user, ownerPhilosophy: "win_now", objectives: [] },
-    });
-    const market = generateOwnerObjectives({
-      ...state,
-      user: {
-        ...state.user,
-        ownerPhilosophy: "market_expansion",
-        objectives: [],
-      },
-    });
+    const winNow = generateOwnerObjectives(
+      withPhilosophyAndObjectives(state, "win_now", []),
+    );
+    const market = generateOwnerObjectives(
+      withPhilosophyAndObjectives(state, "market_expansion", []),
+    );
 
-    const winPrimary = winNow.state.user.objectives.find(
+    const winPrimary = getActiveOwnedFranchise(winNow.state).objectives.find(
       (o) => o.role === "primary",
     )!;
-    const marketPrimary = market.state.user.objectives.find(
+    const marketPrimary = getActiveOwnedFranchise(market.state).objectives.find(
       (o) => o.role === "primary",
     )!;
     expect(winPrimary.category).toBe("competitive");
@@ -463,36 +444,50 @@ describe("owner mandate persistence", () => {
   it("new saves include philosophy and patience at schema 26", () => {
     const state = bootstrappedState("obj_persist_new");
     expect(state.meta.schemaVersion).toBe(GAME_STATE_SCHEMA_VERSION);
-    expect(state.user.ownerPhilosophy).toBe("balanced");
-    expect(state.user.ownerPatience).toBeGreaterThan(0);
+    expect(getActiveOwnedFranchise(state).ownerPhilosophy).toBe("balanced");
+    expect(getActiveOwnedFranchise(state).ownerPatience).toBeGreaterThan(0);
     const restored = deserializeGameState(serializeGameState(state));
-    expect(restored.user.ownerPhilosophy).toBe(state.user.ownerPhilosophy);
-    expect(restored.user.ownerPatience).toBe(state.user.ownerPatience);
+    expect(getActiveOwnedFranchise(restored).ownerPhilosophy).toBe(getActiveOwnedFranchise(state).ownerPhilosophy);
+    expect(getActiveOwnedFranchise(restored).ownerPatience).toBe(getActiveOwnedFranchise(state).ownerPatience);
   });
 
   it("migrates v25 saves without philosophy to balanced", () => {
     const state = bootstrappedState("obj_migrate");
-    const json = JSON.parse(serializeGameState(state)) as {
-      meta: { schemaVersion: number };
-      user: Record<string, unknown>;
+    const active = state.user.activeOwnerTeamId;
+    const franchise = state.user.ownedFranchises[active]!;
+    const json = {
+      ...JSON.parse(serializeGameState(state)),
+      meta: { ...state.meta, schemaVersion: 25 },
+      user: {
+        controlledTeamId: active,
+        mode: state.user.mode,
+        citySelectionConfirmed: franchise.citySelectionConfirmed,
+        franchiseIdentityConfirmed: franchise.franchiseIdentityConfirmed,
+        ownerStartSeasonYear: franchise.ownerStartSeasonYear,
+        ownershipConfidence: franchise.ownershipConfidence,
+        objectives: franchise.objectives.map((objective) => {
+          const next = { ...objective } as Record<string, unknown>;
+          delete next.category;
+          delete next.lifecycle;
+          delete next.role;
+          return next;
+        }),
+        notifications: franchise.notifications,
+        eventLog: franchise.eventLog,
+        appliedGameplayConsequenceKeys: franchise.appliedGameplayConsequenceKeys,
+        explicitDecisions: franchise.explicitDecisions,
+        phaseSkips: franchise.phaseSkips,
+        aiAssistState: franchise.aiAssistState,
+        pendingOwnerDecisions: state.user.pendingOwnerDecisions,
+        ownerDecisionHistory: state.user.ownerDecisionHistory,
+        narrative: franchise.narrative,
+      },
     };
-    json.meta.schemaVersion = 25;
-    delete json.user.ownerPhilosophy;
-    delete json.user.ownerPatience;
-    json.user.objectives = (
-      json.user.objectives as Array<Record<string, unknown>>
-    ).map((objective) => {
-      const next = { ...objective };
-      delete next.category;
-      delete next.lifecycle;
-      delete next.role;
-      return next;
-    });
     const restored = deserializeGameState(JSON.stringify(json));
     expect(restored.meta.schemaVersion).toBe(GAME_STATE_SCHEMA_VERSION);
-    expect(restored.user.ownerPhilosophy).toBe("balanced");
-    expect(restored.user.ownerPatience).toBeGreaterThan(0);
-    for (const objective of restored.user.objectives) {
+    expect(getActiveOwnedFranchise(restored).ownerPhilosophy).toBe("balanced");
+    expect(getActiveOwnedFranchise(restored).ownerPatience).toBeGreaterThan(0);
+    for (const objective of getActiveOwnedFranchise(restored).objectives) {
       expect(objective.category).toBeTruthy();
       expect(objective.lifecycle).toBeTruthy();
       expect(objective.role).toBeTruthy();

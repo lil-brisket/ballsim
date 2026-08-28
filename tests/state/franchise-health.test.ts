@@ -22,6 +22,7 @@ import {
 import { toOwnerDashboardView } from "@/state/owner-dashboard";
 import { createTestGameState } from "../factories/game-state";
 import { bootstrapWorld } from "@/systems/world-pipeline";
+import { getActiveOwnedFranchise, withOwnedFranchise } from "@/state/owner-context";
 
 function bootstrapped(saveId: string): GameState {
   const state = createTestGameState({ saveId });
@@ -38,7 +39,7 @@ function setStanding(
   wins: number,
   losses: number,
 ): GameState {
-  const teamId = state.user.controlledTeamId;
+  const teamId = state.user.activeOwnerTeamId;
   const base =
     state.competition.standings.byTeamId[teamId] ??
     createEmptyTeamStanding(asTeamId(teamId));
@@ -69,7 +70,7 @@ function setStanding(
 }
 
 function setCash(state: GameState, cash: number): GameState {
-  const teamId = state.user.controlledTeamId;
+  const teamId = state.user.activeOwnerTeamId;
   const finances = state.business.finances[teamId]!;
   return {
     ...state,
@@ -84,7 +85,7 @@ function setCash(state: GameState, cash: number): GameState {
 }
 
 function setFanSentiment(state: GameState, fanSentiment: number): GameState {
-  const teamId = state.user.controlledTeamId;
+  const teamId = state.user.activeOwnerTeamId;
   const ops = state.business.franchiseOps[teamId]!;
   return {
     ...state,
@@ -99,7 +100,7 @@ function setFanSentiment(state: GameState, fanSentiment: number): GameState {
 }
 
 function setTicketPrice(state: GameState, ticketPrice: number): GameState {
-  const teamId = state.user.controlledTeamId;
+  const teamId = state.user.activeOwnerTeamId;
   const ops = state.business.franchiseOps[teamId]!;
   return {
     ...state,
@@ -114,7 +115,7 @@ function setTicketPrice(state: GameState, ticketPrice: number): GameState {
 }
 
 function withMaxFacilities(state: GameState): GameState {
-  const teamId = state.user.controlledTeamId;
+  const teamId = state.user.activeOwnerTeamId;
   const ops = state.business.franchiseOps[teamId]!;
   const facilities = { ...ops.facilities };
   for (const category of FACILITY_CATEGORIES) {
@@ -136,7 +137,7 @@ function withMaxFacilities(state: GameState): GameState {
 }
 
 function withMinFacilities(state: GameState): GameState {
-  const teamId = state.user.controlledTeamId;
+  const teamId = state.user.activeOwnerTeamId;
   const ops = state.business.franchiseOps[teamId]!;
   const facilities = { ...ops.facilities };
   for (const category of FACILITY_CATEGORIES) {
@@ -155,7 +156,7 @@ function withMinFacilities(state: GameState): GameState {
 }
 
 function withActiveSponsorship(state: GameState): GameState {
-  const teamId = state.user.controlledTeamId;
+  const teamId = state.user.activeOwnerTeamId;
   const id = asSponsorshipId(`sponsor_${teamId}_health`);
   const sponsorship = createSponsorship({
     id,
@@ -186,7 +187,7 @@ function appendHomeGame(
   capacity: number,
   occurredOn: string,
 ): GameState {
-  const teamId = state.user.controlledTeamId;
+  const teamId = state.user.activeOwnerTeamId;
   const event = createDomainEvent({
     type: "HomeGameDaySettled",
     occurredOn,
@@ -213,18 +214,15 @@ function appendHomeGame(
 
 function withSnapshots(
   state: GameState,
-  snapshots: GameState["user"]["narrative"]["snapshots"],
+  snapshots: ReturnType<typeof getActiveOwnedFranchise>["narrative"]["snapshots"],
 ): GameState {
-  return {
-    ...state,
-    user: {
-      ...state.user,
-      narrative: {
-        ...state.user.narrative,
-        snapshots: [...snapshots],
-      },
+  return withOwnedFranchise(state, state.user.activeOwnerTeamId, (f) => ({
+    ...f,
+    narrative: {
+      ...f.narrative,
+      snapshots: [...snapshots],
     },
-  };
+  }));
 }
 
 function assertBounds(view: ReturnType<typeof calculateFranchiseHealth>): void {
@@ -341,7 +339,7 @@ describe("calculateFranchiseHealth", () => {
     const strong = withMaxFacilities(bootstrapped("health_org_s"));
     const weak = withMinFacilities(bootstrapped("health_org_w"));
     // Strip starter staff from weak org.
-    const teamId = weak.user.controlledTeamId;
+    const teamId = weak.user.activeOwnerTeamId;
     const stripped: GameState = {
       ...weak,
       world: {
@@ -369,7 +367,7 @@ describe("calculateFranchiseHealth", () => {
 
   it("does not penalize strategic score solely for relocation context", () => {
     let state = bootstrapped("health_reloc");
-    const teamId = state.user.controlledTeamId;
+    const teamId = state.user.activeOwnerTeamId;
     const existing = state.business.relocationByTeamId[teamId];
     if (existing) {
       state = {
@@ -528,7 +526,7 @@ describe("calculateFranchiseHealth", () => {
 
   it("uses prior season franchise value for strategic trajectory when history exists", () => {
     let state = bootstrapped("health_hist");
-    const teamId = state.user.controlledTeamId;
+    const teamId = state.user.activeOwnerTeamId;
     const seasonId = asSeasonId("season_2025");
     state = {
       ...state,

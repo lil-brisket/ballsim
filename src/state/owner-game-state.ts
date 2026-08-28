@@ -16,6 +16,7 @@ import type {
   TeamId,
 } from "@/domain/ids";
 import type { GameState } from "@/state/game-state";
+import { getActiveOwnedFranchise } from "@/state/owner-context";
 
 /**
  * Coach/staff id lists for the selected team.
@@ -68,7 +69,7 @@ export type OwnerGameState = {
  * canonical sources. Callers must not mutate those references.
  */
 export function toOwnerGameState(state: GameState): OwnerGameState {
-  const selectedTeamId = state.user.controlledTeamId;
+  const selectedTeamId = state.user.activeOwnerTeamId;
   const team = state.world.teams[selectedTeamId];
   if (!team) {
     throw new Error(
@@ -122,8 +123,8 @@ export function toOwnerGameState(state: GameState): OwnerGameState {
     currentDate: state.world.calendar.currentDate,
     currentSeasonId: season.id,
     selectedTeamId,
-    objectives: state.user.objectives,
-    notifications: state.user.notifications,
+    objectives: getActiveOwnedFranchise(state).objectives,
+    notifications: getActiveOwnedFranchise(state).notifications,
     finances,
     staff: {
       coachIds,

@@ -32,7 +32,7 @@ describe("user-franchise-assist", () => {
     state.competition.season.phase = "offseason";
     state.competition.season.offseasonStage = "free_agency";
 
-    const teamId = state.user.controlledTeamId;
+    const teamId = state.user.activeOwnerTeamId;
     const team = state.world.teams[teamId]!;
     const keep = team.roster.slice(0, Math.max(1, DEFAULT_ROSTER_SIZE - 3));
     for (const playerId of team.roster) {
@@ -63,7 +63,7 @@ describe("user-franchise-assist", () => {
     let state = bootstrapped("assist_staff");
     state.settings.ai.managementPreset = "continuity";
     state.settings.ai.assistance = applyPreset("continuity");
-    const teamId = state.user.controlledTeamId;
+    const teamId = state.user.activeOwnerTeamId;
     const team = state.world.teams[teamId]!;
     for (const staffId of team.staff) {
       const staff = state.world.staff[staffId];

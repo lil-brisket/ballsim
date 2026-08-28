@@ -1,5 +1,6 @@
 import type { TeamId } from "@/domain/ids";
 import type { GameState } from "@/state/game-state";
+import { isOwnedFranchise } from "@/state/owner-context";
 import { projectCashHorizon } from "@/systems/cash-projection";
 import {
   calculateFinancialHealth,
@@ -26,7 +27,7 @@ export function assertCapitalSpendingAllowed(
   teamId: TeamId,
   action: string,
 ): void {
-  if (state.user.controlledTeamId !== teamId) {
+  if (!isOwnedFranchise(state, teamId)) {
     return;
   }
   const input = financialHealthInputFromState(state, teamId);

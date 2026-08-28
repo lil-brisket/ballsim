@@ -9,6 +9,7 @@ import { SIGNIFICANT_FINANCIAL_CHANGE } from "@/systems/owner-objectives-config"
 import { bootstrapWorld } from "@/systems/world-pipeline";
 import { createDomainEvent } from "@/domain/events";
 import { testOwnerObjective as createOwnerObjective } from "../helpers/owner-objective";
+import { getActiveOwnedFranchise, withOwnedFranchise } from "@/state/owner-context";
 
 describe("owner notifications", () => {
   it("emits objective completed and failed notifications without duplicates", () => {
@@ -19,41 +20,38 @@ describe("owner notifications", () => {
     const rng = createSeededRng(state.meta.rngState);
     state = bootstrapWorld(state, rng).state;
     const year = state.competition.season.year;
-    state = {
-      ...state,
-      user: {
-        ...state.user,
-        objectives: [
-          createOwnerObjective({
-            id: asOwnerObjectiveId("obj_c"),
-            type: "make_playoffs",
-            description: "Make playoffs",
-            status: "completed",
-            seasonYear: year,
-            consequenceApplied: true,
-          }),
-          createOwnerObjective({
-            id: asOwnerObjectiveId("obj_f"),
-            type: "minimum_win_total",
-            description: "Win 40",
-            status: "failed",
-            seasonYear: year,
-            target: 40,
-            consequenceApplied: true,
-          }),
-        ],
-      },
-    };
+    state = withOwnedFranchise(state, state.user.activeOwnerTeamId, (f) => ({
+      ...f,
+      objectives: [
+        createOwnerObjective({
+          id: asOwnerObjectiveId("obj_c"),
+          type: "make_playoffs",
+          description: "Make playoffs",
+          status: "completed",
+          seasonYear: year,
+          consequenceApplied: true,
+        }),
+        createOwnerObjective({
+          id: asOwnerObjectiveId("obj_f"),
+          type: "minimum_win_total",
+          description: "Win 40",
+          status: "failed",
+          seasonYear: year,
+          target: 40,
+          consequenceApplied: true,
+        }),
+      ],
+    }));
     const once = generateOwnerNotifications(state);
     expect(
-      once.state.user.notifications.some((n) => n.type === "objective_completed"),
+      getActiveOwnedFranchise(once.state).notifications.some((n) => n.type === "objective_completed"),
     ).toBe(true);
     expect(
-      once.state.user.notifications.some((n) => n.type === "objective_failed"),
+      getActiveOwnedFranchise(once.state).notifications.some((n) => n.type === "objective_failed"),
     ).toBe(true);
     const twice = generateOwnerNotifications(once.state);
-    expect(twice.state.user.notifications).toHaveLength(
-      once.state.user.notifications.length,
+    expect(getActiveOwnedFranchise(twice.state).notifications).toHaveLength(
+      getActiveOwnedFranchise(once.state).notifications.length,
     );
   });
 
@@ -64,7 +62,7 @@ describe("owner notifications", () => {
   });
     const rng = createSeededRng(state.meta.rngState);
     state = bootstrapWorld(state, rng).state;
-    const teamId = state.user.controlledTeamId;
+    const teamId = state.user.activeOwnerTeamId;
     const postseasonState = {
       ...state,
       competition: {
@@ -80,7 +78,7 @@ describe("owner notifications", () => {
       },
     };
     const review = generateOwnerNotifications(postseasonState);
-    const reviewTypes = review.state.user.notifications.map((n) => n.type);
+    const reviewTypes = getActiveOwnedFranchise(review.state).notifications.map((n) => n.type);
     expect(reviewTypes).toContain("playoff_qualified");
     expect(reviewTypes).toContain("season_completed");
 
@@ -95,7 +93,7 @@ describe("owner notifications", () => {
       },
     };
     const off = generateOwnerNotifications(offseasonState);
-    const offTypes = off.state.user.notifications.map((n) => n.type);
+    const offTypes = getActiveOwnedFranchise(off.state).notifications.map((n) => n.type);
     expect(offTypes).toContain("offseason_began");
   });
 
@@ -106,7 +104,7 @@ describe("owner notifications", () => {
   });
     const rng = createSeededRng(state.meta.rngState);
     state = bootstrapWorld(state, rng).state;
-    const teamId = state.user.controlledTeamId;
+    const teamId = state.user.activeOwnerTeamId;
     const previousCash = state.business.finances[teamId]!.cash;
     state = {
       ...state,
@@ -123,7 +121,7 @@ describe("owner notifications", () => {
     };
     const result = generateOwnerNotifications(state, { previousCash });
     expect(
-      result.state.user.notifications.some(
+      getActiveOwnedFranchise(result.state).notifications.some(
         (n) => n.type === "significant_financial_change",
       ),
     ).toBe(true);
@@ -153,14 +151,14 @@ describe("owner notifications", () => {
         ...state.competition,
         season: { ...state.competition.season, phase: "postseason" },
       },
-      user: {
-        ...state.user,
-        notifications: [existing],
-      },
     };
+    state = withOwnedFranchise(state, state.user.activeOwnerTeamId, (f) => ({
+      ...f,
+      notifications: [existing],
+    }));
     const result = generateOwnerNotifications(state);
     expect(
-      result.state.user.notifications.filter(
+      getActiveOwnedFranchise(result.state).notifications.filter(
         (n) => n.dedupeKey === `season_completed:${year}`,
       ),
     ).toHaveLength(1);
@@ -174,7 +172,7 @@ describe("owner notifications", () => {
     });
     const rng = createSeededRng(state.meta.rngState);
     state = bootstrapWorld(state, rng).state;
-    const teamId = state.user.controlledTeamId;
+    const teamId = state.user.activeOwnerTeamId;
     const date = state.world.calendar.currentDate;
     const sellout = generateOwnerNotifications(state, {
       dayEvents: [
@@ -191,7 +189,7 @@ describe("owner notifications", () => {
       ],
     });
     expect(
-      sellout.state.user.notifications.some((n) => n.type === "home_sellout"),
+      getActiveOwnedFranchise(sellout.state).notifications.some((n) => n.type === "home_sellout"),
     ).toBe(true);
 
     const poor = generateOwnerNotifications(state, {
@@ -209,7 +207,7 @@ describe("owner notifications", () => {
       ],
     });
     expect(
-      poor.state.user.notifications.some((n) => n.type === "poor_attendance"),
+      getActiveOwnedFranchise(poor.state).notifications.some((n) => n.type === "poor_attendance"),
     ).toBe(true);
   });
 
@@ -221,7 +219,7 @@ describe("owner notifications", () => {
     });
     const rng = createSeededRng(state.meta.rngState);
     state = bootstrapWorld(state, rng).state;
-    const teamId = state.user.controlledTeamId;
+    const teamId = state.user.activeOwnerTeamId;
     state = {
       ...state,
       business: {
@@ -234,13 +232,13 @@ describe("owner notifications", () => {
     };
     const once = generateOwnerNotifications(state);
     expect(
-      once.state.user.notifications.some(
+      getActiveOwnedFranchise(once.state).notifications.some(
         (n) => n.type === "financial_health_changed",
       ),
     ).toBe(true);
     const twice = generateOwnerNotifications(once.state);
     expect(
-      twice.state.user.notifications.filter(
+      getActiveOwnedFranchise(twice.state).notifications.filter(
         (n) => n.type === "financial_health_changed",
       ),
     ).toHaveLength(1);

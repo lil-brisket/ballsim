@@ -135,7 +135,7 @@ describe("franchise identity persistence regression", () => {
         saveReloadEachSeason: true,
       });
 
-      const teamId = sim.finalState.user.controlledTeamId;
+      const teamId = sim.finalState.user.activeOwnerTeamId;
       const afterYear1Load = await sim.store.load(sim.saveId);
       const fingerprint = getTeamIdentityFingerprint(
         afterYear1Load!.state.world.teams[teamId]!,

@@ -39,14 +39,14 @@ describe("city selection across league areas", () => {
       const available = cities.find((city) => !city.occupied);
       expect(available).toBeDefined();
       const beforeName =
-        state.world.teams[state.user.controlledTeamId]!.name;
+        state.world.teams[state.user.activeOwnerTeamId]!.name;
       const result = applyOwnerCitySelection(state, available!.city);
       expect(result.ok).toBe(true);
       if (!result.ok) {
         return;
       }
       const team =
-        result.state.world.teams[result.state.user.controlledTeamId]!;
+        result.state.world.teams[result.state.user.activeOwnerTeamId]!;
       expect(pool.includes(team.city)).toBe(true);
       expect(team.city).toBe(available!.city);
       expect(team.name).toBe(beforeName);

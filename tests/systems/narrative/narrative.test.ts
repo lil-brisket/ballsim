@@ -19,6 +19,7 @@ import {
 import { asNarrativeSituationId } from "@/domain/ids";
 import { createNarrativeSituation } from "@/domain/entities/narrative-situation";
 import { acknowledgeSituation } from "@/systems/narrative/lifecycle";
+import { getActiveOwnedFranchise, withOwnedFranchise } from "@/state/owner-context";
 
 function snapshot(
   monthId: string,
@@ -46,16 +47,13 @@ function withSnapshots(
   state: GameState,
   snapshots: NarrativeMonthSnapshot[],
 ): GameState {
-  return {
-    ...state,
-    user: {
-      ...state.user,
-      narrative: {
-        ...state.user.narrative,
-        snapshots,
-      },
+  return withOwnedFranchise(state, state.user.activeOwnerTeamId, (f) => ({
+    ...f,
+    narrative: {
+      ...f.narrative,
+      snapshots,
     },
-  };
+  }));
 }
 
 function baseContext(
@@ -244,7 +242,7 @@ describe("narrative lifecycle and actions", () => {
   it("reduce_ticket_price runs setTicketPrice via adapter", () => {
     const rng = createTestRng();
     let state = createCblInitialGameState(rng);
-    const teamId = state.user.controlledTeamId;
+    const teamId = state.user.activeOwnerTeamId;
     const before = state.business.franchiseOps[teamId]!.ticketPrice;
     const situation = createNarrativeSituation({
       id: asNarrativeSituationId("nar_price_1"),
@@ -262,16 +260,13 @@ describe("narrative lifecycle and actions", () => {
       updates: [],
       actions: [{ id: "reduce_ticket_price", label: "Lower prices" }],
     });
-    state = {
-      ...state,
-      user: {
-        ...state.user,
-        narrative: {
-          ...state.user.narrative,
-          situations: [situation],
-        },
+    state = withOwnedFranchise(state, state.user.activeOwnerTeamId, (f) => ({
+      ...f,
+      narrative: {
+        ...f.narrative,
+        situations: [situation],
       },
-    };
+    }));
     const result = applyNarrativeAction(
       state,
       situation.id,
@@ -280,7 +275,7 @@ describe("narrative lifecycle and actions", () => {
     const after =
       result.state.business.franchiseOps[teamId]!.ticketPrice;
     expect(after).toBeLessThan(before);
-    const updated = result.state.user.narrative.situations[0]!;
+    const updated = getActiveOwnedFranchise(result.state).narrative.situations[0]!;
     expect(updated.status).not.toBe("resolved");
   });
 
@@ -295,7 +290,7 @@ describe("narrative processNarrativeLayer", () => {
   it("facility_completed emits a story notification without an active situation", () => {
     const rng = createTestRng();
     let state = createCblInitialGameState(rng);
-    const teamId = state.user.controlledTeamId;
+    const teamId = state.user.activeOwnerTeamId;
     const dayEvents = [
       {
         id: "evt_test_facility" as never,
@@ -308,11 +303,11 @@ describe("narrative processNarrativeLayer", () => {
       cadences: ["daily", "weekly"],
       dayEvents,
     });
-    const narrativeNotifs = result.state.user.notifications.filter(
+    const narrativeNotifs = getActiveOwnedFranchise(result.state).notifications.filter(
       (n) => n.type === "narrative",
     );
     expect(
-      result.state.user.narrative.situations.some(
+      getActiveOwnedFranchise(result.state).narrative.situations.some(
         (s) => s.detectorKey === "facility_completed",
       ),
     ).toBe(false);
@@ -339,15 +334,15 @@ describe("narrative processNarrativeLayer", () => {
       cadences: ["monthly"],
       completedMonthId: "2026-03",
     });
-    expect(a.state.user.narrative.situations.map((s) => s.id)).toEqual(
-      b.state.user.narrative.situations.map((s) => s.id),
+    expect(getActiveOwnedFranchise(a.state).narrative.situations.map((s) => s.id)).toEqual(
+      getActiveOwnedFranchise(b.state).narrative.situations.map((s) => s.id),
     );
     expect(
-      a.state.user.notifications
+      getActiveOwnedFranchise(a.state).notifications
         .filter((n) => n.type === "narrative")
         .map((n) => n.dedupeKey),
     ).toEqual(
-      b.state.user.notifications
+      getActiveOwnedFranchise(b.state).notifications
         .filter((n) => n.type === "narrative")
         .map((n) => n.dedupeKey),
     );
@@ -379,7 +374,7 @@ describe("narrative processNarrativeLayer", () => {
 describe("narrative migration", () => {
   it("createInitialGameState includes empty narrative", () => {
     const state = createCblInitialGameState(createTestRng());
-    expect(state.user.narrative).toEqual({
+    expect(getActiveOwnedFranchise(state).narrative).toEqual({
       situations: [],
       snapshots: [],
       cooldowns: {},

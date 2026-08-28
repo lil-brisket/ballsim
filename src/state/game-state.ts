@@ -37,11 +37,15 @@ import type { Standings } from "@/domain/entities/standings";
 import type { Team } from "@/domain/entities/team";
 import type { ScheduledEvent } from "@/domain/entities/scheduled-event";
 import type { TradeBlock } from "@/domain/entities/trade-block";
+import type {
+  AiAssistancePhases,
+  AiManagementPreset,
+} from "@/domain/ai-management-presets";
 import type { GameSettings } from "@/domain/game-settings";
 import type { DomainEvent } from "@/domain/events";
 import type { SaveId, TeamId } from "@/domain/ids";
 
-export const GAME_STATE_SCHEMA_VERSION = 42;
+export const GAME_STATE_SCHEMA_VERSION = 43;
 
 /** Bounded recent history for Owner Mode activity / transactions UI. */
 export const EVENT_LOG_MAX = 1_000;
@@ -118,23 +122,12 @@ export type BusinessSlice = {
   playerHistory: Record<string, PlayerHistory>;
 };
 
-export type UserSlice = {
-  controlledTeamId: TeamId;
-  mode: GameMode;
-  /**
-   * True after the owner finalizes city selection on the new-game pick screen.
-   * Distinct from time-advance lock; rejects further city relocation at pick.
-   */
-  citySelectionConfirmed: boolean;
-  /**
-   * True after owner completes initial team identity setup (branding screen).
-   * ONBOARDING ONLY — does not mean branding is permanently locked.
-   * Future Front Office rebrand ignores this flag.
-   */
-  franchiseIdentityConfirmed: boolean;
-  /** Earliest known season year the player controlled this franchise. */
-  ownerStartSeasonYear: number;
-  /** Ownership mandate; chosen at team pick. Migrated saves default to balanced. */
+/**
+ * Per-franchise owner identity and owner-mode runtime state.
+ * Does NOT include pendingOwnerDecisions (those live on UserSlice).
+ */
+export type OwnedFranchiseState = {
+  /** Ownership mandate; chosen at team pick / takeover. */
   ownerPhilosophy: OwnerPhilosophy;
   /** 0–100 mandate patience; starts from philosophy profile default. */
   ownerPatience: number;
@@ -144,6 +137,9 @@ export type UserSlice = {
    */
   ownershipConfidence: OwnershipConfidenceState;
   objectives: OwnerObjective[];
+  /** Owner narrative situations, month snapshots, and cooldowns. */
+  narrative: NarrativeState;
+
   notifications: OwnerNotification[];
   /**
    * Append-only recent domain events for Owner activity/transactions.
@@ -160,19 +156,43 @@ export type UserSlice = {
   explicitDecisions: Record<string, true>;
   /** Recorded phase skips when the owner continues past unresolved decisions. */
   phaseSkips: Array<{ phaseKey: string; skippedOn: string; reason: string }>;
-  /**
-   * User-franchise AI assist cooldowns, season counters, and resolved-need fingerprints.
-   */
+
+  /** AI management configuration — what the player allows AI to do. */
+  aiAssistance: AiAssistancePhases;
+  managementPreset: AiManagementPreset;
+
+  /** AI runtime state — cooldowns, season counters, resolved-need fingerprints. */
   aiAssistState: AiAssistRuntimeState;
+
   /**
-   * At most one active owner decision that pauses simulation
-   * (e.g. incoming trade offer).
+   * True after the owner finalizes city selection on the new-game pick screen.
+   * Distinct from time-advance lock; rejects further city relocation at pick.
+   */
+  citySelectionConfirmed: boolean;
+  /**
+   * True after owner completes initial team identity setup (branding screen).
+   * ONBOARDING ONLY — does not mean branding is permanently locked.
+   */
+  franchiseIdentityConfirmed: boolean;
+  /** Earliest known season year the player controlled this franchise. */
+  ownerStartSeasonYear: number;
+};
+
+export type UserSlice = {
+  /** Teams the player controls (simulation / ownership). */
+  ownedTeamIds: TeamId[];
+  /** Team the player is currently acting as (UI context only). */
+  activeOwnerTeamId: TeamId;
+  /** Per-franchise owner state keyed by team id. */
+  ownedFranchises: Record<string, OwnedFranchiseState>;
+  mode: GameMode;
+  /**
+   * Save-level decision queue (NOT duplicated per franchise).
+   * At most one active blocking decision that pauses simulation.
    */
   pendingOwnerDecisions: PendingOwnerDecision[];
   /** Bounded history of resolved owner decisions + rejection fingerprints. */
   ownerDecisionHistory: OwnerDecisionRecord[];
-  /** Owner narrative situations, month snapshots, and cooldowns. */
-  narrative: NarrativeState;
 };
 
 export type AiAssistResolvedNeed = {
@@ -221,18 +241,24 @@ export type GameState = {
 };
 
 /**
- * Append newly emitted domain events exactly once.
+ * Append newly emitted domain events exactly once for a franchise.
  * Call only when a command/simulation emits events during the same persist.
  * Does not re-append on plain load/save of existing state.
  */
 export function appendEventLog(
   state: GameState,
   newlyEmitted: readonly DomainEvent[],
+  teamId?: TeamId,
 ): GameState {
   if (newlyEmitted.length === 0) {
     return state;
   }
-  const merged = [...state.user.eventLog, ...newlyEmitted];
+  const targetTeamId = teamId ?? state.user.activeOwnerTeamId;
+  const franchise = state.user.ownedFranchises[targetTeamId];
+  if (!franchise) {
+    return state;
+  }
+  const merged = [...franchise.eventLog, ...newlyEmitted];
   const eventLog =
     merged.length > EVENT_LOG_MAX
       ? merged.slice(merged.length - EVENT_LOG_MAX)
@@ -241,7 +267,13 @@ export function appendEventLog(
     ...state,
     user: {
       ...state.user,
-      eventLog,
+      ownedFranchises: {
+        ...state.user.ownedFranchises,
+        [targetTeamId]: {
+          ...franchise,
+          eventLog,
+        },
+      },
     },
   };
 }

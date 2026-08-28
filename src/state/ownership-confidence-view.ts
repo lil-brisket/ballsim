@@ -1,3 +1,4 @@
+import { getActiveOwnedFranchise } from "@/state/owner-context";
 /**
  * Dashboard view model for ownership expectations + confidence.
  */
@@ -45,7 +46,7 @@ export function toOwnershipConfidenceView(
   state: GameState,
 ): OwnershipConfidenceView {
   const expectations = buildOwnershipExpectations(state);
-  const confidence = state.user.ownershipConfidence;
+  const confidence = getActiveOwnedFranchise(state).ownershipConfidence;
   const posture = evaluateStrategicPosture(state);
 
   const recentDecisions = confidence.recentEvidence

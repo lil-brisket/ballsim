@@ -6,48 +6,46 @@ import {
   type FacilityCategory,
 } from "@/domain/entities/franchise-ops";
 import { toFranchiseHistoryView } from "@/state/franchise-selectors";
+import { withOwnedFranchise } from "@/state/owner-context";
 
 describe("toFranchiseHistoryView", () => {
   it("builds milestones and highlights without UI-side math", () => {
     let state = createTestGameState({ saveId: "fh_view" });
-    const teamId = state.user.controlledTeamId;
+    const teamId = state.user.activeOwnerTeamId;
     const facilityLevels = {} as Record<(typeof FACILITY_CATEGORIES)[number], number>;
     for (const category of FACILITY_CATEGORIES) {
       facilityLevels[category as FacilityCategory] = 1;
     }
-    state = {
-      ...state,
-      user: {
-        ...state.user,
-        ownerStartSeasonYear: 2026,
-      },
-      competition: {
-        ...state.competition,
-        season: {
-          ...state.competition.season,
-          year: 2028,
+    state = withOwnedFranchise(
+      {
+        ...state,
+        competition: {
+          ...state.competition,
+          season: {
+            ...state.competition.season,
+            year: 2028,
+          },
         },
-      },
-      business: {
-        ...state.business,
-        franchiseHistory: {
-          ...state.business.franchiseHistory,
-          [teamId]: {
-            teamId,
-            seasons: [
-              {
-                seasonId: asSeasonId("season_2026"),
-                seasonYear: 2026,
-                wins: 50,
-                losses: 32,
-                playoffResult: "first_round",
-                championship: false,
-                revenue: 100,
-                expenses: 90,
-                netIncome: 10,
-                payroll: 80,
-                leagueRank: 5,
-                attendance: 800_000,
+        business: {
+          ...state.business,
+          franchiseHistory: {
+            ...state.business.franchiseHistory,
+            [teamId]: {
+              teamId,
+              seasons: [
+                {
+                  seasonId: asSeasonId("season_2026"),
+                  seasonYear: 2026,
+                  wins: 50,
+                  losses: 32,
+                  playoffResult: "first_round",
+                  championship: false,
+                  revenue: 100,
+                  expenses: 90,
+                  netIncome: 10,
+                  payroll: 80,
+                  leagueRank: 5,
+                  attendance: 800_000,
                 cash: 10,
                 fanSentiment: 60,
                 reputation: 60,
@@ -85,7 +83,10 @@ describe("toFranchiseHistoryView", () => {
           },
         },
       },
-    };
+    },
+      teamId,
+      (f) => ({ ...f, ownerStartSeasonYear: 2026 }),
+    );
 
     const view = toFranchiseHistoryView(state);
     expect(view.ownerTenureYears).toBe(3);

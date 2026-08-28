@@ -84,7 +84,7 @@ describe("v30 → v31 migration", () => {
 
   it("preserves relocated franchise identity across round-trip", () => {
     let state = createTestGameState({ saveId: "mig_relocated" });
-    const teamId = state.user.controlledTeamId;
+    const teamId = state.user.activeOwnerTeamId;
     state = {
       ...state,
       world: {

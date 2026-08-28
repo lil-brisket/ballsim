@@ -1,3 +1,4 @@
+import { getActiveOwnedFranchise } from "@/state/owner-context";
 /**
  * Franchise Health — derived analytical lens over GameState.
  *
@@ -182,12 +183,12 @@ const VALUE_TREND_STRONG_PCT = 12;
  * Composes existing selectors; does not reimplement demand, valuation, or SSOT health.
  */
 export function calculateFranchiseHealth(state: GameState): FranchiseHealthView {
-  const teamId = asTeamId(state.user.controlledTeamId);
+  const teamId = asTeamId(state.user.activeOwnerTeamId);
   const business = toFranchiseBusinessView(state);
   const year = state.competition.season.year;
   const statement = getFinancialStatement(state, teamId, year);
   const calendar = getCalendarContext(state);
-  const snapshots = state.user.narrative.snapshots;
+  const snapshots = getActiveOwnedFranchise(state).narrative.snapshots;
   const history = state.business.franchiseHistory[teamId]?.seasons ?? [];
 
   const competitive = scoreCompetitive(state, teamId, calendar.playoffRace, snapshots);
@@ -880,7 +881,7 @@ function attendanceTrendFromHomeGames(
   teamId: TeamId,
 ): number | null {
   const days: number[] = [];
-  for (const event of state.user.eventLog) {
+  for (const event of getActiveOwnedFranchise(state).eventLog) {
     if (event.type !== "HomeGameDaySettled") {
       continue;
     }
@@ -1023,8 +1024,8 @@ function scoreStrategic(
   }[],
 ): DimensionHealth {
   const drivers: HealthDriver[] = [];
-  const patience = state.user.ownerPatience;
-  const objectives = state.user.objectives;
+  const patience = getActiveOwnedFranchise(state).ownerPatience;
+  const objectives = getActiveOwnedFranchise(state).objectives;
   const active = objectives.filter((o) => o.status === "active");
   const completed = objectives.filter((o) => o.status === "completed");
   const failed = objectives.filter((o) => o.status === "failed");
@@ -1036,7 +1037,7 @@ function scoreStrategic(
     alignment = clamp(Math.round(alignment * 0.55 + rate * 100 * 0.45), 0, 100);
   }
 
-  const ownershipMood = state.user.ownershipConfidence.mood;
+  const ownershipMood = getActiveOwnedFranchise(state).ownershipConfidence.mood;
   const moodBoost =
     ownershipMood === "confident"
       ? 8

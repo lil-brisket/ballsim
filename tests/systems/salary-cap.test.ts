@@ -69,7 +69,7 @@ function withContracts(
 describe("salary-cap", () => {
   it("single contract creates matching payroll", () => {
     const state = baseState();
-    const teamId = state.user.controlledTeamId;
+    const teamId = state.user.activeOwnerTeamId;
     const year = state.competition.season.year;
     const next = withContracts(state, [
       createContract({
@@ -86,7 +86,7 @@ describe("salary-cap", () => {
 
   it("sums multiple contracts into payroll", () => {
     const state = baseState();
-    const teamId = state.user.controlledTeamId;
+    const teamId = state.user.activeOwnerTeamId;
     const year = state.competition.season.year;
     const next = withContracts(state, [
       createContract({
@@ -111,7 +111,7 @@ describe("salary-cap", () => {
 
   it("computes cap space under the cap", () => {
     const state = baseState();
-    const teamId = state.user.controlledTeamId;
+    const teamId = state.user.activeOwnerTeamId;
     const year = state.competition.season.year;
     const next = withContracts(state, [
       createContract({
@@ -129,7 +129,7 @@ describe("salary-cap", () => {
 
   it("reports amount over the cap", () => {
     const state = baseState();
-    const teamId = state.user.controlledTeamId;
+    const teamId = state.user.activeOwnerTeamId;
     const year = state.competition.season.year;
     const next = withContracts(state, [
       createContract({
@@ -148,7 +148,7 @@ describe("salary-cap", () => {
 
   it("excludes pending team option salary from payroll", () => {
     const state = baseState();
-    const teamId = state.user.controlledTeamId;
+    const teamId = state.user.activeOwnerTeamId;
     const contract = createContract({
       id: asContractId("c1"),
       playerId: asPlayerId("p1"),
@@ -164,7 +164,7 @@ describe("salary-cap", () => {
 
   it("excludes pending player option salary from payroll", () => {
     const state = baseState();
-    const teamId = state.user.controlledTeamId;
+    const teamId = state.user.activeOwnerTeamId;
     const contract = createContract({
       id: asContractId("c1"),
       playerId: asPlayerId("p1"),
@@ -180,7 +180,7 @@ describe("salary-cap", () => {
 
   it("includes exercised option salary in payroll", () => {
     const state = baseState();
-    const teamId = state.user.controlledTeamId;
+    const teamId = state.user.activeOwnerTeamId;
     const pending = createContract({
       id: asContractId("c1"),
       playerId: asPlayerId("p1"),
@@ -196,7 +196,7 @@ describe("salary-cap", () => {
 
   it("keeps declined option salary excluded from payroll", () => {
     const state = baseState();
-    const teamId = state.user.controlledTeamId;
+    const teamId = state.user.activeOwnerTeamId;
     const pending = createContract({
       id: asContractId("c1"),
       playerId: asPlayerId("p1"),
@@ -212,7 +212,7 @@ describe("salary-cap", () => {
 
   it("does not read TeamFinances.payroll snapshot", () => {
     const state = baseState();
-    const teamId = state.user.controlledTeamId;
+    const teamId = state.user.activeOwnerTeamId;
     const year = state.competition.season.year;
     const next = withContracts(
       state,
@@ -235,7 +235,7 @@ describe("salary-cap", () => {
 
   it("includes exercised player option salary in payroll", () => {
     const state = baseState();
-    const teamId = state.user.controlledTeamId;
+    const teamId = state.user.activeOwnerTeamId;
     const pending = createContract({
       id: asContractId("c1"),
       playerId: asPlayerId("p1"),

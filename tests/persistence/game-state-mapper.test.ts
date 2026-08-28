@@ -10,6 +10,7 @@ import {
 } from "@/persistence/mappers/game-state-mapper";
 import { asContractId, asPlayerId, asTeamId, type ContractId, type PlayerId } from "@/domain/ids";
 import type { Player, PlayerAttributes } from "@/domain/entities/player";
+import { getActiveOwnedFranchise } from "@/state/owner-context";
 
 const V4_ATTRIBUTE_KEYS = [
   "speed",
@@ -43,7 +44,7 @@ describe("GameState schema migration", () => {
   });
 
     const playerId = asPlayerId("player_legacy");
-    const teamId = modern.user.controlledTeamId;
+    const teamId = modern.user.activeOwnerTeamId;
     const contractId = asContractId("contract_legacy");
 
     const v1Json = JSON.stringify({
@@ -88,9 +89,9 @@ describe("GameState schema migration", () => {
             id: "game_legacy",
             seasonId: modern.competition.season.id,
             date: "2026-10-02",
-            homeTeamId: modern.user.controlledTeamId,
+            homeTeamId: modern.user.activeOwnerTeamId,
             awayTeamId: Object.keys(modern.world.teams).find(
-              (id) => id !== modern.user.controlledTeamId,
+              (id) => id !== modern.user.activeOwnerTeamId,
             ),
             status: "scheduled",
             homeScore: null,
@@ -171,7 +172,7 @@ describe("GameState schema migration", () => {
   });
 
     const playerId = asPlayerId("player_v2");
-    const teamId = asTeamId(String(modern.user.controlledTeamId));
+    const teamId = asTeamId(String(modern.user.activeOwnerTeamId));
     const contractId = asContractId("contract_v2");
 
     const v2Json = JSON.stringify({
@@ -254,7 +255,7 @@ describe("GameState schema migration", () => {
   });
 
     const playerId = asPlayerId("player_v3");
-    const teamId = modern.user.controlledTeamId;
+    const teamId = modern.user.activeOwnerTeamId;
     const contractId = asContractId("contract_v3");
 
     const v3Attributes = {
@@ -359,7 +360,7 @@ describe("GameState schema migration", () => {
   });
 
     const playerId = asPlayerId("player_v4");
-    const teamId = modern.user.controlledTeamId;
+    const teamId = modern.user.activeOwnerTeamId;
     const contractId = asContractId("contract_v4");
 
     const attributes = Object.fromEntries(
@@ -444,7 +445,7 @@ describe("GameState schema migration", () => {
   });
 
     const playerId = asPlayerId("player_v5");
-    const teamId = modern.user.controlledTeamId;
+    const teamId = modern.user.activeOwnerTeamId;
     const contractId = asContractId("contract_v5");
 
     const attributes = Object.fromEntries(
@@ -537,7 +538,7 @@ describe("GameState schema migration", () => {
   });
 
     const playerId = asPlayerId("player_multi");
-    const teamId = modern.user.controlledTeamId;
+    const teamId = modern.user.activeOwnerTeamId;
 
     const v2Json = JSON.stringify({
       ...modern,
@@ -592,7 +593,7 @@ describe("GameState schema migration", () => {
     settings: CBL_GAME_SETTINGS,
   });
 
-    const controlledTeamId = modern.user.controlledTeamId;
+    const controlledTeamId = modern.user.activeOwnerTeamId;
     const controlledTeam = modern.world.teams[controlledTeamId]!;
     const division = modern.world.divisions[controlledTeam.divisionId]!;
 
@@ -832,7 +833,7 @@ describe("GameState schema migration", () => {
     settings: CBL_GAME_SETTINGS,
   });
 
-    const homeTeamId = modern.user.controlledTeamId;
+    const homeTeamId = modern.user.activeOwnerTeamId;
     const awayTeamId = Object.keys(modern.world.teams).find(
       (id) => id !== homeTeamId,
     )!;
@@ -1480,8 +1481,6 @@ describe("GameState schema migration", () => {
       ]),
     );
 
-    const { objectives: _removed, ...userWithoutObjectives } = modern.user;
-
     const stateV14 = {
       ...modern,
       meta: {
@@ -1492,12 +1491,12 @@ describe("GameState schema migration", () => {
         ...modern.business,
         finances: financesV14,
       },
-      user: userWithoutObjectives,
+      user: modern.user,
     };
 
     const migrated = deserializeGameState(JSON.stringify(stateV14));
     expect(migrated.meta.schemaVersion).toBe(GAME_STATE_SCHEMA_VERSION);
-    expect(migrated.user.objectives).toEqual([]);
+    expect(getActiveOwnedFranchise(migrated).objectives).toEqual([]);
     for (const finance of Object.values(migrated.business.finances)) {
       expect(finance.booksByYear).toEqual({});
       expect(finance.cash).toBe(50_000_000);
@@ -1515,7 +1514,7 @@ describe("GameState schema migration", () => {
       nowIso: "2026-08-14T12:00:00.000Z",
     settings: CBL_GAME_SETTINGS,
   });
-    const teamId = modern.user.controlledTeamId;
+    const teamId = modern.user.activeOwnerTeamId;
     const playerId = asPlayerId("player_v15");
     const contractId = asContractId("contract_v15");
     const seasonYear = modern.competition.season.year;
@@ -1595,7 +1594,7 @@ describe("GameState schema migration", () => {
       nowIso: "2026-08-14T12:00:00.000Z",
     settings: CBL_GAME_SETTINGS,
   });
-    const teamId = state.user.controlledTeamId;
+    const teamId = state.user.activeOwnerTeamId;
     const year = state.competition.season.year;
 
     const pendingId = asContractId("contract_pending");
@@ -1839,5 +1838,61 @@ describe("GameState schema migration", () => {
       expect(finance.booksByMonth).toEqual({});
       expect(finance.cashLedgerByMonth).toEqual({});
     }
+  });
+
+  it("migrates schemaVersion 42 controlledTeamId into multi-team owned franchises", () => {
+    const modern = createInitialGameState({
+      saveId: "save_migrate_v43_mapper",
+      rngSeed: 9,
+      nowIso: "2026-08-13T12:00:00.000Z",
+      settings: CBL_GAME_SETTINGS,
+    });
+    const active = modern.user.activeOwnerTeamId;
+    const franchise = getActiveOwnedFranchise(modern);
+
+    const v42 = {
+      ...modern,
+      meta: {
+        ...modern.meta,
+        schemaVersion: 42,
+      },
+      user: {
+        controlledTeamId: active,
+        mode: modern.user.mode,
+        citySelectionConfirmed: franchise.citySelectionConfirmed,
+        franchiseIdentityConfirmed: franchise.franchiseIdentityConfirmed,
+        ownerStartSeasonYear: franchise.ownerStartSeasonYear,
+        ownerPhilosophy: franchise.ownerPhilosophy,
+        ownerPatience: franchise.ownerPatience,
+        ownershipConfidence: franchise.ownershipConfidence,
+        objectives: franchise.objectives,
+        notifications: franchise.notifications,
+        eventLog: franchise.eventLog,
+        appliedGameplayConsequenceKeys: franchise.appliedGameplayConsequenceKeys,
+        explicitDecisions: franchise.explicitDecisions,
+        phaseSkips: franchise.phaseSkips,
+        aiAssistState: franchise.aiAssistState,
+        pendingOwnerDecisions: [],
+        ownerDecisionHistory: [],
+        narrative: franchise.narrative,
+      },
+    };
+
+    const migrated = deserializeGameState(JSON.stringify(v42));
+    expect(migrated.meta.schemaVersion).toBe(GAME_STATE_SCHEMA_VERSION);
+    expect(migrated.user.ownedTeamIds).toEqual([active]);
+    expect(migrated.user.activeOwnerTeamId).toBe(active);
+    expect(migrated.user.ownedFranchises[active]?.ownerPhilosophy).toBe(
+      franchise.ownerPhilosophy,
+    );
+    expect(migrated.user.ownedFranchises[active]?.aiAssistance).toEqual(
+      modern.settings.ai.assistance,
+    );
+    expect(migrated.user.ownedFranchises[active]?.managementPreset).toBe(
+      modern.settings.ai.managementPreset,
+    );
+
+    const again = deserializeGameState(serializeGameState(migrated));
+    expect(again.user.ownedTeamIds).toEqual([active]);
   });
 });

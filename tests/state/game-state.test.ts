@@ -23,7 +23,7 @@ describe("createInitialGameState", () => {
     expect(state.world.league.abbreviation).toBe("CBL");
     expect(Object.keys(state.world.teams)).toHaveLength(12);
     expect(Object.keys(state.world.players)).toHaveLength(0);
-    expect(state.world.teams[state.user.controlledTeamId]).toBeDefined();
+    expect(state.world.teams[state.user.activeOwnerTeamId]).toBeDefined();
   });
 
   it("round-trips through serialize/deserialize", () => {

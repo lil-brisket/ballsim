@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { getActiveOwnedFranchise } from "@/state/owner-context";
 
 vi.mock("server-only", () => ({}));
 
@@ -157,7 +158,7 @@ describe("Owner Mode vertical slice", () => {
       expect(available).toBeDefined();
       const before = await store.load(created.save.id);
       const teamCount = Object.keys(before!.state.world.teams).length;
-      const placeholderId = before!.state.user.controlledTeamId;
+      const placeholderId = before!.state.user.activeOwnerTeamId;
 
       const selected = await selectOwnerCity(
         created.save.id,
@@ -171,11 +172,11 @@ describe("Owner Mode vertical slice", () => {
 
       const after = await store.load(created.save.id);
       expect(Object.keys(after!.state.world.teams).length).toBe(teamCount);
-      expect(after!.state.user.controlledTeamId).toBe(placeholderId);
+      expect(after!.state.user.activeOwnerTeamId).toBe(placeholderId);
       expect(after!.state.world.teams[placeholderId]!.city).toBe(
         available!.city,
       );
-      expect(after!.state.user.citySelectionConfirmed).toBe(true);
+      expect(getActiveOwnedFranchise(after!.state).citySelectionConfirmed).toBe(true);
       expect(selected.dashboard.controlledTeam.city).toBe(available!.city);
     },
     LONG_TIMEOUT_MS,
@@ -272,7 +273,7 @@ describe("Owner Mode vertical slice", () => {
       const reloaded = await store.load(created.save.id);
       expect(reloaded).toBeTruthy();
       const team =
-        reloaded!.state.world.teams[reloaded!.state.user.controlledTeamId]!;
+        reloaded!.state.world.teams[reloaded!.state.user.activeOwnerTeamId]!;
       expect(team.city).toBe(available.city);
       expect(team.name).toBe("Comets");
       expect(team.branding).toEqual({
@@ -303,7 +304,7 @@ describe("Owner Mode vertical slice", () => {
       expect(view!.cities.every((c) => c.occupied === false)).toBe(true);
 
       const before = await store.load(created.save.id);
-      const placeholderId = before!.state.user.controlledTeamId;
+      const placeholderId = before!.state.user.activeOwnerTeamId;
       const placeholderCity = before!.state.world.teams[placeholderId]!.city;
       const occupant = Object.values(before!.state.world.teams).find(
         (team) => team.id !== placeholderId,
@@ -335,12 +336,12 @@ describe("Owner Mode vertical slice", () => {
       }
 
       const after = await store.load(created.save.id);
-      expect(after!.state.user.controlledTeamId).toBe(placeholderId);
+      expect(after!.state.user.activeOwnerTeamId).toBe(placeholderId);
       expect(after!.state.world.teams[placeholderId]!.city).toBe(occupant.city);
       expect(after!.state.world.teams[placeholderId]!.name).toBe("Intruders");
       expect(after!.state.world.teams[occupant.id]!.city).toBe(placeholderCity);
       expect(after!.state.world.teams[occupant.id]!.name).toBe(occupantName);
-      expect(after!.state.user.citySelectionConfirmed).toBe(true);
+      expect(getActiveOwnedFranchise(after!.state).citySelectionConfirmed).toBe(true);
     },
     LONG_TIMEOUT_MS,
   );
@@ -415,7 +416,7 @@ describe("Owner Mode vertical slice", () => {
       const midRoundTrip = deserializeGameState(
         serializeGameState(midSeasonSave!.state),
       );
-      expect(midRoundTrip.user.controlledTeamId).toBe(controlledTeamId);
+      expect(midRoundTrip.user.activeOwnerTeamId).toBe(controlledTeamId);
 
       // Advance through preseason → regular
       let phaseResult = await advanceOwnerTime(
@@ -590,13 +591,13 @@ describe("Owner Mode vertical slice", () => {
       const season2 = await store.load(saveId);
       expect(season2).not.toBeNull();
       expect(season2!.state.competition.season.year).toBe(2027);
-      expect(season2!.state.user.controlledTeamId).toBe(controlledTeamId);
+      expect(season2!.state.user.activeOwnerTeamId).toBe(controlledTeamId);
       expect(() => validateGameState(season2!.state)).not.toThrow();
 
       const json = serializeGameState(season2!.state);
       const restored = deserializeGameState(json);
       expect(restored.competition.season.year).toBe(2027);
-      expect(restored.user.controlledTeamId).toBe(controlledTeamId);
+      expect(restored.user.activeOwnerTeamId).toBe(controlledTeamId);
       expect(Object.keys(restored.world.players).length).toBe(
         Object.keys(season2!.state.world.players).length,
       );

@@ -14,7 +14,7 @@ describe("financial spending guards", () => {
       settings: CBL_GAME_SETTINGS,
     });
     state = bootstrapWorld(state, createSeededRng(state.meta.rngState)).state;
-    const teamId = state.user.controlledTeamId;
+    const teamId = state.user.activeOwnerTeamId;
     state = {
       ...state,
       business: {
@@ -42,7 +42,7 @@ describe("financial spending guards", () => {
       settings: CBL_GAME_SETTINGS,
     });
     state = bootstrapWorld(state, createSeededRng(state.meta.rngState)).state;
-    const teamId = state.user.controlledTeamId;
+    const teamId = state.user.activeOwnerTeamId;
     expect(() => startFacilityUpgrade(state, teamId, "youth")).not.toThrow();
   });
 });

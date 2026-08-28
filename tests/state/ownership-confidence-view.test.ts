@@ -5,6 +5,7 @@ import { toOwnershipConfidenceView } from "@/state/ownership-confidence-view";
 import { toOwnerDashboardView } from "@/state/owner-dashboard";
 import { recordOwnershipEvidence } from "@/systems/ownership-confidence-engine";
 import type { AlignmentEvidence } from "@/domain/entities/ownership-confidence";
+import { getActiveOwnedFranchise, withOwnedFranchise } from "@/state/owner-context";
 
 describe("owner career evaluation with ownership confidence", () => {
   it("blends objective and strategic alignment without overriding performance", () => {
@@ -22,17 +23,14 @@ describe("owner career evaluation with ownership confidence", () => {
 
   it("reflects lower strategic alignment when confidence is poor", () => {
     let state = createTestGameState();
-    state = {
-      ...state,
-      user: {
-        ...state.user,
-        ownershipConfidence: {
-          ...state.user.ownershipConfidence,
-          alignmentScore: 25,
-          mood: "displeased",
-        },
+    state = withOwnedFranchise(state, state.user.activeOwnerTeamId, (f) => ({
+      ...f,
+      ownershipConfidence: {
+        ...f.ownershipConfidence,
+        alignmentScore: 25,
+        mood: "displeased",
       },
-    };
+    }));
     const evaluation = toOwnerCareerEvaluation(state);
     expect(evaluation.strategicAlignmentScore).toBe(25);
     expect(evaluation.alignmentScore).toBeLessThan(50);

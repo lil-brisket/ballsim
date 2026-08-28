@@ -2,14 +2,15 @@ import Link from "next/link";
 import { getGameModeDefinition } from "@/application/game-mode-catalog";
 import type { DashboardSnapshot } from "@/state/selectors";
 import { PhaseBadge } from "@/components/game/PhaseBadge";
+import { OwnerTeamSwitcher } from "@/components/game/OwnerTeamSwitcher";
 import { MoneyDisplay } from "@/components/owner/MoneyDisplay";
-import { TeamBadge } from "@/components/owner/TeamBadge";
 
 export function GameHeader(props: {
+  saveId: string;
   saveName: string;
   dashboard: DashboardSnapshot;
 }) {
-  const { dashboard, saveName } = props;
+  const { dashboard, saveName, saveId } = props;
   const modeDef = getGameModeDefinition(dashboard.mode);
   const record = `${dashboard.controlledStanding.wins}-${dashboard.controlledStanding.losses}`;
 
@@ -29,11 +30,9 @@ export function GameHeader(props: {
 
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="space-y-2">
-          <TeamBadge
-            city={dashboard.controlledTeam.city}
-            name={dashboard.controlledTeam.name}
-            abbreviation={dashboard.controlledTeam.abbreviation}
-            branding={dashboard.controlledTeam.branding}
+          <OwnerTeamSwitcher
+            saveId={saveId}
+            ownedTeams={dashboard.ownedTeams}
           />
           <div className="flex flex-wrap items-center gap-2">
             <PhaseBadge
@@ -58,7 +57,6 @@ export function GameHeader(props: {
             </p>
             <p className="text-zinc-200">{dashboard.seasonYear}</p>
           </div>
-          {/* Financial summary: desktop header only; mobile uses dashboard content */}
           <div className="hidden sm:block">
             <p className="text-xs uppercase tracking-wide text-zinc-600">Cash</p>
             <MoneyDisplay amount={dashboard.cash} className="text-zinc-200" />

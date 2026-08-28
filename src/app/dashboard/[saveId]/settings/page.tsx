@@ -35,10 +35,10 @@ export default async function InGameSettingsPage({
     league,
     regularSeason,
     playoffs,
-    ai,
     financialRules,
     injuryFrequency,
   } = settings;
+  const activeFranchiseAi = dashboard.activeFranchiseAi;
 
   return (
     <>
@@ -95,10 +95,12 @@ export default async function InGameSettingsPage({
 
       <Section title="AI Team Management">
         <p className="mb-3 text-sm text-zinc-400">
-          {countDelegatedVisiblePhases(ai.assistance)} of{" "}
+          Active franchise: {dashboard.controlledTeam.city}{" "}
+          {dashboard.controlledTeam.name}.{" "}
+          {countDelegatedVisiblePhases(activeFranchiseAi.assistance)} of{" "}
           {visibleDelegationPhaseCount()} phases delegated to AI
         </p>
-        <DelegationSummary assistance={ai.assistance} readOnly />
+        <DelegationSummary assistance={activeFranchiseAi.assistance} readOnly />
       </Section>
 
       <Section title="Financial rules">

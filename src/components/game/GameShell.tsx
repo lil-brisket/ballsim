@@ -1,6 +1,6 @@
+import { GameHeader } from "@/components/game/GameHeader";
 import type { DashboardSnapshot } from "@/state/selectors";
 import type { OwnerNavGroup } from "@/application/owner-nav-config";
-import { GameHeader } from "@/components/game/GameHeader";
 import { GameNavigation } from "@/components/game/GameNavigation";
 
 export function GameShell(props: {
@@ -12,7 +12,11 @@ export function GameShell(props: {
 }) {
   return (
     <div className="mx-auto flex w-full max-w-7xl flex-1 flex-col gap-6 px-4 py-8 sm:px-6">
-      <GameHeader saveName={props.saveName} dashboard={props.dashboard} />
+      <GameHeader
+        saveId={props.saveId}
+        saveName={props.saveName}
+        dashboard={props.dashboard}
+      />
 
       <div className="flex flex-col gap-6 lg:flex-row lg:items-start">
         <GameNavigation
