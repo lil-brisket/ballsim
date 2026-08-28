@@ -6,6 +6,7 @@ import {
   ControlledFranchiseIdentityEditor,
   type ControlledFranchiseIdentityDraft,
 } from "@/components/owner/ControlledFranchiseIdentityEditor";
+import { TeamLeaguePlacement } from "@/components/owner/TeamLeaguePlacement";
 import { TeamLogoMark } from "@/components/team/logos/TeamLogoMark";
 import type { TeamLogoId } from "@/data/team-branding/logo-catalog";
 import { isTeamLogoId } from "@/data/team-branding/logo-catalog";
@@ -17,6 +18,11 @@ import { validateTeamNickname } from "@/domain/team-nickname";
 import type { TeamListEntry } from "@/state/selectors";
 
 type IdentityDraftMap = Record<string, ControlledFranchiseIdentityDraft>;
+
+type FilterOption = {
+  id: string;
+  label: string;
+};
 
 function seedDraft(team: TeamListEntry): ControlledFranchiseIdentityDraft {
   const branding = team.branding;
@@ -76,17 +82,116 @@ function isDraftValid(
   return { ok: true };
 }
 
+function buildConferenceOptions(
+  teams: readonly TeamListEntry[],
+): FilterOption[] {
+  const byId = new Map<string, string>();
+  for (const team of teams) {
+    if (!byId.has(team.conferenceId) && team.conferenceName) {
+      byId.set(team.conferenceId, team.conferenceName);
+    }
+  }
+  return [...byId.entries()]
+    .map(([id, label]) => ({ id, label }))
+    .sort((a, b) => a.label.localeCompare(b.label));
+}
+
+function buildDivisionOptions(
+  teams: readonly TeamListEntry[],
+): FilterOption[] {
+  const byId = new Map<
+    string,
+    { name: string; conferenceName: string }
+  >();
+  for (const team of teams) {
+    if (!byId.has(team.divisionId) && team.divisionName) {
+      byId.set(team.divisionId, {
+        name: team.divisionName,
+        conferenceName: team.conferenceName,
+      });
+    }
+  }
+  const raw = [...byId.entries()].map(([id, info]) => ({
+    id,
+    name: info.name,
+    conferenceName: info.conferenceName,
+  }));
+  const nameCounts = new Map<string, number>();
+  for (const entry of raw) {
+    nameCounts.set(entry.name, (nameCounts.get(entry.name) ?? 0) + 1);
+  }
+  return raw
+    .map((entry) => ({
+      id: entry.id,
+      label:
+        (nameCounts.get(entry.name) ?? 0) > 1
+          ? `${entry.name} (${entry.conferenceName})`
+          : entry.name,
+    }))
+    .sort((a, b) => a.label.localeCompare(b.label));
+}
+
+function FilterPillRow(props: {
+  label: string;
+  options: readonly FilterOption[];
+  value: string | null;
+  onChange: (next: string | null) => void;
+}) {
+  const pillClass = (active: boolean) =>
+    `rounded-full border px-3 py-1 text-xs ${
+      active
+        ? "border-amber-600 text-amber-400"
+        : "border-zinc-700 text-zinc-400 hover:border-zinc-500"
+    }`;
+
+  return (
+    <div className="space-y-1.5">
+      <p className="text-[10px] font-medium uppercase tracking-wide text-zinc-500">
+        {props.label}
+      </p>
+      <div className="flex flex-wrap gap-2">
+        <button
+          type="button"
+          className={pillClass(props.value === null)}
+          onClick={() => props.onChange(null)}
+        >
+          All
+        </button>
+        {props.options.map((option) => (
+          <button
+            key={option.id}
+            type="button"
+            className={pillClass(props.value === option.id)}
+            onClick={() => props.onChange(option.id)}
+          >
+            {option.label}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 /**
  * Controlled franchise selection + identity setup during onboarding.
  * Anchor franchise (post city pick) is locked; user selects exactly controlledTeamCount.
+ * Selected franchises stay pinned above filters so identity editing is never lost.
  */
 export function OwnerMultiTeamPick(props: {
   saveId: string;
   anchorTeamId: string;
   controlledTeamCount: number;
   teams: readonly TeamListEntry[];
+  divisionsEnabled?: boolean;
 }) {
-  const { saveId, anchorTeamId, controlledTeamCount, teams } = props;
+  const {
+    saveId,
+    anchorTeamId,
+    controlledTeamCount,
+    teams,
+    divisionsEnabled = true,
+  } = props;
+
   const sortedTeams = useMemo(
     () =>
       [...teams].sort((a, b) => {
@@ -97,14 +202,6 @@ export function OwnerMultiTeamPick(props: {
     [teams, anchorTeamId],
   );
 
-  const visibleTeams = useMemo(
-    () =>
-      controlledTeamCount === 1
-        ? sortedTeams.filter((team) => team.id === anchorTeamId)
-        : sortedTeams,
-    [sortedTeams, controlledTeamCount, anchorTeamId],
-  );
-
   const [selectedIds, setSelectedIds] = useState<string[]>(() => [
     anchorTeamId,
   ]);
@@ -113,7 +210,56 @@ export function OwnerMultiTeamPick(props: {
     return anchor ? { [anchorTeamId]: seedDraft(anchor) } : {};
   });
   const [expandedId, setExpandedId] = useState<string | null>(anchorTeamId);
+  const [conferenceFilter, setConferenceFilter] = useState<string | null>(null);
+  const [divisionFilter, setDivisionFilter] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
+
+  const selectedIdSet = useMemo(() => new Set(selectedIds), [selectedIds]);
+
+  const conferenceOptions = useMemo(
+    () => buildConferenceOptions(teams),
+    [teams],
+  );
+  const divisionOptions = useMemo(
+    () => (divisionsEnabled ? buildDivisionOptions(teams) : []),
+    [teams, divisionsEnabled],
+  );
+
+  const showConferenceFilter =
+    controlledTeamCount > 1 && conferenceOptions.length >= 2;
+  const showDivisionFilter =
+    controlledTeamCount > 1 &&
+    divisionsEnabled &&
+    divisionOptions.length >= 2;
+
+  const pinnedTeams = useMemo(
+    () => sortedTeams.filter((team) => selectedIdSet.has(team.id)),
+    [sortedTeams, selectedIdSet],
+  );
+
+  const availableTeams = useMemo(() => {
+    if (controlledTeamCount === 1) {
+      return [];
+    }
+    return sortedTeams.filter((team) => {
+      if (selectedIdSet.has(team.id)) {
+        return false;
+      }
+      if (conferenceFilter !== null && team.conferenceId !== conferenceFilter) {
+        return false;
+      }
+      if (divisionFilter !== null && team.divisionId !== divisionFilter) {
+        return false;
+      }
+      return true;
+    });
+  }, [
+    sortedTeams,
+    selectedIdSet,
+    controlledTeamCount,
+    conferenceFilter,
+    divisionFilter,
+  ]);
 
   const selectedDrafts = useMemo(
     () =>
@@ -201,6 +347,127 @@ export function OwnerMultiTeamPick(props: {
     });
   }
 
+  function renderFranchiseCard(team: TeamListEntry) {
+    const isAnchor = team.id === anchorTeamId;
+    const checked = selectedIdSet.has(team.id);
+    const draft = checked ? ensureDraft(team) : null;
+    const expanded = checked && expandedId === team.id;
+    const validation = checked ? validationById[team.id] : null;
+    const identityComplete = validation?.ok === true;
+    const displayNickname = draft?.nickname ?? team.name;
+
+    return (
+      <li
+        key={team.id}
+        className={`rounded-lg border ${
+          checked ? "border-amber-700/50 bg-zinc-900/40" : "border-zinc-800"
+        }`}
+      >
+        <div className="flex items-start gap-3 px-3 py-3">
+          <input
+            type="checkbox"
+            checked={checked}
+            disabled={
+              isAnchor ||
+              (!checked && selectedIds.length >= controlledTeamCount)
+            }
+            onChange={() => toggle(team.id)}
+            className="mt-1 h-4 w-4 rounded border-zinc-600"
+            aria-label={`Control ${team.city} ${team.name}`}
+          />
+          <button
+            type="button"
+            className="flex min-w-0 flex-1 items-start gap-3 text-left"
+            onClick={() => {
+              if (!checked) {
+                toggle(team.id);
+                return;
+              }
+              setExpandedId((current) =>
+                current === team.id ? null : team.id,
+              );
+            }}
+          >
+            {(draft ?? team.branding) ? (
+              <span
+                className="inline-flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-md border border-zinc-700"
+                style={{
+                  backgroundColor:
+                    draft?.primaryColor ??
+                    team.branding?.primaryColor ??
+                    "#27272a",
+                }}
+              >
+                <TeamLogoMark
+                  branding={{
+                    primaryColor:
+                      draft?.primaryColor ??
+                      team.branding?.primaryColor ??
+                      "#1d4ed8",
+                    secondaryColor:
+                      draft?.secondaryColor ??
+                      team.branding?.secondaryColor ??
+                      "#f8fafc",
+                    accentColor:
+                      draft?.accentColor ??
+                      team.branding?.accentColor ??
+                      "#f59e0b",
+                    logoId:
+                      draft?.logoId ??
+                      (team.branding && isTeamLogoId(team.branding.logoId)
+                        ? team.branding.logoId
+                        : "basketball"),
+                  }}
+                  size="sm"
+                  title={`${team.city} ${displayNickname}`}
+                />
+              </span>
+            ) : null}
+            <span className="min-w-0 flex-1">
+              <span className="block text-xs text-zinc-400">{team.city}</span>
+              <span className="block text-sm font-semibold text-zinc-100">
+                {displayNickname}
+                {isAnchor ? (
+                  <span className="ml-2 text-xs font-normal text-amber-500">
+                    Initial
+                  </span>
+                ) : null}
+              </span>
+              <TeamLeaguePlacement
+                conferenceName={team.conferenceName}
+                divisionName={team.divisionName}
+                showDivision={divisionsEnabled}
+              />
+              {checked ? (
+                <span
+                  className={`mt-1 block text-xs ${
+                    identityComplete ? "text-emerald-400" : "text-amber-500"
+                  }`}
+                >
+                  {identityComplete
+                    ? "Identity complete"
+                    : "Identity incomplete"}
+                </span>
+              ) : null}
+            </span>
+          </button>
+        </div>
+
+        {expanded && draft ? (
+          <div className="px-3 pb-3">
+            <ControlledFranchiseIdentityEditor
+              draft={draft}
+              nicknameError={
+                validation && !validation.ok ? validation.error : null
+              }
+              onChange={updateDraft}
+            />
+          </div>
+        ) : null}
+      </li>
+    );
+  }
+
   return (
     <div className="space-y-4">
       <div>
@@ -213,126 +480,90 @@ export function OwnerMultiTeamPick(props: {
           Select the franchises you want to control, then customize each team&apos;s
           identity. Generated names, colours, and logos are used as defaults.
         </p>
-        {controlledTeamCount > 1 ? (
-          <p className="mt-2 text-sm text-zinc-500">
-            Selected {selectedIds.length} of {controlledTeamCount}
-          </p>
-        ) : null}
       </div>
 
-      <ul className="space-y-2">
-        {visibleTeams.map((team) => {
-          const isAnchor = team.id === anchorTeamId;
-          const checked = selectedIds.includes(team.id);
-          const draft = checked ? ensureDraft(team) : null;
-          const expanded = checked && expandedId === team.id;
-          const validation = checked ? validationById[team.id] : null;
-          const identityComplete = validation?.ok === true;
-
-          return (
-            <li
-              key={team.id}
-              className={`rounded-lg border ${
-                checked ? "border-amber-700/50 bg-zinc-900/40" : "border-zinc-800"
-              }`}
-            >
-              <div className="flex items-start gap-3 px-3 py-3">
-                <input
-                  type="checkbox"
-                  checked={checked}
-                  disabled={
-                    isAnchor ||
-                    (!checked && selectedIds.length >= controlledTeamCount)
-                  }
-                  onChange={() => toggle(team.id)}
-                  className="mt-1 h-4 w-4 rounded border-zinc-600"
-                  aria-label={`Control ${team.city} ${team.name}`}
-                />
-                <button
-                  type="button"
-                  className="flex min-w-0 flex-1 items-center gap-3 text-left"
-                  onClick={() => {
-                    if (!checked) {
-                      toggle(team.id);
-                      return;
-                    }
-                    setExpandedId((current) =>
-                      current === team.id ? null : team.id,
-                    );
-                  }}
-                >
-                  {(draft ?? team.branding) ? (
-                    <span
-                      className="inline-flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-md border border-zinc-700"
-                      style={{
-                        backgroundColor:
-                          draft?.primaryColor ??
-                          team.branding?.primaryColor ??
-                          "#27272a",
-                      }}
-                    >
-                      <TeamLogoMark
-                        branding={{
-                          primaryColor:
-                            draft?.primaryColor ??
-                            team.branding?.primaryColor ??
-                            "#1d4ed8",
-                          secondaryColor:
-                            draft?.secondaryColor ??
-                            team.branding?.secondaryColor ??
-                            "#f8fafc",
-                          accentColor:
-                            draft?.accentColor ??
-                            team.branding?.accentColor ??
-                            "#f59e0b",
-                          logoId:
-                            draft?.logoId ??
-                            (team.branding &&
-                            isTeamLogoId(team.branding.logoId)
-                              ? team.branding.logoId
-                              : "basketball"),
-                        }}
-                        size="sm"
-                        title={`${team.city} ${draft?.nickname ?? team.name}`}
-                      />
-                    </span>
-                  ) : null}
-                  <span className="min-w-0 flex-1">
-                    <span className="block text-sm text-zinc-100">
-                      {team.city} {draft?.nickname ?? team.name}
-                      {isAnchor ? (
-                        <span className="ml-2 text-xs text-amber-500">
-                          Initial
-                        </span>
-                      ) : null}
-                    </span>
-                    <span className="block text-xs text-zinc-500">
-                      {team.conferenceName} · {team.divisionName}
-                      {checked
-                        ? identityComplete
-                          ? " · Identity complete"
-                          : " · Identity incomplete"
-                        : ""}
-                    </span>
+      {controlledTeamCount > 1 ? (
+        <div className="space-y-2 rounded-lg border border-zinc-800 bg-zinc-950/40 px-3 py-3">
+          <p className="text-[10px] font-medium uppercase tracking-wide text-zinc-500">
+            Controlled Franchises
+          </p>
+          <p className="text-sm text-zinc-300">
+            {selectedIds.length} of {controlledTeamCount}
+          </p>
+          <ul className="space-y-2">
+            {pinnedTeams.map((team) => {
+              const draft = drafts[team.id];
+              const nickname = draft?.nickname ?? team.name;
+              return (
+                <li key={`summary-${team.id}`} className="text-sm">
+                  <span className="text-zinc-100">
+                    ✓ {team.city} {nickname}
                   </span>
-                </button>
-              </div>
-
-              {expanded && draft ? (
-                <div className="px-3 pb-3">
-                  <ControlledFranchiseIdentityEditor
-                    draft={draft}
-                    nicknameError={
-                      validation && !validation.ok ? validation.error : null
-                    }
-                    onChange={updateDraft}
+                  <TeamLeaguePlacement
+                    conferenceName={team.conferenceName}
+                    divisionName={team.divisionName}
+                    showDivision={divisionsEnabled}
+                    compact
                   />
-                </div>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      ) : null}
+
+      {controlledTeamCount === 1 ? (
+        <ul className="space-y-2">{pinnedTeams.map(renderFranchiseCard)}</ul>
+      ) : (
+        <>
+          <div className="space-y-2">
+            <p className="text-[10px] font-medium uppercase tracking-wide text-zinc-500">
+              Selected
+            </p>
+            <ul className="space-y-2">
+              {pinnedTeams.map(renderFranchiseCard)}
+            </ul>
+          </div>
+
+          {showConferenceFilter || showDivisionFilter ? (
+            <div className="space-y-3">
+              {showConferenceFilter ? (
+                <FilterPillRow
+                  label="Conference"
+                  options={conferenceOptions}
+                  value={conferenceFilter}
+                  onChange={setConferenceFilter}
+                />
               ) : null}
-            </li>
-          );
-        })}
-      </ul>
+              {showDivisionFilter ? (
+                <FilterPillRow
+                  label="Division"
+                  options={divisionOptions}
+                  value={divisionFilter}
+                  onChange={setDivisionFilter}
+                />
+              ) : null}
+            </div>
+          ) : null}
+
+          <div className="space-y-2">
+            <p className="text-[10px] font-medium uppercase tracking-wide text-zinc-500">
+              Franchises
+            </p>
+            {availableTeams.length === 0 ? (
+              <p className="text-sm text-zinc-500">
+                {selectedIds.length >= controlledTeamCount
+                  ? "Selection limit reached. Deselect a franchise to choose another."
+                  : "No franchises match the current filters."}
+              </p>
+            ) : (
+              <ul className="space-y-2">
+                {availableTeams.map(renderFranchiseCard)}
+              </ul>
+            )}
+          </div>
+        </>
+      )}
 
       <div className="flex flex-wrap gap-3">
         <button

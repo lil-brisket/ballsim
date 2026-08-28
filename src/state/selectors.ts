@@ -155,6 +155,8 @@ export type TeamListEntry = {
   city: string;
   name: string;
   abbreviation: string;
+  conferenceId: string;
+  divisionId: string;
   conferenceName: string;
   divisionName: string;
   branding: TeamBrandingView | null;
@@ -362,6 +364,8 @@ export function listTeamsForSelection(state: GameState): TeamListEntry[] {
       city: team.city,
       name: team.name,
       abbreviation: team.abbreviation,
+      conferenceId: team.conferenceId,
+      divisionId: team.divisionId,
       conferenceName: conference?.name ?? "",
       divisionName: division?.name ?? "",
       branding: toBrandingView(team.branding),

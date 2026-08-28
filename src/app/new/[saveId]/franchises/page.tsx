@@ -58,6 +58,7 @@ export default async function AdditionalFranchisesPage({ params }: PageProps) {
         anchorTeamId={view.dashboard.controlledTeam.id}
         controlledTeamCount={controlledTeamCount}
         teams={view.teams}
+        divisionsEnabled={view.settings.league.divisionsEnabled}
       />
     </OnboardingShell>
   );
