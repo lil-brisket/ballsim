@@ -25,6 +25,13 @@ import { listFreeAgents } from "@/systems/free-agency";
 import { getTeamCapSpace, getTeamPayroll } from "@/systems/salary-cap";
 import { getFinancialStatement } from "@/systems/team-finances";
 import { getCalendarContext } from "@/systems/simulation/calendar-context";
+import { deriveDefaultTeamBranding } from "@/systems/team-branding-generation";
+import {
+  toBrandingView,
+  type TeamBrandingView,
+} from "@/state/team-branding-view";
+
+export type { TeamBrandingView } from "@/state/team-branding-view";
 
 export type DashboardSnapshot = {
   saveId: string;
@@ -70,6 +77,7 @@ export type DashboardSnapshot = {
     teamScore: number;
     opponentScore: number;
     won: boolean;
+    opponentBranding: TeamBrandingView | null;
   }>;
   upcomingGames: ScheduleGameView[];
   objectives: ObjectiveView[];
@@ -121,6 +129,7 @@ export type TeamListEntry = {
   abbreviation: string;
   conferenceName: string;
   divisionName: string;
+  branding: TeamBrandingView | null;
 };
 
 export type CityPickOption = {
@@ -158,6 +167,7 @@ export type StandingRowView = {
   losses: number;
   isUserTeam: boolean;
   rank: number;
+  branding: TeamBrandingView | null;
 };
 
 export type FreeAgentView = {
@@ -191,6 +201,7 @@ export type DraftBoardView = {
     round: number;
     ownerTeamId: string;
     ownerAbbreviation: string;
+    ownerBranding: TeamBrandingView | null;
     status: string;
     selectedPlayerId: string | null;
     isUserPick: boolean;
@@ -204,6 +215,7 @@ export type DraftBoardView = {
   selections: Array<{
     overallPick: number;
     teamAbbreviation: string;
+    teamBranding: TeamBrandingView | null;
     playerName: string;
     playerId: string;
   }>;
@@ -221,6 +233,8 @@ export type ScheduleGameView = {
   date: string;
   opponentAbbreviation: string;
   opponentName: string;
+  opponentTeamId: string;
+  opponentBranding: TeamBrandingView | null;
   home: boolean;
   status: string;
   teamScore: number | null;
@@ -267,6 +281,7 @@ export type PlayerDetailView = {
   potentialOverall: number;
   teamId: string | null;
   teamName: string | null;
+  teamBranding: TeamBrandingView | null;
   onControlledRoster: boolean;
   injuryKind: string;
   developmentStage: string;
@@ -319,6 +334,7 @@ export function listTeamsForSelection(state: GameState): TeamListEntry[] {
       abbreviation: team.abbreviation,
       conferenceName: conference?.name ?? "",
       divisionName: division?.name ?? "",
+      branding: toBrandingView(team.branding),
     });
   }
   entries.sort((a, b) => {
@@ -432,6 +448,7 @@ export function toStandingsView(state: GameState): StandingRowView[] {
       losses: standing.losses,
       isUserTeam: team.id === userTeamId,
       rank: 0,
+      branding: toBrandingView(team.branding),
     });
   }
   rows.sort((a, b) => {
@@ -558,6 +575,7 @@ export function toDraftBoardView(state: GameState): DraftBoardView | null {
       round: slot.round,
       ownerTeamId: slot.ownerTeamId,
       ownerAbbreviation: owner?.abbreviation ?? "???",
+      ownerBranding: toBrandingView(owner?.branding),
       status: slot.status,
       selectedPlayerId: slot.selectedPlayerId ?? null,
       isUserPick: slot.ownerTeamId === userTeamId,
@@ -580,6 +598,7 @@ export function toDraftBoardView(state: GameState): DraftBoardView | null {
       return {
         overallPick: selection.overallPick,
         teamAbbreviation: team?.abbreviation ?? "???",
+        teamBranding: toBrandingView(team?.branding),
         playerName: player
           ? `${player.firstName} ${player.lastName}`
           : selection.playerId,
@@ -612,6 +631,8 @@ export function toScheduleView(state: GameState): ScheduleGameView[] {
       date: game.date,
       opponentAbbreviation: opponent?.abbreviation ?? "???",
       opponentName: opponent ? `${opponent.city} ${opponent.name}` : "Unknown",
+      opponentTeamId: opponentId,
+      opponentBranding: toBrandingView(opponent?.branding),
       home,
       status: game.status,
       teamScore,
@@ -890,6 +911,7 @@ function playerEntityToDetail(
     potentialOverall: player.potential.overall,
     teamId: player.teamId,
     teamName: team ? `${team.city} ${team.name}` : null,
+    teamBranding: toBrandingView(team?.branding),
     onControlledRoster,
     injuryKind: player.injury.kind,
     developmentStage: player.development.stage,
@@ -944,6 +966,7 @@ export function toDashboardSnapshot(state: GameState): DashboardSnapshot {
         teamScore,
         opponentScore,
         won: teamScore > opponentScore,
+        opponentBranding: toBrandingView(opponent?.branding),
       };
     });
 
@@ -1051,6 +1074,7 @@ export type BoxScoreSideView = {
   score: number;
   teamStats: BoxScoreTeamStatsView;
   players: PlayerBoxScoreRowView[];
+  branding: TeamBrandingView | null;
 };
 
 export type GameBoxScoreView = {
@@ -1139,6 +1163,7 @@ export function toGameBoxScoreView(
       city: homeIdentity.city,
       name: homeIdentity.name,
       abbreviation: homeIdentity.abbreviation,
+      branding: homeIdentity.branding,
       score: game.score.home,
       teamStats: toTeamStatsView(homeTeamStats),
       players: homeRows.map((row) =>
@@ -1150,6 +1175,7 @@ export function toGameBoxScoreView(
       city: awayIdentity.city,
       name: awayIdentity.name,
       abbreviation: awayIdentity.abbreviation,
+      branding: awayIdentity.branding,
       score: game.score.away,
       teamStats: toTeamStatsView(awayTeamStats),
       players: awayRows.map((row) =>
@@ -1172,20 +1198,38 @@ function resolveTeamIdentity(
   city: string;
   name: string;
   abbreviation: string;
+  branding: TeamBrandingView | null;
 } {
   if (snapshot) {
+    // Snapshot is authoritative for historical games — never substitute live branding.
+    const fromSnapshot = toBrandingView(snapshot.branding);
     return {
       teamId: snapshot.teamId,
       city: snapshot.city,
       name: snapshot.name,
       abbreviation: snapshot.abbreviation,
+      branding:
+        fromSnapshot ??
+        toBrandingView(
+          deriveDefaultTeamBranding(
+            snapshot.teamId,
+            snapshot.city,
+            snapshot.name,
+          ),
+        ),
     };
   }
+  const fromLive = toBrandingView(live?.branding);
   return {
     teamId,
     city: live?.city ?? "Unknown",
     name: live?.name ?? "Team",
     abbreviation: live?.abbreviation ?? "???",
+    branding:
+      fromLive ??
+      toBrandingView(
+        deriveDefaultTeamBranding(teamId, live?.city ?? "", live?.name ?? ""),
+      ),
   };
 }
 

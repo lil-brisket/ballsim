@@ -3,6 +3,7 @@ import type { OwnerDashboardTeam } from "@/state/owner-dashboard";
 import { EmptyState } from "@/components/owner/EmptyState";
 import { MoneyDisplay } from "@/components/owner/MoneyDisplay";
 import { Section } from "@/components/owner/Section";
+import { TeamLogoMark } from "@/components/team/logos/TeamLogoMark";
 
 export function TeamDecisionPanel(props: {
   team: OwnerDashboardTeam;
@@ -91,17 +92,49 @@ export function TeamDecisionPanel(props: {
                   className="flex items-center justify-between rounded-lg border border-zinc-800 px-3 py-2 text-sm"
                 >
                   <span className="font-mono text-zinc-500">{game.date}</span>
-                  <span className="text-zinc-200">
-                    {game.home ? "vs" : "@"} {game.opponentAbbreviation}
+                  <span className="inline-flex items-center gap-2 text-zinc-200">
+                    <span>{game.home ? "vs" : "@"}</span>
+                    {game.opponentBranding ? (
+                      <span
+                        className="inline-flex h-5 w-5 items-center justify-center overflow-hidden rounded border border-zinc-700"
+                        style={{
+                          backgroundColor: game.opponentBranding.primaryColor,
+                        }}
+                      >
+                        <TeamLogoMark
+                          branding={game.opponentBranding}
+                          size="sm"
+                          decorative
+                        />
+                      </span>
+                    ) : null}
+                    <span>{game.opponentAbbreviation}</span>
                   </span>
                 </li>
               ))}
             </ul>
           )}
           {nextGame ? (
-            <p className="mt-2 text-xs text-zinc-500">
-              Next: {nextGame.home ? "vs" : "@"} {nextGame.opponentAbbreviation}{" "}
-              on {nextGame.date}
+            <p className="mt-2 inline-flex items-center gap-2 text-xs text-zinc-500">
+              <span>Next:</span>
+              <span>{nextGame.home ? "vs" : "@"}</span>
+              {nextGame.opponentBranding ? (
+                <span
+                  className="inline-flex h-4 w-4 items-center justify-center overflow-hidden rounded border border-zinc-700"
+                  style={{
+                    backgroundColor: nextGame.opponentBranding.primaryColor,
+                  }}
+                >
+                  <TeamLogoMark
+                    branding={nextGame.opponentBranding}
+                    size="sm"
+                    decorative
+                  />
+                </span>
+              ) : null}
+              <span>
+                {nextGame.opponentAbbreviation} on {nextGame.date}
+              </span>
             </p>
           ) : null}
         </div>

@@ -5,10 +5,13 @@ import {
   askAiOwnerDecisionAction,
   declineOwnerDecisionAction,
 } from "@/application/actions";
+import { TeamLogoMark } from "@/components/team/logos/TeamLogoMark";
+import type { TeamBrandingView } from "@/state/team-branding-view";
 
 export type PendingTradeOfferViewModel = {
   decisionId: string;
   offeringTeamName: string;
+  offeringTeamBranding: TeamBrandingView | null;
   youReceive: string[];
   theyReceive: string[];
 };
@@ -39,11 +42,27 @@ export function PendingOwnerDecisionPanel(props: {
       >
         Trade offer requires your decision
       </h3>
-      <p className="mt-2 text-amber-100/90">
-        <span className="font-medium text-amber-50">
-          {offer.offeringTeamName}
-        </span>{" "}
-        has offered a trade. Simulation is paused until you decide.
+      <p className="mt-2 flex flex-wrap items-center gap-2 text-amber-100/90">
+        {offer.offeringTeamBranding ? (
+          <span
+            className="inline-flex shrink-0 items-center justify-center rounded-sm p-0.5"
+            style={{
+              backgroundColor: offer.offeringTeamBranding.primaryColor,
+            }}
+          >
+            <TeamLogoMark
+              branding={offer.offeringTeamBranding}
+              size="sm"
+              decorative
+            />
+          </span>
+        ) : null}
+        <span>
+          <span className="font-medium text-amber-50">
+            {offer.offeringTeamName}
+          </span>{" "}
+          has offered a trade. Simulation is paused until you decide.
+        </span>
       </p>
 
       <div className="mt-4 grid gap-3 sm:grid-cols-2">

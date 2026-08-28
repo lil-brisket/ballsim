@@ -3,6 +3,7 @@ import { loadOwnerSaveView } from "@/application/game-service";
 import { DataTable } from "@/components/owner/DataTable";
 import { EmptyState, ErrorState } from "@/components/owner/EmptyState";
 import { PageHeader } from "@/components/owner/PageHeader";
+import { TeamIdentityInline } from "@/components/team/TeamIdentityInline";
 
 type StandingsPageProps = {
   params: Promise<{ saveId: string }>;
@@ -35,13 +36,25 @@ export default async function StandingsPage({
             <tr
               key={row.teamId}
               className={`border-t border-zinc-800 ${
-                row.isUserTeam ? "bg-amber-950/30 font-medium text-amber-300" : ""
+                row.isUserTeam
+                  ? "bg-amber-950/30 font-medium text-amber-300"
+                  : ""
               }`}
             >
               <td className="px-3 py-2 text-zinc-500">{row.rank}</td>
               <td className="px-3 py-2">
-                {row.city} {row.name} ({row.abbreviation})
-                {row.isUserTeam ? " — you" : ""}
+                <span className="inline-flex items-center gap-2">
+                  <TeamIdentityInline
+                    city={row.city}
+                    name={row.name}
+                    abbreviation={row.abbreviation}
+                    branding={row.branding}
+                    size="sm"
+                  />
+                  {row.isUserTeam ? (
+                    <span className="text-amber-400">— you</span>
+                  ) : null}
+                </span>
               </td>
               <td className="px-3 py-2">{row.wins}</td>
               <td className="px-3 py-2">{row.losses}</td>

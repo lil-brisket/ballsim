@@ -36,6 +36,10 @@ import type {
 } from "@/state/franchise-value";
 import { calculateFranchiseValue } from "@/state/franchise-value";
 import { assessRelocation } from "@/state/relocation-assessment";
+import {
+  toBrandingView,
+  type TeamBrandingView,
+} from "@/state/team-branding-view";
 import { getCachedAnnualReport } from "@/systems/franchise-report";
 import { activeGameplayMilestones } from "@/systems/historical-milestones";
 import { currentFranchiseEra } from "@/systems/franchise-eras";
@@ -191,6 +195,7 @@ export type OwnerDashboardPendingTradeOffer = {
   decisionId: string;
   offeringTeamId: string;
   offeringTeamName: string;
+  offeringTeamBranding: TeamBrandingView | null;
   createdOn: string;
   youReceive: string[];
   theyReceive: string[];
@@ -695,6 +700,7 @@ function buildPendingTradeOfferView(
     offeringTeamName: offeringTeam
       ? `${offeringTeam.city} ${offeringTeam.name}`
       : pending.payload.offeringTeamId,
+    offeringTeamBranding: toBrandingView(offeringTeam?.branding),
     createdOn: pending.createdOn,
     youReceive: describeTradeSideAssets(state, offeringSide),
     theyReceive: describeTradeSideAssets(state, userSide),

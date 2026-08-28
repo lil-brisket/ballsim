@@ -2,6 +2,7 @@ import Link from "next/link";
 import { DataTable } from "@/components/owner/DataTable";
 import { EmptyState } from "@/components/owner/EmptyState";
 import { Section } from "@/components/owner/Section";
+import { TeamLogoMark } from "@/components/team/logos/TeamLogoMark";
 import type { PlayerProfileView } from "@/state/player-profile-selectors";
 
 const HIGH_LABELS: Record<string, string> = {
@@ -104,8 +105,27 @@ export function PlayerCareer(props: {
                   {high.value}
                 </td>
                 <td className="px-3 py-2 text-sm text-zinc-400">
-                  vs {high.opponentAbbreviation} · {high.date} ·{" "}
-                  {high.seasonYear}
+                  <span className="inline-flex items-center gap-1.5">
+                    <span>vs</span>
+                    {high.opponentBranding ? (
+                      <span
+                        className="inline-flex shrink-0 items-center justify-center rounded-sm p-0.5"
+                        style={{
+                          backgroundColor: high.opponentBranding.primaryColor,
+                        }}
+                      >
+                        <TeamLogoMark
+                          branding={high.opponentBranding}
+                          size="sm"
+                          decorative
+                        />
+                      </span>
+                    ) : null}
+                    <span>
+                      {high.opponentAbbreviation} · {high.date} ·{" "}
+                      {high.seasonYear}
+                    </span>
+                  </span>
                 </td>
                 <td className="px-3 py-2">
                   <Link

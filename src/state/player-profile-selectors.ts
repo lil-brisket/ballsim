@@ -30,6 +30,11 @@ import {
 } from "@/state/game-access";
 import { getTeamPayroll } from "@/systems/salary-cap";
 import type { PlayerDetailView } from "@/state/selectors";
+import {
+  toBrandingView,
+  type TeamBrandingView,
+} from "@/state/team-branding-view";
+import { deriveDefaultTeamBranding } from "@/systems/team-branding-generation";
 
 export type CareerHighStatKey =
   | "points"
@@ -64,6 +69,7 @@ export type CareerHighView = {
   gameId: string;
   date: string;
   opponentAbbreviation: string;
+  opponentBranding: TeamBrandingView | null;
   teamAbbreviation: string;
   seasonYear: number;
 };
@@ -87,6 +93,7 @@ export type PlayerGameLogRowView = {
   seasonYear: number;
   competitionType: string;
   opponentAbbreviation: string;
+  opponentBranding: TeamBrandingView | null;
   home: boolean;
   won: boolean | null;
   teamScore: number | null;
@@ -273,21 +280,43 @@ function resolveGameTeamIdentity(
   state: GameState,
   game: Game,
   teamId: string,
-): { city: string; name: string; abbreviation: string } {
+): {
+  city: string;
+  name: string;
+  abbreviation: string;
+  branding: TeamBrandingView | null;
+} {
   const isHome = teamId === game.homeTeamId;
   const snapshot = isHome ? game.homeTeamSnapshot : game.awayTeamSnapshot;
   if (snapshot) {
+    // Snapshot is authoritative for historical games — never substitute live branding.
+    const fromSnapshot = toBrandingView(snapshot.branding);
     return {
       city: snapshot.city,
       name: snapshot.name,
       abbreviation: snapshot.abbreviation,
+      branding:
+        fromSnapshot ??
+        toBrandingView(
+          deriveDefaultTeamBranding(
+            snapshot.teamId,
+            snapshot.city,
+            snapshot.name,
+          ),
+        ),
     };
   }
   const live = state.world.teams[teamId];
+  const fromLive = toBrandingView(live?.branding);
   return {
     city: live?.city ?? "Unknown",
     name: live?.name ?? "Team",
     abbreviation: live?.abbreviation ?? "???",
+    branding:
+      fromLive ??
+      toBrandingView(
+        deriveDefaultTeamBranding(teamId, live?.city ?? "", live?.name ?? ""),
+      ),
   };
 }
 
@@ -406,7 +435,7 @@ export function deriveCareerHighs(
       teamId === game.homeTeamId ? game.awayTeamId : game.homeTeamId;
     const teamIdentity = teamId
       ? resolveGameTeamIdentity(state, game, teamId)
-      : { abbreviation: "???" };
+      : { abbreviation: "???", branding: null as TeamBrandingView | null };
     const oppIdentity = resolveGameTeamIdentity(state, game, opponentId);
     const seasonYear = seasonYearFromId(
       game.seasonId,
@@ -423,6 +452,7 @@ export function deriveCareerHighs(
           gameId: game.id,
           date: game.date,
           opponentAbbreviation: oppIdentity.abbreviation,
+          opponentBranding: oppIdentity.branding,
           teamAbbreviation: teamIdentity.abbreviation,
           seasonYear,
         });
@@ -544,6 +574,7 @@ export function toPlayerGameLogView(
       seasonYear: seasonYearFromId(game.seasonId, state.competition.season.year),
       competitionType: game.competitionType,
       opponentAbbreviation: opp.abbreviation,
+      opponentBranding: opp.branding,
       home,
       won,
       teamScore,

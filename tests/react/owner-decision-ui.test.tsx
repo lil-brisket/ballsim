@@ -44,6 +44,7 @@ describe("PendingOwnerDecisionPanel", () => {
         offer={{
           decisionId: "od_1",
           offeringTeamName: "Boston Breakers",
+          offeringTeamBranding: null,
           youReceive: ["Alex Johnson"],
           theyReceive: ["John Smith"],
         }}

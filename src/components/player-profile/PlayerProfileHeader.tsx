@@ -1,5 +1,6 @@
 import { MoneyDisplay } from "@/components/owner/MoneyDisplay";
 import { StatusBadge } from "@/components/owner/StatusBadge";
+import { TeamLogoMark } from "@/components/team/logos/TeamLogoMark";
 import type { PlayerProfileView } from "@/state/player-profile-selectors";
 
 export function PlayerProfileHeader(props: {
@@ -14,9 +15,25 @@ export function PlayerProfileHeader(props: {
           <h1 className="text-2xl font-semibold text-zinc-50">
             {player.firstName} {player.lastName}
           </h1>
-          <p className="mt-1 text-sm text-zinc-400">
-            {player.position} · Age {player.age} ·{" "}
-            {player.teamName ?? "Free agent"}
+          <p className="mt-1 flex flex-wrap items-center gap-1.5 text-sm text-zinc-400">
+            <span>
+              {player.position} · Age {player.age} ·
+            </span>
+            {player.teamBranding ? (
+              <span
+                className="inline-flex shrink-0 items-center justify-center rounded-sm p-0.5"
+                style={{
+                  backgroundColor: player.teamBranding.primaryColor,
+                }}
+              >
+                <TeamLogoMark
+                  branding={player.teamBranding}
+                  size="sm"
+                  decorative
+                />
+              </span>
+            ) : null}
+            <span>{player.teamName ?? "Free agent"}</span>
           </p>
           <p className="mt-1 text-xs capitalize text-zinc-500">
             {player.archetype.replace(/_/g, " ")} · {player.nationality} ·{" "}

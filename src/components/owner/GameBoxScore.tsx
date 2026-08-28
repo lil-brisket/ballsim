@@ -1,6 +1,8 @@
 import type { GameBoxScoreView } from "@/state/selectors";
+import type { TeamBrandingView } from "@/state/team-branding-view";
 import { DataTable } from "@/components/owner/DataTable";
 import { Section } from "@/components/owner/Section";
+import { TeamLogoMark } from "@/components/team/logos/TeamLogoMark";
 
 type GameBoxScoreProps = {
   boxScore: GameBoxScoreView;
@@ -19,6 +21,51 @@ const PLAYER_HEADERS = [
   "PF",
 ];
 
+function MatchupTeamBlock(props: {
+  label: string;
+  city: string;
+  name: string;
+  abbreviation: string;
+  score: number;
+  branding: TeamBrandingView | null;
+  align?: "left" | "right";
+}) {
+  const alignRight = props.align === "right";
+  return (
+    <div className={alignRight ? "sm:text-right" : undefined}>
+      <p className="text-sm text-zinc-500">{props.label}</p>
+      <div
+        className={`mt-1 flex items-center gap-3 ${
+          alignRight ? "sm:flex-row-reverse" : ""
+        }`}
+      >
+        {props.branding ? (
+          <span
+            className="inline-flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-zinc-700"
+            style={{ backgroundColor: props.branding.primaryColor }}
+          >
+            <TeamLogoMark
+              branding={props.branding}
+              size="lg"
+              title={`${props.city} ${props.name}`}
+            />
+          </span>
+        ) : (
+          <span className="inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-lg border border-amber-700/40 bg-amber-950/50 font-mono text-xs font-semibold text-amber-400">
+            {props.abbreviation}
+          </span>
+        )}
+        <div>
+          <p className="text-lg font-medium text-zinc-100">
+            {props.city} {props.name}
+          </p>
+          <p className="font-mono text-3xl text-zinc-50">{props.score}</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function GameBoxScore({ boxScore }: GameBoxScoreProps) {
   const { away, home } = boxScore;
   const metaParts = [
@@ -33,21 +80,24 @@ export function GameBoxScore({ boxScore }: GameBoxScoreProps) {
     <div className="space-y-8">
       <header className="rounded-xl border border-zinc-800 bg-zinc-900/60 px-6 py-5">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <p className="text-sm text-zinc-500">Away</p>
-            <p className="text-lg font-medium text-zinc-100">
-              {away.city} {away.name}
-            </p>
-            <p className="font-mono text-3xl text-zinc-50">{away.score}</p>
-          </div>
+          <MatchupTeamBlock
+            label="Away"
+            city={away.city}
+            name={away.name}
+            abbreviation={away.abbreviation}
+            score={away.score}
+            branding={away.branding}
+          />
           <div className="text-center text-zinc-500">—</div>
-          <div className="sm:text-right">
-            <p className="text-sm text-zinc-500">Home</p>
-            <p className="text-lg font-medium text-zinc-100">
-              {home.city} {home.name}
-            </p>
-            <p className="font-mono text-3xl text-zinc-50">{home.score}</p>
-          </div>
+          <MatchupTeamBlock
+            label="Home"
+            city={home.city}
+            name={home.name}
+            abbreviation={home.abbreviation}
+            score={home.score}
+            branding={home.branding}
+            align="right"
+          />
         </div>
         <p className="mt-4 text-sm text-amber-400/90">
           {boxScore.winnerName} wins by {boxScore.margin}

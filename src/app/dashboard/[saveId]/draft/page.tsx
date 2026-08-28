@@ -6,6 +6,7 @@ import { EmptyState, ErrorState } from "@/components/owner/EmptyState";
 import { PageHeader } from "@/components/owner/PageHeader";
 import { Section } from "@/components/owner/Section";
 import { StatusBadge } from "@/components/owner/StatusBadge";
+import { TeamLogoMark } from "@/components/team/logos/TeamLogoMark";
 
 type DraftPageProps = {
   params: Promise<{ saveId: string }>;
@@ -85,8 +86,30 @@ export default async function DraftPage({
                     #{slot.overallPick}
                   </td>
                   <td className="px-3 py-2 text-zinc-200">
-                    {slot.ownerAbbreviation}
-                    {slot.isUserPick ? " (you)" : ""}
+                    <span className="inline-flex items-center gap-2">
+                      {slot.ownerBranding ? (
+                        <span
+                          className="inline-flex h-6 w-6 shrink-0 items-center justify-center overflow-hidden rounded border border-zinc-700"
+                          style={{
+                            backgroundColor: slot.ownerBranding.primaryColor,
+                          }}
+                        >
+                          <TeamLogoMark
+                            branding={slot.ownerBranding}
+                            size="sm"
+                            decorative
+                          />
+                        </span>
+                      ) : (
+                        <span className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded border border-amber-700/40 bg-amber-950/50 font-mono text-[10px] font-semibold text-amber-400">
+                          {slot.ownerAbbreviation}
+                        </span>
+                      )}
+                      <span>
+                        {slot.ownerAbbreviation}
+                        {slot.isUserPick ? " (you)" : ""}
+                      </span>
+                    </span>
                   </td>
                   <td className="px-3 py-2">
                     <StatusBadge label={slot.status} />

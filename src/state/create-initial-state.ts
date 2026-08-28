@@ -38,6 +38,8 @@ import { generateLeague } from "@/systems/league-generation";
 import { leagueGenerationConfigFromSettings } from "@/systems/league-shape";
 import { generateLeagueStaff } from "@/systems/staff-generation";
 import { defaultOwnerPatience } from "@/systems/owner-philosophy-config";
+import { resolvePaletteIdFromBranding } from "@/domain/entities/team-branding";
+import { paletteLogoKey } from "@/domain/team-identity";
 import { deriveDefaultTeamBranding } from "@/systems/team-branding-generation";
 
 export type CreateInitialGameStateInput = {
@@ -59,7 +61,18 @@ function bootstrapTeam(
   city: string,
   name: string,
   abbreviation: string,
+  usedPaletteLogoKeys?: Set<string>,
 ) {
+  const branding = deriveDefaultTeamBranding(
+    id,
+    city,
+    name,
+    usedPaletteLogoKeys,
+  );
+  const paletteId = resolvePaletteIdFromBranding(branding);
+  if (paletteId && usedPaletteLogoKeys) {
+    usedPaletteLogoKeys.add(paletteLogoKey(paletteId, branding.logoId));
+  }
   return createTeam({
     id,
     divisionId,
@@ -74,7 +87,7 @@ function bootstrapTeam(
     reputation: 50,
     playStyle: { ...NEUTRAL_TEAM_PLAY_STYLE },
     coachingPhilosophy: { ...DEFAULT_COACHING_PHILOSOPHY },
-    branding: deriveDefaultTeamBranding(id, city, name),
+    branding,
   });
 }
 
@@ -286,6 +299,7 @@ export function createFourTeamInitialGameState(
 
   const seasonId = asSeasonId(createId("season"));
 
+  const usedPaletteLogoKeys = new Set<string>();
   const teams = {
     [userTeamId]: bootstrapTeam(
       userTeamId,
@@ -294,6 +308,7 @@ export function createFourTeamInitialGameState(
       "Harbor",
       "Titans",
       "HAR",
+      usedPaletteLogoKeys,
     ),
     [rivalTeamId]: bootstrapTeam(
       rivalTeamId,
@@ -302,6 +317,7 @@ export function createFourTeamInitialGameState(
       "Summit",
       "Wolves",
       "SUM",
+      usedPaletteLogoKeys,
     ),
     [westTeamAId]: bootstrapTeam(
       westTeamAId,
@@ -310,6 +326,7 @@ export function createFourTeamInitialGameState(
       "Canyon",
       "Coyotes",
       "CAN",
+      usedPaletteLogoKeys,
     ),
     [westTeamBId]: bootstrapTeam(
       westTeamBId,
@@ -318,6 +335,7 @@ export function createFourTeamInitialGameState(
       "Pacific",
       "Breakers",
       "PAC",
+      usedPaletteLogoKeys,
     ),
   };
 

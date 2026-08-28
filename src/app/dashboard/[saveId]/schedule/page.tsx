@@ -4,6 +4,7 @@ import { DataTable } from "@/components/owner/DataTable";
 import { EmptyState, ErrorState } from "@/components/owner/EmptyState";
 import { GameResultLink } from "@/components/owner/GameResultLink";
 import { PageHeader } from "@/components/owner/PageHeader";
+import { TeamLogoMark } from "@/components/team/logos/TeamLogoMark";
 
 type SchedulePageProps = {
   params: Promise<{ saveId: string }>;
@@ -68,8 +69,35 @@ export default async function SchedulePage({
                   ) : null}
                 </td>
                 <td className="px-3 py-2 text-zinc-100">
-                  {game.home ? "vs" : "@"} {game.opponentName} (
-                  {game.opponentAbbreviation})
+                  <span className="inline-flex items-center gap-2">
+                    <span className="text-zinc-500">
+                      {game.home ? "vs" : "@"}
+                    </span>
+                    {game.opponentBranding ? (
+                      <span
+                        className="inline-flex h-6 w-6 shrink-0 items-center justify-center overflow-hidden rounded border border-zinc-700"
+                        style={{
+                          backgroundColor: game.opponentBranding.primaryColor,
+                        }}
+                      >
+                        <TeamLogoMark
+                          branding={game.opponentBranding}
+                          size="sm"
+                          decorative
+                        />
+                      </span>
+                    ) : (
+                      <span className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded border border-amber-700/40 bg-amber-950/50 font-mono text-[10px] font-semibold text-amber-400">
+                        {game.opponentAbbreviation}
+                      </span>
+                    )}
+                    <span>
+                      {game.opponentName}{" "}
+                      <span className="font-mono text-zinc-500">
+                        ({game.opponentAbbreviation})
+                      </span>
+                    </span>
+                  </span>
                 </td>
                 <td className="px-3 py-2 text-zinc-400">{game.status}</td>
                 <td className="px-3 py-2">

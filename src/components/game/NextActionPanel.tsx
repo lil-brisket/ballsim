@@ -1,11 +1,14 @@
 import Link from "next/link";
+import { TeamLogoMark } from "@/components/team/logos/TeamLogoMark";
 import type { DashboardSnapshot } from "@/state/selectors";
+import type { TeamBrandingView } from "@/state/team-branding-view";
 
 export type NextActionPresentation = {
   title: string;
   description: string;
   href?: string;
   hrefLabel?: string;
+  opponentBranding?: TeamBrandingView | null;
 };
 
 /**
@@ -46,6 +49,7 @@ export function resolveNextActionPresentation(
     return {
       title: "Advance time",
       description: `Next game ${nextGame.home ? "vs" : "@"} ${nextGame.opponentAbbreviation} on ${nextGame.date}. Use Advance day or Advance 7 days when ready.`,
+      opponentBranding: nextGame.opponentBranding,
     };
   }
 
@@ -69,7 +73,23 @@ export function NextActionPanel(props: {
         Next
       </p>
       <h2 className="mt-1 text-lg font-medium text-zinc-50">{action.title}</h2>
-      <p className="mt-1 text-sm text-zinc-300">{action.description}</p>
+      <p className="mt-1 flex flex-wrap items-center gap-2 text-sm text-zinc-300">
+        {action.opponentBranding ? (
+          <span
+            className="inline-flex shrink-0 items-center justify-center rounded-sm p-0.5"
+            style={{
+              backgroundColor: action.opponentBranding.primaryColor,
+            }}
+          >
+            <TeamLogoMark
+              branding={action.opponentBranding}
+              size="sm"
+              decorative
+            />
+          </span>
+        ) : null}
+        <span>{action.description}</span>
+      </p>
       {action.href && action.hrefLabel ? (
         <Link
           href={action.href}

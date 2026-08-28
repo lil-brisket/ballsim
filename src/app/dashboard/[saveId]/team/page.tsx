@@ -5,6 +5,8 @@ import { EmptyState, ErrorState } from "@/components/owner/EmptyState";
 import { GameResultLink } from "@/components/owner/GameResultLink";
 import { MoneyDisplay } from "@/components/owner/MoneyDisplay";
 import { PageHeader } from "@/components/owner/PageHeader";
+import { TeamBadge } from "@/components/owner/TeamBadge";
+import { TeamLogoMark } from "@/components/team/logos/TeamLogoMark";
 import { Section } from "@/components/owner/Section";
 import { StatCard } from "@/components/owner/StatCard";
 import { StatusBadge } from "@/components/owner/StatusBadge";
@@ -35,10 +37,15 @@ export default async function TeamOverviewPage({
 
   return (
     <>
-      <PageHeader
-        title="Team"
-        subtitle={`${dashboard.controlledTeam.city} ${dashboard.controlledTeam.name}`}
-      />
+      <PageHeader title="Team" subtitle="Franchise overview" />
+      <div className="mb-6">
+        <TeamBadge
+          city={dashboard.controlledTeam.city}
+          name={dashboard.controlledTeam.name}
+          abbreviation={dashboard.controlledTeam.abbreviation}
+          branding={dashboard.controlledTeam.branding}
+        />
+      </div>
       {error ? <ErrorState message={error} /> : null}
 
       <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -81,7 +88,24 @@ export default async function TeamOverviewPage({
                 >
                   <span className="font-mono text-zinc-500">{game.date}</span>
                   <span className="text-zinc-200">
-                    {game.home ? "vs" : "@"} {game.opponentAbbreviation}
+                    <span className="inline-flex items-center gap-2">
+                    <span>{game.home ? "vs" : "@"}</span>
+                    {game.opponentBranding ? (
+                      <span
+                        className="inline-flex h-5 w-5 items-center justify-center overflow-hidden rounded border border-zinc-700"
+                        style={{
+                          backgroundColor: game.opponentBranding.primaryColor,
+                        }}
+                      >
+                        <TeamLogoMark
+                          branding={game.opponentBranding}
+                          size="sm"
+                          decorative
+                        />
+                      </span>
+                    ) : null}
+                    <span>{game.opponentAbbreviation}</span>
+                  </span>
                   </span>
                 </li>
               ))}
@@ -122,8 +146,28 @@ export default async function TeamOverviewPage({
                         result.won ? "text-emerald-400" : "text-rose-400"
                       }
                     >
-                      {result.home ? "vs" : "@"} {result.opponentAbbreviation}{" "}
-                      {result.teamScore}-{result.opponentScore}
+                      <span className="inline-flex items-center gap-2">
+                        <span>{result.home ? "vs" : "@"}</span>
+                        {result.opponentBranding ? (
+                          <span
+                            className="inline-flex h-5 w-5 items-center justify-center overflow-hidden rounded border border-zinc-700"
+                            style={{
+                              backgroundColor:
+                                result.opponentBranding.primaryColor,
+                            }}
+                          >
+                            <TeamLogoMark
+                              branding={result.opponentBranding}
+                              size="sm"
+                              decorative
+                            />
+                          </span>
+                        ) : null}
+                        <span>
+                          {result.opponentAbbreviation} {result.teamScore}-
+                          {result.opponentScore}
+                        </span>
+                      </span>
                     </span>
                   </GameResultLink>
                 </li>

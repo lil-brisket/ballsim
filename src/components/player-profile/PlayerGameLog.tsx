@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 import { EmptyState } from "@/components/owner/EmptyState";
 import { Section } from "@/components/owner/Section";
+import { TeamLogoMark } from "@/components/team/logos/TeamLogoMark";
 import type {
   PlayerGameLogRowView,
   PlayerProfileView,
@@ -11,7 +12,7 @@ import type {
 
 const PAGE_SIZE = 25;
 
-type SortKey = keyof PlayerGameLogRowView;
+type SortKey = Exclude<keyof PlayerGameLogRowView, "opponentBranding">;
 
 export function PlayerGameLog(props: {
   player: PlayerProfileView;
@@ -156,7 +157,24 @@ export function PlayerGameLog(props: {
                   </Link>
                 </td>
                 <td className="px-3 py-2 text-zinc-400">
-                  {row.home ? "vs" : "@"} {row.opponentAbbreviation}
+                  <span className="inline-flex items-center gap-1.5">
+                    <span>{row.home ? "vs" : "@"}</span>
+                    {row.opponentBranding ? (
+                      <span
+                        className="inline-flex shrink-0 items-center justify-center rounded-sm p-0.5"
+                        style={{
+                          backgroundColor: row.opponentBranding.primaryColor,
+                        }}
+                      >
+                        <TeamLogoMark
+                          branding={row.opponentBranding}
+                          size="sm"
+                          decorative
+                        />
+                      </span>
+                    ) : null}
+                    <span>{row.opponentAbbreviation}</span>
+                  </span>
                 </td>
                 <td className="px-3 py-2 font-mono text-zinc-400">
                   {row.won === null
