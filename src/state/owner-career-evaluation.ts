@@ -1,12 +1,11 @@
 import type { OwnerObjectiveCategory } from "@/domain/entities/owner-objective";
-import type { OwnerPhilosophy } from "@/domain/entities/owner-philosophy";
 import type { GameState } from "@/state/game-state";
 import { calculateFranchiseValue } from "@/state/franchise-value";
 import {
   countCareerChampionships,
   countCareerPlayoffAppearances,
 } from "@/systems/owner-objective-definitions";
-import { getOwnerPhilosophyProfile } from "@/systems/owner-philosophy-config";
+import { getDefaultOwnerMandateProfile } from "@/systems/owner-philosophy-config";
 import { confidenceAlignmentScore } from "@/systems/ownership-confidence-engine";
 import { getActiveOwnedFranchise } from "@/state/owner-context";
 
@@ -31,7 +30,6 @@ export type OwnerCareerEvaluation = {
   franchiseValue: number;
   franchiseValueGrowth: number | null;
   ownerPatience: number;
-  philosophy: OwnerPhilosophy;
   headline: string;
 };
 
@@ -44,8 +42,7 @@ export function toOwnerCareerEvaluation(
   state: GameState,
 ): OwnerCareerEvaluation {
   const teamId = state.user.activeOwnerTeamId;
-  const philosophy = getActiveOwnedFranchise(state).ownerPhilosophy;
-  const profile = getOwnerPhilosophyProfile(philosophy);
+  const profile = getDefaultOwnerMandateProfile();
   const objectives = getActiveOwnedFranchise(state).objectives;
   const completed = objectives.filter(
     (objective) => objective.status === "completed",
@@ -99,8 +96,7 @@ export function toOwnerCareerEvaluation(
     franchiseValue,
     franchiseValueGrowth,
     ownerPatience: getActiveOwnedFranchise(state).ownerPatience,
-    philosophy,
-    headline: headlineForBand(band, philosophy),
+    headline: headlineForBand(band),
   };
 }
 
@@ -144,33 +140,15 @@ function resolveBand(input: {
   return "mixed";
 }
 
-function headlineForBand(
-  band: OwnerCareerBand,
-  philosophy: OwnerPhilosophy,
-): string {
+function headlineForBand(band: OwnerCareerBand): string {
   switch (band) {
     case "legacy":
       return "Building an ownership legacy";
     case "successful":
-      return `Meeting ${philosophyLabel(philosophy)} ownership expectations`;
+      return "Meeting ownership expectations";
     case "struggling":
       return "Ownership patience is wearing thin";
     case "mixed":
       return "A mixed ownership record so far";
-  }
-}
-
-function philosophyLabel(philosophy: OwnerPhilosophy): string {
-  switch (philosophy) {
-    case "win_now":
-      return "Win Now";
-    case "build_for_the_future":
-      return "Build for the Future";
-    case "financially_conservative":
-      return "Financially Conservative";
-    case "market_expansion":
-      return "Market Expansion";
-    case "balanced":
-      return "Balanced";
   }
 }

@@ -114,7 +114,6 @@ describe("owner gameplay integration", () => {
         currentDate: state.world.calendar.currentDate,
         citySelectionConfirmed: true,
         franchiseIdentityConfirmed: true,
-        ownerPhilosophy: "win_now",
       }),
     );
     expect(getOwnedTeamIds(state)).toEqual([primary, secondary]);

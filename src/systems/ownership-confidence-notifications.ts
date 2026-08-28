@@ -24,7 +24,7 @@ import type { DomainEvent } from "@/domain/events";
 import { asOwnerNotificationId } from "@/domain/ids";
 import { systemResult, type SystemResult } from "@/domain/system-result";
 import type { GameState } from "@/state/game-state";
-import { getOwnerPhilosophyProfile } from "@/systems/owner-philosophy-config";
+import { getDefaultOwnerMandateProfile } from "@/systems/owner-philosophy-config";
 
 export type OwnershipConfidenceNotificationOptions = {
   previousMood: OwnershipMood;
@@ -34,9 +34,8 @@ export type OwnershipConfidenceNotificationOptions = {
   postureSummary: string;
 };
 
-function philosophyLabel(state: GameState): string {
-  const philosophy = getActiveOwnedFranchise(state).ownerPhilosophy;
-  switch (philosophy) {
+function philosophyLabel(): string {
+  switch (getDefaultOwnerMandateProfile().philosophy) {
     case "win_now":
       return "Win Now";
     case "build_for_the_future":
@@ -124,7 +123,7 @@ export function generateOwnershipConfidenceNotifications(
         id: asOwnerNotificationId(`notif_own_conf_${teamId}_${year}_${mood}`),
         type: "ownership_confidence",
         title: "Ownership Confidence",
-        message: `The franchise has followed the organization's ${philosophyLabel(state)} strategy well. ${detail}`,
+        message: `The franchise has followed the organization's ${philosophyLabel()} strategy well. ${detail}`,
         occurredOn: date,
         severity: "success",
         read: false,
@@ -157,8 +156,6 @@ export function generateOwnershipConfidenceNotifications(
 
   // Pressure — only on escalation into displeased.
   if (mood === "displeased" && previousMood !== "displeased") {
-    const profile = getOwnerPhilosophyProfile(getActiveOwnedFranchise(state).ownerPhilosophy);
-    void profile;
     current = appendNotification(
       current,
       createOwnerNotification({

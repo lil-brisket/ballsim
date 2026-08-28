@@ -1,12 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { withOwnedFranchise } from "@/state/owner-context";
 import { createTestGameState } from "../factories/game-state";
 import { buildOwnershipExpectations } from "@/systems/ownership-expectations";
 import {
   competitiveBandFromWins,
   resolveCompetitiveExpectation,
 } from "@/systems/ownership-expectations-config";
-import type { OwnerPhilosophy } from "@/domain/entities/owner-philosophy";
+import { getDefaultOwnerMandateProfile } from "@/systems/owner-philosophy-config";
 import type { TeamId } from "@/domain/ids";
 
 function withWins(wins: number, losses = 20) {
@@ -71,23 +70,18 @@ describe("ownership expectations", () => {
     expect(high.priorityBullets.length).toBeGreaterThan(0);
   });
 
-  it("financially conservative owners default toward cash preservation", () => {
-    let state = createTestGameState();
-    state = withOwnedFranchise(state, state.user.activeOwnerTeamId, (f) => ({
-      ...f,
-      ownerPhilosophy: "financially_conservative" as OwnerPhilosophy,
-    }));
+  it("uses the fixed default mandate profile for living expectations", () => {
+    const state = createTestGameState();
     const expectations = buildOwnershipExpectations(state);
-    expect(expectations.financialExpectation).toBe("preserve_cash");
-    expect(expectations.tolerance.payrollGrowth).toBeLessThan(0.35);
+    expect(expectations.philosophy).toBe(
+      getDefaultOwnerMandateProfile().philosophy,
+    );
+    expect(expectations.philosophy).toBe("balanced");
+    expect(expectations.tolerance.payrollGrowth).toBe(0.45);
   });
 
-  it("market expansion owners emphasize growth priorities", () => {
+  it("default mandate grows market priorities when awareness is low", () => {
     let state = createTestGameState();
-    state = withOwnedFranchise(state, state.user.activeOwnerTeamId, (f) => ({
-      ...f,
-      ownerPhilosophy: "market_expansion" as OwnerPhilosophy,
-    }));
     const teamId = state.user.activeOwnerTeamId as TeamId;
     const ops = state.business.franchiseOps[teamId]!;
     state = {
@@ -104,11 +98,12 @@ describe("ownership expectations", () => {
       },
     };
     const expectations = buildOwnershipExpectations(state);
-    expect(expectations.marketExpectation).toBe("aggressive_growth");
+    expect(expectations.marketExpectation).toBe("grow");
     expect(
-      expectations.priorityBullets.some((b) =>
-        b.toLowerCase().includes("marketing") ||
-        b.toLowerCase().includes("facilities"),
+      expectations.priorityBullets.some(
+        (b) =>
+          b.toLowerCase().includes("marketing") ||
+          b.toLowerCase().includes("facilities"),
       ),
     ).toBe(true);
   });

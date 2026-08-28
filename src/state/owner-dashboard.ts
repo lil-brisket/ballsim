@@ -167,7 +167,6 @@ export type OwnerDashboardTeam = {
 };
 
 export type OwnerDashboardOwner = {
-  philosophy: string;
   patience: number;
   objectives: ObjectiveView[];
   primaryObjectives: ObjectiveView[];
@@ -621,7 +620,6 @@ function buildOwner(
   const active = objectives.filter((objective) => objective.status === "active");
   const ownership = toOwnershipConfidenceView(data.state);
   return {
-    philosophy: getActiveOwnedFranchise(data.state).ownerPhilosophy,
     patience: getActiveOwnedFranchise(data.state).ownerPatience,
     objectives,
     primaryObjectives: active.filter((objective) => objective.role === "primary"),

@@ -4,6 +4,7 @@ import { loadOwnerSaveView } from "@/application/game-service";
 import { resolveOnboardingRoute } from "@/application/onboarding-routing";
 import { OnboardingShell } from "@/components/game/OnboardingShell";
 import { OwnerMultiTeamPick } from "@/components/owner/OwnerMultiTeamPick";
+import { DEFAULT_OWNERSHIP_SETTINGS } from "@/domain/game-settings";
 
 type PageProps = {
   params: Promise<{ saveId: string }>;
@@ -41,16 +42,21 @@ export default async function AdditionalFranchisesPage({ params }: PageProps) {
     );
   }
 
+  const controlledTeamCount =
+    view.settings.ownership?.controlledTeamCount ??
+    DEFAULT_OWNERSHIP_SETTINGS.controlledTeamCount;
+
   return (
     <OnboardingShell
       step="franchise"
-      title="Multi-team ownership"
-      subtitle="Optionally take control of more franchises in this league."
+      title="Controlled Franchises"
+      subtitle="Select the franchises you want to control, then customize each team's identity."
       className="max-w-3xl"
     >
       <OwnerMultiTeamPick
         saveId={saveId}
-        primaryTeamId={view.dashboard.controlledTeam.id}
+        anchorTeamId={view.dashboard.controlledTeam.id}
+        controlledTeamCount={controlledTeamCount}
         teams={view.teams}
       />
     </OnboardingShell>

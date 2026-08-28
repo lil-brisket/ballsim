@@ -48,14 +48,12 @@ import {
   type GameSettings,
 } from "@/domain/game-settings";
 import { validateGameSettings } from "@/domain/game-settings-validation";
-import {
-  isOwnerPhilosophy,
-  OWNER_PHILOSOPHIES,
-} from "@/domain/entities/owner-philosophy";
-import { defaultOwnerPatience } from "@/systems/owner-philosophy-config";
 import { applyOwnerCitySelection } from "@/systems/owner-city-selection";
 import { applyOwnerFranchiseBranding } from "@/systems/owner-franchise-branding";
-import { createDefaultOwnershipConfidence } from "@/domain/entities/ownership-confidence";
+import {
+  applyConfirmControlledFranchises,
+  type ControlledFranchiseIdentityInput,
+} from "@/systems/confirm-controlled-franchises";
 import {
   recordOwnershipEvidence,
 } from "@/systems/ownership-confidence-engine";
@@ -613,7 +611,6 @@ export async function selectOwnerTeam(
   saveId: string,
   teamId: string,
   store?: SaveGameStore,
-  options: { ownerPhilosophy?: string } = {},
 ): Promise<OwnerCommandResult> {
   const saveStore = getStore(store);
   const loaded = await saveStore.load(saveId);
@@ -626,24 +623,8 @@ export async function selectOwnerTeam(
     return fail(`Team "${teamId}" does not exist.`);
   }
 
-  const requestedPhilosophy = options.ownerPhilosophy;
-  let nextPhilosophy = getActiveOwnedFranchise(loaded.state).ownerPhilosophy;
-  let nextPatience = getActiveOwnedFranchise(loaded.state).ownerPatience;
-  if (requestedPhilosophy !== undefined && requestedPhilosophy.length > 0) {
-    if (!isOwnerPhilosophy(requestedPhilosophy)) {
-      return fail(
-        `Owner philosophy must be one of: ${OWNER_PHILOSOPHIES.join(", ")}.`,
-      );
-    }
-    nextPhilosophy = requestedPhilosophy;
-    nextPatience = defaultOwnerPatience(requestedPhilosophy);
-  }
-
   if (loaded.state.world.calendar.lastSimulatedDate !== null) {
-    if (
-      loaded.state.user.activeOwnerTeamId === typedTeamId &&
-      getActiveOwnedFranchise(loaded.state).ownerPhilosophy === nextPhilosophy
-    ) {
+    if (loaded.state.user.activeOwnerTeamId === typedTeamId) {
       return withDashboard(loaded);
     }
     return fail(
@@ -651,10 +632,7 @@ export async function selectOwnerTeam(
     );
   }
 
-  if (
-    loaded.state.user.activeOwnerTeamId === typedTeamId &&
-    getActiveOwnedFranchise(loaded.state).ownerPhilosophy === nextPhilosophy
-  ) {
+  if (loaded.state.user.activeOwnerTeamId === typedTeamId) {
     return withDashboard(loaded);
   }
 
@@ -681,16 +659,8 @@ export async function selectOwnerTeam(
     typedTeamId,
     {
       ...(loaded.state.user.ownedFranchises[typedTeamId] ?? previous),
-      ownerPhilosophy: nextPhilosophy,
-      ownerPatience: nextPatience,
       citySelectionConfirmed: true,
       franchiseIdentityConfirmed: true,
-      ownershipConfidence:
-        nextPhilosophy !== previous.ownerPhilosophy
-          ? createDefaultOwnershipConfidence(
-              loaded.state.world.calendar.currentDate,
-            )
-          : previous.ownershipConfidence,
     },
   );
 
@@ -750,7 +720,6 @@ export async function takeOverFranchise(
   saveId: string,
   teamId: string,
   store?: SaveGameStore,
-  options: { ownerPhilosophy?: string } = {},
 ): Promise<OwnerCommandResult> {
   const saveStore = getStore(store);
   const loaded = await saveStore.load(saveId);
@@ -765,21 +734,10 @@ export async function takeOverFranchise(
     return fail(`Team "${teamId}" is already under your control.`);
   }
 
-  let philosophy = getActiveOwnedFranchise(loaded.state).ownerPhilosophy;
-  if (options.ownerPhilosophy !== undefined && options.ownerPhilosophy.length > 0) {
-    if (!isOwnerPhilosophy(options.ownerPhilosophy)) {
-      return fail(
-        `Owner philosophy must be one of: ${OWNER_PHILOSOPHIES.join(", ")}.`,
-      );
-    }
-    philosophy = options.ownerPhilosophy;
-  }
-
   const seasonYear = loaded.state.competition.season.year;
   const franchise = createDefaultOwnedFranchiseState({
     seasonYear,
     currentDate: loaded.state.world.calendar.currentDate,
-    ownerPhilosophy: philosophy,
     citySelectionConfirmed: true,
     franchiseIdentityConfirmed: true,
     aiAssistance: { ...loaded.state.settings.ai.assistance },
@@ -808,6 +766,36 @@ export async function takeOverFranchise(
 /**
  * Confirm additional owned franchises during onboarding (after primary city pick).
  */
+export async function confirmControlledFranchises(
+  saveId: string,
+  franchises: readonly ControlledFranchiseIdentityInput[],
+  store?: SaveGameStore,
+): Promise<OwnerCommandResult> {
+  const saveStore = getStore(store);
+  const loaded = await saveStore.load(saveId);
+  if (!loaded) {
+    return fail("Save not found.");
+  }
+
+  const applied = applyConfirmControlledFranchises(loaded.state, franchises);
+  if (!applied.ok) {
+    return fail(applied.error);
+  }
+
+  try {
+    const saved = await persistWorkingState(
+      saveId,
+      applied.state,
+      loaded.state.meta.rngState,
+      saveStore,
+    );
+    return withDashboard(saved);
+  } catch (error) {
+    return fail(error instanceof Error ? error.message : String(error));
+  }
+}
+
+/** @deprecated Prefer {@link confirmControlledFranchises} for onboarding. */
 export async function confirmOwnedFranchises(
   saveId: string,
   additionalTeamIds: readonly string[],
@@ -818,50 +806,39 @@ export async function confirmOwnedFranchises(
   if (!loaded) {
     return fail("Save not found.");
   }
-  if (loaded.state.world.calendar.lastSimulatedDate !== null) {
-    return fail(
-      "Franchise selection is locked after the first time advance for this save.",
-    );
+  const anchorId = loaded.state.user.activeOwnerTeamId;
+  const anchorTeam = loaded.state.world.teams[anchorId];
+  if (!anchorTeam) {
+    return fail(`Anchor team "${anchorId}" is missing.`);
   }
 
-  let working = loaded.state;
-  const primaryId = working.user.activeOwnerTeamId;
-  const seen = new Set<string>([primaryId]);
+  const franchises: ControlledFranchiseIdentityInput[] = [
+    {
+      teamId: anchorId,
+      nickname: anchorTeam.name,
+      primaryColor: anchorTeam.branding.primaryColor,
+      secondaryColor: anchorTeam.branding.secondaryColor,
+      accentColor: anchorTeam.branding.accentColor,
+      logoId: anchorTeam.branding.logoId,
+    },
+  ];
 
   for (const rawId of additionalTeamIds) {
-    const teamId = asTeamId(rawId);
-    if (seen.has(teamId)) {
-      continue;
-    }
-    if (working.world.teams[teamId] === undefined) {
+    const team = loaded.state.world.teams[asTeamId(rawId)];
+    if (!team) {
       return fail(`Team "${rawId}" does not exist.`);
     }
-    if (isOwnedFranchise(working, teamId)) {
-      continue;
-    }
-    seen.add(teamId);
-    const franchise = createDefaultOwnedFranchiseState({
-      seasonYear: working.competition.season.year,
-      currentDate: working.world.calendar.currentDate,
-      citySelectionConfirmed: true,
-      franchiseIdentityConfirmed: true,
-      aiAssistance: { ...working.settings.ai.assistance },
-      managementPreset: working.settings.ai.managementPreset,
+    franchises.push({
+      teamId: team.id,
+      nickname: team.name,
+      primaryColor: team.branding.primaryColor,
+      secondaryColor: team.branding.secondaryColor,
+      accentColor: team.branding.accentColor,
+      logoId: team.branding.logoId,
     });
-    working = withAddedOwnedFranchise(working, teamId, franchise);
   }
 
-  try {
-    const saved = await persistWorkingState(
-      saveId,
-      working,
-      loaded.state.meta.rngState,
-      saveStore,
-    );
-    return withDashboard(saved);
-  } catch (error) {
-    return fail(error instanceof Error ? error.message : String(error));
-  }
+  return confirmControlledFranchises(saveId, franchises, store);
 }
 
 export async function selectOwnerCity(

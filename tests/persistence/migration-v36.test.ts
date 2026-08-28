@@ -25,7 +25,7 @@ describe("v35 → v36 migration", () => {
 
     const loaded = deserializeGameState(JSON.stringify(parsed));
     expect(loaded.meta.schemaVersion).toBe(GAME_STATE_SCHEMA_VERSION);
-    expect(GAME_STATE_SCHEMA_VERSION).toBe(42);
+    expect(GAME_STATE_SCHEMA_VERSION).toBe(44);
     expect(loaded.business.gameArchive).toEqual({});
     expect(loaded.business.playerHistory).toEqual({});
     expect(() => validateGameState(loaded)).not.toThrow();

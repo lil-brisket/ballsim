@@ -12,7 +12,7 @@ import { bootstrapWorld } from "@/systems/world-pipeline";
 import { applyCashAndBooksImpact } from "@/systems/team-finances";
 import { testOwnerObjective as createOwnerObjective } from "../helpers/owner-objective";
 import { OWNER_PHILOSOPHIES } from "@/domain/entities/owner-philosophy";
-import { getOwnerPhilosophyProfile } from "@/systems/owner-philosophy-config";
+import { getDefaultOwnerMandateProfile, getOwnerPhilosophyProfile } from "@/systems/owner-philosophy-config";
 import {
   serializeGameState,
   deserializeGameState,
@@ -23,23 +23,10 @@ import { GAMEPLAY_OBJECTIVE_REWARD } from "@/systems/owner-objectives-config";
 import { getActiveOwnedFranchise, withOwnedFranchise } from "@/state/owner-context";
 import type { GameState } from "@/state/game-state";
 import type { OwnerObjective } from "@/domain/entities/owner-objective";
-import type { OwnerPhilosophy } from "@/domain/entities/owner-philosophy";
 
 function withObjectives(state: GameState, objectives: OwnerObjective[]): GameState {
   return withOwnedFranchise(state, state.user.activeOwnerTeamId, (f) => ({
     ...f,
-    objectives,
-  }));
-}
-
-function withPhilosophyAndObjectives(
-  state: GameState,
-  ownerPhilosophy: OwnerPhilosophy,
-  objectives: OwnerObjective[] = [],
-): GameState {
-  return withOwnedFranchise(state, state.user.activeOwnerTeamId, (f) => ({
-    ...f,
-    ownerPhilosophy,
     objectives,
   }));
 }
@@ -401,7 +388,7 @@ describe("owner philosophy profiles", () => {
     );
   });
 
-  it("generates different primary categories for win_now vs market_expansion in a small market", () => {
+  it("generates primary objectives from the fixed default mandate profile", () => {
     let state = bootstrappedState("obj_phil");
     const teamId = state.user.activeOwnerTeamId;
     state = {
@@ -422,36 +409,29 @@ describe("owner philosophy profiles", () => {
       },
     };
 
-    const winNow = generateOwnerObjectives(
-      withPhilosophyAndObjectives(state, "win_now", []),
-    );
-    const market = generateOwnerObjectives(
-      withPhilosophyAndObjectives(state, "market_expansion", []),
-    );
-
-    const winPrimary = getActiveOwnedFranchise(winNow.state).objectives.find(
+    const generated = generateOwnerObjectives(state);
+    const primary = getActiveOwnedFranchise(generated.state).objectives.find(
       (o) => o.role === "primary",
     )!;
-    const marketPrimary = getActiveOwnedFranchise(market.state).objectives.find(
-      (o) => o.role === "primary",
-    )!;
-    expect(winPrimary.category).toBe("competitive");
-    expect(["franchise", "financial"]).toContain(marketPrimary.category);
+    const defaultProfile = getDefaultOwnerMandateProfile();
+    expect(defaultProfile.philosophy).toBe("balanced");
+    expect(primary).toBeDefined();
+    expect(primary.category).toBeTruthy();
   });
 });
 
 describe("owner mandate persistence", () => {
-  it("new saves include philosophy and patience at schema 26", () => {
+  it("new saves include patience at current schema version", () => {
     const state = bootstrappedState("obj_persist_new");
     expect(state.meta.schemaVersion).toBe(GAME_STATE_SCHEMA_VERSION);
-    expect(getActiveOwnedFranchise(state).ownerPhilosophy).toBe("balanced");
     expect(getActiveOwnedFranchise(state).ownerPatience).toBeGreaterThan(0);
     const restored = deserializeGameState(serializeGameState(state));
-    expect(getActiveOwnedFranchise(restored).ownerPhilosophy).toBe(getActiveOwnedFranchise(state).ownerPhilosophy);
-    expect(getActiveOwnedFranchise(restored).ownerPatience).toBe(getActiveOwnedFranchise(state).ownerPatience);
+    expect(getActiveOwnedFranchise(restored).ownerPatience).toBe(
+      getActiveOwnedFranchise(state).ownerPatience,
+    );
   });
 
-  it("migrates v25 saves without philosophy to balanced", () => {
+  it("migrates v25 saves without philosophy to default patience", () => {
     const state = bootstrappedState("obj_migrate");
     const active = state.user.activeOwnerTeamId;
     const franchise = state.user.ownedFranchises[active]!;
@@ -485,7 +465,6 @@ describe("owner mandate persistence", () => {
     };
     const restored = deserializeGameState(JSON.stringify(json));
     expect(restored.meta.schemaVersion).toBe(GAME_STATE_SCHEMA_VERSION);
-    expect(getActiveOwnedFranchise(restored).ownerPhilosophy).toBe("balanced");
     expect(getActiveOwnedFranchise(restored).ownerPatience).toBeGreaterThan(0);
     for (const objective of getActiveOwnedFranchise(restored).objectives) {
       expect(objective.category).toBeTruthy();

@@ -62,9 +62,6 @@ export default async function MyTeamsPage({ params }: MyTeamsPageProps) {
                     ? ` · ${team.unreadNotificationCount} unread`
                     : ""}
                 </p>
-                <p className="text-xs capitalize text-zinc-500">
-                  {team.ownerPhilosophy.replaceAll("_", " ")}
-                </p>
               </div>
             </div>
 

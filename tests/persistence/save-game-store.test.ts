@@ -88,6 +88,7 @@ function createEightTeamPopulatedState(rngSeed: number): GameState {
         area: "north_america",
       },
       injuryFrequency: "medium",
+      ownership: { controlledTeamCount: 1 },
       regularSeason: { gamesPerTeam: 14, tradeDeadlineRule: { kind: "fraction_of_season_span", seasonSpanFraction: 0.55 } },
       playoffs: {
         playoffTeams: 8,
@@ -182,7 +183,6 @@ function createEightTeamPopulatedState(rngSeed: number): GameState {
           currentDate: "2026-10-01",
           citySelectionConfirmed: true,
           franchiseIdentityConfirmed: true,
-          ownerPhilosophy: "balanced",
         }),
       },
       mode: "owner",

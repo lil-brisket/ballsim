@@ -35,6 +35,7 @@ import {
   selectOwnerTeam,
   switchActiveOwnerTeam,
   takeOverFranchise,
+  confirmControlledFranchises,
   confirmOwnedFranchises,
   setOwnerMarketingBudget,
   setOwnerTicketPrice,
@@ -108,7 +109,7 @@ export async function openSaveAction(formData: FormData): Promise<void> {
     if (!loaded.dashboard.citySelectionConfirmed) {
       redirect(`/new/${loaded.save.id}/team`);
     }
-    redirect(`/new/${loaded.save.id}/branding`);
+    redirect(`/new/${loaded.save.id}/franchises`);
   }
   redirect(`/dashboard/${loaded.save.id}`);
 }
@@ -159,6 +160,53 @@ export async function takeOverFranchiseAction(
   redirect(`/dashboard/${saveId}`);
 }
 
+export async function confirmControlledFranchisesAction(
+  formData: FormData,
+): Promise<void> {
+  const saveId = String(formData.get("saveId") ?? "");
+  const rawJson = String(formData.get("franchisesJson") ?? "");
+  let franchises: Array<{
+    teamId: string;
+    nickname: string;
+    primaryColor: string;
+    secondaryColor: string;
+    accentColor: string;
+    logoId: string;
+  }> = [];
+  try {
+    const parsed: unknown = JSON.parse(rawJson);
+    if (!Array.isArray(parsed)) {
+      redirectWithError(
+        `/new/${saveId}/franchises`,
+        "Invalid franchise payload.",
+      );
+    }
+    franchises = parsed.map((entry) => {
+      const record = entry as Record<string, unknown>;
+      return {
+        teamId: String(record.teamId ?? ""),
+        nickname: String(record.nickname ?? ""),
+        primaryColor: String(record.primaryColor ?? ""),
+        secondaryColor: String(record.secondaryColor ?? ""),
+        accentColor: String(record.accentColor ?? ""),
+        logoId: String(record.logoId ?? ""),
+      };
+    });
+  } catch {
+    redirectWithError(
+      `/new/${saveId}/franchises`,
+      "Invalid franchise payload.",
+    );
+  }
+
+  const result = await confirmControlledFranchises(saveId, franchises);
+  if (!result.ok) {
+    redirectWithError(`/new/${saveId}/franchises`, result.error);
+  }
+  revalidateOwner(saveId);
+  redirect(`/dashboard/${saveId}`);
+}
+
 export async function confirmOwnedFranchisesAction(
   formData: FormData,
 ): Promise<void> {
@@ -172,7 +220,7 @@ export async function confirmOwnedFranchisesAction(
     redirectWithError(`/new/${saveId}/franchises`, result.error);
   }
   revalidateOwner(saveId);
-  redirect(`/new/${saveId}/branding`);
+  redirect(`/dashboard/${saveId}`);
 }
 
 export async function selectCityAction(formData: FormData): Promise<void> {

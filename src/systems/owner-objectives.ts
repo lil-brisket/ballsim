@@ -35,7 +35,7 @@ import {
 } from "@/systems/owner-objectives-config";
 import {
   clampOwnerPatience,
-  getOwnerPhilosophyProfile,
+  getDefaultOwnerMandateProfile,
   OWNER_PATIENCE_COMPLETE_DELTA,
   OWNER_PATIENCE_FAIL_DELTA,
   OWNER_PATIENCE_PRIMARY_FAIL_EXTRA,
@@ -57,7 +57,7 @@ import {
 export function generateOwnerObjectives(state: GameState): SystemResult {
   const seasonYear = state.competition.season.year;
   const teamId = state.user.activeOwnerTeamId;
-  const profile = getOwnerPhilosophyProfile(getActiveOwnedFranchise(state).ownerPhilosophy);
+  const profile = getDefaultOwnerMandateProfile();
   const generated: OwnerObjective[] = [];
 
   const hasSeasonalForYear = getActiveOwnedFranchise(state).objectives.some(

@@ -21,7 +21,10 @@ import {
   applyPreset,
   DEFAULT_AI_MANAGEMENT_PRESET,
   DEFAULT_DELEGATED_ASSISTANCE,
+  DEFAULT_OWNERSHIP_SETTINGS,
   MANAGEMENT_PHASE_KEYS,
+  MAX_CONTROLLED_TEAM_COUNT,
+  maxControlledTeamCountForLeague,
   type AiAssistanceDomains,
   type AiAssistancePhases,
   type AiManagementPreset,
@@ -292,6 +295,11 @@ export function validateGameSettings(
     return { ok: false, errors };
   }
 
+  const ownership = resolveOwnershipSettings(raw, teamCount as number, errors);
+  if (errors.length > 0 || !ownership) {
+    return { ok: false, errors };
+  }
+
   const validated: GameSettings = {
     league: {
       teamCount: teamCount as number,
@@ -301,6 +309,7 @@ export function validateGameSettings(
         "north_america",
     },
     injuryFrequency,
+    ownership,
     regularSeason: {
       gamesPerTeam: gamesPerTeam as number,
       tradeDeadlineRule,
@@ -341,6 +350,43 @@ export function validateGameSettings(
   };
 
   return { ok: true, settings: validated };
+}
+
+/**
+ * Resolve ownership settings. Missing ownership defaults to single-team control.
+ * Domain rule: 1 <= controlledTeamCount <= min(5, league.teamCount).
+ */
+function resolveOwnershipSettings(
+  raw: Record<string, unknown>,
+  teamCount: number,
+  errors: string[],
+): GameSettings["ownership"] | null {
+  const maxAllowed = maxControlledTeamCountForLeague(teamCount);
+  if (raw.ownership === undefined || raw.ownership === null) {
+    return {
+      controlledTeamCount: Math.min(
+        DEFAULT_OWNERSHIP_SETTINGS.controlledTeamCount,
+        maxAllowed,
+      ),
+    };
+  }
+  const ownership = asRecord(raw.ownership, "ownership", errors);
+  if (!ownership) {
+    return null;
+  }
+  const count = ownership.controlledTeamCount;
+  if (
+    typeof count !== "number" ||
+    !Number.isInteger(count) ||
+    count < 1 ||
+    count > maxAllowed
+  ) {
+    errors.push(
+      `ownership.controlledTeamCount must be an integer from 1 to ${maxAllowed} (min of ${MAX_CONTROLLED_TEAM_COUNT} and league.teamCount).`,
+    );
+    return null;
+  }
+  return { controlledTeamCount: count };
 }
 
 /**

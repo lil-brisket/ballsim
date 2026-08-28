@@ -220,9 +220,14 @@ export const OWNER_PHILOSOPHY_PROFILES: Record<
 };
 
 export function getOwnerPhilosophyProfile(
-  philosophy: OwnerPhilosophy,
+  philosophy: OwnerPhilosophy = "balanced",
 ): OwnerPhilosophyProfile {
   return OWNER_PHILOSOPHY_PROFILES[philosophy];
+}
+
+/** Fixed mandate weights after owner philosophy was removed as a user concept. */
+export function getDefaultOwnerMandateProfile(): OwnerPhilosophyProfile {
+  return OWNER_PHILOSOPHY_PROFILES.balanced;
 }
 
 export function clampOwnerPatience(value: number): number {
@@ -236,45 +241,18 @@ export function clampOwnerPatience(value: number): number {
 }
 
 export function defaultOwnerPatience(
-  philosophy: OwnerPhilosophy = "balanced",
+  _philosophy: OwnerPhilosophy = "balanced",
 ): number {
-  return OWNER_PHILOSOPHY_PROFILES[philosophy].startingPatience;
+  return OWNER_PHILOSOPHY_PROFILES.balanced.startingPatience;
 }
 
 /** Human-readable mandate priorities for the owner dashboard. */
 export function mandatePriorityLabels(
-  philosophy: OwnerPhilosophy,
+  _philosophy: OwnerPhilosophy = "balanced",
 ): readonly string[] {
-  switch (philosophy) {
-    case "win_now":
-      return [
-        "Win now and make the playoffs",
-        "Advance in the postseason",
-        "Build a championship-caliber roster",
-      ];
-    case "build_for_the_future":
-      return [
-        "Develop young players",
-        "Protect future assets",
-        "Build sustainable contention",
-      ];
-    case "financially_conservative":
-      return [
-        "Maintain profitability",
-        "Keep payroll disciplined",
-        "Protect franchise value",
-      ];
-    case "market_expansion":
-      return [
-        "Grow attendance and fan support",
-        "Raise market awareness",
-        "Strengthen franchise reputation",
-      ];
-    case "balanced":
-      return [
-        "Compete while staying solvent",
-        "Keep payroll under control",
-        "Grow long-term franchise value",
-      ];
-  }
+  return [
+    "Compete while staying solvent",
+    "Keep payroll under control",
+    "Grow long-term franchise value",
+  ];
 }

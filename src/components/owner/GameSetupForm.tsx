@@ -10,6 +10,7 @@ import {
   SUPPORTED_TEAM_COUNTS,
   LEAGUE_AREA_LABELS,
   LEAGUE_AREA_OPTIONS,
+  maxControlledTeamCountForLeague,
   type GameSettings,
   type InjuryFrequency,
   type LeagueArea,
@@ -59,8 +60,16 @@ export function GameSetupForm({
   }
 
   function updateSettings(next: GameSettings) {
+    const max = maxControlledTeamCountForLeague(next.league.teamCount);
+    const controlledTeamCount = Math.min(
+      Math.max(1, next.ownership?.controlledTeamCount ?? 1),
+      max,
+    );
     setPreset("custom");
-    setSettings(next);
+    setSettings({
+      ...next,
+      ownership: { controlledTeamCount },
+    });
   }
 
   function reset() {
@@ -104,6 +113,14 @@ export function GameSetupForm({
           <ReviewRow
             label="League area"
             value={leagueAreaLabel(settings.league.area ?? "north_america")}
+          />
+          <ReviewRow
+            label="Franchise control"
+            value={
+              settings.ownership.controlledTeamCount === 1
+                ? "1 team"
+                : `${settings.ownership.controlledTeamCount} teams`
+            }
           />
           <ReviewRow
             label="Injury frequency"
@@ -480,6 +497,81 @@ export function GameSetupForm({
             : "12 teams, 22 games, 8 playoff teams, best-of-7 (classic CBL). Choose Custom to edit individual rules."}
         </p>
       )}
+
+      <Section title="Franchise control">
+        <div className="sm:col-span-2 space-y-3">
+          <p className="text-sm text-zinc-400">
+            Decide how many franchises you will control. You choose the specific
+            teams after the league is generated.
+          </p>
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={() =>
+                updateSettings({
+                  ...settings,
+                  ownership: { controlledTeamCount: 1 },
+                })
+              }
+              className={`rounded-md px-3 py-1.5 text-sm ${
+                settings.ownership.controlledTeamCount === 1
+                  ? "bg-amber-600 text-zinc-950"
+                  : "border border-zinc-700 text-zinc-300 hover:border-amber-600"
+              }`}
+            >
+              Control 1 team
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                const max = maxControlledTeamCountForLeague(
+                  settings.league.teamCount,
+                );
+                const next = Math.min(
+                  Math.max(2, settings.ownership.controlledTeamCount),
+                  max,
+                );
+                updateSettings({
+                  ...settings,
+                  ownership: { controlledTeamCount: Math.max(2, next) },
+                });
+              }}
+              className={`rounded-md px-3 py-1.5 text-sm ${
+                settings.ownership.controlledTeamCount > 1
+                  ? "bg-amber-600 text-zinc-950"
+                  : "border border-zinc-700 text-zinc-300 hover:border-amber-600"
+              }`}
+            >
+              Control multiple teams
+            </button>
+          </div>
+          {settings.ownership.controlledTeamCount > 1 ? (
+            <SelectField
+              label="Number of controlled teams"
+              value={settings.ownership.controlledTeamCount}
+              options={Array.from(
+                {
+                  length: Math.max(
+                    0,
+                    maxControlledTeamCountForLeague(settings.league.teamCount) -
+                      1,
+                  ),
+                },
+                (_, index) => {
+                  const value = index + 2;
+                  return { value, label: String(value) };
+                },
+              )}
+              onChange={(value) =>
+                updateSettings({
+                  ...settings,
+                  ownership: { controlledTeamCount: value },
+                })
+              }
+            />
+          ) : null}
+        </div>
+      </Section>
 
       {errors.length > 0 ? (
         <ul className="space-y-1 rounded-md border border-red-900/60 bg-red-950/40 p-3 text-sm text-red-300">

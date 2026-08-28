@@ -8,10 +8,6 @@ import {
   type AiAssistancePhases,
   type AiManagementPreset,
 } from "@/domain/ai-management-presets";
-import {
-  DEFAULT_OWNER_PHILOSOPHY,
-  type OwnerPhilosophy,
-} from "@/domain/entities/owner-philosophy";
 import { createDefaultOwnershipConfidence } from "@/domain/entities/ownership-confidence";
 import { defaultOwnerPatience } from "@/systems/owner-philosophy-config";
 import {
@@ -22,7 +18,6 @@ import {
 export type CreateOwnedFranchiseStateInput = {
   seasonYear: number;
   currentDate: string;
-  ownerPhilosophy?: OwnerPhilosophy;
   ownerPatience?: number;
   citySelectionConfirmed?: boolean;
   franchiseIdentityConfirmed?: boolean;
@@ -33,11 +28,8 @@ export type CreateOwnedFranchiseStateInput = {
 export function createDefaultOwnedFranchiseState(
   input: CreateOwnedFranchiseStateInput,
 ): OwnedFranchiseState {
-  const philosophy = input.ownerPhilosophy ?? DEFAULT_OWNER_PHILOSOPHY;
   return {
-    ownerPhilosophy: philosophy,
-    ownerPatience:
-      input.ownerPatience ?? defaultOwnerPatience(philosophy),
+    ownerPatience: input.ownerPatience ?? defaultOwnerPatience(),
     ownershipConfidence: createDefaultOwnershipConfidence(input.currentDate),
     objectives: [],
     narrative: { situations: [], snapshots: [], cooldowns: {} },

@@ -29,14 +29,12 @@ describe("wrong active team isolation", () => {
         currentDate: "2026-10-01",
         citySelectionConfirmed: true,
         franchiseIdentityConfirmed: true,
-        ownerPhilosophy: "win_now",
         ownerPatience: 40,
       }),
     );
     next = withOwnedFranchise(next, seattle, (f) => ({
       ...f,
       ownerPatience: 70,
-      ownerPhilosophy: "build_for_the_future",
     }));
     return { state: next, seattle, newYork };
   }
@@ -51,12 +49,6 @@ describe("wrong active team isolation", () => {
     expect(getActiveOwnerTeamId(switched)).toBe(newYork);
     expect(switched.user.ownedFranchises[seattle]!.ownerPatience).toBe(70);
     expect(switched.user.ownedFranchises[newYork]!.ownerPatience).toBe(40);
-    expect(switched.user.ownedFranchises[seattle]!.ownerPhilosophy).toBe(
-      "build_for_the_future",
-    );
-    expect(switched.user.ownedFranchises[newYork]!.ownerPhilosophy).toBe(
-      "win_now",
-    );
   });
 
   it("mutating New York AI settings does not change Seattle", () => {

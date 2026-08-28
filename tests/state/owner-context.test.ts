@@ -51,14 +51,13 @@ describe("owner-context", () => {
         currentDate: "2026-10-01",
         citySelectionConfirmed: true,
         franchiseIdentityConfirmed: true,
-        ownerPhilosophy: "win_now",
       }),
     );
     expect(getOwnedTeamIds(withSecond)).toEqual([primary, secondary]);
     const switched = withActiveOwnerTeam(withSecond, secondary);
     expect(getActiveOwnerTeamId(switched)).toBe(secondary);
-    expect(getActiveOwnedFranchise(switched).ownerPhilosophy).toBe("win_now");
-    expect(getOwnedFranchisePhilosophy(switched, primary)).toBe("balanced");
+    expect(getActiveOwnedFranchise(switched).ownerPatience).toBeGreaterThan(0);
+    expect(withSecond.user.ownedFranchises[primary]!.ownerPatience).toBeGreaterThan(0);
   });
 
   it("isolates franchise mutations", () => {
@@ -108,13 +107,6 @@ describe("owner-context", () => {
   });
 });
 
-function getOwnedFranchisePhilosophy(
-  state: ReturnType<typeof createInitialGameState>,
-  teamId: ReturnType<typeof asTeamId>,
-) {
-  return state.user.ownedFranchises[teamId]!.ownerPhilosophy;
-}
-
 describe("v42 → v43 multi-team migration", () => {
   it("migrates controlledTeamId into ownedTeamIds + ownedFranchises", () => {
     const modern = createInitialGameState({
@@ -138,7 +130,7 @@ describe("v42 → v43 multi-team migration", () => {
         citySelectionConfirmed: franchise.citySelectionConfirmed,
         franchiseIdentityConfirmed: franchise.franchiseIdentityConfirmed,
         ownerStartSeasonYear: franchise.ownerStartSeasonYear,
-        ownerPhilosophy: franchise.ownerPhilosophy,
+        ownerPhilosophy: "balanced",
         ownerPatience: franchise.ownerPatience,
         ownershipConfidence: franchise.ownershipConfidence,
         objectives: franchise.objectives,
@@ -158,9 +150,6 @@ describe("v42 → v43 multi-team migration", () => {
     expect(migrated.meta.schemaVersion).toBe(GAME_STATE_SCHEMA_VERSION);
     expect(migrated.user.ownedTeamIds).toEqual([active]);
     expect(migrated.user.activeOwnerTeamId).toBe(active);
-    expect(migrated.user.ownedFranchises[active]?.ownerPhilosophy).toBe(
-      franchise.ownerPhilosophy,
-    );
     expect(migrated.user.ownedFranchises[active]?.aiAssistance).toEqual(
       modern.settings.ai.assistance,
     );

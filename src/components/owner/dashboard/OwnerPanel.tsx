@@ -6,18 +6,8 @@ import { ObjectiveCard } from "@/components/game/ObjectiveCard";
 import { EmptyState } from "@/components/owner/EmptyState";
 import { Section } from "@/components/owner/Section";
 
-const PHILOSOPHY_LABELS: Record<string, string> = {
-  win_now: "Win Now",
-  build_for_the_future: "Build for the Future",
-  financially_conservative: "Financially Conservative",
-  market_expansion: "Market Expansion",
-  balanced: "Balanced",
-};
-
 export function OwnerPanel(props: { owner: OwnerDashboardOwner }) {
   const { owner } = props;
-  const philosophyLabel =
-    PHILOSOPHY_LABELS[owner.philosophy] ?? owner.philosophy;
   const ownership = owner.ownership;
   const [showWhy, setShowWhy] = useState(false);
 
@@ -34,12 +24,9 @@ export function OwnerPanel(props: { owner: OwnerDashboardOwner }) {
         <div className="grid gap-3 sm:grid-cols-2">
           <div className="rounded-xl border border-zinc-800 bg-zinc-900/50 px-4 py-4">
             <p className="font-mono text-[0.65rem] uppercase tracking-[0.16em] text-zinc-500">
-              Owner philosophy
+              Owner patience
             </p>
-            <p className="mt-1 text-lg text-zinc-50">{philosophyLabel}</p>
-            <p className="mt-1 text-xs text-zinc-500">
-              Patience {owner.patience}
-            </p>
+            <p className="mt-1 text-lg text-zinc-50">{owner.patience}</p>
           </div>
           <div className="rounded-xl border border-zinc-800 bg-zinc-900/50 px-4 py-4">
             <p className="font-mono text-[0.65rem] uppercase tracking-[0.16em] text-zinc-500">

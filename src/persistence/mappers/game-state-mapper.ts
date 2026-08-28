@@ -173,6 +173,7 @@ const MIGRATE_ONE_STEP: Record<number, (state: unknown) => unknown> = {
   40: (state) => migrateV40ToV41(state as GameStateV40),
   41: (state) => migrateV41ToV42(state as GameStateV41),
   42: (state) => migrateV42ToV43(state as GameStateV42),
+  43: (state) => migrateV43ToV44(state as GameStateV43),
 };
 
 function legacyUserRecord(user: unknown): Record<string, unknown> {
@@ -3452,7 +3453,7 @@ type GameStateV42 = {
     citySelectionConfirmed: boolean;
     franchiseIdentityConfirmed: boolean;
     ownerStartSeasonYear: number;
-    ownerPhilosophy: GameState["user"]["ownedFranchises"][string]["ownerPhilosophy"];
+    ownerPhilosophy: string;
     ownerPatience: number;
     ownershipConfidence: GameState["user"]["ownedFranchises"][string]["ownershipConfidence"];
     objectives: GameState["user"]["ownedFranchises"][string]["objectives"];
@@ -3504,7 +3505,7 @@ type GameStateV42 = {
  * Moves owner fields into ownedFranchises[controlledTeamId].
  * Pending decisions stay on UserSlice with participant metadata.
  */
-function migrateV42ToV43(state: GameStateV42): GameState {
+function migrateV42ToV43(state: GameStateV42): GameStateV43 {
   const userRecord = legacyUserRecord(state.user);
   if (hasModernOwnershipUser(userRecord)) {
     return {
@@ -3513,7 +3514,7 @@ function migrateV42ToV43(state: GameStateV42): GameState {
         ...state.meta,
         schemaVersion: 43,
       },
-    } as GameState;
+    } as unknown as GameStateV43;
   }
 
   const controlledTeamId = resolveLegacyControlledTeamId(userRecord) as TeamId;
@@ -3522,10 +3523,9 @@ function migrateV42ToV43(state: GameStateV42): GameState {
   };
   const managementPreset = state.settings.ai.managementPreset;
 
-  const franchise: GameState["user"]["ownedFranchises"][string] = {
-    ownerPhilosophy:
-      (userRecord.ownerPhilosophy as GameState["user"]["ownedFranchises"][string]["ownerPhilosophy"]) ??
-      DEFAULT_OWNER_PHILOSOPHY,
+  const franchise: GameState["user"]["ownedFranchises"][string] & {
+    ownerPhilosophy?: string;
+  } = {
     ownerPatience:
       (userRecord.ownerPatience as number | undefined) ??
       defaultOwnerPatience(DEFAULT_OWNER_PHILOSOPHY),
@@ -3561,7 +3561,9 @@ function migrateV42ToV43(state: GameStateV42): GameState {
   };
 
   const pendingOwnerDecisions: GameState["user"]["pendingOwnerDecisions"] =
-    legacyUserArray(userRecord.pendingOwnerDecisions).map((decision) => {
+    legacyUserArray<GameStateV42["user"]["pendingOwnerDecisions"][number]>(
+      userRecord.pendingOwnerDecisions,
+    ).map((decision) => {
       const userTeamId = decision.payload.userTeamId as TeamId;
       const offeringTeamId = decision.payload.offeringTeamId as TeamId;
       const primaryTeamId =
@@ -3591,7 +3593,9 @@ function migrateV42ToV43(state: GameStateV42): GameState {
     });
 
   const ownerDecisionHistory: GameState["user"]["ownerDecisionHistory"] =
-    legacyUserArray(userRecord.ownerDecisionHistory).map((record) => {
+    legacyUserArray<GameStateV42["user"]["ownerDecisionHistory"][number]>(
+      userRecord.ownerDecisionHistory,
+    ).map((record) => {
       const userTeamId = record.payload.userTeamId as TeamId;
       const offeringTeamId = record.payload.offeringTeamId as TeamId;
       const primaryTeamId =
@@ -3642,6 +3646,73 @@ function migrateV42ToV43(state: GameStateV42): GameState {
       mode: state.user.mode,
       pendingOwnerDecisions,
       ownerDecisionHistory,
+    },
+  };
+}
+
+type GameStateV43 = {
+  meta: Omit<GameState["meta"], "schemaVersion"> & {
+    schemaVersion: 43;
+  };
+  settings: GameState["settings"];
+  world: GameState["world"];
+  competition: GameState["competition"];
+  business: GameState["business"];
+  user: {
+    ownedTeamIds: TeamId[];
+    activeOwnerTeamId: TeamId;
+    ownedFranchises: Record<
+      string,
+      GameState["user"]["ownedFranchises"][string] & {
+        ownerPhilosophy?: string;
+      }
+    >;
+    mode: GameState["user"]["mode"];
+    pendingOwnerDecisions: GameState["user"]["pendingOwnerDecisions"];
+    ownerDecisionHistory: GameState["user"]["ownerDecisionHistory"];
+  };
+};
+
+/**
+ * Deterministic v43 → v44: drop per-franchise ownerPhilosophy and ensure
+ * settings.ownership.controlledTeamCount defaults to 1.
+ * Mandate weights now come from getDefaultOwnerMandateProfile().
+ * Emits literal schemaVersion 44. No RNG.
+ */
+function migrateV43ToV44(state: GameStateV43): GameState {
+  const ownedFranchises: GameState["user"]["ownedFranchises"] = {};
+  for (const [teamId, franchise] of Object.entries(state.user.ownedFranchises)) {
+    const { ownerPhilosophy: _removed, ...rest } = franchise;
+    void _removed;
+    ownedFranchises[teamId] = rest;
+  }
+
+  const settingsRecord = state.settings as GameState["settings"] & {
+    ownership?: { controlledTeamCount?: number };
+  };
+  const controlledTeamCount =
+    typeof settingsRecord.ownership?.controlledTeamCount === "number" &&
+    Number.isInteger(settingsRecord.ownership.controlledTeamCount) &&
+    settingsRecord.ownership.controlledTeamCount >= 1
+      ? Math.min(
+          settingsRecord.ownership.controlledTeamCount,
+          Math.max(1, Object.keys(state.world.teams).length),
+        )
+      : 1;
+
+  return {
+    ...state,
+    meta: {
+      ...state.meta,
+      schemaVersion: 44,
+    },
+    settings: {
+      ...state.settings,
+      ownership: { controlledTeamCount },
+    },
+    user: {
+      ...state.user,
+      ownedFranchises,
     },
   };
 }

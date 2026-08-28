@@ -12,6 +12,7 @@ import {
   RELOCATION_MIN_SEASONS_IN_CITY,
 } from "@/systems/relocation-config";
 import type { GameState } from "@/state/game-state";
+import { GAME_STATE_SCHEMA_VERSION } from "@/state/game-state";
 import { serializeGameState, deserializeGameState } from "@/persistence/mappers/game-state-mapper";
 
 function withTenure(state: GameState, seasonsInCity: number): GameState {
@@ -297,7 +298,7 @@ describe("relocation save migration fields", () => {
     state = withTenure(state, 10);
     const json = serializeGameState(state);
     const loaded = deserializeGameState(json);
-    expect(loaded.meta.schemaVersion).toBe(42);
+    expect(loaded.meta.schemaVersion).toBe(GAME_STATE_SCHEMA_VERSION);
     expect(
       loaded.business.relocationByTeamId[teamId]!.cityStartSeasonYear,
     ).toBeGreaterThan(0);

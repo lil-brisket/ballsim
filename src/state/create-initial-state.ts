@@ -362,6 +362,7 @@ export function createFourTeamInitialGameState(
       area: "north_america",
     },
     injuryFrequency: "medium",
+    ownership: { controlledTeamCount: 1 },
     regularSeason: {
       gamesPerTeam: 14,
       tradeDeadlineRule: {

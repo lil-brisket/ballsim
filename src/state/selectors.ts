@@ -81,7 +81,6 @@ export type DashboardSnapshot = {
     isActive: boolean;
     blockingDecisionCount: number;
     unreadNotificationCount: number;
-    ownerPhilosophy: string;
   }>;
   teamCount: number;
   playerCount: number;
@@ -1057,7 +1056,6 @@ export function toDashboardSnapshot(state: GameState): DashboardSnapshot {
         ).length,
         unreadNotificationCount: franchise.notifications.filter((n) => !n.read)
           .length,
-        ownerPhilosophy: franchise.ownerPhilosophy,
       };
     }),
     teamCount: Object.keys(state.world.teams).length,

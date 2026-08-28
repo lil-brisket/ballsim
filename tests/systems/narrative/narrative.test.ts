@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { createCblInitialGameState } from "@/state/create-initial-state";
 import type { GameState } from "@/state/game-state";
+import { GAME_STATE_SCHEMA_VERSION } from "@/state/game-state";
 import type { NarrativeMonthSnapshot } from "@/domain/entities/narrative-situation";
 import { createSeededRng } from "@/domain/rng";
 import { createTestRng, TEST_RNG_SEED } from "../../helpers/determinism";
@@ -379,6 +380,6 @@ describe("narrative migration", () => {
       snapshots: [],
       cooldowns: {},
     });
-    expect(state.meta.schemaVersion).toBe(40);
+    expect(state.meta.schemaVersion).toBe(GAME_STATE_SCHEMA_VERSION);
   });
 });

@@ -73,7 +73,6 @@ function baseDashboard(
         isActive: true,
         blockingDecisionCount: 0,
         unreadNotificationCount: 0,
-        ownerPhilosophy: "win_now",
       },
     ],
     activeFranchiseAi: {

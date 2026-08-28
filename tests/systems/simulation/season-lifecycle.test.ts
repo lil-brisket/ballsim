@@ -241,7 +241,6 @@ describe("season lifecycle", () => {
             currentDate: "2026-10-01",
             citySelectionConfirmed: true,
             franchiseIdentityConfirmed: true,
-            ownerPhilosophy: "balanced",
           }),
         },
         mode: "owner",

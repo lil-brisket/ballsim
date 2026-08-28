@@ -329,10 +329,16 @@ export {
 export {
   OWNER_PHILOSOPHY_PROFILES,
   getOwnerPhilosophyProfile,
+  getDefaultOwnerMandateProfile,
   clampOwnerPatience,
   defaultOwnerPatience,
   mandatePriorityLabels,
 } from "@/systems/owner-philosophy-config";
+export {
+  applyConfirmControlledFranchises,
+  type ControlledFranchiseIdentityInput,
+  type ConfirmControlledFranchisesResult,
+} from "@/systems/confirm-controlled-franchises";
 export { buildOwnershipExpectations } from "@/systems/ownership-expectations";
 export {
   recordOwnershipEvidence,

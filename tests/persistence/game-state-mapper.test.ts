@@ -1862,7 +1862,7 @@ describe("GameState schema migration", () => {
         citySelectionConfirmed: franchise.citySelectionConfirmed,
         franchiseIdentityConfirmed: franchise.franchiseIdentityConfirmed,
         ownerStartSeasonYear: franchise.ownerStartSeasonYear,
-        ownerPhilosophy: franchise.ownerPhilosophy,
+        ownerPhilosophy: "balanced",
         ownerPatience: franchise.ownerPatience,
         ownershipConfidence: franchise.ownershipConfidence,
         objectives: franchise.objectives,
@@ -1882,9 +1882,6 @@ describe("GameState schema migration", () => {
     expect(migrated.meta.schemaVersion).toBe(GAME_STATE_SCHEMA_VERSION);
     expect(migrated.user.ownedTeamIds).toEqual([active]);
     expect(migrated.user.activeOwnerTeamId).toBe(active);
-    expect(migrated.user.ownedFranchises[active]?.ownerPhilosophy).toBe(
-      franchise.ownerPhilosophy,
-    );
     expect(migrated.user.ownedFranchises[active]?.aiAssistance).toEqual(
       modern.settings.ai.assistance,
     );

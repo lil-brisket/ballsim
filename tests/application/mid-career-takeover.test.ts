@@ -60,9 +60,7 @@ describe("mid-career franchise takeover", () => {
     )!;
     expect(isOwnedFranchise(loaded!.state, aiTeam.id)).toBe(false);
 
-    const result = await takeOverFranchise(saveId, aiTeam.id, store, {
-      ownerPhilosophy: "win_now",
-    });
+    const result = await takeOverFranchise(saveId, aiTeam.id, store);
     expect(result.ok).toBe(true);
     if (!result.ok) {
       return;
@@ -74,9 +72,6 @@ describe("mid-career franchise takeover", () => {
     expect(getOwnedTeamIds(after!.state)).toContain(primaryId);
     expect(getActiveOwnerTeamId(after!.state)).toBe(aiTeam.id);
     expect(after!.state.user.ownedFranchises[aiTeam.id]).toBeDefined();
-    expect(after!.state.user.ownedFranchises[aiTeam.id]!.ownerPhilosophy).toBe(
-      "win_now",
-    );
     expect(
       after!.state.user.ownedFranchises[aiTeam.id]!.franchiseIdentityConfirmed,
     ).toBe(true);

@@ -4,7 +4,7 @@
 
 export type OnboardingRoute =
   | { kind: "city"; path: string }
-  | { kind: "branding"; path: string }
+  | { kind: "franchises"; path: string }
   | { kind: "dashboard"; path: string };
 
 export function resolveOnboardingRoute(
@@ -18,7 +18,7 @@ export function resolveOnboardingRoute(
     return { kind: "city", path: `/new/${saveId}/team` };
   }
   if (!flags.franchiseIdentityConfirmed) {
-    return { kind: "branding", path: `/new/${saveId}/branding` };
+    return { kind: "franchises", path: `/new/${saveId}/franchises` };
   }
   return { kind: "dashboard", path: `/dashboard/${saveId}` };
 }

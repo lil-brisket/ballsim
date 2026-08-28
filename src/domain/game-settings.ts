@@ -195,6 +195,17 @@ export type TradeDeadlineRule =
       seasonSpanFraction: number;
     };
 
+/** Max franchises a player may control in one save (onboarding intent). */
+export const MAX_CONTROLLED_TEAM_COUNT = 5;
+
+export type OwnershipSettings = {
+  /**
+   * How many franchises the user will control after league generation.
+   * Actual team IDs are chosen on the controlled-franchises onboarding step.
+   */
+  controlledTeamCount: number;
+};
+
 export type GameSettings = {
   league: {
     teamCount: number;
@@ -207,6 +218,8 @@ export type GameSettings = {
    * Persisted now; not yet consumed by the sim engine.
    */
   injuryFrequency: InjuryFrequency;
+  /** Owner Mode multi-franchise control intent (count only; set before generation). */
+  ownership: OwnershipSettings;
   regularSeason: {
     gamesPerTeam: number;
     tradeDeadlineRule: TradeDeadlineRule;
@@ -273,6 +286,10 @@ function defaultAiSettings(): GameSettings["ai"] {
   };
 }
 
+export const DEFAULT_OWNERSHIP_SETTINGS: OwnershipSettings = {
+  controlledTeamCount: 1,
+};
+
 /** Standard new-save defaults: 30 teams / 82 games / 16 playoff teams. */
 export const DEFAULT_GAME_SETTINGS: GameSettings = {
   league: {
@@ -282,6 +299,7 @@ export const DEFAULT_GAME_SETTINGS: GameSettings = {
     area: "north_america",
   },
   injuryFrequency: "medium",
+  ownership: { ...DEFAULT_OWNERSHIP_SETTINGS },
   regularSeason: {
     gamesPerTeam: 82,
     tradeDeadlineRule: {
@@ -328,6 +346,7 @@ export const CBL_GAME_SETTINGS: GameSettings = {
     area: "north_america",
   },
   injuryFrequency: "medium",
+  ownership: { ...DEFAULT_OWNERSHIP_SETTINGS },
   regularSeason: {
     gamesPerTeam: 22,
     tradeDeadlineRule: {
@@ -500,10 +519,19 @@ export function isTradeDeadlineRule(
   return false;
 }
 
+export function maxControlledTeamCountForLeague(teamCount: number): number {
+  return Math.min(MAX_CONTROLLED_TEAM_COUNT, Math.max(1, teamCount));
+}
+
 export function cloneGameSettings(settings: GameSettings): GameSettings {
   return {
     league: { ...settings.league },
     injuryFrequency: settings.injuryFrequency ?? "medium",
+    ownership: {
+      controlledTeamCount:
+        settings.ownership?.controlledTeamCount ??
+        DEFAULT_OWNERSHIP_SETTINGS.controlledTeamCount,
+    },
     regularSeason: {
       ...settings.regularSeason,
       tradeDeadlineRule: { ...settings.regularSeason.tradeDeadlineRule },

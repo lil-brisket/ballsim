@@ -23,7 +23,6 @@ import {
   cloneGameSettings,
   type LeagueArea,
 } from "@/domain/game-settings";
-import { DEFAULT_OWNER_PHILOSOPHY } from "@/domain/entities/owner-philosophy";
 import { createMemorySaveGameStore } from "@/persistence/memory-save-game-store";
 import { createInitialGameState } from "@/state/create-initial-state";
 import { runMultiYearSimulation } from "../helpers/multi-year-simulation";
@@ -159,7 +158,7 @@ describe("selectOwnerTeam philosophy regression", () => {
 
     const before = await store.load(created.save.id);
     expect(before).not.toBeNull();
-    expect(getActiveOwnedFranchise(before!.state).ownerPhilosophy).toBe(DEFAULT_OWNER_PHILOSOPHY);
+    expect(getActiveOwnedFranchise(before!.state).ownerPatience).toBeGreaterThan(0);
 
     const teamIds = Object.keys(before!.state.world.teams).sort();
     const selected = await selectOwnerTeam(
@@ -171,7 +170,7 @@ describe("selectOwnerTeam philosophy regression", () => {
 
     const after = await store.load(created.save.id);
     expect(after).not.toBeNull();
-    expect(getActiveOwnedFranchise(after!.state).ownerPhilosophy).toBe(DEFAULT_OWNER_PHILOSOPHY);
+    expect(getActiveOwnedFranchise(after!.state).ownerPatience).toBeGreaterThan(0);
     expect(after!.state.user.activeOwnerTeamId).toBe(teamIds[0]);
   });
 });

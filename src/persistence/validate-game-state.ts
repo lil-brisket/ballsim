@@ -35,10 +35,8 @@ import {
   isOwnershipAxis,
 } from "@/domain/entities/franchise-ops";
 import {
-  isOwnerPhilosophy,
   OWNER_PATIENCE_MAX,
   OWNER_PATIENCE_MIN,
-  OWNER_PHILOSOPHIES,
 } from "@/domain/entities/owner-philosophy";
 import {
   isAiManagementPreset,
@@ -2554,14 +2552,6 @@ function validateOwnedFranchiseState(
     !Number.isInteger(franchise.ownerStartSeasonYear as number)
   ) {
     failFn(`${path}.ownerStartSeasonYear must be a finite integer.`);
-  }
-  if (
-    typeof franchise.ownerPhilosophy !== "string" ||
-    !isOwnerPhilosophy(franchise.ownerPhilosophy)
-  ) {
-    failFn(
-      `${path}.ownerPhilosophy must be one of ${OWNER_PHILOSOPHIES.join(", ")}.`,
-    );
   }
   assertNumber(franchise.ownerPatience, `${path}.ownerPatience`);
   if (

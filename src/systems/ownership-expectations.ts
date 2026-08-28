@@ -1,4 +1,3 @@
-import { getActiveOwnedFranchise } from "@/state/owner-context";
 /**
  * Builds living ownership expectations from philosophy + franchise state.
  * Derived only — never persisted as a second mandate source of truth.
@@ -14,7 +13,7 @@ import {
 } from "@/domain/entities/ownership-expectations";
 import type { GameState } from "@/state/game-state";
 import { buildFranchiseContext } from "@/systems/franchise-ai-context";
-import { getOwnerPhilosophyProfile } from "@/systems/owner-philosophy-config";
+import { getDefaultOwnerMandateProfile } from "@/systems/owner-philosophy-config";
 import {
   AWARENESS_LOW_THRESHOLD,
   ATTENDANCE_SOFT_FILL_PCT,
@@ -45,8 +44,7 @@ export function projectedSeasonWins(state: GameState, teamId: TeamId): number {
     const last = history[history.length - 1]!;
     return last.wins;
   }
-  const profile = getOwnerPhilosophyProfile(getActiveOwnedFranchise(state).ownerPhilosophy);
-  return profile.winTolerance.acceptable;
+  return getDefaultOwnerMandateProfile().winTolerance.acceptable;
 }
 
 function revenueGrowing(state: GameState, teamId: TeamId): boolean {
@@ -155,7 +153,7 @@ export function buildOwnershipExpectations(
   state: GameState,
   teamId: TeamId = state.user.activeOwnerTeamId,
 ): OwnershipExpectations {
-  const philosophy = getActiveOwnedFranchise(state).ownerPhilosophy;
+  const philosophy = getDefaultOwnerMandateProfile().philosophy;
   const ctx = buildFranchiseContext(state, teamId);
   const wins = projectedSeasonWins(state, teamId);
   const band = competitiveBandFromWins(wins);

@@ -87,6 +87,7 @@ function createEightTeamGameState(rngSeed: number): {
         area: "north_america",
       },
       injuryFrequency: "medium",
+      ownership: { controlledTeamCount: 1 },
       regularSeason: {
         gamesPerTeam: 14,
         tradeDeadlineRule: {
@@ -189,7 +190,6 @@ function createEightTeamGameState(rngSeed: number): {
           currentDate: "2026-10-01",
           citySelectionConfirmed: true,
           franchiseIdentityConfirmed: true,
-          ownerPhilosophy: "balanced",
         }),
       },
       mode: "owner",

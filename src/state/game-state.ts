@@ -21,7 +21,6 @@ import type {
 } from "@/domain/entities/owner-decision";
 import type { OwnerNotification } from "@/domain/entities/owner-notification";
 import type { OwnerObjective } from "@/domain/entities/owner-objective";
-import type { OwnerPhilosophy } from "@/domain/entities/owner-philosophy";
 import type { OwnershipConfidenceState } from "@/domain/entities/ownership-confidence";
 import type { NarrativeState } from "@/domain/entities/narrative-situation";
 import type { Player } from "@/domain/entities/player";
@@ -45,7 +44,7 @@ import type { GameSettings } from "@/domain/game-settings";
 import type { DomainEvent } from "@/domain/events";
 import type { SaveId, TeamId } from "@/domain/ids";
 
-export const GAME_STATE_SCHEMA_VERSION = 43;
+export const GAME_STATE_SCHEMA_VERSION = 44;
 
 /** Bounded recent history for Owner Mode activity / transactions UI. */
 export const EVENT_LOG_MAX = 1_000;
@@ -127,9 +126,7 @@ export type BusinessSlice = {
  * Does NOT include pendingOwnerDecisions (those live on UserSlice).
  */
 export type OwnedFranchiseState = {
-  /** Ownership mandate; chosen at team pick / takeover. */
-  ownerPhilosophy: OwnerPhilosophy;
-  /** 0–100 mandate patience; starts from philosophy profile default. */
+  /** 0–100 mandate patience; starts from default mandate profile. */
   ownerPatience: number;
   /**
    * Ownership confidence / strategic friction narrative.
