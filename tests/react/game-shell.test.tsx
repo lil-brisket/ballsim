@@ -56,6 +56,43 @@ function baseDashboard(
         logoId: "shield",
       },
     },
+    ownedTeams: [
+      {
+        id: "team_1",
+        city: "Harbor",
+        name: "Waves",
+        abbreviation: "HAR",
+        branding: {
+          primaryColor: "#0B1F3A",
+          secondaryColor: "#C4CED4",
+          accentColor: "#F5B800",
+          logoId: "shield",
+        },
+        wins: 0,
+        losses: 0,
+        isActive: true,
+        blockingDecisionCount: 0,
+        unreadNotificationCount: 0,
+        ownerPhilosophy: "win_now",
+      },
+    ],
+    activeFranchiseAi: {
+      managementPreset: "off",
+      assistance: {
+        injuriesEmergencyRoster: "off",
+        rotationsDepthChart: "off",
+        freeAgency: "off",
+        trades: "off",
+        waiversReleases: "off",
+        contracts: "off",
+        draftScouting: "off",
+        draftSelection: "off",
+        coachingStaff: "off",
+        frontOfficeStaff: "off",
+        strategicRosterDecisions: "off",
+        longTermPlanning: "off",
+      },
+    },
     teamCount: 12,
     playerCount: 100,
     payroll: 1,
@@ -79,7 +116,7 @@ function baseDashboard(
       championTeamId: null,
     },
     ...overrides,
-  };
+  } as DashboardSnapshot;
 }
 
 describe("game shell UI", () => {

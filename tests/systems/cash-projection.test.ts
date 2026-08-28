@@ -13,7 +13,7 @@ describe("projectCashHorizon", () => {
       settings: CBL_GAME_SETTINGS,
     });
     state = bootstrapWorld(state, createSeededRng(state.meta.rngState)).state;
-    const teamId = state.user.controlledTeamId;
+    const teamId = state.user.activeOwnerTeamId;
     const cashBefore = state.business.finances[teamId]!.cash;
     const projection = projectCashHorizon(state, teamId);
     expect(projection.inflowBreakdown.broadcast).toBeGreaterThan(0);
@@ -29,7 +29,7 @@ describe("projectCashHorizon", () => {
       settings: CBL_GAME_SETTINGS,
     });
     state = bootstrapWorld(state, createSeededRng(state.meta.rngState)).state;
-    const teamId = state.user.controlledTeamId;
+    const teamId = state.user.activeOwnerTeamId;
     state = {
       ...state,
       competition: { ...state.competition, games: {} },

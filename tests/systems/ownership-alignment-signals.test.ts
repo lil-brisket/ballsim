@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { withOwnedFranchise } from "@/state/owner-context";
 import { createSeededRng } from "@/domain/rng";
 import { createTestGameState } from "../factories/game-state";
 import type { TradeProposal } from "@/domain/entities/trade-proposal";
@@ -25,7 +26,7 @@ function setStandingWins(
   wins: number,
   losses: number,
 ) {
-  const teamId = state.user.controlledTeamId;
+  const teamId = state.user.activeOwnerTeamId;
   const existing = state.competition.standings.byTeamId[teamId];
   return {
     ...state,
@@ -72,7 +73,7 @@ function findStarOnTeam(
 }
 
 function otherTeamId(state: ReturnType<typeof bootstrapped>): TeamId {
-  const controlled = state.user.controlledTeamId;
+  const controlled = state.user.activeOwnerTeamId;
   const other = Object.keys(state.world.teams).find((id) => id !== controlled);
   return asTeamId(other!);
 }
@@ -80,7 +81,7 @@ function otherTeamId(state: ReturnType<typeof bootstrapped>): TeamId {
 describe("ownership alignment signals", () => {
   it("treats min deals as minor significance", () => {
     const state = bootstrapped();
-    const teamId = state.user.controlledTeamId;
+    const teamId = state.user.activeOwnerTeamId;
     const other = Object.values(state.world.players).find((player) => {
       const team = state.world.teams[teamId];
       return team !== undefined && !team.roster.includes(player.id);
@@ -92,12 +93,12 @@ describe("ownership alignment signals", () => {
 
   it("scores contender star-for-picks differently than rebuild star-for-picks", () => {
     let contend = setStandingWins(bootstrapped(), 52, 18);
-    contend = {
-      ...contend,
-      user: { ...contend.user, ownerPhilosophy: "win_now" },
-    };
+    contend = withOwnedFranchise(contend, contend.user.activeOwnerTeamId, (f) => ({
+      ...f,
+      ownerPhilosophy: "win_now",
+    }));
 
-    const teamId = contend.user.controlledTeamId;
+    const teamId = contend.user.activeOwnerTeamId;
     const star = findStarOnTeam(contend, teamId);
     const counterpart = otherTeamId(contend);
     expect(star).toBeTruthy();
@@ -152,10 +153,10 @@ describe("ownership alignment signals", () => {
 
   it("scores facility upgrades as meaningful for market owners", () => {
     let state = bootstrapped();
-    state = {
-      ...state,
-      user: { ...state.user, ownerPhilosophy: "market_expansion" },
-    };
+    state = withOwnedFranchise(state, state.user.activeOwnerTeamId, (f) => ({
+      ...f,
+      ownerPhilosophy: "market_expansion",
+    }));
     const evidence = scoreFacilityUpgrade(state, "practice");
     expect(evidence.significance).toBe("meaningful");
     expect(evidence.direction).toBe("aligned");
@@ -163,11 +164,11 @@ describe("ownership alignment signals", () => {
 
   it("marks large marketing cuts as conflicting for market expansion owners", () => {
     let state = bootstrapped();
-    state = {
-      ...state,
-      user: { ...state.user, ownerPhilosophy: "market_expansion" },
-    };
-    const teamId = state.user.controlledTeamId;
+    state = withOwnedFranchise(state, state.user.activeOwnerTeamId, (f) => ({
+      ...f,
+      ownerPhilosophy: "market_expansion",
+    }));
+    const teamId = state.user.activeOwnerTeamId;
     const ops = state.business.franchiseOps[teamId]!;
     state = {
       ...state,

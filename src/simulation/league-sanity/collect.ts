@@ -1,3 +1,4 @@
+import { getActiveOwnedFranchise } from "@/state/owner-context";
 /**
  * Collect numeric team-season observations from GameState.
  * No franchise-intelligence imports.
@@ -114,7 +115,7 @@ function isExpansionTeam(state: GameState, teamId: TeamId): boolean {
   if (!ops) {
     return false;
   }
-  const leagueStart = state.user.ownerStartSeasonYear ?? ops.foundedSeasonYear;
+  const leagueStart = getActiveOwnedFranchise(state).ownerStartSeasonYear ?? ops.foundedSeasonYear;
   return ops.foundedSeasonYear > leagueStart;
 }
 

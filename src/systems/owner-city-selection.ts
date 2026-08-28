@@ -3,7 +3,7 @@
  *
  * Invariants:
  * - Does not create or delete teams (teamCount unchanged).
- * - Always relocates the placeholder (current controlledTeamId).
+ * - Always relocates the placeholder (current activeOwnerTeamId).
  * - If another team already sits in the chosen city, that team swaps into the
  *   placeholder's previous city so markets stay unique.
  * - Rejects after citySelectionConfirmed or after first time advance.
@@ -15,6 +15,11 @@ import {
 import type { LeagueArea } from "@/domain/game-settings";
 import type { TeamId } from "@/domain/ids";
 import type { GameState } from "@/state/game-state";
+import {
+  getActiveOwnedFranchise,
+  getActiveOwnerTeamId,
+  withOwnedFranchise,
+} from "@/state/owner-context";
 import { uniqueTeamAbbreviation } from "@/systems/team-abbreviation";
 
 export type ApplyOwnerCitySelectionResult =
@@ -50,7 +55,7 @@ export function applyOwnerCitySelection(
   state: GameState,
   cityInput: string,
 ): ApplyOwnerCitySelectionResult {
-  if (state.user.citySelectionConfirmed) {
+  if (getActiveOwnedFranchise(state).citySelectionConfirmed) {
     return {
       ok: false,
       error: "City selection is already confirmed for this save.",
@@ -79,7 +84,7 @@ export function applyOwnerCitySelection(
   }
 
   const occupant = findTeamByCity(state, canonicalCity);
-  const placeholderId = state.user.controlledTeamId;
+  const placeholderId = state.user.activeOwnerTeamId;
   const placeholder = state.world.teams[placeholderId];
   if (!placeholder) {
     return {
@@ -137,19 +142,19 @@ export function applyOwnerCitySelection(
     };
   }
 
+  const withTeams: GameState = {
+    ...state,
+    world: {
+      ...state.world,
+      teams: nextTeams,
+    },
+  };
+
   return {
     ok: true,
-    state: {
-      ...state,
-      world: {
-        ...state.world,
-        teams: nextTeams,
-      },
-      user: {
-        ...state.user,
-        controlledTeamId: placeholderId,
-        citySelectionConfirmed: true,
-      },
-    },
+    state: withOwnedFranchise(withTeams, placeholderId, (franchise) => ({
+      ...franchise,
+      citySelectionConfirmed: true,
+    })),
   };
 }

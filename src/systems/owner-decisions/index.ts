@@ -4,8 +4,11 @@ export {
 } from "@/domain/entities/owner-decision";
 export {
   getActiveOwnerDecision,
+  getBlockingOwnerDecisions,
+  getPendingDecisionsForTeam,
   getPendingTradeOffers,
   hasActiveOwnerDecision,
+  hasBlockingOwnerDecision,
   tradeOfferFingerprint,
 } from "@/domain/entities/owner-decision";
 export {
@@ -17,6 +20,10 @@ export {
   type ResolveOwnerDecisionInput,
 } from "@/systems/owner-decisions/enqueue-trade-offer";
 export { tryEnqueueCpuToUserTradeOffer } from "@/systems/owner-decisions/find-cpu-user-trade-offer";
+export {
+  tryEnqueueAnyOwnedTeamTradeOffer,
+  tryEnqueueOwnedTeamTradeOffer,
+} from "@/systems/owner-decisions/owned-team-trade-offer";
 export { isInterruptWorthyTradeOffer } from "@/systems/owner-decisions/trade-offer-quality";
 export {
   USER_TRADE_OFFER_MAX_CPU_ASSETS,

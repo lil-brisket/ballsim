@@ -1,3 +1,4 @@
+import { getActiveOwnedFranchise } from "@/state/owner-context";
 /**
  * Builds living ownership expectations from philosophy + franchise state.
  * Derived only — never persisted as a second mandate source of truth.
@@ -44,7 +45,7 @@ export function projectedSeasonWins(state: GameState, teamId: TeamId): number {
     const last = history[history.length - 1]!;
     return last.wins;
   }
-  const profile = getOwnerPhilosophyProfile(state.user.ownerPhilosophy);
+  const profile = getOwnerPhilosophyProfile(getActiveOwnedFranchise(state).ownerPhilosophy);
   return profile.winTolerance.acceptable;
 }
 
@@ -152,9 +153,9 @@ function buildPriorityBullets(
  */
 export function buildOwnershipExpectations(
   state: GameState,
-  teamId: TeamId = state.user.controlledTeamId,
+  teamId: TeamId = state.user.activeOwnerTeamId,
 ): OwnershipExpectations {
-  const philosophy = state.user.ownerPhilosophy;
+  const philosophy = getActiveOwnedFranchise(state).ownerPhilosophy;
   const ctx = buildFranchiseContext(state, teamId);
   const wins = projectedSeasonWins(state, teamId);
   const band = competitiveBandFromWins(wins);

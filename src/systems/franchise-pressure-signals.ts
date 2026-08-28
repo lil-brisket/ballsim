@@ -1,3 +1,6 @@
+import {
+  getOwnedFranchiseOrUndefined,
+} from "@/state/owner-context";
 /**
  * Shared franchise pressure signals — simulation-level, not narrative-owned.
  *
@@ -149,12 +152,10 @@ function snapshotsForTeam(
   state: GameState,
   teamId: TeamId,
 ): readonly NarrativeMonthSnapshot[] {
-  // Narrative snapshots are for the controlled team; for AI teams derive
-  // from franchise history / live ops when snapshots don't apply.
-  if (state.user.controlledTeamId === teamId) {
-    return state.user.narrative.snapshots;
-  }
-  return [];
+  // Narrative snapshots live on owned franchises; AI teams derive from
+  // franchise history / live ops when snapshots don't apply.
+  const franchise = getOwnedFranchiseOrUndefined(state, teamId);
+  return franchise?.narrative.snapshots ?? [];
 }
 
 /**

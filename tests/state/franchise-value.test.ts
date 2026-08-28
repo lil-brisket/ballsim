@@ -38,7 +38,7 @@ function boot(saveId: string): GameState {
 }
 
 function teamIdOf(state: GameState): TeamId {
-  return state.user.controlledTeamId;
+  return state.user.activeOwnerTeamId;
 }
 
 function withOps(

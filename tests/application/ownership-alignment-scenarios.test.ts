@@ -8,6 +8,10 @@ import { buildOwnershipExpectations } from "@/systems/ownership-expectations";
 import { evaluateStrategicPosture } from "@/systems/ownership-strategic-posture";
 import type { AlignmentEvidence } from "@/domain/entities/ownership-confidence";
 import type { OwnerPhilosophy } from "@/domain/entities/owner-philosophy";
+import {
+  getActiveOwnedFranchise,
+  withOwnedFranchise,
+} from "@/state/owner-context";
 
 function pushConflicts(state: ReturnType<typeof createTestGameState>, count: number) {
   let next = state;
@@ -49,10 +53,10 @@ function withPhilosophy(
   state: ReturnType<typeof createTestGameState>,
   philosophy: OwnerPhilosophy,
 ) {
-  return {
-    ...state,
-    user: { ...state.user, ownerPhilosophy: philosophy },
-  };
+  return withOwnedFranchise(state, state.user.activeOwnerTeamId, (f) => ({
+    ...f,
+    ownerPhilosophy: philosophy,
+  }));
 }
 
 function withWins(
@@ -60,7 +64,7 @@ function withWins(
   wins: number,
   losses: number,
 ) {
-  const teamId = state.user.controlledTeamId;
+  const teamId = state.user.activeOwnerTeamId;
   const existing = state.competition.standings.byTeamId[teamId]!;
   return {
     ...state,
@@ -81,20 +85,20 @@ describe("ownership multi-season scenarios", () => {
   it("Scenario A — win_now frustration escalates with repeated conflict", () => {
     let state = withPhilosophy(createTestGameState(), "win_now");
     state = withWins(state, 52, 18);
-    const before = state.user.ownershipConfidence.mood;
+    const before = getActiveOwnedFranchise(state).ownershipConfidence.mood;
     state = pushConflicts(state, 5);
     expect(["watchful", "concerned", "displeased"]).toContain(
-      state.user.ownershipConfidence.mood,
+      getActiveOwnedFranchise(state).ownershipConfidence.mood,
     );
-    expect(state.user.ownershipConfidence.mood).not.toBe(before === "displeased" ? "confident" : before);
+    expect(getActiveOwnedFranchise(state).ownershipConfidence.mood).not.toBe(before === "displeased" ? "confident" : before);
     // Patience should only drift via weekly process, not raw evidence.
     const processed = processOwnershipConfidence(state);
     if (
-      processed.state.user.ownershipConfidence.mood === "concerned" ||
-      processed.state.user.ownershipConfidence.mood === "displeased"
+      getActiveOwnedFranchise(processed.state).ownershipConfidence.mood === "concerned" ||
+      getActiveOwnedFranchise(processed.state).ownershipConfidence.mood === "displeased"
     ) {
-      expect(processed.state.user.ownerPatience).toBeLessThanOrEqual(
-        state.user.ownerPatience,
+      expect(getActiveOwnedFranchise(processed.state).ownerPatience).toBeLessThanOrEqual(
+        getActiveOwnedFranchise(state).ownerPatience,
       );
     }
   });
@@ -106,9 +110,9 @@ describe("ownership multi-season scenarios", () => {
     expect(["rebuild", "develop"]).toContain(expectations.competitiveExpectation);
     state = pushAligned(state, 4);
     expect(["confident", "supportive", "watchful"]).toContain(
-      state.user.ownershipConfidence.mood,
+      getActiveOwnedFranchise(state).ownershipConfidence.mood,
     );
-    expect(state.user.ownershipConfidence.alignmentScore).toBeGreaterThanOrEqual(
+    expect(getActiveOwnedFranchise(state).ownershipConfidence.alignmentScore).toBeGreaterThanOrEqual(
       50,
     );
   });
@@ -117,22 +121,19 @@ describe("ownership multi-season scenarios", () => {
     let state = withPhilosophy(createTestGameState(), "build_for_the_future");
     state = withWins(state, 48, 22);
     // Seed a prior season note implying development mandate.
-    state = {
-      ...state,
-      user: {
-        ...state.user,
-        ownershipConfidence: {
-          ...state.user.ownershipConfidence,
-          seasonNotes: [
-            {
-              seasonYear: state.competition.season.year - 1,
-              mood: "supportive",
-              mandateSummary: "Focus on youth development during a rebuild.",
-            },
-          ],
-        },
+    state = withOwnedFranchise(state, state.user.activeOwnerTeamId, (f) => ({
+      ...f,
+      ownershipConfidence: {
+        ...f.ownershipConfidence,
+        seasonNotes: [
+          {
+            seasonYear: state.competition.season.year - 1,
+            mood: "supportive",
+            mandateSummary: "Focus on youth development during a rebuild.",
+          },
+        ],
       },
-    };
+    }));
     const evaluation = evaluateStrategicPosture(state);
     // May or may not reverse depending on observed roster; ensure API is stable.
     expect(evaluation.gap).toBeTruthy();
@@ -148,14 +149,14 @@ describe("ownership multi-season scenarios", () => {
 
   it("Scenario E — no death spiral: alignment does not harden objectives directly", () => {
     let state = withPhilosophy(createTestGameState(), "win_now");
-    const patienceBefore = state.user.ownerPatience;
+    const patienceBefore = getActiveOwnedFranchise(state).ownerPatience;
     state = pushConflicts(state, 6);
     // Evidence alone should not mutate patience.
-    expect(state.user.ownerPatience).toBe(patienceBefore);
+    expect(getActiveOwnedFranchise(state).ownerPatience).toBe(patienceBefore);
     const weekly = processOwnershipConfidence(state);
     // Cap: weekly patience drift is modest.
     expect(
-      Math.abs(weekly.state.user.ownerPatience - patienceBefore),
+      Math.abs(getActiveOwnedFranchise(weekly.state).ownerPatience - patienceBefore),
     ).toBeLessThanOrEqual(2);
   });
 });

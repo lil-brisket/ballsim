@@ -74,7 +74,7 @@ function makeEvidence(input: {
 function resolveExpectations(input: DecisionSignalInput): OwnershipExpectations {
   return (
     input.expectations ??
-    buildOwnershipExpectations(input.state, input.teamId ?? input.state.user.controlledTeamId)
+    buildOwnershipExpectations(input.state, input.teamId ?? input.state.user.activeOwnerTeamId)
   );
 }
 
@@ -98,7 +98,7 @@ export function scoreTradeDecision(
   proposal: TradeProposal,
   expectations?: OwnershipExpectations,
 ): AlignmentEvidence | null {
-  const teamId = state.user.controlledTeamId;
+  const teamId = state.user.activeOwnerTeamId;
   if (proposal.sideA.teamId !== teamId && proposal.sideB.teamId !== teamId) {
     return null;
   }
@@ -253,7 +253,7 @@ export function scoreFreeAgentSigning(
   years: number,
   expectations?: OwnershipExpectations,
 ): AlignmentEvidence | null {
-  const teamId = state.user.controlledTeamId;
+  const teamId = state.user.activeOwnerTeamId;
   const exp = expectations ?? buildOwnershipExpectations(state, teamId);
   const age = playerAge(state, playerId);
   const ovr = playerOvr(state, playerId);

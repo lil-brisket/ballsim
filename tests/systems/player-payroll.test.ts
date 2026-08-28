@@ -18,7 +18,7 @@ describe("player payroll cash", () => {
       settings: CBL_GAME_SETTINGS,
     });
     state = bootstrapWorld(state, createSeededRng(state.meta.rngState)).state;
-    const teamId = state.user.controlledTeamId;
+    const teamId = state.user.activeOwnerTeamId;
     const year = state.competition.season.year;
     const annual = getTeamPayroll(teamId, year, state);
     expect(annual).toBeGreaterThan(0);

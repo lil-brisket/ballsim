@@ -28,15 +28,30 @@ export type EnqueueTradeOfferResult = {
 };
 
 /**
- * Queue an incoming trade offer for the user franchise.
+ * Queue an incoming trade offer for an owned franchise.
  * Enforces: at most one active decision; rejection fingerprint cooldown.
  */
 export function enqueueTradeOfferForOwner(
   state: GameState,
   offeringTeamId: TeamId,
   proposal: TradeProposal,
+  options: { targetOwnedTeamId?: TeamId } = {},
 ): EnqueueTradeOfferResult {
-  const userTeamId = state.user.controlledTeamId;
+  const userTeamId =
+    options.targetOwnedTeamId ??
+    (state.user.ownedTeamIds.includes(proposal.sideA.teamId)
+      ? proposal.sideA.teamId
+      : state.user.ownedTeamIds.includes(proposal.sideB.teamId)
+        ? proposal.sideB.teamId
+        : state.user.activeOwnerTeamId);
+
+  if (!state.user.ownedTeamIds.includes(userTeamId)) {
+    return {
+      outcome: "rejected",
+      state,
+      reason: "target_not_owned",
+    };
+  }
   if (
     proposal.sideA.teamId !== userTeamId &&
     proposal.sideB.teamId !== userTeamId
@@ -101,10 +116,17 @@ export function enqueueTradeOfferForOwner(
     fingerprint,
   };
 
+  const participantTeamIds = [userTeamId, offeringTeamId].filter(
+    (id, index, arr) => arr.indexOf(id) === index,
+  );
+
   const decision: PendingOwnerDecision = {
     id,
     type: "trade_offer",
     createdOn,
+    blockingLevel: "blocking",
+    primaryTeamId: userTeamId,
+    participantTeamIds,
     payload,
   };
 
@@ -166,6 +188,9 @@ export function resolvePendingOwnerDecision(
     createdOn: pending.createdOn,
     resolvedOn,
     fingerprint: pending.payload.fingerprint,
+    blockingLevel: pending.blockingLevel,
+    primaryTeamId: pending.primaryTeamId,
+    participantTeamIds: [...pending.participantTeamIds],
     payload: pending.payload,
   };
 

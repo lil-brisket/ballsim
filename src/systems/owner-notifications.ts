@@ -18,11 +18,16 @@ import {
   SIGNIFICANT_FINANCIAL_CHANGE,
 } from "@/systems/owner-objectives-config";
 import { getCalendarContext } from "@/systems/simulation/calendar-context";
+import {
+  getActiveOwnedFranchise,
+  getActiveOwnerTeamId,
+  withOwnedFranchise,
+} from "@/state/owner-context";
 
 export type GenerateOwnerNotificationsOptions = {
   /** Controlled-team cash before applyGameplayFinancialConsequences in this pass. */
   previousCash?: number;
-  /** Same-day events not yet appended to user.eventLog. */
+  /** Same-day events not yet appended to franchise.eventLog. */
   dayEvents?: readonly DomainEvent[];
 };
 
@@ -34,10 +39,10 @@ export function generateOwnerNotifications(
   state: GameState,
   options: GenerateOwnerNotificationsOptions = {},
 ): SystemResult {
-  const teamId = state.user.controlledTeamId;
+  const teamId = state.user.activeOwnerTeamId;
   const date = state.world.calendar.currentDate;
   const existingKeys = new Set(
-    state.user.notifications.map((notification) => notification.dedupeKey),
+    getActiveOwnedFranchise(state).notifications.map((notification) => notification.dedupeKey),
   );
   const additions: OwnerNotification[] = [];
 
@@ -49,7 +54,7 @@ export function generateOwnerNotifications(
     additions.push(notification);
   };
 
-  for (const objective of state.user.objectives) {
+  for (const objective of getActiveOwnedFranchise(state).objectives) {
     if (objective.status === "completed") {
       append(
         createOwnerNotification({
@@ -214,13 +219,12 @@ export function generateOwnerNotifications(
     return systemResult(state);
   }
 
-  return systemResult({
-    ...state,
-    user: {
-      ...state.user,
-      notifications: [...state.user.notifications, ...additions],
-    },
-  });
+  return systemResult(
+    withOwnedFranchise(state, teamId, (franchise) => ({
+      ...franchise,
+      notifications: [...franchise.notifications, ...additions],
+    })),
+  );
 }
 
 function appendGameDayAttendanceNotifications(
@@ -232,7 +236,7 @@ function appendGameDayAttendanceNotifications(
 ): void {
   const candidates = [
     ...dayEvents,
-    ...state.user.eventLog,
+    ...getActiveOwnedFranchise(state).eventLog,
   ].filter(
     (event) =>
       event.type === "HomeGameDaySettled" &&
@@ -320,8 +324,8 @@ function lastRecordedHealth(
   state: GameState,
   teamId: TeamId,
 ): FinancialHealthState | null {
-  for (let index = state.user.notifications.length - 1; index >= 0; index -= 1) {
-    const notification = state.user.notifications[index]!;
+  for (let index = getActiveOwnedFranchise(state).notifications.length - 1; index >= 0; index -= 1) {
+    const notification = getActiveOwnedFranchise(state).notifications[index]!;
     if (notification.type !== "financial_health_changed") {
       continue;
     }

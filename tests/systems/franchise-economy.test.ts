@@ -219,7 +219,7 @@ describe("broadcast pool invariants", () => {
 describe("no double counting", () => {
   it("concessions post to concessions; capital not facilities", () => {
     let state = bootstrap(17);
-    const teamId = state.user.controlledTeamId;
+    const teamId = state.user.activeOwnerTeamId;
     const year = state.competition.season.year;
     state = applyCashAndBooksImpact(state, teamId, 5_000, year, {
       revenueCategory: "concessions",
@@ -276,7 +276,7 @@ describe("no double counting", () => {
 
   it("booksByMonth does not alter cash independently of cash mutators", () => {
     let state = bootstrap(23);
-    const teamId = state.user.controlledTeamId;
+    const teamId = state.user.activeOwnerTeamId;
     const cashBefore = state.business.finances[teamId]!.cash;
     const year = state.competition.season.year;
     // recordRevenue alone should not change cash
@@ -291,7 +291,7 @@ describe("no double counting", () => {
 describe("profitable but cash-poor", () => {
   it("positive operating net with capital spend can reduce cash", () => {
     let state = bootstrap(29);
-    const teamId = state.user.controlledTeamId;
+    const teamId = state.user.activeOwnerTeamId;
     const year = state.competition.season.year;
     state = applyCashAndBooksImpact(state, teamId, 20_000_000, year, {
       revenueCategory: "sponsorships",
@@ -322,7 +322,7 @@ describe("profitable but cash-poor", () => {
 describe("schema 28 migration", () => {
   it("round-trips finances with new categories and premiumTicketPrice", () => {
     const state = bootstrap(31);
-    const teamId = state.user.controlledTeamId;
+    const teamId = state.user.activeOwnerTeamId;
     expect(state.meta.schemaVersion).toBe(40);
     expect(state.business.franchiseOps[teamId]!.premiumTicketPrice).toBeGreaterThan(
       0,
@@ -347,7 +347,7 @@ describe("schema 28 migration", () => {
 describe("business decisions change P&L", () => {
   it("identical teams with different ticket prices produce different gate forecasts", () => {
     const state = bootstrap(37);
-    const teamId = state.user.controlledTeamId;
+    const teamId = state.user.activeOwnerTeamId;
     const ops = state.business.franchiseOps[teamId]!;
     const cheap = forecastNextHomeGameDay(state, teamId, {
       ...ops,

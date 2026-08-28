@@ -13,11 +13,11 @@ import { validateGameState } from "@/persistence/validate-game-state";
 import { createInitialGameState } from "@/state/create-initial-state";
 import { CBL_GAME_SETTINGS } from "@/domain/game-settings";
 import { createPhaseEBusinessDefaults } from "@/state/phase-e-defaults";
-import { createDefaultOwnershipConfidence } from "@/domain/entities/ownership-confidence";
 import {
   GAME_STATE_SCHEMA_VERSION,
   type GameState,
 } from "@/state/game-state";
+import { createDefaultOwnedFranchiseState } from "@/state/owned-franchise-state";
 import { generateLeague } from "@/systems/league-generation";
 import { generateRosters } from "@/systems/roster-generation";
 import { simulateSeason } from "@/systems/season-simulation";
@@ -174,32 +174,20 @@ function createEightTeamPopulatedState(rngSeed: number): GameState {
       ...createPhaseEBusinessDefaults(generated.teams.map((t) => t.id as TeamId)),
     },
     user: {
-      controlledTeamId: generated.teams[0]!.id as TeamId,
-      mode: "owner",
-      citySelectionConfirmed: true,
-      franchiseIdentityConfirmed: true,
-      ownerStartSeasonYear: 2026,
-      ownerPhilosophy: "balanced",
-      ownerPatience: 55,
-      ownershipConfidence: createDefaultOwnershipConfidence("2026-10-01"),
-      objectives: [],
-      notifications: [],
-      eventLog: [],
-      appliedGameplayConsequenceKeys: {},
-      explicitDecisions: {},
-      phaseSkips: [],
-      aiAssistState: {
-        resolvedNeeds: {},
-        seasonCounters: {
-          seasonYear: 0,
-          decisions: 0,
-          rosterMoves: 0,
-          freeAgentSignings: 0,
-        },
+      ownedTeamIds: [generated.teams[0]!.id as TeamId],
+      activeOwnerTeamId: generated.teams[0]!.id as TeamId,
+      ownedFranchises: {
+        [generated.teams[0]!.id]: createDefaultOwnedFranchiseState({
+          seasonYear: 2026,
+          currentDate: "2026-10-01",
+          citySelectionConfirmed: true,
+          franchiseIdentityConfirmed: true,
+          ownerPhilosophy: "balanced",
+        }),
       },
+      mode: "owner",
       pendingOwnerDecisions: [],
       ownerDecisionHistory: [],
-      narrative: { situations: [], snapshots: [], cooldowns: {} },
     },
   };
 
@@ -744,10 +732,10 @@ describe("validateGameState / deserialize invalid saves", () => {
       ...state,
       user: {
         ...state.user,
-        controlledTeamId: "team_does_not_exist",
+        activeOwnerTeamId: "team_does_not_exist",
       },
     });
-    expect(() => deserializeGameState(json)).toThrow(/controlledTeamId/);
+    expect(() => deserializeGameState(json)).toThrow(/activeOwnerTeamId/);
   });
 
   it("rejects missing playoffs property on v14 blob", () => {
@@ -786,42 +774,50 @@ describe("validateGameState / deserialize invalid saves", () => {
       ...state,
       user: {
         ...state.user,
-        controlledTeamId: null,
+        activeOwnerTeamId: null,
       },
     });
-    expect(() => deserializeGameState(json)).toThrow(/controlledTeamId/);
+    expect(() => deserializeGameState(json)).toThrow(/activeOwnerTeamId/);
   });
 
   it("rejects duplicate owner objective ids", () => {
     const state = createTestGameState();
+    const teamId = state.user.activeOwnerTeamId;
+    const franchise = state.user.ownedFranchises[teamId]!;
     const json = JSON.stringify({
       ...state,
       user: {
         ...state.user,
-        objectives: [
-          {
-            id: "obj_dup",
-            type: "make_playoffs",
-            description: "Make playoffs",
-            status: "active",
-            seasonYear: 2026,
-            category: "competitive",
-            lifecycle: "seasonal",
-            role: "primary",
-            consequenceApplied: false,
+        ownedFranchises: {
+          ...state.user.ownedFranchises,
+          [teamId]: {
+            ...franchise,
+            objectives: [
+              {
+                id: "obj_dup",
+                type: "make_playoffs",
+                description: "Make playoffs",
+                status: "active",
+                seasonYear: 2026,
+                category: "competitive",
+                lifecycle: "seasonal",
+                role: "primary",
+                consequenceApplied: false,
+              },
+              {
+                id: "obj_dup",
+                type: "win_championship",
+                description: "Win title",
+                status: "active",
+                seasonYear: 2026,
+                category: "competitive",
+                lifecycle: "seasonal",
+                role: "primary",
+                consequenceApplied: false,
+              },
+            ],
           },
-          {
-            id: "obj_dup",
-            type: "win_championship",
-            description: "Win title",
-            status: "active",
-            seasonYear: 2026,
-            category: "competitive",
-            lifecycle: "seasonal",
-            role: "primary",
-            consequenceApplied: false,
-          },
-        ],
+        },
       },
     });
     expect(() => deserializeGameState(json)).toThrow(/duplicate id/);
@@ -829,23 +825,31 @@ describe("validateGameState / deserialize invalid saves", () => {
 
   it("rejects invalid owner objective type", () => {
     const state = createTestGameState();
+    const teamId = state.user.activeOwnerTeamId;
+    const franchise = state.user.ownedFranchises[teamId]!;
     const json = JSON.stringify({
       ...state,
       user: {
         ...state.user,
-        objectives: [
-          {
-            id: "obj_bad",
-            type: "win_lottery",
-            description: "Invalid",
-            status: "active",
-            seasonYear: 2026,
-            category: "competitive",
-            lifecycle: "seasonal",
-            role: "primary",
-            consequenceApplied: false,
+        ownedFranchises: {
+          ...state.user.ownedFranchises,
+          [teamId]: {
+            ...franchise,
+            objectives: [
+              {
+                id: "obj_bad",
+                type: "win_lottery",
+                description: "Invalid",
+                status: "active",
+                seasonYear: 2026,
+                category: "competitive",
+                lifecycle: "seasonal",
+                role: "primary",
+                consequenceApplied: false,
+              },
+            ],
           },
-        ],
+        },
       },
     });
     expect(() => deserializeGameState(json)).toThrow(/type must be one of/);
@@ -853,24 +857,32 @@ describe("validateGameState / deserialize invalid saves", () => {
 
   it("rejects negative objective progress", () => {
     const state = createTestGameState();
+    const teamId = state.user.activeOwnerTeamId;
+    const franchise = state.user.ownedFranchises[teamId]!;
     const json = JSON.stringify({
       ...state,
       user: {
         ...state.user,
-        objectives: [
-          {
-            id: "obj_prog",
-            type: "minimum_win_total",
-            description: "Wins",
-            progress: -1,
-            status: "active",
-            seasonYear: 2026,
-            category: "competitive",
-            lifecycle: "seasonal",
-            role: "primary",
-            consequenceApplied: false,
+        ownedFranchises: {
+          ...state.user.ownedFranchises,
+          [teamId]: {
+            ...franchise,
+            objectives: [
+              {
+                id: "obj_prog",
+                type: "minimum_win_total",
+                description: "Wins",
+                progress: -1,
+                status: "active",
+                seasonYear: 2026,
+                category: "competitive",
+                lifecycle: "seasonal",
+                role: "primary",
+                consequenceApplied: false,
+              },
+            ],
           },
-        ],
+        },
       },
     });
     expect(() => deserializeGameState(json)).toThrow(/progress must be >= 0/);
@@ -878,7 +890,7 @@ describe("validateGameState / deserialize invalid saves", () => {
 
   it("rejects non-finite finance book amounts", () => {
     const state = createTestGameState();
-    const teamId = state.user.controlledTeamId;
+    const teamId = state.user.activeOwnerTeamId;
     const year = state.competition.season.year;
     const json = JSON.stringify({
       ...state,

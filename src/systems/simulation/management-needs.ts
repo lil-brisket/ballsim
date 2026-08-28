@@ -42,8 +42,10 @@ export type ManagementNeed = {
 /**
  * Detect management needs for the user-controlled franchise.
  */
-export function detectManagementNeeds(state: GameState): ManagementNeed[] {
-  const teamId = state.user.controlledTeamId;
+export function detectManagementNeeds(
+  state: GameState,
+  teamId: TeamId = state.user.activeOwnerTeamId,
+): ManagementNeed[] {
   const needs: ManagementNeed[] = [];
 
   needs.push(...detectRosterNeeds(state, teamId));

@@ -1,4 +1,16 @@
 import "server-only";
+import {
+  getActiveOwnedFranchise,
+  withOwnedFranchise,
+  withActiveOwnerTeam,
+  getOwnedTeamIds,
+  getBlockingDecisions,
+  getPendingDecisionsForTeam,
+  isOwnedFranchise,
+  withAddedOwnedFranchise,
+  getOwnedFranchiseAssistance,
+} from "@/state/owner-context";
+import { createDefaultOwnedFranchiseState } from "@/state/owned-franchise-state";
 
 import type { ContractInput } from "@/domain/entities/contract";
 import {
@@ -386,7 +398,7 @@ export async function loadOwnerSaveView(
     return null;
   }
   const state = loaded.state;
-  const teamId = state.user.controlledTeamId;
+  const teamId = state.user.activeOwnerTeamId;
   const roster = toRosterView(state);
   const outgoingPlayerId = roster[roster.length - 1]?.playerId;
   let tradeCandidates: TradeFinderCandidate[] = [];
@@ -615,8 +627,8 @@ export async function selectOwnerTeam(
   }
 
   const requestedPhilosophy = options.ownerPhilosophy;
-  let nextPhilosophy = loaded.state.user.ownerPhilosophy;
-  let nextPatience = loaded.state.user.ownerPatience;
+  let nextPhilosophy = getActiveOwnedFranchise(loaded.state).ownerPhilosophy;
+  let nextPatience = getActiveOwnedFranchise(loaded.state).ownerPatience;
   if (requestedPhilosophy !== undefined && requestedPhilosophy.length > 0) {
     if (!isOwnerPhilosophy(requestedPhilosophy)) {
       return fail(
@@ -629,8 +641,8 @@ export async function selectOwnerTeam(
 
   if (loaded.state.world.calendar.lastSimulatedDate !== null) {
     if (
-      loaded.state.user.controlledTeamId === typedTeamId &&
-      loaded.state.user.ownerPhilosophy === nextPhilosophy
+      loaded.state.user.activeOwnerTeamId === typedTeamId &&
+      getActiveOwnedFranchise(loaded.state).ownerPhilosophy === nextPhilosophy
     ) {
       return withDashboard(loaded);
     }
@@ -640,29 +652,204 @@ export async function selectOwnerTeam(
   }
 
   if (
-    loaded.state.user.controlledTeamId === typedTeamId &&
-    loaded.state.user.ownerPhilosophy === nextPhilosophy
+    loaded.state.user.activeOwnerTeamId === typedTeamId &&
+    getActiveOwnedFranchise(loaded.state).ownerPhilosophy === nextPhilosophy
   ) {
     return withDashboard(loaded);
   }
 
-  const working: GameState = {
-    ...loaded.state,
-    user: {
-      ...loaded.state.user,
-      controlledTeamId: typedTeamId,
+  const previous = getActiveOwnedFranchise(loaded.state);
+  const working = withOwnedFranchise(
+    {
+      ...loaded.state,
+      user: {
+        ...loaded.state.user,
+        ownedTeamIds: [typedTeamId],
+        activeOwnerTeamId: typedTeamId,
+        ownedFranchises:
+          typedTeamId === loaded.state.user.activeOwnerTeamId
+            ? loaded.state.user.ownedFranchises
+            : {
+                [typedTeamId]:
+                  loaded.state.user.ownedFranchises[typedTeamId] ??
+                  loaded.state.user.ownedFranchises[
+                    loaded.state.user.activeOwnerTeamId
+                  ]!,
+              },
+      },
+    },
+    typedTeamId,
+    {
+      ...(loaded.state.user.ownedFranchises[typedTeamId] ?? previous),
       ownerPhilosophy: nextPhilosophy,
       ownerPatience: nextPatience,
       citySelectionConfirmed: true,
       franchiseIdentityConfirmed: true,
       ownershipConfidence:
-        nextPhilosophy !== loaded.state.user.ownerPhilosophy
+        nextPhilosophy !== previous.ownerPhilosophy
           ? createDefaultOwnershipConfidence(
               loaded.state.world.calendar.currentDate,
             )
-          : loaded.state.user.ownershipConfidence,
+          : previous.ownershipConfidence,
     },
-  };
+  );
+
+  try {
+    const saved = await persistWorkingState(
+      saveId,
+      working,
+      loaded.state.meta.rngState,
+      saveStore,
+    );
+    return withDashboard(saved);
+  } catch (error) {
+    return fail(error instanceof Error ? error.message : String(error));
+  }
+}
+
+/**
+ * Switch the active Owner Mode franchise (UI context only).
+ * Does not affect simulation — simulation keys off ownedTeamIds.
+ */
+export async function switchActiveOwnerTeam(
+  saveId: string,
+  teamId: string,
+  store?: SaveGameStore,
+): Promise<OwnerCommandResult> {
+  const saveStore = getStore(store);
+  const loaded = await saveStore.load(saveId);
+  if (!loaded) {
+    return fail("Save not found.");
+  }
+  const typedTeamId = asTeamId(teamId);
+  if (!isOwnedFranchise(loaded.state, typedTeamId)) {
+    return fail(`Team "${teamId}" is not one of your owned franchises.`);
+  }
+  if (loaded.state.user.activeOwnerTeamId === typedTeamId) {
+    return withDashboard(loaded);
+  }
+  try {
+    const working = withActiveOwnerTeam(loaded.state, typedTeamId);
+    const saved = await persistWorkingState(
+      saveId,
+      working,
+      loaded.state.meta.rngState,
+      saveStore,
+    );
+    return withDashboard(saved);
+  } catch (error) {
+    return fail(error instanceof Error ? error.message : String(error));
+  }
+}
+
+/**
+ * Mid-career takeover of an AI-controlled franchise.
+ * Retains all team-level state; generates a new player owner mandate.
+ */
+export async function takeOverFranchise(
+  saveId: string,
+  teamId: string,
+  store?: SaveGameStore,
+  options: { ownerPhilosophy?: string } = {},
+): Promise<OwnerCommandResult> {
+  const saveStore = getStore(store);
+  const loaded = await saveStore.load(saveId);
+  if (!loaded) {
+    return fail("Save not found.");
+  }
+  const typedTeamId = asTeamId(teamId);
+  if (loaded.state.world.teams[typedTeamId] === undefined) {
+    return fail(`Team "${teamId}" does not exist.`);
+  }
+  if (isOwnedFranchise(loaded.state, typedTeamId)) {
+    return fail(`Team "${teamId}" is already under your control.`);
+  }
+
+  let philosophy = getActiveOwnedFranchise(loaded.state).ownerPhilosophy;
+  if (options.ownerPhilosophy !== undefined && options.ownerPhilosophy.length > 0) {
+    if (!isOwnerPhilosophy(options.ownerPhilosophy)) {
+      return fail(
+        `Owner philosophy must be one of: ${OWNER_PHILOSOPHIES.join(", ")}.`,
+      );
+    }
+    philosophy = options.ownerPhilosophy;
+  }
+
+  const seasonYear = loaded.state.competition.season.year;
+  const franchise = createDefaultOwnedFranchiseState({
+    seasonYear,
+    currentDate: loaded.state.world.calendar.currentDate,
+    ownerPhilosophy: philosophy,
+    citySelectionConfirmed: true,
+    franchiseIdentityConfirmed: true,
+    aiAssistance: { ...loaded.state.settings.ai.assistance },
+    managementPreset: loaded.state.settings.ai.managementPreset,
+  });
+
+  try {
+    const working = withAddedOwnedFranchise(
+      loaded.state,
+      typedTeamId,
+      franchise,
+      { setActive: true },
+    );
+    const saved = await persistWorkingState(
+      saveId,
+      working,
+      loaded.state.meta.rngState,
+      saveStore,
+    );
+    return withDashboard(saved);
+  } catch (error) {
+    return fail(error instanceof Error ? error.message : String(error));
+  }
+}
+
+/**
+ * Confirm additional owned franchises during onboarding (after primary city pick).
+ */
+export async function confirmOwnedFranchises(
+  saveId: string,
+  additionalTeamIds: readonly string[],
+  store?: SaveGameStore,
+): Promise<OwnerCommandResult> {
+  const saveStore = getStore(store);
+  const loaded = await saveStore.load(saveId);
+  if (!loaded) {
+    return fail("Save not found.");
+  }
+  if (loaded.state.world.calendar.lastSimulatedDate !== null) {
+    return fail(
+      "Franchise selection is locked after the first time advance for this save.",
+    );
+  }
+
+  let working = loaded.state;
+  const primaryId = working.user.activeOwnerTeamId;
+  const seen = new Set<string>([primaryId]);
+
+  for (const rawId of additionalTeamIds) {
+    const teamId = asTeamId(rawId);
+    if (seen.has(teamId)) {
+      continue;
+    }
+    if (working.world.teams[teamId] === undefined) {
+      return fail(`Team "${rawId}" does not exist.`);
+    }
+    if (isOwnedFranchise(working, teamId)) {
+      continue;
+    }
+    seen.add(teamId);
+    const franchise = createDefaultOwnedFranchiseState({
+      seasonYear: working.competition.season.year,
+      currentDate: working.world.calendar.currentDate,
+      citySelectionConfirmed: true,
+      franchiseIdentityConfirmed: true,
+      aiAssistance: { ...working.settings.ai.assistance },
+      managementPreset: working.settings.ai.managementPreset,
+    });
+    working = withAddedOwnedFranchise(working, teamId, franchise);
+  }
 
   try {
     const saved = await persistWorkingState(
@@ -758,13 +945,26 @@ export async function advanceOwnerTime(
   const preEvents: DomainEvent[] = [];
 
   if (hasActiveOwnerDecision(workingState.user)) {
+    const blocking = workingState.user.pendingOwnerDecisions.find(
+      (d) => d.blockingLevel === "blocking",
+    );
+    const teamId = blocking?.primaryTeamId;
+    const team = teamId ? workingState.world.teams[teamId] : undefined;
+    const teamLabel = team
+      ? `${team.city} ${team.name}`
+      : teamId ?? "a franchise";
+    const switchHint =
+      teamId && teamId !== workingState.user.activeOwnerTeamId
+        ? ` Switch to ${teamLabel} on My Teams to resolve it.`
+        : "";
     return fail(
-      "Cannot advance time while an owner decision is pending. Accept, decline, or ask AI first.",
+      `${teamLabel} needs your attention before time can advance. Resolve the pending owner decision first.${switchHint}`,
     );
   }
 
   if (isUserOnDraftClock(workingState)) {
-    if (!canAiExecute(workingState.settings, "DRAFT_PICK")) {
+    const franchiseAssist = getOwnedFranchiseAssistance(workingState);
+    if (!canAiExecute(workingState.settings, "DRAFT_PICK", franchiseAssist)) {
       return fail(
         "Cannot advance time while your team is on the draft clock. Make a draft selection first.",
       );
@@ -852,7 +1052,7 @@ export async function listOwnerTradeCandidates(
   }
 
   const playerId = asPlayerId(outgoingPlayerId);
-  const teamId = loaded.state.user.controlledTeamId;
+  const teamId = loaded.state.user.activeOwnerTeamId;
   const team = loaded.state.world.teams[teamId];
   if (!team?.roster.includes(playerId)) {
     return fail("Outgoing player is not on your roster.");
@@ -891,7 +1091,7 @@ export async function executeOwnerTrade(
     return fail("Save not found.");
   }
 
-  const teamId = loaded.state.user.controlledTeamId;
+  const teamId = loaded.state.user.activeOwnerTeamId;
   const playerId = asPlayerId(input.outgoingPlayerId);
   const team = loaded.state.world.teams[teamId];
   if (!team?.roster.includes(playerId)) {
@@ -1072,7 +1272,7 @@ async function resolveOwnerTradeDecision(
   } else {
     const evaluation = evaluateTradeOffer(
       working,
-      working.user.controlledTeamId,
+      working.user.activeOwnerTeamId,
       pending.payload.proposal,
     );
     shouldExecute = evaluation.accepted;
@@ -1143,7 +1343,7 @@ export async function signOwnerFreeAgent(
   }
 
   const playerId = asPlayerId(input.playerId);
-  const teamId = state.user.controlledTeamId;
+  const teamId = state.user.activeOwnerTeamId;
   const year = state.competition.season.year;
   const pool = listFreeAgents(state);
   if (!pool.playerIds.includes(playerId)) {
@@ -1258,7 +1458,10 @@ export async function letAiHandlePhaseAndAdvance(
   if (!loaded) {
     return fail("Save not found.");
   }
-  if (isUserAssistCompletelyOff(loaded.state.settings)) {
+  if (isUserAssistCompletelyOff(
+    loaded.state.settings,
+    getOwnedFranchiseAssistance(loaded.state),
+  )) {
     return fail(
       "AI assistance is off. Delegate at least one responsibility in settings first.",
     );
@@ -1317,20 +1520,18 @@ export async function continuePastPhaseAnyway(
 
   const phaseKey = resolveSimulationPhaseKey(loaded.state);
   const today = loaded.state.world.calendar.currentDate;
-  let working: GameState = {
-    ...loaded.state,
-    user: {
-      ...loaded.state.user,
-      phaseSkips: [
-        ...loaded.state.user.phaseSkips,
-        {
-          phaseKey,
-          skippedOn: today,
-          reason: "User chose Continue Anyway",
-        },
-      ],
-    },
-  };
+  const activeTeamId = loaded.state.user.activeOwnerTeamId;
+  let working: GameState = withOwnedFranchise(loaded.state, activeTeamId, (f) => ({
+    ...f,
+    phaseSkips: [
+      ...f.phaseSkips,
+      {
+        phaseKey,
+        skippedOn: today,
+        reason: "User chose Continue Anyway",
+      },
+    ],
+  }));
 
   const rng = createSeededRng(working.meta.rngState);
   try {
@@ -1437,7 +1638,7 @@ export async function selectOwnerDraftProspect(
       draftClassId,
       draftPickId: slot.draftPickId,
       prospectPlayerId: asPlayerId(prospectPlayerId),
-      teamId: loaded.state.user.controlledTeamId,
+      teamId: loaded.state.user.activeOwnerTeamId,
     });
     if (!selection.success) {
       return fail(
@@ -1512,7 +1713,7 @@ export async function makeOwnerFreeAgentOffer(
     );
   }
   const playerId = asPlayerId(input.playerId);
-  const teamId = state.user.controlledTeamId;
+  const teamId = state.user.activeOwnerTeamId;
   const year = state.competition.season.year;
   if (!listFreeAgents(state).playerIds.includes(playerId)) {
     return fail("Player is not an available free agent.");
@@ -1572,7 +1773,7 @@ export async function withdrawOwnerFreeAgentOffer(
   if (!offer) {
     return fail("Offer not found.");
   }
-  if (offer.teamId !== loaded.state.user.controlledTeamId) {
+  if (offer.teamId !== loaded.state.user.activeOwnerTeamId) {
     return fail("Offer does not belong to your team.");
   }
   const rng = createSeededRng(loaded.state.meta.rngState);
@@ -1605,19 +1806,21 @@ export async function markOwnerNotificationsRead(
     notificationIds === undefined
       ? null
       : new Set(notificationIds.filter((id) => id.length > 0));
-  const notifications = loaded.state.user.notifications.map((notification) => {
-    if (idSet !== null && !idSet.has(notification.id)) {
-      return notification;
-    }
-    if (notification.read) {
-      return notification;
-    }
-    return { ...notification, read: true };
-  });
-  const working: GameState = {
-    ...loaded.state,
-    user: { ...loaded.state.user, notifications },
-  };
+  let working = loaded.state;
+  for (const teamId of getOwnedTeamIds(working)) {
+    working = withOwnedFranchise(working, teamId, (franchise) => ({
+      ...franchise,
+      notifications: franchise.notifications.map((notification) => {
+        if (idSet !== null && !idSet.has(notification.id)) {
+          return notification;
+        }
+        if (notification.read) {
+          return notification;
+        }
+        return { ...notification, read: true };
+      }),
+    }));
+  }
   try {
     const saved = await persistWorkingState(
       saveId,
@@ -1697,7 +1900,7 @@ async function applyOwnerContractOption(
   if (!contract) {
     return fail("Contract not found.");
   }
-  if (contract.teamId !== loaded.state.user.controlledTeamId) {
+  if (contract.teamId !== loaded.state.user.activeOwnerTeamId) {
     return fail("Contract does not belong to your team.");
   }
   if (contract.teamOption?.status !== "pending") {
@@ -1737,7 +1940,7 @@ async function applyOwnerContractOption(
 function ensureAiTradeBlocks(state: GameState): GameState {
   let current = state;
   const teamIds = (Object.keys(current.world.teams) as TeamId[])
-    .filter((teamId) => teamId !== current.user.controlledTeamId)
+    .filter((teamId) => teamId !== current.user.activeOwnerTeamId)
     .sort((a, b) => (a < b ? -1 : a > b ? 1 : 0));
 
   for (const teamId of teamIds) {
@@ -1836,7 +2039,7 @@ export async function hireOwnerStaff(
   return runOwnerFranchiseCommand(
     saveId,
     (state) =>
-      hireStaff(state, state.user.controlledTeamId, asStaffId(staffId)),
+      hireStaff(state, state.user.activeOwnerTeamId, asStaffId(staffId)),
     store,
   );
 }
@@ -1849,7 +2052,7 @@ export async function fireOwnerStaff(
   return runOwnerFranchiseCommand(
     saveId,
     (state) =>
-      fireStaff(state, state.user.controlledTeamId, asStaffId(staffId)),
+      fireStaff(state, state.user.activeOwnerTeamId, asStaffId(staffId)),
     store,
   );
 }
@@ -1864,7 +2067,7 @@ export async function upgradeOwnerFacility(
     (state) => {
       const result = startFacilityUpgrade(
         state,
-        state.user.controlledTeamId,
+        state.user.activeOwnerTeamId,
         category,
       );
       return {
@@ -1887,7 +2090,7 @@ export async function setOwnerTicketPrice(
   return runOwnerFranchiseCommand(
     saveId,
     (state) =>
-      setTicketPrice(state, state.user.controlledTeamId, ticketPrice),
+      setTicketPrice(state, state.user.activeOwnerTeamId, ticketPrice),
     store,
   );
 }
@@ -1900,7 +2103,7 @@ export async function setOwnerMarketingBudget(
   return runOwnerFranchiseCommand(
     saveId,
     (state) => {
-      const teamId = state.user.controlledTeamId;
+      const teamId = state.user.activeOwnerTeamId;
       const previous =
         state.business.franchiseOps[teamId]?.marketing.budget ?? 0;
       const result = setMarketingBudget(state, teamId, budget);
@@ -1927,7 +2130,7 @@ export async function signOwnerSponsorship(
 ): Promise<OwnerCommandResult> {
   return runOwnerFranchiseCommand(saveId, (state) => {
     const year = state.competition.season.year;
-    const teamId = state.user.controlledTeamId;
+    const teamId = state.user.activeOwnerTeamId;
     return signSponsorship(state, teamId, {
       id: asSponsorshipId(`sponsor_${teamId}_${year}_${input.sponsorName}`),
       sponsorName: input.sponsorName,
@@ -1946,7 +2149,7 @@ export async function advanceOwnerRelocation(
   store?: SaveGameStore,
 ): Promise<OwnerCommandResult> {
   return runOwnerFranchiseCommand(saveId, (state) => {
-    const teamId = state.user.controlledTeamId;
+    const teamId = state.user.activeOwnerTeamId;
     const process = state.business.relocationByTeamId[teamId];
     const starting =
       process === undefined || process.stage === "none";
@@ -1979,7 +2182,7 @@ export async function cancelOwnerRelocation(
 ): Promise<OwnerCommandResult> {
   return runOwnerFranchiseCommand(
     saveId,
-    (state) => cancelRelocation(state, state.user.controlledTeamId),
+    (state) => cancelRelocation(state, state.user.activeOwnerTeamId),
     store,
   );
 }

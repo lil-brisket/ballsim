@@ -57,7 +57,7 @@ describe("season player development", () => {
         settings: CBL_GAME_SETTINGS,
       });
       state = bootstrapWorld(state, createSeededRng(state.meta.rngState)).state;
-      const teamId = state.user.controlledTeamId;
+      const teamId = state.user.activeOwnerTeamId;
       const ops = state.business.franchiseOps[teamId]!;
       state = {
         ...state,

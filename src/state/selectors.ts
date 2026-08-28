@@ -30,6 +30,11 @@ import {
   toBrandingView,
   type TeamBrandingView,
 } from "@/state/team-branding-view";
+import {
+  getActiveOwnedFranchise,
+  getOwnedTeamIds,
+  getPendingDecisionsForTeam,
+} from "@/state/owner-context";
 
 export type { TeamBrandingView } from "@/state/team-branding-view";
 
@@ -59,6 +64,25 @@ export type DashboardSnapshot = {
       logoId: string;
     };
   };
+  /** Portfolio of all owned franchises for switcher / My Teams. */
+  ownedTeams: Array<{
+    id: string;
+    city: string;
+    name: string;
+    abbreviation: string;
+    branding: {
+      primaryColor: string;
+      secondaryColor: string;
+      accentColor: string;
+      logoId: string;
+    };
+    wins: number;
+    losses: number;
+    isActive: boolean;
+    blockingDecisionCount: number;
+    unreadNotificationCount: number;
+    ownerPhilosophy: string;
+  }>;
   teamCount: number;
   playerCount: number;
   payroll: number;
@@ -90,6 +114,11 @@ export type DashboardSnapshot = {
     read: boolean;
   }>;
   unreadNotificationCount: number;
+  /** Active franchise AI management config (per-franchise, not career settings.ai). */
+  activeFranchiseAi: {
+    managementPreset: string;
+    assistance: import("@/domain/ai-management-presets").AiAssistancePhases;
+  };
   playoffs: {
     status: string;
     fieldSize: number;
@@ -265,6 +294,8 @@ export type NotificationView = {
   severity: string;
   read: boolean;
   relatedObjectiveId: string | null;
+  teamId: string;
+  teamName: string;
 };
 
 export type PlayerDetailView = {
@@ -313,10 +344,10 @@ export type FinancesView = {
 };
 
 export function getControlledTeam(state: GameState): Team {
-  const team = state.world.teams[state.user.controlledTeamId];
+  const team = state.world.teams[state.user.activeOwnerTeamId];
   if (!team) {
     throw new Error(
-      `Controlled team ${state.user.controlledTeamId} is missing from world.teams.`,
+      `Controlled team ${state.user.activeOwnerTeamId} is missing from world.teams.`,
     );
   }
   return team;
@@ -362,7 +393,7 @@ export function listCitiesForTeamPick(state: GameState): CityPickOption[] {
     }
   }
 
-  const marketsOpen = !state.user.citySelectionConfirmed;
+  const marketsOpen = !getActiveOwnedFranchise(state).citySelectionConfirmed;
   const options: CityPickOption[] = getCitiesForArea(area).map((city) => {
     const occupant = byNormalizedCity.get(city.name);
     const location = {
@@ -433,7 +464,7 @@ export function toRosterView(state: GameState): RosterPlayerView[] {
 }
 
 export function toStandingsView(state: GameState): StandingRowView[] {
-  const userTeamId = state.user.controlledTeamId;
+  const owned = new Set(state.user.ownedTeamIds);
   const rows: StandingRowView[] = [];
   for (const team of Object.values(state.world.teams)) {
     const standing =
@@ -446,7 +477,7 @@ export function toStandingsView(state: GameState): StandingRowView[] {
       name: team.name,
       wins: standing.wins,
       losses: standing.losses,
-      isUserTeam: team.id === userTeamId,
+      isUserTeam: owned.has(team.id),
       rank: 0,
       branding: toBrandingView(team.branding),
     });
@@ -485,7 +516,7 @@ export function toFreeAgentViews(state: GameState): FreeAgentView[] {
 }
 
 export function toFreeAgencyOfferViews(state: GameState): FreeAgencyOfferView[] {
-  const teamId = state.user.controlledTeamId;
+  const teamId = state.user.activeOwnerTeamId;
   const views: FreeAgencyOfferView[] = [];
   for (const offer of Object.values(state.business.freeAgency.offers)) {
     if (offer.teamId !== teamId) {
@@ -513,7 +544,7 @@ export function toFreeAgencyOfferViews(state: GameState): FreeAgencyOfferView[] 
 export function toOpenFreeAgencyOfferViews(
   state: GameState,
 ): FreeAgencyOfferView[] {
-  const teamId = state.user.controlledTeamId;
+  const teamId = state.user.activeOwnerTeamId;
   const views: FreeAgencyOfferView[] = [];
   for (const offer of Object.values(state.business.freeAgency.offers)) {
     if (offer.teamId !== teamId || !isOpenOffer(offer.status)) {
@@ -551,7 +582,7 @@ export function toDraftBoardView(state: GameState): DraftBoardView | null {
   if (draft === undefined) {
     return null;
   }
-  const userTeamId = state.user.controlledTeamId;
+  const userTeamId = state.user.activeOwnerTeamId;
   const onClock = draft.order.find((slot) => slot.status === "available");
   const eligibleProspects = Object.values(draft.prospects)
     .filter((prospect) => prospect.status === "eligible")
@@ -610,7 +641,7 @@ export function toDraftBoardView(state: GameState): DraftBoardView | null {
 }
 
 export function toScheduleView(state: GameState): ScheduleGameView[] {
-  const teamId = state.user.controlledTeamId;
+  const teamId = state.user.activeOwnerTeamId;
   const rows: ScheduleGameView[] = [];
   for (const game of Object.values(state.competition.games)) {
     if (game.homeTeamId !== teamId && game.awayTeamId !== teamId) {
@@ -658,7 +689,7 @@ export function toUpcomingGamesView(
 }
 
 export function toObjectivesView(state: GameState): ObjectiveView[] {
-  return state.user.objectives.map((objective) => ({
+  return getActiveOwnedFranchise(state).objectives.map((objective) => ({
     id: objective.id,
     type: objective.type,
     description: objective.description,
@@ -679,7 +710,7 @@ export function toEventLogView(
   state: GameState,
   limit?: number,
 ): EventLogEntryView[] {
-  const entries = state.user.eventLog.map((event) => toEventLogEntry(event));
+  const entries = getActiveOwnedFranchise(state).eventLog.map((event) => toEventLogEntry(event));
   const newestFirst = [...entries].reverse();
   return limit === undefined ? newestFirst : newestFirst.slice(0, limit);
 }
@@ -763,20 +794,35 @@ function describeDomainEvent(event: DomainEvent): string {
 }
 
 export function toNotificationsView(state: GameState): NotificationView[] {
-  return [...state.user.notifications].reverse().map((notification) => ({
-    id: notification.id,
-    type: notification.type,
-    title: notification.title,
-    message: notification.message,
-    occurredOn: notification.occurredOn,
-    severity: notification.severity,
-    read: notification.read,
-    relatedObjectiveId: notification.relatedObjectiveId ?? null,
-  }));
+  const entries: NotificationView[] = [];
+  for (const teamId of getOwnedTeamIds(state)) {
+    const franchise = state.user.ownedFranchises[teamId];
+    const team = state.world.teams[teamId];
+    if (!franchise || !team) {
+      continue;
+    }
+    const teamName = `${team.city} ${team.name}`;
+    for (const notification of franchise.notifications) {
+      entries.push({
+        id: notification.id,
+        type: notification.type,
+        title: notification.title,
+        message: notification.message,
+        occurredOn: notification.occurredOn,
+        severity: notification.severity,
+        read: notification.read,
+        relatedObjectiveId: notification.relatedObjectiveId ?? null,
+        teamId,
+        teamName,
+      });
+    }
+  }
+  entries.sort((a, b) => (a.occurredOn < b.occurredOn ? 1 : a.occurredOn > b.occurredOn ? -1 : 0));
+  return entries;
 }
 
 export function toContractsView(state: GameState): ContractRowView[] {
-  const teamId = state.user.controlledTeamId;
+  const teamId = state.user.activeOwnerTeamId;
   const year = state.competition.season.year;
   const rows: ContractRowView[] = [];
   for (const contract of Object.values(state.business.contracts)) {
@@ -981,8 +1027,8 @@ export function toDashboardSnapshot(state: GameState): DashboardSnapshot {
     leagueName: state.world.league.name,
     mode: state.user.mode,
     teamSelectionLocked: state.world.calendar.lastSimulatedDate !== null,
-    citySelectionConfirmed: state.user.citySelectionConfirmed,
-    franchiseIdentityConfirmed: state.user.franchiseIdentityConfirmed,
+    citySelectionConfirmed: getActiveOwnedFranchise(state).citySelectionConfirmed,
+    franchiseIdentityConfirmed: getActiveOwnedFranchise(state).franchiseIdentityConfirmed,
     userOnDraftClock: isUserOnDraftClock(state),
     controlledTeam: {
       id: team.id,
@@ -991,6 +1037,29 @@ export function toDashboardSnapshot(state: GameState): DashboardSnapshot {
       abbreviation: team.abbreviation,
       branding: { ...team.branding },
     },
+    ownedTeams: getOwnedTeamIds(state).map((ownedId) => {
+      const ownedTeam = state.world.teams[ownedId]!;
+      const ownedStanding =
+        state.competition.standings.byTeamId[ownedId] ??
+        createEmptyTeamStanding(ownedId);
+      const franchise = state.user.ownedFranchises[ownedId]!;
+      return {
+        id: ownedTeam.id,
+        city: ownedTeam.city,
+        name: ownedTeam.name,
+        abbreviation: ownedTeam.abbreviation,
+        branding: { ...ownedTeam.branding },
+        wins: ownedStanding.wins,
+        losses: ownedStanding.losses,
+        isActive: ownedId === state.user.activeOwnerTeamId,
+        blockingDecisionCount: getPendingDecisionsForTeam(state, ownedId).filter(
+          (d) => d.blockingLevel === "blocking",
+        ).length,
+        unreadNotificationCount: franchise.notifications.filter((n) => !n.read)
+          .length,
+        ownerPhilosophy: franchise.ownerPhilosophy,
+      };
+    }),
     teamCount: Object.keys(state.world.teams).length,
     playerCount: Object.keys(state.world.players).length,
     payroll: getTeamPayroll(team.id, year, state),
@@ -1008,15 +1077,19 @@ export function toDashboardSnapshot(state: GameState): DashboardSnapshot {
     upcomingGames: toUpcomingGamesView(state, 5),
     objectives: toObjectivesView(state),
     recentActivity: toEventLogView(state, 10),
-    notifications: state.user.notifications.slice(-10).map((notification) => ({
+    notifications: getActiveOwnedFranchise(state).notifications.slice(-10).map((notification) => ({
       id: notification.id,
       type: notification.type,
       severity: notification.severity,
       message: notification.message,
       read: notification.read,
     })),
-    unreadNotificationCount: state.user.notifications.filter((n) => !n.read)
+    unreadNotificationCount: getActiveOwnedFranchise(state).notifications.filter((n) => !n.read)
       .length,
+    activeFranchiseAi: {
+      managementPreset: getActiveOwnedFranchise(state).managementPreset,
+      assistance: { ...getActiveOwnedFranchise(state).aiAssistance },
+    },
     playoffs: {
       status: playoffs.status,
       fieldSize: playoffs.fieldSize,

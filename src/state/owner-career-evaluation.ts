@@ -8,6 +8,7 @@ import {
 } from "@/systems/owner-objective-definitions";
 import { getOwnerPhilosophyProfile } from "@/systems/owner-philosophy-config";
 import { confidenceAlignmentScore } from "@/systems/ownership-confidence-engine";
+import { getActiveOwnedFranchise } from "@/state/owner-context";
 
 export type OwnerCareerBand =
   | "struggling"
@@ -42,10 +43,10 @@ export type OwnerCareerEvaluation = {
 export function toOwnerCareerEvaluation(
   state: GameState,
 ): OwnerCareerEvaluation {
-  const teamId = state.user.controlledTeamId;
-  const philosophy = state.user.ownerPhilosophy;
+  const teamId = state.user.activeOwnerTeamId;
+  const philosophy = getActiveOwnedFranchise(state).ownerPhilosophy;
   const profile = getOwnerPhilosophyProfile(philosophy);
-  const objectives = state.user.objectives;
+  const objectives = getActiveOwnedFranchise(state).objectives;
   const completed = objectives.filter(
     (objective) => objective.status === "completed",
   );
@@ -83,7 +84,7 @@ export function toOwnerCareerEvaluation(
     completed: completed.length,
     failed: failed.length,
     alignmentScore,
-    patience: state.user.ownerPatience,
+    patience: getActiveOwnedFranchise(state).ownerPatience,
   });
 
   return {
@@ -97,7 +98,7 @@ export function toOwnerCareerEvaluation(
     failedObjectives: failed.length,
     franchiseValue,
     franchiseValueGrowth,
-    ownerPatience: state.user.ownerPatience,
+    ownerPatience: getActiveOwnedFranchise(state).ownerPatience,
     philosophy,
     headline: headlineForBand(band, philosophy),
   };

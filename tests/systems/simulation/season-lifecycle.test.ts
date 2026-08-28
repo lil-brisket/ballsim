@@ -23,7 +23,7 @@ import {
 } from "@/domain/ids";
 import { GAME_STATE_SCHEMA_VERSION, type GameState } from "@/state/game-state";
 import { createEmptyTeamFinanceBooks } from "@/domain/entities/finances";
-import { createDefaultOwnershipConfidence } from "@/domain/entities/ownership-confidence";
+import { createDefaultOwnedFranchiseState } from "@/state/owned-franchise-state";
 import { createPhaseEBusinessDefaults } from "@/state/phase-e-defaults";
 
 describe("season lifecycle", () => {
@@ -233,32 +233,20 @@ describe("season lifecycle", () => {
         ),
       },
       user: {
-        controlledTeamId: generated.teams[0]!.id as TeamId,
-        mode: "owner",
-        citySelectionConfirmed: true,
-      franchiseIdentityConfirmed: true,
-        ownerStartSeasonYear: 2026,
-        ownerPhilosophy: "balanced",
-        ownerPatience: 55,
-        ownershipConfidence: createDefaultOwnershipConfidence("2026-10-01"),
-        objectives: [],
-        notifications: [],
-        eventLog: [],
-        appliedGameplayConsequenceKeys: {},
-        explicitDecisions: {},
-        phaseSkips: [],
-        aiAssistState: {
-          resolvedNeeds: {},
-          seasonCounters: {
-            seasonYear: 0,
-            decisions: 0,
-            rosterMoves: 0,
-            freeAgentSignings: 0,
-          },
+        ownedTeamIds: [generated.teams[0]!.id as TeamId],
+        activeOwnerTeamId: generated.teams[0]!.id as TeamId,
+        ownedFranchises: {
+          [generated.teams[0]!.id]: createDefaultOwnedFranchiseState({
+            seasonYear: 2026,
+            currentDate: "2026-10-01",
+            citySelectionConfirmed: true,
+            franchiseIdentityConfirmed: true,
+            ownerPhilosophy: "balanced",
+          }),
         },
+        mode: "owner",
         pendingOwnerDecisions: [],
         ownerDecisionHistory: [],
-        narrative: { situations: [], snapshots: [], cooldowns: {} },
       },
     };
 

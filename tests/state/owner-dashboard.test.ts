@@ -28,6 +28,7 @@ import { getFinancialStatement } from "@/systems/team-finances";
 import { getTeamPayroll } from "@/systems/salary-cap";
 import { calculateFranchiseValue } from "@/state/franchise-value";
 import { POOR_ATTENDANCE_FILL_RATE_PCT } from "@/systems/owner-objectives-config";
+import { withOwnedFranchise } from "@/state/owner-context";
 
 function bootstrappedState(saveId: string): GameState {
   let state = createTestGameState({ saveId });
@@ -36,7 +37,7 @@ function bootstrappedState(saveId: string): GameState {
 }
 
 function withMaxFacilities(state: GameState): GameState {
-  const teamId = state.user.controlledTeamId;
+  const teamId = state.user.activeOwnerTeamId;
   const ops = state.business.franchiseOps[teamId]!;
   const facilities = { ...ops.facilities };
   for (const category of FACILITY_CATEGORIES) {
@@ -58,7 +59,7 @@ function withMaxFacilities(state: GameState): GameState {
 }
 
 function withActiveSponsorship(state: GameState): GameState {
-  const teamId = state.user.controlledTeamId;
+  const teamId = state.user.activeOwnerTeamId;
   const id = asSponsorshipId(`sponsor_${teamId}_test`);
   const sponsorship = createSponsorship({
     id,
@@ -103,7 +104,7 @@ function setTicketPrice(state: GameState, teamId: string, price: number): GameSt
 }
 
 function setAwareness(state: GameState, awareness: number): GameState {
-  const teamId = state.user.controlledTeamId;
+  const teamId = state.user.activeOwnerTeamId;
   const ops = state.business.franchiseOps[teamId]!;
   return {
     ...state,
@@ -121,7 +122,7 @@ function setAwareness(state: GameState, awareness: number): GameState {
 }
 
 function setCash(state: GameState, cash: number): GameState {
-  const teamId = state.user.controlledTeamId;
+  const teamId = state.user.activeOwnerTeamId;
   const finances = state.business.finances[teamId]!;
   return {
     ...state,
@@ -145,7 +146,7 @@ function appendHomeGame(
     occurredOn?: string;
   },
 ): GameState {
-  const teamId = state.user.controlledTeamId;
+  const teamId = state.user.activeOwnerTeamId;
   const event = createDomainEvent({
     type: "HomeGameDaySettled",
     occurredOn: input.occurredOn ?? state.world.calendar.currentDate,
@@ -169,7 +170,7 @@ function setStanding(
   wins: number,
   losses: number,
 ): GameState {
-  const teamId = state.user.controlledTeamId;
+  const teamId = state.user.activeOwnerTeamId;
   const existing =
     state.competition.standings.byTeamId[teamId] ??
     createEmptyTeamStanding(teamId);
@@ -197,7 +198,7 @@ function setStanding(
 describe("toOwnerDashboardView sourcing", () => {
   it("uses canonical statement, cash, franchise value, health, strength, payroll", () => {
     const state = quietFranchise("dash_source");
-    const teamId = state.user.controlledTeamId;
+    const teamId = state.user.activeOwnerTeamId;
     const year = state.competition.season.year;
     const dash = toOwnerDashboardView(state);
     const statement = getFinancialStatement(state, teamId, year);
@@ -281,7 +282,7 @@ describe("toOwnerDashboardView action queue", () => {
 
   it("pricing hypothesis only when attendance is soft and ticket is clearly above league", () => {
     let state = quietFranchise("dash_price");
-    const teamId = state.user.controlledTeamId;
+    const teamId = state.user.activeOwnerTeamId;
     state = setTicketPrice(state, teamId, 80);
     state = appendHomeGame(state, {
       gameId: "poor2",
@@ -302,7 +303,7 @@ describe("toOwnerDashboardView action queue", () => {
 
   it("high ticket price with healthy attendance does not emit pricing warning", () => {
     let state = quietFranchise("dash_price_ok");
-    const teamId = state.user.controlledTeamId;
+    const teamId = state.user.activeOwnerTeamId;
     state = setTicketPrice(state, teamId, 80);
     state = appendHomeGame(state, {
       gameId: "full1",
@@ -367,7 +368,7 @@ describe("toOwnerDashboardView action queue", () => {
       toOwnerDashboardView(state).actionItems.some((a) => a.category === "roster"),
     ).toBe(false);
 
-    const teamId = state.user.controlledTeamId;
+    const teamId = state.user.activeOwnerTeamId;
     const playerId = state.world.teams[teamId]!.roster[0]!;
     const player = state.world.players[playerId]!;
     state = {
@@ -397,7 +398,7 @@ describe("toOwnerDashboardView action queue", () => {
     ).toBe(false);
 
     let vacant = filled;
-    const teamId = vacant.user.controlledTeamId;
+    const teamId = vacant.user.activeOwnerTeamId;
     const staffEntries = Object.entries(vacant.world.staff).filter(
       ([, s]) => s.teamId === teamId && s.role === "scout",
     );
@@ -440,25 +441,22 @@ describe("toOwnerDashboardView action queue", () => {
 
   it("read notifications do not create a notification action", () => {
     let state = quietFranchise("dash_notif");
-    state = {
-      ...state,
-      user: {
-        ...state.user,
-        notifications: [
-          createOwnerNotification({
-            id: asOwnerNotificationId("n_read"),
-            type: "season_completed",
-            title: "Season done",
-            message: "Season completed",
-            occurredOn: state.world.calendar.currentDate,
-            severity: "warning",
-            read: true,
-            dedupeKey: "season_completed:test",
-            relatedTeamId: asTeamId(state.user.controlledTeamId),
-          }),
-        ],
-      },
-    };
+    state = withOwnedFranchise(state, state.user.activeOwnerTeamId, (f) => ({
+      ...f,
+      notifications: [
+        createOwnerNotification({
+          id: asOwnerNotificationId("n_read"),
+          type: "season_completed",
+          title: "Season done",
+          message: "Season completed",
+          occurredOn: state.world.calendar.currentDate,
+          severity: "warning",
+          read: true,
+          dedupeKey: "season_completed:test",
+          relatedTeamId: asTeamId(state.user.activeOwnerTeamId),
+        }),
+      ],
+    }));
     expect(
       toOwnerDashboardView(state).actionItems.some(
         (a) => a.category === "notifications",
@@ -472,7 +470,7 @@ describe("toOwnerDashboardView action queue", () => {
     state = setCash(state, 0);
     state = withMaxFacilities(state);
     // undo max facilities so facilities item returns
-    const teamId = state.user.controlledTeamId;
+    const teamId = state.user.activeOwnerTeamId;
     const ops = state.business.franchiseOps[teamId]!;
     const facilities = { ...ops.facilities };
     for (const category of FACILITY_CATEGORIES) {
@@ -535,7 +533,7 @@ describe("toOwnerDashboardView action queue", () => {
     let state = quietFranchise("dash_mean");
     const teamIds = Object.keys(state.business.franchiseOps);
     for (const id of teamIds) {
-      if (id === state.user.controlledTeamId) {
+      if (id === state.user.activeOwnerTeamId) {
         continue;
       }
       // Invalid: non-integer / out of range should be ignored
@@ -553,7 +551,7 @@ describe("toOwnerDashboardView action queue", () => {
         },
       };
     }
-    state = setTicketPrice(state, state.user.controlledTeamId, 45);
+    state = setTicketPrice(state, state.user.activeOwnerTeamId, 45);
     // Only one valid price (user) → mean omitted (< 2 valid)
     const dash = toOwnerDashboardView(state);
     expect(dash.health.ticketPriceVsLeaguePct).toBeNull();

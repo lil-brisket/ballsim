@@ -216,7 +216,7 @@ describe("team AI identity valuation", () => {
     const rng = createSeededRng(state.meta.rngState);
     state = bootstrapWorld(state, rng).state;
     const teamIds = Object.keys(state.world.teams) as TeamId[];
-    const teamId = teamIds.find((id) => id !== state.user.controlledTeamId)!;
+    const teamId = teamIds.find((id) => id !== state.user.activeOwnerTeamId)!;
 
     state = {
       ...state,

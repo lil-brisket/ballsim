@@ -2,6 +2,7 @@ import { calculatePlayerOverall } from "@/domain/player-overall-rating";
 import type { TradeProposal } from "@/domain/entities/trade-proposal";
 import type { DraftPickId, PlayerId, TeamId } from "@/domain/ids";
 import type { GameState } from "@/state/game-state";
+import { getOwnedTeamIds, isOwnedFranchise } from "@/state/owner-context";
 import {
   USER_TRADE_OFFER_MAX_CPU_ASSETS,
   USER_TRADE_OFFER_MAX_USER_ASSETS,
@@ -16,14 +17,22 @@ import { getTradeBlock } from "@/systems/trades/trade-block";
 import { validateTrade } from "@/systems/trades/trade-validation";
 
 /**
- * Budgeted search for a meaningful CPU → user trade offer.
+ * Budgeted search for a meaningful CPU → owned-franchise trade offer.
+ * Tries each owned franchise as recipient (not only the active team).
  * Stops at the first CPU-accepted + interrupt-worthy valid proposal.
  */
 export function tryEnqueueCpuToUserTradeOffer(
   state: GameState,
   cpuTeamId: TeamId,
 ): EnqueueTradeOfferResult {
-  const userTeamId = state.user.controlledTeamId;
+  if (isOwnedFranchise(state, cpuTeamId)) {
+    return {
+      outcome: "rejected",
+      state,
+      reason: "cpu_team_is_owned",
+    };
+  }
+
   const cpuAssets = topCpuSurplusAssets(state, cpuTeamId);
   if (cpuAssets.length === 0) {
     return {
@@ -33,36 +42,36 @@ export function tryEnqueueCpuToUserTradeOffer(
     };
   }
 
-  const userAssets = topUserCandidateAssets(state, userTeamId);
-  if (userAssets.length === 0) {
-    return {
-      outcome: "rejected",
-      state,
-      reason: "no_user_candidates",
-    };
-  }
+  for (const userTeamId of getOwnedTeamIds(state)) {
+    const userAssets = topUserCandidateAssets(state, userTeamId);
+    if (userAssets.length === 0) {
+      continue;
+    }
 
-  for (const outgoing of cpuAssets) {
-    for (const incoming of userAssets) {
-      const proposal = buildOneForOne(
-        cpuTeamId,
-        outgoing,
-        userTeamId,
-        incoming,
-      );
-      if (!validateTrade(state, proposal).valid) {
-        continue;
+    for (const outgoing of cpuAssets) {
+      for (const incoming of userAssets) {
+        const proposal = buildOneForOne(
+          cpuTeamId,
+          outgoing,
+          userTeamId,
+          incoming,
+        );
+        if (!validateTrade(state, proposal).valid) {
+          continue;
+        }
+        const cpuEval = evaluateTradeOffer(state, cpuTeamId, proposal);
+        if (!cpuEval.accepted) {
+          continue;
+        }
+        if (
+          !isInterruptWorthyTradeOffer(state, userTeamId, proposal, cpuEval)
+        ) {
+          continue;
+        }
+        return enqueueTradeOfferForOwner(state, cpuTeamId, proposal, {
+          targetOwnedTeamId: userTeamId,
+        });
       }
-      const cpuEval = evaluateTradeOffer(state, cpuTeamId, proposal);
-      if (!cpuEval.accepted) {
-        continue;
-      }
-      if (
-        !isInterruptWorthyTradeOffer(state, userTeamId, proposal, cpuEval)
-      ) {
-        continue;
-      }
-      return enqueueTradeOfferForOwner(state, cpuTeamId, proposal);
     }
   }
 

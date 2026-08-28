@@ -200,7 +200,7 @@ function interpretEconomicStatus(input: {
  */
 export function assessRelocation(
   state: GameState,
-  teamId: TeamId = state.user.controlledTeamId,
+  teamId: TeamId = state.user.activeOwnerTeamId,
 ): RelocationAssessment {
   const process =
     state.business.relocationByTeamId[teamId] ??

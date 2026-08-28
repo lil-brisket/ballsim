@@ -18,7 +18,7 @@ describe("fan sentiment", () => {
   });
     const rng = createSeededRng(state.meta.rngState);
     state = bootstrapWorld(state, rng).state;
-    const teamId = state.user.controlledTeamId;
+    const teamId = state.user.activeOwnerTeamId;
     state = {
       ...state,
       business: {
@@ -46,7 +46,7 @@ describe("fan sentiment", () => {
   });
     const rng = createSeededRng(state.meta.rngState);
     state = bootstrapWorld(state, rng).state;
-    const teamId = state.user.controlledTeamId;
+    const teamId = state.user.activeOwnerTeamId;
     const otherTeamId = (Object.keys(state.world.teams) as string[]).find(
       (id) => id !== teamId,
     )!;

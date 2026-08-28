@@ -66,7 +66,7 @@ describe("annual franchise report", () => {
     let state = createTestGameState({ saveId: "annual_report_1" });
     const rng = createSeededRng(state.meta.rngState);
     state = bootstrapWorld(state, rng).state;
-    const teamId = asTeamId(state.user.controlledTeamId);
+    const teamId = asTeamId(state.user.activeOwnerTeamId);
 
     const seasons = [
       historySeason({

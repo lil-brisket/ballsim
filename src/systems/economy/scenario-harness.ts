@@ -630,7 +630,7 @@ export function applyEconomyScenario(
     capitalRollup?: ReturnType<typeof emptyCapitalRollup>;
   } = {},
 ): GameState {
-  const teamId = state.user.controlledTeamId as TeamId;
+  const teamId = state.user.activeOwnerTeamId as TeamId;
   if (scenario === "baseline") {
     return state;
   }
@@ -737,7 +737,7 @@ function autoPickUserDraft(state: GameState): GameState {
     draftClassId,
     draftPickId: slot.draftPickId,
     prospectPlayerId: prospectId,
-    teamId: state.user.controlledTeamId,
+    teamId: state.user.activeOwnerTeamId,
   });
   return result.success ? result.state : state;
 }
@@ -985,7 +985,7 @@ function snapshotSeason(
   startingCash: number,
   tracker: CashSignTracker,
 ): SeasonEconomySnapshot {
-  const teamId = state.user.controlledTeamId;
+  const teamId = state.user.activeOwnerTeamId;
   const year = state.competition.season.year;
   const ops = state.business.franchiseOps[teamId]!;
   const standing = state.competition.standings.byTeamId[teamId];
@@ -1204,7 +1204,7 @@ export function runEconomyScenario(
   let { state, rng, capitalRollup } = bootstrapEconomyScenario(scenario, {
     seed,
   });
-  const teamId = state.user.controlledTeamId;
+  const teamId = state.user.activeOwnerTeamId;
   const seasons: SeasonEconomySnapshot[] = [];
   const actions: OwnerActionLogEntry[] = [];
   for (let index = 0; index < seasonCount; index += 1) {

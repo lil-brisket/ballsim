@@ -211,6 +211,7 @@ export type {
 } from "@/domain/entities/trade-proposal";
 export { tradeSideAssetCount } from "@/domain/entities/trade-proposal";
 export type {
+  OwnerDecisionBlockingLevel,
   OwnerDecisionRecord,
   OwnerDecisionSource,
   OwnerDecisionStatus,
@@ -223,8 +224,11 @@ export {
   TRADE_OFFER_REJECTION_COOLDOWN_DAYS,
   assetsRelativeToUser,
   getActiveOwnerDecision,
+  getBlockingOwnerDecisions,
+  getPendingDecisionsForTeam,
   getPendingTradeOffers,
   hasActiveOwnerDecision,
+  hasBlockingOwnerDecision,
   tradeOfferFingerprint,
 } from "@/domain/entities/owner-decision";
 export type {

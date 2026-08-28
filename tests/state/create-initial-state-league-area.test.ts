@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { getActiveOwnedFranchise } from "@/state/owner-context";
 
 vi.mock("server-only", () => ({}));
 
@@ -129,7 +130,7 @@ describe("existing save does not regenerate team cities", () => {
       }
       expect(created.dashboard.teamSelectionLocked).toBe(false);
       const loaded = await store.load(created.save.id);
-      expect(loaded!.state.user.citySelectionConfirmed).toBe(false);
+      expect(getActiveOwnedFranchise(loaded!.state).citySelectionConfirmed).toBe(false);
       expect(loaded!.state.settings.league.area).toBe(area);
     },
   );
@@ -158,7 +159,7 @@ describe("selectOwnerTeam philosophy regression", () => {
 
     const before = await store.load(created.save.id);
     expect(before).not.toBeNull();
-    expect(before!.state.user.ownerPhilosophy).toBe(DEFAULT_OWNER_PHILOSOPHY);
+    expect(getActiveOwnedFranchise(before!.state).ownerPhilosophy).toBe(DEFAULT_OWNER_PHILOSOPHY);
 
     const teamIds = Object.keys(before!.state.world.teams).sort();
     const selected = await selectOwnerTeam(
@@ -170,8 +171,8 @@ describe("selectOwnerTeam philosophy regression", () => {
 
     const after = await store.load(created.save.id);
     expect(after).not.toBeNull();
-    expect(after!.state.user.ownerPhilosophy).toBe(DEFAULT_OWNER_PHILOSOPHY);
-    expect(after!.state.user.controlledTeamId).toBe(teamIds[0]);
+    expect(getActiveOwnedFranchise(after!.state).ownerPhilosophy).toBe(DEFAULT_OWNER_PHILOSOPHY);
+    expect(after!.state.user.activeOwnerTeamId).toBe(teamIds[0]);
   });
 });
 

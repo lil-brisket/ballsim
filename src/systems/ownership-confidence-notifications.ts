@@ -5,6 +5,13 @@
  */
 
 import {
+  getActiveOwnedFranchise,
+  getActiveOwnerTeamId,
+  withOwnedFranchise,
+} from "@/state/owner-context";
+
+
+import {
   createOwnerNotification,
   type OwnerNotification,
 } from "@/domain/entities/owner-notification";
@@ -28,7 +35,7 @@ export type OwnershipConfidenceNotificationOptions = {
 };
 
 function philosophyLabel(state: GameState): string {
-  const philosophy = state.user.ownerPhilosophy;
+  const philosophy = getActiveOwnedFranchise(state).ownerPhilosophy;
   switch (philosophy) {
     case "win_now":
       return "Win Now";
@@ -48,18 +55,15 @@ function appendNotification(
   notification: OwnerNotification,
 ): GameState {
   const existingKeys = new Set(
-    state.user.notifications.map((item) => item.dedupeKey),
+    getActiveOwnedFranchise(state).notifications.map((item) => item.dedupeKey),
   );
   if (existingKeys.has(notification.dedupeKey)) {
     return state;
   }
-  return {
-    ...state,
-    user: {
-      ...state.user,
-      notifications: [...state.user.notifications, notification],
-    },
-  };
+  return withOwnedFranchise(state, getActiveOwnerTeamId(state), (franchise) => ({
+    ...franchise,
+    notifications: [...franchise.notifications, notification],
+  }));
 }
 
 /**
@@ -72,12 +76,12 @@ export function generateOwnershipConfidenceNotifications(
 ): SystemResult {
   const events: DomainEvent[] = [];
   let current = state;
-  const teamId = state.user.controlledTeamId;
+  const teamId = state.user.activeOwnerTeamId;
   const date = state.world.calendar.currentDate;
   const year = state.competition.season.year;
-  const mood = state.user.ownershipConfidence.mood;
+  const mood = getActiveOwnedFranchise(state).ownershipConfidence.mood;
   const previousMood = options.previousMood;
-  const confidence = state.user.ownershipConfidence;
+  const confidence = getActiveOwnedFranchise(state).ownershipConfidence;
 
   const hurting = confidence.recentHurting[confidence.recentHurting.length - 1];
   const helping = confidence.recentHelping[confidence.recentHelping.length - 1];
@@ -153,7 +157,7 @@ export function generateOwnershipConfidenceNotifications(
 
   // Pressure — only on escalation into displeased.
   if (mood === "displeased" && previousMood !== "displeased") {
-    const profile = getOwnerPhilosophyProfile(state.user.ownerPhilosophy);
+    const profile = getOwnerPhilosophyProfile(getActiveOwnedFranchise(state).ownerPhilosophy);
     void profile;
     current = appendNotification(
       current,

@@ -120,7 +120,7 @@ describe("free-agency pool", () => {
 
   it("does not list players with active contracts", () => {
     const state = baseState();
-    const teamId = state.user.controlledTeamId;
+    const teamId = state.user.activeOwnerTeamId;
     const year = state.competition.season.year;
     const playerId = asPlayerId("player_active");
     const contract = contractTerms({
@@ -161,7 +161,7 @@ describe("free-agency pool", () => {
   it("releasePlayerToFreeAgency cleans membership for inactive contracts", () => {
     resetDomainEventSequenceForTests();
     const state = baseState();
-    const teamId = state.user.controlledTeamId;
+    const teamId = state.user.activeOwnerTeamId;
     const year = state.competition.season.year;
     const playerId = asPlayerId("player_expired");
     const contract = contractTerms({
@@ -210,7 +210,7 @@ describe("free-agency pool", () => {
 
   it("throws when releasing a player with an active contract", () => {
     const state = baseState();
-    const teamId = state.user.controlledTeamId;
+    const teamId = state.user.activeOwnerTeamId;
     const year = state.competition.season.year;
     const playerId = asPlayerId("player_active_release");
     const contract = contractTerms({
@@ -244,7 +244,7 @@ describe("free-agency pool", () => {
 
   it("releaseExpiredContracts uses status helpers and clears membership", () => {
     const state = baseState();
-    const teamId = state.user.controlledTeamId;
+    const teamId = state.user.activeOwnerTeamId;
     const year = state.competition.season.year;
     const playerId = asPlayerId("player_batch_expire");
     const contract = contractTerms({
@@ -289,7 +289,7 @@ describe("free-agency pool", () => {
 describe("free-agency interest", () => {
   it("evaluates interest deterministically with the default evaluator", () => {
     const { state, playerId } = withFreeAgent(baseState());
-    const teamId = state.user.controlledTeamId;
+    const teamId = state.user.activeOwnerTeamId;
     const first = getPlayerInterest(state, playerId, teamId);
     const second = getPlayerInterest(state, playerId, teamId);
     expect(first).toEqual(second);
@@ -303,7 +303,7 @@ describe("free-agency interest", () => {
 
   it("supports an injected evaluator for extension", () => {
     const { state, playerId } = withFreeAgent(baseState());
-    const teamId = state.user.controlledTeamId;
+    const teamId = state.user.activeOwnerTeamId;
     const interest = getPlayerInterest(
       state,
       playerId,
@@ -317,7 +317,7 @@ describe("free-agency interest", () => {
 describe("free-agency offers", () => {
   it("creates a valid pending offer after validating terms", () => {
     const { state, playerId } = withFreeAgent(baseState());
-    const teamId = state.user.controlledTeamId;
+    const teamId = state.user.activeOwnerTeamId;
     const year = state.competition.season.year;
     const terms = contractTerms({
       contractId: "contract_offer_1",
@@ -342,7 +342,7 @@ describe("free-agency offers", () => {
 
   it("rejects impossible contract terms when making an offer", () => {
     const { state, playerId } = withFreeAgent(baseState());
-    const teamId = state.user.controlledTeamId;
+    const teamId = state.user.activeOwnerTeamId;
     expect(() =>
       makeOffer(state, {
         id: asOfferId("offer_bad_terms"),
@@ -362,7 +362,7 @@ describe("free-agency offers", () => {
 
   it("rejects offers for missing players, non-free-agents, and duplicate open offers", () => {
     const { state, playerId } = withFreeAgent(baseState());
-    const teamId = state.user.controlledTeamId;
+    const teamId = state.user.activeOwnerTeamId;
     const year = state.competition.season.year;
     const terms = contractTerms({
       contractId: "contract_dup",
@@ -442,7 +442,7 @@ describe("free-agency offers", () => {
 describe("free-agency negotiation and reject", () => {
   it("moves pending offers into negotiation", () => {
     const { state, playerId } = withFreeAgent(baseState());
-    const teamId = state.user.controlledTeamId;
+    const teamId = state.user.activeOwnerTeamId;
     const year = state.competition.season.year;
     const offerId = asOfferId("offer_negotiate");
     const offered = makeOffer(state, {
@@ -465,7 +465,7 @@ describe("free-agency negotiation and reject", () => {
 
   it("rejects via negotiate/accept when uninterested without throwing", () => {
     const { state, playerId } = withFreeAgent(baseState());
-    const teamId = state.user.controlledTeamId;
+    const teamId = state.user.activeOwnerTeamId;
     const year = state.competition.season.year;
     const offerId = asOfferId("offer_uninterested");
     const offered = makeOffer(state, {
@@ -515,7 +515,7 @@ describe("free-agency negotiation and reject", () => {
 
   it("rejectOffer leaves pool and roster unchanged", () => {
     const { state, playerId } = withFreeAgent(baseState());
-    const teamId = state.user.controlledTeamId;
+    const teamId = state.user.activeOwnerTeamId;
     const year = state.competition.season.year;
     const offerId = asOfferId("offer_reject");
     const offered = makeOffer(state, {
@@ -542,7 +542,7 @@ describe("free-agency negotiation and reject", () => {
 
   it("throws on stale accept/reject of terminal offers", () => {
     const { state, playerId } = withFreeAgent(baseState());
-    const teamId = state.user.controlledTeamId;
+    const teamId = state.user.activeOwnerTeamId;
     const year = state.competition.season.year;
     const offerId = asOfferId("offer_stale");
     const offered = makeOffer(state, {
@@ -646,7 +646,7 @@ describe("free-agency accept", () => {
 
   it("allows first-year salary equal to cap space for contract startYear", () => {
     const { state, playerId } = withFreeAgent(baseState());
-    const teamId = state.user.controlledTeamId;
+    const teamId = state.user.activeOwnerTeamId;
     const startYear = state.competition.season.year + 1;
     const capSpace = getTeamCapSpace(teamId, startYear, state);
     const offerId = asOfferId("offer_exact_cap");
@@ -670,7 +670,7 @@ describe("free-agency accept", () => {
 
   it("invalidates offer when first-year salary exceeds cap space for startYear", () => {
     const { state, playerId } = withFreeAgent(baseState());
-    const teamId = state.user.controlledTeamId;
+    const teamId = state.user.activeOwnerTeamId;
     const startYear = state.competition.season.year;
     const capSpace = getTeamCapSpace(teamId, startYear, state);
     const offerId = asOfferId("offer_over_cap");
@@ -721,7 +721,7 @@ describe("free-agency persistence", () => {
 
   it("round-trips an accepted signing through serialize/deserialize/validate", () => {
     const { state, playerId } = withFreeAgent(baseState());
-    const teamId = state.user.controlledTeamId;
+    const teamId = state.user.activeOwnerTeamId;
     const year = state.competition.season.year;
     const offerId = asOfferId("offer_persist");
     const offered = makeOffer(state, {
@@ -754,7 +754,7 @@ describe("free-agency persistence", () => {
 describe("free-agency invariants", () => {
   it("never leaves a player as free agent with an active contract after accept", () => {
     const { state, playerId } = withFreeAgent(baseState());
-    const teamId = state.user.controlledTeamId;
+    const teamId = state.user.activeOwnerTeamId;
     const year = state.competition.season.year;
     const offerId = asOfferId("offer_invariant");
     const signed = acceptOffer(
@@ -859,7 +859,7 @@ describe("isOpenOffer", () => {
 describe("stale accepted offer after contract expiration", () => {
   it("does not fail validateGameState after accept then releaseExpiredContracts", () => {
     const { state, playerId } = withFreeAgent(baseState());
-    const teamId = state.user.controlledTeamId;
+    const teamId = state.user.activeOwnerTeamId;
     const year = state.competition.season.year;
     const offerId = asOfferId("offer_expire_cycle");
     const signed = acceptOffer(
@@ -907,7 +907,7 @@ describe("stale accepted offer after contract expiration", () => {
 
   it("invalidates stale open offers without crashing when player is no longer a free agent", () => {
     const { state, playerId } = withFreeAgent(baseState());
-    const teamId = state.user.controlledTeamId;
+    const teamId = state.user.activeOwnerTeamId;
     const year = state.competition.season.year;
     const offerId = asOfferId("offer_stale_open");
 

@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import { takeOverFranchiseAction } from "@/application/actions";
 import { loadOwnerSaveView } from "@/application/game-service";
 import { DataTable } from "@/components/owner/DataTable";
 import { EmptyState, ErrorState } from "@/components/owner/EmptyState";
@@ -21,6 +22,8 @@ export default async function StandingsPage({
     notFound();
   }
 
+  const ownedIds = new Set(view.dashboard.ownedTeams.map((team) => team.id));
+
   return (
     <>
       <PageHeader
@@ -31,7 +34,7 @@ export default async function StandingsPage({
       {view.standings.length === 0 ? (
         <EmptyState message="No standings available." />
       ) : (
-        <DataTable headers={["#", "Team", "W", "L"]}>
+        <DataTable headers={["#", "Team", "W", "L", ""]}>
           {view.standings.map((row) => (
             <tr
               key={row.teamId}
@@ -58,6 +61,20 @@ export default async function StandingsPage({
               </td>
               <td className="px-3 py-2">{row.wins}</td>
               <td className="px-3 py-2">{row.losses}</td>
+              <td className="px-3 py-2 text-right">
+                {!ownedIds.has(row.teamId) ? (
+                  <form action={takeOverFranchiseAction}>
+                    <input type="hidden" name="saveId" value={saveId} />
+                    <input type="hidden" name="teamId" value={row.teamId} />
+                    <button
+                      type="submit"
+                      className="rounded-md border border-zinc-700 px-2 py-1 text-xs text-zinc-300 hover:border-amber-600 hover:text-amber-300"
+                    >
+                      Take Over
+                    </button>
+                  </form>
+                ) : null}
+              </td>
             </tr>
           ))}
         </DataTable>
@@ -65,3 +82,4 @@ export default async function StandingsPage({
     </>
   );
 }
+

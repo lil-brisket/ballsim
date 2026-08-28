@@ -8,6 +8,7 @@ import { validateGameState } from "@/persistence/validate-game-state";
 import { createSeededRng } from "@/domain/rng";
 import { GAME_STATE_SCHEMA_VERSION } from "@/state/game-state";
 import { bootstrapWorld } from "@/systems/world-pipeline";
+import { getActiveOwnedFranchise } from "@/state/owner-context";
 
 describe("v36 → v38 migration (via v37)", () => {
   it("adds phase presets, offseason FA settings, and aiAssistState", () => {
@@ -45,9 +46,9 @@ describe("v36 → v38 migration (via v37)", () => {
     expect(loaded.settings.offseason.freeAgency.allowExtension).toBe(true);
     expect(loaded.competition.season.offseasonStageEnteredDate).toBeNull();
     expect(loaded.competition.season.freeAgencyExtendedUntil).toBeNull();
-    expect(loaded.user.explicitDecisions).toEqual({});
-    expect(loaded.user.phaseSkips).toEqual([]);
-    expect(loaded.user.aiAssistState.resolvedNeeds).toEqual({});
+    expect(getActiveOwnedFranchise(loaded).explicitDecisions).toEqual({});
+    expect(getActiveOwnedFranchise(loaded).phaseSkips).toEqual([]);
+    expect(getActiveOwnedFranchise(loaded).aiAssistState.resolvedNeeds).toEqual({});
     expect(() => validateGameState(loaded)).not.toThrow();
   });
 });

@@ -2,6 +2,7 @@ import type { DomainEvent } from "@/domain/events";
 import type { Rng } from "@/domain/rng";
 import { systemResult, type SystemResult } from "@/domain/system-result";
 import type { GameState } from "@/state/game-state";
+import { getOwnedTeamIds } from "@/state/owner-context";
 import { runAiTeamDecisions } from "@/systems/ai-team-decisions";
 import { applyGameplayFinancialConsequences } from "@/systems/gameplay-financial-consequences";
 import { evaluateOwnerObjectives } from "@/systems/owner-objectives";
@@ -14,7 +15,7 @@ export type OwnerGameplayResult = SystemResult & {
 };
 
 export type RunOwnerGameplayOptions = {
-  /** Same-day domain events not yet in user.eventLog (e.g. HomeGameDaySettled). */
+  /** Same-day domain events not yet in franchise eventLog (e.g. HomeGameDaySettled). */
   dayEvents?: readonly DomainEvent[];
 };
 
@@ -23,9 +24,9 @@ export type RunOwnerGameplayOptions = {
  *
  * Order (required):
  * 1. AI decisions (CPU teams)
- * 2. AI continuity (user team)
+ * 2. AI continuity (all owned franchises — never keys off activeOwnerTeamId)
  * 3. Financial consequences
- * 4. Owner objective evaluation
+ * 4. Owner objective evaluation (per owned franchise via active helpers until looped)
  * 5. Objective financial consequences (second finance pass)
  * 6. Ownership confidence / strategic posture
  * 7. Owner notifications
@@ -39,40 +40,92 @@ export function runOwnerGameplay(
 ): OwnerGameplayResult {
   const events: DomainEvent[] = [];
   let current = state;
-  const teamId = current.user.controlledTeamId;
 
   const ai = runAiTeamDecisions(current, rng);
   current = ai.state;
   events.push(...ai.events);
 
+  // Processes every owned franchise (simulation rule).
   const continuity = runAiContinuity(current, rng);
   current = continuity.state;
   events.push(...continuity.events);
 
-  const previousCash = current.business.finances[teamId]?.cash ?? 0;
+  // Snapshot cash for the first owned team for legacy previousCash return.
+  const primaryTeamId = getOwnedTeamIds(current)[0]!;
+  const previousCash = current.business.finances[primaryTeamId]?.cash ?? 0;
 
   const financesBeforeObjectives = applyGameplayFinancialConsequences(current);
   current = financesBeforeObjectives.state;
   events.push(...financesBeforeObjectives.events);
 
-  const objectives = evaluateOwnerObjectives(current);
-  current = objectives.state;
-  events.push(...objectives.events);
+  // Evaluate objectives for each owned franchise by temporarily switching
+  // active context only for systems that still read activeOwnerTeamId.
+  // Prefer looping with teamId parameters as those systems are updated.
+  for (const teamId of getOwnedTeamIds(current)) {
+    const switched =
+      current.user.activeOwnerTeamId === teamId
+        ? current
+        : {
+            ...current,
+            user: { ...current.user, activeOwnerTeamId: teamId },
+          };
+    const objectives = evaluateOwnerObjectives(switched);
+    current = {
+      ...objectives.state,
+      user: {
+        ...objectives.state.user,
+        activeOwnerTeamId: state.user.activeOwnerTeamId,
+      },
+    };
+    events.push(...objectives.events);
+  }
 
   const financesAfterObjectives = applyGameplayFinancialConsequences(current);
   current = financesAfterObjectives.state;
   events.push(...financesAfterObjectives.events);
 
-  const confidence = processOwnershipConfidence(current);
-  current = confidence.state;
-  events.push(...confidence.events);
+  for (const teamId of getOwnedTeamIds(current)) {
+    const switched =
+      current.user.activeOwnerTeamId === teamId
+        ? current
+        : {
+            ...current,
+            user: { ...current.user, activeOwnerTeamId: teamId },
+          };
+    const confidence = processOwnershipConfidence(switched);
+    current = {
+      ...confidence.state,
+      user: {
+        ...confidence.state.user,
+        activeOwnerTeamId: state.user.activeOwnerTeamId,
+      },
+    };
+    events.push(...confidence.events);
+  }
 
-  const notifications = generateOwnerNotifications(current, {
-    previousCash,
-    dayEvents: options.dayEvents,
-  });
-  current = notifications.state;
-  events.push(...notifications.events);
+  for (const teamId of getOwnedTeamIds(current)) {
+    const switched =
+      current.user.activeOwnerTeamId === teamId
+        ? current
+        : {
+            ...current,
+            user: { ...current.user, activeOwnerTeamId: teamId },
+          };
+    const teamPreviousCash =
+      current.business.finances[teamId]?.cash ?? previousCash;
+    const notifications = generateOwnerNotifications(switched, {
+      previousCash: teamPreviousCash,
+      dayEvents: options.dayEvents,
+    });
+    current = {
+      ...notifications.state,
+      user: {
+        ...notifications.state.user,
+        activeOwnerTeamId: state.user.activeOwnerTeamId,
+      },
+    };
+    events.push(...notifications.events);
+  }
 
   return {
     ...systemResult(current, events),

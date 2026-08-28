@@ -15,6 +15,7 @@ import { createTestGameState } from "../../factories/game-state";
 import { bootstrapWorld } from "@/systems/world-pipeline";
 import { createSeededRng } from "@/domain/rng";
 import { processNarrativeLayer } from "@/systems/narrative/evaluate-narrative";
+import { getActiveOwnedFranchise, withOwnedFranchise } from "@/state/owner-context";
 
 function baseNarrativeContext(
   overrides: Partial<NarrativeContext> = {},
@@ -193,23 +194,20 @@ describe("attendance crisis chain", () => {
     let state = createTestGameState({ saveId: "chain_action" });
     const rng = createSeededRng(state.meta.rngState);
     state = bootstrapWorld(state, rng).state;
-    const teamId = state.user.controlledTeamId;
+    const teamId = state.user.activeOwnerTeamId;
     const before =
       state.business.franchiseOps[teamId]?.ticketPrice ?? 45;
     const situation = openSituation(
       "attendance_decline",
       state.world.calendar.currentDate,
     );
-    state = {
-      ...state,
-      user: {
-        ...state.user,
-        narrative: {
-          ...state.user.narrative,
-          situations: [situation],
-        },
+    state = withOwnedFranchise(state, state.user.activeOwnerTeamId, (f) => ({
+      ...f,
+      narrative: {
+        ...f.narrative,
+        situations: [situation],
       },
-    };
+    }));
     const result = applyNarrativeAction(
       state,
       situation.id,
@@ -230,12 +228,27 @@ describe("attendance crisis chain", () => {
       -ATTENDANCE_TO_SPONSOR_DAYS,
     );
     const attendance = openSituation("attendance_decline", createdOn, 2);
-    state = {
-      ...state,
-      user: {
-        ...state.user,
+    state = withOwnedFranchise(
+      {
+        ...state,
+        business: {
+          ...state.business,
+          franchiseOps: {
+            ...state.business.franchiseOps,
+            [state.user.activeOwnerTeamId]: {
+              ...state.business.franchiseOps[state.user.activeOwnerTeamId]!,
+              ticketPrice: 65,
+              fanSentiment: 35,
+              mediaAttention: 28,
+            },
+          },
+        },
+      },
+      state.user.activeOwnerTeamId,
+      (f) => ({
+        ...f,
         narrative: {
-          ...state.user.narrative,
+          ...f.narrative,
           situations: [attendance],
           snapshots: [
             {
@@ -282,25 +295,13 @@ describe("attendance crisis chain", () => {
             },
           ],
         },
-      },
-      business: {
-        ...state.business,
-        franchiseOps: {
-          ...state.business.franchiseOps,
-          [state.user.controlledTeamId]: {
-            ...state.business.franchiseOps[state.user.controlledTeamId]!,
-            ticketPrice: 65,
-            fanSentiment: 35,
-            mediaAttention: 28,
-          },
-        },
-      },
-    };
+      }),
+    );
 
     const once = processNarrativeLayer(state, rng, {
       cadences: ["monthly"],
     });
-    const sponsorCount = once.state.user.narrative.situations.filter(
+    const sponsorCount = getActiveOwnedFranchise(once.state).narrative.situations.filter(
       (s) =>
         s.detectorKey === "sponsor_visibility_concern" &&
         (s.status === "active" ||
@@ -312,7 +313,7 @@ describe("attendance crisis chain", () => {
     const twice = processNarrativeLayer(once.state, rng, {
       cadences: ["monthly"],
     });
-    const sponsorCount2 = twice.state.user.narrative.situations.filter(
+    const sponsorCount2 = getActiveOwnedFranchise(twice.state).narrative.situations.filter(
       (s) =>
         s.detectorKey === "sponsor_visibility_concern" &&
         (s.status === "active" ||

@@ -304,7 +304,7 @@ function resolvePlayoffRace(state: GameState): PlayoffRaceStatus {
     return "not_applicable";
   }
   const playoffTeams = state.settings.playoffs.playoffTeams;
-  const teamId = state.user.controlledTeamId;
+  const teamId = state.user.activeOwnerTeamId;
   const standing = state.competition.standings.byTeamId[teamId];
   if (!standing || playoffTeams <= 0) {
     return "not_applicable";
@@ -370,7 +370,7 @@ function resolveOffseasonPriorities(
 ): readonly OffseasonPriorityKey[] {
   const phase = state.competition.season.phase;
   const stage = state.competition.season.offseasonStage;
-  const teamId = state.user.controlledTeamId;
+  const teamId = state.user.activeOwnerTeamId;
   const priorities: OffseasonPriorityKey[] = [];
 
   if (phase === "postseason") {
@@ -479,7 +479,7 @@ function resolveSeasonStory(
     daysUntilTradeDeadline: number | null;
   },
 ): string {
-  const teamId = state.user.controlledTeamId;
+  const teamId = state.user.activeOwnerTeamId;
   const standing = state.competition.standings.byTeamId[teamId];
   const ops = state.business.franchiseOps[teamId];
   const wins = standing?.wins ?? 0;

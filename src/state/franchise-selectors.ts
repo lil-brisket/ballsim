@@ -40,6 +40,7 @@ import {
   calculateFinancialHealth,
   type FinancialHealthState,
 } from "@/systems/financial-health";
+import { getActiveOwnedFranchise } from "@/state/owner-context";
 
 export type StaffMemberView = {
   staffId: string;
@@ -204,7 +205,7 @@ export function toStaffView(state: GameState): {
   roster: StaffMemberView[];
   available: StaffMemberView[];
 } {
-  const teamId = state.user.controlledTeamId;
+  const teamId = state.user.activeOwnerTeamId;
   const year = state.competition.season.year;
   const roster: StaffMemberView[] = [];
   const available: StaffMemberView[] = [];
@@ -252,7 +253,7 @@ function toStaffMemberView(
 }
 
 export function toFacilitiesView(state: GameState): FacilityRowView[] {
-  const teamId = state.user.controlledTeamId;
+  const teamId = state.user.activeOwnerTeamId;
   const ops = state.business.franchiseOps[teamId];
   if (!ops) {
     return [];
@@ -320,8 +321,8 @@ function readLastGameDay(
   state: GameState,
   teamId: string,
 ): LastGameDayView | null {
-  for (let index = state.user.eventLog.length - 1; index >= 0; index -= 1) {
-    const event = state.user.eventLog[index]!;
+  for (let index = getActiveOwnedFranchise(state).eventLog.length - 1; index >= 0; index -= 1) {
+    const event = getActiveOwnedFranchise(state).eventLog[index]!;
     if (event.type !== "HomeGameDaySettled") {
       continue;
     }
@@ -415,7 +416,7 @@ export function calculateCashRunway(
 }
 
 export function toFranchiseBusinessView(state: GameState): FranchiseBusinessView {
-  const teamId = state.user.controlledTeamId;
+  const teamId = state.user.activeOwnerTeamId;
   const ops = requireOps(state, teamId);
   const team = state.world.teams[teamId]!;
   const franchiseValueBreakdown = explainFranchiseValue(state, teamId);
@@ -446,7 +447,7 @@ export function toFranchiseBusinessView(state: GameState): FranchiseBusinessView
 }
 
 export function toSponsorshipsView(state: GameState): SponsorshipView[] {
-  const teamId = state.user.controlledTeamId;
+  const teamId = state.user.activeOwnerTeamId;
   return Object.values(state.business.sponsorships)
     .filter((s) => s.teamId === teamId)
     .map((s: Sponsorship) => ({
@@ -467,7 +468,7 @@ export function toLeagueEconomyView(state: GameState): LeagueEconomy {
 }
 
 export function toRelocationView(state: GameState): RelocationProcess {
-  const teamId = state.user.controlledTeamId;
+  const teamId = state.user.activeOwnerTeamId;
   const year = state.competition.season.year;
   return (
     state.business.relocationByTeamId[teamId] ?? {
@@ -488,12 +489,12 @@ export function toExpansionView(state: GameState): ExpansionState {
 }
 
 export function toFranchiseHistoryView(state: GameState): FranchiseHistoryView {
-  const teamId = state.user.controlledTeamId;
+  const teamId = state.user.activeOwnerTeamId;
   const history = state.business.franchiseHistory[teamId];
   const seasons = history ? [...history.seasons] : [];
   const milestones = computeFranchiseHistoryMilestones(
     seasons,
-    state.user.ownerStartSeasonYear,
+    getActiveOwnedFranchise(state).ownerStartSeasonYear,
     state.competition.season.year,
   );
   const highlightsByYear = getSeasonHistoricalHighlights(seasons);

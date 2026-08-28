@@ -43,7 +43,7 @@ describe("economic scenarios (Phase 1A)", () => {
       settings: CBL_GAME_SETTINGS,
     });
     strong = bootstrapWorld(strong, createSeededRng(strong.meta.rngState)).state;
-    const teamId = strong.user.controlledTeamId;
+    const teamId = strong.user.activeOwnerTeamId;
 
     strong = withOps(strong, teamId, {
       fanSentiment: 80,
@@ -137,7 +137,7 @@ describe("economic scenarios (Phase 1A)", () => {
         settings: CBL_GAME_SETTINGS,
       });
       state = bootstrapWorld(state, createSeededRng(state.meta.rngState)).state;
-      const teamId = state.user.controlledTeamId;
+      const teamId = state.user.activeOwnerTeamId;
       state = setMarketingBudget(state, teamId, budget).state;
       state = withOps(state, teamId, {
         marketing: { budget, awareness: 40 },
@@ -166,7 +166,7 @@ describe("economic scenarios (Phase 1A)", () => {
       settings: CBL_GAME_SETTINGS,
     });
     state = bootstrapWorld(state, createSeededRng(state.meta.rngState)).state;
-    const teamId = state.user.controlledTeamId;
+    const teamId = state.user.activeOwnerTeamId;
 
     const level1 = arenaCapacity(state, teamId);
     expect(level1).toBe(ARENA_CAPACITY_BY_LEVEL[0]);
@@ -308,9 +308,9 @@ describe("economic scenarios (Phase 2 harness)", () => {
     const baseline = bootstrapEconomyScenario("baseline", { seed: 77 });
     const high = bootstrapEconomyScenario("high_market", { seed: 77 });
     const low = bootstrapEconomyScenario("low_market", { seed: 77 });
-    const baseTeamId = baseline.state.user.controlledTeamId;
-    const highTeamId = high.state.user.controlledTeamId;
-    const lowTeamId = low.state.user.controlledTeamId;
+    const baseTeamId = baseline.state.user.activeOwnerTeamId;
+    const highTeamId = high.state.user.activeOwnerTeamId;
+    const lowTeamId = low.state.user.activeOwnerTeamId;
     const year = baseline.state.competition.season.year;
 
     const baseOps = baseline.state.business.franchiseOps[baseTeamId]!;

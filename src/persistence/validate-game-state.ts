@@ -41,6 +41,10 @@ import {
   OWNER_PHILOSOPHIES,
 } from "@/domain/entities/owner-philosophy";
 import {
+  isAiManagementPreset,
+  MANAGEMENT_PHASE_KEYS,
+} from "@/domain/ai-management-presets";
+import {
   ALIGNMENT_DIMENSIONS,
   ALIGNMENT_EVIDENCE_DIRECTIONS,
   ALIGNMENT_EVIDENCE_KINDS,
@@ -563,159 +567,65 @@ export function validateGameState(state: unknown): asserts state is GameState {
 
   const user = state.user;
   assertRecord(user, "user");
-  if (!("controlledTeamId" in user) || user.controlledTeamId == null) {
-    fail("user.controlledTeamId is required.");
-  }
-  assertNonEmptyString(user.controlledTeamId, "user.controlledTeamId");
   if (
     typeof user.mode !== "string" ||
     !GAME_MODES.includes(user.mode as GameMode)
   ) {
     fail(`user.mode must be one of ${GAME_MODES.join(", ")}.`);
   }
-  assertNumber(user.ownerStartSeasonYear, "user.ownerStartSeasonYear");
-  if (
-    !Number.isFinite(user.ownerStartSeasonYear) ||
-    !Number.isInteger(user.ownerStartSeasonYear)
-  ) {
-    fail("user.ownerStartSeasonYear must be a finite integer.");
+
+  if (!("ownedTeamIds" in user) || !Array.isArray(user.ownedTeamIds)) {
+    fail("user.ownedTeamIds must be a non-empty array.");
   }
-  if (
-    typeof user.ownerPhilosophy !== "string" ||
-    !isOwnerPhilosophy(user.ownerPhilosophy)
-  ) {
-    fail(
-      `user.ownerPhilosophy must be one of ${OWNER_PHILOSOPHIES.join(", ")}.`,
+  if ((user.ownedTeamIds as unknown[]).length < 1) {
+    fail("user.ownedTeamIds must contain at least one team id.");
+  }
+  for (let i = 0; i < (user.ownedTeamIds as unknown[]).length; i += 1) {
+    assertNonEmptyString(
+      (user.ownedTeamIds as unknown[])[i],
+      `user.ownedTeamIds[${i}]`,
     );
   }
-  assertNumber(user.ownerPatience, "user.ownerPatience");
-  if (
-    !Number.isInteger(user.ownerPatience) ||
-    user.ownerPatience < OWNER_PATIENCE_MIN ||
-    user.ownerPatience > OWNER_PATIENCE_MAX
-  ) {
+  const ownedTeamIdSet = new Set(user.ownedTeamIds as string[]);
+  if (ownedTeamIdSet.size !== (user.ownedTeamIds as unknown[]).length) {
+    fail("user.ownedTeamIds must not contain duplicates.");
+  }
+
+  if (!("activeOwnerTeamId" in user) || user.activeOwnerTeamId == null) {
+    fail("user.activeOwnerTeamId is required.");
+  }
+  assertNonEmptyString(user.activeOwnerTeamId, "user.activeOwnerTeamId");
+  if (!ownedTeamIdSet.has(user.activeOwnerTeamId as string)) {
     fail(
-      `user.ownerPatience must be an integer between ${OWNER_PATIENCE_MIN} and ${OWNER_PATIENCE_MAX}.`,
+      `user.activeOwnerTeamId "${user.activeOwnerTeamId}" must be in user.ownedTeamIds.`,
     );
   }
-  if (
-    !("ownershipConfidence" in user) ||
-    user.ownershipConfidence == null ||
-    typeof user.ownershipConfidence !== "object"
-  ) {
-    fail("user.ownershipConfidence is required.");
-  }
-  validateOwnershipConfidence(
-    user.ownershipConfidence as OwnershipConfidenceState,
-  );
-
-  if (!("objectives" in user) || !Array.isArray(user.objectives)) {
-    fail("user.objectives must be an array.");
-  }
-  validateOwnerObjectives(user.objectives);
-
-  if (!("notifications" in user) || !Array.isArray(user.notifications)) {
-    fail("user.notifications must be an array.");
-  }
-  validateOwnerNotifications(user.notifications);
-
-  if (!("eventLog" in user) || !Array.isArray(user.eventLog)) {
-    fail("user.eventLog must be an array.");
-  }
-  validateEventLog(user.eventLog);
 
   if (
-    !("appliedGameplayConsequenceKeys" in user) ||
-    user.appliedGameplayConsequenceKeys == null ||
-    typeof user.appliedGameplayConsequenceKeys !== "object" ||
-    Array.isArray(user.appliedGameplayConsequenceKeys)
+    !("ownedFranchises" in user) ||
+    user.ownedFranchises == null ||
+    typeof user.ownedFranchises !== "object" ||
+    Array.isArray(user.ownedFranchises)
   ) {
-    fail("user.appliedGameplayConsequenceKeys must be a record.");
+    fail("user.ownedFranchises must be a record.");
   }
-  for (const [key, value] of Object.entries(
-    user.appliedGameplayConsequenceKeys as Record<string, unknown>,
-  )) {
-    if (key.trim().length === 0) {
-      fail("user.appliedGameplayConsequenceKeys keys must be non-empty.");
+  const ownedFranchises = user.ownedFranchises as Record<string, unknown>;
+  for (const teamId of ownedTeamIdSet) {
+    if (!(teamId in ownedFranchises)) {
+      fail(`user.ownedFranchises missing entry for owned team "${teamId}".`);
     }
-    if (value !== true) {
+  }
+  for (const franchiseKey of Object.keys(ownedFranchises)) {
+    if (!ownedTeamIdSet.has(franchiseKey)) {
       fail(
-        `user.appliedGameplayConsequenceKeys["${key}"] must be true.`,
+        `user.ownedFranchises key "${franchiseKey}" is not in user.ownedTeamIds.`,
       );
     }
-  }
-
-  if (
-    !("explicitDecisions" in user) ||
-    user.explicitDecisions == null ||
-    typeof user.explicitDecisions !== "object" ||
-    Array.isArray(user.explicitDecisions)
-  ) {
-    fail("user.explicitDecisions must be a record.");
-  }
-  for (const [key, value] of Object.entries(
-    user.explicitDecisions as Record<string, unknown>,
-  )) {
-    if (key.trim().length === 0) {
-      fail("user.explicitDecisions keys must be non-empty.");
-    }
-    if (value !== true) {
-      fail(`user.explicitDecisions["${key}"] must be true.`);
-    }
-  }
-
-  if (!("phaseSkips" in user) || !Array.isArray(user.phaseSkips)) {
-    fail("user.phaseSkips must be an array.");
-  }
-  for (let index = 0; index < (user.phaseSkips as unknown[]).length; index += 1) {
-    const entry = (user.phaseSkips as unknown[])[index];
-    const path = `user.phaseSkips[${index}]`;
-    if (entry === null || typeof entry !== "object" || Array.isArray(entry)) {
-      fail(`${path} must be an object.`);
-      continue;
-    }
-    const skip = entry as Record<string, unknown>;
-    assertNonEmptyString(skip.phaseKey, `${path}.phaseKey`);
-    assertNonEmptyString(skip.skippedOn, `${path}.skippedOn`);
-    parseCalendarDate(skip.skippedOn as string);
-    assertNonEmptyString(skip.reason, `${path}.reason`);
-  }
-
-  if (
-    !("aiAssistState" in user) ||
-    user.aiAssistState == null ||
-    typeof user.aiAssistState !== "object" ||
-    Array.isArray(user.aiAssistState)
-  ) {
-    fail("user.aiAssistState must be an object.");
-  } else {
-    const assist = user.aiAssistState as Record<string, unknown>;
-    if (
-      assist.resolvedNeeds == null ||
-      typeof assist.resolvedNeeds !== "object" ||
-      Array.isArray(assist.resolvedNeeds)
-    ) {
-      fail("user.aiAssistState.resolvedNeeds must be a record.");
-    }
-    if (
-      assist.seasonCounters == null ||
-      typeof assist.seasonCounters !== "object" ||
-      Array.isArray(assist.seasonCounters)
-    ) {
-      fail("user.aiAssistState.seasonCounters must be an object.");
-    } else {
-      const counters = assist.seasonCounters as Record<string, unknown>;
-      assertNumber(counters.seasonYear, "user.aiAssistState.seasonCounters.seasonYear");
-      assertNumber(counters.decisions, "user.aiAssistState.seasonCounters.decisions");
-      assertNumber(
-        counters.rosterMoves,
-        "user.aiAssistState.seasonCounters.rosterMoves",
-      );
-      assertNumber(
-        counters.freeAgentSignings,
-        "user.aiAssistState.seasonCounters.freeAgentSignings",
-      );
-    }
+    validateOwnedFranchiseState(
+      ownedFranchises[franchiseKey],
+      `user.ownedFranchises[${franchiseKey}]`,
+      fail,
+    );
   }
 
   if (
@@ -758,28 +668,18 @@ export function validateGameState(state: unknown): asserts state is GameState {
     }
   }
 
-  if (!("narrative" in user) || user.narrative == null) {
-    fail("user.narrative is required.");
-  }
-  validateNarrativeState(user.narrative);
-
-  if (typeof user.citySelectionConfirmed !== "boolean") {
-    fail("user.citySelectionConfirmed must be a boolean.");
-  }
-  if (typeof user.franchiseIdentityConfirmed !== "boolean") {
-    fail("user.franchiseIdentityConfirmed must be a boolean.");
-  }
-
   const teamIds = new Set(Object.keys(world.teams));
   const playerIds = new Set(Object.keys(world.players));
   const contractIds = new Set(Object.keys(business.contracts));
   const gameIds = new Set(Object.keys(competition.games));
   const seasonId = competition.season.id;
 
-  if (!teamIds.has(user.controlledTeamId)) {
-    fail(
-      `user.controlledTeamId "${user.controlledTeamId}" is missing from world.teams.`,
-    );
+  for (const ownedId of ownedTeamIdSet) {
+    if (!teamIds.has(ownedId)) {
+      fail(
+        `user.ownedTeamIds entry "${ownedId}" is missing from world.teams.`,
+      );
+    }
   }
 
   for (const [playerId, playerValue] of Object.entries(world.players)) {
@@ -2546,6 +2446,32 @@ function validatePendingOwnerDecision(
   }
   assertNonEmptyString(decision.createdOn, `${path}.createdOn`);
   parseCalendarDate(decision.createdOn as string);
+  if (
+    decision.blockingLevel !== "blocking" &&
+    decision.blockingLevel !== "non_blocking"
+  ) {
+    failFn(`${path}.blockingLevel must be "blocking" or "non_blocking".`);
+  }
+  assertNonEmptyString(decision.primaryTeamId, `${path}.primaryTeamId`);
+  if (
+    !Array.isArray(decision.participantTeamIds) ||
+    decision.participantTeamIds.length < 1
+  ) {
+    failFn(`${path}.participantTeamIds must be a non-empty array.`);
+  }
+  for (let i = 0; i < (decision.participantTeamIds as unknown[]).length; i += 1) {
+    assertNonEmptyString(
+      (decision.participantTeamIds as unknown[])[i],
+      `${path}.participantTeamIds[${i}]`,
+    );
+  }
+  if (
+    !(decision.participantTeamIds as string[]).includes(
+      decision.primaryTeamId as string,
+    )
+  ) {
+    failFn(`${path}.primaryTeamId must be included in participantTeamIds.`);
+  }
   validateTradeOfferDecisionPayload(decision.payload, `${path}.payload`, failFn);
 }
 
@@ -2579,11 +2505,230 @@ function validateOwnerDecisionRecord(
   assertNonEmptyString(record.resolvedOn, `${path}.resolvedOn`);
   parseCalendarDate(record.resolvedOn as string);
   assertNonEmptyString(record.fingerprint, `${path}.fingerprint`);
+  if (
+    record.blockingLevel !== "blocking" &&
+    record.blockingLevel !== "non_blocking"
+  ) {
+    failFn(`${path}.blockingLevel must be "blocking" or "non_blocking".`);
+  }
+  assertNonEmptyString(record.primaryTeamId, `${path}.primaryTeamId`);
+  if (
+    !Array.isArray(record.participantTeamIds) ||
+    record.participantTeamIds.length < 1
+  ) {
+    failFn(`${path}.participantTeamIds must be a non-empty array.`);
+  }
+  for (let i = 0; i < (record.participantTeamIds as unknown[]).length; i += 1) {
+    assertNonEmptyString(
+      (record.participantTeamIds as unknown[])[i],
+      `${path}.participantTeamIds[${i}]`,
+    );
+  }
+  if (
+    !(record.participantTeamIds as string[]).includes(
+      record.primaryTeamId as string,
+    )
+  ) {
+    failFn(`${path}.primaryTeamId must be included in participantTeamIds.`);
+  }
   if (record.expiresOn !== undefined) {
     assertNonEmptyString(record.expiresOn, `${path}.expiresOn`);
     parseCalendarDate(record.expiresOn as string);
   }
   validateTradeOfferDecisionPayload(record.payload, `${path}.payload`, failFn);
+}
+
+function validateOwnedFranchiseState(
+  value: unknown,
+  path: string,
+  failFn: (message: string) => never,
+): void {
+  if (value === null || typeof value !== "object" || Array.isArray(value)) {
+    failFn(`${path} must be an object.`);
+  }
+  const franchise = value as Record<string, unknown>;
+
+  assertNumber(franchise.ownerStartSeasonYear, `${path}.ownerStartSeasonYear`);
+  if (
+    !Number.isFinite(franchise.ownerStartSeasonYear as number) ||
+    !Number.isInteger(franchise.ownerStartSeasonYear as number)
+  ) {
+    failFn(`${path}.ownerStartSeasonYear must be a finite integer.`);
+  }
+  if (
+    typeof franchise.ownerPhilosophy !== "string" ||
+    !isOwnerPhilosophy(franchise.ownerPhilosophy)
+  ) {
+    failFn(
+      `${path}.ownerPhilosophy must be one of ${OWNER_PHILOSOPHIES.join(", ")}.`,
+    );
+  }
+  assertNumber(franchise.ownerPatience, `${path}.ownerPatience`);
+  if (
+    !Number.isInteger(franchise.ownerPatience as number) ||
+    (franchise.ownerPatience as number) < OWNER_PATIENCE_MIN ||
+    (franchise.ownerPatience as number) > OWNER_PATIENCE_MAX
+  ) {
+    failFn(
+      `${path}.ownerPatience must be an integer between ${OWNER_PATIENCE_MIN} and ${OWNER_PATIENCE_MAX}.`,
+    );
+  }
+  if (
+    franchise.ownershipConfidence == null ||
+    typeof franchise.ownershipConfidence !== "object"
+  ) {
+    failFn(`${path}.ownershipConfidence is required.`);
+  }
+  validateOwnershipConfidence(
+    franchise.ownershipConfidence as OwnershipConfidenceState,
+  );
+
+  if (!Array.isArray(franchise.objectives)) {
+    failFn(`${path}.objectives must be an array.`);
+  }
+  validateOwnerObjectives(franchise.objectives);
+
+  if (!Array.isArray(franchise.notifications)) {
+    failFn(`${path}.notifications must be an array.`);
+  }
+  validateOwnerNotifications(franchise.notifications);
+
+  if (!Array.isArray(franchise.eventLog)) {
+    failFn(`${path}.eventLog must be an array.`);
+  }
+  validateEventLog(franchise.eventLog);
+
+  if (
+    franchise.appliedGameplayConsequenceKeys == null ||
+    typeof franchise.appliedGameplayConsequenceKeys !== "object" ||
+    Array.isArray(franchise.appliedGameplayConsequenceKeys)
+  ) {
+    failFn(`${path}.appliedGameplayConsequenceKeys must be a record.`);
+  }
+  for (const [key, val] of Object.entries(
+    franchise.appliedGameplayConsequenceKeys as Record<string, unknown>,
+  )) {
+    if (key.trim().length === 0) {
+      failFn(`${path}.appliedGameplayConsequenceKeys keys must be non-empty.`);
+    }
+    if (val !== true) {
+      failFn(`${path}.appliedGameplayConsequenceKeys["${key}"] must be true.`);
+    }
+  }
+
+  if (
+    franchise.explicitDecisions == null ||
+    typeof franchise.explicitDecisions !== "object" ||
+    Array.isArray(franchise.explicitDecisions)
+  ) {
+    failFn(`${path}.explicitDecisions must be a record.`);
+  }
+  for (const [key, val] of Object.entries(
+    franchise.explicitDecisions as Record<string, unknown>,
+  )) {
+    if (key.trim().length === 0) {
+      failFn(`${path}.explicitDecisions keys must be non-empty.`);
+    }
+    if (val !== true) {
+      failFn(`${path}.explicitDecisions["${key}"] must be true.`);
+    }
+  }
+
+  if (!Array.isArray(franchise.phaseSkips)) {
+    failFn(`${path}.phaseSkips must be an array.`);
+  }
+  for (
+    let index = 0;
+    index < (franchise.phaseSkips as unknown[]).length;
+    index += 1
+  ) {
+    const entry = (franchise.phaseSkips as unknown[])[index];
+    const skipPath = `${path}.phaseSkips[${index}]`;
+    if (entry === null || typeof entry !== "object" || Array.isArray(entry)) {
+      failFn(`${skipPath} must be an object.`);
+      continue;
+    }
+    const skip = entry as Record<string, unknown>;
+    assertNonEmptyString(skip.phaseKey, `${skipPath}.phaseKey`);
+    assertNonEmptyString(skip.skippedOn, `${skipPath}.skippedOn`);
+    parseCalendarDate(skip.skippedOn as string);
+    assertNonEmptyString(skip.reason, `${skipPath}.reason`);
+  }
+
+  if (
+    franchise.aiAssistState == null ||
+    typeof franchise.aiAssistState !== "object" ||
+    Array.isArray(franchise.aiAssistState)
+  ) {
+    failFn(`${path}.aiAssistState must be an object.`);
+  } else {
+    const assist = franchise.aiAssistState as Record<string, unknown>;
+    if (
+      assist.resolvedNeeds == null ||
+      typeof assist.resolvedNeeds !== "object" ||
+      Array.isArray(assist.resolvedNeeds)
+    ) {
+      failFn(`${path}.aiAssistState.resolvedNeeds must be a record.`);
+    }
+    if (
+      assist.seasonCounters == null ||
+      typeof assist.seasonCounters !== "object" ||
+      Array.isArray(assist.seasonCounters)
+    ) {
+      failFn(`${path}.aiAssistState.seasonCounters must be an object.`);
+    } else {
+      const counters = assist.seasonCounters as Record<string, unknown>;
+      assertNumber(
+        counters.seasonYear,
+        `${path}.aiAssistState.seasonCounters.seasonYear`,
+      );
+      assertNumber(
+        counters.decisions,
+        `${path}.aiAssistState.seasonCounters.decisions`,
+      );
+      assertNumber(
+        counters.rosterMoves,
+        `${path}.aiAssistState.seasonCounters.rosterMoves`,
+      );
+      assertNumber(
+        counters.freeAgentSignings,
+        `${path}.aiAssistState.seasonCounters.freeAgentSignings`,
+      );
+    }
+  }
+
+  if (
+    typeof franchise.managementPreset !== "string" ||
+    !isAiManagementPreset(franchise.managementPreset)
+  ) {
+    failFn(`${path}.managementPreset must be a valid AI management preset.`);
+  }
+  if (
+    franchise.aiAssistance == null ||
+    typeof franchise.aiAssistance !== "object" ||
+    Array.isArray(franchise.aiAssistance)
+  ) {
+    failFn(`${path}.aiAssistance must be an object.`);
+  } else {
+    const assistance = franchise.aiAssistance as Record<string, unknown>;
+    for (const key of MANAGEMENT_PHASE_KEYS) {
+      if (!(key in assistance)) {
+        failFn(`${path}.aiAssistance.${key} is required.`);
+      }
+    }
+  }
+
+  if (franchise.narrative == null) {
+    failFn(`${path}.narrative is required.`);
+  }
+  validateNarrativeState(franchise.narrative);
+
+  if (typeof franchise.citySelectionConfirmed !== "boolean") {
+    failFn(`${path}.citySelectionConfirmed must be a boolean.`);
+  }
+  if (typeof franchise.franchiseIdentityConfirmed !== "boolean") {
+    failFn(`${path}.franchiseIdentityConfirmed must be a boolean.`);
+  }
 }
 
 function validateTradeOfferDecisionPayload(

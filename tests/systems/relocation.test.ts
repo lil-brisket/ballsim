@@ -15,7 +15,7 @@ import type { GameState } from "@/state/game-state";
 import { serializeGameState, deserializeGameState } from "@/persistence/mappers/game-state-mapper";
 
 function withTenure(state: GameState, seasonsInCity: number): GameState {
-  const teamId = state.user.controlledTeamId;
+  const teamId = state.user.activeOwnerTeamId;
   const year = state.competition.season.year;
   const process = state.business.relocationByTeamId[teamId]!;
   return {
@@ -53,7 +53,7 @@ function withMarketAndOps(
     losses?: number;
   },
 ): GameState {
-  const teamId = state.user.controlledTeamId;
+  const teamId = state.user.activeOwnerTeamId;
   const ops = state.business.franchiseOps[teamId]!;
   const finances = state.business.finances[teamId]!;
   const standing = state.competition.standings.byTeamId[teamId]!;
@@ -154,10 +154,10 @@ describe("relocation assessment", () => {
       marketSize: 35,
       cash: 500_000,
     });
-    const before = state.world.teams[state.user.controlledTeamId]!.city;
+    const before = state.world.teams[state.user.activeOwnerTeamId]!.city;
     assessRelocation(state);
-    expect(state.world.teams[state.user.controlledTeamId]!.city).toBe(before);
-    expect(state.business.relocationByTeamId[state.user.controlledTeamId]!.stage).toBe(
+    expect(state.world.teams[state.user.activeOwnerTeamId]!.city).toBe(before);
+    expect(state.business.relocationByTeamId[state.user.activeOwnerTeamId]!.stage).toBe(
       "none",
     );
   });
@@ -166,7 +166,7 @@ describe("relocation assessment", () => {
 describe("relocation stages and completion", () => {
   it("applies identity, fee, and fan sentiment on transition advance", () => {
     let state = createTestGameState({ saveId: "reloc_complete" });
-    const teamId = state.user.controlledTeamId;
+    const teamId = state.user.activeOwnerTeamId;
     state = withTenure(state, RELOCATION_MIN_SEASONS_IN_CITY + 3);
     state = withMarketAndOps(state, {
       marketSize: 40,
@@ -207,7 +207,7 @@ describe("relocation stages and completion", () => {
 
   it("rejects occupied destination at league review", () => {
     let state = createTestGameState({ saveId: "reloc_occupied" });
-    const teamId = state.user.controlledTeamId;
+    const teamId = state.user.activeOwnerTeamId;
     state = withTenure(state, RELOCATION_MIN_SEASONS_IN_CITY + 2);
     const other = Object.values(state.world.teams).find((t) => t.id !== teamId)!;
     const occupiedTarget = {
@@ -225,7 +225,7 @@ describe("relocation stages and completion", () => {
 
   it("cancel sets failed-attempt cooldown", () => {
     let state = createTestGameState({ saveId: "reloc_cancel" });
-    const teamId = state.user.controlledTeamId;
+    const teamId = state.user.activeOwnerTeamId;
     state = withTenure(state, RELOCATION_MIN_SEASONS_IN_CITY + 2);
     state = advanceRelocationStage(state, teamId, TARGET).state;
     state = advanceRelocationStage(state, teamId, TARGET).state;
@@ -241,13 +241,13 @@ describe("relocation stages and completion", () => {
   it("completeRelocationTransition requires transition stage", () => {
     const state = createTestGameState({ saveId: "reloc_bad_complete" });
     expect(() =>
-      completeRelocationTransition(state, state.user.controlledTeamId),
+      completeRelocationTransition(state, state.user.activeOwnerTeamId),
     ).toThrow(/transition/);
   });
 
   it("tickRelocationCooldowns clears complete after cooldown", () => {
     let state = createTestGameState({ saveId: "reloc_tick" });
-    const teamId = state.user.controlledTeamId;
+    const teamId = state.user.activeOwnerTeamId;
     state = {
       ...state,
       business: {
@@ -293,7 +293,7 @@ describe("relocation destination ranking", () => {
 describe("relocation save migration fields", () => {
   it("round-trips tenure fields through serialize/deserialize", () => {
     let state = createTestGameState({ saveId: "reloc_ser" });
-    const teamId = state.user.controlledTeamId;
+    const teamId = state.user.activeOwnerTeamId;
     state = withTenure(state, 10);
     const json = serializeGameState(state);
     const loaded = deserializeGameState(json);

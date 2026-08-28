@@ -71,12 +71,22 @@ const EMPTY_CAPABILITIES: PhaseCapabilities = {
 /**
  * Build capability maps for each phase from resolved phase modes.
  * Cheap O(phases) construction — call once per simulation day.
+ * When franchiseAssistance is provided, uses that franchise's config
+ * instead of career settings.ai (multi-team Owner Mode).
  */
 export function buildManagementPolicy(
   settings: GameSettings,
+  franchiseAssistance?: {
+    managementPreset: AiManagementPreset;
+    aiAssistance: AiAssistancePhases;
+  },
 ): ResolvedManagementPolicy {
-  const preset = settings.ai.managementPreset;
-  const phases = resolveAssistancePhases(preset, settings.ai.assistance);
+  const preset =
+    franchiseAssistance?.managementPreset ?? settings.ai.managementPreset;
+  const phases = resolveAssistancePhases(
+    preset,
+    franchiseAssistance?.aiAssistance ?? settings.ai.assistance,
+  );
   const capabilitiesByPhase = {
     injuriesEmergencyRoster: operationalCapabilities(
       phases.injuriesEmergencyRoster,
@@ -328,8 +338,15 @@ export function evaluateAction(
 export function evaluateManagementAction(
   settings: GameSettings,
   actionId: ManagementActionId,
+  franchiseAssistance?: {
+    managementPreset: AiManagementPreset;
+    aiAssistance: AiAssistancePhases;
+  },
 ): PolicyDecision {
-  return evaluateAction(buildManagementPolicy(settings), actionId);
+  return evaluateAction(
+    buildManagementPolicy(settings, franchiseAssistance),
+    actionId,
+  );
 }
 
 /**
@@ -338,8 +355,15 @@ export function evaluateManagementAction(
 export function canAiExecute(
   settings: GameSettings,
   actionId: ManagementActionId,
+  franchiseAssistance?: {
+    managementPreset: AiManagementPreset;
+    aiAssistance: AiAssistancePhases;
+  },
 ): boolean {
-  return evaluateManagementAction(settings, actionId).outcome === "ALLOW";
+  return (
+    evaluateManagementAction(settings, actionId, franchiseAssistance)
+      .outcome === "ALLOW"
+  );
 }
 
 /**
@@ -355,12 +379,17 @@ export function isUserFranchiseAssistTarget(
 
 /**
  * Assist completely off: every management phase is "off".
- * Does not consult the legacy managementPreset field.
  */
-export function isUserAssistCompletelyOff(settings: GameSettings): boolean {
+export function isUserAssistCompletelyOff(
+  settings: GameSettings,
+  franchiseAssistance?: {
+    managementPreset: AiManagementPreset;
+    aiAssistance: AiAssistancePhases;
+  },
+): boolean {
   const phases = resolveAssistancePhases(
-    settings.ai.managementPreset,
-    settings.ai.assistance,
+    franchiseAssistance?.managementPreset ?? settings.ai.managementPreset,
+    franchiseAssistance?.aiAssistance ?? settings.ai.assistance,
   );
   return areAllPhasesOff(phases);
 }
@@ -368,11 +397,17 @@ export function isUserAssistCompletelyOff(settings: GameSettings): boolean {
 /**
  * Whether any phase grants at least continuity/recommend (for UI banners).
  */
-export function isAnyAiAssistEnabled(settings: GameSettings): boolean {
-  if (isUserAssistCompletelyOff(settings)) {
+export function isAnyAiAssistEnabled(
+  settings: GameSettings,
+  franchiseAssistance?: {
+    managementPreset: AiManagementPreset;
+    aiAssistance: AiAssistancePhases;
+  },
+): boolean {
+  if (isUserAssistCompletelyOff(settings, franchiseAssistance)) {
     return false;
   }
-  const policy = buildManagementPolicy(settings);
+  const policy = buildManagementPolicy(settings, franchiseAssistance);
   return Object.values(policy.capabilitiesByPhase).some(
     (caps) =>
       caps.continuity ||
@@ -386,10 +421,16 @@ export function isAnyAiAssistEnabled(settings: GameSettings): boolean {
 /**
  * Whether the user still owns at least one visible management responsibility.
  */
-export function canUserManageFranchise(settings: GameSettings): boolean {
+export function canUserManageFranchise(
+  settings: GameSettings,
+  franchiseAssistance?: {
+    managementPreset: AiManagementPreset;
+    aiAssistance: AiAssistancePhases;
+  },
+): boolean {
   const phases = resolveAssistancePhases(
-    settings.ai.managementPreset,
-    settings.ai.assistance,
+    franchiseAssistance?.managementPreset ?? settings.ai.managementPreset,
+    franchiseAssistance?.aiAssistance ?? settings.ai.assistance,
   );
   return playerRetainsAnyVisibleResponsibility(phases);
 }
@@ -397,6 +438,15 @@ export function canUserManageFranchise(settings: GameSettings): boolean {
 /**
  * True when every player-visible responsibility is delegated (AI owns franchise ops).
  */
-export function isFullDelegation(settings: GameSettings): boolean {
-  return !canUserManageFranchise(settings) && !isUserAssistCompletelyOff(settings);
+export function isFullDelegation(
+  settings: GameSettings,
+  franchiseAssistance?: {
+    managementPreset: AiManagementPreset;
+    aiAssistance: AiAssistancePhases;
+  },
+): boolean {
+  return (
+    !canUserManageFranchise(settings, franchiseAssistance) &&
+    !isUserAssistCompletelyOff(settings, franchiseAssistance)
+  );
 }

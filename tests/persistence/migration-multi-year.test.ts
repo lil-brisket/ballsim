@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
+import { getActiveOwnedFranchise } from "@/state/owner-context";
 
 vi.mock("server-only", () => ({}));
 
@@ -77,9 +78,9 @@ describe("migration then multi-year simulation", () => {
     expect(migrated.meta.schemaVersion).toBe(GAME_STATE_SCHEMA_VERSION);
     expect(migrated.settings.ai.managementPreset).toBe("smart");
     expect(migrated.settings.offseason.freeAgency.durationDays).toBe(30);
-    expect(migrated.user.explicitDecisions).toEqual({});
-    expect(migrated.user.phaseSkips).toEqual([]);
-    expect(migrated.user.aiAssistState.resolvedNeeds).toEqual({});
+    expect(getActiveOwnedFranchise(migrated).explicitDecisions).toEqual({});
+    expect(getActiveOwnedFranchise(migrated).phaseSkips).toEqual([]);
+    expect(getActiveOwnedFranchise(migrated).aiAssistState.resolvedNeeds).toEqual({});
     expect(() => validateGameState(migrated)).not.toThrow();
 
     const result = await runMultiYearSimulation({

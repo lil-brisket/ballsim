@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { getActiveOwnedFranchise } from "@/state/owner-context";
 
 vi.mock("server-only", () => ({}));
 
@@ -36,11 +37,11 @@ describe("multi-year unattended simulation (CI gate)", () => {
       });
       expect(result.seasonsCompleted).toBe(1);
       expect(result.finalState.competition.season.phase).toBe("preseason");
-      const userAssistEvents = result.finalState.user.eventLog.filter(
+      const userAssistEvents = getActiveOwnedFranchise(result.finalState).eventLog.filter(
         (event) =>
           event.type === "AiAssistAction" &&
           (event.payload as { teamId?: string }).teamId ===
-            result.finalState.user.controlledTeamId,
+            result.finalState.user.activeOwnerTeamId,
       );
       expect(userAssistEvents.length).toBe(0);
     },
@@ -180,7 +181,7 @@ describe("multi-year delegation profiles", () => {
         // No dead user team
         const team =
           result.finalState.world.teams[
-            result.finalState.user.controlledTeamId
+            result.finalState.user.activeOwnerTeamId
           ];
         expect(team).toBeTruthy();
         expect(team!.roster.length).toBeGreaterThan(0);

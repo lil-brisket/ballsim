@@ -79,6 +79,7 @@ import {
 } from "@/systems/simulation/phase-responsibility";
 import { isContractActive } from "@/domain/entities/contract";
 import { derivePlayoffResults } from "@/systems/franchise-history";
+import { getActiveOwnedFranchise } from "@/state/owner-context";
 
 export type OwnerDashboardActionSeverity = "critical" | "warning" | "info";
 
@@ -196,6 +197,11 @@ export type OwnerDashboardPendingTradeOffer = {
   offeringTeamId: string;
   offeringTeamName: string;
   offeringTeamBranding: TeamBrandingView | null;
+  receivingTeamId: string;
+  receivingTeamName: string;
+  receivingTeamBranding: TeamBrandingView | null;
+  primaryTeamId: string;
+  bothSidesOwned: boolean;
   createdOn: string;
   youReceive: string[];
   theyReceive: string[];
@@ -376,7 +382,7 @@ export function toOwnerDashboardView(state: GameState): OwnerDashboardView {
   const games = wins + losses;
   const projectedWins =
     games > 0
-      ? Math.round((wins / games) * state.settings.league.gamesPerTeam)
+      ? Math.round((wins / games) * state.settings.regularSeason.gamesPerTeam)
       : null;
   const historicalMilestones = activeGameplayMilestones(history, {
     seasonYear: canonical.year,
@@ -448,7 +454,7 @@ export function toOwnerDashboardView(state: GameState): OwnerDashboardView {
 }
 
 function readCanonical(state: GameState): CanonicalDashboardData {
-  const teamId = state.user.controlledTeamId;
+  const teamId = state.user.activeOwnerTeamId;
   const year = state.competition.season.year;
   const snapshot = toDashboardSnapshot(state);
   const business = toFranchiseBusinessView(state);
@@ -615,8 +621,8 @@ function buildOwner(
   const active = objectives.filter((objective) => objective.status === "active");
   const ownership = toOwnershipConfidenceView(data.state);
   return {
-    philosophy: data.state.user.ownerPhilosophy,
-    patience: data.state.user.ownerPatience,
+    philosophy: getActiveOwnedFranchise(data.state).ownerPhilosophy,
+    patience: getActiveOwnedFranchise(data.state).ownerPatience,
     objectives,
     primaryObjectives: active.filter((objective) => objective.role === "primary"),
     secondaryObjectives: active.filter(
@@ -686,6 +692,7 @@ function buildPendingTradeOfferView(
   }
   const offeringTeam = state.world.teams[pending.payload.offeringTeamId];
   const userTeamId = pending.payload.userTeamId;
+  const receivingTeam = state.world.teams[userTeamId];
   const proposal = pending.payload.proposal;
   const offeringSide =
     proposal.sideA.teamId === pending.payload.offeringTeamId
@@ -693,6 +700,9 @@ function buildPendingTradeOfferView(
       : proposal.sideB;
   const userSide =
     proposal.sideA.teamId === userTeamId ? proposal.sideA : proposal.sideB;
+  const bothSidesOwned =
+    state.user.ownedTeamIds.includes(pending.payload.offeringTeamId) &&
+    state.user.ownedTeamIds.includes(userTeamId);
 
   return {
     decisionId: pending.id,
@@ -701,6 +711,13 @@ function buildPendingTradeOfferView(
       ? `${offeringTeam.city} ${offeringTeam.name}`
       : pending.payload.offeringTeamId,
     offeringTeamBranding: toBrandingView(offeringTeam?.branding),
+    receivingTeamId: userTeamId,
+    receivingTeamName: receivingTeam
+      ? `${receivingTeam.city} ${receivingTeam.name}`
+      : userTeamId,
+    receivingTeamBranding: toBrandingView(receivingTeam?.branding),
+    primaryTeamId: pending.primaryTeamId,
+    bothSidesOwned,
     createdOn: pending.createdOn,
     youReceive: describeTradeSideAssets(state, offeringSide),
     theyReceive: describeTradeSideAssets(state, userSide),
@@ -740,10 +757,10 @@ function buildSeasonRecap(
   const standing = data.snapshot.controlledStanding;
   const playoffMap = derivePlayoffResults(data.state);
   const playoffResult = playoffMap[teamId] ?? "missed";
-  const completed = data.state.user.objectives.filter(
+  const completed = getActiveOwnedFranchise(data.state).objectives.filter(
     (o) => o.status === "completed" && o.seasonYear === data.year,
   ).length;
-  const failed = data.state.user.objectives.filter(
+  const failed = getActiveOwnedFranchise(data.state).objectives.filter(
     (o) => o.status === "failed" && o.seasonYear === data.year,
   ).length;
   return {
@@ -983,7 +1000,7 @@ function buildNarrativeActionItems(
   saveId: string,
 ): OwnerDashboardActionItem[] {
   const items: OwnerDashboardActionItem[] = [];
-  for (const situation of state.user.narrative.situations) {
+  for (const situation of getActiveOwnedFranchise(state).narrative.situations) {
     if (
       situation.status !== "active" &&
       situation.status !== "escalated" &&
@@ -1027,7 +1044,7 @@ function buildNarrativeActionItems(
 }
 
 function buildSituationsView(state: GameState): OwnerDashboardSituationView[] {
-  return state.user.narrative.situations
+  return getActiveOwnedFranchise(state).narrative.situations
     .filter(
       (situation) =>
         situation.status === "active" ||
@@ -1518,7 +1535,7 @@ function readHomeGameDays(
   teamId: string,
 ): LastGameDayView[] {
   const days: LastGameDayView[] = [];
-  for (const event of state.user.eventLog) {
+  for (const event of getActiveOwnedFranchise(state).eventLog) {
     if (event.type !== "HomeGameDaySettled") {
       continue;
     }

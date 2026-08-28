@@ -21,6 +21,7 @@ import { createInitialGameState } from "@/state/create-initial-state";
 import { CBL_GAME_SETTINGS } from "@/domain/game-settings";
 import type { GameState } from "@/state/game-state";
 import { toOwnerGameState } from "@/state/owner-game-state";
+import { getActiveOwnedFranchise } from "@/state/owner-context";
 
 const VALID_ATTRIBUTES = {
   speed: 74,
@@ -57,7 +58,7 @@ describe("toOwnerGameState", () => {
   it("creates Owner Mode state for a valid team", () => {
     const state = baseState();
     const owner = toOwnerGameState(state);
-    expect(owner.selectedTeamId).toBe(state.user.controlledTeamId);
+    expect(owner.selectedTeamId).toBe(state.user.activeOwnerTeamId);
     expect(owner.currentDate).toBe(state.world.calendar.currentDate);
     expect(owner.currentSeasonId).toBe(state.competition.season.id);
   });
@@ -65,7 +66,7 @@ describe("toOwnerGameState", () => {
   it("resolves selectedTeamId to the canonical team", () => {
     const state = baseState();
     const owner = toOwnerGameState(state);
-    expect(owner.selectedTeamId).toBe(state.user.controlledTeamId);
+    expect(owner.selectedTeamId).toBe(state.user.activeOwnerTeamId);
     expect(state.world.teams[owner.selectedTeamId]).toBeDefined();
     expect(state.world.teams[owner.selectedTeamId]!.id).toBe(
       owner.selectedTeamId,
@@ -89,16 +90,16 @@ describe("toOwnerGameState", () => {
       seasonYear: state.competition.season.year,
       consequenceApplied: false,
     });
-    state.user.objectives.push(objective);
+    getActiveOwnedFranchise(state).objectives.push(objective);
     const owner = toOwnerGameState(state);
-    expect(owner.objectives).toBe(state.user.objectives);
+    expect(owner.objectives).toBe(getActiveOwnedFranchise(state).objectives);
     expect(owner.objectives).toHaveLength(1);
     expect(owner.objectives[0]!.type).toBe("make_playoffs");
   });
 
   it("preserves live notifications array reference", () => {
     const state = baseState();
-    expect(toOwnerGameState(state).notifications).toBe(state.user.notifications);
+    expect(toOwnerGameState(state).notifications).toBe(getActiveOwnedFranchise(state).notifications);
   });
 
   it("preserves live finances reference", () => {
@@ -113,7 +114,7 @@ describe("toOwnerGameState", () => {
 
   it("resolves staff ids against world catalogs", () => {
     const state = baseState();
-    const teamId = state.user.controlledTeamId;
+    const teamId = state.user.activeOwnerTeamId;
     const coachId = asCoachId("coach_owner_1");
     const staffId = asStaffId("staff_owner_1");
     const coach: Coach = {
@@ -150,7 +151,7 @@ describe("toOwnerGameState", () => {
 
   it("preserves live roster reference and resolves players", () => {
     const state = baseState();
-    const teamId = state.user.controlledTeamId;
+    const teamId = state.user.activeOwnerTeamId;
     const playerId = asPlayerId("player_owner_1");
     const player = createPlayer({
       id: playerId,
@@ -203,7 +204,7 @@ describe("toOwnerGameState", () => {
 
   it("rejects unknown controlledTeamId", () => {
     const state = baseState();
-    state.user.controlledTeamId = asTeamId("team_does_not_exist");
+    state.user.activeOwnerTeamId = asTeamId("team_does_not_exist");
     expect(() => toOwnerGameState(state)).toThrow(/selectedTeamId/);
   });
 
@@ -218,14 +219,14 @@ describe("toOwnerGameState", () => {
 
   it("rejects missing team finances", () => {
     const state = baseState();
-    const teamId = state.user.controlledTeamId;
+    const teamId = state.user.activeOwnerTeamId;
     delete state.business.finances[teamId];
     expect(() => toOwnerGameState(state)).toThrow(/finances/);
   });
 
   it("rejects unresolved roster player ids", () => {
     const state = baseState();
-    const teamId = state.user.controlledTeamId;
+    const teamId = state.user.activeOwnerTeamId;
     state.world.teams[teamId] = {
       ...state.world.teams[teamId]!,
       roster: [asPlayerId("player_missing")],
@@ -235,7 +236,7 @@ describe("toOwnerGameState", () => {
 
   it("rejects unresolved staff ids", () => {
     const state = baseState();
-    const teamId = state.user.controlledTeamId;
+    const teamId = state.user.activeOwnerTeamId;
     state.world.teams[teamId] = {
       ...state.world.teams[teamId]!,
       staff: [asStaffId("staff_missing")],
@@ -247,7 +248,7 @@ describe("toOwnerGameState", () => {
 describe("Owner Mode GameState round-trip", () => {
   it("survives serialize/deserialize with objectives and finance fields", () => {
     const state = baseState();
-    state.user.objectives = [
+    getActiveOwnedFranchise(state).objectives = [
       testOwnerObjective({
         id: asOwnerObjectiveId("obj_wins"),
         type: "minimum_win_total",
@@ -259,8 +260,8 @@ describe("Owner Mode GameState round-trip", () => {
         consequenceApplied: false,
       }),
     ];
-    state.business.finances[state.user.controlledTeamId] = {
-      ...state.business.finances[state.user.controlledTeamId]!,
+    state.business.finances[state.user.activeOwnerTeamId] = {
+      ...state.business.finances[state.user.activeOwnerTeamId]!,
       booksByYear: {
         [String(state.competition.season.year)]: {
           revenue: {
@@ -291,7 +292,7 @@ describe("Owner Mode GameState round-trip", () => {
     expect(() => validateGameState(restored)).not.toThrow();
 
     const owner = toOwnerGameState(restored);
-    expect(owner.objectives).toBe(restored.user.objectives);
+    expect(owner.objectives).toBe(getActiveOwnedFranchise(restored).objectives);
     const yearKey = String(restored.competition.season.year);
     expect(owner.finances.booksByYear[yearKey]!.revenue.other).toBe(1_000_000);
     expect(owner.finances.booksByYear[yearKey]!.expenses.operations).toBe(

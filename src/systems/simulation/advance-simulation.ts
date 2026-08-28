@@ -1,7 +1,7 @@
 import { getCalendarMonthId, getIsoWeekId } from "@/domain/calendar-date";
 import type { DomainEvent } from "@/domain/events";
 import type { Rng } from "@/domain/rng";
-import { hasActiveOwnerDecision } from "@/domain/entities/owner-decision";
+import { hasBlockingOwnerDecision } from "@/domain/entities/owner-decision";
 import type { GameState } from "@/state/game-state";
 import { advanceCalendar } from "@/systems/calendar";
 import { generateRosters } from "@/systems/roster-generation";
@@ -103,7 +103,7 @@ export function advanceSimulation(
     }
 
     // Owner decisions pause only after a fully completed day.
-    if (hasActiveOwnerDecision(current.user)) {
+    if (hasBlockingOwnerDecision(current.user)) {
       stopReason = "pending_owner_decision";
       break;
     }

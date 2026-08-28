@@ -1,8 +1,10 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import {
   beginOffseasonAction,
   continuePastPhaseAction,
   letAiHandlePhaseAction,
+  switchActiveOwnerTeamAction,
 } from "@/application/actions";
 import { loadOwnerSaveView } from "@/application/game-service";
 import { AdvanceTimeControls } from "@/components/game/AdvanceTimeControls";
@@ -36,7 +38,7 @@ export default async function DashboardPage({
     notFound();
   }
 
-  const { save, ownerDashboard: dash, settings } = view;
+  const { save, ownerDashboard: dash, dashboard } = view;
   const returnPath = `/dashboard/${saveId}`;
   const timeDisabled =
     dash.flags.userOnDraftClock ||
@@ -80,8 +82,7 @@ export default async function DashboardPage({
             continueAnywayAction={continuePastPhaseAction}
             assistantSummary={
               <SimulationAssistantSummary
-                preset={settings.ai.managementPreset}
-                assistance={settings.ai.assistance}
+                assistance={dashboard.activeFranchiseAi.assistance}
                 compact
               />
             }
@@ -90,6 +91,43 @@ export default async function DashboardPage({
       />
 
       {error ? <ErrorState message={error} /> : null}
+
+      {dash.flags.pendingOwnerDecision &&
+      dash.pendingTradeOffer &&
+      dash.pendingTradeOffer.primaryTeamId !==
+        dashboard.controlledTeam.id ? (
+        <div
+          role="status"
+          className="rounded-md border border-amber-700/50 bg-amber-950/40 px-4 py-3 text-sm text-amber-100"
+        >
+          <p className="font-medium text-amber-200">
+            {dash.pendingTradeOffer.receivingTeamName} needs your attention
+            before time can advance.
+          </p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            <form action={switchActiveOwnerTeamAction}>
+              <input type="hidden" name="saveId" value={saveId} />
+              <input
+                type="hidden"
+                name="teamId"
+                value={dash.pendingTradeOffer.primaryTeamId}
+              />
+              <button
+                type="submit"
+                className="rounded-md bg-amber-600 px-3 py-1.5 text-sm font-medium text-zinc-950 hover:bg-amber-500"
+              >
+                Switch to {dash.pendingTradeOffer.receivingTeamName}
+              </button>
+            </form>
+            <Link
+              href={`/dashboard/${saveId}/teams`}
+              className="rounded-md border border-zinc-700 px-3 py-1.5 text-sm text-zinc-200 hover:border-amber-600"
+            >
+              Open My Teams
+            </Link>
+          </div>
+        </div>
+      ) : null}
 
       {dash.pendingTradeOffer ? (
         <PendingOwnerDecisionPanel

@@ -17,7 +17,7 @@ describe("sponsorships media/climate scaling", () => {
       settings: CBL_GAME_SETTINGS,
     });
     state = bootstrapWorld(state, createSeededRng(state.meta.rngState)).state;
-    const teamId = asTeamId(state.user.controlledTeamId);
+    const teamId = asTeamId(state.user.activeOwnerTeamId);
     const year = state.competition.season.year;
 
     state = signSponsorship(state, teamId, {
@@ -77,7 +77,7 @@ describe("sponsorships media/climate scaling", () => {
       settings: CBL_GAME_SETTINGS,
     });
     state = bootstrapWorld(state, createSeededRng(state.meta.rngState)).state;
-    const teamId = asTeamId(state.user.controlledTeamId);
+    const teamId = asTeamId(state.user.activeOwnerTeamId);
     const year = state.competition.season.year;
     state = signSponsorship(state, teamId, {
       id: asSponsorshipId("sp_po_1"),

@@ -89,10 +89,7 @@ export function createDraftFixture(
       ...base.business,
       contracts,
     },
-    user: {
-      ...base.user,
-      controlledTeamId: asTeamId(teamIdList[0]!),
-    },
+    user: base.user,
   };
 
   state = ensureDraftPicks(state);

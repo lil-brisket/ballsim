@@ -1,7 +1,13 @@
+import {
+  getOwnedFranchise,
+  getOwnedTeamIds,
+  withOwnedFranchise,
+} from "@/state/owner-context";
 /**
  * User-franchise AI assistance orchestrator.
  * Flow: detect need → evaluate policy → execute | recommend | continue | block.
  * CPU franchises are never touched here.
+ * Simulation keys off ownedTeamIds — never activeOwnerTeamId.
  */
 
 import { addCalendarDays } from "@/domain/calendar-date";
@@ -62,38 +68,74 @@ import { resolveSimulationPhaseKey } from "@/systems/simulation/simulation-phase
 
 export type RunUserFranchiseAssistOptions = {
   forcePhase?: string;
+  /** When omitted, runs for every owned franchise. */
+  teamId?: TeamId;
 };
 
 /**
  * Run user-franchise management assistance for one simulation day.
  * Short-circuits when preset is Off.
+ * When teamId is omitted, processes every owned franchise independently.
  */
 export function runUserFranchiseAssist(
   state: GameState,
-  _rng: Rng,
+  rng: Rng,
   options: RunUserFranchiseAssistOptions = {},
 ): SystemResult {
+  if (options.teamId !== undefined) {
+    return runUserFranchiseAssistForTeam(state, rng, options.teamId, options);
+  }
+
   const events: DomainEvent[] = [];
-  let current = ensureAiAssistState(state);
-  const teamId = current.user.controlledTeamId;
+  let current = state;
+  for (const teamId of getOwnedTeamIds(state)) {
+    const result = runUserFranchiseAssistForTeam(current, rng, teamId, options);
+    current = result.state;
+    events.push(...result.events);
+  }
+  return systemResult(current, events);
+}
+
+function runUserFranchiseAssistForTeam(
+  state: GameState,
+  _rng: Rng,
+  teamId: TeamId,
+  options: RunUserFranchiseAssistOptions,
+): SystemResult {
+  const events: DomainEvent[] = [];
+  let current = ensureAiAssistState(state, teamId);
+  const franchise = getOwnedFranchise(current, teamId);
   const date = current.world.calendar.currentDate;
   const phaseKey = options.forcePhase ?? resolveSimulationPhaseKey(current);
-  const continuityKey = `ai_continuity:${phaseKey}:${date}`;
+  const continuityKey = `ai_continuity:${teamId}:${phaseKey}:${date}`;
 
-  if (hasAppliedGameplayConsequence(current, continuityKey)) {
+  if (hasAppliedGameplayConsequence(current, continuityKey, teamId)) {
     return systemResult(current);
   }
 
-  if (isUserAssistCompletelyOff(current.settings)) {
-    return systemResult(withAppliedGameplayConsequence(current, continuityKey));
+  const franchiseAssistance = {
+    managementPreset: franchise.managementPreset,
+    aiAssistance: franchise.aiAssistance,
+  };
+
+  if (isUserAssistCompletelyOff(current.settings, franchiseAssistance)) {
+    return systemResult(
+      withAppliedGameplayConsequence(current, continuityKey, teamId),
+    );
   }
 
-  current = syncSeasonCounters(current);
-  const policy = buildManagementPolicy(current.settings);
-  const needs = detectManagementNeeds(current);
+  current = syncSeasonCounters(current, teamId);
+  const policy = buildManagementPolicy(current.settings, franchiseAssistance);
+  const needs = detectManagementNeeds(current, teamId);
 
   for (const need of needs) {
-    if (isNeedOnCooldown(current.user.aiAssistState, need.needKey, date)) {
+    if (
+      isNeedOnCooldown(
+        getOwnedFranchise(current, teamId).aiAssistState,
+        need.needKey,
+        date,
+      )
+    ) {
       continue;
     }
 
@@ -129,7 +171,6 @@ export function runUserFranchiseAssist(
           },
         }),
       );
-      // Draft recommend may still record a soft recommendation without mutating.
       if (
         decision.outcome === "RECOMMEND" &&
         need.actionId === "DRAFT_SCOUT"
@@ -137,22 +178,33 @@ export function runUserFranchiseAssist(
         const scout = recommendDraftProspect(current, teamId, date, decision);
         current = scout.state;
         events.push(...scout.events);
-        current = markNeedResolved(current, need, date, decision.action.cooldownDays);
+        current = markNeedResolved(
+          current,
+          teamId,
+          need,
+          date,
+          decision.action.cooldownDays,
+        );
       }
       continue;
     }
 
-    // ALLOW — execute
     const executed = executeNeed(current, teamId, date, need, decision, policy);
     current = executed.state;
     events.push(...executed.events);
     if (executed.didAct) {
-      current = markNeedResolved(current, need, date, decision.action.cooldownDays);
-      current = incrementAssistCounters(current, need.actionId);
+      current = markNeedResolved(
+        current,
+        teamId,
+        need,
+        date,
+        decision.action.cooldownDays,
+      );
+      current = incrementAssistCounters(current, teamId, need.actionId);
     }
   }
 
-  current = withAppliedGameplayConsequence(current, continuityKey);
+  current = withAppliedGameplayConsequence(current, continuityKey, teamId);
   return systemResult(current, events);
 }
 
@@ -256,7 +308,7 @@ function fillRosterForNeed(
     }
 
     const excluded = new Set<PlayerId>(
-      Object.keys(current.user.explicitDecisions)
+      Object.keys(getOwnedFranchise(current, teamId).explicitDecisions)
         .filter((key) => key.startsWith("declined_fa:"))
         .map((key) => key.slice("declined_fa:".length) as PlayerId),
     );
@@ -369,7 +421,7 @@ function hireStaffForNeed(
   }
 
   const declineKey = `declined_staff:${role}`;
-  if (state.user.explicitDecisions[declineKey] === true) {
+  if (getOwnedFranchise(state, teamId).explicitDecisions[declineKey] === true) {
     return { ...systemResult(state), didAct: false };
   }
   if (findTeamStaffByRole(state, teamId, role) !== null) {
@@ -627,40 +679,34 @@ function missingPositions(
   return PLAYER_POSITIONS.filter((position) => (counts.get(position) ?? 0) === 0);
 }
 
-function ensureAiAssistState(state: GameState): GameState {
-  if (state.user.aiAssistState !== undefined) {
+function ensureAiAssistState(state: GameState, teamId: TeamId): GameState {
+  if (getOwnedFranchise(state, teamId).aiAssistState !== undefined) {
     return state;
   }
-  return {
-    ...state,
-    user: {
-      ...state.user,
-      aiAssistState: { ...EMPTY_AI_ASSIST_STATE },
-    },
-  };
+  return withOwnedFranchise(state, teamId, (franchise) => ({
+    ...franchise,
+    aiAssistState: { ...EMPTY_AI_ASSIST_STATE },
+  }));
 }
 
-function syncSeasonCounters(state: GameState): GameState {
+function syncSeasonCounters(state: GameState, teamId: TeamId): GameState {
   const year = state.competition.season.year;
-  const counters = state.user.aiAssistState.seasonCounters;
+  const counters = getOwnedFranchise(state, teamId).aiAssistState.seasonCounters;
   if (counters.seasonYear === year) {
     return state;
   }
-  return {
-    ...state,
-    user: {
-      ...state.user,
-      aiAssistState: {
-        ...state.user.aiAssistState,
-        seasonCounters: {
-          seasonYear: year,
-          decisions: 0,
-          rosterMoves: 0,
-          freeAgentSignings: 0,
-        },
+  return withOwnedFranchise(state, teamId, (franchise) => ({
+    ...franchise,
+    aiAssistState: {
+      ...franchise.aiAssistState,
+      seasonCounters: {
+        seasonYear: year,
+        decisions: 0,
+        rosterMoves: 0,
+        freeAgentSignings: 0,
       },
     },
-  };
+  }));
 }
 
 function isNeedOnCooldown(
@@ -677,35 +723,34 @@ function isNeedOnCooldown(
 
 function markNeedResolved(
   state: GameState,
+  teamId: TeamId,
   need: ManagementNeed,
   date: string,
   cooldownDays: number,
 ): GameState {
   const cooldownUntil =
     cooldownDays > 0 ? addCalendarDays(date, cooldownDays) : undefined;
-  return {
-    ...state,
-    user: {
-      ...state.user,
-      aiAssistState: {
-        ...state.user.aiAssistState,
-        resolvedNeeds: {
-          ...state.user.aiAssistState.resolvedNeeds,
-          [need.needKey]: {
-            resolvedOn: date,
-            cooldownUntil,
-          },
+  return withOwnedFranchise(state, teamId, (franchise) => ({
+    ...franchise,
+    aiAssistState: {
+      ...franchise.aiAssistState,
+      resolvedNeeds: {
+        ...franchise.aiAssistState.resolvedNeeds,
+        [need.needKey]: {
+          resolvedOn: date,
+          ...(cooldownUntil !== undefined ? { cooldownUntil } : {}),
         },
       },
     },
-  };
+  }));
 }
 
 function incrementAssistCounters(
   state: GameState,
+  teamId: TeamId,
   actionId: string,
 ): GameState {
-  const counters = state.user.aiAssistState.seasonCounters;
+  const counters = getOwnedFranchise(state, teamId).aiAssistState.seasonCounters;
   const freeAgent =
     actionId.includes("FA") ||
     actionId === "MAINTAIN_MIN_ROSTER" ||
@@ -715,19 +760,16 @@ function incrementAssistCounters(
     actionId.includes("RELEASE") ||
     actionId.includes("TRADE") ||
     actionId === "DRAFT_PICK";
-  return {
-    ...state,
-    user: {
-      ...state.user,
-      aiAssistState: {
-        ...state.user.aiAssistState,
-        seasonCounters: {
-          ...counters,
-          decisions: counters.decisions + 1,
-          freeAgentSignings: counters.freeAgentSignings + (freeAgent ? 1 : 0),
-          rosterMoves: counters.rosterMoves + (rosterMove ? 1 : 0),
-        },
+  return withOwnedFranchise(state, teamId, (franchise) => ({
+    ...franchise,
+    aiAssistState: {
+      ...franchise.aiAssistState,
+      seasonCounters: {
+        ...counters,
+        decisions: counters.decisions + 1,
+        freeAgentSignings: counters.freeAgentSignings + (freeAgent ? 1 : 0),
+        rosterMoves: counters.rosterMoves + (rosterMove ? 1 : 0),
       },
     },
-  };
+  }));
 }

@@ -5,6 +5,7 @@ import {
   askAiOwnerDecisionAction,
   declineOwnerDecisionAction,
 } from "@/application/actions";
+import { ActiveTeamBanner } from "@/components/game/ActiveTeamBanner";
 import { TeamLogoMark } from "@/components/team/logos/TeamLogoMark";
 import type { TeamBrandingView } from "@/state/team-branding-view";
 
@@ -12,8 +13,14 @@ export type PendingTradeOfferViewModel = {
   decisionId: string;
   offeringTeamName: string;
   offeringTeamBranding: TeamBrandingView | null;
+  receivingTeamName: string;
+  receivingTeamBranding: TeamBrandingView | null;
+  bothSidesOwned: boolean;
   youReceive: string[];
   theyReceive: string[];
+  primaryTeamId?: string;
+  receivingTeamId?: string;
+  offeringTeamId?: string;
 };
 
 /**
@@ -31,8 +38,16 @@ export function PendingOwnerDecisionPanel(props: {
       role="dialog"
       aria-modal="true"
       aria-labelledby="pending-trade-title"
-      className="rounded-md border border-amber-700/60 bg-amber-950/40 px-4 py-4 text-sm text-amber-100"
+      className="space-y-3 rounded-md border border-amber-700/60 bg-amber-950/40 px-4 py-4 text-sm text-amber-100"
     >
+      {offer.receivingTeamBranding ? (
+        <ActiveTeamBanner
+          city=""
+          name={offer.receivingTeamName}
+          branding={offer.receivingTeamBranding}
+          actionLabel="Approving this trade as this franchise"
+        />
+      ) : null}
       <p className="text-xs uppercase tracking-wide text-amber-400/90">
         Simulation paused
       </p>
@@ -60,15 +75,28 @@ export function PendingOwnerDecisionPanel(props: {
         <span>
           <span className="font-medium text-amber-50">
             {offer.offeringTeamName}
-          </span>{" "}
-          has offered a trade. Simulation is paused until you decide.
+          </span>
+          {" → "}
+          <span className="font-medium text-amber-50">
+            {offer.receivingTeamName}
+          </span>
         </span>
       </p>
+      {offer.bothSidesOwned ? (
+        <p className="mt-2 text-xs text-amber-200/90">
+          You control both franchises in this trade. Approving applies both
+          sides — there is no hidden automatic approval.
+        </p>
+      ) : (
+        <p className="mt-2 text-amber-100/90">
+          Simulation is paused until you decide.
+        </p>
+      )}
 
       <div className="mt-4 grid gap-3 sm:grid-cols-2">
         <div className="rounded-md border border-amber-800/50 bg-zinc-950/40 px-3 py-2">
           <p className="text-xs uppercase tracking-wide text-zinc-500">
-            You receive
+            {offer.receivingTeamName} receives
           </p>
           <ul className="mt-1 list-inside list-disc text-zinc-200">
             {offer.youReceive.length === 0 ? (
@@ -115,17 +143,19 @@ export function PendingOwnerDecisionPanel(props: {
             Decline
           </button>
         </form>
-        <form action={askAiOwnerDecisionAction}>
-          <input type="hidden" name="saveId" value={props.saveId} />
-          <input type="hidden" name="decisionId" value={offer.decisionId} />
-          <input type="hidden" name="returnPath" value={props.returnPath} />
-          <button
-            type="submit"
-            className="rounded-md bg-amber-600 px-3 py-1.5 text-sm font-medium text-zinc-950 hover:bg-amber-500"
-          >
-            Ask AI
-          </button>
-        </form>
+        {!offer.bothSidesOwned ? (
+          <form action={askAiOwnerDecisionAction}>
+            <input type="hidden" name="saveId" value={props.saveId} />
+            <input type="hidden" name="decisionId" value={offer.decisionId} />
+            <input type="hidden" name="returnPath" value={props.returnPath} />
+            <button
+              type="submit"
+              className="rounded-md bg-amber-600 px-3 py-1.5 text-sm font-medium text-zinc-950 hover:bg-amber-500"
+            >
+              Ask AI
+            </button>
+          </form>
+        ) : null}
       </div>
     </div>
   );

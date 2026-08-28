@@ -56,16 +56,12 @@ import {
   getActiveOwnerDecision,
   tryEnqueueCpuToUserTradeOffer,
 } from "@/systems/owner-decisions";
+import { tryEnqueueAnyOwnedTeamTradeOffer } from "@/systems/owner-decisions/owned-team-trade-offer";
+import { isUserControlledTeam } from "@/state/owner-context";
+
+export { isUserControlledTeam };
 
 const REQUIRED_POSITIONS: readonly PlayerPosition[] = PLAYER_POSITIONS;
-
-export function isUserControlledTeam(
-  state: GameState,
-  teamId: TeamId,
-): boolean {
-  return state.user.controlledTeamId === teamId;
-}
-
 /**
  * Deterministic AI decisions for non-user teams.
  * Uses shared EffectivePreferences with owner AI. Never mutates the user team.
@@ -342,6 +338,14 @@ function runAiTrades(state: GameState): SystemResult {
     }
     current = withAppliedGameplayConsequence(executed.state, key);
     return systemResult(current, executed.events);
+  }
+
+  if (!queuedUserOffer && !getActiveOwnerDecision(current.user)) {
+    const ownedOffer = tryEnqueueAnyOwnedTeamTradeOffer(current);
+    if (ownedOffer.outcome === "queued") {
+      current = ownedOffer.state;
+      return systemResult(current);
+    }
   }
 
   return systemResult(withAppliedGameplayConsequence(current, key));

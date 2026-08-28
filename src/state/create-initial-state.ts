@@ -5,8 +5,6 @@ import {
   NEUTRAL_TEAM_PLAY_STYLE,
 } from "@/domain/entities/team";
 import { DEFAULT_COACHING_PHILOSOPHY } from "@/domain/coaching/coaching-philosophy";
-import { DEFAULT_OWNER_PHILOSOPHY } from "@/domain/entities/owner-philosophy";
-import { createDefaultOwnershipConfidence } from "@/domain/entities/ownership-confidence";
 import { createSeededRng } from "@/domain/rng";
 import {
   cloneGameSettings,
@@ -29,15 +27,14 @@ import {
   type TeamId,
 } from "@/domain/ids";
 import {
-  EMPTY_AI_ASSIST_STATE,
   GAME_STATE_SCHEMA_VERSION,
   type GameState,
 } from "@/state/game-state";
+import { createDefaultOwnedFranchiseState } from "@/state/owned-franchise-state";
 import { createPhaseEBusinessDefaults } from "@/state/phase-e-defaults";
 import { generateLeague } from "@/systems/league-generation";
 import { leagueGenerationConfigFromSettings } from "@/systems/league-shape";
 import { generateLeagueStaff } from "@/systems/staff-generation";
-import { defaultOwnerPatience } from "@/systems/owner-philosophy-config";
 import { resolvePaletteIdFromBranding } from "@/domain/entities/team-branding";
 import { paletteLogoKey } from "@/domain/team-identity";
 import { deriveDefaultTeamBranding } from "@/systems/team-branding-generation";
@@ -95,7 +92,7 @@ function bootstrapTeam(
  * Production Owner Mode new-game universe from GameSettings.
  * Defaults to Standard (30 teams). Pass CBL_GAME_SETTINGS for 12-team tests.
  * Application bootstrap fills players/contracts via generateRosters.
- * Placeholder controlledTeamId is the first sorted team id until city/team selection.
+ * Placeholder activeOwnerTeamId is the first sorted team id until city/team selection.
  */
 export function createInitialGameState(
   input: CreateInitialGameStateInput,
@@ -143,7 +140,7 @@ export function createInitialGameState(
   );
 
   const teamIds = Object.keys(teams).sort() as TeamId[];
-  const controlledTeamId = teamIds[0]!;
+  const activeOwnerTeamId = teamIds[0]!;
 
   const finances = Object.fromEntries(
     teamIds.map((teamId) => [
@@ -227,29 +224,19 @@ export function createInitialGameState(
       ...phaseE,
     },
     user: {
-      controlledTeamId,
-      mode: "owner",
-      citySelectionConfirmed: false,
-      franchiseIdentityConfirmed: false,
-      ownerStartSeasonYear: startingSeasonYear,
-      ownerPhilosophy: DEFAULT_OWNER_PHILOSOPHY,
-      ownerPatience: defaultOwnerPatience(DEFAULT_OWNER_PHILOSOPHY),
-      ownershipConfidence: createDefaultOwnershipConfidence(
-        `${startingSeasonYear}-10-01`,
-      ),
-      objectives: [],
-      notifications: [],
-      eventLog: [],
-      appliedGameplayConsequenceKeys: {},
-      explicitDecisions: {},
-      phaseSkips: [],
-      aiAssistState: {
-        resolvedNeeds: {},
-        seasonCounters: { ...EMPTY_AI_ASSIST_STATE.seasonCounters },
+      ownedTeamIds: [activeOwnerTeamId],
+      activeOwnerTeamId,
+      ownedFranchises: {
+        [activeOwnerTeamId]: createDefaultOwnedFranchiseState({
+          seasonYear: startingSeasonYear,
+          currentDate: `${startingSeasonYear}-10-01`,
+          citySelectionConfirmed: false,
+          franchiseIdentityConfirmed: false,
+        }),
       },
+      mode: "owner",
       pendingOwnerDecisions: [],
       ownerDecisionHistory: [],
-      narrative: { situations: [], snapshots: [], cooldowns: {} },
     },
   };
 
@@ -513,29 +500,21 @@ export function createFourTeamInitialGameState(
       ...phaseE,
     },
     user: {
-      controlledTeamId: userTeamId,
-      mode: "owner",
-      citySelectionConfirmed: false,
-      franchiseIdentityConfirmed: false,
-      ownerStartSeasonYear: startingSeasonYear,
-      ownerPhilosophy: DEFAULT_OWNER_PHILOSOPHY,
-      ownerPatience: defaultOwnerPatience(DEFAULT_OWNER_PHILOSOPHY),
-      ownershipConfidence: createDefaultOwnershipConfidence(
-        `${startingSeasonYear}-10-01`,
-      ),
-      objectives: [],
-      notifications: [],
-      eventLog: [],
-      appliedGameplayConsequenceKeys: {},
-      explicitDecisions: {},
-      phaseSkips: [],
-      aiAssistState: {
-        resolvedNeeds: {},
-        seasonCounters: { ...EMPTY_AI_ASSIST_STATE.seasonCounters },
+      ownedTeamIds: [userTeamId],
+      activeOwnerTeamId: userTeamId,
+      ownedFranchises: {
+        [userTeamId]: createDefaultOwnedFranchiseState({
+          seasonYear: startingSeasonYear,
+          currentDate: `${startingSeasonYear}-10-01`,
+          citySelectionConfirmed: true,
+          franchiseIdentityConfirmed: true,
+          aiAssistance: { ...fourTeamSettings.ai.assistance },
+          managementPreset: fourTeamSettings.ai.managementPreset,
+        }),
       },
+      mode: "owner",
       pendingOwnerDecisions: [],
       ownerDecisionHistory: [],
-      narrative: { situations: [], snapshots: [], cooldowns: {} },
     },
   };
 }

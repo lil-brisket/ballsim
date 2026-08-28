@@ -192,7 +192,7 @@ describe("derivePlayoffResults", () => {
 describe("appendFranchiseSeasonRecord", () => {
   it("captures finalized fields including attendance from attendanceByYear", () => {
     let state = createTestGameState({ saveId: "fh_append" });
-    const teamId = state.user.controlledTeamId;
+    const teamId = state.user.activeOwnerTeamId;
     const year = state.competition.season.year;
     state = {
       ...state,
@@ -313,7 +313,7 @@ describe("appendFranchiseSeasonRecord", () => {
 
   it("stores null attendance when accumulator key is missing", () => {
     const state = createTestGameState({ saveId: "fh_null_att" });
-    const teamId = state.user.controlledTeamId;
+    const teamId = state.user.activeOwnerTeamId;
     const result = appendFranchiseSeasonRecord(state, { teamId });
     expect(
       result.state.business.franchiseHistory[teamId]!.seasons[0]!.attendance,

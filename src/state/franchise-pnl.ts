@@ -206,7 +206,7 @@ function seasonPeriodView(
  * Never mutates state. Does not conflate net income with cash flow.
  */
 export function toFranchisePnLView(state: GameState): FranchisePnLView {
-  const teamId = state.user.controlledTeamId;
+  const teamId = state.user.activeOwnerTeamId;
   const year = state.competition.season.year;
   const monthId = getCalendarMonthId(state.world.calendar.currentDate);
   const runway = calculateCashRunway(state, teamId);
