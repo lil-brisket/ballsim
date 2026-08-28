@@ -710,8 +710,11 @@ export async function confirmOwnerTeamIdentity(
   saveId: string,
   input: {
     nickname: string;
-    paletteId: string;
     logoId: string;
+    paletteId?: string;
+    primaryColor?: string;
+    secondaryColor?: string;
+    accentColor?: string;
   },
   store?: SaveGameStore,
 ): Promise<OwnerCommandResult> {

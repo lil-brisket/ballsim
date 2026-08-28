@@ -36,8 +36,7 @@ export function normalizeHexColor(value: string): string {
 }
 
 /**
- * Validates branding. Prefer palette-derived colours in v1 UI;
- * hex format is still checked so persisted values remain coherent.
+ * Validates branding colours as #RRGGBB hex and a known logoId.
  */
 export function validateTeamBranding(input: {
   primaryColor: string;

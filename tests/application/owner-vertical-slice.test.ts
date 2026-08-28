@@ -229,6 +229,63 @@ describe("Owner Mode vertical slice", () => {
   );
 
   it(
+    "custom hex branding survives save reload without palette reconstruction",
+    async () => {
+      const settings = cloneGameSettings(CBL_GAME_SETTINGS);
+      settings.league.area = "north_america";
+      const created = await createNewOwnerSave(
+        { settings, name: "Custom Hex", rngSeed: TEST_RNG_SEED },
+        store,
+      );
+      expect(created.ok).toBe(true);
+      if (!created.ok) {
+        return;
+      }
+      const view = await loadOwnerSaveView(created.save.id, store);
+      const available = view!.cities[0]!;
+      const selected = await selectOwnerCity(
+        created.save.id,
+        available.city,
+        store,
+      );
+      expect(selected.ok).toBe(true);
+      if (!selected.ok) {
+        return;
+      }
+
+      const confirmed = await confirmOwnerTeamIdentity(
+        created.save.id,
+        {
+          nickname: "Comets",
+          logoId: "star",
+          primaryColor: "#123456",
+          secondaryColor: "#F5F5F5",
+          accentColor: "#FFB000",
+        },
+        store,
+      );
+      expect(confirmed.ok).toBe(true);
+      if (!confirmed.ok) {
+        return;
+      }
+
+      const reloaded = await store.load(created.save.id);
+      expect(reloaded).toBeTruthy();
+      const team =
+        reloaded!.state.world.teams[reloaded!.state.user.controlledTeamId]!;
+      expect(team.city).toBe(available.city);
+      expect(team.name).toBe("Comets");
+      expect(team.branding).toEqual({
+        primaryColor: "#123456",
+        secondaryColor: "#F5F5F5",
+        accentColor: "#FFB000",
+        logoId: "star",
+      });
+    },
+    LONG_TIMEOUT_MS,
+  );
+
+  it(
     "city pick: taking a generated-team city relocates the placeholder and swaps the occupant",
     async () => {
       const settings = cloneGameSettings(CBL_GAME_SETTINGS);

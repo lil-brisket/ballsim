@@ -4,7 +4,7 @@ import { resolveOnboardingRoute } from "@/application/onboarding-routing";
 import { OnboardingShell } from "@/components/game/OnboardingShell";
 import { TeamIdentityBuilder } from "@/components/owner/TeamIdentityBuilder";
 import type { TeamLogoId } from "@/data/team-branding/logo-catalog";
-import { resolvePaletteIdFromBranding } from "@/domain/entities/team-branding";
+import { normalizeHexColor } from "@/domain/entities/team-branding";
 
 type BrandingPageProps = {
   params: Promise<{ saveId: string }>;
@@ -30,13 +30,7 @@ export default async function BrandingPage({ params }: BrandingPageProps) {
   }
 
   const team = view.dashboard.controlledTeam;
-  const brandingForResolve = {
-    ...team.branding,
-    logoId: team.branding.logoId as TeamLogoId,
-  };
-  const paletteId =
-    resolvePaletteIdFromBranding(brandingForResolve) ?? "midnight_navy";
-  const logoId = brandingForResolve.logoId;
+  const logoId = team.branding.logoId as TeamLogoId;
 
   const existingTeams = view.teams.map((entry) => ({
     id: entry.id,
@@ -55,8 +49,11 @@ export default async function BrandingPage({ params }: BrandingPageProps) {
       <TeamIdentityBuilder
         saveId={saveId}
         city={team.city}
+        abbreviation={team.abbreviation}
         initialNickname={team.name}
-        initialPaletteId={paletteId}
+        initialPrimaryColor={normalizeHexColor(team.branding.primaryColor)}
+        initialSecondaryColor={normalizeHexColor(team.branding.secondaryColor)}
+        initialAccentColor={normalizeHexColor(team.branding.accentColor)}
         initialLogoId={logoId}
         teamId={team.id}
         existingTeams={existingTeams}

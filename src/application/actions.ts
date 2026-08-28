@@ -147,12 +147,22 @@ export async function confirmTeamIdentityAction(
 ): Promise<void> {
   const saveId = String(formData.get("saveId") ?? "");
   const nickname = String(formData.get("nickname") ?? "");
-  const paletteId = String(formData.get("paletteId") ?? "");
   const logoId = String(formData.get("logoId") ?? "");
+  const primaryColor = String(formData.get("primaryColor") ?? "");
+  const secondaryColor = String(formData.get("secondaryColor") ?? "");
+  const accentColor = String(formData.get("accentColor") ?? "");
+  const paletteIdRaw = formData.get("paletteId");
+  const paletteId =
+    paletteIdRaw === null || String(paletteIdRaw).trim() === ""
+      ? undefined
+      : String(paletteIdRaw);
   const result = await confirmOwnerTeamIdentity(saveId, {
     nickname,
-    paletteId,
     logoId,
+    primaryColor,
+    secondaryColor,
+    accentColor,
+    paletteId,
   });
   if (!result.ok) {
     redirectWithError(`/new/${saveId}/branding`, result.error);

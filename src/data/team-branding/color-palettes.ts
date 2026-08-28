@@ -1,6 +1,6 @@
 /**
  * Curated team colour palettes for franchise identity.
- * Players select a palette; custom hex is deferred.
+ * Players select a palette as a starting point; colours remain editable.
  */
 
 export type TeamColorPaletteId =
@@ -114,14 +114,33 @@ export function getTeamColorPalette(
   return palette;
 }
 
+/**
+ * Matches the ordered colour triple after case-insensitive normalization.
+ * Same colours in a different order do not match.
+ * Invalid / non-hex inputs return null (no throw).
+ */
 export function findPaletteIdByColors(
   primaryColor: string,
   secondaryColor: string,
   accentColor: string,
 ): TeamColorPaletteId | null {
-  const primary = primaryColor.toUpperCase();
-  const secondary = secondaryColor.toUpperCase();
-  const accent = accentColor.toUpperCase();
+  if (
+    typeof primaryColor !== "string" ||
+    typeof secondaryColor !== "string" ||
+    typeof accentColor !== "string"
+  ) {
+    return null;
+  }
+  const primary = primaryColor.trim().toUpperCase();
+  const secondary = secondaryColor.trim().toUpperCase();
+  const accent = accentColor.trim().toUpperCase();
+  if (
+    !/^#[0-9A-F]{6}$/.test(primary) ||
+    !/^#[0-9A-F]{6}$/.test(secondary) ||
+    !/^#[0-9A-F]{6}$/.test(accent)
+  ) {
+    return null;
+  }
   for (const palette of TEAM_COLOR_PALETTES) {
     if (
       palette.primaryColor.toUpperCase() === primary &&
