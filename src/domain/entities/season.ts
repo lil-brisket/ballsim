@@ -19,16 +19,22 @@ export type OffseasonStage =
   | "none"
   | "season_finalization"
   | "contract_expiration"
+  | "roster_decisions"
+  | "draft_preparation"
   | "free_agency"
   | "draft"
+  | "staff_development"
   | "league_initialization";
 
 export const OFFSEASON_STAGES: readonly OffseasonStage[] = [
   "none",
   "season_finalization",
   "contract_expiration",
+  "roster_decisions",
+  "draft_preparation",
   "free_agency",
   "draft",
+  "staff_development",
   "league_initialization",
 ] as const;
 

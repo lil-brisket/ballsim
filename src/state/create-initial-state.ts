@@ -207,6 +207,10 @@ export function createInitialGameState(
         offseasonStageEnteredDate: null,
         freeAgencyExtendedUntil: null,
       },
+      phase: {
+        activePhaseId: "preseason.preparation",
+        enteredDate: `${startingSeasonYear}-10-01`,
+      },
       schedule: {
         seasonId,
         gameIds: [],
@@ -240,6 +244,9 @@ export function createInitialGameState(
       mode: "owner",
       pendingOwnerDecisions: [],
       ownerDecisionHistory: [],
+      franchisePhaseState: {
+        [activeOwnerTeamId]: { dismissed: [] },
+      },
     },
   };
 
@@ -491,6 +498,10 @@ export function createFourTeamInitialGameState(
         offseasonStageEnteredDate: null,
         freeAgencyExtendedUntil: null,
       },
+      phase: {
+        activePhaseId: "preseason.preparation",
+        enteredDate: `${startingSeasonYear}-10-01`,
+      },
       schedule: {
         seasonId,
         gameIds: [],
@@ -526,6 +537,9 @@ export function createFourTeamInitialGameState(
       mode: "owner",
       pendingOwnerDecisions: [],
       ownerDecisionHistory: [],
+      franchisePhaseState: {
+        [userTeamId]: { dismissed: [] },
+      },
     },
   };
 }

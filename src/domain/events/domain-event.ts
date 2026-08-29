@@ -21,6 +21,7 @@ export type DomainEventType =
   | "FreeAgencyOfferInvalidated"
   | "AiAssistAction"
   | "OffseasonStageAdvanced"
+  | "LeaguePhaseAdvanced"
   | "CoachHired"
   | "StaffHired"
   | "StaffFired"
@@ -50,6 +51,7 @@ export const DOMAIN_EVENT_TYPES: readonly DomainEventType[] = [
   "FreeAgencyOfferInvalidated",
   "AiAssistAction",
   "OffseasonStageAdvanced",
+  "LeaguePhaseAdvanced",
   "CoachHired",
   "StaffHired",
   "StaffFired",

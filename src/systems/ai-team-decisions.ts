@@ -64,6 +64,10 @@ import {
   reconcileRosterManagement,
   withTeamRosterManagement,
 } from "@/systems/roster-management";
+import {
+  isDraftAiPhase,
+  isFreeAgencyAiPhase,
+} from "@/systems/phase-engine";
 
 export { isUserControlledTeam };
 
@@ -78,12 +82,12 @@ export function runAiTeamDecisions(state: GameState, _rng: Rng): SystemResult {
   let current = state;
 
   if (current.competition.season.phase === "offseason") {
-    if (current.competition.season.offseasonStage === "free_agency") {
+    if (isFreeAgencyAiPhase(current)) {
       const fa = runAiFreeAgency(current);
       current = fa.state;
       events.push(...fa.events);
     }
-    if (current.competition.season.offseasonStage === "draft") {
+    if (isDraftAiPhase(current)) {
       const draft = runAiDraft(current);
       current = draft.state;
       events.push(...draft.events);

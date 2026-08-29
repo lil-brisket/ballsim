@@ -5,7 +5,7 @@ import { CBL_GAME_SETTINGS } from "@/domain/game-settings";
 import { runAiTeamDecisions } from "@/systems/ai-team-decisions";
 import { DEFAULT_ROSTER_SIZE } from "@/systems/roster-generation-config";
 import {
-  advanceOffseasonStage,
+  advanceLeaguePhase,
   processOffseasonLifecycle,
 } from "@/systems/simulation/offseason-lifecycle";
 import { transitionPhase } from "@/systems/simulation/phase-machine";
@@ -15,6 +15,10 @@ import { listFreeAgents, releasePlayerToFreeAgency } from "@/systems/free-agency
 import type { PlayerId, TeamId } from "@/domain/ids";
 import type { GameState } from "@/state/game-state";
 import { getActiveOwnedFranchise } from "@/state/owner-context";
+import {
+  getActivePhaseId,
+  setActivePhase,
+} from "@/systems/phase-engine";
 
 function aiTeamIds(state: GameState): TeamId[] {
   return (Object.keys(state.world.teams) as TeamId[]).filter(
@@ -49,33 +53,46 @@ function expireContractAndRelease(
   return releasePlayerToFreeAgency(next, playerId).state;
 }
 
-function toFreeAgency(state: GameState, rng: ReturnType<typeof createSeededRng>): GameState {
+function enterRosterDecisions(
+  state: GameState,
+  rng: ReturnType<typeof createSeededRng>,
+): GameState {
   let current = transitionPhase(state, "regular").state;
   current = transitionPhase(current, "postseason").state;
   current = transitionPhase(current, "offseason").state;
-  current = {
-    ...current,
-    competition: {
-      ...current.competition,
-      season: {
-        ...current.competition.season,
-        offseasonStage: "season_finalization",
-      },
-    },
-  };
+  current = setActivePhase(current, "offseason.season_transition");
+  return processOffseasonLifecycle(current, rng).state;
+}
+
+function toFreeAgency(
+  state: GameState,
+  rng: ReturnType<typeof createSeededRng>,
+): GameState {
+  const current = enterRosterDecisions(state, rng);
+  return setActivePhase(current, "offseason.free_agency");
+}
+
+function toDraft(
+  state: GameState,
+  rng: ReturnType<typeof createSeededRng>,
+): GameState {
+  let current = enterRosterDecisions(state, rng);
+  current = advanceLeaguePhase(current, rng).state; // draft_preparation
+  current = advanceLeaguePhase(current, rng).state; // draft
   return processOffseasonLifecycle(current, rng).state;
 }
 
 describe("AI team decisions", () => {
   it("does not modify the user-controlled team during free agency", () => {
     let state = createInitialGameState({
-    saveId: "ai_fa_user", rngSeed: 21,
-    settings: CBL_GAME_SETTINGS,
-  });
+      saveId: "ai_fa_user",
+      rngSeed: 21,
+      settings: CBL_GAME_SETTINGS,
+    });
     const rng = createSeededRng(state.meta.rngState);
     state = bootstrapWorld(state, rng).state;
     state = toFreeAgency(state, rng);
-    expect(state.competition.season.offseasonStage).toBe("free_agency");
+    expect(getActivePhaseId(state)).toBe("offseason.free_agency");
 
     const userTeamId = state.user.activeOwnerTeamId;
     const donorTeamId = aiTeamIds(state)[0]!;
@@ -102,9 +119,10 @@ describe("AI team decisions", () => {
 
   it("can sign a free agent for an AI team with roster need", () => {
     let state = createInitialGameState({
-    saveId: "ai_fa_sign", rngSeed: 22,
-    settings: CBL_GAME_SETTINGS,
-  });
+      saveId: "ai_fa_sign",
+      rngSeed: 22,
+      settings: CBL_GAME_SETTINGS,
+    });
     const rng = createSeededRng(state.meta.rngState);
     state = bootstrapWorld(state, rng).state;
     state = toFreeAgency(state, rng);
@@ -129,9 +147,10 @@ describe("AI team decisions", () => {
 
   it("is deterministic for the same RNG state", () => {
     let state = createInitialGameState({
-    saveId: "ai_det", rngSeed: 23,
-    settings: CBL_GAME_SETTINGS,
-  });
+      saveId: "ai_det",
+      rngSeed: 23,
+      settings: CBL_GAME_SETTINGS,
+    });
     const rngA = createSeededRng(state.meta.rngState);
     state = bootstrapWorld(state, rngA).state;
     state = toFreeAgency(state, rngA);
@@ -148,9 +167,10 @@ describe("AI team decisions", () => {
 
   it("does not churn trade blocks every day beyond one surplus listing", () => {
     let state = createInitialGameState({
-    saveId: "ai_tb", rngSeed: 24,
-    settings: CBL_GAME_SETTINGS,
-  });
+      saveId: "ai_tb",
+      rngSeed: 24,
+      settings: CBL_GAME_SETTINGS,
+    });
     const rng = createSeededRng(state.meta.rngState);
     state = bootstrapWorld(state, rng).state;
     const aiTeamId = aiTeamIds(state)[0]!;
@@ -165,15 +185,14 @@ describe("AI team decisions", () => {
 
   it("stops draft selection when the user team is on the clock", () => {
     let state = createInitialGameState({
-    saveId: "ai_draft", rngSeed: 25,
-    settings: CBL_GAME_SETTINGS,
-  });
+      saveId: "ai_draft",
+      rngSeed: 25,
+      settings: CBL_GAME_SETTINGS,
+    });
     const rng = createSeededRng(state.meta.rngState);
     state = bootstrapWorld(state, rng).state;
-    state = toFreeAgency(state, rng);
-    state = advanceOffseasonStage(state).state;
-    state = processOffseasonLifecycle(state, rng).state;
-    expect(state.competition.season.offseasonStage).toBe("draft");
+    state = toDraft(state, rng);
+    expect(getActivePhaseId(state)).toBe("offseason.draft");
 
     const draftBefore = Object.values(state.world.drafts)[0]!;
     // Force the user team onto the clock as the first available slot.
@@ -216,14 +235,13 @@ describe("AI team decisions", () => {
 
   it("AI drafts an eligible prospect when a non-user team is on the clock", () => {
     let state = createInitialGameState({
-    saveId: "ai_draft_pick", rngSeed: 26,
-    settings: CBL_GAME_SETTINGS,
-  });
+      saveId: "ai_draft_pick",
+      rngSeed: 26,
+      settings: CBL_GAME_SETTINGS,
+    });
     const rng = createSeededRng(state.meta.rngState);
     state = bootstrapWorld(state, rng).state;
-    state = toFreeAgency(state, rng);
-    state = advanceOffseasonStage(state).state;
-    state = processOffseasonLifecycle(state, rng).state;
+    state = toDraft(state, rng);
 
     const draftBefore = Object.values(state.world.drafts)[0]!;
     const userTeamId = state.user.activeOwnerTeamId;
@@ -249,11 +267,12 @@ describe("AI team decisions", () => {
       },
     };
 
-    const usedBefore = draftBefore.order.filter((s) => s.status === "used").length;
+    const selectionsBefore = draftBefore.selections.length;
     const result = runAiTeamDecisions(state, rng).state;
     const draft = Object.values(result.world.drafts)[0]!;
-    const usedAfter = draft.order.filter((s) => s.status === "used").length;
-    expect(usedAfter).toBeGreaterThan(usedBefore);
-    expect(draft.selections.length).toBeGreaterThan(0);
+    expect(draft.selections.length).toBeGreaterThan(selectionsBefore);
+    expect(
+      draft.selections.some((selection) => selection.teamId === aiTeamId),
+    ).toBe(true);
   });
 });

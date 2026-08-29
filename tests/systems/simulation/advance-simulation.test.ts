@@ -4,11 +4,12 @@ import { createInitialGameState } from "@/state/create-initial-state";
 import { CBL_GAME_SETTINGS } from "@/domain/game-settings";
 import { bootstrapWorld } from "@/systems/world-pipeline";
 import { advanceSimulation } from "@/systems/simulation/advance-simulation";
+import { beginRegularSeasonFromPreseason } from "@/systems/simulation/season-lifecycle";
 import { getIsoWeekId } from "@/domain/calendar-date";
 import { resetDomainEventSequenceForTests } from "@/domain/events/domain-event";
 
 describe("advanceSimulation", () => {
-  it("advances one day, sims the opener on the first preseason advance, and reports metadata", () => {
+  it("advances one day, sims the opener after entering regular season, and reports metadata", () => {
     resetDomainEventSequenceForTests();
     const state = createInitialGameState({
     saveId: "adv_opener",
@@ -16,18 +17,19 @@ describe("advanceSimulation", () => {
     settings: CBL_GAME_SETTINGS,
   });
     const rng = createSeededRng(state.meta.rngState);
-    const bootstrapped = bootstrapWorld(state, rng).state;
+    let bootstrapped = bootstrapWorld(state, rng).state;
+    bootstrapped = beginRegularSeasonFromPreseason(bootstrapped).state;
 
-    expect(bootstrapped.competition.season.phase).toBe("preseason");
+    expect(bootstrapped.competition.season.phase).toBe("regular");
 
     const result = advanceSimulation(bootstrapped, rng, { days: 1 });
 
     expect(result.previousDate).toBe("2026-10-01");
     expect(result.currentDate).toBe("2026-10-02");
     expect(result.daysAdvanced).toBe(1);
-    expect(result.phaseBefore).toBe("preseason");
+    expect(result.phaseBefore).toBe("regular");
     expect(result.phaseAfter).toBe("regular");
-    expect(result.phaseChanged).toBe(true);
+    expect(result.phaseChanged).toBe(false);
     expect(result.gamesSimulated).toBeGreaterThan(0);
     expect(result.state.world.calendar.lastSimulatedDate).toBe("2026-10-01");
 
@@ -45,6 +47,7 @@ describe("advanceSimulation", () => {
   });
     const rng = createSeededRng(state.meta.rngState);
     let current = bootstrapWorld(state, rng).state;
+    current = beginRegularSeasonFromPreseason(current).state;
     current = advanceSimulation(current, rng).state;
 
     const stuck = {

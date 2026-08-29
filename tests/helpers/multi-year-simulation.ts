@@ -5,8 +5,10 @@
 
 import {
   advanceOwnerTime,
+  advanceLeaguePhaseCommand,
   beginOffseason,
   createNewOwnerSave,
+  declineOwnerDecision,
   finishFreeAgency,
   loadOwnerSave,
   selectOwnerDraftProspect,
@@ -31,6 +33,11 @@ import type { GameState } from "@/state/game-state";
 import { isUserOnDraftClock } from "@/systems/draft";
 import { assertContinuityBoundary } from "@/systems/simulation/continuity-validation";
 import { canAiExecute } from "@/systems/simulation/management-policy";
+import {
+  canAdvancePhase,
+  getActivePhaseId,
+} from "@/systems/phase-engine";
+import { calendarDaysBetween } from "@/domain/calendar-date";
 import { TEST_RNG_SEED } from "./determinism";
 
 export type AdvanceMode = "day" | "week" | "mixed" | "large_jumps" | "until_phase";
@@ -98,7 +105,7 @@ function daysForMode(mode: AdvanceMode, seasonIndex: number): number {
 }
 
 function lifecycleFingerprint(state: GameState): string {
-  return `${state.competition.season.year}|${state.competition.season.phase}|${state.competition.season.offseasonStage}|${state.world.calendar.currentDate}`;
+  return `${state.competition.season.year}|${getActivePhaseId(state)}|${state.world.calendar.currentDate}`;
 }
 
 function formatDiagnostics(
@@ -195,6 +202,19 @@ async function handleBlockedGates(
   }
   const state = loaded.state;
 
+  const blockingDecisions = state.user.pendingOwnerDecisions.filter(
+    (decision) => decision.blockingLevel === "blocking",
+  );
+  if (blockingDecisions.length > 0) {
+    for (const decision of blockingDecisions) {
+      const declined = await declineOwnerDecision(saveId, decision.id, store);
+      if (!declined.ok) {
+        throw new Error(declined.error);
+      }
+    }
+    return true;
+  }
+
   if (state.competition.season.phase === "postseason") {
     const began = await beginOffseason(saveId, store);
     if (!began.ok) {
@@ -203,19 +223,43 @@ async function handleBlockedGates(
     return true;
   }
 
-  if (
-    state.competition.season.phase === "offseason" &&
-    state.competition.season.offseasonStage === "free_agency" &&
-    !canAiExecute(state.settings, "MAINTAIN_MIN_ROSTER") &&
-    !canAiExecute(state.settings, "SIGN_EMERGENCY_FA") &&
-    !canAiExecute(state.settings, "SIGN_ROUTINE_FA")
-  ) {
-    // AI cannot fill roster via FA: finish FA explicitly so the loop can continue.
-    const finished = await finishFreeAgency(saveId, store);
-    if (!finished.ok) {
-      throw new Error(finished.error);
+  const phaseId = getActivePhaseId(state);
+  if (phaseId === "offseason.free_agency") {
+    const aiCannotManageFa =
+      !canAiExecute(state.settings, "MAINTAIN_MIN_ROSTER") &&
+      !canAiExecute(state.settings, "SIGN_EMERGENCY_FA") &&
+      !canAiExecute(state.settings, "SIGN_ROUTINE_FA");
+    const entered =
+      state.competition.phase?.enteredDate ??
+      state.competition.season.offseasonStageEnteredDate;
+    const durationDays = state.settings.offseason.freeAgency.durationDays;
+    const daysInFa =
+      entered != null
+        ? calendarDaysBetween(entered, state.world.calendar.currentDate) + 1
+        : 0;
+    if ((aiCannotManageFa || daysInFa >= durationDays) && canAdvancePhase(state)) {
+      const finished = await finishFreeAgency(saveId, store);
+      if (!finished.ok) {
+        throw new Error(finished.error);
+      }
+      return true;
     }
-    return true;
+  }
+
+  // Auto-advance user-managed phases when nothing required remains.
+  // Free agency is handled above so AI gets its configured window first.
+  if (
+    (phaseId === "offseason.roster_decisions" ||
+      phaseId === "offseason.draft_preparation" ||
+      phaseId === "offseason.draft" ||
+      phaseId === "offseason.staff_development" ||
+      phaseId === "preseason.preparation") &&
+    canAdvancePhase(state)
+  ) {
+    const advanced = await advanceLeaguePhaseCommand(saveId, store);
+    if (advanced.ok) {
+      return true;
+    }
   }
 
   if (isUserOnDraftClock(state) && !canAiExecute(state.settings, "DRAFT_PICK")) {
@@ -366,7 +410,7 @@ export async function runMultiYearSimulation(
 
     if (
       options.saveReloadMidFa &&
-      before.state.competition.season.offseasonStage === "free_agency" &&
+      getActivePhaseId(before.state) === "offseason.free_agency" &&
       steps % 17 === 0
     ) {
       const json = serializeGameState(before.state);
@@ -413,7 +457,8 @@ export async function runMultiYearSimulation(
       // Deliberate blocked states may still need gate handling next loop
       if (
         /draft clock/i.test(result.error) ||
-        /season review/i.test(result.error)
+        /season review/i.test(result.error) ||
+        /pending owner decision/i.test(result.error)
       ) {
         const handledBlock = await handleBlockedGates(
           saveId,
@@ -456,17 +501,21 @@ export async function runMultiYearSimulation(
       lastTransition = afterFp;
     }
 
-    // Soft check: still in same phase too long (except FA waiting for auto-advance)
+    // Soft check: still in same phase too long
     if (
       after.state.competition.season.phase === beforePhase &&
-      after.state.competition.season.offseasonStage ===
-        before.state.competition.season.offseasonStage &&
+      getActivePhaseId(after.state) === getActivePhaseId(before.state) &&
       after.state.competition.season.year === beforeYear &&
       steps > 0 &&
       steps % 200 === 0
     ) {
-      // Allow FA to burn duration days; otherwise suspect stuck
-      if (after.state.competition.season.offseasonStage !== "free_agency") {
+      // Allow persistent user phases; otherwise suspect stuck
+      const phaseId = getActivePhaseId(after.state);
+      if (
+        phaseId !== "offseason.free_agency" &&
+        phaseId !== "offseason.roster_decisions" &&
+        phaseId !== "offseason.draft_preparation"
+      ) {
         failProgress(
           formatDiagnostics(
             after.state,

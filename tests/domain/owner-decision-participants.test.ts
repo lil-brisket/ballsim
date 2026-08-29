@@ -43,6 +43,7 @@ function userWithDecisions(
     ownedFranchises: {},
     pendingOwnerDecisions: decisions,
     ownerDecisionHistory: [],
+    franchisePhaseState: {},
   };
 }
 

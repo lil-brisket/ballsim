@@ -143,6 +143,10 @@ import {
   toOwnerDashboardView,
   type OwnerDashboardView,
 } from "@/state/owner-dashboard";
+import {
+  toPhaseDashboardView,
+  type PhaseDashboardView,
+} from "@/state/phase-dashboard";
 import type { ExpansionState } from "@/domain/entities/expansion";
 import type { LeagueEconomy } from "@/domain/entities/league-economy";
 import type { RelocationProcess } from "@/domain/entities/relocation";
@@ -194,7 +198,8 @@ import {
   withdrawOffer,
 } from "@/systems/free-agency";
 import { advanceSimulation } from "@/systems/simulation/advance-simulation";
-import { advanceOffseasonStage } from "@/systems/simulation/offseason-lifecycle";
+import { advanceLeaguePhase } from "@/systems/simulation/offseason-lifecycle";
+import { isInLeaguePhase, previewAdvance, getActivePhaseId } from "@/systems/phase-engine";
 import { enterOffseasonFromPostseason } from "@/systems/simulation/season-lifecycle";
 import { runAiContinuity } from "@/systems/simulation/ai-continuity";
 import { canAiExecute, isUserAssistCompletelyOff } from "@/systems/simulation/management-policy";
@@ -290,6 +295,7 @@ export type OwnerSaveView = CreateGameResult & {
   expansionAssessment: ExpansionAssessment;
   franchiseHistory: FranchiseHistoryView;
   ownerDashboard: OwnerDashboardView;
+  phaseDashboard: PhaseDashboardView;
   /** Persisted career settings from GameState.settings (read-only for UI). */
   settings: GameSettings;
 };
@@ -472,6 +478,7 @@ export async function loadOwnerSaveView(
     expansionAssessment: assessExpansion(state),
     franchiseHistory: toFranchiseHistoryView(state),
     ownerDashboard: toOwnerDashboardView(state),
+    phaseDashboard: toPhaseDashboardView(state),
     settings: state.settings,
     navGroups: ownerNavGroupsForState(state),
   };
@@ -1344,10 +1351,7 @@ export async function signOwnerFreeAgent(
   }
 
   const state = loaded.state;
-  if (
-    state.competition.season.phase !== "offseason" ||
-    state.competition.season.offseasonStage !== "free_agency"
-  ) {
+  if (!isInLeaguePhase(state, "offseason.free_agency")) {
     return fail(
       "Free agent signing is only allowed during offseason free agency.",
     );
@@ -1424,16 +1428,13 @@ export async function finishFreeAgency(
     return fail("Save not found.");
   }
 
-  if (
-    loaded.state.competition.season.phase !== "offseason" ||
-    loaded.state.competition.season.offseasonStage !== "free_agency"
-  ) {
+  if (!isInLeaguePhase(loaded.state, "offseason.free_agency")) {
     return fail("Finish free agency requires offseason free_agency stage.");
   }
 
   const rng = createSeededRng(loaded.state.meta.rngState);
   try {
-    const advanced = advanceOffseasonStage(loaded.state);
+    const advanced = advanceLeaguePhase(loaded.state, rng);
     let working = advanced.state;
     const emitted = [...advanced.events];
     const dayResult = advanceSimulation(working, rng, { days: 1 });
@@ -1455,6 +1456,93 @@ export async function finishFreeAgency(
   } catch (error) {
     return fail(error instanceof Error ? error.message : String(error));
   }
+}
+
+/**
+ * Advance the active league phase (user-controlled). Blocks on required tasks.
+ */
+export async function advanceLeaguePhaseCommand(
+  saveId: string,
+  store?: SaveGameStore,
+): Promise<OwnerCommandResult> {
+  const saveStore = getStore(store);
+  const loaded = await saveStore.load(saveId);
+  if (!loaded) {
+    return fail("Save not found.");
+  }
+
+  const preview = previewAdvance(loaded.state);
+  if (!preview.canAdvance) {
+    return fail(preview.blockReason ?? "Cannot advance phase.");
+  }
+
+  const rng = createSeededRng(loaded.state.meta.rngState);
+  try {
+    const advanced = advanceLeaguePhase(loaded.state, rng);
+    const saved = await persistWorkingState(
+      saveId,
+      advanced.state,
+      rng.getState(),
+      saveStore,
+      advanced.events,
+    );
+    return withDashboard(saved);
+  } catch (error) {
+    return fail(error instanceof Error ? error.message : String(error));
+  }
+}
+
+/**
+ * Dismiss a recommended/optional phase task until the end of the current phase.
+ */
+export async function dismissPhaseTask(
+  saveId: string,
+  taskKey: string,
+  store?: SaveGameStore,
+): Promise<OwnerCommandResult> {
+  const saveStore = getStore(store);
+  const loaded = await saveStore.load(saveId);
+  if (!loaded) {
+    return fail("Save not found.");
+  }
+  if (typeof taskKey !== "string" || taskKey.length === 0) {
+    return fail("taskKey is required.");
+  }
+
+  const teamId = loaded.state.user.activeOwnerTeamId;
+  const phaseId = getActivePhaseId(loaded.state);
+  const existing = loaded.state.user.franchisePhaseState?.[teamId] ?? {
+    dismissed: [],
+  };
+  const nextState: GameState = {
+    ...loaded.state,
+    user: {
+      ...loaded.state.user,
+      franchisePhaseState: {
+        ...(loaded.state.user.franchisePhaseState ?? {}),
+        [teamId]: {
+          dismissed: [
+            ...existing.dismissed.filter((entry) => entry.taskKey !== taskKey),
+            {
+              taskKey,
+              dismissedUntil: "phase_end",
+              dismissedAt: loaded.state.world.calendar.currentDate,
+              phaseId,
+            },
+          ],
+        },
+      },
+    },
+  };
+
+  const saved = await persistWorkingState(
+    saveId,
+    nextState,
+    loaded.state.meta.rngState,
+    saveStore,
+    [],
+  );
+  return withDashboard(saved);
 }
 
 /**
@@ -1487,11 +1575,8 @@ export async function letAiHandlePhaseAndAdvance(
     let working = continuity.state;
     const emitted = [...continuity.events];
 
-    if (
-      working.competition.season.phase === "offseason" &&
-      working.competition.season.offseasonStage === "free_agency"
-    ) {
-      const advanced = advanceOffseasonStage(working);
+    if (isInLeaguePhase(working, "offseason.free_agency")) {
+      const advanced = advanceLeaguePhase(working, rng);
       working = advanced.state;
       emitted.push(...advanced.events);
     }
@@ -1546,11 +1631,8 @@ export async function continuePastPhaseAnyway(
 
   const rng = createSeededRng(working.meta.rngState);
   try {
-    if (
-      working.competition.season.phase === "offseason" &&
-      working.competition.season.offseasonStage === "free_agency"
-    ) {
-      const advanced = advanceOffseasonStage(working);
+    if (isInLeaguePhase(working, "offseason.free_agency")) {
+      const advanced = advanceLeaguePhase(working, rng);
       working = advanced.state;
     }
 
@@ -1575,7 +1657,7 @@ export async function continuePastPhaseAnyway(
 
 /**
  * Player-paced Season Review → offseason. Runs one simulation day so
- * season_finalization chains into free_agency exactly once.
+ * season_transition auto-chains into roster_decisions.
  */
 export async function beginOffseason(
   saveId: string,
@@ -1624,10 +1706,7 @@ export async function selectOwnerDraftProspect(
     return fail("Save not found.");
   }
 
-  if (
-    loaded.state.competition.season.phase !== "offseason" ||
-    loaded.state.competition.season.offseasonStage !== "draft"
-  ) {
+  if (!isInLeaguePhase(loaded.state, "offseason.draft")) {
     return fail("Draft selection is only allowed during the draft stage.");
   }
 
@@ -1715,10 +1794,7 @@ export async function makeOwnerFreeAgentOffer(
     return fail("Save not found.");
   }
   const state = loaded.state;
-  if (
-    state.competition.season.phase !== "offseason" ||
-    state.competition.season.offseasonStage !== "free_agency"
-  ) {
+  if (!isInLeaguePhase(state, "offseason.free_agency")) {
     return fail(
       "Free agent offers are only allowed during offseason free agency.",
     );

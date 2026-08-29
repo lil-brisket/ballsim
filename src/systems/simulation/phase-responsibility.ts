@@ -254,7 +254,12 @@ function phaseKeyForResponsibility(state: GameState): string {
     case "free_agency":
       return "free_agency";
     case "draft":
+    case "draft_preparation":
       return "draft";
+    case "roster_decisions":
+    case "contract_expiration":
+      return "offseason";
+    case "staff_development":
     case "league_initialization":
       return "season_transition";
     default:

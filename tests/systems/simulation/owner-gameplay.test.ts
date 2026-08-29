@@ -8,6 +8,7 @@ import { createInitialGameState } from "@/state/create-initial-state";
 import { CBL_GAME_SETTINGS } from "@/domain/game-settings";
 import { asTeamId } from "@/domain/ids";
 import { advanceSimulation } from "@/systems/simulation/advance-simulation";
+import { beginRegularSeasonFromPreseason } from "@/systems/simulation/season-lifecycle";
 import { runOwnerGameplay } from "@/systems/simulation/owner-gameplay";
 import { bootstrapWorld } from "@/systems/world-pipeline";
 import { resetDomainEventSequenceForTests } from "@/domain/events/domain-event";
@@ -27,6 +28,7 @@ describe("owner gameplay integration", () => {
   });
     const rng = createSeededRng(state.meta.rngState);
     state = bootstrapWorld(state, rng).state;
+    state = beginRegularSeasonFromPreseason(state).state;
     const result = advanceSimulation(state, rng, { days: 1 });
     expect(result.state.competition.season.phase).toBe("regular");
     expect(
@@ -117,6 +119,18 @@ describe("owner gameplay integration", () => {
       }),
     );
     expect(getOwnedTeamIds(state)).toEqual([primary, secondary]);
+
+    state = {
+      ...state,
+      user: {
+        ...state.user,
+        franchisePhaseState: {
+          ...state.user.franchisePhaseState,
+          [secondary]: { dismissed: [] },
+        },
+      },
+    };
+    state = beginRegularSeasonFromPreseason(state).state;
 
     const result = advanceSimulation(state, rng, { days: 1 });
     const seasonYear = result.state.competition.season.year;

@@ -15,6 +15,7 @@ vi.mock("@/persistence/save-game-repository", () => ({
 
 import {
   advanceOwnerTime,
+  advanceLeaguePhaseCommand,
   beginOffseason,
   createNewOwnerSave,
   executeOwnerTrade,
@@ -37,9 +38,26 @@ import {
 import { validateGameState } from "@/persistence/validate-game-state";
 import { isUserOnDraftClock } from "@/systems/draft";
 import { listFreeAgents } from "@/systems/free-agency";
+import { getActivePhaseId } from "@/systems/phase-engine";
 import { TEST_RNG_SEED } from "../helpers/determinism";
 
 const LONG_TIMEOUT_MS = 600_000;
+
+async function ensureRegularSeason(
+  saveId: string,
+  store: ReturnType<typeof createMemorySaveGameStore>,
+): Promise<void> {
+  const current = await store.load(saveId);
+  if (!current) {
+    throw new Error("Save missing");
+  }
+  if (getActivePhaseId(current.state) === "preseason.preparation") {
+    const advanced = await advanceLeaguePhaseCommand(saveId, store);
+    if (!advanced.ok) {
+      throw new Error(advanced.error);
+    }
+  }
+}
 
 async function advanceUntilSeasonPhase(
   saveId: string,
@@ -57,6 +75,41 @@ async function advanceUntilSeasonPhase(
       const began = await beginOffseason(saveId, store);
       if (!began.ok) {
         throw new Error(began.error);
+      }
+      continue;
+    }
+    if (current!.dashboard.seasonPhase === "preseason") {
+      await ensureRegularSeason(saveId, store);
+      continue;
+    }
+    const snap = await store.load(saveId);
+    if (snap && isUserOnDraftClock(snap.state)) {
+      const board = (await loadOwnerSaveView(saveId, store))!.draftBoard;
+      const prospect = board?.eligibleProspects[0];
+      if (!prospect) {
+        throw new Error("On draft clock with no prospects");
+      }
+      const drafted = await selectOwnerDraftProspect(
+        saveId,
+        prospect.playerId,
+        store,
+      );
+      if (!drafted.ok) {
+        throw new Error(drafted.error);
+      }
+      continue;
+    }
+    const phaseId = snap ? getActivePhaseId(snap.state) : null;
+    if (
+      phaseId === "offseason.roster_decisions" ||
+      phaseId === "offseason.draft_preparation" ||
+      phaseId === "offseason.draft" ||
+      phaseId === "offseason.free_agency" ||
+      phaseId === "offseason.staff_development"
+    ) {
+      const advanced = await advanceLeaguePhaseCommand(saveId, store);
+      if (!advanced.ok) {
+        throw new Error(advanced.error);
       }
       continue;
     }
@@ -419,6 +472,7 @@ describe("Owner Mode vertical slice", () => {
       expect(midRoundTrip.user.activeOwnerTeamId).toBe(controlledTeamId);
 
       // Advance through preseason → regular
+      await ensureRegularSeason(saveId, store);
       let phaseResult = await advanceOwnerTime(
         saveId,
         { days: 10, stopOnPhaseChange: true },
@@ -445,7 +499,7 @@ describe("Owner Mode vertical slice", () => {
       // Finish playoffs → Season Review (postseason checkpoint)
       await advanceUntilSeasonPhase(saveId, store, "postseason");
 
-      // Begin offseason (player-paced) then continue until free_agency
+      // Begin offseason (player-paced): transition → roster → draft prep → draft
       const began = await beginOffseason(saveId, store);
       expect(began.ok).toBe(true);
       if (!began.ok) {
@@ -454,15 +508,13 @@ describe("Owner Mode vertical slice", () => {
 
       let guard = 0;
       while (guard < 20) {
-        const current = await loadOwnerSave(saveId, store);
+        const current = await store.load(saveId);
         expect(current).not.toBeNull();
-        if (
-          current!.dashboard.seasonPhase === "offseason" &&
-          current!.dashboard.offseasonStage === "free_agency"
-        ) {
+        const phaseId = getActivePhaseId(current!.state);
+        if (phaseId === "offseason.draft") {
           break;
         }
-        if (current!.dashboard.seasonPhase === "postseason") {
+        if (phaseId === "postseason.season_review") {
           const again = await beginOffseason(saveId, store);
           if (!again.ok) {
             throw new Error(again.error);
@@ -470,25 +522,71 @@ describe("Owner Mode vertical slice", () => {
           guard += 1;
           continue;
         }
-        phaseResult = await advanceOwnerTime(
-          saveId,
-          { days: 50, stopOnPhaseChange: true },
-          store,
-        );
-        if (!phaseResult.ok) {
+        const advanced = await advanceLeaguePhaseCommand(saveId, store);
+        if (!advanced.ok) {
           throw new Error(
-            `to free_agency guard=${guard} phase=${current!.dashboard.seasonPhase}/${current!.dashboard.offseasonStage}: ${phaseResult.error}`,
+            `to draft guard=${guard} phase=${phaseId}: ${advanced.error}`,
           );
+        }
+        guard += 1;
+      }
+
+      // Draft: pick whenever on the clock until draft completes / we leave draft
+      guard = 0;
+      while (guard < 40) {
+        const snap = await store.load(saveId);
+        expect(snap).not.toBeNull();
+        const phaseId = getActivePhaseId(snap!.state);
+
+        if (phaseId !== "offseason.draft") {
+          break;
+        }
+
+        if (isUserOnDraftClock(snap!.state)) {
+          const board = (await loadOwnerSaveView(saveId, store))!.draftBoard;
+          expect(board).not.toBeNull();
+          const prospect = board!.eligibleProspects[0];
+          expect(prospect).toBeDefined();
+          const drafted = await selectOwnerDraftProspect(
+            saveId,
+            prospect!.playerId,
+            store,
+          );
+          expect(drafted.ok).toBe(true);
+          if (!drafted.ok) {
+            throw new Error(drafted.error);
+          }
+        } else {
+          const advanced = await advanceOwnerTime(
+            saveId,
+            { days: 5, stopOnPhaseChange: true },
+            store,
+          );
+          if (!advanced.ok) {
+            expect(advanced.error).toMatch(/draft clock/i);
+          }
+        }
+        guard += 1;
+      }
+
+      // Advance draft → free agency
+      guard = 0;
+      while (guard < 10) {
+        const snap = await store.load(saveId);
+        expect(snap).not.toBeNull();
+        if (getActivePhaseId(snap!.state) === "offseason.free_agency") {
+          break;
+        }
+        const advanced = await advanceLeaguePhaseCommand(saveId, store);
+        if (!advanced.ok) {
+          throw new Error(advanced.error);
         }
         guard += 1;
       }
 
       const atFa = await store.load(saveId);
       expect(atFa).not.toBeNull();
-      expect(atFa!.state.competition.season.phase).toBe("offseason");
-      expect(atFa!.state.competition.season.offseasonStage).toBe(
-        "free_agency",
-      );
+      expect(getActivePhaseId(atFa!.state)).toBe("offseason.free_agency");
       const faPool = listFreeAgents(atFa!.state);
       expect(faPool.playerIds.length).toBeGreaterThan(0);
 
@@ -509,55 +607,7 @@ describe("Owner Mode vertical slice", () => {
         throw new Error(finishedFa.error);
       }
 
-      // Draft: pick whenever on the clock until draft/season advances
-      guard = 0;
-      while (guard < 40) {
-        const snap = await store.load(saveId);
-        expect(snap).not.toBeNull();
-        const stage = snap!.state.competition.season.offseasonStage;
-        const phase = snap!.state.competition.season.phase;
-
-        if (phase === "preseason" || phase === "regular") {
-          break;
-        }
-
-        if (stage === "draft" && isUserOnDraftClock(snap!.state)) {
-          const board = (await loadOwnerSaveView(saveId, store))!.draftBoard;
-          expect(board).not.toBeNull();
-          const prospect = board!.eligibleProspects[0];
-          expect(prospect).toBeDefined();
-          const drafted = await selectOwnerDraftProspect(
-            saveId,
-            prospect!.playerId,
-            store,
-          );
-          expect(drafted.ok).toBe(true);
-          if (!drafted.ok) {
-            throw new Error(drafted.error);
-          }
-        } else if (stage === "draft") {
-          const advanced = await advanceOwnerTime(
-            saveId,
-            { days: 5, stopOnPhaseChange: true },
-            store,
-          );
-          if (!advanced.ok) {
-            // On the clock mid-loop
-            expect(advanced.error).toMatch(/draft clock/i);
-            break;
-          }
-        } else {
-          const advanced = await advanceOwnerTime(
-            saveId,
-            { days: 10, stopOnPhaseChange: true },
-            store,
-          );
-          expect(advanced.ok).toBe(true);
-        }
-        guard += 1;
-      }
-
-      // Ensure we reached Season 2
+      // Advance staff → preseason (season 2)
       guard = 0;
       while (guard < 30) {
         const snap = await store.load(saveId);
@@ -575,15 +625,27 @@ describe("Owner Mode vertical slice", () => {
           );
           expect(drafted.ok).toBe(true);
         } else {
-          const advanced = await advanceOwnerTime(
-            saveId,
-            { days: 20, stopOnPhaseChange: true },
-            store,
-          );
-          if (!advanced.ok && /draft clock/i.test(advanced.error)) {
-            continue;
+          const phaseId = getActivePhaseId(snap!.state);
+          if (
+            phaseId === "offseason.staff_development" ||
+            phaseId === "offseason.free_agency" ||
+            phaseId === "preseason.preparation"
+          ) {
+            const advanced = await advanceLeaguePhaseCommand(saveId, store);
+            if (!advanced.ok) {
+              throw new Error(advanced.error);
+            }
+          } else {
+            const advanced = await advanceOwnerTime(
+              saveId,
+              { days: 20, stopOnPhaseChange: true },
+              store,
+            );
+            if (!advanced.ok && /draft clock/i.test(advanced.error)) {
+              continue;
+            }
+            expect(advanced.ok).toBe(true);
           }
-          expect(advanced.ok).toBe(true);
         }
         guard += 1;
       }
@@ -636,6 +698,7 @@ describe("Owner Mode vertical slice", () => {
         );
         expect(selected.ok).toBe(true);
 
+        await ensureRegularSeason(created.save.id, store);
         let result = await advanceOwnerTime(
           created.save.id,
           { days: 10, stopOnPhaseChange: true },

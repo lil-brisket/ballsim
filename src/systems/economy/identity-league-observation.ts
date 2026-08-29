@@ -18,7 +18,7 @@ import {
 import { draftClassIdFor } from "@/domain/entities/draft";
 import { draftYearForSeason } from "@/systems/draft";
 import { runAiTeamDecisions } from "@/systems/ai-team-decisions";
-import { advanceOffseasonStage } from "@/systems/simulation/offseason-lifecycle";
+import { tryAdvanceUserManagedPhase } from "@/systems/phase-engine";
 import { enterOffseasonFromPostseason } from "@/systems/simulation/season-lifecycle";
 import {
   assertIdentityAxesUnchanged,
@@ -89,7 +89,7 @@ function resolveOffseason(state: GameState, rng: Rng): GameState {
     current = persistRng(enterOffseasonFromPostseason(current).state, rng);
   }
   let guard = 0;
-  while (guard < 80) {
+  while (guard < 120) {
     guard += 1;
     if (current.competition.season.phase === "preseason") {
       return current;
@@ -98,11 +98,9 @@ function resolveOffseason(state: GameState, rng: Rng): GameState {
       current = persistRng(enterOffseasonFromPostseason(current).state, rng);
       continue;
     }
-    if (
-      current.competition.season.phase === "offseason" &&
-      current.competition.season.offseasonStage === "free_agency"
-    ) {
-      current = persistRng(advanceOffseasonStage(current).state, rng);
+    const phaseAdvanced = tryAdvanceUserManagedPhase(current, rng);
+    if (phaseAdvanced) {
+      current = persistRng(phaseAdvanced, rng);
       continue;
     }
     if (isUserOnDraftClock(current)) {

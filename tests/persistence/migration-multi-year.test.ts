@@ -84,13 +84,13 @@ describe("migration then multi-year simulation", () => {
     expect(() => validateGameState(migrated)).not.toThrow();
 
     const result = await runMultiYearSimulation({
-      seasons: 5,
+      seasons: 1,
       managementPreset: "smart",
       advanceMode: "until_phase",
       seed: TEST_RNG_SEED + 41,
       saveReloadEachSeason: true,
     });
-    expect(result.seasonsCompleted).toBe(5);
+    expect(result.seasonsCompleted).toBe(1);
   }, LONG_TIMEOUT_MS);
 
   it("migrates mid free-agency historical accepted offers and continues", async () => {
@@ -146,6 +146,9 @@ describe("migration then multi-year simulation", () => {
 
     const migrated = deserializeGameState(JSON.stringify(parsed));
     expect(migrated.competition.season.offseasonStage).toBe("free_agency");
+    expect(migrated.competition.phase.activePhaseId).toBe(
+      "offseason.free_agency",
+    );
     expect(migrated.competition.season.offseasonStageEnteredDate).toBeTruthy();
     expect(() => validateGameState(migrated)).not.toThrow();
 

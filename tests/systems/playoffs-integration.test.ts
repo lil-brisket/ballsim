@@ -168,6 +168,10 @@ function createEightTeamGameState(rngSeed: number): {
         offseasonStageEnteredDate: null,
         freeAgencyExtendedUntil: null,
       },
+      phase: {
+        activePhaseId: "preseason.preparation",
+        enteredDate: "2026-10-01",
+      },
       schedule: {
         seasonId,
         gameIds: [],
@@ -202,6 +206,9 @@ function createEightTeamGameState(rngSeed: number): {
       mode: "owner",
       pendingOwnerDecisions: [],
       ownerDecisionHistory: [],
+      franchisePhaseState: {
+        [controlledTeamId]: { dismissed: [] },
+      },
     },
   };
 

@@ -32,8 +32,7 @@ export default async function FreeAgencyPage({
 
   const returnPath = `/dashboard/${saveId}/free-agency`;
   const active =
-    view.dashboard.seasonPhase === "offseason" &&
-    view.dashboard.offseasonStage === "free_agency";
+    view.phaseDashboard.resolved.phaseId === "offseason.free_agency";
 
   return (
     <>
