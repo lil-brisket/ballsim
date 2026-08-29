@@ -25,15 +25,17 @@ describe("GameSetupForm", () => {
     unmount();
   });
 
-  it("reveals fantasy draft position and randomizer controls", () => {
+  it("shows fantasy draft deferred-setup message", () => {
     const { unmount } = render(<GameSetupForm atSaveLimit={false} />);
 
     fireEvent.change(screen.getByLabelText("Startup draft"), {
       target: { value: "1" },
     });
 
-    expect(screen.getByLabelText("Your draft position")).toBeTruthy();
-    expect(screen.getByLabelText("Randomize my draft position")).toBeTruthy();
+    expect(
+      screen.getByText(/configured after you choose your franchises/i),
+    ).toBeTruthy();
+    expect(screen.queryByLabelText("Your draft position")).toBeNull();
     unmount();
   });
 

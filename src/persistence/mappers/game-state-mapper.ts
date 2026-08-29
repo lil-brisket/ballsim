@@ -186,6 +186,7 @@ const MIGRATE_ONE_STEP: Record<number, (state: unknown) => unknown> = {
   44: (state) => migrateV44ToV45(state as GameStateV44),
   45: (state) => migrateV45ToV46(state as GameStateV45),
   46: (state) => migrateV46ToV47(state as GameStateV46),
+  47: (state) => migrateV47ToV48(state as GameStateV47),
 };
 
 function legacyUserRecord(user: unknown): Record<string, unknown> {
@@ -2170,7 +2171,7 @@ function migrateV23ToV24(state: GameStateV23): GameStateV24 {
       ...phaseE,
     },
     user: state.user,
-  };
+  } as unknown as GameStateV24;
 }
 
 type UserSlicePreV26 = {
@@ -4091,6 +4092,54 @@ function migrateV46ToV47(state: GameStateV46): GameState {
     world: {
       ...(state as unknown as GameState).world,
       teams,
+    },
+  };
+}
+
+type GameStateV47 = Omit<GameState, "meta" | "world" | "settings"> & {
+  meta: Omit<GameState["meta"], "schemaVersion"> & { schemaVersion: 47 };
+  world: Omit<GameState["world"], "fantasyDraft">;
+  settings: Omit<GameState["settings"], "draft"> & {
+    draft: {
+      mode: "standard" | "fantasy";
+      userPickPosition: number | null;
+      randomizeUserPick: boolean;
+      type?: "snake" | "linear";
+      timerSeconds?: number | null;
+      orderMode?: "random" | "manual";
+    };
+  };
+};
+
+/**
+ * Deterministic v47 → v48: add world.fantasyDraft (null) and expand draft settings.
+ * Emits literal schemaVersion 48. No RNG.
+ */
+function migrateV47ToV48(state: GameStateV47): GameState {
+  const legacyDraft = state.settings.draft;
+  const orderMode =
+    legacyDraft.orderMode ??
+    (legacyDraft.randomizeUserPick ? "random" : "manual");
+  return {
+    ...(state as unknown as GameState),
+    meta: {
+      ...(state as unknown as GameState).meta,
+      schemaVersion: 48,
+    },
+    settings: {
+      ...state.settings,
+      draft: {
+        mode: legacyDraft.mode,
+        type: legacyDraft.type ?? "snake",
+        timerSeconds: legacyDraft.timerSeconds ?? null,
+        orderMode,
+        userPickPosition: legacyDraft.userPickPosition ?? null,
+        randomizeUserPick: legacyDraft.randomizeUserPick ?? false,
+      },
+    },
+    world: {
+      ...(state as unknown as GameState).world,
+      fantasyDraft: null,
     },
   };
 }

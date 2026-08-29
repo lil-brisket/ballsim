@@ -4,9 +4,9 @@ import type { RosterRulesConfigInput } from "@/systems/roster-rules";
 /** Default roster bounds for trade validation (signing/waiving/trades). */
 export const TRADE_ROSTER_RULES: RosterRulesConfigInput = {
   minRosterSize: 8,
-  maxRosterSize: 12,
+  maxRosterSize: 15,
   startingLineupSize: 5,
-  benchSize: 4,
+  benchSize: 9,
   inactiveSize: 1,
   allowedPositions: [...PLAYER_POSITIONS],
 };

@@ -156,10 +156,8 @@ export function GameSetupForm({
           <ReviewRow label="Draft" value={settings.draft.mode} />
           {settings.draft.mode === "fantasy" ? (
             <ReviewRow
-              label="Fantasy pick"
-              value={settings.draft.randomizeUserPick
-                ? "Randomized"
-                : String(settings.draft.userPickPosition ?? "Not selected")}
+              label="Fantasy setup"
+              value="Configured after franchise selection"
             />
           ) : null}
           <ReviewRow
@@ -413,40 +411,20 @@ export function GameSetupForm({
                   draft: {
                     ...settings.draft,
                     mode: value === 0 ? "standard" : "fantasy",
-                    userPickPosition:
-                      value === 0 ? null : settings.draft.userPickPosition ?? 1,
-                    randomizeUserPick: value === 0 ? false : settings.draft.randomizeUserPick,
+                    type: settings.draft.type ?? "snake",
+                    timerSeconds: settings.draft.timerSeconds ?? null,
+                    orderMode: settings.draft.orderMode ?? "random",
+                    userPickPosition: null,
+                    randomizeUserPick: false,
                   },
                 })
               }
             />
             {settings.draft.mode === "fantasy" ? (
-              <>
-                <SelectField
-                  label="Your draft position"
-                  value={settings.draft.userPickPosition ?? 1}
-                  options={Array.from({ length: settings.league.teamCount }, (_, index) => ({
-                    value: index + 1,
-                    label: `Pick ${index + 1}`,
-                  }))}
-                  onChange={(value) =>
-                    updateSettings({
-                      ...settings,
-                      draft: { ...settings.draft, userPickPosition: value },
-                    })
-                  }
-                />
-                <ToggleField
-                  label="Randomize my draft position"
-                  checked={settings.draft.randomizeUserPick}
-                  onChange={(checked) =>
-                    updateSettings({
-                      ...settings,
-                      draft: { ...settings.draft, randomizeUserPick: checked },
-                    })
-                  }
-                />
-              </>
+              <p className="text-sm text-zinc-400">
+                Draft order, timer, and snake/linear settings are configured after
+                you choose your franchises.
+              </p>
             ) : null}
           </Section>
 

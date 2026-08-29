@@ -21,6 +21,8 @@ export default async function OwnerLayout({
   const route = resolveOnboardingRoute(saveId, {
     citySelectionConfirmed: loaded.dashboard.citySelectionConfirmed,
     franchiseIdentityConfirmed: loaded.dashboard.franchiseIdentityConfirmed,
+    fantasyDraftMode: loaded.dashboard.fantasyDraftMode,
+    fantasyDraftStatus: loaded.dashboard.fantasyDraftStatus,
   });
   if (route.kind !== "dashboard") {
     redirect(route.path);

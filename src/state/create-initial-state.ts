@@ -194,6 +194,7 @@ export function createInitialGameState(
       staff: {},
       draftPicks: {},
       drafts: {},
+      fantasyDraft: null,
       scheduledEvents: {},
     },
     competition: {
@@ -394,6 +395,9 @@ export function createFourTeamInitialGameState(
     },
     draft: {
       mode: "standard",
+      type: "snake",
+      timerSeconds: null,
+      orderMode: "random",
       userPickPosition: null,
       randomizeUserPick: false,
     },
@@ -474,6 +478,7 @@ export function createFourTeamInitialGameState(
       staff: {},
       draftPicks: {},
       drafts: {},
+      fantasyDraft: null,
       scheduledEvents: {},
     },
     competition: {

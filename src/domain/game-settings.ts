@@ -156,6 +156,8 @@ export const LEAGUE_AREA_OPTIONS: readonly LeagueArea[] = [
   "global",
 ] as const;
 export type DraftMode = "standard" | "fantasy";
+export type FantasyDraftSettingsType = "snake" | "linear";
+export type FantasyDraftOrderModeSetting = "random" | "manual";
 export type LeagueHistoryMode = "new" | "generated";
 
 /** @deprecated Use MANAGEMENT_PHASE_KEYS. */
@@ -268,7 +270,12 @@ export type GameSettings = {
   };
   draft: {
     mode: DraftMode;
+    type: FantasyDraftSettingsType;
+    timerSeconds: number | null;
+    orderMode: FantasyDraftOrderModeSetting;
+    /** @deprecated Prefer orderMode; kept for migration. */
     userPickPosition: number | null;
+    /** @deprecated Prefer orderMode; kept for migration. */
     randomizeUserPick: boolean;
   };
   history: {
@@ -337,6 +344,9 @@ export const DEFAULT_GAME_SETTINGS: GameSettings = {
   },
   draft: {
     mode: "standard",
+    type: "snake",
+    timerSeconds: null,
+    orderMode: "random",
     userPickPosition: null,
     randomizeUserPick: false,
   },
@@ -386,6 +396,9 @@ export const CBL_GAME_SETTINGS: GameSettings = {
   },
   draft: {
     mode: "standard",
+    type: "snake",
+    timerSeconds: null,
+    orderMode: "random",
     userPickPosition: null,
     randomizeUserPick: false,
   },
@@ -500,6 +513,18 @@ export function isDraftMode(value: unknown): value is DraftMode {
   return value === "standard" || value === "fantasy";
 }
 
+export function isFantasyDraftSettingsType(
+  value: unknown,
+): value is FantasyDraftSettingsType {
+  return value === "snake" || value === "linear";
+}
+
+export function isFantasyDraftOrderModeSetting(
+  value: unknown,
+): value is FantasyDraftOrderModeSetting {
+  return value === "random" || value === "manual";
+}
+
 export function isLeagueHistoryMode(
   value: unknown,
 ): value is LeagueHistoryMode {
@@ -559,7 +584,14 @@ export function cloneGameSettings(settings: GameSettings): GameSettings {
       assistance: { ...settings.ai.assistance },
     },
     financialRules: { ...settings.financialRules },
-    draft: { ...settings.draft },
+    draft: {
+      mode: settings.draft.mode,
+      type: settings.draft.type ?? "snake",
+      timerSeconds: settings.draft.timerSeconds ?? null,
+      orderMode: settings.draft.orderMode ?? "random",
+      userPickPosition: settings.draft.userPickPosition,
+      randomizeUserPick: settings.draft.randomizeUserPick,
+    },
     history: { ...settings.history },
     offseason: {
       freeAgency: { ...settings.offseason.freeAgency },

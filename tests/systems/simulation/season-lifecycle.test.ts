@@ -207,6 +207,7 @@ describe("season lifecycle", () => {
         staff: {},
         draftPicks: {},
         drafts: {},
+        fantasyDraft: null,
         scheduledEvents: {},
       },
       competition: {

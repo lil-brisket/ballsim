@@ -20,6 +20,8 @@ export default async function TeamPickPage({ params }: TeamPickPageProps) {
   const route = resolveOnboardingRoute(saveId, {
     citySelectionConfirmed: view.dashboard.citySelectionConfirmed,
     franchiseIdentityConfirmed: view.dashboard.franchiseIdentityConfirmed,
+    fantasyDraftMode: view.dashboard.fantasyDraftMode,
+    fantasyDraftStatus: view.dashboard.fantasyDraftStatus,
   });
   if (route.kind !== "city") {
     redirect(route.path);
