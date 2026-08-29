@@ -29,6 +29,10 @@ import {
   validatePlannedMinutes,
   type RotationFeedback,
 } from "@/systems/roster-management";
+import {
+  formatFeasibilityBanner,
+  validateRotationFeasibility,
+} from "@/systems/rotation/rotation-feasibility";
 import { toEventLogEntry, type EventLogEntryView } from "@/state/selectors";
 
 export type LineupPlayerCardView = {
@@ -62,12 +66,29 @@ export type RotationRowView = {
   firstName: string;
   lastName: string;
   position: PlayerPosition;
-  role: "starter" | "bench" | "inactive";
+  /** Display role including inactive group membership. */
+  role: string;
+  rotationRole: string;
+  rotationStatus: string;
   plannedMinutes: number;
+  targetMinutes: number;
+  minimumMinutes: number;
+  normalMaximumMinutes: number;
+  absoluteMaximumMinutes: number;
+  rotationPriority: number;
+  minutePriorityBias: number;
   actualMinutes: number;
   eligiblePositions: PlayerPosition[];
+  preferredPositions: PlayerPosition[];
+  secondaryPositions: PlayerPosition[];
   availabilityLabel: string;
   available: boolean;
+};
+
+export type RotationPreviewBand = {
+  label: string;
+  minMinutes: number;
+  maxMinutes: number;
 };
 
 export type RotationView = {
@@ -79,6 +100,13 @@ export type RotationView = {
   plannedValid: boolean;
   feedback: RotationFeedback[];
   rotationStyle: string;
+  rotationPhilosophy: string;
+  rotationDepth: number;
+  rotationPreset: string;
+  closingLineupPolicy: string;
+  closingLineupIds: PlayerId[];
+  feasibilityBanner: string | null;
+  previewBands: RotationPreviewBand[];
 };
 
 export type CoachingView = {
@@ -161,7 +189,7 @@ function playerCard(
     position: player.position,
     overall: calculatePlayerOverall(player.position, player.attributes),
     archetypeLabel: ARCHETYPE_LABELS[player.archetype] ?? player.archetype,
-    plannedMinutes: role === "inactive" ? 0 : (rotation?.plannedMinutes ?? 0),
+    plannedMinutes: role === "inactive" ? 0 : (rotation?.targetMinutes ?? 0),
     availabilityLabel: availability.label,
     available: availability.available,
     unavailableReason: availability.reason,
@@ -226,6 +254,7 @@ export function toRotationView(state: GameState): RotationView {
   const team = getControlledTeam(state);
   const management = team.rosterManagement;
   const minutes = validatePlannedMinutes(management);
+  const feasibility = validateRotationFeasibility(management);
   const starterIds = new Set(
     management.startingLineup.map((slot) => slot.playerId),
   );
@@ -244,20 +273,32 @@ export function toRotationView(state: GameState): RotationView {
       (entry) => entry.playerId === playerId,
     );
     const availability = getPlayerAvailability(state, playerId, team.id);
-    const role = management.inactive.includes(playerId)
+    const groupRole = management.inactive.includes(playerId)
       ? "inactive"
       : starterIds.has(playerId)
         ? "starter"
         : "bench";
+    const targetMinutes =
+      groupRole === "inactive" ? 0 : (rotation?.targetMinutes ?? 0);
     rows.push({
       playerId,
       firstName: player.firstName,
       lastName: player.lastName,
       position: player.position,
-      role,
-      plannedMinutes: role === "inactive" ? 0 : (rotation?.plannedMinutes ?? 0),
+      role: groupRole,
+      rotationRole: rotation?.role ?? groupRole,
+      rotationStatus: rotation?.rotationStatus ?? "inactive",
+      plannedMinutes: targetMinutes,
+      targetMinutes,
+      minimumMinutes: rotation?.minimumMinutes ?? 0,
+      normalMaximumMinutes: rotation?.normalMaximumMinutes ?? 0,
+      absoluteMaximumMinutes: rotation?.absoluteMaximumMinutes ?? 0,
+      rotationPriority: rotation?.rotationPriority ?? 5,
+      minutePriorityBias: rotation?.minutePriorityBias ?? 0,
       actualMinutes: seasonActualMinutes(state, team.id, playerId),
-      eligiblePositions: rotation?.eligiblePositions ?? [player.position],
+      eligiblePositions: rotation?.preferredPositions ?? [player.position],
+      preferredPositions: rotation?.preferredPositions ?? [player.position],
+      secondaryPositions: rotation?.secondaryPositions ?? [],
       availabilityLabel: availability.label,
       available: availability.available,
     });
@@ -272,7 +313,47 @@ export function toRotationView(state: GameState): RotationView {
     plannedValid: minutes.valid,
     feedback: getRotationFeedback(state, team.id, management),
     rotationStyle: management.rotationStyle,
+    rotationPhilosophy: management.rotationPhilosophy,
+    rotationDepth: management.rotationDepth,
+    rotationPreset: management.rotationPreset,
+    closingLineupPolicy: management.closingLineupPolicy,
+    closingLineupIds: [...management.closingLineupIds],
+    feasibilityBanner: formatFeasibilityBanner(feasibility),
+    previewBands: buildPreviewBands(rows),
   };
+}
+
+function buildPreviewBands(rows: RotationRowView[]): RotationPreviewBand[] {
+  const groups: Array<{
+    label: string;
+    match: (row: RotationRowView) => boolean;
+  }> = [
+    { label: "Starters", match: (row) => row.rotationRole === "starter" },
+    { label: "Sixth Man", match: (row) => row.rotationRole === "sixth_man" },
+    { label: "Rotation", match: (row) => row.rotationRole === "rotation" },
+    { label: "Bench", match: (row) => row.rotationRole === "bench" },
+    {
+      label: "Deep Bench",
+      match: (row) =>
+        row.rotationRole === "deep_bench" || row.rotationRole === "emergency",
+    },
+  ];
+  return groups
+    .map((group) => {
+      const matched = rows.filter(
+        (row) => row.role !== "inactive" && group.match(row),
+      );
+      if (matched.length === 0) {
+        return null;
+      }
+      const targets = matched.map((row) => row.targetMinutes);
+      return {
+        label: group.label,
+        minMinutes: Math.min(...targets),
+        maxMinutes: Math.max(...targets),
+      };
+    })
+    .filter((band): band is RotationPreviewBand => band != null);
 }
 
 export function toCoachingView(state: GameState): CoachingView {

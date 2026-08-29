@@ -64,9 +64,16 @@ import {
 import type { SimulationProfiler } from "@/systems/simulation/simulation-profiler";
 import { getEmergencyLineup } from "@/systems/roster-management";
 import {
-  applyRotationSubstitutions,
-  type RotationSimSide,
-} from "@/systems/rotation-simulation";
+  accumulateOnCourtTime,
+  averageOnCourtFatigue,
+  finalizeRotationExplanations,
+  initializeRotationForSim,
+  maybeRunRotationWindow,
+  runSubstitutionCheckpoint,
+  syncFoulOutsFromStats,
+} from "@/systems/rotation/sim-bridge";
+import { ROTATION_CONFIG } from "@/systems/rotation/rotation-config";
+import { assertTeamSecondsOnCourt } from "@/systems/rotation/rotation-invariants";
 
 export type SimulateGameContext = {
   homePlayers: readonly Player[];
@@ -159,6 +166,12 @@ export function simulateGame(
     homeOnCourt,
     awayOnCourt,
   });
+  initializeRotationForSim(
+    sim,
+    context.gameState,
+    context.homePlayers,
+    context.awayPlayers,
+  );
 
   let offensiveTeamId: TeamId = rng.chance(0.5)
     ? game.homeTeamId
@@ -177,7 +190,18 @@ export function simulateGame(
         periodNumber: period + 1,
         remainingSeconds: config.regulationPeriodSeconds,
       };
-      maybeApplyPeriodSubstitutions(sim, context, period);
+      sim.windowsFiredThisPeriod = new Set();
+      const checkpoint =
+        period === 2 ? ("halftime" as const) : ("period_start" as const);
+      runSubstitutionCheckpoint(
+        sim,
+        context.gameState,
+        checkpoint,
+        period + 1,
+        config.regulationPeriodSeconds,
+        context.homePlayers,
+        context.awayPlayers,
+      );
     }
     const periodResult = simulatePeriod({
       sim,
@@ -208,7 +232,18 @@ export function simulateGame(
   let overtimePeriodCount = 0;
   while (sim.homeScore === sim.awayScore) {
     overtimePeriodCount += 1;
+    sim.overtimePeriodCount = overtimePeriodCount;
     clock = resetPeriodClock(clock, config.overtimePeriodSeconds);
+    sim.windowsFiredThisPeriod = new Set();
+    runSubstitutionCheckpoint(
+      sim,
+      context.gameState,
+      "period_start",
+      config.regulationPeriodCount + overtimePeriodCount,
+      config.overtimePeriodSeconds,
+      context.homePlayers,
+      context.awayPlayers,
+    );
     const periodResult = simulatePeriod({
       sim,
       clock,
@@ -236,10 +271,29 @@ export function simulateGame(
   }
 
   finalizeMinutesOnSimState(sim);
+  finalizeRotationExplanations(sim);
 
   const homePlayerIds = new Set(context.homePlayers.map((player) => player.id));
   const awayPlayerIds = new Set(context.awayPlayers.map((player) => player.id));
   assertGameSimStatsConservation(sim, homePlayerIds, awayPlayerIds);
+
+  // Minute accounting: secondsOnCourt is authoritative — never rewrite minutes.
+  if (context.gameState != null) {
+    assertTeamSecondsOnCourt({
+      teamLabel: "home",
+      secondsByPlayerId: sim.secondsOnCourt,
+      teamPlayerIds: [...homePlayerIds],
+      overtimePeriods: overtimePeriodCount,
+      toleranceSeconds: 5,
+    });
+    assertTeamSecondsOnCourt({
+      teamLabel: "away",
+      secondsByPlayerId: sim.secondsOnCourt,
+      teamPlayerIds: [...awayPlayerIds],
+      overtimePeriods: overtimePeriodCount,
+      toleranceSeconds: 5,
+    });
+  }
 
   const validationStart = performance.now();
   const finalizedGame = finalizeGameSimState(sim, "final");
@@ -273,6 +327,7 @@ export function simulateGame(
       away: aggregateTeamStats(finalizedGame.awayTeamId, awayPlayerStats),
     },
     events: finalizedGame.events.map((event) => ({ ...event })),
+    rotationMeta: finalizedGame.rotationMeta,
   });
 
   const totalMs = performance.now() - totalStart;
@@ -492,6 +547,7 @@ export function buildFinalizedGame(
     playerStats,
     homeTeamSnapshot: homeSnapshot,
     awayTeamSnapshot: awaySnapshot,
+    rotationMeta: result.rotationMeta,
   });
 
   assertCompletedGameBoxScore(finalGame);
@@ -602,7 +658,7 @@ function simulatePeriod(args: {
         defensiveTeamFoulsBefore: defensiveFoulsBefore,
         decision,
         eventSequenceStart: sim.eventSequenceStart,
-        fatigue: 0,
+        fatigue: averageOnCourtFatigue(sim, offensivePlayers),
         defensivePressureMultiplier:
           tactical.defensiveModifiers.defensivePressureMultiplier,
       },
@@ -625,6 +681,19 @@ function simulatePeriod(args: {
       teamFouls.away = resolution.defensiveTeamFoulsAfter;
     }
 
+    const newlyFouledOut = syncFoulOutsFromStats(sim);
+    if (newlyFouledOut.length > 0) {
+      runSubstitutionCheckpoint(
+        sim,
+        args.context.gameState,
+        "foul_out",
+        clock.periodNumber,
+        clock.remainingSeconds,
+        args.context.homePlayers,
+        args.context.awayPlayers,
+      );
+    }
+
     const requestedSeconds = requestPossessionSeconds(
       resolution,
       args.config,
@@ -633,11 +702,35 @@ function simulatePeriod(args: {
     );
     const consumed = consumeTime(clock, requestedSeconds);
     clock = consumed.clock;
-    addSecondsToOnCourtPlayers(
-      sim.secondsOnCourt,
-      sim.homeOnCourt,
-      sim.awayOnCourt,
-      consumed.elapsedSeconds,
+    accumulateOnCourtTime(sim, consumed.elapsedSeconds);
+
+    // Blowout relief late in regulation
+    if (
+      clock.periodNumber >= args.config.regulationPeriodCount &&
+      Math.abs(sim.homeScore - sim.awayScore) >= ROTATION_CONFIG.blowoutMargin
+    ) {
+      const blowoutKey = `blowout:${clock.periodNumber}`;
+      if (!sim.windowsFiredThisPeriod.has(blowoutKey)) {
+        sim.windowsFiredThisPeriod.add(blowoutKey);
+        runSubstitutionCheckpoint(
+          sim,
+          args.context.gameState,
+          "blowout_relief",
+          clock.periodNumber,
+          clock.remainingSeconds,
+          args.context.homePlayers,
+          args.context.awayPlayers,
+        );
+      }
+    }
+
+    maybeRunRotationWindow(
+      sim,
+      args.context.gameState,
+      clock.periodNumber,
+      clock.remainingSeconds,
+      args.context.homePlayers,
+      args.context.awayPlayers,
     );
 
     if (resolution.nextPossession.offensiveTeamId !== offensiveTeamId) {
@@ -717,70 +810,6 @@ function philosophyForTeam(
     return context.awayCoachingPhilosophy ?? DEFAULT_COACHING_PHILOSOPHY;
   }
   return DEFAULT_COACHING_PHILOSOPHY;
-}
-
-function maybeApplyPeriodSubstitutions(
-  sim: GameSimState,
-  context: SimulateGameContext,
-  periodIndex: number,
-): void {
-  const state = context.gameState;
-  if (state == null) {
-    return;
-  }
-
-  const elapsedGameSeconds =
-    periodIndex * GAME_SIMULATION_CONFIG.regulationPeriodSeconds;
-
-  const homeResult = applyRotationSubstitutions({
-    state,
-    side: {
-      teamId: sim.homeTeamId,
-      onCourt: [...sim.homeOnCourt],
-      slots: sim.homeOnCourt.map((player) => player.position),
-    },
-    secondsOnCourt: sim.secondsOnCourt,
-    elapsedGameSeconds,
-  });
-  if (homeResult.substituted) {
-    sim.homeOnCourt = homeResult.onCourt;
-    if (homeResult.playerOutId && homeResult.playerInId) {
-      sim.events.push({
-        sequence: sim.events.length + 1,
-        type: "substitution",
-        teamId: sim.homeTeamId,
-        playerId: homeResult.playerInId,
-      });
-      if (!sim.secondsOnCourt.has(homeResult.playerInId)) {
-        sim.secondsOnCourt.set(homeResult.playerInId, 0);
-      }
-    }
-  }
-
-  const awayResult = applyRotationSubstitutions({
-    state,
-    side: {
-      teamId: sim.awayTeamId,
-      onCourt: [...sim.awayOnCourt],
-      slots: sim.awayOnCourt.map((player) => player.position),
-    },
-    secondsOnCourt: sim.secondsOnCourt,
-    elapsedGameSeconds,
-  });
-  if (awayResult.substituted) {
-    sim.awayOnCourt = awayResult.onCourt;
-    if (awayResult.playerOutId && awayResult.playerInId) {
-      sim.events.push({
-        sequence: sim.events.length + 1,
-        type: "substitution",
-        teamId: sim.awayTeamId,
-        playerId: awayResult.playerInId,
-      });
-      if (!sim.secondsOnCourt.has(awayResult.playerInId)) {
-        sim.secondsOnCourt.set(awayResult.playerInId, 0);
-      }
-    }
-  }
 }
 
 function addSecondsToOnCourtPlayers(

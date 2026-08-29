@@ -112,6 +112,40 @@ export type Game = {
   homeTeamSnapshot: GameTeamSnapshot | null;
   /** Populated at finalization; null while scheduled/in_progress or legacy. */
   awayTeamSnapshot: GameTeamSnapshot | null;
+  /**
+   * Frozen rotation settings + trace from tip-off. Null/undefined for legacy / scheduled games.
+   * Immune to later team rotation setting changes.
+   */
+  rotationMeta?: GameRotationMeta | null;
+};
+
+/** Per-player target snapshot used for post-game minutes vs target. */
+export type GameRotationPlayerSnapshot = {
+  playerId: PlayerId;
+  targetMinutes: number;
+  minimumMinutes: number;
+  normalMaximumMinutes: number;
+  absoluteMaximumMinutes: number;
+  role: string;
+};
+
+export type GameRotationTraceEntry = {
+  sequence: number;
+  periodNumber: number;
+  secondsRemaining: number;
+  teamId: string;
+  playerOutId: PlayerId | null;
+  playerInId: PlayerId | null;
+  reason: string;
+  detail?: string;
+  forced: boolean;
+};
+
+export type GameRotationMeta = {
+  home: GameRotationPlayerSnapshot[];
+  away: GameRotationPlayerSnapshot[];
+  trace: GameRotationTraceEntry[];
+  explanations: Record<string, string[]>;
 };
 
 /** Unvalidated construction payload for {@link createGame}. */
@@ -129,6 +163,7 @@ export type GameInput = {
   playerStats: GamePlayerStats[];
   homeTeamSnapshot: GameTeamSnapshot | null;
   awayTeamSnapshot: GameTeamSnapshot | null;
+  rotationMeta?: GameRotationMeta | null;
 };
 
 /**
@@ -187,6 +222,7 @@ export function createGame(input: GameInput): Game {
     awayTeamSnapshot: input.awayTeamSnapshot
       ? { ...input.awayTeamSnapshot }
       : null,
+    rotationMeta: input.rotationMeta ?? null,
   };
 }
 

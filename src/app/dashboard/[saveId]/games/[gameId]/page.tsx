@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { loadOwnerGameBoxScoreView } from "@/application/game-service";
 import { GameBoxScore } from "@/components/owner/GameBoxScore";
+import { GameRotationPanel } from "@/components/owner/GameRotationPanel";
 import { PageHeader } from "@/components/owner/PageHeader";
 
 type GamePageProps = {
@@ -32,6 +33,15 @@ export default async function GameBoxScorePage({ params }: GamePageProps) {
         }
       />
       <GameBoxScore boxScore={boxScore} />
+      {boxScore.rotation ? (
+        <div className="mt-8">
+          <GameRotationPanel
+            rotation={boxScore.rotation}
+            homeAbbreviation={boxScore.home.abbreviation}
+            awayAbbreviation={boxScore.away.abbreviation}
+          />
+        </div>
+      ) : null}
     </>
   );
 }

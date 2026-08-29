@@ -149,7 +149,7 @@ describe("roster-management", () => {
     const management = recommendRosterManagement(state, teamId);
     management.rotation = management.rotation.map((entry, index) => ({
       ...entry,
-      plannedMinutes: index === 0 ? 50 : entry.plannedMinutes,
+      targetMinutes: index === 0 ? 50 : entry.targetMinutes,
     }));
     const validation = validatePlannedMinutes(management);
     expect(validation.valid).toBe(false);
