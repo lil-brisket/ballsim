@@ -26,7 +26,7 @@ export const FRONT_OFFICE_ROLES: readonly StaffRole[] = [
   "general_manager",
   "scout",
   "finance",
-  "marketing",
+  "public_relations",
 ];
 
 export type ManagementNeed = {

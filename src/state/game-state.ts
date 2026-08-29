@@ -33,6 +33,7 @@ import type { Season } from "@/domain/entities/season";
 import type { Sponsorship } from "@/domain/entities/sponsorship";
 import type { Staff } from "@/domain/entities/staff";
 import type { StaffContract } from "@/domain/entities/staff-contract";
+import type { StaffOffer } from "@/domain/entities/staff-offer";
 import type { Standings } from "@/domain/entities/standings";
 import type { Team } from "@/domain/entities/team";
 import type { ScheduledEvent } from "@/domain/entities/scheduled-event";
@@ -49,7 +50,17 @@ import type {
   FranchisePhaseState,
 } from "@/systems/phase-engine/phase-types";
 
-export const GAME_STATE_SCHEMA_VERSION = 49;
+export const GAME_STATE_SCHEMA_VERSION = 50;
+
+/** League personnel market for staff free agency (not a business-finance concept). */
+export type StaffMarketState = {
+  /** Historical offers; resolution changes status, never deletes. */
+  offers: Record<string, StaffOffer>;
+};
+
+export const EMPTY_STAFF_MARKET: StaffMarketState = {
+  offers: {},
+};
 
 /** Bounded recent history for Owner Mode activity / transactions UI. */
 export const EVENT_LOG_MAX = 1_000;
@@ -76,6 +87,8 @@ export type WorldSlice = {
   players: Record<string, Player>;
   coaches: Record<string, Coach>;
   staff: Record<string, Staff>;
+  /** Staff free-agency offers — personnel system, not business finance. */
+  staffMarket: StaffMarketState;
   draftPicks: Record<string, DraftPick>;
   drafts: Record<string, DraftClass>;
   /** Startup fantasy draft; null when league uses standard roster generation. */

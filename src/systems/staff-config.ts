@@ -9,15 +9,16 @@ export const STAFF_BUYOUT_FRACTION = 0.5;
 /** Default contract length when hiring. */
 export const STAFF_DEFAULT_CONTRACT_YEARS = 3;
 
-/** Base annual salaries by role (scaled by quality later). */
+/** Base annual salaries by role (scaled by overall later). */
 export const STAFF_BASE_SALARY_BY_ROLE: Record<string, number> = {
   general_manager: 2_500_000,
   head_coach: 3_000_000,
   assistant_coach: 800_000,
   scout: 600_000,
   trainer: 700_000,
+  medical: 650_000,
   finance: 500_000,
-  marketing: 550_000,
+  public_relations: 550_000,
 };
 
 /** Quality 50 → 1.0 salary multiplier; ±1% per quality point around 50. */

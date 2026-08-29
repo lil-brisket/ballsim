@@ -914,10 +914,10 @@ function scoreOrganizational(
   const staff = toStaffView(state);
   const facilities = toFacilitiesView(state);
 
-  const qualities = staff.roster.map((m) => m.quality);
+  const overalls = staff.roster.map((m) => m.overall);
   const meanQuality =
-    qualities.length > 0
-      ? qualities.reduce((a, b) => a + b, 0) / qualities.length
+    overalls.length > 0
+      ? overalls.reduce((a, b) => a + b, 0) / overalls.length
       : 40;
 
   const filledRoles = new Set(staff.roster.map((m) => m.role));

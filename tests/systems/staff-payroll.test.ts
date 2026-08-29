@@ -1,6 +1,5 @@
 import { describe, expect, it } from "vitest";
 import { createStaffContract } from "@/domain/entities/staff-contract";
-import { createStaff } from "@/domain/entities/staff";
 import { asStaffContractId, asStaffId } from "@/domain/ids";
 import { createSeededRng } from "@/domain/rng";
 import { createInitialGameState } from "@/state/create-initial-state";
@@ -8,6 +7,7 @@ import { CBL_GAME_SETTINGS } from "@/domain/game-settings";
 import { processWeeklyStaffPayroll } from "@/systems/staff";
 import { getTeamStaffPayroll } from "@/systems/staff-budget";
 import { bootstrapWorld } from "@/systems/world-pipeline";
+import { testStaff } from "../helpers/staff";
 
 describe("staff payroll", () => {
   it("processWeeklyStaffPayroll does not drain business funds (commitment limit)", () => {
@@ -31,16 +31,14 @@ describe("staff payroll", () => {
         ...state.world,
         staff: {
           ...state.world.staff,
-          [staffId]: createStaff({
+          [staffId]: testStaff({
             id: staffId,
             teamId,
             firstName: "Pat",
             lastName: "Payroll",
             role: "finance",
-            quality: 60,
+            overall: 60,
             experience: 5,
-            strengths: [],
-            weaknesses: [],
           }),
         },
         teams: {

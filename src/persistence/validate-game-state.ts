@@ -107,6 +107,12 @@ import {
 } from "@/domain/entities/scheduled-event";
 import type { GameState, GameMode } from "@/state/game-state";
 import { GAME_STATE_SCHEMA_VERSION } from "@/state/game-state";
+import {
+  assertStaffShape,
+  isStaffRole,
+  STAFF_ROLES,
+  type Staff,
+} from "@/domain/entities/staff";
 import { validateGameSettings } from "@/domain/game-settings-validation";
 import {
   asContractId,
@@ -306,6 +312,8 @@ export function validateGameState(state: unknown): asserts state is GameState {
   assertRecord(world.players, "world.players");
   assertRecord(world.coaches, "world.coaches");
   assertRecord(world.staff, "world.staff");
+  assertRecord(world.staffMarket, "world.staffMarket");
+  assertRecord(world.staffMarket.offers, "world.staffMarket.offers");
   assertRecord(world.draftPicks, "world.draftPicks");
   assertRecord(world.drafts, "world.drafts");
   if (world.fantasyDraft !== null && world.fantasyDraft !== undefined) {
@@ -557,27 +565,16 @@ export function validateGameState(state: unknown): asserts state is GameState {
     if (staffValue.id !== staffId) {
       fail(`world.staff key "${staffId}" does not match staff.id.`);
     }
-    if (
-      typeof staffValue.role !== "string" ||
-      ![
-        "general_manager",
-        "head_coach",
-        "assistant_coach",
-        "scout",
-        "trainer",
-        "finance",
-        "marketing",
-      ].includes(staffValue.role)
-    ) {
-      fail(`world.staff[${staffId}].role is invalid.`);
+    if (!isStaffRole(staffValue.role)) {
+      fail(
+        `world.staff[${staffId}].role must be one of ${STAFF_ROLES.join(", ")}.`,
+      );
     }
-    assertIntegerInRange(staffValue.quality, 1, 99, `world.staff[${staffId}].quality`);
-    if (
-      typeof staffValue.experience !== "number" ||
-      !Number.isInteger(staffValue.experience) ||
-      staffValue.experience < 0
-    ) {
-      fail(`world.staff[${staffId}].experience must be a non-negative integer.`);
+    try {
+      assertStaffShape(staffValue as Staff);
+    } catch (error) {
+      const detail = error instanceof Error ? error.message : String(error);
+      fail(`world.staff[${staffId}]: ${detail}`);
     }
     if (staffValue.teamId !== null) {
       assertNonEmptyString(staffValue.teamId, `world.staff[${staffId}].teamId`);

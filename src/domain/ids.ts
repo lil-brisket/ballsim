@@ -22,6 +22,7 @@ export type DraftPickId = Brand<string, "DraftPickId">;
 export type DraftClassId = Brand<string, "DraftClassId">;
 export type ScheduledEventId = Brand<string, "ScheduledEventId">;
 export type StaffContractId = Brand<string, "StaffContractId">;
+export type StaffOfferId = Brand<string, "StaffOfferId">;
 export type SponsorshipId = Brand<string, "SponsorshipId">;
 export type NarrativeSituationId = Brand<string, "NarrativeSituationId">;
 export type OwnerDecisionId = Brand<string, "OwnerDecisionId">;
@@ -112,6 +113,10 @@ export function asScheduledEventId(value: string): ScheduledEventId {
 
 export function asStaffContractId(value: string): StaffContractId {
   return value as StaffContractId;
+}
+
+export function asStaffOfferId(value: string): StaffOfferId {
+  return value as StaffOfferId;
 }
 
 export function asSponsorshipId(value: string): SponsorshipId {

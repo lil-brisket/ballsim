@@ -24,6 +24,11 @@ import { processSeasonalLeagueEconomy } from "@/systems/league-economy";
 import { appendOwnershipSeasonNote } from "@/systems/ownership-confidence-engine";
 import { tickRelocationCooldowns } from "@/systems/relocation";
 import { processSeasonPlayerDevelopment } from "@/systems/season-player-development";
+import { processSeasonStaffDevelopment } from "@/systems/staff-development";
+import { releaseExpiredStaffContracts } from "@/systems/staff-contract-lifecycle";
+import { refreshStaffFreeAgentPool } from "@/systems/staff-generation";
+import { processStaffRetirement } from "@/systems/staff-retirement";
+import { runLeagueStaffAiManagement } from "@/systems/staff-ai-management";
 import { expireSponsorshipsAtSeason } from "@/systems/sponsorships";
 import { transitionPhase } from "@/systems/simulation/phase-machine";
 import { beginRegularSeasonFromPreseason } from "@/systems/simulation/season-lifecycle";
@@ -241,6 +246,9 @@ function processPhaseExit(
     const released = releaseExpiredContracts(current);
     current = released.state;
     events.push(...released.events);
+    const staffReleased = releaseExpiredStaffContracts(current);
+    current = staffReleased.state;
+    events.push(...staffReleased.events);
   }
 
   if (fromPhaseId === "offseason.draft") {
@@ -342,6 +350,24 @@ function runSeasonTransition(state: GameState, rng: Rng): SystemResult {
   const development = processSeasonPlayerDevelopment(current, rng);
   current = development.state;
   events.push(...development.events);
+
+  const staffDev = processSeasonStaffDevelopment(current, rng);
+  current = staffDev.state;
+  events.push(...staffDev.events);
+
+  const staffRetired = processStaffRetirement(current, rng);
+  current = staffRetired.state;
+  events.push(...staffRetired.events);
+
+  const staffReleased = releaseExpiredStaffContracts(current);
+  current = staffReleased.state;
+  events.push(...staffReleased.events);
+
+  current = refreshStaffFreeAgentPool(current, rng, 1);
+
+  const staffAi = runLeagueStaffAiManagement(current, rng);
+  current = staffAi.state;
+  events.push(...staffAi.events);
 
   const sponsorships = expireSponsorshipsAtSeason(current);
   current = sponsorships.state;

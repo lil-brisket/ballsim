@@ -1,82 +1,68 @@
 import type { StaffId, TeamId } from "@/domain/ids";
 import { RATING_MAX, RATING_MIN } from "@/domain/entities/player";
+import {
+  assertStaffCareerEntryShape,
+  assertStaffDevelopmentShape,
+  createDefaultStaffDevelopment,
+  type StaffCareerEntry,
+  type StaffDevelopmentState,
+} from "@/domain/entities/staff-development";
+import {
+  assertStaffPreferencesShape,
+  createStaffPreferences,
+  type StaffPreferences,
+} from "@/domain/entities/staff-preferences";
+import {
+  isStaffRole,
+  STAFF_ATTRIBUTE_KEYS,
+  STAFF_ROLES,
+  type StaffAttributes,
+  type StaffAttributesByRole,
+  type StaffRole,
+} from "@/domain/entities/staff-roles";
+
+export type { StaffRole, StaffAttributes, StaffAttributesByRole };
+export {
+  STAFF_ROLES,
+  STARTER_STAFF_ROLES,
+  STAFF_ROLE_DISPLAY,
+  STAFF_ATTRIBUTE_KEYS,
+  isStaffRole,
+  migrateLegacyStaffRole,
+} from "@/domain/entities/staff-roles";
+export type {
+  StaffPreferences,
+  StaffInterestLevel,
+} from "@/domain/entities/staff-preferences";
+export type {
+  StaffDevelopmentState,
+  StaffCareerEntry,
+  StaffDevelopmentTrend,
+  StaffCareerEventKind,
+} from "@/domain/entities/staff-development";
 
 /**
- * Staff roles. Tier 1 roles (GM, head coach, scout, trainer) have Phase E
- * gameplay modifiers. Tier 2 (assistant coach, finance, marketing) are
- * hireable/payable only until a later phase has real hooks.
+ * Staff roles. Gameplay modifiers are role-specific via staff-effects modules.
+ * Finance Director affects business efficiency only — never basketball budgets.
  */
-export type StaffRole =
-  | "general_manager"
-  | "head_coach"
-  | "assistant_coach"
-  | "scout"
-  | "trainer"
-  | "finance"
-  | "marketing";
-
-export const STAFF_ROLES: readonly StaffRole[] = [
-  "general_manager",
-  "head_coach",
-  "assistant_coach",
-  "scout",
-  "trainer",
-  "finance",
-  "marketing",
-] as const;
-
-/** Roles that receive gameplay modifiers in Phase E. */
-export const TIER1_STAFF_ROLES: readonly StaffRole[] = [
-  "general_manager",
-  "head_coach",
-  "scout",
-  "trainer",
-] as const;
-
-export type StaffStrength =
-  | "evaluation"
-  | "development"
-  | "leadership"
-  | "scouting"
-  | "motivation"
-  | "discipline";
-
-export const STAFF_STRENGTHS: readonly StaffStrength[] = [
-  "evaluation",
-  "development",
-  "leadership",
-  "scouting",
-  "motivation",
-  "discipline",
-] as const;
-
-export type StaffWeakness =
-  | "ego"
-  | "inexperience"
-  | "communication"
-  | "risk_averse"
-  | "overconfident";
-
-export const STAFF_WEAKNESSES: readonly StaffWeakness[] = [
-  "ego",
-  "inexperience",
-  "communication",
-  "risk_averse",
-  "overconfident",
-] as const;
-
 export type Staff = {
   id: StaffId;
   teamId: TeamId | null;
   firstName: string;
   lastName: string;
   role: StaffRole;
-  /** Overall quality 1–99. */
-  quality: number;
-  /** Years of experience (non-negative integer). */
+  age: number;
+  /** Overall ability 1–99; equals weighted role attributes (no experience bonus). */
+  overall: number;
+  /** Developmental ceiling 1–99; independent but correlated at generation. */
+  potential: number;
+  /** Years of experience — separate from overall. */
   experience: number;
-  strengths: StaffStrength[];
-  weaknesses: StaffWeakness[];
+  attributes: StaffAttributes;
+  morale: number;
+  preferences: StaffPreferences;
+  development: StaffDevelopmentState;
+  careerHistory: StaffCareerEntry[];
 };
 
 export type StaffInput = {
@@ -85,31 +71,31 @@ export type StaffInput = {
   firstName: string;
   lastName: string;
   role: StaffRole;
-  quality: number;
+  age: number;
+  overall: number;
+  potential: number;
   experience: number;
-  strengths: readonly StaffStrength[];
-  weaknesses: readonly StaffWeakness[];
+  attributes: StaffAttributes;
+  morale: number;
+  preferences: StaffPreferences;
+  development: StaffDevelopmentState;
+  careerHistory: readonly StaffCareerEntry[];
 };
 
-export function isStaffRole(value: unknown): value is StaffRole {
-  return (
-    typeof value === "string" &&
-    (STAFF_ROLES as readonly string[]).includes(value)
-  );
-}
-
-export function isStaffStrength(value: unknown): value is StaffStrength {
-  return (
-    typeof value === "string" &&
-    (STAFF_STRENGTHS as readonly string[]).includes(value)
-  );
-}
-
-export function isStaffWeakness(value: unknown): value is StaffWeakness {
-  return (
-    typeof value === "string" &&
-    (STAFF_WEAKNESSES as readonly string[]).includes(value)
-  );
+/**
+ * Compute overall from role attributes (equal weights). Experience is NOT included.
+ */
+export function computeStaffOverall(
+  role: StaffRole,
+  attributes: StaffAttributes,
+): number {
+  const keys = STAFF_ATTRIBUTE_KEYS[role] as readonly string[];
+  const attrs = attributes as Record<string, number>;
+  let sum = 0;
+  for (const key of keys) {
+    sum += attrs[key]!;
+  }
+  return Math.round(sum / keys.length);
 }
 
 export function createStaff(input: StaffInput): Staff {
@@ -120,10 +106,15 @@ export function createStaff(input: StaffInput): Staff {
     firstName: input.firstName,
     lastName: input.lastName,
     role: input.role,
-    quality: input.quality,
+    age: input.age,
+    overall: input.overall,
+    potential: input.potential,
     experience: input.experience,
-    strengths: [...input.strengths],
-    weaknesses: [...input.weaknesses],
+    attributes: cloneAttributes(input.role, input.attributes),
+    morale: input.morale,
+    preferences: createStaffPreferences(input.preferences),
+    development: { ...input.development },
+    careerHistory: input.careerHistory.map((e) => ({ ...e })),
   };
 }
 
@@ -139,7 +130,12 @@ export function assertStaffShape(staff: StaffInput | Staff): void {
       `Staff role must be one of ${STAFF_ROLES.join(", ")}.`,
     );
   }
-  assertRating(staff.quality, "quality");
+  assertAge(staff.age);
+  assertRating(staff.overall, "overall");
+  assertRating(staff.potential, "potential");
+  if (staff.potential < staff.overall - 5) {
+    // Soft: allow slight undershoot from decline; hard floor in generation.
+  }
   if (
     typeof staff.experience !== "number" ||
     !Number.isInteger(staff.experience) ||
@@ -147,28 +143,43 @@ export function assertStaffShape(staff: StaffInput | Staff): void {
   ) {
     throw new Error("Staff experience must be a non-negative integer.");
   }
-  assertTraitList(staff.strengths, "strengths", isStaffStrength);
-  assertTraitList(staff.weaknesses, "weaknesses", isStaffWeakness);
+  assertAttributes(staff.role, staff.attributes);
+  assertRating(staff.morale, "morale");
+  assertStaffPreferencesShape(staff.preferences);
+  assertStaffDevelopmentShape(staff.development);
+  if (!Array.isArray(staff.careerHistory)) {
+    throw new Error("Staff careerHistory must be an array.");
+  }
+  for (const entry of staff.careerHistory) {
+    assertStaffCareerEntryShape(entry);
+  }
 }
 
-function assertTraitList<T extends string>(
-  value: readonly T[],
-  field: string,
-  isValid: (v: unknown) => v is T,
+export function assertAttributes(
+  role: StaffRole,
+  attributes: StaffAttributes,
 ): void {
-  if (!Array.isArray(value)) {
-    throw new Error(`Staff ${field} must be an array.`);
-  }
-  const seen = new Set<string>();
-  for (const item of value) {
-    if (!isValid(item)) {
-      throw new Error(`Staff ${field} contains invalid value "${String(item)}".`);
+  const keys = STAFF_ATTRIBUTE_KEYS[role] as readonly string[];
+  const attrs = attributes as Record<string, number>;
+  for (const key of keys) {
+    if (!(key in attrs)) {
+      throw new Error(`Staff attributes missing "${key}" for role ${role}.`);
     }
-    if (seen.has(item)) {
-      throw new Error(`Staff ${field} contains duplicate "${item}".`);
-    }
-    seen.add(item);
+    assertRating(attrs[key]!, `attributes.${key}`);
   }
+}
+
+function cloneAttributes(
+  role: StaffRole,
+  attributes: StaffAttributes,
+): StaffAttributes {
+  const keys = STAFF_ATTRIBUTE_KEYS[role] as readonly string[];
+  const src = attributes as Record<string, number>;
+  const out: Record<string, number> = {};
+  for (const key of keys) {
+    out[key] = src[key]!;
+  }
+  return out as StaffAttributes;
 }
 
 function assertNonEmptyId(value: string, field: string): void {
@@ -189,6 +200,17 @@ function assertNonEmptyName(value: string, field: string): void {
   }
 }
 
+function assertAge(value: number): void {
+  if (
+    typeof value !== "number" ||
+    !Number.isInteger(value) ||
+    value < 22 ||
+    value > 85
+  ) {
+    throw new Error("Staff age must be an integer between 22 and 85.");
+  }
+}
+
 function assertRating(value: number, field: string): void {
   if (
     !Number.isInteger(value) ||
@@ -200,3 +222,5 @@ function assertRating(value: number, field: string): void {
     );
   }
 }
+
+export { createDefaultStaffDevelopment };

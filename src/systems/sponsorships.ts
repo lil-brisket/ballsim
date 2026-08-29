@@ -13,6 +13,7 @@ import {
   withAppliedGameplayConsequence,
 } from "@/systems/gameplay-financial-consequences";
 import { applyCashAndBooksImpact } from "@/systems/team-finances";
+import { financeRevenueEfficiencyMultiplier } from "@/systems/staff-effects";
 
 export type SignSponsorshipInput = {
   id: SponsorshipId;
@@ -110,7 +111,8 @@ export function estimateMonthlySponsorshipPayout(
   return Math.round(
     monthlyBase *
       sponsorshipMediaFactor(mediaAttention) *
-      sponsorshipClimateFactor(climate),
+      sponsorshipClimateFactor(climate) *
+      financeRevenueEfficiencyMultiplier(state, teamId as TeamId),
   );
 }
 

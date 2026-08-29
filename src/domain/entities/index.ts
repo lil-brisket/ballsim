@@ -159,16 +159,27 @@ export { createCoach } from "@/domain/entities/coach";
 export type {
   Staff,
   StaffRole,
-  StaffStrength,
-  StaffWeakness,
   StaffInput,
+  StaffAttributes,
+  StaffAttributesByRole,
+  StaffPreferences,
+  StaffInterestLevel,
+  StaffDevelopmentState,
+  StaffCareerEntry,
+  StaffDevelopmentTrend,
+  StaffCareerEventKind,
 } from "@/domain/entities/staff";
 export {
   STAFF_ROLES,
-  TIER1_STAFF_ROLES,
+  STARTER_STAFF_ROLES,
+  STAFF_ROLE_DISPLAY,
+  STAFF_ATTRIBUTE_KEYS,
   createStaff,
   assertStaffShape,
   isStaffRole,
+  migrateLegacyStaffRole,
+  computeStaffOverall,
+  createDefaultStaffDevelopment,
 } from "@/domain/entities/staff";
 export type {
   StaffContract,
