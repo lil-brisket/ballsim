@@ -45,6 +45,7 @@ import {
   withdrawOwnerFreeAgentOffer,
   updateOwnerLineup,
   updateOwnerRotation,
+  optimizeOwnerRotation,
   applyOwnerLineupRecommendation,
   updateOwnerCoachingPhilosophy,
   applyOwnerCoachingPreset,
@@ -762,14 +763,28 @@ export async function updateRotationAction(formData: FormData): Promise<void> {
   const path = returnPath(formData, saveId);
   const rotationJson = String(formData.get("rotationJson") ?? "[]");
   const rotationStyle = String(formData.get("rotationStyle") ?? "");
+  const rotationPhilosophy = String(formData.get("rotationPhilosophy") ?? "");
+  const rotationDepthRaw = String(formData.get("rotationDepth") ?? "");
+  const rotationPreset = String(formData.get("rotationPreset") ?? "");
+  const closingLineupPolicy = String(formData.get("closingLineupPolicy") ?? "");
+  const closingLineupJson = String(formData.get("closingLineupJson") ?? "[]");
   let rotation: Array<{
     playerId: string;
-    plannedMinutes: number;
-    eligiblePositions: string[];
-    role: "starter" | "bench";
+    targetMinutes: number;
+    minimumMinutes: number;
+    normalMaximumMinutes: number;
+    absoluteMaximumMinutes: number;
+    rotationPriority: number;
+    rotationStatus: string;
+    role: string;
+    preferredPositions: string[];
+    secondaryPositions?: string[];
+    minutePriorityBias?: number;
   }> = [];
+  let closingLineupIds: string[] = [];
   try {
     rotation = JSON.parse(rotationJson) as typeof rotation;
+    closingLineupIds = JSON.parse(closingLineupJson) as string[];
   } catch {
     redirectWithError(path, "Invalid rotation payload.");
   }
@@ -777,6 +792,29 @@ export async function updateRotationAction(formData: FormData): Promise<void> {
     teamId,
     rotation,
     rotationStyle: rotationStyle || undefined,
+    rotationPhilosophy: rotationPhilosophy || undefined,
+    rotationDepth: rotationDepthRaw
+      ? Number(rotationDepthRaw)
+      : undefined,
+    rotationPreset: rotationPreset || undefined,
+    closingLineupPolicy: closingLineupPolicy || undefined,
+    closingLineupIds,
+  });
+  if (!result.ok) {
+    redirectWithError(path, result.error);
+  }
+  revalidateOwner(saveId);
+  redirect(path);
+}
+
+export async function optimizeRotationAction(formData: FormData): Promise<void> {
+  const saveId = String(formData.get("saveId") ?? "");
+  const teamId = String(formData.get("teamId") ?? "");
+  const path = returnPath(formData, saveId);
+  const rotationPreset = String(formData.get("rotationPreset") ?? "auto");
+  const result = await optimizeOwnerRotation(saveId, {
+    teamId,
+    rotationPreset: rotationPreset || "auto",
   });
   if (!result.ok) {
     redirectWithError(path, result.error);

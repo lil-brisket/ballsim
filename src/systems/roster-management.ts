@@ -10,9 +10,15 @@ import {
 } from "@/domain/entities/player";
 import {
   cloneTeamRosterManagement,
+  depthForPhilosophy,
   emptyTeamRosterManagement,
+  philosophyFromStyle,
+  styleFromPhilosophy,
   type LineupSlot,
   type RotationEntry,
+  type RotationPhilosophy,
+  type RotationPreset,
+  type RotationRole,
   type RotationStyle,
   type TeamRosterManagement,
 } from "@/domain/entities/team-roster-management";
@@ -26,6 +32,12 @@ import {
 } from "@/systems/player-availability";
 import { GAME_SIMULATION_CONFIG } from "@/systems/game-simulation-config";
 import { TRADE_ROSTER_RULES } from "@/systems/trades-config";
+import { ROLE_TEMPLATES } from "@/systems/rotation/rotation-role-templates";
+import {
+  formatFeasibilityBanner,
+  hasHardFeasibilityIssues,
+  validateRotationFeasibility,
+} from "@/systems/rotation/rotation-feasibility";
 
 export type RosterManagementValidationIssue = {
   code: string;
@@ -47,7 +59,8 @@ export type RotationFeedback = {
     | "not_enough"
     | "unavailable"
     | "high_workload"
-    | "thin_bench";
+    | "thin_bench"
+    | "infeasible";
   message: string;
   playerId?: PlayerId;
 };
@@ -59,9 +72,6 @@ export type EmergencyLineupResult = {
 };
 
 const HIGH_WORKLOAD_MINUTES = 38;
-const TIGHT_ROTATION_SIZE = 7;
-const BALANCED_ROTATION_SIZE = 8;
-const DEEP_ROTATION_SIZE = 10;
 
 /**
  * Regulation team-minutes target derived from sim config (240 for standard rules).
@@ -153,7 +163,6 @@ export function validateRosterManagementShape(
     checkMembership(slot.playerId, "starting lineup");
     const availability = getPlayerAvailability(state, slot.playerId, teamId);
     if (!availability.available && availability.reason !== "inactive") {
-      // inactive check is via group membership; injured still invalid as starter
       if (availability.reason === "injured") {
         issues.push({
           code: "unavailable_starter",
@@ -201,16 +210,16 @@ export function validateRosterManagementShape(
         message: `Rotation entry ${entry.playerId} must be a starter or bench player.`,
       });
     }
-    if (inactiveSet.has(entry.playerId) && entry.plannedMinutes > 0) {
+    if (inactiveSet.has(entry.playerId) && entry.targetMinutes > 0) {
       issues.push({
         code: "inactive_minutes",
-        message: `Inactive player ${entry.playerId} cannot have planned minutes > 0.`,
+        message: `Inactive player ${entry.playerId} cannot have target minutes > 0.`,
       });
     }
-    if (entry.eligiblePositions.length === 0) {
+    if (entry.preferredPositions.length === 0) {
       issues.push({
         code: "no_eligible_positions",
-        message: `Rotation entry ${entry.playerId} needs at least one eligible position.`,
+        message: `Rotation entry ${entry.playerId} needs at least one preferred position.`,
       });
     }
   }
@@ -219,10 +228,10 @@ export function validateRosterManagementShape(
     const rotationEntry = management.rotation.find(
       (entry) => entry.playerId === playerId,
     );
-    if (rotationEntry != null && rotationEntry.plannedMinutes > 0) {
+    if (rotationEntry != null && rotationEntry.targetMinutes > 0) {
       issues.push({
         code: "inactive_minutes",
-        message: `Inactive player ${playerId} cannot have planned minutes > 0.`,
+        message: `Inactive player ${playerId} cannot have target minutes > 0.`,
       });
     }
   }
@@ -255,7 +264,7 @@ export function validatePlannedMinutes(
   target: number = getRegulationTeamMinutesTarget(),
 ): PlannedMinutesValidation {
   const totalPlanned = management.rotation.reduce(
-    (sum, entry) => sum + entry.plannedMinutes,
+    (sum, entry) => sum + entry.targetMinutes,
     0,
   );
   const delta = totalPlanned - target;
@@ -265,23 +274,34 @@ export function validatePlannedMinutes(
       code: delta > 0 ? "too_many_minutes" : "not_enough_minutes",
       message:
         delta > 0
-          ? `Planned minutes (${totalPlanned}) exceed target (${target}) by ${delta}.`
-          : `Planned minutes (${totalPlanned}) are ${-delta} under target (${target}).`,
+          ? `Target minutes (${totalPlanned}) exceed team target (${target}) by ${delta}.`
+          : `Target minutes (${totalPlanned}) are ${-delta} under team target (${target}).`,
     });
   }
   for (const entry of management.rotation) {
-    if (entry.plannedMinutes > HIGH_WORKLOAD_MINUTES) {
+    if (entry.targetMinutes > HIGH_WORKLOAD_MINUTES) {
       issues.push({
         code: "high_workload",
-        message: `Player ${entry.playerId} has an unusually high workload (${entry.plannedMinutes} minutes).`,
+        message: `Player ${entry.playerId} has an unusually high workload (${entry.targetMinutes} minutes).`,
       });
+    }
+  }
+  const feasibility = validateRotationFeasibility(management);
+  for (const issue of feasibility.issues) {
+    if (
+      issue.code === "maximums_below_available" ||
+      issue.code === "minimums_exceed_available" ||
+      issue.code === "all_targets_zero" ||
+      issue.code === "insufficient_active"
+    ) {
+      issues.push({ code: issue.code, message: issue.message });
     }
   }
   return {
     totalPlanned,
     target,
     delta,
-    valid: delta === 0,
+    valid: delta === 0 && !hasHardFeasibilityIssues(feasibility),
     issues,
   };
 }
@@ -293,7 +313,16 @@ export function getRotationFeedback(
 ): RotationFeedback[] {
   const feedback: RotationFeedback[] = [];
   const minutes = validatePlannedMinutes(management);
-  if (minutes.delta === 0) {
+  const feasibility = validateRotationFeasibility(management);
+  const banner = formatFeasibilityBanner(feasibility);
+  if (banner != null) {
+    feedback.push({
+      kind: "infeasible",
+      message: banner,
+    });
+  }
+
+  if (minutes.delta === 0 && banner == null) {
     feedback.push({
       kind: "balanced",
       message: "Minutes are balanced.",
@@ -303,7 +332,7 @@ export function getRotationFeedback(
       kind: "too_many",
       message: `Too many minutes assigned (${minutes.totalPlanned} / ${minutes.target}).`,
     });
-  } else {
+  } else if (minutes.delta < 0) {
     feedback.push({
       kind: "not_enough",
       message: `Not enough minutes assigned (${minutes.totalPlanned} / ${minutes.target}).`,
@@ -311,30 +340,30 @@ export function getRotationFeedback(
   }
 
   for (const entry of management.rotation) {
-    if (entry.plannedMinutes <= 0) {
+    if (entry.targetMinutes <= 0) {
       continue;
     }
     const availability = getPlayerAvailability(state, entry.playerId, teamId);
     if (!availability.available) {
       feedback.push({
         kind: "unavailable",
-        message: `${entry.playerId} is unavailable (${availability.label}) but has planned minutes.`,
+        message: `${entry.playerId} is unavailable (${availability.label}) but has target minutes.`,
         playerId: entry.playerId,
       });
     }
-    if (entry.plannedMinutes > HIGH_WORKLOAD_MINUTES) {
+    if (entry.targetMinutes > HIGH_WORKLOAD_MINUTES) {
       feedback.push({
         kind: "high_workload",
-        message: `Unusually high workload (${entry.plannedMinutes} planned minutes).`,
+        message: `Unusually high workload (${entry.targetMinutes} target minutes).`,
         playerId: entry.playerId,
       });
     }
   }
 
-  const activeWithMinutes = management.rotation.filter(
-    (entry) => entry.plannedMinutes > 0,
+  const activeCount = management.rotation.filter(
+    (entry) => entry.rotationStatus === "active",
   ).length;
-  if (activeWithMinutes < TIGHT_ROTATION_SIZE && management.rotation.length > 0) {
+  if (activeCount < 7 && management.rotation.length > 0) {
     feedback.push({
       kind: "thin_bench",
       message: "Bench depth is insufficient for a sustainable rotation.",
@@ -348,7 +377,7 @@ function playerOverall(player: Player): number {
   return calculatePlayerOverall(player.position, player.attributes);
 }
 
-function defaultEligiblePositions(player: Player): PlayerPosition[] {
+function defaultPreferredPositions(player: Player): PlayerPosition[] {
   const primary = player.position;
   const index = PLAYER_POSITIONS.indexOf(primary);
   const eligible: PlayerPosition[] = [primary];
@@ -361,94 +390,249 @@ function defaultEligiblePositions(player: Player): PlayerPosition[] {
   return [...new Set(eligible)];
 }
 
-function rotationSizeForStyle(style: RotationStyle): number {
-  if (style === "tight") {
-    return TIGHT_ROTATION_SIZE;
-  }
-  if (style === "deep") {
-    return DEEP_ROTATION_SIZE;
-  }
-  return BALANCED_ROTATION_SIZE;
+function emptyInactiveEntry(
+  playerId: PlayerId,
+  preferredPositions: PlayerPosition[],
+): RotationEntry {
+  const template = ROLE_TEMPLATES.emergency;
+  return {
+    playerId,
+    targetMinutes: 0,
+    minimumMinutes: 0,
+    normalMaximumMinutes: template.normalMax,
+    absoluteMaximumMinutes: template.absoluteMax,
+    rotationPriority: template.priority,
+    rotationStatus: "inactive",
+    role: "emergency",
+    preferredPositions,
+    secondaryPositions: [],
+    minutePriorityBias: 0,
+  };
 }
 
-function distributePlannedMinutes(
-  entries: Array<{ playerId: PlayerId; role: "starter" | "bench"; overall: number }>,
-  style: RotationStyle,
+function buildEntryFromTemplate(input: {
+  playerId: PlayerId;
+  role: RotationRole;
+  targetMinutes: number;
+  preferredPositions: PlayerPosition[];
+  active: boolean;
+}): RotationEntry {
+  const template = ROLE_TEMPLATES[input.role];
+  return {
+    playerId: input.playerId,
+    targetMinutes: input.targetMinutes,
+    minimumMinutes: input.active ? template.min : 0,
+    normalMaximumMinutes: Math.max(input.targetMinutes, template.normalMax),
+    absoluteMaximumMinutes: Math.max(
+      input.targetMinutes,
+      template.absoluteMax,
+    ),
+    rotationPriority: template.priority,
+    rotationStatus: input.active ? "active" : "inactive",
+    role: input.role,
+    preferredPositions: input.preferredPositions,
+    secondaryPositions: [],
+    minutePriorityBias: 0,
+  };
+}
+
+/**
+ * Distribute target minutes across an ordered candidate list for a philosophy/depth.
+ */
+export function buildRotationFromRoster(
+  entries: Array<{
+    playerId: PlayerId;
+    isStarter: boolean;
+    overall: number;
+    preferredPositions: PlayerPosition[];
+    /** Development boost: young / high potential. */
+    developmentWeight?: number;
+  }>,
+  philosophy: RotationPhilosophy,
+  depth: number,
   target: number = getRegulationTeamMinutesTarget(),
 ): RotationEntry[] {
-  const size = Math.min(rotationSizeForStyle(style), entries.length);
+  const size = Math.min(Math.max(depth, 5), entries.length);
   const active = entries.slice(0, size);
   if (active.length === 0) {
     return [];
   }
 
-  const starterCount = active.filter((entry) => entry.role === "starter").length;
-  const benchCount = active.length - starterCount;
-  const starterShare = starterCount > 0 ? 0.72 : 0;
-  const benchShare = 1 - starterShare;
+  // Role assignment by index within active pool
+  const roleForIndex = (index: number, isStarter: boolean): RotationRole => {
+    if (isStarter) {
+      return "starter";
+    }
+    if (index === 5) {
+      return "sixth_man";
+    }
+    if (index <= 7) {
+      return "rotation";
+    }
+    if (index <= 9) {
+      return "bench";
+    }
+    return "deep_bench";
+  };
 
+  const starters = active.filter((entry) => entry.isStarter);
+  const bench = active.filter((entry) => !entry.isStarter);
+
+  const starterShare =
+    philosophy === "star_heavy"
+      ? 0.8
+      : philosophy === "deep" || philosophy === "development"
+        ? 0.65
+        : philosophy === "tight"
+          ? 0.76
+          : 0.72;
   const starterPool = Math.round(target * starterShare);
   const benchPool = target - starterPool;
 
   const result: RotationEntry[] = [];
-  const starters = active.filter((entry) => entry.role === "starter");
-  const bench = active.filter((entry) => entry.role === "bench");
-
   let assigned = 0;
+
   starters.forEach((entry, index) => {
     const remainingPlayers = starters.length - index;
     const remainingPool = starterPool - assigned;
-    const minutes =
+    let minutes =
       remainingPlayers === 1
         ? remainingPool
-        : Math.max(18, Math.floor(remainingPool / remainingPlayers));
+        : Math.max(28, Math.floor(remainingPool / remainingPlayers));
+    if (philosophy === "development" && (entry.developmentWeight ?? 0) > 0.5) {
+      minutes = Math.max(24, minutes - 2);
+    }
     assigned += minutes;
-    result.push({
-      playerId: entry.playerId,
-      plannedMinutes: minutes,
-      eligiblePositions: [],
-      role: "starter",
-    });
+    result.push(
+      buildEntryFromTemplate({
+        playerId: entry.playerId,
+        role: "starter",
+        targetMinutes: minutes,
+        preferredPositions: entry.preferredPositions,
+        active: true,
+      }),
+    );
   });
 
+  // Development: sort bench by development weight so prospects get more
+  const benchOrdered =
+    philosophy === "development"
+      ? [...bench].sort(
+          (a, b) =>
+            (b.developmentWeight ?? 0) - (a.developmentWeight ?? 0) ||
+            b.overall - a.overall,
+        )
+      : bench;
+
   let benchAssigned = 0;
-  bench.forEach((entry, index) => {
-    const remainingPlayers = bench.length - index;
+  benchOrdered.forEach((entry, index) => {
+    const globalIndex = starters.length + index;
+    const role = roleForIndex(globalIndex, false);
+    const remainingPlayers = benchOrdered.length - index;
     const remainingPool = benchPool - benchAssigned;
-    const minutes =
+    let minutes =
       remainingPlayers === 1
         ? Math.max(0, remainingPool)
         : Math.max(0, Math.floor(remainingPool / remainingPlayers));
+    if (philosophy === "development" && (entry.developmentWeight ?? 0) > 0.4) {
+      minutes = Math.max(minutes, Math.min(18, minutes + 3));
+    }
     benchAssigned += minutes;
-    result.push({
-      playerId: entry.playerId,
-      plannedMinutes: minutes,
-      eligiblePositions: [],
-      role: "bench",
-    });
+    result.push(
+      buildEntryFromTemplate({
+        playerId: entry.playerId,
+        role,
+        targetMinutes: minutes,
+        preferredPositions: entry.preferredPositions,
+        active: minutes > 0,
+      }),
+    );
   });
 
-  // Include remaining roster players with 0 planned minutes (bench depth / inactive handled elsewhere)
+  // Remaining roster: inactive / emergency
   for (const entry of entries.slice(size)) {
-    result.push({
-      playerId: entry.playerId,
-      plannedMinutes: 0,
-      eligiblePositions: [],
-      role: entry.role,
-    });
+    result.push(
+      emptyInactiveEntry(entry.playerId, entry.preferredPositions),
+    );
+  }
+
+  // Fix rounding so targets sum to team target
+  const activeResult = result.filter((e) => e.rotationStatus === "active");
+  const sum = activeResult.reduce((s, e) => s + e.targetMinutes, 0);
+  const delta = target - sum;
+  if (delta !== 0 && activeResult.length > 0) {
+    const adjust = activeResult[activeResult.length - 1]!;
+    adjust.targetMinutes = Math.max(0, adjust.targetMinutes + delta);
+    adjust.normalMaximumMinutes = Math.max(
+      adjust.targetMinutes,
+      adjust.normalMaximumMinutes,
+    );
+    adjust.absoluteMaximumMinutes = Math.max(
+      adjust.targetMinutes,
+      adjust.absoluteMaximumMinutes,
+    );
   }
 
   return result;
 }
 
+export function resolvePhilosophyAndDepth(options: {
+  rotationStyle?: RotationStyle;
+  rotationPhilosophy?: RotationPhilosophy;
+  rotationDepth?: number;
+  rotationPreset?: RotationPreset;
+  existing?: TeamRosterManagement;
+}): {
+  philosophy: RotationPhilosophy;
+  depth: number;
+  style: RotationStyle;
+  preset: RotationPreset;
+} {
+  const preset = options.rotationPreset ?? options.existing?.rotationPreset ?? "balanced";
+  let philosophy =
+    options.rotationPhilosophy ??
+    options.existing?.rotationPhilosophy ??
+    (options.rotationStyle
+      ? philosophyFromStyle(options.rotationStyle)
+      : options.existing?.rotationStyle
+        ? philosophyFromStyle(options.existing.rotationStyle)
+        : "balanced");
+
+  if (preset === "star_heavy") {
+    philosophy = "star_heavy";
+  } else if (preset === "deep") {
+    philosophy = "deep";
+  } else if (preset === "development") {
+    philosophy = "development";
+  } else if (preset === "balanced") {
+    philosophy = "balanced";
+  }
+
+  const depth =
+    options.rotationDepth ??
+    options.existing?.rotationDepth ??
+    depthForPhilosophy(philosophy);
+
+  return {
+    philosophy,
+    depth,
+    style: styleFromPhilosophy(philosophy),
+    preset,
+  };
+}
+
 /**
  * Position-aware recommended lineup / rotation from current roster + availability.
+ * Used by both user Auto Optimize and AI teams.
  */
 export function recommendRosterManagement(
   state: GameState,
   teamId: TeamId,
   options: {
     rotationStyle?: RotationStyle;
+    rotationPhilosophy?: RotationPhilosophy;
+    rotationDepth?: number;
+    rotationPreset?: RotationPreset;
     configuredBy?: TeamRosterManagement["lastConfiguredBy"];
   } = {},
 ): TeamRosterManagement {
@@ -457,18 +641,18 @@ export function recommendRosterManagement(
     return emptyTeamRosterManagement();
   }
 
-  const rotationStyle =
-    options.rotationStyle ??
-    team.rosterManagement.rotationStyle ??
-    "balanced";
+  const resolved = resolvePhilosophyAndDepth({
+    ...options,
+    existing: team.rosterManagement,
+  });
+
   const players = team.roster
     .map((playerId) => state.world.players[playerId])
     .filter((player): player is Player => player != null)
     .sort((a, b) => playerOverall(b) - playerOverall(a));
 
-  const available = players.filter((player) =>
-    // Ignore current inactive list when recommending — use injury only
-    player.injury.kind === "healthy",
+  const available = players.filter(
+    (player) => player.injury.kind === "healthy",
   );
   const injured = players.filter((player) => player.injury.kind === "injured");
 
@@ -488,7 +672,6 @@ export function recommendRosterManagement(
     startingLineup.push({ playerId: candidate.id, slot });
   }
 
-  // Fill remaining starter slots if < 5 (positional mismatch OK for recommend)
   while (startingLineup.length < TRADE_ROSTER_RULES.startingLineupSize) {
     const candidate = available.find((player) => !used.has(player.id));
     if (candidate == null) {
@@ -512,7 +695,6 @@ export function recommendRosterManagement(
     used.add(player.id);
   }
 
-  // Injured players default to inactive (0 minutes)
   for (const player of injured) {
     if (!used.has(player.id)) {
       inactive.push(player.id);
@@ -520,7 +702,6 @@ export function recommendRosterManagement(
     }
   }
 
-  // Any remaining (shouldn't happen) go to bench
   for (const player of players) {
     if (!used.has(player.id)) {
       bench.push(player.id);
@@ -533,28 +714,49 @@ export function recommendRosterManagement(
       const player = state.world.players[slot.playerId]!;
       return {
         playerId: slot.playerId,
-        role: "starter" as const,
+        isStarter: true,
         overall: playerOverall(player),
+        preferredPositions: defaultPreferredPositions(player),
+        developmentWeight: developmentWeight(player),
       };
     }),
     ...bench.map((playerId) => {
       const player = state.world.players[playerId]!;
       return {
         playerId,
-        role: "bench" as const,
+        isStarter: false,
         overall: playerOverall(player),
+        preferredPositions: defaultPreferredPositions(player),
+        developmentWeight: developmentWeight(player),
       };
     }),
-  ].sort((a, b) => b.overall - a.overall);
+  ].sort((a, b) => {
+    if (a.isStarter !== b.isStarter) {
+      return a.isStarter ? -1 : 1;
+    }
+    return b.overall - a.overall;
+  });
 
-  const rotation = distributePlannedMinutes(rotationCandidates, rotationStyle).map(
-    (entry) => {
-      const player = state.world.players[entry.playerId]!;
-      return {
-        ...entry,
-        eligiblePositions: defaultEligiblePositions(player),
-      };
-    },
+  // For depth ranking: overall order with starters first already
+  const ranked = [
+    ...rotationCandidates.filter((e) => e.isStarter),
+    ...rotationCandidates
+      .filter((e) => !e.isStarter)
+      .sort((a, b) => {
+        if (resolved.philosophy === "development") {
+          return (
+            (b.developmentWeight ?? 0) - (a.developmentWeight ?? 0) ||
+            b.overall - a.overall
+          );
+        }
+        return b.overall - a.overall;
+      }),
+  ];
+
+  const rotation = buildRotationFromRoster(
+    ranked,
+    resolved.philosophy,
+    resolved.depth,
   );
 
   return {
@@ -562,9 +764,34 @@ export function recommendRosterManagement(
     bench,
     inactive,
     rotation,
-    rotationStyle,
+    rotationStyle: resolved.style,
+    rotationPhilosophy: resolved.philosophy,
+    rotationDepth: resolved.depth,
+    rotationPreset: options.rotationPreset ?? resolved.preset,
+    closingLineupPolicy: team.rosterManagement.closingLineupPolicy ?? "auto",
+    closingLineupIds: [...(team.rosterManagement.closingLineupIds ?? [])],
     lastConfiguredBy: options.configuredBy ?? "default",
   };
+}
+
+function developmentWeight(player: Player): number {
+  const age = player.age ?? 28;
+  const potential = player.potential.overall;
+  const youth = age <= 23 ? 1 : age <= 25 ? 0.6 : age <= 27 ? 0.3 : 0;
+  const pot = Math.max(0, (potential - 55) / 40);
+  return youth * 0.6 + pot * 0.4;
+}
+
+/** Alias used by UI Auto Optimize — same pipeline as AI. */
+export function optimizeRotationFromRoster(
+  state: GameState,
+  teamId: TeamId,
+  options: Parameters<typeof recommendRosterManagement>[2] = {},
+): TeamRosterManagement {
+  return recommendRosterManagement(state, teamId, {
+    ...options,
+    configuredBy: options?.configuredBy ?? "user",
+  });
 }
 
 /**
@@ -606,14 +833,12 @@ export function reconcileRosterManagement(
         inactive.push(playerId);
       } else {
         bench.push(playerId);
-        rotation.push({
-          playerId,
-          plannedMinutes: 0,
-          eligiblePositions: player
-            ? defaultEligiblePositions(player)
-            : ["SF"],
-          role: "bench",
-        });
+        rotation.push(
+          emptyInactiveEntry(
+            playerId,
+            player ? defaultPreferredPositions(player) : ["SF"],
+          ),
+        );
       }
       assigned.add(playerId);
     }
@@ -625,6 +850,13 @@ export function reconcileRosterManagement(
     inactive,
     rotation,
     rotationStyle: previous.rotationStyle,
+    rotationPhilosophy: previous.rotationPhilosophy,
+    rotationDepth: previous.rotationDepth,
+    rotationPreset: previous.rotationPreset,
+    closingLineupPolicy: previous.closingLineupPolicy,
+    closingLineupIds: previous.closingLineupIds.filter((id) =>
+      rosterSet.has(id),
+    ),
     lastConfiguredBy: previous.lastConfiguredBy,
   };
 
@@ -647,6 +879,8 @@ export function reconcileRosterManagement(
   if (needsRecommend) {
     next = recommendRosterManagement(state, teamId, {
       rotationStyle: previous.rotationStyle,
+      rotationPhilosophy: previous.rotationPhilosophy,
+      rotationDepth: previous.rotationDepth,
       configuredBy: "default",
     });
   }
@@ -700,7 +934,6 @@ export function getEmergencyLineup(
     };
   }
 
-  // Emergency: use all available, then fill with best remaining (including injured)
   const rosterPlayers = team.roster
     .map((playerId) => state.world.players[playerId])
     .filter((player): player is Player => player != null)

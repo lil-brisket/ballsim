@@ -9,10 +9,19 @@ import {
   type CoachingPresetId,
 } from "@/domain/coaching/coaching-presets";
 import type {
+  ClosingLineupPolicy,
   LineupSlot,
   RotationEntry,
+  RotationPhilosophy,
+  RotationPreset,
   RotationStyle,
   TeamRosterManagement,
+} from "@/domain/entities/team-roster-management";
+import {
+  cloneTeamRosterManagement,
+  depthForPhilosophy,
+  philosophyFromStyle,
+  styleFromPhilosophy,
 } from "@/domain/entities/team-roster-management";
 import type { PlayerId, TeamId } from "@/domain/ids";
 import type { GameState } from "@/state/game-state";
@@ -23,11 +32,12 @@ import {
 import {
   applyRosterManagement,
   getTeamRosterManagement,
+  optimizeRotationFromRoster,
   recommendRosterManagement,
   validateRosterManagementShape,
   withTeamRosterManagement,
 } from "@/systems/roster-management";
-import { cloneTeamRosterManagement } from "@/domain/entities/team-roster-management";
+import { ROLE_TEMPLATES } from "@/systems/rotation/rotation-role-templates";
 
 export type TeamManagementCommandResult =
   | { ok: true; state: GameState }
@@ -50,6 +60,46 @@ function assertActiveOwnedTeam(
   return null;
 }
 
+function starterTemplateEntry(
+  playerId: PlayerId,
+  preferredPositions: RotationEntry["preferredPositions"],
+): RotationEntry {
+  const template = ROLE_TEMPLATES.starter;
+  return {
+    playerId,
+    targetMinutes: 32,
+    minimumMinutes: template.min,
+    normalMaximumMinutes: template.normalMax,
+    absoluteMaximumMinutes: template.absoluteMax,
+    rotationPriority: template.priority,
+    rotationStatus: "active",
+    role: "starter",
+    preferredPositions,
+    secondaryPositions: [],
+    minutePriorityBias: 0,
+  };
+}
+
+function benchTemplateEntry(
+  playerId: PlayerId,
+  preferredPositions: RotationEntry["preferredPositions"],
+): RotationEntry {
+  const template = ROLE_TEMPLATES.bench;
+  return {
+    playerId,
+    targetMinutes: 0,
+    minimumMinutes: 0,
+    normalMaximumMinutes: template.normalMax,
+    absoluteMaximumMinutes: template.absoluteMax,
+    rotationPriority: template.priority,
+    rotationStatus: "inactive",
+    role: "bench",
+    preferredPositions,
+    secondaryPositions: [],
+    minutePriorityBias: 0,
+  };
+}
+
 export function updateLineupCommand(
   state: GameState,
   input: {
@@ -70,33 +120,38 @@ export function updateLineupCommand(
     .filter((entry) => !input.inactive.includes(entry.playerId))
     .map((entry) => ({
       ...entry,
-      role: starterIds.has(entry.playerId) ? "starter" : "bench",
-      plannedMinutes: input.inactive.includes(entry.playerId)
+      preferredPositions: [...entry.preferredPositions],
+      secondaryPositions: [...entry.secondaryPositions],
+      role: starterIds.has(entry.playerId)
+        ? ("starter" as const)
+        : entry.role === "starter"
+          ? ("bench" as const)
+          : entry.role,
+      targetMinutes: input.inactive.includes(entry.playerId)
         ? 0
-        : entry.plannedMinutes,
+        : entry.targetMinutes,
+      rotationStatus: input.inactive.includes(entry.playerId)
+        ? ("inactive" as const)
+        : entry.rotationStatus,
     }));
 
-  // Ensure every starter/bench has a rotation row
   for (const slot of input.startingLineup) {
     if (!rotation.some((entry) => entry.playerId === slot.playerId)) {
       const player = state.world.players[slot.playerId];
-      rotation.push({
-        playerId: slot.playerId,
-        plannedMinutes: 32,
-        eligiblePositions: player ? [player.position] : [slot.slot],
-        role: "starter",
-      });
+      rotation.push(
+        starterTemplateEntry(
+          slot.playerId,
+          player ? [player.position] : [slot.slot],
+        ),
+      );
     }
   }
   for (const playerId of input.bench) {
     if (!rotation.some((entry) => entry.playerId === playerId)) {
       const player = state.world.players[playerId];
-      rotation.push({
-        playerId,
-        plannedMinutes: 0,
-        eligiblePositions: player ? [player.position] : ["SF"],
-        role: "bench",
-      });
+      rotation.push(
+        benchTemplateEntry(playerId, player ? [player.position] : ["SF"]),
+      );
     }
   }
 
@@ -140,6 +195,11 @@ export function updateRotationCommand(
     teamId: TeamId;
     rotation: RotationEntry[];
     rotationStyle?: RotationStyle;
+    rotationPhilosophy?: RotationPhilosophy;
+    rotationDepth?: number;
+    rotationPreset?: RotationPreset;
+    closingLineupPolicy?: ClosingLineupPolicy;
+    closingLineupIds?: PlayerId[];
   },
 ): TeamManagementCommandResult {
   const auth = assertActiveOwnedTeam(state, input.teamId);
@@ -150,27 +210,67 @@ export function updateRotationCommand(
   const current = getTeamRosterManagement(state, input.teamId);
   const inactiveSet = new Set(current.inactive);
   for (const entry of input.rotation) {
-    if (inactiveSet.has(entry.playerId) && entry.plannedMinutes > 0) {
+    if (inactiveSet.has(entry.playerId) && entry.targetMinutes > 0) {
       return {
         ok: false,
-        error: `Inactive player ${entry.playerId} cannot have planned minutes > 0.`,
+        error: `Inactive player ${entry.playerId} cannot have target minutes > 0.`,
       };
     }
   }
+
+  const philosophy =
+    input.rotationPhilosophy ??
+    (input.rotationStyle
+      ? philosophyFromStyle(input.rotationStyle)
+      : current.rotationPhilosophy);
 
   const next: TeamRosterManagement = {
     ...cloneTeamRosterManagement(current),
     rotation: input.rotation.map((entry) => ({
       ...entry,
-      eligiblePositions: [...entry.eligiblePositions],
+      preferredPositions: [...entry.preferredPositions],
+      secondaryPositions: [...entry.secondaryPositions],
     })),
-    rotationStyle: input.rotationStyle ?? current.rotationStyle,
+    rotationPhilosophy: philosophy,
+    rotationStyle: styleFromPhilosophy(philosophy),
+    rotationDepth:
+      input.rotationDepth ??
+      current.rotationDepth ??
+      depthForPhilosophy(philosophy),
+    rotationPreset: input.rotationPreset ?? "custom",
+    closingLineupPolicy:
+      input.closingLineupPolicy ?? current.closingLineupPolicy,
+    closingLineupIds:
+      input.closingLineupIds ?? current.closingLineupIds,
     lastConfiguredBy: "user",
   };
 
   return {
     ok: true,
     state: withTeamRosterManagement(state, input.teamId, next),
+  };
+}
+
+export function optimizeRotationCommand(
+  state: GameState,
+  input: {
+    teamId: TeamId;
+    rotationPreset?: RotationPreset;
+    rotationPhilosophy?: RotationPhilosophy;
+  },
+): TeamManagementCommandResult {
+  const auth = assertActiveOwnedTeam(state, input.teamId);
+  if (auth) {
+    return auth;
+  }
+  const optimized = optimizeRotationFromRoster(state, input.teamId, {
+    rotationPreset: input.rotationPreset,
+    rotationPhilosophy: input.rotationPhilosophy,
+    configuredBy: "user",
+  });
+  return {
+    ok: true,
+    state: withTeamRosterManagement(state, input.teamId, optimized),
   };
 }
 
@@ -253,6 +353,8 @@ export function applyCoachingPresetCommand(
 
   const management = cloneTeamRosterManagement(team.rosterManagement);
   management.rotationStyle = preset.rotationStyle;
+  management.rotationPhilosophy = philosophyFromStyle(preset.rotationStyle);
+  management.rotationDepth = depthForPhilosophy(management.rotationPhilosophy);
   management.lastConfiguredBy = "user";
 
   return {

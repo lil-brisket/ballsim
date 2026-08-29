@@ -1187,6 +1187,27 @@ export type GameBoxScoreView = {
   winnerName: string;
   margin: number;
   isCurrentSeason: boolean;
+  rotation: GameRotationPanelView | null;
+};
+
+export type GameRotationPlayerCompareView = {
+  playerId: string;
+  name: string;
+  minutes: number;
+  targetMinutes: number | null;
+  explanations: string[];
+};
+
+export type GameRotationSubView = {
+  clockLabel: string;
+  teamAbbreviation: string;
+  detail: string;
+};
+
+export type GameRotationPanelView = {
+  homePlayers: GameRotationPlayerCompareView[];
+  awayPlayers: GameRotationPlayerCompareView[];
+  substitutions: GameRotationSubView[];
 };
 
 /** True when a finalized current-season game can open a box-score page. */
@@ -1285,6 +1306,79 @@ export function toGameBoxScoreView(
     winnerName,
     margin,
     isCurrentSeason: true,
+    rotation: toRotationPanelView(
+      game,
+      homeIdentity.abbreviation,
+      awayIdentity.abbreviation,
+      state,
+    ),
+  };
+}
+
+function toRotationPanelView(
+  game: Game,
+  homeAbbr: string,
+  awayAbbr: string,
+  state: GameState,
+): GameRotationPanelView | null {
+  const meta = game.rotationMeta;
+  if (meta == null) {
+    return null;
+  }
+  const buildSide = (
+    snapshot: typeof meta.home,
+    rows: typeof game.playerStats,
+  ): GameRotationPlayerCompareView[] => {
+    const byId = new Map(snapshot.map((entry) => [entry.playerId, entry]));
+    return rows
+      .filter((row) => row.minutes > 0 || byId.has(row.playerId))
+      .map((row) => {
+        const snap = byId.get(row.playerId);
+        const player = state.world.players[row.playerId];
+        const name =
+          row.firstName && row.lastName
+            ? `${row.firstName} ${row.lastName}`
+            : player
+              ? `${player.firstName} ${player.lastName}`
+              : row.playerId;
+        return {
+          playerId: row.playerId,
+          name,
+          minutes: row.minutes,
+          targetMinutes: snap?.targetMinutes ?? null,
+          explanations: meta.explanations[row.playerId] ?? [],
+        };
+      })
+      .sort((a, b) => b.minutes - a.minutes);
+  };
+
+  const { homeRows, awayRows } = partitionBoxScorePlayers(game);
+  const substitutions = meta.trace
+    .filter((entry) => entry.playerInId != null)
+    .slice(0, 40)
+    .map((entry) => {
+      const minutes = Math.floor(entry.secondsRemaining / 60);
+      const seconds = Math.floor(entry.secondsRemaining % 60);
+      const periodLabel =
+        entry.periodNumber <= 4
+          ? `Q${entry.periodNumber}`
+          : `OT${entry.periodNumber - 4}`;
+      const abbr =
+        entry.teamId === game.homeTeamId ? homeAbbr : awayAbbr;
+      return {
+        clockLabel: `${minutes}:${seconds.toString().padStart(2, "0")} ${periodLabel}`,
+        teamAbbreviation: abbr,
+        detail:
+          entry.playerOutId != null
+            ? `OUT ${entry.playerOutId} → IN ${entry.playerInId} (${entry.reason})`
+            : `IN ${entry.playerInId} (${entry.reason})`,
+      };
+    });
+
+  return {
+    homePlayers: buildSide(meta.home, homeRows),
+    awayPlayers: buildSide(meta.away, awayRows),
+    substitutions,
   };
 }
 

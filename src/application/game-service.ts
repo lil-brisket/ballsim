@@ -26,6 +26,7 @@ import {
   updateCoachingPhilosophyCommand,
   updateLineupCommand,
   updateRotationCommand,
+  optimizeRotationCommand,
 } from "@/systems/team-management-commands";
 
 import type { ContractInput } from "@/domain/entities/contract";
@@ -2385,11 +2386,23 @@ export async function updateOwnerRotation(
     teamId: string;
     rotation: Array<{
       playerId: string;
-      plannedMinutes: number;
-      eligiblePositions: string[];
-      role: "starter" | "bench";
+      targetMinutes: number;
+      minimumMinutes: number;
+      normalMaximumMinutes: number;
+      absoluteMaximumMinutes: number;
+      rotationPriority: number;
+      rotationStatus: string;
+      role: string;
+      preferredPositions: string[];
+      secondaryPositions?: string[];
+      minutePriorityBias?: number;
     }>;
     rotationStyle?: string;
+    rotationPhilosophy?: string;
+    rotationDepth?: number;
+    rotationPreset?: string;
+    closingLineupPolicy?: string;
+    closingLineupIds?: string[];
   },
   store?: SaveGameStore,
 ): Promise<OwnerCommandResult> {
@@ -2400,16 +2413,90 @@ export async function updateOwnerRotation(
         teamId: asTeamId(input.teamId),
         rotation: input.rotation.map((entry) => ({
           playerId: asPlayerId(entry.playerId),
-          plannedMinutes: entry.plannedMinutes,
-          eligiblePositions: entry.eligiblePositions as Array<
+          targetMinutes: entry.targetMinutes,
+          minimumMinutes: entry.minimumMinutes,
+          normalMaximumMinutes: entry.normalMaximumMinutes,
+          absoluteMaximumMinutes: entry.absoluteMaximumMinutes,
+          rotationPriority: entry.rotationPriority as 1 | 2 | 3 | 4 | 5,
+          rotationStatus: entry.rotationStatus as
+            | "active"
+            | "inactive"
+            | "emergency",
+          role: entry.role as
+            | "starter"
+            | "sixth_man"
+            | "rotation"
+            | "bench"
+            | "deep_bench"
+            | "emergency",
+          preferredPositions: entry.preferredPositions as Array<
             "PG" | "SG" | "SF" | "PF" | "C"
           >,
-          role: entry.role,
+          secondaryPositions: (entry.secondaryPositions ?? []) as Array<
+            "PG" | "SG" | "SF" | "PF" | "C"
+          >,
+          minutePriorityBias: (entry.minutePriorityBias ?? 0) as -1 | 0 | 1,
         })),
         rotationStyle: input.rotationStyle as
           | "tight"
           | "balanced"
           | "deep"
+          | undefined,
+        rotationPhilosophy: input.rotationPhilosophy as
+          | "deep"
+          | "balanced"
+          | "tight"
+          | "star_heavy"
+          | "development"
+          | undefined,
+        rotationDepth: input.rotationDepth,
+        rotationPreset: input.rotationPreset as
+          | "auto"
+          | "balanced"
+          | "star_heavy"
+          | "deep"
+          | "development"
+          | "custom"
+          | undefined,
+        closingLineupPolicy: input.closingLineupPolicy as
+          | "auto"
+          | "starters"
+          | "custom"
+          | undefined,
+        closingLineupIds: input.closingLineupIds?.map((id) => asPlayerId(id)),
+      }),
+    store,
+  );
+}
+
+export async function optimizeOwnerRotation(
+  saveId: string,
+  input: {
+    teamId: string;
+    rotationPreset?: string;
+    rotationPhilosophy?: string;
+  },
+  store?: SaveGameStore,
+): Promise<OwnerCommandResult> {
+  return runTeamManagementMutation(
+    saveId,
+    (state) =>
+      optimizeRotationCommand(state, {
+        teamId: asTeamId(input.teamId),
+        rotationPreset: input.rotationPreset as
+          | "auto"
+          | "balanced"
+          | "star_heavy"
+          | "deep"
+          | "development"
+          | "custom"
+          | undefined,
+        rotationPhilosophy: input.rotationPhilosophy as
+          | "deep"
+          | "balanced"
+          | "tight"
+          | "star_heavy"
+          | "development"
           | undefined,
       }),
     store,

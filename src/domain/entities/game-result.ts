@@ -4,6 +4,7 @@ import {
   type GameEvent,
   type GameEventType,
   type GamePlayerStats,
+  type GameRotationMeta,
   type GameScore,
 } from "@/domain/entities/game";
 import type { GameId, SeasonId, TeamId } from "@/domain/ids";
@@ -61,6 +62,8 @@ export type GameResult = {
   playerStats: GamePlayerStats[];
   teamStats: { home: GameTeamStats; away: GameTeamStats };
   events: GameEvent[];
+  /** Frozen rotation snapshot + trace; null when unavailable. */
+  rotationMeta: GameRotationMeta | null;
 };
 
 export type GameResultInput = {
@@ -77,6 +80,7 @@ export type GameResultInput = {
   playerStats: GamePlayerStats[];
   teamStats: { home: GameTeamStats; away: GameTeamStats };
   events: GameEvent[];
+  rotationMeta?: GameRotationMeta | null;
 };
 
 /**
@@ -130,6 +134,7 @@ export function createGameResult(input: GameResultInput): GameResult {
       away: { ...input.teamStats.away },
     },
     events: input.events.map((event) => ({ ...event })),
+    rotationMeta: input.rotationMeta ?? null,
   };
 }
 

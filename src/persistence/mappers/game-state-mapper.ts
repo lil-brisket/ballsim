@@ -16,7 +16,14 @@ import { NEUTRAL_TEAM_PLAY_STYLE } from "@/domain/entities/team";
 import { createEmptyTeamFinanceBooks, normalizeTeamFinanceBooks } from "@/domain/entities/finances";
 import type { TeamFinances } from "@/domain/entities/finances";
 import { DEFAULT_COACHING_PHILOSOPHY } from "@/domain/coaching/coaching-philosophy";
-import { emptyTeamRosterManagement } from "@/domain/entities/team-roster-management";
+import {
+  depthForPhilosophy,
+  emptyTeamRosterManagement,
+  philosophyFromStyle,
+  styleFromPhilosophy,
+  type RotationStyle,
+} from "@/domain/entities/team-roster-management";
+import { migrateLegacyRotationEntry } from "@/systems/rotation/migrate-rotation-entry";
 import type {
   ArenaId,
   ConferenceId,
@@ -178,6 +185,7 @@ const MIGRATE_ONE_STEP: Record<number, (state: unknown) => unknown> = {
   43: (state) => migrateV43ToV44(state as GameStateV43),
   44: (state) => migrateV44ToV45(state as GameStateV44),
   45: (state) => migrateV45ToV46(state as GameStateV45),
+  46: (state) => migrateV46ToV47(state as GameStateV46),
 };
 
 function legacyUserRecord(user: unknown): Record<string, unknown> {
@@ -3868,13 +3876,38 @@ type GameStateV45 = {
   user: GameState["user"];
 };
 
+type GameStateV46 = Omit<GameState, "meta" | "world"> & {
+  meta: { schemaVersion: 46; [key: string]: unknown };
+  world: {
+    teams: Record<
+      string,
+      Omit<GameState["world"]["teams"][string], "rosterManagement"> & {
+        rosterManagement: {
+          startingLineup: GameState["world"]["teams"][string]["rosterManagement"]["startingLineup"];
+          bench: string[];
+          inactive: string[];
+          rotation: Array<{
+            playerId: string;
+            plannedMinutes: number;
+            eligiblePositions: string[];
+            role: "starter" | "bench";
+          }>;
+          rotationStyle: RotationStyle;
+          lastConfiguredBy: "default" | "user" | "ai";
+        };
+      }
+    >;
+    [key: string]: unknown;
+  };
+};
+
 /**
  * Deterministic v45 → v46: rename TeamFinances cash → businessFunds,
  * cashLedgerByMonth → businessFundsLedgerByMonth (openCash/netCashChange),
  * FranchiseSeasonRecord.cash → businessFunds, ensure salaryCap + staffBudget.
  * Emits literal schemaVersion 46. No RNG.
  */
-function migrateV45ToV46(state: GameStateV45): GameState {
+function migrateV45ToV46(state: GameStateV45): GameStateV46 {
   const finances: Record<string, TeamFinances> = {};
   for (const [teamId, finance] of Object.entries(state.business.finances)) {
     const legacy = finance as TeamFinancesV45 & {
@@ -3956,6 +3989,108 @@ function migrateV45ToV46(state: GameStateV45): GameState {
       ...state.business,
       finances,
       franchiseHistory,
+    },
+  } as unknown as GameStateV46;
+}
+
+/**
+ * Deterministic v46 → v47: expand TeamRosterManagement rotation entries
+ * (target/min/normalMax/absoluteMax, rotationStatus, philosophy, depth, etc.).
+ * Conservative: rotationStatus active only when plannedMinutes > 0.
+ * Idempotent if entries already have targetMinutes (e.g. fresh recommend during v44→v45).
+ * Emits literal schemaVersion 47. No RNG.
+ */
+function migrateV46ToV47(state: GameStateV46): GameState {
+  const teams: GameState["world"]["teams"] = {};
+  for (const [teamId, team] of Object.entries(state.world.teams)) {
+    const legacy = team.rosterManagement as {
+      startingLineup?: GameState["world"]["teams"][string]["rosterManagement"]["startingLineup"];
+      bench?: string[];
+      inactive?: string[];
+      rotation?: Array<Record<string, unknown>>;
+      rotationStyle?: RotationStyle;
+      rotationPhilosophy?: string;
+      rotationDepth?: number;
+      rotationPreset?: string;
+      closingLineupPolicy?: string;
+      closingLineupIds?: string[];
+      lastConfiguredBy?: "default" | "user" | "ai";
+    };
+    const style: RotationStyle =
+      legacy?.rotationStyle === "tight" ||
+      legacy?.rotationStyle === "deep" ||
+      legacy?.rotationStyle === "balanced"
+        ? legacy.rotationStyle
+        : "balanced";
+    const philosophy =
+      legacy?.rotationPhilosophy === "deep" ||
+      legacy?.rotationPhilosophy === "tight" ||
+      legacy?.rotationPhilosophy === "star_heavy" ||
+      legacy?.rotationPhilosophy === "development" ||
+      legacy?.rotationPhilosophy === "balanced"
+        ? legacy.rotationPhilosophy
+        : philosophyFromStyle(style);
+
+    const rotation = (legacy?.rotation ?? []).map((entry) => {
+      if (typeof entry.targetMinutes === "number") {
+        return entry as unknown as GameState["world"]["teams"][string]["rosterManagement"]["rotation"][number];
+      }
+      return migrateLegacyRotationEntry({
+        playerId: String(entry.playerId ?? ""),
+        plannedMinutes:
+          typeof entry.plannedMinutes === "number" ? entry.plannedMinutes : 0,
+        eligiblePositions: Array.isArray(entry.eligiblePositions)
+          ? (entry.eligiblePositions as string[])
+          : Array.isArray(entry.preferredPositions)
+            ? (entry.preferredPositions as string[])
+            : [],
+        role: entry.role === "starter" ? "starter" : "bench",
+      });
+    });
+
+    teams[teamId] = {
+      ...team,
+      rosterManagement: {
+        startingLineup: legacy?.startingLineup ?? [],
+        bench: [...(legacy?.bench ?? [])],
+        inactive: [...(legacy?.inactive ?? [])],
+        rotation,
+        rotationStyle: styleFromPhilosophy(philosophy),
+        rotationPhilosophy: philosophy,
+        rotationDepth:
+          typeof legacy?.rotationDepth === "number"
+            ? legacy.rotationDepth
+            : depthForPhilosophy(philosophy),
+        rotationPreset:
+          legacy?.rotationPreset === "auto" ||
+          legacy?.rotationPreset === "balanced" ||
+          legacy?.rotationPreset === "star_heavy" ||
+          legacy?.rotationPreset === "deep" ||
+          legacy?.rotationPreset === "development" ||
+          legacy?.rotationPreset === "custom"
+            ? legacy.rotationPreset
+            : "custom",
+        closingLineupPolicy:
+          legacy?.closingLineupPolicy === "starters" ||
+          legacy?.closingLineupPolicy === "custom" ||
+          legacy?.closingLineupPolicy === "auto"
+            ? legacy.closingLineupPolicy
+            : "auto",
+        closingLineupIds: [...(legacy?.closingLineupIds ?? [])],
+        lastConfiguredBy: legacy?.lastConfiguredBy ?? "default",
+      },
+    } as GameState["world"]["teams"][string];
+  }
+
+  return {
+    ...(state as unknown as GameState),
+    meta: {
+      ...(state as unknown as GameState).meta,
+      schemaVersion: 47,
+    },
+    world: {
+      ...(state as unknown as GameState).world,
+      teams,
     },
   };
 }

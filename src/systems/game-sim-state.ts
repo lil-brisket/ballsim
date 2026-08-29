@@ -10,11 +10,17 @@ import {
   type GameCompetitionType,
   type GameEvent,
   type GamePlayerStats,
+  type GameRotationMeta,
   type GameScore,
 } from "@/domain/entities/game";
 import type { Player } from "@/domain/entities/player";
+import type { RotationEntry } from "@/domain/entities/team-roster-management";
 import type { GameId, PlayerId, SeasonId, TeamId } from "@/domain/ids";
 import type { PlayerStatsDelta } from "@/systems/possession-stats";
+import type { RotationPlan } from "@/systems/rotation/rotation-planner";
+import type { RotationTraceEntry } from "@/systems/rotation/rotation-trace";
+import type { FoulTroubleLevel } from "@/systems/rotation/rotation-foul-trouble";
+import type { GameSituation } from "@/systems/rotation/rotation-game-context";
 
 export type GameSimState = {
   id: GameId;
@@ -37,6 +43,27 @@ export type GameSimState = {
   secondsOnCourt: Map<string, number>;
   homeOnCourt: Player[];
   awayOnCourt: Player[];
+  /** Continuous stretch since last sub-in. */
+  continuousSecondsOnCourt: Map<string, number>;
+  fatigueByPlayerId: Map<string, number>;
+  lastSubElapsedSeconds: Map<string, number>;
+  fouledOutPlayerIds: Set<string>;
+  rotationTrace: RotationTraceEntry[];
+  rotationExplanations: Map<string, string[]>;
+  /** Frozen at tip-off from TeamRosterManagement. */
+  homeRotationSnapshot: RotationEntry[];
+  awayRotationSnapshot: RotationEntry[];
+  homeRotationPlan: RotationPlan | null;
+  awayRotationPlan: RotationPlan | null;
+  /** Peak foul trouble seen (for explanations). */
+  peakFoulTroubleByPlayerId: Map<string, FoulTroubleLevel>;
+  peakFatigueByPlayerId: Map<string, number>;
+  situationsSeen: Set<GameSituation>;
+  /** Elapsed regulation+OT game clock seconds. */
+  elapsedGameSeconds: number;
+  /** Windows already evaluated this period (avoid double-firing). */
+  windowsFiredThisPeriod: Set<string>;
+  overtimePeriodCount: number;
 };
 
 export type CreateGameSimStateInput = {
@@ -92,6 +119,24 @@ export function createGameSimState(input: CreateGameSimStateInput): GameSimState
     secondsOnCourt,
     homeOnCourt: [...input.homeOnCourt],
     awayOnCourt: [...input.awayOnCourt],
+    continuousSecondsOnCourt: new Map(
+      [...onCourtIds].map((id) => [id, 0]),
+    ),
+    fatigueByPlayerId: new Map(),
+    lastSubElapsedSeconds: new Map(),
+    fouledOutPlayerIds: new Set(),
+    rotationTrace: [],
+    rotationExplanations: new Map(),
+    homeRotationSnapshot: [],
+    awayRotationSnapshot: [],
+    homeRotationPlan: null,
+    awayRotationPlan: null,
+    peakFoulTroubleByPlayerId: new Map(),
+    peakFatigueByPlayerId: new Map(),
+    situationsSeen: new Set(),
+    elapsedGameSeconds: 0,
+    windowsFiredThisPeriod: new Set(),
+    overtimePeriodCount: 0,
   };
 }
 
@@ -245,6 +290,35 @@ export function finalizeGameSimState(
     return { ...row };
   });
 
+  const explanations: Record<string, string[]> = {};
+  for (const [playerId, reasons] of sim.rotationExplanations) {
+    explanations[playerId] = [...reasons];
+  }
+
+  const rotationMeta: GameRotationMeta | null =
+    sim.homeRotationSnapshot.length > 0 || sim.awayRotationSnapshot.length > 0
+      ? {
+          home: sim.homeRotationSnapshot.map((entry) => ({
+            playerId: entry.playerId,
+            targetMinutes: entry.targetMinutes,
+            minimumMinutes: entry.minimumMinutes,
+            normalMaximumMinutes: entry.normalMaximumMinutes,
+            absoluteMaximumMinutes: entry.absoluteMaximumMinutes,
+            role: entry.role,
+          })),
+          away: sim.awayRotationSnapshot.map((entry) => ({
+            playerId: entry.playerId,
+            targetMinutes: entry.targetMinutes,
+            minimumMinutes: entry.minimumMinutes,
+            normalMaximumMinutes: entry.normalMaximumMinutes,
+            absoluteMaximumMinutes: entry.absoluteMaximumMinutes,
+            role: entry.role,
+          })),
+          trace: sim.rotationTrace.map((entry) => ({ ...entry })),
+          explanations,
+        }
+      : null;
+
   return createGame({
     id: sim.id,
     seasonId: sim.seasonId,
@@ -259,6 +333,7 @@ export function finalizeGameSimState(
     playerStats,
     homeTeamSnapshot: null,
     awayTeamSnapshot: null,
+    rotationMeta,
   });
 }
 
