@@ -7,6 +7,8 @@ import {
   isAiManagementMode,
   isAiManagementPreset,
   isDraftMode,
+  isFantasyDraftOrderModeSetting,
+  isFantasyDraftSettingsType,
   isInjuryFrequency,
   isLeagueArea,
   isLeagueHistoryMode,
@@ -261,8 +263,32 @@ export function validateGameSettings(
   const draftMode = draft.mode;
   const userPickPosition = draft.userPickPosition;
   const randomizeUserPick = draft.randomizeUserPick;
+  const draftType = draft.type;
+  const timerSeconds = draft.timerSeconds;
+  const orderMode = draft.orderMode;
   if (draftMode !== undefined && !isDraftMode(draftMode)) {
     errors.push('draft.mode must be "standard" or "fantasy".');
+  }
+  if (
+    draftType !== undefined &&
+    !isFantasyDraftSettingsType(draftType)
+  ) {
+    errors.push('draft.type must be "snake" or "linear".');
+  }
+  if (
+    timerSeconds !== undefined &&
+    timerSeconds !== null &&
+    (typeof timerSeconds !== "number" ||
+      !Number.isInteger(timerSeconds) ||
+      timerSeconds < 1)
+  ) {
+    errors.push("draft.timerSeconds must be null or a positive integer.");
+  }
+  if (
+    orderMode !== undefined &&
+    !isFantasyDraftOrderModeSetting(orderMode)
+  ) {
+    errors.push('draft.orderMode must be "random" or "manual".');
   }
   if (
     userPickPosition !== undefined &&
@@ -376,6 +402,13 @@ export function validateGameSettings(
     },
     draft: {
       mode: (draftMode as GameSettings["draft"]["mode"] | undefined) ?? "standard",
+      type:
+        (draftType as GameSettings["draft"]["type"] | undefined) ?? "snake",
+      timerSeconds:
+        (timerSeconds as number | null | undefined) ?? null,
+      orderMode:
+        (orderMode as GameSettings["draft"]["orderMode"] | undefined) ??
+        "random",
       userPickPosition: (userPickPosition as number | null | undefined) ?? null,
       randomizeUserPick: (randomizeUserPick as boolean | undefined) ?? false,
     },

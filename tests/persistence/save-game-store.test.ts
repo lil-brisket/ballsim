@@ -123,6 +123,9 @@ function createEightTeamPopulatedState(rngSeed: number): GameState {
       },
       draft: {
         mode: "standard",
+        type: "snake",
+        timerSeconds: null,
+        orderMode: "random",
         userPickPosition: null,
         randomizeUserPick: false,
       },
@@ -147,6 +150,7 @@ function createEightTeamPopulatedState(rngSeed: number): GameState {
       staff: {},
       draftPicks: {},
       drafts: {},
+      fantasyDraft: null,
       scheduledEvents: {},
     },
     competition: {

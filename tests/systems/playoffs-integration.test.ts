@@ -128,6 +128,9 @@ function createEightTeamGameState(rngSeed: number): {
       },
       draft: {
         mode: "standard",
+        type: "snake",
+        timerSeconds: null,
+        orderMode: "random",
         userPickPosition: null,
         randomizeUserPick: false,
       },
@@ -152,6 +155,7 @@ function createEightTeamGameState(rngSeed: number): {
       staff: {},
       draftPicks: {},
       drafts: {},
+      fantasyDraft: null,
       scheduledEvents: {},
     },
     competition: {

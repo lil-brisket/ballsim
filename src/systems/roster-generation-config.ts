@@ -1,7 +1,7 @@
 import type { PlayerPosition } from "@/domain/entities/player";
 
 /** Default roster size used by roster and league generation. */
-export const DEFAULT_ROSTER_SIZE = 10;
+export const DEFAULT_ROSTER_SIZE = 15;
 
 const ROSTER_POSITION_CYCLE: readonly PlayerPosition[] = [
   "PG",

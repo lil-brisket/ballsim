@@ -5,6 +5,7 @@ import type { Contract } from "@/domain/entities/contract";
 import type { Division } from "@/domain/entities/division";
 import type { DraftPick } from "@/domain/entities/draft-pick";
 import type { DraftClass } from "@/domain/entities/draft";
+import type { FantasyDraft } from "@/domain/entities/fantasy-draft";
 import type { ExpansionState } from "@/domain/entities/expansion";
 import type { FreeAgencyOffer } from "@/domain/entities/free-agency-offer";
 import type { FranchiseHistory } from "@/domain/entities/franchise-history";
@@ -44,7 +45,7 @@ import type { GameSettings } from "@/domain/game-settings";
 import type { DomainEvent } from "@/domain/events";
 import type { SaveId, TeamId } from "@/domain/ids";
 
-export const GAME_STATE_SCHEMA_VERSION = 47;
+export const GAME_STATE_SCHEMA_VERSION = 48;
 
 /** Bounded recent history for Owner Mode activity / transactions UI. */
 export const EVENT_LOG_MAX = 1_000;
@@ -73,6 +74,8 @@ export type WorldSlice = {
   staff: Record<string, Staff>;
   draftPicks: Record<string, DraftPick>;
   drafts: Record<string, DraftClass>;
+  /** Startup fantasy draft; null when league uses standard roster generation. */
+  fantasyDraft: FantasyDraft | null;
   scheduledEvents: Record<string, ScheduledEvent>;
 };
 

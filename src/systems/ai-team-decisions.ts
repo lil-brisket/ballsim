@@ -58,6 +58,7 @@ import {
 } from "@/systems/owner-decisions";
 import { tryEnqueueAnyOwnedTeamTradeOffer } from "@/systems/owner-decisions/owned-team-trade-offer";
 import { isUserControlledTeam } from "@/state/owner-context";
+import { draftTalentScore } from "@/systems/fantasy-draft/draft-evaluation";
 import {
   recommendRosterManagement,
   reconcileRosterManagement,
@@ -558,43 +559,14 @@ export function selectProspectForTeam(
     if (countA !== countB) {
       return countA - countB;
     }
-    const scoreA = draftProspectScore(a.player, prefs);
-    const scoreB = draftProspectScore(b.player, prefs);
+    const scoreA = draftTalentScore(a.player, prefs);
+    const scoreB = draftTalentScore(b.player, prefs);
     if (scoreA !== scoreB) {
       return scoreB - scoreA;
     }
     return a.playerId < b.playerId ? -1 : a.playerId > b.playerId ? 1 : 0;
   });
   return available[0]!.playerId;
-}
-
-function draftProspectScore(
-  player: Player,
-  prefs: EffectivePreferences | undefined,
-): number {
-  const overall = calculatePlayerOverall(player.position, player.attributes);
-  const potential = player.potential.overall;
-  const upside = Math.max(0, potential - overall);
-  if (!prefs) {
-    return overall;
-  }
-  // Win-now / established: weight overall. Development/rebuild: potential/upside.
-  const overallWeight =
-    0.45 +
-    boundedPreferenceDelta(prefs.winNowPressure, 0.2) +
-    boundedPreferenceDelta(prefs.establishedPlayerValue, 0.1);
-  const potentialWeight =
-    0.35 +
-    boundedPreferenceDelta(prefs.youthValue, 0.15) +
-    boundedPreferenceDelta(prefs.developmentPriority, 0.1);
-  const upsideWeight =
-    0.2 + boundedPreferenceDelta(prefs.riskAppetite, 0.15);
-  // Conservative → high floor (overall); aggressive → ceiling (potential)
-  return (
-    overall * Math.max(0.2, overallWeight) +
-    potential * Math.max(0.15, potentialWeight) +
-    upside * Math.max(0.05, upsideWeight)
-  );
 }
 
 function findSurplusPlayer(

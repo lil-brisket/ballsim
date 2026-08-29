@@ -20,11 +20,13 @@ export default async function AdditionalFranchisesPage({ params }: PageProps) {
   const route = resolveOnboardingRoute(saveId, {
     citySelectionConfirmed: view.dashboard.citySelectionConfirmed,
     franchiseIdentityConfirmed: view.dashboard.franchiseIdentityConfirmed,
+    fantasyDraftMode: view.dashboard.fantasyDraftMode,
+    fantasyDraftStatus: view.dashboard.fantasyDraftStatus,
   });
   if (route.kind === "city") {
     redirect(route.path);
   }
-  if (route.kind === "dashboard") {
+  if (route.kind !== "franchises") {
     redirect(route.path);
   }
 

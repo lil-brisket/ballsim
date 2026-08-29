@@ -50,6 +50,20 @@ import {
   updateOwnerCoachingPhilosophy,
   applyOwnerCoachingPreset,
 } from "@/application/game-service";
+import {
+  configureFantasyDraftSetup,
+  confirmFantasyDraftSetup,
+  continueAfterFantasyDraft,
+  initializeFantasyDraftOrder,
+  pauseOwnerFantasyDraft,
+  randomizeFantasyDraftOrder,
+  reorderFantasyDraft,
+  resumeOwnerFantasyDraft,
+  selectFantasyDraftPlayer,
+  toggleFantasyDraftAutoPick,
+  toggleFantasyDraftAutoPickAll,
+  undoOwnerFantasyDraftPick,
+} from "@/application/game-service";
 import type { FacilityCategory } from "@/domain/entities/franchise-ops";
 import { validateGameSettings } from "@/domain/game-settings-validation";
 import { DEFAULT_GAME_SETTINGS } from "@/domain/game-settings";
@@ -69,7 +83,11 @@ function redirectWithError(path: string, error: string): never {
 
 function returnPath(formData: FormData, saveId: string): string {
   const raw = String(formData.get("returnPath") ?? "");
-  if (raw.startsWith(`/dashboard/${saveId}`)) {
+  if (
+    raw.startsWith(`/dashboard/${saveId}`) ||
+    raw.startsWith(`/fantasy-draft/${saveId}`) ||
+    raw.startsWith(`/new/${saveId}/fantasy-draft`)
+  ) {
     return raw;
   }
   return ownerBase(saveId);
@@ -146,11 +164,14 @@ export async function switchActiveOwnerTeamAction(
 ): Promise<void> {
   const saveId = String(formData.get("saveId") ?? "");
   const teamId = String(formData.get("teamId") ?? "");
+  const path = returnPath(formData, saveId);
   const result = await switchActiveOwnerTeam(saveId, teamId);
   if (!result.ok) {
-    redirectWithError(`/dashboard/${saveId}`, result.error);
+    redirectWithError(path, result.error);
   }
   revalidateOwner(saveId);
+  revalidatePath(`/fantasy-draft/${saveId}`, "layout");
+  redirect(path);
 }
 
 export async function takeOverFranchiseAction(
@@ -210,6 +231,9 @@ export async function confirmControlledFranchisesAction(
     redirectWithError(`/new/${saveId}/franchises`, result.error);
   }
   revalidateOwner(saveId);
+  if (result.dashboard.fantasyDraftMode) {
+    redirect(`/new/${saveId}/fantasy-draft/setup`);
+  }
   redirect(`/dashboard/${saveId}`);
 }
 
@@ -871,4 +895,194 @@ export async function applyCoachingPresetAction(
   }
   revalidateOwner(saveId);
   redirect(path);
+}
+
+function fantasyDraftPath(saveId: string): string {
+  return `/fantasy-draft/${saveId}`;
+}
+
+function revalidateFantasyDraft(saveId: string): void {
+  revalidatePath(`/fantasy-draft/${saveId}`, "layout");
+  revalidatePath(`/new/${saveId}/fantasy-draft/setup`);
+}
+
+export async function configureFantasyDraftSetupAction(
+  formData: FormData,
+): Promise<void> {
+  const saveId = String(formData.get("saveId") ?? "");
+  const draftType = String(formData.get("draftType") ?? "snake") as
+    | "snake"
+    | "linear";
+  const orderMode = String(formData.get("orderMode") ?? "random") as
+    | "random"
+    | "manual";
+  const timerRaw = String(formData.get("timerSeconds") ?? "");
+  const timerSeconds =
+    timerRaw === "" || timerRaw === "off" ? null : Number(timerRaw);
+  const path = `/new/${saveId}/fantasy-draft/setup`;
+  const result = await configureFantasyDraftSetup(saveId, {
+    draftType,
+    orderMode,
+    timerSeconds:
+      timerSeconds !== null && Number.isFinite(timerSeconds)
+        ? Math.max(1, Math.floor(timerSeconds))
+        : null,
+  });
+  if (!result.ok) {
+    redirectWithError(path, result.error);
+  }
+  revalidateFantasyDraft(saveId);
+  redirect(path);
+}
+
+export async function randomizeFantasyDraftOrderAction(
+  formData: FormData,
+): Promise<void> {
+  const saveId = String(formData.get("saveId") ?? "");
+  const path = `/new/${saveId}/fantasy-draft/setup`;
+  await initializeFantasyDraftOrder(saveId);
+  const result = await randomizeFantasyDraftOrder(saveId);
+  if (!result.ok) {
+    redirectWithError(path, result.error);
+  }
+  revalidateFantasyDraft(saveId);
+  redirect(path);
+}
+
+export async function reorderFantasyDraftAction(
+  formData: FormData,
+): Promise<void> {
+  const saveId = String(formData.get("saveId") ?? "");
+  const teamId = String(formData.get("teamId") ?? "");
+  const direction = Number(formData.get("direction") ?? 0) as -1 | 1;
+  const path = `/new/${saveId}/fantasy-draft/setup`;
+  const result = await reorderFantasyDraft(
+    saveId,
+    teamId,
+    direction === -1 ? -1 : 1,
+  );
+  if (!result.ok) {
+    redirectWithError(path, result.error);
+  }
+  revalidateFantasyDraft(saveId);
+  redirect(path);
+}
+
+export async function confirmFantasyDraftSetupAction(
+  formData: FormData,
+): Promise<void> {
+  const saveId = String(formData.get("saveId") ?? "");
+  const path = `/new/${saveId}/fantasy-draft/setup`;
+  const result = await confirmFantasyDraftSetup(saveId);
+  if (!result.ok) {
+    redirectWithError(path, result.error);
+  }
+  revalidateFantasyDraft(saveId);
+  redirect(fantasyDraftPath(saveId));
+}
+
+export async function fantasyDraftPickAction(
+  formData: FormData,
+): Promise<void> {
+  const saveId = String(formData.get("saveId") ?? "");
+  const playerId = String(formData.get("playerId") ?? "");
+  const path = fantasyDraftPath(saveId);
+  const result = await selectFantasyDraftPlayer(saveId, playerId);
+  if (!result.ok) {
+    redirectWithError(path, result.error);
+  }
+  revalidateFantasyDraft(saveId);
+  if (result.draft?.status === "complete") {
+    redirect(`${path}/summary`);
+  }
+  redirect(path);
+}
+
+export async function toggleFantasyDraftAutoPickAction(
+  formData: FormData,
+): Promise<void> {
+  const saveId = String(formData.get("saveId") ?? "");
+  const teamId = String(formData.get("teamId") ?? "");
+  const enabled = String(formData.get("enabled") ?? "") === "true";
+  const path = fantasyDraftPath(saveId);
+  const result = await toggleFantasyDraftAutoPick(saveId, teamId, enabled);
+  if (!result.ok) {
+    redirectWithError(path, result.error);
+  }
+  revalidateFantasyDraft(saveId);
+  if (result.draft?.status === "complete") {
+    redirect(`${path}/summary`);
+  }
+  redirect(path);
+}
+
+export async function toggleFantasyDraftAutoPickAllAction(
+  formData: FormData,
+): Promise<void> {
+  const saveId = String(formData.get("saveId") ?? "");
+  const enabled = String(formData.get("enabled") ?? "") === "true";
+  const path = fantasyDraftPath(saveId);
+  const result = await toggleFantasyDraftAutoPickAll(saveId, enabled);
+  if (!result.ok) {
+    redirectWithError(path, result.error);
+  }
+  revalidateFantasyDraft(saveId);
+  if (result.draft?.status === "complete") {
+    redirect(`${path}/summary`);
+  }
+  redirect(path);
+}
+
+export async function pauseFantasyDraftAction(
+  formData: FormData,
+): Promise<void> {
+  const saveId = String(formData.get("saveId") ?? "");
+  const path = fantasyDraftPath(saveId);
+  const result = await pauseOwnerFantasyDraft(saveId);
+  if (!result.ok) {
+    redirectWithError(path, result.error);
+  }
+  revalidateFantasyDraft(saveId);
+  redirect(path);
+}
+
+export async function resumeFantasyDraftAction(
+  formData: FormData,
+): Promise<void> {
+  const saveId = String(formData.get("saveId") ?? "");
+  const path = fantasyDraftPath(saveId);
+  const result = await resumeOwnerFantasyDraft(saveId);
+  if (!result.ok) {
+    redirectWithError(path, result.error);
+  }
+  revalidateFantasyDraft(saveId);
+  if (result.draft?.status === "complete") {
+    redirect(`${path}/summary`);
+  }
+  redirect(path);
+}
+
+export async function undoFantasyDraftPickAction(
+  formData: FormData,
+): Promise<void> {
+  const saveId = String(formData.get("saveId") ?? "");
+  const path = fantasyDraftPath(saveId);
+  const result = await undoOwnerFantasyDraftPick(saveId);
+  if (!result.ok) {
+    redirectWithError(path, result.error);
+  }
+  revalidateFantasyDraft(saveId);
+  redirect(path);
+}
+
+export async function continueAfterFantasyDraftAction(
+  formData: FormData,
+): Promise<void> {
+  const saveId = String(formData.get("saveId") ?? "");
+  const result = await continueAfterFantasyDraft(saveId);
+  if (!result.ok) {
+    redirectWithError(`${fantasyDraftPath(saveId)}/summary`, result.error);
+  }
+  revalidateOwner(saveId);
+  redirect(`/dashboard/${saveId}`);
 }

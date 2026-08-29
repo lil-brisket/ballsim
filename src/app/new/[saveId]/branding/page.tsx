@@ -19,6 +19,8 @@ export default async function BrandingPage({ params }: BrandingPageProps) {
   const route = resolveOnboardingRoute(saveId, {
     citySelectionConfirmed: view.dashboard.citySelectionConfirmed,
     franchiseIdentityConfirmed: view.dashboard.franchiseIdentityConfirmed,
+    fantasyDraftMode: view.dashboard.fantasyDraftMode,
+    fantasyDraftStatus: view.dashboard.fantasyDraftStatus,
   });
   redirect(route.path);
 }

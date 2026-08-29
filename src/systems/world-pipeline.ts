@@ -2,6 +2,7 @@ import type { Rng } from "@/domain/rng";
 import { systemResult, type SystemResult } from "@/domain/system-result";
 import type { GameState } from "@/state/game-state";
 import { mergeDraftPicksForSeason } from "@/domain/draft-picks/generate-draft-picks";
+import { generateFantasyPlayerPool } from "@/systems/fantasy-draft/player-pool";
 import { generateRosters } from "@/systems/roster-generation";
 import { advanceSimulation } from "@/systems/simulation/advance-simulation";
 
@@ -11,13 +12,17 @@ export type WorldPipelineCommand = {
 
 /**
  * Ensures roster and draft picks exist (world-gen bootstrap).
+ * Fantasy mode generates an unassigned player pool instead of team rosters.
  * Does not generate the regular-season schedule — that is owned by season lifecycle.
  * Idempotent; safe before advance day or on new save creation.
  */
 export function bootstrapWorld(state: GameState, rng: Rng): SystemResult {
-  const afterRosters = generateRosters(state, rng);
-  const afterPicks = ensureDraftPicks(afterRosters.state);
-  return systemResult(afterPicks, afterRosters.events);
+  const afterPlayers =
+    state.settings.draft.mode === "fantasy"
+      ? generateFantasyPlayerPool(state, rng)
+      : generateRosters(state, rng);
+  const afterPicks = ensureDraftPicks(afterPlayers.state);
+  return systemResult(afterPicks, afterPlayers.events);
 }
 
 /**

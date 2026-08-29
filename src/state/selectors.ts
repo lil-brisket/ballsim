@@ -4,6 +4,9 @@ import {
   isContractActive,
 } from "@/domain/entities/contract";
 import { draftClassIdFor } from "@/domain/entities/draft";
+import {
+  fantasyDraftPlayerTier,
+} from "@/domain/entities/fantasy-draft";
 import { isOpenOffer } from "@/domain/entities/free-agency-offer";
 import type { TeamFinancialStatement } from "@/domain/entities/finances";
 import type { Game } from "@/domain/entities/game";
@@ -21,6 +24,16 @@ import {
 } from "@/data/league/city-locations";
 import { draftYearForSeason } from "@/systems/draft";
 import { isUserOnDraftClock } from "@/systems/draft/draft-clock";
+import {
+  getAvailableDraftPlayers,
+  getRemainingPickSeconds,
+  isUserOnFantasyDraftClock,
+} from "@/systems/fantasy-draft/draft-clock";
+import {
+  getCurrentPick,
+  getNextPick,
+} from "@/systems/fantasy-draft/draft-order";
+import { fantasyDraftPositionCounts } from "@/systems/fantasy-draft/draft-evaluation";
 import { listFreeAgents } from "@/systems/free-agency";
 import { getTeamCapSpace, getTeamPayroll } from "@/systems/salary-cap";
 import { getLeagueSalaryCap } from "@/systems/league-salary-cap";
@@ -57,6 +70,8 @@ export type DashboardSnapshot = {
   teamSelectionLocked: boolean;
   citySelectionConfirmed: boolean;
   franchiseIdentityConfirmed: boolean;
+  fantasyDraftMode: boolean;
+  fantasyDraftStatus: string | null;
   userOnDraftClock: boolean;
   controlledTeam: {
     id: string;
@@ -1056,6 +1071,8 @@ export function toDashboardSnapshot(state: GameState): DashboardSnapshot {
     teamSelectionLocked: state.world.calendar.lastSimulatedDate !== null,
     citySelectionConfirmed: getActiveOwnedFranchise(state).citySelectionConfirmed,
     franchiseIdentityConfirmed: getActiveOwnedFranchise(state).franchiseIdentityConfirmed,
+    fantasyDraftMode: state.settings.draft.mode === "fantasy",
+    fantasyDraftStatus: state.world.fantasyDraft?.status ?? null,
     userOnDraftClock: isUserOnDraftClock(state),
     controlledTeam: {
       id: team.id,
@@ -1503,3 +1520,211 @@ function toPlayerBoxScoreRow(
 }
 
 export type { TeamId };
+
+export type FantasyDraftView = {
+  status: string;
+  draftType: string;
+  orderMode: string;
+  orderConfirmed: boolean;
+  picksPerTeam: number;
+  totalPicks: number;
+  currentPickNumber: number | null;
+  currentRound: number | null;
+  onClockTeamId: string | null;
+  onClockTeamName: string | null;
+  onClockTeamAbbreviation: string | null;
+  onClockIsUser: boolean;
+  nextTeamId: string | null;
+  nextTeamName: string | null;
+  userOnClock: boolean;
+  timerEnabled: boolean;
+  timerSecondsPerPick: number;
+  pickStartedAt: string | null;
+  remainingSeconds: number | null;
+  paused: boolean;
+  draftOrder: Array<{
+    pickNumber: number;
+    teamId: string;
+    teamName: string;
+    abbreviation: string;
+    isUser: boolean;
+    branding: TeamBrandingView | null;
+  }>;
+  controlledFranchises: Array<{
+    teamId: string;
+    teamName: string;
+    abbreviation: string;
+    isActive: boolean;
+    isOnClock: boolean;
+    autoPick: boolean;
+    rosterCount: number;
+    branding: TeamBrandingView | null;
+  }>;
+  availablePlayers: Array<{
+    playerId: string;
+    firstName: string;
+    lastName: string;
+    position: string;
+    age: number;
+    heightInches: number;
+    overall: number;
+    potential: number;
+    tier: string;
+  }>;
+  activeRoster: Array<{
+    playerId: string;
+    name: string;
+    position: string;
+    overall: number;
+  }>;
+  positionCounts: Array<{ position: string; count: number }>;
+  selections: Array<{
+    pickNumber: number;
+    round: number;
+    pickInRound: number;
+    teamId: string;
+    teamAbbreviation: string;
+    playerId: string;
+    playerName: string;
+    position: string;
+  }>;
+  undraftedCount: number;
+  selectionsMade: number;
+};
+
+export function toFantasyDraftView(
+  state: GameState,
+  nowIso: string = new Date().toISOString(),
+): FantasyDraftView | null {
+  const draft = state.world.fantasyDraft;
+  if (draft === null) {
+    return null;
+  }
+
+  const current = getCurrentPick(state);
+  const next = getNextPick(state);
+  const onClockTeam = current
+    ? state.world.teams[current.teamId]
+    : undefined;
+  const nextTeam = next ? state.world.teams[next.teamId] : undefined;
+
+  const draftOrder = draft.draftOrder.map((teamId, index) => {
+    const team = state.world.teams[teamId];
+    return {
+      pickNumber: index + 1,
+      teamId,
+      teamName: team ? `${team.city} ${team.name}` : teamId,
+      abbreviation: team?.abbreviation ?? "???",
+      isUser: state.user.ownedTeamIds.includes(teamId as TeamId),
+      branding: toBrandingView(team?.branding),
+    };
+  });
+
+  const controlledFranchises = state.user.ownedTeamIds.map((teamId) => {
+    const team = state.world.teams[teamId];
+    return {
+      teamId,
+      teamName: team ? `${team.city} ${team.name}` : teamId,
+      abbreviation: team?.abbreviation ?? "???",
+      isActive: teamId === state.user.activeOwnerTeamId,
+      isOnClock: current?.teamId === teamId,
+      autoPick: Boolean(draft.userTeamAutoPick[teamId]),
+      rosterCount: team?.roster.length ?? 0,
+      branding: toBrandingView(team?.branding),
+    };
+  });
+
+  const availablePlayers = getAvailableDraftPlayers(state)
+    .map((player) => {
+      const overall = calculatePlayerOverall(player.position, player.attributes);
+      return {
+        playerId: player.id,
+        firstName: player.firstName,
+        lastName: player.lastName,
+        position: player.position,
+        age: player.age,
+        heightInches: player.heightInches,
+        overall,
+        potential: player.potential.overall,
+        tier: fantasyDraftPlayerTier(overall),
+      };
+    })
+    .sort((a, b) => b.overall - a.overall);
+
+  const activeTeamId = current?.teamId ?? state.user.activeOwnerTeamId;
+  const activeTeam = state.world.teams[activeTeamId];
+  const activeRoster =
+    activeTeam?.roster.map((playerId) => {
+      const player = state.world.players[playerId];
+      return {
+        playerId,
+        name: player
+          ? `${player.firstName} ${player.lastName}`
+          : playerId,
+        position: player?.position ?? "?",
+        overall: player
+          ? calculatePlayerOverall(player.position, player.attributes)
+          : 0,
+      };
+    }) ?? [];
+
+  const counts = fantasyDraftPositionCounts(state, activeTeamId as TeamId);
+  const positionCounts = ["PG", "SG", "SF", "PF", "C"].map((position) => ({
+    position,
+    count: counts.get(position as "PG") ?? 0,
+  }));
+
+  const selections = draft.selections.map((selection) => {
+    const team = state.world.teams[selection.teamId];
+    const player = state.world.players[selection.playerId];
+    return {
+      pickNumber: selection.pickNumber,
+      round: selection.round,
+      pickInRound: selection.pickInRound,
+      teamId: selection.teamId,
+      teamAbbreviation: team?.abbreviation ?? "???",
+      playerId: selection.playerId,
+      playerName: player
+        ? `${player.firstName} ${player.lastName}`
+        : selection.playerId,
+      position: player?.position ?? "?",
+    };
+  });
+
+  return {
+    status: draft.status,
+    draftType: draft.draftType,
+    orderMode: draft.orderMode,
+    orderConfirmed: draft.orderConfirmed,
+    picksPerTeam: draft.picksPerTeam,
+    totalPicks: draft.totalPicks,
+    currentPickNumber: draft.currentPickNumber,
+    currentRound: current?.round ?? null,
+    onClockTeamId: current?.teamId ?? null,
+    onClockTeamName: onClockTeam
+      ? `${onClockTeam.city} ${onClockTeam.name}`
+      : null,
+    onClockTeamAbbreviation: onClockTeam?.abbreviation ?? null,
+    onClockIsUser: current
+      ? state.user.ownedTeamIds.includes(current.teamId)
+      : false,
+    nextTeamId: next?.teamId ?? null,
+    nextTeamName: nextTeam ? `${nextTeam.city} ${nextTeam.name}` : null,
+    userOnClock: isUserOnFantasyDraftClock(state),
+    timerEnabled: draft.timer.enabled,
+    timerSecondsPerPick: draft.timer.secondsPerPick,
+    pickStartedAt: draft.timer.pickStartedAt,
+    remainingSeconds: getRemainingPickSeconds(draft, nowIso),
+    paused: draft.status === "paused",
+    draftOrder,
+    controlledFranchises,
+    availablePlayers,
+    activeRoster,
+    positionCounts,
+    selections,
+    undraftedCount:
+      draft.poolPlayerIds.length - draft.selectedPlayerIds.length,
+    selectionsMade: draft.selections.length,
+  };
+}
+
