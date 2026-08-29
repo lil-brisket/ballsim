@@ -23,6 +23,12 @@ import { draftYearForSeason } from "@/systems/draft";
 import { isUserOnDraftClock } from "@/systems/draft/draft-clock";
 import { listFreeAgents } from "@/systems/free-agency";
 import { getTeamCapSpace, getTeamPayroll } from "@/systems/salary-cap";
+import { getLeagueSalaryCap } from "@/systems/league-salary-cap";
+import {
+  getLeagueStaffBudget,
+  getTeamStaffBudgetSpace,
+  getTeamStaffPayroll,
+} from "@/systems/staff-budget";
 import { getFinancialStatement } from "@/systems/team-finances";
 import { getCalendarContext } from "@/systems/simulation/calendar-context";
 import { deriveDefaultTeamBranding } from "@/systems/team-branding-generation";
@@ -339,9 +345,16 @@ export type PlayerDetailView = {
 };
 
 export type FinancesView = {
-  cash: number;
+  businessFunds: number;
   payrollSnapshot: number;
   statement: TeamFinancialStatement;
+  salaryCap: number;
+  salaryCapEnabled: boolean;
+  playerPayroll: number;
+  capSpace: number;
+  staffBudget: number;
+  staffPayroll: number;
+  staffBudgetSpace: number;
 };
 
 export function getControlledTeam(state: GameState): Team {
@@ -857,10 +870,21 @@ export function toFinancesView(state: GameState): FinancesView {
   const team = getControlledTeam(state);
   const year = state.competition.season.year;
   const finances = state.business.finances[team.id];
+  const salaryCap = getLeagueSalaryCap(state);
+  const staffBudget = getLeagueStaffBudget(state);
+  const playerPayroll = getTeamPayroll(team.id, year, state);
+  const staffPayroll = getTeamStaffPayroll(team.id, year, state);
   return {
-    cash: finances?.cash ?? 0,
+    businessFunds: finances?.businessFunds ?? 0,
     payrollSnapshot: finances?.payroll ?? 0,
     statement: getFinancialStatement(state, team.id, year),
+    salaryCap,
+    salaryCapEnabled: state.settings.financialRules.salaryCapEnabled,
+    playerPayroll,
+    capSpace: getTeamCapSpace(team.id, year, state, salaryCap),
+    staffBudget,
+    staffPayroll,
+    staffBudgetSpace: getTeamStaffBudgetSpace(team.id, year, state, staffBudget),
   };
 }
 
@@ -1066,7 +1090,7 @@ export function toDashboardSnapshot(state: GameState): DashboardSnapshot {
     playerCount: Object.keys(state.world.players).length,
     payroll: getTeamPayroll(team.id, year, state),
     capSpace: getTeamCapSpace(team.id, year, state),
-    cash: state.business.finances[team.id]?.cash ?? 0,
+    cash: state.business.finances[team.id]?.businessFunds ?? 0,
     revenueTotal: statement.revenue.total,
     expensesTotal: statement.expenses.total,
     netIncome: statement.netIncome,

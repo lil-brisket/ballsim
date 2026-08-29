@@ -640,7 +640,7 @@ export function explainFranchiseValue(
   const financial = calculateFinancialValue({
     normalizedRevenue,
     trailingNetIncome,
-    cash: finances.cash,
+    cash: finances.businessFunds,
   });
 
   const performanceInputs = resolvePerformanceInputs(state, teamId, trail);

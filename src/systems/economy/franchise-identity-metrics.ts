@@ -89,7 +89,7 @@ export function snapshotFranchiseIdentityRow(
     patience: ops.patience,
     riskTolerance: ops.riskTolerance,
     marketSize: ops.marketSize,
-    cash: state.business.finances[teamId]?.cash ?? 0,
+    cash: state.business.finances[teamId]?.businessFunds ?? 0,
     payroll: getTeamPayroll(teamId, state.competition.season.year, state),
     ticketPrice: ops.ticketPrice,
     marketingBudget: ops.marketing.budget,

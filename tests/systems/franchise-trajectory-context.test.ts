@@ -41,7 +41,7 @@ function season(input: {
     payroll: 60_000_000,
     leagueRank: null,
     attendance: input.attendance ?? 500_000,
-    cash: input.cash ?? 40_000_000,
+    businessFunds: input.cash ?? 40_000_000,
     fanSentiment: input.fanSentiment ?? 50,
     reputation: 50,
     facilityLevels,
@@ -134,7 +134,7 @@ describe("buildFranchiseTrajectoryContext", () => {
           ...state.business.finances,
           [teamId]: {
             ...state.business.finances[teamId]!,
-            cash: 120_000_000,
+            businessFunds: 120_000_000,
           },
         },
         franchiseHistory: {

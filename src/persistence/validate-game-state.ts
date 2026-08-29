@@ -793,7 +793,14 @@ export function validateGameState(state: unknown): asserts state is GameState {
         `business.finances entry "${financeKey}" must key and teamId match an existing team.`,
       );
     }
-    assertNumber(financeValue.cash, `business.finances[${financeKey}].cash`);
+    const businessFundsValue =
+      typeof financeValue.businessFunds === "number"
+        ? financeValue.businessFunds
+        : financeValue.cash;
+    assertNumber(
+      businessFundsValue,
+      `business.finances[${financeKey}].businessFunds`,
+    );
     assertNumber(
       financeValue.payroll,
       `business.finances[${financeKey}].payroll`,
@@ -827,13 +834,16 @@ export function validateGameState(state: unknown): asserts state is GameState {
       financeValue.booksByMonth,
       `business.finances[${financeKey}].booksByMonth`,
     );
+    const ledger =
+      financeValue.businessFundsLedgerByMonth ??
+      financeValue.cashLedgerByMonth;
     assertRecord(
-      financeValue.cashLedgerByMonth,
-      `business.finances[${financeKey}].cashLedgerByMonth`,
+      ledger,
+      `business.finances[${financeKey}].businessFundsLedgerByMonth`,
     );
     validateCashLedgerByMonth(
-      financeValue.cashLedgerByMonth,
-      `business.finances[${financeKey}].cashLedgerByMonth`,
+      ledger as Record<string, unknown>,
+      `business.finances[${financeKey}].businessFundsLedgerByMonth`,
     );
   }
 
@@ -2352,14 +2362,25 @@ function validateCashLedgerByMonth(
     }
     const entryPath = `${path}[${monthKey}]`;
     assertRecord(entry, entryPath);
-    assertNumber(entry.openCash, `${entryPath}.openCash`);
+    const openBusinessFunds =
+      typeof entry.openBusinessFunds === "number"
+        ? entry.openBusinessFunds
+        : entry.openCash;
+    assertNumber(openBusinessFunds, `${entryPath}.openBusinessFunds`);
     assertNonNegativeIntegerMoney(
       entry.playerPayrollOutflow,
       `${entryPath}.playerPayrollOutflow`,
     );
-    assertNumber(entry.netCashChange, `${entryPath}.netCashChange`);
-    if (!Number.isInteger(entry.netCashChange)) {
-      fail(`${entryPath}.netCashChange must be an integer.`);
+    const netBusinessFundsChange =
+      typeof entry.netBusinessFundsChange === "number"
+        ? entry.netBusinessFundsChange
+        : entry.netCashChange;
+    assertNumber(
+      netBusinessFundsChange,
+      `${entryPath}.netBusinessFundsChange`,
+    );
+    if (!Number.isInteger(netBusinessFundsChange)) {
+      fail(`${entryPath}.netBusinessFundsChange must be an integer.`);
     }
   }
 }

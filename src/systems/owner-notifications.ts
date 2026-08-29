@@ -181,7 +181,7 @@ export function generateOwnerNotifications(
   );
 
   if (options.previousCash !== undefined && !healthChanged) {
-    const currentCash = state.business.finances[teamId]?.cash ?? 0;
+    const currentCash = state.business.finances[teamId]?.businessFunds ?? 0;
     const delta = currentCash - options.previousCash;
     if (Math.abs(delta) >= SIGNIFICANT_FINANCIAL_CHANGE) {
       append(
@@ -359,38 +359,31 @@ function healthMessage(
       : pressure;
   const runwayText =
     runwayWeeks === null
-      ? "Projected cash stays non-negative over the current horizon if conditions hold."
-      : `At current conditions, cash is projected to run out in about ${runwayWeeks} weeks.`;
-  if (health === "insolvent") {
+      ? "Projected business funds stay non-negative over the current horizon if conditions hold."
+      : `At current conditions, business funds are projected to run out in about ${runwayWeeks} weeks.`;
+  if (health === "insolvent" || health === "critical") {
     return {
-      title: "Franchise insolvent",
-      message: `Cash is at or below zero. ${pressureLabel} is the largest operating outflow. Facility upgrades and marketing increases are blocked until inflows recover.`,
-      severity: "critical",
-    };
-  }
-  if (health === "critical") {
-    return {
-      title: "Critical financial risk",
-      message: `Projected cash at season/horizon is ${projectedCash < 0 ? "negative" : "thin"} because ${pressureLabel} dominates spending. ${runwayText} Cut spending or raise game-day revenue.`,
+      title: "Business funds critical",
+      message: `Business funds are very low. ${pressureLabel} is the largest operating outflow. Major facility investments may be difficult until inflows recover. ${runwayText}`,
       severity: "critical",
     };
   }
   if (health === "warning") {
     return {
-      title: "Financial warning",
+      title: "Business funds warning",
       message: `${pressureLabel} is the primary cost pressure. ${runwayText} Further spending increases would add risk.`,
       severity: "warning",
     };
   }
   if (health === "healthy") {
     return {
-      title: "Financial health improved",
-      message: `Operating cash flow covers spending with a liquidity buffer. ${runwayText}`,
+      title: "Business funds improved",
+      message: `Operating inflows cover business spending with a liquidity buffer. ${runwayText}`,
       severity: "success",
     };
   }
   return {
-    title: "Finances stabilized",
+    title: "Business funds stabilized",
     message: `The franchise has limited margin but is no longer in immediate distress. ${runwayText}`,
     severity: "success",
   };
@@ -403,7 +396,7 @@ function appendFinancialHealthTransition(
   append: (notification: OwnerNotification) => void,
 ): boolean {
   const projection = projectCashHorizon(state, teamId);
-  const cash = state.business.finances[teamId]?.cash ?? 0;
+  const cash = state.business.finances[teamId]?.businessFunds ?? 0;
   const health = calculateFinancialHealth({
     cash,
     weeklyOutflow: projection.weeklyOutflow,

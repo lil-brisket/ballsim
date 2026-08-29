@@ -155,7 +155,7 @@ function priorSnapshotFromHistory(
     rosterStrength: current.rosterStrength,
     draftAssetCount: current.draftAssetCount,
     payroll: current.payroll,
-    cash: last.cash,
+    cash: last.businessFunds,
     awareness: current.awareness,
     fanSentiment: last.fanSentiment,
     reputation: last.reputation,

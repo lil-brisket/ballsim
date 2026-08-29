@@ -179,8 +179,8 @@ export function generateAnnualFranchiseReport(
       rosterStrength: yoy(rosterStrength, null),
     },
     financial: {
-      startingCash: prior?.cash ?? current.cash,
-      endingCash: yoy(current.cash, prior?.cash ?? null),
+      startingCash: prior?.businessFunds ?? current.businessFunds,
+      endingCash: yoy(current.businessFunds, prior?.businessFunds ?? null),
       revenue: yoy(current.revenue, prior?.revenue ?? null),
       expenses: yoy(current.expenses, prior?.expenses ?? null),
       netIncome: yoy(current.netIncome, prior?.netIncome ?? null),

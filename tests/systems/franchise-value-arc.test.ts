@@ -72,7 +72,7 @@ function withCash(state: GameState, cash: number): GameState {
       ...state.business,
       finances: {
         ...state.business.finances,
-        [teamId]: { ...finances, cash },
+        [teamId]: { ...finances, businessFunds: cash },
       },
     },
   };
@@ -182,7 +182,7 @@ function seasonRecord(input: {
     payroll: 60_000_000,
     leagueRank: null,
     attendance: null,
-    cash: input.cash ?? 40_000_000,
+    businessFunds: input.cash ?? 40_000_000,
     fanSentiment: input.fanSentiment ?? 50,
     reputation: input.reputation ?? 50,
     facilityLevels,

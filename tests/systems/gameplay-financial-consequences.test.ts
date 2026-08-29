@@ -58,9 +58,9 @@ describe("gameplay financial consequences", () => {
         games: { ...state.competition.games, [gameId]: game },
       },
     };
-    const before = state.business.finances[teamId]!.cash;
+    const before = state.business.finances[teamId]!.businessFunds;
     const once = applyGameplayFinancialConsequences(state);
-    expect(once.state.business.finances[teamId]!.cash).toBe(
+    expect(once.state.business.finances[teamId]!.businessFunds).toBe(
       before - GAMEPLAY_LOSS_EXPENSE,
     );
     expect(
@@ -96,15 +96,15 @@ describe("gameplay financial consequences", () => {
         }),
       ],
     }));
-    const before = state.business.finances[teamId]!.cash;
+    const before = state.business.finances[teamId]!.businessFunds;
     const once = applyGameplayFinancialConsequences(state);
-    expect(once.state.business.finances[teamId]!.cash).toBe(
+    expect(once.state.business.finances[teamId]!.businessFunds).toBe(
       before + GAMEPLAY_OBJECTIVE_REWARD,
     );
     expect(getActiveOwnedFranchise(once.state).objectives[0]!.consequenceApplied).toBe(true);
     const twice = applyGameplayFinancialConsequences(once.state);
-    expect(twice.state.business.finances[teamId]!.cash).toBe(
-      once.state.business.finances[teamId]!.cash,
+    expect(twice.state.business.finances[teamId]!.businessFunds).toBe(
+      once.state.business.finances[teamId]!.businessFunds,
     );
   });
 });

@@ -4,8 +4,9 @@ import type { TeamId } from "@/domain/ids";
  * Chart of accounts — posted categories only.
  *
  * Accounting books (booksByYear / booksByMonth) record posted revenue and
- * expenses. They are NOT a cash ledger. cash on TeamFinances is authoritative
- * for liquidity. Net income (from books) and cash flow must never be conflated.
+ * expenses. They are NOT a cash ledger. businessFunds on TeamFinances is the
+ * authoritative business-ops currency. Player salary cap and staff budget are
+ * separate commitment limits and never draw from businessFunds.
  *
  * playerSalaries is derived from contracts on statements — never posted.
  */
@@ -60,29 +61,33 @@ export type TeamFinanceBooks = {
 };
 
 /**
- * Liquidity journal for a calendar month (YYYY-MM).
- * Never mutates cash; written only as a side effect of cash mutators.
- * openCash is the balance immediately before the first cash mutation in the month.
+ * Business-funds journal for a calendar month (YYYY-MM).
+ * Never mutates businessFunds; written only as a side effect of mutators.
+ * openBusinessFunds is the balance immediately before the first mutation in the month.
+ * Player/staff payroll no longer posts here (commitment limits only).
  */
-export type TeamCashMonthLedger = {
-  openCash: number;
-  /** Sum of absolute weekly player-payroll cash outflows posted in this month. */
+export type TeamBusinessFundsMonthLedger = {
+  openBusinessFunds: number;
+  /** @deprecated Always 0 — player payroll no longer drains business funds. */
   playerPayrollOutflow: number;
-  /** Sum of all signed cash deltas (books+cash and cash-only) in this month. */
-  netCashChange: number;
+  /** Sum of all signed business-funds deltas in this month. */
+  netBusinessFundsChange: number;
 };
+
+/** @deprecated Use TeamBusinessFundsMonthLedger. */
+export type TeamCashMonthLedger = TeamBusinessFundsMonthLedger;
 
 /**
  * Authoritative team finance record under business.finances.
  *
- * cash — liquidity source of truth.
- * booksByYear / booksByMonth — posted accounting only (not cash).
- * cashLedgerByMonth — derived liquidity reporting from actual cash movements.
+ * businessFunds — business-ops currency source of truth (only actual cash pool).
+ * booksByYear / booksByMonth — posted accounting only (not currency).
+ * businessFundsLedgerByMonth — derived liquidity reporting from business mutations.
  * payroll — snapshot only; statement salaries derive from contracts.
  */
 export type TeamFinances = {
   teamId: TeamId;
-  cash: number;
+  businessFunds: number;
   payroll: number;
   /** Keys are String(seasonYear) matching contract salaryByYear convention. */
   booksByYear: Record<string, TeamFinanceBooks>;
@@ -95,8 +100,8 @@ export type TeamFinances = {
   attendanceByYear: Record<string, number>;
   /** Keys are YYYY-MM calendar months. Accounting projection only. */
   booksByMonth: Record<string, TeamFinanceBooks>;
-  /** Keys are YYYY-MM. Liquidity journal; never used to invent cash. */
-  cashLedgerByMonth: Record<string, TeamCashMonthLedger>;
+  /** Keys are YYYY-MM. Business-funds journal; never used to invent funds. */
+  businessFundsLedgerByMonth: Record<string, TeamBusinessFundsMonthLedger>;
 };
 
 /**

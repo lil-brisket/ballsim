@@ -97,9 +97,9 @@ describe("marketing", () => {
     state = bootstrapWorld(state, createSeededRng(state.meta.rngState)).state;
     const teamId = asTeamId(state.user.activeOwnerTeamId);
     state = setMarketingBudget(state, teamId, 2_600_000).state;
-    const cashBefore = state.business.finances[teamId]!.cash;
+    const cashBefore = state.business.finances[teamId]!.businessFunds;
     state = processWeeklyMarketing(state).state;
-    const cashAfter = state.business.finances[teamId]!.cash;
+    const cashAfter = state.business.finances[teamId]!.businessFunds;
     expect(cashAfter).toBeLessThan(cashBefore);
   });
 });

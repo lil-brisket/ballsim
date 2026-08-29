@@ -53,12 +53,12 @@ function createEightTeamPopulatedState(rngSeed: number): GameState {
       team.id,
       {
         teamId: team.id,
-        cash: 50_000_000,
+        businessFunds: 50_000_000,
         payroll: 0,
         booksByYear: {},
         attendanceByYear: {},
         booksByMonth: {},
-        cashLedgerByMonth: {},
+        businessFundsLedgerByMonth: {},
       },
     ]),
   );
@@ -116,6 +116,8 @@ function createEightTeamPopulatedState(rngSeed: number): GameState {
       },
       financialRules: {
         salaryCapEnabled: true,
+        salaryCap: 100_000_000,
+        staffBudget: 12_000_000,
         luxuryTaxEnabled: true,
         revenueSharingEnabled: true,
       },

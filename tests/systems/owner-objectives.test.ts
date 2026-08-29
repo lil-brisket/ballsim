@@ -320,7 +320,7 @@ describe("owner objectives", () => {
     let state = bootstrappedState("obj_nocash");
     const teamId = state.user.activeOwnerTeamId;
     const year = state.competition.season.year;
-    const before = state.business.finances[teamId]!.cash;
+    const before = state.business.finances[teamId]!.businessFunds;
     state = withObjectives(state, [
           createOwnerObjective({
             id: asOwnerObjectiveId("obj_aware"),
@@ -332,7 +332,7 @@ describe("owner objectives", () => {
           }),
         ]);
     const once = applyGameplayFinancialConsequences(state);
-    expect(once.state.business.finances[teamId]!.cash).toBe(before);
+    expect(once.state.business.finances[teamId]!.businessFunds).toBe(before);
     expect(getActiveOwnedFranchise(once.state).objectives[0]!.consequenceApplied).toBe(true);
   });
 
@@ -340,7 +340,7 @@ describe("owner objectives", () => {
     let state = bootstrappedState("obj_cash");
     const teamId = state.user.activeOwnerTeamId;
     const year = state.competition.season.year;
-    const before = state.business.finances[teamId]!.cash;
+    const before = state.business.finances[teamId]!.businessFunds;
     state = withObjectives(state, [
           createOwnerObjective({
             id: asOwnerObjectiveId("obj_mp_cash"),
@@ -352,7 +352,7 @@ describe("owner objectives", () => {
           }),
         ]);
     const once = applyGameplayFinancialConsequences(state);
-    expect(once.state.business.finances[teamId]!.cash).toBe(
+    expect(once.state.business.finances[teamId]!.businessFunds).toBe(
       before + GAMEPLAY_OBJECTIVE_REWARD,
     );
   });

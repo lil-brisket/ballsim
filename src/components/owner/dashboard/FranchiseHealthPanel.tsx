@@ -216,13 +216,13 @@ export function FranchiseHealthPanel(props: {
         <HealthToneBadge health={health.financialHealth} />
       </div>
 
-      {health.financialHealth === "insolvent" ? (
+      {health.financialHealth === "critical" ? (
         <p
-          role="alert"
-          className="rounded-md border border-rose-800/60 bg-rose-950/40 px-4 py-3 text-sm text-rose-200"
+          role="status"
+          className="rounded-md border border-amber-800/60 bg-amber-950/40 px-4 py-3 text-sm text-amber-200"
         >
-          The franchise is insolvent. Cash is at or below zero — review finances
-          before making capital decisions.
+          Business funds are low. Major facility investments may be difficult —
+          review Finances before large capital decisions.
         </p>
       ) : null}
 

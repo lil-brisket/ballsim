@@ -8,7 +8,7 @@ import {
   MARKETING_WEEKS_PER_YEAR,
 } from "@/systems/marketing-config";
 import { stepTowardNeutral } from "@/systems/neutral-decay";
-import { applyCashAndBooksImpact } from "@/systems/team-finances";
+import { applyCashAndBooksImpact, assertSufficientBusinessFunds } from "@/systems/team-finances";
 import { assertCapitalSpendingAllowed } from "@/systems/financial-spending";
 
 function clampAwareness(value: number): number {
@@ -29,6 +29,13 @@ export function setMarketingBudget(
   }
   if (annualBudget > ops.marketing.budget) {
     assertCapitalSpendingAllowed(state, teamId, "Increasing the marketing budget");
+    const weeklySpend = Math.floor(annualBudget / MARKETING_WEEKS_PER_YEAR);
+    assertSufficientBusinessFunds(
+      state,
+      teamId,
+      weeklySpend,
+      "Increasing the marketing budget",
+    );
   }
   return systemResult({
     ...state,

@@ -438,7 +438,7 @@ function shiftTeamAges(
 }
 
 function teamCash(state: GameState, teamId: string): number {
-  return state.business.finances[teamId]?.cash ?? 0;
+  return state.business.finances[teamId]?.businessFunds ?? 0;
 }
 
 function emptyCapitalRollup(): {

@@ -802,11 +802,7 @@ function buildActionItems(
   }
 
   const healthState = health.financialHealth;
-  if (
-    healthState === "warning" ||
-    healthState === "critical" ||
-    healthState === "insolvent"
-  ) {
+  if (healthState === "warning" || healthState === "critical") {
     const severity: OwnerDashboardActionSeverity =
       healthState === "warning" ? "warning" : "critical";
     const runway = data.business.cashRunway;
@@ -814,22 +810,14 @@ function buildActionItems(
       id: "action_financial",
       category: "financial",
       severity,
-      title:
-        healthState === "insolvent"
-          ? "Franchise insolvent"
-          : "Financial pressure",
+      title: "Business funds pressure",
       what:
-        healthState === "insolvent"
-          ? "Cash reserves are at or below zero."
-          : runway.netWeeklyBurn > 0
-            ? "Cash reserves are under pressure while weekly operating burn remains positive."
-            : "Financial health is in a warning or critical state.",
-      why:
-        healthState === "insolvent"
-          ? "Capital spending is blocked and the franchise cannot operate normally until cash recovers."
-          : "Continued pressure may constrain facility, marketing, and roster spending decisions.",
+        runway.netWeeklyBurn > 0
+          ? "Business funds are under pressure while weekly operating burn remains positive."
+          : "Business funds health is tight or critical.",
+      why: "Major facility or marketing investments may be difficult until business revenue improves.",
       evidence: [
-        `Cash: ${formatCompactMoney(health.cash)}`,
+        `Business funds: ${formatCompactMoney(health.cash)}`,
         `Health: ${healthState}`,
         runway.runwayWeeks !== null
           ? `Runway: ~${runway.runwayWeeks} weeks`
@@ -1285,12 +1273,11 @@ function buildInsights(
     health.netIncome < 0 &&
     data.business.cashRunway.netWeeklyBurn > 0 &&
     (health.financialHealth === "warning" ||
-      health.financialHealth === "critical" ||
-      health.financialHealth === "insolvent")
+      health.financialHealth === "critical")
   ) {
     insights.push({
       id: "insight_financial",
-      text: "Expenses are outpacing revenue signals while cash reserves are under pressure — financial posture is worth reviewing.",
+      text: "Expenses are outpacing revenue signals while business funds are under pressure — financial posture is worth reviewing.",
     });
   }
 

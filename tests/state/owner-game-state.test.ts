@@ -107,7 +107,7 @@ describe("toOwnerGameState", () => {
     const owner = toOwnerGameState(state);
     const teamId = owner.selectedTeamId;
     expect(owner.finances).toBe(state.business.finances[teamId]);
-    expect(owner.finances.cash).toBe(50_000_000);
+    expect(owner.finances.businessFunds).toBe(18_000_000);
     expect(owner.finances.booksByYear).toEqual({});
     expect(owner.finances.payroll).toBe(0);
   });
@@ -283,8 +283,9 @@ describe("Owner Mode GameState round-trip", () => {
           },
         },
       },
+      attendanceByYear: {},
       booksByMonth: {},
-      cashLedgerByMonth: {},
+      businessFundsLedgerByMonth: {},
     };
 
     const restored = deserializeGameState(serializeGameState(state));

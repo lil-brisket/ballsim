@@ -14,6 +14,7 @@ import type { DraftPickId, PlayerId, TeamId } from "@/domain/ids";
 import type { GameState } from "@/state/game-state";
 import { createRosterRulesConfig, validateRosterSize } from "@/systems/roster-rules";
 import { getTeamPayroll } from "@/systems/salary-cap";
+import { getLeagueSalaryCap } from "@/systems/league-salary-cap";
 import { getCalendarContext } from "@/systems/simulation/calendar-context";
 import { TRADE_ROSTER_RULES } from "@/systems/trades-config";
 import { checkPlayerTradeEligibility } from "@/systems/trades/trade-eligibility";
@@ -148,10 +149,12 @@ export function validateTrade(
 
   // Salary (skipped when salary cap is disabled in game settings)
   if (state.settings.financialRules.salaryCapEnabled) {
+    const salaryCap = getLeagueSalaryCap(state);
     const salaryA = applyTradeSalaryRule({
       currentPayroll: getTeamPayroll(sideA.teamId, seasonYear, state),
       outgoingSalary: sumPlayerSalaries(state, sideA.playerIds, seasonYear),
       incomingSalary: sumPlayerSalaries(state, sideB.playerIds, seasonYear),
+      salaryCap,
     });
     if (!salaryA.valid) {
       errors.push({
@@ -164,6 +167,7 @@ export function validateTrade(
       currentPayroll: getTeamPayroll(sideB.teamId, seasonYear, state),
       outgoingSalary: sumPlayerSalaries(state, sideB.playerIds, seasonYear),
       incomingSalary: sumPlayerSalaries(state, sideA.playerIds, seasonYear),
+      salaryCap,
     });
     if (!salaryB.valid) {
       errors.push({

@@ -9,6 +9,8 @@ import {
   type AiManagementPreset,
 } from "@/domain/ai-management-presets";
 import { DEFAULT_DELEGATED_ASSISTANCE } from "@/domain/ai-management-delegation";
+import { DEFAULT_SALARY_CAP } from "@/systems/salary-cap-config";
+import { DEFAULT_STAFF_BUDGET } from "@/systems/staff-budget-config";
 
 export type {
   AiAssistancePhases,
@@ -250,6 +252,16 @@ export type GameSettings = {
   };
   financialRules: {
     salaryCapEnabled: boolean;
+    /**
+     * League-wide player salary cap in integer dollars (commitment limit).
+     * Default {@link DEFAULT_SALARY_CAP} from salary-cap-config.
+     */
+    salaryCap: number;
+    /**
+     * League-wide staff/coaching budget in integer dollars (commitment limit).
+     * Default {@link DEFAULT_STAFF_BUDGET} from staff-budget-config.
+     */
+    staffBudget: number;
     /** Persisted only; luxury tax engine is not implemented yet. */
     luxuryTaxEnabled: boolean;
     revenueSharingEnabled: boolean;
@@ -318,6 +330,8 @@ export const DEFAULT_GAME_SETTINGS: GameSettings = {
   ai: defaultAiSettings(),
   financialRules: {
     salaryCapEnabled: true,
+    salaryCap: DEFAULT_SALARY_CAP,
+    staffBudget: DEFAULT_STAFF_BUDGET,
     luxuryTaxEnabled: true,
     revenueSharingEnabled: true,
   },
@@ -365,6 +379,8 @@ export const CBL_GAME_SETTINGS: GameSettings = {
   ai: defaultAiSettings(),
   financialRules: {
     salaryCapEnabled: true,
+    salaryCap: DEFAULT_SALARY_CAP,
+    staffBudget: DEFAULT_STAFF_BUDGET,
     luxuryTaxEnabled: true,
     revenueSharingEnabled: true,
   },

@@ -88,7 +88,7 @@ function withMarketAndOps(
         ...state.business.finances,
         [teamId]: {
           ...finances,
-          cash: input.cash ?? finances.cash,
+          businessFunds: input.cash ?? finances.businessFunds,
         },
       },
     },
@@ -196,7 +196,7 @@ describe("relocation stages and completion", () => {
     expect(state.world.teams[teamId]!.abbreviation).toBe(TARGET.abbreviation);
     expect(state.business.franchiseOps[teamId]!.marketSize).toBe(72);
     expect(state.business.franchiseOps[teamId]!.fanSentiment).toBeLessThan(70);
-    expect(state.business.finances[teamId]!.cash).toBeLessThan(100_000_000);
+    expect(state.business.finances[teamId]!.businessFunds).toBeLessThan(100_000_000);
     expect(
       state.business.relocationByTeamId[teamId]!.cooldownSeasonsRemaining,
     ).toBe(RELOCATION_COOLDOWN_SEASONS);

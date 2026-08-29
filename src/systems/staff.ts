@@ -13,19 +13,16 @@ import { createStaffContract } from "@/domain/entities/staff-contract";
 import type { GameState } from "@/state/game-state";
 import { appendSeasonEventLog } from "@/state/game-state";
 import {
-  STAFF_BUYOUT_FRACTION,
   STAFF_DEFAULT_CONTRACT_YEARS,
-  STAFF_PAYROLL_WEEKS_PER_YEAR,
 } from "@/systems/staff-config";
 import {
   annualSalaryForStaff,
   findTeamStaffByRole,
 } from "@/systems/staff-effects";
-import { applyCashAndBooksImpact } from "@/systems/team-finances";
 import {
-  getStaffContractSalaryForYear,
   isStaffContractActive,
 } from "@/domain/entities/staff-contract";
+import { getTeamStaffBudgetSpace } from "@/systems/staff-budget";
 
 function salaryByYearFor(
   startYear: number,
@@ -70,6 +67,12 @@ export function hireStaff(
   const year = state.competition.season.year;
   const years = options.years ?? STAFF_DEFAULT_CONTRACT_YEARS;
   const annual = options.annualSalary ?? annualSalaryForStaff(staff);
+  const staffBudgetSpace = getTeamStaffBudgetSpace(teamId, year, state);
+  if (annual > staffBudgetSpace) {
+    throw new Error(
+      `hireStaff: annual salary $${annual.toLocaleString()} exceeds available staff budget $${staffBudgetSpace.toLocaleString()}.`,
+    );
+  }
   const contractId = asStaffContractId(`scontract_${staffId}_${year}`);
   const contract = createStaffContract({
     id: contractId,
@@ -146,7 +149,7 @@ export function hireStaff(
 }
 
 /**
- * Fire/release staff. Pays buyout of remaining current-year salary via expenses.staff.
+ * Fire/release staff. Does not charge business funds (staff is a commitment limit).
  * Head coach clears matching world.coaches entry.
  */
 export function fireStaff(
@@ -177,19 +180,6 @@ export function fireStaff(
       isStaffContractActive(c, year),
   );
   if (activeContract) {
-    const salary = getStaffContractSalaryForYear(activeContract, year) ?? 0;
-    const buyout = Math.round(salary * STAFF_BUYOUT_FRACTION);
-    if (buyout > 0) {
-      const impact = applyCashAndBooksImpact(
-        current,
-        teamId,
-        -buyout,
-        year,
-        { expenseCategory: "staff" },
-      );
-      current = impact.state;
-      events.push(...impact.events);
-    }
     const { [activeContract.id]: _removed, ...rest } =
       current.business.staffContracts;
     current = {
@@ -251,37 +241,9 @@ export function fireStaff(
 }
 
 /**
- * Weekly staff payroll burn for all teams. Posts expenses.staff.
- * Remainder of annual salary is paid in the last week window via floor division.
+ * Staff payroll is a commitment limit (staff budget), not a business-funds drain.
+ * Kept as a no-op for weekly pipeline compatibility.
  */
 export function processWeeklyStaffPayroll(state: GameState): SystemResult {
-  const year = state.competition.season.year;
-  const events: DomainEvent[] = [];
-  let current = state;
-
-  const teamIds = Object.keys(current.world.teams).sort();
-  for (const teamId of teamIds) {
-    let weeklyTotal = 0;
-    for (const contract of Object.values(current.business.staffContracts)) {
-      if (contract.teamId !== teamId || !isStaffContractActive(contract, year)) {
-        continue;
-      }
-      const annual = getStaffContractSalaryForYear(contract, year) ?? 0;
-      weeklyTotal += Math.floor(annual / STAFF_PAYROLL_WEEKS_PER_YEAR);
-    }
-    if (weeklyTotal <= 0) {
-      continue;
-    }
-    const impact = applyCashAndBooksImpact(
-      current,
-      teamId as TeamId,
-      -weeklyTotal,
-      year,
-      { expenseCategory: "staff" },
-    );
-    current = impact.state;
-    events.push(...impact.events);
-  }
-
-  return systemResult(current, events);
+  return systemResult(state);
 }

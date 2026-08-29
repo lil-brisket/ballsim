@@ -304,10 +304,10 @@ describe("financial toggles", () => {
       },
     });
     const teamId = Object.keys(state.world.teams)[0]!;
-    const before = state.business.finances[teamId]!.cash;
+    const before = state.business.finances[teamId]!.businessFunds;
     const result = processMonthlyBroadcastRevenue(state);
     // Pool still pays; sharing off means 100% market-weighted remainder.
-    expect(result.state.business.finances[teamId]!.cash).toBeGreaterThan(before);
+    expect(result.state.business.finances[teamId]!.businessFunds).toBeGreaterThan(before);
     const year = state.competition.season.year;
     expect(
       result.state.business.finances[teamId]!.booksByYear[String(year)]!
@@ -321,9 +321,9 @@ describe("financial toggles", () => {
       settings: CBL_GAME_SETTINGS,
     });
     const teamId = Object.keys(state.world.teams)[0]!;
-    const before = state.business.finances[teamId]!.cash;
+    const before = state.business.finances[teamId]!.businessFunds;
     const result = processMonthlyBroadcastRevenue(state);
-    expect(result.state.business.finances[teamId]!.cash).toBeGreaterThan(before);
+    expect(result.state.business.finances[teamId]!.businessFunds).toBeGreaterThan(before);
   });
 
   it("salary cap disabled allows a signing that exceeds the cap", () => {

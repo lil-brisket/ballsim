@@ -390,7 +390,7 @@ export function calculateCashRunway(
   state: GameState,
   teamId: string,
 ): CashRunwayView {
-  const cash = state.business.finances[teamId]?.cash ?? 0;
+  const cash = state.business.finances[teamId]?.businessFunds ?? 0;
   const projection = projectCashHorizon(state, teamId);
   const health = calculateFinancialHealth({
     cash,

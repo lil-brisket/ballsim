@@ -152,11 +152,12 @@ describe("season lifecycle", () => {
         team.id,
         {
           teamId: team.id as TeamId,
-          cash: 0,
+          businessFunds: 0,
           payroll: 0,
           booksByYear: { "2026": createEmptyTeamFinanceBooks() },
+          attendanceByYear: {},
           booksByMonth: {},
-          cashLedgerByMonth: {},
+          businessFundsLedgerByMonth: {},
         },
       ]),
     );

@@ -58,15 +58,17 @@ export function GameHeader(props: {
             <p className="text-zinc-200">{dashboard.seasonYear}</p>
           </div>
           <div className="hidden sm:block">
-            <p className="text-xs uppercase tracking-wide text-zinc-600">Cash</p>
+            <p className="text-xs uppercase tracking-wide text-zinc-600">
+              Business Funds
+            </p>
             <MoneyDisplay amount={dashboard.cash} className="text-zinc-200" />
           </div>
           <div className="hidden sm:block">
             <p className="text-xs uppercase tracking-wide text-zinc-600">
-              Payroll
+              Cap Space
             </p>
             <MoneyDisplay
-              amount={dashboard.payroll}
+              amount={dashboard.capSpace}
               className="text-zinc-200"
             />
           </div>

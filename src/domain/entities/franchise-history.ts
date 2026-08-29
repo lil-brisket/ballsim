@@ -50,7 +50,7 @@ export type FranchiseSeasonRecord = {
   leagueRank: number | null;
   /** Total home attendance (regular + playoff) for the completed season. */
   attendance: number | null;
-  cash: number;
+  businessFunds: number;
   fanSentiment: number;
   reputation: number;
   facilityLevels: Record<FacilityCategory, number>;

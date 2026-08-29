@@ -56,9 +56,9 @@ describe("ticket revenue", () => {
       },
     };
 
-    const cashBefore = state.business.finances[teamId]!.cash;
+    const cashBefore = state.business.finances[teamId]!.businessFunds;
     const once = processHomeGameTicketRevenue(state);
-    const cashAfter = once.state.business.finances[teamId]!.cash;
+    const cashAfter = once.state.business.finances[teamId]!.businessFunds;
     expect(cashAfter).toBeGreaterThan(cashBefore);
 
     const key = ticketRevenueConsequenceKey(teamId, gameId);
@@ -70,7 +70,7 @@ describe("ticket revenue", () => {
     expect(settled[0]!.payload.concessionsRevenue).toBeGreaterThan(0);
 
     const twice = processHomeGameTicketRevenue(once.state);
-    expect(twice.state.business.finances[teamId]!.cash).toBe(cashAfter);
+    expect(twice.state.business.finances[teamId]!.businessFunds).toBe(cashAfter);
 
     const books = twice.state.business.finances[teamId]!.booksByYear[String(year)];
     expect(books?.revenue.tickets).toBeGreaterThan(0);

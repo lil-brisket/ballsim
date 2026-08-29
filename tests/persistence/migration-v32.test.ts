@@ -22,9 +22,9 @@ describe("v31 → v32 migration", () => {
     const preservedCash = (
       (parsed.business as Record<string, unknown>).finances as Record<
         string,
-        { cash: number }
+        { businessFunds: number }
       >
-    )[modern.user.activeOwnerTeamId]!.cash;
+    )[modern.user.activeOwnerTeamId]!.businessFunds;
     delete user.ownerStartSeasonYear;
 
     const business = parsed.business as Record<string, unknown>;
@@ -52,7 +52,7 @@ describe("v31 → v32 migration", () => {
           playoffResult: "missed",
           championship: false,
           revenue: 10,
-          cash: 10,
+          businessFunds: 10,
           fanSentiment: 50,
           reputation: 50,
           facilityLevels: {
@@ -74,7 +74,7 @@ describe("v31 → v32 migration", () => {
 
     const loaded = deserializeGameState(JSON.stringify(parsed));
     expect(loaded.meta.schemaVersion).toBe(GAME_STATE_SCHEMA_VERSION);
-    expect(GAME_STATE_SCHEMA_VERSION).toBe(44);
+    expect(GAME_STATE_SCHEMA_VERSION).toBe(46);
     expect(getActiveOwnedFranchise(loaded).ownerStartSeasonYear).toBe(
       loaded.competition.season.year,
     );
@@ -88,7 +88,7 @@ describe("v31 → v32 migration", () => {
       expect(loaded.business.finances[teamId]!.attendanceByYear).toEqual({});
     }
     expect(
-      loaded.business.finances[modern.user.activeOwnerTeamId]!.cash,
+      loaded.business.finances[modern.user.activeOwnerTeamId]!.businessFunds,
     ).toBe(preservedCash);
 
     expect(() => validateGameState(loaded)).not.toThrow();

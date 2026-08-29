@@ -30,7 +30,7 @@ describe("v38 → v39 migration", () => {
 
     const loaded = deserializeGameState(JSON.stringify(parsed));
     expect(loaded.meta.schemaVersion).toBe(GAME_STATE_SCHEMA_VERSION);
-    expect(GAME_STATE_SCHEMA_VERSION).toBe(44);
+    expect(GAME_STATE_SCHEMA_VERSION).toBe(46);
     expect(loaded.settings.ai.assistance).toEqual(applyPreset("continuity"));
     expect(loaded.settings.ai.assistance.freeAgency).toBe("continuity");
     expect(loaded.settings.ai.assistance.freeAgency).not.toBe("full");

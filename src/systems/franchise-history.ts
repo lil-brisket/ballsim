@@ -97,7 +97,7 @@ export function appendFranchiseSeasonRecord(
     payroll: getTeamPayroll(teamId, year, state),
     leagueRank: leagueRankForTeam(state, teamId),
     attendance: finances?.attendanceByYear[String(year)] ?? null,
-    cash: finances?.cash ?? 0,
+    businessFunds: finances?.businessFunds ?? 0,
     fanSentiment: ops.fanSentiment,
     reputation: team.reputation,
     facilityLevels: facilityLevelsSnapshot(state, teamId),

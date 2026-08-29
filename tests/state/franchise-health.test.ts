@@ -78,7 +78,7 @@ function setCash(state: GameState, cash: number): GameState {
       ...state.business,
       finances: {
         ...state.business.finances,
-        [teamId]: { ...finances, cash },
+        [teamId]: { ...finances, businessFunds: cash },
       },
     },
   };
@@ -550,7 +550,7 @@ describe("calculateFranchiseHealth", () => {
                 payroll: 40_000_000,
                 leagueRank: 15,
                 attendance: 400_000,
-                cash: 30_000_000,
+                businessFunds: 30_000_000,
                 fanSentiment: 50,
                 reputation: 50,
                 facilityLevels: Object.fromEntries(

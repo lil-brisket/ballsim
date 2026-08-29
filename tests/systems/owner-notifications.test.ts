@@ -105,7 +105,7 @@ describe("owner notifications", () => {
     const rng = createSeededRng(state.meta.rngState);
     state = bootstrapWorld(state, rng).state;
     const teamId = state.user.activeOwnerTeamId;
-    const previousCash = state.business.finances[teamId]!.cash;
+    const previousCash = state.business.finances[teamId]!.businessFunds;
     state = {
       ...state,
       business: {
@@ -114,7 +114,7 @@ describe("owner notifications", () => {
           ...state.business.finances,
           [teamId]: {
             ...state.business.finances[teamId]!,
-            cash: previousCash + SIGNIFICANT_FINANCIAL_CHANGE,
+            businessFunds: previousCash + SIGNIFICANT_FINANCIAL_CHANGE,
           },
         },
       },
@@ -226,7 +226,7 @@ describe("owner notifications", () => {
         ...state.business,
         finances: {
           ...state.business.finances,
-          [teamId]: { ...state.business.finances[teamId]!, cash: -1 },
+          [teamId]: { ...state.business.finances[teamId]!, businessFunds: -1 },
         },
       },
     };
