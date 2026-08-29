@@ -15,10 +15,15 @@ import type { RelocationProcess } from "@/domain/entities/relocation";
 import type { ExpansionState } from "@/domain/entities/expansion";
 import type { Sponsorship } from "@/domain/entities/sponsorship";
 import type { Staff } from "@/domain/entities/staff";
+import { STAFF_ROLE_DISPLAY } from "@/domain/entities/staff-roles";
 import {
   getStaffContractSalaryForYear,
   isStaffContractActive,
 } from "@/domain/entities/staff-contract";
+import {
+  bottomAttributeLabels,
+  topAttributeLabels,
+} from "@/systems/staff-ratings";
 import type { GameState } from "@/state/game-state";
 import {
   explainFranchiseValue,
@@ -47,13 +52,21 @@ export type StaffMemberView = {
   firstName: string;
   lastName: string;
   role: string;
-  quality: number;
+  roleLabel: string;
+  overall: number;
+  potential: number;
+  age: number;
   experience: number;
   strengths: string[];
   weaknesses: string[];
   employed: boolean;
   annualSalary: number | null;
   contractEndYear: number | null;
+  yearsRemaining: number | null;
+  trend: "improving" | "stable" | "declining";
+  morale: number;
+  desiredSalary: number;
+  minimumSalary: number;
 };
 
 export type FacilityRowView = {
@@ -220,7 +233,9 @@ export function toStaffView(state: GameState): {
   }
 
   roster.sort((a, b) => a.role.localeCompare(b.role));
-  available.sort((a, b) => a.role.localeCompare(b.role) || b.quality - a.quality);
+  available.sort(
+    (a, b) => a.role.localeCompare(b.role) || b.overall - a.overall,
+  );
   return { roster, available };
 }
 
@@ -240,15 +255,23 @@ function toStaffMemberView(
     firstName: staff.firstName,
     lastName: staff.lastName,
     role: staff.role,
-    quality: staff.quality,
+    roleLabel: STAFF_ROLE_DISPLAY[staff.role] ?? staff.role,
+    overall: staff.overall,
+    potential: staff.potential,
+    age: staff.age,
     experience: staff.experience,
-    strengths: [...staff.strengths],
-    weaknesses: [...staff.weaknesses],
+    strengths: topAttributeLabels(staff.role, staff.attributes),
+    weaknesses: bottomAttributeLabels(staff.role, staff.attributes),
     employed: staff.teamId !== null,
     annualSalary: contract
       ? (getStaffContractSalaryForYear(contract, year) ?? null)
       : null,
     contractEndYear: contract?.endYear ?? null,
+    yearsRemaining: contract ? Math.max(0, contract.endYear - year + 1) : null,
+    trend: staff.development.trend,
+    morale: staff.morale,
+    desiredSalary: staff.preferences.desiredSalary,
+    minimumSalary: staff.preferences.minimumSalary,
   };
 }
 

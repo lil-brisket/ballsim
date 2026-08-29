@@ -38,7 +38,10 @@ import type {
 import { asArenaId, asTeamId } from "@/domain/ids";
 import { addCalendarDays } from "@/domain/calendar-date";
 import type { GameState } from "@/state/game-state";
-import { GAME_STATE_SCHEMA_VERSION } from "@/state/game-state";
+import {
+  EMPTY_STAFF_MARKET,
+  GAME_STATE_SCHEMA_VERSION,
+} from "@/state/game-state";
 import { leaguePhaseIdFromLegacy } from "@/systems/phase-engine/resolve-current-phase";
 import type { OffseasonStage, SeasonPhase } from "@/domain/entities/season";
 import { createEmptyPlayoffTournament } from "@/domain/entities/playoffs";
@@ -77,8 +80,7 @@ import {
   type AiProfile,
   type FranchiseOps,
 } from "@/domain/entities/franchise-ops";
-import type { StaffRole, StaffStrength, StaffWeakness } from "@/domain/entities/staff";
-import { asStaffId } from "@/domain/ids";
+import { hydrateStaffFromPersisted } from "@/systems/staff-ratings";
 import type {
   OwnerObjective,
   OwnerObjectiveCategory,
@@ -192,6 +194,7 @@ const MIGRATE_ONE_STEP: Record<number, (state: unknown) => unknown> = {
   46: (state) => migrateV46ToV47(state as GameStateV46),
   47: (state) => migrateV47ToV48(state as GameStateV47),
   48: (state) => migrateV48ToV49(state as GameStateV48),
+  49: (state) => migrateV49ToV50(state as GameStateV49),
 };
 
 function legacyUserRecord(user: unknown): Record<string, unknown> {
@@ -2109,29 +2112,12 @@ function migrateV23ToV24(state: GameStateV23): GameStateV24 {
   const staff: GameState["world"]["staff"] = {};
   for (const [id, raw] of Object.entries(state.world.staff)) {
     const s = raw as Record<string, unknown>;
-    const role =
-      s.role === "other" || s.role === undefined
-        ? "assistant_coach"
-        : (s.role as StaffRole);
-    let teamId = (s.teamId as TeamId | null) ?? null;
+    const member = hydrateStaffFromPersisted(s, id);
+    let teamId = member.teamId;
     if (teamId !== null && !(teamId in state.world.teams)) {
       teamId = null;
     }
-    staff[id] = {
-      id: asStaffId(String(s.id ?? id)),
-      teamId,
-      firstName: String(s.firstName ?? "Unknown"),
-      lastName: String(s.lastName ?? "Staff"),
-      role,
-      quality: typeof s.quality === "number" ? s.quality : 50,
-      experience: typeof s.experience === "number" ? s.experience : 5,
-      strengths: Array.isArray(s.strengths)
-        ? (s.strengths as StaffStrength[])
-        : [],
-      weaknesses: Array.isArray(s.weaknesses)
-        ? (s.weaknesses as StaffWeakness[])
-        : [],
-    };
+    staff[id] = teamId === member.teamId ? member : { ...member, teamId };
   }
 
   const teams: GameState["world"]["teams"] = {};
@@ -4157,7 +4143,7 @@ type GameStateV48 = Omit<GameState, "meta" | "competition" | "user"> & {
  * Maps legacy SeasonPhase + OffseasonStage → LeaguePhaseId.
  * Emits literal schemaVersion 49. No RNG.
  */
-function migrateV48ToV49(state: GameStateV48): GameState {
+function migrateV48ToV49(state: GameStateV48): GameStateV49 {
   const season = state.competition.season;
   const activePhaseId = leaguePhaseIdFromLegacy(
     season.phase as SeasonPhase,
@@ -4173,9 +4159,9 @@ function migrateV48ToV49(state: GameStateV48): GameState {
   }
 
   return {
-    ...(state as unknown as GameState),
+    ...(state as unknown as GameStateV49),
     meta: {
-      ...(state as unknown as GameState).meta,
+      ...(state as unknown as GameStateV49).meta,
       schemaVersion: 49,
     },
     competition: {
@@ -4188,6 +4174,46 @@ function migrateV48ToV49(state: GameStateV48): GameState {
     user: {
       ...state.user,
       franchisePhaseState,
+    },
+  };
+}
+
+type GameStateV49 = Omit<GameState, "meta"> & {
+  meta: Omit<GameState["meta"], "schemaVersion"> & { schemaVersion: 49 };
+};
+
+/**
+ * Deterministic v49 → v50: staff overhaul (attributes/overall) + staffMarket.
+ * Migrates marketing → public_relations. Emits literal schemaVersion 50.
+ */
+function migrateV49ToV50(state: GameStateV49): GameState {
+  const staff: GameState["world"]["staff"] = {};
+  for (const [id, raw] of Object.entries(state.world.staff)) {
+    const member = hydrateStaffFromPersisted(
+      raw as unknown as Record<string, unknown>,
+      id,
+    );
+    let teamId = member.teamId;
+    if (teamId !== null && !(teamId in state.world.teams)) {
+      teamId = null;
+    }
+    staff[id] = teamId === member.teamId ? member : { ...member, teamId };
+  }
+
+  const worldRecord = state.world as GameState["world"] & {
+    staffMarket?: GameState["world"]["staffMarket"];
+  };
+
+  return {
+    ...state,
+    meta: {
+      ...state.meta,
+      schemaVersion: 50,
+    },
+    world: {
+      ...state.world,
+      staff,
+      staffMarket: worldRecord.staffMarket ?? EMPTY_STAFF_MARKET,
     },
   };
 }

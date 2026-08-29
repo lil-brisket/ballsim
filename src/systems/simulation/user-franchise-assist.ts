@@ -599,19 +599,19 @@ function logRotationRepair(
 function pickUnemployedStaff(
   state: GameState,
   role: StaffRole,
-): { id: StaffId; quality: number } | undefined {
+): { id: StaffId; overall: number } | undefined {
   const pool = Object.values(state.world.staff)
     .filter((staff) => staff.teamId === null && staff.role === role)
     .sort((a, b) => {
-      if (b.quality !== a.quality) {
-        return b.quality - a.quality;
+      if (b.overall !== a.overall) {
+        return b.overall - a.overall;
       }
       return a.id < b.id ? -1 : a.id > b.id ? 1 : 0;
     });
   const best = pool[0];
   return best === undefined
     ? undefined
-    : { id: best.id, quality: best.quality };
+    : { id: best.id, overall: best.overall };
 }
 
 function pickBestAffordableFreeAgent(

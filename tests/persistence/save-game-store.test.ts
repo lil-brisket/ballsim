@@ -148,6 +148,7 @@ function createEightTeamPopulatedState(rngSeed: number): GameState {
       players: {},
       coaches: {},
       staff: {},
+      staffMarket: { offers: {} },
       draftPicks: {},
       drafts: {},
       fantasyDraft: null,

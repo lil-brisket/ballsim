@@ -6,6 +6,7 @@ import {
   REPUTATION_MONTHLY_SMOOTHING,
   REPUTATION_TARGET_WEIGHTS,
 } from "@/systems/reputation-config";
+import { prReputationModifier } from "@/systems/staff-effects";
 
 function clampReputation(value: number): number {
   return Math.max(1, Math.min(99, Math.round(value)));
@@ -51,6 +52,7 @@ export function reputationTarget(state: GameState, teamId: TeamId): number {
   >) {
     target += components[key] * REPUTATION_TARGET_WEIGHTS[key];
   }
+  target += prReputationModifier(state, teamId);
   return clampReputation(target);
 }
 

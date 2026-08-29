@@ -74,6 +74,10 @@ import {
 } from "@/systems/rotation/sim-bridge";
 import { ROTATION_CONFIG } from "@/systems/rotation/rotation-config";
 import { assertTeamSecondsOnCourt } from "@/systems/rotation/rotation-invariants";
+import {
+  buildTeamStaffGameContext,
+  type TeamStaffGameContext,
+} from "@/systems/staff-effects";
 
 export type SimulateGameContext = {
   homePlayers: readonly Player[];
@@ -87,6 +91,9 @@ export type SimulateGameContext = {
   homeCoachingPhilosophy?: CoachingPhilosophy;
   /** Away team coaching philosophy; defaults to all balanced. */
   awayCoachingPhilosophy?: CoachingPhilosophy;
+  /** Precomputed once per game — do not look up staff in possession loops. */
+  homeStaffContext?: TeamStaffGameContext;
+  awayStaffContext?: TeamStaffGameContext;
   /**
    * Optional decision injector for tests. Production uses choosePossessionDecision.
    */
@@ -458,6 +465,8 @@ export function simulateScheduledGame(
         homeTeam?.coachingPhilosophy ?? DEFAULT_COACHING_PHILOSOPHY,
       awayCoachingPhilosophy:
         awayTeam?.coachingPhilosophy ?? DEFAULT_COACHING_PHILOSOPHY,
+      homeStaffContext: buildTeamStaffGameContext(state, game.homeTeamId),
+      awayStaffContext: buildTeamStaffGameContext(state, game.awayTeamId),
       profiler: options?.profiler,
       gameState: state,
     },
@@ -694,11 +703,24 @@ function simulatePeriod(args: {
       );
     }
 
+    const staffCtx =
+      offensiveTeamId === sim.homeTeamId
+        ? args.context.homeStaffContext
+        : args.context.awayStaffContext;
+    const staffTempoDelta = staffCtx
+      ? Math.round(
+          (staffCtx.offensiveModifier +
+            staffCtx.preparationModifier +
+            staffCtx.gameManagementModifier) *
+            2,
+        )
+      : 0;
+
     const requestedSeconds = requestPossessionSeconds(
       resolution,
       args.config,
       args.rng,
-      tactical.offensiveModifiers.possessionSecondsDelta,
+      tactical.offensiveModifiers.possessionSecondsDelta + staffTempoDelta,
     );
     const consumed = consumeTime(clock, requestedSeconds);
     clock = consumed.clock;

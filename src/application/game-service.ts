@@ -150,7 +150,8 @@ import {
 import type { ExpansionState } from "@/domain/entities/expansion";
 import type { LeagueEconomy } from "@/domain/entities/league-economy";
 import type { RelocationProcess } from "@/domain/entities/relocation";
-import { hireStaff, fireStaff } from "@/systems/staff";
+import { hireStaff } from "@/systems/staff";
+import { fireStaffWithBuyout } from "@/systems/staff-contract-lifecycle";
 import { startFacilityUpgrade } from "@/systems/facilities";
 import type { FacilityCategory } from "@/domain/entities/franchise-ops";
 import { setMarketingBudget } from "@/systems/marketing";
@@ -2118,6 +2119,29 @@ async function runOwnerFranchiseCommand(
   }
 }
 
+export async function loadOwnerStaffDetail(
+  saveId: string,
+  staffId: string,
+  store?: SaveGameStore,
+): Promise<
+  | (CreateGameResult & { staff: import("@/domain/entities/staff").Staff })
+  | null
+> {
+  const loaded = await getStore(store).load(saveId);
+  if (!loaded) {
+    return null;
+  }
+  const staff = loaded.state.world.staff[staffId];
+  if (!staff) {
+    return null;
+  }
+  return {
+    save: toSaveSummary(loaded),
+    dashboard: toDashboardSnapshot(loaded.state),
+    staff,
+  };
+}
+
 export async function hireOwnerStaff(
   saveId: string,
   staffId: string,
@@ -2139,7 +2163,11 @@ export async function fireOwnerStaff(
   return runOwnerFranchiseCommand(
     saveId,
     (state) =>
-      fireStaff(state, state.user.activeOwnerTeamId, asStaffId(staffId)),
+      fireStaffWithBuyout(
+        state,
+        state.user.activeOwnerTeamId,
+        asStaffId(staffId),
+      ),
     store,
   );
 }

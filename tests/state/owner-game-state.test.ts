@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { testOwnerObjective } from "../helpers/owner-objective";
+import { testStaff } from "../helpers/staff";
 import { createPlayer } from "@/domain/entities/player";
 import type { Coach } from "@/domain/entities/coach";
-import type { Staff } from "@/domain/entities/staff";
 import {
   asCoachId,
   asContractId,
@@ -123,17 +123,15 @@ describe("toOwnerGameState", () => {
       firstName: "Pat",
       lastName: "Riley",
     };
-    const staffMember: Staff = {
+    const staffMember = testStaff({
       id: staffId,
       teamId,
       firstName: "Sam",
       lastName: "Scout",
       role: "scout",
-      quality: 60,
+      overall: 60,
       experience: 8,
-      strengths: ["scouting"],
-      weaknesses: [],
-    };
+    });
     // Isolate catalogs for this assertion (initial state seeds staff/coaches).
     state.world.coaches = { [coachId]: coach };
     state.world.staff = { [staffId]: staffMember };

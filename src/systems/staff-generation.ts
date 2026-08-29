@@ -3,14 +3,11 @@ import { LAST_NAMES } from "@/data/names/last-names";
 import { createCoach } from "@/domain/entities/coach";
 import {
   createStaff,
-  STAFF_ROLES,
+  STARTER_STAFF_ROLES,
   type Staff,
   type StaffRole,
-  type StaffStrength,
-  type StaffWeakness,
-  STAFF_STRENGTHS,
-  STAFF_WEAKNESSES,
 } from "@/domain/entities/staff";
+import { STAFF_ROLES } from "@/domain/entities/staff-roles";
 import { createStaffContract } from "@/domain/entities/staff-contract";
 import {
   asCoachId,
@@ -24,61 +21,34 @@ import { systemResult, type SystemResult } from "@/domain/system-result";
 import type { GameState } from "@/state/game-state";
 import { annualSalaryForStaff } from "@/systems/staff-effects";
 import { STAFF_DEFAULT_CONTRACT_YEARS } from "@/systems/staff-config";
+import { generateStaffProfile } from "@/systems/staff-ratings";
 
 /** Roles assigned to every team by generateLeagueStaff. */
-export const STARTER_ROLES: readonly StaffRole[] = [
-  "general_manager",
-  "head_coach",
-  "scout",
-  "trainer",
-  "assistant_coach",
-  "finance",
-  "marketing",
-];
+export const STARTER_ROLES: readonly StaffRole[] = STARTER_STAFF_ROLES;
 
-const UNEMPLOYED_PER_ROLE = 2;
-
-function pickTraits(rng: Rng): {
-  strengths: StaffStrength[];
-  weaknesses: StaffWeakness[];
-} {
-  const strengths: StaffStrength[] = [];
-  const weaknesses: StaffWeakness[] = [];
-  if (rng.chance(0.7)) {
-    strengths.push(rng.pick(STAFF_STRENGTHS));
-  }
-  if (rng.chance(0.5)) {
-    const second = rng.pick(STAFF_STRENGTHS);
-    if (!strengths.includes(second)) {
-      strengths.push(second);
-    }
-  }
-  if (rng.chance(0.55)) {
-    weaknesses.push(rng.pick(STAFF_WEAKNESSES));
-  }
-  return { strengths, weaknesses };
-}
+const UNEMPLOYED_PER_ROLE = 5;
 
 function createStaffMember(
   rng: Rng,
   role: StaffRole,
   teamId: TeamId | null,
   index: number,
+  seasonYear: number,
 ): Staff {
   const id = asStaffId(
     `staff_${role}_${teamId ?? "fa"}_${index}_${rng.nextInt(0, 1_000_000)}`,
   );
-  const { strengths, weaknesses } = pickTraits(rng);
+  const profile = generateStaffProfile(role, rng, {
+    teamId,
+    seasonYear,
+  });
   return createStaff({
     id,
     teamId,
     firstName: rng.pick(FIRST_NAMES),
     lastName: rng.pick(LAST_NAMES),
     role,
-    quality: rng.nextInt(35, 75),
-    experience: rng.nextInt(0, 25),
-    strengths,
-    weaknesses,
+    ...profile,
   });
 }
 
@@ -104,7 +74,7 @@ export function generateLeagueStaff(state: GameState, rng: Rng): GameState {
     const team = teams[teamId]!;
     const staffIds: StaffId[] = [];
     for (const role of STARTER_ROLES) {
-      const member = createStaffMember(rng, role, teamId, index);
+      const member = createStaffMember(rng, role, teamId, index, year);
       index += 1;
       staff[member.id] = member;
       staffIds.push(member.id);
@@ -142,7 +112,7 @@ export function generateLeagueStaff(state: GameState, rng: Rng): GameState {
 
   for (const role of STAFF_ROLES) {
     for (let i = 0; i < UNEMPLOYED_PER_ROLE; i += 1) {
-      const member = createStaffMember(rng, role, null, index);
+      const member = createStaffMember(rng, role, null, index, year);
       index += 1;
       staff[member.id] = member;
     }
@@ -155,6 +125,7 @@ export function generateLeagueStaff(state: GameState, rng: Rng): GameState {
       staff,
       coaches,
       teams,
+      staffMarket: state.world.staffMarket ?? { offers: {} },
     },
     business: {
       ...state.business,
@@ -187,7 +158,7 @@ export function generateLeagueStaffForTeam(
   let index = Object.keys(staff).length;
 
   for (const role of STARTER_ROLES) {
-    const member = createStaffMember(rng, role, teamId, index);
+    const member = createStaffMember(rng, role, teamId, index, year);
     index += 1;
     staff[member.id] = member;
     staffIds.push(member.id);
@@ -237,4 +208,31 @@ export function generateLeagueStaffForTeam(
       staffContracts,
     },
   });
+}
+
+/**
+ * Refresh unemployed staff pool during offseason (add developmental candidates).
+ */
+export function refreshStaffFreeAgentPool(
+  state: GameState,
+  rng: Rng,
+  perRole = 2,
+): GameState {
+  const year = state.competition.season.year;
+  const staff = { ...state.world.staff };
+  let index = Object.keys(staff).length;
+  for (const role of STAFF_ROLES) {
+    for (let i = 0; i < perRole; i += 1) {
+      const member = createStaffMember(rng, role, null, index, year);
+      index += 1;
+      staff[member.id] = member;
+    }
+  }
+  return {
+    ...state,
+    world: {
+      ...state.world,
+      staff,
+    },
+  };
 }

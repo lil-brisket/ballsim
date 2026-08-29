@@ -23,6 +23,9 @@ import {
   isStaffContractActive,
 } from "@/domain/entities/staff-contract";
 import { getTeamStaffBudgetSpace } from "@/systems/staff-budget";
+import { appendCareerEntry } from "@/domain/entities/staff-development";
+import { createStaff } from "@/domain/entities/staff";
+import { invalidateStaffOffers } from "@/systems/staff-contract-lifecycle";
 
 function salaryByYearFor(
   startYear: number,
@@ -83,7 +86,21 @@ export function hireStaff(
     salaryByYear: salaryByYearFor(year, years, annual),
   });
 
-  const nextStaff: Staff = { ...staff, teamId };
+  const nextStaff = createStaff({
+    ...staff,
+    teamId,
+    careerHistory: appendCareerEntry(staff.careerHistory, {
+      seasonYear: year,
+      teamId,
+      role: staff.role,
+      overall: staff.overall,
+      kind: "joined",
+    }),
+    development: {
+      ...staff.development,
+      timeInRole: 0,
+    },
+  });
   let coaches = state.world.coaches;
   const events: DomainEvent[] = [
     createDomainEvent({
@@ -118,34 +135,33 @@ export function hireStaff(
     );
   }
 
-  return systemResult(
-    appendSeasonEventLog(
-      {
-        ...state,
-        world: {
-          ...state.world,
-          staff: { ...state.world.staff, [staffId]: nextStaff },
-          coaches,
-          teams: {
-            ...state.world.teams,
-            [teamId]: {
-              ...team,
-              staff: [...team.staff, staffId],
-            },
-          },
-        },
-        business: {
-          ...state.business,
-          staffContracts: {
-            ...state.business.staffContracts,
-            [contractId]: contract,
+  const withHire = appendSeasonEventLog(
+    {
+      ...state,
+      world: {
+        ...state.world,
+        staff: { ...state.world.staff, [staffId]: nextStaff },
+        coaches,
+        teams: {
+          ...state.world.teams,
+          [teamId]: {
+            ...team,
+            staff: [...team.staff, staffId],
           },
         },
       },
-      events,
-    ),
+      business: {
+        ...state.business,
+        staffContracts: {
+          ...state.business.staffContracts,
+          [contractId]: contract,
+        },
+      },
+    },
     events,
   );
+
+  return systemResult(invalidateStaffOffers(withHire, staffId), events);
 }
 
 /**

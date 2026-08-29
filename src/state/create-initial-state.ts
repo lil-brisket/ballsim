@@ -28,6 +28,7 @@ import {
   type TeamId,
 } from "@/domain/ids";
 import {
+  EMPTY_STAFF_MARKET,
   GAME_STATE_SCHEMA_VERSION,
   type GameState,
 } from "@/state/game-state";
@@ -192,6 +193,7 @@ export function createInitialGameState(
       players: {},
       coaches: {},
       staff: {},
+      staffMarket: EMPTY_STAFF_MARKET,
       draftPicks: {},
       drafts: {},
       fantasyDraft: null,
@@ -483,6 +485,7 @@ export function createFourTeamInitialGameState(
       players: {},
       coaches: {},
       staff: {},
+      staffMarket: EMPTY_STAFF_MARKET,
       draftPicks: {},
       drafts: {},
       fantasyDraft: null,

@@ -28,8 +28,8 @@ import {
 import { hireStaff, processWeeklyStaffPayroll } from "@/systems/staff";
 import { processWeeklyPlayerPayroll } from "@/systems/player-payroll";
 import { asStaffId, asTeamId } from "@/domain/ids";
-import { createStaff } from "@/domain/entities/staff";
 import { TEST_NOW_ISO, TEST_RNG_SEED } from "../helpers/determinism";
+import { testStaff } from "../helpers/staff";
 
 describe("league financial settings", () => {
   it("defaults salaryCap and staffBudget on DEFAULT_GAME_SETTINGS", () => {
@@ -179,16 +179,14 @@ describe("staff budget", () => {
       },
     };
     const staffId = asStaffId("staff_expensive_hc");
-    const staff = createStaff({
+    const staff = testStaff({
       id: staffId,
       firstName: "Expensive",
       lastName: "Coach",
       role: "head_coach",
-      quality: 99,
+      overall: 99,
       experience: 10,
       teamId: null,
-      strengths: ["leadership"],
-      weaknesses: [],
     });
     state = {
       ...state,
