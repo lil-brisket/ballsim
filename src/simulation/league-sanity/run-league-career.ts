@@ -18,8 +18,12 @@ import {
   makeDraftSelection,
 } from "@/systems/draft";
 import { runAiTeamDecisions } from "@/systems/ai-team-decisions";
-import { advanceOffseasonStage } from "@/systems/simulation/offseason-lifecycle";
+import { advanceLeaguePhase } from "@/systems/simulation/offseason-lifecycle";
 import { enterOffseasonFromPostseason } from "@/systems/simulation/season-lifecycle";
+import {
+  getActivePhaseId,
+  tryAdvanceUserManagedPhase,
+} from "@/systems/phase-engine";
 import { collectLeagueSanitySnapshots } from "@/simulation/league-sanity/collect";
 import type { LeagueSanityTeamSeasonSnapshot } from "@/simulation/league-sanity/types";
 
@@ -77,26 +81,34 @@ function autoPickUserDraft(state: GameState): GameState {
   return result.success ? result.state : state;
 }
 
+function tryAdvanceUserPhase(state: GameState, rng: Rng): GameState | null {
+  const next = tryAdvanceUserManagedPhase(state, rng);
+  return next ? persistRng(next, rng) : null;
+}
+
 function resolveOffseason(state: GameState, rng: Rng): GameState {
   let current = persistRng(state, rng);
   if (current.competition.season.phase === "postseason") {
     current = persistRng(enterOffseasonFromPostseason(current).state, rng);
   }
   let guard = 0;
-  while (guard < 80) {
+  while (guard < 120) {
     guard += 1;
     if (current.competition.season.phase === "preseason") {
+      const advanced = tryAdvanceUserPhase(current, rng);
+      if (advanced && advanced.competition.season.phase === "regular") {
+        return advanced;
+      }
+      if (getActivePhaseId(current) === "preseason.preparation") {
+        const toRegular = tryAdvanceUserPhase(current, rng);
+        if (toRegular) {
+          return toRegular;
+        }
+      }
       return current;
     }
     if (current.competition.season.phase === "postseason") {
       current = persistRng(enterOffseasonFromPostseason(current).state, rng);
-      continue;
-    }
-    if (
-      current.competition.season.phase === "offseason" &&
-      current.competition.season.offseasonStage === "free_agency"
-    ) {
-      current = persistRng(advanceOffseasonStage(current).state, rng);
       continue;
     }
     if (isUserOnDraftClock(current)) {
@@ -104,12 +116,18 @@ function resolveOffseason(state: GameState, rng: Rng): GameState {
       current = persistRng(runAiTeamDecisions(current, rng).state, rng);
       continue;
     }
+    const phaseAdvanced = tryAdvanceUserPhase(current, rng);
+    if (phaseAdvanced) {
+      current = phaseAdvanced;
+      continue;
+    }
     current = persistRng(
       advanceSimulation(current, rng, { days: 1 }).state,
       rng,
     );
     if (current.competition.season.phase === "preseason") {
-      return current;
+      const toRegular = tryAdvanceUserPhase(current, rng);
+      return toRegular ?? current;
     }
   }
   throw new Error("League sanity: offseason did not reach preseason.");
@@ -119,6 +137,15 @@ function simulateOneSeason(state: GameState, rng: Rng): GameState {
   let current = persistRng(state, rng);
   const startYear = current.competition.season.year;
   let days = 0;
+
+  // Leave starting preseason if needed
+  if (getActivePhaseId(current) === "preseason.preparation") {
+    const advanced = tryAdvanceUserPhase(current, rng);
+    if (advanced) {
+      current = advanced;
+    }
+  }
+
   while (days < MAX_DAYS_PER_SEASON) {
     days += 1;
     if (isUserOnDraftClock(current)) {
@@ -126,17 +153,30 @@ function simulateOneSeason(state: GameState, rng: Rng): GameState {
       current = persistRng(runAiTeamDecisions(current, rng).state, rng);
       continue;
     }
+    const phaseAdvanced = tryAdvanceUserPhase(current, rng);
+    if (
+      phaseAdvanced &&
+      getActivePhaseId(current) !== "preseason.preparation"
+    ) {
+      // Don't auto-leave regular via this path; only offseason user phases mid-season
+      const from = getActivePhaseId(current);
+      if (from.startsWith("offseason.")) {
+        current = phaseAdvanced;
+        continue;
+      }
+    }
     const advanced = advanceSimulation(current, rng, { days: 1 });
     current = persistRng(advanced.state, rng);
     const season = current.competition.season;
     if (season.year === startYear && season.phase === "postseason") {
       break;
     }
+    const phaseId = getActivePhaseId(current);
     if (
       season.year === startYear &&
-      season.phase === "offseason" &&
-      (season.offseasonStage === "free_agency" ||
-        season.offseasonStage === "draft")
+      (phaseId === "offseason.free_agency" ||
+        phaseId === "offseason.draft" ||
+        phaseId === "offseason.roster_decisions")
     ) {
       break;
     }
@@ -173,12 +213,19 @@ export function runLeagueCareer(
   const rng = createSeededRng(state.meta.rngState);
   state = persistRng(bootstrapWorld(state, rng).state, rng);
 
+  // Enter regular season from initial preseason
+  if (getActivePhaseId(state) === "preseason.preparation") {
+    const advanced = tryAdvanceUserPhase(state, rng);
+    if (advanced) {
+      state = advanced;
+    }
+  }
+
   const snapshots: LeagueSanityTeamSeasonSnapshot[] = [];
   const teamCount = Object.keys(state.world.teams).length;
 
   for (let seasonIndex = 0; seasonIndex < seasons; seasonIndex += 1) {
     state = simulateOneSeason(state, rng);
-    // Collect at season end (postseason / offseason entry) before advancing offseason.
     const seasonSnaps = collectLeagueSanitySnapshots(
       state,
       simulationIndex,

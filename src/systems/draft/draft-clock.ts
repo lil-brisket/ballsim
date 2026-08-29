@@ -3,6 +3,7 @@ import type { DraftOrderSlot } from "@/domain/entities/draft";
 import type { TeamId } from "@/domain/ids";
 import type { GameState } from "@/state/game-state";
 import { draftYearForSeason } from "@/systems/draft/draft-order";
+import { getActivePhaseId } from "@/systems/phase-engine";
 
 /**
  * First unused draft order slot on the active draft for the current season year.
@@ -11,10 +12,7 @@ import { draftYearForSeason } from "@/systems/draft/draft-order";
 export function getActiveDraftOnClockSlot(
   state: GameState,
 ): DraftOrderSlot | undefined {
-  if (state.competition.season.phase !== "offseason") {
-    return undefined;
-  }
-  if (state.competition.season.offseasonStage !== "draft") {
+  if (getActivePhaseId(state) !== "offseason.draft") {
     return undefined;
   }
   const draftYear = draftYearForSeason(state.competition.season.year);

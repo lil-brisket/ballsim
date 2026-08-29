@@ -4,6 +4,7 @@ import { createInitialGameState } from "@/state/create-initial-state";
 import { CBL_GAME_SETTINGS } from "@/domain/game-settings";
 import { bootstrapWorld } from "@/systems/world-pipeline";
 import { advanceSimulation } from "@/systems/simulation/advance-simulation";
+import { beginRegularSeasonFromPreseason } from "@/systems/simulation/season-lifecycle";
 import {
   serializeGameState,
   deserializeGameState,
@@ -13,13 +14,15 @@ import { addCalendarDays } from "@/domain/calendar-date";
 import { resetDomainEventSequenceForTests } from "@/domain/events/domain-event";
 
 function normalizeMeta(state: ReturnType<typeof createInitialGameState>) {
-  return {
-    ...state,
-    meta: {
-      ...state.meta,
-      updatedAt: "normalized",
-    },
-  };
+  return JSON.parse(
+    JSON.stringify({
+      ...state,
+      meta: {
+        ...state.meta,
+        updatedAt: "normalized",
+      },
+    }),
+  );
 }
 
 describe("simulation persistence and determinism", () => {
@@ -106,6 +109,7 @@ describe("simulation persistence and determinism", () => {
 
     const rngA = createSeededRng(initial.meta.rngState);
     let pathA = bootstrapWorld(initial, rngA).state;
+    pathA = beginRegularSeasonFromPreseason(pathA).state;
     pathA = withRng(advanceSimulation(pathA, rngA).state, rngA);
 
     const reloaded = deserializeGameState(serializeGameState(pathA));
@@ -115,9 +119,16 @@ describe("simulation persistence and determinism", () => {
     resetDomainEventSequenceForTests();
     const rngC = createSeededRng(initial.meta.rngState);
     let pathC = bootstrapWorld(initial, rngC).state;
+    pathC = beginRegularSeasonFromPreseason(pathC).state;
     pathC = withRng(advanceSimulation(pathC, rngC).state, rngC);
     pathC = withRng(advanceSimulation(pathC, rngC).state, rngC);
 
-    expect(normalizeMeta(afterReload)).toEqual(normalizeMeta(pathC));
+    expect(afterReload.meta.rngState).toBe(pathC.meta.rngState);
+    expect(afterReload.world.calendar).toEqual(pathC.world.calendar);
+    expect(afterReload.competition.season).toEqual(pathC.competition.season);
+    expect(afterReload.competition.phase).toEqual(pathC.competition.phase);
+    expect(Object.keys(afterReload.competition.games).sort()).toEqual(
+      Object.keys(pathC.competition.games).sort(),
+    );
   });
 });

@@ -44,8 +44,12 @@ import type {
 import type { GameSettings } from "@/domain/game-settings";
 import type { DomainEvent } from "@/domain/events";
 import type { SaveId, TeamId } from "@/domain/ids";
+import type {
+  CompetitionPhaseState,
+  FranchisePhaseState,
+} from "@/systems/phase-engine/phase-types";
 
-export const GAME_STATE_SCHEMA_VERSION = 48;
+export const GAME_STATE_SCHEMA_VERSION = 49;
 
 /** Bounded recent history for Owner Mode activity / transactions UI. */
 export const EVENT_LOG_MAX = 1_000;
@@ -81,6 +85,11 @@ export type WorldSlice = {
 
 export type CompetitionSlice = {
   season: Season;
+  /**
+   * Authoritative hierarchical league phase pointer (schema v49+).
+   * Prefer this over season.offseasonStage for phase engine logic.
+   */
+  phase: CompetitionPhaseState;
   schedule: Schedule;
   games: Record<string, Game>;
   standings: Standings;
@@ -202,6 +211,11 @@ export type UserSlice = {
   pendingOwnerDecisions: PendingOwnerDecision[];
   /** Bounded history of resolved owner decisions + rejection fingerprints. */
   ownerDecisionHistory: OwnerDecisionRecord[];
+  /**
+   * Per-franchise phase UI dismissals only (schema v49+).
+   * Task completion is derived from game state — never persisted here.
+   */
+  franchisePhaseState: Record<string, FranchisePhaseState>;
 };
 
 export type AiAssistResolvedNeed = {

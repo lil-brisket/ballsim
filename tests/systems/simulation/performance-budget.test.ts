@@ -13,6 +13,7 @@ import { createInitialGameState } from "@/state/create-initial-state";
 import { generateValidationRosters } from "@/simulation/validation";
 import { simulateGame } from "@/systems/game-simulation";
 import { advanceSimulation } from "@/systems/simulation/advance-simulation";
+import { beginRegularSeasonFromPreseason } from "@/systems/simulation/season-lifecycle";
 import {
   createSimulationProfiler,
 } from "@/systems/simulation/simulation-profiler";
@@ -81,6 +82,7 @@ describe("simulation performance budgets (soft)", () => {
       });
       const rng = createSeededRng(state.meta.rngState);
       state = bootstrapWorld(state, rng).state;
+      state = beginRegularSeasonFromPreseason(state).state;
       state = {
         ...state,
         meta: { ...state.meta, rngState: rng.getState() },
@@ -101,13 +103,6 @@ describe("simulation performance budgets (soft)", () => {
               lastSimulatedDate: null,
             },
           },
-          competition: {
-            ...state.competition,
-            season: {
-              ...state.competition.season,
-              phase: "regular",
-            },
-          },
         };
       }
 
@@ -122,7 +117,11 @@ describe("simulation performance budgets (soft)", () => {
       }
 
       expect(elapsed).toBeLessThan(WEEK_SOFT_MS);
-      expect(result.daysAdvanced).toBe(7);
+      // Trade offers may pause mid-week; still require meaningful progress.
+      expect(result.daysAdvanced).toBeGreaterThanOrEqual(1);
+      if (result.stopReason !== "pending_owner_decision") {
+        expect(result.daysAdvanced).toBe(7);
+      }
     },
     60_000,
   );

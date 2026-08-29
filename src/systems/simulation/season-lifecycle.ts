@@ -1,11 +1,14 @@
 import type { DomainEvent } from "@/domain/events";
-import type { OffseasonStage } from "@/domain/entities/season";
 import { createSeededRng } from "@/domain/rng";
 import { systemResult, type SystemResult } from "@/domain/system-result";
 import type { GameState } from "@/state/game-state";
 import { startPlayoffs } from "@/systems/playoff-simulation";
 import { generateSchedule } from "@/systems/schedule-generation";
 import { transitionPhase } from "@/systems/simulation/phase-machine";
+import {
+  getActivePhaseId,
+  setActivePhase,
+} from "@/systems/phase-engine";
 
 /**
  * True when the regular season has a non-empty schedule and every listed game is final.
@@ -23,27 +26,6 @@ export function isRegularSeasonComplete(state: GameState): boolean {
     }
   }
   return true;
-}
-
-function setOffseasonStage(
-  state: GameState,
-  offseasonStage: OffseasonStage,
-): GameState {
-  if (state.competition.season.offseasonStage === offseasonStage) {
-    return state;
-  }
-  return {
-    ...state,
-    competition: {
-      ...state.competition,
-      season: {
-        ...state.competition.season,
-        offseasonStage,
-        offseasonStageEnteredDate: state.world.calendar.currentDate,
-        freeAgencyExtendedUntil: null,
-      },
-    },
-  };
 }
 
 function withRegularSeasonStartDate(
@@ -66,32 +48,50 @@ function withRegularSeasonStartDate(
 }
 
 /**
+ * Begin the regular season from preseason.preparation (user-controlled advance).
+ */
+export function beginRegularSeasonFromPreseason(state: GameState): SystemResult {
+  if (getActivePhaseId(state) !== "preseason.preparation") {
+    throw new Error(
+      `beginRegularSeasonFromPreseason requires preseason.preparation; got "${getActivePhaseId(state)}".`,
+    );
+  }
+  const events: DomainEvent[] = [];
+  let current = state;
+
+  const phaseResult = transitionPhase(current, "regular");
+  current = phaseResult.state;
+  events.push(...phaseResult.events);
+
+  current = setActivePhase(current, "regular");
+  current = withRegularSeasonStartDate(
+    current,
+    current.world.calendar.currentDate,
+  );
+
+  if (current.competition.schedule.gameIds.length === 0) {
+    const scheduleResult = generateSchedule(current);
+    current = scheduleResult.state;
+    events.push(...scheduleResult.events);
+  }
+
+  return systemResult(current, events);
+}
+
+/**
  * Evaluates season-phase transitions appropriate for the current competition state.
- * Does not advance the calendar. transitionPhase is the sole phase writer.
+ * Does not advance the calendar. transitionPhase is the sole SeasonPhase writer.
  *
- * Postseason is a player-paced Season Review checkpoint: it does NOT auto-advance
- * to offseason. Callers use beginOffseason / enterOffseasonFromPostseason.
+ * Preseason is user-paced via beginRegularSeasonFromPreseason / advanceLeaguePhase.
+ * Postseason is a player-paced Season Review checkpoint.
  */
 export function processSeasonLifecycle(state: GameState): SystemResult {
   const events: DomainEvent[] = [];
   let current = state;
   const phase = current.competition.season.phase;
 
+  // preseason: hold until user advances (preseason.preparation → regular).
   if (phase === "preseason") {
-    const phaseResult = transitionPhase(current, "regular");
-    current = phaseResult.state;
-    events.push(...phaseResult.events);
-
-    current = withRegularSeasonStartDate(
-      current,
-      current.world.calendar.currentDate,
-    );
-
-    if (current.competition.schedule.gameIds.length === 0) {
-      const scheduleResult = generateSchedule(current);
-      current = scheduleResult.state;
-      events.push(...scheduleResult.events);
-    }
     return systemResult(current, events);
   }
 
@@ -111,13 +111,13 @@ export function processSeasonLifecycle(state: GameState): SystemResult {
       };
       events.push(...started.events);
       const phaseResult = transitionPhase(current, "playoffs");
-      current = phaseResult.state;
+      current = setActivePhase(phaseResult.state, "playoffs");
       events.push(...phaseResult.events);
       return systemResult(current, events);
     }
 
     const phaseResult = transitionPhase(current, "postseason");
-    current = phaseResult.state;
+    current = setActivePhase(phaseResult.state, "postseason.season_review");
     events.push(...phaseResult.events);
     return systemResult(current, events);
   }
@@ -127,18 +127,31 @@ export function processSeasonLifecycle(state: GameState): SystemResult {
     current.competition.playoffs.status === "complete"
   ) {
     const phaseResult = transitionPhase(current, "postseason");
-    current = phaseResult.state;
+    current = setActivePhase(phaseResult.state, "postseason.season_review");
     events.push(...phaseResult.events);
     return systemResult(current, events);
   }
 
-  // postseason: hold for player-paced Season Review (beginOffseason).
+  // Sync competition.phase when in regular/playoffs without pointer
+  if (phase === "regular" && getActivePhaseId(current) !== "regular") {
+    current = setActivePhase(current, "regular");
+  }
+  if (phase === "playoffs" && getActivePhaseId(current) !== "playoffs") {
+    current = setActivePhase(current, "playoffs");
+  }
+  if (
+    phase === "postseason" &&
+    getActivePhaseId(current) !== "postseason.season_review"
+  ) {
+    current = setActivePhase(current, "postseason.season_review");
+  }
+
   return systemResult(current, events);
 }
 
 /**
- * Player-paced exit from Season Review into offseason finalization.
- * Does not run finalization processors — the next advanceSimulation day does.
+ * Player-paced exit from Season Review into offseason season transition.
+ * Does not run transition processors — the next advanceSimulation day does.
  */
 export function enterOffseasonFromPostseason(state: GameState): SystemResult {
   if (state.competition.season.phase !== "postseason") {
@@ -148,6 +161,6 @@ export function enterOffseasonFromPostseason(state: GameState): SystemResult {
   }
   const phaseResult = transitionPhase(state, "offseason");
   let current = phaseResult.state;
-  current = setOffseasonStage(current, "season_finalization");
+  current = setActivePhase(current, "offseason.season_transition");
   return systemResult(current, phaseResult.events);
 }

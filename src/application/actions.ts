@@ -14,6 +14,8 @@ import {
   exerciseOwnerTeamOption,
   finishFreeAgency,
   beginOffseason,
+  advanceLeaguePhaseCommand,
+  dismissPhaseTask,
   letAiHandlePhaseAndAdvance,
   continuePastPhaseAnyway,
   acceptOwnerDecision,
@@ -481,6 +483,33 @@ export async function finishFreeAgencyAction(
   const saveId = String(formData.get("saveId") ?? "");
   const path = returnPath(formData, saveId);
   const result = await finishFreeAgency(saveId);
+  if (!result.ok) {
+    redirectWithError(path, result.error);
+  }
+  revalidateOwner(saveId);
+  redirect(path);
+}
+
+export async function advanceLeaguePhaseAction(
+  formData: FormData,
+): Promise<void> {
+  const saveId = String(formData.get("saveId") ?? "");
+  const path = returnPath(formData, saveId);
+  const result = await advanceLeaguePhaseCommand(saveId);
+  if (!result.ok) {
+    redirectWithError(path, result.error);
+  }
+  revalidateOwner(saveId);
+  redirect(path);
+}
+
+export async function dismissPhaseTaskAction(
+  formData: FormData,
+): Promise<void> {
+  const saveId = String(formData.get("saveId") ?? "");
+  const taskKey = String(formData.get("taskKey") ?? "");
+  const path = returnPath(formData, saveId);
+  const result = await dismissPhaseTask(saveId, taskKey);
   if (!result.ok) {
     redirectWithError(path, result.error);
   }

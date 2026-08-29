@@ -19,10 +19,12 @@ export {
   processSeasonLifecycle,
   isRegularSeasonComplete,
   enterOffseasonFromPostseason,
+  beginRegularSeasonFromPreseason,
 } from "@/systems/simulation/season-lifecycle";
 export {
   processOffseasonLifecycle,
   advanceOffseasonStage,
+  advanceLeaguePhase,
   initializeNewSeason,
 } from "@/systems/simulation/offseason-lifecycle";
 export { advanceSimulation } from "@/systems/simulation/advance-simulation";

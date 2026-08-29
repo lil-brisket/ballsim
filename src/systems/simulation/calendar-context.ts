@@ -67,11 +67,14 @@ export type CalendarContext = {
  */
 export function lifecycleIdentity(state: GameState): string {
   const season = state.competition.season;
+  const phaseId =
+    state.competition.phase?.activePhaseId ??
+    `${season.phase}|${season.offseasonStage}`;
   const segment =
     season.phase === "regular"
       ? getCalendarContext(state).seasonSegment
       : "none";
-  return `${season.phase}|${season.offseasonStage}|${season.year}|${segment}`;
+  return `${phaseId}|${season.year}|${segment}`;
 }
 
 export function getCalendarContext(state: GameState): CalendarContext {

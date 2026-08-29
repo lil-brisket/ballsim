@@ -10,7 +10,7 @@ import {
   resolveTradeDeadlineDate,
   areTradesOpen,
 } from "@/systems/simulation/calendar-context";
-import { processSeasonLifecycle } from "@/systems/simulation/season-lifecycle";
+import { beginRegularSeasonFromPreseason } from "@/systems/simulation/season-lifecycle";
 import { transitionPhase } from "@/systems/simulation/phase-machine";
 import { validateTrade } from "@/systems/trades/trade-validation";
 import { createGame } from "@/domain/entities/game";
@@ -52,7 +52,7 @@ describe("calendar context", () => {
     });
     const rng = createSeededRng(state.meta.rngState);
     state = bootstrapWorld(state, rng).state;
-    state = processSeasonLifecycle(state).state;
+    state = beginRegularSeasonFromPreseason(state).state;
     expect(state.competition.season.phase).toBe("regular");
     expect(state.competition.season.regularSeasonStartDate).toBeTruthy();
 
@@ -95,7 +95,7 @@ describe("calendar context", () => {
     });
     const rng = createSeededRng(state.meta.rngState);
     state = bootstrapWorld(state, rng).state;
-    state = processSeasonLifecycle(state).state;
+    state = beginRegularSeasonFromPreseason(state).state;
     const start = state.competition.season.regularSeasonStartDate!;
     state = {
       ...state,
@@ -169,7 +169,7 @@ describe("calendar context", () => {
     });
     const rng = createSeededRng(state.meta.rngState);
     state = bootstrapWorld(state, rng).state;
-    state = processSeasonLifecycle(state).state;
+    state = beginRegularSeasonFromPreseason(state).state;
     const start = state.competition.season.regularSeasonStartDate!;
     // Ensure schedule end exists after deadline for span-based helpers.
     const lateGameId = asGameId("game_cal_end");

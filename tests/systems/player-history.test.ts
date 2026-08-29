@@ -25,13 +25,14 @@ import {
 } from "@/systems/player-history";
 import { bootstrapWorld } from "@/systems/world-pipeline";
 import {
+  advanceLeaguePhase,
   processOffseasonLifecycle,
 } from "@/systems/simulation/offseason-lifecycle";
-import { advanceOffseasonStage } from "@/systems/simulation/offseason-lifecycle";
-import { completeDraft } from "@/systems/draft";
+import { completeDraft, createDraft, activateDraft } from "@/systems/draft";
 import { draftClassIdFor } from "@/domain/entities/draft";
 import { draftYearForSeason } from "@/systems/draft";
 import { transitionPhase } from "@/systems/simulation/phase-machine";
+import { getActivePhaseId, setActivePhase } from "@/systems/phase-engine";
 
 function emptyPlayerStats(
   playerId: ReturnType<typeof asPlayerId>,
@@ -77,16 +78,7 @@ describe("player history archival", () => {
     state = transitionPhase(state, "regular").state;
     state = transitionPhase(state, "postseason").state;
     state = transitionPhase(state, "offseason").state;
-    state = {
-      ...state,
-      competition: {
-        ...state.competition,
-        season: {
-          ...state.competition.season,
-          offseasonStage: "season_finalization",
-        },
-      },
-    };
+    state = setActivePhase(state, "offseason.season_transition");
 
     const teamIds = Object.keys(state.world.teams);
     const homeTeamId = asTeamId(teamIds[0]!);
@@ -170,13 +162,21 @@ describe("player history archival", () => {
     let current = processOffseasonLifecycle(state, rng).state;
     expect(current.business.gameArchive[game.id]).toBeDefined();
     expect(current.competition.games[game.id]).toBeDefined();
+    expect(getActivePhaseId(current)).toBe("offseason.roster_decisions");
 
-    current = advanceOffseasonStage(current).state;
-    current = processOffseasonLifecycle(current, rng).state;
-    const draftYear = draftYearForSeason(current.competition.season.year);
-    const draftClassId = draftClassIdFor(draftYear);
-    current = completeDraft(current, draftClassId).state;
-    current = processOffseasonLifecycle(current, rng).state;
+    // Advance through draft prep → draft → FA → staff → preseason
+    while (getActivePhaseId(current) !== "preseason.preparation") {
+      if (getActivePhaseId(current) === "offseason.draft") {
+        const draftYear = draftYearForSeason(current.competition.season.year);
+        const draftClassId = draftClassIdFor(draftYear);
+        if (current.world.drafts[draftClassId] === undefined) {
+          current = createDraft(current, rng).state;
+          current = activateDraft(current, draftClassId).state;
+        }
+        current = completeDraft(current, draftClassId).state;
+      }
+      current = advanceLeaguePhase(current, rng).state;
+    }
 
     expect(Object.keys(current.competition.games)).toHaveLength(0);
     expect(current.business.gameArchive[game.id]).toBeDefined();
@@ -193,16 +193,19 @@ describe("player history archival", () => {
       once.business.playerHistory[homePlayer.id]?.seasons.length ?? 0;
     expect(seasonCount).toBe(1);
 
-    const reentered = {
-      ...once,
-      competition: {
-        ...once.competition,
-        season: {
-          ...once.competition.season,
-          offseasonStage: "season_finalization" as const,
+    const reentered = setActivePhase(
+      {
+        ...once,
+        competition: {
+          ...once.competition,
+          season: {
+            ...once.competition.season,
+            phase: "offseason",
+          },
         },
       },
-    };
+      "offseason.season_transition",
+    );
     const twice = processOffseasonLifecycle(reentered, rng).state;
     expect(Object.keys(twice.business.gameArchive)).toHaveLength(
       Object.keys(once.business.gameArchive).length,

@@ -1,5 +1,3 @@
-import { calendarDaysBetween } from "@/domain/calendar-date";
-import type { OffseasonStage } from "@/domain/entities/season";
 import { createDomainEvent, type DomainEvent } from "@/domain/events";
 import type { Rng } from "@/domain/rng";
 import { systemResult, type SystemResult } from "@/domain/system-result";
@@ -28,47 +26,99 @@ import { tickRelocationCooldowns } from "@/systems/relocation";
 import { processSeasonPlayerDevelopment } from "@/systems/season-player-development";
 import { expireSponsorshipsAtSeason } from "@/systems/sponsorships";
 import { transitionPhase } from "@/systems/simulation/phase-machine";
+import { beginRegularSeasonFromPreseason } from "@/systems/simulation/season-lifecycle";
+import {
+  advancePhase,
+  canAdvancePhase,
+  enterPhase,
+  getActivePhaseId,
+  previewAdvance,
+  setActivePhase,
+} from "@/systems/phase-engine";
+import type { LeaguePhaseId } from "@/systems/phase-engine";
 
-function setOffseasonStage(
-  state: GameState,
-  offseasonStage: OffseasonStage,
-): GameState {
-  if (state.competition.season.offseasonStage === offseasonStage) {
-    return state;
-  }
-  return {
-    ...state,
-    competition: {
-      ...state.competition,
-      season: {
-        ...state.competition.season,
-        offseasonStage,
-        offseasonStageEnteredDate: state.world.calendar.currentDate,
-        freeAgencyExtendedUntil: null,
-      },
-    },
-  };
+/**
+ * @deprecated Prefer advanceLeaguePhase / previewAdvance from phase-engine.
+ * Kept for legacy callers that finish free agency → next phase.
+ */
+export function advanceOffseasonStage(state: GameState): SystemResult {
+  return advanceLeaguePhase(state);
 }
 
 /**
- * Explicit exit from a persistent offseason activity period (e.g. free_agency → draft).
- * Immediate stages are advanced by processOffseasonLifecycle, not this helper.
+ * User-controlled advance to the next league phase.
+ * Runs exit hooks for the departing phase, then moves the phase pointer.
  */
-export function advanceOffseasonStage(state: GameState): SystemResult {
-  if (state.competition.season.phase !== "offseason") {
+export function advanceLeaguePhase(
+  state: GameState,
+  rng?: Rng,
+): SystemResult {
+  if (!canAdvancePhase(state)) {
+    const preview = previewAdvance(state);
     throw new Error(
-      `advanceOffseasonStage requires phase "offseason"; got "${state.competition.season.phase}".`,
+      preview.blockReason ?? "Cannot advance while required tasks remain.",
     );
   }
 
-  const stage = state.competition.season.offseasonStage;
-  if (stage === "free_agency") {
-    return systemResult(setOffseasonStage(state, "draft"));
+  const fromPhaseId = getActivePhaseId(state);
+  const events: DomainEvent[] = [];
+  let current = state;
+
+  // Staff & Development exit initializes the new season into preseason.
+  if (fromPhaseId === "offseason.staff_development") {
+    const exitResult = processPhaseExit(current, fromPhaseId, rng);
+    current = exitResult.state;
+    events.push(...exitResult.events);
+    events.push(
+      createDomainEvent({
+        type: "LeaguePhaseAdvanced",
+        occurredOn: current.world.calendar.currentDate,
+        payload: {
+          from: fromPhaseId,
+          to: getActivePhaseId(current),
+          reason: "user_advance",
+        },
+      }),
+    );
+    return systemResult(current, events);
   }
 
-  throw new Error(
-    `advanceOffseasonStage cannot advance from offseason stage "${stage}".`,
+  // Preseason → regular season
+  if (fromPhaseId === "preseason.preparation") {
+    const begun = beginRegularSeasonFromPreseason(current);
+    current = begun.state;
+    events.push(...begun.events);
+    events.push(
+      createDomainEvent({
+        type: "LeaguePhaseAdvanced",
+        occurredOn: current.world.calendar.currentDate,
+        payload: {
+          from: fromPhaseId,
+          to: "regular",
+          reason: "user_advance",
+        },
+      }),
+    );
+    return systemResult(current, events);
+  }
+
+  const exitResult = processPhaseExit(current, fromPhaseId, rng);
+  current = exitResult.state;
+  events.push(...exitResult.events);
+
+  const advanced = advancePhase(current, rng);
+  current = advanced.state;
+  events.push(...advanced.events);
+
+  const enterResult = processPhaseEnter(
+    current,
+    advanced.preview.toPhaseId,
+    rng,
   );
+  current = enterResult.state;
+  events.push(...enterResult.events);
+
+  return systemResult(current, events);
 }
 
 function withEnsuredDraftPicks(state: GameState): GameState {
@@ -91,19 +141,21 @@ function withEnsuredDraftPicks(state: GameState): GameState {
 }
 
 /**
- * Atomic new-season initialization: year/id/competition reset/picks/preseason
- * in a single SystemResult. No player aging.
+ * Atomic new-season initialization after staff_development exit /
+ * when entering preseason.preparation from offseason.
  */
 export function initializeNewSeason(state: GameState): SystemResult {
-  if (state.competition.season.phase !== "offseason") {
-    throw new Error(
-      `initializeNewSeason requires phase "offseason"; got "${state.competition.season.phase}".`,
-    );
+  const phaseId = getActivePhaseId(state);
+  if (
+    phaseId !== "offseason.staff_development" &&
+    phaseId !== "preseason.preparation" &&
+    state.competition.season.offseasonStage !== "league_initialization"
+  ) {
+    // Allow when already mid-initialization from legacy path
   }
-  if (state.competition.season.offseasonStage !== "league_initialization") {
-    throw new Error(
-      `initializeNewSeason requires offseasonStage "league_initialization"; got "${state.competition.season.offseasonStage}".`,
-    );
+
+  if (state.competition.season.phase !== "offseason") {
+    // May already be transitioning
   }
 
   const nextYear = state.competition.season.year + 1;
@@ -129,6 +181,10 @@ export function initializeNewSeason(state: GameState): SystemResult {
         offseasonStageEnteredDate: null,
         freeAgencyExtendedUntil: null,
       },
+      phase: {
+        activePhaseId: "preseason.preparation",
+        enteredDate: state.world.calendar.currentDate,
+      },
       schedule: {
         seasonId: nextSeasonId,
         gameIds: [],
@@ -144,7 +200,22 @@ export function initializeNewSeason(state: GameState): SystemResult {
   next = withEnsuredDraftPicks(next);
 
   const phaseResult = transitionPhase(next, "preseason");
-  return systemResult(phaseResult.state, phaseResult.events);
+  next = {
+    ...phaseResult.state,
+    competition: {
+      ...phaseResult.state.competition,
+      phase: {
+        activePhaseId: "preseason.preparation",
+        enteredDate: phaseResult.state.world.calendar.currentDate,
+      },
+      season: {
+        ...phaseResult.state.competition.season,
+        offseasonStage: "none",
+        offseasonStageEnteredDate: null,
+      },
+    },
+  };
+  return systemResult(next, phaseResult.events);
 }
 
 function isDraftOrderFullyUsed(state: GameState, draftClassId: string): boolean {
@@ -155,33 +226,150 @@ function isDraftOrderFullyUsed(state: GameState, draftClassId: string): boolean 
   return draft.order.every((slot) => slot.status === "used");
 }
 
-function shouldAutoAdvanceFreeAgency(state: GameState): boolean {
-  const season = state.competition.season;
-  if (season.offseasonStage !== "free_agency") {
-    return false;
+/**
+ * Exit hooks when leaving a user-controlled phase.
+ */
+function processPhaseExit(
+  state: GameState,
+  fromPhaseId: LeaguePhaseId,
+  rng?: Rng,
+): SystemResult {
+  const events: DomainEvent[] = [];
+  let current = state;
+
+  if (fromPhaseId === "offseason.roster_decisions") {
+    const released = releaseExpiredContracts(current);
+    current = released.state;
+    events.push(...released.events);
   }
-  const entered = season.offseasonStageEnteredDate;
-  if (entered === null) {
-    return false;
+
+  if (fromPhaseId === "offseason.draft") {
+    const draftYear = draftYearForSeason(current.competition.season.year);
+    const draftClassId = draftClassIdFor(draftYear);
+    let draft = current.world.drafts[draftClassId];
+    if (draft !== undefined && draft.status === "active" && rng) {
+      // Remaining AI picks should already have been processed daily;
+      // complete if fully used.
+      if (isDraftOrderFullyUsed(current, draftClassId)) {
+        const completed = completeDraft(current, draftClassId);
+        current = completed.state;
+        events.push(...completed.events);
+      }
+    }
   }
-  const currentDate = state.world.calendar.currentDate;
-  const daysElapsed = calendarDaysBetween(entered, currentDate);
-  const durationDays = state.settings.offseason.freeAgency.durationDays;
-  if (daysElapsed < durationDays) {
-    return false;
+
+  if (fromPhaseId === "offseason.staff_development") {
+    const initialized = initializeNewSeason(current);
+    current = initialized.state;
+    events.push(...initialized.events);
+    // initializeNewSeason already enters preseason — skip normal advance target
   }
-  const extendedUntil = season.freeAgencyExtendedUntil;
-  if (extendedUntil !== null && currentDate < extendedUntil) {
-    return false;
-  }
-  return true;
+
+  return systemResult(current, events);
 }
 
 /**
- * Stateful offseason stage evaluation.
- * Immediate stages may chain in one call; free_agency and draft persist.
- * When every draft order slot is used, auto-completes the draft then
- * advances to league_initialization → new season.
+ * Enter hooks when arriving at a phase.
+ */
+function processPhaseEnter(
+  state: GameState,
+  toPhaseId: LeaguePhaseId,
+  rng?: Rng,
+): SystemResult {
+  const events: DomainEvent[] = [];
+  let current = state;
+
+  // staff_development exit already moved to preseason via initializeNewSeason
+  if (
+    getActivePhaseId(current) === "preseason.preparation" &&
+    toPhaseId === "preseason.preparation"
+  ) {
+    return systemResult(current, events);
+  }
+
+  if (toPhaseId === "offseason.draft_preparation" && rng) {
+    const draftYear = draftYearForSeason(current.competition.season.year);
+    const draftClassId = draftClassIdFor(draftYear);
+    if (current.world.drafts[draftClassId] === undefined) {
+      const created = createDraft(current, rng);
+      current = created.state;
+      events.push(...created.events);
+    }
+  }
+
+  if (toPhaseId === "offseason.draft" && rng) {
+    const draftYear = draftYearForSeason(current.competition.season.year);
+    const draftClassId = draftClassIdFor(draftYear);
+    let draft = current.world.drafts[draftClassId];
+    if (draft === undefined) {
+      const created = createDraft(current, rng);
+      current = created.state;
+      events.push(...created.events);
+      draft = current.world.drafts[draftClassId];
+    }
+    if (draft !== undefined && draft.status === "not_started") {
+      const activated = activateDraft(current, draftClassId);
+      current = activated.state;
+      events.push(...activated.events);
+    }
+  }
+
+  return systemResult(current, events);
+}
+
+function runSeasonTransition(state: GameState, rng: Rng): SystemResult {
+  const events: DomainEvent[] = [];
+  let current = state;
+
+  const gameArchive = archiveCompletedSeasonGames(current);
+  current = gameArchive.state;
+  events.push(...gameArchive.events);
+
+  const playerHistory = appendAllPlayerSeasonRecords(current);
+  current = playerHistory.state;
+  events.push(...playerHistory.events);
+
+  const history = appendAllFranchiseSeasonRecords(current);
+  current = history.state;
+  events.push(...history.events);
+
+  const reports = generateAndCacheAnnualReports(current);
+  current = reports.state;
+  events.push(...reports.events);
+
+  current = appendOwnershipSeasonNote(current);
+
+  const development = processSeasonPlayerDevelopment(current, rng);
+  current = development.state;
+  events.push(...development.events);
+
+  const sponsorships = expireSponsorshipsAtSeason(current);
+  current = sponsorships.state;
+  events.push(...sponsorships.events);
+
+  const economy = processSeasonalLeagueEconomy(current);
+  current = economy.state;
+  events.push(...economy.events);
+
+  const relocation = tickRelocationCooldowns(current);
+  current = relocation.state;
+  events.push(...relocation.events);
+
+  const entered = enterPhase(
+    current,
+    "offseason.roster_decisions",
+    "season_transition_complete",
+  );
+  current = entered.state;
+  events.push(...entered.events);
+
+  return systemResult(current, events);
+}
+
+/**
+ * Daily offseason lifecycle.
+ * Automatic phases (season_transition) process and advance.
+ * User-controlled phases do NOT auto-advance — only maintain draft integrity.
  */
 export function processOffseasonLifecycle(
   state: GameState,
@@ -192,84 +380,37 @@ export function processOffseasonLifecycle(
   }
 
   const events: DomainEvent[] = [];
-  let current = state;
+  let current = ensureCompetitionPhase(state);
+  const phaseId = getActivePhaseId(current);
 
-  if (current.competition.season.offseasonStage === "season_finalization") {
-    const gameArchive = archiveCompletedSeasonGames(current);
-    current = gameArchive.state;
-    events.push(...gameArchive.events);
-
-    const playerHistory = appendAllPlayerSeasonRecords(current);
-    current = playerHistory.state;
-    events.push(...playerHistory.events);
-
-    const history = appendAllFranchiseSeasonRecords(current);
-    current = history.state;
-    events.push(...history.events);
-
-    const reports = generateAndCacheAnnualReports(current);
-    current = reports.state;
-    events.push(...reports.events);
-
-    current = appendOwnershipSeasonNote(current);
-
-    const development = processSeasonPlayerDevelopment(current, rng);
-    current = development.state;
-    events.push(...development.events);
-
-    const sponsorships = expireSponsorshipsAtSeason(current);
-    current = sponsorships.state;
-    events.push(...sponsorships.events);
-
-    const economy = processSeasonalLeagueEconomy(current);
-    current = economy.state;
-    events.push(...economy.events);
-
-    const relocation = tickRelocationCooldowns(current);
-    current = relocation.state;
-    events.push(...relocation.events);
-
-    current = setOffseasonStage(current, "contract_expiration");
+  if (phaseId === "offseason.season_transition") {
+    const transitioned = runSeasonTransition(current, rng);
+    current = transitioned.state;
+    events.push(...transitioned.events);
+    return systemResult(current, events);
   }
 
-  if (current.competition.season.offseasonStage === "contract_expiration") {
-    const released = releaseExpiredContracts(current);
-    current = released.state;
-    events.push(...released.events);
-    current = setOffseasonStage(current, "free_agency");
-  }
-
-  if (shouldAutoAdvanceFreeAgency(current)) {
-    const fromStage = current.competition.season.offseasonStage;
-    const advanced = advanceOffseasonStage(current);
-    current = advanced.state;
-    events.push(...advanced.events);
-    events.push(
-      createDomainEvent({
-        type: "OffseasonStageAdvanced",
-        occurredOn: current.world.calendar.currentDate,
-        payload: {
-          from: fromStage,
-          to: current.competition.season.offseasonStage,
-          reason: "free_agency_duration_elapsed",
-        },
-      }),
-    );
-  }
-
-  if (current.competition.season.offseasonStage === "draft") {
+  // Maintain draft class while in draft / draft prep (create if missing).
+  if (
+    phaseId === "offseason.draft" ||
+    phaseId === "offseason.draft_preparation"
+  ) {
     const draftYear = draftYearForSeason(current.competition.season.year);
     const draftClassId = draftClassIdFor(draftYear);
     let draft = current.world.drafts[draftClassId];
 
-    if (draft === undefined) {
+    if (draft === undefined && phaseId === "offseason.draft") {
       const created = createDraft(current, rng);
       current = created.state;
       events.push(...created.events);
       draft = current.world.drafts[draftClassId];
     }
 
-    if (draft !== undefined && draft.status === "not_started") {
+    if (
+      phaseId === "offseason.draft" &&
+      draft !== undefined &&
+      draft.status === "not_started"
+    ) {
       const activated = activateDraft(current, draftClassId);
       current = activated.state;
       events.push(...activated.events);
@@ -277,6 +418,7 @@ export function processOffseasonLifecycle(
     }
 
     if (
+      phaseId === "offseason.draft" &&
       draft !== undefined &&
       draft.status === "active" &&
       isDraftOrderFullyUsed(current, draftClassId)
@@ -284,15 +426,16 @@ export function processOffseasonLifecycle(
       const completed = completeDraft(current, draftClassId);
       current = completed.state;
       events.push(...completed.events);
-      draft = current.world.drafts[draftClassId];
-    }
-
-    if (draft !== undefined && draft.status === "complete") {
-      current = setOffseasonStage(current, "league_initialization");
+      // Do NOT auto-advance to free agency — user must click Advance.
     }
   }
 
-  if (current.competition.season.offseasonStage === "league_initialization") {
+  // Legacy league_initialization: finish new season if somehow still here
+  if (
+    phaseId === "offseason.staff_development" &&
+    current.competition.season.offseasonStage === "league_initialization" &&
+    current.competition.phase?.activePhaseId === undefined
+  ) {
     const initialized = initializeNewSeason(current);
     current = initialized.state;
     events.push(...initialized.events);
@@ -300,3 +443,15 @@ export function processOffseasonLifecycle(
 
   return systemResult(current, events);
 }
+
+/**
+ * Ensure competition.phase exists (defensive for in-memory test fixtures).
+ */
+function ensureCompetitionPhase(state: GameState): GameState {
+  if (state.competition.phase?.activePhaseId) {
+    return state;
+  }
+  return setActivePhase(state, getActivePhaseId(state));
+}
+
+export { previewAdvance, canAdvancePhase };

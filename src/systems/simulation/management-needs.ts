@@ -14,6 +14,7 @@ import { DEFAULT_ROSTER_SIZE } from "@/systems/roster-generation-config";
 import { findTeamStaffByRole } from "@/systems/staff-effects";
 import { STARTER_ROLES } from "@/systems/staff-generation";
 import type { ManagementActionId } from "@/systems/simulation/management-actions";
+import { isInLeaguePhase } from "@/systems/phase-engine";
 
 export const COACHING_ROLES: readonly StaffRole[] = [
   "head_coach",
@@ -99,9 +100,7 @@ function detectRosterNeeds(
     });
   }
 
-  const inFaWindow =
-    state.competition.season.phase === "offseason" &&
-    state.competition.season.offseasonStage === "free_agency";
+  const inFaWindow = isInLeaguePhase(state, "offseason.free_agency");
 
   if (
     inFaWindow &&

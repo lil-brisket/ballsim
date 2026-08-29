@@ -9,6 +9,7 @@ import {
   isRegularSeasonComplete,
   processSeasonLifecycle,
   enterOffseasonFromPostseason,
+  beginRegularSeasonFromPreseason,
 } from "@/systems/simulation/season-lifecycle";
 import { transitionPhase } from "@/systems/simulation/phase-machine";
 import { simulatePlayoffs } from "@/systems/playoff-simulation";
@@ -35,7 +36,7 @@ describe("season lifecycle", () => {
     const rng = createSeededRng(state.meta.rngState);
     const bootstrapped = bootstrapWorld(state, rng).state;
 
-    const result = processSeasonLifecycle(bootstrapped);
+    const result = beginRegularSeasonFromPreseason(bootstrapped);
     expect(result.state.competition.season.phase).toBe("regular");
     expect(result.state.competition.schedule.gameIds.length).toBeGreaterThan(0);
 
@@ -66,7 +67,7 @@ describe("season lifecycle", () => {
       return { state: bootstrapWorld(state, rng).state, rng };
     })();
 
-    let current = processSeasonLifecycle(rostered).state;
+    let current = beginRegularSeasonFromPreseason(rostered).state;
     expect(current.competition.season.phase).toBe("regular");
 
     const dates = [
@@ -110,7 +111,7 @@ describe("season lifecycle", () => {
     });
     const rng = createSeededRng(state.meta.rngState);
     const bootstrapped = bootstrapWorld(state, rng).state;
-    const result = processSeasonLifecycle(bootstrapped);
+    const result = beginRegularSeasonFromPreseason(bootstrapped);
     expect(result.state.competition.season.phase).toBe("regular");
     expect(result.state.competition.season.regularSeasonStartDate).toBe(
       bootstrapped.world.calendar.currentDate,
@@ -220,7 +221,11 @@ describe("season lifecycle", () => {
           offseasonStageEnteredDate: null,
           freeAgencyExtendedUntil: null,
         },
-        schedule: { seasonId, gameIds: [] },
+        phase: {
+          activePhaseId: "preseason.preparation",
+          enteredDate: "2026-10-01",
+        },
+        schedule: { seasonId, gameIds: [], gameIdsByDate: {} },
         games: {},
         standings,
         playoffs: createEmptyPlayoffTournament(),
@@ -249,11 +254,14 @@ describe("season lifecycle", () => {
         mode: "owner",
         pendingOwnerDecisions: [],
         ownerDecisionHistory: [],
+        franchisePhaseState: {
+          [generated.teams[0]!.id]: { dismissed: [] },
+        },
       },
     };
 
     state = generateRosters(state, rng).state;
-    state = processSeasonLifecycle(state).state;
+    state = beginRegularSeasonFromPreseason(state).state;
     expect(state.competition.season.phase).toBe("regular");
 
     const dates = [

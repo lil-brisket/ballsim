@@ -1,16 +1,18 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import {
+  advanceLeaguePhaseAction,
   beginOffseasonAction,
   continuePastPhaseAction,
+  dismissPhaseTaskAction,
   letAiHandlePhaseAction,
   switchActiveOwnerTeamAction,
 } from "@/application/actions";
 import { loadOwnerSaveView } from "@/application/game-service";
 import { AdvanceTimeControls } from "@/components/game/AdvanceTimeControls";
 import { SimulationAssistantSummary } from "@/components/game/SimulationAssistantSummary";
-import { SimulationPhaseBanner } from "@/components/game/SimulationPhaseBanner";
 import { SimulationProgressBanner } from "@/components/game/SimulationProgressBanner";
+import { PhaseDashboard } from "@/components/phase/PhaseDashboard";
 import { AttentionRequiredPanel } from "@/components/owner/dashboard/AttentionRequiredPanel";
 import { DashboardNotifications } from "@/components/owner/dashboard/DashboardNotifications";
 import { FranchiseHealthPanel } from "@/components/owner/dashboard/FranchiseHealthPanel";
@@ -38,7 +40,7 @@ export default async function DashboardPage({
     notFound();
   }
 
-  const { save, ownerDashboard: dash, dashboard } = view;
+  const { save, ownerDashboard: dash, dashboard, phaseDashboard } = view;
   const returnPath = `/dashboard/${saveId}`;
   const timeDisabled =
     dash.flags.userOnDraftClock ||
@@ -51,10 +53,12 @@ export default async function DashboardPage({
       : null;
   const aiCanHandle =
     phase.aiAssistEnabled && phase.unresolvedDecisionCount > 0;
+  const activePhaseId = phaseDashboard.resolved.phaseId;
   const goToHref =
-    dash.offseasonStage === "free_agency"
+    activePhaseId === "offseason.free_agency"
       ? `/dashboard/${saveId}/free-agency`
-      : dash.offseasonStage === "draft"
+      : activePhaseId === "offseason.draft" ||
+          activePhaseId === "offseason.draft_preparation"
         ? `/dashboard/${saveId}/draft`
         : `/dashboard/${saveId}`;
 
@@ -137,9 +141,15 @@ export default async function DashboardPage({
         />
       ) : null}
 
-      <SimulationPhaseBanner
-        phase={phase}
+      <PhaseDashboard
+        view={phaseDashboard}
+        saveId={saveId}
+        returnPath={returnPath}
         currentDate={dash.currentDate}
+        seasonYear={dash.seasonYear}
+        advanceAction={advanceLeaguePhaseAction}
+        dismissAction={dismissPhaseTaskAction}
+        switchTeamAction={switchActiveOwnerTeamAction}
       />
 
       <SimulationProgressBanner

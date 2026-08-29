@@ -39,12 +39,13 @@ import { asArenaId, asTeamId } from "@/domain/ids";
 import { addCalendarDays } from "@/domain/calendar-date";
 import type { GameState } from "@/state/game-state";
 import { GAME_STATE_SCHEMA_VERSION } from "@/state/game-state";
+import { leaguePhaseIdFromLegacy } from "@/systems/phase-engine/resolve-current-phase";
+import type { OffseasonStage, SeasonPhase } from "@/domain/entities/season";
 import { createEmptyPlayoffTournament } from "@/domain/entities/playoffs";
 import { calculateStandings } from "@/systems/standings";
 import { recommendRosterManagement } from "@/systems/roster-management";
 import { validateGameState } from "@/persistence/validate-game-state";
 import { generateDraftPicksForSeason } from "@/domain/draft-picks/generate-draft-picks";
-import type { OffseasonStage, SeasonPhase } from "@/domain/entities/season";
 import { createDefaultOwnershipConfidence } from "@/domain/entities/ownership-confidence";
 import { createPhaseEBusinessDefaults } from "@/state/phase-e-defaults";
 import { deriveDefaultTeamBranding } from "@/systems/team-branding-generation";
@@ -68,6 +69,9 @@ import {
   type GameSettings,
 } from "@/domain/game-settings";
 import { EMPTY_AI_ASSIST_STATE } from "@/state/game-state";
+/** Pre-v49 competition/user shapes — phase fields added only in migrateV48ToV49. */
+type CompetitionSlicePreV49 = Omit<GameState["competition"], "phase">;
+type UserSlicePreV49 = Omit<GameState["user"], "franchisePhaseState">;
 import {
   isAiProfile,
   type AiProfile,
@@ -187,6 +191,7 @@ const MIGRATE_ONE_STEP: Record<number, (state: unknown) => unknown> = {
   45: (state) => migrateV45ToV46(state as GameStateV45),
   46: (state) => migrateV46ToV47(state as GameStateV46),
   47: (state) => migrateV47ToV48(state as GameStateV47),
+  48: (state) => migrateV48ToV49(state as GameStateV48),
 };
 
 function legacyUserRecord(user: unknown): Record<string, unknown> {
@@ -1426,7 +1431,7 @@ type GameStateV14 = {
     rngState: number;
   };
   world: GameState["world"];
-  competition: GameState["competition"];
+  competition: CompetitionSlicePreV49;
   business: BusinessSliceV14;
   user: UserSliceV14;
 };
@@ -1437,7 +1442,7 @@ type GameStateV15 = {
     rngState: number;
   };
   world: GameState["world"];
-  competition: GameState["competition"];
+  competition: CompetitionSlicePreV49;
   business: BusinessSliceV15;
   user: UserSliceV21;
 };
@@ -1465,7 +1470,7 @@ type GameStateV16 = {
     rngState: number;
   };
   world: WorldSliceV17;
-  competition: GameState["competition"];
+  competition: CompetitionSlicePreV49;
   business: BusinessSliceV16;
   user: UserSliceV21;
 };
@@ -1495,7 +1500,7 @@ type GameStateV17 = {
     rngState: number;
   };
   world: WorldSliceV17;
-  competition: GameState["competition"];
+  competition: CompetitionSlicePreV49;
   business: BusinessSliceV17;
   user: UserSliceV21;
 };
@@ -1527,7 +1532,7 @@ type GameStateV18 = {
     rngState: number;
   };
   world: WorldSliceV18;
-  competition: GameState["competition"];
+  competition: CompetitionSlicePreV49;
   business: BusinessSliceV18;
   user: UserSliceV21;
 };
@@ -1583,7 +1588,7 @@ type GameStateV21 = {
     rngState: number;
   };
   world: GameStateV23["world"];
-  competition: GameState["competition"];
+  competition: CompetitionSlicePreV49;
   business: GameStateV23["business"];
   user: UserSliceV21;
 };
@@ -1969,7 +1974,7 @@ function migrateV21ToV22(state: GameStateV21): GameStateV22 {
         ...state.meta,
         schemaVersion: 22,
       },
-    } as GameStateV22;
+    } as unknown as GameStateV22;
   }
 
   const seasonYear = state.competition.season.year;
@@ -2048,7 +2053,7 @@ type GameStateV22 = {
     rngState: number;
   };
   world: GameStateV23["world"];
-  competition: GameState["competition"];
+  competition: CompetitionSlicePreV49;
   business: GameStateV23["business"];
   user: {
     controlledTeamId: TeamId;
@@ -2081,7 +2086,7 @@ type GameStateV23 = {
     drafts: GameState["world"]["drafts"];
     scheduledEvents: GameState["world"]["scheduledEvents"];
   };
-  competition: GameState["competition"];
+  competition: CompetitionSlicePreV49;
   business: {
     contracts: GameState["business"]["contracts"];
     finances: GameState["business"]["finances"];
@@ -2200,7 +2205,7 @@ type GameStateV24 = {
     rngState: number;
   };
   world: GameState["world"];
-  competition: GameState["competition"];
+  competition: CompetitionSlicePreV49;
   business: GameState["business"];
   user: UserSlicePreV26;
 };
@@ -2212,7 +2217,7 @@ type GameStateV25 = {
   };
   settings: GameState["settings"];
   world: GameState["world"];
-  competition: GameState["competition"];
+  competition: CompetitionSlicePreV49;
   business: GameState["business"];
   user: UserSlicePreV26;
 };
@@ -2369,7 +2374,7 @@ type GameStateV26 = {
   };
   settings: GameState["settings"];
   world: GameState["world"];
-  competition: GameState["competition"];
+  competition: CompetitionSlicePreV49;
   business: GameState["business"];
   user: Record<string, any>;
 };
@@ -2441,7 +2446,7 @@ type GameStateV27 = {
   };
   settings: GameState["settings"];
   world: GameState["world"];
-  competition: GameState["competition"];
+  competition: CompetitionSlicePreV49;
   business: GameState["business"];
   user: Record<string, any>;
 };
@@ -2652,7 +2657,7 @@ type GameStateV29 = {
   };
   settings: GameSettings;
   world: GameState["world"];
-  competition: GameState["competition"];
+  competition: CompetitionSlicePreV49;
   business: GameState["business"];
   user: Record<string, any>;
 };
@@ -2694,7 +2699,7 @@ type GameStateV30 = {
   meta: GameState["meta"];
   settings: GameState["settings"];
   world: GameState["world"];
-  competition: GameState["competition"];
+  competition: CompetitionSlicePreV49;
   business: GameState["business"];
   user: Record<string, any>;
 };
@@ -2771,7 +2776,7 @@ type GameStateV31 = {
   meta: GameState["meta"];
   settings: GameState["settings"];
   world: GameState["world"];
-  competition: GameState["competition"];
+  competition: CompetitionSlicePreV49;
   business: GameState["business"];
   user: Record<string, any>;
 };
@@ -2852,7 +2857,7 @@ type GameStateV32 = {
   meta: GameState["meta"];
   settings: GameState["settings"];
   world: GameState["world"];
-  competition: GameState["competition"];
+  competition: CompetitionSlicePreV49;
   business: GameState["business"];
   user: Record<string, any>;
 };
@@ -2899,7 +2904,7 @@ type GameStateV33 = {
   };
   settings: GameState["settings"];
   world: GameState["world"];
-  competition: GameState["competition"];
+  competition: CompetitionSlicePreV49;
   business: GameState["business"];
   user: Record<string, any>;
 };
@@ -2975,7 +2980,7 @@ type GameStateV34 = {
   };
   settings: GameState["settings"];
   world: GameState["world"];
-  competition: GameState["competition"];
+  competition: CompetitionSlicePreV49;
   business: Omit<GameState["business"], "gameArchive" | "playerHistory">;
   user: Record<string, any>;
 };
@@ -2986,7 +2991,7 @@ type GameStateV35 = {
   };
   settings: GameState["settings"];
   world: GameState["world"];
-  competition: GameState["competition"];
+  competition: CompetitionSlicePreV49;
   business: Omit<GameState["business"], "gameArchive" | "playerHistory"> & {
     gameArchive?: GameState["business"]["gameArchive"];
     playerHistory?: GameState["business"]["playerHistory"];
@@ -3036,7 +3041,7 @@ type GameStateV37 = {
     };
   };
   world: GameState["world"];
-  competition: GameState["competition"];
+  competition: CompetitionSlicePreV49;
   business: GameState["business"];
   user: Record<string, any>;
 };
@@ -3053,7 +3058,7 @@ type GameStateV38 = {
     };
   };
   world: GameState["world"];
-  competition: GameState["competition"];
+  competition: CompetitionSlicePreV49;
   business: GameState["business"];
   user: Record<string, any>;
 };
@@ -3064,7 +3069,7 @@ type GameStateV39 = {
   };
   settings: GameState["settings"];
   world: GameState["world"];
-  competition: GameState["competition"];
+  competition: CompetitionSlicePreV49;
   business: GameState["business"];
   user: Record<string, any>;
 };
@@ -3075,7 +3080,7 @@ type GameStateV40 = {
   };
   settings: GameState["settings"];
   world: GameState["world"];
-  competition: GameState["competition"];
+  competition: CompetitionSlicePreV49;
   business: GameState["business"];
   user: Record<string, any>;
 };
@@ -3235,16 +3240,6 @@ function migrateV36ToV37(state: GameStateV36): GameStateV37 {
  */
 function migrateV37ToV38(state: GameStateV37): GameStateV38 {
   const userRecord = legacyUserRecord(state.user);
-  if (hasModernOwnershipUser(userRecord)) {
-    return {
-      ...state,
-      meta: {
-        ...state.meta,
-        schemaVersion: 38,
-      },
-    } as GameStateV38;
-  }
-
   const preset = legacyManagementModeToPreset(state.settings.ai.managementMode);
   const assistance = applyPreset(preset);
 
@@ -3470,7 +3465,7 @@ type GameStateV42 = {
   };
   settings: GameState["settings"];
   world: GameState["world"];
-  competition: GameState["competition"];
+  competition: CompetitionSlicePreV49;
   business: GameState["business"];
   user: {
     controlledTeamId: string;
@@ -3681,7 +3676,7 @@ type GameStateV43 = {
   };
   settings: GameState["settings"];
   world: GameState["world"];
-  competition: GameState["competition"];
+  competition: CompetitionSlicePreV49;
   business: GameState["business"];
   user: {
     ownedTeamIds: TeamId[];
@@ -3765,11 +3760,11 @@ type GameStateV44 = {
     drafts: GameState["world"]["drafts"];
     scheduledEvents: GameState["world"]["scheduledEvents"];
   };
-  competition: Omit<GameState["competition"], "seasonEventLog"> & {
+  competition: Omit<GameState["competition"], "seasonEventLog" | "phase"> & {
     seasonEventLog?: GameState["competition"]["seasonEventLog"];
   };
   business: GameState["business"];
-  user: GameState["user"];
+  user: UserSlicePreV49;
 };
 
 /**
@@ -3858,7 +3853,7 @@ type GameStateV45 = {
     };
   };
   world: GameState["world"];
-  competition: GameState["competition"];
+  competition: CompetitionSlicePreV49;
   business: Omit<GameState["business"], "finances" | "franchiseHistory"> & {
     finances: Record<string, TeamFinancesV45>;
     franchiseHistory: Record<
@@ -3874,10 +3869,10 @@ type GameStateV45 = {
       }
     >;
   };
-  user: GameState["user"];
+  user: UserSlicePreV49;
 };
 
-type GameStateV46 = Omit<GameState, "meta" | "world"> & {
+type GameStateV46 = Omit<GameState, "meta" | "world" | "competition" | "user"> & {
   meta: { schemaVersion: 46; [key: string]: unknown };
   world: {
     teams: Record<
@@ -3900,6 +3895,8 @@ type GameStateV46 = Omit<GameState, "meta" | "world"> & {
     >;
     [key: string]: unknown;
   };
+  competition: CompetitionSlicePreV49;
+  user: UserSlicePreV49;
 };
 
 /**
@@ -4001,7 +3998,7 @@ function migrateV45ToV46(state: GameStateV45): GameStateV46 {
  * Idempotent if entries already have targetMinutes (e.g. fresh recommend during v44→v45).
  * Emits literal schemaVersion 47. No RNG.
  */
-function migrateV46ToV47(state: GameStateV46): GameState {
+function migrateV46ToV47(state: GameStateV46): GameStateV47 {
   const teams: GameState["world"]["teams"] = {};
   for (const [teamId, team] of Object.entries(state.world.teams)) {
     const legacy = team.rosterManagement as {
@@ -4084,21 +4081,26 @@ function migrateV46ToV47(state: GameStateV46): GameState {
   }
 
   return {
-    ...(state as unknown as GameState),
+    ...(state as unknown as GameStateV47),
     meta: {
-      ...(state as unknown as GameState).meta,
+      ...(state as unknown as GameStateV47).meta,
       schemaVersion: 47,
     },
     world: {
-      ...(state as unknown as GameState).world,
+      ...(state as unknown as GameStateV47).world,
       teams,
     },
   };
 }
 
-type GameStateV47 = Omit<GameState, "meta" | "world" | "settings"> & {
+type GameStateV47 = Omit<
+  GameState,
+  "meta" | "world" | "settings" | "competition" | "user"
+> & {
   meta: Omit<GameState["meta"], "schemaVersion"> & { schemaVersion: 47 };
   world: Omit<GameState["world"], "fantasyDraft">;
+  competition: CompetitionSlicePreV49;
+  user: UserSlicePreV49;
   settings: Omit<GameState["settings"], "draft"> & {
     draft: {
       mode: "standard" | "fantasy";
@@ -4115,15 +4117,15 @@ type GameStateV47 = Omit<GameState, "meta" | "world" | "settings"> & {
  * Deterministic v47 → v48: add world.fantasyDraft (null) and expand draft settings.
  * Emits literal schemaVersion 48. No RNG.
  */
-function migrateV47ToV48(state: GameStateV47): GameState {
+function migrateV47ToV48(state: GameStateV47): GameStateV48 {
   const legacyDraft = state.settings.draft;
   const orderMode =
     legacyDraft.orderMode ??
     (legacyDraft.randomizeUserPick ? "random" : "manual");
   return {
-    ...(state as unknown as GameState),
+    ...(state as unknown as GameStateV48),
     meta: {
-      ...(state as unknown as GameState).meta,
+      ...(state as unknown as GameStateV48).meta,
       schemaVersion: 48,
     },
     settings: {
@@ -4138,8 +4140,54 @@ function migrateV47ToV48(state: GameStateV47): GameState {
       },
     },
     world: {
-      ...(state as unknown as GameState).world,
+      ...(state as unknown as GameStateV48).world,
       fantasyDraft: null,
+    },
+  };
+}
+
+type GameStateV48 = Omit<GameState, "meta" | "competition" | "user"> & {
+  meta: Omit<GameState["meta"], "schemaVersion"> & { schemaVersion: 48 };
+  competition: Omit<GameState["competition"], "phase">;
+  user: Omit<GameState["user"], "franchisePhaseState">;
+};
+
+/**
+ * Deterministic v48 → v49: add competition.phase and user.franchisePhaseState.
+ * Maps legacy SeasonPhase + OffseasonStage → LeaguePhaseId.
+ * Emits literal schemaVersion 49. No RNG.
+ */
+function migrateV48ToV49(state: GameStateV48): GameState {
+  const season = state.competition.season;
+  const activePhaseId = leaguePhaseIdFromLegacy(
+    season.phase as SeasonPhase,
+    season.offseasonStage as OffseasonStage,
+  );
+  const enteredDate =
+    season.offseasonStageEnteredDate ??
+    state.world.calendar.currentDate;
+
+  const franchisePhaseState: GameState["user"]["franchisePhaseState"] = {};
+  for (const teamId of state.user.ownedTeamIds) {
+    franchisePhaseState[teamId] = { dismissed: [] };
+  }
+
+  return {
+    ...(state as unknown as GameState),
+    meta: {
+      ...(state as unknown as GameState).meta,
+      schemaVersion: 49,
+    },
+    competition: {
+      ...state.competition,
+      phase: {
+        activePhaseId,
+        enteredDate,
+      },
+    },
+    user: {
+      ...state.user,
+      franchisePhaseState,
     },
   };
 }

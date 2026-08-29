@@ -115,6 +115,10 @@ import {
   asScheduledEventId,
   asTeamId,
 } from "@/domain/ids";
+import {
+  isLeaguePhaseId,
+  LEAGUE_PHASE_IDS,
+} from "@/systems/phase-engine";
 
 const GAME_MODES: readonly GameMode[] = ["owner"];
 
@@ -316,6 +320,7 @@ export function validateGameState(state: unknown): asserts state is GameState {
   assertRecord(competition, "competition");
   for (const key of [
     "season",
+    "phase",
     "schedule",
     "games",
     "standings",
@@ -367,6 +372,21 @@ export function validateGameState(state: unknown): asserts state is GameState {
     competition.season.freeAgencyExtendedUntil,
     "competition.season.freeAgencyExtendedUntil",
   );
+
+  assertRecord(competition.phase, "competition.phase");
+  if (
+    typeof competition.phase.activePhaseId !== "string" ||
+    !isLeaguePhaseId(competition.phase.activePhaseId)
+  ) {
+    fail(
+      `competition.phase.activePhaseId must be one of ${LEAGUE_PHASE_IDS.join(", ")}.`,
+    );
+  }
+  assertNonEmptyString(
+    competition.phase.enteredDate,
+    "competition.phase.enteredDate",
+  );
+  parseCalendarDate(competition.phase.enteredDate as string);
 
   assertRecord(competition.schedule, "competition.schedule");
   assertNonEmptyString(
@@ -680,6 +700,39 @@ export function validateGameState(state: unknown): asserts state is GameState {
         `user.ownerDecisionHistory[${index}]`,
         fail,
       );
+    }
+  }
+
+  assertRecord(user.franchisePhaseState, "user.franchisePhaseState");
+  for (const [teamKey, entry] of Object.entries(
+    user.franchisePhaseState as Record<string, unknown>,
+  )) {
+    assertRecord(entry, `user.franchisePhaseState[${teamKey}]`);
+    if (!Array.isArray((entry as { dismissed?: unknown }).dismissed)) {
+      fail(`user.franchisePhaseState[${teamKey}].dismissed must be an array.`);
+    }
+    for (
+      let index = 0;
+      index < ((entry as { dismissed: unknown[] }).dismissed).length;
+      index += 1
+    ) {
+      const dismissed = (entry as { dismissed: unknown[] }).dismissed[index];
+      assertRecord(
+        dismissed,
+        `user.franchisePhaseState[${teamKey}].dismissed[${index}]`,
+      );
+      assertNonEmptyString(
+        (dismissed as { taskKey?: unknown }).taskKey,
+        `user.franchisePhaseState[${teamKey}].dismissed[${index}].taskKey`,
+      );
+      if (
+        typeof (dismissed as { phaseId?: unknown }).phaseId !== "string" ||
+        !isLeaguePhaseId((dismissed as { phaseId: string }).phaseId)
+      ) {
+        fail(
+          `user.franchisePhaseState[${teamKey}].dismissed[${index}].phaseId must be a LeaguePhaseId.`,
+        );
+      }
     }
   }
 

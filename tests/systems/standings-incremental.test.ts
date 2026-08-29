@@ -7,6 +7,7 @@ import { createSeededRng } from "@/domain/rng";
 import { createInitialGameState } from "@/state/create-initial-state";
 import { bootstrapWorld } from "@/systems/world-pipeline";
 import { advanceSimulation } from "@/systems/simulation/advance-simulation";
+import { beginRegularSeasonFromPreseason } from "@/systems/simulation/season-lifecycle";
 import {
   rebuildStandings,
   updateStandingsIncremental,
@@ -22,8 +23,9 @@ describe("incremental standings parity", () => {
     });
     const rng = createSeededRng(state.meta.rngState);
     state = bootstrapWorld(state, rng).state;
+    state = beginRegularSeasonFromPreseason(state).state;
 
-    // Advance one day: preseason → regular, openers simulated
+    // Advance one day: openers simulated
     const advanced = advanceSimulation(state, rng, { days: 1 });
     state = advanced.state;
     expect(advanced.gamesSimulated).toBeGreaterThan(0);
