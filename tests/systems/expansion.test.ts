@@ -80,7 +80,7 @@ describe("expansion complete", () => {
     state = withGrowthEconomy(state);
     const preexisting = Object.keys(state.world.teams).sort();
     const cashBefore = preexisting.map(
-      (id) => state.business.finances[id]!.cash,
+      (id) => state.business.finances[id]!.businessFunds,
     );
 
     const division = Object.values(state.world.divisions)[0]!;
@@ -106,7 +106,7 @@ describe("expansion complete", () => {
     );
     expect(newTeams.length).toBe(1);
     const newTeamId = newTeams[0]!;
-    expect(state.business.finances[newTeamId]!.cash).toBe(EXPANSION_STARTING_CASH);
+    expect(state.business.finances[newTeamId]!.businessFunds).toBe(EXPANSION_STARTING_CASH);
 
     const divisionOfNew = Object.values(state.world.divisions).find((d) =>
       d.teamIds.includes(newTeamId as never),
@@ -115,7 +115,7 @@ describe("expansion complete", () => {
     expect(divisionOfNew!.teamIds).toContain(newTeamId);
 
     for (let i = 0; i < preexisting.length; i += 1) {
-      expect(state.business.finances[preexisting[i]!]!.cash).toBeGreaterThan(
+      expect(state.business.finances[preexisting[i]!]!.businessFunds).toBeGreaterThan(
         cashBefore[i]!,
       );
     }

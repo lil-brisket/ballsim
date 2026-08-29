@@ -46,7 +46,7 @@ describe("v30 → v31 migration", () => {
           playoffResult: "missed",
           championship: false,
           revenue: 10,
-          cash: 10,
+          businessFunds: 10,
           fanSentiment: 50,
           reputation: 50,
           facilityLevels: {
@@ -66,7 +66,7 @@ describe("v30 → v31 migration", () => {
 
     const loaded = deserializeGameState(JSON.stringify(parsed));
     expect(loaded.meta.schemaVersion).toBe(GAME_STATE_SCHEMA_VERSION);
-    expect(GAME_STATE_SCHEMA_VERSION).toBe(44);
+    expect(GAME_STATE_SCHEMA_VERSION).toBe(46);
 
     for (const teamId of Object.keys(loaded.world.teams)) {
       const process = loaded.business.relocationByTeamId[teamId]!;
@@ -134,8 +134,12 @@ describe("v30 → v31 migration", () => {
                 playoffResult: "missed",
                 championship: false,
                 revenue: 1,
+                expenses: 1,
+                netIncome: 0,
+                payroll: 1,
+                leagueRank: null,
                 attendance: null,
-                cash: 1,
+                businessFunds: 1,
                 fanSentiment: 40,
                 reputation: 55,
                 facilityLevels: {

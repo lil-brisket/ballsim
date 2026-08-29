@@ -24,7 +24,6 @@ import {
   OWNER_OBJECTIVE_CAREER_PLAYOFFS,
   OWNER_OBJECTIVE_MID_OVERALL,
   OWNER_OBJECTIVE_MULTI_SEASON_HORIZON,
-  OWNER_OBJECTIVE_PAYROLL_LIMIT,
   OWNER_OBJECTIVE_SMALL_MARKET,
   OWNER_OBJECTIVE_STRONG_OVERALL,
   OWNER_OBJECTIVE_VALUE_GROWTH_PCT,
@@ -33,6 +32,7 @@ import {
   OWNER_OBJECTIVE_YOUNG_SHARE_TARGET,
   OWNER_OBJECTIVE_YOUTH_OVERALL_GAIN,
 } from "@/systems/owner-objectives-config";
+import { getLeagueSalaryCap } from "@/systems/league-salary-cap";
 import {
   clampOwnerPatience,
   getDefaultOwnerMandateProfile,
@@ -272,7 +272,7 @@ function pickPrimaryType(
   state: GameState,
   teamId: TeamId,
 ): OwnerObjectiveType {
-  const cash = state.business.finances[teamId]?.cash ?? 0;
+  const cash = state.business.finances[teamId]?.businessFunds ?? 0;
   if (profile.philosophy === "market_expansion" && marketSize <= OWNER_OBJECTIVE_SMALL_MARKET) {
     return firstAvailable(profile.preferredPrimary, [
       "attendance",
@@ -504,7 +504,7 @@ function createTypedObjective(args: CreateTypedArgs): OwnerObjective {
       });
     }
     case "payroll_limit": {
-      const target = payrollTargetForProfile(profile);
+      const target = payrollTargetForProfile(profile, state);
       return createOwnerObjective({
         id: asOwnerObjectiveId(baseId),
         type,
@@ -542,7 +542,7 @@ function createTypedObjective(args: CreateTypedArgs): OwnerObjective {
         category: definition.category,
         lifecycle,
         role,
-        progress: Math.max(0, state.business.finances[teamId]?.cash ?? 0),
+        progress: Math.max(0, state.business.finances[teamId]?.businessFunds ?? 0),
         consequenceApplied: false,
       });
     case "revenue_target": {
@@ -813,8 +813,11 @@ function winTargetForProfile(
   return target;
 }
 
-function payrollTargetForProfile(profile: OwnerPhilosophyProfile): number {
+function payrollTargetForProfile(
+  profile: OwnerPhilosophyProfile,
+  state: GameState,
+): number {
   const pressure = profile.payrollPressure;
   const fraction = 1.15 - pressure * 0.25;
-  return Math.round(OWNER_OBJECTIVE_PAYROLL_LIMIT * fraction);
+  return Math.round(getLeagueSalaryCap(state) * fraction);
 }

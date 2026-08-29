@@ -73,7 +73,7 @@ export function runAiFranchiseDecisions(
       continue;
     }
     const prefs = resolved.preferences;
-    const cash = current.business.finances[teamId]?.cash ?? 0;
+    const cash = current.business.finances[teamId]?.businessFunds ?? 0;
 
     const ticketTarget = ticketPriceFromPreferences(
       ops.ticketPrice,

@@ -177,7 +177,7 @@ describe("broadcast pool invariants", () => {
         },
       },
     };
-    const beforeLarge = state.business.finances[large]!.cash;
+    const beforeLarge = state.business.finances[large]!.businessFunds;
     const result = processMonthlyBroadcastRevenue(state);
     const books = result.state.business.finances[large]!.booksByYear[
       String(state.competition.season.year)
@@ -185,10 +185,10 @@ describe("broadcast pool invariants", () => {
     expect(books.revenue.broadcast).toBeGreaterThan(0);
     expect(books.revenue.other).toBe(0);
     const largeShare =
-      result.state.business.finances[large]!.cash - beforeLarge;
+      result.state.business.finances[large]!.businessFunds - beforeLarge;
     const smallShare =
-      result.state.business.finances[small]!.cash -
-      state.business.finances[small]!.cash;
+      result.state.business.finances[small]!.businessFunds -
+      state.business.finances[small]!.businessFunds;
     expect(largeShare).toBeGreaterThan(smallShare);
   });
 
@@ -229,7 +229,7 @@ describe("no double counting", () => {
     expect(books.revenue.concessions).toBe(5_000);
     expect(books.revenue.other).toBe(0);
 
-    const cashBefore = state.business.finances[teamId]!.cash;
+    const cashBefore = state.business.finances[teamId]!.businessFunds;
     const facilitiesBefore = books.expenses.facilities;
     try {
       state = startFacilityUpgrade(state, teamId, "youth").state;
@@ -242,7 +242,7 @@ describe("no double counting", () => {
     const after = state.business.finances[teamId]!.booksByYear[String(year)]!;
     expect(after.expenses.capital).toBeGreaterThan(0);
     expect(after.expenses.facilities).toBe(facilitiesBefore);
-    expect(state.business.finances[teamId]!.cash).toBeLessThan(cashBefore);
+    expect(state.business.finances[teamId]!.businessFunds).toBeLessThan(cashBefore);
   });
 
   it("playoff bonuses post to playoffs for all teams, not other", () => {
@@ -278,11 +278,11 @@ describe("no double counting", () => {
   it("booksByMonth does not alter cash independently of cash mutators", () => {
     let state = bootstrap(23);
     const teamId = state.user.activeOwnerTeamId;
-    const cashBefore = state.business.finances[teamId]!.cash;
+    const cashBefore = state.business.finances[teamId]!.businessFunds;
     const year = state.competition.season.year;
     // recordRevenue alone should not change cash
     state = recordRevenue(state, teamId, "tickets", 1000, year).state;
-    expect(state.business.finances[teamId]!.cash).toBe(cashBefore);
+    expect(state.business.finances[teamId]!.businessFunds).toBe(cashBefore);
     expect(
       Object.keys(state.business.finances[teamId]!.booksByMonth).length,
     ).toBeGreaterThan(0);
@@ -300,7 +300,7 @@ describe("profitable but cash-poor", () => {
     state = applyCashAndBooksImpact(state, teamId, -5_000_000, year, {
       expenseCategory: "marketing",
     }).state;
-    const cashBeforeCapex = state.business.finances[teamId]!.cash;
+    const cashBeforeCapex = state.business.finances[teamId]!.businessFunds;
     state = applyCashAndBooksImpact(state, teamId, -25_000_000, year, {
       expenseCategory: "capital",
     }).state;
@@ -309,7 +309,7 @@ describe("profitable but cash-poor", () => {
       5_000_000,
     );
     expect(pnl.seasonToDate.investment.capital).toBe(25_000_000);
-    expect(state.business.finances[teamId]!.cash).toBe(
+    expect(state.business.finances[teamId]!.businessFunds).toBe(
       cashBeforeCapex - 25_000_000,
     );
     // Operating revenue - opex is positive before considering capital/payroll on statement
@@ -329,7 +329,7 @@ describe("schema 28 migration", () => {
       0,
     );
     expect(state.business.finances[teamId]!.booksByMonth).toEqual({});
-    expect(state.business.finances[teamId]!.cashLedgerByMonth).toEqual({});
+    expect(state.business.finances[teamId]!.businessFundsLedgerByMonth).toEqual({});
     const restored = deserializeGameState(serializeGameState(state));
     expect(restored.meta.schemaVersion).toBe(GAME_STATE_SCHEMA_VERSION);
     expect(

@@ -49,11 +49,11 @@ function toSignals(season: FranchiseSeasonRecord): SeasonSignals {
     playoff: isPlayoffAppearance(season.playoffResult),
     championship: season.championship,
     netIncome: season.netIncome,
-    cash: season.cash,
+    cash: season.businessFunds,
     franchiseValue: season.franchiseValue,
     meanFacility: meanFacility(season.facilityLevels),
     attendance: season.attendance,
-    financialStress: season.cash <= 0 || season.netIncome < -20_000_000,
+    financialStress: season.businessFunds <= 0 || season.netIncome < -20_000_000,
   };
 }
 

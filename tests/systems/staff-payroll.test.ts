@@ -5,16 +5,17 @@ import { asStaffContractId, asStaffId } from "@/domain/ids";
 import { createSeededRng } from "@/domain/rng";
 import { createInitialGameState } from "@/state/create-initial-state";
 import { CBL_GAME_SETTINGS } from "@/domain/game-settings";
-import { STAFF_PAYROLL_WEEKS_PER_YEAR } from "@/systems/staff-config";
 import { processWeeklyStaffPayroll } from "@/systems/staff";
+import { getTeamStaffPayroll } from "@/systems/staff-budget";
 import { bootstrapWorld } from "@/systems/world-pipeline";
 
 describe("staff payroll", () => {
-  it("processWeeklyStaffPayroll deducts floor(annual/52) per active contract", () => {
+  it("processWeeklyStaffPayroll does not drain business funds (commitment limit)", () => {
     let state = createInitialGameState({
-    saveId: "payroll_test", rngSeed: 5,
-    settings: CBL_GAME_SETTINGS,
-  });
+      saveId: "payroll_test",
+      rngSeed: 5,
+      settings: CBL_GAME_SETTINGS,
+    });
     const rng = createSeededRng(state.meta.rngState);
     state = bootstrapWorld(state, rng).state;
     const teamId = state.user.activeOwnerTeamId;
@@ -23,7 +24,6 @@ describe("staff payroll", () => {
     const staffId = asStaffId("staff_payroll_test");
     const contractId = asStaffContractId("scontract_payroll_test");
     const annual = 5_200_000;
-    const weeklyExpected = Math.floor(annual / STAFF_PAYROLL_WEEKS_PER_YEAR);
 
     state = {
       ...state,
@@ -71,12 +71,12 @@ describe("staff payroll", () => {
       },
     };
 
-    const cashBefore = state.business.finances[teamId]!.cash;
+    const fundsBefore = state.business.finances[teamId]!.businessFunds;
     const result = processWeeklyStaffPayroll(state);
-    const cashAfter = result.state.business.finances[teamId]!.cash;
-    expect(cashBefore - cashAfter).toBeGreaterThanOrEqual(weeklyExpected);
-    const books =
-      result.state.business.finances[teamId]!.booksByYear[String(year)];
-    expect(books?.expenses.staff).toBeGreaterThanOrEqual(weeklyExpected);
+    const fundsAfter = result.state.business.finances[teamId]!.businessFunds;
+    expect(fundsAfter).toBe(fundsBefore);
+    expect(getTeamStaffPayroll(teamId, year, result.state)).toBeGreaterThanOrEqual(
+      annual,
+    );
   });
 });

@@ -1475,7 +1475,7 @@ describe("GameState schema migration", () => {
         teamId,
         {
           teamId: finance.teamId,
-          cash: finance.cash,
+          cash: finance.businessFunds,
           payroll: finance.payroll,
         },
       ]),
@@ -1499,7 +1499,7 @@ describe("GameState schema migration", () => {
     expect(getActiveOwnedFranchise(migrated).objectives).toEqual([]);
     for (const finance of Object.values(migrated.business.finances)) {
       expect(finance.booksByYear).toEqual({});
-      expect(finance.cash).toBe(50_000_000);
+      expect(finance.businessFunds).toBe(18_000_000);
       expect(finance.payroll).toBe(0);
       expect("revenue" in finance).toBe(false);
       expect("expenses" in finance).toBe(false);
@@ -1749,7 +1749,7 @@ describe("GameState schema migration", () => {
           teamId,
           {
             teamId: finance.teamId,
-            cash: finance.cash,
+            cash: finance.businessFunds,
             revenue,
             expenses,
             payroll: finance.payroll,
@@ -1836,7 +1836,7 @@ describe("GameState schema migration", () => {
       expect("revenue" in finance).toBe(false);
       expect("expenses" in finance).toBe(false);
       expect(finance.booksByMonth).toEqual({});
-      expect(finance.cashLedgerByMonth).toEqual({});
+      expect(finance.businessFundsLedgerByMonth).toEqual({});
     }
   });
 

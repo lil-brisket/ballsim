@@ -40,7 +40,7 @@ function season(input: {
     payroll: 60_000_000,
     leagueRank: null,
     attendance: input.attendance === undefined ? null : input.attendance,
-    cash: 40_000_000,
+    businessFunds: 40_000_000,
     fanSentiment: 50,
     reputation: 50,
     facilityLevels,

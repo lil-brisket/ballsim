@@ -34,6 +34,16 @@ import {
   type TradeDeadlineRule,
 } from "@/domain/game-settings";
 import { tryResolveLeagueShape } from "@/domain/league-shape";
+import {
+  DEFAULT_SALARY_CAP,
+  MAX_SALARY_CAP,
+  MIN_SALARY_CAP,
+} from "@/systems/salary-cap-config";
+import {
+  DEFAULT_STAFF_BUDGET,
+  MAX_STAFF_BUDGET,
+  MIN_STAFF_BUDGET,
+} from "@/systems/staff-budget-config";
 
 export type GameSettingsValidationResult =
   | { ok: true; settings: GameSettings }
@@ -218,6 +228,36 @@ export function validateGameSettings(
     errors.push("financialRules.revenueSharingEnabled must be a boolean.");
   }
 
+  let salaryCap =
+    financialRules.salaryCap === undefined
+      ? DEFAULT_SALARY_CAP
+      : financialRules.salaryCap;
+  let staffBudget =
+    financialRules.staffBudget === undefined
+      ? DEFAULT_STAFF_BUDGET
+      : financialRules.staffBudget;
+
+  if (
+    typeof salaryCap !== "number" ||
+    !Number.isInteger(salaryCap) ||
+    salaryCap < MIN_SALARY_CAP ||
+    salaryCap > MAX_SALARY_CAP
+  ) {
+    errors.push(
+      `financialRules.salaryCap must be an integer between ${MIN_SALARY_CAP} and ${MAX_SALARY_CAP}.`,
+    );
+  }
+  if (
+    typeof staffBudget !== "number" ||
+    !Number.isInteger(staffBudget) ||
+    staffBudget < MIN_STAFF_BUDGET ||
+    staffBudget > MAX_STAFF_BUDGET
+  ) {
+    errors.push(
+      `financialRules.staffBudget must be an integer between ${MIN_STAFF_BUDGET} and ${MAX_STAFF_BUDGET}.`,
+    );
+  }
+
   const draftMode = draft.mode;
   const userPickPosition = draft.userPickPosition;
   const randomizeUserPick = draft.randomizeUserPick;
@@ -329,6 +369,8 @@ export function validateGameSettings(
     },
     financialRules: {
       salaryCapEnabled: salaryCapEnabled as boolean,
+      salaryCap: salaryCap as number,
+      staffBudget: staffBudget as number,
       luxuryTaxEnabled: luxuryTaxEnabled as boolean,
       revenueSharingEnabled: revenueSharingEnabled as boolean,
     },

@@ -320,8 +320,10 @@ export {
 export {
   recordRevenue,
   recordExpense,
+  applyBusinessFundsImpact,
   applyCashAndBooksImpact,
   applyCashOnlyImpact,
+  assertSufficientBusinessFunds,
   getFinancialStatement,
   getTotalRevenue,
   getTotalExpenses,
@@ -393,9 +395,22 @@ export {
 export { generateOwnerNotifications } from "@/systems/owner-notifications";
 export {
   calculateFinancialHealth,
+  calculateBusinessHealth,
   isCapitalSpendingRestricted,
 } from "@/systems/financial-health";
-export { projectCashHorizon } from "@/systems/cash-projection";
+export {
+  projectCashHorizon,
+  projectBusinessFundsHorizon,
+} from "@/systems/cash-projection";
+export { getLeagueSalaryCap, getLeagueSalaryCapFromSettings } from "@/systems/league-salary-cap";
+export {
+  getLeagueStaffBudget,
+  getTeamStaffPayroll,
+  getTeamStaffBudgetSpace,
+} from "@/systems/staff-budget";
+export { DEFAULT_SALARY_CAP } from "@/systems/salary-cap-config";
+export { DEFAULT_STAFF_BUDGET } from "@/systems/staff-budget-config";
+export { DEFAULT_BUSINESS_FUNDS } from "@/systems/business-funds-config";
 export {
   runEconomyScenario,
   applyEconomyScenario,

@@ -141,7 +141,7 @@ function summarizeHistory(state: GameState): void {
         (season) =>
           `${season.seasonYear}:${season.wins}-${season.losses}` +
           ` att=${season.attendance ?? "-"}` +
-          ` cash=${Math.round(season.cash / 1_000_000)}M` +
+          ` cash=${Math.round(season.businessFunds / 1_000_000)}M` +
           ` val=${Math.round(season.franchiseValue / 1_000_000)}M`,
       )
       .join(" | ");

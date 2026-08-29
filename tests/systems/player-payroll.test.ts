@@ -3,15 +3,12 @@ import { CBL_GAME_SETTINGS } from "@/domain/game-settings";
 import { createSeededRng } from "@/domain/rng";
 import { createInitialGameState } from "@/state/create-initial-state";
 import { getFinancialStatement } from "@/systems/team-finances";
-import {
-  PLAYER_PAYROLL_WEEKS_PER_YEAR,
-  processWeeklyPlayerPayroll,
-} from "@/systems/player-payroll";
+import { processWeeklyPlayerPayroll } from "@/systems/player-payroll";
 import { getTeamPayroll } from "@/systems/salary-cap";
 import { bootstrapWorld } from "@/systems/world-pipeline";
 
-describe("player payroll cash", () => {
-  it("reduces cash without posting playerSalaries to books", () => {
+describe("player payroll (commitment limit)", () => {
+  it("does not reduce business funds; statement still derives player salaries", () => {
     let state = createInitialGameState({
       saveId: "payroll_cash",
       rngSeed: 44,
@@ -23,28 +20,26 @@ describe("player payroll cash", () => {
     const annual = getTeamPayroll(teamId, year, state);
     expect(annual).toBeGreaterThan(0);
 
-    const cashBefore = state.business.finances[teamId]!.cash;
+    const fundsBefore = state.business.finances[teamId]!.businessFunds;
     const booksBefore =
       state.business.finances[teamId]!.booksByYear[String(year)]?.expenses;
     const result = processWeeklyPlayerPayroll(state);
-    const cashAfter = result.state.business.finances[teamId]!.cash;
-    const expectedWeekly = Math.floor(annual / PLAYER_PAYROLL_WEEKS_PER_YEAR);
-    expect(cashAfter).toBe(cashBefore - expectedWeekly);
+    const fundsAfter = result.state.business.finances[teamId]!.businessFunds;
+    expect(fundsAfter).toBe(fundsBefore);
 
     const booksAfter =
       result.state.business.finances[teamId]!.booksByYear[String(year)]?.expenses;
     expect(booksAfter?.operations ?? 0).toBe(booksBefore?.operations ?? 0);
     expect(booksAfter?.staff ?? 0).toBe(booksBefore?.staff ?? 0);
-
-    const paid = result.events.filter((e) => e.type === "PlayerPayrollPaid");
-    expect(paid.length).toBeGreaterThan(0);
-    expect(paid.some((e) => e.payload.teamId === teamId)).toBe(true);
+    expect(result.events.filter((e) => e.type === "PlayerPayrollPaid")).toHaveLength(
+      0,
+    );
 
     const statement = getFinancialStatement(result.state, teamId, year);
     expect(statement.expenses.playerSalaries).toBe(annual);
   });
 
-  it("scenario E — higher payroll creates more weekly cash pressure", () => {
+  it("higher payroll does not create business-funds pressure", () => {
     let state = createInitialGameState({
       saveId: "payroll_e",
       rngSeed: 50,
@@ -62,18 +57,14 @@ describe("player payroll cash", () => {
     const high = payrolls[payrolls.length - 1]!;
     expect(high.payroll).toBeGreaterThanOrEqual(low.payroll);
 
-    const cashLowBefore = state.business.finances[low.id]!.cash;
-    const cashHighBefore = state.business.finances[high.id]!.cash;
+    const fundsLowBefore = state.business.finances[low.id]!.businessFunds;
+    const fundsHighBefore = state.business.finances[high.id]!.businessFunds;
     const result = processWeeklyPlayerPayroll(state);
-    const lowDelta =
-      cashLowBefore - result.state.business.finances[low.id]!.cash;
-    const highDelta =
-      cashHighBefore - result.state.business.finances[high.id]!.cash;
-    expect(highDelta).toBeGreaterThanOrEqual(lowDelta);
-    // Starting cash should still cover many weeks for a typical roster.
-    const weeksCovered = Math.floor(
-      cashHighBefore / Math.max(1, highDelta),
+    expect(result.state.business.finances[low.id]!.businessFunds).toBe(
+      fundsLowBefore,
     );
-    expect(weeksCovered).toBeGreaterThan(8);
+    expect(result.state.business.finances[high.id]!.businessFunds).toBe(
+      fundsHighBefore,
+    );
   });
 });

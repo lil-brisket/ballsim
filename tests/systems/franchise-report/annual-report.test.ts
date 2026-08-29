@@ -49,7 +49,7 @@ function historySeason(input: {
     payroll: 85_000_000,
     leagueRank: 6,
     attendance: input.attendance ?? 650_000,
-    cash: input.cash ?? 45_000_000,
+    businessFunds: input.cash ?? 45_000_000,
     fanSentiment: 55,
     reputation: 55,
     facilityLevels,

@@ -27,9 +27,9 @@ describe("facilities", () => {
   it("startFacilityUpgrade deducts cash and sets upgrade weeks", () => {
     const state = bootstrapped();
     const teamId = state.user.activeOwnerTeamId;
-    const cashBefore = state.business.finances[teamId]!.cash;
+    const cashBefore = state.business.finances[teamId]!.businessFunds;
     const result = startFacilityUpgrade(state, teamId, "practice");
-    const after = result.state.business.finances[teamId]!.cash;
+    const after = result.state.business.finances[teamId]!.businessFunds;
     expect(after).toBeLessThan(cashBefore);
     expect(
       result.state.business.franchiseOps[teamId]!.facilities.practice

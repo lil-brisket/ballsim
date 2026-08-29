@@ -130,7 +130,7 @@ function setCash(state: GameState, cash: number): GameState {
       ...state.business,
       finances: {
         ...state.business.finances,
-        [teamId]: { ...finances, cash },
+        [teamId]: { ...finances, businessFunds: cash },
       },
     },
   };
@@ -207,7 +207,7 @@ describe("toOwnerDashboardView sourcing", () => {
     expect(dash.health.revenue).toBe(statement.revenue.total);
     expect(dash.health.expenses).toBe(statement.expenses.total);
     expect(dash.health.netIncome).toBe(statement.netIncome);
-    expect(dash.health.cash).toBe(state.business.finances[teamId]!.cash);
+    expect(dash.health.cash).toBe(state.business.finances[teamId]!.businessFunds);
     expect(dash.health.franchiseValue).toBe(business.franchiseValue);
     expect(dash.health.franchiseValue).toBe(
       calculateFranchiseValue(state, teamId),

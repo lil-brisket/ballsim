@@ -9,6 +9,7 @@ import {
   visibleDelegationPhaseCount,
 } from "@/domain/ai-management-delegation";
 import { INJURY_FREQUENCY_LABELS } from "@/domain/game-settings";
+import { formatMoney } from "@/components/owner/MoneyDisplay";
 
 type SettingsPageProps = {
   params: Promise<{ saveId: string }>;
@@ -106,8 +107,16 @@ export default async function InGameSettingsPage({
       <Section title="Financial rules">
         <dl className="grid gap-3 text-sm sm:grid-cols-2">
           <SettingRow
-            label="Salary cap"
-            value={financialRules.salaryCapEnabled ? "On" : "Off"}
+            label="Player Salary Cap"
+            value={
+              financialRules.salaryCapEnabled
+                ? formatMoney(financialRules.salaryCap)
+                : "Off"
+            }
+          />
+          <SettingRow
+            label="Staff Budget"
+            value={formatMoney(financialRules.staffBudget)}
           />
           <SettingRow
             label="Luxury tax"

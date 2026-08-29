@@ -14,11 +14,12 @@ describe("projectCashHorizon", () => {
     });
     state = bootstrapWorld(state, createSeededRng(state.meta.rngState)).state;
     const teamId = state.user.activeOwnerTeamId;
-    const cashBefore = state.business.finances[teamId]!.cash;
+    const cashBefore = state.business.finances[teamId]!.businessFunds;
     const projection = projectCashHorizon(state, teamId);
     expect(projection.inflowBreakdown.broadcast).toBeGreaterThan(0);
-    expect(state.business.finances[teamId]!.cash).toBe(cashBefore);
-    expect(projection.outflowBreakdown.playerPayroll).toBeGreaterThan(0);
+    expect(state.business.finances[teamId]!.businessFunds).toBe(cashBefore);
+    expect(projection.outflowBreakdown.playerPayroll).toBe(0);
+    expect(projection.outflowBreakdown.staff).toBe(0);
     expect(projection.horizonEndDate.length).toBe(10);
   });
 

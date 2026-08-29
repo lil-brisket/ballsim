@@ -330,8 +330,8 @@ describe("team-finances immutability and validation", () => {
     expect(state).toEqual(snapshot);
     expect(result.state).not.toBe(state);
     expect(result.state.business.finances[otherTeamId]).toBe(otherBefore);
-    expect(result.state.business.finances[teamId]!.cash).toBe(
-      state.business.finances[teamId]!.cash,
+    expect(result.state.business.finances[teamId]!.businessFunds).toBe(
+      state.business.finances[teamId]!.businessFunds,
     );
     expect(result.state.business.finances[teamId]!.payroll).toBe(
       state.business.finances[teamId]!.payroll,

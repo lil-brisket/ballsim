@@ -546,7 +546,7 @@ function evaluatePositiveCash(
   state: GameState,
   teamId: TeamId,
 ): OwnerObjective {
-  const cash = state.business.finances[teamId]?.cash ?? 0;
+  const cash = state.business.finances[teamId]?.businessFunds ?? 0;
   const progress = Math.max(0, cash);
   if (cash > 0) {
     if (isTerminalSeasonPhase(state.competition.season.phase)) {

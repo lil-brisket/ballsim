@@ -5,7 +5,7 @@ import {
   normalizeTeamFinanceBooks,
   type ExpenseCategory,
   type RevenueCategory,
-  type TeamCashMonthLedger,
+  type TeamBusinessFundsMonthLedger,
   type TeamFinanceBooks,
   type TeamFinancialStatement,
   type TeamFinances,
@@ -21,9 +21,8 @@ import type { GameState } from "@/state/game-state";
 import { getTeamPayroll } from "@/systems/salary-cap";
 
 /**
- * Additive revenue posting. Does not mutate cash or payroll.
+ * Additive revenue posting. Does not mutate businessFunds or payroll.
  * Posts to both booksByYear and booksByMonth (accounting only).
- * Does not auto-create missing finance records.
  */
 export function recordRevenue(
   state: GameState,
@@ -57,7 +56,7 @@ export function recordRevenue(
 
 /**
  * Additive posted-expense posting. Does not accept playerSalaries.
- * Posts to both booksByYear and booksByMonth. Does not mutate cash.
+ * Posts to both booksByYear and booksByMonth. Does not mutate businessFunds.
  */
 export function recordExpense(
   state: GameState,
@@ -90,14 +89,14 @@ export function recordExpense(
 }
 
 /**
- * Posts books and adjusts cash by the same signed integer amount.
- * Positive amount → revenue category + cash increase.
- * Negative amount → expense category + cash decrease (absolute value posted).
+ * Posts books and adjusts businessFunds by the same signed integer amount.
+ * Positive amount → revenue category + businessFunds increase.
+ * Negative amount → expense category + businessFunds decrease (absolute value posted).
  * Zero is a no-op.
  *
- * Cash ledger journal is updated for liquidity reporting; books never invent cash.
+ * Never used for player or staff payroll (those are commitment limits).
  */
-export function applyCashAndBooksImpact(
+export function applyBusinessFundsImpact(
   state: GameState,
   teamId: TeamId,
   amount: number,
@@ -110,10 +109,10 @@ export function applyCashAndBooksImpact(
   assertTeamAndFinanceExist(state, teamId);
   assertSeasonYear(year);
   if (typeof amount !== "number" || !Number.isFinite(amount)) {
-    throw new Error("Cash/books impact amount must be a finite number.");
+    throw new Error("Business funds impact amount must be a finite number.");
   }
   if (!Number.isInteger(amount)) {
-    throw new Error("Cash/books impact amount must be an integer.");
+    throw new Error("Business funds impact amount must be an integer.");
   }
   if (amount === 0) {
     return systemResult(state);
@@ -140,47 +139,45 @@ export function applyCashAndBooksImpact(
     events.push(...posted.events);
   }
 
-  next = applyCashDelta(next, teamId, amount, { playerPayroll: false });
+  next = applyBusinessFundsDelta(next, teamId, amount);
   return systemResult(next, events);
 }
 
+/** @deprecated Use applyBusinessFundsImpact. */
+export const applyCashAndBooksImpact = applyBusinessFundsImpact;
+
 /**
- * Adjusts cash without posting books. Used for player payroll cash flow
- * (annual obligation remains derived on the statement via getTeamPayroll).
- * Emits PlayerPayrollPaid — never ExpenseRecorded / recordExpense.
- * Updates cashLedgerByMonth.playerPayrollOutflow for monthly liquidity reporting.
+ * @deprecated Player payroll no longer drains business funds.
+ * Kept as a no-op for call-site migration; prefer removing callers.
  */
 export function applyCashOnlyImpact(
   state: GameState,
+  _teamId: TeamId,
+  _amount: number,
+  _options: { period: string } = { period: "weekly" },
+): SystemResult {
+  return systemResult(state);
+}
+
+/**
+ * Throws if the team lacks sufficient business funds for a spend.
+ */
+export function assertSufficientBusinessFunds(
+  state: GameState,
   teamId: TeamId,
   amount: number,
-  options: { period: string } = { period: "weekly" },
-): SystemResult {
+  action: string,
+): void {
   assertTeamAndFinanceExist(state, teamId);
-  if (typeof amount !== "number" || !Number.isFinite(amount)) {
-    throw new Error("Cash-only impact amount must be a finite number.");
+  if (typeof amount !== "number" || !Number.isFinite(amount) || amount < 0) {
+    throw new Error(`${action}: amount must be a non-negative finite number.`);
   }
-  if (!Number.isInteger(amount)) {
-    throw new Error("Cash-only impact amount must be an integer.");
+  const funds = state.business.finances[teamId]!.businessFunds;
+  if (funds < amount) {
+    throw new Error(
+      `${action} requires $${amount.toLocaleString()} in business funds (available: $${funds.toLocaleString()}).`,
+    );
   }
-  if (amount === 0) {
-    return systemResult(state);
-  }
-
-  const next = applyCashDelta(state, teamId, amount, { playerPayroll: true });
-
-  return systemResult(next, [
-    createDomainEvent({
-      type: "PlayerPayrollPaid",
-      occurredOn: state.world.calendar.currentDate,
-      payload: {
-        teamId,
-        amount: Math.abs(amount),
-        period: options.period,
-        signedAmount: amount,
-      },
-    }),
-  ]);
 }
 
 /**
@@ -278,23 +275,20 @@ export function getNetIncome(
   return getFinancialStatement(state, teamId, year).netIncome;
 }
 
-function applyCashDelta(
+function applyBusinessFundsDelta(
   state: GameState,
   teamId: TeamId,
   amount: number,
-  options: { playerPayroll: boolean },
 ): GameState {
   const existing = state.business.finances[teamId]!;
   const monthId = getCalendarMonthId(state.world.calendar.currentDate);
-  const ledger = existing.cashLedgerByMonth ?? {};
+  const ledger = existing.businessFundsLedgerByMonth ?? {};
   const prior = ledger[monthId];
-  const openCash = prior?.openCash ?? existing.cash;
-  const nextLedgerEntry: TeamCashMonthLedger = {
-    openCash,
-    playerPayrollOutflow:
-      (prior?.playerPayrollOutflow ?? 0) +
-      (options.playerPayroll ? Math.abs(amount) : 0),
-    netCashChange: (prior?.netCashChange ?? 0) + amount,
+  const openBusinessFunds = prior?.openBusinessFunds ?? existing.businessFunds;
+  const nextLedgerEntry: TeamBusinessFundsMonthLedger = {
+    openBusinessFunds,
+    playerPayrollOutflow: prior?.playerPayrollOutflow ?? 0,
+    netBusinessFundsChange: (prior?.netBusinessFundsChange ?? 0) + amount,
   };
 
   return {
@@ -305,9 +299,9 @@ function applyCashDelta(
         ...state.business.finances,
         [teamId]: {
           ...existing,
-          cash: existing.cash + amount,
+          businessFunds: existing.businessFunds + amount,
           booksByMonth: existing.booksByMonth ?? {},
-          cashLedgerByMonth: {
+          businessFundsLedgerByMonth: {
             ...ledger,
             [monthId]: nextLedgerEntry,
           },
@@ -345,19 +339,18 @@ function addToBooks(
 
   const nextFinance: TeamFinances = {
     teamId: existingFinance.teamId,
-    cash: existingFinance.cash,
+    businessFunds: existingFinance.businessFunds,
     payroll: existingFinance.payroll,
     booksByYear: {
       ...existingFinance.booksByYear,
       [yearKey]: nextYearBooks,
     },
-    /** Preserve durable season attendance keyed by stable teamId. */
     attendanceByYear: existingFinance.attendanceByYear ?? {},
     booksByMonth: {
       ...booksByMonth,
       [monthId]: nextMonthBooks,
     },
-    cashLedgerByMonth: existingFinance.cashLedgerByMonth ?? {},
+    businessFundsLedgerByMonth: existingFinance.businessFundsLedgerByMonth ?? {},
   };
 
   return {

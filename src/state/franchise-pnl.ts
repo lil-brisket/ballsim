@@ -52,13 +52,13 @@ export type ProfitabilityView = {
   playerSalaries: number | null;
 };
 
-/** Liquidity — cash is authoritative; cash flow from actual movements. */
+/** Liquidity — businessFunds is authoritative; flow from actual movements. */
 export type LiquidityView = {
-  cash: number;
-  /** Month-open cash snapshot when ledger exists; else null. */
-  openCash: number | null;
-  /** Sum of signed cash deltas recorded in the period. */
-  netCashChange: number;
+  businessFunds: number;
+  /** Month-open business-funds snapshot when ledger exists; else null. */
+  openBusinessFunds: number | null;
+  /** Sum of signed business-funds deltas recorded in the period. */
+  netBusinessFundsChange: number;
   /** Actual weekly payroll cash outflows recorded in the period. */
   playerPayrollOutflow: number;
   runway: CashRunwayView;
@@ -133,7 +133,7 @@ function monthPeriodView(
   const books = normalizeTeamFinanceBooks(
     finances?.booksByMonth[monthId] ?? createEmptyTeamFinanceBooks(),
   );
-  const ledger = finances?.cashLedgerByMonth[monthId];
+  const ledger = finances?.businessFundsLedgerByMonth[monthId];
   const revenue = revenueFromBooks(books);
   const operatingExpenses = operatingFromBooks(books);
   return {
@@ -146,9 +146,9 @@ function monthPeriodView(
       playerSalaries: null,
     },
     liquidity: {
-      cash: finances?.cash ?? 0,
-      openCash: ledger?.openCash ?? null,
-      netCashChange: ledger?.netCashChange ?? 0,
+      businessFunds: finances?.businessFunds ?? 0,
+      openBusinessFunds: ledger?.openBusinessFunds ?? null,
+      netBusinessFundsChange: ledger?.netBusinessFundsChange ?? 0,
       playerPayrollOutflow: ledger?.playerPayrollOutflow ?? 0,
       runway,
     },
@@ -189,9 +189,9 @@ function seasonPeriodView(
       playerSalaries: statement.expenses.playerSalaries,
     },
     liquidity: {
-      cash: finances?.cash ?? 0,
-      openCash: null,
-      netCashChange: 0,
+      businessFunds: finances?.businessFunds ?? 0,
+      openBusinessFunds: null,
+      netBusinessFundsChange: 0,
       playerPayrollOutflow: 0,
       runway,
     },

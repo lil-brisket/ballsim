@@ -312,8 +312,12 @@ export function buildFranchiseTrajectoryContext(
     latest && priorForBaseline.length > 0
       ? Math.max(
           0,
-          (mean(priorForBaseline.map((season) => season.cash)) - latest.cash) /
-            Math.max(mean(priorForBaseline.map((season) => season.cash)), 1),
+          (mean(priorForBaseline.map((season) => season.businessFunds)) -
+            latest.businessFunds) /
+            Math.max(
+              mean(priorForBaseline.map((season) => season.businessFunds)),
+              1,
+            ),
         )
       : 0,
   );

@@ -325,14 +325,14 @@ export function completeExpansion(state: GameState, rng: Rng): SystemResult {
           ...current.business.finances,
           [teamId]: {
             teamId,
-            cash: EXPANSION_STARTING_CASH,
+            businessFunds: EXPANSION_STARTING_CASH,
             payroll: 0,
             booksByYear: {
               [String(year)]: createEmptyTeamFinanceBooks(),
             },
             attendanceByYear: {},
             booksByMonth: {},
-            cashLedgerByMonth: {},
+            businessFundsLedgerByMonth: {},
           },
         },
         franchiseOps: {

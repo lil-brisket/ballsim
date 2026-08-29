@@ -177,6 +177,7 @@ const MIGRATE_ONE_STEP: Record<number, (state: unknown) => unknown> = {
   42: (state) => migrateV42ToV43(state as GameStateV42),
   43: (state) => migrateV43ToV44(state as GameStateV43),
   44: (state) => migrateV44ToV45(state as GameStateV44),
+  45: (state) => migrateV45ToV46(state as GameStateV45),
 };
 
 function legacyUserRecord(user: unknown): Record<string, unknown> {
@@ -1623,7 +1624,11 @@ function migrateV14ToV15(state: GameStateV14): GameStateV15 {
       teamId,
       {
         teamId: finance.teamId,
-        cash: finance.cash,
+        cash:
+          finance.cash ??
+          (finance as TeamFinancesV14 & { businessFunds?: number })
+            .businessFunds ??
+          0,
         revenue: 0,
         expenses: 0,
         payroll: finance.payroll,
@@ -1824,7 +1829,7 @@ function migrateV19ToV20(state: GameStateV19): GameStateV20 {
   const seasonYear = state.competition.season.year;
   const yearKey = String(seasonYear);
 
-  const finances: Record<string, TeamFinances> = Object.fromEntries(
+  const finances = Object.fromEntries(
     Object.entries(state.business.finances).map(([teamId, finance]) => {
       const booksByYear: TeamFinances["booksByYear"] = {};
       const hasRevenue = finance.revenue > 0;
@@ -1853,7 +1858,7 @@ function migrateV19ToV20(state: GameStateV19): GameStateV20 {
         },
       ];
     }),
-  );
+  ) as unknown as Record<string, TeamFinances>;
 
   return {
     meta: {
@@ -2439,7 +2444,7 @@ type GameStateV27 = {
  * Does not rewrite historical "other" lumping. Emits schemaVersion 28.
  */
 function migrateV27ToV28(state: GameStateV27): GameStateV28 {
-  const finances: Record<string, TeamFinances> = {};
+  const finances: Record<string, unknown> = {};
   for (const [teamId, finance] of Object.entries(state.business.finances)) {
     const booksByYear: TeamFinances["booksByYear"] = {};
     for (const [yearKey, books] of Object.entries(finance.booksByYear ?? {})) {
@@ -2456,14 +2461,17 @@ function migrateV27ToV28(state: GameStateV27): GameStateV28 {
         books as Parameters<typeof normalizeTeamFinanceBooks>[0],
       );
     }
+    const legacy = finance as TeamFinances & {
+      cash?: number;
+      cashLedgerByMonth?: Record<string, unknown>;
+    };
     finances[teamId] = {
       teamId: finance.teamId,
-      cash: finance.cash,
+      cash: legacy.cash,
       payroll: finance.payroll,
       booksByYear,
       booksByMonth,
-      cashLedgerByMonth:
-        (finance as TeamFinances).cashLedgerByMonth ?? {},
+      cashLedgerByMonth: legacy.cashLedgerByMonth ?? {},
     };
   }
 
@@ -2489,7 +2497,7 @@ function migrateV27ToV28(state: GameStateV27): GameStateV28 {
     competition: state.competition as GameStateV28["competition"],
     business: {
       ...state.business,
-      finances,
+      finances: finances as GameStateV28["business"]["finances"],
       franchiseOps,
     },
     user: state.user,
@@ -3760,12 +3768,12 @@ type GameStateV44 = {
  * Derives initial lineups from roster via recommendRosterManagement.
  * Emits literal schemaVersion 45. No RNG.
  */
-function migrateV44ToV45(state: GameStateV44): GameState {
-  let working: GameState = {
+function migrateV44ToV45(state: GameStateV44): GameStateV45 {
+  let working = {
     ...state,
     meta: {
       ...state.meta,
-      schemaVersion: 45,
+      schemaVersion: 45 as const,
     },
     world: {
       ...state.world,
@@ -3784,12 +3792,16 @@ function migrateV44ToV45(state: GameStateV44): GameState {
       ...state.competition,
       seasonEventLog: state.competition.seasonEventLog ?? [],
     },
-  };
+  } as unknown as GameStateV45;
 
   for (const teamId of Object.keys(working.world.teams)) {
-    const management = recommendRosterManagement(working, asTeamId(teamId), {
-      configuredBy: "default",
-    });
+    const management = recommendRosterManagement(
+      working as unknown as GameState,
+      asTeamId(teamId),
+      {
+        configuredBy: "default",
+      },
+    );
     working = {
       ...working,
       world: {
@@ -3806,6 +3818,146 @@ function migrateV44ToV45(state: GameStateV44): GameState {
   }
 
   return working;
+}
+
+type TeamFinancesV45 = {
+  teamId: TeamId;
+  cash: number;
+  payroll: number;
+  booksByYear: TeamFinances["booksByYear"];
+  attendanceByYear?: Record<string, number>;
+  booksByMonth: TeamFinances["booksByMonth"];
+  cashLedgerByMonth: Record<
+    string,
+    {
+      openCash: number;
+      playerPayrollOutflow: number;
+      netCashChange: number;
+    }
+  >;
+};
+
+type GameStateV45 = {
+  meta: Omit<GameState["meta"], "schemaVersion"> & {
+    schemaVersion: 45;
+    rngState: number;
+  };
+  settings: GameState["settings"] & {
+    financialRules: GameState["settings"]["financialRules"] & {
+      salaryCap?: number;
+      staffBudget?: number;
+    };
+  };
+  world: GameState["world"];
+  competition: GameState["competition"];
+  business: Omit<GameState["business"], "finances" | "franchiseHistory"> & {
+    finances: Record<string, TeamFinancesV45>;
+    franchiseHistory: Record<
+      string,
+      {
+        teamId: TeamId;
+        seasons: Array<
+          Record<string, unknown> & {
+            cash?: number;
+            businessFunds?: number;
+          }
+        >;
+      }
+    >;
+  };
+  user: GameState["user"];
+};
+
+/**
+ * Deterministic v45 → v46: rename TeamFinances cash → businessFunds,
+ * cashLedgerByMonth → businessFundsLedgerByMonth (openCash/netCashChange),
+ * FranchiseSeasonRecord.cash → businessFunds, ensure salaryCap + staffBudget.
+ * Emits literal schemaVersion 46. No RNG.
+ */
+function migrateV45ToV46(state: GameStateV45): GameState {
+  const finances: Record<string, TeamFinances> = {};
+  for (const [teamId, finance] of Object.entries(state.business.finances)) {
+    const legacy = finance as TeamFinancesV45 & {
+      businessFunds?: number;
+      businessFundsLedgerByMonth?: TeamFinances["businessFundsLedgerByMonth"];
+    };
+    const businessFundsLedgerByMonth: TeamFinances["businessFundsLedgerByMonth"] =
+      {};
+    const rawLedger =
+      legacy.businessFundsLedgerByMonth ?? legacy.cashLedgerByMonth ?? {};
+    for (const [monthKey, entry] of Object.entries(rawLedger)) {
+      const e = entry as {
+        openBusinessFunds?: number;
+        openCash?: number;
+        playerPayrollOutflow?: number;
+        netBusinessFundsChange?: number;
+        netCashChange?: number;
+      };
+      businessFundsLedgerByMonth[monthKey] = {
+        openBusinessFunds: e.openBusinessFunds ?? e.openCash ?? 0,
+        playerPayrollOutflow: e.playerPayrollOutflow ?? 0,
+        netBusinessFundsChange: e.netBusinessFundsChange ?? e.netCashChange ?? 0,
+      };
+    }
+    finances[teamId] = {
+      teamId: finance.teamId,
+      businessFunds: legacy.businessFunds ?? legacy.cash ?? 0,
+      payroll: finance.payroll,
+      booksByYear: finance.booksByYear ?? {},
+      attendanceByYear: finance.attendanceByYear ?? {},
+      booksByMonth: finance.booksByMonth ?? {},
+      businessFundsLedgerByMonth,
+    };
+  }
+
+  const franchiseHistory: GameState["business"]["franchiseHistory"] = {};
+  for (const [teamId, history] of Object.entries(
+    state.business.franchiseHistory ?? {},
+  )) {
+    franchiseHistory[teamId] = {
+      teamId: history.teamId,
+      seasons: history.seasons.map((season) => {
+        const raw = season as Record<string, unknown>;
+        const {
+          cash: legacyCash,
+          businessFunds: existingFunds,
+          ...rest
+        } = raw;
+        return {
+          ...rest,
+          businessFunds:
+            typeof existingFunds === "number"
+              ? existingFunds
+              : typeof legacyCash === "number"
+                ? legacyCash
+                : 0,
+        };
+      }) as GameState["business"]["franchiseHistory"][string]["seasons"],
+    };
+  }
+
+  const financialRules = {
+    ...state.settings.financialRules,
+    salaryCap: state.settings.financialRules.salaryCap ?? 100_000_000,
+    staffBudget: state.settings.financialRules.staffBudget ?? 12_000_000,
+  };
+
+  return {
+    ...state,
+    meta: {
+      ...state.meta,
+      schemaVersion: 46,
+    },
+    settings: {
+      ...state.settings,
+      financialRules,
+    },
+    business: {
+      ...state.business,
+      finances,
+      franchiseHistory,
+    },
+  };
 }
 
 function backfillSnapshotBranding(

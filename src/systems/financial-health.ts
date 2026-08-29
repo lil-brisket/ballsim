@@ -1,9 +1,23 @@
 import {
-  HEALTH_CRITICAL_RUNWAY_WEEKS,
-  HEALTH_HEALTHY_LIQUIDITY_WEEKS,
-  HEALTH_WARNING_RUNWAY_WEEKS,
-} from "@/systems/financial-health-config";
+  BUSINESS_FUNDS_CRITICAL_THRESHOLD,
+  BUSINESS_FUNDS_STRONG_THRESHOLD,
+  BUSINESS_FUNDS_TIGHT_THRESHOLD,
+} from "@/systems/business-funds-config";
 
+/**
+ * Informational business-funds health bands.
+ * Never blocks simulation, eliminates franchises, or gates basketball ops.
+ */
+export const BUSINESS_HEALTH_STATES = [
+  "strong",
+  "stable",
+  "tight",
+  "critical",
+] as const;
+
+export type BusinessHealthState = (typeof BUSINESS_HEALTH_STATES)[number];
+
+/** @deprecated Use BUSINESS_HEALTH_STATES / BusinessHealthState. */
 export const FINANCIAL_HEALTH_STATES = [
   "healthy",
   "stable",
@@ -12,73 +26,79 @@ export const FINANCIAL_HEALTH_STATES = [
   "insolvent",
 ] as const;
 
+/** @deprecated Use BusinessHealthState. */
 export type FinancialHealthState = (typeof FINANCIAL_HEALTH_STATES)[number];
 
+export type BusinessHealthInput = {
+  businessFunds: number;
+  weeklyOutflow: number;
+  netWeeklyBurn: number;
+  runwayWeeks: number | null;
+  projectedBusinessFunds: number | null;
+};
+
+/** @deprecated Use BusinessHealthInput. */
 export type FinancialHealthInput = {
   cash: number;
   weeklyOutflow: number;
   netWeeklyBurn: number;
   runwayWeeks: number | null;
-  /** Constant-condition projected cash at the named horizon; null if unknown. */
   projectedCash: number | null;
 };
 
 /**
- * Pure franchise financial-health evaluator.
- * Selectors, notifications, and spend guards must all call this — not each other.
+ * Pure informational business-funds health evaluator.
+ * Never returns insolvent / bankruptcy; low funds → critical warning only.
  */
-export function calculateFinancialHealth(
-  input: FinancialHealthInput,
-): FinancialHealthState {
-  const { cash, weeklyOutflow, netWeeklyBurn, runwayWeeks, projectedCash } =
-    input;
+export function calculateBusinessHealth(
+  input: BusinessHealthInput,
+): BusinessHealthState {
+  const { businessFunds } = input;
 
-  if (cash <= 0) {
-    return "insolvent";
-  }
-
-  if (projectedCash !== null && projectedCash < 0) {
+  if (businessFunds < BUSINESS_FUNDS_CRITICAL_THRESHOLD) {
     return "critical";
   }
-
-  if (
-    runwayWeeks !== null &&
-    runwayWeeks <= HEALTH_CRITICAL_RUNWAY_WEEKS
-  ) {
-    return "critical";
+  if (businessFunds < BUSINESS_FUNDS_TIGHT_THRESHOLD) {
+    return "tight";
   }
-
-  if (
-    runwayWeeks !== null &&
-    runwayWeeks <= HEALTH_WARNING_RUNWAY_WEEKS
-  ) {
-    return "warning";
+  if (businessFunds >= BUSINESS_FUNDS_STRONG_THRESHOLD) {
+    return "strong";
   }
-
-  const healthyLiquidity =
-    weeklyOutflow <= 0 ||
-    cash >= weeklyOutflow * HEALTH_HEALTHY_LIQUIDITY_WEEKS;
-
-  if (netWeeklyBurn <= 0 && healthyLiquidity) {
-    return "healthy";
-  }
-
   return "stable";
 }
 
 /**
- * Capital spend (facility upgrades, marketing increases) is blocked only when
- * cash is gone or projected cash at the horizon is materially negative.
+ * @deprecated Prefer calculateBusinessHealth. Maps legacy bands for call-site migration.
+ * "insolvent" is never returned — maps low cash to "critical".
+ */
+export function calculateFinancialHealth(
+  input: FinancialHealthInput,
+): FinancialHealthState {
+  const business = calculateBusinessHealth({
+    businessFunds: input.cash,
+    weeklyOutflow: input.weeklyOutflow,
+    netWeeklyBurn: input.netWeeklyBurn,
+    runwayWeeks: input.runwayWeeks,
+    projectedBusinessFunds: input.projectedCash,
+  });
+  switch (business) {
+    case "strong":
+      return "healthy";
+    case "stable":
+      return "stable";
+    case "tight":
+      return "warning";
+    case "critical":
+      return "critical";
+  }
+}
+
+/**
+ * @deprecated Capital spend is gated by assertSufficientBusinessFunds only.
+ * Always returns false — insolvency/runway gates removed.
  */
 export function isCapitalSpendingRestricted(
-  input: FinancialHealthInput,
+  _input: FinancialHealthInput | BusinessHealthInput,
 ): boolean {
-  const health = calculateFinancialHealth(input);
-  if (health === "insolvent") {
-    return true;
-  }
-  if (health === "critical" && input.projectedCash !== null) {
-    return input.projectedCash < 0;
-  }
   return false;
 }

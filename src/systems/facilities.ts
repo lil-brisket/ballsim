@@ -14,7 +14,7 @@ import {
   facilityUpgradeCost,
   facilityWeeklyOpex,
 } from "@/systems/facilities-config";
-import { applyCashAndBooksImpact } from "@/systems/team-finances";
+import { applyCashAndBooksImpact, assertSufficientBusinessFunds } from "@/systems/team-finances";
 import { assertCapitalSpendingAllowed } from "@/systems/financial-spending";
 
 export function arenaCapacity(state: GameState, teamId: TeamId): number {
@@ -67,6 +67,7 @@ export function startFacilityUpgrade(
 
   const cost = facilityUpgradeCost(category, facility.level);
   assertCapitalSpendingAllowed(state, teamId, "Facility upgrades");
+  assertSufficientBusinessFunds(state, teamId, cost, "Facility upgrades");
   const year = state.competition.season.year;
   const events: DomainEvent[] = [];
   let current = state;

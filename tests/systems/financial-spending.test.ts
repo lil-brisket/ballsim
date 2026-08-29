@@ -21,15 +21,15 @@ describe("financial spending guards", () => {
         ...state.business,
         finances: {
           ...state.business.finances,
-          [teamId]: { ...state.business.finances[teamId]!, cash: 0 },
+          [teamId]: { ...state.business.finances[teamId]!, businessFunds: 0 },
         },
       },
     };
     expect(() => startFacilityUpgrade(state, teamId, "practice")).toThrow(
-      /blocked/i,
+      /business funds/i,
     );
     expect(() => setMarketingBudget(state, teamId, 9_000_000)).toThrow(
-      /blocked/i,
+      /business funds/i,
     );
     const cut = setMarketingBudget(state, teamId, 0);
     expect(cut.state.business.franchiseOps[teamId]!.marketing.budget).toBe(0);

@@ -54,9 +54,10 @@ function facilityMeanForTeam(state: GameState, teamId: TeamId): number {
 }
 
 function healthForTeam(state: GameState, teamId: TeamId): FinancialHealthState {
-  const projection = projectCashHorizon(state, teamId, 12);
+  const projection = projectCashHorizon(state, teamId);
+  const funds = state.business.finances[teamId]?.businessFunds ?? 0;
   return calculateFinancialHealth({
-    cash: projection.cash,
+    cash: funds,
     weeklyOutflow: projection.weeklyOutflow,
     netWeeklyBurn: projection.netWeeklyBurn,
     runwayWeeks: projection.runwayWeeks,
@@ -120,7 +121,7 @@ export function buildMonthSnapshot(
     fanSentiment: ops?.fanSentiment ?? 50,
     reputation: state.world.teams[teamId]?.reputation ?? 50,
     mediaAttention: ops?.mediaAttention ?? 30,
-    cash: finances?.cash ?? 0,
+    cash: finances?.businessFunds ?? 0,
     healthBand: healthForTeam(state, teamId),
     wins: standing?.wins ?? 0,
     losses: standing?.losses ?? 0,
@@ -329,9 +330,9 @@ export function buildNarrativeContext(
   const ops = state.business.franchiseOps[teamId];
   const finances = state.business.finances[teamId];
   const standing = state.competition.standings.byTeamId[teamId];
-  const projection = projectCashHorizon(state, teamId, 12);
+  const projection = projectCashHorizon(state, teamId);
   const healthBand = calculateFinancialHealth({
-    cash: projection.cash,
+    cash: finances?.businessFunds ?? 0,
     weeklyOutflow: projection.weeklyOutflow,
     netWeeklyBurn: projection.netWeeklyBurn,
     runwayWeeks: projection.runwayWeeks,
@@ -437,7 +438,7 @@ export function buildNarrativeContext(
     currentReputation: state.world.teams[teamId]?.reputation ?? 50,
     currentTicketPrice: ops?.ticketPrice ?? 45,
     currentMarketingBudget: ops?.marketing.budget ?? 0,
-    currentCash: finances?.cash ?? 0,
+    currentCash: finances?.businessFunds ?? 0,
     healthBand,
     runwayWeeks: projection.runwayWeeks,
     streakKind,

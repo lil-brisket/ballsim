@@ -28,6 +28,17 @@ import {
 import { validateGameSettings } from "@/domain/game-settings-validation";
 import { createSaveAction } from "@/application/actions";
 import { AiTeamManagementSection } from "@/components/owner/ai-management";
+import { formatMoney } from "@/components/owner/MoneyDisplay";
+import {
+  DEFAULT_SALARY_CAP,
+  MAX_SALARY_CAP,
+  MIN_SALARY_CAP,
+} from "@/systems/salary-cap-config";
+import {
+  DEFAULT_STAFF_BUDGET,
+  MAX_STAFF_BUDGET,
+  MIN_STAFF_BUDGET,
+} from "@/systems/staff-budget-config";
 
 type GameSetupFormProps = {
   atSaveLimit: boolean;
@@ -156,8 +167,16 @@ export function GameSetupForm({
             value={settings.history.mode === "generated" ? "Generated" : "New league"}
           />
           <ReviewRow
-            label="Salary cap"
-            value={settings.financialRules.salaryCapEnabled ? "On" : "Off"}
+            label="Player Salary Cap"
+            value={
+              settings.financialRules.salaryCapEnabled
+                ? formatMoney(settings.financialRules.salaryCap)
+                : "Off"
+            }
+          />
+          <ReviewRow
+            label="Staff Budget"
+            value={formatMoney(settings.financialRules.staffBudget)}
           />
           <ReviewRow
             label="Luxury tax"
@@ -450,7 +469,7 @@ export function GameSetupForm({
 
           <Section title="Financial rules">
             <ToggleField
-              label="Salary cap"
+              label="Player Salary Cap enabled"
               checked={settings.financialRules.salaryCapEnabled}
               onChange={(checked) =>
                 updateSettings({
@@ -458,6 +477,39 @@ export function GameSetupForm({
                   financialRules: {
                     ...settings.financialRules,
                     salaryCapEnabled: checked,
+                  },
+                })
+              }
+            />
+            <MoneyInputField
+              label="Player Salary Cap"
+              value={settings.financialRules.salaryCap}
+              min={MIN_SALARY_CAP}
+              max={MAX_SALARY_CAP}
+              defaultValue={DEFAULT_SALARY_CAP}
+              disabled={!settings.financialRules.salaryCapEnabled}
+              onChange={(salaryCap) =>
+                updateSettings({
+                  ...settings,
+                  financialRules: {
+                    ...settings.financialRules,
+                    salaryCap,
+                  },
+                })
+              }
+            />
+            <MoneyInputField
+              label="Staff Budget"
+              value={settings.financialRules.staffBudget}
+              min={MIN_STAFF_BUDGET}
+              max={MAX_STAFF_BUDGET}
+              defaultValue={DEFAULT_STAFF_BUDGET}
+              onChange={(staffBudget) =>
+                updateSettings({
+                  ...settings,
+                  financialRules: {
+                    ...settings.financialRules,
+                    staffBudget,
                   },
                 })
               }
@@ -679,6 +731,62 @@ function ToggleField({
         className="size-4 rounded border-zinc-600 bg-zinc-950 text-amber-600"
       />
       {label}
+    </label>
+  );
+}
+
+function MoneyInputField({
+  label,
+  value,
+  min,
+  max,
+  defaultValue,
+  disabled = false,
+  onChange,
+}: {
+  label: string;
+  value: number;
+  min: number;
+  max: number;
+  defaultValue: number;
+  disabled?: boolean;
+  onChange: (value: number) => void;
+}) {
+  const millions = value / 1_000_000;
+  return (
+    <label className="block space-y-1 text-sm text-zinc-300 sm:col-span-2">
+      <span className="font-medium text-zinc-200">
+        {label} — {formatMoney(value)}
+      </span>
+      <p className="text-xs text-zinc-500">
+        Range {formatMoney(min)}–{formatMoney(max)}. Default{" "}
+        {formatMoney(defaultValue)}.
+      </p>
+      <div className="flex flex-wrap items-center gap-2">
+        <input
+          type="number"
+          inputMode="decimal"
+          disabled={disabled}
+          min={min / 1_000_000}
+          max={max / 1_000_000}
+          step={1}
+          value={Number.isFinite(millions) ? millions : ""}
+          onChange={(event) => {
+            const raw = event.target.value;
+            if (raw === "") {
+              return;
+            }
+            const parsed = Number(raw);
+            if (!Number.isFinite(parsed)) {
+              return;
+            }
+            const dollars = Math.round(parsed * 1_000_000);
+            onChange(Math.min(max, Math.max(min, dollars)));
+          }}
+          className="w-32 rounded-md border border-zinc-700 bg-zinc-950 px-3 py-2 text-zinc-100 outline-none ring-amber-500/40 focus:ring-2 disabled:opacity-50"
+        />
+        <span className="text-xs text-zinc-500">million dollars</span>
+      </div>
     </label>
   );
 }

@@ -61,11 +61,11 @@ describe("sponsorships media/climate scaling", () => {
       },
     };
 
-    const cashBase = state.business.finances[teamId]!.cash;
+    const cashBase = state.business.finances[teamId]!.businessFunds;
     const lowResult = processMonthlySponsorshipRevenue(lowMedia);
     const highResult = processMonthlySponsorshipRevenue(highMedia);
-    const lowGain = lowResult.state.business.finances[teamId]!.cash - cashBase;
-    const highGain = highResult.state.business.finances[teamId]!.cash - cashBase;
+    const lowGain = lowResult.state.business.finances[teamId]!.businessFunds - cashBase;
+    const highGain = highResult.state.business.finances[teamId]!.businessFunds - cashBase;
     expect(highGain).toBeGreaterThan(lowGain);
     expect(lowGain).toBeGreaterThan(0);
   });
@@ -99,11 +99,11 @@ describe("sponsorships media/climate scaling", () => {
         },
       },
     };
-    const cash0 = state.business.finances[teamId]!.cash;
+    const cash0 = state.business.finances[teamId]!.businessFunds;
     state = processMonthlySponsorshipRevenue(state).state;
-    const afterFirst = state.business.finances[teamId]!.cash - cash0;
+    const afterFirst = state.business.finances[teamId]!.businessFunds - cash0;
     state = processMonthlySponsorshipRevenue(state).state;
-    const afterSecond = state.business.finances[teamId]!.cash - cash0;
+    const afterSecond = state.business.finances[teamId]!.businessFunds - cash0;
     expect(afterFirst).toBeGreaterThan(5_000_000);
     expect(afterSecond - afterFirst).toBeLessThan(5_000_000);
     expect(afterSecond - afterFirst).toBeGreaterThan(0);

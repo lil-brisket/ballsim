@@ -42,7 +42,7 @@ function season(input: {
     payroll: 80_000_000,
     leagueRank: 8,
     attendance: input.attendance ?? 600_000,
-    cash: 40_000_000,
+    businessFunds: 40_000_000,
     fanSentiment: 50,
     reputation: 50,
     facilityLevels,

@@ -14,6 +14,7 @@ import {
   type GameSettings,
 } from "@/domain/game-settings";
 import { validateGameSettings } from "@/domain/game-settings-validation";
+import { DEFAULT_BUSINESS_FUNDS } from "@/systems/business-funds-config";
 import {
   asArenaId,
   asConferenceId,
@@ -147,12 +148,12 @@ export function createInitialGameState(
       teamId,
       {
         teamId,
-        cash: 50_000_000,
+        businessFunds: DEFAULT_BUSINESS_FUNDS,
         payroll: 0,
         booksByYear: {},
         attendanceByYear: {},
         booksByMonth: {},
-        cashLedgerByMonth: {},
+        businessFundsLedgerByMonth: {},
       },
     ]),
   );
@@ -332,12 +333,12 @@ export function createFourTeamInitialGameState(
       teamId,
       {
         teamId: teamId as TeamId,
-        cash: 50_000_000,
+        businessFunds: DEFAULT_BUSINESS_FUNDS,
         payroll: 0,
         booksByYear: {},
         attendanceByYear: {},
         booksByMonth: {},
-        cashLedgerByMonth: {},
+        businessFundsLedgerByMonth: {},
       },
     ]),
   );
@@ -386,6 +387,8 @@ export function createFourTeamInitialGameState(
     },
     financialRules: {
       salaryCapEnabled: true,
+      salaryCap: DEFAULT_GAME_SETTINGS.financialRules.salaryCap,
+      staffBudget: DEFAULT_GAME_SETTINGS.financialRules.staffBudget,
       luxuryTaxEnabled: true,
       revenueSharingEnabled: true,
     },

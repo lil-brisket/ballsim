@@ -134,6 +134,8 @@ export function reconstructGameSettingsFromState(
     },
     financialRules: {
       salaryCapEnabled: true,
+      salaryCap: DEFAULT_GAME_SETTINGS.financialRules.salaryCap,
+      staffBudget: DEFAULT_GAME_SETTINGS.financialRules.staffBudget,
       luxuryTaxEnabled: true,
       revenueSharingEnabled: true,
     },
