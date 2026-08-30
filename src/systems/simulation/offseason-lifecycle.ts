@@ -29,6 +29,9 @@ import { processSeasonStaffDevelopment } from "@/systems/staff-development";
 import { releaseExpiredStaffContracts } from "@/systems/staff-contract-lifecycle";
 import { refreshStaffFreeAgentPool } from "@/systems/staff-generation";
 import { processStaffRetirement } from "@/systems/staff-retirement";
+import { processPlayerRetirements } from "@/systems/player-retirement";
+import { finalizeRfaQualification } from "@/systems/rfa";
+import { withdrawOpenFreeAgencyOffers } from "@/systems/expire-transactions";
 import { runLeagueStaffAiManagement } from "@/systems/staff-ai-management";
 import { expireSponsorshipsAtSeason } from "@/systems/sponsorships";
 import { transitionPhase } from "@/systems/simulation/phase-machine";
@@ -184,6 +187,8 @@ export function initializeNewSeason(state: GameState): SystemResult {
         phase: "offseason",
         offseasonStage: "none",
         regularSeasonStartDate: null,
+        tradeDeadlineDate: null,
+        rfaQualificationComplete: false,
         offseasonStageEnteredDate: null,
         freeAgencyExtendedUntil: null,
       },
@@ -250,6 +255,17 @@ function processPhaseExit(
     const staffReleased = releaseExpiredStaffContracts(current);
     current = staffReleased.state;
     events.push(...staffReleased.events);
+    const rfa = finalizeRfaQualification(current, {
+      autoIssueQoForAiTeams: true,
+    });
+    current = rfa.state;
+    events.push(...rfa.events);
+  }
+
+  if (fromPhaseId === "offseason.free_agency") {
+    const withdrawn = withdrawOpenFreeAgencyOffers(current);
+    current = withdrawn.state;
+    events.push(...withdrawn.events);
   }
 
   if (fromPhaseId === "offseason.draft") {
@@ -323,6 +339,16 @@ function processPhaseEnter(
     }
   }
 
+  if (toPhaseId === "offseason.free_agency") {
+    if (current.competition.season.rfaQualificationComplete !== true) {
+      const rfa = finalizeRfaQualification(current, {
+        autoIssueQoForAiTeams: true,
+      });
+      current = rfa.state;
+      events.push(...rfa.events);
+    }
+  }
+
   return systemResult(current, events);
 }
 
@@ -351,6 +377,10 @@ function runSeasonTransition(state: GameState, rng: Rng): SystemResult {
   const development = processSeasonPlayerDevelopment(current, rng);
   current = development.state;
   events.push(...development.events);
+
+  const playerRetired = processPlayerRetirements(current, rng);
+  current = playerRetired.state;
+  events.push(...playerRetired.events);
 
   const staffDev = processSeasonStaffDevelopment(current, rng);
   current = staffDev.state;

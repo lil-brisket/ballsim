@@ -199,6 +199,7 @@ const MIGRATE_ONE_STEP: Record<number, (state: unknown) => unknown> = {
   50: (state) => migrateV50ToV51(state as GameStateV50),
   51: (state) => migrateV51ToV52(state as GameStateV51),
   52: (state) => migrateV52ToV53(state as GameStateV52),
+  53: (state) => migrateV53ToV54(state as GameStateV53),
 };
 
 function legacyUserRecord(user: unknown): Record<string, unknown> {
@@ -1948,6 +1949,12 @@ function migrateV20ToV21(state: GameStateV20): GameStateV21 {
         regularSeasonStartDate:
           (state.competition.season as { regularSeasonStartDate?: string | null })
             .regularSeasonStartDate ?? null,
+        tradeDeadlineDate:
+          (state.competition.season as { tradeDeadlineDate?: string | null })
+            .tradeDeadlineDate ?? null,
+        rfaQualificationComplete:
+          (state.competition.season as { rfaQualificationComplete?: boolean })
+            .rfaQualificationComplete === true,
         offseasonStageEnteredDate:
           (state.competition.season as {
             offseasonStageEnteredDate?: string | null;
@@ -4470,3 +4477,102 @@ function findUniqueContractId(
   }
   return null;
 }
+
+type GameStateV53 = Omit<GameState, "meta" | "business" | "competition"> & {
+  meta: Omit<GameState["meta"], "schemaVersion"> & { schemaVersion: 53 };
+  competition: {
+    season: Omit<
+      GameState["competition"]["season"],
+      "tradeDeadlineDate" | "rfaQualificationComplete"
+    > & {
+      tradeDeadlineDate?: string | null;
+      rfaQualificationComplete?: boolean;
+    };
+    phase: GameState["competition"]["phase"];
+    schedule: GameState["competition"]["schedule"];
+    games: GameState["competition"]["games"];
+    standings: GameState["competition"]["standings"];
+    playoffs: GameState["competition"]["playoffs"];
+    seasonEventLog: GameState["competition"]["seasonEventLog"];
+  };
+  business: Omit<GameState["business"], "rfaStatuses"> & {
+    rfaStatuses?: GameState["business"]["rfaStatuses"];
+  };
+};
+
+/**
+ * Deterministic v53 → v54: hard-lock fields —
+ * tradeDeadlineDate snapshot, rfaStatuses, DraftPick.status, season.rfaQualificationComplete.
+ */
+function migrateV53ToV54(state: GameStateV53): GameState {
+  const draftPicks: GameState["world"]["draftPicks"] = {};
+  for (const [id, pick] of Object.entries(state.world.draftPicks)) {
+    let status: "available" | "used" =
+      (pick as { status?: "available" | "used" }).status ?? "available";
+    for (const draft of Object.values(state.world.drafts)) {
+      const slot = draft.order.find((entry) => entry.draftPickId === id);
+      if (slot?.status === "used") {
+        status = "used";
+        break;
+      }
+    }
+    draftPicks[id] = {
+      ...pick,
+      status,
+    };
+  }
+
+  let tradeDeadlineDate: string | null =
+    state.competition.season.tradeDeadlineDate ?? null;
+  if (
+    tradeDeadlineDate === null &&
+    state.competition.season.phase === "regular"
+  ) {
+    let earliest =
+      state.competition.season.regularSeasonStartDate ?? null;
+    let latest: string | null = null;
+    for (const gameId of state.competition.schedule.gameIds) {
+      const game = state.competition.games[gameId];
+      if (!game) continue;
+      if (earliest === null || game.date < earliest) earliest = game.date;
+      if (latest === null || game.date > latest) latest = game.date;
+    }
+    if (earliest !== null && latest !== null && latest >= earliest) {
+      // Inline 60% calendar-span calculation (avoid circular import at migrate time)
+      const start = earliest;
+      const end = latest;
+      const startMs = Date.parse(`${start}T00:00:00Z`);
+      const endMs = Date.parse(`${end}T00:00:00Z`);
+      const spanDays = Math.round((endMs - startMs) / 86_400_000);
+      const offset = Math.max(0, Math.round(spanDays * 0.6));
+      const deadlineMs = startMs + offset * 86_400_000;
+      tradeDeadlineDate = new Date(deadlineMs).toISOString().slice(0, 10);
+    }
+  }
+
+  return {
+    ...state,
+    meta: {
+      ...state.meta,
+      schemaVersion: 54,
+    },
+    world: {
+      ...state.world,
+      draftPicks,
+    },
+    competition: {
+      ...state.competition,
+      season: {
+        ...state.competition.season,
+        tradeDeadlineDate,
+        rfaQualificationComplete:
+          state.competition.season.rfaQualificationComplete === true,
+      },
+    },
+    business: {
+      ...state.business,
+      rfaStatuses: state.business.rfaStatuses ?? {},
+    },
+  };
+}
+

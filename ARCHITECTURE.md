@@ -37,6 +37,8 @@ Rules:
 - `src/domain`, `src/state`, and `src/systems` must not import `react`, `next`, or Prisma.
 - Prisma models are a persistence mechanism only. They are **not** the source of truth for game mechanics.
 - `GameState` is the authoritative in-memory / serialized game model for a save.
+- **League phase authority:** `competition.phase.activePhaseId` is authoritative; `season.phase` / `offseasonStage` are derived compatibility fields.
+- **Hard locks / transaction legality:** `src/systems/league-rules/` is the read-only rules façade (`canPerformAction`). It must not import `phase-engine` (avoids cycles). See `docs/HARD_LOCKS.md`.
 
 ## Directory map
 

@@ -323,7 +323,7 @@ export const DEFAULT_GAME_SETTINGS: GameSettings = {
     gamesPerTeam: 82,
     tradeDeadlineRule: {
       kind: "fraction_of_season_span",
-      seasonSpanFraction: 0.55,
+      seasonSpanFraction: 0.6,
     },
   },
   playoffs: {
@@ -375,7 +375,7 @@ export const CBL_GAME_SETTINGS: GameSettings = {
     gamesPerTeam: 22,
     tradeDeadlineRule: {
       kind: "fraction_of_season_span",
-      seasonSpanFraction: 0.55,
+      seasonSpanFraction: 0.6,
     },
   },
   playoffs: {
@@ -533,7 +533,7 @@ export function isLeagueHistoryMode(
 
 export const DEFAULT_TRADE_DEADLINE_RULE: TradeDeadlineRule = {
   kind: "fraction_of_season_span",
-  seasonSpanFraction: 0.55,
+  seasonSpanFraction: 0.6,
 };
 
 export function isTradeDeadlineRule(

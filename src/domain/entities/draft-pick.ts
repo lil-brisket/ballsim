@@ -4,6 +4,13 @@ export type DraftPickRound = 1 | 2;
 
 export const DRAFT_PICK_ROUNDS: readonly DraftPickRound[] = [1, 2];
 
+export type DraftPickStatus = "available" | "used";
+
+export const DRAFT_PICK_STATUSES: readonly DraftPickStatus[] = [
+  "available",
+  "used",
+] as const;
+
 export type DraftPick = {
   id: DraftPickId;
   /** Team that originally owned the pick. Immutable after generation. */
@@ -12,6 +19,12 @@ export type DraftPick = {
   ownerTeamId: TeamId;
   seasonYear: number;
   round: DraftPickRound;
+  /**
+   * Ownership vs consumption:
+   * - available: tradable (subject to horizon / deadline)
+   * - used: spent in a draft; retains owner for history but untradeable
+   */
+  status: DraftPickStatus;
 };
 
 export type DraftPickInput = {
@@ -20,6 +33,7 @@ export type DraftPickInput = {
   ownerTeamId: TeamId;
   seasonYear: number;
   round: DraftPickRound;
+  status?: DraftPickStatus;
 };
 
 /**
@@ -34,12 +48,17 @@ export function createDraftPick(input: DraftPickInput): DraftPick {
   if (input.round !== 1 && input.round !== 2) {
     throw new Error("DraftPick round must be 1 or 2.");
   }
+  const status = input.status ?? "available";
+  if (status !== "available" && status !== "used") {
+    throw new Error('DraftPick status must be "available" or "used".');
+  }
   return {
     id: input.id,
     originalTeamId: input.originalTeamId,
     ownerTeamId: input.ownerTeamId,
     seasonYear: input.seasonYear,
     round: input.round,
+    status,
   };
 }
 

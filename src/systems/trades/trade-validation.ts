@@ -15,10 +15,10 @@ import type { GameState } from "@/state/game-state";
 import { createRosterRulesConfig, validateRosterSize } from "@/systems/roster-rules";
 import { getTeamPayroll } from "@/systems/salary-cap";
 import { getLeagueSalaryCap } from "@/systems/league-salary-cap";
-import { getCalendarContext } from "@/systems/simulation/calendar-context";
 import { TRADE_ROSTER_RULES } from "@/systems/trades-config";
 import { checkPlayerTradeEligibility } from "@/systems/trades/trade-eligibility";
 import { applyTradeSalaryRule } from "@/systems/trades/trade-salary-rules";
+import { canTradeDraftPick, checkTradeWindow } from "@/systems/league-rules";
 import type {
   TradeValidationIssue,
   TradeValidationResult,
@@ -39,19 +39,17 @@ export function validateTrade(
 
   const playerAssets =
     proposal.sideA.playerIds.length + proposal.sideB.playerIds.length;
-  if (playerAssets > 0) {
-    const calendar = getCalendarContext(state);
-    const phase = state.competition.season.phase;
-    const allowed =
-      calendar.tradesOpen ||
-      phase === "offseason" ||
-      phase === "preseason";
-    if (!allowed) {
-      errors.push({
-        code: "TRADE_DEADLINE_PASSED",
-        message:
-          "Player trades are closed after the trade deadline until the offseason.",
-      });
+  const pickAssets =
+    proposal.sideA.draftPickIds.length + proposal.sideB.draftPickIds.length;
+  if (playerAssets > 0 || pickAssets > 0) {
+    const window = checkTradeWindow(state);
+    if (!window.allowed) {
+      errors.push(
+        ...window.violations.map((v) => ({
+          code: v.code,
+          message: v.message,
+        })),
+      );
     }
   }
 
@@ -302,6 +300,10 @@ function validateSideAssets(
         code: "PICK_NOT_OWNED",
         message: `Draft pick "${pickId}" is not owned by team "${team.id}".`,
       });
+    }
+    const pickTrade = canTradeDraftPick(state, pickId as DraftPickId);
+    for (const issue of pickTrade.violations) {
+      errors.push({ code: issue.code, message: issue.message });
     }
   }
 }
