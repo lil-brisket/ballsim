@@ -104,7 +104,7 @@ describe("staff persistence / v50", () => {
     delete (v49Payload.world as Record<string, unknown>).staffMarket;
 
     const migrated = deserializeGameState(JSON.stringify(v49Payload));
-    expect(migrated.meta.schemaVersion).toBe(50);
+    expect(migrated.meta.schemaVersion).toBe(51);
     expect(migrated.world.staffMarket).toEqual({ offers: {} });
 
     for (const member of Object.values(migrated.world.staff)) {

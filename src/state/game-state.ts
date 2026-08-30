@@ -50,7 +50,7 @@ import type {
   FranchisePhaseState,
 } from "@/systems/phase-engine/phase-types";
 
-export const GAME_STATE_SCHEMA_VERSION = 50;
+export const GAME_STATE_SCHEMA_VERSION = 51;
 
 /** League personnel market for staff free agency (not a business-finance concept). */
 export type StaffMarketState = {
@@ -325,7 +325,16 @@ export function appendSeasonEventLog(
   if (newlyEmitted.length === 0) {
     return state;
   }
-  const merged = [...state.competition.seasonEventLog, ...newlyEmitted];
+  const seen = new Set(state.competition.seasonEventLog.map((e) => e.id));
+  const uniqueNew = newlyEmitted.filter((e) => {
+    if (seen.has(e.id)) return false;
+    seen.add(e.id);
+    return true;
+  });
+  if (uniqueNew.length === 0) {
+    return state;
+  }
+  const merged = [...state.competition.seasonEventLog, ...uniqueNew];
   const seasonEventLog =
     merged.length > SEASON_EVENT_LOG_MAX
       ? merged.slice(merged.length - SEASON_EVENT_LOG_MAX)

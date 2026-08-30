@@ -263,6 +263,41 @@ describe("team AI identity valuation", () => {
 
     const draftYear = state.competition.season.year + 1;
     const draftClassId = draftClassIdFor(draftYear);
+    const readyEstimate = {
+      teamId,
+      prospectPlayerId: readyPg.id,
+      exposure: 2,
+      effectiveExposure: 3,
+      knowledgeLevel: "developing" as const,
+      confidence: "high" as const,
+      estimatedOverall: { min: 74, max: 80 },
+      estimatedPotential: { min: 76, max: 82 },
+      projectedRank: { min: 1, max: 3 },
+      scoutGrade: "B+" as const,
+      estimatedCategories: {
+        shooting: { min: 70, max: 78 },
+        finishing: { min: 72, max: 80 },
+        passing: { min: 70, max: 78 },
+        ballHandling: { min: 70, max: 78 },
+        perimeterDefense: { min: 55, max: 65 },
+        interiorDefense: { min: 45, max: 55 },
+        rebounding: { min: 40, max: 50 },
+        athleticism: { min: 60, max: 70 },
+      },
+      positionEstimate: "PG" as const,
+      positionConfidence: "high" as const,
+      intangibles: {},
+      lastUpdatedOn: state.world.calendar.currentDate,
+    };
+    const upsideEstimate = {
+      ...readyEstimate,
+      prospectPlayerId: upsidePg.id,
+      estimatedOverall: { min: 52, max: 60 },
+      estimatedPotential: { min: 88, max: 95 },
+      projectedRank: { min: 2, max: 5 },
+      scoutGrade: "A-" as const,
+      confidence: "medium" as const,
+    };
     const draft: DraftClass = {
       id: draftClassId,
       seasonYear: draftYear,
@@ -284,6 +319,16 @@ describe("team AI identity valuation", () => {
       },
       scouting: [],
       selections: [],
+      teamDraftState: {
+        [teamId]: {
+          scouting: [readyEstimate, upsideEstimate],
+          scoutAssignments: [],
+          board: [],
+          interviews: {},
+          regionCoverage: { domestic: 1, international: 1 },
+        },
+      },
+      pickResults: [],
     };
     state = {
       ...state,

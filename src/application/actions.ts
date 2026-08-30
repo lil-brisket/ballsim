@@ -32,6 +32,12 @@ import {
   advanceOwnerRelocation,
   runOwnerExpansionDraft,
   selectOwnerDraftProspect,
+  assignOwnerScoutToProspect,
+  scoutOwnerRegion,
+  addOwnerDraftBoardProspect,
+  removeOwnerDraftBoardProspect,
+  toggleOwnerDraftBoardPriority,
+  interviewOwnerProspect,
   selectOwnerCity,
   confirmOwnerTeamIdentity,
   selectOwnerTeam,
@@ -535,6 +541,88 @@ export async function draftProspectAction(formData: FormData): Promise<void> {
   const prospectPlayerId = String(formData.get("prospectPlayerId") ?? "");
   const path = returnPath(formData, saveId);
   const result = await selectOwnerDraftProspect(saveId, prospectPlayerId);
+  if (!result.ok) {
+    redirectWithError(path, result.error);
+  }
+  revalidateOwner(saveId);
+  redirect(path);
+}
+
+export async function assignScoutAction(formData: FormData): Promise<void> {
+  const saveId = String(formData.get("saveId") ?? "");
+  const prospectPlayerId = String(formData.get("prospectPlayerId") ?? "");
+  const path = returnPath(formData, `/dashboard/${saveId}/scouting`);
+  const result = await assignOwnerScoutToProspect(saveId, prospectPlayerId);
+  if (!result.ok) {
+    redirectWithError(path, result.error);
+  }
+  revalidateOwner(saveId);
+  redirect(path);
+}
+
+export async function scoutRegionAction(formData: FormData): Promise<void> {
+  const saveId = String(formData.get("saveId") ?? "");
+  const region = String(formData.get("region") ?? "domestic");
+  const path = returnPath(formData, `/dashboard/${saveId}/scouting`);
+  if (region !== "domestic" && region !== "international") {
+    redirectWithError(path, "Invalid scouting region.");
+  }
+  const result = await scoutOwnerRegion(
+    saveId,
+    region as "domestic" | "international",
+  );
+  if (!result.ok) {
+    redirectWithError(path, result.error);
+  }
+  revalidateOwner(saveId);
+  redirect(path);
+}
+
+export async function addDraftBoardAction(formData: FormData): Promise<void> {
+  const saveId = String(formData.get("saveId") ?? "");
+  const prospectPlayerId = String(formData.get("prospectPlayerId") ?? "");
+  const path = returnPath(formData, `/dashboard/${saveId}/draft`);
+  const result = await addOwnerDraftBoardProspect(saveId, prospectPlayerId);
+  if (!result.ok) {
+    redirectWithError(path, result.error);
+  }
+  revalidateOwner(saveId);
+  redirect(path);
+}
+
+export async function removeDraftBoardAction(formData: FormData): Promise<void> {
+  const saveId = String(formData.get("saveId") ?? "");
+  const prospectPlayerId = String(formData.get("prospectPlayerId") ?? "");
+  const path = returnPath(formData, `/dashboard/${saveId}/draft`);
+  const result = await removeOwnerDraftBoardProspect(saveId, prospectPlayerId);
+  if (!result.ok) {
+    redirectWithError(path, result.error);
+  }
+  revalidateOwner(saveId);
+  redirect(path);
+}
+
+export async function toggleDraftBoardPriorityAction(
+  formData: FormData,
+): Promise<void> {
+  const saveId = String(formData.get("saveId") ?? "");
+  const prospectPlayerId = String(formData.get("prospectPlayerId") ?? "");
+  const path = returnPath(formData, `/dashboard/${saveId}/draft`);
+  const result = await toggleOwnerDraftBoardPriority(saveId, prospectPlayerId);
+  if (!result.ok) {
+    redirectWithError(path, result.error);
+  }
+  revalidateOwner(saveId);
+  redirect(path);
+}
+
+export async function interviewProspectAction(
+  formData: FormData,
+): Promise<void> {
+  const saveId = String(formData.get("saveId") ?? "");
+  const prospectPlayerId = String(formData.get("prospectPlayerId") ?? "");
+  const path = returnPath(formData, `/dashboard/${saveId}/scouting`);
+  const result = await interviewOwnerProspect(saveId, prospectPlayerId);
   if (!result.ok) {
     redirectWithError(path, result.error);
   }

@@ -13,6 +13,7 @@ import {
   createDraft,
   draftYearForSeason,
 } from "@/systems/draft";
+import { advanceScoutAssignments } from "@/systems/scouting/scouting-progression";
 import { releaseExpiredContracts } from "@/systems/free-agency";
 import { appendAllFranchiseSeasonRecords } from "@/systems/franchise-history";
 import {
@@ -429,6 +430,11 @@ export function processOffseasonLifecycle(
       const created = createDraft(current, rng);
       current = created.state;
       events.push(...created.events);
+      draft = current.world.drafts[draftClassId];
+    }
+
+    if (draft !== undefined && draft.status !== "complete") {
+      current = advanceScoutAssignments(current, rng);
       draft = current.world.drafts[draftClassId];
     }
 
