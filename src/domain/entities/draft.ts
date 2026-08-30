@@ -12,6 +12,13 @@ import {
   type PlayerAttributes,
 } from "@/domain/entities/player";
 import type { DraftPickRound } from "@/domain/entities/draft-pick";
+import type { DraftPickResult } from "@/domain/entities/draft-pick-result";
+import type {
+  DraftBoardEntry,
+  EstimatedProspectData,
+  ProspectInterview,
+  ScoutAssignment,
+} from "@/domain/entities/scouting-types";
 
 export type DraftLifecycleStatus = "not_started" | "active" | "complete";
 
@@ -47,6 +54,10 @@ export type DraftProspect = {
   status: DraftProspectStatus;
 };
 
+/**
+ * @deprecated Legacy point-estimate report. Prefer EstimatedProspectData on TeamDraftState.
+ * Kept for migration of pre-v51 saves.
+ */
 export type DraftScoutReport = {
   teamId: TeamId;
   prospectPlayerId: PlayerId;
@@ -78,14 +89,73 @@ export type DraftSelection = {
   playerId: PlayerId;
 };
 
+/** League-wide mock draft slot (shared simulation). */
+export type LeagueMockDraftSlot = {
+  overallPick: number;
+  teamId: TeamId;
+  prospectPlayerId: PlayerId;
+};
+
+export type LeagueMockDraft = {
+  cacheKey: string;
+  generatedOn: string;
+  slots: LeagueMockDraftSlot[];
+};
+
+/** Team-specific view of the mock draft. */
+export type TeamMockDraftView = {
+  cacheKey: string;
+  projectedPicks: Array<{
+    prospectPlayerId: PlayerId;
+    projectedOverallPick: number;
+    previousProjectedOverallPick: number | null;
+    delta: number | null;
+    availabilityLabel: string;
+  }>;
+};
+
+/**
+ * Per-team draft intelligence — every team (user + AI) has its own copy.
+ * activeOwnerTeamId only controls which team's data the UI displays.
+ */
+export type TeamDraftState = {
+  scouting: EstimatedProspectData[];
+  scoutAssignments: ScoutAssignment[];
+  board: DraftBoardEntry[];
+  interviews: Record<string, ProspectInterview>;
+  /** Region coverage multipliers: domestic / international. */
+  regionCoverage: { domestic: number; international: number };
+  teamMockDraftCacheKey?: string;
+  teamMockDraftView?: TeamMockDraftView;
+};
+
+export type TeamDraftGrade = {
+  overallGrade: string;
+  bestPickPlayerId: PlayerId | null;
+  biggestReachPlayerId: PlayerId | null;
+  needAddressed: boolean;
+  explanation: string;
+};
+
 export type DraftClass = {
   id: DraftClassId;
   seasonYear: number;
   status: DraftLifecycleStatus;
   prospects: Record<string, DraftProspect>;
   order: DraftOrderSlot[];
+  /**
+   * @deprecated Legacy flat scouting array. New drafts use teamDraftState[teamId].scouting.
+   * Migrated saves may still have entries until regenerated.
+   */
   scouting: DraftScoutReport[];
   selections: DraftSelection[];
+  /** Per-team scouting, boards, interviews (user + AI). */
+  teamDraftState: Record<string, TeamDraftState>;
+  /** Authoritative pick history for grading. */
+  pickResults: DraftPickResult[];
+  leagueMockDraft?: LeagueMockDraft;
+  /** Post-draft grades keyed by teamId. */
+  teamGrades?: Record<string, TeamDraftGrade>;
 };
 
 export function draftClassIdFor(seasonYear: number): DraftClassId {
@@ -168,6 +238,16 @@ export function createDraftScoutReport(input: {
     estimatedAttributes: { ...input.estimatedAttributes },
     estimatedPotentialOverall: input.estimatedPotentialOverall,
     projectedRank: input.projectedRank,
+  };
+}
+
+export function createEmptyTeamDraftState(): TeamDraftState {
+  return {
+    scouting: [],
+    scoutAssignments: [],
+    board: [],
+    interviews: {},
+    regionCoverage: { domestic: 1, international: 1 },
   };
 }
 
@@ -254,6 +334,8 @@ export function createEmptyDraftClass(input: {
     order: [],
     scouting: [],
     selections: [],
+    teamDraftState: {},
+    pickResults: [],
   };
 }
 

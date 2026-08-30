@@ -18,6 +18,7 @@ import {
   advanceLeaguePhaseCommand,
   beginOffseason,
   createNewOwnerSave,
+  declineOwnerDecision,
   executeOwnerTrade,
   finishFreeAgency,
   loadOwnerSave,
@@ -119,6 +120,20 @@ async function advanceUntilSeasonPhase(
       store,
     );
     if (!result.ok) {
+      if (
+        result.error.includes("pending owner decision") &&
+        snap?.state.user.pendingOwnerDecisions[0]
+      ) {
+        const declined = await declineOwnerDecision(
+          saveId,
+          snap.state.user.pendingOwnerDecisions[0]!.id,
+          store,
+        );
+        if (!declined.ok) {
+          throw new Error(declined.error);
+        }
+        continue;
+      }
       throw new Error(result.error);
     }
   }
@@ -524,6 +539,22 @@ describe("Owner Mode vertical slice", () => {
         }
         const advanced = await advanceLeaguePhaseCommand(saveId, store);
         if (!advanced.ok) {
+          const pending = current!.state.user.pendingOwnerDecisions[0];
+          if (
+            advanced.error.includes("decision") &&
+            pending
+          ) {
+            const declined = await declineOwnerDecision(
+              saveId,
+              pending.id,
+              store,
+            );
+            if (!declined.ok) {
+              throw new Error(declined.error);
+            }
+            guard += 1;
+            continue;
+          }
           throw new Error(
             `to draft guard=${guard} phase=${phaseId}: ${advanced.error}`,
           );
@@ -563,7 +594,22 @@ describe("Owner Mode vertical slice", () => {
             store,
           );
           if (!advanced.ok) {
-            expect(advanced.error).toMatch(/draft clock/i);
+            const pending = snap!.state.user.pendingOwnerDecisions[0];
+            if (
+              advanced.error.includes("pending owner decision") &&
+              pending
+            ) {
+              const declined = await declineOwnerDecision(
+                saveId,
+                pending.id,
+                store,
+              );
+              if (!declined.ok) {
+                throw new Error(declined.error);
+              }
+            } else {
+              expect(advanced.error).toMatch(/draft clock/i);
+            }
           }
         }
         guard += 1;

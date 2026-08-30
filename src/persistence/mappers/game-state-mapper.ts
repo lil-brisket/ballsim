@@ -195,6 +195,7 @@ const MIGRATE_ONE_STEP: Record<number, (state: unknown) => unknown> = {
   47: (state) => migrateV47ToV48(state as GameStateV47),
   48: (state) => migrateV48ToV49(state as GameStateV48),
   49: (state) => migrateV49ToV50(state as GameStateV49),
+  50: (state) => migrateV50ToV51(state as GameStateV50),
 };
 
 function legacyUserRecord(user: unknown): Record<string, unknown> {
@@ -4186,7 +4187,7 @@ type GameStateV49 = Omit<GameState, "meta"> & {
  * Deterministic v49 → v50: staff overhaul (attributes/overall) + staffMarket.
  * Migrates marketing → public_relations. Emits literal schemaVersion 50.
  */
-function migrateV49ToV50(state: GameStateV49): GameState {
+function migrateV49ToV50(state: GameStateV49): GameStateV50 {
   const staff: GameState["world"]["staff"] = {};
   for (const [id, raw] of Object.entries(state.world.staff)) {
     const member = hydrateStaffFromPersisted(
@@ -4214,6 +4215,41 @@ function migrateV49ToV50(state: GameStateV49): GameState {
       ...state.world,
       staff,
       staffMarket: worldRecord.staffMarket ?? EMPTY_STAFF_MARKET,
+    },
+  };
+}
+
+type GameStateV50 = Omit<GameState, "meta"> & {
+  meta: Omit<GameState["meta"], "schemaVersion"> & { schemaVersion: 50 };
+};
+
+/**
+ * Deterministic v50 → v51: scouting overhaul.
+ * Adds teamDraftState + pickResults to each DraftClass; keeps legacy scouting array.
+ */
+function migrateV50ToV51(state: GameStateV50): GameState {
+  const drafts: GameState["world"]["drafts"] = {};
+  for (const [draftId, draft] of Object.entries(state.world.drafts)) {
+    const raw = draft as typeof draft & {
+      teamDraftState?: GameState["world"]["drafts"][string]["teamDraftState"];
+      pickResults?: GameState["world"]["drafts"][string]["pickResults"];
+    };
+    drafts[draftId] = {
+      ...draft,
+      teamDraftState: raw.teamDraftState ?? {},
+      pickResults: raw.pickResults ?? [],
+    };
+  }
+
+  return {
+    ...state,
+    meta: {
+      ...state.meta,
+      schemaVersion: 51,
+    },
+    world: {
+      ...state.world,
+      drafts,
     },
   };
 }

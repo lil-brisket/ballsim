@@ -1353,6 +1353,18 @@ export function validateGameState(state: unknown): asserts state is GameState {
       );
     }
 
+    if (draftValue.teamDraftState === undefined) {
+      fail(`world.drafts[${draftId}].teamDraftState is required.`);
+    } else {
+      assertRecord(
+        draftValue.teamDraftState,
+        `world.drafts[${draftId}].teamDraftState`,
+      );
+    }
+    if (!Array.isArray(draftValue.pickResults)) {
+      fail(`world.drafts[${draftId}].pickResults must be an array.`);
+    }
+
     for (let index = 0; index < draftValue.selections.length; index += 1) {
       const selection = draftValue.selections[index] as Record<string, unknown>;
       assertRecord(selection, `world.drafts[${draftId}].selections[${index}]`);

@@ -193,6 +193,16 @@ import {
 } from "@/systems/draft";
 import { draftClassIdFor } from "@/domain/entities/draft";
 import {
+  assignScoutToProspect,
+  scoutRegionCoverage,
+} from "@/systems/scouting";
+import {
+  addToDraftBoard,
+  removeFromDraftBoard,
+  toggleDraftBoardPriority,
+} from "@/systems/draft/draft-board";
+import { conductProspectInterview } from "@/systems/draft/prospect-interviews";
+import {
   acceptOffer,
   listFreeAgents,
   makeOffer,
@@ -1782,6 +1792,111 @@ export async function selectOwnerDraftProspect(
   } catch (error) {
     return fail(error instanceof Error ? error.message : String(error));
   }
+}
+
+async function mutateActiveFranchiseDraft(
+  saveId: string,
+  mutate: (state: GameState) => GameState,
+  store?: SaveGameStore,
+): Promise<OwnerCommandResult> {
+  const saveStore = getStore(store);
+  const loaded = await saveStore.load(saveId);
+  if (!loaded) {
+    return fail("Save not found.");
+  }
+  try {
+    const next = mutate(loaded.state);
+    const saved = await persistWorkingState(
+      saveId,
+      next,
+      loaded.state.meta.rngState,
+      saveStore,
+      [],
+    );
+    return withDashboard(saved);
+  } catch (error) {
+    return fail(error instanceof Error ? error.message : String(error));
+  }
+}
+
+export async function assignOwnerScoutToProspect(
+  saveId: string,
+  prospectPlayerId: string,
+  store?: SaveGameStore,
+): Promise<OwnerCommandResult> {
+  return mutateActiveFranchiseDraft(saveId, (state) =>
+    assignScoutToProspect(
+      state,
+      state.user.activeOwnerTeamId,
+      asPlayerId(prospectPlayerId),
+    ),
+  store);
+}
+
+export async function scoutOwnerRegion(
+  saveId: string,
+  region: "domestic" | "international",
+  store?: SaveGameStore,
+): Promise<OwnerCommandResult> {
+  return mutateActiveFranchiseDraft(saveId, (state) =>
+    scoutRegionCoverage(state, state.user.activeOwnerTeamId, region),
+  store);
+}
+
+export async function addOwnerDraftBoardProspect(
+  saveId: string,
+  prospectPlayerId: string,
+  store?: SaveGameStore,
+): Promise<OwnerCommandResult> {
+  return mutateActiveFranchiseDraft(saveId, (state) =>
+    addToDraftBoard(
+      state,
+      state.user.activeOwnerTeamId,
+      asPlayerId(prospectPlayerId),
+    ),
+  store);
+}
+
+export async function removeOwnerDraftBoardProspect(
+  saveId: string,
+  prospectPlayerId: string,
+  store?: SaveGameStore,
+): Promise<OwnerCommandResult> {
+  return mutateActiveFranchiseDraft(saveId, (state) =>
+    removeFromDraftBoard(
+      state,
+      state.user.activeOwnerTeamId,
+      asPlayerId(prospectPlayerId),
+    ),
+  store);
+}
+
+export async function toggleOwnerDraftBoardPriority(
+  saveId: string,
+  prospectPlayerId: string,
+  store?: SaveGameStore,
+): Promise<OwnerCommandResult> {
+  return mutateActiveFranchiseDraft(saveId, (state) =>
+    toggleDraftBoardPriority(
+      state,
+      state.user.activeOwnerTeamId,
+      asPlayerId(prospectPlayerId),
+    ),
+  store);
+}
+
+export async function interviewOwnerProspect(
+  saveId: string,
+  prospectPlayerId: string,
+  store?: SaveGameStore,
+): Promise<OwnerCommandResult> {
+  return mutateActiveFranchiseDraft(saveId, (state) =>
+    conductProspectInterview(
+      state,
+      state.user.activeOwnerTeamId,
+      asPlayerId(prospectPlayerId),
+    ),
+  store);
 }
 
 export async function makeOwnerFreeAgentOffer(

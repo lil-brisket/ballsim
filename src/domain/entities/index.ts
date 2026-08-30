@@ -231,6 +231,10 @@ export type {
   DraftProspectStatus,
   DraftScoutReport,
   DraftSelection,
+  TeamDraftState,
+  LeagueMockDraft,
+  TeamMockDraftView,
+  TeamDraftGrade,
 } from "@/domain/entities/draft";
 export {
   DRAFT_LIFECYCLE_STATUSES,
@@ -241,11 +245,50 @@ export {
   createDraftScoutReport,
   createDraftSelection,
   createEmptyDraftClass,
+  createEmptyTeamDraftState,
   draftClassIdFor,
   isDraftLifecycleStatus,
   isDraftOrderSlotStatus,
   isDraftProspectStatus,
 } from "@/domain/entities/draft";
+export type {
+  DraftPickResult,
+  ScoutingAtSelection,
+} from "@/domain/entities/draft-pick-result";
+export { createDraftPickResult } from "@/domain/entities/draft-pick-result";
+export type {
+  EstimatedProspectData,
+  EstimatedScoutingCategories,
+  EstimatedScoutingCategoryKey,
+  RatingRange,
+  ScoutGrade,
+  ScoutConfidence,
+  ScoutingKnowledgeLevel,
+  ScoutingRegion,
+  ScoutAssignment,
+  DraftBoardEntry,
+  ProspectInterview,
+  PickGradeSummary,
+  ScoutingStrengthWeakness,
+} from "@/domain/entities/scouting-types";
+export {
+  SCOUTING_KNOWLEDGE_LEVELS,
+  SCOUT_CONFIDENCES,
+  SCOUT_GRADES,
+  SCOUTING_REGIONS,
+  ESTIMATED_SCOUTING_CATEGORY_KEYS,
+  createRatingRange,
+  ratingRangeMidpoint,
+  isScoutingKnowledgeLevel,
+  isScoutConfidence,
+  isScoutGrade,
+  isScoutingRegion,
+} from "@/domain/entities/scouting-types";
+export {
+  resolveScoutingRegion,
+  domesticNationalitiesForArea,
+  DOMESTIC_NATIONALITIES_BY_AREA,
+} from "@/domain/entities/scouting-regions";
 export type {
   TradeBlock,
   TradeBlockAsset,

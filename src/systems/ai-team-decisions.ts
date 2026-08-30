@@ -58,7 +58,7 @@ import {
 } from "@/systems/owner-decisions";
 import { tryEnqueueAnyOwnedTeamTradeOffer } from "@/systems/owner-decisions/owned-team-trade-offer";
 import { isUserControlledTeam } from "@/state/owner-context";
-import { draftTalentScore } from "@/systems/fantasy-draft/draft-evaluation";
+import { selectProspectFromTeamScouting } from "@/systems/draft/mock-draft";
 import {
   recommendRosterManagement,
   reconcileRosterManagement,
@@ -534,8 +534,8 @@ function pickBestAffordableFreeAgent(
 }
 
 /**
- * Draft *selection* preference: overall vs potential / youth / floor-ceiling.
- * Does NOT bake pick accumulation into prospect ranking (that is trade-asset strategy).
+ * Draft *selection* preference using THIS team's scouting estimates + needs.
+ * Never reads authoritative player attributes/potential for ranking.
  */
 export function selectProspectForTeam(
   state: GameState,
@@ -548,29 +548,24 @@ export function selectProspectForTeam(
   if (available.length === 0) {
     return undefined;
   }
-  const prefs = resolveFranchisePreferences(state, teamId)?.preferences;
-  const counts = positionCounts(state, teamId);
-  available.sort((a, b) => {
-    const posA = a.player.position;
-    const posB = b.player.position;
-    const countA = counts.get(posA) ?? 0;
-    const countB = counts.get(posB) ?? 0;
-    const missingA = countA === 0 ? 0 : 1;
-    const missingB = countB === 0 ? 0 : 1;
-    if (missingA !== missingB) {
-      return missingA - missingB;
-    }
-    if (countA !== countB) {
-      return countA - countB;
-    }
-    const scoreA = draftTalentScore(a.player, prefs);
-    const scoreB = draftTalentScore(b.player, prefs);
-    if (scoreA !== scoreB) {
-      return scoreB - scoreA;
-    }
-    return a.playerId < b.playerId ? -1 : a.playerId > b.playerId ? 1 : 0;
-  });
-  return available[0]!.playerId;
+  const eligibleIds = new Set(available.map((p) => p.playerId as string));
+  const fromScouting = selectProspectFromTeamScouting(
+    state,
+    draft,
+    teamId,
+    eligibleIds,
+  );
+  if (fromScouting !== undefined) {
+    return fromScouting;
+  }
+  // Fallback only when team has no scouting data (migrated incomplete draft):
+  // use projected rank midpoints from any estimate, else stable id order — still
+  // avoid true overall by sorting on playerId only.
+  return available
+    .slice()
+    .sort((a, b) =>
+      a.playerId < b.playerId ? -1 : a.playerId > b.playerId ? 1 : 0,
+    )[0]!.playerId;
 }
 
 function findSurplusPlayer(

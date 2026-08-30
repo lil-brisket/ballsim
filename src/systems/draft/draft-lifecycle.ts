@@ -2,6 +2,7 @@ import type { DraftClass } from "@/domain/entities/draft";
 import type { DraftClassId } from "@/domain/ids";
 import { systemResult, type SystemResult } from "@/domain/system-result";
 import type { GameState } from "@/state/game-state";
+import { applyImmediateGradesToDraft } from "@/systems/draft/draft-grading";
 
 /**
  * not_started → active. Rejects other transitions.
@@ -24,6 +25,7 @@ export function activateDraft(
 
 /**
  * active → complete. Does not create players for remaining eligible prospects.
+ * Applies immediate draft grades for every team.
  */
 export function completeDraft(
   state: GameState,
@@ -35,10 +37,11 @@ export function completeDraft(
       `Cannot complete draft "${draftClassId}": status is "${draft.status}".`,
     );
   }
-  return replaceDraft(state, {
+  const graded = applyImmediateGradesToDraft(state, {
     ...draft,
     status: "complete",
   });
+  return replaceDraft(state, graded);
 }
 
 function requireDraft(

@@ -1,6 +1,7 @@
 import { createContract } from "@/domain/entities/contract";
 import type { DraftClass } from "@/domain/entities/draft";
 import { createDraftSelection } from "@/domain/entities/draft";
+import { createDraftPickResult } from "@/domain/entities/draft-pick-result";
 import type { Player } from "@/domain/entities/player";
 import type { Team } from "@/domain/entities/team";
 import { createDomainEvent, type DomainEvent } from "@/domain/events/domain-event";
@@ -14,6 +15,8 @@ import {
   type MakeDraftSelectionInput,
 } from "@/systems/draft/draft-validation";
 import type { DraftValidationResult } from "@/systems/draft/draft-types";
+import { findTeamProspectEstimate } from "@/systems/draft/draft-scouting";
+import { createRatingRange } from "@/domain/entities/scouting-types";
 import { reconcileRosterManagement } from "@/systems/roster-management";
 import { getTeamPayroll } from "@/systems/salary-cap";
 
@@ -105,6 +108,34 @@ export function makeDraftSelection(
     playerId,
   });
 
+  const estimate = findTeamProspectEstimate(
+    draft.teamDraftState[ownerTeamId],
+    playerId,
+  );
+  const pickResult = createDraftPickResult({
+    draftClassId: draft.id,
+    draftPickId: slot.draftPickId,
+    seasonYear: draft.seasonYear,
+    round: slot.round,
+    overallPick: slot.overallPick,
+    teamId: ownerTeamId,
+    playerId,
+    playerSnapshot: { ...prospect.player },
+    scoutingAtSelection: estimate
+      ? {
+          scoutGrade: estimate.scoutGrade,
+          estimatedOverall: { ...estimate.estimatedOverall },
+          estimatedPotential: { ...estimate.estimatedPotential },
+          confidence: estimate.confidence,
+        }
+      : {
+          scoutGrade: "C",
+          estimatedOverall: createRatingRange(50, 70),
+          estimatedPotential: createRatingRange(55, 75),
+          confidence: "low",
+        },
+  });
+
   const updatedDraft: DraftClass = {
     ...draft,
     prospects: {
@@ -113,6 +144,7 @@ export function makeDraftSelection(
     },
     order: updatedOrder,
     selections: [...draft.selections, selection],
+    pickResults: [...(draft.pickResults ?? []), pickResult],
   };
 
   let next: GameState = {

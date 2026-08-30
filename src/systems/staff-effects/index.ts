@@ -7,7 +7,12 @@ import {
 
 export { findTeamStaffByRole } from "@/systems/staff-effects/find";
 export { gmTradeAcceptanceThreshold } from "@/systems/staff-effects/gm-effects";
-export { scoutNoiseScale } from "@/systems/staff-effects/scout-effects";
+export {
+  scoutNoiseScale,
+  scoutQualityMultiplier,
+  scoutSpeedMultiplier,
+  scoutInternationalModifier,
+} from "@/systems/staff-effects/scout-effects";
 export {
   trainerDevelopmentMultiplier,
   combinedStaffDevelopmentMultiplier,

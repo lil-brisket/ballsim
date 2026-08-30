@@ -119,7 +119,7 @@ function buildTasksForPhase(
           context.bestDraftPick !== null
             ? `You hold pick #${context.bestDraftPick}; scouting now improves draft-day decisions.`
             : "Scouting prepares you for trades and draft-day value.",
-        href: `/dashboard/${saveId}/draft`,
+        href: `/dashboard/${saveId}/scouting`,
         teamId,
         focusKey: "draft_pick",
       });

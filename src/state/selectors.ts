@@ -275,7 +275,14 @@ export type DraftBoardView = {
     firstName: string;
     lastName: string;
     position: string;
-    overall: number;
+    /** Scout grade letter — never true overall. */
+    scoutGrade: string | null;
+    estimatedOverallMin: number | null;
+    estimatedOverallMax: number | null;
+    confidence: string | null;
+    knowledgeLevel: string;
+    projectedRankMin: number | null;
+    projectedRankMax: number | null;
   }>;
 };
 
@@ -614,20 +621,40 @@ export function toDraftBoardView(state: GameState): DraftBoardView | null {
     return null;
   }
   const userTeamId = state.user.activeOwnerTeamId;
+  const teamState = draft.teamDraftState[userTeamId];
   const onClock = draft.order.find((slot) => slot.status === "available");
   const eligibleProspects = Object.values(draft.prospects)
     .filter((prospect) => prospect.status === "eligible")
-    .map((prospect) => ({
-      playerId: prospect.playerId,
-      firstName: prospect.player.firstName,
-      lastName: prospect.player.lastName,
-      position: prospect.player.position,
-      overall: calculatePlayerOverall(
-        prospect.player.position,
-        prospect.player.attributes,
-      ),
-    }))
-    .sort((a, b) => b.overall - a.overall);
+    .map((prospect) => {
+      const estimate = teamState?.scouting.find(
+        (report) => report.prospectPlayerId === prospect.playerId,
+      );
+      return {
+        playerId: prospect.playerId,
+        firstName: prospect.player.firstName,
+        lastName: prospect.player.lastName,
+        position: estimate?.positionEstimate ?? prospect.player.position,
+        scoutGrade: estimate?.scoutGrade ?? null,
+        estimatedOverallMin: estimate?.estimatedOverall.min ?? null,
+        estimatedOverallMax: estimate?.estimatedOverall.max ?? null,
+        confidence: estimate?.confidence ?? null,
+        knowledgeLevel: estimate?.knowledgeLevel ?? "unknown",
+        projectedRankMin: estimate?.projectedRank.min ?? null,
+        projectedRankMax: estimate?.projectedRank.max ?? null,
+      };
+    })
+    .sort((a, b) => {
+      const midA =
+        a.estimatedOverallMin != null && a.estimatedOverallMax != null
+          ? (a.estimatedOverallMin + a.estimatedOverallMax) / 2
+          : -1;
+      const midB =
+        b.estimatedOverallMin != null && b.estimatedOverallMax != null
+          ? (b.estimatedOverallMin + b.estimatedOverallMax) / 2
+          : -1;
+      if (midA !== midB) return midB - midA;
+      return a.playerId < b.playerId ? -1 : a.playerId > b.playerId ? 1 : 0;
+    });
 
   const order = draft.order.map((slot) => {
     const owner = state.world.teams[slot.ownerTeamId];
