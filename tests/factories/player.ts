@@ -21,6 +21,7 @@ import {
   type PlayerPotential,
   type PlayerSuspension,
 } from "@/domain/entities/player";
+import { migrateLegacySeverity } from "@/domain/entities/injury";
 
 export type CreatePlayerOverrides = {
   id?: PlayerId | string;
@@ -38,10 +39,73 @@ export type CreatePlayerOverrides = {
   personality?: Partial<PlayerPersonality>;
   contractId?: ContractId | string | null;
   availability?: PlayerAvailability;
-  injury?: PlayerInjury | null;
+  injury?: PlayerInjury | LegacyInjuryOverride | null;
+  activeInjuries?: PlayerInjury[];
   suspension?: PlayerSuspension | null;
+  durability?: number;
+  conditioning?: number;
   development?: Partial<DevelopmentState>;
 };
+
+/** Transitional test helper shape for pre-v55 injury fixtures. */
+type LegacyInjuryOverride = {
+  type: string;
+  severity: string;
+  gamesRemaining?: { min: number; max: number } | null;
+  recommendedWorkloadMpg?: number | null;
+  maximumWorkloadMpg?: number | null;
+  recoveryProgress?: number;
+  bodyPart?: PlayerInjury["bodyPart"];
+  catalogKey?: string;
+};
+
+function normalizeInjuryOverride(
+  injury: PlayerInjury | LegacyInjuryOverride | null | undefined,
+): PlayerInjury | null {
+  if (injury == null) return null;
+  if ("injuryId" in injury && typeof injury.injuryId === "string") {
+    return injury as PlayerInjury;
+  }
+  const legacy = injury as LegacyInjuryOverride;
+  const severity = migrateLegacySeverity(legacy.severity);
+  const maxMpg = legacy.maximumWorkloadMpg ?? null;
+  const gameRestriction =
+    maxMpg === 0
+      ? "out"
+      : maxMpg != null && maxMpg < 28
+        ? "limited"
+        : "monitor";
+  return {
+    injuryId: `test_${legacy.type.replace(/\s+/g, "_").toLowerCase()}`,
+    catalogKey: legacy.catalogKey ?? "undisclosed",
+    type: legacy.type,
+    bodyPart: legacy.bodyPart ?? "unknown",
+    severity,
+    injuredOn: "2026-01-01",
+    expectedReturnWindow:
+      legacy.gamesRemaining != null
+        ? {
+            earliest: "2026-01-05",
+            latest: "2026-01-15",
+          }
+        : null,
+    recoveryProgress: legacy.recoveryProgress ?? 0,
+    practiceRestriction: gameRestriction === "out" ? "none" : "rehab",
+    gameRestriction,
+    minutesRestriction: maxMpg,
+    recommendedWorkloadMpg: legacy.recommendedWorkloadMpg ?? null,
+    maximumWorkloadMpg: maxMpg,
+    reinjuryRisk: 0.1,
+    temporaryEffects: [],
+    temporaryFrustration: 8,
+    isReinjury: false,
+    isAggravation: false,
+    priorInjuryId: null,
+    chronic: false,
+    isLegacyData: legacy.severity === "unknown" || legacy.type === "Undisclosed",
+    exposureSource: "off_court",
+  };
+}
 
 /**
  * Deterministic Player factory. Defaults are stable; pass overrides to customize.
@@ -116,13 +180,37 @@ export function createPlayer(overrides: CreatePlayerOverrides = {}): Player {
     },
     contractId,
     availability: overrides.availability ?? "available",
-    injury: overrides.injury === undefined ? null : overrides.injury,
+    activeInjuries: overrides.activeInjuries?.map((injury) =>
+      normalizeInjuryOverride(injury),
+    ).filter((injury): injury is PlayerInjury => injury != null),
+    injury: normalizeInjuryOverride(
+      overrides.injury === undefined ? null : overrides.injury,
+    ),
     suspension: overrides.suspension === undefined ? null : overrides.suspension,
+    physical:
+      overrides.durability != null
+        ? { durability: overrides.durability }
+        : undefined,
+    conditioning: overrides.conditioning,
     development: {
       stage: "developing",
       ...overrides.development,
     },
   });
+}
+
+export function createTestInjury(
+  overrides: Partial<PlayerInjury> & { type?: string; severity?: string } = {},
+): PlayerInjury {
+  return normalizeInjuryOverride({
+    type: overrides.type ?? "Undisclosed",
+    severity: overrides.severity ?? "moderate",
+    gamesRemaining: null,
+    recommendedWorkloadMpg: overrides.recommendedWorkloadMpg ?? null,
+    maximumWorkloadMpg: overrides.maximumWorkloadMpg ?? 0,
+    recoveryProgress: overrides.recoveryProgress ?? 0,
+    ...overrides,
+  })!;
 }
 
 export function uniformPlayerAttributes(rating: number): PlayerAttributes {

@@ -435,6 +435,9 @@ export function handleMidGameInjury(input: {
   const nextState = applyInjuryFromSeverity(input.state, injuredPlayerId, {
     type: "In-game injury",
     severity: "moderate",
+    catalogKey: "ankle_sprain",
+    exposureSource: "game_acute",
+    injuredOn: input.state.world.calendar.currentDate,
   });
 
   sim.unavailablePlayerIds.add(injuredPlayerId);

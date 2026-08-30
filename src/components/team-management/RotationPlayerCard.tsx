@@ -40,10 +40,14 @@ function statusEmoji(status: string): string {
   switch (status) {
     case "available":
       return "🟢";
+    case "minor":
+      return "🟡";
     case "questionable":
       return "🟡";
     case "limited":
       return "🟠";
+    case "recovery":
+      return "🔵";
     case "out":
     case "suspended":
       return "🔴";
@@ -56,10 +60,14 @@ function statusLabel(status: string): string {
   switch (status) {
     case "available":
       return "Available";
+    case "minor":
+      return "Minor";
     case "questionable":
       return "Questionable";
     case "limited":
       return "Limited";
+    case "recovery":
+      return "Recovery";
     case "out":
       return "Out";
     case "suspended":

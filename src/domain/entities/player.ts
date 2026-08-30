@@ -7,6 +7,53 @@ import {
   isPlayerNationality,
   type PlayerNationality,
 } from "@/domain/entities/player-nationality";
+import {
+  CONDITIONING_MAX,
+  CONDITIONING_MIN,
+  DURABILITY_MAX,
+  DURABILITY_MIN,
+  INJURY_HISTORY_MAX,
+  isBodyPart,
+  isExposureSource,
+  isGameRestriction,
+  isInjurySeverity,
+  isPracticeRestriction,
+  type InjuryHistoryEntry,
+  type PlayerInjury,
+  type PlayerPhysicalProfile,
+} from "@/domain/entities/injury";
+
+export type {
+  BodyPart,
+  ExposureSource,
+  GameRestriction,
+  InjuryAttributeEffect,
+  InjuryHistoryEntry,
+  InjurySeverity,
+  PlayerConditioning,
+  PlayerInjury,
+  PlayerPhysicalProfile,
+  PracticeRestriction,
+} from "@/domain/entities/injury";
+export {
+  AVAILABILITY_RESTRICTIVENESS,
+  BODY_PARTS,
+  CONDITIONING_MAX,
+  CONDITIONING_MIN,
+  DURABILITY_MAX,
+  DURABILITY_MIN,
+  EXPOSURE_SOURCES,
+  GAME_RESTRICTIONS,
+  INJURY_HISTORY_MAX,
+  INJURY_SEVERITIES,
+  PRACTICE_RESTRICTIONS,
+  isBodyPart,
+  isExposureSource,
+  isGameRestriction,
+  isInjurySeverity,
+  isPracticeRestriction,
+  migrateLegacySeverity,
+} from "@/domain/entities/injury";
 
 export const RATING_MIN = 1;
 export const RATING_MAX = 99;
@@ -62,46 +109,26 @@ export type PlayerPersonality = {
 /**
  * Whether a player may take the floor — independent of injury detail and suspension.
  * Suspension is represented here as "suspended"; injury detail lives on {@link PlayerInjury}.
+ * Status is derived from active injuries (most restrictive wins), not a fixed progression.
  */
 export type PlayerAvailability =
   | "available"
+  | "minor"
   | "questionable"
   | "limited"
+  | "recovery"
   | "out"
   | "suspended";
 
 export const PLAYER_AVAILABILITIES: readonly PlayerAvailability[] = [
   "available",
+  "minor",
   "questionable",
   "limited",
+  "recovery",
   "out",
   "suspended",
 ] as const;
-
-export type InjurySeverity = "minor" | "moderate" | "major" | "unknown";
-
-export const INJURY_SEVERITIES: readonly InjurySeverity[] = [
-  "minor",
-  "moderate",
-  "major",
-  "unknown",
-] as const;
-
-/**
- * Medical injury detail. Null when the player has no active injury.
- * Suspension is never stored here — use {@link PlayerSuspension}.
- */
-export type PlayerInjury = {
-  type: string;
-  severity: InjurySeverity;
-  gamesRemaining: { min: number; max: number } | null;
-  /** Soft medical guidance — AI targets this when set. */
-  recommendedWorkloadMpg: number | null;
-  /** Hard safety cap — engine must not exceed unless medical override. */
-  maximumWorkloadMpg: number | null;
-  /** 0–1 recovery progress toward full availability. */
-  recoveryProgress: number;
-};
 
 export type PlayerSuspension = {
   gamesRemaining: number;
@@ -136,12 +163,23 @@ export type Player = {
   potential: PlayerPotential;
   personality: PlayerPersonality;
   contractId: ContractId | null;
-  /** Floor eligibility — separate from injury detail and suspension object. */
+  /** Floor eligibility — derived from activeInjuries when not suspended. */
   availability: PlayerAvailability;
-  /** Active injury detail, or null when healthy / no injury recorded. */
+  /**
+   * Active medical injuries (expect 0–1; multiple allowed).
+   * Overall status = most restrictive across all entries.
+   */
+  activeInjuries: PlayerInjury[];
+  /**
+   * @deprecated Prefer {@link Player.activeInjuries}. Synced as primary
+   * (most restrictive) injury or null for transitional consumers.
+   */
   injury: PlayerInjury | null;
   /** Independent of injury — a healthy player may still be suspended. */
   suspension: PlayerSuspension | null;
+  physical: PlayerPhysicalProfile;
+  conditioning: number;
+  injuryHistory: InjuryHistoryEntry[];
   development: DevelopmentState;
   /**
    * Irreversible retirement flag. Retired players cannot return to FA,
@@ -167,8 +205,13 @@ export type PlayerInput = {
   personality: PlayerPersonality;
   contractId: ContractId | null;
   availability: PlayerAvailability;
-  injury: PlayerInjury | null;
+  activeInjuries?: PlayerInjury[];
+  /** @deprecated Prefer activeInjuries. Migrated into activeInjuries when set. */
+  injury?: PlayerInjury | null;
   suspension: PlayerSuspension | null;
+  physical?: PlayerPhysicalProfile;
+  conditioning?: number;
+  injuryHistory?: InjuryHistoryEntry[];
   development: DevelopmentState;
   retired?: boolean;
 };
@@ -178,24 +221,80 @@ export function migrateLegacyInjuryStatus(
   legacy: InjuryStatus | null | undefined,
 ): {
   availability: PlayerAvailability;
+  activeInjuries: PlayerInjury[];
   injury: PlayerInjury | null;
   suspension: null;
 } {
   if (legacy == null || legacy.kind === "healthy") {
-    return { availability: "available", injury: null, suspension: null };
+    return {
+      availability: "available",
+      activeInjuries: [],
+      injury: null,
+      suspension: null,
+    };
   }
+  const injury = createLegacyUndisclosedInjury();
   return {
     availability: "out",
-    injury: {
-      type: "Undisclosed",
-      severity: "unknown",
-      gamesRemaining: null,
-      recommendedWorkloadMpg: null,
-      maximumWorkloadMpg: null,
-      recoveryProgress: 0,
-    },
+    activeInjuries: [injury],
+    injury,
     suspension: null,
   };
+}
+
+/** Build a legacy undisclosed injury for migration. */
+export function createLegacyUndisclosedInjury(
+  injuredOn: string = "1970-01-01",
+): PlayerInjury {
+  return {
+    injuryId: `legacy_undisclosed_${injuredOn}`,
+    catalogKey: "undisclosed",
+    type: "Undisclosed",
+    bodyPart: "unknown",
+    severity: "moderate",
+    injuredOn,
+    expectedReturnWindow: null,
+    recoveryProgress: 0,
+    practiceRestriction: "none",
+    gameRestriction: "out",
+    minutesRestriction: 0,
+    recommendedWorkloadMpg: null,
+    maximumWorkloadMpg: 0,
+    reinjuryRisk: 0.15,
+    temporaryEffects: [],
+    temporaryFrustration: 10,
+    isReinjury: false,
+    isAggravation: false,
+    priorInjuryId: null,
+    chronic: false,
+    isLegacyData: true,
+    exposureSource: "off_court",
+  };
+}
+
+/**
+ * Sync deprecated `injury` field from activeInjuries (most restrictive first).
+ */
+export function primaryActiveInjury(
+  activeInjuries: readonly PlayerInjury[],
+): PlayerInjury | null {
+  if (activeInjuries.length === 0) {
+    return null;
+  }
+  const rank = (injury: PlayerInjury): number => {
+    if (injury.gameRestriction === "out") return 5;
+    if (injury.gameRestriction === "limited") return 3;
+    if (injury.gameRestriction === "monitor") return 2;
+    return 1;
+  };
+  let best = activeInjuries[0]!;
+  for (let i = 1; i < activeInjuries.length; i++) {
+    const candidate = activeInjuries[i]!;
+    if (rank(candidate) > rank(best)) {
+      best = candidate;
+    }
+  }
+  return best;
 }
 
 export function isPlayerAvailability(
@@ -204,13 +303,12 @@ export function isPlayerAvailability(
   return (PLAYER_AVAILABILITIES as readonly string[]).includes(value);
 }
 
-export function isInjurySeverity(value: string): value is InjurySeverity {
-  return (INJURY_SEVERITIES as readonly string[]).includes(value);
-}
-
 /** True when the player is eligible to take the floor (may still have workload caps). */
 export function playerCanPlay(player: Player): boolean {
-  if (player.availability === "out" || player.availability === "suspended") {
+  if (
+    player.availability === "out" ||
+    player.availability === "suspended"
+  ) {
     return false;
   }
   if (player.suspension != null && player.suspension.gamesRemaining > 0) {
@@ -226,10 +324,14 @@ export function availabilityDisplayLabel(
   switch (availability) {
     case "available":
       return "Available";
+    case "minor":
+      return "Minor";
     case "questionable":
       return "Questionable";
     case "limited":
       return "Limited";
+    case "recovery":
+      return "Recovery";
     case "out":
       return "Out";
     case "suspended":
@@ -293,9 +395,30 @@ export function createPlayer(input: PlayerInput): Player {
   assertPersonality(input.personality);
   assertOptionalId(input.contractId, "contractId");
   assertAvailability(input.availability);
-  assertPlayerInjury(input.injury);
+
+  const activeInjuries = resolveActiveInjuriesInput(input);
+  for (const injury of activeInjuries) {
+    assertPlayerInjury(injury);
+  }
   assertSuspension(input.suspension);
   assertDevelopment(input.development);
+
+  const physical: PlayerPhysicalProfile = {
+    durability: clampInt(
+      input.physical?.durability ?? defaultDurabilityForAge(input.age),
+      DURABILITY_MIN,
+      DURABILITY_MAX,
+    ),
+  };
+  const conditioning = clampInt(
+    input.conditioning ?? 100,
+    CONDITIONING_MIN,
+    CONDITIONING_MAX,
+  );
+  const injuryHistory = (input.injuryHistory ?? []).slice(
+    0,
+    INJURY_HISTORY_MAX,
+  );
 
   return {
     id: input.id,
@@ -313,12 +436,49 @@ export function createPlayer(input: PlayerInput): Player {
     personality: { ...input.personality },
     contractId: input.contractId,
     availability: input.availability,
-    injury: input.injury == null ? null : { ...input.injury, gamesRemaining: input.injury.gamesRemaining == null ? null : { ...input.injury.gamesRemaining } },
+    activeInjuries: activeInjuries.map(cloneInjury),
+    injury: primaryActiveInjury(activeInjuries),
     suspension:
       input.suspension == null ? null : { ...input.suspension },
+    physical: { ...physical },
+    conditioning,
+    injuryHistory: injuryHistory.map((entry) => ({ ...entry })),
     development: { ...input.development },
     retired: input.retired === true ? true : undefined,
   };
+}
+
+function resolveActiveInjuriesInput(input: PlayerInput): PlayerInjury[] {
+  if (input.activeInjuries != null) {
+    return [...input.activeInjuries];
+  }
+  if (input.injury != null) {
+    return [input.injury];
+  }
+  return [];
+}
+
+function cloneInjury(injury: PlayerInjury): PlayerInjury {
+  return {
+    ...injury,
+    expectedReturnWindow:
+      injury.expectedReturnWindow == null
+        ? null
+        : { ...injury.expectedReturnWindow },
+    temporaryEffects: injury.temporaryEffects.map((effect) => ({ ...effect })),
+  };
+}
+
+export function defaultDurabilityForAge(age: number): number {
+  // Slight age bias; generation should prefer explicit RNG. Floor/ceiling applied by caller.
+  if (age <= 22) return 72;
+  if (age <= 27) return 68;
+  if (age <= 32) return 62;
+  return 55;
+}
+
+function clampInt(value: number, min: number, max: number): number {
+  return Math.max(min, Math.min(max, Math.round(value)));
 }
 
 function assertNonEmptyId(value: string, field: string): void {
@@ -428,44 +588,38 @@ function assertAvailability(availability: PlayerAvailability): void {
   }
 }
 
-function assertPlayerInjury(injury: PlayerInjury | null): void {
-  if (injury === null) {
-    return;
+function assertPlayerInjury(injury: PlayerInjury): void {
+  if (typeof injury !== "object" || injury === null) {
+    throw new Error("Player injury must be an object.");
   }
-  if (typeof injury !== "object") {
-    throw new Error("Player injury must be an object or null.");
+  if (typeof injury.injuryId !== "string" || injury.injuryId.length === 0) {
+    throw new Error("Player injury.injuryId must be a non-empty string.");
+  }
+  if (typeof injury.catalogKey !== "string" || injury.catalogKey.length === 0) {
+    throw new Error("Player injury.catalogKey must be a non-empty string.");
   }
   if (typeof injury.type !== "string" || injury.type.trim().length === 0) {
     throw new Error("Player injury.type must be a non-empty string.");
   }
+  if (!isBodyPart(injury.bodyPart)) {
+    throw new Error(`Player injury.bodyPart is invalid: ${injury.bodyPart}.`);
+  }
   if (!isInjurySeverity(injury.severity)) {
     throw new Error(
-      `Player injury.severity must be one of ${INJURY_SEVERITIES.join(", ")}.`,
+      `Player injury.severity must be one of minor|moderate|major|severe.`,
     );
   }
-  if (injury.gamesRemaining !== null) {
+  if (typeof injury.injuredOn !== "string" || injury.injuredOn.length === 0) {
+    throw new Error("Player injury.injuredOn must be a non-empty date string.");
+  }
+  if (injury.expectedReturnWindow != null) {
     if (
-      typeof injury.gamesRemaining !== "object" ||
-      !Number.isInteger(injury.gamesRemaining.min) ||
-      !Number.isInteger(injury.gamesRemaining.max) ||
-      injury.gamesRemaining.min < 0 ||
-      injury.gamesRemaining.max < injury.gamesRemaining.min
+      typeof injury.expectedReturnWindow.earliest !== "string" ||
+      typeof injury.expectedReturnWindow.latest !== "string"
     ) {
       throw new Error(
-        "Player injury.gamesRemaining must be null or { min, max } with non-negative integers and max >= min.",
+        "Player injury.expectedReturnWindow must have earliest and latest dates.",
       );
-    }
-  }
-  for (const field of [
-    "recommendedWorkloadMpg",
-    "maximumWorkloadMpg",
-  ] as const) {
-    const value = injury[field];
-    if (
-      value !== null &&
-      (typeof value !== "number" || !Number.isFinite(value) || value < 0)
-    ) {
-      throw new Error(`Player injury.${field} must be null or a non-negative finite number.`);
     }
   }
   if (
@@ -477,6 +631,55 @@ function assertPlayerInjury(injury: PlayerInjury | null): void {
     throw new Error(
       "Player injury.recoveryProgress must be a finite number between 0 and 1.",
     );
+  }
+  if (!isPracticeRestriction(injury.practiceRestriction)) {
+    throw new Error("Player injury.practiceRestriction is invalid.");
+  }
+  if (!isGameRestriction(injury.gameRestriction)) {
+    throw new Error("Player injury.gameRestriction is invalid.");
+  }
+  for (const field of [
+    "recommendedWorkloadMpg",
+    "maximumWorkloadMpg",
+    "minutesRestriction",
+  ] as const) {
+    const value = injury[field];
+    if (
+      value !== null &&
+      (typeof value !== "number" || !Number.isFinite(value) || value < 0)
+    ) {
+      throw new Error(
+        `Player injury.${field} must be null or a non-negative finite number.`,
+      );
+    }
+  }
+  if (
+    typeof injury.reinjuryRisk !== "number" ||
+    !Number.isFinite(injury.reinjuryRisk) ||
+    injury.reinjuryRisk < 0 ||
+    injury.reinjuryRisk > 1
+  ) {
+    throw new Error(
+      "Player injury.reinjuryRisk must be a finite number between 0 and 1.",
+    );
+  }
+  if (!Array.isArray(injury.temporaryEffects)) {
+    throw new Error("Player injury.temporaryEffects must be an array.");
+  }
+  if (
+    typeof injury.temporaryFrustration !== "number" ||
+    !Number.isFinite(injury.temporaryFrustration)
+  ) {
+    throw new Error("Player injury.temporaryFrustration must be a finite number.");
+  }
+  if (typeof injury.isReinjury !== "boolean") {
+    throw new Error("Player injury.isReinjury must be a boolean.");
+  }
+  if (typeof injury.isAggravation !== "boolean") {
+    throw new Error("Player injury.isAggravation must be a boolean.");
+  }
+  if (!isExposureSource(injury.exposureSource)) {
+    throw new Error("Player injury.exposureSource is invalid.");
   }
 }
 

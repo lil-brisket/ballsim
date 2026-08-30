@@ -5,11 +5,18 @@ import type {
   InjuryStatus,
   Player,
   PlayerAttributes,
+  PlayerInjury,
   PlayerPersonality,
   PlayerPosition,
   PlayerPotential,
 } from "@/domain/entities/player";
-import { migrateLegacyInjuryStatus } from "@/domain/entities/player";
+import {
+  createLegacyUndisclosedInjury,
+  defaultDurabilityForAge,
+  migrateLegacyInjuryStatus,
+  migrateLegacySeverity,
+  primaryActiveInjury,
+} from "@/domain/entities/player";
 import type { PlayerArchetype } from "@/domain/entities/player-archetype";
 import type { PlayerNationality } from "@/domain/entities/player-nationality";
 import type { Team, TeamPlayStyle } from "@/domain/entities/team";
@@ -200,6 +207,7 @@ const MIGRATE_ONE_STEP: Record<number, (state: unknown) => unknown> = {
   51: (state) => migrateV51ToV52(state as GameStateV51),
   52: (state) => migrateV52ToV53(state as GameStateV52),
   53: (state) => migrateV53ToV54(state as GameStateV53),
+  54: (state) => migrateV54ToV55(state as GameStateV54),
 };
 
 function legacyUserRecord(user: unknown): Record<string, unknown> {
@@ -888,8 +896,12 @@ function migratePlayerV5ToV6(player: PlayerV5): Player {
     potential: { ...player.potential },
     personality: { ...player.personality },
     availability: migrated.availability,
+    activeInjuries: migrated.activeInjuries,
     injury: migrated.injury,
     suspension: migrated.suspension,
+    physical: { durability: defaultDurabilityForAge(player.age) },
+    conditioning: 100,
+    injuryHistory: [],
     development: { ...player.development },
     nationality: LEGACY_PLAYER_NATIONALITY,
   };
@@ -4416,11 +4428,29 @@ function migratePlayerInjuryFields(
         raw.injury !== null &&
         !("kind" in (raw.injury as object))))
   ) {
+    const injury = (raw.injury as Player["injury"]) ?? null;
+    const activeInjuries = Array.isArray(raw.activeInjuries)
+      ? (raw.activeInjuries as PlayerInjury[])
+      : injury != null
+        ? [injury]
+        : [];
     return {
       ...base,
       availability: raw.availability as Player["availability"],
-      injury: (raw.injury as Player["injury"]) ?? null,
+      activeInjuries,
+      injury: primaryActiveInjury(activeInjuries),
       suspension: (raw.suspension as Player["suspension"]) ?? null,
+      physical:
+        (raw.physical as Player["physical"]) ?? {
+          durability: defaultDurabilityForAge(
+            typeof base.age === "number" ? base.age : 25,
+          ),
+        },
+      conditioning:
+        typeof raw.conditioning === "number" ? raw.conditioning : 100,
+      injuryHistory: Array.isArray(raw.injuryHistory)
+        ? (raw.injuryHistory as Player["injuryHistory"])
+        : [],
     };
   }
 
@@ -4432,10 +4462,18 @@ function migratePlayerInjuryFields(
     injury?: unknown;
   };
   return {
-    ...(rest as unknown as Player),
+    ...base,
     availability: migrated.availability,
+    activeInjuries: migrated.activeInjuries,
     injury: migrated.injury,
     suspension: migrated.suspension,
+    physical: {
+      durability: defaultDurabilityForAge(
+        typeof base.age === "number" ? base.age : 25,
+      ),
+    },
+    conditioning: 100,
+    injuryHistory: [],
   };
 }
 
@@ -4573,6 +4611,213 @@ function migrateV53ToV54(state: GameStateV53): GameState {
       ...state.business,
       rfaStatuses: state.business.rfaStatuses ?? {},
     },
+  };
+}
+
+type GameStateV54 = Omit<GameState, "meta"> & {
+  meta: Omit<GameState["meta"], "schemaVersion"> & { schemaVersion: 54 };
+};
+
+/**
+ * Deterministic v54 → v55: activeInjuries[], expanded PlayerInjury,
+ * durability, conditioning, injuryHistory.
+ */
+function migrateV54ToV55(state: GameStateV54): GameState {
+  const currentDate = state.world.calendar?.currentDate ?? "2000-01-01";
+  const players: GameState["world"]["players"] = {};
+
+  for (const [playerId, raw] of Object.entries(state.world.players)) {
+    players[playerId] = migratePlayerToV55InjuryModel(
+      raw as unknown as Record<string, unknown>,
+      currentDate,
+    );
+  }
+
+  return {
+    ...state,
+    meta: {
+      ...state.meta,
+      schemaVersion: 55,
+    },
+    world: {
+      ...state.world,
+      players,
+    },
+  };
+}
+
+function migratePlayerToV55InjuryModel(
+  raw: Record<string, unknown>,
+  currentDate: string,
+): Player {
+  const base = raw as unknown as Player;
+  const age = typeof base.age === "number" ? base.age : 25;
+
+  // Already on v55 shape
+  if (Array.isArray(raw.activeInjuries) && raw.physical != null) {
+    return {
+      ...base,
+      activeInjuries: raw.activeInjuries as PlayerInjury[],
+      injury: primaryActiveInjury(raw.activeInjuries as PlayerInjury[]),
+      physical: raw.physical as Player["physical"],
+      conditioning:
+        typeof raw.conditioning === "number" ? raw.conditioning : 100,
+      injuryHistory: Array.isArray(raw.injuryHistory)
+        ? (raw.injuryHistory as Player["injuryHistory"])
+        : [],
+    };
+  }
+
+  const legacyInjury = raw.injury as
+    | PlayerInjury
+    | { kind?: string; type?: string; severity?: string }
+    | null
+    | undefined;
+
+  let activeInjuries: PlayerInjury[] = [];
+
+  if (Array.isArray(raw.activeInjuries)) {
+    activeInjuries = (raw.activeInjuries as PlayerInjury[]).map((injury) =>
+      expandLegacyPlayerInjury(injury as unknown as Record<string, unknown>, currentDate),
+    );
+  } else if (
+    legacyInjury != null &&
+    typeof legacyInjury === "object" &&
+    "kind" in legacyInjury
+  ) {
+    const migrated = migrateLegacyInjuryStatus(
+      legacyInjury as InjuryStatus,
+    );
+    activeInjuries = migrated.activeInjuries.map((injury) => ({
+      ...injury,
+      injuredOn: estimateLegacyInjuredOn(currentDate, 10),
+    }));
+  } else if (
+    legacyInjury != null &&
+    typeof legacyInjury === "object" &&
+    "type" in legacyInjury
+  ) {
+    activeInjuries = [
+      expandLegacyPlayerInjury(
+        legacyInjury as unknown as Record<string, unknown>,
+        currentDate,
+      ),
+    ];
+  }
+
+  return {
+    ...base,
+    activeInjuries,
+    injury: primaryActiveInjury(activeInjuries),
+    physical: {
+      durability:
+        (raw.physical as { durability?: number } | undefined)?.durability ??
+        defaultDurabilityForAge(age),
+    },
+    conditioning:
+      typeof raw.conditioning === "number" ? raw.conditioning : 100,
+    injuryHistory: Array.isArray(raw.injuryHistory)
+      ? (raw.injuryHistory as Player["injuryHistory"])
+      : [],
+  };
+}
+
+function estimateLegacyInjuredOn(
+  currentDate: string,
+  estimatedDaysAgo: number,
+): string {
+  try {
+    return addCalendarDays(currentDate, -estimatedDaysAgo);
+  } catch {
+    return currentDate;
+  }
+}
+
+function expandLegacyPlayerInjury(
+  raw: Record<string, unknown>,
+  currentDate: string,
+): PlayerInjury {
+  if (
+    typeof raw.injuryId === "string" &&
+    typeof raw.catalogKey === "string" &&
+    typeof raw.bodyPart === "string"
+  ) {
+    return {
+      ...(raw as unknown as PlayerInjury),
+      severity: migrateLegacySeverity(String(raw.severity)),
+      isLegacyData: raw.isLegacyData === true ? true : undefined,
+    };
+  }
+
+  const type =
+    typeof raw.type === "string" && raw.type.length > 0
+      ? raw.type
+      : "Undisclosed";
+  const severity = migrateLegacySeverity(
+    typeof raw.severity === "string" ? raw.severity : "unknown",
+  );
+  const isUndisclosed = type === "Undisclosed";
+  const gamesRemaining = raw.gamesRemaining as
+    | { min: number; max: number }
+    | null
+    | undefined;
+  const estimatedDays =
+    gamesRemaining != null
+      ? Math.max(3, Math.round(((gamesRemaining.min + gamesRemaining.max) / 2) * 2))
+      : 10;
+  const injuredOn = estimateLegacyInjuredOn(currentDate, estimatedDays);
+
+  if (isUndisclosed) {
+    return {
+      ...createLegacyUndisclosedInjury(injuredOn),
+      recoveryProgress:
+        typeof raw.recoveryProgress === "number" ? raw.recoveryProgress : 0,
+      recommendedWorkloadMpg:
+        typeof raw.recommendedWorkloadMpg === "number"
+          ? raw.recommendedWorkloadMpg
+          : null,
+      maximumWorkloadMpg:
+        typeof raw.maximumWorkloadMpg === "number"
+          ? raw.maximumWorkloadMpg
+          : 0,
+    };
+  }
+
+  const maxMpg =
+    typeof raw.maximumWorkloadMpg === "number" ? raw.maximumWorkloadMpg : null;
+  const gameRestriction =
+    maxMpg === 0 ? "out" : maxMpg != null && maxMpg < 28 ? "limited" : "monitor";
+
+  return {
+    injuryId: `legacy_${type.replace(/\s+/g, "_").toLowerCase()}_${injuredOn}`,
+    catalogKey: "undisclosed",
+    type,
+    bodyPart: "unknown",
+    severity,
+    injuredOn,
+    expectedReturnWindow: {
+      earliest: addCalendarDays(injuredOn, Math.max(1, estimatedDays - 2)),
+      latest: addCalendarDays(injuredOn, estimatedDays + 4),
+    },
+    recoveryProgress:
+      typeof raw.recoveryProgress === "number" ? raw.recoveryProgress : 0,
+    practiceRestriction: gameRestriction === "out" ? "none" : "rehab",
+    gameRestriction,
+    minutesRestriction: maxMpg,
+    recommendedWorkloadMpg:
+      typeof raw.recommendedWorkloadMpg === "number"
+        ? raw.recommendedWorkloadMpg
+        : null,
+    maximumWorkloadMpg: maxMpg,
+    reinjuryRisk: 0.12,
+    temporaryEffects: [],
+    temporaryFrustration: 10,
+    isReinjury: false,
+    isAggravation: false,
+    priorInjuryId: null,
+    chronic: false,
+    isLegacyData: true,
+    exposureSource: "off_court",
   };
 }
 

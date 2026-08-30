@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { asPlayerId, asTeamId } from "@/domain/ids";
-import { createPlayer, uniformPlayerAttributes } from "../factories/player";
+import { createPlayer, createTestInjury, uniformPlayerAttributes } from "../factories/player";
 import { buildRotationFromRoster } from "@/systems/roster-management";
 import { ROTATION_CONFIG } from "@/systems/rotation/rotation-config";
 import { redistributeRotationForInjuries } from "@/systems/rotation/rotation-injury-response";
@@ -108,14 +108,22 @@ describe("redistributeRotationForInjuries", () => {
     const injuredStarter = {
       ...starter,
       availability: "out" as const,
-      injury: {
+      injury: createTestInjury({
         type: "Hamstring",
-        severity: "moderate" as const,
-        gamesRemaining: { min: 2, max: 4 },
-        recommendedWorkloadMpg: null,
+        severity: "moderate",
         maximumWorkloadMpg: 0,
+        recommendedWorkloadMpg: null,
         recoveryProgress: 0,
-      },
+      }),
+      activeInjuries: [
+        createTestInjury({
+          type: "Hamstring",
+          severity: "moderate",
+          maximumWorkloadMpg: 0,
+          recommendedWorkloadMpg: null,
+          recoveryProgress: 0,
+        }),
+      ],
     };
 
     const roster = [injuredStarter, backup, ...others];

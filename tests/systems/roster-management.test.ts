@@ -15,6 +15,7 @@ import {
 } from "@/systems/team-management-commands";
 import { createTestGameState } from "../factories/game-state";
 import { createTestRng } from "../helpers/determinism";
+import { createLegacyUndisclosedInjury } from "@/domain/entities/player";
 
 function bootstrappedState() {
   const initial = createTestGameState();
@@ -49,7 +50,10 @@ describe("roster-management", () => {
           ...state.world.players,
           [playerId]: {
             ...state.world.players[playerId]!,
-            availability: "out", injury: { type: "Undisclosed", severity: "unknown", gamesRemaining: null, recommendedWorkloadMpg: null, maximumWorkloadMpg: null, recoveryProgress: 0 }, suspension: null,
+            availability: "out",
+            injury: createLegacyUndisclosedInjury("2026-01-01"),
+            activeInjuries: [createLegacyUndisclosedInjury("2026-01-01")],
+            suspension: null,
           },
         },
       },
@@ -130,7 +134,10 @@ describe("roster-management", () => {
       const playerId = roster[index]!;
       players[playerId] = {
         ...players[playerId]!,
-        availability: "out", injury: { type: "Undisclosed", severity: "unknown", gamesRemaining: null, recommendedWorkloadMpg: null, maximumWorkloadMpg: null, recoveryProgress: 0 }, suspension: null,
+        availability: "out",
+        injury: createLegacyUndisclosedInjury("2026-01-01"),
+        activeInjuries: [createLegacyUndisclosedInjury("2026-01-01")],
+        suspension: null,
       };
     }
     state = {

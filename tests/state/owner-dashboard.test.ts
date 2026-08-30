@@ -23,6 +23,7 @@ import {
 import { toOwnerDashboardView } from "@/state/owner-dashboard";
 import { meanRosterOverall } from "@/state/roster-strength";
 import { createTestGameState } from "../factories/game-state";
+import { createLegacyUndisclosedInjury } from "@/domain/entities/player";
 import { bootstrapWorld } from "@/systems/world-pipeline";
 import { getFinancialStatement } from "@/systems/team-finances";
 import { getTeamPayroll } from "@/systems/salary-cap";
@@ -379,7 +380,10 @@ describe("toOwnerDashboardView action queue", () => {
           ...state.world.players,
           [playerId]: {
             ...player,
-            availability: "out", injury: { type: "Undisclosed", severity: "unknown", gamesRemaining: null, recommendedWorkloadMpg: null, maximumWorkloadMpg: null, recoveryProgress: 0 }, suspension: null,
+            availability: "out",
+            injury: createLegacyUndisclosedInjury("2026-01-01"),
+            activeInjuries: [createLegacyUndisclosedInjury("2026-01-01")],
+            suspension: null,
           },
         },
       },
@@ -503,7 +507,10 @@ describe("toOwnerDashboardView action queue", () => {
           ...state.world.players,
           [playerId]: {
             ...player,
-            availability: "out", injury: { type: "Undisclosed", severity: "unknown", gamesRemaining: null, recommendedWorkloadMpg: null, maximumWorkloadMpg: null, recoveryProgress: 0 }, suspension: null,
+            availability: "out",
+            injury: createLegacyUndisclosedInjury("2026-01-01"),
+            activeInjuries: [createLegacyUndisclosedInjury("2026-01-01")],
+            suspension: null,
           },
         },
       },

@@ -112,11 +112,14 @@ describe("staff effects", () => {
     expect(state.settings.financialRules.staffBudget).toBe(staffBudgetBefore);
   });
 
-  it("medical prevention is neutral until injury engine exists", () => {
+  it("medical prevention scales with medical staff attributes", () => {
     const state = boot();
-    expect(
-      medicalPreventionMultiplier(state, state.user.activeOwnerTeamId),
-    ).toBe(1);
+    const mult = medicalPreventionMultiplier(
+      state,
+      state.user.activeOwnerTeamId,
+    );
+    expect(mult).toBeGreaterThanOrEqual(0.75);
+    expect(mult).toBeLessThanOrEqual(1.35);
   });
 
   it("builds TeamStaffGameContext once without throwing", () => {

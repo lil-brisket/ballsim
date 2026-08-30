@@ -20,11 +20,13 @@ import {
   WORK_ETHIC_SCALE,
 } from "@/systems/player-development-config";
 import { developmentStageForAge } from "@/systems/player-generation-config";
+import { developmentOpportunityFactor } from "@/systems/injury/injury-effects";
 
 /**
  * One deterministic annual development step at the player's current age.
  * Does not increment age. Does not mutate the input player.
- * Injury status is ignored (no injury development penalty in v1).
+ * Injury impact scales with severity/time missed via developmentOpportunityFactor —
+ * short minor injuries have little effect.
  * @param trainerMultiplier Tier 1 trainer quality scale (default 1).
  */
 export function developPlayer(
@@ -45,10 +47,12 @@ export function developPlayer(
     remainingPotential <= 0
       ? 0
       : Math.min(1, remainingPotential / POTENTIAL_TAPER_GAP);
+  const injuryFactor = developmentOpportunityFactor(player);
   const workEthicModifier =
     (1 +
       (player.personality.workEthic - WORK_ETHIC_CENTER) / WORK_ETHIC_SCALE) *
-    trainerMultiplier;
+    trainerMultiplier *
+    injuryFactor;
 
   const nextAttributes: PlayerAttributes = { ...player.attributes };
 

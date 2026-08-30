@@ -11,7 +11,7 @@ export function findTeamStaffByRole(
   if (!team) {
     return null;
   }
-  for (const staffId of team.staff) {
+  for (const staffId of team.staff ?? []) {
     const staff = state.world.staff[staffId];
     if (staff && staff.teamId === teamId && staff.role === role) {
       return staff;

@@ -18,12 +18,14 @@ export type UnavailabilityReason =
   | "not_on_roster"
   | "suspended"
   | "questionable"
-  | "limited";
+  | "limited"
+  | "minor"
+  | "recovery";
 
 /** Resolved gate result used by UI / sim / rotation. */
 export type ResolvedPlayerAvailability = {
   available: boolean;
-  /** True when the player may take the floor (available/questionable/limited). */
+  /** True when the player may take the floor (available/questionable/limited/minor/recovery). */
   canPlay: boolean;
   status: PlayerAvailabilityStatus;
   reason?: UnavailabilityReason;
@@ -47,6 +49,8 @@ const AVAILABILITY_LABELS: Record<UnavailabilityReason, string> = {
   suspended: "Suspended",
   questionable: "Questionable",
   limited: "Limited",
+  minor: "Minor",
+  recovery: "Recovery",
 };
 
 function notOnRoster(): ResolvedPlayerAvailability {
@@ -68,10 +72,18 @@ function resolveFromPlayer(
   player: Player,
   inactive: boolean,
 ): ResolvedPlayerAvailability {
-  const injuryType = player.injury?.type ?? null;
+  const injuryType =
+    player.injury?.type ??
+    player.activeInjuries?.[0]?.type ??
+    null;
   const isLegacyUndisclosed =
-    player.injury?.type === "Undisclosed" &&
-    player.injury.severity === "unknown";
+    (player.injury?.type === "Undisclosed" &&
+      (player.injury.isLegacyData === true ||
+        player.injury.severity === "moderate" &&
+          player.injury.catalogKey === "undisclosed")) ||
+    false;
+
+  const primary = player.injury ?? player.activeInjuries?.[0] ?? null;
 
   if (player.suspension != null && player.suspension.gamesRemaining > 0) {
     return {
@@ -115,8 +127,8 @@ function resolveFromPlayer(
           ? `Out · ${injuryType}`
           : AVAILABILITY_LABELS.injured,
       injuryType,
-      recommendedWorkloadMpg: player.injury?.recommendedWorkloadMpg ?? null,
-      maximumWorkloadMpg: player.injury?.maximumWorkloadMpg ?? null,
+      recommendedWorkloadMpg: primary?.recommendedWorkloadMpg ?? null,
+      maximumWorkloadMpg: primary?.maximumWorkloadMpg ?? null,
       limitReason: injuryType
         ? `Unavailable due to ${injuryType.toLowerCase()}.`
         : "Player is out.",
@@ -132,26 +144,27 @@ function resolveFromPlayer(
       reason: "inactive",
       label: AVAILABILITY_LABELS.inactive,
       injuryType,
-      recommendedWorkloadMpg: player.injury?.recommendedWorkloadMpg ?? null,
-      maximumWorkloadMpg: player.injury?.maximumWorkloadMpg ?? null,
+      recommendedWorkloadMpg: primary?.recommendedWorkloadMpg ?? null,
+      maximumWorkloadMpg: primary?.maximumWorkloadMpg ?? null,
       limitReason: null,
       isLegacyUndisclosed,
     };
   }
 
-  if (player.availability === "limited") {
-    const recommended = player.injury?.recommendedWorkloadMpg ?? null;
+  if (player.availability === "limited" || player.availability === "recovery") {
+    const recommended = primary?.recommendedWorkloadMpg ?? null;
+    const status = player.availability;
     return {
       available: true,
       canPlay: true,
-      status: "limited",
-      reason: "limited",
+      status,
+      reason: status === "recovery" ? "recovery" : "limited",
       label: injuryType
-        ? `Limited · ${injuryType}`
-        : AVAILABILITY_LABELS.limited,
+        ? `${availabilityDisplayLabel(status)} · ${injuryType}`
+        : availabilityDisplayLabel(status),
       injuryType,
       recommendedWorkloadMpg: recommended,
-      maximumWorkloadMpg: player.injury?.maximumWorkloadMpg ?? null,
+      maximumWorkloadMpg: primary?.maximumWorkloadMpg ?? null,
       limitReason:
         recommended != null && injuryType
           ? `Medical recommendation is ${recommended} MPG due to ${injuryType.toLowerCase()}.`
@@ -162,18 +175,22 @@ function resolveFromPlayer(
     };
   }
 
-  if (player.availability === "questionable") {
+  if (
+    player.availability === "questionable" ||
+    player.availability === "minor"
+  ) {
+    const status = player.availability;
     return {
       available: true,
       canPlay: true,
-      status: "questionable",
-      reason: "questionable",
+      status,
+      reason: status === "minor" ? "minor" : "questionable",
       label: injuryType
-        ? `Questionable · ${injuryType}`
-        : AVAILABILITY_LABELS.questionable,
+        ? `${availabilityDisplayLabel(status)} · ${injuryType}`
+        : availabilityDisplayLabel(status),
       injuryType,
-      recommendedWorkloadMpg: player.injury?.recommendedWorkloadMpg ?? null,
-      maximumWorkloadMpg: player.injury?.maximumWorkloadMpg ?? null,
+      recommendedWorkloadMpg: primary?.recommendedWorkloadMpg ?? null,
+      maximumWorkloadMpg: primary?.maximumWorkloadMpg ?? null,
       limitReason: injuryType
         ? `Game-time decision due to ${injuryType.toLowerCase()}.`
         : "Game-time decision.",

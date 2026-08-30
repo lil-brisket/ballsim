@@ -38,6 +38,24 @@ import {
   type RotationHealthReport,
 } from "@/systems/rotation/rotation-health";
 import { toEventLogEntry, type EventLogEntryView } from "@/state/selectors";
+import type { PlayerInjury } from "@/domain/entities/player";
+
+function deriveGamesRemainingFromInjury(
+  injury: PlayerInjury | null | undefined,
+  currentDate: string,
+): { min: number; max: number } | null {
+  const window = injury?.expectedReturnWindow;
+  if (window == null) return null;
+  const toDays = (iso: string) => {
+    const a = Date.parse(`${currentDate}T12:00:00Z`);
+    const b = Date.parse(`${iso}T12:00:00Z`);
+    if (!Number.isFinite(a) || !Number.isFinite(b)) return 0;
+    return Math.max(0, Math.round((b - a) / 86_400_000));
+  };
+  const min = toDays(window.earliest);
+  const max = Math.max(min, toDays(window.latest));
+  return { min, max };
+}
 
 export type LineupPlayerCardView = {
   playerId: PlayerId;
@@ -154,25 +172,54 @@ export type CoachingView = {
   presets: Array<{ id: CoachingPresetId; label: string; description: string }>;
 };
 
+export type InjuryEffectDeltaView = {
+  attribute: string;
+  delta: number;
+};
+
+export type InjuryHistorySnippetView = {
+  type: string;
+  bodyPart: string;
+  severity: string;
+  injuredOn: string;
+  isReinjury: boolean;
+  isAggravation: boolean;
+};
+
 export type InjuryRowView = {
   playerId: PlayerId;
   firstName: string;
   lastName: string;
   position: PlayerPosition;
+  overall: number;
   status: import("@/domain/entities/player").PlayerAvailability;
   statusLabel: string;
   injuryType: string | null;
+  bodyPart: string | null;
   severity: string | null;
+  recoveryProgress: number | null;
+  expectedReturnEarliest: string | null;
+  expectedReturnLatest: string | null;
+  practiceRestriction: string | null;
+  gameRestriction: string | null;
+  minutesRestriction: number | null;
   recommendedWorkloadMpg: number | null;
   maximumWorkloadMpg: number | null;
+  reinjuryRisk: number | null;
+  temporaryEffects: InjuryEffectDeltaView[];
   gamesRemaining: { min: number; max: number } | null;
   isLegacyUndisclosed: boolean;
+  isLongTerm: boolean;
+  isHighReinjuryRisk: boolean;
+  activeInjuryCount: number;
+  recentHistory: InjuryHistorySnippetView[];
 };
 
 export type InjuryReportView = {
   teamId: TeamId;
   rows: InjuryRowView[];
   injuredCount: number;
+  historyRows: InjuryHistorySnippetView[];
 };
 
 export type TeamManagementOverview = {
@@ -437,7 +484,7 @@ export function toRotationView(state: GameState): RotationView {
     const isLegacyUndisclosed =
       availability.isLegacyUndisclosed ||
       (player.injury?.type === "Undisclosed" &&
-        player.injury.severity === "unknown");
+        player.injury.isLegacyData === true);
     rows.push({
       playerId,
       firstName: player.firstName,
@@ -474,7 +521,10 @@ export function toRotationView(state: GameState): RotationView {
       injurySeverity: player.injury?.severity ?? null,
       recommendedWorkloadMpg: availability.recommendedWorkloadMpg,
       maximumWorkloadMpg: availability.maximumWorkloadMpg,
-      gamesRemaining: player.injury?.gamesRemaining ?? null,
+      gamesRemaining: deriveGamesRemainingFromInjury(
+        player.injury,
+        state.world.calendar.currentDate,
+      ),
       isLegacyUndisclosed,
       workloadWarning: workloadWarningForRow(
         targetMinutes,
@@ -562,35 +612,77 @@ export function toCoachingView(state: GameState): CoachingView {
 export function toInjuryReportView(state: GameState): InjuryReportView {
   const team = getControlledTeam(state);
   const rows: InjuryRowView[] = [];
+  const historyRows: InjuryHistorySnippetView[] = [];
+
   for (const playerId of team.roster) {
     const player = state.world.players[playerId];
     if (player == null) {
       continue;
     }
+    const availability = getPlayerAvailability(state, playerId, team.id);
+    const active = player.activeInjuries ?? (player.injury ? [player.injury] : []);
+    const primary = player.injury ?? active[0] ?? null;
+    const effects = primary?.temporaryEffects ?? [];
+    const window = primary?.expectedReturnWindow ?? null;
+    let gamesRemaining: { min: number; max: number } | null = null;
+    if (window != null) {
+      const today = state.world.calendar.currentDate;
+      const toDays = (iso: string) => {
+        const a = Date.parse(`${today}T12:00:00Z`);
+        const b = Date.parse(`${iso}T12:00:00Z`);
+        if (!Number.isFinite(a) || !Number.isFinite(b)) return 0;
+        return Math.max(0, Math.round((b - a) / 86_400_000));
+      };
+      gamesRemaining = {
+        min: toDays(window.earliest),
+        max: Math.max(toDays(window.earliest), toDays(window.latest)),
+      };
+    }
+
+    const recentHistory = (player.injuryHistory ?? []).slice(0, 3).map((entry) => ({
+      type: entry.type,
+      bodyPart: entry.bodyPart,
+      severity: entry.severity,
+      injuredOn: entry.injuredOn,
+      isReinjury: entry.isReinjury,
+      isAggravation: entry.isAggravation,
+    }));
+    historyRows.push(...recentHistory);
+
     rows.push({
       playerId,
       firstName: player.firstName,
       lastName: player.lastName,
       position: player.position,
+      overall: calculatePlayerOverall(player.position, player.attributes),
       status: player.availability,
-      statusLabel:
-        player.availability === "available"
-          ? "Available"
-          : player.availability === "questionable"
-            ? "Questionable"
-            : player.availability === "limited"
-              ? "Limited"
-              : player.availability === "suspended"
-                ? "Suspended"
-                : "Out",
-      injuryType: player.injury?.type ?? null,
-      severity: player.injury?.severity ?? null,
-      recommendedWorkloadMpg: player.injury?.recommendedWorkloadMpg ?? null,
-      maximumWorkloadMpg: player.injury?.maximumWorkloadMpg ?? null,
-      gamesRemaining: player.injury?.gamesRemaining ?? null,
+      statusLabel: availability.label.split(" · ")[0] ?? availability.label,
+      injuryType: primary?.type ?? null,
+      bodyPart: primary?.bodyPart ?? null,
+      severity: primary?.severity ?? null,
+      recoveryProgress: primary?.recoveryProgress ?? null,
+      expectedReturnEarliest: window?.earliest ?? null,
+      expectedReturnLatest: window?.latest ?? null,
+      practiceRestriction: primary?.practiceRestriction ?? null,
+      gameRestriction: primary?.gameRestriction ?? null,
+      minutesRestriction: primary?.minutesRestriction ?? null,
+      recommendedWorkloadMpg: availability.recommendedWorkloadMpg,
+      maximumWorkloadMpg: availability.maximumWorkloadMpg,
+      reinjuryRisk: primary?.reinjuryRisk ?? null,
+      temporaryEffects: effects.map((effect) => ({
+        attribute: effect.attribute,
+        delta: Math.round(effect.delta * (1 - (primary?.recoveryProgress ?? 0))),
+      })),
+      gamesRemaining,
       isLegacyUndisclosed:
-        player.injury?.type === "Undisclosed" &&
-        player.injury.severity === "unknown",
+        primary?.type === "Undisclosed" && primary.isLegacyData === true,
+      isLongTerm:
+        primary != null &&
+        (primary.severity === "major" || primary.severity === "severe") &&
+        (gamesRemaining?.min ?? 0) >= 14,
+      isHighReinjuryRisk: (primary?.reinjuryRisk ?? 0) >= 0.2,
+      activeInjuryCount: active.length,
+      recentHistory,
     });
   }
   rows.sort((a, b) => {
@@ -598,8 +690,10 @@ export function toInjuryReportView(state: GameState): InjuryReportView {
       const order = [
         "out",
         "suspended",
+        "recovery",
         "limited",
         "questionable",
+        "minor",
         "available",
       ];
       return order.indexOf(a.status) - order.indexOf(b.status);
@@ -610,8 +704,14 @@ export function toInjuryReportView(state: GameState): InjuryReportView {
     teamId: team.id,
     rows,
     injuredCount: rows.filter(
-      (row) => row.status === "out" || row.status === "limited",
+      (row) =>
+        row.status === "out" ||
+        row.status === "limited" ||
+        row.status === "recovery" ||
+        row.status === "questionable" ||
+        row.status === "minor",
     ).length,
+    historyRows,
   };
 }
 

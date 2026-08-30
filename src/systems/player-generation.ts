@@ -142,8 +142,14 @@ export function generatePlayerWithRng(
     personality,
     contractId: options.contractId ?? null,
     availability: "available",
+    activeInjuries: [],
     injury: null,
     suspension: null,
+    physical: {
+      durability: rng.nextInt(45, 88),
+    },
+    conditioning: 100,
+    injuryHistory: [],
     development: { stage: developmentStageForAge(age) },
   });
 }
