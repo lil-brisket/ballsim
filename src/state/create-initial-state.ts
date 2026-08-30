@@ -206,6 +206,8 @@ export function createInitialGameState(
         phase: "preseason",
         offseasonStage: "none",
         regularSeasonStartDate: null,
+        tradeDeadlineDate: null,
+        rfaQualificationComplete: false,
         offseasonStageEnteredDate: null,
         freeAgencyExtendedUntil: null,
       },
@@ -229,6 +231,7 @@ export function createInitialGameState(
       freeAgency: {
         offers: {},
       },
+      rfaStatuses: {},
       tradeBlocks: {},
       ...phaseE,
     },
@@ -498,6 +501,8 @@ export function createFourTeamInitialGameState(
         phase: "preseason",
         offseasonStage: "none",
         regularSeasonStartDate: null,
+        tradeDeadlineDate: null,
+        rfaQualificationComplete: false,
         offseasonStageEnteredDate: null,
         freeAgencyExtendedUntil: null,
       },
@@ -521,6 +526,7 @@ export function createFourTeamInitialGameState(
       freeAgency: {
         offers: {},
       },
+      rfaStatuses: {},
       tradeBlocks: {},
       ...phaseE,
     },

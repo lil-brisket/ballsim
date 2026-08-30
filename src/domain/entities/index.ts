@@ -536,3 +536,17 @@ export {
   createNarrativeSituation,
   createEmptyNarrativeState,
 } from "@/domain/entities/narrative-situation";
+
+export type {
+  RfaStatus,
+  RfaOfferSheet,
+  RfaResolution,
+  RfaStatusInput,
+} from "@/domain/entities/rfa-status";
+export {
+  createRfaStatus,
+  assertRfaStatusShape,
+  isActiveRfa,
+  isRfaResolution,
+  RFA_RESOLUTIONS,
+} from "@/domain/entities/rfa-status";

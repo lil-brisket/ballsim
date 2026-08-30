@@ -32,6 +32,7 @@ import { processHomeGameTicketRevenue } from "@/systems/ticket-revenue";
 import { processNarrativeLayer } from "@/systems/narrative";
 import { assertContinuityBoundary } from "@/systems/simulation/continuity-validation";
 import type { SimulationProfiler } from "@/systems/simulation/simulation-profiler";
+import { processWindowExpirations } from "@/systems/expire-transactions";
 
 /**
  * Canonical Owner Mode simulation advance.
@@ -175,6 +176,11 @@ function advanceOneDay(
   const offseasonLife = processOffseasonLifecycle(current, rng);
   current = offseasonLife.state;
   events.push(...offseasonLife.events);
+
+  const windowExpiry = processWindowExpirations(current);
+  current = windowExpiry.state;
+  events.push(...windowExpiry.events);
+
   if (profiler) {
     profiler.addSeason("lifecycleMs", performance.now() - lifecycleStart);
   }

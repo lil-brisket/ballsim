@@ -41,6 +41,7 @@ import {
 import { DEFAULT_ROSTER_SIZE } from "@/systems/roster-generation-config";
 import { getTeamCapSpace } from "@/systems/salary-cap";
 import { getCalendarContext } from "@/systems/simulation/calendar-context";
+import { checkTradeWindow } from "@/systems/league-rules/trade-rules";
 import {
   draftYearForSeason,
   makeDraftSelection,
@@ -95,10 +96,8 @@ export function runAiTeamDecisions(state: GameState, _rng: Rng): SystemResult {
   }
 
   const calendar = getCalendarContext(current);
-  const phase = current.competition.season.phase;
-  const playerTradesAllowed =
-    calendar.tradesOpen || phase === "offseason" || phase === "preseason";
-  if (playerTradesAllowed) {
+  const tradeWindow = checkTradeWindow(current);
+  if (tradeWindow.allowed) {
     const trade = runAiTrades(current);
     current = trade.state;
     events.push(...trade.events);

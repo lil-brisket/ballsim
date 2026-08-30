@@ -143,6 +143,11 @@ export type Player = {
   /** Independent of injury — a healthy player may still be suspended. */
   suspension: PlayerSuspension | null;
   development: DevelopmentState;
+  /**
+   * Irreversible retirement flag. Retired players cannot return to FA,
+   * be traded, or be re-signed. Historical stats remain intact.
+   */
+  retired?: boolean;
 };
 
 /** Unvalidated construction payload for {@link createPlayer}. */
@@ -165,6 +170,7 @@ export type PlayerInput = {
   injury: PlayerInjury | null;
   suspension: PlayerSuspension | null;
   development: DevelopmentState;
+  retired?: boolean;
 };
 
 /** Conservative migration of legacy binary `{ kind: "healthy" | "injured" }`. */
@@ -311,6 +317,7 @@ export function createPlayer(input: PlayerInput): Player {
     suspension:
       input.suspension == null ? null : { ...input.suspension },
     development: { ...input.development },
+    retired: input.retired === true ? true : undefined,
   };
 }
 

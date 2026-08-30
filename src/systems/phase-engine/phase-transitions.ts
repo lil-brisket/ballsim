@@ -15,6 +15,10 @@ import type {
   PhaseAdvanceSummary,
 } from "@/systems/phase-engine/phase-types";
 import { transitionPhase } from "@/systems/simulation/phase-machine";
+import {
+  canAdvanceFromPhase,
+  canEnterPhase,
+} from "@/systems/league-rules/phase-prerequisites";
 
 /**
  * Write active phase into competition.phase and keep legacy season fields synced.
@@ -50,6 +54,10 @@ export function setActivePhase(
         offseasonStageEnteredDate:
           seasonPhase === "offseason" ? enteredDate : null,
         freeAgencyExtendedUntil: null,
+        // Preserve hard-lock snapshots across phase writes
+        tradeDeadlineDate: state.competition.season.tradeDeadlineDate ?? null,
+        rfaQualificationComplete:
+          state.competition.season.rfaQualificationComplete === true,
       },
     },
     user: {
@@ -169,7 +177,13 @@ export function previewAdvance(state: GameState): PhaseAdvancePreview {
   }
 
   const toDef = getPhaseDefinition(toPhaseId);
-  const canAdvance = requiredRemaining === 0;
+  const leaveCheck = canAdvanceFromPhase(state, fromPhaseId);
+  const enterCheck = canEnterPhase(state, toPhaseId);
+  const leaguePrereq = {
+    allowed: leaveCheck.allowed && enterCheck.allowed,
+    blockReason: leaveCheck.blockReason ?? enterCheck.blockReason,
+  };
+  const canAdvance = requiredRemaining === 0 && leaguePrereq.allowed;
   return {
     fromPhaseId,
     toPhaseId,
@@ -178,9 +192,11 @@ export function previewAdvance(state: GameState): PhaseAdvancePreview {
     recommendedRemaining,
     requiredRemaining,
     canAdvance,
-    blockReason: canAdvance
-      ? null
-      : `${requiredRemaining} required decision${requiredRemaining === 1 ? "" : "s"} must be resolved before advancing.`,
+    blockReason: !leaguePrereq.allowed
+      ? leaguePrereq.blockReason
+      : canAdvance
+        ? null
+        : `${requiredRemaining} required decision${requiredRemaining === 1 ? "" : "s"} must be resolved before advancing.`,
   };
 }
 

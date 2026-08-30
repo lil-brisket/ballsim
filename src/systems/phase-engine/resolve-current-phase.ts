@@ -89,16 +89,14 @@ export function seasonPhaseFromLeaguePhase(
 }
 
 /**
- * Authoritative active phase id from persisted competition.phase,
- * falling back to legacy season fields when missing or inconsistent.
+ * Authoritative active phase id from persisted competition.phase.
+ * When stored phase disagrees with legacy season.phase, prefer competition.phase
+ * and treat season.phase as stale (callers should repair via setActivePhase).
  */
 export function getActivePhaseId(state: GameState): LeaguePhaseId {
   const stored = state.competition.phase?.activePhaseId;
   if (isLeaguePhaseId(stored)) {
-    const expectedSeasonPhase = seasonPhaseFromLeaguePhase(stored);
-    if (expectedSeasonPhase === state.competition.season.phase) {
-      return stored;
-    }
+    return stored;
   }
   return leaguePhaseIdFromLegacy(
     state.competition.season.phase,

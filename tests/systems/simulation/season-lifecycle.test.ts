@@ -219,6 +219,8 @@ describe("season lifecycle", () => {
           phase: "preseason",
           offseasonStage: "none",
           regularSeasonStartDate: null,
+          tradeDeadlineDate: null,
+          rfaQualificationComplete: false,
           offseasonStageEnteredDate: null,
           freeAgencyExtendedUntil: null,
         },
@@ -236,6 +238,7 @@ describe("season lifecycle", () => {
         contracts: {},
         finances,
         freeAgency: { offers: {} },
+        rfaStatuses: {},
         tradeBlocks: {},
         ...createPhaseEBusinessDefaults(
           generated.teams.map((team) => team.id as TeamId),

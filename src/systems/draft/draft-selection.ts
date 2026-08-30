@@ -163,6 +163,13 @@ export function makeDraftSelection(
         ...state.world.drafts,
         [draft.id]: updatedDraft,
       },
+      draftPicks: {
+        ...state.world.draftPicks,
+        [input.draftPickId]: {
+          ...state.world.draftPicks[input.draftPickId]!,
+          status: "used",
+        },
+      },
     },
     business: {
       ...state.business,

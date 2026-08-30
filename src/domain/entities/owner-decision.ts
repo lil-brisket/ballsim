@@ -11,7 +11,7 @@ export type OwnerDecisionType = "trade_offer";
 
 export type OwnerDecisionStatus = "accepted" | "declined" | "delegated";
 
-export type OwnerDecisionSource = "owner" | "owner_ai";
+export type OwnerDecisionSource = "owner" | "owner_ai" | "system";
 
 /** Whether the decision pauses simulation advance. */
 export type OwnerDecisionBlockingLevel = "blocking" | "non_blocking";

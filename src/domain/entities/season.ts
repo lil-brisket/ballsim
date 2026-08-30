@@ -49,6 +49,17 @@ export type Season = {
    */
   regularSeasonStartDate: string | null;
   /**
+   * Snapshotted trade deadline (YYYY-MM-DD) set when regular season begins.
+   * 60% of regular-season calendar span — not games played.
+   * Null until regular season starts.
+   */
+  tradeDeadlineDate: string | null;
+  /**
+   * True after roster_decisions classifies all expiring players as UFA or RFA.
+   * Required before free agency opens.
+   */
+  rfaQualificationComplete: boolean;
+  /**
    * Calendar date when the current offseasonStage was entered (YYYY-MM-DD).
    * Null when offseasonStage is "none" or before first stage entry.
    */
@@ -56,6 +67,7 @@ export type Season = {
   /**
    * Optional absolute end date when the user extends free agency past durationDays.
    * Null when not extended / not in free agency.
+   * Note: durationDays is cosmetic — phase determines FA availability.
    */
   freeAgencyExtendedUntil: string | null;
 };

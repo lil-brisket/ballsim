@@ -8,6 +8,7 @@ import type { DraftClass } from "@/domain/entities/draft";
 import type { FantasyDraft } from "@/domain/entities/fantasy-draft";
 import type { ExpansionState } from "@/domain/entities/expansion";
 import type { FreeAgencyOffer } from "@/domain/entities/free-agency-offer";
+import type { RfaStatus } from "@/domain/entities/rfa-status";
 import type { FranchiseHistory } from "@/domain/entities/franchise-history";
 import type { FranchiseOps } from "@/domain/entities/franchise-ops";
 import type { FranchiseReportCache } from "@/domain/entities/annual-franchise-report";
@@ -50,7 +51,7 @@ import type {
   FranchisePhaseState,
 } from "@/systems/phase-engine/phase-types";
 
-export const GAME_STATE_SCHEMA_VERSION = 53;
+export const GAME_STATE_SCHEMA_VERSION = 54;
 
 /** League personnel market for staff free agency (not a business-finance concept). */
 export type StaffMarketState = {
@@ -127,6 +128,8 @@ export type BusinessSlice = {
   contracts: Record<string, Contract>;
   finances: Record<string, TeamFinances>;
   freeAgency: FreeAgencyState;
+  /** Restricted free agency statuses for the current offseason cycle. */
+  rfaStatuses: Record<string, RfaStatus>;
   tradeBlocks: Record<string, TradeBlock>;
   /** Staff employment terms (separate from player contracts). */
   staffContracts: Record<string, StaffContract>;

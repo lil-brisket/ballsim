@@ -25,6 +25,8 @@ import { FREE_AGENCY_INTEREST_CONFIG } from "@/systems/free-agency-config";
 import { getTeamCapSpace, getTeamPayroll } from "@/systems/salary-cap";
 import { reconcileRosterManagement } from "@/systems/roster-management";
 import { stripPlayersFromAllTradeBlocks } from "@/systems/trades/trade-block";
+import { checkFreeAgencySigning } from "@/systems/league-rules/free-agency-rules";
+import { TRADE_ROSTER_RULES } from "@/systems/trades-config";
 
 export type FreeAgentPoolView = {
   playerIds: PlayerId[];
@@ -378,6 +380,32 @@ export function acceptOffer(
       offerId,
       `Team "${offer.teamId}" cannot afford offer "${offerId}": first-year salary ${firstYearSalary} exceeds cap space ${capSpace} for ${offer.terms.startYear}.`,
     );
+  }
+
+  const faGate = checkFreeAgencySigning(state, offer.playerId);
+  // Phase lock is enforced by canPerformAction / game-service.
+  // Engine still enforces hard locks: RFA bypass and retirement.
+  const hardOnly = faGate.violations.filter(
+    (v) =>
+      v.code === "RFA_REQUIRES_OFFER_SHEET" ||
+      v.code === "PLAYER_RETIRED" ||
+      v.code === "PLAYER_NOT_FOUND",
+  );
+  if (hardOnly.length > 0) {
+    throw new Error(hardOnly[0]!.message);
+  }
+
+  const signingTeamForSize = state.world.teams[offer.teamId];
+  if (signingTeamForSize) {
+    const projectedSize = signingTeamForSize.roster.includes(offer.playerId)
+      ? signingTeamForSize.roster.length
+      : signingTeamForSize.roster.length + 1;
+    const maxSize = TRADE_ROSTER_RULES.maxRosterSize;
+    if (projectedSize > maxSize) {
+      throw new Error(
+        `Signing would exceed maximum roster size of ${maxSize}.`,
+      );
+    }
   }
 
   if (state.business.contracts[offer.terms.id] !== undefined) {

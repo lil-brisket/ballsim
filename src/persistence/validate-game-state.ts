@@ -381,6 +381,16 @@ export function validateGameState(state: unknown): asserts state is GameState {
     competition.season.freeAgencyExtendedUntil,
     "competition.season.freeAgencyExtendedUntil",
   );
+  assertOptionalCalendarDate(
+    competition.season.tradeDeadlineDate ?? null,
+    "competition.season.tradeDeadlineDate",
+  );
+  if (
+    competition.season.rfaQualificationComplete !== undefined &&
+    typeof competition.season.rfaQualificationComplete !== "boolean"
+  ) {
+    fail("competition.season.rfaQualificationComplete must be a boolean.");
+  }
 
   assertRecord(competition.phase, "competition.phase");
   if (

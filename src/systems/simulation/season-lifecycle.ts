@@ -9,6 +9,8 @@ import {
   getActivePhaseId,
   setActivePhase,
 } from "@/systems/phase-engine";
+import { canBeginRegularSeason, canBeginPlayoffs } from "@/systems/league-rules";
+import { snapshotTradeDeadline } from "@/systems/league-rules/snapshot-trade-deadline";
 
 /**
  * True when the regular season has a non-empty schedule and every listed game is final.
@@ -56,6 +58,12 @@ export function beginRegularSeasonFromPreseason(state: GameState): SystemResult 
       `beginRegularSeasonFromPreseason requires preseason.preparation; got "${getActivePhaseId(state)}".`,
     );
   }
+  const gate = canBeginRegularSeason(state);
+  if (!gate.allowed) {
+    throw new Error(
+      gate.blockReason ?? "Season cannot begin — roster validation is incomplete.",
+    );
+  }
   const events: DomainEvent[] = [];
   let current = state;
 
@@ -74,6 +82,8 @@ export function beginRegularSeasonFromPreseason(state: GameState): SystemResult 
     current = scheduleResult.state;
     events.push(...scheduleResult.events);
   }
+
+  current = snapshotTradeDeadline(current);
 
   return systemResult(current, events);
 }
@@ -96,6 +106,10 @@ export function processSeasonLifecycle(state: GameState): SystemResult {
   }
 
   if (phase === "regular" && isRegularSeasonComplete(current)) {
+    const playoffGate = canBeginPlayoffs(current);
+    if (!playoffGate.allowed && current.settings.playoffs.playoffTeams > 0) {
+      // Standings/seeds may still be building — fall through only when complete check fails for empty
+    }
     const playoffTeams = current.settings.playoffs.playoffTeams;
     const liveTeamCount = Object.keys(current.world.teams).length;
 

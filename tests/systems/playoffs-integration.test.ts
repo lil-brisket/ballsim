@@ -166,6 +166,8 @@ function createEightTeamGameState(rngSeed: number): {
         phase: "preseason",
         offseasonStage: "none",
         regularSeasonStartDate: null,
+        tradeDeadlineDate: null,
+        rfaQualificationComplete: false,
         offseasonStageEnteredDate: null,
         freeAgencyExtendedUntil: null,
       },
@@ -188,6 +190,7 @@ function createEightTeamGameState(rngSeed: number): {
       freeAgency: {
         offers: {},
       },
+      rfaStatuses: {},
       tradeBlocks: {},
       ...createPhaseEBusinessDefaults(
         generated.teams.map((team) => team.id as TeamId),

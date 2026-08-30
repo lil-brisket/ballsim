@@ -16,6 +16,7 @@ import { isContractActive } from "@/domain/entities/contract";
 import { STARTER_ROLES } from "@/systems/staff-generation";
 import { CALENDAR_CONTEXT_CONFIG } from "@/systems/simulation/calendar-context-config";
 import { assessRelocation } from "@/state/relocation-assessment";
+import { TRADE_DEADLINE_SEASON_FRACTION } from "@/systems/league-rules/invariants";
 
 export type SeasonSegment =
   | "none"
@@ -88,11 +89,13 @@ export function getCalendarContext(state: GameState): CalendarContext {
     scheduleBounds.earliestGameDate;
   const seasonEnd = scheduleBounds.latestGameDate;
 
-  const tradeDeadlineDate = resolveTradeDeadlineDate(
-    state.settings.regularSeason.tradeDeadlineRule,
-    seasonStart,
-    seasonEnd,
-  );
+  const tradeDeadlineDate =
+    state.competition.season.tradeDeadlineDate ??
+    resolveTradeDeadlineDate(
+      state.settings.regularSeason.tradeDeadlineRule,
+      seasonStart,
+      seasonEnd,
+    );
 
   const gamesRemaining = countRemainingRegularGames(state);
   const regularSeasonProgress = computeRegularSeasonProgress(
@@ -160,9 +163,14 @@ export function areTradesOpen(
     // No deadline yet (no schedule / start) — allow trades during regular.
     return true;
   }
-  return currentDate <= tradeDeadlineDate;
+  // Hard lock: deadline day itself is closed (currentDate < deadline).
+  return currentDate < tradeDeadlineDate;
 }
 
+/**
+ * Trade deadline from 60% of regular-season calendar span (hard lock).
+ * Not based on games played. Prefer settings only for days_after_season_start legacy.
+ */
 export function resolveTradeDeadlineDate(
   rule: TradeDeadlineRule,
   seasonStart: string | null,
@@ -174,11 +182,15 @@ export function resolveTradeDeadlineDate(
   if (rule.kind === "days_after_season_start") {
     return addCalendarDays(seasonStart, rule.daysAfterSeasonStart);
   }
+  // Hard lock: always use TRADE_DEADLINE_SEASON_FRACTION (0.6), ignore settings fraction.
   if (seasonEnd === null || seasonEnd < seasonStart) {
     return null;
   }
   const spanDays = calendarDaysBetween(seasonStart, seasonEnd);
-  const offset = Math.max(0, Math.round(spanDays * rule.seasonSpanFraction));
+  const offset = Math.max(
+    0,
+    Math.round(spanDays * TRADE_DEADLINE_SEASON_FRACTION),
+  );
   return addCalendarDays(seasonStart, offset);
 }
 

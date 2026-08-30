@@ -211,6 +211,7 @@ import {
 import { advanceSimulation } from "@/systems/simulation/advance-simulation";
 import { advanceLeaguePhase } from "@/systems/simulation/offseason-lifecycle";
 import { isInLeaguePhase, previewAdvance, getActivePhaseId } from "@/systems/phase-engine";
+import { getActionBlockReason } from "@/systems/league-rules";
 import { enterOffseasonFromPostseason } from "@/systems/simulation/season-lifecycle";
 import { runAiContinuity } from "@/systems/simulation/ai-continuity";
 import { canAiExecute, isUserAssistCompletelyOff } from "@/systems/simulation/management-policy";
@@ -1379,10 +1380,13 @@ export async function signOwnerFreeAgent(
   }
 
   const state = loaded.state;
-  if (!isInLeaguePhase(state, "offseason.free_agency")) {
-    return fail(
-      "Free agent signing is only allowed during offseason free agency.",
-    );
+  const faBlock = getActionBlockReason(state, {
+    kind: "sign_free_agent",
+    playerId: asPlayerId(input.playerId),
+    teamId: state.user.activeOwnerTeamId,
+  });
+  if (faBlock) {
+    return fail(faBlock);
   }
 
   const playerId = asPlayerId(input.playerId);

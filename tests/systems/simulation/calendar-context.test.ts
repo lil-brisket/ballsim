@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { addCalendarDays } from "@/domain/calendar-date";
-import { asGameId, asTeamId, type TeamId } from "@/domain/ids";
+import { addCalendarDays, calendarDaysBetween } from "@/domain/calendar-date";
+import { type TeamId } from "@/domain/ids";
 import { createSeededRng } from "@/domain/rng";
 import { CBL_GAME_SETTINGS } from "@/domain/game-settings";
 import { createInitialGameState } from "@/state/create-initial-state";
@@ -13,11 +13,11 @@ import {
 import { beginRegularSeasonFromPreseason } from "@/systems/simulation/season-lifecycle";
 import { transitionPhase } from "@/systems/simulation/phase-machine";
 import { validateTrade } from "@/systems/trades/trade-validation";
-import { createGame } from "@/domain/entities/game";
 import type { TradeProposal } from "@/domain/entities/trade-proposal";
+import { TRADE_DEADLINE_SEASON_FRACTION } from "@/systems/league-rules/invariants";
 
 describe("calendar context", () => {
-  it("resolves trade deadline from league calendar span, not game index", () => {
+  it("resolves trade deadline from league calendar span at 60% hard lock", () => {
     const start = "2026-10-01";
     const end = "2027-04-15";
     const byDays = resolveTradeDeadlineDate(
@@ -27,36 +27,34 @@ describe("calendar context", () => {
     );
     expect(byDays).toBe(addCalendarDays(start, 100));
 
+    const spanDays = calendarDaysBetween(start, end);
     const byFraction = resolveTradeDeadlineDate(
       { kind: "fraction_of_season_span", seasonSpanFraction: 0.5 },
       start,
       end,
     );
-    expect(byFraction).toBe(addCalendarDays(start, 98));
+    // Hard lock always uses 0.6, ignoring the settings fraction.
+    expect(byFraction).toBe(
+      addCalendarDays(
+        start,
+        Math.round(spanDays * TRADE_DEADLINE_SEASON_FRACTION),
+      ),
+    );
   });
 
-  it("marks trades closed after the deadline during regular season", () => {
+  it("marks trades closed after the snapshotted deadline during regular season", () => {
     let state = createInitialGameState({
       saveId: "cal_deadline",
       rngSeed: 7,
-      settings: {
-        ...CBL_GAME_SETTINGS,
-        regularSeason: {
-          ...CBL_GAME_SETTINGS.regularSeason,
-          tradeDeadlineRule: {
-            kind: "days_after_season_start",
-            daysAfterSeasonStart: 10,
-          },
-        },
-      },
+      settings: CBL_GAME_SETTINGS,
     });
     const rng = createSeededRng(state.meta.rngState);
     state = bootstrapWorld(state, rng).state;
     state = beginRegularSeasonFromPreseason(state).state;
     expect(state.competition.season.phase).toBe("regular");
-    expect(state.competition.season.regularSeasonStartDate).toBeTruthy();
+    expect(state.competition.season.tradeDeadlineDate).toBeTruthy();
 
-    const start = state.competition.season.regularSeasonStartDate!;
+    const deadline = state.competition.season.tradeDeadlineDate!;
     const openCtx = getCalendarContext(state);
     expect(openCtx.tradesOpen).toBe(true);
 
@@ -66,44 +64,37 @@ describe("calendar context", () => {
         ...state.world,
         calendar: {
           ...state.world.calendar,
-          currentDate: addCalendarDays(start, 11),
+          currentDate: deadline,
         },
       },
     };
     const late = getCalendarContext(state);
     expect(late.tradesOpen).toBe(false);
-    expect(late.seasonSegment).toBe("late");
-    expect(areTradesOpen("regular", addCalendarDays(start, 11), late.tradeDeadlineDate)).toBe(
+    expect(areTradesOpen("regular", deadline, late.tradeDeadlineDate)).toBe(
       false,
     );
+    expect(
+      areTradesOpen("regular", addCalendarDays(deadline, -1), deadline),
+    ).toBe(true);
   });
 
   it("rejects in-season player trades after the deadline", () => {
     let state = createInitialGameState({
       saveId: "cal_trade_lock",
       rngSeed: 9,
-      settings: {
-        ...CBL_GAME_SETTINGS,
-        regularSeason: {
-          ...CBL_GAME_SETTINGS.regularSeason,
-          tradeDeadlineRule: {
-            kind: "days_after_season_start",
-            daysAfterSeasonStart: 5,
-          },
-        },
-      },
+      settings: CBL_GAME_SETTINGS,
     });
     const rng = createSeededRng(state.meta.rngState);
     state = bootstrapWorld(state, rng).state;
     state = beginRegularSeasonFromPreseason(state).state;
-    const start = state.competition.season.regularSeasonStartDate!;
+    const deadline = state.competition.season.tradeDeadlineDate!;
     state = {
       ...state,
       world: {
         ...state.world,
         calendar: {
           ...state.world.calendar,
-          currentDate: addCalendarDays(start, 6),
+          currentDate: addCalendarDays(deadline, 1),
         },
       },
     };
@@ -156,57 +147,20 @@ describe("calendar context", () => {
     let state = createInitialGameState({
       saveId: "cal_window",
       rngSeed: 11,
-      settings: {
-        ...CBL_GAME_SETTINGS,
-        regularSeason: {
-          ...CBL_GAME_SETTINGS.regularSeason,
-          tradeDeadlineRule: {
-            kind: "days_after_season_start",
-            daysAfterSeasonStart: 30,
-          },
-        },
-      },
+      settings: CBL_GAME_SETTINGS,
     });
     const rng = createSeededRng(state.meta.rngState);
     state = bootstrapWorld(state, rng).state;
     state = beginRegularSeasonFromPreseason(state).state;
-    const start = state.competition.season.regularSeasonStartDate!;
-    // Ensure schedule end exists after deadline for span-based helpers.
-    const lateGameId = asGameId("game_cal_end");
-    const teamIds = Object.keys(state.world.teams) as TeamId[];
-    const lateGame = createGame({
-      competitionType: "regular_season",
-      homeTeamSnapshot: null,
-      awayTeamSnapshot: null,
-      id: lateGameId,
-      seasonId: state.competition.season.id,
-      date: addCalendarDays(start, 80),
-      homeTeamId: asTeamId(teamIds[0]!),
-      awayTeamId: asTeamId(teamIds[1]!),
-      status: "scheduled",
-      score: { home: 0, away: 0 },
-      periodScores: [],
-      events: [],
-      playerStats: [],
-    });
+    const deadline = state.competition.season.tradeDeadlineDate!;
+    // 3 days before deadline → deadline_window (config: 14 days)
     state = {
       ...state,
-      competition: {
-        ...state.competition,
-        schedule: {
-          ...state.competition.schedule,
-          gameIds: [...state.competition.schedule.gameIds, lateGameId],
-        },
-        games: {
-          ...state.competition.games,
-          [lateGameId]: lateGame,
-        },
-      },
       world: {
         ...state.world,
         calendar: {
           ...state.world.calendar,
-          currentDate: addCalendarDays(start, 25),
+          currentDate: addCalendarDays(deadline, -3),
         },
       },
     };
