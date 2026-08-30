@@ -49,7 +49,7 @@ describe("roster-management", () => {
           ...state.world.players,
           [playerId]: {
             ...state.world.players[playerId]!,
-            injury: { kind: "injured" },
+            availability: "out", injury: { type: "Undisclosed", severity: "unknown", gamesRemaining: null, recommendedWorkloadMpg: null, maximumWorkloadMpg: null, recoveryProgress: 0 }, suspension: null,
           },
         },
       },
@@ -130,7 +130,7 @@ describe("roster-management", () => {
       const playerId = roster[index]!;
       players[playerId] = {
         ...players[playerId]!,
-        injury: { kind: "injured" },
+        availability: "out", injury: { type: "Undisclosed", severity: "unknown", gamesRemaining: null, recommendedWorkloadMpg: null, maximumWorkloadMpg: null, recoveryProgress: 0 }, suspension: null,
       };
     }
     state = {

@@ -10,6 +10,25 @@ import { SortableTableControls } from "@/components/owner/SortableTableControls"
 
 type SortKey = "player" | "status" | "position";
 
+function isUnavailableStatus(status: string): boolean {
+  return (
+    status === "out" ||
+    status === "limited" ||
+    status === "questionable" ||
+    status === "suspended"
+  );
+}
+
+function formatGamesRemaining(
+  games: { min: number; max: number } | null,
+): string | null {
+  if (games == null) return null;
+  if (games.min === games.max) {
+    return `${games.min}g`;
+  }
+  return `${games.min}–${games.max}g`;
+}
+
 export function InjuryTable(props: {
   saveId: string;
   report: InjuryReportView;
@@ -23,7 +42,7 @@ export function InjuryTable(props: {
     const q = query.trim().toLowerCase();
     if (q) {
       filtered = filtered.filter((row) =>
-        `${row.firstName} ${row.lastName} ${row.position} ${row.statusLabel}`
+        `${row.firstName} ${row.lastName} ${row.position} ${row.statusLabel} ${row.injuryType ?? ""}`
           .toLowerCase()
           .includes(q),
       );
@@ -63,31 +82,53 @@ export function InjuryTable(props: {
           { value: "position", label: "Position" },
         ]}
       />
-      <DataTable headers={["Player", "Pos", "Status", ""]}>
-        {rows.map((row) => (
-          <tr key={row.playerId} className="border-t border-zinc-800">
-            <td className="px-3 py-2 text-zinc-100">
-              {row.firstName} {row.lastName}
-            </td>
-            <td className="px-3 py-2 font-mono text-zinc-400">{row.position}</td>
-            <td className="px-3 py-2">
-              <StatusBadge
-                label={row.statusLabel}
-                tone={row.status === "injured" ? "injured" : "healthy"}
-              />
-            </td>
-            <td className="px-3 py-2 text-right">
-              {row.status === "injured" ? (
-                <Link
-                  href={`/dashboard/${props.saveId}/team-management/lineups`}
-                  className="text-xs text-amber-400 hover:underline"
-                >
-                  Fix lineup →
-                </Link>
-              ) : null}
-            </td>
-          </tr>
-        ))}
+      <DataTable
+        headers={["Player", "Pos", "Status", "Detail", "Workload", ""]}
+      >
+        {rows.map((row) => {
+          const gamesText = formatGamesRemaining(row.gamesRemaining);
+          const detailParts = [
+            row.isLegacyUndisclosed
+              ? "Undisclosed"
+              : row.injuryType,
+            row.severity,
+            gamesText,
+          ].filter(Boolean);
+          const workload =
+            row.recommendedWorkloadMpg != null ||
+            row.maximumWorkloadMpg != null
+              ? `Rec ${row.recommendedWorkloadMpg ?? "—"} / Max ${row.maximumWorkloadMpg ?? "—"}`
+              : "—";
+          return (
+            <tr key={row.playerId} className="border-t border-zinc-800">
+              <td className="px-3 py-2 text-zinc-100">
+                {row.firstName} {row.lastName}
+              </td>
+              <td className="px-3 py-2 font-mono text-zinc-400">
+                {row.position}
+              </td>
+              <td className="px-3 py-2">
+                <StatusBadge label={row.statusLabel} tone={row.status} />
+              </td>
+              <td className="px-3 py-2 text-xs text-zinc-400">
+                {detailParts.length > 0 ? detailParts.join(" · ") : "—"}
+              </td>
+              <td className="px-3 py-2 font-mono text-xs text-zinc-400">
+                {workload}
+              </td>
+              <td className="px-3 py-2 text-right">
+                {isUnavailableStatus(row.status) ? (
+                  <Link
+                    href={`/dashboard/${props.saveId}/team-management/lineups`}
+                    className="text-xs text-amber-400 hover:underline"
+                  >
+                    Fix lineup →
+                  </Link>
+                ) : null}
+              </td>
+            </tr>
+          );
+        })}
       </DataTable>
     </div>
   );

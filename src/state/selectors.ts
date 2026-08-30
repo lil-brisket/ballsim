@@ -505,7 +505,7 @@ export function toRosterView(state: GameState): RosterPlayerView[] {
       contractSalary: salary,
       contractEndYear: contract?.endYear ?? null,
       contractYearsRemaining: yearsRemaining,
-      injuryKind: player.injury.kind,
+      injuryKind: player.availability,
       developmentStage: player.development.stage,
     });
   }
@@ -1040,7 +1040,7 @@ function playerEntityToDetail(
     teamName: team ? `${team.city} ${team.name}` : null,
     teamBranding: toBrandingView(team?.branding),
     onControlledRoster,
-    injuryKind: player.injury.kind,
+    injuryKind: player.availability,
     developmentStage: player.development.stage,
     attributes: { ...player.attributes },
     contract: contract
@@ -2024,7 +2024,7 @@ export function toFantasyDraftPlayerDetailView(
     overall,
     potential: player.potential.overall,
     tier: fantasyDraftPlayerTier(overall),
-    injuryKind: player.injury.kind,
+    injuryKind: player.availability,
     developmentStage: player.development.stage,
     attributes: { ...player.attributes },
     strengths: strengths.map((s) => ({ label: s.label, rating: s.rating })),

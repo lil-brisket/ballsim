@@ -43,7 +43,7 @@ export type PlayerSeasonRecord = {
   overall: number;
   attributes: PlayerAttributes;
   developmentStage: DevelopmentStage;
-  /** Season-end injury status kind ("healthy" | "injured"). */
+  /** Season-end availability status ("available" | "questionable" | ...). */
   injuryKind: string;
   /** Season-end contract snapshot only; current contract lives in business.contracts. */
   contractSnapshot: PlayerSeasonContractSnapshot;

@@ -9,6 +9,7 @@ import type {
   PlayerPosition,
   PlayerPotential,
 } from "@/domain/entities/player";
+import { migrateLegacyInjuryStatus } from "@/domain/entities/player";
 import type { PlayerArchetype } from "@/domain/entities/player-archetype";
 import type { PlayerNationality } from "@/domain/entities/player-nationality";
 import type { Team, TeamPlayStyle } from "@/domain/entities/team";
@@ -197,6 +198,7 @@ const MIGRATE_ONE_STEP: Record<number, (state: unknown) => unknown> = {
   49: (state) => migrateV49ToV50(state as GameStateV49),
   50: (state) => migrateV50ToV51(state as GameStateV50),
   51: (state) => migrateV51ToV52(state as GameStateV51),
+  52: (state) => migrateV52ToV53(state as GameStateV52),
 };
 
 function legacyUserRecord(user: unknown): Record<string, unknown> {
@@ -878,12 +880,15 @@ function migrateV5ToV6(state: GameStateV5): GameStateV6 {
 }
 
 function migratePlayerV5ToV6(player: PlayerV5): Player {
+  const migrated = migrateLegacyInjuryStatus(player.injury);
   return {
     ...player,
     attributes: { ...player.attributes },
     potential: { ...player.potential },
     personality: { ...player.personality },
-    injury: { ...player.injury },
+    availability: migrated.availability,
+    injury: migrated.injury,
+    suspension: migrated.suspension,
     development: { ...player.development },
     nationality: LEGACY_PLAYER_NATIONALITY,
   };
@@ -4263,7 +4268,7 @@ type GameStateV51 = Omit<GameState, "meta"> & {
  * Deterministic v51 → v52: fantasy draft queues, auto-pick strategies,
  * settings, and post-draft analysis containers.
  */
-function migrateV51ToV52(state: GameStateV51): GameState {
+function migrateV51ToV52(state: GameStateV51): GameStateV52 {
   const fantasyDraft = state.world.fantasyDraft;
   if (fantasyDraft === null) {
     return {
@@ -4330,6 +4335,100 @@ function migrateV51ToV52(state: GameStateV51): GameState {
             : null,
       },
     },
+  };
+}
+
+type GameStateV52 = Omit<GameState, "meta"> & {
+  meta: Omit<GameState["meta"], "schemaVersion"> & { schemaVersion: 52 };
+};
+
+/**
+ * Deterministic v52 → v53: separate player availability / injury / suspension.
+ * Legacy `{ kind: "healthy" | "injured" }` maps conservatively — no fabricated
+ * severity or return timelines.
+ */
+function migrateV52ToV53(state: GameStateV52): GameState {
+  const players: GameState["world"]["players"] = {};
+  for (const [playerId, raw] of Object.entries(state.world.players)) {
+    players[playerId] = migratePlayerInjuryFields(
+      raw as unknown as Record<string, unknown>,
+    );
+  }
+
+  const teams: GameState["world"]["teams"] = {};
+  for (const [teamId, team] of Object.entries(state.world.teams)) {
+    const management = team.rosterManagement;
+    teams[teamId] = {
+      ...team,
+      rosterManagement: {
+        ...management,
+        rotationDepth: Math.max(
+          management.rotationDepth,
+          depthForPhilosophy(management.rotationPhilosophy),
+        ),
+        closingLineupPolicy:
+          management.closingLineupPolicy === "auto" ||
+          management.closingLineupPolicy === "best_five" ||
+          management.closingLineupPolicy === "starters" ||
+          management.closingLineupPolicy === "custom"
+            ? management.closingLineupPolicy
+            : "auto",
+        rotation: management.rotation.map((entry) => ({
+          ...entry,
+          role: entry.role === "deep_bench" ? "bench" : entry.role,
+          overrideMedicalRecommendation:
+            entry.overrideMedicalRecommendation === true,
+        })),
+      },
+    };
+  }
+
+  return {
+    ...state,
+    meta: {
+      ...state.meta,
+      schemaVersion: 53,
+    },
+    world: {
+      ...state.world,
+      players,
+      teams,
+    },
+  };
+}
+
+function migratePlayerInjuryFields(
+  raw: Record<string, unknown>,
+): Player {
+  const base = raw as unknown as Player;
+  // Already migrated shape
+  if (
+    typeof raw.availability === "string" &&
+    (raw.injury === null ||
+      (typeof raw.injury === "object" &&
+        raw.injury !== null &&
+        !("kind" in (raw.injury as object))))
+  ) {
+    return {
+      ...base,
+      availability: raw.availability as Player["availability"],
+      injury: (raw.injury as Player["injury"]) ?? null,
+      suspension: (raw.suspension as Player["suspension"]) ?? null,
+    };
+  }
+
+  const legacyInjury = raw.injury as InjuryStatus | undefined;
+  const migrated = migrateLegacyInjuryStatus(
+    legacyInjury ?? { kind: "healthy" },
+  );
+  const { injury: _removed, ...rest } = raw as Record<string, unknown> & {
+    injury?: unknown;
+  };
+  return {
+    ...(rest as unknown as Player),
+    availability: migrated.availability,
+    injury: migrated.injury,
+    suspension: migrated.suspension,
   };
 }
 

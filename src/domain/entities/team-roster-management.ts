@@ -47,6 +47,11 @@ export type RotationEntry = {
   preferredPositions: PlayerPosition[];
   secondaryPositions: PlayerPosition[];
   minutePriorityBias: MinutePriorityBias;
+  /**
+   * When true, user accepts risk of exceeding medical recommended/maximum workload.
+   * Default false — engine respects maximumWorkloadMpg as a hard cap.
+   */
+  overrideMedicalRecommendation?: boolean;
 };
 
 export type RotationPhilosophy =
@@ -67,7 +72,11 @@ export type RotationPreset =
   | "development"
   | "custom";
 
-export type ClosingLineupPolicy = "auto" | "starters" | "custom";
+export type ClosingLineupPolicy =
+  | "auto"
+  | "best_five"
+  | "starters"
+  | "custom";
 
 export type RosterConfiguredBy = "default" | "user" | "ai";
 
@@ -128,6 +137,7 @@ export const ROTATION_PRESETS: readonly RotationPreset[] = [
 
 export const CLOSING_LINEUP_POLICIES: readonly ClosingLineupPolicy[] = [
   "auto",
+  "best_five",
   "starters",
   "custom",
 ] as const;
@@ -140,7 +150,7 @@ export const ROSTER_CONFIGURED_BY: readonly RosterConfiguredBy[] = [
 
 export const DEFAULT_ROTATION_STYLE: RotationStyle = "balanced";
 export const DEFAULT_ROTATION_PHILOSOPHY: RotationPhilosophy = "balanced";
-export const DEFAULT_ROTATION_DEPTH = 9;
+export const DEFAULT_ROTATION_DEPTH = 12;
 export const DEFAULT_ROTATION_PRESET: RotationPreset = "balanced";
 export const DEFAULT_CLOSING_LINEUP_POLICY: ClosingLineupPolicy = "auto";
 
@@ -218,14 +228,13 @@ export function depthForPhilosophy(
   switch (philosophy) {
     case "tight":
     case "star_heavy":
-      return 8;
-    case "deep":
       return 10;
+    case "deep":
     case "development":
-      return 11;
+      return 12;
     case "balanced":
     default:
-      return 9;
+      return 12;
   }
 }
 

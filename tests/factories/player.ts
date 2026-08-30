@@ -10,14 +10,16 @@ import {
   createPlayer as createDomainPlayer,
   PLAYER_ATTRIBUTE_KEYS,
   type DevelopmentState,
-  type InjuryStatus,
   type Player,
   type PlayerArchetype,
   type PlayerAttributes,
+  type PlayerAvailability,
+  type PlayerInjury,
   type PlayerNationality,
   type PlayerPersonality,
   type PlayerPosition,
   type PlayerPotential,
+  type PlayerSuspension,
 } from "@/domain/entities/player";
 
 export type CreatePlayerOverrides = {
@@ -35,7 +37,9 @@ export type CreatePlayerOverrides = {
   potential?: Partial<PlayerPotential>;
   personality?: Partial<PlayerPersonality>;
   contractId?: ContractId | string | null;
-  injury?: InjuryStatus;
+  availability?: PlayerAvailability;
+  injury?: PlayerInjury | null;
+  suspension?: PlayerSuspension | null;
   development?: Partial<DevelopmentState>;
 };
 
@@ -111,7 +115,9 @@ export function createPlayer(overrides: CreatePlayerOverrides = {}): Player {
       ...overrides.personality,
     },
     contractId,
-    injury: overrides.injury ?? { kind: "healthy" },
+    availability: overrides.availability ?? "available",
+    injury: overrides.injury === undefined ? null : overrides.injury,
+    suspension: overrides.suspension === undefined ? null : overrides.suspension,
     development: {
       stage: "developing",
       ...overrides.development,

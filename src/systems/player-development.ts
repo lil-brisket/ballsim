@@ -102,7 +102,9 @@ export function developPlayer(
     potential: player.potential,
     personality: player.personality,
     contractId: player.contractId,
+    availability: player.availability,
     injury: player.injury,
+    suspension: player.suspension,
     development: { stage },
   });
 }

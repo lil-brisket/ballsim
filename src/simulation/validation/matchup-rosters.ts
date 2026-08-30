@@ -55,7 +55,19 @@ export function copyPlayerWithAttributes(
     potential: { ...source.potential },
     personality: { ...source.personality },
     contractId: null,
-    injury: { ...source.injury },
+    availability: source.availability,
+    injury:
+      source.injury == null
+        ? null
+        : {
+            ...source.injury,
+            gamesRemaining:
+              source.injury.gamesRemaining == null
+                ? null
+                : { ...source.injury.gamesRemaining },
+          },
+    suspension:
+      source.suspension == null ? null : { ...source.suspension },
     development: { ...source.development },
   });
 }

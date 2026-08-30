@@ -123,7 +123,7 @@ function expectValidGeneratedPlayer(
     expect(player.personality[key], message).toBeLessThanOrEqual(MAX_PERSONALITY);
   }
 
-  expect(player.injury.kind, message).toBe("healthy");
+  expect(player.availability, message).toBe("available");
   expect(player.development.stage, message).toBe(
     developmentStageForAge(player.age),
   );
@@ -516,7 +516,7 @@ describe("generateRosters with player generation engine", () => {
           isArchetypeCompatible(player.archetype, player.position),
         ).toBe(true);
         expect(player.potential.overall).toBeGreaterThanOrEqual(overall);
-        expect(player.injury.kind).toBe("healthy");
+        expect(player.availability).toBe("available");
         expect(player.development.stage).toBe(
           developmentStageForAge(player.age),
         );

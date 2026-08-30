@@ -65,11 +65,34 @@ function resolveClosingLineup(input: {
   activeIds: PlayerId[];
 }): PlayerId[] {
   const { management, playersById, activeIds } = input;
+
+  const fillFromOverall = (seed: PlayerId[]): PlayerId[] => {
+    const sorted = [...activeIds]
+      .map((id) => playersById.get(id))
+      .filter((p): p is Player => p != null)
+      .sort((a, b) => overall(b) - overall(a))
+      .map((p) => p.id);
+    const filled = [...seed];
+    for (const id of sorted) {
+      if (filled.length >= 5) break;
+      if (!filled.includes(id)) filled.push(id);
+    }
+    return filled.slice(0, 5);
+  };
+
   if (
     management.closingLineupPolicy === "custom" &&
     management.closingLineupIds.length === 5
   ) {
-    return [...management.closingLineupIds];
+    const custom = management.closingLineupIds.filter((id) =>
+      activeIds.includes(id),
+    );
+    if (custom.length === 5) return custom;
+    return fillFromOverall(custom);
+  }
+
+  if (management.closingLineupPolicy === "best_five") {
+    return fillFromOverall([]);
   }
 
   if (
@@ -80,28 +103,11 @@ function resolveClosingLineup(input: {
     const starters = management.startingLineup
       .map((slot) => slot.playerId)
       .filter((id) => activeIds.includes(id));
-    if (starters.length === 5) {
-      return starters;
-    }
-    // Fill from highest overall actives
-    const sorted = [...activeIds]
-      .map((id) => playersById.get(id))
-      .filter((p): p is Player => p != null)
-      .sort((a, b) => overall(b) - overall(a))
-      .map((p) => p.id);
-    const filled = [...starters];
-    for (const id of sorted) {
-      if (filled.length >= 5) {
-        break;
-      }
-      if (!filled.includes(id)) {
-        filled.push(id);
-      }
-    }
-    return filled.slice(0, 5);
+    if (starters.length === 5) return starters;
+    return fillFromOverall(starters);
   }
 
-  return activeIds.slice(0, 5);
+  return fillFromOverall([]);
 }
 
 /**

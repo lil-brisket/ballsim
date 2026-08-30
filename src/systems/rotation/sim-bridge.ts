@@ -25,6 +25,8 @@ import {
 } from "@/systems/rotation/rotation-foul-trouble";
 import { appendTraceEntry } from "@/systems/rotation/rotation-trace";
 import { buildMinuteExplanations } from "@/systems/rotation/rotation-explanations";
+import { applyInjuryFromSeverity } from "@/systems/injury/injury-lifecycle";
+import { redistributeLiveMinutesAfterInjury } from "@/systems/rotation/rotation-injury-response";
 import { ROTATION_CONFIG } from "@/systems/rotation/rotation-config";
 
 export function initializeRotationForSim(
@@ -103,8 +105,14 @@ function unavailableIdsForTeam(
   teamId: TeamId,
   roster: readonly Player[],
   fouledOut: ReadonlySet<string>,
+  midGameUnavailable?: ReadonlySet<string>,
 ): Set<string> {
   const ids = new Set<string>([...fouledOut]);
+  if (midGameUnavailable) {
+    for (const id of midGameUnavailable) {
+      ids.add(id);
+    }
+  }
   if (state == null) {
     return ids;
   }
@@ -187,6 +195,7 @@ function applySideSubstitutions(input: {
     teamId,
     roster,
     sim.fouledOutPlayerIds,
+    sim.unavailablePlayerIds,
   );
 
   const onCourtIds = new Set(onCourt.map((p) => p.id));
@@ -397,12 +406,74 @@ export function finalizeRotationExplanations(sim: GameSimState): void {
         sim.peakFoulTroubleByPlayerId.get(entry.playerId) ?? "none",
       peakFatigue: sim.peakFatigueByPlayerId.get(entry.playerId) ?? 0,
       situationsSeen: situations,
-      wasInjured: false,
+      wasInjured: sim.unavailablePlayerIds.has(entry.playerId),
     });
     if (reasons.length > 0) {
       sim.rotationExplanations.set(entry.playerId, reasons);
     }
   }
+}
+
+/**
+ * Mid-game injury hook: mark player unavailable, remove from court, redistribute
+ * remaining planned minutes, then force a substitution checkpoint.
+ * Injury probability/event generation is separate — this handles consequences.
+ */
+export function handleMidGameInjury(input: {
+  sim: GameSimState;
+  state: GameState;
+  teamId: TeamId;
+  injuredPlayerId: PlayerId;
+  periodNumber: number;
+  secondsRemaining: number;
+  homeRoster: readonly Player[];
+  awayRoster: readonly Player[];
+  isHome: boolean;
+}): GameState {
+  const { sim, injuredPlayerId, isHome } = input;
+
+  const nextState = applyInjuryFromSeverity(input.state, injuredPlayerId, {
+    type: "In-game injury",
+    severity: "moderate",
+  });
+
+  sim.unavailablePlayerIds.add(injuredPlayerId);
+
+  const plan = isHome ? sim.homeRotationPlan : sim.awayRotationPlan;
+  const roster = isHome ? input.homeRoster : input.awayRoster;
+  if (plan != null) {
+    const playersById = new Map(
+      roster.map((p) => [p.id as string, p] as const),
+    );
+    const actualMinutes = new Map<string, number>();
+    for (const [id, seconds] of sim.secondsOnCourt) {
+      actualMinutes.set(id, seconds / 60);
+    }
+    const remainingGameMinutes =
+      Math.max(0, input.secondsRemaining) / 60 +
+      Math.max(0, 4 - input.periodNumber) * 12;
+    const injuredPlayer = roster.find((p) => p.id === injuredPlayerId);
+    plan.rotationByPlayerId = redistributeLiveMinutesAfterInjury({
+      rotationByPlayerId: plan.rotationByPlayerId,
+      injuredPlayerId,
+      actualMinutesByPlayer: actualMinutes,
+      remainingGameMinutes,
+      playersById,
+      position: injuredPlayer?.position,
+    });
+  }
+
+  runSubstitutionCheckpoint(
+    sim,
+    nextState,
+    "injury",
+    input.periodNumber,
+    input.secondsRemaining,
+    input.homeRoster,
+    input.awayRoster,
+  );
+
+  return nextState;
 }
 
 export function averageOnCourtFatigue(

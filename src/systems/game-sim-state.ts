@@ -48,6 +48,8 @@ export type GameSimState = {
   fatigueByPlayerId: Map<string, number>;
   lastSubElapsedSeconds: Map<string, number>;
   fouledOutPlayerIds: Set<string>;
+  /** Mid-game injuries / other unavailability during this sim. */
+  unavailablePlayerIds: Set<string>;
   rotationTrace: RotationTraceEntry[];
   rotationExplanations: Map<string, string[]>;
   /** Frozen at tip-off from TeamRosterManagement. */
@@ -125,6 +127,7 @@ export function createGameSimState(input: CreateGameSimStateInput): GameSimState
     fatigueByPlayerId: new Map(),
     lastSubElapsedSeconds: new Map(),
     fouledOutPlayerIds: new Set(),
+    unavailablePlayerIds: new Set(),
     rotationTrace: [],
     rotationExplanations: new Map(),
     homeRotationSnapshot: [],

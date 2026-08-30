@@ -56,7 +56,9 @@ function validInput(overrides: Partial<PlayerInput> = {}): PlayerInput {
       composure: 58,
     },
     contractId: asContractId("contract_1"),
-    injury: { kind: "healthy" },
+    availability: "available",
+    injury: null,
+    suspension: null,
     development: { stage: "developing" },
     ...overrides,
   };
@@ -285,11 +287,27 @@ describe("createPlayer", () => {
     ).toBe("c_99");
   });
 
-  it("represents injury state", () => {
-    expect(createPlayer(validInput()).injury).toEqual({ kind: "healthy" });
-    expect(
-      createPlayer(validInput({ injury: { kind: "injured" } })).injury,
-    ).toEqual({ kind: "injured" });
+  it("represents availability and injury state", () => {
+    const healthy = createPlayer(validInput());
+    expect(healthy.availability).toBe("available");
+    expect(healthy.injury).toBeNull();
+    expect(healthy.suspension).toBeNull();
+
+    const injured = createPlayer(
+      validInput({
+        availability: "out",
+        injury: {
+          type: "Ankle Sprain",
+          severity: "moderate",
+          gamesRemaining: { min: 2, max: 4 },
+          recommendedWorkloadMpg: null,
+          maximumWorkloadMpg: null,
+          recoveryProgress: 0,
+        },
+      }),
+    );
+    expect(injured.availability).toBe("out");
+    expect(injured.injury?.type).toBe("Ankle Sprain");
   });
 
   it("represents development stage", () => {

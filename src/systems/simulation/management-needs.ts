@@ -132,7 +132,7 @@ function detectRotationNeeds(
 
   const healthy = team.roster.filter((playerId) => {
     const player = state.world.players[playerId];
-    return player !== undefined && player.injury.kind === "healthy";
+    return player !== undefined && player.availability === "available";
   });
 
   if (healthy.length < GAME_SIMULATION_CONFIG.startingLineupSize) {
@@ -149,12 +149,15 @@ function detectRotationNeeds(
     ];
   }
 
-  // Injured players exist but enough healthy remain — continuity may rebalance.
-  const injuredOnRoster = team.roster.some((playerId) => {
+  // Injured / out players exist but enough healthy remain — continuity may rebalance.
+  const outOnRoster = team.roster.some((playerId) => {
     const player = state.world.players[playerId];
-    return player !== undefined && player.injury.kind === "injured";
+    return (
+      player !== undefined &&
+      (player.availability === "out" || player.availability === "suspended")
+    );
   });
-  if (injuredOnRoster) {
+  if (outOnRoster) {
     return [
       {
         id: "injured_in_rotation",
@@ -162,7 +165,10 @@ function detectRotationNeeds(
         severity: "warning",
         title: "Injured player in rotation pool",
         detail: "Healthy substitutes should cover injured players for game validity.",
-        needKey: `injured_rotation:${team.roster.filter((id) => state.world.players[id]?.injury.kind === "injured").length}`,
+        needKey: `injured_rotation:${team.roster.filter((id) => {
+          const p = state.world.players[id];
+          return p?.availability === "out" || p?.availability === "suspended";
+        }).length}`,
         metadata: {},
       },
     ];
@@ -276,7 +282,12 @@ function countHealthyPlayers(
   let count = 0;
   for (const playerId of roster) {
     const player = state.world.players[playerId];
-    if (player && player.injury.kind === "healthy") {
+    if (
+      player &&
+      (player.availability === "available" ||
+        player.availability === "questionable" ||
+        player.availability === "limited")
+    ) {
       count += 1;
     }
   }

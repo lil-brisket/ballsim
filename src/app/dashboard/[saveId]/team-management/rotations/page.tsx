@@ -24,7 +24,7 @@ export default async function RotationsPage({
     <>
       <PageHeader
         title="Rotations"
-        subtitle="Set targets, min/max, and priority — the simulation decides actual minutes"
+        subtitle="Set Target MPG, roles, and priority — the simulation decides actual minutes"
       />
       {error ? <ErrorState message={error} /> : null}
       <RotationEditor saveId={saveId} rotation={view.rotation} />

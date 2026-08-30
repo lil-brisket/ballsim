@@ -338,7 +338,7 @@ function scoreCompetitive(
   }
 
   // Injuries — soft penalty when multiple players unavailable.
-  const injured = toRosterView(state).filter((p) => p.injuryKind !== "healthy");
+  const injured = toRosterView(state).filter((p) => p.injuryKind !== "available");
   if (injured.length >= 3) {
     score = clamp(score - 5, 0, 100);
     drivers.push({

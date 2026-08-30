@@ -32,7 +32,7 @@ export default async function TeamOverviewPage({
   }
 
   const { dashboard, roster } = view;
-  const healthy = roster.filter((p) => p.injuryKind === "healthy").length;
+  const healthy = roster.filter((p) => p.injuryKind === "available").length;
   const injured = roster.length - healthy;
 
   return (

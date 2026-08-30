@@ -97,7 +97,7 @@ function makePlayer(
       composure: 50,
     },
     contractId: null,
-    injury: { kind: "healthy" },
+    availability: "available", injury: null, suspension: null,
     development: { stage: age <= 24 ? "developing" : "prime" },
   });
 }

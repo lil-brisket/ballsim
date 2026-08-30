@@ -3,6 +3,12 @@
  * UI and sim must use this — never hardcode injury/inactive checks in components.
  */
 
+import {
+  availabilityDisplayLabel,
+  playerCanPlay,
+  type Player,
+  type PlayerAvailability as PlayerAvailabilityStatus,
+} from "@/domain/entities/player";
 import type { PlayerId, TeamId } from "@/domain/ids";
 import type { GameState } from "@/state/game-state";
 
@@ -10,20 +16,184 @@ export type UnavailabilityReason =
   | "injured"
   | "inactive"
   | "not_on_roster"
-  | "suspended";
+  | "suspended"
+  | "questionable"
+  | "limited";
 
-export type PlayerAvailability = {
+/** Resolved gate result used by UI / sim / rotation. */
+export type ResolvedPlayerAvailability = {
   available: boolean;
+  /** True when the player may take the floor (available/questionable/limited). */
+  canPlay: boolean;
+  status: PlayerAvailabilityStatus;
   reason?: UnavailabilityReason;
   label: string;
+  injuryType: string | null;
+  recommendedWorkloadMpg: number | null;
+  maximumWorkloadMpg: number | null;
+  /** Human-readable reason for workload restriction, if any. */
+  limitReason: string | null;
+  /** Legacy/migrated injury without medical detail. */
+  isLegacyUndisclosed: boolean;
 };
 
+/** @deprecated Prefer {@link ResolvedPlayerAvailability}. */
+export type PlayerAvailability = ResolvedPlayerAvailability;
+
 const AVAILABILITY_LABELS: Record<UnavailabilityReason, string> = {
-  injured: "Injured",
+  injured: "Out",
   inactive: "Inactive",
   not_on_roster: "Not on roster",
   suspended: "Suspended",
+  questionable: "Questionable",
+  limited: "Limited",
 };
+
+function notOnRoster(): ResolvedPlayerAvailability {
+  return {
+    available: false,
+    canPlay: false,
+    status: "out",
+    reason: "not_on_roster",
+    label: AVAILABILITY_LABELS.not_on_roster,
+    injuryType: null,
+    recommendedWorkloadMpg: null,
+    maximumWorkloadMpg: null,
+    limitReason: null,
+    isLegacyUndisclosed: false,
+  };
+}
+
+function resolveFromPlayer(
+  player: Player,
+  inactive: boolean,
+): ResolvedPlayerAvailability {
+  const injuryType = player.injury?.type ?? null;
+  const isLegacyUndisclosed =
+    player.injury?.type === "Undisclosed" &&
+    player.injury.severity === "unknown";
+
+  if (player.suspension != null && player.suspension.gamesRemaining > 0) {
+    return {
+      available: false,
+      canPlay: false,
+      status: "suspended",
+      reason: "suspended",
+      label: AVAILABILITY_LABELS.suspended,
+      injuryType,
+      recommendedWorkloadMpg: null,
+      maximumWorkloadMpg: null,
+      limitReason: null,
+      isLegacyUndisclosed,
+    };
+  }
+
+  if (player.availability === "suspended") {
+    return {
+      available: false,
+      canPlay: false,
+      status: "suspended",
+      reason: "suspended",
+      label: AVAILABILITY_LABELS.suspended,
+      injuryType,
+      recommendedWorkloadMpg: null,
+      maximumWorkloadMpg: null,
+      limitReason: null,
+      isLegacyUndisclosed,
+    };
+  }
+
+  if (player.availability === "out") {
+    return {
+      available: false,
+      canPlay: false,
+      status: "out",
+      reason: "injured",
+      label: isLegacyUndisclosed
+        ? "Out (details unavailable)"
+        : injuryType
+          ? `Out · ${injuryType}`
+          : AVAILABILITY_LABELS.injured,
+      injuryType,
+      recommendedWorkloadMpg: player.injury?.recommendedWorkloadMpg ?? null,
+      maximumWorkloadMpg: player.injury?.maximumWorkloadMpg ?? null,
+      limitReason: injuryType
+        ? `Unavailable due to ${injuryType.toLowerCase()}.`
+        : "Player is out.",
+      isLegacyUndisclosed,
+    };
+  }
+
+  if (inactive) {
+    return {
+      available: false,
+      canPlay: false,
+      status: player.availability,
+      reason: "inactive",
+      label: AVAILABILITY_LABELS.inactive,
+      injuryType,
+      recommendedWorkloadMpg: player.injury?.recommendedWorkloadMpg ?? null,
+      maximumWorkloadMpg: player.injury?.maximumWorkloadMpg ?? null,
+      limitReason: null,
+      isLegacyUndisclosed,
+    };
+  }
+
+  if (player.availability === "limited") {
+    const recommended = player.injury?.recommendedWorkloadMpg ?? null;
+    return {
+      available: true,
+      canPlay: true,
+      status: "limited",
+      reason: "limited",
+      label: injuryType
+        ? `Limited · ${injuryType}`
+        : AVAILABILITY_LABELS.limited,
+      injuryType,
+      recommendedWorkloadMpg: recommended,
+      maximumWorkloadMpg: player.injury?.maximumWorkloadMpg ?? null,
+      limitReason:
+        recommended != null && injuryType
+          ? `Medical recommendation is ${recommended} MPG due to ${injuryType.toLowerCase()}.`
+          : recommended != null
+            ? `Medical recommendation is ${recommended} MPG.`
+            : "Player is medically limited.",
+      isLegacyUndisclosed,
+    };
+  }
+
+  if (player.availability === "questionable") {
+    return {
+      available: true,
+      canPlay: true,
+      status: "questionable",
+      reason: "questionable",
+      label: injuryType
+        ? `Questionable · ${injuryType}`
+        : AVAILABILITY_LABELS.questionable,
+      injuryType,
+      recommendedWorkloadMpg: player.injury?.recommendedWorkloadMpg ?? null,
+      maximumWorkloadMpg: player.injury?.maximumWorkloadMpg ?? null,
+      limitReason: injuryType
+        ? `Game-time decision due to ${injuryType.toLowerCase()}.`
+        : "Game-time decision.",
+      isLegacyUndisclosed,
+    };
+  }
+
+  // available
+  return {
+    available: true,
+    canPlay: playerCanPlay(player),
+    status: "available",
+    label: availabilityDisplayLabel("available"),
+    injuryType: null,
+    recommendedWorkloadMpg: null,
+    maximumWorkloadMpg: null,
+    limitReason: null,
+    isLegacyUndisclosed: false,
+  };
+}
 
 /**
  * Resolve whether a player may be selected as an active starter / rotation player.
@@ -33,50 +203,25 @@ export function getPlayerAvailability(
   state: GameState,
   playerId: PlayerId,
   teamId: TeamId,
-): PlayerAvailability {
+): ResolvedPlayerAvailability {
   const team = state.world.teams[teamId];
   if (team == null) {
-    return {
-      available: false,
-      reason: "not_on_roster",
-      label: AVAILABILITY_LABELS.not_on_roster,
-    };
+    return notOnRoster();
   }
 
   if (!team.roster.includes(playerId)) {
-    return {
-      available: false,
-      reason: "not_on_roster",
-      label: AVAILABILITY_LABELS.not_on_roster,
-    };
+    return notOnRoster();
   }
 
   const player = state.world.players[playerId];
   if (player == null) {
-    return {
-      available: false,
-      reason: "not_on_roster",
-      label: AVAILABILITY_LABELS.not_on_roster,
-    };
+    return notOnRoster();
   }
 
-  if (player.injury.kind === "injured") {
-    return {
-      available: false,
-      reason: "injured",
-      label: AVAILABILITY_LABELS.injured,
-    };
-  }
-
-  if (team.rosterManagement.inactive.includes(playerId)) {
-    return {
-      available: false,
-      reason: "inactive",
-      label: AVAILABILITY_LABELS.inactive,
-    };
-  }
-
-  return { available: true, label: "Available" };
+  return resolveFromPlayer(
+    player,
+    team.rosterManagement.inactive.includes(playerId),
+  );
 }
 
 export function isPlayerAvailable(
@@ -85,6 +230,15 @@ export function isPlayerAvailable(
   teamId: TeamId,
 ): boolean {
   return getPlayerAvailability(state, playerId, teamId).available;
+}
+
+/** True when player can take the floor (includes questionable / limited). */
+export function canPlayerPlay(
+  state: GameState,
+  playerId: PlayerId,
+  teamId: TeamId,
+): boolean {
+  return getPlayerAvailability(state, playerId, teamId).canPlay;
 }
 
 export function listAvailableRosterPlayerIds(
@@ -97,5 +251,19 @@ export function listAvailableRosterPlayerIds(
   }
   return team.roster.filter((playerId) =>
     isPlayerAvailable(state, playerId, teamId),
+  );
+}
+
+/** Playable for rotation depth counting: available, questionable, or limited. */
+export function listPlayableRosterPlayerIds(
+  state: GameState,
+  teamId: TeamId,
+): PlayerId[] {
+  const team = state.world.teams[teamId];
+  if (team == null) {
+    return [];
+  }
+  return team.roster.filter((playerId) =>
+    canPlayerPlay(state, playerId, teamId),
   );
 }

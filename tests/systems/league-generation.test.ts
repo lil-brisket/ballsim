@@ -611,5 +611,5 @@ function expectValidGeneratedPlayer(player: Player): void {
 
   expect(player.contractId).toBeNull();
   expect(player.teamId).not.toBeNull();
-  expect(player.injury.kind).toBe("healthy");
+  expect(player.availability).toBe("available");
 }

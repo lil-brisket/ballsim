@@ -176,7 +176,7 @@ function buildPlayerSeasonRecord(
     overall: calculatePlayerOverall(player.position, player.attributes),
     attributes: { ...player.attributes },
     developmentStage: player.development.stage,
-    injuryKind: player.injury.kind,
+    injuryKind: player.availability,
     contractSnapshot: {
       contractId: player.contractId,
       salary,

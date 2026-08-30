@@ -72,6 +72,7 @@ import {
   runSubstitutionCheckpoint,
   syncFoulOutsFromStats,
 } from "@/systems/rotation/sim-bridge";
+import { advanceInjuryRecoveryAfterGame } from "@/systems/injury/injury-recovery";
 import { ROTATION_CONFIG } from "@/systems/rotation/rotation-config";
 import { assertTeamSecondsOnCourt } from "@/systems/rotation/rotation-invariants";
 import {
@@ -413,6 +414,12 @@ export function simulateGamesForDate(
     }
     games[gameId] = finalGame;
     events.push(event);
+    // Advance injury recovery for both teams after each completed game
+    working = advanceInjuryRecoveryAfterGame(
+      working,
+      finalGame.homeTeamId,
+      finalGame.awayTeamId,
+    );
   }
 
   if (events.length === 0) {

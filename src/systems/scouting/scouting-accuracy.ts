@@ -6,6 +6,7 @@
 import type { DraftProspect } from "@/domain/entities/draft";
 import type { LeagueArea } from "@/domain/game-settings";
 import type { Player, PlayerPersonality } from "@/domain/entities/player";
+import { playerCanPlay } from "@/domain/entities/player";
 import { calculatePlayerOverall } from "@/domain/player-overall-rating";
 import type { TeamId } from "@/domain/ids";
 import type { Rng } from "@/domain/rng";
@@ -71,7 +72,7 @@ export function prospectUncertainty(player: Player): number {
   if (player.development.stage === "developing") {
     uncertainty += 0.15;
   }
-  if (player.injury.kind === "injured") {
+  if (player.availability === "out" || player.availability === "suspended" || !playerCanPlay(player)) {
     uncertainty += 0.2;
   }
   return Math.max(0.5, Math.min(2, uncertainty));

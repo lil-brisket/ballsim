@@ -172,7 +172,7 @@ describe("toOwnerGameState", () => {
         composure: 58,
       },
       contractId: asContractId("contract_owner_1"),
-      injury: { kind: "healthy" },
+      availability: "available", injury: null, suspension: null,
       development: { stage: "developing" },
     });
     state.world.players[playerId] = player;

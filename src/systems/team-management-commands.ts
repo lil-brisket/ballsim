@@ -37,6 +37,9 @@ import {
   validateRosterManagementShape,
   withTeamRosterManagement,
 } from "@/systems/roster-management";
+import { deriveRotationConstraints } from "@/systems/rotation/derive-rotation-constraints";
+import { redistributeRotationForInjuries } from "@/systems/rotation/rotation-injury-response";
+import { getPlayerAvailability } from "@/systems/player-availability";
 import { ROLE_TEMPLATES } from "@/systems/rotation/rotation-role-templates";
 
 export type TeamManagementCommandResult =
@@ -224,13 +227,26 @@ export function updateRotationCommand(
       ? philosophyFromStyle(input.rotationStyle)
       : current.rotationPhilosophy);
 
-  const next: TeamRosterManagement = {
+  const derivedRotation = input.rotation.map((entry) => {
+    const avail = getPlayerAvailability(state, entry.playerId, input.teamId);
+    return deriveRotationConstraints({
+      playerId: entry.playerId,
+      targetMinutes: entry.targetMinutes,
+      role: entry.role === "deep_bench" ? "bench" : entry.role,
+      preferredPositions: entry.preferredPositions,
+      secondaryPositions: entry.secondaryPositions,
+      rotationPriority: entry.rotationPriority,
+      minutePriorityBias: entry.minutePriorityBias,
+      overrideMedicalRecommendation: entry.overrideMedicalRecommendation,
+      recommendedWorkloadMpg: avail.recommendedWorkloadMpg,
+      maximumWorkloadMpg: avail.maximumWorkloadMpg,
+      canPlay: avail.canPlay && !inactiveSet.has(entry.playerId),
+    });
+  });
+
+  let next: TeamRosterManagement = {
     ...cloneTeamRosterManagement(current),
-    rotation: input.rotation.map((entry) => ({
-      ...entry,
-      preferredPositions: [...entry.preferredPositions],
-      secondaryPositions: [...entry.secondaryPositions],
-    })),
+    rotation: derivedRotation,
     rotationPhilosophy: philosophy,
     rotationStyle: styleFromPhilosophy(philosophy),
     rotationDepth:
@@ -242,6 +258,16 @@ export function updateRotationCommand(
       input.closingLineupPolicy ?? current.closingLineupPolicy,
     closingLineupIds:
       input.closingLineupIds ?? current.closingLineupIds,
+    lastConfiguredBy: "user",
+  };
+
+  const redistributed = redistributeRotationForInjuries(
+    state,
+    input.teamId,
+    next,
+  );
+  next = {
+    ...redistributed.management,
     lastConfiguredBy: "user",
   };
 

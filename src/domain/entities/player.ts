@@ -59,6 +59,58 @@ export type PlayerPersonality = {
   composure: number;
 };
 
+/**
+ * Whether a player may take the floor — independent of injury detail and suspension.
+ * Suspension is represented here as "suspended"; injury detail lives on {@link PlayerInjury}.
+ */
+export type PlayerAvailability =
+  | "available"
+  | "questionable"
+  | "limited"
+  | "out"
+  | "suspended";
+
+export const PLAYER_AVAILABILITIES: readonly PlayerAvailability[] = [
+  "available",
+  "questionable",
+  "limited",
+  "out",
+  "suspended",
+] as const;
+
+export type InjurySeverity = "minor" | "moderate" | "major" | "unknown";
+
+export const INJURY_SEVERITIES: readonly InjurySeverity[] = [
+  "minor",
+  "moderate",
+  "major",
+  "unknown",
+] as const;
+
+/**
+ * Medical injury detail. Null when the player has no active injury.
+ * Suspension is never stored here — use {@link PlayerSuspension}.
+ */
+export type PlayerInjury = {
+  type: string;
+  severity: InjurySeverity;
+  gamesRemaining: { min: number; max: number } | null;
+  /** Soft medical guidance — AI targets this when set. */
+  recommendedWorkloadMpg: number | null;
+  /** Hard safety cap — engine must not exceed unless medical override. */
+  maximumWorkloadMpg: number | null;
+  /** 0–1 recovery progress toward full availability. */
+  recoveryProgress: number;
+};
+
+export type PlayerSuspension = {
+  gamesRemaining: number;
+};
+
+/**
+ * @deprecated Use {@link PlayerAvailability} + {@link PlayerInjury}. Kept for
+ * type aliases during migration of legacy save payloads.
+ */
 export type InjuryStatus =
   | { kind: "healthy" }
   | { kind: "injured" };
@@ -84,7 +136,12 @@ export type Player = {
   potential: PlayerPotential;
   personality: PlayerPersonality;
   contractId: ContractId | null;
-  injury: InjuryStatus;
+  /** Floor eligibility — separate from injury detail and suspension object. */
+  availability: PlayerAvailability;
+  /** Active injury detail, or null when healthy / no injury recorded. */
+  injury: PlayerInjury | null;
+  /** Independent of injury — a healthy player may still be suspended. */
+  suspension: PlayerSuspension | null;
   development: DevelopmentState;
 };
 
@@ -104,9 +161,75 @@ export type PlayerInput = {
   potential: PlayerPotential;
   personality: PlayerPersonality;
   contractId: ContractId | null;
-  injury: InjuryStatus;
+  availability: PlayerAvailability;
+  injury: PlayerInjury | null;
+  suspension: PlayerSuspension | null;
   development: DevelopmentState;
 };
+
+/** Conservative migration of legacy binary `{ kind: "healthy" | "injured" }`. */
+export function migrateLegacyInjuryStatus(
+  legacy: InjuryStatus | null | undefined,
+): {
+  availability: PlayerAvailability;
+  injury: PlayerInjury | null;
+  suspension: null;
+} {
+  if (legacy == null || legacy.kind === "healthy") {
+    return { availability: "available", injury: null, suspension: null };
+  }
+  return {
+    availability: "out",
+    injury: {
+      type: "Undisclosed",
+      severity: "unknown",
+      gamesRemaining: null,
+      recommendedWorkloadMpg: null,
+      maximumWorkloadMpg: null,
+      recoveryProgress: 0,
+    },
+    suspension: null,
+  };
+}
+
+export function isPlayerAvailability(
+  value: string,
+): value is PlayerAvailability {
+  return (PLAYER_AVAILABILITIES as readonly string[]).includes(value);
+}
+
+export function isInjurySeverity(value: string): value is InjurySeverity {
+  return (INJURY_SEVERITIES as readonly string[]).includes(value);
+}
+
+/** True when the player is eligible to take the floor (may still have workload caps). */
+export function playerCanPlay(player: Player): boolean {
+  if (player.availability === "out" || player.availability === "suspended") {
+    return false;
+  }
+  if (player.suspension != null && player.suspension.gamesRemaining > 0) {
+    return false;
+  }
+  return true;
+}
+
+/** Display label for availability status. */
+export function availabilityDisplayLabel(
+  availability: PlayerAvailability,
+): string {
+  switch (availability) {
+    case "available":
+      return "Available";
+    case "questionable":
+      return "Questionable";
+    case "limited":
+      return "Limited";
+    case "out":
+      return "Out";
+    case "suspended":
+      return "Suspended";
+  }
+}
 
 export const PLAYER_ATTRIBUTE_KEYS: readonly (keyof PlayerAttributes)[] = [
   "speed",
@@ -163,7 +286,9 @@ export function createPlayer(input: PlayerInput): Player {
   assertPotential(input.potential);
   assertPersonality(input.personality);
   assertOptionalId(input.contractId, "contractId");
-  assertInjury(input.injury);
+  assertAvailability(input.availability);
+  assertPlayerInjury(input.injury);
+  assertSuspension(input.suspension);
   assertDevelopment(input.development);
 
   return {
@@ -181,7 +306,10 @@ export function createPlayer(input: PlayerInput): Player {
     potential: { ...input.potential },
     personality: { ...input.personality },
     contractId: input.contractId,
-    injury: { ...input.injury },
+    availability: input.availability,
+    injury: input.injury == null ? null : { ...input.injury, gamesRemaining: input.injury.gamesRemaining == null ? null : { ...input.injury.gamesRemaining } },
+    suspension:
+      input.suspension == null ? null : { ...input.suspension },
     development: { ...input.development },
   };
 }
@@ -285,12 +413,80 @@ function assertPersonality(personality: PlayerPersonality): void {
   }
 }
 
-function assertInjury(injury: InjuryStatus): void {
-  if (injury === null || typeof injury !== "object") {
-    throw new Error("Player injury must be an object.");
+function assertAvailability(availability: PlayerAvailability): void {
+  if (!isPlayerAvailability(availability)) {
+    throw new Error(
+      `Player availability must be one of ${PLAYER_AVAILABILITIES.join(", ")}.`,
+    );
   }
-  if (injury.kind !== "healthy" && injury.kind !== "injured") {
-    throw new Error('Player injury.kind must be "healthy" or "injured".');
+}
+
+function assertPlayerInjury(injury: PlayerInjury | null): void {
+  if (injury === null) {
+    return;
+  }
+  if (typeof injury !== "object") {
+    throw new Error("Player injury must be an object or null.");
+  }
+  if (typeof injury.type !== "string" || injury.type.trim().length === 0) {
+    throw new Error("Player injury.type must be a non-empty string.");
+  }
+  if (!isInjurySeverity(injury.severity)) {
+    throw new Error(
+      `Player injury.severity must be one of ${INJURY_SEVERITIES.join(", ")}.`,
+    );
+  }
+  if (injury.gamesRemaining !== null) {
+    if (
+      typeof injury.gamesRemaining !== "object" ||
+      !Number.isInteger(injury.gamesRemaining.min) ||
+      !Number.isInteger(injury.gamesRemaining.max) ||
+      injury.gamesRemaining.min < 0 ||
+      injury.gamesRemaining.max < injury.gamesRemaining.min
+    ) {
+      throw new Error(
+        "Player injury.gamesRemaining must be null or { min, max } with non-negative integers and max >= min.",
+      );
+    }
+  }
+  for (const field of [
+    "recommendedWorkloadMpg",
+    "maximumWorkloadMpg",
+  ] as const) {
+    const value = injury[field];
+    if (
+      value !== null &&
+      (typeof value !== "number" || !Number.isFinite(value) || value < 0)
+    ) {
+      throw new Error(`Player injury.${field} must be null or a non-negative finite number.`);
+    }
+  }
+  if (
+    typeof injury.recoveryProgress !== "number" ||
+    !Number.isFinite(injury.recoveryProgress) ||
+    injury.recoveryProgress < 0 ||
+    injury.recoveryProgress > 1
+  ) {
+    throw new Error(
+      "Player injury.recoveryProgress must be a finite number between 0 and 1.",
+    );
+  }
+}
+
+function assertSuspension(suspension: PlayerSuspension | null): void {
+  if (suspension === null) {
+    return;
+  }
+  if (typeof suspension !== "object") {
+    throw new Error("Player suspension must be an object or null.");
+  }
+  if (
+    !Number.isInteger(suspension.gamesRemaining) ||
+    suspension.gamesRemaining < 0
+  ) {
+    throw new Error(
+      "Player suspension.gamesRemaining must be a non-negative integer.",
+    );
   }
 }
 

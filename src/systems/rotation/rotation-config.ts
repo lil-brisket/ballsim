@@ -34,6 +34,11 @@ export const ROTATION_CONFIG = {
   playersOnCourt: 5,
   regulationMinutes: 48,
   overtimePeriodMinutes: 5,
+  /** Minutes at or above this count as meaningful rotation usage. */
+  meaningfulRotationMinutes: 5,
+  /** AI preference ceiling for meaningful rotation players. */
+  targetRotationPlayerCount: 12,
+  defaultRotationDepth: 12,
 } as const;
 
 export type RotationConfig = typeof ROTATION_CONFIG;

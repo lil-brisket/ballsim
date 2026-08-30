@@ -33,6 +33,10 @@ import {
   formatFeasibilityBanner,
   validateRotationFeasibility,
 } from "@/systems/rotation/rotation-feasibility";
+import {
+  analyzeRotationHealth,
+  type RotationHealthReport,
+} from "@/systems/rotation/rotation-health";
 import { toEventLogEntry, type EventLogEntryView } from "@/state/selectors";
 
 export type LineupPlayerCardView = {
@@ -61,28 +65,55 @@ export type LineupView = {
   lastConfiguredBy: string;
 };
 
+export type RotationSeasonStatsView = {
+  mpg: number;
+  ppg: number;
+  rpg: number;
+  apg: number;
+  spg: number;
+  bpg: number;
+  fgPct: number | null;
+  threePct: number | null;
+  ftPct: number | null;
+};
+
 export type RotationRowView = {
   playerId: PlayerId;
   firstName: string;
   lastName: string;
   position: PlayerPosition;
+  age: number;
+  overall: number;
+  teamName: string;
   /** Display role including inactive group membership. */
   role: string;
   rotationRole: string;
   rotationStatus: string;
   plannedMinutes: number;
   targetMinutes: number;
+  projectedMinutes: number;
   minimumMinutes: number;
   normalMaximumMinutes: number;
   absoluteMaximumMinutes: number;
   rotationPriority: number;
   minutePriorityBias: number;
+  overrideMedicalRecommendation: boolean;
   actualMinutes: number;
   eligiblePositions: PlayerPosition[];
   preferredPositions: PlayerPosition[];
   secondaryPositions: PlayerPosition[];
+  availabilityStatus: string;
   availabilityLabel: string;
   available: boolean;
+  injuryLabel: string | null;
+  injuryType: string | null;
+  injurySeverity: string | null;
+  recommendedWorkloadMpg: number | null;
+  maximumWorkloadMpg: number | null;
+  gamesRemaining: { min: number; max: number } | null;
+  isLegacyUndisclosed: boolean;
+  workloadWarning: string | null;
+  seasonStats: RotationSeasonStatsView | null;
 };
 
 export type RotationPreviewBand = {
@@ -93,12 +124,14 @@ export type RotationPreviewBand = {
 
 export type RotationView = {
   teamId: TeamId;
+  teamName: string;
   rows: RotationRowView[];
   totalPlanned: number;
   target: number;
   delta: number;
   plannedValid: boolean;
   feedback: RotationFeedback[];
+  health: RotationHealthReport;
   rotationStyle: string;
   rotationPhilosophy: string;
   rotationDepth: number;
@@ -126,8 +159,14 @@ export type InjuryRowView = {
   firstName: string;
   lastName: string;
   position: PlayerPosition;
-  status: "healthy" | "injured";
+  status: import("@/domain/entities/player").PlayerAvailability;
   statusLabel: string;
+  injuryType: string | null;
+  severity: string | null;
+  recommendedWorkloadMpg: number | null;
+  maximumWorkloadMpg: number | null;
+  gamesRemaining: { min: number; max: number } | null;
+  isLegacyUndisclosed: boolean;
 };
 
 export type InjuryReportView = {
@@ -250,11 +289,123 @@ function seasonActualMinutes(
   return total;
 }
 
+function seasonStatsForPlayer(
+  state: GameState,
+  teamId: TeamId,
+  playerId: PlayerId,
+): RotationSeasonStatsView | null {
+  let games = 0;
+  let minutes = 0;
+  let points = 0;
+  let rebounds = 0;
+  let assists = 0;
+  let steals = 0;
+  let blocks = 0;
+  let fgMade = 0;
+  let fgAtt = 0;
+  let threeMade = 0;
+  let threeAtt = 0;
+  let ftMade = 0;
+  let ftAtt = 0;
+
+  for (const game of Object.values(state.competition.games)) {
+    if (game.status !== "final") {
+      continue;
+    }
+    if (game.homeTeamId !== teamId && game.awayTeamId !== teamId) {
+      continue;
+    }
+    const row = game.playerStats.find((stats) => stats.playerId === playerId);
+    if (row == null) {
+      continue;
+    }
+    games += 1;
+    minutes += row.minutes;
+    points += row.points;
+    rebounds += row.rebounds;
+    assists += row.assists;
+    steals += row.steals;
+    blocks += row.blocks;
+    fgMade += row.fieldGoalsMade;
+    fgAtt += row.fieldGoalsAttempted;
+    threeMade += row.threePointersMade;
+    threeAtt += row.threePointersAttempted;
+    ftMade += row.freeThrowsMade;
+    ftAtt += row.freeThrowsAttempted;
+  }
+
+  if (games === 0) {
+    return null;
+  }
+
+  const perGame = (value: number) =>
+    Math.round((value / games) * 10) / 10;
+  const pct = (made: number, attempted: number) =>
+    attempted > 0 ? Math.round((made / attempted) * 1000) / 10 : null;
+
+  return {
+    mpg: perGame(minutes),
+    ppg: perGame(points),
+    rpg: perGame(rebounds),
+    apg: perGame(assists),
+    spg: perGame(steals),
+    bpg: perGame(blocks),
+    fgPct: pct(fgMade, fgAtt),
+    threePct: pct(threeMade, threeAtt),
+    ftPct: pct(ftMade, ftAtt),
+  };
+}
+
+function injuryDisplayLabel(
+  availabilityStatus: string,
+  injuryType: string | null,
+  isLegacyUndisclosed: boolean,
+): string | null {
+  if (availabilityStatus === "available") {
+    return null;
+  }
+  if (isLegacyUndisclosed) {
+    return "Undisclosed injury";
+  }
+  if (injuryType) {
+    return injuryType;
+  }
+  if (availabilityStatus === "suspended") {
+    return "Suspended";
+  }
+  return null;
+}
+
+function workloadWarningForRow(
+  targetMinutes: number,
+  recommendedWorkloadMpg: number | null,
+  maximumWorkloadMpg: number | null,
+  overrideMedicalRecommendation: boolean,
+): string | null {
+  if (
+    recommendedWorkloadMpg == null ||
+    targetMinutes <= recommendedWorkloadMpg
+  ) {
+    return null;
+  }
+  if (overrideMedicalRecommendation) {
+    return `Medical override — target ${targetMinutes} exceeds recommended ${recommendedWorkloadMpg} MPG`;
+  }
+  if (
+    maximumWorkloadMpg != null &&
+    targetMinutes > maximumWorkloadMpg
+  ) {
+    return `Target ${targetMinutes} exceeds maximum ${maximumWorkloadMpg} MPG`;
+  }
+  return `Target ${targetMinutes} exceeds recommended ${recommendedWorkloadMpg} MPG`;
+}
+
 export function toRotationView(state: GameState): RotationView {
   const team = getControlledTeam(state);
   const management = team.rosterManagement;
   const minutes = validatePlannedMinutes(management);
   const feasibility = validateRotationFeasibility(management);
+  const health = analyzeRotationHealth(state, team.id, management);
   const starterIds = new Set(
     management.startingLineup.map((slot) => slot.playerId),
   );
@@ -280,38 +431,71 @@ export function toRotationView(state: GameState): RotationView {
         : "bench";
     const targetMinutes =
       groupRole === "inactive" ? 0 : (rotation?.targetMinutes ?? 0);
+    const overrideMedicalRecommendation =
+      rotation?.overrideMedicalRecommendation === true;
+    const injuryType = player.injury?.type ?? availability.injuryType;
+    const isLegacyUndisclosed =
+      availability.isLegacyUndisclosed ||
+      (player.injury?.type === "Undisclosed" &&
+        player.injury.severity === "unknown");
     rows.push({
       playerId,
       firstName: player.firstName,
       lastName: player.lastName,
       position: player.position,
+      age: player.age,
+      overall: calculatePlayerOverall(player.position, player.attributes),
+      teamName: team.name,
       role: groupRole,
       rotationRole: rotation?.role ?? groupRole,
       rotationStatus: rotation?.rotationStatus ?? "inactive",
       plannedMinutes: targetMinutes,
       targetMinutes,
+      projectedMinutes: targetMinutes,
       minimumMinutes: rotation?.minimumMinutes ?? 0,
       normalMaximumMinutes: rotation?.normalMaximumMinutes ?? 0,
       absoluteMaximumMinutes: rotation?.absoluteMaximumMinutes ?? 0,
       rotationPriority: rotation?.rotationPriority ?? 5,
       minutePriorityBias: rotation?.minutePriorityBias ?? 0,
+      overrideMedicalRecommendation,
       actualMinutes: seasonActualMinutes(state, team.id, playerId),
       eligiblePositions: rotation?.preferredPositions ?? [player.position],
       preferredPositions: rotation?.preferredPositions ?? [player.position],
       secondaryPositions: rotation?.secondaryPositions ?? [],
+      availabilityStatus: availability.status,
       availabilityLabel: availability.label,
       available: availability.available,
+      injuryLabel: injuryDisplayLabel(
+        availability.status,
+        injuryType,
+        isLegacyUndisclosed,
+      ),
+      injuryType,
+      injurySeverity: player.injury?.severity ?? null,
+      recommendedWorkloadMpg: availability.recommendedWorkloadMpg,
+      maximumWorkloadMpg: availability.maximumWorkloadMpg,
+      gamesRemaining: player.injury?.gamesRemaining ?? null,
+      isLegacyUndisclosed,
+      workloadWarning: workloadWarningForRow(
+        targetMinutes,
+        availability.recommendedWorkloadMpg,
+        availability.maximumWorkloadMpg,
+        overrideMedicalRecommendation,
+      ),
+      seasonStats: seasonStatsForPlayer(state, team.id, playerId),
     });
   }
 
   return {
     teamId: team.id,
+    teamName: team.name,
     rows,
     totalPlanned: minutes.totalPlanned,
     target: minutes.target,
     delta: minutes.delta,
     plannedValid: minutes.valid,
     feedback: getRotationFeedback(state, team.id, management),
+    health,
     rotationStyle: management.rotationStyle,
     rotationPhilosophy: management.rotationPhilosophy,
     rotationDepth: management.rotationDepth,
@@ -388,20 +572,46 @@ export function toInjuryReportView(state: GameState): InjuryReportView {
       firstName: player.firstName,
       lastName: player.lastName,
       position: player.position,
-      status: player.injury.kind,
-      statusLabel: player.injury.kind === "healthy" ? "Available" : "Injured",
+      status: player.availability,
+      statusLabel:
+        player.availability === "available"
+          ? "Available"
+          : player.availability === "questionable"
+            ? "Questionable"
+            : player.availability === "limited"
+              ? "Limited"
+              : player.availability === "suspended"
+                ? "Suspended"
+                : "Out",
+      injuryType: player.injury?.type ?? null,
+      severity: player.injury?.severity ?? null,
+      recommendedWorkloadMpg: player.injury?.recommendedWorkloadMpg ?? null,
+      maximumWorkloadMpg: player.injury?.maximumWorkloadMpg ?? null,
+      gamesRemaining: player.injury?.gamesRemaining ?? null,
+      isLegacyUndisclosed:
+        player.injury?.type === "Undisclosed" &&
+        player.injury.severity === "unknown",
     });
   }
   rows.sort((a, b) => {
     if (a.status !== b.status) {
-      return a.status === "injured" ? -1 : 1;
+      const order = [
+        "out",
+        "suspended",
+        "limited",
+        "questionable",
+        "available",
+      ];
+      return order.indexOf(a.status) - order.indexOf(b.status);
     }
     return a.lastName.localeCompare(b.lastName);
   });
   return {
     teamId: team.id,
     rows,
-    injuredCount: rows.filter((row) => row.status === "injured").length,
+    injuredCount: rows.filter(
+      (row) => row.status === "out" || row.status === "limited",
+    ).length,
   };
 }
 

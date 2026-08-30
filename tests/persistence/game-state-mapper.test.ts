@@ -134,7 +134,9 @@ describe("GameState schema migration", () => {
     expect(player.heightInches).toBe(78);
     expect(player.weightPounds).toBe(215);
     expect(player.personality.workEthic).toBe(50);
-    expect(player.injury).toEqual({ kind: "healthy" });
+    expect(player.availability).toBe("available");
+    expect(player.injury).toBeNull();
+    expect(player.suspension).toBeNull();
     expect(player.development).toEqual({ stage: "prime" });
     expect(player.contractId).toBe(contractId);
     expect("shooting" in player.attributes).toBe(false);
@@ -240,7 +242,7 @@ describe("GameState schema migration", () => {
     );
     expect(player.potential.overall).toBe(72);
     expect(player.contractId).toBe(contractId);
-    expect(player.injury.kind).toBe("healthy");
+    expect(player.availability).toBe("available");
     expect(player.development.stage).toBe("prime");
     expect(player.archetype).toBe("floor_general");
     expect(player.nationality).toBe("USA");
@@ -386,7 +388,7 @@ describe("GameState schema migration", () => {
         composure: 55,
       },
       contractId,
-      injury: { kind: "healthy" as const },
+      injury: { kind: "healthy" },
       development: { stage: "prime" as const },
     };
 
@@ -426,7 +428,8 @@ describe("GameState schema migration", () => {
     expect(player.attributes).toEqual(attributes);
     expect(player.potential).toEqual(v4Player.potential);
     expect(player.personality).toEqual(v4Player.personality);
-    expect(player.injury).toEqual(v4Player.injury);
+    expect(player.availability).toBe("available");
+    expect(player.injury).toBeNull();
     expect(player.development).toEqual(v4Player.development);
     expect(player.firstName).toBe("V4");
     expect(player.position).toBe("PF");
@@ -472,7 +475,7 @@ describe("GameState schema migration", () => {
         composure: 60,
       },
       contractId,
-      injury: { kind: "healthy" as const },
+      injury: { kind: "healthy" },
       development: { stage: "developing" as const },
     };
 
@@ -521,11 +524,19 @@ describe("GameState schema migration", () => {
     expect(player.potential).toEqual(v5Player.potential);
     expect(player.personality).toEqual(v5Player.personality);
     expect(player.contractId).toBe(contractId);
-    expect(player.injury).toEqual(v5Player.injury);
+    expect(player.injury).toBeNull();
+    expect(player.availability).toBe("available");
+    expect(player.suspension).toBeNull();
     expect(player.development).toEqual(v5Player.development);
     expect(player.nationality).toBe("USA");
     expect(Object.keys(player).sort()).toEqual(
-      [...Object.keys(v5Player), "nationality"].sort(),
+      [
+        ...Object.keys(v5Player).filter((k) => k !== "injury"),
+        "availability",
+        "injury",
+        "suspension",
+        "nationality",
+      ].sort(),
     );
   });
 
@@ -1633,7 +1644,9 @@ describe("GameState schema migration", () => {
       potential: { overall: 75 },
       personality,
       contractId,
-      injury: { kind: "healthy" },
+      availability: "available",
+      injury: null,
+      suspension: null,
       development: { stage: "prime" },
     });
 

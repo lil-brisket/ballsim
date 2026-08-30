@@ -1614,7 +1614,7 @@ function collectRosterProblems(
   state: GameState,
 ): OwnerDashboardRosterProblem[] {
   return toRosterView(state)
-    .filter((player) => player.injuryKind !== "healthy")
+    .filter((player) => player.injuryKind !== "available")
     .map((player) => ({
       playerId: player.playerId,
       name: `${player.firstName} ${player.lastName}`,

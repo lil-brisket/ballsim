@@ -29,10 +29,14 @@ import {
   getPlayerAvailability,
   isPlayerAvailable,
   listAvailableRosterPlayerIds,
+  listPlayableRosterPlayerIds,
 } from "@/systems/player-availability";
 import { GAME_SIMULATION_CONFIG } from "@/systems/game-simulation-config";
 import { TRADE_ROSTER_RULES } from "@/systems/trades-config";
-import { ROLE_TEMPLATES } from "@/systems/rotation/rotation-role-templates";
+import { deriveRotationConstraints } from "@/systems/rotation/derive-rotation-constraints";
+import { ROTATION_CONFIG } from "@/systems/rotation/rotation-config";
+import { analyzeRotationHealth } from "@/systems/rotation/rotation-health";
+import { redistributeRotationForInjuries } from "@/systems/rotation/rotation-injury-response";
 import {
   formatFeasibilityBanner,
   hasHardFeasibilityIssues,
@@ -311,62 +315,24 @@ export function getRotationFeedback(
   teamId: TeamId,
   management: TeamRosterManagement = getTeamRosterManagement(state, teamId),
 ): RotationFeedback[] {
+  const health = analyzeRotationHealth(state, teamId, management);
   const feedback: RotationFeedback[] = [];
-  const minutes = validatePlannedMinutes(management);
-  const feasibility = validateRotationFeasibility(management);
-  const banner = formatFeasibilityBanner(feasibility);
-  if (banner != null) {
-    feedback.push({
-      kind: "infeasible",
-      message: banner,
-    });
+
+  for (const issue of health.issues) {
+    let kind: RotationFeedback["kind"] = "balanced";
+    if (issue.code === "too_many") kind = "too_many";
+    else if (issue.code === "not_enough") kind = "not_enough";
+    else if (issue.code === "unavailable_minutes") kind = "unavailable";
+    else if (issue.code === "thin_rotation") kind = "thin_bench";
+    else if (issue.code === "workload_exceeded") kind = "high_workload";
+    else if (issue.severity === "error") kind = "infeasible";
+    feedback.push({ kind, message: issue.message });
   }
 
-  if (minutes.delta === 0 && banner == null) {
+  if (health.level === "healthy") {
     feedback.push({
       kind: "balanced",
-      message: "Minutes are balanced.",
-    });
-  } else if (minutes.delta > 0) {
-    feedback.push({
-      kind: "too_many",
-      message: `Too many minutes assigned (${minutes.totalPlanned} / ${minutes.target}).`,
-    });
-  } else if (minutes.delta < 0) {
-    feedback.push({
-      kind: "not_enough",
-      message: `Not enough minutes assigned (${minutes.totalPlanned} / ${minutes.target}).`,
-    });
-  }
-
-  for (const entry of management.rotation) {
-    if (entry.targetMinutes <= 0) {
-      continue;
-    }
-    const availability = getPlayerAvailability(state, entry.playerId, teamId);
-    if (!availability.available) {
-      feedback.push({
-        kind: "unavailable",
-        message: `${entry.playerId} is unavailable (${availability.label}) but has target minutes.`,
-        playerId: entry.playerId,
-      });
-    }
-    if (entry.targetMinutes > HIGH_WORKLOAD_MINUTES) {
-      feedback.push({
-        kind: "high_workload",
-        message: `Unusually high workload (${entry.targetMinutes} target minutes).`,
-        playerId: entry.playerId,
-      });
-    }
-  }
-
-  const activeCount = management.rotation.filter(
-    (entry) => entry.rotationStatus === "active",
-  ).length;
-  if (activeCount < 7 && management.rotation.length > 0) {
-    feedback.push({
-      kind: "thin_bench",
-      message: "Bench depth is insufficient for a sustainable rotation.",
+      message: health.availabilitySummary,
     });
   }
 
@@ -394,20 +360,13 @@ function emptyInactiveEntry(
   playerId: PlayerId,
   preferredPositions: PlayerPosition[],
 ): RotationEntry {
-  const template = ROLE_TEMPLATES.emergency;
-  return {
+  return deriveRotationConstraints({
     playerId,
     targetMinutes: 0,
-    minimumMinutes: 0,
-    normalMaximumMinutes: template.normalMax,
-    absoluteMaximumMinutes: template.absoluteMax,
-    rotationPriority: template.priority,
-    rotationStatus: "inactive",
     role: "emergency",
     preferredPositions,
-    secondaryPositions: [],
-    minutePriorityBias: 0,
-  };
+    canPlay: false,
+  });
 }
 
 function buildEntryFromTemplate(input: {
@@ -416,28 +375,23 @@ function buildEntryFromTemplate(input: {
   targetMinutes: number;
   preferredPositions: PlayerPosition[];
   active: boolean;
+  recommendedWorkloadMpg?: number | null;
+  maximumWorkloadMpg?: number | null;
 }): RotationEntry {
-  const template = ROLE_TEMPLATES[input.role];
-  return {
+  return deriveRotationConstraints({
     playerId: input.playerId,
-    targetMinutes: input.targetMinutes,
-    minimumMinutes: input.active ? template.min : 0,
-    normalMaximumMinutes: Math.max(input.targetMinutes, template.normalMax),
-    absoluteMaximumMinutes: Math.max(
-      input.targetMinutes,
-      template.absoluteMax,
-    ),
-    rotationPriority: template.priority,
-    rotationStatus: input.active ? "active" : "inactive",
+    targetMinutes: input.active ? input.targetMinutes : 0,
     role: input.role,
     preferredPositions: input.preferredPositions,
-    secondaryPositions: [],
-    minutePriorityBias: 0,
-  };
+    canPlay: input.active,
+    recommendedWorkloadMpg: input.recommendedWorkloadMpg,
+    maximumWorkloadMpg: input.maximumWorkloadMpg,
+  });
 }
 
 /**
  * Distribute target minutes across an ordered candidate list for a philosophy/depth.
+ * Uses desiredRotationSize = min(12, playable) and tiered meaningful minutes.
  */
 export function buildRotationFromRoster(
   entries: Array<{
@@ -447,60 +401,98 @@ export function buildRotationFromRoster(
     preferredPositions: PlayerPosition[];
     /** Development boost: young / high potential. */
     developmentWeight?: number;
+    availability?: "available" | "questionable" | "limited" | "out" | "suspended";
+    recommendedWorkloadMpg?: number | null;
+    maximumWorkloadMpg?: number | null;
+    injurySeverity?: "minor" | "moderate" | "major" | "unknown" | null;
   }>,
   philosophy: RotationPhilosophy,
   depth: number,
   target: number = getRegulationTeamMinutesTarget(),
 ): RotationEntry[] {
-  const size = Math.min(Math.max(depth, 5), entries.length);
-  const active = entries.slice(0, size);
+  const playable = entries.filter(
+    (e) =>
+      e.availability !== "out" &&
+      e.availability !== "suspended" &&
+      (e.availability == null ||
+        e.availability === "available" ||
+        e.availability === "questionable" ||
+        e.availability === "limited"),
+  );
+  const desiredSize = Math.min(
+    Math.max(depth, 5),
+    ROTATION_CONFIG.targetRotationPlayerCount,
+    playable.length,
+  );
+  const size = Math.min(Math.max(desiredSize, 5), playable.length);
+  const active = playable.slice(0, size);
   if (active.length === 0) {
-    return [];
+    return entries.map((e) =>
+      emptyInactiveEntry(e.playerId, e.preferredPositions),
+    );
   }
 
-  // Role assignment by index within active pool
   const roleForIndex = (index: number, isStarter: boolean): RotationRole => {
-    if (isStarter) {
-      return "starter";
-    }
-    if (index === 5) {
-      return "sixth_man";
-    }
-    if (index <= 7) {
-      return "rotation";
-    }
-    if (index <= 9) {
-      return "bench";
-    }
-    return "deep_bench";
+    if (isStarter) return "starter";
+    if (index === 5) return "sixth_man";
+    if (index <= 7) return "rotation";
+    if (index <= 9) return "bench";
+    return "bench";
   };
 
   const starters = active.filter((entry) => entry.isStarter);
   const bench = active.filter((entry) => !entry.isStarter);
 
+  // Starter share — slightly lower than before so depth can receive meaningful minutes
   const starterShare =
     philosophy === "star_heavy"
-      ? 0.8
+      ? 0.72
       : philosophy === "deep" || philosophy === "development"
-        ? 0.65
+        ? 0.58
         : philosophy === "tight"
-          ? 0.76
-          : 0.72;
+          ? 0.68
+          : 0.64;
   const starterPool = Math.round(target * starterShare);
   const benchPool = target - starterPool;
 
   const result: RotationEntry[] = [];
   let assigned = 0;
 
+  // Weight starters by overall
+  const starterWeights = starters.map((e) => Math.max(1, e.overall));
+  const starterWeightSum = starterWeights.reduce((a, b) => a + b, 0) || 1;
+
   starters.forEach((entry, index) => {
-    const remainingPlayers = starters.length - index;
-    const remainingPool = starterPool - assigned;
-    let minutes =
-      remainingPlayers === 1
-        ? remainingPool
-        : Math.max(28, Math.floor(remainingPool / remainingPlayers));
+    let minutes = Math.round(
+      (starterPool * starterWeights[index]!) / starterWeightSum,
+    );
+    minutes = Math.max(26, Math.min(34, minutes));
     if (philosophy === "development" && (entry.developmentWeight ?? 0) > 0.5) {
       minutes = Math.max(24, minutes - 2);
+    }
+    // Injury risk: pull toward recommended workload
+    if (entry.recommendedWorkloadMpg != null) {
+      const riskPull =
+        entry.injurySeverity === "minor"
+          ? 0.7
+          : entry.injurySeverity === "moderate"
+            ? 0.9
+            : 0.5;
+      minutes = Math.round(
+        minutes * (1 - riskPull) + entry.recommendedWorkloadMpg * riskPull,
+      );
+    }
+    if (
+      entry.maximumWorkloadMpg != null &&
+      minutes > entry.maximumWorkloadMpg
+    ) {
+      minutes = entry.maximumWorkloadMpg;
+    }
+    if (entry.availability === "questionable") {
+      minutes = Math.max(
+        ROTATION_CONFIG.meaningfulRotationMinutes,
+        Math.round(minutes * 0.9),
+      );
     }
     assigned += minutes;
     result.push(
@@ -510,11 +502,35 @@ export function buildRotationFromRoster(
         targetMinutes: minutes,
         preferredPositions: entry.preferredPositions,
         active: true,
+        recommendedWorkloadMpg: entry.recommendedWorkloadMpg,
+        maximumWorkloadMpg: entry.maximumWorkloadMpg,
       }),
     );
   });
 
-  // Development: sort bench by development weight so prospects get more
+  // Fix starter pool rounding — redistribute leftover into bench pool
+  let effectiveBenchPool = benchPool + (starterPool - assigned);
+  if (effectiveBenchPool < 0) {
+    // Scale starters down proportionally
+    const scale = starterPool / Math.max(assigned, 1);
+    let rescaleAssigned = 0;
+    for (let i = 0; i < result.length; i++) {
+      const scaled = Math.max(
+        24,
+        Math.round(result[i]!.targetMinutes * scale),
+      );
+      result[i] = buildEntryFromTemplate({
+        playerId: result[i]!.playerId,
+        role: "starter",
+        targetMinutes: scaled,
+        preferredPositions: result[i]!.preferredPositions,
+        active: true,
+      });
+      rescaleAssigned += scaled;
+    }
+    effectiveBenchPool = target - rescaleAssigned;
+  }
+
   const benchOrdered =
     philosophy === "development"
       ? [...bench].sort(
@@ -524,53 +540,126 @@ export function buildRotationFromRoster(
         )
       : bench;
 
+  // Tiered bench: primary (15-24), secondary (6-15), remainder meaningful floor
+  const primaryCount = Math.min(4, Math.max(0, benchOrdered.length));
+  const secondaryCount = Math.min(
+    3,
+    Math.max(0, benchOrdered.length - primaryCount),
+  );
+
+  const primaryShare = 0.62;
+  const secondaryShare = 0.3;
+  const primaryPool = Math.round(effectiveBenchPool * primaryShare);
+  const secondaryPool = Math.round(effectiveBenchPool * secondaryShare);
+  const restPool = effectiveBenchPool - primaryPool - secondaryPool;
+
   let benchAssigned = 0;
-  benchOrdered.forEach((entry, index) => {
-    const globalIndex = starters.length + index;
-    const role = roleForIndex(globalIndex, false);
-    const remainingPlayers = benchOrdered.length - index;
-    const remainingPool = benchPool - benchAssigned;
-    let minutes =
-      remainingPlayers === 1
-        ? Math.max(0, remainingPool)
-        : Math.max(0, Math.floor(remainingPool / remainingPlayers));
-    if (philosophy === "development" && (entry.developmentWeight ?? 0) > 0.4) {
-      minutes = Math.max(minutes, Math.min(18, minutes + 3));
-    }
-    benchAssigned += minutes;
-    result.push(
-      buildEntryFromTemplate({
-        playerId: entry.playerId,
-        role,
-        targetMinutes: minutes,
-        preferredPositions: entry.preferredPositions,
-        active: minutes > 0,
-      }),
-    );
-  });
+
+  const assignBenchSlice = (
+    slice: typeof benchOrdered,
+    pool: number,
+    minMpg: number,
+    maxMpg: number,
+    startIndex: number,
+  ) => {
+    if (slice.length === 0 || pool <= 0) return;
+    const weights = slice.map((e) => Math.max(1, e.overall));
+    const weightSum = weights.reduce((a, b) => a + b, 0) || 1;
+    slice.forEach((entry, index) => {
+      const globalIndex = startIndex + index;
+      const role = roleForIndex(globalIndex, false);
+      let minutes = Math.round((pool * weights[index]!) / weightSum);
+      minutes = Math.max(minMpg, Math.min(maxMpg, minutes));
+      if (philosophy === "development" && (entry.developmentWeight ?? 0) > 0.4) {
+        minutes = Math.max(minutes, Math.min(18, minutes + 3));
+      }
+      if (entry.recommendedWorkloadMpg != null) {
+        minutes = Math.min(minutes, entry.recommendedWorkloadMpg);
+      }
+      if (
+        entry.maximumWorkloadMpg != null &&
+        minutes > entry.maximumWorkloadMpg
+      ) {
+        minutes = entry.maximumWorkloadMpg;
+      }
+      // Ensure meaningful minutes — no 1–2 MPG tokens
+      if (
+        minutes > 0 &&
+        minutes < ROTATION_CONFIG.meaningfulRotationMinutes
+      ) {
+        minutes = ROTATION_CONFIG.meaningfulRotationMinutes;
+      }
+      benchAssigned += minutes;
+      result.push(
+        buildEntryFromTemplate({
+          playerId: entry.playerId,
+          role,
+          targetMinutes: minutes,
+          preferredPositions: entry.preferredPositions,
+          active: minutes > 0,
+          recommendedWorkloadMpg: entry.recommendedWorkloadMpg,
+          maximumWorkloadMpg: entry.maximumWorkloadMpg,
+        }),
+      );
+    });
+  };
+
+  assignBenchSlice(
+    benchOrdered.slice(0, primaryCount),
+    primaryPool,
+    15,
+    24,
+    starters.length,
+  );
+  assignBenchSlice(
+    benchOrdered.slice(primaryCount, primaryCount + secondaryCount),
+    secondaryPool,
+    6,
+    15,
+    starters.length + primaryCount,
+  );
+  assignBenchSlice(
+    benchOrdered.slice(primaryCount + secondaryCount),
+    restPool,
+    ROTATION_CONFIG.meaningfulRotationMinutes,
+    10,
+    starters.length + primaryCount + secondaryCount,
+  );
 
   // Remaining roster: inactive / emergency
-  for (const entry of entries.slice(size)) {
+  const activeIds = new Set(result.map((e) => e.playerId));
+  for (const entry of entries) {
+    if (activeIds.has(entry.playerId)) continue;
     result.push(
       emptyInactiveEntry(entry.playerId, entry.preferredPositions),
     );
   }
 
-  // Fix rounding so targets sum to team target
+  // Normalize to team target
   const activeResult = result.filter((e) => e.rotationStatus === "active");
   const sum = activeResult.reduce((s, e) => s + e.targetMinutes, 0);
   const delta = target - sum;
   if (delta !== 0 && activeResult.length > 0) {
-    const adjust = activeResult[activeResult.length - 1]!;
-    adjust.targetMinutes = Math.max(0, adjust.targetMinutes + delta);
-    adjust.normalMaximumMinutes = Math.max(
-      adjust.targetMinutes,
-      adjust.normalMaximumMinutes,
+    // Prefer adjusting middle of bench, not dumping on last player
+    const adjustIndex = Math.min(
+      activeResult.length - 1,
+      Math.max(5, Math.floor(activeResult.length / 2)),
     );
-    adjust.absoluteMaximumMinutes = Math.max(
-      adjust.targetMinutes,
-      adjust.absoluteMaximumMinutes,
+    const adjust = activeResult[adjustIndex]!;
+    const nextTarget = Math.max(
+      ROTATION_CONFIG.meaningfulRotationMinutes,
+      adjust.targetMinutes + delta,
     );
+    const idx = result.findIndex((e) => e.playerId === adjust.playerId);
+    if (idx >= 0) {
+      result[idx] = buildEntryFromTemplate({
+        playerId: adjust.playerId,
+        role: adjust.role,
+        targetMinutes: nextTarget,
+        preferredPositions: adjust.preferredPositions,
+        active: true,
+      });
+    }
   }
 
   return result;
@@ -651,10 +740,15 @@ export function recommendRosterManagement(
     .filter((player): player is Player => player != null)
     .sort((a, b) => playerOverall(b) - playerOverall(a));
 
-  const available = players.filter(
-    (player) => player.injury.kind === "healthy",
+  const available = players.filter((player) =>
+    player.availability === "available" ||
+    player.availability === "questionable" ||
+    player.availability === "limited",
   );
-  const injured = players.filter((player) => player.injury.kind === "injured");
+  const injured = players.filter(
+    (player) =>
+      player.availability === "out" || player.availability === "suspended",
+  );
 
   const used = new Set<string>();
   const startingLineup: LineupSlot[] = [];
@@ -718,6 +812,10 @@ export function recommendRosterManagement(
         overall: playerOverall(player),
         preferredPositions: defaultPreferredPositions(player),
         developmentWeight: developmentWeight(player),
+        availability: player.availability,
+        recommendedWorkloadMpg: player.injury?.recommendedWorkloadMpg ?? null,
+        maximumWorkloadMpg: player.injury?.maximumWorkloadMpg ?? null,
+        injurySeverity: player.injury?.severity ?? null,
       };
     }),
     ...bench.map((playerId) => {
@@ -728,6 +826,10 @@ export function recommendRosterManagement(
         overall: playerOverall(player),
         preferredPositions: defaultPreferredPositions(player),
         developmentWeight: developmentWeight(player),
+        availability: player.availability,
+        recommendedWorkloadMpg: player.injury?.recommendedWorkloadMpg ?? null,
+        maximumWorkloadMpg: player.injury?.maximumWorkloadMpg ?? null,
+        injurySeverity: player.injury?.severity ?? null,
       };
     }),
   ].sort((a, b) => {
@@ -753,24 +855,56 @@ export function recommendRosterManagement(
       }),
   ];
 
-  const rotation = buildRotationFromRoster(
-    ranked,
-    resolved.philosophy,
+  // Depth = min(philosophy depth, playable count, 12)
+  const playableCount = listPlayableRosterPlayerIds(state, teamId).length;
+  const effectiveDepth = Math.min(
     resolved.depth,
+    ROTATION_CONFIG.targetRotationPlayerCount,
+    Math.max(playableCount, 5),
   );
 
-  return {
+  let rotation = buildRotationFromRoster(
+    ranked,
+    resolved.philosophy,
+    effectiveDepth,
+  );
+
+  // Also include inactive injured players as emergency entries
+  for (const playerId of inactive) {
+    if (!rotation.some((e) => e.playerId === playerId)) {
+      const player = state.world.players[playerId];
+      rotation.push(
+        emptyInactiveEntry(
+          playerId,
+          player ? defaultPreferredPositions(player) : ["SF"],
+        ),
+      );
+    }
+  }
+
+  const baseManagement: TeamRosterManagement = {
     startingLineup,
     bench,
     inactive,
     rotation,
     rotationStyle: resolved.style,
     rotationPhilosophy: resolved.philosophy,
-    rotationDepth: resolved.depth,
-    rotationPreset: options.rotationPreset ?? resolved.preset,
-    closingLineupPolicy: team.rosterManagement.closingLineupPolicy ?? "auto",
-    closingLineupIds: [...(team.rosterManagement.closingLineupIds ?? [])],
-    lastConfiguredBy: options.configuredBy ?? "default",
+    rotationDepth: effectiveDepth,
+    rotationPreset: resolved.preset,
+    closingLineupPolicy: team.rosterManagement.closingLineupPolicy,
+    closingLineupIds: [...team.rosterManagement.closingLineupIds],
+    lastConfiguredBy: options.configuredBy ?? "ai",
+  };
+
+  const redistributed = redistributeRotationForInjuries(
+    state,
+    teamId,
+    baseManagement,
+  );
+
+  return {
+    ...redistributed.management,
+    lastConfiguredBy: options.configuredBy ?? "ai",
   };
 }
 
@@ -792,6 +926,99 @@ export function optimizeRotationFromRoster(
     ...options,
     configuredBy: options?.configuredBy ?? "user",
   });
+}
+
+export type OptimizeChange = {
+  kind:
+    | "minutes"
+    | "role"
+    | "added"
+    | "removed"
+    | "depth"
+    | "coverage"
+    | "other";
+  message: string;
+  playerId?: PlayerId;
+};
+
+/**
+ * Preview Auto Optimize without persisting — returns changelog for UI undo/summary.
+ */
+export function previewOptimizeRotation(
+  state: GameState,
+  teamId: TeamId,
+  options: Parameters<typeof recommendRosterManagement>[2] = {},
+): {
+  management: TeamRosterManagement;
+  changelog: OptimizeChange[];
+} {
+  const before = getTeamRosterManagement(state, teamId);
+  const management = optimizeRotationFromRoster(state, teamId, options);
+  const changelog: OptimizeChange[] = [];
+
+  const beforeById = new Map(
+    before.rotation.map((e) => [e.playerId as string, e]),
+  );
+  const afterById = new Map(
+    management.rotation.map((e) => [e.playerId as string, e]),
+  );
+
+  let beforeMeaningful = 0;
+  let afterMeaningful = 0;
+
+  for (const [playerId, after] of afterById) {
+    const prev = beforeById.get(playerId);
+    const player = state.world.players[playerId as PlayerId];
+    const name = player
+      ? `${player.firstName} ${player.lastName}`
+      : playerId;
+    if (after.targetMinutes >= ROTATION_CONFIG.meaningfulRotationMinutes) {
+      afterMeaningful += 1;
+    }
+    if (prev == null) {
+      if (after.targetMinutes > 0) {
+        changelog.push({
+          kind: "added",
+          message: `Added ${name} to meaningful rotation`,
+          playerId: after.playerId,
+        });
+      }
+      continue;
+    }
+    if (prev.targetMinutes >= ROTATION_CONFIG.meaningfulRotationMinutes) {
+      beforeMeaningful += 1;
+    }
+    if (prev.targetMinutes !== after.targetMinutes) {
+      changelog.push({
+        kind: "minutes",
+        message: `${prev.targetMinutes < after.targetMinutes ? "Increased" : "Reduced"} ${name}: ${prev.targetMinutes} → ${after.targetMinutes} MPG`,
+        playerId: after.playerId,
+      });
+    }
+    if (prev.role !== after.role) {
+      changelog.push({
+        kind: "role",
+        message: `Changed ${name} role: ${prev.role} → ${after.role}`,
+        playerId: after.playerId,
+      });
+    }
+  }
+
+  if (beforeMeaningful !== afterMeaningful) {
+    changelog.push({
+      kind: "depth",
+      message: `Expanded rotation from ${beforeMeaningful} → ${afterMeaningful} players`,
+    });
+  }
+
+  if (changelog.length === 0) {
+    changelog.push({
+      kind: "other",
+      message: "Rotation already optimized — no changes needed",
+    });
+  }
+
+  return { management, changelog };
 }
 
 /**
@@ -829,7 +1056,10 @@ export function reconcileRosterManagement(
   for (const playerId of team.roster) {
     if (!assigned.has(playerId)) {
       const player = state.world.players[playerId];
-      if (player?.injury.kind === "injured") {
+      if (
+        player?.availability === "out" ||
+        player?.availability === "suspended"
+      ) {
         inactive.push(playerId);
       } else {
         bench.push(playerId);

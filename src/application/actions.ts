@@ -924,15 +924,16 @@ export async function updateRotationAction(formData: FormData): Promise<void> {
   let rotation: Array<{
     playerId: string;
     targetMinutes: number;
-    minimumMinutes: number;
-    normalMaximumMinutes: number;
-    absoluteMaximumMinutes: number;
+    minimumMinutes?: number;
+    normalMaximumMinutes?: number;
+    absoluteMaximumMinutes?: number;
     rotationPriority: number;
     rotationStatus: string;
     role: string;
     preferredPositions: string[];
     secondaryPositions?: string[];
     minutePriorityBias?: number;
+    overrideMedicalRecommendation?: boolean;
   }> = [];
   let closingLineupIds: string[] = [];
   try {

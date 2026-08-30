@@ -2640,15 +2640,16 @@ export async function updateOwnerRotation(
     rotation: Array<{
       playerId: string;
       targetMinutes: number;
-      minimumMinutes: number;
-      normalMaximumMinutes: number;
-      absoluteMaximumMinutes: number;
+      minimumMinutes?: number;
+      normalMaximumMinutes?: number;
+      absoluteMaximumMinutes?: number;
       rotationPriority: number;
       rotationStatus: string;
       role: string;
       preferredPositions: string[];
       secondaryPositions?: string[];
       minutePriorityBias?: number;
+      overrideMedicalRecommendation?: boolean;
     }>;
     rotationStyle?: string;
     rotationPhilosophy?: string;
@@ -2667,9 +2668,9 @@ export async function updateOwnerRotation(
         rotation: input.rotation.map((entry) => ({
           playerId: asPlayerId(entry.playerId),
           targetMinutes: entry.targetMinutes,
-          minimumMinutes: entry.minimumMinutes,
-          normalMaximumMinutes: entry.normalMaximumMinutes,
-          absoluteMaximumMinutes: entry.absoluteMaximumMinutes,
+          minimumMinutes: entry.minimumMinutes ?? 0,
+          normalMaximumMinutes: entry.normalMaximumMinutes ?? 0,
+          absoluteMaximumMinutes: entry.absoluteMaximumMinutes ?? 0,
           rotationPriority: entry.rotationPriority as 1 | 2 | 3 | 4 | 5,
           rotationStatus: entry.rotationStatus as
             | "active"
@@ -2689,6 +2690,8 @@ export async function updateOwnerRotation(
             "PG" | "SG" | "SF" | "PF" | "C"
           >,
           minutePriorityBias: (entry.minutePriorityBias ?? 0) as -1 | 0 | 1,
+          overrideMedicalRecommendation:
+            entry.overrideMedicalRecommendation === true,
         })),
         rotationStyle: input.rotationStyle as
           | "tight"
@@ -2713,6 +2716,7 @@ export async function updateOwnerRotation(
           | undefined,
         closingLineupPolicy: input.closingLineupPolicy as
           | "auto"
+          | "best_five"
           | "starters"
           | "custom"
           | undefined,

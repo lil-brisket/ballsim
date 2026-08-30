@@ -141,7 +141,9 @@ export function generatePlayerWithRng(
     potential: { overall: potentialOverall },
     personality,
     contractId: options.contractId ?? null,
-    injury: { kind: "healthy" },
+    availability: "available",
+    injury: null,
+    suspension: null,
     development: { stage: developmentStageForAge(age) },
   });
 }

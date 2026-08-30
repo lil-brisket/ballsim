@@ -379,7 +379,7 @@ describe("toOwnerDashboardView action queue", () => {
           ...state.world.players,
           [playerId]: {
             ...player,
-            injury: { kind: "injured" },
+            availability: "out", injury: { type: "Undisclosed", severity: "unknown", gamesRemaining: null, recommendedWorkloadMpg: null, maximumWorkloadMpg: null, recoveryProgress: 0 }, suspension: null,
           },
         },
       },
@@ -503,7 +503,7 @@ describe("toOwnerDashboardView action queue", () => {
           ...state.world.players,
           [playerId]: {
             ...player,
-            injury: { kind: "injured" },
+            availability: "out", injury: { type: "Undisclosed", severity: "unknown", gamesRemaining: null, recommendedWorkloadMpg: null, maximumWorkloadMpg: null, recoveryProgress: 0 }, suspension: null,
           },
         },
       },

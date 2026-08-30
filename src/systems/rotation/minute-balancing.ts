@@ -35,11 +35,19 @@ export function minutesDeficit(input: {
 export function effectiveMaximum(
   entry: RotationEntry,
   context: RotationGameContext,
+  medicalMaximumMpg?: number | null,
 ): number {
-  if (context.maximumOverridePolicy === "absolute") {
-    return entry.absoluteMaximumMinutes;
+  let max =
+    context.maximumOverridePolicy === "absolute"
+      ? entry.absoluteMaximumMinutes
+      : entry.normalMaximumMinutes;
+  if (
+    medicalMaximumMpg != null &&
+    entry.overrideMedicalRecommendation !== true
+  ) {
+    max = Math.min(max, medicalMaximumMpg);
   }
-  return entry.normalMaximumMinutes;
+  return max;
 }
 
 /**
@@ -52,9 +60,15 @@ export function minuteBalanceInScore(input: {
   elapsedGameSeconds: number;
   context: RotationGameContext;
   remainingGameMinutes: number;
+  medicalMaximumMpg?: number | null;
+  medicalRecommendedMpg?: number | null;
 }): number {
   const deficit = minutesDeficit(input);
-  const max = effectiveMaximum(input.entry, input.context);
+  const max = effectiveMaximum(
+    input.entry,
+    input.context,
+    input.medicalMaximumMpg,
+  );
   const room = max - input.actualMinutes;
 
   if (room <= 0) {
@@ -69,16 +83,36 @@ export function minuteBalanceInScore(input: {
       : 0;
 
   // Cap deficit influence — deficit of 8 minutes ≈ score of ~3, not 8
-  const cappedDeficit = Math.max(-4, Math.min(4, deficit * 0.4));
+  let cappedDeficit = Math.max(-4, Math.min(4, deficit * 0.4));
 
-  // Blowout lead: reduce urgency to chase star targets
+  // Soft penalty above medical recommendation
+  if (
+    input.medicalRecommendedMpg != null &&
+    input.entry.overrideMedicalRecommendation !== true &&
+    input.actualMinutes >= input.medicalRecommendedMpg
+  ) {
+    cappedDeficit -= 2;
+  }
+
+  // Blowout lead: reduce urgency to chase star targets; boost deep bench
   const blowoutDamp =
     input.context.situation === "blowout_lead" ? 0.5 : 1;
+  const blowoutBenchBoost =
+    (input.context.situation === "blowout_lead" ||
+      input.context.situation === "blowout_deficit") &&
+    (input.entry.role === "bench" ||
+      input.entry.role === "deep_bench" ||
+      input.entry.role === "emergency")
+      ? 3
+      : 0;
 
   // Priority: lower number = higher priority → slight boost
   const priorityBoost = (6 - input.entry.rotationPriority) * 0.35;
 
-  return (cappedDeficit + underMinimum + priorityBoost) * blowoutDamp;
+  return (
+    (cappedDeficit + underMinimum + priorityBoost) * blowoutDamp +
+    blowoutBenchBoost
+  );
 }
 
 /**
