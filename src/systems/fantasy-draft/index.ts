@@ -11,15 +11,27 @@ export {
   getPickOwnerForNumber,
   getCurrentPick,
   getNextPick,
+  getNextPickNumberForTeam,
   randomizeDraftOrder,
   setDefaultDraftOrder,
   setDraftOrder,
   moveTeamInOrder,
+  moveTeamToIndex,
+  swapTeamsInOrder,
   confirmFantasyDraftOrder,
   teamIdsSorted,
   withFantasyDraft,
   type FantasyPickInfo,
 } from "@/systems/fantasy-draft/draft-order";
+export {
+  addToFantasyDraftQueue,
+  removeFromFantasyDraftQueue,
+  reorderFantasyDraftQueue,
+  getFantasyDraftQueue,
+  getFirstAvailableQueuedPlayer,
+  setFantasyDraftAutoPickStrategy,
+  updateFantasyDraftSettings,
+} from "@/systems/fantasy-draft/draft-queue";
 export {
   getAvailableDraftPlayers,
   isTeamOnFantasyDraftClock,
@@ -51,7 +63,10 @@ export {
 } from "@/systems/fantasy-draft/draft-evaluation";
 export {
   advanceFantasyDraftClock,
+  advanceFantasyDraftUntilNextUserPick,
   selectCpuDraftPlayer,
 } from "@/systems/fantasy-draft/draft-advance";
 export { completeFantasyDraft } from "@/systems/fantasy-draft/draft-lifecycle";
 export { undoLastFantasyDraftPick } from "@/systems/fantasy-draft/draft-undo";
+export { analyzeFantasyDraft, analyzeFantasyDraftPicks } from "@/systems/fantasy-draft/draft-analysis";
+

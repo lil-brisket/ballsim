@@ -76,6 +76,39 @@ export function getNextPick(state: GameState): FantasyPickInfo | undefined {
   return getPickOwnerForNumber(draft.draftOrder, draft.draftType, next);
 }
 
+/**
+ * Next overall pick number owned by the given team (including current pick if theirs).
+ * null if the team has no remaining picks.
+ */
+export function getNextPickNumberForTeam(
+  state: GameState,
+  teamId: TeamId,
+): number | null {
+  const draft = state.world.fantasyDraft;
+  if (
+    draft === null ||
+    draft.currentPickNumber === null ||
+    draft.draftOrder.length === 0
+  ) {
+    return null;
+  }
+  for (
+    let pickNumber = draft.currentPickNumber;
+    pickNumber <= draft.totalPicks;
+    pickNumber += 1
+  ) {
+    const info = getPickOwnerForNumber(
+      draft.draftOrder,
+      draft.draftType,
+      pickNumber,
+    );
+    if (info.teamId === teamId) {
+      return pickNumber;
+    }
+  }
+  return null;
+}
+
 export function teamIdsSorted(state: GameState): TeamId[] {
   return Object.keys(state.world.teams)
     .sort((a, b) => (a < b ? -1 : a > b ? 1 : 0))
@@ -144,6 +177,55 @@ export function moveTeamInOrder(
   const tmp = order[index]!;
   order[index] = order[target]!;
   order[target] = tmp;
+  return withFantasyDraft(state, { ...draft, draftOrder: order });
+}
+
+/** Move a team to an absolute 0-based index; other teams shift to fill. */
+export function moveTeamToIndex(
+  state: GameState,
+  teamId: TeamId,
+  toIndex: number,
+): GameState {
+  const draft = requireSetupDraft(state);
+  const order = [...draft.draftOrder];
+  const fromIndex = order.indexOf(teamId);
+  if (fromIndex < 0) {
+    throw new Error(`Team "${teamId}" is not in the draft order.`);
+  }
+  if (!Number.isInteger(toIndex) || toIndex < 0 || toIndex >= order.length) {
+    throw new Error(
+      `Draft order index ${toIndex} is out of range (0..${order.length - 1}).`,
+    );
+  }
+  if (fromIndex === toIndex) {
+    return state;
+  }
+  order.splice(fromIndex, 1);
+  order.splice(toIndex, 0, teamId);
+  return withFantasyDraft(state, { ...draft, draftOrder: order });
+}
+
+/** Swap two teams' positions in the draft order. */
+export function swapTeamsInOrder(
+  state: GameState,
+  teamIdA: TeamId,
+  teamIdB: TeamId,
+): GameState {
+  const draft = requireSetupDraft(state);
+  if (teamIdA === teamIdB) {
+    return state;
+  }
+  const order = [...draft.draftOrder];
+  const indexA = order.indexOf(teamIdA);
+  const indexB = order.indexOf(teamIdB);
+  if (indexA < 0) {
+    throw new Error(`Team "${teamIdA}" is not in the draft order.`);
+  }
+  if (indexB < 0) {
+    throw new Error(`Team "${teamIdB}" is not in the draft order.`);
+  }
+  order[indexA] = teamIdB;
+  order[indexB] = teamIdA;
   return withFantasyDraft(state, { ...draft, draftOrder: order });
 }
 

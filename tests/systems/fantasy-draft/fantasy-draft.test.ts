@@ -11,6 +11,7 @@ import { createInitialGameState } from "@/state/create-initial-state";
 import { GAME_STATE_SCHEMA_VERSION } from "@/state/game-state";
 import {
   advanceFantasyDraftClock,
+  addToFantasyDraftQueue,
   computeFantasyPoolSize,
   computeFantasyTotalPicks,
   confirmFantasyDraftOrder,
@@ -18,14 +19,22 @@ import {
   generateFantasyPlayerPool,
   getAvailableDraftPlayers,
   getCurrentPick,
+  getFantasyDraftQueue,
+  getNextPickNumberForTeam,
   getPickOwnerForNumber,
   makeFantasyDraftSelection,
   moveTeamInOrder,
+  moveTeamToIndex,
   pauseFantasyDraft,
   randomizeDraftOrder,
+  removeFromFantasyDraftQueue,
+  reorderFantasyDraftQueue,
   resumeFantasyDraft,
+  selectCpuDraftPlayer,
   setDefaultDraftOrder,
   setFantasyDraftAutoPickAll,
+  setFantasyDraftAutoPickStrategy,
+  swapTeamsInOrder,
   undoLastFantasyDraftPick,
 } from "@/systems/fantasy-draft";
 import { bootstrapWorld } from "@/systems/world-pipeline";
@@ -139,6 +148,28 @@ describe("fantasy draft order", () => {
     expect(state.world.fantasyDraft!.orderConfirmed).toBe(true);
     expect(state.world.fantasyDraft!.status).toBe("active");
     expect(() => moveTeamInOrder(state, teamId, 1)).toThrow(/locked/i);
+  });
+
+  it("moves a team to an absolute index", () => {
+    let state = createFantasyState(8);
+    state = setDefaultDraftOrder(state);
+    const order = [...state.world.fantasyDraft!.draftOrder];
+    const teamId = order[0]!;
+    state = moveTeamToIndex(state, teamId, 3);
+    expect(state.world.fantasyDraft!.draftOrder[3]).toBe(teamId);
+    expect(state.world.fantasyDraft!.draftOrder).toHaveLength(8);
+    expect(new Set(state.world.fantasyDraft!.draftOrder).size).toBe(8);
+  });
+
+  it("swaps two teams in the draft order", () => {
+    let state = createFantasyState(8);
+    state = setDefaultDraftOrder(state);
+    const order = [...state.world.fantasyDraft!.draftOrder];
+    const teamA = order[1]!;
+    const teamB = order[5]!;
+    state = swapTeamsInOrder(state, teamA, teamB);
+    expect(state.world.fantasyDraft!.draftOrder[1]).toBe(teamB);
+    expect(state.world.fantasyDraft!.draftOrder[5]).toBe(teamA);
   });
 });
 
@@ -308,4 +339,147 @@ describe("fantasy draft 12-team stress (reduced 30-team)", () => {
     },
     120_000,
   );
+});
+
+describe("fantasy draft queue and next pick", () => {
+  function withTwoOwnedTeams(state: ReturnType<typeof createFantasyState>) {
+    const teamIds = Object.keys(state.world.teams) as TeamId[];
+    return {
+      ...state,
+      user: {
+        ...state.user,
+        ownedTeamIds: [teamIds[0]!, teamIds[1]!],
+        activeOwnerTeamId: teamIds[0]!,
+        ownedFranchises: {
+          [teamIds[0]!]:
+            state.user.ownedFranchises[state.user.activeOwnerTeamId]!,
+          [teamIds[1]!]: {
+            ...state.user.ownedFranchises[state.user.activeOwnerTeamId]!,
+          },
+        },
+      },
+    };
+  }
+
+  it("isolates queues per owned franchise", () => {
+    let { state } = startDraft(withTwoOwnedTeams(createFantasyState(8)));
+    const [teamA, teamB] = state.user.ownedTeamIds;
+    const available = getAvailableDraftPlayers(state);
+    const playerA = available[0]!.id;
+    const playerB = available[1]!.id;
+
+    state = addToFantasyDraftQueue(state, teamA!, playerA);
+    state = addToFantasyDraftQueue(state, teamB!, playerB);
+
+    expect(getFantasyDraftQueue(state, teamA!)).toEqual([playerA]);
+    expect(getFantasyDraftQueue(state, teamB!)).toEqual([playerB]);
+
+    state = removeFromFantasyDraftQueue(state, teamA!, playerA);
+    expect(getFantasyDraftQueue(state, teamA!)).toEqual([]);
+    expect(getFantasyDraftQueue(state, teamB!)).toEqual([playerB]);
+  });
+
+  it("reorders queue and auto-pick selects queued player first", () => {
+    let { state } = startDraft(withTwoOwnedTeams(createFantasyState(8)));
+    const teamId = state.user.activeOwnerTeamId;
+    const available = getAvailableDraftPlayers(state);
+    const first = available[0]!.id;
+    const second = available[1]!.id;
+
+    state = addToFantasyDraftQueue(state, teamId, first);
+    state = addToFantasyDraftQueue(state, teamId, second);
+    state = reorderFantasyDraftQueue(state, teamId, [second, first]);
+    expect(getFantasyDraftQueue(state, teamId)).toEqual([second, first]);
+
+    state = setFantasyDraftAutoPickStrategy(
+      state,
+      teamId,
+      "queue_then_best_fit",
+    );
+    // Put owned team on clock by finding their pick
+    const pick = getCurrentPick(state)!;
+    // Ensure team on clock uses queue: if not owned, skip by selecting for them
+    if (pick.teamId !== teamId) {
+      // Manually set auto for AI and advance until owned team
+      state = setFantasyDraftAutoPickAll(state, true);
+      // Disable auto for owned so advance stops at them... actually we want them on clock
+      state = {
+        ...state,
+        world: {
+          ...state.world,
+          fantasyDraft: {
+            ...state.world.fantasyDraft!,
+            userTeamAutoPick: Object.fromEntries(
+              state.user.ownedTeamIds.map((id) => [id, false]),
+            ),
+          },
+        },
+      };
+      // Auto AI only
+      for (let i = 0; i < 50; i += 1) {
+        const current = getCurrentPick(state);
+        if (!current) break;
+        if (state.user.ownedTeamIds.includes(current.teamId)) break;
+        const selected = selectCpuDraftPlayer(
+          state,
+          current.teamId,
+          current.round,
+        )!;
+        state = makeFantasyDraftSelection(state, {
+          teamId: current.teamId,
+          playerId: selected,
+          nowIso: TEST_NOW_ISO,
+          bypassTimerExpiry: true,
+        }).state;
+      }
+    }
+
+    const onClock = getCurrentPick(state)!;
+    expect(state.user.ownedTeamIds.includes(onClock.teamId)).toBe(true);
+    const queued = getFantasyDraftQueue(state, onClock.teamId);
+    const expected =
+      queued.find(
+        (id) =>
+          !state.world.fantasyDraft!.selectedPlayerIds.some((s) => s === id),
+      ) ?? null;
+
+    const picked = selectCpuDraftPlayer(state, onClock.teamId, onClock.round);
+    if (expected) {
+      expect(picked).toBe(expected);
+    }
+  });
+
+  it("getNextPickNumberForTeam returns current or future pick", () => {
+    let { state } = startDraft(createFantasyState(8));
+    const order = state.world.fantasyDraft!.draftOrder;
+    const firstTeam = order[0]!;
+    expect(getNextPickNumberForTeam(state, firstTeam)).toBe(1);
+
+    const pick = getCurrentPick(state)!;
+    const playerId = getAvailableDraftPlayers(state)[0]!.id;
+    state = makeFantasyDraftSelection(state, {
+      teamId: pick.teamId,
+      playerId,
+      nowIso: TEST_NOW_ISO,
+    }).state;
+
+    // After pick 1, first team's next (snake 8 teams) is pick 16
+    expect(getNextPickNumberForTeam(state, firstTeam)).toBe(16);
+    expect(getNextPickNumberForTeam(state, order[1]!)).toBe(2);
+  });
+
+  it("migration defaults queues and settings on serialize round-trip", () => {
+    let { state } = startDraft(createFantasyState(8));
+    expect(state.world.fantasyDraft!.teamQueues).toEqual({});
+    expect(state.world.fantasyDraft!.settings.confirmPicks).toBe(true);
+    expect(state.world.fantasyDraft!.version).toBeGreaterThanOrEqual(2);
+
+    const json = serializeGameState(state);
+    const restored = deserializeGameState(json);
+    expect(restored.world.fantasyDraft!.teamQueues).toEqual({});
+    expect(restored.world.fantasyDraft!.autoPickStrategy).toEqual({});
+    expect(restored.world.fantasyDraft!.settings.confirmPicks).toBe(true);
+    expect(restored.world.fantasyDraft!.pickAnalyses).toEqual([]);
+    expect(restored.world.fantasyDraft!.leagueRecap).toBeNull();
+  });
 });

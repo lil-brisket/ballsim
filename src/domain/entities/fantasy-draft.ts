@@ -1,6 +1,6 @@
 import type { ContractId, PlayerId, TeamId } from "@/domain/ids";
 
-export const FANTASY_DRAFT_SCHEMA_VERSION = 1;
+export const FANTASY_DRAFT_SCHEMA_VERSION = 2;
 
 export type FantasyDraftStatus =
   | "setup"
@@ -29,6 +29,24 @@ export const FANTASY_DRAFT_ORDER_MODES: readonly FantasyDraftOrderMode[] = [
   "manual",
 ];
 
+export type FantasyDraftAutoPickStrategy =
+  | "queue_then_best_fit"
+  | "queue_then_best_available"
+  | "best_fit"
+  | "best_available";
+
+export const FANTASY_DRAFT_AUTO_PICK_STRATEGIES: readonly FantasyDraftAutoPickStrategy[] =
+  [
+    "queue_then_best_fit",
+    "queue_then_best_available",
+    "best_fit",
+    "best_available",
+  ];
+
+export type FantasyDraftSettings = {
+  confirmPicks: boolean;
+};
+
 export type FantasyDraftSelection = {
   pickNumber: number;
   round: number;
@@ -44,6 +62,118 @@ export type FantasyDraftTimer = {
   secondsPerPick: number;
   /** Authoritative start time for the current pick; expiresAt is derived. */
   pickStartedAt: string | null;
+};
+
+export type FantasyDraftPickAssessment =
+  | "Excellent"
+  | "Strong"
+  | "Good"
+  | "Fair"
+  | "Reach";
+
+export type FantasyDraftPickAnalysis = {
+  pickNumber: number;
+  teamId: TeamId;
+  playerId: PlayerId;
+  talentRankAtPick: number;
+  fitRankAtPick: number;
+  wasBestAvailable: boolean;
+  wasBestFit: boolean;
+  valueStars: number;
+  pickAssessment: FantasyDraftPickAssessment;
+  reachDelta: number;
+  compositeScore: number;
+};
+
+export type FantasyDraftPositionBalanceLevel =
+  | "Excellent"
+  | "Good"
+  | "Average"
+  | "Below Average"
+  | "Weak";
+
+export type FantasyDraftPositionBalance = {
+  position: string;
+  count: number;
+  level: FantasyDraftPositionBalanceLevel;
+  averageOverall: number | null;
+};
+
+export type FantasyDraftPickHighlight = {
+  playerId: PlayerId;
+  playerName: string;
+  pickNumber: number;
+  overall: number;
+  potential: number;
+  position: string;
+};
+
+export type FantasyDraftPickBreakdownRow = {
+  pickNumber: number;
+  round: number;
+  playerId: PlayerId;
+  playerName: string;
+  position: string;
+  overall: number;
+  potential: number;
+  age: number;
+  assessment: FantasyDraftPickAssessment;
+  valueStars: number;
+};
+
+export type FantasyDraftTeamSummary = {
+  teamId: TeamId;
+  playerCount: number;
+  avgOvr: number;
+  avgPot: number;
+  avgAge: number;
+  positionCounts: Array<{ position: string; count: number }>;
+  positionBalance: FantasyDraftPositionBalance[];
+  archetypeCounts: Array<{ archetype: string; count: number }>;
+  positionalOverlap: string[];
+  bestPlayer: FantasyDraftPickHighlight | null;
+  highestPotential: FantasyDraftPickHighlight | null;
+  oldestPick: FantasyDraftPickHighlight | null;
+  youngestPick: FantasyDraftPickHighlight | null;
+  rosterStrength: number;
+  longTermStrength: number;
+  remainingWeaknesses: Array<{ position: string; level: string }>;
+  bestPick: FantasyDraftPickHighlight | null;
+  biggestReach: FantasyDraftPickHighlight | null;
+  bestValue: FantasyDraftPickHighlight | null;
+  strongValuePickCount: number;
+  draftGrade: string;
+  draftGradeLabel: string;
+  draftVerdict: string;
+  strengths: string[];
+  concerns: string[];
+  teamOutlook: {
+    shortTerm: string;
+    longTerm: string;
+    narrative: string;
+  };
+  recommendedNextSteps: string[];
+  pickBreakdown: FantasyDraftPickBreakdownRow[];
+};
+
+export type FantasyDraftLeagueAward = {
+  teamId: TeamId;
+  teamName: string;
+  playerId?: PlayerId;
+  playerName?: string;
+  pickNumber?: number;
+  value?: number;
+  detail: string;
+};
+
+export type FantasyDraftLeagueRecap = {
+  bestDraft: FantasyDraftLeagueAward | null;
+  biggestSteal: FantasyDraftLeagueAward | null;
+  biggestReach: FantasyDraftLeagueAward | null;
+  mostAggressive: FantasyDraftLeagueAward | null;
+  youngestDraft: FantasyDraftLeagueAward | null;
+  highestAvgOvr: FantasyDraftLeagueAward | null;
+  highestAvgPot: FantasyDraftLeagueAward | null;
 };
 
 export type FantasyDraft = {
@@ -70,6 +200,15 @@ export type FantasyDraft = {
   /** When paused; timer frozen. */
   pausedAt: string | null;
   userTeamAutoPick: Record<string, boolean>;
+  /** Franchise-scoped ordered draft queues (owned teams). */
+  teamQueues: Record<string, PlayerId[]>;
+  /** Per owned-team auto-pick strategy. */
+  autoPickStrategy: Record<string, FantasyDraftAutoPickStrategy>;
+  settings: FantasyDraftSettings;
+  /** Populated at draft completion. */
+  pickAnalyses: FantasyDraftPickAnalysis[];
+  teamSummaries: Record<string, FantasyDraftTeamSummary>;
+  leagueRecap: FantasyDraftLeagueRecap | null;
 };
 
 export function isFantasyDraftStatus(
@@ -94,6 +233,15 @@ export function isFantasyDraftOrderMode(
   return (
     typeof value === "string" &&
     (FANTASY_DRAFT_ORDER_MODES as readonly string[]).includes(value)
+  );
+}
+
+export function isFantasyDraftAutoPickStrategy(
+  value: unknown,
+): value is FantasyDraftAutoPickStrategy {
+  return (
+    typeof value === "string" &&
+    (FANTASY_DRAFT_AUTO_PICK_STRATEGIES as readonly string[]).includes(value)
   );
 }
 
@@ -132,6 +280,14 @@ export function createEmptyFantasyDraft(input: {
     },
     pausedAt: null,
     userTeamAutoPick: {},
+    teamQueues: {},
+    autoPickStrategy: {},
+    settings: {
+      confirmPicks: true,
+    },
+    pickAnalyses: [],
+    teamSummaries: {},
+    leagueRecap: null,
   };
 }
 

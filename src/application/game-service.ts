@@ -233,21 +233,38 @@ import { PLAYER_POSITIONS, type PlayerPosition } from "@/domain/entities/player"
 import { bootstrapWorld } from "@/systems/world-pipeline";
 import {
   advanceFantasyDraftClock,
+  advanceFantasyDraftUntilNextUserPick,
+  addToFantasyDraftQueue,
   confirmFantasyDraftOrder,
   getCurrentPick,
   makeFantasyDraftSelection,
   moveTeamInOrder,
+  moveTeamToIndex,
   pauseFantasyDraft,
   randomizeDraftOrder,
+  removeFromFantasyDraftQueue,
+  reorderFantasyDraftQueue,
   resumeFantasyDraft,
   setDefaultDraftOrder,
   setFantasyDraftAutoPick,
   setFantasyDraftAutoPickAll,
+  setFantasyDraftAutoPickStrategy,
+  swapTeamsInOrder,
   undoLastFantasyDraftPick,
+  updateFantasyDraftSettings,
   withFantasyDraft,
 } from "@/systems/fantasy-draft";
-import type { FantasyDraftType } from "@/domain/entities/fantasy-draft";
-import { toFantasyDraftView, type FantasyDraftView } from "@/state/selectors";
+import type {
+  FantasyDraftAutoPickStrategy,
+  FantasyDraftType,
+} from "@/domain/entities/fantasy-draft";
+import {
+  toFantasyDraftView,
+  toFantasyDraftPlayerDetailView,
+  toFantasyDraftSummaryView,
+  type FantasyDraftView,
+  type FantasyDraftPlayerDetailView,
+} from "@/state/selectors";
 
 /** Max Owner Mode SaveGame rows. Current-count cap, not a lifetime counter. */
 export const MAX_OWNER_SAVE_SLOTS = 10;
@@ -2818,6 +2835,38 @@ export async function loadFantasyDraftView(
   return { save: toSaveSummary(loaded), draft };
 }
 
+export async function loadFantasyDraftPlayerDetail(
+  saveId: string,
+  playerId: string,
+  store?: SaveGameStore,
+): Promise<FantasyDraftPlayerDetailView | null> {
+  const saveStore = getStore(store);
+  const loaded = await saveStore.load(saveId);
+  if (!loaded) {
+    return null;
+  }
+  return toFantasyDraftPlayerDetailView(loaded.state, playerId);
+}
+
+export async function loadFantasyDraftSummaryView(
+  saveId: string,
+  store?: SaveGameStore,
+): Promise<{
+  save: SaveGameSummary;
+  summary: NonNullable<ReturnType<typeof toFantasyDraftSummaryView>>;
+} | null> {
+  const saveStore = getStore(store);
+  const loaded = await saveStore.load(saveId);
+  if (!loaded) {
+    return null;
+  }
+  const summary = toFantasyDraftSummaryView(loaded.state);
+  if (!summary) {
+    return null;
+  }
+  return { save: toSaveSummary(loaded), summary };
+}
+
 async function mutateFantasyDraft(
   saveId: string,
   mutator: (
@@ -2904,6 +2953,42 @@ export async function reorderFantasyDraft(
     saveId,
     (state) => ({
       state: moveTeamInOrder(state, asTeamId(teamId), direction),
+      events: [],
+    }),
+    store,
+  );
+}
+
+export async function moveFantasyDraftTeamToIndex(
+  saveId: string,
+  teamId: string,
+  toIndex: number,
+  store?: SaveGameStore,
+): Promise<OwnerCommandResult<{ draft: FantasyDraftView | null }>> {
+  return mutateFantasyDraft(
+    saveId,
+    (state) => ({
+      state: moveTeamToIndex(state, asTeamId(teamId), toIndex),
+      events: [],
+    }),
+    store,
+  );
+}
+
+export async function swapFantasyDraftTeams(
+  saveId: string,
+  teamIdA: string,
+  teamIdB: string,
+  store?: SaveGameStore,
+): Promise<OwnerCommandResult<{ draft: FantasyDraftView | null }>> {
+  return mutateFantasyDraft(
+    saveId,
+    (state) => ({
+      state: swapTeamsInOrder(
+        state,
+        asTeamId(teamIdA),
+        asTeamId(teamIdB),
+      ),
       events: [],
     }),
     store,
@@ -3101,6 +3186,115 @@ export async function undoOwnerFantasyDraftPick(
         throw new Error(result.message ?? "Undo failed.");
       }
       return { state: result.state, events: result.events };
+    },
+    store,
+  );
+}
+
+export async function addFantasyDraftQueuePlayer(
+  saveId: string,
+  teamId: string,
+  playerId: string,
+  store?: SaveGameStore,
+): Promise<OwnerCommandResult<{ draft: FantasyDraftView | null }>> {
+  return mutateFantasyDraft(
+    saveId,
+    (state) => ({
+      state: addToFantasyDraftQueue(
+        state,
+        asTeamId(teamId),
+        asPlayerId(playerId),
+      ),
+      events: [],
+    }),
+    store,
+  );
+}
+
+export async function removeFantasyDraftQueuePlayer(
+  saveId: string,
+  teamId: string,
+  playerId: string,
+  store?: SaveGameStore,
+): Promise<OwnerCommandResult<{ draft: FantasyDraftView | null }>> {
+  return mutateFantasyDraft(
+    saveId,
+    (state) => ({
+      state: removeFromFantasyDraftQueue(
+        state,
+        asTeamId(teamId),
+        asPlayerId(playerId),
+      ),
+      events: [],
+    }),
+    store,
+  );
+}
+
+export async function reorderFantasyDraftQueuePlayers(
+  saveId: string,
+  teamId: string,
+  orderedPlayerIds: string[],
+  store?: SaveGameStore,
+): Promise<OwnerCommandResult<{ draft: FantasyDraftView | null }>> {
+  return mutateFantasyDraft(
+    saveId,
+    (state) => ({
+      state: reorderFantasyDraftQueue(
+        state,
+        asTeamId(teamId),
+        orderedPlayerIds.map((id) => asPlayerId(id)),
+      ),
+      events: [],
+    }),
+    store,
+  );
+}
+
+export async function setOwnerFantasyDraftAutoPickStrategy(
+  saveId: string,
+  teamId: string,
+  strategy: FantasyDraftAutoPickStrategy,
+  store?: SaveGameStore,
+): Promise<OwnerCommandResult<{ draft: FantasyDraftView | null }>> {
+  return mutateFantasyDraft(
+    saveId,
+    (state) => ({
+      state: setFantasyDraftAutoPickStrategy(
+        state,
+        asTeamId(teamId),
+        strategy,
+      ),
+      events: [],
+    }),
+    store,
+  );
+}
+
+export async function updateOwnerFantasyDraftSettings(
+  saveId: string,
+  settings: { confirmPicks?: boolean },
+  store?: SaveGameStore,
+): Promise<OwnerCommandResult<{ draft: FantasyDraftView | null }>> {
+  return mutateFantasyDraft(
+    saveId,
+    (state) => ({
+      state: updateFantasyDraftSettings(state, settings),
+      events: [],
+    }),
+    store,
+  );
+}
+
+export async function advanceFantasyDraftUntilNextPick(
+  saveId: string,
+  store?: SaveGameStore,
+): Promise<OwnerCommandResult<{ draft: FantasyDraftView | null }>> {
+  return mutateFantasyDraft(
+    saveId,
+    (state, _rng, nowIso) => {
+      const advanced = advanceFantasyDraftUntilNextUserPick(state, nowIso);
+      return { state: advanced.state, events: advanced.events };
     },
     store,
   );

@@ -5,6 +5,7 @@ import {
   isDraftProspectStatus,
 } from "@/domain/entities/draft";
 import {
+  isFantasyDraftAutoPickStrategy,
   isFantasyDraftOrderMode,
   isFantasyDraftStatus,
   isFantasyDraftType,
@@ -2948,6 +2949,46 @@ function validateFantasyDraft(
     failFn("world.fantasyDraft.pausedAt must be null or a string.");
   }
   assertRecord(draft.userTeamAutoPick, "world.fantasyDraft.userTeamAutoPick");
+  assertRecord(draft.teamQueues, "world.fantasyDraft.teamQueues");
+  assertRecord(draft.autoPickStrategy, "world.fantasyDraft.autoPickStrategy");
+  assertRecord(draft.settings, "world.fantasyDraft.settings");
+  const settings = draft.settings as Record<string, unknown>;
+  if (typeof settings.confirmPicks !== "boolean") {
+    failFn("world.fantasyDraft.settings.confirmPicks must be a boolean.");
+  }
+  if (!Array.isArray(draft.pickAnalyses)) {
+    failFn("world.fantasyDraft.pickAnalyses must be an array.");
+  }
+  assertRecord(draft.teamSummaries, "world.fantasyDraft.teamSummaries");
+  if (draft.leagueRecap !== null && typeof draft.leagueRecap !== "object") {
+    failFn("world.fantasyDraft.leagueRecap must be null or an object.");
+  }
+
+  for (const [teamId, strategy] of Object.entries(
+    draft.autoPickStrategy as Record<string, unknown>,
+  )) {
+    assertNonEmptyString(teamId, "world.fantasyDraft.autoPickStrategy key");
+    if (!isFantasyDraftAutoPickStrategy(strategy)) {
+      failFn(
+        `world.fantasyDraft.autoPickStrategy["${teamId}"] is invalid.`,
+      );
+    }
+  }
+
+  for (const [teamId, queueValue] of Object.entries(
+    draft.teamQueues as Record<string, unknown>,
+  )) {
+    assertNonEmptyString(teamId, "world.fantasyDraft.teamQueues key");
+    if (!Array.isArray(queueValue)) {
+      failFn(`world.fantasyDraft.teamQueues["${teamId}"] must be an array.`);
+    }
+    for (let i = 0; i < (queueValue as unknown[]).length; i += 1) {
+      assertNonEmptyString(
+        (queueValue as unknown[])[i],
+        `world.fantasyDraft.teamQueues["${teamId}"][${i}]`,
+      );
+    }
+  }
 
   const teams = world.teams as Record<string, unknown>;
   const players = world.players as Record<string, unknown>;

@@ -196,6 +196,7 @@ const MIGRATE_ONE_STEP: Record<number, (state: unknown) => unknown> = {
   48: (state) => migrateV48ToV49(state as GameStateV48),
   49: (state) => migrateV49ToV50(state as GameStateV49),
   50: (state) => migrateV50ToV51(state as GameStateV50),
+  51: (state) => migrateV51ToV52(state as GameStateV51),
 };
 
 function legacyUserRecord(user: unknown): Record<string, unknown> {
@@ -4250,6 +4251,84 @@ function migrateV50ToV51(state: GameStateV50): GameState {
     world: {
       ...state.world,
       drafts,
+    },
+  };
+}
+
+type GameStateV51 = Omit<GameState, "meta"> & {
+  meta: Omit<GameState["meta"], "schemaVersion"> & { schemaVersion: 51 };
+};
+
+/**
+ * Deterministic v51 → v52: fantasy draft queues, auto-pick strategies,
+ * settings, and post-draft analysis containers.
+ */
+function migrateV51ToV52(state: GameStateV51): GameState {
+  const fantasyDraft = state.world.fantasyDraft;
+  if (fantasyDraft === null) {
+    return {
+      ...state,
+      meta: {
+        ...state.meta,
+        schemaVersion: 52,
+      },
+    };
+  }
+
+  const raw = fantasyDraft as Record<string, unknown>;
+
+  return {
+    ...state,
+    meta: {
+      ...state.meta,
+      schemaVersion: 52,
+    },
+    world: {
+      ...state.world,
+      fantasyDraft: {
+        ...fantasyDraft,
+        version: Math.max(
+          typeof fantasyDraft.version === "number" ? fantasyDraft.version : 1,
+          2,
+        ),
+        teamQueues:
+          raw.teamQueues && typeof raw.teamQueues === "object"
+            ? (raw.teamQueues as NonNullable<
+                GameState["world"]["fantasyDraft"]
+              >["teamQueues"])
+            : {},
+        autoPickStrategy:
+          raw.autoPickStrategy && typeof raw.autoPickStrategy === "object"
+            ? (raw.autoPickStrategy as NonNullable<
+                GameState["world"]["fantasyDraft"]
+              >["autoPickStrategy"])
+            : {},
+        settings: {
+          confirmPicks:
+            raw.settings &&
+            typeof raw.settings === "object" &&
+            (raw.settings as { confirmPicks?: unknown }).confirmPicks === false
+              ? false
+              : true,
+        },
+        pickAnalyses: Array.isArray(raw.pickAnalyses)
+          ? (raw.pickAnalyses as NonNullable<
+              GameState["world"]["fantasyDraft"]
+            >["pickAnalyses"])
+          : [],
+        teamSummaries:
+          raw.teamSummaries && typeof raw.teamSummaries === "object"
+            ? (raw.teamSummaries as NonNullable<
+                GameState["world"]["fantasyDraft"]
+              >["teamSummaries"])
+            : {},
+        leagueRecap:
+          raw.leagueRecap && typeof raw.leagueRecap === "object"
+            ? (raw.leagueRecap as NonNullable<
+                GameState["world"]["fantasyDraft"]
+              >["leagueRecap"])
+            : null,
+      },
     },
   };
 }

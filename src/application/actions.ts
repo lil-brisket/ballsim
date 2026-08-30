@@ -59,19 +59,31 @@ import {
   applyOwnerCoachingPreset,
 } from "@/application/game-service";
 import {
+  addFantasyDraftQueuePlayer,
+  advanceFantasyDraftUntilNextPick,
   configureFantasyDraftSetup,
   confirmFantasyDraftSetup,
   continueAfterFantasyDraft,
   initializeFantasyDraftOrder,
+  loadFantasyDraftPlayerDetail,
+  moveFantasyDraftTeamToIndex,
   pauseOwnerFantasyDraft,
   randomizeFantasyDraftOrder,
+  removeFantasyDraftQueuePlayer,
   reorderFantasyDraft,
+  reorderFantasyDraftQueuePlayers,
   resumeOwnerFantasyDraft,
   selectFantasyDraftPlayer,
+  setOwnerFantasyDraftAutoPickStrategy,
+  swapFantasyDraftTeams,
   toggleFantasyDraftAutoPick,
   toggleFantasyDraftAutoPickAll,
   undoOwnerFantasyDraftPick,
+  updateOwnerFantasyDraftSettings,
 } from "@/application/game-service";
+import type { FantasyDraftAutoPickStrategy } from "@/domain/entities/fantasy-draft";
+import { isFantasyDraftAutoPickStrategy } from "@/domain/entities/fantasy-draft";
+import type { FantasyDraftPlayerDetailView } from "@/state/selectors";
 import type { FacilityCategory } from "@/domain/entities/franchise-ops";
 import { validateGameSettings } from "@/domain/game-settings-validation";
 import { DEFAULT_GAME_SETTINGS } from "@/domain/game-settings";
@@ -1085,6 +1097,36 @@ export async function reorderFantasyDraftAction(
   redirect(path);
 }
 
+export async function moveFantasyDraftTeamToIndexAction(
+  formData: FormData,
+): Promise<void> {
+  const saveId = String(formData.get("saveId") ?? "");
+  const teamId = String(formData.get("teamId") ?? "");
+  const toIndex = Number(formData.get("toIndex") ?? -1);
+  const path = `/new/${saveId}/fantasy-draft/setup`;
+  const result = await moveFantasyDraftTeamToIndex(saveId, teamId, toIndex);
+  if (!result.ok) {
+    redirectWithError(path, result.error);
+  }
+  revalidateFantasyDraft(saveId);
+  redirect(path);
+}
+
+export async function swapFantasyDraftTeamsAction(
+  formData: FormData,
+): Promise<void> {
+  const saveId = String(formData.get("saveId") ?? "");
+  const teamIdA = String(formData.get("teamIdA") ?? "");
+  const teamIdB = String(formData.get("teamIdB") ?? "");
+  const path = `/new/${saveId}/fantasy-draft/setup`;
+  const result = await swapFantasyDraftTeams(saveId, teamIdA, teamIdB);
+  if (!result.ok) {
+    redirectWithError(path, result.error);
+  }
+  revalidateFantasyDraft(saveId);
+  redirect(path);
+}
+
 export async function confirmFantasyDraftSetupAction(
   formData: FormData,
 ): Promise<void> {
@@ -1192,6 +1234,113 @@ export async function undoFantasyDraftPickAction(
   redirect(path);
 }
 
+export async function addFantasyDraftQueuePlayerAction(
+  formData: FormData,
+): Promise<void> {
+  const saveId = String(formData.get("saveId") ?? "");
+  const teamId = String(formData.get("teamId") ?? "");
+  const playerId = String(formData.get("playerId") ?? "");
+  const path = fantasyDraftPath(saveId);
+  const result = await addFantasyDraftQueuePlayer(saveId, teamId, playerId);
+  if (!result.ok) {
+    redirectWithError(path, result.error);
+  }
+  revalidateFantasyDraft(saveId);
+  redirect(path);
+}
+
+export async function removeFantasyDraftQueuePlayerAction(
+  formData: FormData,
+): Promise<void> {
+  const saveId = String(formData.get("saveId") ?? "");
+  const teamId = String(formData.get("teamId") ?? "");
+  const playerId = String(formData.get("playerId") ?? "");
+  const path = fantasyDraftPath(saveId);
+  const result = await removeFantasyDraftQueuePlayer(saveId, teamId, playerId);
+  if (!result.ok) {
+    redirectWithError(path, result.error);
+  }
+  revalidateFantasyDraft(saveId);
+  redirect(path);
+}
+
+export async function reorderFantasyDraftQueueAction(
+  formData: FormData,
+): Promise<void> {
+  const saveId = String(formData.get("saveId") ?? "");
+  const teamId = String(formData.get("teamId") ?? "");
+  const orderedRaw = String(formData.get("orderedPlayerIds") ?? "");
+  const orderedPlayerIds = orderedRaw
+    .split(",")
+    .map((id) => id.trim())
+    .filter((id) => id.length > 0);
+  const path = fantasyDraftPath(saveId);
+  const result = await reorderFantasyDraftQueuePlayers(
+    saveId,
+    teamId,
+    orderedPlayerIds,
+  );
+  if (!result.ok) {
+    redirectWithError(path, result.error);
+  }
+  revalidateFantasyDraft(saveId);
+  redirect(path);
+}
+
+export async function setFantasyDraftAutoPickStrategyAction(
+  formData: FormData,
+): Promise<void> {
+  const saveId = String(formData.get("saveId") ?? "");
+  const teamId = String(formData.get("teamId") ?? "");
+  const strategyRaw = String(formData.get("strategy") ?? "");
+  const path = fantasyDraftPath(saveId);
+  if (!isFantasyDraftAutoPickStrategy(strategyRaw)) {
+    redirectWithError(path, "Invalid auto-pick strategy.");
+  }
+  const result = await setOwnerFantasyDraftAutoPickStrategy(
+    saveId,
+    teamId,
+    strategyRaw as FantasyDraftAutoPickStrategy,
+  );
+  if (!result.ok) {
+    redirectWithError(path, result.error);
+  }
+  revalidateFantasyDraft(saveId);
+  redirect(path);
+}
+
+export async function updateFantasyDraftSettingsAction(
+  formData: FormData,
+): Promise<void> {
+  const saveId = String(formData.get("saveId") ?? "");
+  const confirmPicks = String(formData.get("confirmPicks") ?? "") === "true";
+  const path = fantasyDraftPath(saveId);
+  const result = await updateOwnerFantasyDraftSettings(saveId, {
+    confirmPicks,
+  });
+  if (!result.ok) {
+    redirectWithError(path, result.error);
+  }
+  revalidateFantasyDraft(saveId);
+  redirect(path);
+}
+
+export async function advanceFantasyDraftUntilNextPickAction(
+  formData: FormData,
+): Promise<void> {
+  const saveId = String(formData.get("saveId") ?? "");
+  const path = fantasyDraftPath(saveId);
+  const result = await advanceFantasyDraftUntilNextPick(saveId);
+  if (!result.ok) {
+    redirectWithError(path, result.error);
+  }
+  revalidateFantasyDraft(saveId);
+  if (result.draft?.status === "complete") {
+    redirect(`${path}/summary`);
+  }
+  redirect(path);
+}
+
 export async function continueAfterFantasyDraftAction(
   formData: FormData,
 ): Promise<void> {
@@ -1202,4 +1351,12 @@ export async function continueAfterFantasyDraftAction(
   }
   revalidateOwner(saveId);
   redirect(`/dashboard/${saveId}`);
+}
+
+/** Client-callable detail fetch (no redirect). */
+export async function fetchFantasyDraftPlayerDetailAction(
+  saveId: string,
+  playerId: string,
+): Promise<FantasyDraftPlayerDetailView | null> {
+  return loadFantasyDraftPlayerDetail(saveId, playerId);
 }

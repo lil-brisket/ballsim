@@ -3,12 +3,12 @@ import {
   configureFantasyDraftSetupAction,
   confirmFantasyDraftSetupAction,
   randomizeFantasyDraftOrderAction,
-  reorderFantasyDraftAction,
 } from "@/application/actions";
 import {
   initializeFantasyDraftOrder,
   loadFantasyDraftView,
 } from "@/application/game-service";
+import { FantasyDraftOrderEditor } from "@/components/fantasy-draft/FantasyDraftOrderEditor";
 import { ErrorState } from "@/components/owner/EmptyState";
 import { PageHeader } from "@/components/owner/PageHeader";
 import { Section } from "@/components/owner/Section";
@@ -98,10 +98,6 @@ export default async function FantasyDraftSetupPage({
       </Section>
 
       <Section title="Draft order">
-        <p className="mb-3 text-sm text-zinc-400">
-          Randomize creates a starting order. Move teams up/down, then confirm to
-          lock.
-        </p>
         <div className="mb-4 flex flex-wrap gap-2">
           <form action={randomizeFantasyDraftOrderAction}>
             <input type="hidden" name="saveId" value={saveId} />
@@ -113,54 +109,15 @@ export default async function FantasyDraftSetupPage({
             </button>
           </form>
         </div>
-        <ol className="space-y-2">
-          {draft.draftOrder.map((entry) => (
-            <li
-              key={entry.teamId}
-              className="flex items-center justify-between rounded-lg border border-zinc-800 px-3 py-2"
-            >
-              <span className="text-sm">
-                <span className="mr-3 font-mono text-zinc-500">
-                  {entry.pickNumber}.
-                </span>
-                {entry.teamName}
-                {entry.isUser ? (
-                  <span className="ml-2 rounded bg-amber-900/50 px-1.5 py-0.5 text-xs text-amber-200">
-                    USER
-                  </span>
-                ) : (
-                  <span className="ml-2 rounded bg-zinc-800 px-1.5 py-0.5 text-xs text-zinc-400">
-                    CPU
-                  </span>
-                )}
-              </span>
-              <span className="flex gap-1">
-                <form action={reorderFantasyDraftAction}>
-                  <input type="hidden" name="saveId" value={saveId} />
-                  <input type="hidden" name="teamId" value={entry.teamId} />
-                  <input type="hidden" name="direction" value={-1} />
-                  <button
-                    type="submit"
-                    className="rounded border border-zinc-700 px-2 py-1 text-xs text-zinc-300"
-                  >
-                    ↑
-                  </button>
-                </form>
-                <form action={reorderFantasyDraftAction}>
-                  <input type="hidden" name="saveId" value={saveId} />
-                  <input type="hidden" name="teamId" value={entry.teamId} />
-                  <input type="hidden" name="direction" value={1} />
-                  <button
-                    type="submit"
-                    className="rounded border border-zinc-700 px-2 py-1 text-xs text-zinc-300"
-                  >
-                    ↓
-                  </button>
-                </form>
-              </span>
-            </li>
-          ))}
-        </ol>
+        <FantasyDraftOrderEditor
+          saveId={saveId}
+          draftOrder={draft.draftOrder.map((entry) => ({
+            pickNumber: entry.pickNumber,
+            teamId: entry.teamId,
+            teamName: entry.teamName,
+            isUser: entry.isUser,
+          }))}
+        />
       </Section>
 
       <form action={confirmFantasyDraftSetupAction}>
