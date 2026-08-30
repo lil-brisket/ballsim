@@ -56,18 +56,32 @@ export function copyPlayerWithAttributes(
     personality: { ...source.personality },
     contractId: null,
     availability: source.availability,
+    activeInjuries: (source.activeInjuries ?? []).map((injury) => ({
+      ...injury,
+      expectedReturnWindow:
+        injury.expectedReturnWindow == null
+          ? null
+          : { ...injury.expectedReturnWindow },
+      temporaryEffects: injury.temporaryEffects.map((effect) => ({ ...effect })),
+    })),
     injury:
       source.injury == null
         ? null
         : {
             ...source.injury,
-            gamesRemaining:
-              source.injury.gamesRemaining == null
+            expectedReturnWindow:
+              source.injury.expectedReturnWindow == null
                 ? null
-                : { ...source.injury.gamesRemaining },
+                : { ...source.injury.expectedReturnWindow },
+            temporaryEffects: source.injury.temporaryEffects.map((effect) => ({
+              ...effect,
+            })),
           },
     suspension:
       source.suspension == null ? null : { ...source.suspension },
+    physical: { ...(source.physical ?? { durability: 65 }) },
+    conditioning: source.conditioning ?? 100,
+    injuryHistory: [...(source.injuryHistory ?? [])],
     development: { ...source.development },
   });
 }

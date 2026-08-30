@@ -297,17 +297,36 @@ describe("createPlayer", () => {
       validInput({
         availability: "out",
         injury: {
+          injuryId: "inj_ankle_1",
+          catalogKey: "ankle_sprain",
           type: "Ankle Sprain",
+          bodyPart: "ankle",
           severity: "moderate",
-          gamesRemaining: { min: 2, max: 4 },
-          recommendedWorkloadMpg: null,
-          maximumWorkloadMpg: null,
+          injuredOn: "2026-01-01",
+          expectedReturnWindow: {
+            earliest: "2026-01-08",
+            latest: "2026-01-14",
+          },
           recoveryProgress: 0,
+          practiceRestriction: "rehab",
+          gameRestriction: "out",
+          minutesRestriction: 0,
+          recommendedWorkloadMpg: null,
+          maximumWorkloadMpg: 0,
+          reinjuryRisk: 0.1,
+          temporaryEffects: [],
+          temporaryFrustration: 10,
+          isReinjury: false,
+          isAggravation: false,
+          priorInjuryId: null,
+          chronic: false,
+          exposureSource: "game_acute",
         },
       }),
     );
     expect(injured.availability).toBe("out");
     expect(injured.injury?.type).toBe("Ankle Sprain");
+    expect(injured.activeInjuries).toHaveLength(1);
   });
 
   it("represents development stage", () => {

@@ -533,8 +533,12 @@ describe("GameState schema migration", () => {
       [
         ...Object.keys(v5Player).filter((k) => k !== "injury"),
         "availability",
+        "activeInjuries",
         "injury",
         "suspension",
+        "physical",
+        "conditioning",
+        "injuryHistory",
         "nationality",
       ].sort(),
     );
@@ -1645,8 +1649,12 @@ describe("GameState schema migration", () => {
       personality,
       contractId,
       availability: "available",
+      activeInjuries: [],
       injury: null,
       suspension: null,
+      physical: { durability: 70 },
+      conditioning: 100,
+      injuryHistory: [],
       development: { stage: "prime" },
     });
 

@@ -401,10 +401,17 @@ export function buildRotationFromRoster(
     preferredPositions: PlayerPosition[];
     /** Development boost: young / high potential. */
     developmentWeight?: number;
-    availability?: "available" | "questionable" | "limited" | "out" | "suspended";
+    availability?:
+      | "available"
+      | "minor"
+      | "questionable"
+      | "limited"
+      | "recovery"
+      | "out"
+      | "suspended";
     recommendedWorkloadMpg?: number | null;
     maximumWorkloadMpg?: number | null;
-    injurySeverity?: "minor" | "moderate" | "major" | "unknown" | null;
+    injurySeverity?: "minor" | "moderate" | "major" | "severe" | null;
   }>,
   philosophy: RotationPhilosophy,
   depth: number,
@@ -416,8 +423,10 @@ export function buildRotationFromRoster(
       e.availability !== "suspended" &&
       (e.availability == null ||
         e.availability === "available" ||
+        e.availability === "minor" ||
         e.availability === "questionable" ||
-        e.availability === "limited"),
+        e.availability === "limited" ||
+        e.availability === "recovery"),
   );
   const desiredSize = Math.min(
     Math.max(depth, 5),
@@ -477,7 +486,9 @@ export function buildRotationFromRoster(
           ? 0.7
           : entry.injurySeverity === "moderate"
             ? 0.9
-            : 0.5;
+            : entry.injurySeverity === "severe"
+              ? 1
+              : 0.5;
       minutes = Math.round(
         minutes * (1 - riskPull) + entry.recommendedWorkloadMpg * riskPull,
       );
@@ -488,10 +499,19 @@ export function buildRotationFromRoster(
     ) {
       minutes = entry.maximumWorkloadMpg;
     }
-    if (entry.availability === "questionable") {
+    if (
+      entry.availability === "questionable" ||
+      entry.availability === "minor"
+    ) {
       minutes = Math.max(
         ROTATION_CONFIG.meaningfulRotationMinutes,
         Math.round(minutes * 0.9),
+      );
+    }
+    if (entry.availability === "recovery") {
+      minutes = Math.max(
+        ROTATION_CONFIG.meaningfulRotationMinutes,
+        Math.round(minutes * 0.75),
       );
     }
     assigned += minutes;
@@ -813,9 +833,9 @@ export function recommendRosterManagement(
         preferredPositions: defaultPreferredPositions(player),
         developmentWeight: developmentWeight(player),
         availability: player.availability,
-        recommendedWorkloadMpg: player.injury?.recommendedWorkloadMpg ?? null,
-        maximumWorkloadMpg: player.injury?.maximumWorkloadMpg ?? null,
-        injurySeverity: player.injury?.severity ?? null,
+        recommendedWorkloadMpg: player.injury?.recommendedWorkloadMpg ?? player.activeInjuries?.[0]?.recommendedWorkloadMpg ?? null,
+        maximumWorkloadMpg: player.injury?.maximumWorkloadMpg ?? player.activeInjuries?.[0]?.maximumWorkloadMpg ?? null,
+        injurySeverity: player.injury?.severity ?? player.activeInjuries?.[0]?.severity ?? null,
       };
     }),
     ...bench.map((playerId) => {
@@ -827,9 +847,9 @@ export function recommendRosterManagement(
         preferredPositions: defaultPreferredPositions(player),
         developmentWeight: developmentWeight(player),
         availability: player.availability,
-        recommendedWorkloadMpg: player.injury?.recommendedWorkloadMpg ?? null,
-        maximumWorkloadMpg: player.injury?.maximumWorkloadMpg ?? null,
-        injurySeverity: player.injury?.severity ?? null,
+        recommendedWorkloadMpg: player.injury?.recommendedWorkloadMpg ?? player.activeInjuries?.[0]?.recommendedWorkloadMpg ?? null,
+        maximumWorkloadMpg: player.injury?.maximumWorkloadMpg ?? player.activeInjuries?.[0]?.maximumWorkloadMpg ?? null,
+        injurySeverity: player.injury?.severity ?? player.activeInjuries?.[0]?.severity ?? null,
       };
     }),
   ].sort((a, b) => {

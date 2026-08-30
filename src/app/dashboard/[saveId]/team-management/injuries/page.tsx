@@ -23,8 +23,8 @@ export default async function InjuriesPage({
   return (
     <>
       <PageHeader
-        title="Injury Report"
-        subtitle="Current roster availability from the canonical injury model"
+        title="Injury Center"
+        subtitle="Current roster medical status, restrictions, and recovery — click a player for details"
       />
       {error ? <ErrorState message={error} /> : null}
       <InjuryTable saveId={saveId} report={view.injuries} />
