@@ -12,6 +12,7 @@ import type { RfaStatus } from "@/domain/entities/rfa-status";
 import type { FranchiseHistory } from "@/domain/entities/franchise-history";
 import type { FranchiseOps } from "@/domain/entities/franchise-ops";
 import type { FranchiseReportCache } from "@/domain/entities/annual-franchise-report";
+import type { GameDayPromotionSeasonState } from "@/domain/entities/game-day-promotion";
 import type { TeamFinances } from "@/domain/entities/finances";
 import type { Game } from "@/domain/entities/game";
 import type { GameArchive } from "@/domain/entities/game-archive";
@@ -52,7 +53,7 @@ import type {
   FranchisePhaseState,
 } from "@/systems/phase-engine/phase-types";
 
-export const GAME_STATE_SCHEMA_VERSION = 57;
+export const GAME_STATE_SCHEMA_VERSION = 58;
 
 /** League personnel market for staff free agency (not a business-finance concept). */
 export type StaffMarketState = {
@@ -171,6 +172,11 @@ export type BusinessSlice = {
    * Player-card accolades are derived from this store.
    */
   awards: AwardHistoryState;
+  /**
+   * Per-team game-day promotion season state (assignments, results, fatigue).
+   * Cleared on new season; results keyed for future archive compatibility.
+   */
+  gameDayPromotionsByTeamId: Record<string, GameDayPromotionSeasonState>;
 };
 
 /**

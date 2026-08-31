@@ -1,7 +1,8 @@
 import type { DomainEvent } from "@/domain/events";
 import { createDomainEvent } from "@/domain/events";
 import type { GameId, TeamId } from "@/domain/ids";
-import { calculatePlayerOverall } from "@/domain/player-overall-rating";
+import type { Rng } from "@/domain/rng";
+import { createSeededRng } from "@/domain/rng";
 import { systemResult, type SystemResult } from "@/domain/system-result";
 import type { GameState } from "@/state/game-state";
 import {
@@ -9,24 +10,24 @@ import {
   fanFacilityDemandRaw,
 } from "@/systems/demand/calculate-demand";
 import {
-  PLAYOFF_DEMAND_UPLIFT,
-} from "@/systems/demand/demand-config";
-import {
-  allocateGameDaySeats,
-  applyConsumerCycleToDemandScore,
-  applyPlayoffDemandUplift,
-  concessionsFromAttendance,
-  merchandiseFromAttendance,
   premiumCapacityForArena,
-  resolvePremiumOccupancy,
   revenuePerAttendee,
-  starMerchandiseFactor,
 } from "@/systems/demand/resolve-attendance";
 import { arenaCapacity } from "@/systems/facilities";
 import {
   hasAppliedGameplayConsequence,
   withAppliedGameplayConsequence,
 } from "@/systems/gameplay-financial-consequences";
+import { PROMOTION_VARIANCE_CLAMP } from "@/systems/game-day-promotions/game-day-promotion-config";
+import {
+  computeGameDaySnapshot,
+  type GameDayRevenueSnapshot,
+} from "@/systems/game-day-promotions/project-game-day-promotion";
+import { resolveGameDayPromotionEffects } from "@/systems/game-day-promotions/resolve-game-day-promotion-effects";
+import {
+  compactPromotionSummary,
+  settleGameDayPromotion,
+} from "@/systems/game-day-promotions/settle-game-day-promotion";
 import { applyCashAndBooksImpact } from "@/systems/team-finances";
 
 export function ticketRevenueConsequenceKey(
@@ -45,40 +46,83 @@ function teamWinPct(state: GameState, teamId: TeamId): number {
   return games === 0 ? 0.5 : standing.wins / games;
 }
 
-function rosterStarAverage(state: GameState, teamId: TeamId): number {
-  const players = Object.values(state.world.players)
-    .filter((player) => player.teamId === teamId)
-    .map((player) =>
-      calculatePlayerOverall(player.position, player.attributes),
-    )
-    .sort((a, b) => b - a);
-  if (players.length === 0) {
-    return 50;
+function snapshotToPostedRevenue(
+  state: GameState,
+  teamId: TeamId,
+  year: number,
+  snapshot: GameDayRevenueSnapshot,
+): { state: GameState; events: DomainEvent[] } {
+  const events: DomainEvent[] = [];
+  let current = state;
+
+  if (snapshot.ticketRevenue > 0) {
+    const ticketImpact = applyCashAndBooksImpact(
+      current,
+      teamId,
+      snapshot.ticketRevenue,
+      year,
+      { revenueCategory: "tickets" },
+    );
+    current = ticketImpact.state;
+    events.push(...ticketImpact.events);
   }
-  const top = players.slice(0, Math.min(3, players.length));
-  return top.reduce((sum, ovr) => sum + ovr, 0) / top.length;
+
+  if (snapshot.premiumRevenue > 0) {
+    const premiumImpact = applyCashAndBooksImpact(
+      current,
+      teamId,
+      snapshot.premiumRevenue,
+      year,
+      { revenueCategory: "premium" },
+    );
+    current = premiumImpact.state;
+    events.push(...premiumImpact.events);
+  }
+
+  if (snapshot.merchRevenue > 0) {
+    const merchImpact = applyCashAndBooksImpact(
+      current,
+      teamId,
+      snapshot.merchRevenue,
+      year,
+      { revenueCategory: "merchandise" },
+    );
+    current = merchImpact.state;
+    events.push(...merchImpact.events);
+  }
+
+  if (snapshot.concessionsRevenue > 0) {
+    const concessionsImpact = applyCashAndBooksImpact(
+      current,
+      teamId,
+      snapshot.concessionsRevenue,
+      year,
+      { revenueCategory: "concessions" },
+    );
+    current = concessionsImpact.state;
+    events.push(...concessionsImpact.events);
+  }
+
+  return { state: current, events };
 }
 
 /**
  * Posts ticket, premium, merchandise, and concessions revenue for all final
  * home games on currentDate. Emits HomeGameDaySettled as the historical record.
- * Accumulates durable season attendance on finances.attendanceByYear (regular
- * + playoff home games). Idempotent via appliedGameplayConsequenceKeys —
- * retries must not double-count attendance or revenue.
  *
- * Seat allocation: premium first, then GA against remaining capacity.
- * Playoff bonuses are NOT booked here — see processLeaguePlayoffBonuses.
+ * Promotion logic is delegated to the game-day-promotions subsystem.
+ * This file remains the orchestrator only.
  */
-export function processHomeGameTicketRevenue(state: GameState): SystemResult {
+export function processHomeGameTicketRevenue(
+  state: GameState,
+  rng?: Rng,
+): SystemResult {
   const date = state.world.calendar.currentDate;
   const year = state.competition.season.year;
   const leaguePopularity = state.business.leagueEconomy.popularity;
-  const cycle = state.business.leagueEconomy.cycle;
-  const inPlayoffs =
-    state.competition.playoffs.status === "in_progress" ||
-    state.competition.playoffs.status === "complete";
   const events: DomainEvent[] = [];
   let current = state;
+  const localRng = rng ?? createSeededRng(state.meta.rngState);
 
   for (const game of Object.values(current.competition.games)) {
     if (game.status !== "final" || game.date !== date) {
@@ -96,8 +140,33 @@ export function processHomeGameTicketRevenue(state: GameState): SystemResult {
       continue;
     }
 
+    const baseline = computeGameDaySnapshot(current, teamId, game, {
+      demandBoost: 0,
+      ticketPriceMultiplier: 1,
+      merchMultiplier: 1,
+      concessionMultiplier: 1,
+    });
+
+    const varianceFactor =
+      1 + (localRng.next() * 2 - 1) * PROMOTION_VARIANCE_CLAMP;
+    const effects = resolveGameDayPromotionEffects(
+      current,
+      teamId,
+      game,
+      varianceFactor,
+    );
+
+    const actual = effects
+      ? computeGameDaySnapshot(current, teamId, game, {
+          demandBoost: effects.demandBoost,
+          ticketPriceMultiplier: effects.ticketPriceMultiplier,
+          merchMultiplier: effects.merchMultiplier,
+          concessionMultiplier: effects.concessionMultiplier,
+        })
+      : baseline;
+
     const opponentWinPct = teamWinPct(current, game.awayTeamId);
-    let demand = calculateTicketDemand({
+    const demand = calculateTicketDemand({
       marketSize: ops.marketSize,
       fanSentiment: ops.fanSentiment,
       reputation: team.reputation,
@@ -109,91 +178,37 @@ export function processHomeGameTicketRevenue(state: GameState): SystemResult {
       opponentWinPct,
     });
 
-    let demandScore = applyConsumerCycleToDemandScore(demand.score, cycle);
-    if (inPlayoffs) {
-      demandScore = applyPlayoffDemandUplift(demandScore, PLAYOFF_DEMAND_UPLIFT);
-    }
-
     const capacity = arenaCapacity(current, teamId);
     const premiumCapacity = premiumCapacityForArena(
       capacity,
       ops.facilities.arena.level,
     );
-    const premiumOccupancyRaw = resolvePremiumOccupancy(
-      demandScore,
-      ops.premiumTicketPrice,
-      premiumCapacity,
-    );
-    const seats = allocateGameDaySeats({
-      arenaCapacity: capacity,
-      premiumCapacity,
-      premiumOccupancy: premiumOccupancyRaw,
-      gaDemandScore: demandScore,
-      gaTicketPrice: ops.ticketPrice,
-    });
 
-    const ticketRevenue = seats.gaAttendance * ops.ticketPrice;
-    const premiumRevenue = seats.premiumOccupancy * ops.premiumTicketPrice;
-    const starFactor = starMerchandiseFactor(
-      rosterStarAverage(current, teamId),
-    );
-    const totalAttendance = seats.gaAttendance + seats.premiumOccupancy;
-    const merchRevenue = merchandiseFromAttendance(
-      totalAttendance,
-      ops.fanSentiment,
-      starFactor,
-    );
-    const concessionsRevenue = concessionsFromAttendance(
-      totalAttendance,
-      ops.fanSentiment,
-    );
+    const posted = snapshotToPostedRevenue(current, teamId, year, actual);
+    current = posted.state;
+    events.push(...posted.events);
 
-    if (ticketRevenue > 0) {
-      const ticketImpact = applyCashAndBooksImpact(
+    let promotionSummary:
+      | ReturnType<typeof compactPromotionSummary>
+      | undefined;
+
+    if (effects) {
+      const settled = settleGameDayPromotion(
         current,
         teamId,
-        ticketRevenue,
-        year,
-        { revenueCategory: "tickets" },
+        game,
+        baseline,
+        actual,
+        effects,
+        varianceFactor - 1,
       );
-      current = ticketImpact.state;
-      events.push(...ticketImpact.events);
-    }
-
-    if (premiumRevenue > 0) {
-      const premiumImpact = applyCashAndBooksImpact(
-        current,
-        teamId,
-        premiumRevenue,
-        year,
-        { revenueCategory: "premium" },
-      );
-      current = premiumImpact.state;
-      events.push(...premiumImpact.events);
-    }
-
-    if (merchRevenue > 0) {
-      const merchImpact = applyCashAndBooksImpact(
-        current,
-        teamId,
-        merchRevenue,
-        year,
-        { revenueCategory: "merchandise" },
-      );
-      current = merchImpact.state;
-      events.push(...merchImpact.events);
-    }
-
-    if (concessionsRevenue > 0) {
-      const concessionsImpact = applyCashAndBooksImpact(
-        current,
-        teamId,
-        concessionsRevenue,
-        year,
-        { revenueCategory: "concessions" },
-      );
-      current = concessionsImpact.state;
-      events.push(...concessionsImpact.events);
+      current = settled.state;
+      events.push(...settled.events);
+      const result =
+        current.business.gameDayPromotionsByTeamId[teamId]?.results[game.id];
+      if (result) {
+        promotionSummary = compactPromotionSummary(result);
+      }
     }
 
     events.push(
@@ -203,26 +218,27 @@ export function processHomeGameTicketRevenue(state: GameState): SystemResult {
         payload: {
           teamId,
           gameId: game.id,
-          attendance: totalAttendance,
-          gaAttendance: seats.gaAttendance,
-          premiumOccupancy: seats.premiumOccupancy,
+          attendance: actual.attendance,
+          gaAttendance: actual.gaAttendance,
+          premiumOccupancy: actual.premiumOccupancy,
           capacity,
           premiumCapacity,
-          demandScore,
+          demandScore: actual.demandScore,
           ticketPrice: ops.ticketPrice,
           premiumTicketPrice: ops.premiumTicketPrice,
-          ticketRevenue,
-          premiumRevenue,
-          merchRevenue,
-          concessionsRevenue,
+          ticketRevenue: actual.ticketRevenue,
+          premiumRevenue: actual.premiumRevenue,
+          merchRevenue: actual.merchRevenue,
+          concessionsRevenue: actual.concessionsRevenue,
           revenuePerAttendee: revenuePerAttendee(
-            totalAttendance,
-            ticketRevenue,
-            merchRevenue,
-            concessionsRevenue,
-            premiumRevenue,
+            actual.attendance,
+            actual.ticketRevenue,
+            actual.merchRevenue,
+            actual.concessionsRevenue,
+            actual.premiumRevenue,
           ),
           contributions: demand.contributions,
+          ...(promotionSummary ? { promotion: promotionSummary } : {}),
         },
       }),
     );
@@ -241,7 +257,7 @@ export function processHomeGameTicketRevenue(state: GameState): SystemResult {
               ...finances,
               attendanceByYear: {
                 ...finances.attendanceByYear,
-                [yearKey]: priorAttendance + totalAttendance,
+                [yearKey]: priorAttendance + actual.attendance,
               },
             },
           },

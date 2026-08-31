@@ -8,6 +8,7 @@ import {
 import { processWeeklyMarketing } from "@/systems/marketing";
 import { processWeeklyMediaDecay } from "@/systems/media";
 import { runAiFranchiseDecisions } from "@/systems/ai-franchise-decisions";
+import { runAiGameDayPromotionDecisions } from "@/systems/game-day-promotions/ai-game-day-promotions";
 import { createSeededRng } from "@/domain/rng";
 
 export type WeeklyPipelineResult = SystemResult & {
@@ -73,6 +74,13 @@ export function runWeeklyPipeline(
   );
   current = ai.state;
   events.push(...ai.events);
+
+  const aiPromos = runAiGameDayPromotionDecisions(
+    current,
+    createSeededRng(current.meta.rngState),
+  );
+  current = aiPromos.state;
+  events.push(...aiPromos.events);
 
   return {
     ...systemResult(current, events),

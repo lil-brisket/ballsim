@@ -34,6 +34,7 @@ import {
 } from "@/state/game-state";
 import { createDefaultOwnedFranchiseState } from "@/state/owned-franchise-state";
 import { createPhaseEBusinessDefaults } from "@/state/phase-e-defaults";
+import type { GameDayPromotionSeasonState } from "@/domain/entities/game-day-promotion";
 import { generateLeague } from "@/systems/league-generation";
 import { leagueGenerationConfigFromSettings } from "@/systems/league-shape";
 import { generateLeagueStaff } from "@/systems/staff-generation";
@@ -271,6 +272,13 @@ export function createInitialGameState(
       ...state.meta,
       rngState: rng.getState(),
     },
+    business: {
+      ...state.business,
+      gameDayPromotionsByTeamId: syncPromotionSeasonIds(
+        state.business.gameDayPromotionsByTeamId,
+        seasonId,
+      ),
+    },
   };
 }
 
@@ -430,7 +438,7 @@ export function createFourTeamInitialGameState(
     },
   };
 
-  return {
+  const state: GameState = {
     meta: {
       saveId,
       schemaVersion: GAME_STATE_SCHEMA_VERSION,
@@ -569,4 +577,29 @@ export function createFourTeamInitialGameState(
       },
     },
   };
+  return {
+    ...state,
+    business: {
+      ...state.business,
+      gameDayPromotionsByTeamId: syncPromotionSeasonIds(
+        state.business.gameDayPromotionsByTeamId,
+        seasonId,
+      ),
+    },
+  };
+}
+
+function syncPromotionSeasonIds(
+  byTeamId: Record<string, GameDayPromotionSeasonState>,
+  seasonId: ReturnType<typeof asSeasonId>,
+): Record<string, GameDayPromotionSeasonState> {
+  const next: Record<string, GameDayPromotionSeasonState> = {};
+  for (const teamId of Object.keys(byTeamId)) {
+    const current = byTeamId[teamId]!;
+    next[teamId] =
+      current.seasonId === seasonId
+        ? current
+        : { ...current, seasonId };
+  }
+  return next;
 }

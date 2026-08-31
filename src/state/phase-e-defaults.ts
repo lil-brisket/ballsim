@@ -5,9 +5,13 @@ import {
   createDefaultFranchiseOps,
   type FranchiseOps,
 } from "@/domain/entities/franchise-ops";
+import {
+  createEmptyGameDayPromotionSeasonState,
+  type GameDayPromotionSeasonState,
+} from "@/domain/entities/game-day-promotion";
 import { createDefaultLeagueEconomy } from "@/domain/entities/league-economy";
 import { createIdleRelocation } from "@/domain/entities/relocation";
-import type { TeamId } from "@/domain/ids";
+import { asSeasonId, type TeamId } from "@/domain/ids";
 import { generateFranchiseIdentity } from "@/systems/franchise-identity-generation";
 
 /**
@@ -33,6 +37,7 @@ export function createPhaseEBusinessDefaults(
   gameArchive: Record<string, never>;
   playerHistory: Record<string, never>;
   awards: ReturnType<typeof createEmptyAwardHistory>;
+  gameDayPromotionsByTeamId: Record<string, GameDayPromotionSeasonState>;
 } {
   const franchiseOps: Record<string, FranchiseOps> = {};
   const relocationByTeamId: Record<
@@ -43,6 +48,11 @@ export function createPhaseEBusinessDefaults(
     string,
     ReturnType<typeof createEmptyFranchiseHistory>
   > = {};
+  const gameDayPromotionsByTeamId: Record<string, GameDayPromotionSeasonState> =
+    {};
+  const seasonId = asSeasonId(
+    `season_${cityStartSeasonYear > 0 ? cityStartSeasonYear : 2026}`,
+  );
 
   const sorted = [...teamIds].sort();
   for (let i = 0; i < sorted.length; i += 1) {
@@ -71,6 +81,8 @@ export function createPhaseEBusinessDefaults(
       cityStartSeasonYear,
     );
     franchiseHistory[teamId] = createEmptyFranchiseHistory(teamId);
+    gameDayPromotionsByTeamId[teamId] =
+      createEmptyGameDayPromotionSeasonState(seasonId);
   }
 
   return {
@@ -85,5 +97,6 @@ export function createPhaseEBusinessDefaults(
     gameArchive: {},
     playerHistory: {},
     awards: createEmptyAwardHistory(),
+    gameDayPromotionsByTeamId,
   };
 }

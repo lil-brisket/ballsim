@@ -11,7 +11,8 @@ export const MEDIA_EVENT_BUMPS: Partial<
     | "FacilityUpgradeCompleted"
     | "SponsorshipSigned"
     | "RelocationStageChanged"
-    | "ExpansionStageChanged",
+    | "ExpansionStageChanged"
+    | "GameDayPromotionSettled",
     number
   >
 > = {
@@ -23,4 +24,5 @@ export const MEDIA_EVENT_BUMPS: Partial<
   SponsorshipSigned: 3,
   RelocationStageChanged: 5,
   ExpansionStageChanged: 6,
+  GameDayPromotionSettled: 2,
 };

@@ -530,6 +530,16 @@ export function validateGameState(state: unknown): asserts state is GameState {
     fail("business.awards.results is required.");
   }
   assertRecord(business.awards.results, "business.awards.results");
+  if (
+    !("gameDayPromotionsByTeamId" in business) ||
+    business.gameDayPromotionsByTeamId == null
+  ) {
+    fail("business.gameDayPromotionsByTeamId is required.");
+  }
+  assertRecord(
+    business.gameDayPromotionsByTeamId,
+    "business.gameDayPromotionsByTeamId",
+  );
   if (!("leagueEconomy" in business) || business.leagueEconomy == null) {
     fail("business.leagueEconomy is required.");
   }
@@ -543,6 +553,26 @@ export function validateGameState(state: unknown): asserts state is GameState {
     if (!(teamId in franchiseOps)) {
       fail(`business.franchiseOps missing team "${teamId}".`);
     }
+    if (!(teamId in business.gameDayPromotionsByTeamId)) {
+      fail(`business.gameDayPromotionsByTeamId missing team "${teamId}".`);
+    }
+    const promo = (business.gameDayPromotionsByTeamId as Record<string, unknown>)[
+      teamId
+    ];
+    assertRecord(promo, `business.gameDayPromotionsByTeamId[${teamId}]`);
+    if (typeof promo.committedSpend !== "number") {
+      fail(
+        `business.gameDayPromotionsByTeamId[${teamId}].committedSpend must be a number.`,
+      );
+    }
+    assertRecord(
+      promo.assignments,
+      `business.gameDayPromotionsByTeamId[${teamId}].assignments`,
+    );
+    assertRecord(
+      promo.results,
+      `business.gameDayPromotionsByTeamId[${teamId}].results`,
+    );
     const ops = (franchiseOps as Record<string, unknown>)[teamId];
     assertRecord(ops, `business.franchiseOps[${teamId}]`);
     if (!isAiProfile(ops.aiProfile)) {

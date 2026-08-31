@@ -591,3 +591,19 @@ export {
   isRfaResolution,
   RFA_RESOLUTIONS,
 } from "@/domain/entities/rfa-status";
+export type {
+  GameDayPromotionAssignment,
+  GameDayPromotionCategory,
+  GameDayPromotionDefinition,
+  GameDayPromotionObjective,
+  GameDayPromotionProjection,
+  GameDayPromotionResult,
+  GameDayPromotionSeasonState,
+  FanResponse,
+} from "@/domain/entities/game-day-promotion";
+export {
+  createEmptyGameDayPromotionSeasonState,
+  GAME_DAY_PROMOTION_CATEGORIES,
+  isGameDayPromotionCategory,
+  isFanResponse,
+} from "@/domain/entities/game-day-promotion";

@@ -45,6 +45,7 @@ export type DomainEventType =
   | "RevenueRecorded"
   | "ExpenseRecorded"
   | "HomeGameDaySettled"
+  | "GameDayPromotionSettled"
   | "PlayerPayrollPaid"
   | "PlayerAssignedToDevelopmentLeague"
   | "PlayerRecalledFromDevelopmentLeague"
@@ -89,6 +90,7 @@ export const DOMAIN_EVENT_TYPES: readonly DomainEventType[] = [
   "RevenueRecorded",
   "ExpenseRecorded",
   "HomeGameDaySettled",
+  "GameDayPromotionSettled",
   "PlayerPayrollPaid",
   "PlayerAssignedToDevelopmentLeague",
   "PlayerRecalledFromDevelopmentLeague",

@@ -29,6 +29,7 @@ import { processDailyFanSentimentAfterGames } from "@/systems/fan-sentiment";
 import { applyMediaFromDomainEvents } from "@/systems/media";
 import { processLeaguePlayoffBonuses } from "@/systems/playoff-financial-bonuses";
 import { processHomeGameTicketRevenue } from "@/systems/ticket-revenue";
+import { applyPromotionDownstreamEffects } from "@/systems/game-day-promotions/apply-promotion-downstream-effects";
 import { processNarrativeLayer } from "@/systems/narrative";
 import { assertContinuityBoundary } from "@/systems/simulation/continuity-validation";
 import type { SimulationProfiler } from "@/systems/simulation/simulation-profiler";
@@ -194,7 +195,7 @@ function advanceOneDay(
   events.push(...daily.events);
 
   const ticketsStart = performance.now();
-  const tickets = processHomeGameTicketRevenue(current);
+  const tickets = processHomeGameTicketRevenue(current, rng);
   current = tickets.state;
   events.push(...tickets.events);
 
@@ -230,6 +231,10 @@ function advanceOneDay(
   const media = applyMediaFromDomainEvents(current, events);
   current = media.state;
   events.push(...media.events);
+  // Fan/PR/awareness from GameDayPromotionSettled (media handled above).
+  const promoDownstream = applyPromotionDownstreamEffects(current, events);
+  current = promoDownstream.state;
+  events.push(...promoDownstream.events);
   if (profiler) {
     profiler.addSeason("mediaMs", performance.now() - mediaStart);
   }
