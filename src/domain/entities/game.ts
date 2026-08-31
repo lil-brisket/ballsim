@@ -10,11 +10,15 @@ export const GAME_STATUSES: readonly GameStatus[] = [
   "final",
 ];
 
-export type GameCompetitionType = "regular_season" | "playoffs";
+export type GameCompetitionType =
+  | "regular_season"
+  | "playoffs"
+  | "development_league";
 
 export const GAME_COMPETITION_TYPES: readonly GameCompetitionType[] = [
   "regular_season",
   "playoffs",
+  "development_league",
 ];
 
 export type GameScore = {

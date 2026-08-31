@@ -334,6 +334,7 @@ export function validateGameState(state: unknown): asserts state is GameState {
     "games",
     "standings",
     "playoffs",
+    "developmentLeague",
     "seasonEventLog",
   ] as const) {
     if (!(key in competition)) {
@@ -428,6 +429,29 @@ export function validateGameState(state: unknown): asserts state is GameState {
   }
   assertRecord(competition.playoffs, "competition.playoffs");
   validatePlayoffs(competition.playoffs);
+
+  if (
+    competition.developmentLeague === null ||
+    competition.developmentLeague === undefined
+  ) {
+    fail("competition.developmentLeague is required.");
+  }
+  assertRecord(
+    competition.developmentLeague,
+    "competition.developmentLeague",
+  );
+  assertRecord(
+    competition.developmentLeague.schedule,
+    "competition.developmentLeague.schedule",
+  );
+  assertRecord(
+    competition.developmentLeague.games,
+    "competition.developmentLeague.games",
+  );
+  assertRecord(
+    competition.developmentLeague.standings,
+    "competition.developmentLeague.standings",
+  );
 
   if (!Array.isArray(competition.seasonEventLog)) {
     fail("competition.seasonEventLog must be an array.");
@@ -1103,6 +1127,25 @@ export function validateGameState(state: unknown): asserts state is GameState {
         );
       }
       rosterMembership.set(rosterPlayerId, teamId);
+    }
+  }
+
+  // DL-assigned players: franchise ownership via teamId, not on Team.roster
+  for (const [playerId, playerValue] of Object.entries(world.players)) {
+    const dl = (playerValue as { developmentLeague?: { status?: string; parentTeamId?: string | null } })
+      .developmentLeague;
+    if (dl?.status !== "assigned") {
+      continue;
+    }
+    if (rosterMembership.has(playerId)) {
+      fail(
+        `Player "${playerId}" is Development League–assigned but still appears on a top-league roster.`,
+      );
+    }
+    if (playerValue.teamId == null) {
+      fail(
+        `Player "${playerId}" is Development League–assigned but has null teamId.`,
+      );
     }
   }
 

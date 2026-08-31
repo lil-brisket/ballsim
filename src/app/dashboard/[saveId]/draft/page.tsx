@@ -7,6 +7,7 @@ import {
 } from "@/application/actions";
 import { loadOwnerSaveView } from "@/application/game-service";
 import { DraftBoardPanel } from "@/components/draft/DraftBoardPanel";
+import { PostDraftDevelopmentReview } from "@/components/draft/PostDraftDevelopmentReview";
 import { ProspectCard } from "@/components/draft/ProspectCard";
 import { EmptyState, ErrorState } from "@/components/owner/EmptyState";
 import { PageHeader } from "@/components/owner/PageHeader";
@@ -21,6 +22,7 @@ import {
   ensureMockDrafts,
   getDraftRecommendations,
 } from "@/systems/draft";
+import { buildPostDraftDlRecommendations } from "@/systems/development-league/recommendations";
 import { prospectFunFact } from "@/systems/draft/prospect-fun-facts";
 import { toScoutingReportView } from "@/systems/scouting/scouting-reports";
 
@@ -119,6 +121,21 @@ export default async function DraftPage({
         <EmptyState message="Draft is not active. Finish free agency or advance into the draft stage." />
       ) : (
         <>
+          {draft.status === "complete" ? (
+            <div className="mb-6">
+              <PostDraftDevelopmentReview
+                saveId={saveId}
+                returnPath={returnPath}
+                review={buildPostDraftDlRecommendations(
+                  state,
+                  teamId,
+                  draft.pickResults
+                    .filter((p) => p.teamId === teamId)
+                    .map((p) => p.playerId),
+                )}
+              />
+            </div>
+          ) : null}
           {board.userOnClock ? (
             <p className="mb-4 rounded-md border border-amber-700/50 bg-amber-950/40 px-4 py-3 text-sm text-amber-200">
               Your team is on the clock. Select a prospect below.

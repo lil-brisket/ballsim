@@ -69,6 +69,7 @@ import {
   isDraftAiPhase,
   isFreeAgencyAiPhase,
 } from "@/systems/phase-engine";
+import { runAiDevelopmentLeagueDecisions } from "@/systems/development-league/ai-decisions";
 
 export { isUserControlledTeam };
 
@@ -104,6 +105,10 @@ export function runAiTeamDecisions(state: GameState, _rng: Rng): SystemResult {
   }
 
   current = maintainAiRosterManagement(current);
+
+  const dl = runAiDevelopmentLeagueDecisions(current, _rng);
+  current = dl.state;
+  events.push(...dl.events);
 
   return systemResult(current, events);
 }

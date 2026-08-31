@@ -51,6 +51,9 @@ export type PlayerSeasonRecord = {
   competition: {
     regular: PlayerSeasonStatLine;
     playoffs: PlayerSeasonStatLine;
+    /** Development League season line — never mixed into combined. */
+    development: PlayerSeasonStatLine;
+    /** Top-league only (regular + playoffs). Does not include development. */
     combined: PlayerSeasonStatLine;
   };
 };

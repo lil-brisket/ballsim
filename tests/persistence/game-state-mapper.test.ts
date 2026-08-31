@@ -540,6 +540,7 @@ describe("GameState schema migration", () => {
         "conditioning",
         "injuryHistory",
         "nationality",
+        "developmentLeague",
       ].sort(),
     );
   });

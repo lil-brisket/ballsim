@@ -177,6 +177,15 @@ function createEightTeamPopulatedState(rngSeed: number): GameState {
       games: {},
       standings,
       playoffs: createEmptyPlayoffTournament(),
+      developmentLeague: {
+        schedule: {
+          seasonId,
+          gameIds: [],
+          gameIdsByDate: {},
+        },
+        games: {},
+        standings: { byTeamId: {} },
+      },
       seasonEventLog: [],
     },
     business: {

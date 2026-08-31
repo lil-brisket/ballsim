@@ -223,6 +223,15 @@ export function createInitialGameState(
       games: {},
       standings,
       playoffs: createEmptyPlayoffTournament(),
+      developmentLeague: {
+        schedule: {
+          seasonId,
+          gameIds: [],
+          gameIdsByDate: {},
+        },
+        games: {},
+        standings: { byTeamId: {} },
+      },
       seasonEventLog: [],
     },
     business: {
@@ -518,6 +527,15 @@ export function createFourTeamInitialGameState(
       games: {},
       standings,
       playoffs: createEmptyPlayoffTournament(),
+      developmentLeague: {
+        schedule: {
+          seasonId,
+          gameIds: [],
+          gameIdsByDate: {},
+        },
+        games: {},
+        standings: { byTeamId: {} },
+      },
       seasonEventLog: [],
     },
     business: {

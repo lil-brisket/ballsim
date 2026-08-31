@@ -17,6 +17,9 @@ import {
   migrateLegacySeverity,
   primaryActiveInjury,
 } from "@/domain/entities/player";
+import { createDefaultDevelopmentLeagueProfile } from "@/domain/entities/development-league";
+import { createEmptyPlayerSeasonStatLine } from "@/domain/entities/player-history";
+import { createEmptyTeamStanding } from "@/domain/entities/standings";
 import type { PlayerArchetype } from "@/domain/entities/player-archetype";
 import type { PlayerNationality } from "@/domain/entities/player-nationality";
 import type { Team, TeamPlayStyle } from "@/domain/entities/team";
@@ -208,6 +211,7 @@ const MIGRATE_ONE_STEP: Record<number, (state: unknown) => unknown> = {
   52: (state) => migrateV52ToV53(state as GameStateV52),
   53: (state) => migrateV53ToV54(state as GameStateV53),
   54: (state) => migrateV54ToV55(state as GameStateV54),
+  55: (state) => migrateV55ToV56(state as GameStateV55),
 };
 
 function legacyUserRecord(user: unknown): Record<string, unknown> {
@@ -4818,6 +4822,99 @@ function expandLegacyPlayerInjury(
     chronic: false,
     isLegacyData: true,
     exposureSource: "off_court",
+  };
+}
+
+type GameStateV55 = Omit<GameState, "meta"> & {
+  meta: Omit<GameState["meta"], "schemaVersion"> & { schemaVersion: 55 };
+};
+
+/**
+ * Deterministic v55 → v56: Development League profile on players,
+ * competition.developmentLeague slice, playerHistory.development bucket.
+ */
+function migrateV55ToV56(state: GameStateV55): GameState {
+  const players: GameState["world"]["players"] = {};
+  for (const [playerId, raw] of Object.entries(state.world.players)) {
+    const player = raw as Player;
+    const existing = (raw as { developmentLeague?: unknown }).developmentLeague;
+    players[playerId] = {
+      ...player,
+      developmentLeague:
+        existing != null && typeof existing === "object"
+          ? (existing as Player["developmentLeague"])
+          : createDefaultDevelopmentLeagueProfile(),
+    };
+  }
+
+  const seasonId = state.competition.season.id;
+  const standingsByTeamId: Record<
+    string,
+    ReturnType<typeof createEmptyTeamStanding>
+  > = {};
+  for (const team of Object.values(state.world.teams)) {
+    standingsByTeamId[team.id] = createEmptyTeamStanding(team.id);
+  }
+
+  const existingDl = (
+    state.competition as {
+      developmentLeague?: GameState["competition"]["developmentLeague"];
+    }
+  ).developmentLeague;
+
+  const playerHistory: GameState["business"]["playerHistory"] = {};
+  for (const [playerId, history] of Object.entries(
+    state.business.playerHistory ?? {},
+  )) {
+    playerHistory[playerId] = {
+      ...history,
+      seasons: history.seasons.map((season) => {
+        const competition = season.competition as {
+          regular: (typeof season.competition)["regular"];
+          playoffs: (typeof season.competition)["playoffs"];
+          combined: (typeof season.competition)["combined"];
+          development?: (typeof season.competition)["regular"];
+        };
+        return {
+          ...season,
+          competition: {
+            regular: competition.regular,
+            playoffs: competition.playoffs,
+            development:
+              competition.development ?? createEmptyPlayerSeasonStatLine(),
+            combined: competition.combined,
+          },
+        };
+      }),
+    };
+  }
+
+  return {
+    ...state,
+    meta: {
+      ...state.meta,
+      schemaVersion: 56,
+    },
+    world: {
+      ...state.world,
+      players,
+    },
+    competition: {
+      ...state.competition,
+      developmentLeague: existingDl ?? {
+        schedule: {
+          seasonId,
+          gameIds: [],
+          gameIdsByDate: {},
+        },
+        games: {},
+        standings: { byTeamId: standingsByTeamId },
+      },
+    },
+    business: {
+      ...state.business,
+      playerHistory,
+    },
   };
 }
 

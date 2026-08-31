@@ -53,7 +53,13 @@ export const defaultTradeEligibilityRules: TradeEligibilityRule[] = [
         message: `Player "${context.player.id}" teamId does not match offering team.`,
       };
     }
-    if (!context.offeringTeam.roster.includes(context.player.id as PlayerId)) {
+    const onTopRoster = context.offeringTeam.roster.includes(
+      context.player.id as PlayerId,
+    );
+    const onDl =
+      context.player.developmentLeague?.status === "assigned" &&
+      context.player.teamId === context.offeringTeam.id;
+    if (!onTopRoster && !onDl) {
       return {
         code: "PLAYER_INELIGIBLE",
         message: `Player "${context.player.id}" is not on offering team roster.`,

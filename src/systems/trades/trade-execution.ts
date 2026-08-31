@@ -84,7 +84,7 @@ export function executeTrade(
   const teamA = { ...teams[teamIdA]!, roster: [...teams[teamIdA]!.roster] };
   const teamB = { ...teams[teamIdB]!, roster: [...teams[teamIdB]!.roster] };
 
-  // Remove outgoing players from rosters
+  // Remove outgoing players from rosters (DL-assigned players are already off roster)
   teamA.roster = teamA.roster.filter(
     (id) => !proposal.sideA.playerIds.includes(id),
   );
@@ -95,8 +95,21 @@ export function executeTrade(
   // Move players A → B
   for (const playerId of proposal.sideA.playerIds) {
     const player = players[playerId]!;
-    players[playerId] = { ...player, teamId: teamIdB };
-    if (!teamB.roster.includes(playerId)) {
+    const wasDlAssigned = player.developmentLeague?.status === "assigned";
+    const nextDl =
+      player.developmentLeague != null
+        ? {
+            ...player.developmentLeague,
+            parentTeamId: wasDlAssigned ? teamIdB : player.developmentLeague.parentTeamId,
+          }
+        : undefined;
+    players[playerId] = {
+      ...player,
+      teamId: teamIdB,
+      developmentLeague: nextDl,
+    };
+    // DL-assigned players stay off top-league roster; transfer ownership only
+    if (!wasDlAssigned && !teamB.roster.includes(playerId)) {
       teamB.roster = [...teamB.roster, playerId];
     }
     if (player.contractId !== null) {
@@ -110,8 +123,20 @@ export function executeTrade(
   // Move players B → A
   for (const playerId of proposal.sideB.playerIds) {
     const player = players[playerId]!;
-    players[playerId] = { ...player, teamId: teamIdA };
-    if (!teamA.roster.includes(playerId)) {
+    const wasDlAssigned = player.developmentLeague?.status === "assigned";
+    const nextDl =
+      player.developmentLeague != null
+        ? {
+            ...player.developmentLeague,
+            parentTeamId: wasDlAssigned ? teamIdA : player.developmentLeague.parentTeamId,
+          }
+        : undefined;
+    players[playerId] = {
+      ...player,
+      teamId: teamIdA,
+      developmentLeague: nextDl,
+    };
+    if (!wasDlAssigned && !teamA.roster.includes(playerId)) {
       teamA.roster = [...teamA.roster, playerId];
     }
     if (player.contractId !== null) {

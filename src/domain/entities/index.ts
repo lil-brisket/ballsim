@@ -147,6 +147,21 @@ export {
   availabilityDisplayLabel,
 } from "@/domain/entities/player";
 export type {
+  DevelopmentLeagueProfile,
+  DevelopmentLeagueStatus,
+  DevelopmentLeagueRole,
+  DevelopmentReadiness,
+} from "@/domain/entities/development-league";
+export {
+  DL_MAX_SEASONS,
+  DL_DRAFT_ELIGIBILITY_SEASONS,
+  DL_MAX_OPPORTUNITY_BONUS,
+  createDefaultDevelopmentLeagueProfile,
+  getDevelopmentLeagueSeasonsRemaining,
+  isDevelopmentLeagueStatus,
+  isDevelopmentLeagueRole,
+} from "@/domain/entities/development-league";
+export type {
   InjuryDefinition,
   ExpectedReturnWindow,
   LegacyInjurySeverity,

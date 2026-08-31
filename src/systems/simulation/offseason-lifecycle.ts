@@ -25,6 +25,7 @@ import { processSeasonalLeagueEconomy } from "@/systems/league-economy";
 import { appendOwnershipSeasonNote } from "@/systems/ownership-confidence-engine";
 import { tickRelocationCooldowns } from "@/systems/relocation";
 import { processSeasonPlayerDevelopment } from "@/systems/season-player-development";
+import { processDevelopmentLeagueSeasonTransition } from "@/systems/development-league/season-transition";
 import { processSeasonStaffDevelopment } from "@/systems/staff-development";
 import { releaseExpiredStaffContracts } from "@/systems/staff-contract-lifecycle";
 import { refreshStaffFreeAgentPool } from "@/systems/staff-generation";
@@ -204,6 +205,15 @@ export function initializeNewSeason(state: GameState): SystemResult {
       games: {},
       standings: { byTeamId: standingsByTeamId },
       playoffs: createEmptyPlayoffTournament(),
+      developmentLeague: {
+        schedule: {
+          seasonId: nextSeasonId,
+          gameIds: [],
+          gameIdsByDate: {},
+        },
+        games: {},
+        standings: { byTeamId: standingsByTeamId },
+      },
       seasonEventLog: [],
     },
   };
@@ -373,6 +383,10 @@ function runSeasonTransition(state: GameState, rng: Rng): SystemResult {
   events.push(...reports.events);
 
   current = appendOwnershipSeasonNote(current);
+
+  const dlTransition = processDevelopmentLeagueSeasonTransition(current);
+  current = dlTransition.state;
+  events.push(...dlTransition.events);
 
   const development = processSeasonPlayerDevelopment(current, rng);
   current = development.state;

@@ -23,8 +23,23 @@ import type {
   TradeValidationIssue,
   TradeValidationResult,
 } from "@/systems/trades/trade-types";
+import { isPlayerDlAssigned } from "@/systems/development-league/franchise-membership";
 
 export type { TradeValidationIssue, TradeValidationResult };
+
+function countTopLeaguePlayersInTrade(
+  playerIds: readonly PlayerId[],
+  state: GameState,
+): number {
+  let count = 0;
+  for (const playerId of playerIds) {
+    const player = state.world.players[playerId];
+    if (player != null && !isPlayerDlAssigned(player)) {
+      count += 1;
+    }
+  }
+  return count;
+}
 
 /**
  * Canonical trade validation. Never mutates state.
@@ -175,12 +190,14 @@ export function validateTrade(
     }
   }
 
-  // Roster size — picks have zero roster impact
+  // Roster size — DL-assigned players do not affect top-league roster size
   const rosterRules = createRosterRulesConfig(TRADE_ROSTER_RULES);
-  const newSizeA =
-    teamA!.roster.length - sideA.playerIds.length + sideB.playerIds.length;
-  const newSizeB =
-    teamB!.roster.length - sideB.playerIds.length + sideA.playerIds.length;
+  const outA = countTopLeaguePlayersInTrade(sideA.playerIds, state);
+  const inA = countTopLeaguePlayersInTrade(sideB.playerIds, state);
+  const outB = countTopLeaguePlayersInTrade(sideB.playerIds, state);
+  const inB = countTopLeaguePlayersInTrade(sideA.playerIds, state);
+  const newSizeA = teamA!.roster.length - outA + inA;
+  const newSizeB = teamB!.roster.length - outB + inB;
 
   try {
     validateRosterSize(newSizeA, rosterRules);
@@ -278,7 +295,10 @@ function validateSideAssets(
         message: `Player "${playerId}" is not owned by team "${team.id}".`,
       });
     }
-    if (!team.roster.includes(playerId as PlayerId)) {
+    const onTopRoster = team.roster.includes(playerId as PlayerId);
+    const onDl =
+      isPlayerDlAssigned(player) && player.teamId === team.id;
+    if (!onTopRoster && !onDl) {
       errors.push({
         code: "PLAYER_NOT_ON_ROSTER",
         message: `Player "${playerId}" is not on team "${team.id}" roster.`,
