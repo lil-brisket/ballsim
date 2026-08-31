@@ -22,6 +22,13 @@ import {
   type PlayerInjury,
   type PlayerPhysicalProfile,
 } from "@/domain/entities/injury";
+import {
+  cloneDevelopmentLeagueProfile,
+  createDefaultDevelopmentLeagueProfile,
+  isDevelopmentLeagueRole,
+  isDevelopmentLeagueStatus,
+  type DevelopmentLeagueProfile,
+} from "@/domain/entities/development-league";
 
 export type {
   BodyPart,
@@ -182,6 +189,11 @@ export type Player = {
   injuryHistory: InjuryHistoryEntry[];
   development: DevelopmentState;
   /**
+   * Development League assignment/eligibility state.
+   * Player.teamId remains franchise ownership; Team.roster is top-league only.
+   */
+  developmentLeague: DevelopmentLeagueProfile;
+  /**
    * Irreversible retirement flag. Retired players cannot return to FA,
    * be traded, or be re-signed. Historical stats remain intact.
    */
@@ -213,6 +225,7 @@ export type PlayerInput = {
   conditioning?: number;
   injuryHistory?: InjuryHistoryEntry[];
   development: DevelopmentState;
+  developmentLeague?: DevelopmentLeagueProfile;
   retired?: boolean;
 };
 
@@ -402,6 +415,9 @@ export function createPlayer(input: PlayerInput): Player {
   }
   assertSuspension(input.suspension);
   assertDevelopment(input.development);
+  const developmentLeague = normalizeDevelopmentLeagueProfile(
+    input.developmentLeague,
+  );
 
   const physical: PlayerPhysicalProfile = {
     durability: clampInt(
@@ -444,7 +460,49 @@ export function createPlayer(input: PlayerInput): Player {
     conditioning,
     injuryHistory: injuryHistory.map((entry) => ({ ...entry })),
     development: { ...input.development },
+    developmentLeague: cloneDevelopmentLeagueProfile(developmentLeague),
     retired: input.retired === true ? true : undefined,
+  };
+}
+
+function normalizeDevelopmentLeagueProfile(
+  input: DevelopmentLeagueProfile | undefined,
+): DevelopmentLeagueProfile {
+  if (input == null) {
+    return createDefaultDevelopmentLeagueProfile();
+  }
+  if (!isDevelopmentLeagueStatus(input.status)) {
+    throw new Error(
+      `Player developmentLeague.status must be one of none, assigned.`,
+    );
+  }
+  if (!isDevelopmentLeagueRole(input.role)) {
+    throw new Error(
+      `Player developmentLeague.role must be starter, rotation, or development.`,
+    );
+  }
+  if (
+    !Number.isInteger(input.seasonsUsed) ||
+    input.seasonsUsed < 0 ||
+    input.seasonsUsed > 3
+  ) {
+    throw new Error(
+      "Player developmentLeague.seasonsUsed must be an integer 0–3.",
+    );
+  }
+  return {
+    status: input.status,
+    parentTeamId: input.parentTeamId,
+    role: input.role,
+    seasonsUsed: input.seasonsUsed,
+    assignedThisSeason: input.assignedThisSeason === true,
+    dlAssignmentLockedThisSeason: input.dlAssignmentLockedThisSeason === true,
+    firstAssignedSeasonYear: input.firstAssignedSeasonYear,
+    draftSeasonYear: input.draftSeasonYear,
+    currentSeasonStats:
+      input.currentSeasonStats == null
+        ? undefined
+        : { ...input.currentSeasonStats },
   };
 }
 

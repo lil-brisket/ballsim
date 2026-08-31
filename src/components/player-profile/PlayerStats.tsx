@@ -71,6 +71,7 @@ function Cell(props: { label: string; value: string }) {
 
 export function PlayerStats(props: { player: PlayerProfileView }) {
   const { player } = props;
+  const dlLine = player.developmentLeague.developmentStatLine;
 
   return (
     <div className="space-y-8">
@@ -89,6 +90,12 @@ export function PlayerStats(props: { player: PlayerProfileView }) {
       {player.playoffStatLine.games > 0 ? (
         <Section title="Current season — playoffs (totals)">
           <TotalsGrid line={player.playoffStatLine} title="Playoff" />
+        </Section>
+      ) : null}
+
+      {dlLine.games > 0 ? (
+        <Section title="Development League — current season (totals)">
+          <TotalsGrid line={dlLine} title="Development League" />
         </Section>
       ) : null}
 

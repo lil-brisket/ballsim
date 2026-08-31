@@ -45,7 +45,10 @@ export type DomainEventType =
   | "RevenueRecorded"
   | "ExpenseRecorded"
   | "HomeGameDaySettled"
-  | "PlayerPayrollPaid";
+  | "PlayerPayrollPaid"
+  | "PlayerAssignedToDevelopmentLeague"
+  | "PlayerRecalledFromDevelopmentLeague"
+  | "PlayerGraduatedFromDevelopmentLeague";
 
 export const DOMAIN_EVENT_TYPES: readonly DomainEventType[] = [
   "GameCompleted",
@@ -87,6 +90,9 @@ export const DOMAIN_EVENT_TYPES: readonly DomainEventType[] = [
   "ExpenseRecorded",
   "HomeGameDaySettled",
   "PlayerPayrollPaid",
+  "PlayerAssignedToDevelopmentLeague",
+  "PlayerRecalledFromDevelopmentLeague",
+  "PlayerGraduatedFromDevelopmentLeague",
 ];
 
 export function isDomainEventType(value: string): value is DomainEventType {

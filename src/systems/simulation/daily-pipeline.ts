@@ -16,6 +16,7 @@ import {
 import { redistributeRotationForInjuries } from "@/systems/rotation/rotation-injury-response";
 import { cloneTeamRosterManagement } from "@/domain/entities/team-roster-management";
 import type { TeamId } from "@/domain/ids";
+import { runDevelopmentLeaguePipeline } from "@/systems/development-league/daily-pipeline";
 
 export type DailyPipelineResult = SystemResult & {
   gamesSimulated: number;
@@ -55,6 +56,11 @@ export function runDailyPipeline(
         newlyFinalized.push(game);
       }
     }
+
+    const dlResult = runDevelopmentLeaguePipeline(current, rng, profiler);
+    current = dlResult.state;
+    events.push(...dlResult.events);
+    gamesSimulated += dlResult.gamesSimulated;
   }
 
   if (

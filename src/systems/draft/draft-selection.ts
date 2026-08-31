@@ -68,6 +68,16 @@ export function makeDraftSelection(
     id: playerId,
     teamId: ownerTeamId,
     contractId,
+    developmentLeague: {
+      status: "none",
+      parentTeamId: null,
+      role: "development",
+      seasonsUsed: 0,
+      assignedThisSeason: false,
+      dlAssignmentLockedThisSeason: false,
+      firstAssignedSeasonYear: null,
+      draftSeasonYear: draft.seasonYear,
+    },
   };
 
   const contract = createContract({

@@ -19,6 +19,7 @@ import {
 } from "@/components/player-profile/PlayerProfileNav";
 import { PlayerStats } from "@/components/player-profile/PlayerStats";
 import { PlayerTrends } from "@/components/player-profile/PlayerTrends";
+import { DevelopmentLeaguePlayerActions } from "@/components/player-profile/DevelopmentLeaguePlayerActions";
 
 type PlayerPageProps = {
   params: Promise<{ saveId: string; playerId: string }>;
@@ -93,7 +94,19 @@ export default async function PlayerDetailPage({
         />
 
         {activeTab === "overview" ? (
-          <PlayerOverview player={player} actions={tradeActions} />
+          <>
+            <DevelopmentLeaguePlayerActions
+              saveId={saveId}
+              playerId={playerId}
+              returnPath={returnPath}
+              canAssign={player.developmentLeague.canAssign}
+              canRecall={player.developmentLeague.canRecall}
+              statusLabel={player.developmentLeague.statusLabel}
+              readinessLabel={player.developmentLeague.readinessLabel}
+              whyBullets={player.developmentLeague.whyBullets}
+            />
+            <PlayerOverview player={player} actions={tradeActions} />
+          </>
         ) : null}
         {activeTab === "attributes" ? (
           <PlayerAttributesPanel player={player} />

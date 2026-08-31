@@ -51,7 +51,7 @@ import type {
   FranchisePhaseState,
 } from "@/systems/phase-engine/phase-types";
 
-export const GAME_STATE_SCHEMA_VERSION = 55;
+export const GAME_STATE_SCHEMA_VERSION = 56;
 
 /** League personnel market for staff free agency (not a business-finance concept). */
 export type StaffMarketState = {
@@ -108,6 +108,15 @@ export type CompetitionSlice = {
   games: Record<string, Game>;
   standings: Standings;
   playoffs: PlayoffTournament;
+  /**
+   * Development League competition layer — same team IDs as world.teams.
+   * DL rosters come from player.developmentLeague.status, not Team.roster.
+   */
+  developmentLeague: {
+    schedule: Schedule;
+    games: Record<string, Game>;
+    standings: Standings;
+  };
   /**
    * League-wide transaction feed for the current season.
    * Every transaction-level event (AI or user), regardless of active franchise.

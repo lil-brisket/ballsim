@@ -74,7 +74,7 @@ describe("v31 → v32 migration", () => {
 
     const loaded = deserializeGameState(JSON.stringify(parsed));
     expect(loaded.meta.schemaVersion).toBe(GAME_STATE_SCHEMA_VERSION);
-    expect(GAME_STATE_SCHEMA_VERSION).toBe(46);
+    expect(GAME_STATE_SCHEMA_VERSION).toBe(56);
     expect(getActiveOwnedFranchise(loaded).ownerStartSeasonYear).toBe(
       loaded.competition.season.year,
     );

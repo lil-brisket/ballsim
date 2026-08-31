@@ -4,6 +4,7 @@ import { systemResult, type SystemResult } from "@/domain/system-result";
 import type { GameState } from "@/state/game-state";
 import { startPlayoffs } from "@/systems/playoff-simulation";
 import { generateSchedule } from "@/systems/schedule-generation";
+import { generateDevelopmentLeagueSchedule } from "@/systems/development-league/schedule-generation";
 import { transitionPhase } from "@/systems/simulation/phase-machine";
 import {
   getActivePhaseId,
@@ -82,6 +83,10 @@ export function beginRegularSeasonFromPreseason(state: GameState): SystemResult 
     current = scheduleResult.state;
     events.push(...scheduleResult.events);
   }
+
+  const dlSchedule = generateDevelopmentLeagueSchedule(current);
+  current = dlSchedule.state;
+  events.push(...dlSchedule.events);
 
   current = snapshotTradeDeadline(current);
 

@@ -35,6 +35,15 @@ import {
   type TeamBrandingView,
 } from "@/state/team-branding-view";
 import { deriveDefaultTeamBranding } from "@/systems/team-branding-generation";
+import { isDevelopmentLeagueEligible } from "@/systems/development-league/eligibility";
+import { isPlayerDlAssigned } from "@/systems/development-league/franchise-membership";
+import {
+  getDevelopmentReadiness,
+  getDlAssignmentExplanation,
+  getPromotionExplanation,
+} from "@/systems/development-league/recommendations";
+import { getDevelopmentLeagueSeasonsRemaining } from "@/domain/entities/development-league";
+import { getControlledTeam } from "@/state/selectors";
 
 export type CareerHighStatKey =
   | "points"
@@ -185,6 +194,18 @@ export type PlayerProfileView = PlayerDetailView & {
   attributeDevelopment: Record<string, TrendPoint[]>;
   overallTrend: TrendPoint[];
   trendSeries: Record<string, TrendPoint[]>;
+  developmentLeague: {
+    assigned: boolean;
+    canAssign: boolean;
+    canRecall: boolean;
+    statusLabel: string | null;
+    readinessLabel: string | null;
+    whyBullets: string[];
+    seasonsUsed: number;
+    seasonsRemaining: number;
+    role: string | null;
+    developmentStatLine: PlayerSeasonStatLine;
+  };
 };
 
 function seasonYearFromId(seasonId: SeasonId, fallbackYear: number): number {
@@ -337,18 +358,22 @@ export function aggregatePlayerSeasonStats(
 ): {
   regular: PlayerSeasonStatLine;
   playoffs: PlayerSeasonStatLine;
+  development: PlayerSeasonStatLine;
   combined: PlayerSeasonStatLine;
 } {
   const targetSeasonId = seasonId ?? state.competition.season.id;
   const games = getPlayerSeasonGames(state, playerId, targetSeasonId);
   let regular = createEmptyPlayerSeasonStatLine();
   let playoffs = createEmptyPlayerSeasonStatLine();
+  let development = createEmptyPlayerSeasonStatLine();
 
   for (const game of games) {
     const row = game.playerStats.find((stat) => stat.playerId === playerId);
     if (!row) continue;
     if (game.competitionType === "playoffs") {
       playoffs = accumulateLine(playoffs, row);
+    } else if (game.competitionType === "development_league") {
+      development = accumulateLine(development, row);
     } else {
       regular = accumulateLine(regular, row);
     }
@@ -357,6 +382,7 @@ export function aggregatePlayerSeasonStats(
   return {
     regular,
     playoffs,
+    development,
     combined: addPlayerSeasonStatLines(regular, playoffs),
   };
 }
@@ -889,6 +915,27 @@ export function toPlayerProfileView(
     trendSeries[key] = toPlayerTrendSeries(history, key, currentPartial);
   }
 
+  const worldPlayer = state.world.players[playerId];
+  const controlledTeam = getControlledTeam(state);
+  const ownedByActive =
+    worldPlayer != null && worldPlayer.teamId === controlledTeam.id;
+  const assigned = worldPlayer != null && isPlayerDlAssigned(worldPlayer);
+  const canAssign =
+    ownedByActive &&
+    worldPlayer != null &&
+    isDevelopmentLeagueEligible(worldPlayer, controlledTeam.id, state);
+  const canRecall = ownedByActive && assigned;
+  const readiness =
+    worldPlayer != null && ownedByActive
+      ? getDevelopmentReadiness(worldPlayer, controlledTeam.id, state)
+      : null;
+  const whyBullets =
+    worldPlayer != null && ownedByActive
+      ? assigned
+        ? getPromotionExplanation(worldPlayer, controlledTeam.id, state)
+        : getDlAssignmentExplanation(worldPlayer, controlledTeam.id, state)
+      : [];
+
   return {
     ...detail,
     seasonStats: {
@@ -922,6 +969,24 @@ export function toPlayerProfileView(
     attributeDevelopment,
     overallTrend: trendSeries.ovr ?? [],
     trendSeries,
+    developmentLeague: {
+      assigned,
+      canAssign,
+      canRecall,
+      statusLabel: assigned
+        ? `Assigned (${worldPlayer?.developmentLeague?.role ?? "development"})`
+        : worldPlayer?.developmentLeague?.draftSeasonYear != null
+          ? "Eligible prospect"
+          : null,
+      readinessLabel: readiness?.replace(/_/g, " ") ?? null,
+      whyBullets,
+      seasonsUsed: worldPlayer?.developmentLeague?.seasonsUsed ?? 0,
+      seasonsRemaining: getDevelopmentLeagueSeasonsRemaining(
+        worldPlayer?.developmentLeague,
+      ),
+      role: worldPlayer?.developmentLeague?.role ?? null,
+      developmentStatLine: seasonStats.development,
+    },
   };
 }
 

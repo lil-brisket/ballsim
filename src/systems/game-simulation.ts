@@ -15,6 +15,7 @@ import type { Player } from "@/domain/entities/player";
 import { calculatePlayerOverall } from "@/domain/player-overall-rating";
 import {
   asPossessionId,
+  type PlayerId,
   type TeamId,
 } from "@/domain/ids";
 import type { Rng } from "@/domain/rng";
@@ -442,12 +443,18 @@ export function simulateGamesForDate(
  * Simulates one scheduled game using {@link simulateGame} and returns the
  * finalized Game plus a GameCompleted domain event.
  * Shared by regular-season date sim and playoff series sim.
+ *
+ * Optional rosterOverrides supply player IDs for a team instead of Team.roster
+ * (used by Development League — never mutate Team.roster for DL sim).
  */
 export function simulateScheduledGame(
   state: GameState,
   game: Game,
   rng: Rng,
-  options?: { profiler?: SimulationProfiler },
+  options?: {
+    profiler?: SimulationProfiler;
+    rosterOverrides?: Partial<Record<TeamId, PlayerId[]>>;
+  },
 ): { finalGame: Game; event: DomainEvent } {
   if (game.status !== "scheduled") {
     throw new Error(
@@ -455,12 +462,26 @@ export function simulateScheduledGame(
     );
   }
 
-  const homePlayers = rosterForTeam(state, game.homeTeamId);
-  const awayPlayers = rosterForTeam(state, game.awayTeamId);
+  const homePlayers = resolveRosterForSimulation(
+    state,
+    game.homeTeamId,
+    options?.rosterOverrides,
+  );
+  const awayPlayers = resolveRosterForSimulation(
+    state,
+    game.awayTeamId,
+    options?.rosterOverrides,
+  );
   const homeTeam = state.world.teams[game.homeTeamId];
   const awayTeam = state.world.teams[game.awayTeamId];
-  const homeLineup = getEmergencyLineup(state, game.homeTeamId);
-  const awayLineup = getEmergencyLineup(state, game.awayTeamId);
+  const homeLineup =
+    options?.rosterOverrides?.[game.homeTeamId] != null
+      ? { players: selectStartingLineup(homePlayers, 5) }
+      : getEmergencyLineup(state, game.homeTeamId);
+  const awayLineup =
+    options?.rosterOverrides?.[game.awayTeamId] != null
+      ? { players: selectStartingLineup(awayPlayers, 5) }
+      : getEmergencyLineup(state, game.awayTeamId);
   const result = simulateGame(
     game,
     {
@@ -498,6 +519,32 @@ export function simulateScheduledGame(
   });
 
   return { finalGame, event };
+}
+
+/**
+ * Resolve players for simulation: explicit override IDs, else Team.roster.
+ */
+export function resolveRosterForSimulation(
+  state: GameState,
+  teamId: TeamId,
+  rosterOverrides?: Partial<Record<TeamId, PlayerId[]>>,
+): Player[] {
+  const overrideIds = rosterOverrides?.[teamId];
+  if (overrideIds != null) {
+    const players: Player[] = [];
+    for (const playerId of overrideIds) {
+      const player = state.world.players[playerId];
+      if (player != null) {
+        players.push(player);
+      }
+    }
+    return players.sort(
+      (a, b) =>
+        calculatePlayerOverall(b.position, b.attributes) -
+        calculatePlayerOverall(a.position, a.attributes),
+    );
+  }
+  return rosterForTeam(state, teamId);
 }
 
 /**

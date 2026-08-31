@@ -81,10 +81,12 @@ function aggregatePlayerSeasonLines(
 ): {
   regular: PlayerSeasonStatLine;
   playoffs: PlayerSeasonStatLine;
+  development: PlayerSeasonStatLine;
   combined: PlayerSeasonStatLine;
 } {
   let regular = createEmptyPlayerSeasonStatLine();
   let playoffs = createEmptyPlayerSeasonStatLine();
+  let development = createEmptyPlayerSeasonStatLine();
 
   for (const game of games) {
     const row = game.playerStats.find((stat) => stat.playerId === playerId);
@@ -93,6 +95,8 @@ function aggregatePlayerSeasonLines(
     }
     if (game.competitionType === "playoffs") {
       playoffs = accumulateStatLine(playoffs, row);
+    } else if (game.competitionType === "development_league") {
+      development = accumulateStatLine(development, row);
     } else {
       regular = accumulateStatLine(regular, row);
     }
@@ -101,6 +105,7 @@ function aggregatePlayerSeasonLines(
   return {
     regular,
     playoffs,
+    development,
     combined: addPlayerSeasonStatLines(regular, playoffs),
   };
 }
@@ -120,6 +125,15 @@ function collectEligiblePlayerIds(state: GameState): Set<PlayerId> {
     }
   }
 
+  for (const player of Object.values(state.world.players)) {
+    if (
+      player.teamId != null &&
+      player.developmentLeague?.status === "assigned"
+    ) {
+      eligible.add(player.id);
+    }
+  }
+
   for (const contract of Object.values(state.business.contracts)) {
     if (isContractActive(contract, year)) {
       eligible.add(contract.playerId);
@@ -127,6 +141,17 @@ function collectEligiblePlayerIds(state: GameState): Set<PlayerId> {
   }
 
   for (const game of Object.values(state.competition.games)) {
+    if (game.status !== "final" || game.seasonId !== seasonId) {
+      continue;
+    }
+    for (const row of game.playerStats) {
+      eligible.add(row.playerId);
+    }
+  }
+
+  for (const game of Object.values(
+    state.competition.developmentLeague?.games ?? {},
+  )) {
     if (game.status !== "final" || game.seasonId !== seasonId) {
       continue;
     }

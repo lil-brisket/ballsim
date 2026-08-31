@@ -21,9 +21,13 @@ function mergeGamesById(
   return byId;
 }
 
-/** All games from competition.games and business.gameArchive (archive wins on conflict). */
+/** All games from competition.games, DL games, and business.gameArchive (archive wins on conflict). */
 export function getAllAvailableGames(state: GameState): Game[] {
-  return [...mergeGamesById(state.competition.games, state.business.gameArchive).values()];
+  const current = {
+    ...state.competition.games,
+    ...(state.competition.developmentLeague?.games ?? {}),
+  };
+  return [...mergeGamesById(current, state.business.gameArchive).values()];
 }
 
 /** Finalized games only (current + archived). */

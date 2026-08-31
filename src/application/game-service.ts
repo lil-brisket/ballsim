@@ -193,6 +193,10 @@ import {
 } from "@/systems/draft";
 import { draftClassIdFor } from "@/domain/entities/draft";
 import {
+  assignPlayerToDevelopmentLeague,
+  recallPlayerFromDevelopmentLeague,
+} from "@/systems/development-league";
+import {
   assignScoutToProspect,
   scoutRegionCoverage,
 } from "@/systems/scouting";
@@ -1852,6 +1856,64 @@ export async function assignOwnerScoutToProspect(
       asPlayerId(prospectPlayerId),
     ),
   store);
+}
+
+export async function assignOwnerPlayerToDevelopmentLeague(
+  saveId: string,
+  playerId: string,
+  store?: SaveGameStore,
+): Promise<OwnerCommandResult> {
+  const saveStore = getStore(store);
+  const loaded = await saveStore.load(saveId);
+  if (!loaded) {
+    return fail("Save not found.");
+  }
+  const teamId = loaded.state.user.activeOwnerTeamId;
+  const result = assignPlayerToDevelopmentLeague(
+    loaded.state,
+    asPlayerId(playerId),
+    teamId,
+  );
+  if (!result.success) {
+    return fail(result.errors[0] ?? "Cannot assign to Development League.");
+  }
+  const saved = await persistWorkingState(
+    saveId,
+    result.state,
+    loaded.state.meta.rngState,
+    saveStore,
+    result.events,
+  );
+  return withDashboard(saved);
+}
+
+export async function recallOwnerPlayerFromDevelopmentLeague(
+  saveId: string,
+  playerId: string,
+  store?: SaveGameStore,
+): Promise<OwnerCommandResult> {
+  const saveStore = getStore(store);
+  const loaded = await saveStore.load(saveId);
+  if (!loaded) {
+    return fail("Save not found.");
+  }
+  const teamId = loaded.state.user.activeOwnerTeamId;
+  const result = recallPlayerFromDevelopmentLeague(
+    loaded.state,
+    asPlayerId(playerId),
+    teamId,
+  );
+  if (!result.success) {
+    return fail(result.errors[0] ?? "Cannot recall from Development League.");
+  }
+  const saved = await persistWorkingState(
+    saveId,
+    result.state,
+    loaded.state.meta.rngState,
+    saveStore,
+    result.events,
+  );
+  return withDashboard(saved);
 }
 
 export async function scoutOwnerRegion(

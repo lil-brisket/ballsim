@@ -1,4 +1,4 @@
-import { createPlayer, type Player } from "@/domain/entities/player";
+import { createPlayer, PLAYER_ATTRIBUTE_KEYS, type Player } from "@/domain/entities/player";
 import type { DomainEvent } from "@/domain/events";
 import { createDomainEvent } from "@/domain/events";
 import type { TeamId } from "@/domain/ids";
@@ -11,6 +11,10 @@ import { FACILITY_LEVEL_MAX } from "@/domain/entities/franchise-ops";
 import { developPlayer } from "@/systems/player-development";
 import { developmentStageForAge } from "@/systems/player-generation-config";
 import { trainerDevelopmentMultiplier } from "@/systems/staff-effects";
+import {
+  applyDlOpportunityBonusToPlayer,
+  computeDlOpportunityBonus,
+} from "@/systems/development-league/development-opportunity";
 
 /** Minimum |overall delta| to emit PlayerDeveloped / PlayerDeclined. */
 export const PLAYER_DEVELOPMENT_EVENT_OVERALL_THRESHOLD = 1;
@@ -76,11 +80,20 @@ export function processSeasonPlayerDevelopment(
       aged.age,
     );
     const developed = developPlayer(aged, rng, multiplier);
-    nextPlayers[playerId] = developed;
+    let withDlBonus = developed;
+    if (aged.teamId != null) {
+      const dlBonus = computeDlOpportunityBonus(aged, aged.teamId, state);
+      withDlBonus = applyDlOpportunityBonusToPlayer(
+        developed,
+        dlBonus,
+        PLAYER_ATTRIBUTE_KEYS,
+      );
+    }
+    nextPlayers[playerId] = withDlBonus;
 
     const afterOverall = calculatePlayerOverall(
-      developed.position,
-      developed.attributes,
+      withDlBonus.position,
+      withDlBonus.attributes,
     );
     const delta = afterOverall - beforeOverall;
     if (delta >= PLAYER_DEVELOPMENT_EVENT_OVERALL_THRESHOLD) {
@@ -89,11 +102,11 @@ export function processSeasonPlayerDevelopment(
           type: "PlayerDeveloped",
           occurredOn: state.world.calendar.currentDate,
           payload: {
-            playerId: developed.id,
-            teamId: developed.teamId,
+            playerId: withDlBonus.id,
+            teamId: withDlBonus.teamId,
             overallBefore: beforeOverall,
             overallAfter: afterOverall,
-            age: developed.age,
+            age: withDlBonus.age,
           },
         }),
       );
@@ -103,11 +116,11 @@ export function processSeasonPlayerDevelopment(
           type: "PlayerDeclined",
           occurredOn: state.world.calendar.currentDate,
           payload: {
-            playerId: developed.id,
-            teamId: developed.teamId,
+            playerId: withDlBonus.id,
+            teamId: withDlBonus.teamId,
             overallBefore: beforeOverall,
             overallAfter: afterOverall,
-            age: developed.age,
+            age: withDlBonus.age,
           },
         }),
       );
