@@ -96,6 +96,11 @@ export type GamePlayerStats = {
   freeThrowsAttempted: number;
   /** Meaningful on-ball offensive involvement; at most one credit per possession. */
   touches: number;
+  /**
+   * True if the player was in the starting lineup at tip-off.
+   * False for legacy pre-v57 rows (Sixth Man may use rotation fallback).
+   */
+  started: boolean;
 };
 
 export type Game = {
@@ -254,6 +259,7 @@ export function createEmptyGamePlayerStats(playerId: PlayerId): GamePlayerStats 
     freeThrowsMade: 0,
     freeThrowsAttempted: 0,
     touches: 0,
+    started: false,
   };
 }
 
@@ -434,5 +440,10 @@ function assertPlayerStats(playerStats: unknown): void {
       `playerStats[${index}].freeThrowsAttempted`,
     );
     assertNonNegativeInteger(stats.touches, `playerStats[${index}].touches`);
+    if (typeof stats.started !== "boolean") {
+      throw new Error(
+        `Game playerStats[${index}].started must be a boolean.`,
+      );
+    }
   }
 }

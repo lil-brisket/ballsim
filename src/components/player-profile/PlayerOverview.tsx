@@ -66,6 +66,36 @@ export function PlayerOverview(props: {
         )}
       </Section>
 
+      {player.awards.length > 0 ? (
+        <Section title="Awards">
+          <ul className="space-y-1.5 text-sm">
+            {player.awards.slice(0, 8).map((award) => (
+              <li
+                key={`${award.awardId}-${award.seasonYear}-${award.period ?? "y"}`}
+                className="rounded-lg border border-zinc-800 px-3 py-2"
+              >
+                <span className="text-zinc-100">{award.displayName}</span>
+                <span className="ml-2 font-mono text-amber-400">
+                  {award.periodLabel
+                    ? award.periodLabel
+                    : String(award.seasonYear)}
+                </span>
+                {award.teamName ? (
+                  <span className="ml-2 text-zinc-500">{award.teamName}</span>
+                ) : null}
+              </li>
+            ))}
+          </ul>
+          {player.awardCareerTotals.length > 0 ? (
+            <p className="mt-3 text-xs text-zinc-500">
+              {player.awardCareerTotals
+                .map((t) => `${t.count}× ${t.shortLabel}`)
+                .join(" · ")}
+            </p>
+          ) : null}
+        </Section>
+      ) : null}
+
       <div className="grid gap-6 lg:grid-cols-2">
         <Section title="Strengths">
           {player.strengths.length === 0 ? (

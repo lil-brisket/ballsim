@@ -63,6 +63,7 @@ function emptyPlayerStats(
     freeThrowsMade: points % 2,
     freeThrowsAttempted: 2,
     touches: 10,
+    started: false,
   };
 }
 

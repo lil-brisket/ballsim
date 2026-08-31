@@ -37,7 +37,7 @@ describe("v36 → v38 migration (via v37)", () => {
 
     const loaded = deserializeGameState(JSON.stringify(parsed));
     expect(loaded.meta.schemaVersion).toBe(GAME_STATE_SCHEMA_VERSION);
-    expect(GAME_STATE_SCHEMA_VERSION).toBe(56);
+    expect(GAME_STATE_SCHEMA_VERSION).toBe(57);
     // v37 defaulted missing mode to smart_assist → v38 maps to smart preset
     // → v39 preserves smart phase modes on assistance
     expect(loaded.settings.ai.managementPreset).toBe("smart");

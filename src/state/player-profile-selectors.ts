@@ -29,6 +29,11 @@ import {
   getPlayerSeasonGames,
 } from "@/state/game-access";
 import { getTeamPayroll } from "@/systems/salary-cap";
+import {
+  toPlayerAwardsView,
+  type PlayerAwardCareerTotalView,
+  type PlayerAwardRowView,
+} from "@/state/award-selectors";
 import type { PlayerDetailView } from "@/state/selectors";
 import {
   toBrandingView,
@@ -206,6 +211,8 @@ export type PlayerProfileView = PlayerDetailView & {
     role: string | null;
     developmentStatLine: PlayerSeasonStatLine;
   };
+  awards: PlayerAwardRowView[];
+  awardCareerTotals: PlayerAwardCareerTotalView[];
 };
 
 function seasonYearFromId(seasonId: SeasonId, fallbackYear: number): number {
@@ -987,6 +994,7 @@ export function toPlayerProfileView(
       role: worldPlayer?.developmentLeague?.role ?? null,
       developmentStatLine: seasonStats.development,
     },
+    ...toPlayerAwardsView(state, playerId),
   };
 }
 

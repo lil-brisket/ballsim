@@ -1,3 +1,4 @@
+import { createEmptyAwardHistory } from "@/domain/entities/awards";
 import { createIdleExpansionState } from "@/domain/entities/expansion";
 import { createEmptyFranchiseHistory } from "@/domain/entities/franchise-history";
 import {
@@ -31,6 +32,7 @@ export function createPhaseEBusinessDefaults(
   franchiseReportCache: Record<string, never>;
   gameArchive: Record<string, never>;
   playerHistory: Record<string, never>;
+  awards: ReturnType<typeof createEmptyAwardHistory>;
 } {
   const franchiseOps: Record<string, FranchiseOps> = {};
   const relocationByTeamId: Record<
@@ -82,5 +84,6 @@ export function createPhaseEBusinessDefaults(
     franchiseReportCache: {},
     gameArchive: {},
     playerHistory: {},
+    awards: createEmptyAwardHistory(),
   };
 }

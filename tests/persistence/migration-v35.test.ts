@@ -68,6 +68,7 @@ describe("v34 → v35 migration", () => {
           freeThrowsMade: 10,
           freeThrowsAttempted: 12,
           touches: 0,
+        started: false,
         },
         {
           playerId: awayPlayer.id,
@@ -91,6 +92,7 @@ describe("v34 → v35 migration", () => {
           freeThrowsMade: 10,
           freeThrowsAttempted: 12,
           touches: 0,
+        started: false,
         },
       ],
       homeTeamSnapshot: {
@@ -156,7 +158,7 @@ describe("v34 → v35 migration", () => {
 
     const loaded = deserializeGameState(JSON.stringify(parsed));
     expect(loaded.meta.schemaVersion).toBe(GAME_STATE_SCHEMA_VERSION);
-    expect(GAME_STATE_SCHEMA_VERSION).toBe(56);
+    expect(GAME_STATE_SCHEMA_VERSION).toBe(57);
 
     const migrated = loaded.competition.games[game.id]!;
     expect(migrated.competitionType).toBe("regular_season");

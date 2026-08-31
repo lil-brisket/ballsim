@@ -61,6 +61,7 @@ function seedFinalGame(state: GameState) {
         freeThrowsMade: 16,
         freeThrowsAttempted: 20,
         touches: 0,
+      started: false,
       },
       {
         playerId: awayPlayer.id,
@@ -84,6 +85,7 @@ function seedFinalGame(state: GameState) {
         freeThrowsMade: 14,
         freeThrowsAttempted: 18,
         touches: 0,
+      started: false,
       },
     ],
     homeTeamSnapshot: {

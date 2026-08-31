@@ -1,6 +1,7 @@
 /**
  * Tunable free-agency interest defaults for v1.
- * Factor weights are stubs — the default evaluator does not apply formulas yet.
+ * Factor weights are stubs — the default evaluator does not apply formulas yet,
+ * except award reputation which contributes a bounded expectation bonus.
  */
 export const FREE_AGENCY_INTEREST_CONFIG = {
   /** Baseline score when all factor contributions are 0. */
@@ -9,7 +10,7 @@ export const FREE_AGENCY_INTEREST_CONFIG = {
   interestThreshold: 50,
   /**
    * Reserved for future weighted factor sums.
-   * v1 default evaluator ignores these and keeps factor contributions at 0.
+   * Award reputation is applied directly as a score delta (capped).
    */
   factorWeights: {
     money: 0,
@@ -18,6 +19,7 @@ export const FREE_AGENCY_INTEREST_CONFIG = {
     location: 0,
     championshipOpportunity: 0,
     personality: 0,
+    reputation: 1,
   },
 } as const;
 

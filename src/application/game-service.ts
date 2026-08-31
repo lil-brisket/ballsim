@@ -121,6 +121,7 @@ import {
   toPlayerProfileView,
   type PlayerProfileView,
 } from "@/state/player-profile-selectors";
+import { toLeagueAwardsView } from "@/state/award-selectors";
 import {
   toExpansionView,
   toFacilitiesView,
@@ -331,6 +332,7 @@ export type OwnerSaveView = CreateGameResult & {
   phaseDashboard: PhaseDashboardView;
   /** Persisted career settings from GameState.settings (read-only for UI). */
   settings: GameSettings;
+  leagueAwards: ReturnType<typeof toLeagueAwardsView>;
 };
 
 function toSaveSummary(loaded: LoadedSaveGame): SaveGameSummary {
@@ -513,6 +515,7 @@ export async function loadOwnerSaveView(
     ownerDashboard: toOwnerDashboardView(state),
     phaseDashboard: toPhaseDashboardView(state),
     settings: state.settings,
+    leagueAwards: toLeagueAwardsView(state, saveId),
     navGroups: ownerNavGroupsForState(state),
   };
 }

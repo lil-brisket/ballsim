@@ -1,6 +1,7 @@
 import { getCalendarMonthId } from "@/domain/calendar-date";
 import { systemResult, type SystemResult } from "@/domain/system-result";
 import type { GameState } from "@/state/game-state";
+import { runMonthlyAwards } from "@/systems/awards/award-pipeline";
 import {
   processMonthlyBroadcastRevenue,
   processMonthlyLeagueEconomyDrift,
@@ -48,6 +49,10 @@ export function runMonthlyPipeline(
   const broadcast = processMonthlyBroadcastRevenue(current);
   current = broadcast.state;
   events.push(...broadcast.events);
+
+  const awards = runMonthlyAwards(current, completedMonthId);
+  current = awards.state;
+  events.push(...awards.events);
 
   return {
     ...systemResult(

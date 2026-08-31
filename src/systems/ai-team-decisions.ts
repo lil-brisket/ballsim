@@ -39,6 +39,7 @@ import {
   AI_FA_MIN_SALARY,
 } from "@/systems/owner-objectives-config";
 import { DEFAULT_ROSTER_SIZE } from "@/systems/roster-generation-config";
+import { computeAwardReputationBonus } from "@/systems/awards/award-reputation";
 import { getTeamCapSpace } from "@/systems/salary-cap";
 import { getCalendarContext } from "@/systems/simulation/calendar-context";
 import { checkTradeWindow } from "@/systems/league-rules/trade-rules";
@@ -472,12 +473,15 @@ function positionCounts(
 function freeAgentPreferenceScore(
   player: Player,
   prefs: EffectivePreferences | undefined,
+  state: GameState,
 ): number {
   const overall = calculatePlayerOverall(player.position, player.attributes);
+  // Award reputation is a bounded expectation bonus — never changes OVR.
+  const awardBonus = computeAwardReputationBonus(player.id, state);
   if (!prefs) {
-    return overall;
+    return overall + awardBonus;
   }
-  let score = overall;
+  let score = overall + awardBonus;
   if (player.age <= AI_YOUTH_AGE_MAX) {
     score += boundedPreferenceDelta(prefs.youthValue, 8);
     // Development orgs prefer high-potential / early-stage players.
@@ -516,8 +520,8 @@ function pickBestAffordableFreeAgent(
     if (aMissing !== bMissing) {
       return aMissing - bMissing;
     }
-    const scoreA = freeAgentPreferenceScore(a, prefs);
-    const scoreB = freeAgentPreferenceScore(b, prefs);
+    const scoreA = freeAgentPreferenceScore(a, prefs, state);
+    const scoreB = freeAgentPreferenceScore(b, prefs, state);
     if (scoreA !== scoreB) {
       return scoreB - scoreA;
     }

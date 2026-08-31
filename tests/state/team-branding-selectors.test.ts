@@ -73,6 +73,7 @@ describe("team branding in selectors", () => {
           freeThrowsMade: 2,
           freeThrowsAttempted: 2,
           touches: 0,
+        started: false,
         },
         {
           playerId: awayPlayer.id,
@@ -96,6 +97,7 @@ describe("team branding in selectors", () => {
           freeThrowsMade: 3,
           freeThrowsAttempted: 4,
           touches: 0,
+        started: false,
         },
       ],
       homeTeamSnapshot: {
@@ -202,6 +204,7 @@ describe("team branding in selectors", () => {
           freeThrowsMade: 2,
           freeThrowsAttempted: 2,
           touches: 0,
+        started: false,
         },
       ],
       homeTeamSnapshot: {

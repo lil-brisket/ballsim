@@ -244,6 +244,22 @@ export {
   type FreeAgencyInterestConfig,
 } from "@/systems/free-agency-config";
 export {
+  AWARD_ELIGIBILITY_CONFIG,
+  AWARD_METRIC_VERSION,
+  AWARD_REPUTATION_CONFIG,
+  AWARD_SCORING_CONFIG,
+  runMonthlyAwards,
+  runYearlyAwards,
+  computeAwardReputationBonus,
+  evaluateMvp,
+  evaluateDpoy,
+  evaluateRoy,
+  evaluateSixthMan,
+  evaluateMostImproved,
+  isRookieEligible,
+  getPlayerRookieSeasonYear,
+} from "@/systems/awards";
+export {
   acceptOffer,
   defaultEvaluatePlayerInterest,
   getFreeAgent,

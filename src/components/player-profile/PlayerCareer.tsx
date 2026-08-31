@@ -28,7 +28,8 @@ export function PlayerCareer(props: {
   if (
     player.seasonHistory.length === 0 &&
     player.teamStints.length === 0 &&
-    player.careerHighs.length === 0
+    player.careerHighs.length === 0 &&
+    player.awards.length === 0
   ) {
     return (
       <Section title="Career">
@@ -47,6 +48,52 @@ export function PlayerCareer(props: {
 
   return (
     <div className="space-y-8">
+      {(player.awards.length > 0 || player.awardCareerTotals.length > 0) && (
+        <>
+          <Section title="Awards">
+            {player.awards.length === 0 ? (
+              <EmptyState message="No awards yet." />
+            ) : (
+              <ul className="space-y-1.5 text-sm">
+                {player.awards.map((award) => (
+                  <li
+                    key={`${award.awardId}-${award.seasonYear}-${award.period ?? "y"}`}
+                    className="rounded-lg border border-zinc-800 px-4 py-2"
+                  >
+                    <span className="text-zinc-100">{award.displayName}</span>
+                    <span className="ml-2 text-zinc-500">—</span>
+                    <span className="ml-2 font-mono text-amber-400">
+                      {award.periodLabel ?? String(award.seasonYear)}
+                    </span>
+                    {award.teamName ? (
+                      <span className="ml-2 text-zinc-500">
+                        ({award.teamName})
+                      </span>
+                    ) : null}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </Section>
+          <Section title="Career Accolades">
+            {player.awardCareerTotals.length === 0 ? (
+              <EmptyState message="No career accolades yet." />
+            ) : (
+              <ul className="flex flex-wrap gap-2 text-sm">
+                {player.awardCareerTotals.map((total) => (
+                  <li
+                    key={total.awardId}
+                    className="rounded-full border border-zinc-700 px-3 py-1 text-zinc-200"
+                  >
+                    {total.count}× {total.displayName}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </Section>
+        </>
+      )}
+
       <Section title="Team history">
         {tenureBlocks.length === 0 ? (
           <EmptyState message="No team stints derived from game history yet." />

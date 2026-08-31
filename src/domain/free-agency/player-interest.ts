@@ -11,7 +11,8 @@ export type PlayerInterestFactor =
   | "playingTime"
   | "location"
   | "championshipOpportunity"
-  | "personality";
+  | "personality"
+  | "reputation";
 
 export const PLAYER_INTEREST_FACTORS: readonly PlayerInterestFactor[] = [
   "money",
@@ -20,6 +21,7 @@ export const PLAYER_INTEREST_FACTORS: readonly PlayerInterestFactor[] = [
   "location",
   "championshipOpportunity",
   "personality",
+  "reputation",
 ];
 
 export type PlayerInterest = {
@@ -48,5 +50,6 @@ export function emptyInterestFactors(): Record<PlayerInterestFactor, number> {
     location: 0,
     championshipOpportunity: 0,
     personality: 0,
+    reputation: 0,
   };
 }
