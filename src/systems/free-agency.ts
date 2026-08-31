@@ -22,6 +22,7 @@ import { systemResult, type SystemResult } from "@/domain/system-result";
 import type { GameState } from "@/state/game-state";
 import { appendSeasonEventLog } from "@/state/game-state";
 import { FREE_AGENCY_INTEREST_CONFIG } from "@/systems/free-agency-config";
+import { computeAwardReputationBonus } from "@/systems/awards/award-reputation";
 import { getTeamCapSpace, getTeamPayroll } from "@/systems/salary-cap";
 import { reconcileRosterManagement } from "@/systems/roster-management";
 import { stripPlayersFromAllTradeBlocks } from "@/systems/trades/trade-block";
@@ -44,21 +45,24 @@ export type FreeAgencyWriteOptions = {
 };
 
 /**
- * v1 default interest: all factor contributions 0, score = baseline.
- * Interested when score >= threshold.
+ * Default interest: baseline + bounded award reputation (expectations only).
+ * Awards never modify OVR, potential, or attributes.
  */
 export const defaultEvaluatePlayerInterest: EvaluatePlayerInterest = (
   playerId,
   teamId,
-  _state,
+  state,
 ) => {
-  const score = FREE_AGENCY_INTEREST_CONFIG.baselineScore;
+  const factors = emptyInterestFactors();
+  const awardBonus = computeAwardReputationBonus(playerId, state);
+  factors.reputation = awardBonus;
+  const score = FREE_AGENCY_INTEREST_CONFIG.baselineScore + awardBonus;
   return {
     playerId,
     teamId,
     score,
     interested: score >= FREE_AGENCY_INTEREST_CONFIG.interestThreshold,
-    factors: emptyInterestFactors(),
+    factors,
   };
 };
 

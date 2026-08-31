@@ -522,6 +522,14 @@ export function validateGameState(state: unknown): asserts state is GameState {
   assertRecord(franchiseReportCache, "business.franchiseReportCache");
   assertRecord(gameArchive, "business.gameArchive");
   assertRecord(playerHistory, "business.playerHistory");
+  if (!("awards" in business) || business.awards == null) {
+    fail("business.awards is required.");
+  }
+  assertRecord(business.awards, "business.awards");
+  if (!("results" in business.awards) || business.awards.results == null) {
+    fail("business.awards.results is required.");
+  }
+  assertRecord(business.awards.results, "business.awards.results");
   if (!("leagueEconomy" in business) || business.leagueEconomy == null) {
     fail("business.leagueEconomy is required.");
   }
@@ -1707,6 +1715,11 @@ function validateGame(
     if (stats.lastName != null && typeof stats.lastName !== "string") {
       fail(
         `competition.games[${gameKey}].playerStats[${index}].lastName must be a string or null.`,
+      );
+    }
+    if (typeof (stats as { started?: unknown }).started !== "boolean") {
+      fail(
+        `competition.games[${gameKey}].playerStats[${index}].started must be a boolean.`,
       );
     }
   }

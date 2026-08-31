@@ -61,6 +61,7 @@ describe("game box score selectors", () => {
           freeThrowsMade: 20,
           freeThrowsAttempted: 24,
           touches: 0,
+        started: false,
         },
         {
           playerId: awayPlayer.id,
@@ -84,6 +85,7 @@ describe("game box score selectors", () => {
           freeThrowsMade: 16,
           freeThrowsAttempted: 20,
           touches: 0,
+        started: false,
         },
       ],
       homeTeamSnapshot: {

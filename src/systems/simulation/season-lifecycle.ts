@@ -2,6 +2,7 @@ import type { DomainEvent } from "@/domain/events";
 import { createSeededRng } from "@/domain/rng";
 import { systemResult, type SystemResult } from "@/domain/system-result";
 import type { GameState } from "@/state/game-state";
+import { runYearlyAwards } from "@/systems/awards/award-pipeline";
 import { startPlayoffs } from "@/systems/playoff-simulation";
 import { generateSchedule } from "@/systems/schedule-generation";
 import { generateDevelopmentLeagueSchedule } from "@/systems/development-league/schedule-generation";
@@ -111,6 +112,12 @@ export function processSeasonLifecycle(state: GameState): SystemResult {
   }
 
   if (phase === "regular" && isRegularSeasonComplete(current)) {
+    // Regular-season awards must finalize before playoffs begin.
+    // Playoff stats must never alter these awards (idempotent if re-run).
+    const yearly = runYearlyAwards(current);
+    current = yearly.state;
+    events.push(...yearly.events);
+
     const playoffGate = canBeginPlayoffs(current);
     if (!playoffGate.allowed && current.settings.playoffs.playoffTeams > 0) {
       // Standings/seeds may still be building — fall through only when complete check fails for empty

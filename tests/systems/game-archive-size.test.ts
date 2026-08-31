@@ -67,6 +67,7 @@ describe("game archive size measurement", () => {
                 freeThrowsMade: 2,
                 freeThrowsAttempted: 2,
                 touches: 12,
+                started: true,
               },
               {
                 playerId: awayPlayer.id,
@@ -90,6 +91,7 @@ describe("game archive size measurement", () => {
                 freeThrowsMade: 3,
                 freeThrowsAttempted: 4,
                 touches: 10,
+                started: true,
               },
             ],
             homeTeamSnapshot: {

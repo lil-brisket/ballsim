@@ -17,6 +17,7 @@ import {
   migrateLegacySeverity,
   primaryActiveInjury,
 } from "@/domain/entities/player";
+import { createEmptyAwardHistory } from "@/domain/entities/awards";
 import { createDefaultDevelopmentLeagueProfile } from "@/domain/entities/development-league";
 import { createEmptyPlayerSeasonStatLine } from "@/domain/entities/player-history";
 import { createEmptyTeamStanding } from "@/domain/entities/standings";
@@ -212,6 +213,7 @@ const MIGRATE_ONE_STEP: Record<number, (state: unknown) => unknown> = {
   53: (state) => migrateV53ToV54(state as GameStateV53),
   54: (state) => migrateV54ToV55(state as GameStateV54),
   55: (state) => migrateV55ToV56(state as GameStateV55),
+  56: (state) => migrateV56ToV57(state as GameStateV56),
 };
 
 function legacyUserRecord(user: unknown): Record<string, unknown> {
@@ -1255,7 +1257,8 @@ function migrateV9ToV10(state: GameStateV9): GameStateV10 {
       playerStats: legacy.playerStats.map((entry) => ({
         ...entry,
         touches: 0,
-      })),
+        started: false,
+      })) as Game["playerStats"],
     };
   }
 
@@ -4825,15 +4828,16 @@ function expandLegacyPlayerInjury(
   };
 }
 
-type GameStateV55 = Omit<GameState, "meta"> & {
+type GameStateV55 = Omit<GameState, "meta" | "business"> & {
   meta: Omit<GameState["meta"], "schemaVersion"> & { schemaVersion: 55 };
+  business: Omit<GameState["business"], "awards">;
 };
 
 /**
  * Deterministic v55 → v56: Development League profile on players,
  * competition.developmentLeague slice, playerHistory.development bucket.
  */
-function migrateV55ToV56(state: GameStateV55): GameState {
+function migrateV55ToV56(state: GameStateV55): GameStateV56 {
   const players: GameState["world"]["players"] = {};
   for (const [playerId, raw] of Object.entries(state.world.players)) {
     const player = raw as Player;
@@ -4914,6 +4918,64 @@ function migrateV55ToV56(state: GameStateV55): GameState {
     business: {
       ...state.business,
       playerHistory,
+    },
+  };
+}
+
+type GameStateV56 = Omit<GameState, "meta" | "business"> & {
+  meta: Omit<GameState["meta"], "schemaVersion"> & { schemaVersion: 56 };
+  business: Omit<GameState["business"], "awards"> & {
+    awards?: GameState["business"]["awards"];
+  };
+};
+
+function patchPlayerStatsStarted(
+  games: Record<string, Game>,
+): Record<string, Game> {
+  const next: Record<string, Game> = {};
+  for (const [gameId, game] of Object.entries(games)) {
+    next[gameId] = {
+      ...game,
+      playerStats: game.playerStats.map((row) => ({
+        ...row,
+        started:
+          typeof (row as { started?: unknown }).started === "boolean"
+            ? (row as { started: boolean }).started
+            : false,
+      })),
+    };
+  }
+  return next;
+}
+
+/**
+ * Deterministic v56 → v57: awards history store + GamePlayerStats.started.
+ */
+function migrateV56ToV57(state: GameStateV56): GameState {
+  const competitionGames = patchPlayerStatsStarted(state.competition.games);
+  const dlGames = patchPlayerStatsStarted(
+    state.competition.developmentLeague?.games ?? {},
+  );
+  const archiveGames = patchPlayerStatsStarted(state.business.gameArchive ?? {});
+
+  return {
+    ...state,
+    meta: {
+      ...state.meta,
+      schemaVersion: 57,
+    },
+    competition: {
+      ...state.competition,
+      games: competitionGames,
+      developmentLeague: {
+        ...state.competition.developmentLeague,
+        games: dlGames,
+      },
+    },
+    business: {
+      ...state.business,
+      gameArchive: archiveGames,
+      awards: state.business.awards ?? createEmptyAwardHistory(),
     },
   };
 }

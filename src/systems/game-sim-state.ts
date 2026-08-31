@@ -84,19 +84,25 @@ export function createGameSimState(input: CreateGameSimStateInput): GameSimState
   const playerStatsById = new Map<string, GamePlayerStats>();
   const playerStatsOrder: PlayerId[] = [];
 
-  for (const player of input.homePlayers) {
-    playerStatsById.set(player.id, createEmptyGamePlayerStats(player.id));
-    playerStatsOrder.push(player.id);
-  }
-  for (const player of input.awayPlayers) {
-    playerStatsById.set(player.id, createEmptyGamePlayerStats(player.id));
-    playerStatsOrder.push(player.id);
-  }
-
-  const onCourtIds = new Set<string>([
+  const starterIds = new Set<string>([
     ...input.homeOnCourt.map((player) => player.id),
     ...input.awayOnCourt.map((player) => player.id),
   ]);
+
+  for (const player of input.homePlayers) {
+    const row = createEmptyGamePlayerStats(player.id);
+    row.started = starterIds.has(player.id);
+    playerStatsById.set(player.id, row);
+    playerStatsOrder.push(player.id);
+  }
+  for (const player of input.awayPlayers) {
+    const row = createEmptyGamePlayerStats(player.id);
+    row.started = starterIds.has(player.id);
+    playerStatsById.set(player.id, row);
+    playerStatsOrder.push(player.id);
+  }
+
+  const onCourtIds = starterIds;
   const secondsOnCourt = new Map<string, number>();
   for (const playerId of onCourtIds) {
     secondsOnCourt.set(playerId, 0);

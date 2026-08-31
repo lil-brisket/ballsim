@@ -46,6 +46,7 @@ function playerRow(
     freeThrowsMade: 0,
     freeThrowsAttempted: 0,
     touches: 0,
+    started: false,
     ...overrides,
   };
 }

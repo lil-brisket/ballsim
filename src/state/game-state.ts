@@ -26,6 +26,7 @@ import type { OwnerObjective } from "@/domain/entities/owner-objective";
 import type { OwnershipConfidenceState } from "@/domain/entities/ownership-confidence";
 import type { NarrativeState } from "@/domain/entities/narrative-situation";
 import type { Player } from "@/domain/entities/player";
+import type { AwardHistoryState } from "@/domain/entities/awards";
 import type { PlayerHistory } from "@/domain/entities/player-history";
 import type { PlayoffTournament } from "@/domain/entities/playoffs";
 import type { RelocationProcess } from "@/domain/entities/relocation";
@@ -51,7 +52,7 @@ import type {
   FranchisePhaseState,
 } from "@/systems/phase-engine/phase-types";
 
-export const GAME_STATE_SCHEMA_VERSION = 56;
+export const GAME_STATE_SCHEMA_VERSION = 57;
 
 /** League personnel market for staff free agency (not a business-finance concept). */
 export type StaffMarketState = {
@@ -165,6 +166,11 @@ export type BusinessSlice = {
    * Career highs / stints are derived from gameArchive.
    */
   playerHistory: Record<string, PlayerHistory>;
+  /**
+   * Centralized league award history (monthly + yearly).
+   * Player-card accolades are derived from this store.
+   */
+  awards: AwardHistoryState;
 };
 
 /**

@@ -968,6 +968,7 @@ describe("GameState schema migration", () => {
         freeThrowsMade: 0,
         freeThrowsAttempted: 0,
         touches: 0,
+      started: false,
       },
     ]);
     expect(finalGame.periodScores).toEqual([]);
@@ -1139,6 +1140,7 @@ describe("GameState schema migration", () => {
       freeThrowsMade: 0,
       freeThrowsAttempted: 0,
       touches: 0,
+    started: false,
     });
   });
 
@@ -1320,6 +1322,7 @@ describe("GameState schema migration", () => {
       freeThrowsMade: 2,
       freeThrowsAttempted: 2,
       touches: 0,
+    started: false,
     });
   });
 
