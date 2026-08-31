@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { loadOwnerSaveView } from "@/application/game-service";
 import { DataTable } from "@/components/owner/DataTable";
@@ -34,7 +35,7 @@ export default async function SchedulePage({
       {view.schedule.length === 0 ? (
         <EmptyState message="No games on the schedule yet." />
       ) : (
-        <DataTable headers={["Date", "Matchup", "Status", "Result"]}>
+        <DataTable headers={["Date", "Matchup", "Status", "Event", "Result"]}>
           {view.schedule.map((game) => {
             const isCurrent = game.date === currentDate;
             const isPast = game.date < currentDate;
@@ -100,6 +101,20 @@ export default async function SchedulePage({
                   </span>
                 </td>
                 <td className="px-3 py-2 text-zinc-400">{game.status}</td>
+                <td className="px-3 py-2 text-sm">
+                  {game.home ? (
+                    <Link
+                      href={`/dashboard/${saveId}/schedule/${game.gameId}/event`}
+                      className="text-amber-400 hover:text-amber-300"
+                    >
+                      {game.gameDayPromotion
+                        ? game.gameDayPromotion.name
+                        : "Manage event"}
+                    </Link>
+                  ) : (
+                    <span className="text-zinc-600">—</span>
+                  )}
+                </td>
                 <td className="px-3 py-2">
                   {isFinal ? (
                     <GameResultLink

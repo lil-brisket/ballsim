@@ -28,6 +28,7 @@ import {
   normalizeCityName,
 } from "@/data/league/city-locations";
 import { draftYearForSeason } from "@/systems/draft";
+import { getGameDayPromotionDefinition } from "@/systems/game-day-promotions/game-day-promotion-catalog";
 import { isUserOnDraftClock } from "@/systems/draft/draft-clock";
 import { calculateTeamDraftNeeds } from "@/systems/draft/draft-needs";
 import {
@@ -310,6 +311,11 @@ export type ScheduleGameView = {
   teamScore: number | null;
   opponentScore: number | null;
   won: boolean | null;
+  gameDayPromotion: {
+    promotionId: string;
+    name: string;
+    status: string;
+  } | null;
 };
 
 export type ContractRowView = {
@@ -712,6 +718,7 @@ export function toDraftBoardView(state: GameState): DraftBoardView | null {
 
 export function toScheduleView(state: GameState): ScheduleGameView[] {
   const teamId = state.user.activeOwnerTeamId;
+  const promoState = state.business.gameDayPromotionsByTeamId[teamId];
   const rows: ScheduleGameView[] = [];
   for (const game of Object.values(state.competition.games)) {
     if (game.homeTeamId !== teamId && game.awayTeamId !== teamId) {
@@ -727,6 +734,26 @@ export function toScheduleView(state: GameState): ScheduleGameView[] {
         ? game.score.away
         : game.score.home
       : null;
+    let gameDayPromotion: ScheduleGameView["gameDayPromotion"] = null;
+    if (home && promoState) {
+      const assignment = promoState.assignments[game.id];
+      const result = promoState.results[game.id];
+      if (assignment && assignment.status !== "cancelled") {
+        const def = getGameDayPromotionDefinition(assignment.promotionId);
+        gameDayPromotion = {
+          promotionId: assignment.promotionId,
+          name: def?.name ?? assignment.promotionId,
+          status: assignment.status,
+        };
+      } else if (result) {
+        const def = getGameDayPromotionDefinition(result.promotionId);
+        gameDayPromotion = {
+          promotionId: result.promotionId,
+          name: def?.name ?? result.promotionId,
+          status: "completed",
+        };
+      }
+    }
     rows.push({
       gameId: game.id,
       date: game.date,
@@ -742,6 +769,7 @@ export function toScheduleView(state: GameState): ScheduleGameView[] {
         teamScore !== null && opponentScore !== null
           ? teamScore > opponentScore
           : null,
+      gameDayPromotion,
     });
   }
   rows.sort((a, b) => a.date.localeCompare(b.date));

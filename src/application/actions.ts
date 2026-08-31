@@ -49,6 +49,9 @@ import {
   confirmOwnedFranchises,
   setOwnerMarketingBudget,
   setOwnerTicketPrice,
+  scheduleOwnerGameDayPromotion,
+  cancelOwnerGameDayPromotion,
+  changeOwnerGameDayPromotion,
   signOwnerFreeAgent,
   signOwnerSponsorship,
   upgradeOwnerFacility,
@@ -811,6 +814,58 @@ export async function setMarketingBudgetAction(
   const budget = Number(formData.get("budget") ?? 0);
   const path = returnPath(formData, saveId);
   const result = await setOwnerMarketingBudget(saveId, budget);
+  if (!result.ok) {
+    redirectWithError(path, result.error);
+  }
+  revalidateOwner(saveId);
+  redirect(path);
+}
+
+export async function scheduleGameDayPromotionAction(
+  formData: FormData,
+): Promise<void> {
+  const saveId = String(formData.get("saveId") ?? "");
+  const gameId = String(formData.get("gameId") ?? "");
+  const promotionId = String(formData.get("promotionId") ?? "");
+  const path = returnPath(formData, saveId);
+  const result = await scheduleOwnerGameDayPromotion(
+    saveId,
+    gameId,
+    promotionId,
+  );
+  if (!result.ok) {
+    redirectWithError(path, result.error);
+  }
+  revalidateOwner(saveId);
+  redirect(path);
+}
+
+export async function cancelGameDayPromotionAction(
+  formData: FormData,
+): Promise<void> {
+  const saveId = String(formData.get("saveId") ?? "");
+  const gameId = String(formData.get("gameId") ?? "");
+  const path = returnPath(formData, saveId);
+  const result = await cancelOwnerGameDayPromotion(saveId, gameId);
+  if (!result.ok) {
+    redirectWithError(path, result.error);
+  }
+  revalidateOwner(saveId);
+  redirect(path);
+}
+
+export async function changeGameDayPromotionAction(
+  formData: FormData,
+): Promise<void> {
+  const saveId = String(formData.get("saveId") ?? "");
+  const gameId = String(formData.get("gameId") ?? "");
+  const promotionId = String(formData.get("promotionId") ?? "");
+  const path = returnPath(formData, saveId);
+  const result = await changeOwnerGameDayPromotion(
+    saveId,
+    gameId,
+    promotionId,
+  );
   if (!result.ok) {
     redirectWithError(path, result.error);
   }

@@ -18,6 +18,7 @@ import {
   primaryActiveInjury,
 } from "@/domain/entities/player";
 import { createEmptyAwardHistory } from "@/domain/entities/awards";
+import { createEmptyGameDayPromotionSeasonState } from "@/domain/entities/game-day-promotion";
 import { createDefaultDevelopmentLeagueProfile } from "@/domain/entities/development-league";
 import { createEmptyPlayerSeasonStatLine } from "@/domain/entities/player-history";
 import { createEmptyTeamStanding } from "@/domain/entities/standings";
@@ -47,7 +48,7 @@ import type {
   StaffId,
   TeamId,
 } from "@/domain/ids";
-import { asArenaId, asTeamId } from "@/domain/ids";
+import { asArenaId, asSeasonId, asTeamId } from "@/domain/ids";
 import { addCalendarDays } from "@/domain/calendar-date";
 import type { GameState } from "@/state/game-state";
 import {
@@ -214,6 +215,7 @@ const MIGRATE_ONE_STEP: Record<number, (state: unknown) => unknown> = {
   54: (state) => migrateV54ToV55(state as GameStateV54),
   55: (state) => migrateV55ToV56(state as GameStateV55),
   56: (state) => migrateV56ToV57(state as GameStateV56),
+  57: (state) => migrateV57ToV58(state as GameStateV57),
 };
 
 function legacyUserRecord(user: unknown): Record<string, unknown> {
@@ -4929,6 +4931,13 @@ type GameStateV56 = Omit<GameState, "meta" | "business"> & {
   };
 };
 
+type GameStateV57 = Omit<GameState, "meta" | "business"> & {
+  meta: Omit<GameState["meta"], "schemaVersion"> & { schemaVersion: 57 };
+  business: Omit<GameState["business"], "gameDayPromotionsByTeamId"> & {
+    gameDayPromotionsByTeamId?: GameState["business"]["gameDayPromotionsByTeamId"];
+  };
+};
+
 function patchPlayerStatsStarted(
   games: Record<string, Game>,
 ): Record<string, Game> {
@@ -4951,7 +4960,7 @@ function patchPlayerStatsStarted(
 /**
  * Deterministic v56 → v57: awards history store + GamePlayerStats.started.
  */
-function migrateV56ToV57(state: GameStateV56): GameState {
+function migrateV56ToV57(state: GameStateV56): GameStateV57 {
   const competitionGames = patchPlayerStatsStarted(state.competition.games);
   const dlGames = patchPlayerStatsStarted(
     state.competition.developmentLeague?.games ?? {},
@@ -4976,6 +4985,33 @@ function migrateV56ToV57(state: GameStateV56): GameState {
       ...state.business,
       gameArchive: archiveGames,
       awards: state.business.awards ?? createEmptyAwardHistory(),
+    },
+  };
+}
+
+/**
+ * Deterministic v57 → v58: empty game-day promotion season state per team.
+ */
+function migrateV57ToV58(state: GameStateV57): GameState {
+  const seasonId = asSeasonId(state.competition.season.id);
+  const gameDayPromotionsByTeamId: GameState["business"]["gameDayPromotionsByTeamId"] =
+    { ...(state.business.gameDayPromotionsByTeamId ?? {}) };
+  for (const teamId of Object.keys(state.world.teams).sort()) {
+    if (!gameDayPromotionsByTeamId[teamId]) {
+      gameDayPromotionsByTeamId[teamId] =
+        createEmptyGameDayPromotionSeasonState(seasonId);
+    }
+  }
+
+  return {
+    ...state,
+    meta: {
+      ...state.meta,
+      schemaVersion: 58,
+    },
+    business: {
+      ...state.business,
+      gameDayPromotionsByTeamId,
     },
   };
 }

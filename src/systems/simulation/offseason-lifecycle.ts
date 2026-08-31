@@ -4,6 +4,7 @@ import { systemResult, type SystemResult } from "@/domain/system-result";
 import type { GameState } from "@/state/game-state";
 import { createEmptyPlayoffTournament } from "@/domain/entities/playoffs";
 import { createEmptyTeamStanding } from "@/domain/entities/standings";
+import { createEmptyGameDayPromotionSeasonState } from "@/domain/entities/game-day-promotion";
 import { draftClassIdFor } from "@/domain/entities/draft";
 import { mergeDraftPicksForSeason } from "@/domain/draft-picks/generate-draft-picks";
 import { asSeasonId, type TeamId } from "@/domain/ids";
@@ -215,6 +216,20 @@ export function initializeNewSeason(state: GameState): SystemResult {
         standings: { byTeamId: standingsByTeamId },
       },
       seasonEventLog: [],
+    },
+  };
+
+  const clearedPromotions: GameState["business"]["gameDayPromotionsByTeamId"] =
+    {};
+  for (const teamId of Object.keys(state.world.teams).sort()) {
+    clearedPromotions[teamId] =
+      createEmptyGameDayPromotionSeasonState(nextSeasonId);
+  }
+  next = {
+    ...next,
+    business: {
+      ...next.business,
+      gameDayPromotionsByTeamId: clearedPromotions,
     },
   };
 
