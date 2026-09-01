@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import {
   acceptOwnerDecisionAction,
   askAiOwnerDecisionAction,
@@ -21,10 +22,22 @@ export type PendingTradeOfferViewModel = {
   primaryTeamId?: string;
   receivingTeamId?: string;
   offeringTeamId?: string;
+  valueSummary?: "favor_receive" | "favor_send" | "even";
+  motivationLabel?: string | null;
+  reasons?: string[];
+  expiresOn?: string | null;
 };
 
+function valueLabel(
+  summary: PendingTradeOfferViewModel["valueSummary"],
+): string {
+  if (summary === "favor_receive") return "Favors You";
+  if (summary === "favor_send") return "Favors Them";
+  return "Even";
+}
+
 /**
- * Blocks advance and asks the owner to Accept / Decline / Ask AI.
+ * Compact trade-offer interrupt panel: Accept / Review / Negotiate / Decline.
  */
 export function PendingOwnerDecisionPanel(props: {
   saveId: string;
@@ -32,6 +45,8 @@ export function PendingOwnerDecisionPanel(props: {
   offer: PendingTradeOfferViewModel;
 }) {
   const { offer } = props;
+  const reviewHref = `/dashboard/${props.saveId}/trades/${offer.decisionId}`;
+  const negotiateHref = `/dashboard/${props.saveId}/trades/${offer.decisionId}/negotiate`;
 
   return (
     <div
@@ -55,7 +70,7 @@ export function PendingOwnerDecisionPanel(props: {
         id="pending-trade-title"
         className="mt-1 text-lg font-medium text-amber-50"
       >
-        Trade offer requires your decision
+        {offer.offeringTeamName} Trade Offer
       </h3>
       <p className="mt-2 flex flex-wrap items-center gap-2 text-amber-100/90">
         {offer.offeringTeamBranding ? (
@@ -82,6 +97,11 @@ export function PendingOwnerDecisionPanel(props: {
           </span>
         </span>
       </p>
+      {offer.motivationLabel ? (
+        <p className="text-xs text-amber-200/90">
+          Why they&apos;re calling: {offer.motivationLabel}
+        </p>
+      ) : null}
       {offer.bothSidesOwned ? (
         <p className="mt-2 text-xs text-amber-200/90">
           You control both franchises in this trade. Approving applies both
@@ -96,7 +116,7 @@ export function PendingOwnerDecisionPanel(props: {
       <div className="mt-4 grid gap-3 sm:grid-cols-2">
         <div className="rounded-md border border-amber-800/50 bg-zinc-950/40 px-3 py-2">
           <p className="text-xs uppercase tracking-wide text-zinc-500">
-            {offer.receivingTeamName} receives
+            You Receive
           </p>
           <ul className="mt-1 list-inside list-disc text-zinc-200">
             {offer.youReceive.length === 0 ? (
@@ -108,7 +128,7 @@ export function PendingOwnerDecisionPanel(props: {
         </div>
         <div className="rounded-md border border-amber-800/50 bg-zinc-950/40 px-3 py-2">
           <p className="text-xs uppercase tracking-wide text-zinc-500">
-            {offer.offeringTeamName} receives
+            You Send
           </p>
           <ul className="mt-1 list-inside list-disc text-zinc-200">
             {offer.theyReceive.length === 0 ? (
@@ -119,6 +139,17 @@ export function PendingOwnerDecisionPanel(props: {
           </ul>
         </div>
       </div>
+
+      <p className="mt-3 text-sm font-medium text-amber-50">
+        Trade: {valueLabel(offer.valueSummary)}
+      </p>
+      {offer.reasons && offer.reasons.length > 0 ? (
+        <ul className="list-inside list-disc text-xs text-amber-200/80">
+          {offer.reasons.slice(0, 3).map((reason) => (
+            <li key={reason}>{reason}</li>
+          ))}
+        </ul>
+      ) : null}
 
       <div className="mt-5 flex flex-wrap gap-2">
         <form action={acceptOwnerDecisionAction}>
@@ -132,6 +163,18 @@ export function PendingOwnerDecisionPanel(props: {
             Accept
           </button>
         </form>
+        <Link
+          href={reviewHref}
+          className="rounded-md border border-amber-600/70 bg-amber-900/40 px-3 py-1.5 text-sm font-medium text-amber-50 hover:border-amber-400"
+        >
+          Review
+        </Link>
+        <Link
+          href={negotiateHref}
+          className="rounded-md border border-zinc-500 px-3 py-1.5 text-sm text-zinc-100 hover:border-zinc-300"
+        >
+          Negotiate
+        </Link>
         <form action={declineOwnerDecisionAction}>
           <input type="hidden" name="saveId" value={props.saveId} />
           <input type="hidden" name="decisionId" value={offer.decisionId} />

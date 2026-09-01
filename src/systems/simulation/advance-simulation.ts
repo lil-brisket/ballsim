@@ -2,6 +2,7 @@ import { getCalendarMonthId, getIsoWeekId } from "@/domain/calendar-date";
 import type { DomainEvent } from "@/domain/events";
 import type { Rng } from "@/domain/rng";
 import { hasBlockingOwnerDecision } from "@/domain/entities/owner-decision";
+import { expireDatedTradeOffers } from "@/systems/owner-decisions/enqueue-trade-offer";
 import type { GameState } from "@/state/game-state";
 import { advanceCalendar } from "@/systems/calendar";
 import { generateRosters } from "@/systems/roster-generation";
@@ -181,6 +182,9 @@ function advanceOneDay(
   const windowExpiry = processWindowExpirations(current);
   current = windowExpiry.state;
   events.push(...windowExpiry.events);
+
+  const datedOffers = expireDatedTradeOffers(current);
+  current = datedOffers.state;
 
   if (profiler) {
     profiler.addSeason("lifecycleMs", performance.now() - lifecycleStart);

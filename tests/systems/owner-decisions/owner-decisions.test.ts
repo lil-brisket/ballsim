@@ -122,7 +122,7 @@ describe("v39 → v40 migration", () => {
 
     const loaded = deserializeGameState(JSON.stringify(parsed));
     expect(loaded.meta.schemaVersion).toBe(GAME_STATE_SCHEMA_VERSION);
-    expect(GAME_STATE_SCHEMA_VERSION).toBe(57);
+    expect(GAME_STATE_SCHEMA_VERSION).toBe(59);
     expect(loaded.user.pendingOwnerDecisions).toEqual([]);
     expect(loaded.user.ownerDecisionHistory).toEqual([]);
     expect(() => validateGameState(loaded)).not.toThrow();
@@ -173,7 +173,7 @@ describe("owner trade offer enqueue", () => {
       built.proposal,
     );
     expect(second.outcome).toBe("skipped");
-    expect(second.reason).toBe("active_decision_exists");
+    expect(second.reason).toBe("duplicate_pending_fingerprint");
     expect(second.state.user.pendingOwnerDecisions).toHaveLength(1);
   });
 
@@ -318,7 +318,7 @@ describe("simulation pause on owner decision", () => {
     const advance = await advanceOwnerTime("od_persist", { days: 1 }, store);
     expect(advance.ok).toBe(false);
     if (!advance.ok) {
-      expect(advance.error).toMatch(/owner decision is pending/i);
+      expect(advance.error).toMatch(/pending owner decision|needs your attention/i);
     }
 
     const dash = toOwnerDashboardView(loaded!.state);

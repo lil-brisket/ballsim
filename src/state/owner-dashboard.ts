@@ -43,6 +43,8 @@ import {
 import { getCachedAnnualReport } from "@/systems/franchise-report";
 import { activeGameplayMilestones } from "@/systems/historical-milestones";
 import { currentFranchiseEra } from "@/systems/franchise-eras";
+import { evaluateTrade } from "@/systems/trades/asset-valuation/complete-trade-evaluation";
+import { motivationDisplayLabel } from "@/systems/trades/cpu-trade-generator";
 import {
   ACTION_QUEUE_CAP,
   DASHBOARD_ACTIVITY_CAP,
@@ -204,6 +206,15 @@ export type OwnerDashboardPendingTradeOffer = {
   createdOn: string;
   youReceive: string[];
   theyReceive: string[];
+  valueSummary: "favor_receive" | "favor_send" | "even";
+  motivationLabel: string | null;
+  reasons: string[];
+  expiresOn: string | null;
+};
+
+export type OwnerDashboardTradeInbox = {
+  totalPending: number;
+  pendingForActiveTeam: number;
 };
 
 export type OwnerDashboardSeasonRecap = {
@@ -273,8 +284,9 @@ export type OwnerDashboardView = {
   notifications: NotificationView[];
   activity: EventLogEntryView[];
   flags: OwnerDashboardFlags;
-  /** Active trade offer requiring Accept / Decline / Ask AI, if any. */
+  /** Active trade offer requiring Accept / Decline / Review / Negotiate, if any. */
   pendingTradeOffer: OwnerDashboardPendingTradeOffer | null;
+  tradeInbox: OwnerDashboardTradeInbox;
   situations: OwnerDashboardSituationView[];
   simulationPhase: SimulationPhaseContext;
   phaseResponsibility: PhaseResponsibility;
@@ -366,6 +378,7 @@ export function toOwnerDashboardView(state: GameState): OwnerDashboardView {
   const owner = buildOwner(canonical, actionItems, health);
   const flags = buildFlags(canonical);
   const pendingTradeOffer = buildPendingTradeOfferView(state);
+  const tradeInbox = buildTradeInbox(state);
   const situations = buildSituationsView(state);
   const seasonRecap =
     calendar.lifecyclePhase === "postseason"
@@ -446,6 +459,7 @@ export function toOwnerDashboardView(state: GameState): OwnerDashboardView {
     activity,
     flags,
     pendingTradeOffer,
+    tradeInbox,
     situations,
     simulationPhase,
     phaseResponsibility,
@@ -682,16 +696,31 @@ function buildFlags(data: CanonicalDashboardData): OwnerDashboardFlags {
 function buildPendingTradeOfferView(
   state: GameState,
 ): OwnerDashboardPendingTradeOffer | null {
-  const pending = state.user.pendingOwnerDecisions.find(
-    (d) => d.type === "trade_offer",
-  );
+  const activeTeamId = state.user.activeOwnerTeamId;
+  const pending =
+    state.user.pendingOwnerDecisions.find(
+      (d) =>
+        d.type === "trade_offer" &&
+        (d.payload.status === undefined ||
+          d.payload.status === "pending" ||
+          d.payload.status === "negotiating") &&
+        d.payload.userTeamId === activeTeamId,
+    ) ??
+    state.user.pendingOwnerDecisions.find(
+      (d) =>
+        d.type === "trade_offer" &&
+        (d.payload.status === undefined ||
+          d.payload.status === "pending" ||
+          d.payload.status === "negotiating"),
+    );
   if (!pending) {
     return null;
   }
   const offeringTeam = state.world.teams[pending.payload.offeringTeamId];
   const userTeamId = pending.payload.userTeamId;
   const receivingTeam = state.world.teams[userTeamId];
-  const proposal = pending.payload.proposal;
+  const proposal =
+    pending.payload.currentProposal ?? pending.payload.proposal;
   const offeringSide =
     proposal.sideA.teamId === pending.payload.offeringTeamId
       ? proposal.sideA
@@ -701,6 +730,9 @@ function buildPendingTradeOfferView(
   const bothSidesOwned =
     state.user.ownedTeamIds.includes(pending.payload.offeringTeamId) &&
     state.user.ownedTeamIds.includes(userTeamId);
+
+  const evaluation = evaluateTrade(state, userTeamId, proposal);
+  const motivation = pending.payload.motivation;
 
   return {
     decisionId: pending.id,
@@ -719,6 +751,28 @@ function buildPendingTradeOfferView(
     createdOn: pending.createdOn,
     youReceive: describeTradeSideAssets(state, offeringSide),
     theyReceive: describeTradeSideAssets(state, userSide),
+    valueSummary: evaluation.recommendation,
+    motivationLabel: motivation
+      ? motivationDisplayLabel(motivation)
+      : null,
+    reasons: evaluation.reasons.slice(0, 4),
+    expiresOn: pending.payload.expiresOn ?? null,
+  };
+}
+
+function buildTradeInbox(state: GameState): OwnerDashboardTradeInbox {
+  const open = state.user.pendingOwnerDecisions.filter(
+    (d) =>
+      d.type === "trade_offer" &&
+      (d.payload.status === undefined ||
+        d.payload.status === "pending" ||
+        d.payload.status === "negotiating"),
+  );
+  const active = state.user.activeOwnerTeamId;
+  return {
+    totalPending: open.length,
+    pendingForActiveTeam: open.filter((d) => d.payload.userTeamId === active)
+      .length,
   };
 }
 
