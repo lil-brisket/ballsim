@@ -19,11 +19,7 @@ export function GameShell(props: {
       />
 
       <div className="flex flex-col gap-6 lg:flex-row lg:items-start">
-        <GameNavigation
-          saveId={props.saveId}
-          unreadCount={props.dashboard.unreadNotificationCount}
-          groups={props.navGroups}
-        />
+        <GameNavigation saveId={props.saveId} groups={props.navGroups} />
         <div className="flex min-w-0 flex-1 flex-col gap-8">{props.children}</div>
       </div>
     </div>

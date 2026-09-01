@@ -47,13 +47,18 @@ import type {
 } from "@/domain/ai-management-presets";
 import type { GameSettings } from "@/domain/game-settings";
 import type { DomainEvent } from "@/domain/events";
+import type {
+  MediaFeedState,
+  MediaReadState,
+} from "@/domain/entities/media-item";
+import type { SocialFeedState } from "@/domain/entities/social-post";
 import type { SaveId, TeamId } from "@/domain/ids";
 import type {
   CompetitionPhaseState,
   FranchisePhaseState,
 } from "@/systems/phase-engine/phase-types";
 
-export const GAME_STATE_SCHEMA_VERSION = 59;
+export const GAME_STATE_SCHEMA_VERSION = 60;
 
 /** League personnel market for staff free agency (not a business-finance concept). */
 export type StaffMarketState = {
@@ -202,6 +207,19 @@ export type OwnedFranchiseState = {
    * Bounded to {@link EVENT_LOG_MAX} most recent entries.
    */
   eventLog: DomainEvent[];
+  /**
+   * Bounded Media Hub presentation cache (not authoritative history).
+   * Populated by media-hub derived projections from domain events.
+   */
+  mediaFeed: MediaFeedState;
+  /**
+   * Bounded fictional social/analyst reactions tied to media sources.
+   */
+  socialFeed: SocialFeedState;
+  /**
+   * Separate read/dismiss bookkeeping for media feed items (keyed by MediaItemId).
+   */
+  mediaReadState: MediaReadState;
   /** Deterministic keys for applied gameplay/AI consequences (idempotency). */
   appliedGameplayConsequenceKeys: Record<string, true>;
   /**

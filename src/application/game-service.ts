@@ -39,6 +39,7 @@ import type { DomainEvent } from "@/domain/events";
 import {
   asContractId,
   asGameId,
+  asMediaItemId,
   asNarrativeSituationId,
   asOfferId,
   asOwnerDecisionId,
@@ -49,6 +50,18 @@ import {
   type PlayerId,
   type TeamId,
 } from "@/domain/ids";
+import {
+  isMediaUnread,
+  type MediaHubTab,
+  type MediaItem,
+  type MediaLatestFilter,
+  type MediaStoryType,
+} from "@/domain/entities/media-item";
+import type {
+  SocialAuthorType,
+  SocialPost,
+} from "@/domain/entities/social-post";
+import type { ImportanceLevel } from "@/domain/entities/event-source";
 import { createSeededRng, type Rng } from "@/domain/rng";
 import { validateGameState } from "@/persistence/validate-game-state";
 import { prismaSaveGameStore } from "@/persistence/save-game-repository";
@@ -168,7 +181,7 @@ import {
   listGameDayPromotionDefinitions,
 } from "@/systems/game-day-promotions/game-day-promotion-catalog";
 import { projectGameDayPromotion } from "@/systems/game-day-promotions/project-game-day-promotion";
-import { calendarDaysBetween } from "@/domain/calendar-date";
+import { calendarDaysBetween, parseCalendarDate } from "@/domain/calendar-date";
 import { setTicketPrice } from "@/systems/ticket-pricing";
 import {
   advanceRelocationStage,
@@ -227,6 +240,22 @@ import {
   withdrawOffer,
 } from "@/systems/free-agency";
 import { advanceSimulation } from "@/systems/simulation/advance-simulation";
+import { buildSimulationHighlights } from "@/systems/simulation/simulation-highlights";
+import {
+  findNextSimulationTarget,
+  getCalendarMonthGrid,
+  getCalendarTodayBriefing,
+  summarizeSimulationRange,
+  type CalendarMonthGrid,
+  type CalendarTodayBriefing,
+  type SimulationRangePreview,
+  type SimulationTarget,
+} from "@/systems/calendar";
+import {
+  CALENDAR_FILTERS,
+  type CalendarFilter,
+} from "@/domain/entities/calendar-event";
+import { processDerivedProjections } from "@/systems/media-hub";
 import { advanceLeaguePhase } from "@/systems/simulation/offseason-lifecycle";
 import { isInLeaguePhase, previewAdvance, getActivePhaseId } from "@/systems/phase-engine";
 import { getActionBlockReason } from "@/systems/league-rules";
@@ -532,6 +561,146 @@ export async function loadOwnerSaveView(
     settings: state.settings,
     leagueAwards: toLeagueAwardsView(state, saveId),
     navGroups: ownerNavGroupsForState(state),
+  };
+}
+
+export type CalendarPageMediaHighlight = {
+  date: string;
+  headline: string;
+  summary: string;
+  storyType: string;
+};
+
+export type CalendarPageView = {
+  save: SaveGameSummary;
+  dashboard: DashboardSnapshot;
+  currentDate: string;
+  year: number;
+  month: number;
+  selectedDate: string;
+  filter: CalendarFilter;
+  monthGrid: CalendarMonthGrid;
+  todayBriefing: CalendarTodayBriefing;
+  simulationPreview: SimulationRangePreview | null;
+  nextTargets: {
+    nextGame: SimulationTarget | null;
+    nextImportant: SimulationTarget | null;
+    nextDecision: SimulationTarget | null;
+    nextDeadline: SimulationTarget | null;
+  };
+  timeDisabled: boolean;
+  timeDisabledFlags: {
+    userOnDraftClock: boolean;
+    seasonReviewPending: boolean;
+    pendingOwnerDecision: boolean;
+  };
+  recentMediaHighlights: CalendarPageMediaHighlight[];
+  userTeamId: TeamId;
+};
+
+export type LoadCalendarPageViewOptions = {
+  year?: number;
+  month?: number;
+  selectedDate?: string;
+  filter?: CalendarFilter;
+};
+
+/**
+ * Calendar page data: month grid, today briefing, simulation targets/preview.
+ * Loads GameState once; does not invent projected trades or injuries.
+ */
+export async function loadCalendarPageView(
+  saveId: string,
+  options: LoadCalendarPageViewOptions = {},
+  store?: SaveGameStore,
+): Promise<CalendarPageView | null> {
+  const loaded = await getStore(store).load(saveId);
+  if (!loaded) {
+    return null;
+  }
+
+  const state = loaded.state;
+  const currentDate = state.world.calendar.currentDate;
+  const parsedCurrent = parseCalendarDate(currentDate);
+
+  const year =
+    options.year !== undefined && Number.isInteger(options.year)
+      ? options.year
+      : parsedCurrent.year;
+  const month =
+    options.month !== undefined &&
+    Number.isInteger(options.month) &&
+    options.month >= 1 &&
+    options.month <= 12
+      ? options.month
+      : parsedCurrent.month;
+
+  const selectedDate =
+    options.selectedDate && /^\d{4}-\d{2}-\d{2}$/.test(options.selectedDate)
+      ? options.selectedDate
+      : currentDate;
+
+  const filter: CalendarFilter =
+    options.filter &&
+    (CALENDAR_FILTERS as readonly string[]).includes(options.filter)
+      ? options.filter
+      : "all";
+
+  const monthGrid = getCalendarMonthGrid(state, year, month, { saveId });
+  const todayBriefing = getCalendarTodayBriefing(state);
+
+  let simulationPreview: SimulationRangePreview | null = null;
+  if (selectedDate >= currentDate) {
+    try {
+      simulationPreview = summarizeSimulationRange(state, selectedDate);
+    } catch {
+      simulationPreview = null;
+    }
+  }
+
+  const ownerDash = toOwnerDashboardView(state);
+  const timeDisabledFlags = {
+    userOnDraftClock: ownerDash.flags.userOnDraftClock,
+    seasonReviewPending: ownerDash.flags.seasonReviewPending,
+    pendingOwnerDecision: ownerDash.flags.pendingOwnerDecision,
+  };
+
+  const franchise = getActiveOwnedFranchise(state);
+  const recentMediaHighlights: CalendarPageMediaHighlight[] = (
+    franchise.mediaFeed?.items ?? []
+  )
+    .slice(0, 40)
+    .map((item) => ({
+      date: item.occurredOn,
+      headline: item.headline,
+      summary: item.summary,
+      storyType: item.storyType,
+    }));
+
+  return {
+    save: toSaveSummary(loaded),
+    dashboard: toDashboardSnapshot(state),
+    currentDate,
+    year,
+    month,
+    selectedDate,
+    filter,
+    monthGrid,
+    todayBriefing,
+    simulationPreview,
+    nextTargets: {
+      nextGame: findNextSimulationTarget(state, "next_game"),
+      nextImportant: findNextSimulationTarget(state, "next_important"),
+      nextDecision: findNextSimulationTarget(state, "next_decision"),
+      nextDeadline: findNextSimulationTarget(state, "next_deadline"),
+    },
+    timeDisabled:
+      timeDisabledFlags.userOnDraftClock ||
+      timeDisabledFlags.seasonReviewPending ||
+      timeDisabledFlags.pendingOwnerDecision,
+    timeDisabledFlags,
+    recentMediaHighlights,
+    userTeamId: state.user.activeOwnerTeamId,
   };
 }
 
@@ -998,11 +1167,38 @@ export async function confirmOwnerTeamIdentity(
   }
 }
 
+export type SimulationStopCondition =
+  | "blocking_decision"
+  | "user_team_game"
+  | "important_event"
+  | "phase_change";
+
+export type AdvanceOwnerTimeOptions = {
+  days?: number;
+  stopOnPhaseChange?: boolean;
+  /** Simulate forward until this calendar date is current (inclusive landing). */
+  targetDate?: string;
+  /** Explicit shortcut modes — resolve target date from calendar projection. */
+  targetMode?:
+    | "next_game"
+    | "next_important"
+    | "next_decision"
+    | "next_deadline";
+  /** Optional early-stop conditions for multi-day advances. */
+  stopConditions?: SimulationStopCondition[];
+};
+
 export async function advanceOwnerTime(
   saveId: string,
-  options: { days?: number; stopOnPhaseChange?: boolean } = {},
+  options: AdvanceOwnerTimeOptions = {},
   store?: SaveGameStore,
-): Promise<OwnerCommandResult<{ events: DomainEvent[]; simulation: Omit<AdvanceSimulationResult, "state" | "events"> }>> {
+): Promise<
+  OwnerCommandResult<{
+    events: DomainEvent[];
+    simulation: Omit<AdvanceSimulationResult, "state" | "events">;
+    highlights: ReturnType<typeof buildSimulationHighlights>;
+  }>
+> {
   const saveStore = getStore(store);
   const loaded = await saveStore.load(saveId);
   if (!loaded) {
@@ -1062,32 +1258,136 @@ export async function advanceOwnerTime(
     );
   }
 
-  const days = options.days ?? 1;
+  const resolved = resolveAdvanceDays(workingState, options);
+  if (!resolved.ok) {
+    return fail(resolved.error);
+  }
+
+  const stopConditions = options.stopConditions ?? [];
+  const stopOnPhaseChange =
+    options.stopOnPhaseChange === true ||
+    stopConditions.includes("phase_change");
+
   const rng = createSeededRng(rngState);
 
   try {
     const result = advanceSimulation(workingState, rng, {
-      days,
-      stopOnPhaseChange: options.stopOnPhaseChange,
+      days: resolved.days,
+      stopOnPhaseChange,
     });
+
+    const allEvents = [...preEvents, ...result.events];
+    const withProjections = processDerivedProjections(result.state, allEvents);
 
     const saved = await persistWorkingState(
       saveId,
-      result.state,
+      withProjections,
       rng.getState(),
       saveStore,
-      [...preEvents, ...result.events],
+      allEvents,
     );
 
     const { state: _state, events, ...simulation } = result;
+    const highlights = buildSimulationHighlights(withProjections, allEvents);
     return {
       ...withDashboard(saved),
-      events: [...preEvents, ...events],
+      events: allEvents,
       simulation,
+      highlights,
     };
   } catch (error) {
     return fail(error instanceof Error ? error.message : String(error));
   }
+}
+
+function resolveAdvanceDays(
+  state: GameState,
+  options: AdvanceOwnerTimeOptions,
+): { ok: true; days: number } | { ok: false; error: string } {
+  const currentDate = state.world.calendar.currentDate;
+  const stopConditions = [...(options.stopConditions ?? [])];
+
+  let days = options.days ?? 1;
+  let targetDate = options.targetDate;
+
+  if (options.targetMode != null) {
+    if (options.targetMode === "next_decision") {
+      // Advance until a blocking decision appears or phase changes.
+      days = 400;
+      stopConditions.push("blocking_decision", "phase_change");
+      targetDate = undefined;
+    } else {
+      const target = findNextSimulationTarget(state, options.targetMode);
+      if (!target || target.daysUntil < 1) {
+        const labels: Record<string, string> = {
+          next_game: "No upcoming team game found.",
+          next_important: "No upcoming important event found.",
+          next_deadline: "No upcoming deadline found.",
+        };
+        return {
+          ok: false,
+          error: labels[options.targetMode] ?? "No target found.",
+        };
+      }
+      targetDate = target.date;
+      if (options.targetMode === "next_game") {
+        stopConditions.push("user_team_game", "blocking_decision");
+      } else if (options.targetMode === "next_important") {
+        stopConditions.push("important_event", "blocking_decision");
+      } else {
+        stopConditions.push("blocking_decision");
+      }
+    }
+  }
+
+  if (targetDate != null) {
+    const delta = calendarDaysBetween(currentDate, targetDate);
+    if (delta < 0) {
+      return {
+        ok: false,
+        error: "Cannot simulate backward. Select a future date.",
+      };
+    }
+    if (delta === 0) {
+      return {
+        ok: false,
+        error: "Already at the selected date.",
+      };
+    }
+    days = delta;
+  }
+
+  // Cap days at earlier stop-condition targets when requested.
+  const caps: number[] = [days];
+
+  if (stopConditions.includes("user_team_game")) {
+    const next = findNextSimulationTarget(state, "next_game");
+    if (next && next.daysUntil > 0) {
+      caps.push(next.daysUntil);
+    }
+  }
+  if (stopConditions.includes("important_event")) {
+    const next = findNextSimulationTarget(state, "next_important");
+    if (next && next.daysUntil > 0) {
+      caps.push(next.daysUntil);
+    }
+  }
+  if (
+    stopConditions.includes("blocking_decision") &&
+    options.targetMode !== "next_decision"
+  ) {
+    const next = findNextSimulationTarget(state, "next_decision");
+    if (next && next.daysUntil > 0) {
+      caps.push(next.daysUntil);
+    }
+  }
+
+  const resolvedDays = Math.min(...caps);
+  if (!Number.isInteger(resolvedDays) || resolvedDays < 1) {
+    return { ok: false, error: "Nothing to simulate for the selected target." };
+  }
+
+  return { ok: true, days: resolvedDays };
 }
 
 /** @deprecated Prefer advanceOwnerTime — kept for existing callers. */
@@ -1642,6 +1942,8 @@ export async function finishFreeAgency(
       // Persist stopped at draft clock without requiring another advance.
     }
 
+    working = processDerivedProjections(working, emitted);
+
     const saved = await persistWorkingState(
       saveId,
       working,
@@ -1785,6 +2087,8 @@ export async function letAiHandlePhaseAndAdvance(
     working = dayResult.state;
     emitted.push(...dayResult.events);
 
+    working = processDerivedProjections(working, emitted);
+
     const saved = await persistWorkingState(
       saveId,
       working,
@@ -1839,6 +2143,8 @@ export async function continuePastPhaseAnyway(
     });
     working = dayResult.state;
 
+    working = processDerivedProjections(working, dayResult.events);
+
     const saved = await persistWorkingState(
       saveId,
       working,
@@ -1878,6 +2184,8 @@ export async function beginOffseason(
     const dayResult = advanceSimulation(working, rng, { days: 1 });
     working = dayResult.state;
     emitted.push(...dayResult.events);
+
+    working = processDerivedProjections(working, emitted);
 
     const saved = await persistWorkingState(
       saveId,
@@ -1966,6 +2274,8 @@ export async function selectOwnerDraftProspect(
         }
       }
     }
+
+    working = processDerivedProjections(working, emitted);
 
     const saved = await persistWorkingState(
       saveId,
@@ -2268,6 +2578,346 @@ export async function markOwnerNotificationsRead(
       }),
     }));
   }
+  try {
+    const saved = await persistWorkingState(
+      saveId,
+      working,
+      loaded.state.meta.rngState,
+      saveStore,
+    );
+    return withDashboard(saved);
+  } catch (error) {
+    return fail(error instanceof Error ? error.message : String(error));
+  }
+}
+
+export type MediaStoryEntityView = {
+  id: string;
+  name: string;
+  canOpen?: boolean;
+  href?: string;
+  abbreviation?: string;
+};
+
+export type MediaStoryView = {
+  id: string;
+  headline: string;
+  summary: string;
+  occurredOn: string;
+  storyType: MediaStoryType;
+  importance: ImportanceLevel;
+  unread: boolean;
+  gameId?: string;
+  canOpenGame: boolean;
+  players: MediaStoryEntityView[];
+  teams: MediaStoryEntityView[];
+};
+
+export type SocialPostView = {
+  id: string;
+  occurredOn: string;
+  authorType: SocialAuthorType;
+  authorLabel: string;
+  content: string;
+  importance: ImportanceLevel;
+  relatedMediaId?: string;
+};
+
+export type MediaFranchiseAttentionView = {
+  mediaAttention: number;
+  awareness: number;
+  fanSentiment: number;
+  reputation: number;
+  demandWeighted: number | null;
+};
+
+export type MediaPageView = {
+  saveId: string;
+  tab: MediaHubTab;
+  latestFilter: MediaLatestFilter;
+  items: MediaStoryView[];
+  socialPosts: SocialPostView[];
+  unreadCount: number;
+  franchiseAttention: MediaFranchiseAttentionView;
+};
+
+function resolveTeamHref(
+  state: GameState,
+  teamId: TeamId,
+  saveId: string,
+): string {
+  if (teamId === state.user.activeOwnerTeamId) {
+    return `/dashboard/${saveId}/team`;
+  }
+  if (isOwnedFranchise(state, teamId)) {
+    return `/dashboard/${saveId}/teams`;
+  }
+  return `/dashboard/${saveId}/league`;
+}
+
+function toMediaStoryView(
+  state: GameState,
+  saveId: string,
+  item: MediaItem,
+): MediaStoryView {
+  const readState = getActiveOwnedFranchise(state).mediaReadState ?? {};
+  const players = (item.playerIds ?? []).map((playerId) => {
+    const player = state.world.players[playerId];
+    const name = player
+      ? `${player.firstName} ${player.lastName}`
+      : String(playerId);
+    return {
+      id: playerId,
+      name,
+      canOpen: isPlayerInOwnerScope(state, playerId),
+    };
+  });
+  const teams = (item.teamIds ?? []).map((teamId) => {
+    const team = state.world.teams[teamId];
+    return {
+      id: teamId,
+      name: team ? `${team.city} ${team.name}` : String(teamId),
+      abbreviation: team?.abbreviation,
+      href: resolveTeamHref(state, teamId, saveId),
+    };
+  });
+  const gameId = item.gameId ? String(item.gameId) : undefined;
+  return {
+    id: item.id,
+    headline: item.headline,
+    summary: item.summary,
+    occurredOn: item.occurredOn,
+    storyType: item.storyType,
+    importance: item.importance,
+    unread: isMediaUnread(item, readState),
+    gameId,
+    canOpenGame: gameId ? canOpenGameBoxScore(state, gameId) : false,
+    players,
+    teams,
+  };
+}
+
+function toSocialPostView(post: SocialPost): SocialPostView {
+  return {
+    id: post.id,
+    occurredOn: post.occurredOn,
+    authorType: post.authorType,
+    authorLabel: post.authorLabel,
+    content: post.content,
+    importance: post.importance,
+    relatedMediaId: post.relatedMediaId,
+  };
+}
+
+function matchesLatestFilter(
+  item: MediaItem,
+  filter: MediaLatestFilter,
+): boolean {
+  if (filter === "all") {
+    return true;
+  }
+  if (filter === "game") {
+    return item.storyType === "game";
+  }
+  if (filter === "player") {
+    return item.storyType === "player" || item.storyType === "injury";
+  }
+  // trends: high-signal league/player developments
+  return (
+    item.importance === "critical" ||
+    item.importance === "high" ||
+    item.storyType === "injury"
+  );
+}
+
+function filterMediaItemsForTab(
+  items: readonly MediaItem[],
+  tab: MediaHubTab,
+  latestFilter: MediaLatestFilter,
+  activeTeamId: TeamId,
+): MediaItem[] {
+  if (tab === "social") {
+    return [];
+  }
+  if (tab === "transactions") {
+    return items.filter((item) => item.storyType === "transaction");
+  }
+  if (tab === "league") {
+    return items.filter((item) => item.storyType === "league");
+  }
+  if (tab === "team") {
+    return items.filter(
+      (item) =>
+        (item.teamIds?.includes(activeTeamId) ?? false) ||
+        item.relevanceScore >= 40,
+    );
+  }
+  // latest
+  return items.filter((item) => matchesLatestFilter(item, latestFilter));
+}
+
+function parseMediaHubTab(raw: string | undefined): MediaHubTab {
+  switch (raw) {
+    case "team":
+    case "transactions":
+    case "league":
+    case "social":
+      return raw;
+    default:
+      return "latest";
+  }
+}
+
+function parseMediaLatestFilter(raw: string | undefined): MediaLatestFilter {
+  switch (raw) {
+    case "game":
+    case "player":
+    case "trends":
+      return raw;
+    default:
+      return "all";
+  }
+}
+
+/**
+ * Media Hub page model: tab-filtered stories, social posts, unread count,
+ * and franchise attention stats for the active owned franchise.
+ */
+export async function loadMediaPageView(
+  saveId: string,
+  options: { tab?: string; filter?: string } = {},
+  store?: SaveGameStore,
+): Promise<MediaPageView | null> {
+  const loaded = await getStore(store).load(saveId);
+  if (!loaded) {
+    return null;
+  }
+  const state = loaded.state;
+  const franchise = getActiveOwnedFranchise(state);
+  const mediaFeed = franchise.mediaFeed ?? { items: [] };
+  const socialFeed = franchise.socialFeed ?? { posts: [] };
+  const readState = franchise.mediaReadState ?? {};
+  const tab = parseMediaHubTab(options.tab);
+  const latestFilter = parseMediaLatestFilter(options.filter);
+  const activeTeamId = state.user.activeOwnerTeamId;
+
+  const filteredItems = filterMediaItemsForTab(
+    mediaFeed.items,
+    tab,
+    latestFilter,
+    activeTeamId,
+  );
+  const unreadCount = mediaFeed.items.filter((item) =>
+    isMediaUnread(item, readState),
+  ).length;
+
+  const biz = toFranchiseBusinessView(state);
+  const mediaContributor = biz.forecast.demandContributors.find(
+    (c) => c.key === "mediaAttention",
+  );
+
+  return {
+    saveId,
+    tab,
+    latestFilter,
+    items: filteredItems.map((item) => toMediaStoryView(state, saveId, item)),
+    socialPosts:
+      tab === "social" ? socialFeed.posts.map(toSocialPostView) : [],
+    unreadCount,
+    franchiseAttention: {
+      mediaAttention: biz.mediaAttention,
+      awareness: biz.awareness,
+      fanSentiment: biz.fanSentiment,
+      reputation: biz.reputation,
+      demandWeighted: mediaContributor ? mediaContributor.weighted : null,
+    },
+  };
+}
+
+/** Mark one Media Hub item read for the active owned franchise. */
+export async function markMediaRead(
+  saveId: string,
+  mediaItemId: string,
+  store?: SaveGameStore,
+): Promise<OwnerCommandResult> {
+  const saveStore = getStore(store);
+  const loaded = await saveStore.load(saveId);
+  if (!loaded) {
+    return fail("Save not found.");
+  }
+  if (!mediaItemId) {
+    return fail("Media item id is required.");
+  }
+  const typedId = asMediaItemId(mediaItemId);
+  const currentDate = loaded.state.world.calendar.currentDate;
+  const working = withOwnedFranchise(
+    loaded.state,
+    loaded.state.user.activeOwnerTeamId,
+    (franchise) => {
+      const existing = franchise.mediaReadState?.[typedId] ?? {};
+      if (existing.readAt) {
+        return franchise;
+      }
+      return {
+        ...franchise,
+        mediaReadState: {
+          ...(franchise.mediaReadState ?? {}),
+          [typedId]: { ...existing, readAt: currentDate },
+        },
+      };
+    },
+  );
+  try {
+    const saved = await persistWorkingState(
+      saveId,
+      working,
+      loaded.state.meta.rngState,
+      saveStore,
+    );
+    return withDashboard(saved);
+  } catch (error) {
+    return fail(error instanceof Error ? error.message : String(error));
+  }
+}
+
+/** Mark all Media Hub items read for the active owned franchise. */
+export async function markAllMediaRead(
+  saveId: string,
+  store?: SaveGameStore,
+): Promise<OwnerCommandResult> {
+  const saveStore = getStore(store);
+  const loaded = await saveStore.load(saveId);
+  if (!loaded) {
+    return fail("Save not found.");
+  }
+  const currentDate = loaded.state.world.calendar.currentDate;
+  const working = withOwnedFranchise(
+    loaded.state,
+    loaded.state.user.activeOwnerTeamId,
+    (franchise) => {
+      const items = franchise.mediaFeed?.items ?? [];
+      if (items.length === 0) {
+        return franchise;
+      }
+      const nextReadState = { ...(franchise.mediaReadState ?? {}) };
+      let changed = false;
+      for (const item of items) {
+        const existing = nextReadState[item.id] ?? {};
+        if (existing.readAt || existing.dismissedAt) {
+          continue;
+        }
+        nextReadState[item.id] = { ...existing, readAt: currentDate };
+        changed = true;
+      }
+      if (!changed) {
+        return franchise;
+      }
+      return {
+        ...franchise,
+        mediaReadState: nextReadState,
+      };
+    },
+  );
   try {
     const saved = await persistWorkingState(
       saveId,

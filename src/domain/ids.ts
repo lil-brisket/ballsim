@@ -26,6 +26,8 @@ export type StaffOfferId = Brand<string, "StaffOfferId">;
 export type SponsorshipId = Brand<string, "SponsorshipId">;
 export type NarrativeSituationId = Brand<string, "NarrativeSituationId">;
 export type OwnerDecisionId = Brand<string, "OwnerDecisionId">;
+export type MediaItemId = Brand<string, "MediaItemId">;
+export type SocialPostId = Brand<string, "SocialPostId">;
 
 export function asPlayerId(value: string): PlayerId {
   return value as PlayerId;
@@ -129,4 +131,12 @@ export function asNarrativeSituationId(value: string): NarrativeSituationId {
 
 export function asOwnerDecisionId(value: string): OwnerDecisionId {
   return value as OwnerDecisionId;
+}
+
+export function asMediaItemId(value: string): MediaItemId {
+  return value as MediaItemId;
+}
+
+export function asSocialPostId(value: string): SocialPostId {
+  return value as SocialPostId;
 }

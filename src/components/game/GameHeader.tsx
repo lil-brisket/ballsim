@@ -5,6 +5,44 @@ import { PhaseBadge } from "@/components/game/PhaseBadge";
 import { OwnerTeamSwitcher } from "@/components/game/OwnerTeamSwitcher";
 import { MoneyDisplay } from "@/components/owner/MoneyDisplay";
 
+function NotificationsBell(props: {
+  saveId: string;
+  unreadCount: number;
+}) {
+  const href = `/dashboard/${props.saveId}/notifications`;
+  const label =
+    props.unreadCount > 0
+      ? `Notifications, ${props.unreadCount} unread`
+      : "Notifications";
+
+  return (
+    <Link
+      href={href}
+      aria-label={label}
+      className="relative inline-flex h-9 w-9 items-center justify-center rounded-md border border-zinc-700 text-zinc-300 hover:border-amber-600 hover:text-amber-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-500"
+    >
+      <svg
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.75"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        className="h-4 w-4"
+        aria-hidden="true"
+      >
+        <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" />
+        <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" />
+      </svg>
+      {props.unreadCount > 0 ? (
+        <span className="absolute -right-1.5 -top-1.5 inline-flex min-w-[1.15rem] items-center justify-center rounded-full bg-amber-500 px-1 font-mono text-[0.65rem] font-semibold leading-4 text-zinc-950">
+          {props.unreadCount > 99 ? "99+" : props.unreadCount}
+        </span>
+      ) : null}
+    </Link>
+  );
+}
+
 export function GameHeader(props: {
   saveId: string;
   saveName: string;
@@ -23,9 +61,15 @@ export function GameHeader(props: {
         >
           ← Home
         </Link>
-        <p className="font-mono text-xs uppercase tracking-[0.18em] text-amber-500">
-          {modeDef.name}
-        </p>
+        <div className="flex items-center gap-3">
+          <p className="font-mono text-xs uppercase tracking-[0.18em] text-amber-500">
+            {modeDef.name}
+          </p>
+          <NotificationsBell
+            saveId={saveId}
+            unreadCount={dashboard.unreadNotificationCount}
+          />
+        </div>
       </div>
 
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">

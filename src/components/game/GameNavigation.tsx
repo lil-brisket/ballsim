@@ -32,7 +32,6 @@ function NavLink(props: {
 
 function NavGroups(props: {
   saveId: string;
-  unreadCount: number;
   onNavigate?: () => void;
   groups?: readonly OwnerNavGroup[];
 }) {
@@ -54,15 +53,11 @@ function NavGroups(props: {
                 item.href === ""
                   ? pathname === base
                   : pathname === href || pathname.startsWith(`${href}/`);
-              const label =
-                item.label === "Notifications" && props.unreadCount > 0
-                  ? `Notifications (${props.unreadCount})`
-                  : item.label;
               return (
                 <li key={item.href || "dashboard"}>
                   <NavLink
                     href={href}
-                    label={label}
+                    label={item.label}
                     active={active}
                     onNavigate={props.onNavigate}
                   />
@@ -82,7 +77,6 @@ function NavGroups(props: {
  */
 export function GameNavigation(props: {
   saveId: string;
-  unreadCount: number;
   groups?: readonly OwnerNavGroup[];
 }) {
   const [open, setOpen] = useState(false);
@@ -107,7 +101,6 @@ export function GameNavigation(props: {
           >
             <NavGroups
               saveId={props.saveId}
-              unreadCount={props.unreadCount}
               groups={props.groups}
               onNavigate={() => setOpen(false)}
             />
@@ -119,11 +112,7 @@ export function GameNavigation(props: {
         className="hidden w-52 shrink-0 lg:block"
         aria-label="Owner Mode"
       >
-        <NavGroups
-          saveId={props.saveId}
-          unreadCount={props.unreadCount}
-          groups={props.groups}
-        />
+        <NavGroups saveId={props.saveId} groups={props.groups} />
       </nav>
     </>
   );

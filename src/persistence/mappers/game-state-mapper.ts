@@ -20,6 +20,11 @@ import {
 import { createEmptyAwardHistory } from "@/domain/entities/awards";
 import { createEmptyGameDayPromotionSeasonState } from "@/domain/entities/game-day-promotion";
 import { createDefaultDevelopmentLeagueProfile } from "@/domain/entities/development-league";
+import {
+  createEmptyMediaFeed,
+  createEmptyMediaReadState,
+} from "@/domain/entities/media-item";
+import { createEmptySocialFeed } from "@/domain/entities/social-post";
 import { createEmptyPlayerSeasonStatLine } from "@/domain/entities/player-history";
 import { createEmptyTeamStanding } from "@/domain/entities/standings";
 import type { PlayerArchetype } from "@/domain/entities/player-archetype";
@@ -217,6 +222,7 @@ const MIGRATE_ONE_STEP: Record<number, (state: unknown) => unknown> = {
   56: (state) => migrateV56ToV57(state as GameStateV56),
   57: (state) => migrateV57ToV58(state as GameStateV57),
   58: (state) => migrateV58ToV59(state as GameStateV58),
+  59: (state) => migrateV59ToV60(state as GameStateV59),
 };
 
 function legacyUserRecord(user: unknown): Record<string, unknown> {
@@ -3583,6 +3589,9 @@ function migrateV42ToV43(state: GameStateV42): GameStateV43 {
       },
     notifications: legacyUserArray(userRecord.notifications),
     eventLog: legacyUserArray(userRecord.eventLog),
+    mediaFeed: createEmptyMediaFeed(),
+    socialFeed: createEmptySocialFeed(),
+    mediaReadState: createEmptyMediaReadState(),
     appliedGameplayConsequenceKeys:
       (userRecord.appliedGameplayConsequenceKeys as Record<string, true>) ?? {},
     explicitDecisions:
@@ -4993,6 +5002,18 @@ type GameStateV58 = Omit<GameState, "meta"> & {
   meta: Omit<GameState["meta"], "schemaVersion"> & { schemaVersion: 58 };
 };
 
+type OwnedFranchiseStateV59 = Omit<
+  GameState["user"]["ownedFranchises"][string],
+  "mediaFeed" | "socialFeed" | "mediaReadState"
+>;
+
+type GameStateV59 = Omit<GameState, "meta" | "user"> & {
+  meta: Omit<GameState["meta"], "schemaVersion"> & { schemaVersion: 59 };
+  user: Omit<GameState["user"], "ownedFranchises"> & {
+    ownedFranchises: Record<string, OwnedFranchiseStateV59>;
+  };
+};
+
 function patchPlayerStatsStarted(
   games: Record<string, Game>,
 ): Record<string, Game> {
@@ -5074,7 +5095,7 @@ function migrateV57ToV58(state: GameStateV57): GameStateV58 {
 /**
  * Deterministic v58 → v59: normalize trade offer payloads for multi-offer queue.
  */
-function migrateV58ToV59(state: GameStateV58): GameState {
+function migrateV58ToV59(state: GameStateV58): GameStateV59 {
   const pendingOwnerDecisions = state.user.pendingOwnerDecisions.map(
     (decision) => {
       const proposal = decision.payload.proposal;
@@ -5136,6 +5157,34 @@ function migrateV58ToV59(state: GameStateV58): GameState {
       ...state.user,
       pendingOwnerDecisions,
       ownerDecisionHistory,
+    },
+  };
+}
+
+/**
+ * Deterministic v59 → v60: seed empty Media Hub feeds on every owned franchise.
+ */
+function migrateV59ToV60(state: GameStateV59): GameState {
+  const ownedFranchises: GameState["user"]["ownedFranchises"] = {};
+  for (const teamId of Object.keys(state.user.ownedFranchises).sort()) {
+    const franchise = state.user.ownedFranchises[teamId]!;
+    ownedFranchises[teamId] = {
+      ...franchise,
+      mediaFeed: createEmptyMediaFeed(),
+      socialFeed: createEmptySocialFeed(),
+      mediaReadState: createEmptyMediaReadState(),
+    };
+  }
+
+  return {
+    ...state,
+    meta: {
+      ...state.meta,
+      schemaVersion: 60,
+    },
+    user: {
+      ...state.user,
+      ownedFranchises,
     },
   };
 }

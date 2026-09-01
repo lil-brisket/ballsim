@@ -9,6 +9,11 @@ import {
   type AiManagementPreset,
 } from "@/domain/ai-management-presets";
 import { createDefaultOwnershipConfidence } from "@/domain/entities/ownership-confidence";
+import {
+  createEmptyMediaFeed,
+  createEmptyMediaReadState,
+} from "@/domain/entities/media-item";
+import { createEmptySocialFeed } from "@/domain/entities/social-post";
 import { defaultOwnerPatience } from "@/systems/owner-philosophy-config";
 import {
   EMPTY_AI_ASSIST_STATE,
@@ -35,6 +40,9 @@ export function createDefaultOwnedFranchiseState(
     narrative: { situations: [], snapshots: [], cooldowns: {} },
     notifications: [],
     eventLog: [],
+    mediaFeed: createEmptyMediaFeed(),
+    socialFeed: createEmptySocialFeed(),
+    mediaReadState: createEmptyMediaReadState(),
     appliedGameplayConsequenceKeys: {},
     explicitDecisions: {},
     phaseSkips: [],

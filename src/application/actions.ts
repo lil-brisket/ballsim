@@ -26,6 +26,8 @@ import {
   loadOwnerSave,
   makeOwnerFreeAgentOffer,
   markOwnerNotificationsRead,
+  markMediaRead,
+  markAllMediaRead,
   acknowledgeOwnerNarrativeSituation,
   resolveOwnerNarrativeSituation,
   proposeOwnerExpansion,
@@ -355,6 +357,134 @@ export async function advanceUntilPhaseAction(
   }
   revalidateOwner(saveId);
   redirect(path);
+}
+
+function parseStopConditions(
+  formData: FormData,
+): import("@/application/game-service").SimulationStopCondition[] {
+  const conditions: import("@/application/game-service").SimulationStopCondition[] =
+    [];
+  if (formData.get("stopBlockingDecision") === "1") {
+    conditions.push("blocking_decision");
+  }
+  if (formData.get("stopUserTeamGame") === "1") {
+    conditions.push("user_team_game");
+  }
+  if (formData.get("stopImportantEvent") === "1") {
+    conditions.push("important_event");
+  }
+  if (formData.get("stopPhaseChange") === "1") {
+    conditions.push("phase_change");
+  }
+  return conditions;
+}
+
+function redirectWithSummary(
+  path: string,
+  daysAdvanced: number,
+  highlightCount: number,
+): never {
+  const separator = path.includes("?") ? "&" : "?";
+  redirect(
+    `${path}${separator}simSummary=1&daysAdvanced=${daysAdvanced}&highlights=${highlightCount}`,
+  );
+}
+
+export async function simulateToDateAction(formData: FormData): Promise<void> {
+  const saveId = String(formData.get("saveId") ?? "");
+  const path = returnPath(formData, saveId);
+  const targetDate = String(formData.get("targetDate") ?? "");
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(targetDate)) {
+    redirectWithError(path, "Invalid target date.");
+  }
+  const result = await advanceOwnerTime(saveId, {
+    targetDate,
+    stopConditions: parseStopConditions(formData),
+  });
+  if (!result.ok) {
+    redirectWithError(path, result.error);
+  }
+  revalidateOwner(saveId);
+  redirectWithSummary(
+    path,
+    result.simulation.daysAdvanced,
+    result.highlights.length,
+  );
+}
+
+export async function simulateToNextGameAction(
+  formData: FormData,
+): Promise<void> {
+  const saveId = String(formData.get("saveId") ?? "");
+  const path = returnPath(formData, saveId);
+  const result = await advanceOwnerTime(saveId, { targetMode: "next_game" });
+  if (!result.ok) {
+    redirectWithError(path, result.error);
+  }
+  revalidateOwner(saveId);
+  redirectWithSummary(
+    path,
+    result.simulation.daysAdvanced,
+    result.highlights.length,
+  );
+}
+
+export async function simulateToNextImportantAction(
+  formData: FormData,
+): Promise<void> {
+  const saveId = String(formData.get("saveId") ?? "");
+  const path = returnPath(formData, saveId);
+  const result = await advanceOwnerTime(saveId, {
+    targetMode: "next_important",
+  });
+  if (!result.ok) {
+    redirectWithError(path, result.error);
+  }
+  revalidateOwner(saveId);
+  redirectWithSummary(
+    path,
+    result.simulation.daysAdvanced,
+    result.highlights.length,
+  );
+}
+
+export async function simulateToNextDecisionAction(
+  formData: FormData,
+): Promise<void> {
+  const saveId = String(formData.get("saveId") ?? "");
+  const path = returnPath(formData, saveId);
+  const result = await advanceOwnerTime(saveId, {
+    targetMode: "next_decision",
+    stopOnPhaseChange: true,
+  });
+  if (!result.ok) {
+    redirectWithError(path, result.error);
+  }
+  revalidateOwner(saveId);
+  redirectWithSummary(
+    path,
+    result.simulation.daysAdvanced,
+    result.highlights.length,
+  );
+}
+
+export async function simulateToNextDeadlineAction(
+  formData: FormData,
+): Promise<void> {
+  const saveId = String(formData.get("saveId") ?? "");
+  const path = returnPath(formData, saveId);
+  const result = await advanceOwnerTime(saveId, {
+    targetMode: "next_deadline",
+  });
+  if (!result.ok) {
+    redirectWithError(path, result.error);
+  }
+  revalidateOwner(saveId);
+  redirectWithSummary(
+    path,
+    result.simulation.daysAdvanced,
+    result.highlights.length,
+  );
 }
 
 export async function letAiHandlePhaseAction(
@@ -727,6 +857,31 @@ export async function markNotificationsReadAction(
     saveId,
     singleId.length > 0 ? [singleId] : undefined,
   );
+  if (!result.ok) {
+    redirectWithError(path, result.error);
+  }
+  revalidateOwner(saveId);
+  redirect(path);
+}
+
+export async function markMediaReadAction(formData: FormData): Promise<void> {
+  const saveId = String(formData.get("saveId") ?? "");
+  const mediaItemId = String(formData.get("mediaItemId") ?? "");
+  const path = returnPath(formData, saveId);
+  const result = await markMediaRead(saveId, mediaItemId);
+  if (!result.ok) {
+    redirectWithError(path, result.error);
+  }
+  revalidateOwner(saveId);
+  redirect(path);
+}
+
+export async function markAllMediaReadAction(
+  formData: FormData,
+): Promise<void> {
+  const saveId = String(formData.get("saveId") ?? "");
+  const path = returnPath(formData, saveId);
+  const result = await markAllMediaRead(saveId);
   if (!result.ok) {
     redirectWithError(path, result.error);
   }

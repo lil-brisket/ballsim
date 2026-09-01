@@ -2799,6 +2799,36 @@ function validateOwnedFranchiseState(
   validateEventLog(franchise.eventLog);
 
   if (
+    franchise.mediaFeed == null ||
+    typeof franchise.mediaFeed !== "object" ||
+    Array.isArray(franchise.mediaFeed)
+  ) {
+    failFn(`${path}.mediaFeed must be an object.`);
+  }
+  if (!Array.isArray((franchise.mediaFeed as { items?: unknown }).items)) {
+    failFn(`${path}.mediaFeed.items must be an array.`);
+  }
+
+  if (
+    franchise.socialFeed == null ||
+    typeof franchise.socialFeed !== "object" ||
+    Array.isArray(franchise.socialFeed)
+  ) {
+    failFn(`${path}.socialFeed must be an object.`);
+  }
+  if (!Array.isArray((franchise.socialFeed as { posts?: unknown }).posts)) {
+    failFn(`${path}.socialFeed.posts must be an array.`);
+  }
+
+  if (
+    franchise.mediaReadState == null ||
+    typeof franchise.mediaReadState !== "object" ||
+    Array.isArray(franchise.mediaReadState)
+  ) {
+    failFn(`${path}.mediaReadState must be a record.`);
+  }
+
+  if (
     franchise.appliedGameplayConsequenceKeys == null ||
     typeof franchise.appliedGameplayConsequenceKeys !== "object" ||
     Array.isArray(franchise.appliedGameplayConsequenceKeys)

@@ -19,12 +19,17 @@ export type OwnerNavGroup = {
 
 export const OWNER_NAV_GROUPS: readonly OwnerNavGroup[] = [
   {
-    id: "dashboard",
-    label: "Overview",
+    id: "home",
+    label: "Home",
     items: [
       { href: "", label: "Dashboard" },
       { href: "/teams", label: "My Teams" },
     ],
+  },
+  {
+    id: "calendar",
+    label: "Calendar",
+    items: [{ href: "/calendar", label: "Calendar" }],
   },
   {
     id: "team",
@@ -33,8 +38,11 @@ export const OWNER_NAV_GROUPS: readonly OwnerNavGroup[] = [
       { href: "/team", label: "Team" },
       { href: "/team-management", label: "Team Management" },
       { href: "/roster", label: "Roster" },
-      { href: "/development-league", label: "Development League" },
+      { href: "/team-management/lineups", label: "Lineups" },
+      { href: "/team-management/coaching", label: "Coaching" },
+      { href: "/team-management/injuries", label: "Injuries" },
       { href: "/contracts", label: "Contracts" },
+      { href: "/development-league", label: "Development League" },
     ],
   },
   {
@@ -43,11 +51,19 @@ export const OWNER_NAV_GROUPS: readonly OwnerNavGroup[] = [
     items: [
       { href: "/league", label: "League" },
       { href: "/standings", label: "Standings" },
-      { href: "/awards", label: "Awards" },
       { href: "/schedule", label: "Schedule" },
       { href: "/draft", label: "Draft" },
       { href: "/scouting", label: "Scouting" },
       { href: "/free-agency", label: "Free Agency" },
+      { href: "/awards", label: "Awards" },
+    ],
+  },
+  {
+    id: "media",
+    label: "Media",
+    items: [
+      { href: "/media", label: "News" },
+      { href: "/transactions", label: "Transactions" },
     ],
   },
   {
@@ -61,15 +77,6 @@ export const OWNER_NAV_GROUPS: readonly OwnerNavGroup[] = [
       { href: "/sponsorships", label: "Sponsorships" },
       { href: "/relocation", label: "Relocation" },
       { href: "/history", label: "History" },
-      { href: "/media", label: "Media" },
-    ],
-  },
-  {
-    id: "events",
-    label: "Events",
-    items: [
-      { href: "/notifications", label: "Notifications" },
-      { href: "/transactions", label: "Transactions" },
     ],
   },
   {

@@ -80,10 +80,32 @@ import {
   type PhaseResponsibility,
 } from "@/systems/simulation/phase-responsibility";
 import { isContractActive } from "@/domain/entities/contract";
+import { isMediaUnread } from "@/domain/entities/media-item";
 import { derivePlayoffResults } from "@/systems/franchise-history";
 import { getActiveOwnedFranchise } from "@/state/owner-context";
+import { findNextSimulationTarget } from "@/systems/calendar";
 
 export type OwnerDashboardActionSeverity = "critical" | "warning" | "info";
+
+export type OwnerDashboardMediaHeadline = {
+  id: string;
+  headline: string;
+  summary: string;
+  occurredOn: string;
+  href: string;
+  importance: string;
+  unread: boolean;
+};
+
+export type OwnerDashboardNextEvent = {
+  date: string;
+  title: string;
+  description?: string;
+  daysUntil: number;
+  category: string;
+  href?: string;
+  blocking: boolean;
+};
 
 export type OwnerDashboardActionCategory =
   | "draft"
@@ -290,6 +312,10 @@ export type OwnerDashboardView = {
   situations: OwnerDashboardSituationView[];
   simulationPhase: SimulationPhaseContext;
   phaseResponsibility: PhaseResponsibility;
+  /** Top franchise media feed items for dashboard League News. */
+  mediaHeadlines: OwnerDashboardMediaHeadline[];
+  /** Next high-importance calendar target for the controlled franchise. */
+  nextImportantEvent: OwnerDashboardNextEvent | null;
 };
 
 type CanonicalDashboardData = {
@@ -432,6 +458,9 @@ export function toOwnerDashboardView(state: GameState): OwnerDashboardView {
     });
   }
 
+  const mediaHeadlines = buildMediaHeadlines(state, canonical.saveId);
+  const nextImportantEvent = buildNextImportantEvent(state);
+
   return {
     saveId: canonical.saveId,
     currentDate: canonical.snapshot.currentDate,
@@ -463,6 +492,8 @@ export function toOwnerDashboardView(state: GameState): OwnerDashboardView {
     situations,
     simulationPhase,
     phaseResponsibility,
+    mediaHeadlines,
+    nextImportantEvent,
   };
 }
 
@@ -1681,6 +1712,71 @@ function findVacantStarterRoles(
 ): string[] {
   const filled = new Set(staff.roster.map((member) => member.role));
   return STARTER_ROLES.filter((role) => !filled.has(role));
+}
+
+const DASHBOARD_MEDIA_HEADLINES_LIMIT = 5;
+
+function resolveMediaHref(saveId: string, href: string): string {
+  if (href.startsWith(`/dashboard/${saveId}`)) {
+    return href;
+  }
+  if (href.startsWith("/media")) {
+    return `/dashboard/${saveId}/media`;
+  }
+  if (href.startsWith("/")) {
+    return `/dashboard/${saveId}${href}`;
+  }
+  return `/dashboard/${saveId}/media`;
+}
+
+function buildMediaHeadlines(
+  state: GameState,
+  saveId: string,
+): OwnerDashboardMediaHeadline[] {
+  const franchise = getActiveOwnedFranchise(state);
+  const items = [...(franchise.mediaFeed?.items ?? [])].sort((a, b) => {
+    if (a.occurredOn !== b.occurredOn) {
+      return b.occurredOn.localeCompare(a.occurredOn);
+    }
+    return b.relevanceScore - a.relevanceScore;
+  });
+
+  return items.slice(0, DASHBOARD_MEDIA_HEADLINES_LIMIT).map((item) => ({
+    id: item.id,
+    headline: item.headline,
+    summary: item.summary,
+    occurredOn: item.occurredOn,
+    href: resolveMediaHref(saveId, item.href),
+    importance: item.importance,
+    unread: isMediaUnread(item, franchise.mediaReadState ?? {}),
+  }));
+}
+
+function buildNextImportantEvent(
+  state: GameState,
+): OwnerDashboardNextEvent | null {
+  const target = findNextSimulationTarget(state, "next_important");
+  if (!target) {
+    return null;
+  }
+  if (target.event) {
+    return {
+      date: target.date,
+      title: target.event.title,
+      description: target.event.description,
+      daysUntil: target.daysUntil,
+      category: target.event.category,
+      href: target.event.href,
+      blocking: target.event.blocking,
+    };
+  }
+  return {
+    date: target.date,
+    title: "Important date approaching",
+    daysUntil: target.daysUntil,
+    category: "league",
+    blocking: false,
+  };
 }
 
 function pctAbove(value: number, baseline: number): number {

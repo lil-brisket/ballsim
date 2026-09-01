@@ -14,6 +14,12 @@ import { SimulationAssistantSummary } from "@/components/game/SimulationAssistan
 import { SimulationProgressBanner } from "@/components/game/SimulationProgressBanner";
 import { PhaseDashboard } from "@/components/phase/PhaseDashboard";
 import { AttentionRequiredPanel } from "@/components/owner/dashboard/AttentionRequiredPanel";
+import {
+  DashboardHubLinks,
+  LeagueNewsPanel,
+  NextGamePanel,
+  NextImportantEventPanel,
+} from "@/components/owner/dashboard/DashboardHubPanels";
 import { DashboardNotifications } from "@/components/owner/dashboard/DashboardNotifications";
 import { FranchiseHealthPanel } from "@/components/owner/dashboard/FranchiseHealthPanel";
 import { FranchiseSituations } from "@/components/owner/dashboard/FranchiseSituations";
@@ -96,6 +102,8 @@ export default async function DashboardPage({
 
       {error ? <ErrorState message={error} /> : null}
 
+      <DashboardHubLinks saveId={saveId} />
+
       {dash.flags.pendingOwnerDecision &&
       dash.pendingTradeOffer &&
       dash.pendingTradeOffer.primaryTeamId !==
@@ -150,6 +158,14 @@ export default async function DashboardPage({
           .
         </p>
       ) : null}
+
+      <div className="grid gap-8 lg:grid-cols-2 lg:items-start">
+        <NextGamePanel team={dash.team} saveId={saveId} />
+        <NextImportantEventPanel
+          event={dash.nextImportantEvent}
+          saveId={saveId}
+        />
+      </div>
 
       <PhaseDashboard
         view={phaseDashboard}
@@ -245,6 +261,8 @@ export default async function DashboardPage({
           />
         </div>
       </div>
+
+      <LeagueNewsPanel headlines={dash.mediaHeadlines} saveId={saveId} />
 
       <div className="grid gap-8 lg:grid-cols-2">
         <div className="order-3">
