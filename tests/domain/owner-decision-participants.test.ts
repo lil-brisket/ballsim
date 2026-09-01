@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   getBlockingOwnerDecisions,
   getPendingDecisionsForTeam,
+  buildTradeOfferPayload,
   type PendingOwnerDecision,
 } from "@/domain/entities/owner-decision";
 import { asOwnerDecisionId, asTeamId } from "@/domain/ids";
@@ -14,6 +15,10 @@ function stubPendingDecision(
 ): PendingOwnerDecision {
   const offeringTeamId =
     participantTeamIds.find((id) => id !== primaryTeamId) ?? primaryTeamId;
+  const proposal = {
+    sideA: { teamId: offeringTeamId, playerIds: [] as never[], draftPickIds: [] as never[] },
+    sideB: { teamId: primaryTeamId, playerIds: [] as never[], draftPickIds: [] as never[] },
+  };
   return {
     id: asOwnerDecisionId(`od_test_${primaryTeamId}_${blockingLevel}`),
     type: "trade_offer",
@@ -21,15 +26,13 @@ function stubPendingDecision(
     blockingLevel,
     primaryTeamId,
     participantTeamIds,
-    payload: {
+    payload: buildTradeOfferPayload({
       offeringTeamId,
       userTeamId: primaryTeamId,
-      proposal: {
-        sideA: { teamId: offeringTeamId, playerIds: [], draftPickIds: [] },
-        sideB: { teamId: primaryTeamId, playerIds: [], draftPickIds: [] },
-      },
+      proposal,
       fingerprint: `${offeringTeamId}|${primaryTeamId}| |`,
-    },
+      createdOn: "2026-10-01",
+    }),
   };
 }
 

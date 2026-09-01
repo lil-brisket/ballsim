@@ -738,8 +738,6 @@ export function validateGameState(state: unknown): asserts state is GameState {
     !Array.isArray(user.pendingOwnerDecisions)
   ) {
     fail("user.pendingOwnerDecisions must be an array.");
-  } else if ((user.pendingOwnerDecisions as unknown[]).length > 1) {
-    fail("user.pendingOwnerDecisions may contain at most one active decision.");
   } else {
     for (
       let index = 0;
@@ -2696,14 +2694,19 @@ function validateOwnerDecisionRecord(
   if (
     record.status !== "accepted" &&
     record.status !== "declined" &&
-    record.status !== "delegated"
+    record.status !== "delegated" &&
+    record.status !== "expired"
   ) {
     failFn(
-      `${path}.status must be one of accepted, declined, delegated.`,
+      `${path}.status must be one of accepted, declined, delegated, expired.`,
     );
   }
-  if (record.decisionSource !== "owner" && record.decisionSource !== "owner_ai") {
-    failFn(`${path}.decisionSource must be "owner" or "owner_ai".`);
+  if (
+    record.decisionSource !== "owner" &&
+    record.decisionSource !== "owner_ai" &&
+    record.decisionSource !== "system"
+  ) {
+    failFn(`${path}.decisionSource must be "owner", "owner_ai", or "system".`);
   }
   assertNonEmptyString(record.createdOn, `${path}.createdOn`);
   parseCalendarDate(record.createdOn as string);
@@ -2950,6 +2953,54 @@ function validateTradeOfferDecisionPayload(
   const proposal = payload.proposal as Record<string, unknown>;
   validateTradeSide(proposal.sideA, `${path}.proposal.sideA`, failFn);
   validateTradeSide(proposal.sideB, `${path}.proposal.sideB`, failFn);
+
+  if (payload.originalProposal !== undefined) {
+    if (
+      payload.originalProposal === null ||
+      typeof payload.originalProposal !== "object" ||
+      Array.isArray(payload.originalProposal)
+    ) {
+      failFn(`${path}.originalProposal must be an object when present.`);
+    } else {
+      const original = payload.originalProposal as Record<string, unknown>;
+      validateTradeSide(original.sideA, `${path}.originalProposal.sideA`, failFn);
+      validateTradeSide(original.sideB, `${path}.originalProposal.sideB`, failFn);
+    }
+  }
+  if (payload.currentProposal !== undefined) {
+    if (
+      payload.currentProposal === null ||
+      typeof payload.currentProposal !== "object" ||
+      Array.isArray(payload.currentProposal)
+    ) {
+      failFn(`${path}.currentProposal must be an object when present.`);
+    } else {
+      const current = payload.currentProposal as Record<string, unknown>;
+      validateTradeSide(current.sideA, `${path}.currentProposal.sideA`, failFn);
+      validateTradeSide(current.sideB, `${path}.currentProposal.sideB`, failFn);
+    }
+  }
+  if (payload.status !== undefined) {
+    const status = payload.status;
+    if (
+      status !== "pending" &&
+      status !== "negotiating" &&
+      status !== "accepted" &&
+      status !== "declined" &&
+      status !== "expired"
+    ) {
+      failFn(`${path}.status is invalid.`);
+    }
+  }
+  if (payload.negotiationHistory !== undefined) {
+    if (!Array.isArray(payload.negotiationHistory)) {
+      failFn(`${path}.negotiationHistory must be an array when present.`);
+    }
+  }
+  if (payload.expiresOn !== undefined) {
+    assertNonEmptyString(payload.expiresOn, `${path}.expiresOn`);
+    parseCalendarDate(payload.expiresOn as string);
+  }
 }
 
 function validateTradeSide(

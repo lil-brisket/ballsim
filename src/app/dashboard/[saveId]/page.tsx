@@ -141,6 +141,16 @@ export default async function DashboardPage({
         />
       ) : null}
 
+      {dash.tradeInbox.totalPending > 1 ? (
+        <p className="text-xs text-amber-200/80">
+          {dash.tradeInbox.totalPending} trade offers pending
+          {dash.tradeInbox.pendingForActiveTeam > 0
+            ? ` (${dash.tradeInbox.pendingForActiveTeam} for this team)`
+            : ""}
+          .
+        </p>
+      ) : null}
+
       <PhaseDashboard
         view={phaseDashboard}
         saveId={saveId}

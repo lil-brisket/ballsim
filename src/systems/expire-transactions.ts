@@ -83,7 +83,7 @@ function expirePendingTradeOffers(state: GameState): SystemResult {
     if (decision.type !== "trade_offer") continue;
     const { state: next } = resolvePendingOwnerDecision(current, {
       decisionId: decision.id,
-      status: "declined",
+      status: "expired",
       decisionSource: "system",
     });
     current = next;

@@ -216,6 +216,7 @@ const MIGRATE_ONE_STEP: Record<number, (state: unknown) => unknown> = {
   55: (state) => migrateV55ToV56(state as GameStateV55),
   56: (state) => migrateV56ToV57(state as GameStateV56),
   57: (state) => migrateV57ToV58(state as GameStateV57),
+  58: (state) => migrateV58ToV59(state as GameStateV58),
 };
 
 function legacyUserRecord(user: unknown): Record<string, unknown> {
@@ -3625,10 +3626,33 @@ function migrateV42ToV43(state: GameStateV42): GameStateV43 {
         primaryTeamId,
         participantTeamIds,
         payload: {
+          offerId:
+            (decision.payload as { offerId?: string }).offerId ??
+            String(decision.id),
           offeringTeamId,
           userTeamId,
           proposal: decision.payload.proposal as GameState["user"]["pendingOwnerDecisions"][number]["payload"]["proposal"],
+          originalProposal:
+            ((decision.payload as { originalProposal?: typeof decision.payload.proposal })
+              .originalProposal as GameState["user"]["pendingOwnerDecisions"][number]["payload"]["originalProposal"]) ??
+            (decision.payload.proposal as GameState["user"]["pendingOwnerDecisions"][number]["payload"]["proposal"]),
+          currentProposal:
+            ((decision.payload as { currentProposal?: typeof decision.payload.proposal })
+              .currentProposal as GameState["user"]["pendingOwnerDecisions"][number]["payload"]["currentProposal"]) ??
+            (decision.payload.proposal as GameState["user"]["pendingOwnerDecisions"][number]["payload"]["proposal"]),
+          negotiationHistory:
+            ((decision.payload as { negotiationHistory?: GameState["user"]["pendingOwnerDecisions"][number]["payload"]["negotiationHistory"] })
+              .negotiationHistory) ?? [],
+          status:
+            ((decision.payload as { status?: GameState["user"]["pendingOwnerDecisions"][number]["payload"]["status"] })
+              .status) ?? "pending",
+          motivation: (decision.payload as { motivation?: GameState["user"]["pendingOwnerDecisions"][number]["payload"]["motivation"] })
+            .motivation,
           fingerprint: decision.payload.fingerprint,
+          createdOn:
+            (decision.payload as { createdOn?: string }).createdOn ??
+            decision.createdOn,
+          expiresOn: (decision.payload as { expiresOn?: string }).expiresOn,
         },
       };
     });
@@ -3664,10 +3688,37 @@ function migrateV42ToV43(state: GameStateV42): GameStateV43 {
           ? { expiresOn: record.expiresOn }
           : {}),
         payload: {
+          offerId:
+            (record.payload as { offerId?: string }).offerId ?? String(record.id),
           offeringTeamId,
           userTeamId,
           proposal: record.payload.proposal as GameState["user"]["ownerDecisionHistory"][number]["payload"]["proposal"],
+          originalProposal:
+            ((record.payload as { originalProposal?: typeof record.payload.proposal })
+              .originalProposal as GameState["user"]["ownerDecisionHistory"][number]["payload"]["originalProposal"]) ??
+            (record.payload.proposal as GameState["user"]["ownerDecisionHistory"][number]["payload"]["proposal"]),
+          currentProposal:
+            ((record.payload as { currentProposal?: typeof record.payload.proposal })
+              .currentProposal as GameState["user"]["ownerDecisionHistory"][number]["payload"]["currentProposal"]) ??
+            (record.payload.proposal as GameState["user"]["ownerDecisionHistory"][number]["payload"]["proposal"]),
+          negotiationHistory:
+            ((record.payload as { negotiationHistory?: GameState["user"]["ownerDecisionHistory"][number]["payload"]["negotiationHistory"] })
+              .negotiationHistory) ?? [],
+          status:
+            ((record.payload as { status?: GameState["user"]["ownerDecisionHistory"][number]["payload"]["status"] })
+              .status) ??
+            (record.status === "accepted"
+              ? "accepted"
+              : record.status === "expired"
+                ? "expired"
+                : "declined"),
+          motivation: (record.payload as { motivation?: GameState["user"]["ownerDecisionHistory"][number]["payload"]["motivation"] })
+            .motivation,
           fingerprint: record.payload.fingerprint,
+          createdOn:
+            (record.payload as { createdOn?: string }).createdOn ??
+            record.createdOn,
+          expiresOn: (record.payload as { expiresOn?: string }).expiresOn,
         },
       };
     });
@@ -4938,6 +4989,10 @@ type GameStateV57 = Omit<GameState, "meta" | "business"> & {
   };
 };
 
+type GameStateV58 = Omit<GameState, "meta"> & {
+  meta: Omit<GameState["meta"], "schemaVersion"> & { schemaVersion: 58 };
+};
+
 function patchPlayerStatsStarted(
   games: Record<string, Game>,
 ): Record<string, Game> {
@@ -4992,7 +5047,7 @@ function migrateV56ToV57(state: GameStateV56): GameStateV57 {
 /**
  * Deterministic v57 → v58: empty game-day promotion season state per team.
  */
-function migrateV57ToV58(state: GameStateV57): GameState {
+function migrateV57ToV58(state: GameStateV57): GameStateV58 {
   const seasonId = asSeasonId(state.competition.season.id);
   const gameDayPromotionsByTeamId: GameState["business"]["gameDayPromotionsByTeamId"] =
     { ...(state.business.gameDayPromotionsByTeamId ?? {}) };
@@ -5012,6 +5067,75 @@ function migrateV57ToV58(state: GameStateV57): GameState {
     business: {
       ...state.business,
       gameDayPromotionsByTeamId,
+    },
+  };
+}
+
+/**
+ * Deterministic v58 → v59: normalize trade offer payloads for multi-offer queue.
+ */
+function migrateV58ToV59(state: GameStateV58): GameState {
+  const pendingOwnerDecisions = state.user.pendingOwnerDecisions.map(
+    (decision) => {
+      const proposal = decision.payload.proposal;
+      const createdOn = decision.createdOn;
+      return {
+        ...decision,
+        payload: {
+          ...decision.payload,
+          offerId: decision.id,
+          originalProposal: proposal,
+          currentProposal: proposal,
+          negotiationHistory: decision.payload.negotiationHistory ?? [
+            {
+              proposedByTeamId: decision.payload.offeringTeamId,
+              proposal,
+              proposedOn: createdOn,
+            },
+          ],
+          status: decision.payload.status ?? "pending",
+          createdOn,
+          expiresOn: decision.payload.expiresOn,
+          motivation: decision.payload.motivation,
+        },
+      };
+    },
+  );
+
+  const ownerDecisionHistory = state.user.ownerDecisionHistory.map((record) => {
+    const proposal = record.payload.proposal;
+    return {
+      ...record,
+      payload: {
+        ...record.payload,
+        offerId: record.payload.offerId ?? record.id,
+        originalProposal: record.payload.originalProposal ?? proposal,
+        currentProposal: record.payload.currentProposal ?? proposal,
+        negotiationHistory: record.payload.negotiationHistory ?? [],
+        status:
+          record.payload.status ??
+          (record.status === "accepted"
+            ? "accepted"
+            : record.status === "expired"
+              ? "expired"
+              : "declined"),
+        createdOn: record.payload.createdOn ?? record.createdOn,
+        expiresOn: record.payload.expiresOn,
+        motivation: record.payload.motivation,
+      },
+    };
+  });
+
+  return {
+    ...state,
+    meta: {
+      ...state.meta,
+      schemaVersion: 59,
+    },
+    user: {
+      ...state.user,
+      pendingOwnerDecisions,
+      ownerDecisionHistory,
     },
   };
 }

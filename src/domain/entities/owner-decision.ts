@@ -1,5 +1,7 @@
 import type { TradeProposal } from "@/domain/entities/trade-proposal";
 import type { OwnerDecisionId, TeamId } from "@/domain/ids";
+import type { PlayerPosition } from "@/domain/entities/player";
+import type { TradeEvaluation } from "@/systems/trades/asset-valuation/complete-trade-evaluation";
 
 /** Calendar days a declined trade fingerprint blocks re-offers. */
 export const TRADE_OFFER_REJECTION_COOLDOWN_DAYS = 14;
@@ -9,19 +11,61 @@ export const OWNER_DECISION_HISTORY_MAX = 50;
 
 export type OwnerDecisionType = "trade_offer";
 
-export type OwnerDecisionStatus = "accepted" | "declined" | "delegated";
+export type OwnerDecisionStatus =
+  | "accepted"
+  | "declined"
+  | "delegated"
+  | "expired";
 
 export type OwnerDecisionSource = "owner" | "owner_ai" | "system";
 
 /** Whether the decision pauses simulation advance. */
 export type OwnerDecisionBlockingLevel = "blocking" | "non_blocking";
 
+export type TradeOfferStatus =
+  | "pending"
+  | "negotiating"
+  | "accepted"
+  | "declined"
+  | "expired";
+
+export type TradeMotivation =
+  | { type: "positional_need"; targetPosition: PlayerPosition }
+  | { type: "salary_relief" }
+  | { type: "rebuild" }
+  | { type: "contender_upgrade" }
+  | { type: "asset_accumulation" };
+
+export type TradeNegotiationEntry = {
+  proposedByTeamId: TeamId;
+  proposal: TradeProposal;
+  proposedOn: string;
+  evaluation?: TradeEvaluation;
+  decision?: "accepted" | "rejected" | "countered";
+};
+
 export type TradeOfferDecisionPayload = {
+  /** Explicit offer id (mirrors decision.id). */
+  offerId?: string;
   offeringTeamId: TeamId;
   userTeamId: TeamId;
+  /**
+   * @deprecated Prefer originalProposal / currentProposal.
+   * Kept for v58 save compatibility during migration.
+   */
   proposal: TradeProposal;
+  /** Original CPU offer — never mutated after enqueue. */
+  originalProposal: TradeProposal;
+  /** Latest terms under consideration. */
+  currentProposal: TradeProposal;
+  negotiationHistory: TradeNegotiationEntry[];
+  status: TradeOfferStatus;
+  motivation?: TradeMotivation;
   /** Normalized asset fingerprint for cooldown / de-dupe. */
   fingerprint: string;
+  createdOn?: string;
+  /** Calendar date when the offer expires if unresolved. */
+  expiresOn?: string;
 };
 
 export type PendingOwnerDecision = {
@@ -58,23 +102,43 @@ export type UserSliceRef = {
   ownerDecisionHistory: OwnerDecisionRecord[];
 };
 
-/** At most one active owner decision may exist. */
-export function getActiveOwnerDecision(
-  user: UserSliceRef,
-): PendingOwnerDecision | undefined {
-  return user.pendingOwnerDecisions[0];
+function isOpenOfferStatus(status: TradeOfferStatus | undefined): boolean {
+  return status === undefined || status === "pending" || status === "negotiating";
 }
 
-/** True when any pending decision has blockingLevel === "blocking". */
+/**
+ * First blocking pending offer. Optionally scoped to a franchise.
+ */
+export function getActiveOwnerDecision(
+  user: UserSliceRef,
+  teamId?: TeamId,
+): PendingOwnerDecision | undefined {
+  const pool = teamId
+    ? user.pendingOwnerDecisions.filter(
+        (d) =>
+          d.payload.userTeamId === teamId ||
+          d.primaryTeamId === teamId ||
+          d.participantTeamIds.includes(teamId),
+      )
+    : user.pendingOwnerDecisions;
+  return pool.find(
+    (decision) =>
+      decision.blockingLevel === "blocking" &&
+      isOpenOfferStatus(decision.payload.status),
+  );
+}
+
+/** True when any open blocking decision exists. */
 export function hasBlockingOwnerDecision(user: UserSliceRef): boolean {
   return user.pendingOwnerDecisions.some(
-    (decision) => decision.blockingLevel === "blocking",
+    (decision) =>
+      decision.blockingLevel === "blocking" &&
+      isOpenOfferStatus(decision.payload.status),
   );
 }
 
 /**
- * @deprecated Prefer {@link hasBlockingOwnerDecision}. Kept for call-site migration.
- * True when any pending decision exists (legacy single-team pause semantics).
+ * @deprecated Prefer {@link hasBlockingOwnerDecision}.
  */
 export function hasActiveOwnerDecision(user: UserSliceRef): boolean {
   return hasBlockingOwnerDecision(user);
@@ -84,17 +148,22 @@ export function getPendingTradeOffers(
   user: UserSliceRef,
 ): PendingOwnerDecision[] {
   return user.pendingOwnerDecisions.filter(
-    (decision) => decision.type === "trade_offer",
+    (decision) =>
+      decision.type === "trade_offer" &&
+      isOpenOfferStatus(decision.payload.status),
   );
 }
 
-/** Pending decisions that involve the given franchise (no duplication). */
+/** Pending decisions for a franchise (team-scoped inbox). */
 export function getPendingDecisionsForTeam(
   user: UserSliceRef,
   teamId: TeamId,
 ): PendingOwnerDecision[] {
-  return user.pendingOwnerDecisions.filter((decision) =>
-    decision.participantTeamIds.includes(teamId),
+  return user.pendingOwnerDecisions.filter(
+    (decision) =>
+      isOpenOfferStatus(decision.payload.status) &&
+      (decision.payload.userTeamId === teamId ||
+        decision.participantTeamIds.includes(teamId)),
   );
 }
 
@@ -102,7 +171,9 @@ export function getBlockingOwnerDecisions(
   user: UserSliceRef,
 ): PendingOwnerDecision[] {
   return user.pendingOwnerDecisions.filter(
-    (decision) => decision.blockingLevel === "blocking",
+    (decision) =>
+      decision.blockingLevel === "blocking" &&
+      isOpenOfferStatus(decision.payload.status),
   );
 }
 
@@ -164,4 +235,76 @@ function sortAssetKeys(
     ...playerIds.map((id) => `player:${id}`),
     ...draftPickIds.map((id) => `pick:${id}`),
   ].sort((a, b) => (a < b ? -1 : a > b ? 1 : 0));
+}
+
+/** Normalize legacy payloads missing v59 fields. */
+export function normalizeTradeOfferPayload(
+  payload: TradeOfferDecisionPayload,
+  decisionId: string,
+  createdOn: string,
+): TradeOfferDecisionPayload {
+  const original = payload.originalProposal ?? payload.proposal;
+  const current = payload.currentProposal ?? payload.proposal ?? original;
+  return {
+    ...payload,
+    offerId: payload.offerId ?? decisionId,
+    proposal: current,
+    originalProposal: cloneProposal(original),
+    currentProposal: cloneProposal(current),
+    negotiationHistory: payload.negotiationHistory ?? [],
+    status: payload.status ?? "pending",
+    createdOn: payload.createdOn ?? createdOn,
+    expiresOn: payload.expiresOn,
+    motivation: payload.motivation,
+  };
+}
+
+export function cloneProposal(proposal: TradeProposal): TradeProposal {
+  return {
+    sideA: {
+      teamId: proposal.sideA.teamId,
+      playerIds: [...proposal.sideA.playerIds],
+      draftPickIds: [...proposal.sideA.draftPickIds],
+    },
+    sideB: {
+      teamId: proposal.sideB.teamId,
+      playerIds: [...proposal.sideB.playerIds],
+      draftPickIds: [...proposal.sideB.draftPickIds],
+    },
+  };
+}
+
+/** Build a complete v59 trade-offer payload from a minimal proposal. */
+export function buildTradeOfferPayload(input: {
+  offeringTeamId: TeamId;
+  userTeamId: TeamId;
+  proposal: TradeProposal;
+  fingerprint: string;
+  decisionId?: string;
+  createdOn?: string;
+  expiresOn?: string;
+  motivation?: TradeMotivation;
+  status?: TradeOfferStatus;
+}): TradeOfferDecisionPayload {
+  const proposal = cloneProposal(input.proposal);
+  return {
+    offerId: input.decisionId,
+    offeringTeamId: input.offeringTeamId,
+    userTeamId: input.userTeamId,
+    proposal,
+    originalProposal: cloneProposal(proposal),
+    currentProposal: cloneProposal(proposal),
+    negotiationHistory: [
+      {
+        proposedByTeamId: input.offeringTeamId,
+        proposal: cloneProposal(proposal),
+        proposedOn: input.createdOn ?? "1970-01-01",
+      },
+    ],
+    status: input.status ?? "pending",
+    motivation: input.motivation,
+    fingerprint: input.fingerprint,
+    createdOn: input.createdOn,
+    expiresOn: input.expiresOn,
+  };
 }

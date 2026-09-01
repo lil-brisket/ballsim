@@ -16,6 +16,7 @@ import { advanceOwnerTime } from "@/application/game-service";
 import { CBL_GAME_SETTINGS } from "@/domain/game-settings";
 import {
   type PendingOwnerDecision,
+  buildTradeOfferPayload,
 } from "@/domain/entities/owner-decision";
 import { createSeededRng } from "@/domain/rng";
 import { asOwnerDecisionId, asTeamId } from "@/domain/ids";
@@ -36,6 +37,10 @@ function stubBlockingDecision(
 ): PendingOwnerDecision {
   const offeringTeamId =
     participantTeamIds.find((id) => id !== primaryTeamId) ?? primaryTeamId;
+  const proposal = {
+    sideA: { teamId: offeringTeamId, playerIds: [] as never[], draftPickIds: [] as never[] },
+    sideB: { teamId: primaryTeamId, playerIds: [] as never[], draftPickIds: [] as never[] },
+  };
   return {
     id: asOwnerDecisionId(`od_blocking_${primaryTeamId}_${blockingLevel}`),
     type: "trade_offer",
@@ -43,15 +48,13 @@ function stubBlockingDecision(
     blockingLevel,
     primaryTeamId,
     participantTeamIds,
-    payload: {
+    payload: buildTradeOfferPayload({
       offeringTeamId,
       userTeamId: primaryTeamId,
-      proposal: {
-        sideA: { teamId: offeringTeamId, playerIds: [], draftPickIds: [] },
-        sideB: { teamId: primaryTeamId, playerIds: [], draftPickIds: [] },
-      },
+      proposal,
       fingerprint: `${offeringTeamId}|${primaryTeamId}|stub|`,
-    },
+      createdOn: "2026-10-01",
+    }),
   };
 }
 

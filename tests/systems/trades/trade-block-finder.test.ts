@@ -194,7 +194,12 @@ describe("trade evaluation and AI", () => {
     const proposal = playerForPlayerProposal(state);
     const evaluation = evaluateTradeOffer(state, teamB, proposal);
     expect(typeof evaluation.netValue).toBe("number");
-    expect(evaluation.accepted).toBe(evaluation.netValue >= 0);
+    expect(typeof evaluation.accepted).toBe("boolean");
+    expect(
+      evaluation.decisionAction === "accept" ||
+        evaluation.decisionAction === "reject" ||
+        evaluation.decisionAction === "counter",
+    ).toBe(true);
   });
 
   it("AI generates a proposal that goes through normal validation", () => {

@@ -62,6 +62,7 @@ import {
   applyOwnerLineupRecommendation,
   updateOwnerCoachingPhilosophy,
   applyOwnerCoachingPreset,
+  submitTradeCounteroffer,
 } from "@/application/game-service";
 import {
   addFantasyDraftQueuePlayer,
@@ -417,6 +418,41 @@ export async function askAiOwnerDecisionAction(
   const decisionId = String(formData.get("decisionId") ?? "");
   const path = returnPath(formData, saveId);
   const result = await delegateOwnerDecisionToAi(saveId, decisionId);
+  if (!result.ok) {
+    redirectWithError(path, result.error);
+  }
+  revalidateOwner(saveId);
+  redirect(path);
+}
+
+export async function submitTradeCounterofferAction(
+  formData: FormData,
+): Promise<void> {
+  const saveId = String(formData.get("saveId") ?? "");
+  const decisionId = String(formData.get("decisionId") ?? "");
+  const path = returnPath(formData, saveId);
+  const offeringTeamId = String(formData.get("offeringTeamId") ?? "");
+  const userTeamId = String(formData.get("userTeamId") ?? "");
+  const cpuPlayerIds = formData.getAll("cpuPlayerIds").map(String);
+  const cpuPickIds = formData.getAll("cpuPickIds").map(String);
+  const userPlayerIds = formData.getAll("userPlayerIds").map(String);
+  const userPickIds = formData.getAll("userPickIds").map(String);
+
+  const { asDraftPickId, asPlayerId, asTeamId } = await import("@/domain/ids");
+  const proposal = {
+    sideA: {
+      teamId: asTeamId(offeringTeamId),
+      playerIds: cpuPlayerIds.map(asPlayerId),
+      draftPickIds: cpuPickIds.map(asDraftPickId),
+    },
+    sideB: {
+      teamId: asTeamId(userTeamId),
+      playerIds: userPlayerIds.map(asPlayerId),
+      draftPickIds: userPickIds.map(asDraftPickId),
+    },
+  };
+
+  const result = await submitTradeCounteroffer(saveId, decisionId, proposal);
   if (!result.ok) {
     redirectWithError(path, result.error);
   }

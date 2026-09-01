@@ -38,6 +38,27 @@ export {
 } from "@/systems/trades/trade-finder";
 export {
   evaluateTradeOffer,
+  evaluateTrade,
   type TradeOfferEvaluation,
+  type TradeEvaluation,
 } from "@/systems/trades/trade-evaluation";
 export { generateAiTradeProposal } from "@/systems/trades/trade-ai";
+export {
+  getBaseAssetValue,
+  getTeamAssetValue,
+  getTradeDesirability,
+  getRetentionPriority,
+  makeTradeDecision,
+  tradeDecisionSeed,
+  projectDraftPick,
+  tierDisplayLabel,
+} from "@/systems/trades/asset-valuation";
+export {
+  calculateTradeNeeds,
+  type TeamTradeNeeds,
+} from "@/systems/trades/trade-needs";
+export {
+  generateCpuTradeCandidates,
+  type CpuTradeCandidate,
+  type TradeMotivation,
+} from "@/systems/trades/cpu-trade-generator";

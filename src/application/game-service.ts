@@ -241,9 +241,11 @@ import {
   executeTrade,
   findTrades,
   getTradeBlock,
+  validateTrade,
   type TradeFinderCandidate,
 } from "@/systems/trades";
 import {
+  applyTradeCounterofferState,
   getActiveOwnerDecision,
   hasActiveOwnerDecision,
   resolvePendingOwnerDecision,
@@ -1311,8 +1313,10 @@ async function resolveOwnerTradeDecision(
   }
 
   const decisionId = asOwnerDecisionId(decisionIdRaw);
-  const pending = getActiveOwnerDecision(loaded.state.user);
-  if (!pending || pending.id !== decisionId) {
+  const pending = loaded.state.user.pendingOwnerDecisions.find(
+    (d) => d.id === decisionId,
+  );
+  if (!pending) {
     if (
       loaded.state.user.ownerDecisionHistory.some((r) => r.id === decisionId)
     ) {
@@ -1324,6 +1328,10 @@ async function resolveOwnerTradeDecision(
   if (pending.type !== "trade_offer") {
     return fail("Unsupported owner decision type.");
   }
+
+  const proposal =
+    pending.payload.currentProposal ?? pending.payload.proposal;
+  const evaluateAsTeamId = pending.payload.userTeamId;
 
   let working = loaded.state;
   const events: DomainEvent[] = [];
@@ -1339,15 +1347,15 @@ async function resolveOwnerTradeDecision(
   } else {
     const evaluation = evaluateTradeOffer(
       working,
-      working.user.activeOwnerTeamId,
-      pending.payload.proposal,
+      evaluateAsTeamId,
+      proposal,
     );
     shouldExecute = evaluation.accepted;
     historyStatus = "delegated";
   }
 
   if (shouldExecute) {
-    const executed = executeTrade(working, pending.payload.proposal);
+    const executed = executeTrade(working, proposal);
     if (!executed.success) {
       return fail(
         executed.validation.errors[0]?.message ?? "Trade validation failed.",
@@ -1355,7 +1363,7 @@ async function resolveOwnerTradeDecision(
     }
     working = recordOwnershipEvidence(
       executed.state,
-      scoreTradeDecision(working, pending.payload.proposal),
+      scoreTradeDecision(working, proposal),
     );
     events.push(...executed.events);
   }
@@ -1373,6 +1381,143 @@ async function resolveOwnerTradeDecision(
 
   // Preserve "delegated" in history when Ask AI accepted (executed).
   // When Ask AI rejected we stored declined for cooldown; annotate source already set.
+
+  try {
+    const saved = await persistWorkingState(
+      saveId,
+      working,
+      loaded.state.meta.rngState,
+      saveStore,
+      events,
+    );
+    return withDashboard(saved);
+  } catch (error) {
+    return fail(error instanceof Error ? error.message : String(error));
+  }
+}
+
+/**
+ * Submit a user counteroffer against a pending CPU trade offer.
+ * CPU Accept → execute. CPU Reject → declined. CPU Counter → stay negotiating.
+ */
+export async function submitTradeCounteroffer(
+  saveId: string,
+  decisionIdRaw: string,
+  counterProposal: TradeProposal,
+  store?: SaveGameStore,
+): Promise<OwnerCommandResult> {
+  const saveStore = getStore(store);
+  const loaded = await saveStore.load(saveId);
+  if (!loaded) {
+    return fail("Save not found.");
+  }
+
+  const decisionId = asOwnerDecisionId(decisionIdRaw);
+  const pending = loaded.state.user.pendingOwnerDecisions.find(
+    (d) => d.id === decisionId,
+  );
+  if (!pending || pending.type !== "trade_offer") {
+    return fail("No matching pending trade offer.");
+  }
+  if (!loaded.state.user.ownedTeamIds.includes(pending.payload.userTeamId)) {
+    return fail("Trade offer is not for an owned franchise.");
+  }
+
+  const validation = validateTrade(loaded.state, counterProposal);
+  if (!validation.valid) {
+    return fail(validation.errors[0]?.message ?? "Counteroffer is invalid.");
+  }
+
+  let working = loaded.state;
+  const cpuEval = evaluateTradeOffer(
+    working,
+    pending.payload.offeringTeamId,
+    counterProposal,
+  );
+  const events: DomainEvent[] = [];
+
+  if (cpuEval.accepted || cpuEval.decisionAction === "accept") {
+    const executed = executeTrade(working, counterProposal);
+    if (!executed.success) {
+      return fail(
+        executed.validation.errors[0]?.message ?? "Trade validation failed.",
+      );
+    }
+    working = recordOwnershipEvidence(
+      executed.state,
+      scoreTradeDecision(working, counterProposal),
+    );
+    events.push(...executed.events);
+    const resolved = resolvePendingOwnerDecision(working, {
+      decisionId,
+      status: "accepted",
+      decisionSource: "owner",
+    });
+    working = resolved.state;
+  } else if (cpuEval.decisionAction === "counter") {
+    // Simple CPU counter: keep original assets from CPU side, accept user's
+    // outgoing set when still valid — otherwise reject.
+    const original =
+      pending.payload.originalProposal ?? pending.payload.proposal;
+    const cpuSide =
+      original.sideA.teamId === pending.payload.offeringTeamId
+        ? original.sideA
+        : original.sideB;
+    const userSide =
+      counterProposal.sideA.teamId === pending.payload.userTeamId
+        ? counterProposal.sideA
+        : counterProposal.sideB;
+    const cpuCounter: TradeProposal = {
+      sideA: {
+        teamId: pending.payload.offeringTeamId,
+        playerIds: [...cpuSide.playerIds],
+        draftPickIds: [...cpuSide.draftPickIds],
+      },
+      sideB: {
+        teamId: pending.payload.userTeamId,
+        playerIds: [...userSide.playerIds],
+        draftPickIds: [...userSide.draftPickIds],
+      },
+    };
+    if (!validateTrade(working, cpuCounter).valid) {
+      const resolved = resolvePendingOwnerDecision(
+        applyTradeCounterofferState(
+          working,
+          decisionId,
+          counterProposal,
+          "rejected",
+        ),
+        {
+          decisionId,
+          status: "declined",
+          decisionSource: "owner",
+        },
+      );
+      working = resolved.state;
+    } else {
+      working = applyTradeCounterofferState(
+        working,
+        decisionId,
+        counterProposal,
+        "countered",
+        cpuCounter,
+      );
+    }
+  } else {
+    // Rejected counter → negotiation ends as declined (no dead inbox offer).
+    working = applyTradeCounterofferState(
+      working,
+      decisionId,
+      counterProposal,
+      "rejected",
+    );
+    const resolved = resolvePendingOwnerDecision(working, {
+      decisionId,
+      status: "declined",
+      decisionSource: "owner",
+    });
+    working = resolved.state;
+  }
 
   try {
     const saved = await persistWorkingState(

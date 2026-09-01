@@ -53,7 +53,7 @@ import type {
   FranchisePhaseState,
 } from "@/systems/phase-engine/phase-types";
 
-export const GAME_STATE_SCHEMA_VERSION = 58;
+export const GAME_STATE_SCHEMA_VERSION = 59;
 
 /** League personnel market for staff free agency (not a business-finance concept). */
 export type StaffMarketState = {
@@ -243,7 +243,7 @@ export type UserSlice = {
   mode: GameMode;
   /**
    * Save-level decision queue (NOT duplicated per franchise).
-   * At most one active blocking decision that pauses simulation.
+   * Blocking decisions pause simulation until resolved (FIFO; multi-offer).
    */
   pendingOwnerDecisions: PendingOwnerDecision[];
   /** Bounded history of resolved owner decisions + rejection fingerprints. */
