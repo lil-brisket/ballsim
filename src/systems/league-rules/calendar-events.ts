@@ -1,4 +1,8 @@
 import type { GameState } from "@/state/game-state";
+import {
+  getExpectedPhaseWindow,
+  resolveSeasonAnchors,
+} from "@/systems/league-rules/league-calendar";
 import { readActivePhaseId } from "@/systems/league-rules/phase-ids";
 import { resolveHardLockTradeDeadlineDate } from "@/systems/league-rules/trade-rules";
 
@@ -42,18 +46,30 @@ function scheduleBounds(state: GameState): {
 }
 
 /**
- * Derived league milestones from phase + snapshotted calendar dates.
+ * Derived league milestones from phase + snapshotted / resolved calendar dates.
  * Does not invent a second calendar engine.
  */
-export function getLeagueMilestones(state: GameState): readonly LeagueMilestone[] {
+export function getLeagueMilestones(
+  state: GameState,
+): readonly LeagueMilestone[] {
   const phaseId = readActivePhaseId(state);
   const currentDate = state.world.calendar.currentDate;
   const bounds = scheduleBounds(state);
+  const anchors = resolveSeasonAnchors(state);
   const seasonStart =
-    state.competition.season.regularSeasonStartDate ?? bounds.earliest;
+    state.competition.season.regularSeasonStartDate ??
+    anchors.regularSeasonStart ??
+    bounds.earliest;
   const deadline =
     state.competition.season.tradeDeadlineDate ??
     resolveHardLockTradeDeadlineDate(seasonStart, bounds.latest);
+
+  const draftWindow = getExpectedPhaseWindow(state, "offseason.draft");
+  const faWindow = getExpectedPhaseWindow(state, "offseason.free_agency");
+  const preseasonWindow = getExpectedPhaseWindow(
+    state,
+    "preseason.preparation",
+  );
 
   const draft = Object.values(state.world.drafts)[0];
   const draftComplete = draft?.status === "complete";
@@ -63,14 +79,17 @@ export function getLeagueMilestones(state: GameState): readonly LeagueMilestone[
     {
       key: "offseasonStart",
       label: "Offseason start",
-      date: state.competition.season.offseasonStageEnteredDate,
-      reached: phaseId.startsWith("offseason.") || phaseId.startsWith("preseason."),
+      date:
+        anchors.offseasonStart ??
+        state.competition.season.offseasonStageEnteredDate,
+      reached:
+        phaseId.startsWith("offseason.") || phaseId.startsWith("preseason."),
       active: phaseId === "offseason.season_transition",
     },
     {
       key: "rfaWindowOpen",
       label: "RFA qualifying offers",
-      date: null,
+      date: anchors.offseasonStart,
       reached:
         state.competition.season.rfaQualificationComplete === true ||
         phaseId === "offseason.free_agency" ||
@@ -82,21 +101,22 @@ export function getLeagueMilestones(state: GameState): readonly LeagueMilestone[
     {
       key: "draftStart",
       label: "Draft",
-      date: null,
-      reached: draftActive || draftComplete || phaseId === "offseason.free_agency",
+      date: draftWindow?.start ?? null,
+      reached:
+        draftActive || draftComplete || phaseId === "offseason.free_agency",
       active: phaseId === "offseason.draft",
     },
     {
       key: "draftComplete",
       label: "Draft complete",
-      date: null,
+      date: draftComplete ? (draftWindow?.end ?? currentDate) : null,
       reached: draftComplete === true,
       active: false,
     },
     {
       key: "freeAgencyOpen",
       label: "Free agency open",
-      date: null,
+      date: faWindow?.start ?? null,
       reached:
         phaseId === "offseason.free_agency" ||
         phaseId === "offseason.staff_development" ||
@@ -107,7 +127,7 @@ export function getLeagueMilestones(state: GameState): readonly LeagueMilestone[
     {
       key: "freeAgencyClose",
       label: "Free agency close",
-      date: null,
+      date: faWindow?.end ?? null,
       reached:
         phaseId === "offseason.staff_development" ||
         phaseId === "preseason.preparation" ||
@@ -117,7 +137,7 @@ export function getLeagueMilestones(state: GameState): readonly LeagueMilestone[
     {
       key: "preseasonStart",
       label: "Preseason",
-      date: null,
+      date: preseasonWindow?.start ?? anchors.preseasonStart,
       reached:
         phaseId === "preseason.preparation" ||
         phaseId === "regular" ||
@@ -145,22 +165,19 @@ export function getLeagueMilestones(state: GameState): readonly LeagueMilestone[
           phaseId === "playoffs" ||
           phaseId === "postseason.season_review"),
       active:
-        phaseId === "regular" &&
-        deadline !== null &&
-        currentDate < deadline &&
-        currentDate >= deadline, // never true; deadline day is closed
+        phaseId === "regular" && deadline !== null && currentDate < deadline,
     },
     {
       key: "regularSeasonEnd",
       label: "Regular season end",
-      date: bounds.latest,
+      date: anchors.regularSeasonEnd ?? bounds.latest,
       reached: phaseId === "playoffs" || phaseId === "postseason.season_review",
       active: false,
     },
     {
       key: "playoffsStart",
       label: "Playoffs",
-      date: null,
+      date: anchors.regularSeasonEnd,
       reached:
         phaseId === "playoffs" || phaseId === "postseason.season_review",
       active: phaseId === "playoffs",
@@ -168,7 +185,7 @@ export function getLeagueMilestones(state: GameState): readonly LeagueMilestone[
     {
       key: "championFinalized",
       label: "Champion determined",
-      date: null,
+      date: anchors.playoffsEnd,
       reached:
         phaseId === "postseason.season_review" ||
         phaseId.startsWith("offseason."),

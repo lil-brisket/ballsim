@@ -100,3 +100,11 @@ export {
 } from "@/systems/league-rules/lifecycle-invariants";
 
 export { snapshotTradeDeadline } from "@/systems/league-rules/snapshot-trade-deadline";
+
+
+export {
+  phaseOrderIndex, getNextPhaseInOrder, resolveSeasonAnchors, resolveOffseasonWindows, getExpectedPhaseWindow, resolvePhaseResolution, PHASE_ORDER,
+} from "@/systems/league-rules/league-calendar";
+export type {
+  SeasonAnchors, PhaseResolutionReason, PhaseBlockedBy, PhaseResolution, ResolvedPhaseWindow,
+} from "@/systems/league-rules/league-calendar";

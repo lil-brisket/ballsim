@@ -57,6 +57,11 @@ export type MultiYearSimOptions = {
   seed?: number;
   maxSteps?: number;
   settingsBase?: GameSettings;
+  /**
+   * Calendar-primary progression: do not call beginOffseason / advanceLeaguePhase.
+   * Time advance + syncPhaseForward own phase transitions.
+   */
+  calendarPrimary?: boolean;
 };
 
 export type MultiYearSimDiagnostics = {
@@ -195,6 +200,7 @@ async function handleBlockedGates(
   saveId: string,
   store: ReturnType<typeof createMemorySaveGameStore>,
   _managementPreset: AiManagementPreset,
+  calendarPrimary = false,
 ): Promise<boolean> {
   const loaded = await store.load(saveId);
   if (!loaded) {
@@ -215,7 +221,7 @@ async function handleBlockedGates(
     return true;
   }
 
-  if (state.competition.season.phase === "postseason") {
+  if (!calendarPrimary && state.competition.season.phase === "postseason") {
     const began = await beginOffseason(saveId, store);
     if (!began.ok) {
       throw new Error(began.error);
@@ -237,7 +243,11 @@ async function handleBlockedGates(
       entered != null
         ? calendarDaysBetween(entered, state.world.calendar.currentDate) + 1
         : 0;
-    if ((aiCannotManageFa || daysInFa >= durationDays) && canAdvancePhase(state)) {
+    if (
+      !calendarPrimary &&
+      (aiCannotManageFa || daysInFa >= durationDays) &&
+      canAdvancePhase(state)
+    ) {
       const finished = await finishFreeAgency(saveId, store);
       if (!finished.ok) {
         throw new Error(finished.error);
@@ -249,6 +259,7 @@ async function handleBlockedGates(
   // Auto-advance user-managed phases when nothing required remains.
   // Free agency is handled above so AI gets its configured window first.
   if (
+    !calendarPrimary &&
     (phaseId === "offseason.roster_decisions" ||
       phaseId === "offseason.draft_preparation" ||
       phaseId === "offseason.draft" ||
@@ -426,6 +437,7 @@ export async function runMultiYearSimulation(
       saveId,
       store,
       effectivePreset,
+      options.calendarPrimary === true,
     );
     if (handled) {
       steps += 1;
@@ -464,6 +476,7 @@ export async function runMultiYearSimulation(
           saveId,
           store,
           effectivePreset,
+          options.calendarPrimary === true,
         );
         if (handledBlock) {
           lastTransition = `blocked:${result.error}`;

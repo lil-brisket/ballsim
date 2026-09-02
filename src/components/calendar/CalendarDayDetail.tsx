@@ -60,6 +60,13 @@ export function CalendarDayDetail(props: {
   events: readonly CalendarEventView[];
   currentDate: string;
   onClose?: () => void;
+  teamGame?: {
+    gameId: string;
+    opponentLabel: string;
+    home: boolean;
+    status: string;
+    scoreLabel: string | null;
+  } | null;
 }) {
   const isFuture = props.date > props.currentDate;
   const isToday = props.date === props.currentDate;
@@ -96,6 +103,22 @@ export function CalendarDayDetail(props: {
       </div>
 
       <div className="flex-1 space-y-4 overflow-y-auto px-4 py-3">
+        <section className="space-y-2 rounded-md border border-zinc-800 bg-zinc-900/50 px-3 py-3">
+          <h4 className="text-xs uppercase tracking-wide text-zinc-500">Your team</h4>
+          {props.teamGame ? (
+            <div className="space-y-1">
+              <p className="text-sm text-zinc-100">
+                {props.teamGame.home ? "vs" : "@"} {props.teamGame.opponentLabel}
+              </p>
+              <p className="text-xs text-zinc-400">
+                {props.teamGame.status}
+                {props.teamGame.scoreLabel ? ` · ${props.teamGame.scoreLabel}` : ""}
+              </p>
+            </div>
+          ) : (
+            <p className="text-sm text-zinc-400">No Game</p>
+          )}
+        </section>
         {groups.length === 0 ? (
           <p className="text-sm text-zinc-500">No events on this date.</p>
         ) : (

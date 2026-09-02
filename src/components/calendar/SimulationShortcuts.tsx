@@ -3,6 +3,9 @@
 import { useFormStatus } from "react-dom";
 import {
   advanceDayAction,
+  advanceWeekAction,
+  advanceMonthAction,
+  simulateToEndOfSeasonAction,
   simulateToNextDeadlineAction,
   simulateToNextDecisionAction,
   simulateToNextGameAction,
@@ -98,7 +101,35 @@ export function SimulationShortcuts(props: {
             label="Next Decision"
             pendingLabel="Simulating…"
             hint={targetHint(nextTargets.nextDecision)}
-            disabled={props.disabled || !nextTargets.nextDecision}
+            disabled={props.disabled}
+          />
+        </form>
+
+        <form action={advanceWeekAction}>
+          <input type="hidden" name="saveId" value={props.saveId} />
+          <input type="hidden" name="returnPath" value={props.returnPath} />
+          <ShortcutButton
+            label="Next Week"
+            pendingLabel="Simulating…"
+            disabled={props.disabled}
+          />
+        </form>
+        <form action={advanceMonthAction}>
+          <input type="hidden" name="saveId" value={props.saveId} />
+          <input type="hidden" name="returnPath" value={props.returnPath} />
+          <ShortcutButton
+            label="Next Month"
+            pendingLabel="Simulating…"
+            disabled={props.disabled}
+          />
+        </form>
+        <form action={simulateToEndOfSeasonAction}>
+          <input type="hidden" name="saveId" value={props.saveId} />
+          <input type="hidden" name="returnPath" value={props.returnPath} />
+          <ShortcutButton
+            label="End of Season"
+            pendingLabel="Simulating…"
+            disabled={props.disabled}
           />
         </form>
         <form action={simulateToNextDeadlineAction}>

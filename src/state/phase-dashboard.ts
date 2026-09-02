@@ -79,10 +79,7 @@ export function toPhaseDashboardView(
     null;
 
   const def = getPhaseDefinition(resolved.phaseId);
-  const showAdvanceControl =
-    def.advanceMode === "user" &&
-    resolved.nextPhaseId !== null &&
-    resolved.phaseId !== "postseason.season_review";
+  const showAdvanceControl = false; // calendar-primary: phase advance demoted
 
   return {
     resolved,

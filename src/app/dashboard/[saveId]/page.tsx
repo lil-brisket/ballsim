@@ -2,7 +2,6 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import {
   advanceLeaguePhaseAction,
-  beginOffseasonAction,
   continuePastPhaseAction,
   dismissPhaseTaskAction,
   letAiHandlePhaseAction,
@@ -50,7 +49,6 @@ export default async function DashboardPage({
   const returnPath = `/dashboard/${saveId}`;
   const timeDisabled =
     dash.flags.userOnDraftClock ||
-    dash.flags.seasonReviewPending ||
     dash.flags.pendingOwnerDecision;
   const phase = dash.simulationPhase;
   const unresolvedWarning =
@@ -197,40 +195,28 @@ export default async function DashboardPage({
       {dash.flags.seasonReviewPending ? (
         <div
           role="status"
-          className="space-y-3 rounded-md border border-amber-700/50 bg-amber-950/40 px-4 py-3 text-sm text-amber-100"
+          className="space-y-3 rounded-md border border-zinc-700/60 bg-zinc-900/40 px-4 py-3 text-sm text-zinc-200"
         >
-          <p className="font-medium text-amber-200">Season Review</p>
+          <p className="font-medium text-zinc-100">Season Review</p>
           {dash.seasonRecap ? (
-            <ul className="list-inside list-disc space-y-1 text-amber-100/90">
+            <ul className="list-inside list-disc space-y-1 text-zinc-300">
               <li>Record: {dash.seasonRecap.record}</li>
               <li>Playoffs: {dash.seasonRecap.playoffResult}</li>
-              <li>
-                Net income:{" "}
-                {dash.seasonRecap.netIncome.toLocaleString("en-US", {
-                  style: "currency",
-                  currency: "USD",
-                  maximumFractionDigits: 0,
-                })}
-              </li>
-              <li>
-                Objectives: {dash.seasonRecap.completedObjectives} completed /{" "}
-                {dash.seasonRecap.failedObjectives} failed
-              </li>
             </ul>
           ) : null}
           {dash.seasonStory ? (
-            <p className="text-amber-100/80">{dash.seasonStory}</p>
+            <p className="text-zinc-400">{dash.seasonStory}</p>
           ) : null}
-          <form action={beginOffseasonAction}>
-            <input type="hidden" name="saveId" value={saveId} />
-            <input type="hidden" name="returnPath" value={returnPath} />
-            <button
-              type="submit"
-              className="rounded-md bg-amber-600 px-4 py-2 text-sm font-medium text-zinc-950 hover:bg-amber-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-500"
-            >
-              Begin Offseason
-            </button>
-          </form>
+          <p className="text-zinc-400">
+            Continue from the Calendar — time advancement is calendar-driven. Season
+            review no longer blocks simulation.
+          </p>
+          <a
+            href={`/dashboard/${saveId}/calendar`}
+            className="inline-block rounded-md bg-amber-600 px-4 py-2 text-sm font-medium text-zinc-950 hover:bg-amber-500"
+          >
+            Open Calendar
+          </a>
         </div>
       ) : null}
 

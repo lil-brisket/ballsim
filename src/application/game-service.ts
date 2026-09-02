@@ -181,7 +181,8 @@ import {
   listGameDayPromotionDefinitions,
 } from "@/systems/game-day-promotions/game-day-promotion-catalog";
 import { projectGameDayPromotion } from "@/systems/game-day-promotions/project-game-day-promotion";
-import { calendarDaysBetween, parseCalendarDate } from "@/domain/calendar-date";
+import { addCalendarDays, calendarDaysBetween, formatCalendarDate, parseCalendarDate } from "@/domain/calendar-date";
+import { buildSimulationSummary } from "@/systems/calendar/simulation-summary";
 import { setTicketPrice } from "@/systems/ticket-pricing";
 import {
   advanceRelocationStage,
@@ -251,6 +252,10 @@ import {
   type SimulationRangePreview,
   type SimulationTarget,
 } from "@/systems/calendar";
+
+import { getTeamGameForDate } from "@/systems/calendar/schedule-projection";
+import { resolvePhaseResolution, resolveSeasonAnchors } from "@/systems/league-rules/league-calendar";
+import { getPhaseDefinition } from "@/systems/phase-engine";
 import {
   CALENDAR_FILTERS,
   type CalendarFilter,
@@ -596,6 +601,21 @@ export type CalendarPageView = {
   };
   recentMediaHighlights: CalendarPageMediaHighlight[];
   userTeamId: TeamId;
+  phaseLabel: string;
+  phaseId: string;
+  teamGameOnSelectedDate: {
+    gameId: string;
+    opponentLabel: string;
+    home: boolean;
+    status: string;
+    scoreLabel: string | null;
+  } | null;
+  pauseBanner: {
+    reason: "draft_clock" | "owner_decision" | null;
+    message: string | null;
+    resolveHref: string | null;
+  };
+  simulationSummary: import("@/systems/calendar/simulation-summary").SimulationSummary | null;
 };
 
 export type LoadCalendarPageViewOptions = {
@@ -603,6 +623,9 @@ export type LoadCalendarPageViewOptions = {
   month?: number;
   selectedDate?: string;
   filter?: CalendarFilter;
+  /** When set with daysAdvanced, rebuilds a team-first simulation summary. */
+  simulationFromDate?: string;
+  daysAdvanced?: number;
 };
 
 /**
@@ -696,11 +719,73 @@ export async function loadCalendarPageView(
     },
     timeDisabled:
       timeDisabledFlags.userOnDraftClock ||
-      timeDisabledFlags.seasonReviewPending ||
       timeDisabledFlags.pendingOwnerDecision,
     timeDisabledFlags,
-    recentMediaHighlights,
+        recentMediaHighlights,
     userTeamId: state.user.activeOwnerTeamId,
+    phaseId: getActivePhaseId(state),
+    phaseLabel: getPhaseDefinition(getActivePhaseId(state)).name,
+    teamGameOnSelectedDate: (() => {
+      const teamId = state.user.activeOwnerTeamId;
+      const game = getTeamGameForDate(state, teamId, selectedDate);
+      if (!game) return null;
+      const home = game.homeTeamId === teamId;
+      const opponentId = home ? game.awayTeamId : game.homeTeamId;
+      const opponent = state.world.teams[opponentId];
+      const opponentLabel = opponent
+        ? `${opponent.city} ${opponent.name}`
+        : String(opponentId);
+      let scoreLabel: string | null = null;
+      if (game.status === "final") {
+        const homeScore = game.score?.home;
+        const awayScore = game.score?.away;
+        if (typeof homeScore === "number" && typeof awayScore === "number") {
+          scoreLabel = home
+            ? `${homeScore}–${awayScore}`
+            : `${awayScore}–${homeScore}`;
+        }
+      }
+      return {
+        gameId: game.id,
+        opponentLabel,
+        home,
+        status: game.status,
+        scoreLabel,
+      };
+    })(),
+    pauseBanner: timeDisabledFlags.userOnDraftClock
+      ? {
+          reason: "draft_clock" as const,
+          message: "Simulation paused — your team is on the draft clock.",
+          resolveHref: `/dashboard/${saveId}/draft`,
+        }
+      : timeDisabledFlags.pendingOwnerDecision
+        ? {
+            reason: "owner_decision" as const,
+            message:
+              "Simulation paused — a required owner decision must be resolved.",
+            resolveHref: `/dashboard/${saveId}`,
+          }
+        : { reason: null, message: null, resolveHref: null },
+    simulationSummary: (() => {
+      const daysAdvanced = options.daysAdvanced;
+      if (
+        daysAdvanced == null ||
+        !Number.isInteger(daysAdvanced) ||
+        daysAdvanced < 1
+      ) {
+        return null;
+      }
+      const fromDate =
+        options.simulationFromDate &&
+        /^\d{4}-\d{2}-\d{2}$/.test(options.simulationFromDate)
+          ? options.simulationFromDate
+          : addCalendarDays(currentDate, -daysAdvanced);
+      return buildSimulationSummary(state, [], {
+        fromDate,
+        toDate: currentDate,
+      });
+    })(),
   };
 }
 
@@ -1183,7 +1268,9 @@ export type AdvanceOwnerTimeOptions = {
     | "next_game"
     | "next_important"
     | "next_decision"
-    | "next_deadline";
+    | "next_deadline"
+    | "next_month"
+    | "end_of_season";
   /** Optional early-stop conditions for multi-day advances. */
   stopConditions?: SimulationStopCondition[];
 };
@@ -1197,6 +1284,7 @@ export async function advanceOwnerTime(
     events: DomainEvent[];
     simulation: Omit<AdvanceSimulationResult, "state" | "events">;
     highlights: ReturnType<typeof buildSimulationHighlights>;
+    summary?: import("@/systems/calendar/simulation-summary").SimulationSummary;
   }>
 > {
   const saveStore = getStore(store);
@@ -1252,10 +1340,26 @@ export async function advanceOwnerTime(
     }
   }
 
-  if (workingState.competition.season.phase === "postseason") {
-    return fail(
-      "Season review is in progress. Begin the offseason from the dashboard before advancing time.",
+  // Preflight: reconcile phase pointer with date/state before simulating.
+  {
+    const { reconcilePhaseWithState } = await import(
+      "@/systems/simulation/phase-lifecycle"
     );
+    const preflight = reconcilePhaseWithState(workingState);
+    workingState = preflight.state;
+    preEvents.push(...preflight.events);
+    if (preflight.stopReason === "owner_decision") {
+      return fail(
+        preflight.stopMessage ??
+          "A required owner decision must be resolved before time can advance.",
+      );
+    }
+    if (preflight.stopReason === "draft_clock") {
+      return fail(
+        preflight.stopMessage ??
+          "Cannot advance time while your team is on the draft clock.",
+      );
+    }
   }
 
   const resolved = resolveAdvanceDays(workingState, options);
@@ -1276,8 +1380,22 @@ export async function advanceOwnerTime(
       stopOnPhaseChange,
     });
 
-    const allEvents = [...preEvents, ...result.events];
-    const withProjections = processDerivedProjections(result.state, allEvents);
+    // Postflight: final phase reconciliation + full invariant validation.
+    const { reconcilePhaseWithState } = await import(
+      "@/systems/simulation/phase-lifecycle"
+    );
+    const { assertSimulationState } = await import(
+      "@/systems/simulation/validate-simulation-state"
+    );
+    const { buildSimulationSummary } = await import(
+      "@/systems/calendar/simulation-summary"
+    );
+    const postflight = reconcilePhaseWithState(result.state, rng);
+    assertSimulationState(postflight.state, "full");
+
+    const fromDate = workingState.world.calendar.currentDate;
+    const allEvents = [...preEvents, ...result.events, ...postflight.events];
+    const withProjections = processDerivedProjections(postflight.state, allEvents);
 
     const saved = await persistWorkingState(
       saveId,
@@ -1287,13 +1405,18 @@ export async function advanceOwnerTime(
       allEvents,
     );
 
-    const { state: _state, events, ...simulation } = result;
+    const { state: _state, events: _ignored, ...simulation } = result;
     const highlights = buildSimulationHighlights(withProjections, allEvents);
+    const summary = buildSimulationSummary(withProjections, allEvents, {
+      fromDate,
+      toDate: withProjections.world.calendar.currentDate,
+    });
     return {
       ...withDashboard(saved),
       events: allEvents,
       simulation,
       highlights,
+      summary,
     };
   } catch (error) {
     return fail(error instanceof Error ? error.message : String(error));
@@ -1316,6 +1439,38 @@ function resolveAdvanceDays(
       days = 400;
       stopConditions.push("blocking_decision", "phase_change");
       targetDate = undefined;
+    } else if (options.targetMode === "next_month") {
+      const parsed = parseCalendarDate(currentDate);
+      const lastDayThisMonth = formatCalendarDate(
+        parsed.year,
+        parsed.month,
+        new Date(parsed.year, parsed.month, 0).getDate(),
+      );
+      targetDate = lastDayThisMonth;
+      if (targetDate <= currentDate) {
+        const nextMonth = parsed.month === 12 ? 1 : parsed.month + 1;
+        const nextYear = parsed.month === 12 ? parsed.year + 1 : parsed.year;
+        targetDate = formatCalendarDate(
+          nextYear,
+          nextMonth,
+          new Date(nextYear, nextMonth, 0).getDate(),
+        );
+      }
+      stopConditions.push("blocking_decision");
+    } else if (options.targetMode === "end_of_season") {
+      const anchors = resolveSeasonAnchors(state);
+      targetDate =
+        anchors.playoffsEnd ??
+        anchors.regularSeasonEnd ??
+        anchors.seasonReviewStart ??
+        undefined;
+      if (!targetDate || targetDate <= currentDate) {
+        return {
+          ok: false,
+          error: "No end-of-season date is available to simulate to.",
+        };
+      }
+      stopConditions.push("blocking_decision");
     } else {
       const target = findNextSimulationTarget(state, options.targetMode);
       if (!target || target.daysUntil < 1) {

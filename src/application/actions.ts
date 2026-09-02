@@ -343,6 +343,46 @@ export async function advanceWeekAction(formData: FormData): Promise<void> {
   redirect(path);
 }
 
+
+export async function advanceMonthAction(formData: FormData): Promise<void> {
+  const saveId = String(formData.get("saveId") ?? "");
+  const path = returnPath(formData, saveId);
+  const result = await advanceOwnerTime(saveId, { targetMode: "next_month" });
+  if (!result.ok) {
+    redirectWithError(path, result.error);
+  }
+  revalidateOwner(saveId);
+  redirectWithSummary(
+    path,
+    result.simulation.daysAdvanced,
+    result.highlights.length,
+    result.summary?.fromDate,
+  );
+}
+
+export async function simulateToEndOfSeasonAction(
+  formData: FormData,
+): Promise<void> {
+  const saveId = String(formData.get("saveId") ?? "");
+  const path = returnPath(formData, saveId);
+  const result = await advanceOwnerTime(saveId, {
+    targetMode: "end_of_season",
+    stopOnPhaseChange: false,
+  });
+  if (!result.ok) {
+    redirectWithError(path, result.error);
+  }
+  revalidateOwner(saveId);
+  redirectWithSummary(
+    path,
+    result.simulation.daysAdvanced,
+    result.highlights.length,
+    result.summary?.fromDate,
+  );
+}
+
+
+
 export async function advanceUntilPhaseAction(
   formData: FormData,
 ): Promise<void> {
@@ -383,12 +423,18 @@ function redirectWithSummary(
   path: string,
   daysAdvanced: number,
   highlightCount: number,
+  fromDate?: string,
 ): never {
   const separator = path.includes("?") ? "&" : "?";
+  const fromParam =
+    fromDate && /^\d{4}-\d{2}-\d{2}$/.test(fromDate)
+      ? `&fromDate=${fromDate}`
+      : "";
   redirect(
-    `${path}${separator}simSummary=1&daysAdvanced=${daysAdvanced}&highlights=${highlightCount}`,
+    `${path}${separator}simSummary=1&daysAdvanced=${daysAdvanced}&highlights=${highlightCount}${fromParam}`,
   );
 }
+
 
 export async function simulateToDateAction(formData: FormData): Promise<void> {
   const saveId = String(formData.get("saveId") ?? "");

@@ -264,8 +264,9 @@ function isDraftOrderFullyUsed(state: GameState, draftClassId: string): boolean 
 
 /**
  * Exit hooks when leaving a user-controlled phase.
+ * Exported for date-driven phase sync (calendar progression).
  */
-function processPhaseExit(
+export function processPhaseExit(
   state: GameState,
   fromPhaseId: LeaguePhaseId,
   rng?: Rng,
@@ -320,8 +321,9 @@ function processPhaseExit(
 
 /**
  * Enter hooks when arriving at a phase.
+ * Exported for date-driven phase sync (calendar progression).
  */
-function processPhaseEnter(
+export function processPhaseEnter(
   state: GameState,
   toPhaseId: LeaguePhaseId,
   rng?: Rng,
@@ -517,7 +519,7 @@ export function processOffseasonLifecycle(
       const completed = completeDraft(current, draftClassId);
       current = completed.state;
       events.push(...completed.events);
-      // Do NOT auto-advance to free agency — user must click Advance.
+      // Date-driven sync (syncPhaseForward) advances to free agency when ready.
     }
   }
 

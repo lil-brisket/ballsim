@@ -35,3 +35,14 @@ export {
   type SimulationRangeYourTeamPreview,
   type SimulationRangeLeaguePreview,
 } from "@/systems/calendar/simulation-preview";
+
+
+export {
+  buildSimulationSummary,
+} from "@/systems/calendar/simulation-summary";
+export type {
+  SimulationSummaryItem, SimulationSummary, BuildSimulationSummaryOptions,
+} from "@/systems/calendar/simulation-summary";
+export {
+  getTeamGamesForDate, getTeamGameForDate,
+} from "@/systems/calendar/schedule-projection";

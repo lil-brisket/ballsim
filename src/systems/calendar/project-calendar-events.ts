@@ -10,6 +10,7 @@ import {
   type CalendarEventView,
   type CalendarFilter,
 } from "@/domain/entities/calendar-event";
+import { certaintyFromLifecycle } from "@/domain/entities/calendar-event";
 import type { AwardResult } from "@/domain/entities/awards";
 import {
   getBlockingOwnerDecisions,
@@ -38,6 +39,10 @@ import {
   getLeagueMilestones,
   type LeagueMilestone,
 } from "@/systems/league-rules/calendar-events";
+import {
+  getTeamTransactions,
+  TEAM_TRANSACTION_EVENT_TYPES,
+} from "@/state/team-transaction-selectors";
 
 export type ProjectCalendarEventsOptions = {
   teamId?: TeamId;
@@ -66,7 +71,7 @@ export function projectCalendarEvents(
   };
 
   for (const game of Object.values(state.competition.games)) {
-    const view = projectGame(state, game, currentDate, saveId);
+    const view = projectGame(state, game, currentDate, saveId, focusTeamId);
     if (view) upsert(view);
   }
 
@@ -76,8 +81,25 @@ export function projectCalendarEvents(
   }
 
   for (const domainEvent of state.competition.seasonEventLog) {
+    // Team-scoped transaction rows come from the canonical selector below.
+    if (
+      (options.teamId != null || options.userTeamOnly) &&
+      TEAM_TRANSACTION_EVENT_TYPES.includes(domainEvent.type)
+    ) {
+      continue;
+    }
     const view = projectDomainEvent(state, domainEvent, currentDate, saveId);
     if (view) upsert(view);
+  }
+
+  if (options.teamId != null || options.userTeamOnly) {
+    for (const row of getTeamTransactions(state, focusTeamId, {
+      from: options.from,
+      to: options.to,
+    })) {
+      const view = projectDomainEvent(state, row.event, currentDate, saveId);
+      if (view) upsert(view);
+    }
   }
 
   for (const decision of getBlockingOwnerDecisions(state.user)) {
@@ -158,6 +180,7 @@ function projectGame(
   game: Game,
   currentDate: string,
   saveId: string,
+  focusTeamId?: TeamId,
 ): CalendarEventView | null {
   const isFinal = game.status === "final";
   if (game.date > currentDate && isFinal) {
@@ -179,9 +202,9 @@ function projectGame(
 
   const source: EventSourceRef = { type: "game", id: game.id };
   const sourceKey = toSourceKey(source);
+  const controlledTeamId = focusTeamId ?? state.user.activeOwnerTeamId;
   const importance: ImportanceLevel =
-    game.homeTeamId === state.user.activeOwnerTeamId ||
-    game.awayTeamId === state.user.activeOwnerTeamId
+    game.homeTeamId === controlledTeamId || game.awayTeamId === controlledTeamId
       ? "high"
       : policy.media.importance;
 
@@ -189,6 +212,7 @@ function projectGame(
     id: `cal:${sourceKey}`,
     date: game.date,
     lifecycle: policy.calendar.lifecycle,
+    certainty: certaintyFromLifecycle(policy.calendar.lifecycle),
     category: policy.calendar.category,
     title,
     description,
@@ -221,6 +245,7 @@ function projectMilestone(
     id: `cal:${sourceKey}`,
     date: milestone.date,
     lifecycle: isPastOrToday ? "occurred" : policy.calendar.lifecycle,
+    certainty: certaintyFromLifecycle(isPastOrToday ? "occurred" : policy.calendar.lifecycle),
     category: policy.calendar.category,
     title: milestone.label,
     importance: policy.media.importance,
@@ -265,6 +290,7 @@ function projectDomainEvent(
     id: `cal:${sourceKey}`,
     date: domainEvent.occurredOn,
     lifecycle: policy.calendar.lifecycle,
+    certainty: certaintyFromLifecycle(policy.calendar.lifecycle),
     category: policy.calendar.category,
     title,
     description,
@@ -302,6 +328,7 @@ function projectOwnerDecision(
     id: `cal:${sourceKey}`,
     date,
     lifecycle: policy.calendar.lifecycle,
+    certainty: certaintyFromLifecycle(policy.calendar.lifecycle),
     category: policy.calendar.category,
     title: `Trade offer from ${offeringName}`,
     description:
@@ -348,6 +375,7 @@ function projectAward(
     id: `cal:${sourceKey}`,
     date,
     lifecycle: policy.calendar.lifecycle,
+    certainty: certaintyFromLifecycle(policy.calendar.lifecycle),
     category: policy.calendar.category,
     title: `${def.displayName}: ${winnerName}`,
     importance: policy.media.importance,

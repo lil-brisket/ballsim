@@ -13,9 +13,11 @@ import {
 } from "@/systems/simulation/monthly-pipeline";
 import { processOffseasonLifecycle } from "@/systems/simulation/offseason-lifecycle";
 import { runOwnerGameplay } from "@/systems/simulation/owner-gameplay";
+import { syncPhaseForward } from "@/systems/simulation/phase-lifecycle";
 import { processScheduledEvents } from "@/systems/simulation/scheduled-events";
 import { processSeasonLifecycle } from "@/systems/simulation/season-lifecycle";
 import { lifecycleIdentity } from "@/systems/simulation/calendar-context";
+import { assertSimulationState } from "@/systems/simulation/validate-simulation-state";
 import type {
   AdvanceSimulationOptions,
   AdvanceSimulationResult,
@@ -171,6 +173,12 @@ function advanceOneDay(
   const identityBeforeLifecycle = lifecycleIdentity(current);
 
   const lifecycleStart = performance.now();
+
+  // Date-driven phase sync: at most one phase transition, full exit/enter hooks.
+  const phaseSync = syncPhaseForward(current, rng, { allowAiAssist: true });
+  current = phaseSync.state;
+  events.push(...phaseSync.events);
+
   const seasonLife = processSeasonLifecycle(current);
   current = seasonLife.state;
   events.push(...seasonLife.events);
@@ -257,6 +265,9 @@ function advanceOneDay(
   const calendarResult = advanceCalendar(current);
   current = calendarResult.state;
   events.push(...calendarResult.events);
+
+  // Lightweight per-day invariant check.
+  assertSimulationState(current, "day");
 
   const newDate = current.world.calendar.currentDate;
   let weeklyRan = false;

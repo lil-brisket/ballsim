@@ -17,6 +17,7 @@ type CalendarPageProps = {
     simSummary?: string;
     daysAdvanced?: string;
     highlights?: string;
+    fromDate?: string;
   }>;
 };
 
@@ -33,19 +34,24 @@ export default async function CalendarPage({
 
   const year = sp.year ? Number(sp.year) : undefined;
   const month = sp.month ? Number(sp.month) : undefined;
+  const daysAdvanced = sp.daysAdvanced ? Number(sp.daysAdvanced) : 0;
+  const showSimSummary = sp.simSummary === "1";
 
   const view = await loadCalendarPageView(saveId, {
     year: Number.isFinite(year) ? year : undefined,
     month: Number.isFinite(month) ? month : undefined,
     selectedDate: sp.date,
     filter: sp.filter as CalendarFilter | undefined,
+    simulationFromDate: sp.fromDate,
+    daysAdvanced:
+      showSimSummary && Number.isFinite(daysAdvanced) && daysAdvanced > 0
+        ? daysAdvanced
+        : undefined,
   });
   if (!view) {
     notFound();
   }
 
-  const showSimSummary = sp.simSummary === "1";
-  const daysAdvanced = sp.daysAdvanced ? Number(sp.daysAdvanced) : 0;
   const highlightCount = sp.highlights ? Number(sp.highlights) : 0;
 
   return (

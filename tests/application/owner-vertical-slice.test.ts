@@ -753,10 +753,9 @@ describe("Owner Mode vertical slice", () => {
         expect(result.ok).toBe(true);
 
         await advanceUntilSeasonPhase(created.save.id, store, "playoffs");
-        result = await loadOwnerSave(created.save.id, store) as NonNullable<
-          Awaited<ReturnType<typeof loadOwnerSave>>
-        >;
-        expect(result.dashboard.seasonPhase).toBe("playoffs");
+        const playoffView = await loadOwnerSave(created.save.id, store);
+        expect(playoffView).not.toBeNull();
+        expect(playoffView!.dashboard.seasonPhase).toBe("playoffs");
 
         const atPlayoffs = await store.load(created.save.id);
         const qualified =

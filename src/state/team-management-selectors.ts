@@ -18,6 +18,7 @@ import type { PlayerId, TeamId } from "@/domain/ids";
 import type { GameState } from "@/state/game-state";
 import { getControlledTeam } from "@/state/selectors";
 import { getActiveOwnerTeamId, getOwnedTeamIds } from "@/state/owner-context";
+import { getTeamTransactions } from "@/state/team-transaction-selectors";
 import {
   getPlayerAvailability,
   type UnavailabilityReason,
@@ -770,41 +771,16 @@ export function toSeasonTransactionsView(
   filters: SeasonTransactionFilters,
 ): SeasonTransactionsView {
   const activeTeamId = getActiveOwnerTeamId(state);
-  const owned = new Set(getOwnedTeamIds(state).map(String));
 
-  let events = [...state.competition.seasonEventLog];
-
-  if (filters.scope === "team") {
-    events = events.filter((event) => {
-      const payload = event.payload;
-      const teamId =
-        (typeof payload.teamId === "string" && payload.teamId) ||
-        (typeof payload.toTeamId === "string" && payload.toTeamId) ||
-        (typeof payload.fromTeamId === "string" && payload.fromTeamId) ||
-        null;
-      if (teamId == null) {
-        return false;
-      }
-      return teamId === activeTeamId || owned.has(teamId);
-    });
-    // Prefer exact active team match when both owned
-    events = events.filter((event) => {
-      const payload = event.payload;
-      const ids = [
-        payload.teamId,
-        payload.toTeamId,
-        payload.fromTeamId,
-      ].filter((id): id is string => typeof id === "string");
-      return ids.includes(activeTeamId);
-    });
-  }
+  let events =
+    filters.scope === "team"
+      ? getTeamTransactions(state, activeTeamId).map((row) => row.event)
+      : [...state.competition.seasonEventLog].filter((event) =>
+          TRANSACTION_TYPES.includes(event.type),
+        );
 
   if (filters.type && filters.type !== "all") {
     events = events.filter((event) => event.type === filters.type);
-  } else {
-    events = events.filter((event) =>
-      TRANSACTION_TYPES.includes(event.type),
-    );
   }
 
   events.sort((a, b) => {

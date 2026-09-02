@@ -108,6 +108,7 @@ import type {
 } from "@/domain/entities/owner-objective";
 import { DEFAULT_OWNER_PHILOSOPHY } from "@/domain/entities/owner-philosophy";
 import { defaultOwnerPatience } from "@/systems/owner-philosophy-config";
+import { reconcilePhaseWithState } from "@/systems/simulation/phase-lifecycle";
 
 const gameStateEnvelopeSchema = z.object({
   meta: z.object({
@@ -323,7 +324,9 @@ export function deserializeGameState(stateJson: string): GameState {
   }
 
   validateGameState(state);
-  return state;
+  // Align phase pointer with date/state for saves created before calendar-driven sync.
+  const reconciled = reconcilePhaseWithState(state as GameState);
+  return reconciled.state;
 }
 
 /** Schema v7 game shape before score/events/playerStats. */

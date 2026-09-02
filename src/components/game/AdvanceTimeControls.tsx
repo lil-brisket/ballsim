@@ -66,6 +66,7 @@ export function AdvanceTimeControls(props: {
   const untilLabel = props.untilPhaseLabel
     ? `Until ${props.untilPhaseLabel}`
     : "Until next phase";
+  const calendarHref = `/dashboard/${props.saveId}/calendar`;
   const [dialogOpen, setDialogOpen] = useState(false);
 
   const showWarning = Boolean(props.unresolvedWarning);
@@ -115,16 +116,28 @@ export function AdvanceTimeControls(props: {
             {untilLabel}
           </button>
         ) : (
-          <form action={advanceUntilPhaseAction} className="space-y-1">
-            <input type="hidden" name="saveId" value={props.saveId} />
-            <input type="hidden" name="returnPath" value={props.returnPath} />
-            <AdvanceButton
-              label={untilLabel}
-              pendingLabel="Simulating until next phase…"
-              disabled={props.disabled}
-            />
-            <SimulationProgressStatus message="Advancing until the next phase — progress continues in the background; please wait…" />
-          </form>
+          <div className="space-y-1 opacity-70">
+            <p className="text-xs text-zinc-500">
+              Prefer the{" "}
+              <a
+                href={calendarHref}
+                className="text-amber-500 hover:text-amber-400"
+              >
+                Calendar
+              </a>{" "}
+              for time advancement. Until-phase remains as a secondary control.
+            </p>
+            <form action={advanceUntilPhaseAction} className="space-y-1">
+              <input type="hidden" name="saveId" value={props.saveId} />
+              <input type="hidden" name="returnPath" value={props.returnPath} />
+              <AdvanceButton
+                label={untilLabel}
+                pendingLabel="Simulating until next phase…"
+                disabled={props.disabled}
+              />
+              <SimulationProgressStatus message="Advancing until the next phase — progress continues in the background; please wait…" />
+            </form>
+          </div>
         )}
       </div>
 

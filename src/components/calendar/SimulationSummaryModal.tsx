@@ -10,6 +10,12 @@ export function SimulationSummaryModal(props: {
   highlightCount: number;
   returnPath: string;
   recentHighlights: readonly CalendarPageMediaHighlight[];
+  teamLabel?: string | null;
+  record?: { wins: number; losses: number; gamesPlayed: number } | null;
+  teamEvents?: readonly { date: string; headline: string }[];
+  leagueEvents?: readonly { date: string; headline: string }[];
+  injuryNotes?: readonly string[];
+  transactionCount?: number;
 }) {
   const router = useRouter();
   const [visible, setVisible] = useState(props.open);
@@ -37,6 +43,7 @@ export function SimulationSummaryModal(props: {
     url.searchParams.delete("simSummary");
     url.searchParams.delete("daysAdvanced");
     url.searchParams.delete("highlights");
+    url.searchParams.delete("fromDate");
     const next =
       url.pathname +
       (url.searchParams.toString() ? `?${url.searchParams.toString()}` : "");
@@ -76,6 +83,76 @@ export function SimulationSummaryModal(props: {
         </div>
 
         <div className="max-h-[55vh] space-y-4 overflow-y-auto px-5 py-4">
+          {props.teamLabel ? (
+            <section className="space-y-2 rounded-md border border-zinc-800 bg-zinc-950/40 px-3 py-3">
+              <p className="text-xs uppercase tracking-wide text-zinc-500">
+                Your team — {props.teamLabel}
+              </p>
+              {props.record ? (
+                <p className="text-sm text-zinc-200">
+                  Record in window: {props.record.wins}–{props.record.losses}{" "}
+                  <span className="text-zinc-500">
+                    ({props.record.gamesPlayed} games)
+                  </span>
+                </p>
+              ) : null}
+              {typeof props.transactionCount === "number" ? (
+                <p className="text-xs text-zinc-400">
+                  Transactions: {props.transactionCount}
+                </p>
+              ) : null}
+              {props.injuryNotes && props.injuryNotes.length > 0 ? (
+                <ul className="space-y-1 text-xs text-zinc-400">
+                  {props.injuryNotes.map((note) => (
+                    <li key={note}>{note}</li>
+                  ))}
+                </ul>
+              ) : null}
+            </section>
+          ) : null}
+
+          {props.teamEvents && props.teamEvents.length > 0 ? (
+            <section className="space-y-2">
+              <p className="text-xs uppercase tracking-wide text-zinc-500">
+                Team events
+              </p>
+              <ul className="space-y-1.5">
+                {props.teamEvents.map((event) => (
+                  <li
+                    key={`${event.date}-${event.headline}`}
+                    className="rounded-md border border-zinc-800 px-3 py-2 text-sm text-zinc-100"
+                  >
+                    <span className="font-mono text-xs text-amber-400/80">
+                      {event.date}
+                    </span>
+                    <p>{event.headline}</p>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          ) : null}
+
+          {props.leagueEvents && props.leagueEvents.length > 0 ? (
+            <section className="space-y-2">
+              <p className="text-xs uppercase tracking-wide text-zinc-500">
+                League
+              </p>
+              <ul className="space-y-1.5">
+                {props.leagueEvents.map((event) => (
+                  <li
+                    key={`${event.date}-${event.headline}`}
+                    className="rounded-md border border-zinc-800 px-3 py-2 text-sm text-zinc-300"
+                  >
+                    <span className="font-mono text-xs text-zinc-500">
+                      {event.date}
+                    </span>
+                    <p>{event.headline}</p>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          ) : null}
+
           <p className="text-sm text-zinc-300">
             League activity was processed through the selected window — games,
             development, finances, and franchise updates as applicable.

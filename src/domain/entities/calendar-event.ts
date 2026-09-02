@@ -13,6 +13,20 @@ export type CalendarEventLifecycle =
   | "action_required"
   | "cancelled";
 
+/** Display certainty — known (occurred), scheduled (future authoritative), action_required. */
+export type CalendarEventCertainty =
+  | "known"
+  | "scheduled"
+  | "action_required";
+
+export function certaintyFromLifecycle(
+  lifecycle: CalendarEventLifecycle,
+): CalendarEventCertainty {
+  if (lifecycle === "action_required") return "action_required";
+  if (lifecycle === "occurred") return "known";
+  return "scheduled";
+}
+
 export type CalendarEventCategory =
   | "game"
   | "transaction"
@@ -50,6 +64,7 @@ export type CalendarEventView = {
   blocking: boolean;
   completed: boolean;
   href?: string;
+  certainty: CalendarEventCertainty;
 };
 
 export type CalendarFilter =

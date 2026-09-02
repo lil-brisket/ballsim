@@ -106,3 +106,23 @@ export type {
   SimulationProfiler,
 } from "@/systems/simulation/simulation-profiler";
 export type { OwnerGameplayResult } from "@/systems/simulation/owner-gameplay";
+
+
+export {
+  reconcilePhaseWithState,
+  syncPhaseForward,
+} from "@/systems/simulation/phase-lifecycle";
+export type {
+  PhaseSyncResult,
+  PhaseSyncStopReason,
+  SyncPhaseForwardOptions,
+} from "@/systems/simulation/phase-lifecycle";
+export {
+  validateDayInvariants,
+  validateSimulationState,
+  assertSimulationState,
+} from "@/systems/simulation/validate-simulation-state";
+export type {
+  SimulationValidationIssue,
+  SimulationValidationResult,
+} from "@/systems/simulation/validate-simulation-state";
