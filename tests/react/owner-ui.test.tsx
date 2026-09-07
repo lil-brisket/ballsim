@@ -9,6 +9,7 @@ import { OwnerNav } from "@/components/owner/OwnerNav";
 import { MoneyDisplay } from "@/components/owner/MoneyDisplay";
 import { StatusBadge } from "@/components/owner/StatusBadge";
 import { ConfirmDialog } from "@/components/owner/ConfirmDialog";
+import { OWNER_NAV_GROUPS } from "@/application/owner-nav-config";
 
 describe("Owner UI primitives", () => {
   it("formats money display", () => {
@@ -23,8 +24,8 @@ describe("Owner UI primitives", () => {
     unmount();
   });
 
-  it("renders owner nav links with saveId", () => {
-    const { unmount } = render(<OwnerNav saveId="save_test" unreadCount={2} />);
+  it("renders owner nav links with saveId and new hierarchy", () => {
+    const { unmount } = render(<OwnerNav saveId="save_test" />);
     expect(
       screen.getByText("Dashboard").closest("a")?.getAttribute("href"),
     ).toBe("/dashboard/save_test");
@@ -32,9 +33,22 @@ describe("Owner UI primitives", () => {
       "/dashboard/save_test/roster",
     );
     expect(
-      screen.getByText("Notifications (2)").closest("a")?.getAttribute("href"),
-    ).toBe("/dashboard/save_test/notifications");
+      screen.getByText("Media Hub").closest("a")?.getAttribute("href"),
+    ).toBe("/dashboard/save_test/media");
+    expect(
+      screen.getByText("Staff & Coaching").closest("a")?.getAttribute("href"),
+    ).toBe("/dashboard/save_test/staff-coaching");
+    expect(screen.queryByText("Notifications (2)")).toBeNull();
+    expect(screen.queryByText("Team Management")).toBeNull();
+    expect(screen.queryByText("Relocation")).toBeNull();
     unmount();
+  });
+
+  it("static nav config matches canonical destinations", () => {
+    const hrefs = OWNER_NAV_GROUPS.flatMap((g) => g.items.map((i) => i.href));
+    expect(hrefs).toContain("/franchise");
+    expect(hrefs).toContain("/development");
+    expect(hrefs).not.toContain("/relocation");
   });
 
   it("confirm dialog opens and exposes form children without mutating", () => {
@@ -114,7 +128,9 @@ describe("Owner UI primitives", () => {
     );
 
     fireEvent.click(screen.getByRole("button", { name: "Delete" }));
-    const confirmButton = screen.getByRole("button", { name: "Confirm delete" });
+    const confirmButton = screen.getByRole("button", {
+      name: "Confirm delete",
+    });
     const form = confirmButton.closest("form");
     expect(form).not.toBeNull();
 

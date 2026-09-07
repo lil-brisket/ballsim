@@ -10,6 +10,8 @@ import { PageHeader } from "@/components/owner/PageHeader";
 import { Section } from "@/components/owner/Section";
 import { StatCard } from "@/components/owner/StatCard";
 import Link from "next/link";
+import { prismaSaveGameStore } from "@/persistence/save-game-repository";
+import { isRelocationAccessible } from "@/state/owner-season-context";
 
 type PageProps = {
   params: Promise<{ saveId: string }>;
@@ -22,6 +24,44 @@ export default async function RelocationPage({
 }: PageProps) {
   const { saveId } = await params;
   const { error } = await searchParams;
+  const loaded = await prismaSaveGameStore.load(saveId);
+  if (!loaded) {
+    notFound();
+  }
+
+  if (!isRelocationAccessible(loaded.state)) {
+    return (
+      <>
+        <PageHeader
+          title="Relocation"
+          subtitle="Offseason franchise decision"
+        />
+        {error ? <ErrorState message={error} /> : null}
+        <div className="rounded-xl border border-zinc-800 bg-zinc-900/50 px-4 py-6">
+          <p className="text-sm text-zinc-300">
+            Relocation is not currently available for this franchise. It can
+            only begin during the offseason when market conditions make a move
+            strategically relevant.
+          </p>
+          <div className="mt-4 flex flex-wrap gap-3 text-sm">
+            <Link
+              href={`/dashboard/${saveId}/offseason`}
+              className="font-medium text-amber-400 hover:text-amber-300"
+            >
+              Back to Offseason Hub
+            </Link>
+            <Link
+              href={`/dashboard/${saveId}/franchise`}
+              className="text-zinc-400 hover:text-zinc-200"
+            >
+              Franchise overview
+            </Link>
+          </div>
+        </div>
+      </>
+    );
+  }
+
   const view = await loadOwnerSaveView(saveId);
   if (!view) {
     notFound();
@@ -42,11 +82,11 @@ export default async function RelocationPage({
       {error ? <ErrorState message={error} /> : null}
 
       <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard label="Status" value={assessment.status.replaceAll("_", " ")} />
         <StatCard
-          label="Basketball"
-          value={assessment.basketballHealth}
+          label="Status"
+          value={assessment.status.replaceAll("_", " ")}
         />
+        <StatCard label="Basketball" value={assessment.basketballHealth} />
         <StatCard label="Business" value={assessment.businessHealth} />
         <StatCard
           label="Market size"
@@ -75,7 +115,8 @@ export default async function RelocationPage({
 
       <Section title="Stay strategy">
         <p className="mb-2 text-sm text-zinc-400">
-          Relocation is an opportunity cost. Existing owner actions remain available:
+          Relocation is an opportunity cost. Existing owner actions remain
+          available:
         </p>
         <ul className="list-disc space-y-1 pl-5 text-sm text-zinc-300">
           {assessment.stayAdvantages.map((advantage) => (
@@ -120,7 +161,10 @@ export default async function RelocationPage({
               </thead>
               <tbody>
                 {topDestinations.map((destination) => (
-                  <tr key={destination.city} className="border-t border-zinc-800">
+                  <tr
+                    key={destination.city}
+                    className="border-t border-zinc-800"
+                  >
                     <td className="py-1.5 pr-3">
                       {destination.city} {destination.name}
                     </td>
@@ -165,8 +209,8 @@ export default async function RelocationPage({
       <Section title="Pursue relocation">
         {!canAdvance ? (
           <p className="text-sm text-zinc-400">
-            Relocation is not available to start. Improve the stay path, wait for
-            tenure, or wait until market pressure makes a move strategically
+            Relocation is not available to start. Improve the stay path, wait
+            for tenure, or wait until market pressure makes a move strategically
             relevant.
           </p>
         ) : (

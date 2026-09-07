@@ -32,7 +32,7 @@ export default async function StaffDetailPage({ params }: PageProps) {
       />
       <p className="mb-4 text-sm text-zinc-400">
         <Link
-          href={`/dashboard/${saveId}/staff`}
+          href={`/dashboard/${saveId}/staff-coaching/staff`}
           className="hover:text-amber-400"
         >
           ← Back to staff

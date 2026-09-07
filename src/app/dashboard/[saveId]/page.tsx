@@ -48,8 +48,7 @@ export default async function DashboardPage({
   const { save, ownerDashboard: dash, dashboard, phaseDashboard } = view;
   const returnPath = `/dashboard/${saveId}`;
   const timeDisabled =
-    dash.flags.userOnDraftClock ||
-    dash.flags.pendingOwnerDecision;
+    dash.flags.userOnDraftClock || dash.flags.pendingOwnerDecision;
   const phase = dash.simulationPhase;
   const unresolvedWarning =
     phase.unresolvedDecisionCount > 0 && phase.responsibility === "unresolved"
@@ -66,11 +65,13 @@ export default async function DashboardPage({
         ? `/dashboard/${saveId}/draft`
         : `/dashboard/${saveId}`;
 
+  const showOffseasonShortcut = dash.seasonPhase === "offseason";
+
   return (
     <>
       <PageHeader
         title={`${dash.controlledTeam.city} ${dash.controlledTeam.name}`}
-        subtitle={`${save.name} · ${dash.leagueName}`}
+        subtitle={`${save.name} · ${dash.leagueName} · ${dash.team.wins}–${dash.team.losses}`}
         actions={
           <AdvanceTimeControls
             saveId={save.id}
@@ -101,6 +102,15 @@ export default async function DashboardPage({
       {error ? <ErrorState message={error} /> : null}
 
       <DashboardHubLinks saveId={saveId} />
+
+      {showOffseasonShortcut ? (
+        <Link
+          href={`/dashboard/${saveId}/offseason`}
+          className="inline-flex rounded-md border border-amber-700/50 bg-amber-950/30 px-3 py-2 text-sm text-amber-200 hover:border-amber-600"
+        >
+          Open Offseason Hub
+        </Link>
+      ) : null}
 
       {dash.flags.pendingOwnerDecision &&
       dash.pendingTradeOffer &&
@@ -165,15 +175,19 @@ export default async function DashboardPage({
         />
       </div>
 
-      <PhaseDashboard
-        view={phaseDashboard}
+      <AttentionRequiredPanel
+        items={dash.actionItems}
+        responsibility={dash.phaseResponsibility}
         saveId={saveId}
         returnPath={returnPath}
-        currentDate={dash.currentDate}
-        seasonYear={dash.seasonYear}
-        advanceAction={advanceLeaguePhaseAction}
-        dismissAction={dismissPhaseTaskAction}
-        switchTeamAction={switchActiveOwnerTeamAction}
+        aiCanHandle={aiCanHandle}
+        letAiHandleAction={letAiHandlePhaseAction}
+      />
+
+      <FranchiseSituations
+        saveId={saveId}
+        situations={dash.situations}
+        returnPath={returnPath}
       />
 
       <SimulationProgressBanner
@@ -208,8 +222,8 @@ export default async function DashboardPage({
             <p className="text-zinc-400">{dash.seasonStory}</p>
           ) : null}
           <p className="text-zinc-400">
-            Continue from the Calendar — time advancement is calendar-driven. Season
-            review no longer blocks simulation.
+            Continue from the Calendar — time advancement is calendar-driven.
+            Season review no longer blocks simulation.
           </p>
           <a
             href={`/dashboard/${saveId}/calendar`}
@@ -224,52 +238,40 @@ export default async function DashboardPage({
         <p className="text-sm text-zinc-400">{dash.seasonStory}</p>
       ) : null}
 
-      <div className="grid gap-8 lg:grid-cols-2 lg:items-start">
-        <div className="order-2 space-y-4 lg:order-1">
-          <FranchiseHealthPanel
-            health={dash.health}
-            insights={dash.insights}
-          />
-        </div>
-        <div className="order-1 space-y-4 lg:order-2">
-          <AttentionRequiredPanel
-            items={dash.actionItems}
-            responsibility={dash.phaseResponsibility}
-            saveId={saveId}
-            returnPath={returnPath}
-            aiCanHandle={aiCanHandle}
-            letAiHandleAction={letAiHandlePhaseAction}
-          />
-          <FranchiseSituations
-            saveId={saveId}
-            situations={dash.situations}
-            returnPath={returnPath}
-          />
-        </div>
-      </div>
+      <FranchiseHealthPanel health={dash.health} insights={dash.insights} />
 
       <LeagueNewsPanel headlines={dash.mediaHeadlines} saveId={saveId} />
 
       <div className="grid gap-8 lg:grid-cols-2">
-        <div className="order-3">
-          <TeamDecisionPanel team={dash.team} saveId={saveId} />
-        </div>
-        <div className="order-4">
-          <OwnerPanel owner={dash.owner} />
-        </div>
+        <TeamDecisionPanel team={dash.team} saveId={saveId} />
+        <OwnerPanel owner={dash.owner} />
       </div>
 
       <div className="grid gap-8 lg:grid-cols-2">
-        <div className="order-5">
-          <DashboardNotifications
-            notifications={dash.notifications}
+        <DashboardNotifications
+          notifications={dash.notifications}
+          saveId={saveId}
+        />
+        <RecentActivity activity={dash.activity} />
+      </div>
+
+      <details className="rounded-xl border border-zinc-800 bg-zinc-900/30 px-4 py-3">
+        <summary className="cursor-pointer font-mono text-[0.65rem] uppercase tracking-[0.16em] text-zinc-500">
+          Phase details (optional)
+        </summary>
+        <div className="mt-4">
+          <PhaseDashboard
+            view={phaseDashboard}
             saveId={saveId}
+            returnPath={returnPath}
+            currentDate={dash.currentDate}
+            seasonYear={dash.seasonYear}
+            advanceAction={advanceLeaguePhaseAction}
+            dismissAction={dismissPhaseTaskAction}
+            switchTeamAction={switchActiveOwnerTeamAction}
           />
         </div>
-        <div className="order-6">
-          <RecentActivity activity={dash.activity} />
-        </div>
-      </div>
+      </details>
     </>
   );
 }

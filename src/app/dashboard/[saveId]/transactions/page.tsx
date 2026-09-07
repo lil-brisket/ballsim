@@ -5,7 +5,7 @@ type PageProps = {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 };
 
-/** Backward-compatible redirect into Team Management transactions. */
+/** Backward-compatible redirect into Media Hub transactions tab. */
 export default async function TransactionsRedirectPage({
   params,
   searchParams,
@@ -13,15 +13,11 @@ export default async function TransactionsRedirectPage({
   const { saveId } = await params;
   const query = await searchParams;
   const qs = new URLSearchParams();
+  qs.set("tab", "transactions");
   for (const [key, value] of Object.entries(query)) {
-    if (typeof value === "string") {
+    if (typeof value === "string" && key !== "tab") {
       qs.set(key, value);
     }
   }
-  const suffix = qs.toString();
-  redirect(
-    `/dashboard/${saveId}/team-management/transactions${
-      suffix ? `?${suffix}` : ""
-    }`,
-  );
+  redirect(`/dashboard/${saveId}/media?${qs.toString()}`);
 }

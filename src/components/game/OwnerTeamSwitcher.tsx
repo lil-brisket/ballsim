@@ -63,12 +63,12 @@ export function OwnerTeamSwitcher(props: {
           </span>
           <span className="block text-xs text-zinc-500">
             {active.wins}-{active.losses}
-            {ownedTeams.length > 1 ? " · Switch team" : ""}
+            {ownedTeams.length > 1 ? " · Switch franchise" : ""}
           </span>
         </span>
         {ownedTeams.length > 1 ? (
           <span className="ml-1 text-zinc-500" aria-hidden>
-            ▼
+            ▾
           </span>
         ) : null}
       </button>
@@ -79,7 +79,7 @@ export function OwnerTeamSwitcher(props: {
           className="absolute left-0 z-30 mt-2 w-80 rounded-xl border border-zinc-700 bg-zinc-950 p-2 shadow-xl"
         >
           <p className="px-2 py-1 text-xs font-medium uppercase tracking-wide text-zinc-500">
-            My Teams
+            My Franchises
           </p>
           <ul className="space-y-1">
             {ownedTeams.map((team) => (
@@ -103,7 +103,7 @@ export function OwnerTeamSwitcher(props: {
                   </span>
                   <span className="min-w-0 flex-1">
                     <span className="block truncate text-sm text-zinc-100">
-                      {team.isActive ? "✓ " : ""}
+                      <span aria-hidden>{team.isActive ? "● " : "○ "}</span>
                       {team.city} {team.name}
                     </span>
                     <span className="block text-xs text-zinc-500">

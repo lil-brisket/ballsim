@@ -50,8 +50,8 @@ export default async function MediaPage({
   return (
     <>
       <PageHeader
-        title="Media"
-        subtitle="League stories and social reaction for your franchise"
+        title="Media Hub"
+        subtitle="League stories, social reaction, and the transaction wire for your franchise"
         actions={
           <form action={markAllMediaReadAction}>
             <input type="hidden" name="saveId" value={saveId} />

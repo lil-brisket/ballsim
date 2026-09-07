@@ -459,7 +459,7 @@ function describeDomainEvent(
         playerIds: playerId ? [playerId] : undefined,
         href: playerId
           ? `/dashboard/${saveId}/players/${playerId}`
-          : `/dashboard/${saveId}/transactions`,
+          : `/dashboard/${saveId}/media?tab=transactions`,
       };
     case "PlayerTraded":
       return {
@@ -472,7 +472,7 @@ function describeDomainEvent(
           (id): id is TeamId => id !== undefined,
         ),
         playerIds: playerId ? [playerId] : undefined,
-        href: `/dashboard/${saveId}/transactions`,
+        href: `/dashboard/${saveId}/media?tab=transactions`,
       };
     case "ContractSigned":
     case "FreeAgentSigned":
@@ -481,7 +481,7 @@ function describeDomainEvent(
         description: teamName ?? undefined,
         teamIds: teamId ? [teamId] : undefined,
         playerIds: playerId ? [playerId] : undefined,
-        href: `/dashboard/${saveId}/transactions`,
+        href: `/dashboard/${saveId}/media?tab=transactions`,
       };
     case "PlayerReleased":
       return {
@@ -489,7 +489,7 @@ function describeDomainEvent(
         description: teamName ?? undefined,
         teamIds: teamId ? [teamId] : undefined,
         playerIds: playerId ? [playerId] : undefined,
-        href: `/dashboard/${saveId}/transactions`,
+        href: `/dashboard/${saveId}/media?tab=transactions`,
       };
     case "DraftPickMade":
       return {
@@ -514,14 +514,14 @@ function describeDomainEvent(
         title: "Staff hired",
         description: teamName ?? undefined,
         teamIds: teamId ? [teamId] : undefined,
-        href: `/dashboard/${saveId}/staff`,
+        href: `/dashboard/${saveId}/staff-coaching`,
       };
     case "StaffFired":
       return {
         title: "Staff fired",
         description: teamName ?? undefined,
         teamIds: teamId ? [teamId] : undefined,
-        href: `/dashboard/${saveId}/staff`,
+        href: `/dashboard/${saveId}/staff-coaching`,
       };
     case "PlayerRetired":
       return {
@@ -530,7 +530,7 @@ function describeDomainEvent(
         playerIds: playerId ? [playerId] : undefined,
         href: playerId
           ? `/dashboard/${saveId}/players/${playerId}`
-          : `/dashboard/${saveId}/transactions`,
+          : `/dashboard/${saveId}/media?tab=transactions`,
       };
     case "FacilityUpgradeStarted":
     case "FacilityUpgradeCompleted":
@@ -568,7 +568,7 @@ function describeDomainEvent(
         title: humanizeEventType(event.type),
         teamIds: teamId ? [teamId] : undefined,
         playerIds: playerId ? [playerId] : undefined,
-        href: `/dashboard/${saveId}/transactions`,
+        href: `/dashboard/${saveId}/media?tab=transactions`,
       };
   }
 }

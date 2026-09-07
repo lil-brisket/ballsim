@@ -1,12 +1,12 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { loadOwnerSave } from "@/application/game-service";
 import {
   assignToDevelopmentLeagueAction,
   recallFromDevelopmentLeagueAction,
 } from "@/application/actions";
 import { EmptyState, ErrorState } from "@/components/owner/EmptyState";
 import { PageHeader } from "@/components/owner/PageHeader";
+import { prismaSaveGameStore } from "@/persistence/save-game-repository";
 import { toDevelopmentLeagueDashboardView } from "@/state/development-league-selectors";
 
 type PageProps = {
@@ -33,7 +33,7 @@ export default async function DevelopmentLeaguePage({
 }: PageProps) {
   const { saveId } = await params;
   const { error } = await searchParams;
-  const loaded = await loadOwnerSave(saveId);
+  const loaded = await prismaSaveGameStore.load(saveId);
   if (!loaded) {
     notFound();
   }

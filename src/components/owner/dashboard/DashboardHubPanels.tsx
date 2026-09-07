@@ -30,17 +30,45 @@ function HubCtaLink(props: {
 export function DashboardHubLinks(props: { saveId: string }) {
   const base = `/dashboard/${props.saveId}`;
   return (
-    <div className="grid gap-3 sm:grid-cols-2">
-      <HubCtaLink
-        href={`${base}/calendar`}
-        title="Calendar"
-        description="Primary time control — review today, upcoming events, and advance with intent."
-      />
-      <HubCtaLink
-        href={`${base}/media`}
-        title="Media Hub"
-        description="League news, franchise attention, and the transaction wire."
-      />
+    <div className="space-y-3">
+      <div className="grid gap-3 sm:grid-cols-2">
+        <HubCtaLink
+          href={`${base}/calendar`}
+          title="Calendar"
+          description="Primary time control — review today, upcoming events, and advance with intent."
+        />
+        <HubCtaLink
+          href={`${base}/media`}
+          title="Media Hub"
+          description="League news, franchise attention, and the transaction wire."
+        />
+      </div>
+      <div className="flex flex-wrap gap-2 text-sm">
+        <Link
+          href={`${base}/roster`}
+          className="rounded-md border border-zinc-700 px-3 py-1.5 text-zinc-300 hover:border-amber-600"
+        >
+          Roster
+        </Link>
+        <Link
+          href={`${base}/staff-coaching`}
+          className="rounded-md border border-zinc-700 px-3 py-1.5 text-zinc-300 hover:border-amber-600"
+        >
+          Staff & Coaching
+        </Link>
+        <Link
+          href={`${base}/contracts`}
+          className="rounded-md border border-zinc-700 px-3 py-1.5 text-zinc-300 hover:border-amber-600"
+        >
+          Contracts
+        </Link>
+        <Link
+          href={`${base}/franchise`}
+          className="rounded-md border border-zinc-700 px-3 py-1.5 text-zinc-300 hover:border-amber-600"
+        >
+          Franchise
+        </Link>
+      </div>
     </div>
   );
 }

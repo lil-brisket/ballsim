@@ -196,6 +196,10 @@ import {
   type RelocationAssessment,
 } from "@/state/relocation-assessment";
 import {
+  isOffseasonPeriod,
+  isRelocationAccessible,
+} from "@/state/owner-season-context";
+import {
   assessExpansion,
   type ExpansionAssessment,
 } from "@/state/expansion-assessment";
@@ -3692,14 +3696,13 @@ export async function advanceOwnerRelocation(
     const starting =
       process === undefined || process.stage === "none";
     if (starting) {
-      const phase = state.competition.season.phase;
-      if (phase !== "offseason" && phase !== "postseason") {
-        throw new Error(
-          "Relocation can only be started during Season Review or the offseason.",
-        );
-      }
-      const assessment = assessRelocation(state, teamId);
-      if (!assessment.canStart) {
+      if (!isRelocationAccessible(state, teamId)) {
+        if (!isOffseasonPeriod(state)) {
+          throw new Error(
+            "Relocation can only be started during the offseason.",
+          );
+        }
+        const assessment = assessRelocation(state, teamId);
         throw new Error(
           assessment.status === "blocked_tenure"
             ? "Relocation is blocked by franchise tenure or cooldown."

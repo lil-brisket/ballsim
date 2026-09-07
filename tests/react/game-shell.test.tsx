@@ -217,9 +217,7 @@ describe("game shell UI", () => {
     );
     expect(screen.getByRole("button", { name: "Day" })).toBeTruthy();
     expect(screen.getByRole("button", { name: "7 Days" })).toBeTruthy();
-    expect(
-      screen.getByRole("button", { name: "Until next phase" }),
-    ).toBeTruthy();
+    expect(screen.getByText("Advanced…")).toBeTruthy();
     unmount();
   });
 
@@ -230,8 +228,12 @@ describe("game shell UI", () => {
     expect(hrefs).toContain("/roster");
     expect(hrefs).toContain("/draft");
     expect(hrefs).toContain("/free-agency");
-    expect(hrefs).toContain("/business");
+    expect(hrefs).toContain("/franchise");
+    expect(hrefs).toContain("/media");
     expect(hrefs).not.toContain("/trades");
+    expect(hrefs).not.toContain("/business");
+    expect(hrefs).not.toContain("/team-management");
+    expect(hrefs).not.toContain("/relocation");
   });
 
   it("NextActionPanel renders link when provided", () => {

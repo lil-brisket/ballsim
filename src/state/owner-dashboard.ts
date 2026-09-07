@@ -996,7 +996,7 @@ function buildActionItems(
       what: `Vacant starter role${data.vacantStarterRoles.length === 1 ? "" : "s"}: ${data.vacantStarterRoles.join(", ")}.`,
       why: "Missing starter staff can weaken evaluation, development, or operations coverage.",
       evidence: data.vacantStarterRoles.map((role) => `Open: ${role}`),
-      href: `/dashboard/${saveId}/staff`,
+      href: `/dashboard/${saveId}/staff-coaching`,
       hrefLabel: "Review Staff",
     });
   }
@@ -1187,7 +1187,7 @@ function buildCalendarActionItems(
           : `Record: ${team.wins}–${team.losses}`,
         `Games remaining (league): ${calendar.gamesRemaining}`,
       ],
-      href: `/dashboard/${saveId}/transactions`,
+      href: `/dashboard/${saveId}/media?tab=transactions`,
       hrefLabel: "Open Transactions",
     });
   }

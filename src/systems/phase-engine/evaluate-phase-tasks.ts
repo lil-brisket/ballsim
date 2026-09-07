@@ -246,7 +246,7 @@ function buildTasksForPhase(
         detail: "Fill a vacant starter staff role.",
         explanation:
           "Empty staff roles reduce development and organizational quality.",
-        href: `/dashboard/${saveId}/staff`,
+        href: `/dashboard/${saveId}/staff-coaching`,
         teamId,
         focusKey: "staff_vacancies",
       });
@@ -259,7 +259,7 @@ function buildTasksForPhase(
       title: "Review staff and development",
       detail: "Upgrade roles or adjust priorities.",
       explanation: "Optional fine-tuning before preseason.",
-      href: `/dashboard/${saveId}/staff`,
+      href: `/dashboard/${saveId}/staff-coaching`,
       teamId,
     });
   }
