@@ -11,6 +11,8 @@ const TABS: ReadonlyArray<{ id: MediaHubTab; label: string }> = [
   { id: "latest", label: "Latest" },
   { id: "team", label: "Your Team" },
   { id: "transactions", label: "Transactions" },
+  { id: "games", label: "Games" },
+  { id: "injuries", label: "Injuries" },
   { id: "league", label: "League" },
   { id: "social", label: "Social" },
 ];

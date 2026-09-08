@@ -88,6 +88,15 @@ export default async function TeamManagementTransactionsPage({
         title="Transactions"
         subtitle="Season-wide league transaction feed (structured events)"
       />
+      <p className="mb-3 text-sm text-zinc-400">
+        Prefer the league ledger?{" "}
+        <Link
+          href={`/dashboard/${saveId}/transactions`}
+          className="text-amber-400 hover:text-amber-300"
+        >
+          Open Transactions Hub
+        </Link>
+      </p>
       {query.error ? <ErrorState message={query.error} /> : null}
 
       <div className="flex flex-wrap gap-2">

@@ -6,3 +6,7 @@ export { StatLine, type StatLineItem } from "@/components/basketball/StatLine";
 export { TeamCard } from "@/components/basketball/TeamCard";
 export { TeamDrawer } from "@/components/basketball/TeamDrawer";
 export { GameRow, type GameRowProps } from "@/components/basketball/GameRow";
+export {
+  LeagueGameRow,
+  type LeagueGameRowProps,
+} from "@/components/basketball/LeagueGameRow";

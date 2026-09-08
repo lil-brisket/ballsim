@@ -23,6 +23,8 @@ export type MediaHubTab =
   | "latest"
   | "team"
   | "transactions"
+  | "games"
+  | "injuries"
   | "league"
   | "social";
 

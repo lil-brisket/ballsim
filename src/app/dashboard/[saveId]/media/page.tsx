@@ -20,7 +20,7 @@ type MediaPageProps = {
 };
 
 /**
- * League Media Hub — stories, social reactions, and franchise attention.
+ * League Media Hub — narrative stories, featured hierarchy, social reactions.
  */
 export default async function MediaPage({
   params,
@@ -51,7 +51,7 @@ export default async function MediaPage({
     <>
       <PageHeader
         title="Media Hub"
-        subtitle="League stories, social reaction, and the transaction wire for your franchise"
+        subtitle="The story of the league — narrative context around simulation events"
         actions={
           <form action={markAllMediaReadAction}>
             <input type="hidden" name="saveId" value={saveId} />
@@ -79,10 +79,12 @@ export default async function MediaPage({
         <SocialFeed posts={view.socialPosts} />
       ) : (
         <MediaFeed
+          showFeatured={view.tab === "latest" || view.tab === "team"}
           items={view.items.map((item) => ({
             ...item,
             saveId,
             returnPath,
+            reactionCount: item.reactionCount,
           }))}
         />
       )}

@@ -71,17 +71,18 @@ describe("owner nav config invariants", () => {
     expect(hrefs).toContain("/media");
     expect(hrefs).toContain("/franchise");
     expect(hrefs).toContain("/finances");
+    expect(hrefs).toContain("/transactions");
     expect(hrefs).not.toContain("/team-management");
     expect(hrefs).not.toContain("/relocation");
     expect(hrefs).not.toContain("/staff");
-    expect(hrefs).not.toContain("/transactions");
     expect(hrefs).not.toContain("/business");
     expect(hrefs).not.toContain("/facilities");
   });
 
-  it("league group has seven items", () => {
+  it("league group has eight items including Transactions", () => {
     const league = OWNER_NAV_GROUPS.find((g) => g.id === "league");
-    expect(league?.items).toHaveLength(7);
+    expect(league?.items).toHaveLength(8);
+    expect(league?.items.some((i) => i.href === "/transactions")).toBe(true);
   });
 
   it("injects Offseason Hub only during offseason", () => {

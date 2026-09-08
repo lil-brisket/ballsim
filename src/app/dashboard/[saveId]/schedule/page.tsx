@@ -1,15 +1,26 @@
 import Link from "next/link";
+import { Suspense } from "react";
 import { notFound } from "next/navigation";
-import { loadOwnerSaveView } from "@/application/game-service";
-import { DataTable } from "@/components/owner/DataTable";
+import { loadLeagueScheduleView } from "@/application/game-service";
+import { LeagueGameRow } from "@/components/basketball/LeagueGameRow";
+import {
+  parseTeamFilterParam,
+  resolveTeamFilterId,
+  TeamFilter,
+} from "@/components/league/TeamFilter";
 import { EmptyState, ErrorState } from "@/components/owner/EmptyState";
-import { GameResultLink } from "@/components/owner/GameResultLink";
 import { PageHeader } from "@/components/owner/PageHeader";
-import { TeamLogoMark } from "@/components/team/logos/TeamLogoMark";
+import { shiftFocusDate } from "@/state/league-schedule-selectors";
+import { cn, focusRingClass } from "@/components/ui/styles";
 
 type SchedulePageProps = {
   params: Promise<{ saveId: string }>;
-  searchParams: Promise<{ error?: string }>;
+  searchParams: Promise<{
+    error?: string;
+    date?: string;
+    team?: string;
+    status?: string;
+  }>;
 };
 
 export default async function SchedulePage({
@@ -17,123 +28,249 @@ export default async function SchedulePage({
   searchParams,
 }: SchedulePageProps) {
   const { saveId } = await params;
-  const { error } = await searchParams;
-  const view = await loadOwnerSaveView(saveId);
+  const query = await searchParams;
+
+  const teamParam = query.team;
+  const statusFilter =
+    query.status === "final" || query.status === "upcoming"
+      ? query.status
+      : "all";
+
+  const baseView = await loadLeagueScheduleView(saveId, {
+    focusDate: query.date,
+    status: statusFilter,
+  });
+  if (!baseView) {
+    notFound();
+  }
+
+  const teamValue = parseTeamFilterParam(teamParam, baseView.myTeamId);
+  const teamId = resolveTeamFilterId(teamValue, baseView.myTeamId);
+  const focusDate = query.date || baseView.currentDate;
+
+  const view =
+    teamId == null
+      ? baseView
+      : await loadLeagueScheduleView(saveId, {
+          focusDate,
+          teamId,
+          status: statusFilter,
+        });
   if (!view) {
     notFound();
   }
 
-  const currentDate = view.dashboard.currentDate;
+  const currentDate = view.currentDate;
+  const base = `/dashboard/${saveId}/schedule`;
+
+  function href(overrides: Record<string, string | undefined>): string {
+    const params = new URLSearchParams();
+    const next = {
+      date:
+        (overrides.date ?? focusDate) !== currentDate
+          ? (overrides.date ?? focusDate)
+          : undefined,
+      team: teamValue === "all" ? undefined : String(teamValue),
+      status: statusFilter === "all" ? undefined : statusFilter,
+      ...overrides,
+    };
+    for (const [k, v] of Object.entries(next)) {
+      if (v) {
+        params.set(k, v);
+      }
+    }
+    if (params.get("date") === currentDate) {
+      params.delete("date");
+    }
+    const qs = params.toString();
+    return qs ? `${base}?${qs}` : base;
+  }
+
+  const prevDate = shiftFocusDate(focusDate, -1);
+  const nextDate = shiftFocusDate(focusDate, 1);
 
   return (
-    <>
+    <div className="space-y-4">
       <PageHeader
         title="Schedule"
-        subtitle={`World date ${currentDate} · controlled team games`}
+        subtitle="League schedule — browse all games (Calendar controls simulation)"
       />
-      {error ? <ErrorState message={error} /> : null}
-      {view.schedule.length === 0 ? (
-        <EmptyState message="No games on the schedule yet." />
+      {query.error ? <ErrorState message={query.error} /> : null}
+
+      <div className="flex flex-wrap items-center gap-3">
+        <Link
+          href={href({ date: prevDate })}
+          className={cn(
+            "rounded-md border border-zinc-700 px-2 py-1 text-sm text-zinc-300 hover:border-amber-600",
+            focusRingClass,
+          )}
+        >
+          ← Prev
+        </Link>
+        <Link
+          href={href({ date: undefined })}
+          className={cn(
+            "rounded-md border px-3 py-1 text-sm",
+            focusDate === view.currentDate
+              ? "border-amber-600 text-amber-400"
+              : "border-zinc-700 text-zinc-300 hover:border-amber-600",
+            focusRingClass,
+          )}
+        >
+          Today
+        </Link>
+        <Link
+          href={href({ date: nextDate })}
+          className={cn(
+            "rounded-md border border-zinc-700 px-2 py-1 text-sm text-zinc-300 hover:border-amber-600",
+            focusRingClass,
+          )}
+        >
+          Next →
+        </Link>
+        <span className="font-mono text-sm text-zinc-400">{focusDate}</span>
+      </div>
+
+      <Suspense
+        fallback={<p className="text-xs text-zinc-600">Loading filters…</p>}
+      >
+        <TeamFilter
+          teams={view.teams}
+          myTeamId={view.myTeamId}
+          value={teamValue}
+        />
+      </Suspense>
+
+      <div className="flex flex-wrap gap-2" aria-label="Status filter">
+        {(
+          [
+            ["all", "All"],
+            ["upcoming", "Upcoming"],
+            ["final", "Final"],
+          ] as const
+        ).map(([id, label]) => (
+          <Link
+            key={id}
+            href={href({
+              status: id === "all" ? undefined : id,
+            })}
+            className={cn(
+              "rounded-full border px-3 py-1 text-xs",
+              statusFilter === id
+                ? "border-amber-600 text-amber-400"
+                : "border-zinc-700 text-zinc-400",
+              focusRingClass,
+            )}
+          >
+            {label}
+          </Link>
+        ))}
+      </div>
+
+      {view.emptyReason ? (
+        <EmptyState message={view.emptyReason} />
       ) : (
-        <DataTable headers={["Date", "Matchup", "Status", "Event", "Result"]}>
-          {view.schedule.map((game) => {
-            const isCurrent = game.date === currentDate;
-            const isPast = game.date < currentDate;
-            const isFinal = game.status === "final";
-            const resultCell =
-              game.teamScore !== null && game.opponentScore !== null ? (
-                <span
-                  className={
-                    game.won ? "text-emerald-400" : "text-rose-400"
-                  }
-                >
-                  {game.teamScore}-{game.opponentScore}
-                </span>
-              ) : (
-                <span className="text-zinc-600">—</span>
-              );
-            return (
-              <tr
-                key={game.gameId}
-                className={`border-t border-zinc-800 ${
-                  isCurrent
-                    ? "bg-amber-950/30"
-                    : isPast
-                      ? "opacity-70"
-                      : ""
-                }`}
-              >
-                <td className="px-3 py-2 font-mono text-zinc-500">
-                  {game.date}
-                  {isCurrent ? (
-                    <span className="ml-2 text-xs text-amber-400">today</span>
-                  ) : null}
-                </td>
-                <td className="px-3 py-2 text-zinc-100">
-                  <span className="inline-flex items-center gap-2">
-                    <span className="text-zinc-500">
-                      {game.home ? "vs" : "@"}
-                    </span>
-                    {game.opponentBranding ? (
-                      <span
-                        className="inline-flex h-6 w-6 shrink-0 items-center justify-center overflow-hidden rounded border border-zinc-700"
-                        style={{
-                          backgroundColor: game.opponentBranding.primaryColor,
-                        }}
-                      >
-                        <TeamLogoMark
-                          branding={game.opponentBranding}
-                          size="sm"
-                          decorative
-                        />
-                      </span>
-                    ) : (
-                      <span className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded border border-amber-700/40 bg-amber-950/50 font-mono text-[10px] font-semibold text-amber-400">
-                        {game.opponentAbbreviation}
-                      </span>
-                    )}
-                    <span>
-                      {game.opponentName}{" "}
-                      <span className="font-mono text-zinc-500">
-                        ({game.opponentAbbreviation})
-                      </span>
-                    </span>
-                  </span>
-                </td>
-                <td className="px-3 py-2 text-zinc-400">{game.status}</td>
-                <td className="px-3 py-2 text-sm">
-                  {game.home ? (
-                    <Link
-                      href={`/dashboard/${saveId}/schedule/${game.gameId}/event`}
-                      className="text-amber-400 hover:text-amber-300"
-                    >
-                      {game.gameDayPromotion
-                        ? game.gameDayPromotion.name
-                        : "Manage event"}
-                    </Link>
-                  ) : (
-                    <span className="text-zinc-600">—</span>
-                  )}
-                </td>
-                <td className="px-3 py-2">
-                  {isFinal ? (
-                    <GameResultLink
+        <>
+          <section>
+            <h2 className="mb-2 font-mono text-xs uppercase tracking-[0.14em] text-zinc-500">
+              {focusDate === view.currentDate
+                ? `${focusDate} — Today`
+                : focusDate}
+            </h2>
+            {view.today.length === 0 ? (
+              <p className="text-sm text-zinc-600">No games on this date.</p>
+            ) : (
+              <ul className="space-y-2">
+                {view.today.map((game) => (
+                  <li key={game.gameId} className="space-y-1">
+                    <LeagueGameRow
                       saveId={saveId}
                       gameId={game.gameId}
-                      canOpen
-                      showHint
-                    >
-                      {resultCell}
-                    </GameResultLink>
-                  ) : (
-                    resultCell
-                  )}
-                </td>
-              </tr>
-            );
-          })}
-        </DataTable>
+                      date={game.date}
+                      homeTeamId={game.homeTeamId}
+                      awayTeamId={game.awayTeamId}
+                      homeAbbreviation={game.homeAbbreviation}
+                      awayAbbreviation={game.awayAbbreviation}
+                      homeBranding={game.homeBranding}
+                      awayBranding={game.awayBranding}
+                      homeScore={game.homeScore}
+                      awayScore={game.awayScore}
+                      status={game.status}
+                      competitionType={game.competitionType}
+                    />
+                    {game.canManageEvent ? (
+                      <Link
+                        href={`/dashboard/${saveId}/schedule/${game.gameId}/event`}
+                        className="ml-3 text-xs text-amber-400 hover:text-amber-300"
+                      >
+                        Manage event
+                      </Link>
+                    ) : null}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
+
+          {view.upcoming.length > 0 ? (
+            <section>
+              <h2 className="mb-2 font-mono text-xs uppercase tracking-[0.14em] text-zinc-500">
+                Upcoming
+              </h2>
+              <ul className="space-y-2">
+                {view.upcoming.map((game) => (
+                  <li key={game.gameId}>
+                    <LeagueGameRow
+                      saveId={saveId}
+                      gameId={game.gameId}
+                      date={game.date}
+                      homeTeamId={game.homeTeamId}
+                      awayTeamId={game.awayTeamId}
+                      homeAbbreviation={game.homeAbbreviation}
+                      awayAbbreviation={game.awayAbbreviation}
+                      homeBranding={game.homeBranding}
+                      awayBranding={game.awayBranding}
+                      homeScore={game.homeScore}
+                      awayScore={game.awayScore}
+                      status={game.status}
+                      competitionType={game.competitionType}
+                    />
+                  </li>
+                ))}
+              </ul>
+            </section>
+          ) : null}
+
+          {view.recent.length > 0 ? (
+            <section>
+              <h2 className="mb-2 font-mono text-xs uppercase tracking-[0.14em] text-zinc-500">
+                Recent Results
+              </h2>
+              <ul className="space-y-2">
+                {view.recent.map((game) => (
+                  <li key={game.gameId}>
+                    <LeagueGameRow
+                      saveId={saveId}
+                      gameId={game.gameId}
+                      date={game.date}
+                      homeTeamId={game.homeTeamId}
+                      awayTeamId={game.awayTeamId}
+                      homeAbbreviation={game.homeAbbreviation}
+                      awayAbbreviation={game.awayAbbreviation}
+                      homeBranding={game.homeBranding}
+                      awayBranding={game.awayBranding}
+                      homeScore={game.homeScore}
+                      awayScore={game.awayScore}
+                      status={game.status}
+                      competitionType={game.competitionType}
+                    />
+                  </li>
+                ))}
+              </ul>
+            </section>
+          ) : null}
+        </>
       )}
-    </>
+    </div>
   );
 }
