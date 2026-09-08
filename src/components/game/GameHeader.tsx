@@ -1,9 +1,8 @@
 import Link from "next/link";
 import { getGameModeDefinition } from "@/application/game-mode-catalog";
 import type { DashboardSnapshot } from "@/state/selectors";
-import { PhaseBadge } from "@/components/game/PhaseBadge";
 import { OwnerTeamSwitcher } from "@/components/game/OwnerTeamSwitcher";
-import { MoneyDisplay } from "@/components/owner/MoneyDisplay";
+import { cn, focusRingClass, panelClass } from "@/components/ui/styles";
 
 function NotificationsBell(props: {
   saveId: string;
@@ -19,7 +18,10 @@ function NotificationsBell(props: {
     <Link
       href={href}
       aria-label={label}
-      className="relative inline-flex h-9 w-9 items-center justify-center rounded-md border border-zinc-700 text-zinc-300 hover:border-amber-600 hover:text-amber-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-500"
+      className={cn(
+        "relative inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-zinc-700 text-zinc-300 hover:border-amber-600 hover:text-amber-400",
+        focusRingClass,
+      )}
     >
       <svg
         viewBox="0 0 24 24"
@@ -43,87 +45,76 @@ function NotificationsBell(props: {
   );
 }
 
+/**
+ * Global in-save header: where am I, who am I managing, what day is it?
+ * Financial snapshot lives on Dashboard / Finances — not here.
+ */
 export function GameHeader(props: {
   saveId: string;
   saveName: string;
   dashboard: DashboardSnapshot;
 }) {
-  const { dashboard, saveName, saveId } = props;
+  const { dashboard, saveId } = props;
   const modeDef = getGameModeDefinition(dashboard.mode);
-  const record = `${dashboard.controlledStanding.wins}-${dashboard.controlledStanding.losses}`;
+  const record = `${dashboard.controlledStanding.wins}–${dashboard.controlledStanding.losses}`;
 
   return (
-    <div className="flex flex-col gap-4 rounded-xl border border-zinc-800 bg-zinc-900/50 p-4">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <Link
-          href="/home"
-          className="text-sm text-zinc-400 hover:text-amber-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-500"
-        >
-          ← Home
-        </Link>
-        <div className="flex items-center gap-3">
-          <p className="font-mono text-xs uppercase tracking-[0.18em] text-amber-500">
+    <header
+      className={cn(
+        panelClass,
+        "flex flex-col gap-3 p-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4 sm:p-4",
+      )}
+    >
+      <div className="flex min-w-0 flex-wrap items-center gap-3">
+        <div className="flex shrink-0 items-center gap-2">
+          <Link
+            href="/home"
+            className={cn(
+              "text-sm font-medium text-zinc-100 hover:text-amber-400",
+              focusRingClass,
+            )}
+          >
+            BallSim
+          </Link>
+          <span className="hidden text-zinc-700 sm:inline" aria-hidden>
+            |
+          </span>
+          <span className="hidden font-mono text-[0.65rem] uppercase tracking-[0.16em] text-amber-500 sm:inline">
             {modeDef.name}
+          </span>
+        </div>
+
+        <OwnerTeamSwitcher
+          saveId={saveId}
+          ownedTeams={dashboard.ownedTeams}
+        />
+      </div>
+
+      <div className="flex min-w-0 flex-wrap items-center gap-3 sm:justify-end">
+        <div className="min-w-0">
+          <p className="font-mono text-sm text-zinc-200">
+            {dashboard.currentDate}
           </p>
-          <NotificationsBell
-            saveId={saveId}
-            unreadCount={dashboard.unreadNotificationCount}
-          />
-        </div>
-      </div>
-
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div className="space-y-2">
-          <OwnerTeamSwitcher
-            saveId={saveId}
-            ownedTeams={dashboard.ownedTeams}
-          />
-          <div className="flex flex-wrap items-center gap-2">
-            <PhaseBadge
-              seasonPhase={dashboard.seasonPhase}
-              offseasonStage={dashboard.offseasonStage}
-              displayLabel={dashboard.calendarDisplayLabel}
-            />
-            <span className="text-sm text-zinc-400">
-              Record {record} · #{dashboard.standingsRank}
-            </span>
-          </div>
+          <p className="text-xs text-zinc-500">
+            Season {dashboard.seasonYear}
+          </p>
         </div>
 
-        <div className="flex flex-wrap gap-4 text-sm text-zinc-400">
-          <div>
-            <p className="text-xs uppercase tracking-wide text-zinc-600">Date</p>
-            <p className="font-mono text-zinc-200">{dashboard.currentDate}</p>
-          </div>
-          <div>
-            <p className="text-xs uppercase tracking-wide text-zinc-600">
-              Season
-            </p>
-            <p className="text-zinc-200">{dashboard.seasonYear}</p>
-          </div>
-          <div className="hidden sm:block">
-            <p className="text-xs uppercase tracking-wide text-zinc-600">
-              Business Funds
-            </p>
-            <MoneyDisplay amount={dashboard.cash} className="text-zinc-200" />
-          </div>
-          <div className="hidden sm:block">
-            <p className="text-xs uppercase tracking-wide text-zinc-600">
-              Cap Space
-            </p>
-            <MoneyDisplay
-              amount={dashboard.capSpace}
-              className="text-zinc-200"
-            />
-          </div>
-          <div className="hidden md:block">
-            <p className="text-xs uppercase tracking-wide text-zinc-600">
-              Save
-            </p>
-            <p className="text-zinc-300">{saveName}</p>
-          </div>
-        </div>
+        <span className="hidden text-zinc-700 sm:inline" aria-hidden>
+          |
+        </span>
+
+        <p className="min-w-0 truncate text-sm text-zinc-300">
+          <span className="font-mono text-zinc-100">{record}</span>
+          <span className="text-zinc-500"> · </span>
+          <span className="text-zinc-400">#{dashboard.standingsRank}</span>
+        </p>
+
+        <NotificationsBell
+          saveId={saveId}
+          unreadCount={dashboard.unreadNotificationCount}
+        />
       </div>
-    </div>
+    </header>
   );
 }

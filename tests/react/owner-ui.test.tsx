@@ -26,17 +26,21 @@ describe("Owner UI primitives", () => {
 
   it("renders owner nav links with saveId and new hierarchy", () => {
     const { unmount } = render(<OwnerNav saveId="save_test" />);
-    expect(
-      screen.getByText("Dashboard").closest("a")?.getAttribute("href"),
-    ).toBe("/dashboard/save_test");
-    expect(screen.getByText("Roster").closest("a")?.getAttribute("href")).toBe(
+    const frontOffice = screen.getAllByText("Front Office")[0];
+    expect(frontOffice?.closest("a")?.getAttribute("href")).toBe(
+      "/dashboard/save_test",
+    );
+    expect(screen.getAllByText("Roster")[0]?.closest("a")?.getAttribute("href")).toBe(
       "/dashboard/save_test/roster",
     );
     expect(
-      screen.getByText("Media Hub").closest("a")?.getAttribute("href"),
+      screen.getAllByText("Media Hub")[0]?.closest("a")?.getAttribute("href"),
     ).toBe("/dashboard/save_test/media");
     expect(
-      screen.getByText("Staff & Coaching").closest("a")?.getAttribute("href"),
+      screen
+        .getAllByText("Staff & Coaching")[0]
+        ?.closest("a")
+        ?.getAttribute("href"),
     ).toBe("/dashboard/save_test/staff-coaching");
     expect(screen.queryByText("Notifications (2)")).toBeNull();
     expect(screen.queryByText("Team Management")).toBeNull();

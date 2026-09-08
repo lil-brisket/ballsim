@@ -1,8 +1,8 @@
 "use client";
 
-import Link from "next/link";
 import { useMemo, useState } from "react";
 import type { RosterPlayerView } from "@/state/selectors";
+import { PlayerEntityLink } from "@/components/entity/PlayerEntityLink";
 import { ContractSummary } from "@/components/owner/ContractSummary";
 import { DataTable } from "@/components/owner/DataTable";
 import { StatusBadge } from "@/components/owner/StatusBadge";
@@ -112,12 +112,12 @@ export function RosterTable(props: {
         {filtered.map((player) => (
           <tr key={player.playerId} className="border-t border-zinc-800">
             <td className="px-3 py-2">
-              <Link
-                href={`/dashboard/${props.saveId}/players/${player.playerId}`}
-                className="text-amber-400 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-500"
+              <PlayerEntityLink
+                saveId={props.saveId}
+                playerId={player.playerId}
               >
                 {player.firstName} {player.lastName}
-              </Link>
+              </PlayerEntityLink>
             </td>
             <td className="px-3 py-2 text-zinc-400">{player.position}</td>
             <td className="px-3 py-2 text-zinc-400">{player.age}</td>

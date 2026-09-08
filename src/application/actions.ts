@@ -74,6 +74,8 @@ import {
   continueAfterFantasyDraft,
   initializeFantasyDraftOrder,
   loadFantasyDraftPlayerDetail,
+  loadPlayerDrawerView,
+  loadTeamDrawerView,
   moveFantasyDraftTeamToIndex,
   pauseOwnerFantasyDraft,
   randomizeFantasyDraftOrder,
@@ -92,6 +94,10 @@ import {
 import type { FantasyDraftAutoPickStrategy } from "@/domain/entities/fantasy-draft";
 import { isFantasyDraftAutoPickStrategy } from "@/domain/entities/fantasy-draft";
 import type { FantasyDraftPlayerDetailView } from "@/state/selectors";
+import type {
+  PlayerDrawerView,
+  TeamDrawerView,
+} from "@/state/entity-drawer-selectors";
 import type { FacilityCategory } from "@/domain/entities/franchise-ops";
 import { validateGameSettings } from "@/domain/game-settings-validation";
 import { DEFAULT_GAME_SETTINGS } from "@/domain/game-settings";
@@ -1688,4 +1694,20 @@ export async function fetchFantasyDraftPlayerDetailAction(
   playerId: string,
 ): Promise<FantasyDraftPlayerDetailView | null> {
   return loadFantasyDraftPlayerDetail(saveId, playerId);
+}
+
+/** Client-callable player drawer fetch (no redirect). */
+export async function fetchPlayerDrawerViewAction(
+  saveId: string,
+  playerId: string,
+): Promise<PlayerDrawerView | null> {
+  return loadPlayerDrawerView(saveId, playerId);
+}
+
+/** Client-callable team drawer fetch (no redirect). */
+export async function fetchTeamDrawerViewAction(
+  saveId: string,
+  teamId: string,
+): Promise<TeamDrawerView | null> {
+  return loadTeamDrawerView(saveId, teamId);
 }

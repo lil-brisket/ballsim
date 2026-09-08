@@ -135,6 +135,13 @@ import {
   toPlayerProfileView,
   type PlayerProfileView,
 } from "@/state/player-profile-selectors";
+import {
+  toPlayerDrawerView,
+  toTeamDrawerView,
+  type PlayerDrawerView,
+  type TeamDrawerView,
+} from "@/state/entity-drawer-selectors";
+import { resolveTeamHref } from "@/state/resolve-team-href";
 import { toLeagueAwardsView } from "@/state/award-selectors";
 import {
   toExpansionView,
@@ -816,6 +823,32 @@ export async function loadOwnerPlayerView(
     dashboard: toDashboardSnapshot(loaded.state),
     player,
   };
+}
+
+/** Quick-view drawer payload — any in-league player (public vs controlled fields). */
+export async function loadPlayerDrawerView(
+  saveId: string,
+  playerId: string,
+  store?: SaveGameStore,
+): Promise<PlayerDrawerView | null> {
+  const loaded = await getStore(store).load(saveId);
+  if (!loaded) {
+    return null;
+  }
+  return toPlayerDrawerView(loaded.state, asPlayerId(playerId), saveId);
+}
+
+/** Quick-view drawer payload for any league team. */
+export async function loadTeamDrawerView(
+  saveId: string,
+  teamId: string,
+  store?: SaveGameStore,
+): Promise<TeamDrawerView | null> {
+  const loaded = await getStore(store).load(saveId);
+  if (!loaded) {
+    return null;
+  }
+  return toTeamDrawerView(loaded.state, asTeamId(teamId), saveId);
 }
 
 export async function loadOwnerGameBoxScoreView(
@@ -2799,20 +2832,6 @@ export type MediaPageView = {
   unreadCount: number;
   franchiseAttention: MediaFranchiseAttentionView;
 };
-
-function resolveTeamHref(
-  state: GameState,
-  teamId: TeamId,
-  saveId: string,
-): string {
-  if (teamId === state.user.activeOwnerTeamId) {
-    return `/dashboard/${saveId}/team`;
-  }
-  if (isOwnedFranchise(state, teamId)) {
-    return `/dashboard/${saveId}/teams`;
-  }
-  return `/dashboard/${saveId}/league`;
-}
 
 function toMediaStoryView(
   state: GameState,

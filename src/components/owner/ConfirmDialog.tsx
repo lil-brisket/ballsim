@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import { Overlay } from "@/components/ui/Overlay";
+import { focusRingClass, cn } from "@/components/ui/styles";
 
 /**
  * Presentation-only confirmation. Mutation must happen via form/server action
@@ -19,17 +21,21 @@ export function ConfirmDialog(props: {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="text-xs text-amber-400 hover:underline"
+        className={cn("text-xs text-amber-400 hover:underline", focusRingClass)}
       >
         {props.confirmLabel ?? "Confirm"}
       </button>
       {open ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+        <Overlay
+          className="flex items-center justify-center p-4"
+          onClick={() => setOpen(false)}
+        >
           <div
             role="dialog"
             aria-modal="true"
             aria-labelledby="confirm-dialog-title"
-            className="w-full max-w-md rounded-xl border border-zinc-700 bg-zinc-900 p-5 shadow-xl"
+            className="relative z-10 w-full max-w-md rounded-xl border border-zinc-700 bg-zinc-900 p-5 shadow-xl"
+            onClick={(event) => event.stopPropagation()}
           >
             <h3
               id="confirm-dialog-title"
@@ -42,14 +48,17 @@ export function ConfirmDialog(props: {
               <button
                 type="button"
                 onClick={() => setOpen(false)}
-                className="rounded-md border border-zinc-700 px-3 py-1.5 text-sm text-zinc-200 hover:border-zinc-500"
+                className={cn(
+                  "rounded-md border border-zinc-700 px-3 py-1.5 text-sm text-zinc-200 hover:border-zinc-500",
+                  focusRingClass,
+                )}
               >
                 Cancel
               </button>
               {props.children}
             </div>
           </div>
-        </div>
+        </Overlay>
       ) : null}
     </>
   );
