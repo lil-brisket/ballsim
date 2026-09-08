@@ -5,6 +5,7 @@ import { CalendarWorkspace } from "@/components/calendar/CalendarWorkspace";
 import { ErrorState } from "@/components/owner/EmptyState";
 import { PageHeader } from "@/components/owner/PageHeader";
 import type { CalendarFilter } from "@/domain/entities/calendar-event";
+import { parseCalendarDate } from "@/domain/calendar-date";
 
 type CalendarPageProps = {
   params: Promise<{ saveId: string }>;
@@ -18,6 +19,7 @@ type CalendarPageProps = {
     daysAdvanced?: string;
     highlights?: string;
     fromDate?: string;
+    focus?: string;
   }>;
 };
 
@@ -32,15 +34,28 @@ export default async function CalendarPage({
   const { saveId } = await params;
   const sp = await searchParams;
 
-  const year = sp.year ? Number(sp.year) : undefined;
-  const month = sp.month ? Number(sp.month) : undefined;
+  let year = sp.year ? Number(sp.year) : undefined;
+  let month = sp.month ? Number(sp.month) : undefined;
   const daysAdvanced = sp.daysAdvanced ? Number(sp.daysAdvanced) : 0;
   const showSimSummary = sp.simSummary === "1";
+  let selectedDate = sp.date;
+
+  // Resolve focus=next-game server-side so CalendarWorkspace stays URL-driven.
+  if (sp.focus === "next-game" && !selectedDate) {
+    const probe = await loadCalendarPageView(saveId, {});
+    const nextGameDate = probe?.nextTargets.nextGame?.date;
+    if (nextGameDate) {
+      selectedDate = nextGameDate;
+      const parsed = parseCalendarDate(nextGameDate);
+      year = parsed.year;
+      month = parsed.month;
+    }
+  }
 
   const view = await loadCalendarPageView(saveId, {
     year: Number.isFinite(year) ? year : undefined,
     month: Number.isFinite(month) ? month : undefined,
-    selectedDate: sp.date,
+    selectedDate,
     filter: sp.filter as CalendarFilter | undefined,
     simulationFromDate: sp.fromDate,
     daysAdvanced:
@@ -73,6 +88,8 @@ export default async function CalendarPage({
         showSimSummary={showSimSummary}
         daysAdvanced={Number.isFinite(daysAdvanced) ? daysAdvanced : 0}
         highlightCount={Number.isFinite(highlightCount) ? highlightCount : 0}
+        fromDate={sp.fromDate ?? null}
+        focus={sp.focus ?? null}
       />
     </>
   );

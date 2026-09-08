@@ -7,6 +7,7 @@ export function SplashBackground(props: { className?: string }) {
     <div
       className={`pointer-events-none absolute inset-0 overflow-hidden ${props.className ?? ""}`}
       aria-hidden
+      suppressHydrationWarning
     >
       <div className="splash-court absolute inset-0" />
       <div className="splash-vignette absolute inset-0" />

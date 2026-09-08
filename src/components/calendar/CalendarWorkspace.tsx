@@ -23,6 +23,7 @@ function buildCalendarHref(input: {
   month: number;
   date?: string;
   filter?: CalendarFilter;
+  focus?: string;
 }): string {
   const params = new URLSearchParams();
   params.set("year", String(input.year));
@@ -31,6 +32,7 @@ function buildCalendarHref(input: {
   if (input.filter && input.filter !== "all") {
     params.set("filter", input.filter);
   }
+  if (input.focus) params.set("focus", input.focus);
   return `/dashboard/${input.saveId}/calendar?${params.toString()}`;
 }
 
@@ -40,17 +42,22 @@ export function CalendarWorkspace(props: {
   showSimSummary: boolean;
   daysAdvanced: number;
   highlightCount: number;
+  fromDate?: string | null;
+  focus?: string | null;
 }) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [selectedDate, setSelectedDate] = useState(props.view.selectedDate);
   const [filter, setFilter] = useState<CalendarFilter>(props.view.filter);
   const [mobileDetailOpen, setMobileDetailOpen] = useState(false);
+  const focus = props.focus ?? null;
 
+  /* eslint-disable react-hooks/set-state-in-effect -- sync URL-driven view props into local UI state */
   useEffect(() => {
     setSelectedDate(props.view.selectedDate);
     setFilter(props.view.filter);
   }, [props.view.selectedDate, props.view.filter]);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   const returnPath = buildCalendarHref({
     saveId: props.saveId,
@@ -136,11 +143,32 @@ export function CalendarWorkspace(props: {
     });
   }
 
-  // Preview is computed server-side for the URL-selected date only.
   const preview =
     selectedDate === props.view.selectedDate
       ? props.view.simulationPreview
       : null;
+
+  const teamGame = props.view.teamGameOnSelectedDate
+    ? {
+        gameId: props.view.teamGameOnSelectedDate.gameId,
+        opponentLabel: props.view.teamGameOnSelectedDate.opponentLabel,
+        opponentTeamId: props.view.teamGameOnSelectedDate.opponentTeamId,
+        home: props.view.teamGameOnSelectedDate.home,
+        status: props.view.teamGameOnSelectedDate.status,
+        scoreLabel: props.view.teamGameOnSelectedDate.scoreLabel,
+      }
+    : null;
+
+  const simulatePanel = (
+    <SimulateUntilPanel
+      saveId={props.saveId}
+      returnPath={returnPath}
+      targetDate={selectedDate}
+      currentDate={props.view.currentDate}
+      preview={preview}
+      disabled={props.view.timeDisabled}
+    />
+  );
 
   return (
     <div className={`space-y-6 ${isPending ? "opacity-80" : ""}`}>
@@ -162,12 +190,21 @@ export function CalendarWorkspace(props: {
         currentDate={props.view.currentDate}
       />
 
-      <SimulationShortcuts
-        saveId={props.saveId}
-        returnPath={returnPath}
-        disabled={props.view.timeDisabled}
-        nextTargets={props.view.nextTargets}
-      />
+      <div
+        id="simulation-shortcuts"
+        className={
+          focus === "next-game"
+            ? "rounded-xl border border-amber-700/40 bg-amber-950/10 p-3"
+            : undefined
+        }
+      >
+        <SimulationShortcuts
+          saveId={props.saveId}
+          returnPath={returnPath}
+          disabled={props.view.timeDisabled}
+          nextTargets={props.view.nextTargets}
+        />
+      </div>
 
       <CalendarFilters value={filter} onChange={handleFilterChange} />
 
@@ -181,33 +218,19 @@ export function CalendarWorkspace(props: {
               navigate({ year, month, date: selectedDate, filter })
             }
             onJumpToday={handleJumpToday}
+            userTeamId={props.view.userTeamId}
           />
         </div>
 
         <div className="hidden space-y-4 lg:block">
           <CalendarDayDetail
+            saveId={props.saveId}
             date={selectedDate}
             events={selectedEvents}
             currentDate={props.view.currentDate}
-                      teamGame={
-              props.view.teamGameOnSelectedDate
-                ? {
-                    gameId: props.view.teamGameOnSelectedDate.gameId,
-                    opponentLabel: props.view.teamGameOnSelectedDate.opponentLabel,
-                    home: props.view.teamGameOnSelectedDate.home,
-                    status: props.view.teamGameOnSelectedDate.status,
-                    scoreLabel: props.view.teamGameOnSelectedDate.scoreLabel,
-                  }
-                : null
-            }
-          />
-          <SimulateUntilPanel
-            saveId={props.saveId}
-            returnPath={returnPath}
-            targetDate={selectedDate}
-            currentDate={props.view.currentDate}
-            preview={preview}
-            disabled={props.view.timeDisabled}
+            userTeamId={props.view.userTeamId}
+            teamGame={teamGame}
+            simulatePanel={simulatePanel}
           />
         </div>
       </div>
@@ -215,31 +238,16 @@ export function CalendarWorkspace(props: {
       <div className="space-y-4 lg:hidden">
         {mobileDetailOpen || selectedDate ? (
           <CalendarDayDetail
+            saveId={props.saveId}
             date={selectedDate}
             events={selectedEvents}
             currentDate={props.view.currentDate}
+            userTeamId={props.view.userTeamId}
             onClose={() => setMobileDetailOpen(false)}
-                      teamGame={
-              props.view.teamGameOnSelectedDate
-                ? {
-                    gameId: props.view.teamGameOnSelectedDate.gameId,
-                    opponentLabel: props.view.teamGameOnSelectedDate.opponentLabel,
-                    home: props.view.teamGameOnSelectedDate.home,
-                    status: props.view.teamGameOnSelectedDate.status,
-                    scoreLabel: props.view.teamGameOnSelectedDate.scoreLabel,
-                  }
-                : null
-            }
+            teamGame={teamGame}
+            simulatePanel={simulatePanel}
           />
         ) : null}
-        <SimulateUntilPanel
-          saveId={props.saveId}
-          returnPath={returnPath}
-          targetDate={selectedDate}
-          currentDate={props.view.currentDate}
-          preview={preview}
-          disabled={props.view.timeDisabled}
-        />
       </div>
 
       <SimulationSummaryModal
@@ -254,6 +262,9 @@ export function CalendarWorkspace(props: {
         leagueEvents={props.view.simulationSummary?.leagueEvents}
         injuryNotes={props.view.simulationSummary?.injuryNotes}
         transactionCount={props.view.simulationSummary?.transactionCount}
+        fromDate={props.fromDate}
+        toDate={props.view.currentDate}
+        saveId={props.saveId}
       />
     </div>
   );

@@ -1,6 +1,7 @@
 "use client";
 
 import type { CalendarMonthGrid } from "@/systems/calendar";
+import type { TeamId } from "@/domain/ids";
 import { CalendarDayCell } from "@/components/calendar/CalendarDayCell";
 
 const WEEKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"] as const;
@@ -38,6 +39,7 @@ export function CalendarMonthView(props: {
   onSelectDate: (date: string) => void;
   onChangeMonth: (year: number, month: number) => void;
   onJumpToday: () => void;
+  userTeamId?: TeamId | null;
 }) {
   const title = `${MONTH_NAMES[props.grid.month - 1]} ${props.grid.year}`;
   const prev = shiftMonth(props.grid.year, props.grid.month, -1);
@@ -88,6 +90,7 @@ export function CalendarMonthView(props: {
               cell={cell}
               selected={cell.date === props.selectedDate}
               onSelect={props.onSelectDate}
+              userTeamId={props.userTeamId}
             />
           )),
         )}

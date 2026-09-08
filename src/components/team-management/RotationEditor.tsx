@@ -13,6 +13,8 @@ import {
   type RotationPlayerCardData,
 } from "@/components/team-management/RotationPlayerCard";
 import { RotationQuarterVisualization } from "@/components/team-management/RotationQuarterVisualization";
+import { RotationHierarchyPanel } from "@/components/team-management/RotationHierarchyPanel";
+import { RotationRecommendationPanel } from "@/components/team-management/RotationRecommendationPanel";
 
 type SortKey =
   | "name"
@@ -176,6 +178,13 @@ function optimizeSnapshotKey(saveId: string, teamId: string): string {
 export function RotationEditor(props: {
   saveId: string;
   rotation: RotationView;
+  recommendationPreview?: {
+    playerCount: number;
+    totalMinutes: number;
+    targetMinutes: number;
+    changelog: import("@/systems/roster-management").OptimizeChange[];
+    reasons: string[];
+  } | null;
 }) {
   const returnPath = `/dashboard/${props.saveId}/team-management/rotations`;
   const initialRef = useRef(mapRowsFromView(props.rotation));
@@ -354,6 +363,25 @@ export function RotationEditor(props: {
 
   return (
     <div className="space-y-4">
+      <RotationHierarchyPanel
+        saveId={props.saveId}
+        rotation={props.rotation}
+      />
+
+      {props.recommendationPreview ? (
+        <RotationRecommendationPanel
+          saveId={props.saveId}
+          teamId={props.rotation.teamId}
+          returnPath={returnPath}
+          preset={preset}
+          currentPlayerCount={meaningfulCount}
+          currentTotalMinutes={totalPlanned}
+          currentTarget={props.rotation.target}
+          preview={props.recommendationPreview}
+          onBeforeApply={snapshotBeforeOptimize}
+        />
+      ) : null}
+
       {props.rotation.feasibilityBanner ? (
         <div className="rounded-lg border border-rose-700 bg-rose-950/40 px-4 py-3 text-sm text-rose-200">
           {props.rotation.feasibilityBanner}
@@ -389,8 +417,9 @@ export function RotationEditor(props: {
             <button
               type="submit"
               className="rounded-md border border-amber-700 px-3 py-1.5 text-sm text-amber-300 hover:bg-amber-950"
+              title="Applies the AI recommendation shown above"
             >
-              Auto Optimize
+              Apply Recommendation
             </button>
           </form>
           <button

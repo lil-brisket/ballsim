@@ -1,62 +1,11 @@
 import type { CalendarDayCell as CalendarDayCellData } from "@/systems/calendar";
-import type { CalendarEventView } from "@/domain/entities/calendar-event";
-
-const INDICATOR_ORDER = [
-  "game",
-  "news",
-  "transaction",
-  "injury",
-  "deadline",
-  "action",
-] as const;
-
-type IndicatorKind = (typeof INDICATOR_ORDER)[number];
-
-const INDICATOR_DOT: Record<IndicatorKind, string> = {
-  game: "bg-sky-400",
-  news: "bg-zinc-400",
-  transaction: "bg-violet-400",
-  injury: "bg-rose-400",
-  deadline: "bg-amber-400",
-  action: "bg-amber-300 ring-1 ring-amber-500",
-};
+import type { TeamId } from "@/domain/ids";
+import {
+  ATTENTION_INDICATOR_DOT,
+  collectAttentionIndicators,
+} from "@/components/calendar/event-attention-tiers";
 
 const MAX_VISIBLE_DOTS = 4;
-
-function collectIndicators(
-  events: readonly CalendarEventView[],
-): IndicatorKind[] {
-  const present = new Set<IndicatorKind>();
-  for (const event of events) {
-    if (event.lifecycle === "action_required" || event.blocking) {
-      present.add("action");
-      continue;
-    }
-    switch (event.category) {
-      case "game":
-        present.add("game");
-        break;
-      case "news":
-        present.add("news");
-        break;
-      case "transaction":
-        present.add("transaction");
-        break;
-      case "injury":
-        present.add("injury");
-        break;
-      case "deadline":
-        present.add("deadline");
-        break;
-      case "action_required":
-        present.add("action");
-        break;
-      default:
-        break;
-    }
-  }
-  return INDICATOR_ORDER.filter((kind) => present.has(kind));
-}
 
 function dayNumber(isoDate: string): string {
   const day = isoDate.slice(8, 10);
@@ -67,11 +16,12 @@ export function CalendarDayCell(props: {
   cell: CalendarDayCellData;
   selected: boolean;
   onSelect: (date: string) => void;
+  userTeamId?: TeamId | null;
 }) {
-  const { cell, selected, onSelect } = props;
-  const indicators = collectIndicators(cell.events);
+  const { cell, selected, onSelect, userTeamId } = props;
+  const indicators = collectAttentionIndicators(cell.events, userTeamId);
   const visible = indicators.slice(0, MAX_VISIBLE_DOTS);
-  const overflow = Math.max(0, cell.events.length - visible.length);
+  const overflow = Math.max(0, indicators.length - visible.length);
   const ariaLabel = [
     cell.date,
     cell.isToday ? "today" : null,
@@ -112,8 +62,8 @@ export function CalendarDayCell(props: {
         {visible.map((kind) => (
           <span
             key={kind}
-            title={kind}
-            className={`inline-block h-1.5 w-1.5 rounded-full ${INDICATOR_DOT[kind]}`}
+            title={kind.replace("_", " ")}
+            className={`inline-block h-1.5 w-1.5 rounded-full ${ATTENTION_INDICATOR_DOT[kind]}`}
             aria-hidden
           />
         ))}

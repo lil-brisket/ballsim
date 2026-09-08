@@ -19,6 +19,7 @@ import {
   toInjuryReportView,
   toSeasonTransactionsView,
 } from "@/state/team-management-selectors";
+import { toTeamHubView } from "@/state/team-hub-selectors";
 import {
   applyCoachingPresetCommand,
   applyLineupRecommendationCommand,
@@ -28,6 +29,7 @@ import {
   updateRotationCommand,
   optimizeRotationCommand,
 } from "@/systems/team-management-commands";
+import { previewOptimizeRotation } from "@/systems/roster-management";
 
 import type { ContractInput } from "@/domain/entities/contract";
 import {
@@ -393,6 +395,7 @@ export type OwnerSaveView = CreateGameResult & {
   /** Persisted career settings from GameState.settings (read-only for UI). */
   settings: GameSettings;
   leagueAwards: ReturnType<typeof toLeagueAwardsView>;
+  teamHub: import("@/state/team-hub-selectors").TeamHubView;
 };
 
 function toSaveSummary(loaded: LoadedSaveGame): SaveGameSummary {
@@ -576,6 +579,7 @@ export async function loadOwnerSaveView(
     phaseDashboard: toPhaseDashboardView(state),
     settings: state.settings,
     leagueAwards: toLeagueAwardsView(state, saveId),
+    teamHub: toTeamHubView(state),
     navGroups: ownerNavGroupsForState(state),
   };
 }
@@ -617,6 +621,7 @@ export type CalendarPageView = {
   teamGameOnSelectedDate: {
     gameId: string;
     opponentLabel: string;
+    opponentTeamId: string;
     home: boolean;
     status: string;
     scoreLabel: string | null;
@@ -759,6 +764,7 @@ export async function loadCalendarPageView(
       return {
         gameId: game.id,
         opponentLabel,
+        opponentTeamId: opponentId,
         home,
         status: game.status,
         scoreLabel,
@@ -3839,6 +3845,8 @@ export type TeamManagementView = CreateGameResult & {
   injuries: ReturnType<typeof toInjuryReportView>;
   transactions: ReturnType<typeof toSeasonTransactionsView>;
   recommendation: ReturnType<typeof previewLineupRecommendation>;
+  /** Pure preview of Auto Optimize — not persisted. */
+  optimizePreview: ReturnType<typeof previewOptimizeRotation>;
 };
 
 export async function loadTeamManagementView(
@@ -3890,6 +3898,11 @@ export async function loadTeamManagementView(
     recommendation: previewLineupRecommendation(
       state,
       state.user.activeOwnerTeamId,
+    ),
+    optimizePreview: previewOptimizeRotation(
+      state,
+      state.user.activeOwnerTeamId,
+      { rotationPreset: "auto" },
     ),
     navGroups: ownerNavGroupsForState(state),
   };

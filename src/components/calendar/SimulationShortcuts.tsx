@@ -57,9 +57,15 @@ export function SimulationShortcuts(props: {
 
   return (
     <div className="space-y-2">
-      <p className="text-xs uppercase tracking-wide text-zinc-500">
-        Simulation shortcuts
-      </p>
+      <div className="flex flex-wrap items-end justify-between gap-2">
+        <p className="text-xs uppercase tracking-wide text-zinc-500">
+          Simulation shortcuts
+        </p>
+        <p className="max-w-md text-[0.65rem] text-zinc-600">
+          Next Game advances until the earliest of your next team game or a
+          blocking decision.
+        </p>
+      </div>
       <div
         className="flex flex-wrap gap-2"
         role="group"
@@ -80,7 +86,10 @@ export function SimulationShortcuts(props: {
           <ShortcutButton
             label="Next Game"
             pendingLabel="Simulating…"
-            hint={targetHint(nextTargets.nextGame)}
+            hint={
+              targetHint(nextTargets.nextGame) ??
+              "Simulate until the next team game or a blocking decision, whichever comes first"
+            }
             disabled={props.disabled || !nextTargets.nextGame}
           />
         </form>

@@ -2,32 +2,27 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import {
   advanceLeaguePhaseAction,
-  continuePastPhaseAction,
   dismissPhaseTaskAction,
   letAiHandlePhaseAction,
   switchActiveOwnerTeamAction,
 } from "@/application/actions";
 import { loadOwnerSaveView } from "@/application/game-service";
-import { AdvanceTimeControls } from "@/components/game/AdvanceTimeControls";
-import { SimulationAssistantSummary } from "@/components/game/SimulationAssistantSummary";
-import { SimulationProgressBanner } from "@/components/game/SimulationProgressBanner";
 import { PhaseDashboard } from "@/components/phase/PhaseDashboard";
-import { AttentionRequiredPanel } from "@/components/owner/dashboard/AttentionRequiredPanel";
-import {
-  DashboardHubLinks,
-  LeagueNewsPanel,
-  NextGamePanel,
-  NextImportantEventPanel,
-} from "@/components/owner/dashboard/DashboardHubPanels";
+import { ActionCenter } from "@/components/action-center/ActionCenter";
+import { AroundTheLeaguePanel } from "@/components/owner/dashboard/AroundTheLeaguePanel";
 import { DashboardNotifications } from "@/components/owner/dashboard/DashboardNotifications";
 import { FranchiseHealthPanel } from "@/components/owner/dashboard/FranchiseHealthPanel";
 import { FranchiseSituations } from "@/components/owner/dashboard/FranchiseSituations";
+import { FrontOfficeHeader } from "@/components/owner/dashboard/FrontOfficeHeader";
+import { NextGamePanel } from "@/components/owner/dashboard/NextGamePanel";
 import { OwnerPanel } from "@/components/owner/dashboard/OwnerPanel";
 import { PendingOwnerDecisionPanel } from "@/components/owner/dashboard/PendingOwnerDecisionPanel";
 import { RecentActivity } from "@/components/owner/dashboard/RecentActivity";
-import { TeamDecisionPanel } from "@/components/owner/dashboard/TeamDecisionPanel";
+import { RecentResultsPanel } from "@/components/owner/dashboard/RecentResultsPanel";
+import { TeamSnapshotPanel } from "@/components/owner/dashboard/TeamSnapshotPanel";
 import { ErrorState } from "@/components/owner/EmptyState";
-import { PageHeader } from "@/components/owner/PageHeader";
+import { buildActionCenterView } from "@/state/action-center-selectors";
+import { recentFormFromResults } from "@/state/recent-form-selectors";
 
 type DashboardPageProps = {
   params: Promise<{ saveId: string }>;
@@ -47,61 +42,44 @@ export default async function DashboardPage({
 
   const { save, ownerDashboard: dash, dashboard, phaseDashboard } = view;
   const returnPath = `/dashboard/${saveId}`;
-  const timeDisabled =
-    dash.flags.userOnDraftClock || dash.flags.pendingOwnerDecision;
   const phase = dash.simulationPhase;
-  const unresolvedWarning =
-    phase.unresolvedDecisionCount > 0 && phase.responsibility === "unresolved"
-      ? `${phase.primaryLabel} has ${phase.unresolvedDecisionCount} unresolved decision${phase.unresolvedDecisionCount === 1 ? "" : "s"}`
-      : null;
   const aiCanHandle =
     phase.aiAssistEnabled && phase.unresolvedDecisionCount > 0;
-  const activePhaseId = phaseDashboard.resolved.phaseId;
-  const goToHref =
-    activePhaseId === "offseason.free_agency"
-      ? `/dashboard/${saveId}/free-agency`
-      : activePhaseId === "offseason.draft" ||
-          activePhaseId === "offseason.draft_preparation"
-        ? `/dashboard/${saveId}/draft`
-        : `/dashboard/${saveId}`;
 
+  const actionCenter = buildActionCenterView({
+    actionItems: dash.actionItems,
+    phaseResponsibility: dash.phaseResponsibility,
+    currentDate: dash.currentDate,
+    saveId,
+    daysUntilTradeDeadline: dash.daysUntilTradeDeadline,
+  });
+
+  const recentForm = recentFormFromResults(dashboard.recentResults);
+  const nextGame = dash.team.upcomingGames[0];
+  const nextOpponentLabel = nextGame
+    ? `${nextGame.home ? "vs" : "@"} ${nextGame.opponentAbbreviation}`
+    : null;
+  const isNextGameFocal = actionCenter.focalMode === "next-game";
   const showOffseasonShortcut = dash.seasonPhase === "offseason";
 
   return (
-    <>
-      <PageHeader
-        title={`${dash.controlledTeam.city} ${dash.controlledTeam.name}`}
-        subtitle={`${save.name} · ${dash.leagueName} · ${dash.team.wins}–${dash.team.losses}`}
-        actions={
-          <AdvanceTimeControls
-            saveId={save.id}
-            returnPath={returnPath}
-            disabled={timeDisabled}
-            untilPhaseLabel={phase.nextPhaseLabel ?? undefined}
-            unresolvedWarning={unresolvedWarning}
-            requiresConfirm={Boolean(unresolvedWarning)}
-            confirmTitle={`${phase.primaryLabel} is still active`}
-            confirmDescription={
-              unresolvedWarning
-                ? `${unresolvedWarning}. What would you like to do?`
-                : undefined
-            }
-            goToHref={goToHref}
-            letAiHandleAction={letAiHandlePhaseAction}
-            continueAnywayAction={continuePastPhaseAction}
-            assistantSummary={
-              <SimulationAssistantSummary
-                assistance={dashboard.activeFranchiseAi.assistance}
-                compact
-              />
-            }
-          />
-        }
+    <div className="space-y-8">
+      <FrontOfficeHeader
+        saveId={saveId}
+        saveName={save.name}
+        leagueName={dash.leagueName}
+        currentDate={dash.currentDate}
+        seasonYear={dash.seasonYear}
+        seasonPhaseLabel={phase.primaryLabel}
+        teamCity={dash.controlledTeam.city}
+        teamName={dash.controlledTeam.name}
+        wins={dash.team.wins}
+        losses={dash.team.losses}
+        leagueRank={dash.team.leagueRank}
+        nextOpponentLabel={nextOpponentLabel}
       />
 
       {error ? <ErrorState message={error} /> : null}
-
-      <DashboardHubLinks saveId={saveId} />
 
       {showOffseasonShortcut ? (
         <Link
@@ -167,42 +145,19 @@ export default async function DashboardPage({
         </p>
       ) : null}
 
-      <div className="grid gap-8 lg:grid-cols-2 lg:items-start">
-        <NextGamePanel team={dash.team} saveId={saveId} />
-        <NextImportantEventPanel
-          event={dash.nextImportantEvent}
-          saveId={saveId}
-        />
-      </div>
-
-      <AttentionRequiredPanel
-        items={dash.actionItems}
-        responsibility={dash.phaseResponsibility}
-        saveId={saveId}
-        returnPath={returnPath}
-        aiCanHandle={aiCanHandle}
-        letAiHandleAction={letAiHandlePhaseAction}
-      />
-
-      <FranchiseSituations
-        saveId={saveId}
-        situations={dash.situations}
-        returnPath={returnPath}
-      />
-
-      <SimulationProgressBanner
-        seasonYear={dash.seasonYear}
-        phase={phase.primaryLabel}
-        currentDate={dash.currentDate}
-      />
-
       {dash.flags.userOnDraftClock ? (
         <p
           role="status"
           className="rounded-md border border-amber-700/50 bg-amber-950/40 px-4 py-3 text-sm text-amber-200"
         >
           Your team is on the draft clock. Make a selection on the Draft screen
-          before advancing time.
+          before advancing time.{" "}
+          <Link
+            href={`/dashboard/${saveId}/draft`}
+            className="font-medium text-amber-300 underline"
+          >
+            Open Draft
+          </Link>
         </p>
       ) : null}
 
@@ -223,37 +178,66 @@ export default async function DashboardPage({
           ) : null}
           <p className="text-zinc-400">
             Continue from the Calendar — time advancement is calendar-driven.
-            Season review no longer blocks simulation.
           </p>
-          <a
+          <Link
             href={`/dashboard/${saveId}/calendar`}
             className="inline-block rounded-md bg-amber-600 px-4 py-2 text-sm font-medium text-zinc-950 hover:bg-amber-500"
           >
             Open Calendar
-          </a>
+          </Link>
         </div>
       ) : null}
 
-      {dash.seasonStory && !dash.flags.seasonReviewPending ? (
-        <p className="text-sm text-zinc-400">{dash.seasonStory}</p>
-      ) : null}
+      <ActionCenter
+        view={actionCenter}
+        saveId={saveId}
+        returnPath={returnPath}
+        aiCanHandle={aiCanHandle}
+        letAiHandleAction={letAiHandlePhaseAction}
+      />
 
-      <FranchiseHealthPanel health={dash.health} insights={dash.insights} />
+      <div className="grid gap-8 lg:grid-cols-2 lg:items-start">
+        <NextGamePanel
+          team={dash.team}
+          saveId={saveId}
+          teamRecord={`${dash.team.wins}–${dash.team.losses}`}
+          recentForm={recentForm}
+          isFocal={isNextGameFocal}
+        />
+        <TeamSnapshotPanel
+          team={dash.team}
+          saveId={saveId}
+          recentForm={recentForm}
+        />
+      </div>
 
-      <LeagueNewsPanel headlines={dash.mediaHeadlines} saveId={saveId} />
+      <RecentResultsPanel saveId={saveId} games={recentForm.games} />
+
+      <div className="grid gap-8 lg:grid-cols-2 lg:items-start">
+        <AroundTheLeaguePanel
+          headlines={dash.mediaHeadlines}
+          saveId={saveId}
+        />
+        <div className="opacity-90">
+          <RecentActivity activity={dash.activity.slice(0, 5)} />
+        </div>
+      </div>
+
+      <FranchiseSituations
+        saveId={saveId}
+        situations={dash.situations}
+        returnPath={returnPath}
+      />
 
       <div className="grid gap-8 lg:grid-cols-2">
-        <TeamDecisionPanel team={dash.team} saveId={saveId} />
+        <FranchiseHealthPanel health={dash.health} insights={dash.insights} />
         <OwnerPanel owner={dash.owner} />
       </div>
 
-      <div className="grid gap-8 lg:grid-cols-2">
-        <DashboardNotifications
-          notifications={dash.notifications}
-          saveId={saveId}
-        />
-        <RecentActivity activity={dash.activity} />
-      </div>
+      <DashboardNotifications
+        notifications={dash.notifications}
+        saveId={saveId}
+      />
 
       <details className="rounded-xl border border-zinc-800 bg-zinc-900/30 px-4 py-3">
         <summary className="cursor-pointer font-mono text-[0.65rem] uppercase tracking-[0.16em] text-zinc-500">
@@ -272,6 +256,6 @@ export default async function DashboardPage({
           />
         </div>
       </details>
-    </>
+    </div>
   );
 }

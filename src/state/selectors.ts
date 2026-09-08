@@ -130,6 +130,7 @@ export type DashboardSnapshot = {
     gameId: string;
     date: string;
     opponentAbbreviation: string;
+    opponentTeamId: string;
     home: boolean;
     teamScore: number;
     opponentScore: number;
@@ -1117,6 +1118,7 @@ export function toDashboardSnapshot(state: GameState): DashboardSnapshot {
         gameId: game.id,
         date: game.date,
         opponentAbbreviation: opponent?.abbreviation ?? "???",
+        opponentTeamId: opponentId,
         home,
         teamScore,
         opponentScore,
