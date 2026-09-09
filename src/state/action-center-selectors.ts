@@ -297,3 +297,37 @@ export function filterTeamDecisions(
     )
     .slice(0, limit);
 }
+
+/**
+ * Domain-filtered decisions for management hubs (Contracts, Staff, Finances, etc.).
+ * Does not invent actions — filters existing Action Center items only.
+ * Sort: actionable/blocked (urgency) → deadline → importance → id.
+ */
+export function filterDomainDecisions(
+  items: ActionCenterItem[],
+  categories: Array<OwnerDashboardActionCategory | "phase">,
+  limit = 5,
+): ActionCenterItem[] {
+  const categorySet = new Set<string>(categories);
+  const filtered = items.filter((item) => categorySet.has(item.category));
+  filtered.sort((a, b) => {
+    const urgencyOrder: Record<ActionCenterUrgency, number> = {
+      immediate: 0,
+      soon: 1,
+      routine: 2,
+    };
+    const urg = urgencyOrder[a.urgency] - urgencyOrder[b.urgency];
+    if (urg !== 0) return urg;
+    if (a.deadline && b.deadline) {
+      const cmp = a.deadline.localeCompare(b.deadline);
+      if (cmp !== 0) return cmp;
+    } else if (a.deadline && !b.deadline) {
+      return -1;
+    } else if (!a.deadline && b.deadline) {
+      return 1;
+    }
+    if (a.priority !== b.priority) return a.priority - b.priority;
+    return a.id.localeCompare(b.id);
+  });
+  return filtered.slice(0, limit);
+}

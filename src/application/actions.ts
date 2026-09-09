@@ -76,6 +76,7 @@ import {
   loadFantasyDraftPlayerDetail,
   loadPlayerDrawerView,
   loadTeamDrawerView,
+  loadStaffDrawerView,
   moveFantasyDraftTeamToIndex,
   pauseOwnerFantasyDraft,
   randomizeFantasyDraftOrder,
@@ -97,6 +98,7 @@ import type { FantasyDraftPlayerDetailView } from "@/state/selectors";
 import type {
   PlayerDrawerView,
   TeamDrawerView,
+  StaffDrawerView,
 } from "@/state/entity-drawer-selectors";
 import type { FacilityCategory } from "@/domain/entities/franchise-ops";
 import { validateGameSettings } from "@/domain/game-settings-validation";
@@ -1710,4 +1712,12 @@ export async function fetchTeamDrawerViewAction(
   teamId: string,
 ): Promise<TeamDrawerView | null> {
   return loadTeamDrawerView(saveId, teamId);
+}
+
+/** Client-callable staff drawer fetch (no redirect). */
+export async function fetchStaffDrawerViewAction(
+  saveId: string,
+  staffId: string,
+): Promise<StaffDrawerView | null> {
+  return loadStaffDrawerView(saveId, staffId);
 }

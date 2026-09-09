@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   buildActionCenterView,
+  filterDomainDecisions,
   filterTeamDecisions,
   mapOwnerActionToCenterItem,
 } from "@/state/action-center-selectors";
@@ -142,5 +143,38 @@ describe("action-center-selectors", () => {
       true,
     );
     expect(team.some((i) => i.id === "r1")).toBe(true);
+  });
+
+  it("filters domain decisions by category and sorts by urgency then deadline", () => {
+    const view = buildActionCenterView({
+      actionItems: [
+        action({
+          id: "c_late",
+          category: "contracts",
+          severity: "info",
+          title: "Later",
+          evidence: ["Due 2026-09-20"],
+        }),
+        action({
+          id: "c_soon",
+          category: "contracts",
+          severity: "warning",
+          title: "Soon",
+          evidence: ["Due 2026-09-10"],
+        }),
+        action({
+          id: "staff1",
+          category: "staff",
+          severity: "critical",
+          title: "Hire",
+        }),
+      ],
+      currentDate: "2026-09-08",
+      saveId: "s1",
+    });
+    const contracts = filterDomainDecisions(view.items, ["contracts"], 5);
+    expect(contracts).toHaveLength(2);
+    expect(contracts[0]!.id).toBe("c_soon");
+    expect(contracts[1]!.id).toBe("c_late");
   });
 });

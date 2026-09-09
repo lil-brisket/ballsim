@@ -142,8 +142,10 @@ import {
 import {
   toPlayerDrawerView,
   toTeamDrawerView,
+  toStaffDrawerView,
   type PlayerDrawerView,
   type TeamDrawerView,
+  type StaffDrawerView,
 } from "@/state/entity-drawer-selectors";
 import { resolveTeamHref } from "@/state/resolve-team-href";
 import { toLeagueAwardsView } from "@/state/award-selectors";
@@ -174,6 +176,30 @@ import {
   type PhaseDashboardView,
 } from "@/state/phase-dashboard";
 import { toLeagueHubView, type LeagueHubView } from "@/state/league-hub-selectors";
+import {
+  toContractHubView,
+  type ContractHubView,
+} from "@/state/contract-hub-selectors";
+import {
+  toStaffHubView,
+  type StaffHubView,
+} from "@/state/staff-hub-selectors";
+import {
+  toDevelopmentHubView,
+  type DevelopmentHubView,
+} from "@/state/development-hub-selectors";
+import {
+  toDevelopmentLeagueDashboardView,
+  type DevelopmentLeagueDashboardView,
+} from "@/state/development-league-selectors";
+import {
+  toFinanceHubView,
+  type FinanceHubView,
+} from "@/state/finance-hub-selectors";
+import {
+  toFranchiseHubView,
+  type FranchiseHubView,
+} from "@/state/franchise-hub-selectors";
 import {
   toTransactionHubView,
   type TransactionHubView,
@@ -874,6 +900,19 @@ export async function loadTeamDrawerView(
     return null;
   }
   return toTeamDrawerView(loaded.state, asTeamId(teamId), saveId);
+}
+
+/** Quick-view drawer payload for a staff member. */
+export async function loadStaffDrawerView(
+  saveId: string,
+  staffId: string,
+  store?: SaveGameStore,
+): Promise<StaffDrawerView | null> {
+  const loaded = await getStore(store).load(saveId);
+  if (!loaded) {
+    return null;
+  }
+  return toStaffDrawerView(loaded.state, staffId, saveId);
 }
 
 export async function loadOwnerGameBoxScoreView(
@@ -3016,6 +3055,90 @@ export async function loadLeagueHubView(
     return null;
   }
   return toLeagueHubView(loaded.state);
+}
+
+/**
+ * Contract Management Hub — payroll, options, and contract decisions.
+ */
+export async function loadContractHubView(
+  saveId: string,
+  store?: SaveGameStore,
+): Promise<ContractHubView | null> {
+  const loaded = await getStore(store).load(saveId);
+  if (!loaded) {
+    return null;
+  }
+  return toContractHubView(loaded.state);
+}
+
+/**
+ * Staff Hub — Staff Directory, vacancies, and hiring market.
+ */
+export async function loadStaffHubView(
+  saveId: string,
+  store?: SaveGameStore,
+): Promise<StaffHubView | null> {
+  const loaded = await getStore(store).load(saveId);
+  if (!loaded) {
+    return null;
+  }
+  return toStaffHubView(loaded.state);
+}
+
+/**
+ * Player Development Hub — who is changing on the roster.
+ */
+export async function loadDevelopmentHubView(
+  saveId: string,
+  store?: SaveGameStore,
+): Promise<DevelopmentHubView | null> {
+  const loaded = await getStore(store).load(saveId);
+  if (!loaded) {
+    return null;
+  }
+  return toDevelopmentHubView(loaded.state);
+}
+
+/**
+ * Franchise Development League Hub.
+ */
+export async function loadDevelopmentLeagueHubView(
+  saveId: string,
+  store?: SaveGameStore,
+): Promise<DevelopmentLeagueDashboardView | null> {
+  const loaded = await getStore(store).load(saveId);
+  if (!loaded) {
+    return null;
+  }
+  return toDevelopmentLeagueDashboardView(loaded.state);
+}
+
+/**
+ * Finance Hub — position, performance, commitments, activity, trend.
+ */
+export async function loadFinanceHubView(
+  saveId: string,
+  store?: SaveGameStore,
+): Promise<FinanceHubView | null> {
+  const loaded = await getStore(store).load(saveId);
+  if (!loaded) {
+    return null;
+  }
+  return toFinanceHubView(loaded.state);
+}
+
+/**
+ * Franchise Hub — long-term organizational state.
+ */
+export async function loadFranchiseHubView(
+  saveId: string,
+  store?: SaveGameStore,
+): Promise<FranchiseHubView | null> {
+  const loaded = await getStore(store).load(saveId);
+  if (!loaded) {
+    return null;
+  }
+  return toFranchiseHubView(loaded.state);
 }
 
 /**

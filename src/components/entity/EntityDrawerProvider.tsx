@@ -9,12 +9,15 @@ import {
 } from "react";
 import {
   fetchPlayerDrawerViewAction,
+  fetchStaffDrawerViewAction,
   fetchTeamDrawerViewAction,
 } from "@/application/actions";
 import { PlayerDrawer } from "@/components/basketball/PlayerDrawer";
+import { StaffDrawer } from "@/components/basketball/StaffDrawer";
 import { TeamDrawer } from "@/components/basketball/TeamDrawer";
 import type {
   PlayerDrawerView,
+  StaffDrawerView,
   TeamDrawerView,
 } from "@/state/entity-drawer-selectors";
 
@@ -23,6 +26,7 @@ type LoadStatus = "idle" | "loading" | "ready" | "error" | "missing";
 type EntityDrawerContextValue = {
   openPlayer: (playerId: string) => void;
   openTeam: (teamId: string) => void;
+  openStaff: (staffId: string) => void;
   close: () => void;
 };
 
@@ -36,6 +40,7 @@ export function useEntityDrawer(): EntityDrawerContextValue {
     return {
       openPlayer: () => undefined,
       openTeam: () => undefined,
+      openStaff: () => undefined,
       close: () => undefined,
     };
   }
@@ -46,10 +51,11 @@ export function EntityDrawerProvider(props: {
   saveId: string;
   children: React.ReactNode;
 }) {
-  const [kind, setKind] = useState<"player" | "team" | null>(null);
+  const [kind, setKind] = useState<"player" | "team" | "staff" | null>(null);
   const [entityId, setEntityId] = useState<string | null>(null);
   const [playerView, setPlayerView] = useState<PlayerDrawerView | null>(null);
   const [teamView, setTeamView] = useState<TeamDrawerView | null>(null);
+  const [staffView, setStaffView] = useState<StaffDrawerView | null>(null);
   const [status, setStatus] = useState<LoadStatus>("idle");
 
   const loadPlayer = useCallback(
@@ -97,10 +103,33 @@ export function EntityDrawerProvider(props: {
     [props.saveId],
   );
 
+  const loadStaff = useCallback(
+    async (staffId: string) => {
+      setStatus("loading");
+      setStaffView(null);
+      try {
+        const view = await fetchStaffDrawerViewAction(props.saveId, staffId);
+        if (!view) {
+          setStatus("missing");
+          setStaffView(null);
+          return;
+        }
+        setStaffView(view);
+        setStatus("ready");
+      } catch {
+        setStatus("error");
+        setStaffView(null);
+      }
+    },
+    [props.saveId],
+  );
+
   const openPlayer = useCallback(
     (playerId: string) => {
       setKind("player");
       setEntityId(playerId);
+      setTeamView(null);
+      setStaffView(null);
       void loadPlayer(playerId);
     },
     [loadPlayer],
@@ -110,9 +139,22 @@ export function EntityDrawerProvider(props: {
     (teamId: string) => {
       setKind("team");
       setEntityId(teamId);
+      setPlayerView(null);
+      setStaffView(null);
       void loadTeam(teamId);
     },
     [loadTeam],
+  );
+
+  const openStaff = useCallback(
+    (staffId: string) => {
+      setKind("staff");
+      setEntityId(staffId);
+      setPlayerView(null);
+      setTeamView(null);
+      void loadStaff(staffId);
+    },
+    [loadStaff],
   );
 
   const close = useCallback(() => {
@@ -120,12 +162,13 @@ export function EntityDrawerProvider(props: {
     setEntityId(null);
     setPlayerView(null);
     setTeamView(null);
+    setStaffView(null);
     setStatus("idle");
   }, []);
 
   const value = useMemo(
-    () => ({ openPlayer, openTeam, close }),
-    [openPlayer, openTeam, close],
+    () => ({ openPlayer, openTeam, openStaff, close }),
+    [openPlayer, openTeam, openStaff, close],
   );
 
   return (
@@ -155,6 +198,19 @@ export function EntityDrawerProvider(props: {
         onRetry={
           entityId && kind === "team"
             ? () => void loadTeam(entityId)
+            : undefined
+        }
+      />
+      <StaffDrawer
+        open={kind === "staff"}
+        onOpenChange={(open) => {
+          if (!open) close();
+        }}
+        status={kind === "staff" ? status : "idle"}
+        view={staffView}
+        onRetry={
+          entityId && kind === "staff"
+            ? () => void loadStaff(entityId)
             : undefined
         }
       />

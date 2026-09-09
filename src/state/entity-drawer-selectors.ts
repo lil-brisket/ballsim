@@ -2,6 +2,12 @@ import {
   getContractSalaryForYear,
   getContractStatus,
 } from "@/domain/entities/contract";
+import {
+  getStaffContractSalaryForYear,
+  isStaffContractActive,
+} from "@/domain/entities/staff-contract";
+import { STAFF_ROLE_DISPLAY } from "@/domain/entities/staff-roles";
+import type { StaffRole } from "@/domain/entities/staff";
 import type { PlayerId, TeamId } from "@/domain/ids";
 import { calculatePlayerOverall } from "@/domain/player-overall-rating";
 import type { GameState } from "@/state/game-state";
@@ -13,6 +19,10 @@ import {
   type TeamBrandingView,
 } from "@/state/team-branding-view";
 import { getTeamCapSpace, getTeamPayroll } from "@/systems/salary-cap";
+import {
+  bottomAttributeLabels,
+  topAttributeLabels,
+} from "@/systems/staff-ratings";
 
 export type PlayerDrawerView = {
   playerId: string;
@@ -348,3 +358,82 @@ export function toTeamDrawerView(
     },
   };
 }
+
+export type StaffDrawerView = {
+  staffId: string;
+  identity: {
+    firstName: string;
+    lastName: string;
+    role: string;
+    roleLabel: string;
+    age: number;
+    overall: number;
+    potential: number;
+  };
+  development: {
+    trend: string;
+    morale: number;
+  };
+  contract: {
+    salary: number | null;
+    yearsRemaining: number | null;
+    endYear: number | null;
+  };
+  strengths: string[];
+  weaknesses: string[];
+  navigation: {
+    staffHref: string;
+    staffHubHref: string;
+  };
+};
+
+export function toStaffDrawerView(
+  state: GameState,
+  staffId: string,
+  saveId: string,
+): StaffDrawerView | null {
+  const staff = state.world.staff[staffId];
+  if (!staff) return null;
+
+  const year = state.competition.season.year;
+  const role = staff.role as StaffRole;
+  const contract = Object.values(state.business.staffContracts).find(
+    (c) =>
+      c.staffId === staff.id &&
+      (staff.teamId === null || c.teamId === staff.teamId) &&
+      isStaffContractActive(c, year),
+  );
+
+  return {
+    staffId: staff.id,
+    identity: {
+      firstName: staff.firstName,
+      lastName: staff.lastName,
+      role: staff.role,
+      roleLabel: STAFF_ROLE_DISPLAY[role] ?? staff.role,
+      age: staff.age,
+      overall: staff.overall,
+      potential: staff.potential,
+    },
+    development: {
+      trend: staff.development.trend,
+      morale: staff.morale,
+    },
+    contract: {
+      salary: contract
+        ? (getStaffContractSalaryForYear(contract, year) ?? null)
+        : null,
+      yearsRemaining: contract
+        ? Math.max(0, contract.endYear - year + 1)
+        : null,
+      endYear: contract?.endYear ?? null,
+    },
+    strengths: topAttributeLabels(role, staff.attributes),
+    weaknesses: bottomAttributeLabels(role, staff.attributes),
+    navigation: {
+      staffHref: `/dashboard/${saveId}/staff/${staff.id}`,
+      staffHubHref: `/dashboard/${saveId}/staff-coaching/staff`,
+    },
+  };
+}
+

@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { loadOwnerSaveView } from "@/application/game-service";
+import { loadStaffHubView } from "@/application/game-service";
 import { StaffPageView } from "@/components/staff-coaching/StaffPageView";
 
 type PageProps = {
@@ -13,7 +13,7 @@ export default async function StaffCoachingStaffPage({
 }: PageProps) {
   const { saveId } = await params;
   const { error, role, sort } = await searchParams;
-  const view = await loadOwnerSaveView(saveId);
+  const view = await loadStaffHubView(saveId);
   if (!view) {
     notFound();
   }
@@ -21,8 +21,7 @@ export default async function StaffCoachingStaffPage({
 
   return (
     <StaffPageView
-      saveId={saveId}
-      staff={view.staff}
+      view={view}
       returnPath={returnPath}
       filterBasePath={returnPath}
       error={error}

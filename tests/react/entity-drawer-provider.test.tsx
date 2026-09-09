@@ -6,10 +6,12 @@ import { TeamEntityLink } from "@/components/entity/TeamEntityLink";
 
 const fetchPlayer = vi.fn();
 const fetchTeam = vi.fn();
+const fetchStaff = vi.fn();
 
 vi.mock("@/application/actions", () => ({
   fetchPlayerDrawerViewAction: (...args: unknown[]) => fetchPlayer(...args),
   fetchTeamDrawerViewAction: (...args: unknown[]) => fetchTeam(...args),
+  fetchStaffDrawerViewAction: (...args: unknown[]) => fetchStaff(...args),
 }));
 
 vi.mock("next/navigation", () => ({
@@ -50,6 +52,7 @@ describe("EntityDrawerProvider", () => {
   beforeEach(() => {
     fetchPlayer.mockReset();
     fetchTeam.mockReset();
+    fetchStaff.mockReset();
   });
 
   it("opens player drawer from PlayerEntityLink", async () => {
