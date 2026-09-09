@@ -1,4 +1,9 @@
+"use client";
+
+import { PlayerEntityLink } from "@/components/entity/PlayerEntityLink";
+
 type ProspectCardProps = {
+  saveId: string;
   playerId: string;
   firstName: string;
   lastName: string;
@@ -28,7 +33,9 @@ export function ProspectCard(props: ProspectCardProps) {
       <header className="flex items-start justify-between gap-2">
         <div>
           <h3 className="font-medium text-zinc-100">
-            {props.firstName} {props.lastName}
+            <PlayerEntityLink saveId={props.saveId} playerId={props.playerId}>
+              {props.firstName} {props.lastName}
+            </PlayerEntityLink>
           </h3>
           <p className="text-xs text-zinc-500">
             {props.position}
@@ -81,7 +88,7 @@ export function ProspectCard(props: ProspectCardProps) {
         ) : null}
       </dl>
 
-      {(props.strengths?.length || props.weaknesses?.length) ? (
+      {props.strengths?.length || props.weaknesses?.length ? (
         <div className="mt-2 space-y-1 text-xs">
           {props.strengths?.slice(0, 2).map((s) => (
             <p key={s} className="text-emerald-400/90">

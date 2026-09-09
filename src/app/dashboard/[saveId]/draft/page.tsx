@@ -7,6 +7,8 @@ import {
 } from "@/application/actions";
 import { loadOwnerSaveView } from "@/application/game-service";
 import { DraftBoardPanel } from "@/components/draft/DraftBoardPanel";
+import { DraftHeaderStrip } from "@/components/draft/DraftHeaderStrip";
+import { DraftPickSummary } from "@/components/draft/DraftPickSummary";
 import { PostDraftDevelopmentReview } from "@/components/draft/PostDraftDevelopmentReview";
 import { ProspectCard } from "@/components/draft/ProspectCard";
 import { EmptyState, ErrorState } from "@/components/owner/EmptyState";
@@ -14,8 +16,11 @@ import { PageHeader } from "@/components/owner/PageHeader";
 import { Section } from "@/components/owner/Section";
 import { StatusBadge } from "@/components/owner/StatusBadge";
 import { TeamLogoMark } from "@/components/team/logos/TeamLogoMark";
+import { TeamEntityLink } from "@/components/entity/TeamEntityLink";
+import { PlayerEntityLink } from "@/components/entity/PlayerEntityLink";
 import { draftClassIdFor } from "@/domain/entities/draft";
 import { prismaSaveGameStore } from "@/persistence/save-game-repository";
+import { toDraftHubView } from "@/state/draft-hub-selectors";
 import {
   calculateTeamDraftNeeds,
   draftYearForSeason,
@@ -46,6 +51,7 @@ export default async function DraftPage({
   const board = view.draftBoard;
   const loaded = await prismaSaveGameStore.load(saveId);
   const state = loaded?.state;
+  const hub = state ? toDraftHubView(state) : null;
   const teamId = state?.user.activeOwnerTeamId;
   const draftYear = state
     ? draftYearForSeason(state.competition.season.year)
@@ -66,7 +72,7 @@ export default async function DraftPage({
     notes: string;
     scoutGrade: string | null;
   }> = [];
-  let mockByProspect = new Map<
+  const mockByProspect = new Map<
     string,
     { projected: number; previous: number | null; availability: string }
   >();
@@ -112,15 +118,26 @@ export default async function DraftPage({
         subtitle={
           board
             ? `${board.status}${board.onClockOverall !== null ? ` · pick ${board.onClockOverall}` : ""}`
-            : "Draft board available during offseason draft stage"
+            : (hub?.inactiveReason ??
+              "Draft board available during offseason draft stage")
         }
       />
       {error ? <ErrorState message={error} /> : null}
 
+      {hub ? <DraftHeaderStrip view={hub} /> : null}
+
       {!board || !state || !draft || !teamId ? (
-        <EmptyState message="Draft is not active. Finish free agency or advance into the draft stage." />
+        <EmptyState
+          message={
+            hub?.inactiveReason ??
+            "Draft is not active. Use the Calendar to advance into the draft stage."
+          }
+        />
       ) : (
         <>
+          <Section title="Pick order">
+            <DraftPickSummary saveId={saveId} picks={hub?.picks ?? []} />
+          </Section>
           {draft.status === "complete" ? (
             <div className="mb-6">
               <PostDraftDevelopmentReview
@@ -174,9 +191,13 @@ export default async function DraftPage({
                           />
                         </span>
                       ) : null}
-                      <span className="text-zinc-300">
+                      <TeamEntityLink
+                        saveId={saveId}
+                        teamId={slot.ownerTeamId}
+                        className="text-zinc-300 hover:underline"
+                      >
                         {slot.ownerAbbreviation}
-                      </span>
+                      </TeamEntityLink>
                       <StatusBadge label={slot.status} />
                     </li>
                   ))}
@@ -190,7 +211,12 @@ export default async function DraftPage({
                     {board.selections.map((selection) => (
                       <li key={`${selection.overallPick}-${selection.playerId}`}>
                         #{selection.overallPick} {selection.teamAbbreviation}:{" "}
-                        {selection.playerName}
+                        <PlayerEntityLink
+                          saveId={saveId}
+                          playerId={selection.playerId}
+                        >
+                          {selection.playerName}
+                        </PlayerEntityLink>
                       </li>
                     ))}
                   </ul>
@@ -223,6 +249,7 @@ export default async function DraftPage({
                     return (
                       <div key={prospect.playerId}>
                         <ProspectCard
+                          saveId={saveId}
                           playerId={prospect.playerId}
                           firstName={prospect.firstName}
                           lastName={prospect.lastName}

@@ -77,24 +77,47 @@ describe("owner nav config invariants", () => {
     expect(hrefs).not.toContain("/staff");
     expect(hrefs).not.toContain("/business");
     expect(hrefs).not.toContain("/facilities");
+    expect(hrefs).not.toContain("/draft");
+    expect(hrefs).not.toContain("/scouting");
+    expect(hrefs).not.toContain("/free-agency");
   });
 
-  it("league group has eight items including Transactions", () => {
+  it("league group has five evergreen items including Awards", () => {
     const league = OWNER_NAV_GROUPS.find((g) => g.id === "league");
-    expect(league?.items).toHaveLength(8);
+    expect(league?.items).toHaveLength(5);
     expect(league?.items.some((i) => i.href === "/transactions")).toBe(true);
+    expect(league?.items.some((i) => i.href === "/awards")).toBe(true);
+    expect(league?.items.some((i) => i.href === "/draft")).toBe(false);
   });
 
-  it("injects Offseason Hub only during offseason", () => {
+  it("injects Offseason group with Draft/Scouting/FA only during offseason", () => {
     const regular = ownerNavGroupsForState(baseState({ phase: "regular" }));
     expect(regular.some((g) => g.id === "offseason")).toBe(false);
+    const regularHrefs = regular.flatMap((g) => g.items.map((i) => i.href));
+    expect(regularHrefs).not.toContain("/draft");
+    expect(regularHrefs).not.toContain("/scouting");
+    expect(regularHrefs).not.toContain("/free-agency");
 
     const offseason = ownerNavGroupsForState(baseState({ phase: "offseason" }));
     expect(offseason.some((g) => g.id === "offseason")).toBe(true);
-    const offseasonItem = offseason
-      .find((g) => g.id === "offseason")
-      ?.items.find((i) => i.href === "/offseason");
-    expect(offseasonItem?.label).toBe("Offseason Hub");
+    const offGroup = offseason.find((g) => g.id === "offseason");
+    expect(offGroup?.items.map((i) => i.href)).toEqual([
+      "/offseason",
+      "/draft",
+      "/scouting",
+      "/free-agency",
+    ]);
+  });
+
+  it("injects Playoffs into League nav during playoffs and postseason", () => {
+    for (const phase of ["playoffs", "postseason"] as const) {
+      const groups = ownerNavGroupsForState(baseState({ phase }));
+      const league = groups.find((g) => g.id === "league");
+      expect(league?.items.some((i) => i.href === "/playoffs")).toBe(true);
+    }
+    const regular = ownerNavGroupsForState(baseState({ phase: "regular" }));
+    const league = regular.find((g) => g.id === "league");
+    expect(league?.items.some((i) => i.href === "/playoffs")).toBe(false);
   });
 
   it("never includes relocation in computed nav groups", () => {

@@ -88,6 +88,13 @@ export const NAV_ICONS: Record<string, React.ReactNode> = {
     </>
   ),
   awards: <path d="M8 4h8v4a4 4 0 0 1-8 0V4zM9 21h6M12 12v9" />,
+  playoffs: (
+    <>
+      <path d="M6 4h12v4H6z" />
+      <path d="M8 8v8M16 8v8M8 16h8" />
+      <path d="M10 20h4" />
+    </>
+  ),
   media: (
     <>
       <path d="M4 6h16v12H4z" />

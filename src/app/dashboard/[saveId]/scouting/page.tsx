@@ -4,17 +4,18 @@ import {
   interviewProspectAction,
   scoutRegionAction,
 } from "@/application/actions";
-import { loadOwnerSaveView } from "@/application/game-service";
 import { EmptyState, ErrorState } from "@/components/owner/EmptyState";
 import { PageHeader } from "@/components/owner/PageHeader";
 import { Section } from "@/components/owner/Section";
+import { StatusBadge } from "@/components/ui/StatusBadge";
 import { draftClassIdFor } from "@/domain/entities/draft";
 import { draftYearForSeason } from "@/systems/draft";
-import { getScoutingCoverageSummary } from "@/systems/scouting";
 import { resolveScoutingRegion } from "@/domain/entities/scouting-regions";
 import { toScoutingReportView } from "@/systems/scouting/scouting-reports";
 import { ProspectCard } from "@/components/draft/ProspectCard";
 import { prismaSaveGameStore } from "@/persistence/save-game-repository";
+import { toScoutingHubView } from "@/state/scouting-hub-selectors";
+import { PlayerEntityLink } from "@/components/entity/PlayerEntityLink";
 
 type Props = {
   params: Promise<{ saveId: string }>;
@@ -24,45 +25,47 @@ type Props = {
 export default async function ScoutingPage({ params, searchParams }: Props) {
   const { saveId } = await params;
   const { error, prospect: focusProspect } = await searchParams;
-  const view = await loadOwnerSaveView(saveId);
-  if (!view) notFound();
-
   const loaded = await prismaSaveGameStore.load(saveId);
   if (!loaded) notFound();
   const state = loaded.state;
+  const hub = toScoutingHubView(state);
   const teamId = state.user.activeOwnerTeamId;
   const draftYear = draftYearForSeason(state.competition.season.year);
   const draft = state.world.drafts[draftClassIdFor(draftYear)];
-  const coverage = getScoutingCoverageSummary(state, teamId);
   const returnPath = `/dashboard/${saveId}/scouting`;
   const leagueArea = state.settings.league.area ?? "north_america";
 
   return (
-    <>
-      <PageHeader
-        title="Scouting"
-        subtitle="Assign scouts, build coverage, and deepen prospect reports"
-      />
+    <div className="space-y-4">
+      <PageHeader title="Scouting" subtitle="Who should you scout next?" />
       {error ? <ErrorState message={error} /> : null}
 
-      {!draft || draft.status === "complete" ? (
-        <EmptyState message="Scouting is available during draft preparation and the draft." />
+      {!hub.active || !draft ? (
+        <EmptyState
+          message={
+            hub.inactiveReason ??
+            "Scouting is available during draft preparation and the draft."
+          }
+        />
       ) : (
         <>
           <Section title="Coverage">
-            <div className="grid gap-3 sm:grid-cols-4 text-sm">
+            <div className="grid gap-3 text-sm sm:grid-cols-4">
               <CoverageStat
                 label="Domestic"
-                value={`${Math.round(coverage.domestic * 100)}%`}
+                value={`${Math.round(hub.coverage.domestic * 100)}%`}
               />
               <CoverageStat
                 label="International"
-                value={`${Math.round(coverage.international * 100)}%`}
+                value={`${Math.round(hub.coverage.international * 100)}%`}
               />
-              <CoverageStat label="Discovered" value={String(coverage.discovered)} />
+              <CoverageStat
+                label="Discovered"
+                value={String(hub.coverage.discovered)}
+              />
               <CoverageStat
                 label="Need more scouting"
-                value={String(coverage.needsMoreScouting)}
+                value={String(hub.coverage.needsMoreScouting)}
               />
             </div>
             <div className="mt-3 flex flex-wrap gap-3">
@@ -90,9 +93,38 @@ export default async function ScoutingPage({ params, searchParams }: Props) {
               </form>
             </div>
             <p className="mt-2 text-xs text-zinc-500">
-              Active assignments: {coverage.assignments}. Exposure improves when
-              you advance days during draft prep.
+              Active assignments: {hub.coverage.assignments}. Exposure improves
+              when you advance days on the Calendar during draft prep.
             </p>
+          </Section>
+
+          <Section title="Prospects needing attention">
+            {hub.needsAttention.length === 0 ? (
+              <EmptyState message="No prospects currently need more scouting." />
+            ) : (
+              <ul className="divide-y divide-zinc-800 rounded-xl border border-zinc-800">
+                {hub.needsAttention.slice(0, 12).map((row) => (
+                  <li
+                    key={row.playerId}
+                    className="flex flex-wrap items-center justify-between gap-2 px-4 py-2 text-sm"
+                  >
+                    <div>
+                      <PlayerEntityLink
+                        saveId={saveId}
+                        playerId={row.playerId}
+                      >
+                        {row.firstName} {row.lastName}
+                      </PlayerEntityLink>
+                      <p className="text-xs text-zinc-500">
+                        {row.position} · Age {row.age} · {row.region} ·{" "}
+                        {row.knowledgeLevel}
+                      </p>
+                    </div>
+                    <StatusBadge label="Needs attention" tone="warning" />
+                  </li>
+                ))}
+              </ul>
+            )}
           </Section>
 
           <Section title="Prospect pool">
@@ -122,6 +154,7 @@ export default async function ScoutingPage({ params, searchParams }: Props) {
                       }
                     >
                       <ProspectCard
+                        saveId={saveId}
                         playerId={prospect.playerId}
                         firstName={prospect.player.firstName}
                         lastName={prospect.player.lastName}
@@ -195,7 +228,7 @@ export default async function ScoutingPage({ params, searchParams }: Props) {
           </Section>
         </>
       )}
-    </>
+    </div>
   );
 }
 

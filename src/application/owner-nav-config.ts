@@ -10,6 +10,7 @@ import {
   type OwnerNavBadgeKey,
 } from "@/state/owner-nav-badges";
 import { isOffseasonPeriod } from "@/state/owner-season-context";
+import type { SeasonPhase } from "@/domain/entities/season";
 
 export type OwnerNavItem = {
   href: string;
@@ -86,9 +87,6 @@ export const OWNER_NAV_GROUPS: readonly OwnerNavGroup[] = [
         label: "Transactions",
         icon: "transactions",
       },
-      { href: "/draft", label: "Draft", icon: "draft" },
-      { href: "/scouting", label: "Scouting", icon: "scouting" },
-      { href: "/free-agency", label: "Free Agency", icon: "freeAgency" },
       { href: "/awards", label: "Awards", icon: "awards" },
     ],
   },
@@ -129,8 +127,25 @@ const OFFSEASON_GROUP: OwnerNavGroup = {
       icon: "offseason",
       badgeKey: "offseason",
     },
+    { href: "/draft", label: "Draft", icon: "draft" },
+    { href: "/scouting", label: "Scouting", icon: "scouting" },
+    {
+      href: "/free-agency",
+      label: "Free Agency",
+      icon: "freeAgency",
+    },
   ],
 };
+
+const PLAYOFFS_NAV_ITEM: OwnerNavItem = {
+  href: "/playoffs",
+  label: "Playoffs",
+  icon: "playoffs",
+};
+
+function isPlayoffsNavPhase(phase: SeasonPhase): boolean {
+  return phase === "playoffs" || phase === "postseason";
+}
 
 export function flattenOwnerNavItems(): readonly OwnerNavItem[] {
   return OWNER_NAV_GROUPS.flatMap((group) => group.items);
@@ -143,11 +158,24 @@ export function flattenOwnerNavItems(): readonly OwnerNavItem[] {
 export function ownerNavGroupsForState(state: GameState): OwnerNavGroup[] {
   const badges = computeOwnerNavBadges(state);
   const groups: OwnerNavGroup[] = [];
+  const phase = state.competition.season.phase;
 
   for (const group of OWNER_NAV_GROUPS) {
     if (group.id === "simulation" && isOffseasonPeriod(state)) {
       groups.push(withBadges(group, badges));
       groups.push(withBadges(OFFSEASON_GROUP, badges));
+      continue;
+    }
+    if (group.id === "league" && isPlayoffsNavPhase(phase)) {
+      groups.push(
+        withBadges(
+          {
+            ...group,
+            items: [...group.items, PLAYOFFS_NAV_ITEM],
+          },
+          badges,
+        ),
+      );
       continue;
     }
     groups.push(withBadges(group, badges));
