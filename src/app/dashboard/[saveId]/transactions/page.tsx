@@ -2,7 +2,7 @@ import Link from "next/link";
 import { Suspense } from "react";
 import { notFound } from "next/navigation";
 import { loadTransactionHubView } from "@/application/game-service";
-import { parseTeamFilterParam } from "@/components/league/TeamFilter";
+import { parseTeamFilterParam } from "@/components/league/team-filter-utils";
 import { EmptyState, ErrorState } from "@/components/owner/EmptyState";
 import { PageHeader } from "@/components/owner/PageHeader";
 import { TransactionFilters } from "@/components/transactions/TransactionFilters";

@@ -3,11 +3,11 @@ import { Suspense } from "react";
 import { notFound } from "next/navigation";
 import { loadLeagueScheduleView } from "@/application/game-service";
 import { LeagueGameRow } from "@/components/basketball/LeagueGameRow";
+import { TeamFilter } from "@/components/league/TeamFilter";
 import {
   parseTeamFilterParam,
   resolveTeamFilterId,
-  TeamFilter,
-} from "@/components/league/TeamFilter";
+} from "@/components/league/team-filter-utils";
 import { EmptyState, ErrorState } from "@/components/owner/EmptyState";
 import { PageHeader } from "@/components/owner/PageHeader";
 import { shiftFocusDate } from "@/state/league-schedule-selectors";

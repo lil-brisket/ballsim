@@ -3,14 +3,15 @@
 import { useMemo, useState } from "react";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { cn, focusRingClass } from "@/components/ui/styles";
+import type { TeamFilterValue } from "./team-filter-utils";
+
+export type { TeamFilterValue };
 
 export type TeamFilterOption = {
   teamId: string;
   label: string;
   abbreviation: string;
 };
-
-export type TeamFilterValue = "all" | "my" | string;
 
 /**
  * Shared All / My Team / searchable team picker for Schedule + Transactions.
@@ -145,30 +146,4 @@ export function TeamFilter(props: {
       ) : null}
     </div>
   );
-}
-
-export function parseTeamFilterParam(
-  value: string | undefined,
-  myTeamId: string,
-): TeamFilterValue {
-  if (!value || value === "all") {
-    return "all";
-  }
-  if (value === "my" || value === myTeamId) {
-    return value === myTeamId ? myTeamId : "my";
-  }
-  return value;
-}
-
-export function resolveTeamFilterId(
-  value: TeamFilterValue,
-  myTeamId: string,
-): string | null {
-  if (value === "all") {
-    return null;
-  }
-  if (value === "my") {
-    return myTeamId;
-  }
-  return value;
 }
