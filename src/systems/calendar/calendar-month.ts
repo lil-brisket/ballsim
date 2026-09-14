@@ -8,11 +8,15 @@ import {
   parseCalendarDate,
 } from "@/domain/calendar-date";
 import type { CalendarEventView } from "@/domain/entities/calendar-event";
+import type { TeamId } from "@/domain/ids";
 import type { GameState } from "@/state/game-state";
+import { projectOwnerCalendarEvents } from "@/systems/calendar/project-owner-calendar";
 import {
-  projectCalendarEvents,
-  type ProjectCalendarEventsOptions,
-} from "@/systems/calendar/project-calendar-events";
+  getNextTeamGameDate,
+  getTeamGameForDate,
+  projectTeamGameView,
+  type TeamCalendarGameView,
+} from "@/systems/calendar/schedule-projection";
 
 export type CalendarDayIndicatorCounts = {
   games: number;
@@ -29,6 +33,12 @@ export type CalendarDayCell = {
   isFuture: boolean;
   events: CalendarEventView[];
   indicatorCounts: CalendarDayIndicatorCounts;
+  /** Controlled-team game on this date, if any. */
+  teamGame: TeamCalendarGameView | null;
+  /** Non-game owner-relevant events on this date. */
+  specialEvents: CalendarEventView[];
+  /** True when this date is the next controlled-team game. */
+  isNextTeamGame: boolean;
 };
 
 export type CalendarMonthGrid = {
@@ -36,15 +46,17 @@ export type CalendarMonthGrid = {
   month: number;
   weeks: CalendarDayCell[][];
   currentDate: string;
+  nextTeamGameDate: string | null;
 };
 
-export type GetCalendarMonthGridOptions = Omit<
-  ProjectCalendarEventsOptions,
-  "from" | "to"
->;
+export type GetCalendarMonthGridOptions = {
+  saveId?: string;
+  teamId?: TeamId;
+};
 
 /**
  * Builds a Monday-start month grid with leading/trailing days from adjacent months.
+ * Uses owner-calendar projection (controlled-team games + owner-relevant events).
  */
 export function getCalendarMonthGrid(
   state: GameState,
@@ -59,6 +71,9 @@ export function getCalendarMonthGrid(
   }
 
   const currentDate = state.world.calendar.currentDate;
+  const teamId = options.teamId ?? state.user.activeOwnerTeamId;
+  const nextTeamGameDate = getNextTeamGameDate(state, teamId);
+
   const monthStart = formatCalendarDate(year, month, 1);
   const nextMonthStart =
     month === 12
@@ -71,10 +86,11 @@ export function getCalendarMonthGrid(
   const endWeekday = weekdayMondayFirst(monthEnd);
   const gridEnd = addCalendarDays(monthEnd, 6 - endWeekday);
 
-  const events = projectCalendarEvents(state, {
-    ...options,
+  const events = projectOwnerCalendarEvents(state, {
     from: gridStart,
     to: gridEnd,
+    saveId: options.saveId,
+    teamId,
   });
 
   const eventsByDate = new Map<string, CalendarEventView[]>();
@@ -94,6 +110,13 @@ export function getCalendarMonthGrid(
     for (let dayIndex = 0; dayIndex < 7; dayIndex += 1) {
       const dayEvents = eventsByDate.get(cursor) ?? [];
       const { year: cellYear, month: cellMonth } = parseCalendarDate(cursor);
+      const rawGame = getTeamGameForDate(state, teamId, cursor);
+      const teamGame = rawGame
+        ? projectTeamGameView(state, teamId, rawGame)
+        : null;
+      const specialEvents = dayEvents.filter(
+        (event) => event.category !== "game",
+      );
       week.push({
         date: cursor,
         inMonth: cellYear === year && cellMonth === month,
@@ -102,13 +125,16 @@ export function getCalendarMonthGrid(
         isFuture: cursor > currentDate,
         events: dayEvents,
         indicatorCounts: countIndicators(dayEvents),
+        teamGame,
+        specialEvents,
+        isNextTeamGame: nextTeamGameDate != null && cursor === nextTeamGameDate,
       });
       cursor = addCalendarDays(cursor, 1);
     }
     weeks.push(week);
   }
 
-  return { year, month, weeks, currentDate };
+  return { year, month, weeks, currentDate, nextTeamGameDate };
 }
 
 function weekdayMondayFirst(isoDate: string): number {

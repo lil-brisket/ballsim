@@ -44,5 +44,20 @@ export type {
   SimulationSummaryItem, SimulationSummary, BuildSimulationSummaryOptions,
 } from "@/systems/calendar/simulation-summary";
 export {
-  getTeamGamesForDate, getTeamGameForDate,
+  getTeamGamesForDate,
+  getTeamGameForDate,
+  projectTeamGameView,
+  getNextTeamGameDate,
+  type TeamCalendarGameView,
 } from "@/systems/calendar/schedule-projection";
+
+export {
+  projectOwnerCalendarEvents,
+  isOwnerCalendarEvent,
+  type ProjectOwnerCalendarEventsOptions,
+} from "@/systems/calendar/project-owner-calendar";
+
+export {
+  buildCalendarDateInspectorView,
+  type CalendarDateInspectorView,
+} from "@/systems/calendar/calendar-inspector";

@@ -1,8 +1,10 @@
 "use client";
 
 import type { CalendarMonthGrid } from "@/systems/calendar";
-import type { TeamId } from "@/domain/ids";
-import { CalendarDayCell } from "@/components/calendar/CalendarDayCell";
+import {
+  CalendarDayCell,
+  formatShortDate,
+} from "@/components/calendar/CalendarDayCell";
 
 const WEEKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"] as const;
 
@@ -36,10 +38,12 @@ function shiftMonth(
 export function CalendarMonthView(props: {
   grid: CalendarMonthGrid;
   selectedDate: string;
+  currentDate: string;
+  nextTeamGameDate: string | null;
   onSelectDate: (date: string) => void;
   onChangeMonth: (year: number, month: number) => void;
   onJumpToday: () => void;
-  userTeamId?: TeamId | null;
+  onJumpNextGame: () => void;
 }) {
   const title = `${MONTH_NAMES[props.grid.month - 1]} ${props.grid.year}`;
   const prev = shiftMonth(props.grid.year, props.grid.month, -1);
@@ -47,8 +51,16 @@ export function CalendarMonthView(props: {
 
   return (
     <div className="space-y-3">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <h2 className="text-lg font-medium text-zinc-100">{title}</h2>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="space-y-1">
+          <h2 className="text-lg font-medium text-zinc-100">{title}</h2>
+          <p className="text-xs text-zinc-500">
+            Current date{" "}
+            <span className="font-mono font-medium text-amber-300">
+              {props.currentDate}
+            </span>
+          </p>
+        </div>
         <div className="flex flex-wrap gap-2">
           <button
             type="button"
@@ -71,6 +83,15 @@ export function CalendarMonthView(props: {
           >
             Next
           </button>
+          {props.nextTeamGameDate ? (
+            <button
+              type="button"
+              onClick={props.onJumpNextGame}
+              className="rounded-md border border-sky-700/50 bg-sky-950/30 px-3 py-1.5 text-sm text-sky-200 hover:border-sky-500"
+            >
+              Next Game → {formatShortDate(props.nextTeamGameDate)}
+            </button>
+          ) : null}
         </div>
       </div>
 
@@ -90,7 +111,6 @@ export function CalendarMonthView(props: {
               cell={cell}
               selected={cell.date === props.selectedDate}
               onSelect={props.onSelectDate}
-              userTeamId={props.userTeamId}
             />
           )),
         )}

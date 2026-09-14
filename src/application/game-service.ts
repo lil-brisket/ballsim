@@ -210,6 +210,7 @@ import {
 import {
   toStandingsPageView,
   type StandingsPageView,
+  toCalendarLeagueContext,
 } from "@/state/standings-selectors";
 import {
   toLeagueScheduleView,
@@ -301,23 +302,15 @@ import {
 import { advanceSimulation } from "@/systems/simulation/advance-simulation";
 import { buildSimulationHighlights } from "@/systems/simulation/simulation-highlights";
 import {
+  buildCalendarDateInspectorView,
   findNextSimulationTarget,
   getCalendarMonthGrid,
-  getCalendarTodayBriefing,
-  summarizeSimulationRange,
+  getNextTeamGameDate,
   type CalendarMonthGrid,
-  type CalendarTodayBriefing,
-  type SimulationRangePreview,
-  type SimulationTarget,
 } from "@/systems/calendar";
 
-import { getTeamGameForDate } from "@/systems/calendar/schedule-projection";
 import { resolvePhaseResolution, resolveSeasonAnchors } from "@/systems/league-rules/league-calendar";
 import { getPhaseDefinition } from "@/systems/phase-engine";
-import {
-  CALENDAR_FILTERS,
-  type CalendarFilter,
-} from "@/domain/entities/calendar-event";
 import { processDerivedProjections } from "@/systems/media-hub";
 import { advanceLeaguePhase } from "@/systems/simulation/offseason-lifecycle";
 import { isInLeaguePhase, previewAdvance, getActivePhaseId } from "@/systems/phase-engine";
@@ -643,16 +636,10 @@ export type CalendarPageView = {
   year: number;
   month: number;
   selectedDate: string;
-  filter: CalendarFilter;
   monthGrid: CalendarMonthGrid;
-  todayBriefing: CalendarTodayBriefing;
-  simulationPreview: SimulationRangePreview | null;
-  nextTargets: {
-    nextGame: SimulationTarget | null;
-    nextImportant: SimulationTarget | null;
-    nextDecision: SimulationTarget | null;
-    nextDeadline: SimulationTarget | null;
-  };
+  inspector: import("@/systems/calendar/calendar-inspector").CalendarDateInspectorView;
+  leagueContext: import("@/state/standings-selectors").CalendarLeagueContextView | null;
+  nextTeamGameDate: string | null;
   timeDisabled: boolean;
   timeDisabledFlags: {
     userOnDraftClock: boolean;
@@ -661,16 +648,6 @@ export type CalendarPageView = {
   };
   recentMediaHighlights: CalendarPageMediaHighlight[];
   userTeamId: TeamId;
-  phaseLabel: string;
-  phaseId: string;
-  teamGameOnSelectedDate: {
-    gameId: string;
-    opponentLabel: string;
-    opponentTeamId: string;
-    home: boolean;
-    status: string;
-    scoreLabel: string | null;
-  } | null;
   pauseBanner: {
     reason: "draft_clock" | "owner_decision" | null;
     message: string | null;
@@ -683,14 +660,13 @@ export type LoadCalendarPageViewOptions = {
   year?: number;
   month?: number;
   selectedDate?: string;
-  filter?: CalendarFilter;
   /** When set with daysAdvanced, rebuilds a team-first simulation summary. */
   simulationFromDate?: string;
   daysAdvanced?: number;
 };
 
 /**
- * Calendar page data: month grid, today briefing, simulation targets/preview.
+ * Calendar page data: owner-scoped month grid, date inspector, league context.
  * Loads GameState once; does not invent projected trades or injuries.
  */
 export async function loadCalendarPageView(
@@ -724,23 +700,16 @@ export async function loadCalendarPageView(
       ? options.selectedDate
       : currentDate;
 
-  const filter: CalendarFilter =
-    options.filter &&
-    (CALENDAR_FILTERS as readonly string[]).includes(options.filter)
-      ? options.filter
-      : "all";
-
-  const monthGrid = getCalendarMonthGrid(state, year, month, { saveId });
-  const todayBriefing = getCalendarTodayBriefing(state);
-
-  let simulationPreview: SimulationRangePreview | null = null;
-  if (selectedDate >= currentDate) {
-    try {
-      simulationPreview = summarizeSimulationRange(state, selectedDate);
-    } catch {
-      simulationPreview = null;
-    }
-  }
+  const teamId = state.user.activeOwnerTeamId;
+  const monthGrid = getCalendarMonthGrid(state, year, month, {
+    saveId,
+    teamId,
+  });
+  const inspector = buildCalendarDateInspectorView(state, selectedDate, {
+    saveId,
+  });
+  const leagueContext = toCalendarLeagueContext(state);
+  const nextTeamGameDate = getNextTeamGameDate(state, teamId);
 
   const ownerDash = toOwnerDashboardView(state);
   const timeDisabledFlags = {
@@ -768,53 +737,16 @@ export async function loadCalendarPageView(
     year,
     month,
     selectedDate,
-    filter,
     monthGrid,
-    todayBriefing,
-    simulationPreview,
-    nextTargets: {
-      nextGame: findNextSimulationTarget(state, "next_game"),
-      nextImportant: findNextSimulationTarget(state, "next_important"),
-      nextDecision: findNextSimulationTarget(state, "next_decision"),
-      nextDeadline: findNextSimulationTarget(state, "next_deadline"),
-    },
+    inspector,
+    leagueContext,
+    nextTeamGameDate,
     timeDisabled:
       timeDisabledFlags.userOnDraftClock ||
       timeDisabledFlags.pendingOwnerDecision,
     timeDisabledFlags,
-        recentMediaHighlights,
-    userTeamId: state.user.activeOwnerTeamId,
-    phaseId: getActivePhaseId(state),
-    phaseLabel: getPhaseDefinition(getActivePhaseId(state)).name,
-    teamGameOnSelectedDate: (() => {
-      const teamId = state.user.activeOwnerTeamId;
-      const game = getTeamGameForDate(state, teamId, selectedDate);
-      if (!game) return null;
-      const home = game.homeTeamId === teamId;
-      const opponentId = home ? game.awayTeamId : game.homeTeamId;
-      const opponent = state.world.teams[opponentId];
-      const opponentLabel = opponent
-        ? `${opponent.city} ${opponent.name}`
-        : String(opponentId);
-      let scoreLabel: string | null = null;
-      if (game.status === "final") {
-        const homeScore = game.score?.home;
-        const awayScore = game.score?.away;
-        if (typeof homeScore === "number" && typeof awayScore === "number") {
-          scoreLabel = home
-            ? `${homeScore}–${awayScore}`
-            : `${awayScore}–${homeScore}`;
-        }
-      }
-      return {
-        gameId: game.id,
-        opponentLabel,
-        opponentTeamId: opponentId,
-        home,
-        status: game.status,
-        scoreLabel,
-      };
-    })(),
+    recentMediaHighlights,
+    userTeamId: teamId,
     pauseBanner: timeDisabledFlags.userOnDraftClock
       ? {
           reason: "draft_clock" as const,
