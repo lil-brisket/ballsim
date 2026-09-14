@@ -416,3 +416,58 @@ export function toMyTeamStandingsContext(
 export function formatStreak(streak: StandingStreak): string {
   return streakLabel(streak) ?? "—";
 }
+
+export type CalendarLeagueContextView = {
+  conferenceRank: number;
+  divisionRank: number;
+  conferenceName: string;
+  divisionName: string;
+  wins: number;
+  losses: number;
+  conferenceWins: number;
+  conferenceLosses: number;
+  divisionWins: number;
+  divisionLosses: number;
+  gamesBack: number;
+  streakLabel: string | null;
+};
+
+/**
+ * Compact standings strip for the Calendar page — controlled team only.
+ */
+export function toCalendarLeagueContext(
+  state: GameState,
+): CalendarLeagueContextView | null {
+  const teamId = getActiveOwnerTeamId(state);
+  const page = toStandingsPageView(state);
+  const user = page.leagueRows.find((row) => row.teamId === teamId);
+  if (!user) {
+    return null;
+  }
+
+  const standing =
+    state.competition.standings.byTeamId[teamId] ??
+    createEmptyTeamStanding(teamId);
+
+  const divisionRows = page.leagueRows
+    .filter((row) => row.divisionId === user.divisionId)
+    .sort(sortStandingRows);
+  const divisionRank =
+    divisionRows.findIndex((row) => row.teamId === teamId) + 1;
+
+  return {
+    conferenceRank: user.conferenceRank,
+    divisionRank: divisionRank > 0 ? divisionRank : 99,
+    conferenceName: user.conferenceName,
+    divisionName: user.divisionName,
+    wins: user.wins,
+    losses: user.losses,
+    conferenceWins: standing.conferenceWins,
+    conferenceLosses: standing.conferenceLosses,
+    divisionWins: standing.divisionWins,
+    divisionLosses: standing.divisionLosses,
+    gamesBack: user.gamesBackConference,
+    streakLabel: streakLabel(user.streak),
+  };
+}
+
