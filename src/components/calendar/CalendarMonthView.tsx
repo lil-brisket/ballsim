@@ -1,6 +1,7 @@
 "use client";
 
 import type { CalendarMonthGrid } from "@/systems/calendar";
+import { collectLegendMilestones } from "@/systems/calendar/league-milestone-markers";
 import {
   CalendarDayCell,
   formatShortDate,
@@ -33,6 +34,43 @@ function shiftMonth(
     year: Math.floor(index / 12),
     month: (index % 12) + 1,
   };
+}
+
+function CalendarMilestoneLegend(props: { grid: CalendarMonthGrid }) {
+  const monthMarkers = props.grid.weeks
+    .flat()
+    .flatMap((cell) => cell.leagueMilestones);
+  const legend = collectLegendMilestones(monthMarkers);
+
+  if (legend.length === 0) {
+    return null;
+  }
+
+  return (
+    <div className="rounded-lg border border-zinc-800 bg-zinc-950/40 px-3 py-2">
+      <p className="text-[10px] uppercase tracking-wide text-zinc-500">
+        League milestones
+      </p>
+      <div className="mt-2 flex flex-wrap gap-2">
+        {legend.map((milestone) => (
+          <span
+            key={milestone.key}
+            className="inline-flex items-center gap-1.5 text-xs text-zinc-300"
+          >
+            <span
+              className={[
+                "inline-block rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide",
+                milestone.chipClass,
+              ].join(" ")}
+            >
+              {milestone.shortLabel}
+            </span>
+            <span className="text-zinc-500">{milestone.label}</span>
+          </span>
+        ))}
+      </div>
+    </div>
+  );
 }
 
 export function CalendarMonthView(props: {
@@ -115,6 +153,8 @@ export function CalendarMonthView(props: {
           )),
         )}
       </div>
+
+      <CalendarMilestoneLegend grid={props.grid} />
     </div>
   );
 }

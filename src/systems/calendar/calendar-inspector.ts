@@ -8,6 +8,10 @@ import type { CalendarEventView } from "@/domain/entities/calendar-event";
 import type { GameState } from "@/state/game-state";
 import { projectOwnerCalendarEvents } from "@/systems/calendar/project-owner-calendar";
 import {
+  toCalendarLeagueMilestoneMarker,
+} from "@/systems/calendar/league-milestone-markers";
+import { getLeagueMilestones } from "@/systems/league-rules/calendar-events";
+import {
   getTeamGameForDate,
   projectTeamGameView,
   type TeamCalendarGameView,
@@ -79,6 +83,36 @@ function buildLeagueSnippet(state: GameState, date: string): string | null {
 
   const joined = parts.filter(Boolean).join(" · ");
   return joined.length > 0 ? joined : null;
+}
+
+function leagueMilestoneEventsForDate(
+  state: GameState,
+  date: string,
+  saveId: string,
+): CalendarEventView[] {
+  const events: CalendarEventView[] = [];
+
+  for (const milestone of getLeagueMilestones(state)) {
+    const marker = toCalendarLeagueMilestoneMarker(milestone);
+    if (!marker || marker.date !== date) continue;
+
+    events.push({
+      id: `cal:milestone:${marker.key}:${marker.date}`,
+      date: marker.date,
+      lifecycle: marker.reached ? "occurred" : "scheduled",
+      certainty: marker.reached ? "known" : "scheduled",
+      category: marker.key === "tradeDeadline" ? "deadline" : "league",
+      title: marker.label,
+      importance: "high",
+      source: { type: "milestone", key: marker.key },
+      sourceKey: `milestone:${marker.key}`,
+      blocking: false,
+      completed: marker.reached,
+      href: `/dashboard/${saveId}/calendar?date=${marker.date}`,
+    });
+  }
+
+  return events;
 }
 
 function buildPreviewSummaryLines(
@@ -160,7 +194,15 @@ export function buildCalendarDateInspectorView(
     saveId: options.saveId,
     teamId,
   });
-  const specialEvents = dayEvents.filter((event) => event.category !== "game");
+  const milestoneEvents = leagueMilestoneEventsForDate(
+    state,
+    selectedDate,
+    String(options.saveId ?? state.meta.saveId),
+  );
+  const specialEvents = [
+    ...dayEvents.filter((event) => event.category !== "game"),
+    ...milestoneEvents,
+  ];
 
   const isFuture = selectedDate > currentDate;
   const previewParts = isFuture

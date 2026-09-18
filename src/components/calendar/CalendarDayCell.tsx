@@ -24,6 +24,48 @@ export function formatShortDate(isoDate: string): string {
   return `${months[month - 1]} ${day}`;
 }
 
+function LeagueMilestoneChips(props: {
+  milestones: CalendarDayCellData["leagueMilestones"];
+}) {
+  if (props.milestones.length === 0) {
+    return null;
+  }
+
+  const visible = props.milestones.slice(0, 2);
+  const hiddenCount = props.milestones.length - visible.length;
+
+  return (
+    <div className="flex flex-wrap gap-0.5">
+      {visible.map((milestone) => (
+        <span
+          key={milestone.key}
+          title={milestone.label}
+          className={[
+            "inline-block max-w-full truncate rounded px-1 py-0.5 text-[9px] font-semibold uppercase tracking-wide sm:text-[10px]",
+            milestone.chipClass,
+            milestone.reached && !milestone.active ? "opacity-70" : "",
+          ]
+            .filter(Boolean)
+            .join(" ")}
+        >
+          {milestone.shortLabel}
+        </span>
+      ))}
+      {hiddenCount > 0 ? (
+        <span
+          className="inline-block rounded bg-zinc-800 px-1 py-0.5 text-[9px] font-medium text-zinc-400 sm:text-[10px]"
+          title={props.milestones
+            .slice(2)
+            .map((milestone) => milestone.label)
+            .join(", ")}
+        >
+          +{hiddenCount}
+        </span>
+      ) : null}
+    </div>
+  );
+}
+
 export function CalendarDayCell(props: {
   cell: CalendarDayCellData;
   selected: boolean;
@@ -32,6 +74,7 @@ export function CalendarDayCell(props: {
   const { cell, selected, onSelect } = props;
   const teamGame = cell.teamGame;
   const specialCount = cell.specialEvents.length;
+  const milestoneCount = cell.leagueMilestones.length;
 
   const ariaParts = [
     cell.date,
@@ -42,6 +85,7 @@ export function CalendarDayCell(props: {
           teamGame.resultLabel ? ` ${teamGame.resultLabel}` : ""
         }`
       : null,
+    ...cell.leagueMilestones.map((milestone) => milestone.label),
     specialCount > 0 ? `${specialCount} special events` : null,
   ];
 
@@ -52,7 +96,7 @@ export function CalendarDayCell(props: {
       aria-label={ariaParts.filter(Boolean).join(", ")}
       aria-pressed={selected}
       className={[
-        "flex min-h-[5.5rem] flex-col gap-1 rounded-md border p-1.5 text-left transition-colors sm:min-h-[6.25rem] sm:p-2",
+        "flex min-h-[5.5rem] flex-col gap-1 rounded-md border p-1.5 text-left transition-colors sm:min-h-[6.75rem] sm:p-2",
         "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-500",
         cell.inMonth
           ? "border-zinc-800 bg-zinc-950/50"
@@ -78,6 +122,8 @@ export function CalendarDayCell(props: {
       >
         {dayNumber(cell.date)}
       </span>
+
+      <LeagueMilestoneChips milestones={cell.leagueMilestones} />
 
       {teamGame ? (
         <div className="mt-auto space-y-0.5">
@@ -107,7 +153,7 @@ export function CalendarDayCell(props: {
             </p>
           ) : null}
         </div>
-      ) : specialCount > 0 ? (
+      ) : milestoneCount === 0 && specialCount > 0 ? (
         <div className="mt-auto">
           <span
             className="inline-block h-1.5 w-1.5 rounded-full bg-violet-400"
