@@ -12,6 +12,11 @@ import type { TeamId } from "@/domain/ids";
 import type { GameState } from "@/state/game-state";
 import { projectOwnerCalendarEvents } from "@/systems/calendar/project-owner-calendar";
 import {
+  getLeagueMilestoneMarkersForRange,
+  indexLeagueMilestoneMarkersByDate,
+  type CalendarLeagueMilestoneMarker,
+} from "@/systems/calendar/league-milestone-markers";
+import {
   getNextTeamGameDate,
   getTeamGameForDate,
   projectTeamGameView,
@@ -39,6 +44,8 @@ export type CalendarDayCell = {
   specialEvents: CalendarEventView[];
   /** True when this date is the next controlled-team game. */
   isNextTeamGame: boolean;
+  /** League phase milestones on this date (season start, playoffs, etc.). */
+  leagueMilestones: CalendarLeagueMilestoneMarker[];
 };
 
 export type CalendarMonthGrid = {
@@ -93,6 +100,10 @@ export function getCalendarMonthGrid(
     teamId,
   });
 
+  const milestoneByDate = indexLeagueMilestoneMarkersByDate(
+    getLeagueMilestoneMarkersForRange(state, gridStart, gridEnd),
+  );
+
   const eventsByDate = new Map<string, CalendarEventView[]>();
   for (const event of events) {
     const list = eventsByDate.get(event.date);
@@ -128,6 +139,7 @@ export function getCalendarMonthGrid(
         teamGame,
         specialEvents,
         isNextTeamGame: nextTeamGameDate != null && cursor === nextTeamGameDate,
+        leagueMilestones: milestoneByDate.get(cursor) ?? [],
       });
       cursor = addCalendarDays(cursor, 1);
     }

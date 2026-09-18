@@ -61,3 +61,11 @@ export {
   buildCalendarDateInspectorView,
   type CalendarDateInspectorView,
 } from "@/systems/calendar/calendar-inspector";
+
+export {
+  collectLegendMilestones,
+  getLeagueMilestoneMarkersForRange,
+  indexLeagueMilestoneMarkersByDate,
+  toCalendarLeagueMilestoneMarker,
+  type CalendarLeagueMilestoneMarker,
+} from "@/systems/calendar/league-milestone-markers";
