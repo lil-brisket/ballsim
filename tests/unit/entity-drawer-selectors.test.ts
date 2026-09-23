@@ -82,7 +82,7 @@ function withSeededRosters(base: GameState): GameState {
 }
 
 describe("resolveTeamHref", () => {
-  it("routes active franchise to /team, owned to /teams, else /league", () => {
+  it("routes active franchise to /team, other owned teams to /league, else /league", () => {
     const state = createTestGameState({ saveId: "save_drawer" });
     const activeId = state.user.activeOwnerTeamId;
     const ownedIds = getOwnedTeamIds(state);
@@ -97,7 +97,7 @@ describe("resolveTeamHref", () => {
     );
     if (otherOwned) {
       expect(resolveTeamHref(state, otherOwned, "save_drawer")).toBe(
-        "/dashboard/save_drawer/teams",
+        "/dashboard/save_drawer/league",
       );
     }
     if (unowned) {

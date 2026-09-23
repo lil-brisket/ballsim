@@ -34,7 +34,6 @@ export const OWNER_NAV_GROUPS: readonly OwnerNavGroup[] = [
     label: "Home",
     items: [
       { href: "", label: "Front Office", icon: "home" },
-      { href: "/teams", label: "My Teams", icon: "teams" },
     ],
   },
   {
