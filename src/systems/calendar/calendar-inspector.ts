@@ -11,6 +11,7 @@ import {
   toCalendarLeagueMilestoneMarker,
 } from "@/systems/calendar/league-milestone-markers";
 import { getLeagueMilestones } from "@/systems/league-rules/calendar-events";
+import { canBeginRegularSeason } from "@/systems/league-rules";
 import {
   getTeamGameForDate,
   projectTeamGameView,
@@ -20,8 +21,10 @@ import { summarizeSimulationRange } from "@/systems/calendar/simulation-preview"
 import {
   getActivePhaseId,
   getPhaseDefinition,
+  previewAdvance,
 } from "@/systems/phase-engine";
 import { getCalendarContext } from "@/systems/simulation/calendar-context";
+import { needsRegularSeasonInitialization } from "@/systems/simulation/season-lifecycle";
 
 export type CalendarDateInspectorView = {
   date: string;
@@ -36,6 +39,7 @@ export type CalendarDateInspectorView = {
     canSimulate: boolean;
     summaryLines: string[];
     days: number;
+    blockReason: string | null;
   } | null;
   action: "none" | "simulate_to_date";
 };
@@ -115,15 +119,72 @@ function leagueMilestoneEventsForDate(
   return events;
 }
 
-function buildPreviewSummaryLines(
+/**
+ * Server-built simulation preview — authoritative gates live in phase-engine /
+ * season-lifecycle. The inspector only renders these fields.
+ */
+export function buildCalendarSimulationPreview(
   state: GameState,
   selectedDate: string,
   teamGame: TeamCalendarGameView | null,
   specialEvents: readonly CalendarEventView[],
-): { summaryLines: string[]; days: number } | null {
+): {
+  canSimulate: boolean;
+  summaryLines: string[];
+  days: number;
+  blockReason: string | null;
+} | null {
+  if (selectedDate <= state.world.calendar.currentDate) {
+    return null;
+  }
+
+  const needsInit = needsRegularSeasonInitialization(state);
+  const preview = previewAdvance(state);
+  const gate = canBeginRegularSeason(state);
+  const blocked =
+    needsInit && (!preview.canAdvance || !gate.allowed);
+
+  let blockReason: string | null = null;
+  if (blocked) {
+    const lines: string[] = ["Cannot begin regular season."];
+    if (preview.blockReason) lines.push(preview.blockReason);
+    if (gate.blockReason && gate.blockReason !== preview.blockReason) {
+      lines.push(gate.blockReason);
+    }
+    for (const v of gate.violations) {
+      if (v.message && !lines.includes(v.message)) {
+        lines.push(`• ${v.message}`);
+      }
+    }
+    blockReason = lines.join(" ");
+  }
+
+  const lines: string[] = [];
+
+  if (needsInit) {
+    lines.push(
+      "Simulate to begin the regular season. No games will be played yet. Simulation will pause at the start of the regular season.",
+    );
+  } else if (
+    state.competition.season.phase === "regular" &&
+    state.competition.season.regularSeasonStartDate ===
+      state.world.calendar.currentDate
+  ) {
+    const openerStillScheduled = Object.values(state.competition.games).some(
+      (g) =>
+        g.competitionType === "regular_season" &&
+        g.date === state.world.calendar.currentDate &&
+        g.status === "scheduled",
+    );
+    if (openerStillScheduled) {
+      lines.push(
+        "The regular season is ready. Simulate again to play today's games.",
+      );
+    }
+  }
+
   try {
-    const preview = summarizeSimulationRange(state, selectedDate);
-    const lines: string[] = [];
+    const range = summarizeSimulationRange(state, selectedDate);
 
     if (teamGame) {
       lines.push(
@@ -132,10 +193,10 @@ function buildPreviewSummaryLines(
           : `Away vs ${teamGame.opponentName}`,
       );
       lines.push(teamGame.seasonPhase);
-    } else if (preview.yourTeam.games > 0) {
+    } else if (range.yourTeam.games > 0 && !needsInit) {
       lines.push(
-        `${preview.yourTeam.games} team game${
-          preview.yourTeam.games === 1 ? "" : "s"
+        `${range.yourTeam.games} team game${
+          range.yourTeam.games === 1 ? "" : "s"
         } in range`,
       );
     }
@@ -146,21 +207,34 @@ function buildPreviewSummaryLines(
           specialEvents.length === 1 ? "" : "s"
         }`,
       );
-    } else if (preview.deadlines.length > 0) {
+    } else if (range.deadlines.length > 0) {
       lines.push(
-        `${preview.deadlines.length} deadline${
-          preview.deadlines.length === 1 ? "" : "s"
+        `${range.deadlines.length} deadline${
+          range.deadlines.length === 1 ? "" : "s"
         } in range`,
       );
     }
 
-    lines.push(
-      `${preview.days} day${preview.days === 1 ? "" : "s"} of world simulation`,
-    );
+    if (!needsInit) {
+      lines.push(
+        `${range.days} day${range.days === 1 ? "" : "s"} of world simulation`,
+      );
+    }
 
-    return { summaryLines: lines, days: preview.days };
+    return {
+      canSimulate: !blocked,
+      summaryLines: lines,
+      days: range.days,
+      blockReason,
+    };
   } catch {
-    return null;
+    if (lines.length === 0 && !blockReason) return null;
+    return {
+      canSimulate: !blocked,
+      summaryLines: lines,
+      days: 0,
+      blockReason,
+    };
   }
 }
 
@@ -205,8 +279,13 @@ export function buildCalendarDateInspectorView(
   ];
 
   const isFuture = selectedDate > currentDate;
-  const previewParts = isFuture
-    ? buildPreviewSummaryLines(state, selectedDate, teamGame, specialEvents)
+  const simulationPreview = isFuture
+    ? buildCalendarSimulationPreview(
+        state,
+        selectedDate,
+        teamGame,
+        specialEvents,
+      )
     : null;
 
   return {
@@ -218,14 +297,12 @@ export function buildCalendarDateInspectorView(
     teamGame,
     specialEvents,
     leagueContextSnippet: buildLeagueSnippet(state, selectedDate),
-    simulationPreview:
-      isFuture && previewParts
-        ? {
-            canSimulate: true,
-            summaryLines: previewParts.summaryLines,
-            days: previewParts.days,
-          }
-        : null,
-    action: isFuture && previewParts ? "simulate_to_date" : "none",
+    simulationPreview,
+    action:
+      isFuture && simulationPreview && simulationPreview.canSimulate
+        ? "simulate_to_date"
+        : isFuture && simulationPreview
+          ? "simulate_to_date"
+          : "none",
   };
 }

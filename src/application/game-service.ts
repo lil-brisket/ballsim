@@ -320,6 +320,10 @@ import { advanceLeaguePhase } from "@/systems/simulation/offseason-lifecycle";
 import { isInLeaguePhase, previewAdvance, getActivePhaseId } from "@/systems/phase-engine";
 import { getActionBlockReason } from "@/systems/league-rules";
 import { enterOffseasonFromPostseason } from "@/systems/simulation/season-lifecycle";
+import {
+  derivePlannedPreseasonStartDate,
+  needsRegularSeasonInitialization,
+} from "@/systems/simulation/planned-season-dates";
 import { runAiContinuity } from "@/systems/simulation/ai-continuity";
 import { canAiExecute, isUserAssistCompletelyOff } from "@/systems/simulation/management-policy";
 import { resolveSimulationPhaseKey } from "@/systems/simulation/simulation-phase";
@@ -658,6 +662,10 @@ export type CalendarPageView = {
   };
   recentMediaHighlights: CalendarPageMediaHighlight[];
   userTeamId: TeamId;
+  /** True while still in preseason.preparation before owner opens the regular season. */
+  seasonInitializationRequired: boolean;
+  /** True when regular season is open, currentDate is opener, and opener games are still scheduled. */
+  openingDayPending: boolean;
   pauseBanner: {
     reason: "draft_clock" | "owner_decision" | null;
     message: string | null;
@@ -684,26 +692,58 @@ export async function loadCalendarPageView(
   options: LoadCalendarPageViewOptions = {},
   store?: SaveGameStore,
 ): Promise<CalendarPageView | null> {
-  const loaded = await getStore(store).load(saveId);
+  const saveStore = getStore(store);
+  const loaded = await saveStore.load(saveId);
   if (!loaded) {
     return null;
   }
 
-  const state = loaded.state;
+  let state = loaded.state;
+  const rng = createSeededRng(state.meta.rngState);
+  const bootstrapped = bootstrapWorld(state, rng);
+  if (bootstrapped.state !== state) {
+    state = {
+      ...bootstrapped.state,
+      meta: {
+        ...bootstrapped.state.meta,
+        rngState: rng.getState(),
+        updatedAt: new Date().toISOString(),
+      },
+    };
+    validateGameState(state);
+    await persistWorkingState(saveId, state, rng.getState(), saveStore);
+  }
+
   const currentDate = state.world.calendar.currentDate;
   const parsedCurrent = parseCalendarDate(currentDate);
 
-  const year =
-    options.year !== undefined && Number.isInteger(options.year)
-      ? options.year
-      : parsedCurrent.year;
-  const month =
+  const hasExplicitYear =
+    options.year !== undefined && Number.isInteger(options.year);
+  const hasExplicitMonth =
     options.month !== undefined &&
     Number.isInteger(options.month) &&
     options.month >= 1 &&
-    options.month <= 12
-      ? options.month
-      : parsedCurrent.month;
+    options.month <= 12;
+
+  let year = hasExplicitYear ? options.year! : parsedCurrent.year;
+  let month = hasExplicitMonth ? options.month! : parsedCurrent.month;
+
+  // When URL does not pin year/month and preseason init is still pending, open
+  // on the preseason month so the PRESEASON milestone is visible. selectedDate
+  // stays on currentDate (e.g. opening night).
+  if (!hasExplicitYear && !hasExplicitMonth && needsRegularSeasonInitialization(state)) {
+    const plannedPreseason = derivePlannedPreseasonStartDate(state);
+    if (plannedPreseason) {
+      const parsedPreseason = parseCalendarDate(plannedPreseason);
+      if (
+        parsedPreseason.year !== parsedCurrent.year ||
+        parsedPreseason.month !== parsedCurrent.month
+      ) {
+        year = parsedPreseason.year;
+        month = parsedPreseason.month;
+      }
+    }
+  }
 
   const selectedDate =
     options.selectedDate && /^\d{4}-\d{2}-\d{2}$/.test(options.selectedDate)
@@ -740,6 +780,19 @@ export async function loadCalendarPageView(
       storyType: item.storyType,
     }));
 
+  const seasonInitializationRequired = needsRegularSeasonInitialization(state);
+  const openerDate = state.competition.season.regularSeasonStartDate;
+  const openingDayPending =
+    state.competition.season.phase === "regular" &&
+    openerDate != null &&
+    openerDate === currentDate &&
+    Object.values(state.competition.games).some(
+      (game) =>
+        game.competitionType === "regular_season" &&
+        game.date === currentDate &&
+        game.status === "scheduled",
+    );
+
   return {
     save: toSaveSummary(loaded),
     dashboard: toDashboardSnapshot(state),
@@ -757,6 +810,8 @@ export async function loadCalendarPageView(
     timeDisabledFlags,
     recentMediaHighlights,
     userTeamId: teamId,
+    seasonInitializationRequired,
+    openingDayPending,
     pauseBanner: timeDisabledFlags.userOnDraftClock
       ? {
           reason: "draft_clock" as const,
@@ -1414,15 +1469,21 @@ export async function advanceOwnerTime(
       }
 
       const stopConditions = options.stopConditions ?? [];
+      // Owner calendar simulate-to-date always pauses at phase boundaries so the
+      // user can see the new phase (e.g. regular-season schedule) before continuing.
+      const isCalendarTarget =
+        options.targetDate != null || options.targetMode != null;
       const stopOnPhaseChange =
         options.stopOnPhaseChange === true ||
-        stopConditions.includes("phase_change");
+        stopConditions.includes("phase_change") ||
+        isCalendarTarget;
 
       const rng = createSeededRng(rngState);
 
       const result = advanceSimulation(workingState, rng, {
         days: resolved.days,
         stopOnPhaseChange,
+        allowOwnerManagedPhaseTransitions: true,
       });
 
       // Postflight: final phase reconciliation + full invariant validation.

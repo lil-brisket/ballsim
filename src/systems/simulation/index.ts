@@ -18,6 +18,9 @@ export {
 export {
   processSeasonLifecycle,
   isRegularSeasonComplete,
+  needsRegularSeasonInitialization,
+  derivePlannedRegularSeasonStartDate,
+  derivePlannedPreseasonStartDate,
   enterOffseasonFromPostseason,
   beginRegularSeasonFromPreseason,
 } from "@/systems/simulation/season-lifecycle";
@@ -28,7 +31,7 @@ export {
   initializeNewSeason,
 } from "@/systems/simulation/offseason-lifecycle";
 export { advanceSimulation } from "@/systems/simulation/advance-simulation";
-export { SEASON_LIFECYCLE_CONFIG } from "@/systems/simulation/season-lifecycle-config";
+export { SEASON_LIFECYCLE_CONFIG, DEFAULT_REGULAR_SEASON_START_DATE } from "@/systems/simulation/season-lifecycle-config";
 export {
   getCalendarContext,
   lifecycleIdentity,
@@ -111,6 +114,7 @@ export type { OwnerGameplayResult } from "@/systems/simulation/owner-gameplay";
 export {
   reconcilePhaseWithState,
   syncPhaseForward,
+  formatCannotBeginRegularSeasonError,
 } from "@/systems/simulation/phase-lifecycle";
 export type {
   PhaseSyncResult,

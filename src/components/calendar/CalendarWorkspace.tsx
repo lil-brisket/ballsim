@@ -8,6 +8,7 @@ import { DateInspector } from "@/components/calendar/DateInspector";
 import { CalendarLeagueContextPanel } from "@/components/calendar/CalendarLeagueContext";
 import { SimulationSummaryModal } from "@/components/calendar/SimulationSummaryModal";
 import { SimulationPausedBanner } from "@/components/calendar/SimulationPausedBanner";
+import { SeasonLifecycleBanner } from "@/components/calendar/SeasonLifecycleBanner";
 import { useSimulationActivity } from "@/components/game/simulation-activity";
 import { parseCalendarDate } from "@/domain/calendar-date";
 
@@ -136,6 +137,11 @@ export function CalendarWorkspace(props: {
         message={props.view.pauseBanner.message}
         resolveHref={props.view.pauseBanner.resolveHref}
         currentDate={props.view.currentDate}
+      />
+
+      <SeasonLifecycleBanner
+        seasonInitializationRequired={props.view.seasonInitializationRequired}
+        openingDayPending={props.view.openingDayPending}
       />
 
       <CalendarMonthView

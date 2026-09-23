@@ -231,6 +231,7 @@ export {
   runWeeklyPipeline,
   runOwnerGameplay,
   SEASON_LIFECYCLE_CONFIG,
+  DEFAULT_REGULAR_SEASON_START_DATE,
   getCalendarContext,
   lifecycleIdentity,
   type AdvanceSimulationResult,

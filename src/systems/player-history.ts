@@ -97,6 +97,8 @@ function aggregatePlayerSeasonLines(
       playoffs = accumulateStatLine(playoffs, row);
     } else if (game.competitionType === "development_league") {
       development = accumulateStatLine(development, row);
+    } else if (game.competitionType === "preseason") {
+      continue;
     } else {
       regular = accumulateStatLine(regular, row);
     }

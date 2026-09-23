@@ -71,6 +71,13 @@ export function projectCalendarEvents(
   };
 
   for (const game of Object.values(state.competition.games)) {
+    if (
+      options.teamId != null &&
+      game.homeTeamId !== options.teamId &&
+      game.awayTeamId !== options.teamId
+    ) {
+      continue;
+    }
     const view = projectGame(state, game, currentDate, saveId, focusTeamId);
     if (view) upsert(view);
   }

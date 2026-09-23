@@ -43,10 +43,18 @@ export type AdvanceSimulationOptions = {
   days?: number;
   /**
    * Stop after the first day that changes Owner lifecycle identity
-   * `{ season.phase, season.offseasonStage, season.year }`.
+   * `{ season.phase, season.offseasonStage, season.year }` (plus season segment).
    * Does not treat draft-clock as a lifecycle identity change.
+   * Callers that must cross phases without pausing leave this false (default).
+   * Owner calendar simulateToDate should pass true.
    */
   stopOnPhaseChange?: boolean;
+  /**
+   * When true, calendar/owner simulation may cross owner-managed phase boundaries
+   * (e.g. preseason.preparation → regular). Distinct from AI assist for delegated tasks.
+   * Default true for advanceSimulation; reconcilePhaseWithState keeps this false.
+   */
+  allowOwnerManagedPhaseTransitions?: boolean;
   /** Optional hierarchical profiler for season cost breakdown. */
   profiler?: SimulationProfiler;
   /** Optional progress callback (e.g. UI / CLI). */

@@ -1352,9 +1352,17 @@ export function toGameBoxScoreView(
 
   let seasonGameNumber: number | null = null;
   if (game.competitionType === "regular_season") {
-    const index = state.competition.schedule.gameIds.indexOf(game.id);
-    if (index >= 0) {
-      seasonGameNumber = index + 1;
+    let regularIndex = 0;
+    for (const gameId of state.competition.schedule.gameIds) {
+      const scheduled = state.competition.games[gameId];
+      if (scheduled?.competitionType !== "regular_season") {
+        continue;
+      }
+      regularIndex += 1;
+      if (scheduled.id === game.id) {
+        seasonGameNumber = regularIndex;
+        break;
+      }
     }
   }
 
@@ -1362,7 +1370,11 @@ export function toGameBoxScoreView(
     gameId: game.id,
     date: game.date,
     competitionTypeLabel:
-      game.competitionType === "playoffs" ? "Playoffs" : "Regular Season",
+      game.competitionType === "playoffs"
+        ? "Playoffs"
+        : game.competitionType === "preseason"
+          ? "Preseason"
+          : "Regular Season",
     seasonGameNumber,
     home: {
       teamId: homeIdentity.teamId,

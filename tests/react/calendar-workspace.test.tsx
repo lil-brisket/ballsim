@@ -114,6 +114,7 @@ function makeView(
           "5 days of world simulation",
         ],
         days: 5,
+        blockReason: null,
       },
       action: "simulate_to_date",
     },
@@ -140,6 +141,8 @@ function makeView(
     },
     recentMediaHighlights: [],
     userTeamId: asTeamId("team_1"),
+    seasonInitializationRequired: false,
+    openingDayPending: false,
     pauseBanner: {
       reason: null,
       message: null,
@@ -151,6 +154,44 @@ function makeView(
 }
 
 describe("CalendarWorkspace redesign", () => {
+  it("renders Season setup banner when seasonInitializationRequired", () => {
+    const { unmount } = render(
+      <SimulationActivityProvider>
+        <CalendarWorkspace
+          view={makeView({ seasonInitializationRequired: true })}
+          saveId="save_cal"
+          showSimSummary={false}
+          daysAdvanced={0}
+          highlightCount={0}
+        />
+      </SimulationActivityProvider>,
+    );
+    expect(screen.getByText("Season setup")).toBeTruthy();
+    expect(
+      screen.getByText(/Simulate to begin the regular season/i),
+    ).toBeTruthy();
+    unmount();
+  });
+
+  it("renders Opening Day banner when openingDayPending", () => {
+    const { unmount } = render(
+      <SimulationActivityProvider>
+        <CalendarWorkspace
+          view={makeView({ openingDayPending: true })}
+          saveId="save_cal"
+          showSimSummary={false}
+          daysAdvanced={0}
+          highlightCount={0}
+        />
+      </SimulationActivityProvider>,
+    );
+    expect(screen.getByText("Opening Day")).toBeTruthy();
+    expect(
+      screen.getByText(/Simulate again to play today's games/i),
+    ).toBeTruthy();
+    unmount();
+  });
+
   it("renders inspector and league context without shortcuts or stop conditions", () => {
     const { unmount } = render(
       <SimulationActivityProvider>

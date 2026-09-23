@@ -6,6 +6,8 @@ import { expireDatedTradeOffers } from "@/systems/owner-decisions/enqueue-trade-
 import type { GameState } from "@/state/game-state";
 import { advanceCalendar } from "@/systems/calendar";
 import { generateRosters } from "@/systems/roster-generation";
+import { canBeginRegularSeason } from "@/systems/league-rules";
+import { canAdvancePhase } from "@/systems/phase-engine";
 import { runDailyPipeline } from "@/systems/simulation/daily-pipeline";
 import {
   completedMonthIdForSimulatedDate,
@@ -13,9 +15,16 @@ import {
 } from "@/systems/simulation/monthly-pipeline";
 import { processOffseasonLifecycle } from "@/systems/simulation/offseason-lifecycle";
 import { runOwnerGameplay } from "@/systems/simulation/owner-gameplay";
-import { syncPhaseForward } from "@/systems/simulation/phase-lifecycle";
+import {
+  formatCannotBeginRegularSeasonError,
+  syncPhaseForward,
+} from "@/systems/simulation/phase-lifecycle";
 import { processScheduledEvents } from "@/systems/simulation/scheduled-events";
-import { processSeasonLifecycle } from "@/systems/simulation/season-lifecycle";
+import {
+  derivePlannedRegularSeasonStartDate,
+  needsRegularSeasonInitialization,
+  processSeasonLifecycle,
+} from "@/systems/simulation/season-lifecycle";
 import { lifecycleIdentity } from "@/systems/simulation/calendar-context";
 import { assertSimulationState } from "@/systems/simulation/validate-simulation-state";
 import type {
@@ -51,6 +60,12 @@ import { processWindowExpirations } from "@/systems/expire-transactions";
  * 7. advanceCalendar +1 (orchestrator only)
  * 8. Weekly pipeline when crossing into a new ISO week
  *
+ * Phase-boundary exception (preseason → regular):
+ * When allowOwnerManagedPhaseTransitions initializes the regular season,
+ * competition simulation and calendar +1 are skipped so the opener remains
+ * unplayed. currentDate lands on regularSeasonStartDate. The next advance
+ * plays that day's games.
+ *
  * When `stopOnPhaseChange` is true, stops immediately after the first day
  * that changes `{ phase, offseasonStage, year, seasonSegment }`. Never bypasses lifecycle.
  *
@@ -71,6 +86,23 @@ export function advanceSimulation(
     );
   }
 
+  const allowOwnerManaged =
+    options.allowOwnerManagedPhaseTransitions !== false;
+
+  // Transactional pre-check: do not open the regular season when blocked.
+  // Preseason days before the planned opener may still advance freely.
+  if (allowOwnerManaged && needsRegularSeasonInitialization(state)) {
+    const plannedOpener = derivePlannedRegularSeasonStartDate(state);
+    if (
+      plannedOpener != null &&
+      state.world.calendar.currentDate >= plannedOpener
+    ) {
+      if (!canAdvancePhase(state) || !canBeginRegularSeason(state).allowed) {
+        throw new Error(formatCannotBeginRegularSeasonError(state));
+      }
+    }
+  }
+
   const phaseBefore = state.competition.season.phase;
   const previousDate = state.world.calendar.currentDate;
   const identityBefore = lifecycleIdentity(state);
@@ -84,7 +116,10 @@ export function advanceSimulation(
   let stopReason: AdvanceSimulationResult["stopReason"];
 
   for (let dayIndex = 0; dayIndex < days; dayIndex += 1) {
-    const dayResult = advanceOneDay(current, rng, options.profiler);
+    const dayResult = advanceOneDay(current, rng, {
+      profiler: options.profiler,
+      allowOwnerManagedPhaseTransitions: allowOwnerManaged,
+    });
     current = dayResult.state;
     allEvents.push(...dayResult.events);
     scheduledEventsProcessed += dayResult.scheduledEventsProcessed;
@@ -120,6 +155,15 @@ export function advanceSimulation(
       stopReason = "phase_change";
       break;
     }
+
+    // Phase-boundary day already stopped competition; if stopOnPhaseChange
+    // was false, still halt after initializing regular season so callers
+    // that requested a multi-day jump don't accidentally play opener games
+    // in the same run when identity changed via regularSeasonInitialized.
+    if (dayResult.regularSeasonInitialized && options.stopOnPhaseChange) {
+      stopReason = "phase_change";
+      break;
+    }
   }
 
   const phaseAfter = current.competition.season.phase;
@@ -152,16 +196,25 @@ type OneDayResult = {
   gamesSimulated: number;
   weeklyPipelineRan: boolean;
   monthlyPipelineRan: boolean;
+  regularSeasonInitialized: boolean;
+};
+
+type OneDayOptions = {
+  profiler?: SimulationProfiler;
+  allowOwnerManagedPhaseTransitions?: boolean;
 };
 
 function advanceOneDay(
   state: GameState,
   rng: Rng,
-  profiler?: SimulationProfiler,
+  dayOptions: OneDayOptions = {},
 ): OneDayResult {
   const events: DomainEvent[] = [];
   let current = bootstrapRostersAndPicks(state, rng);
   const dayStart = performance.now();
+  const profiler = dayOptions.profiler;
+  const allowOwnerManaged =
+    dayOptions.allowOwnerManagedPhaseTransitions !== false;
 
   const simulatedDate = current.world.calendar.currentDate;
   if (current.world.calendar.lastSimulatedDate === simulatedDate) {
@@ -175,9 +228,60 @@ function advanceOneDay(
   const lifecycleStart = performance.now();
 
   // Date-driven phase sync: at most one phase transition, full exit/enter hooks.
-  const phaseSync = syncPhaseForward(current, rng, { allowAiAssist: true });
+  const phaseSync = syncPhaseForward(current, rng, {
+    allowAiAssist: true,
+    allowOwnerManagedPhaseTransitions: allowOwnerManaged,
+  });
   current = phaseSync.state;
   events.push(...phaseSync.events);
+
+  if (
+    phaseSync.stopReason === "required_tasks" &&
+    phaseSync.stopMessage &&
+    needsRegularSeasonInitialization(state) &&
+    allowOwnerManaged
+  ) {
+    throw new Error(phaseSync.stopMessage);
+  }
+
+  const regularSeasonInitialized = phaseSync.regularSeasonInitialized === true;
+
+  // Phase-boundary day: schedule generated, land on opener, do not play games.
+  if (regularSeasonInitialized) {
+    const opener =
+      current.competition.season.regularSeasonStartDate ??
+      current.world.calendar.currentDate;
+    if (current.world.calendar.currentDate !== opener) {
+      current = {
+        ...current,
+        world: {
+          ...current.world,
+          calendar: {
+            ...current.world.calendar,
+            currentDate: opener,
+          },
+        },
+      };
+    }
+
+    assertContinuityBoundary(current);
+    assertSimulationState(current, "day");
+
+    if (profiler) {
+      profiler.addSeason("lifecycleMs", performance.now() - lifecycleStart);
+      profiler.bumpDay();
+    }
+
+    return {
+      state: current,
+      events,
+      scheduledEventsProcessed: 0,
+      gamesSimulated: 0,
+      weeklyPipelineRan: false,
+      monthlyPipelineRan: false,
+      regularSeasonInitialized: true,
+    };
+  }
 
   const seasonLife = processSeasonLifecycle(current);
   current = seasonLife.state;
@@ -320,8 +424,7 @@ function advanceOneDay(
   events.push(...narrative.events);
   if (profiler) {
     profiler.addSeason("narrativeMs", performance.now() - narrativeStart);
-    const accounted =
-      performance.now() - dayStart;
+    const accounted = performance.now() - dayStart;
     // residual bucket for unclassified day work
     void accounted;
     profiler.bumpDay();
@@ -334,6 +437,7 @@ function advanceOneDay(
     gamesSimulated: daily.gamesSimulated,
     weeklyPipelineRan: weeklyRan,
     monthlyPipelineRan: monthlyRan,
+    regularSeasonInitialized: false,
   };
 }
 

@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { createPlayer } from "../factories/player";
 import { createTeam } from "../factories/team";
 import { createTestGameState } from "../factories/game-state";
-import { FIXTURE_SEASON_START } from "../fixtures/dates";
+import { FIXTURE_PRESEASON_START } from "../fixtures/dates";
 import { TEST_NOW_ISO, TEST_RNG_SEED } from "../helpers/determinism";
 
 describe("createPlayer", () => {
@@ -49,6 +49,6 @@ describe("createTestGameState", () => {
     expect(state.meta.saveId).toBe("save_test");
     expect(state.meta.rngSeed).toBe(TEST_RNG_SEED);
     expect(state.meta.createdAt).toBe(TEST_NOW_ISO);
-    expect(state.world.calendar.currentDate).toBe(FIXTURE_SEASON_START);
+    expect(state.world.calendar.currentDate).toBe(FIXTURE_PRESEASON_START);
   });
 });

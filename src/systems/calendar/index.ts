@@ -59,6 +59,7 @@ export {
 
 export {
   buildCalendarDateInspectorView,
+  buildCalendarSimulationPreview,
   type CalendarDateInspectorView,
 } from "@/systems/calendar/calendar-inspector";
 

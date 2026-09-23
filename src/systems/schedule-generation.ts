@@ -1,16 +1,22 @@
-import { addCalendarDays } from "@/domain/calendar-date";
 import { asGameId, type TeamId } from "@/domain/ids";
 import { createGame, type Game } from "@/domain/entities/game";
 import { systemResult, type SystemResult } from "@/domain/system-result";
 import type { GameState } from "@/state/game-state";
 import {
+  expectedRoundCount,
   validateSeasonScheduleConfig,
   type SeasonScheduleAssignment,
   type SeasonScheduleConfig,
 } from "@/systems/schedule-generation-config";
 import { validateSeasonSchedule } from "@/systems/schedule-validation";
 import { buildGameIdsByDate } from "@/systems/schedule-date-index";
-import { SEASON_LIFECYCLE_CONFIG } from "@/systems/simulation/season-lifecycle-config";
+import {
+  assignRoundDates,
+  buildLeagueRoundDayOffsets,
+  computeRegularSeasonSpanDays,
+  REGULAR_SEASON_SCHEDULE_CALENDAR,
+  resolveRegularSeasonScheduleAnchor,
+} from "@/systems/schedule-calendar-dates";
 
 type UnorderedPair = {
   round: number;
@@ -37,8 +43,8 @@ export function generateSeasonSchedule(
  * Builds a double round-robin regular-season schedule into GameState.
  * Idempotent: no-op when schedule.gameIds is already non-empty.
  * Does not mutate season.phase — callers use transitionPhase("regular").
- * Uses {@link generateSeasonSchedule} with defaultSeasonLength; each round
- * maps to one calendar day. Round 1 lands on currentDate + scheduleStartOffsetDays.
+ * Dates come from {@link resolveRegularSeasonScheduleAnchor} + round day offsets
+ * (never raw currentDate during preseason).
  */
 export function generateSchedule(state: GameState): SystemResult {
   if (state.competition.schedule.gameIds.length > 0) {
@@ -54,21 +60,31 @@ export function generateSchedule(state: GameState): SystemResult {
 
   const seasonLength = state.settings.regularSeason.gamesPerTeam;
   const assignments = generateSeasonSchedule({ teamIds, seasonLength });
+  const roundCount = expectedRoundCount(teamIds.length, seasonLength);
+  const calendarConfig = REGULAR_SEASON_SCHEDULE_CALENDAR;
+  const spanDays = computeRegularSeasonSpanDays(roundCount, calendarConfig);
+  const anchor = resolveRegularSeasonScheduleAnchor(state);
+  const offsets = buildLeagueRoundDayOffsets(
+    roundCount,
+    spanDays,
+    state.meta.rngSeed,
+    calendarConfig,
+  );
+  const roundDates = assignRoundDates(anchor, offsets);
 
   const games: Record<string, Game> = {};
   const gameIds: Game["id"][] = [];
   const seasonId = state.competition.season.id;
-  const currentDate = state.world.calendar.currentDate;
-  const startOffset = SEASON_LIFECYCLE_CONFIG.scheduleStartOffsetDays;
 
   for (let index = 0; index < assignments.length; index += 1) {
     const assignment = assignments[index]!;
     const gameId = asGameId(`game_${seasonId}_${index}`);
-    // Rounds are 1-based; offset 0 places round 1 on currentDate.
-    const date = addCalendarDays(
-      currentDate,
-      assignment.round - 1 + startOffset,
-    );
+    const date = roundDates[assignment.round - 1];
+    if (date == null) {
+      throw new Error(
+        `Schedule generation missing date for round ${assignment.round}.`,
+      );
+    }
     games[gameId] = createGame({
       id: gameId,
       seasonId,

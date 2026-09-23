@@ -13,6 +13,16 @@ import {
 } from "@/systems/phase-engine";
 import { canBeginRegularSeason, canBeginPlayoffs } from "@/systems/league-rules";
 import { snapshotTradeDeadline } from "@/systems/league-rules/snapshot-trade-deadline";
+import {
+  derivePlannedRegularSeasonStartDate,
+  needsRegularSeasonInitialization,
+} from "@/systems/simulation/planned-season-dates";
+
+export {
+  derivePlannedPreseasonStartDate,
+  derivePlannedRegularSeasonStartDate,
+  needsRegularSeasonInitialization,
+} from "@/systems/simulation/planned-season-dates";
 
 /**
  * True when the regular season has a non-empty schedule and every listed game is final.
@@ -20,16 +30,18 @@ import { snapshotTradeDeadline } from "@/systems/league-rules/snapshot-trade-dea
  */
 export function isRegularSeasonComplete(state: GameState): boolean {
   const { schedule, games } = state.competition;
-  if (schedule.gameIds.length === 0) {
-    return false;
-  }
+  let regularGameCount = 0;
   for (const gameId of schedule.gameIds) {
     const game = games[gameId];
-    if (!game || game.status !== "final") {
+    if (!game || game.competitionType !== "regular_season") {
+      continue;
+    }
+    regularGameCount += 1;
+    if (game.status !== "final") {
       return false;
     }
   }
-  return true;
+  return regularGameCount > 0;
 }
 
 function withRegularSeasonStartDate(
@@ -74,10 +86,26 @@ export function beginRegularSeasonFromPreseason(state: GameState): SystemResult 
   events.push(...phaseResult.events);
 
   current = setActivePhase(current, "regular");
-  current = withRegularSeasonStartDate(
-    current,
-    current.world.calendar.currentDate,
-  );
+  // Prefer the planned opener when still derived from preseason entry so early
+  // explicit opens don't invent a different opening night than the schedule.
+  const plannedOpener = derivePlannedRegularSeasonStartDate(state);
+  const openerDate =
+    plannedOpener != null && plannedOpener.length > 0
+      ? plannedOpener
+      : current.world.calendar.currentDate;
+  current = withRegularSeasonStartDate(current, openerDate);
+  if (current.world.calendar.currentDate !== openerDate) {
+    current = {
+      ...current,
+      world: {
+        ...current.world,
+        calendar: {
+          ...current.world.calendar,
+          currentDate: openerDate,
+        },
+      },
+    };
+  }
 
   if (current.competition.schedule.gameIds.length === 0) {
     const scheduleResult = generateSchedule(current);

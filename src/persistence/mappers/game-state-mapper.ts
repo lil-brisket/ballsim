@@ -3140,11 +3140,14 @@ function migrateV34ToV35(state: GameStateV34): GameStateV35 {
     };
     const competitionType =
       raw.competitionType === "regular_season" ||
-      raw.competitionType === "playoffs"
+      raw.competitionType === "playoffs" ||
+      raw.competitionType === "preseason"
         ? raw.competitionType
         : gameId.startsWith("playoff_") || gameId.startsWith("playin_")
           ? "playoffs"
-          : "regular_season";
+          : gameId.startsWith("game_pre_")
+            ? "preseason"
+            : "regular_season";
 
     games[gameId] = {
       ...raw,

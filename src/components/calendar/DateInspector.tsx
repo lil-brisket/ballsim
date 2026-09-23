@@ -144,11 +144,18 @@ export function DateInspector(props: {
                 <li key={line}>• {line}</li>
               ))}
             </ul>
+            {inspector.simulationPreview.blockReason ? (
+              <p className="text-sm text-red-300">
+                {inspector.simulationPreview.blockReason}
+              </p>
+            ) : null}
             <SimulationPreviewAction
               saveId={props.saveId}
               returnPath={props.returnPath}
               targetDate={inspector.date}
-              disabled={props.timeDisabled}
+              disabled={
+                props.timeDisabled || !inspector.simulationPreview.canSimulate
+              }
               canSimulate={
                 inspector.action === "simulate_to_date" &&
                 inspector.simulationPreview.canSimulate

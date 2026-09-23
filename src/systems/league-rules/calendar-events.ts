@@ -5,6 +5,10 @@ import {
 } from "@/systems/league-rules/league-calendar";
 import { readActivePhaseId } from "@/systems/league-rules/phase-ids";
 import { resolveHardLockTradeDeadlineDate } from "@/systems/league-rules/trade-rules";
+import {
+  derivePlannedPreseasonStartDate,
+  derivePlannedRegularSeasonStartDate,
+} from "@/systems/simulation/planned-season-dates";
 
 export type LeagueMilestoneKey =
   | "offseasonStart"
@@ -39,6 +43,7 @@ function scheduleBounds(state: GameState): {
   for (const gameId of state.competition.schedule.gameIds) {
     const game = state.competition.games[gameId];
     if (!game) continue;
+    if (game.competitionType === "preseason") continue;
     if (earliest === null || game.date < earliest) earliest = game.date;
     if (latest === null || game.date > latest) latest = game.date;
   }
@@ -56,9 +61,16 @@ export function getLeagueMilestones(
   const currentDate = state.world.calendar.currentDate;
   const bounds = scheduleBounds(state);
   const anchors = resolveSeasonAnchors(state);
+  // Prefer authoritative regularSeasonStartDate. While still in preseason, derive a
+  // planned opener for display only — never write regularSeasonStartDate here
+  // (that would make expectedPhaseFromDate enter regular before transition).
+  // Single source: derivePlannedRegularSeasonStartDate.
+  const plannedOpener = derivePlannedRegularSeasonStartDate(state);
+  const plannedPreseasonStart = derivePlannedPreseasonStartDate(state);
   const seasonStart =
     state.competition.season.regularSeasonStartDate ??
     anchors.regularSeasonStart ??
+    plannedOpener ??
     bounds.earliest;
   const deadline =
     state.competition.season.tradeDeadlineDate ??
@@ -70,6 +82,15 @@ export function getLeagueMilestones(
     state,
     "preseason.preparation",
   );
+
+  // Preseason date precedence (most authoritative first):
+  // 1. derived phase window  2. resolved anchors  3. planned fallback
+  // plannedPreseasonStart is null once the season leaves preseason.preparation,
+  // so it cannot overwrite historical/current-season anchors.
+  const preseasonStartDate =
+    preseasonWindow?.start ??
+    anchors.preseasonStart ??
+    plannedPreseasonStart;
 
   const draft = Object.values(state.world.drafts)[0];
   const draftComplete = draft?.status === "complete";
@@ -137,7 +158,7 @@ export function getLeagueMilestones(
     {
       key: "preseasonStart",
       label: "Preseason",
-      date: preseasonWindow?.start ?? anchors.preseasonStart,
+      date: preseasonStartDate,
       reached:
         phaseId === "preseason.preparation" ||
         phaseId === "regular" ||

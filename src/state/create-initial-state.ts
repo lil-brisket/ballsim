@@ -1,3 +1,4 @@
+import { addCalendarDays } from "@/domain/calendar-date";
 import { createEmptyPlayoffTournament } from "@/domain/entities/playoffs";
 import { createEmptyTeamStanding } from "@/domain/entities/standings";
 import {
@@ -41,6 +42,8 @@ import { generateLeagueStaff } from "@/systems/staff-generation";
 import { resolvePaletteIdFromBranding } from "@/domain/entities/team-branding";
 import { paletteLogoKey } from "@/domain/team-identity";
 import { deriveDefaultTeamBranding } from "@/systems/team-branding-generation";
+import { PRESEASON_LENGTH_DAYS } from "@/systems/simulation/offseason-calendar-config";
+import { DEFAULT_REGULAR_SEASON_START_DATE } from "@/systems/simulation/season-lifecycle-config";
 
 export type CreateInitialGameStateInput = {
   saveId: string;
@@ -169,6 +172,10 @@ export function createInitialGameState(
   const seasonId = asSeasonId(`season_${saveId}_2026`);
   const startingSeasonYear = 2026;
   const phaseE = createPhaseEBusinessDefaults(teamIds, rngSeed, startingSeasonYear);
+  const preseasonStartDate = addCalendarDays(
+    DEFAULT_REGULAR_SEASON_START_DATE,
+    -PRESEASON_LENGTH_DAYS,
+  );
 
   let state: GameState = {
     meta: {
@@ -182,7 +189,7 @@ export function createInitialGameState(
     settings: cloneGameSettings(settings),
     world: {
       calendar: {
-        currentDate: "2026-10-01",
+        currentDate: preseasonStartDate,
         lastSimulatedDate: null,
         lastSimulatedWeekId: null,
         lastSimulatedMonthId: null,
@@ -214,7 +221,7 @@ export function createInitialGameState(
       },
       phase: {
         activePhaseId: "preseason.preparation",
-        enteredDate: `${startingSeasonYear}-10-01`,
+        enteredDate: preseasonStartDate,
       },
       schedule: {
         seasonId,
@@ -251,7 +258,7 @@ export function createInitialGameState(
       ownedFranchises: {
         [activeOwnerTeamId]: createDefaultOwnedFranchiseState({
           seasonYear: startingSeasonYear,
-          currentDate: `${startingSeasonYear}-10-01`,
+          currentDate: preseasonStartDate,
           citySelectionConfirmed: false,
           franchiseIdentityConfirmed: false,
         }),
@@ -385,6 +392,10 @@ export function createFourTeamInitialGameState(
   const teamIds = Object.keys(teams) as TeamId[];
   const startingSeasonYear = 2026;
   const phaseE = createPhaseEBusinessDefaults(teamIds, rngSeed, startingSeasonYear);
+  const preseasonStartDate = addCalendarDays(
+    DEFAULT_REGULAR_SEASON_START_DATE,
+    -PRESEASON_LENGTH_DAYS,
+  );
 
   const fourTeamSettings: GameSettings = input.settings ?? {
     league: {
@@ -450,7 +461,7 @@ export function createFourTeamInitialGameState(
     settings: cloneGameSettings(fourTeamSettings),
     world: {
       calendar: {
-        currentDate: "2026-10-01",
+        currentDate: preseasonStartDate,
         lastSimulatedDate: null,
         lastSimulatedWeekId: null,
         lastSimulatedMonthId: null,
@@ -525,7 +536,7 @@ export function createFourTeamInitialGameState(
       },
       phase: {
         activePhaseId: "preseason.preparation",
-        enteredDate: `${startingSeasonYear}-10-01`,
+        enteredDate: preseasonStartDate,
       },
       schedule: {
         seasonId,
@@ -562,7 +573,7 @@ export function createFourTeamInitialGameState(
       ownedFranchises: {
         [userTeamId]: createDefaultOwnedFranchiseState({
           seasonYear: startingSeasonYear,
-          currentDate: `${startingSeasonYear}-10-01`,
+          currentDate: preseasonStartDate,
           citySelectionConfirmed: true,
           franchiseIdentityConfirmed: true,
           aiAssistance: { ...fourTeamSettings.ai.assistance },

@@ -154,4 +154,27 @@ describe("active owner calendar scope", () => {
     expect(getNextTeamGameDate(back, teamA)).toBe(nextAStill);
     expect(back.user.activeOwnerTeamId).toBe(teamA);
   });
+
+  it("month grid only shows games for the active controlled team", async () => {
+    const saveId = "active_owner_density";
+    const { store, teamA, state } = await seedMultiTeamSave(saveId, 91);
+    const opener =
+      state.competition.season.regularSeasonStartDate ??
+      state.world.calendar.currentDate;
+    const { year, month } = parseCalendarDate(opener);
+    const grid = getCalendarMonthGrid(state, year, month, { teamId: teamA });
+    const teamGameDays = grid.weeks.flat().filter((c) => c.teamGame != null);
+    // CBL 22-game season: not a game every day of the opener month.
+    expect(teamGameDays.length).toBeGreaterThan(0);
+    expect(teamGameDays.length).toBeLessThan(28);
+    for (const cell of teamGameDays) {
+      expect(cell.teamGame!.opponentTeamId).not.toBe(teamA);
+      const dayGames = Object.values(state.competition.games).filter(
+        (g) =>
+          g.date === cell.date &&
+          (g.homeTeamId === teamA || g.awayTeamId === teamA),
+      );
+      expect(dayGames.length).toBeGreaterThanOrEqual(1);
+    }
+  });
 });

@@ -85,7 +85,10 @@ export function canEnterPhase(
     } else {
       for (const gameId of schedule.gameIds) {
         const game = games[gameId];
-        if (!game || game.status !== "final") {
+        if (!game || game.competitionType !== "regular_season") {
+          continue;
+        }
+        if (game.status !== "final") {
           violations.push({
             code: "REGULAR_SEASON_INCOMPLETE",
             message:

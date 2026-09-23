@@ -61,6 +61,8 @@ export type TeamCalendarGameView = {
 
 function seasonPhaseLabel(competitionType: Game["competitionType"]): string {
   switch (competitionType) {
+    case "preseason":
+      return "Preseason";
     case "playoffs":
       return "Playoffs";
     case "development_league":

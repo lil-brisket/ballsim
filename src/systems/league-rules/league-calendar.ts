@@ -20,6 +20,10 @@ import {
   getPhaseWindowConfig,
   type PhaseWindowConfig,
 } from "@/systems/simulation/offseason-calendar-config";
+import {
+  derivePlannedRegularSeasonStartDate,
+  needsRegularSeasonInitialization,
+} from "@/systems/simulation/planned-season-dates";
 import { evaluatePhaseTasks } from "@/systems/phase-engine/evaluate-phase-tasks";
 import { getPhaseDefinition } from "@/systems/phase-engine/phase-definitions";
 import type { LeaguePhaseId } from "@/systems/phase-engine/phase-types";
@@ -96,6 +100,7 @@ function scheduleBounds(state: GameState): {
     const game = state.competition.games[gameId];
     if (!game) continue;
     if (game.competitionType === "development_league") continue;
+    if (game.competitionType === "preseason") continue;
     if (earliest === null || game.date < earliest) earliest = game.date;
     if (latest === null || game.date > latest) latest = game.date;
   }
@@ -117,8 +122,16 @@ function lastFinalGameDate(
 
 export function resolveSeasonAnchors(state: GameState): SeasonAnchors {
   const bounds = scheduleBounds(state);
+  // Precedence: committed start date → schedule bounds → planned opener (preseason only).
+  // Planned values apply only while needsRegularSeasonInitialization; they must not
+  // invent openings after the season has progressed.
+  const plannedOpener = needsRegularSeasonInitialization(state)
+    ? derivePlannedRegularSeasonStartDate(state)
+    : null;
   const regularSeasonStart =
-    state.competition.season.regularSeasonStartDate ?? bounds.earliest;
+    state.competition.season.regularSeasonStartDate ??
+    bounds.earliest ??
+    plannedOpener;
 
   const regularSeasonEnd =
     lastFinalGameDate(state, "regular_season") ?? bounds.latest;

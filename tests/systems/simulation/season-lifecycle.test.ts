@@ -41,7 +41,10 @@ describe("season lifecycle", () => {
     expect(result.state.competition.schedule.gameIds.length).toBeGreaterThan(0);
 
     const openers = Object.values(result.state.competition.games).filter(
-      (game) => game.date === bootstrapped.world.calendar.currentDate,
+      (game) => game.date === result.state.competition.season.regularSeasonStartDate,
+    );
+    expect(result.state.competition.season.regularSeasonStartDate).toBe(
+      "2026-10-01",
     );
     expect(openers.length).toBeGreaterThan(0);
   });
@@ -114,8 +117,9 @@ describe("season lifecycle", () => {
     const result = beginRegularSeasonFromPreseason(bootstrapped);
     expect(result.state.competition.season.phase).toBe("regular");
     expect(result.state.competition.season.regularSeasonStartDate).toBe(
-      bootstrapped.world.calendar.currentDate,
+      "2026-10-01",
     );
+    expect(result.state.world.calendar.currentDate).toBe("2026-10-01");
   });
 
   it("moves regular → playoffs when the league is large enough", () => {

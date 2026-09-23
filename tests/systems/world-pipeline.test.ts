@@ -3,7 +3,9 @@ import { createSeededRng } from "@/domain/rng";
 import { createInitialGameState } from "@/state/create-initial-state";
 import { CBL_GAME_SETTINGS } from "@/domain/game-settings";
 import { bootstrapWorld, runWorldPipeline } from "@/systems/world-pipeline";
+import { beginRegularSeasonFromPreseason } from "@/systems/simulation/season-lifecycle";
 import { generateRosters } from "@/systems/roster-generation";
+import { DEFAULT_ROSTER_SIZE } from "@/systems/roster-generation-config";
 import { generateSchedule } from "@/systems/schedule-generation";
 import { resetDomainEventSequenceForTests } from "@/domain/events/domain-event";
 import {
@@ -23,9 +25,11 @@ describe("roster and schedule generation", () => {
     const result = generateRosters(state, rng);
 
     const teamCount = Object.keys(state.world.teams).length;
-    expect(Object.keys(result.state.world.players)).toHaveLength(teamCount * 10);
+    expect(Object.keys(result.state.world.players)).toHaveLength(
+      teamCount * DEFAULT_ROSTER_SIZE,
+    );
     expect(Object.keys(result.state.business.contracts)).toHaveLength(
-      teamCount * 10,
+      teamCount * DEFAULT_ROSTER_SIZE,
     );
   });
 
@@ -72,7 +76,7 @@ describe("roster and schedule generation", () => {
     const result = generateRosters(state, rng);
 
     for (const team of Object.values(result.state.world.teams)) {
-      expect(team.roster).toHaveLength(10);
+      expect(team.roster).toHaveLength(DEFAULT_ROSTER_SIZE);
       for (const playerId of team.roster) {
         const player = result.state.world.players[playerId];
         expect(player).toBeDefined();
@@ -108,12 +112,17 @@ describe("roster and schedule generation", () => {
       ),
     ).toBe(true);
 
-    // Round 1 lands on currentDate when scheduleStartOffsetDays is 0
+    // Round 1 lands on the planned regular-season opener (not preseason currentDate).
     const firstDate = "2026-10-01";
     const firstRoundGames = Object.values(result.state.competition.games).filter(
       (game) => game.date === firstDate,
     );
     expect(firstRoundGames.length).toBe(teamCount / 2);
+    expect(
+      Object.values(result.state.competition.games).every(
+        (game) => game.date >= firstDate,
+      ),
+    ).toBe(true);
   });
 
   it("throws when the empty schedule has fewer than two teams", () => {
@@ -143,38 +152,111 @@ describe("roster and schedule generation", () => {
 });
 
 describe("world pipeline advanceDay", () => {
-  it("bootstraps, sims games on current date when any exist, then advances calendar", () => {
+  it("materializes schedule during bootstrap without changing phase", () => {
     resetDomainEventSequenceForTests();
     const state = createInitialGameState({
-    saveId: "save_advance",
-      rngSeed: 42,
+      saveId: "save_bootstrap_sched",
+      rngSeed: 40,
       nowIso: "2026-08-13T12:00:00.000Z",
-    settings: CBL_GAME_SETTINGS,
-  });
+      settings: CBL_GAME_SETTINGS,
+    });
     const rng = createSeededRng(state.meta.rngState);
     const bootstrapped = bootstrapWorld(state, rng);
 
-    expect(bootstrapped.state.competition.schedule.gameIds).toHaveLength(0);
+    expect(bootstrapped.state.competition.schedule.gameIds.length).toBeGreaterThan(
+      0,
+    );
     expect(bootstrapped.state.competition.season.phase).toBe("preseason");
+    expect(bootstrapped.state.competition.season.regularSeasonStartDate).toBeNull();
+    expect(
+      Object.values(bootstrapped.state.competition.games).every(
+        (game) => game.status === "scheduled",
+      ),
+    ).toBe(true);
+  });
 
-    const advanced = runWorldPipeline(bootstrapped.state, rng, {
+  it("does not duplicate schedule when bootstrap runs on an existing regular-season save", () => {
+    resetDomainEventSequenceForTests();
+    const state = createInitialGameState({
+      saveId: "save_bootstrap_idempotent",
+      rngSeed: 41,
+      nowIso: "2026-08-13T12:00:00.000Z",
+      settings: CBL_GAME_SETTINGS,
+    });
+    const rng = createSeededRng(state.meta.rngState);
+    let current = bootstrapWorld(state, rng).state;
+    current = beginRegularSeasonFromPreseason(current).state;
+    expect(current.competition.season.phase).toBe("regular");
+
+    const gameIdsBefore = [...current.competition.schedule.gameIds];
+    const gamesBefore = { ...current.competition.games };
+    const phaseBefore = current.competition.season.phase;
+    const dateBefore = current.world.calendar.currentDate;
+
+    const again = bootstrapWorld(current, rng);
+    expect(again.state.competition.schedule.gameIds).toEqual(gameIdsBefore);
+    expect(Object.keys(again.state.competition.games).sort()).toEqual(
+      Object.keys(gamesBefore).sort(),
+    );
+    expect(again.state.competition.season.phase).toBe(phaseBefore);
+    expect(again.state.world.calendar.currentDate).toBe(dateBefore);
+  });
+
+  it("bootstraps, opens regular season without playing opener, then sims on next day", () => {
+    resetDomainEventSequenceForTests();
+    const state = createInitialGameState({
+      saveId: "save_advance",
+      rngSeed: 42,
+      nowIso: "2026-08-13T12:00:00.000Z",
+      settings: CBL_GAME_SETTINGS,
+    });
+    const rng = createSeededRng(state.meta.rngState);
+    const bootstrapped = bootstrapWorld(state, rng);
+
+    expect(bootstrapped.state.competition.schedule.gameIds.length).toBeGreaterThan(
+      0,
+    );
+    expect(bootstrapped.state.competition.season.phase).toBe("preseason");
+    expect(bootstrapped.state.world.calendar.currentDate).toBe("2026-09-10");
+
+    // Explicit open snaps to planned opener without playing games.
+    const opened = beginRegularSeasonFromPreseason(bootstrapped.state);
+
+    expect(opened.state.world.calendar.currentDate).toBe("2026-10-01");
+    expect(opened.state.competition.season.phase).toBe("regular");
+    expect(opened.state.competition.season.regularSeasonStartDate).toBe(
+      "2026-10-01",
+    );
+    expect(opened.state.competition.schedule.gameIds).toEqual(
+      bootstrapped.state.competition.schedule.gameIds,
+    );
+
+    const openerGames = Object.values(opened.state.competition.games).filter(
+      (game) => game.date === "2026-10-01",
+    );
+    expect(openerGames.length).toBeGreaterThan(0);
+    expect(openerGames.every((game) => game.status === "scheduled")).toBe(
+      true,
+    );
+
+    // Next day: play opener and advance calendar.
+    const advanced = runWorldPipeline(opened.state, rng, {
       type: "advanceDay",
     });
 
     expect(advanced.state.world.calendar.currentDate).toBe("2026-10-02");
-    expect(advanced.state.competition.season.phase).toBe("regular");
-    expect(advanced.state.competition.schedule.gameIds.length).toBeGreaterThan(0);
     expect(
       advanced.events.some((event) => event.type === "GameCompleted"),
     ).toBe(true);
 
-    const openerGames = Object.values(advanced.state.competition.games).filter(
+    const finalOpeners = Object.values(advanced.state.competition.games).filter(
       (game) => game.date === "2026-10-01",
     );
-    expect(openerGames.length).toBeGreaterThan(0);
-    expect(openerGames.every((game) => game.status === "final")).toBe(true);
+    expect(finalOpeners.every((game) => game.status === "final")).toBe(true);
 
-    const standing = Object.values(advanced.state.competition.standings.byTeamId);
+    const standing = Object.values(
+      advanced.state.competition.standings.byTeamId,
+    );
     const totalDecisions = standing.reduce(
       (acc, row) => acc + row.wins + row.losses,
       0,
@@ -186,19 +268,21 @@ describe("world pipeline advanceDay", () => {
 
   it("continues the RNG stream across advances via getState", () => {
     const state = createInitialGameState({
-    saveId: "save_rng_cont",
+      saveId: "save_rng_cont",
       rngSeed: 7,
-    settings: CBL_GAME_SETTINGS,
-  });
+      settings: CBL_GAME_SETTINGS,
+    });
     const rngA = createSeededRng(state.meta.rngState);
-    const first = runWorldPipeline(state, rngA, { type: "advanceDay" });
+    const bootstrapped = bootstrapWorld(state, rngA).state;
+    const first = runWorldPipeline(bootstrapped, rngA, { type: "advanceDay" });
     const midState = rngA.getState();
 
     const rngB = createSeededRng(midState);
     const second = runWorldPipeline(first.state, rngB, { type: "advanceDay" });
 
     const rngReplay = createSeededRng(state.meta.rngState);
-    const replayFirst = runWorldPipeline(state, rngReplay, {
+    const replayBoot = bootstrapWorld(state, rngReplay).state;
+    const replayFirst = runWorldPipeline(replayBoot, rngReplay, {
       type: "advanceDay",
     });
     const replaySecond = runWorldPipeline(replayFirst.state, rngReplay, {

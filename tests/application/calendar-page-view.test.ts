@@ -22,6 +22,27 @@ import { bootstrapWorld } from "@/systems/world-pipeline";
 import { beginRegularSeasonFromPreseason } from "@/systems/simulation/season-lifecycle";
 import { resetDomainEventSequenceForTests } from "@/domain/events/domain-event";
 
+async function seedPreseasonSave(id: string, seed: number) {
+  resetDomainEventSequenceForTests();
+  const store = createMemorySaveGameStore();
+  let state = createInitialGameState({
+    saveId: id,
+    rngSeed: seed,
+    settings: CBL_GAME_SETTINGS,
+  });
+  const rng = createSeededRng(state.meta.rngState);
+  state = bootstrapWorld(state, rng).state;
+  state = {
+    ...state,
+    meta: {
+      ...state.meta,
+      rngState: rng.getState(),
+    },
+  };
+  await store.create({ id, name: id, state });
+  return { store, state };
+}
+
 async function seedRegularSave(id: string, seed: number) {
   resetDomainEventSequenceForTests();
   const store = createMemorySaveGameStore();
@@ -67,5 +88,23 @@ describe("loadCalendarPageView consolidated shape", () => {
     expect("todayBriefing" in view!).toBe(false);
     expect("simulationPreview" in view!).toBe(false);
     expect("teamGameOnSelectedDate" in view!).toBe(false);
+  });
+
+  it("defaults displayed month to preseason while keeping selectedDate on currentDate", async () => {
+    const { store, state } = await seedPreseasonSave("cal_preseason_month", 42);
+    const view = await loadCalendarPageView("cal_preseason_month", {}, store);
+    expect(view).not.toBeNull();
+    expect(view!.selectedDate).toBe(state.world.calendar.currentDate);
+    expect(view!.month).toBe(9);
+    expect(view!.year).toBe(2026);
+
+    const withUrl = await loadCalendarPageView(
+      "cal_preseason_month",
+      { year: 2026, month: 10 },
+      store,
+    );
+    expect(withUrl!.month).toBe(10);
+    expect(withUrl!.year).toBe(2026);
+    expect(withUrl!.selectedDate).toBe(state.world.calendar.currentDate);
   });
 });

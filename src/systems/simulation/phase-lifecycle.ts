@@ -20,8 +20,10 @@ import {
 import {
   canAdvancePhase,
   getActivePhaseId,
+  previewAdvance,
   type LeaguePhaseId,
 } from "@/systems/phase-engine";
+import { canBeginRegularSeason } from "@/systems/league-rules";
 import { canAiExecute } from "@/systems/simulation/management-policy";
 import {
   advanceLeaguePhase,
@@ -30,7 +32,9 @@ import {
 } from "@/systems/simulation/offseason-lifecycle";
 import {
   beginRegularSeasonFromPreseason,
+  derivePlannedRegularSeasonStartDate,
   enterOffseasonFromPostseason,
+  needsRegularSeasonInitialization,
 } from "@/systems/simulation/season-lifecycle";
 import { runAiContinuity } from "@/systems/simulation/ai-continuity";
 
@@ -47,6 +51,8 @@ export type PhaseSyncResult = SystemResult & {
   resolution: PhaseResolution;
   stopReason: PhaseSyncStopReason;
   stopMessage?: string;
+  /** True when preseason → regular was applied (schedule generated, no competition yet). */
+  regularSeasonInitialized?: boolean;
 };
 
 function emptySync(
@@ -70,12 +76,16 @@ function emptySync(
 /**
  * Align active phase with resolvePhaseResolution without advancing the calendar.
  * Safe on load and before/after multi-day simulation. At most one phase step.
+ * Does not cross owner-managed boundaries (preseason → regular).
  */
 export function reconcilePhaseWithState(
   state: GameState,
   rng?: Rng,
 ): PhaseSyncResult {
-  return syncPhaseForward(state, rng, { allowAiAssist: false });
+  return syncPhaseForward(state, rng, {
+    allowAiAssist: false,
+    allowOwnerManagedPhaseTransitions: false,
+  });
 }
 
 export type SyncPhaseForwardOptions = {
@@ -84,7 +94,33 @@ export type SyncPhaseForwardOptions = {
    * Never silently resolves mandatory owner decisions without assist permission.
    */
   allowAiAssist?: boolean;
+  /**
+   * When true, may initialize the regular season from preseason.preparation.
+   * Distinct from allowAiAssist — used by owner calendar simulation.
+   */
+  allowOwnerManagedPhaseTransitions?: boolean;
 };
+
+/**
+ * Format a clear block reason when preseason → regular cannot start.
+ */
+export function formatCannotBeginRegularSeasonError(state: GameState): string {
+  const preview = previewAdvance(state);
+  const gate = canBeginRegularSeason(state);
+  const lines: string[] = ["Cannot begin regular season."];
+  if (preview.blockReason) {
+    lines.push(preview.blockReason);
+  }
+  if (gate.blockReason && gate.blockReason !== preview.blockReason) {
+    lines.push(gate.blockReason);
+  }
+  for (const v of gate.violations) {
+    if (v.message && !lines.includes(v.message)) {
+      lines.push(`• ${v.message}`);
+    }
+  }
+  return lines.join("\n");
+}
 
 /**
  * Advance at most one phase toward the resolver target, running full exit/enter hooks.
@@ -95,6 +131,8 @@ export function syncPhaseForward(
   options: SyncPhaseForwardOptions = {},
 ): PhaseSyncResult {
   const allowAiAssist = options.allowAiAssist === true;
+  const allowOwnerManaged =
+    options.allowOwnerManagedPhaseTransitions === true;
   const date = state.world.calendar.currentDate;
   const resolution = resolvePhaseResolution(state, date);
   const fromPhaseId = getActivePhaseId(state);
@@ -106,6 +144,52 @@ export function syncPhaseForward(
       "owner_decision",
       "A required owner decision must be resolved before the league can advance.",
     );
+  }
+
+  // Owner calendar / simulation may open the regular season on/after the planned
+  // opener even when the date resolver still reports preseason. Do not open early
+  // while still inside the preseason window (currentDate < planned opener).
+  if (allowOwnerManaged && needsRegularSeasonInitialization(state)) {
+    const plannedOpener = derivePlannedRegularSeasonStartDate(state);
+    if (
+      plannedOpener == null ||
+      state.world.calendar.currentDate < plannedOpener
+    ) {
+      return emptySync(state, resolution);
+    }
+    if (!canAdvancePhase(state) || !canBeginRegularSeason(state).allowed) {
+      return emptySync(
+        state,
+        resolution,
+        "required_tasks",
+        formatCannotBeginRegularSeasonError(state),
+      );
+    }
+    const begun = beginRegularSeasonFromPreseason(state);
+    return {
+      state: begun.state,
+      events: begun.events,
+      transitioned: true,
+      fromPhaseId,
+      toPhaseId: getActivePhaseId(begun.state),
+      resolution: resolvePhaseResolution(
+        begun.state,
+        begun.state.world.calendar.currentDate,
+      ),
+      stopReason: "none",
+      regularSeasonInitialized: true,
+    };
+  }
+
+  // Schedule may be materialized early for calendar projection while still in
+  // preseason.preparation. Date resolution can then report "regular" on the
+  // opener date — do not auto-cross that owner-managed boundary here.
+  if (
+    !allowOwnerManaged &&
+    fromPhaseId === "preseason.preparation" &&
+    (resolution.phaseId === "regular" || needsRegularSeasonInitialization(state))
+  ) {
+    return emptySync(state, resolution);
   }
 
   if (resolution.phaseId === fromPhaseId) {
@@ -220,6 +304,9 @@ export function syncPhaseForward(
         current.world.calendar.currentDate,
       ),
       stopReason: "none",
+      regularSeasonInitialized:
+        fromPhaseId === "preseason.preparation" &&
+        getActivePhaseId(current) === "regular",
     };
   } catch (error) {
     // Fallback: explicit exit → enter when advanceLeaguePhase rejects
@@ -250,6 +337,9 @@ export function syncPhaseForward(
       ),
       stopReason: "none",
       stopMessage: error instanceof Error ? error.message : undefined,
+      regularSeasonInitialized:
+        fromPhaseId === "preseason.preparation" &&
+        getActivePhaseId(current) === "regular",
     };
   }
 }

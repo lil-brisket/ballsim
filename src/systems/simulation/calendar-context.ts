@@ -220,7 +220,11 @@ function countRemainingRegularGames(state: GameState): number {
   let remaining = 0;
   for (const gameId of state.competition.schedule.gameIds) {
     const game = state.competition.games[gameId];
-    if (game && game.status !== "final") {
+    if (
+      game &&
+      game.competitionType === "regular_season" &&
+      game.status !== "final"
+    ) {
       remaining += 1;
     }
   }
@@ -241,7 +245,13 @@ function computeRegularSeasonProgress(
     const elapsed = calendarDaysBetween(seasonStart, currentDate);
     return Math.max(0, Math.min(1, elapsed / span));
   }
-  const total = state.competition.schedule.gameIds.length;
+  let total = 0;
+  for (const gameId of state.competition.schedule.gameIds) {
+    const game = state.competition.games[gameId];
+    if (game?.competitionType === "regular_season") {
+      total += 1;
+    }
+  }
   if (total === 0) {
     return 0;
   }

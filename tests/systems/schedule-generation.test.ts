@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
+import { calendarDaysBetween } from "@/domain/calendar-date";
+import { CBL_GAME_SETTINGS, DEFAULT_GAME_SETTINGS } from "@/domain/game-settings";
 import { asTeamId, type TeamId } from "@/domain/ids";
+import { createSeededRng } from "@/domain/rng";
+import { resetDomainEventSequenceForTests } from "@/domain/events/domain-event";
+import { createInitialGameState } from "@/state/create-initial-state";
 import {
   defaultSeasonLength,
   expectedRoundCount,
@@ -8,6 +13,7 @@ import {
 } from "@/systems/schedule-generation-config";
 import { generateSeasonSchedule } from "@/systems/schedule-generation";
 import { validateSeasonSchedule } from "@/systems/schedule-validation";
+import { bootstrapWorld } from "@/systems/world-pipeline";
 
 function teamIds(...ids: string[]): TeamId[] {
   return ids.map(asTeamId);
@@ -262,5 +268,115 @@ describe("generateSeasonSchedule", () => {
     expect(defaultSeasonLength(4)).toBe(6);
     expect(defaultSeasonLength(5)).toBe(8);
     expect(defaultSeasonLength(10)).toBe(18);
+  });
+});
+
+describe("generateSchedule calendar spacing", () => {
+  it("spreads an 82-game season across a realistic calendar span", () => {
+    resetDomainEventSequenceForTests();
+    const state = createInitialGameState({
+      saveId: "sched_82_span",
+      rngSeed: 82,
+      settings: DEFAULT_GAME_SETTINGS,
+    });
+    const rng = createSeededRng(state.meta.rngState);
+    const bootstrapped = bootstrapWorld(state, rng).state;
+    expect(bootstrapped.settings.regularSeason.gamesPerTeam).toBe(82);
+
+    const games = Object.values(bootstrapped.competition.games).filter(
+      (g) => g.competitionType === "regular_season",
+    );
+    expect(games.length).toBeGreaterThan(0);
+
+    const dates = games.map((g) => g.date).sort();
+    const first = dates[0]!;
+    const last = dates[dates.length - 1]!;
+    expect(first).toBe("2026-10-01");
+
+    const span = calendarDaysBetween(first, last);
+    // ceil(82 / 3.5 * 7) = 164; allow a small band for config clamps / break
+    expect(span).toBeGreaterThanOrEqual(150);
+    expect(span).toBeLessThanOrEqual(180);
+    // Must not be the old 1-round-per-day compression (~81 days).
+    expect(span).toBeGreaterThan(100);
+  });
+
+  it("spaces controlled-team games realistically with opener and B2B rules", () => {
+    resetDomainEventSequenceForTests();
+    const state = createInitialGameState({
+      saveId: "sched_team_space",
+      rngSeed: 17,
+      settings: DEFAULT_GAME_SETTINGS,
+    });
+    const rng = createSeededRng(state.meta.rngState);
+    const bootstrapped = bootstrapWorld(state, rng).state;
+    const teamId = bootstrapped.user.activeOwnerTeamId;
+    const gamesPerTeam = bootstrapped.settings.regularSeason.gamesPerTeam;
+
+    const teamGames = Object.values(bootstrapped.competition.games)
+      .filter(
+        (g) =>
+          g.competitionType === "regular_season" &&
+          (g.homeTeamId === teamId || g.awayTeamId === teamId),
+      )
+      .sort((a, b) => a.date.localeCompare(b.date));
+
+    expect(teamGames).toHaveLength(gamesPerTeam);
+    expect(teamGames[0]!.date).toBe("2026-10-01");
+    expect(
+      teamGames.every((g) => g.date >= "2026-10-01"),
+    ).toBe(true);
+    expect(
+      teamGames.every((g) => g.seasonId === bootstrapped.competition.season.id),
+    ).toBe(true);
+
+    const dates = teamGames.map((g) => g.date);
+    const uniqueDates = new Set(dates);
+    // No doubleheaders for a team on the same date (league rounds are single-slate).
+    expect(uniqueDates.size).toBe(dates.length);
+
+    const gaps: number[] = [];
+    for (let i = 1; i < dates.length; i += 1) {
+      gaps.push(calendarDaysBetween(dates[i - 1]!, dates[i]!));
+    }
+    expect(gaps.every((g) => g >= 1)).toBe(true);
+
+    const b2bCount = gaps.filter((g) => g === 1).length;
+    // Some B2Bs expected at ~8% of gaps, with spacing constraints.
+    expect(b2bCount).toBeGreaterThan(0);
+    expect(b2bCount).toBeLessThan(gamesPerTeam * 0.25);
+
+    const first = dates[0]!;
+    const last = dates[dates.length - 1]!;
+    const spanDays = calendarDaysBetween(first, last);
+    const weeks = spanDays / 7;
+    const avgPerWeek = gamesPerTeam / weeks;
+    expect(avgPerWeek).toBeGreaterThan(2.5);
+    expect(avgPerWeek).toBeLessThan(4.5);
+
+    // October must not be a solid wall of games for the controlled team.
+    const octoberGames = dates.filter((d) => d.startsWith("2026-10"));
+    expect(octoberGames.length).toBeLessThan(25);
+  });
+
+  it("does not re-date an already materialized schedule on bootstrap", () => {
+    resetDomainEventSequenceForTests();
+    let state = createInitialGameState({
+      saveId: "sched_no_mutate",
+      rngSeed: 3,
+      settings: CBL_GAME_SETTINGS,
+    });
+    const rng = createSeededRng(state.meta.rngState);
+    state = bootstrapWorld(state, rng).state;
+    const before = Object.values(state.competition.games).map((g) => ({
+      id: g.id,
+      date: g.date,
+    }));
+    const again = bootstrapWorld(state, rng).state;
+    const after = Object.values(again.competition.games).map((g) => ({
+      id: g.id,
+      date: g.date,
+    }));
+    expect(after).toEqual(before);
   });
 });
