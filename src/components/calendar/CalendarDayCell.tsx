@@ -69,12 +69,14 @@ function LeagueMilestoneChips(props: {
 export function CalendarDayCell(props: {
   cell: CalendarDayCellData;
   selected: boolean;
+  disabled?: boolean;
   onSelect: (date: string) => void;
 }) {
   const { cell, selected, onSelect } = props;
+  const disabled = props.disabled === true;
   const teamGame = cell.teamGame;
   const specialCount = cell.specialEvents.length;
-  const milestoneCount = cell.leagueMilestones.length;
+  const milestoneCount = (cell.leagueMilestones ?? []).length;
 
   const ariaParts = [
     cell.date,
@@ -85,14 +87,17 @@ export function CalendarDayCell(props: {
           teamGame.resultLabel ? ` ${teamGame.resultLabel}` : ""
         }`
       : null,
-    ...cell.leagueMilestones.map((milestone) => milestone.label),
+    ...(cell.leagueMilestones ?? []).map((milestone) => milestone.label),
     specialCount > 0 ? `${specialCount} special events` : null,
   ];
 
   return (
     <button
       type="button"
-      onClick={() => onSelect(cell.date)}
+      disabled={disabled}
+      onClick={() => {
+        if (!disabled) onSelect(cell.date);
+      }}
       aria-label={ariaParts.filter(Boolean).join(", ")}
       aria-pressed={selected}
       className={[
@@ -107,6 +112,7 @@ export function CalendarDayCell(props: {
           : "",
         selected ? "ring-2 ring-amber-500/80" : "hover:border-zinc-600",
         cell.isPast && !cell.isToday ? "opacity-75" : "",
+        disabled ? "cursor-not-allowed opacity-50" : "",
       ]
         .filter(Boolean)
         .join(" ")}
@@ -123,7 +129,7 @@ export function CalendarDayCell(props: {
         {dayNumber(cell.date)}
       </span>
 
-      <LeagueMilestoneChips milestones={cell.leagueMilestones} />
+      <LeagueMilestoneChips milestones={cell.leagueMilestones ?? []} />
 
       {teamGame ? (
         <div className="mt-auto space-y-0.5">

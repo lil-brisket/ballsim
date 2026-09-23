@@ -16,6 +16,8 @@ vi.mock("next/navigation", () => ({
 
 import type { CalendarPageView } from "@/application/game-service";
 import { CalendarWorkspace } from "@/components/calendar/CalendarWorkspace";
+import * as simulationActivity from "@/components/game/simulation-activity";
+import { SimulationActivityProvider } from "@/components/game/simulation-activity";
 
 function makeView(
   overrides: Partial<CalendarPageView> = {},
@@ -72,6 +74,7 @@ function makeView(
             teamGame: null,
             specialEvents: [],
             isNextTeamGame: false,
+            leagueMilestones: [],
           },
           {
             date: selectedDate,
@@ -89,6 +92,7 @@ function makeView(
             teamGame,
             specialEvents: [],
             isNextTeamGame: true,
+            leagueMilestones: [],
           },
         ],
       ],
@@ -149,13 +153,15 @@ function makeView(
 describe("CalendarWorkspace redesign", () => {
   it("renders inspector and league context without shortcuts or stop conditions", () => {
     const { unmount } = render(
-      <CalendarWorkspace
-        view={makeView()}
-        saveId="save_cal"
-        showSimSummary={false}
-        daysAdvanced={0}
-        highlightCount={0}
-      />,
+      <SimulationActivityProvider>
+        <CalendarWorkspace
+          view={makeView()}
+          saveId="save_cal"
+          showSimSummary={false}
+          daysAdvanced={0}
+          highlightCount={0}
+        />
+      </SimulationActivityProvider>,
     );
 
     expect(screen.getByText("Friday, September 18, 2026")).toBeTruthy();
@@ -176,13 +182,15 @@ describe("CalendarWorkspace redesign", () => {
   it("uses Next Game as date navigation only", () => {
     push.mockClear();
     const { unmount } = render(
-      <CalendarWorkspace
-        view={makeView()}
-        saveId="save_cal"
-        showSimSummary={false}
-        daysAdvanced={0}
-        highlightCount={0}
-      />,
+      <SimulationActivityProvider>
+        <CalendarWorkspace
+          view={makeView()}
+          saveId="save_cal"
+          showSimSummary={false}
+          daysAdvanced={0}
+          highlightCount={0}
+        />
+      </SimulationActivityProvider>,
     );
     fireEvent.click(
       screen.getByRole("button", { name: /Next Game →/i }),
@@ -208,18 +216,68 @@ describe("CalendarWorkspace redesign", () => {
       action: "none" as const,
     };
     const { unmount } = render(
-      <CalendarWorkspace
-        view={makeView({
-          selectedDate: "2026-09-10",
-          inspector: pastInspector,
-        })}
-        saveId="save_cal"
-        showSimSummary={false}
-        daysAdvanced={0}
-        highlightCount={0}
-      />,
+      <SimulationActivityProvider>
+        <CalendarWorkspace
+          view={makeView({
+            selectedDate: "2026-09-10",
+            inspector: pastInspector,
+          })}
+          saveId="save_cal"
+          showSimSummary={false}
+          daysAdvanced={0}
+          highlightCount={0}
+        />
+      </SimulationActivityProvider>,
     );
     expect(screen.queryByRole("button", { name: /Simulate to date/i })).toBeNull();
+    unmount();
+  });
+
+  it("disables calendar navigation while simulation is pending", () => {
+    push.mockClear();
+    const spy = vi
+      .spyOn(simulationActivity, "useSimulationActivity")
+      .mockReturnValue({
+        simulationPending: true,
+        setSimulationPending: vi.fn(),
+      });
+
+    const { unmount } = render(
+      <SimulationActivityProvider>
+        <CalendarWorkspace
+          view={makeView()}
+          saveId="save_cal"
+          showSimSummary={false}
+          daysAdvanced={0}
+          highlightCount={0}
+        />
+      </SimulationActivityProvider>,
+    );
+
+    expect(screen.getByText(/Simulation in progress/i)).toBeTruthy();
+    expect(
+      (screen.getByRole("button", { name: "Prev" }) as HTMLButtonElement)
+        .disabled,
+    ).toBe(true);
+    expect(
+      (screen.getByRole("button", { name: "Today" }) as HTMLButtonElement)
+        .disabled,
+    ).toBe(true);
+    expect(
+      (screen.getByRole("button", { name: "Next" }) as HTMLButtonElement)
+        .disabled,
+    ).toBe(true);
+    expect(
+      (
+        screen.getByRole("button", {
+          name: /Next Game →/i,
+        }) as HTMLButtonElement
+      ).disabled,
+    ).toBe(true);
+
+    fireEvent.click(screen.getByRole("button", { name: /Next Game →/i }));
+    expect(push).not.toHaveBeenCalled();
+    spy.mockRestore();
     unmount();
   });
 });

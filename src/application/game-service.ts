@@ -74,6 +74,10 @@ import type {
   SaveGameStore,
   SaveGameSummary,
 } from "@/persistence/save-game-store";
+import {
+  mapTimeAdvancePersistenceError,
+  withTimeAdvanceDedupe,
+} from "@/application/time-advance-mutation";
 import { createInitialGameState } from "@/state/create-initial-state";
 import type { GameState } from "@/state/game-state";
 import { appendEventLog } from "@/state/game-state";
@@ -470,6 +474,7 @@ function withDashboard(
  * Persist working state after successful command validation.
  * Writes RNG only on the working copy being saved.
  * Appends newlyEmittedEvents exactly once into user.eventLog (bounded).
+ * When ifUpdatedAt is set, commits only if the store row still matches (CAS).
  */
 async function persistWorkingState(
   saveId: string,
@@ -477,6 +482,7 @@ async function persistWorkingState(
   rngState: number,
   store: SaveGameStore,
   newlyEmittedEvents: readonly DomainEvent[] = [],
+  options: { ifUpdatedAt?: Date } = {},
 ): Promise<LoadedSaveGame> {
   const withEvents = appendEventLog(working, newlyEmittedEvents);
   validateGameState(withEvents);
@@ -490,7 +496,11 @@ async function persistWorkingState(
     },
   };
   validateGameState(nextState);
-  return store.save({ id: saveId, state: nextState });
+  return store.save({
+    id: saveId,
+    state: nextState,
+    ifUpdatedAt: options.ifUpdatedAt,
+  });
 }
 
 export async function createNewOwnerSave(
@@ -1320,139 +1330,143 @@ export async function advanceOwnerTime(
     summary?: import("@/systems/calendar/simulation-summary").SimulationSummary;
   }>
 > {
-  const saveStore = getStore(store);
-  const loaded = await saveStore.load(saveId);
-  if (!loaded) {
-    return fail("Save not found.");
-  }
+  try {
+    return await withTimeAdvanceDedupe(saveId, async () => {
+      const saveStore = getStore(store);
+      const loaded = await saveStore.load(saveId);
+      if (!loaded) {
+        return fail("Save not found.");
+      }
 
-  let workingState = loaded.state;
-  let rngState = loaded.state.meta.rngState;
-  const preEvents: DomainEvent[] = [];
+      const commitToken = loaded.updatedAt;
+      let workingState = loaded.state;
+      let rngState = loaded.state.meta.rngState;
+      const preEvents: DomainEvent[] = [];
 
-  if (hasActiveOwnerDecision(workingState.user)) {
-    const blocking = workingState.user.pendingOwnerDecisions.find(
-      (d) => d.blockingLevel === "blocking",
-    );
-    const teamId = blocking?.primaryTeamId;
-    const team = teamId ? workingState.world.teams[teamId] : undefined;
-    const teamLabel = team
-      ? `${team.city} ${team.name}`
-      : teamId ?? "a franchise";
-    const switchHint =
-      teamId && teamId !== workingState.user.activeOwnerTeamId
-        ? ` Switch to ${teamLabel} on My Teams to resolve it.`
-        : "";
-    return fail(
-      `${teamLabel} needs your attention before time can advance. Resolve the pending owner decision first.${switchHint}`,
-    );
-  }
-
-  if (isUserOnDraftClock(workingState)) {
-    const franchiseAssist = getOwnedFranchiseAssistance(workingState);
-    if (!canAiExecute(workingState.settings, "DRAFT_PICK", franchiseAssist)) {
-      return fail(
-        "Cannot advance time while your team is on the draft clock. Make a draft selection first.",
-      );
-    }
-    const rngDraft = createSeededRng(rngState);
-    try {
-      const continuity = runAiContinuity(workingState, rngDraft, {
-        forcePhase: `draft_clock:${workingState.world.calendar.currentDate}`,
-      });
-      workingState = continuity.state;
-      rngState = rngDraft.getState();
-      preEvents.push(...continuity.events);
-      if (isUserOnDraftClock(workingState)) {
+      if (hasActiveOwnerDecision(workingState.user)) {
+        const blocking = workingState.user.pendingOwnerDecisions.find(
+          (d) => d.blockingLevel === "blocking",
+        );
+        const teamId = blocking?.primaryTeamId;
+        const team = teamId ? workingState.world.teams[teamId] : undefined;
+        const teamLabel = team
+          ? `${team.city} ${team.name}`
+          : teamId ?? "a franchise";
+        const switchHint =
+          teamId && teamId !== workingState.user.activeOwnerTeamId
+            ? ` Switch to ${teamLabel} on My Teams to resolve it.`
+            : "";
         return fail(
-          "Cannot advance time while your team is on the draft clock. Make a draft selection first.",
+          `${teamLabel} needs your attention before time can advance. Resolve the pending owner decision first.${switchHint}`,
         );
       }
-    } catch (error) {
-      return fail(error instanceof Error ? error.message : String(error));
-    }
-  }
 
-  // Preflight: reconcile phase pointer with date/state before simulating.
-  {
-    const { reconcilePhaseWithState } = await import(
-      "@/systems/simulation/phase-lifecycle"
-    );
-    const preflight = reconcilePhaseWithState(workingState);
-    workingState = preflight.state;
-    preEvents.push(...preflight.events);
-    if (preflight.stopReason === "owner_decision") {
-      return fail(
-        preflight.stopMessage ??
-          "A required owner decision must be resolved before time can advance.",
+      if (isUserOnDraftClock(workingState)) {
+        const franchiseAssist = getOwnedFranchiseAssistance(workingState);
+        if (!canAiExecute(workingState.settings, "DRAFT_PICK", franchiseAssist)) {
+          return fail(
+            "Cannot advance time while your team is on the draft clock. Make a draft selection first.",
+          );
+        }
+        const rngDraft = createSeededRng(rngState);
+        try {
+          const continuity = runAiContinuity(workingState, rngDraft, {
+            forcePhase: `draft_clock:${workingState.world.calendar.currentDate}`,
+          });
+          workingState = continuity.state;
+          rngState = rngDraft.getState();
+          preEvents.push(...continuity.events);
+          if (isUserOnDraftClock(workingState)) {
+            return fail(
+              "Cannot advance time while your team is on the draft clock. Make a draft selection first.",
+            );
+          }
+        } catch (error) {
+          return fail(mapTimeAdvancePersistenceError(error));
+        }
+      }
+
+      // Preflight: reconcile phase pointer with date/state before simulating.
+      {
+        const { reconcilePhaseWithState } = await import(
+          "@/systems/simulation/phase-lifecycle"
+        );
+        const preflight = reconcilePhaseWithState(workingState);
+        workingState = preflight.state;
+        preEvents.push(...preflight.events);
+        if (preflight.stopReason === "owner_decision") {
+          return fail(
+            preflight.stopMessage ??
+              "A required owner decision must be resolved before time can advance.",
+          );
+        }
+        if (preflight.stopReason === "draft_clock") {
+          return fail(
+            preflight.stopMessage ??
+              "Cannot advance time while your team is on the draft clock.",
+          );
+        }
+      }
+
+      const resolved = resolveAdvanceDays(workingState, options);
+      if (!resolved.ok) {
+        return fail(resolved.error);
+      }
+
+      const stopConditions = options.stopConditions ?? [];
+      const stopOnPhaseChange =
+        options.stopOnPhaseChange === true ||
+        stopConditions.includes("phase_change");
+
+      const rng = createSeededRng(rngState);
+
+      const result = advanceSimulation(workingState, rng, {
+        days: resolved.days,
+        stopOnPhaseChange,
+      });
+
+      // Postflight: final phase reconciliation + full invariant validation.
+      const { reconcilePhaseWithState } = await import(
+        "@/systems/simulation/phase-lifecycle"
       );
-    }
-    if (preflight.stopReason === "draft_clock") {
-      return fail(
-        preflight.stopMessage ??
-          "Cannot advance time while your team is on the draft clock.",
+      const { assertSimulationState } = await import(
+        "@/systems/simulation/validate-simulation-state"
       );
-    }
-  }
+      const { buildSimulationSummary } = await import(
+        "@/systems/calendar/simulation-summary"
+      );
+      const postflight = reconcilePhaseWithState(result.state, rng);
+      assertSimulationState(postflight.state, "full");
 
-  const resolved = resolveAdvanceDays(workingState, options);
-  if (!resolved.ok) {
-    return fail(resolved.error);
-  }
+      const fromDate = workingState.world.calendar.currentDate;
+      const allEvents = [...preEvents, ...result.events, ...postflight.events];
+      const withProjections = processDerivedProjections(postflight.state, allEvents);
 
-  const stopConditions = options.stopConditions ?? [];
-  const stopOnPhaseChange =
-    options.stopOnPhaseChange === true ||
-    stopConditions.includes("phase_change");
+      const saved = await persistWorkingState(
+        saveId,
+        withProjections,
+        rng.getState(),
+        saveStore,
+        allEvents,
+        { ifUpdatedAt: commitToken },
+      );
 
-  const rng = createSeededRng(rngState);
-
-  try {
-    const result = advanceSimulation(workingState, rng, {
-      days: resolved.days,
-      stopOnPhaseChange,
+      const { state: _state, events: _ignored, ...simulation } = result;
+      const highlights = buildSimulationHighlights(withProjections, allEvents);
+      const summary = buildSimulationSummary(withProjections, allEvents, {
+        fromDate,
+        toDate: withProjections.world.calendar.currentDate,
+      });
+      return {
+        ...withDashboard(saved),
+        events: allEvents,
+        simulation,
+        highlights,
+        summary,
+      };
     });
-
-    // Postflight: final phase reconciliation + full invariant validation.
-    const { reconcilePhaseWithState } = await import(
-      "@/systems/simulation/phase-lifecycle"
-    );
-    const { assertSimulationState } = await import(
-      "@/systems/simulation/validate-simulation-state"
-    );
-    const { buildSimulationSummary } = await import(
-      "@/systems/calendar/simulation-summary"
-    );
-    const postflight = reconcilePhaseWithState(result.state, rng);
-    assertSimulationState(postflight.state, "full");
-
-    const fromDate = workingState.world.calendar.currentDate;
-    const allEvents = [...preEvents, ...result.events, ...postflight.events];
-    const withProjections = processDerivedProjections(postflight.state, allEvents);
-
-    const saved = await persistWorkingState(
-      saveId,
-      withProjections,
-      rng.getState(),
-      saveStore,
-      allEvents,
-    );
-
-    const { state: _state, events: _ignored, ...simulation } = result;
-    const highlights = buildSimulationHighlights(withProjections, allEvents);
-    const summary = buildSimulationSummary(withProjections, allEvents, {
-      fromDate,
-      toDate: withProjections.world.calendar.currentDate,
-    });
-    return {
-      ...withDashboard(saved),
-      events: allEvents,
-      simulation,
-      highlights,
-      summary,
-    };
   } catch (error) {
-    return fail(error instanceof Error ? error.message : String(error));
+    return fail(mapTimeAdvancePersistenceError(error));
   }
 }
 
@@ -2107,41 +2121,45 @@ export async function finishFreeAgency(
   saveId: string,
   store?: SaveGameStore,
 ): Promise<OwnerCommandResult> {
-  const saveStore = getStore(store);
-  const loaded = await saveStore.load(saveId);
-  if (!loaded) {
-    return fail("Save not found.");
-  }
-
-  if (!isInLeaguePhase(loaded.state, "offseason.free_agency")) {
-    return fail("Finish free agency requires offseason free_agency stage.");
-  }
-
-  const rng = createSeededRng(loaded.state.meta.rngState);
   try {
-    const advanced = advanceLeaguePhase(loaded.state, rng);
-    let working = advanced.state;
-    const emitted = [...advanced.events];
-    const dayResult = advanceSimulation(working, rng, { days: 1 });
-    working = dayResult.state;
-    emitted.push(...dayResult.events);
+    return await withTimeAdvanceDedupe(saveId, async () => {
+      const saveStore = getStore(store);
+      const loaded = await saveStore.load(saveId);
+      if (!loaded) {
+        return fail("Save not found.");
+      }
 
-    if (isUserOnDraftClock(working)) {
-      // Persist stopped at draft clock without requiring another advance.
-    }
+      if (!isInLeaguePhase(loaded.state, "offseason.free_agency")) {
+        return fail("Finish free agency requires offseason free_agency stage.");
+      }
 
-    working = processDerivedProjections(working, emitted);
+      const commitToken = loaded.updatedAt;
+      const rng = createSeededRng(loaded.state.meta.rngState);
+      const advanced = advanceLeaguePhase(loaded.state, rng);
+      let working = advanced.state;
+      const emitted = [...advanced.events];
+      const dayResult = advanceSimulation(working, rng, { days: 1 });
+      working = dayResult.state;
+      emitted.push(...dayResult.events);
 
-    const saved = await persistWorkingState(
-      saveId,
-      working,
-      rng.getState(),
-      saveStore,
-      emitted,
-    );
-    return withDashboard(saved);
+      if (isUserOnDraftClock(working)) {
+        // Persist stopped at draft clock without requiring another advance.
+      }
+
+      working = processDerivedProjections(working, emitted);
+
+      const saved = await persistWorkingState(
+        saveId,
+        working,
+        rng.getState(),
+        saveStore,
+        emitted,
+        { ifUpdatedAt: commitToken },
+      );
+      return withDashboard(saved);
+    });
   } catch (error) {
-    return fail(error instanceof Error ? error.message : String(error));
+    return fail(mapTimeAdvancePersistenceError(error));
   }
 }
 
@@ -2239,54 +2257,58 @@ export async function letAiHandlePhaseAndAdvance(
   saveId: string,
   store?: SaveGameStore,
 ): Promise<OwnerCommandResult> {
-  const saveStore = getStore(store);
-  const loaded = await saveStore.load(saveId);
-  if (!loaded) {
-    return fail("Save not found.");
-  }
-  if (isUserAssistCompletelyOff(
-    loaded.state.settings,
-    getOwnedFranchiseAssistance(loaded.state),
-  )) {
-    return fail(
-      "AI assistance is off. Delegate at least one responsibility in settings first.",
-    );
-  }
-
-  const rng = createSeededRng(loaded.state.meta.rngState);
   try {
-    const phaseKey = resolveSimulationPhaseKey(loaded.state);
-    const continuity = runAiContinuity(loaded.state, rng, {
-      forcePhase: `handoff:${phaseKey}`,
+    return await withTimeAdvanceDedupe(saveId, async () => {
+      const saveStore = getStore(store);
+      const loaded = await saveStore.load(saveId);
+      if (!loaded) {
+        return fail("Save not found.");
+      }
+      if (isUserAssistCompletelyOff(
+        loaded.state.settings,
+        getOwnedFranchiseAssistance(loaded.state),
+      )) {
+        return fail(
+          "AI assistance is off. Delegate at least one responsibility in settings first.",
+        );
+      }
+
+      const commitToken = loaded.updatedAt;
+      const rng = createSeededRng(loaded.state.meta.rngState);
+      const phaseKey = resolveSimulationPhaseKey(loaded.state);
+      const continuity = runAiContinuity(loaded.state, rng, {
+        forcePhase: `handoff:${phaseKey}`,
+      });
+      let working = continuity.state;
+      const emitted = [...continuity.events];
+
+      if (isInLeaguePhase(working, "offseason.free_agency")) {
+        const advanced = advanceLeaguePhase(working, rng);
+        working = advanced.state;
+        emitted.push(...advanced.events);
+      }
+
+      const dayResult = advanceSimulation(working, rng, {
+        days: 400,
+        stopOnPhaseChange: true,
+      });
+      working = dayResult.state;
+      emitted.push(...dayResult.events);
+
+      working = processDerivedProjections(working, emitted);
+
+      const saved = await persistWorkingState(
+        saveId,
+        working,
+        rng.getState(),
+        saveStore,
+        emitted,
+        { ifUpdatedAt: commitToken },
+      );
+      return withDashboard(saved);
     });
-    let working = continuity.state;
-    const emitted = [...continuity.events];
-
-    if (isInLeaguePhase(working, "offseason.free_agency")) {
-      const advanced = advanceLeaguePhase(working, rng);
-      working = advanced.state;
-      emitted.push(...advanced.events);
-    }
-
-    const dayResult = advanceSimulation(working, rng, {
-      days: 400,
-      stopOnPhaseChange: true,
-    });
-    working = dayResult.state;
-    emitted.push(...dayResult.events);
-
-    working = processDerivedProjections(working, emitted);
-
-    const saved = await persistWorkingState(
-      saveId,
-      working,
-      rng.getState(),
-      saveStore,
-      emitted,
-    );
-    return withDashboard(saved);
   } catch (error) {
-    return fail(error instanceof Error ? error.message : String(error));
+    return fail(mapTimeAdvancePersistenceError(error));
   }
 }
 
@@ -2297,52 +2319,56 @@ export async function continuePastPhaseAnyway(
   saveId: string,
   store?: SaveGameStore,
 ): Promise<OwnerCommandResult> {
-  const saveStore = getStore(store);
-  const loaded = await saveStore.load(saveId);
-  if (!loaded) {
-    return fail("Save not found.");
-  }
-
-  const phaseKey = resolveSimulationPhaseKey(loaded.state);
-  const today = loaded.state.world.calendar.currentDate;
-  const activeTeamId = loaded.state.user.activeOwnerTeamId;
-  let working: GameState = withOwnedFranchise(loaded.state, activeTeamId, (f) => ({
-    ...f,
-    phaseSkips: [
-      ...f.phaseSkips,
-      {
-        phaseKey,
-        skippedOn: today,
-        reason: "User chose Continue Anyway",
-      },
-    ],
-  }));
-
-  const rng = createSeededRng(working.meta.rngState);
   try {
-    if (isInLeaguePhase(working, "offseason.free_agency")) {
-      const advanced = advanceLeaguePhase(working, rng);
-      working = advanced.state;
-    }
+    return await withTimeAdvanceDedupe(saveId, async () => {
+      const saveStore = getStore(store);
+      const loaded = await saveStore.load(saveId);
+      if (!loaded) {
+        return fail("Save not found.");
+      }
 
-    const dayResult = advanceSimulation(working, rng, {
-      days: 400,
-      stopOnPhaseChange: true,
+      const commitToken = loaded.updatedAt;
+      const phaseKey = resolveSimulationPhaseKey(loaded.state);
+      const today = loaded.state.world.calendar.currentDate;
+      const activeTeamId = loaded.state.user.activeOwnerTeamId;
+      let working: GameState = withOwnedFranchise(loaded.state, activeTeamId, (f) => ({
+        ...f,
+        phaseSkips: [
+          ...f.phaseSkips,
+          {
+            phaseKey,
+            skippedOn: today,
+            reason: "User chose Continue Anyway",
+          },
+        ],
+      }));
+
+      const rng = createSeededRng(working.meta.rngState);
+      if (isInLeaguePhase(working, "offseason.free_agency")) {
+        const advanced = advanceLeaguePhase(working, rng);
+        working = advanced.state;
+      }
+
+      const dayResult = advanceSimulation(working, rng, {
+        days: 400,
+        stopOnPhaseChange: true,
+      });
+      working = dayResult.state;
+
+      working = processDerivedProjections(working, dayResult.events);
+
+      const saved = await persistWorkingState(
+        saveId,
+        working,
+        rng.getState(),
+        saveStore,
+        dayResult.events,
+        { ifUpdatedAt: commitToken },
+      );
+      return withDashboard(saved);
     });
-    working = dayResult.state;
-
-    working = processDerivedProjections(working, dayResult.events);
-
-    const saved = await persistWorkingState(
-      saveId,
-      working,
-      rng.getState(),
-      saveStore,
-      dayResult.events,
-    );
-    return withDashboard(saved);
   } catch (error) {
-    return fail(error instanceof Error ? error.message : String(error));
+    return fail(mapTimeAdvancePersistenceError(error));
   }
 }
 
@@ -2354,37 +2380,41 @@ export async function beginOffseason(
   saveId: string,
   store?: SaveGameStore,
 ): Promise<OwnerCommandResult> {
-  const saveStore = getStore(store);
-  const loaded = await saveStore.load(saveId);
-  if (!loaded) {
-    return fail("Save not found.");
-  }
-
-  if (loaded.state.competition.season.phase !== "postseason") {
-    return fail("Begin offseason requires the Season Review (postseason) phase.");
-  }
-
-  const rng = createSeededRng(loaded.state.meta.rngState);
   try {
-    const entered = enterOffseasonFromPostseason(loaded.state);
-    let working = entered.state;
-    const emitted = [...entered.events];
-    const dayResult = advanceSimulation(working, rng, { days: 1 });
-    working = dayResult.state;
-    emitted.push(...dayResult.events);
+    return await withTimeAdvanceDedupe(saveId, async () => {
+      const saveStore = getStore(store);
+      const loaded = await saveStore.load(saveId);
+      if (!loaded) {
+        return fail("Save not found.");
+      }
 
-    working = processDerivedProjections(working, emitted);
+      if (loaded.state.competition.season.phase !== "postseason") {
+        return fail("Begin offseason requires the Season Review (postseason) phase.");
+      }
 
-    const saved = await persistWorkingState(
-      saveId,
-      working,
-      rng.getState(),
-      saveStore,
-      emitted,
-    );
-    return withDashboard(saved);
+      const commitToken = loaded.updatedAt;
+      const rng = createSeededRng(loaded.state.meta.rngState);
+      const entered = enterOffseasonFromPostseason(loaded.state);
+      let working = entered.state;
+      const emitted = [...entered.events];
+      const dayResult = advanceSimulation(working, rng, { days: 1 });
+      working = dayResult.state;
+      emitted.push(...dayResult.events);
+
+      working = processDerivedProjections(working, emitted);
+
+      const saved = await persistWorkingState(
+        saveId,
+        working,
+        rng.getState(),
+        saveStore,
+        emitted,
+        { ifUpdatedAt: commitToken },
+      );
+      return withDashboard(saved);
+    });
   } catch (error) {
-    return fail(error instanceof Error ? error.message : String(error));
+    return fail(mapTimeAdvancePersistenceError(error));
   }
 }
 
@@ -2393,88 +2423,92 @@ export async function selectOwnerDraftProspect(
   prospectPlayerId: string,
   store?: SaveGameStore,
 ): Promise<OwnerCommandResult> {
-  const saveStore = getStore(store);
-  const loaded = await saveStore.load(saveId);
-  if (!loaded) {
-    return fail("Save not found.");
-  }
-
-  if (!isInLeaguePhase(loaded.state, "offseason.draft")) {
-    return fail("Draft selection is only allowed during the draft stage.");
-  }
-
-  if (!isUserOnDraftClock(loaded.state)) {
-    return fail("Your team is not on the draft clock.");
-  }
-
-  const slot = getActiveDraftOnClockSlot(loaded.state);
-  if (slot === undefined) {
-    return fail("No available draft slot.");
-  }
-
-  const draftYear = draftYearForSeason(loaded.state.competition.season.year);
-  const draftClassId = draftClassIdFor(draftYear);
-  const rng = createSeededRng(loaded.state.meta.rngState);
-
   try {
-    const selection = makeDraftSelection(loaded.state, {
-      draftClassId,
-      draftPickId: slot.draftPickId,
-      prospectPlayerId: asPlayerId(prospectPlayerId),
-      teamId: loaded.state.user.activeOwnerTeamId,
-    });
-    if (!selection.success) {
-      return fail(
-        selection.validation.errors[0]?.message ?? "Draft selection invalid.",
-      );
-    }
+    return await withTimeAdvanceDedupe(saveId, async () => {
+      const saveStore = getStore(store);
+      const loaded = await saveStore.load(saveId);
+      if (!loaded) {
+        return fail("Save not found.");
+      }
 
-    let working = recordOwnershipEvidence(
-      selection.state,
-      scoreDraftSelection(loaded.state),
-    );
-    const emitted: DomainEvent[] = [...selection.events];
-    const ai = runAiTeamDecisions(working, rng);
-    working = ai.state;
-    emitted.push(...ai.events);
+      if (!isInLeaguePhase(loaded.state, "offseason.draft")) {
+        return fail("Draft selection is only allowed during the draft stage.");
+      }
 
-    if (!isUserOnDraftClock(working)) {
-      const advanced = advanceSimulation(working, rng, {
-        days: 1,
-        stopOnPhaseChange: true,
+      if (!isUserOnDraftClock(loaded.state)) {
+        return fail("Your team is not on the draft clock.");
+      }
+
+      const slot = getActiveDraftOnClockSlot(loaded.state);
+      if (slot === undefined) {
+        return fail("No available draft slot.");
+      }
+
+      const commitToken = loaded.updatedAt;
+      const draftYear = draftYearForSeason(loaded.state.competition.season.year);
+      const draftClassId = draftClassIdFor(draftYear);
+      const rng = createSeededRng(loaded.state.meta.rngState);
+
+      const selection = makeDraftSelection(loaded.state, {
+        draftClassId,
+        draftPickId: slot.draftPickId,
+        prospectPlayerId: asPlayerId(prospectPlayerId),
+        teamId: loaded.state.user.activeOwnerTeamId,
       });
-      working = advanced.state;
-      emitted.push(...advanced.events);
-      if (
-        working.competition.season.offseasonStage === "draft" &&
-        !isUserOnDraftClock(working)
-      ) {
-        const aiAgain = runAiTeamDecisions(working, rng);
-        working = aiAgain.state;
-        emitted.push(...aiAgain.events);
-        if (!isUserOnDraftClock(working)) {
-          const again = advanceSimulation(working, rng, {
-            days: 1,
-            stopOnPhaseChange: true,
-          });
-          working = again.state;
-          emitted.push(...again.events);
+      if (!selection.success) {
+        return fail(
+          selection.validation.errors[0]?.message ?? "Draft selection invalid.",
+        );
+      }
+
+      let working = recordOwnershipEvidence(
+        selection.state,
+        scoreDraftSelection(loaded.state),
+      );
+      const emitted: DomainEvent[] = [...selection.events];
+      const ai = runAiTeamDecisions(working, rng);
+      working = ai.state;
+      emitted.push(...ai.events);
+
+      if (!isUserOnDraftClock(working)) {
+        const advanced = advanceSimulation(working, rng, {
+          days: 1,
+          stopOnPhaseChange: true,
+        });
+        working = advanced.state;
+        emitted.push(...advanced.events);
+        if (
+          working.competition.season.offseasonStage === "draft" &&
+          !isUserOnDraftClock(working)
+        ) {
+          const aiAgain = runAiTeamDecisions(working, rng);
+          working = aiAgain.state;
+          emitted.push(...aiAgain.events);
+          if (!isUserOnDraftClock(working)) {
+            const again = advanceSimulation(working, rng, {
+              days: 1,
+              stopOnPhaseChange: true,
+            });
+            working = again.state;
+            emitted.push(...again.events);
+          }
         }
       }
-    }
 
-    working = processDerivedProjections(working, emitted);
+      working = processDerivedProjections(working, emitted);
 
-    const saved = await persistWorkingState(
-      saveId,
-      working,
-      rng.getState(),
-      saveStore,
-      emitted,
-    );
-    return withDashboard(saved);
+      const saved = await persistWorkingState(
+        saveId,
+        working,
+        rng.getState(),
+        saveStore,
+        emitted,
+        { ifUpdatedAt: commitToken },
+      );
+      return withDashboard(saved);
+    });
   } catch (error) {
-    return fail(error instanceof Error ? error.message : String(error));
+    return fail(mapTimeAdvancePersistenceError(error));
   }
 }
 

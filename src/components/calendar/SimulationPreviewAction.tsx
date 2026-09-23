@@ -2,6 +2,7 @@
 
 import { useFormStatus } from "react-dom";
 import { simulateToDateAction } from "@/application/actions";
+import { SimulationPendingReporter } from "@/components/game/simulation-activity";
 
 function SimulateSubmitButton(props: { disabled?: boolean }) {
   const { pending } = useFormStatus();
@@ -35,6 +36,7 @@ export function SimulationPreviewAction(props: {
 
   return (
     <form action={simulateToDateAction} className="space-y-2">
+      <SimulationPendingReporter />
       <input type="hidden" name="saveId" value={props.saveId} />
       <input type="hidden" name="returnPath" value={props.returnPath} />
       <input type="hidden" name="targetDate" value={props.targetDate} />

@@ -1110,20 +1110,16 @@ export function reconcileRosterManagement(
     lastConfiguredBy: previous.lastConfiguredBy,
   };
 
+  const provisionalState = withTeamRosterManagement(state, teamId, next);
   const issues = validateRosterManagementShape(
-    withTeamRosterManagement(state, teamId, next),
+    provisionalState,
     teamId,
     next,
   );
+  const feasibility = validateRotationFeasibility(next);
   const needsRecommend =
-    issues.some(
-      (issue) =>
-        issue.code === "starter_count" ||
-        issue.code === "unavailable_starter" ||
-        issue.code === "duplicate_group" ||
-        issue.code === "unassigned" ||
-        issue.code === "duplicate_slots",
-    ) ||
+    issues.length > 0 ||
+    hasHardFeasibilityIssues(feasibility) ||
     startingLineup.length < TRADE_ROSTER_RULES.startingLineupSize;
 
   if (needsRecommend) {

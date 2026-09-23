@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { CalendarDateInspectorView } from "@/systems/calendar";
+import type { TeamId } from "@/domain/ids";
 import { TeamEntityLink } from "@/components/entity/TeamEntityLink";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { SimulationPreviewAction } from "@/components/calendar/SimulationPreviewAction";
@@ -10,6 +11,8 @@ export function DateInspector(props: {
   returnPath: string;
   inspector: CalendarDateInspectorView;
   timeDisabled: boolean;
+  /** Active owner franchise — kept for callers that need explicit scoping. */
+  userTeamId?: TeamId;
 }) {
   const { inspector } = props;
   const statusLabel =

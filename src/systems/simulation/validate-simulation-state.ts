@@ -115,6 +115,45 @@ export function validateSimulationState(
     }
   }
 
+  // Hard roster ownership checks only — full rotation feasibility lives in
+  // roster-integrity helpers used by trade/regression tests, not every jump.
+  if (
+    state.competition.season.phase === "regular" ||
+    state.competition.season.phase === "playoffs"
+  ) {
+    for (const team of Object.values(state.world.teams)) {
+      const rosterSet = new Set(team.roster.map(String));
+      for (const playerId of team.roster) {
+        const player = state.world.players[playerId];
+        if (player == null) {
+          issues.push(
+            issue(
+              "missing_roster_player",
+              `Roster player ${playerId} missing for team ${team.id}.`,
+            ),
+          );
+        } else if (player.teamId !== team.id) {
+          issues.push(
+            issue(
+              "player_team_mismatch",
+              `Player ${playerId} teamId ${String(player.teamId)} != roster ${team.id}.`,
+            ),
+          );
+        }
+      }
+      for (const entry of team.rosterManagement.rotation) {
+        if (!rosterSet.has(entry.playerId)) {
+          issues.push(
+            issue(
+              "rotation_stale_player",
+              `Team ${team.id} rotation still references ${entry.playerId}.`,
+            ),
+          );
+        }
+      }
+    }
+  }
+
   for (const game of Object.values(state.competition.games)) {
     if (game.status === "final") {
       if (
