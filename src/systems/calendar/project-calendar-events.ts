@@ -12,6 +12,7 @@ import {
 } from "@/domain/entities/calendar-event";
 import { certaintyFromLifecycle } from "@/domain/entities/calendar-event";
 import type { AwardResult } from "@/domain/entities/awards";
+import type { SeasonEvent } from "@/domain/entities/season-events";
 import {
   getBlockingOwnerDecisions,
   type PendingOwnerDecision,
@@ -115,6 +116,13 @@ export function projectCalendarEvents(
 
   for (const award of Object.values(state.business.awards.results)) {
     const view = projectAward(state, award, currentDate, saveId);
+    if (view) upsert(view);
+  }
+
+  for (const seasonEvent of Object.values(
+    state.competition.seasonEvents?.events ?? {},
+  )) {
+    const view = projectSeasonEvent(seasonEvent, currentDate, saveId);
     if (view) upsert(view);
   }
 
@@ -401,6 +409,13 @@ export function awardCalendarDate(
   state: GameState,
   award: AwardResult,
 ): string | null {
+  if (award.period === "midseason") {
+    return (
+      state.competition.seasonEvents.midseasonAwards?.announceDate ??
+      state.competition.seasonEvents.midseasonAwards?.cutoffDate ??
+      state.world.calendar.currentDate
+    );
+  }
   if (award.period !== null) {
     return firstDayOfNextMonth(award.period);
   }
@@ -582,6 +597,84 @@ function describeDomainEvent(
 
 function humanizeEventType(type: string): string {
   return type.replace(/([a-z])([A-Z])/g, "$1 $2");
+}
+
+function seasonEventIcon(type: SeasonEvent["type"]): string {
+  switch (type) {
+    case "all_star":
+      return "⭐";
+    case "midseason_tournament":
+      return "🏆";
+    case "midseason_awards":
+      return "🏅";
+    case "holiday":
+      return "🎉";
+    case "fan_voting":
+      return "⭐";
+    default:
+      return "📅";
+  }
+}
+
+function seasonEventHref(saveId: string, event: SeasonEvent): string {
+  switch (event.type) {
+    case "fan_voting":
+      return `/dashboard/${saveId}/season-events/fan-voting`;
+    case "all_star":
+      return `/dashboard/${saveId}/season-events/all-star`;
+    case "midseason_tournament":
+      return `/dashboard/${saveId}/season-events/midseason-cup`;
+    case "midseason_awards":
+      return `/dashboard/${saveId}/awards`;
+    default:
+      return `/dashboard/${saveId}/calendar?date=${event.startDate}`;
+  }
+}
+
+function projectSeasonEvent(
+  event: SeasonEvent,
+  currentDate: string,
+  saveId: string,
+): CalendarEventView | null {
+  if (event.status === "cancelled") {
+    return null;
+  }
+  const lifecycle =
+    event.status === "completed"
+      ? "occurred"
+      : event.startDate > currentDate
+        ? "scheduled"
+        : event.status === "active"
+          ? "scheduled"
+          : event.endDate < currentDate
+            ? "occurred"
+            : "scheduled";
+
+  const source: EventSourceRef = {
+    type: "season_event",
+    id: event.id,
+  };
+  const sourceKey = toSourceKey(source);
+  const icon = seasonEventIcon(event.type);
+
+  return {
+    id: `cal:${sourceKey}`,
+    date: event.startDate,
+    lifecycle,
+    certainty: certaintyFromLifecycle(lifecycle),
+    category: "league",
+    title: `${icon} ${event.shortLabel}`,
+    description: event.title,
+    importance:
+      event.type === "all_star" || event.type === "midseason_tournament"
+        ? "critical"
+        : "high",
+    source,
+    sourceKey,
+    blocking: false,
+    completed: event.status === "completed",
+    href: seasonEventHref(saveId, event),
+  };
 }
 
 export function teamDisplayName(state: GameState, teamId: TeamId): string {

@@ -4,6 +4,7 @@ import { systemResult, type SystemResult } from "@/domain/system-result";
 import type { GameState } from "@/state/game-state";
 import { createEmptyPlayoffTournament } from "@/domain/entities/playoffs";
 import { createEmptyTeamStanding } from "@/domain/entities/standings";
+import { createEmptySeasonEventsState } from "@/domain/entities/season-events";
 import { createEmptyGameDayPromotionSeasonState } from "@/domain/entities/game-day-promotion";
 import { draftClassIdFor } from "@/domain/entities/draft";
 import { mergeDraftPicksForSeason } from "@/domain/draft-picks/generate-draft-picks";
@@ -216,6 +217,7 @@ export function initializeNewSeason(state: GameState): SystemResult {
         standings: { byTeamId: standingsByTeamId },
       },
       seasonEventLog: [],
+      seasonEvents: createEmptySeasonEventsState(),
     },
   };
 

@@ -33,7 +33,8 @@ export type EventSourceRef =
   | { type: "award"; id: string }
   | { type: "playoff_series"; id: string }
   | { type: "milestone"; key: LeagueMilestoneKey }
-  | { type: "owner_decision"; id: OwnerDecisionId };
+  | { type: "owner_decision"; id: OwnerDecisionId }
+  | { type: "season_event"; id: string };
 
 /**
  * Flattened deterministic dedupe key.
@@ -53,6 +54,8 @@ export function toSourceKey(ref: EventSourceRef): string {
       return `milestone:${ref.key}`;
     case "owner_decision":
       return `owner_decision:${ref.id}`;
+    case "season_event":
+      return `season_event:${ref.id}`;
   }
 }
 

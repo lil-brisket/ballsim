@@ -336,6 +336,7 @@ export function validateGameState(state: unknown): asserts state is GameState {
     "playoffs",
     "developmentLeague",
     "seasonEventLog",
+    "seasonEvents",
   ] as const) {
     if (!(key in competition)) {
       fail(`competition missing required field "${key}".`);
@@ -457,6 +458,20 @@ export function validateGameState(state: unknown): asserts state is GameState {
     fail("competition.seasonEventLog must be an array.");
   }
   validateEventLog(competition.seasonEventLog, "competition.seasonEventLog");
+
+  assertRecord(competition.seasonEvents, "competition.seasonEvents");
+  assertRecord(
+    competition.seasonEvents.events,
+    "competition.seasonEvents.events",
+  );
+  assertRecord(
+    competition.seasonEvents.fanVoting,
+    "competition.seasonEvents.fanVoting",
+  );
+  assertRecord(
+    competition.seasonEvents.holidays,
+    "competition.seasonEvents.holidays",
+  );
 
   const business = state.business;
   assertRecord(business, "business");

@@ -36,7 +36,6 @@ export function runMonthlyAwards(
   }
 
   let current = state;
-  let awardsGenerated = 0;
   const before = Object.keys(current.business.awards.results).length;
 
   current = ensureAwardResult(
@@ -52,7 +51,51 @@ export function runMonthlyAwards(
     evaluateDefensivePlayerOfMonth(current, completedMonthId),
   );
 
-  awardsGenerated =
+  const awardsGenerated =
+    Object.keys(current.business.awards.results).length - before;
+  return { ...systemResult(current), awardsGenerated };
+}
+
+/**
+ * Midseason awards at statistical cutoff. Idempotent via award result ids.
+ * Uses period "midseason" and tier midseason award definitions.
+ */
+export function runMidseasonAwards(
+  state: GameState,
+  throughDate: string,
+): AwardsPipelineResult {
+  let current = state;
+  const before = Object.keys(current.business.awards.results).length;
+  const opts = {
+    throughDate,
+    period: "midseason" as const,
+  };
+
+  current = ensureAwardResult(
+    current,
+    evaluateMvp(current, { ...opts, awardId: "midseason_mvp" }),
+  );
+  current = ensureAwardResult(
+    current,
+    evaluateDpoy(current, { ...opts, awardId: "midseason_dpoy" }),
+  );
+  current = ensureAwardResult(
+    current,
+    evaluateRoy(current, { ...opts, awardId: "midseason_roy" }),
+  );
+  current = ensureAwardResult(
+    current,
+    evaluateSixthMan(current, { ...opts, awardId: "midseason_sixth_man" }),
+  );
+  current = ensureAwardResult(
+    current,
+    evaluateMostImproved(current, {
+      ...opts,
+      awardId: "midseason_most_improved",
+    }),
+  );
+
+  const awardsGenerated =
     Object.keys(current.business.awards.results).length - before;
   return { ...systemResult(current), awardsGenerated };
 }

@@ -5,7 +5,7 @@ export type AwardCadence = "monthly" | "yearly";
 
 export type AwardSubjectType = "player" | "coach";
 
-export type AwardTier = "major" | "monthly";
+export type AwardTier = "major" | "monthly" | "midseason";
 
 export type AwardDefinitionId =
   | "player_of_month"
@@ -16,7 +16,12 @@ export type AwardDefinitionId =
   | "roy"
   | "sixth_man"
   | "most_improved"
-  | "coach_of_year";
+  | "coach_of_year"
+  | "midseason_mvp"
+  | "midseason_dpoy"
+  | "midseason_roy"
+  | "midseason_sixth_man"
+  | "midseason_most_improved";
 
 export type AwardDefinition = {
   id: AwardDefinitionId;

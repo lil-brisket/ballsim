@@ -19,7 +19,7 @@ describe("game-day promotions migration", () => {
       createSeededRng(state.meta.rngState),
     ).state;
     expect(state.meta.schemaVersion).toBe(GAME_STATE_SCHEMA_VERSION);
-    expect(GAME_STATE_SCHEMA_VERSION).toBe(58);
+    
     for (const teamId of Object.keys(state.world.teams)) {
       const promo = state.business.gameDayPromotionsByTeamId[teamId];
       expect(promo).toBeTruthy();
@@ -51,7 +51,7 @@ describe("game-day promotions migration", () => {
     };
     const json = JSON.stringify(legacy);
     const migrated = deserializeGameState(json);
-    expect(migrated.meta.schemaVersion).toBe(58);
+    expect(migrated.meta.schemaVersion).toBe(GAME_STATE_SCHEMA_VERSION);
     for (const teamId of Object.keys(migrated.world.teams)) {
       expect(migrated.business.gameDayPromotionsByTeamId[teamId]).toBeTruthy();
     }

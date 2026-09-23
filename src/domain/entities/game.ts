@@ -14,13 +14,17 @@ export type GameCompetitionType =
   | "preseason"
   | "regular_season"
   | "playoffs"
-  | "development_league";
+  | "development_league"
+  | "all_star"
+  | "midseason_tournament";
 
 export const GAME_COMPETITION_TYPES: readonly GameCompetitionType[] = [
   "preseason",
   "regular_season",
   "playoffs",
   "development_league",
+  "all_star",
+  "midseason_tournament",
 ];
 
 export type GameScore = {

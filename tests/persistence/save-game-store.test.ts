@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { createEmptyPlayoffTournament } from "@/domain/entities/playoffs";
+import { createEmptySeasonEventsState } from "@/domain/entities/season-events";
 import { createEmptyTeamStanding } from "@/domain/entities/standings";
 import { resetDomainEventSequenceForTests } from "@/domain/events/domain-event";
 import { asSaveId, asSeasonId, type TeamId } from "@/domain/ids";
@@ -133,6 +134,15 @@ function createEightTeamPopulatedState(rngSeed: number): GameState {
       offseason: {
         freeAgency: { durationDays: 30, allowExtension: true },
       },
+      seasonEvents: {
+        midseasonAnchor: { method: "schedule_fraction", fraction: 0.5 },
+        votingDaysBeforeAnchor: 14,
+        votingDaysAfterAnchor: 0,
+        allStarDaysAfterVotingClose: 2,
+        awardsDurationDays: 1,
+        scheduleBreakDays: 0,
+        tournamentFieldSize: 8,
+      },
     },
     world: {
       calendar: {
@@ -187,6 +197,7 @@ function createEightTeamPopulatedState(rngSeed: number): GameState {
         standings: { byTeamId: {} },
       },
       seasonEventLog: [],
+      seasonEvents: createEmptySeasonEventsState(),
     },
     business: {
       contracts: {},

@@ -88,6 +88,11 @@ export const OWNER_NAV_GROUPS: readonly OwnerNavGroup[] = [
         icon: "transactions",
       },
       { href: "/awards", label: "Awards", icon: "awards" },
+      {
+        href: "/season-events/fan-voting",
+        label: "Fan Voting",
+        icon: "awards",
+      },
     ],
   },
   {
@@ -143,8 +148,42 @@ const PLAYOFFS_NAV_ITEM: OwnerNavItem = {
   icon: "playoffs",
 };
 
+const ALL_STAR_NAV_ITEM: OwnerNavItem = {
+  href: "/season-events/all-star",
+  label: "All-Star",
+  icon: "awards",
+};
+
+const MIDSEASON_CUP_NAV_ITEM: OwnerNavItem = {
+  href: "/season-events/midseason-cup",
+  label: "Midseason Cup",
+  icon: "playoffs",
+};
+
 function isPlayoffsNavPhase(phase: SeasonPhase): boolean {
   return phase === "playoffs" || phase === "postseason";
+}
+
+function midseasonNavExtras(state: GameState): OwnerNavItem[] {
+  const extras: OwnerNavItem[] = [];
+  const se = state.competition.seasonEvents;
+  if (!se) return extras;
+  if (
+    se.allStar &&
+    (se.allStar.status === "selections_announced" ||
+      se.allStar.status === "completed" ||
+      se.allStar.status === "voting")
+  ) {
+    extras.push(ALL_STAR_NAV_ITEM);
+  }
+  if (
+    se.tournament &&
+    se.tournament.status !== "not_started" &&
+    se.tournament.qualifiedTeams.length > 0
+  ) {
+    extras.push(MIDSEASON_CUP_NAV_ITEM);
+  }
+  return extras;
 }
 
 export function flattenOwnerNavItems(): readonly OwnerNavItem[] {
@@ -166,17 +205,23 @@ export function ownerNavGroupsForState(state: GameState): OwnerNavGroup[] {
       groups.push(withBadges(OFFSEASON_GROUP, badges));
       continue;
     }
-    if (group.id === "league" && isPlayoffsNavPhase(phase)) {
-      groups.push(
-        withBadges(
-          {
-            ...group,
-            items: [...group.items, PLAYOFFS_NAV_ITEM],
-          },
-          badges,
-        ),
-      );
-      continue;
+    if (group.id === "league") {
+      const extras = [
+        ...(isPlayoffsNavPhase(phase) ? [PLAYOFFS_NAV_ITEM] : []),
+        ...midseasonNavExtras(state),
+      ];
+      if (extras.length > 0) {
+        groups.push(
+          withBadges(
+            {
+              ...group,
+              items: [...group.items, ...extras],
+            },
+            badges,
+          ),
+        );
+        continue;
+      }
     }
     groups.push(withBadges(group, badges));
   }

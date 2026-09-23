@@ -2,6 +2,7 @@ import {
   AI_ASSISTANCE_DOMAIN_KEYS,
   DEFAULT_AI_ASSISTANCE,
   DEFAULT_OFFSEASON_SETTINGS,
+  DEFAULT_SEASON_EVENTS_SETTINGS,
   DEFAULT_TRADE_DEADLINE_RULE,
   isAiAssistDomainMode,
   isAiManagementMode,
@@ -422,9 +423,85 @@ export function validateGameSettings(
         allowExtension: freeAgencyAllowExtension,
       },
     },
+    seasonEvents: resolveSeasonEventsSettings(raw.seasonEvents, errors),
   };
 
   return { ok: true, settings: validated };
+}
+
+/**
+ * Midseason event settings — missing block defaults to DEFAULT_SEASON_EVENTS_SETTINGS.
+ */
+function resolveSeasonEventsSettings(
+  raw: unknown,
+  errors: string[],
+): GameSettings["seasonEvents"] {
+  if (raw === undefined || raw === null) {
+    return {
+      ...DEFAULT_SEASON_EVENTS_SETTINGS,
+      midseasonAnchor: { ...DEFAULT_SEASON_EVENTS_SETTINGS.midseasonAnchor },
+    };
+  }
+  const record = asRecord(raw, "seasonEvents", errors);
+  if (!record) {
+    return {
+      ...DEFAULT_SEASON_EVENTS_SETTINGS,
+      midseasonAnchor: { ...DEFAULT_SEASON_EVENTS_SETTINGS.midseasonAnchor },
+    };
+  }
+  const defaults = DEFAULT_SEASON_EVENTS_SETTINGS;
+  let fraction = defaults.midseasonAnchor.fraction;
+  const anchor = record.midseasonAnchor;
+  if (anchor !== undefined && anchor !== null) {
+    const anchorRec = asRecord(anchor, "seasonEvents.midseasonAnchor", errors);
+    if (anchorRec) {
+      if (
+        anchorRec.method !== undefined &&
+        anchorRec.method !== "schedule_fraction"
+      ) {
+        errors.push(
+          'seasonEvents.midseasonAnchor.method must be "schedule_fraction".',
+        );
+      }
+      if (
+        typeof anchorRec.fraction === "number" &&
+        Number.isFinite(anchorRec.fraction) &&
+        anchorRec.fraction >= 0 &&
+        anchorRec.fraction <= 1
+      ) {
+        fraction = anchorRec.fraction;
+      } else if (anchorRec.fraction !== undefined) {
+        errors.push(
+          "seasonEvents.midseasonAnchor.fraction must be a number between 0 and 1.",
+        );
+      }
+    }
+  }
+
+  const intField = (
+    key: keyof GameSettings["seasonEvents"],
+    min: number,
+  ): number => {
+    const value = record[key];
+    if (value === undefined) {
+      return defaults[key] as number;
+    }
+    if (typeof value !== "number" || !Number.isInteger(value) || value < min) {
+      errors.push(`seasonEvents.${String(key)} must be an integer >= ${min}.`);
+      return defaults[key] as number;
+    }
+    return value;
+  };
+
+  return {
+    midseasonAnchor: { method: "schedule_fraction", fraction },
+    votingDaysBeforeAnchor: intField("votingDaysBeforeAnchor", 0),
+    votingDaysAfterAnchor: intField("votingDaysAfterAnchor", 0),
+    allStarDaysAfterVotingClose: intField("allStarDaysAfterVotingClose", 0),
+    awardsDurationDays: intField("awardsDurationDays", 1),
+    scheduleBreakDays: intField("scheduleBreakDays", 0),
+    tournamentFieldSize: intField("tournamentFieldSize", 0),
+  };
 }
 
 /**

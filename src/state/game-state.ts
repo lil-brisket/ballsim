@@ -40,6 +40,7 @@ import type { StaffOffer } from "@/domain/entities/staff-offer";
 import type { Standings } from "@/domain/entities/standings";
 import type { Team } from "@/domain/entities/team";
 import type { ScheduledEvent } from "@/domain/entities/scheduled-event";
+import type { SeasonEventsState } from "@/domain/entities/season-events";
 import type { TradeBlock } from "@/domain/entities/trade-block";
 import type {
   AiAssistancePhases,
@@ -58,7 +59,7 @@ import type {
   FranchisePhaseState,
 } from "@/systems/phase-engine/phase-types";
 
-export const GAME_STATE_SCHEMA_VERSION = 60;
+export const GAME_STATE_SCHEMA_VERSION = 61;
 
 /** League personnel market for staff free agency (not a business-finance concept). */
 export type StaffMarketState = {
@@ -130,6 +131,11 @@ export type CompetitionSlice = {
    * Cleared on season rollover. Bounded; not a finance/roster authority.
    */
   seasonEventLog: DomainEvent[];
+  /**
+   * Midseason / special season event framework (fan voting, All-Star, awards, holidays, tournament).
+   * Cleared on season rollover. Planned when the regular season initializes.
+   */
+  seasonEvents: SeasonEventsState;
 };
 
 /** Max entries retained in competition.seasonEventLog. */

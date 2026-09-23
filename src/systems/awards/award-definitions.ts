@@ -76,6 +76,46 @@ export const AWARD_DEFINITIONS: Record<AwardDefinitionId, AwardDefinition> = {
     subjectType: "coach",
     tier: "major",
   },
+  midseason_mvp: {
+    id: "midseason_mvp",
+    cadence: "yearly",
+    displayName: "Midseason MVP",
+    shortLabel: "MS-MVP",
+    subjectType: "player",
+    tier: "midseason",
+  },
+  midseason_dpoy: {
+    id: "midseason_dpoy",
+    cadence: "yearly",
+    displayName: "Midseason Defensive Player",
+    shortLabel: "MS-DPOY",
+    subjectType: "player",
+    tier: "midseason",
+  },
+  midseason_roy: {
+    id: "midseason_roy",
+    cadence: "yearly",
+    displayName: "Midseason Rookie",
+    shortLabel: "MS-ROY",
+    subjectType: "player",
+    tier: "midseason",
+  },
+  midseason_sixth_man: {
+    id: "midseason_sixth_man",
+    cadence: "yearly",
+    displayName: "Midseason Sixth Man",
+    shortLabel: "MS-6MOY",
+    subjectType: "player",
+    tier: "midseason",
+  },
+  midseason_most_improved: {
+    id: "midseason_most_improved",
+    cadence: "yearly",
+    displayName: "Midseason Most Improved",
+    shortLabel: "MS-MIP",
+    subjectType: "player",
+    tier: "midseason",
+  },
 };
 
 export const MONTHLY_AWARD_IDS: readonly AwardDefinitionId[] = [

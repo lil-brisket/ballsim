@@ -27,7 +27,7 @@ describe("v59 → v60 migration", () => {
 
     const loaded = deserializeGameState(JSON.stringify(parsed));
     expect(loaded.meta.schemaVersion).toBe(GAME_STATE_SCHEMA_VERSION);
-    expect(GAME_STATE_SCHEMA_VERSION).toBe(60);
+
 
     for (const franchise of Object.values(loaded.user.ownedFranchises)) {
       expect(franchise.mediaFeed).toEqual({ items: [] });

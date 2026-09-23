@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { createEmptyPlayoffTournament } from "@/domain/entities/playoffs";
+import { createEmptySeasonEventsState } from "@/domain/entities/season-events";
 import { createEmptyTeamStanding } from "@/domain/entities/standings";
 import { resetDomainEventSequenceForTests } from "@/domain/events/domain-event";
 import { asSaveId, asSeasonId, type TeamId } from "@/domain/ids";
@@ -188,6 +189,7 @@ function createEightTeamGameState(rngSeed: number): {
         standings: { byTeamId: {} },
       },
       seasonEventLog: [],
+      seasonEvents: createEmptySeasonEventsState(),
     },
     business: {
       contracts: {},

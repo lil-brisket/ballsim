@@ -25,6 +25,7 @@ import {
   getActionBlockReason,
 } from "@/systems/league-rules";
 import { serializeGameState, deserializeGameState } from "@/persistence/mappers/game-state-mapper";
+import { GAME_STATE_SCHEMA_VERSION } from "@/state/game-state";
 import { setActivePhase } from "@/systems/phase-engine";
 import { processPlayerRetirements } from "@/systems/player-retirement";
 
@@ -285,7 +286,7 @@ describe("league hard locks", () => {
         state.competition.season.tradeDeadlineDate,
       );
       expect(loaded.business.rfaStatuses).toEqual({});
-      expect(loaded.meta.schemaVersion).toBe(54);
+      expect(loaded.meta.schemaVersion).toBe(GAME_STATE_SCHEMA_VERSION);
       const before = canPerformAction(state, { kind: "activate_draft" });
       const after = canPerformAction(loaded, { kind: "activate_draft" });
       expect(after.allowed).toBe(before.allowed);

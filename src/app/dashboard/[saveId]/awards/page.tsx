@@ -33,6 +33,7 @@ export default async function AwardsPage({ params, searchParams }: PageProps) {
         saveId={saveId}
         currentSeasonYear={hub.currentSeasonYear}
         seasons={hub.seasons}
+        midseasonAwards={hub.midseasonAwards}
         majorAwards={hub.majorAwards}
         monthlyAwards={hub.monthlyAwards}
         isBrowsingHistorical={hub.isBrowsingHistorical}

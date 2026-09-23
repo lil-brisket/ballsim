@@ -144,6 +144,12 @@ export function reconstructGameSettingsFromState(
     offseason: {
       freeAgency: { ...DEFAULT_GAME_SETTINGS.offseason.freeAgency },
     },
+    seasonEvents: {
+      ...DEFAULT_GAME_SETTINGS.seasonEvents,
+      midseasonAnchor: {
+        ...DEFAULT_GAME_SETTINGS.seasonEvents.midseasonAnchor,
+      },
+    },
   };
 }
 

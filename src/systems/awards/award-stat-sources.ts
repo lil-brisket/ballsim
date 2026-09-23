@@ -24,12 +24,14 @@ export type PeriodTeamRecord = {
   pointsAgainst: number;
 };
 
-/** Primary-league final games only — never development_league. */
+/** Primary-league final games only — never development_league / all_star / tournament. */
 export function getPrimaryLeagueFinalGames(
   state: GameState,
   options?: {
     seasonId?: SeasonId;
     competitionTypes?: ReadonlyArray<"regular_season" | "playoffs">;
+    /** Inclusive cutoff date (YYYY-MM-DD). */
+    throughDate?: string;
   },
 ): Game[] {
   const seasonId = options?.seasonId ?? state.competition.season.id;
@@ -40,7 +42,11 @@ export function getPrimaryLeagueFinalGames(
     (game) =>
       game.seasonId === seasonId &&
       game.competitionType !== "development_league" &&
-      types.has(game.competitionType as "regular_season" | "playoffs"),
+      game.competitionType !== "all_star" &&
+      game.competitionType !== "midseason_tournament" &&
+      game.competitionType !== "preseason" &&
+      types.has(game.competitionType as "regular_season" | "playoffs") &&
+      (options?.throughDate == null || game.date <= options.throughDate),
   );
 }
 

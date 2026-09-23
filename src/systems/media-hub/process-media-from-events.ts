@@ -62,6 +62,16 @@ function storyTypeForEvent(event: DomainEvent): MediaStoryType {
     case "PlayerRecalledFromDevelopmentLeague":
     case "PlayerGraduatedFromDevelopmentLeague":
       return "player";
+    case "MidseasonVotingOpened":
+    case "FanVoteLeaderChanged":
+    case "FanVotingClosed":
+    case "AllStarSelectionsAnnounced":
+    case "MidseasonTournamentStarted":
+    case "MidseasonTournamentCompleted":
+    case "MidseasonAwardAnnounced":
+    case "HolidayStarted":
+    case "HolidayCompleted":
+      return "league";
     default:
       return "league";
   }

@@ -18,6 +18,7 @@ import {
   primaryActiveInjury,
 } from "@/domain/entities/player";
 import { createEmptyAwardHistory } from "@/domain/entities/awards";
+import { createEmptySeasonEventsState } from "@/domain/entities/season-events";
 import { createEmptyGameDayPromotionSeasonState } from "@/domain/entities/game-day-promotion";
 import { createDefaultDevelopmentLeagueProfile } from "@/domain/entities/development-league";
 import {
@@ -91,7 +92,10 @@ import {
 } from "@/domain/game-settings";
 import { EMPTY_AI_ASSIST_STATE } from "@/state/game-state";
 /** Pre-v49 competition/user shapes — phase fields added only in migrateV48ToV49. */
-type CompetitionSlicePreV49 = Omit<GameState["competition"], "phase">;
+type CompetitionSlicePreV49 = Omit<
+  GameState["competition"],
+  "phase" | "seasonEvents"
+>;
 type UserSlicePreV49 = Omit<GameState["user"], "franchisePhaseState">;
 import {
   isAiProfile,
@@ -224,6 +228,7 @@ const MIGRATE_ONE_STEP: Record<number, (state: unknown) => unknown> = {
   57: (state) => migrateV57ToV58(state as GameStateV57),
   58: (state) => migrateV58ToV59(state as GameStateV58),
   59: (state) => migrateV59ToV60(state as GameStateV59),
+  60: (state) => migrateV60ToV61(state as GameStateV60),
 };
 
 function legacyUserRecord(user: unknown): Record<string, unknown> {
@@ -3847,7 +3852,10 @@ type GameStateV44 = {
     drafts: GameState["world"]["drafts"];
     scheduledEvents: GameState["world"]["scheduledEvents"];
   };
-  competition: Omit<GameState["competition"], "seasonEventLog" | "phase"> & {
+  competition: Omit<
+    GameState["competition"],
+    "seasonEventLog" | "phase" | "seasonEvents"
+  > & {
     seasonEventLog?: GameState["competition"]["seasonEventLog"];
   };
   business: GameState["business"];
@@ -4235,7 +4243,7 @@ function migrateV47ToV48(state: GameStateV47): GameStateV48 {
 
 type GameStateV48 = Omit<GameState, "meta" | "competition" | "user"> & {
   meta: Omit<GameState["meta"], "schemaVersion"> & { schemaVersion: 48 };
-  competition: Omit<GameState["competition"], "phase">;
+  competition: Omit<GameState["competition"], "phase" | "seasonEvents">;
   user: Omit<GameState["user"], "franchisePhaseState">;
 };
 
@@ -5170,7 +5178,7 @@ function migrateV58ToV59(state: GameStateV58): GameStateV59 {
 /**
  * Deterministic v59 → v60: seed empty Media Hub feeds on every owned franchise.
  */
-function migrateV59ToV60(state: GameStateV59): GameState {
+function migrateV59ToV60(state: GameStateV59): GameStateV60 {
   const ownedFranchises: GameState["user"]["ownedFranchises"] = {};
   for (const teamId of Object.keys(state.user.ownedFranchises).sort()) {
     const franchise = state.user.ownedFranchises[teamId]!;
@@ -5191,6 +5199,28 @@ function migrateV59ToV60(state: GameStateV59): GameState {
     user: {
       ...state.user,
       ownedFranchises,
+    },
+  };
+}
+
+type GameStateV60 = Omit<GameState, "meta" | "competition"> & {
+  meta: Omit<GameState["meta"], "schemaVersion"> & { schemaVersion: 60 };
+  competition: Omit<GameState["competition"], "seasonEvents">;
+};
+
+/**
+ * Deterministic v60 → v61: empty seasonEvents framework on competition.
+ */
+function migrateV60ToV61(state: GameStateV60): GameState {
+  return {
+    ...state,
+    meta: {
+      ...state.meta,
+      schemaVersion: 61,
+    },
+    competition: {
+      ...state.competition,
+      seasonEvents: createEmptySeasonEventsState(),
     },
   };
 }
