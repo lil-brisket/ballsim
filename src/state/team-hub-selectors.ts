@@ -3,11 +3,6 @@
  */
 
 import type { GameState } from "@/state/game-state";
-import type { ActionCenterItem } from "@/state/action-center-selectors";
-import {
-  buildActionCenterView,
-  filterTeamDecisions,
-} from "@/state/action-center-selectors";
 import {
   getRecentForm,
   type RecentFormView,
@@ -18,6 +13,14 @@ import {
   toRosterView,
   type RosterPlayerView,
 } from "@/state/selectors";
+import {
+  toMyTeamStandingsContext,
+  type PlayoffPositionLabel,
+} from "@/state/standings-selectors";
+import {
+  getTeamRecentHistory,
+  type TeamRecentHistoryItem,
+} from "@/state/team-recent-history-selectors";
 import {
   toRotationView,
   type RotationRowView,
@@ -32,6 +35,13 @@ export type TeamHubRotationSnapshot = {
   delta: number;
   plannedValid: boolean;
   feedbackMessages: string[];
+};
+
+export type TeamHubStandingsContext = {
+  conferenceRank: number | null;
+  conferenceName: string | null;
+  gamesBack: number | null;
+  playoffLabel: PlayoffPositionLabel | null;
 };
 
 export type TeamHubView = {
@@ -57,11 +67,11 @@ export type TeamHubView = {
   healthyCount: number;
   injuredCount: number;
   recentForm: RecentFormView;
+  standings: TeamHubStandingsContext;
+  recentHistory: TeamRecentHistoryItem[];
   rotation: TeamHubRotationSnapshot;
   corePlayers: RosterPlayerView[];
   injuredPlayers: RosterPlayerView[];
-  upcomingGames: ReturnType<typeof toDashboardSnapshot>["upcomingGames"];
-  decisions: ActionCenterItem[];
 };
 
 function rotationSnapshot(rotation: RotationView): TeamHubRotationSnapshot {
@@ -117,14 +127,9 @@ export function toTeamHubView(state: GameState): TeamHubView {
   const owner = toOwnerDashboardView(state);
   const roster = toRosterView(state);
   const rotation = toRotationView(state);
-  const recentForm = getRecentForm(state, state.user.activeOwnerTeamId);
-  const actionCenter = buildActionCenterView({
-    actionItems: owner.actionItems,
-    phaseResponsibility: owner.phaseResponsibility,
-    currentDate: owner.currentDate,
-    saveId: owner.saveId,
-    daysUntilTradeDeadline: owner.daysUntilTradeDeadline,
-  });
+  const teamId = state.user.activeOwnerTeamId;
+  const recentForm = getRecentForm(state, teamId);
+  const standingsCtx = toMyTeamStandingsContext(state);
 
   const healthy = roster.filter((p) => p.injuryKind === "available");
   const injured = roster.filter((p) => p.injuryKind !== "available");
@@ -150,10 +155,15 @@ export function toTeamHubView(state: GameState): TeamHubView {
     healthyCount: healthy.length,
     injuredCount: injured.length,
     recentForm,
+    standings: {
+      conferenceRank: standingsCtx?.conferenceRank ?? null,
+      conferenceName: standingsCtx?.conferenceName ?? null,
+      gamesBack: standingsCtx?.gamesBack ?? null,
+      playoffLabel: standingsCtx?.playoffLabel ?? null,
+    },
+    recentHistory: getTeamRecentHistory(state, teamId),
     rotation: rotationSnapshot(rotation),
     corePlayers,
     injuredPlayers: injured.slice(0, 5),
-    upcomingGames: dashboard.upcomingGames.slice(0, 5),
-    decisions: filterTeamDecisions(actionCenter.items, 5),
   };
 }
