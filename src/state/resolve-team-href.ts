@@ -1,10 +1,10 @@
 import type { TeamId } from "@/domain/ids";
 import type { GameState } from "@/state/game-state";
-import { isOwnedFranchise } from "@/state/owner-context";
 
 /**
  * Best owner-mode destination for a team entity.
- * Active franchise → /team; other owned → /teams; else → /league.
+ * Active franchise → /team; other owned and unowned → /league.
+ * Franchise switching happens via the header OwnerTeamSwitcher.
  */
 export function resolveTeamHref(
   state: GameState,
@@ -13,9 +13,6 @@ export function resolveTeamHref(
 ): string {
   if (teamId === state.user.activeOwnerTeamId) {
     return `/dashboard/${saveId}/team`;
-  }
-  if (isOwnedFranchise(state, teamId)) {
-    return `/dashboard/${saveId}/teams`;
   }
   return `/dashboard/${saveId}/league`;
 }

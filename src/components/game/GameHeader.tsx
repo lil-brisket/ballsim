@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Suspense } from "react";
 import { getGameModeDefinition } from "@/application/game-mode-catalog";
 import type { DashboardSnapshot } from "@/state/selectors";
 import { OwnerTeamSwitcher } from "@/components/game/OwnerTeamSwitcher";
@@ -84,10 +85,12 @@ export function GameHeader(props: {
           </span>
         </div>
 
-        <OwnerTeamSwitcher
-          saveId={saveId}
-          ownedTeams={dashboard.ownedTeams}
-        />
+        <Suspense fallback={null}>
+          <OwnerTeamSwitcher
+            saveId={saveId}
+            ownedTeams={dashboard.ownedTeams}
+          />
+        </Suspense>
       </div>
 
       <div className="flex min-w-0 flex-wrap items-center gap-3 sm:justify-end">

@@ -1409,7 +1409,7 @@ export async function advanceOwnerTime(
           : teamId ?? "a franchise";
         const switchHint =
           teamId && teamId !== workingState.user.activeOwnerTeamId
-            ? ` Switch to ${teamLabel} on My Teams to resolve it.`
+            ? ` Switch to ${teamLabel} using the franchise selector in the header to resolve it.`
             : "";
         return fail(
           `${teamLabel} needs your attention before time can advance. Resolve the pending owner decision first.${switchHint}`,

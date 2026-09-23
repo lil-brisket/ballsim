@@ -226,14 +226,15 @@ describe("game shell UI", () => {
     expect(hrefs).toContain("");
     expect(hrefs).toContain("/team");
     expect(hrefs).toContain("/roster");
-    expect(hrefs).toContain("/draft");
-    expect(hrefs).toContain("/free-agency");
     expect(hrefs).toContain("/franchise");
     expect(hrefs).toContain("/media");
+    expect(hrefs).not.toContain("/draft");
+    expect(hrefs).not.toContain("/free-agency");
     expect(hrefs).not.toContain("/trades");
     expect(hrefs).not.toContain("/business");
     expect(hrefs).not.toContain("/team-management");
     expect(hrefs).not.toContain("/relocation");
+    expect(hrefs).not.toContain("/teams");
   });
 
   it("NextActionPanel renders link when provided", () => {

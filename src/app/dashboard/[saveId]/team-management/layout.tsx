@@ -3,6 +3,7 @@ import { TeamManagementNav } from "@/components/team-management/TeamManagementNa
 import { OwnerTeamSwitcher } from "@/components/game/OwnerTeamSwitcher";
 import { TeamBadge } from "@/components/owner/TeamBadge";
 import { notFound } from "next/navigation";
+import { Suspense } from "react";
 
 type LayoutProps = {
   children: React.ReactNode;
@@ -30,10 +31,12 @@ export default async function TeamManagementLayout({
           abbreviation={team.abbreviation}
           branding={team.branding}
         />
-        <OwnerTeamSwitcher
-          saveId={saveId}
-          ownedTeams={loaded.dashboard.ownedTeams}
-        />
+        <Suspense fallback={null}>
+          <OwnerTeamSwitcher
+            saveId={saveId}
+            ownedTeams={loaded.dashboard.ownedTeams}
+          />
+        </Suspense>
       </div>
       <TeamManagementNav saveId={saveId} />
       {children}

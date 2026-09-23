@@ -80,13 +80,27 @@ describe("owner nav config invariants", () => {
     expect(hrefs).not.toContain("/draft");
     expect(hrefs).not.toContain("/scouting");
     expect(hrefs).not.toContain("/free-agency");
+    expect(hrefs).not.toContain("/teams");
   });
 
-  it("league group has five evergreen items including Awards", () => {
+  it("contains no My Teams nav item or /teams route", () => {
+    const items = flattenOwnerNavItems();
+    expect(items.some((item) => item.href === "/teams")).toBe(false);
+    expect(items.some((item) => item.label === "My Teams")).toBe(false);
+    for (const group of OWNER_NAV_GROUPS) {
+      expect(group.items.some((item) => item.href === "/teams")).toBe(false);
+      expect(group.items.some((item) => item.label === "My Teams")).toBe(false);
+    }
+  });
+
+  it("league group has evergreen League destinations including Awards and Fan Voting", () => {
     const league = OWNER_NAV_GROUPS.find((g) => g.id === "league");
-    expect(league?.items).toHaveLength(5);
+    expect(league?.items).toHaveLength(6);
     expect(league?.items.some((i) => i.href === "/transactions")).toBe(true);
     expect(league?.items.some((i) => i.href === "/awards")).toBe(true);
+    expect(
+      league?.items.some((i) => i.href === "/season-events/fan-voting"),
+    ).toBe(true);
     expect(league?.items.some((i) => i.href === "/draft")).toBe(false);
   });
 

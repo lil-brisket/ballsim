@@ -98,7 +98,7 @@ export type DashboardSnapshot = {
       logoId: string;
     };
   };
-  /** Portfolio of all owned franchises for switcher / My Teams. */
+  /** Portfolio of all owned franchises for the header franchise switcher. */
   ownedTeams: Array<{
     id: string;
     city: string;

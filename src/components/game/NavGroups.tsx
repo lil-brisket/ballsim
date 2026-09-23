@@ -10,14 +10,6 @@ export const NAV_ICONS: Record<string, React.ReactNode> = {
   home: (
     <path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1v-9.5z" />
   ),
-  teams: (
-    <>
-      <circle cx="9" cy="8" r="3" />
-      <circle cx="16" cy="9" r="2.5" />
-      <path d="M3 19c0-2.5 2.5-4 6-4s6 1.5 6 4" />
-      <path d="M14 19c0-1.8 1.5-3 4-3s3.5 1 3.5 3" />
-    </>
-  ),
   calendar: (
     <>
       <rect x="3" y="5" width="18" height="16" rx="2" />
