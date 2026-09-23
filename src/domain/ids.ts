@@ -28,6 +28,9 @@ export type NarrativeSituationId = Brand<string, "NarrativeSituationId">;
 export type OwnerDecisionId = Brand<string, "OwnerDecisionId">;
 export type MediaItemId = Brand<string, "MediaItemId">;
 export type SocialPostId = Brand<string, "SocialPostId">;
+export type SeasonEventId = Brand<string, "SeasonEventId">;
+export type FanVoteCampaignId = Brand<string, "FanVoteCampaignId">;
+export type FanVoteCategoryId = Brand<string, "FanVoteCategoryId">;
 
 export function asPlayerId(value: string): PlayerId {
   return value as PlayerId;
@@ -139,4 +142,16 @@ export function asMediaItemId(value: string): MediaItemId {
 
 export function asSocialPostId(value: string): SocialPostId {
   return value as SocialPostId;
+}
+
+export function asSeasonEventId(value: string): SeasonEventId {
+  return value as SeasonEventId;
+}
+
+export function asFanVoteCampaignId(value: string): FanVoteCampaignId {
+  return value as FanVoteCampaignId;
+}
+
+export function asFanVoteCategoryId(value: string): FanVoteCategoryId {
+  return value as FanVoteCategoryId;
 }

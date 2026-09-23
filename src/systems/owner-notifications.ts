@@ -212,6 +212,14 @@ export function generateOwnerNotifications(
     options.dayEvents ?? [],
     append,
   );
+
+  appendMidseasonEventNotifications(
+    state,
+    teamId,
+    date,
+    options.dayEvents ?? [],
+    append,
+  );
   appendAwarenessBandNotification(state, teamId, date, append);
   appendCalendarStoryNotifications(state, teamId, date, append);
 
@@ -225,6 +233,112 @@ export function generateOwnerNotifications(
       notifications: [...franchise.notifications, ...additions],
     })),
   );
+}
+
+function appendMidseasonEventNotifications(
+  state: GameState,
+  teamId: TeamId,
+  date: string,
+  dayEvents: readonly DomainEvent[],
+  append: (notification: OwnerNotification) => void,
+): void {
+  const roster = new Set(
+    Object.values(state.world.players)
+      .filter((p) => p.teamId === teamId && !p.retired)
+      .map((p) => p.id),
+  );
+
+  for (const event of dayEvents) {
+    if (event.type === "AllStarSelectionsAnnounced") {
+      const playerIds = Array.isArray(event.payload.playerIds)
+        ? (event.payload.playerIds as string[])
+        : [];
+      const owned = playerIds.filter((id) => roster.has(id as never));
+      if (owned.length > 0) {
+        append(
+          createOwnerNotification({
+            id: asOwnerNotificationId(
+              `notif_allstar_${teamId}_${event.occurredOn}`,
+            ),
+            type: "midseason_event",
+            title: "All-Star selection",
+            message: `${owned.length} of your players were named All-Stars.`,
+            occurredOn: date,
+            severity: "success",
+            read: false,
+            dedupeKey: `midseason_allstar:${teamId}:${event.occurredOn}`,
+            relatedTeamId: teamId,
+          }),
+        );
+      }
+    }
+
+    if (event.type === "MidseasonAwardAnnounced") {
+      const winnerId = String(event.payload.winnerSubjectId ?? "");
+      const winnerTeamId = event.payload.winnerTeamId;
+      if (roster.has(winnerId as never) || winnerTeamId === teamId) {
+        append(
+          createOwnerNotification({
+            id: asOwnerNotificationId(
+              `notif_ms_award_${teamId}_${event.payload.awardId}_${event.occurredOn}`,
+            ),
+            type: "midseason_event",
+            title: "Midseason award",
+            message: "One of your players won a midseason award.",
+            occurredOn: date,
+            severity: "success",
+            read: false,
+            dedupeKey: `midseason_award:${teamId}:${String(event.payload.awardId)}:${event.occurredOn}`,
+            relatedTeamId: teamId,
+          }),
+        );
+      }
+    }
+
+    if (event.type === "MidseasonTournamentCompleted") {
+      if (event.payload.championTeamId === teamId) {
+        append(
+          createOwnerNotification({
+            id: asOwnerNotificationId(
+              `notif_ms_cup_${teamId}_${event.occurredOn}`,
+            ),
+            type: "midseason_event",
+            title: "Midseason Cup champions",
+            message: "Your team won the Midseason Cup.",
+            occurredOn: date,
+            severity: "success",
+            read: false,
+            dedupeKey: `midseason_cup_champ:${teamId}:${event.occurredOn}`,
+            relatedTeamId: teamId,
+          }),
+        );
+      }
+    }
+
+    if (event.type === "FanVoteLeaderChanged") {
+      const playerId = String(event.payload.playerId ?? "");
+      if (
+        roster.has(playerId as never) &&
+        event.payload.transition === "fan_vote_leader"
+      ) {
+        append(
+          createOwnerNotification({
+            id: asOwnerNotificationId(
+              `notif_vote_lead_${teamId}_${playerId}_${event.occurredOn}`,
+            ),
+            type: "midseason_event",
+            title: "Fan vote leader",
+            message: "One of your players leads a fan-vote category.",
+            occurredOn: date,
+            severity: "info",
+            read: false,
+            dedupeKey: `fan_vote_leader:${teamId}:${playerId}:${event.occurredOn}`,
+            relatedTeamId: teamId,
+          }),
+        );
+      }
+    }
+  }
 }
 
 function appendGameDayAttendanceNotifications(

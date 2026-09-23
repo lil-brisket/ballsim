@@ -338,12 +338,20 @@ export function evaluateDefensivePlayerOfMonth(
   );
 }
 
-export function evaluateMvp(state: GameState): AwardResult | null {
+export function evaluateMvp(
+  state: GameState,
+  options?: { throughDate?: string; awardId?: AwardDefinitionId; period?: string | null },
+): AwardResult | null {
+  const awardId = options?.awardId ?? "mvp";
+  const period = options?.period !== undefined ? options.period : null;
   const games = getPrimaryLeagueFinalGames(state, {
     competitionTypes: ["regular_season"],
+    throughDate: options?.throughDate,
   });
   if (games.length === 0) return null;
-  const cfg = AWARD_ELIGIBILITY_CONFIG.mvp;
+  const cfg = options?.throughDate
+    ? { minGames: 10, minMinutes: 200 }
+    : AWARD_ELIGIBILITY_CONFIG.mvp;
   const pool = buildPlayerPool(
     listPlayersInGames(games),
     games,
@@ -377,7 +385,8 @@ export function evaluateMvp(state: GameState): AwardResult | null {
   const defPct = percentileScores(defImpact);
   const twoWay = impactPct.map((off, i) => (off + defPct[i]!) / 2);
 
-  const scored = pool.map((agg, i) => {
+  const weights = AWARD_SCORING_CONFIG.mvp;
+  const scored: ScoredCandidate[] = pool.map((agg, i) => {
     const { score, breakdown } = weightedScore(
       {
         individualImpact: impactPct[i]!,
@@ -386,7 +395,7 @@ export function evaluateMvp(state: GameState): AwardResult | null {
         availability: availPct[i]!,
         twoWayImpact: twoWay[i]!,
       },
-      AWARD_SCORING_CONFIG.mvp,
+      weights,
     );
     const rec = agg.teamId ? teamRecords.get(agg.teamId) : undefined;
     return {
@@ -403,15 +412,23 @@ export function evaluateMvp(state: GameState): AwardResult | null {
       teamRank: agg.teamId ? (teamRanks.get(agg.teamId) ?? null) : null,
     };
   });
-  return toAwardResult(state, "mvp", null, rankCandidates(scored));
+  return toAwardResult(state, awardId, period, rankCandidates(scored));
 }
 
-export function evaluateDpoy(state: GameState): AwardResult | null {
+export function evaluateDpoy(
+  state: GameState,
+  options?: { throughDate?: string; awardId?: AwardDefinitionId; period?: string | null },
+): AwardResult | null {
+  const awardId = options?.awardId ?? "dpoy";
+  const period = options?.period !== undefined ? options.period : null;
   const games = getPrimaryLeagueFinalGames(state, {
     competitionTypes: ["regular_season"],
+    throughDate: options?.throughDate,
   });
   if (games.length === 0) return null;
-  const cfg = AWARD_ELIGIBILITY_CONFIG.dpoy;
+  const cfg = options?.throughDate
+    ? { minGames: 10, minMinutes: 200 }
+    : AWARD_ELIGIBILITY_CONFIG.dpoy;
   const pool = buildPlayerPool(
     listPlayersInGames(games),
     games,
@@ -466,15 +483,23 @@ export function evaluateDpoy(state: GameState): AwardResult | null {
       teamRank: agg.teamId ? (teamRanks.get(agg.teamId) ?? null) : null,
     };
   });
-  return toAwardResult(state, "dpoy", null, rankCandidates(scored));
+  return toAwardResult(state, awardId, period, rankCandidates(scored));
 }
 
-export function evaluateRoy(state: GameState): AwardResult | null {
+export function evaluateRoy(
+  state: GameState,
+  options?: { throughDate?: string; awardId?: AwardDefinitionId; period?: string | null },
+): AwardResult | null {
+  const awardId = options?.awardId ?? "roy";
+  const period = options?.period !== undefined ? options.period : null;
   const games = getPrimaryLeagueFinalGames(state, {
     competitionTypes: ["regular_season"],
+    throughDate: options?.throughDate,
   });
   if (games.length === 0) return null;
-  const cfg = AWARD_ELIGIBILITY_CONFIG.rookieOfYear;
+  const cfg = options?.throughDate
+    ? { minGames: 10, minMinutes: 200 }
+    : AWARD_ELIGIBILITY_CONFIG.rookieOfYear;
   const seasonYear = state.competition.season.year;
   const rookies = listPlayersInGames(games).filter((id) =>
     isRookieEligible(state, id, seasonYear),
@@ -489,19 +514,31 @@ export function evaluateRoy(state: GameState): AwardResult | null {
     AWARD_SCORING_CONFIG.roy,
     { includeTeamSuccess: false },
   );
-  return toAwardResult(state, "roy", null, rankCandidates(scored));
+  return toAwardResult(state, awardId, period, rankCandidates(scored));
 }
 
-export function evaluateSixthMan(state: GameState): AwardResult | null {
+export function evaluateSixthMan(
+  state: GameState,
+  options?: { throughDate?: string; awardId?: AwardDefinitionId; period?: string | null },
+): AwardResult | null {
+  const awardId = options?.awardId ?? "sixth_man";
+  const period = options?.period !== undefined ? options.period : null;
   const games = getPrimaryLeagueFinalGames(state, {
     competitionTypes: ["regular_season"],
+    throughDate: options?.throughDate,
   });
   if (games.length === 0) return null;
+  const minGames = options?.throughDate
+    ? 10
+    : AWARD_ELIGIBILITY_CONFIG.sixthMan.minGames;
+  const minMinutes = options?.throughDate
+    ? 200
+    : AWARD_ELIGIBILITY_CONFIG.sixthMan.minMinutes;
   const all = buildPlayerPool(
     listPlayersInGames(games),
     games,
-    AWARD_ELIGIBILITY_CONFIG.sixthMan.minGames,
-    AWARD_ELIGIBILITY_CONFIG.sixthMan.minMinutes,
+    minGames,
+    minMinutes,
   );
   const pool = all.filter(isSixthManEligible);
   if (pool.length === 0) return null;
@@ -553,7 +590,7 @@ export function evaluateSixthMan(state: GameState): AwardResult | null {
       teamRank: agg.teamId ? (teamRanks.get(agg.teamId) ?? null) : null,
     };
   });
-  return toAwardResult(state, "sixth_man", null, rankCandidates(scored));
+  return toAwardResult(state, awardId, period, rankCandidates(scored));
 }
 
 function priorSeasonLine(
@@ -569,12 +606,25 @@ function priorSeasonLine(
   return prior?.competition.regular ?? null;
 }
 
-export function evaluateMostImproved(state: GameState): AwardResult | null {
+export function evaluateMostImproved(
+  state: GameState,
+  options?: { throughDate?: string; awardId?: AwardDefinitionId; period?: string | null },
+): AwardResult | null {
+  const awardId = options?.awardId ?? "most_improved";
+  const period = options?.period !== undefined ? options.period : null;
   const games = getPrimaryLeagueFinalGames(state, {
     competitionTypes: ["regular_season"],
+    throughDate: options?.throughDate,
   });
   if (games.length === 0) return null;
-  const cfg = AWARD_ELIGIBILITY_CONFIG.mostImproved;
+  const cfg = options?.throughDate
+    ? {
+        minCurrentSeasonGames: 10,
+        minCurrentSeasonMinutes: 200,
+        minPreviousSeasonGames: 10,
+        minPreviousSeasonMinutes: 200,
+      }
+    : AWARD_ELIGIBILITY_CONFIG.mostImproved;
   const candidates = listPlayersInGames(games);
   const pool: Array<{
     agg: PeriodPlayerAgg;
@@ -686,7 +736,7 @@ export function evaluateMostImproved(state: GameState): AwardResult | null {
       teamRank: agg.teamId ? (teamRanks.get(agg.teamId) ?? null) : null,
     };
   });
-  return toAwardResult(state, "most_improved", null, rankCandidates(scored));
+  return toAwardResult(state, awardId, period, rankCandidates(scored));
 }
 
 export function evaluateCoachOfYear(state: GameState): AwardResult | null {

@@ -22,6 +22,7 @@ export function LeagueAwardsHistory(props: {
   saveId: string;
   currentSeasonYear: number;
   seasons: number[];
+  midseasonAwards: AwardsHubRow[];
   majorAwards: AwardsHubRow[];
   monthlyAwards: AwardsHubRow[];
   isBrowsingHistorical: boolean;
@@ -33,8 +34,12 @@ export function LeagueAwardsHistory(props: {
   const [awardId, setAwardId] = useState<string>("");
 
   const allRows = useMemo(
-    () => [...props.majorAwards, ...props.monthlyAwards],
-    [props.majorAwards, props.monthlyAwards],
+    () => [
+      ...props.midseasonAwards,
+      ...props.majorAwards,
+      ...props.monthlyAwards,
+    ],
+    [props.midseasonAwards, props.majorAwards, props.monthlyAwards],
   );
 
   const filtered = useMemo(() => {
@@ -49,7 +54,10 @@ export function LeagueAwardsHistory(props: {
     });
   }, [allRows, seasonYear, awardId]);
 
-  const major = filtered.filter((r) => r.cadence === "yearly");
+  const midseason = filtered.filter((r) => r.tier === "midseason");
+  const major = filtered.filter(
+    (r) => r.cadence === "yearly" && r.tier !== "midseason",
+  );
   const monthly = filtered.filter((r) => r.cadence === "monthly");
   const browsingHistorical =
     seasonYear !== "" && Number(seasonYear) !== props.currentSeasonYear;
@@ -99,7 +107,13 @@ export function LeagueAwardsHistory(props: {
       </div>
 
       <AwardTable
-        title="Major awards"
+        title="Midseason"
+        saveId={props.saveId}
+        rows={midseason}
+        empty="No midseason awards for this season."
+      />
+      <AwardTable
+        title="Season awards"
         saveId={props.saveId}
         rows={major}
         empty="No major awards for this season."

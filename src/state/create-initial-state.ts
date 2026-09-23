@@ -1,5 +1,6 @@
 import { addCalendarDays } from "@/domain/calendar-date";
 import { createEmptyPlayoffTournament } from "@/domain/entities/playoffs";
+import { createEmptySeasonEventsState } from "@/domain/entities/season-events";
 import { createEmptyTeamStanding } from "@/domain/entities/standings";
 import {
   createTeam,
@@ -241,6 +242,7 @@ export function createInitialGameState(
         standings: { byTeamId: {} },
       },
       seasonEventLog: [],
+      seasonEvents: createEmptySeasonEventsState(),
     },
     business: {
       contracts: {},
@@ -447,6 +449,12 @@ export function createFourTeamInitialGameState(
     offseason: {
       freeAgency: { ...DEFAULT_GAME_SETTINGS.offseason.freeAgency },
     },
+    seasonEvents: {
+      ...DEFAULT_GAME_SETTINGS.seasonEvents,
+      midseasonAnchor: {
+        ...DEFAULT_GAME_SETTINGS.seasonEvents.midseasonAnchor,
+      },
+    },
   };
 
   const state: GameState = {
@@ -556,6 +564,7 @@ export function createFourTeamInitialGameState(
         standings: { byTeamId: {} },
       },
       seasonEventLog: [],
+      seasonEvents: createEmptySeasonEventsState(),
     },
     business: {
       contracts: {},

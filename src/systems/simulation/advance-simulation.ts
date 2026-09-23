@@ -20,6 +20,7 @@ import {
   syncPhaseForward,
 } from "@/systems/simulation/phase-lifecycle";
 import { processScheduledEvents } from "@/systems/simulation/scheduled-events";
+import { processSeasonEvents } from "@/systems/season-events";
 import {
   derivePlannedRegularSeasonStartDate,
   needsRegularSeasonInitialization,
@@ -309,6 +310,11 @@ function advanceOneDay(
   const daily = runDailyPipeline(current, rng, profiler);
   current = daily.state;
   events.push(...daily.events);
+
+  // Season events after games so cutoff-day RS stats are included.
+  const seasonEvents = processSeasonEvents(current, rng);
+  current = seasonEvents.state;
+  events.push(...seasonEvents.events);
 
   const ticketsStart = performance.now();
   const tickets = processHomeGameTicketRevenue(current, rng);

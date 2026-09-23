@@ -288,6 +288,27 @@ export type GameSettings = {
       allowExtension: boolean;
     };
   };
+  /**
+   * Midseason event calendar rules.
+   * Anchor is derived from scheduled regular-season dates (never games played).
+   */
+  seasonEvents: {
+    midseasonAnchor: {
+      method: "schedule_fraction";
+      fraction: number;
+    };
+    /** Days before/after anchor for fan voting window. */
+    votingDaysBeforeAnchor: number;
+    votingDaysAfterAnchor: number;
+    /** Days after voting close for All-Star exhibition. */
+    allStarDaysAfterVotingClose: number;
+    /** Inclusive duration of midseason awards announcement (usually 1). */
+    awardsDurationDays: number;
+    /** Idle days inserted into RS schedule around midseason (0 = off). */
+    scheduleBreakDays: number;
+    /** Tournament field size when enabled (0 = tournament disabled at plan time). */
+    tournamentFieldSize: number;
+  };
 };
 
 export const DEFAULT_OFFSEASON_SETTINGS: GameSettings["offseason"] = {
@@ -295,6 +316,19 @@ export const DEFAULT_OFFSEASON_SETTINGS: GameSettings["offseason"] = {
     durationDays: 30,
     allowExtension: true,
   },
+};
+
+export const DEFAULT_SEASON_EVENTS_SETTINGS: GameSettings["seasonEvents"] = {
+  midseasonAnchor: {
+    method: "schedule_fraction",
+    fraction: 0.5,
+  },
+  votingDaysBeforeAnchor: 14,
+  votingDaysAfterAnchor: 0,
+  allStarDaysAfterVotingClose: 2,
+  awardsDurationDays: 1,
+  scheduleBreakDays: 0,
+  tournamentFieldSize: 8,
 };
 
 function defaultAiSettings(): GameSettings["ai"] {
@@ -359,6 +393,7 @@ export const DEFAULT_GAME_SETTINGS: GameSettings = {
       allowExtension: DEFAULT_OFFSEASON_SETTINGS.freeAgency.allowExtension,
     },
   },
+  seasonEvents: { ...DEFAULT_SEASON_EVENTS_SETTINGS },
 };
 
 /** Classic CBL: 12 teams / 22 games / 8 playoff teams. */
@@ -411,6 +446,7 @@ export const CBL_GAME_SETTINGS: GameSettings = {
       allowExtension: DEFAULT_OFFSEASON_SETTINGS.freeAgency.allowExtension,
     },
   },
+  seasonEvents: { ...DEFAULT_SEASON_EVENTS_SETTINGS },
 };
 
 /** Wins required to clinch a best-of-N series. */
@@ -595,6 +631,13 @@ export function cloneGameSettings(settings: GameSettings): GameSettings {
     history: { ...settings.history },
     offseason: {
       freeAgency: { ...settings.offseason.freeAgency },
+    },
+    seasonEvents: {
+      ...(settings.seasonEvents ?? DEFAULT_SEASON_EVENTS_SETTINGS),
+      midseasonAnchor: {
+        ...(settings.seasonEvents?.midseasonAnchor ??
+          DEFAULT_SEASON_EVENTS_SETTINGS.midseasonAnchor),
+      },
     },
   };
 }

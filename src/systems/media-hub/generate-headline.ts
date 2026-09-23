@@ -278,6 +278,74 @@ export function generateHeadline(
         summary: `${name} earns a full promotion from the development league.`,
       };
     }
+    case "MidseasonVotingOpened": {
+      return {
+        headline: "All-Star voting opens",
+        summary:
+          "Fans can now vote for this year's All-Star selections.",
+      };
+    }
+    case "FanVoteLeaderChanged": {
+      const name = playerName(state, str(p, "playerId"));
+      const category = str(p, "categoryLabel") ?? "fan voting";
+      const transition = str(p, "transition");
+      if (transition === "entered_top_5") {
+        return {
+          headline: `${name} enters the top 5 in ${category}`,
+          summary: `${name} climbs into the top five of ${category}.`,
+        };
+      }
+      return {
+        headline: `Vote leader change: ${name}`,
+        summary: `${name} takes the top fan-vote spot in ${category}.`,
+      };
+    }
+    case "FanVotingClosed": {
+      return {
+        headline: "All-Star voting closes",
+        summary: "Fan voting has ended; selections will be announced.",
+      };
+    }
+    case "AllStarSelectionsAnnounced": {
+      return {
+        headline: "All-Star selections announced",
+        summary: "The league unveils this season's All-Star roster.",
+      };
+    }
+    case "MidseasonTournamentStarted": {
+      return {
+        headline: "Midseason Cup begins",
+        summary: "Tournament play opens with the qualified field.",
+      };
+    }
+    case "MidseasonTournamentCompleted": {
+      const champ = teamName(state, str(p, "championTeamId"));
+      return {
+        headline: `${champ} win the Midseason Cup`,
+        summary: `${champ} claim the Midseason Cup title.`,
+      };
+    }
+    case "MidseasonAwardAnnounced": {
+      const name = playerName(state, str(p, "winnerSubjectId"));
+      return {
+        headline: `Midseason award: ${name}`,
+        summary: `${name} has been named a midseason award winner.`,
+      };
+    }
+    case "HolidayStarted": {
+      const title = str(p, "title") ?? "League holiday";
+      return {
+        headline: title,
+        summary: `The league observes ${title}.`,
+      };
+    }
+    case "HolidayCompleted": {
+      const title = str(p, "title") ?? "League holiday";
+      return {
+        headline: `${title} concludes`,
+        summary: `${title} has ended.`,
+      };
+    }
     default: {
       return {
         headline: `${event.type.replace(/([A-Z])/g, " $1").trim()}`,

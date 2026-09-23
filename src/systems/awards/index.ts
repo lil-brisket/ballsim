@@ -19,6 +19,7 @@ export {
 export {
   runMonthlyAwards,
   runYearlyAwards,
+  runMidseasonAwards,
   type AwardsPipelineResult,
 } from "@/systems/awards/award-pipeline";
 export {

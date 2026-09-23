@@ -67,6 +67,10 @@ function seasonPhaseLabel(competitionType: Game["competitionType"]): string {
       return "Playoffs";
     case "development_league":
       return "Development League";
+    case "all_star":
+      return "All-Star";
+    case "midseason_tournament":
+      return "Midseason Cup";
     default:
       return "Regular Season";
   }

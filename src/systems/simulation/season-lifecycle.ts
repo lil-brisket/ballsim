@@ -17,6 +17,7 @@ import {
   derivePlannedRegularSeasonStartDate,
   needsRegularSeasonInitialization,
 } from "@/systems/simulation/planned-season-dates";
+import { planSeasonEvents } from "@/systems/season-events";
 
 export {
   derivePlannedPreseasonStartDate,
@@ -118,6 +119,10 @@ export function beginRegularSeasonFromPreseason(state: GameState): SystemResult 
   events.push(...dlSchedule.events);
 
   current = snapshotTradeDeadline(current);
+
+  const plannedEvents = planSeasonEvents(current);
+  current = plannedEvents.state;
+  events.push(...plannedEvents.events);
 
   return systemResult(current, events);
 }

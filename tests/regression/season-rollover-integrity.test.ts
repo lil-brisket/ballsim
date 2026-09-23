@@ -14,6 +14,7 @@ import { toFranchiseHubView } from "@/state/franchise-hub-selectors";
 import { getActiveOwnerTeamId } from "@/state/owner-context";
 import type { GameState } from "@/state/game-state";
 import { createEmptyPlayoffTournament } from "@/domain/entities/playoffs";
+import { createEmptySeasonEventsState } from "@/domain/entities/season-events";
 import { createEmptyTeamStanding } from "@/domain/entities/standings";
 import type { TeamId } from "@/domain/ids";
 
@@ -37,6 +38,7 @@ function bumpSeasonYear(state: GameState): GameState {
       playoffs: createEmptyPlayoffTournament(),
       standings: { byTeamId },
       seasonEventLog: [],
+      seasonEvents: createEmptySeasonEventsState(),
     },
   };
 }

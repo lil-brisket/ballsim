@@ -16,6 +16,7 @@ import { simulatePlayoffs } from "@/systems/playoff-simulation";
 import { generateLeague } from "@/systems/league-generation";
 import { generateRosters } from "@/systems/roster-generation";
 import { createEmptyPlayoffTournament } from "@/domain/entities/playoffs";
+import { createEmptySeasonEventsState } from "@/domain/entities/season-events";
 import { createEmptyTeamStanding } from "@/domain/entities/standings";
 import {
   asSaveId,
@@ -242,6 +243,7 @@ describe("season lifecycle", () => {
           standings: { byTeamId: {} },
         },
         seasonEventLog: [],
+        seasonEvents: createEmptySeasonEventsState(),
       },
       business: {
         contracts: {},

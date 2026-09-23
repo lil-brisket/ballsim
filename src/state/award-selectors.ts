@@ -42,7 +42,7 @@ export type PlayerAwardRowView = {
   teamId: string | null;
   teamName: string | null;
   cadence: "monthly" | "yearly";
-  tier: "major" | "monthly";
+  tier: "major" | "monthly" | "midseason";
 };
 
 export type PlayerAwardCareerTotalView = {

@@ -184,6 +184,39 @@ export const DOMAIN_EVENT_REGISTRY: Record<
     notify: true,
     social: { minPosts: 0, maxPosts: 1 },
   }),
+  MidseasonVotingOpened: occurred("league", "high", {
+    notify: true,
+    social: { minPosts: 1, maxPosts: 2 },
+  }),
+  FanVoteLeaderChanged: occurred("league", "medium", {
+    social: { minPosts: 0, maxPosts: 1 },
+  }),
+  FanVotingClosed: occurred("league", "high", {
+    notify: true,
+    social: { minPosts: 0, maxPosts: 2 },
+  }),
+  AllStarSelectionsAnnounced: occurred("league", "critical", {
+    notify: true,
+    notifyCat: "important",
+    social: { minPosts: 1, maxPosts: 3 },
+  }),
+  MidseasonTournamentStarted: occurred("league", "high", {
+    notify: true,
+    social: { minPosts: 0, maxPosts: 2 },
+  }),
+  MidseasonTournamentCompleted: occurred("league", "critical", {
+    notify: true,
+    notifyCat: "important",
+    social: { minPosts: 1, maxPosts: 3 },
+  }),
+  MidseasonAwardAnnounced: occurred("league", "high", {
+    notify: true,
+    social: { minPosts: 0, maxPosts: 2 },
+  }),
+  HolidayStarted: occurred("league", "medium", {
+    social: { minPosts: 0, maxPosts: 1 },
+  }),
+  HolidayCompleted: silent("league"),
 };
 
 export const SCHEDULED_GAME_POLICY: EventRegistryEntry = entry({

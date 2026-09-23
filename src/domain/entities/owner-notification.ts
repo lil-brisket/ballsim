@@ -38,7 +38,8 @@ export type OwnerNotificationType =
   | "ownership_confidence"
   | "ownership_concern"
   | "ownership_direction_change"
-  | "ownership_pressure";
+  | "ownership_pressure"
+  | "midseason_event";
 
 export const OWNER_NOTIFICATION_TYPES: readonly OwnerNotificationType[] = [
   "objective_completed",
@@ -61,6 +62,7 @@ export const OWNER_NOTIFICATION_TYPES: readonly OwnerNotificationType[] = [
   "ownership_concern",
   "ownership_direction_change",
   "ownership_pressure",
+  "midseason_event",
 ];
 
 export function isOwnerNotificationType(
