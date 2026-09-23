@@ -7,6 +7,10 @@ import {
   advanceUntilPhaseAction,
   advanceWeekAction,
 } from "@/application/actions";
+import {
+  SimulationPendingReporter,
+  useSimulationActivity,
+} from "@/components/game/simulation-activity";
 
 function AdvanceButton(props: {
   label: string;
@@ -68,6 +72,8 @@ export function AdvanceTimeControls(props: {
     : "Until next phase";
   const calendarHref = `/dashboard/${props.saveId}/calendar`;
   const [dialogOpen, setDialogOpen] = useState(false);
+  const { simulationPending } = useSimulationActivity();
+  const controlsDisabled = Boolean(props.disabled) || simulationPending;
 
   const showWarning = Boolean(props.unresolvedWarning);
 
@@ -77,10 +83,7 @@ export function AdvanceTimeControls(props: {
         <div className="mb-2">{props.assistantSummary}</div>
       ) : null}
       {showWarning ? (
-        <p
-          role="status"
-          className="text-sm text-amber-400"
-        >
+        <p role="status" className="text-sm text-amber-400">
           ⚠ {props.unresolvedWarning}
         </p>
       ) : null}
@@ -89,29 +92,31 @@ export function AdvanceTimeControls(props: {
       </p>
       <div className="flex flex-wrap gap-2" role="group" aria-label="Advance time">
         <form action={advanceDayAction} className="space-y-1">
+          <SimulationPendingReporter />
           <input type="hidden" name="saveId" value={props.saveId} />
           <input type="hidden" name="returnPath" value={props.returnPath} />
           <AdvanceButton
             label="Day"
             pendingLabel="Simulating day…"
-            disabled={props.disabled}
+            disabled={controlsDisabled}
           />
           <SimulationProgressStatus message="Simulating next day — games, standings, and franchise updates…" />
         </form>
         <form action={advanceWeekAction} className="space-y-1">
+          <SimulationPendingReporter />
           <input type="hidden" name="saveId" value={props.saveId} />
           <input type="hidden" name="returnPath" value={props.returnPath} />
           <AdvanceButton
             label="7 Days"
             pendingLabel="Simulating week…"
-            disabled={props.disabled}
+            disabled={controlsDisabled}
           />
           <SimulationProgressStatus message="Simulating 7 days — this may take a few seconds…" />
         </form>
         {props.requiresConfirm && showWarning ? (
           <button
             type="button"
-            disabled={props.disabled}
+            disabled={controlsDisabled}
             onClick={() => setDialogOpen(true)}
             className="rounded-md border border-zinc-800 px-3 py-2 text-xs text-zinc-500 hover:border-zinc-600 hover:text-zinc-300 disabled:opacity-40"
           >
@@ -134,6 +139,7 @@ export function AdvanceTimeControls(props: {
                 for intentional time advancement.
               </p>
               <form action={advanceUntilPhaseAction} className="space-y-1">
+                <SimulationPendingReporter />
                 <input type="hidden" name="saveId" value={props.saveId} />
                 <input
                   type="hidden"
@@ -143,7 +149,7 @@ export function AdvanceTimeControls(props: {
                 <AdvanceButton
                   label={untilLabel}
                   pendingLabel="Simulating until next phase…"
-                  disabled={props.disabled}
+                  disabled={controlsDisabled}
                 />
                 <SimulationProgressStatus message="Advancing until the next phase — progress continues in the background; please wait…" />
               </form>
@@ -189,6 +195,7 @@ export function AdvanceTimeControls(props: {
               ) : null}
               {props.letAiHandleAction ? (
                 <form action={props.letAiHandleAction}>
+                  <SimulationPendingReporter />
                   <input type="hidden" name="saveId" value={props.saveId} />
                   <input
                     type="hidden"
@@ -197,7 +204,8 @@ export function AdvanceTimeControls(props: {
                   />
                   <button
                     type="submit"
-                    className="rounded-md bg-emerald-700 px-3 py-1.5 text-sm font-medium text-zinc-50 hover:bg-emerald-600"
+                    disabled={controlsDisabled}
+                    className="rounded-md bg-emerald-700 px-3 py-1.5 text-sm font-medium text-zinc-50 hover:bg-emerald-600 disabled:opacity-40"
                   >
                     Let AI Handle
                   </button>
@@ -205,6 +213,7 @@ export function AdvanceTimeControls(props: {
               ) : null}
               {props.continueAnywayAction ? (
                 <form action={props.continueAnywayAction}>
+                  <SimulationPendingReporter />
                   <input type="hidden" name="saveId" value={props.saveId} />
                   <input
                     type="hidden"
@@ -213,13 +222,15 @@ export function AdvanceTimeControls(props: {
                   />
                   <button
                     type="submit"
-                    className="rounded-md bg-amber-600 px-3 py-1.5 text-sm font-medium text-zinc-950 hover:bg-amber-500"
+                    disabled={controlsDisabled}
+                    className="rounded-md bg-amber-600 px-3 py-1.5 text-sm font-medium text-zinc-950 hover:bg-amber-500 disabled:opacity-40"
                   >
                     Continue Anyway
                   </button>
                 </form>
               ) : (
                 <form action={advanceUntilPhaseAction}>
+                  <SimulationPendingReporter />
                   <input type="hidden" name="saveId" value={props.saveId} />
                   <input
                     type="hidden"
@@ -228,7 +239,8 @@ export function AdvanceTimeControls(props: {
                   />
                   <button
                     type="submit"
-                    className="rounded-md bg-amber-600 px-3 py-1.5 text-sm font-medium text-zinc-950 hover:bg-amber-500"
+                    disabled={controlsDisabled}
+                    className="rounded-md bg-amber-600 px-3 py-1.5 text-sm font-medium text-zinc-950 hover:bg-amber-500 disabled:opacity-40"
                   >
                     Continue Anyway
                   </button>

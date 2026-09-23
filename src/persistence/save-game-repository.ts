@@ -13,6 +13,7 @@ import type {
   SaveGameStore,
   SaveGameSummary,
 } from "@/persistence/save-game-store";
+import { SaveVersionConflictError } from "@/persistence/save-version-conflict";
 
 /**
  * Serialize + validate a clone before write. Does not mutate input state.
@@ -87,8 +88,26 @@ export function createPrismaSaveGameStore(): SaveGameStore {
     async save(input: {
       id: string;
       state: GameState;
+      ifUpdatedAt?: Date;
     }): Promise<LoadedSaveGame> {
       const stateJson = prepareStateJson(input.state);
+      if (input.ifUpdatedAt != null) {
+        const result = await prisma.saveGame.updateMany({
+          where: { id: input.id, updatedAt: input.ifUpdatedAt },
+          data: {
+            schemaVersion: GAME_STATE_SCHEMA_VERSION,
+            stateJson,
+          },
+        });
+        if (result.count === 0) {
+          throw new SaveVersionConflictError(input.id);
+        }
+        const row = await prisma.saveGame.findUnique({ where: { id: input.id } });
+        if (!row) {
+          throw new SaveVersionConflictError(input.id);
+        }
+        return toLoaded(row);
+      }
       const row = await prisma.saveGame.update({
         where: { id: input.id },
         data: {

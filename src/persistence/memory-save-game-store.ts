@@ -10,6 +10,7 @@ import type {
   SaveGameStore,
   SaveGameSummary,
 } from "@/persistence/save-game-store";
+import { SaveVersionConflictError } from "@/persistence/save-version-conflict";
 
 type MemorySaveRow = {
   id: string;
@@ -35,6 +36,10 @@ export type SeedPersistedBlobInput = {
 export type MemorySaveGameStore = SaveGameStore & {
   seedPersistedBlob(input: SeedPersistedBlobInput): void;
 };
+
+function sameUpdatedAt(a: Date, b: Date): boolean {
+  return a.getTime() === b.getTime();
+}
 
 /**
  * In-memory SaveGameStore for tests. Replaces the whole blob in one
@@ -107,10 +112,17 @@ export function createMemorySaveGameStore(): MemorySaveGameStore {
     async save(input: {
       id: string;
       state: GameState;
+      ifUpdatedAt?: Date;
     }): Promise<LoadedSaveGame> {
       const existing = rows.get(input.id);
       if (!existing) {
         throw new Error(`SaveGame "${input.id}" not found.`);
+      }
+      if (
+        input.ifUpdatedAt != null &&
+        !sameUpdatedAt(existing.updatedAt, input.ifUpdatedAt)
+      ) {
+        throw new SaveVersionConflictError(input.id);
       }
       const stateJson = prepareStateJson(input.state);
       const row: MemorySaveRow = {

@@ -20,6 +20,8 @@ export function hasAppliedGameplayConsequence(
   key: string,
   teamId?: TeamId,
 ): boolean {
+  // Simulation-side fallback: prefer explicit teamId. ownedTeamIds[0] is not UI
+  // "Your Team" context — callers that own multiple franchises must pass teamId.
   const targetId = teamId ?? state.user.ownedTeamIds[0];
   if (!targetId) {
     return false;
@@ -33,6 +35,7 @@ export function withAppliedGameplayConsequence(
   key: string,
   teamId?: TeamId,
 ): GameState {
+  // Same multi-franchise rule as hasAppliedGameplayConsequence — not activeOwnerTeamId.
   const targetId = teamId ?? state.user.ownedTeamIds[0] ?? getActiveOwnerTeamId(state);
   const franchise = state.user.ownedFranchises[targetId];
   if (!franchise) {

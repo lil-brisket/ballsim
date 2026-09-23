@@ -17,10 +17,36 @@ import { redistributeRotationForInjuries } from "@/systems/rotation/rotation-inj
 import { cloneTeamRosterManagement } from "@/domain/entities/team-roster-management";
 import type { TeamId } from "@/domain/ids";
 import { runDevelopmentLeaguePipeline } from "@/systems/development-league/daily-pipeline";
+import { reconcileRosterManagement } from "@/systems/roster-management";
+import { scheduledGameIdsForDate } from "@/systems/schedule-date-index";
 
 export type DailyPipelineResult = SystemResult & {
   gamesSimulated: number;
 };
+
+/**
+ * Ensure teams scheduled to play today have valid roster management /
+ * rotations before game simulation. Uses existing reconcile — no loop logic.
+ */
+function reconcileTeamsForScheduledGames(
+  state: GameState,
+  date: string,
+): GameState {
+  const teamIds = new Set<TeamId>();
+  for (const gameId of scheduledGameIdsForDate(state, date)) {
+    const game = state.competition.games[gameId];
+    if (game == null || game.status !== "scheduled") {
+      continue;
+    }
+    teamIds.add(game.homeTeamId);
+    teamIds.add(game.awayTeamId);
+  }
+  let current = state;
+  for (const teamId of teamIds) {
+    current = reconcileRosterManagement(current, teamId);
+  }
+  return current;
+}
 
 /**
  * Deterministic daily simulation work for the current calendar date.
@@ -39,6 +65,7 @@ export function runDailyPipeline(
   const newlyFinalized: Game[] = [];
 
   if (phase === "regular") {
+    current = reconcileTeamsForScheduledGames(current, date);
     const gamesResult = simulateGamesForDate(current, rng, date, profiler);
     current = gamesResult.state;
     events.push(...gamesResult.events);

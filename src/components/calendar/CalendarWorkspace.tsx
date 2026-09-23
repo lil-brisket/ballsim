@@ -8,6 +8,7 @@ import { DateInspector } from "@/components/calendar/DateInspector";
 import { CalendarLeagueContextPanel } from "@/components/calendar/CalendarLeagueContext";
 import { SimulationSummaryModal } from "@/components/calendar/SimulationSummaryModal";
 import { SimulationPausedBanner } from "@/components/calendar/SimulationPausedBanner";
+import { useSimulationActivity } from "@/components/game/simulation-activity";
 import { parseCalendarDate } from "@/domain/calendar-date";
 
 function buildCalendarHref(input: {
@@ -44,6 +45,8 @@ export function CalendarWorkspace(props: {
 }) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
+  const { simulationPending } = useSimulationActivity();
+  const navigationDisabled = simulationPending;
   const [selectedDate, setSelectedDate] = useState(props.view.selectedDate);
   const [mobileDetailOpen, setMobileDetailOpen] = useState(false);
 
@@ -61,6 +64,7 @@ export function CalendarWorkspace(props: {
   });
 
   function navigate(next: { year: number; month: number; date?: string }) {
+    if (navigationDisabled) return;
     const href = buildCalendarHref({
       saveId: props.saveId,
       year: next.year,
@@ -73,6 +77,7 @@ export function CalendarWorkspace(props: {
   }
 
   function handleSelectDate(date: string) {
+    if (navigationDisabled) return;
     setSelectedDate(date);
     setMobileDetailOpen(true);
     const { year, month } = parseCalendarDate(date);
@@ -80,6 +85,7 @@ export function CalendarWorkspace(props: {
   }
 
   function handleChangeMonth(year: number, month: number) {
+    if (navigationDisabled) return;
     const keepDate =
       selectedDate && dateInMonth(selectedDate, year, month)
         ? selectedDate
@@ -88,6 +94,7 @@ export function CalendarWorkspace(props: {
   }
 
   function handleJumpToday() {
+    if (navigationDisabled) return;
     const { year, month } = parseCalendarDate(props.view.currentDate);
     setSelectedDate(props.view.currentDate);
     navigate({
@@ -98,6 +105,7 @@ export function CalendarWorkspace(props: {
   }
 
   function handleJumpNextGame() {
+    if (navigationDisabled) return;
     const next = props.view.nextTeamGameDate;
     if (!next) return;
     const { year, month } = parseCalendarDate(next);
@@ -105,8 +113,24 @@ export function CalendarWorkspace(props: {
     navigate({ year, month, date: next });
   }
 
+  const busy = isPending || simulationPending;
+
   return (
-    <div className={`space-y-6 ${isPending ? "opacity-80" : ""}`}>
+    <div
+      className={`space-y-6 ${busy ? "opacity-80" : ""}`}
+      aria-busy={simulationPending || undefined}
+    >
+      {simulationPending ? (
+        <p
+          role="status"
+          aria-live="polite"
+          className="rounded-md border border-amber-700/40 bg-amber-950/30 px-3 py-2 text-sm text-amber-100"
+        >
+          Simulation in progress — calendar navigation is locked until it
+          finishes.
+        </p>
+      ) : null}
+
       <SimulationPausedBanner
         reason={props.view.pauseBanner.reason}
         message={props.view.pauseBanner.message}
@@ -119,6 +143,7 @@ export function CalendarWorkspace(props: {
         selectedDate={selectedDate}
         currentDate={props.view.currentDate}
         nextTeamGameDate={props.view.nextTeamGameDate}
+        navigationDisabled={navigationDisabled}
         onSelectDate={handleSelectDate}
         onChangeMonth={handleChangeMonth}
         onJumpToday={handleJumpToday}
@@ -135,7 +160,8 @@ export function CalendarWorkspace(props: {
             saveId={props.saveId}
             returnPath={returnPath}
             inspector={props.view.inspector}
-            timeDisabled={props.view.timeDisabled}
+            timeDisabled={props.view.timeDisabled || simulationPending}
+            userTeamId={props.view.userTeamId}
           />
         </div>
         <CalendarLeagueContextPanel context={props.view.leagueContext} />
