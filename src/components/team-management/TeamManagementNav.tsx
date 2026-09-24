@@ -5,8 +5,7 @@ import { usePathname } from "next/navigation";
 
 const TABS = [
   { href: "", label: "Overview" },
-  { href: "/lineups", label: "Lineups" },
-  { href: "/rotations", label: "Rotations" },
+  { href: "/lineups", label: "Lineup & Rotation", alsoMatch: ["/rotations"] },
   { href: "/transactions", label: "Transactions" },
 ] as const;
 
@@ -18,10 +17,15 @@ export function TeamManagementNav(props: { saveId: string }) {
     <nav className="flex flex-wrap gap-2 border-b border-zinc-800 pb-3">
       {TABS.map((tab) => {
         const href = `${base}${tab.href}`;
+        const alsoMatch =
+          "alsoMatch" in tab
+            ? tab.alsoMatch.map((suffix) => `${base}${suffix}`)
+            : [];
         const active =
           tab.href === ""
             ? pathname === base || pathname === `${base}/`
-            : pathname.startsWith(href);
+            : pathname.startsWith(href) ||
+              alsoMatch.some((path) => pathname.startsWith(path));
         return (
           <Link
             key={tab.href || "overview"}

@@ -30,7 +30,7 @@ describe("ActionCenter", () => {
           relevance: "team",
           title: "Injury requires rotation change",
           description: "Starter is out",
-          href: "/dashboard/s1/team-management/rotations",
+          href: "/dashboard/s1/team-management/lineups",
           hrefLabel: "Review Rotation",
         },
       ],

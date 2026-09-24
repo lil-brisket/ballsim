@@ -5,15 +5,15 @@ const LINKS = [
   { key: "team" as const, suffix: "/team", label: "Team Hub" },
   { key: "roster" as const, suffix: "/roster", label: "Roster" },
   {
-    key: "rotation" as const,
-    suffix: "/team-management/rotations",
-    label: "Rotations",
+    key: "lineupRotation" as const,
+    suffix: "/team-management/lineups",
+    label: "Lineup & Rotation",
   },
 ] as const;
 
 export function TeamHubSubNav(props: {
   saveId: string;
-  active: "team" | "roster" | "rotation";
+  active: "team" | "roster" | "lineupRotation";
 }) {
   const base = `/dashboard/${props.saveId}`;
   return (

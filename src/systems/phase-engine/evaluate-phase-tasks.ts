@@ -274,7 +274,7 @@ function buildTasksForPhase(
       detail: "Confirm depth chart before opening night.",
       explanation:
         "A configured rotation avoids early-season lineup issues.",
-      href: `/dashboard/${saveId}/team-management/rotations`,
+      href: `/dashboard/${saveId}/team-management/lineups`,
       teamId,
       focusKey: "preseason_prep",
     });

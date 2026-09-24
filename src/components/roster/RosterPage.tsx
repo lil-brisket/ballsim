@@ -103,14 +103,7 @@ export function RosterPage(props: { view: RosterPageView }) {
                     href={view.lineupHref}
                     className="text-amber-400 hover:text-amber-300"
                   >
-                    Edit lineups
-                  </Link>
-                  {" · "}
-                  <Link
-                    href={view.rotationsHref}
-                    className="text-amber-400 hover:text-amber-300"
-                  >
-                    Edit rotations
+                    Edit lineup &amp; rotation
                   </Link>
                 </p>
               </div>

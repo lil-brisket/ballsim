@@ -14,6 +14,7 @@ import {
   emptyTeamRosterManagement,
   philosophyFromStyle,
   styleFromPhilosophy,
+  type ClosingLineupPolicy,
   type LineupSlot,
   type RotationEntry,
   type RotationPhilosophy,
@@ -42,6 +43,7 @@ import {
   hasHardFeasibilityIssues,
   validateRotationFeasibility,
 } from "@/systems/rotation/rotation-feasibility";
+import { ROLE_TEMPLATES } from "@/systems/rotation/rotation-role-templates";
 
 export type RosterManagementValidationIssue = {
   code: string;
@@ -1216,6 +1218,196 @@ export function getEmergencyLineup(
     slots,
     emergency: true,
   };
+}
+
+function starterTemplateEntry(
+  playerId: PlayerId,
+  preferredPositions: RotationEntry["preferredPositions"],
+): RotationEntry {
+  const template = ROLE_TEMPLATES.starter;
+  return {
+    playerId,
+    targetMinutes: 32,
+    minimumMinutes: template.min,
+    normalMaximumMinutes: template.normalMax,
+    absoluteMaximumMinutes: template.absoluteMax,
+    rotationPriority: template.priority,
+    rotationStatus: "active",
+    role: "starter",
+    preferredPositions,
+    secondaryPositions: [],
+    minutePriorityBias: 0,
+  };
+}
+
+function benchTemplateEntry(
+  playerId: PlayerId,
+  preferredPositions: RotationEntry["preferredPositions"],
+): RotationEntry {
+  const template = ROLE_TEMPLATES.bench;
+  return {
+    playerId,
+    targetMinutes: 0,
+    minimumMinutes: 0,
+    normalMaximumMinutes: template.normalMax,
+    absoluteMaximumMinutes: template.absoluteMax,
+    rotationPriority: template.priority,
+    rotationStatus: "inactive",
+    role: "bench",
+    preferredPositions,
+    secondaryPositions: [],
+    minutePriorityBias: 0,
+  };
+}
+
+export type LineupManagementInput = {
+  startingLineup: LineupSlot[];
+  bench: PlayerId[];
+  inactive: PlayerId[];
+};
+
+/**
+ * Sync startingLineup / bench / inactive into management and keep rotation
+ * membership consistent (roles, inactive minutes, template rows for newcomers).
+ * Inactive players are excluded from the rotation array (existing rule).
+ * Does not persist or validate — callers validate before apply.
+ */
+export function mergeLineupIntoManagement(
+  state: GameState,
+  teamId: TeamId,
+  current: TeamRosterManagement,
+  lineup: LineupManagementInput,
+): TeamRosterManagement {
+  void teamId;
+  const starterIds = new Set(lineup.startingLineup.map((slot) => slot.playerId));
+  const rotation: RotationEntry[] = current.rotation
+    .filter((entry) => !lineup.inactive.includes(entry.playerId))
+    .map((entry) => ({
+      ...entry,
+      preferredPositions: [...entry.preferredPositions],
+      secondaryPositions: [...entry.secondaryPositions],
+      role: starterIds.has(entry.playerId)
+        ? ("starter" as const)
+        : entry.role === "starter"
+          ? ("bench" as const)
+          : entry.role,
+      targetMinutes: lineup.inactive.includes(entry.playerId)
+        ? 0
+        : entry.targetMinutes,
+      rotationStatus: lineup.inactive.includes(entry.playerId)
+        ? ("inactive" as const)
+        : entry.rotationStatus,
+    }));
+
+  for (const slot of lineup.startingLineup) {
+    if (!rotation.some((entry) => entry.playerId === slot.playerId)) {
+      const player = state.world.players[slot.playerId];
+      rotation.push(
+        starterTemplateEntry(
+          slot.playerId,
+          player ? [player.position] : [slot.slot],
+        ),
+      );
+    }
+  }
+  for (const playerId of lineup.bench) {
+    if (!rotation.some((entry) => entry.playerId === playerId)) {
+      const player = state.world.players[playerId];
+      rotation.push(
+        benchTemplateEntry(playerId, player ? [player.position] : ["SF"]),
+      );
+    }
+  }
+
+  return {
+    ...cloneTeamRosterManagement(current),
+    startingLineup: lineup.startingLineup.map((slot) => ({ ...slot })),
+    bench: [...lineup.bench],
+    inactive: [...lineup.inactive],
+    rotation,
+    lastConfiguredBy: "user",
+  };
+}
+
+export type RotationEditsInput = {
+  rotation: RotationEntry[];
+  rotationStyle?: RotationStyle;
+  rotationPhilosophy?: RotationPhilosophy;
+  rotationDepth?: number;
+  rotationPreset?: RotationPreset;
+  closingLineupPolicy?: ClosingLineupPolicy;
+  closingLineupIds?: PlayerId[];
+};
+
+/**
+ * Overlay rotation entry edits + settings onto a management draft.
+ * Derives medical/availability constraints and redistributes for injuries.
+ * Returns { ok:false } when inactive players have positive minutes.
+ */
+export function applyRotationEditsToManagement(
+  state: GameState,
+  teamId: TeamId,
+  draft: TeamRosterManagement,
+  input: RotationEditsInput,
+):
+  | { ok: true; management: TeamRosterManagement }
+  | { ok: false; error: string } {
+  const inactiveSet = new Set(draft.inactive);
+  for (const entry of input.rotation) {
+    if (inactiveSet.has(entry.playerId) && entry.targetMinutes > 0) {
+      return {
+        ok: false,
+        error: `Inactive player ${entry.playerId} cannot have target minutes > 0.`,
+      };
+    }
+  }
+
+  const philosophy =
+    input.rotationPhilosophy ??
+    (input.rotationStyle
+      ? philosophyFromStyle(input.rotationStyle)
+      : draft.rotationPhilosophy);
+
+  const derivedRotation = input.rotation.map((entry) => {
+    const avail = getPlayerAvailability(state, entry.playerId, teamId);
+    return deriveRotationConstraints({
+      playerId: entry.playerId,
+      targetMinutes: entry.targetMinutes,
+      role: entry.role === "deep_bench" ? "bench" : entry.role,
+      preferredPositions: entry.preferredPositions,
+      secondaryPositions: entry.secondaryPositions,
+      rotationPriority: entry.rotationPriority,
+      minutePriorityBias: entry.minutePriorityBias,
+      overrideMedicalRecommendation: entry.overrideMedicalRecommendation,
+      recommendedWorkloadMpg: avail.recommendedWorkloadMpg,
+      maximumWorkloadMpg: avail.maximumWorkloadMpg,
+      canPlay: avail.canPlay && !inactiveSet.has(entry.playerId),
+    });
+  });
+
+  let next: TeamRosterManagement = {
+    ...cloneTeamRosterManagement(draft),
+    rotation: derivedRotation,
+    rotationPhilosophy: philosophy,
+    rotationStyle: styleFromPhilosophy(philosophy),
+    rotationDepth:
+      input.rotationDepth ??
+      draft.rotationDepth ??
+      depthForPhilosophy(philosophy),
+    rotationPreset: input.rotationPreset ?? "custom",
+    closingLineupPolicy:
+      input.closingLineupPolicy ?? draft.closingLineupPolicy,
+    closingLineupIds: input.closingLineupIds ?? draft.closingLineupIds,
+    lastConfiguredBy: "user",
+  };
+
+  const redistributed = redistributeRotationForInjuries(state, teamId, next);
+  next = {
+    ...redistributed.management,
+    lastConfiguredBy: "user",
+  };
+
+  return { ok: true, management: next };
 }
 
 export function applyRosterManagement(

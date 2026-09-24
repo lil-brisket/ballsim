@@ -56,7 +56,7 @@ export const OWNER_NAV_GROUPS: readonly OwnerNavGroup[] = [
       { href: "/roster", label: "Roster", icon: "roster", badgeKey: "roster" },
       {
         href: "/team-management/lineups",
-        label: "Lineups",
+        label: "Lineup & Rotation",
         icon: "lineups",
       },
       {

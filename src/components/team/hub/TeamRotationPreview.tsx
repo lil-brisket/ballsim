@@ -10,14 +10,14 @@ export function TeamRotationPreview(props: {
   hub: TeamHubView;
 }) {
   const { saveId, hub } = props;
-  const rotationHref = `/dashboard/${saveId}/team-management/rotations`;
+  const rotationHref = `/dashboard/${saveId}/team-management/lineups`;
 
   return (
     <Section
       title="Rotation"
       action={
         <Link href={rotationHref} className="text-sm text-amber-400">
-          Manage Rotation
+          Manage Lineup & Rotation
         </Link>
       }
     >

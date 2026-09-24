@@ -60,10 +60,8 @@ import {
   signOwnerSponsorship,
   upgradeOwnerFacility,
   withdrawOwnerFreeAgentOffer,
-  updateOwnerLineup,
-  updateOwnerRotation,
-  optimizeOwnerRotation,
-  applyOwnerLineupRecommendation,
+  updateOwnerLineupAndRotation,
+  previewOwnerOptimizeRotation,
   updateOwnerCoachingPhilosophy,
   applyOwnerCoachingPreset,
   submitTradeCounteroffer,
@@ -1247,115 +1245,130 @@ export async function completeExpansionAction(
   redirect(path);
 }
 
-export async function updateLineupAction(formData: FormData): Promise<void> {
-  const saveId = String(formData.get("saveId") ?? "");
-  const teamId = String(formData.get("teamId") ?? "");
-  const path = returnPath(formData, saveId);
-  const startingLineupJson = String(formData.get("startingLineupJson") ?? "[]");
-  const benchJson = String(formData.get("benchJson") ?? "[]");
-  const inactiveJson = String(formData.get("inactiveJson") ?? "[]");
-  let startingLineup: Array<{ playerId: string; slot: string }> = [];
-  let bench: string[] = [];
-  let inactive: string[] = [];
+type CombinedRotationPayloadEntry = {
+  playerId: string;
+  targetMinutes: number;
+  minimumMinutes?: number;
+  normalMaximumMinutes?: number;
+  absoluteMaximumMinutes?: number;
+  rotationPriority: number;
+  rotationStatus: string;
+  role: string;
+  preferredPositions: string[];
+  secondaryPositions?: string[];
+  minutePriorityBias?: number;
+  overrideMedicalRecommendation?: boolean;
+};
+
+function parseCombinedLineupRotationPayload(formData: FormData):
+  | {
+      ok: true;
+      startingLineup: Array<{ playerId: string; slot: string }>;
+      bench: string[];
+      inactive: string[];
+      rotation: CombinedRotationPayloadEntry[];
+      closingLineupIds: string[];
+      rotationStyle: string;
+      rotationPhilosophy: string;
+      rotationDepthRaw: string;
+      rotationPreset: string;
+      closingLineupPolicy: string;
+    }
+  | { ok: false; error: string } {
   try {
-    startingLineup = JSON.parse(startingLineupJson) as typeof startingLineup;
-    bench = JSON.parse(benchJson) as string[];
-    inactive = JSON.parse(inactiveJson) as string[];
+    return {
+      ok: true,
+      startingLineup: JSON.parse(
+        String(formData.get("startingLineupJson") ?? "[]"),
+      ) as Array<{ playerId: string; slot: string }>,
+      bench: JSON.parse(String(formData.get("benchJson") ?? "[]")) as string[],
+      inactive: JSON.parse(
+        String(formData.get("inactiveJson") ?? "[]"),
+      ) as string[],
+      rotation: JSON.parse(
+        String(formData.get("rotationJson") ?? "[]"),
+      ) as CombinedRotationPayloadEntry[],
+      closingLineupIds: JSON.parse(
+        String(formData.get("closingLineupJson") ?? "[]"),
+      ) as string[],
+      rotationStyle: String(formData.get("rotationStyle") ?? ""),
+      rotationPhilosophy: String(formData.get("rotationPhilosophy") ?? ""),
+      rotationDepthRaw: String(formData.get("rotationDepth") ?? ""),
+      rotationPreset: String(formData.get("rotationPreset") ?? ""),
+      closingLineupPolicy: String(formData.get("closingLineupPolicy") ?? ""),
+    };
   } catch {
-    redirectWithError(path, "Invalid lineup payload.");
+    return { ok: false, error: "Invalid lineup/rotation payload." };
   }
-  const result = await updateOwnerLineup(saveId, {
-    teamId,
-    startingLineup,
-    bench,
-    inactive,
-  });
-  if (!result.ok) {
-    redirectWithError(path, result.error);
-  }
-  revalidateOwner(saveId);
-  redirect(path);
 }
 
-export async function updateRotationAction(formData: FormData): Promise<void> {
-  const saveId = String(formData.get("saveId") ?? "");
-  const teamId = String(formData.get("teamId") ?? "");
-  const path = returnPath(formData, saveId);
-  const rotationJson = String(formData.get("rotationJson") ?? "[]");
-  const rotationStyle = String(formData.get("rotationStyle") ?? "");
-  const rotationPhilosophy = String(formData.get("rotationPhilosophy") ?? "");
-  const rotationDepthRaw = String(formData.get("rotationDepth") ?? "");
-  const rotationPreset = String(formData.get("rotationPreset") ?? "");
-  const closingLineupPolicy = String(formData.get("closingLineupPolicy") ?? "");
-  const closingLineupJson = String(formData.get("closingLineupJson") ?? "[]");
-  let rotation: Array<{
-    playerId: string;
-    targetMinutes: number;
-    minimumMinutes?: number;
-    normalMaximumMinutes?: number;
-    absoluteMaximumMinutes?: number;
-    rotationPriority: number;
-    rotationStatus: string;
-    role: string;
-    preferredPositions: string[];
-    secondaryPositions?: string[];
-    minutePriorityBias?: number;
-    overrideMedicalRecommendation?: boolean;
-  }> = [];
-  let closingLineupIds: string[] = [];
-  try {
-    rotation = JSON.parse(rotationJson) as typeof rotation;
-    closingLineupIds = JSON.parse(closingLineupJson) as string[];
-  } catch {
-    redirectWithError(path, "Invalid rotation payload.");
-  }
-  const result = await updateOwnerRotation(saveId, {
-    teamId,
-    rotation,
-    rotationStyle: rotationStyle || undefined,
-    rotationPhilosophy: rotationPhilosophy || undefined,
-    rotationDepth: rotationDepthRaw
-      ? Number(rotationDepthRaw)
-      : undefined,
-    rotationPreset: rotationPreset || undefined,
-    closingLineupPolicy: closingLineupPolicy || undefined,
-    closingLineupIds,
-  });
-  if (!result.ok) {
-    redirectWithError(path, result.error);
-  }
-  revalidateOwner(saveId);
-  redirect(path);
-}
-
-export async function optimizeRotationAction(formData: FormData): Promise<void> {
-  const saveId = String(formData.get("saveId") ?? "");
-  const teamId = String(formData.get("teamId") ?? "");
-  const path = returnPath(formData, saveId);
-  const rotationPreset = String(formData.get("rotationPreset") ?? "auto");
-  const result = await optimizeOwnerRotation(saveId, {
-    teamId,
-    rotationPreset: rotationPreset || "auto",
-  });
-  if (!result.ok) {
-    redirectWithError(path, result.error);
-  }
-  revalidateOwner(saveId);
-  redirect(path);
-}
-
-export async function applyLineupRecommendationAction(
+export async function updateLineupAndRotationAction(
   formData: FormData,
 ): Promise<void> {
   const saveId = String(formData.get("saveId") ?? "");
   const teamId = String(formData.get("teamId") ?? "");
   const path = returnPath(formData, saveId);
-  const result = await applyOwnerLineupRecommendation(saveId, teamId);
+  const parsed = parseCombinedLineupRotationPayload(formData);
+  if (!parsed.ok) {
+    redirectWithError(path, parsed.error);
+  }
+  const result = await updateOwnerLineupAndRotation(saveId, {
+    teamId,
+    startingLineup: parsed.startingLineup,
+    bench: parsed.bench,
+    inactive: parsed.inactive,
+    rotation: parsed.rotation,
+    rotationStyle: parsed.rotationStyle || undefined,
+    rotationPhilosophy: parsed.rotationPhilosophy || undefined,
+    rotationDepth: parsed.rotationDepthRaw
+      ? Number(parsed.rotationDepthRaw)
+      : undefined,
+    rotationPreset: parsed.rotationPreset || undefined,
+    closingLineupPolicy: parsed.closingLineupPolicy || undefined,
+    closingLineupIds: parsed.closingLineupIds,
+  });
   if (!result.ok) {
     redirectWithError(path, result.error);
   }
   revalidateOwner(saveId);
   redirect(path);
+}
+
+/**
+ * Non-persisting optimize preview for the combined editor.
+ * Returns JSON so the client can apply locally + undo before Save.
+ */
+export async function previewOptimizeRotationAction(
+  formData: FormData,
+): Promise<
+  | {
+      ok: true;
+      management: import("@/domain/entities/team-roster-management").TeamRosterManagement;
+      changelog: import("@/systems/roster-management").OptimizeChange[];
+    }
+  | { ok: false; error: string }
+> {
+  const saveId = String(formData.get("saveId") ?? "");
+  const teamId = String(formData.get("teamId") ?? "");
+  const parsed = parseCombinedLineupRotationPayload(formData);
+  if (!parsed.ok) {
+    return parsed;
+  }
+  return previewOwnerOptimizeRotation(saveId, {
+    teamId,
+    startingLineup: parsed.startingLineup,
+    bench: parsed.bench,
+    inactive: parsed.inactive,
+    rotation: parsed.rotation,
+    rotationStyle: parsed.rotationStyle || undefined,
+    rotationPhilosophy: parsed.rotationPhilosophy || undefined,
+    rotationDepth: parsed.rotationDepthRaw
+      ? Number(parsed.rotationDepthRaw)
+      : undefined,
+    rotationPreset: parsed.rotationPreset || "auto",
+    closingLineupPolicy: parsed.closingLineupPolicy || undefined,
+    closingLineupIds: parsed.closingLineupIds,
+  });
 }
 
 export async function updateCoachingPhilosophyAction(

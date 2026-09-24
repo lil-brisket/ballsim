@@ -28,7 +28,7 @@ export function NextGamePanel(props: {
 }) {
   const nextGame = props.team.upcomingGames[0];
   const scheduleHref = `/dashboard/${props.saveId}/schedule`;
-  const rotationHref = `/dashboard/${props.saveId}/team-management/rotations`;
+  const rotationHref = `/dashboard/${props.saveId}/team-management/lineups`;
 
   return (
     <Section
