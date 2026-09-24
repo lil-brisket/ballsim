@@ -24,6 +24,7 @@ import {
   fireOwnerStaff,
   hireOwnerStaff,
   loadOwnerSave,
+  listOwnerTradeCandidates,
   makeOwnerFreeAgentOffer,
   markOwnerNotificationsRead,
   markMediaRead,
@@ -51,6 +52,7 @@ import {
   confirmOwnedFranchises,
   setOwnerMarketingBudget,
   setOwnerTicketPrice,
+  setOwnerPlayerTradeBlock,
   scheduleOwnerGameDayPromotion,
   cancelOwnerGameDayPromotion,
   changeOwnerGameDayPromotion,
@@ -654,6 +656,35 @@ export async function executeTradeAction(formData: FormData): Promise<void> {
   }
   revalidateOwner(saveId);
   redirect(path);
+}
+
+export async function toggleTradeBlockAction(formData: FormData): Promise<void> {
+  const saveId = String(formData.get("saveId") ?? "");
+  const playerId = String(formData.get("playerId") ?? "");
+  const listedRaw = String(formData.get("listed") ?? "");
+  const listed = listedRaw === "true" || listedRaw === "1";
+  const path = returnPath(formData, saveId);
+  const result = await setOwnerPlayerTradeBlock(saveId, { playerId, listed });
+  if (!result.ok) {
+    redirectWithError(path, result.error);
+  }
+  revalidateOwner(saveId);
+  redirect(path);
+}
+
+/** Client-callable Trade Finder search (no redirect). Lazy — not used on roster page load. */
+export async function listTradeCandidatesAction(
+  saveId: string,
+  outgoingPlayerId: string,
+): Promise<
+  | { ok: true; candidates: import("@/state/roster-page-selectors").TradeFinderRowView[] }
+  | { ok: false; error: string }
+> {
+  const result = await listOwnerTradeCandidates(saveId, outgoingPlayerId);
+  if (!result.ok) {
+    return { ok: false, error: result.error };
+  }
+  return { ok: true, candidates: result.candidates };
 }
 
 export async function signFreeAgentAction(formData: FormData): Promise<void> {

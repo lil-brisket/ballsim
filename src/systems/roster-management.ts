@@ -343,17 +343,30 @@ function playerOverall(player: Player): number {
   return calculatePlayerOverall(player.position, player.attributes);
 }
 
-function defaultPreferredPositions(player: Player): PlayerPosition[] {
+export type PositionFit = {
+  position: PlayerPosition;
+  fit: "primary" | "secondary";
+};
+
+/**
+ * Primary = player.position; secondary = adjacent positions on the position ladder only.
+ * Shared by roster needs and depth-chart eligibility — do not duplicate adjacency elsewhere.
+ */
+export function positionFitsForPlayer(player: Player): PositionFit[] {
   const primary = player.position;
   const index = PLAYER_POSITIONS.indexOf(primary);
-  const eligible: PlayerPosition[] = [primary];
+  const fits: PositionFit[] = [{ position: primary, fit: "primary" }];
   if (index > 0) {
-    eligible.push(PLAYER_POSITIONS[index - 1]!);
+    fits.push({ position: PLAYER_POSITIONS[index - 1]!, fit: "secondary" });
   }
   if (index < PLAYER_POSITIONS.length - 1) {
-    eligible.push(PLAYER_POSITIONS[index + 1]!);
+    fits.push({ position: PLAYER_POSITIONS[index + 1]!, fit: "secondary" });
   }
-  return [...new Set(eligible)];
+  return fits;
+}
+
+function defaultPreferredPositions(player: Player): PlayerPosition[] {
+  return positionFitsForPlayer(player).map((entry) => entry.position);
 }
 
 function emptyInactiveEntry(

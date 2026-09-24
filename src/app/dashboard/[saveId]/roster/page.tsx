@@ -1,56 +1,33 @@
+import { Suspense } from "react";
 import { notFound } from "next/navigation";
-import { loadOwnerSaveView, loadTeamManagementView } from "@/application/game-service";
-import { EmptyState, ErrorState } from "@/components/owner/EmptyState";
-import { PageHeader } from "@/components/owner/PageHeader";
+import { loadRosterPageView } from "@/application/game-service";
+import { ErrorState } from "@/components/owner/EmptyState";
 import { TeamHubSubNav } from "@/components/team/TeamHubSubNav";
-import {
-  RosterViewSwitcher,
-  type RosterViewMode,
-} from "@/components/roster/RosterViewSwitcher";
+import { RosterPage } from "@/components/roster/RosterPage";
 
 type RosterPageProps = {
   params: Promise<{ saveId: string }>;
-  searchParams: Promise<{ error?: string; view?: string }>;
+  searchParams: Promise<{ error?: string; tab?: string }>;
 };
 
-export default async function RosterPage({
+export default async function RosterRoutePage({
   params,
   searchParams,
 }: RosterPageProps) {
   const { saveId } = await params;
-  const { error, view: viewParam } = await searchParams;
-  const view = await loadOwnerSaveView(saveId);
-  if (!view) {
+  const { error } = await searchParams;
+  const loaded = await loadRosterPageView(saveId);
+  if (!loaded) {
     notFound();
   }
-
-  const tm = await loadTeamManagementView(saveId);
-  const lineup = tm?.lineup;
-  if (!lineup) {
-    notFound();
-  }
-
-  const rosterView: RosterViewMode =
-    viewParam === "cards" || viewParam === "depth" ? viewParam : "table";
 
   return (
     <>
       <TeamHubSubNav saveId={saveId} active="roster" />
-      <PageHeader
-        title="Roster"
-        subtitle={`${view.roster.length} players on the controlled team`}
-      />
       {error ? <ErrorState message={error} /> : null}
-      {view.roster.length === 0 ? (
-        <EmptyState message="No players on the roster." />
-      ) : (
-        <RosterViewSwitcher
-          saveId={saveId}
-          players={view.roster}
-          lineup={lineup}
-          view={rosterView}
-        />
-      )}
+      <Suspense fallback={<p className="text-sm text-zinc-500">Loading roster…</p>}>
+        <RosterPage view={loaded.rosterPage} />
+      </Suspense>
     </>
   );
 }

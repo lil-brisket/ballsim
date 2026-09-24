@@ -334,9 +334,16 @@ import {
   executeTrade,
   findTrades,
   getTradeBlock,
+  removeFromTradeBlock,
   validateTrade,
   type TradeFinderCandidate,
 } from "@/systems/trades";
+import {
+  toRosterPageView,
+  toTradeFinderRowViews,
+  type RosterPageView,
+  type TradeFinderRowView,
+} from "@/state/roster-page-selectors";
 import {
   applyTradeCounterofferState,
   getActiveOwnerDecision,
@@ -634,6 +641,73 @@ export async function loadOwnerSaveView(
     teamHub: toTeamHubView(state),
     navGroups: ownerNavGroupsForState(state),
   };
+}
+
+export type RosterPageLoadResult = CreateGameResult & {
+  rosterPage: RosterPageView;
+};
+
+/**
+ * Dedicated roster-management page load.
+ * Does not run Trade Finder / ensureAiTradeBlocks — candidates load lazily.
+ */
+export async function loadRosterPageView(
+  saveId: string,
+  store?: SaveGameStore,
+): Promise<RosterPageLoadResult | null> {
+  const loaded = await getStore(store).load(saveId);
+  if (!loaded) {
+    return null;
+  }
+  const state = loaded.state;
+  return {
+    save: toSaveSummary(loaded),
+    dashboard: toDashboardSnapshot(state),
+    rosterPage: toRosterPageView(state),
+    navGroups: ownerNavGroupsForState(state),
+  };
+}
+
+/**
+ * Add or remove a roster player from the owner's trade block.
+ * Persists; does not change roster membership.
+ */
+export async function setOwnerPlayerTradeBlock(
+  saveId: string,
+  input: { playerId: string; listed: boolean },
+  store?: SaveGameStore,
+): Promise<OwnerCommandResult> {
+  const saveStore = getStore(store);
+  const loaded = await saveStore.load(saveId);
+  if (!loaded) {
+    return fail("Save not found.");
+  }
+
+  const playerId = asPlayerId(input.playerId);
+  const teamId = loaded.state.user.activeOwnerTeamId;
+  const team = loaded.state.world.teams[teamId];
+  if (!team?.roster.includes(playerId)) {
+    return fail("Player is not on your roster.");
+  }
+
+  try {
+    const result = input.listed
+      ? addToTradeBlock(loaded.state, teamId, { kind: "player", playerId })
+      : removeFromTradeBlock(loaded.state, teamId, {
+          kind: "player",
+          playerId,
+        });
+    const saved = await persistWorkingState(
+      saveId,
+      result.state,
+      loaded.state.meta.rngState,
+      saveStore,
+      result.events,
+    );
+    return withDashboard(saved);
+  } catch (error) {
+    return fail(error instanceof Error ? error.message : String(error));
+  }
 }
 
 export type CalendarPageMediaHighlight = {
@@ -1677,7 +1751,9 @@ export async function listOwnerTradeCandidates(
   saveId: string,
   outgoingPlayerId: string,
   store?: SaveGameStore,
-): Promise<OwnerCommandResult<{ candidates: TradeFinderCandidate[] }>> {
+): Promise<
+  OwnerCommandResult<{ candidates: TradeFinderRowView[] }>
+> {
   const loaded = await getStore(store).load(saveId);
   if (!loaded) {
     return fail("Save not found.");
@@ -1690,12 +1766,14 @@ export async function listOwnerTradeCandidates(
     return fail("Outgoing player is not on your roster.");
   }
 
+  // Working-copy preparation only — must not run inside roster page selectors.
   const working = ensureAiTradeBlocks(loaded.state);
-  const candidates = findTrades(working, {
+  const raw = findTrades(working, {
     direction: "move",
     teamId,
     asset: { kind: "player", playerId },
-  }).filter((candidate) => {
+  });
+  const accepted = raw.filter((candidate) => {
     const evalB = evaluateTradeOffer(
       working,
       candidate.counterpartyTeamId,
@@ -1703,6 +1781,13 @@ export async function listOwnerTradeCandidates(
     );
     return evalB.accepted;
   });
+
+  const candidates = toTradeFinderRowViews(working, accepted, saveId).map(
+    (row) => ({
+      ...row,
+      acceptedByCounterparty: true,
+    }),
+  );
 
   return {
     ok: true,

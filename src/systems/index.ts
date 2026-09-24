@@ -27,6 +27,8 @@ export {
   getEmergencyLineup,
   getRegulationTeamMinutesTarget,
   validatePlannedMinutes,
+  positionFitsForPlayer,
+  type PositionFit,
 } from "@/systems/roster-management";
 export {
   getPlayerAvailability,
