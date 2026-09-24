@@ -833,13 +833,30 @@ function enrichEventLogEntry(
   };
 }
 
+/**
+ * Human-readable description for a seasonEventLog row (name-resolved).
+ * Shared by Transactions Hub and Team Hub recent history.
+ */
+export function describeTeamSeasonEvent(
+  state: GameState,
+  event: GameState["competition"]["seasonEventLog"][number],
+): string {
+  return describeTransactionEvent(state, event);
+}
+
 function describeTransactionEvent(
   state: GameState,
   event: GameState["competition"]["seasonEventLog"][number],
 ): string {
   const payload = event.payload;
-  const playerName = resolvePlayerName(state, payload.playerId);
-  const teamName = resolveTeamName(state, payload.teamId);
+  const playerName = resolvePlayerName(
+    state,
+    payload.playerId ?? payload.winnerSubjectId,
+  );
+  const teamName = resolveTeamName(
+    state,
+    payload.teamId ?? payload.winnerTeamId,
+  );
   const fromTeam = resolveTeamName(state, payload.fromTeamId);
   const toTeam = resolveTeamName(state, payload.toTeamId);
 
@@ -858,6 +875,13 @@ function describeTransactionEvent(
       return `Hired staff${teamName ? ` — ${teamName}` : ""}`;
     case "StaffFired":
       return `Fired staff${teamName ? ` — ${teamName}` : ""}`;
+    case "PlayerInjured":
+      return `Injured ${playerName}${teamName ? ` — ${teamName}` : ""}`;
+    case "MidseasonAwardAnnounced": {
+      const awardId =
+        typeof payload.awardId === "string" ? payload.awardId : "Award";
+      return `${playerName} won ${awardId}${teamName ? ` — ${teamName}` : ""}`;
+    }
     default:
       return entryDescriptionFallback(event.type, playerName, teamName);
   }

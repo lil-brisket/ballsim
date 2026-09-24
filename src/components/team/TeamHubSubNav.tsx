@@ -2,15 +2,18 @@ import Link from "next/link";
 import { cn, focusRingClass } from "@/components/ui/styles";
 
 const LINKS = [
-  { suffix: "/team", label: "Team Hub" },
-  { suffix: "/roster", label: "Roster" },
-  { suffix: "/team-management/rotations", label: "Rotation" },
-  { suffix: "/team-management/lineups", label: "Lineups" },
+  { key: "team" as const, suffix: "/team", label: "Team Hub" },
+  { key: "roster" as const, suffix: "/roster", label: "Roster" },
+  {
+    key: "rotation" as const,
+    suffix: "/team-management/rotations",
+    label: "Rotations",
+  },
 ] as const;
 
 export function TeamHubSubNav(props: {
   saveId: string;
-  active: "team" | "roster" | "rotation" | "lineups";
+  active: "team" | "roster" | "rotation";
 }) {
   const base = `/dashboard/${props.saveId}`;
   return (
@@ -19,14 +22,7 @@ export function TeamHubSubNav(props: {
       className="mb-6 flex flex-wrap gap-2 border-b border-zinc-800 pb-3"
     >
       {LINKS.map((link) => {
-        const key = link.label.toLowerCase().includes("hub")
-          ? "team"
-          : link.label.toLowerCase() === "roster"
-            ? "roster"
-            : link.label.toLowerCase() === "rotation"
-              ? "rotation"
-              : "lineups";
-        const active = key === props.active;
+        const active = link.key === props.active;
         return (
           <Link
             key={link.suffix}
