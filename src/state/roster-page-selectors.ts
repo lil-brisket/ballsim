@@ -662,7 +662,7 @@ export function toRosterPageView(state: GameState): RosterPageView {
       ),
     },
     lineupHref: `/dashboard/${saveId}/team-management/lineups`,
-    rotationsHref: `/dashboard/${saveId}/team-management/rotations`,
+    rotationsHref: `/dashboard/${saveId}/team-management/lineups`,
   };
 }
 

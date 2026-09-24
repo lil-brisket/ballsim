@@ -2,7 +2,8 @@ import { notFound } from "next/navigation";
 import { loadTeamManagementView } from "@/application/game-service";
 import { ErrorState } from "@/components/owner/EmptyState";
 import { PageHeader } from "@/components/owner/PageHeader";
-import { LineupEditor } from "@/components/team-management/LineupEditor";
+import { TeamHubSubNav } from "@/components/team/TeamHubSubNav";
+import { LineupRotationEditor } from "@/components/team-management/LineupRotationEditor";
 
 type PageProps = {
   params: Promise<{ saveId: string }>;
@@ -19,15 +20,16 @@ export default async function LineupsPage({ params, searchParams }: PageProps) {
 
   return (
     <>
+      <TeamHubSubNav saveId={saveId} active="lineupRotation" />
       <PageHeader
-        title="Lineups"
-        subtitle="Starting five, bench, and inactive assignments"
+        title="Lineup & Rotation"
+        subtitle="Starting five, minutes, roles, and closing lineup"
       />
       {error ? <ErrorState message={error} /> : null}
-      <LineupEditor
+      <LineupRotationEditor
         saveId={saveId}
         lineup={view.lineup}
-        recommendation={view.recommendation}
+        rotation={view.rotation}
       />
     </>
   );

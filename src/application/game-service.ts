@@ -24,13 +24,21 @@ import { toTeamHubView } from "@/state/team-hub-selectors";
 import {
   applyCoachingPresetCommand,
   applyLineupRecommendationCommand,
-  previewLineupRecommendation,
   updateCoachingPhilosophyCommand,
+  updateLineupAndRotationCommand,
   updateLineupCommand,
   updateRotationCommand,
   optimizeRotationCommand,
 } from "@/systems/team-management-commands";
-import { previewOptimizeRotation } from "@/systems/roster-management";
+import {
+  applyRotationEditsToManagement,
+  getTeamRosterManagement,
+  mergeLineupIntoManagement,
+  previewOptimizeRotation,
+  withTeamRosterManagement,
+} from "@/systems/roster-management";
+import type { OptimizeChange } from "@/systems/roster-management";
+import type { TeamRosterManagement } from "@/domain/entities/team-roster-management";
 
 import type { ContractInput } from "@/domain/entities/contract";
 import {
@@ -4239,9 +4247,6 @@ export type TeamManagementView = CreateGameResult & {
   coaching: ReturnType<typeof toCoachingView>;
   injuries: ReturnType<typeof toInjuryReportView>;
   transactions: ReturnType<typeof toSeasonTransactionsView>;
-  recommendation: ReturnType<typeof previewLineupRecommendation>;
-  /** Pure preview of Auto Optimize — not persisted. */
-  optimizePreview: ReturnType<typeof previewOptimizeRotation>;
 };
 
 export async function loadTeamManagementView(
@@ -4290,15 +4295,6 @@ export async function loadTeamManagementView(
       page: transactionQuery?.page ?? 0,
       pageSize: 50,
     }),
-    recommendation: previewLineupRecommendation(
-      state,
-      state.user.activeOwnerTeamId,
-    ),
-    optimizePreview: previewOptimizeRotation(
-      state,
-      state.user.activeOwnerTeamId,
-      { rotationPreset: "auto" },
-    ),
     navGroups: ownerNavGroupsForState(state),
   };
 }
@@ -4352,6 +4348,250 @@ export async function updateOwnerLineup(
       }),
     store,
   );
+}
+
+function mapRotationEntriesForCommand(
+  rotation: Array<{
+    playerId: string;
+    targetMinutes: number;
+    minimumMinutes?: number;
+    normalMaximumMinutes?: number;
+    absoluteMaximumMinutes?: number;
+    rotationPriority: number;
+    rotationStatus: string;
+    role: string;
+    preferredPositions: string[];
+    secondaryPositions?: string[];
+    minutePriorityBias?: number;
+    overrideMedicalRecommendation?: boolean;
+  }>,
+) {
+  return rotation.map((entry) => ({
+    playerId: asPlayerId(entry.playerId),
+    targetMinutes: entry.targetMinutes,
+    minimumMinutes: entry.minimumMinutes ?? 0,
+    normalMaximumMinutes: entry.normalMaximumMinutes ?? 0,
+    absoluteMaximumMinutes: entry.absoluteMaximumMinutes ?? 0,
+    rotationPriority: entry.rotationPriority as 1 | 2 | 3 | 4 | 5,
+    rotationStatus: entry.rotationStatus as
+      | "active"
+      | "inactive"
+      | "emergency",
+    role: entry.role as
+      | "starter"
+      | "sixth_man"
+      | "rotation"
+      | "bench"
+      | "deep_bench"
+      | "emergency",
+    preferredPositions: entry.preferredPositions as Array<
+      "PG" | "SG" | "SF" | "PF" | "C"
+    >,
+    secondaryPositions: (entry.secondaryPositions ?? []) as Array<
+      "PG" | "SG" | "SF" | "PF" | "C"
+    >,
+    minutePriorityBias: (entry.minutePriorityBias ?? 0) as -1 | 0 | 1,
+    overrideMedicalRecommendation:
+      entry.overrideMedicalRecommendation === true,
+  }));
+}
+
+export async function updateOwnerLineupAndRotation(
+  saveId: string,
+  input: {
+    teamId: string;
+    startingLineup: Array<{ playerId: string; slot: string }>;
+    bench: string[];
+    inactive: string[];
+    rotation: Array<{
+      playerId: string;
+      targetMinutes: number;
+      minimumMinutes?: number;
+      normalMaximumMinutes?: number;
+      absoluteMaximumMinutes?: number;
+      rotationPriority: number;
+      rotationStatus: string;
+      role: string;
+      preferredPositions: string[];
+      secondaryPositions?: string[];
+      minutePriorityBias?: number;
+      overrideMedicalRecommendation?: boolean;
+    }>;
+    rotationStyle?: string;
+    rotationPhilosophy?: string;
+    rotationDepth?: number;
+    rotationPreset?: string;
+    closingLineupPolicy?: string;
+    closingLineupIds?: string[];
+  },
+  store?: SaveGameStore,
+): Promise<OwnerCommandResult> {
+  return runTeamManagementMutation(
+    saveId,
+    (state) =>
+      updateLineupAndRotationCommand(state, {
+        teamId: asTeamId(input.teamId),
+        startingLineup: input.startingLineup.map((slot) => ({
+          playerId: asPlayerId(slot.playerId),
+          slot: slot.slot as "PG" | "SG" | "SF" | "PF" | "C",
+        })),
+        bench: input.bench.map((id) => asPlayerId(id)),
+        inactive: input.inactive.map((id) => asPlayerId(id)),
+        rotation: mapRotationEntriesForCommand(input.rotation),
+        rotationStyle: input.rotationStyle as
+          | "tight"
+          | "balanced"
+          | "deep"
+          | undefined,
+        rotationPhilosophy: input.rotationPhilosophy as
+          | "deep"
+          | "balanced"
+          | "tight"
+          | "star_heavy"
+          | "development"
+          | undefined,
+        rotationDepth: input.rotationDepth,
+        rotationPreset: input.rotationPreset as
+          | "auto"
+          | "balanced"
+          | "star_heavy"
+          | "deep"
+          | "development"
+          | "custom"
+          | undefined,
+        closingLineupPolicy: input.closingLineupPolicy as
+          | "auto"
+          | "best_five"
+          | "starters"
+          | "custom"
+          | undefined,
+        closingLineupIds: input.closingLineupIds?.map((id) => asPlayerId(id)),
+      }),
+    store,
+  );
+}
+
+/**
+ * Preview optimize against a posted lineup+rotation draft without persisting.
+ * Uses full GameState + recommendRosterManagement (not suitable for client bundle).
+ */
+export async function previewOwnerOptimizeRotation(
+  saveId: string,
+  input: {
+    teamId: string;
+    startingLineup: Array<{ playerId: string; slot: string }>;
+    bench: string[];
+    inactive: string[];
+    rotation: Array<{
+      playerId: string;
+      targetMinutes: number;
+      minimumMinutes?: number;
+      normalMaximumMinutes?: number;
+      absoluteMaximumMinutes?: number;
+      rotationPriority: number;
+      rotationStatus: string;
+      role: string;
+      preferredPositions: string[];
+      secondaryPositions?: string[];
+      minutePriorityBias?: number;
+      overrideMedicalRecommendation?: boolean;
+    }>;
+    rotationStyle?: string;
+    rotationPhilosophy?: string;
+    rotationDepth?: number;
+    rotationPreset?: string;
+    closingLineupPolicy?: string;
+    closingLineupIds?: string[];
+  },
+  store?: SaveGameStore,
+): Promise<
+  | {
+      ok: true;
+      management: TeamRosterManagement;
+      changelog: OptimizeChange[];
+    }
+  | { ok: false; error: string }
+> {
+  const saveStore = getStore(store);
+  const loaded = await saveStore.load(saveId);
+  if (!loaded) {
+    return { ok: false, error: "Save not found." };
+  }
+  const teamId = asTeamId(input.teamId);
+  const current = getTeamRosterManagement(loaded.state, teamId);
+  const afterLineup = mergeLineupIntoManagement(
+    loaded.state,
+    teamId,
+    current,
+    {
+      startingLineup: input.startingLineup.map((slot) => ({
+        playerId: asPlayerId(slot.playerId),
+        slot: slot.slot as "PG" | "SG" | "SF" | "PF" | "C",
+      })),
+      bench: input.bench.map((id) => asPlayerId(id)),
+      inactive: input.inactive.map((id) => asPlayerId(id)),
+    },
+  );
+  const applied = applyRotationEditsToManagement(
+    loaded.state,
+    teamId,
+    afterLineup,
+    {
+      rotation: mapRotationEntriesForCommand(input.rotation),
+      rotationStyle: input.rotationStyle as
+        | "tight"
+        | "balanced"
+        | "deep"
+        | undefined,
+      rotationPhilosophy: input.rotationPhilosophy as
+        | "deep"
+        | "balanced"
+        | "tight"
+        | "star_heavy"
+        | "development"
+        | undefined,
+      rotationDepth: input.rotationDepth,
+      rotationPreset: input.rotationPreset as
+        | "auto"
+        | "balanced"
+        | "star_heavy"
+        | "deep"
+        | "development"
+        | "custom"
+        | undefined,
+      closingLineupPolicy: input.closingLineupPolicy as
+        | "auto"
+        | "best_five"
+        | "starters"
+        | "custom"
+        | undefined,
+      closingLineupIds: input.closingLineupIds?.map((id) => asPlayerId(id)),
+    },
+  );
+  if (!applied.ok) {
+    return applied;
+  }
+  const draftState = withTeamRosterManagement(
+    loaded.state,
+    teamId,
+    applied.management,
+  );
+  const preview = previewOptimizeRotation(draftState, teamId, {
+    rotationPreset: (input.rotationPreset as
+      | "auto"
+      | "balanced"
+      | "star_heavy"
+      | "deep"
+      | "development"
+      | "custom"
+      | undefined) ?? "auto",
+    configuredBy: "user",
+  });
+  return {
+    ok: true,
+    management: preview.management,
+    changelog: preview.changelog,
+  };
 }
 
 export async function updateOwnerRotation(
