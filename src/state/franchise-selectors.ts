@@ -22,6 +22,7 @@ import {
 } from "@/domain/entities/staff-contract";
 import {
   bottomAttributeLabels,
+  deriveStaffSpecialty,
   topAttributeLabels,
 } from "@/systems/staff-ratings";
 import type { GameState } from "@/state/game-state";
@@ -67,6 +68,7 @@ export type StaffMemberView = {
   morale: number;
   desiredSalary: number;
   minimumSalary: number;
+  specialty: string;
 };
 
 export type FacilityRowView = {
@@ -272,6 +274,7 @@ function toStaffMemberView(
     morale: staff.morale,
     desiredSalary: staff.preferences.desiredSalary,
     minimumSalary: staff.preferences.minimumSalary,
+    specialty: deriveStaffSpecialty(staff.role, staff.attributes),
   };
 }
 

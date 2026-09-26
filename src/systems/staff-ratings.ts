@@ -310,6 +310,26 @@ export function topAttributeLabels(
     .map(humanizeAttrKey);
 }
 
+export function deriveStaffSpecialty(
+  role: StaffRole,
+  attributes: StaffAttributes,
+): string {
+  return topAttributeLabels(role, attributes, 1)[0] ?? "—";
+}
+
+export function staffAttributeEntries(
+  role: StaffRole,
+  attributes: StaffAttributes,
+): Array<{ key: string; label: string; value: number }> {
+  const keys = STAFF_ATTRIBUTE_KEYS[role] as readonly string[];
+  const attrs = attributes as Record<string, number>;
+  return keys.map((key) => ({
+    key,
+    label: humanizeAttrKey(key),
+    value: attrs[key] ?? 0,
+  }));
+}
+
 export function bottomAttributeLabels(
   role: StaffRole,
   attributes: StaffAttributes,

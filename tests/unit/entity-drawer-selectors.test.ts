@@ -3,6 +3,7 @@ import { createContract } from "@/domain/entities/contract";
 import { asContractId, asPlayerId, asTeamId } from "@/domain/ids";
 import {
   toPlayerDrawerView,
+  toStaffDrawerView,
   toTeamDrawerView,
 } from "@/state/entity-drawer-selectors";
 import type { GameState } from "@/state/game-state";
@@ -11,6 +12,11 @@ import { resolveTeamHref } from "@/state/resolve-team-href";
 import { getControlledTeam } from "@/state/selectors";
 import { createTestGameState } from "../factories/game-state";
 import { createPlayer } from "../factories/player";
+import { createSeededRng } from "@/domain/rng";
+import { bootstrapWorld } from "@/systems/world-pipeline";
+import { findTeamStaffByRole } from "@/systems/staff-effects";
+import { remainingStaffContractValue } from "@/systems/staff-contract-lifecycle";
+import { getStaffContractSalaryForYear } from "@/domain/entities/staff-contract";
 
 function withSeededRosters(base: GameState): GameState {
   const controlled = getControlledTeam(base);
@@ -203,5 +209,103 @@ describe("toTeamDrawerView", () => {
     const publicView = toTeamDrawerView(state, unowned!.id, "save_drawer");
     expect(publicView!.context).toBeNull();
     expect(publicView!.navigation.rosterHref).toBeNull();
+  });
+});
+
+describe("toStaffDrawerView", () => {
+  it("includes experience, attributes, contract value, and ordered effects", () => {
+    let state = createTestGameState({ saveId: "staff_drawer" });
+    state = bootstrapWorld(state, createSeededRng(state.meta.rngState)).state;
+    const teamId = getControlledTeam(state).id;
+    const coach = findTeamStaffByRole(state, teamId, "head_coach");
+    expect(coach).toBeTruthy();
+
+    const view = toStaffDrawerView(state, coach!.id, "staff_drawer");
+    expect(view).toBeTruthy();
+    expect(view!.experience).toBe(coach!.experience);
+    expect(view!.attributes.length).toBeGreaterThan(0);
+    expect(view!.canManage).toBe(true);
+    expect(view!.effects.map((row) => row.label)).toEqual([
+      "Tempo bonus",
+      "Efficiency bonus",
+    ]);
+
+    const year = state.competition.season.year;
+    const contract = Object.values(state.business.staffContracts).find(
+      (c) => c.staffId === coach!.id && c.teamId === teamId,
+    );
+    expect(contract).toBeTruthy();
+    expect(view!.contractValue).toBe(
+      remainingStaffContractValue(contract!, year),
+    );
+  });
+
+  it("uses remaining salary-by-year for one year left", () => {
+    let state = createTestGameState({ saveId: "staff_drawer_1y" });
+    state = bootstrapWorld(state, createSeededRng(state.meta.rngState)).state;
+    const teamId = getControlledTeam(state).id;
+    const coach = findTeamStaffByRole(state, teamId, "head_coach")!;
+    const year = state.competition.season.year;
+    const contract = Object.values(state.business.staffContracts).find(
+      (c) => c.staffId === coach.id && c.teamId === teamId,
+    )!;
+    const salary = getStaffContractSalaryForYear(contract, year) ?? 0;
+    state = {
+      ...state,
+      business: {
+        ...state.business,
+        staffContracts: {
+          ...state.business.staffContracts,
+          [contract.id]: {
+            ...contract,
+            endYear: year,
+            salaryByYear: { [String(year)]: salary },
+          },
+        },
+      },
+    };
+
+    const view = toStaffDrawerView(state, coach.id, "staff_drawer_1y");
+    expect(view!.contract.yearsRemaining).toBe(1);
+    expect(view!.contractValue).toBe(salary);
+  });
+
+  it("shows zero remaining for employed staff without an active contract", () => {
+    let state = createTestGameState({ saveId: "staff_drawer_0y" });
+    state = bootstrapWorld(state, createSeededRng(state.meta.rngState)).state;
+    const teamId = getControlledTeam(state).id;
+    const coach = findTeamStaffByRole(state, teamId, "head_coach")!;
+    const nextContracts = { ...state.business.staffContracts };
+    for (const [id, contract] of Object.entries(nextContracts)) {
+      if (contract.staffId === coach.id) {
+        delete nextContracts[id];
+      }
+    }
+    state = {
+      ...state,
+      business: { ...state.business, staffContracts: nextContracts },
+    };
+
+    const view = toStaffDrawerView(state, coach.id, "staff_drawer_0y");
+    expect(view!.canManage).toBe(true);
+    expect(view!.contract.yearsRemaining).toBe(0);
+    expect(view!.contractValue).toBe(0);
+    expect(view!.contract.salary).toBeNull();
+  });
+
+  it("treats free agents as having no contract and no effects", () => {
+    let state = createTestGameState({ saveId: "staff_drawer_fa" });
+    state = bootstrapWorld(state, createSeededRng(state.meta.rngState)).state;
+    const freeAgent = Object.values(state.world.staff).find(
+      (member) => member.teamId === null,
+    );
+    expect(freeAgent).toBeTruthy();
+
+    const view = toStaffDrawerView(state, freeAgent!.id, "staff_drawer_fa");
+    expect(view!.canManage).toBe(false);
+    expect(view!.effects).toEqual([]);
+    expect(view!.contract.salary).toBeNull();
+    expect(view!.contract.yearsRemaining).toBeNull();
+    expect(view!.contractValue).toBeNull();
   });
 });

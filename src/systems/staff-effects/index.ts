@@ -6,6 +6,10 @@ import {
 } from "@/systems/staff-config";
 
 export { findTeamStaffByRole } from "@/systems/staff-effects/find";
+export {
+  describeStaffEffects,
+  type StaffEffectView,
+} from "@/systems/staff-effects/describe";
 export { gmTradeAcceptanceThreshold } from "@/systems/staff-effects/gm-effects";
 export {
   scoutNoiseScale,

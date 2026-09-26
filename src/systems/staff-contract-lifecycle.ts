@@ -18,7 +18,7 @@ import { STAFF_BUYOUT_FRACTION } from "@/systems/staff-config";
 import { fireStaff } from "@/systems/staff";
 import { isOpenStaffOffer } from "@/domain/entities/staff-offer";
 
-function remainingGuaranteedSalary(
+export function remainingStaffContractValue(
   contract: StaffContract,
   currentYear: number,
 ): number {
@@ -45,7 +45,7 @@ export function calculateStaffBuyout(
     return 0;
   }
   return Math.round(
-    remainingGuaranteedSalary(contract, year) * STAFF_BUYOUT_FRACTION,
+    remainingStaffContractValue(contract, year) * STAFF_BUYOUT_FRACTION,
   );
 }
 
