@@ -93,6 +93,20 @@ describe("owner nav config invariants", () => {
     }
   });
 
+  it("does not expose a standalone Contracts sidebar destination", () => {
+    const items = flattenOwnerNavItems();
+    expect(items.some((item) => item.href === "/contracts")).toBe(false);
+    expect(items.some((item) => item.label === "Contracts")).toBe(false);
+    for (const group of OWNER_NAV_GROUPS) {
+      expect(group.items.some((item) => item.href === "/contracts")).toBe(
+        false,
+      );
+      expect(group.items.some((item) => item.label === "Contracts")).toBe(
+        false,
+      );
+    }
+  });
+
   it("league group has evergreen League destinations including Awards and Fan Voting", () => {
     const league = OWNER_NAV_GROUPS.find((g) => g.id === "league");
     expect(league?.items).toHaveLength(6);

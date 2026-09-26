@@ -344,7 +344,7 @@ function rosterDecisionTasks(
         detail: `Exercise or decline the pending ${optionKind}.`,
         explanation:
           "Unresolved options block advancing past Roster Decisions.",
-        href: `/dashboard/${saveId}/contracts`,
+        href: `/dashboard/${saveId}/team/contracts`,
         teamId,
         focusKey: "pending_options",
       });
@@ -365,7 +365,7 @@ function rosterDecisionTasks(
         title: `Review ${name}'s expiring contract`,
         detail: "Consider extension, trade, or letting them reach free agency.",
         explanation: `${name} is in the final year of their contract.`,
-        href: `/dashboard/${saveId}/contracts`,
+        href: `/dashboard/${saveId}/team/contracts`,
         teamId,
         focusKey: "expiring_contracts",
       });

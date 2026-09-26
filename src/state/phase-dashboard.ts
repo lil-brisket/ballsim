@@ -104,7 +104,7 @@ function buildOptionalLinks(
   const base = `/dashboard/${saveId}`;
   const links: Array<{ label: string; href: string }> = [
     { label: "Roster", href: `${base}/roster` },
-    { label: "Contracts", href: `${base}/contracts` },
+    { label: "Contracts", href: `${base}/team/contracts` },
     { label: "Trades", href: `${base}/team-management/transactions` },
     { label: "Staff", href: `${base}/staff` },
   ];

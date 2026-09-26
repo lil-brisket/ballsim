@@ -108,4 +108,22 @@ describe("contract-hub-selectors", () => {
     const sorted = sortContractHubRows(rows);
     expect(sorted.map((r) => r.contractId)).toEqual(["c3", "c2", "c1"]);
   });
+
+  it("points contract decision links at the Team Hub contracts route", () => {
+    let state = createTestGameState({ saveId: "contract_hub_hrefs" });
+    const rng = createSeededRng(state.meta.rngState);
+    state = bootstrapWorld(state, rng).state;
+
+    const saveId = state.meta.saveId;
+    const nested = `/dashboard/${saveId}/team/contracts`;
+    const stale = `/dashboard/${saveId}/contracts`;
+    const hub = toContractHubView(state);
+
+    expect(hub.decisions.some((item) => item.href === stale)).toBe(false);
+    for (const item of hub.decisions) {
+      if (item.href.includes("/contracts")) {
+        expect(item.href).toBe(nested);
+      }
+    }
+  });
 });

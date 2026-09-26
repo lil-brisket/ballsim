@@ -92,7 +92,7 @@ function milestoneHref(
     case "freeAgencyClose":
       return `${base}/free-agency`;
     case "rfaWindowOpen":
-      return `${base}/contracts`;
+      return `${base}/team/contracts`;
     case "preseasonStart":
     case "regularSeasonStart":
     case "offseasonStart":
@@ -268,7 +268,7 @@ export function toOffseasonHubView(state: GameState): OffseasonHubView {
 
   const quickLinks: OffseasonQuickLink[] = [
     { label: "Calendar", href: `${base}/calendar` },
-    { label: "Contracts", href: `${base}/contracts` },
+    { label: "Contracts", href: `${base}/team/contracts` },
     { label: "Draft", href: `${base}/draft` },
     { label: "Scouting", href: `${base}/scouting` },
     { label: "Free Agency", href: `${base}/free-agency` },

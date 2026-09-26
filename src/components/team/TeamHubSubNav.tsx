@@ -1,6 +1,11 @@
 import Link from "next/link";
 import { cn, focusRingClass } from "@/components/ui/styles";
 
+/**
+ * Team Hub contextual destinations.
+ * Roster and Lineups remain sibling routes (`/roster`, `/team-management/lineups`);
+ * Contracts is nested at `/team/contracts` by Issue #56.
+ */
 const LINKS = [
   { key: "team" as const, suffix: "/team", label: "Team Hub" },
   { key: "roster" as const, suffix: "/roster", label: "Roster" },
@@ -9,11 +14,12 @@ const LINKS = [
     suffix: "/team-management/lineups",
     label: "Lineup & Rotation",
   },
+  { key: "contracts" as const, suffix: "/team/contracts", label: "Contracts" },
 ] as const;
 
 export function TeamHubSubNav(props: {
   saveId: string;
-  active: "team" | "roster" | "lineupRotation";
+  active: "team" | "roster" | "lineupRotation" | "contracts";
 }) {
   const base = `/dashboard/${props.saveId}`;
   return (

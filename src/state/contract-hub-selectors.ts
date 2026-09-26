@@ -220,7 +220,7 @@ export function toContractHubView(state: GameState): ContractHubView {
           id: row.playerId,
           label: row.playerName,
         },
-        href: `/dashboard/${saveId}/contracts`,
+        href: `/dashboard/${saveId}/team/contracts`,
         hrefLabel: "Review",
       });
     }
