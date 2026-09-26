@@ -57,6 +57,7 @@ import {
   asPlayerId,
   asSponsorshipId,
   asStaffId,
+  asStaffOfferId,
   asTeamId,
   type PlayerId,
   type TeamId,
@@ -194,7 +195,9 @@ import {
 } from "@/state/contract-hub-selectors";
 import {
   toStaffHubView,
+  toStaffHiringMarketView,
   type StaffHubView,
+  type StaffHiringMarketView,
 } from "@/state/staff-hub-selectors";
 import {
   toDevelopmentHubView,
@@ -233,7 +236,12 @@ import type { ExpansionState } from "@/domain/entities/expansion";
 import type { LeagueEconomy } from "@/domain/entities/league-economy";
 import type { RelocationProcess } from "@/domain/entities/relocation";
 import { hireStaff } from "@/systems/staff";
-import { fireStaffWithBuyout } from "@/systems/staff-contract-lifecycle";
+import { fireStaffWithBuyout, renewStaffContract } from "@/systems/staff-contract-lifecycle";
+import {
+  acceptStaffOffer,
+  makeStaffOffer,
+  negotiateStaffOffer,
+} from "@/systems/staff-free-agency";
 import { startFacilityUpgrade } from "@/systems/facilities";
 import type { FacilityCategory } from "@/domain/entities/franchise-ops";
 import { setMarketingBudget } from "@/systems/marketing";
@@ -3206,6 +3214,20 @@ export async function loadStaffHubView(
 }
 
 /**
+ * Staff Hiring Market — unemployed staff and open owner offers.
+ */
+export async function loadStaffHiringMarketView(
+  saveId: string,
+  store?: SaveGameStore,
+): Promise<StaffHiringMarketView | null> {
+  const loaded = await getStore(store).load(saveId);
+  if (!loaded) {
+    return null;
+  }
+  return toStaffHiringMarketView(loaded.state);
+}
+
+/**
  * Player Development Hub — who is changing on the roster.
  */
 export async function loadDevelopmentHubView(
@@ -3764,6 +3786,68 @@ export async function fireOwnerStaff(
         state.user.activeOwnerTeamId,
         asStaffId(staffId),
       ),
+    store,
+  );
+}
+
+export async function renewOwnerStaffContract(
+  saveId: string,
+  staffId: string,
+  years: number,
+  annualSalary: number,
+  store?: SaveGameStore,
+): Promise<OwnerCommandResult> {
+  return runOwnerFranchiseCommand(
+    saveId,
+    (state) =>
+      renewStaffContract(state, state.user.activeOwnerTeamId, asStaffId(staffId), {
+        years,
+        annualSalary,
+      }),
+    store,
+  );
+}
+
+export async function makeOwnerStaffOffer(
+  saveId: string,
+  staffId: string,
+  annualSalary: number,
+  years: number,
+  store?: SaveGameStore,
+): Promise<OwnerCommandResult> {
+  return runOwnerFranchiseCommand(
+    saveId,
+    (state) =>
+      makeStaffOffer(state, {
+        staffId: asStaffId(staffId),
+        teamId: state.user.activeOwnerTeamId,
+        annualSalary,
+        years,
+      }),
+    store,
+  );
+}
+
+export async function negotiateOwnerStaffOffer(
+  saveId: string,
+  offerId: string,
+  store?: SaveGameStore,
+): Promise<OwnerCommandResult> {
+  return runOwnerFranchiseCommand(
+    saveId,
+    (state) => negotiateStaffOffer(state, asStaffOfferId(offerId)),
+    store,
+  );
+}
+
+export async function acceptOwnerStaffOffer(
+  saveId: string,
+  offerId: string,
+  store?: SaveGameStore,
+): Promise<OwnerCommandResult> {
+  return runOwnerFranchiseCommand(
+    saveId,
+    (state) => acceptStaffOffer(state, asStaffOfferId(offerId)),
     store,
   );
 }

@@ -206,6 +206,7 @@ export function EntityDrawerProvider(props: {
         onOpenChange={(open) => {
           if (!open) close();
         }}
+        saveId={props.saveId}
         status={kind === "staff" ? status : "idle"}
         view={staffView}
         onRetry={

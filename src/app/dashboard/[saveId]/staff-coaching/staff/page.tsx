@@ -4,7 +4,7 @@ import { StaffPageView } from "@/components/staff-coaching/StaffPageView";
 
 type PageProps = {
   params: Promise<{ saveId: string }>;
-  searchParams: Promise<{ error?: string; role?: string; sort?: string }>;
+  searchParams: Promise<{ error?: string }>;
 };
 
 export default async function StaffCoachingStaffPage({
@@ -12,21 +12,12 @@ export default async function StaffCoachingStaffPage({
   searchParams,
 }: PageProps) {
   const { saveId } = await params;
-  const { error, role, sort } = await searchParams;
+  const { error } = await searchParams;
   const view = await loadStaffHubView(saveId);
   if (!view) {
     notFound();
   }
-  const returnPath = `/dashboard/${saveId}/staff-coaching/staff`;
-
   return (
-    <StaffPageView
-      view={view}
-      returnPath={returnPath}
-      filterBasePath={returnPath}
-      error={error}
-      role={role}
-      sort={sort}
-    />
+    <StaffPageView view={view} error={error} />
   );
 }

@@ -2,6 +2,7 @@ import { describe, expect, it, vi, beforeEach } from "vitest";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { EntityDrawerProvider } from "@/components/entity/EntityDrawerProvider";
 import { PlayerEntityLink } from "@/components/entity/PlayerEntityLink";
+import { StaffEntityLink } from "@/components/entity/StaffEntityLink";
 import { TeamEntityLink } from "@/components/entity/TeamEntityLink";
 
 const fetchPlayer = vi.fn();
@@ -12,6 +13,8 @@ vi.mock("@/application/actions", () => ({
   fetchPlayerDrawerViewAction: (...args: unknown[]) => fetchPlayer(...args),
   fetchTeamDrawerViewAction: (...args: unknown[]) => fetchTeam(...args),
   fetchStaffDrawerViewAction: (...args: unknown[]) => fetchStaff(...args),
+  fireStaffAction: vi.fn(),
+  renewStaffContractAction: vi.fn(),
 }));
 
 vi.mock("next/navigation", () => ({
@@ -139,6 +142,55 @@ describe("EntityDrawerProvider", () => {
       expect(screen.getByText("View team")).toBeTruthy();
     });
     expect(screen.getByText("View schedule")).toBeTruthy();
+    unmount();
+  });
+
+  it("opens staff drawer from StaffEntityLink using staffId", async () => {
+    fetchStaff.mockResolvedValue({
+      staffId: "staff_1",
+      identity: {
+        firstName: "John",
+        lastName: "Smith",
+        role: "head_coach",
+        roleLabel: "Head Coach",
+        age: 48,
+        overall: 82,
+        potential: 88,
+      },
+      experience: 17,
+      attributes: [
+        { key: "leadership", label: "Leadership", value: 88 },
+        { key: "offensiveStrategy", label: "Offensive Strategy", value: 86 },
+      ],
+      development: { trend: "stable", morale: 70 },
+      contract: { salary: 2_800_000, yearsRemaining: 3, endYear: 2028 },
+      contractValue: 8_400_000,
+      effects: [{ label: "Tempo bonus", value: "+3%" }],
+      buyoutAmount: 4_200_000,
+      canManage: true,
+      strengths: ["Leadership"],
+      weaknesses: ["Adaptability"],
+      navigation: {
+        staffHref: "/dashboard/save_test/staff/staff_1",
+        staffHubHref: "/dashboard/save_test/staff-coaching/staff",
+      },
+    });
+
+    const { unmount } = render(
+      <EntityDrawerProvider saveId="save_test">
+        <StaffEntityLink saveId="save_test" staffId="staff_1">
+          John Smith
+        </StaffEntityLink>
+      </EntityDrawerProvider>,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "John Smith" }));
+    expect(fetchStaff).toHaveBeenCalledWith("save_test", "staff_1");
+    await waitFor(() => {
+      expect(screen.getByText("View full profile")).toBeTruthy();
+    });
+    expect(screen.getByText("Attributes")).toBeTruthy();
+    expect(screen.getByText("Impact")).toBeTruthy();
     unmount();
   });
 

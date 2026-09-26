@@ -23,6 +23,10 @@ import {
   delegateOwnerDecisionToAi,
   fireOwnerStaff,
   hireOwnerStaff,
+  renewOwnerStaffContract,
+  makeOwnerStaffOffer,
+  negotiateOwnerStaffOffer,
+  acceptOwnerStaffOffer,
   loadOwnerSave,
   listOwnerTradeCandidates,
   makeOwnerFreeAgentOffer,
@@ -1050,6 +1054,72 @@ export async function fireStaffAction(formData: FormData): Promise<void> {
   const staffId = String(formData.get("staffId") ?? "");
   const path = returnPath(formData, saveId);
   const result = await fireOwnerStaff(saveId, staffId);
+  if (!result.ok) {
+    redirectWithError(path, result.error);
+  }
+  revalidateOwner(saveId);
+  redirect(path);
+}
+
+export async function renewStaffContractAction(
+  formData: FormData,
+): Promise<void> {
+  const saveId = String(formData.get("saveId") ?? "");
+  const staffId = String(formData.get("staffId") ?? "");
+  const years = Number(formData.get("years") ?? "");
+  const annualSalary = Number(formData.get("annualSalary") ?? "");
+  const path = returnPath(formData, saveId);
+  const result = await renewOwnerStaffContract(
+    saveId,
+    staffId,
+    years,
+    annualSalary,
+  );
+  if (!result.ok) {
+    redirectWithError(path, result.error);
+  }
+  revalidateOwner(saveId);
+  redirect(path);
+}
+
+export async function makeStaffOfferAction(formData: FormData): Promise<void> {
+  const saveId = String(formData.get("saveId") ?? "");
+  const staffId = String(formData.get("staffId") ?? "");
+  const annualSalary = Number(formData.get("annualSalary") ?? "");
+  const years = Number(formData.get("years") ?? "");
+  const path = returnPath(formData, saveId);
+  const result = await makeOwnerStaffOffer(
+    saveId,
+    staffId,
+    annualSalary,
+    years,
+  );
+  if (!result.ok) {
+    redirectWithError(path, result.error);
+  }
+  revalidateOwner(saveId);
+  redirect(path);
+}
+
+export async function negotiateStaffOfferAction(
+  formData: FormData,
+): Promise<void> {
+  const saveId = String(formData.get("saveId") ?? "");
+  const offerId = String(formData.get("offerId") ?? "");
+  const path = returnPath(formData, saveId);
+  const result = await negotiateOwnerStaffOffer(saveId, offerId);
+  if (!result.ok) {
+    redirectWithError(path, result.error);
+  }
+  revalidateOwner(saveId);
+  redirect(path);
+}
+
+export async function acceptStaffOfferAction(formData: FormData): Promise<void> {
+  const saveId = String(formData.get("saveId") ?? "");
+  const offerId = String(formData.get("offerId") ?? "");
+  const path = returnPath(formData, saveId);
+  const result = await acceptOwnerStaffOffer(saveId, offerId);
   if (!result.ok) {
     redirectWithError(path, result.error);
   }

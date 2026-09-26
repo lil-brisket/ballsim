@@ -8,10 +8,10 @@ import {
 } from "@/domain/entities/staff-contract";
 import { STAFF_ROLE_DISPLAY } from "@/domain/entities/staff-roles";
 import type { StaffRole } from "@/domain/entities/staff";
-import type { PlayerId, TeamId } from "@/domain/ids";
+import { asStaffId, type PlayerId, type TeamId } from "@/domain/ids";
 import { calculatePlayerOverall } from "@/domain/player-overall-rating";
 import type { GameState } from "@/state/game-state";
-import { isOwnedFranchise } from "@/state/owner-context";
+import { getActiveOwnerTeamId, isOwnedFranchise } from "@/state/owner-context";
 import { resolveTeamHref } from "@/state/resolve-team-href";
 import { getControlledTeam } from "@/state/selectors";
 import {
@@ -19,8 +19,11 @@ import {
   type TeamBrandingView,
 } from "@/state/team-branding-view";
 import { getTeamCapSpace, getTeamPayroll } from "@/systems/salary-cap";
+import { describeStaffEffects } from "@/systems/staff-effects";
+import { calculateStaffBuyout, remainingStaffContractValue } from "@/systems/staff-contract-lifecycle";
 import {
   bottomAttributeLabels,
+  staffAttributeEntries,
   topAttributeLabels,
 } from "@/systems/staff-ratings";
 
@@ -370,6 +373,8 @@ export type StaffDrawerView = {
     overall: number;
     potential: number;
   };
+  experience: number;
+  attributes: Array<{ key: string; label: string; value: number }>;
   development: {
     trend: string;
     morale: number;
@@ -379,6 +384,10 @@ export type StaffDrawerView = {
     yearsRemaining: number | null;
     endYear: number | null;
   };
+  contractValue: number | null;
+  effects: Array<{ label: string; value: string | number }>;
+  buyoutAmount: number;
+  canManage: boolean;
   strengths: string[];
   weaknesses: string[];
   navigation: {
@@ -397,6 +406,9 @@ export function toStaffDrawerView(
 
   const year = state.competition.season.year;
   const role = staff.role as StaffRole;
+  const ownerTeamId = getActiveOwnerTeamId(state);
+  const employed = staff.teamId !== null;
+  const canManage = staff.teamId === ownerTeamId;
   const contract = Object.values(state.business.staffContracts).find(
     (c) =>
       c.staffId === staff.id &&
@@ -415,6 +427,8 @@ export function toStaffDrawerView(
       overall: staff.overall,
       potential: staff.potential,
     },
+    experience: staff.experience,
+    attributes: staffAttributeEntries(role, staff.attributes),
     development: {
       trend: staff.development.trend,
       morale: staff.morale,
@@ -425,9 +439,21 @@ export function toStaffDrawerView(
         : null,
       yearsRemaining: contract
         ? Math.max(0, contract.endYear - year + 1)
-        : null,
+        : employed
+          ? 0
+          : null,
       endYear: contract?.endYear ?? null,
     },
+    contractValue: contract
+      ? remainingStaffContractValue(contract, year)
+      : employed
+        ? 0
+        : null,
+    effects: describeStaffEffects(state, staff.id),
+    buyoutAmount: canManage
+      ? calculateStaffBuyout(state, ownerTeamId, asStaffId(staff.id))
+      : 0,
+    canManage,
     strengths: topAttributeLabels(role, staff.attributes),
     weaknesses: bottomAttributeLabels(role, staff.attributes),
     navigation: {
