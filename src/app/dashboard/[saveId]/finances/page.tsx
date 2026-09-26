@@ -41,7 +41,7 @@ export default async function FinancesPage({
         subtitle={`${view.teamName} · Season ${view.seasonYear}`}
         actions={
           <Link
-            href={`/dashboard/${saveId}/contracts`}
+            href={`/dashboard/${saveId}/team/contracts`}
             className="text-sm text-amber-400 hover:underline"
           >
             Contracts

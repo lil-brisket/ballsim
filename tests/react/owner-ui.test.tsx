@@ -53,6 +53,11 @@ describe("Owner UI primitives", () => {
     expect(hrefs).toContain("/franchise");
     expect(hrefs).toContain("/development");
     expect(hrefs).not.toContain("/relocation");
+    expect(
+      OWNER_NAV_GROUPS.flatMap((g) => g.items).some(
+        (item) => item.href === "/contracts" || item.label === "Contracts",
+      ),
+    ).toBe(false);
   });
 
   it("confirm dialog opens and exposes form children without mutating", () => {

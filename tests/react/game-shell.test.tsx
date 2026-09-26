@@ -235,6 +235,7 @@ describe("game shell UI", () => {
     expect(hrefs).not.toContain("/team-management");
     expect(hrefs).not.toContain("/relocation");
     expect(hrefs).not.toContain("/teams");
+    expect(hrefs.some((href) => href === "/contracts")).toBe(false);
   });
 
   it("NextActionPanel renders link when provided", () => {

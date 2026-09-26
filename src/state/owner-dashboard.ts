@@ -1240,7 +1240,7 @@ function buildCalendarActionItems(
       what: `${expiring.length} contract${expiring.length === 1 ? "" : "s"} end within the next season.`,
       why: "Salary commitments and roster continuity need an owner decision.",
       evidence: expiring.slice(0, 3).map((c) => `Ends ${c.endYear}`),
-      href: `/dashboard/${saveId}/contracts`,
+      href: `/dashboard/${saveId}/team/contracts`,
       hrefLabel: "Review Contracts",
     });
   }
@@ -1258,7 +1258,7 @@ function buildCalendarActionItems(
           what: `About ${formatCompactMoney(capSpace)} in cap space available.`,
           why: "Deadline deals need legal salary matching and space.",
           evidence: [`Cap space: ${formatCompactMoney(capSpace)}`],
-          href: `/dashboard/${saveId}/contracts`,
+          href: `/dashboard/${saveId}/team/contracts`,
           hrefLabel: "Review Cap",
         });
       }

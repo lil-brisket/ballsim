@@ -65,12 +65,6 @@ export const OWNER_NAV_GROUPS: readonly OwnerNavGroup[] = [
         icon: "staff",
         badgeKey: "staff",
       },
-      {
-        href: "/contracts",
-        label: "Contracts",
-        icon: "contracts",
-        badgeKey: "contracts",
-      },
       { href: "/development", label: "Development", icon: "development" },
     ],
   },

@@ -227,7 +227,7 @@ export function toPlayerDrawerView(
       playerHref: `/dashboard/${saveId}/players/${playerId}`,
       teamHref,
       contractHref: onControlledRoster
-        ? `/dashboard/${saveId}/contracts`
+        ? `/dashboard/${saveId}/team/contracts`
         : null,
       developmentHref: onControlledRoster
         ? `/dashboard/${saveId}/development`

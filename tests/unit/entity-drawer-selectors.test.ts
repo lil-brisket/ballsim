@@ -148,7 +148,9 @@ describe("toPlayerDrawerView", () => {
     );
     expect(controlledView).not.toBeNull();
     expect(controlledView!.contract).not.toBeNull();
-    expect(controlledView!.navigation.contractHref).toContain("/contracts");
+    expect(controlledView!.navigation.contractHref).toBe(
+      "/dashboard/save_drawer/team/contracts",
+    );
     expect(controlledView!.navigation.developmentHref).toContain(
       "/development",
     );
