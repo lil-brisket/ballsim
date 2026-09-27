@@ -93,6 +93,66 @@ function accumulateRow(
   };
 }
 
+/**
+ * One-pass season totals for every player who appears in `games`.
+ * Equivalent to calling {@link aggregatePlayerPeriodStats} per player, without
+ * the O(players × games) scan.
+ */
+export function aggregateAllPlayersInGames(
+  games: readonly Game[],
+): PeriodPlayerAgg[] {
+  type Acc = {
+    totals: PlayerSeasonStatLine;
+    starts: number;
+    teamGames: Map<string, number>;
+  };
+  const byPlayer = new Map<string, Acc>();
+
+  for (const game of games) {
+    for (const row of game.playerStats) {
+      let acc = byPlayer.get(row.playerId);
+      if (!acc) {
+        acc = {
+          totals: createEmptyPlayerSeasonStatLine(),
+          starts: 0,
+          teamGames: new Map(),
+        };
+        byPlayer.set(row.playerId, acc);
+      }
+      acc.totals = accumulateRow(acc.totals, row);
+      if (row.started === true) {
+        acc.starts += 1;
+      }
+      if (row.teamId) {
+        acc.teamGames.set(row.teamId, (acc.teamGames.get(row.teamId) ?? 0) + 1);
+      }
+    }
+  }
+
+  const result: PeriodPlayerAgg[] = [];
+  for (const [playerId, acc] of byPlayer) {
+    let teamId: TeamId | null = null;
+    let bestCount = 0;
+    for (const [id, count] of acc.teamGames) {
+      if (count > bestCount) {
+        bestCount = count;
+        teamId = id as TeamId;
+      }
+    }
+    result.push({
+      playerId: playerId as PlayerId,
+      teamId,
+      games: acc.totals.games,
+      starts: acc.starts,
+      minutes: acc.totals.minutes,
+      totals: acc.totals,
+    });
+  }
+
+  result.sort((a, b) => a.playerId.localeCompare(b.playerId));
+  return result;
+}
+
 export function aggregatePlayerPeriodStats(
   playerId: PlayerId,
   games: readonly Game[],
@@ -100,7 +160,7 @@ export function aggregatePlayerPeriodStats(
   let totals = createEmptyPlayerSeasonStatLine();
   let starts = 0;
   let teamId: TeamId | null = null;
-  let teamGames = new Map<string, number>();
+  const teamGames = new Map<string, number>();
 
   for (const game of games) {
     const row = game.playerStats.find((stat) => stat.playerId === playerId);

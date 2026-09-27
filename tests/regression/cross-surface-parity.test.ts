@@ -46,7 +46,10 @@ describe("cross-surface parity", () => {
     const teamId = getActiveOwnerTeamId(state);
     const teamHub = toTeamHubView(state);
     const leagueHub = toLeagueHubView(state);
-    const standings = toStandingsPageView(state);
+    const standings = toStandingsPageView(state, {
+      view: "conference",
+      stats: "standard",
+    });
     const owner = toOwnerDashboardView(state);
 
     expect(teamHub.wins).toBe(owner.team.wins);
@@ -79,7 +82,10 @@ describe("cross-surface parity", () => {
     state = bootstrapWorld(state, rng).state;
 
     const playoffs = toPlayoffHubView(state);
-    const standings = toStandingsPageView(state);
+    const standings = toStandingsPageView(state, {
+      view: "conference",
+      stats: "standard",
+    });
     expect(playoffs.tournamentStatus).toBe(standings.playoffStatus);
   });
 });

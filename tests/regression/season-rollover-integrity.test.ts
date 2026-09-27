@@ -78,7 +78,10 @@ describe("season rollover integrity", () => {
     expect(toPlayoffHubView(state).available).toBe(false);
     expect(toPlayoffHubView(state).userStatus).toBe("not_in_playoffs");
 
-    const standings = toStandingsPageView(state);
+    const standings = toStandingsPageView(state, {
+      view: "conference",
+      stats: "standard",
+    });
     const row = standings.leagueRows.find((r) => r.teamId === teamId);
     if (row) {
       expect(row.wins).toBe(0);

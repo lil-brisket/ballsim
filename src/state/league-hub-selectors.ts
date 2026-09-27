@@ -175,7 +175,10 @@ export function toLeagueHubView(state: GameState): LeagueHubView {
   const saveId = state.meta.saveId;
   const team = getActiveTeam(state);
   const teamId = getActiveOwnerTeamId(state);
-  const standingsPage = toStandingsPageView(state);
+  const standingsPage = toStandingsPageView(state, {
+    view: "conference",
+    stats: "standard",
+  });
   const myTeam = toMyTeamStandingsContext(state);
 
   const top = standingsPage.leagueRows.slice(0, LEAGUE_HUB_STANDINGS_TOP);
