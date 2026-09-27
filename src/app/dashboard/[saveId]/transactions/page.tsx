@@ -8,8 +8,8 @@ import { PageHeader } from "@/components/owner/PageHeader";
 import { TransactionFilters } from "@/components/transactions/TransactionFilters";
 import { TransactionTimeline } from "@/components/transactions/TransactionRow";
 import {
-  parseTransactionDateRange,
-  parseTransactionFilterGroup,
+  parseTransactionHubQuery,
+  toTransactionHubSearchParams,
   TRANSACTION_HUB_PAGE_SIZE,
 } from "@/state/transaction-hub-selectors";
 import { cn, focusRingClass } from "@/components/ui/styles";
@@ -23,6 +23,10 @@ type PageProps = {
     range?: string;
     q?: string;
     limit?: string;
+    sort?: string;
+    activity?: string;
+    start?: string;
+    end?: string;
   }>;
 };
 
@@ -32,21 +36,18 @@ export default async function TransactionsHubPage({
 }: PageProps) {
   const { saveId } = await params;
   const query = await searchParams;
-  const group = parseTransactionFilterGroup(query.type);
-  const range = parseTransactionDateRange(query.range);
-  const search = typeof query.q === "string" ? query.q : "";
-  const limitRaw = Number(query.limit ?? TRANSACTION_HUB_PAGE_SIZE);
-  const limit =
-    Number.isFinite(limitRaw) && limitRaw > 0
-      ? Math.min(limitRaw, 200)
-      : TRANSACTION_HUB_PAGE_SIZE;
+  const parsed = parseTransactionHubQuery(query);
 
   const view = await loadTransactionHubView(saveId, {
-    group,
-    teamParam: query.team,
-    range,
-    search,
-    limit,
+    group: parsed.group,
+    teamParam: parsed.teamParam ?? query.team,
+    range: parsed.range,
+    search: parsed.search,
+    limit: parsed.limit,
+    sort: parsed.sort,
+    activityMode: parsed.activityMode,
+    start: parsed.start,
+    end: parsed.end,
   });
   if (!view) {
     notFound();
@@ -54,24 +55,42 @@ export default async function TransactionsHubPage({
 
   const teamValue = parseTeamFilterParam(query.team, view.myTeamId);
   const basePath = `/dashboard/${saveId}/transactions`;
+  const filtersActive =
+    parsed.group !== "all" ||
+    parsed.range !== "season" ||
+    teamValue !== "all" ||
+    parsed.search !== "" ||
+    parsed.sort !== "newest" ||
+    parsed.activityMode !== "league" ||
+    Boolean(parsed.start) ||
+    Boolean(parsed.end);
 
   function loadMoreHref(): string {
-    const params = new URLSearchParams();
-    if (group !== "all") {
-      params.set("type", group);
-    }
-    if (range !== "season") {
-      params.set("range", range);
-    }
-    if (teamValue !== "all") {
-      params.set("team", String(teamValue));
-    }
-    if (search) {
-      params.set("q", search);
-    }
-    params.set("limit", String(limit + TRANSACTION_HUB_PAGE_SIZE));
+    const params = toTransactionHubSearchParams({
+      group: parsed.group,
+      teamParam: teamValue === "all" ? undefined : String(teamValue),
+      range: parsed.range,
+      start: parsed.start,
+      end: parsed.end,
+      sort: parsed.sort,
+      activityMode: parsed.activityMode,
+      search: parsed.search,
+      limit: parsed.limit + TRANSACTION_HUB_PAGE_SIZE,
+    });
     return `${basePath}?${params.toString()}`;
   }
+
+  const clearFilters = (
+    <Link
+      href={basePath}
+      className={cn(
+        "text-sm text-amber-400 hover:text-amber-300",
+        focusRingClass,
+      )}
+    >
+      Clear filters
+    </Link>
+  );
 
   return (
     <div className="space-y-4">
@@ -87,21 +106,38 @@ export default async function TransactionsHubPage({
         <TransactionFilters
           saveId={saveId}
           basePath={basePath}
-          group={group}
-          range={range}
+          group={parsed.group}
+          range={parsed.range}
           teamValue={teamValue}
-          search={search}
+          search={parsed.search}
           teams={view.teams}
           myTeamId={view.myTeamId}
-          limit={limit}
+          limit={parsed.limit}
+          sort={parsed.sort}
+          activityMode={parsed.activityMode}
+          start={parsed.start}
+          end={parsed.end}
+          today={view.currentDate}
         />
       </Suspense>
 
       {view.groups.length === 0 ? (
-        <EmptyState message="No transactions match these filters." />
+        <EmptyState
+          title={
+            parsed.activityMode === "myTeam"
+              ? "Showing your franchise activity"
+              : undefined
+          }
+          message="No transactions match these filters."
+          action={filtersActive ? clearFilters : undefined}
+        />
       ) : (
         <>
-          <TransactionTimeline saveId={saveId} groups={view.groups} />
+          <TransactionTimeline
+            saveId={saveId}
+            groups={view.groups}
+            activityMode={parsed.activityMode}
+          />
           <p className="text-xs text-zinc-600">
             Showing {view.shown} of {view.total}
           </p>

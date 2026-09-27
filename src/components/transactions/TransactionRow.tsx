@@ -3,6 +3,7 @@ import { TeamEntityLink } from "@/components/entity/TeamEntityLink";
 import { StatusBadge } from "@/components/owner/StatusBadge";
 import {
   transactionTypeLabel,
+  type TransactionActivityMode,
   type TransactionRowView,
 } from "@/state/transaction-hub-selectors";
 import { cn, focusRingClass } from "@/components/ui/styles";
@@ -33,11 +34,21 @@ export function TransactionTypeBadge(props: { type: TransactionRowView["type"] }
 export function TransactionRow(props: {
   saveId: string;
   row: TransactionRowView;
+  activityMode?: TransactionActivityMode;
 }) {
   const { saveId, row } = props;
+  const emphasize =
+    props.activityMode === "myTeam" && row.isMyTeam;
 
   return (
-    <article className="rounded-lg border border-zinc-800 bg-zinc-900/40 px-3 py-3">
+    <article
+      className={cn(
+        "rounded-lg border px-3 py-3",
+        emphasize
+          ? "border-amber-700/70 border-l-2 border-l-amber-500 bg-amber-950/20"
+          : "border-zinc-800 bg-zinc-900/40",
+      )}
+    >
       <div className="flex flex-wrap items-center gap-2">
         <TransactionTypeBadge type={row.type} />
         <span className="font-mono text-[0.65rem] text-zinc-600">
@@ -132,6 +143,7 @@ export function TransactionRow(props: {
 export function TransactionTimeline(props: {
   saveId: string;
   groups: Array<{ date: string; rows: TransactionRowView[] }>;
+  activityMode?: TransactionActivityMode;
 }) {
   if (props.groups.length === 0) {
     return null;
@@ -139,6 +151,11 @@ export function TransactionTimeline(props: {
 
   return (
     <div className="space-y-6">
+      {props.activityMode === "myTeam" ? (
+        <p className="text-xs uppercase tracking-[0.14em] text-zinc-500">
+          Showing your franchise activity
+        </p>
+      ) : null}
       {props.groups.map((group) => (
         <section key={group.date} aria-label={group.date}>
           <h2 className="mb-2 font-mono text-xs uppercase tracking-[0.14em] text-zinc-500">
@@ -147,7 +164,11 @@ export function TransactionTimeline(props: {
           <ul className="space-y-2">
             {group.rows.map((row) => (
               <li key={row.id}>
-                <TransactionRow saveId={props.saveId} row={row} />
+                <TransactionRow
+                  saveId={props.saveId}
+                  row={row}
+                  activityMode={props.activityMode}
+                />
               </li>
             ))}
           </ul>

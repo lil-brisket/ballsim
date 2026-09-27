@@ -220,6 +220,8 @@ import {
   type TransactionHubView,
   type TransactionFilterGroup,
   type TransactionDateRangeKey,
+  type TransactionSortKey,
+  type TransactionActivityMode,
   TRANSACTION_HUB_PAGE_SIZE,
 } from "@/state/transaction-hub-selectors";
 import { toLeagueLeadersView } from "@/state/league-leaders-selectors";
@@ -3296,6 +3298,10 @@ export async function loadTransactionHubView(
     range?: TransactionDateRangeKey;
     search?: string;
     limit?: number;
+    sort?: TransactionSortKey;
+    activityMode?: TransactionActivityMode;
+    start?: string;
+    end?: string;
   } = {},
   store?: SaveGameStore,
 ): Promise<TransactionHubView | null> {
@@ -3314,8 +3320,12 @@ export async function loadTransactionHubView(
     group: options.group ?? "all",
     teamId,
     range: options.range ?? "season",
+    start: options.start,
+    end: options.end,
     search: options.search ?? "",
     limit: options.limit ?? TRANSACTION_HUB_PAGE_SIZE,
+    sort: options.sort ?? "newest",
+    activityMode: options.activityMode ?? "league",
   });
 }
 

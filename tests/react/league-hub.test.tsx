@@ -167,6 +167,8 @@ describe("TransactionRow entity links", () => {
               },
             ],
             eventIds: ["e1", "e2"],
+            contractValue: null,
+            isMyTeam: false,
           }}
         />,
       ),
