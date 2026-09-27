@@ -14,6 +14,7 @@ import { getActiveOwnerTeamId } from "@/state/owner-context";
 import { toRosterView } from "@/state/selectors";
 import { toStaffView } from "@/state/franchise-selectors";
 import { calculatePlayerOverall } from "@/domain/player-overall-rating";
+import { changeFromHistory } from "@/state/player-overall-change";
 import { isPlayerDlAssigned } from "@/systems/development-league/franchise-membership";
 
 export type DevelopmentHubRow = {
@@ -77,39 +78,6 @@ export function sortDevelopmentRows(
     if (b.overall !== a.overall) return b.overall - a.overall;
     return a.playerName.localeCompare(b.playerName);
   });
-}
-
-function changeFromHistory(
-  state: GameState,
-  playerId: string,
-  currentOverall: number,
-): { delta: number | null; label: string | null } {
-  const history = state.business.playerHistory[playerId];
-  if (!history || history.seasons.length === 0) {
-    return { delta: null, label: null };
-  }
-  const seasons = [...history.seasons].sort(
-    (a, b) => a.seasonYear - b.seasonYear,
-  );
-  const last = seasons[seasons.length - 1]!;
-  // Prefer last completed season vs current live OVR when years differ.
-  if (last.seasonYear < state.competition.season.year) {
-    const delta = currentOverall - last.overall;
-    return {
-      delta,
-      label: `${last.overall} → ${currentOverall}`,
-    };
-  }
-  if (seasons.length >= 2) {
-    const prev = seasons[seasons.length - 2]!;
-    const delta = last.overall - prev.overall;
-    return {
-      delta,
-      label: `${prev.overall} → ${last.overall}`,
-    };
-  }
-  // Only one season snapshot — contextual evidence, not a fabricated prior.
-  return { delta: null, label: String(last.overall) };
 }
 
 export function toDevelopmentHubView(state: GameState): DevelopmentHubView {
