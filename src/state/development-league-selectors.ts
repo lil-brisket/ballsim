@@ -3,10 +3,17 @@
  * Presentation-only; composes DL eligibility/readiness systems.
  */
 
+import { DL_MAX_SEASONS } from "@/domain/entities/development-league";
 import type { DevelopmentReadiness } from "@/domain/entities/development-league";
+import type { TeamStanding } from "@/domain/entities/standings";
 import { calculatePlayerOverall } from "@/domain/player-overall-rating";
 import type { GameState } from "@/state/game-state";
+import { changeFromHistory } from "@/state/player-overall-change";
 import { getControlledTeam } from "@/state/selectors";
+import {
+  toBrandingView,
+  type TeamBrandingView,
+} from "@/state/team-branding-view";
 import {
   getDevelopmentLeagueRosterPlayers,
   getFranchisePlayers,
@@ -20,11 +27,17 @@ import {
   getPromotionExplanation,
 } from "@/systems/development-league/recommendations";
 
+export const DL_NOTABLE_MIN_GAMES = 5;
+export const DL_NOTABLE_PPG = 10;
+export const DL_WHY_BULLETS_FALLBACK =
+  "Readiness based on current OVR and projected top-league minutes.";
+
 export type DlProspectRowView = {
   playerId: string;
   name: string;
   overall: number;
   potential: number;
+  potentialHeadroom: number;
   age: number;
   dlSeason: number;
   seasonsRemaining: number;
@@ -35,12 +48,17 @@ export type DlProspectRowView = {
   apg: number | null;
   readiness: DevelopmentReadiness;
   whyBullets: string[];
+  changeDelta: number | null;
+  changeLabel: string | null;
 };
 
 export type DlRecentResultView = {
   gameId: string;
   date: string;
   opponentAbbreviation: string;
+  opponentTeamId: string;
+  opponentName: string;
+  opponentBranding: TeamBrandingView | null;
   home: boolean;
   teamScore: number;
   opponentScore: number;
@@ -51,8 +69,15 @@ export type DevelopmentLeagueDashboardView = {
   saveId: string;
   teamId: string;
   teamName: string;
+  city: string;
+  name: string;
+  abbreviation: string;
+  branding: TeamBrandingView | null;
   /** Franchise Development League record — same teamId as parent franchise. */
   record: { wins: number; losses: number } | null;
+  leagueRank: number | null;
+  streakLabel: string | null;
+  assignedCount: number;
   summary: {
     developing: number;
     ready: number;
@@ -63,6 +88,7 @@ export type DevelopmentLeagueDashboardView = {
   recallCandidates: DlProspectRowView[];
   developingProspects: DlProspectRowView[];
   notablePerformance: DlProspectRowView[];
+  improvers: DlProspectRowView[];
   prospects: DlProspectRowView[];
   recentResults: DlRecentResultView[];
   eligibleToAssign: Array<{
@@ -113,6 +139,47 @@ export function sortDlProspects(
   });
 }
 
+function withWhyFallback(bullets: string[]): string[] {
+  if (bullets.length === 0) {
+    return [DL_WHY_BULLETS_FALLBACK];
+  }
+  return bullets;
+}
+
+function streakLabelFromStanding(standing: TeamStanding | undefined): string | null {
+  if (standing == null) return null;
+  if (standing.streak.type == null || standing.streak.count <= 0) return null;
+  return `${standing.streak.type}${standing.streak.count}`;
+}
+
+function dlLeagueRank(
+  state: GameState,
+  teamId: string,
+): number | null {
+  const byTeamId = state.competition.developmentLeague?.standings.byTeamId ?? {};
+  const rows = Object.values(byTeamId);
+  if (rows.length === 0) return null;
+  if (byTeamId[teamId] == null) return null;
+
+  const ranked = rows
+    .map((standing) => ({
+      standing,
+      abbreviation: state.world.teams[standing.teamId]?.abbreviation ?? standing.teamId,
+    }))
+    .sort((a, b) => {
+      if (b.standing.winPercentage !== a.standing.winPercentage) {
+        return b.standing.winPercentage - a.standing.winPercentage;
+      }
+      if (b.standing.wins !== a.standing.wins) {
+        return b.standing.wins - a.standing.wins;
+      }
+      return a.abbreviation.localeCompare(b.abbreviation);
+    });
+
+  const index = ranked.findIndex((row) => row.standing.teamId === teamId);
+  return index < 0 ? null : index + 1;
+}
+
 export function toDevelopmentLeagueDashboardView(
   state: GameState,
 ): DevelopmentLeagueDashboardView {
@@ -135,23 +202,31 @@ export function toDevelopmentLeagueDashboardView(
 
     const stats = player.developmentLeague?.currentSeasonStats;
     const seasonsUsed = player.developmentLeague?.seasonsUsed ?? 0;
+    const overall = calculatePlayerOverall(player.position, player.attributes);
+    const potential = player.potential.overall;
+    const change = changeFromHistory(state, player.id, overall);
+    const whyBullets = isPlayerDlAssigned(player)
+      ? getPromotionExplanation(player, teamId, state)
+      : getDlAssignmentExplanation(player, teamId, state);
+
     prospects.push({
       playerId: player.id,
       name: `${player.firstName} ${player.lastName}`,
-      overall: calculatePlayerOverall(player.position, player.attributes),
-      potential: player.potential.overall,
+      overall,
+      potential,
+      potentialHeadroom: Math.max(0, potential - overall),
       age: player.age,
       dlSeason: seasonsUsed + (player.developmentLeague?.assignedThisSeason ? 1 : 0),
-      seasonsRemaining: Math.max(0, 3 - seasonsUsed),
+      seasonsRemaining: Math.max(0, DL_MAX_SEASONS - seasonsUsed),
       role: player.developmentLeague?.role ?? "development",
       mpg: mpgFromCache(stats),
       ppg: avg(stats, "points"),
       rpg: avg(stats, "rebounds"),
       apg: avg(stats, "assists"),
       readiness,
-      whyBullets: isPlayerDlAssigned(player)
-        ? getPromotionExplanation(player, teamId, state)
-        : getDlAssignmentExplanation(player, teamId, state),
+      whyBullets: withWhyFallback(whyBullets),
+      changeDelta: change.delta,
+      changeLabel: change.label,
     });
   }
 
@@ -159,8 +234,16 @@ export function toDevelopmentLeagueDashboardView(
   const recallCandidates = sorted.filter((p) => p.readiness === "ready");
   const developingProspects = sorted.filter((p) => p.readiness !== "ready");
   const notablePerformance = [...sorted]
-    .filter((p) => p.ppg !== null && p.ppg >= 10)
+    .filter((p) => {
+      const player = state.world.players[p.playerId];
+      const games = player?.developmentLeague?.currentSeasonStats?.games ?? 0;
+      return p.ppg !== null && p.ppg >= DL_NOTABLE_PPG && games >= DL_NOTABLE_MIN_GAMES;
+    })
     .sort((a, b) => (b.ppg ?? 0) - (a.ppg ?? 0))
+    .slice(0, 5);
+  const improvers = [...sorted]
+    .filter((p) => p.changeDelta !== null && p.changeDelta > 0)
+    .sort((a, b) => (b.changeDelta ?? 0) - (a.changeDelta ?? 0))
     .slice(0, 5);
 
   const standing = state.competition.developmentLeague?.standings.byTeamId[teamId];
@@ -189,6 +272,11 @@ export function toDevelopmentLeagueDashboardView(
       gameId: game.id,
       date: game.date,
       opponentAbbreviation: opponent?.abbreviation ?? opponentId,
+      opponentTeamId: opponentId,
+      opponentName: opponent
+        ? `${opponent.city} ${opponent.name}`
+        : opponentId,
+      opponentBranding: toBrandingView(opponent?.branding) ?? null,
       home,
       teamScore,
       opponentScore,
@@ -219,11 +307,19 @@ export function toDevelopmentLeagueDashboardView(
     saveId,
     teamId,
     teamName: `${team.city} ${team.name}`,
+    city: team.city,
+    name: team.name,
+    abbreviation: team.abbreviation,
+    branding: toBrandingView(team.branding),
     record,
+    leagueRank: dlLeagueRank(state, teamId),
+    streakLabel: streakLabelFromStanding(standing),
+    assignedCount: sorted.length,
     summary: { developing, ready, nearReady, notReady },
     recallCandidates,
     developingProspects,
     notablePerformance,
+    improvers,
     prospects: sorted,
     recentResults,
     eligibleToAssign,

@@ -1,6 +1,6 @@
 export function PageHeader(props: {
   title: string;
-  subtitle?: string;
+  subtitle?: React.ReactNode;
   actions?: React.ReactNode;
 }) {
   return (
@@ -10,7 +10,7 @@ export function PageHeader(props: {
           {props.title}
         </h1>
         {props.subtitle ? (
-          <p className="text-sm text-zinc-400">{props.subtitle}</p>
+          <div className="text-sm text-zinc-400">{props.subtitle}</div>
         ) : null}
       </div>
       {props.actions ? (
