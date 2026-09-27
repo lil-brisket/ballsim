@@ -11,7 +11,7 @@ import {
   TEAM_TRANSACTION_EVENT_TYPES,
   isTransactionRelevantToTeam,
 } from "@/state/team-transaction-selectors";
-import { addCalendarDays } from "@/domain/calendar-date";
+import { addCalendarDays, parseCalendarDate } from "@/domain/calendar-date";
 import {
   toBrandingView,
   type TeamBrandingView,
@@ -26,8 +26,10 @@ export const TRANSACTION_FILTER_GROUPS = {
     "ContractSigned",
   ] as const satisfies readonly DomainEventType[],
   releases: ["PlayerReleased"] as const satisfies readonly DomainEventType[],
+  waivers: [] as const satisfies readonly DomainEventType[],
+  extensions: [] as const satisfies readonly DomainEventType[],
+  draft: ["DraftPickMade"] as const satisfies readonly DomainEventType[],
   other: [
-    "DraftPickMade",
     "CoachHired",
     "StaffHired",
     "StaffFired",
@@ -40,7 +42,18 @@ export type TransactionDateRangeKey =
   | "today"
   | "7d"
   | "30d"
-  | "season";
+  | "season"
+  | "custom";
+
+export type TransactionSortKey =
+  | "newest"
+  | "oldest"
+  | "team"
+  | "player"
+  | "type"
+  | "contract";
+
+export type TransactionActivityMode = "league" | "myTeam";
 
 export type TransactionEntityRef = {
   id: string;
@@ -66,15 +79,50 @@ export type TransactionRowView = {
   /** Two-sided layout when trade grouping succeeds. */
   tradeSides: TradeSideView[] | null;
   eventIds: string[];
+  /**
+   * Sum of salaryByYear for ContractSigned / FreeAgentSigned via payload.contractId.
+   * Grouped trades stay null: PlayerTraded has no contractId, and current
+   * player.contractId is the live deal, not the trade-time package.
+   */
+  contractValue: number | null;
+  isMyTeam: boolean;
 };
 
 export type TransactionHubFilters = {
   group: TransactionFilterGroup;
   teamId: string | null;
   range: TransactionDateRangeKey;
+  start?: string;
+  end?: string;
   search: string;
   /** Number of rows to show (Load more). */
   limit: number;
+  sort: TransactionSortKey;
+  activityMode: TransactionActivityMode;
+};
+
+export type TransactionHubQueryInput = {
+  type?: string;
+  team?: string;
+  range?: string;
+  q?: string;
+  limit?: string;
+  sort?: string;
+  activity?: string;
+  start?: string;
+  end?: string;
+};
+
+export type ParsedTransactionHubQuery = {
+  group: TransactionFilterGroup;
+  teamParam: string | undefined;
+  range: TransactionDateRangeKey;
+  search: string;
+  limit: number;
+  sort: TransactionSortKey;
+  activityMode: TransactionActivityMode;
+  start?: string;
+  end?: string;
 };
 
 export type TransactionDateGroup = {
@@ -85,6 +133,7 @@ export type TransactionDateGroup = {
 export type TransactionHubView = {
   saveId: string;
   myTeamId: string;
+  currentDate: string;
   groups: TransactionDateGroup[];
   total: number;
   shown: number;
@@ -97,6 +146,7 @@ export type TransactionHubView = {
 };
 
 export const TRANSACTION_HUB_PAGE_SIZE = 25;
+const TRANSACTION_HUB_MAX_LIMIT = 200;
 
 function resolvePlayer(
   state: GameState,
@@ -162,6 +212,31 @@ function describeSimple(
   }
 }
 
+function isValidIsoCalendarDate(raw: string): boolean {
+  try {
+    parseCalendarDate(raw);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+export function customDateRangeError(
+  start?: string,
+  end?: string,
+): string | null {
+  if (!start || !end) {
+    return "Start and end dates are required.";
+  }
+  if (!isValidIsoCalendarDate(start) || !isValidIsoCalendarDate(end)) {
+    return "Dates must be valid calendar days (YYYY-MM-DD).";
+  }
+  if (start > end) {
+    return "Start must be on or before end.";
+  }
+  return null;
+}
+
 function dateRangeBounds(
   state: GameState,
   range: TransactionDateRangeKey,
@@ -204,14 +279,43 @@ function tradePairKey(event: DomainEvent): string | null {
   return `${event.occurredOn}|${pair}`;
 }
 
+function contractValueFromPayload(
+  state: GameState,
+  payload: Record<string, unknown>,
+): number | null {
+  const contractId = payload.contractId;
+  if (typeof contractId !== "string" || !contractId) {
+    return null;
+  }
+  const contract = state.business.contracts[contractId];
+  if (!contract) {
+    return null;
+  }
+  const salaries = Object.values(contract.salaryByYear);
+  if (salaries.length === 0) {
+    return null;
+  }
+  return salaries.reduce((sum, salary) => sum + salary, 0);
+}
+
+function rowIsMyTeam(
+  events: readonly DomainEvent[],
+  myTeamId: TeamId,
+): boolean {
+  return events.some((event) => isTransactionRelevantToTeam(event, myTeamId));
+}
+
 /**
  * Group same-day PlayerTraded events between the same two teams into one row.
  */
-function buildRows(state: GameState, events: DomainEvent[]): TransactionRowView[] {
+function buildRows(
+  state: GameState,
+  events: DomainEvent[],
+  myTeamId: TeamId,
+): TransactionRowView[] {
   const used = new Set<string>();
   const rows: TransactionRowView[] = [];
 
-  // Index trade groups
   const tradeGroups = new Map<string, DomainEvent[]>();
   for (const event of events) {
     const key = tradePairKey(event);
@@ -287,6 +391,8 @@ function buildRows(state: GameState, events: DomainEvent[]): TransactionRowView[
         teams,
         tradeSides: tradeSides.length === 2 ? tradeSides : null,
         eventIds: group.map((e) => e.id),
+        contractValue: null,
+        isMyTeam: rowIsMyTeam(group, myTeamId),
       });
       continue;
     }
@@ -314,18 +420,80 @@ function buildRows(state: GameState, events: DomainEvent[]): TransactionRowView[
       teams: uniqueTeams,
       tradeSides: null,
       eventIds: [event.id],
+      contractValue: contractValueFromPayload(state, payload),
+      isMyTeam: rowIsMyTeam([event], myTeamId),
     });
   }
 
-  rows.sort((a, b) => {
-    const d = b.occurredOn.localeCompare(a.occurredOn);
-    if (d !== 0) {
-      return d;
-    }
-    return b.id.localeCompare(a.id);
-  });
-
   return rows;
+}
+
+function compareNewestThenId(
+  a: TransactionRowView,
+  b: TransactionRowView,
+): number {
+  const byDate = b.occurredOn.localeCompare(a.occurredOn);
+  if (byDate !== 0) {
+    return byDate;
+  }
+  return b.id.localeCompare(a.id);
+}
+
+function sortRows(
+  rows: TransactionRowView[],
+  sort: TransactionSortKey,
+): TransactionRowView[] {
+  const sorted = [...rows];
+  sorted.sort((a, b) => {
+    switch (sort) {
+      case "oldest": {
+        const byDate = a.occurredOn.localeCompare(b.occurredOn);
+        if (byDate !== 0) {
+          return byDate;
+        }
+        return a.id.localeCompare(b.id);
+      }
+      case "team": {
+        const byTeam = (a.teams[0]?.name ?? "").localeCompare(
+          b.teams[0]?.name ?? "",
+        );
+        if (byTeam !== 0) {
+          return byTeam;
+        }
+        return compareNewestThenId(a, b);
+      }
+      case "player": {
+        const byPlayer = (a.players[0]?.name ?? "").localeCompare(
+          b.players[0]?.name ?? "",
+        );
+        if (byPlayer !== 0) {
+          return byPlayer;
+        }
+        return compareNewestThenId(a, b);
+      }
+      case "type": {
+        const byType = transactionTypeLabel(a.type).localeCompare(
+          transactionTypeLabel(b.type),
+        );
+        if (byType !== 0) {
+          return byType;
+        }
+        return compareNewestThenId(a, b);
+      }
+      case "contract": {
+        const aValue = a.contractValue ?? Number.NEGATIVE_INFINITY;
+        const bValue = b.contractValue ?? Number.NEGATIVE_INFINITY;
+        if (bValue !== aValue) {
+          return bValue - aValue;
+        }
+        return compareNewestThenId(a, b);
+      }
+      default: {
+        return compareNewestThenId(a, b);
+      }
+    }
+  });
+  return sorted;
 }
 
 export function parseTransactionFilterGroup(
@@ -340,10 +508,111 @@ export function parseTransactionFilterGroup(
 export function parseTransactionDateRange(
   raw: string | undefined,
 ): TransactionDateRangeKey {
-  if (raw === "today" || raw === "7d" || raw === "30d" || raw === "season") {
+  if (
+    raw === "today" ||
+    raw === "7d" ||
+    raw === "30d" ||
+    raw === "season" ||
+    raw === "custom"
+  ) {
     return raw;
   }
   return "season";
+}
+
+export function parseTransactionSortKey(
+  raw: string | undefined,
+): TransactionSortKey {
+  if (
+    raw === "newest" ||
+    raw === "oldest" ||
+    raw === "team" ||
+    raw === "player" ||
+    raw === "type" ||
+    raw === "contract"
+  ) {
+    return raw;
+  }
+  return "newest";
+}
+
+export function parseActivityMode(
+  raw: string | undefined,
+): TransactionActivityMode {
+  if (raw === "league" || raw === "myTeam") {
+    return raw;
+  }
+  return "league";
+}
+
+function parseLimit(raw: string | undefined): number {
+  const limitRaw = Number(raw ?? TRANSACTION_HUB_PAGE_SIZE);
+  if (Number.isFinite(limitRaw) && limitRaw > 0) {
+    return Math.min(limitRaw, TRANSACTION_HUB_MAX_LIMIT);
+  }
+  return TRANSACTION_HUB_PAGE_SIZE;
+}
+
+export function parseTransactionHubQuery(
+  raw: TransactionHubQueryInput,
+): ParsedTransactionHubQuery {
+  const start = typeof raw.start === "string" ? raw.start : undefined;
+  const end = typeof raw.end === "string" ? raw.end : undefined;
+  return {
+    group: parseTransactionFilterGroup(raw.type),
+    teamParam: typeof raw.team === "string" ? raw.team : undefined,
+    range: parseTransactionDateRange(raw.range),
+    search: typeof raw.q === "string" ? raw.q : "",
+    limit: parseLimit(raw.limit),
+    sort: parseTransactionSortKey(raw.sort),
+    activityMode: parseActivityMode(raw.activity),
+    start,
+    end,
+  };
+}
+
+export function toTransactionHubSearchParams(input: {
+  group: TransactionFilterGroup;
+  teamParam?: string;
+  range: TransactionDateRangeKey;
+  start?: string;
+  end?: string;
+  sort: TransactionSortKey;
+  activityMode: TransactionActivityMode;
+  search: string;
+  limit?: number;
+}): URLSearchParams {
+  const params = new URLSearchParams();
+  if (input.group !== "all") {
+    params.set("type", input.group);
+  }
+  if (input.teamParam && input.teamParam !== "all") {
+    params.set("team", input.teamParam);
+  }
+  if (input.range !== "season") {
+    params.set("range", input.range);
+  }
+  if (input.range === "custom") {
+    if (input.start) {
+      params.set("start", input.start);
+    }
+    if (input.end) {
+      params.set("end", input.end);
+    }
+  }
+  if (input.sort !== "newest") {
+    params.set("sort", input.sort);
+  }
+  if (input.activityMode !== "league") {
+    params.set("activity", input.activityMode);
+  }
+  if (input.search) {
+    params.set("q", input.search);
+  }
+  if (input.limit != null && input.limit > TRANSACTION_HUB_PAGE_SIZE) {
+    params.set("limit", String(input.limit));
+  }
+  return params;
 }
 
 export function toTransactionHubView(
@@ -351,17 +620,29 @@ export function toTransactionHubView(
   filters: TransactionHubFilters,
 ): TransactionHubView {
   const myTeamId = getActiveOwnerTeamId(state);
-  const bounds = dateRangeBounds(state, filters.range);
 
   let events = [...state.competition.seasonEventLog].filter((event) =>
     eventMatchesGroup(event.type, filters.group),
   );
 
-  if (bounds.from) {
-    events = events.filter((e) => e.occurredOn >= bounds.from!);
-  }
-  if (bounds.to) {
-    events = events.filter((e) => e.occurredOn <= bounds.to!);
+  if (filters.range === "custom") {
+    if (customDateRangeError(filters.start, filters.end)) {
+      events = [];
+    } else {
+      const start = filters.start!;
+      const end = filters.end!;
+      events = events.filter(
+        (event) => event.occurredOn >= start && event.occurredOn <= end,
+      );
+    }
+  } else {
+    const bounds = dateRangeBounds(state, filters.range);
+    if (bounds.from) {
+      events = events.filter((e) => e.occurredOn >= bounds.from!);
+    }
+    if (bounds.to) {
+      events = events.filter((e) => e.occurredOn <= bounds.to!);
+    }
   }
 
   if (filters.teamId) {
@@ -369,15 +650,11 @@ export function toTransactionHubView(
     events = events.filter((e) => isTransactionRelevantToTeam(e, teamId));
   }
 
-  events.sort((a, b) => {
-    const d = b.occurredOn.localeCompare(a.occurredOn);
-    if (d !== 0) {
-      return d;
-    }
-    return b.id.localeCompare(a.id);
-  });
+  let rows = buildRows(state, events, myTeamId);
 
-  let rows = buildRows(state, events);
+  if (filters.activityMode === "myTeam") {
+    rows = rows.filter((row) => row.isMyTeam);
+  }
 
   const search = filters.search.trim().toLowerCase();
   if (search) {
@@ -396,6 +673,8 @@ export function toTransactionHubView(
     });
   }
 
+  rows = sortRows(rows, filters.sort);
+
   const total = rows.length;
   const shownRows = rows.slice(0, filters.limit);
   const byDate = new Map<string, TransactionRowView[]>();
@@ -405,7 +684,11 @@ export function toTransactionHubView(
     byDate.set(row.occurredOn, list);
   }
   const groups: TransactionDateGroup[] = [...byDate.entries()]
-    .sort((a, b) => b[0].localeCompare(a[0]))
+    .sort((a, b) =>
+      filters.sort === "oldest"
+        ? a[0].localeCompare(b[0])
+        : b[0].localeCompare(a[0]),
+    )
     .map(([date, dateRows]) => ({ date, rows: dateRows }));
 
   const teams = Object.values(state.world.teams)
@@ -419,6 +702,7 @@ export function toTransactionHubView(
   return {
     saveId: state.meta.saveId,
     myTeamId,
+    currentDate: state.world.calendar.currentDate,
     groups,
     total,
     shown: shownRows.length,

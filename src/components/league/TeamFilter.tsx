@@ -22,6 +22,8 @@ export function TeamFilter(props: {
   value: TeamFilterValue;
   /** Search param key (default "team"). */
   paramKey?: string;
+  /** Extra query keys to drop on change (e.g. pagination `limit`). */
+  paramsToDelete?: string[];
 }) {
   const paramKey = props.paramKey ?? "team";
   const router = useRouter();
@@ -50,6 +52,9 @@ export function TeamFilter(props: {
       params.delete(paramKey);
     } else {
       params.set(paramKey, next);
+    }
+    for (const key of props.paramsToDelete ?? []) {
+      params.delete(key);
     }
     const qs = params.toString();
     router.push(qs ? `${pathname}?${qs}` : pathname);
