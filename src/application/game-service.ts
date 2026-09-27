@@ -222,9 +222,11 @@ import {
   type TransactionDateRangeKey,
   TRANSACTION_HUB_PAGE_SIZE,
 } from "@/state/transaction-hub-selectors";
+import { toLeagueLeadersView } from "@/state/league-leaders-selectors";
+import { parseStandingsPageParams } from "@/state/standings-page-params";
 import {
   toStandingsPageView,
-  type StandingsPageView,
+  toPlayoffRaceView,
   toCalendarLeagueContext,
 } from "@/state/standings-selectors";
 import {
@@ -3318,17 +3320,28 @@ export async function loadTransactionHubView(
 }
 
 /**
- * Enriched standings page (conference groups, GB, playoff context).
+ * Standings hub (groups, leaders, playoff race) from a single save load.
  */
 export async function loadStandingsPageView(
   saveId: string,
+  search: {
+    view?: string | string[];
+    stats?: string | string[];
+  } = {},
   store?: SaveGameStore,
-): Promise<StandingsPageView | null> {
+) {
   const loaded = await getStore(store).load(saveId);
   if (!loaded) {
     return null;
   }
-  return toStandingsPageView(loaded.state);
+  const options = parseStandingsPageParams(search, {
+    divisionsEnabled: loaded.state.settings.league.divisionsEnabled,
+  });
+  return {
+    standings: toStandingsPageView(loaded.state, options),
+    leaders: toLeagueLeadersView(loaded.state),
+    playoffRace: toPlayoffRaceView(loaded.state),
+  };
 }
 
 /**

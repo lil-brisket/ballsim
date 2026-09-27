@@ -7,6 +7,11 @@ import { createTestGameState } from "../factories/game-state";
 import { bootstrapWorld } from "@/systems/world-pipeline";
 import { createSeededRng } from "@/domain/rng";
 
+const CONFERENCE_STANDARD = {
+  view: "conference" as const,
+  stats: "standard" as const,
+};
+
 describe("standings-selectors", () => {
   it("derives cutoff from fieldSize / conferences, not hardcoded rank 8", () => {
     let state = createTestGameState({ saveId: "standings_cutoff" });
@@ -16,12 +21,12 @@ describe("standings-selectors", () => {
     const cutoff = playoffCutoffPerConference(state);
     expect(cutoff).toBeGreaterThanOrEqual(1);
 
-    const page = toStandingsPageView(state);
+    const page = toStandingsPageView(state, CONFERENCE_STANDARD);
     expect(page.cutoffPerConference).toBe(cutoff);
     expect(page.groups.length).toBeGreaterThan(0);
     for (const group of page.groups) {
-      expect(group.cutoffRank).toBe(cutoff);
-      // Conference leader has 0 GB
+      expect(group.cutoffRank).toBeNull();
+      expect(group.kind).toBe("conference");
       expect(group.rows[0]?.gamesBackConference).toBe(0);
     }
   });
@@ -31,7 +36,7 @@ describe("standings-selectors", () => {
     const rng = createSeededRng(state.meta.rngState);
     state = bootstrapWorld(state, rng).state;
 
-    const page = toStandingsPageView(state);
+    const page = toStandingsPageView(state, CONFERENCE_STANDARD);
     for (const group of page.groups) {
       for (let i = 1; i < group.rows.length; i++) {
         expect(group.rows[i]!.conferenceRank).toBeGreaterThan(
@@ -46,9 +51,10 @@ describe("standings-selectors", () => {
     const rng = createSeededRng(state.meta.rngState);
     state = bootstrapWorld(state, rng).state;
 
-    const page = toStandingsPageView(state);
+    const page = toStandingsPageView(state, CONFERENCE_STANDARD);
     for (const row of page.leagueRows) {
       expect(row.playoffLabel).not.toBe("eliminated");
+      expect(row.playoffLabel).not.toBe("play_in");
     }
   });
 });

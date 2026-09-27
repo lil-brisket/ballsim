@@ -111,7 +111,7 @@ Systems expected later (do not treat as present until implemented):
 - Player development — **implemented** building block (`developPlayer`) and offseason season tick (`processSeasonPlayerDevelopment` ages + develops; facilities/trainers scale positive deltas only)
 - Injuries
 - Finances — period-keyed revenue/expense books on `business.finances` (`booksByYear`); financial statements derive totals and player salaries from contracts (`getTeamPayroll`); home game-day posts tickets, merchandise, and concessions (`other`); `HomeGameDaySettled` is the historical attendance record; weekly player payroll is cash-only (`PlayerPayrollPaid`, not posted to books); marketing/awareness and media/climate sponsorship modifiers are live
-- Standings — **implemented** (`src/systems/standings.ts` — `calculateStandings` / `updateStandings`)
+- Standings — **implemented** (`src/systems/standings.ts` — `calculateStandings` / `updateStandings`). Standings page views (Overall / Conference / Division) are presentation-only; playoff qualification is league-wide (`settings.playoffs.playoffTeams` / `qualifyAndSeed`).
 - Schedule generation — **implemented** as building block `generateSeasonSchedule` + world adapter `generateSchedule` (`src/systems/schedule-generation.ts`); validates via `validateSeasonSchedule`
 - Save/load (foundation persistence exists)
 - Roster generation — **implemented** (`src/systems/roster-generation.ts`)
