@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { OwnerNavGroup } from "@/application/owner-nav-config";
 import { NavGroups } from "@/components/game/NavGroups";
 import { cn, focusRingClass } from "@/components/ui/styles";
@@ -8,7 +8,6 @@ import { cn, focusRingClass } from "@/components/ui/styles";
 const STORAGE_KEY = "ballsim:ownerNavCollapsed";
 
 function readCollapsedPreference(): boolean {
-  if (typeof window === "undefined") return false;
   try {
     return window.localStorage.getItem(STORAGE_KEY) === "1";
   } catch {
@@ -20,7 +19,11 @@ export function DesktopNavigation(props: {
   saveId: string;
   groups?: readonly OwnerNavGroup[];
 }) {
-  const [collapsed, setCollapsed] = useState(readCollapsedPreference);
+  const [collapsed, setCollapsed] = useState(false);
+
+  useEffect(() => {
+    setCollapsed(readCollapsedPreference());
+  }, []);
 
   function toggleCollapsed() {
     setCollapsed((value) => {

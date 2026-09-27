@@ -15,6 +15,7 @@ export function SplashBackground(props: { className?: string }) {
         className="splash-court-lines absolute inset-0 h-full w-full opacity-[0.12]"
         viewBox="0 0 800 600"
         preserveAspectRatio="xMidYMid slice"
+        suppressHydrationWarning
       >
         {/* Outer boundary */}
         <rect
@@ -26,6 +27,7 @@ export function SplashBackground(props: { className?: string }) {
           stroke="currentColor"
           strokeWidth="2"
           className="text-zinc-300"
+          suppressHydrationWarning
         />
         {/* Half-court line */}
         <line
@@ -36,6 +38,7 @@ export function SplashBackground(props: { className?: string }) {
           stroke="currentColor"
           strokeWidth="1.5"
           className="text-zinc-400"
+          suppressHydrationWarning
         />
         {/* Center circle */}
         <circle
@@ -46,6 +49,7 @@ export function SplashBackground(props: { className?: string }) {
           stroke="currentColor"
           strokeWidth="1.5"
           className="text-zinc-400"
+          suppressHydrationWarning
         />
         {/* Left key */}
         <rect
@@ -57,6 +61,7 @@ export function SplashBackground(props: { className?: string }) {
           stroke="currentColor"
           strokeWidth="1.5"
           className="text-zinc-400"
+          suppressHydrationWarning
         />
         <circle
           cx="200"
@@ -66,6 +71,7 @@ export function SplashBackground(props: { className?: string }) {
           stroke="currentColor"
           strokeWidth="1.5"
           className="text-zinc-400"
+          suppressHydrationWarning
         />
         {/* Right key */}
         <rect
@@ -77,6 +83,7 @@ export function SplashBackground(props: { className?: string }) {
           stroke="currentColor"
           strokeWidth="1.5"
           className="text-zinc-400"
+          suppressHydrationWarning
         />
         <circle
           cx="600"
@@ -86,6 +93,7 @@ export function SplashBackground(props: { className?: string }) {
           stroke="currentColor"
           strokeWidth="1.5"
           className="text-zinc-400"
+          suppressHydrationWarning
         />
         {/* Three-point arcs (simplified) */}
         <path
@@ -94,6 +102,7 @@ export function SplashBackground(props: { className?: string }) {
           stroke="currentColor"
           strokeWidth="1.25"
           className="text-zinc-500"
+          suppressHydrationWarning
         />
         <path
           d="M 720 120 Q 520 300 720 480"
@@ -101,6 +110,7 @@ export function SplashBackground(props: { className?: string }) {
           stroke="currentColor"
           strokeWidth="1.25"
           className="text-zinc-500"
+          suppressHydrationWarning
         />
       </svg>
     </div>
