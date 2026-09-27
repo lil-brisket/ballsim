@@ -22,7 +22,10 @@ export function getRfaStatus(
   return state.business.rfaStatuses?.[playerId];
 }
 
-export function isPlayerActiveRfa(state: GameState, playerId: PlayerId): boolean {
+export function isPlayerActiveRfa(
+  state: GameState,
+  playerId: PlayerId,
+): boolean {
   const status = getRfaStatus(state, playerId);
   return status !== undefined && isActiveRfa(status);
 }

@@ -18,9 +18,7 @@ export function TeamIdentityPreview(props: {
     textColor === "#FFFFFF" ? "rgba(255,255,255,0.75)" : "rgba(10,10,10,0.7)";
   const showUniforms = props.showUniformPreview !== false;
   const abbreviation =
-    props.abbreviation?.trim() ||
-    props.city.slice(0, 3).toUpperCase() ||
-    "???";
+    props.abbreviation?.trim() || props.city.slice(0, 3).toUpperCase() || "???";
 
   return (
     <div
@@ -76,10 +74,7 @@ export function TeamIdentityPreview(props: {
       </div>
       {showUniforms ? (
         <div className="flex w-full max-w-xs flex-col gap-2">
-          <div
-            className="flex w-full gap-3"
-            aria-label="Home and away preview"
-          >
+          <div className="flex w-full gap-3" aria-label="Home and away preview">
             <UniformStrip
               label="Home"
               bodyColor={props.primaryColor}

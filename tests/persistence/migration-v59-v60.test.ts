@@ -28,7 +28,6 @@ describe("v59 → v60 migration", () => {
     const loaded = deserializeGameState(JSON.stringify(parsed));
     expect(loaded.meta.schemaVersion).toBe(GAME_STATE_SCHEMA_VERSION);
 
-
     for (const franchise of Object.values(loaded.user.ownedFranchises)) {
       expect(franchise.mediaFeed).toEqual({ items: [] });
       expect(franchise.socialFeed).toEqual({ posts: [] });
@@ -79,9 +78,9 @@ describe("v59 → v60 migration", () => {
     const franchise = roundTrip.user.ownedFranchises[teamId];
     expect(franchise.mediaFeed.items).toHaveLength(1);
     expect(franchise.mediaFeed.items[0]?.headline).toBe("Test trade");
-    expect(franchise.mediaReadState["media_domain_event:evt_test"]?.readAt).toBe(
-      state.world.calendar.currentDate,
-    );
+    expect(
+      franchise.mediaReadState["media_domain_event:evt_test"]?.readAt,
+    ).toBe(state.world.calendar.currentDate);
     expect(() => validateGameState(roundTrip)).not.toThrow();
   });
 });

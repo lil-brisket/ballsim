@@ -258,7 +258,8 @@ export function redistributeRotationForInjuries(
               : best.entry.role,
           preferredPositions: best.entry.preferredPositions,
           secondaryPositions: best.entry.secondaryPositions,
-          rotationPriority: Math.min(best.entry.rotationPriority, 3) as 1 | 2 | 3 | 4 | 5,
+          rotationPriority: Math.min(best.entry.rotationPriority, 3) as
+            1 | 2 | 3 | 4 | 5,
           recommendedWorkloadMpg: avail.recommendedWorkloadMpg,
           maximumWorkloadMpg: avail.maximumWorkloadMpg,
         });
@@ -316,7 +317,10 @@ export function redistributeLiveMinutesAfterInjury(input: {
       if (entry.rotationStatus === "inactive") return false;
       const player = input.playersById.get(id);
       if (player == null) return false;
-      if (input.position && !playerCanCoverSlot(player, input.position, entry)) {
+      if (
+        input.position &&
+        !playerCanCoverSlot(player, input.position, entry)
+      ) {
         return false;
       }
       return true;

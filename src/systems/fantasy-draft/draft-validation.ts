@@ -1,9 +1,7 @@
 import type { PlayerId, TeamId } from "@/domain/ids";
 import type { GameState } from "@/state/game-state";
 import { PLAYER_POSITIONS } from "@/domain/entities/player";
-import {
-  getCurrentPick,
-} from "@/systems/fantasy-draft/draft-order";
+import { getCurrentPick } from "@/systems/fantasy-draft/draft-order";
 import {
   isPickExpired,
   isPlayerDrafted,
@@ -109,9 +107,7 @@ export function validateFantasyDraftSelection(
         message: `Player "${input.playerId}" has already been drafted.`,
       });
     }
-    if (
-      !(PLAYER_POSITIONS as readonly string[]).includes(player.position)
-    ) {
+    if (!(PLAYER_POSITIONS as readonly string[]).includes(player.position)) {
       errors.push({
         code: "INVALID_POSITION",
         message: `Player position "${player.position}" is not allowed.`,

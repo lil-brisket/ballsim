@@ -16,6 +16,8 @@ export default defineConfig({
   test: {
     coverage: {
       provider: "v8",
+      reporter: ["text", "json-summary", "html", "lcov"],
+      reportsDirectory: "./coverage",
       include: ["src/**"],
       exclude: ["src/generated/**", "src/app/**"],
     },
@@ -25,9 +27,7 @@ export default defineConfig({
         test: {
           name: "unit",
           environment: "node",
-          include: [
-            "tests/**/*.test.ts",
-          ],
+          include: ["tests/**/*.test.ts"],
           exclude: [
             "tests/**/*.test.tsx",
             "tests/application/multi-year-simulation*.test.ts",

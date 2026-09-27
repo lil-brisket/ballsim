@@ -159,10 +159,7 @@ describe("evaluateRosterNeeds", () => {
         }),
       ],
     };
-    const needs = evaluateRosterNeeds(
-      buildState([healthy, injured]),
-      teamId,
-    );
+    const needs = evaluateRosterNeeds(buildState([healthy, injured]), teamId);
     // Only one healthy → weak (not strong despite two on roster)
     expect(needs.find((need) => need.position === "C")?.level).toBe("weak");
   });

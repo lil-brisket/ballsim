@@ -1,12 +1,7 @@
 import { addCalendarDays } from "@/domain/calendar-date";
 import { createGame, type Game } from "@/domain/entities/game";
 import type { PlayoffSeries } from "@/domain/entities/playoffs";
-import {
-  asGameId,
-  asTeamId,
-  type GameId,
-  type SeasonId,
-} from "@/domain/ids";
+import { asGameId, asTeamId, type GameId, type SeasonId } from "@/domain/ids";
 import { getHomeTeamForGame } from "@/systems/playoff-config";
 
 /**
@@ -49,9 +44,7 @@ export function createNextPlayoffGame(input: {
       ? series.lowerSeedTeamId
       : series.higherSeedTeamId;
 
-  const gameId =
-    input.gameId ??
-    asGameId(`playoff_${series.id}_g${gameIndex}`);
+  const gameId = input.gameId ?? asGameId(`playoff_${series.id}_g${gameIndex}`);
 
   return createGame({
     id: gameId,

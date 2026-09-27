@@ -36,9 +36,7 @@ export function SimulationPausedBanner(props: {
             title: props.message,
             href: props.resolveHref ?? undefined,
             hrefLabel:
-              props.reason === "draft_clock"
-                ? "Open Draft"
-                : "Review Decision",
+              props.reason === "draft_clock" ? "Open Draft" : "Review Decision",
           },
         ];
 

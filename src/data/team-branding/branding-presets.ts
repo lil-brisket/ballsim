@@ -7,11 +7,7 @@ import type { TeamColorPaletteId } from "@/data/team-branding/color-palettes";
 import type { TeamLogoId } from "@/data/team-branding/logo-catalog";
 
 export type TeamBrandingPresetId =
-  | "classic"
-  | "modern"
-  | "aggressive"
-  | "city"
-  | "elite";
+  "classic" | "modern" | "aggressive" | "city" | "elite";
 
 export type TeamBrandingPreset = {
   id: TeamBrandingPresetId;

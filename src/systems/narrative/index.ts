@@ -1,4 +1,8 @@
-export { buildNarrativeContext, appendMonthSnapshot, buildMonthSnapshot } from "@/systems/narrative/build-narrative-context";
+export {
+  buildNarrativeContext,
+  appendMonthSnapshot,
+  buildMonthSnapshot,
+} from "@/systems/narrative/build-narrative-context";
 export { processNarrativeLayer } from "@/systems/narrative/evaluate-narrative";
 export type { ProcessNarrativeOptions } from "@/systems/narrative/evaluate-narrative";
 export type {

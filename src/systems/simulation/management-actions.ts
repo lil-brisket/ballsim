@@ -7,10 +7,7 @@
 import type { ManagementPhase } from "@/domain/ai-management-presets";
 
 export type ActionClassification =
-  | "continuity"
-  | "routine"
-  | "strategic"
-  | "userDecision";
+  "continuity" | "routine" | "strategic" | "userDecision";
 
 /**
  * Capability an action requires from its phase mode.

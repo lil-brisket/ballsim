@@ -254,7 +254,9 @@ describe("custom date filtering", () => {
   it("reports validation errors without throwing", () => {
     expect(customDateRangeError(undefined, "2026-01-02")).toMatch(/required/);
     expect(customDateRangeError("2026-01-01", undefined)).toMatch(/required/);
-    expect(customDateRangeError("not-a-date", "2026-01-02")).toMatch(/YYYY-MM-DD/);
+    expect(customDateRangeError("not-a-date", "2026-01-02")).toMatch(
+      /YYYY-MM-DD/,
+    );
     expect(customDateRangeError("2026-01-02", "2026-01-01")).toMatch(/before/);
     expect(customDateRangeError("2026-01-01", "2026-01-01")).toBeNull();
   });
@@ -318,11 +320,11 @@ describe("custom date filtering", () => {
         end: "2026-01-31",
       }),
     );
-    expect(flatten(view).map((row) => row.occurredOn).sort()).toEqual([
-      "2026-01-01",
-      "2026-01-15",
-      "2026-01-31",
-    ]);
+    expect(
+      flatten(view)
+        .map((row) => row.occurredOn)
+        .sort(),
+    ).toEqual(["2026-01-01", "2026-01-15", "2026-01-31"]);
   });
 
   it("returns zero rows for invalid, missing, or reversed custom dates — not season", () => {
@@ -340,10 +342,7 @@ describe("custom date filtering", () => {
       state,
       filters({ range: "custom", start: "bad", end: "2026-03-01" }),
     );
-    const missing = toTransactionHubView(
-      state,
-      filters({ range: "custom" }),
-    );
+    const missing = toTransactionHubView(state, filters({ range: "custom" }));
     const reversed = toTransactionHubView(
       state,
       filters({
@@ -573,12 +572,16 @@ describe("row sorting", () => {
 
     expect(newest[0]!.occurredOn).toBe("2026-05-01");
     expect(newest[newest.length - 1]!.id).toBe(early.id);
-    const sameDayNewest = newest.filter((row) => row.occurredOn === "2026-05-01");
+    const sameDayNewest = newest.filter(
+      (row) => row.occurredOn === "2026-05-01",
+    );
     expect(sameDayNewest[0]!.id >= sameDayNewest[1]!.id).toBe(true);
 
     expect(oldest[0]!.id).toBe(early.id);
     expect(oldest[oldest.length - 1]!.occurredOn).toBe("2026-05-01");
-    const sameDayOldest = oldest.filter((row) => row.occurredOn === "2026-05-01");
+    const sameDayOldest = oldest.filter(
+      (row) => row.occurredOn === "2026-05-01",
+    );
     expect(sameDayOldest[0]!.id <= sameDayOldest[1]!.id).toBe(true);
   });
 

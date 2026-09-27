@@ -98,8 +98,7 @@ describe("player-availability", () => {
         .canPlay,
     ).toBe(false);
     expect(
-      getPlayerAvailability(state, asPlayerId("p2"), asTeamId("team_1"))
-        .status,
+      getPlayerAvailability(state, asPlayerId("p2"), asTeamId("team_1")).status,
     ).toBe("suspended");
     expect(listPlayableRosterPlayerIds(state, asTeamId("team_1"))).toEqual([]);
   });

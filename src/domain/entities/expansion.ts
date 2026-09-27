@@ -3,11 +3,7 @@
  */
 
 export type ExpansionStage =
-  | "none"
-  | "proposed"
-  | "approved"
-  | "draft"
-  | "complete";
+  "none" | "proposed" | "approved" | "draft" | "complete";
 
 export const EXPANSION_STAGES: readonly ExpansionStage[] = [
   "none",

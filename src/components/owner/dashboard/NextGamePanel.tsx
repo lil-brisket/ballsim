@@ -109,7 +109,10 @@ export function NextGamePanel(props: {
                       >
                         {problem.name}
                       </PlayerEntityLink>
-                      <span className="text-rose-300/80"> — {problem.kind}</span>
+                      <span className="text-rose-300/80">
+                        {" "}
+                        — {problem.kind}
+                      </span>
                     </li>
                   ))}
                 </ul>

@@ -64,8 +64,10 @@ describe("sponsorships media/climate scaling", () => {
     const cashBase = state.business.finances[teamId]!.businessFunds;
     const lowResult = processMonthlySponsorshipRevenue(lowMedia);
     const highResult = processMonthlySponsorshipRevenue(highMedia);
-    const lowGain = lowResult.state.business.finances[teamId]!.businessFunds - cashBase;
-    const highGain = highResult.state.business.finances[teamId]!.businessFunds - cashBase;
+    const lowGain =
+      lowResult.state.business.finances[teamId]!.businessFunds - cashBase;
+    const highGain =
+      highResult.state.business.finances[teamId]!.businessFunds - cashBase;
     expect(highGain).toBeGreaterThan(lowGain);
     expect(lowGain).toBeGreaterThan(0);
   });

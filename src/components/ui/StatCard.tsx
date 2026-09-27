@@ -17,15 +17,10 @@ export function StatCard(props: {
 }) {
   const density = props.density ?? "comfortable";
   return (
-    <div
-      className={cn(panelClass, densityPadding[density], props.className)}
-    >
+    <div className={cn(panelClass, densityPadding[density], props.className)}>
       <h2 className="text-sm font-medium text-zinc-400">{props.label}</h2>
       <div
-        className={cn(
-          "mt-2 text-xl text-zinc-50",
-          props.mono && "font-mono",
-        )}
+        className={cn("mt-2 text-xl text-zinc-50", props.mono && "font-mono")}
       >
         {props.value}
       </div>

@@ -198,9 +198,7 @@ describe("preseason → regular phase-boundary simulation", () => {
 
     expect(current.world.calendar.currentDate).toBe(beforeDate);
     expect(current.competition.season.phase).toBe(beforePhase);
-    expect(current.competition.schedule.gameIds.length).toBe(
-      beforeScheduleLen,
-    );
+    expect(current.competition.schedule.gameIds.length).toBe(beforeScheduleLen);
   });
 
   it("does not open regular season without allowOwnerManagedPhaseTransitions", () => {

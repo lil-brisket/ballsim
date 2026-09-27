@@ -9,19 +9,10 @@ import {
   playerForPlayerProposal,
   teamIds,
 } from "../systems/trades/fixture";
-import {
-  acceptOffer,
-  makeOffer,
-  isFreeAgent,
-} from "@/systems/free-agency";
+import { acceptOffer, makeOffer, isFreeAgent } from "@/systems/free-agency";
 import { emptyInterestFactors } from "@/domain/free-agency/player-interest";
 import type { EvaluatePlayerInterest } from "@/domain/free-agency/player-interest";
-import {
-  asContractId,
-  asOfferId,
-  asPlayerId,
-  asTeamId,
-} from "@/domain/ids";
+import { asContractId, asOfferId, asPlayerId, asTeamId } from "@/domain/ids";
 import { createInitialGameState } from "@/state/create-initial-state";
 import { CBL_GAME_SETTINGS } from "@/domain/game-settings";
 import { createPlayer } from "../factories/player";
@@ -112,9 +103,9 @@ describe("phase5 free-agency signing invariants", () => {
     expect(state.world.calendar.currentDate).toBe(dateBefore);
     expect(state.world.players[playerId]!.teamId).toBe(teamId);
     expect(state.world.teams[teamId]!.roster).toContain(playerId);
-    expect(
-      toContractsView(state).some((c) => c.playerId === playerId),
-    ).toBe(true);
+    expect(toContractsView(state).some((c) => c.playerId === playerId)).toBe(
+      true,
+    );
     expect(toFinancesView(state).playerPayroll).toBeGreaterThan(payrollBefore);
   });
 });

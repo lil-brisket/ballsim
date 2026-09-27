@@ -1,6 +1,4 @@
-import type {
-  GameDayPromotionProjection,
-} from "@/domain/entities/game-day-promotion";
+import type { GameDayPromotionProjection } from "@/domain/entities/game-day-promotion";
 import type { Game } from "@/domain/entities/game";
 import type { TeamId } from "@/domain/ids";
 import { calculatePlayerOverall } from "@/domain/player-overall-rating";
@@ -38,9 +36,7 @@ function teamWinPct(state: GameState, teamId: string): number {
 function rosterStarAverage(state: GameState, teamId: string): number {
   const players = Object.values(state.world.players)
     .filter((player) => player.teamId === teamId)
-    .map((player) =>
-      calculatePlayerOverall(player.position, player.attributes),
-    )
+    .map((player) => calculatePlayerOverall(player.position, player.attributes))
     .sort((a, b) => b - a);
   if (players.length === 0) return 50;
   const top = players.slice(0, Math.min(3, players.length));
@@ -183,13 +179,12 @@ export function projectGameDayPromotion(
 
   return {
     attendanceMid: withPromo.attendance,
-    attendanceLow: Math.max(
-      0,
-      Math.round(withPromo.attendance * (1 - range)),
-    ),
+    attendanceLow: Math.max(0, Math.round(withPromo.attendance * (1 - range))),
     attendanceHigh: Math.round(withPromo.attendance * (1 + range)),
     netImpactMid: netMid,
-    netImpactLow: Math.round(netMid - Math.abs(revenueDiff) * range - definition.cost * 0.05),
+    netImpactLow: Math.round(
+      netMid - Math.abs(revenueDiff) * range - definition.cost * 0.05,
+    ),
     netImpactHigh: Math.round(netMid + Math.abs(revenueDiff) * range),
     attendanceDifferenceMid: attendanceDiff,
     cost: definition.cost,

@@ -8,8 +8,7 @@ export type Density = "compact" | "default" | "comfortable";
 export const focusRingClass =
   "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-500";
 
-export const panelClass =
-  "rounded-xl border border-zinc-800 bg-zinc-900/60";
+export const panelClass = "rounded-xl border border-zinc-800 bg-zinc-900/60";
 
 export const panelDashedClass =
   "rounded-xl border border-dashed border-zinc-800 bg-zinc-900/30";

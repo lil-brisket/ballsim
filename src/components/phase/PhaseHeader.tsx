@@ -24,7 +24,9 @@ export function PhaseHeader(props: {
           <h2 className="mt-0.5 text-lg font-medium text-zinc-50">
             {view.nowLabel}
           </h2>
-          <p className="mt-1 text-sm text-emerald-400/90">{view.resolved.theme}</p>
+          <p className="mt-1 text-sm text-emerald-400/90">
+            {view.resolved.theme}
+          </p>
         </div>
         <div>
           <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-zinc-500">

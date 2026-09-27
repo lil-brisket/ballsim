@@ -1,6 +1,4 @@
-export {
-  calculateDraftPickValue,
-} from "@/systems/trades/draft-pick-value";
+export { calculateDraftPickValue } from "@/systems/trades/draft-pick-value";
 export {
   applyTradeSalaryRule,
   type TradeSalaryInputs,

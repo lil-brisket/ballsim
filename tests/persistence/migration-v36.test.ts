@@ -12,7 +12,10 @@ import { bootstrapWorld } from "@/systems/world-pipeline";
 describe("v35 → v36 migration", () => {
   it("adds empty gameArchive and playerHistory", () => {
     let modern = createTestGameState({ saveId: "mig_v36" });
-    modern = bootstrapWorld(modern, createSeededRng(modern.meta.rngState)).state;
+    modern = bootstrapWorld(
+      modern,
+      createSeededRng(modern.meta.rngState),
+    ).state;
 
     const parsed = JSON.parse(serializeGameState(modern)) as Record<
       string,

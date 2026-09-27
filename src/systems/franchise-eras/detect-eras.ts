@@ -53,7 +53,8 @@ function toSignals(season: FranchiseSeasonRecord): SeasonSignals {
     franchiseValue: season.franchiseValue,
     meanFacility: meanFacility(season.facilityLevels),
     attendance: season.attendance,
-    financialStress: season.businessFunds <= 0 || season.netIncome < -20_000_000,
+    financialStress:
+      season.businessFunds <= 0 || season.netIncome < -20_000_000,
   };
 }
 
@@ -66,7 +67,12 @@ function classifyWindow(
   window: SeasonSignals[],
   priorWinPct: number | null,
   franchiseAge: number,
-): { classification: FranchiseEraClassification; confidence: number; drivers: EraDriver[]; signals: Record<string, number> } {
+): {
+  classification: FranchiseEraClassification;
+  confidence: number;
+  drivers: EraDriver[];
+  signals: Record<string, number>;
+} {
   const win = mean(window.map((s) => s.winPct));
   const playoffRate =
     window.filter((s) => s.playoff).length / Math.max(1, window.length);
@@ -89,7 +95,11 @@ function classifyWindow(
     franchiseAge,
   };
 
-  if (franchiseAge <= 2 && window[0]!.seasonYear === window[window.length - 1]!.seasonYear || franchiseAge <= 2) {
+  if (
+    (franchiseAge <= 2 &&
+      window[0]!.seasonYear === window[window.length - 1]!.seasonYear) ||
+    franchiseAge <= 2
+  ) {
     // Prefer new_franchise for earliest seasons only when age is small
   }
 
@@ -353,9 +363,7 @@ export function detectFranchiseEras(
         ? signals.slice(Math.max(0, lookbackStart - 3), lookbackStart)
         : [];
     const priorWin =
-      priorWindow.length > 0
-        ? mean(priorWindow.map((s) => s.winPct))
-        : null;
+      priorWindow.length > 0 ? mean(priorWindow.map((s) => s.winPct)) : null;
     const age = signals[i]!.seasonYear - founded + 1;
     const classified = classifyWindow(window, priorWin, age);
 

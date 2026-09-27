@@ -73,7 +73,11 @@ describe("resolveFranchisePreferences", () => {
     const id = identity("rebuild", { spending: 40, patience: 30, risk: 50 });
     const calm = resolveFranchisePreferencesFromParts(
       id,
-      baseContext({ performancePressure: 0.1, winPct: 0.55, rosterStrength: 62 }),
+      baseContext({
+        performancePressure: 0.1,
+        winPct: 0.55,
+        rosterStrength: 62,
+      }),
     );
     const pressed = resolveFranchisePreferencesFromParts(
       id,

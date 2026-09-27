@@ -26,7 +26,7 @@ describe("simulation analytics summarize", () => {
   it("computes HHI and championship concentration", () => {
     expect(herfindahlHirschmanIndex([0.5, 0.5])).toBeCloseTo(0.5);
     expect(championshipConcentration([5, 3, 2])).toBeCloseTo(
-      (0.5) ** 2 + (0.3) ** 2 + (0.2) ** 2,
+      0.5 ** 2 + 0.3 ** 2 + 0.2 ** 2,
     );
     expect(championshipConcentration([])).toBe(0);
   });
@@ -50,7 +50,11 @@ describe("simulation analytics correlations", () => {
       evaluateRelationship(0.02, { kind: "directional_positive", minR: 0.15 }),
     ).toContain("expected positive");
     expect(
-      evaluateRelationship(0.3, { kind: "weak_positive", minR: 0.05, maxR: 0.7 }),
+      evaluateRelationship(0.3, {
+        kind: "weak_positive",
+        minR: 0.05,
+        maxR: 0.7,
+      }),
     ).toBeNull();
   });
 });

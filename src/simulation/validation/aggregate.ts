@@ -33,15 +33,11 @@ export function summarizeMetric(values: readonly number[]): MetricSummary {
   const sorted = sortedCopy(values);
   const mid = Math.floor(n / 2);
   const median =
-    n % 2 === 1
-      ? sorted[mid]!
-      : (sorted[mid - 1]! + sorted[mid]!) / 2;
+    n % 2 === 1 ? sorted[mid]! : (sorted[mid - 1]! + sorted[mid]!) / 2;
   return { n, mean, median, min, max, stdev };
 }
 
-function summarizeNullable(
-  values: readonly (number | null)[],
-): MetricSummary {
+function summarizeNullable(values: readonly (number | null)[]): MetricSummary {
   return summarizeMetric(
     values.filter((value): value is number => value !== null),
   );

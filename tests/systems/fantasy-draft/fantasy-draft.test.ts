@@ -247,30 +247,26 @@ describe("fantasy draft pause and timer", () => {
 });
 
 describe("fantasy draft auto-pick and completion", () => {
-  it(
-    "CPU advance completes a small league and leaves free agents",
-    () => {
-      let { state } = startDraft(createFantasyState(8));
-      state = setFantasyDraftAutoPickAll(state, true);
+  it("CPU advance completes a small league and leaves free agents", () => {
+    let { state } = startDraft(createFantasyState(8));
+    state = setFantasyDraftAutoPickAll(state, true);
 
-      const advanced = advanceFantasyDraftClock(state, TEST_NOW_ISO);
-      state = advanced.state;
+    const advanced = advanceFantasyDraftClock(state, TEST_NOW_ISO);
+    state = advanced.state;
 
-      expect(state.world.fantasyDraft!.status).toBe("complete");
-      expect(state.world.fantasyDraft!.currentPickNumber).toBeNull();
-      expect(state.world.fantasyDraft!.selections).toHaveLength(
-        state.world.fantasyDraft!.totalPicks,
-      );
+    expect(state.world.fantasyDraft!.status).toBe("complete");
+    expect(state.world.fantasyDraft!.currentPickNumber).toBeNull();
+    expect(state.world.fantasyDraft!.selections).toHaveLength(
+      state.world.fantasyDraft!.totalPicks,
+    );
 
-      for (const team of Object.values(state.world.teams)) {
-        expect(team.roster).toHaveLength(FANTASY_DRAFT_PICKS_PER_TEAM);
-      }
+    for (const team of Object.values(state.world.teams)) {
+      expect(team.roster).toHaveLength(FANTASY_DRAFT_PICKS_PER_TEAM);
+    }
 
-      const fas = listFreeAgents(state);
-      expect(fas.playerIds.length).toBeGreaterThan(0);
-    },
-    60_000,
-  );
+    const fas = listFreeAgents(state);
+    expect(fas.playerIds.length).toBeGreaterThan(0);
+  }, 60_000);
 
   it("survives serialize/deserialize mid-draft", () => {
     let { state } = startDraft(createFantasyState(8));
@@ -294,51 +290,47 @@ describe("fantasy draft auto-pick and completion", () => {
 });
 
 describe("fantasy draft 12-team stress (reduced 30-team)", () => {
-  it(
-    "completes full snake draft for 12 teams with auto-picks",
-    () => {
-      let state = createFantasyState(12);
-      const teamIds = Object.keys(state.world.teams) as TeamId[];
-      state = {
-        ...state,
-        user: {
-          ...state.user,
-          ownedTeamIds: [teamIds[0]!, teamIds[1]!],
-          activeOwnerTeamId: teamIds[0]!,
-          ownedFranchises: {
-            [teamIds[0]!]:
-              state.user.ownedFranchises[state.user.activeOwnerTeamId]!,
-            [teamIds[1]!]: {
-              ...state.user.ownedFranchises[state.user.activeOwnerTeamId]!,
-            },
+  it("completes full snake draft for 12 teams with auto-picks", () => {
+    let state = createFantasyState(12);
+    const teamIds = Object.keys(state.world.teams) as TeamId[];
+    state = {
+      ...state,
+      user: {
+        ...state.user,
+        ownedTeamIds: [teamIds[0]!, teamIds[1]!],
+        activeOwnerTeamId: teamIds[0]!,
+        ownedFranchises: {
+          [teamIds[0]!]:
+            state.user.ownedFranchises[state.user.activeOwnerTeamId]!,
+          [teamIds[1]!]: {
+            ...state.user.ownedFranchises[state.user.activeOwnerTeamId]!,
           },
         },
-      };
+      },
+    };
 
-      state = setDefaultDraftOrder(state);
-      state = confirmFantasyDraftOrder(state, TEST_NOW_ISO);
-      state = setFantasyDraftAutoPickAll(state, true);
+    state = setDefaultDraftOrder(state);
+    state = confirmFantasyDraftOrder(state, TEST_NOW_ISO);
+    state = setFantasyDraftAutoPickAll(state, true);
 
-      const advanced = advanceFantasyDraftClock(state, TEST_NOW_ISO);
-      state = advanced.state;
+    const advanced = advanceFantasyDraftClock(state, TEST_NOW_ISO);
+    state = advanced.state;
 
-      expect(state.world.fantasyDraft!.status).toBe("complete");
-      expect(state.world.fantasyDraft!.selections).toHaveLength(
-        12 * FANTASY_DRAFT_PICKS_PER_TEAM,
-      );
+    expect(state.world.fantasyDraft!.status).toBe("complete");
+    expect(state.world.fantasyDraft!.selections).toHaveLength(
+      12 * FANTASY_DRAFT_PICKS_PER_TEAM,
+    );
 
-      const seen = new Set<string>();
-      for (const team of Object.values(state.world.teams)) {
-        expect(team.roster).toHaveLength(FANTASY_DRAFT_PICKS_PER_TEAM);
-        for (const id of team.roster) {
-          expect(seen.has(String(id))).toBe(false);
-          seen.add(String(id));
-        }
+    const seen = new Set<string>();
+    for (const team of Object.values(state.world.teams)) {
+      expect(team.roster).toHaveLength(FANTASY_DRAFT_PICKS_PER_TEAM);
+      for (const id of team.roster) {
+        expect(seen.has(String(id))).toBe(false);
+        seen.add(String(id));
       }
-      expect(listFreeAgents(state).playerIds.length).toBeGreaterThan(0);
-    },
-    120_000,
-  );
+    }
+    expect(listFreeAgents(state).playerIds.length).toBeGreaterThan(0);
+  }, 120_000);
 });
 
 describe("fantasy draft queue and next pick", () => {

@@ -76,10 +76,7 @@ export function SimulationSummaryModal(props: {
         : undefined,
     })) ?? [];
 
-  const attention = [
-    ...(props.attentionItems ?? []),
-    ...attentionFromInjuries,
-  ];
+  const attention = [...(props.attentionItems ?? []), ...attentionFromInjuries];
 
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 p-4 sm:items-center">
@@ -178,10 +175,7 @@ export function SimulationSummaryModal(props: {
                     className="rounded-md border border-amber-800/40 bg-amber-950/20 px-3 py-2 text-sm text-amber-100"
                   >
                     {item.href ? (
-                      <Link
-                        href={item.href}
-                        className="hover:text-amber-300"
-                      >
+                      <Link href={item.href} className="hover:text-amber-300">
                         {item.title}
                       </Link>
                     ) : (

@@ -3,7 +3,10 @@
  */
 
 import type { GameState } from "@/state/game-state";
-import type { FanVoteCampaign, FanVoteCandidate } from "@/domain/entities/season-events";
+import type {
+  FanVoteCampaign,
+  FanVoteCandidate,
+} from "@/domain/entities/season-events";
 
 export type FanVoteLeaderRow = {
   rank: number;
@@ -43,7 +46,9 @@ function movementOf(candidate: FanVoteCandidate): FanVoteLeaderRow["movement"] {
 
 export function toFanVotingHubView(state: GameState): FanVotingHubView {
   const saveId = state.meta.saveId;
-  const campaigns = Object.values(state.competition.seasonEvents?.fanVoting ?? {});
+  const campaigns = Object.values(
+    state.competition.seasonEvents?.fanVoting ?? {},
+  );
   const campaign = campaigns[0];
   if (!campaign) {
     return {

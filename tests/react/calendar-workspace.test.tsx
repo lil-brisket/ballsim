@@ -19,9 +19,7 @@ import { CalendarWorkspace } from "@/components/calendar/CalendarWorkspace";
 import * as simulationActivity from "@/components/game/simulation-activity";
 import { SimulationActivityProvider } from "@/components/game/simulation-activity";
 
-function makeView(
-  overrides: Partial<CalendarPageView> = {},
-): CalendarPageView {
+function makeView(overrides: Partial<CalendarPageView> = {}): CalendarPageView {
   const currentDate = "2026-09-13";
   const selectedDate = "2026-09-18";
   const teamGame = {
@@ -233,9 +231,7 @@ describe("CalendarWorkspace redesign", () => {
         />
       </SimulationActivityProvider>,
     );
-    fireEvent.click(
-      screen.getByRole("button", { name: /Next Game →/i }),
-    );
+    fireEvent.click(screen.getByRole("button", { name: /Next Game →/i }));
     expect(push).toHaveBeenCalled();
     const href = String(push.mock.calls[0]?.[0] ?? "");
     expect(href).toContain("date=2026-09-18");
@@ -270,7 +266,9 @@ describe("CalendarWorkspace redesign", () => {
         />
       </SimulationActivityProvider>,
     );
-    expect(screen.queryByRole("button", { name: /Simulate to date/i })).toBeNull();
+    expect(
+      screen.queryByRole("button", { name: /Simulate to date/i }),
+    ).toBeNull();
     unmount();
   });
 

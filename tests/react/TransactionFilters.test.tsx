@@ -1,5 +1,11 @@
 import { describe, expect, it, vi, beforeEach, afterEach } from "vitest";
-import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  within,
+} from "@testing-library/react";
 import { addCalendarDays } from "@/domain/calendar-date";
 
 const { pushMock } = vi.hoisted(() => ({ pushMock: vi.fn() }));

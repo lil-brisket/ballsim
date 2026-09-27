@@ -1,4 +1,9 @@
-import { asPlayerId, type ContractId, type PlayerId, type TeamId } from "@/domain/ids";
+import {
+  asPlayerId,
+  type ContractId,
+  type PlayerId,
+  type TeamId,
+} from "@/domain/ids";
 import {
   createPlayer,
   PLAYER_POSITIONS,
@@ -66,8 +71,7 @@ export function generatePlayerWithRng(
   rng: Rng,
   options: GeneratePlayerOptions = {},
 ): Player {
-  const playerId =
-    options.id ?? asPlayerId(`player_gen_${rng.getState()}`);
+  const playerId = options.id ?? asPlayerId(`player_gen_${rng.getState()}`);
 
   const quality = rng.nextInt(MIN_PLAYER_QUALITY, MAX_PLAYER_QUALITY);
 

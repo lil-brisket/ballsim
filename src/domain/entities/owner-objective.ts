@@ -15,11 +15,7 @@ export function isOwnerObjectiveStatus(
 }
 
 export type OwnerObjectiveCategory =
-  | "financial"
-  | "competitive"
-  | "franchise"
-  | "strategic"
-  | "long_term";
+  "financial" | "competitive" | "franchise" | "strategic" | "long_term";
 
 export const OWNER_OBJECTIVE_CATEGORIES: readonly OwnerObjectiveCategory[] = [
   "financial",
@@ -36,10 +32,7 @@ export function isOwnerObjectiveCategory(
 }
 
 export type OwnerObjectiveLifecycle =
-  | "seasonal"
-  | "multi_season"
-  | "career"
-  | "milestone";
+  "seasonal" | "multi_season" | "career" | "milestone";
 
 export const OWNER_OBJECTIVE_LIFECYCLES: readonly OwnerObjectiveLifecycle[] = [
   "seasonal",
@@ -158,7 +151,9 @@ export type OwnerObjectiveInput = {
  * status, or target from game state. Does not enforce objective-type-
  * specific business rules (e.g. required target for minimum_win_total).
  */
-export function createOwnerObjective(input: OwnerObjectiveInput): OwnerObjective {
+export function createOwnerObjective(
+  input: OwnerObjectiveInput,
+): OwnerObjective {
   assertNonEmptyId(input.id, "id");
   assertObjectiveType(input.type);
   assertNonEmptyDescription(input.description);

@@ -131,7 +131,8 @@ export const MANAGEMENT_PHASE_METADATA: Record<
     phase: "draftSelection",
     categoryId: "draft",
     label: MANAGEMENT_PHASE_LABELS.draftSelection,
-    description: "Make draft selections on behalf of the team when on the clock.",
+    description:
+      "Make draft selections on behalf of the team when on the clock.",
     playerVisible: true,
     delegationSupported: true,
     availability: "supported",
@@ -151,8 +152,7 @@ export const MANAGEMENT_PHASE_METADATA: Record<
     phase: "frontOfficeStaff",
     categoryId: "coaching",
     label: MANAGEMENT_PHASE_LABELS.frontOfficeStaff,
-    description:
-      "Hire required front-office staff when vacancies arise.",
+    description: "Hire required front-office staff when vacancies arise.",
     playerVisible: true,
     delegationSupported: true,
     availability: "supported",
@@ -316,10 +316,7 @@ export function visiblePhasesForCategory(
   );
 }
 
-export type CategoryDelegationState =
-  | "all"
-  | "partial"
-  | "none";
+export type CategoryDelegationState = "all" | "partial" | "none";
 
 export function categoryDelegationState(
   phases: AiAssistancePhases,

@@ -49,13 +49,7 @@ export const STAFF_ROLE_DISPLAY: Record<StaffRole, string> = {
 };
 
 export type StaffEffectModuleKey =
-  | "gm"
-  | "finance"
-  | "coach"
-  | "development"
-  | "scout"
-  | "medical"
-  | "pr";
+  "gm" | "finance" | "coach" | "development" | "scout" | "medical" | "pr";
 
 export const STAFF_ROLE_EFFECT_MODULE: Record<StaffRole, StaffEffectModuleKey> =
   {

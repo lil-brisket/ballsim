@@ -11,7 +11,10 @@ import { RotationHealth } from "@/components/team-management/RotationHealth";
 import { RotationSettings } from "@/components/team-management/RotationSettings";
 import { RotationTable } from "@/components/team-management/RotationTable";
 import { StartingFiveEditor } from "@/components/team-management/StartingFiveEditor";
-import type { LineupView, RotationView } from "@/state/team-management-selectors";
+import type {
+  LineupView,
+  RotationView,
+} from "@/state/team-management-selectors";
 import {
   applyOptimizedManagement,
   buildOptimizeChangelog,
@@ -103,7 +106,10 @@ export function LineupRotationEditor(props: {
       const formData = new FormData();
       formData.set("saveId", props.saveId);
       formData.set("teamId", props.rotation.teamId);
-      formData.set("startingLineupJson", JSON.stringify(payload.startingLineup));
+      formData.set(
+        "startingLineupJson",
+        JSON.stringify(payload.startingLineup),
+      );
       formData.set("benchJson", JSON.stringify(payload.bench));
       formData.set("inactiveJson", JSON.stringify(payload.inactive));
       formData.set("rotationJson", JSON.stringify(payload.rotation));
@@ -215,9 +221,7 @@ export function LineupRotationEditor(props: {
         preset={state.preset}
         optimizing={optimizing}
         canUndo={undoSnapshot != null || dirty}
-        onPresetChange={(preset) =>
-          markDirty({ ...state, preset })
-        }
+        onPresetChange={(preset) => markDirty({ ...state, preset })}
         onOptimize={handleOptimize}
         onUndo={handleUndo}
       />

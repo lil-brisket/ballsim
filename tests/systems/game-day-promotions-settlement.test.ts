@@ -12,10 +12,7 @@ import { applyMediaFromDomainEvents } from "@/systems/media";
 import { bootstrapWorld } from "@/systems/world-pipeline";
 import { createDomainEvent } from "@/domain/events";
 
-function setupScheduledThenFinal(
-  promotionId: string,
-  daysAhead = 30,
-) {
+function setupScheduledThenFinal(promotionId: string, daysAhead = 30) {
   let state = createInitialGameState({
     saveId: "gdp_settle",
     rngSeed: 42,
@@ -110,9 +107,8 @@ describe("game-day promotions settlement", () => {
   });
 
   it("ticket promo can raise attendance while lowering ticket revenue", () => {
-    const { state, teamId, gameId, rng } = setupScheduledThenFinal(
-      "discount_night",
-    );
+    const { state, teamId, gameId, rng } =
+      setupScheduledThenFinal("discount_night");
     const settled = processHomeGameTicketRevenue(state, rng);
     const result =
       settled.state.business.gameDayPromotionsByTeamId[teamId]!.results[gameId];
@@ -128,8 +124,7 @@ describe("game-day promotions settlement", () => {
 
   it("does not double-apply media and fan bumps", () => {
     const { state, teamId, rng } = setupScheduledThenFinal("charity_night");
-    const sentimentBefore =
-      state.business.franchiseOps[teamId]!.fanSentiment;
+    const sentimentBefore = state.business.franchiseOps[teamId]!.fanSentiment;
     const mediaBefore = state.business.franchiseOps[teamId]!.mediaAttention;
 
     const settled = processHomeGameTicketRevenue(state, rng);
@@ -156,9 +151,8 @@ describe("game-day promotions settlement", () => {
   });
 
   it("giveaway quantity caps distribution", () => {
-    const { state, teamId, gameId, rng } = setupScheduledThenFinal(
-      "jersey_giveaway",
-    );
+    const { state, teamId, gameId, rng } =
+      setupScheduledThenFinal("jersey_giveaway");
     const settled = processHomeGameTicketRevenue(state, rng);
     const result =
       settled.state.business.gameDayPromotionsByTeamId[teamId]!.results[gameId];
@@ -210,12 +204,8 @@ describe("game-day promotions basketball isolation", () => {
     })();
 
     const before = state.competition.games[gameId]!;
-    const after = scheduleGameDayPromotion(
-      state,
-      teamId,
-      gameId,
-      "kids_night",
-    ).state.competition.games[gameId]!;
+    const after = scheduleGameDayPromotion(state, teamId, gameId, "kids_night")
+      .state.competition.games[gameId]!;
     expect(after.score).toEqual(before.score);
     expect(after.playerStats).toEqual(before.playerStats);
     expect(after.status).toBe("scheduled");

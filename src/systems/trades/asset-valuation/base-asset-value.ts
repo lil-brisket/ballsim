@@ -39,7 +39,10 @@ export function getBaseAssetValue(
   return basePickValue(state, asset.draftPickId);
 }
 
-function basePlayerValue(state: GameState, playerId: PlayerId): AssetValueResult {
+function basePlayerValue(
+  state: GameState,
+  playerId: PlayerId,
+): AssetValueResult {
   const player = state.world.players[playerId];
   if (!player) {
     return { value: 0, reasons: ["Unknown player"] };
@@ -51,8 +54,7 @@ function basePlayerValue(state: GameState, playerId: PlayerId): AssetValueResult
 
   const ability = overall;
   const potentialGap = player.potential.overall - overall;
-  const potential =
-    overall + Math.max(-8, Math.min(15, potentialGap * 0.55));
+  const potential = overall + Math.max(-8, Math.min(15, potentialGap * 0.55));
   if (potentialGap >= 8) {
     reasons.push("High upside remaining");
   } else if (potentialGap <= -3) {
@@ -81,7 +83,10 @@ function basePlayerValue(state: GameState, playerId: PlayerId): AssetValueResult
   return { value: Math.round(value * 10) / 10, reasons };
 }
 
-function basePickValue(state: GameState, pickId: DraftPickId): AssetValueResult {
+function basePickValue(
+  state: GameState,
+  pickId: DraftPickId,
+): AssetValueResult {
   const pick = state.world.draftPicks[pickId];
   if (!pick || pick.status !== "available") {
     return { value: 0, reasons: ["Unavailable pick"] };
@@ -97,7 +102,10 @@ function basePickValue(state: GameState, pickId: DraftPickId): AssetValueResult 
   if (projection.confidence === "low") {
     reasons.push("High projection uncertainty");
   }
-  if (projection.tier === "strong_lottery" || projection.tier === "likely_lottery") {
+  if (
+    projection.tier === "strong_lottery" ||
+    projection.tier === "likely_lottery"
+  ) {
     reasons.push("High lottery potential");
   }
   if (pick.round === 2) {
@@ -106,7 +114,9 @@ function basePickValue(state: GameState, pickId: DraftPickId): AssetValueResult 
 
   // Soft floor near legacy constants so mid-pack R1 stays near 80.
   const floor =
-    pick.round === 1 ? DRAFT_PICK_VALUE_ROUND_1 * 0.55 : DRAFT_PICK_VALUE_ROUND_2 * 0.55;
+    pick.round === 1
+      ? DRAFT_PICK_VALUE_ROUND_1 * 0.55
+      : DRAFT_PICK_VALUE_ROUND_2 * 0.55;
   return {
     value: Math.round(Math.max(floor, value) * 10) / 10,
     reasons,
@@ -138,8 +148,7 @@ function performanceValue(
   reasons: string[],
 ): number {
   const { games, seasonPts, recentPts } = collectPerformance(state, player.id);
-  const expected =
-    overall * RECENT_PERFORMANCE_WEIGHT.expectedPtsPerOvr;
+  const expected = overall * RECENT_PERFORMANCE_WEIGHT.expectedPtsPerOvr;
   if (games === 0) {
     return overall;
   }
@@ -163,7 +172,10 @@ function performanceValue(
   const delta = blended - expected;
   if (delta <= -3 && games >= RECENT_PERFORMANCE_WEIGHT.minGamesForRecent) {
     reasons.push("Recent production below expectations");
-  } else if (delta >= 3 && games >= RECENT_PERFORMANCE_WEIGHT.minGamesForRecent) {
+  } else if (
+    delta >= 3 &&
+    games >= RECENT_PERFORMANCE_WEIGHT.minGamesForRecent
+  ) {
     reasons.push("Sustained overperformance");
   }
 
@@ -188,9 +200,7 @@ function collectPerformance(
   const window = RECENT_PERFORMANCE_WEIGHT.rollingWindow;
   const recent = rows.slice(-window);
   const recentPts =
-    recent.length > 0
-      ? recent.reduce((a, b) => a + b, 0) / recent.length
-      : 0;
+    recent.length > 0 ? recent.reduce((a, b) => a + b, 0) / recent.length : 0;
   return { games, seasonPts, recentPts };
 }
 

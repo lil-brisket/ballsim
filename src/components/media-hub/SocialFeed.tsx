@@ -19,9 +19,7 @@ export function SocialFeed(props: {
 }) {
   if (props.posts.length === 0) {
     return (
-      <EmptyState
-        message={props.emptyMessage ?? "No social reactions yet."}
-      />
+      <EmptyState message={props.emptyMessage ?? "No social reactions yet."} />
     );
   }
 

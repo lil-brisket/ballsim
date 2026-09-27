@@ -51,7 +51,9 @@ describe("staff generation / ratings", () => {
     });
     state = bootstrapWorld(state, createSeededRng(state.meta.rngState)).state;
     for (const role of STAFF_ROLES) {
-      const found = Object.values(state.world.staff).some((s) => s.role === role);
+      const found = Object.values(state.world.staff).some(
+        (s) => s.role === role,
+      );
       expect(found).toBe(true);
     }
   });

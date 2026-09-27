@@ -139,9 +139,9 @@ describe("action-center-selectors", () => {
       saveId: "s1",
     });
     const team = filterTeamDecisions(view.items);
-    expect(team.every((i) => i.category === "roster" || i.relevance === "team")).toBe(
-      true,
-    );
+    expect(
+      team.every((i) => i.category === "roster" || i.relevance === "team"),
+    ).toBe(true);
     expect(team.some((i) => i.id === "r1")).toBe(true);
   });
 

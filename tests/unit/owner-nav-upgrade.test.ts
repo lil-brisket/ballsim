@@ -46,9 +46,7 @@ describe("owner season context", () => {
   });
 
   it("isRelocationAccessible requires offseason", () => {
-    expect(isRelocationAccessible(baseState({ phase: "regular" }))).toBe(
-      false,
-    );
+    expect(isRelocationAccessible(baseState({ phase: "regular" }))).toBe(false);
     expect(isRelocationAccessible(baseState({ phase: "postseason" }))).toBe(
       false,
     );

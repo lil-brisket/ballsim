@@ -36,8 +36,10 @@ describe("incremental standings parity", () => {
     expect(newlyFinalized.length).toBeGreaterThan(0);
 
     // Reset standings to empty rows, then apply incrementally
-    const byTeamId: Record<string, ReturnType<typeof createEmptyTeamStanding>> =
-      {};
+    const byTeamId: Record<
+      string,
+      ReturnType<typeof createEmptyTeamStanding>
+    > = {};
     for (const team of Object.values(state.world.teams)) {
       byTeamId[team.id] = createEmptyTeamStanding(team.id);
     }
@@ -115,10 +117,7 @@ describe("schedule date index", () => {
       homeTeamSnapshot: null,
       awayTeamSnapshot: null,
     });
-    const byDate = buildGameIdsByDate(
-      { g1, g2, g3 },
-      [g1.id, g2.id, g3.id],
-    );
+    const byDate = buildGameIdsByDate({ g1, g2, g3 }, [g1.id, g2.id, g3.id]);
     expect(byDate["2026-10-01"]).toEqual([g1.id, g2.id]);
     expect(byDate["2026-10-02"]).toEqual([g3.id]);
   });

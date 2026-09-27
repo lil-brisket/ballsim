@@ -27,9 +27,7 @@ type FilterOption = {
 function seedDraft(team: TeamListEntry): ControlledFranchiseIdentityDraft {
   const branding = team.branding;
   const logoId: TeamLogoId =
-    branding && isTeamLogoId(branding.logoId)
-      ? branding.logoId
-      : "basketball";
+    branding && isTeamLogoId(branding.logoId) ? branding.logoId : "basketball";
   return {
     teamId: team.id,
     city: team.city,
@@ -105,10 +103,7 @@ function buildDivisionOptions(
       ? teams
       : teams.filter((team) => team.conferenceId === conferenceFilter);
 
-  const byId = new Map<
-    string,
-    { name: string; conferenceName: string }
-  >();
+  const byId = new Map<string, { name: string; conferenceName: string }>();
   for (const team of scoped) {
     if (!byId.has(team.divisionId) && team.divisionName) {
       byId.set(team.divisionId, {
@@ -231,9 +226,7 @@ export function OwnerMultiTeamPick(props: {
   );
   const divisionOptions = useMemo(
     () =>
-      divisionsEnabled
-        ? buildDivisionOptions(teams, conferenceFilter)
-        : [],
+      divisionsEnabled ? buildDivisionOptions(teams, conferenceFilter) : [],
     [teams, divisionsEnabled, conferenceFilter],
   );
 
@@ -247,9 +240,7 @@ export function OwnerMultiTeamPick(props: {
   const showConferenceFilter =
     controlledTeamCount > 1 && conferenceOptions.length >= 2;
   const showDivisionFilter =
-    controlledTeamCount > 1 &&
-    divisionsEnabled &&
-    divisionOptions.length >= 2;
+    controlledTeamCount > 1 && divisionsEnabled && divisionOptions.length >= 2;
 
   const pinnedTeams = useMemo(
     () => sortedTeams.filter((team) => selectedIdSet.has(team.id)),
@@ -308,8 +299,7 @@ export function OwnerMultiTeamPick(props: {
 
   const exactCount = selectedIds.length === controlledTeamCount;
   const allValid =
-    exactCount &&
-    selectedIds.every((id) => validationById[id]?.ok === true);
+    exactCount && selectedIds.every((id) => validationById[id]?.ok === true);
 
   function ensureDraft(team: TeamListEntry): ControlledFranchiseIdentityDraft {
     return drafts[team.id] ?? seedDraft(team);
@@ -499,8 +489,9 @@ export function OwnerMultiTeamPick(props: {
             : `Select ${controlledTeamCount} franchises`}
         </h2>
         <p className="mt-1 text-sm text-zinc-400">
-          Select the franchises you want to control, then customize each team&apos;s
-          identity. Generated names, colours, and logos are used as defaults.
+          Select the franchises you want to control, then customize each
+          team&apos;s identity. Generated names, colours, and logos are used as
+          defaults.
         </p>
       </div>
 

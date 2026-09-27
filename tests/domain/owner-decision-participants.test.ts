@@ -16,8 +16,16 @@ function stubPendingDecision(
   const offeringTeamId =
     participantTeamIds.find((id) => id !== primaryTeamId) ?? primaryTeamId;
   const proposal = {
-    sideA: { teamId: offeringTeamId, playerIds: [] as never[], draftPickIds: [] as never[] },
-    sideB: { teamId: primaryTeamId, playerIds: [] as never[], draftPickIds: [] as never[] },
+    sideA: {
+      teamId: offeringTeamId,
+      playerIds: [] as never[],
+      draftPickIds: [] as never[],
+    },
+    sideB: {
+      teamId: primaryTeamId,
+      playerIds: [] as never[],
+      draftPickIds: [] as never[],
+    },
   };
   return {
     id: asOwnerDecisionId(`od_test_${primaryTeamId}_${blockingLevel}`),
@@ -57,7 +65,11 @@ describe("owner-decision participants", () => {
 
   it("getPendingDecisionsForTeam returns decisions involving that franchise", () => {
     const blockingOnA = stubPendingDecision(teamA, [teamA, teamB], "blocking");
-    const nonBlockingOnB = stubPendingDecision(teamB, [teamB, teamC], "non_blocking");
+    const nonBlockingOnB = stubPendingDecision(
+      teamB,
+      [teamB, teamC],
+      "non_blocking",
+    );
     const user = userWithDecisions([blockingOnA, nonBlockingOnB]);
 
     expect(getPendingDecisionsForTeam(user, teamA)).toEqual([blockingOnA]);
@@ -71,7 +83,11 @@ describe("owner-decision participants", () => {
 
   it("getBlockingOwnerDecisions filters to blockingLevel blocking only", () => {
     const blocking = stubPendingDecision(teamA, [teamA, teamB], "blocking");
-    const nonBlocking = stubPendingDecision(teamB, [teamB, teamC], "non_blocking");
+    const nonBlocking = stubPendingDecision(
+      teamB,
+      [teamB, teamC],
+      "non_blocking",
+    );
     const user = userWithDecisions([blocking, nonBlocking]);
 
     expect(getBlockingOwnerDecisions(user)).toEqual([blocking]);

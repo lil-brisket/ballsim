@@ -7,11 +7,7 @@ import {
 import { validateGameState } from "@/persistence/validate-game-state";
 import { createGame } from "@/domain/entities/game";
 import { createSeededRng } from "@/domain/rng";
-import {
-  asGameId,
-  asSeasonId,
-  asTeamId,
-} from "@/domain/ids";
+import { asGameId, asSeasonId, asTeamId } from "@/domain/ids";
 import { GAME_STATE_SCHEMA_VERSION } from "@/state/game-state";
 import { bootstrapWorld } from "@/systems/world-pipeline";
 
@@ -68,7 +64,7 @@ describe("v34 → v35 migration", () => {
           freeThrowsMade: 10,
           freeThrowsAttempted: 12,
           touches: 0,
-        started: false,
+          started: false,
         },
         {
           playerId: awayPlayer.id,
@@ -92,7 +88,7 @@ describe("v34 → v35 migration", () => {
           freeThrowsMade: 10,
           freeThrowsAttempted: 12,
           touches: 0,
-        started: false,
+          started: false,
         },
       ],
       homeTeamSnapshot: {
@@ -100,24 +96,24 @@ describe("v34 → v35 migration", () => {
         city: "Old City",
         name: "Old Name",
         abbreviation: "OLD",
-      branding: {
-        primaryColor: "#0B1F3A",
-        secondaryColor: "#C4CED4",
-        accentColor: "#F5B800",
-        logoId: "shield",
-      },
+        branding: {
+          primaryColor: "#0B1F3A",
+          secondaryColor: "#C4CED4",
+          accentColor: "#F5B800",
+          logoId: "shield",
+        },
       },
       awayTeamSnapshot: {
         teamId: awayTeamId,
         city: "Other",
         name: "Side",
         abbreviation: "OTH",
-      branding: {
-        primaryColor: "#0B1F3A",
-        secondaryColor: "#C4CED4",
-        accentColor: "#F5B800",
-        logoId: "shield",
-      },
+        branding: {
+          primaryColor: "#0B1F3A",
+          secondaryColor: "#C4CED4",
+          accentColor: "#F5B800",
+          logoId: "shield",
+        },
       },
     });
 
@@ -159,7 +155,6 @@ describe("v34 → v35 migration", () => {
     const loaded = deserializeGameState(JSON.stringify(parsed));
     expect(loaded.meta.schemaVersion).toBe(GAME_STATE_SCHEMA_VERSION);
 
-
     const migrated = loaded.competition.games[game.id]!;
     expect(migrated.competitionType).toBe("regular_season");
     expect(migrated.homeTeamSnapshot).toBeNull();
@@ -173,9 +168,7 @@ describe("v34 → v35 migration", () => {
   it("infers playoffs competitionType from playoff_ id prefix", () => {
     const modern = bootstrappedState("mig_v35_po");
     const teamIds = Object.keys(modern.world.teams);
-    const gameId = asGameId(
-      `playoff_${modern.competition.season.id}_g0`,
-    );
+    const gameId = asGameId(`playoff_${modern.competition.season.id}_g0`);
     const parsed = JSON.parse(serializeGameState(modern)) as Record<
       string,
       unknown
@@ -199,8 +192,6 @@ describe("v34 → v35 migration", () => {
     };
 
     const loaded = deserializeGameState(JSON.stringify(parsed));
-    expect(loaded.competition.games[gameId]!.competitionType).toBe(
-      "playoffs",
-    );
+    expect(loaded.competition.games[gameId]!.competitionType).toBe("playoffs");
   });
 });

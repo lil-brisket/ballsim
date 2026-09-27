@@ -22,7 +22,8 @@ import {
 } from "../factories/player";
 
 function prospectFixture(
-  overrides: Partial<DlProspectRowView> & Pick<DlProspectRowView, "playerId" | "name" | "readiness">,
+  overrides: Partial<DlProspectRowView> &
+    Pick<DlProspectRowView, "playerId" | "name" | "readiness">,
 ): DlProspectRowView {
   return {
     overall: 70,
@@ -36,7 +37,9 @@ function prospectFixture(
     ppg: 10,
     rpg: 4,
     apg: 3,
-    whyBullets: ["Readiness based on current OVR and projected top-league minutes."],
+    whyBullets: [
+      "Readiness based on current OVR and projected top-league minutes.",
+    ],
     changeDelta: null,
     changeLabel: null,
     ...overrides,
@@ -117,7 +120,13 @@ function withAssignedPlayer(
 function withDlStats(
   state: ReturnType<typeof createTestGameState>,
   playerId: string,
-  stats: { games: number; points: number; minutes?: number; rebounds?: number; assists?: number },
+  stats: {
+    games: number;
+    points: number;
+    minutes?: number;
+    rebounds?: number;
+    assists?: number;
+  },
 ) {
   const player = state.world.players[playerId]!;
   return {
@@ -234,33 +243,41 @@ describe("development-league-selectors", () => {
     state = withAssignedPlayer(state, { playerId: "dl_scorer", teamId });
     state = withDlStats(state, "dl_scorer", { games: 5, points: 60 });
     const view = toDevelopmentLeagueDashboardView(state);
-    expect(view.notablePerformance.some((p) => p.playerId === "dl_scorer")).toBe(
-      true,
-    );
+    expect(
+      view.notablePerformance.some((p) => p.playerId === "dl_scorer"),
+    ).toBe(true);
   });
 
   it("orders recent results newest first and caps at five", () => {
     let state = createTestGameState({ saveId: "dl_results" });
     const team = getControlledTeam(state);
-    const other = Object.values(state.world.teams).find((t) => t.id !== team.id);
+    const other = Object.values(state.world.teams).find(
+      (t) => t.id !== team.id,
+    );
     expect(other).toBeDefined();
-    const games = ["2026-11-01", "2026-11-03", "2026-11-05", "2026-11-07", "2026-11-09", "2026-11-11"].map(
-      (date, index) =>
-        createGame({
-          id: asGameId(`dl_game_${index}`),
-          seasonId: state.competition.season.id,
-          homeTeamId: team.id,
-          awayTeamId: other!.id,
-          date,
-          competitionType: "development_league",
-          score: { home: 100, away: 90 },
-          status: "final",
-          periodScores: [],
-          events: [],
-          playerStats: [],
-          homeTeamSnapshot: null,
-          awayTeamSnapshot: null,
-        }),
+    const games = [
+      "2026-11-01",
+      "2026-11-03",
+      "2026-11-05",
+      "2026-11-07",
+      "2026-11-09",
+      "2026-11-11",
+    ].map((date, index) =>
+      createGame({
+        id: asGameId(`dl_game_${index}`),
+        seasonId: state.competition.season.id,
+        homeTeamId: team.id,
+        awayTeamId: other!.id,
+        date,
+        competitionType: "development_league",
+        score: { home: 100, away: 90 },
+        status: "final",
+        periodScores: [],
+        events: [],
+        playerStats: [],
+        homeTeamSnapshot: null,
+        awayTeamSnapshot: null,
+      }),
     );
     state = {
       ...state,
@@ -339,7 +356,9 @@ describe("development-league-selectors", () => {
   it("ranks tied win records deterministically by abbreviation", () => {
     let state = createTestGameState({ saveId: "dl_rank" });
     const team = getControlledTeam(state);
-    const other = Object.values(state.world.teams).find((t) => t.id !== team.id)!;
+    const other = Object.values(state.world.teams).find(
+      (t) => t.id !== team.id,
+    )!;
     const standingA = {
       ...createEmptyTeamStanding(team.id),
       wins: 5,
@@ -382,7 +401,9 @@ describe("development-league-selectors", () => {
         playerId: "empty",
         name: "Empty Why",
         readiness: "developing",
-        whyBullets: ["Readiness based on current OVR and projected top-league minutes."],
+        whyBullets: [
+          "Readiness based on current OVR and projected top-league minutes.",
+        ],
       }),
     ];
     expect(rows[0]!.whyBullets[0]).toMatch(/Readiness based on current OVR/);

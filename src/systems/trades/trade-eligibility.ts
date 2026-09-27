@@ -28,7 +28,8 @@ export const defaultTradeEligibilityRules: TradeEligibilityRule[] = [
         message: `Player "${context.player.id}" has no contract and cannot be traded.`,
       };
     }
-    const contract = context.state.business.contracts[context.player.contractId];
+    const contract =
+      context.state.business.contracts[context.player.contractId];
     if (contract === undefined) {
       return {
         code: "PLAYER_INELIGIBLE",

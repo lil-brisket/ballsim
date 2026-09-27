@@ -6,10 +6,7 @@ import { resetDomainEventSequenceForTests } from "@/domain/events/domain-event";
 import { asSaveId, asSeasonId, type TeamId } from "@/domain/ids";
 import { createSeededRng } from "@/domain/rng";
 import { createFourTeamInitialGameState } from "@/state/create-initial-state";
-import {
-  GAME_STATE_SCHEMA_VERSION,
-  type GameState,
-} from "@/state/game-state";
+import { GAME_STATE_SCHEMA_VERSION, type GameState } from "@/state/game-state";
 import { generateLeague } from "@/systems/league-generation";
 import { generateRosters } from "@/systems/roster-generation";
 import {
@@ -56,7 +53,15 @@ function createEightTeamGameState(rngSeed: number): {
   const finances = Object.fromEntries(
     generated.teams.map((team) => [
       team.id,
-      { teamId: team.id, businessFunds: 50_000_000, payroll: 0, booksByYear: {}, attendanceByYear: {}, booksByMonth: {}, businessFundsLedgerByMonth: {} },
+      {
+        teamId: team.id,
+        businessFunds: 50_000_000,
+        payroll: 0,
+        booksByYear: {},
+        attendanceByYear: {},
+        booksByMonth: {},
+        businessFundsLedgerByMonth: {},
+      },
     ]),
   );
 

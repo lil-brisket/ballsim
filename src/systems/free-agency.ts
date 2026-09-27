@@ -262,8 +262,7 @@ export function negotiateOffer(
   options: FreeAgencyWriteOptions = {},
 ): SystemResult {
   const offer = assertOpenOffer(state, offerId);
-  const evaluate =
-    options.evaluateInterest ?? defaultEvaluatePlayerInterest;
+  const evaluate = options.evaluateInterest ?? defaultEvaluatePlayerInterest;
   const interest = evaluate(offer.playerId, offer.teamId, state);
   const today = state.world.calendar.currentDate;
 
@@ -314,7 +313,10 @@ export function rejectOffer(state: GameState, offerId: OfferId): SystemResult {
  * Domain meaning: only the offering team may withdraw.
  * v1 has no actor/auth layer — authorization is outside this system.
  */
-export function withdrawOffer(state: GameState, offerId: OfferId): SystemResult {
+export function withdrawOffer(
+  state: GameState,
+  offerId: OfferId,
+): SystemResult {
   const offer = assertOpenOffer(state, offerId);
   return systemResult(
     withOffer(state, {
@@ -343,8 +345,7 @@ export function acceptOffer(
 
   const offer = assertOpenOffer(state, offerId);
 
-  const evaluate =
-    options.evaluateInterest ?? defaultEvaluatePlayerInterest;
+  const evaluate = options.evaluateInterest ?? defaultEvaluatePlayerInterest;
   const interest = evaluate(offer.playerId, offer.teamId, state);
   const today = state.world.calendar.currentDate;
 
@@ -370,11 +371,7 @@ export function acceptOffer(
     );
   }
 
-  const capSpace = getTeamCapSpace(
-    offer.teamId,
-    offer.terms.startYear,
-    state,
-  );
+  const capSpace = getTeamCapSpace(offer.teamId, offer.terms.startYear, state);
   if (
     state.settings.financialRules.salaryCapEnabled &&
     firstYearSalary > capSpace

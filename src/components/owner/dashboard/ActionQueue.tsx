@@ -2,9 +2,7 @@ import Link from "next/link";
 import type { OwnerDashboardActionItem } from "@/state/owner-dashboard";
 import { StatusBadge } from "@/components/owner/StatusBadge";
 
-export function ActionQueue(props: {
-  items: OwnerDashboardActionItem[];
-}) {
+export function ActionQueue(props: { items: OwnerDashboardActionItem[] }) {
   if (props.items.length === 0) {
     return (
       <section
@@ -25,10 +23,7 @@ export function ActionQueue(props: {
   }
 
   return (
-    <section
-      className="space-y-3"
-      aria-label="What needs your attention"
-    >
+    <section className="space-y-3" aria-label="What needs your attention">
       <div>
         <p className="font-mono text-xs uppercase tracking-[0.16em] text-amber-500">
           What needs your attention
@@ -49,7 +44,9 @@ export function ActionQueue(props: {
             </div>
             <p className="mt-2 text-sm text-zinc-300">{item.what}</p>
             <p className="mt-2 text-sm text-zinc-400">
-              <span className="font-medium text-zinc-300">Why it matters: </span>
+              <span className="font-medium text-zinc-300">
+                Why it matters:{" "}
+              </span>
               {item.why}
             </p>
             {item.evidence.length > 0 ? (

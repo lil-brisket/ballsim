@@ -343,7 +343,8 @@ export function detectMediaOwnershipPressure(
       {
         id: "review_finances",
         label: "Review finances",
-        effectSummary: "Opens the finances page to reassess commercial strategy.",
+        effectSummary:
+          "Opens the finances page to reassess commercial strategy.",
         href: "/finances",
       },
     ],

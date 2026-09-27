@@ -49,8 +49,7 @@ export function validateRotationFeasibility(
 
   const pool = management.rotation.filter(
     (entry) =>
-      entry.rotationStatus === "active" ||
-      entry.rotationStatus === "emergency",
+      entry.rotationStatus === "active" || entry.rotationStatus === "emergency",
   );
   // Feasibility for max/min uses active (and emergency only if needed — use active first)
   const active = management.rotation.filter(
@@ -89,7 +88,10 @@ export function validateRotationFeasibility(
     });
   }
 
-  if (active.length >= ROTATION_CONFIG.playersOnCourt && sumAbsoluteMaximum < available) {
+  if (
+    active.length >= ROTATION_CONFIG.playersOnCourt &&
+    sumAbsoluteMaximum < available
+  ) {
     issues.push({
       code: "maximums_below_available",
       message: `Maximum minutes currently allow only ${sumAbsoluteMaximum} team minutes (need ${available}). Increase player maximums or use Auto Optimize.`,
@@ -106,8 +108,7 @@ export function validateRotationFeasibility(
 
   return {
     feasible: issues.every(
-      (issue) =>
-        issue.code === "targets_unbalanced", // soft warning only
+      (issue) => issue.code === "targets_unbalanced", // soft warning only
     ),
     availablePlayerMinutes: available,
     sumMinimum,

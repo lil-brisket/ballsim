@@ -4,10 +4,7 @@ import type { Rng } from "@/domain/rng";
 import { systemResult, type SystemResult } from "@/domain/system-result";
 import type { GameState } from "@/state/game-state";
 import { simulateGamesForDate } from "@/systems/game-simulation";
-import {
-  simulatePlayoffs,
-  startPlayoffs,
-} from "@/systems/playoff-simulation";
+import { simulatePlayoffs, startPlayoffs } from "@/systems/playoff-simulation";
 import { generateSchedule } from "@/systems/schedule-generation";
 import { MIN_TEAM_COUNT } from "@/systems/schedule-generation-config";
 import { updateStandings } from "@/systems/standings";
@@ -159,7 +156,9 @@ function validatePostSchedule(state: GameState): void {
   for (const gameId of schedule.gameIds) {
     const game = games[gameId];
     if (!game) {
-      throw new Error(`Scheduled game ${gameId} is missing from competition.games.`);
+      throw new Error(
+        `Scheduled game ${gameId} is missing from competition.games.`,
+      );
     }
 
     if (game.seasonId !== season.id) {
@@ -212,7 +211,9 @@ function validateParticipatingTeamRoster(
 ): void {
   const team = state.world.teams[teamId];
   if (!team) {
-    throw new Error(`Participating team ${teamId} is missing from world.teams.`);
+    throw new Error(
+      `Participating team ${teamId} is missing from world.teams.`,
+    );
   }
 
   for (const playerId of team.roster) {
@@ -236,7 +237,9 @@ function validateParticipatingTeamRoster(
       (playerId) => state.world.players[playerId] != null,
     ).length;
     if (resolvedCount === 0) {
-      throw new Error(`Team ${teamId} has no players available for simulation.`);
+      throw new Error(
+        `Team ${teamId} has no players available for simulation.`,
+      );
     }
   }
 }

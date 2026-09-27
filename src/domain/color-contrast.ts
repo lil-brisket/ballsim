@@ -45,9 +45,7 @@ export function relativeLuminance(hex: string): number | null {
     return s <= 0.03928 ? s / 12.92 : ((s + 0.055) / 1.055) ** 2.4;
   };
   return (
-    0.2126 * channel(rgb.r) +
-    0.7152 * channel(rgb.g) +
-    0.0722 * channel(rgb.b)
+    0.2126 * channel(rgb.r) + 0.7152 * channel(rgb.g) + 0.0722 * channel(rgb.b)
   );
 }
 
@@ -124,15 +122,13 @@ export function evaluateTeamIdentityContrast(input: {
   if (accentHardToDistinguish(input.primaryColor, input.accentColor)) {
     warnings.push({
       kind: "primary_accent",
-      message:
-        "Accent colour may be difficult to distinguish from primary.",
+      message: "Accent colour may be difficult to distinguish from primary.",
     });
   }
   if (accentHardToDistinguish(input.secondaryColor, input.accentColor)) {
     warnings.push({
       kind: "secondary_accent",
-      message:
-        "Accent colour may be difficult to distinguish from secondary.",
+      message: "Accent colour may be difficult to distinguish from secondary.",
     });
   }
   if (homeAwayHardToDistinguish(input.primaryColor, input.secondaryColor)) {

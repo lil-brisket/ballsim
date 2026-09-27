@@ -37,10 +37,7 @@ export type PossessionStatsAccumulator = {
 export function createPossessionStatsAccumulator(
   eventSequenceStart: number,
 ): PossessionStatsAccumulator {
-  if (
-    !Number.isInteger(eventSequenceStart) ||
-    eventSequenceStart < 0
-  ) {
+  if (!Number.isInteger(eventSequenceStart) || eventSequenceStart < 0) {
     throw new Error(
       "Possession eventSequenceStart must be a non-negative integer.",
     );

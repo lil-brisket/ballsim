@@ -58,13 +58,14 @@ export const CONSUMER_CYCLE_MULTIPLIER: Record<EconomicCycle, number> = {
 export const PLAYOFF_DEMAND_UPLIFT = 1.08;
 
 /** Premium seating: fraction of arena capacity by arena level 1–5. */
-export const PREMIUM_CAPACITY_FRACTION_BY_ARENA_LEVEL: Record<number, number> = {
-  1: 0.06,
-  2: 0.08,
-  3: 0.1,
-  4: 0.12,
-  5: 0.14,
-};
+export const PREMIUM_CAPACITY_FRACTION_BY_ARENA_LEVEL: Record<number, number> =
+  {
+    1: 0.06,
+    2: 0.08,
+    3: 0.1,
+    4: 0.12,
+    5: 0.14,
+  };
 
 /** Premium price elasticity (lower than GA — corporate demand less price-sensitive). */
 export const PREMIUM_PRICE_ELASTICITY = 0.35;

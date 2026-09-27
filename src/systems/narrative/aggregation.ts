@@ -7,7 +7,10 @@ const FAN_DEMAND_KEYS = new Set([
   "losing_slide",
 ]);
 
-const MONEY_PRESSURE_KEYS = new Set(["financial_pressure", "objective_progress"]);
+const MONEY_PRESSURE_KEYS = new Set([
+  "financial_pressure",
+  "objective_progress",
+]);
 
 /**
  * Deterministic aggregation: overlapping group members become one candidate.
@@ -25,7 +28,8 @@ export function aggregateCandidates(
 
   const fanMembers = [...FAN_DEMAND_KEYS].filter((key) => byKey.has(key));
   if (fanMembers.length >= 2) {
-    const primary = byKey.get("attendance_decline") ?? byKey.get(fanMembers[0]!)!;
+    const primary =
+      byKey.get("attendance_decline") ?? byKey.get(fanMembers[0]!)!;
     const evidence = { ...primary.evidence };
     const templateContext = { ...primary.templateContext };
     for (const key of fanMembers) {
@@ -81,7 +85,11 @@ export function aggregateCandidates(
       detectorKey: "financial_pressure",
       severity: pickMaxSeverity([primary.severity, objective.severity]),
       priorityHint: priorityForDetectorKey("financial_pressure"),
-      evidence: { ...primary.evidence, ...objective.evidence, aggregated: true },
+      evidence: {
+        ...primary.evidence,
+        ...objective.evidence,
+        aggregated: true,
+      },
       templateContext: {
         ...primary.templateContext,
         ...objective.templateContext,

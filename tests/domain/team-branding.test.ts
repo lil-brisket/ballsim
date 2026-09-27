@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { brandingFromPalette, validateTeamBranding } from "@/domain/entities/team-branding";
+import {
+  brandingFromPalette,
+  validateTeamBranding,
+} from "@/domain/entities/team-branding";
 import {
   evaluateTeamIdentityContrast,
   readableTextOnBackground,
@@ -69,7 +72,9 @@ describe("validateTeamBranding", () => {
 
 describe("findPaletteIdByColors", () => {
   it("returns the palette id for an exact ordered match", () => {
-    const palette = TEAM_COLOR_PALETTES.find((entry) => entry.id === "royal_purple")!;
+    const palette = TEAM_COLOR_PALETTES.find(
+      (entry) => entry.id === "royal_purple",
+    )!;
     expect(
       findPaletteIdByColors(
         palette.primaryColor,
@@ -80,13 +85,15 @@ describe("findPaletteIdByColors", () => {
   });
 
   it("matches after HEX case normalization", () => {
-    expect(
-      findPaletteIdByColors("#4a1c6b", "#f0e6f7", "#e8b923"),
-    ).toBe("royal_purple");
+    expect(findPaletteIdByColors("#4a1c6b", "#f0e6f7", "#e8b923")).toBe(
+      "royal_purple",
+    );
   });
 
   it("returns null when the same colours are in a different order", () => {
-    const palette = TEAM_COLOR_PALETTES.find((entry) => entry.id === "royal_purple")!;
+    const palette = TEAM_COLOR_PALETTES.find(
+      (entry) => entry.id === "royal_purple",
+    )!;
     expect(
       findPaletteIdByColors(
         palette.secondaryColor,
@@ -97,9 +104,7 @@ describe("findPaletteIdByColors", () => {
   });
 
   it("returns null for custom colours", () => {
-    expect(
-      findPaletteIdByColors("#123456", "#F5F5F5", "#FFB000"),
-    ).toBeNull();
+    expect(findPaletteIdByColors("#123456", "#F5F5F5", "#FFB000")).toBeNull();
   });
 
   it("returns null for invalid colours without throwing", () => {
@@ -121,7 +126,8 @@ describe("getTeamIdentityFingerprint", () => {
       name: "Huskies",
       abbreviation: "TOR",
       primaryColor: brandingFromPalette("crimson_gold", "bear").primaryColor,
-      secondaryColor: brandingFromPalette("crimson_gold", "bear").secondaryColor,
+      secondaryColor: brandingFromPalette("crimson_gold", "bear")
+        .secondaryColor,
       accentColor: brandingFromPalette("crimson_gold", "bear").accentColor,
       logoId: "bear",
     });

@@ -62,7 +62,9 @@ export function copyPlayerWithAttributes(
         injury.expectedReturnWindow == null
           ? null
           : { ...injury.expectedReturnWindow },
-      temporaryEffects: injury.temporaryEffects.map((effect) => ({ ...effect })),
+      temporaryEffects: injury.temporaryEffects.map((effect) => ({
+        ...effect,
+      })),
     })),
     injury:
       source.injury == null
@@ -77,8 +79,7 @@ export function copyPlayerWithAttributes(
               ...effect,
             })),
           },
-    suspension:
-      source.suspension == null ? null : { ...source.suspension },
+    suspension: source.suspension == null ? null : { ...source.suspension },
     physical: { ...(source.physical ?? { durability: 65 }) },
     conditioning: source.conditioning ?? 100,
     injuryHistory: [...(source.injuryHistory ?? [])],

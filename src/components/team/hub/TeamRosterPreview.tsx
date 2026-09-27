@@ -4,10 +4,7 @@ import { Section } from "@/components/owner/Section";
 import { cn, panelClass } from "@/components/ui/styles";
 import type { TeamHubView } from "@/state/team-hub-selectors";
 
-export function TeamRosterPreview(props: {
-  saveId: string;
-  hub: TeamHubView;
-}) {
+export function TeamRosterPreview(props: { saveId: string; hub: TeamHubView }) {
   const { saveId, hub } = props;
   const rosterHref = `/dashboard/${saveId}/roster`;
 

@@ -1,9 +1,4 @@
-import type {
-  DraftClassId,
-  DraftPickId,
-  PlayerId,
-  TeamId,
-} from "@/domain/ids";
+import type { DraftClassId, DraftPickId, PlayerId, TeamId } from "@/domain/ids";
 import {
   PLAYER_ATTRIBUTE_KEYS,
   RATING_MAX,
@@ -225,10 +220,7 @@ export function createDraftScoutReport(input: {
   assertNonEmptyId(input.teamId, "teamId");
   assertNonEmptyId(input.prospectPlayerId, "prospectPlayerId");
   assertAttributes(input.estimatedAttributes);
-  assertRating(
-    input.estimatedPotentialOverall,
-    "estimatedPotentialOverall",
-  );
+  assertRating(input.estimatedPotentialOverall, "estimatedPotentialOverall");
   if (!Number.isInteger(input.projectedRank) || input.projectedRank < 1) {
     throw new Error("DraftScoutReport projectedRank must be an integer >= 1.");
   }

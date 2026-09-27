@@ -750,8 +750,9 @@ describe("franchise value arcs", () => {
     const freshV = calculateFranchiseValue(fresh, teamIdOf(fresh));
     expect(freshV).toBeGreaterThan(200_000_000);
     expect(freshV).toBeLessThan(800_000_000);
-    expect(explainFranchiseValue(fresh, teamIdOf(fresh)).lastSeasonSnapshot)
-      .toBeNull();
+    expect(
+      explainFranchiseValue(fresh, teamIdOf(fresh)).lastSeasonSnapshot,
+    ).toBeNull();
 
     let oneSeason = boot("arc_one_season");
     oneSeason = withOps(oneSeason, { marketSize: 50, fanSentiment: 50 });

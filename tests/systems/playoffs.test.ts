@@ -2,10 +2,7 @@ import { describe, expect, it } from "vitest";
 import { playoffRoundLabel } from "@/domain/entities/playoffs";
 import { createEmptyTeamStanding } from "@/domain/entities/standings";
 import { asGameId, asSeasonId, asTeamId } from "@/domain/ids";
-import {
-  bracketSeedOrder,
-  generateBracket,
-} from "@/systems/playoff-bracket";
+import { bracketSeedOrder, generateBracket } from "@/systems/playoff-bracket";
 import {
   getHomeTeamForGame,
   getPlayoffTeamCount,
@@ -83,9 +80,7 @@ describe("qualifyAndSeed", () => {
 
   it("is deterministic for identical standings", () => {
     const standings = standingsForSeeds(10);
-    expect(qualifyAndSeed(standings, 8)).toEqual(
-      qualifyAndSeed(standings, 8),
-    );
+    expect(qualifyAndSeed(standings, 8)).toEqual(qualifyAndSeed(standings, 8));
   });
 
   it("throws when standings are fewer than playoffTeams", () => {
@@ -136,9 +131,9 @@ describe("generateBracket", () => {
   it("builds a 16-team bracket with 15 series and fixed feeders", () => {
     const tournament = generateBracket(seeds(16));
     expect(tournament.series).toHaveLength(15);
-    expect(tournament.series.filter((series) => series.round === 0)).toHaveLength(
-      8,
-    );
+    expect(
+      tournament.series.filter((series) => series.round === 0),
+    ).toHaveLength(8);
     expect(Math.log2(16)).toBe(4);
 
     const opening = tournament.series
@@ -161,10 +156,7 @@ describe("generateBracket", () => {
       (series) => series.round === 2 && series.slot === 0,
     )!;
     expect(final.higherSeedTeamId).toBeNull();
-    expect(final.feederSeriesIds).toEqual([
-      "playoff_r1_s0",
-      "playoff_r1_s1",
-    ]);
+    expect(final.feederSeriesIds).toEqual(["playoff_r1_s0", "playoff_r1_s1"]);
   });
 });
 
@@ -217,11 +209,7 @@ describe("recordSeriesGameResult", () => {
     let series = activeSeries();
     const winner = series.higherSeedTeamId!;
     for (let game = 0; game < SERIES_WINS_TO_CLINCH; game += 1) {
-      series = recordSeriesGameResult(
-        series,
-        asGameId(`g_${game}`),
-        winner,
-      );
+      series = recordSeriesGameResult(series, asGameId(`g_${game}`), winner);
     }
     expect(series.status).toBe("complete");
     expect(series.winnerTeamId).toBe(winner);

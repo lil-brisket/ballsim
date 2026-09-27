@@ -79,9 +79,7 @@ describe("buildOwnerReturnPath", () => {
     const params = new URLSearchParams(
       "year=2026&month=11&date=2026-11-01&error=boom&simSummary=1&daysAdvanced=3&highlights=2&fromDate=2026-11-01&team=my",
     );
-    expect(
-      buildOwnerReturnPath("/dashboard/save123/calendar", params),
-    ).toBe(
+    expect(buildOwnerReturnPath("/dashboard/save123/calendar", params)).toBe(
       "/dashboard/save123/calendar?year=2026&month=11&date=2026-11-01&team=my",
     );
   });

@@ -12,13 +12,11 @@ import type {
 
 /** Projected or current win totals used to place competitive trajectory. */
 export type CompetitiveTrajectoryBand =
-  | "collapse"
-  | "rebuild"
-  | "developing"
-  | "playoff_chase"
-  | "contender";
+  "collapse" | "rebuild" | "developing" | "playoff_chase" | "contender";
 
-export function competitiveBandFromWins(wins: number): CompetitiveTrajectoryBand {
+export function competitiveBandFromWins(
+  wins: number,
+): CompetitiveTrajectoryBand {
   if (wins < 28) {
     return "collapse";
   }
@@ -117,7 +115,10 @@ export function resolveRosterExpectation(
   youngCoreReady: boolean,
 ): RosterStance {
   if (philosophy === "build_for_the_future") {
-    if (youngCoreReady && (competitive === "compete" || competitive === "contend")) {
+    if (
+      youngCoreReady &&
+      (competitive === "compete" || competitive === "contend")
+    ) {
       return "balanced";
     }
     return "youth_focus";

@@ -66,8 +66,7 @@ export function StaffTermsDialog(props: {
             </h3>
             {props.askingSalary !== undefined ? (
               <p className="mt-2 text-sm text-zinc-400">
-                Requested salary{" "}
-                <MoneyDisplay amount={props.askingSalary} />
+                Requested salary <MoneyDisplay amount={props.askingSalary} />
               </p>
             ) : null}
             {props.interestLevel ? (
@@ -114,8 +113,7 @@ export function StaffTermsDialog(props: {
               </label>
               {props.showTotalPreview ? (
                 <p className="text-sm text-zinc-400">
-                  New contract{" "}
-                  <MoneyDisplay amount={total} /> total
+                  New contract <MoneyDisplay amount={total} /> total
                 </p>
               ) : null}
               <div className="flex justify-end gap-2 pt-2">

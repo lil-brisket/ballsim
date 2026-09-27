@@ -14,12 +14,9 @@ describe("game-day promotions migration", () => {
       rngSeed: 1,
       settings: CBL_GAME_SETTINGS,
     });
-    state = bootstrapWorld(
-      state,
-      createSeededRng(state.meta.rngState),
-    ).state;
+    state = bootstrapWorld(state, createSeededRng(state.meta.rngState)).state;
     expect(state.meta.schemaVersion).toBe(GAME_STATE_SCHEMA_VERSION);
-    
+
     for (const teamId of Object.keys(state.world.teams)) {
       const promo = state.business.gameDayPromotionsByTeamId[teamId];
       expect(promo).toBeTruthy();
@@ -34,10 +31,7 @@ describe("game-day promotions migration", () => {
       rngSeed: 2,
       settings: CBL_GAME_SETTINGS,
     });
-    state = bootstrapWorld(
-      state,
-      createSeededRng(state.meta.rngState),
-    ).state;
+    state = bootstrapWorld(state, createSeededRng(state.meta.rngState)).state;
 
     // Simulate a v57 save missing the promotions map.
     const legacy = {

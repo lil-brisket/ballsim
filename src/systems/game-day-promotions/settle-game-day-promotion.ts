@@ -1,9 +1,5 @@
-import type {
-  GameDayPromotionResult,
-} from "@/domain/entities/game-day-promotion";
-import {
-  createEmptyGameDayPromotionSeasonState,
-} from "@/domain/entities/game-day-promotion";
+import type { GameDayPromotionResult } from "@/domain/entities/game-day-promotion";
+import { createEmptyGameDayPromotionSeasonState } from "@/domain/entities/game-day-promotion";
 import type { Game } from "@/domain/entities/game";
 import { createDomainEvent } from "@/domain/events";
 import type { TeamId } from "@/domain/ids";
@@ -56,15 +52,12 @@ export function settleGameDayPromotion(
 
   const projected = assignment.projectedSnapshot;
   const projectedAttendance = projected?.attendanceMid ?? actual.attendance;
-  const projectedAttendanceLow =
-    projected?.attendanceLow ?? actual.attendance;
+  const projectedAttendanceLow = projected?.attendanceLow ?? actual.attendance;
   const projectedAttendanceHigh =
     projected?.attendanceHigh ?? actual.attendance;
   const projectedNetImpact = projected?.netImpactMid ?? netFinancialImpact;
-  const projectedNetImpactLow =
-    projected?.netImpactLow ?? netFinancialImpact;
-  const projectedNetImpactHigh =
-    projected?.netImpactHigh ?? netFinancialImpact;
+  const projectedNetImpactLow = projected?.netImpactLow ?? netFinancialImpact;
+  const projectedNetImpactHigh = projected?.netImpactHigh ?? netFinancialImpact;
 
   const fanResponse = fanResponseFromEffectiveness(
     effects.effectivenessScore / 100,

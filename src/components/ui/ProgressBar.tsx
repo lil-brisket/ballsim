@@ -9,7 +9,8 @@ export function ProgressBar(props: {
   "aria-label"?: string;
 }) {
   const max = props.max ?? 100;
-  const pct = max <= 0 ? 0 : Math.min(100, Math.max(0, (props.value / max) * 100));
+  const pct =
+    max <= 0 ? 0 : Math.min(100, Math.max(0, (props.value / max) * 100));
 
   return (
     <div className={cn("w-full", props.className)}>

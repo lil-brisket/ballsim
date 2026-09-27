@@ -32,9 +32,7 @@ export const OWNER_NAV_GROUPS: readonly OwnerNavGroup[] = [
   {
     id: "home",
     label: "Home",
-    items: [
-      { href: "", label: "Front Office", icon: "home" },
-    ],
+    items: [{ href: "", label: "Front Office", icon: "home" }],
   },
   {
     id: "simulation",

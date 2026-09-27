@@ -76,7 +76,8 @@ function answerForTopic(
       }
       return {
         topic,
-        quote: "Building something lasting appeals to me as much as quick wins.",
+        quote:
+          "Building something lasting appeals to me as much as quick wins.",
         preferenceSignal: "winNow",
         preferenceStrength: "low",
       };
@@ -165,8 +166,7 @@ export function conductProspectInterview(
     answers,
   };
 
-  const existing =
-    draft.teamDraftState[teamId] ?? createEmptyTeamDraftState();
+  const existing = draft.teamDraftState[teamId] ?? createEmptyTeamDraftState();
   const nextTeam: TeamDraftState = {
     ...existing,
     interviews: {

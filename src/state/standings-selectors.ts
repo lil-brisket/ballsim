@@ -27,12 +27,7 @@ import { getCalendarContext } from "@/systems/simulation/calendar-context";
 export type { StandingsPageOptions, StandingsStatsMode, StandingsViewMode };
 
 export type PlayoffPositionLabel =
-  | "clinched"
-  | "playoff"
-  | "play_in"
-  | "bubble"
-  | "eliminated"
-  | "na";
+  "clinched" | "playoff" | "play_in" | "bubble" | "eliminated" | "na";
 
 export type StandingsRowEnriched = {
   teamId: string;
@@ -151,8 +146,7 @@ function round1(n: number): number {
 }
 
 function gamesBack(leader: TeamStanding, team: TeamStanding): number {
-  const raw =
-    (leader.wins - team.wins + (team.losses - leader.losses)) / 2;
+  const raw = (leader.wins - team.wins + (team.losses - leader.losses)) / 2;
   return round1(raw);
 }
 
@@ -295,9 +289,10 @@ function compareDrafts(a: Draft, b: Draft): number {
   return compareStandings(a.standing, b.standing);
 }
 
-function rankGroup(
-  drafts: Draft[],
-): { rankById: Map<string, number>; leader: TeamStanding | undefined } {
+function rankGroup(drafts: Draft[]): {
+  rankById: Map<string, number>;
+  leader: TeamStanding | undefined;
+} {
   const sorted = [...drafts].sort(compareDrafts);
   const rankById = new Map<string, number>();
   sorted.forEach((row, i) => rankById.set(row.teamId, i + 1));
@@ -546,7 +541,10 @@ export function toStandingsPageView(
   };
 }
 
-function toRaceEntry(row: StandingsRowEnriched, cutoff: number): PlayoffRaceEntry {
+function toRaceEntry(
+  row: StandingsRowEnriched,
+  cutoff: number,
+): PlayoffRaceEntry {
   return {
     teamId: row.teamId,
     abbreviation: row.abbreviation,
@@ -570,8 +568,7 @@ export function toPlayoffRaceView(state: GameState): PlayoffRaceView {
   const playoffTeamCount = page.playoffTeamCount;
   const live = page.leagueRows.length;
   const applicable =
-    page.mode === "regular" &&
-    isPlayoffCutoffVisible(playoffTeamCount, live);
+    page.mode === "regular" && isPlayoffCutoffVisible(playoffTeamCount, live);
 
   if (!applicable) {
     return {
@@ -589,9 +586,7 @@ export function toPlayoffRaceView(state: GameState): PlayoffRaceView {
   let above = inTeams.slice(-Math.min(PLAYOFF_RACE_WINDOW, inTeams.length));
   let below = outTeams.slice(0, Math.min(PLAYOFF_RACE_WINDOW, outTeams.length));
 
-  const windowIds = new Set(
-    [...above, ...below].map((row) => row.teamId),
-  );
+  const windowIds = new Set([...above, ...below].map((row) => row.teamId));
   const owned = new Set(page.ownedTeamIds);
   for (const row of page.leagueRows) {
     if (!owned.has(row.teamId) || windowIds.has(row.teamId)) {

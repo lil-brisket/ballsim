@@ -11,9 +11,7 @@ export function uniqueTeamAbbreviation(
 ): string {
   const letters = city.replace(/[^A-Za-z]/g, "").toUpperCase();
   const base =
-    letters.length >= 3
-      ? letters.slice(0, 3)
-      : (letters + "XXX").slice(0, 3);
+    letters.length >= 3 ? letters.slice(0, 3) : (letters + "XXX").slice(0, 3);
 
   if (!used.has(base)) {
     return base;
@@ -33,7 +31,5 @@ export function uniqueTeamAbbreviation(
     }
   }
 
-  throw new Error(
-    `Could not derive a unique abbreviation for city "${city}".`,
-  );
+  throw new Error(`Could not derive a unique abbreviation for city "${city}".`);
 }

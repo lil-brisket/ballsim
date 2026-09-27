@@ -12,12 +12,7 @@ vi.mock("@/persistence/save-game-repository", () => ({
   },
 }));
 
-import {
-  asContractId,
-  asOfferId,
-  asPlayerId,
-  asTeamId,
-} from "@/domain/ids";
+import { asContractId, asOfferId, asPlayerId, asTeamId } from "@/domain/ids";
 import {
   CBL_GAME_SETTINGS,
   DEFAULT_GAME_SETTINGS,
@@ -86,9 +81,7 @@ describe("settings persistence and isolation", () => {
     expect(legacyPayload.settings.playoffs.playInEnabled).toBe(false);
     expect(legacyPayload.settings.ai.difficulty).toBe("normal");
     expect(legacyPayload.settings.simulation.frequency).toBe("daily");
-    expect(
-      "injuriesEnabled" in (legacyPayload.settings as object),
-    ).toBe(false);
+    expect("injuriesEnabled" in (legacyPayload.settings as object)).toBe(false);
   });
 
   it("CBL preset creates 12/22/8 via createNewOwnerSave", async () => {
@@ -169,16 +162,16 @@ describe("settings persistence and isolation", () => {
     expect(reconstructed.regularSeason.gamesPerTeam).toBe(22);
     expect(reconstructed.league.teamCount).toBe(12);
     expect(reconstructed.playoffs.playoffTeams).toBe(8);
-    const validated = validateGameSettings(reconstructed, { mode: "persisted" });
+    const validated = validateGameSettings(reconstructed, {
+      mode: "persisted",
+    });
     expect(validated.ok).toBe(true);
   });
 });
 
 describe("schedule gamesPerTeam", () => {
   it("12 teams / 14 games → every team has exactly 14", () => {
-    const teamIds = Array.from({ length: 12 }, (_, i) =>
-      asTeamId(`team_${i}`),
-    );
+    const teamIds = Array.from({ length: 12 }, (_, i) => asTeamId(`team_${i}`));
     const assignments = generateSeasonSchedule({
       teamIds,
       seasonLength: 14,
@@ -194,9 +187,7 @@ describe("schedule gamesPerTeam", () => {
   });
 
   it("12 teams / 22 games → every team has exactly 22", () => {
-    const teamIds = Array.from({ length: 12 }, (_, i) =>
-      asTeamId(`team_${i}`),
-    );
+    const teamIds = Array.from({ length: 12 }, (_, i) => asTeamId(`team_${i}`));
     const assignments = generateSeasonSchedule({
       teamIds,
       seasonLength: 22,
@@ -212,9 +203,7 @@ describe("schedule gamesPerTeam", () => {
   });
 
   it("30 teams / 82 games → every team has exactly 82", () => {
-    const teamIds = Array.from({ length: 30 }, (_, i) =>
-      asTeamId(`team_${i}`),
-    );
+    const teamIds = Array.from({ length: 30 }, (_, i) => asTeamId(`team_${i}`));
     const assignments = generateSeasonSchedule({
       teamIds,
       seasonLength: 82,
@@ -307,11 +296,13 @@ describe("financial toggles", () => {
     const before = state.business.finances[teamId]!.businessFunds;
     const result = processMonthlyBroadcastRevenue(state);
     // Pool still pays; sharing off means 100% market-weighted remainder.
-    expect(result.state.business.finances[teamId]!.businessFunds).toBeGreaterThan(before);
+    expect(
+      result.state.business.finances[teamId]!.businessFunds,
+    ).toBeGreaterThan(before);
     const year = state.competition.season.year;
     expect(
-      result.state.business.finances[teamId]!.booksByYear[String(year)]!
-        .revenue.broadcast,
+      result.state.business.finances[teamId]!.booksByYear[String(year)]!.revenue
+        .broadcast,
     ).toBeGreaterThan(0);
   });
 
@@ -323,7 +314,9 @@ describe("financial toggles", () => {
     const teamId = Object.keys(state.world.teams)[0]!;
     const before = state.business.finances[teamId]!.businessFunds;
     const result = processMonthlyBroadcastRevenue(state);
-    expect(result.state.business.finances[teamId]!.businessFunds).toBeGreaterThan(before);
+    expect(
+      result.state.business.finances[teamId]!.businessFunds,
+    ).toBeGreaterThan(before);
   });
 
   it("salary cap disabled allows a signing that exceeds the cap", () => {

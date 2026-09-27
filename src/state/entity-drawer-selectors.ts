@@ -20,7 +20,10 @@ import {
 } from "@/state/team-branding-view";
 import { getTeamCapSpace, getTeamPayroll } from "@/systems/salary-cap";
 import { describeStaffEffects } from "@/systems/staff-effects";
-import { calculateStaffBuyout, remainingStaffContractValue } from "@/systems/staff-contract-lifecycle";
+import {
+  calculateStaffBuyout,
+  remainingStaffContractValue,
+} from "@/systems/staff-contract-lifecycle";
 import {
   bottomAttributeLabels,
   staffAttributeEntries,
@@ -462,4 +465,3 @@ export function toStaffDrawerView(
     },
   };
 }
-

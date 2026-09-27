@@ -67,7 +67,9 @@ export function applyPromotionDownstreamEffects(
             fanSentiment: clampSentiment(ops.fanSentiment + sentimentBump),
             marketing: {
               ...ops.marketing,
-              awareness: clampAwareness(ops.marketing.awareness + awarenessBump),
+              awareness: clampAwareness(
+                ops.marketing.awareness + awarenessBump,
+              ),
             },
           },
         };

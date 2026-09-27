@@ -9,10 +9,7 @@ import type { TeamId } from "@/domain/ids";
 export type EventAttentionTier = 1 | 2 | 3 | 4;
 
 export type AttentionIndicatorKind =
-  | "team_game"
-  | "user_impact"
-  | "league"
-  | "background";
+  "team_game" | "user_impact" | "league" | "background";
 
 const INDICATOR_ORDER: AttentionIndicatorKind[] = [
   "team_game",
@@ -39,9 +36,7 @@ export function getEventAttentionTier(
   event: CalendarEventView,
   userTeamId?: TeamId | null,
 ): EventAttentionTier {
-  const isUserTeam = Boolean(
-    userTeamId && event.teamIds?.includes(userTeamId),
-  );
+  const isUserTeam = Boolean(userTeamId && event.teamIds?.includes(userTeamId));
 
   // Tier 1 — user's team game
   if (event.category === "game" && isUserTeam) {

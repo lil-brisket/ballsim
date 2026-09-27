@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 import { createDomainEvent } from "@/domain/events";
-import { appendSeasonEventLog, GAME_STATE_SCHEMA_VERSION } from "@/state/game-state";
+import {
+  appendSeasonEventLog,
+  GAME_STATE_SCHEMA_VERSION,
+} from "@/state/game-state";
 import { toSeasonTransactionsView } from "@/state/team-management-selectors";
 import { generateRosters } from "@/systems/roster-generation";
 import { deserializeGameState } from "@/persistence/mappers/game-state-mapper";
@@ -56,7 +59,10 @@ describe("seasonEventLog", () => {
 
 describe("migration v45", () => {
   it("adds rosterManagement and seasonEventLog when loading v44-shaped saves", () => {
-    const state = generateRosters(createTestGameState(), createTestRng(2)).state;
+    const state = generateRosters(
+      createTestGameState(),
+      createTestRng(2),
+    ).state;
     // Simulate a serialized v44 payload missing the new fields
     const legacy = structuredClone(state) as Record<string, unknown>;
     const meta = legacy.meta as { schemaVersion: number };

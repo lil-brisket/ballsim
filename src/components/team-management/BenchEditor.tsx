@@ -21,9 +21,13 @@ export function BenchEditor(props: {
         <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-zinc-400">
           Bench
         </h2>
-        <DataTable headers={["Player", "Pos", "Role", "Target MPG", "Status", ""]}>
+        <DataTable
+          headers={["Player", "Pos", "Role", "Target MPG", "Status", ""]}
+        >
           {props.bench.map((playerId) => {
-            const player = props.allPlayers.find((p) => p.playerId === playerId);
+            const player = props.allPlayers.find(
+              (p) => p.playerId === playerId,
+            );
             const row = props.rowsById.get(playerId);
             if (!player) {
               return null;

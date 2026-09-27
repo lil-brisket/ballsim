@@ -176,9 +176,7 @@ describe("Development League migration", () => {
     const migrated = deserializeGameState(JSON.stringify(parsed));
     expect(migrated.meta.schemaVersion).toBe(GAME_STATE_SCHEMA_VERSION);
     expect(migrated.competition.developmentLeague).toBeDefined();
-    expect(migrated.competition.developmentLeague.schedule.gameIds).toEqual(
-      [],
-    );
+    expect(migrated.competition.developmentLeague.schedule.gameIds).toEqual([]);
     const sample = migrated.world.players["mig_p1"]!;
     expect(sample.developmentLeague.status).toBe("none");
     expect(sample.developmentLeague.seasonsUsed).toBe(0);

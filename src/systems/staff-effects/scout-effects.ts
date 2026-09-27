@@ -6,7 +6,11 @@ import {
   SCOUT_NOISE_SCALE_MAX,
   SCOUT_NOISE_SCALE_MIN,
 } from "@/systems/staff-config";
-import { averageAttrs, clamp, diminishAbove } from "@/systems/staff-effects/shared";
+import {
+  averageAttrs,
+  clamp,
+  diminishAbove,
+} from "@/systems/staff-effects/shared";
 
 function scoutAttrs(
   state: GameState,
@@ -29,8 +33,7 @@ export function scoutNoiseScale(state: GameState, teamId: TeamId): number {
     ]),
     85,
   );
-  const scale =
-    1 - (accuracy - 50) * SCOUT_NOISE_REDUCTION_PER_QUALITY_POINT;
+  const scale = 1 - (accuracy - 50) * SCOUT_NOISE_REDUCTION_PER_QUALITY_POINT;
   return clamp(scale, SCOUT_NOISE_SCALE_MIN, SCOUT_NOISE_SCALE_MAX);
 }
 
@@ -61,10 +64,7 @@ export function scoutQualityMultiplier(
 }
 
 /** scoutingSpeed → exposure-per-day multiplier (1 = average). */
-export function scoutSpeedMultiplier(
-  state: GameState,
-  teamId: TeamId,
-): number {
+export function scoutSpeedMultiplier(state: GameState, teamId: TeamId): number {
   const attrs = scoutAttrs(state, teamId);
   if (!attrs) return 0.9;
   const speed = attrs.scoutingSpeed ?? 50;

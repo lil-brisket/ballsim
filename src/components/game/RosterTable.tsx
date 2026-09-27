@@ -99,15 +99,7 @@ export function RosterTable(props: {
       </div>
 
       <DataTable
-        headers={[
-          "Player",
-          "Pos",
-          "Age",
-          "OVR",
-          "Contract",
-          "Status",
-          "Dev",
-        ]}
+        headers={["Player", "Pos", "Age", "OVR", "Contract", "Status", "Dev"]}
       >
         {filtered.map((player) => (
           <tr key={player.playerId} className="border-t border-zinc-800">
@@ -130,10 +122,7 @@ export function RosterTable(props: {
               />
             </td>
             <td className="px-3 py-2">
-              <StatusBadge
-                label={player.injuryKind}
-                tone={player.injuryKind}
-              />
+              <StatusBadge label={player.injuryKind} tone={player.injuryKind} />
             </td>
             <td className="px-3 py-2 text-zinc-400">
               {player.developmentStage}

@@ -204,9 +204,7 @@ export function failureModePreferenceBias(
     case "rebuild":
       // Doesn't capitalize: pick value stays high even in windows.
       return {
-        pickValueFloor: clampPreference(
-          0.4 + traits.assetAccumulation * 0.25,
-        ),
+        pickValueFloor: clampPreference(0.4 + traits.assetAccumulation * 0.25),
         youthValueFloor: 0.4,
       };
     case "market_growth":

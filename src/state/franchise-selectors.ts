@@ -347,7 +347,11 @@ function readLastGameDay(
   state: GameState,
   teamId: string,
 ): LastGameDayView | null {
-  for (let index = getActiveOwnedFranchise(state).eventLog.length - 1; index >= 0; index -= 1) {
+  for (
+    let index = getActiveOwnedFranchise(state).eventLog.length - 1;
+    index >= 0;
+    index -= 1
+  ) {
     const event = getActiveOwnedFranchise(state).eventLog[index]!;
     if (event.type !== "HomeGameDaySettled") {
       continue;
@@ -382,8 +386,7 @@ function readLastGameDay(
       premiumOccupancy,
       capacity,
       premiumCapacity,
-      fillRatePct:
-        capacity > 0 ? Math.round((attendance / capacity) * 100) : 0,
+      fillRatePct: capacity > 0 ? Math.round((attendance / capacity) * 100) : 0,
       demandScore: Number(payload.demandScore) || 0,
       ticketPrice: Number(payload.ticketPrice) || 0,
       premiumTicketPrice: Number(payload.premiumTicketPrice) || 0,
@@ -441,7 +444,9 @@ export function calculateCashRunway(
   };
 }
 
-export function toFranchiseBusinessView(state: GameState): FranchiseBusinessView {
+export function toFranchiseBusinessView(
+  state: GameState,
+): FranchiseBusinessView {
   const teamId = state.user.activeOwnerTeamId;
   const ops = requireOps(state, teamId);
   const team = state.world.teams[teamId]!;
@@ -511,7 +516,10 @@ export function toRelocationView(state: GameState): RelocationProcess {
 }
 
 export function toExpansionView(state: GameState): ExpansionState {
-  return { ...state.business.expansion, candidates: [...state.business.expansion.candidates] };
+  return {
+    ...state.business.expansion,
+    candidates: [...state.business.expansion.candidates],
+  };
 }
 
 export function toFranchiseHistoryView(state: GameState): FranchiseHistoryView {

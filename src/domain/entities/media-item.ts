@@ -3,20 +3,14 @@
  * Authoritative facts remain in seasonEventLog / games / awards.
  */
 
-import type { EventSourceRef, ImportanceLevel } from "@/domain/entities/event-source";
 import type {
-  GameId,
-  MediaItemId,
-  PlayerId,
-  TeamId,
-} from "@/domain/ids";
+  EventSourceRef,
+  ImportanceLevel,
+} from "@/domain/entities/event-source";
+import type { GameId, MediaItemId, PlayerId, TeamId } from "@/domain/ids";
 
 export type MediaStoryType =
-  | "game"
-  | "transaction"
-  | "injury"
-  | "league"
-  | "player";
+  "game" | "transaction" | "injury" | "league" | "player";
 
 /** Top-level Media Hub tabs (MVP). */
 export type MediaHubTab =

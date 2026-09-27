@@ -44,7 +44,8 @@ describe("trade ownership safeguards", () => {
   }
 
   it("swaps players between owned teams without duplication", () => {
-    const { state, teamA, teamB, playerA, playerB } = twoOwnedTeamsWithPlayers();
+    const { state, teamA, teamB, playerA, playerB } =
+      twoOwnedTeamsWithPlayers();
     if (!playerA || !playerB) {
       // Fresh league may not have rosters until staff/generation completes —
       // createInitialGameState includes staff generation but players come later.

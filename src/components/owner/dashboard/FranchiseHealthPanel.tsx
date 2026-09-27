@@ -11,10 +11,7 @@ import type {
   FranchiseHealthView,
   HealthDriver,
 } from "@/state/franchise-health";
-import {
-  formatDimensionStatus,
-  trendSymbol,
-} from "@/state/franchise-health";
+import { formatDimensionStatus, trendSymbol } from "@/state/franchise-health";
 import type { FranchiseValueDriverKey } from "@/state/franchise-value";
 import { MoneyDisplay } from "@/components/owner/MoneyDisplay";
 import {
@@ -74,7 +71,9 @@ function franchiseValueContext(health: OwnerDashboardHealth): string {
   return parts.join(" · ");
 }
 
-function conditionToneClass(condition: FranchiseHealthView["condition"]): string {
+function conditionToneClass(
+  condition: FranchiseHealthView["condition"],
+): string {
   if (condition === "excellent" || condition === "strong") {
     return "text-emerald-400";
   }

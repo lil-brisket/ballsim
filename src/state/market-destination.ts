@@ -31,7 +31,10 @@ export type DestinationEvaluation = {
   credibleImprovement: boolean;
 };
 
-function opportunityBand(sizeDelta: number, currentSize: number): OpportunityBand {
+function opportunityBand(
+  sizeDelta: number,
+  currentSize: number,
+): OpportunityBand {
   if (sizeDelta >= 25 || (sizeDelta >= 15 && currentSize < 50)) {
     return "very_high";
   }
@@ -93,10 +96,14 @@ export function evaluateDestination(
     );
   }
   if (options.financialPressure && marketSizeDelta > 0) {
-    reasons.push("Financial pressure at home makes a stronger market strategically relevant.");
+    reasons.push(
+      "Financial pressure at home makes a stronger market strategically relevant.",
+    );
   }
   if (risk === "high") {
-    reasons.push("Large size jump or major market entry carries high uncertainty.");
+    reasons.push(
+      "Large size jump or major market entry carries high uncertainty.",
+    );
   }
 
   const credibleImprovement =

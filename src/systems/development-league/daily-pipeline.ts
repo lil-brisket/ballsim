@@ -80,9 +80,7 @@ function applyDlGameToStandings(
     pointsFor: home.pointsFor + game.score.home,
     pointsAgainst: home.pointsAgainst + game.score.away,
     pointDifferential:
-      home.pointsFor +
-      game.score.home -
-      (home.pointsAgainst + game.score.away),
+      home.pointsFor + game.score.home - (home.pointsAgainst + game.score.away),
     winPercentage: 0,
     streak: {
       type: homeWon ? "W" : "L",
@@ -97,9 +95,7 @@ function applyDlGameToStandings(
     pointsFor: away.pointsFor + game.score.away,
     pointsAgainst: away.pointsAgainst + game.score.home,
     pointDifferential:
-      away.pointsFor +
-      game.score.away -
-      (away.pointsAgainst + game.score.home),
+      away.pointsFor + game.score.away - (away.pointsAgainst + game.score.home),
     winPercentage: 0,
     streak: {
       type: homeWon ? "L" : "W",
@@ -171,18 +167,16 @@ export function rebuildDlSeasonStatsCache(state: GameState): GameState {
   for (const [playerId, stats] of totals) {
     const player = players[playerId];
     if (player == null) continue;
-    const profile =
-      player.developmentLeague ??
-      ({
-        status: "none" as const,
-        parentTeamId: null,
-        role: "development" as const,
-        seasonsUsed: 0,
-        assignedThisSeason: false,
-        dlAssignmentLockedThisSeason: false,
-        firstAssignedSeasonYear: null,
-        draftSeasonYear: null,
-      });
+    const profile = player.developmentLeague ?? {
+      status: "none" as const,
+      parentTeamId: null,
+      role: "development" as const,
+      seasonsUsed: 0,
+      assignedThisSeason: false,
+      dlAssignmentLockedThisSeason: false,
+      firstAssignedSeasonYear: null,
+      draftSeasonYear: null,
+    };
     players[playerId] = createPlayer({
       ...player,
       developmentLeague: {

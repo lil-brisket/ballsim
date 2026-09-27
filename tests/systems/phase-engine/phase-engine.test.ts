@@ -18,7 +18,10 @@ import {
   tryAdvanceUserManagedPhase,
 } from "@/systems/phase-engine";
 import { GAME_STATE_SCHEMA_VERSION } from "@/state/game-state";
-import { serializeGameState, deserializeGameState } from "@/persistence/mappers/game-state-mapper";
+import {
+  serializeGameState,
+  deserializeGameState,
+} from "@/persistence/mappers/game-state-mapper";
 
 function bootState() {
   let state = createCblInitialGameState({
@@ -41,7 +44,9 @@ describe("phase-engine", () => {
     const { state } = bootState();
     expect(getActivePhaseId(state)).toBe("preseason.preparation");
     expect(state.competition.phase.activePhaseId).toBe("preseason.preparation");
-    expect(state.user.franchisePhaseState[state.user.activeOwnerTeamId]).toEqual({
+    expect(
+      state.user.franchisePhaseState[state.user.activeOwnerTeamId],
+    ).toEqual({
       dismissed: [],
     });
   });
@@ -81,7 +86,9 @@ describe("phase-engine", () => {
     current = enterOffseasonFromPostseason(current).state;
     expect(getActivePhaseId(current)).toBe("offseason.season_transition");
     const processed = processOffseasonLifecycle(current, rng);
-    expect(getActivePhaseId(processed.state)).toBe("offseason.roster_decisions");
+    expect(getActivePhaseId(processed.state)).toBe(
+      "offseason.roster_decisions",
+    );
   });
 
   it("uses draft-before-free-agency order", () => {

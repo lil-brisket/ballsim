@@ -145,9 +145,7 @@ export type PlayerSuspension = {
  * @deprecated Use {@link PlayerAvailability} + {@link PlayerInjury}. Kept for
  * type aliases during migration of legacy save payloads.
  */
-export type InjuryStatus =
-  | { kind: "healthy" }
-  | { kind: "injured" };
+export type InjuryStatus = { kind: "healthy" } | { kind: "injured" };
 
 export type DevelopmentStage = "developing" | "prime" | "declining";
 
@@ -318,10 +316,7 @@ export function isPlayerAvailability(
 
 /** True when the player is eligible to take the floor (may still have workload caps). */
 export function playerCanPlay(player: Player): boolean {
-  if (
-    player.availability === "out" ||
-    player.availability === "suspended"
-  ) {
+  if (player.availability === "out" || player.availability === "suspended") {
     return false;
   }
   if (player.suspension != null && player.suspension.gamesRemaining > 0) {
@@ -454,8 +449,7 @@ export function createPlayer(input: PlayerInput): Player {
     availability: input.availability,
     activeInjuries: activeInjuries.map(cloneInjury),
     injury: primaryActiveInjury(activeInjuries),
-    suspension:
-      input.suspension == null ? null : { ...input.suspension },
+    suspension: input.suspension == null ? null : { ...input.suspension },
     physical: { ...physical },
     conditioning,
     injuryHistory: injuryHistory.map((entry) => ({ ...entry })),
@@ -575,7 +569,9 @@ function assertPositiveFinite(value: number, field: string): void {
 
 function assertPlayerPosition(value: string): void {
   if (!PLAYER_POSITIONS.includes(value as PlayerPosition)) {
-    throw new Error(`Player position must be one of ${PLAYER_POSITIONS.join(", ")}.`);
+    throw new Error(
+      `Player position must be one of ${PLAYER_POSITIONS.join(", ")}.`,
+    );
   }
 }
 
@@ -596,11 +592,7 @@ function assertPlayerNationality(value: string): void {
 }
 
 function assertRating(value: number, field: string): void {
-  if (
-    !Number.isInteger(value) ||
-    value < RATING_MIN ||
-    value > RATING_MAX
-  ) {
+  if (!Number.isInteger(value) || value < RATING_MIN || value > RATING_MAX) {
     throw new Error(
       `Player ${field} must be an integer between ${RATING_MIN} and ${RATING_MAX}.`,
     );
@@ -728,7 +720,9 @@ function assertPlayerInjury(injury: PlayerInjury): void {
     typeof injury.temporaryFrustration !== "number" ||
     !Number.isFinite(injury.temporaryFrustration)
   ) {
-    throw new Error("Player injury.temporaryFrustration must be a finite number.");
+    throw new Error(
+      "Player injury.temporaryFrustration must be a finite number.",
+    );
   }
   if (typeof injury.isReinjury !== "boolean") {
     throw new Error("Player injury.isReinjury must be a boolean.");

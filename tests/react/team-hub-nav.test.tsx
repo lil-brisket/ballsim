@@ -32,10 +32,14 @@ describe("TeamHubSubNav", () => {
     );
 
     expect(
-      screen.getByRole("link", { name: "Contracts" }).getAttribute("aria-current"),
+      screen
+        .getByRole("link", { name: "Contracts" })
+        .getAttribute("aria-current"),
     ).toBe("page");
     expect(
-      screen.getByRole("link", { name: "Team Hub" }).getAttribute("aria-current"),
+      screen
+        .getByRole("link", { name: "Team Hub" })
+        .getAttribute("aria-current"),
     ).toBeNull();
 
     unmount();

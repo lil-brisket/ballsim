@@ -131,12 +131,7 @@ export type AiAssistanceDomains = {
 };
 
 export type LeagueArea =
-  | "north_america"
-  | "europe"
-  | "africa"
-  | "asia"
-  | "south_america"
-  | "global";
+  "north_america" | "europe" | "africa" | "asia" | "south_america" | "global";
 
 export const LEAGUE_AREA_LABELS: Record<LeagueArea, string> = {
   north_america: "North America",
@@ -472,9 +467,7 @@ export function isSupportedPlayoffTeamCount(
   return (SUPPORTED_PLAYOFF_TEAM_COUNTS as readonly number[]).includes(value);
 }
 
-export function isSupportedSeriesLength(
-  value: number,
-): value is SeriesLength {
+export function isSupportedSeriesLength(value: number): value is SeriesLength {
   return (SUPPORTED_SERIES_LENGTHS as readonly number[]).includes(value);
 }
 

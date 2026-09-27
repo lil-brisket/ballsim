@@ -57,7 +57,8 @@ describe("franchise pressure signals", () => {
     const friction = computeFranchisePressureSignals({
       consecutiveAttendanceDeclineMonths: 1,
       consecutiveAttendanceRiseMonths: 0,
-      attendanceDownPctVsPriorMonth: PRESSURE_THRESHOLDS.fanPriceAttendanceDownPct,
+      attendanceDownPctVsPriorMonth:
+        PRESSURE_THRESHOLDS.fanPriceAttendanceDownPct,
       sentimentChangeVsPriorMonth: PRESSURE_THRESHOLDS.fanPriceSentimentDrop,
       ticketMerchChangeVsPriorMonth: -2,
       vsLeagueFillPct: -4,

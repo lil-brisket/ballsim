@@ -35,7 +35,9 @@ export function isPickConsumed(state: GameState, pickId: DraftPickId): boolean {
  * Inclusive: seasonYear + DRAFT_PICK_TRADE_HORIZON_YEARS is allowed;
  * one year beyond is not.
  */
-export function maxTradablePickSeasonYear(competitionSeasonYear: number): number {
+export function maxTradablePickSeasonYear(
+  competitionSeasonYear: number,
+): number {
   return competitionSeasonYear + DRAFT_PICK_TRADE_HORIZON_YEARS;
 }
 

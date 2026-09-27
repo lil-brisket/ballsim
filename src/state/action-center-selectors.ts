@@ -15,10 +15,7 @@ import type {
   PhaseResponsibility,
   UnresolvedDecision,
 } from "@/systems/simulation/phase-responsibility";
-import {
-  addCalendarDays,
-  calendarDaysBetween,
-} from "@/domain/calendar-date";
+import { addCalendarDays, calendarDaysBetween } from "@/domain/calendar-date";
 
 export type ActionCenterUrgency = "immediate" | "soon" | "routine";
 export type ActionCenterRelevance = "team" | "franchise" | "league";
@@ -156,7 +153,10 @@ function basePriority(
   return cat + SEVERITY_PRIORITY[severity];
 }
 
-function compareActionCenterItems(a: ActionCenterItem, b: ActionCenterItem): number {
+function compareActionCenterItems(
+  a: ActionCenterItem,
+  b: ActionCenterItem,
+): number {
   if (a.priority !== b.priority) return a.priority - b.priority;
   if (a.deadline && b.deadline) {
     const cmp = a.deadline.localeCompare(b.deadline);
@@ -242,11 +242,7 @@ export function buildActionCenterView(input: {
 
   for (const unresolved of input.phaseResponsibility?.unresolvedItems ?? []) {
     items.push(
-      mapUnresolvedToCenterItem(
-        unresolved,
-        input.saveId,
-        input.currentDate,
-      ),
+      mapUnresolvedToCenterItem(unresolved, input.saveId, input.currentDate),
     );
   }
 

@@ -52,9 +52,7 @@ function minimalState(players: ReturnType<typeof createPlayer>[]): GameState {
   } as unknown as GameState;
 }
 
-function sampleInjury(
-  overrides: Partial<PlayerInjury> = {},
-): PlayerInjury {
+function sampleInjury(overrides: Partial<PlayerInjury> = {}): PlayerInjury {
   return {
     injuryId: "inj_test_1",
     catalogKey: "knee_sprain",
@@ -116,9 +114,9 @@ describe("injury lifecycle", () => {
     });
     const next = state.world.players[asPlayerId("p1")]!;
     expect(next.activeInjuries.length).toBe(2);
-    expect(
-      aggregateAvailabilityFromInjuries(next.activeInjuries),
-    ).toBe("limited");
+    expect(aggregateAvailabilityFromInjuries(next.activeInjuries)).toBe(
+      "limited",
+    );
   });
 
   it("supports suspension without injury", () => {

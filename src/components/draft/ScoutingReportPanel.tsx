@@ -70,9 +70,7 @@ export function ScoutingReportPanel({
             <p className="text-zinc-400">
               Projected rank: {report.projectedRank.min}–
               {report.projectedRank.max}
-              {report.positionEstimate
-                ? ` · ${report.positionEstimate}`
-                : ""}
+              {report.positionEstimate ? ` · ${report.positionEstimate}` : ""}
             </p>
           ) : null}
 
@@ -173,9 +171,7 @@ function Stat({
       <div className="text-[10px] uppercase tracking-wide text-zinc-600">
         {label}
       </div>
-      <div
-        className={`text-zinc-100 ${capitalize ? "capitalize" : ""}`}
-      >
+      <div className={`text-zinc-100 ${capitalize ? "capitalize" : ""}`}>
         {value}
       </div>
     </div>

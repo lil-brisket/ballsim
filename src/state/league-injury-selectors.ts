@@ -43,9 +43,7 @@ export function toLeagueInjuryBriefing(
     // Most severe active injury
     let best = injuries[0]!;
     for (const injury of injuries) {
-      if (
-        SEVERITY_RANK[injury.severity] > SEVERITY_RANK[best.severity]
-      ) {
+      if (SEVERITY_RANK[injury.severity] > SEVERITY_RANK[best.severity]) {
         best = injury;
       }
     }

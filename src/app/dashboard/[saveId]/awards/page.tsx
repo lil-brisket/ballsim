@@ -25,10 +25,7 @@ export default async function AwardsPage({ params, searchParams }: PageProps) {
 
   return (
     <>
-      <PageHeader
-        title="Awards"
-        subtitle="League award history by season"
-      />
+      <PageHeader title="Awards" subtitle="League award history by season" />
       <LeagueAwardsHistory
         saveId={saveId}
         currentSeasonYear={hub.currentSeasonYear}

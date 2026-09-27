@@ -39,13 +39,14 @@ function entry(
   };
 }
 
-function managementWith(
-  rotation: RotationEntry[],
-): TeamRosterManagement {
+function managementWith(rotation: RotationEntry[]): TeamRosterManagement {
   return {
     ...emptyTeamRosterManagement(),
     rotation,
-    rotationDepth: Math.max(5, rotation.filter((r) => r.rotationStatus === "active").length),
+    rotationDepth: Math.max(
+      5,
+      rotation.filter((r) => r.rotationStatus === "active").length,
+    ),
     rotationPhilosophy: "balanced",
     rotationStyle: "balanced",
     rotationPreset: "custom",
@@ -117,7 +118,7 @@ describe("rotation planner", () => {
         playerId: player.id,
         targetMinutes: index < 8 ? 30 - index : 0,
         rotationStatus: index < 8 ? "active" : "inactive",
-        rotationPriority: (Math.min(5, index + 1) as 1 | 2 | 3 | 4 | 5),
+        rotationPriority: Math.min(5, index + 1) as 1 | 2 | 3 | 4 | 5,
         role: index < 5 ? "starter" : "bench",
         preferredPositions: [player.position],
       }),

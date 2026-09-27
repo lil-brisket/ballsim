@@ -47,12 +47,10 @@ export function tryEnqueueOwnedTeamTradeOffer(
     };
   }
   // Only accept proposals that specifically involve teamB.
-  if (
-    !(
-      (proposal.sideA.teamId === teamAId && proposal.sideB.teamId === teamBId) ||
-      (proposal.sideA.teamId === teamBId && proposal.sideB.teamId === teamAId)
-    )
-  ) {
+  if (!(
+    (proposal.sideA.teamId === teamAId && proposal.sideB.teamId === teamBId) ||
+    (proposal.sideA.teamId === teamBId && proposal.sideB.teamId === teamAId)
+  )) {
     return {
       outcome: "rejected",
       state,
@@ -99,11 +97,7 @@ export function tryEnqueueAnyOwnedTeamTradeOffer(
   );
   for (let i = 0; i < owned.length; i += 1) {
     for (let j = i + 1; j < owned.length; j += 1) {
-      const result = tryEnqueueOwnedTeamTradeOffer(
-        state,
-        owned[i]!,
-        owned[j]!,
-      );
+      const result = tryEnqueueOwnedTeamTradeOffer(state, owned[i]!, owned[j]!);
       if (result.outcome === "queued") {
         return result;
       }

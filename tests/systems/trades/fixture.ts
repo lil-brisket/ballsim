@@ -105,10 +105,7 @@ export function createTradeFixture(
   teams[teamAId] = { ...teams[teamAId]!, roster: teamARoster };
   teams[teamBId] = { ...teams[teamBId]!, roster: teamBRoster };
 
-  const draftPicks = generateDraftPicksForSeason(
-    Object.values(teams),
-    year,
-  );
+  const draftPicks = generateDraftPicksForSeason(Object.values(teams), year);
 
   const finances = { ...base.business.finances };
   const payrollA = teamARoster.length * defaultSalary;

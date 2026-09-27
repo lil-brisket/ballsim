@@ -7,7 +7,10 @@ import { simulateGamesForDate } from "@/systems/game-simulation";
 import { simulateNextPlayoffGame } from "@/systems/playoff-simulation";
 import { updateStandings } from "@/systems/standings";
 import type { SimulationProfiler } from "@/systems/simulation/simulation-profiler";
-import { tickDailyRecovery, processExposureEvent } from "@/systems/injury/injury-service";
+import {
+  tickDailyRecovery,
+  processExposureEvent,
+} from "@/systems/injury/injury-service";
 import { processPostGameInjuryExposures } from "@/systems/injury/injury-post-game";
 import {
   createOffseasonTrainingExposure,
@@ -141,7 +144,9 @@ export function runDailyPipeline(
               ...current.world.teams,
               [teamId]: {
                 ...team,
-                rosterManagement: cloneTeamRosterManagement(response.management),
+                rosterManagement: cloneTeamRosterManagement(
+                  response.management,
+                ),
               },
             },
           },

@@ -40,7 +40,10 @@ function parseArgs(argv: string[]): {
   };
 }
 
-function scheduledGame(homeTeamId: ReturnType<typeof asTeamId>, awayTeamId: ReturnType<typeof asTeamId>) {
+function scheduledGame(
+  homeTeamId: ReturnType<typeof asTeamId>,
+  awayTeamId: ReturnType<typeof asTeamId>,
+) {
   return createGame({
     competitionType: "regular_season",
     homeTeamSnapshot: null,

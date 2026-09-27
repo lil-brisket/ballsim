@@ -23,10 +23,16 @@ export function createCoach(input: CoachInput): Coach {
       throw new Error("Coach teamId must be a non-empty string or null.");
     }
   }
-  if (typeof input.firstName !== "string" || input.firstName.trim().length === 0) {
+  if (
+    typeof input.firstName !== "string" ||
+    input.firstName.trim().length === 0
+  ) {
     throw new Error("Coach firstName must be a non-empty string.");
   }
-  if (typeof input.lastName !== "string" || input.lastName.trim().length === 0) {
+  if (
+    typeof input.lastName !== "string" ||
+    input.lastName.trim().length === 0
+  ) {
     throw new Error("Coach lastName must be a non-empty string.");
   }
   return {

@@ -13,10 +13,7 @@ import { advanceSimulation } from "@/systems/simulation/advance-simulation";
 import { completeDraft, createDraft, activateDraft } from "@/systems/draft";
 import { draftClassIdFor } from "@/domain/entities/draft";
 import { draftYearForSeason } from "@/systems/draft";
-import {
-  getActivePhaseId,
-  setActivePhase,
-} from "@/systems/phase-engine";
+import { getActivePhaseId, setActivePhase } from "@/systems/phase-engine";
 
 describe("offseason lifecycle", () => {
   function enterOffseason() {

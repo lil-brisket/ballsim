@@ -8,12 +8,7 @@ import {
   SKILL_WEIGHTS,
 } from "@/domain/player-overall-rating";
 
-export type EvaluationLevel =
-  | "elite"
-  | "strong"
-  | "average"
-  | "weak"
-  | "poor";
+export type EvaluationLevel = "elite" | "strong" | "average" | "weak" | "poor";
 
 export type EvaluationCategory =
   | "scoring"
@@ -36,7 +31,11 @@ export type PlayerAttributeEvaluation = {
 const ATTRIBUTE_META: Partial<
   Record<
     keyof PlayerAttributes,
-    { category: EvaluationCategory; strengthLabel: string; weaknessLabel: string }
+    {
+      category: EvaluationCategory;
+      strengthLabel: string;
+      weaknessLabel: string;
+    }
   >
 > = {
   finishing: {
@@ -148,7 +147,9 @@ function positionWeight(
   position: PlayerPosition,
   attribute: keyof PlayerAttributes,
 ): number {
-  const skill = SKILL_WEIGHTS[position] as Partial<Record<keyof PlayerAttributes, number>>;
+  const skill = SKILL_WEIGHTS[position] as Partial<
+    Record<keyof PlayerAttributes, number>
+  >;
   const physical = PHYSICAL_WEIGHTS[position] as Partial<
     Record<keyof PlayerAttributes, number>
   >;
@@ -236,7 +237,11 @@ export function topAttributesByPosition(
   position: PlayerPosition,
   attributes: PlayerAttributes,
   count = 5,
-): Array<{ attribute: keyof PlayerAttributes; rating: number; weight: number }> {
+): Array<{
+  attribute: keyof PlayerAttributes;
+  rating: number;
+  weight: number;
+}> {
   const keys = Object.keys(ATTRIBUTE_META) as Array<keyof PlayerAttributes>;
   return keys
     .map((attribute) => ({

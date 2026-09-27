@@ -9,7 +9,11 @@ import {
 import { createDivision, type Division } from "@/domain/entities/division";
 import { createLeague, type League } from "@/domain/entities/league";
 import { type Player } from "@/domain/entities/player";
-import { createTeam, NEUTRAL_TEAM_PLAY_STYLE, type Team } from "@/domain/entities/team";
+import {
+  createTeam,
+  NEUTRAL_TEAM_PLAY_STYLE,
+  type Team,
+} from "@/domain/entities/team";
 import { resolvePaletteIdFromBranding } from "@/domain/entities/team-branding";
 import { DEFAULT_COACHING_PHILOSOPHY } from "@/domain/coaching/coaching-philosophy";
 import type { LeagueArea } from "@/domain/game-settings";
@@ -94,7 +98,11 @@ export function generateLeague(
   );
 
   const divisionNamesByConference: string[][] = [];
-  for (let conferenceIndex = 0; conferenceIndex < resolved.conferenceCount; conferenceIndex += 1) {
+  for (
+    let conferenceIndex = 0;
+    conferenceIndex < resolved.conferenceCount;
+    conferenceIndex += 1
+  ) {
     divisionNamesByConference.push(
       takeUniqueNames(
         DIVISION_NAMES,
@@ -146,7 +154,8 @@ export function generateLeague(
         teamIndex < resolved.teamsPerDivision;
         teamIndex += 1
       ) {
-        const teamId = ids.teamIds[conferenceIndex]![divisionIndex]![teamIndex]!;
+        const teamId =
+          ids.teamIds[conferenceIndex]![divisionIndex]![teamIndex]!;
         const nameData = teamNames[teamNameIndex]!;
         teamNameIndex += 1;
 
@@ -257,7 +266,10 @@ function validateConfig(config: LeagueGenerationConfig): ResolvedConfig {
   }
 
   assertPositiveInteger(config.conferenceCount, "conferenceCount");
-  assertPositiveInteger(config.divisionsPerConference, "divisionsPerConference");
+  assertPositiveInteger(
+    config.divisionsPerConference,
+    "divisionsPerConference",
+  );
   assertPositiveInteger(config.teamsPerDivision, "teamsPerDivision");
 
   const rosterSize =
@@ -285,9 +297,7 @@ function validateConfig(config: LeagueGenerationConfig): ResolvedConfig {
 
 function assertPositiveInteger(value: number, field: string): void {
   if (!Number.isInteger(value) || value <= 0) {
-    throw new Error(
-      `League generation ${field} must be a positive integer.`,
-    );
+    throw new Error(`League generation ${field} must be a positive integer.`);
   }
 }
 
@@ -304,9 +314,7 @@ function assertNonEmptyName(value: string, field: string): void {
     throw new Error(`League generation ${field} must be a non-empty string.`);
   }
   if (value.trim().length === 0) {
-    throw new Error(
-      `League generation ${field} cannot be whitespace-only.`,
-    );
+    throw new Error(`League generation ${field} cannot be whitespace-only.`);
   }
 }
 
@@ -345,9 +353,7 @@ function assignIds(config: ResolvedConfig): HierarchyIds {
         teamIndex < config.teamsPerDivision;
         teamIndex += 1
       ) {
-        divisionTeamIds.push(
-          asTeamId(`team_${divisionId}_${teamIndex}`),
-        );
+        divisionTeamIds.push(asTeamId(`team_${divisionId}_${teamIndex}`));
       }
       conferenceTeamIds.push(divisionTeamIds);
     }

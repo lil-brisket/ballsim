@@ -88,14 +88,10 @@ export function validateRosterRulesConfig(
 
   const composition = compositionSum(rules);
   if (composition < rules.minRosterSize) {
-    throw new Error(
-      "Roster rules composition must be at least minRosterSize.",
-    );
+    throw new Error("Roster rules composition must be at least minRosterSize.");
   }
   if (composition > rules.maxRosterSize) {
-    throw new Error(
-      "Roster rules composition must be at most maxRosterSize.",
-    );
+    throw new Error("Roster rules composition must be at most maxRosterSize.");
   }
 }
 
@@ -108,14 +104,10 @@ export function validateRosterSize(
     throw new Error("Roster playerCount must be an integer >= 0.");
   }
   if (playerCount < rules.minRosterSize) {
-    throw new Error(
-      `Roster size must be at least ${rules.minRosterSize}.`,
-    );
+    throw new Error(`Roster size must be at least ${rules.minRosterSize}.`);
   }
   if (playerCount > rules.maxRosterSize) {
-    throw new Error(
-      `Roster size must be at most ${rules.maxRosterSize}.`,
-    );
+    throw new Error(`Roster size must be at most ${rules.maxRosterSize}.`);
   }
 }
 
@@ -200,9 +192,7 @@ function validateRosterGroup(
   const seen = new Set<string>();
   for (const playerId of ids) {
     if (seen.has(playerId)) {
-      throw new Error(
-        `Roster ${label} contains duplicate player ${playerId}.`,
-      );
+      throw new Error(`Roster ${label} contains duplicate player ${playerId}.`);
     }
     seen.add(playerId);
 
@@ -303,9 +293,7 @@ function assertIntegerAtLeast(
   minimum: number,
 ): void {
   if (!Number.isInteger(value) || value < minimum) {
-    throw new Error(
-      `Roster rules ${field} must be an integer >= ${minimum}.`,
-    );
+    throw new Error(`Roster rules ${field} must be an integer >= ${minimum}.`);
   }
 }
 

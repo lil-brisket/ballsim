@@ -43,8 +43,4 @@ export type RelationshipExpectation =
   | { kind: "context_dependent"; note: string };
 
 export type CompetitiveTier =
-  | "bottom_quartile"
-  | "middle"
-  | "playoff"
-  | "contender"
-  | "champion";
+  "bottom_quartile" | "middle" | "playoff" | "contender" | "champion";

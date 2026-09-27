@@ -17,7 +17,10 @@ import { createTestGameState } from "../factories/game-state";
 const OVERALL = { view: "overall" as const, stats: "standard" as const };
 const CONFERENCE = { view: "conference" as const, stats: "standard" as const };
 const DIVISION = { view: "division" as const, stats: "standard" as const };
-const OVERALL_ADVANCED = { view: "overall" as const, stats: "advanced" as const };
+const OVERALL_ADVANCED = {
+  view: "overall" as const,
+  stats: "advanced" as const,
+};
 const CONFERENCE_ADVANCED = {
   view: "conference" as const,
   stats: "advanced" as const,
@@ -97,13 +100,17 @@ describe("toStandingsPageView", () => {
       expect(page.view).toBe(options.view);
       expect(page.stats).toBe(options.stats);
       expect(page.groups.length).toBeGreaterThan(0);
-      expect(page.leagueRows.length).toBe(Object.keys(state.world.teams).length);
+      expect(page.leagueRows.length).toBe(
+        Object.keys(state.world.teams).length,
+      );
     }
 
     const overall = toStandingsPageView(state, OVERALL);
     expect(overall.groups).toHaveLength(1);
     expect(overall.groups[0]!.kind).toBe("overall");
-    expect(overall.groups[0]!.cutoffRank).toBe(state.settings.playoffs.playoffTeams);
+    expect(overall.groups[0]!.cutoffRank).toBe(
+      state.settings.playoffs.playoffTeams,
+    );
     expect(overall.groups[0]!.rows[0]!.leagueRank).toBe(1);
     expect(overall.groups[0]!.rows[0]!.gamesBackLeague).toBe(0);
 
@@ -147,8 +154,7 @@ describe("toStandingsPageView", () => {
     const page = toStandingsPageView(tied, OVERALL);
     const standingA = byTeamId[a]!;
     const standingB = byTeamId[b]!;
-    const expectedFirst =
-      compareStandings(standingA, standingB) <= 0 ? a : b;
+    const expectedFirst = compareStandings(standingA, standingB) <= 0 ? a : b;
     expect(page.leagueRows[0]!.teamId).toBe(expectedFirst);
   });
 
@@ -195,8 +201,10 @@ describe("toStandingsPageView", () => {
       ...state,
       competition: { ...state.competition, standings: { byTeamId } },
     };
-    const played = toStandingsPageView(withGames, OVERALL_ADVANCED)
-      .leagueRows.find((r) => r.teamId === teamId)!;
+    const played = toStandingsPageView(
+      withGames,
+      OVERALL_ADVANCED,
+    ).leagueRows.find((r) => r.teamId === teamId)!;
     expect(played.ppg).toBe(110);
     expect(played.oppPpg).toBe(90);
     expect(played.net).toBe(20);

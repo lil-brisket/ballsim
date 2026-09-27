@@ -19,7 +19,11 @@ function fmtPct(rate: number | null, digits = 1): string {
   return `${(rate * 100).toFixed(digits)}%`;
 }
 
-function lineMetric(label: string, summary: MetricSummary, asPct = false): string {
+function lineMetric(
+  label: string,
+  summary: MetricSummary,
+  asPct = false,
+): string {
   const mean = asPct ? fmtPct(summary.mean) : fmt(summary.mean);
   const median = asPct ? fmtPct(summary.median) : fmt(summary.median);
   const stdev = asPct ? fmtPct(summary.stdev) : fmt(summary.stdev);
@@ -110,10 +114,12 @@ export function formatValidationReport(result: ValidationRunResult): string {
     lines.push(
       "",
       section("INVARIANT FAILURES (sample)"),
-      ...result.invariantFailures.slice(0, 20).map(
-        (failure) =>
-          `${failure.gameId} ${failure.side ?? ""} ${failure.rule}: ${failure.detail}`,
-      ),
+      ...result.invariantFailures
+        .slice(0, 20)
+        .map(
+          (failure) =>
+            `${failure.gameId} ${failure.side ?? ""} ${failure.rule}: ${failure.detail}`,
+        ),
     );
   }
 
@@ -121,8 +127,7 @@ export function formatValidationReport(result: ValidationRunResult): string {
 }
 
 function formatCorrelation(corr: CorrelationResult): string {
-  const r =
-    corr.pearsonR === null ? "n/a" : corr.pearsonR.toFixed(3);
+  const r = corr.pearsonR === null ? "n/a" : corr.pearsonR.toFixed(3);
   return `${corr.name.padEnd(32)} r=${r.padStart(7)}  ${corr.verdict}  ${corr.message}`;
 }
 
@@ -144,6 +149,8 @@ function formatMatchupSection(matchup: MatchupDiagnosticResult): string {
   ].join("\n");
 }
 
-export function formatAggregatesBrief(aggregates: ValidationAggregates): string {
+export function formatAggregatesBrief(
+  aggregates: ValidationAggregates,
+): string {
   return `games=${aggregates.gamesSimulated} teamPts=${fmt(aggregates.teamPoints.mean)} poss=${fmt(aggregates.possessionsPerTeam.mean)} FG%=${fmtPct(aggregates.fieldGoalPct.mean)}`;
 }

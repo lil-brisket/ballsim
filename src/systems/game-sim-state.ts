@@ -80,7 +80,9 @@ export type CreateGameSimStateInput = {
  * Builds a fresh GameSimState from a scheduled/in-progress Game and lineups.
  * Does not validate the full Game entity (that happens at finalize).
  */
-export function createGameSimState(input: CreateGameSimStateInput): GameSimState {
+export function createGameSimState(
+  input: CreateGameSimStateInput,
+): GameSimState {
   const playerStatsById = new Map<string, GamePlayerStats>();
   const playerStatsOrder: PlayerId[] = [];
 
@@ -127,9 +129,7 @@ export function createGameSimState(input: CreateGameSimStateInput): GameSimState
     secondsOnCourt,
     homeOnCourt: [...input.homeOnCourt],
     awayOnCourt: [...input.awayOnCourt],
-    continuousSecondsOnCourt: new Map(
-      [...onCourtIds].map((id) => [id, 0]),
-    ),
+    continuousSecondsOnCourt: new Map([...onCourtIds].map((id) => [id, 0])),
     fatigueByPlayerId: new Map(),
     lastSubElapsedSeconds: new Map(),
     fouledOutPlayerIds: new Set(),

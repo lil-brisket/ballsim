@@ -7,9 +7,14 @@ import type { FantasyDraftTeamSummary } from "@/domain/entities/fantasy-draft";
 
 function Stars(props: { count: number }) {
   return (
-    <span className="tracking-tight text-amber-400" aria-label={`${props.count} stars`}>
+    <span
+      className="tracking-tight text-amber-400"
+      aria-label={`${props.count} stars`}
+    >
       {"★".repeat(props.count)}
-      <span className="text-zinc-600">{"☆".repeat(Math.max(0, 5 - props.count))}</span>
+      <span className="text-zinc-600">
+        {"☆".repeat(Math.max(0, 5 - props.count))}
+      </span>
     </span>
   );
 }
@@ -52,8 +57,8 @@ function HighlightCard(props: {
         {props.pick.playerName} — Pick #{props.pick.pickNumber}
       </div>
       <div className="text-zinc-400">
-        {props.pick.position} · {props.pick.overall} OVR / {props.pick.potential}{" "}
-        POT
+        {props.pick.position} · {props.pick.overall} OVR /{" "}
+        {props.pick.potential} POT
       </div>
     </div>
   );
@@ -72,11 +77,15 @@ function TeamSummaryPanel(props: {
         <p className="mt-1 text-sm text-zinc-400">Fantasy Draft Complete</p>
         <div className="mt-3 flex flex-wrap items-end gap-4">
           <div>
-            <div className="text-[10px] uppercase text-zinc-500">Draft Grade</div>
+            <div className="text-[10px] uppercase text-zinc-500">
+              Draft Grade
+            </div>
             <div className="text-4xl font-bold text-amber-300">
               {summary.draftGrade}
             </div>
-            <div className="text-sm text-zinc-400">{summary.draftGradeLabel}</div>
+            <div className="text-sm text-zinc-400">
+              {summary.draftGradeLabel}
+            </div>
           </div>
           <div className="text-sm text-zinc-400">
             {summary.playerCount} players selected · Avg OVR {summary.avgOvr} ·
@@ -144,7 +153,9 @@ function TeamSummaryPanel(props: {
           </h4>
           {summary.positionBalance.map((row) => (
             <div key={row.position} className="flex items-center gap-3 text-sm">
-              <span className="w-8 font-mono text-zinc-300">{row.position}</span>
+              <span className="w-8 font-mono text-zinc-300">
+                {row.position}
+              </span>
               <BalanceBar level={row.level} />
               <span className="w-28 text-right text-xs text-zinc-400">
                 {row.level}
@@ -258,7 +269,10 @@ function LeagueRecapPanel(props: { view: FantasyDraftSummaryView }) {
       <h2 className="text-lg font-semibold text-zinc-50">League Draft Recap</h2>
       <div className="mt-4 grid gap-3 sm:grid-cols-2">
         {awards.map(({ label, award }) => (
-          <div key={label} className="rounded-lg border border-zinc-800 p-3 text-sm">
+          <div
+            key={label}
+            className="rounded-lg border border-zinc-800 p-3 text-sm"
+          >
             <div className="text-[10px] uppercase tracking-wide text-zinc-500">
               {label}
             </div>

@@ -3,10 +3,7 @@ import { LogoFrame, type TeamLogoProps } from "./LogoFrame";
 export function MountainLogo(props: TeamLogoProps) {
   return (
     <LogoFrame {...props} title={props.title ?? "Mountain"}>
-      <path
-        d="M6 48 L20 24 L28 36 L38 16 L58 48 Z"
-        fill={props.primaryColor}
-      />
+      <path d="M6 48 L20 24 L28 36 L38 16 L58 48 Z" fill={props.primaryColor} />
       <path d="M20 24 L24 32 L28 36 L38 16 Z" fill={props.accentColor} />
       <path
         d="M6 48 H58"
@@ -102,26 +99,11 @@ export function BridgeLogo(props: TeamLogoProps) {
 export function PalmTreeLogo(props: TeamLogoProps) {
   return (
     <LogoFrame {...props} title={props.title ?? "Palm"}>
-      <path
-        d="M30 52 L32 28 L34 52 Z"
-        fill={props.primaryColor}
-      />
-      <path
-        d="M32 28 Q18 20 12 28 Q22 26 32 32"
-        fill={props.accentColor}
-      />
-      <path
-        d="M32 28 Q46 20 52 28 Q42 26 32 32"
-        fill={props.accentColor}
-      />
-      <path
-        d="M32 26 Q24 12 18 16 Q28 18 32 28"
-        fill={props.primaryColor}
-      />
-      <path
-        d="M32 26 Q40 12 46 16 Q36 18 32 28"
-        fill={props.primaryColor}
-      />
+      <path d="M30 52 L32 28 L34 52 Z" fill={props.primaryColor} />
+      <path d="M32 28 Q18 20 12 28 Q22 26 32 32" fill={props.accentColor} />
+      <path d="M32 28 Q46 20 52 28 Q42 26 32 32" fill={props.accentColor} />
+      <path d="M32 26 Q24 12 18 16 Q28 18 32 28" fill={props.primaryColor} />
+      <path d="M32 26 Q40 12 46 16 Q36 18 32 28" fill={props.primaryColor} />
     </LogoFrame>
   );
 }
@@ -129,7 +111,10 @@ export function PalmTreeLogo(props: TeamLogoProps) {
 export function PineTreeLogo(props: TeamLogoProps) {
   return (
     <LogoFrame {...props} title={props.title ?? "Pine"}>
-      <path d="M32 10 L44 28 H36 L48 40 H34 L50 52 H14 L30 40 H16 L28 28 H20 Z" fill={props.primaryColor} />
+      <path
+        d="M32 10 L44 28 H36 L48 40 H34 L50 52 H14 L30 40 H16 L28 28 H20 Z"
+        fill={props.primaryColor}
+      />
       <rect x="29" y="50" width="6" height="6" fill={props.accentColor} />
     </LogoFrame>
   );

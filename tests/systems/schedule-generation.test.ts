@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 import { calendarDaysBetween } from "@/domain/calendar-date";
-import { CBL_GAME_SETTINGS, DEFAULT_GAME_SETTINGS } from "@/domain/game-settings";
+import {
+  CBL_GAME_SETTINGS,
+  DEFAULT_GAME_SETTINGS,
+} from "@/domain/game-settings";
 import { asTeamId, type TeamId } from "@/domain/ids";
 import { createSeededRng } from "@/domain/rng";
 import { resetDomainEventSequenceForTests } from "@/domain/events/domain-event";
@@ -19,10 +22,7 @@ function teamIds(...ids: string[]): TeamId[] {
   return ids.map(asTeamId);
 }
 
-function config(
-  ids: TeamId[],
-  seasonLength: number,
-): SeasonScheduleConfig {
+function config(ids: TeamId[], seasonLength: number): SeasonScheduleConfig {
   return { teamIds: ids, seasonLength };
 }
 
@@ -69,14 +69,8 @@ function assertScheduleInvariants(
     inRound.add(game.homeTeamId);
     inRound.add(game.awayTeamId);
 
-    gamesByTeam.set(
-      game.homeTeamId,
-      gamesByTeam.get(game.homeTeamId)! + 1,
-    );
-    gamesByTeam.set(
-      game.awayTeamId,
-      gamesByTeam.get(game.awayTeamId)! + 1,
-    );
+    gamesByTeam.set(game.homeTeamId, gamesByTeam.get(game.homeTeamId)! + 1);
+    gamesByTeam.set(game.awayTeamId, gamesByTeam.get(game.awayTeamId)! + 1);
     homeByTeam.set(game.homeTeamId, homeByTeam.get(game.homeTeamId)! + 1);
     awayByTeam.set(game.awayTeamId, awayByTeam.get(game.awayTeamId)! + 1);
 
@@ -133,7 +127,10 @@ describe("generateSeasonSchedule", () => {
 
   it("schedules a larger configurable league", () => {
     const ids = teamIds(
-      ...Array.from({ length: 10 }, (_, i) => `team_${String(i).padStart(2, "0")}`),
+      ...Array.from(
+        { length: 10 },
+        (_, i) => `team_${String(i).padStart(2, "0")}`,
+      ),
     );
     const cfg = config(ids, defaultSeasonLength(10));
     const schedule = generateSeasonSchedule(cfg);
@@ -235,17 +232,17 @@ describe("generateSeasonSchedule", () => {
   });
 
   it("throws on impossible configurations", () => {
-    expect(() =>
-      generateSeasonSchedule(config(teamIds("only"), 2)),
-    ).toThrow(/at least 2 teams/);
+    expect(() => generateSeasonSchedule(config(teamIds("only"), 2))).toThrow(
+      /at least 2 teams/,
+    );
 
-    expect(() =>
-      generateSeasonSchedule(config(teamIds("a", "a"), 2)),
-    ).toThrow(/unique/);
+    expect(() => generateSeasonSchedule(config(teamIds("a", "a"), 2))).toThrow(
+      /unique/,
+    );
 
-    expect(() =>
-      generateSeasonSchedule(config(teamIds("a", "b"), 0)),
-    ).toThrow(/seasonLength/);
+    expect(() => generateSeasonSchedule(config(teamIds("a", "b"), 0))).toThrow(
+      /seasonLength/,
+    );
 
     expect(() =>
       generateSeasonSchedule(config(teamIds("a", "b", "c"), 3)),
@@ -323,9 +320,7 @@ describe("generateSchedule calendar spacing", () => {
 
     expect(teamGames).toHaveLength(gamesPerTeam);
     expect(teamGames[0]!.date).toBe("2026-10-01");
-    expect(
-      teamGames.every((g) => g.date >= "2026-10-01"),
-    ).toBe(true);
+    expect(teamGames.every((g) => g.date >= "2026-10-01")).toBe(true);
     expect(
       teamGames.every((g) => g.seasonId === bootstrapped.competition.season.id),
     ).toBe(true);

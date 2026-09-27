@@ -3,10 +3,7 @@ import { POOR_ATTENDANCE_FILL_RATE_PCT } from "@/systems/owner-objectives-config
 import { getTeamCapSpace, getTeamPayroll } from "@/systems/salary-cap";
 import { STARTER_ROLES } from "@/systems/staff-generation";
 import { getFinancialStatement } from "@/systems/team-finances";
-import {
-  TICKET_PRICE_MAX,
-  TICKET_PRICE_MIN,
-} from "@/systems/ticket-pricing";
+import { TICKET_PRICE_MAX, TICKET_PRICE_MIN } from "@/systems/ticket-pricing";
 import type { TeamId } from "@/domain/ids";
 import { asTeamId } from "@/domain/ids";
 import type { GameState } from "@/state/game-state";
@@ -263,7 +260,12 @@ export type OwnerDashboardSituationView = {
   body: string;
   updatedOn: string;
   evidence: Record<string, number | boolean | string>;
-  actions: { id: string; label: string; href?: string; effectSummary?: string }[];
+  actions: {
+    id: string;
+    label: string;
+    href?: string;
+    effectSummary?: string;
+  }[];
 };
 
 export type OwnerDashboardView = {
@@ -280,7 +282,9 @@ export type OwnerDashboardView = {
   offseasonPriorities: readonly string[];
   seasonRecap: OwnerDashboardSeasonRecap | null;
   /** Latest cached annual report for the controlled team, if any. */
-  annualReport: import("@/domain/entities/annual-franchise-report").AnnualFranchiseReport | null;
+  annualReport:
+    | import("@/domain/entities/annual-franchise-report").AnnualFranchiseReport
+    | null;
   /** Active historical milestones (approaching / projected / achieved this season). */
   historicalMilestones: import("@/domain/entities/historical-milestone").MilestoneResult[];
   /** Current franchise era, if detectable. */
@@ -412,8 +416,7 @@ export function toOwnerDashboardView(state: GameState): OwnerDashboardView {
       : null;
 
   const teamId = asTeamId(canonical.teamId);
-  const history =
-    state.business.franchiseHistory[teamId]?.seasons ?? [];
+  const history = state.business.franchiseHistory[teamId]?.seasons ?? [];
   const standing = state.competition.standings.byTeamId[teamId];
   const wins = standing?.wins ?? 0;
   const losses = standing?.losses ?? 0;
@@ -428,8 +431,9 @@ export function toOwnerDashboardView(state: GameState): OwnerDashboardView {
     losses,
     projectedWins,
     attendanceToDate:
-      state.business.finances[teamId]?.attendanceByYear[String(canonical.year)] ??
-      null,
+      state.business.finances[teamId]?.attendanceByYear[
+        String(canonical.year)
+      ] ?? null,
     projectedAttendance: null,
     franchiseValue: calculateFranchiseValue(state, teamId),
     netIncome: health.netIncome,
@@ -440,8 +444,7 @@ export function toOwnerDashboardView(state: GameState): OwnerDashboardView {
   });
   const annualReport = getCachedAnnualReport(state, teamId);
   const currentEra = currentFranchiseEra(history, {
-    foundedSeasonYear:
-      state.business.franchiseOps[teamId]?.foundedSeasonYear,
+    foundedSeasonYear: state.business.franchiseOps[teamId]?.foundedSeasonYear,
   });
 
   // Surface top historical milestones as insights
@@ -662,12 +665,16 @@ function buildOwner(
   _health: OwnerDashboardHealth,
 ): OwnerDashboardOwner {
   const objectives = data.snapshot.objectives;
-  const active = objectives.filter((objective) => objective.status === "active");
+  const active = objectives.filter(
+    (objective) => objective.status === "active",
+  );
   const ownership = toOwnershipConfidenceView(data.state);
   return {
     patience: getActiveOwnedFranchise(data.state).ownerPatience,
     objectives,
-    primaryObjectives: active.filter((objective) => objective.role === "primary"),
+    primaryObjectives: active.filter(
+      (objective) => objective.role === "primary",
+    ),
     secondaryObjectives: active.filter(
       (objective) => objective.role === "secondary",
     ),
@@ -750,8 +757,7 @@ function buildPendingTradeOfferView(
   const offeringTeam = state.world.teams[pending.payload.offeringTeamId];
   const userTeamId = pending.payload.userTeamId;
   const receivingTeam = state.world.teams[userTeamId];
-  const proposal =
-    pending.payload.currentProposal ?? pending.payload.proposal;
+  const proposal = pending.payload.currentProposal ?? pending.payload.proposal;
   const offeringSide =
     proposal.sideA.teamId === pending.payload.offeringTeamId
       ? proposal.sideA
@@ -783,9 +789,7 @@ function buildPendingTradeOfferView(
     youReceive: describeTradeSideAssets(state, offeringSide),
     theyReceive: describeTradeSideAssets(state, userSide),
     valueSummary: evaluation.recommendation,
-    motivationLabel: motivation
-      ? motivationDisplayLabel(motivation)
-      : null,
+    motivationLabel: motivation ? motivationDisplayLabel(motivation) : null,
     reasons: evaluation.reasons.slice(0, 4),
     expiresOn: pending.payload.expiresOn ?? null,
   };
@@ -815,17 +819,13 @@ function describeTradeSideAssets(
   for (const playerId of side.playerIds) {
     const player = state.world.players[playerId];
     labels.push(
-      player
-        ? `${player.firstName} ${player.lastName}`
-        : `Player ${playerId}`,
+      player ? `${player.firstName} ${player.lastName}` : `Player ${playerId}`,
     );
   }
   for (const pickId of side.draftPickIds) {
     const pick = state.world.draftPicks[pickId];
     labels.push(
-      pick
-        ? `${pick.seasonYear} Round ${pick.round} pick`
-        : `Pick ${pickId}`,
+      pick ? `${pick.seasonYear} Round ${pick.round} pick` : `Pick ${pickId}`,
     );
   }
   return labels;
@@ -1036,8 +1036,7 @@ function buildActionItems(
   }
 
   const importantUnread = data.snapshot.notifications.filter(
-    (n) =>
-      !n.read && (n.severity === "warning" || n.severity === "critical"),
+    (n) => !n.read && (n.severity === "warning" || n.severity === "critical"),
   );
   if (importantUnread.length > 0) {
     const alreadyCovered =
@@ -1047,10 +1046,9 @@ function buildActionItems(
       items.push({
         id: "action_notifications",
         category: "notifications",
-        severity:
-          importantUnread.some((n) => n.severity === "critical")
-            ? "critical"
-            : "warning",
+        severity: importantUnread.some((n) => n.severity === "critical")
+          ? "critical"
+          : "warning",
         title: "Important notifications",
         what: `You have ${importantUnread.length} unread warning or critical notification${importantUnread.length === 1 ? "" : "s"}.`,
         why: "These events may affect franchise decisions you have not reviewed yet.",
@@ -1115,8 +1113,8 @@ function buildNarrativeActionItems(
 }
 
 function buildSituationsView(state: GameState): OwnerDashboardSituationView[] {
-  return getActiveOwnedFranchise(state).narrative.situations
-    .filter(
+  return getActiveOwnedFranchise(state)
+    .narrative.situations.filter(
       (situation) =>
         situation.status === "active" ||
         situation.status === "acknowledged" ||
@@ -1161,7 +1159,9 @@ function buildCalendarActionItems(
       category: "calendar",
       severity: "critical",
       title: "Season review",
-      what: calendar.seasonStory || "Review the season before opening the offseason.",
+      what:
+        calendar.seasonStory ||
+        "Review the season before opening the offseason.",
       why: "Ownership evaluation and offseason decisions start after you acknowledge this review.",
       evidence: [
         `Record: ${team.wins}–${team.losses}`,
@@ -1228,8 +1228,7 @@ function buildCalendarActionItems(
       contract.endYear <= year + 1,
   );
   if (
-    (calendar.lifecyclePhase === "offseason" ||
-      calendar.deadlineWindow) &&
+    (calendar.lifecyclePhase === "offseason" || calendar.deadlineWindow) &&
     expiring.length > 0
   ) {
     items.push({
@@ -1276,7 +1275,9 @@ function buildCalendarActionItems(
       title: "Offseason facility planning",
       what: "Capital investment windows are strongest in the offseason.",
       why: "Facility levels affect development, capacity, and franchise value next season.",
-      evidence: data.facilities.slice(0, 2).map((f) => `${f.category}: L${f.level}`),
+      evidence: data.facilities
+        .slice(0, 2)
+        .map((f) => `${f.category}: L${f.level}`),
       href: `/dashboard/${saveId}/facilities`,
       hrefLabel: "Manage Facilities",
     });
@@ -1284,8 +1285,8 @@ function buildCalendarActionItems(
 
   if (
     calendar.offseasonPriorities.includes("relocation") ||
-    (calendar.lifecyclePhase === "offseason" ||
-      calendar.lifecyclePhase === "postseason")
+    calendar.lifecyclePhase === "offseason" ||
+    calendar.lifecyclePhase === "postseason"
   ) {
     const relocAssessment = assessRelocation(data.state);
     if (
@@ -1296,8 +1297,7 @@ function buildCalendarActionItems(
       items.push({
         id: "action_relocation",
         category: "relocation",
-        severity:
-          relocAssessment.status === "strong_case" ? "warning" : "info",
+        severity: relocAssessment.status === "strong_case" ? "warning" : "info",
         title:
           relocAssessment.status === "in_progress"
             ? "Relocation in progress"
@@ -1369,8 +1369,6 @@ function buildInsights(
   return insights;
 }
 
-
-
 function sortAndCapActionItems(
   items: OwnerDashboardActionItem[],
   calendar: CalendarContext,
@@ -1394,8 +1392,7 @@ function sortAndCapActionItems(
       if (sev !== 0) {
         return sev;
       }
-      const cat =
-        CATEGORY_PRIORITY[a.category] - CATEGORY_PRIORITY[b.category];
+      const cat = CATEGORY_PRIORITY[a.category] - CATEGORY_PRIORITY[b.category];
       if (cat !== 0) {
         return cat;
       }
@@ -1442,7 +1439,10 @@ function calendarBoostCategories(
     boost.add("sponsorship");
     boost.add("marketing");
   }
-  if (calendar.lifecyclePhase === "regular" && calendar.seasonSegment === "early") {
+  if (
+    calendar.lifecyclePhase === "regular" &&
+    calendar.seasonSegment === "early"
+  ) {
     boost.add("attendance");
     boost.add("marketing");
     boost.add("team");
@@ -1600,10 +1600,7 @@ function meanLeagueStrength(state: GameState): number | null {
   return total / teamIds.length;
 }
 
-function readHomeGameDays(
-  state: GameState,
-  teamId: string,
-): LastGameDayView[] {
+function readHomeGameDays(state: GameState, teamId: string): LastGameDayView[] {
   const days: LastGameDayView[] = [];
   for (const event of getActiveOwnedFranchise(state).eventLog) {
     if (event.type !== "HomeGameDaySettled") {
@@ -1623,8 +1620,7 @@ function readHomeGameDays(
       premiumOccupancy: Number(payload.premiumOccupancy) || 0,
       capacity,
       premiumCapacity: Number(payload.premiumCapacity) || 0,
-      fillRatePct:
-        capacity > 0 ? Math.round((attendance / capacity) * 100) : 0,
+      fillRatePct: capacity > 0 ? Math.round((attendance / capacity) * 100) : 0,
       demandScore: Number(payload.demandScore) || 0,
       ticketPrice: Number(payload.ticketPrice) || 0,
       premiumTicketPrice: Number(payload.premiumTicketPrice) || 0,

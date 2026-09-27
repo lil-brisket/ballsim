@@ -83,7 +83,9 @@ export function TradeBlockRosterView(props: {
               >
                 <div>
                   <p className="text-sm text-zinc-100">{pick.label}</p>
-                  <p className="font-mono text-xs text-zinc-500">{pick.status}</p>
+                  <p className="font-mono text-xs text-zinc-500">
+                    {pick.status}
+                  </p>
                 </div>
               </li>
             ))}

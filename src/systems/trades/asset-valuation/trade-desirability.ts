@@ -1,11 +1,12 @@
 import type { DraftPickId, PlayerId, TeamId } from "@/domain/ids";
 import type { GameState } from "@/state/game-state";
 import { getTradeBlock } from "@/systems/trades/trade-block";
-import {
-  TRADE_DESIRABILITY_WEIGHTS,
-} from "@/systems/trades-config";
+import { TRADE_DESIRABILITY_WEIGHTS } from "@/systems/trades-config";
 import { getRetentionPriority } from "@/systems/trades/asset-valuation/retention-priority";
-import { calculateTradeNeeds, tradeNeedLevelScore } from "@/systems/trades/trade-needs";
+import {
+  calculateTradeNeeds,
+  tradeNeedLevelScore,
+} from "@/systems/trades/trade-needs";
 import type { TradeAssetRef } from "@/systems/trades/asset-valuation/types";
 
 export type TradeDirection = "send" | "receive";
@@ -48,9 +49,7 @@ function playerDesirability(
   if (direction === "send") {
     const block = getTradeBlock(state, teamId);
     if (
-      block.assets.some(
-        (a) => a.kind === "player" && a.playerId === playerId,
-      )
+      block.assets.some((a) => a.kind === "player" && a.playerId === playerId)
     ) {
       score += TRADE_DESIRABILITY_WEIGHTS.onBlockBonus;
       reasons.push("Already on trade block");
@@ -71,7 +70,10 @@ function playerDesirability(
   } else {
     const needs = calculateTradeNeeds(state, teamId);
     const pos = needs.byPosition.find((p) => p.position === player.position);
-    if (pos && tradeNeedLevelScore(pos.level) >= tradeNeedLevelScore("moderate")) {
+    if (
+      pos &&
+      tradeNeedLevelScore(pos.level) >= tradeNeedLevelScore("moderate")
+    ) {
       score += TRADE_DESIRABILITY_WEIGHTS.needAcquireBonus;
       reasons.push(`Team has a positional need at ${player.position}`);
     }
@@ -94,9 +96,7 @@ function pickDesirability(
   const block = getTradeBlock(state, teamId);
   if (
     direction === "send" &&
-    block.assets.some(
-      (a) => a.kind === "draftPick" && a.draftPickId === pickId,
-    )
+    block.assets.some((a) => a.kind === "draftPick" && a.draftPickId === pickId)
   ) {
     score += TRADE_DESIRABILITY_WEIGHTS.onBlockBonus;
     reasons.push("Pick listed on trade block");

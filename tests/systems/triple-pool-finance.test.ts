@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { CBL_GAME_SETTINGS, DEFAULT_GAME_SETTINGS } from "@/domain/game-settings";
+import {
+  CBL_GAME_SETTINGS,
+  DEFAULT_GAME_SETTINGS,
+} from "@/domain/game-settings";
 import { validateGameSettings } from "@/domain/game-settings-validation";
 import { createInitialGameState } from "@/state/create-initial-state";
 import { GAME_STATE_SCHEMA_VERSION } from "@/state/game-state";
@@ -195,9 +198,9 @@ describe("staff budget", () => {
         staff: { ...state.world.staff, [staffId]: staff },
       },
     };
-    expect(getTeamStaffBudgetSpace(teamId, state.competition.season.year, state)).toBe(
-      5_000_000,
-    );
+    expect(
+      getTeamStaffBudgetSpace(teamId, state.competition.season.year, state),
+    ).toBe(5_000_000);
     expect(() =>
       hireStaff(state, teamId, staffId, { annualSalary: 10_000_000 }),
     ).toThrow(/staff budget/i);
@@ -291,6 +294,8 @@ describe("migration v46", () => {
         .openBusinessFunds,
     ).toBe(12_000_000);
     expect(loaded.settings.financialRules.salaryCap).toBe(DEFAULT_SALARY_CAP);
-    expect(loaded.settings.financialRules.staffBudget).toBe(DEFAULT_STAFF_BUDGET);
+    expect(loaded.settings.financialRules.staffBudget).toBe(
+      DEFAULT_STAFF_BUDGET,
+    );
   });
 });

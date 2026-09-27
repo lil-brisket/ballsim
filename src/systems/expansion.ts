@@ -3,10 +3,7 @@ import { createIdleExpansionState } from "@/domain/entities/expansion";
 import { createDefaultFranchiseOps } from "@/domain/entities/franchise-ops";
 import { createEmptyFranchiseHistory } from "@/domain/entities/franchise-history";
 import { createIdleRelocation } from "@/domain/entities/relocation";
-import {
-  createTeam,
-  NEUTRAL_TEAM_PLAY_STYLE,
-} from "@/domain/entities/team";
+import { createTeam, NEUTRAL_TEAM_PLAY_STYLE } from "@/domain/entities/team";
 import { DEFAULT_COACHING_PHILOSOPHY } from "@/domain/coaching/coaching-philosophy";
 import type { DomainEvent } from "@/domain/events";
 import { createDomainEvent } from "@/domain/events";
@@ -369,11 +366,7 @@ export function completeExpansion(state: GameState, rng: Rng): SystemResult {
       },
     };
 
-    const feeShare = distributeExpansionFee(
-      current,
-      expansion.fee,
-      teamId,
-    );
+    const feeShare = distributeExpansionFee(current, expansion.fee, teamId);
     // Fee goes to pre-existing clubs only — exclude new team (already excluded).
     void preexistingIds;
     current = feeShare.state;

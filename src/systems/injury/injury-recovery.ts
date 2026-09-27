@@ -41,7 +41,13 @@ function treatmentModifier(
 
 function playerRecoveryFactor(player: Player): number {
   const ageFactor =
-    player.age <= 25 ? 1.08 : player.age <= 30 ? 1.0 : player.age <= 34 ? 0.92 : 0.85;
+    player.age <= 25
+      ? 1.08
+      : player.age <= 30
+        ? 1.0
+        : player.age <= 34
+          ? 0.92
+          : 0.85;
   const durabilityFactor =
     0.85 + ((player.physical?.durability ?? 60) - DURABILITY_MIN) / 200;
   const conditioningFactor =
@@ -79,7 +85,12 @@ export function tickInjuryDailyRecovery(
   if (recoveryProgress >= 0.5 && recommended != null && recommended < 32) {
     recommended = Math.min(36, recommended + 1);
   }
-  if (recoveryProgress >= 0.5 && maximum != null && maximum > 0 && maximum < 38) {
+  if (
+    recoveryProgress >= 0.5 &&
+    maximum != null &&
+    maximum > 0 &&
+    maximum < 38
+  ) {
     maximum = Math.min(40, maximum + 1);
   }
   if (recoveryProgress >= 0.7 && maximum === 0) {
@@ -130,7 +141,9 @@ export function tickInjuryDailyRecovery(
 }
 
 /** Clear RTP restrictions when fully recovered and low reinjury risk. */
-export function maybeFullyClearInjury(injury: PlayerInjury): PlayerInjury | null {
+export function maybeFullyClearInjury(
+  injury: PlayerInjury,
+): PlayerInjury | null {
   if (injury.recoveryProgress < 1) {
     return injury;
   }

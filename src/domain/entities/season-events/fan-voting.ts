@@ -7,16 +7,9 @@ import type {
 } from "@/domain/ids";
 
 export type FanVoteCampaignStatus =
-  | "scheduled"
-  | "open"
-  | "closed"
-  | "finalized";
+  "scheduled" | "open" | "closed" | "finalized";
 
-export type FanVoteCategoryKind =
-  | "guards"
-  | "forwards"
-  | "centers"
-  | "open";
+export type FanVoteCategoryKind = "guards" | "forwards" | "centers" | "open";
 
 export type FanVoteCandidate = {
   playerId: PlayerId;

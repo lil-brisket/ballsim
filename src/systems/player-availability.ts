@@ -73,14 +73,12 @@ function resolveFromPlayer(
   inactive: boolean,
 ): ResolvedPlayerAvailability {
   const injuryType =
-    player.injury?.type ??
-    player.activeInjuries?.[0]?.type ??
-    null;
+    player.injury?.type ?? player.activeInjuries?.[0]?.type ?? null;
   const isLegacyUndisclosed =
     (player.injury?.type === "Undisclosed" &&
       (player.injury.isLegacyData === true ||
-        player.injury.severity === "moderate" &&
-          player.injury.catalogKey === "undisclosed")) ||
+        (player.injury.severity === "moderate" &&
+          player.injury.catalogKey === "undisclosed"))) ||
     false;
 
   const primary = player.injury ?? player.activeInjuries?.[0] ?? null;

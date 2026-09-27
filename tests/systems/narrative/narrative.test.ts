@@ -12,7 +12,10 @@ import { applySpamFilters, selectDailyStories } from "@/systems/narrative/spam";
 import { processNarrativeLayer } from "@/systems/narrative/evaluate-narrative";
 import { renderNarrative } from "@/systems/narrative/templates";
 import { compareCandidatesForPriority } from "@/systems/narrative/priority";
-import type { DetectorCandidate, NarrativeContext } from "@/systems/narrative/types";
+import type {
+  DetectorCandidate,
+  NarrativeContext,
+} from "@/systems/narrative/types";
 import {
   applyNarrativeAction,
   getNarrativeActionDefinition,
@@ -20,7 +23,10 @@ import {
 import { asNarrativeSituationId } from "@/domain/ids";
 import { createNarrativeSituation } from "@/domain/entities/narrative-situation";
 import { acknowledgeSituation } from "@/systems/narrative/lifecycle";
-import { getActiveOwnedFranchise, withOwnedFranchise } from "@/state/owner-context";
+import {
+  getActiveOwnedFranchise,
+  withOwnedFranchise,
+} from "@/state/owner-context";
 
 function snapshot(
   monthId: string,
@@ -93,7 +99,9 @@ describe("narrative attendance_decline detector", () => {
       snapshot("2026-03", 66),
     ]);
     const context = buildNarrativeContext(state, { cadence: "monthly" });
-    expect(context.consecutiveAttendanceDeclineMonths).toBeGreaterThanOrEqual(2);
+    expect(context.consecutiveAttendanceDeclineMonths).toBeGreaterThanOrEqual(
+      2,
+    );
     const candidate = detectAttendanceDecline({
       ...context,
       leagueRelative: {
@@ -125,7 +133,9 @@ describe("narrative attendance_decline detector", () => {
         developmentWeak: false,
       },
     });
-    expect(rendered.body.toLowerCase()).not.toContain("coaching staff believes");
+    expect(rendered.body.toLowerCase()).not.toContain(
+      "coaching staff believes",
+    );
     expect(rendered.body.toLowerCase()).not.toContain("staff believes");
   });
 });
@@ -169,7 +179,9 @@ describe("narrative aggregation and priority", () => {
     ];
     const aggregated = aggregateCandidates(candidates);
     expect(aggregated.some((c) => c.detectorKey === "fan_demand")).toBe(true);
-    expect(aggregated.filter((c) => FAN_KEYS.has(c.detectorKey)).length).toBe(0);
+    expect(aggregated.filter((c) => FAN_KEYS.has(c.detectorKey)).length).toBe(
+      0,
+    );
   });
 
   it("selects at most two stories by deterministic priority", () => {
@@ -273,10 +285,10 @@ describe("narrative lifecycle and actions", () => {
       situation.id,
       "reduce_ticket_price",
     );
-    const after =
-      result.state.business.franchiseOps[teamId]!.ticketPrice;
+    const after = result.state.business.franchiseOps[teamId]!.ticketPrice;
     expect(after).toBeLessThan(before);
-    const updated = getActiveOwnedFranchise(result.state).narrative.situations[0]!;
+    const updated = getActiveOwnedFranchise(result.state).narrative
+      .situations[0]!;
     expect(updated.status).not.toBe("resolved");
   });
 
@@ -304,9 +316,9 @@ describe("narrative processNarrativeLayer", () => {
       cadences: ["daily", "weekly"],
       dayEvents,
     });
-    const narrativeNotifs = getActiveOwnedFranchise(result.state).notifications.filter(
-      (n) => n.type === "narrative",
-    );
+    const narrativeNotifs = getActiveOwnedFranchise(
+      result.state,
+    ).notifications.filter((n) => n.type === "narrative");
     expect(
       getActiveOwnedFranchise(result.state).narrative.situations.some(
         (s) => s.detectorKey === "facility_completed",
@@ -335,16 +347,18 @@ describe("narrative processNarrativeLayer", () => {
       cadences: ["monthly"],
       completedMonthId: "2026-03",
     });
-    expect(getActiveOwnedFranchise(a.state).narrative.situations.map((s) => s.id)).toEqual(
+    expect(
+      getActiveOwnedFranchise(a.state).narrative.situations.map((s) => s.id),
+    ).toEqual(
       getActiveOwnedFranchise(b.state).narrative.situations.map((s) => s.id),
     );
     expect(
-      getActiveOwnedFranchise(a.state).notifications
-        .filter((n) => n.type === "narrative")
+      getActiveOwnedFranchise(a.state)
+        .notifications.filter((n) => n.type === "narrative")
         .map((n) => n.dedupeKey),
     ).toEqual(
-      getActiveOwnedFranchise(b.state).notifications
-        .filter((n) => n.type === "narrative")
+      getActiveOwnedFranchise(b.state)
+        .notifications.filter((n) => n.type === "narrative")
         .map((n) => n.dedupeKey),
     );
   });

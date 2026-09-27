@@ -1,15 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { createSeededRng } from "@/domain/rng";
-import {
-  asDraftPickId,
-  asPlayerId,
-  asTeamId,
-  type TeamId,
-} from "@/domain/ids";
-import {
-  createPlayer,
-  type PlayerAttributes,
-} from "@/domain/entities/player";
+import { asDraftPickId, asPlayerId, asTeamId, type TeamId } from "@/domain/ids";
+import { createPlayer, type PlayerAttributes } from "@/domain/entities/player";
 import { createInitialGameState } from "@/state/create-initial-state";
 import { CBL_GAME_SETTINGS } from "@/domain/game-settings";
 import { bootstrapWorld } from "@/systems/world-pipeline";
@@ -97,7 +89,9 @@ function makePlayer(
       composure: 50,
     },
     contractId: null,
-    availability: "available", injury: null, suspension: null,
+    availability: "available",
+    injury: null,
+    suspension: null,
     development: { stage: age <= 24 ? "developing" : "prime" },
   });
 }
@@ -254,7 +248,11 @@ describe("team AI identity valuation", () => {
     const readyPlayer = makePlayer("prospect_ready", 22, readyAttrs, 80);
     const upsidePlayer = makePlayer("prospect_upside", 19, upsideAttrs, 92);
     // Force PG so position counts match
-    const readyPg = createPlayer({ ...readyPlayer, position: "PG", id: asPlayerId("prospect_ready") });
+    const readyPg = createPlayer({
+      ...readyPlayer,
+      position: "PG",
+      id: asPlayerId("prospect_ready"),
+    });
     const upsidePg = createPlayer({
       ...upsidePlayer,
       position: "PG",

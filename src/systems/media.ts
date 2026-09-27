@@ -35,7 +35,8 @@ export function applyMediaFromDomainEvents(
 
   const bumps = new Map<TeamId, number>();
   for (const event of events) {
-    const bump = MEDIA_EVENT_BUMPS[event.type as keyof typeof MEDIA_EVENT_BUMPS];
+    const bump =
+      MEDIA_EVENT_BUMPS[event.type as keyof typeof MEDIA_EVENT_BUMPS];
     if (bump === undefined) {
       continue;
     }

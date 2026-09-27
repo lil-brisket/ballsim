@@ -1,10 +1,7 @@
 import type { Foul } from "@/domain/entities/foul";
 import type { Player } from "@/domain/entities/player";
 import type { PlayerId, TeamId } from "@/domain/ids";
-import {
-  SHOT_TYPES,
-  type ShotType,
-} from "@/systems/shot-resolution-config";
+import { SHOT_TYPES, type ShotType } from "@/systems/shot-resolution-config";
 
 export type PossessionDecision =
   | {
@@ -114,11 +111,7 @@ function resolvePassDecision(
   decision: Extract<PossessionDecision, { action: "pass" }>,
   context: PossessionDecisionContext,
 ): ResolvedPossessionDecision {
-  const passer = requireOffensivePlayer(
-    decision.passerId,
-    context,
-    "passerId",
-  );
+  const passer = requireOffensivePlayer(decision.passerId, context, "passerId");
   const receiver = requireOffensivePlayer(
     decision.receiverId,
     context,
@@ -183,7 +176,7 @@ function resolveFoulDecision(
     // Offensive foul path — does not call resolveFoul; shotType unused.
     if (decision.foul.foulType === "shooting") {
       throw new Error(
-        "Possession offensive fouls must use foulType \"non-shooting\".",
+        'Possession offensive fouls must use foulType "non-shooting".',
       );
     }
     if (decision.shotType !== undefined) {

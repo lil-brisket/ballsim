@@ -124,12 +124,8 @@ function AvailabilitySection(props: { player: RotationPlayerCardData }) {
             <div>
               <dt className="inline text-zinc-500">Injury: </dt>
               <dd className="inline">
-                {player.isLegacyUndisclosed
-                  ? "Undisclosed"
-                  : player.injuryType}
-                {player.injurySeverity
-                  ? ` (${player.injurySeverity})`
-                  : ""}
+                {player.isLegacyUndisclosed ? "Undisclosed" : player.injuryType}
+                {player.injurySeverity ? ` (${player.injurySeverity})` : ""}
               </dd>
             </div>
           ) : null}
@@ -153,20 +149,14 @@ function AvailabilitySection(props: { player: RotationPlayerCardData }) {
   if (status === "limited") {
     return (
       <div className="rounded-lg border border-orange-800/60 bg-orange-950/30 px-4 py-3">
-        <p className="text-sm font-medium text-orange-300">
-          {emoji} Limited
-        </p>
+        <p className="text-sm font-medium text-orange-300">{emoji} Limited</p>
         <dl className="mt-2 space-y-1 text-xs text-zinc-300">
           {player.injuryType ? (
             <div>
               <dt className="inline text-zinc-500">Injury: </dt>
               <dd className="inline">
-                {player.isLegacyUndisclosed
-                  ? "Undisclosed"
-                  : player.injuryType}
-                {player.injurySeverity
-                  ? ` (${player.injurySeverity})`
-                  : ""}
+                {player.isLegacyUndisclosed ? "Undisclosed" : player.injuryType}
+                {player.injurySeverity ? ` (${player.injurySeverity})` : ""}
               </dd>
             </div>
           ) : null}
@@ -305,7 +295,10 @@ export function RotationPlayerCard(props: {
                     ["SPG", stats.spg.toFixed(1)],
                     ["BPG", stats.bpg.toFixed(1)],
                     ["FG%", stats.fgPct != null ? `${stats.fgPct}%` : "—"],
-                    ["3P%", stats.threePct != null ? `${stats.threePct}%` : "—"],
+                    [
+                      "3P%",
+                      stats.threePct != null ? `${stats.threePct}%` : "—",
+                    ],
                     ["FT%", stats.ftPct != null ? `${stats.ftPct}%` : "—"],
                   ] as const
                 ).map(([label, value]) => (

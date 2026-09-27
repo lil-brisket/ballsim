@@ -11,11 +11,7 @@ import type { GameState } from "@/state/game-state";
 import { getContractStatus } from "@/domain/entities/contract";
 
 export type DraftNeedLevel =
-  | "critical"
-  | "major"
-  | "moderate"
-  | "minor"
-  | "none";
+  "critical" | "major" | "moderate" | "minor" | "none";
 
 export type PositionDraftNeed = {
   position: PlayerPosition;
@@ -68,9 +64,7 @@ export function calculateTeamDraftNeeds(
         : null;
     const averageAge =
       players.length > 0
-        ? Math.round(
-            players.reduce((a, p) => a + p.age, 0) / players.length,
-          )
+        ? Math.round(players.reduce((a, p) => a + p.age, 0) / players.length)
         : null;
 
     const reasons: string[] = [];
@@ -91,7 +85,11 @@ export function calculateTeamDraftNeeds(
     if (depth > 0 && bestOverall < 68) {
       if (LEVEL_RANK[level] < LEVEL_RANK.major) level = "major";
       reasons.push("Low starter quality");
-    } else if (depth > 0 && bestOverall < 74 && LEVEL_RANK[level] < LEVEL_RANK.moderate) {
+    } else if (
+      depth > 0 &&
+      bestOverall < 74 &&
+      LEVEL_RANK[level] < LEVEL_RANK.moderate
+    ) {
       level = "moderate";
       reasons.push("Average starter quality");
     }

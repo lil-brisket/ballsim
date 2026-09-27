@@ -1,6 +1,12 @@
 "use client";
 
-import { useEffect, useId, useRef, useState, useSyncExternalStore } from "react";
+import {
+  useEffect,
+  useId,
+  useRef,
+  useState,
+  useSyncExternalStore,
+} from "react";
 import { createPortal } from "react-dom";
 import type { OwnerNavGroup } from "@/application/owner-nav-config";
 import { NavGroups } from "@/components/game/NavGroups";
@@ -96,10 +102,7 @@ export function MobileNavigationDrawer(props: {
               )}
             >
               <div className="flex items-center justify-between border-b border-zinc-800 px-4 py-3">
-                <h2
-                  id={titleId}
-                  className="text-sm font-medium text-zinc-100"
-                >
+                <h2 id={titleId} className="text-sm font-medium text-zinc-100">
                   Menu
                 </h2>
                 <button

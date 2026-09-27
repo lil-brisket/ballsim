@@ -21,7 +21,9 @@ describe("user-franchise-assist", () => {
     state.settings.ai.managementPreset = "off";
     state.settings.ai.assistance = applyPreset("off");
     const result = runUserFranchiseAssist(state, createSeededRng(1));
-    const assistEvents = result.events.filter((e) => e.type === "AiAssistAction");
+    const assistEvents = result.events.filter(
+      (e) => e.type === "AiAssistAction",
+    );
     expect(assistEvents.length).toBe(0);
   });
 

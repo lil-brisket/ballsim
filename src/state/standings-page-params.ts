@@ -90,9 +90,7 @@ export function searchParamsFromRecord(
 export function buildStandingsHref(input: {
   pathname: string;
   currentSearch:
-    | URLSearchParams
-    | Record<string, string | string[] | undefined>
-    | string;
+    URLSearchParams | Record<string, string | string[] | undefined> | string;
   view: StandingsViewMode;
   stats: StandingsStatsMode;
 }): string {

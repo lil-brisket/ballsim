@@ -13,7 +13,11 @@ import type { TeamDrawerView } from "@/state/entity-drawer-selectors";
 
 function DrawerSkeleton() {
   return (
-    <div className="animate-pulse space-y-4" aria-busy="true" aria-label="Loading">
+    <div
+      className="animate-pulse space-y-4"
+      aria-busy="true"
+      aria-label="Loading"
+    >
       <div className="h-20 rounded-lg bg-zinc-800" />
       <div className="h-8 w-1/2 rounded bg-zinc-800" />
       <div className="h-32 rounded-lg bg-zinc-800" />
@@ -129,9 +133,7 @@ export function TeamDrawer(props: {
 
           {streakLabel ? (
             <Section title="Form" density="compact">
-              <StatLine
-                items={[{ label: "Streak", value: streakLabel }]}
-              />
+              <StatLine items={[{ label: "Streak", value: streakLabel }]} />
             </Section>
           ) : null}
 
@@ -183,9 +185,7 @@ export function TeamDrawer(props: {
                 items={[
                   {
                     label: "Payroll",
-                    value: (
-                      <MoneyDisplay amount={props.view.context.payroll} />
-                    ),
+                    value: <MoneyDisplay amount={props.view.context.payroll} />,
                   },
                   {
                     label: "Cap space",
@@ -218,7 +218,9 @@ export function TeamDrawer(props: {
                     </span>
                     <span
                       className={
-                        game.won ? "font-mono text-emerald-400" : "font-mono text-rose-300"
+                        game.won
+                          ? "font-mono text-emerald-400"
+                          : "font-mono text-rose-300"
                       }
                     >
                       {game.teamScore}–{game.opponentScore}

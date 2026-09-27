@@ -110,9 +110,7 @@ export function PlayerCareer(props: {
                     : `${block.start}–${block.end}`}
                 </span>
                 <span className="ml-3 text-zinc-100">{block.team}</span>
-                <span className="ml-2 text-zinc-500">
-                  ({block.games} GP)
-                </span>
+                <span className="ml-2 text-zinc-500">({block.games} GP)</span>
               </li>
             ))}
           </ul>

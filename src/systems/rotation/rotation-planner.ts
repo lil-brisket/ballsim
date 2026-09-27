@@ -43,9 +43,7 @@ function overall(player: Player): number {
   return calculatePlayerOverall(player.position, player.attributes);
 }
 
-function buildStaggerWindows(
-  regulationPeriodCount: number,
-): StaggerWindow[] {
+function buildStaggerWindows(regulationPeriodCount: number): StaggerWindow[] {
   const windows: StaggerWindow[] = [];
   for (let period = 1; period <= regulationPeriodCount + 2; period += 1) {
     for (const range of ROTATION_CONFIG.quarterWindows) {
@@ -125,16 +123,12 @@ export function buildRotationPlan(input: {
     input.rosterPlayers.map((player) => [player.id as string, player]),
   );
   const rotationByPlayerId = new Map(
-    input.management.rotation.map((entry) => [
-      entry.playerId as string,
-      entry,
-    ]),
+    input.management.rotation.map((entry) => [entry.playerId as string, entry]),
   );
 
   const depth = Math.max(
     5,
-    input.management.rotationDepth ||
-      ROTATION_CONFIG.playersOnCourt,
+    input.management.rotationDepth || ROTATION_CONFIG.playersOnCourt,
   );
 
   const rankedActive = input.management.rotation

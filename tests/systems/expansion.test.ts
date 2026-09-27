@@ -10,7 +10,10 @@ import {
 import { EXPANSION_STARTING_CASH } from "@/systems/expansion-config";
 import { assessExpansion } from "@/state/expansion-assessment";
 import type { GameState } from "@/state/game-state";
-import { deserializeGameState, serializeGameState } from "@/persistence/mappers/game-state-mapper";
+import {
+  deserializeGameState,
+  serializeGameState,
+} from "@/persistence/mappers/game-state-mapper";
 
 function withGrowthEconomy(state: GameState): GameState {
   return {
@@ -84,8 +87,8 @@ describe("expansion complete", () => {
     );
 
     const division = Object.values(state.world.divisions)[0]!;
-    const candidates = assessExpansion(state).marketOpportunity.destinations
-      .slice(0, 2)
+    const candidates = assessExpansion(state)
+      .marketOpportunity.destinations.slice(0, 2)
       .map((d) => ({
         city: d.city,
         name: d.name,
@@ -106,7 +109,9 @@ describe("expansion complete", () => {
     );
     expect(newTeams.length).toBe(1);
     const newTeamId = newTeams[0]!;
-    expect(state.business.finances[newTeamId]!.businessFunds).toBe(EXPANSION_STARTING_CASH);
+    expect(state.business.finances[newTeamId]!.businessFunds).toBe(
+      EXPANSION_STARTING_CASH,
+    );
 
     const divisionOfNew = Object.values(state.world.divisions).find((d) =>
       d.teamIds.includes(newTeamId as never),
@@ -115,9 +120,9 @@ describe("expansion complete", () => {
     expect(divisionOfNew!.teamIds).toContain(newTeamId);
 
     for (let i = 0; i < preexisting.length; i += 1) {
-      expect(state.business.finances[preexisting[i]!]!.businessFunds).toBeGreaterThan(
-        cashBefore[i]!,
-      );
+      expect(
+        state.business.finances[preexisting[i]!]!.businessFunds,
+      ).toBeGreaterThan(cashBefore[i]!);
     }
 
     expect(state.business.franchiseHistory[newTeamId]!.seasons).toEqual([]);

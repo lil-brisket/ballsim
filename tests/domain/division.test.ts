@@ -1,8 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-  createDivision,
-  type DivisionInput,
-} from "@/domain/entities/division";
+import { createDivision, type DivisionInput } from "@/domain/entities/division";
 import {
   asConferenceId,
   asDivisionId,
@@ -62,11 +59,7 @@ describe("createDivision", () => {
     expect(
       createDivision(
         validInput({
-          teamIds: [
-            asTeamId("team_a"),
-            asTeamId("team_b"),
-            asTeamId("team_c"),
-          ],
+          teamIds: [asTeamId("team_a"), asTeamId("team_b"), asTeamId("team_c")],
         }),
       ).teamIds,
     ).toHaveLength(3);

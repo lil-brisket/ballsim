@@ -5,10 +5,7 @@ import type { DashboardSnapshot } from "@/state/selectors";
 import { OwnerTeamSwitcher } from "@/components/game/OwnerTeamSwitcher";
 import { cn, focusRingClass, panelClass } from "@/components/ui/styles";
 
-function NotificationsBell(props: {
-  saveId: string;
-  unreadCount: number;
-}) {
+function NotificationsBell(props: { saveId: string; unreadCount: number }) {
   const href = `/dashboard/${props.saveId}/notifications`;
   const label =
     props.unreadCount > 0
@@ -98,9 +95,7 @@ export function GameHeader(props: {
           <p className="font-mono text-sm text-zinc-200">
             {dashboard.currentDate}
           </p>
-          <p className="text-xs text-zinc-500">
-            Season {dashboard.seasonYear}
-          </p>
+          <p className="text-xs text-zinc-500">Season {dashboard.seasonYear}</p>
         </div>
 
         <span className="hidden text-zinc-700 sm:inline" aria-hidden>

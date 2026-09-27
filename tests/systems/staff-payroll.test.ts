@@ -73,8 +73,8 @@ describe("staff payroll", () => {
     const result = processWeeklyStaffPayroll(state);
     const fundsAfter = result.state.business.finances[teamId]!.businessFunds;
     expect(fundsAfter).toBe(fundsBefore);
-    expect(getTeamStaffPayroll(teamId, year, result.state)).toBeGreaterThanOrEqual(
-      annual,
-    );
+    expect(
+      getTeamStaffPayroll(teamId, year, result.state),
+    ).toBeGreaterThanOrEqual(annual);
   });
 });

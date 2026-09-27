@@ -19,14 +19,18 @@ import {
 } from "@/systems/owner-objectives-config";
 import { bootstrapWorld } from "@/systems/world-pipeline";
 import { testOwnerObjective as createOwnerObjective } from "../helpers/owner-objective";
-import { getActiveOwnedFranchise, withOwnedFranchise } from "@/state/owner-context";
+import {
+  getActiveOwnedFranchise,
+  withOwnedFranchise,
+} from "@/state/owner-context";
 
 describe("gameplay financial consequences", () => {
   it("applies loss operations expense once per game key (no win ticket revenue)", () => {
     let state = createInitialGameState({
-    saveId: "fin_loss", rngSeed: 3,
-    settings: CBL_GAME_SETTINGS,
-  });
+      saveId: "fin_loss",
+      rngSeed: 3,
+      settings: CBL_GAME_SETTINGS,
+    });
     const rng = createSeededRng(state.meta.rngState);
     state = bootstrapWorld(state, rng).state;
     const teamId = state.user.activeOwnerTeamId;
@@ -69,16 +73,18 @@ describe("gameplay financial consequences", () => {
         `game_result:${teamId}:${gameId}`,
       ),
     ).toBe(true);
-    const books = once.state.business.finances[teamId]!.booksByYear[String(year)];
+    const books =
+      once.state.business.finances[teamId]!.booksByYear[String(year)];
     expect(books?.revenue.tickets).toBe(0);
     expect(books?.expenses.operations).toBe(GAMEPLAY_LOSS_EXPENSE);
   });
 
   it("applies objective reward once via consequence keys", () => {
     let state = createInitialGameState({
-    saveId: "fin_obj", rngSeed: 4,
-    settings: CBL_GAME_SETTINGS,
-  });
+      saveId: "fin_obj",
+      rngSeed: 4,
+      settings: CBL_GAME_SETTINGS,
+    });
     const rng = createSeededRng(state.meta.rngState);
     state = bootstrapWorld(state, rng).state;
     const teamId = state.user.activeOwnerTeamId;
@@ -101,7 +107,9 @@ describe("gameplay financial consequences", () => {
     expect(once.state.business.finances[teamId]!.businessFunds).toBe(
       before + GAMEPLAY_OBJECTIVE_REWARD,
     );
-    expect(getActiveOwnedFranchise(once.state).objectives[0]!.consequenceApplied).toBe(true);
+    expect(
+      getActiveOwnedFranchise(once.state).objectives[0]!.consequenceApplied,
+    ).toBe(true);
     const twice = applyGameplayFinancialConsequences(once.state);
     expect(twice.state.business.finances[teamId]!.businessFunds).toBe(
       once.state.business.finances[teamId]!.businessFunds,

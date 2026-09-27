@@ -11,11 +11,57 @@ datasource db {
 }
 
 /// Persistence envelope for one save. Game mechanics live in GameState JSON, not Prisma relations.
+/// `stateJson` remains the authoritative snapshot. `teams` / `players` are query projections.
 model SaveGame {
-  id            String   @id
+  id            String       @id
   name          String
   schemaVersion Int
   stateJson     String
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+  teams         SaveTeam[]
+  players       SavePlayer[]
+
+  @@index([name])
+  @@index([updatedAt])
+}
+
+/// Query projection of a domain Team for one save. Not the domain entity.
+model SaveTeam {
+  saveGameId   String
+  teamId       String
+  name         String
+  city         String
+  abbreviation String
+  conferenceId String
+  divisionId   String
+  arenaId      String
+  reputation   Int
+  saveGame     SaveGame @relation(fields: [saveGameId], references: [id], onDelete: Cascade)
+
+  @@id([saveGameId, teamId])
+  @@index([saveGameId, conferenceId])
+  @@index([saveGameId, name])
+}
+
+/// Query projection of a domain Player for one save. Not the domain entity.
+model SavePlayer {
+  saveGameId       String
+  playerId         String
+  /// Domain Team.id; null for free agents. Not a Prisma FK (replace-all writes).
+  teamId           String?
+  firstName        String
+  lastName         String
+  position         String
+  age              Int
+  overall          Int
+  potentialOverall Int
+  availability     String
+  retired          Boolean  @default(false)
+  saveGame         SaveGame @relation(fields: [saveGameId], references: [id], onDelete: Cascade)
+
+  @@id([saveGameId, playerId])
+  @@index([saveGameId, teamId])
+  @@index([saveGameId, lastName, firstName])
+  @@index([saveGameId, position])
 }

@@ -99,7 +99,9 @@ describe("toOwnerGameState", () => {
 
   it("preserves live notifications array reference", () => {
     const state = baseState();
-    expect(toOwnerGameState(state).notifications).toBe(getActiveOwnedFranchise(state).notifications);
+    expect(toOwnerGameState(state).notifications).toBe(
+      getActiveOwnedFranchise(state).notifications,
+    );
   });
 
   it("preserves live finances reference", () => {
@@ -172,7 +174,9 @@ describe("toOwnerGameState", () => {
         composure: 58,
       },
       contractId: asContractId("contract_owner_1"),
-      availability: "available", injury: null, suspension: null,
+      availability: "available",
+      injury: null,
+      suspension: null,
       development: { stage: "developing" },
     });
     state.world.players[playerId] = player;

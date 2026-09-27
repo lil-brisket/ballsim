@@ -117,7 +117,14 @@ describe("analyzeRotationHealth availability summary", () => {
       deriveRotationConstraints({
         playerId: p.id,
         targetMinutes: i < 5 ? 30 : i < 9 ? 16 : 8,
-        role: i < 5 ? "starter" : i === 5 ? "sixth_man" : i < 9 ? "rotation" : "bench",
+        role:
+          i < 5
+            ? "starter"
+            : i === 5
+              ? "sixth_man"
+              : i < 9
+                ? "rotation"
+                : "bench",
         preferredPositions: [p.position],
       }),
     );

@@ -41,7 +41,9 @@ function maxWins(seasons: readonly FranchiseSeasonRecord[]): number {
   return best;
 }
 
-function maxAttendance(seasons: readonly FranchiseSeasonRecord[]): number | null {
+function maxAttendance(
+  seasons: readonly FranchiseSeasonRecord[],
+): number | null {
   let best: number | null = null;
   for (const s of seasons) {
     if (s.attendance === null) continue;
@@ -58,7 +60,9 @@ function maxValue(seasons: readonly FranchiseSeasonRecord[]): number {
   return best;
 }
 
-function currentPlayoffStreak(seasons: readonly FranchiseSeasonRecord[]): number {
+function currentPlayoffStreak(
+  seasons: readonly FranchiseSeasonRecord[],
+): number {
   let streak = 0;
   for (let i = seasons.length - 1; i >= 0; i -= 1) {
     if (!isPlayoffAppearance(seasons[i]!.playoffResult)) break;
@@ -208,11 +212,15 @@ export function queryHistoricalMilestones(
   }
 
   // Relocation-relative firsts
-  const relocationYears = ordered.filter((s) => s.relocated).map((s) => s.seasonYear);
+  const relocationYears = ordered
+    .filter((s) => s.relocated)
+    .map((s) => s.seasonYear);
   if (relocationYears.length > 0) {
     const relocateYear = relocationYears[0]!;
     const after = ordered.filter((s) => s.seasonYear > relocateYear);
-    const firstPlayoffAfter = after.find((s) => isPlayoffAppearance(s.playoffResult));
+    const firstPlayoffAfter = after.find((s) =>
+      isPlayoffAppearance(s.playoffResult),
+    );
     const firstTitleAfter = after.find((s) => s.championship);
     if (firstPlayoffAfter) {
       push(
@@ -265,7 +273,9 @@ export function queryHistoricalMilestones(
         bestAtt.seasonYear,
       );
     }
-    const bestVal = [...ordered].sort((a, b) => b.franchiseValue - a.franchiseValue)[0]!;
+    const bestVal = [...ordered].sort(
+      (a, b) => b.franchiseValue - a.franchiseValue,
+    )[0]!;
     push(
       results,
       "franchise_record_franchise_value",

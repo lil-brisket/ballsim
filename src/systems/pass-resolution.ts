@@ -1,8 +1,4 @@
-import {
-  RATING_MAX,
-  RATING_MIN,
-  type Player,
-} from "@/domain/entities/player";
+import { RATING_MAX, RATING_MIN, type Player } from "@/domain/entities/player";
 import type { Rng } from "@/domain/rng";
 import { PASS_RESOLUTION_CONFIG } from "@/systems/pass-resolution-config";
 
@@ -102,10 +98,7 @@ export function calculatePassProbabilities(
  *
  * A turnover never consumes the assist-opportunity roll.
  */
-export function resolvePass(
-  input: ResolvePassInput,
-  rng: Rng,
-): PassResolution {
+export function resolvePass(input: ResolvePassInput, rng: Rng): PassResolution {
   const probabilities = calculatePassProbabilities(input);
   const completed = rng.chance(probabilities.passSuccessProbability);
 
@@ -146,11 +139,7 @@ function validateResolvePassInput(input: ResolvePassInput): void {
 }
 
 function assertRating(value: number, field: string): void {
-  if (
-    !Number.isInteger(value) ||
-    value < RATING_MIN ||
-    value > RATING_MAX
-  ) {
+  if (!Number.isInteger(value) || value < RATING_MIN || value > RATING_MAX) {
     throw new Error(
       `Pass ${field} must be an integer between ${RATING_MIN} and ${RATING_MAX}.`,
     );

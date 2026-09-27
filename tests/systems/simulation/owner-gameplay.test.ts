@@ -23,9 +23,10 @@ describe("owner gameplay integration", () => {
   it("generates objectives when advancing from preseason", () => {
     resetDomainEventSequenceForTests();
     let state = createInitialGameState({
-    saveId: "gp_obj", rngSeed: 31,
-    settings: CBL_GAME_SETTINGS,
-  });
+      saveId: "gp_obj",
+      rngSeed: 31,
+      settings: CBL_GAME_SETTINGS,
+    });
     const rng = createSeededRng(state.meta.rngState);
     state = bootstrapWorld(state, rng).state;
     state = beginRegularSeasonFromPreseason(state).state;
@@ -38,33 +39,41 @@ describe("owner gameplay integration", () => {
           objective.seasonYear === result.state.competition.season.year,
       ),
     ).toBe(true);
-    expect(getActiveOwnedFranchise(result.state).notifications.length).toBeGreaterThanOrEqual(0);
+    expect(
+      getActiveOwnedFranchise(result.state).notifications.length,
+    ).toBeGreaterThanOrEqual(0);
   });
 
   it("persists gameplay state through save/load", () => {
     resetDomainEventSequenceForTests();
     let state = createInitialGameState({
-    saveId: "gp_persist", rngSeed: 32,
-    settings: CBL_GAME_SETTINGS,
-  });
+      saveId: "gp_persist",
+      rngSeed: 32,
+      settings: CBL_GAME_SETTINGS,
+    });
     const rng = createSeededRng(state.meta.rngState);
     state = bootstrapWorld(state, rng).state;
     state = advanceSimulation(state, rng, { days: 1 }).state;
     const json = serializeGameState(state);
     const restored = deserializeGameState(json);
-    expect(getActiveOwnedFranchise(restored).objectives).toEqual(getActiveOwnedFranchise(state).objectives);
-    expect(getActiveOwnedFranchise(restored).notifications).toEqual(getActiveOwnedFranchise(state).notifications);
-    expect(getActiveOwnedFranchise(restored).appliedGameplayConsequenceKeys).toEqual(
-      getActiveOwnedFranchise(state).appliedGameplayConsequenceKeys,
+    expect(getActiveOwnedFranchise(restored).objectives).toEqual(
+      getActiveOwnedFranchise(state).objectives,
     );
+    expect(getActiveOwnedFranchise(restored).notifications).toEqual(
+      getActiveOwnedFranchise(state).notifications,
+    );
+    expect(
+      getActiveOwnedFranchise(restored).appliedGameplayConsequenceKeys,
+    ).toEqual(getActiveOwnedFranchise(state).appliedGameplayConsequenceKeys);
   });
 
   it("is idempotent when runOwnerGameplay is invoked twice on the same day", () => {
     resetDomainEventSequenceForTests();
     let state = createInitialGameState({
-    saveId: "gp_idem", rngSeed: 33,
-    settings: CBL_GAME_SETTINGS,
-  });
+      saveId: "gp_idem",
+      rngSeed: 33,
+      settings: CBL_GAME_SETTINGS,
+    });
     const rng = createSeededRng(state.meta.rngState);
     state = bootstrapWorld(state, rng).state;
     state = advanceSimulation(state, rng, { days: 1 }).state;
@@ -89,11 +98,17 @@ describe("owner gameplay integration", () => {
     expect(getActiveOwnedFranchise(second.state).notifications).toHaveLength(
       getActiveOwnedFranchise(first.state).notifications.length,
     );
-    expect(getActiveOwnedFranchise(second.state).objectives).toEqual(getActiveOwnedFranchise(first.state).objectives);
-    expect(getActiveOwnedFranchise(second.state).appliedGameplayConsequenceKeys).toEqual(
+    expect(getActiveOwnedFranchise(second.state).objectives).toEqual(
+      getActiveOwnedFranchise(first.state).objectives,
+    );
+    expect(
+      getActiveOwnedFranchise(second.state).appliedGameplayConsequenceKeys,
+    ).toEqual(
       getActiveOwnedFranchise(first.state).appliedGameplayConsequenceKeys,
     );
-    expect(second.state.business.finances).toEqual(first.state.business.finances);
+    expect(second.state.business.finances).toEqual(
+      first.state.business.finances,
+    );
   });
 
   it("evaluates objectives for every owned franchise, not only the active team", () => {
@@ -141,7 +156,8 @@ describe("owner gameplay integration", () => {
       expect(
         franchise.objectives.some(
           (objective) =>
-            objective.status === "active" && objective.seasonYear === seasonYear,
+            objective.status === "active" &&
+            objective.seasonYear === seasonYear,
         ),
       ).toBe(true);
     }

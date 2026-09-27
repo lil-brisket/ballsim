@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { toLeagueHubView, LEAGUE_HUB_TIER2_LIMIT } from "@/state/league-hub-selectors";
+import {
+  toLeagueHubView,
+  LEAGUE_HUB_TIER2_LIMIT,
+} from "@/state/league-hub-selectors";
 import { createTestGameState } from "../factories/game-state";
 import { bootstrapWorld } from "@/systems/world-pipeline";
 import { createSeededRng } from "@/domain/rng";

@@ -6,7 +6,10 @@ import { bootstrapWorld } from "@/systems/world-pipeline";
 import { advanceSimulation } from "@/systems/simulation/advance-simulation";
 import { beginRegularSeasonFromPreseason } from "@/systems/simulation/season-lifecycle";
 import { resetDomainEventSequenceForTests } from "@/domain/events/domain-event";
-import { projectCalendarEvents, getCalendarMonthGrid } from "@/systems/calendar";
+import {
+  projectCalendarEvents,
+  getCalendarMonthGrid,
+} from "@/systems/calendar";
 import { parseCalendarDate } from "@/domain/calendar-date";
 import { getLeagueMilestones } from "@/systems/league-rules/calendar-events";
 import { getCalendarContext } from "@/systems/simulation/calendar-context";
@@ -55,11 +58,7 @@ describe("calendar season transitions", () => {
     const after = parseCalendarDate(advanced.world.calendar.currentDate);
 
     if (after.year === before.year && after.month === before.month) {
-      const gridAfter = getCalendarMonthGrid(
-        advanced,
-        after.year,
-        after.month,
-      );
+      const gridAfter = getCalendarMonthGrid(advanced, after.year, after.month);
       expect(gridAfter.weeks.length).toBe(gridBefore.weeks.length);
       const todayAfter = gridAfter.weeks.flat().filter((c) => c.isToday);
       expect(todayAfter).toHaveLength(1);
@@ -77,9 +76,7 @@ describe("calendar season transitions", () => {
 
   it("year/month boundary: grid for adjacent month has no isToday when viewing other month", () => {
     const { state } = bootRegular("cal_adj_month", 44);
-    const { year, month } = parseCalendarDate(
-      state.world.calendar.currentDate,
-    );
+    const { year, month } = parseCalendarDate(state.world.calendar.currentDate);
     const nextMonth = month === 12 ? 1 : month + 1;
     const nextYear = month === 12 ? year + 1 : year;
     const grid = getCalendarMonthGrid(state, nextYear, nextMonth);

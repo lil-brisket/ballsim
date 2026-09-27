@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 import { asPlayerId, asTeamId } from "@/domain/ids";
-import { createPlayer, createTestInjury, uniformPlayerAttributes } from "../factories/player";
+import {
+  createPlayer,
+  createTestInjury,
+  uniformPlayerAttributes,
+} from "../factories/player";
 import { buildRotationFromRoster } from "@/systems/roster-management";
 import { ROTATION_CONFIG } from "@/systems/rotation/rotation-config";
 import { redistributeRotationForInjuries } from "@/systems/rotation/rotation-injury-response";
@@ -64,12 +68,9 @@ describe("buildRotationFromRoster 12-player preference", () => {
       playerId: asPlayerId(`p${i}`),
       isStarter: i < 5,
       overall: i === 0 ? 92 : 80 - i,
-      preferredPositions: [
-        (["PG", "SG", "SF", "PF", "C"] as const)[i % 5]!,
-      ],
+      preferredPositions: [(["PG", "SG", "SF", "PF", "C"] as const)[i % 5]!],
       availability: (i === 0 ? "limited" : "available") as
-        | "limited"
-        | "available",
+        "limited" | "available",
       recommendedWorkloadMpg: i === 0 ? 28 : null,
       maximumWorkloadMpg: i === 0 ? 32 : null,
       injurySeverity: (i === 0 ? "minor" : null) as "minor" | null,

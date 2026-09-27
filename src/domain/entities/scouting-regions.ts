@@ -13,14 +13,7 @@ export const DOMESTIC_NATIONALITIES_BY_AREA: Record<
   readonly PlayerNationality[]
 > = {
   north_america: ["USA", "Canada", "Mexico"],
-  europe: [
-    "Spain",
-    "France",
-    "Germany",
-    "Italy",
-    "Serbia",
-    "Greece",
-  ],
+  europe: ["Spain", "France", "Germany", "Italy", "Serbia", "Greece"],
   africa: ["Nigeria", "Senegal"],
   asia: ["Japan", "China", "Philippines"],
   south_america: ["Brazil", "Argentina"],

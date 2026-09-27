@@ -69,7 +69,11 @@ export default async function PlayoffsPage({
               value={hub.currentRoundLabel ?? "—"}
               density="compact"
             />
-            <Metric label="Your team" value={hub.userTeamName} density="compact" />
+            <Metric
+              label="Your team"
+              value={hub.userTeamName}
+              density="compact"
+            />
             <Metric
               label="Your status"
               value={STATUS_LABEL[hub.userStatus] ?? hub.userStatus}
@@ -147,10 +151,7 @@ function SeriesCard(props: {
         <span className="text-zinc-200">
           {series.higherSeed != null ? `#${series.higherSeed} ` : ""}
           {series.higherSeedTeamId && series.higherSeedTeamName ? (
-            <TeamEntityLink
-              saveId={saveId}
-              teamId={series.higherSeedTeamId}
-            >
+            <TeamEntityLink saveId={saveId} teamId={series.higherSeedTeamId}>
               {series.higherSeedTeamName}
             </TeamEntityLink>
           ) : (

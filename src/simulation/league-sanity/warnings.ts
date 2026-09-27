@@ -35,8 +35,7 @@ export function evaluateSanityWarnings(input: {
   }
 
   const maxTitles = a.titlesPerFranchise.max;
-  const totalTitles =
-    a.titlesPerFranchise.mean * a.titlesPerFranchise.n;
+  const totalTitles = a.titlesPerFranchise.mean * a.titlesPerFranchise.n;
   if (totalTitles > 0 && maxTitles / totalTitles > t.dynastyTitleShare) {
     warnings.push({
       id: "dynasty_lock_in",

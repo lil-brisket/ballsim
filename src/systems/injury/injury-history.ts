@@ -2,7 +2,10 @@
  * Injury history archive and lookups for reinjury / long-term effect checks.
  */
 
-import { INJURY_HISTORY_MAX, type InjuryHistoryEntry } from "@/domain/entities/injury";
+import {
+  INJURY_HISTORY_MAX,
+  type InjuryHistoryEntry,
+} from "@/domain/entities/injury";
 import type { Player, PlayerInjury } from "@/domain/entities/player";
 import type { InjuryCalendarDate } from "@/domain/entities/injury";
 

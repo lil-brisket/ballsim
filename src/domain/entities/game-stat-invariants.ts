@@ -67,10 +67,7 @@ export function checkShootingStatInvariants(
     fail("TWO_POINT_FGM_NONNEG", `FGM - 3PM = ${twoPointFgm}`);
   }
 
-  if (
-    stats.rebounds !==
-    stats.offensiveRebounds + stats.defensiveRebounds
-  ) {
+  if (stats.rebounds !== stats.offensiveRebounds + stats.defensiveRebounds) {
     fail(
       "REB_SUM",
       `REB ${stats.rebounds} !== OREB ${stats.offensiveRebounds} + DREB ${stats.defensiveRebounds}`,

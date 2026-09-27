@@ -34,16 +34,16 @@ import {
   applyCandidateToSituations,
   expireDueSituations,
 } from "@/systems/narrative/lifecycle";
-import {
-  applySpamFilters,
-  selectDailyStories,
-} from "@/systems/narrative/spam";
+import { applySpamFilters, selectDailyStories } from "@/systems/narrative/spam";
 import { renderNarrative } from "@/systems/narrative/templates";
 import type {
   DetectorCandidate,
   NarrativeCadence,
 } from "@/systems/narrative/types";
-import { getActiveOwnedFranchise, withOwnedFranchise } from "@/state/owner-context";
+import {
+  getActiveOwnedFranchise,
+  withOwnedFranchise,
+} from "@/state/owner-context";
 
 export type ProcessNarrativeOptions = {
   /** Cadences that apply for this evaluation (e.g. daily+weekly+monthly on month boundary). */
@@ -115,7 +115,8 @@ export function processNarrativeLayer(
     current = appendMonthSnapshot(current, options.completedMonthId);
   }
 
-  const primaryCadence = options.cadences[options.cadences.length - 1] ?? "daily";
+  const primaryCadence =
+    options.cadences[options.cadences.length - 1] ?? "daily";
   const context = buildNarrativeContext(current, {
     cadence: primaryCadence,
     dayEvents: options.dayEvents,
@@ -207,13 +208,19 @@ export function processNarrativeLayer(
     }
   }
 
-  return systemResult(withOwnedFranchise(current, current.user.activeOwnerTeamId, (franchise) => ({
-    ...franchise,
-    notifications,
-    narrative: {
-      ...franchise.narrative,
-      situations,
-      cooldowns,
-    },
-  })));
+  return systemResult(
+    withOwnedFranchise(
+      current,
+      current.user.activeOwnerTeamId,
+      (franchise) => ({
+        ...franchise,
+        notifications,
+        narrative: {
+          ...franchise.narrative,
+          situations,
+          cooldowns,
+        },
+      }),
+    ),
+  );
 }

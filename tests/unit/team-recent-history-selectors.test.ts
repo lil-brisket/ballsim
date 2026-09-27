@@ -104,9 +104,7 @@ describe("getTeamRecentHistory", () => {
     const history = getTeamRecentHistory(state, teamA);
     expect(history).toHaveLength(TEAM_RECENT_HISTORY_LIMIT);
     for (let i = 1; i < history.length; i += 1) {
-      expect(
-        history[i - 1]!.occurredOn >= history[i]!.occurredOn,
-      ).toBe(true);
+      expect(history[i - 1]!.occurredOn >= history[i]!.occurredOn).toBe(true);
     }
   });
 
@@ -145,7 +143,9 @@ describe("getTeamRecentHistory", () => {
     expect(history.every((row) => row.kind !== "other")).toBe(true);
     // No duplicate "Game completed" style entry from the log
     expect(
-      history.filter((row) => row.title.toLowerCase().includes("game completed")),
+      history.filter((row) =>
+        row.title.toLowerCase().includes("game completed"),
+      ),
     ).toHaveLength(0);
   });
 
@@ -154,7 +154,8 @@ describe("getTeamRecentHistory", () => {
     const ids = teamIds(state);
     const teamA = ids[0]!;
     const teamB = ids[1]!;
-    const franchiseA = state.user.ownedFranchises[state.user.activeOwnerTeamId]!;
+    const franchiseA =
+      state.user.ownedFranchises[state.user.activeOwnerTeamId]!;
 
     state = {
       ...state,
@@ -226,9 +227,7 @@ describe("getTeamRecentHistory", () => {
     expect(historyB.length).toBeGreaterThanOrEqual(3);
     expect(historyB.every((row) => !row.id.includes(String(teamA)))).toBe(true);
     // Team B must not see team A's signing as its only/sole event type mix incorrectly
-    expect(
-      historyB.some((row) => row.kind === "game_result"),
-    ).toBe(true);
+    expect(historyB.some((row) => row.kind === "game_result")).toBe(true);
     expect(historyB.some((row) => row.kind === "injury")).toBe(true);
     expect(historyB.some((row) => row.kind === "award")).toBe(true);
   });

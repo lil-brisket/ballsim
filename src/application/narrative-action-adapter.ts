@@ -14,12 +14,13 @@ import {
   TICKET_PRICE_MIN,
 } from "@/systems/ticket-pricing";
 import { PREMIUM_TICKET_PRICE_MIN } from "@/systems/demand/demand-config";
-import { getActiveOwnedFranchise, withOwnedFranchise } from "@/state/owner-context";
+import {
+  getActiveOwnedFranchise,
+  withOwnedFranchise,
+} from "@/state/owner-context";
 
 export type NarrativeActionTransition =
-  | "acknowledge"
-  | "take_action"
-  | "resolve";
+  "acknowledge" | "take_action" | "resolve";
 
 export type NarrativeActionDefinition = {
   transition: NarrativeActionTransition;
@@ -38,71 +39,66 @@ const MARKETING_BUDGET_BUMP = 500_000;
  * Rule: actions must invoke an existing gameplay command OR navigate to a
  * meaningful review page. Avoid narrative-only hidden modifiers.
  */
-export const NARRATIVE_ACTION_CATALOG: Record<string, NarrativeActionDefinition> =
-  {
-    review_facilities: { transition: "acknowledge" },
-    review_finances: { transition: "acknowledge" },
-    review_relocation: { transition: "acknowledge" },
-    open_free_agency: { transition: "acknowledge" },
-    stay_the_course: { transition: "acknowledge" },
-    reduce_ticket_price: {
-      transition: "take_action",
-      run: (state) => {
-        const teamId = state.user.activeOwnerTeamId;
-        const current =
-          state.business.franchiseOps[teamId]?.ticketPrice ?? 45;
-        const next = Math.max(TICKET_PRICE_MIN, current - TICKET_PRICE_REDUCTION);
-        return setTicketPrice(state, teamId, next);
-      },
+export const NARRATIVE_ACTION_CATALOG: Record<
+  string,
+  NarrativeActionDefinition
+> = {
+  review_facilities: { transition: "acknowledge" },
+  review_finances: { transition: "acknowledge" },
+  review_relocation: { transition: "acknowledge" },
+  open_free_agency: { transition: "acknowledge" },
+  stay_the_course: { transition: "acknowledge" },
+  reduce_ticket_price: {
+    transition: "take_action",
+    run: (state) => {
+      const teamId = state.user.activeOwnerTeamId;
+      const current = state.business.franchiseOps[teamId]?.ticketPrice ?? 45;
+      const next = Math.max(TICKET_PRICE_MIN, current - TICKET_PRICE_REDUCTION);
+      return setTicketPrice(state, teamId, next);
     },
-    reduce_premium_ticket_price: {
-      transition: "take_action",
-      run: (state) => {
-        const teamId = state.user.activeOwnerTeamId;
-        const current =
-          state.business.franchiseOps[teamId]?.premiumTicketPrice ?? 180;
-        const next = Math.max(
-          PREMIUM_TICKET_PRICE_MIN,
-          current - PREMIUM_TICKET_PRICE_REDUCTION,
-        );
-        return setPremiumTicketPrice(state, teamId, next);
-      },
+  },
+  reduce_premium_ticket_price: {
+    transition: "take_action",
+    run: (state) => {
+      const teamId = state.user.activeOwnerTeamId;
+      const current =
+        state.business.franchiseOps[teamId]?.premiumTicketPrice ?? 180;
+      const next = Math.max(
+        PREMIUM_TICKET_PRICE_MIN,
+        current - PREMIUM_TICKET_PRICE_REDUCTION,
+      );
+      return setPremiumTicketPrice(state, teamId, next);
     },
-    increase_marketing: {
-      transition: "take_action",
-      run: (state) => {
-        const teamId = state.user.activeOwnerTeamId;
-        const current =
-          state.business.franchiseOps[teamId]?.marketing.budget ?? 0;
-        return setMarketingBudget(
-          state,
-          teamId,
-          current + MARKETING_BUDGET_BUMP,
-        );
-      },
+  },
+  increase_marketing: {
+    transition: "take_action",
+    run: (state) => {
+      const teamId = state.user.activeOwnerTeamId;
+      const current =
+        state.business.franchiseOps[teamId]?.marketing.budget ?? 0;
+      return setMarketingBudget(state, teamId, current + MARKETING_BUDGET_BUMP);
     },
-    accept_sponsor_proposal: {
-      transition: "resolve",
-      run: (state) => {
-        const teamId = state.user.activeOwnerTeamId;
-        const year = state.competition.season.year;
-        const annualValue = 2_500_000;
-        const signed = signSponsorship(state, teamId, {
-          id: asSponsorshipId(
-            `sponsor_${teamId}_${year}_narrative_extension`,
-          ),
-          sponsorName: "Regional Partners",
-          annualValue,
-          startYear: year,
-          endYear: year + 2,
-          reputationFloor: 40,
-          playoffBonus: Math.round(annualValue * 0.1),
-        });
-        return signed;
-      },
+  },
+  accept_sponsor_proposal: {
+    transition: "resolve",
+    run: (state) => {
+      const teamId = state.user.activeOwnerTeamId;
+      const year = state.competition.season.year;
+      const annualValue = 2_500_000;
+      const signed = signSponsorship(state, teamId, {
+        id: asSponsorshipId(`sponsor_${teamId}_${year}_narrative_extension`),
+        sponsorName: "Regional Partners",
+        annualValue,
+        startYear: year,
+        endYear: year + 2,
+        reputationFloor: 40,
+        playoffBonus: Math.round(annualValue * 0.1),
+      });
+      return signed;
     },
-    decline_sponsor_proposal: { transition: "resolve" },
-  };
+  },
+  decline_sponsor_proposal: { transition: "resolve" },
+};
 
 export function getNarrativeActionDefinition(
   actionId: string,
@@ -129,10 +125,7 @@ export function applyNarrativeAction(
   if (!situation) {
     throw new Error(`Narrative situation "${situationId}" not found.`);
   }
-  if (
-    situation.status === "resolved" ||
-    situation.status === "expired"
-  ) {
+  if (situation.status === "resolved" || situation.status === "expired") {
     throw new Error(
       `Narrative situation "${situationId}" is already ${situation.status}.`,
     );
@@ -148,33 +141,39 @@ export function applyNarrativeAction(
   }
 
   const date = current.world.calendar.currentDate;
-  const situations = getActiveOwnedFranchise(current).narrative.situations.map((entry) => {
-    if (entry.id !== situationId) {
-      return entry;
-    }
-    if (definition.transition === "acknowledge") {
-      return acknowledgeSituation(entry, date);
-    }
-    if (definition.transition === "resolve") {
-      return resolveSituation(entry, date);
-    }
-    // take_action — keep active/acknowledged; do not auto-resolve.
-    // Underlying detectors resolve when simulation conditions improve.
-    return {
-      ...entry,
-      status: entry.status === "escalated" ? "active" : entry.status,
-      updatedOn: date,
-    };
-  });
+  const situations = getActiveOwnedFranchise(current).narrative.situations.map(
+    (entry) => {
+      if (entry.id !== situationId) {
+        return entry;
+      }
+      if (definition.transition === "acknowledge") {
+        return acknowledgeSituation(entry, date);
+      }
+      if (definition.transition === "resolve") {
+        return resolveSituation(entry, date);
+      }
+      // take_action — keep active/acknowledged; do not auto-resolve.
+      // Underlying detectors resolve when simulation conditions improve.
+      return {
+        ...entry,
+        status: entry.status === "escalated" ? "active" : entry.status,
+        updatedOn: date,
+      };
+    },
+  );
 
   return systemResult(
-    withOwnedFranchise(current, current.user.activeOwnerTeamId, (franchise) => ({
-      ...franchise,
-      narrative: {
-        ...franchise.narrative,
-        situations,
-      },
-    })),
+    withOwnedFranchise(
+      current,
+      current.user.activeOwnerTeamId,
+      (franchise) => ({
+        ...franchise,
+        narrative: {
+          ...franchise.narrative,
+          situations,
+        },
+      }),
+    ),
     events,
   );
 }
@@ -196,9 +195,7 @@ export function acknowledgeNarrativeSituationInState(
       narrative: {
         ...franchise.narrative,
         situations: franchise.narrative.situations.map((entry) =>
-          entry.id === situationId
-            ? acknowledgeSituation(entry, date)
-            : entry,
+          entry.id === situationId ? acknowledgeSituation(entry, date) : entry,
         ),
       },
     })),

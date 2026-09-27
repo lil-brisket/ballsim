@@ -144,10 +144,7 @@ export function calculateStandings(
     if (game.status !== "final") {
       continue;
     }
-    if (
-      options.seasonId !== undefined &&
-      game.seasonId !== options.seasonId
-    ) {
+    if (options.seasonId !== undefined && game.seasonId !== options.seasonId) {
       continue;
     }
     if (!teamById.has(game.homeTeamId) || !teamById.has(game.awayTeamId)) {

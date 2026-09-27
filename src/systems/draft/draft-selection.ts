@@ -4,7 +4,10 @@ import { createDraftSelection } from "@/domain/entities/draft";
 import { createDraftPickResult } from "@/domain/entities/draft-pick-result";
 import type { Player } from "@/domain/entities/player";
 import type { Team } from "@/domain/entities/team";
-import { createDomainEvent, type DomainEvent } from "@/domain/events/domain-event";
+import {
+  createDomainEvent,
+  type DomainEvent,
+} from "@/domain/events/domain-event";
 import { asContractId, type DraftClassId } from "@/domain/ids";
 import type { GameState } from "@/state/game-state";
 import { appendSeasonEventLog } from "@/state/game-state";

@@ -32,10 +32,7 @@ function seasonRecord(opts: {
   };
 }
 
-function withHistory(
-  playerId: string,
-  seasons: PlayerSeasonRecord[],
-) {
+function withHistory(playerId: string, seasons: PlayerSeasonRecord[]) {
   const state = createTestGameState({ saveId: "ovr_change" });
   return {
     ...state,

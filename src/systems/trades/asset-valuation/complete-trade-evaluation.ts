@@ -9,7 +9,10 @@ import { getBaseAssetValue } from "@/systems/trades/asset-valuation/base-asset-v
 import type { TradeAssetRef } from "@/systems/trades/asset-valuation/types";
 import { getTeamCapSpace } from "@/systems/salary-cap";
 import { getContractSalaryForYear } from "@/domain/entities/contract";
-import { calculateTradeNeeds, tradeNeedLevelScore } from "@/systems/trades/trade-needs";
+import {
+  calculateTradeNeeds,
+  tradeNeedLevelScore,
+} from "@/systems/trades/trade-needs";
 
 /**
  * Deterministic complete trade evaluation. No RNG. Does not return accepted.
@@ -40,8 +43,12 @@ export function evaluateTrade(
   evaluatingTeamId: TeamId,
   proposal: TradeProposal,
 ): TradeEvaluation {
-  const { incomingPlayerIds, outgoingPlayerIds, incomingPickIds, outgoingPickIds } =
-    assetsFromPerspective(evaluatingTeamId, proposal);
+  const {
+    incomingPlayerIds,
+    outgoingPlayerIds,
+    incomingPickIds,
+    outgoingPickIds,
+  } = assetsFromPerspective(evaluatingTeamId, proposal);
 
   const reasons: string[] = [];
   let incomingValue = 0;

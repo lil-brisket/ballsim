@@ -7,10 +7,10 @@ import { CBL_GAME_SETTINGS } from "@/domain/game-settings";
 describe("SystemResult", () => {
   it("packages state with domain events without mutation helpers pretending to simulate", () => {
     const state = createInitialGameState({
-    saveId: "save_events",
+      saveId: "save_events",
       nowIso: "2026-08-13T12:00:00.000Z",
-    settings: CBL_GAME_SETTINGS,
-  });
+      settings: CBL_GAME_SETTINGS,
+    });
 
     const event = createDomainEvent({
       type: "ContractSigned",

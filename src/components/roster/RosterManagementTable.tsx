@@ -13,20 +13,9 @@ import { StatusBadge } from "@/components/owner/StatusBadge";
 import { cn, focusRingClass } from "@/components/ui/styles";
 
 type SortKey =
-  | "overall"
-  | "age"
-  | "salary"
-  | "years"
-  | "position"
-  | "role"
-  | "name";
+  "overall" | "age" | "salary" | "years" | "position" | "role" | "name";
 
-type FilterChip =
-  | "all"
-  | PlayerPosition
-  | "starters"
-  | "injured"
-  | "on_block";
+type FilterChip = "all" | PlayerPosition | "starters" | "injured" | "on_block";
 
 const POSITION_ORDER = Object.fromEntries(
   PLAYER_POSITIONS.map((position, index) => [position, index]),
@@ -143,7 +132,11 @@ export function RosterManagementTable(props: {
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap gap-2" role="group" aria-label="Roster filters">
+      <div
+        className="flex flex-wrap gap-2"
+        role="group"
+        aria-label="Roster filters"
+      >
         {chips.map((entry) => (
           <button
             key={entry.id}

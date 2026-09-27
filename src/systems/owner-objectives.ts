@@ -62,8 +62,7 @@ export function generateOwnerObjectives(state: GameState): SystemResult {
 
   const hasSeasonalForYear = getActiveOwnedFranchise(state).objectives.some(
     (objective) =>
-      objective.lifecycle === "seasonal" &&
-      objective.seasonYear === seasonYear,
+      objective.lifecycle === "seasonal" && objective.seasonYear === seasonYear,
   );
 
   if (!hasSeasonalForYear) {
@@ -84,7 +83,9 @@ export function generateOwnerObjectives(state: GameState): SystemResult {
     const longTerm = buildLongTermObjective(state, teamId, seasonYear, profile);
     if (
       longTerm &&
-      !getActiveOwnedFranchise(state).objectives.some((objective) => objective.id === longTerm.id) &&
+      !getActiveOwnedFranchise(state).objectives.some(
+        (objective) => objective.id === longTerm.id,
+      ) &&
       !generated.some((objective) => objective.id === longTerm.id)
     ) {
       generated.push(longTerm);
@@ -99,7 +100,9 @@ export function generateOwnerObjectives(state: GameState): SystemResult {
     const milestone = buildMilestoneObjective(state, teamId, seasonYear);
     if (
       milestone &&
-      !getActiveOwnedFranchise(state).objectives.some((objective) => objective.id === milestone.id) &&
+      !getActiveOwnedFranchise(state).objectives.some(
+        (objective) => objective.id === milestone.id,
+      ) &&
       !generated.some((objective) => objective.id === milestone.id)
     ) {
       generated.push(milestone);
@@ -148,7 +151,8 @@ export function evaluateOwnerObjectives(state: GameState): SystemResult {
   const objectivesChanged = nextObjectives.some(
     (objective, index) => objective !== previous[index],
   );
-  const patienceChanged = ownerPatience !== getActiveOwnedFranchise(current).ownerPatience;
+  const patienceChanged =
+    ownerPatience !== getActiveOwnedFranchise(current).ownerPatience;
   if (!objectivesChanged && !patienceChanged) {
     return systemResult(current);
   }
@@ -203,7 +207,10 @@ function evaluateOne(
     return objective;
   }
 
-  if (objective.lifecycle === "seasonal" && objective.seasonYear !== seasonYear) {
+  if (
+    objective.lifecycle === "seasonal" &&
+    objective.seasonYear !== seasonYear
+  ) {
     return objective;
   }
 
@@ -273,21 +280,30 @@ function pickPrimaryType(
   teamId: TeamId,
 ): OwnerObjectiveType {
   const cash = state.business.finances[teamId]?.businessFunds ?? 0;
-  if (profile.philosophy === "market_expansion" && marketSize <= OWNER_OBJECTIVE_SMALL_MARKET) {
+  if (
+    profile.philosophy === "market_expansion" &&
+    marketSize <= OWNER_OBJECTIVE_SMALL_MARKET
+  ) {
     return firstAvailable(profile.preferredPrimary, [
       "attendance",
       "fan_sentiment",
       "awareness",
     ]);
   }
-  if (profile.philosophy === "financially_conservative" || (profile.requiresProfitability && cash < 5_000_000)) {
+  if (
+    profile.philosophy === "financially_conservative" ||
+    (profile.requiresProfitability && cash < 5_000_000)
+  ) {
     return firstAvailable(profile.preferredPrimary, [
       "improve_finances",
       "positive_cash",
       "payroll_limit",
     ]);
   }
-  if (profile.philosophy === "build_for_the_future" && meanOverall < OWNER_OBJECTIVE_MID_OVERALL) {
+  if (
+    profile.philosophy === "build_for_the_future" &&
+    meanOverall < OWNER_OBJECTIVE_MID_OVERALL
+  ) {
     return firstAvailable(profile.preferredPrimary, [
       "develop_young_players",
       "roster_direction",
@@ -318,7 +334,11 @@ function pickSecondaryTypes(
   const picks: OwnerObjectiveType[] = [];
   const candidates = [...profile.preferredSecondary];
 
-  if (profile.payrollPressure >= 0.5 && !used.has("payroll_limit") && primaryType !== "payroll_limit") {
+  if (
+    profile.payrollPressure >= 0.5 &&
+    !used.has("payroll_limit") &&
+    primaryType !== "payroll_limit"
+  ) {
     candidates.unshift("payroll_limit");
   }
   if (
@@ -367,8 +387,7 @@ function buildLongTermObjective(
   profile: OwnerPhilosophyProfile,
 ): OwnerObjective | null {
   const type =
-    profile.preferredLongTerm[0] ??
-    ("franchise_value" as OwnerObjectiveType);
+    profile.preferredLongTerm[0] ?? ("franchise_value" as OwnerObjectiveType);
   return createTypedObjective({
     state,
     teamId,
@@ -398,8 +417,8 @@ function buildMilestoneObjective(
     state.business.franchiseOps[teamId]?.facilities.arena.level ?? 1;
 
   const completedMilestoneTypes = new Set(
-    getActiveOwnedFranchise(state).objectives
-      .filter(
+    getActiveOwnedFranchise(state)
+      .objectives.filter(
         (objective) =>
           objective.lifecycle === "milestone" &&
           objective.status === "completed",
@@ -542,7 +561,10 @@ function createTypedObjective(args: CreateTypedArgs): OwnerObjective {
         category: definition.category,
         lifecycle,
         role,
-        progress: Math.max(0, state.business.finances[teamId]?.businessFunds ?? 0),
+        progress: Math.max(
+          0,
+          state.business.finances[teamId]?.businessFunds ?? 0,
+        ),
         consequenceApplied: false,
       });
     case "revenue_target": {
@@ -682,8 +704,7 @@ function createTypedObjective(args: CreateTypedArgs): OwnerObjective {
         lifecycle,
         role,
         target,
-        progress:
-          state.business.franchiseOps[teamId]?.marketing.awareness ?? 0,
+        progress: state.business.franchiseOps[teamId]?.marketing.awareness ?? 0,
         consequenceApplied: false,
       });
     }
@@ -807,7 +828,10 @@ function winTargetForProfile(
     }
   }
 
-  if (getActiveOwnedFranchise(state).ownerPatience < OWNER_PATIENCE_TIGHTEN_THRESHOLD) {
+  if (
+    getActiveOwnedFranchise(state).ownerPatience <
+    OWNER_PATIENCE_TIGHTEN_THRESHOLD
+  ) {
     target = Math.round(target * OWNER_PATIENCE_TIGHTEN_WIN_FACTOR);
   }
   return target;

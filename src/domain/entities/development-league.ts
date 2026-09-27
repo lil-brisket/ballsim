@@ -40,10 +40,7 @@ export const DEVELOPMENT_LEAGUE_ROLES: readonly DevelopmentLeagueRole[] = [
 
 /** Derived (not persisted) promotion/readiness label. */
 export type DevelopmentReadiness =
-  | "not_ready"
-  | "developing"
-  | "near_ready"
-  | "ready";
+  "not_ready" | "developing" | "near_ready" | "ready";
 
 export const DEVELOPMENT_READINESS_LABELS: readonly DevelopmentReadiness[] = [
   "not_ready",

@@ -3,9 +3,7 @@ import type { DraftPickId, PlayerId, TeamId } from "@/domain/ids";
 import type { GameState } from "@/state/game-state";
 import type { TradeOfferEvaluation } from "@/systems/trades/trade-evaluation";
 import { getBaseAssetValue } from "@/systems/trades/asset-valuation/base-asset-value";
-import {
-  TRADE_OFFER_QUALITY_FLOOR,
-} from "@/systems/trades-config";
+import { TRADE_OFFER_QUALITY_FLOOR } from "@/systems/trades-config";
 import {
   USER_TRADE_INTERRUPT_MIN_ABS_NET,
   USER_TRADE_INTERRUPT_MIN_INCOMING_VALUE,

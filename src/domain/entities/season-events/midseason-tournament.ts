@@ -6,11 +6,7 @@ import type {
 } from "@/domain/entities/playoffs";
 
 export type MidseasonTournamentFormat =
-  | "regional"
-  | "conference"
-  | "division"
-  | "country"
-  | "state";
+  "regional" | "conference" | "division" | "country" | "state";
 
 export type MidseasonTournamentState = {
   seasonId: SeasonId;

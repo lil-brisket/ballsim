@@ -90,7 +90,10 @@ export function calculateTradeNeeds(
         ovr >= 75
       );
     });
-    if (expiringHighEnd.length > 0 && needLevelScore(level) < needLevelScore("moderate")) {
+    if (
+      expiringHighEnd.length > 0 &&
+      needLevelScore(level) < needLevelScore("moderate")
+    ) {
       level = "moderate";
       reasons.push("Quality starter approaching free agency");
     }

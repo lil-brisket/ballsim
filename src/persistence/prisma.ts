@@ -17,8 +17,22 @@ function createPrismaClient(): PrismaClient {
   return new PrismaClient({ adapter });
 }
 
-export const prisma = globalForPrisma.prisma ?? createPrismaClient();
-
-if (process.env.NODE_ENV !== "production") {
-  globalForPrisma.prisma = prisma;
+/**
+ * Lazy Prisma client. Construction (and DATABASE_URL check) happens on first use
+ * so tests can inject a client without requiring a process-wide database URL.
+ */
+export function getPrisma(): PrismaClient {
+  globalForPrisma.prisma ??= createPrismaClient();
+  return globalForPrisma.prisma;
 }
+
+export const prisma: PrismaClient = new Proxy({} as PrismaClient, {
+  get(_target, prop) {
+    const client = getPrisma();
+    const value = Reflect.get(client, prop, client) as unknown;
+    if (typeof value === "function") {
+      return value.bind(client);
+    }
+    return value;
+  },
+});

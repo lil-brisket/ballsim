@@ -4,11 +4,7 @@
  */
 
 export type OwnershipMood =
-  | "confident"
-  | "supportive"
-  | "watchful"
-  | "concerned"
-  | "displeased";
+  "confident" | "supportive" | "watchful" | "concerned" | "displeased";
 
 export const OWNERSHIP_MOODS: readonly OwnershipMood[] = [
   "confident",
@@ -30,13 +26,12 @@ export const ALIGNMENT_EVIDENCE_SIGNIFICANCES: readonly AlignmentEvidenceSignifi
 export function isAlignmentEvidenceSignificance(
   value: string,
 ): value is AlignmentEvidenceSignificance {
-  return (ALIGNMENT_EVIDENCE_SIGNIFICANCES as readonly string[]).includes(value);
+  return (ALIGNMENT_EVIDENCE_SIGNIFICANCES as readonly string[]).includes(
+    value,
+  );
 }
 
-export type AlignmentEvidenceDirection =
-  | "aligned"
-  | "neutral"
-  | "conflicting";
+export type AlignmentEvidenceDirection = "aligned" | "neutral" | "conflicting";
 
 export const ALIGNMENT_EVIDENCE_DIRECTIONS: readonly AlignmentEvidenceDirection[] =
   ["aligned", "neutral", "conflicting"] as const;
@@ -62,12 +57,7 @@ export function isAlignmentEvidenceKind(
 }
 
 export type AlignmentDimension =
-  | "competitive"
-  | "roster"
-  | "assets"
-  | "financial"
-  | "market"
-  | "overall";
+  "competitive" | "roster" | "assets" | "financial" | "market" | "overall";
 
 export const ALIGNMENT_DIMENSIONS: readonly AlignmentDimension[] = [
   "competitive",

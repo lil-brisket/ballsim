@@ -128,9 +128,7 @@ export function projectCalendarEvents(
 
   let events = [...bySourceKey.values()];
 
-  events = events.filter((event) =>
-    isAllowedOnDate(event, currentDate),
-  );
+  events = events.filter((event) => isAllowedOnDate(event, currentDate));
 
   if (options.from !== undefined) {
     events = events.filter((event) => event.date >= options.from!);
@@ -151,7 +149,8 @@ export function projectCalendarEvents(
         event.category === "league" ||
         event.category === "deadline" ||
         event.blocking ||
-        (event.teamIds !== undefined && event.teamIds.includes(options.teamId!)),
+        (event.teamIds !== undefined &&
+          event.teamIds.includes(options.teamId!)),
     );
   }
 
@@ -241,7 +240,6 @@ function projectGame(
   };
 }
 
-
 function projectMilestone(
   milestone: LeagueMilestone,
   currentDate: string,
@@ -260,7 +258,9 @@ function projectMilestone(
     id: `cal:${sourceKey}`,
     date: milestone.date,
     lifecycle: isPastOrToday ? "occurred" : policy.calendar.lifecycle,
-    certainty: certaintyFromLifecycle(isPastOrToday ? "occurred" : policy.calendar.lifecycle),
+    certainty: certaintyFromLifecycle(
+      isPastOrToday ? "occurred" : policy.calendar.lifecycle,
+    ),
     category: policy.calendar.category,
     title: milestone.label,
     importance: policy.media.importance,
@@ -332,10 +332,7 @@ function projectOwnerDecision(
     id: decision.id,
   };
   const sourceKey = toSourceKey(source);
-  const offeringName = teamDisplayName(
-    state,
-    decision.payload.offeringTeamId,
-  );
+  const offeringName = teamDisplayName(state, decision.payload.offeringTeamId);
   const date =
     decision.createdOn <= currentDate ? currentDate : decision.createdOn;
 

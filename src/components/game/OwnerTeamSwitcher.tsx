@@ -34,10 +34,7 @@ export function buildOwnerReturnPath(
   return qs ? `${pathname}?${qs}` : pathname;
 }
 
-function FranchiseMark(props: {
-  team: OwnedTeamSummary;
-  size: "sm" | "md";
-}) {
+function FranchiseMark(props: { team: OwnedTeamSummary; size: "sm" | "md" }) {
   const { team, size } = props;
   const box = size === "md" ? "h-9 w-9" : "h-8 w-8";
   return (
@@ -116,10 +113,7 @@ export function OwnerTeamSwitcher(props: {
       const formData = new FormData();
       formData.set("saveId", saveId);
       formData.set("teamId", teamId);
-      formData.set(
-        "returnPath",
-        buildOwnerReturnPath(pathname, searchParams),
-      );
+      formData.set("returnPath", buildOwnerReturnPath(pathname, searchParams));
       await switchActiveOwnerTeamAction(formData);
       setOpen(false);
     });

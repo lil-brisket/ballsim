@@ -195,7 +195,9 @@ export function MediaStoryCard(props: MediaStoryCardProps) {
       <div className="mt-2 flex flex-wrap items-center gap-3 font-mono text-xs text-zinc-600">
         <span>{occurredOn}</span>
         {reactionCount != null && reactionCount > 0 ? (
-          <span>{reactionCount} reaction{reactionCount === 1 ? "" : "s"}</span>
+          <span>
+            {reactionCount} reaction{reactionCount === 1 ? "" : "s"}
+          </span>
         ) : null}
       </div>
     </article>

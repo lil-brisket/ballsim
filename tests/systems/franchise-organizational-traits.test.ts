@@ -75,10 +75,7 @@ describe("deriveOrganizationalTraits", () => {
 
   it("provides failure-mode floors for prestige and development orgs", () => {
     const prestige = deriveOrganizationalTraits(identity("win_now"));
-    const prestigeBias = failureModePreferenceBias(
-      "win_now",
-      prestige.traits,
-    );
+    const prestigeBias = failureModePreferenceBias("win_now", prestige.traits);
     expect(prestigeBias.spendWillingnessFloor).toBeGreaterThan(0.3);
 
     const development = deriveOrganizationalTraits(identity("development"));

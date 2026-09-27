@@ -16,9 +16,7 @@ export type TeamIdentityInlineProps = {
 export function TeamIdentityInline(props: TeamIdentityInlineProps) {
   const size = props.size ?? "sm";
   const monogramClass =
-    size === "md"
-      ? "h-8 w-8 text-xs"
-      : "h-6 w-6 text-[10px]";
+    size === "md" ? "h-8 w-8 text-xs" : "h-6 w-6 text-[10px]";
 
   return (
     <span className="inline-flex items-center gap-2">
@@ -27,11 +25,7 @@ export function TeamIdentityInline(props: TeamIdentityInlineProps) {
           className={`inline-flex shrink-0 items-center justify-center overflow-hidden rounded border border-zinc-700 ${monogramClass}`}
           style={{ backgroundColor: props.branding.primaryColor }}
         >
-          <TeamLogoMark
-            branding={props.branding}
-            size={size}
-            decorative
-          />
+          <TeamLogoMark branding={props.branding} size={size} decorative />
         </span>
       ) : (
         <span

@@ -33,14 +33,12 @@ import type { GameState } from "@/state/game-state";
 import { isUserOnDraftClock } from "@/systems/draft";
 import { assertContinuityBoundary } from "@/systems/simulation/continuity-validation";
 import { canAiExecute } from "@/systems/simulation/management-policy";
-import {
-  canAdvancePhase,
-  getActivePhaseId,
-} from "@/systems/phase-engine";
+import { canAdvancePhase, getActivePhaseId } from "@/systems/phase-engine";
 import { calendarDaysBetween } from "@/domain/calendar-date";
 import { TEST_RNG_SEED } from "./determinism";
 
-export type AdvanceMode = "day" | "week" | "mixed" | "large_jumps" | "until_phase";
+export type AdvanceMode =
+  "day" | "week" | "mixed" | "large_jumps" | "until_phase";
 
 export type MultiYearSimOptions = {
   seasons: number;
@@ -273,7 +271,10 @@ async function handleBlockedGates(
     }
   }
 
-  if (isUserOnDraftClock(state) && !canAiExecute(state.settings, "DRAFT_PICK")) {
+  if (
+    isUserOnDraftClock(state) &&
+    !canAiExecute(state.settings, "DRAFT_PICK")
+  ) {
     const view = await loadOwnerSave(saveId, store);
     if (!view) {
       throw new Error("Missing view for draft pick");
@@ -456,7 +457,8 @@ export async function runMultiYearSimulation(
       before.state.competition.season.year - startYear,
     );
     const days = daysForMode(options.advanceMode, seasonIndex);
-    const stopOnPhaseChange = days >= 30 || options.advanceMode === "until_phase";
+    const stopOnPhaseChange =
+      days >= 30 || options.advanceMode === "until_phase";
 
     const result = await advanceOwnerTime(
       saveId,

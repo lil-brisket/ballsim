@@ -179,12 +179,12 @@ describe("simulateGame", () => {
       expect(rows.reduce((s, r) => s + r.freeThrowsMade, 0)).toBe(
         team.freeThrowsMade,
       );
-      expect(
-        rows.reduce((s, r) => s + r.offensiveRebounds, 0),
-      ).toBe(team.offensiveRebounds);
-      expect(
-        rows.reduce((s, r) => s + r.defensiveRebounds, 0),
-      ).toBe(team.defensiveRebounds);
+      expect(rows.reduce((s, r) => s + r.offensiveRebounds, 0)).toBe(
+        team.offensiveRebounds,
+      );
+      expect(rows.reduce((s, r) => s + r.defensiveRebounds, 0)).toBe(
+        team.defensiveRebounds,
+      );
     }
   });
 
@@ -385,9 +385,7 @@ describe("simulateGame", () => {
     );
 
     expect(result.overtimePeriodCount).toBeGreaterThanOrEqual(2);
-    expect(result.periodScores.length).toBe(
-      4 + result.overtimePeriodCount,
-    );
+    expect(result.periodScores.length).toBe(4 + result.overtimePeriodCount);
     expect(result.score.home).not.toBe(result.score.away);
   });
 
@@ -614,9 +612,7 @@ describe("simulateScheduledGame finalization", () => {
     );
     expect(finalGame.playerStats.length).toBeGreaterThan(0);
     for (const row of finalGame.playerStats) {
-      expect(row.teamId === homeTeamId || row.teamId === awayTeamId).toBe(
-        true,
-      );
+      expect(row.teamId === homeTeamId || row.teamId === awayTeamId).toBe(true);
       expect(row.firstName).toBeTruthy();
       expect(row.lastName).toBeTruthy();
     }

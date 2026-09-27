@@ -22,8 +22,7 @@ function withBoard(
 ): GameState {
   const draft = getDraft(state);
   if (!draft) return state;
-  const existing =
-    draft.teamDraftState[teamId] ?? createEmptyTeamDraftState();
+  const existing = draft.teamDraftState[teamId] ?? createEmptyTeamDraftState();
   const board = mutate([...existing.board]).map((entry, index) => ({
     ...entry,
     rank: index + 1,

@@ -2,10 +2,7 @@ import { addCalendarDays } from "@/domain/calendar-date";
 import { createEmptyPlayoffTournament } from "@/domain/entities/playoffs";
 import { createEmptySeasonEventsState } from "@/domain/entities/season-events";
 import { createEmptyTeamStanding } from "@/domain/entities/standings";
-import {
-  createTeam,
-  NEUTRAL_TEAM_PLAY_STYLE,
-} from "@/domain/entities/team";
+import { createTeam, NEUTRAL_TEAM_PLAY_STYLE } from "@/domain/entities/team";
 import { DEFAULT_COACHING_PHILOSOPHY } from "@/domain/coaching/coaching-philosophy";
 import { createSeededRng } from "@/domain/rng";
 import {
@@ -109,16 +106,16 @@ export function createInitialGameState(
   const rngSeed = input.rngSeed ?? 1;
   const rng = createSeededRng(rngSeed);
 
-  const settingsInput = cloneGameSettings(input.settings ?? DEFAULT_GAME_SETTINGS);
+  const settingsInput = cloneGameSettings(
+    input.settings ?? DEFAULT_GAME_SETTINGS,
+  );
   const validated = validateGameSettings(settingsInput, {
     mode: isSupportedTeamCount(settingsInput.league.teamCount)
       ? "newSave"
       : "persisted",
   });
   if (!validated.ok) {
-    throw new Error(
-      `Invalid GameSettings: ${validated.errors.join("; ")}`,
-    );
+    throw new Error(`Invalid GameSettings: ${validated.errors.join("; ")}`);
   }
   const settings = validated.settings;
 
@@ -172,7 +169,11 @@ export function createInitialGameState(
 
   const seasonId = asSeasonId(`season_${saveId}_2026`);
   const startingSeasonYear = 2026;
-  const phaseE = createPhaseEBusinessDefaults(teamIds, rngSeed, startingSeasonYear);
+  const phaseE = createPhaseEBusinessDefaults(
+    teamIds,
+    rngSeed,
+    startingSeasonYear,
+  );
   const preseasonStartDate = addCalendarDays(
     DEFAULT_REGULAR_SEASON_START_DATE,
     -PRESEASON_LENGTH_DAYS,
@@ -393,7 +394,11 @@ export function createFourTeamInitialGameState(
 
   const teamIds = Object.keys(teams) as TeamId[];
   const startingSeasonYear = 2026;
-  const phaseE = createPhaseEBusinessDefaults(teamIds, rngSeed, startingSeasonYear);
+  const phaseE = createPhaseEBusinessDefaults(
+    teamIds,
+    rngSeed,
+    startingSeasonYear,
+  );
   const preseasonStartDate = addCalendarDays(
     DEFAULT_REGULAR_SEASON_START_DATE,
     -PRESEASON_LENGTH_DAYS,
@@ -617,9 +622,7 @@ function syncPromotionSeasonIds(
   for (const teamId of Object.keys(byTeamId)) {
     const current = byTeamId[teamId]!;
     next[teamId] =
-      current.seasonId === seasonId
-        ? current
-        : { ...current, seasonId };
+      current.seasonId === seasonId ? current : { ...current, seasonId };
   }
   return next;
 }

@@ -12,7 +12,10 @@ import { bootstrapWorld } from "@/systems/world-pipeline";
 import { applyCashAndBooksImpact } from "@/systems/team-finances";
 import { testOwnerObjective as createOwnerObjective } from "../helpers/owner-objective";
 import { OWNER_PHILOSOPHIES } from "@/domain/entities/owner-philosophy";
-import { getDefaultOwnerMandateProfile, getOwnerPhilosophyProfile } from "@/systems/owner-philosophy-config";
+import {
+  getDefaultOwnerMandateProfile,
+  getOwnerPhilosophyProfile,
+} from "@/systems/owner-philosophy-config";
 import {
   serializeGameState,
   deserializeGameState,
@@ -20,11 +23,17 @@ import {
 import { GAME_STATE_SCHEMA_VERSION } from "@/state/game-state";
 import { applyGameplayFinancialConsequences } from "@/systems/gameplay-financial-consequences";
 import { GAMEPLAY_OBJECTIVE_REWARD } from "@/systems/owner-objectives-config";
-import { getActiveOwnedFranchise, withOwnedFranchise } from "@/state/owner-context";
+import {
+  getActiveOwnedFranchise,
+  withOwnedFranchise,
+} from "@/state/owner-context";
 import type { GameState } from "@/state/game-state";
 import type { OwnerObjective } from "@/domain/entities/owner-objective";
 
-function withObjectives(state: GameState, objectives: OwnerObjective[]): GameState {
+function withObjectives(
+  state: GameState,
+  objectives: OwnerObjective[],
+): GameState {
   return withOwnedFranchise(state, state.user.activeOwnerTeamId, (f) => ({
     ...f,
     objectives,
@@ -99,19 +108,21 @@ describe("owner objectives", () => {
       },
     };
     state = withObjectives(state, [
-          createOwnerObjective({
-            id: asOwnerObjectiveId("obj_w"),
-            type: "minimum_win_total",
-            description: "Win 40",
-            status: "active",
-            seasonYear: year,
-            target: 40,
-            progress: 0,
-            consequenceApplied: false,
-          }),
-        ]);
+      createOwnerObjective({
+        id: asOwnerObjectiveId("obj_w"),
+        type: "minimum_win_total",
+        description: "Win 40",
+        status: "active",
+        seasonYear: year,
+        target: 40,
+        progress: 0,
+        consequenceApplied: false,
+      }),
+    ]);
     const result = evaluateOwnerObjectives(state);
-    const objective = getActiveOwnedFranchise(result.state).objectives.find((o) => o.id === "obj_w")!;
+    const objective = getActiveOwnedFranchise(result.state).objectives.find(
+      (o) => o.id === "obj_w",
+    )!;
     expect(objective.status).toBe("completed");
     expect(objective.progress).toBe(40);
   });
@@ -129,21 +140,23 @@ describe("owner objectives", () => {
       },
     };
     state = withObjectives(state, [
-          createOwnerObjective({
-            id: asOwnerObjectiveId("obj_p"),
-            type: "payroll_limit",
-            description: "Cap payroll",
-            status: "active",
-            seasonYear: year,
-            target: Math.max(0, payroll - 1),
-            progress: payroll,
-            consequenceApplied: false,
-          }),
-        ]);
+      createOwnerObjective({
+        id: asOwnerObjectiveId("obj_p"),
+        type: "payroll_limit",
+        description: "Cap payroll",
+        status: "active",
+        seasonYear: year,
+        target: Math.max(0, payroll - 1),
+        progress: payroll,
+        consequenceApplied: false,
+      }),
+    ]);
     const failed = evaluateOwnerObjectives(state);
-    expect(getActiveOwnedFranchise(failed.state).objectives.find((o) => o.id === "obj_p")!.status).toBe(
-      "failed",
-    );
+    expect(
+      getActiveOwnedFranchise(failed.state).objectives.find(
+        (o) => o.id === "obj_p",
+      )!.status,
+    ).toBe("failed");
 
     const stillFailed = withObjectives(
       failed.state,
@@ -154,9 +167,11 @@ describe("owner objectives", () => {
       ),
     );
     const reeval = evaluateOwnerObjectives(stillFailed);
-    expect(getActiveOwnedFranchise(reeval.state).objectives.find((o) => o.id === "obj_p")!.status).toBe(
-      "failed",
-    );
+    expect(
+      getActiveOwnedFranchise(reeval.state).objectives.find(
+        (o) => o.id === "obj_p",
+      )!.status,
+    ).toBe("failed");
   });
 
   it("completes improve_finances from positive net income", () => {
@@ -174,19 +189,19 @@ describe("owner objectives", () => {
       },
     };
     state = withObjectives(state, [
-          createOwnerObjective({
-            id: asOwnerObjectiveId("obj_f"),
-            type: "improve_finances",
-            description: "Positive net income",
-            status: "active",
-            seasonYear: year,
-            consequenceApplied: false,
-          }),
-        ]);
+      createOwnerObjective({
+        id: asOwnerObjectiveId("obj_f"),
+        type: "improve_finances",
+        description: "Positive net income",
+        status: "active",
+        seasonYear: year,
+        consequenceApplied: false,
+      }),
+    ]);
     const result = evaluateOwnerObjectives(state);
-    const financeObjective = getActiveOwnedFranchise(result.state).objectives.find(
-      (objective) => objective.id === "obj_f",
-    );
+    const financeObjective = getActiveOwnedFranchise(
+      result.state,
+    ).objectives.find((objective) => objective.id === "obj_f");
     expect(financeObjective?.status).toBe("completed");
   });
 
@@ -209,18 +224,20 @@ describe("owner objectives", () => {
       },
     };
     state = withObjectives(state, [
-          createOwnerObjective({
-            id: asOwnerObjectiveId("obj_mp"),
-            type: "make_playoffs",
-            description: "Make playoffs",
-            status: "active",
-            seasonYear: year,
-            consequenceApplied: false,
-          }),
-        ]);
+      createOwnerObjective({
+        id: asOwnerObjectiveId("obj_mp"),
+        type: "make_playoffs",
+        description: "Make playoffs",
+        status: "active",
+        seasonYear: year,
+        consequenceApplied: false,
+      }),
+    ]);
     const result = evaluateOwnerObjectives(state);
     expect(
-      getActiveOwnedFranchise(result.state).objectives.find((o) => o.id === "obj_mp")!.status,
+      getActiveOwnedFranchise(result.state).objectives.find(
+        (o) => o.id === "obj_mp",
+      )!.status,
     ).toBe("completed");
   });
 
@@ -235,18 +252,20 @@ describe("owner objectives", () => {
       },
     };
     state = withObjectives(state, [
-          createOwnerObjective({
-            id: asOwnerObjectiveId("obj_mpf"),
-            type: "make_playoffs",
-            description: "Make playoffs",
-            status: "active",
-            seasonYear: year,
-            consequenceApplied: false,
-          }),
-        ]);
+      createOwnerObjective({
+        id: asOwnerObjectiveId("obj_mpf"),
+        type: "make_playoffs",
+        description: "Make playoffs",
+        status: "active",
+        seasonYear: year,
+        consequenceApplied: false,
+      }),
+    ]);
     const result = evaluateOwnerObjectives(state);
     expect(
-      getActiveOwnedFranchise(result.state).objectives.find((o) => o.id === "obj_mpf")!.status,
+      getActiveOwnedFranchise(result.state).objectives.find(
+        (o) => o.id === "obj_mpf",
+      )!.status,
     ).toBe("failed");
   });
 
@@ -261,21 +280,23 @@ describe("owner objectives", () => {
       },
     };
     state = withObjectives(state, [
-          createOwnerObjective({
-            id: asOwnerObjectiveId("obj_y"),
-            type: "develop_young_players",
-            description: "Develop youth",
-            status: "active",
-            seasonYear: year,
-            baseline: 0,
-            target: 0,
-            progress: 0,
-            consequenceApplied: false,
-          }),
-        ]);
+      createOwnerObjective({
+        id: asOwnerObjectiveId("obj_y"),
+        type: "develop_young_players",
+        description: "Develop youth",
+        status: "active",
+        seasonYear: year,
+        baseline: 0,
+        target: 0,
+        progress: 0,
+        consequenceApplied: false,
+      }),
+    ]);
     const result = evaluateOwnerObjectives(state);
     expect(
-      getActiveOwnedFranchise(result.state).objectives.find((o) => o.id === "obj_y")!.status,
+      getActiveOwnedFranchise(result.state).objectives.find(
+        (o) => o.id === "obj_y",
+      )!.status,
     ).toBe("completed");
   });
 
@@ -294,20 +315,20 @@ describe("owner objectives", () => {
       },
     };
     state = withObjectives(state, [
-          createOwnerObjective({
-            id: asOwnerObjectiveId("obj_career_championships"),
-            type: "championship_count",
-            description: "Win 3 titles",
-            status: "active",
-            seasonYear: year,
-            lifecycle: "career",
-            role: "long_term",
-            category: "long_term",
-            target: 3,
-            progress: 0,
-            consequenceApplied: false,
-          }),
-        ]);
+      createOwnerObjective({
+        id: asOwnerObjectiveId("obj_career_championships"),
+        type: "championship_count",
+        description: "Win 3 titles",
+        status: "active",
+        seasonYear: year,
+        lifecycle: "career",
+        role: "long_term",
+        category: "long_term",
+        target: 3,
+        progress: 0,
+        consequenceApplied: false,
+      }),
+    ]);
     const result = evaluateOwnerObjectives(state);
     const career = getActiveOwnedFranchise(result.state).objectives.find(
       (o) => o.id === "obj_career_championships",
@@ -322,18 +343,20 @@ describe("owner objectives", () => {
     const year = state.competition.season.year;
     const before = state.business.finances[teamId]!.businessFunds;
     state = withObjectives(state, [
-          createOwnerObjective({
-            id: asOwnerObjectiveId("obj_aware"),
-            type: "awareness",
-            description: "Raise awareness",
-            status: "completed",
-            seasonYear: year,
-            consequenceApplied: false,
-          }),
-        ]);
+      createOwnerObjective({
+        id: asOwnerObjectiveId("obj_aware"),
+        type: "awareness",
+        description: "Raise awareness",
+        status: "completed",
+        seasonYear: year,
+        consequenceApplied: false,
+      }),
+    ]);
     const once = applyGameplayFinancialConsequences(state);
     expect(once.state.business.finances[teamId]!.businessFunds).toBe(before);
-    expect(getActiveOwnedFranchise(once.state).objectives[0]!.consequenceApplied).toBe(true);
+    expect(
+      getActiveOwnedFranchise(once.state).objectives[0]!.consequenceApplied,
+    ).toBe(true);
   });
 
   it("still posts cash for whitelisted make_playoffs completion", () => {
@@ -342,15 +365,15 @@ describe("owner objectives", () => {
     const year = state.competition.season.year;
     const before = state.business.finances[teamId]!.businessFunds;
     state = withObjectives(state, [
-          createOwnerObjective({
-            id: asOwnerObjectiveId("obj_mp_cash"),
-            type: "make_playoffs",
-            description: "Make playoffs",
-            status: "completed",
-            seasonYear: year,
-            consequenceApplied: false,
-          }),
-        ]);
+      createOwnerObjective({
+        id: asOwnerObjectiveId("obj_mp_cash"),
+        type: "make_playoffs",
+        description: "Make playoffs",
+        status: "completed",
+        seasonYear: year,
+        consequenceApplied: false,
+      }),
+    ]);
     const once = applyGameplayFinancialConsequences(state);
     expect(once.state.business.finances[teamId]!.businessFunds).toBe(
       before + GAMEPLAY_OBJECTIVE_REWARD,
@@ -364,9 +387,9 @@ describe("owner philosophy profiles", () => {
       getOwnerPhilosophyProfile(id),
     );
     expect(profiles).toHaveLength(5);
-    expect(new Set(profiles.map((p) => p.preferredPrimary[0])).size).toBeGreaterThan(
-      1,
-    );
+    expect(
+      new Set(profiles.map((p) => p.preferredPrimary[0])).size,
+    ).toBeGreaterThan(1);
     expect(
       getOwnerPhilosophyProfile("win_now").winTolerance.unacceptable,
     ).toBeGreaterThan(
@@ -383,9 +406,7 @@ describe("owner philosophy profiles", () => {
     );
     expect(
       getOwnerPhilosophyProfile("balanced").categoryWeights.competitive,
-    ).toBe(
-      getOwnerPhilosophyProfile("balanced").categoryWeights.financial,
-    );
+    ).toBe(getOwnerPhilosophyProfile("balanced").categoryWeights.financial);
   });
 
   it("generates primary objectives from the fixed default mandate profile", () => {
@@ -454,7 +475,8 @@ describe("owner mandate persistence", () => {
         }),
         notifications: franchise.notifications,
         eventLog: franchise.eventLog,
-        appliedGameplayConsequenceKeys: franchise.appliedGameplayConsequenceKeys,
+        appliedGameplayConsequenceKeys:
+          franchise.appliedGameplayConsequenceKeys,
         explicitDecisions: franchise.explicitDecisions,
         phaseSkips: franchise.phaseSkips,
         aiAssistState: franchise.aiAssistState,

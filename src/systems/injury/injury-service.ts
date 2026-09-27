@@ -182,9 +182,7 @@ export function tickDailyRecovery(
     }
 
     const medical =
-      next.teamId != null
-        ? medicalRecoveryMultiplier(current, next.teamId)
-        : 1;
+      next.teamId != null ? medicalRecoveryMultiplier(current, next.teamId) : 1;
 
     const remaining: PlayerInjury[] = [];
     for (const injury of next.activeInjuries) {
@@ -195,7 +193,12 @@ export function tickDailyRecovery(
         const hadLongTerm = maybeApplyLongTermDurability(next, ticked, rng);
         next = appendInjuryHistory(
           next,
-          toHistoryEntry(ticked, date, estimateGamesMissed(ticked), hadLongTerm),
+          toHistoryEntry(
+            ticked,
+            date,
+            estimateGamesMissed(ticked),
+            hadLongTerm,
+          ),
         );
         if (hadLongTerm) {
           next = {
@@ -215,7 +218,9 @@ export function tickDailyRecovery(
 
     // Conditioning: drop slightly when out; recover when playing/rehab
     let conditioning = next.conditioning ?? 100;
-    const outCount = remaining.filter((i) => i.gameRestriction === "out").length;
+    const outCount = remaining.filter(
+      (i) => i.gameRestriction === "out",
+    ).length;
     if (outCount > 0) {
       conditioning = Math.max(40, conditioning - 1.5);
     } else if (remaining.length === 0) {
@@ -274,7 +279,11 @@ function maybeApplyLongTermDurability(
   const definition = getInjuryDefinition(injury.catalogKey);
   const chance =
     definition?.longTermEffectChance[injury.severity] ??
-    (injury.severity === "severe" ? 0.08 : injury.severity === "major" ? 0.02 : 0);
+    (injury.severity === "severe"
+      ? 0.08
+      : injury.severity === "major"
+        ? 0.02
+        : 0);
   if (chance <= 0) return false;
   return rng.next() < chance;
 }
@@ -302,7 +311,12 @@ export function archiveResolvedInjuries(
       const hadLongTerm = maybeApplyLongTermDurability(next, injury, rng);
       next = appendInjuryHistory(
         next,
-        toHistoryEntry(injury, recoveredOn, estimateGamesMissed(injury), hadLongTerm),
+        toHistoryEntry(
+          injury,
+          recoveredOn,
+          estimateGamesMissed(injury),
+          hadLongTerm,
+        ),
       );
       if (hadLongTerm) {
         next = {

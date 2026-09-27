@@ -68,10 +68,11 @@ export function generatePlayerAttributes(
   const attributes = {} as PlayerAttributes;
 
   for (const key of ATTRIBUTE_KEYS) {
-    const center = Math.round(
-      quality + (weights[key] - 1) * GENERATION_SCALE,
+    const center = Math.round(quality + (weights[key] - 1) * GENERATION_SCALE);
+    const raw = rng.nextInt(
+      center - GENERATION_SPREAD,
+      center + GENERATION_SPREAD,
     );
-    const raw = rng.nextInt(center - GENERATION_SPREAD, center + GENERATION_SPREAD);
     attributes[key] = Math.min(RATING_MAX, Math.max(RATING_MIN, raw));
   }
 

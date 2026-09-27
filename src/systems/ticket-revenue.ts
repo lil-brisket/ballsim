@@ -189,8 +189,7 @@ export function processHomeGameTicketRevenue(
     events.push(...posted.events);
 
     let promotionSummary:
-      | ReturnType<typeof compactPromotionSummary>
-      | undefined;
+      ReturnType<typeof compactPromotionSummary> | undefined;
 
     if (effects) {
       const settled = settleGameDayPromotion(

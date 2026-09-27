@@ -86,11 +86,7 @@ export function toFinanceHubView(state: GameState): FinanceHubView {
     daysUntilTradeDeadline: owner.daysUntilTradeDeadline,
   });
 
-  const decisions = filterDomainDecisions(
-    actionCenter.items,
-    ["financial"],
-    8,
-  );
+  const decisions = filterDomainDecisions(actionCenter.items, ["financial"], 8);
 
   // Warnings: only critical/tight health OR existing financial action items.
   const warnings: ActionCenterItem[] = [];

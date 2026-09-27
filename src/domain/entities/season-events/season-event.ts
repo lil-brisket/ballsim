@@ -1,8 +1,4 @@
-import type {
-  FanVoteCampaignId,
-  SeasonEventId,
-  SeasonId,
-} from "@/domain/ids";
+import type { FanVoteCampaignId, SeasonEventId, SeasonId } from "@/domain/ids";
 
 export type SeasonEventType =
   | "midseason_tournament"
@@ -20,10 +16,7 @@ export const SEASON_EVENT_TYPES: readonly SeasonEventType[] = [
 ] as const;
 
 export type SeasonEventStatus =
-  | "scheduled"
-  | "active"
-  | "completed"
-  | "cancelled";
+  "scheduled" | "active" | "completed" | "cancelled";
 
 export const SEASON_EVENT_STATUSES: readonly SeasonEventStatus[] = [
   "scheduled",

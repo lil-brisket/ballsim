@@ -14,7 +14,10 @@ import {
   facilityUpgradeCost,
   facilityWeeklyOpex,
 } from "@/systems/facilities-config";
-import { applyCashAndBooksImpact, assertSufficientBusinessFunds } from "@/systems/team-finances";
+import {
+  applyCashAndBooksImpact,
+  assertSufficientBusinessFunds,
+} from "@/systems/team-finances";
 import { assertCapitalSpendingAllowed } from "@/systems/financial-spending";
 
 export function arenaCapacity(state: GameState, teamId: TeamId): number {
@@ -51,7 +54,9 @@ export function startFacilityUpgrade(
 ): SystemResult {
   const ops = state.business.franchiseOps[teamId];
   if (!ops) {
-    throw new Error(`startFacilityUpgrade: franchiseOps missing for "${teamId}".`);
+    throw new Error(
+      `startFacilityUpgrade: franchiseOps missing for "${teamId}".`,
+    );
   }
   const facility = ops.facilities[category];
   if (facility.upgradeWeeksRemaining > 0) {
@@ -168,7 +173,10 @@ export function processWeeklyFacilityUpgrades(state: GameState): SystemResult {
       const remaining = facility.upgradeWeeksRemaining - 1;
       if (remaining <= 0) {
         const newLevel = Math.min(facility.level + 1, FACILITY_LEVEL_MAX);
-        nextFacilities[category] = { level: newLevel, upgradeWeeksRemaining: 0 };
+        nextFacilities[category] = {
+          level: newLevel,
+          upgradeWeeksRemaining: 0,
+        };
         changed = true;
         events.push(
           createDomainEvent({

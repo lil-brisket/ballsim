@@ -1,4 +1,7 @@
-import { createDomainEvent, type DomainEvent } from "@/domain/events/domain-event";
+import {
+  createDomainEvent,
+  type DomainEvent,
+} from "@/domain/events/domain-event";
 import type { GameState } from "@/state/game-state";
 import { appendSeasonEventLog } from "@/state/game-state";
 import { analyzeFantasyDraft } from "@/systems/fantasy-draft/draft-analysis";

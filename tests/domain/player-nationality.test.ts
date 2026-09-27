@@ -16,6 +16,8 @@ describe("player nationality catalog", () => {
   });
 
   it("contains no duplicate nationality identifiers", () => {
-    expect(new Set(PLAYER_NATIONALITIES).size).toBe(PLAYER_NATIONALITIES.length);
+    expect(new Set(PLAYER_NATIONALITIES).size).toBe(
+      PLAYER_NATIONALITIES.length,
+    );
   });
 });

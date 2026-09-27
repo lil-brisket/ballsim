@@ -116,8 +116,7 @@ function interpolatePickCurve(overallPick: number): number {
     const a = curve[i]!;
     const b = curve[i + 1]!;
     if (overallPick >= a.overallPick && overallPick <= b.overallPick) {
-      const t =
-        (overallPick - a.overallPick) / (b.overallPick - a.overallPick);
+      const t = (overallPick - a.overallPick) / (b.overallPick - a.overallPick);
       return a.value + t * (b.value - a.value);
     }
   }
@@ -128,8 +127,12 @@ function uncertaintyHalfWidth(
   seasonProgress: number,
   leagueSize: number,
 ): number {
-  const { earlySeasonFraction, lateSeasonFraction, minHalfWidth, maxHalfWidth } =
-    PICK_UNCERTAINTY_CONFIG;
+  const {
+    earlySeasonFraction,
+    lateSeasonFraction,
+    minHalfWidth,
+    maxHalfWidth,
+  } = PICK_UNCERTAINTY_CONFIG;
   const fraction =
     earlySeasonFraction +
     (lateSeasonFraction - earlySeasonFraction) * clamp01(seasonProgress);
@@ -150,10 +153,7 @@ function computeSeasonProgress(state: GameState): number {
   return clamp01(played / teams / gamesPerTeam);
 }
 
-function rankTeamsWorstToBest(
-  state: GameState,
-  teamIds: TeamId[],
-): TeamId[] {
+function rankTeamsWorstToBest(state: GameState, teamIds: TeamId[]): TeamId[] {
   return [...teamIds].sort((a, b) => {
     const sa = state.competition.standings.byTeamId[a];
     const sb = state.competition.standings.byTeamId[b];

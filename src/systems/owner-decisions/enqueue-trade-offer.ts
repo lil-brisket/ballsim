@@ -15,17 +15,18 @@ import {
   type TradeNegotiationEntry,
 } from "@/domain/entities/owner-decision";
 import type { TradeProposal } from "@/domain/entities/trade-proposal";
-import { asOwnerDecisionId, type OwnerDecisionId, type TeamId } from "@/domain/ids";
+import {
+  asOwnerDecisionId,
+  type OwnerDecisionId,
+  type TeamId,
+} from "@/domain/ids";
 import type { GameState } from "@/state/game-state";
 import { TRADE_OFFER_EXPIRATION } from "@/systems/trades-config";
 import { getCalendarContext } from "@/systems/simulation/calendar-context";
 import { evaluateTrade } from "@/systems/trades/asset-valuation/complete-trade-evaluation";
 
 export type TradeOfferEnqueueOutcome =
-  | "queued"
-  | "executed"
-  | "rejected"
-  | "skipped";
+  "queued" | "executed" | "rejected" | "skipped";
 
 export type EnqueueTradeOfferResult = {
   outcome: TradeOfferEnqueueOutcome;
@@ -170,10 +171,7 @@ export function enqueueTradeOfferForOwner(
       ...state,
       user: {
         ...state.user,
-        pendingOwnerDecisions: [
-          ...state.user.pendingOwnerDecisions,
-          decision,
-        ],
+        pendingOwnerDecisions: [...state.user.pendingOwnerDecisions, decision],
       },
     },
     decision,
@@ -187,7 +185,8 @@ export function computeExpiresOn(state: GameState, createdOn: string): string {
     days = TRADE_OFFER_EXPIRATION.offseasonDays;
   } else if (
     calendar.daysUntilTradeDeadline !== null &&
-    calendar.daysUntilTradeDeadline <= TRADE_OFFER_EXPIRATION.deadlineProximityDays
+    calendar.daysUntilTradeDeadline <=
+      TRADE_OFFER_EXPIRATION.deadlineProximityDays
   ) {
     days = TRADE_OFFER_EXPIRATION.nearDeadlineDays;
   }

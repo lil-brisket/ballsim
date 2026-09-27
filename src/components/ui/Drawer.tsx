@@ -94,7 +94,9 @@ export function Drawer(props: {
       if (event.key !== "Tab" || !panelRef.current) return;
       const nodes = Array.from(
         panelRef.current.querySelectorAll<HTMLElement>(FOCUSABLE),
-      ).filter((el) => !el.hasAttribute("disabled") && el.offsetParent !== null);
+      ).filter(
+        (el) => !el.hasAttribute("disabled") && el.offsetParent !== null,
+      );
       if (nodes.length === 0) return;
       const first = nodes[0]!;
       const last = nodes[nodes.length - 1]!;

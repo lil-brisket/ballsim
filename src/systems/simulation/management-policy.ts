@@ -24,10 +24,7 @@ import {
 } from "@/systems/simulation/management-actions";
 
 export type PolicyOutcome =
-  | "ALLOW"
-  | "RECOMMEND"
-  | "DENY_CONTINUE"
-  | "DENY_BLOCK";
+  "ALLOW" | "RECOMMEND" | "DENY_CONTINUE" | "DENY_BLOCK";
 
 export type PhaseCapabilities = {
   continuity: boolean;

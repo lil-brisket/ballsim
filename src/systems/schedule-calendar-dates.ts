@@ -235,7 +235,10 @@ export function assignRoundDates(
 }
 
 function minCalendarGap(config: ScheduleCalendarConfig): number {
-  if (!Number.isInteger(config.minRestDaysBetweenRounds) || config.minRestDaysBetweenRounds < 0) {
+  if (
+    !Number.isInteger(config.minRestDaysBetweenRounds) ||
+    config.minRestDaysBetweenRounds < 0
+  ) {
     throw new Error(
       `minRestDaysBetweenRounds must be an integer >= 0; got ${config.minRestDaysBetweenRounds}.`,
     );

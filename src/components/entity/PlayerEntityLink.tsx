@@ -4,10 +4,7 @@ import Link from "next/link";
 import { useEntityDrawer } from "@/components/entity/EntityDrawerProvider";
 import { cn, focusRingClass } from "@/components/ui/styles";
 
-const DEFAULT_CLASS = cn(
-  "text-amber-400 hover:underline",
-  focusRingClass,
-);
+const DEFAULT_CLASS = cn("text-amber-400 hover:underline", focusRingClass);
 
 type PlayerEntityLinkProps = {
   saveId: string;
@@ -36,8 +33,7 @@ export function PlayerEntityLink({
   href,
 }: PlayerEntityLinkProps) {
   const { openPlayer } = useEntityDrawer();
-  const destination =
-    href ?? `/dashboard/${saveId}/players/${playerId}`;
+  const destination = href ?? `/dashboard/${saveId}/players/${playerId}`;
 
   if (!canOpen) {
     return <span className={className}>{children}</span>;

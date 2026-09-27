@@ -89,8 +89,8 @@ export function DelegationSummary({
           </p>
           {youCategories.length === 0 ? (
             <p className="mt-1 text-zinc-500">
-              All areas delegated during simulation — you can still override
-              any AI move manually
+              All areas delegated during simulation — you can still override any
+              AI move manually
             </p>
           ) : (
             <ul className="mt-1 list-inside list-disc text-zinc-400">

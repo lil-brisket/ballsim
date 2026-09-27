@@ -6,11 +6,7 @@ import {
   FACILITY_CATEGORIES,
   FACILITY_LEVEL_MAX,
 } from "@/domain/entities/franchise-ops";
-import {
-  asSeasonId,
-  asSponsorshipId,
-  asTeamId,
-} from "@/domain/ids";
+import { asSeasonId, asSponsorshipId, asTeamId } from "@/domain/ids";
 import { createSeededRng } from "@/domain/rng";
 import { appendEventLog, type GameState } from "@/state/game-state";
 import {
@@ -22,7 +18,10 @@ import {
 import { toOwnerDashboardView } from "@/state/owner-dashboard";
 import { createTestGameState } from "../factories/game-state";
 import { bootstrapWorld } from "@/systems/world-pipeline";
-import { getActiveOwnedFranchise, withOwnedFranchise } from "@/state/owner-context";
+import {
+  getActiveOwnedFranchise,
+  withOwnedFranchise,
+} from "@/state/owner-context";
 
 function bootstrapped(saveId: string): GameState {
   const state = createTestGameState({ saveId });
@@ -214,7 +213,9 @@ function appendHomeGame(
 
 function withSnapshots(
   state: GameState,
-  snapshots: ReturnType<typeof getActiveOwnedFranchise>["narrative"]["snapshots"],
+  snapshots: ReturnType<
+    typeof getActiveOwnedFranchise
+  >["narrative"]["snapshots"],
 ): GameState {
   return withOwnedFranchise(state, state.user.activeOwnerTeamId, (f) => ({
     ...f,
@@ -451,9 +452,7 @@ describe("calculateFranchiseHealth", () => {
     expect(view.biggestStrength).not.toBeNull();
     expect(view.biggestRisk).not.toBeNull();
     expect(view).not.toHaveProperty("overall");
-    expect(
-      Object.keys(view.dimensions).sort(),
-    ).toEqual(
+    expect(Object.keys(view.dimensions).sort()).toEqual(
       [
         "commercial",
         "competitive",
@@ -494,9 +493,9 @@ describe("calculateFranchiseHealth", () => {
     const state = bootstrapped("health_dash");
     const dash = toOwnerDashboardView(state);
     expect(dash.health.franchiseHealth).toBeDefined();
-    expect(dash.health.franchiseHealth.dimensions.financial.score).toBeGreaterThanOrEqual(
-      0,
-    );
+    expect(
+      dash.health.franchiseHealth.dimensions.financial.score,
+    ).toBeGreaterThanOrEqual(0);
     expect(typeof dash.health.cash).toBe("number");
     expect(typeof dash.health.fanSentiment).toBe("number");
     expect(dash.health.financialHealth).toBeTruthy();
@@ -520,7 +519,9 @@ describe("calculateFranchiseHealth", () => {
     const view = calculateFranchiseHealth(state);
     expect(view.dimensions.strategic.confidence).toBe("low");
     expect(
-      view.dimensions.strategic.drivers.some((d) => d.key === "no_season_history"),
+      view.dimensions.strategic.drivers.some(
+        (d) => d.key === "no_season_history",
+      ),
     ).toBe(true);
   });
 

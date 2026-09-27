@@ -84,7 +84,11 @@ describe("league milestone calendar markers", () => {
       ...state,
       competition: {
         ...state.competition,
-        schedule: { ...state.competition.schedule, gameIds: [], gameIdsByDate: {} },
+        schedule: {
+          ...state.competition.schedule,
+          gameIds: [],
+          gameIdsByDate: {},
+        },
         games: {},
       },
     };

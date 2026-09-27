@@ -57,10 +57,7 @@ export function detectManagementNeeds(
   return needs;
 }
 
-function detectRosterNeeds(
-  state: GameState,
-  teamId: TeamId,
-): ManagementNeed[] {
+function detectRosterNeeds(state: GameState, teamId: TeamId): ManagementNeed[] {
   const team = state.world.teams[teamId];
   if (!team) {
     return [];
@@ -164,11 +161,14 @@ function detectRotationNeeds(
         actionId: "FIX_INVALID_ROTATION",
         severity: "warning",
         title: "Injured player in rotation pool",
-        detail: "Healthy substitutes should cover injured players for game validity.",
-        needKey: `injured_rotation:${team.roster.filter((id) => {
-          const p = state.world.players[id];
-          return p?.availability === "out" || p?.availability === "suspended";
-        }).length}`,
+        detail:
+          "Healthy substitutes should cover injured players for game validity.",
+        needKey: `injured_rotation:${
+          team.roster.filter((id) => {
+            const p = state.world.players[id];
+            return p?.availability === "out" || p?.availability === "suspended";
+          }).length
+        }`,
         metadata: {},
       },
     ];
@@ -177,10 +177,7 @@ function detectRotationNeeds(
   return [];
 }
 
-function detectStaffNeeds(
-  state: GameState,
-  teamId: TeamId,
-): ManagementNeed[] {
+function detectStaffNeeds(state: GameState, teamId: TeamId): ManagementNeed[] {
   const needs: ManagementNeed[] = [];
 
   for (const role of COACHING_ROLES) {
@@ -233,10 +230,7 @@ function detectStaffNeeds(
   return needs;
 }
 
-function detectDraftNeeds(
-  state: GameState,
-  teamId: TeamId,
-): ManagementNeed[] {
+function detectDraftNeeds(state: GameState, teamId: TeamId): ManagementNeed[] {
   if (!isUserOnDraftClock(state)) {
     return [];
   }

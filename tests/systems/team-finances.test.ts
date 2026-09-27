@@ -1,12 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { createContract, type Contract } from "@/domain/entities/contract";
 import { createEmptyTeamFinanceBooks } from "@/domain/entities/finances";
-import {
-  asContractId,
-  asPlayerId,
-  asTeamId,
-  type TeamId,
-} from "@/domain/ids";
+import { asContractId, asPlayerId, asTeamId, type TeamId } from "@/domain/ids";
 import {
   deserializeGameState,
   serializeGameState,
@@ -136,8 +131,8 @@ describe("team-finances expenses", () => {
     const year = state.competition.season.year;
     const result = recordExpense(state, teamId, "staff", 40_000, year);
     expect(
-      result.state.business.finances[teamId]!.booksByYear[String(year)]!.expenses
-        .staff,
+      result.state.business.finances[teamId]!.booksByYear[String(year)]!
+        .expenses.staff,
     ).toBe(40_000);
   });
 
@@ -147,8 +142,8 @@ describe("team-finances expenses", () => {
     const year = state.competition.season.year;
     const result = recordExpense(state, teamId, "facilities", 30_000, year);
     expect(
-      result.state.business.finances[teamId]!.booksByYear[String(year)]!.expenses
-        .facilities,
+      result.state.business.finances[teamId]!.booksByYear[String(year)]!
+        .expenses.facilities,
     ).toBe(30_000);
   });
 
@@ -158,8 +153,8 @@ describe("team-finances expenses", () => {
     const year = state.competition.season.year;
     const result = recordExpense(state, teamId, "operations", 20_000, year);
     expect(
-      result.state.business.finances[teamId]!.booksByYear[String(year)]!.expenses
-        .operations,
+      result.state.business.finances[teamId]!.booksByYear[String(year)]!
+        .expenses.operations,
     ).toBe(20_000);
   });
 
@@ -169,8 +164,8 @@ describe("team-finances expenses", () => {
     const year = state.competition.season.year;
     const result = recordExpense(state, teamId, "marketing", 15_000, year);
     expect(
-      result.state.business.finances[teamId]!.booksByYear[String(year)]!.expenses
-        .marketing,
+      result.state.business.finances[teamId]!.booksByYear[String(year)]!
+        .expenses.marketing,
     ).toBe(15_000);
   });
 
@@ -212,13 +207,7 @@ describe("team-finances expenses", () => {
     const teamId = state.user.activeOwnerTeamId;
     const year = state.competition.season.year;
     expect(() =>
-      recordExpense(
-        state,
-        teamId,
-        "playerSalaries" as never,
-        100,
-        year,
-      ),
+      recordExpense(state, teamId, "playerSalaries" as never, 100, year),
     ).toThrow(/playerSalaries/);
   });
 });
@@ -352,7 +341,8 @@ describe("team-finances immutability and validation", () => {
     const state = baseState();
     const teamId = state.user.activeOwnerTeamId;
     const year = state.competition.season.year;
-    const { [teamId]: _removed, ...financesWithoutTeam } = state.business.finances;
+    const { [teamId]: _removed, ...financesWithoutTeam } =
+      state.business.finances;
     const broken: GameState = {
       ...state,
       business: { ...state.business, finances: financesWithoutTeam },
@@ -389,17 +379,17 @@ describe("team-finances immutability and validation", () => {
   it("throws for negative amounts", () => {
     const state = baseState();
     const teamId = state.user.activeOwnerTeamId;
-    expect(() =>
-      recordRevenue(state, teamId, "tickets", -1, 2026),
-    ).toThrow(/must be >= 0/);
+    expect(() => recordRevenue(state, teamId, "tickets", -1, 2026)).toThrow(
+      /must be >= 0/,
+    );
   });
 
   it("throws for non-integer year", () => {
     const state = baseState();
     const teamId = state.user.activeOwnerTeamId;
-    expect(() =>
-      recordRevenue(state, teamId, "tickets", 1, 2026.5),
-    ).toThrow(/year must be an integer/);
+    expect(() => recordRevenue(state, teamId, "tickets", 1, 2026.5)).toThrow(
+      /year must be an integer/,
+    );
   });
 
   it("rejects malformed booksByYear keys on load", () => {
@@ -434,9 +424,9 @@ describe("team-finances persistence", () => {
 
     const restored = deserializeGameState(serializeGameState(state));
     expect(() => validateGameState(restored)).not.toThrow();
-    expect(restored.business.finances[teamId]!.booksByYear[String(year)]).toEqual(
-      state.business.finances[teamId]!.booksByYear[String(year)],
-    );
+    expect(
+      restored.business.finances[teamId]!.booksByYear[String(year)],
+    ).toEqual(state.business.finances[teamId]!.booksByYear[String(year)]);
     expect(getFinancialStatement(restored, teamId, year)).toEqual(
       getFinancialStatement(state, teamId, year),
     );

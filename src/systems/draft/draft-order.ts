@@ -21,9 +21,7 @@ export function generateDraftOrder(
     (pick) => pick.seasonYear === draftYear,
   );
   if (picksForYear.length === 0) {
-    throw new Error(
-      `No draft picks found for seasonYear ${draftYear}.`,
-    );
+    throw new Error(`No draft picks found for seasonYear ${draftYear}.`);
   }
 
   const winsByTeam = winsByOriginalTeam(state);
@@ -33,9 +31,7 @@ export function generateDraftOrder(
   for (const round of DRAFT_PICK_ROUNDS) {
     const roundPicks = picksForYear
       .filter((pick) => pick.round === round)
-      .sort((left, right) =>
-        comparePicksForOrder(left, right, winsByTeam),
-      );
+      .sort((left, right) => comparePicksForOrder(left, right, winsByTeam));
 
     for (const pick of roundPicks) {
       slots.push(

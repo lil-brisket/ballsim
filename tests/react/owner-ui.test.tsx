@@ -30,9 +30,9 @@ describe("Owner UI primitives", () => {
     expect(frontOffice?.closest("a")?.getAttribute("href")).toBe(
       "/dashboard/save_test",
     );
-    expect(screen.getAllByText("Roster")[0]?.closest("a")?.getAttribute("href")).toBe(
-      "/dashboard/save_test/roster",
-    );
+    expect(
+      screen.getAllByText("Roster")[0]?.closest("a")?.getAttribute("href"),
+    ).toBe("/dashboard/save_test/roster");
     expect(
       screen.getAllByText("Media Hub")[0]?.closest("a")?.getAttribute("href"),
     ).toBe("/dashboard/save_test/media");
@@ -75,9 +75,7 @@ describe("Owner UI primitives", () => {
     expect(screen.queryByRole("dialog")).toBeNull();
     fireEvent.click(screen.getByRole("button", { name: "Trade" }));
     expect(screen.getByRole("dialog")).toBeTruthy();
-    expect(
-      screen.getByRole("button", { name: "Confirm trade" }),
-    ).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Confirm trade" })).toBeTruthy();
     unmount();
   });
 
@@ -88,7 +86,7 @@ describe("Owner UI primitives", () => {
     const { unmount } = render(
       <ConfirmDialog
         title="Delete save?"
-        description='Delete “Harbor Franchise”? This cannot be undone.'
+        description="Delete “Harbor Franchise”? This cannot be undone."
         confirmLabel="Delete"
       >
         <form
@@ -105,9 +103,7 @@ describe("Owner UI primitives", () => {
     expect(screen.queryByRole("dialog")).toBeNull();
     fireEvent.click(screen.getByRole("button", { name: "Delete" }));
     expect(screen.getByRole("dialog")).toBeTruthy();
-    expect(
-      screen.getByRole("button", { name: "Confirm delete" }),
-    ).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Confirm delete" })).toBeTruthy();
 
     fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
     expect(screen.queryByRole("dialog")).toBeNull();

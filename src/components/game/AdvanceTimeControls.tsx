@@ -38,11 +38,7 @@ function SimulationProgressStatus(props: { message: string }) {
     return null;
   }
   return (
-    <p
-      role="status"
-      aria-live="polite"
-      className="text-sm text-amber-300/90"
-    >
+    <p role="status" aria-live="polite" className="text-sm text-amber-300/90">
       {props.message}
     </p>
   );
@@ -90,7 +86,11 @@ export function AdvanceTimeControls(props: {
       <p className="text-xs uppercase tracking-wide text-zinc-500">
         Secondary advance
       </p>
-      <div className="flex flex-wrap gap-2" role="group" aria-label="Advance time">
+      <div
+        className="flex flex-wrap gap-2"
+        role="group"
+        aria-label="Advance time"
+      >
         <form action={advanceDayAction} className="space-y-1">
           <SimulationPendingReporter />
           <input type="hidden" name="saveId" value={props.saveId} />

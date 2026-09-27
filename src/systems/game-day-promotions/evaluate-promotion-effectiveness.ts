@@ -61,11 +61,15 @@ export function audienceFit(
   switch (targetAudience) {
     case "families":
       // Mid markets skew family-friendly.
-      return clamp01(0.55 + (1 - Math.abs(market - 0.5) * 1.2) * 0.25 + sentiment * 0.15);
+      return clamp01(
+        0.55 + (1 - Math.abs(market - 0.5) * 1.2) * 0.25 + sentiment * 0.15,
+      );
     case "students":
       return clamp01(0.5 + (1 - market) * 0.25 + sentiment * 0.1);
     case "youth":
-      return clamp01(0.52 + (1 - Math.abs(market - 0.45)) * 0.2 + sentiment * 0.12);
+      return clamp01(
+        0.52 + (1 - Math.abs(market - 0.45)) * 0.2 + sentiment * 0.12,
+      );
     case "community":
       return clamp01(0.6 + (1 - market) * 0.2 + sentiment * 0.2);
     case "general":
@@ -112,7 +116,9 @@ export function evaluatePromotionEffectiveness(
   const opponentAppeal = clamp01(context.opponentWinPct);
   const momentum = clamp01(context.winPct);
   const timing = dayOfWeekFactor(context.gameDate);
-  const divisionBonus = context.sameDivision ? DIVISION_MATCHUP_AFFINITY_BONUS : 0;
+  const divisionBonus = context.sameDivision
+    ? DIVISION_MATCHUP_AFFINITY_BONUS
+    : 0;
 
   // Fan interest: low sentiment dampens effectiveness (underperformance risk).
   const fanInterest = 0.7 + (clampRating(context.fanSentiment) / 100) * 0.3;

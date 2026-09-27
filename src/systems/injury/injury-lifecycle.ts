@@ -100,7 +100,10 @@ export function withPlayer(
   if (patch.activeInjuries != null) {
     next.injury = primaryActiveInjury(patch.activeInjuries);
   }
-  if (patch.availability == null && (patch.activeInjuries != null || patch.suspension !== undefined)) {
+  if (
+    patch.availability == null &&
+    (patch.activeInjuries != null || patch.suspension !== undefined)
+  ) {
     next.availability = resolvePlayerAvailabilityFromState(next);
   }
   return {
@@ -158,7 +161,9 @@ function buildInjuryFromInput(
   }
 
   return {
-    injuryId: input.injuryId ?? `inj_${injuredOn}_${input.catalogKey ?? "x"}_${input.type.replace(/\s+/g, "_").toLowerCase()}`,
+    injuryId:
+      input.injuryId ??
+      `inj_${injuredOn}_${input.catalogKey ?? "x"}_${input.type.replace(/\s+/g, "_").toLowerCase()}`,
     catalogKey: input.catalogKey ?? catalog?.catalogKey ?? "undisclosed",
     type: input.type,
     bodyPart: input.bodyPart ?? catalog?.bodyPart ?? "unknown",
@@ -174,8 +179,7 @@ function buildInjuryFromInput(
       input.gameRestriction ??
       catalog?.gameRestriction[input.severity] ??
       defaults.gameRestriction,
-    minutesRestriction:
-      input.minutesRestriction ?? workload.minutesRestriction,
+    minutesRestriction: input.minutesRestriction ?? workload.minutesRestriction,
     recommendedWorkloadMpg:
       input.recommendedWorkloadMpg ??
       workload.recommendedWorkloadMpg ??
@@ -185,13 +189,9 @@ function buildInjuryFromInput(
       workload.maximumWorkloadMpg ??
       defaults.maximumWorkloadMpg,
     reinjuryRisk:
-      input.reinjuryRisk ??
-      catalog?.reinjuryModifier[input.severity] ??
-      0.1,
+      input.reinjuryRisk ?? catalog?.reinjuryModifier[input.severity] ?? 0.1,
     temporaryEffects:
-      input.temporaryEffects ??
-      catalog?.temporaryEffects[input.severity] ??
-      [],
+      input.temporaryEffects ?? catalog?.temporaryEffects[input.severity] ?? [],
     temporaryFrustration:
       input.severity === "minor"
         ? 5
@@ -222,9 +222,7 @@ export function applyInjuryToPlayer(
     return state;
   }
   const injuredOn =
-    input.injuredOn ??
-    state.world.calendar?.currentDate ??
-    "2000-01-01";
+    input.injuredOn ?? state.world.calendar?.currentDate ?? "2000-01-01";
   const injury = buildInjuryFromInput(input, injuredOn);
   const activeInjuries = [...ensureActiveInjuries(player), injury];
   const availability =

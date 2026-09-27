@@ -248,8 +248,7 @@ function correlate(
   }
 
   const wrongDirection =
-    (expectedSign > 0 && pearsonR < 0) ||
-    (expectedSign < 0 && pearsonR > 0);
+    (expectedSign > 0 && pearsonR < 0) || (expectedSign < 0 && pearsonR > 0);
 
   // Weak |r| alone never FAILs. Wrong-direction with large N → WARNING.
   if (wrongDirection && largeSample && Math.abs(pearsonR) >= 0.05) {
@@ -277,10 +276,7 @@ function correlate(
 
 function meanAttr(
   players: readonly Player[],
-  key:
-    | "perimeterDefense"
-    | "interiorDefense"
-    | "defensiveIq",
+  key: "perimeterDefense" | "interiorDefense" | "defensiveIq",
 ): number {
   if (players.length === 0) {
     return 0;

@@ -181,7 +181,9 @@ export function roleDisplayLabelFor(
   if (isInactive) {
     return "Inactive";
   }
-  return rotationRole.replaceAll("_", " ").replace(/\b\w/g, (c) => c.toUpperCase());
+  return rotationRole
+    .replaceAll("_", " ")
+    .replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
 export function rotationRoleSortKey(role: RotationRole): number {
@@ -196,7 +198,9 @@ function fitAtPosition(
   player: Player,
   position: PlayerPosition,
 ): PositionFit | undefined {
-  return positionFitsForPlayer(player).find((entry) => entry.position === position);
+  return positionFitsForPlayer(player).find(
+    (entry) => entry.position === position,
+  );
 }
 
 /**
@@ -250,8 +254,7 @@ export function evaluateRosterNeeds(
     const topParts = [h1, h2, h3]
       .filter((value, index) => index < healthyCount)
       .map((value) => String(Math.round(value)));
-    const topLabel =
-      topParts.length > 0 ? topParts.join("/") : "—";
+    const topLabel = topParts.length > 0 ? topParts.join("/") : "—";
 
     return {
       position,
@@ -420,7 +423,11 @@ export function toTradeBlockView(
 function resolveRotationRole(
   playerId: PlayerId,
   management: GameState["world"]["teams"][string]["rosterManagement"],
-): { rotationRole: RotationRole; isInactive: boolean; depthSlot?: PlayerPosition } {
+): {
+  rotationRole: RotationRole;
+  isInactive: boolean;
+  depthSlot?: PlayerPosition;
+} {
   const isInactive = management.inactive.includes(playerId);
   const starterSlot = management.startingLineup.find(
     (slot) => slot.playerId === playerId,
@@ -465,10 +472,7 @@ function enrichRosterPlayers(
   const onBlock = new Map(
     block.assets
       .filter((asset) => asset.kind === "player")
-      .map((asset) => [
-        asset.playerId,
-        asset.status,
-      ] as const),
+      .map((asset) => [asset.playerId, asset.status] as const),
   );
 
   return base.map((row) => {

@@ -1,7 +1,4 @@
-export type StaffDevelopmentTrend =
-  | "improving"
-  | "stable"
-  | "declining";
+export type StaffDevelopmentTrend = "improving" | "stable" | "declining";
 
 export const STAFF_DEVELOPMENT_TRENDS: readonly StaffDevelopmentTrend[] = [
   "improving",
@@ -18,11 +15,7 @@ export type StaffDevelopmentState = {
 };
 
 export type StaffCareerEventKind =
-  | "joined"
-  | "promoted"
-  | "moved"
-  | "fired"
-  | "retired";
+  "joined" | "promoted" | "moved" | "fired" | "retired";
 
 export const STAFF_CAREER_EVENT_KINDS: readonly StaffCareerEventKind[] = [
   "joined",
@@ -103,10 +96,7 @@ export function assertStaffCareerEntryShape(entry: StaffCareerEntry): void {
   if (typeof entry.role !== "string" || entry.role.length === 0) {
     throw new Error("StaffCareerEntry role must be a non-empty string.");
   }
-  if (
-    typeof entry.overall !== "number" ||
-    !Number.isInteger(entry.overall)
-  ) {
+  if (typeof entry.overall !== "number" || !Number.isInteger(entry.overall)) {
     throw new Error("StaffCareerEntry overall must be an integer.");
   }
   if (

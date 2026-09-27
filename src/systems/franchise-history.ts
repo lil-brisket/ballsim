@@ -108,11 +108,12 @@ export function appendFranchiseSeasonRecord(
     franchiseValue: calculateFranchiseValue(state, teamId),
   };
 
-  const existing: FranchiseHistory =
-    state.business.franchiseHistory[teamId] ?? {
-      teamId,
-      seasons: [],
-    };
+  const existing: FranchiseHistory = state.business.franchiseHistory[
+    teamId
+  ] ?? {
+    teamId,
+    seasons: [],
+  };
 
   return systemResult({
     ...state,
@@ -133,7 +134,9 @@ export function appendFranchiseSeasonRecord(
  * Append season records for every team at season finalization.
  * Idempotent for the current seasonId (skips teams that already have it).
  */
-export function appendAllFranchiseSeasonRecords(state: GameState): SystemResult {
+export function appendAllFranchiseSeasonRecords(
+  state: GameState,
+): SystemResult {
   let current = state;
   const events: DomainEvent[] = [];
   const championId = state.competition.playoffs.championTeamId ?? null;
@@ -142,8 +145,9 @@ export function appendAllFranchiseSeasonRecords(state: GameState): SystemResult 
   for (const teamId of Object.keys(current.world.teams).sort() as TeamId[]) {
     const history = current.business.franchiseHistory[teamId];
     const already =
-      history?.seasons.some((s) => s.seasonId === current.competition.season.id) ??
-      false;
+      history?.seasons.some(
+        (s) => s.seasonId === current.competition.season.id,
+      ) ?? false;
     if (already) {
       continue;
     }

@@ -75,7 +75,9 @@ export function getDlAssignmentRecommendation(
 
   if (projectedMpg <= 8) {
     score += 40;
-    reasons.push(`Projected for only ${Math.round(projectedMpg)} top-league MPG`);
+    reasons.push(
+      `Projected for only ${Math.round(projectedMpg)} top-league MPG`,
+    );
   } else if (projectedMpg <= 15) {
     score += 20;
     reasons.push(`Projected ${Math.round(projectedMpg)} top-league MPG`);
@@ -161,7 +163,9 @@ export function getDlAssignmentExplanation(
       `DL projected role: ${player.developmentLeague?.role ?? "development"}`,
     );
   } else if (rec.strongCandidate) {
-    bullets.push("Significant development opportunity in the Development League");
+    bullets.push(
+      "Significant development opportunity in the Development League",
+    );
   }
   return bullets;
 }
@@ -208,8 +212,7 @@ export function buildPostDraftDlRecommendations(
     const player = state.world.players[playerId];
     if (player == null) continue;
     const rec = getDlAssignmentRecommendation(player, teamId, state);
-    const recommendation =
-      rec.strongCandidate ? "development_league" : "keep";
+    const recommendation = rec.strongCandidate ? "development_league" : "keep";
     if (rec.strongCandidate) strongCandidates += 1;
     players.push({
       playerId,

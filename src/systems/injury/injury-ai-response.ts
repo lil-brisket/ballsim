@@ -5,7 +5,10 @@
 import type { Player } from "@/domain/entities/player";
 import type { GameState } from "@/state/game-state";
 import type { PlayerId, TeamId } from "@/domain/ids";
-import { getEffectivePlayerValue, getWorkloadRestrictions } from "@/systems/injury/injury-effects";
+import {
+  getEffectivePlayerValue,
+  getWorkloadRestrictions,
+} from "@/systems/injury/injury-effects";
 
 const ROLLING_GAMES = 8;
 
@@ -71,9 +74,7 @@ export function computeReturnToPlayTargetMinutes(
   }
 
   const hardCap =
-    workload.maximumWorkloadMpg ??
-    workload.minutesRestriction ??
-    baseline;
+    workload.maximumWorkloadMpg ?? workload.minutesRestriction ?? baseline;
   const softTarget = workload.recommendedWorkloadMpg ?? hardCap;
 
   // Ramp over ~5 games after clearance

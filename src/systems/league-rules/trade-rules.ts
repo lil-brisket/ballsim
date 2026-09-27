@@ -44,9 +44,10 @@ export function areTradesOpenHardLock(
   return currentDate < tradeDeadlineDate;
 }
 
-export function checkTradeWindow(
-  state: GameState,
-): { allowed: boolean; violations: RuleViolation[] } {
+export function checkTradeWindow(state: GameState): {
+  allowed: boolean;
+  violations: RuleViolation[];
+} {
   const phaseId = readActivePhaseId(state);
 
   if (phaseId === "preseason.preparation") {

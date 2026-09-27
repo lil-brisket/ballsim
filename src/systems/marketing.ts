@@ -8,7 +8,10 @@ import {
   MARKETING_WEEKS_PER_YEAR,
 } from "@/systems/marketing-config";
 import { stepTowardNeutral } from "@/systems/neutral-decay";
-import { applyCashAndBooksImpact, assertSufficientBusinessFunds } from "@/systems/team-finances";
+import {
+  applyCashAndBooksImpact,
+  assertSufficientBusinessFunds,
+} from "@/systems/team-finances";
 import { assertCapitalSpendingAllowed } from "@/systems/financial-spending";
 
 function clampAwareness(value: number): number {
@@ -21,14 +24,22 @@ export function setMarketingBudget(
   annualBudget: number,
 ): SystemResult {
   if (!Number.isInteger(annualBudget) || annualBudget < 0) {
-    throw new Error("setMarketingBudget: budget must be a non-negative integer.");
+    throw new Error(
+      "setMarketingBudget: budget must be a non-negative integer.",
+    );
   }
   const ops = state.business.franchiseOps[teamId];
   if (!ops) {
-    throw new Error(`setMarketingBudget: franchiseOps missing for "${teamId}".`);
+    throw new Error(
+      `setMarketingBudget: franchiseOps missing for "${teamId}".`,
+    );
   }
   if (annualBudget > ops.marketing.budget) {
-    assertCapitalSpendingAllowed(state, teamId, "Increasing the marketing budget");
+    assertCapitalSpendingAllowed(
+      state,
+      teamId,
+      "Increasing the marketing budget",
+    );
     const weeklySpend = Math.floor(annualBudget / MARKETING_WEEKS_PER_YEAR);
     assertSufficientBusinessFunds(
       state,

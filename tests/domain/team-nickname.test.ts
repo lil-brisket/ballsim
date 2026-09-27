@@ -8,7 +8,9 @@ import {
 
 describe("normalizeTeamNickname", () => {
   it("trims and collapses whitespace", () => {
-    expect(normalizeTeamNickname("  Atlanta   Knights  ")).toBe("Atlanta Knights");
+    expect(normalizeTeamNickname("  Atlanta   Knights  ")).toBe(
+      "Atlanta Knights",
+    );
   });
 });
 

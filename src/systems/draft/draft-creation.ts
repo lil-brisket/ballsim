@@ -1,7 +1,4 @@
-import {
-  draftClassIdFor,
-  type DraftClass,
-} from "@/domain/entities/draft";
+import { draftClassIdFor, type DraftClass } from "@/domain/entities/draft";
 import type { Rng } from "@/domain/rng";
 import { systemResult, type SystemResult } from "@/domain/system-result";
 import type { GameState } from "@/state/game-state";
@@ -26,9 +23,7 @@ export function createDraft(state: GameState, rng: Rng): SystemResult {
   const draftClassId = draftClassIdFor(draftYear);
 
   if (state.world.drafts[draftClassId] !== undefined) {
-    throw new Error(
-      `Draft class "${draftClassId}" already exists.`,
-    );
+    throw new Error(`Draft class "${draftClassId}" already exists.`);
   }
   if (Object.keys(state.world.teams).length < 1) {
     throw new Error("Cannot create draft: no teams in world.");
@@ -39,12 +34,7 @@ export function createDraft(state: GameState, rng: Rng): SystemResult {
     );
   }
 
-  const prospects = generateDraftProspects(
-    state,
-    rng,
-    draftClassId,
-    draftYear,
-  );
+  const prospects = generateDraftProspects(state, rng, draftClassId, draftYear);
   const order = generateDraftOrder(state, draftYear);
   // Legacy flat array still generated for migration bridge / tests that assert length.
   const scouting = generateDraftScouting(state, rng, prospects);

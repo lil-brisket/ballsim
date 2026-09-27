@@ -40,11 +40,7 @@ function assignDistinctProfiles(state: GameState): GameState {
             : 50,
       patience: profile === "development" || profile === "rebuild" ? 70 : 45,
       riskTolerance:
-        profile === "conservative"
-          ? 25
-          : profile === "aggressive"
-            ? 75
-            : 50,
+        profile === "conservative" ? 25 : profile === "aggressive" ? 75 : 50,
     };
   }
   return {

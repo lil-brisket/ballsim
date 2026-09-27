@@ -33,13 +33,9 @@ export function applySpamFilters(
 
     // fan_demand maps to attendance_decline open key for memory.
     if (candidate.detectorKey === "fan_demand") {
-      const attendanceStage = context.openSituationStages.get(
-        "attendance_decline",
-      );
-      if (
-        attendanceStage !== undefined &&
-        candidate.stage <= attendanceStage
-      ) {
+      const attendanceStage =
+        context.openSituationStages.get("attendance_decline");
+      if (attendanceStage !== undefined && candidate.stage <= attendanceStage) {
         return false;
       }
     }

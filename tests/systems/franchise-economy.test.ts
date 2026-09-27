@@ -133,8 +133,16 @@ describe("star merch factor", () => {
     expect(starMerchandiseFactor(0)).toBeGreaterThanOrEqual(0.9);
     expect(starMerchandiseFactor(99)).toBeLessThanOrEqual(1.2);
     expect(merchandiseFromAttendance(0, 90, 1.18)).toBe(0);
-    const low = merchandiseFromAttendance(10_000, 50, starMerchandiseFactor(40));
-    const high = merchandiseFromAttendance(10_000, 50, starMerchandiseFactor(95));
+    const low = merchandiseFromAttendance(
+      10_000,
+      50,
+      starMerchandiseFactor(40),
+    );
+    const high = merchandiseFromAttendance(
+      10_000,
+      50,
+      starMerchandiseFactor(95),
+    );
     expect(high).toBeGreaterThan(low);
   });
 });
@@ -179,9 +187,10 @@ describe("broadcast pool invariants", () => {
     };
     const beforeLarge = state.business.finances[large]!.businessFunds;
     const result = processMonthlyBroadcastRevenue(state);
-    const books = result.state.business.finances[large]!.booksByYear[
-      String(state.competition.season.year)
-    ]!;
+    const books =
+      result.state.business.finances[large]!.booksByYear[
+        String(state.competition.season.year)
+      ]!;
     expect(books.revenue.broadcast).toBeGreaterThan(0);
     expect(books.revenue.other).toBe(0);
     const largeShare =
@@ -242,7 +251,9 @@ describe("no double counting", () => {
     const after = state.business.finances[teamId]!.booksByYear[String(year)]!;
     expect(after.expenses.capital).toBeGreaterThan(0);
     expect(after.expenses.facilities).toBe(facilitiesBefore);
-    expect(state.business.finances[teamId]!.businessFunds).toBeLessThan(cashBefore);
+    expect(state.business.finances[teamId]!.businessFunds).toBeLessThan(
+      cashBefore,
+    );
   });
 
   it("playoff bonuses post to playoffs for all teams, not other", () => {
@@ -325,16 +336,18 @@ describe("schema 28 migration", () => {
     const state = bootstrap(31);
     const teamId = state.user.activeOwnerTeamId;
     expect(state.meta.schemaVersion).toBe(GAME_STATE_SCHEMA_VERSION);
-    expect(state.business.franchiseOps[teamId]!.premiumTicketPrice).toBeGreaterThan(
-      0,
-    );
+    expect(
+      state.business.franchiseOps[teamId]!.premiumTicketPrice,
+    ).toBeGreaterThan(0);
     expect(state.business.finances[teamId]!.booksByMonth).toEqual({});
-    expect(state.business.finances[teamId]!.businessFundsLedgerByMonth).toEqual({});
+    expect(state.business.finances[teamId]!.businessFundsLedgerByMonth).toEqual(
+      {},
+    );
     const restored = deserializeGameState(serializeGameState(state));
     expect(restored.meta.schemaVersion).toBe(GAME_STATE_SCHEMA_VERSION);
-    expect(
-      restored.business.finances[teamId]!.booksByYear,
-    ).toEqual(state.business.finances[teamId]!.booksByYear);
+    expect(restored.business.finances[teamId]!.booksByYear).toEqual(
+      state.business.finances[teamId]!.booksByYear,
+    );
   });
 
   it("empty books helper includes new categories", () => {

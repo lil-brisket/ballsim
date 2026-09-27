@@ -20,10 +20,7 @@ import {
 } from "@/state/franchise-selectors";
 import { explainFranchiseValue } from "@/state/franchise-value";
 import { calculateFranchiseHealth } from "@/state/franchise-health";
-import {
-  toObjectivesView,
-  type ObjectiveView,
-} from "@/state/selectors";
+import { toObjectivesView, type ObjectiveView } from "@/state/selectors";
 
 export type FranchiseHubSnapshot = {
   wins: number;
@@ -101,7 +98,10 @@ export function toFranchiseHubView(state: GameState): FranchiseHubView {
 
   const activeObjectives = sortFranchiseObjectives(
     toObjectivesView(state).filter(
-      (o) => o.status === "active" || o.status === "in_progress" || o.status === "pending",
+      (o) =>
+        o.status === "active" ||
+        o.status === "in_progress" ||
+        o.status === "pending",
     ),
   );
 

@@ -42,8 +42,8 @@ describe("validateSimulationState", () => {
     };
     const result = validateDayInvariants(corrupted);
     expect(result.ok).toBe(false);
-    expect(result.issues.some((issue) => issue.code === "orphan_player_team")).toBe(
-      true,
-    );
+    expect(
+      result.issues.some((issue) => issue.code === "orphan_player_team"),
+    ).toBe(true);
   });
 });

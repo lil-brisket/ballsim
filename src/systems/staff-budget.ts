@@ -8,7 +8,9 @@ import type { GameState } from "@/state/game-state";
 import { DEFAULT_STAFF_BUDGET } from "@/systems/staff-budget-config";
 
 /** Authoritative staff budget from league settings. */
-export function getLeagueStaffBudgetFromSettings(settings: GameSettings): number {
+export function getLeagueStaffBudgetFromSettings(
+  settings: GameSettings,
+): number {
   const value = settings.financialRules.staffBudget;
   if (typeof value === "number" && Number.isFinite(value) && value > 0) {
     return value;

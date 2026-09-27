@@ -36,7 +36,8 @@ export function withAppliedGameplayConsequence(
   teamId?: TeamId,
 ): GameState {
   // Same multi-franchise rule as hasAppliedGameplayConsequence — not activeOwnerTeamId.
-  const targetId = teamId ?? state.user.ownedTeamIds[0] ?? getActiveOwnerTeamId(state);
+  const targetId =
+    teamId ?? state.user.ownedTeamIds[0] ?? getActiveOwnerTeamId(state);
   const franchise = state.user.ownedFranchises[targetId];
   if (!franchise) {
     return state;
@@ -88,9 +89,15 @@ export function applyGameplayFinancialConsequences(
     const won = userScore > oppScore;
     if (!won) {
       const amount = -GAMEPLAY_LOSS_EXPENSE;
-      const impact = applyCashAndBooksImpact(current, teamId, amount, seasonYear, {
-        expenseCategory: "operations",
-      });
+      const impact = applyCashAndBooksImpact(
+        current,
+        teamId,
+        amount,
+        seasonYear,
+        {
+          expenseCategory: "operations",
+        },
+      );
       current = withAppliedGameplayConsequence(impact.state, key);
       events.push(...impact.events);
     } else {

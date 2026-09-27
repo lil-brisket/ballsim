@@ -227,7 +227,11 @@ function readLastAttendanceFillRate(
   teamId: TeamId,
 ): number | null {
   const teamIdStr = String(teamId);
-  for (let i = getActiveOwnedFranchise(state).eventLog.length - 1; i >= 0; i -= 1) {
+  for (
+    let i = getActiveOwnedFranchise(state).eventLog.length - 1;
+    i >= 0;
+    i -= 1
+  ) {
     const event = getActiveOwnedFranchise(state).eventLog[i]!;
     if (
       event.type === "HomeGameDaySettled" &&
@@ -503,8 +507,7 @@ function evaluateFranchiseValue(
 ): OwnerObjective {
   const value = calculateFranchiseValue(state, teamId);
   const baseline = objective.baseline ?? value;
-  const target =
-    objective.target ?? Math.round(baseline * 1.25);
+  const target = objective.target ?? Math.round(baseline * 1.25);
   const progress = value;
   if (value >= target) {
     return { ...objective, progress, status: "completed", baseline };

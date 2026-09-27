@@ -9,10 +9,19 @@ export function DraftHeaderStrip(props: { view: DraftHubView }) {
       aria-label="Draft summary"
     >
       {view.draftYear != null ? (
-        <Metric label="Draft year" value={String(view.draftYear)} density="compact" />
+        <Metric
+          label="Draft year"
+          value={String(view.draftYear)}
+          density="compact"
+        />
       ) : null}
       {view.draftDate ? (
-        <Metric label="Draft date" value={view.draftDate} mono density="compact" />
+        <Metric
+          label="Draft date"
+          value={view.draftDate}
+          mono
+          density="compact"
+        />
       ) : null}
       <Metric
         label="Status"

@@ -134,8 +134,7 @@ export function generateAnnualFranchiseReport(
   const games = current.wins + current.losses;
   const winPctValue = games === 0 ? 0 : current.wins / games;
   const priorGames = prior ? prior.wins + prior.losses : 0;
-  const priorWinPct =
-    prior && priorGames > 0 ? prior.wins / priorGames : null;
+  const priorWinPct = prior && priorGames > 0 ? prior.wins / priorGames : null;
 
   const rosterStrength = meanRosterOverall(state, teamId);
   const facilityMean = meanFacility(current.facilityLevels);
@@ -202,7 +201,9 @@ export function generateAnnualFranchiseReport(
       failedObjectives: getActiveOwnedFranchise(state).objectives.filter(
         (o) => o.status === "failed" && o.seasonYear === year,
       ).length,
-      alignmentScore: getActiveOwnedFranchise(state).ownershipConfidence?.alignmentScore ?? null,
+      alignmentScore:
+        getActiveOwnedFranchise(state).ownershipConfidence?.alignmentScore ??
+        null,
     },
     franchiseValue: {
       starting: valueStarting,

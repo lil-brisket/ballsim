@@ -67,14 +67,10 @@ export function StartingFiveEditor(props: {
                   <option
                     key={player.playerId}
                     value={player.playerId}
-                    disabled={
-                      !player.available && player.playerId !== current
-                    }
+                    disabled={!player.available && player.playerId !== current}
                   >
                     {player.firstName} {player.lastName}
-                    {!player.available
-                      ? ` (${player.availabilityLabel})`
-                      : ""}
+                    {!player.available ? ` (${player.availabilityLabel})` : ""}
                   </option>
                 ))}
               </select>

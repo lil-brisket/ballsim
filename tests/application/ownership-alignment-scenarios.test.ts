@@ -12,7 +12,10 @@ import {
   withOwnedFranchise,
 } from "@/state/owner-context";
 
-function pushConflicts(state: ReturnType<typeof createTestGameState>, count: number) {
+function pushConflicts(
+  state: ReturnType<typeof createTestGameState>,
+  count: number,
+) {
   let next = state;
   for (let i = 0; i < count; i += 1) {
     const evidence: AlignmentEvidence = {
@@ -30,7 +33,10 @@ function pushConflicts(state: ReturnType<typeof createTestGameState>, count: num
   return next;
 }
 
-function pushAligned(state: ReturnType<typeof createTestGameState>, count: number) {
+function pushAligned(
+  state: ReturnType<typeof createTestGameState>,
+  count: number,
+) {
   let next = state;
   for (let i = 0; i < count; i += 1) {
     const evidence: AlignmentEvidence = {
@@ -85,12 +91,14 @@ describe("ownership multi-season scenarios", () => {
     // Patience should only drift via weekly process, not raw evidence.
     const processed = processOwnershipConfidence(state);
     if (
-      getActiveOwnedFranchise(processed.state).ownershipConfidence.mood === "concerned" ||
-      getActiveOwnedFranchise(processed.state).ownershipConfidence.mood === "displeased"
+      getActiveOwnedFranchise(processed.state).ownershipConfidence.mood ===
+        "concerned" ||
+      getActiveOwnedFranchise(processed.state).ownershipConfidence.mood ===
+        "displeased"
     ) {
-      expect(getActiveOwnedFranchise(processed.state).ownerPatience).toBeLessThanOrEqual(
-        getActiveOwnedFranchise(state).ownerPatience,
-      );
+      expect(
+        getActiveOwnedFranchise(processed.state).ownerPatience,
+      ).toBeLessThanOrEqual(getActiveOwnedFranchise(state).ownerPatience);
     }
   });
 
@@ -98,14 +106,16 @@ describe("ownership multi-season scenarios", () => {
     let state = createTestGameState();
     state = withWins(state, 28, 42);
     const expectations = buildOwnershipExpectations(state);
-    expect(["rebuild", "develop"]).toContain(expectations.competitiveExpectation);
+    expect(["rebuild", "develop"]).toContain(
+      expectations.competitiveExpectation,
+    );
     state = pushAligned(state, 4);
     expect(["confident", "supportive", "watchful"]).toContain(
       getActiveOwnedFranchise(state).ownershipConfidence.mood,
     );
-    expect(getActiveOwnedFranchise(state).ownershipConfidence.alignmentScore).toBeGreaterThanOrEqual(
-      50,
-    );
+    expect(
+      getActiveOwnedFranchise(state).ownershipConfidence.alignmentScore,
+    ).toBeGreaterThanOrEqual(50);
   });
 
   it("Scenario C — strategic reversal is detectable when shifting toward contention", () => {
@@ -147,7 +157,9 @@ describe("ownership multi-season scenarios", () => {
     const weekly = processOwnershipConfidence(state);
     // Cap: weekly patience drift is modest.
     expect(
-      Math.abs(getActiveOwnedFranchise(weekly.state).ownerPatience - patienceBefore),
+      Math.abs(
+        getActiveOwnedFranchise(weekly.state).ownerPatience - patienceBefore,
+      ),
     ).toBeLessThanOrEqual(2);
   });
 });

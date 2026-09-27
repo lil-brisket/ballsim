@@ -50,7 +50,9 @@ describe("city pools data integrity", () => {
   });
 
   it.each(LEAGUE_AREAS)("%s getCitiesForArea matches pool size", (area) => {
-    expect(getCitiesForArea(area)).toHaveLength(getTeamCitiesForArea(area).length);
+    expect(getCitiesForArea(area)).toHaveLength(
+      getTeamCitiesForArea(area).length,
+    );
   });
 
   it("regional pools are pairwise disjoint", () => {

@@ -1,9 +1,6 @@
 import type { SeasonId } from "@/domain/ids";
 
-export type MidseasonAwardsStatus =
-  | "scheduled"
-  | "announced"
-  | "cancelled";
+export type MidseasonAwardsStatus = "scheduled" | "announced" | "cancelled";
 
 export type MidseasonAwardsState = {
   seasonId: SeasonId;

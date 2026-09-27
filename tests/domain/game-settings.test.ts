@@ -122,7 +122,8 @@ describe("validateGameSettings", () => {
       playoffs: { ...DEFAULT_GAME_SETTINGS.playoffs, playoffTeams: 8 },
       regularSeason: {
         gamesPerTeam: 22,
-        tradeDeadlineRule: DEFAULT_GAME_SETTINGS.regularSeason.tradeDeadlineRule,
+        tradeDeadlineRule:
+          DEFAULT_GAME_SETTINGS.regularSeason.tradeDeadlineRule,
       },
     });
     expect(result.ok).toBe(false);

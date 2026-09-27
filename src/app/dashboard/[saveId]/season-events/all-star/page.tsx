@@ -60,7 +60,10 @@ function SelectionList(props: {
   return (
     <ul className="divide-y divide-zinc-800">
       {props.rows.map((row) => (
-        <li key={row.playerId} className="flex justify-between gap-3 py-2 text-sm">
+        <li
+          key={row.playerId}
+          className="flex justify-between gap-3 py-2 text-sm"
+        >
           <div>
             <PlayerEntityLink saveId={props.saveId} playerId={row.playerId}>
               {row.playerName}

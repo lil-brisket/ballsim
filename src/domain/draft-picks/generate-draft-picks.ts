@@ -73,10 +73,7 @@ export function expectedDraftPickCount(teamCount: number): number {
   return teamCount * DRAFT_PICK_HORIZON_YEARS * DRAFT_PICK_ROUNDS.length;
 }
 
-export function teamDraftPickIds(
-  teamId: TeamId,
-  seasonYear: number,
-): string[] {
+export function teamDraftPickIds(teamId: TeamId, seasonYear: number): string[] {
   const ids: string[] = [];
   for (let offset = 1; offset <= DRAFT_PICK_HORIZON_YEARS; offset += 1) {
     const year = seasonYear + offset;

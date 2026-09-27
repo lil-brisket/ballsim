@@ -35,6 +35,4 @@ export {
   USER_TRADE_INTERRUPT_MIN_ABS_NET,
   USER_TRADE_INTERRUPT_MIN_PLAYER_OVERALL,
 } from "@/systems/owner-decisions/owner-decision-config";
-export {
-  motivationDisplayLabel,
-} from "@/systems/trades/cpu-trade-generator";
+export { motivationDisplayLabel } from "@/systems/trades/cpu-trade-generator";

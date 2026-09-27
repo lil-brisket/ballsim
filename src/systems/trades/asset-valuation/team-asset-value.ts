@@ -61,7 +61,10 @@ export function getTeamAssetValue(
         }
       }
 
-      const overall = calculatePlayerOverall(player.position, player.attributes);
+      const overall = calculatePlayerOverall(
+        player.position,
+        player.attributes,
+      );
       const adj = postureAdjustments(posture, player.age, "player");
       strategicFit += adj;
       if (adj >= 5) {
@@ -100,8 +103,7 @@ export function getTeamAssetValue(
     const block = getTradeBlock(state, teamId);
     if (
       block.assets.some(
-        (a) =>
-          a.kind === "draftPick" && a.draftPickId === asset.draftPickId,
+        (a) => a.kind === "draftPick" && a.draftPickId === asset.draftPickId,
       )
     ) {
       rosterFit += TRADE_BLOCK_VALUE_BONUS * 0.4;
@@ -131,8 +133,7 @@ export function getTeamAssetValue(
 
   const value =
     Math.round(
-      (base.value + rosterFit + strategicFit + contractAdj + financialAdj) *
-        10,
+      (base.value + rosterFit + strategicFit + contractAdj + financialAdj) * 10,
     ) / 10;
 
   return { value, reasons };

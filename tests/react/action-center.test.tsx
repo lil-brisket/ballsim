@@ -11,9 +11,7 @@ describe("ActionCenter", () => {
       focalMode: "next-game",
       urgentCount: 0,
     };
-    render(
-      <ActionCenter view={view} saveId="s1" returnPath="/dashboard/s1" />,
-    );
+    render(<ActionCenter view={view} saveId="s1" returnPath="/dashboard/s1" />);
     expect(screen.getByText(/good shape/i)).toBeTruthy();
   });
 
@@ -38,12 +36,8 @@ describe("ActionCenter", () => {
       focalMode: "actions",
       urgentCount: 1,
     };
-    render(
-      <ActionCenter view={view} saveId="s1" returnPath="/dashboard/s1" />,
-    );
+    render(<ActionCenter view={view} saveId="s1" returnPath="/dashboard/s1" />);
     expect(screen.getByText(/1 action need attention/i)).toBeTruthy();
-    expect(
-      screen.getByText("Injury requires rotation change"),
-    ).toBeTruthy();
+    expect(screen.getByText("Injury requires rotation change")).toBeTruthy();
   });
 });

@@ -62,9 +62,7 @@ describe("offseason-hub-selectors", () => {
     expect(hub.status.length).toBeGreaterThan(0);
     expect(hub.actionCenter).toBeDefined();
     expect(hub.quickLinks.some((l) => l.href.endsWith("/draft"))).toBe(true);
-    expect(hub.quickLinks.some((l) => l.href.endsWith("/calendar"))).toBe(
-      true,
-    );
+    expect(hub.quickLinks.some((l) => l.href.endsWith("/calendar"))).toBe(true);
   });
 
   it("maps timeline milestones to destination hrefs", () => {

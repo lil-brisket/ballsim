@@ -42,9 +42,15 @@ describe("ownership expectations", () => {
   });
 
   it("lets a win_now owner accept rebuild at low wins and contend at high wins", () => {
-    expect(resolveCompetitiveExpectation("win_now", "collapse")).toBe("rebuild");
-    expect(resolveCompetitiveExpectation("win_now", "developing")).toBe("develop");
-    expect(resolveCompetitiveExpectation("win_now", "contender")).toBe("contend");
+    expect(resolveCompetitiveExpectation("win_now", "collapse")).toBe(
+      "rebuild",
+    );
+    expect(resolveCompetitiveExpectation("win_now", "developing")).toBe(
+      "develop",
+    );
+    expect(resolveCompetitiveExpectation("win_now", "contender")).toBe(
+      "contend",
+    );
   });
 
   it("keeps build_for_the_future more development-oriented at the same win band", () => {

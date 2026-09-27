@@ -35,29 +35,18 @@ export const GAME_DAY_PROMOTION_OBJECTIVES: readonly GameDayPromotionObjective[]
   ] as const;
 
 export type GameDayPromotionTargetAudience =
-  | "families"
-  | "students"
-  | "youth"
-  | "community"
-  | "general";
+  "families" | "students" | "youth" | "community" | "general";
 
 export const GAME_DAY_PROMOTION_TARGET_AUDIENCES: readonly GameDayPromotionTargetAudience[] =
   ["families", "students", "youth", "community", "general"] as const;
 
 export type GameDayPromotionAssignmentStatus =
-  | "scheduled"
-  | "committed"
-  | "completed"
-  | "cancelled";
+  "scheduled" | "committed" | "completed" | "cancelled";
 
 export const GAME_DAY_PROMOTION_ASSIGNMENT_STATUSES: readonly GameDayPromotionAssignmentStatus[] =
   ["scheduled", "committed", "completed", "cancelled"] as const;
 
-export type FanResponse =
-  | "negative"
-  | "neutral"
-  | "positive"
-  | "very_positive";
+export type FanResponse = "negative" | "neutral" | "positive" | "very_positive";
 
 export const FAN_RESPONSES: readonly FanResponse[] = [
   "negative",
@@ -211,7 +200,9 @@ export function isGameDayPromotionAssignmentStatus(
 ): value is GameDayPromotionAssignmentStatus {
   return (
     typeof value === "string" &&
-    (GAME_DAY_PROMOTION_ASSIGNMENT_STATUSES as readonly string[]).includes(value)
+    (GAME_DAY_PROMOTION_ASSIGNMENT_STATUSES as readonly string[]).includes(
+      value,
+    )
   );
 }
 

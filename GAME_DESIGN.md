@@ -16,11 +16,11 @@ Working product title: **Basketball** (subject to rename).
 
 ## Modes
 
-| Mode | Status | Description |
-| --- | --- | --- |
-| Owner Mode | Active foundation | Control a franchise as owner/front office |
-| Career Mode | Future | Player or staff career progression |
-| Dynasty Mode | Future | Long-horizon franchise legacy play |
+| Mode         | Status            | Description                               |
+| ------------ | ----------------- | ----------------------------------------- |
+| Owner Mode   | Active foundation | Control a franchise as owner/front office |
+| Career Mode  | Future            | Player or staff career progression        |
+| Dynasty Mode | Future            | Long-horizon franchise legacy play        |
 
 ## Owner Mode (current focus)
 
@@ -146,17 +146,17 @@ Still deferred:
 
 Phase 2 measures whether the existing economy produces believable franchise paths. Baseline is the **unmodified** CBL starting franchise. Other scenarios are deltas from that baseline.
 
-| Scenario | 1 season | 3–5 seasons | 10 seasons |
-| --- | --- | --- | --- |
-| Baseline | Modest cash drift | Survivable; no insolvency | No forced fire sale |
-| Win-now | Payroll pressure; gate helps if they win | Playoff cash only if contention lasts | Thin cash or a crash |
-| Conservative | Cash preservation | Growing cash, lagging brand | High cash, lower value if they never invest |
-| Development | Weaker near-term wins/cash | Overall up vs baseline without collapse | Slow build |
-| Distress | Negative operating cash | Warning/critical possible | Constrained, not a second economy |
-| Recovery | Starts distressed with cuts | Cash/health improve without debt | Return toward stable |
-| Aggressive | Cash pressure from real upgrade attempts; restrictions possible | Constraint without requiring insolvency | Overspend slows; not unbounded collapse |
-| High market | Market-size-only boost to demand | Higher gate vs baseline | Market advantage without roster change |
-| Low market | Market-size-only demand drag | Lower gate vs baseline | Market disadvantage without roster change |
+| Scenario     | 1 season                                                        | 3–5 seasons                             | 10 seasons                                  |
+| ------------ | --------------------------------------------------------------- | --------------------------------------- | ------------------------------------------- |
+| Baseline     | Modest cash drift                                               | Survivable; no insolvency               | No forced fire sale                         |
+| Win-now      | Payroll pressure; gate helps if they win                        | Playoff cash only if contention lasts   | Thin cash or a crash                        |
+| Conservative | Cash preservation                                               | Growing cash, lagging brand             | High cash, lower value if they never invest |
+| Development  | Weaker near-term wins/cash                                      | Overall up vs baseline without collapse | Slow build                                  |
+| Distress     | Negative operating cash                                         | Warning/critical possible               | Constrained, not a second economy           |
+| Recovery     | Starts distressed with cuts                                     | Cash/health improve without debt        | Return toward stable                        |
+| Aggressive   | Cash pressure from real upgrade attempts; restrictions possible | Constraint without requiring insolvency | Overspend slows; not unbounded collapse     |
+| High market  | Market-size-only boost to demand                                | Higher gate vs baseline                 | Market advantage without roster change      |
+| Low market   | Market-size-only demand drag                                    | Lower gate vs baseline                  | Market disadvantage without roster change   |
 
 Direct per-win cash bonuses are not used; winning already pays through attendance, demand, reputation, sponsorship, and playoffs.
 
@@ -191,7 +191,7 @@ Players store current ability as category attributes on a **1–99** integer sca
 
 **Quality** is a generation-time latent attribute-center (40–85). It is not stored on `Player` and is not current overall or potential.
 
-**Position** (`PG` | `SG` | `SF` | `PF` | `C`) and **archetype** (machine-readable style tag such as `floor_general`) are stored on the player. Archetype influences how attributes are *generated* (position baseline + archetype modifiers + RNG). It is not the source of truth for ability and does not assign a stored overall rating. Attributes remain the ability model. Uncommon position/archetype pairs are allowed on stored players; compatibility is a generation constraint only.
+**Position** (`PG` | `SG` | `SF` | `PF` | `C`) and **archetype** (machine-readable style tag such as `floor_general`) are stored on the player. Archetype influences how attributes are _generated_ (position baseline + archetype modifiers + RNG). It is not the source of truth for ability and does not assign a stored overall rating. Attributes remain the ability model. Uncommon position/archetype pairs are allowed on stored players; compatibility is a generation constraint only.
 
 **Nationality** is a typed catalog field on the player (same ownership pattern as archetype). It is selected during name generation and stored for identity/flavor. It does **not** yet affect attributes, tendencies, or simulation. Pre-nationality saves (schema versions before 6) migrate every player to `"USA"` deterministically — a fixed legacy compatibility default, not RNG-based generation.
 

@@ -6,9 +6,7 @@ import {
 } from "@/domain/entities/player";
 import { calculatePlayerOverall } from "@/domain/player-overall-rating";
 
-function attrs(
-  overrides: Partial<PlayerAttributes> = {},
-): PlayerAttributes {
+function attrs(overrides: Partial<PlayerAttributes> = {}): PlayerAttributes {
   return {
     speed: 70,
     strength: 70,

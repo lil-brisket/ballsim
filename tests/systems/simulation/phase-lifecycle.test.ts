@@ -43,7 +43,9 @@ describe("phase-lifecycle syncPhaseForward", () => {
     const rng = createSeededRng(state.meta.rngState);
     const bootstrapped = bootstrapWorld(state, rng).state;
     const before = getActivePhaseId(bootstrapped);
-    const result = syncPhaseForward(bootstrapped, rng, { allowAiAssist: false });
+    const result = syncPhaseForward(bootstrapped, rng, {
+      allowAiAssist: false,
+    });
     const after = getActivePhaseId(result.state);
     if (result.transitioned) {
       expect(after).not.toBe(before);

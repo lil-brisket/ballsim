@@ -9,7 +9,10 @@ import type {
   MediaStoryType,
 } from "@/domain/entities/media-item";
 import { MEDIA_FEED_MAX } from "@/domain/entities/media-item";
-import type { SocialFeedState, SocialPost } from "@/domain/entities/social-post";
+import type {
+  SocialFeedState,
+  SocialPost,
+} from "@/domain/entities/social-post";
 import { SOCIAL_FEED_MAX } from "@/domain/entities/social-post";
 import type { DomainEvent } from "@/domain/events";
 import type { GameId, TeamId } from "@/domain/ids";
@@ -113,8 +116,12 @@ export function processMediaFromEvents(
   existingMedia: MediaFeedState = { items: [] },
   existingSocial: SocialFeedState = { posts: [] },
 ): ProcessMediaResult {
-  const existingKeys = new Set(existingMedia.items.map((item) => item.sourceKey));
-  const existingSocialIds = new Set(existingSocial.posts.map((post) => post.id));
+  const existingKeys = new Set(
+    existingMedia.items.map((item) => item.sourceKey),
+  );
+  const existingSocialIds = new Set(
+    existingSocial.posts.map((post) => post.id),
+  );
 
   const newItems: MediaItem[] = [];
   const newPosts: SocialPost[] = [];

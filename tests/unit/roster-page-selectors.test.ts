@@ -2,10 +2,7 @@ import { describe, expect, it } from "vitest";
 import { bootstrapWorld } from "@/systems/world-pipeline";
 import { createSeededRng } from "@/domain/rng";
 import { createTestGameState } from "../factories/game-state";
-import {
-  toFreeAgentViews,
-  toRosterView,
-} from "@/state/selectors";
+import { toFreeAgentViews, toRosterView } from "@/state/selectors";
 import {
   toRosterPageView,
   toTradeBlockView,
@@ -32,9 +29,9 @@ describe("toRosterPageView", () => {
     });
     expect(view.tradeFinder).not.toHaveProperty("candidates");
     expect(view.summary.rosterCount).toBe(view.roster.length);
-    expect(view.roster.every((row) => typeof row.rotationRole === "string")).toBe(
-      true,
-    );
+    expect(
+      view.roster.every((row) => typeof row.rotationRole === "string"),
+    ).toBe(true);
     expect(view.roster.every((row) => row.roleDisplayLabel.length > 0)).toBe(
       true,
     );

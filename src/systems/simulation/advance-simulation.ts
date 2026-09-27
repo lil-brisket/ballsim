@@ -87,8 +87,7 @@ export function advanceSimulation(
     );
   }
 
-  const allowOwnerManaged =
-    options.allowOwnerManagedPhaseTransitions !== false;
+  const allowOwnerManaged = options.allowOwnerManagedPhaseTransitions !== false;
 
   // Transactional pre-check: do not open the regular season when blocked.
   // Preseason days before the planned opener may still advance freely.

@@ -36,8 +36,7 @@ export function pickFeaturedStoryId(
     return null;
   }
   const sorted = [...items].sort((a, b) => {
-    const imp =
-      IMPORTANCE_RANK[b.importance] - IMPORTANCE_RANK[a.importance];
+    const imp = IMPORTANCE_RANK[b.importance] - IMPORTANCE_RANK[a.importance];
     if (imp !== 0) {
       return imp;
     }

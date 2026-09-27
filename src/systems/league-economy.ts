@@ -4,7 +4,10 @@ import { systemResult, type SystemResult } from "@/domain/system-result";
 import type { GameState } from "@/state/game-state";
 import { applyCashAndBooksImpact } from "@/systems/team-finances";
 
-const CYCLE_DRIFT: Record<EconomicCycle, { popularity: number; broadcast: number; sponsorship: number }> = {
+const CYCLE_DRIFT: Record<
+  EconomicCycle,
+  { popularity: number; broadcast: number; sponsorship: number }
+> = {
   growth: { popularity: 1, broadcast: 1, sponsorship: 1 },
   stable: { popularity: 0, broadcast: 0, sponsorship: 0 },
   recession: { popularity: -1, broadcast: -1, sponsorship: -2 },
@@ -24,7 +27,9 @@ function nextCycle(current: EconomicCycle, popularity: number): EconomicCycle {
   return current === "growth" || current === "recession" ? "stable" : current;
 }
 
-export function processMonthlyLeagueEconomyDrift(state: GameState): SystemResult {
+export function processMonthlyLeagueEconomyDrift(
+  state: GameState,
+): SystemResult {
   const economy = state.business.leagueEconomy;
   const drift = CYCLE_DRIFT[economy.cycle];
   const popularity = clampLeagueMetric(economy.popularity + drift.popularity);
@@ -220,13 +225,9 @@ export function processMonthlyBroadcastRevenue(state: GameState): SystemResult {
     if (amount <= 0) {
       continue;
     }
-    const impact = applyCashAndBooksImpact(
-      current,
-      teamId,
-      amount,
-      year,
-      { revenueCategory: "broadcast" },
-    );
+    const impact = applyCashAndBooksImpact(current, teamId, amount, year, {
+      revenueCategory: "broadcast",
+    });
     current = impact.state;
     events.push(...impact.events);
   }

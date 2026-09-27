@@ -30,8 +30,7 @@ export function resolveNextActionPresentation(
   }
 
   const importantUnread = dashboard.notifications.some(
-    (n) =>
-      !n.read && (n.severity === "warning" || n.severity === "critical"),
+    (n) => !n.read && (n.severity === "warning" || n.severity === "critical"),
   );
   if (importantUnread || dashboard.unreadNotificationCount > 0) {
     return {
@@ -60,9 +59,7 @@ export function resolveNextActionPresentation(
   };
 }
 
-export function NextActionPanel(props: {
-  action: NextActionPresentation;
-}) {
+export function NextActionPanel(props: { action: NextActionPresentation }) {
   const { action } = props;
   return (
     <section

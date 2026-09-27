@@ -48,10 +48,7 @@ export function PlayerContract(props: {
             label="Years remaining"
             value={`${profile.yearsRemaining} (${profile.startYear}–${profile.endYear})`}
           />
-          <Info
-            label="Status"
-            value={<StatusBadge label={profile.status} />}
-          />
+          <Info label="Status" value={<StatusBadge label={profile.status} />} />
           <Info
             label="Remaining value"
             value={<MoneyDisplay amount={profile.totalRemainingValue} />}

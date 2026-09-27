@@ -65,8 +65,7 @@ export function computePhaseResponsibility(
 
   const blocking = unresolvedItems.filter(
     (item) =>
-      item.policyOutcome === "DENY_BLOCK" ||
-      item.policyOutcome === "RECOMMEND",
+      item.policyOutcome === "DENY_BLOCK" || item.policyOutcome === "RECOMMEND",
   );
 
   if (aiOwnsAll) {
@@ -177,10 +176,7 @@ function toUnresolvedDecisions(
       continue;
     }
     const decision = evaluateAction(policy, need.actionId);
-    if (
-      decision.outcome === "DENY_BLOCK" ||
-      decision.outcome === "RECOMMEND"
-    ) {
+    if (decision.outcome === "DENY_BLOCK" || decision.outcome === "RECOMMEND") {
       if (!items.some((item) => item.id === need.id)) {
         items.push({
           id: need.id,
@@ -197,9 +193,7 @@ function toUnresolvedDecisions(
   return items;
 }
 
-function legacyDomainAlias(
-  need: ManagementNeed,
-): UnresolvedDecision["domain"] {
+function legacyDomainAlias(need: ManagementNeed): UnresolvedDecision["domain"] {
   switch (need.actionId) {
     case "DRAFT_PICK":
     case "DRAFT_SCOUT":

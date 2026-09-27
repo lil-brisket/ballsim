@@ -1,4 +1,7 @@
-import type { NarrativeContext, DetectorCandidate } from "@/systems/narrative/types";
+import type {
+  NarrativeContext,
+  DetectorCandidate,
+} from "@/systems/narrative/types";
 import { priorityForDetectorKey } from "@/systems/narrative/priority";
 import { OWNER_STREAK_NOTIFICATION_THRESHOLD } from "@/systems/owner-objectives-config";
 import type { GameState } from "@/state/game-state";
@@ -299,11 +302,7 @@ export function detectFinancialPressure(
   }
 
   const stage = critical ? 3 : warning ? 2 : 1;
-  const severity = critical
-    ? "critical"
-    : warning
-      ? "important"
-      : "notable";
+  const severity = critical ? "critical" : warning ? "important" : "notable";
 
   return {
     detectorKey: "financial_pressure",
@@ -311,9 +310,7 @@ export function detectFinancialPressure(
     category: "financial",
     stage,
     severity,
-    priorityHint: critical
-      ? 5
-      : priorityForDetectorKey("financial_pressure"),
+    priorityHint: critical ? 5 : priorityForDetectorKey("financial_pressure"),
     evidence: {
       healthBand: context.healthBand,
       cash: context.currentCash,
@@ -356,8 +353,7 @@ export function detectExpectationGap(
     const expectedPace =
       winObjective.target *
       (context.wins + context.losses > 0
-        ? (context.wins + context.losses) /
-          Math.max(winObjective.target * 2, 1)
+        ? (context.wins + context.losses) / Math.max(winObjective.target * 2, 1)
         : 0);
     // Simpler: compare current wins to linear pace assuming ~82 or settings length.
     const gamesPlayed = context.wins + context.losses;
@@ -365,8 +361,9 @@ export function detectExpectationGap(
       const seasonLength = Math.max(gamesPlayed, 20);
       const expectedWins = (winObjective.target * gamesPlayed) / seasonLength;
       gapPct =
-        Math.round(((context.wins - expectedWins) / winObjective.target) * 1000) /
-        10;
+        Math.round(
+          ((context.wins - expectedWins) / winObjective.target) * 1000,
+        ) / 10;
       beating = gapPct >= 12;
       missing = gapPct <= -12;
     }
@@ -444,10 +441,7 @@ export function detectFacilityStaffConcern(
 
   const lag = context.leagueRelative.vsLeagueFacility;
   if (lag >= -0.4) {
-    if (
-      context.openDetectorKeys.has("facility_staff_concern") &&
-      lag >= 0
-    ) {
+    if (context.openDetectorKeys.has("facility_staff_concern") && lag >= 0) {
       return {
         detectorKey: "facility_staff_concern",
         kind: "situation",
@@ -663,10 +657,7 @@ export function detectRivalStrengthChange(
 
   // Require a high-overall transaction involving another conference team.
   const meaningful = context.dayEvents.filter((event) => {
-    if (
-      event.type !== "PlayerTraded" &&
-      event.type !== "FreeAgentSigned"
-    ) {
+    if (event.type !== "PlayerTraded" && event.type !== "FreeAgentSigned") {
       return false;
     }
     const toTeamId = String(
@@ -675,7 +666,9 @@ export function detectRivalStrengthChange(
     if (!toTeamId || toTeamId === context.teamId) {
       return false;
     }
-    const overall = Number(event.payload.overall ?? event.payload.playerOverall);
+    const overall = Number(
+      event.payload.overall ?? event.payload.playerOverall,
+    );
     // Without overall on payload, require strength map or silence.
     if (Number.isFinite(overall)) {
       return overall >= 80;
@@ -800,8 +793,10 @@ export function detectLeagueEconomyShift(
     context.leagueBroadcast < 40 ||
     context.leagueBroadcast > 70
   ) {
-    const rising = context.leaguePopularity >= 65 || context.leagueBroadcast >= 65;
-    const falling = context.leaguePopularity <= 40 || context.leagueBroadcast <= 40;
+    const rising =
+      context.leaguePopularity >= 65 || context.leagueBroadcast >= 65;
+    const falling =
+      context.leaguePopularity <= 40 || context.leagueBroadcast <= 40;
     if (!rising && !falling) {
       return null;
     }
@@ -882,7 +877,11 @@ export function detectRelocationPressure(
       tenureBlocked: assessment.tenure.blocked,
     },
     actions: [
-      { id: "review_relocation", label: "Review stay vs move", href: "/relocation" },
+      {
+        id: "review_relocation",
+        label: "Review stay vs move",
+        href: "/relocation",
+      },
       { id: "increase_marketing", label: "Increase marketing" },
     ],
   };
@@ -897,7 +896,10 @@ export function detectExpansionDiscussion(
     return null;
   }
   const assessment = assessExpansion(state);
-  if (assessment.status === "not_relevant" || assessment.status === "in_progress") {
+  if (
+    assessment.status === "not_relevant" ||
+    assessment.status === "in_progress"
+  ) {
     return null;
   }
   if (context.openDetectorKeys.has("expansion_discussion")) {

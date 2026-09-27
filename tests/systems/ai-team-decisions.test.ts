@@ -11,14 +11,14 @@ import {
 import { transitionPhase } from "@/systems/simulation/phase-machine";
 import { getTradeBlock } from "@/systems/trades";
 import { bootstrapWorld } from "@/systems/world-pipeline";
-import { listFreeAgents, releasePlayerToFreeAgency } from "@/systems/free-agency";
+import {
+  listFreeAgents,
+  releasePlayerToFreeAgency,
+} from "@/systems/free-agency";
 import type { PlayerId, TeamId } from "@/domain/ids";
 import type { GameState } from "@/state/game-state";
 import { getActiveOwnedFranchise } from "@/state/owner-context";
-import {
-  getActivePhaseId,
-  setActivePhase,
-} from "@/systems/phase-engine";
+import { getActivePhaseId, setActivePhase } from "@/systems/phase-engine";
 
 function aiTeamIds(state: GameState): TeamId[] {
   return (Object.keys(state.world.teams) as TeamId[]).filter(

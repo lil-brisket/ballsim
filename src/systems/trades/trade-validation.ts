@@ -12,7 +12,10 @@ import {
 } from "@/domain/entities/trade-proposal";
 import type { DraftPickId, PlayerId, TeamId } from "@/domain/ids";
 import type { GameState } from "@/state/game-state";
-import { createRosterRulesConfig, validateRosterSize } from "@/systems/roster-rules";
+import {
+  createRosterRulesConfig,
+  validateRosterSize,
+} from "@/systems/roster-rules";
 import { getTeamPayroll } from "@/systems/salary-cap";
 import { getLeagueSalaryCap } from "@/systems/league-salary-cap";
 import { TRADE_ROSTER_RULES } from "@/systems/trades-config";
@@ -296,8 +299,7 @@ function validateSideAssets(
       });
     }
     const onTopRoster = team.roster.includes(playerId as PlayerId);
-    const onDl =
-      isPlayerDlAssigned(player) && player.teamId === team.id;
+    const onDl = isPlayerDlAssigned(player) && player.teamId === team.id;
     if (!onTopRoster && !onDl) {
       errors.push({
         code: "PLAYER_NOT_ON_ROSTER",

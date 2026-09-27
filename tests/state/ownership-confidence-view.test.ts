@@ -5,7 +5,10 @@ import { toOwnershipConfidenceView } from "@/state/ownership-confidence-view";
 import { toOwnerDashboardView } from "@/state/owner-dashboard";
 import { recordOwnershipEvidence } from "@/systems/ownership-confidence-engine";
 import type { AlignmentEvidence } from "@/domain/entities/ownership-confidence";
-import { getActiveOwnedFranchise, withOwnedFranchise } from "@/state/owner-context";
+import {
+  getActiveOwnedFranchise,
+  withOwnedFranchise,
+} from "@/state/owner-context";
 
 describe("owner career evaluation with ownership confidence", () => {
   it("blends objective and strategic alignment without overriding performance", () => {

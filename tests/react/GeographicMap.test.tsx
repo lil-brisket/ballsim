@@ -33,7 +33,9 @@ describe("GeographicMap", () => {
         selectedCityId="Atlanta"
       />,
     );
-    expect(screen.getByRole("img", { name: /North America city map/ })).toBeTruthy();
+    expect(
+      screen.getByRole("img", { name: /North America city map/ }),
+    ).toBeTruthy();
     expect(screen.getByText("Available")).toBeTruthy();
     expect(screen.getByText("Occupied")).toBeTruthy();
     expect(screen.getByRole("button", { name: /Atlanta/ })).toBeTruthy();
@@ -56,9 +58,9 @@ describe("GeographicMap", () => {
       </div>,
     );
     const svg = container.querySelector("svg");
-    expect(svg?.className.baseVal ?? svg?.getAttribute("class") ?? "").toContain(
-      "h-full",
-    );
+    expect(
+      svg?.className.baseVal ?? svg?.getAttribute("class") ?? "",
+    ).toContain("h-full");
     unmount();
   });
 });

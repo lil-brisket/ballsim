@@ -50,9 +50,9 @@ describe("phase5 cross-system flows", () => {
     expect(hub.playerPayroll).toBe(contracts.playerPayroll);
     expect(hub.playerPayroll).toBe(finances.finances.playerPayroll);
     expect(hub.currentDate).toBe(owner.currentDate);
-    expect(ownerNavGroupsForState(state).some((g) => g.id === "offseason")).toBe(
-      true,
-    );
+    expect(
+      ownerNavGroupsForState(state).some((g) => g.id === "offseason"),
+    ).toBe(true);
   });
 
   it("Flow 6/5 — draft and FA hubs do not invent active state outside stage", () => {

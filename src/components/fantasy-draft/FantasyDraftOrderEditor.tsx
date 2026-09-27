@@ -1,6 +1,12 @@
 "use client";
 
-import { useEffect, useRef, useState, useTransition, type DragEvent } from "react";
+import {
+  useEffect,
+  useRef,
+  useState,
+  useTransition,
+  type DragEvent,
+} from "react";
 import {
   moveFantasyDraftTeamToIndexAction,
   reorderFantasyDraftAction,
@@ -78,7 +84,9 @@ export function FantasyDraftOrderEditor(props: FantasyDraftOrderEditorProps) {
       setSelectedTeamId(null);
       return;
     }
-    const fromIndex = entries.findIndex((entry) => entry.teamId === selectedTeamId);
+    const fromIndex = entries.findIndex(
+      (entry) => entry.teamId === selectedTeamId,
+    );
     const toIndex = entries.findIndex((entry) => entry.teamId === teamId);
     if (fromIndex < 0 || toIndex < 0) {
       setSelectedTeamId(null);
@@ -123,7 +131,9 @@ export function FantasyDraftOrderEditor(props: FantasyDraftOrderEditorProps) {
     if (movingTeamId === null || pending) {
       return;
     }
-    const fromIndex = entries.findIndex((entry) => entry.teamId === movingTeamId);
+    const fromIndex = entries.findIndex(
+      (entry) => entry.teamId === movingTeamId,
+    );
     if (fromIndex < 0 || fromIndex === toIndex) {
       return;
     }

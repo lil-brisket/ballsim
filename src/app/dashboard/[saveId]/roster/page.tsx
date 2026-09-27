@@ -25,7 +25,9 @@ export default async function RosterRoutePage({
     <>
       <TeamHubSubNav saveId={saveId} active="roster" />
       {error ? <ErrorState message={error} /> : null}
-      <Suspense fallback={<p className="text-sm text-zinc-500">Loading roster…</p>}>
+      <Suspense
+        fallback={<p className="text-sm text-zinc-500">Loading roster…</p>}
+      >
         <RosterPage view={loaded.rosterPage} />
       </Suspense>
     </>

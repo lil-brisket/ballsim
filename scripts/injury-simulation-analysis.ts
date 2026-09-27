@@ -146,9 +146,7 @@ function main(): void {
   countLongTerm(state, counters);
 
   const perTeamGame =
-    counters.teamGames > 0
-      ? counters.totalInjuries / counters.teamGames
-      : null;
+    counters.teamGames > 0 ? counters.totalInjuries / counters.teamGames : null;
 
   const report = {
     days,

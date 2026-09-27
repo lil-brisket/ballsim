@@ -39,19 +39,10 @@ export const TRANSACTION_FILTER_GROUPS = {
 export type TransactionFilterGroup = keyof typeof TRANSACTION_FILTER_GROUPS;
 
 export type TransactionDateRangeKey =
-  | "today"
-  | "7d"
-  | "30d"
-  | "season"
-  | "custom";
+  "today" | "7d" | "30d" | "season" | "custom";
 
 export type TransactionSortKey =
-  | "newest"
-  | "oldest"
-  | "team"
-  | "player"
-  | "type"
-  | "contract";
+  "newest" | "oldest" | "team" | "player" | "type" | "contract";
 
 export type TransactionActivityMode = "league" | "myTeam";
 
@@ -158,9 +149,7 @@ function resolvePlayer(
   const player = state.world.players[playerId];
   return {
     id: playerId,
-    name: player
-      ? `${player.firstName} ${player.lastName}`
-      : playerId,
+    name: player ? `${player.firstName} ${player.lastName}` : playerId,
   };
 }
 
@@ -183,10 +172,7 @@ function resolveTeam(
   };
 }
 
-function describeSimple(
-  state: GameState,
-  event: DomainEvent,
-): string {
+function describeSimple(state: GameState, event: DomainEvent): string {
   const payload = event.payload as Record<string, unknown>;
   const player = resolvePlayer(state, payload.playerId);
   const team = resolveTeam(state, payload.teamId);
@@ -407,9 +393,7 @@ function buildRows(
       resolveTeam(state, payload.fromTeamId),
       resolveTeam(state, payload.toTeamId),
     ].filter(Boolean) as TransactionEntityRef[];
-    const uniqueTeams = [
-      ...new Map(teams.map((t) => [t.id, t])).values(),
-    ];
+    const uniqueTeams = [...new Map(teams.map((t) => [t.id, t])).values()];
 
     rows.push({
       id: event.id,

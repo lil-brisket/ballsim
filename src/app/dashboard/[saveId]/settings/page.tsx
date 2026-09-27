@@ -32,13 +32,8 @@ export default async function InGameSettingsPage({
   }
 
   const { settings, dashboard } = view;
-  const {
-    league,
-    regularSeason,
-    playoffs,
-    financialRules,
-    injuryFrequency,
-  } = settings;
+  const { league, regularSeason, playoffs, financialRules, injuryFrequency } =
+    settings;
   const activeFranchiseAi = dashboard.activeFranchiseAi;
 
   return (
@@ -61,10 +56,7 @@ export default async function InGameSettingsPage({
             label="Live team count"
             value={`${dashboard.teamCount}`}
           />
-          <SettingRow
-            label="Conferences"
-            value={`${league.conferenceCount}`}
-          />
+          <SettingRow label="Conferences" value={`${league.conferenceCount}`} />
           <SettingRow
             label="Divisions"
             value={league.divisionsEnabled ? "On" : "Off"}

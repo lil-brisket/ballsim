@@ -57,10 +57,7 @@ export function GameSetupForm({
   const [step, setStep] = useState<"configure" | "confirm">("configure");
   const [pending, startTransition] = useTransition();
 
-  const validation = useMemo(
-    () => validateGameSettings(settings),
-    [settings],
-  );
+  const validation = useMemo(() => validateGameSettings(settings), [settings]);
   const errors = validation.ok ? [] : validation.errors;
   const isCustom = preset === "custom";
 
@@ -162,7 +159,9 @@ export function GameSetupForm({
           ) : null}
           <ReviewRow
             label="League history"
-            value={settings.history.mode === "generated" ? "Generated" : "New league"}
+            value={
+              settings.history.mode === "generated" ? "Generated" : "New league"
+            }
           />
           <ReviewRow
             label="Player Salary Cap"
@@ -182,9 +181,7 @@ export function GameSetupForm({
           />
           <ReviewRow
             label="Revenue sharing"
-            value={
-              settings.financialRules.revenueSharingEnabled ? "On" : "Off"
-            }
+            value={settings.financialRules.revenueSharingEnabled ? "On" : "Off"}
           />
         </dl>
         <div className="flex flex-wrap gap-3">
@@ -422,8 +419,8 @@ export function GameSetupForm({
             />
             {settings.draft.mode === "fantasy" ? (
               <p className="text-sm text-zinc-400">
-                Draft order, timer, and snake/linear settings are configured after
-                you choose your franchises.
+                Draft order, timer, and snake/linear settings are configured
+                after you choose your franchises.
               </p>
             ) : null}
           </Section>
@@ -647,13 +644,7 @@ function leagueAreaLabel(area: LeagueArea): string {
   return LEAGUE_AREA_LABELS[area];
 }
 
-function Section({
-  title,
-  children,
-}: {
-  title: string;
-  children: ReactNode;
-}) {
+function Section({ title, children }: { title: string; children: ReactNode }) {
   return (
     <section className="space-y-3 rounded-lg border border-zinc-800 p-4">
       <h3 className="text-sm font-medium text-zinc-100">{title}</h3>

@@ -7,9 +7,7 @@ import type { StandingsRowEnriched } from "@/state/standings-selectors";
 import { formatStreak } from "@/state/standings-selectors";
 import { cn, focusRingClass } from "@/components/ui/styles";
 
-export function LeagueSnapshotPanel(props: {
-  snapshot: LeagueHubSnapshot;
-}) {
+export function LeagueSnapshotPanel(props: { snapshot: LeagueHubSnapshot }) {
   const s = props.snapshot;
   const metrics = [
     { label: "Leader", value: `${s.leaderAbbreviation} ${s.leaderRecord}` },
@@ -36,7 +34,9 @@ export function LeagueSnapshotPanel(props: {
             <dt className="font-mono text-[0.65rem] uppercase tracking-wide text-zinc-500">
               {m.label}
             </dt>
-            <dd className="mt-1 text-sm font-medium text-zinc-100">{m.value}</dd>
+            <dd className="mt-1 text-sm font-medium text-zinc-100">
+              {m.value}
+            </dd>
           </div>
         ))}
       </dl>

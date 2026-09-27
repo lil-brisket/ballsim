@@ -87,7 +87,10 @@ describe("franchise identity persistence", () => {
     // 1 season is enough to exercise AI paths; full 10-season runs are for tuning.
     const observation = runIdentityLeagueObservation(1, { seed: 101 });
     expect(observation.seasonsSimulated).toBe(1);
-    assertIdentityAxesUnchanged(observation.initialAxes, observation.finalState);
+    assertIdentityAxesUnchanged(
+      observation.initialAxes,
+      observation.finalState,
+    );
     expect(observation.finalAxes).toEqual(observation.initialAxes);
     expect(observation.sampleDecisionReasons.length).toBeGreaterThan(0);
     expect(observation.fingerprints.length).toBeGreaterThan(0);

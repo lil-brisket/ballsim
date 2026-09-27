@@ -36,10 +36,7 @@ import {
   OWNER_OBJECTIVE_STATUSES,
   OWNER_OBJECTIVE_TYPES,
 } from "@/domain/entities/owner-objective";
-import {
-  isAiProfile,
-  isOwnershipAxis,
-} from "@/domain/entities/franchise-ops";
+import { isAiProfile, isOwnershipAxis } from "@/domain/entities/franchise-ops";
 import {
   OWNER_PATIENCE_MAX,
   OWNER_PATIENCE_MIN,
@@ -84,22 +81,13 @@ import {
   NARRATIVE_UPDATES_MAX,
   type NarrativeEvidence,
 } from "@/domain/entities/narrative-situation";
-import {
-  DOMAIN_EVENT_TYPES,
-  isDomainEventType,
-} from "@/domain/events";
+import { DOMAIN_EVENT_TYPES, isDomainEventType } from "@/domain/events";
 import {
   isTradeBlockStatus,
   type TradeBlockAsset,
 } from "@/domain/entities/trade-block";
-import type {
-  OffseasonStage,
-  SeasonPhase,
-} from "@/domain/entities/season";
-import {
-  OFFSEASON_STAGES,
-  SEASON_PHASES,
-} from "@/domain/entities/season";
+import type { OffseasonStage, SeasonPhase } from "@/domain/entities/season";
+import { OFFSEASON_STAGES, SEASON_PHASES } from "@/domain/entities/season";
 import {
   SCHEDULED_EVENT_STATUSES,
   SCHEDULED_EVENT_TYPES,
@@ -122,10 +110,7 @@ import {
   asScheduledEventId,
   asTeamId,
 } from "@/domain/ids";
-import {
-  isLeaguePhaseId,
-  LEAGUE_PHASE_IDS,
-} from "@/systems/phase-engine";
+import { isLeaguePhaseId, LEAGUE_PHASE_IDS } from "@/systems/phase-engine";
 
 const GAME_MODES: readonly GameMode[] = ["owner"];
 
@@ -141,13 +126,19 @@ function fail(message: string): never {
   throw new Error(`Invalid GameState: ${message}`);
 }
 
-function assertRecord(value: unknown, path: string): asserts value is Record<string, unknown> {
+function assertRecord(
+  value: unknown,
+  path: string,
+): asserts value is Record<string, unknown> {
   if (value === null || typeof value !== "object" || Array.isArray(value)) {
     fail(`${path} must be an object.`);
   }
 }
 
-function assertNonEmptyString(value: unknown, path: string): asserts value is string {
+function assertNonEmptyString(
+  value: unknown,
+  path: string,
+): asserts value is string {
   if (typeof value !== "string" || value.length === 0) {
     fail(`${path} must be a non-empty string.`);
   }
@@ -250,7 +241,10 @@ export function validateGameState(state: unknown): asserts state is GameState {
   }
 
   assertRecord(world.calendar, "world.calendar");
-  assertNonEmptyString(world.calendar.currentDate, "world.calendar.currentDate");
+  assertNonEmptyString(
+    world.calendar.currentDate,
+    "world.calendar.currentDate",
+  );
   try {
     parseCalendarDate(world.calendar.currentDate);
   } catch (error) {
@@ -278,7 +272,9 @@ export function validateGameState(state: unknown): asserts state is GameState {
       );
     }
   } else {
-    fail("world.calendar.lastSimulatedDate must be a YYYY-MM-DD string or null.");
+    fail(
+      "world.calendar.lastSimulatedDate must be a YYYY-MM-DD string or null.",
+    );
   }
 
   if (world.calendar.lastSimulatedWeekId === null) {
@@ -289,7 +285,9 @@ export function validateGameState(state: unknown): asserts state is GameState {
       "world.calendar.lastSimulatedWeekId",
     );
   } else {
-    fail("world.calendar.lastSimulatedWeekId must be a non-empty string or null.");
+    fail(
+      "world.calendar.lastSimulatedWeekId must be a non-empty string or null.",
+    );
   }
 
   if (world.calendar.lastSimulatedMonthId === null) {
@@ -369,10 +367,14 @@ export function validateGameState(state: unknown): asserts state is GameState {
     competition.season.regularSeasonStartDate !== undefined
   ) {
     if (typeof competition.season.regularSeasonStartDate !== "string") {
-      fail("competition.season.regularSeasonStartDate must be a string or null.");
+      fail(
+        "competition.season.regularSeasonStartDate must be a string or null.",
+      );
     }
   } else if (competition.season.regularSeasonStartDate === undefined) {
-    fail("competition.season.regularSeasonStartDate is required (string or null).");
+    fail(
+      "competition.season.regularSeasonStartDate is required (string or null).",
+    );
   }
 
   assertOptionalCalendarDate(
@@ -423,7 +425,10 @@ export function validateGameState(state: unknown): asserts state is GameState {
 
   assertRecord(competition.games, "competition.games");
   assertRecord(competition.standings, "competition.standings");
-  assertRecord(competition.standings.byTeamId, "competition.standings.byTeamId");
+  assertRecord(
+    competition.standings.byTeamId,
+    "competition.standings.byTeamId",
+  );
 
   if (competition.playoffs === null || competition.playoffs === undefined) {
     fail("competition.playoffs is required.");
@@ -437,10 +442,7 @@ export function validateGameState(state: unknown): asserts state is GameState {
   ) {
     fail("competition.developmentLeague is required.");
   }
-  assertRecord(
-    competition.developmentLeague,
-    "competition.developmentLeague",
-  );
+  assertRecord(competition.developmentLeague, "competition.developmentLeague");
   assertRecord(
     competition.developmentLeague.schedule,
     "competition.developmentLeague.schedule",
@@ -571,9 +573,9 @@ export function validateGameState(state: unknown): asserts state is GameState {
     if (!(teamId in business.gameDayPromotionsByTeamId)) {
       fail(`business.gameDayPromotionsByTeamId missing team "${teamId}".`);
     }
-    const promo = (business.gameDayPromotionsByTeamId as Record<string, unknown>)[
-      teamId
-    ];
+    const promo = (
+      business.gameDayPromotionsByTeamId as Record<string, unknown>
+    )[teamId];
     assertRecord(promo, `business.gameDayPromotionsByTeamId[${teamId}]`);
     if (typeof promo.committedSpend !== "number") {
       fail(
@@ -796,7 +798,7 @@ export function validateGameState(state: unknown): asserts state is GameState {
     }
     for (
       let index = 0;
-      index < ((entry as { dismissed: unknown[] }).dismissed).length;
+      index < (entry as { dismissed: unknown[] }).dismissed.length;
       index += 1
     ) {
       const dismissed = (entry as { dismissed: unknown[] }).dismissed[index];
@@ -827,9 +829,7 @@ export function validateGameState(state: unknown): asserts state is GameState {
 
   for (const ownedId of ownedTeamIdSet) {
     if (!teamIds.has(ownedId)) {
-      fail(
-        `user.ownedTeamIds entry "${ownedId}" is missing from world.teams.`,
-      );
+      fail(`user.ownedTeamIds entry "${ownedId}" is missing from world.teams.`);
     }
   }
 
@@ -873,14 +873,18 @@ export function validateGameState(state: unknown): asserts state is GameState {
     }
   }
 
-  for (const [contractId, contractValue] of Object.entries(business.contracts)) {
+  for (const [contractId, contractValue] of Object.entries(
+    business.contracts,
+  )) {
     assertRecord(contractValue, `business.contracts[${contractId}]`);
     assertNonEmptyString(
       contractValue.id,
       `business.contracts[${contractId}].id`,
     );
     if (contractValue.id !== contractId) {
-      fail(`business.contracts key "${contractId}" does not match contract.id.`);
+      fail(
+        `business.contracts key "${contractId}" does not match contract.id.`,
+      );
     }
     assertNonEmptyString(
       contractValue.playerId,
@@ -982,8 +986,7 @@ export function validateGameState(state: unknown): asserts state is GameState {
       `business.finances[${financeKey}].booksByMonth`,
     );
     const ledger =
-      financeValue.businessFundsLedgerByMonth ??
-      financeValue.cashLedgerByMonth;
+      financeValue.businessFundsLedgerByMonth ?? financeValue.cashLedgerByMonth;
     assertRecord(
       ledger,
       `business.finances[${financeKey}].businessFundsLedgerByMonth`,
@@ -1088,10 +1091,7 @@ export function validateGameState(state: unknown): asserts state is GameState {
         );
       }
       const linkedContract = business.contracts[acceptedContractId];
-      assertRecord(
-        linkedContract,
-        `business.contracts[${acceptedContractId}]`,
-      );
+      assertRecord(linkedContract, `business.contracts[${acceptedContractId}]`);
       if (linkedContract.playerId !== offerValue.playerId) {
         fail(
           `business.freeAgency.offers[${offerId}] accepted contract playerId must match offer.playerId.`,
@@ -1103,10 +1103,7 @@ export function validateGameState(state: unknown): asserts state is GameState {
         );
       }
       const signedPlayer = world.players[offerValue.playerId as string];
-      assertRecord(
-        signedPlayer,
-        `world.players[${offerValue.playerId}]`,
-      );
+      assertRecord(signedPlayer, `world.players[${offerValue.playerId}]`);
       // Accepted offers are historical records. Live membership invariants apply
       // only while the offer's contract is still the player's current binding.
       // After expiration/release/re-sign, player.contractId diverges — that is valid.
@@ -1183,8 +1180,11 @@ export function validateGameState(state: unknown): asserts state is GameState {
 
   // DL-assigned players: franchise ownership via teamId, not on Team.roster
   for (const [playerId, playerValue] of Object.entries(world.players)) {
-    const dl = (playerValue as { developmentLeague?: { status?: string; parentTeamId?: string | null } })
-      .developmentLeague;
+    const dl = (
+      playerValue as {
+        developmentLeague?: { status?: string; parentTeamId?: string | null };
+      }
+    ).developmentLeague;
     if (dl?.status !== "assigned") {
       continue;
     }
@@ -1225,7 +1225,10 @@ export function validateGameState(state: unknown): asserts state is GameState {
         `world.draftPicks[${pickId}].ownerTeamId "${pickValue.ownerTeamId}" is missing from world.teams.`,
       );
     }
-    assertNumber(pickValue.seasonYear, `world.draftPicks[${pickId}].seasonYear`);
+    assertNumber(
+      pickValue.seasonYear,
+      `world.draftPicks[${pickId}].seasonYear`,
+    );
     if (!Number.isInteger(pickValue.seasonYear)) {
       fail(`world.draftPicks[${pickId}].seasonYear must be an integer.`);
     }
@@ -1334,10 +1337,7 @@ export function validateGameState(state: unknown): asserts state is GameState {
         };
         // Active drafts require the draftee to be on a team. Completed drafts are
         // historical — players may later become free agents (teamId null).
-        if (
-          draftValue.status === "active" &&
-          worldPlayer.teamId == null
-        ) {
+        if (draftValue.status === "active" && worldPlayer.teamId == null) {
           fail(
             `world.drafts[${draftId}] selected prospect "${prospectId}" must have a teamId on world.players.`,
           );
@@ -1517,7 +1517,9 @@ export function validateGameState(state: unknown): asserts state is GameState {
     }
   }
 
-  for (const [blockTeamId, blockValue] of Object.entries(business.tradeBlocks)) {
+  for (const [blockTeamId, blockValue] of Object.entries(
+    business.tradeBlocks,
+  )) {
     assertRecord(blockValue, `business.tradeBlocks[${blockTeamId}]`);
     assertNonEmptyString(
       blockValue.teamId,
@@ -1597,7 +1599,10 @@ export function validateGameState(state: unknown): asserts state is GameState {
   for (const [standingKey, standingValue] of Object.entries(
     competition.standings.byTeamId,
   )) {
-    assertRecord(standingValue, `competition.standings.byTeamId[${standingKey}]`);
+    assertRecord(
+      standingValue,
+      `competition.standings.byTeamId[${standingKey}]`,
+    );
     assertNonEmptyString(
       standingValue.teamId,
       `competition.standings.byTeamId[${standingKey}].teamId`,
@@ -1621,13 +1626,7 @@ export function validateGameState(state: unknown): asserts state is GameState {
   }
 
   for (const [gameKey, gameValue] of Object.entries(competition.games)) {
-    validateGame(
-      gameKey,
-      gameValue,
-      seasonId,
-      teamIds,
-      playerIds,
-    );
+    validateGame(gameKey, gameValue, seasonId, teamIds, playerIds);
   }
 
   validatePlayoffReferences(
@@ -1829,7 +1828,9 @@ function validateTeamSnapshotField(
     `${fieldPath}.branding.logoId`,
   );
   if (!teamIds.has(snapshot.teamId)) {
-    fail(`${fieldPath}.teamId "${snapshot.teamId}" is missing from world.teams.`);
+    fail(
+      `${fieldPath}.teamId "${snapshot.teamId}" is missing from world.teams.`,
+    );
   }
   if (expectedTeamId != null && snapshot.teamId !== expectedTeamId) {
     fail(`${fieldPath}.teamId must match the game's team id.`);
@@ -1856,10 +1857,7 @@ function validatePlayoffs(playoffs: Record<string, unknown>): void {
   }
   for (const [index, series] of playoffs.series.entries()) {
     assertRecord(series, `competition.playoffs.series[${index}]`);
-    assertNonEmptyString(
-      series.id,
-      `competition.playoffs.series[${index}].id`,
-    );
+    assertNonEmptyString(series.id, `competition.playoffs.series[${index}].id`);
     if (
       typeof series.status !== "string" ||
       !PLAYOFF_SERIES_STATUSES.includes(
@@ -1886,7 +1884,10 @@ function validatePlayoffReferences(
     }
   }
 
-  if (playoffs.championTeamId != null && !teamIds.has(playoffs.championTeamId)) {
+  if (
+    playoffs.championTeamId != null &&
+    !teamIds.has(playoffs.championTeamId)
+  ) {
     fail(
       `competition.playoffs.championTeamId "${playoffs.championTeamId}" is missing from world.teams.`,
     );
@@ -1945,7 +1946,9 @@ function validatePlayoffReferences(
 /**
  * Structural validation only — no objective-type-specific business rules.
  */
-function validateOwnershipConfidence(confidence: OwnershipConfidenceState): void {
+function validateOwnershipConfidence(
+  confidence: OwnershipConfidenceState,
+): void {
   const path = "user.ownershipConfidence";
   if (
     typeof confidence.mood !== "string" ||
@@ -2028,9 +2031,7 @@ function validateAlignmentEvidence(
     typeof evidence.kind !== "string" ||
     !isAlignmentEvidenceKind(evidence.kind)
   ) {
-    fail(
-      `${path}.kind must be one of ${ALIGNMENT_EVIDENCE_KINDS.join(", ")}.`,
-    );
+    fail(`${path}.kind must be one of ${ALIGNMENT_EVIDENCE_KINDS.join(", ")}.`);
   }
   if (
     typeof evidence.significance !== "string" ||
@@ -2105,9 +2106,7 @@ function validateOwnerObjectives(objectives: unknown[]): void {
       typeof objectiveValue.type !== "string" ||
       !isOwnerObjectiveType(objectiveValue.type)
     ) {
-      fail(
-        `${path}.type must be one of ${OWNER_OBJECTIVE_TYPES.join(", ")}.`,
-      );
+      fail(`${path}.type must be one of ${OWNER_OBJECTIVE_TYPES.join(", ")}.`);
     }
 
     assertNonEmptyString(objectiveValue.description, `${path}.description`);
@@ -2155,9 +2154,7 @@ function validateOwnerObjectives(objectives: unknown[]): void {
       typeof objectiveValue.role !== "string" ||
       !isOwnerObjectiveRole(objectiveValue.role)
     ) {
-      fail(
-        `${path}.role must be one of ${OWNER_OBJECTIVE_ROLES.join(", ")}.`,
-      );
+      fail(`${path}.role must be one of ${OWNER_OBJECTIVE_ROLES.join(", ")}.`);
     }
 
     if (objectiveValue.target !== undefined) {
@@ -2196,7 +2193,9 @@ function validateOwnerNotifications(notifications: unknown[]): void {
     assertRecord(notificationValue, path);
     assertNonEmptyString(notificationValue.id, `${path}.id`);
     if (seenIds.has(notificationValue.id)) {
-      fail(`user.notifications contains duplicate id "${notificationValue.id}".`);
+      fail(
+        `user.notifications contains duplicate id "${notificationValue.id}".`,
+      );
     }
     seenIds.add(notificationValue.id);
 
@@ -2322,15 +2321,17 @@ function validateNarrativeSituation(
   }
   seenIds.add(value.id);
   assertNonEmptyString(value.detectorKey, `${path}.detectorKey`);
-  if (typeof value.category !== "string" || !isNarrativeCategory(value.category)) {
-    fail(
-      `${path}.category must be one of ${NARRATIVE_CATEGORIES.join(", ")}.`,
-    );
+  if (
+    typeof value.category !== "string" ||
+    !isNarrativeCategory(value.category)
+  ) {
+    fail(`${path}.category must be one of ${NARRATIVE_CATEGORIES.join(", ")}.`);
   }
-  if (typeof value.severity !== "string" || !isNarrativeSeverity(value.severity)) {
-    fail(
-      `${path}.severity must be one of ${NARRATIVE_SEVERITIES.join(", ")}.`,
-    );
+  if (
+    typeof value.severity !== "string" ||
+    !isNarrativeSeverity(value.severity)
+  ) {
+    fail(`${path}.severity must be one of ${NARRATIVE_SEVERITIES.join(", ")}.`);
   }
   if (
     typeof value.status !== "string" ||
@@ -2369,7 +2370,9 @@ function validateNarrativeSituation(
     if (!Array.isArray(value.actions)) {
       fail(`${path}.actions must be an array.`);
     }
-    for (const [aIndex, actionValue] of (value.actions as unknown[]).entries()) {
+    for (const [aIndex, actionValue] of (
+      value.actions as unknown[]
+    ).entries()) {
       const actionPath = `${path}.actions[${aIndex}]`;
       assertRecord(actionValue, actionPath);
       assertNonEmptyString(actionValue.id, `${actionPath}.id`);
@@ -2400,10 +2403,11 @@ function validateNarrativeUpdate(value: unknown, path: string): void {
   assertRecord(value, path);
   assertNonEmptyString(value.occurredOn, `${path}.occurredOn`);
   parseCalendarDate(value.occurredOn as string);
-  if (typeof value.severity !== "string" || !isNarrativeSeverity(value.severity)) {
-    fail(
-      `${path}.severity must be one of ${NARRATIVE_SEVERITIES.join(", ")}.`,
-    );
+  if (
+    typeof value.severity !== "string" ||
+    !isNarrativeSeverity(value.severity)
+  ) {
+    fail(`${path}.severity must be one of ${NARRATIVE_SEVERITIES.join(", ")}.`);
   }
   assertNonEmptyString(value.title, `${path}.title`);
   assertNonEmptyString(value.summary, `${path}.summary`);
@@ -2459,9 +2463,7 @@ function validateEventLog(
       typeof eventValue.type !== "string" ||
       !isDomainEventType(eventValue.type)
     ) {
-      fail(
-        `${path}.type must be one of ${DOMAIN_EVENT_TYPES.join(", ")}.`,
-      );
+      fail(`${path}.type must be one of ${DOMAIN_EVENT_TYPES.join(", ")}.`);
     }
 
     assertNonEmptyString(eventValue.occurredOn, `${path}.occurredOn`);
@@ -2558,17 +2560,17 @@ function validateCashLedgerByMonth(
       typeof entry.netBusinessFundsChange === "number"
         ? entry.netBusinessFundsChange
         : entry.netCashChange;
-    assertNumber(
-      netBusinessFundsChange,
-      `${entryPath}.netBusinessFundsChange`,
-    );
+    assertNumber(netBusinessFundsChange, `${entryPath}.netBusinessFundsChange`);
     if (!Number.isInteger(netBusinessFundsChange)) {
       fail(`${entryPath}.netBusinessFundsChange must be an integer.`);
     }
   }
 }
 
-function validateTeamFinanceBooksShape(booksValue: unknown, booksPath: string): void {
+function validateTeamFinanceBooksShape(
+  booksValue: unknown,
+  booksPath: string,
+): void {
   assertRecord(booksValue, booksPath);
   assertRecord(booksValue.revenue, `${booksPath}.revenue`);
   assertRecord(booksValue.expenses, `${booksPath}.expenses`);
@@ -2618,9 +2620,7 @@ function validateScheduledEvents(events: unknown): void {
       typeof value.type !== "string" ||
       !(SCHEDULED_EVENT_TYPES as readonly string[]).includes(value.type)
     ) {
-      fail(
-        `${path}.type must be one of ${SCHEDULED_EVENT_TYPES.join(", ")}.`,
-      );
+      fail(`${path}.type must be one of ${SCHEDULED_EVENT_TYPES.join(", ")}.`);
     }
     void (value.type as ScheduledEventType);
 
@@ -2677,7 +2677,11 @@ function validatePendingOwnerDecision(
   ) {
     failFn(`${path}.participantTeamIds must be a non-empty array.`);
   }
-  for (let i = 0; i < (decision.participantTeamIds as unknown[]).length; i += 1) {
+  for (
+    let i = 0;
+    i < (decision.participantTeamIds as unknown[]).length;
+    i += 1
+  ) {
     assertNonEmptyString(
       (decision.participantTeamIds as unknown[])[i],
       `${path}.participantTeamIds[${i}]`,
@@ -2690,7 +2694,11 @@ function validatePendingOwnerDecision(
   ) {
     failFn(`${path}.primaryTeamId must be included in participantTeamIds.`);
   }
-  validateTradeOfferDecisionPayload(decision.payload, `${path}.payload`, failFn);
+  validateTradeOfferDecisionPayload(
+    decision.payload,
+    `${path}.payload`,
+    failFn,
+  );
 }
 
 function validateOwnerDecisionRecord(
@@ -3008,8 +3016,16 @@ function validateTradeOfferDecisionPayload(
       failFn(`${path}.originalProposal must be an object when present.`);
     } else {
       const original = payload.originalProposal as Record<string, unknown>;
-      validateTradeSide(original.sideA, `${path}.originalProposal.sideA`, failFn);
-      validateTradeSide(original.sideB, `${path}.originalProposal.sideB`, failFn);
+      validateTradeSide(
+        original.sideA,
+        `${path}.originalProposal.sideA`,
+        failFn,
+      );
+      validateTradeSide(
+        original.sideB,
+        `${path}.originalProposal.sideB`,
+        failFn,
+      );
     }
   }
   if (payload.currentProposal !== undefined) {
@@ -3086,7 +3102,10 @@ function validateFantasyDraft(
   assertRecord(draftValue, "world.fantasyDraft");
   const draft = draftValue as Record<string, unknown>;
   assertNumber(draft.version, "world.fantasyDraft.version");
-  if (!Number.isInteger(draft.version as number) || (draft.version as number) < 1) {
+  if (
+    !Number.isInteger(draft.version as number) ||
+    (draft.version as number) < 1
+  ) {
     failFn("world.fantasyDraft.version must be an integer >= 1.");
   }
   if (!isFantasyDraftStatus(draft.status)) {
@@ -3131,10 +3150,7 @@ function validateFantasyDraft(
     failFn("world.fantasyDraft.timer.enabled must be a boolean.");
   }
   assertNumber(timer.secondsPerPick, "world.fantasyDraft.timer.secondsPerPick");
-  if (
-    timer.pickStartedAt !== null &&
-    typeof timer.pickStartedAt !== "string"
-  ) {
+  if (timer.pickStartedAt !== null && typeof timer.pickStartedAt !== "string") {
     failFn("world.fantasyDraft.timer.pickStartedAt must be null or a string.");
   }
   if (draft.pausedAt !== null && typeof draft.pausedAt !== "string") {
@@ -3161,9 +3177,7 @@ function validateFantasyDraft(
   )) {
     assertNonEmptyString(teamId, "world.fantasyDraft.autoPickStrategy key");
     if (!isFantasyDraftAutoPickStrategy(strategy)) {
-      failFn(
-        `world.fantasyDraft.autoPickStrategy["${teamId}"] is invalid.`,
-      );
+      failFn(`world.fantasyDraft.autoPickStrategy["${teamId}"] is invalid.`);
     }
   }
 
@@ -3210,7 +3224,10 @@ function validateFantasyDraft(
 
   for (let i = 0; i < (draft.selectedPlayerIds as unknown[]).length; i += 1) {
     const playerId = (draft.selectedPlayerIds as unknown[])[i] as string;
-    assertNonEmptyString(playerId, `world.fantasyDraft.selectedPlayerIds[${i}]`);
+    assertNonEmptyString(
+      playerId,
+      `world.fantasyDraft.selectedPlayerIds[${i}]`,
+    );
     if (seenSelected.has(playerId)) {
       failFn(
         `world.fantasyDraft.selectedPlayerIds duplicates player "${playerId}".`,
@@ -3223,13 +3240,19 @@ function validateFantasyDraft(
     const selection = (draft.selections as unknown[])[i];
     assertRecord(selection, `world.fantasyDraft.selections[${i}]`);
     const sel = selection as Record<string, unknown>;
-    assertNumber(sel.pickNumber, `world.fantasyDraft.selections[${i}].pickNumber`);
+    assertNumber(
+      sel.pickNumber,
+      `world.fantasyDraft.selections[${i}].pickNumber`,
+    );
     assertNumber(sel.round, `world.fantasyDraft.selections[${i}].round`);
     assertNumber(
       sel.pickInRound,
       `world.fantasyDraft.selections[${i}].pickInRound`,
     );
-    assertNonEmptyString(sel.teamId, `world.fantasyDraft.selections[${i}].teamId`);
+    assertNonEmptyString(
+      sel.teamId,
+      `world.fantasyDraft.selections[${i}].teamId`,
+    );
     assertNonEmptyString(
       sel.playerId,
       `world.fantasyDraft.selections[${i}].playerId`,
@@ -3254,5 +3277,3 @@ function validateFantasyDraft(
     }
   }
 }
-
-

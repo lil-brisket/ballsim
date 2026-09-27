@@ -113,8 +113,7 @@ function isEligibleToEnter(input: {
   }
   // Active or no entry (fallback)
   return (
-    input.plan.activePlayerIds.includes(input.player.id) ||
-    input.allowEmergency
+    input.plan.activePlayerIds.includes(input.player.id) || input.allowEmergency
   );
 }
 
@@ -151,9 +150,7 @@ function pickBestReplacement(input: {
         })
       : 0;
 
-    const priorityBoost = entry
-      ? (6 - entry.rotationPriority) * 0.5
-      : 0;
+    const priorityBoost = entry ? (6 - entry.rotationPriority) * 0.5 : 0;
 
     // Closing lineup preference in late close / OT
     const closingBoost =
@@ -166,7 +163,10 @@ function pickBestReplacement(input: {
     const trial = input.onCourt.map((p) =>
       p.id === input.outPlayer.id ? candidate : p,
     );
-    const viability = scoreLineupViability(trial, input.plan.rotationByPlayerId);
+    const viability = scoreLineupViability(
+      trial,
+      input.plan.rotationByPlayerId,
+    );
 
     const score =
       positionFit + inScore + priorityBoost + closingBoost + viability * 0.05;
@@ -288,8 +288,7 @@ function tacticalOutScore(
   }
   const fouls = input.foulsByPlayerId.get(player.id) ?? 0;
   const trouble = foulTroubleLevel(fouls, input.context.periodNumber);
-  const continuous =
-    input.continuousSecondsOnCourt.get(player.id) ?? 0;
+  const continuous = input.continuousSecondsOnCourt.get(player.id) ?? 0;
   const fatigue =
     input.fatigueByPlayerId.get(player.id) ??
     computeFatigue({
@@ -348,10 +347,7 @@ function applyTacticalSubstitutions(
   input: SubstitutionEngineInput,
   current: SubstitutionEngineResult,
 ): SubstitutionEngineResult {
-  if (
-    input.checkpoint === "foul_out" ||
-    input.checkpoint === "injury"
-  ) {
+  if (input.checkpoint === "foul_out" || input.checkpoint === "injury") {
     // Forced-only checkpoints
     return current;
   }
@@ -431,9 +427,7 @@ function applyTacticalSubstitutions(
     }
 
     // Validate resulting lineup
-    const trialCourt = onCourt.map((p, i) =>
-      i === worstIndex ? incoming : p,
-    );
+    const trialCourt = onCourt.map((p, i) => (i === worstIndex ? incoming : p));
     const validation = validateLineup({
       onCourt: trialCourt,
       unavailableIds: input.unavailableIds,
@@ -480,14 +474,16 @@ function applyTacticalSubstitutions(
     subsApplied < maxSubs
   ) {
     const closing = input.plan.closingLineupIds;
-    for (let index = 0; index < onCourt.length && subsApplied < maxSubs; index += 1) {
+    for (
+      let index = 0;
+      index < onCourt.length && subsApplied < maxSubs;
+      index += 1
+    ) {
       const onCourtPlayer = onCourt[index]!;
       if (closing.includes(onCourtPlayer.id)) {
         continue;
       }
-      const missing = closing.find(
-        (id) => !onCourt.some((p) => p.id === id),
-      );
+      const missing = closing.find((id) => !onCourt.some((p) => p.id === id));
       if (missing == null) {
         break;
       }

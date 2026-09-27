@@ -78,14 +78,14 @@ describe("phase5 offseason lifecycle", () => {
     const rng = createSeededRng(state.meta.rngState);
     state = bootstrapWorld(state, rng).state;
     state = withSeason(state, "offseason", "free_agency");
-    expect(ownerNavGroupsForState(state).some((g) => g.id === "offseason")).toBe(
-      true,
-    );
+    expect(
+      ownerNavGroupsForState(state).some((g) => g.id === "offseason"),
+    ).toBe(true);
 
     state = withSeason(state, "preseason", "none");
-    expect(ownerNavGroupsForState(state).some((g) => g.id === "offseason")).toBe(
-      false,
-    );
+    expect(
+      ownerNavGroupsForState(state).some((g) => g.id === "offseason"),
+    ).toBe(false);
     expect(toOffseasonHubView(state).active).toBe(false);
     expect(toFreeAgencyHubView(state).active).toBe(false);
   });

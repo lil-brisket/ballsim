@@ -42,7 +42,7 @@ function baseDashboard(
     mode: "owner",
     teamSelectionLocked: true,
     citySelectionConfirmed: true,
-      franchiseIdentityConfirmed: true,
+    franchiseIdentityConfirmed: true,
     userOnDraftClock: false,
     controlledTeam: {
       id: "team_1",
@@ -132,7 +132,9 @@ describe("game shell UI", () => {
     expect(
       screen.getByRole("link", { name: /Owner Mode/i }).getAttribute("href"),
     ).toBe("/owner");
-    expect(screen.queryByRole("link", { name: /Select Owner Mode/i })).toBeNull();
+    expect(
+      screen.queryByRole("link", { name: /Select Owner Mode/i }),
+    ).toBeNull();
     expect(screen.getByText("Career Mode")).toBeTruthy();
     expect(screen.getByText("Dynasty Mode")).toBeTruthy();
     expect(screen.getAllByText("Coming Soon").length).toBeGreaterThan(0);

@@ -16,9 +16,10 @@ import { bootstrapWorld } from "@/systems/world-pipeline";
 describe("facilities", () => {
   function bootstrapped() {
     let state = createInitialGameState({
-    saveId: "fac_test", rngSeed: 11,
-    settings: CBL_GAME_SETTINGS,
-  });
+      saveId: "fac_test",
+      rngSeed: 11,
+      settings: CBL_GAME_SETTINGS,
+    });
     const rng = createSeededRng(state.meta.rngState);
     state = bootstrapWorld(state, rng).state;
     return state;
@@ -65,16 +66,14 @@ describe("facilities", () => {
     const state = bootstrapped();
     const teamId = state.user.activeOwnerTeamId;
     const started = startFacilityUpgrade(state, teamId, "arena");
-    expect(() =>
-      startFacilityUpgrade(started.state, teamId, "arena"),
-    ).toThrow(/already in progress/);
+    expect(() => startFacilityUpgrade(started.state, teamId, "arena")).toThrow(
+      /already in progress/,
+    );
   });
 
   it("uses franchise ops for unknown team throws", () => {
     const state = bootstrapped();
-    expect(() =>
-      arenaCapacity(state, asTeamId("team_missing")),
-    ).toThrow();
+    expect(() => arenaCapacity(state, asTeamId("team_missing"))).toThrow();
   });
 
   it("defaults franchise ops levels at 1", () => {

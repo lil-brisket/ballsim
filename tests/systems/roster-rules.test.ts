@@ -60,7 +60,9 @@ function idsOf(players: readonly Player[]): PlayerId[] {
 
 function validAssignment(
   rules: RosterRulesConfig = validRules(),
-  playerCount: number = rules.startingLineupSize + rules.benchSize + rules.inactiveSize,
+  playerCount: number = rules.startingLineupSize +
+    rules.benchSize +
+    rules.inactiveSize,
 ): RosterAssignment {
   const players = createRosterPlayers(playerCount);
   return {
@@ -116,9 +118,7 @@ describe("createRosterRulesConfig", () => {
       "PF",
       "C",
     ] as const);
-    const rules = createRosterRulesConfig(
-      validInput({ allowedPositions }),
-    );
+    const rules = createRosterRulesConfig(validInput({ allowedPositions }));
     expect(rules.allowedPositions).toEqual([...PLAYER_POSITIONS]);
   });
 
@@ -186,7 +186,9 @@ describe("validateRosterRulesConfig", () => {
     (maxRosterSize) => {
       expect(() =>
         createRosterRulesConfig(validInput({ maxRosterSize })),
-      ).toThrow(/Roster rules maxRosterSize must be an integer >= minRosterSize/);
+      ).toThrow(
+        /Roster rules maxRosterSize must be an integer >= minRosterSize/,
+      );
     },
   );
 
@@ -208,14 +210,11 @@ describe("validateRosterRulesConfig", () => {
     ).toThrow(/Roster rules inactiveSize must be an integer >= 0/);
   });
 
-  it.each([1.5, NaN, Infinity])(
-    "rejects invalid benchSize=%s",
-    (benchSize) => {
-      expect(() =>
-        createRosterRulesConfig(validInput({ benchSize })),
-      ).toThrow(/Roster rules benchSize must be an integer >= 0/);
-    },
-  );
+  it.each([1.5, NaN, Infinity])("rejects invalid benchSize=%s", (benchSize) => {
+    expect(() => createRosterRulesConfig(validInput({ benchSize }))).toThrow(
+      /Roster rules benchSize must be an integer >= 0/,
+    );
+  });
 
   it("rejects empty allowedPositions", () => {
     expect(() =>
@@ -349,9 +348,9 @@ describe("validateRoster", () => {
     const assignment = validAssignment(rules);
     const center = createPlayer({ id: "player_1", position: "C" });
     const players = [center, ...assignment.players.slice(1)];
-    expect(() =>
-      validateRoster({ ...assignment, players }, rules),
-    ).toThrow(/Roster player player_1 has disallowed position C/);
+    expect(() => validateRoster({ ...assignment, players }, rules)).toThrow(
+      /Roster player player_1 has disallowed position C/,
+    );
   });
 
   it("rejects duplicate PlayerIds even when the objects differ", () => {
@@ -438,7 +437,10 @@ describe("validateStartingLineup", () => {
     const assignment = validAssignment(rules);
     expect(() =>
       validateStartingLineup(
-        { ...assignment, startingLineup: assignment.startingLineup.slice(0, 4) },
+        {
+          ...assignment,
+          startingLineup: assignment.startingLineup.slice(0, 4),
+        },
         rules,
       ),
     ).toThrow(/Roster starting lineup must contain exactly 5 players/);
@@ -466,7 +468,9 @@ describe("validateStartingLineup", () => {
     ];
     expect(() =>
       validateStartingLineup({ ...assignment, startingLineup }, rules),
-    ).toThrow(/Roster starting lineup player player_missing is not on the roster/);
+    ).toThrow(
+      /Roster starting lineup player player_missing is not on the roster/,
+    );
   });
 
   it("rejects an inactive player in the starting lineup", () => {
@@ -516,7 +520,10 @@ describe("validateBench", () => {
     const rules = validRules();
     const assignment = validAssignment(rules);
     expect(() =>
-      validateBench({ ...assignment, bench: assignment.bench.slice(0, 3) }, rules),
+      validateBench(
+        { ...assignment, bench: assignment.bench.slice(0, 3) },
+        rules,
+      ),
     ).toThrow(/Roster bench must contain exactly 4 players/);
   });
 
@@ -567,9 +574,9 @@ describe("validateBench", () => {
     const players = assignment.players.map((player) =>
       player.id === "player_6" ? center : player,
     );
-    expect(() =>
-      validateBench({ ...assignment, players }, rules),
-    ).toThrow(/Roster player player_6 has disallowed position C/);
+    expect(() => validateBench({ ...assignment, players }, rules)).toThrow(
+      /Roster player player_6 has disallowed position C/,
+    );
   });
 });
 
@@ -586,7 +593,9 @@ describe("validateInactivePlayers", () => {
     const assignment = validAssignment(rules);
     expect(assignment.players).toHaveLength(10);
     expect(assignment.inactive).toHaveLength(1);
-    expect(() => validateRosterSize(assignment.players.length, rules)).not.toThrow();
+    expect(() =>
+      validateRosterSize(assignment.players.length, rules),
+    ).not.toThrow();
     expect(() => validateRoster(assignment, rules)).not.toThrow();
   });
 
@@ -649,7 +658,9 @@ describe("purity", () => {
   it("does not mutate frozen inputs on a passing call", () => {
     const rules = Object.freeze({
       ...validRules(),
-      allowedPositions: Object.freeze([...PLAYER_POSITIONS]) as PlayerPosition[],
+      allowedPositions: Object.freeze([
+        ...PLAYER_POSITIONS,
+      ]) as PlayerPosition[],
     });
     const assignment = validAssignment(rules);
     const frozenPlayers = Object.freeze(
@@ -676,7 +687,9 @@ describe("purity", () => {
   it("does not mutate frozen inputs on a failing call", () => {
     const rules = Object.freeze({
       ...validRules(),
-      allowedPositions: Object.freeze([...PLAYER_POSITIONS]) as PlayerPosition[],
+      allowedPositions: Object.freeze([
+        ...PLAYER_POSITIONS,
+      ]) as PlayerPosition[],
     });
     const assignment = validAssignment(rules);
     const startingLineup = [

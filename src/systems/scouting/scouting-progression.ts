@@ -42,8 +42,7 @@ export function assignScoutToProspect(
   const prospect = draft.prospects[prospectPlayerId];
   if (!prospect || prospect.status !== "eligible") return state;
 
-  const existing =
-    draft.teamDraftState[teamId] ?? createEmptyTeamDraftState();
+  const existing = draft.teamDraftState[teamId] ?? createEmptyTeamDraftState();
   const filtered = existing.scoutAssignments.filter(
     (a) => a.prospectPlayerId !== prospectPlayerId,
   );
@@ -51,7 +50,9 @@ export function assignScoutToProspect(
     filtered.shift();
   }
   const exposurePerDay =
-    0.85 * scoutSpeedMultiplier(state, teamId) * scoutQualityMultiplier(state, teamId);
+    0.85 *
+    scoutSpeedMultiplier(state, teamId) *
+    scoutQualityMultiplier(state, teamId);
   const nextTeamState: TeamDraftState = {
     ...existing,
     scoutAssignments: [
@@ -77,8 +78,7 @@ export function scoutRegionCoverage(
 ): GameState {
   const draft = getActiveOrPrepDraft(state);
   if (!draft) return state;
-  const existing =
-    draft.teamDraftState[teamId] ?? createEmptyTeamDraftState();
+  const existing = draft.teamDraftState[teamId] ?? createEmptyTeamDraftState();
   const nextCoverage = { ...existing.regionCoverage };
   nextCoverage[region] = Math.min(
     REGION_COVERAGE_MAX,
@@ -94,10 +94,7 @@ export function scoutRegionCoverage(
  * Advance exposure for all teams' scout assignments by one day.
  * Re-evaluates estimates for assigned prospects (consumes RNG).
  */
-export function advanceScoutAssignments(
-  state: GameState,
-  rng: Rng,
-): GameState {
+export function advanceScoutAssignments(state: GameState, rng: Rng): GameState {
   const draft = getActiveOrPrepDraft(state);
   if (!draft) return state;
 
@@ -206,8 +203,7 @@ export function getScoutingCoverageSummary(
       assignments: 0,
     };
   }
-  const teamState =
-    draft.teamDraftState[teamId] ?? createEmptyTeamDraftState();
+  const teamState = draft.teamDraftState[teamId] ?? createEmptyTeamDraftState();
   const leagueArea = state.settings.league.area ?? "north_america";
   let discovered = 0;
   let needsMoreScouting = 0;

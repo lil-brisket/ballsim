@@ -46,7 +46,13 @@ export function evaluatePlayerForTeam(
   const prefs = resolveFranchisePreferences(state, teamId)?.preferences;
   const base = draftTalentScore(player, prefs);
   const counts = fantasyDraftPositionCounts(state, teamId);
-  return applyRosterNeedModifiers(base, counts, player.position, round, picksPerTeam);
+  return applyRosterNeedModifiers(
+    base,
+    counts,
+    player.position,
+    round,
+    picksPerTeam,
+  );
 }
 
 export function applyRosterNeedModifiers(
@@ -140,8 +146,7 @@ export function draftTalentScore(
     0.35 +
     boundedPreferenceDelta(prefs.youthValue, 0.15) +
     boundedPreferenceDelta(prefs.developmentPriority, 0.1);
-  const upsideWeight =
-    0.2 + boundedPreferenceDelta(prefs.riskAppetite, 0.15);
+  const upsideWeight = 0.2 + boundedPreferenceDelta(prefs.riskAppetite, 0.15);
   return (
     overall * Math.max(0.2, overallWeight) +
     potential * Math.max(0.15, potentialWeight) +

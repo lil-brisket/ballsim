@@ -5,12 +5,7 @@ import {
   type GameInput,
   type GamePlayerStats,
 } from "@/domain/entities/game";
-import {
-  asGameId,
-  asPlayerId,
-  asSeasonId,
-  asTeamId,
-} from "@/domain/ids";
+import { asGameId, asPlayerId, asSeasonId, asTeamId } from "@/domain/ids";
 
 function validInput(overrides: Partial<GameInput> = {}): GameInput {
   return {
@@ -41,7 +36,9 @@ function sampleEvent(overrides: Partial<GameEvent> = {}): GameEvent {
   };
 }
 
-function sampleStats(overrides: Partial<GamePlayerStats> = {}): GamePlayerStats {
+function sampleStats(
+  overrides: Partial<GamePlayerStats> = {},
+): GamePlayerStats {
   return {
     playerId: asPlayerId("player_1"),
     teamId: null,
@@ -215,21 +212,21 @@ describe("createGame", () => {
   });
 
   it("rejects empty season id", () => {
-    expect(() =>
-      createGame(validInput({ seasonId: asSeasonId("") })),
-    ).toThrow(/seasonId/);
+    expect(() => createGame(validInput({ seasonId: asSeasonId("") }))).toThrow(
+      /seasonId/,
+    );
   });
 
   it("rejects empty home team id", () => {
-    expect(() =>
-      createGame(validInput({ homeTeamId: asTeamId("") })),
-    ).toThrow(/homeTeamId/);
+    expect(() => createGame(validInput({ homeTeamId: asTeamId("") }))).toThrow(
+      /homeTeamId/,
+    );
   });
 
   it("rejects empty away team id", () => {
-    expect(() =>
-      createGame(validInput({ awayTeamId: asTeamId("") })),
-    ).toThrow(/awayTeamId/);
+    expect(() => createGame(validInput({ awayTeamId: asTeamId("") }))).toThrow(
+      /awayTeamId/,
+    );
   });
 
   it("rejects identical home and away teams", () => {
@@ -272,9 +269,7 @@ describe("createGame", () => {
 
   it("rejects invalid status", () => {
     expect(() =>
-      createGame(
-        validInput({ status: "cancelled" as GameInput["status"] }),
-      ),
+      createGame(validInput({ status: "cancelled" as GameInput["status"] })),
     ).toThrow(/status/);
   });
 
@@ -294,9 +289,7 @@ describe("createGame", () => {
     expect(() =>
       createGame(
         validInput({
-          events: [
-            sampleEvent({ type: "timeout" as GameEvent["type"] }),
-          ],
+          events: [sampleEvent({ type: "timeout" as GameEvent["type"] })],
         }),
       ),
     ).toThrow(/events\[0\]\.type/);
@@ -365,52 +358,34 @@ describe("createGame", () => {
 
   it("rejects negative player statistics", () => {
     expect(() =>
-      createGame(
-        validInput({ playerStats: [sampleStats({ minutes: -1 })] }),
-      ),
+      createGame(validInput({ playerStats: [sampleStats({ minutes: -1 })] })),
     ).toThrow(/playerStats\[0\]\.minutes/);
     expect(() =>
-      createGame(
-        validInput({ playerStats: [sampleStats({ points: -1 })] }),
-      ),
+      createGame(validInput({ playerStats: [sampleStats({ points: -1 })] })),
     ).toThrow(/playerStats\[0\]\.points/);
     expect(() =>
-      createGame(
-        validInput({ playerStats: [sampleStats({ rebounds: -1 })] }),
-      ),
+      createGame(validInput({ playerStats: [sampleStats({ rebounds: -1 })] })),
     ).toThrow(/playerStats\[0\]\.rebounds/);
     expect(() =>
-      createGame(
-        validInput({ playerStats: [sampleStats({ assists: -1 })] }),
-      ),
+      createGame(validInput({ playerStats: [sampleStats({ assists: -1 })] })),
     ).toThrow(/playerStats\[0\]\.assists/);
     expect(() =>
-      createGame(
-        validInput({ playerStats: [sampleStats({ steals: -1 })] }),
-      ),
+      createGame(validInput({ playerStats: [sampleStats({ steals: -1 })] })),
     ).toThrow(/playerStats\[0\]\.steals/);
     expect(() =>
-      createGame(
-        validInput({ playerStats: [sampleStats({ blocks: -1 })] }),
-      ),
+      createGame(validInput({ playerStats: [sampleStats({ blocks: -1 })] })),
     ).toThrow(/playerStats\[0\]\.blocks/);
     expect(() =>
-      createGame(
-        validInput({ playerStats: [sampleStats({ turnovers: -1 })] }),
-      ),
+      createGame(validInput({ playerStats: [sampleStats({ turnovers: -1 })] })),
     ).toThrow(/playerStats\[0\]\.turnovers/);
     expect(() =>
-      createGame(
-        validInput({ playerStats: [sampleStats({ fouls: -1 })] }),
-      ),
+      createGame(validInput({ playerStats: [sampleStats({ fouls: -1 })] })),
     ).toThrow(/playerStats\[0\]\.fouls/);
   });
 
   it("rejects non-integer player statistics", () => {
     expect(() =>
-      createGame(
-        validInput({ playerStats: [sampleStats({ points: 1.5 })] }),
-      ),
+      createGame(validInput({ playerStats: [sampleStats({ points: 1.5 })] })),
     ).toThrow(/playerStats\[0\]\.points/);
     expect(() =>
       createGame(

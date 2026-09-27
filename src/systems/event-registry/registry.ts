@@ -296,9 +296,10 @@ export function getDomainEventPolicy(
 }
 
 /** Social post count bounds by importance tier. */
-export function socialBoundsForImportance(
-  importance: ImportanceLevel,
-): { minPosts: number; maxPosts: number } {
+export function socialBoundsForImportance(importance: ImportanceLevel): {
+  minPosts: number;
+  maxPosts: number;
+} {
   switch (importance) {
     case "critical":
       return { minPosts: 1, maxPosts: 3 };

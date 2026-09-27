@@ -3,9 +3,7 @@ import { getActiveOwnedFranchise } from "@/state/owner-context";
  * Dashboard view model for ownership expectations + confidence.
  */
 
-import type {
-  OwnershipMood,
-} from "@/domain/entities/ownership-confidence";
+import type { OwnershipMood } from "@/domain/entities/ownership-confidence";
 import { ownershipMoodLabel } from "@/domain/entities/ownership-confidence";
 import type { OwnershipExpectations } from "@/domain/entities/ownership-expectations";
 import type { GameState } from "@/state/game-state";

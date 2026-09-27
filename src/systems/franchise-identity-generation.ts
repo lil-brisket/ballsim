@@ -125,8 +125,7 @@ export function generateFranchiseIdentity(input: {
 }): FranchiseIdentityAxes {
   const hash = hashFranchiseIdentitySeed(input.rngSeed, input.teamId);
   const weights = strategyWeightsForMarket(input.marketSize);
-  const aiProfile =
-    input.forceProfile ?? pickWeightedStrategy(hash, weights);
+  const aiProfile = input.forceProfile ?? pickWeightedStrategy(hash, weights);
 
   const baselines = axisBaselines(aiProfile);
   // Independent jitter from distinct hash slices (±20).

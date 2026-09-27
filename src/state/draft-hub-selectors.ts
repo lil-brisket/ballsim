@@ -5,10 +5,7 @@
 
 import type { GameState } from "@/state/game-state";
 import { getActiveOwnerTeamId } from "@/state/owner-context";
-import {
-  toDraftBoardView,
-  type DraftBoardView,
-} from "@/state/selectors";
+import { toDraftBoardView, type DraftBoardView } from "@/state/selectors";
 import { getExpectedPhaseWindow } from "@/systems/league-rules/league-calendar";
 import {
   calculateTeamDraftNeeds,
@@ -132,12 +129,9 @@ export function toDraftHubView(state: GameState): DraftHubView {
     },
   );
 
-  const needs =
-    draft && board ? calculateTeamDraftNeeds(state, teamId) : null;
+  const needs = draft && board ? calculateTeamDraftNeeds(state, teamId) : null;
   const recommendations =
-    draft && board
-      ? getDraftRecommendations(state, draft, teamId, 3)
-      : [];
+    draft && board ? getDraftRecommendations(state, draft, teamId, 3) : [];
 
   return {
     active: board !== null,

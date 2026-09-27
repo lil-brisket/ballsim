@@ -16,7 +16,10 @@ import {
   type MyTeamStandingsContext,
   type StandingsRowEnriched,
 } from "@/state/standings-selectors";
-import { toLeagueInjuryBriefing, type LeagueInjuryRow } from "@/state/league-injury-selectors";
+import {
+  toLeagueInjuryBriefing,
+  type LeagueInjuryRow,
+} from "@/state/league-injury-selectors";
 import {
   toBrandingView,
   type TeamBrandingView,
@@ -116,7 +119,10 @@ function resolveTeamName(state: GameState, teamId: unknown): string {
   return team ? `${team.city} ${team.name}` : teamId;
 }
 
-function describeTxn(state: GameState, event: GameState["competition"]["seasonEventLog"][number]): string {
+function describeTxn(
+  state: GameState,
+  event: GameState["competition"]["seasonEventLog"][number],
+): string {
   const payload = event.payload as Record<string, unknown>;
   const playerName = resolvePlayerName(state, payload.playerId);
   const teamName = resolveTeamName(state, payload.teamId);
@@ -142,7 +148,10 @@ function describeTxn(state: GameState, event: GameState["competition"]["seasonEv
   }
 }
 
-function collectIds(payload: Record<string, unknown>, keys: string[]): string[] {
+function collectIds(
+  payload: Record<string, unknown>,
+  keys: string[],
+): string[] {
   const ids: string[] = [];
   for (const key of keys) {
     const value = payload[key];
@@ -266,11 +275,7 @@ export function toLeagueHubView(state: GameState): LeagueHubView {
       occurredOn: event.occurredOn,
       description: describeTxn(state, event),
       playerIds: collectIds(payload, ["playerId"]),
-      teamIds: collectIds(payload, [
-        "teamId",
-        "fromTeamId",
-        "toTeamId",
-      ]),
+      teamIds: collectIds(payload, ["teamId", "fromTeamId", "toTeamId"]),
     };
   });
 
@@ -280,8 +285,7 @@ export function toLeagueHubView(state: GameState): LeagueHubView {
   const franchise = getActiveOwnedFranchise(state);
   const readState = franchise.mediaReadState ?? {};
   const mediaItems = [...(franchise.mediaFeed?.items ?? [])].sort((a, b) => {
-    const imp =
-      IMPORTANCE_RANK[b.importance] - IMPORTANCE_RANK[a.importance];
+    const imp = IMPORTANCE_RANK[b.importance] - IMPORTANCE_RANK[a.importance];
     if (imp !== 0) {
       return imp;
     }

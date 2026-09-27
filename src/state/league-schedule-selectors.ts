@@ -82,10 +82,7 @@ function toRow(
   };
 }
 
-function sortGames(
-  a: LeagueScheduleGameRow,
-  b: LeagueScheduleGameRow,
-): number {
+function sortGames(a: LeagueScheduleGameRow, b: LeagueScheduleGameRow): number {
   const d = a.date.localeCompare(b.date);
   if (d !== 0) {
     return d;
@@ -109,9 +106,7 @@ export function toLeagueScheduleView(
 
   if (filters.teamId) {
     const tid = filters.teamId;
-    games = games.filter(
-      (g) => g.homeTeamId === tid || g.awayTeamId === tid,
-    );
+    games = games.filter((g) => g.homeTeamId === tid || g.awayTeamId === tid);
   }
 
   if (filters.status === "final") {
@@ -151,11 +146,7 @@ export function toLeagueScheduleView(
     .sort((a, b) => a.label.localeCompare(b.label));
 
   let emptyReason: string | null = null;
-  if (
-    today.length === 0 &&
-    upcoming.length === 0 &&
-    recent.length === 0
-  ) {
+  if (today.length === 0 && upcoming.length === 0 && recent.length === 0) {
     if (phase === "offseason" || phase === "postseason") {
       emptyReason =
         "No scheduled games — open the Calendar for offseason milestones.";

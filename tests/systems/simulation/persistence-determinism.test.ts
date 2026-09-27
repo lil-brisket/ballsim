@@ -28,9 +28,9 @@ function normalizeMeta(state: ReturnType<typeof createInitialGameState>) {
 describe("simulation persistence and determinism", () => {
   it("migrates schemaVersion 20 into simulation backbone fields", () => {
     const modern = createInitialGameState({
-    saveId: "mig_v20",
-    settings: CBL_GAME_SETTINGS,
-  });
+      saveId: "mig_v20",
+      settings: CBL_GAME_SETTINGS,
+    });
     const v20 = {
       ...modern,
       meta: {
@@ -94,10 +94,10 @@ describe("simulation persistence and determinism", () => {
   it("advance → save → load → advance matches uninterrupted simulation", () => {
     resetDomainEventSequenceForTests();
     const initial = createInitialGameState({
-    saveId: "det_roundtrip",
+      saveId: "det_roundtrip",
       rngSeed: 99,
-    settings: CBL_GAME_SETTINGS,
-  });
+      settings: CBL_GAME_SETTINGS,
+    });
 
     const withRng = (
       state: typeof initial,

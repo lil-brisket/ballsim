@@ -1,11 +1,7 @@
 import type { SeasonId } from "@/domain/ids";
 
 export type SeasonPhase =
-  | "preseason"
-  | "regular"
-  | "playoffs"
-  | "postseason"
-  | "offseason";
+  "preseason" | "regular" | "playoffs" | "postseason" | "offseason";
 
 export const SEASON_PHASES: readonly SeasonPhase[] = [
   "preseason",

@@ -57,10 +57,7 @@ describe("staff development", () => {
     };
 
     const before = state.world.staff[coach.id]!.overall;
-    const result = processSeasonStaffDevelopment(
-      state,
-      createSeededRng(100),
-    );
+    const result = processSeasonStaffDevelopment(state, createSeededRng(100));
     const after = result.state.world.staff[coach.id]!;
     expect(after.age).toBe(coach.age + 1);
     expect(after.experience).toBe(coach.experience + 1);

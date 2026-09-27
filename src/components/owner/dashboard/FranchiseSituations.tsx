@@ -15,10 +15,7 @@ export function FranchiseSituations(props: {
   }
 
   return (
-    <section
-      className="space-y-3"
-      aria-label="Franchise situations"
-    >
+    <section className="space-y-3" aria-label="Franchise situations">
       <div>
         <p className="font-mono text-xs uppercase tracking-[0.16em] text-sky-500">
           Franchise situations
@@ -96,11 +93,7 @@ export function FranchiseSituations(props: {
               ))}
               <form action={acknowledgeNarrativeSituationAction}>
                 <input type="hidden" name="saveId" value={props.saveId} />
-                <input
-                  type="hidden"
-                  name="situationId"
-                  value={situation.id}
-                />
+                <input type="hidden" name="situationId" value={situation.id} />
                 <input
                   type="hidden"
                   name="returnPath"

@@ -32,7 +32,8 @@ export function SeasonLifecycleBanner(props: {
           Opening Day
         </p>
         <p className="mt-1 text-sm text-emerald-50">
-          The regular season is ready. Simulate again to play today&apos;s games.
+          The regular season is ready. Simulate again to play today&apos;s
+          games.
         </p>
       </div>
     );

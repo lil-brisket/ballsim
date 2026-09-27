@@ -83,9 +83,9 @@ describe("game-day promotions scheduling", () => {
       ];
     expect(assignment.promotionId).toBe("team_poster_giveaway");
     expect(assignment.costPaid).toBe(28_000);
-    expect(
-      result.state.business.finances[teamId]!.businessFunds,
-    ).toBe(cashBefore - 28_000);
+    expect(result.state.business.finances[teamId]!.businessFunds).toBe(
+      cashBefore - 28_000,
+    );
     expect(
       result.state.business.gameDayPromotionsByTeamId[teamId]!.committedSpend,
     ).toBe(28_000);
@@ -136,32 +136,16 @@ describe("game-day promotions scheduling", () => {
 
   it("enforces one promotion per home game", () => {
     const { state, teamId, gameId } = setupWithHomeGame(30);
-    const once = scheduleGameDayPromotion(
-      state,
-      teamId,
-      gameId,
-      "kids_night",
-    );
+    const once = scheduleGameDayPromotion(state, teamId, gameId, "kids_night");
     expect(() =>
-      scheduleGameDayPromotion(
-        once.state,
-        teamId,
-        gameId,
-        "family_night",
-      ),
+      scheduleGameDayPromotion(once.state, teamId, gameId, "family_night"),
     ).toThrow(/already has a promotion/);
   });
 
   it("applies tiered cancellation refunds", () => {
     expect(refundFractionForCancel("2026-10-01", "2026-11-01", 14)).toBe(1);
     expect(refundFractionForCancel("2026-10-20", "2026-10-28", 14)).toBe(0.5);
-    expect(
-      refundFractionForCancel(
-        "2026-10-26",
-        "2026-10-28",
-        14,
-      ),
-    ).toBe(0);
+    expect(refundFractionForCancel("2026-10-26", "2026-10-28", 14)).toBe(0);
     expect(PROMOTION_FINAL_CANCEL_WINDOW_DAYS).toBe(3);
 
     const { state, teamId, gameId } = setupWithHomeGame(30);
@@ -173,14 +157,10 @@ describe("game-day promotions scheduling", () => {
     );
     const cashAfterSchedule =
       scheduled.state.business.finances[teamId]!.businessFunds;
-    const cancelled = cancelGameDayPromotion(
-      scheduled.state,
-      teamId,
-      gameId,
+    const cancelled = cancelGameDayPromotion(scheduled.state, teamId, gameId);
+    expect(cancelled.state.business.finances[teamId]!.businessFunds).toBe(
+      cashAfterSchedule + 18_000,
     );
-    expect(
-      cancelled.state.business.finances[teamId]!.businessFunds,
-    ).toBe(cashAfterSchedule + 18_000);
     expect(
       cancelled.state.business.gameDayPromotionsByTeamId[teamId]!.assignments[
         gameId

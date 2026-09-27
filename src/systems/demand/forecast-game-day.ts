@@ -47,9 +47,7 @@ function teamWinPct(state: GameState, teamId: string): number {
 function rosterStarAverage(state: GameState, teamId: string): number {
   const players = Object.values(state.world.players)
     .filter((player) => player.teamId === teamId)
-    .map((player) =>
-      calculatePlayerOverall(player.position, player.attributes),
-    )
+    .map((player) => calculatePlayerOverall(player.position, player.attributes))
     .sort((a, b) => b - a);
   if (players.length === 0) {
     return 50;

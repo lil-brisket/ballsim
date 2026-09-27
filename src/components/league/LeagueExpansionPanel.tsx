@@ -77,9 +77,11 @@ export function LeagueExpansionPanel(props: {
               Market opportunity — {assessment.marketOpportunity.status}
             </p>
             <ul className="mt-1 list-disc space-y-0.5 pl-4 text-zinc-400">
-              {assessment.marketOpportunity.reasons.slice(0, 3).map((reason) => (
-                <li key={reason}>{reason}</li>
-              ))}
+              {assessment.marketOpportunity.reasons
+                .slice(0, 3)
+                .map((reason) => (
+                  <li key={reason}>{reason}</li>
+                ))}
             </ul>
           </div>
           <div className="rounded-lg border border-zinc-800 p-3 text-sm">
@@ -87,9 +89,11 @@ export function LeagueExpansionPanel(props: {
               Structural capacity — {assessment.structuralCapacity.status}
             </p>
             <ul className="mt-1 list-disc space-y-0.5 pl-4 text-zinc-400">
-              {assessment.structuralCapacity.reasons.slice(0, 3).map((reason) => (
-                <li key={reason}>{reason}</li>
-              ))}
+              {assessment.structuralCapacity.reasons
+                .slice(0, 3)
+                .map((reason) => (
+                  <li key={reason}>{reason}</li>
+                ))}
             </ul>
           </div>
         </div>

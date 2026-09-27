@@ -124,9 +124,7 @@ export function buildFranchiseContext(
   if (calendar.deadlineWindow) {
     const days = calendar.daysUntilTradeDeadline;
     calendarUrgency =
-      days === null
-        ? 0.55
-        : Math.max(0.35, Math.min(1, 1 - days / 14));
+      days === null ? 0.55 : Math.max(0.35, Math.min(1, 1 - days / 14));
   } else if (calendar.seasonSegment === "late") {
     calendarUrgency = 0.35;
   } else if (calendar.lifecyclePhase === "offseason") {

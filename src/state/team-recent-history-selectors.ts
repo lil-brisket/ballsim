@@ -16,11 +16,7 @@ import { getTeamTransactions } from "@/state/team-transaction-selectors";
 export const TEAM_RECENT_HISTORY_LIMIT = 5;
 
 export type TeamRecentHistoryKind =
-  | "game_result"
-  | "transaction"
-  | "injury"
-  | "award"
-  | "other";
+  "game_result" | "transaction" | "injury" | "award" | "other";
 
 export type TeamRecentHistoryItem = {
   id: string;

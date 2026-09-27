@@ -14,11 +14,7 @@ import {
 import type { Rng } from "@/domain/rng";
 import { systemResult, type SystemResult } from "@/domain/system-result";
 import type { GameState } from "@/state/game-state";
-import {
-  acceptOffer,
-  listFreeAgents,
-  makeOffer,
-} from "@/systems/free-agency";
+import { acceptOffer, listFreeAgents, makeOffer } from "@/systems/free-agency";
 import {
   hasAppliedGameplayConsequence,
   withAppliedGameplayConsequence,
@@ -43,10 +39,7 @@ import { computeAwardReputationBonus } from "@/systems/awards/award-reputation";
 import { getTeamCapSpace } from "@/systems/salary-cap";
 import { getCalendarContext } from "@/systems/simulation/calendar-context";
 import { checkTradeWindow } from "@/systems/league-rules/trade-rules";
-import {
-  draftYearForSeason,
-  makeDraftSelection,
-} from "@/systems/draft";
+import { draftYearForSeason, makeDraftSelection } from "@/systems/draft";
 import {
   addToTradeBlock,
   evaluateTradeOffer,
@@ -66,10 +59,7 @@ import {
   reconcileRosterManagement,
   withTeamRosterManagement,
 } from "@/systems/roster-management";
-import {
-  isDraftAiPhase,
-  isFreeAgencyAiPhase,
-} from "@/systems/phase-engine";
+import { isDraftAiPhase, isFreeAgencyAiPhase } from "@/systems/phase-engine";
 import { runAiDevelopmentLeagueDecisions } from "@/systems/development-league/ai-decisions";
 
 export { isUserControlledTeam };
@@ -325,11 +315,13 @@ function runAiTrades(state: GameState): SystemResult {
     // Calendar pressure modifies urgency; it does not override identity.
     // Deadline window: lower skip thresholds without forcing every team to act.
     const deadlineBoost = calendar.deadlineWindow ? 0.12 : 0;
-    const skipRisk = 0.35 - deadlineBoost * (prefs.riskAppetite > 0.5 ? 1 : 0.4);
+    const skipRisk =
+      0.35 - deadlineBoost * (prefs.riskAppetite > 0.5 ? 1 : 0.4);
     const skipPatience =
       0.45 - deadlineBoost * (prefs.patiencePressure > 0.4 ? 1 : 0.3);
     const skipWinNow =
-      0.55 - deadlineBoost * (prefs.winNowPressure > prefs.rebuildPressure ? 1 : 0);
+      0.55 -
+      deadlineBoost * (prefs.winNowPressure > prefs.rebuildPressure ? 1 : 0);
 
     if (
       prefs.riskAppetite < skipRisk &&
@@ -340,7 +332,10 @@ function runAiTrades(state: GameState): SystemResult {
     }
 
     // Rebuilders sell more readily near the deadline; contenders list less surplus.
-    if (calendar.deadlineWindow && prefs.rebuildPressure > prefs.winNowPressure) {
+    if (
+      calendar.deadlineWindow &&
+      prefs.rebuildPressure > prefs.winNowPressure
+    ) {
       current = ensureSurplusOnBlock(current, teamId, prefs);
     } else if (!calendar.deadlineWindow || prefs.winNowPressure >= 0.5) {
       current = ensureSurplusOnBlock(current, teamId, prefs);
@@ -445,7 +440,9 @@ function teamUrgentlyNeedsSigning(state: GameState, teamId: TeamId): boolean {
 
 function missingPositions(state: GameState, teamId: TeamId): PlayerPosition[] {
   const counts = positionCounts(state, teamId);
-  return REQUIRED_POSITIONS.filter((position) => (counts.get(position) ?? 0) === 0);
+  return REQUIRED_POSITIONS.filter(
+    (position) => (counts.get(position) ?? 0) === 0,
+  );
 }
 
 function positionCounts(
@@ -510,8 +507,8 @@ function pickBestAffordableFreeAgent(
   prefs: EffectivePreferences | undefined,
 ): Player | undefined {
   const missing = missingPositions(state, teamId);
-  const pool = listFreeAgents(state).playerIds
-    .map((playerId) => state.world.players[playerId])
+  const pool = listFreeAgents(state)
+    .playerIds.map((playerId) => state.world.players[playerId])
     .filter((player): player is Player => player !== undefined);
 
   const ranked = [...pool].sort((a, b) => {

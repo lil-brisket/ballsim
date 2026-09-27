@@ -7,10 +7,7 @@ import { getCalendarContext } from "@/systems/simulation/calendar-context";
 import { expireRfaOfferSheets } from "@/systems/rfa";
 import { readActivePhaseId } from "@/systems/league-rules/phase-ids";
 
-export type ClosedWindowKind =
-  | "trade_deadline"
-  | "free_agency"
-  | "rfa_match";
+export type ClosedWindowKind = "trade_deadline" | "free_agency" | "rfa_match";
 
 /**
  * Expire all pending transactions whose legal window has closed.
@@ -58,10 +55,7 @@ export function processWindowExpirations(state: GameState): SystemResult {
     !calendar.tradesOpen &&
     calendar.tradeDeadlineDate != null
   ) {
-    const result = expireTransactionsForClosedWindow(
-      current,
-      "trade_deadline",
-    );
+    const result = expireTransactionsForClosedWindow(current, "trade_deadline");
     current = result.state;
     events.push(...result.events);
   }

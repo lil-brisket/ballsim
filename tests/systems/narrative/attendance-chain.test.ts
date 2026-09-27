@@ -15,7 +15,10 @@ import { createTestGameState } from "../../factories/game-state";
 import { bootstrapWorld } from "@/systems/world-pipeline";
 import { createSeededRng } from "@/domain/rng";
 import { processNarrativeLayer } from "@/systems/narrative/evaluate-narrative";
-import { getActiveOwnedFranchise, withOwnedFranchise } from "@/state/owner-context";
+import {
+  getActiveOwnedFranchise,
+  withOwnedFranchise,
+} from "@/state/owner-context";
 
 function baseNarrativeContext(
   overrides: Partial<NarrativeContext> = {},
@@ -88,11 +91,7 @@ function baseNarrativeContext(
   };
 }
 
-function openSituation(
-  detectorKey: string,
-  createdOn: string,
-  stage = 1,
-) {
+function openSituation(detectorKey: string, createdOn: string, stage = 1) {
   return createNarrativeSituation({
     id: asNarrativeSituationId(`nar_${detectorKey}_test`),
     detectorKey,
@@ -126,7 +125,10 @@ describe("attendance crisis chain", () => {
   });
 
   it("escalates to sponsor concern after ignored attendance decline", () => {
-    const createdOn = addCalendarDays("2026-03-01", -ATTENDANCE_TO_SPONSOR_DAYS);
+    const createdOn = addCalendarDays(
+      "2026-03-01",
+      -ATTENDANCE_TO_SPONSOR_DAYS,
+    );
     const context = baseNarrativeContext({ date: "2026-03-01" });
     const situations = [openSituation("attendance_decline", createdOn)];
     const candidate = detectSponsorVisibilityConcern(context, situations);
@@ -195,8 +197,7 @@ describe("attendance crisis chain", () => {
     const rng = createSeededRng(state.meta.rngState);
     state = bootstrapWorld(state, rng).state;
     const teamId = state.user.activeOwnerTeamId;
-    const before =
-      state.business.franchiseOps[teamId]?.ticketPrice ?? 45;
+    const before = state.business.franchiseOps[teamId]?.ticketPrice ?? 45;
     const situation = openSituation(
       "attendance_decline",
       state.world.calendar.currentDate,
@@ -301,7 +302,9 @@ describe("attendance crisis chain", () => {
     const once = processNarrativeLayer(state, rng, {
       cadences: ["monthly"],
     });
-    const sponsorCount = getActiveOwnedFranchise(once.state).narrative.situations.filter(
+    const sponsorCount = getActiveOwnedFranchise(
+      once.state,
+    ).narrative.situations.filter(
       (s) =>
         s.detectorKey === "sponsor_visibility_concern" &&
         (s.status === "active" ||
@@ -313,7 +316,9 @@ describe("attendance crisis chain", () => {
     const twice = processNarrativeLayer(once.state, rng, {
       cadences: ["monthly"],
     });
-    const sponsorCount2 = getActiveOwnedFranchise(twice.state).narrative.situations.filter(
+    const sponsorCount2 = getActiveOwnedFranchise(
+      twice.state,
+    ).narrative.situations.filter(
       (s) =>
         s.detectorKey === "sponsor_visibility_concern" &&
         (s.status === "active" ||

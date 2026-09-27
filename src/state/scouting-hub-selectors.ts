@@ -87,9 +87,7 @@ export function toScoutingHubView(state: GameState): ScoutingHubView {
         (s) => s.prospectPlayerId === prospect.playerId,
       );
       const hasAssignment = assignmentIds.has(prospect.playerId);
-      const hasInterview = Boolean(
-        teamState?.interviews?.[prospect.playerId],
-      );
+      const hasInterview = Boolean(teamState?.interviews?.[prospect.playerId]);
       const knowledgeLevel = estimate?.knowledgeLevel ?? "unknown";
       const exposure = estimate?.effectiveExposure ?? estimate?.exposure ?? 0;
       const needsAttention =
@@ -104,10 +102,7 @@ export function toScoutingHubView(state: GameState): ScoutingHubView {
         lastName: prospect.player.lastName,
         position: estimate?.positionEstimate ?? prospect.player.position,
         age: prospect.player.age,
-        region: resolveScoutingRegion(
-          leagueArea,
-          prospect.player.nationality,
-        ),
+        region: resolveScoutingRegion(leagueArea, prospect.player.nationality),
         knowledgeLevel,
         scoutGrade: estimate?.scoutGrade ?? null,
         estimatedOverallMin: estimate?.estimatedOverall.min ?? null,

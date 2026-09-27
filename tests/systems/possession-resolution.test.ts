@@ -264,9 +264,7 @@ describe("resolvePossession missed shot and rebound", () => {
       offensiveTeamId: DEFENSE,
       defensiveTeamId: OFFENSE,
     });
-    expect(
-      result.playerStats.some((d) => d.rebounds === 1),
-    ).toBe(true);
+    expect(result.playerStats.some((d) => d.rebounds === 1)).toBe(true);
   });
 
   it("keeps offensive possession after an offensive rebound", () => {
@@ -313,10 +311,7 @@ describe("resolvePossession pass and assist", () => {
     expect(result.possession.action).toBe("pass");
     expect(result.possession.outcome).toBe("pass_completed");
     expect(result.pointsScored).toBe(2);
-    expect(result.events.map((e) => e.type)).toEqual([
-      "shot_made",
-      "assist",
-    ]);
+    expect(result.events.map((e) => e.type)).toEqual(["shot_made", "assist"]);
     expect(result.playerStats).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
@@ -527,10 +522,7 @@ describe("resolvePossession fouls", () => {
         }),
       ]),
     );
-    expect(result.events.map((e) => e.type)).toEqual([
-      "foul",
-      "free_throw",
-    ]);
+    expect(result.events.map((e) => e.type)).toEqual(["foul", "free_throw"]);
   });
 
   it("retains offense on non-shooting foul outside bonus", () => {

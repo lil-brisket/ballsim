@@ -118,7 +118,10 @@ function def(input: {
   bodyPart: InjuryDefinition["bodyPart"];
   severityDistribution: Record<InjurySeverity, number>;
   recoveryDays: Record<InjurySeverity, { min: number; max: number }>;
-  gameRestriction: Record<InjurySeverity, InjuryDefinition["gameRestriction"][InjurySeverity]>;
+  gameRestriction: Record<
+    InjurySeverity,
+    InjuryDefinition["gameRestriction"][InjurySeverity]
+  >;
   practiceRestriction: Record<
     InjurySeverity,
     InjuryDefinition["practiceRestriction"][InjurySeverity]
@@ -139,12 +142,10 @@ function def(input: {
     practiceRestriction: input.practiceRestriction,
     temporaryEffects: input.temporaryEffects,
     reinjuryModifier:
-      input.reinjuryModifier ??
-      severityMap(0.05, 0.12, 0.22, 0.35),
+      input.reinjuryModifier ?? severityMap(0.05, 0.12, 0.22, 0.35),
     chronicModifier: input.chronicModifier ?? 0.02,
     longTermEffectChance:
-      input.longTermEffectChance ??
-      severityMap(0, 0, 0.02, 0.08),
+      input.longTermEffectChance ?? severityMap(0, 0, 0.02, 0.08),
     typicalExposure: input.typicalExposure,
   };
 }
@@ -358,7 +359,11 @@ export const INJURY_CATALOG: readonly InjuryDefinition[] = [
     practiceRestriction: severityMap("modified", "rehab", "none", "none"),
     temporaryEffects: PHYSICAL_EFFECTS.light,
     longTermEffectChance: severityMap(0, 0.01, 0.06, 0.2),
-    typicalExposure: [...GAME_AND_PRACTICE, "game_overuse", "offseason_training"],
+    typicalExposure: [
+      ...GAME_AND_PRACTICE,
+      "game_overuse",
+      "offseason_training",
+    ],
   }),
   def({
     catalogKey: "hip_pointer",

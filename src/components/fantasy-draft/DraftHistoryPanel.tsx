@@ -67,7 +67,10 @@ export function DraftHistoryPanel(props: { draft: FantasyDraftView }) {
                 </thead>
                 <tbody>
                   {[...props.draft.selections].reverse().map((sel) => (
-                    <tr key={sel.pickNumber} className="border-t border-zinc-800">
+                    <tr
+                      key={sel.pickNumber}
+                      className="border-t border-zinc-800"
+                    >
                       <td className="py-1.5">{sel.pickNumber}</td>
                       <td>{sel.round}</td>
                       <td>{sel.teamAbbreviation}</td>

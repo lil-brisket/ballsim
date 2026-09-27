@@ -32,8 +32,7 @@ export default async function TradeReviewPage(props: PageProps) {
   );
   if (!pending || pending.type !== "trade_offer") notFound();
 
-  const proposal =
-    pending.payload.currentProposal ?? pending.payload.proposal;
+  const proposal = pending.payload.currentProposal ?? pending.payload.proposal;
   const userTeamId = pending.payload.userTeamId;
   const offeringTeamId = pending.payload.offeringTeamId;
   const evaluation = evaluateTrade(state, userTeamId, proposal);
@@ -112,12 +111,8 @@ export default async function TradeReviewPage(props: PageProps) {
         </ul>
         <div className="mt-3 grid grid-cols-3 gap-2 text-xs text-zinc-400">
           <div>Roster fit {(evaluation.rosterFit * 100).toFixed(0)}%</div>
-          <div>
-            Strategic fit {(evaluation.strategicFit * 100).toFixed(0)}%
-          </div>
-          <div>
-            Financial {(evaluation.financialImpact * 100).toFixed(0)}%
-          </div>
+          <div>Strategic fit {(evaluation.strategicFit * 100).toFixed(0)}%</div>
+          <div>Financial {(evaluation.financialImpact * 100).toFixed(0)}%</div>
         </div>
       </section>
 
@@ -197,7 +192,10 @@ function AssetColumn(props: {
           if (!player) {
             return <li key={playerId}>Unknown player</li>;
           }
-          const ovr = calculatePlayerOverall(player.position, player.attributes);
+          const ovr = calculatePlayerOverall(
+            player.position,
+            player.attributes,
+          );
           const contract = player.contractId
             ? props.state.business.contracts[player.contractId]
             : undefined;
@@ -205,7 +203,10 @@ function AssetColumn(props: {
             ? getContractSalaryForYear(contract, year)
             : undefined;
           return (
-            <li key={playerId} className="rounded border border-zinc-800 px-2 py-2">
+            <li
+              key={playerId}
+              className="rounded border border-zinc-800 px-2 py-2"
+            >
               <Link
                 href={`/dashboard/${props.state.meta.saveId}/players/${playerId}`}
                 className="font-medium text-amber-100 hover:underline"
@@ -226,15 +227,17 @@ function AssetColumn(props: {
           if (!pick) return <li key={pickId}>Unknown pick</li>;
           const projection = projectDraftPick(props.state, pick);
           return (
-            <li key={pickId} className="rounded border border-zinc-800 px-2 py-2">
+            <li
+              key={pickId}
+              className="rounded border border-zinc-800 px-2 py-2"
+            >
               <p className="font-medium text-zinc-100">
                 {pick.seasonYear} Round {pick.round}
               </p>
               <p className="text-xs text-zinc-400">
                 {tierDisplayLabel(projection.tier)} · ~#
-                {projection.projectedOverallPick} (range #
-                {projection.rangeLow}–#{projection.rangeHigh},{" "}
-                {projection.confidence} confidence)
+                {projection.projectedOverallPick} (range #{projection.rangeLow}
+                –#{projection.rangeHigh}, {projection.confidence} confidence)
               </p>
             </li>
           );

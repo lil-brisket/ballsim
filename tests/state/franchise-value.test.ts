@@ -132,10 +132,7 @@ function withYearBooks(
   };
 }
 
-function withFacilityLevels(
-  state: GameState,
-  level: number,
-): GameState {
+function withFacilityLevels(state: GameState, level: number): GameState {
   const teamId = teamIdOf(state);
   const ops = state.business.franchiseOps[teamId]!;
   const facilities = { ...ops.facilities };
@@ -366,8 +363,8 @@ describe("franchise value — invariants", () => {
     giant = withFillRate(giant, 0.45);
     const tinyMarket = explainFranchiseValue(tiny, teamIdOf(tiny)).components
       .market;
-    const giantMarket = explainFranchiseValue(giant, teamIdOf(giant))
-      .components.market;
+    const giantMarket = explainFranchiseValue(giant, teamIdOf(giant)).components
+      .market;
     expect(giantMarket).toBeGreaterThan(tinyMarket);
   });
 
@@ -394,8 +391,8 @@ describe("franchise value — invariants", () => {
     steady = withYearBooks(steady, year, booksWithRevenue(250_000_000));
     const spikeRev = explainFranchiseValue(spike, teamIdOf(spike)).components
       .revenue;
-    const steadyRev = explainFranchiseValue(steady, teamIdOf(steady))
-      .components.revenue;
+    const steadyRev = explainFranchiseValue(steady, teamIdOf(steady)).components
+      .revenue;
     expect(spikeRev).toBeLessThan(steadyRev);
   });
 
@@ -404,11 +401,7 @@ describe("franchise value — invariants", () => {
     let profit = boot("fv_profit_hi");
     const year = loss.competition.season.year;
     loss = withYearBooks(loss, year, booksWithPnL(80_000_000, 120_000_000));
-    profit = withYearBooks(
-      profit,
-      year,
-      booksWithPnL(120_000_000, 80_000_000),
-    );
+    profit = withYearBooks(profit, year, booksWithPnL(120_000_000, 80_000_000));
     expect(calculateFranchiseValue(profit, teamIdOf(profit))).toBeGreaterThan(
       calculateFranchiseValue(loss, teamIdOf(loss)),
     );
@@ -529,9 +522,7 @@ describe("franchise value — invariants", () => {
     expect(highExplain.components.facilities).toBeGreaterThan(
       lowExplain.components.facilities,
     );
-    expect(highExplain.components.facilities).toBeLessThan(
-      5 * 8_000_000 + 1,
-    );
+    expect(highExplain.components.facilities).toBeLessThan(5 * 8_000_000 + 1);
   });
 
   it("explainFranchiseValue.total matches calculateFranchiseValue", () => {

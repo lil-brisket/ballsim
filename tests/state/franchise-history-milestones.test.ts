@@ -160,11 +160,7 @@ describe("franchise history milestones", () => {
     expect(currentOwnershipTenureYears(2026, 2027)).toBe(2);
     expect(currentOwnershipTenureYears(2026, 2028)).toBe(3);
     const milestones = computeFranchiseHistoryMilestones(
-      [
-        season({ year: 2024 }),
-        season({ year: 2025 }),
-        season({ year: 2026 }),
-      ],
+      [season({ year: 2024 }), season({ year: 2025 }), season({ year: 2026 })],
       2026,
       2026,
     );

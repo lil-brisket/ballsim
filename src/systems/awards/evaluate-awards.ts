@@ -245,7 +245,12 @@ export function evaluatePlayerOfMonth(
     teamRanks,
     AWARD_SCORING_CONFIG.playerOfMonth,
   );
-  return toAwardResult(state, "player_of_month", monthId, rankCandidates(scored));
+  return toAwardResult(
+    state,
+    "player_of_month",
+    monthId,
+    rankCandidates(scored),
+  );
 }
 
 export function evaluateRookieOfMonth(
@@ -268,7 +273,12 @@ export function evaluateRookieOfMonth(
     teamRanks,
     AWARD_SCORING_CONFIG.rookieOfMonth,
   );
-  return toAwardResult(state, "rookie_of_month", monthId, rankCandidates(scored));
+  return toAwardResult(
+    state,
+    "rookie_of_month",
+    monthId,
+    rankCandidates(scored),
+  );
 }
 
 export function evaluateDefensivePlayerOfMonth(
@@ -340,7 +350,11 @@ export function evaluateDefensivePlayerOfMonth(
 
 export function evaluateMvp(
   state: GameState,
-  options?: { throughDate?: string; awardId?: AwardDefinitionId; period?: string | null },
+  options?: {
+    throughDate?: string;
+    awardId?: AwardDefinitionId;
+    period?: string | null;
+  },
 ): AwardResult | null {
   const awardId = options?.awardId ?? "mvp";
   const period = options?.period !== undefined ? options.period : null;
@@ -417,7 +431,11 @@ export function evaluateMvp(
 
 export function evaluateDpoy(
   state: GameState,
-  options?: { throughDate?: string; awardId?: AwardDefinitionId; period?: string | null },
+  options?: {
+    throughDate?: string;
+    awardId?: AwardDefinitionId;
+    period?: string | null;
+  },
 ): AwardResult | null {
   const awardId = options?.awardId ?? "dpoy";
   const period = options?.period !== undefined ? options.period : null;
@@ -488,7 +506,11 @@ export function evaluateDpoy(
 
 export function evaluateRoy(
   state: GameState,
-  options?: { throughDate?: string; awardId?: AwardDefinitionId; period?: string | null },
+  options?: {
+    throughDate?: string;
+    awardId?: AwardDefinitionId;
+    period?: string | null;
+  },
 ): AwardResult | null {
   const awardId = options?.awardId ?? "roy";
   const period = options?.period !== undefined ? options.period : null;
@@ -519,7 +541,11 @@ export function evaluateRoy(
 
 export function evaluateSixthMan(
   state: GameState,
-  options?: { throughDate?: string; awardId?: AwardDefinitionId; period?: string | null },
+  options?: {
+    throughDate?: string;
+    awardId?: AwardDefinitionId;
+    period?: string | null;
+  },
 ): AwardResult | null {
   const awardId = options?.awardId ?? "sixth_man";
   const period = options?.period !== undefined ? options.period : null;
@@ -608,7 +634,11 @@ function priorSeasonLine(
 
 export function evaluateMostImproved(
   state: GameState,
-  options?: { throughDate?: string; awardId?: AwardDefinitionId; period?: string | null },
+  options?: {
+    throughDate?: string;
+    awardId?: AwardDefinitionId;
+    period?: string | null;
+  },
 ): AwardResult | null {
   const awardId = options?.awardId ?? "most_improved";
   const period = options?.period !== undefined ? options.period : null;
@@ -694,7 +724,9 @@ export function evaluateMostImproved(
     const prev = rate(prior);
     const minuteFactor = Math.max(prev.minutes, 1) / Math.max(cur.minutes, 1);
     const rawProd =
-      cur.points + cur.rebounds * 1.2 + cur.assists * 1.5 -
+      cur.points +
+      cur.rebounds * 1.2 +
+      cur.assists * 1.5 -
       (prev.points + prev.rebounds * 1.2 + prev.assists * 1.5);
     // Penalize improvement driven purely by minute spikes.
     return rawProd * Math.min(1, minuteFactor + 0.25);

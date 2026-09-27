@@ -92,8 +92,7 @@ export default async function DashboardPage({
 
       {dash.flags.pendingOwnerDecision &&
       dash.pendingTradeOffer &&
-      dash.pendingTradeOffer.primaryTeamId !==
-        dashboard.controlledTeam.id ? (
+      dash.pendingTradeOffer.primaryTeamId !== dashboard.controlledTeam.id ? (
         <div
           role="status"
           className="rounded-md border border-amber-700/50 bg-amber-950/40 px-4 py-3 text-sm text-amber-100"
@@ -208,10 +207,7 @@ export default async function DashboardPage({
       <RecentResultsPanel saveId={saveId} games={recentForm.games} />
 
       <div className="grid gap-8 lg:grid-cols-2 lg:items-start">
-        <AroundTheLeaguePanel
-          headlines={dash.mediaHeadlines}
-          saveId={saveId}
-        />
+        <AroundTheLeaguePanel headlines={dash.mediaHeadlines} saveId={saveId} />
         <div className="opacity-90">
           <RecentActivity activity={dash.activity.slice(0, 5)} />
         </div>

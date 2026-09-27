@@ -14,10 +14,7 @@ import { validateGameState } from "@/persistence/validate-game-state";
 import { createInitialGameState } from "@/state/create-initial-state";
 import { CBL_GAME_SETTINGS } from "@/domain/game-settings";
 import { createPhaseEBusinessDefaults } from "@/state/phase-e-defaults";
-import {
-  GAME_STATE_SCHEMA_VERSION,
-  type GameState,
-} from "@/state/game-state";
+import { GAME_STATE_SCHEMA_VERSION, type GameState } from "@/state/game-state";
 import { createDefaultOwnedFranchiseState } from "@/state/owned-franchise-state";
 import { generateLeague } from "@/systems/league-generation";
 import { generateRosters } from "@/systems/roster-generation";
@@ -90,7 +87,13 @@ function createEightTeamPopulatedState(rngSeed: number): GameState {
       },
       injuryFrequency: "medium",
       ownership: { controlledTeamCount: 1 },
-      regularSeason: { gamesPerTeam: 14, tradeDeadlineRule: { kind: "fraction_of_season_span", seasonSpanFraction: 0.55 } },
+      regularSeason: {
+        gamesPerTeam: 14,
+        tradeDeadlineRule: {
+          kind: "fraction_of_season_span",
+          seasonSpanFraction: 0.55,
+        },
+      },
       playoffs: {
         playoffTeams: 8,
         seriesLength: 7,
@@ -207,7 +210,9 @@ function createEightTeamPopulatedState(rngSeed: number): GameState {
       },
       rfaStatuses: {},
       tradeBlocks: {},
-      ...createPhaseEBusinessDefaults(generated.teams.map((t) => t.id as TeamId)),
+      ...createPhaseEBusinessDefaults(
+        generated.teams.map((t) => t.id as TeamId),
+      ),
     },
     user: {
       ownedTeamIds: [generated.teams[0]!.id as TeamId],
@@ -249,9 +254,9 @@ function assertPopulatedFixture(state: GameState): void {
   expect(samplePlayer.attributes.speed).toBeTypeOf("number");
   expect(samplePlayer.firstName.length).toBeGreaterThan(0);
 
-  expect(Object.keys(state.competition.standings.byTeamId).length).toBeGreaterThan(
-    1,
-  );
+  expect(
+    Object.keys(state.competition.standings.byTeamId).length,
+  ).toBeGreaterThan(1);
   expect(state.competition.schedule.gameIds.length).toBeGreaterThan(0);
 
   const finalGames = Object.values(state.competition.games).filter(
@@ -445,9 +450,9 @@ describe("MemorySaveGameStore", () => {
     expect(missing).toBeNull();
 
     const state = createTestGameState({ saveId: "save_orphan" });
-    await expect(
-      store.save({ id: "does-not-exist", state }),
-    ).rejects.toThrow(/not found/);
+    await expect(store.save({ id: "does-not-exist", state })).rejects.toThrow(
+      /not found/,
+    );
   });
 
   it("deletes an existing save and leaves unrelated saves intact", async () => {
@@ -686,7 +691,9 @@ describe("MemorySaveGameStore", () => {
 
 describe("validateGameState / deserialize invalid saves", () => {
   it("rejects malformed JSON", () => {
-    expect(() => deserializeGameState("{not-json")).toThrow(/Malformed GameState JSON/);
+    expect(() => deserializeGameState("{not-json")).toThrow(
+      /Malformed GameState JSON/,
+    );
   });
 
   it("rejects missing root slices", () => {
@@ -734,7 +741,9 @@ describe("validateGameState / deserialize invalid saves", () => {
       ...state,
       meta: metaWithoutVersion,
     });
-    expect(() => deserializeGameState(json)).toThrow(/Invalid GameState envelope/);
+    expect(() => deserializeGameState(json)).toThrow(
+      /Invalid GameState envelope/,
+    );
   });
 
   it("rejects invalid calendar date", () => {
@@ -965,11 +974,11 @@ describe("validateGameState / deserialize invalid saves", () => {
 describe("serializeGameState", () => {
   it("does not call deserialize and leaves state unchanged", () => {
     const state = createInitialGameState({
-    saveId: "save_serialize_only",
+      saveId: "save_serialize_only",
       rngSeed: 1,
       nowIso: TEST_NOW_ISO,
-    settings: CBL_GAME_SETTINGS,
-  });
+      settings: CBL_GAME_SETTINGS,
+    });
     const snapshot = structuredClone(state);
     const json = serializeGameState(state);
     expect(state).toEqual(snapshot);

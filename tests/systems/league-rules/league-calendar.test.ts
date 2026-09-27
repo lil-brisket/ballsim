@@ -60,9 +60,10 @@ describe("league-calendar phase resolution", () => {
     const anchors = resolveSeasonAnchors(state);
     expect(resolution.phaseId).toBeTruthy();
     expect(resolution.reason).toBeTruthy();
-    expect(typeof anchors.regularSeasonStart === "string" || anchors.regularSeasonStart === null).toBe(
-      true,
-    );
+    expect(
+      typeof anchors.regularSeasonStart === "string" ||
+        anchors.regularSeasonStart === null,
+    ).toBe(true);
     const window = getExpectedPhaseWindow(state, resolution.phaseId);
     expect(window === null || typeof window.start === "string").toBe(true);
   });

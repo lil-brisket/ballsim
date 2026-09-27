@@ -5,10 +5,7 @@ import {
   randomizeTeamIdentityDraft,
 } from "@/systems/owner-franchise-branding";
 import { applyOwnerCitySelection } from "@/systems/owner-city-selection";
-import {
-  CBL_GAME_SETTINGS,
-  cloneGameSettings,
-} from "@/domain/game-settings";
+import { CBL_GAME_SETTINGS, cloneGameSettings } from "@/domain/game-settings";
 import { createInitialGameState } from "@/state/create-initial-state";
 import { listCitiesForTeamPick } from "@/state/selectors";
 import { getTeamIdentityFingerprint } from "@/domain/team-identity";
@@ -53,7 +50,9 @@ describe("applyOwnerFranchiseBranding", () => {
     expect(team.name).toBe("Titans");
     expect(team.branding.logoId).toBe("wolf");
     expect(resolvePaletteIdFromBranding(team.branding)).toBe("crimson_gold");
-    expect(getActiveOwnedFranchise(result.state).franchiseIdentityConfirmed).toBe(true);
+    expect(
+      getActiveOwnedFranchise(result.state).franchiseIdentityConfirmed,
+    ).toBe(true);
   });
 
   it("persists explicit hex colours when all three are present", () => {
@@ -174,9 +173,9 @@ describe("randomizeTeamIdentityDraft", () => {
     expect(next.secondaryColor).toMatch(/^#[0-9A-F]{6}$/i);
     expect(next.accentColor).toMatch(/^#[0-9A-F]{6}$/i);
     expect(next.logoId.length).toBeGreaterThan(0);
-    expect(
-      `${next.nickname}|${next.paletteId}|${next.logoId}`,
-    ).not.toBe("Huskies|midnight_navy|shield");
+    expect(`${next.nickname}|${next.paletteId}|${next.logoId}`).not.toBe(
+      "Huskies|midnight_navy|shield",
+    );
     expect(next).not.toHaveProperty("city");
   });
 

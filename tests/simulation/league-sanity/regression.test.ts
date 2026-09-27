@@ -1,7 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-  buildLeagueSanityReport,
-} from "@/simulation/league-sanity";
+import { buildLeagueSanityReport } from "@/simulation/league-sanity";
 import { readFileSync, writeFileSync, unlinkSync } from "node:fs";
 import { join } from "node:path";
 import { tmpdir } from "node:os";

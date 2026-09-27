@@ -26,9 +26,9 @@ describe("layoutMapMarkers", () => {
     expect(brussels.originX).toBe(102);
     expect(paris.offset).toBeLessThanOrEqual(MARKER_MAX_OFFSET);
     expect(brussels.offset).toBeLessThanOrEqual(MARKER_MAX_OFFSET);
-    expect(Math.hypot(paris.x - brussels.x, paris.y - brussels.y)).toBeGreaterThan(
-      2,
-    );
+    expect(
+      Math.hypot(paris.x - brussels.x, paris.y - brussels.y),
+    ).toBeGreaterThan(2);
   });
 
   it("keeps the selected marker closer to its true location", () => {

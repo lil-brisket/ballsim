@@ -176,17 +176,11 @@ function pickWeightedAction(
   const weights: Array<{ action: ActionKind; weight: number }> = [
     {
       action: "shot",
-      weight: clampWeight(
-        config.actionBaseWeights.shot * shotMod,
-        config,
-      ),
+      weight: clampWeight(config.actionBaseWeights.shot * shotMod, config),
     },
     {
       action: "pass",
-      weight: clampWeight(
-        config.actionBaseWeights.pass * passMod,
-        config,
-      ),
+      weight: clampWeight(config.actionBaseWeights.pass * passMod, config),
     },
     {
       action: "turnover",

@@ -11,10 +11,7 @@ const INJURY_TONES = new Set([
   "injured",
 ]);
 
-export function InjuryBadge(props: {
-  status: string;
-  label?: string;
-}) {
+export function InjuryBadge(props: { status: string; label?: string }) {
   const tone = INJURY_TONES.has(props.status) ? props.status : "info";
   return <StatusBadge label={props.label ?? props.status} tone={tone} />;
 }

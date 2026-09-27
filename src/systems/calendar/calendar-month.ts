@@ -71,7 +71,12 @@ export function getCalendarMonthGrid(
   month: number,
   options: GetCalendarMonthGridOptions = {},
 ): CalendarMonthGrid {
-  if (!Number.isInteger(year) || !Number.isInteger(month) || month < 1 || month > 12) {
+  if (
+    !Number.isInteger(year) ||
+    !Number.isInteger(month) ||
+    month < 1 ||
+    month > 12
+  ) {
     throw new Error(
       `getCalendarMonthGrid requires year and month 1–12; got ${year}-${month}.`,
     );

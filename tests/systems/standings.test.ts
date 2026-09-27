@@ -15,9 +15,7 @@ const SEASON_A = asSeasonId("season_a");
 const SEASON_B = asSeasonId("season_b");
 
 function finalGame(
-  overrides: Partial<
-    Omit<GameInput, "id" | "homeTeamId" | "awayTeamId">
-  > & {
+  overrides: Partial<Omit<GameInput, "id" | "homeTeamId" | "awayTeamId">> & {
     id: string;
     homeTeamId: string;
     awayTeamId: string;
@@ -67,10 +65,7 @@ function scheduledGame(overrides: {
   });
 }
 
-function standingById(
-  standings: TeamStanding[],
-  teamId: string,
-): TeamStanding {
+function standingById(standings: TeamStanding[], teamId: string): TeamStanding {
   const entry = standings.find((row) => row.teamId === teamId);
   expect(entry).toBeDefined();
   return entry!;
@@ -227,10 +222,7 @@ describe("calculateStandings", () => {
         date: "2026-10-03",
       }),
     ];
-    const standings = calculateStandings(
-      [eastA, eastB, eastC, westA],
-      games,
-    );
+    const standings = calculateStandings([eastA, eastB, eastC, westA], games);
     const east = standingById(standings, "team_east_a");
     expect(east.wins).toBe(3);
     expect(east.conferenceWins).toBe(2);

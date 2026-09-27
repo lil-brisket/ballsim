@@ -12,7 +12,10 @@ vi.mock("@/persistence/save-game-repository", () => ({
   },
 }));
 
-import { advanceOwnerTime, loadCalendarPageView } from "@/application/game-service";
+import {
+  advanceOwnerTime,
+  loadCalendarPageView,
+} from "@/application/game-service";
 import { CBL_GAME_SETTINGS } from "@/domain/game-settings";
 import { createSeededRng } from "@/domain/rng";
 import { createMemorySaveGameStore } from "@/persistence/memory-save-game-store";
@@ -24,7 +27,10 @@ import {
   derivePlannedPreseasonStartDate,
   derivePlannedRegularSeasonStartDate,
 } from "@/systems/simulation/season-lifecycle";
-import { FIXTURE_PRESEASON_START, FIXTURE_SEASON_START } from "../fixtures/dates";
+import {
+  FIXTURE_PRESEASON_START,
+  FIXTURE_SEASON_START,
+} from "../fixtures/dates";
 
 /**
  * End-to-end contract for calendar visibility + two-simulation opener.
@@ -86,7 +92,9 @@ describe("calendar preseason → opener progression", () => {
       .find((cell) => cell.date === opener);
     expect(openerCell?.teamGame).not.toBeNull();
     expect(
-      Object.values(state.competition.games).every((g) => g.status === "scheduled"),
+      Object.values(state.competition.games).every(
+        (g) => g.status === "scheduled",
+      ),
     ).toBe(true);
 
     // Stand on opening night so the next advance opens regular season.
@@ -117,10 +125,10 @@ describe("calendar preseason → opener progression", () => {
     const afterFirst = await store.load("cal_progression");
     expect(afterFirst!.state.competition.season.phase).toBe("regular");
     expect(afterFirst!.state.world.calendar.currentDate).toBe(opener);
-    const openersAfterFirst = Object.values(afterFirst!.state.competition.games).filter(
-      (g) =>
-        g.competitionType === "regular_season" &&
-        g.date === opener,
+    const openersAfterFirst = Object.values(
+      afterFirst!.state.competition.games,
+    ).filter(
+      (g) => g.competitionType === "regular_season" && g.date === opener,
     );
     expect(openersAfterFirst.length).toBeGreaterThan(0);
     expect(openersAfterFirst.every((g) => g.status === "scheduled")).toBe(true);
@@ -130,7 +138,11 @@ describe("calendar preseason → opener progression", () => {
     expect(mid!.openingDayPending).toBe(true);
 
     // --- Simulate #2: opener played ---
-    const second = await advanceOwnerTime("cal_progression", { days: 1 }, store);
+    const second = await advanceOwnerTime(
+      "cal_progression",
+      { days: 1 },
+      store,
+    );
     expect(second.ok).toBe(true);
     if (!second.ok) return;
 

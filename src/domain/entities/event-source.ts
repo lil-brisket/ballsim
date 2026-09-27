@@ -4,11 +4,7 @@
  * so all surfaces share one stable identity for the same underlying fact.
  */
 
-import type {
-  DomainEventId,
-  GameId,
-  OwnerDecisionId,
-} from "@/domain/ids";
+import type { DomainEventId, GameId, OwnerDecisionId } from "@/domain/ids";
 import type { LeagueMilestoneKey } from "@/systems/league-rules/calendar-events";
 
 export type ImportanceLevel = "critical" | "high" | "medium" | "low";

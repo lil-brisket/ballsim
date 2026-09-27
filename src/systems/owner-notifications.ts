@@ -42,7 +42,9 @@ export function generateOwnerNotifications(
   const teamId = state.user.activeOwnerTeamId;
   const date = state.world.calendar.currentDate;
   const existingKeys = new Set(
-    getActiveOwnedFranchise(state).notifications.map((notification) => notification.dedupeKey),
+    getActiveOwnedFranchise(state).notifications.map(
+      (notification) => notification.dedupeKey,
+    ),
   );
   const additions: OwnerNotification[] = [];
 
@@ -186,9 +188,7 @@ export function generateOwnerNotifications(
     if (Math.abs(delta) >= SIGNIFICANT_FINANCIAL_CHANGE) {
       append(
         createOwnerNotification({
-          id: asOwnerNotificationId(
-            `notif_fin_change_${teamId}_${date}`,
-          ),
+          id: asOwnerNotificationId(`notif_fin_change_${teamId}_${date}`),
           type: "significant_financial_change",
           title: "Significant financial change",
           message:
@@ -438,7 +438,11 @@ function lastRecordedHealth(
   state: GameState,
   teamId: TeamId,
 ): FinancialHealthState | null {
-  for (let index = getActiveOwnedFranchise(state).notifications.length - 1; index >= 0; index -= 1) {
+  for (
+    let index = getActiveOwnedFranchise(state).notifications.length - 1;
+    index >= 0;
+    index -= 1
+  ) {
     const notification = getActiveOwnedFranchise(state).notifications[index]!;
     if (notification.type !== "financial_health_changed") {
       continue;
@@ -468,9 +472,7 @@ function healthMessage(
   runwayWeeks: number | null,
 ): { title: string; message: string; severity: OwnerNotification["severity"] } {
   const pressureLabel =
-    pressure === "player_payroll"
-      ? "player payroll"
-      : pressure;
+    pressure === "player_payroll" ? "player payroll" : pressure;
   const runwayText =
     runwayWeeks === null
       ? "Projected business funds stay non-negative over the current horizon if conditions hold."
@@ -533,9 +535,7 @@ function appendFinancialHealthTransition(
   );
   append(
     createOwnerNotification({
-      id: asOwnerNotificationId(
-        `notif_health_${teamId}_${date}_${health}`,
-      ),
+      id: asOwnerNotificationId(`notif_health_${teamId}_${date}_${health}`),
       type: "financial_health_changed",
       title: copy.title,
       message: copy.message,

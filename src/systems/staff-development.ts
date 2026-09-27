@@ -45,7 +45,10 @@ export function processSeasonStaffDevelopment(
     for (const key of keys) {
       attrs[key] = clampRating(attrs[key]! + delta);
     }
-    const overall = computeStaffOverall(aged.role, attrs as Staff["attributes"]);
+    const overall = computeStaffOverall(
+      aged.role,
+      attrs as Staff["attributes"],
+    );
     const overallDelta = overall - aged.overall;
 
     let trend: Staff["development"]["trend"] = "stable";
@@ -120,9 +123,16 @@ function computeAttributeDelta(
 ): number {
   const roomToGrow = Math.max(0, staff.potential - staff.overall);
   const ageFactor =
-    staff.age <= 35 ? 1.15 : staff.age <= 50 ? 1.0 : staff.age <= 60 ? 0.7 : 0.35;
+    staff.age <= 35
+      ? 1.15
+      : staff.age <= 50
+        ? 1.0
+        : staff.age <= 60
+          ? 0.7
+          : 0.35;
   const experienceFactor = 1 + Math.min(0.15, staff.experience * 0.005);
-  const timeInRoleFactor = 1 + Math.min(0.1, staff.development.timeInRole * 0.01);
+  const timeInRoleFactor =
+    1 + Math.min(0.1, staff.development.timeInRole * 0.01);
 
   let base = 0;
   if (roomToGrow >= 8 && staff.age <= 45) {

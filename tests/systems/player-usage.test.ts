@@ -253,8 +253,9 @@ describe("weighted selection", () => {
     const profiles = buildOffensiveUsageProfiles(players);
     const sequence = (seed: number) => {
       const rng = createTestRng(seed);
-      return Array.from({ length: 40 }, () =>
-        pickWeightedPlayer(profiles, "involvementWeight", rng).id,
+      return Array.from(
+        { length: 40 },
+        () => pickWeightedPlayer(profiles, "involvementWeight", rng).id,
       ).join(",");
     };
     expect(sequence(1)).not.toEqual(sequence(2));

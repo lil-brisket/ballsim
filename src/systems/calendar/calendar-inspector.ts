@@ -7,9 +7,7 @@ import { parseCalendarDate } from "@/domain/calendar-date";
 import type { CalendarEventView } from "@/domain/entities/calendar-event";
 import type { GameState } from "@/state/game-state";
 import { projectOwnerCalendarEvents } from "@/systems/calendar/project-owner-calendar";
-import {
-  toCalendarLeagueMilestoneMarker,
-} from "@/systems/calendar/league-milestone-markers";
+import { toCalendarLeagueMilestoneMarker } from "@/systems/calendar/league-milestone-markers";
 import { getLeagueMilestones } from "@/systems/league-rules/calendar-events";
 import { canBeginRegularSeason } from "@/systems/league-rules";
 import {
@@ -141,8 +139,7 @@ export function buildCalendarSimulationPreview(
   const needsInit = needsRegularSeasonInitialization(state);
   const preview = previewAdvance(state);
   const gate = canBeginRegularSeason(state);
-  const blocked =
-    needsInit && (!preview.canAdvance || !gate.allowed);
+  const blocked = needsInit && (!preview.canAdvance || !gate.allowed);
 
   let blockReason: string | null = null;
   if (blocked) {

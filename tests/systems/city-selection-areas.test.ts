@@ -38,8 +38,7 @@ describe("city selection across league areas", () => {
 
       const available = cities.find((city) => !city.occupied);
       expect(available).toBeDefined();
-      const beforeName =
-        state.world.teams[state.user.activeOwnerTeamId]!.name;
+      const beforeName = state.world.teams[state.user.activeOwnerTeamId]!.name;
       const result = applyOwnerCitySelection(state, available!.city);
       expect(result.ok).toBe(true);
       if (!result.ok) {

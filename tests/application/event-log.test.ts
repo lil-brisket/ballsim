@@ -42,7 +42,12 @@ describe("eventLog persistence", () => {
   });
 
   it("appends newly emitted events exactly once across save/reload", async () => {
-    const created = await createNewOwnerSave({ settings: CBL_GAME_SETTINGS, name: "Event Log Franchise", rngSeed: TEST_RNG_SEED },
+    const created = await createNewOwnerSave(
+      {
+        settings: CBL_GAME_SETTINGS,
+        name: "Event Log Franchise",
+        rngSeed: TEST_RNG_SEED,
+      },
       store,
     );
     expect(created.ok).toBe(true);
@@ -69,8 +74,12 @@ describe("eventLog persistence", () => {
 
     await saveOwnerGame(saveId, loaded!.state, store);
     const reloaded = await store.load(saveId);
-    expect(getActiveOwnedFranchise(reloaded!.state).eventLog).toHaveLength(countAfterAdvance);
-    expect(getActiveOwnedFranchise(reloaded!.state).eventLog.map((e) => e.id)).toEqual(ids);
+    expect(getActiveOwnedFranchise(reloaded!.state).eventLog).toHaveLength(
+      countAfterAdvance,
+    );
+    expect(
+      getActiveOwnedFranchise(reloaded!.state).eventLog.map((e) => e.id),
+    ).toEqual(ids);
 
     const view = toEventLogView(reloaded!.state);
     expect(view).toHaveLength(countAfterAdvance);
@@ -98,15 +107,26 @@ describe("eventLog persistence", () => {
     );
 
     const trimmed = appendEventLog(base, many);
-    expect(getActiveOwnedFranchise(trimmed).eventLog).toHaveLength(EVENT_LOG_MAX);
-    expect(getActiveOwnedFranchise(trimmed).eventLog[0]?.payload.index).toBe(50);
+    expect(getActiveOwnedFranchise(trimmed).eventLog).toHaveLength(
+      EVENT_LOG_MAX,
+    );
+    expect(getActiveOwnedFranchise(trimmed).eventLog[0]?.payload.index).toBe(
+      50,
+    );
     expect(
-      getActiveOwnedFranchise(trimmed).eventLog[getActiveOwnedFranchise(trimmed).eventLog.length - 1]?.payload.index,
+      getActiveOwnedFranchise(trimmed).eventLog[
+        getActiveOwnedFranchise(trimmed).eventLog.length - 1
+      ]?.payload.index,
     ).toBe(EVENT_LOG_MAX + 49);
   });
 
   it("migrates schema 22 saves with empty eventLog", async () => {
-    const created = await createNewOwnerSave({ settings: CBL_GAME_SETTINGS, name: "Migrate Event Log", rngSeed: TEST_RNG_SEED },
+    const created = await createNewOwnerSave(
+      {
+        settings: CBL_GAME_SETTINGS,
+        name: "Migrate Event Log",
+        rngSeed: TEST_RNG_SEED,
+      },
       store,
     );
     expect(created.ok).toBe(true);
@@ -124,8 +144,8 @@ describe("eventLog persistence", () => {
         mode: loaded!.state.user.mode,
         objectives: getActiveOwnedFranchise(loaded!.state).objectives,
         notifications: getActiveOwnedFranchise(loaded!.state).notifications,
-        appliedGameplayConsequenceKeys:
-          getActiveOwnedFranchise(loaded!.state).appliedGameplayConsequenceKeys,
+        appliedGameplayConsequenceKeys: getActiveOwnedFranchise(loaded!.state)
+          .appliedGameplayConsequenceKeys,
       },
     };
 
@@ -135,4 +155,3 @@ describe("eventLog persistence", () => {
     expect(serializeGameState(migrated)).toContain("eventLog");
   });
 });
-

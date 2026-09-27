@@ -78,7 +78,10 @@ export function merchandiseFromAttendance(
   const sentimentFactor =
     MERCHANDISE_SENTIMENT_MIN +
     (sentiment / 100) * (MERCHANDISE_SENTIMENT_MAX - MERCHANDISE_SENTIMENT_MIN);
-  const boundedStar = Math.max(STAR_MERCH_MIN, Math.min(STAR_MERCH_MAX, starFactor));
+  const boundedStar = Math.max(
+    STAR_MERCH_MIN,
+    Math.min(STAR_MERCH_MAX, starFactor),
+  );
   return Math.round(
     attendance * MERCHANDISE_PER_ATTENDEE_BASE * sentimentFactor * boundedStar,
   );

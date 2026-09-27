@@ -16,10 +16,7 @@ import {
   projectPoint,
   REGION_MAP_CONFIG,
 } from "@/components/map/region-projection-config";
-import {
-  LEAGUE_AREA_LABELS,
-  type LeagueArea,
-} from "@/domain/game-settings";
+import { LEAGUE_AREA_LABELS, type LeagueArea } from "@/domain/game-settings";
 
 const HIT_RADIUS = 8;
 
@@ -106,11 +103,7 @@ export function GeographicMap(props: {
   const fill = props.fill === true;
 
   return (
-    <div
-      className={
-        fill ? "flex h-full min-h-0 flex-col gap-2" : "space-y-3"
-      }
-    >
+    <div className={fill ? "flex h-full min-h-0 flex-col gap-2" : "space-y-3"}>
       <div
         className={
           fill

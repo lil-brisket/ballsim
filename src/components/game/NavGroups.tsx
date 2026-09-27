@@ -2,7 +2,10 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import type { OwnerNavGroup, OwnerNavItem } from "@/application/owner-nav-config";
+import type {
+  OwnerNavGroup,
+  OwnerNavItem,
+} from "@/application/owner-nav-config";
 import { OWNER_NAV_GROUPS } from "@/application/owner-nav-config";
 import { cn, focusRingClass } from "@/components/ui/styles";
 

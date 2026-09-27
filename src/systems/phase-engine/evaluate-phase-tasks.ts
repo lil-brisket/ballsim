@@ -1,6 +1,4 @@
-import {
-  getContractStatus,
-} from "@/domain/entities/contract";
+import { getContractStatus } from "@/domain/entities/contract";
 import { draftClassIdFor } from "@/domain/entities/draft";
 import type { TeamId } from "@/domain/ids";
 import type { GameState } from "@/state/game-state";
@@ -8,9 +6,7 @@ import { draftYearForSeason } from "@/systems/draft";
 import { isUserOnDraftClock } from "@/systems/draft/draft-clock";
 import { evaluatePhaseFocus } from "@/systems/phase-engine/evaluate-phase-focus";
 import { getActivePhaseId } from "@/systems/phase-engine/resolve-current-phase";
-import {
-  analyzeTeamPhaseContext,
-} from "@/systems/phase-engine/team-context";
+import { analyzeTeamPhaseContext } from "@/systems/phase-engine/team-context";
 import type {
   ActionPriority,
   DismissedRecommendation,
@@ -272,8 +268,7 @@ function buildTasksForPhase(
       priority: "recommended",
       title: "Set rotations and lineups",
       detail: "Confirm depth chart before opening night.",
-      explanation:
-        "A configured rotation avoids early-season lineup issues.",
+      explanation: "A configured rotation avoids early-season lineup issues.",
       href: `/dashboard/${saveId}/team-management/lineups`,
       teamId,
       focusKey: "preseason_prep",
@@ -329,9 +324,7 @@ function rosterDecisionTasks(
     const status = getContractStatus(contract, year);
     if (status === "team_option" || status === "player_option") {
       const player = state.world.players[contract.playerId];
-      const name = player
-        ? `${player.firstName} ${player.lastName}`
-        : "Player";
+      const name = player ? `${player.firstName} ${player.lastName}` : "Player";
       const optionKind =
         status === "team_option" ? "team option" : "player option";
       tasks.push({
@@ -348,14 +341,9 @@ function rosterDecisionTasks(
         teamId,
         focusKey: "pending_options",
       });
-    } else if (
-      status === "active" &&
-      contract.endYear === year
-    ) {
+    } else if (status === "active" && contract.endYear === year) {
       const player = state.world.players[contract.playerId];
-      const name = player
-        ? `${player.firstName} ${player.lastName}`
-        : "Player";
+      const name = player ? `${player.firstName} ${player.lastName}` : "Player";
       tasks.push({
         taskKey: `expiring:${contract.id}`,
         type: "expiring_contract",

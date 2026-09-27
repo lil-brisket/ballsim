@@ -1,4 +1,10 @@
-import type { CoachId, LeagueId, PlayerId, SeasonId, TeamId } from "@/domain/ids";
+import type {
+  CoachId,
+  LeagueId,
+  PlayerId,
+  SeasonId,
+  TeamId,
+} from "@/domain/ids";
 import type { PlayerSeasonStatLine } from "@/domain/entities/player-history";
 
 export type AwardCadence = "monthly" | "yearly";

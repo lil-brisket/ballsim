@@ -2,9 +2,7 @@ import type {
   GameDayPromotionAssignment,
   GameDayPromotionSeasonState,
 } from "@/domain/entities/game-day-promotion";
-import {
-  createEmptyGameDayPromotionSeasonState,
-} from "@/domain/entities/game-day-promotion";
+import { createEmptyGameDayPromotionSeasonState } from "@/domain/entities/game-day-promotion";
 import type { Game } from "@/domain/entities/game";
 import type { DomainEvent } from "@/domain/events";
 import { createDomainEvent } from "@/domain/events";
@@ -143,7 +141,9 @@ export function scheduleGameDayPromotion(
 
   const ops = state.business.franchiseOps[teamId];
   if (!ops) {
-    throw new Error(`scheduleGameDayPromotion: franchiseOps missing for "${teamId}".`);
+    throw new Error(
+      `scheduleGameDayPromotion: franchiseOps missing for "${teamId}".`,
+    );
   }
 
   let promoState = ensurePromoState(state, teamId);
@@ -192,7 +192,11 @@ export function scheduleGameDayPromotion(
     }
   }
 
-  assertCapitalSpendingAllowed(state, teamId, "Scheduling a game-day promotion");
+  assertCapitalSpendingAllowed(
+    state,
+    teamId,
+    "Scheduling a game-day promotion",
+  );
   assertSufficientBusinessFunds(
     state,
     teamId,
@@ -352,7 +356,10 @@ export function refreshPromotionAssignmentStatuses(
   let changed = false;
   const assignments = { ...promoState.assignments };
   for (const [gameId, assignment] of Object.entries(assignments)) {
-    if (assignment.status !== "scheduled" && assignment.status !== "committed") {
+    if (
+      assignment.status !== "scheduled" &&
+      assignment.status !== "committed"
+    ) {
       continue;
     }
     const game = state.competition.games[gameId];

@@ -86,9 +86,7 @@ describe("substitution engine", () => {
       secondsOnCourt: new Map(),
       continuousSecondsOnCourt: new Map(),
       lastSubElapsedSeconds: new Map(),
-      foulsByPlayerId: new Map(
-        [...fouledOut].map((id) => [id, 6]),
-      ),
+      foulsByPlayerId: new Map([...fouledOut].map((id) => [id, 6])),
       fouledOutIds: fouledOut,
       unavailableIds: new Set(),
       fatigueByPlayerId: new Map(),
@@ -156,9 +154,7 @@ describe("substitution engine", () => {
     const secondsOnCourt = new Map(
       onCourt.map((p) => [p.id as string, 20 * 60]),
     );
-    const continuous = new Map(
-      onCourt.map((p) => [p.id as string, 500]),
-    );
+    const continuous = new Map(onCourt.map((p) => [p.id as string, 500]));
 
     const result = evaluateSubstitutions({
       teamId,
@@ -172,9 +168,7 @@ describe("substitution engine", () => {
       foulsByPlayerId: new Map(),
       fouledOutIds: new Set(),
       unavailableIds: new Set(),
-      fatigueByPlayerId: new Map(
-        onCourt.map((p) => [p.id as string, 0.9]),
-      ),
+      fatigueByPlayerId: new Map(onCourt.map((p) => [p.id as string, 0.9])),
       elapsedGameSeconds: 1200,
       context: buildRotationGameContext({
         periodNumber: 2,

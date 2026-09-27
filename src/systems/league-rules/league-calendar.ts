@@ -5,10 +5,7 @@
  * league state, event completion, and blocking owner decisions.
  */
 
-import {
-  addCalendarDays,
-  calendarDaysBetween,
-} from "@/domain/calendar-date";
+import { addCalendarDays, calendarDaysBetween } from "@/domain/calendar-date";
 import { hasBlockingOwnerDecision } from "@/domain/entities/owner-decision";
 import type { GameState } from "@/state/game-state";
 import { isDraftCompleteForYear } from "@/systems/league-rules/draft-rules";

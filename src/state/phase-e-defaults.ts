@@ -32,7 +32,10 @@ export function createPhaseEBusinessDefaults(
   leagueEconomy: ReturnType<typeof createDefaultLeagueEconomy>;
   relocationByTeamId: Record<string, ReturnType<typeof createIdleRelocation>>;
   expansion: ReturnType<typeof createIdleExpansionState>;
-  franchiseHistory: Record<string, ReturnType<typeof createEmptyFranchiseHistory>>;
+  franchiseHistory: Record<
+    string,
+    ReturnType<typeof createEmptyFranchiseHistory>
+  >;
   franchiseReportCache: Record<string, never>;
   gameArchive: Record<string, never>;
   playerHistory: Record<string, never>;

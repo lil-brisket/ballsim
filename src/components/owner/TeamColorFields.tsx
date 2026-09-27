@@ -1,10 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import {
-  isHexColor,
-  normalizeHexColor,
-} from "@/domain/entities/team-branding";
+import { isHexColor, normalizeHexColor } from "@/domain/entities/team-branding";
 
 export type TeamColorChannel = "primary" | "secondary" | "accent";
 

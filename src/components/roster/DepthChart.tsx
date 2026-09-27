@@ -40,10 +40,7 @@ export function DepthChart(props: {
                   {entries.slice(0, 5).map((entry, index) => (
                     <li
                       key={`${position}-${entry.playerId}`}
-                      className={cn(
-                        "text-sm",
-                        !entry.canPlay && "opacity-60",
-                      )}
+                      className={cn("text-sm", !entry.canPlay && "opacity-60")}
                     >
                       <div className="flex items-baseline justify-between gap-1">
                         <span className="min-w-0 truncate">

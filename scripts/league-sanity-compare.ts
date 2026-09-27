@@ -54,7 +54,11 @@ function getPath(obj: unknown, path: string): unknown {
   return cur;
 }
 
-function compareMetric(path: string, baseline: LeagueSanityReport, current: LeagueSanityReport): DiffRow {
+function compareMetric(
+  path: string,
+  baseline: LeagueSanityReport,
+  current: LeagueSanityReport,
+): DiffRow {
   const b = num(getPath(baseline, path));
   const c = num(getPath(current, path));
   const delta = b !== null && c !== null ? c - b : null;
@@ -68,7 +72,11 @@ function compareMetric(path: string, baseline: LeagueSanityReport, current: Leag
     if (absTol !== undefined && Math.abs(delta) > absTol) {
       warn = true;
     }
-    if (pctTol !== undefined && deltaPct !== null && Math.abs(deltaPct) > pctTol) {
+    if (
+      pctTol !== undefined &&
+      deltaPct !== null &&
+      Math.abs(deltaPct) > pctTol
+    ) {
       warn = true;
     }
     if (absTol === undefined && pctTol === undefined && deltaPct !== null) {
@@ -111,8 +119,12 @@ const diffs = PATHS.map((path) => compareMetric(path, baseline, current));
 
 console.log("LEAGUE SANITY REGRESSION COMPARE");
 console.log("================================");
-console.log(`Baseline seed: ${baseline.metadata.simulationSeed} checksum=${baseline.metadata.resultChecksum}`);
-console.log(`Current seed:  ${current.metadata.simulationSeed} checksum=${current.metadata.resultChecksum}`);
+console.log(
+  `Baseline seed: ${baseline.metadata.simulationSeed} checksum=${baseline.metadata.resultChecksum}`,
+);
+console.log(
+  `Current seed:  ${current.metadata.simulationSeed} checksum=${current.metadata.resultChecksum}`,
+);
 console.log("");
 
 let warnCount = 0;

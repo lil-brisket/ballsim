@@ -15,9 +15,7 @@ export function FinancialStatStrip(props: { view: FinanceHubView }) {
       />
       <Strip
         label="Net change (month)"
-        value={
-          <MoneyDisplay amount={month.liquidity.netBusinessFundsChange} />
-        }
+        value={<MoneyDisplay amount={month.liquidity.netBusinessFundsChange} />}
       />
       <Strip
         label="Payroll"

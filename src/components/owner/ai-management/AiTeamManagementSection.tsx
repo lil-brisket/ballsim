@@ -10,7 +10,10 @@ import {
   setPhaseDelegated,
   visibleDelegationPhaseCount,
 } from "@/domain/ai-management-delegation";
-import type { AiAssistancePhases, ManagementPhase } from "@/domain/ai-management-presets";
+import type {
+  AiAssistancePhases,
+  ManagementPhase,
+} from "@/domain/ai-management-presets";
 import { AiAssistanceHelpPanel } from "@/components/owner/ai-management/AiAssistanceHelpPanel";
 import { DelegationCategorySection } from "@/components/owner/ai-management/DelegationCategorySection";
 import { DelegationSummary } from "@/components/owner/ai-management/DelegationSummary";
@@ -29,7 +32,11 @@ export function AiTeamManagementSection({
 
   function togglePhase(phase: ManagementPhase) {
     onAssistanceChange(
-      setPhaseDelegated(assistance, phase, !isPhaseDelegated(assistance, phase)),
+      setPhaseDelegated(
+        assistance,
+        phase,
+        !isPhaseDelegated(assistance, phase),
+      ),
     );
   }
 

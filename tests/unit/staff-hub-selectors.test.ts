@@ -12,7 +12,10 @@ import { fireStaff } from "@/systems/staff";
 import { makeStaffOffer } from "@/systems/staff-free-agency";
 import { findTeamStaffByRole } from "@/systems/staff-effects";
 import { asStaffId, asTeamId } from "@/domain/ids";
-import { getLeagueStaffBudget, getTeamStaffPayroll } from "@/systems/staff-budget";
+import {
+  getLeagueStaffBudget,
+  getTeamStaffPayroll,
+} from "@/systems/staff-budget";
 import { STAFF_ROLES } from "@/domain/entities/staff-roles";
 
 function boot(saveId: string) {
@@ -55,9 +58,9 @@ describe("staff-hub-selectors", () => {
     state = fireStaff(state, teamId, medical!.id).state;
 
     const hub = toStaffHubView(state);
-    expect(hub.vacantRoleEntries.some((entry) => entry.role === "medical")).toBe(
-      true,
-    );
+    expect(
+      hub.vacantRoleEntries.some((entry) => entry.role === "medical"),
+    ).toBe(true);
     expect(hub.vacantRoles).toContain("Medical Staff");
   });
 
@@ -136,7 +139,11 @@ describe("staff-hub-selectors", () => {
       );
     }
 
-    const byOverall = applyStaffHiringMarketFilters(market, undefined, "overall");
+    const byOverall = applyStaffHiringMarketFilters(
+      market,
+      undefined,
+      "overall",
+    );
     for (let i = 1; i < byOverall.length; i += 1) {
       expect(byOverall[i - 1]!.overall).toBeGreaterThanOrEqual(
         byOverall[i]!.overall,

@@ -1,4 +1,8 @@
-import { createPlayer, PLAYER_ATTRIBUTE_KEYS, type Player } from "@/domain/entities/player";
+import {
+  createPlayer,
+  PLAYER_ATTRIBUTE_KEYS,
+  type Player,
+} from "@/domain/entities/player";
 import type { DomainEvent } from "@/domain/events";
 import { createDomainEvent } from "@/domain/events";
 import type { TeamId } from "@/domain/ids";
@@ -43,7 +47,8 @@ export function combinedDevelopmentMultiplier(
   if (developmentStageForAge(playerAge) === "developing") {
     const level =
       state.business.franchiseOps[teamId]?.facilities.youth.level ?? 1;
-    youth = 1 + ((level - 1) / (FACILITY_LEVEL_MAX - 1)) * YOUTH_DEV_BONUS_AT_MAX;
+    youth =
+      1 + ((level - 1) / (FACILITY_LEVEL_MAX - 1)) * YOUTH_DEV_BONUS_AT_MAX;
   }
   return facility * trainer * youth;
 }

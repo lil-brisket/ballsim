@@ -16,9 +16,7 @@ export type {
   ResolvedPhase,
 } from "@/systems/phase-engine/phase-types";
 
-export {
-  LEAGUE_PHASE_IDS,
-} from "@/systems/phase-engine/phase-types";
+export { LEAGUE_PHASE_IDS } from "@/systems/phase-engine/phase-types";
 
 export {
   PHASE_DEFINITIONS,
@@ -39,9 +37,7 @@ export {
   seasonPhaseFromLeaguePhase,
 } from "@/systems/phase-engine/resolve-current-phase";
 
-export {
-  analyzeTeamPhaseContext,
-} from "@/systems/phase-engine/team-context";
+export { analyzeTeamPhaseContext } from "@/systems/phase-engine/team-context";
 export type {
   TeamPhaseContext,
   PositionalStrength,

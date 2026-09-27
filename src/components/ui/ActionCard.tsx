@@ -26,10 +26,7 @@ type ActionCardBase = {
  */
 export function ActionCard(
   props: ActionCardBase &
-    (
-      | { href: string; onClick?: never }
-      | { href?: never; onClick: () => void }
-    ),
+    ({ href: string; onClick?: never } | { href?: never; onClick: () => void }),
 ) {
   const density = props.density ?? "default";
   const className = cn(

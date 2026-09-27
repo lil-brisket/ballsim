@@ -17,7 +17,5 @@ export default async function StaffCoachingStaffPage({
   if (!view) {
     notFound();
   }
-  return (
-    <StaffPageView view={view} error={error} />
-  );
+  return <StaffPageView view={view} error={error} />;
 }

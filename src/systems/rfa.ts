@@ -3,10 +3,7 @@ import {
   getContractSalaryForYear,
   isContractActive,
 } from "@/domain/entities/contract";
-import {
-  createRfaStatus,
-  type RfaStatus,
-} from "@/domain/entities/rfa-status";
+import { createRfaStatus, type RfaStatus } from "@/domain/entities/rfa-status";
 import { createDomainEvent, type DomainEvent } from "@/domain/events";
 import type { PlayerId } from "@/domain/ids";
 import { systemResult, type SystemResult } from "@/domain/system-result";
@@ -62,10 +59,8 @@ export function finalizeRfaQualification(
       leagueMin;
     const qoSalary = computeQualifyingOfferSalary(priorSalary, leagueMin);
 
-    const isAiTeam =
-      player.teamId != null && !owned.has(player.teamId);
-    const autoIssue =
-      options.autoIssueQoForAiTeams === true && isAiTeam;
+    const isAiTeam = player.teamId != null && !owned.has(player.teamId);
+    const autoIssue = options.autoIssueQoForAiTeams === true && isAiTeam;
 
     if (autoIssue && player.teamId != null) {
       rfaStatuses[player.id] = createRfaStatus({
@@ -139,8 +134,7 @@ export function issueQualifyingOffer(
   }
   const year = state.competition.season.year;
   const leagueMin = Math.round(getLeagueSalaryCap(state) * 0.01);
-  const priorSalary =
-    getContractSalaryForYear(contract, year) ?? leagueMin;
+  const priorSalary = getContractSalaryForYear(contract, year) ?? leagueMin;
   const qoSalary = computeQualifyingOfferSalary(priorSalary, leagueMin);
 
   const status = createRfaStatus({

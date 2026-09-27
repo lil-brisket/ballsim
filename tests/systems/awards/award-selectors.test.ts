@@ -42,6 +42,8 @@ describe("award selectors", () => {
     expect(league.rows.length).toBeGreaterThan(0);
     const mvp = league.rows.find((r) => r.result.awardId === "mvp");
     expect(mvp?.result.candidates[0]?.rank).toBe(1);
-    expect(mvp?.result.candidates[0]?.subjectId).toBe(mvp?.result.winner.subjectId);
+    expect(mvp?.result.candidates[0]?.subjectId).toBe(
+      mvp?.result.winner.subjectId,
+    );
   });
 });

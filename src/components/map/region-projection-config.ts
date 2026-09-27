@@ -85,10 +85,12 @@ const countriesCollection = feature(
   world.objects.countries,
 ) as FeatureCollection<Geometry, CountryProperties>;
 
-let cachedFeatures: Partial<Record<LeagueArea, Feature<Geometry, CountryProperties>[]>> =
-  {};
-let cachedAdmin1: Partial<Record<LeagueArea, Feature<Geometry, CountryProperties>[]>> =
-  {};
+let cachedFeatures: Partial<
+  Record<LeagueArea, Feature<Geometry, CountryProperties>[]>
+> = {};
+let cachedAdmin1: Partial<
+  Record<LeagueArea, Feature<Geometry, CountryProperties>[]>
+> = {};
 
 function forEachPosition(
   coords: unknown,
@@ -149,7 +151,9 @@ export function getRegionAdmin1LineFeatures(
   return filtered;
 }
 
-function createBaseProjection(kind: RegionMapConfig["projectionKind"]): GeoProjection {
+function createBaseProjection(
+  kind: RegionMapConfig["projectionKind"],
+): GeoProjection {
   if (kind === "albers") {
     return geoAlbers().parallels([29.5, 45.5]).rotate([96, 0]).center([0, 38]);
   }

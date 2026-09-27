@@ -5,9 +5,19 @@ import type { TeamId } from "@/domain/ids";
 import type { Rng } from "@/domain/rng";
 import { systemResult, type SystemResult } from "@/domain/system-result";
 import type { GameState } from "@/state/game-state";
-import { findTeamStaffByRole, annualSalaryForStaff } from "@/systems/staff-effects";
-import { acceptStaffOffer, makeStaffOffer, negotiateStaffOffer } from "@/systems/staff-free-agency";
-import { renewStaffContract, fireStaffWithBuyout } from "@/systems/staff-contract-lifecycle";
+import {
+  findTeamStaffByRole,
+  annualSalaryForStaff,
+} from "@/systems/staff-effects";
+import {
+  acceptStaffOffer,
+  makeStaffOffer,
+  negotiateStaffOffer,
+} from "@/systems/staff-free-agency";
+import {
+  renewStaffContract,
+  fireStaffWithBuyout,
+} from "@/systems/staff-contract-lifecycle";
 import { getTeamStaffBudgetSpace } from "@/systems/staff-budget";
 import { STAFF_DEFAULT_CONTRACT_YEARS } from "@/systems/staff-config";
 import { asStaffOfferId } from "@/domain/ids";
@@ -138,7 +148,9 @@ export function runLeagueStaffAiManagement(
 }
 
 function roleLeagueAverage(state: GameState, role: StaffRole): number {
-  const members = Object.values(state.world.staff).filter((s) => s.role === role);
+  const members = Object.values(state.world.staff).filter(
+    (s) => s.role === role,
+  );
   if (members.length === 0) return 50;
   const sum = members.reduce((acc, s) => acc + s.overall, 0);
   return Math.round(sum / members.length);

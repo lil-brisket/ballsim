@@ -175,14 +175,10 @@ export function toScoutingReportView(
 
   const report = buildScoutingReport(estimate);
   const level = estimate.knowledgeLevel;
-  const showCategories =
-    level === "detailed" || level === "comprehensive";
-  const showIntangibles =
-    level === "detailed" || level === "comprehensive";
+  const showCategories = level === "detailed" || level === "comprehensive";
+  const showIntangibles = level === "detailed" || level === "comprehensive";
   const showStrengths =
-    level === "developing" ||
-    level === "detailed" ||
-    level === "comprehensive";
+    level === "developing" || level === "detailed" || level === "comprehensive";
 
   const categories: ScoutingReportView["categories"] = {};
   if (showCategories) {

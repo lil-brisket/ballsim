@@ -350,7 +350,8 @@ function addToBooks(
       ...booksByMonth,
       [monthId]: nextMonthBooks,
     },
-    businessFundsLedgerByMonth: existingFinance.businessFundsLedgerByMonth ?? {},
+    businessFundsLedgerByMonth:
+      existingFinance.businessFundsLedgerByMonth ?? {},
   };
 
   return {
@@ -376,13 +377,17 @@ function assertTeamAndFinanceExist(state: GameState, teamId: TeamId): void {
   }
 }
 
-function assertRevenueCategory(category: string): asserts category is RevenueCategory {
+function assertRevenueCategory(
+  category: string,
+): asserts category is RevenueCategory {
   if (!isRevenueCategory(category)) {
     throw new Error(`Invalid revenue category "${category}".`);
   }
 }
 
-function assertExpenseCategory(category: string): asserts category is ExpenseCategory {
+function assertExpenseCategory(
+  category: string,
+): asserts category is ExpenseCategory {
   if (category === "playerSalaries") {
     throw new Error(
       'Expense category "playerSalaries" is derived from contracts and cannot be posted.',

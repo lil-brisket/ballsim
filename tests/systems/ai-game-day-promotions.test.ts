@@ -58,8 +58,8 @@ describe("AI game-day promotions", () => {
 
     const result = runAiGameDayPromotionDecisions(state, rng);
     const userAssignments =
-      result.state.business.gameDayPromotionsByTeamId[userTeamId]?.assignments ??
-      {};
+      result.state.business.gameDayPromotionsByTeamId[userTeamId]
+        ?.assignments ?? {};
     expect(Object.keys(userAssignments)).toHaveLength(0);
     expect(isUserControlledTeam(result.state, userTeamId)).toBe(true);
 

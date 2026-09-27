@@ -36,7 +36,10 @@ export function EventCard(props: {
         </p>
       </div>
       {props.amount != null ? (
-        <MoneyDisplay amount={props.amount} className="shrink-0 text-zinc-400" />
+        <MoneyDisplay
+          amount={props.amount}
+          className="shrink-0 text-zinc-400"
+        />
       ) : null}
     </li>
   );

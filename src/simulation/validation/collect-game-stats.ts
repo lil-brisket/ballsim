@@ -35,20 +35,13 @@ function teamSnapshot(
     turnovers: stats.turnovers,
     fouls: stats.fouls,
     possessions,
-    fieldGoalPct: shootingPct(
-      stats.fieldGoalsMade,
-      stats.fieldGoalsAttempted,
-    ),
+    fieldGoalPct: shootingPct(stats.fieldGoalsMade, stats.fieldGoalsAttempted),
     threePointPct: shootingPct(
       stats.threePointersMade,
       stats.threePointersAttempted,
     ),
-    freeThrowPct: shootingPct(
-      stats.freeThrowsMade,
-      stats.freeThrowsAttempted,
-    ),
-    pointsPerPossession:
-      possessions > 0 ? stats.points / possessions : null,
+    freeThrowPct: shootingPct(stats.freeThrowsMade, stats.freeThrowsAttempted),
+    pointsPerPossession: possessions > 0 ? stats.points / possessions : null,
   };
 }
 

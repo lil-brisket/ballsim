@@ -108,7 +108,10 @@ function resolveOffseason(state: GameState, rng: Rng): GameState {
       current = persistRng(runAiTeamDecisions(current, rng).state, rng);
       continue;
     }
-    current = persistRng(advanceSimulation(current, rng, { days: 1 }).state, rng);
+    current = persistRng(
+      advanceSimulation(current, rng, { days: 1 }).state,
+      rng,
+    );
     if (current.competition.season.phase === "preseason") {
       return current;
     }

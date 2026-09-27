@@ -22,7 +22,9 @@ export function getTradeBlock(state: GameState, teamId: TeamId): TradeBlock {
   const block = existing ?? createEmptyTradeBlock(teamId);
   return {
     teamId: block.teamId,
-    assets: block.assets.filter((asset) => isAssetOwnedByTeam(state, teamId, asset)),
+    assets: block.assets.filter((asset) =>
+      isAssetOwnedByTeam(state, teamId, asset),
+    ),
   };
 }
 
@@ -43,7 +45,8 @@ export function addToTradeBlock(
     );
   }
 
-  const existing = state.business.tradeBlocks[teamId] ?? createEmptyTradeBlock(teamId);
+  const existing =
+    state.business.tradeBlocks[teamId] ?? createEmptyTradeBlock(teamId);
   if (assetAlreadyListed(existing, asset)) {
     return systemResult(state);
   }
@@ -79,7 +82,9 @@ export function removeFromTradeBlock(
     return systemResult(state);
   }
 
-  const assets = existing.assets.filter((asset) => !assetMatchesRef(asset, assetRef));
+  const assets = existing.assets.filter(
+    (asset) => !assetMatchesRef(asset, assetRef),
+  );
   if (assets.length === existing.assets.length) {
     return systemResult(state);
   }
@@ -126,7 +131,10 @@ function toTradeBlockAsset(
   return { kind: "draftPick", draftPickId: ref.draftPickId, status };
 }
 
-function assetAlreadyListed(block: TradeBlock, asset: TradeBlockAsset): boolean {
+function assetAlreadyListed(
+  block: TradeBlock,
+  asset: TradeBlockAsset,
+): boolean {
   return block.assets.some((existing) => assetMatchesRef(existing, asset));
 }
 

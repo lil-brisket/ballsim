@@ -3,7 +3,10 @@
  * This is a projection, not a scripted substitution schedule.
  */
 
-import type { RotationEntry, RotationRole } from "@/domain/entities/team-roster-management";
+import type {
+  RotationEntry,
+  RotationRole,
+} from "@/domain/entities/team-roster-management";
 
 export type QuarterProjectionPlayer = {
   playerId: string;
@@ -28,7 +31,9 @@ const QUARTER_MINUTES = 12;
  * - Sixth man / rotation heavy Q1/Q2/Q3 middle
  * - Bench heavier Q2/Q4 garbage-ish / rest segments
  */
-function roleQuarterWeights(role: RotationRole): [number, number, number, number] {
+function roleQuarterWeights(
+  role: RotationRole,
+): [number, number, number, number] {
   switch (role) {
     case "starter":
       return [0.28, 0.22, 0.25, 0.25];

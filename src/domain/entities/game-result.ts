@@ -221,10 +221,7 @@ function assertPeriodScores(periodScores: unknown): void {
     throw new Error("GameResult periodScores must be an array.");
   }
   for (let index = 0; index < periodScores.length; index += 1) {
-    assertScore(
-      periodScores[index] as GameScore,
-      `periodScores[${index}]`,
-    );
+    assertScore(periodScores[index] as GameScore, `periodScores[${index}]`);
   }
 }
 
@@ -335,9 +332,6 @@ function assertTeamStats(stats: GameTeamStats, fieldPrefix: string): void {
     if (field === "teamId") {
       continue;
     }
-    assertNonNegativeInteger(
-      stats[field] as number,
-      `${fieldPrefix}.${field}`,
-    );
+    assertNonNegativeInteger(stats[field] as number, `${fieldPrefix}.${field}`);
   }
 }

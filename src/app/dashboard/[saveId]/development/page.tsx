@@ -140,11 +140,7 @@ export default async function DevelopmentHubPage({
               headers={["Player", "Stage", "OVR", "Change", "POT", "DL"]}
             >
               {view.rows.map((row) => (
-                <DevelopmentRow
-                  key={row.playerId}
-                  saveId={saveId}
-                  row={row}
-                />
+                <DevelopmentRow key={row.playerId} saveId={saveId} row={row} />
               ))}
             </DataTable>
           </div>

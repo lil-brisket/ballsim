@@ -1,7 +1,10 @@
 import type { FantasyDraft } from "@/domain/entities/fantasy-draft";
 import type { Player } from "@/domain/entities/player";
 import type { Team } from "@/domain/entities/team";
-import { createDomainEvent, type DomainEvent } from "@/domain/events/domain-event";
+import {
+  createDomainEvent,
+  type DomainEvent,
+} from "@/domain/events/domain-event";
 import type { GameState } from "@/state/game-state";
 import { appendSeasonEventLog } from "@/state/game-state";
 import { withFantasyDraft } from "@/systems/fantasy-draft/draft-order";
@@ -61,10 +64,7 @@ export function undoLastFantasyDraftPick(
     };
   }
 
-  if (
-    last.contractId &&
-    !isFantasyDraftContractId(String(last.contractId))
-  ) {
+  if (last.contractId && !isFantasyDraftContractId(String(last.contractId))) {
     return {
       success: false,
       message: "Last pick contract is not a fantasy-draft contract.",

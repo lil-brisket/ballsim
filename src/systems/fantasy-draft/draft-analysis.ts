@@ -63,7 +63,10 @@ function gradeLabel(grade: string): string {
   return "Weak draft";
 }
 
-function valueStarsFromTalentRank(talentRank: number, pickNumber: number): number {
+function valueStarsFromTalentRank(
+  talentRank: number,
+  pickNumber: number,
+): number {
   const expectedRank = Math.max(1, Math.round(pickNumber * 0.85));
   const delta = expectedRank - talentRank;
   if (delta >= 12) return 5;
@@ -121,10 +124,7 @@ export function analyzeFantasyDraftPicks(
     ReturnType<typeof resolveFranchisePreferences>
   >();
   for (const teamId of draft.draftOrder) {
-    prefsByTeam.set(
-      teamId,
-      resolveFranchisePreferences(state, teamId),
-    );
+    prefsByTeam.set(teamId, resolveFranchisePreferences(state, teamId));
   }
 
   const talentScoreByPlayer = new Map<string, number>();
@@ -132,7 +132,10 @@ export function analyzeFantasyDraftPicks(
     const player = state.world.players[playerId];
     if (!player) continue;
     // Neutral talent score (no franchise prefs) for league-comparable ranks
-    talentScoreByPlayer.set(String(playerId), draftTalentScore(player, undefined));
+    talentScoreByPlayer.set(
+      String(playerId),
+      draftTalentScore(player, undefined),
+    );
   }
 
   const taken = new Set<string>();
@@ -183,7 +186,10 @@ export function analyzeFantasyDraftPicks(
     let talentRank = 1;
     for (const id of availableIds) {
       const score = talentScoreByPlayer.get(id) ?? 0;
-      if (score > selectedTalent || (score === selectedTalent && id < selectedKey)) {
+      if (
+        score > selectedTalent ||
+        (score === selectedTalent && id < selectedKey)
+      ) {
         talentRank += 1;
       }
     }
@@ -207,10 +213,7 @@ export function analyzeFantasyDraftPicks(
         selection.round,
         draft.picksPerTeam,
       );
-      if (
-        fit > selectedFit ||
-        (fit === selectedFit && id < selectedKey)
-      ) {
+      if (fit > selectedFit || (fit === selectedFit && id < selectedKey)) {
         fitRank += 1;
       }
     }
@@ -276,8 +279,7 @@ function buildTeamSummary(
       ? 0
       : Math.round(
           (players.reduce(
-            (sum, p) =>
-              sum + calculatePlayerOverall(p.position, p.attributes),
+            (sum, p) => sum + calculatePlayerOverall(p.position, p.attributes),
             0,
           ) /
             playerCount) *
@@ -312,9 +314,7 @@ function buildTeamSummary(
       );
       const averageOverall =
         overalls.length > 0
-          ? Math.round(
-              overalls.reduce((a, b) => a + b, 0) / overalls.length,
-            )
+          ? Math.round(overalls.reduce((a, b) => a + b, 0) / overalls.length)
           : null;
       return {
         position,
@@ -351,7 +351,10 @@ function buildTeamSummary(
     if (!highestPotential || h.potential > highestPotential.potential) {
       highestPotential = h;
     }
-    if (!oldestPick || player.age > (state.world.players[oldestPick.playerId]?.age ?? 0)) {
+    if (
+      !oldestPick ||
+      player.age > (state.world.players[oldestPick.playerId]?.age ?? 0)
+    ) {
       oldestPick = h;
     }
     if (
@@ -390,7 +393,8 @@ function buildTeamSummary(
     if (bp) bestPick = highlightFromPlayer(bp, best.selection.pickNumber);
     if (reach.analysis.reachDelta >= 8) {
       const rp = state.world.players[reach.selection.playerId];
-      if (rp) biggestReach = highlightFromPlayer(rp, reach.selection.pickNumber);
+      if (rp)
+        biggestReach = highlightFromPlayer(rp, reach.selection.pickNumber);
     }
     const vp = state.world.players[value.selection.playerId];
     if (vp) bestValue = highlightFromPlayer(vp, value.selection.pickNumber);
@@ -413,15 +417,13 @@ function buildTeamSummary(
       ? 10
       : teamAnalyses.reduce((s, a) => s + a.talentRankAtPick, 0) /
         teamAnalyses.length;
-  const valueShare =
-    playerCount === 0 ? 0 : strongValuePickCount / playerCount;
+  const valueShare = playerCount === 0 ? 0 : strongValuePickCount / playerCount;
   const needPenalty = remainingWeaknesses.length * 4;
   const youthBonus = avgAge <= 24 ? 4 : avgAge <= 26 ? 2 : 0;
   const potBonus = Math.max(0, (avgPot - 80) * 0.4);
   const ovrBonus = Math.max(0, (avgOvr - 76) * 0.5);
-  const balancePenalty = positionBalance.filter(
-    (b) => b.level === "Weak",
-  ).length * 3;
+  const balancePenalty =
+    positionBalance.filter((b) => b.level === "Weak").length * 3;
 
   const composite =
     72 +
@@ -452,9 +454,7 @@ function buildTeamSummary(
   if (avgAge <= 24) strengths.push("Elite young talent");
   if (avgOvr >= 82) strengths.push("High overall talent acquisition");
   if (positionalOverlap.length > 0) {
-    concerns.push(
-      `Positional overlap at ${positionalOverlap.join(", ")}`,
-    );
+    concerns.push(`Positional overlap at ${positionalOverlap.join(", ")}`);
   }
   if (avgAge >= 28) concerns.push("Limited youth / aging core risk");
   if (players.filter((p) => p.age >= 30).length === 0 && avgAge < 25) {
@@ -475,11 +475,7 @@ function buildTeamSummary(
   const uniqueConcerns = [...new Set(concerns)].slice(0, 5);
 
   const shortTerm =
-    avgOvr >= 82
-      ? "Competitive"
-      : avgOvr >= 76
-        ? "Developing"
-        : "Rebuilding";
+    avgOvr >= 82 ? "Competitive" : avgOvr >= 76 ? "Developing" : "Rebuilding";
   const longTerm =
     avgPot >= 88
       ? "Excellent"
@@ -492,8 +488,7 @@ function buildTeamSummary(
   const guardHeavy =
     (counts.get("PG") ?? 0) + (counts.get("SG") ?? 0) >=
     Math.ceil(playerCount * 0.5);
-  const frontcourtThin =
-    (counts.get("PF") ?? 0) + (counts.get("C") ?? 0) <= 2;
+  const frontcourtThin = (counts.get("PF") ?? 0) + (counts.get("C") ?? 0) <= 2;
 
   const verdictParts: string[] = [];
   if (avgPot >= 86 && avgAge <= 25) {
@@ -689,11 +684,9 @@ function buildLeagueRecap(
       teamPicks.reduce((s, a) => s + a.reachDelta, 0) / teamPicks.length;
     if (avg > maxAvgReach) {
       maxAvgReach = avg;
-      mostAggressive = award(
-        teamId,
-        `Avg reach delta ${avg.toFixed(1)}`,
-        { value: avg },
-      );
+      mostAggressive = award(teamId, `Avg reach delta ${avg.toFixed(1)}`, {
+        value: avg,
+      });
     }
   }
 
@@ -709,27 +702,21 @@ function buildLeagueRecap(
     if (!summary) continue;
     if (summary.avgAge < minAge) {
       minAge = summary.avgAge;
-      youngestDraft = award(
-        teamId,
-        `Avg age ${summary.avgAge}`,
-        { value: summary.avgAge },
-      );
+      youngestDraft = award(teamId, `Avg age ${summary.avgAge}`, {
+        value: summary.avgAge,
+      });
     }
     if (summary.avgOvr > maxOvr) {
       maxOvr = summary.avgOvr;
-      highestAvgOvr = award(
-        teamId,
-        `Avg OVR ${summary.avgOvr}`,
-        { value: summary.avgOvr },
-      );
+      highestAvgOvr = award(teamId, `Avg OVR ${summary.avgOvr}`, {
+        value: summary.avgOvr,
+      });
     }
     if (summary.avgPot > maxPot) {
       maxPot = summary.avgPot;
-      highestAvgPot = award(
-        teamId,
-        `Avg POT ${summary.avgPot}`,
-        { value: summary.avgPot },
-      );
+      highestAvgPot = award(teamId, `Avg POT ${summary.avgPot}`, {
+        value: summary.avgPot,
+      });
     }
   }
 
@@ -754,25 +741,25 @@ export function analyzeFantasyDraft(state: GameState): {
 } {
   const draft = state.world.fantasyDraft;
   if (draft === null) {
-    return { pickAnalyses: [], teamSummaries: {}, leagueRecap: {
-      bestDraft: null,
-      biggestSteal: null,
-      biggestReach: null,
-      mostAggressive: null,
-      youngestDraft: null,
-      highestAvgOvr: null,
-      highestAvgPot: null,
-    } };
+    return {
+      pickAnalyses: [],
+      teamSummaries: {},
+      leagueRecap: {
+        bestDraft: null,
+        biggestSteal: null,
+        biggestReach: null,
+        mostAggressive: null,
+        youngestDraft: null,
+        highestAvgOvr: null,
+        highestAvgPot: null,
+      },
+    };
   }
 
   const pickAnalyses = analyzeFantasyDraftPicks(state);
   const teamSummaries: Record<string, FantasyDraftTeamSummary> = {};
   for (const teamId of draft.draftOrder) {
-    teamSummaries[teamId] = buildTeamSummary(
-      state,
-      teamId,
-      pickAnalyses,
-    );
+    teamSummaries[teamId] = buildTeamSummary(state, teamId, pickAnalyses);
   }
   const leagueRecap = buildLeagueRecap(state, teamSummaries, pickAnalyses);
   return { pickAnalyses, teamSummaries, leagueRecap };

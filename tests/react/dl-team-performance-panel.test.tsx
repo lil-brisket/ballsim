@@ -58,18 +58,14 @@ describe("DlTeamPerformancePanel", () => {
 
   it("uses no-assignment empty copy", () => {
     render(
-      wrap(
-        <DlTeamPerformancePanel saveId="s1" assignedCount={0} games={[]} />,
-      ),
+      wrap(<DlTeamPerformancePanel saveId="s1" assignedCount={0} games={[]} />),
     );
     expect(screen.getByText(DL_EMPTY_NO_ASSIGNMENTS)).toBeTruthy();
   });
 
   it("uses season-not-started empty copy when prospects are assigned", () => {
     render(
-      wrap(
-        <DlTeamPerformancePanel saveId="s1" assignedCount={3} games={[]} />,
-      ),
+      wrap(<DlTeamPerformancePanel saveId="s1" assignedCount={3} games={[]} />),
     );
     expect(screen.getByText(DL_EMPTY_SEASON_NOT_STARTED)).toBeTruthy();
   });

@@ -31,9 +31,9 @@ describe("league-schedule-selectors", () => {
     const teamId = state.user.activeOwnerTeamId;
     const view = toLeagueScheduleView(state, { teamId });
     for (const game of [...view.today, ...view.upcoming, ...view.recent]) {
-      expect(
-        game.homeTeamId === teamId || game.awayTeamId === teamId,
-      ).toBe(true);
+      expect(game.homeTeamId === teamId || game.awayTeamId === teamId).toBe(
+        true,
+      );
     }
   });
 });

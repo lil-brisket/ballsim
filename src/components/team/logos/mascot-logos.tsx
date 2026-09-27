@@ -71,10 +71,7 @@ export function PantherLogo(props: TeamLogoProps) {
         fill={props.primaryColor}
       />
       <circle cx="22" cy="34" r="2.2" fill={props.accentColor} />
-      <path
-        d="M36 32 L50 28 L46 36 Z"
-        fill={props.accentColor}
-      />
+      <path d="M36 32 L50 28 L46 36 Z" fill={props.accentColor} />
       <path
         d="M26 40 L30 46 L34 40"
         fill="none"

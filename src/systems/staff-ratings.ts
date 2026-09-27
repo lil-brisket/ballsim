@@ -25,10 +25,7 @@ import {
 } from "@/systems/staff-config";
 
 function clampRating(value: number): number {
-  return Math.max(
-    RATING_MIN,
-    Math.min(RATING_MAX, Math.round(value)),
-  );
+  return Math.max(RATING_MIN, Math.min(RATING_MAX, Math.round(value)));
 }
 
 /**
@@ -46,8 +43,7 @@ export function generateAttributesAroundOverall(
     out[key] = clampRating(targetOverall + noise);
   }
   // Nudge mean toward targetOverall
-  const mean =
-    keys.reduce((sum, key) => sum + out[key]!, 0) / keys.length;
+  const mean = keys.reduce((sum, key) => sum + out[key]!, 0) / keys.length;
   const adjust = targetOverall - mean;
   for (const key of keys) {
     out[key] = clampRating(out[key]! + adjust);
@@ -172,7 +168,8 @@ export function generateStaffPreferences(
       : rng.nextInt(0, 25),
     minimumSalary: minimum,
     desiredSalary: Math.max(minimum, desired),
-    preferredContractYears: experience > 15 ? rng.nextInt(2, 5) : rng.nextInt(1, 4),
+    preferredContractYears:
+      experience > 15 ? rng.nextInt(2, 5) : rng.nextInt(1, 4),
     preferredRole,
   };
 }
@@ -203,10 +200,7 @@ export function preferencesForMigration(
 }
 
 export type StaffCareerArchetype =
-  | "elite"
-  | "veteran"
-  | "average"
-  | "developmental";
+  "elite" | "veteran" | "average" | "developmental";
 
 export function pickCareerArchetype(rng: Rng): StaffCareerArchetype {
   const roll = rng.nextInt(1, 100);
@@ -372,8 +366,7 @@ export function hydrateStaffFromPersisted(
     typeof raw.attributes === "object" &&
     typeof raw.overall === "number";
 
-  const quality =
-    typeof raw.quality === "number" ? raw.quality : 50;
+  const quality = typeof raw.quality === "number" ? raw.quality : 50;
   const strengths = Array.isArray(raw.strengths)
     ? raw.strengths.map(String)
     : [];
@@ -391,8 +384,7 @@ export function hydrateStaffFromPersisted(
     typeof raw.potential === "number"
       ? raw.potential
       : derivePotentialForMigration(overall, age);
-  const morale =
-    typeof raw.morale === "number" ? raw.morale : 60;
+  const morale = typeof raw.morale === "number" ? raw.morale : 60;
   const preferences =
     raw.preferences != null && typeof raw.preferences === "object"
       ? (raw.preferences as StaffPreferences)

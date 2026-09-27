@@ -58,7 +58,9 @@ export function getGamesForSeason(
   state: GameState,
   seasonId: SeasonId,
 ): Game[] {
-  return getAllAvailableGames(state).filter((game) => game.seasonId === seasonId);
+  return getAllAvailableGames(state).filter(
+    (game) => game.seasonId === seasonId,
+  );
 }
 
 /** Finalized games for a season. */

@@ -180,17 +180,14 @@ describe("resolveFreeThrow", () => {
 describe("resolveFreeThrow validation", () => {
   it("rejects a missing shooter", () => {
     expect(() =>
-      resolveFreeThrow(
-        { shooter: null as unknown as Player },
-        createTestRng(),
-      ),
+      resolveFreeThrow({ shooter: null as unknown as Player }, createTestRng()),
     ).toThrow(/shooter/);
   });
 
   it("rejects a missing rng", () => {
-    expect(() =>
-      resolveFreeThrow(baseInput(), null as unknown as Rng),
-    ).toThrow(/Rng/);
+    expect(() => resolveFreeThrow(baseInput(), null as unknown as Rng)).toThrow(
+      /Rng/,
+    );
   });
 
   it("rejects an invalid freeThrow rating", () => {

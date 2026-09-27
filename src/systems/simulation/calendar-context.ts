@@ -4,10 +4,7 @@
  * Do not invent month checks elsewhere — read getCalendarContext.
  */
 
-import {
-  addCalendarDays,
-  calendarDaysBetween,
-} from "@/domain/calendar-date";
+import { addCalendarDays, calendarDaysBetween } from "@/domain/calendar-date";
 import type { OffseasonStage, SeasonPhase } from "@/domain/entities/season";
 import type { TradeDeadlineRule } from "@/domain/game-settings";
 import type { TeamId } from "@/domain/ids";
@@ -19,18 +16,10 @@ import { assessRelocation } from "@/state/relocation-assessment";
 import { TRADE_DEADLINE_SEASON_FRACTION } from "@/systems/league-rules/invariants";
 
 export type SeasonSegment =
-  | "none"
-  | "early"
-  | "mid"
-  | "deadline_window"
-  | "late";
+  "none" | "early" | "mid" | "deadline_window" | "late";
 
 export type PlayoffRaceStatus =
-  | "not_applicable"
-  | "contending"
-  | "bubble"
-  | "clinched"
-  | "eliminated";
+  "not_applicable" | "contending" | "bubble" | "clinched" | "eliminated";
 
 export type OffseasonPriorityKey =
   | "season_review"
@@ -105,7 +94,11 @@ export function getCalendarContext(state: GameState): CalendarContext {
     state,
   );
 
-  const tradesOpen = areTradesOpen(lifecyclePhase, currentDate, tradeDeadlineDate);
+  const tradesOpen = areTradesOpen(
+    lifecyclePhase,
+    currentDate,
+    tradeDeadlineDate,
+  );
   const daysUntilTradeDeadline =
     tradeDeadlineDate === null
       ? null
@@ -353,7 +346,8 @@ function resolvePlayoffRace(state: GameState): PlayoffRaceStatus {
   const conferencePlayoffSpots =
     conferenceId && Object.keys(state.world.conferences).length > 1
       ? Math.ceil(
-          playoffTeams / Math.max(1, Object.keys(state.world.conferences).length),
+          playoffTeams /
+            Math.max(1, Object.keys(state.world.conferences).length),
         )
       : playoffTeams;
 
@@ -369,7 +363,8 @@ function resolvePlayoffRace(state: GameState): PlayoffRaceStatus {
   if (rank <= conferencePlayoffSpots) {
     if (
       bubbleFloor &&
-      standing.wins - bubbleFloor.wins <= CALENDAR_CONTEXT_CONFIG.playoffBubbleGames &&
+      standing.wins - bubbleFloor.wins <=
+        CALENDAR_CONTEXT_CONFIG.playoffBubbleGames &&
       countRemainingRegularGames(state) > 0
     ) {
       return "bubble";
@@ -382,8 +377,7 @@ function resolvePlayoffRace(state: GameState): PlayoffRaceStatus {
   if (
     cutoff &&
     cutoff.wins - standing.wins > CALENDAR_CONTEXT_CONFIG.playoffBubbleGames &&
-    countRemainingRegularGames(state) <
-      (cutoff.wins - standing.wins) * 2
+    countRemainingRegularGames(state) < (cutoff.wins - standing.wins) * 2
   ) {
     return "eliminated";
   }
@@ -415,7 +409,7 @@ function resolveOffseasonPriorities(
   }
 
   const year = state.competition.season.year;
-    const expiring = Object.values(state.business.contracts).filter(
+  const expiring = Object.values(state.business.contracts).filter(
     (contract) =>
       contract.teamId === teamId &&
       isContractActive(contract, year) &&
@@ -572,10 +566,7 @@ function resolveSeasonStory(
   return "";
 }
 
-function deriveControlledPlayoffLine(
-  state: GameState,
-  teamId: TeamId,
-): string {
+function deriveControlledPlayoffLine(state: GameState, teamId: TeamId): string {
   const champion = state.competition.playoffs.championTeamId;
   if (champion === teamId) {
     return "Championship secured.";

@@ -1,13 +1,6 @@
 import { describe, expect, it } from "vitest";
-import {
-  createLeague,
-  type LeagueInput,
-} from "@/domain/entities/league";
-import {
-  asConferenceId,
-  asLeagueId,
-  type ConferenceId,
-} from "@/domain/ids";
+import { createLeague, type LeagueInput } from "@/domain/entities/league";
+import { asConferenceId, asLeagueId, type ConferenceId } from "@/domain/ids";
 
 function validInput(overrides: Partial<LeagueInput> = {}): LeagueInput {
   return {
@@ -52,16 +45,15 @@ describe("createLeague", () => {
   });
 
   it("accepts an empty conference collection", () => {
-    expect(createLeague(validInput({ conferenceIds: [] })).conferenceIds).toEqual(
-      [],
-    );
+    expect(
+      createLeague(validInput({ conferenceIds: [] })).conferenceIds,
+    ).toEqual([]);
   });
 
   it("accepts different numbers of conferences", () => {
     expect(
-      createLeague(
-        validInput({ conferenceIds: [asConferenceId("conf_a")] }),
-      ).conferenceIds,
+      createLeague(validInput({ conferenceIds: [asConferenceId("conf_a")] }))
+        .conferenceIds,
     ).toHaveLength(1);
     expect(
       createLeague(
@@ -138,10 +130,7 @@ describe("createLeague", () => {
     expect(() =>
       createLeague(
         validInput({
-          conferenceIds: [
-            asConferenceId("conf_a"),
-            asConferenceId("conf_a"),
-          ],
+          conferenceIds: [asConferenceId("conf_a"), asConferenceId("conf_a")],
         }),
       ),
     ).toThrow(/duplicate/);

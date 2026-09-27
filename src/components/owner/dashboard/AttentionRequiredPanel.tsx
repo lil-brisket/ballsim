@@ -99,7 +99,9 @@ export function AttentionRequiredPanel(props: {
             </div>
             <p className="mt-2 text-sm text-zinc-300">{item.what}</p>
             <p className="mt-2 text-sm text-zinc-400">
-              <span className="font-medium text-zinc-300">Why it matters: </span>
+              <span className="font-medium text-zinc-300">
+                Why it matters:{" "}
+              </span>
               {item.why}
             </p>
             {item.evidence.length > 0 ? (

@@ -5,7 +5,10 @@ import {
   evaluatePlayerOfMonth,
   evaluateRoy,
 } from "@/systems/awards/evaluate-awards";
-import { runMonthlyAwards, runYearlyAwards } from "@/systems/awards/award-pipeline";
+import {
+  runMonthlyAwards,
+  runYearlyAwards,
+} from "@/systems/awards/award-pipeline";
 import { isRookieEligible } from "@/systems/awards/award-eligibility";
 import { getPlayerAwards } from "@/state/award-selectors";
 import {

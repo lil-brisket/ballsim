@@ -9,11 +9,7 @@ import { createEmptyFanVoteCampaign } from "@/domain/entities/season-events/fan-
 import type { AllStarEventState } from "@/domain/entities/season-events/all-star";
 import type { MidseasonAwardsState } from "@/domain/entities/season-events/midseason-awards";
 import type { MidseasonTournamentState } from "@/domain/entities/season-events/midseason-tournament";
-import {
-  asFanVoteCampaignId,
-  asSeasonId,
-  type SeasonId,
-} from "@/domain/ids";
+import { asFanVoteCampaignId, asSeasonId, type SeasonId } from "@/domain/ids";
 import { systemResult, type SystemResult } from "@/domain/system-result";
 import type { GameState } from "@/state/game-state";
 import { DEFAULT_SEASON_EVENTS_SETTINGS } from "@/domain/game-settings";
@@ -41,8 +37,7 @@ export function planSeasonEvents(state: GameState): SystemResult {
     return systemResult(state);
   }
 
-  const config =
-    state.settings.seasonEvents ?? DEFAULT_SEASON_EVENTS_SETTINGS;
+  const config = state.settings.seasonEvents ?? DEFAULT_SEASON_EVENTS_SETTINGS;
   const campaignId = asFanVoteCampaignId(`fanvote_${seasonId}`);
   const categories = buildFanVoteCategories(state);
 
@@ -207,9 +202,7 @@ export function planSeasonEvents(state: GameState): SystemResult {
   });
 }
 
-export function ensureSeasonEventsState(
-  state: GameState,
-): SeasonEventsState {
+export function ensureSeasonEventsState(state: GameState): SeasonEventsState {
   return state.competition.seasonEvents ?? createEmptySeasonEventsState();
 }
 

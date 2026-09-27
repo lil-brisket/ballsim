@@ -20,8 +20,7 @@ export type ValidateTeamNicknameContext = {
 };
 
 export type TeamNicknameValidation =
-  | { ok: true; value: string }
-  | { ok: false; error: string };
+  { ok: true; value: string } | { ok: false; error: string };
 
 export function normalizeTeamNickname(input: string): string {
   return input.trim().replace(/\s+/g, " ");

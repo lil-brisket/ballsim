@@ -17,7 +17,9 @@ export function TeamLeaguePlacement(props: {
   const conferenceLabel = `${props.conferenceName} Conference`;
 
   if (!showDivision) {
-    return <span className="block text-xs text-zinc-400">{conferenceLabel}</span>;
+    return (
+      <span className="block text-xs text-zinc-400">{conferenceLabel}</span>
+    );
   }
 
   const divisionLabel = `${props.divisionName} Division`;

@@ -35,9 +35,7 @@ export function PhaseAttentionSummaryPanel(props: {
           Required: {counts.required}
           {required.length > 0 ? ` · ${required[0]!.title}` : ""}
         </li>
-        <li className="text-amber-300">
-          Recommended: {counts.recommended}
-        </li>
+        <li className="text-amber-300">Recommended: {counts.recommended}</li>
         <li className="text-sky-300">Optional: {counts.optional}</li>
       </ul>
     </section>

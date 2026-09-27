@@ -33,9 +33,7 @@ export function FinancialLedger(props: { entries: EventLogEntryView[] }) {
 
 export function FinancialTrend(props: { points: FinanceTrendPoint[] }) {
   if (props.points.length === 0) {
-    return (
-      <EmptyState message="No monthly financial history available yet." />
-    );
+    return <EmptyState message="No monthly financial history available yet." />;
   }
   const maxAbs = Math.max(
     ...props.points.flatMap((p) => [p.revenue, p.expenses]),

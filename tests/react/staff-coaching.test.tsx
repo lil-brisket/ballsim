@@ -168,9 +168,9 @@ describe("staff-coaching UI", () => {
     );
     expect(screen.getByText("Hiring Market")).toBeTruthy();
     expect(screen.getByText("Jane Scout")).toBeTruthy();
-    expect(screen.getByRole("link", { name: "Scout" }).getAttribute("aria-current")).toBe(
-      "page",
-    );
+    expect(
+      screen.getByRole("link", { name: "Scout" }).getAttribute("aria-current"),
+    ).toBe("page");
     expect(
       screen.getByRole("link", { name: "Sort: overall" }).getAttribute("href"),
     ).toContain("role=scout");

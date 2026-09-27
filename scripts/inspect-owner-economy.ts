@@ -66,7 +66,8 @@ console.log(
     {
       scenario: result.scenario,
       seed: result.seed,
-      warnings: unclassifiedWarnings.length > 0 ? unclassifiedWarnings : undefined,
+      warnings:
+        unclassifiedWarnings.length > 0 ? unclassifiedWarnings : undefined,
       recoveryDelta: result.recoveryDelta,
       actions: result.actions,
       seasons: result.seasons.map((season) => ({

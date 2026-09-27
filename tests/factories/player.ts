@@ -102,7 +102,8 @@ function normalizeInjuryOverride(
     isAggravation: false,
     priorInjuryId: null,
     chronic: false,
-    isLegacyData: legacy.severity === "unknown" || legacy.type === "Undisclosed",
+    isLegacyData:
+      legacy.severity === "unknown" || legacy.type === "Undisclosed",
     exposureSource: "off_court",
   };
 }
@@ -180,13 +181,14 @@ export function createPlayer(overrides: CreatePlayerOverrides = {}): Player {
     },
     contractId,
     availability: overrides.availability ?? "available",
-    activeInjuries: overrides.activeInjuries?.map((injury) =>
-      normalizeInjuryOverride(injury),
-    ).filter((injury): injury is PlayerInjury => injury != null),
+    activeInjuries: overrides.activeInjuries
+      ?.map((injury) => normalizeInjuryOverride(injury))
+      .filter((injury): injury is PlayerInjury => injury != null),
     injury: normalizeInjuryOverride(
       overrides.injury === undefined ? null : overrides.injury,
     ),
-    suspension: overrides.suspension === undefined ? null : overrides.suspension,
+    suspension:
+      overrides.suspension === undefined ? null : overrides.suspension,
     physical:
       overrides.durability != null
         ? { durability: overrides.durability }

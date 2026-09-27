@@ -1,7 +1,10 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { loadLeagueHubView } from "@/application/game-service";
-import { LeagueHeader, MyTeamContextStrip } from "@/components/league/LeagueHeader";
+import {
+  LeagueHeader,
+  MyTeamContextStrip,
+} from "@/components/league/LeagueHeader";
 import {
   LeagueSnapshotPanel,
   LeagueStandingsSnapshot,
@@ -20,7 +23,10 @@ type PageProps = {
   searchParams: Promise<{ error?: string }>;
 };
 
-export default async function LeagueHubPage({ params, searchParams }: PageProps) {
+export default async function LeagueHubPage({
+  params,
+  searchParams,
+}: PageProps) {
   const { saveId } = await params;
   const { error } = await searchParams;
   const view = await loadLeagueHubView(saveId);
@@ -63,7 +69,10 @@ export default async function LeagueHubPage({ params, searchParams }: PageProps)
           Expansion opportunity is available.{" "}
           <Link
             href={`/dashboard/${saveId}/league/expansion`}
-            className={cn("text-amber-400 hover:text-amber-300", focusRingClass)}
+            className={cn(
+              "text-amber-400 hover:text-amber-300",
+              focusRingClass,
+            )}
           >
             View expansion
           </Link>
@@ -79,18 +88,12 @@ export default async function LeagueHubPage({ params, searchParams }: PageProps)
           cutoffRank={view.cutoffRank}
           includesUserOutsideTop={view.standingsIncludesUserOutsideTop}
         />
-        <LeagueRecentResultsPanel
-          saveId={saveId}
-          games={view.recentResults}
-        />
+        <LeagueRecentResultsPanel saveId={saveId} games={view.recentResults} />
       </div>
 
       {/* Tier 2 — compact previews */}
       <div className="grid gap-4 lg:grid-cols-2">
-        <LeagueTransactionsBriefing
-          saveId={saveId}
-          rows={view.transactions}
-        />
+        <LeagueTransactionsBriefing saveId={saveId} rows={view.transactions} />
         <LeagueInjuriesBriefing saveId={saveId} rows={view.injuries} />
       </div>
       <LeagueMediaBriefing saveId={saveId} rows={view.media} />
