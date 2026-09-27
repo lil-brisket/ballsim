@@ -77,7 +77,14 @@ export function mergeGameSimulationConfig(
   overrides?: Partial<GameSimulationConfig>,
 ): GameSimulationConfig {
   if (overrides == null) {
-    return { ...GAME_SIMULATION_CONFIG, actionBaseWeights: { ...GAME_SIMULATION_CONFIG.actionBaseWeights }, foulSubtypeWeights: { ...GAME_SIMULATION_CONFIG.foulSubtypeWeights }, possessionTimeSeconds: { ...GAME_SIMULATION_CONFIG.possessionTimeSeconds } };
+    return {
+      ...GAME_SIMULATION_CONFIG,
+      actionBaseWeights: { ...GAME_SIMULATION_CONFIG.actionBaseWeights },
+      foulSubtypeWeights: { ...GAME_SIMULATION_CONFIG.foulSubtypeWeights },
+      possessionTimeSeconds: {
+        ...GAME_SIMULATION_CONFIG.possessionTimeSeconds,
+      },
+    };
   }
   return {
     regulationPeriodCount:

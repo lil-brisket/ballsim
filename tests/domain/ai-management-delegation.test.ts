@@ -32,15 +32,15 @@ describe("ai-management-delegation", () => {
     expect(DEFAULT_GAME_SETTINGS.ai.assistance).toEqual(
       DEFAULT_DELEGATED_ASSISTANCE,
     );
-    expect(isPhaseDelegated(DEFAULT_DELEGATED_ASSISTANCE, "injuriesEmergencyRoster")).toBe(
-      true,
-    );
+    expect(
+      isPhaseDelegated(DEFAULT_DELEGATED_ASSISTANCE, "injuriesEmergencyRoster"),
+    ).toBe(true);
     expect(isPhaseDelegated(DEFAULT_DELEGATED_ASSISTANCE, "freeAgency")).toBe(
       false,
     );
-    expect(isPhaseDelegated(DEFAULT_DELEGATED_ASSISTANCE, "draftSelection")).toBe(
-      false,
-    );
+    expect(
+      isPhaseDelegated(DEFAULT_DELEGATED_ASSISTANCE, "draftSelection"),
+    ).toBe(false);
   });
 
   it("isPhaseDelegated is false only for off", () => {

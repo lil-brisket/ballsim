@@ -8,7 +8,10 @@ import {
   type TeamId,
 } from "@/domain/ids";
 import { createSeededRng, type Rng } from "@/domain/rng";
-import { DEFAULT_ROSTER_SIZE, rosterPositionForSlot } from "@/systems/roster-generation-config";
+import {
+  DEFAULT_ROSTER_SIZE,
+  rosterPositionForSlot,
+} from "@/systems/roster-generation-config";
 import { generatePlayerWithRng } from "@/systems/player-generation";
 import { simulateGame } from "@/systems/game-simulation";
 import { aggregateSnapshots } from "@/simulation/validation/aggregate";
@@ -94,9 +97,14 @@ function scheduledGame(
   });
 }
 
-function playerStatsMap(
-  result: { playerStats: readonly { playerId: string; points: number; rebounds: number; assists: number }[] },
-): Map<string, { points: number; rebounds: number; assists: number }> {
+function playerStatsMap(result: {
+  playerStats: readonly {
+    playerId: string;
+    points: number;
+    rebounds: number;
+    assists: number;
+  }[];
+}): Map<string, { points: number; rebounds: number; assists: number }> {
   const map = new Map<
     string,
     { points: number; rebounds: number; assists: number }

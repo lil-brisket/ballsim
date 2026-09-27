@@ -4,9 +4,7 @@
  */
 
 import type { TeamId } from "@/domain/ids";
-import type {
-  OwnershipExpectations,
-} from "@/domain/entities/ownership-expectations";
+import type { OwnershipExpectations } from "@/domain/entities/ownership-expectations";
 import {
   competitiveStanceLabel,
   rosterStanceLabel,
@@ -72,13 +70,20 @@ function attendanceFillPct(state: GameState, teamId: TeamId): number {
     const homeGames = Math.max(1, Math.round((last.wins + last.losses) / 2));
     return Math.round((last.attendance / (capacity * homeGames)) * 100);
   }
-  return Math.round((ops.fanSentiment / 100) * 70 + ops.marketing.awareness * 0.3);
+  return Math.round(
+    (ops.fanSentiment / 100) * 70 + ops.marketing.awareness * 0.3,
+  );
 }
 
 function buildMandateSummary(
-  expectations: Omit<OwnershipExpectations, "mandateSummary" | "priorityBullets">,
+  expectations: Omit<
+    OwnershipExpectations,
+    "mandateSummary" | "priorityBullets"
+  >,
 ): string {
-  const competitive = competitiveStanceLabel(expectations.competitiveExpectation);
+  const competitive = competitiveStanceLabel(
+    expectations.competitiveExpectation,
+  );
   const roster = rosterStanceLabel(expectations.rosterBuildingExpectation);
   switch (expectations.philosophy) {
     case "win_now":
@@ -98,12 +103,17 @@ function buildMandateSummary(
 }
 
 function buildPriorityBullets(
-  expectations: Omit<OwnershipExpectations, "mandateSummary" | "priorityBullets">,
+  expectations: Omit<
+    OwnershipExpectations,
+    "mandateSummary" | "priorityBullets"
+  >,
 ): string[] {
   const bullets: string[] = [];
   switch (expectations.competitiveExpectation) {
     case "rebuild":
-      bullets.push("Preserve future flexibility and avoid empty contention spending");
+      bullets.push(
+        "Preserve future flexibility and avoid empty contention spending",
+      );
       break;
     case "develop":
       bullets.push("Show meaningful progress without forcing a win-now roster");
@@ -112,7 +122,9 @@ function buildPriorityBullets(
       bullets.push("Compete for the playoffs and protect the current core");
       break;
     case "contend":
-      bullets.push("Maximize contention windows and avoid unnecessary asset accumulation");
+      bullets.push(
+        "Maximize contention windows and avoid unnecessary asset accumulation",
+      );
       break;
   }
   switch (expectations.rosterBuildingExpectation) {
@@ -123,7 +135,9 @@ function buildPriorityBullets(
       bullets.push("Blend youth development with targeted veteran help");
       break;
     case "win_now_roster":
-      bullets.push("Prioritize established contributors over long-term asset gathering");
+      bullets.push(
+        "Prioritize established contributors over long-term asset gathering",
+      );
       break;
   }
   switch (expectations.financialExpectation) {
@@ -134,7 +148,9 @@ function buildPriorityBullets(
       bullets.push("Keep payroll growth aligned with revenue");
       break;
     case "invest":
-      bullets.push("Invest where it improves competitiveness or market strength");
+      bullets.push(
+        "Invest where it improves competitiveness or market strength",
+      );
       break;
   }
   if (
@@ -157,7 +173,10 @@ export function buildOwnershipExpectations(
   const ctx = buildFranchiseContext(state, teamId);
   const wins = projectedSeasonWins(state, teamId);
   const band = competitiveBandFromWins(wins);
-  const competitiveExpectation = resolveCompetitiveExpectation(philosophy, band);
+  const competitiveExpectation = resolveCompetitiveExpectation(
+    philosophy,
+    band,
+  );
 
   const youngCoreReady =
     (ctx?.youngRosterSharePct ?? 0) >= YOUNG_CORE_SHARE_PCT &&

@@ -1,11 +1,25 @@
-import { createGame, type Game, type GamePlayerStats } from "@/domain/entities/game";
-import { createEmptyAwardHistory, type AwardResult } from "@/domain/entities/awards";
+import {
+  createGame,
+  type Game,
+  type GamePlayerStats,
+} from "@/domain/entities/game";
+import {
+  createEmptyAwardHistory,
+  type AwardResult,
+} from "@/domain/entities/awards";
 import {
   createEmptyPlayerHistory,
   createEmptyPlayerSeasonStatLine,
   type PlayerSeasonStatLine,
 } from "@/domain/entities/player-history";
-import { asGameId, asPlayerId, asSeasonId, asTeamId, type PlayerId, type TeamId } from "@/domain/ids";
+import {
+  asGameId,
+  asPlayerId,
+  asSeasonId,
+  asTeamId,
+  type PlayerId,
+  type TeamId,
+} from "@/domain/ids";
 import type { GameState } from "@/state/game-state";
 import { createTestGameState } from "../../factories/game-state";
 import { createPlayer } from "../../factories/player";
@@ -26,7 +40,7 @@ export function boxRow(
     points: stats.points ?? 0,
     rebounds: stats.rebounds ?? 0,
     offensiveRebounds: stats.offensiveRebounds ?? 0,
-    defensiveRebounds: stats.defensiveRebounds ?? (stats.rebounds ?? 0),
+    defensiveRebounds: stats.defensiveRebounds ?? stats.rebounds ?? 0,
     assists: stats.assists ?? 0,
     steals: stats.steals ?? 0,
     blocks: stats.blocks ?? 0,
@@ -34,7 +48,8 @@ export function boxRow(
     fouls: stats.fouls ?? 2,
     fieldGoalsMade: stats.fieldGoalsMade ?? Math.floor((stats.points ?? 0) / 2),
     fieldGoalsAttempted:
-      stats.fieldGoalsAttempted ?? Math.max(1, Math.floor((stats.points ?? 0) / 2) + 4),
+      stats.fieldGoalsAttempted ??
+      Math.max(1, Math.floor((stats.points ?? 0) / 2) + 4),
     threePointersMade: stats.threePointersMade ?? 0,
     threePointersAttempted: stats.threePointersAttempted ?? 0,
     freeThrowsMade: stats.freeThrowsMade ?? 0,

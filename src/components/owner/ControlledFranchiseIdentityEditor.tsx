@@ -1,6 +1,9 @@
 "use client";
 
-import { TeamColorFields, type TeamColorChannel } from "@/components/owner/TeamColorFields";
+import {
+  TeamColorFields,
+  type TeamColorChannel,
+} from "@/components/owner/TeamColorFields";
 import { TeamLogoMark } from "@/components/team/logos/TeamLogoMark";
 import { TeamNicknameField } from "@/components/team/TeamNicknameField";
 import {
@@ -162,9 +165,7 @@ export function ControlledFranchiseIdentityEditor(props: {
                         key={logo.id}
                         type="button"
                         title={logo.label}
-                        onClick={() =>
-                          onChange({ ...draft, logoId: logo.id })
-                        }
+                        onClick={() => onChange({ ...draft, logoId: logo.id })}
                         className={`inline-flex h-9 w-9 items-center justify-center rounded-md border ${
                           selected
                             ? "border-amber-500 bg-amber-500/15"

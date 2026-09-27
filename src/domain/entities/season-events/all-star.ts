@@ -14,11 +14,7 @@ export type AllStarSelection = {
 };
 
 export type AllStarEventStatus =
-  | "scheduled"
-  | "voting"
-  | "selections_announced"
-  | "completed"
-  | "cancelled";
+  "scheduled" | "voting" | "selections_announced" | "completed" | "cancelled";
 
 export type AllStarEventState = {
   seasonId: SeasonId;

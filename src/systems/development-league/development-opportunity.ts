@@ -8,9 +8,7 @@ import type { Player } from "@/domain/entities/player";
 import { calculatePlayerOverall } from "@/domain/player-overall-rating";
 import type { TeamId } from "@/domain/ids";
 import type { GameState } from "@/state/game-state";
-import {
-  DL_MAX_MEANINGFUL_MINUTES_DELTA,
-} from "@/systems/development-league/config";
+import { DL_MAX_MEANINGFUL_MINUTES_DELTA } from "@/systems/development-league/config";
 import { isPlayerDlAssigned } from "@/systems/development-league/franchise-membership";
 import { estimateProjectedTopLeagueMinutes } from "@/systems/development-league/recommendations";
 
@@ -78,9 +76,7 @@ export function applyDlOpportunityBonusToPlayer(
     return player;
   }
   // Prefer attributes furthest below potential-ish mid values — simple: bump lowest few
-  const sorted = [...attributeKeys].sort(
-    (a, b) => nextAttrs[a] - nextAttrs[b],
-  );
+  const sorted = [...attributeKeys].sort((a, b) => nextAttrs[a] - nextAttrs[b]);
   for (let i = 0; i < bumps && i < sorted.length; i += 1) {
     const key = sorted[i]!;
     nextAttrs[key] = Math.min(99, nextAttrs[key] + 1);

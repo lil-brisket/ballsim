@@ -115,7 +115,8 @@ describe("asset valuation — deterministic", () => {
         },
       },
     };
-    const lotteryPick = state.world.draftPicks[pickForTeam(state, teamA, 1, 1)]!;
+    const lotteryPick =
+      state.world.draftPicks[pickForTeam(state, teamA, 1, 1)]!;
     const latePick = state.world.draftPicks[pickForTeam(state, teamB, 1, 1)]!;
     const lotteryProj = projectDraftPick(state, lotteryPick);
     const lateProj = projectDraftPick(state, latePick);
@@ -291,7 +292,10 @@ describe("negotiation and expiration", () => {
             ...decision,
             payload: {
               ...decision.payload,
-              expiresOn: addCalendarDays(working.world.calendar.currentDate, -1),
+              expiresOn: addCalendarDays(
+                working.world.calendar.currentDate,
+                -1,
+              ),
             },
           },
         ],

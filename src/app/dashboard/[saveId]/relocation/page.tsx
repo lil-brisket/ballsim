@@ -69,8 +69,7 @@ export default async function RelocationPage({
   const relocation = view.relocation;
   const assessment = view.relocationAssessment;
   const returnPath = `/dashboard/${saveId}/relocation`;
-  const canAdvance =
-    assessment.status === "in_progress" || assessment.canStart;
+  const canAdvance = assessment.status === "in_progress" || assessment.canStart;
   const topDestinations = assessment.destinationOpportunity.slice(0, 5);
 
   return (

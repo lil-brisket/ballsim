@@ -42,7 +42,9 @@ export function OwnerPanel(props: { owner: OwnerDashboardOwner }) {
           <p className="font-mono text-[0.65rem] uppercase tracking-[0.16em] text-zinc-500">
             Current expectation
           </p>
-          <p className="mt-1 text-sm text-zinc-200">{ownership.mandateSummary}</p>
+          <p className="mt-1 text-sm text-zinc-200">
+            {ownership.mandateSummary}
+          </p>
           {ownership.priorityBullets.length > 0 ? (
             <ul className="mt-2 space-y-1">
               {ownership.priorityBullets.map((bullet) => (
@@ -116,7 +118,9 @@ export function OwnerPanel(props: { owner: OwnerDashboardOwner }) {
                   Helping alignment
                 </p>
                 {ownership.whyHelping.length === 0 ? (
-                  <p className="mt-1 text-sm text-zinc-500">No recent helpers.</p>
+                  <p className="mt-1 text-sm text-zinc-500">
+                    No recent helpers.
+                  </p>
                 ) : (
                   <ul className="mt-1 space-y-1">
                     {ownership.whyHelping.map((line) => (
@@ -132,7 +136,9 @@ export function OwnerPanel(props: { owner: OwnerDashboardOwner }) {
                   Hurting alignment
                 </p>
                 {ownership.whyHurting.length === 0 ? (
-                  <p className="mt-1 text-sm text-zinc-500">No recent concerns.</p>
+                  <p className="mt-1 text-sm text-zinc-500">
+                    No recent concerns.
+                  </p>
                 ) : (
                   <ul className="mt-1 space-y-1">
                     {ownership.whyHurting.map((line) => (

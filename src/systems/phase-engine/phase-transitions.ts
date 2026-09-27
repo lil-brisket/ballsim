@@ -49,8 +49,7 @@ export function setActivePhase(
       },
       season: {
         ...state.competition.season,
-        offseasonStage:
-          seasonPhase === "offseason" ? offseasonStage : "none",
+        offseasonStage: seasonPhase === "offseason" ? offseasonStage : "none",
         offseasonStageEnteredDate:
           seasonPhase === "offseason" ? enteredDate : null,
         freeAgencyExtendedUntil: null,
@@ -71,9 +70,7 @@ export function setActivePhase(
 
   if (next.competition.season.phase !== seasonPhase) {
     // Only use transitionPhase when moving between SeasonPhase buckets.
-    if (
-      canTransitionSeasonPhase(next.competition.season.phase, seasonPhase)
-    ) {
+    if (canTransitionSeasonPhase(next.competition.season.phase, seasonPhase)) {
       const result = transitionPhase(next, seasonPhase);
       next = {
         ...result.state,
@@ -213,14 +210,12 @@ export type AdvancePhaseResult = SystemResult & {
  * User-controlled phase advance. Callers must run exit hooks (AI, contract release, etc.) separately or via processPhaseExit.
  * This function only moves the phase pointer after validating required tasks.
  */
-export function advancePhase(
-  state: GameState,
-  _rng?: Rng,
-): AdvancePhaseResult {
+export function advancePhase(state: GameState, _rng?: Rng): AdvancePhaseResult {
   const preview = previewAdvance(state);
   if (!preview.canAdvance) {
     throw new Error(
-      preview.blockReason ?? "Cannot advance phase while required tasks remain.",
+      preview.blockReason ??
+        "Cannot advance phase while required tasks remain.",
     );
   }
 

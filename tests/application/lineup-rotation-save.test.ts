@@ -122,7 +122,9 @@ describe("updateOwnerLineupAndRotation persistence", () => {
     const loaded = await store.load(saveId);
     if (!loaded) return;
     const before = getTeamRosterManagement(loaded.state, teamId as never);
-    const beforeJson = JSON.stringify(before.rotation.map((e) => e.targetMinutes));
+    const beforeJson = JSON.stringify(
+      before.rotation.map((e) => e.targetMinutes),
+    );
 
     const preview = await previewOwnerOptimizeRotation(
       saveId,

@@ -4,20 +4,17 @@
  * transactions or injuries.
  */
 
-import type { EventSourceRef, ImportanceLevel } from "@/domain/entities/event-source";
+import type {
+  EventSourceRef,
+  ImportanceLevel,
+} from "@/domain/entities/event-source";
 import type { PlayerId, TeamId } from "@/domain/ids";
 
 export type CalendarEventLifecycle =
-  | "scheduled"
-  | "occurred"
-  | "action_required"
-  | "cancelled";
+  "scheduled" | "occurred" | "action_required" | "cancelled";
 
 /** Display certainty — known (occurred), scheduled (future authoritative), action_required. */
-export type CalendarEventCertainty =
-  | "known"
-  | "scheduled"
-  | "action_required";
+export type CalendarEventCertainty = "known" | "scheduled" | "action_required";
 
 export function certaintyFromLifecycle(
   lifecycle: CalendarEventLifecycle,

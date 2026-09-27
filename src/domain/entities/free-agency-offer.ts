@@ -5,11 +5,7 @@ import {
 import type { ContractId, OfferId, PlayerId, TeamId } from "@/domain/ids";
 
 export type FreeAgencyOfferStatus =
-  | "pending"
-  | "negotiating"
-  | "accepted"
-  | "rejected"
-  | "withdrawn";
+  "pending" | "negotiating" | "accepted" | "rejected" | "withdrawn";
 
 export const FREE_AGENCY_OFFER_STATUSES: readonly FreeAgencyOfferStatus[] = [
   "pending",
@@ -106,7 +102,9 @@ export function assertFreeAgencyOfferShape(
   }
   assertContractShape(offer.terms);
   if (offer.terms.playerId !== offer.playerId) {
-    throw new Error("FreeAgencyOffer terms.playerId must match offer.playerId.");
+    throw new Error(
+      "FreeAgencyOffer terms.playerId must match offer.playerId.",
+    );
   }
   if (offer.terms.teamId !== offer.teamId) {
     throw new Error("FreeAgencyOffer terms.teamId must match offer.teamId.");

@@ -82,9 +82,9 @@ export default async function GameDayEventPage({
             <div>
               <dt className="text-zinc-500">Attendance</dt>
               <dd className="text-zinc-100">
-                {view.result.actualAttendance.toLocaleString()} (expected without
-                event: {view.result.baselineAttendance.toLocaleString()},{" "}
-                {view.result.attendanceDifference >= 0 ? "+" : ""}
+                {view.result.actualAttendance.toLocaleString()} (expected
+                without event: {view.result.baselineAttendance.toLocaleString()}
+                , {view.result.attendanceDifference >= 0 ? "+" : ""}
                 {view.result.attendanceDifference.toLocaleString()})
               </dd>
             </div>
@@ -225,9 +225,8 @@ export default async function GameDayEventPage({
                   <div className="min-w-0 flex-1">
                     <div className="font-medium text-zinc-100">{item.name}</div>
                     <div className="mt-1 text-xs uppercase tracking-wide text-zinc-500">
-                      {item.category.replaceAll("_", " ")} ·{" "}
-                      {item.leadTimeDays}d lead ·{" "}
-                      <MoneyDisplay amount={item.cost} />
+                      {item.category.replaceAll("_", " ")} · {item.leadTimeDays}
+                      d lead · <MoneyDisplay amount={item.cost} />
                     </div>
                     <p className="mt-2 text-sm text-zinc-400">
                       {item.description}
@@ -246,7 +245,9 @@ export default async function GameDayEventPage({
                       </p>
                     ) : null}
                     {!item.available && item.reason ? (
-                      <p className="mt-2 text-xs text-rose-400">{item.reason}</p>
+                      <p className="mt-2 text-xs text-rose-400">
+                        {item.reason}
+                      </p>
                     ) : null}
                   </div>
                   {item.available ? (
@@ -259,11 +260,7 @@ export default async function GameDayEventPage({
                     >
                       <input type="hidden" name="saveId" value={saveId} />
                       <input type="hidden" name="gameId" value={gameId} />
-                      <input
-                        type="hidden"
-                        name="promotionId"
-                        value={item.id}
-                      />
+                      <input type="hidden" name="promotionId" value={item.id} />
                       <input
                         type="hidden"
                         name="returnPath"

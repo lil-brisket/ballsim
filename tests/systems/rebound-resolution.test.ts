@@ -316,12 +316,8 @@ describe("resolveRebound", () => {
 
   it("can resolve a defensive rebound with a stubbed contest roll", () => {
     const input = baseInput({
-      offensivePlayers: [
-        makePlayer("off_a", OFFENSE_TEAM, { rebounding: 70 }),
-      ],
-      defensivePlayers: [
-        makePlayer("def_a", DEFENSE_TEAM, { rebounding: 70 }),
-      ],
+      offensivePlayers: [makePlayer("off_a", OFFENSE_TEAM, { rebounding: 70 })],
+      defensivePlayers: [makePlayer("def_a", DEFENSE_TEAM, { rebounding: 70 })],
     });
     const rng = createStubRng([0.5, 0.5, 0.99, 0.0]);
     const result = resolveRebound(input, rng);
@@ -624,9 +620,9 @@ describe("resolveRebound statistical behavior", () => {
 
 describe("resolveRebound validation", () => {
   it("rejects a missing RNG", () => {
-    expect(() =>
-      resolveRebound(baseInput(), null as unknown as Rng),
-    ).toThrow(/RNG/);
+    expect(() => resolveRebound(baseInput(), null as unknown as Rng)).toThrow(
+      /RNG/,
+    );
   });
 
   it("rejects an empty offensive pool", () => {

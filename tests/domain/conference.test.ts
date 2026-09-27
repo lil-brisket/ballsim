@@ -59,9 +59,8 @@ describe("createConference", () => {
 
   it("accepts different numbers of divisions", () => {
     expect(
-      createConference(
-        validInput({ divisionIds: [asDivisionId("div_a")] }),
-      ).divisionIds,
+      createConference(validInput({ divisionIds: [asDivisionId("div_a")] }))
+        .divisionIds,
     ).toHaveLength(1);
     expect(
       createConference(

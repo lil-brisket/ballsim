@@ -88,9 +88,7 @@ export function getLeagueMilestones(
   // plannedPreseasonStart is null once the season leaves preseason.preparation,
   // so it cannot overwrite historical/current-season anchors.
   const preseasonStartDate =
-    preseasonWindow?.start ??
-    anchors.preseasonStart ??
-    plannedPreseasonStart;
+    preseasonWindow?.start ?? anchors.preseasonStart ?? plannedPreseasonStart;
 
   const draft = Object.values(state.world.drafts)[0];
   const draftComplete = draft?.status === "complete";
@@ -199,8 +197,7 @@ export function getLeagueMilestones(
       key: "playoffsStart",
       label: "Playoffs",
       date: anchors.regularSeasonEnd,
-      reached:
-        phaseId === "playoffs" || phaseId === "postseason.season_review",
+      reached: phaseId === "playoffs" || phaseId === "postseason.season_review",
       active: phaseId === "playoffs",
     },
     {

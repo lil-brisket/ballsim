@@ -3,7 +3,10 @@
  */
 
 import type { ImportanceLevel } from "@/domain/entities/event-source";
-import type { SocialAuthorType, SocialPost } from "@/domain/entities/social-post";
+import type {
+  SocialAuthorType,
+  SocialPost,
+} from "@/domain/entities/social-post";
 import type { DomainEvent } from "@/domain/events";
 import type { MediaItemId } from "@/domain/ids";
 import { asSocialPostId } from "@/domain/ids";

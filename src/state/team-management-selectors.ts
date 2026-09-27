@@ -386,8 +386,7 @@ function seasonStatsForPlayer(
     return null;
   }
 
-  const perGame = (value: number) =>
-    Math.round((value / games) * 10) / 10;
+  const perGame = (value: number) => Math.round((value / games) * 10) / 10;
   const pct = (made: number, attempted: number) =>
     attempted > 0 ? Math.round((made / attempted) * 1000) / 10 : null;
 
@@ -439,10 +438,7 @@ function workloadWarningForRow(
   if (overrideMedicalRecommendation) {
     return `Medical override — target ${targetMinutes} exceeds recommended ${recommendedWorkloadMpg} MPG`;
   }
-  if (
-    maximumWorkloadMpg != null &&
-    targetMinutes > maximumWorkloadMpg
-  ) {
+  if (maximumWorkloadMpg != null && targetMinutes > maximumWorkloadMpg) {
     return `Target ${targetMinutes} exceeds maximum ${maximumWorkloadMpg} MPG`;
   }
   return `Target ${targetMinutes} exceeds recommended ${recommendedWorkloadMpg} MPG`;
@@ -621,7 +617,8 @@ export function toInjuryReportView(state: GameState): InjuryReportView {
       continue;
     }
     const availability = getPlayerAvailability(state, playerId, team.id);
-    const active = player.activeInjuries ?? (player.injury ? [player.injury] : []);
+    const active =
+      player.activeInjuries ?? (player.injury ? [player.injury] : []);
     const primary = player.injury ?? active[0] ?? null;
     const effects = primary?.temporaryEffects ?? [];
     const window = primary?.expectedReturnWindow ?? null;
@@ -640,14 +637,16 @@ export function toInjuryReportView(state: GameState): InjuryReportView {
       };
     }
 
-    const recentHistory = (player.injuryHistory ?? []).slice(0, 3).map((entry) => ({
-      type: entry.type,
-      bodyPart: entry.bodyPart,
-      severity: entry.severity,
-      injuredOn: entry.injuredOn,
-      isReinjury: entry.isReinjury,
-      isAggravation: entry.isAggravation,
-    }));
+    const recentHistory = (player.injuryHistory ?? [])
+      .slice(0, 3)
+      .map((entry) => ({
+        type: entry.type,
+        bodyPart: entry.bodyPart,
+        severity: entry.severity,
+        injuredOn: entry.injuredOn,
+        isReinjury: entry.isReinjury,
+        isAggravation: entry.isAggravation,
+      }));
     historyRows.push(...recentHistory);
 
     rows.push({
@@ -672,7 +671,9 @@ export function toInjuryReportView(state: GameState): InjuryReportView {
       reinjuryRisk: primary?.reinjuryRisk ?? null,
       temporaryEffects: effects.map((effect) => ({
         attribute: effect.attribute,
-        delta: Math.round(effect.delta * (1 - (primary?.recoveryProgress ?? 0))),
+        delta: Math.round(
+          effect.delta * (1 - (primary?.recoveryProgress ?? 0)),
+        ),
       })),
       gamesRemaining,
       isLegacyUndisclosed:
@@ -823,7 +824,9 @@ function enrichEventLogEntry(
   entry: EventLogEntryView,
 ): EventLogEntryView {
   // Prefer name-resolved description when IDs are present in the raw event
-  const event = state.competition.seasonEventLog.find((row) => row.id === entry.id);
+  const event = state.competition.seasonEventLog.find(
+    (row) => row.id === entry.id,
+  );
   if (event == null) {
     return entry;
   }

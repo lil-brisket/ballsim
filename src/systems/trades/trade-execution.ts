@@ -4,7 +4,10 @@ import type { Player } from "@/domain/entities/player";
 import type { Team } from "@/domain/entities/team";
 import type { TradeBlock } from "@/domain/entities/trade-block";
 import type { TradeProposal } from "@/domain/entities/trade-proposal";
-import { createDomainEvent, type DomainEvent } from "@/domain/events/domain-event";
+import {
+  createDomainEvent,
+  type DomainEvent,
+} from "@/domain/events/domain-event";
 import type { DraftPickId, PlayerId, TeamId } from "@/domain/ids";
 import type { GameState } from "@/state/game-state";
 import { getTeamPayroll } from "@/systems/salary-cap";
@@ -100,7 +103,9 @@ export function executeTrade(
       player.developmentLeague != null
         ? {
             ...player.developmentLeague,
-            parentTeamId: wasDlAssigned ? teamIdB : player.developmentLeague.parentTeamId,
+            parentTeamId: wasDlAssigned
+              ? teamIdB
+              : player.developmentLeague.parentTeamId,
           }
         : undefined;
     players[playerId] = {
@@ -128,7 +133,9 @@ export function executeTrade(
       player.developmentLeague != null
         ? {
             ...player.developmentLeague,
-            parentTeamId: wasDlAssigned ? teamIdA : player.developmentLeague.parentTeamId,
+            parentTeamId: wasDlAssigned
+              ? teamIdA
+              : player.developmentLeague.parentTeamId,
           }
         : undefined;
     players[playerId] = {

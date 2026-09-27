@@ -129,7 +129,9 @@ describe("existing save does not regenerate team cities", () => {
       }
       expect(created.dashboard.teamSelectionLocked).toBe(false);
       const loaded = await store.load(created.save.id);
-      expect(getActiveOwnedFranchise(loaded!.state).citySelectionConfirmed).toBe(false);
+      expect(
+        getActiveOwnedFranchise(loaded!.state).citySelectionConfirmed,
+      ).toBe(false);
       expect(loaded!.state.settings.league.area).toBe(area);
     },
   );
@@ -158,19 +160,19 @@ describe("selectOwnerTeam philosophy regression", () => {
 
     const before = await store.load(created.save.id);
     expect(before).not.toBeNull();
-    expect(getActiveOwnedFranchise(before!.state).ownerPatience).toBeGreaterThan(0);
+    expect(
+      getActiveOwnedFranchise(before!.state).ownerPatience,
+    ).toBeGreaterThan(0);
 
     const teamIds = Object.keys(before!.state.world.teams).sort();
-    const selected = await selectOwnerTeam(
-      created.save.id,
-      teamIds[0]!,
-      store,
-    );
+    const selected = await selectOwnerTeam(created.save.id, teamIds[0]!, store);
     expect(selected.ok).toBe(true);
 
     const after = await store.load(created.save.id);
     expect(after).not.toBeNull();
-    expect(getActiveOwnedFranchise(after!.state).ownerPatience).toBeGreaterThan(0);
+    expect(getActiveOwnedFranchise(after!.state).ownerPatience).toBeGreaterThan(
+      0,
+    );
     expect(after!.state.user.activeOwnerTeamId).toBe(teamIds[0]);
   });
 });

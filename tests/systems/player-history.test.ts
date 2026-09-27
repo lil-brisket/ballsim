@@ -1,11 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { createGame } from "@/domain/entities/game";
 import { createSeededRng } from "@/domain/rng";
-import {
-  asGameId,
-  asPlayerId,
-  asTeamId,
-} from "@/domain/ids";
+import { asGameId, asPlayerId, asTeamId } from "@/domain/ids";
 import { CBL_GAME_SETTINGS } from "@/domain/game-settings";
 import { createInitialGameState } from "@/state/create-initial-state";
 import {
@@ -122,24 +118,24 @@ describe("player history archival", () => {
         city: "Home",
         name: "Club",
         abbreviation: "HOM",
-      branding: {
-        primaryColor: "#0B1F3A",
-        secondaryColor: "#C4CED4",
-        accentColor: "#F5B800",
-        logoId: "shield",
-      },
+        branding: {
+          primaryColor: "#0B1F3A",
+          secondaryColor: "#C4CED4",
+          accentColor: "#F5B800",
+          logoId: "shield",
+        },
       },
       awayTeamSnapshot: {
         teamId: awayTeamId,
         city: "Away",
         name: "Side",
         abbreviation: "AWY",
-      branding: {
-        primaryColor: "#0B1F3A",
-        secondaryColor: "#C4CED4",
-        accentColor: "#F5B800",
-        logoId: "shield",
-      },
+        branding: {
+          primaryColor: "#0B1F3A",
+          secondaryColor: "#C4CED4",
+          accentColor: "#F5B800",
+          logoId: "shield",
+        },
       },
     });
 
@@ -211,7 +207,9 @@ describe("player history archival", () => {
     expect(Object.keys(twice.business.gameArchive)).toHaveLength(
       Object.keys(once.business.gameArchive).length,
     );
-    expect(twice.business.playerHistory[homePlayer.id]?.seasons).toHaveLength(1);
+    expect(twice.business.playerHistory[homePlayer.id]?.seasons).toHaveLength(
+      1,
+    );
     expect(JSON.stringify(twice.business.gameArchive)).toBe(
       JSON.stringify(once.business.gameArchive),
     );
@@ -287,24 +285,24 @@ describe("player history archival", () => {
         city: "Away",
         name: "Side",
         abbreviation: "AWY",
-      branding: {
-        primaryColor: "#0B1F3A",
-        secondaryColor: "#C4CED4",
-        accentColor: "#F5B800",
-        logoId: "shield",
-      },
+        branding: {
+          primaryColor: "#0B1F3A",
+          secondaryColor: "#C4CED4",
+          accentColor: "#F5B800",
+          logoId: "shield",
+        },
       },
       awayTeamSnapshot: {
         teamId: homeTeamId,
         city: "Home",
         name: "Club",
         abbreviation: "HOM",
-      branding: {
-        primaryColor: "#0B1F3A",
-        secondaryColor: "#C4CED4",
-        accentColor: "#F5B800",
-        logoId: "shield",
-      },
+        branding: {
+          primaryColor: "#0B1F3A",
+          secondaryColor: "#C4CED4",
+          accentColor: "#F5B800",
+          logoId: "shield",
+        },
       },
     });
 
@@ -361,8 +359,9 @@ describe("game access helpers", () => {
       playerStats: [
         emptyPlayerStats(player.id, homeTeamId, "A", "B", 10),
         emptyPlayerStats(
-          Object.values(state.world.players).find((p) => p.teamId === awayTeamId)!
-            .id,
+          Object.values(state.world.players).find(
+            (p) => p.teamId === awayTeamId,
+          )!.id,
           awayTeamId,
           "C",
           "D",
@@ -374,24 +373,24 @@ describe("game access helpers", () => {
         city: "H",
         name: "T",
         abbreviation: "HOM",
-      branding: {
-        primaryColor: "#0B1F3A",
-        secondaryColor: "#C4CED4",
-        accentColor: "#F5B800",
-        logoId: "shield",
-      },
+        branding: {
+          primaryColor: "#0B1F3A",
+          secondaryColor: "#C4CED4",
+          accentColor: "#F5B800",
+          logoId: "shield",
+        },
       },
       awayTeamSnapshot: {
         teamId: awayTeamId,
         city: "A",
         name: "T",
         abbreviation: "AWY",
-      branding: {
-        primaryColor: "#0B1F3A",
-        secondaryColor: "#C4CED4",
-        accentColor: "#F5B800",
-        logoId: "shield",
-      },
+        branding: {
+          primaryColor: "#0B1F3A",
+          secondaryColor: "#C4CED4",
+          accentColor: "#F5B800",
+          logoId: "shield",
+        },
       },
     });
 
@@ -453,7 +452,13 @@ describe("player profile selectors", () => {
       periodScores: [{ home: 110, away: 100 }],
       events: [],
       playerStats: [
-        emptyPlayerStats(player.id, homeTeamId, player.firstName, player.lastName, 42),
+        emptyPlayerStats(
+          player.id,
+          homeTeamId,
+          player.firstName,
+          player.lastName,
+          42,
+        ),
         emptyPlayerStats(
           opponent.id,
           awayTeamId,
@@ -467,24 +472,24 @@ describe("player profile selectors", () => {
         city: "Home",
         name: "Club",
         abbreviation: "HOM",
-      branding: {
-        primaryColor: "#0B1F3A",
-        secondaryColor: "#C4CED4",
-        accentColor: "#F5B800",
-        logoId: "shield",
-      },
+        branding: {
+          primaryColor: "#0B1F3A",
+          secondaryColor: "#C4CED4",
+          accentColor: "#F5B800",
+          logoId: "shield",
+        },
       },
       awayTeamSnapshot: {
         teamId: awayTeamId,
         city: "Away",
         name: "Side",
         abbreviation: "AWY",
-      branding: {
-        primaryColor: "#0B1F3A",
-        secondaryColor: "#C4CED4",
-        accentColor: "#F5B800",
-        logoId: "shield",
-      },
+        branding: {
+          primaryColor: "#0B1F3A",
+          secondaryColor: "#C4CED4",
+          accentColor: "#F5B800",
+          logoId: "shield",
+        },
       },
     });
 
@@ -499,7 +504,9 @@ describe("player profile selectors", () => {
     const detail = toPlayerDetailView(state, player.id)!;
     const profile = toPlayerProfileView(state, player.id, detail);
     expect(profile.seasonAverages?.ppg).toBe(42);
-    expect(profile.strengths.length + profile.weaknesses.length).toBeGreaterThan(0);
+    expect(
+      profile.strengths.length + profile.weaknesses.length,
+    ).toBeGreaterThan(0);
     expect(profile.gameLog).toHaveLength(1);
     expect(profile.trackingStartedSeasonYear).toBeNull();
 

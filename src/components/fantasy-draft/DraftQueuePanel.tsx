@@ -20,9 +20,7 @@ export function DraftQueuePanel(props: {
   const activeTeam = draft.controlledFranchises.find((t) => t.isActive);
   const teamId = draft.activeOwnerTeamId;
   const canDraft =
-    draft.userOnClock &&
-    !draft.paused &&
-    draft.onClockTeamId === teamId;
+    draft.userOnClock && !draft.paused && draft.onClockTeamId === teamId;
 
   return (
     <section className="rounded-xl border border-zinc-800 p-4">

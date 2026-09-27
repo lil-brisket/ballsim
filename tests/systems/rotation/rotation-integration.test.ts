@@ -58,12 +58,12 @@ describe("rotation integration", () => {
     state = withTeamRosterManagement(state, homeId, homeMgmt);
     state = withTeamRosterManagement(state, awayId, awayMgmt);
 
-    const homePlayers = state.world.teams[homeId]!.roster
-      .map((id) => state.world.players[id])
-      .filter((p): p is Player => p != null);
-    const awayPlayers = state.world.teams[awayId]!.roster
-      .map((id) => state.world.players[id])
-      .filter((p): p is Player => p != null);
+    const homePlayers = state.world.teams[homeId]!.roster.map(
+      (id) => state.world.players[id],
+    ).filter((p): p is Player => p != null);
+    const awayPlayers = state.world.teams[awayId]!.roster.map(
+      (id) => state.world.players[id],
+    ).filter((p): p is Player => p != null);
 
     expect(homePlayers.length).toBeGreaterThanOrEqual(8);
     expect(awayPlayers.length).toBeGreaterThanOrEqual(8);

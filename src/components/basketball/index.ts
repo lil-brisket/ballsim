@@ -1,5 +1,8 @@
 export { InjuryBadge } from "@/components/basketball/InjuryBadge";
-export { PlayerCard, type PlayerCardFields } from "@/components/basketball/PlayerCard";
+export {
+  PlayerCard,
+  type PlayerCardFields,
+} from "@/components/basketball/PlayerCard";
 export { PlayerDrawer } from "@/components/basketball/PlayerDrawer";
 export { StaffDrawer } from "@/components/basketball/StaffDrawer";
 export { RosterRow } from "@/components/basketball/RosterRow";

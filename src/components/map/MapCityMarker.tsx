@@ -21,10 +21,15 @@ export const MapCityMarker = memo(function MapCityMarker(props: {
       : "Available";
   const label = `${props.city.label}. ${props.city.locationLabel ?? ""}. ${
     status === "selected" ? "Selected. " : ""
-  }${statusText}`.replace(/\s+/g, " ").trim();
+  }${statusText}`
+    .replace(/\s+/g, " ")
+    .trim();
 
   return (
-    <g transform={`translate(${props.x} ${props.y})`} className="cursor-pointer">
+    <g
+      transform={`translate(${props.x} ${props.y})`}
+      className="cursor-pointer"
+    >
       <title>{`${props.city.label} — ${props.city.locationLabel ?? ""} — ${
         props.city.status === "occupied"
           ? `${props.city.detail ?? ""} existing franchise`

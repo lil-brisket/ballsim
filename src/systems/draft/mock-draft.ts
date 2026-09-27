@@ -63,7 +63,11 @@ export function scoreProspectFromEstimate(
   const potentialWeight = 0.35 + youthValue * 0.2;
   const upsideWeight = 0.1 + youthValue * 0.15 + developmentPriority * 0.1;
   const confidence =
-    estimate.confidence === "high" ? 4 : estimate.confidence === "medium" ? 2 : 0;
+    estimate.confidence === "high"
+      ? 4
+      : estimate.confidence === "medium"
+        ? 2
+        : 0;
   return (
     overall * overallWeight +
     potential * potentialWeight +
@@ -197,8 +201,7 @@ export function computeTeamMockDraftView(
         previous?.projectedPicks.find(
           (p) => p.prospectPlayerId === prospect.playerId,
         )?.projectedOverallPick ?? null;
-      const delta =
-        prev !== null ? prev - projectedOverallPick : null;
+      const delta = prev !== null ? prev - projectedOverallPick : null;
       const estimate = findTeamProspectEstimate(teamState, prospect.playerId);
       const known = estimate && estimate.knowledgeLevel !== "unknown";
       return {

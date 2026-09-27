@@ -11,9 +11,7 @@ import type { Player } from "@/domain/entities/player";
 import type { PlayerId, TeamId } from "@/domain/ids";
 import type { GameState } from "@/state/game-state";
 
-export function isPlayerDlAssigned(
-  player: Player | null | undefined,
-): boolean {
+export function isPlayerDlAssigned(player: Player | null | undefined): boolean {
   return player?.developmentLeague?.status === "assigned";
 }
 
@@ -71,11 +69,7 @@ export function getFranchisePlayerIds(
   }
   // Also include any player with teamId matching but neither list (edge/migration)
   for (const player of Object.values(state.world.players)) {
-    if (
-      player.teamId === teamId &&
-      !player.retired &&
-      !seen.has(player.id)
-    ) {
+    if (player.teamId === teamId && !player.retired && !seen.has(player.id)) {
       seen.add(player.id);
       ids.push(player.id);
     }

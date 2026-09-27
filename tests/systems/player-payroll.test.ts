@@ -28,12 +28,13 @@ describe("player payroll (commitment limit)", () => {
     expect(fundsAfter).toBe(fundsBefore);
 
     const booksAfter =
-      result.state.business.finances[teamId]!.booksByYear[String(year)]?.expenses;
+      result.state.business.finances[teamId]!.booksByYear[String(year)]
+        ?.expenses;
     expect(booksAfter?.operations ?? 0).toBe(booksBefore?.operations ?? 0);
     expect(booksAfter?.staff ?? 0).toBe(booksBefore?.staff ?? 0);
-    expect(result.events.filter((e) => e.type === "PlayerPayrollPaid")).toHaveLength(
-      0,
-    );
+    expect(
+      result.events.filter((e) => e.type === "PlayerPayrollPaid"),
+    ).toHaveLength(0);
 
     const statement = getFinancialStatement(result.state, teamId, year);
     expect(statement.expenses.playerSalaries).toBe(annual);

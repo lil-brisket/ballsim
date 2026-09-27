@@ -24,10 +24,7 @@ import {
 } from "@/domain/entities/team-roster-management";
 import type { PlayerId, TeamId } from "@/domain/ids";
 import type { GameState } from "@/state/game-state";
-import {
-  getActiveOwnerTeamId,
-  isOwnedFranchise,
-} from "@/state/owner-context";
+import { getActiveOwnerTeamId, isOwnedFranchise } from "@/state/owner-context";
 import {
   applyRosterManagement,
   applyRotationEditsToManagement,
@@ -40,8 +37,7 @@ import {
 } from "@/systems/roster-management";
 
 export type TeamManagementCommandResult =
-  | { ok: true; state: GameState }
-  | { ok: false; error: string };
+  { ok: true; state: GameState } | { ok: false; error: string };
 
 function assertActiveOwnedTeam(
   state: GameState,
@@ -113,7 +109,8 @@ export function updateLineupCommand(
   } catch (error) {
     return {
       ok: false,
-      error: error instanceof Error ? error.message : "Failed to update lineup.",
+      error:
+        error instanceof Error ? error.message : "Failed to update lineup.",
     };
   }
 }
@@ -137,20 +134,15 @@ export function updateRotationCommand(
   }
 
   const current = getTeamRosterManagement(state, input.teamId);
-  const applied = applyRotationEditsToManagement(
-    state,
-    input.teamId,
-    current,
-    {
-      rotation: input.rotation,
-      rotationStyle: input.rotationStyle,
-      rotationPhilosophy: input.rotationPhilosophy,
-      rotationDepth: input.rotationDepth,
-      rotationPreset: input.rotationPreset,
-      closingLineupPolicy: input.closingLineupPolicy,
-      closingLineupIds: input.closingLineupIds,
-    },
-  );
+  const applied = applyRotationEditsToManagement(state, input.teamId, current, {
+    rotation: input.rotation,
+    rotationStyle: input.rotationStyle,
+    rotationPhilosophy: input.rotationPhilosophy,
+    rotationDepth: input.rotationDepth,
+    rotationPreset: input.rotationPreset,
+    closingLineupPolicy: input.closingLineupPolicy,
+    closingLineupIds: input.closingLineupIds,
+  });
   if (!applied.ok) {
     return applied;
   }

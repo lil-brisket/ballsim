@@ -100,13 +100,15 @@ const PALETTE_BY_ID = new Map(
   TEAM_COLOR_PALETTES.map((palette) => [palette.id, palette]),
 );
 
-export function isTeamColorPaletteId(value: unknown): value is TeamColorPaletteId {
-  return typeof value === "string" && PALETTE_BY_ID.has(value as TeamColorPaletteId);
+export function isTeamColorPaletteId(
+  value: unknown,
+): value is TeamColorPaletteId {
+  return (
+    typeof value === "string" && PALETTE_BY_ID.has(value as TeamColorPaletteId)
+  );
 }
 
-export function getTeamColorPalette(
-  id: TeamColorPaletteId,
-): TeamColorPalette {
+export function getTeamColorPalette(id: TeamColorPaletteId): TeamColorPalette {
   const palette = PALETTE_BY_ID.get(id);
   if (!palette) {
     throw new Error(`Unknown team colour palette "${id}".`);

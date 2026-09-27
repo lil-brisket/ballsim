@@ -1,9 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-  createFoul,
-  FOUL_TYPES,
-  type FoulInput,
-} from "@/domain/entities/foul";
+import { createFoul, FOUL_TYPES, type FoulInput } from "@/domain/entities/foul";
 import { asPlayerId } from "@/domain/ids";
 
 function validInput(overrides: Partial<FoulInput> = {}): FoulInput {

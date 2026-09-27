@@ -68,10 +68,7 @@ export function acknowledgeSituation(
   situation: NarrativeSituation,
   date: string,
 ): NarrativeSituation {
-  if (
-    situation.status === "resolved" ||
-    situation.status === "expired"
-  ) {
+  if (situation.status === "resolved" || situation.status === "expired") {
     return situation;
   }
   return {
@@ -248,7 +245,11 @@ export function applyCandidateToSituations(
     };
   }
 
-  const id = situationIdFor(storageKey, teamId, `${monthId}_s${candidate.stage}`);
+  const id = situationIdFor(
+    storageKey,
+    teamId,
+    `${monthId}_s${candidate.stage}`,
+  );
   const expiresOn =
     candidate.expiresAfterDays !== undefined &&
     Number.isInteger(candidate.expiresAfterDays) &&

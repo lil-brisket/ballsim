@@ -76,9 +76,9 @@ describe("getNextTeamGameDate", () => {
 
     const game = getTeamGameForDate(state, teamId, next!);
     expect(game).not.toBeNull();
-    expect(
-      game!.homeTeamId === teamId || game!.awayTeamId === teamId,
-    ).toBe(true);
+    expect(game!.homeTeamId === teamId || game!.awayTeamId === teamId).toBe(
+      true,
+    );
   });
 
   it("is independent of findNextSimulationTarget", () => {
@@ -145,9 +145,7 @@ describe("getCalendarMonthGrid owner enrichment", () => {
         }
       }
       if (cell.teamGame) {
-        expect(
-          cell.teamGame.home || !cell.teamGame.home,
-        ).toBe(true);
+        expect(cell.teamGame.home || !cell.teamGame.home).toBe(true);
       }
     }
   });
@@ -172,7 +170,9 @@ describe("buildCalendarDateInspectorView", () => {
     const futureView = buildCalendarDateInspectorView(state, future);
     expect(futureView.action).toBe("simulate_to_date");
     expect(futureView.simulationPreview).not.toBeNull();
-    expect(futureView.simulationPreview!.summaryLines.length).toBeGreaterThan(0);
+    expect(futureView.simulationPreview!.summaryLines.length).toBeGreaterThan(
+      0,
+    );
     expect(futureView.simulationPreview!.canSimulate).toBe(true);
   });
 });

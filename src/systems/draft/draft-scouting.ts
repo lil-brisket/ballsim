@@ -17,10 +17,11 @@ import {
   buildScoutEvaluationContext,
   evaluateProspectForTeam,
 } from "@/systems/scouting/scouting-accuracy";
+import { createDraftScoutReport } from "@/domain/entities/draft";
 import {
-  createDraftScoutReport,
-} from "@/domain/entities/draft";
-import { PLAYER_ATTRIBUTE_KEYS, type PlayerAttributes } from "@/domain/entities/player";
+  PLAYER_ATTRIBUTE_KEYS,
+  type PlayerAttributes,
+} from "@/domain/entities/player";
 import { ratingRangeMidpoint } from "@/domain/entities/scouting-types";
 import { scoutNoiseScale } from "@/systems/staff-effects";
 import {

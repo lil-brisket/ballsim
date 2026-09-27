@@ -26,7 +26,11 @@ export function MultiTeamPhaseSwitcher(props: {
             ) : (
               <form action={props.switchAction}>
                 <input type="hidden" name="saveId" value={props.saveId} />
-                <input type="hidden" name="returnPath" value={props.returnPath} />
+                <input
+                  type="hidden"
+                  name="returnPath"
+                  value={props.returnPath}
+                />
                 <input type="hidden" name="teamId" value={team.teamId} />
                 <button
                   type="submit"

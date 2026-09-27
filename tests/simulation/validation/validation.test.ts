@@ -11,13 +11,12 @@ import {
 } from "@/simulation/validation/run-validation";
 import { createSeededRng } from "@/domain/rng";
 import { createGame } from "@/domain/entities/game";
-import {
-  asGameId,
-  asSeasonId,
-  asTeamId,
-} from "@/domain/ids";
+import { asGameId, asSeasonId, asTeamId } from "@/domain/ids";
 import { simulateGame } from "@/systems/game-simulation";
-import { createGameResult, aggregateTeamStats } from "@/domain/entities/game-result";
+import {
+  createGameResult,
+  aggregateTeamStats,
+} from "@/domain/entities/game-result";
 import { createEmptyGamePlayerStats } from "@/domain/entities/game";
 import { asPlayerId } from "@/domain/ids";
 
@@ -31,7 +30,8 @@ function validTeam(
   const threePointersAttempted = overrides.threePointersAttempted ?? 30;
   const freeThrowsAttempted = overrides.freeThrowsAttempted ?? 25;
   const twoPointFgm = fieldGoalsMade - threePointersMade;
-  const defaultPoints = 2 * twoPointFgm + 3 * threePointersMade + freeThrowsMade;
+  const defaultPoints =
+    2 * twoPointFgm + 3 * threePointersMade + freeThrowsMade;
   const points = overrides.points ?? defaultPoints;
   const possessions = overrides.possessions ?? 100;
   return {
@@ -336,7 +336,9 @@ describe("aggregateSnapshots", () => {
     // Covered indirectly via runSimulationValidation checksum stability
     const run = runSimulationValidation({ games: 2, seed: 11 });
     expect(run.aggregates.gamesSimulated).toBe(2);
-    expect(run.aggregates.pooledShooting.fieldGoalsAttempted).toBeGreaterThan(0);
+    expect(run.aggregates.pooledShooting.fieldGoalsAttempted).toBeGreaterThan(
+      0,
+    );
     expect(aggregateSnapshots([], 1).gamesSimulated).toBe(0);
   });
 });

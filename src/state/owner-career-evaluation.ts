@@ -9,11 +9,7 @@ import { getDefaultOwnerMandateProfile } from "@/systems/owner-philosophy-config
 import { confidenceAlignmentScore } from "@/systems/ownership-confidence-engine";
 import { getActiveOwnedFranchise } from "@/state/owner-context";
 
-export type OwnerCareerBand =
-  | "struggling"
-  | "mixed"
-  | "successful"
-  | "legacy";
+export type OwnerCareerBand = "struggling" | "mixed" | "successful" | "legacy";
 
 export type OwnerCareerEvaluation = {
   band: OwnerCareerBand;

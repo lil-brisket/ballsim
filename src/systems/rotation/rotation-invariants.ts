@@ -15,13 +15,9 @@ export type MinuteAccountingFailure = {
  * Regulation: 5 × 48 × 60 = 14400
  * Each OT period: + 5 × 5 × 60 = 1500
  */
-export function expectedTeamPlayerSeconds(
-  overtimePeriods: number,
-): number {
+export function expectedTeamPlayerSeconds(overtimePeriods: number): number {
   const regulation =
-    ROTATION_CONFIG.playersOnCourt *
-    ROTATION_CONFIG.regulationMinutes *
-    60;
+    ROTATION_CONFIG.playersOnCourt * ROTATION_CONFIG.regulationMinutes * 60;
   const ot =
     overtimePeriods *
     ROTATION_CONFIG.playersOnCourt *
@@ -73,7 +69,5 @@ export function assertTeamSecondsOnCourt(
   if (failures.length === 0) {
     return;
   }
-  throw new Error(
-    failures.map((f) => `${f.rule}: ${f.detail}`).join("; "),
-  );
+  throw new Error(failures.map((f) => `${f.rule}: ${f.detail}`).join("; "));
 }

@@ -36,7 +36,9 @@ export function validateDayInvariants(
   const date = state.world.calendar.currentDate;
 
   if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
-    issues.push(issue("invalid_current_date", `Invalid currentDate "${date}".`));
+    issues.push(
+      issue("invalid_current_date", `Invalid currentDate "${date}".`),
+    );
   }
 
   const lastSim = state.world.calendar.lastSimulatedDate;

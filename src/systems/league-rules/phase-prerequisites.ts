@@ -6,7 +6,10 @@ import {
 } from "@/systems/league-rules/draft-rules";
 import { readActivePhaseId } from "@/systems/league-rules/phase-ids";
 import { isRfaQualificationComplete } from "@/systems/league-rules/rfa-rules";
-import { createRosterRulesConfig, validateRosterSize } from "@/systems/roster-rules";
+import {
+  createRosterRulesConfig,
+  validateRosterSize,
+} from "@/systems/roster-rules";
 import { TRADE_ROSTER_RULES } from "@/systems/trades-config";
 import type { RuleViolation } from "@/systems/league-rules/types";
 import { DRAFT_ROUNDS } from "@/systems/league-rules/invariants";
@@ -47,8 +50,7 @@ export function canEnterPhase(
     if (!isRfaQualificationComplete(state)) {
       violations.push({
         code: "RFA_QUALIFICATION_INCOMPLETE",
-        message:
-          "Free agency cannot open — RFA qualification is incomplete.",
+        message: "Free agency cannot open — RFA qualification is incomplete.",
         tier: "phase_lock",
         action: "advance_phase",
       });
@@ -91,8 +93,7 @@ export function canEnterPhase(
         if (game.status !== "final") {
           violations.push({
             code: "REGULAR_SEASON_INCOMPLETE",
-            message:
-              "Playoffs cannot start before regular season completion.",
+            message: "Playoffs cannot start before regular season completion.",
             tier: "phase_lock",
             action: "begin_playoffs",
           });
@@ -102,7 +103,10 @@ export function canEnterPhase(
     }
   }
 
-  if (toPhaseId === "offseason.draft" || toPhaseId === "activate_draft" as never) {
+  if (
+    toPhaseId === "offseason.draft" ||
+    toPhaseId === ("activate_draft" as never)
+  ) {
     const teamCount = Object.keys(state.world.teams).length;
     const drafts = Object.values(state.world.drafts);
     for (const draft of drafts) {
@@ -112,8 +116,7 @@ export function canEnterPhase(
       ) {
         violations.push({
           code: "DRAFT_ORDER_NOT_FINALIZED",
-          message:
-            "Draft cannot begin — draft order has not been finalized.",
+          message: "Draft cannot begin — draft order has not been finalized.",
           tier: "hard_lock",
           action: "activate_draft",
         });
@@ -163,7 +166,9 @@ export function canAdvanceFromPhase(
   };
 }
 
-export function canBeginRegularSeason(state: GameState): PhasePrerequisiteResult {
+export function canBeginRegularSeason(
+  state: GameState,
+): PhasePrerequisiteResult {
   return canEnterPhase(state, "regular");
 }
 

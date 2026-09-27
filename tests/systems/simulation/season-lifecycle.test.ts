@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 import { createSeededRng } from "@/domain/rng";
-import { createInitialGameState, createFourTeamInitialGameState } from "@/state/create-initial-state";
+import {
+  createInitialGameState,
+  createFourTeamInitialGameState,
+} from "@/state/create-initial-state";
 import { CBL_GAME_SETTINGS } from "@/domain/game-settings";
 import { bootstrapWorld } from "@/systems/world-pipeline";
 import { simulateGamesForDate } from "@/systems/game-simulation";
@@ -18,11 +21,7 @@ import { generateRosters } from "@/systems/roster-generation";
 import { createEmptyPlayoffTournament } from "@/domain/entities/playoffs";
 import { createEmptySeasonEventsState } from "@/domain/entities/season-events";
 import { createEmptyTeamStanding } from "@/domain/entities/standings";
-import {
-  asSaveId,
-  asSeasonId,
-  type TeamId,
-} from "@/domain/ids";
+import { asSaveId, asSeasonId, type TeamId } from "@/domain/ids";
 import { GAME_STATE_SCHEMA_VERSION, type GameState } from "@/state/game-state";
 import { createEmptyTeamFinanceBooks } from "@/domain/entities/finances";
 import { createDefaultOwnedFranchiseState } from "@/state/owned-franchise-state";
@@ -31,9 +30,10 @@ import { createPhaseEBusinessDefaults } from "@/state/phase-e-defaults";
 describe("season lifecycle", () => {
   it("transitions preseason → regular and generates a same-day opener schedule", () => {
     const state = createInitialGameState({
-    saveId: "life_pre", rngSeed: 1,
-    settings: CBL_GAME_SETTINGS,
-  });
+      saveId: "life_pre",
+      rngSeed: 1,
+      settings: CBL_GAME_SETTINGS,
+    });
     const rng = createSeededRng(state.meta.rngState);
     const bootstrapped = bootstrapWorld(state, rng).state;
 
@@ -42,7 +42,8 @@ describe("season lifecycle", () => {
     expect(result.state.competition.schedule.gameIds.length).toBeGreaterThan(0);
 
     const openers = Object.values(result.state.competition.games).filter(
-      (game) => game.date === result.state.competition.season.regularSeasonStartDate,
+      (game) =>
+        game.date === result.state.competition.season.regularSeasonStartDate,
     );
     expect(result.state.competition.season.regularSeasonStartDate).toBe(
       "2026-10-01",
@@ -52,9 +53,9 @@ describe("season lifecycle", () => {
 
   it("does not treat an empty schedule as a completed regular season", () => {
     let state = createInitialGameState({
-    saveId: "life_empty",
-    settings: CBL_GAME_SETTINGS,
-  });
+      saveId: "life_empty",
+      settings: CBL_GAME_SETTINGS,
+    });
     state = transitionPhase(state, "regular").state;
     expect(isRegularSeasonComplete(state)).toBe(false);
     const result = processSeasonLifecycle(state);
@@ -92,9 +93,9 @@ describe("season lifecycle", () => {
 
   it("holds on postseason until enterOffseasonFromPostseason", () => {
     let state = createInitialGameState({
-    saveId: "life_off",
-    settings: CBL_GAME_SETTINGS,
-  });
+      saveId: "life_off",
+      settings: CBL_GAME_SETTINGS,
+    });
     state = transitionPhase(state, "regular").state;
     state = transitionPhase(state, "postseason").state;
     const held = processSeasonLifecycle(state);

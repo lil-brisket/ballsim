@@ -97,7 +97,10 @@ export type PreferenceDebugSnapshot = {
   pressure: FranchisePressureSignals;
   preferences: EffectivePreferences;
   /** Top influences for harness/tests (developer-only). */
-  primaryInfluences: readonly { key: keyof EffectivePreferences; value: number }[];
+  primaryInfluences: readonly {
+    key: keyof EffectivePreferences;
+    value: number;
+  }[];
 };
 
 export type ResolvedFranchisePreferences = {
@@ -179,7 +182,8 @@ function identityBaselinePreferences(
       patiencePressure * 0.2 +
       (context.rosterStrength >= 60 ? 0.15 : 0) +
       (context.winPct >= 0.55 ? 0.1 : 0)) *
-      (context.deadlineWindow && traits.competitiveness >= traits.assetAccumulation
+      (context.deadlineWindow &&
+      traits.competitiveness >= traits.assetAccumulation
         ? calendarScale
         : 1),
   );
@@ -190,7 +194,8 @@ function identityBaselinePreferences(
       (context.youngRosterSharePct >= 50 ? 0.1 : 0) +
       (context.draftAssetCount >= 4 ? 0.1 : 0) +
       (context.rosterStrength > 0 && context.rosterStrength < 48 ? 0.15 : 0)) *
-      (context.deadlineWindow && traits.assetAccumulation > traits.competitiveness
+      (context.deadlineWindow &&
+      traits.assetAccumulation > traits.competitiveness
         ? calendarScale
         : 1),
   );
@@ -307,7 +312,8 @@ export function resolveFranchisePreferencesFromParts(
     pressure.financialStress * 0.12 + pressure.sponsorRisk * 0.04;
 
   const inertiaCap =
-    trajectory.financialStress >= 0.75 || context.financialHealth === "insolvent"
+    trajectory.financialStress >= 0.75 ||
+    context.financialHealth === "insolvent"
       ? IDENTITY_INERTIA_CATASTROPHIC_CAP
       : IDENTITY_INERTIA_MODIFIER_CAP;
 

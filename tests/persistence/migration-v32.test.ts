@@ -81,9 +81,9 @@ describe("v31 → v32 migration", () => {
     expect(
       loaded.business.franchiseHistory[firstTeam]!.seasons[0]!.attendance,
     ).toBeNull();
-    expect(
-      loaded.business.franchiseHistory[firstTeam]!.seasons[0]!.city,
-    ).toBe("Legacy City");
+    expect(loaded.business.franchiseHistory[firstTeam]!.seasons[0]!.city).toBe(
+      "Legacy City",
+    );
     for (const teamId of Object.keys(loaded.world.teams)) {
       expect(loaded.business.finances[teamId]!.attendanceByYear).toEqual({});
     }

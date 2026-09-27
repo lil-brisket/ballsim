@@ -55,8 +55,7 @@ export function checkFreeAgencySigning(
   ) {
     violations.push({
       code: "RFA_REQUIRES_OFFER_SHEET",
-      message:
-        "RFA signing requires the restricted free-agency process.",
+      message: "RFA signing requires the restricted free-agency process.",
       tier: "hard_lock",
       action: "sign_free_agent",
     });

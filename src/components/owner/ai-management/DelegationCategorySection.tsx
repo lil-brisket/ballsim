@@ -6,7 +6,10 @@ import {
   MANAGEMENT_PHASE_METADATA,
   type DelegationCategoryId,
 } from "@/domain/ai-management-delegation";
-import type { AiAssistancePhases, ManagementPhase } from "@/domain/ai-management-presets";
+import type {
+  AiAssistancePhases,
+  ManagementPhase,
+} from "@/domain/ai-management-presets";
 import { ResponsibilityCard } from "@/components/owner/ai-management/ResponsibilityCard";
 
 type DelegationCategorySectionProps = {
@@ -33,8 +36,7 @@ export function DelegationCategorySection({
   );
   const phases = Object.values(MANAGEMENT_PHASE_METADATA)
     .filter(
-      (meta) =>
-        meta.categoryId === categoryId && meta.delegationSupported,
+      (meta) => meta.categoryId === categoryId && meta.delegationSupported,
     )
     .map((meta) => meta.phase);
 
@@ -50,7 +52,10 @@ export function DelegationCategorySection({
         : "None delegated";
 
   return (
-    <details open className="group space-y-3 rounded-md border border-zinc-800 bg-zinc-950/40 p-3">
+    <details
+      open
+      className="group space-y-3 rounded-md border border-zinc-800 bg-zinc-950/40 p-3"
+    >
       <summary className="flex cursor-pointer list-none items-start justify-between gap-3 [&::-webkit-details-marker]:hidden">
         <div className="min-w-0 space-y-1">
           <div className="flex flex-wrap items-center gap-2">

@@ -11,7 +11,10 @@ import { toDepthChartView } from "@/state/roster-page-selectors";
 
 function buildState(
   players: ReturnType<typeof createPlayer>[],
-  startingLineup: Array<{ playerId: string; slot: "PG" | "SG" | "SF" | "PF" | "C" }> = [],
+  startingLineup: Array<{
+    playerId: string;
+    slot: "PG" | "SG" | "SF" | "PF" | "C";
+  }> = [],
   teamId = asTeamId("team_depth"),
 ): GameState {
   const worldPlayers: GameState["world"]["players"] = {};

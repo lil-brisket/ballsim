@@ -49,10 +49,7 @@ function checkMean(
  * Home win rate under fair coin (no home-court advantage).
  * sigma = sqrt(0.25 / n); compare |p - 0.5| / sigma.
  */
-function homeWinRateCheck(
-  homeWins: number,
-  games: number,
-): CheckResult {
+function homeWinRateCheck(homeWins: number, games: number): CheckResult {
   if (games === 0) {
     return {
       name: "home_win_rate",
@@ -152,24 +149,39 @@ export function evaluatePlausibility(
       warnMin: 65,
       warnMax: 130,
     }),
-    checkMean("fg_pct", aggregates.fieldGoalPct.mean, {
-      passMin: 0.38,
-      passMax: 0.55,
-      warnMin: 0.32,
-      warnMax: 0.62,
-    }, pct),
-    checkMean("three_pt_pct", aggregates.threePointPct.mean, {
-      passMin: 0.28,
-      passMax: 0.42,
-      warnMin: 0.22,
-      warnMax: 0.5,
-    }, pct),
-    checkMean("ft_pct", aggregates.freeThrowPct.mean, {
-      passMin: 0.65,
-      passMax: 0.85,
-      warnMin: 0.55,
-      warnMax: 0.92,
-    }, pct),
+    checkMean(
+      "fg_pct",
+      aggregates.fieldGoalPct.mean,
+      {
+        passMin: 0.38,
+        passMax: 0.55,
+        warnMin: 0.32,
+        warnMax: 0.62,
+      },
+      pct,
+    ),
+    checkMean(
+      "three_pt_pct",
+      aggregates.threePointPct.mean,
+      {
+        passMin: 0.28,
+        passMax: 0.42,
+        warnMin: 0.22,
+        warnMax: 0.5,
+      },
+      pct,
+    ),
+    checkMean(
+      "ft_pct",
+      aggregates.freeThrowPct.mean,
+      {
+        passMin: 0.65,
+        passMax: 0.85,
+        warnMin: 0.55,
+        warnMax: 0.92,
+      },
+      pct,
+    ),
     checkMean("turnovers", aggregates.turnovers.mean, {
       passMin: 8,
       passMax: 22,
@@ -202,10 +214,7 @@ export function evaluatePlausibility(
     }),
     assistRatioCheck(aggregates),
     teamPointsStdevCheck(aggregates.teamPoints.stdev),
-    homeWinRateCheck(
-      aggregates.homeAway.homeWins,
-      aggregates.gamesSimulated,
-    ),
+    homeWinRateCheck(aggregates.homeAway.homeWins, aggregates.gamesSimulated),
   ];
   return checks;
 }

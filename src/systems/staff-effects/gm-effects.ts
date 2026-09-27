@@ -1,9 +1,7 @@
 import type { GameState } from "@/state/game-state";
 import type { TeamId } from "@/domain/ids";
 import { findTeamStaffByRole } from "@/systems/staff-effects/find";
-import {
-  GM_TRADE_THRESHOLD_PER_QUALITY_POINT,
-} from "@/systems/staff-config";
+import { GM_TRADE_THRESHOLD_PER_QUALITY_POINT } from "@/systems/staff-config";
 import { averageAttrs, diminishAbove } from "@/systems/staff-effects/shared";
 
 /**

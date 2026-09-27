@@ -11,11 +11,7 @@ import type { FinancialHealthState } from "@/systems/financial-health";
 import type { TeamId } from "@/domain/ids";
 
 export type NarrativeCadence =
-  | "game"
-  | "daily"
-  | "weekly"
-  | "monthly"
-  | "offseason";
+  "game" | "daily" | "weekly" | "monthly" | "offseason";
 
 export type NarrativeDetectorKind = "situation" | "story";
 

@@ -73,7 +73,9 @@ describe("OwnerEntryActions", () => {
     expect(screen.queryByRole("button", { name: /Continue/i })).toBeNull();
     expect(screen.getByText(/No saves available/i)).toBeTruthy();
     expect(
-      screen.getByRole("link", { name: /Start New Game/i }).getAttribute("href"),
+      screen
+        .getByRole("link", { name: /Start New Game/i })
+        .getAttribute("href"),
     ).toBe("/new/setup?mode=owner");
     unmount();
   });

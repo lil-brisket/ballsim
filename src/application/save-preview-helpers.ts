@@ -31,7 +31,5 @@ export function filterSavePreviewsForMode(
   previews: readonly OwnerSavePreview[],
   mode: GameMode,
 ): OwnerSavePreview[] {
-  return previews.filter(
-    (preview) => !preview.ok || preview.mode === mode,
-  );
+  return previews.filter((preview) => !preview.ok || preview.mode === mode);
 }

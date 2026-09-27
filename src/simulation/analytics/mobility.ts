@@ -69,7 +69,9 @@ export function assignCompetitiveTier(
     const playoffSorted = [...playoffRows].sort((a, b) => b.winPct - a.winPct);
     const contenderCut = Math.max(1, Math.ceil(playoffSorted.length * 0.25));
     const contenderIds = new Set(
-      playoffSorted.slice(0, contenderCut).map((r) => `${r.teamKey}:${r.seasonIndex}`),
+      playoffSorted
+        .slice(0, contenderCut)
+        .map((r) => `${r.teamKey}:${r.seasonIndex}`),
     );
     for (const row of rows) {
       const key = `${row.teamKey}:${row.seasonIndex}`;
@@ -226,7 +228,9 @@ export function computeValueMobility(
 
   const quartile = new Map<string, "bottom" | "middle" | "top">();
   for (const [, rows] of bySeason) {
-    const sorted = [...rows].sort((a, b) => a.franchiseValue - b.franchiseValue);
+    const sorted = [...rows].sort(
+      (a, b) => a.franchiseValue - b.franchiseValue,
+    );
     const q = Math.max(1, Math.floor(sorted.length * 0.25));
     for (let i = 0; i < sorted.length; i += 1) {
       const row = sorted[i]!;
@@ -262,7 +266,9 @@ export function computeValueMobility(
   // Rank within season for persistence
   const rankByKey = new Map<string, number>();
   for (const [, rows] of bySeason) {
-    const sorted = [...rows].sort((a, b) => b.franchiseValue - a.franchiseValue);
+    const sorted = [...rows].sort(
+      (a, b) => b.franchiseValue - a.franchiseValue,
+    );
     sorted.forEach((row, index) => {
       rankByKey.set(`${row.teamKey}:${row.seasonIndex}`, index + 1);
     });

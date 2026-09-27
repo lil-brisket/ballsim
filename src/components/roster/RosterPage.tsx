@@ -14,10 +14,7 @@ import { TradeFinderView } from "@/components/roster/TradeFinderView";
 import { cn, focusRingClass } from "@/components/ui/styles";
 
 export type RosterManagementTab =
-  | "roster"
-  | "free-agents"
-  | "trade-block"
-  | "trade-finder";
+  "roster" | "free-agents" | "trade-block" | "trade-finder";
 
 const TABS: { id: RosterManagementTab; label: string }[] = [
   { id: "roster", label: "Roster" },
@@ -52,10 +49,9 @@ export function RosterPage(props: { view: RosterPageView }) {
       params.set("tab", next);
     }
     const qs = params.toString();
-    router.replace(
-      `/dashboard/${view.saveId}/roster${qs ? `?${qs}` : ""}`,
-      { scroll: false },
-    );
+    router.replace(`/dashboard/${view.saveId}/roster${qs ? `?${qs}` : ""}`, {
+      scroll: false,
+    });
   }
 
   return (
@@ -139,9 +135,7 @@ export function RosterPage(props: { view: RosterPageView }) {
         <TradeFinderView
           saveId={view.saveId}
           roster={view.roster}
-          suggestedOutgoingPlayerId={
-            view.tradeFinder.suggestedOutgoingPlayerId
-          }
+          suggestedOutgoingPlayerId={view.tradeFinder.suggestedOutgoingPlayerId}
         />
       ) : null}
     </div>

@@ -4,11 +4,7 @@ import {
   type PossessionAction,
   type PossessionOutcome,
 } from "@/domain/entities/possession";
-import {
-  RATING_MAX,
-  RATING_MIN,
-  type Player,
-} from "@/domain/entities/player";
+import { RATING_MAX, RATING_MIN, type Player } from "@/domain/entities/player";
 import type { GameEvent } from "@/domain/entities/game";
 import type { PlayerId, PossessionId, TeamId } from "@/domain/ids";
 import type { Rng } from "@/domain/rng";
@@ -26,18 +22,12 @@ import {
   resolveFreeThrow,
   type FreeThrowResult,
 } from "@/systems/free-throw-resolution";
-import {
-  resolvePass,
-  type PassResolution,
-} from "@/systems/pass-resolution";
+import { resolvePass, type PassResolution } from "@/systems/pass-resolution";
 import {
   resolveRebound,
   type ReboundResult,
 } from "@/systems/rebound-resolution";
-import {
-  resolveShot,
-  type ShotResolution,
-} from "@/systems/shot-resolution";
+import { resolveShot, type ShotResolution } from "@/systems/shot-resolution";
 import type { ShotType } from "@/systems/shot-resolution-config";
 import {
   addAssist,
@@ -183,8 +173,7 @@ export function resolvePossession(
   }
 
   const pointsScored = ctx.stats.pointsScored;
-  const scoringTeamId =
-    pointsScored > 0 ? input.offensiveTeamId : null;
+  const scoringTeamId = pointsScored > 0 ? input.offensiveTeamId : null;
 
   const possession = createPossession({
     id: input.possessionId,
@@ -334,24 +323,14 @@ function resolveShotBranch(ctx: ExecutionContext): void {
     const points = fieldGoalPoints(decision.shotType);
     addFieldGoal(ctx.stats, shooter.id, decision.shotType, true);
     addPoints(ctx.stats, shooter.id, points);
-    pushEvent(
-      ctx.stats,
-      "shot_made",
-      shooter.id,
-      ctx.input.offensiveTeamId,
-    );
+    pushEvent(ctx.stats, "shot_made", shooter.id, ctx.input.offensiveTeamId);
     ctx.possessionOutcome = "shot_made";
     flipPossession(ctx);
     return;
   }
 
   addFieldGoal(ctx.stats, shooter.id, decision.shotType, false);
-  pushEvent(
-    ctx.stats,
-    "shot_missed",
-    shooter.id,
-    ctx.input.offensiveTeamId,
-  );
+  pushEvent(ctx.stats, "shot_missed", shooter.id, ctx.input.offensiveTeamId);
   ctx.possessionOutcome = "shot_missed";
   resolveReboundAfterMiss(ctx);
 }
@@ -383,12 +362,7 @@ function resolvePassBranch(ctx: ExecutionContext): void {
 
   if (pass.outcome === "turnover") {
     addTurnover(ctx.stats, passer.id);
-    pushEvent(
-      ctx.stats,
-      "turnover",
-      passer.id,
-      ctx.input.offensiveTeamId,
-    );
+    pushEvent(ctx.stats, "turnover", passer.id, ctx.input.offensiveTeamId);
     ctx.possessionAction = "turnover";
     ctx.possessionOutcome = "turnover";
     flipPossession(ctx);
@@ -423,30 +397,15 @@ function resolvePassBranch(ctx: ExecutionContext): void {
     const points = fieldGoalPoints(shotType);
     addFieldGoal(ctx.stats, receiver.id, shotType, true);
     addPoints(ctx.stats, receiver.id, points);
-    pushEvent(
-      ctx.stats,
-      "shot_made",
-      receiver.id,
-      ctx.input.offensiveTeamId,
-    );
+    pushEvent(ctx.stats, "shot_made", receiver.id, ctx.input.offensiveTeamId);
     addAssist(ctx.stats, passer.id);
-    pushEvent(
-      ctx.stats,
-      "assist",
-      passer.id,
-      ctx.input.offensiveTeamId,
-    );
+    pushEvent(ctx.stats, "assist", passer.id, ctx.input.offensiveTeamId);
     flipPossession(ctx);
     return;
   }
 
   addFieldGoal(ctx.stats, receiver.id, shotType, false);
-  pushEvent(
-    ctx.stats,
-    "shot_missed",
-    receiver.id,
-    ctx.input.offensiveTeamId,
-  );
+  pushEvent(ctx.stats, "shot_missed", receiver.id, ctx.input.offensiveTeamId);
   resolveReboundAfterMiss(ctx);
 }
 
@@ -458,12 +417,7 @@ function resolveTurnoverBranch(ctx: ExecutionContext): void {
   ctx.possessionOutcome = "turnover";
   addTouch(ctx.stats, player.id);
   addTurnover(ctx.stats, player.id);
-  pushEvent(
-    ctx.stats,
-    "turnover",
-    player.id,
-    ctx.input.offensiveTeamId,
-  );
+  pushEvent(ctx.stats, "turnover", player.id, ctx.input.offensiveTeamId);
   flipPossession(ctx);
 }
 
@@ -482,12 +436,7 @@ function resolveFoulBranch(ctx: ExecutionContext): void {
     ctx.possessionOutcome = "offensive_foul";
     addTouch(ctx.stats, fouler.id);
     addFoul(ctx.stats, fouler.id);
-    pushEvent(
-      ctx.stats,
-      "foul",
-      fouler.id,
-      ctx.input.offensiveTeamId,
-    );
+    pushEvent(ctx.stats, "foul", fouler.id, ctx.input.offensiveTeamId);
     flipPossession(ctx);
     return;
   }
@@ -523,12 +472,7 @@ function resolveFoulBranch(ctx: ExecutionContext): void {
     ctx.possessionOutcome = "shooting_foul";
 
     addFoul(ctx.stats, fouler.id);
-    pushEvent(
-      ctx.stats,
-      "foul",
-      fouler.id,
-      ctx.input.defensiveTeamId,
-    );
+    pushEvent(ctx.stats, "foul", fouler.id, ctx.input.defensiveTeamId);
 
     // Shooting foul credits the fouled shooter whether or not FGA is recorded;
     // if FGA is also recorded below, dedup keeps a single touch.
@@ -552,12 +496,7 @@ function resolveFoulBranch(ctx: ExecutionContext): void {
   ctx.possessionOutcome = "non_shooting_foul";
 
   addFoul(ctx.stats, fouler.id);
-  pushEvent(
-    ctx.stats,
-    "foul",
-    fouler.id,
-    ctx.input.defensiveTeamId,
-  );
+  pushEvent(ctx.stats, "foul", fouler.id, ctx.input.defensiveTeamId);
 
   if (foulResult.freeThrowsAwarded > 0) {
     resolveFreeThrowSequence(ctx, fouled, foulResult.freeThrowsAwarded);
@@ -596,12 +535,7 @@ function resolveFreeThrowSequence(
   for (let index = 0; index < awarded; index += 1) {
     const ft = resolveFreeThrow({ shooter }, ctx.rng);
     ctx.steps.push({ type: "free_throw", result: ft });
-    pushEvent(
-      ctx.stats,
-      "free_throw",
-      shooter.id,
-      ctx.input.offensiveTeamId,
-    );
+    pushEvent(ctx.stats, "free_throw", shooter.id, ctx.input.offensiveTeamId);
     addFreeThrow(ctx.stats, shooter.id, ft.made);
     if (ft.made) {
       addPoints(ctx.stats, shooter.id, 1);
@@ -613,9 +547,7 @@ function resolveFreeThrowSequence(
   }
 
   if (ctx.possessionAction === "free_throw") {
-    ctx.possessionOutcome = anyMiss
-      ? "free_throw_missed"
-      : "free_throw_made";
+    ctx.possessionOutcome = anyMiss ? "free_throw_missed" : "free_throw_made";
   }
 
   if (!lastMade) {
@@ -638,12 +570,7 @@ function resolveReboundAfterMiss(ctx: ExecutionContext): void {
   );
   ctx.steps.push({ type: "rebound", result: rebound });
   addRebound(ctx.stats, rebound.playerId, rebound.type);
-  pushEvent(
-    ctx.stats,
-    "rebound",
-    rebound.playerId,
-    rebound.teamId,
-  );
+  pushEvent(ctx.stats, "rebound", rebound.playerId, rebound.teamId);
 
   if (rebound.type === "offensive") {
     ctx.nextPossession = {

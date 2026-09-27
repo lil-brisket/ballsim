@@ -17,7 +17,10 @@ import {
 describe("v41 → v42 migration", () => {
   it("marks completed city selection as franchise identity confirmed", () => {
     let modern = createTestGameState({ saveId: "mig_v42_done" });
-    modern = bootstrapWorld(modern, createSeededRng(modern.meta.rngState)).state;
+    modern = bootstrapWorld(
+      modern,
+      createSeededRng(modern.meta.rngState),
+    ).state;
     modern = withOwnedFranchise(modern, modern.user.activeOwnerTeamId, (f) => ({
       ...f,
       citySelectionConfirmed: true,
@@ -43,7 +46,8 @@ describe("v41 → v42 migration", () => {
         objectives: franchise.objectives,
         notifications: franchise.notifications,
         eventLog: franchise.eventLog,
-        appliedGameplayConsequenceKeys: franchise.appliedGameplayConsequenceKeys,
+        appliedGameplayConsequenceKeys:
+          franchise.appliedGameplayConsequenceKeys,
         explicitDecisions: franchise.explicitDecisions,
         phaseSkips: franchise.phaseSkips,
         aiAssistState: franchise.aiAssistState,
@@ -69,7 +73,9 @@ describe("v41 → v42 migration", () => {
     const loaded = deserializeGameState(JSON.stringify(parsed));
     expect(loaded.meta.schemaVersion).toBe(GAME_STATE_SCHEMA_VERSION);
     expect(getActiveOwnedFranchise(loaded).citySelectionConfirmed).toBe(true);
-    expect(getActiveOwnedFranchise(loaded).franchiseIdentityConfirmed).toBe(true);
+    expect(getActiveOwnedFranchise(loaded).franchiseIdentityConfirmed).toBe(
+      true,
+    );
     for (const team of Object.values(loaded.world.teams)) {
       expect(team.branding.logoId).toBeTruthy();
       expect(team.branding.primaryColor).toMatch(/^#[0-9A-F]{6}$/);
@@ -77,15 +83,20 @@ describe("v41 → v42 migration", () => {
     expect(() => validateGameState(loaded)).not.toThrow();
     expect(
       resolveOnboardingRoute("mig_v42_done", {
-        citySelectionConfirmed: getActiveOwnedFranchise(loaded).citySelectionConfirmed,
-        franchiseIdentityConfirmed: getActiveOwnedFranchise(loaded).franchiseIdentityConfirmed,
+        citySelectionConfirmed:
+          getActiveOwnedFranchise(loaded).citySelectionConfirmed,
+        franchiseIdentityConfirmed:
+          getActiveOwnedFranchise(loaded).franchiseIdentityConfirmed,
       }).kind,
     ).toBe("dashboard");
   });
 
   it("keeps in-progress city selection on city step", () => {
     let modern = createTestGameState({ saveId: "mig_v42_progress" });
-    modern = bootstrapWorld(modern, createSeededRng(modern.meta.rngState)).state;
+    modern = bootstrapWorld(
+      modern,
+      createSeededRng(modern.meta.rngState),
+    ).state;
     modern = withOwnedFranchise(modern, modern.user.activeOwnerTeamId, (f) => ({
       ...f,
       citySelectionConfirmed: false,
@@ -111,7 +122,8 @@ describe("v41 → v42 migration", () => {
         objectives: franchise.objectives,
         notifications: franchise.notifications,
         eventLog: franchise.eventLog,
-        appliedGameplayConsequenceKeys: franchise.appliedGameplayConsequenceKeys,
+        appliedGameplayConsequenceKeys:
+          franchise.appliedGameplayConsequenceKeys,
         explicitDecisions: franchise.explicitDecisions,
         phaseSkips: franchise.phaseSkips,
         aiAssistState: franchise.aiAssistState,
@@ -136,12 +148,16 @@ describe("v41 → v42 migration", () => {
 
     const loaded = deserializeGameState(JSON.stringify(parsed));
     expect(getActiveOwnedFranchise(loaded).citySelectionConfirmed).toBe(false);
-    expect(getActiveOwnedFranchise(loaded).franchiseIdentityConfirmed).toBe(false);
+    expect(getActiveOwnedFranchise(loaded).franchiseIdentityConfirmed).toBe(
+      false,
+    );
     expect(Object.values(loaded.world.teams)[0]!.branding.logoId).toBeTruthy();
     expect(
       resolveOnboardingRoute("mig_v42_progress", {
-        citySelectionConfirmed: getActiveOwnedFranchise(loaded).citySelectionConfirmed,
-        franchiseIdentityConfirmed: getActiveOwnedFranchise(loaded).franchiseIdentityConfirmed,
+        citySelectionConfirmed:
+          getActiveOwnedFranchise(loaded).citySelectionConfirmed,
+        franchiseIdentityConfirmed:
+          getActiveOwnedFranchise(loaded).franchiseIdentityConfirmed,
       }),
     ).toEqual({ kind: "city", path: "/new/mig_v42_progress/team" });
   });

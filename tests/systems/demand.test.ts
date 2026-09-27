@@ -24,9 +24,7 @@ describe("demand", () => {
     expect(result.score).toBeGreaterThan(0);
     expect(result.score).toBeLessThanOrEqual(100);
     expect(result.contributions.marketSize.weighted).toBeCloseTo(11.4, 0);
-    expect(
-      Object.keys(result.contributions).length,
-    ).toBeGreaterThan(0);
+    expect(Object.keys(result.contributions).length).toBeGreaterThan(0);
   });
 
   it("explainTicketDemand includes inputs", () => {

@@ -37,9 +37,7 @@ export function StandingsControls(props: {
   stats: StandingsStatsMode;
   divisionsEnabled: boolean;
   searchParams?:
-    | URLSearchParams
-    | Record<string, string | string[] | undefined>
-    | string;
+    URLSearchParams | Record<string, string | string[] | undefined> | string;
 }) {
   const pathname = `/dashboard/${props.saveId}/standings`;
   const currentSearch = props.searchParams ?? {};
@@ -52,7 +50,10 @@ export function StandingsControls(props: {
 
   return (
     <div className="mb-4 flex flex-wrap items-center gap-4">
-      <nav className="flex flex-wrap items-center gap-2" aria-label="Standings view">
+      <nav
+        className="flex flex-wrap items-center gap-2"
+        aria-label="Standings view"
+      >
         <span className="font-mono text-[0.65rem] uppercase tracking-[0.16em] text-zinc-500">
           View
         </span>
@@ -76,7 +77,10 @@ export function StandingsControls(props: {
           );
         })}
       </nav>
-      <nav className="flex flex-wrap items-center gap-2" aria-label="Standings stats">
+      <nav
+        className="flex flex-wrap items-center gap-2"
+        aria-label="Standings stats"
+      >
         <span className="font-mono text-[0.65rem] uppercase tracking-[0.16em] text-zinc-500">
           Stats
         </span>

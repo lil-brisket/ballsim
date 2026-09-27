@@ -45,8 +45,7 @@ export function derivePlannedRegularSeasonStartDate(
     return state.competition.season.regularSeasonStartDate;
   }
   const entered =
-    state.competition.phase?.enteredDate ??
-    state.world.calendar.currentDate;
+    state.competition.phase?.enteredDate ?? state.world.calendar.currentDate;
   return addCalendarDays(entered, PRESEASON_LENGTH_DAYS);
 }
 

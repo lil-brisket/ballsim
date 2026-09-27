@@ -49,10 +49,7 @@ function emitStageChange(
   });
 }
 
-function ensureProcess(
-  state: GameState,
-  teamId: TeamId,
-): RelocationProcess {
+function ensureProcess(state: GameState, teamId: TeamId): RelocationProcess {
   const existing = state.business.relocationByTeamId[teamId];
   if (existing) {
     return {
@@ -122,7 +119,9 @@ export function advanceRelocationStage(
   } else if (process.stage === "league_review") {
     const reviewTarget = resolvedTarget;
     if (!reviewTarget) {
-      throw new Error("advanceRelocationStage: league review requires a target.");
+      throw new Error(
+        "advanceRelocationStage: league review requires a target.",
+      );
     }
     if (isCityOccupied(state, reviewTarget.city)) {
       next = {
@@ -244,13 +243,9 @@ export function completeRelocationTransition(
   const events: DomainEvent[] = [];
   let current = state;
 
-  const impact = applyCashAndBooksImpact(
-    current,
-    teamId,
-    -process.fee,
-    year,
-    { expenseCategory: "operations" },
-  );
+  const impact = applyCashAndBooksImpact(current, teamId, -process.fee, year, {
+    expenseCategory: "operations",
+  });
   current = impact.state;
   events.push(...impact.events);
 
@@ -264,9 +259,7 @@ export function completeRelocationTransition(
   const seasonsInCity = Math.max(
     1,
     year -
-      (process.cityStartSeasonYear > 0
-        ? process.cityStartSeasonYear
-        : year) +
+      (process.cityStartSeasonYear > 0 ? process.cityStartSeasonYear : year) +
       1,
   );
   const sentimentShock = Math.min(

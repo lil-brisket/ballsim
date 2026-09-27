@@ -57,7 +57,9 @@ describe("owner-context", () => {
     const switched = withActiveOwnerTeam(withSecond, secondary);
     expect(getActiveOwnerTeamId(switched)).toBe(secondary);
     expect(getActiveOwnedFranchise(switched).ownerPatience).toBeGreaterThan(0);
-    expect(withSecond.user.ownedFranchises[primary]!.ownerPatience).toBeGreaterThan(0);
+    expect(
+      withSecond.user.ownedFranchises[primary]!.ownerPatience,
+    ).toBeGreaterThan(0);
   });
 
   it("isolates franchise mutations", () => {
@@ -136,7 +138,8 @@ describe("v42 → v43 multi-team migration", () => {
         objectives: franchise.objectives,
         notifications: franchise.notifications,
         eventLog: franchise.eventLog,
-        appliedGameplayConsequenceKeys: franchise.appliedGameplayConsequenceKeys,
+        appliedGameplayConsequenceKeys:
+          franchise.appliedGameplayConsequenceKeys,
         explicitDecisions: franchise.explicitDecisions,
         phaseSkips: franchise.phaseSkips,
         aiAssistState: franchise.aiAssistState,

@@ -36,10 +36,7 @@ export function DraftPickSummary(props: {
                 <span className="ml-1 text-zinc-600">R{pick.round}</span>
               </td>
               <td className="px-3 py-2">
-                <TeamEntityLink
-                  saveId={props.saveId}
-                  teamId={pick.ownerTeamId}
-                >
+                <TeamEntityLink saveId={props.saveId} teamId={pick.ownerTeamId}>
                   {pick.ownerAbbreviation}
                   {pick.isUserPick ? " (you)" : ""}
                 </TeamEntityLink>

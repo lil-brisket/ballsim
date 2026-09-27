@@ -5,10 +5,7 @@
  */
 
 import { isTeamLogoId } from "@/data/team-branding/logo-catalog";
-import {
-  isHexColor,
-  normalizeHexColor,
-} from "@/domain/entities/team-branding";
+import { isHexColor, normalizeHexColor } from "@/domain/entities/team-branding";
 
 export type TeamBrandingView = {
   primaryColor: string;

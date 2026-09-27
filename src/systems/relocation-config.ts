@@ -45,7 +45,4 @@ export const RELOCATION_STAGE_ORDER = [
   "complete",
 ] as const;
 
-export const RELOCATION_CANCELLABLE_STAGES = new Set([
-  "explore",
-  "negotiate",
-]);
+export const RELOCATION_CANCELLABLE_STAGES = new Set(["explore", "negotiate"]);

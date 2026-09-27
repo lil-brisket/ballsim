@@ -29,14 +29,22 @@ function playerName(state: GameState, playerId: string | undefined): string {
   return `${player.firstName} ${player.lastName}`;
 }
 
-function str(payload: Record<string, unknown>, key: string): string | undefined {
+function str(
+  payload: Record<string, unknown>,
+  key: string,
+): string | undefined {
   const value = payload[key];
   return typeof value === "string" && value.length > 0 ? value : undefined;
 }
 
-function num(payload: Record<string, unknown>, key: string): number | undefined {
+function num(
+  payload: Record<string, unknown>,
+  key: string,
+): number | undefined {
   const value = payload[key];
-  return typeof value === "number" && Number.isFinite(value) ? value : undefined;
+  return typeof value === "number" && Number.isFinite(value)
+    ? value
+    : undefined;
 }
 
 export type GeneratedHeadline = {
@@ -157,9 +165,10 @@ export function generateHeadline(
     }
     case "StaffHired": {
       const staffId = str(p, "staffId");
-      const staff = staffId && state.world.staff[staffId]
-        ? `${state.world.staff[staffId]!.firstName} ${state.world.staff[staffId]!.lastName}`
-        : "New staff member";
+      const staff =
+        staffId && state.world.staff[staffId]
+          ? `${state.world.staff[staffId]!.firstName} ${state.world.staff[staffId]!.lastName}`
+          : "New staff member";
       const team = teamName(state, str(p, "teamId"));
       return {
         headline: `${team} add ${staff} to staff`,
@@ -168,9 +177,10 @@ export function generateHeadline(
     }
     case "StaffFired": {
       const staffId = str(p, "staffId");
-      const staff = staffId && state.world.staff[staffId]
-        ? `${state.world.staff[staffId]!.firstName} ${state.world.staff[staffId]!.lastName}`
-        : "Staff member";
+      const staff =
+        staffId && state.world.staff[staffId]
+          ? `${state.world.staff[staffId]!.firstName} ${state.world.staff[staffId]!.lastName}`
+          : "Staff member";
       const team = teamName(state, str(p, "teamId"));
       return {
         headline: `${team} part ways with ${staff}`,
@@ -179,9 +189,10 @@ export function generateHeadline(
     }
     case "StaffRetired": {
       const staffId = str(p, "staffId");
-      const staff = staffId && state.world.staff[staffId]
-        ? `${state.world.staff[staffId]!.firstName} ${state.world.staff[staffId]!.lastName}`
-        : "Staff member";
+      const staff =
+        staffId && state.world.staff[staffId]
+          ? `${state.world.staff[staffId]!.firstName} ${state.world.staff[staffId]!.lastName}`
+          : "Staff member";
       return {
         headline: `${staff} retires`,
         summary: `${staff} announces retirement from the league.`,
@@ -210,7 +221,8 @@ export function generateHeadline(
     }
     case "FacilityUpgradeStarted": {
       const team = teamName(state, str(p, "teamId"));
-      const facility = str(p, "facility") ?? str(p, "upgradeType") ?? "facility";
+      const facility =
+        str(p, "facility") ?? str(p, "upgradeType") ?? "facility";
       return {
         headline: `${team} begin ${facility} upgrade`,
         summary: `${team} break ground on a ${facility} improvement.`,
@@ -218,7 +230,8 @@ export function generateHeadline(
     }
     case "FacilityUpgradeCompleted": {
       const team = teamName(state, str(p, "teamId"));
-      const facility = str(p, "facility") ?? str(p, "upgradeType") ?? "facility";
+      const facility =
+        str(p, "facility") ?? str(p, "upgradeType") ?? "facility";
       return {
         headline: `${team} complete ${facility} upgrade`,
         summary: `${team} unveil an upgraded ${facility}.`,
@@ -226,7 +239,8 @@ export function generateHeadline(
     }
     case "SponsorshipSigned": {
       const team = teamName(state, str(p, "teamId"));
-      const sponsor = str(p, "sponsorName") ?? str(p, "sponsorId") ?? "a new partner";
+      const sponsor =
+        str(p, "sponsorName") ?? str(p, "sponsorId") ?? "a new partner";
       return {
         headline: `${team} land sponsorship with ${sponsor}`,
         summary: `${team} announce a commercial deal with ${sponsor}.`,
@@ -281,8 +295,7 @@ export function generateHeadline(
     case "MidseasonVotingOpened": {
       return {
         headline: "All-Star voting opens",
-        summary:
-          "Fans can now vote for this year's All-Star selections.",
+        summary: "Fans can now vote for this year's All-Star selections.",
       };
     }
     case "FanVoteLeaderChanged": {

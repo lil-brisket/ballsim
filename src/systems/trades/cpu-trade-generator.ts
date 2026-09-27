@@ -38,7 +38,10 @@ export type CpuTradeCandidate = {
 export function generateCpuTradeCandidates(
   state: GameState,
   fromTeamId: TeamId,
-  options: { maxCandidates?: number; counterpartyFilter?: (id: TeamId) => boolean } = {},
+  options: {
+    maxCandidates?: number;
+    counterpartyFilter?: (id: TeamId) => boolean;
+  } = {},
 ): CpuTradeCandidate[] {
   const max = options.maxCandidates ?? TRADE_FINDER_MAX_CANDIDATES;
   const motivation = deriveMotivation(state, fromTeamId);
@@ -66,7 +69,10 @@ export function generateCpuTradeCandidates(
         evaluation.valueDifference * 1.2 +
         evaluation.rosterFit * 25 +
         evaluation.strategicFit * 20;
-      if (score < TRADE_OFFER_QUALITY_FLOOR - 40 && evaluation.valueDifference < 0) {
+      if (
+        score < TRADE_OFFER_QUALITY_FLOOR - 40 &&
+        evaluation.valueDifference < 0
+      ) {
         continue;
       }
       candidates.push({

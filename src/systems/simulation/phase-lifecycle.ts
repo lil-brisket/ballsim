@@ -39,10 +39,7 @@ import {
 import { runAiContinuity } from "@/systems/simulation/ai-continuity";
 
 export type PhaseSyncStopReason =
-  | "owner_decision"
-  | "required_tasks"
-  | "draft_clock"
-  | "none";
+  "owner_decision" | "required_tasks" | "draft_clock" | "none";
 
 export type PhaseSyncResult = SystemResult & {
   transitioned: boolean;
@@ -131,8 +128,7 @@ export function syncPhaseForward(
   options: SyncPhaseForwardOptions = {},
 ): PhaseSyncResult {
   const allowAiAssist = options.allowAiAssist === true;
-  const allowOwnerManaged =
-    options.allowOwnerManagedPhaseTransitions === true;
+  const allowOwnerManaged = options.allowOwnerManagedPhaseTransitions === true;
   const date = state.world.calendar.currentDate;
   const resolution = resolvePhaseResolution(state, date);
   const fromPhaseId = getActivePhaseId(state);
@@ -187,7 +183,8 @@ export function syncPhaseForward(
   if (
     !allowOwnerManaged &&
     fromPhaseId === "preseason.preparation" &&
-    (resolution.phaseId === "regular" || needsRegularSeasonInitialization(state))
+    (resolution.phaseId === "regular" ||
+      needsRegularSeasonInitialization(state))
   ) {
     return emptySync(state, resolution);
   }
@@ -238,8 +235,16 @@ export function syncPhaseForward(
       }
     } else if (
       canAiExecute(current.settings, "SIGN_ROUTINE_FA", franchiseAssist) ||
-      canAiExecute(current.settings, "EXTEND_MINIMUM_CONTRACT", franchiseAssist) ||
-      canAiExecute(current.settings, "RELEASE_FOR_ROSTER_RULES", franchiseAssist)
+      canAiExecute(
+        current.settings,
+        "EXTEND_MINIMUM_CONTRACT",
+        franchiseAssist,
+      ) ||
+      canAiExecute(
+        current.settings,
+        "RELEASE_FOR_ROSTER_RULES",
+        franchiseAssist,
+      )
     ) {
       const continuity = runAiContinuity(current, rng, {
         forcePhase: `date_sync:${fromPhaseId}:${date}`,

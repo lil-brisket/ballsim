@@ -98,7 +98,11 @@ export function deriveAlignmentScore(
     const kind = KIND_WEIGHT[item.kind];
     const weight = sig * kind;
     const value =
-      item.direction === "aligned" ? 1 : item.direction === "conflicting" ? 0 : 0.55;
+      item.direction === "aligned"
+        ? 1
+        : item.direction === "conflicting"
+          ? 0
+          : 0.55;
     weighted += value * weight;
     total += weight;
   }
@@ -113,8 +117,7 @@ function countPattern(
   direction: AlignmentEvidence["direction"],
 ): number {
   return evidence.filter(
-    (item) =>
-      item.direction === direction && item.significance !== "minor",
+    (item) => item.direction === direction && item.significance !== "minor",
   ).length;
 }
 
@@ -169,7 +172,8 @@ function applyEvidenceToConfidence(
   }
 
   let concernLevel = confidence.concernLevel;
-  const weight = SIGNIFICANCE_WEIGHT[evidence.significance] * KIND_WEIGHT[evidence.kind];
+  const weight =
+    SIGNIFICANCE_WEIGHT[evidence.significance] * KIND_WEIGHT[evidence.kind];
   if (evidence.direction === "conflicting") {
     concernLevel += weight * 6;
   } else if (evidence.direction === "aligned") {
@@ -182,9 +186,15 @@ function applyEvidenceToConfidence(
   let recentHelping = [...confidence.recentHelping];
   let recentHurting = [...confidence.recentHurting];
   if (evidence.direction === "aligned") {
-    recentHelping = pushUniqueLine(recentHelping, evidence.detail ?? evidence.summary);
+    recentHelping = pushUniqueLine(
+      recentHelping,
+      evidence.detail ?? evidence.summary,
+    );
   } else if (evidence.direction === "conflicting") {
-    recentHurting = pushUniqueLine(recentHurting, evidence.detail ?? evidence.summary);
+    recentHurting = pushUniqueLine(
+      recentHurting,
+      evidence.detail ?? evidence.summary,
+    );
   }
 
   const recentEvidence = pushEvidence(confidence.recentEvidence, evidence);
@@ -237,10 +247,14 @@ export function recordOwnershipEvidence(
     getActiveOwnedFranchise(state).ownershipConfidence,
     evidence,
   );
-  return withOwnedFranchise(state, getActiveOwnerTeamId(state), (franchise) => ({
-    ...franchise,
-    ownershipConfidence,
-  }));
+  return withOwnedFranchise(
+    state,
+    getActiveOwnerTeamId(state),
+    (franchise) => ({
+      ...franchise,
+      ownershipConfidence,
+    }),
+  );
 }
 
 function daysBetween(a: string, b: string): number {
@@ -334,7 +348,9 @@ export function appendOwnershipSeasonNote(state: GameState): GameState {
     mood: getActiveOwnedFranchise(state).ownershipConfidence.mood,
     mandateSummary: expectations.mandateSummary,
   };
-  const existing = getActiveOwnedFranchise(state).ownershipConfidence.seasonNotes.filter(
+  const existing = getActiveOwnedFranchise(
+    state,
+  ).ownershipConfidence.seasonNotes.filter(
     (item) => item.seasonYear !== note.seasonYear,
   );
   const seasonNotes = [...existing, note];
@@ -343,19 +359,23 @@ export function appendOwnershipSeasonNote(state: GameState): GameState {
       ? seasonNotes.slice(seasonNotes.length - OWNERSHIP_SEASON_NOTES_MAX)
       : seasonNotes;
 
-  return withOwnedFranchise(state, getActiveOwnerTeamId(state), (franchise) => ({
-    ...franchise,
-    ownershipConfidence: {
-      ...franchise.ownershipConfidence,
-      seasonNotes: trimmed,
-      lastReversal: franchise.ownershipConfidence.lastReversal
-        ? {
-            ...franchise.ownershipConfidence.lastReversal,
-            acknowledged: true,
-          }
-        : undefined,
-    },
-  }));
+  return withOwnedFranchise(
+    state,
+    getActiveOwnerTeamId(state),
+    (franchise) => ({
+      ...franchise,
+      ownershipConfidence: {
+        ...franchise.ownershipConfidence,
+        seasonNotes: trimmed,
+        lastReversal: franchise.ownershipConfidence.lastReversal
+          ? {
+              ...franchise.ownershipConfidence.lastReversal,
+              acknowledged: true,
+            }
+          : undefined,
+      },
+    }),
+  );
 }
 
 export function confidenceAlignmentScore(state: GameState): number {

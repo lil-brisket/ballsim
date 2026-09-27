@@ -28,9 +28,7 @@ function evidenceId(prefix: string, occurredOn: string, salt: string): string {
   return `${prefix}_${occurredOn}_${salt}`.replace(/[^a-zA-Z0-9_:-]/g, "_");
 }
 
-function clampSignificance(
-  magnitude: number,
-): AlignmentEvidenceSignificance {
+function clampSignificance(magnitude: number): AlignmentEvidenceSignificance {
   if (magnitude >= 0.72) {
     return "major";
   }
@@ -71,10 +69,15 @@ function makeEvidence(input: {
   };
 }
 
-function resolveExpectations(input: DecisionSignalInput): OwnershipExpectations {
+function resolveExpectations(
+  input: DecisionSignalInput,
+): OwnershipExpectations {
   return (
     input.expectations ??
-    buildOwnershipExpectations(input.state, input.teamId ?? input.state.user.activeOwnerTeamId)
+    buildOwnershipExpectations(
+      input.state,
+      input.teamId ?? input.state.user.activeOwnerTeamId,
+    )
   );
 }
 
@@ -103,8 +106,10 @@ export function scoreTradeDecision(
     return null;
   }
   const exp = expectations ?? buildOwnershipExpectations(state, teamId);
-  const ourSide = proposal.sideA.teamId === teamId ? proposal.sideA : proposal.sideB;
-  const theirSide = proposal.sideA.teamId === teamId ? proposal.sideB : proposal.sideA;
+  const ourSide =
+    proposal.sideA.teamId === teamId ? proposal.sideA : proposal.sideB;
+  const theirSide =
+    proposal.sideA.teamId === teamId ? proposal.sideB : proposal.sideA;
 
   const outgoingPlayers = ourSide.playerIds;
   const incomingPlayers = theirSide.playerIds;
@@ -158,7 +163,9 @@ export function scoreTradeDecision(
   if (competitive === "compete" || competitive === "contend") {
     if (netStarOutgoing > 0 && pickNet > 0) {
       delta -= 0.55 * netStarOutgoing;
-      reasons.push("moved core talent for future assets while ownership expects contention");
+      reasons.push(
+        "moved core talent for future assets while ownership expects contention",
+      );
     }
     if (netStarOutgoing < 0) {
       delta += 0.4;
@@ -194,7 +201,10 @@ export function scoreTradeDecision(
     if (netYouthIncoming > 0 || pickNet > 0) {
       delta += 0.2;
     }
-    if (outgoingPicks.length > 0 && incomingPlayers.some((id) => playerAge(state, id) >= 30)) {
+    if (
+      outgoingPicks.length > 0 &&
+      incomingPlayers.some((id) => playerAge(state, id) >= 30)
+    ) {
       delta -= 0.35;
       reasons.push("spent draft capital on a short-term veteran");
     }
@@ -265,7 +275,10 @@ export function scoreFreeAgentSigning(
   const expensive = salary >= 12_000_000 || years >= 3;
   const minDeal = salary <= 2_500_000 && years <= 2;
 
-  if (exp.competitiveExpectation === "contend" || exp.competitiveExpectation === "compete") {
+  if (
+    exp.competitiveExpectation === "contend" ||
+    exp.competitiveExpectation === "compete"
+  ) {
     if (ovr >= 75) {
       delta += 0.4;
       reasons.push("added a contributor for a competitive roster");
@@ -275,22 +288,33 @@ export function scoreFreeAgentSigning(
     }
   }
 
-  if (exp.competitiveExpectation === "rebuild" || exp.rosterBuildingExpectation === "youth_focus") {
+  if (
+    exp.competitiveExpectation === "rebuild" ||
+    exp.rosterBuildingExpectation === "youth_focus"
+  ) {
     if (age <= 25) {
       delta += 0.35;
       reasons.push("added young talent consistent with development focus");
     }
     if (age >= 31 && expensive) {
       delta -= 0.5;
-      reasons.push("committed expensive years to an aging veteran while developing");
+      reasons.push(
+        "committed expensive years to an aging veteran while developing",
+      );
     }
   }
 
   if (exp.financialExpectation === "preserve_cash" && expensive) {
     delta -= 0.45;
-    reasons.push("increased financial exposure while ownership wants payroll discipline");
+    reasons.push(
+      "increased financial exposure while ownership wants payroll discipline",
+    );
   }
-  if (exp.financialExpectation === "sustainable" && expensive && payroll > 90_000_000) {
+  if (
+    exp.financialExpectation === "sustainable" &&
+    expensive &&
+    payroll > 90_000_000
+  ) {
     delta -= 0.25;
     reasons.push("payroll growth is outpacing ownership's tolerance");
   }
@@ -439,7 +463,10 @@ export function scoreMarketingBudgetChange(
   } else if (wantsGrowth && deltaBudget < 0) {
     direction = "conflicting";
     detail = "Reduced marketing while ownership wants market growth";
-  } else if (exp.financialExpectation === "preserve_cash" && deltaBudget > 250_000) {
+  } else if (
+    exp.financialExpectation === "preserve_cash" &&
+    deltaBudget > 250_000
+  ) {
     direction = "conflicting";
     detail = "Marketing spend rose while ownership wants cash preserved";
   } else if (deltaBudget > 0) {

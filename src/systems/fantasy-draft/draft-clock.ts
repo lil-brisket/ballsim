@@ -57,10 +57,7 @@ export function isUserOnFantasyDraftClock(state: GameState): boolean {
 /**
  * Client countdown is presentation only. Server validates expiry from timestamps.
  */
-export function isPickExpired(
-  draft: FantasyDraft,
-  nowIso: string,
-): boolean {
+export function isPickExpired(draft: FantasyDraft, nowIso: string): boolean {
   if (!draft.timer.enabled || draft.timer.pickStartedAt === null) {
     return false;
   }
@@ -94,10 +91,7 @@ export function getRemainingPickSeconds(
   return Math.max(0, Math.ceil(remainingMs / 1000));
 }
 
-export function pauseFantasyDraft(
-  state: GameState,
-  nowIso: string,
-): GameState {
+export function pauseFantasyDraft(state: GameState, nowIso: string): GameState {
   const draft = state.world.fantasyDraft;
   if (draft === null || draft.status !== "active") {
     throw new Error("Fantasy draft is not active.");
@@ -139,7 +133,10 @@ export function resumeFantasyDraft(
  * On load: if draft was active, treat as paused so the timer does not expire
  * while the game was closed.
  */
-export function pauseFantasyDraftOnLoad(state: GameState, nowIso: string): GameState {
+export function pauseFantasyDraftOnLoad(
+  state: GameState,
+  nowIso: string,
+): GameState {
   const draft = state.world.fantasyDraft;
   if (draft === null || draft.status !== "active") {
     return state;

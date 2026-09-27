@@ -121,9 +121,7 @@ export function validateTeamRosterIntegrity(
   const feasibility = validateRotationFeasibility(management);
   if (hasHardFeasibilityIssues(feasibility)) {
     for (const f of feasibility.issues) {
-      issues.push(
-        issue(`rotation_${f.code}`, f.message, "error"),
-      );
+      issues.push(issue(`rotation_${f.code}`, f.message, "error"));
     }
   }
 

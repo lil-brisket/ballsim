@@ -9,7 +9,11 @@ import {
 } from "@/domain/entities/franchise-ops";
 import type { DomainEvent } from "@/domain/events";
 import type { PlayerAttributes } from "@/domain/entities/player";
-import { PLAYER_ATTRIBUTE_KEYS, RATING_MAX, RATING_MIN } from "@/domain/entities/player";
+import {
+  PLAYER_ATTRIBUTE_KEYS,
+  RATING_MAX,
+  RATING_MIN,
+} from "@/domain/entities/player";
 import { calculatePlayerOverall } from "@/domain/player-overall-rating";
 import type { Rng } from "@/domain/rng";
 import { createSeededRng } from "@/domain/rng";
@@ -35,9 +39,7 @@ import { runAiTeamDecisions } from "@/systems/ai-team-decisions";
 import { setMarketingBudget } from "@/systems/marketing";
 import { setTicketPrice } from "@/systems/ticket-pricing";
 import { getFinancialStatement } from "@/systems/team-finances";
-import {
-  facilityUpgradeCost,
-} from "@/systems/facilities-config";
+import { facilityUpgradeCost } from "@/systems/facilities-config";
 import { startFacilityUpgrade } from "@/systems/facilities";
 import { estimateMonthlyBroadcastShare } from "@/systems/league-economy";
 import {
@@ -72,18 +74,13 @@ export type RevenueMix = {
   other: number;
   unclassified: number;
   total: number;
-  shares: Record<
-    keyof Omit<RevenueMix, "shares" | "total">,
-    number
-  >;
+  shares: Record<keyof Omit<RevenueMix, "shares" | "total">, number>;
 };
 
 export type CapitalAttemptKind = "facility_upgrade" | "marketing_increase";
 
 export type CapitalAttemptOutcome =
-  | "succeeded"
-  | "rejected"
-  | "skipped_unaffordable";
+  "succeeded" | "rejected" | "skipped_unaffordable";
 
 export type CapitalAttempt = {
   kind: CapitalAttemptKind;
@@ -307,9 +304,7 @@ function meanRosterOverall(state: GameState, teamId: string): number {
   return count === 0 ? 0 : Math.round((sum / count) * 10) / 10;
 }
 
-function facilityLevelsOf(
-  ops: FranchiseOps,
-): Record<FacilityCategory, number> {
+function facilityLevelsOf(ops: FranchiseOps): Record<FacilityCategory, number> {
   const levels = {} as Record<FacilityCategory, number>;
   for (const category of FACILITY_CATEGORIES) {
     levels[category] = ops.facilities[category].level;
@@ -332,7 +327,11 @@ function patchOps(
       ...state.business,
       franchiseOps: {
         ...state.business.franchiseOps,
-        [teamId]: { ...ops, ...patch, marketing: patch.marketing ?? ops.marketing },
+        [teamId]: {
+          ...ops,
+          ...patch,
+          marketing: patch.marketing ?? ops.marketing,
+        },
       },
     },
   };
@@ -583,7 +582,8 @@ function applyAggressivePolicy(
   });
 
   const afterArena = next;
-  const practiceLevel = afterArena.business.franchiseOps[teamId]!.facilities.practice;
+  const practiceLevel =
+    afterArena.business.franchiseOps[teamId]!.facilities.practice;
   const fanLevel = afterArena.business.franchiseOps[teamId]!.facilities.fan;
   const practiceAffordable =
     practiceLevel.upgradeWeeksRemaining === 0 &&
@@ -705,8 +705,14 @@ function pickBestProspect(
     return undefined;
   }
   available.sort((a, b) => {
-    const overallA = calculatePlayerOverall(a.player.position, a.player.attributes);
-    const overallB = calculatePlayerOverall(b.player.position, b.player.attributes);
+    const overallA = calculatePlayerOverall(
+      a.player.position,
+      a.player.attributes,
+    );
+    const overallB = calculatePlayerOverall(
+      b.player.position,
+      b.player.attributes,
+    );
     if (overallA !== overallB) {
       return overallB - overallA;
     }
@@ -755,7 +761,10 @@ function absorbEvents(
   _broadcastShare: number,
 ): void {
   for (const event of events) {
-    if (event.type === "HomeGameDaySettled" && event.payload.teamId === teamId) {
+    if (
+      event.type === "HomeGameDaySettled" &&
+      event.payload.teamId === teamId
+    ) {
       mix.gate +=
         (Number(event.payload.ticketRevenue) || 0) +
         (Number(event.payload.premiumRevenue) || 0);
@@ -787,10 +796,7 @@ function absorbEvents(
       continue;
     }
 
-    if (
-      event.type === "PlayerPayrollPaid" &&
-      event.payload.teamId === teamId
-    ) {
+    if (event.type === "PlayerPayrollPaid" && event.payload.teamId === teamId) {
       mix.playerPayroll += Math.abs(Number(event.payload.amount) || 0);
       continue;
     }
@@ -892,7 +898,10 @@ function buildCashFlow(
   tracker: CashSignTracker,
 ): SeasonCashFlow {
   // Capex counted once via FacilityUpgradeStarted; strip from books for opex.
-  const facilityOpex = Math.max(0, mix.facilitiesBooks - mix.facilityInvestment);
+  const facilityOpex = Math.max(
+    0,
+    mix.facilitiesBooks - mix.facilityInvestment,
+  );
   const recurringRevenue =
     mix.gate +
     mix.merchandise +
@@ -1031,13 +1040,9 @@ function snapshotSeason(
     projectedCash: projection.projectedCash,
     health,
     attendanceMean:
-      mix.homeGames > 0
-        ? Math.round(mix.attendanceSum / mix.homeGames)
-        : null,
+      mix.homeGames > 0 ? Math.round(mix.attendanceSum / mix.homeGames) : null,
     capacityMean:
-      mix.homeGames > 0
-        ? Math.round(mix.capacitySum / mix.homeGames)
-        : null,
+      mix.homeGames > 0 ? Math.round(mix.capacitySum / mix.homeGames) : null,
     fillRateMean:
       mix.homeGames > 0
         ? Math.round((mix.fillRateSum / mix.homeGames) * 10) / 10
@@ -1075,7 +1080,10 @@ function resolveOffseason(state: GameState, rng: Rng): GameState {
       current = persistRng(runAiTeamDecisions(current, rng).state, rng);
       continue;
     }
-    current = persistRng(advanceSimulation(current, rng, { days: 1 }).state, rng);
+    current = persistRng(
+      advanceSimulation(current, rng, { days: 1 }).state,
+      rng,
+    );
     if (current.competition.season.phase === "preseason") {
       return current;
     }
@@ -1136,7 +1144,11 @@ function simulateOneSeason(
 export function bootstrapEconomyScenario(
   scenario: EconomyScenarioId,
   options: { seed?: number } = {},
-): { state: GameState; rng: Rng; capitalRollup: ReturnType<typeof emptyCapitalRollup> } {
+): {
+  state: GameState;
+  rng: Rng;
+  capitalRollup: ReturnType<typeof emptyCapitalRollup>;
+} {
   const seed = options.seed ?? HARNESS_SEED;
   let state = createInitialGameState({
     saveId: `econ_${scenario}`,
@@ -1167,8 +1179,7 @@ function computeRecoveryDelta(
     last.runwayWeeks > first.runwayWeeks;
   const runwayRecovered =
     first.runwayWeeks !== null && last.runwayWeeks === null;
-  const healthImproved =
-    HEALTH_RANK[last.health] > HEALTH_RANK[first.health];
+  const healthImproved = HEALTH_RANK[last.health] > HEALTH_RANK[first.health];
   const improved =
     cashDelta > 0 ||
     opDelta > 0 ||
@@ -1245,7 +1256,9 @@ export function runEconomyScenario(
 }
 
 /** Assert cash-flow snapshot identities (throws on violation). */
-export function assertCashFlowInvariants(snapshot: SeasonEconomySnapshot): void {
+export function assertCashFlowInvariants(
+  snapshot: SeasonEconomySnapshot,
+): void {
   const { cashFlow, revenue } = snapshot;
   if (cashFlow.netCash !== cashFlow.endingCash - cashFlow.startingCash) {
     throw new Error(
@@ -1285,7 +1298,9 @@ export function assertCashFlowInvariants(snapshot: SeasonEconomySnapshot): void 
     cashFlow.costs.facilityOpex + cashFlow.costs.facilityInvestment <
       cashFlow.costs.facilityInvestment
   ) {
-    throw new Error("facilityInvestment incorrectly reduced facilityOpex below zero path");
+    throw new Error(
+      "facilityInvestment incorrectly reduced facilityOpex below zero path",
+    );
   }
   if (snapshot.revenue.gate !== snapshot.statementTickets) {
     throw new Error(
@@ -1307,4 +1322,3 @@ export {
   personalityCoherenceScores,
 } from "@/systems/economy/franchise-identity-metrics";
 export { runIdentityLeagueObservation } from "@/systems/economy/identity-league-observation";
-

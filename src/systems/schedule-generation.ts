@@ -324,7 +324,8 @@ function scoreHomeOption(
 
   // Prefer the team that currently has fewer homes (balance)
   score +=
-    (awayCount.get(homeCandidate)! - homeCount.get(homeCandidate)!) -
+    awayCount.get(homeCandidate)! -
+    homeCount.get(homeCandidate)! -
     (awayCount.get(awayCandidate)! - homeCount.get(awayCandidate)!);
 
   // Prefer alternating venue for this matchup

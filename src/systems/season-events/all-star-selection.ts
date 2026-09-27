@@ -171,8 +171,7 @@ export function simulateAllStarGameIfDue(
   const homeScore = 100 + Math.floor(rng.next() * 40);
   const awayScore = 100 + Math.floor(rng.next() * 40);
   // Avoid ties for a clean winner
-  const finalHome =
-    homeScore === awayScore ? homeScore + 1 : homeScore;
+  const finalHome = homeScore === awayScore ? homeScore + 1 : homeScore;
 
   const finalGame = createGame({
     id: gameId,

@@ -1,5 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from "@testing-library/react";
 
 vi.mock("next/navigation", () => ({
   usePathname: () => "/dashboard/save_test",
@@ -36,8 +42,6 @@ describe("DesktopNavigation collapsed preference", () => {
     render(<DesktopNavigation saveId="save_test" />);
     fireEvent.click(screen.getByRole("button", { name: "Collapse sidebar" }));
     expect(window.localStorage.getItem(STORAGE_KEY)).toBe("1");
-    expect(
-      screen.getByRole("button", { name: "Expand sidebar" }),
-    ).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Expand sidebar" })).toBeTruthy();
   });
 });

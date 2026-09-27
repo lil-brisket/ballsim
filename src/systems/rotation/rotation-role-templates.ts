@@ -98,9 +98,10 @@ export function inferRoleFromLegacy(
  * Philosophy multipliers applied when distributing target minutes.
  * Values > 1 push more minutes to top priority players.
  */
-export function philosophyMinuteSkew(
-  philosophy: RotationPhilosophy,
-): { topShare: number; depthShare: number } {
+export function philosophyMinuteSkew(philosophy: RotationPhilosophy): {
+  topShare: number;
+  depthShare: number;
+} {
   switch (philosophy) {
     case "star_heavy":
       return { topShare: 0.8, depthShare: 0.2 };

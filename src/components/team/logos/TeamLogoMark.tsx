@@ -41,8 +41,7 @@ type TeamLogoMarkLegacyProps = TeamLogoMarkBaseProps & {
 };
 
 export type TeamLogoMarkProps =
-  | TeamLogoMarkBrandingProps
-  | TeamLogoMarkLegacyProps;
+  TeamLogoMarkBrandingProps | TeamLogoMarkLegacyProps;
 
 function resolveLogoProps(props: TeamLogoMarkProps): TeamLogoProps & {
   logoId: TeamLogoId;
@@ -88,19 +87,6 @@ export function TeamLogoMark(props: TeamLogoMarkProps) {
   return <Component {...markProps} />;
 }
 
-export {
-  WolfLogo,
-  BearLogo,
-  EagleLogo,
-  LionLogo,
-} from "./mascot-logos";
-export {
-  LightningLogo,
-  FlameLogo,
-} from "./power-logos";
-export {
-  CrownLogo,
-  ShieldLogo,
-  StarLogo,
-  MonogramLogo,
-} from "./classic-logos";
+export { WolfLogo, BearLogo, EagleLogo, LionLogo } from "./mascot-logos";
+export { LightningLogo, FlameLogo } from "./power-logos";
+export { CrownLogo, ShieldLogo, StarLogo, MonogramLogo } from "./classic-logos";

@@ -1,16 +1,9 @@
 import { describe, expect, it } from "vitest";
 import { createGame } from "@/domain/entities/game";
-import {
-  asGameId,
-  asSeasonId,
-  asTeamId,
-} from "@/domain/ids";
+import { asGameId, asSeasonId, asTeamId } from "@/domain/ids";
 import { createSeededRng } from "@/domain/rng";
 import { createTestGameState } from "../factories/game-state";
-import {
-  canOpenGameBoxScore,
-  toGameBoxScoreView,
-} from "@/state/selectors";
+import { canOpenGameBoxScore, toGameBoxScoreView } from "@/state/selectors";
 import { bootstrapWorld } from "@/systems/world-pipeline";
 
 describe("game box score selectors", () => {
@@ -61,7 +54,7 @@ describe("game box score selectors", () => {
           freeThrowsMade: 20,
           freeThrowsAttempted: 24,
           touches: 0,
-        started: false,
+          started: false,
         },
         {
           playerId: awayPlayer.id,
@@ -85,7 +78,7 @@ describe("game box score selectors", () => {
           freeThrowsMade: 16,
           freeThrowsAttempted: 20,
           touches: 0,
-        started: false,
+          started: false,
         },
       ],
       homeTeamSnapshot: {
@@ -93,24 +86,24 @@ describe("game box score selectors", () => {
         city: "SnapCity",
         name: "Snappers",
         abbreviation: "SNP",
-      branding: {
-        primaryColor: "#0B1F3A",
-        secondaryColor: "#C4CED4",
-        accentColor: "#F5B800",
-        logoId: "shield",
-      },
+        branding: {
+          primaryColor: "#0B1F3A",
+          secondaryColor: "#C4CED4",
+          accentColor: "#F5B800",
+          logoId: "shield",
+        },
       },
       awayTeamSnapshot: {
         teamId: awayTeamId,
         city: "Visit",
         name: "Visitors",
         abbreviation: "VIS",
-      branding: {
-        primaryColor: "#0B1F3A",
-        secondaryColor: "#C4CED4",
-        accentColor: "#F5B800",
-        logoId: "shield",
-      },
+        branding: {
+          primaryColor: "#0B1F3A",
+          secondaryColor: "#C4CED4",
+          accentColor: "#F5B800",
+          logoId: "shield",
+        },
       },
     });
 

@@ -162,9 +162,7 @@ function countConsecutiveLosingSeasons(
   return count;
 }
 
-function playoffDrought(
-  seasons: readonly FranchiseSeasonRecord[],
-): number {
+function playoffDrought(seasons: readonly FranchiseSeasonRecord[]): number {
   let drought = 0;
   for (let index = seasons.length - 1; index >= 0; index -= 1) {
     if (seasons[index]!.playoffResult === "missed") {
@@ -260,9 +258,7 @@ export function buildFranchiseTrajectoryContext(
   const droughtArc = clampPreference(drought / 4);
   const agingPressure = clampPreference((rosterAge - 27) / 6);
   const weakRoster =
-    rosterStrength > 0
-      ? clampPreference((50 - rosterStrength) / 25)
-      : 0.5;
+    rosterStrength > 0 ? clampPreference((50 - rosterStrength) / 25) : 0.5;
   const valueDecline = clampPreference(-valueVsOwnBaseline);
   const rebuildPressure = clampPreference(
     losingArc * 0.3 +
@@ -275,9 +271,7 @@ export function buildFranchiseTrajectoryContext(
   // --- competitiveWindow (multi-factor, not wins-only) ---
   const performanceFactor = clampPreference((currentWinPct - 0.4) / 0.3);
   const strengthFactor =
-    rosterStrength > 0
-      ? clampPreference((rosterStrength - 52) / 20)
-      : 0.3;
+    rosterStrength > 0 ? clampPreference((rosterStrength - 52) / 20) : 0.3;
   const youngStarFactor = hasYoungStar
     ? clampPreference((youngStarOverall - YOUNG_STAR_OVERALL_MIN) / 15 + 0.45)
     : youngShare >= 45
@@ -295,9 +289,7 @@ export function buildFranchiseTrajectoryContext(
           ? 0.35
           : 0.1;
   const ageFit =
-    rosterAge > 0
-      ? clampPreference(1 - Math.abs(rosterAge - 26.5) / 8)
-      : 0.4;
+    rosterAge > 0 ? clampPreference(1 - Math.abs(rosterAge - 26.5) / 8) : 0.4;
   const competitiveWindow = clampPreference(
     performanceFactor * 0.25 +
       strengthFactor * 0.25 +

@@ -153,7 +153,12 @@ describe("Owner Mode vertical slice", () => {
   it(
     "new game + team selection survive save/load smoke test",
     async () => {
-      const created = await createNewOwnerSave({ settings: CBL_GAME_SETTINGS, name: "Smoke Franchise", rngSeed: TEST_RNG_SEED },
+      const created = await createNewOwnerSave(
+        {
+          settings: CBL_GAME_SETTINGS,
+          name: "Smoke Franchise",
+          rngSeed: TEST_RNG_SEED,
+        },
         store,
       );
       expect(created.ok).toBe(true);
@@ -244,7 +249,9 @@ describe("Owner Mode vertical slice", () => {
       expect(after!.state.world.teams[placeholderId]!.city).toBe(
         available!.city,
       );
-      expect(getActiveOwnedFranchise(after!.state).citySelectionConfirmed).toBe(true);
+      expect(getActiveOwnedFranchise(after!.state).citySelectionConfirmed).toBe(
+        true,
+      );
       expect(selected.dashboard.controlledTeam.city).toBe(available!.city);
     },
     LONG_TIMEOUT_MS,
@@ -409,7 +416,9 @@ describe("Owner Mode vertical slice", () => {
       expect(after!.state.world.teams[placeholderId]!.name).toBe("Intruders");
       expect(after!.state.world.teams[occupant.id]!.city).toBe(placeholderCity);
       expect(after!.state.world.teams[occupant.id]!.name).toBe(occupantName);
-      expect(getActiveOwnedFranchise(after!.state).citySelectionConfirmed).toBe(true);
+      expect(getActiveOwnedFranchise(after!.state).citySelectionConfirmed).toBe(
+        true,
+      );
     },
     LONG_TIMEOUT_MS,
   );
@@ -417,7 +426,12 @@ describe("Owner Mode vertical slice", () => {
   it(
     "rejects invalid free agency and draft actions in preseason",
     async () => {
-      const created = await createNewOwnerSave({ settings: CBL_GAME_SETTINGS, name: "Guard Franchise", rngSeed: TEST_RNG_SEED },
+      const created = await createNewOwnerSave(
+        {
+          settings: CBL_GAME_SETTINGS,
+          name: "Guard Franchise",
+          rngSeed: TEST_RNG_SEED,
+        },
         store,
       );
       expect(created.ok).toBe(true);
@@ -447,7 +461,12 @@ describe("Owner Mode vertical slice", () => {
   it(
     "final acceptance: Season 1 through Season 2 with save/load",
     async () => {
-      const created = await createNewOwnerSave({ settings: CBL_GAME_SETTINGS, name: "Vertical Slice", rngSeed: TEST_RNG_SEED },
+      const created = await createNewOwnerSave(
+        {
+          settings: CBL_GAME_SETTINGS,
+          name: "Vertical Slice",
+          rngSeed: TEST_RNG_SEED,
+        },
         store,
       );
       expect(created.ok).toBe(true);
@@ -507,9 +526,10 @@ describe("Owner Mode vertical slice", () => {
       const atPlayoffs = await store.load(saveId);
       expect(atPlayoffs).not.toBeNull();
       expect(() => validateGameState(atPlayoffs!.state)).not.toThrow();
-      const userQualified = atPlayoffs!.state.competition.playoffs.qualifiedTeams.some(
-        (entry) => entry.teamId === controlledTeamId,
-      );
+      const userQualified =
+        atPlayoffs!.state.competition.playoffs.qualifiedTeams.some(
+          (entry) => entry.teamId === controlledTeamId,
+        );
 
       // Finish playoffs → Season Review (postseason checkpoint)
       await advanceUntilSeasonPhase(saveId, store, "postseason");
@@ -540,10 +560,7 @@ describe("Owner Mode vertical slice", () => {
         const advanced = await advanceLeaguePhaseCommand(saveId, store);
         if (!advanced.ok) {
           const pending = current!.state.user.pendingOwnerDecisions[0];
-          if (
-            advanced.error.includes("decision") &&
-            pending
-          ) {
+          if (advanced.error.includes("decision") && pending) {
             const declined = await declineOwnerDecision(
               saveId,
               pending.id,
@@ -595,10 +612,7 @@ describe("Owner Mode vertical slice", () => {
           );
           if (!advanced.ok) {
             const pending = snap!.state.user.pendingOwnerDecisions[0];
-            if (
-              advanced.error.includes("pending owner decision") &&
-              pending
-            ) {
+            if (advanced.error.includes("pending owner decision") && pending) {
               const declined = await declineOwnerDecision(
                 saveId,
                 pending.id,
@@ -725,7 +739,10 @@ describe("Owner Mode vertical slice", () => {
         if (outcomes.qualify && outcomes.miss) {
           break;
         }
-        const created = await createNewOwnerSave({ settings: CBL_GAME_SETTINGS, name: `PlayoffOutcome ${teamIndex}`,
+        const created = await createNewOwnerSave(
+          {
+            settings: CBL_GAME_SETTINGS,
+            name: `PlayoffOutcome ${teamIndex}`,
             rngSeed: TEST_RNG_SEED + teamIndex,
           },
           store,
@@ -737,11 +754,7 @@ describe("Owner Mode vertical slice", () => {
         const loaded = await store.load(created.save.id);
         const teamIds = Object.keys(loaded!.state.world.teams).sort();
         const teamId = teamIds[teamIndex % teamIds.length]!;
-        const selected = await selectOwnerTeam(
-          created.save.id,
-          teamId,
-          store,
-        );
+        const selected = await selectOwnerTeam(created.save.id, teamId, store);
         expect(selected.ok).toBe(true);
 
         await ensureRegularSeason(created.save.id, store);
@@ -775,4 +788,3 @@ describe("Owner Mode vertical slice", () => {
     LONG_TIMEOUT_MS,
   );
 });
-

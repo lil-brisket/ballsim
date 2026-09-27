@@ -6,11 +6,7 @@ import {
 import { appendCareerEntry } from "@/domain/entities/staff-development";
 import { createStaff, type Staff } from "@/domain/entities/staff";
 import { createDomainEvent, type DomainEvent } from "@/domain/events";
-import {
-  asStaffContractId,
-  type StaffId,
-  type TeamId,
-} from "@/domain/ids";
+import { asStaffContractId, type StaffId, type TeamId } from "@/domain/ids";
 import { systemResult, type SystemResult } from "@/domain/system-result";
 import type { GameState } from "@/state/game-state";
 import { appendSeasonEventLog } from "@/state/game-state";
@@ -187,11 +183,7 @@ export function releaseExpiredStaffContracts(state: GameState): SystemResult {
 
     const nextContracts = { ...current.business.staffContracts };
     for (const [cid, c] of Object.entries(nextContracts)) {
-      if (
-        c.staffId === staff.id &&
-        c.teamId === teamId &&
-        year >= c.endYear
-      ) {
+      if (c.staffId === staff.id && c.teamId === teamId && year >= c.endYear) {
         delete nextContracts[cid];
       }
     }

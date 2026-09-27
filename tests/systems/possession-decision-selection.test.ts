@@ -91,20 +91,12 @@ describe("choosePossessionDecision usage weighting", () => {
       }
     }
 
-    expect(shotCounts.get("star")!).toBeGreaterThan(
-      shotCounts.get("second")!,
-    );
-    expect(shotCounts.get("second")!).toBeGreaterThan(
-      shotCounts.get("role")!,
-    );
-    expect(shotCounts.get("role")!).toBeGreaterThan(
-      shotCounts.get("twelfth")!,
-    );
+    expect(shotCounts.get("star")!).toBeGreaterThan(shotCounts.get("second")!);
+    expect(shotCounts.get("second")!).toBeGreaterThan(shotCounts.get("role")!);
+    expect(shotCounts.get("role")!).toBeGreaterThan(shotCounts.get("twelfth")!);
     expect(shotCounts.get("twelfth")!).toBeGreaterThan(0);
 
-    expect(passCounts.get("star")!).toBeGreaterThan(
-      passCounts.get("twelfth")!,
-    );
+    expect(passCounts.get("star")!).toBeGreaterThan(passCounts.get("twelfth")!);
     expect(passCounts.get("twelfth")!).toBeGreaterThan(0);
   });
 
@@ -138,10 +130,7 @@ describe("choosePossessionDecision usage weighting", () => {
         },
         rng,
       );
-      if (
-        decision.action === "foul" &&
-        decision.foul.foulType === "shooting"
-      ) {
+      if (decision.action === "foul" && decision.foul.foulType === "shooting") {
         const fouledId = decision.foul.fouledPlayerId;
         fouledCounts.set(fouledId, (fouledCounts.get(fouledId) ?? 0) + 1);
       }

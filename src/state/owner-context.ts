@@ -18,10 +18,7 @@ import {
   getPendingDecisionsForTeam as getPendingDecisionsForTeamFromUser,
   type PendingOwnerDecision,
 } from "@/domain/entities/owner-decision";
-import type {
-  GameState,
-  OwnedFranchiseState,
-} from "@/state/game-state";
+import type { GameState, OwnedFranchiseState } from "@/state/game-state";
 
 export function getOwnedTeamIds(state: GameState): readonly TeamId[] {
   return state.user.ownedTeamIds;
@@ -58,9 +55,7 @@ export function getOwnedFranchise(
 ): OwnedFranchiseState {
   const franchise = state.user.ownedFranchises[teamId];
   if (!franchise) {
-    throw new Error(
-      `Owned franchise state missing for team "${teamId}".`,
-    );
+    throw new Error(`Owned franchise state missing for team "${teamId}".`);
   }
   return franchise;
 }
@@ -138,8 +133,7 @@ export function withOwnedFranchise(
     | ((current: OwnedFranchiseState) => OwnedFranchiseState),
 ): GameState {
   const current = getOwnedFranchise(state, teamId);
-  const next =
-    typeof updater === "function" ? updater(current) : updater;
+  const next = typeof updater === "function" ? updater(current) : updater;
   if (next === current) {
     return state;
   }
@@ -162,9 +156,7 @@ export function getPendingDecisionsForTeam(
   return getPendingDecisionsForTeamFromUser(state.user, teamId);
 }
 
-export function getBlockingDecisions(
-  state: GameState,
-): PendingOwnerDecision[] {
+export function getBlockingDecisions(state: GameState): PendingOwnerDecision[] {
   return getBlockingOwnerDecisions(state.user);
 }
 
@@ -213,8 +205,7 @@ export function withRelinquishedOwnedFranchise(
   if (ownedTeamIds.length === 0) {
     throw new Error("Cannot relinquish the last owned franchise.");
   }
-  const { [teamId]: _removed, ...ownedFranchises } =
-    state.user.ownedFranchises;
+  const { [teamId]: _removed, ...ownedFranchises } = state.user.ownedFranchises;
   const activeOwnerTeamId =
     state.user.activeOwnerTeamId === teamId
       ? ownedTeamIds[0]!

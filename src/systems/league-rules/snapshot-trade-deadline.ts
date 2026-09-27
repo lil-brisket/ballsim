@@ -8,8 +8,7 @@ export function snapshotTradeDeadline(state: GameState): GameState {
   if (state.competition.season.tradeDeadlineDate != null) {
     return state;
   }
-  let earliest: string | null =
-    state.competition.season.regularSeasonStartDate;
+  let earliest: string | null = state.competition.season.regularSeasonStartDate;
   let latest: string | null = null;
   for (const gameId of state.competition.schedule.gameIds) {
     const game = state.competition.games[gameId];

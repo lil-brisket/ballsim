@@ -27,10 +27,7 @@ export function getActiveDraftOnClockSlot(
 /**
  * True when the next unused draft slot belongs to the given team.
  */
-export function isTeamOnDraftClock(
-  state: GameState,
-  teamId: TeamId,
-): boolean {
+export function isTeamOnDraftClock(state: GameState, teamId: TeamId): boolean {
   const slot = getActiveDraftOnClockSlot(state);
   return slot !== undefined && slot.ownerTeamId === teamId;
 }

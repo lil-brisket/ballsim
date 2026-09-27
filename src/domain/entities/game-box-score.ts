@@ -84,9 +84,8 @@ export function validateCompletedGameBoxScore(
     }
   }
 
-  const { homeRows, awayRows, hasAuthoritativeTeams } = partitionPlayerStats(
-    game,
-  );
+  const { homeRows, awayRows, hasAuthoritativeTeams } =
+    partitionPlayerStats(game);
 
   if (hasAuthoritativeTeams) {
     const homeTeam = aggregateTeamStats(game.homeTeamId, homeRows);

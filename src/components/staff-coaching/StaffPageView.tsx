@@ -15,10 +15,7 @@ import type { StaffHubView } from "@/state/staff-hub-selectors";
 /**
  * Staff Hub — payroll summary + directory with inline vacancies.
  */
-export function StaffPageView(props: {
-  view: StaffHubView;
-  error?: string;
-}) {
+export function StaffPageView(props: { view: StaffHubView; error?: string }) {
   const { view, error } = props;
   const saveId = view.saveId;
   const members = view.directory.flatMap((group) => group.members);
@@ -26,10 +23,7 @@ export function StaffPageView(props: {
 
   return (
     <div className="space-y-4">
-      <PageHeader
-        title="Staff"
-        subtitle="Who is operating the organization"
-      />
+      <PageHeader title="Staff" subtitle="Who is operating the organization" />
       {error ? <ErrorState message={error} /> : null}
 
       <StaffPayrollCard view={view} />

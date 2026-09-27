@@ -46,7 +46,10 @@ describe("scouting-hub-selectors", () => {
     expect(Array.isArray(hub.needsAttention)).toBe(true);
     expect(Array.isArray(hub.prospects)).toBe(true);
     for (let i = 1; i < hub.prospects.length; i += 1) {
-      if (hub.prospects[i]!.needsAttention && !hub.prospects[i - 1]!.needsAttention) {
+      if (
+        hub.prospects[i]!.needsAttention &&
+        !hub.prospects[i - 1]!.needsAttention
+      ) {
         expect.fail("needsAttention prospects must sort first");
       }
     }

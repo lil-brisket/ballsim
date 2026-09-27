@@ -120,4 +120,9 @@ function buildOptionalLinks(
   return links;
 }
 
-export type { PhaseTask, PhaseFocus, PhaseAttentionSummary, PhaseAdvancePreview };
+export type {
+  PhaseTask,
+  PhaseFocus,
+  PhaseAttentionSummary,
+  PhaseAdvancePreview,
+};

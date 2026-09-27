@@ -27,9 +27,7 @@ import {
 } from "@/domain/entities/contract";
 
 export type ContractAvailableAction =
-  | "exercise_team_option"
-  | "decline_team_option"
-  | "none";
+  "exercise_team_option" | "decline_team_option" | "none";
 
 /** Presentation state — separate from availableAction. */
 export type ContractPresentationState =
@@ -149,10 +147,8 @@ export function toContractHubView(state: GameState): ContractHubView {
     const status = contract
       ? getContractStatus(contract, year)
       : (row.status as ContractStatus);
-    const isExpiring =
-      status === "active" && row.endYear <= year + 1;
-    const hasPending =
-      row.hasPendingTeamOption || row.hasPendingPlayerOption;
+    const isExpiring = status === "active" && row.endYear <= year + 1;
+    const hasPending = row.hasPendingTeamOption || row.hasPendingPlayerOption;
     const action = availableAction(row);
 
     return {

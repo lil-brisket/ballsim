@@ -34,7 +34,8 @@ function buildView(
   return {
     seasons,
     milestones,
-    ownerTenureYears: overrides?.ownerTenureYears ?? milestones.currentOwnershipTenureYears,
+    ownerTenureYears:
+      overrides?.ownerTenureYears ?? milestones.currentOwnershipTenureYears,
   };
 }
 

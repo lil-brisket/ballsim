@@ -13,7 +13,9 @@ function requireActiveOrPausedDraft(state: GameState): FantasyDraft {
     throw new Error("No fantasy draft exists.");
   }
   if (draft.status !== "active" && draft.status !== "paused") {
-    throw new Error("Fantasy draft queues can only be edited during the draft.");
+    throw new Error(
+      "Fantasy draft queues can only be edited during the draft.",
+    );
   }
   return draft;
 }

@@ -10,9 +10,7 @@ export default async function FantasyDraftSummaryPage({ params }: PageProps) {
   const { saveId } = await params;
   const loaded = await loadFantasyDraftSummaryView(saveId);
   if (!loaded) {
-    const { loadFantasyDraftView } = await import(
-      "@/application/game-service"
-    );
+    const { loadFantasyDraftView } = await import("@/application/game-service");
     const draftLoaded = await loadFantasyDraftView(saveId);
     if (!draftLoaded) {
       notFound();
@@ -26,7 +24,5 @@ export default async function FantasyDraftSummaryPage({ params }: PageProps) {
     notFound();
   }
 
-  return (
-    <FantasyDraftSummaryClient saveId={saveId} view={loaded.summary} />
-  );
+  return <FantasyDraftSummaryClient saveId={saveId} view={loaded.summary} />;
 }

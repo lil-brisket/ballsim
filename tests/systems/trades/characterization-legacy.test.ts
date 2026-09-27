@@ -15,7 +15,10 @@ import {
 } from "@/systems/trades";
 import { applyTradeSalaryRule } from "@/systems/trades/trade-salary-rules";
 import { gmTradeAcceptanceThreshold } from "@/systems/staff-effects";
-import { DRAFT_PICK_VALUE_ROUND_1, DRAFT_PICK_VALUE_ROUND_2 } from "@/systems/trades-config";
+import {
+  DRAFT_PICK_VALUE_ROUND_1,
+  DRAFT_PICK_VALUE_ROUND_2,
+} from "@/systems/trades-config";
 import {
   createTradeFixture,
   pickForTeam,
@@ -82,7 +85,11 @@ describe("legacy characterization — evaluateTradeOffer", () => {
     const proposal = playerForPlayerProposal(state);
     const evaluation = evaluateTradeOffer(state, teamA, proposal);
     expect(typeof evaluation.accepted).toBe("boolean");
-    expect(evaluation.decisionAction === "accept" || evaluation.decisionAction === "reject" || evaluation.decisionAction === "counter").toBe(true);
+    expect(
+      evaluation.decisionAction === "accept" ||
+        evaluation.decisionAction === "reject" ||
+        evaluation.decisionAction === "counter",
+    ).toBe(true);
   });
 });
 
@@ -120,9 +127,9 @@ describe("legacy characterization — trade block and AI proposal", () => {
       playerId,
     });
     const block = getTradeBlock(next.state, teamA);
-    expect(block.assets.some((a) => a.kind === "player" && a.playerId === playerId)).toBe(
-      true,
-    );
+    expect(
+      block.assets.some((a) => a.kind === "player" && a.playerId === playerId),
+    ).toBe(true);
   });
 
   it("generateAiTradeProposal finds valid 1-for-1 from blocks", () => {
@@ -165,7 +172,11 @@ describe("legacy characterization — executeTrade ownership", () => {
     expect(executed.success).toBe(true);
     expect(executed.state.world.players[playerA]?.teamId).toBe(teamB);
     expect(executed.state.world.draftPicks[pickB]?.ownerTeamId).toBe(teamA);
-    expect(executed.state.world.teams[teamA]!.roster.includes(playerA)).toBe(false);
-    expect(executed.state.world.teams[teamB]!.roster.includes(playerA)).toBe(true);
+    expect(executed.state.world.teams[teamA]!.roster.includes(playerA)).toBe(
+      false,
+    );
+    expect(executed.state.world.teams[teamB]!.roster.includes(playerA)).toBe(
+      true,
+    );
   });
 });

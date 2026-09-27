@@ -19,7 +19,5 @@ export default async function ContractsRedirectPage({
     }
   }
   const suffix = qs.toString();
-  redirect(
-    `/dashboard/${saveId}/team/contracts${suffix ? `?${suffix}` : ""}`,
-  );
+  redirect(`/dashboard/${saveId}/team/contracts${suffix ? `?${suffix}` : ""}`);
 }

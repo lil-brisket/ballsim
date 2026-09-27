@@ -12,7 +12,11 @@ import type { PlayerDrawerView } from "@/state/entity-drawer-selectors";
 
 function DrawerSkeleton() {
   return (
-    <div className="animate-pulse space-y-4" aria-busy="true" aria-label="Loading">
+    <div
+      className="animate-pulse space-y-4"
+      aria-busy="true"
+      aria-label="Loading"
+    >
       <div className="h-16 rounded-lg bg-zinc-800" />
       <div className="h-8 w-2/3 rounded bg-zinc-800" />
       <div className="h-24 rounded-lg bg-zinc-800" />
@@ -166,11 +170,12 @@ export function PlayerDrawer(props: {
                 items={[
                   {
                     label: "Salary",
-                    value: props.view.contract.salary != null ? (
-                      <MoneyDisplay amount={props.view.contract.salary} />
-                    ) : (
-                      "—"
-                    ),
+                    value:
+                      props.view.contract.salary != null ? (
+                        <MoneyDisplay amount={props.view.contract.salary} />
+                      ) : (
+                        "—"
+                      ),
                   },
                   {
                     label: "Years",

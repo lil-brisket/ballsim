@@ -21,10 +21,7 @@ export type StaffPreferences = {
 export type StaffPreferencesInput = StaffPreferences;
 
 export type StaffInterestLevel =
-  | "interested"
-  | "neutral"
-  | "uninterested"
-  | "unwilling";
+  "interested" | "neutral" | "uninterested" | "unwilling";
 
 export const STAFF_INTEREST_LEVELS: readonly StaffInterestLevel[] = [
   "interested",
@@ -75,9 +72,7 @@ export function assertStaffPreferencesShape(
   assertNonNegativeInteger(prefs.minimumSalary, "minimumSalary");
   assertNonNegativeInteger(prefs.desiredSalary, "desiredSalary");
   if (prefs.desiredSalary < prefs.minimumSalary) {
-    throw new Error(
-      "StaffPreferences desiredSalary must be >= minimumSalary.",
-    );
+    throw new Error("StaffPreferences desiredSalary must be >= minimumSalary.");
   }
   if (
     typeof prefs.preferredContractYears !== "number" ||
@@ -108,11 +103,9 @@ function assertWeight(value: number, field: string): void {
 }
 
 function assertNonNegativeInteger(value: number, field: string): void {
-  if (
-    typeof value !== "number" ||
-    !Number.isInteger(value) ||
-    value < 0
-  ) {
-    throw new Error(`StaffPreferences ${field} must be a non-negative integer.`);
+  if (typeof value !== "number" || !Number.isInteger(value) || value < 0) {
+    throw new Error(
+      `StaffPreferences ${field} must be a non-negative integer.`,
+    );
   }
 }

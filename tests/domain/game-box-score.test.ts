@@ -12,18 +12,15 @@ import {
   type GameInput,
   type GamePlayerStats,
 } from "@/domain/entities/game";
-import {
-  asGameId,
-  asPlayerId,
-  asSeasonId,
-  asTeamId,
-} from "@/domain/ids";
+import { asGameId, asPlayerId, asSeasonId, asTeamId } from "@/domain/ids";
 
 const HOME = asTeamId("team_home");
 const AWAY = asTeamId("team_away");
 
 function playerRow(
-  overrides: Partial<GamePlayerStats> & { playerId: ReturnType<typeof asPlayerId> },
+  overrides: Partial<GamePlayerStats> & {
+    playerId: ReturnType<typeof asPlayerId>;
+  },
 ): GamePlayerStats {
   return {
     teamId: HOME,
@@ -51,9 +48,7 @@ function playerRow(
   };
 }
 
-function finalGameInput(
-  overrides: Partial<GameInput> = {},
-): GameInput {
+function finalGameInput(overrides: Partial<GameInput> = {}): GameInput {
   const homePlayer = playerRow({
     playerId: asPlayerId("p_home"),
     teamId: HOME,
@@ -106,24 +101,24 @@ function finalGameInput(
       city: "Boston",
       name: "Celtics",
       abbreviation: "BOS",
-    branding: {
-      primaryColor: "#0B1F3A",
-      secondaryColor: "#C4CED4",
-      accentColor: "#F5B800",
-      logoId: "shield",
-    },
+      branding: {
+        primaryColor: "#0B1F3A",
+        secondaryColor: "#C4CED4",
+        accentColor: "#F5B800",
+        logoId: "shield",
+      },
     },
     awayTeamSnapshot: {
       teamId: AWAY,
       city: "New York",
       name: "Knicks",
       abbreviation: "NYK",
-    branding: {
-      primaryColor: "#0B1F3A",
-      secondaryColor: "#C4CED4",
-      accentColor: "#F5B800",
-      logoId: "shield",
-    },
+      branding: {
+        primaryColor: "#0B1F3A",
+        secondaryColor: "#C4CED4",
+        accentColor: "#F5B800",
+        logoId: "shield",
+      },
     },
     ...overrides,
   };

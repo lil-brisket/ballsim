@@ -18,10 +18,7 @@ const TONE: Record<string, string> = {
   neutral: "border-zinc-700 bg-zinc-900 text-zinc-400",
 };
 
-export function StatusBadge(props: {
-  label: string;
-  tone?: string;
-}) {
+export function StatusBadge(props: { label: string; tone?: string }) {
   const toneClass = TONE[props.tone ?? props.label] ?? TONE.info;
   return (
     <span

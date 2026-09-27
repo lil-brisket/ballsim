@@ -15,9 +15,7 @@ export type ScheduledEventHandler = (
   rng: Rng,
 ) => SystemResult;
 
-const handlers: Partial<
-  Record<ScheduledEventType, ScheduledEventHandler>
-> = {
+const handlers: Partial<Record<ScheduledEventType, ScheduledEventHandler>> = {
   noop: (state) => systemResult(state),
 };
 
@@ -96,8 +94,7 @@ export function processScheduledEvents(
   const currentDate = state.world.calendar.currentDate;
   const due = Object.values(state.world.scheduledEvents)
     .filter(
-      (event) =>
-        event.status === "pending" && event.triggerDate <= currentDate,
+      (event) => event.status === "pending" && event.triggerDate <= currentDate,
     )
     .sort((a, b) => {
       if (a.triggerDate !== b.triggerDate) {

@@ -157,14 +157,17 @@ export default async function DevelopmentLeaguePage({
       <DlAssignSection>
         <Section title="Assign from roster">
           <p className="text-xs text-zinc-600">
-            Assignment is optional. Use this list when a prospect needs Development
-            League minutes; day-to-day management is not required here.
+            Assignment is optional. Use this list when a prospect needs
+            Development League minutes; day-to-day management is not required
+            here.
           </p>
           {view.eligibleToAssign.length === 0 ? (
             <EmptyState message="No eligible players available to assign." />
           ) : (
             <>
-              <ul className={cn("md:hidden", densityGap.compact, "flex flex-col")}>
+              <ul
+                className={cn("md:hidden", densityGap.compact, "flex flex-col")}
+              >
                 {view.eligibleToAssign.map((row) => (
                   <li key={row.playerId}>
                     <DlEligibleCard
@@ -178,13 +181,7 @@ export default async function DevelopmentLeaguePage({
               <div className="hidden md:block">
                 <DataTable
                   caption="Eligible players to assign to the Development League"
-                  headers={[
-                    "Player",
-                    "OVR",
-                    "POT",
-                    "Recommendation",
-                    "Action",
-                  ]}
+                  headers={["Player", "OVR", "POT", "Recommendation", "Action"]}
                 >
                   {view.eligibleToAssign.map((row) => (
                     <DlEligibleRow

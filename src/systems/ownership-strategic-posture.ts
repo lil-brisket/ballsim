@@ -73,7 +73,10 @@ export type PostureEvaluation = {
   reversal: StrategicReversal | null;
 };
 
-function snapshotPosture(state: GameState, teamId: TeamId): StrategicPostureSnapshot {
+function snapshotPosture(
+  state: GameState,
+  teamId: TeamId,
+): StrategicPostureSnapshot {
   const ctx = buildFranchiseContext(state, teamId);
   const team = state.world.teams[teamId];
   const ops = state.business.franchiseOps[teamId];
@@ -103,7 +106,9 @@ function snapshotPosture(state: GameState, teamId: TeamId): StrategicPostureSnap
 
   let meanFacilityLevel = 1;
   if (ops) {
-    const levels = FACILITY_CATEGORIES.map((c) => ops.facilities[c]?.level ?? 1);
+    const levels = FACILITY_CATEGORIES.map(
+      (c) => ops.facilities[c]?.level ?? 1,
+    );
     meanFacilityLevel =
       levels.reduce((a, b) => a + b, 0) / Math.max(1, levels.length);
   }
@@ -204,7 +209,10 @@ function observeFinancial(
   return "sustainable";
 }
 
-function observeMarket(current: StrategicPostureSnapshot, facilityDelta: number): MarketStance {
+function observeMarket(
+  current: StrategicPostureSnapshot,
+  facilityDelta: number,
+): MarketStance {
   if (current.awareness < 40 || current.fanSentiment < 40) {
     return facilityDelta > 0.2 || current.awareness < 35
       ? "aggressive_growth"
@@ -220,8 +228,16 @@ function stanceAligned<T extends string>(expected: T, observed: T): boolean {
   return expected === observed;
 }
 
-function competitiveNear(expected: CompetitiveStance, observed: CompetitiveStance): boolean {
-  const order: CompetitiveStance[] = ["rebuild", "develop", "compete", "contend"];
+function competitiveNear(
+  expected: CompetitiveStance,
+  observed: CompetitiveStance,
+): boolean {
+  const order: CompetitiveStance[] = [
+    "rebuild",
+    "develop",
+    "compete",
+    "contend",
+  ];
   return Math.abs(order.indexOf(expected) - order.indexOf(observed)) <= 1;
 }
 
@@ -252,7 +268,9 @@ function buildGapSummary(
   return `Ownership expects ${competitiveStanceLabel(expectations.competitiveExpectation)}; the franchise is operating toward ${competitiveStanceLabel(observedCompetitive)}.`;
 }
 
-function buildPostureNarrative(delta: Omit<StrategicPostureDelta, "narrativeSummary">): string {
+function buildPostureNarrative(
+  delta: Omit<StrategicPostureDelta, "narrativeSummary">,
+): string {
   const parts: string[] = [];
   if (Math.abs(delta.ageDelta) >= 0.8) {
     parts.push(
@@ -289,7 +307,8 @@ function detectReversal(
   observedCompetitive: CompetitiveStance,
 ): StrategicReversal | null {
   const prior = getActiveOwnedFranchise(state).ownershipConfidence.lastReversal;
-  const priorNote = getActiveOwnedFranchise(state).ownershipConfidence.seasonNotes.at(-1);
+  const priorNote =
+    getActiveOwnedFranchise(state).ownershipConfidence.seasonNotes.at(-1);
   const priorDirection =
     priorNote?.mandateSummary.includes("youth") ||
     priorNote?.mandateSummary.includes("development") ||
@@ -354,7 +373,9 @@ export function evaluateStrategicPosture(
   const prior = priorSnapshotFromHistory(state, teamId, current);
 
   const ageDelta = prior ? current.averageAge - prior.averageAge : 0;
-  const youngShareDelta = prior ? current.youngSharePct - prior.youngSharePct : 0;
+  const youngShareDelta = prior
+    ? current.youngSharePct - prior.youngSharePct
+    : 0;
   const draftAssetDelta = prior
     ? current.draftAssetCount - prior.draftAssetCount
     : 0;

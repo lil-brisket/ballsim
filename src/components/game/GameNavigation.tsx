@@ -15,10 +15,7 @@ export function GameNavigation(props: {
 }) {
   return (
     <>
-      <MobileNavigationDrawer
-        saveId={props.saveId}
-        groups={props.groups}
-      />
+      <MobileNavigationDrawer saveId={props.saveId} groups={props.groups} />
       <DesktopNavigation saveId={props.saveId} groups={props.groups} />
     </>
   );

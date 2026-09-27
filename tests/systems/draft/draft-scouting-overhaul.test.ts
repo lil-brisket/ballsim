@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 import { createSeededRng } from "@/domain/rng";
-import { createDraft, activateDraft, makeDraftSelection } from "@/systems/draft";
+import {
+  createDraft,
+  activateDraft,
+  makeDraftSelection,
+} from "@/systems/draft";
 import { draftYearForSeason } from "@/systems/draft/draft-order";
 import { draftClassIdFor } from "@/domain/entities/draft";
 import { createDraftFixture, sortedTeamIds } from "../draft/fixture";
@@ -65,12 +69,7 @@ describe("mock draft", () => {
         .filter((p) => p.status === "eligible")
         .map((p) => p.playerId as string),
     );
-    const pick = selectProspectFromTeamScouting(
-      state,
-      draft,
-      teamId,
-      eligible,
-    );
+    const pick = selectProspectFromTeamScouting(state, draft, teamId, eligible);
     expect(pick).toBeDefined();
     expect(eligible.has(pick!)).toBe(true);
   });
@@ -83,9 +82,7 @@ describe("draft board and interviews", () => {
     const draftYear = draftYearForSeason(state.competition.season.year);
     const draftId = draftClassIdFor(draftYear);
     const teamId = sortedTeamIds(state)[0]!;
-    const prospectId = Object.keys(
-      state.world.drafts[draftId]!.prospects,
-    )[0]!;
+    const prospectId = Object.keys(state.world.drafts[draftId]!.prospects)[0]!;
 
     state = addToDraftBoard(state, teamId, prospectId as never);
     expect(
@@ -103,9 +100,7 @@ describe("draft board and interviews", () => {
     const draftYear = draftYearForSeason(state.competition.season.year);
     const draftId = draftClassIdFor(draftYear);
     const teamId = sortedTeamIds(state)[0]!;
-    const prospectId = Object.keys(
-      state.world.drafts[draftId]!.prospects,
-    )[0]!;
+    const prospectId = Object.keys(state.world.drafts[draftId]!.prospects)[0]!;
     state = conductProspectInterview(state, teamId, prospectId as never);
     const interview =
       state.world.drafts[draftId]!.teamDraftState[teamId]!.interviews[
@@ -183,9 +178,7 @@ describe("coverage and fun facts", () => {
     const draftYear = draftYearForSeason(state.competition.season.year);
     const draftId = draftClassIdFor(draftYear);
     const teamId = sortedTeamIds(state)[0]!;
-    const prospectId = Object.keys(
-      state.world.drafts[draftId]!.prospects,
-    )[0]!;
+    const prospectId = Object.keys(state.world.drafts[draftId]!.prospects)[0]!;
     state = assignScoutToProspect(state, teamId, prospectId as never);
     expect(
       state.world.drafts[draftId]!.teamDraftState[teamId]!.scoutAssignments

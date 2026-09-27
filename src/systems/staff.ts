@@ -12,16 +12,12 @@ import type { Staff } from "@/domain/entities/staff";
 import { createStaffContract } from "@/domain/entities/staff-contract";
 import type { GameState } from "@/state/game-state";
 import { appendSeasonEventLog } from "@/state/game-state";
-import {
-  STAFF_DEFAULT_CONTRACT_YEARS,
-} from "@/systems/staff-config";
+import { STAFF_DEFAULT_CONTRACT_YEARS } from "@/systems/staff-config";
 import {
   annualSalaryForStaff,
   findTeamStaffByRole,
 } from "@/systems/staff-effects";
-import {
-  isStaffContractActive,
-} from "@/domain/entities/staff-contract";
+import { isStaffContractActive } from "@/domain/entities/staff-contract";
 import { getTeamStaffBudgetSpace } from "@/systems/staff-budget";
 import { appendCareerEntry } from "@/domain/entities/staff-development";
 import { createStaff } from "@/domain/entities/staff";

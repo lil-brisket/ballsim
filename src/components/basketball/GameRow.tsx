@@ -30,9 +30,7 @@ export type GameRowProps = {
  */
 export function GameRow(props: GameRowProps) {
   const hasResult =
-    props.teamScore != null &&
-    props.opponentScore != null &&
-    props.won != null;
+    props.teamScore != null && props.opponentScore != null && props.won != null;
 
   const opponentLabel = (
     <span className="inline-flex items-center gap-2">
@@ -77,7 +75,10 @@ export function GameRow(props: GameRowProps) {
   ) : props.calendarHref ? (
     <Link
       href={props.calendarHref}
-      className={cn("text-xs text-amber-400 hover:text-amber-300", focusRingClass)}
+      className={cn(
+        "text-xs text-amber-400 hover:text-amber-300",
+        focusRingClass,
+      )}
     >
       Calendar
     </Link>

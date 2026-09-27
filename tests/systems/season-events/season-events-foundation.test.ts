@@ -37,7 +37,9 @@ function bootRegularSeason(saveId: string) {
 describe("season events foundation", () => {
   it("plans events from committed RS schedule dates", () => {
     const { state } = bootRegularSeason("se_plan");
-    expect(Object.keys(state.competition.seasonEvents.events).length).toBeGreaterThan(0);
+    expect(
+      Object.keys(state.competition.seasonEvents.events).length,
+    ).toBeGreaterThan(0);
     const window = deriveMidseasonEventWindow(state);
     expect(window).not.toBeNull();
     const anchor = deriveMidseasonAnchorDate(state);
@@ -47,7 +49,9 @@ describe("season events foundation", () => {
 
   it("planSeasonEvents is idempotent", () => {
     const { state } = bootRegularSeason("se_idempotent");
-    const firstCount = Object.keys(state.competition.seasonEvents.events).length;
+    const firstCount = Object.keys(
+      state.competition.seasonEvents.events,
+    ).length;
     const second = planSeasonEvents(state).state;
     expect(Object.keys(second.competition.seasonEvents.events).length).toBe(
       firstCount,
@@ -73,19 +77,19 @@ describe("season events foundation", () => {
 
     const result = processSeasonEvents(current, rng);
     const after = result.state.competition.seasonEvents.holidays[holiday!.key]!;
-    expect(after.status === "active" || after.status === "completed").toBe(true);
-    expect(
-      result.events.some((e) => e.type === "HolidayStarted"),
-    ).toBe(true);
+    expect(after.status === "active" || after.status === "completed").toBe(
+      true,
+    );
+    expect(result.events.some((e) => e.type === "HolidayStarted")).toBe(true);
   });
 
   it("survives serialize/deserialize with planned events", () => {
     const { state } = bootRegularSeason("se_persist");
     const reloaded = deserializeGameState(serializeGameState(state));
     expect(reloaded.meta.schemaVersion).toBe(GAME_STATE_SCHEMA_VERSION);
-    expect(
-      Object.keys(reloaded.competition.seasonEvents.events).length,
-    ).toBe(Object.keys(state.competition.seasonEvents.events).length);
+    expect(Object.keys(reloaded.competition.seasonEvents.events).length).toBe(
+      Object.keys(state.competition.seasonEvents.events).length,
+    );
   });
 
   it("migrates v60 saves to empty seasonEvents", () => {
@@ -111,7 +115,9 @@ describe("season events foundation", () => {
 
   it("processes fan voting open on voting open date", () => {
     const { state, rng } = bootRegularSeason("se_vote_open");
-    const campaign = Object.values(state.competition.seasonEvents.fanVoting)[0]!;
+    const campaign = Object.values(
+      state.competition.seasonEvents.fanVoting,
+    )[0]!;
     let current = {
       ...state,
       world: {
@@ -128,14 +134,16 @@ describe("season events foundation", () => {
       result.state.competition.seasonEvents.fanVoting,
     )[0]!;
     expect(updated.status).toBe("open");
-    expect(
-      result.events.some((e) => e.type === "MidseasonVotingOpened"),
-    ).toBe(true);
+    expect(result.events.some((e) => e.type === "MidseasonVotingOpened")).toBe(
+      true,
+    );
   });
 
   it("multi-day advance ticks votes deterministically", () => {
     const { state, rng } = bootRegularSeason("se_vote_tick");
-    const campaign = Object.values(state.competition.seasonEvents.fanVoting)[0]!;
+    const campaign = Object.values(
+      state.competition.seasonEvents.fanVoting,
+    )[0]!;
 
     let jump: GameState = {
       ...state,
@@ -154,7 +162,9 @@ describe("season events foundation", () => {
     const jumped = advanceSimulation(jump, jumpRng, { days: 5 });
     jump = jumped.state;
 
-    const afterJump = Object.values(jump.competition.seasonEvents.fanVoting)[0]!;
+    const afterJump = Object.values(
+      jump.competition.seasonEvents.fanVoting,
+    )[0]!;
     expect(afterJump.status).toBe("open");
     expect(afterJump.lastTickDate).not.toBeNull();
 

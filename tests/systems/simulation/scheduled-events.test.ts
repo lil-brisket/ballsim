@@ -21,9 +21,10 @@ describe("scheduled events", () => {
 
   function baseState() {
     const state = createInitialGameState({
-    saveId: "sched_evt", rngSeed: 3,
-    settings: CBL_GAME_SETTINGS,
-  });
+      saveId: "sched_evt",
+      rngSeed: 3,
+      settings: CBL_GAME_SETTINGS,
+    });
     const rng = createSeededRng(state.meta.rngState);
     return { state: bootstrapWorld(state, rng).state, rng };
   }
@@ -90,7 +91,9 @@ describe("scheduled events", () => {
       triggerDate: "2026-10-01",
     }).state;
 
-    expect(() => processScheduledEvents(withEvent, rng)).toThrow(/handler boom/);
+    expect(() => processScheduledEvents(withEvent, rng)).toThrow(
+      /handler boom/,
+    );
     expect(withEvent.world.scheduledEvents.evt_fail?.status).toBe("pending");
   });
 

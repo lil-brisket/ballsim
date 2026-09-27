@@ -28,7 +28,10 @@ export type DemandContribution = {
 
 export type TicketDemandResult = {
   score: number;
-  contributions: Record<keyof typeof DEMAND_CONTRIBUTOR_WEIGHTS, DemandContribution>;
+  contributions: Record<
+    keyof typeof DEMAND_CONTRIBUTOR_WEIGHTS,
+    DemandContribution
+  >;
 };
 
 export type DemandExplanation = TicketDemandResult & {
@@ -63,9 +66,7 @@ export function calculateTicketDemand(
   inputs: TicketDemandInputs,
 ): TicketDemandResult {
   const fanFacilityRaw =
-    inputs.fanFacility !== undefined
-      ? clampRating(inputs.fanFacility)
-      : 0;
+    inputs.fanFacility !== undefined ? clampRating(inputs.fanFacility) : 0;
   const opponentRaw = winPctContribution(
     inputs.opponentWinPct !== undefined ? inputs.opponentWinPct : 0.5,
   );

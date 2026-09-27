@@ -1,7 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-  createDraftPick,
-} from "@/domain/entities/draft-pick";
+import { createDraftPick } from "@/domain/entities/draft-pick";
 import { draftClassIdFor } from "@/domain/entities/draft";
 import { asDraftPickId, asPlayerId, asTeamId } from "@/domain/ids";
 import { createSeededRng } from "@/domain/rng";
@@ -180,13 +178,17 @@ describe("draft lifecycle and selection", () => {
     const beforeActivate = makeDraftSelection(state, {
       draftClassId: draftId,
       draftPickId: state.world.drafts[draftId]!.order[0]!.draftPickId,
-      prospectPlayerId: Object.keys(state.world.drafts[draftId]!.prospects)[0] as never,
+      prospectPlayerId: Object.keys(
+        state.world.drafts[draftId]!.prospects,
+      )[0] as never,
       teamId: state.world.drafts[draftId]!.order[0]!.ownerTeamId,
     });
     expect(beforeActivate.success).toBe(false);
-    expect(beforeActivate.validation.errors.some((e) => e.code === "DRAFT_NOT_ACTIVE")).toBe(
-      true,
-    );
+    expect(
+      beforeActivate.validation.errors.some(
+        (e) => e.code === "DRAFT_NOT_ACTIVE",
+      ),
+    ).toBe(true);
 
     state = activateDraft(state, draftId).state;
     expect(state.world.drafts[draftId]!.status).toBe("active");
@@ -244,9 +246,9 @@ describe("draft lifecycle and selection", () => {
     const usedPick = makeDraftSelection(state, {
       draftClassId: draftId,
       draftPickId: slot.draftPickId,
-      prospectPlayerId: Object.values(state.world.drafts[draftId]!.prospects).find(
-        (p) => p.status === "eligible",
-      )!.playerId,
+      prospectPlayerId: Object.values(
+        state.world.drafts[draftId]!.prospects,
+      ).find((p) => p.status === "eligible")!.playerId,
       teamId: slot.ownerTeamId,
     });
     expect(usedPick.success).toBe(false);
@@ -281,9 +283,9 @@ describe("draft lifecycle and selection", () => {
     const afterComplete = makeDraftSelection(state, {
       draftClassId: draftId,
       draftPickId: state.world.drafts[draftId]!.order[1]!.draftPickId,
-      prospectPlayerId: Object.values(state.world.drafts[draftId]!.prospects).find(
-        (p) => p.status === "eligible",
-      )!.playerId,
+      prospectPlayerId: Object.values(
+        state.world.drafts[draftId]!.prospects,
+      ).find((p) => p.status === "eligible")!.playerId,
       teamId: state.world.drafts[draftId]!.order[1]!.ownerTeamId,
     });
     expect(afterComplete.success).toBe(false);

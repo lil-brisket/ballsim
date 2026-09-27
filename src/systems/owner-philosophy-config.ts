@@ -87,7 +87,11 @@ export const OWNER_PHILOSOPHY_PROFILES: Record<
       "win_championship",
     ],
     preferredSecondary: ["playoff_round", "payroll_limit", "reputation"],
-    preferredLongTerm: ["championship_count", "playoff_count", "franchise_value"],
+    preferredLongTerm: [
+      "championship_count",
+      "playoff_count",
+      "franchise_value",
+    ],
   },
   build_for_the_future: {
     philosophy: "build_for_the_future",
@@ -110,11 +114,7 @@ export const OWNER_PHILOSOPHY_PROFILES: Record<
       "roster_direction",
       "minimum_win_total",
     ],
-    preferredSecondary: [
-      "payroll_limit",
-      "improve_finances",
-      "fan_sentiment",
-    ],
+    preferredSecondary: ["payroll_limit", "improve_finances", "fan_sentiment"],
     preferredLongTerm: [
       "franchise_value",
       "championship_count",
@@ -172,11 +172,7 @@ export const OWNER_PHILOSOPHY_PROFILES: Record<
       "awareness",
       "reputation",
     ],
-    preferredSecondary: [
-      "revenue_target",
-      "arena_level",
-      "minimum_win_total",
-    ],
+    preferredSecondary: ["revenue_target", "arena_level", "minimum_win_total"],
     preferredLongTerm: ["franchise_value", "awareness", "reputation"],
   },
   /**

@@ -40,9 +40,7 @@ function tabHref(
     params.set("filter", filter);
   }
   const qs = params.toString();
-  return qs
-    ? `/dashboard/${saveId}/media?${qs}`
-    : `/dashboard/${saveId}/media`;
+  return qs ? `/dashboard/${saveId}/media?${qs}` : `/dashboard/${saveId}/media`;
 }
 
 export function MediaTabNav(props: {

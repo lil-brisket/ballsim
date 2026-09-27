@@ -13,11 +13,21 @@ type LineFeature = {
 
 const fifty = JSON.parse(
   readFileSync(`${process.env.TEMP}/ne_50m_admin1_lines.geojson`, "utf8"),
-) as { features: Array<{ properties: Record<string, unknown>; geometry: LineFeature["geometry"] }> };
+) as {
+  features: Array<{
+    properties: Record<string, unknown>;
+    geometry: LineFeature["geometry"];
+  }>;
+};
 
 const ten = JSON.parse(
   readFileSync(`${process.env.TEMP}/ne_10m_admin1_lines.geojson`, "utf8"),
-) as { features: Array<{ properties: Record<string, unknown>; geometry: LineFeature["geometry"] }> };
+) as {
+  features: Array<{
+    properties: Record<string, unknown>;
+    geometry: LineFeature["geometry"];
+  }>;
+};
 
 const extraFrom10m = new Set([
   "MEX",
@@ -52,9 +62,10 @@ function roundCoords(value: unknown): unknown {
   return value;
 }
 
-function compact(
-  feature: { properties: Record<string, unknown>; geometry: LineFeature["geometry"] },
-): LineFeature {
+function compact(feature: {
+  properties: Record<string, unknown>;
+  geometry: LineFeature["geometry"];
+}): LineFeature {
   return {
     type: "Feature",
     properties: {
@@ -85,7 +96,9 @@ const collection = {
 
 const out = "src/data/geo/admin1-lines-50m.json";
 writeFileSync(out, JSON.stringify(collection));
-console.log(`wrote ${out} features=${merged.length} bytes=${Buffer.byteLength(JSON.stringify(collection))}`);
+console.log(
+  `wrote ${out} features=${merged.length} bytes=${Buffer.byteLength(JSON.stringify(collection))}`,
+);
 const by = new Map<string, number>();
 for (const feature of merged) {
   by.set(feature.properties.adm0, (by.get(feature.properties.adm0) ?? 0) + 1);

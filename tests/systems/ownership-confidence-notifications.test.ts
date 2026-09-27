@@ -6,7 +6,10 @@ import {
   recordOwnershipEvidence,
 } from "@/systems/ownership-confidence-engine";
 import type { AlignmentEvidence } from "@/domain/entities/ownership-confidence";
-import { getActiveOwnedFranchise, withOwnedFranchise } from "@/state/owner-context";
+import {
+  getActiveOwnedFranchise,
+  withOwnedFranchise,
+} from "@/state/owner-context";
 
 function evidence(
   partial: Partial<AlignmentEvidence> &
@@ -42,9 +45,9 @@ describe("ownership confidence notifications", () => {
       gapSummary: "Gap",
       postureSummary: "Posture",
     });
-    const ownershipTypes = getActiveOwnedFranchise(result.state).notifications.filter((n) =>
-      n.type.startsWith("ownership_"),
-    );
+    const ownershipTypes = getActiveOwnedFranchise(
+      result.state,
+    ).notifications.filter((n) => n.type.startsWith("ownership_"));
     // Still supportive → no concern/pressure; confidence only on positive transitions.
     expect(
       ownershipTypes.filter((n) => n.type === "ownership_concern"),
@@ -56,21 +59,24 @@ describe("ownership confidence notifications", () => {
     state = withOwnedFranchise(state, state.user.activeOwnerTeamId, (f) => ({
       ...f,
       ownershipConfidence: {
-          ...f.ownershipConfidence,
-          mood: "concerned",
-          concernLevel: 72,
-          recentHurting: ["Traded core talent while contending"],
-        },
+        ...f.ownershipConfidence,
+        mood: "concerned",
+        concernLevel: 72,
+        recentHurting: ["Traded core talent while contending"],
+      },
     }));
     const result = generateOwnershipConfidenceNotifications(state, {
       previousMood: "watchful",
       previousConcern: 50,
       reversal: null,
-      gapSummary: "Ownership expects contention, but recent moves suggest a rebuild.",
+      gapSummary:
+        "Ownership expects contention, but recent moves suggest a rebuild.",
       postureSummary: "Roster aged up while picks were added.",
     });
     expect(
-      getActiveOwnedFranchise(result.state).notifications.some((n) => n.type === "ownership_concern"),
+      getActiveOwnedFranchise(result.state).notifications.some(
+        (n) => n.type === "ownership_concern",
+      ),
     ).toBe(true);
   });
 
@@ -79,10 +85,10 @@ describe("ownership confidence notifications", () => {
     state = withOwnedFranchise(state, state.user.activeOwnerTeamId, (f) => ({
       ...f,
       ownershipConfidence: {
-          ...f.ownershipConfidence,
-          mood: "concerned",
-          concernLevel: 72,
-        },
+        ...f.ownershipConfidence,
+        mood: "concerned",
+        concernLevel: 72,
+      },
     }));
     const first = generateOwnershipConfidenceNotifications(state, {
       previousMood: "watchful",
@@ -109,10 +115,10 @@ describe("ownership confidence notifications", () => {
     state = withOwnedFranchise(state, state.user.activeOwnerTeamId, (f) => ({
       ...f,
       ownershipConfidence: {
-          ...f.ownershipConfidence,
-          mood: "confident",
-          recentHelping: ["Young core improved while keeping flexibility"],
-        },
+        ...f.ownershipConfidence,
+        mood: "confident",
+        recentHelping: ["Young core improved while keeping flexibility"],
+      },
     }));
     const result = generateOwnershipConfidenceNotifications(state, {
       previousMood: "concerned",
@@ -174,9 +180,9 @@ describe("ownership confidence notifications", () => {
       },
     }));
     const second = processOwnershipConfidence(state);
-    const ownership = getActiveOwnedFranchise(second.state).notifications.filter((n) =>
-      n.type.startsWith("ownership_"),
-    );
+    const ownership = getActiveOwnedFranchise(
+      second.state,
+    ).notifications.filter((n) => n.type.startsWith("ownership_"));
     // At most one of each type for the season in this short window.
     const byType = new Map<string, number>();
     for (const n of ownership) {

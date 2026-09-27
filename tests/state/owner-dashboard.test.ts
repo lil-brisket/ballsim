@@ -6,11 +6,7 @@ import {
   FACILITY_LEVEL_MAX,
 } from "@/domain/entities/franchise-ops";
 import { createDomainEvent } from "@/domain/events";
-import {
-  asOwnerNotificationId,
-  asSponsorshipId,
-  asTeamId,
-} from "@/domain/ids";
+import { asOwnerNotificationId, asSponsorshipId, asTeamId } from "@/domain/ids";
 import { createSeededRng } from "@/domain/rng";
 import { createEmptyTeamStanding } from "@/domain/entities/standings";
 import { appendEventLog, type GameState } from "@/state/game-state";
@@ -90,7 +86,11 @@ function quietFranchise(saveId: string): GameState {
   return withActiveSponsorship(withMaxFacilities(bootstrappedState(saveId)));
 }
 
-function setTicketPrice(state: GameState, teamId: string, price: number): GameState {
+function setTicketPrice(
+  state: GameState,
+  teamId: string,
+  price: number,
+): GameState {
   const ops = state.business.franchiseOps[teamId]!;
   return {
     ...state,
@@ -208,7 +208,9 @@ describe("toOwnerDashboardView sourcing", () => {
     expect(dash.health.revenue).toBe(statement.revenue.total);
     expect(dash.health.expenses).toBe(statement.expenses.total);
     expect(dash.health.netIncome).toBe(statement.netIncome);
-    expect(dash.health.cash).toBe(state.business.finances[teamId]!.businessFunds);
+    expect(dash.health.cash).toBe(
+      state.business.finances[teamId]!.businessFunds,
+    );
     expect(dash.health.franchiseValue).toBe(business.franchiseValue);
     expect(dash.health.franchiseValue).toBe(
       calculateFranchiseValue(state, teamId),
@@ -248,9 +250,10 @@ describe("toOwnerDashboardView action queue", () => {
     const state = quietFranchise("dash_quiet");
     const dash = toOwnerDashboardView(state);
     expect(dash.actionItems).toEqual([]);
-    expect(dash.health.financialHealth === "healthy" || dash.health.financialHealth === "stable").toBe(
-      true,
-    );
+    expect(
+      dash.health.financialHealth === "healthy" ||
+        dash.health.financialHealth === "stable",
+    ).toBe(true);
   });
 
   it("financial action appears when insolvent and disappears when cash restored", () => {
@@ -258,11 +261,15 @@ describe("toOwnerDashboardView action queue", () => {
     state = setCash(state, 0);
     let dash = toOwnerDashboardView(state);
     expect(dash.actionItems.some((a) => a.category === "financial")).toBe(true);
-    expect(dash.actionItems.find((a) => a.category === "financial")?.why.length).toBeGreaterThan(0);
+    expect(
+      dash.actionItems.find((a) => a.category === "financial")?.why.length,
+    ).toBeGreaterThan(0);
 
     state = setCash(state, 50_000_000);
     dash = toOwnerDashboardView(state);
-    expect(dash.actionItems.some((a) => a.category === "financial")).toBe(false);
+    expect(dash.actionItems.some((a) => a.category === "financial")).toBe(
+      false,
+    );
   });
 
   it("attendance action for poor fill; no pricing hypothesis when ticket is normal", () => {
@@ -274,7 +281,9 @@ describe("toOwnerDashboardView action queue", () => {
       ticketPrice: 45,
     });
     const dash = toOwnerDashboardView(state);
-    expect(dash.actionItems.some((a) => a.category === "attendance")).toBe(true);
+    expect(dash.actionItems.some((a) => a.category === "attendance")).toBe(
+      true,
+    );
     expect(dash.insights.some((i) => i.id === "insight_pricing")).toBe(false);
     expect(
       dash.actionItems.find((a) => a.category === "attendance")?.hrefLabel,
@@ -329,9 +338,7 @@ describe("toOwnerDashboardView action queue", () => {
     expect(dash.actionItems.some((a) => a.category === "marketing")).toBe(
       false,
     );
-    expect(dash.insights.some((i) => i.id === "insight_marketing")).toBe(
-      false,
-    );
+    expect(dash.insights.some((i) => i.id === "insight_marketing")).toBe(false);
   });
 
   it("marketing insight at awareness boundary with poor fill", () => {
@@ -366,7 +373,9 @@ describe("toOwnerDashboardView action queue", () => {
   it("no injuries → no roster action; injured → roster action", () => {
     let state = quietFranchise("dash_inj");
     expect(
-      toOwnerDashboardView(state).actionItems.some((a) => a.category === "roster"),
+      toOwnerDashboardView(state).actionItems.some(
+        (a) => a.category === "roster",
+      ),
     ).toBe(false);
 
     const teamId = state.user.activeOwnerTeamId;
@@ -389,7 +398,9 @@ describe("toOwnerDashboardView action queue", () => {
       },
     };
     expect(
-      toOwnerDashboardView(state).actionItems.some((a) => a.category === "roster"),
+      toOwnerDashboardView(state).actionItems.some(
+        (a) => a.category === "roster",
+      ),
     ).toBe(true);
   });
 
@@ -525,7 +536,9 @@ describe("toOwnerDashboardView action queue", () => {
 
     // Without draft, still verify cap.
     const withoutDraft = toOwnerDashboardView(state);
-    expect(withoutDraft.actionItems.length).toBeLessThanOrEqual(ACTION_QUEUE_CAP);
+    expect(withoutDraft.actionItems.length).toBeLessThanOrEqual(
+      ACTION_QUEUE_CAP,
+    );
     expect(withoutDraft.actionItems.length).toBe(ACTION_QUEUE_CAP);
 
     // Simulate draft clock by wrapping snapshot is awkward; set userOnDraftClock

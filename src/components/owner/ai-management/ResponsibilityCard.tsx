@@ -1,8 +1,6 @@
 "use client";
 
-import {
-  MANAGEMENT_PHASE_METADATA,
-} from "@/domain/ai-management-delegation";
+import { MANAGEMENT_PHASE_METADATA } from "@/domain/ai-management-delegation";
 import type { ManagementPhase } from "@/domain/ai-management-presets";
 
 type ResponsibilityCardProps = {
@@ -36,15 +34,14 @@ export function ResponsibilityCard({
       <div className="flex items-start justify-between gap-2">
         <span className="text-sm font-medium text-zinc-100">{meta.label}</span>
         {delegated ? (
-          <span
-            className="shrink-0 text-amber-400"
-            aria-hidden="true"
-          >
+          <span className="shrink-0 text-amber-400" aria-hidden="true">
             ✓
           </span>
         ) : null}
       </div>
-      <p className="text-xs leading-relaxed text-zinc-400">{meta.description}</p>
+      <p className="text-xs leading-relaxed text-zinc-400">
+        {meta.description}
+      </p>
       {delegated ? (
         <span className="mt-1 text-[10px] font-semibold uppercase tracking-wider text-amber-500/90">
           AI handles

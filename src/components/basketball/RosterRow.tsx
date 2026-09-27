@@ -44,9 +44,7 @@ export function RosterRow(props: {
       <span className="shrink-0 font-mono text-sm text-zinc-200">
         {props.overall}
       </span>
-      {props.injuryStatus ? (
-        <InjuryBadge status={props.injuryStatus} />
-      ) : null}
+      {props.injuryStatus ? <InjuryBadge status={props.injuryStatus} /> : null}
     </div>
   );
 }

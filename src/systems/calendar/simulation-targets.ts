@@ -14,10 +14,7 @@ import type { GameState } from "@/state/game-state";
 import { projectCalendarEvents } from "@/systems/calendar/project-calendar-events";
 
 export type SimulationTargetMode =
-  | "next_game"
-  | "next_important"
-  | "next_decision"
-  | "next_deadline";
+  "next_game" | "next_important" | "next_decision" | "next_deadline";
 
 export type SimulationTarget = {
   date: string;
@@ -127,14 +124,12 @@ function findNextImportant(
     if (event.blocking) return true;
     if (event.category === "deadline" || event.category === "league") {
       return (
-        event.lifecycle === "scheduled" ||
-        event.lifecycle === "action_required"
+        event.lifecycle === "scheduled" || event.lifecycle === "action_required"
       );
     }
     return (
       event.teamIds?.includes(teamId) === true &&
-      (event.lifecycle === "scheduled" ||
-        event.lifecycle === "action_required")
+      (event.lifecycle === "scheduled" || event.lifecycle === "action_required")
     );
   });
 

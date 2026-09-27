@@ -3,12 +3,7 @@
  * Survives prospect lifecycle; stores scouting snapshot at selection time.
  */
 
-import type {
-  DraftClassId,
-  DraftPickId,
-  PlayerId,
-  TeamId,
-} from "@/domain/ids";
+import type { DraftClassId, DraftPickId, PlayerId, TeamId } from "@/domain/ids";
 import type { DraftPickRound } from "@/domain/entities/draft-pick";
 import type { Player } from "@/domain/entities/player";
 import type {

@@ -6,9 +6,7 @@ import { createInitialGameState } from "@/state/create-initial-state";
 import { CBL_GAME_SETTINGS } from "@/domain/game-settings";
 import { appendEventLog } from "@/state/game-state";
 import { toFranchiseBusinessView } from "@/state/franchise-selectors";
-import {
-  hasAppliedGameplayConsequence,
-} from "@/systems/gameplay-financial-consequences";
+import { hasAppliedGameplayConsequence } from "@/systems/gameplay-financial-consequences";
 import {
   processHomeGameTicketRevenue,
   ticketRevenueConsequenceKey,
@@ -70,9 +68,12 @@ describe("ticket revenue", () => {
     expect(settled[0]!.payload.concessionsRevenue).toBeGreaterThan(0);
 
     const twice = processHomeGameTicketRevenue(once.state);
-    expect(twice.state.business.finances[teamId]!.businessFunds).toBe(cashAfter);
+    expect(twice.state.business.finances[teamId]!.businessFunds).toBe(
+      cashAfter,
+    );
 
-    const books = twice.state.business.finances[teamId]!.booksByYear[String(year)];
+    const books =
+      twice.state.business.finances[teamId]!.booksByYear[String(year)];
     expect(books?.revenue.tickets).toBeGreaterThan(0);
     expect(books?.revenue.merchandise).toBeGreaterThan(0);
     expect(books?.revenue.concessions).toBeGreaterThan(0);
@@ -294,9 +295,9 @@ describe("ticket revenue", () => {
     };
 
     const result = processHomeGameTicketRevenue(state);
-    expect(result.state.business.finances[teamId]!.attendanceByYear["2025"]).toBe(
-      1_200_000,
-    );
+    expect(
+      result.state.business.finances[teamId]!.attendanceByYear["2025"],
+    ).toBe(1_200_000);
     expect(
       result.state.business.finances[teamId]!.attendanceByYear[year],
     ).toBeGreaterThan(0);

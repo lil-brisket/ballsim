@@ -54,7 +54,12 @@ export function TeamCard(props: {
           <Metric label="Record" value={record} mono density="compact" />
         ) : null}
         {props.rank != null ? (
-          <Metric label="Rank" value={`#${props.rank}`} mono density="compact" />
+          <Metric
+            label="Rank"
+            value={`#${props.rank}`}
+            mono
+            density="compact"
+          />
         ) : null}
         {props.conference ? (
           <Metric

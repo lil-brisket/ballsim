@@ -45,8 +45,7 @@ export function playerReboundBaseStrength(player: Player): number {
   assertPlayerPosition(player.position);
   assertRating(player.attributes.rebounding, "attributes.rebounding");
   return (
-    player.attributes.rebounding +
-    POSITION_REBOUND_MODIFIERS[player.position]
+    player.attributes.rebounding + POSITION_REBOUND_MODIFIERS[player.position]
   );
 }
 
@@ -98,8 +97,7 @@ export function resolveRebound(
     REBOUND_RESOLUTION_CONFIG.defensivePositioningMultiplier;
 
   const offensiveReboundProbability =
-    offensiveTeamStrength /
-    (offensiveTeamStrength + defensiveTeamStrength);
+    offensiveTeamStrength / (offensiveTeamStrength + defensiveTeamStrength);
 
   const offenseWins = rng.chance(offensiveReboundProbability);
   const winningScores = offenseWins ? offensiveScores : defensiveScores;
@@ -118,10 +116,7 @@ function effectiveStrength(player: Player, rng: Rng): number {
   const base = playerReboundBaseStrength(player);
   const variance =
     (rng.next() * 2 - 1) * REBOUND_RESOLUTION_CONFIG.varianceAmplitude;
-  return Math.max(
-    REBOUND_RESOLUTION_CONFIG.minStrength,
-    base + variance,
-  );
+  return Math.max(REBOUND_RESOLUTION_CONFIG.minStrength, base + variance);
 }
 
 /**
@@ -204,9 +199,7 @@ function validateResolveReboundInput(
       );
     }
     if (offensiveIds.has(player.id)) {
-      throw new Error(
-        "Rebound candidate pools must not share player IDs.",
-      );
+      throw new Error("Rebound candidate pools must not share player IDs.");
     }
     defensiveIds.add(player.id);
     assertRating(player.attributes.rebounding, "attributes.rebounding");
@@ -214,7 +207,10 @@ function validateResolveReboundInput(
   }
 }
 
-function assertValidPlayer(player: Player | null | undefined, field: string): asserts player is Player {
+function assertValidPlayer(
+  player: Player | null | undefined,
+  field: string,
+): asserts player is Player {
   if (player == null) {
     throw new Error(`Rebound ${field} must be a valid player.`);
   }
@@ -227,11 +223,7 @@ function assertNonEmptyTeamId(value: TeamId, field: string): void {
 }
 
 function assertRating(value: number, field: string): void {
-  if (
-    !Number.isInteger(value) ||
-    value < RATING_MIN ||
-    value > RATING_MAX
-  ) {
+  if (!Number.isInteger(value) || value < RATING_MIN || value > RATING_MAX) {
     throw new Error(
       `Rebound ${field} must be an integer between ${RATING_MIN} and ${RATING_MAX}.`,
     );

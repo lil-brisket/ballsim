@@ -91,8 +91,10 @@ export function generateDevelopmentLeagueSchedule(
     gameIds.push(gameId);
   }
 
-  const standingsByTeamId: Record<string, ReturnType<typeof createEmptyTeamStanding>> =
-    {};
+  const standingsByTeamId: Record<
+    string,
+    ReturnType<typeof createEmptyTeamStanding>
+  > = {};
   for (const teamId of teamIds) {
     standingsByTeamId[teamId] = createEmptyTeamStanding(teamId);
   }

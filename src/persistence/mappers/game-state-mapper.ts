@@ -32,7 +32,10 @@ import type { PlayerArchetype } from "@/domain/entities/player-archetype";
 import type { PlayerNationality } from "@/domain/entities/player-nationality";
 import type { Team, TeamPlayStyle } from "@/domain/entities/team";
 import { NEUTRAL_TEAM_PLAY_STYLE } from "@/domain/entities/team";
-import { createEmptyTeamFinanceBooks, normalizeTeamFinanceBooks } from "@/domain/entities/finances";
+import {
+  createEmptyTeamFinanceBooks,
+  normalizeTeamFinanceBooks,
+} from "@/domain/entities/finances";
 import type { TeamFinances } from "@/domain/entities/finances";
 import { DEFAULT_COACHING_PHILOSOPHY } from "@/domain/coaching/coaching-philosophy";
 import {
@@ -497,7 +500,10 @@ type GameStateV7 = {
   user: UserSliceV14;
 };
 
-type GameStateV6 = Omit<GameState, "meta" | "settings" | "world" | "competition" | "business" | "user"> & {
+type GameStateV6 = Omit<
+  GameState,
+  "meta" | "settings" | "world" | "competition" | "business" | "user"
+> & {
   meta: Omit<GameState["meta"], "schemaVersion"> & { schemaVersion: 6 };
   world: Omit<GameState["world"], "players" | "teams"> & {
     players: Record<string, Player>;
@@ -1645,7 +1651,9 @@ type GameStateV21 = {
  */
 function migrateV13ToV14(state: GameStateV13): GameStateV14 {
   if (typeof state.meta.rngState !== "number") {
-    throw new Error("GameState meta.rngState is required for schemaVersion 13.");
+    throw new Error(
+      "GameState meta.rngState is required for schemaVersion 13.",
+    );
   }
 
   return {
@@ -1677,25 +1685,28 @@ function migrateV13ToV14(state: GameStateV13): GameStateV14 {
  */
 function migrateV14ToV15(state: GameStateV14): GameStateV15 {
   if (typeof state.meta.rngState !== "number") {
-    throw new Error("GameState meta.rngState is required for schemaVersion 14.");
+    throw new Error(
+      "GameState meta.rngState is required for schemaVersion 14.",
+    );
   }
 
-  const finances: Record<string, TeamFinancesV15ThroughV19> = Object.fromEntries(
-    Object.entries(state.business.finances).map(([teamId, finance]) => [
-      teamId,
-      {
-        teamId: finance.teamId,
-        cash:
-          finance.cash ??
-          (finance as TeamFinancesV14 & { businessFunds?: number })
-            .businessFunds ??
-          0,
-        revenue: 0,
-        expenses: 0,
-        payroll: finance.payroll,
-      },
-    ]),
-  );
+  const finances: Record<string, TeamFinancesV15ThroughV19> =
+    Object.fromEntries(
+      Object.entries(state.business.finances).map(([teamId, finance]) => [
+        teamId,
+        {
+          teamId: finance.teamId,
+          cash:
+            finance.cash ??
+            (finance as TeamFinancesV14 & { businessFunds?: number })
+              .businessFunds ??
+            0,
+          revenue: 0,
+          expenses: 0,
+          payroll: finance.payroll,
+        },
+      ]),
+    );
 
   return {
     meta: {
@@ -1731,7 +1742,9 @@ function migrateV14ToV15(state: GameStateV14): GameStateV15 {
  */
 function migrateV15ToV16(state: GameStateV15): GameStateV16 {
   if (typeof state.meta.rngState !== "number") {
-    throw new Error("GameState meta.rngState is required for schemaVersion 15.");
+    throw new Error(
+      "GameState meta.rngState is required for schemaVersion 15.",
+    );
   }
 
   const startYear = state.competition.season.year;
@@ -1784,7 +1797,9 @@ function migrateV15ToV16(state: GameStateV15): GameStateV16 {
  */
 function migrateV16ToV17(state: GameStateV16): GameStateV17 {
   if (typeof state.meta.rngState !== "number") {
-    throw new Error("GameState meta.rngState is required for schemaVersion 16.");
+    throw new Error(
+      "GameState meta.rngState is required for schemaVersion 16.",
+    );
   }
 
   return {
@@ -1816,7 +1831,9 @@ function migrateV16ToV17(state: GameStateV16): GameStateV17 {
  */
 function migrateV17ToV18(state: GameStateV17): GameStateV18 {
   if (typeof state.meta.rngState !== "number") {
-    throw new Error("GameState meta.rngState is required for schemaVersion 17.");
+    throw new Error(
+      "GameState meta.rngState is required for schemaVersion 17.",
+    );
   }
 
   const teams = Object.values(state.world.teams) as Team[];
@@ -1855,7 +1872,9 @@ function migrateV17ToV18(state: GameStateV17): GameStateV18 {
  */
 function migrateV18ToV19(state: GameStateV18): GameStateV19 {
   if (typeof state.meta.rngState !== "number") {
-    throw new Error("GameState meta.rngState is required for schemaVersion 18.");
+    throw new Error(
+      "GameState meta.rngState is required for schemaVersion 18.",
+    );
   }
 
   return {
@@ -1884,7 +1903,9 @@ function migrateV18ToV19(state: GameStateV18): GameStateV19 {
  */
 function migrateV19ToV20(state: GameStateV19): GameStateV20 {
   if (typeof state.meta.rngState !== "number") {
-    throw new Error("GameState meta.rngState is required for schemaVersion 19.");
+    throw new Error(
+      "GameState meta.rngState is required for schemaVersion 19.",
+    );
   }
 
   const seasonYear = state.competition.season.year;
@@ -1949,7 +1970,9 @@ function migrateV19ToV20(state: GameStateV19): GameStateV20 {
  */
 function migrateV20ToV21(state: GameStateV20): GameStateV21 {
   if (typeof state.meta.rngState !== "number") {
-    throw new Error("GameState meta.rngState is required for schemaVersion 20.");
+    throw new Error(
+      "GameState meta.rngState is required for schemaVersion 20.",
+    );
   }
 
   const currentDate = state.world.calendar.currentDate;
@@ -1983,8 +2006,11 @@ function migrateV20ToV21(state: GameStateV20): GameStateV21 {
         phase,
         offseasonStage,
         regularSeasonStartDate:
-          (state.competition.season as { regularSeasonStartDate?: string | null })
-            .regularSeasonStartDate ?? null,
+          (
+            state.competition.season as {
+              regularSeasonStartDate?: string | null;
+            }
+          ).regularSeasonStartDate ?? null,
         tradeDeadlineDate:
           (state.competition.season as { tradeDeadlineDate?: string | null })
             .tradeDeadlineDate ?? null,
@@ -1992,13 +2018,17 @@ function migrateV20ToV21(state: GameStateV20): GameStateV21 {
           (state.competition.season as { rfaQualificationComplete?: boolean })
             .rfaQualificationComplete === true,
         offseasonStageEnteredDate:
-          (state.competition.season as {
-            offseasonStageEnteredDate?: string | null;
-          }).offseasonStageEnteredDate ?? null,
+          (
+            state.competition.season as {
+              offseasonStageEnteredDate?: string | null;
+            }
+          ).offseasonStageEnteredDate ?? null,
         freeAgencyExtendedUntil:
-          (state.competition.season as {
-            freeAgencyExtendedUntil?: string | null;
-          }).freeAgencyExtendedUntil ?? null,
+          (
+            state.competition.season as {
+              freeAgencyExtendedUntil?: string | null;
+            }
+          ).freeAgencyExtendedUntil ?? null,
       },
       seasonEventLog: [],
     },
@@ -2016,7 +2046,9 @@ function migrateV20ToV21(state: GameStateV20): GameStateV21 {
  */
 function migrateV21ToV22(state: GameStateV21): GameStateV22 {
   if (typeof state.meta.rngState !== "number") {
-    throw new Error("GameState meta.rngState is required for schemaVersion 21.");
+    throw new Error(
+      "GameState meta.rngState is required for schemaVersion 21.",
+    );
   }
 
   const userRecord = legacyUserRecord(state.user);
@@ -2031,11 +2063,14 @@ function migrateV21ToV22(state: GameStateV21): GameStateV22 {
   }
 
   const seasonYear = state.competition.season.year;
-  const rawObjectives = legacyUserArray<OwnerObjectiveV21>(userRecord.objectives);
+  const rawObjectives = legacyUserArray<OwnerObjectiveV21>(
+    userRecord.objectives,
+  );
   const objectives = rawObjectives.map((objective) => {
     const { completed, seasonYear: existingSeasonYear, ...rest } = objective;
     const nextSeasonYear =
-      typeof existingSeasonYear === "number" && Number.isInteger(existingSeasonYear)
+      typeof existingSeasonYear === "number" &&
+      Number.isInteger(existingSeasonYear)
         ? existingSeasonYear
         : seasonYear;
     return {
@@ -2078,7 +2113,9 @@ function migrateV21ToV22(state: GameStateV21): GameStateV22 {
  */
 function migrateV22ToV23(state: GameStateV22): GameStateV23 {
   if (typeof state.meta.rngState !== "number") {
-    throw new Error("GameState meta.rngState is required for schemaVersion 22.");
+    throw new Error(
+      "GameState meta.rngState is required for schemaVersion 22.",
+    );
   }
 
   return {
@@ -2351,9 +2388,9 @@ function migrateV25ToV26(state: GameStateV25): GameStateV26 {
     } as GameStateV26;
   }
 
-  const objectives = legacyUserArray<
-    UserSlicePreV26["objectives"][number]
-  >(userRecord.objectives).map((objective) => {
+  const objectives = legacyUserArray<UserSlicePreV26["objectives"][number]>(
+    userRecord.objectives,
+  ).map((objective) => {
     const meta = legacyObjectiveMeta(objective.type);
     return {
       id: objective.id,
@@ -2445,8 +2482,7 @@ function migrateV26ToV27(state: GameStateV26): GameStateV27 {
         typeof raw.spendingTolerance === "number"
           ? raw.spendingTolerance
           : axes.spendingTolerance,
-      patience:
-        typeof raw.patience === "number" ? raw.patience : axes.patience,
+      patience: typeof raw.patience === "number" ? raw.patience : axes.patience,
       riskTolerance:
         typeof raw.riskTolerance === "number"
           ? raw.riskTolerance
@@ -2487,7 +2523,6 @@ type GameStateV27 = {
   user: Record<string, any>;
 };
 
-
 /**
  * Deterministic v27 → v28: expand finance categories, add booksByMonth and
  * cashLedgerByMonth, ensure premiumTicketPrice on FranchiseOps.
@@ -2504,8 +2539,11 @@ function migrateV27ToV28(state: GameStateV27): GameStateV28 {
     }
     const booksByMonth: TeamFinances["booksByMonth"] = {};
     const rawMonths =
-      (finance as TeamFinances & { booksByMonth?: TeamFinances["booksByMonth"] })
-        .booksByMonth ?? {};
+      (
+        finance as TeamFinances & {
+          booksByMonth?: TeamFinances["booksByMonth"];
+        }
+      ).booksByMonth ?? {};
     for (const [monthKey, books] of Object.entries(rawMonths)) {
       booksByMonth[monthKey] = normalizeTeamFinanceBooks(
         books as Parameters<typeof normalizeTeamFinanceBooks>[0],
@@ -2646,18 +2684,19 @@ function migrateV28ToV29(state: GameStateV28): GameStateV29 {
           staffHiring: "inherit",
           trades: "inherit",
           injuryReplacement: "inherit",
-          ...((state.settings.ai as { assistance?: Partial<AiAssistanceDomains> })
-            .assistance ?? {}),
+          ...((
+            state.settings.ai as { assistance?: Partial<AiAssistanceDomains> }
+          ).assistance ?? {}),
         } as AiAssistanceDomains,
       },
       offseason: {
         freeAgency: {
           durationDays:
-            (state.settings as { offseason?: GameSettings["offseason"] }).offseason
-              ?.freeAgency.durationDays ?? 30,
+            (state.settings as { offseason?: GameSettings["offseason"] })
+              .offseason?.freeAgency.durationDays ?? 30,
           allowExtension:
-            (state.settings as { offseason?: GameSettings["offseason"] }).offseason
-              ?.freeAgency.allowExtension ?? true,
+            (state.settings as { offseason?: GameSettings["offseason"] })
+              .offseason?.freeAgency.allowExtension ?? true,
         },
       },
       regularSeason: {
@@ -2674,13 +2713,17 @@ function migrateV28ToV29(state: GameStateV28): GameStateV29 {
         offseasonStage: state.competition.season.offseasonStage,
         regularSeasonStartDate,
         offseasonStageEnteredDate:
-          (state.competition.season as {
-            offseasonStageEnteredDate?: string | null;
-          }).offseasonStageEnteredDate ?? null,
+          (
+            state.competition.season as {
+              offseasonStageEnteredDate?: string | null;
+            }
+          ).offseasonStageEnteredDate ?? null,
         freeAgencyExtendedUntil:
-          (state.competition.season as {
-            freeAgencyExtendedUntil?: string | null;
-          }).freeAgencyExtendedUntil ?? null,
+          (
+            state.competition.season as {
+              freeAgencyExtendedUntil?: string | null;
+            }
+          ).freeAgencyExtendedUntil ?? null,
       },
     },
   } as unknown as GameStateV29;
@@ -2760,8 +2803,8 @@ function migrateV30ToV31(state: GameStateV30): GameState {
       fee: existing?.fee ?? 0,
       cityStartSeasonYear:
         existing &&
-        typeof (existing as { cityStartSeasonYear?: number }).cityStartSeasonYear ===
-          "number" &&
+        typeof (existing as { cityStartSeasonYear?: number })
+          .cityStartSeasonYear === "number" &&
         (existing as { cityStartSeasonYear: number }).cityStartSeasonYear > 0
           ? (existing as { cityStartSeasonYear: number }).cityStartSeasonYear
           : inferredStart,
@@ -2860,7 +2903,8 @@ function migrateV31ToV32(state: GameStateV31): GameStateV32 {
         const attendance =
           rawAttendance === null
             ? null
-            : typeof rawAttendance === "number" && Number.isFinite(rawAttendance)
+            : typeof rawAttendance === "number" &&
+                Number.isFinite(rawAttendance)
               ? rawAttendance
               : null;
         return {
@@ -2964,7 +3008,7 @@ function migrateV33ToV34(state: GameStateV33): GameStateV34 {
       foundedSeasonYear:
         typeof raw.foundedSeasonYear === "number"
           ? raw.foundedSeasonYear
-          : firstYear ?? leagueStart,
+          : (firstYear ?? leagueStart),
     };
   }
 
@@ -3225,7 +3269,8 @@ function migrateV36ToV37(state: GameStateV36): GameStateV37 {
       freeAgency: previousAi.assistance?.freeAgency ?? ("inherit" as const),
       draft: previousAi.assistance?.draft ?? ("inherit" as const),
       contracts: previousAi.assistance?.contracts ?? ("inherit" as const),
-      rosterFilling: previousAi.assistance?.rosterFilling ?? ("inherit" as const),
+      rosterFilling:
+        previousAi.assistance?.rosterFilling ?? ("inherit" as const),
       rotations: previousAi.assistance?.rotations ?? ("inherit" as const),
       staffHiring: previousAi.assistance?.staffHiring ?? ("inherit" as const),
       trades: previousAi.assistance?.trades ?? ("inherit" as const),
@@ -3236,8 +3281,7 @@ function migrateV36ToV37(state: GameStateV36): GameStateV37 {
 
   const offseason = {
     freeAgency: {
-      durationDays:
-        state.settings.offseason?.freeAgency.durationDays ?? 30,
+      durationDays: state.settings.offseason?.freeAgency.durationDays ?? 30,
       allowExtension:
         state.settings.offseason?.freeAgency.allowExtension ?? true,
     },
@@ -3262,8 +3306,11 @@ function migrateV36ToV37(state: GameStateV36): GameStateV37 {
         freeAgencyExtendedUntil: season.freeAgencyExtendedUntil ?? null,
       },
       seasonEventLog:
-        (state.competition as { seasonEventLog?: GameState["competition"]["seasonEventLog"] })
-          .seasonEventLog ?? [],
+        (
+          state.competition as {
+            seasonEventLog?: GameState["competition"]["seasonEventLog"];
+          }
+        ).seasonEventLog ?? [],
     },
     user: {
       ...state.user,
@@ -3651,23 +3698,43 @@ function migrateV42ToV43(state: GameStateV42): GameStateV43 {
             String(decision.id),
           offeringTeamId,
           userTeamId,
-          proposal: decision.payload.proposal as GameState["user"]["pendingOwnerDecisions"][number]["payload"]["proposal"],
+          proposal: decision.payload
+            .proposal as GameState["user"]["pendingOwnerDecisions"][number]["payload"]["proposal"],
           originalProposal:
-            ((decision.payload as { originalProposal?: typeof decision.payload.proposal })
+            ((
+              decision.payload as {
+                originalProposal?: typeof decision.payload.proposal;
+              }
+            )
               .originalProposal as GameState["user"]["pendingOwnerDecisions"][number]["payload"]["originalProposal"]) ??
-            (decision.payload.proposal as GameState["user"]["pendingOwnerDecisions"][number]["payload"]["proposal"]),
+            (decision.payload
+              .proposal as GameState["user"]["pendingOwnerDecisions"][number]["payload"]["proposal"]),
           currentProposal:
-            ((decision.payload as { currentProposal?: typeof decision.payload.proposal })
+            ((
+              decision.payload as {
+                currentProposal?: typeof decision.payload.proposal;
+              }
+            )
               .currentProposal as GameState["user"]["pendingOwnerDecisions"][number]["payload"]["currentProposal"]) ??
-            (decision.payload.proposal as GameState["user"]["pendingOwnerDecisions"][number]["payload"]["proposal"]),
+            (decision.payload
+              .proposal as GameState["user"]["pendingOwnerDecisions"][number]["payload"]["proposal"]),
           negotiationHistory:
-            ((decision.payload as { negotiationHistory?: GameState["user"]["pendingOwnerDecisions"][number]["payload"]["negotiationHistory"] })
-              .negotiationHistory) ?? [],
+            (
+              decision.payload as {
+                negotiationHistory?: GameState["user"]["pendingOwnerDecisions"][number]["payload"]["negotiationHistory"];
+              }
+            ).negotiationHistory ?? [],
           status:
-            ((decision.payload as { status?: GameState["user"]["pendingOwnerDecisions"][number]["payload"]["status"] })
-              .status) ?? "pending",
-          motivation: (decision.payload as { motivation?: GameState["user"]["pendingOwnerDecisions"][number]["payload"]["motivation"] })
-            .motivation,
+            (
+              decision.payload as {
+                status?: GameState["user"]["pendingOwnerDecisions"][number]["payload"]["status"];
+              }
+            ).status ?? "pending",
+          motivation: (
+            decision.payload as {
+              motivation?: GameState["user"]["pendingOwnerDecisions"][number]["payload"]["motivation"];
+            }
+          ).motivation,
           fingerprint: decision.payload.fingerprint,
           createdOn:
             (decision.payload as { createdOn?: string }).createdOn ??
@@ -3709,31 +3776,52 @@ function migrateV42ToV43(state: GameStateV42): GameStateV43 {
           : {}),
         payload: {
           offerId:
-            (record.payload as { offerId?: string }).offerId ?? String(record.id),
+            (record.payload as { offerId?: string }).offerId ??
+            String(record.id),
           offeringTeamId,
           userTeamId,
-          proposal: record.payload.proposal as GameState["user"]["ownerDecisionHistory"][number]["payload"]["proposal"],
+          proposal: record.payload
+            .proposal as GameState["user"]["ownerDecisionHistory"][number]["payload"]["proposal"],
           originalProposal:
-            ((record.payload as { originalProposal?: typeof record.payload.proposal })
+            ((
+              record.payload as {
+                originalProposal?: typeof record.payload.proposal;
+              }
+            )
               .originalProposal as GameState["user"]["ownerDecisionHistory"][number]["payload"]["originalProposal"]) ??
-            (record.payload.proposal as GameState["user"]["ownerDecisionHistory"][number]["payload"]["proposal"]),
+            (record.payload
+              .proposal as GameState["user"]["ownerDecisionHistory"][number]["payload"]["proposal"]),
           currentProposal:
-            ((record.payload as { currentProposal?: typeof record.payload.proposal })
+            ((
+              record.payload as {
+                currentProposal?: typeof record.payload.proposal;
+              }
+            )
               .currentProposal as GameState["user"]["ownerDecisionHistory"][number]["payload"]["currentProposal"]) ??
-            (record.payload.proposal as GameState["user"]["ownerDecisionHistory"][number]["payload"]["proposal"]),
+            (record.payload
+              .proposal as GameState["user"]["ownerDecisionHistory"][number]["payload"]["proposal"]),
           negotiationHistory:
-            ((record.payload as { negotiationHistory?: GameState["user"]["ownerDecisionHistory"][number]["payload"]["negotiationHistory"] })
-              .negotiationHistory) ?? [],
+            (
+              record.payload as {
+                negotiationHistory?: GameState["user"]["ownerDecisionHistory"][number]["payload"]["negotiationHistory"];
+              }
+            ).negotiationHistory ?? [],
           status:
-            ((record.payload as { status?: GameState["user"]["ownerDecisionHistory"][number]["payload"]["status"] })
-              .status) ??
+            (
+              record.payload as {
+                status?: GameState["user"]["ownerDecisionHistory"][number]["payload"]["status"];
+              }
+            ).status ??
             (record.status === "accepted"
               ? "accepted"
               : record.status === "expired"
                 ? "expired"
                 : "declined"),
-          motivation: (record.payload as { motivation?: GameState["user"]["ownerDecisionHistory"][number]["payload"]["motivation"] })
-            .motivation,
+          motivation: (
+            record.payload as {
+              motivation?: GameState["user"]["ownerDecisionHistory"][number]["payload"]["motivation"];
+            }
+          ).motivation,
           fingerprint: record.payload.fingerprint,
           createdOn:
             (record.payload as { createdOn?: string }).createdOn ??
@@ -3793,7 +3881,9 @@ type GameStateV43 = {
  */
 function migrateV43ToV44(state: GameStateV43): GameStateV44 {
   const ownedFranchises: GameState["user"]["ownedFranchises"] = {};
-  for (const [teamId, franchise] of Object.entries(state.user.ownedFranchises)) {
+  for (const [teamId, franchise] of Object.entries(
+    state.user.ownedFranchises,
+  )) {
     const { ownerPhilosophy: _removed, ...rest } = franchise;
     void _removed;
     ownedFranchises[teamId] = rest;
@@ -3967,7 +4057,10 @@ type GameStateV45 = {
   user: UserSlicePreV49;
 };
 
-type GameStateV46 = Omit<GameState, "meta" | "world" | "competition" | "user"> & {
+type GameStateV46 = Omit<
+  GameState,
+  "meta" | "world" | "competition" | "user"
+> & {
   meta: { schemaVersion: 46; [key: string]: unknown };
   world: {
     teams: Record<
@@ -4022,7 +4115,8 @@ function migrateV45ToV46(state: GameStateV45): GameStateV46 {
       businessFundsLedgerByMonth[monthKey] = {
         openBusinessFunds: e.openBusinessFunds ?? e.openCash ?? 0,
         playerPayrollOutflow: e.playerPayrollOutflow ?? 0,
-        netBusinessFundsChange: e.netBusinessFundsChange ?? e.netCashChange ?? 0,
+        netBusinessFundsChange:
+          e.netBusinessFundsChange ?? e.netCashChange ?? 0,
       };
     }
     finances[teamId] = {
@@ -4044,11 +4138,7 @@ function migrateV45ToV46(state: GameStateV45): GameStateV46 {
       teamId: history.teamId,
       seasons: history.seasons.map((season) => {
         const raw = season as Record<string, unknown>;
-        const {
-          cash: legacyCash,
-          businessFunds: existingFunds,
-          ...rest
-        } = raw;
+        const { cash: legacyCash, businessFunds: existingFunds, ...rest } = raw;
         return {
           ...rest,
           businessFunds:
@@ -4259,8 +4349,7 @@ function migrateV48ToV49(state: GameStateV48): GameStateV49 {
     season.offseasonStage as OffseasonStage,
   );
   const enteredDate =
-    season.offseasonStageEnteredDate ??
-    state.world.calendar.currentDate;
+    season.offseasonStageEnteredDate ?? state.world.calendar.currentDate;
 
   const franchisePhaseState: GameState["user"]["franchisePhaseState"] = {};
   for (const teamId of state.user.ownedTeamIds) {
@@ -4499,9 +4588,7 @@ function migrateV52ToV53(state: GameStateV52): GameState {
   };
 }
 
-function migratePlayerInjuryFields(
-  raw: Record<string, unknown>,
-): Player {
+function migratePlayerInjuryFields(raw: Record<string, unknown>): Player {
   const base = raw as unknown as Player;
   // Already migrated shape
   if (
@@ -4523,12 +4610,11 @@ function migratePlayerInjuryFields(
       activeInjuries,
       injury: primaryActiveInjury(activeInjuries),
       suspension: (raw.suspension as Player["suspension"]) ?? null,
-      physical:
-        (raw.physical as Player["physical"]) ?? {
-          durability: defaultDurabilityForAge(
-            typeof base.age === "number" ? base.age : 25,
-          ),
-        },
+      physical: (raw.physical as Player["physical"]) ?? {
+        durability: defaultDurabilityForAge(
+          typeof base.age === "number" ? base.age : 25,
+        ),
+      },
       conditioning:
         typeof raw.conditioning === "number" ? raw.conditioning : 100,
       injuryHistory: Array.isArray(raw.injuryHistory)
@@ -4649,8 +4735,7 @@ function migrateV53ToV54(state: GameStateV53): GameState {
     tradeDeadlineDate === null &&
     state.competition.season.phase === "regular"
   ) {
-    let earliest =
-      state.competition.season.regularSeasonStartDate ?? null;
+    let earliest = state.competition.season.regularSeasonStartDate ?? null;
     let latest: string | null = null;
     for (const gameId of state.competition.schedule.gameIds) {
       const game = state.competition.games[gameId];
@@ -4761,16 +4846,17 @@ function migratePlayerToV55InjuryModel(
 
   if (Array.isArray(raw.activeInjuries)) {
     activeInjuries = (raw.activeInjuries as PlayerInjury[]).map((injury) =>
-      expandLegacyPlayerInjury(injury as unknown as Record<string, unknown>, currentDate),
+      expandLegacyPlayerInjury(
+        injury as unknown as Record<string, unknown>,
+        currentDate,
+      ),
     );
   } else if (
     legacyInjury != null &&
     typeof legacyInjury === "object" &&
     "kind" in legacyInjury
   ) {
-    const migrated = migrateLegacyInjuryStatus(
-      legacyInjury as InjuryStatus,
-    );
+    const migrated = migrateLegacyInjuryStatus(legacyInjury as InjuryStatus);
     activeInjuries = migrated.activeInjuries.map((injury) => ({
       ...injury,
       injuredOn: estimateLegacyInjuredOn(currentDate, 10),
@@ -4797,8 +4883,7 @@ function migratePlayerToV55InjuryModel(
         (raw.physical as { durability?: number } | undefined)?.durability ??
         defaultDurabilityForAge(age),
     },
-    conditioning:
-      typeof raw.conditioning === "number" ? raw.conditioning : 100,
+    conditioning: typeof raw.conditioning === "number" ? raw.conditioning : 100,
     injuryHistory: Array.isArray(raw.injuryHistory)
       ? (raw.injuryHistory as Player["injuryHistory"])
       : [],
@@ -4841,12 +4926,13 @@ function expandLegacyPlayerInjury(
   );
   const isUndisclosed = type === "Undisclosed";
   const gamesRemaining = raw.gamesRemaining as
-    | { min: number; max: number }
-    | null
-    | undefined;
+    { min: number; max: number } | null | undefined;
   const estimatedDays =
     gamesRemaining != null
-      ? Math.max(3, Math.round(((gamesRemaining.min + gamesRemaining.max) / 2) * 2))
+      ? Math.max(
+          3,
+          Math.round(((gamesRemaining.min + gamesRemaining.max) / 2) * 2),
+        )
       : 10;
   const injuredOn = estimateLegacyInjuredOn(currentDate, estimatedDays);
 
@@ -4860,16 +4946,18 @@ function expandLegacyPlayerInjury(
           ? raw.recommendedWorkloadMpg
           : null,
       maximumWorkloadMpg:
-        typeof raw.maximumWorkloadMpg === "number"
-          ? raw.maximumWorkloadMpg
-          : 0,
+        typeof raw.maximumWorkloadMpg === "number" ? raw.maximumWorkloadMpg : 0,
     };
   }
 
   const maxMpg =
     typeof raw.maximumWorkloadMpg === "number" ? raw.maximumWorkloadMpg : null;
   const gameRestriction =
-    maxMpg === 0 ? "out" : maxMpg != null && maxMpg < 28 ? "limited" : "monitor";
+    maxMpg === 0
+      ? "out"
+      : maxMpg != null && maxMpg < 28
+        ? "limited"
+        : "monitor";
 
   return {
     injuryId: `legacy_${type.replace(/\s+/g, "_").toLowerCase()}_${injuredOn}`,
@@ -5055,7 +5143,9 @@ function migrateV56ToV57(state: GameStateV56): GameStateV57 {
   const dlGames = patchPlayerStatsStarted(
     state.competition.developmentLeague?.games ?? {},
   );
-  const archiveGames = patchPlayerStatsStarted(state.business.gameArchive ?? {});
+  const archiveGames = patchPlayerStatsStarted(
+    state.business.gameArchive ?? {},
+  );
 
   return {
     ...state,
@@ -5224,4 +5314,3 @@ function migrateV60ToV61(state: GameStateV60): GameState {
     },
   };
 }
-

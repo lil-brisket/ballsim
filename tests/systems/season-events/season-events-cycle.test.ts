@@ -37,7 +37,9 @@ function bootRegularSeason(saveId: string) {
 describe("season events midseason cycle", () => {
   it("finalizes fan voting and announces All-Star selections", () => {
     const { state, rng } = bootRegularSeason("se_allstar");
-    const campaign = Object.values(state.competition.seasonEvents.fanVoting)[0]!;
+    const campaign = Object.values(
+      state.competition.seasonEvents.fanVoting,
+    )[0]!;
 
     let current: GameState = {
       ...state,
@@ -55,7 +57,9 @@ describe("season events midseason cycle", () => {
     // First ensure open from openDate via catch-up ticks inside processFanVoting
     const result = processSeasonEvents(current, rng);
     current = result.state;
-    const updated = Object.values(current.competition.seasonEvents.fanVoting)[0]!;
+    const updated = Object.values(
+      current.competition.seasonEvents.fanVoting,
+    )[0]!;
     expect(updated.status).toBe("finalized");
 
     const allStar = current.competition.seasonEvents.allStar!;
@@ -169,7 +173,9 @@ describe("season events midseason cycle", () => {
       },
     };
     const day = processSeasonEvents(current, rng);
-    expect(JSON.stringify(day.state.competition.standings)).toBe(beforeStandings);
+    expect(JSON.stringify(day.state.competition.standings)).toBe(
+      beforeStandings,
+    );
 
     const tournamentGames = Object.values(day.state.competition.games).filter(
       (g) => g.competitionType === "midseason_tournament",
@@ -184,7 +190,9 @@ describe("season events midseason cycle", () => {
 
   it("full advance across voting window does not duplicate open events", () => {
     const { state } = bootRegularSeason("se_nodupe");
-    const campaign = Object.values(state.competition.seasonEvents.fanVoting)[0]!;
+    const campaign = Object.values(
+      state.competition.seasonEvents.fanVoting,
+    )[0]!;
 
     let current: GameState = {
       ...state,
@@ -200,7 +208,9 @@ describe("season events midseason cycle", () => {
     const rng = createSeededRng(current.meta.rngState);
     const first = advanceSimulation(current, rng, { days: 3 });
     current = first.state;
-    const opens = first.events.filter((e) => e.type === "MidseasonVotingOpened");
+    const opens = first.events.filter(
+      (e) => e.type === "MidseasonVotingOpened",
+    );
     expect(opens.length).toBe(1);
 
     const second = advanceSimulation(

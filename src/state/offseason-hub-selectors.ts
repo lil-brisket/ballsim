@@ -80,10 +80,7 @@ const OFFSEASON_TIMELINE_KEYS: readonly LeagueMilestoneKey[] = [
   "regularSeasonStart",
 ] as const;
 
-function milestoneHref(
-  key: LeagueMilestoneKey,
-  base: string,
-): string | null {
+function milestoneHref(key: LeagueMilestoneKey, base: string): string | null {
   switch (key) {
     case "draftStart":
     case "draftComplete":
@@ -134,7 +131,9 @@ function buildStatusChecklist(
   teamId: string,
 ): OffseasonStatusItem[] {
   const year = state.competition.season.year;
-  const contractsNeedingDecision = Object.values(state.business.contracts).filter(
+  const contractsNeedingDecision = Object.values(
+    state.business.contracts,
+  ).filter(
     (contract) =>
       contract.teamId === teamId &&
       isContractActive(contract, year) &&
@@ -157,18 +156,14 @@ function buildStatusChecklist(
     state.competition.season.offseasonStage === "free_agency" ||
     state.competition.season.offseasonStage === "staff_development";
 
-  const faActive =
-    state.competition.season.offseasonStage === "free_agency";
-  const freeAgentCount = faActive
-    ? listFreeAgents(state).playerIds.length
-    : 0;
+  const faActive = state.competition.season.offseasonStage === "free_agency";
+  const freeAgentCount = faActive ? listFreeAgents(state).playerIds.length : 0;
 
   const team = state.world.teams[teamId];
   const rosterCount = team?.roster.length ?? 0;
 
   const dlAssigned = Object.values(state.world.players).filter(
-    (p) =>
-      p.teamId === teamId && p.developmentLeague.status === "assigned",
+    (p) => p.teamId === teamId && p.developmentLeague.status === "assigned",
   ).length;
 
   return [
@@ -299,7 +294,9 @@ export function toOffseasonHubView(state: GameState): OffseasonHubView {
     actionCenter,
     timeline: active ? timeline : [],
     status: active ? buildStatusChecklist(state, teamId) : [],
-    quickLinks: active ? quickLinks : [{ label: "Calendar", href: `${base}/calendar` }],
+    quickLinks: active
+      ? quickLinks
+      : [{ label: "Calendar", href: `${base}/calendar` }],
     relocationAvailable: isRelocationAccessible(state, teamId),
   };
 }

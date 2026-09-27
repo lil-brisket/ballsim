@@ -10,7 +10,6 @@ import {
   withOwnedFranchise,
 } from "@/state/owner-context";
 
-
 import {
   createOwnerNotification,
   type OwnerNotification,
@@ -59,10 +58,14 @@ function appendNotification(
   if (existingKeys.has(notification.dedupeKey)) {
     return state;
   }
-  return withOwnedFranchise(state, getActiveOwnerTeamId(state), (franchise) => ({
-    ...franchise,
-    notifications: [...franchise.notifications, notification],
-  }));
+  return withOwnedFranchise(
+    state,
+    getActiveOwnerTeamId(state),
+    (franchise) => ({
+      ...franchise,
+      notifications: [...franchise.notifications, notification],
+    }),
+  );
 }
 
 /**
@@ -90,9 +93,7 @@ export function generateOwnershipConfidenceNotifications(
     current = appendNotification(
       current,
       createOwnerNotification({
-        id: asOwnerNotificationId(
-          `notif_own_dir_${teamId}_${year}_${date}`,
-        ),
+        id: asOwnerNotificationId(`notif_own_dir_${teamId}_${year}_${date}`),
         type: "ownership_direction_change",
         title: "Change in Direction",
         message: options.reversal.summary,
@@ -134,14 +135,16 @@ export function generateOwnershipConfidenceNotifications(
   }
 
   // Concern — only on escalation into concerned (not every week).
-  if (mood === "concerned" && previousMood !== "concerned" && previousMood !== "displeased") {
+  if (
+    mood === "concerned" &&
+    previousMood !== "concerned" &&
+    previousMood !== "displeased"
+  ) {
     const why = hurting ?? options.gapSummary;
     current = appendNotification(
       current,
       createOwnerNotification({
-        id: asOwnerNotificationId(
-          `notif_own_concern_${teamId}_${year}`,
-        ),
+        id: asOwnerNotificationId(`notif_own_concern_${teamId}_${year}`),
         type: "ownership_concern",
         title: "Ownership Concern",
         message: `${options.gapSummary} ${why}`.trim(),
@@ -159,9 +162,7 @@ export function generateOwnershipConfidenceNotifications(
     current = appendNotification(
       current,
       createOwnerNotification({
-        id: asOwnerNotificationId(
-          `notif_own_pressure_${teamId}_${year}`,
-        ),
+        id: asOwnerNotificationId(`notif_own_pressure_${teamId}_${year}`),
         type: "ownership_pressure",
         title: "Ownership Pressure",
         message: `Ownership has serious concerns about the direction of the franchise. Mood is now ${ownershipMoodLabel(mood)}. ${options.gapSummary}`,

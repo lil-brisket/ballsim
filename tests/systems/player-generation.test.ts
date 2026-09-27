@@ -88,11 +88,15 @@ function expectValidGeneratedPlayer(
   expect(player.heightInches, message).toBeGreaterThanOrEqual(
     body.minHeightInches,
   );
-  expect(player.heightInches, message).toBeLessThanOrEqual(body.maxHeightInches);
+  expect(player.heightInches, message).toBeLessThanOrEqual(
+    body.maxHeightInches,
+  );
   expect(player.weightPounds, message).toBeGreaterThanOrEqual(
     body.minWeightPounds,
   );
-  expect(player.weightPounds, message).toBeLessThanOrEqual(body.maxWeightPounds);
+  expect(player.weightPounds, message).toBeLessThanOrEqual(
+    body.maxWeightPounds,
+  );
 
   for (const key of PLAYER_ATTRIBUTE_KEYS) {
     expect(player.attributes[key], message).toBeDefined();
@@ -110,7 +114,9 @@ function expectValidGeneratedPlayer(
   const gapBand = potentialGapBandForAge(player.age);
   const minPotential = clampRating(overall + gapBand.min);
   const maxPotential = clampRating(overall + gapBand.max);
-  expect(player.potential.overall, message).toBeGreaterThanOrEqual(minPotential);
+  expect(player.potential.overall, message).toBeGreaterThanOrEqual(
+    minPotential,
+  );
   expect(player.potential.overall, message).toBeLessThanOrEqual(maxPotential);
 
   for (const key of PERSONALITY_KEYS) {
@@ -120,7 +126,9 @@ function expectValidGeneratedPlayer(
     expect(player.personality[key], message).toBeGreaterThanOrEqual(
       MIN_PERSONALITY,
     );
-    expect(player.personality[key], message).toBeLessThanOrEqual(MAX_PERSONALITY);
+    expect(player.personality[key], message).toBeLessThanOrEqual(
+      MAX_PERSONALITY,
+    );
   }
 
   expect(player.availability, message).toBe("available");
@@ -217,16 +225,22 @@ describe("player generation", () => {
       }
     });
 
-    it("produces valid players for the large sequential sample", { timeout: 60_000 }, () => {
-      for (const sample of samples) {
-        expectValidGeneratedPlayer(sample.player, sample.seed);
-      }
-    });
+    it(
+      "produces valid players for the large sequential sample",
+      { timeout: 60_000 },
+      () => {
+        for (const sample of samples) {
+          expectValidGeneratedPlayer(sample.player, sample.seed);
+        }
+      },
+    );
   });
 
   describe("distribution", () => {
     it("generates all valid positions", () => {
-      const positions = new Set(samples.map((sample) => sample.player.position));
+      const positions = new Set(
+        samples.map((sample) => sample.player.position),
+      );
       expect(positions.size).toBeGreaterThan(1);
       expect(positions.size).toBe(PLAYER_POSITIONS.length);
       for (const position of PLAYER_POSITIONS) {
@@ -301,7 +315,9 @@ describe("player generation", () => {
       const firstNames = new Set(
         samples.map((sample) => sample.player.firstName),
       );
-      const lastNames = new Set(samples.map((sample) => sample.player.lastName));
+      const lastNames = new Set(
+        samples.map((sample) => sample.player.lastName),
+      );
       expect(firstNames.size).toBeGreaterThan(1);
       expect(lastNames.size).toBeGreaterThan(1);
     });
@@ -380,10 +396,9 @@ describe("player generation", () => {
 
     it("keeps development stage aligned with age", () => {
       for (const sample of samples) {
-        expect(
-          sample.player.development.stage,
-          seedMessage(sample.seed),
-        ).toBe(developmentStageForAge(sample.player.age));
+        expect(sample.player.development.stage, seedMessage(sample.seed)).toBe(
+          developmentStageForAge(sample.player.age),
+        );
       }
     });
 
@@ -471,11 +486,11 @@ describe("player generation", () => {
 describe("generateRosters with player generation engine", () => {
   it("fills each team with ten players in fixed position slots", () => {
     const state = createInitialGameState({
-    saveId: "save_roster_slots",
+      saveId: "save_roster_slots",
       rngSeed: 21,
       nowIso: "2026-08-13T12:00:00.000Z",
-    settings: CBL_GAME_SETTINGS,
-  });
+      settings: CBL_GAME_SETTINGS,
+    });
     const result = generateRosters(state, createSeededRng(state.meta.rngState));
     const teamCount = Object.keys(state.world.teams).length;
     const players = Object.values(result.state.world.players);
@@ -512,9 +527,9 @@ describe("generateRosters with player generation engine", () => {
         expect(player.age).toBeLessThanOrEqual(MAX_PLAYER_AGE);
         expect(PLAYER_POSITIONS).toContain(player.position);
         expect(isPlayerArchetype(player.archetype)).toBe(true);
-        expect(
-          isArchetypeCompatible(player.archetype, player.position),
-        ).toBe(true);
+        expect(isArchetypeCompatible(player.archetype, player.position)).toBe(
+          true,
+        );
         expect(player.potential.overall).toBeGreaterThanOrEqual(overall);
         expect(player.availability).toBe("available");
         expect(player.development.stage).toBe(

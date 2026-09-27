@@ -48,9 +48,7 @@ export function validateSeasonSchedule(
     const { round, homeTeamId, awayTeamId } = game;
 
     if (!Number.isInteger(round)) {
-      throw new Error(
-        `Season schedule game[${i}] round must be an integer.`,
-      );
+      throw new Error(`Season schedule game[${i}] round must be an integer.`);
     }
     if (round < 1 || round > roundCount) {
       throw new Error(

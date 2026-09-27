@@ -25,10 +25,6 @@ export default async function FantasyDraftPage({
   }
 
   return (
-    <FantasyDraftBoard
-      saveId={saveId}
-      draft={loaded.draft}
-      error={error}
-    />
+    <FantasyDraftBoard saveId={saveId} draft={loaded.draft} error={error} />
   );
 }

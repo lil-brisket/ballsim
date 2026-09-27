@@ -28,7 +28,9 @@ export function bracketSeedOrder(fieldSize: number): number[] {
  * Supports 4 / 6 / 8 / 12 / 16 (+ larger powers of 2).
  * Byes advance without creating series, games, or fake opponents.
  */
-export function generateBracket(seeds: readonly PlayoffSeed[]): PlayoffTournament {
+export function generateBracket(
+  seeds: readonly PlayoffSeed[],
+): PlayoffTournament {
   const fieldSize = seeds.length;
   if (
     fieldSize !== 4 &&
@@ -66,7 +68,11 @@ function mapSeeds(
   const seenTeams = new Set<string>();
 
   for (const entry of seeds) {
-    if (!Number.isInteger(entry.seed) || entry.seed < 1 || entry.seed > fieldSize) {
+    if (
+      !Number.isInteger(entry.seed) ||
+      entry.seed < 1 ||
+      entry.seed > fieldSize
+    ) {
       throw new Error(
         `generateBracket seed must be an integer 1..${fieldSize}; got ${entry.seed}.`,
       );
@@ -233,7 +239,9 @@ function buildTwelveTeamBracket(
     series.push(makeOpeningSeries(slot, a, b, bySeed));
   }
 
-  const r0 = series.filter((s) => s.round === 0).sort((a, b) => a.slot - b.slot);
+  const r0 = series
+    .filter((s) => s.round === 0)
+    .sort((a, b) => a.slot - b.slot);
   // slot0 = 5v12, slot1 = 6v11, slot2 = 7v10, slot3 = 8v9
   const qfSpecs: Array<{
     slot: number;

@@ -39,12 +39,7 @@ function scorePromotionOption(
 ): number | null {
   const game = state.competition.games[gameId];
   if (!game) return null;
-  const projection = projectGameDayPromotion(
-    state,
-    teamId,
-    game,
-    promotionId,
-  );
+  const projection = projectGameDayPromotion(state, teamId, game, promotionId);
   if (!projection) return null;
 
   const definition = listGameDayPromotionDefinitions().find(

@@ -38,8 +38,16 @@ function stubBlockingDecision(
   const offeringTeamId =
     participantTeamIds.find((id) => id !== primaryTeamId) ?? primaryTeamId;
   const proposal = {
-    sideA: { teamId: offeringTeamId, playerIds: [] as never[], draftPickIds: [] as never[] },
-    sideB: { teamId: primaryTeamId, playerIds: [] as never[], draftPickIds: [] as never[] },
+    sideA: {
+      teamId: offeringTeamId,
+      playerIds: [] as never[],
+      draftPickIds: [] as never[],
+    },
+    sideB: {
+      teamId: primaryTeamId,
+      playerIds: [] as never[],
+      draftPickIds: [] as never[],
+    },
   };
   return {
     id: asOwnerDecisionId(`od_blocking_${primaryTeamId}_${blockingLevel}`),
@@ -85,7 +93,11 @@ function multiOwnedState() {
 describe("advance blocking decisions", () => {
   it("pauses advanceSimulation when a blocking decision is pending", () => {
     const { state, primary, secondary } = multiOwnedState();
-    const decision = stubBlockingDecision(primary, [primary, secondary], "blocking");
+    const decision = stubBlockingDecision(
+      primary,
+      [primary, secondary],
+      "blocking",
+    );
     const withDecision = {
       ...state,
       user: {
@@ -107,7 +119,11 @@ describe("advance blocking decisions", () => {
 
   it("does not pause advanceSimulation for non-blocking decisions", () => {
     const { state, primary, secondary } = multiOwnedState();
-    const decision = stubBlockingDecision(primary, [primary, secondary], "non_blocking");
+    const decision = stubBlockingDecision(
+      primary,
+      [primary, secondary],
+      "non_blocking",
+    );
     const withDecision = {
       ...state,
       user: {
@@ -129,7 +145,11 @@ describe("advance blocking decisions", () => {
     const store = createMemorySaveGameStore();
     const { state, primary, secondary } = multiOwnedState();
     const secondaryTeam = state.world.teams[secondary]!;
-    const decision = stubBlockingDecision(secondary, [secondary, primary], "blocking");
+    const decision = stubBlockingDecision(
+      secondary,
+      [secondary, primary],
+      "blocking",
+    );
     const withDecision = withActiveOwnerTeam(
       {
         ...state,
@@ -147,12 +167,18 @@ describe("advance blocking decisions", () => {
       state: withDecision,
     });
 
-    const result = await advanceOwnerTime("blocking_non_active", { days: 1 }, store);
+    const result = await advanceOwnerTime(
+      "blocking_non_active",
+      { days: 1 },
+      store,
+    );
     expect(result.ok).toBe(false);
     if (result.ok) {
       return;
     }
-    expect(result.error).toContain(`${secondaryTeam.city} ${secondaryTeam.name}`);
+    expect(result.error).toContain(
+      `${secondaryTeam.city} ${secondaryTeam.name}`,
+    );
     expect(result.error).toMatch(/resolve the pending owner decision/i);
     expect(result.error).toMatch(/switch to/i);
   });

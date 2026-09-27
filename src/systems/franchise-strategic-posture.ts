@@ -138,8 +138,7 @@ export function deriveStrategicPosture(
     traits.patience * 0.2 +
     (1 - Math.abs(trajectory.organizationalMomentum - 0.5)) * 0.15 +
     (trajectory.financialStress < 0.4 ? 0.1 : 0) +
-    (trajectory.competitiveWindow > 0.3 &&
-    trajectory.competitiveWindow < 0.65
+    (trajectory.competitiveWindow > 0.3 && trajectory.competitiveWindow < 0.65
       ? 0.15
       : 0);
   scores.push({

@@ -22,18 +22,9 @@ function TotalsGrid(props: { line: PlayerSeasonStatLine; title: string }) {
       <Cell label="STL" value={String(line.steals)} />
       <Cell label="BLK" value={String(line.blocks)} />
       <Cell label="TO" value={String(line.turnovers)} />
-      <Cell
-        label="FG"
-        value={`${line.fgMade}/${line.fgAttempted}`}
-      />
-      <Cell
-        label="3PT"
-        value={`${line.threeMade}/${line.threeAttempted}`}
-      />
-      <Cell
-        label="FT"
-        value={`${line.ftMade}/${line.ftAttempted}`}
-      />
+      <Cell label="FG" value={`${line.fgMade}/${line.fgAttempted}`} />
+      <Cell label="3PT" value={`${line.threeMade}/${line.threeAttempted}`} />
+      <Cell label="FT" value={`${line.ftMade}/${line.ftAttempted}`} />
     </div>
   );
 }
@@ -124,7 +115,9 @@ export function PlayerStats(props: { player: PlayerProfileView }) {
               const g = line.games;
               return (
                 <tr key={season.seasonId} className="border-t border-zinc-800">
-                  <td className="px-3 py-2 text-zinc-100">{season.seasonYear}</td>
+                  <td className="px-3 py-2 text-zinc-100">
+                    {season.seasonYear}
+                  </td>
                   <td className="px-3 py-2 text-zinc-400">{season.age}</td>
                   <td className="px-3 py-2 font-mono text-zinc-100">
                     {season.overall}
@@ -212,7 +205,9 @@ export function PlayerStats(props: { player: PlayerProfileView }) {
         {player.careerAverages ? (
           <div className="space-y-4">
             <AveragesGrid avg={player.careerAverages} />
-            <p className="text-xs text-zinc-500">Career averages (regular + playoffs).</p>
+            <p className="text-xs text-zinc-500">
+              Career averages (regular + playoffs).
+            </p>
             <TotalsGrid line={player.careerTotals} title="Career" />
           </div>
         ) : (

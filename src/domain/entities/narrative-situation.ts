@@ -35,10 +35,7 @@ export function isNarrativeCategory(value: string): value is NarrativeCategory {
 }
 
 export type NarrativeSeverity =
-  | "informational"
-  | "notable"
-  | "important"
-  | "critical";
+  "informational" | "notable" | "important" | "critical";
 
 export const NARRATIVE_SEVERITIES: readonly NarrativeSeverity[] = [
   "informational",
@@ -52,11 +49,7 @@ export function isNarrativeSeverity(value: string): value is NarrativeSeverity {
 }
 
 export type NarrativeSituationStatus =
-  | "active"
-  | "acknowledged"
-  | "resolved"
-  | "expired"
-  | "escalated";
+  "active" | "acknowledged" | "resolved" | "expired" | "escalated";
 
 export const NARRATIVE_SITUATION_STATUSES: readonly NarrativeSituationStatus[] =
   ["active", "acknowledged", "resolved", "expired", "escalated"] as const;
@@ -247,8 +240,6 @@ function assertNonEmptyString(value: string, field: string): void {
     throw new Error(`NarrativeSituation ${field} must be a non-empty string.`);
   }
   if (value.trim().length === 0) {
-    throw new Error(
-      `NarrativeSituation ${field} cannot be whitespace-only.`,
-    );
+    throw new Error(`NarrativeSituation ${field} cannot be whitespace-only.`);
   }
 }

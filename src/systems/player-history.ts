@@ -222,7 +222,8 @@ export function appendAllPlayerSeasonRecords(state: GameState): SystemResult {
   const seasonYear = state.competition.season.year;
   const eligible = collectEligiblePlayerIds(state);
 
-  let playerHistory: Record<string, PlayerHistory> = state.business.playerHistory;
+  let playerHistory: Record<string, PlayerHistory> =
+    state.business.playerHistory;
   let changed = false;
 
   const sortedIds = [...eligible].sort();
@@ -246,8 +247,7 @@ export function appendAllPlayerSeasonRecords(state: GameState): SystemResult {
     playerHistory[playerId] = {
       playerId,
       seasons: [...prior.seasons, record],
-      trackingStartedSeasonYear:
-        prior.trackingStartedSeasonYear ?? seasonYear,
+      trackingStartedSeasonYear: prior.trackingStartedSeasonYear ?? seasonYear,
     };
   }
 

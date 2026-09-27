@@ -1,10 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { applyOwnerCitySelection } from "@/systems/owner-city-selection";
 import { uniqueTeamAbbreviation } from "@/systems/team-abbreviation";
-import {
-  CBL_GAME_SETTINGS,
-  cloneGameSettings,
-} from "@/domain/game-settings";
+import { CBL_GAME_SETTINGS, cloneGameSettings } from "@/domain/game-settings";
 import { createInitialGameState } from "@/state/create-initial-state";
 import { listCitiesForTeamPick } from "@/state/selectors";
 import { TEST_RNG_SEED } from "../helpers/determinism";
@@ -34,13 +31,17 @@ describe("applyOwnerCitySelection", () => {
     const afterOccupied = applyOwnerCitySelection(state, occupiedCity);
     expect(afterOccupied.ok).toBe(true);
     if (afterOccupied.ok) {
-      expect(Object.keys(afterOccupied.state.world.teams).length).toBe(teamCount);
+      expect(Object.keys(afterOccupied.state.world.teams).length).toBe(
+        teamCount,
+      );
     }
 
     const afterAvailable = applyOwnerCitySelection(state, available.city);
     expect(afterAvailable.ok).toBe(true);
     if (afterAvailable.ok) {
-      expect(Object.keys(afterAvailable.state.world.teams).length).toBe(teamCount);
+      expect(Object.keys(afterAvailable.state.world.teams).length).toBe(
+        teamCount,
+      );
     }
   });
 
@@ -58,10 +59,14 @@ describe("applyOwnerCitySelection", () => {
     }
 
     expect(result.state.user.activeOwnerTeamId).toBe(placeholderId);
-    expect(getActiveOwnedFranchise(result.state).citySelectionConfirmed).toBe(true);
+    expect(getActiveOwnedFranchise(result.state).citySelectionConfirmed).toBe(
+      true,
+    );
     expect(result.state.world.teams[placeholderId]!.city).toBe(target.city);
     expect(result.state.world.teams[target.teamId]!.city).toBe(placeholderCity);
-    expect(result.state.world.teams[target.teamId]!.name).toBe(targetBefore.name);
+    expect(result.state.world.teams[target.teamId]!.name).toBe(
+      targetBefore.name,
+    );
   });
 
   it("available city relocates only the placeholder franchise", () => {
@@ -88,7 +93,9 @@ describe("applyOwnerCitySelection", () => {
     }
 
     expect(result.state.user.activeOwnerTeamId).toBe(placeholderId);
-    expect(getActiveOwnedFranchise(result.state).citySelectionConfirmed).toBe(true);
+    expect(getActiveOwnedFranchise(result.state).citySelectionConfirmed).toBe(
+      true,
+    );
     expect(result.state.world.teams[placeholderId]!.city).toBe(available.city);
     expect(result.state.world.teams[placeholderId]!.abbreviation).toBe(
       expectedAbbr,
@@ -100,7 +107,9 @@ describe("applyOwnerCitySelection", () => {
       Object.keys(state.world.teams).length,
     );
 
-    const cityNames = Object.values(result.state.world.teams).map((t) => t.city);
+    const cityNames = Object.values(result.state.world.teams).map(
+      (t) => t.city,
+    );
     expect(new Set(cityNames).size).toBe(cityNames.length);
   });
 
@@ -164,7 +173,9 @@ describe("applyOwnerCitySelection", () => {
     expect(result.state.world.teams[placeholderId]!.branding).toEqual(
       beforeBranding,
     );
-    expect(getActiveOwnedFranchise(result.state).franchiseIdentityConfirmed).toBe(false);
+    expect(
+      getActiveOwnedFranchise(result.state).franchiseIdentityConfirmed,
+    ).toBe(false);
   });
 
   it("preserves branding when taking a city that already has a team", () => {

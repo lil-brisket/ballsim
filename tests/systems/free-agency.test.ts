@@ -3,12 +3,7 @@ import { createContract } from "@/domain/entities/contract";
 import { isOpenOffer } from "@/domain/entities/free-agency-offer";
 import type { EvaluatePlayerInterest } from "@/domain/free-agency/player-interest";
 import { emptyInterestFactors } from "@/domain/free-agency/player-interest";
-import {
-  asContractId,
-  asOfferId,
-  asPlayerId,
-  asTeamId,
-} from "@/domain/ids";
+import { asContractId, asOfferId, asPlayerId, asTeamId } from "@/domain/ids";
 import { resetDomainEventSequenceForTests } from "@/domain/events/domain-event";
 import {
   deserializeGameState,
@@ -17,10 +12,7 @@ import {
 import { validateGameState } from "@/persistence/validate-game-state";
 import { createInitialGameState } from "@/state/create-initial-state";
 import { CBL_GAME_SETTINGS } from "@/domain/game-settings";
-import {
-  GAME_STATE_SCHEMA_VERSION,
-  type GameState,
-} from "@/state/game-state";
+import { GAME_STATE_SCHEMA_VERSION, type GameState } from "@/state/game-state";
 import {
   acceptOffer,
   defaultEvaluatePlayerInterest,
@@ -97,10 +89,7 @@ function contractTerms(input: {
   });
 }
 
-const uninterestedEvaluator: EvaluatePlayerInterest = (
-  playerId,
-  teamId,
-) => ({
+const uninterestedEvaluator: EvaluatePlayerInterest = (playerId, teamId) => ({
   playerId,
   teamId,
   score: 0,
@@ -663,9 +652,9 @@ describe("free-agency accept", () => {
       }),
     }).state;
     const accepted = acceptOffer(offered, offerId);
-    expect(
-      accepted.state.business.freeAgency.offers[offerId]?.status,
-    ).toBe("accepted");
+    expect(accepted.state.business.freeAgency.offers[offerId]?.status).toBe(
+      "accepted",
+    );
   });
 
   it("invalidates offer when first-year salary exceeds cap space for startYear", () => {
@@ -700,11 +689,11 @@ describe("free-agency accept", () => {
 describe("free-agency persistence", () => {
   it("migrates schemaVersion 16 saves to empty freeAgency offers", () => {
     const modern = createInitialGameState({
-    saveId: "save_v16_fa",
+      saveId: "save_v16_fa",
       rngSeed: 41,
       nowIso: TEST_NOW_ISO,
-    settings: CBL_GAME_SETTINGS,
-  });
+      settings: CBL_GAME_SETTINGS,
+    });
     const { freeAgency: _freeAgency, ...businessV16 } = modern.business;
     const stateV16 = {
       ...modern,
@@ -958,10 +947,7 @@ describe("stale accepted offer after contract expiration", () => {
           ...offered.world.teams,
           [otherTeamId]: {
             ...offered.world.teams[otherTeamId]!,
-            roster: [
-              ...offered.world.teams[otherTeamId]!.roster,
-              playerId,
-            ],
+            roster: [...offered.world.teams[otherTeamId]!.roster, playerId],
           },
         },
       },

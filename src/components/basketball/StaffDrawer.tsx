@@ -17,7 +17,11 @@ import type { StaffDrawerView } from "@/state/entity-drawer-selectors";
 
 function DrawerSkeleton() {
   return (
-    <div className="animate-pulse space-y-4" aria-busy="true" aria-label="Loading">
+    <div
+      className="animate-pulse space-y-4"
+      aria-busy="true"
+      aria-label="Loading"
+    >
       <div className="h-16 rounded-lg bg-zinc-800" />
       <div className="h-8 w-2/3 rounded bg-zinc-800" />
       <div className="h-24 rounded-lg bg-zinc-800" />
@@ -105,8 +109,8 @@ function StaffDrawerBody(props: { saveId: string; view: StaffDrawerView }) {
   return (
     <div className="space-y-5">
       <p className="text-sm text-zinc-300">
-        {view.identity.overall} OVR · Age {view.identity.age} · {view.experience}{" "}
-        yrs experience
+        {view.identity.overall} OVR · Age {view.identity.age} ·{" "}
+        {view.experience} yrs experience
       </p>
 
       <Section title="Profile">
@@ -121,7 +125,9 @@ function StaffDrawerBody(props: { saveId: string; view: StaffDrawerView }) {
           </p>
           <div className="flex flex-wrap items-center gap-2">
             <StatusBadge label={view.development.trend} />
-            <span className="text-zinc-400">Morale {view.development.morale}</span>
+            <span className="text-zinc-400">
+              Morale {view.development.morale}
+            </span>
           </div>
         </div>
       </Section>

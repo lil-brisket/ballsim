@@ -45,8 +45,7 @@ export function buildRotationGameContext(input: {
   const absMargin = Math.abs(scoreDifferential);
   const late =
     (input.periodNumber === regulationPeriods || isOvertime) &&
-    input.secondsRemainingInPeriod <=
-      ROTATION_CONFIG.lateGameSecondsRemaining;
+    input.secondsRemainingInPeriod <= ROTATION_CONFIG.lateGameSecondsRemaining;
 
   const isLateClose =
     late && absMargin <= ROTATION_CONFIG.closeGameMargin && !isOvertime;
@@ -60,8 +59,7 @@ export function buildRotationGameContext(input: {
     input.periodNumber >= regulationPeriods &&
     absMargin >= ROTATION_CONFIG.blowoutMargin
   ) {
-    situation =
-      scoreDifferential > 0 ? "blowout_lead" : "blowout_deficit";
+    situation = scoreDifferential > 0 ? "blowout_lead" : "blowout_deficit";
   } else if (absMargin <= ROTATION_CONFIG.closeGameMargin) {
     situation = "close";
   }
@@ -69,8 +67,7 @@ export function buildRotationGameContext(input: {
   const useAbsolute =
     isOvertime ||
     isLateClose ||
-    (isPlayoffs &&
-      (situation === "close" || isLateClose));
+    (isPlayoffs && (situation === "close" || isLateClose));
 
   return {
     situation,
@@ -95,9 +92,7 @@ export function buildRotationGameContext(input: {
   };
 }
 
-export function isInRotationWindow(
-  secondsRemainingInPeriod: number,
-): boolean {
+export function isInRotationWindow(secondsRemainingInPeriod: number): boolean {
   return ROTATION_CONFIG.quarterWindows.some(
     (window) =>
       secondsRemainingInPeriod <= window.clockRangeStart &&

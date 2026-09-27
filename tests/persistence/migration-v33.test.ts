@@ -25,9 +25,15 @@ describe("v32 → v33 migration", () => {
     expect(loaded.meta.schemaVersion).toBe(GAME_STATE_SCHEMA_VERSION);
 
     expect(getActiveOwnedFranchise(loaded).ownershipConfidence).toBeDefined();
-    expect(getActiveOwnedFranchise(loaded).ownershipConfidence.mood).toBe("supportive");
-    expect(getActiveOwnedFranchise(loaded).ownershipConfidence.recentEvidence).toEqual([]);
-    expect(getActiveOwnedFranchise(loaded).ownershipConfidence.seasonNotes).toEqual([]);
+    expect(getActiveOwnedFranchise(loaded).ownershipConfidence.mood).toBe(
+      "supportive",
+    );
+    expect(
+      getActiveOwnedFranchise(loaded).ownershipConfidence.recentEvidence,
+    ).toEqual([]);
+    expect(
+      getActiveOwnedFranchise(loaded).ownershipConfidence.seasonNotes,
+    ).toEqual([]);
     expect(() => validateGameState(loaded)).not.toThrow();
 
     const roundTrip = deserializeGameState(serializeGameState(loaded));

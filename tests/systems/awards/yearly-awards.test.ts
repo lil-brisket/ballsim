@@ -68,14 +68,11 @@ describe("yearly awards", () => {
     expect(result).not.toBeNull();
     // Either can win depending on weighting; ensure eligibility + candidates
     expect(result!.candidates.length).toBeGreaterThanOrEqual(2);
-    expect(
-      result!.candidates.every(
-        (c) => c.score >= 0 && c.rank >= 1,
-      ),
-    ).toBe(true);
+    expect(result!.candidates.every((c) => c.score >= 0 && c.rank >= 1)).toBe(
+      true,
+    );
     // Winner must meet min games
-    const winnerAggGames =
-      result!.context.statSnapshot.games;
+    const winnerAggGames = result!.context.statSnapshot.games;
     expect(winnerAggGames).toBeGreaterThanOrEqual(
       AWARD_ELIGIBILITY_CONFIG.mvp.minGames,
     );

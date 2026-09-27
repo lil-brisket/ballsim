@@ -1,11 +1,12 @@
-import type { OwnerNotificationId, OwnerObjectiveId, TeamId } from "@/domain/ids";
+import type {
+  OwnerNotificationId,
+  OwnerObjectiveId,
+  TeamId,
+} from "@/domain/ids";
 import type { NarrativeSituationId } from "@/domain/ids";
 
 export type OwnerNotificationSeverity =
-  | "info"
-  | "success"
-  | "warning"
-  | "critical";
+  "info" | "success" | "warning" | "critical";
 
 export const OWNER_NOTIFICATION_SEVERITIES: readonly OwnerNotificationSeverity[] =
   ["info", "success", "warning", "critical"];
@@ -156,8 +157,6 @@ function assertNonEmptyString(value: string, field: string): void {
     throw new Error(`OwnerNotification ${field} must be a non-empty string.`);
   }
   if (value.trim().length === 0) {
-    throw new Error(
-      `OwnerNotification ${field} cannot be whitespace-only.`,
-    );
+    throw new Error(`OwnerNotification ${field} cannot be whitespace-only.`);
   }
 }

@@ -145,12 +145,10 @@ describe("franchise identity persistence regression", () => {
       expect(fingerprint.primaryColor).toMatch(/^#[0-9A-F]{6}$/i);
       expect(sim.seasonsCompleted).toBeGreaterThanOrEqual(2);
 
-      const reloaded = deserializeGameState(
-        serializeGameState(sim.finalState),
+      const reloaded = deserializeGameState(serializeGameState(sim.finalState));
+      expect(getTeamIdentityFingerprint(reloaded.world.teams[teamId]!)).toEqual(
+        fingerprint,
       );
-      expect(
-        getTeamIdentityFingerprint(reloaded.world.teams[teamId]!),
-      ).toEqual(fingerprint);
       expect(reloaded.world.teams[teamId]!.city).toBe(fingerprint.city);
       expect(reloaded.world.teams[teamId]!.name).toBe(fingerprint.name);
       expect(reloaded.world.teams[teamId]!.branding.logoId).toBe(

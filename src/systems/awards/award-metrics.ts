@@ -24,12 +24,9 @@ export function efficiencyFromTotals(
   const fga = totals.fgAttempted;
   const fta = totals.ftAttempted;
   const tsa = fga + 0.44 * fta;
-  const tsPct =
-    tsa > 0 ? totals.points / (2 * tsa) : null;
+  const tsPct = tsa > 0 ? totals.points / (2 * tsa) : null;
   const eFgPct =
-    fga > 0
-      ? (totals.fgMade + 0.5 * totals.threeMade) / fga
-      : null;
+    fga > 0 ? (totals.fgMade + 0.5 * totals.threeMade) / fga : null;
   const astTo =
     totals.turnovers > 0
       ? totals.assists / totals.turnovers

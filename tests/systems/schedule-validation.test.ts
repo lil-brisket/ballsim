@@ -45,7 +45,9 @@ describe("validateSeasonSchedule", () => {
       { round: 3, homeTeamId: asTeamId("a"), awayTeamId: asTeamId("c") },
       { round: 3, homeTeamId: asTeamId("b"), awayTeamId: asTeamId("d") },
     ];
-    expect(() => validateSeasonSchedule(config, bad)).toThrow(/not in the config/);
+    expect(() => validateSeasonSchedule(config, bad)).toThrow(
+      /not in the config/,
+    );
   });
 
   it("rejects a team playing twice in the same round", () => {

@@ -1,4 +1,7 @@
-import { setMarketingBudgetAction, setTicketPriceAction } from "@/application/actions";
+import {
+  setMarketingBudgetAction,
+  setTicketPriceAction,
+} from "@/application/actions";
 import { loadOwnerSaveView } from "@/application/game-service";
 import { notFound } from "next/navigation";
 import { ErrorState } from "@/components/owner/EmptyState";

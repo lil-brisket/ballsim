@@ -1,9 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { createGame } from "@/domain/entities/game";
-import {
-  asGameId,
-  asTeamId,
-} from "@/domain/ids";
+import { asGameId, asTeamId } from "@/domain/ids";
 import { createSeededRng } from "@/domain/rng";
 import {
   deserializeGameState,
@@ -61,7 +58,7 @@ function seedFinalGame(state: GameState) {
         freeThrowsMade: 16,
         freeThrowsAttempted: 20,
         touches: 0,
-      started: false,
+        started: false,
       },
       {
         playerId: awayPlayer.id,
@@ -85,7 +82,7 @@ function seedFinalGame(state: GameState) {
         freeThrowsMade: 14,
         freeThrowsAttempted: 18,
         touches: 0,
-      started: false,
+        started: false,
       },
     ],
     homeTeamSnapshot: {

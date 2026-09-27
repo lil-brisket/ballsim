@@ -56,9 +56,7 @@ export function scoreLineupViability(
   }
   // Prefer covering at least 3 distinct position buckets and having a big/guard mix
   const diversity = covered.size * 2;
-  const hasGuard = [...covered].some(
-    (p) => p === "PG" || p === "SG",
-  );
+  const hasGuard = [...covered].some((p) => p === "PG" || p === "SG");
   const hasBig = [...covered].some((p) => p === "PF" || p === "C");
   const mixBonus = (hasGuard ? 3 : 0) + (hasBig ? 3 : 0);
   return diversity + flexibility * 0.25 + mixBonus;
@@ -72,7 +70,9 @@ export function validateLineup(input: {
   const issues: string[] = [];
   const sizeOk = input.onCourt.length === 5;
   if (!sizeOk) {
-    issues.push(`Lineup must have exactly 5 players (have ${input.onCourt.length}).`);
+    issues.push(
+      `Lineup must have exactly 5 players (have ${input.onCourt.length}).`,
+    );
   }
 
   let allEligible = true;

@@ -1,4 +1,8 @@
-import { addCalendarDays, getCalendarMonthId, getIsoWeekId } from "@/domain/calendar-date";
+import {
+  addCalendarDays,
+  getCalendarMonthId,
+  getIsoWeekId,
+} from "@/domain/calendar-date";
 import { FACILITY_CATEGORIES } from "@/domain/entities/franchise-ops";
 import type { TeamId } from "@/domain/ids";
 import type { GameState } from "@/state/game-state";
@@ -129,15 +133,21 @@ export function projectBusinessFundsHorizon(
     : { totalGameDayRevenue: 0 };
   const gameDayRevenue = forecast.totalGameDayRevenue;
   const monthlySponsorship = estimateMonthlySponsorshipPayout(state, teamId);
-  const monthlyBroadcast = estimateMonthlyBroadcastShare(state, teamId as TeamId);
+  const monthlyBroadcast = estimateMonthlyBroadcastShare(
+    state,
+    teamId as TeamId,
+  );
   const homeDates = remainingHomeGameDates(state, teamId);
   const currentDate = state.world.calendar.currentDate;
   const lastGameDate = homeDates[homeDates.length - 1];
-  const seasonHorizon = lastGameDate ?? addCalendarDays(currentDate, NEAR_TERM_DAYS);
+  const seasonHorizon =
+    lastGameDate ?? addCalendarDays(currentDate, NEAR_TERM_DAYS);
   const capDate = addCalendarDays(currentDate, HORIZON_DAY_CAP);
   const horizonEndDate = seasonHorizon > capDate ? capDate : seasonHorizon;
   const horizonKind: BusinessFundsHorizonProjection["horizonKind"] =
-    lastGameDate !== undefined && lastGameDate <= capDate ? "season" : "near_term";
+    lastGameDate !== undefined && lastGameDate <= capDate
+      ? "season"
+      : "near_term";
 
   const homeDateSet = new Set(homeDates);
   let funds = funds0;

@@ -2,10 +2,7 @@ import type { PlayerId, TeamId } from "@/domain/ids";
 import type { GameState } from "@/state/game-state";
 import type { RuleViolation } from "@/systems/league-rules/types";
 
-export function isPlayerRetired(
-  state: GameState,
-  playerId: PlayerId,
-): boolean {
+export function isPlayerRetired(state: GameState, playerId: PlayerId): boolean {
   const player = state.world.players[playerId];
   return player?.retired === true;
 }

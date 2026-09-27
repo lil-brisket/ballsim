@@ -36,9 +36,7 @@ export function evaluateStaffInterest(
 
   // Salary
   const salaryRatio =
-    prefs.desiredSalary > 0
-      ? offer.annualSalary / prefs.desiredSalary
-      : 1;
+    prefs.desiredSalary > 0 ? offer.annualSalary / prefs.desiredSalary : 1;
   if (offer.annualSalary < prefs.minimumSalary) {
     score -= 40;
   } else {
@@ -77,7 +75,10 @@ export function evaluateStaffInterest(
   }
 
   // Experience: veterans more picky about salary, less random
-  if (staff.experience >= 15 && offer.annualSalary < prefs.desiredSalary * 0.9) {
+  if (
+    staff.experience >= 15 &&
+    offer.annualSalary < prefs.desiredSalary * 0.9
+  ) {
     score -= 8;
   }
 

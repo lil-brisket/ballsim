@@ -89,9 +89,7 @@ export const TEAM_LOGO_IDS: readonly TeamLogoId[] = TEAM_LOGO_CATALOG.map(
   (entry) => entry.id,
 );
 
-const LOGO_BY_ID = new Map(
-  TEAM_LOGO_CATALOG.map((entry) => [entry.id, entry]),
-);
+const LOGO_BY_ID = new Map(TEAM_LOGO_CATALOG.map((entry) => [entry.id, entry]));
 
 export function isTeamLogoId(value: unknown): value is TeamLogoId {
   return typeof value === "string" && LOGO_BY_ID.has(value as TeamLogoId);

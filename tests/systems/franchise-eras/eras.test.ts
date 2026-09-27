@@ -71,10 +71,28 @@ describe("franchise era detection", () => {
 
   it("classifies golden era from titles and sustained success", () => {
     const seasons = [
-      season({ year: 2030, wins: 55, playoff: true, championship: true, franchiseValue: 1.4e9 }),
-      season({ year: 2031, wins: 58, playoff: true, championship: true, franchiseValue: 1.5e9 }),
+      season({
+        year: 2030,
+        wins: 55,
+        playoff: true,
+        championship: true,
+        franchiseValue: 1.4e9,
+      }),
+      season({
+        year: 2031,
+        wins: 58,
+        playoff: true,
+        championship: true,
+        franchiseValue: 1.5e9,
+      }),
       season({ year: 2032, wins: 56, playoff: true, franchiseValue: 1.55e9 }),
-      season({ year: 2033, wins: 60, playoff: true, championship: true, franchiseValue: 1.7e9 }),
+      season({
+        year: 2033,
+        wins: 60,
+        playoff: true,
+        championship: true,
+        franchiseValue: 1.7e9,
+      }),
     ];
     const { eras } = detectFranchiseEras(seasons, { foundedSeasonYear: 2020 });
     expect(eras.some((e) => e.classification === "golden_era")).toBe(true);
@@ -86,10 +104,17 @@ describe("franchise era detection", () => {
   it("detects financial crisis", () => {
     const seasons = [
       season({ year: 2040, wins: 40, cash: -1, netIncome: -30_000_000 }),
-      season({ year: 2041, wins: 38, cash: -5_000_000, netIncome: -25_000_000 }),
+      season({
+        year: 2041,
+        wins: 38,
+        cash: -5_000_000,
+        netIncome: -25_000_000,
+      }),
     ];
     const { eras } = detectFranchiseEras(seasons);
-    expect(eras.some((e) => e.classification === "financial_crisis")).toBe(true);
+    expect(eras.some((e) => e.classification === "financial_crisis")).toBe(
+      true,
+    );
   });
 
   it("uses hysteresis to avoid noisy era flipping", () => {

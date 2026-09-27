@@ -17,9 +17,7 @@ export function TradeFinderView(props: {
   suggestedOutgoingPlayerId: string | null;
 }) {
   const initial =
-    props.suggestedOutgoingPlayerId ??
-    props.roster[0]?.playerId ??
-    "";
+    props.suggestedOutgoingPlayerId ?? props.roster[0]?.playerId ?? "";
   const [outgoingPlayerId, setOutgoingPlayerId] = useState(initial);
   const [candidates, setCandidates] = useState<TradeFinderRowView[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -98,12 +96,7 @@ export function TradeFinderView(props: {
       {candidates.length > 0 ? (
         <div className="overflow-x-auto">
           <DataTable
-            headers={[
-              "Counterparty",
-              "You send",
-              "You receive",
-              "Action",
-            ]}
+            headers={["Counterparty", "You send", "You receive", "Action"]}
           >
             {candidates.map((row, index) => (
               <tr

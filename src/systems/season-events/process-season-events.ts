@@ -28,10 +28,7 @@ import {
  * 8. Tournament — qual / games
  * 9. Holiday completion
  */
-export function processSeasonEvents(
-  state: GameState,
-  rng: Rng,
-): SystemResult {
+export function processSeasonEvents(state: GameState, rng: Rng): SystemResult {
   let current = withSeasonEvents(state, ensureSeasonEventsState(state));
   const events: DomainEvent[] = [];
   const simulatedDate = current.world.calendar.currentDate;

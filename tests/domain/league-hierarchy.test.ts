@@ -2,10 +2,7 @@ import { describe, expect, it } from "vitest";
 import { createConference } from "@/domain/entities/conference";
 import { createDivision } from "@/domain/entities/division";
 import { createLeague } from "@/domain/entities/league";
-import {
-  createTeam,
-  NEUTRAL_TEAM_PLAY_STYLE,
-} from "@/domain/entities/team";
+import { createTeam, NEUTRAL_TEAM_PLAY_STYLE } from "@/domain/entities/team";
 import { DEFAULT_COACHING_PHILOSOPHY } from "@/domain/coaching/coaching-philosophy";
 import { DEFAULT_TEST_TEAM_BRANDING } from "@/domain/entities/default-team-branding";
 import {

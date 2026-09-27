@@ -4,9 +4,7 @@ import { StatusBadge } from "@/components/owner/StatusBadge";
 import { cn } from "@/components/ui/styles";
 import type { DevelopmentHubRow } from "@/state/development-hub-selectors";
 
-function changeTone(
-  delta: number | null,
-): "success" | "critical" | "neutral" {
+function changeTone(delta: number | null): "success" | "critical" | "neutral" {
   if (delta === null) return "neutral";
   if (delta > 0) return "success";
   if (delta < 0) return "critical";
@@ -28,8 +26,7 @@ export function DevelopmentRow(props: {
   row: DevelopmentHubRow;
 }) {
   const { saveId, row } = props;
-  const notable =
-    row.changeDelta !== null && Math.abs(row.changeDelta) >= 1;
+  const notable = row.changeDelta !== null && Math.abs(row.changeDelta) >= 1;
 
   return (
     <tr className="border-t border-zinc-800">

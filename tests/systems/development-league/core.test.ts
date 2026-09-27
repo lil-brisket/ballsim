@@ -5,7 +5,10 @@ import { createPlayer } from "@/domain/entities/player";
 import { asContractId, asPlayerId, asTeamId } from "@/domain/ids";
 import { calculatePlayerOverall } from "@/domain/player-overall-rating";
 import { createTestGameState } from "../../factories/game-state";
-import { createPlayer as createTestPlayer, uniformPlayerAttributes } from "../../factories/player";
+import {
+  createPlayer as createTestPlayer,
+  uniformPlayerAttributes,
+} from "../../factories/player";
 import {
   assignPlayerToDevelopmentLeague,
   recallPlayerFromDevelopmentLeague,
@@ -21,7 +24,10 @@ import {
   getTopLeagueRosterSize,
   isPlayerDlAssigned,
 } from "@/systems/development-league/franchise-membership";
-import { getTeamContractualSalaryObligation, getTeamPayroll } from "@/systems/salary-cap";
+import {
+  getTeamContractualSalaryObligation,
+  getTeamPayroll,
+} from "@/systems/salary-cap";
 import { processDevelopmentLeagueSeasonTransition } from "@/systems/development-league/season-transition";
 import { computeDlOpportunityBonus } from "@/systems/development-league/development-opportunity";
 import { resolveRosterForSimulation } from "@/systems/game-simulation";
@@ -100,7 +106,9 @@ describe("Development League franchise membership", () => {
     expect(isPlayerDlAssigned(state.world.players["dl_p1"]!)).toBe(true);
     expect(getTopLeagueRosterPlayerIds(teamId, state)).not.toContain("dl_p1");
     expect(getTopLeagueRosterSize(teamId, state)).toBe(before - 1);
-    expect(getDevelopmentLeagueRosterPlayerIds(teamId, state)).toContain("dl_p1");
+    expect(getDevelopmentLeagueRosterPlayerIds(teamId, state)).toContain(
+      "dl_p1",
+    );
     expect(getFranchisePlayerIds(teamId, state)).toContain("dl_p1");
     expect(state.world.players["dl_p1"]!.teamId).toBe(teamId);
   });
@@ -213,12 +221,14 @@ describe("Development League season counting", () => {
       asPlayerId("cnt_p1"),
       teamId,
     ).state;
-    expect(state.world.players["cnt_p1"]!.developmentLeague.assignedThisSeason).toBe(
-      true,
-    );
+    expect(
+      state.world.players["cnt_p1"]!.developmentLeague.assignedThisSeason,
+    ).toBe(true);
     const transitioned = processDevelopmentLeagueSeasonTransition(state);
     state = transitioned.state;
-    expect(state.world.players["cnt_p1"]!.developmentLeague.seasonsUsed).toBe(1);
+    expect(state.world.players["cnt_p1"]!.developmentLeague.seasonsUsed).toBe(
+      1,
+    );
     expect(
       state.world.players["cnt_p1"]!.developmentLeague.assignedThisSeason,
     ).toBe(false);

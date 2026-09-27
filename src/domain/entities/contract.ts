@@ -1,10 +1,7 @@
 import type { ContractId, PlayerId, TeamId } from "@/domain/ids";
 
 export type ContractStatus =
-  | "active"
-  | "expired"
-  | "team_option"
-  | "player_option";
+  "active" | "expired" | "team_option" | "player_option";
 
 export type ContractOptionStatus = "pending" | "exercised" | "declined";
 
@@ -80,10 +77,11 @@ export function assertContractShape(contract: ContractInput | Contract): void {
     throw new Error("Contract startYear must be <= endYear.");
   }
   assertSalaryByYearKeys(contract);
-  if (contract.teamOption !== undefined && contract.playerOption !== undefined) {
-    throw new Error(
-      "Contract cannot have both teamOption and playerOption.",
-    );
+  if (
+    contract.teamOption !== undefined &&
+    contract.playerOption !== undefined
+  ) {
+    throw new Error("Contract cannot have both teamOption and playerOption.");
   }
   if (contract.teamOption !== undefined) {
     assertContractOption(contract.teamOption, contract, "teamOption");
@@ -204,7 +202,11 @@ function declineOption(
 
 function assertContractOption(
   option: ContractOption,
-  contract: { startYear: number; endYear: number; salaryByYear: Record<string, number> },
+  contract: {
+    startYear: number;
+    endYear: number;
+    salaryByYear: Record<string, number>;
+  },
   field: string,
 ): void {
   assertIntegerYear(option.year, `${field}.year`);
@@ -219,9 +221,7 @@ function assertContractOption(
 
   if (option.status === "pending") {
     if (option.year !== contract.endYear + 1) {
-      throw new Error(
-        `Contract ${field} pending year must be endYear + 1.`,
-      );
+      throw new Error(`Contract ${field} pending year must be endYear + 1.`);
     }
     if (salaryForYear !== undefined) {
       throw new Error(
@@ -233,9 +233,7 @@ function assertContractOption(
 
   if (option.status === "exercised") {
     if (option.year !== contract.endYear) {
-      throw new Error(
-        `Contract ${field} exercised year must equal endYear.`,
-      );
+      throw new Error(`Contract ${field} exercised year must equal endYear.`);
     }
     if (salaryForYear !== option.salary) {
       throw new Error(
@@ -247,9 +245,7 @@ function assertContractOption(
 
   // declined
   if (option.year !== contract.endYear + 1) {
-    throw new Error(
-      `Contract ${field} declined year must be endYear + 1.`,
-    );
+    throw new Error(`Contract ${field} declined year must be endYear + 1.`);
   }
   if (salaryForYear !== undefined) {
     throw new Error(

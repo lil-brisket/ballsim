@@ -13,9 +13,10 @@ import { bootstrapWorld } from "@/systems/world-pipeline";
 describe("fan sentiment", () => {
   it("updateFanSentimentForTeam smooths toward target", () => {
     let state = createInitialGameState({
-    saveId: "sent_test", rngSeed: 9,
-    settings: CBL_GAME_SETTINGS,
-  });
+      saveId: "sent_test",
+      rngSeed: 9,
+      settings: CBL_GAME_SETTINGS,
+    });
     const rng = createSeededRng(state.meta.rngState);
     state = bootstrapWorld(state, rng).state;
     const teamId = state.user.activeOwnerTeamId;
@@ -41,9 +42,10 @@ describe("fan sentiment", () => {
 
   it("processDailyFanSentimentAfterGames bumps home winner", () => {
     let state = createInitialGameState({
-    saveId: "sent_game", rngSeed: 10,
-    settings: CBL_GAME_SETTINGS,
-  });
+      saveId: "sent_game",
+      rngSeed: 10,
+      settings: CBL_GAME_SETTINGS,
+    });
     const rng = createSeededRng(state.meta.rngState);
     state = bootstrapWorld(state, rng).state;
     const teamId = state.user.activeOwnerTeamId;
@@ -52,8 +54,7 @@ describe("fan sentiment", () => {
     )!;
     const date = state.world.calendar.currentDate;
     const gameId = asGameId("game_sent_1");
-    const baseSentiment =
-      state.business.franchiseOps[teamId]!.fanSentiment;
+    const baseSentiment = state.business.franchiseOps[teamId]!.fanSentiment;
     state = {
       ...state,
       competition: {

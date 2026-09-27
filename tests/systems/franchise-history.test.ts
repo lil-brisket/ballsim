@@ -3,7 +3,12 @@ import type {
   PlayoffSeries,
   PlayoffTournament,
 } from "@/domain/entities/playoffs";
-import { asPlayoffSeriesId, asSeasonId, asTeamId, type TeamId } from "@/domain/ids";
+import {
+  asPlayoffSeriesId,
+  asSeasonId,
+  asTeamId,
+  type TeamId,
+} from "@/domain/ids";
 import { createTestGameState } from "../factories/game-state";
 import {
   appendAllFranchiseSeasonRecords,
@@ -32,7 +37,10 @@ function series(input: {
     lowerSeed: null,
     higherSeedTeamId: input.higher,
     lowerSeedTeamId: input.lower,
-    wins: { [input.winner]: 4, [input.higher === input.winner ? input.lower : input.higher]: 0 },
+    wins: {
+      [input.winner]: 4,
+      [input.higher === input.winner ? input.lower : input.higher]: 0,
+    },
     gameIds: [],
     status: "complete",
     winnerTeamId: input.winner,
@@ -259,7 +267,9 @@ describe("appendFranchiseSeasonRecord", () => {
     expect(typeof record.revenue).toBe("number");
 
     const twice = appendAllFranchiseSeasonRecords(once.state);
-    expect(twice.state.business.franchiseHistory[teamId]!.seasons).toHaveLength(1);
+    expect(twice.state.business.franchiseHistory[teamId]!.seasons).toHaveLength(
+      1,
+    );
 
     const nextYear = year + 1;
     let advanced = {

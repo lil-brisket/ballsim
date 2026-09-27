@@ -1,4 +1,7 @@
-import { createSponsorship, type Sponsorship } from "@/domain/entities/sponsorship";
+import {
+  createSponsorship,
+  type Sponsorship,
+} from "@/domain/entities/sponsorship";
 import type { DomainEvent } from "@/domain/events";
 import { createDomainEvent } from "@/domain/events";
 import type { SponsorshipId, TeamId } from "@/domain/ids";

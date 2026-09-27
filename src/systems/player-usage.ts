@@ -263,7 +263,9 @@ export function pickWeightedPlayer(
     ? profiles.filter((profile) => profile.playerId !== excludePlayerId)
     : profiles;
   if (eligible.length === 0) {
-    throw new Error("pickWeightedPlayer requires at least one eligible player.");
+    throw new Error(
+      "pickWeightedPlayer requires at least one eligible player.",
+    );
   }
   const picked = pickByWeight(
     eligible.map((profile) => ({

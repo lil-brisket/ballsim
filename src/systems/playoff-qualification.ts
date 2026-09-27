@@ -12,10 +12,7 @@ export function qualifyAndSeed(
   standings: readonly TeamStanding[],
   playoffTeams: number,
 ): PlayoffSeed[] {
-  if (
-    !Number.isInteger(playoffTeams) ||
-    playoffTeams < 1
-  ) {
+  if (!Number.isInteger(playoffTeams) || playoffTeams < 1) {
     throw new Error(
       `qualifyAndSeed playoffTeams must be a positive integer; got ${playoffTeams}.`,
     );

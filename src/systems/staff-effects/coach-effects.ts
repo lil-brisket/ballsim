@@ -95,7 +95,11 @@ export function buildTeamStaffGameContext(
   if (ac) {
     const attrs = ac.attributes as Record<string, number>;
     preparationModifier = clamp(
-      (averageAttrs(attrs, ["gamePreparation", "offensiveSupport", "defensiveSupport"]) -
+      (averageAttrs(attrs, [
+        "gamePreparation",
+        "offensiveSupport",
+        "defensiveSupport",
+      ]) -
         50) *
         0.0015,
       -0.05,

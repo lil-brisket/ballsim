@@ -6,11 +6,7 @@ export const FACILITY_UPGRADE_WEEKS = 4;
 
 /** Arena seating capacity by facility level (index 0 = level 1). */
 export const ARENA_CAPACITY_BY_LEVEL: readonly number[] = [
-  12_000,
-  15_000,
-  18_000,
-  21_000,
-  25_000,
+  12_000, 15_000, 18_000, 21_000, 25_000,
 ];
 
 /** One-time upgrade cost from level N to N+1 (index 0 = 1→2). */

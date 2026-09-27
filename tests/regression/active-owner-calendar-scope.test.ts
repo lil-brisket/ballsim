@@ -17,7 +17,10 @@ vi.mock("@/persistence/save-game-repository", () => ({
   },
 }));
 
-import { loadCalendarPageView, switchActiveOwnerTeam } from "@/application/game-service";
+import {
+  loadCalendarPageView,
+  switchActiveOwnerTeam,
+} from "@/application/game-service";
 import { CBL_GAME_SETTINGS } from "@/domain/game-settings";
 import { createSeededRng } from "@/domain/rng";
 import { createMemorySaveGameStore } from "@/persistence/memory-save-game-store";
@@ -140,11 +143,9 @@ describe("active owner calendar scope", () => {
     const nextAStill = getNextTeamGameDate(loadedB!.state, teamA);
     expect(nextB).not.toBeNull();
 
-    const inspectorB = buildCalendarDateInspectorView(
-      loadedB!.state,
-      nextB!,
-      { saveId },
-    );
+    const inspectorB = buildCalendarDateInspectorView(loadedB!.state, nextB!, {
+      saveId,
+    });
     if (inspectorB.teamGame) {
       expect(inspectorB.teamGame.opponentTeamId).not.toBe(teamB);
     }

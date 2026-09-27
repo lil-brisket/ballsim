@@ -9,14 +9,16 @@ import type { AwardDefinitionId } from "@/domain/entities/awards";
 import { AWARD_DEFINITIONS } from "@/systems/awards/award-definitions";
 import type { AwardsHubRow } from "@/state/awards-hub-selectors";
 
-const AWARD_FILTER_OPTIONS: Array<{ id: "" | AwardDefinitionId; label: string }> =
-  [
-    { id: "", label: "All awards" },
-    ...Object.values(AWARD_DEFINITIONS).map((def) => ({
-      id: def.id,
-      label: def.displayName,
-    })),
-  ];
+const AWARD_FILTER_OPTIONS: Array<{
+  id: "" | AwardDefinitionId;
+  label: string;
+}> = [
+  { id: "", label: "All awards" },
+  ...Object.values(AWARD_DEFINITIONS).map((def) => ({
+    id: def.id,
+    label: def.displayName,
+  })),
+];
 
 export function LeagueAwardsHistory(props: {
   saveId: string;

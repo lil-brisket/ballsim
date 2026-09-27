@@ -57,7 +57,10 @@ export function analyzeTeamPhaseContext(
     if (contract.teamId !== teamId) {
       continue;
     }
-    if (!isContractActive(contract, year) && getContractStatus(contract, year) === "expired") {
+    if (
+      !isContractActive(contract, year) &&
+      getContractStatus(contract, year) === "expired"
+    ) {
       // Already expired — counted via release path; skip for "expiring this year"
     }
     if (isContractActive(contract, year) && contract.endYear === year) {
@@ -155,10 +158,7 @@ function computePositionalStrengths(
         count += 1;
         let overall = 0;
         try {
-          overall = calculatePlayerOverall(
-            player.position,
-            player.attributes,
-          );
+          overall = calculatePlayerOverall(player.position, player.attributes);
         } catch {
           continue;
         }
@@ -168,8 +168,7 @@ function computePositionalStrengths(
       }
     }
     const leaguePositionalAvg = leagueAvgs[position] ?? 70;
-    const isWeak =
-      count === 0 || bestOverall < leaguePositionalAvg - 5;
+    const isWeak = count === 0 || bestOverall < leaguePositionalAvg - 5;
     result.push({
       position,
       bestOverall,
@@ -208,9 +207,7 @@ function leaguePositionalAverages(
   for (const position of PLAYER_POSITIONS) {
     const bucket = sums[position];
     avgs[position] =
-      bucket && bucket.count > 0
-        ? Math.round(bucket.total / bucket.count)
-        : 70;
+      bucket && bucket.count > 0 ? Math.round(bucket.total / bucket.count) : 70;
   }
   return avgs;
 }

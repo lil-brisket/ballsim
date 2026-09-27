@@ -11,11 +11,7 @@ import {
 } from "@/domain/entities/playoffs";
 
 export type UserPlayoffStatus =
-  | "not_in_playoffs"
-  | "in_playoffs"
-  | "eliminated"
-  | "advanced"
-  | "champion";
+  "not_in_playoffs" | "in_playoffs" | "eliminated" | "advanced" | "champion";
 
 export type PlayoffSeriesView = {
   id: string;
@@ -79,8 +75,7 @@ export function resolveUserPlayoffStatus(
   }
 
   const teamSeries = playoffs.series.filter(
-    (s) =>
-      s.higherSeedTeamId === teamId || s.lowerSeedTeamId === teamId,
+    (s) => s.higherSeedTeamId === teamId || s.lowerSeedTeamId === teamId,
   );
   const lostComplete = teamSeries.some(
     (s) =>
@@ -142,8 +137,7 @@ export function toPlayoffHubView(state: GameState): PlayoffHubView {
   const teamId = getActiveOwnerTeamId(state);
   const team = state.world.teams[teamId];
   const playoffs = state.competition.playoffs;
-  const available =
-    playoffs.status !== "not_started" && playoffs.fieldSize > 0;
+  const available = playoffs.status !== "not_started" && playoffs.fieldSize > 0;
 
   const seriesViews = playoffs.series
     .map((s) => toSeriesView(state, s, playoffs.fieldSize))

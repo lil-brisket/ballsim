@@ -6,7 +6,10 @@ import { PRESEASON_GAMES_PER_TEAM } from "@/systems/preseason-schedule-config";
 import { generatePreseasonSchedule } from "@/systems/preseason-schedule-generation";
 import { generateSchedule } from "@/systems/schedule-generation";
 import { bootstrapWorld } from "@/systems/world-pipeline";
-import { FIXTURE_PRESEASON_START, FIXTURE_SEASON_START } from "../fixtures/dates";
+import {
+  FIXTURE_PRESEASON_START,
+  FIXTURE_SEASON_START,
+} from "../fixtures/dates";
 
 describe("generatePreseasonSchedule", () => {
   it("adds five exhibition games per team during the preseason window", () => {

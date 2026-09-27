@@ -4,10 +4,7 @@ import { asContractId, asPlayerId } from "@/domain/ids";
 import { resetDomainEventSequenceForTests } from "@/domain/events/domain-event";
 import { DEFAULT_SALARY_CAP } from "@/systems/salary-cap-config";
 import { getTeamPayroll } from "@/systems/salary-cap";
-import {
-  executeTrade,
-  validateTrade,
-} from "@/systems/trades";
+import { executeTrade, validateTrade } from "@/systems/trades";
 import { applyTradeSalaryRule } from "@/systems/trades/trade-salary-rules";
 import {
   createTradeFixture,
@@ -362,8 +359,7 @@ describe("trade validation — invalid trades", () => {
     expect(result.valid).toBe(false);
     expect(
       result.errors.some(
-        (e) =>
-          e.code === "CONTRACT_MISSING" || e.code === "PLAYER_INELIGIBLE",
+        (e) => e.code === "CONTRACT_MISSING" || e.code === "PLAYER_INELIGIBLE",
       ),
     ).toBe(true);
   });

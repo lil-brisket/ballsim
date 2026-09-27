@@ -51,10 +51,7 @@ export function getCurrentPick(state: GameState): FantasyPickInfo | undefined {
   ) {
     return undefined;
   }
-  if (
-    draft.status !== "active" &&
-    draft.status !== "paused"
-  ) {
+  if (draft.status !== "active" && draft.status !== "paused") {
     return undefined;
   }
   return getPickOwnerForNumber(

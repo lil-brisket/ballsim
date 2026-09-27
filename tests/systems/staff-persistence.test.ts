@@ -81,8 +81,7 @@ describe("staff persistence / v50", () => {
         teamId: member.teamId,
         firstName: member.firstName,
         lastName: member.lastName,
-        role:
-          member.role === "public_relations" ? "marketing" : member.role,
+        role: member.role === "public_relations" ? "marketing" : member.role,
         quality: member.overall,
         experience: member.experience,
         strengths: [],

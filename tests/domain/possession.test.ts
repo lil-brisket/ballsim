@@ -126,33 +126,25 @@ describe("createPossession", () => {
 
   it("rejects empty offensivePlayerId", () => {
     expect(() =>
-      createPossession(
-        validInput({ offensivePlayerId: asPlayerId("") }),
-      ),
+      createPossession(validInput({ offensivePlayerId: asPlayerId("") })),
     ).toThrow(/offensivePlayerId/);
   });
 
   it("rejects whitespace-only offensivePlayerId", () => {
     expect(() =>
-      createPossession(
-        validInput({ offensivePlayerId: asPlayerId(" ") }),
-      ),
+      createPossession(validInput({ offensivePlayerId: asPlayerId(" ") })),
     ).toThrow(/offensivePlayerId.*whitespace-only/);
   });
 
   it("rejects empty defensivePlayerId when provided", () => {
     expect(() =>
-      createPossession(
-        validInput({ defensivePlayerId: asPlayerId("") }),
-      ),
+      createPossession(validInput({ defensivePlayerId: asPlayerId("") })),
     ).toThrow(/defensivePlayerId/);
   });
 
   it("rejects whitespace-only defensivePlayerId when provided", () => {
     expect(() =>
-      createPossession(
-        validInput({ defensivePlayerId: asPlayerId(" ") }),
-      ),
+      createPossession(validInput({ defensivePlayerId: asPlayerId(" ") })),
     ).toThrow(/defensivePlayerId.*whitespace-only/);
   });
 
@@ -192,9 +184,7 @@ describe("createPossession", () => {
       ),
     ).toThrow(/not compatible/);
     expect(() =>
-      createPossession(
-        validInput({ action: "pass", outcome: "shot_made" }),
-      ),
+      createPossession(validInput({ action: "pass", outcome: "shot_made" })),
     ).toThrow(/not compatible/);
     expect(() =>
       createPossession(
@@ -202,9 +192,7 @@ describe("createPossession", () => {
       ),
     ).toThrow(/not compatible/);
     expect(() =>
-      createPossession(
-        validInput({ action: "foul", outcome: "turnover" }),
-      ),
+      createPossession(validInput({ action: "foul", outcome: "turnover" })),
     ).toThrow(/not compatible/);
     expect(() =>
       createPossession(

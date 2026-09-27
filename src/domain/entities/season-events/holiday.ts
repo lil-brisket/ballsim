@@ -20,10 +20,7 @@ export type HolidayDefinition = {
 };
 
 export type HolidayInstanceStatus =
-  | "scheduled"
-  | "active"
-  | "completed"
-  | "cancelled";
+  "scheduled" | "active" | "completed" | "cancelled";
 
 export type HolidayInstance = {
   key: string;

@@ -24,7 +24,10 @@ import {
   isFreeAgencyOpen,
   getActionBlockReason,
 } from "@/systems/league-rules";
-import { serializeGameState, deserializeGameState } from "@/persistence/mappers/game-state-mapper";
+import {
+  serializeGameState,
+  deserializeGameState,
+} from "@/persistence/mappers/game-state-mapper";
 import { GAME_STATE_SCHEMA_VERSION } from "@/state/game-state";
 import { setActivePhase } from "@/systems/phase-engine";
 import { processPlayerRetirements } from "@/systems/player-retirement";
@@ -46,13 +49,13 @@ describe("league hard locks", () => {
       const start = "2026-10-01";
       const end = "2027-04-01";
       const deadline = resolveHardLockTradeDeadlineDate(start, end)!;
-      expect(areTradesOpen("regular", addCalendarDays(deadline, -1), deadline)).toBe(
-        true,
-      );
+      expect(
+        areTradesOpen("regular", addCalendarDays(deadline, -1), deadline),
+      ).toBe(true);
       expect(areTradesOpen("regular", deadline, deadline)).toBe(false);
-      expect(areTradesOpen("regular", addCalendarDays(deadline, 1), deadline)).toBe(
-        false,
-      );
+      expect(
+        areTradesOpen("regular", addCalendarDays(deadline, 1), deadline),
+      ).toBe(false);
     });
 
     it("resolveTradeDeadlineDate ignores settings fraction (hard lock 0.6)", () => {
@@ -175,11 +178,13 @@ describe("league hard locks", () => {
         teamId: teamId as never,
       });
       expect(blocked.allowed).toBe(false);
-      expect(getActionBlockReason(state, {
-        kind: "sign_free_agent",
-        playerId: playerId as never,
-        teamId: teamId as never,
-      })).toMatch(/Free agency is not open/i);
+      expect(
+        getActionBlockReason(state, {
+          kind: "sign_free_agent",
+          playerId: playerId as never,
+          teamId: teamId as never,
+        }),
+      ).toMatch(/Free agency is not open/i);
     });
   });
 
@@ -227,9 +232,9 @@ describe("league hard locks", () => {
       };
       const result = validateTrade(state, proposal);
       expect(result.valid).toBe(false);
-      expect(result.errors.some((e) => e.code === "TRADE_DEADLINE_PASSED")).toBe(
-        true,
-      );
+      expect(
+        result.errors.some((e) => e.code === "TRADE_DEADLINE_PASSED"),
+      ).toBe(true);
     });
   });
 
@@ -263,9 +268,9 @@ describe("league hard locks", () => {
       const before = state.world.players[playerId]!;
       const result = processPlayerRetirements(state, createSeededRng(1));
       expect(result.state.world.players[playerId]!.retired).toBe(true);
-      expect(result.events.filter((e) => e.payload.playerId === playerId)).toHaveLength(
-        0,
-      );
+      expect(
+        result.events.filter((e) => e.payload.playerId === playerId),
+      ).toHaveLength(0);
       expect(result.state.world.players[playerId]).toEqual(before);
     });
   });

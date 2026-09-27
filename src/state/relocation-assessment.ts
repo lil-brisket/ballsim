@@ -9,9 +9,7 @@
 import { createIdleRelocation } from "@/domain/entities/relocation";
 import type { TeamId } from "@/domain/ids";
 import type { GameState } from "@/state/game-state";
-import {
-  calculateCashRunway,
-} from "@/state/franchise-selectors";
+import { calculateCashRunway } from "@/state/franchise-selectors";
 import {
   explainFranchiseValue,
   readAttendanceRealization,
@@ -114,9 +112,7 @@ function businessBand(
   const standing = value.standing;
 
   const distressed =
-    health === "warning" ||
-    health === "critical" ||
-    health === "insolvent";
+    health === "warning" || health === "critical" || health === "insolvent";
   const softBiz = realization < RELOCATION_SOFT_REALIZATION;
   const strongStanding =
     standing === "major" ||
@@ -130,7 +126,11 @@ function businessBand(
   if (distressed) {
     return { band: "weak", health };
   }
-  if (health === "healthy" && strongStanding && realization >= RELOCATION_SOFT_REALIZATION) {
+  if (
+    health === "healthy" &&
+    strongStanding &&
+    realization >= RELOCATION_SOFT_REALIZATION
+  ) {
     return { band: "strong", health };
   }
   if (health === "healthy" || (health === "stable" && !softBiz)) {
@@ -161,8 +161,13 @@ function interpretEconomicStatus(input: {
   business: HealthBand;
   financialPressure: boolean;
 }): Exclude<RelocationAssessmentStatus, "blocked_tenure" | "in_progress"> {
-  const { weakMarket, softRealization, basketball, business, financialPressure } =
-    input;
+  const {
+    weakMarket,
+    softRealization,
+    basketball,
+    business,
+    financialPressure,
+  } = input;
   const marketBinding = weakMarket || softRealization;
 
   if (!marketBinding) {
@@ -211,9 +216,7 @@ export function assessRelocation(
   const basketball = basketballBand(state, teamId);
   const { band: business, health } = businessBand(state, teamId, realization);
   const financialPressure =
-    health === "warning" ||
-    health === "critical" ||
-    health === "insolvent";
+    health === "warning" || health === "critical" || health === "insolvent";
 
   const weakMarket = marketSize < RELOCATION_WEAK_MARKET_SIZE;
   const softRealization = realization < RELOCATION_SOFT_REALIZATION;
@@ -239,8 +242,7 @@ export function assessRelocation(
   const bestCredible = destinations.find((d) => d.credibleImprovement);
   const feeDelta = Math.max(0, bestCredible?.marketSizeDelta ?? 0);
   const estimatedFee =
-    RELOCATION_TRANSITION_FEE +
-    feeDelta * RELOCATION_FEE_PER_MARKET_SIZE_POINT;
+    RELOCATION_TRANSITION_FEE + feeDelta * RELOCATION_FEE_PER_MARKET_SIZE_POINT;
 
   const primaryDrivers: string[] = [];
   const constraints: string[] = [];
@@ -297,7 +299,10 @@ export function assessRelocation(
     }
   }
 
-  if (marketSize >= RELOCATION_STRONG_MARKET_SIZE && realization >= RELOCATION_SOFT_REALIZATION) {
+  if (
+    marketSize >= RELOCATION_STRONG_MARKET_SIZE &&
+    realization >= RELOCATION_SOFT_REALIZATION
+  ) {
     stayAdvantages.push(
       "Strong local market and solid fill — relocation would give up valuable relationships.",
     );
@@ -342,7 +347,9 @@ export function assessRelocation(
   }
 
   const canStart =
-    (status === "consider" || status === "strong_case" || status === "in_progress") &&
+    (status === "consider" ||
+      status === "strong_case" ||
+      status === "in_progress") &&
     !tenureBlocked;
 
   return {
@@ -387,9 +394,7 @@ export function assessRelocation(
   };
 }
 
-export function relocationMayStart(
-  assessment: RelocationAssessment,
-): boolean {
+export function relocationMayStart(assessment: RelocationAssessment): boolean {
   return assessment.canStart;
 }
 
@@ -400,8 +405,7 @@ export function relocationFeeForTarget(
 ): number {
   const delta = Math.max(0, targetMarketSize - currentMarketSize);
   return (
-    RELOCATION_TRANSITION_FEE +
-    delta * RELOCATION_FEE_PER_MARKET_SIZE_POINT
+    RELOCATION_TRANSITION_FEE + delta * RELOCATION_FEE_PER_MARKET_SIZE_POINT
   );
 }
 

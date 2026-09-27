@@ -1,4 +1,7 @@
-import type { PlayerAttributes, PlayerPosition } from "@/domain/entities/player";
+import type {
+  PlayerAttributes,
+  PlayerPosition,
+} from "@/domain/entities/player";
 
 export type PlayerArchetype =
   | "floor_general"
@@ -409,9 +412,10 @@ export function combinedAttributeWeights(
   const positionWeights = POSITION_ATTRIBUTE_WEIGHTS[position];
   const archetypeWeights = ARCHETYPE_ATTRIBUTE_WEIGHTS[archetype];
   const result = {} as AttributeWeights;
-  for (const key of Object.keys(positionWeights) as (keyof PlayerAttributes)[]) {
-    result[key] =
-      1 + (positionWeights[key] - 1) + (archetypeWeights[key] - 1);
+  for (const key of Object.keys(
+    positionWeights,
+  ) as (keyof PlayerAttributes)[]) {
+    result[key] = 1 + (positionWeights[key] - 1) + (archetypeWeights[key] - 1);
   }
   return result;
 }

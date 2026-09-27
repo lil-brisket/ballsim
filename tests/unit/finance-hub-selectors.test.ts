@@ -28,9 +28,7 @@ describe("finance-hub-selectors", () => {
     if (hub.businessHealth !== "critical" && hub.businessHealth !== "tight") {
       // May be empty when no owner-dashboard financial actions exist.
       expect(Array.isArray(hub.warnings)).toBe(true);
-      expect(
-        hub.warnings.every((w) => w.category === "financial"),
-      ).toBe(true);
+      expect(hub.warnings.every((w) => w.category === "financial")).toBe(true);
     }
   });
 });

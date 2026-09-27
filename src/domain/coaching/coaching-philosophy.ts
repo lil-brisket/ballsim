@@ -5,15 +5,9 @@
 
 export type PacePhilosophy = "fast" | "balanced" | "halfCourt";
 
-export type OffensiveEmphasis =
-  | "threePointHeavy"
-  | "balanced"
-  | "inside";
+export type OffensiveEmphasis = "threePointHeavy" | "balanced" | "inside";
 
-export type DefensiveApproach =
-  | "aggressive"
-  | "balanced"
-  | "conservative";
+export type DefensiveApproach = "aggressive" | "balanced" | "conservative";
 
 export type CoachingPhilosophy = {
   pace: PacePhilosophy;

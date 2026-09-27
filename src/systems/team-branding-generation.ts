@@ -78,7 +78,11 @@ export function selectTeamBrandingCandidate(
   input: GenerateTeamBrandingInput,
   startPaletteIndex: number,
   startLogoIndex: number,
-): { paletteId: TeamColorPaletteId; logoId: TeamLogoId; branding: TeamBranding } {
+): {
+  paletteId: TeamColorPaletteId;
+  logoId: TeamLogoId;
+  branding: TeamBranding;
+} {
   const used = input.usedPaletteLogoKeys;
   const candidates = candidateOrder(startPaletteIndex, startLogoIndex);
   let chosen = candidates[0]!;
@@ -128,11 +132,8 @@ export function generateTeamBranding(
 ): TeamBranding {
   const startPaletteIndex = rng.nextInt(0, TEAM_COLOR_PALETTES.length - 1);
   const startLogoIndex = rng.nextInt(0, TEAM_LOGO_IDS.length - 1);
-  return selectTeamBrandingCandidate(
-    input,
-    startPaletteIndex,
-    startLogoIndex,
-  ).branding;
+  return selectTeamBrandingCandidate(input, startPaletteIndex, startLogoIndex)
+    .branding;
 }
 
 export function pickRandomPaletteAndLogo(rng: Rng): {

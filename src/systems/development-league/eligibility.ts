@@ -110,10 +110,7 @@ export function evaluateDevelopmentLeagueEligibility(
   if (draftYear == null) {
     reasons.push("Player was not drafted (v1 DL is for draft picks only).");
   } else if (
-    !isWithinDraftEligibilityWindow(
-      draftYear,
-      state.competition.season.year,
-    )
+    !isWithinDraftEligibilityWindow(draftYear, state.competition.season.year)
   ) {
     reasons.push(
       `Player is outside the ${DL_DRAFT_WINDOW_SEASONS}-season draft eligibility window.`,

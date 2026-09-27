@@ -4,8 +4,7 @@ import type { GameState } from "@/state/game-state";
 import { isFreeAgent } from "@/systems/free-agency";
 
 export type ContinuityValidationResult =
-  | { ok: true; errors: [] }
-  | { ok: false; errors: string[] };
+  { ok: true; errors: [] } | { ok: false; errors: string[] };
 
 /**
  * Scoped continuity invariants for safe simulation (not full validateGameState).
@@ -95,8 +94,6 @@ export function validateContinuityBoundary(
 export function assertContinuityBoundary(state: GameState): void {
   const result = validateContinuityBoundary(state);
   if (!result.ok) {
-    throw new Error(
-      `Continuity boundary failed:\n${result.errors.join("\n")}`,
-    );
+    throw new Error(`Continuity boundary failed:\n${result.errors.join("\n")}`);
   }
 }

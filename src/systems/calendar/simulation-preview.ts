@@ -74,8 +74,7 @@ export function summarizeSimulationRange(
   }
 
   const leagueGames = rangeEvents.filter(
-    (event) =>
-      event.category === "game" && event.lifecycle === "scheduled",
+    (event) => event.category === "game" && event.lifecycle === "scheduled",
   );
 
   const deadlines = rangeEvents.filter(
@@ -170,13 +169,13 @@ function buildSystemsProcessing(
   if (ctx.lifecyclePhase === "playoffs") {
     systems.add("Playoffs");
   }
-  if (
-    ctx.lifecyclePhase === "offseason" ||
-    ctx.offseasonStage !== "none"
-  ) {
+  if (ctx.lifecyclePhase === "offseason" || ctx.offseasonStage !== "none") {
     systems.add("Offseason lifecycle");
   }
-  if (ctx.deadlineWindow || (ctx.daysUntilTradeDeadline !== null && ctx.daysUntilTradeDeadline >= 0)) {
+  if (
+    ctx.deadlineWindow ||
+    (ctx.daysUntilTradeDeadline !== null && ctx.daysUntilTradeDeadline >= 0)
+  ) {
     systems.add("Trade market");
   }
 

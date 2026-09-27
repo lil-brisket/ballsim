@@ -40,9 +40,7 @@ export function recordSeriesGameResult(
     );
   }
   if (series.gameIds.includes(gameId)) {
-    throw new Error(
-      `Series ${series.id} already includes game ${gameId}.`,
-    );
+    throw new Error(`Series ${series.id} already includes game ${gameId}.`);
   }
   if (series.gameIds.length >= maxGames) {
     throw new Error(

@@ -40,7 +40,9 @@ describe("ownership confidence engine", () => {
       }),
     );
     expect(getActiveOwnedFranchise(next).ownershipConfidence.mood).toBe(before);
-    expect(getActiveOwnedFranchise(next).ownershipConfidence.recentEvidence).toHaveLength(1);
+    expect(
+      getActiveOwnedFranchise(next).ownershipConfidence.recentEvidence,
+    ).toHaveLength(1);
   });
 
   it("does not jump to displeased from a single conflicting decision", () => {
@@ -54,7 +56,9 @@ describe("ownership confidence engine", () => {
         kind: "decision",
       }),
     );
-    expect(getActiveOwnedFranchise(state).ownershipConfidence.mood).not.toBe("displeased");
+    expect(getActiveOwnedFranchise(state).ownershipConfidence.mood).not.toBe(
+      "displeased",
+    );
   });
 
   it("escalates mood after repeated conflicting meaningful evidence", () => {
@@ -112,13 +116,18 @@ describe("ownership confidence engine", () => {
 
   it("resolveMood requires patterns before displeased", () => {
     expect(
-      resolveMood("supportive", 40, [
-        evidence({
-          direction: "conflicting",
-          significance: "meaningful",
-          summary: "one",
-        }),
-      ], false),
+      resolveMood(
+        "supportive",
+        40,
+        [
+          evidence({
+            direction: "conflicting",
+            significance: "meaningful",
+            summary: "one",
+          }),
+        ],
+        false,
+      ),
     ).not.toBe("displeased");
   });
 

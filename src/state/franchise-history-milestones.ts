@@ -206,9 +206,7 @@ function longestPlayoffStreak(seasons: FranchiseSeasonRecord[]): number {
  * Completed seasons after the most recent championship.
  * Never champion → null (not franchise age).
  */
-function championshipDrought(
-  seasons: FranchiseSeasonRecord[],
-): number | null {
+function championshipDrought(seasons: FranchiseSeasonRecord[]): number | null {
   let lastChampIndex = -1;
   for (let i = 0; i < seasons.length; i += 1) {
     if (seasons[i]!.championship) {
@@ -326,10 +324,7 @@ export function computeFranchiseHistoryMilestones(
     lastPlayoffSeason: lastMatching(chronological, (s) =>
       isPlayoffAppearance(s.playoffResult),
     ),
-    lastChampionshipSeason: lastMatching(
-      chronological,
-      (s) => s.championship,
-    ),
+    lastChampionshipSeason: lastMatching(chronological, (s) => s.championship),
     currentOwnershipTenureYears: currentOwnershipTenureYears(
       ownerStartSeasonYear,
       currentSeasonYear,
@@ -388,10 +383,7 @@ export function getSeasonHistoricalHighlights(
     push(firstPlayoff.seasonYear, "first_playoff");
   }
 
-  const firstChampionship = firstMatching(
-    chronological,
-    (s) => s.championship,
-  );
+  const firstChampionship = firstMatching(chronological, (s) => s.championship);
   if (firstChampionship) {
     push(firstChampionship.seasonYear, "first_championship");
   }

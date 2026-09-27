@@ -174,9 +174,7 @@ export function simulateNextPlayoffGame(
 ): SystemResult {
   const playoffs = state.competition.playoffs;
   if (playoffs.status === "not_started") {
-    throw new Error(
-      "simulateNextPlayoffGame requires playoffs to be started.",
-    );
+    throw new Error("simulateNextPlayoffGame requires playoffs to be started.");
   }
   if (playoffs.status === "complete") {
     return systemResult(state);
@@ -188,9 +186,7 @@ export function simulateNextPlayoffGame(
 
   const nextSeries = pickNextActiveSeries(seriesList);
   if (!nextSeries) {
-    throw new Error(
-      "simulateNextPlayoffGame: no active series ready to play.",
-    );
+    throw new Error("simulateNextPlayoffGame: no active series ready to play.");
   }
 
   const nextDate = nextPlayoffGameDate({
@@ -312,7 +308,9 @@ export function simulatePlayoffs(state: GameState, rng: Rng): SystemResult {
   return systemResult(current, events);
 }
 
-function pickNextActiveSeries(seriesList: PlayoffSeries[]): PlayoffSeries | null {
+function pickNextActiveSeries(
+  seriesList: PlayoffSeries[],
+): PlayoffSeries | null {
   const active = seriesList
     .filter((series) => series.status === "active")
     .sort((left, right) => {

@@ -50,9 +50,7 @@ function pickCounterpartTeam(state: GameState, userTeamId: TeamId): TeamId {
         (g.homeTeamId === userTeamId || g.awayTeamId === userTeamId),
     );
     if (game) {
-      return game.homeTeamId === userTeamId
-        ? game.awayTeamId
-        : game.homeTeamId;
+      return game.homeTeamId === userTeamId ? game.awayTeamId : game.homeTeamId;
     }
   }
   const other = Object.keys(state.world.teams).find((id) => id !== userTeamId);
@@ -109,7 +107,11 @@ describe("post-trade simulation integrity", () => {
       const userTeamId = ownedTeamId(state);
       const counterpartId = pickCounterpartTeam(state, userTeamId);
 
-      const proposal = playerForPlayerProposal(state, userTeamId, counterpartId);
+      const proposal = playerForPlayerProposal(
+        state,
+        userTeamId,
+        counterpartId,
+      );
       const fromUser = proposal.sideA.playerIds[0]!;
       const fromOther = proposal.sideB.playerIds[0]!;
 
@@ -127,7 +129,8 @@ describe("post-trade simulation integrity", () => {
       assertTeamRosterIntegrity(state, userTeamId);
       assertTeamRosterIntegrity(state, counterpartId);
 
-      const userRotation = state.world.teams[userTeamId]!.rosterManagement.rotation;
+      const userRotation =
+        state.world.teams[userTeamId]!.rosterManagement.rotation;
       expect(userRotation.some((e) => e.playerId === fromUser)).toBe(false);
       const otherRotation =
         state.world.teams[counterpartId]!.rosterManagement.rotation;

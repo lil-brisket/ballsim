@@ -72,11 +72,7 @@ export type FranchiseValueDriverKey =
   | "championships";
 
 export type FranchiseStanding =
-  | "emerging"
-  | "established"
-  | "major"
-  | "elite"
-  | "legacy";
+  "emerging" | "established" | "major" | "elite" | "legacy";
 
 export type FranchiseValueComponents = {
   market: number;
@@ -139,10 +135,7 @@ function trailingSeasons(
   return history.slice(-count);
 }
 
-function weightedAverage(
-  values: number[],
-  weights: readonly number[],
-): number {
+function weightedAverage(values: number[], weights: readonly number[]): number {
   let weightSum = 0;
   let valueSum = 0;
   for (let index = 0; index < values.length; index += 1) {
@@ -283,9 +276,7 @@ export function championshipDecayWeight(seasonsAgo: number): number {
   return Math.max(0.08, weight);
 }
 
-export function calculateChampionshipValue(
-  championshipAges: number[],
-): number {
+export function calculateChampionshipValue(championshipAges: number[]): number {
   let effective = 0;
   for (const age of championshipAges) {
     effective += championshipDecayWeight(age);
@@ -314,8 +305,7 @@ function calculateLeagueMultiplier(input: {
   // Map 1–99 composite onto [MIN, MAX] with 50 → midpoint.
   const t = (composite - 1) / 98;
   const multiplier =
-    LEAGUE_MULTIPLIER_MIN +
-    t * (LEAGUE_MULTIPLIER_MAX - LEAGUE_MULTIPLIER_MIN);
+    LEAGUE_MULTIPLIER_MIN + t * (LEAGUE_MULTIPLIER_MAX - LEAGUE_MULTIPLIER_MIN);
   return clamp(multiplier, LEAGUE_MULTIPLIER_MIN, LEAGUE_MULTIPLIER_MAX);
 }
 
@@ -336,10 +326,7 @@ function calculateInstantaneousMark(
   return sum * leagueMultiplier;
 }
 
-function applyInertia(
-  mark: number,
-  lastSeasonSnapshot: number | null,
-): number {
+function applyInertia(mark: number, lastSeasonSnapshot: number | null): number {
   if (lastSeasonSnapshot === null) {
     return mark;
   }
@@ -622,12 +609,7 @@ export function explainFranchiseValue(
     fanSentiment: brandInputs.fanSentiment,
   });
 
-  const revenueSeries = resolveRevenueSeries(
-    state,
-    teamId,
-    currentYear,
-    trail,
-  );
+  const revenueSeries = resolveRevenueSeries(state, teamId, currentYear, trail);
   const normalizedRevenue = weightedAverage(
     revenueSeries,
     REVENUE_YEAR_WEIGHTS.slice(0, revenueSeries.length),

@@ -86,11 +86,7 @@ describe("AI franchise decisions (owner ops)", () => {
       },
       baseCtx,
     );
-    const growthPrice = ticketPriceFromPreferences(
-      45,
-      55,
-      growth.preferences,
-    );
+    const growthPrice = ticketPriceFromPreferences(45, 55, growth.preferences);
     const winNowPrice = ticketPriceFromPreferences(45, 55, winNow.preferences);
     expect(growth.preferences.attendancePriority).toBeGreaterThan(
       winNow.preferences.attendancePriority,
@@ -116,9 +112,11 @@ describe("AI franchise decisions (owner ops)", () => {
       40_000_000,
       resolved.preferences,
     );
-    expect(category === "practice" || category === "training" || category === "youth").toBe(
-      true,
-    );
+    expect(
+      category === "practice" ||
+        category === "training" ||
+        category === "youth",
+    ).toBe(true);
   });
 
   it("high cashPreservation can no-op marketing", () => {

@@ -9,16 +9,25 @@ export type RenderedNarrative = {
   severity: NarrativeSeverity;
 };
 
-function num(ctx: Record<string, number | boolean | string>, key: string): number {
+function num(
+  ctx: Record<string, number | boolean | string>,
+  key: string,
+): number {
   const value = ctx[key];
   return typeof value === "number" ? value : Number(value) || 0;
 }
 
-function bool(ctx: Record<string, number | boolean | string>, key: string): boolean {
+function bool(
+  ctx: Record<string, number | boolean | string>,
+  key: string,
+): boolean {
   return ctx[key] === true;
 }
 
-function str(ctx: Record<string, number | boolean | string>, key: string): string {
+function str(
+  ctx: Record<string, number | boolean | string>,
+  key: string,
+): string {
   const value = ctx[key];
   return typeof value === "string" ? value : String(value ?? "");
 }
@@ -60,7 +69,8 @@ export function renderNarrative(
       if (candidate.resolve) {
         return {
           title: "Sponsor visibility concern eased",
-          summary: "Commercial partners are no longer escalating visibility worries.",
+          summary:
+            "Commercial partners are no longer escalating visibility worries.",
           body: "Attendance and demand signals have recovered enough that sponsor pressure is no longer active.",
           severity: "informational",
         };
@@ -76,7 +86,8 @@ export function renderNarrative(
       if (candidate.resolve) {
         return {
           title: "Media ownership pressure eased",
-          summary: "Coverage of ownership has cooled as commercial conditions improved.",
+          summary:
+            "Coverage of ownership has cooled as commercial conditions improved.",
           body: "Local media is no longer amplifying an unresolved attendance and sponsor spiral.",
           severity: "informational",
         };
@@ -140,8 +151,7 @@ export function renderNarrative(
       }
       return {
         title: "Below expectations",
-        summary:
-          "Results are materially short of ownership expectations.",
+        summary: "Results are materially short of ownership expectations.",
         body: `At ${num(ctx, "wins")}-${num(ctx, "losses")}, the franchise is underperforming its targets by roughly ${Math.abs(num(ctx, "gapPct"))}%${bool(ctx, "attendanceMoved") ? ", and gate demand is also shifting" : ""}.`,
         severity,
       };
@@ -149,8 +159,7 @@ export function renderNarrative(
       if (candidate.resolve) {
         return {
           title: "Facility gap closed",
-          summary:
-            "Facility investment is no longer lagging comparable teams.",
+          summary: "Facility investment is no longer lagging comparable teams.",
           body: "The earlier facility concern has cleared based on league-relative facility levels.",
           severity: "informational",
         };

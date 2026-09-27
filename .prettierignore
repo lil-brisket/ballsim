@@ -1,0 +1,16 @@
+node_modules
+.next
+out
+build
+coverage
+src/generated
+*.db
+*.db-journal
+package-lock.json
+pnpm-lock.yaml
+prisma/migrations
+.next/**
+.agents
+.claude
+.windsurf
+

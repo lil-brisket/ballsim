@@ -13,9 +13,7 @@ describe("GameSetupForm", () => {
 
     expect(screen.getByRole("heading", { name: "League" })).toBeTruthy();
     expect(screen.getByLabelText("Number of teams")).toBeTruthy();
-    expect(
-      screen.getByRole("button", { name: "Custom league" }),
-    ).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Custom league" })).toBeTruthy();
     expect(
       screen.getByRole("button", { name: "Standard template — 30 / 82 / 16" }),
     ).toBeTruthy();

@@ -9,12 +9,7 @@ import { developmentStageForAge } from "@/systems/player-generation-config";
 
 const N = 1000;
 const YEARS = 6;
-const PHYSICAL_KEYS = [
-  "speed",
-  "strength",
-  "athleticism",
-  "stamina",
-] as const;
+const PHYSICAL_KEYS = ["speed", "strength", "athleticism", "stamina"] as const;
 const SKILL_KEYS = [
   "finishing",
   "midRange",
@@ -64,7 +59,9 @@ function meanAttrChange(
   after: Player,
   keys: readonly (keyof Player["attributes"])[],
 ): number {
-  return mean(keys.map((key) => after.attributes[key] - before.attributes[key]));
+  return mean(
+    keys.map((key) => after.attributes[key] - before.attributes[key]),
+  );
 }
 
 const players: Player[] = [];
@@ -188,9 +185,7 @@ for (let year = 0; year < YEARS; year += 1) {
     meanAge: round2(mean(trajectory.map((player) => player.age))),
     meanOverall: round2(mean(afterOveralls)),
     meanGap: round2(
-      mean(
-        next.map((player) => player.potential.overall - overallOf(player)),
-      ),
+      mean(next.map((player) => player.potential.overall - overallOf(player))),
     ),
     meanChange: round2(mean(changes)),
     reachedPotential,

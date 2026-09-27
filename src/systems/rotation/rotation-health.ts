@@ -86,7 +86,9 @@ export function analyzeRotationHealth(
       meaningfulPlayerCount: 0,
       availabilitySummary: "No team",
       summaryLine: `0 / ${targetMinutes} MIN · 0 Players · Under`,
-      issues: [{ code: "no_team", message: "Team not found.", severity: "error" }],
+      issues: [
+        { code: "no_team", message: "Team not found.", severity: "error" },
+      ],
       positionCoverage: [],
       workloadWarnings: [],
       replacementRecommendations: [],
@@ -285,9 +287,7 @@ export function analyzeRotationHealth(
       );
     }
     if (questionableCount > 0) {
-      parts.push(
-        `${questionableCount} questionable`,
-      );
+      parts.push(`${questionableCount} questionable`);
     }
     if (outCount > 0) {
       parts.push(`${outCount} out`);

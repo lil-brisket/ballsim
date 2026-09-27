@@ -11,13 +11,7 @@ import { RotationQuarterVisualization } from "@/components/team-management/Rotat
 import type { EditableRotationRow } from "@/state/lineup-rotation-editor";
 import { rotationGroupLabel } from "@/state/lineup-rotation-editor";
 
-type SortKey =
-  | "name"
-  | "position"
-  | "planned"
-  | "role"
-  | "priority"
-  | "status";
+type SortKey = "name" | "position" | "planned" | "role" | "priority" | "status";
 
 const ROLE_OPTIONS = [
   "starter",
@@ -208,9 +202,7 @@ export function RotationTable(props: {
 }) {
   const [sortKey, setSortKey] = useState<SortKey>("planned");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
-  const [selectedPlayerId, setSelectedPlayerId] = useState<string | null>(
-    null,
-  );
+  const [selectedPlayerId, setSelectedPlayerId] = useState<string | null>(null);
 
   const sorted = useMemo(() => {
     return [...props.rows].sort((a, b) => {

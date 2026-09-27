@@ -1,4 +1,7 @@
-import { getActiveOwnedFranchise, withOwnedFranchise } from "@/state/owner-context";
+import {
+  getActiveOwnedFranchise,
+  withOwnedFranchise,
+} from "@/state/owner-context";
 /**
  * Owner franchise identity confirmation (new-game branding step).
  *
@@ -11,13 +14,14 @@ import {
   isTeamColorPaletteId,
   validateTeamBranding,
 } from "@/domain/entities/team-branding";
-import { isTeamLogoId, type TeamLogoId } from "@/data/team-branding/logo-catalog";
+import {
+  isTeamLogoId,
+  type TeamLogoId,
+} from "@/data/team-branding/logo-catalog";
 import { validateTeamNickname } from "@/domain/team-nickname";
 import type { GameState } from "@/state/game-state";
 import { TEAM_NICKNAMES } from "@/data/league/team-nicknames";
-import {
-  TEAM_COLOR_PALETTES,
-} from "@/data/team-branding/color-palettes";
+import { TEAM_COLOR_PALETTES } from "@/data/team-branding/color-palettes";
 import { TEAM_LOGO_IDS } from "@/data/team-branding/logo-catalog";
 import type { Rng } from "@/domain/rng";
 import { createSeededRng } from "@/domain/rng";
@@ -33,8 +37,7 @@ export type ApplyOwnerFranchiseBrandingInput = {
 };
 
 export type ApplyOwnerFranchiseBrandingResult =
-  | { ok: true; state: GameState }
-  | { ok: false; error: string };
+  { ok: true; state: GameState } | { ok: false; error: string };
 
 export type RandomizedTeamIdentity = {
   nickname: string;
@@ -111,8 +114,9 @@ export function applyOwnerFranchiseBranding(
   const hasPrimary = isPresentColor(input.primaryColor);
   const hasSecondary = isPresentColor(input.secondaryColor);
   const hasAccent = isPresentColor(input.accentColor);
-  const presentCount = [hasPrimary, hasSecondary, hasAccent].filter(Boolean)
-    .length;
+  const presentCount = [hasPrimary, hasSecondary, hasAccent].filter(
+    Boolean,
+  ).length;
 
   let branding;
   if (presentCount === 3) {
@@ -185,9 +189,7 @@ export function randomizeTeamIdentityDraft(input: {
 }): RandomizedTeamIdentity {
   const rng = input.rng ?? createSeededRng(Date.now());
 
-  const used = new Set(
-    input.usedNicknames.map((name) => name.toLowerCase()),
-  );
+  const used = new Set(input.usedNicknames.map((name) => name.toLowerCase()));
   const availableNicknames = TEAM_NICKNAMES.filter((name) => {
     const key = name.toLowerCase();
     if (key === input.currentNickname.toLowerCase()) {
@@ -228,8 +230,7 @@ export function randomizeTeamIdentityDraft(input: {
 
   const palette = TEAM_COLOR_PALETTES[0]!;
   const logoId =
-    TEAM_LOGO_IDS.find((id) => id !== input.currentLogoId) ??
-    TEAM_LOGO_IDS[0]!;
+    TEAM_LOGO_IDS.find((id) => id !== input.currentLogoId) ?? TEAM_LOGO_IDS[0]!;
   const nickname =
     nicknamePool.find(
       (name) => name.toLowerCase() !== input.currentNickname.toLowerCase(),

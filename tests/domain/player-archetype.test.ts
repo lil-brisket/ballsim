@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { PLAYER_POSITIONS, type PlayerAttributes } from "@/domain/entities/player";
+import {
+  PLAYER_POSITIONS,
+  type PlayerAttributes,
+} from "@/domain/entities/player";
 import {
   ARCHETYPE_ATTRIBUTE_WEIGHTS,
   ARCHETYPE_COMPATIBLE_POSITIONS,
@@ -52,9 +55,9 @@ describe("player archetype catalog", () => {
       );
     }
     for (const archetype of PLAYER_ARCHETYPES) {
-      expect(Object.keys(ARCHETYPE_ATTRIBUTE_WEIGHTS[archetype]).sort()).toEqual(
-        expected,
-      );
+      expect(
+        Object.keys(ARCHETYPE_ATTRIBUTE_WEIGHTS[archetype]).sort(),
+      ).toEqual(expected);
     }
   });
 

@@ -86,7 +86,9 @@ export default async function FreeAgencyPage({
       </div>
 
       {!hub.active ? (
-        <EmptyState message={hub.inactiveReason ?? "Free agency is not active."} />
+        <EmptyState
+          message={hub.inactiveReason ?? "Free agency is not active."}
+        />
       ) : (
         <>
           {hub.decisions.length > 0 ? (
@@ -179,7 +181,9 @@ export default async function FreeAgencyPage({
                         {agent.firstName} {agent.lastName}
                       </PlayerEntityLink>
                     </td>
-                    <td className="px-3 py-2 text-zinc-400">{agent.position}</td>
+                    <td className="px-3 py-2 text-zinc-400">
+                      {agent.position}
+                    </td>
                     <td className="px-3 py-2 text-zinc-400">{agent.age}</td>
                     <td className="px-3 py-2 text-zinc-200">{agent.overall}</td>
                     <td className="px-3 py-2">
@@ -236,7 +240,11 @@ export default async function FreeAgencyPage({
                             name="returnPath"
                             value={returnPath}
                           />
-                          <input type="hidden" name="salary" value={2_000_000} />
+                          <input
+                            type="hidden"
+                            name="salary"
+                            value={2_000_000}
+                          />
                           <input type="hidden" name="years" value={1} />
                           <button
                             type="submit"
@@ -288,8 +296,8 @@ export default async function FreeAgencyPage({
               Finish free agency (legacy domain action)
             </summary>
             <p className="mt-2 text-xs text-zinc-500">
-              Prefers Calendar for progression. This pre-existing action advances
-              the league phase and one simulation day.
+              Prefers Calendar for progression. This pre-existing action
+              advances the league phase and one simulation day.
             </p>
             <form action={finishFreeAgencyAction} className="mt-3">
               <input type="hidden" name="saveId" value={saveId} />

@@ -210,7 +210,9 @@ describe("calculatePassProbabilities", () => {
         }),
       }),
     );
-    expect(stronger.assistProbability).toBeGreaterThan(weaker.assistProbability);
+    expect(stronger.assistProbability).toBeGreaterThan(
+      weaker.assistProbability,
+    );
   });
 
   it("does not set assistProbability equal to passSuccessProbability", () => {
@@ -482,43 +484,40 @@ describe("resolvePass validation", () => {
   it("rejects the same passer and receiver", () => {
     const passer = createPlayer({ id: "same_player" });
     expect(() =>
-      resolvePass(
-        baseInput({ passer, receiver: passer }),
-        createTestRng(),
-      ),
+      resolvePass(baseInput({ passer, receiver: passer }), createTestRng()),
     ).toThrow(/different/);
   });
 
   it("rejects passing below RATING_MIN", () => {
     const passer = createPlayer({ id: "bad_passing_low" });
     passer.attributes.passing = RATING_MIN - 1;
-    expect(() =>
-      resolvePass(baseInput({ passer }), createTestRng()),
-    ).toThrow(/passing/);
+    expect(() => resolvePass(baseInput({ passer }), createTestRng())).toThrow(
+      /passing/,
+    );
   });
 
   it("rejects passing above RATING_MAX", () => {
     const passer = createPlayer({ id: "bad_passing_high" });
     passer.attributes.passing = RATING_MAX + 1;
-    expect(() =>
-      resolvePass(baseInput({ passer }), createTestRng()),
-    ).toThrow(/passing/);
+    expect(() => resolvePass(baseInput({ passer }), createTestRng())).toThrow(
+      /passing/,
+    );
   });
 
   it("rejects ball handling below RATING_MIN", () => {
     const passer = createPlayer({ id: "bad_handling_low" });
     passer.attributes.ballHandling = 0;
-    expect(() =>
-      resolvePass(baseInput({ passer }), createTestRng()),
-    ).toThrow(/ballHandling/);
+    expect(() => resolvePass(baseInput({ passer }), createTestRng())).toThrow(
+      /ballHandling/,
+    );
   });
 
   it("rejects ball handling above RATING_MAX", () => {
     const passer = createPlayer({ id: "bad_handling_high" });
     passer.attributes.ballHandling = 100;
-    expect(() =>
-      resolvePass(baseInput({ passer }), createTestRng()),
-    ).toThrow(/ballHandling/);
+    expect(() => resolvePass(baseInput({ passer }), createTestRng())).toThrow(
+      /ballHandling/,
+    );
   });
 
   it("rejects defensive pressure outside rating bounds", () => {

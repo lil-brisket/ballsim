@@ -38,7 +38,10 @@ function formatRate(value: number | null): string {
   return value == null ? "—" : value.toFixed(1);
 }
 
-function displayedRank(row: StandingsRowEnriched, kind: StandingsGroup["kind"]): number {
+function displayedRank(
+  row: StandingsRowEnriched,
+  kind: StandingsGroup["kind"],
+): number {
   if (kind === "overall") {
     return row.leagueRank;
   }
@@ -48,7 +51,10 @@ function displayedRank(row: StandingsRowEnriched, kind: StandingsGroup["kind"]):
   return row.conferenceRank;
 }
 
-function displayedGb(row: StandingsRowEnriched, kind: StandingsGroup["kind"]): number {
+function displayedGb(
+  row: StandingsRowEnriched,
+  kind: StandingsGroup["kind"],
+): number {
   if (kind === "overall") {
     return row.gamesBackLeague;
   }
@@ -151,16 +157,12 @@ function columnsFor(
       {
         key: "ortg",
         label: "ORTG",
-        render: () => (
-          <span title="Season possessions are not tracked">—</span>
-        ),
+        render: () => <span title="Season possessions are not tracked">—</span>,
       },
       {
         key: "drtg",
         label: "DRTG",
-        render: () => (
-          <span title="Season possessions are not tracked">—</span>
-        ),
+        render: () => <span title="Season possessions are not tracked">—</span>,
       },
     );
   }
@@ -201,7 +203,10 @@ function columnsFor(
 export function StandingsTable(props: {
   saveId: string;
   group: StandingsGroup;
-  page: Pick<StandingsPageView, "mode" | "stats" | "playoffTeamCount" | "ownedTeamIds">;
+  page: Pick<
+    StandingsPageView,
+    "mode" | "stats" | "playoffTeamCount" | "ownedTeamIds"
+  >;
 }) {
   const ownedIds = new Set(props.page.ownedTeamIds);
   const columns = columnsFor(
@@ -245,8 +250,7 @@ export function StandingsTable(props: {
           <tbody>
             {props.group.rows.map((row) => {
               const rank = displayedRank(row, props.group.kind);
-              const cutoff =
-                showCutoffLine && rank === props.group.cutoffRank;
+              const cutoff = showCutoffLine && rank === props.group.cutoffRank;
               return (
                 <tr
                   key={row.teamId}
@@ -264,7 +268,9 @@ export function StandingsTable(props: {
                         "px-3 py-2",
                         col.key === "rank"
                           ? "font-mono text-zinc-500"
-                          : col.key !== "team" && col.key !== "label" && col.key !== "action"
+                          : col.key !== "team" &&
+                              col.key !== "label" &&
+                              col.key !== "action"
                             ? "font-mono"
                             : null,
                         col.align === "right" && "text-right",

@@ -119,9 +119,7 @@ export function snapshotAllFranchiseIdentities(
 }
 
 /** Capture identity axes for drift detection. */
-export function captureIdentityAxes(
-  state: GameState,
-): Record<
+export function captureIdentityAxes(state: GameState): Record<
   string,
   {
     aiProfile: AiProfile;

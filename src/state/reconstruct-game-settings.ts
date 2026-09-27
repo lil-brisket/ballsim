@@ -108,7 +108,8 @@ export function reconstructGameSettingsFromState(
 
   return {
     league: {
-      teamCount: teamCount > 0 ? teamCount : DEFAULT_GAME_SETTINGS.league.teamCount,
+      teamCount:
+        teamCount > 0 ? teamCount : DEFAULT_GAME_SETTINGS.league.teamCount,
       conferenceCount: resolvedConferenceCount,
       divisionsEnabled,
       area: DEFAULT_GAME_SETTINGS.league.area,
@@ -117,7 +118,9 @@ export function reconstructGameSettingsFromState(
     ownership: { ...DEFAULT_GAME_SETTINGS.ownership },
     regularSeason: {
       gamesPerTeam,
-      tradeDeadlineRule: { ...DEFAULT_GAME_SETTINGS.regularSeason.tradeDeadlineRule },
+      tradeDeadlineRule: {
+        ...DEFAULT_GAME_SETTINGS.regularSeason.tradeDeadlineRule,
+      },
     },
     playoffs: {
       playoffTeams,

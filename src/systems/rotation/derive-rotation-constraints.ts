@@ -98,8 +98,7 @@ export function deriveRotationConstraints(
     preferredPositions: [...input.preferredPositions],
     secondaryPositions: [...(input.secondaryPositions ?? [])],
     minutePriorityBias: input.minutePriorityBias ?? 0,
-    overrideMedicalRecommendation:
-      input.overrideMedicalRecommendation === true,
+    overrideMedicalRecommendation: input.overrideMedicalRecommendation === true,
   };
 }
 

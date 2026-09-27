@@ -58,7 +58,10 @@ describe("staff contracts / free agency", () => {
       id: offerId,
       staffId: fa.id,
       teamId,
-      annualSalary: Math.max(fa.preferences.desiredSalary, fa.preferences.minimumSalary),
+      annualSalary: Math.max(
+        fa.preferences.desiredSalary,
+        fa.preferences.minimumSalary,
+      ),
       years: 3,
     }).state;
     state = negotiateStaffOffer(state, offerId).state;

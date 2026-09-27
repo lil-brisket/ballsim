@@ -4,17 +4,9 @@
  */
 
 export type AiManagementPreset =
-  | "off"
-  | "continuity"
-  | "smart"
-  | "full_management"
-  | "custom";
+  "off" | "continuity" | "smart" | "full_management" | "custom";
 
-export type OperationalPhaseMode =
-  | "off"
-  | "continuity"
-  | "routine"
-  | "full";
+export type OperationalPhaseMode = "off" | "continuity" | "routine" | "full";
 
 export type TradesPhaseMode = "off" | "user_only" | "full";
 

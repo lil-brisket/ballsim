@@ -13,7 +13,10 @@ import {
 import { addCalendarDays } from "@/domain/calendar-date";
 import type { ContractInput } from "@/domain/entities/contract";
 import type { Player } from "@/domain/entities/player";
-import { PLAYER_POSITIONS, type PlayerPosition } from "@/domain/entities/player";
+import {
+  PLAYER_POSITIONS,
+  type PlayerPosition,
+} from "@/domain/entities/player";
 import type { StaffRole } from "@/domain/entities/staff";
 import { createDomainEvent, type DomainEvent } from "@/domain/events";
 import {
@@ -30,11 +33,7 @@ import {
   type AiAssistRuntimeState,
   type GameState,
 } from "@/state/game-state";
-import {
-  acceptOffer,
-  listFreeAgents,
-  makeOffer,
-} from "@/systems/free-agency";
+import { acceptOffer, listFreeAgents, makeOffer } from "@/systems/free-agency";
 import {
   hasAppliedGameplayConsequence,
   withAppliedGameplayConsequence,
@@ -175,10 +174,7 @@ function runUserFranchiseAssistForTeam(
           },
         }),
       );
-      if (
-        decision.outcome === "RECOMMEND" &&
-        need.actionId === "DRAFT_SCOUT"
-      ) {
+      if (decision.outcome === "RECOMMEND" && need.actionId === "DRAFT_SCOUT") {
         const scout = recommendDraftProspect(current, teamId, date, decision);
         current = scout.state;
         events.push(...scout.events);
@@ -655,7 +651,10 @@ function pickBestAffordableFreeAgent(
     if (capSpace >= AI_FA_MIN_SALARY) {
       // Smart: never sign a "max-level" free agent under routine.
       if (options.preferCheap) {
-        const overall = calculatePlayerOverall(player.position, player.attributes);
+        const overall = calculatePlayerOverall(
+          player.position,
+          player.attributes,
+        );
         if (overall >= 80) {
           continue;
         }
@@ -666,10 +665,7 @@ function pickBestAffordableFreeAgent(
   return undefined;
 }
 
-function missingPositions(
-  state: GameState,
-  teamId: TeamId,
-): PlayerPosition[] {
+function missingPositions(state: GameState, teamId: TeamId): PlayerPosition[] {
   const counts = new Map<PlayerPosition, number>();
   for (const position of PLAYER_POSITIONS) {
     counts.set(position, 0);
@@ -685,7 +681,9 @@ function missingPositions(
     }
     counts.set(player.position, (counts.get(player.position) ?? 0) + 1);
   }
-  return PLAYER_POSITIONS.filter((position) => (counts.get(position) ?? 0) === 0);
+  return PLAYER_POSITIONS.filter(
+    (position) => (counts.get(position) ?? 0) === 0,
+  );
 }
 
 function ensureAiAssistState(state: GameState, teamId: TeamId): GameState {
@@ -700,7 +698,8 @@ function ensureAiAssistState(state: GameState, teamId: TeamId): GameState {
 
 function syncSeasonCounters(state: GameState, teamId: TeamId): GameState {
   const year = state.competition.season.year;
-  const counters = getOwnedFranchise(state, teamId).aiAssistState.seasonCounters;
+  const counters = getOwnedFranchise(state, teamId).aiAssistState
+    .seasonCounters;
   if (counters.seasonYear === year) {
     return state;
   }
@@ -759,7 +758,8 @@ function incrementAssistCounters(
   teamId: TeamId,
   actionId: string,
 ): GameState {
-  const counters = getOwnedFranchise(state, teamId).aiAssistState.seasonCounters;
+  const counters = getOwnedFranchise(state, teamId).aiAssistState
+    .seasonCounters;
   const freeAgent =
     actionId.includes("FA") ||
     actionId === "MAINTAIN_MIN_ROSTER" ||

@@ -3,7 +3,10 @@ import type { TradeProposal } from "@/domain/entities/trade-proposal";
 import type { DraftPickId, PlayerId, TeamId } from "@/domain/ids";
 import type { GameState } from "@/state/game-state";
 import { TRADE_FINDER_MAX_CANDIDATES } from "@/systems/trades-config";
-import { getTradeBlock, type TradeBlockAssetRef } from "@/systems/trades/trade-block";
+import {
+  getTradeBlock,
+  type TradeBlockAssetRef,
+} from "@/systems/trades/trade-block";
 import { validateTrade } from "@/systems/trades/trade-validation";
 
 export type TradeFinderAsset =
@@ -172,15 +175,17 @@ function buildProposal(
   return {
     sideA: {
       teamId: sideATeamId,
-      playerIds:
-        sideAAsset.kind === "player" ? [sideAAsset.playerId] : [],
+      playerIds: sideAAsset.kind === "player" ? [sideAAsset.playerId] : [],
       draftPickIds:
         sideAAsset.kind === "draftPick" ? [sideAAsset.draftPickId] : [],
     },
     sideB: {
       teamId: sideBTeamId,
       playerIds: sideBAssets
-        .filter((a): a is { kind: "player"; playerId: PlayerId } => a.kind === "player")
+        .filter(
+          (a): a is { kind: "player"; playerId: PlayerId } =>
+            a.kind === "player",
+        )
         .map((a) => a.playerId),
       draftPickIds: sideBAssets
         .filter(
@@ -210,7 +215,9 @@ function sortedOtherTeamIds(state: GameState, teamId: TeamId): TeamId[] {
     .sort((a, b) => (a < b ? -1 : a > b ? 1 : 0));
 }
 
-function sortBlockAssets(assets: readonly TradeBlockAsset[]): TradeBlockAsset[] {
+function sortBlockAssets(
+  assets: readonly TradeBlockAsset[],
+): TradeBlockAsset[] {
   return [...assets].sort((a, b) => {
     const keyA = assetSortKey(a);
     const keyB = assetSortKey(b);

@@ -1,4 +1,7 @@
-export type { DomainEvent, DomainEventType } from "@/domain/events/domain-event";
+export type {
+  DomainEvent,
+  DomainEventType,
+} from "@/domain/events/domain-event";
 export {
   DOMAIN_EVENT_TYPES,
   createDomainEvent,

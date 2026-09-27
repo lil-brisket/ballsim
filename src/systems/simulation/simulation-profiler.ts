@@ -36,7 +36,13 @@ export type SeasonProfilerBuckets = {
 
 export type SimulationProfiler = {
   recordGame(cost: GameSimCostModel): void;
-  addSeason(bucket: keyof Omit<SeasonProfilerBuckets, "totalMs" | "days" | "gamesSimulated" | "playoffGames">, ms: number): void;
+  addSeason(
+    bucket: keyof Omit<
+      SeasonProfilerBuckets,
+      "totalMs" | "days" | "gamesSimulated" | "playoffGames"
+    >,
+    ms: number,
+  ): void;
   bumpDay(): void;
   bumpGames(count: number): void;
   bumpPlayoffGames(count: number): void;
@@ -137,7 +143,9 @@ export function formatSeasonProfiler(season: SeasonProfilerBuckets): string {
   ].join("\n");
 }
 
-export function averageGameCost(games: readonly GameSimCostModel[]): GameSimCostModel | null {
+export function averageGameCost(
+  games: readonly GameSimCostModel[],
+): GameSimCostModel | null {
   if (games.length === 0) {
     return null;
   }

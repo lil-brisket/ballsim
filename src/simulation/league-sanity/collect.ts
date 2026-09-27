@@ -115,7 +115,9 @@ function isExpansionTeam(state: GameState, teamId: TeamId): boolean {
   if (!ops) {
     return false;
   }
-  const leagueStart = getActiveOwnedFranchise(state).ownerStartSeasonYear ?? ops.foundedSeasonYear;
+  const leagueStart =
+    getActiveOwnedFranchise(state).ownerStartSeasonYear ??
+    ops.foundedSeasonYear;
   return ops.foundedSeasonYear > leagueStart;
 }
 

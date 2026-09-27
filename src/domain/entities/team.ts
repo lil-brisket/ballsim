@@ -155,9 +155,7 @@ export function createTeam(input: TeamInput): Team {
   };
 }
 
-function assertRosterManagement(
-  value: unknown,
-): TeamRosterManagement {
+function assertRosterManagement(value: unknown): TeamRosterManagement {
   if (!isTeamRosterManagement(value)) {
     throw new Error(
       "Team rosterManagement must be a valid TeamRosterManagement object.",
@@ -226,11 +224,7 @@ function assertPlayStyle(value: unknown): void {
 }
 
 function assertRating(value: number, field: string): void {
-  if (
-    !Number.isInteger(value) ||
-    value < RATING_MIN ||
-    value > RATING_MAX
-  ) {
+  if (!Number.isInteger(value) || value < RATING_MIN || value > RATING_MAX) {
     throw new Error(
       `Team ${field} must be an integer between ${RATING_MIN} and ${RATING_MAX}.`,
     );

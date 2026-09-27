@@ -8,7 +8,13 @@ import {
   deserializeGameState,
   serializeGameState,
 } from "@/persistence/mappers/game-state-mapper";
-import { asContractId, asPlayerId, asTeamId, type ContractId, type PlayerId } from "@/domain/ids";
+import {
+  asContractId,
+  asPlayerId,
+  asTeamId,
+  type ContractId,
+  type PlayerId,
+} from "@/domain/ids";
 import type { Player, PlayerAttributes } from "@/domain/entities/player";
 import { getActiveOwnedFranchise } from "@/state/owner-context";
 
@@ -37,11 +43,11 @@ const V4_ATTRIBUTE_KEYS = [
 describe("GameState schema migration", () => {
   it("migrates schemaVersion 1 saves through to current schema version", () => {
     const modern = createInitialGameState({
-    saveId: "save_migrate",
+      saveId: "save_migrate",
       rngSeed: 5,
       nowIso: "2026-08-13T12:00:00.000Z",
-    settings: CBL_GAME_SETTINGS,
-  });
+      settings: CBL_GAME_SETTINGS,
+    });
 
     const playerId = asPlayerId("player_legacy");
     const teamId = modern.user.activeOwnerTeamId;
@@ -111,15 +117,15 @@ describe("GameState schema migration", () => {
     });
     expect(migrated.competition.games.game_legacy?.events).toEqual([]);
     expect(migrated.competition.games.game_legacy?.status).toBe("scheduled");
-    expect(
-      "homeScore" in (migrated.competition.games.game_legacy ?? {}),
-    ).toBe(false);
-    expect(
-      "awayScore" in (migrated.competition.games.game_legacy ?? {}),
-    ).toBe(false);
-    expect(
-      "boxScore" in (migrated.competition.games.game_legacy ?? {}),
-    ).toBe(false);
+    expect("homeScore" in (migrated.competition.games.game_legacy ?? {})).toBe(
+      false,
+    );
+    expect("awayScore" in (migrated.competition.games.game_legacy ?? {})).toBe(
+      false,
+    );
+    expect("boxScore" in (migrated.competition.games.game_legacy ?? {})).toBe(
+      false,
+    );
 
     const player = migrated.world.players[playerId]!;
     expect(player.attributes.midRange).toBe(80);
@@ -152,9 +158,7 @@ describe("GameState schema migration", () => {
 
     const migratedContract = migrated.business.contracts[contractId]!;
     expect(migratedContract.startYear).toBe(migrated.competition.season.year);
-    expect(migratedContract.endYear).toBe(
-      migrated.competition.season.year + 1,
-    );
+    expect(migratedContract.endYear).toBe(migrated.competition.season.year + 1);
     expect(migratedContract.salaryByYear).toEqual({
       [String(migrated.competition.season.year)]: 1_000_000,
       [String(migrated.competition.season.year + 1)]: 1_000_000,
@@ -167,11 +171,11 @@ describe("GameState schema migration", () => {
 
   it("migrates schemaVersion 2 players to current schema deterministically", () => {
     const modern = createInitialGameState({
-    saveId: "save_v2",
+      saveId: "save_v2",
       rngSeed: 9,
       nowIso: "2026-08-13T12:00:00.000Z",
-    settings: CBL_GAME_SETTINGS,
-  });
+      settings: CBL_GAME_SETTINGS,
+    });
 
     const playerId = asPlayerId("player_v2");
     const teamId = asTeamId(String(modern.user.activeOwnerTeamId));
@@ -250,11 +254,11 @@ describe("GameState schema migration", () => {
 
   it("migrates schemaVersion 3 players to current schema with distinguishable mappings", () => {
     const modern = createInitialGameState({
-    saveId: "save_v3",
+      saveId: "save_v3",
       rngSeed: 11,
       nowIso: "2026-08-13T12:00:00.000Z",
-    settings: CBL_GAME_SETTINGS,
-  });
+      settings: CBL_GAME_SETTINGS,
+    });
 
     const playerId = asPlayerId("player_v3");
     const teamId = modern.user.activeOwnerTeamId;
@@ -355,11 +359,11 @@ describe("GameState schema migration", () => {
 
   it("migrates schemaVersion 4 players by adding deterministic archetype only", () => {
     const modern = createInitialGameState({
-    saveId: "save_v4",
+      saveId: "save_v4",
       rngSeed: 17,
       nowIso: "2026-08-13T12:00:00.000Z",
-    settings: CBL_GAME_SETTINGS,
-  });
+      settings: CBL_GAME_SETTINGS,
+    });
 
     const playerId = asPlayerId("player_v4");
     const teamId = modern.user.activeOwnerTeamId;
@@ -441,11 +445,11 @@ describe("GameState schema migration", () => {
 
   it("migrates schemaVersion 5 players by adding deterministic USA nationality only", () => {
     const modern = createInitialGameState({
-    saveId: "save_v5",
+      saveId: "save_v5",
       rngSeed: 21,
       nowIso: "2026-08-13T12:00:00.000Z",
-    settings: CBL_GAME_SETTINGS,
-  });
+      settings: CBL_GAME_SETTINGS,
+    });
 
     const playerId = asPlayerId("player_v5");
     const teamId = modern.user.activeOwnerTeamId;
@@ -547,11 +551,11 @@ describe("GameState schema migration", () => {
 
   it("sets contractId to null when zero or multiple contracts match", () => {
     const modern = createInitialGameState({
-    saveId: "save_v2_multi",
+      saveId: "save_v2_multi",
       rngSeed: 3,
       nowIso: "2026-08-13T12:00:00.000Z",
-    settings: CBL_GAME_SETTINGS,
-  });
+      settings: CBL_GAME_SETTINGS,
+    });
 
     const playerId = asPlayerId("player_multi");
     const teamId = modern.user.activeOwnerTeamId;
@@ -603,11 +607,11 @@ describe("GameState schema migration", () => {
 
   it("migrates schemaVersion 6 teams to schemaVersion 7 relationship fields", () => {
     const modern = createInitialGameState({
-    saveId: "save_v6_teams",
+      saveId: "save_v6_teams",
       rngSeed: 11,
       nowIso: "2026-08-13T12:00:00.000Z",
-    settings: CBL_GAME_SETTINGS,
-  });
+      settings: CBL_GAME_SETTINGS,
+    });
 
     const controlledTeamId = modern.user.activeOwnerTeamId;
     const controlledTeam = modern.world.teams[controlledTeamId]!;
@@ -649,7 +653,9 @@ describe("GameState schema migration", () => {
     expect(migratedTeam.arenaId).toBe(`arena_${controlledTeamId}`);
     expect(migratedTeam.reputation).toBe(50);
     expect(migratedTeam.playStyle).toEqual(NEUTRAL_TEAM_PLAY_STYLE);
-    expect(migratedTeam.coachingPhilosophy).toEqual(DEFAULT_COACHING_PHILOSOPHY);
+    expect(migratedTeam.coachingPhilosophy).toEqual(
+      DEFAULT_COACHING_PHILOSOPHY,
+    );
     expect(migratedTeam.name).toBe(controlledTeam.name);
     expect(migratedTeam.city).toBe(controlledTeam.city);
     expect(migratedTeam.abbreviation).toBe(controlledTeam.abbreviation);
@@ -657,11 +663,11 @@ describe("GameState schema migration", () => {
 
   it("migrates schemaVersion 10 teams by adding neutral playStyle only", () => {
     const modern = createInitialGameState({
-    saveId: "save_v10_teams",
+      saveId: "save_v10_teams",
       rngSeed: 14,
       nowIso: "2026-08-14T12:00:00.000Z",
-    settings: CBL_GAME_SETTINGS,
-  });
+      settings: CBL_GAME_SETTINGS,
+    });
 
     const teamIds = Object.keys(modern.world.teams);
     expect(teamIds.length).toBeGreaterThanOrEqual(2);
@@ -728,27 +734,19 @@ describe("GameState schema migration", () => {
     expect(migratedA.coachingPhilosophy).toEqual(DEFAULT_COACHING_PHILOSOPHY);
     expect(migratedB.coachingPhilosophy).toEqual(DEFAULT_COACHING_PHILOSOPHY);
 
-    const {
-      playStyle: _a,
-      coachingPhilosophy: _ca,
-      ...fieldsA
-    } = migratedA;
-    const {
-      playStyle: _b,
-      coachingPhilosophy: _cb,
-      ...fieldsB
-    } = migratedB;
+    const { playStyle: _a, coachingPhilosophy: _ca, ...fieldsA } = migratedA;
+    const { playStyle: _b, coachingPhilosophy: _cb, ...fieldsB } = migratedB;
     expect(fieldsA).toEqual(v10Teams[teamAId]);
     expect(fieldsB).toEqual(v10Teams[teamBId]);
   });
 
   it("migrates schemaVersion 11 teams by adding balanced coachingPhilosophy only", () => {
     const modern = createInitialGameState({
-    saveId: "save_v11_teams",
+      saveId: "save_v11_teams",
       rngSeed: 15,
       nowIso: "2026-08-14T12:00:00.000Z",
-    settings: CBL_GAME_SETTINGS,
-  });
+      settings: CBL_GAME_SETTINGS,
+    });
 
     const teamIds = Object.keys(modern.world.teams);
     expect(teamIds.length).toBeGreaterThanOrEqual(2);
@@ -768,7 +766,10 @@ describe("GameState schema migration", () => {
       insideFrequency: 61,
     };
 
-    const stripCoaching = (team: typeof teamA, playStyle: typeof customPlayStyleA) => {
+    const stripCoaching = (
+      team: typeof teamA,
+      playStyle: typeof customPlayStyleA,
+    ) => {
       const { coachingPhilosophy: _coachingPhilosophy, ...rest } = team;
       return { ...rest, playStyle: { ...playStyle } };
     };
@@ -830,11 +831,11 @@ describe("GameState schema migration", () => {
 
   it("serializes coachingPhilosophy on current teams", () => {
     const modern = createInitialGameState({
-    saveId: "save_current_coaching",
+      saveId: "save_current_coaching",
       rngSeed: 16,
       nowIso: "2026-08-14T12:00:00.000Z",
-    settings: CBL_GAME_SETTINGS,
-  });
+      settings: CBL_GAME_SETTINGS,
+    });
     const json = serializeGameState(modern);
     const restored = deserializeGameState(json);
     const team = Object.values(restored.world.teams)[0]!;
@@ -843,11 +844,11 @@ describe("GameState schema migration", () => {
 
   it("migrates schemaVersion 7 games to score, events, and playerStats", () => {
     const modern = createInitialGameState({
-    saveId: "save_v7_games",
+      saveId: "save_v7_games",
       rngSeed: 12,
       nowIso: "2026-08-13T12:00:00.000Z",
-    settings: CBL_GAME_SETTINGS,
-  });
+      settings: CBL_GAME_SETTINGS,
+    });
 
     const homeTeamId = modern.user.activeOwnerTeamId;
     const awayTeamId = Object.keys(modern.world.teams).find(
@@ -968,7 +969,7 @@ describe("GameState schema migration", () => {
         freeThrowsMade: 0,
         freeThrowsAttempted: 0,
         touches: 0,
-      started: false,
+        started: false,
       },
     ]);
     expect(finalGame.periodScores).toEqual([]);
@@ -1140,7 +1141,7 @@ describe("GameState schema migration", () => {
       freeThrowsMade: 0,
       freeThrowsAttempted: 0,
       touches: 0,
-    started: false,
+      started: false,
     });
   });
 
@@ -1322,16 +1323,16 @@ describe("GameState schema migration", () => {
       freeThrowsMade: 2,
       freeThrowsAttempted: 2,
       touches: 0,
-    started: false,
+      started: false,
     });
   });
 
   it("round-trips current schema version including rngState", () => {
     const state = createInitialGameState({
-    saveId: "save_current",
+      saveId: "save_current",
       rngSeed: 9,
-    settings: CBL_GAME_SETTINGS,
-  });
+      settings: CBL_GAME_SETTINGS,
+    });
     const restored = deserializeGameState(serializeGameState(state));
     expect(restored.meta.schemaVersion).toBe(GAME_STATE_SCHEMA_VERSION);
     expect(restored.meta.rngState).toBe(state.meta.rngState);
@@ -1340,10 +1341,10 @@ describe("GameState schema migration", () => {
 
   it("rejects a future schemaVersion without attempting migration", () => {
     const state = createInitialGameState({
-    saveId: "save_future",
+      saveId: "save_future",
       rngSeed: 3,
-    settings: CBL_GAME_SETTINGS,
-  });
+      settings: CBL_GAME_SETTINGS,
+    });
     const futureJson = JSON.stringify({
       ...state,
       meta: { ...state.meta, schemaVersion: GAME_STATE_SCHEMA_VERSION + 1 },
@@ -1357,11 +1358,11 @@ describe("GameState schema migration", () => {
 
   it("migrates schemaVersion 12 standings by recomputing expanded TeamStanding", () => {
     const modern = createInitialGameState({
-    saveId: "save_v12_standings",
+      saveId: "save_v12_standings",
       rngSeed: 17,
       nowIso: "2026-08-14T12:00:00.000Z",
-    settings: CBL_GAME_SETTINGS,
-  });
+      settings: CBL_GAME_SETTINGS,
+    });
 
     const teamIds = Object.keys(modern.world.teams).sort();
     const homeTeamId = teamIds[0]!;
@@ -1452,11 +1453,11 @@ describe("GameState schema migration", () => {
 
   it("migrates schemaVersion 13 saves by adding empty playoffs", () => {
     const modern = createInitialGameState({
-    saveId: "save_v13_playoffs",
+      saveId: "save_v13_playoffs",
       rngSeed: 21,
       nowIso: "2026-08-14T12:00:00.000Z",
-    settings: CBL_GAME_SETTINGS,
-  });
+      settings: CBL_GAME_SETTINGS,
+    });
 
     const { playoffs: _removed, ...competitionWithoutPlayoffs } =
       modern.competition;
@@ -1483,11 +1484,11 @@ describe("GameState schema migration", () => {
 
   it("migrates schemaVersion 14 saves by adding objectives and finance revenue/expenses", () => {
     const modern = createInitialGameState({
-    saveId: "save_v14_owner",
+      saveId: "save_v14_owner",
       rngSeed: 23,
       nowIso: "2026-08-14T12:00:00.000Z",
-    settings: CBL_GAME_SETTINGS,
-  });
+      settings: CBL_GAME_SETTINGS,
+    });
 
     const financesV14 = Object.fromEntries(
       Object.entries(modern.business.finances).map(([teamId, finance]) => [
@@ -1528,11 +1529,11 @@ describe("GameState schema migration", () => {
 
   it("migrates schemaVersion 15 contracts to startYear/endYear/salaryByYear without options", () => {
     const modern = createInitialGameState({
-    saveId: "save_v15_contracts",
+      saveId: "save_v15_contracts",
       rngSeed: 29,
       nowIso: "2026-08-14T12:00:00.000Z",
-    settings: CBL_GAME_SETTINGS,
-  });
+      settings: CBL_GAME_SETTINGS,
+    });
     const teamId = modern.user.activeOwnerTeamId;
     const playerId = asPlayerId("player_v15");
     const contractId = asContractId("contract_v15");
@@ -1608,11 +1609,11 @@ describe("GameState schema migration", () => {
 
   it("round-trips contracts with team and player options", () => {
     const state = createInitialGameState({
-    saveId: "save_contract_options",
+      saveId: "save_contract_options",
       rngSeed: 31,
       nowIso: "2026-08-14T12:00:00.000Z",
-    settings: CBL_GAME_SETTINGS,
-  });
+      settings: CBL_GAME_SETTINGS,
+    });
     const teamId = state.user.activeOwnerTeamId;
     const year = state.competition.season.year;
 
@@ -1634,10 +1635,7 @@ describe("GameState schema migration", () => {
       composure: 50,
     };
 
-    const withPlayer = (
-      id: PlayerId,
-      contractId: ContractId,
-    ): Player => ({
+    const withPlayer = (id: PlayerId, contractId: ContractId): Player => ({
       id,
       teamId,
       firstName: "Opt",
@@ -1736,18 +1734,16 @@ describe("GameState schema migration", () => {
     expect(restored.world.players[playerExercised]?.contractId).toBe(
       exercisedId,
     );
-    expect(restored.world.players[playerDeclined]?.contractId).toBe(
-      declinedId,
-    );
+    expect(restored.world.players[playerDeclined]?.contractId).toBe(declinedId);
   });
 
   it("migrates schemaVersion 19 scalar finances to booksByYear preserving non-zero totals", () => {
     const modern = createInitialGameState({
-    saveId: "save_v19_finances",
+      saveId: "save_v19_finances",
       rngSeed: 41,
       nowIso: "2026-08-14T12:00:00.000Z",
-    settings: CBL_GAME_SETTINGS,
-  });
+      settings: CBL_GAME_SETTINGS,
+    });
     const seasonYear = modern.competition.season.year;
     const yearKey = String(seasonYear);
     const teamIds = Object.keys(modern.business.finances);
@@ -1893,7 +1889,8 @@ describe("GameState schema migration", () => {
         objectives: franchise.objectives,
         notifications: franchise.notifications,
         eventLog: franchise.eventLog,
-        appliedGameplayConsequenceKeys: franchise.appliedGameplayConsequenceKeys,
+        appliedGameplayConsequenceKeys:
+          franchise.appliedGameplayConsequenceKeys,
         explicitDecisions: franchise.explicitDecisions,
         phaseSkips: franchise.phaseSkips,
         aiAssistState: franchise.aiAssistState,

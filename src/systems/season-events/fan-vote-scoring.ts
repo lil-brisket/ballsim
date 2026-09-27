@@ -26,7 +26,7 @@ export function computeDailyVoteIncrements(
     const candidate = category.candidates[playerId]!;
     const player = state.world.players[playerId];
     if (!player || player.retired) {
-    weights.set(asPlayerId(playerId), 0);
+      weights.set(asPlayerId(playerId), 0);
       continue;
     }
     const teamId = candidate.teamId ?? player.teamId;
@@ -53,7 +53,10 @@ export function computeDailyVoteIncrements(
       0.05 * media;
 
     const variance = 1 + (rng.next() * 2 - 1) * VARIANCE_AMPLITUDE;
-    const weight = Math.max(0.001, baseAppeal * (0.85 + 0.15 * awareness) * variance);
+    const weight = Math.max(
+      0.001,
+      baseAppeal * (0.85 + 0.15 * awareness) * variance,
+    );
     weights.set(asPlayerId(playerId), weight);
     weightSum += weight;
   }

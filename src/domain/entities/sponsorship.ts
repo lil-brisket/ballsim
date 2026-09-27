@@ -109,6 +109,8 @@ function assertNonNegativeInteger(value: number, field: string): void {
 
 function assertRating(value: number, field: string): void {
   if (!Number.isInteger(value) || value < 1 || value > 99) {
-    throw new Error(`Sponsorship ${field} must be an integer between 1 and 99.`);
+    throw new Error(
+      `Sponsorship ${field} must be an integer between 1 and 99.`,
+    );
   }
 }

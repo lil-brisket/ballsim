@@ -125,7 +125,10 @@ function hasPlayoffImplications(
       winPercentage:
         state.competition.standings.byTeamId[team.id]?.winPercentage ?? 0,
     }))
-    .sort((a, b) => b.winPercentage - a.winPercentage || a.teamId.localeCompare(b.teamId));
+    .sort(
+      (a, b) =>
+        b.winPercentage - a.winPercentage || a.teamId.localeCompare(b.teamId),
+    );
 
   const cutline = Math.ceil(ranked.length / 2);
   const inRace = new Set(ranked.slice(0, cutline).map((row) => row.teamId));

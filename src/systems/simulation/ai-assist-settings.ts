@@ -45,7 +45,10 @@ export function resolveDomainAssistMode(
   const policy = buildManagementPolicy(settings);
   const actionId = DOMAIN_TO_ACTION[domain];
   const decision = evaluateManagementAction(settings, actionId);
-  if (decision.outcome === "DENY_CONTINUE" || decision.outcome === "DENY_BLOCK") {
+  if (
+    decision.outcome === "DENY_CONTINUE" ||
+    decision.outcome === "DENY_BLOCK"
+  ) {
     return "off";
   }
   const phaseMode = policy.phases[decision.phase];

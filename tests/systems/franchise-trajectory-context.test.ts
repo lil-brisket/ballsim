@@ -75,7 +75,12 @@ describe("buildFranchiseTrajectoryContext", () => {
           [teamId]: {
             teamId: asTeamId(teamId),
             seasons: [
-              season({ year: 2020, wins: 22, losses: 60, franchiseValue: 900_000_000 }),
+              season({
+                year: 2020,
+                wins: 22,
+                losses: 60,
+                franchiseValue: 900_000_000,
+              }),
               season({
                 year: 2021,
                 wins: 20,

@@ -49,14 +49,9 @@ function assignDistinctProfiles(state: GameState): GameState {
           : profile === "win_now" || profile === "aggressive"
             ? 75
             : 50,
-      patience:
-        profile === "development" || profile === "rebuild" ? 70 : 45,
+      patience: profile === "development" || profile === "rebuild" ? 70 : 45,
       riskTolerance:
-        profile === "conservative"
-          ? 25
-          : profile === "aggressive"
-            ? 75
-            : 50,
+        profile === "conservative" ? 25 : profile === "aggressive" ? 75 : 50,
     };
   }
   return {
@@ -88,7 +83,9 @@ function summarizeHistory(state: GameState): void {
     }
   }
   const means = meanFingerprintsByProfile(rows);
-  console.log("\n=== Organizational fingerprints (current season snapshot) ===\n");
+  console.log(
+    "\n=== Organizational fingerprints (current season snapshot) ===\n",
+  );
   for (const mean of means) {
     console.log(
       [
@@ -107,9 +104,7 @@ function summarizeHistory(state: GameState): void {
   }
 
   console.log("\n=== Sample posture / preference debug ===\n");
-  const samples = Object.keys(state.world.teams)
-    .sort()
-    .slice(0, 6) as TeamId[];
+  const samples = Object.keys(state.world.teams).sort().slice(0, 6) as TeamId[];
   for (const teamId of samples) {
     const resolved = resolveFranchisePreferences(state, teamId);
     const ops = state.business.franchiseOps[teamId];

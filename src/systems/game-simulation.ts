@@ -13,11 +13,7 @@ import {
 import { assertCompletedGameBoxScore } from "@/domain/entities/game-box-score";
 import type { Player } from "@/domain/entities/player";
 import { calculatePlayerOverall } from "@/domain/player-overall-rating";
-import {
-  asPossessionId,
-  type PlayerId,
-  type TeamId,
-} from "@/domain/ids";
+import { asPossessionId, type PlayerId, type TeamId } from "@/domain/ids";
 import type { Rng } from "@/domain/rng";
 import { createDomainEvent, type DomainEvent } from "@/domain/events";
 import { systemResult, type SystemResult } from "@/domain/system-result";
@@ -342,8 +338,7 @@ export function simulateGame(
   const totalMs = performance.now() - totalStart;
   const possessions = sim.possessionIndex;
   const events = sim.events.length;
-  const accounted =
-    validationMs + decisionSelectionMs + resolutionMs + statsMs;
+  const accounted = validationMs + decisionSelectionMs + resolutionMs + statsMs;
   const otherMs = Math.max(0, totalMs - accounted);
 
   if (context.profiler) {
@@ -585,9 +580,7 @@ export function buildFinalizedGame(
         `buildFinalizedGame: player ${row.playerId} not on either roster for ${result.gameId}.`,
       );
     }
-    const teamId = homePlayer
-      ? result.homeTeamId
-      : result.awayTeamId;
+    const teamId = homePlayer ? result.homeTeamId : result.awayTeamId;
     return {
       ...row,
       teamId,
@@ -711,9 +704,7 @@ function simulatePeriod(args: {
     const resolutionStart = performance.now();
     const resolution = resolvePossession(
       {
-        possessionId: asPossessionId(
-          `poss_${sim.id}_${sim.possessionIndex}`,
-        ),
+        possessionId: asPossessionId(`poss_${sim.id}_${sim.possessionIndex}`),
         offensiveTeamId,
         defensiveTeamId,
         offensivePlayers,

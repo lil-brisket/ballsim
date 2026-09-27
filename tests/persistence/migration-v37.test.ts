@@ -13,7 +13,10 @@ import { getActiveOwnedFranchise } from "@/state/owner-context";
 describe("v36 → v38 migration (via v37)", () => {
   it("adds phase presets, offseason FA settings, and aiAssistState", () => {
     let modern = createTestGameState({ saveId: "mig_v37" });
-    modern = bootstrapWorld(modern, createSeededRng(modern.meta.rngState)).state;
+    modern = bootstrapWorld(
+      modern,
+      createSeededRng(modern.meta.rngState),
+    ).state;
 
     const parsed = JSON.parse(serializeGameState(modern)) as Record<
       string,
@@ -48,7 +51,9 @@ describe("v36 → v38 migration (via v37)", () => {
     expect(loaded.competition.season.freeAgencyExtendedUntil).toBeNull();
     expect(getActiveOwnedFranchise(loaded).explicitDecisions).toEqual({});
     expect(getActiveOwnedFranchise(loaded).phaseSkips).toEqual([]);
-    expect(getActiveOwnedFranchise(loaded).aiAssistState.resolvedNeeds).toEqual({});
+    expect(getActiveOwnedFranchise(loaded).aiAssistState.resolvedNeeds).toEqual(
+      {},
+    );
     expect(() => validateGameState(loaded)).not.toThrow();
   });
 });

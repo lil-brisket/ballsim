@@ -94,12 +94,14 @@ export const LEAGUE_BROADCAST_WEIGHT = 0.25;
 export const LEAGUE_SPONSORSHIP_WEIGHT = 0.25;
 export const LEAGUE_CYCLE_WEIGHT = 0.1;
 
-export const LEAGUE_CYCLE_SCORE: Record<"growth" | "stable" | "recession", number> =
-  {
-    growth: 75,
-    stable: 50,
-    recession: 25,
-  };
+export const LEAGUE_CYCLE_SCORE: Record<
+  "growth" | "stable" | "recession",
+  number
+> = {
+  growth: 75,
+  stable: 50,
+  recession: 25,
+};
 
 /**
  * Inertia: total = (1 - α) × lastSnapshot + α × mark.

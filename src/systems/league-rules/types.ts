@@ -1,9 +1,5 @@
 import type { ContractInput } from "@/domain/entities/contract";
-import type {
-  DraftPickId,
-  PlayerId,
-  TeamId,
-} from "@/domain/ids";
+import type { DraftPickId, PlayerId, TeamId } from "@/domain/ids";
 import type { LeaguePhaseId } from "@/systems/phase-engine/phase-types";
 import type { TradeProposal } from "@/domain/entities/trade-proposal";
 

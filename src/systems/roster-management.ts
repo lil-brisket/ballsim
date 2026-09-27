@@ -146,10 +146,7 @@ export function validateRosterManagementShape(
   const rosterSet = new Set(team.roster.map(String));
   const seen = new Set<string>();
 
-  const checkMembership = (
-    playerId: PlayerId,
-    group: string,
-  ): void => {
+  const checkMembership = (playerId: PlayerId, group: string): void => {
     if (!rosterSet.has(playerId)) {
       issues.push({
         code: "not_on_roster",
@@ -207,10 +204,7 @@ export function validateRosterManagementShape(
         message: `Inactive player ${entry.playerId} cannot appear in rotation.`,
       });
     }
-    if (
-      !starterIds.has(entry.playerId) &&
-      !benchSet.has(entry.playerId)
-    ) {
+    if (!starterIds.has(entry.playerId) && !benchSet.has(entry.playerId)) {
       issues.push({
         code: "rotation_not_active",
         message: `Rotation entry ${entry.playerId} must be a starter or bench player.`,
@@ -255,7 +249,10 @@ export function validateRosterManagementShape(
 
   const slotPositions = management.startingLineup.map((slot) => slot.slot);
   const uniqueSlots = new Set(slotPositions);
-  if (slotPositions.length === expectedStarters && uniqueSlots.size !== expectedStarters) {
+  if (
+    slotPositions.length === expectedStarters &&
+    uniqueSlots.size !== expectedStarters
+  ) {
     issues.push({
       code: "duplicate_slots",
       message: "Starting lineup slots must be unique (PG, SG, SF, PF, C).",
@@ -550,10 +547,7 @@ export function buildRotationFromRoster(
     const scale = starterPool / Math.max(assigned, 1);
     let rescaleAssigned = 0;
     for (let i = 0; i < result.length; i++) {
-      const scaled = Math.max(
-        24,
-        Math.round(result[i]!.targetMinutes * scale),
-      );
+      const scaled = Math.max(24, Math.round(result[i]!.targetMinutes * scale));
       result[i] = buildEntryFromTemplate({
         playerId: result[i]!.playerId,
         role: "starter",
@@ -605,7 +599,10 @@ export function buildRotationFromRoster(
       const role = roleForIndex(globalIndex, false);
       let minutes = Math.round((pool * weights[index]!) / weightSum);
       minutes = Math.max(minMpg, Math.min(maxMpg, minutes));
-      if (philosophy === "development" && (entry.developmentWeight ?? 0) > 0.4) {
+      if (
+        philosophy === "development" &&
+        (entry.developmentWeight ?? 0) > 0.4
+      ) {
         minutes = Math.max(minutes, Math.min(18, minutes + 3));
       }
       if (entry.recommendedWorkloadMpg != null) {
@@ -618,10 +615,7 @@ export function buildRotationFromRoster(
         minutes = entry.maximumWorkloadMpg;
       }
       // Ensure meaningful minutes — no 1–2 MPG tokens
-      if (
-        minutes > 0 &&
-        minutes < ROTATION_CONFIG.meaningfulRotationMinutes
-      ) {
+      if (minutes > 0 && minutes < ROTATION_CONFIG.meaningfulRotationMinutes) {
         minutes = ROTATION_CONFIG.meaningfulRotationMinutes;
       }
       benchAssigned += minutes;
@@ -665,9 +659,7 @@ export function buildRotationFromRoster(
   const activeIds = new Set(result.map((e) => e.playerId));
   for (const entry of entries) {
     if (activeIds.has(entry.playerId)) continue;
-    result.push(
-      emptyInactiveEntry(entry.playerId, entry.preferredPositions),
-    );
+    result.push(emptyInactiveEntry(entry.playerId, entry.preferredPositions));
   }
 
   // Normalize to team target
@@ -712,7 +704,8 @@ export function resolvePhilosophyAndDepth(options: {
   style: RotationStyle;
   preset: RotationPreset;
 } {
-  const preset = options.rotationPreset ?? options.existing?.rotationPreset ?? "balanced";
+  const preset =
+    options.rotationPreset ?? options.existing?.rotationPreset ?? "balanced";
   let philosophy =
     options.rotationPhilosophy ??
     options.existing?.rotationPhilosophy ??
@@ -775,10 +768,11 @@ export function recommendRosterManagement(
     .filter((player): player is Player => player != null)
     .sort((a, b) => playerOverall(b) - playerOverall(a));
 
-  const available = players.filter((player) =>
-    player.availability === "available" ||
-    player.availability === "questionable" ||
-    player.availability === "limited",
+  const available = players.filter(
+    (player) =>
+      player.availability === "available" ||
+      player.availability === "questionable" ||
+      player.availability === "limited",
   );
   const injured = players.filter(
     (player) =>
@@ -792,8 +786,7 @@ export function recommendRosterManagement(
     const candidate =
       available.find(
         (player) => player.position === slot && !used.has(player.id),
-      ) ??
-      available.find((player) => !used.has(player.id));
+      ) ?? available.find((player) => !used.has(player.id));
     if (candidate == null) {
       break;
     }
@@ -848,9 +841,18 @@ export function recommendRosterManagement(
         preferredPositions: defaultPreferredPositions(player),
         developmentWeight: developmentWeight(player),
         availability: player.availability,
-        recommendedWorkloadMpg: player.injury?.recommendedWorkloadMpg ?? player.activeInjuries?.[0]?.recommendedWorkloadMpg ?? null,
-        maximumWorkloadMpg: player.injury?.maximumWorkloadMpg ?? player.activeInjuries?.[0]?.maximumWorkloadMpg ?? null,
-        injurySeverity: player.injury?.severity ?? player.activeInjuries?.[0]?.severity ?? null,
+        recommendedWorkloadMpg:
+          player.injury?.recommendedWorkloadMpg ??
+          player.activeInjuries?.[0]?.recommendedWorkloadMpg ??
+          null,
+        maximumWorkloadMpg:
+          player.injury?.maximumWorkloadMpg ??
+          player.activeInjuries?.[0]?.maximumWorkloadMpg ??
+          null,
+        injurySeverity:
+          player.injury?.severity ??
+          player.activeInjuries?.[0]?.severity ??
+          null,
       };
     }),
     ...bench.map((playerId) => {
@@ -862,9 +864,18 @@ export function recommendRosterManagement(
         preferredPositions: defaultPreferredPositions(player),
         developmentWeight: developmentWeight(player),
         availability: player.availability,
-        recommendedWorkloadMpg: player.injury?.recommendedWorkloadMpg ?? player.activeInjuries?.[0]?.recommendedWorkloadMpg ?? null,
-        maximumWorkloadMpg: player.injury?.maximumWorkloadMpg ?? player.activeInjuries?.[0]?.maximumWorkloadMpg ?? null,
-        injurySeverity: player.injury?.severity ?? player.activeInjuries?.[0]?.severity ?? null,
+        recommendedWorkloadMpg:
+          player.injury?.recommendedWorkloadMpg ??
+          player.activeInjuries?.[0]?.recommendedWorkloadMpg ??
+          null,
+        maximumWorkloadMpg:
+          player.injury?.maximumWorkloadMpg ??
+          player.activeInjuries?.[0]?.maximumWorkloadMpg ??
+          null,
+        injurySeverity:
+          player.injury?.severity ??
+          player.activeInjuries?.[0]?.severity ??
+          null,
       };
     }),
   ].sort((a, b) => {
@@ -965,13 +976,7 @@ export function optimizeRotationFromRoster(
 
 export type OptimizeChange = {
   kind:
-    | "minutes"
-    | "role"
-    | "added"
-    | "removed"
-    | "depth"
-    | "coverage"
-    | "other";
+    "minutes" | "role" | "added" | "removed" | "depth" | "coverage" | "other";
   message: string;
   playerId?: PlayerId;
 };
@@ -1004,9 +1009,7 @@ export function previewOptimizeRotation(
   for (const [playerId, after] of afterById) {
     const prev = beforeById.get(playerId);
     const player = state.world.players[playerId as PlayerId];
-    const name = player
-      ? `${player.firstName} ${player.lastName}`
-      : playerId;
+    const name = player ? `${player.firstName} ${player.lastName}` : playerId;
     if (after.targetMinutes >= ROTATION_CONFIG.meaningfulRotationMinutes) {
       afterMeaningful += 1;
     }
@@ -1126,11 +1129,7 @@ export function reconcileRosterManagement(
   };
 
   const provisionalState = withTeamRosterManagement(state, teamId, next);
-  const issues = validateRosterManagementShape(
-    provisionalState,
-    teamId,
-    next,
-  );
+  const issues = validateRosterManagementShape(provisionalState, teamId, next);
   const feasibility = validateRotationFeasibility(next);
   const needsRecommend =
     issues.length > 0 ||
@@ -1279,7 +1278,9 @@ export function mergeLineupIntoManagement(
   lineup: LineupManagementInput,
 ): TeamRosterManagement {
   void teamId;
-  const starterIds = new Set(lineup.startingLineup.map((slot) => slot.playerId));
+  const starterIds = new Set(
+    lineup.startingLineup.map((slot) => slot.playerId),
+  );
   const rotation: RotationEntry[] = current.rotation
     .filter((entry) => !lineup.inactive.includes(entry.playerId))
     .map((entry) => ({
@@ -1395,8 +1396,7 @@ export function applyRotationEditsToManagement(
       draft.rotationDepth ??
       depthForPhilosophy(philosophy),
     rotationPreset: input.rotationPreset ?? "custom",
-    closingLineupPolicy:
-      input.closingLineupPolicy ?? draft.closingLineupPolicy,
+    closingLineupPolicy: input.closingLineupPolicy ?? draft.closingLineupPolicy,
     closingLineupIds: input.closingLineupIds ?? draft.closingLineupIds,
     lastConfiguredBy: "user",
   };

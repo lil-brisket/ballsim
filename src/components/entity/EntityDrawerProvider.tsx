@@ -63,10 +63,7 @@ export function EntityDrawerProvider(props: {
       setStatus("loading");
       setPlayerView(null);
       try {
-        const view = await fetchPlayerDrawerViewAction(
-          props.saveId,
-          playerId,
-        );
+        const view = await fetchPlayerDrawerViewAction(props.saveId, playerId);
         if (!view) {
           setStatus("missing");
           setPlayerView(null);

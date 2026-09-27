@@ -83,7 +83,9 @@ describe("team calendar + transactions", () => {
     let next = bootstrapWorld(state, rng).state;
     next = beginRegularSeasonFromPreseason(next).state;
     const date = next.world.calendar.currentDate;
-    const teamIds = Object.keys(next.world.teams) as ReturnType<typeof asTeamId>[];
+    const teamIds = Object.keys(next.world.teams) as ReturnType<
+      typeof asTeamId
+    >[];
     const first = teamIds[0]!;
     const second = teamIds[1]!;
     const firstGame = getTeamGameForDate(next, first, date);

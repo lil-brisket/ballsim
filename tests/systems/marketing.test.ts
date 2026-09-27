@@ -3,7 +3,10 @@ import { CBL_GAME_SETTINGS } from "@/domain/game-settings";
 import { asTeamId } from "@/domain/ids";
 import { createSeededRng } from "@/domain/rng";
 import { createInitialGameState } from "@/state/create-initial-state";
-import { processWeeklyMarketing, setMarketingBudget } from "@/systems/marketing";
+import {
+  processWeeklyMarketing,
+  setMarketingBudget,
+} from "@/systems/marketing";
 import { bootstrapWorld } from "@/systems/world-pipeline";
 
 describe("marketing", () => {
@@ -35,8 +38,7 @@ describe("marketing", () => {
     for (let week = 0; week < 12; week += 1) {
       state = processWeeklyMarketing(state).state;
     }
-    const afterSpend =
-      state.business.franchiseOps[teamId]!.marketing.awareness;
+    const afterSpend = state.business.franchiseOps[teamId]!.marketing.awareness;
     expect(afterSpend).toBeGreaterThan(startAwareness);
 
     // Force a high awareness so weekly decay toward 50 survives integer rounding.
@@ -57,8 +59,7 @@ describe("marketing", () => {
     for (let week = 0; week < 40; week += 1) {
       state = processWeeklyMarketing(state).state;
     }
-    const afterDecay =
-      state.business.franchiseOps[teamId]!.marketing.awareness;
+    const afterDecay = state.business.franchiseOps[teamId]!.marketing.awareness;
     expect(afterDecay).toBeLessThan(peak);
     expect(afterDecay).toBeGreaterThanOrEqual(50);
   });

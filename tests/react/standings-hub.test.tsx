@@ -30,7 +30,9 @@ function wrap(ui: React.ReactNode) {
   return <EntityDrawerProvider saveId="s1">{ui}</EntityDrawerProvider>;
 }
 
-const row = (overrides: Partial<StandingsRowEnriched> = {}): StandingsRowEnriched => ({
+const row = (
+  overrides: Partial<StandingsRowEnriched> = {},
+): StandingsRowEnriched => ({
   teamId: "t1",
   abbreviation: "BOS",
   city: "Boston",
@@ -71,7 +73,11 @@ describe("StandingsControls", () => {
           view="conference"
           stats="advanced"
           divisionsEnabled={true}
-          searchParams={{ view: "conference", stats: "advanced", error: "boom" }}
+          searchParams={{
+            view: "conference",
+            stats: "advanced",
+            error: "boom",
+          }}
         />,
       ),
     );
@@ -143,11 +149,7 @@ describe("StandingsTable", () => {
   };
 
   it("renders standard columns", () => {
-    render(
-      wrap(
-        <StandingsTable saveId="s1" group={group} page={page} />,
-      ),
-    );
+    render(wrap(<StandingsTable saveId="s1" group={group} page={page} />));
     expect(screen.getByTestId("standings-col-w")).toBeTruthy();
     expect(screen.getByTestId("standings-col-pct")).toBeTruthy();
     expect(screen.queryByTestId("standings-col-ppg")).toBeNull();

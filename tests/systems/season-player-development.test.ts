@@ -20,10 +20,7 @@ describe("season player development", () => {
     });
     state = bootstrapWorld(state, createSeededRng(state.meta.rngState)).state;
     const beforeAges = Object.values(state.world.players).map((p) => p.age);
-    const result = processSeasonPlayerDevelopment(
-      state,
-      createSeededRng(55),
-    );
+    const result = processSeasonPlayerDevelopment(state, createSeededRng(55));
     const afterPlayers = Object.values(result.state.world.players);
     expect(afterPlayers.length).toBe(beforeAges.length);
     for (let i = 0; i < afterPlayers.length; i += 1) {

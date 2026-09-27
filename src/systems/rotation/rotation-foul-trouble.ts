@@ -5,11 +5,7 @@
 import { ROTATION_CONFIG } from "@/systems/rotation/rotation-config";
 
 export type FoulTroubleLevel =
-  | "none"
-  | "caution"
-  | "trouble"
-  | "severe"
-  | "fouled_out";
+  "none" | "caution" | "trouble" | "severe" | "fouled_out";
 
 export function isFouledOut(personalFouls: number): boolean {
   return personalFouls >= ROTATION_CONFIG.personalFoulLimit;

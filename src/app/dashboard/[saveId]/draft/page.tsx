@@ -94,7 +94,8 @@ export default async function DraftPage({
         name: prospect
           ? `${prospect.player.firstName} ${prospect.player.lastName}`
           : entry.prospectPlayerId,
-        position: estimate?.positionEstimate ?? prospect?.player.position ?? "?",
+        position:
+          estimate?.positionEstimate ?? prospect?.player.position ?? "?",
         rank: entry.rank,
         priority: entry.priority,
         notes: entry.notes,
@@ -209,7 +210,9 @@ export default async function DraftPage({
                 ) : (
                   <ul className="max-h-48 space-y-1 overflow-y-auto text-xs text-zinc-300">
                     {board.selections.map((selection) => (
-                      <li key={`${selection.overallPick}-${selection.playerId}`}>
+                      <li
+                        key={`${selection.overallPick}-${selection.playerId}`}
+                      >
                         #{selection.overallPick} {selection.teamAbbreviation}:{" "}
                         <PlayerEntityLink
                           saveId={saveId}
@@ -232,7 +235,9 @@ export default async function DraftPage({
                 <div className="grid gap-3 md:grid-cols-2">
                   {board.eligibleProspects.slice(0, 24).map((prospect) => {
                     const full = draft.prospects[prospect.playerId];
-                    const estimate = draft.teamDraftState[teamId]?.scouting.find(
+                    const estimate = draft.teamDraftState[
+                      teamId
+                    ]?.scouting.find(
                       (s) => s.prospectPlayerId === prospect.playerId,
                     );
                     const report = toScoutingReportView(estimate);
@@ -343,7 +348,9 @@ export default async function DraftPage({
                         </li>
                       ))}
                     {needs.priorityPositions.length === 0 ? (
-                      <li className="text-zinc-500">No major positional needs.</li>
+                      <li className="text-zinc-500">
+                        No major positional needs.
+                      </li>
                     ) : null}
                   </ul>
                 ) : (

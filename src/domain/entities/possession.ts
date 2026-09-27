@@ -1,11 +1,7 @@
 import type { PlayerId, PossessionId } from "@/domain/ids";
 
 export type PossessionAction =
-  | "shot"
-  | "pass"
-  | "turnover"
-  | "foul"
-  | "free_throw";
+  "shot" | "pass" | "turnover" | "foul" | "free_throw";
 
 export const POSSESSION_ACTIONS: readonly PossessionAction[] = [
   "shot",

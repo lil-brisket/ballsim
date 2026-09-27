@@ -72,7 +72,11 @@ export function prospectUncertainty(player: Player): number {
   if (player.development.stage === "developing") {
     uncertainty += 0.15;
   }
-  if (player.availability === "out" || player.availability === "suspended" || !playerCanPlay(player)) {
+  if (
+    player.availability === "out" ||
+    player.availability === "suspended" ||
+    !playerCanPlay(player)
+  ) {
     uncertainty += 0.2;
   }
   return Math.max(0.5, Math.min(2, uncertainty));
@@ -124,8 +128,7 @@ export function scoutGradeFromEstimated(
   potential: RatingRange,
 ): ScoutGrade {
   const score =
-    ratingRangeMidpoint(overall) * 0.45 +
-    ratingRangeMidpoint(potential) * 0.55;
+    ratingRangeMidpoint(overall) * 0.45 + ratingRangeMidpoint(potential) * 0.55;
   if (score >= 92) return "A+";
   if (score >= 88) return "A";
   if (score >= 84) return "A-";
@@ -139,10 +142,9 @@ export function scoutGradeFromEstimated(
   return "F";
 }
 
-function trueCategoryRatings(player: Player): Record<
-  EstimatedScoutingCategoryKey,
-  number
-> {
+function trueCategoryRatings(
+  player: Player,
+): Record<EstimatedScoutingCategoryKey, number> {
   const a = player.attributes;
   return {
     shooting: Math.round((a.threePoint + a.freeThrow + a.midRange) / 3),
@@ -177,7 +179,10 @@ function noisyRange(
   halfWidth: number,
   rng: Rng,
 ): RatingRange {
-  const bias = rng.nextInt(-Math.ceil(halfWidth * 0.4), Math.ceil(halfWidth * 0.4));
+  const bias = rng.nextInt(
+    -Math.ceil(halfWidth * 0.4),
+    Math.ceil(halfWidth * 0.4),
+  );
   const center = trueValue + bias;
   return createRatingRange(center - halfWidth, center + halfWidth);
 }
@@ -213,7 +218,10 @@ export function evaluateProspectForTeam(
     scoutQuality,
     effectiveExposure,
   );
-  const trueOverall = calculatePlayerOverall(player.position, player.attributes);
+  const trueOverall = calculatePlayerOverall(
+    player.position,
+    player.attributes,
+  );
   const estimatedOverall = noisyRange(trueOverall, overallHalf, rng);
   const estimatedPotential = noisyRange(
     player.potential.overall,
@@ -255,10 +263,7 @@ export function evaluateProspectForTeam(
   };
 
   const intangibles: Partial<Record<PersonalityKey, RatingRange>> = {};
-  if (
-    knowledgeLevel === "detailed" ||
-    knowledgeLevel === "comprehensive"
-  ) {
+  if (knowledgeLevel === "detailed" || knowledgeLevel === "comprehensive") {
     const intangibleHalf = halfWidthFor(
       BASE_INTANGIBLE_HALF_WIDTH,
       uncertainty,

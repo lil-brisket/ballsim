@@ -23,12 +23,16 @@ function bootstrapRosters(saveId: string, rngSeed: number) {
   return { state: afterRosters.state, rng };
 }
 
-function scheduleRegularSeason(state: ReturnType<typeof createInitialGameState>) {
+function scheduleRegularSeason(
+  state: ReturnType<typeof createInitialGameState>,
+) {
   const phased = transitionPhase(state, "regular").state;
   return generateSchedule(phased).state;
 }
 
-function snapshotScheduledGames(state: ReturnType<typeof createInitialGameState>) {
+function snapshotScheduledGames(
+  state: ReturnType<typeof createInitialGameState>,
+) {
   return state.competition.schedule.gameIds.map((gameId) => {
     const game = state.competition.games[gameId]!;
     return structuredClone({
@@ -56,7 +60,9 @@ describe("simulateSeason", () => {
 
     expect(result.state.competition.season.phase).toBe("playoffs");
     expect(result.state.competition.playoffs.status).toBe("complete");
-    expect(result.state.competition.schedule.gameIds).toHaveLength(expectedGames);
+    expect(result.state.competition.schedule.gameIds).toHaveLength(
+      expectedGames,
+    );
 
     for (const gameId of result.state.competition.schedule.gameIds) {
       const game = result.state.competition.games[gameId]!;
@@ -86,15 +92,19 @@ describe("simulateSeason", () => {
       sumWinsLosses += row.wins + row.losses;
     }
 
-    const completedFinalGames = result.state.competition.schedule.gameIds.filter(
-      (gameId) => result.state.competition.games[gameId]?.status === "final",
-    ).length;
+    const completedFinalGames =
+      result.state.competition.schedule.gameIds.filter(
+        (gameId) => result.state.competition.games[gameId]?.status === "final",
+      ).length;
     expect(sumWinsLosses).toBe(2 * completedFinalGames);
   });
 
   it("simulates only remaining scheduled games in a partial season", () => {
     resetDomainEventSequenceForTests();
-    const { state: rostered, rng } = bootstrapRosters("save_season_partial", 102);
+    const { state: rostered, rng } = bootstrapRosters(
+      "save_season_partial",
+      102,
+    );
     const scheduled = scheduleRegularSeason(rostered);
 
     const firstFourIds = scheduled.competition.schedule.gameIds.slice(0, 4);
@@ -115,9 +125,10 @@ describe("simulateSeason", () => {
     const remainingScheduled = current.competition.schedule.gameIds.filter(
       (gameId) => current.competition.games[gameId]?.status === "scheduled",
     );
-    const finalizedOnSelectedDates = current.competition.schedule.gameIds.filter(
-      (gameId) => current.competition.games[gameId]?.status === "final",
-    );
+    const finalizedOnSelectedDates =
+      current.competition.schedule.gameIds.filter(
+        (gameId) => current.competition.games[gameId]?.status === "final",
+      );
     expect(remainingScheduled.length).toBe(
       scheduled.competition.schedule.gameIds.length -
         finalizedOnSelectedDates.length,
@@ -160,7 +171,10 @@ describe("simulateSeason", () => {
   });
 
   it("throws on an unknown home team reference", () => {
-    const { state: rostered, rng } = bootstrapRosters("save_season_bad_team", 104);
+    const { state: rostered, rng } = bootstrapRosters(
+      "save_season_bad_team",
+      104,
+    );
     const scheduled = scheduleRegularSeason(rostered);
     const gameId = scheduled.competition.schedule.gameIds[0]!;
     const game = scheduled.competition.games[gameId]!;
@@ -192,7 +206,8 @@ describe("simulateSeason", () => {
     );
     const scheduled = scheduleRegularSeason(rostered);
     const gameId = scheduled.competition.schedule.gameIds[0]!;
-    const { [gameId]: _removed, ...remainingGames } = scheduled.competition.games;
+    const { [gameId]: _removed, ...remainingGames } =
+      scheduled.competition.games;
 
     const corrupted = {
       ...scheduled,
@@ -202,7 +217,9 @@ describe("simulateSeason", () => {
       },
     };
 
-    expect(() => simulateSeason(corrupted, rng)).toThrow(/missing from competition.games/);
+    expect(() => simulateSeason(corrupted, rng)).toThrow(
+      /missing from competition.games/,
+    );
   });
 
   it("throws when preseason already has a schedule", () => {

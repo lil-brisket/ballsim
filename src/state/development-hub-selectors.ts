@@ -140,9 +140,7 @@ export function toDevelopmentHubView(state: GameState): DevelopmentHubView {
     notableImprovers,
     rows,
     staffContext: {
-      trainerName: trainer
-        ? `${trainer.firstName} ${trainer.lastName}`
-        : null,
+      trainerName: trainer ? `${trainer.firstName} ${trainer.lastName}` : null,
       trainerOverall: trainer?.overall ?? null,
       trainerId: trainer?.staffId ?? null,
     },

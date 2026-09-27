@@ -255,14 +255,8 @@ function applySideSubstitutions(input: {
     }
     sim.continuousSecondsOnCourt.set(decision.playerOutId, 0);
     sim.continuousSecondsOnCourt.set(decision.playerInId, 0);
-    sim.lastSubElapsedSeconds.set(
-      decision.playerOutId,
-      sim.elapsedGameSeconds,
-    );
-    sim.lastSubElapsedSeconds.set(
-      decision.playerInId,
-      sim.elapsedGameSeconds,
-    );
+    sim.lastSubElapsedSeconds.set(decision.playerOutId, sim.elapsedGameSeconds);
+    sim.lastSubElapsedSeconds.set(decision.playerInId, sim.elapsedGameSeconds);
   }
 
   return result.onCourt;
@@ -351,7 +345,13 @@ export function syncFoulOutsFromStats(sim: GameSimState): PlayerId[] {
       ) + sim.overtimePeriodCount,
     );
     const prev = sim.peakFoulTroubleByPlayerId.get(playerId) ?? "none";
-    const order = ["none", "caution", "trouble", "severe", "fouled_out"] as const;
+    const order = [
+      "none",
+      "caution",
+      "trouble",
+      "severe",
+      "fouled_out",
+    ] as const;
     if (order.indexOf(level) > order.indexOf(prev)) {
       sim.peakFoulTroubleByPlayerId.set(playerId, level);
     }
@@ -396,8 +396,7 @@ export function finalizeRotationExplanations(sim: GameSimState): void {
     ...sim.homeRotationSnapshot,
     ...sim.awayRotationSnapshot,
   ]) {
-    const actual =
-      (sim.secondsOnCourt.get(entry.playerId) ?? 0) / 60;
+    const actual = (sim.secondsOnCourt.get(entry.playerId) ?? 0) / 60;
     const reasons = buildMinuteExplanations({
       entry,
       actualMinutes: actual,

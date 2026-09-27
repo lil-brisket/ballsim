@@ -47,13 +47,7 @@ export function PlayerGameLog(props: {
       return sortAsc ? 1 : -1;
     });
     return rows;
-  }, [
-    props.player.gameLog,
-    seasonFilter,
-    competitionFilter,
-    sortKey,
-    sortAsc,
-  ]);
+  }, [props.player.gameLog, seasonFilter, competitionFilter, sortKey, sortAsc]);
 
   const pageCount = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const pageRows = filtered.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);

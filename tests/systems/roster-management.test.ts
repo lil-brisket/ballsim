@@ -86,14 +86,18 @@ describe("roster-management", () => {
           [teamA]: {
             ...state.world.teams[teamA]!,
             roster: [
-              ...state.world.teams[teamA]!.roster.filter((id) => id !== playerFromA),
+              ...state.world.teams[teamA]!.roster.filter(
+                (id) => id !== playerFromA,
+              ),
               playerFromB,
             ],
           },
           [teamB]: {
             ...state.world.teams[teamB]!,
             roster: [
-              ...state.world.teams[teamB]!.roster.filter((id) => id !== playerFromB),
+              ...state.world.teams[teamB]!.roster.filter(
+                (id) => id !== playerFromB,
+              ),
               playerFromA,
             ],
           },
@@ -188,8 +192,9 @@ describe("team-management multi-team auth", () => {
       };
     }
     const inactiveOwned =
-      state.user.ownedTeamIds.find((id) => id !== state.user.activeOwnerTeamId) ??
-      asTeamId(otherTeamId);
+      state.user.ownedTeamIds.find(
+        (id) => id !== state.user.activeOwnerTeamId,
+      ) ?? asTeamId(otherTeamId);
 
     const result = applyLineupRecommendationCommand(state, inactiveOwned);
     expect(result.ok).toBe(false);

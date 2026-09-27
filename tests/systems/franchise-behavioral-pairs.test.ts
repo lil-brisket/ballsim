@@ -176,7 +176,8 @@ describe("behavioral pairs — same circumstances, different identities", () => 
     const resolved = profiles.map((profile) =>
       resolveFranchisePreferencesFromParts(
         identity(profile, {
-          spending: profile === "conservative" ? 25 : profile === "win_now" ? 75 : 50,
+          spending:
+            profile === "conservative" ? 25 : profile === "win_now" ? 75 : 50,
           patience: 50,
           risk: profile === "conservative" ? 25 : 55,
         }),

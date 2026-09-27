@@ -21,10 +21,7 @@ import {
 export type ExpansionGateStatus = "open" | "closed";
 
 export type ExpansionAssessmentStatus =
-  | "not_relevant"
-  | "partial"
-  | "opportunity"
-  | "in_progress";
+  "not_relevant" | "partial" | "opportunity" | "in_progress";
 
 export type ExpansionAssessment = {
   status: ExpansionAssessmentStatus;
@@ -60,7 +57,9 @@ function nextSupportedTeamCount(liveCount: number): number | null {
   return null;
 }
 
-function evaluateLeagueReadiness(state: GameState): ExpansionAssessment["leagueReadiness"] {
+function evaluateLeagueReadiness(
+  state: GameState,
+): ExpansionAssessment["leagueReadiness"] {
   const eco = state.business.leagueEconomy;
   const reasons: string[] = [];
   let open = true;
@@ -94,7 +93,9 @@ function evaluateLeagueReadiness(state: GameState): ExpansionAssessment["leagueR
   }
 
   if (open && reasons.length === 1) {
-    reasons.push("Popularity, broadcast, and sponsorship climate support expansion.");
+    reasons.push(
+      "Popularity, broadcast, and sponsorship climate support expansion.",
+    );
   }
 
   return {
@@ -223,7 +224,11 @@ export function assessExpansion(state: GameState): ExpansionAssessment {
 
   const summaryReasons: string[] = [];
   if (leagueReadiness.status === "closed") {
-    summaryReasons.push(...leagueReadiness.reasons.filter((r) => r.includes("below") || r.includes("recession")));
+    summaryReasons.push(
+      ...leagueReadiness.reasons.filter(
+        (r) => r.includes("below") || r.includes("recession"),
+      ),
+    );
   }
   if (marketOpportunity.status === "closed") {
     summaryReasons.push(...marketOpportunity.reasons);

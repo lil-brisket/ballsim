@@ -49,8 +49,7 @@ export function createDefaultOwnedFranchiseState(
     aiAssistance: input.aiAssistance
       ? { ...input.aiAssistance }
       : { ...DEFAULT_DELEGATED_ASSISTANCE },
-    managementPreset:
-      input.managementPreset ?? DEFAULT_AI_MANAGEMENT_PRESET,
+    managementPreset: input.managementPreset ?? DEFAULT_AI_MANAGEMENT_PRESET,
     aiAssistState: {
       resolvedNeeds: {},
       seasonCounters: { ...EMPTY_AI_ASSIST_STATE.seasonCounters },

@@ -8,10 +8,7 @@ import { CBL_GAME_SETTINGS, cloneGameSettings } from "@/domain/game-settings";
 describe("TeamLeaguePlacement", () => {
   it("renders conference and division on separate lines by default", () => {
     const { container, unmount } = render(
-      <TeamLeaguePlacement
-        conferenceName="Coastal"
-        divisionName="Gulf"
-      />,
+      <TeamLeaguePlacement conferenceName="Coastal" divisionName="Gulf" />,
     );
     expect(container.textContent).toContain("Coastal Conference");
     expect(container.textContent).toContain("Gulf Division");

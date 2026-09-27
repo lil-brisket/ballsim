@@ -38,9 +38,6 @@ export function brandingFingerprintKey(branding: TeamBranding): string {
   ].join("|");
 }
 
-export function paletteLogoKey(
-  paletteId: string,
-  logoId: string,
-): string {
+export function paletteLogoKey(paletteId: string, logoId: string): string {
   return `${paletteId}|${logoId}`;
 }

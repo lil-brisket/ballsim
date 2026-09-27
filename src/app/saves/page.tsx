@@ -54,9 +54,7 @@ export default async function SavesPage({ searchParams }: SavesPageProps) {
       {previews.length === 0 ? (
         <EmptyState
           message={
-            modeFilter === "owner"
-              ? "No Owner saves found."
-              : "No saves found."
+            modeFilter === "owner" ? "No Owner saves found." : "No saves found."
           }
         />
       ) : (

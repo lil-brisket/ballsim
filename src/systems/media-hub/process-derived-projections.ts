@@ -13,7 +13,9 @@ import type { TeamId } from "@/domain/ids";
 import type { GameState, OwnedFranchiseState } from "@/state/game-state";
 import { processMediaFromEvents } from "@/systems/media-hub/process-media-from-events";
 
-function ensureMediaFields(franchise: OwnedFranchiseState): OwnedFranchiseState {
+function ensureMediaFields(
+  franchise: OwnedFranchiseState,
+): OwnedFranchiseState {
   return {
     ...franchise,
     mediaFeed: franchise.mediaFeed ?? createEmptyMediaFeed(),

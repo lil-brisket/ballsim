@@ -191,7 +191,8 @@ export function indexLeagueMilestoneMarkersByDate(
 
   for (const list of byDate.values()) {
     list.sort(
-      (left, right) => milestonePriority(left.key) - milestonePriority(right.key),
+      (left, right) =>
+        milestonePriority(left.key) - milestonePriority(right.key),
     );
   }
 

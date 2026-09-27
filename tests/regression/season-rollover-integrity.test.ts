@@ -20,8 +20,10 @@ import type { TeamId } from "@/domain/ids";
 
 function bumpSeasonYear(state: GameState): GameState {
   const nextYear = state.competition.season.year + 1;
-  const byTeamId: Record<string, ReturnType<typeof createEmptyTeamStanding>> =
-    {};
+  const byTeamId: Record<
+    string,
+    ReturnType<typeof createEmptyTeamStanding>
+  > = {};
   for (const teamId of Object.keys(state.world.teams)) {
     byTeamId[teamId] = createEmptyTeamStanding(teamId as TeamId);
   }

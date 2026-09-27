@@ -14,9 +14,7 @@ export function Panel(props: {
   const Tag = props.as ?? "div";
   const density = props.density ?? "default";
   return (
-    <Tag
-      className={cn(panelClass, densityPadding[density], props.className)}
-    >
+    <Tag className={cn(panelClass, densityPadding[density], props.className)}>
       {props.children}
     </Tag>
   );

@@ -1,9 +1,7 @@
 import type { DraftPickId, PlayerId, TeamId } from "@/domain/ids";
 
 export type TradeBlockStatus =
-  | "available"
-  | "actively_shopping"
-  | "open_to_offers";
+  "available" | "actively_shopping" | "open_to_offers";
 
 export const TRADE_BLOCK_STATUSES: readonly TradeBlockStatus[] = [
   "available",

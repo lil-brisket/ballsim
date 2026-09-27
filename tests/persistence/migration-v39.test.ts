@@ -18,7 +18,10 @@ import { cloneGameSettings } from "@/domain/game-settings";
 describe("v38 → v39 migration", () => {
   it("preserves continuity phase modes exactly without upgrading to full", () => {
     let modern = createTestGameState({ saveId: "mig_v39_cont" });
-    modern = bootstrapWorld(modern, createSeededRng(modern.meta.rngState)).state;
+    modern = bootstrapWorld(
+      modern,
+      createSeededRng(modern.meta.rngState),
+    ).state;
     modern.settings.ai.managementPreset = "continuity";
     modern.settings.ai.assistance = applyPreset("continuity");
 
@@ -40,7 +43,10 @@ describe("v38 → v39 migration", () => {
 
   it("preserves smart draftScouting as recommend (not full)", () => {
     let modern = createTestGameState({ saveId: "mig_v39_smart" });
-    modern = bootstrapWorld(modern, createSeededRng(modern.meta.rngState)).state;
+    modern = bootstrapWorld(
+      modern,
+      createSeededRng(modern.meta.rngState),
+    ).state;
     modern.settings.ai.managementPreset = "smart";
     modern.settings.ai.assistance = applyPreset("smart");
 
@@ -59,7 +65,10 @@ describe("v38 → v39 migration", () => {
 
   it("preserves off preset as all phases off", () => {
     let modern = createTestGameState({ saveId: "mig_v39_off" });
-    modern = bootstrapWorld(modern, createSeededRng(modern.meta.rngState)).state;
+    modern = bootstrapWorld(
+      modern,
+      createSeededRng(modern.meta.rngState),
+    ).state;
     modern.settings.ai.managementPreset = "off";
     modern.settings.ai.assistance = applyPreset("off");
 
@@ -76,7 +85,10 @@ describe("v38 → v39 migration", () => {
 
   it("preserves custom mode mix without upgrading modes", () => {
     let modern = createTestGameState({ saveId: "mig_v39_custom" });
-    modern = bootstrapWorld(modern, createSeededRng(modern.meta.rngState)).state;
+    modern = bootstrapWorld(
+      modern,
+      createSeededRng(modern.meta.rngState),
+    ).state;
     const customAssistance = {
       ...applyPreset("continuity"),
       freeAgency: "routine" as const,
@@ -100,7 +112,10 @@ describe("v38 → v39 migration", () => {
 
   it("behavioral: migrated smart save keeps recommend-level draft scouting policy", () => {
     let modern = createTestGameState({ saveId: "mig_v39_behavior" });
-    modern = bootstrapWorld(modern, createSeededRng(modern.meta.rngState)).state;
+    modern = bootstrapWorld(
+      modern,
+      createSeededRng(modern.meta.rngState),
+    ).state;
     modern.settings.ai.managementPreset = "smart";
     modern.settings.ai.assistance = applyPreset("smart");
 

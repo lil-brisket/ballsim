@@ -25,9 +25,7 @@ export function SimulationAssistantSummary({
   const total = visibleDelegationPhaseCount();
 
   if (compact) {
-    return (
-      <DelegationSummary assistance={assistance} compact />
-    );
+    return <DelegationSummary assistance={assistance} compact />;
   }
 
   return (

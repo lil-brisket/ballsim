@@ -101,13 +101,17 @@ export type DevelopmentLeagueDashboardView = {
   }>;
 };
 
-function mpgFromCache(stats: { games: number; minutes: number } | undefined): number | null {
+function mpgFromCache(
+  stats: { games: number; minutes: number } | undefined,
+): number | null {
   if (stats == null || stats.games <= 0) return null;
   return Math.round((stats.minutes / stats.games) * 10) / 10;
 }
 
 function avg(
-  stats: { games: number; points?: number; rebounds?: number; assists?: number } | undefined,
+  stats:
+    | { games: number; points?: number; rebounds?: number; assists?: number }
+    | undefined,
   key: "points" | "rebounds" | "assists",
 ): number | null {
   if (stats == null || stats.games <= 0) return null;
@@ -146,17 +150,17 @@ function withWhyFallback(bullets: string[]): string[] {
   return bullets;
 }
 
-function streakLabelFromStanding(standing: TeamStanding | undefined): string | null {
+function streakLabelFromStanding(
+  standing: TeamStanding | undefined,
+): string | null {
   if (standing == null) return null;
   if (standing.streak.type == null || standing.streak.count <= 0) return null;
   return `${standing.streak.type}${standing.streak.count}`;
 }
 
-function dlLeagueRank(
-  state: GameState,
-  teamId: string,
-): number | null {
-  const byTeamId = state.competition.developmentLeague?.standings.byTeamId ?? {};
+function dlLeagueRank(state: GameState, teamId: string): number | null {
+  const byTeamId =
+    state.competition.developmentLeague?.standings.byTeamId ?? {};
   const rows = Object.values(byTeamId);
   if (rows.length === 0) return null;
   if (byTeamId[teamId] == null) return null;
@@ -164,7 +168,8 @@ function dlLeagueRank(
   const ranked = rows
     .map((standing) => ({
       standing,
-      abbreviation: state.world.teams[standing.teamId]?.abbreviation ?? standing.teamId,
+      abbreviation:
+        state.world.teams[standing.teamId]?.abbreviation ?? standing.teamId,
     }))
     .sort((a, b) => {
       if (b.standing.winPercentage !== a.standing.winPercentage) {
@@ -216,7 +221,8 @@ export function toDevelopmentLeagueDashboardView(
       potential,
       potentialHeadroom: Math.max(0, potential - overall),
       age: player.age,
-      dlSeason: seasonsUsed + (player.developmentLeague?.assignedThisSeason ? 1 : 0),
+      dlSeason:
+        seasonsUsed + (player.developmentLeague?.assignedThisSeason ? 1 : 0),
       seasonsRemaining: Math.max(0, DL_MAX_SEASONS - seasonsUsed),
       role: player.developmentLeague?.role ?? "development",
       mpg: mpgFromCache(stats),
@@ -237,7 +243,11 @@ export function toDevelopmentLeagueDashboardView(
     .filter((p) => {
       const player = state.world.players[p.playerId];
       const games = player?.developmentLeague?.currentSeasonStats?.games ?? 0;
-      return p.ppg !== null && p.ppg >= DL_NOTABLE_PPG && games >= DL_NOTABLE_MIN_GAMES;
+      return (
+        p.ppg !== null &&
+        p.ppg >= DL_NOTABLE_PPG &&
+        games >= DL_NOTABLE_MIN_GAMES
+      );
     })
     .sort((a, b) => (b.ppg ?? 0) - (a.ppg ?? 0))
     .slice(0, 5);
@@ -246,7 +256,8 @@ export function toDevelopmentLeagueDashboardView(
     .sort((a, b) => (b.changeDelta ?? 0) - (a.changeDelta ?? 0))
     .slice(0, 5);
 
-  const standing = state.competition.developmentLeague?.standings.byTeamId[teamId];
+  const standing =
+    state.competition.developmentLeague?.standings.byTeamId[teamId];
   const record = standing
     ? { wins: standing.wins, losses: standing.losses }
     : null;
@@ -273,9 +284,7 @@ export function toDevelopmentLeagueDashboardView(
       date: game.date,
       opponentAbbreviation: opponent?.abbreviation ?? opponentId,
       opponentTeamId: opponentId,
-      opponentName: opponent
-        ? `${opponent.city} ${opponent.name}`
-        : opponentId,
+      opponentName: opponent ? `${opponent.city} ${opponent.name}` : opponentId,
       opponentBranding: toBrandingView(opponent?.branding) ?? null,
       home,
       teamScore,
@@ -287,8 +296,7 @@ export function toDevelopmentLeagueDashboardView(
   const eligibleToAssign = getFranchisePlayers(teamId, state)
     .filter(
       (p) =>
-        !isPlayerDlAssigned(p) &&
-        isDevelopmentLeagueEligible(p, teamId, state),
+        !isPlayerDlAssigned(p) && isDevelopmentLeagueEligible(p, teamId, state),
     )
     .map((p) => {
       const rec = getDlAssignmentRecommendation(p, teamId, state);
@@ -301,7 +309,11 @@ export function toDevelopmentLeagueDashboardView(
         strongCandidate: rec.strongCandidate,
       };
     })
-    .sort((a, b) => Number(b.strongCandidate) - Number(a.strongCandidate) || a.name.localeCompare(b.name));
+    .sort(
+      (a, b) =>
+        Number(b.strongCandidate) - Number(a.strongCandidate) ||
+        a.name.localeCompare(b.name),
+    );
 
   return {
     saveId,

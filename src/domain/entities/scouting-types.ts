@@ -8,11 +8,7 @@ import type { PlayerPosition } from "@/domain/entities/player";
 import { RATING_MAX, RATING_MIN } from "@/domain/entities/player";
 
 export type ScoutingKnowledgeLevel =
-  | "unknown"
-  | "basic"
-  | "developing"
-  | "detailed"
-  | "comprehensive";
+  "unknown" | "basic" | "developing" | "detailed" | "comprehensive";
 
 export const SCOUTING_KNOWLEDGE_LEVELS: readonly ScoutingKnowledgeLevel[] = [
   "unknown",
@@ -64,17 +60,7 @@ export type EstimatedScoutingCategories = Record<
 >;
 
 export type ScoutGrade =
-  | "A+"
-  | "A"
-  | "A-"
-  | "B+"
-  | "B"
-  | "B-"
-  | "C+"
-  | "C"
-  | "C-"
-  | "D"
-  | "F";
+  "A+" | "A" | "A-" | "B+" | "B" | "B-" | "C+" | "C" | "C-" | "D" | "F";
 
 export const SCOUT_GRADES: readonly ScoutGrade[] = [
   "A+",
@@ -91,11 +77,7 @@ export const SCOUT_GRADES: readonly ScoutGrade[] = [
 ] as const;
 
 export type PersonalityKey =
-  | "workEthic"
-  | "loyalty"
-  | "competitiveness"
-  | "leadership"
-  | "composure";
+  "workEthic" | "loyalty" | "competitiveness" | "leadership" | "composure";
 
 export const PERSONALITY_KEYS: readonly PersonalityKey[] = [
   "workEthic",
@@ -206,17 +188,7 @@ export type ProspectInterview = {
 };
 
 export type PickGradeLetter =
-  | "A+"
-  | "A"
-  | "A-"
-  | "B+"
-  | "B"
-  | "B-"
-  | "C+"
-  | "C"
-  | "C-"
-  | "D"
-  | "F";
+  "A+" | "A" | "A-" | "B+" | "B" | "B-" | "C+" | "C" | "C-" | "D" | "F";
 
 export type PickGradeSummary = {
   grade: PickGradeLetter;

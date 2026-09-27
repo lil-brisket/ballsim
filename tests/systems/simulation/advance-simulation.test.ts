@@ -12,10 +12,10 @@ describe("advanceSimulation", () => {
   it("advances one day, sims the opener after entering regular season, and reports metadata", () => {
     resetDomainEventSequenceForTests();
     const state = createInitialGameState({
-    saveId: "adv_opener",
+      saveId: "adv_opener",
       rngSeed: 7,
-    settings: CBL_GAME_SETTINGS,
-  });
+      settings: CBL_GAME_SETTINGS,
+    });
     const rng = createSeededRng(state.meta.rngState);
     let bootstrapped = bootstrapWorld(state, rng).state;
     bootstrapped = beginRegularSeasonFromPreseason(bootstrapped).state;
@@ -42,9 +42,10 @@ describe("advanceSimulation", () => {
 
   it("rejects re-simulating the same calendar date", () => {
     const state = createInitialGameState({
-    saveId: "adv_twice", rngSeed: 8,
-    settings: CBL_GAME_SETTINGS,
-  });
+      saveId: "adv_twice",
+      rngSeed: 8,
+      settings: CBL_GAME_SETTINGS,
+    });
     const rng = createSeededRng(state.meta.rngState);
     let current = bootstrapWorld(state, rng).state;
     current = beginRegularSeasonFromPreseason(current).state;
@@ -69,10 +70,10 @@ describe("advanceSimulation", () => {
     resetDomainEventSequenceForTests();
     // Sunday 2026-08-09 → Monday 2026-08-10 crosses weeks.
     let state = createInitialGameState({
-    saveId: "adv_week",
+      saveId: "adv_week",
       rngSeed: 9,
-    settings: CBL_GAME_SETTINGS,
-  });
+      settings: CBL_GAME_SETTINGS,
+    });
     state = {
       ...state,
       world: {
@@ -103,9 +104,9 @@ describe("advanceSimulation", () => {
 
   it("rejects non-positive day counts", () => {
     const state = createInitialGameState({
-    saveId: "adv_bad_days",
-    settings: CBL_GAME_SETTINGS,
-  });
+      saveId: "adv_bad_days",
+      settings: CBL_GAME_SETTINGS,
+    });
     const rng = createSeededRng(state.meta.rngState);
     expect(() => advanceSimulation(state, rng, { days: 0 })).toThrow(
       /days must be an integer >= 1/,

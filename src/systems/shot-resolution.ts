@@ -1,8 +1,4 @@
-import {
-  RATING_MAX,
-  RATING_MIN,
-  type Player,
-} from "@/domain/entities/player";
+import { RATING_MAX, RATING_MIN, type Player } from "@/domain/entities/player";
 import type { Rng } from "@/domain/rng";
 import {
   SHOT_RESOLUTION_CONFIG,
@@ -48,14 +44,10 @@ export function calculateShotProbability(input: ResolveShotInput): number {
   const baseProbability = shootingAbility / RATING_MAX;
   const defensivePenalty =
     (defenseRating / RATING_MAX) * SHOT_RESOLUTION_CONFIG.defensiveImpact;
-  const fatiguePenalty =
-    input.fatigue * SHOT_RESOLUTION_CONFIG.fatigueImpact;
+  const fatiguePenalty = input.fatigue * SHOT_RESOLUTION_CONFIG.fatigueImpact;
 
   const unclamped =
-    baseProbability +
-    shotTypeAdjustment -
-    defensivePenalty -
-    fatiguePenalty;
+    baseProbability + shotTypeAdjustment - defensivePenalty - fatiguePenalty;
 
   return clampProbability(unclamped);
 }
@@ -64,10 +56,7 @@ export function calculateShotProbability(input: ResolveShotInput): number {
  * Resolves a shot attempt: computes make probability, then one Bernoulli roll.
  * Does not mutate input. Calls rng.chance exactly once.
  */
-export function resolveShot(
-  input: ResolveShotInput,
-  rng: Rng,
-): ShotResolution {
+export function resolveShot(input: ResolveShotInput, rng: Rng): ShotResolution {
   const probability = calculateShotProbability(input);
   const made = rng.chance(probability);
   return { made, probability };
@@ -111,9 +100,7 @@ function validateResolveShotInput(input: ResolveShotInput): void {
     throw new Error("Shot resolution requires a defender.");
   }
   if (!SHOT_TYPES.includes(input.shotType)) {
-    throw new Error(
-      `Shot type must be one of ${SHOT_TYPES.join(", ")}.`,
-    );
+    throw new Error(`Shot type must be one of ${SHOT_TYPES.join(", ")}.`);
   }
   if (
     typeof input.fatigue !== "number" ||
@@ -125,20 +112,14 @@ function validateResolveShotInput(input: ResolveShotInput): void {
   }
 
   if (input.shotType === "two_point") {
-    assertRating(
-      input.shooter.attributes.finishing,
-      "shooter.finishing",
-    );
+    assertRating(input.shooter.attributes.finishing, "shooter.finishing");
     assertRating(input.shooter.attributes.midRange, "shooter.midRange");
     assertRating(
       input.defender.attributes.interiorDefense,
       "defender.interiorDefense",
     );
   } else {
-    assertRating(
-      input.shooter.attributes.threePoint,
-      "shooter.threePoint",
-    );
+    assertRating(input.shooter.attributes.threePoint, "shooter.threePoint");
     assertRating(
       input.defender.attributes.perimeterDefense,
       "defender.perimeterDefense",
@@ -147,11 +128,7 @@ function validateResolveShotInput(input: ResolveShotInput): void {
 }
 
 function assertRating(value: number, field: string): void {
-  if (
-    !Number.isInteger(value) ||
-    value < RATING_MIN ||
-    value > RATING_MAX
-  ) {
+  if (!Number.isInteger(value) || value < RATING_MIN || value > RATING_MAX) {
     throw new Error(
       `Shot ${field} must be an integer between ${RATING_MIN} and ${RATING_MAX}.`,
     );

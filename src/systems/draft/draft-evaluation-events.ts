@@ -8,11 +8,7 @@ import type { PlayerId, TeamId } from "@/domain/ids";
 import type { GameState } from "@/state/game-state";
 
 export type DraftEvaluationEventType =
-  | "combine"
-  | "medical"
-  | "team_workout"
-  | "private_workout"
-  | "interview";
+  "combine" | "medical" | "team_workout" | "private_workout" | "interview";
 
 export type DraftEvaluationEvent = {
   type: DraftEvaluationEventType;

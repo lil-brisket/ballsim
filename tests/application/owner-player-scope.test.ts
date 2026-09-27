@@ -29,7 +29,12 @@ describe("owner player scope", () => {
   });
 
   it("returns null for missing or out-of-scope playerId", async () => {
-    const created = await createNewOwnerSave({ settings: CBL_GAME_SETTINGS, name: "Scope Franchise", rngSeed: TEST_RNG_SEED },
+    const created = await createNewOwnerSave(
+      {
+        settings: CBL_GAME_SETTINGS,
+        name: "Scope Franchise",
+        rngSeed: TEST_RNG_SEED,
+      },
       store,
     );
     expect(created.ok).toBe(true);
@@ -37,9 +42,7 @@ describe("owner player scope", () => {
       return;
     }
     const saveId = created.save.id;
-    const teams = Object.values(
-      (await store.load(saveId))!.state.world.teams,
-    );
+    const teams = Object.values((await store.load(saveId))!.state.world.teams);
     const controlled = teams.find(
       (team) => team.id === created.dashboard.controlledTeam.id,
     )!;
@@ -59,11 +62,7 @@ describe("owner player scope", () => {
     const otherPlayerId = otherTeam.roster[0];
     expect(otherPlayerId).toBeDefined();
 
-    const outOfScope = await loadOwnerPlayerView(
-      saveId,
-      otherPlayerId!,
-      store,
-    );
+    const outOfScope = await loadOwnerPlayerView(saveId, otherPlayerId!, store);
     expect(outOfScope).toBeNull();
 
     const ownPlayerId = controlled.roster[0];
@@ -73,4 +72,3 @@ describe("owner player scope", () => {
     expect(inScope!.player.playerId).toBe(ownPlayerId);
   });
 });
-

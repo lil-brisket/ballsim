@@ -4,11 +4,11 @@ Concise conventions for unit, integration, and React tests in this project.
 
 ## Stack
 
-| Layer | Tool |
-| --- | --- |
-| Runner | Vitest 4 |
-| Path aliases | `vite-tsconfig-paths` (`@/*` → `src/*`) |
-| Coverage | `@vitest/coverage-v8` |
+| Layer              | Tool                                              |
+| ------------------ | ------------------------------------------------- |
+| Runner             | Vitest 4                                          |
+| Path aliases       | `vite-tsconfig-paths` (`@/*` → `src/*`)           |
+| Coverage           | `@vitest/coverage-v8`                             |
 | React (jsdom only) | `@testing-library/react` + `@testing-library/dom` |
 
 Domain, state, systems, and persistence tests run in the **Node** Vitest project. Component smoke tests use the **React/jsdom** project. Do not add Jest or Playwright unless architecture is updated first.
@@ -16,9 +16,9 @@ Domain, state, systems, and persistence tests run in the **Node** Vitest project
 ## Commands
 
 ```bash
-npm test              # vitest run (CI / one-shot)
+npm test              # vitest run (CI / one-shot: unit + integration + react)
 npm run test:watch    # watch mode
-npm run test:coverage # coverage report
+npm run test:coverage # same projects as npm test, plus v8 coverage (text/html/lcov)
 ```
 
 ## Directory structure
@@ -73,6 +73,8 @@ Prefer:
 
 Mock only when isolating I/O (Prisma, filesystem, network). Avoid tests that only assert a mock was called without checking meaningful outcomes.
 
+Prisma adapter tests (`tests/persistence/prisma-save-game-store.test.ts`) use a temp SQLite file and `prisma migrate deploy`. They inject `PrismaClient` into `createPrismaSaveGameStore`. Mock `server-only` in that file. Do not point these tests at `prisma/dev.db`.
+
 ## Determinism
 
 Simulation correctness depends on reproducibility:
@@ -96,11 +98,16 @@ GitHub Actions (`.github/workflows/ci.yml`) on `push` / `pull_request`:
 1. Node **20** (Next.js 16 requires `>=20.9.0`; `@types/node` is `^20`)
 2. `npm ci`
 3. `npx tsc --noEmit`
-4. `npm run lint`
-5. `npm test`
-6. `npm run build` with `DATABASE_URL=file:./prisma/ci.db`
+4. `npm run lint` (stylistic rules deferred to Prettier via `eslint-config-prettier`)
+5. `npm run format:check`
+6. `npm run test:coverage` (unit + integration + react, writes `coverage/lcov.info`)
+7. Upload `coverage/` as a workflow artifact (`coverage-report`)
+8. Upload `coverage/lcov.info` to Codecov (`codecov/codecov-action@v5`; optional `CODECOV_TOKEN` repo secret)
+9. `npm run build` with `DATABASE_URL=file:./prisma/ci.db`
 
-`next build` requires `DATABASE_URL` to be defined (Prisma client construction) but does **not** query the database during build for current dynamic routes. CI uses a real local SQLite `file:` URL, not a fake remote host. No migrate step is required for build today.
+Coverage HTML/LCOV live under `coverage/` (gitignored). Codecov project/patch status is configured in `codecov.yml` (auto target, 2% project drop tolerance; patch is informational).
+
+`next build` requires `DATABASE_URL` to be defined (Prisma client construction) but does **not** query the database during build for current dynamic routes. CI uses a real local SQLite `file:` URL, not a fake remote host. No migrate step is required for build today. Prisma adapter tests apply migrations themselves against a temp file.
 
 ## Expectations for contributors
 

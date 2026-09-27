@@ -65,9 +65,24 @@ describe("league generation", () => {
     });
 
     it.each([
-      { conferenceCount: 1, divisionsPerConference: 1, teamsPerDivision: 1, rosterSize: 10 },
-      { conferenceCount: 2, divisionsPerConference: 2, teamsPerDivision: 3, rosterSize: 10 },
-      { conferenceCount: 2, divisionsPerConference: 3, teamsPerDivision: 5, rosterSize: 10 },
+      {
+        conferenceCount: 1,
+        divisionsPerConference: 1,
+        teamsPerDivision: 1,
+        rosterSize: 10,
+      },
+      {
+        conferenceCount: 2,
+        divisionsPerConference: 2,
+        teamsPerDivision: 3,
+        rosterSize: 10,
+      },
+      {
+        conferenceCount: 2,
+        divisionsPerConference: 3,
+        teamsPerDivision: 5,
+        rosterSize: 10,
+      },
     ])(
       "supports league size $conferenceCount×$divisionsPerConference×$teamsPerDivision",
       (size) => {
@@ -349,14 +364,11 @@ describe("league generation", () => {
   });
 
   describe("league area city pools", () => {
-    it.each(LEAGUE_AREAS)(
-      "%s pool has at least 40 unique cities",
-      (area) => {
-        const pool = getTeamCitiesForArea(area);
-        expect(pool.length).toBeGreaterThanOrEqual(40);
-        expect(new Set(pool).size).toBe(pool.length);
-      },
-    );
+    it.each(LEAGUE_AREAS)("%s pool has at least 40 unique cities", (area) => {
+      const pool = getTeamCitiesForArea(area);
+      expect(pool.length).toBeGreaterThanOrEqual(40);
+      expect(new Set(pool).size).toBe(pool.length);
+    });
 
     it.each(LEAGUE_AREAS)(
       "%s generation uses only that area's cities with unique markets and franchise names",

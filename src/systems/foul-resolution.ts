@@ -1,13 +1,6 @@
-import {
-  createFoul,
-  type Foul,
-  type FoulType,
-} from "@/domain/entities/foul";
+import { createFoul, type Foul, type FoulType } from "@/domain/entities/foul";
 import type { PlayerId } from "@/domain/ids";
-import {
-  SHOT_TYPES,
-  type ShotType,
-} from "@/systems/shot-resolution-config";
+import { SHOT_TYPES, type ShotType } from "@/systems/shot-resolution-config";
 import {
   FOUL_RESOLUTION_CONFIG,
   type FoulRules,
@@ -57,7 +50,12 @@ export function resolveFoul(input: ResolveFoulInput): FoulResolution {
   const foul = input.foul;
 
   if (foul.foulType === "shooting") {
-    return resolveShootingFoul(foul, teamFoulsAfter, input.shotType!, input.shotMade!);
+    return resolveShootingFoul(
+      foul,
+      teamFoulsAfter,
+      input.shotType!,
+      input.shotMade!,
+    );
   }
 
   return resolveNonShootingFoul(foul, teamFoulsAfter, rules);
@@ -160,10 +158,7 @@ function validateResolveFoulInput(input: ResolveFoulInput): void {
   // Re-validate foul shape so raw objects cannot bypass createFoul.
   createFoul(input.foul);
 
-  if (
-    !Number.isInteger(input.teamFoulsBefore) ||
-    input.teamFoulsBefore < 0
-  ) {
+  if (!Number.isInteger(input.teamFoulsBefore) || input.teamFoulsBefore < 0) {
     throw new Error(
       "Foul resolution teamFoulsBefore must be a non-negative integer.",
     );

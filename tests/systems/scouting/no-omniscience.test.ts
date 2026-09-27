@@ -10,9 +10,7 @@ import { calculatePlayerOverall } from "@/domain/player-overall-rating";
 import { createDraftFixture, sortedTeamIds } from "../draft/fixture";
 import { TEST_RNG_SEED } from "../../helpers/determinism";
 import { toScoutingReportView } from "@/systems/scouting/scouting-reports";
-import {
-  deriveStrengthsWeaknessesFromEstimates,
-} from "@/systems/scouting/scouting-reports";
+import { deriveStrengthsWeaknessesFromEstimates } from "@/systems/scouting/scouting-reports";
 
 describe("no omniscience", () => {
   it("draft board view never exposes true overall", () => {
@@ -148,11 +146,10 @@ describe("scouting accuracy", () => {
     const teams = sortedTeamIds(state);
     expect(Object.keys(draft.teamDraftState).length).toBe(teams.length);
     const prospectId = Object.keys(draft.prospects)[0]!;
-    const reports = teams.map(
-      (teamId) =>
-        draft.teamDraftState[teamId]!.scouting.find(
-          (s) => s.prospectPlayerId === prospectId,
-        )!,
+    const reports = teams.map((teamId) =>
+      draft.teamDraftState[teamId]!.scouting.find(
+        (s) => s.prospectPlayerId === prospectId,
+      )!,
     );
     // Different teams generally disagree (not required identical)
     expect(reports[0]!.teamId).not.toBe(reports[1]!.teamId);

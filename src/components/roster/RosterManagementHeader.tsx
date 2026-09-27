@@ -5,13 +5,14 @@ import { MoneyDisplay } from "@/components/owner/MoneyDisplay";
 import { Metric } from "@/components/ui/Metric";
 import { cn, panelClass } from "@/components/ui/styles";
 
-export function RosterManagementHeader(props: {
-  view: RosterPageView;
-}) {
+export function RosterManagementHeader(props: { view: RosterPageView }) {
   const { team, summary } = props.view;
   return (
     <header
-      className={cn(panelClass, "flex flex-wrap items-start justify-between gap-4 px-4 py-3")}
+      className={cn(
+        panelClass,
+        "flex flex-wrap items-start justify-between gap-4 px-4 py-3",
+      )}
       aria-label="Roster summary"
     >
       <div>

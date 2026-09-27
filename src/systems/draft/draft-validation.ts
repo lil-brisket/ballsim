@@ -1,10 +1,5 @@
 import type { DraftClass } from "@/domain/entities/draft";
-import type {
-  DraftClassId,
-  DraftPickId,
-  PlayerId,
-  TeamId,
-} from "@/domain/ids";
+import type { DraftClassId, DraftPickId, PlayerId, TeamId } from "@/domain/ids";
 import type { GameState } from "@/state/game-state";
 import type {
   DraftValidationIssue,
@@ -30,8 +25,7 @@ export function validateDraftSelection(
   const warnings: DraftValidationIssue[] = [];
 
   const draft = state.world.drafts[input.draftClassId] as
-    | DraftClass
-    | undefined;
+    DraftClass | undefined;
   if (draft === undefined) {
     errors.push({
       code: "DRAFT_NOT_FOUND",

@@ -29,7 +29,10 @@ export type DlAssignmentResult = {
   events: DomainEvent[];
 };
 
-function deriveInitialDlRole(player: Player, dlPeers: Player[]): DevelopmentLeagueRole {
+function deriveInitialDlRole(
+  player: Player,
+  dlPeers: Player[],
+): DevelopmentLeagueRole {
   const overall = calculatePlayerOverall(player.position, player.attributes);
   const peers = [...dlPeers, player].sort(
     (a, b) =>
@@ -74,7 +77,8 @@ export function assignPlayerToDevelopmentLeague(
     }
   }
   const role = deriveInitialDlRole(player, peers);
-  const prior = player.developmentLeague ?? createDefaultDevelopmentLeagueProfile();
+  const prior =
+    player.developmentLeague ?? createDefaultDevelopmentLeagueProfile();
   const nextProfile: DevelopmentLeagueProfile = {
     ...prior,
     status: "assigned",
@@ -156,7 +160,8 @@ export function recallPlayerFromDevelopmentLeague(
 
   const player = state.world.players[playerId]!;
   const team = state.world.teams[teamId] as Team;
-  const prior = player.developmentLeague ?? createDefaultDevelopmentLeagueProfile();
+  const prior =
+    player.developmentLeague ?? createDefaultDevelopmentLeagueProfile();
 
   const nextProfile: DevelopmentLeagueProfile = {
     ...prior,

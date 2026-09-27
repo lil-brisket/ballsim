@@ -49,8 +49,7 @@ import {
 } from "@/systems/staff-budget-config";
 
 export type GameSettingsValidationResult =
-  | { ok: true; settings: GameSettings }
-  | { ok: false; errors: string[] };
+  { ok: true; settings: GameSettings } | { ok: false; errors: string[] };
 
 export type ValidateGameSettingsOptions = {
   /**
@@ -72,7 +71,11 @@ export function validateGameSettings(
   const mode = options.mode ?? "newSave";
   const errors: string[] = [];
 
-  if (settings === null || typeof settings !== "object" || Array.isArray(settings)) {
+  if (
+    settings === null ||
+    typeof settings !== "object" ||
+    Array.isArray(settings)
+  ) {
     return { ok: false, errors: ["settings must be an object."] };
   }
 
@@ -144,7 +147,10 @@ export function validateGameSettings(
   const injuryFrequency = resolveInjuryFrequency(raw);
 
   const gamesPerTeam = regularSeason.gamesPerTeam;
-  if (typeof gamesPerTeam !== "number" || !isSupportedGamesPerTeam(gamesPerTeam)) {
+  if (
+    typeof gamesPerTeam !== "number" ||
+    !isSupportedGamesPerTeam(gamesPerTeam)
+  ) {
     errors.push(
       `regularSeason.gamesPerTeam must be one of ${[14, 20, 22, 30, 40, 60, 72, 82].join(", ")}.`,
     );
@@ -184,7 +190,10 @@ export function validateGameSettings(
   }
 
   const seriesLength = playoffs.seriesLength;
-  if (typeof seriesLength !== "number" || !isSupportedSeriesLength(seriesLength)) {
+  if (
+    typeof seriesLength !== "number" ||
+    !isSupportedSeriesLength(seriesLength)
+  ) {
     errors.push("playoffs.seriesLength must be 1, 3, 5, or 7.");
   }
 
@@ -206,9 +215,7 @@ export function validateGameSettings(
     if (freeAgency) {
       if (freeAgency.allowExtension !== undefined) {
         if (typeof freeAgency.allowExtension !== "boolean") {
-          errors.push(
-            "offseason.freeAgency.allowExtension must be a boolean.",
-          );
+          errors.push("offseason.freeAgency.allowExtension must be a boolean.");
         } else {
           freeAgencyAllowExtension = freeAgency.allowExtension;
         }
@@ -270,10 +277,7 @@ export function validateGameSettings(
   if (draftMode !== undefined && !isDraftMode(draftMode)) {
     errors.push('draft.mode must be "standard" or "fantasy".');
   }
-  if (
-    draftType !== undefined &&
-    !isFantasyDraftSettingsType(draftType)
-  ) {
+  if (draftType !== undefined && !isFantasyDraftSettingsType(draftType)) {
     errors.push('draft.type must be "snake" or "linear".');
   }
   if (
@@ -285,10 +289,7 @@ export function validateGameSettings(
   ) {
     errors.push("draft.timerSeconds must be null or a positive integer.");
   }
-  if (
-    orderMode !== undefined &&
-    !isFantasyDraftOrderModeSetting(orderMode)
-  ) {
+  if (orderMode !== undefined && !isFantasyDraftOrderModeSetting(orderMode)) {
     errors.push('draft.orderMode must be "random" or "manual".');
   }
   if (
@@ -372,7 +373,8 @@ export function validateGameSettings(
       teamCount: teamCount as number,
       conferenceCount: conferenceCount as number,
       divisionsEnabled: divisionsEnabled as boolean,
-      area: (league.area as GameSettings["league"]["area"] | undefined) ??
+      area:
+        (league.area as GameSettings["league"]["area"] | undefined) ??
         "north_america",
     },
     injuryFrequency,
@@ -402,11 +404,10 @@ export function validateGameSettings(
       revenueSharingEnabled: revenueSharingEnabled as boolean,
     },
     draft: {
-      mode: (draftMode as GameSettings["draft"]["mode"] | undefined) ?? "standard",
-      type:
-        (draftType as GameSettings["draft"]["type"] | undefined) ?? "snake",
-      timerSeconds:
-        (timerSeconds as number | null | undefined) ?? null,
+      mode:
+        (draftMode as GameSettings["draft"]["mode"] | undefined) ?? "standard",
+      type: (draftType as GameSettings["draft"]["type"] | undefined) ?? "snake",
+      timerSeconds: (timerSeconds as number | null | undefined) ?? null,
       orderMode:
         (orderMode as GameSettings["draft"]["orderMode"] | undefined) ??
         "random",
@@ -654,9 +655,7 @@ function mapLegacyDomainsToPhases(
   legacy: AiAssistanceDomains,
 ): AiAssistancePhases {
   const base =
-    preset === "custom"
-      ? applyPreset("continuity")
-      : applyPreset(preset);
+    preset === "custom" ? applyPreset("continuity") : applyPreset(preset);
 
   const mapDomain = (
     mode: AiAssistanceDomains[keyof AiAssistanceDomains],

@@ -34,8 +34,7 @@ export type ControlledFranchiseIdentityInput = {
 };
 
 export type ConfirmControlledFranchisesResult =
-  | { ok: true; state: GameState }
-  | { ok: false; error: string };
+  { ok: true; state: GameState } | { ok: false; error: string };
 
 /**
  * Validate and apply controlled-franchise selection + identity in one transition.

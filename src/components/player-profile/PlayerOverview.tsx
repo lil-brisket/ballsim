@@ -6,11 +6,7 @@ function formatAttributeLabel(key: string): string {
   return key.replace(/([A-Z])/g, " $1");
 }
 
-function FormDelta(props: {
-  label: string;
-  recent: number;
-  season: number;
-}) {
+function FormDelta(props: { label: string; recent: number; season: number }) {
   const diff = props.recent - props.season;
   const tone =
     Math.abs(diff) < 0.3
@@ -108,7 +104,9 @@ export function PlayerOverview(props: {
                   className="flex items-center justify-between rounded-lg border border-zinc-800 px-3 py-2 text-sm"
                 >
                   <span className="text-zinc-100">{item.label}</span>
-                  <span className="font-mono text-amber-400">{item.rating}</span>
+                  <span className="font-mono text-amber-400">
+                    {item.rating}
+                  </span>
                 </li>
               ))}
             </ul>

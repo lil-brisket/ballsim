@@ -44,7 +44,9 @@ describe("TeamNicknameField", () => {
         onRandomize={onRandomize}
       />,
     );
-    fireEvent.click(screen.getByRole("button", { name: "Randomize team name" }));
+    fireEvent.click(
+      screen.getByRole("button", { name: "Randomize team name" }),
+    );
     expect(onRandomize).toHaveBeenCalledTimes(1);
   });
 });

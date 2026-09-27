@@ -13,10 +13,7 @@ type PageProps = {
   searchParams: Promise<{ error?: string }>;
 };
 
-export default async function HistoryPage({
-  params,
-  searchParams,
-}: PageProps) {
+export default async function HistoryPage({ params, searchParams }: PageProps) {
   const { saveId } = await params;
   const { error } = await searchParams;
   const view = await loadOwnerSaveView(saveId);
@@ -64,7 +61,9 @@ export default async function HistoryPage({
                 <p className="mt-1 font-medium text-zinc-100">
                   {situation.title}
                 </p>
-                <p className="mt-1 text-sm text-zinc-400">{situation.summary}</p>
+                <p className="mt-1 text-sm text-zinc-400">
+                  {situation.summary}
+                </p>
               </li>
             ))}
             {view.notifications

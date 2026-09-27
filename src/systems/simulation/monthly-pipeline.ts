@@ -74,6 +74,8 @@ export function runMonthlyPipeline(
 }
 
 /** Month id for the date that was just simulated (completed month window). */
-export function completedMonthIdForSimulatedDate(simulatedDate: string): string {
+export function completedMonthIdForSimulatedDate(
+  simulatedDate: string,
+): string {
   return getCalendarMonthId(simulatedDate);
 }

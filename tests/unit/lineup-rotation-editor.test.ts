@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import type { LineupView, RotationView } from "@/state/team-management-selectors";
+import type {
+  LineupView,
+  RotationView,
+} from "@/state/team-management-selectors";
 import {
   cloneEditorState,
   createEditorState,
@@ -252,9 +255,7 @@ describe("lineup-rotation-editor", () => {
     const row = state.rows.find((r) => r.playerId === "p6");
     expect(row?.targetMinutes).toBe(0);
     state = updateRotationRow(state, "p6", { targetMinutes: 20 });
-    expect(
-      state.rows.find((r) => r.playerId === "p6")?.targetMinutes,
-    ).toBe(0);
+    expect(state.rows.find((r) => r.playerId === "p6")?.targetMinutes).toBe(0);
     const payload = toSavePayload(state);
     expect(payload.rotation.some((e) => e.playerId === "p6")).toBe(false);
     expect(payload.inactive).toContain("p6");

@@ -105,16 +105,15 @@ describe("AiTeamManagementSection", () => {
       />,
     );
 
-    const rosterHeading = screen.getAllByText("Roster Management").find(
-      (el) => el.tagName === "H3",
-    );
+    const rosterHeading = screen
+      .getAllByText("Roster Management")
+      .find((el) => el.tagName === "H3");
     expect(rosterHeading).toBeTruthy();
     const rosterSection = rosterHeading!.closest("details");
     expect(rosterSection).toBeTruthy();
-    const selectAll = within(rosterSection as HTMLElement).getByRole(
-      "button",
-      { name: "Select All" },
-    );
+    const selectAll = within(rosterSection as HTMLElement).getByRole("button", {
+      name: "Select All",
+    });
     fireEvent.click(selectAll);
 
     expect(

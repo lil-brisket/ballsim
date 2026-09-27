@@ -16,13 +16,8 @@ export function OwnerEntryActions(props: {
   maxSaveSlots: number;
   newGameHref: string;
 }) {
-  const {
-    continueSave,
-    hasAnySaves,
-    atSaveLimit,
-    maxSaveSlots,
-    newGameHref,
-  } = props;
+  const { continueSave, hasAnySaves, atSaveLimit, maxSaveSlots, newGameHref } =
+    props;
 
   return (
     <>
@@ -31,7 +26,9 @@ export function OwnerEntryActions(props: {
           className={`${panelClass} border-amber-800/40 bg-amber-950/20`}
           aria-label="No Owner saves"
         >
-          <h2 className="text-lg font-medium text-zinc-50">No Owner saves yet</h2>
+          <h2 className="text-lg font-medium text-zinc-50">
+            No Owner saves yet
+          </h2>
           <p className="text-sm text-zinc-400">
             Start your first franchise to begin.
           </p>

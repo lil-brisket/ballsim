@@ -33,12 +33,7 @@ export type OwnerNavBadge = {
 };
 
 export type OwnerNavBadgeKey =
-  | "calendar"
-  | "roster"
-  | "contracts"
-  | "media"
-  | "offseason"
-  | "staff";
+  "calendar" | "roster" | "contracts" | "media" | "offseason" | "staff";
 
 export type OwnerNavBadgeMap = Partial<Record<OwnerNavBadgeKey, OwnerNavBadge>>;
 
@@ -156,9 +151,7 @@ export function computeOwnerNavBadges(state: GameState): OwnerNavBadgeMap {
         count: outstanding,
         kind: "actionable",
         label:
-          outstanding === 1
-            ? "outstanding decision"
-            : "outstanding decisions",
+          outstanding === 1 ? "outstanding decision" : "outstanding decisions",
       };
     }
   }

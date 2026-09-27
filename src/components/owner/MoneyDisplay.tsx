@@ -10,10 +10,7 @@ export function formatMoney(amount: number): string {
   return `$${amount.toLocaleString()}`;
 }
 
-export function MoneyDisplay(props: {
-  amount: number;
-  className?: string;
-}) {
+export function MoneyDisplay(props: { amount: number; className?: string }) {
   return (
     <span className={`font-mono tabular-nums ${props.className ?? ""}`}>
       {formatMoney(props.amount)}

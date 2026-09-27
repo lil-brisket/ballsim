@@ -11,10 +11,7 @@ import {
 } from "@/state/action-center-selectors";
 import { toOwnerDashboardView } from "@/state/owner-dashboard";
 import { getActiveOwnerTeamId } from "@/state/owner-context";
-import {
-  toStaffView,
-  type StaffMemberView,
-} from "@/state/franchise-selectors";
+import { toStaffView, type StaffMemberView } from "@/state/franchise-selectors";
 import {
   STAFF_ROLE_DISPLAY,
   STAFF_ROLES,
@@ -165,8 +162,7 @@ export function toStaffHubView(state: GameState): StaffHubView {
       roleLabel: STAFF_ROLE_DISPLAY[r] ?? r,
     }),
   );
-  const headCoach =
-    staff.roster.find((m) => m.role === "head_coach") ?? null;
+  const headCoach = staff.roster.find((m) => m.role === "head_coach") ?? null;
 
   const actionCenter = buildActionCenterView({
     actionItems: owner.actionItems,

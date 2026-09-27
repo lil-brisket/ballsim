@@ -57,7 +57,10 @@ export function makeTradeDecision(
 
   const confidence = Math.max(
     0.2,
-    Math.min(1, evaluation.confidence + Math.abs(decisionScore - threshold) / 40),
+    Math.min(
+      1,
+      evaluation.confidence + Math.abs(decisionScore - threshold) / 40,
+    ),
   );
 
   return { action, confidence, decisionScore };

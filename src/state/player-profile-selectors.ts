@@ -275,7 +275,9 @@ function accumulateLine(
   };
 }
 
-function averagesFromLine(line: PlayerSeasonStatLine): SeasonAveragesView | null {
+function averagesFromLine(
+  line: PlayerSeasonStatLine,
+): SeasonAveragesView | null {
   if (line.games === 0) {
     return null;
   }
@@ -348,10 +350,7 @@ function resolveGameTeamIdentity(
   };
 }
 
-function playerTeamIdInGame(
-  game: Game,
-  playerId: PlayerId,
-): string | null {
+function playerTeamIdInGame(game: Game, playerId: PlayerId): string | null {
   const row = game.playerStats.find((stat) => stat.playerId === playerId);
   if (!row) return null;
   if (row.teamId) return row.teamId;
@@ -429,7 +428,10 @@ export function derivePlayerTeamStints(
     let city = team?.city ?? "Unknown";
     let name = team?.name ?? "Team";
     for (const game of games) {
-      const year = seasonYearFromId(game.seasonId, state.competition.season.year);
+      const year = seasonYearFromId(
+        game.seasonId,
+        state.competition.season.year,
+      );
       if (year !== entry.seasonYear) continue;
       const identity = resolveGameTeamIdentity(state, game, entry.teamId);
       if (identity.city !== "Unknown") {
@@ -571,10 +573,30 @@ export function deriveBestSeasons(
   };
 
   return [
-    bestBy("scoring", "Best Scoring Season", (c) => c.ppg, (v) => `${round1(v)} PPG`),
-    bestBy("rebounding", "Best Rebounding Season", (c) => c.rpg, (v) => `${round1(v)} RPG`),
-    bestBy("playmaking", "Best Playmaking Season", (c) => c.apg, (v) => `${round1(v)} APG`),
-    bestBy("overall", "Best Overall Season", (c) => c.overall, (v) => `${v} OVR`),
+    bestBy(
+      "scoring",
+      "Best Scoring Season",
+      (c) => c.ppg,
+      (v) => `${round1(v)} PPG`,
+    ),
+    bestBy(
+      "rebounding",
+      "Best Rebounding Season",
+      (c) => c.rpg,
+      (v) => `${round1(v)} RPG`,
+    ),
+    bestBy(
+      "playmaking",
+      "Best Playmaking Season",
+      (c) => c.apg,
+      (v) => `${round1(v)} APG`,
+    ),
+    bestBy(
+      "overall",
+      "Best Overall Season",
+      (c) => c.overall,
+      (v) => `${v} OVR`,
+    ),
   ].filter((entry): entry is BestSeasonView => entry !== null);
 }
 
@@ -604,7 +626,10 @@ export function toPlayerGameLogView(
     rows.push({
       gameId: game.id,
       date: game.date,
-      seasonYear: seasonYearFromId(game.seasonId, state.competition.season.year),
+      seasonYear: seasonYearFromId(
+        game.seasonId,
+        state.competition.season.year,
+      ),
       competitionType: game.competitionType,
       opponentAbbreviation: opp.abbreviation,
       opponentBranding: opp.branding,

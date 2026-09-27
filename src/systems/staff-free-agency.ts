@@ -1,4 +1,8 @@
-import { createStaffOffer, isOpenStaffOffer, type StaffOffer } from "@/domain/entities/staff-offer";
+import {
+  createStaffOffer,
+  isOpenStaffOffer,
+  type StaffOffer,
+} from "@/domain/entities/staff-offer";
 import { createDomainEvent, type DomainEvent } from "@/domain/events";
 import {
   asStaffOfferId,
@@ -97,7 +101,12 @@ export function negotiateStaffOffer(
 ): SystemResult {
   const offer = assertOpenStaffOffer(state, offerId);
   const staff = state.world.staff[offer.staffId]!;
-  const interest = evaluateStaffInterest(staff, offer.teamId, state, offer.terms);
+  const interest = evaluateStaffInterest(
+    staff,
+    offer.teamId,
+    state,
+    offer.terms,
+  );
   const today = state.world.calendar.currentDate;
 
   if (!interest.interested || interest.level === "unwilling") {
@@ -156,7 +165,12 @@ export function acceptStaffOffer(
 ): SystemResult {
   const offer = assertOpenStaffOffer(state, offerId);
   const staff = state.world.staff[offer.staffId]!;
-  const interest = evaluateStaffInterest(staff, offer.teamId, state, offer.terms);
+  const interest = evaluateStaffInterest(
+    staff,
+    offer.teamId,
+    state,
+    offer.terms,
+  );
   if (!interest.interested) {
     return negotiateStaffOffer(state, offerId);
   }

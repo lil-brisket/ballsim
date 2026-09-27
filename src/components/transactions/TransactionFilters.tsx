@@ -77,8 +77,7 @@ export function TransactionFilters(props: {
     const next = {
       type: props.group === "all" ? undefined : props.group,
       range: props.range === "season" ? undefined : props.range,
-      team:
-        props.teamValue === "all" ? undefined : String(props.teamValue),
+      team: props.teamValue === "all" ? undefined : String(props.teamValue),
       q: props.search || undefined,
       sort: props.sort === "newest" ? undefined : props.sort,
       activity:
@@ -88,10 +87,10 @@ export function TransactionFilters(props: {
       limit: props.limit > 25 ? String(props.limit) : undefined,
       ...overrides,
     };
-    const range = (next.range as TransactionDateRangeKey | undefined) ?? "season";
+    const range =
+      (next.range as TransactionDateRangeKey | undefined) ?? "season";
     const params = toTransactionHubSearchParams({
-      group:
-        (next.type as TransactionFilterGroup | undefined) ?? "all",
+      group: (next.type as TransactionFilterGroup | undefined) ?? "all",
       teamParam: next.team,
       range,
       start: range === "custom" ? next.start : undefined,
@@ -126,11 +125,7 @@ export function TransactionFilters(props: {
 
   return (
     <div className="space-y-3">
-      <div
-        className="flex flex-wrap gap-2"
-        role="group"
-        aria-label="Activity"
-      >
+      <div className="flex flex-wrap gap-2" role="group" aria-label="Activity">
         <Link
           href={href({ activity: undefined, limit: undefined })}
           className={cn(
@@ -166,9 +161,7 @@ export function TransactionFilters(props: {
             onChange={(event) =>
               push({
                 type:
-                  event.target.value === "all"
-                    ? undefined
-                    : event.target.value,
+                  event.target.value === "all" ? undefined : event.target.value,
               })
             }
             className={selectClass}

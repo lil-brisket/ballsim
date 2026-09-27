@@ -126,9 +126,7 @@ export function assertStaffShape(staff: StaffInput | Staff): void {
   assertNonEmptyName(staff.firstName, "firstName");
   assertNonEmptyName(staff.lastName, "lastName");
   if (!isStaffRole(staff.role)) {
-    throw new Error(
-      `Staff role must be one of ${STAFF_ROLES.join(", ")}.`,
-    );
+    throw new Error(`Staff role must be one of ${STAFF_ROLES.join(", ")}.`);
   }
   assertAge(staff.age);
   assertRating(staff.overall, "overall");
@@ -212,11 +210,7 @@ function assertAge(value: number): void {
 }
 
 function assertRating(value: number, field: string): void {
-  if (
-    !Number.isInteger(value) ||
-    value < RATING_MIN ||
-    value > RATING_MAX
-  ) {
+  if (!Number.isInteger(value) || value < RATING_MIN || value > RATING_MAX) {
     throw new Error(
       `Staff ${field} must be an integer between ${RATING_MIN} and ${RATING_MAX}.`,
     );

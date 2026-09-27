@@ -3,9 +3,7 @@ import { StatusBadge } from "@/components/owner/StatusBadge";
 import { TeamLogoMark } from "@/components/team/logos/TeamLogoMark";
 import type { PlayerProfileView } from "@/state/player-profile-selectors";
 
-export function PlayerProfileHeader(props: {
-  player: PlayerProfileView;
-}) {
+export function PlayerProfileHeader(props: { player: PlayerProfileView }) {
   const { player } = props;
 
   return (
@@ -45,7 +43,9 @@ export function PlayerProfileHeader(props: {
             <p className="text-[10px] uppercase tracking-wide text-amber-500/80">
               Overall
             </p>
-            <p className="font-mono text-2xl text-amber-400">{player.overall}</p>
+            <p className="font-mono text-2xl text-amber-400">
+              {player.overall}
+            </p>
           </div>
           <div className="rounded-lg border border-zinc-800 px-4 py-2 text-center">
             <p className="text-[10px] uppercase tracking-wide text-zinc-500">
@@ -57,10 +57,7 @@ export function PlayerProfileHeader(props: {
           </div>
           <div className="space-y-1">
             <StatusBadge label={player.developmentStage} />
-            <StatusBadge
-              label={player.injuryKind}
-              tone={player.injuryKind}
-            />
+            <StatusBadge label={player.injuryKind} tone={player.injuryKind} />
           </div>
         </div>
       </div>

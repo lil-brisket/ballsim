@@ -52,7 +52,8 @@ export function runOwnerGameplay(
 
   // Snapshot cash for the first owned team for legacy previousCash return.
   const primaryTeamId = getOwnedTeamIds(current)[0]!;
-  const previousCash = current.business.finances[primaryTeamId]?.businessFunds ?? 0;
+  const previousCash =
+    current.business.finances[primaryTeamId]?.businessFunds ?? 0;
 
   const financesBeforeObjectives = applyGameplayFinancialConsequences(current);
   current = financesBeforeObjectives.state;

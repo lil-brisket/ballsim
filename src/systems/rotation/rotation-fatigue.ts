@@ -22,10 +22,7 @@ export function computeFatigue(input: {
     input.continuousSecondsOnCourt /
     Math.max(1, ROTATION_CONFIG.continuousStretchSeconds);
   const totalLoad = input.totalSecondsOnCourt / (48 * 60);
-  const restRelief = Math.min(
-    0.35,
-    input.secondsSinceLastRest / 600,
-  );
+  const restRelief = Math.min(0.35, input.secondsSinceLastRest / 600);
 
   const raw =
     continuousLoad * 0.55 * staminaFactor +

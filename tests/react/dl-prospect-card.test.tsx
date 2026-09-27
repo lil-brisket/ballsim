@@ -30,7 +30,9 @@ function wrap(ui: React.ReactNode) {
   return <EntityDrawerProvider saveId="s1">{ui}</EntityDrawerProvider>;
 }
 
-function prospect(overrides: Partial<DlProspectRowView> = {}): DlProspectRowView {
+function prospect(
+  overrides: Partial<DlProspectRowView> = {},
+): DlProspectRowView {
   return {
     playerId: "p1",
     name: "Alex Prospect",
@@ -85,9 +87,7 @@ describe("DlProspectCard", () => {
         />,
       ),
     );
-    expect(
-      screen.getByLabelText("No season-over-season history"),
-    ).toBeTruthy();
+    expect(screen.getByLabelText("No season-over-season history")).toBeTruthy();
   });
 
   it("renders a positive emerald delta", () => {

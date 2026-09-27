@@ -47,9 +47,10 @@ export function checkContractExtensionWindow(
   };
 }
 
-export function checkPlayerReleaseWindow(
-  state: GameState,
-): { allowed: boolean; violations: RuleViolation[] } {
+export function checkPlayerReleaseWindow(state: GameState): {
+  allowed: boolean;
+  violations: RuleViolation[];
+} {
   const phaseId = readActivePhaseId(state);
   if (phaseId === "offseason.season_transition") {
     return {
@@ -57,7 +58,8 @@ export function checkPlayerReleaseWindow(
       violations: [
         {
           code: "RELEASE_WINDOW_CLOSED",
-          message: "Player releases are not available during season transition.",
+          message:
+            "Player releases are not available during season transition.",
           tier: "phase_lock",
           action: "player_release",
         },

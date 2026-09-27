@@ -56,9 +56,7 @@ export function summarizeMetric(values: readonly number[]): MetricSummary {
   const sorted = sortedCopy(values);
   const mid = Math.floor(n / 2);
   const median =
-    n % 2 === 1
-      ? sorted[mid]!
-      : (sorted[mid - 1]! + sorted[mid]!) / 2;
+    n % 2 === 1 ? sorted[mid]! : (sorted[mid - 1]! + sorted[mid]!) / 2;
   return { n, mean, median, min, max, stdev };
 }
 
@@ -90,9 +88,7 @@ export function distributionHistogram(
   }
   const min = Math.min(...values);
   const max = Math.max(...values);
-  const bins =
-    binCount ??
-    Math.max(1, Math.ceil(Math.log2(values.length) + 1));
+  const bins = binCount ?? Math.max(1, Math.ceil(Math.log2(values.length) + 1));
   if (min === max) {
     return [{ low: min, high: max, count: values.length, share: 1 }];
   }

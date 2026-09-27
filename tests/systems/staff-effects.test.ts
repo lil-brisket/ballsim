@@ -49,7 +49,10 @@ describe("staff effects", () => {
     let state = boot();
     const teamId = state.user.activeOwnerTeamId;
 
-    const makeElite = (role: "trainer" | "head_coach" | "assistant_coach", id: string) => {
+    const makeElite = (
+      role: "trainer" | "head_coach" | "assistant_coach",
+      id: string,
+    ) => {
       const attrs = attributesFromLegacyQuality(role, 95, [], []);
       return createStaff({
         ...testStaff({ id: asStaffId(id), role, teamId, overall: 95 }),
@@ -67,7 +70,9 @@ describe("staff effects", () => {
     const team = state.world.teams[teamId]!;
     const keep = team.staff.filter((id) => {
       const s = state.world.staff[id];
-      return s && !["trainer", "head_coach", "assistant_coach"].includes(s.role);
+      return (
+        s && !["trainer", "head_coach", "assistant_coach"].includes(s.role)
+      );
     });
 
     state = {
@@ -124,10 +129,7 @@ describe("staff effects", () => {
 
   it("builds TeamStaffGameContext once without throwing", () => {
     const state = boot();
-    const ctx = buildTeamStaffGameContext(
-      state,
-      state.user.activeOwnerTeamId,
-    );
+    const ctx = buildTeamStaffGameContext(state, state.user.activeOwnerTeamId);
     expect(ctx.offensiveModifier).toBeGreaterThanOrEqual(-0.1);
     expect(ctx.offensiveModifier).toBeLessThanOrEqual(0.1);
   });

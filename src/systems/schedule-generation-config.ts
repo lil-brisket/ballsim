@@ -46,9 +46,7 @@ export function expectedRoundCount(
     );
   }
   if (!Number.isInteger(seasonLength) || seasonLength < 1) {
-    throw new Error(
-      "expectedRoundCount seasonLength must be an integer >= 1.",
-    );
+    throw new Error("expectedRoundCount seasonLength must be an integer >= 1.");
   }
   if (teamCount % 2 === 0) {
     return seasonLength;
@@ -65,9 +63,10 @@ export function expectedRoundCount(
  * Validates season schedule config and returns a normalized copy with sorted unique team IDs.
  * Throws Error on impossible configurations.
  */
-export function validateSeasonScheduleConfig(
-  config: SeasonScheduleConfig,
-): { teamIds: TeamId[]; seasonLength: number } {
+export function validateSeasonScheduleConfig(config: SeasonScheduleConfig): {
+  teamIds: TeamId[];
+  seasonLength: number;
+} {
   const { teamIds, seasonLength } = config;
 
   if (!Array.isArray(teamIds)) {
@@ -91,9 +90,7 @@ export function validateSeasonScheduleConfig(
     throw new Error("Season schedule teamIds must be unique.");
   }
   if (!Number.isInteger(seasonLength) || seasonLength < 1) {
-    throw new Error(
-      "Season schedule seasonLength must be an integer >= 1.",
-    );
+    throw new Error("Season schedule seasonLength must be an integer >= 1.");
   }
   const n = teamIds.length;
   if (n % 2 === 1 && seasonLength % (n - 1) !== 0) {

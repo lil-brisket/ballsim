@@ -17,8 +17,7 @@ export type ResolvedLeagueShape = {
 };
 
 export type ResolveLeagueShapeResult =
-  | { ok: true; shape: ResolvedLeagueShape }
-  | { ok: false; error: string };
+  { ok: true; shape: ResolvedLeagueShape } | { ok: false; error: string };
 
 /**
  * When divisions are disabled, uses one synthetic division per conference.
@@ -56,7 +55,8 @@ export function tryResolveLeagueShape(
     };
   }
 
-  const divisionsPerConference = chooseDivisionsPerConference(teamsPerConference);
+  const divisionsPerConference =
+    chooseDivisionsPerConference(teamsPerConference);
   if (divisionsPerConference === null) {
     return {
       ok: false,
@@ -76,7 +76,9 @@ export function tryResolveLeagueShape(
   };
 }
 
-export function resolveLeagueShape(input: LeagueShapeInput): ResolvedLeagueShape {
+export function resolveLeagueShape(
+  input: LeagueShapeInput,
+): ResolvedLeagueShape {
   const result = tryResolveLeagueShape(input);
   if (!result.ok) {
     throw new Error(result.error);
@@ -88,7 +90,9 @@ export function resolveLeagueShape(input: LeagueShapeInput): ResolvedLeagueShape
  * Prefer classic 2 then 3 then 4 divisions, each with at least 2 teams.
  * Returns null when no such split exists (e.g. prime teamsPerConference).
  */
-function chooseDivisionsPerConference(teamsPerConference: number): number | null {
+function chooseDivisionsPerConference(
+  teamsPerConference: number,
+): number | null {
   if (teamsPerConference < 4) {
     return null;
   }

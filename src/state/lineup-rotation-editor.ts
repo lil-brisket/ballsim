@@ -185,7 +185,9 @@ export function findDuplicateAssignments(
   return dupes;
 }
 
-function syncRowGroups(state: LineupRotationEditorState): EditableRotationRow[] {
+function syncRowGroups(
+  state: LineupRotationEditorState,
+): EditableRotationRow[] {
   const starterIds = new Set(state.starters.map((s) => s.playerId));
   const inactiveIds = new Set(state.inactive);
   return state.rows.map((row) => {
@@ -330,9 +332,7 @@ export function applyOptimizedManagement(
   },
 ): LineupRotationEditorState {
   const byId = new Map(management.rotation.map((e) => [e.playerId, e]));
-  const starterIds = new Set(
-    management.startingLineup.map((s) => s.playerId),
-  );
+  const starterIds = new Set(management.startingLineup.map((s) => s.playerId));
   const inactiveIds = new Set(management.inactive);
   const rows = state.rows.map((row) => {
     const entry = byId.get(row.playerId);
@@ -511,7 +511,9 @@ export const DEPTH_ROTATION_ROLES = new Set([
   "emergency",
 ]);
 
-export function rotationGroupLabel(row: EditableRotationRow): "core" | "depth" | "inactive" {
+export function rotationGroupLabel(
+  row: EditableRotationRow,
+): "core" | "depth" | "inactive" {
   if (row.groupRole === "inactive") {
     return "inactive";
   }

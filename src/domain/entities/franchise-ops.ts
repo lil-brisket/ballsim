@@ -12,12 +12,7 @@
  */
 
 export type FacilityCategory =
-  | "arena"
-  | "practice"
-  | "training"
-  | "medical"
-  | "youth"
-  | "fan";
+  "arena" | "practice" | "training" | "medical" | "youth" | "fan";
 
 export const FACILITY_CATEGORIES: readonly FacilityCategory[] = [
   "arena",
@@ -127,7 +122,10 @@ export function isOwnershipAxis(value: unknown): value is number {
 export function createDefaultFacilities(): FacilitiesState {
   const facilities = {} as FacilitiesState;
   for (const category of FACILITY_CATEGORIES) {
-    facilities[category] = { level: FACILITY_LEVEL_MIN, upgradeWeeksRemaining: 0 };
+    facilities[category] = {
+      level: FACILITY_LEVEL_MIN,
+      upgradeWeeksRemaining: 0,
+    };
   }
   return facilities;
 }

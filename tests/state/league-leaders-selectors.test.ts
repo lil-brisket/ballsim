@@ -4,11 +4,7 @@ import type { GameState } from "@/state/game-state";
 import { toLeagueLeadersView } from "@/state/league-leaders-selectors";
 import { bootstrapWorld } from "@/systems/world-pipeline";
 import { createTestGameState } from "../factories/game-state";
-import {
-  boxRow,
-  injectGames,
-  makeFinalGame,
-} from "../systems/awards/helpers";
+import { boxRow, injectGames, makeFinalGame } from "../systems/awards/helpers";
 import {
   createEmptyTeamStanding,
   type TeamStanding,
@@ -208,8 +204,9 @@ describe("toLeagueLeadersView", () => {
       }),
     );
     state = injectGames(state, games);
-    const leader = toLeagueLeadersView(state).cards.find((c) => c.key === "ppg")
-      ?.leader;
+    const leader = toLeagueLeadersView(state).cards.find(
+      (c) => c.key === "ppg",
+    )?.leader;
     expect(leader?.playerId).toBe(lowId);
   });
 });

@@ -16,8 +16,7 @@ export function minutesDeficit(input: {
   elapsedGameSeconds: number;
   context: RotationGameContext;
 }): number {
-  const regulationSeconds =
-    ROTATION_CONFIG.regulationMinutes * 60;
+  const regulationSeconds = ROTATION_CONFIG.regulationMinutes * 60;
   const effectiveTarget =
     input.entry.targetMinutes +
     (input.context.isOvertime ? input.context.targetMinutesAdjustment : 0) +
@@ -95,8 +94,7 @@ export function minuteBalanceInScore(input: {
   }
 
   // Blowout lead: reduce urgency to chase star targets; boost deep bench
-  const blowoutDamp =
-    input.context.situation === "blowout_lead" ? 0.5 : 1;
+  const blowoutDamp = input.context.situation === "blowout_lead" ? 0.5 : 1;
   const blowoutBenchBoost =
     (input.context.situation === "blowout_lead" ||
       input.context.situation === "blowout_deficit") &&
@@ -132,7 +130,10 @@ export function minuteBalanceOutScore(input: {
   let score = 0;
   if (overAbs >= 0) {
     score += 20;
-  } else if (overNormal >= 0 && input.context.maximumOverridePolicy === "normal") {
+  } else if (
+    overNormal >= 0 &&
+    input.context.maximumOverridePolicy === "normal"
+  ) {
     score += 6 + overNormal;
   } else if (deficit < -2) {
     // Ahead of target pace

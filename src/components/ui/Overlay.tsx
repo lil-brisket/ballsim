@@ -29,10 +29,7 @@ export function OverlayCloseHint(props: { onClick: () => void }) {
     <button
       type="button"
       aria-label="Close"
-      className={cn(
-        "absolute inset-0 cursor-default",
-        focusRingClass,
-      )}
+      className={cn("absolute inset-0 cursor-default", focusRingClass)}
       onClick={props.onClick}
     />
   );

@@ -6,11 +6,7 @@ import {
   type PlayerInput,
 } from "@/domain/entities/player";
 import { PLAYER_ARCHETYPES } from "@/domain/entities/player-archetype";
-import {
-  asContractId,
-  asPlayerId,
-  asTeamId,
-} from "@/domain/ids";
+import { asContractId, asPlayerId, asTeamId } from "@/domain/ids";
 
 const VALID_ATTRIBUTES: PlayerAttributes = {
   speed: 74,
@@ -106,9 +102,9 @@ describe("createPlayer", () => {
   });
 
   it("accepts valid nationalities", () => {
-    expect(createPlayer(validInput({ nationality: "Canada" })).nationality).toBe(
-      "Canada",
-    );
+    expect(
+      createPlayer(validInput({ nationality: "Canada" })).nationality,
+    ).toBe("Canada");
     expect(createPlayer(validInput({ nationality: "Spain" })).nationality).toBe(
       "Spain",
     );
@@ -281,7 +277,9 @@ describe("createPlayer", () => {
   });
 
   it("supports null or set contract references", () => {
-    expect(createPlayer(validInput({ contractId: null })).contractId).toBeNull();
+    expect(
+      createPlayer(validInput({ contractId: null })).contractId,
+    ).toBeNull();
     expect(
       createPlayer(validInput({ contractId: asContractId("c_99") })).contractId,
     ).toBe("c_99");
@@ -336,9 +334,8 @@ describe("createPlayer", () => {
         .stage,
     ).toBe("prime");
     expect(
-      createPlayer(
-        validInput({ development: { stage: "declining" } }),
-      ).development.stage,
+      createPlayer(validInput({ development: { stage: "declining" } }))
+        .development.stage,
     ).toBe("declining");
   });
 

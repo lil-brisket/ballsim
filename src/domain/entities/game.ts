@@ -206,17 +206,13 @@ export function createGame(input: GameInput): Game {
     input.homeTeamSnapshot != null &&
     input.homeTeamSnapshot.teamId !== input.homeTeamId
   ) {
-    throw new Error(
-      "Game homeTeamSnapshot.teamId must equal homeTeamId.",
-    );
+    throw new Error("Game homeTeamSnapshot.teamId must equal homeTeamId.");
   }
   if (
     input.awayTeamSnapshot != null &&
     input.awayTeamSnapshot.teamId !== input.awayTeamId
   ) {
-    throw new Error(
-      "Game awayTeamSnapshot.teamId must equal awayTeamId.",
-    );
+    throw new Error("Game awayTeamSnapshot.teamId must equal awayTeamId.");
   }
 
   return {
@@ -242,7 +238,9 @@ export function createGame(input: GameInput): Game {
 }
 
 /** Zeroed box-score row for a player (DNP or pre-tip). */
-export function createEmptyGamePlayerStats(playerId: PlayerId): GamePlayerStats {
+export function createEmptyGamePlayerStats(
+  playerId: PlayerId,
+): GamePlayerStats {
   return {
     playerId,
     teamId: null,
@@ -304,9 +302,7 @@ function assertCompetitionType(value: string): void {
 
 function assertStatus(value: string): void {
   if (!GAME_STATUSES.includes(value as GameStatus)) {
-    throw new Error(
-      `Game status must be one of ${GAME_STATUSES.join(", ")}.`,
-    );
+    throw new Error(`Game status must be one of ${GAME_STATUSES.join(", ")}.`);
   }
 }
 
@@ -329,10 +325,7 @@ function assertPeriodScores(periodScores: unknown): void {
     throw new Error("Game periodScores must be an array.");
   }
   for (let index = 0; index < periodScores.length; index += 1) {
-    assertScore(
-      periodScores[index] as GameScore,
-      `periodScores[${index}]`,
-    );
+    assertScore(periodScores[index] as GameScore, `periodScores[${index}]`);
   }
 }
 
@@ -447,9 +440,7 @@ function assertPlayerStats(playerStats: unknown): void {
     );
     assertNonNegativeInteger(stats.touches, `playerStats[${index}].touches`);
     if (typeof stats.started !== "boolean") {
-      throw new Error(
-        `Game playerStats[${index}].started must be a boolean.`,
-      );
+      throw new Error(`Game playerStats[${index}].started must be a boolean.`);
     }
   }
 }

@@ -45,10 +45,7 @@ export function processFanVoting(
     );
 
     // Open
-    if (
-      campaign.status === "scheduled" &&
-      campaign.openDate <= simulatedDate
-    ) {
+    if (campaign.status === "scheduled" && campaign.openDate <= simulatedDate) {
       campaign = { ...campaign, status: "open" };
       if (eventEntry) {
         seasonEventMap = {
@@ -108,10 +105,7 @@ export function processFanVoting(
     }
 
     // Close
-    if (
-      campaign.status === "open" &&
-      campaign.closeDate <= simulatedDate
-    ) {
+    if (campaign.status === "open" && campaign.closeDate <= simulatedDate) {
       // Final tick on close date if needed
       if (
         campaign.lastTickDate == null ||
@@ -241,8 +235,7 @@ function applyVoteTick(
       candidates[playerId] = {
         ...existing,
         voteTotal,
-        previousRank:
-          campaign.previousRankings[categoryId]?.[playerId] ?? null,
+        previousRank: campaign.previousRankings[categoryId]?.[playerId] ?? null,
       };
     }
 
@@ -252,8 +245,7 @@ function applyVoteTick(
     });
     ranked.forEach((candidate, index) => {
       const rank = index + 1;
-      const voteShare =
-        totalVotes > 0 ? candidate.voteTotal / totalVotes : 0;
+      const voteShare = totalVotes > 0 ? candidate.voteTotal / totalVotes : 0;
       candidates[candidate.playerId] = {
         ...candidate,
         rank,
@@ -306,7 +298,9 @@ function detectLeaderChanges(
     const leader = top[0];
     if (!leader) continue;
 
-    const prevLeaderId = Object.entries(prev).find(([, rank]) => rank === 1)?.[0];
+    const prevLeaderId = Object.entries(prev).find(
+      ([, rank]) => rank === 1,
+    )?.[0];
     if (prevLeaderId != null && prevLeaderId !== leader.playerId) {
       events.push(
         createSeasonDomainEvent({

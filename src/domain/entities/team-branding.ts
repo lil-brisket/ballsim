@@ -22,8 +22,7 @@ export type TeamBranding = {
 };
 
 export type TeamBrandingValidation =
-  | { ok: true; value: TeamBranding }
-  | { ok: false; error: string };
+  { ok: true; value: TeamBranding } | { ok: false; error: string };
 
 const HEX_COLOR = /^#[0-9A-Fa-f]{6}$/;
 
@@ -96,7 +95,10 @@ export function resolvePaletteIdFromBranding(
   );
 }
 
-export function assertTeamBranding(value: unknown, field = "branding"): TeamBranding {
+export function assertTeamBranding(
+  value: unknown,
+  field = "branding",
+): TeamBranding {
   if (value === null || typeof value !== "object" || Array.isArray(value)) {
     throw new Error(`Team ${field} must be a non-null object.`);
   }

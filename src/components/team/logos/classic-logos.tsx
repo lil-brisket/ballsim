@@ -117,12 +117,54 @@ export function LaurelLogo(props: TeamLogoProps) {
         strokeWidth="3"
         strokeLinecap="round"
       />
-      <ellipse cx="18" cy="28" rx="4" ry="2.5" fill={props.accentColor} transform="rotate(-40 18 28)" />
-      <ellipse cx="16" cy="36" rx="4" ry="2.5" fill={props.accentColor} transform="rotate(-20 16 36)" />
-      <ellipse cx="20" cy="42" rx="4" ry="2.5" fill={props.accentColor} transform="rotate(-10 20 42)" />
-      <ellipse cx="46" cy="28" rx="4" ry="2.5" fill={props.accentColor} transform="rotate(40 46 28)" />
-      <ellipse cx="48" cy="36" rx="4" ry="2.5" fill={props.accentColor} transform="rotate(20 48 36)" />
-      <ellipse cx="44" cy="42" rx="4" ry="2.5" fill={props.accentColor} transform="rotate(10 44 42)" />
+      <ellipse
+        cx="18"
+        cy="28"
+        rx="4"
+        ry="2.5"
+        fill={props.accentColor}
+        transform="rotate(-40 18 28)"
+      />
+      <ellipse
+        cx="16"
+        cy="36"
+        rx="4"
+        ry="2.5"
+        fill={props.accentColor}
+        transform="rotate(-20 16 36)"
+      />
+      <ellipse
+        cx="20"
+        cy="42"
+        rx="4"
+        ry="2.5"
+        fill={props.accentColor}
+        transform="rotate(-10 20 42)"
+      />
+      <ellipse
+        cx="46"
+        cy="28"
+        rx="4"
+        ry="2.5"
+        fill={props.accentColor}
+        transform="rotate(40 46 28)"
+      />
+      <ellipse
+        cx="48"
+        cy="36"
+        rx="4"
+        ry="2.5"
+        fill={props.accentColor}
+        transform="rotate(20 48 36)"
+      />
+      <ellipse
+        cx="44"
+        cy="42"
+        rx="4"
+        ry="2.5"
+        fill={props.accentColor}
+        transform="rotate(10 44 42)"
+      />
       <circle cx="32" cy="28" r="6" fill={props.primaryColor} />
     </LogoFrame>
   );
@@ -185,14 +227,8 @@ export function DiamondLogo(props: TeamLogoProps) {
         strokeWidth="2"
         strokeLinejoin="round"
       />
-      <path
-        d="M32 18 L44 32 L32 46 L20 32 Z"
-        fill={props.secondaryColor}
-      />
-      <path
-        d="M32 24 L38 32 L32 40 L26 32 Z"
-        fill={props.accentColor}
-      />
+      <path d="M32 18 L44 32 L32 46 L20 32 Z" fill={props.secondaryColor} />
+      <path d="M32 24 L38 32 L32 40 L26 32 Z" fill={props.accentColor} />
     </LogoFrame>
   );
 }

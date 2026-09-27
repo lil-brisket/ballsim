@@ -20,7 +20,10 @@ import type {
   NarrativeContext,
   ObjectiveGapView,
 } from "@/systems/narrative/types";
-import { getActiveOwnedFranchise, withOwnedFranchise } from "@/state/owner-context";
+import {
+  getActiveOwnedFranchise,
+  withOwnedFranchise,
+} from "@/state/owner-context";
 
 function mean(values: number[]): number {
   if (values.length === 0) {
@@ -93,7 +96,11 @@ export function buildMonthSnapshot(
     }
     const attendance = Number(event.payload.attendance);
     const capacity = Number(event.payload.capacity);
-    if (Number.isFinite(attendance) && Number.isFinite(capacity) && capacity > 0) {
+    if (
+      Number.isFinite(attendance) &&
+      Number.isFinite(capacity) &&
+      capacity > 0
+    ) {
       attendanceSum += attendance;
       capacitySum += capacity;
       attendanceCount += 1;
@@ -139,13 +146,17 @@ export function appendMonthSnapshot(
   }
   const snapshot = buildMonthSnapshot(state, monthId);
   const snapshots = [...existing, snapshot].slice(-NARRATIVE_SNAPSHOTS_MAX);
-  return withOwnedFranchise(state, state.user.activeOwnerTeamId, (franchise) => ({
-    ...franchise,
-    narrative: {
-      ...franchise.narrative,
-      snapshots,
-    },
-  }));
+  return withOwnedFranchise(
+    state,
+    state.user.activeOwnerTeamId,
+    (franchise) => ({
+      ...franchise,
+      narrative: {
+        ...franchise.narrative,
+        snapshots,
+      },
+    }),
+  );
 }
 
 function countConsecutiveDecline(
@@ -186,7 +197,10 @@ function countConsecutiveRise(
   return count;
 }
 
-function buildLeagueRelative(state: GameState, teamId: TeamId): LeagueRelativeView {
+function buildLeagueRelative(
+  state: GameState,
+  teamId: TeamId,
+): LeagueRelativeView {
   const year = state.competition.season.year;
   const teamIds = Object.keys(state.world.teams) as TeamId[];
   const controlled = state.world.teams[teamId];
@@ -287,7 +301,10 @@ function buildLeagueRelative(state: GameState, teamId: TeamId): LeagueRelativeVi
         : null,
     ticketPrice: ops?.ticketPrice ?? 0,
     leagueMeanTicketPrice: Math.round(leagueMeanTicketPrice),
-    vsLeagueTicketPricePct: pctDelta(ops?.ticketPrice ?? 0, leagueMeanTicketPrice),
+    vsLeagueTicketPricePct: pctDelta(
+      ops?.ticketPrice ?? 0,
+      leagueMeanTicketPrice,
+    ),
     payroll,
     leagueMeanPayroll: Math.round(leagueMeanPayroll),
     vsLeaguePayrollPct: pctDelta(payroll, leagueMeanPayroll),
@@ -297,7 +314,10 @@ function buildLeagueRelative(state: GameState, teamId: TeamId): LeagueRelativeVi
       Math.round((facilityMean - leagueMedianFacility) * 100) / 100,
     franchiseValue,
     leagueMeanFranchiseValue: Math.round(leagueMeanFranchiseValue),
-    vsLeagueFranchiseValuePct: pctDelta(franchiseValue, leagueMeanFranchiseValue),
+    vsLeagueFranchiseValuePct: pctDelta(
+      franchiseValue,
+      leagueMeanFranchiseValue,
+    ),
     winPct: Math.round(winPct * 1000) / 1000,
     conferenceMeanWinPct: Math.round(conferenceMeanWinPct * 1000) / 1000,
     vsConferenceWinPct:
@@ -348,29 +368,27 @@ export function buildNarrativeContext(
     streak?.kind === "W" || streak?.kind === "L" ? streak.kind : "N";
   const streakLength = streak?.length ?? 0;
 
-  const objectives: ObjectiveGapView[] = getActiveOwnedFranchise(state).objectives.map(
-    (objective) => {
-      const target =
-        typeof objective.target === "number" ? objective.target : null;
-      const progress =
-        typeof objective.progress === "number" ? objective.progress : null;
-      const gap =
-        target !== null && progress !== null ? target - progress : null;
-      return {
-        id: objective.id,
-        type: objective.type,
-        description: objective.description,
-        target,
-        progress,
-        gap,
-        status: objective.status,
-        category: objective.category,
-      };
-    },
-  );
+  const objectives: ObjectiveGapView[] = getActiveOwnedFranchise(
+    state,
+  ).objectives.map((objective) => {
+    const target =
+      typeof objective.target === "number" ? objective.target : null;
+    const progress =
+      typeof objective.progress === "number" ? objective.progress : null;
+    const gap = target !== null && progress !== null ? target - progress : null;
+    return {
+      id: objective.id,
+      type: objective.type,
+      description: objective.description,
+      target,
+      progress,
+      gap,
+      status: objective.status,
+      category: objective.category,
+    };
+  });
 
-  const history =
-    state.business.franchiseHistory[teamId]?.seasons ?? [];
+  const history = state.business.franchiseHistory[teamId]?.seasons ?? [];
   const priorSeason = history.length > 0 ? history[history.length - 1]! : null;
 
   const openDetectorKeys = new Set<string>();
@@ -389,8 +407,7 @@ export function buildNarrativeContext(
   const attendanceDownPctVsPriorMonth =
     latest && prior && prior.fillRatePct > 0
       ? Math.round(
-          ((prior.fillRatePct - latest.fillRatePct) / prior.fillRatePct) *
-            1000,
+          ((prior.fillRatePct - latest.fillRatePct) / prior.fillRatePct) * 1000,
         ) / 10
       : null;
 
@@ -463,7 +480,9 @@ export function buildNarrativeContext(
     openSituationStages,
     cooldowns: getActiveOwnedFranchise(state).narrative.cooldowns,
     notificationDedupeKeys: new Set(
-      getActiveOwnedFranchise(state).notifications.map((notification) => notification.dedupeKey),
+      getActiveOwnedFranchise(state).notifications.map(
+        (notification) => notification.dedupeKey,
+      ),
     ),
   };
 }

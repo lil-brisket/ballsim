@@ -84,9 +84,9 @@ describe("TeamIdentityBuilder", () => {
     fireEvent.change(accentHex, { target: { value: "#AABBCC" } });
     fireEvent.blur(accentHex);
     expect(
-      screen.getByRole("button", { name: "Custom" }).getAttribute(
-        "aria-pressed",
-      ),
+      screen
+        .getByRole("button", { name: "Custom" })
+        .getAttribute("aria-pressed"),
     ).toBe("true");
     expect(
       (
@@ -108,9 +108,9 @@ describe("TeamIdentityBuilder", () => {
       (screen.getByLabelText("Accent HEX") as HTMLInputElement).value,
     ).toBe(ROYAL.accentColor);
     expect(
-      screen.getByRole("button", { name: "Custom" }).getAttribute(
-        "aria-pressed",
-      ),
+      screen
+        .getByRole("button", { name: "Custom" })
+        .getAttribute("aria-pressed"),
     ).toBe("true");
   });
 
@@ -154,9 +154,9 @@ describe("TeamIdentityBuilder", () => {
       initialLogoId: "monogram",
     });
     expect(
-      screen.getByRole("button", { name: "Custom" }).getAttribute(
-        "aria-pressed",
-      ),
+      screen
+        .getByRole("button", { name: "Custom" })
+        .getAttribute("aria-pressed"),
     ).toBe("true");
     expect(
       (screen.getByLabelText("Primary HEX") as HTMLInputElement).value,
@@ -199,9 +199,9 @@ describe("TeamIdentityBuilder", () => {
     expect(primaryHex).toBe(ROYAL.primaryColor);
     expect(primaryHex).not.toBe("#000000");
     expect(
-      screen.getByRole("button", { name: "Crown" }).getAttribute(
-        "aria-pressed",
-      ),
+      screen
+        .getByRole("button", { name: "Crown" })
+        .getAttribute("aria-pressed"),
     ).toBe("true");
   });
 
@@ -216,9 +216,9 @@ describe("TeamIdentityBuilder", () => {
       screen.getByTestId("away-uniform").getAttribute("data-body-color"),
     ).toBe(ROYAL.primaryColor);
     expect(
-      screen.getByRole("button", { name: "Custom" }).getAttribute(
-        "aria-pressed",
-      ),
+      screen
+        .getByRole("button", { name: "Custom" })
+        .getAttribute("aria-pressed"),
     ).toBe("true");
   });
 
@@ -254,9 +254,9 @@ describe("TeamIdentityBuilder", () => {
     renderBuilder();
     fireEvent.click(screen.getByRole("button", { name: "Elite" }));
     expect(
-      screen.getByRole("button", { name: "Crown" }).getAttribute(
-        "aria-pressed",
-      ),
+      screen
+        .getByRole("button", { name: "Crown" })
+        .getAttribute("aria-pressed"),
     ).toBe("true");
     fireEvent.click(screen.getByRole("button", { name: "Wolf" }));
     expect(

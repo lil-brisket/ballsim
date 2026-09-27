@@ -3,7 +3,10 @@ import { asPlayerId } from "@/domain/ids";
 import { calculatePlayerOverall } from "@/domain/player-overall-rating";
 import { buildAwardResultId } from "@/domain/entities/awards";
 import { computeAwardReputationBonus } from "@/systems/awards/award-reputation";
-import { AWARD_METRIC_VERSION, AWARD_REPUTATION_CONFIG } from "@/systems/awards/awards-config";
+import {
+  AWARD_METRIC_VERSION,
+  AWARD_REPUTATION_CONFIG,
+} from "@/systems/awards/awards-config";
 import { defaultEvaluatePlayerInterest } from "@/systems/free-agency";
 import {
   addPlayerToState,
@@ -105,7 +108,10 @@ describe("award reputation / FA", () => {
     const [teamA] = primaryTeamIds(state);
     state = addPlayerToState(state, "mvp_guy", teamA);
     const player = state.world.players.mvp_guy!;
-    const ovrBefore = calculatePlayerOverall(player.position, player.attributes);
+    const ovrBefore = calculatePlayerOverall(
+      player.position,
+      player.attributes,
+    );
     state = seedAward(state, "mvp_guy", "mvp", 2030);
     const ovrAfter = calculatePlayerOverall(
       state.world.players.mvp_guy!.position,
@@ -144,10 +150,7 @@ describe("award reputation / FA", () => {
       2035,
       "2035-01",
     );
-    const monthly = computeAwardReputationBonus(
-      asPlayerId("p3"),
-      monthlyState,
-    );
+    const monthly = computeAwardReputationBonus(asPlayerId("p3"), monthlyState);
     expect(monthly).toBeLessThan(recent);
     expect(monthly).toBeLessThanOrEqual(
       AWARD_REPUTATION_CONFIG.weights.player_of_month,

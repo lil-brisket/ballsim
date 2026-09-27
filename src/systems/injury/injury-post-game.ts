@@ -28,11 +28,7 @@ function recentMpg(state: GameState, playerId: PlayerId): number {
   return 20;
 }
 
-function isBackToBack(
-  state: GameState,
-  teamId: TeamId,
-  date: string,
-): boolean {
+function isBackToBack(state: GameState, teamId: TeamId, date: string): boolean {
   let previous: string | null = null;
   for (const game of Object.values(state.competition.games)) {
     if (game.status !== "final") continue;
@@ -92,7 +88,9 @@ export function processPostGameInjuryExposures(
     current = acute.state;
     events.push(...acute.events);
 
-    const injuredThisGame = acute.events.some((e) => e.type === "PlayerInjured");
+    const injuredThisGame = acute.events.some(
+      (e) => e.type === "PlayerInjured",
+    );
 
     const overuse = processExposureEvent(
       current,

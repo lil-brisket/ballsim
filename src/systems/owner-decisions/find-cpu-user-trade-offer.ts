@@ -182,10 +182,7 @@ function topCpuSurplusAssets(state: GameState, teamId: TeamId): AssetRef[] {
   return scored.slice(0, USER_TRADE_OFFER_MAX_CPU_ASSETS).map((s) => s.asset);
 }
 
-function topUserCandidateAssets(
-  state: GameState,
-  teamId: TeamId,
-): AssetRef[] {
+function topUserCandidateAssets(state: GameState, teamId: TeamId): AssetRef[] {
   const team = state.world.teams[teamId];
   if (!team) return [];
 

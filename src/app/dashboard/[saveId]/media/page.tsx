@@ -96,18 +96,13 @@ export default async function MediaPage({
             value={`${attention.mediaAttention}`}
           />
           <StatCard label="Awareness" value={`${attention.awareness}`} />
-          <StatCard
-            label="Fan sentiment"
-            value={`${attention.fanSentiment}`}
-          />
+          <StatCard label="Fan sentiment" value={`${attention.fanSentiment}`} />
           <StatCard label="Reputation" value={`${attention.reputation}`} />
         </section>
         <ul className="mt-3 space-y-2 text-sm text-zinc-300">
           <li>
             Demand contribution (forecast):{" "}
-            {attention.demandWeighted != null
-              ? attention.demandWeighted
-              : "—"}{" "}
+            {attention.demandWeighted != null ? attention.demandWeighted : "—"}{" "}
             weighted points
           </li>
           <li>

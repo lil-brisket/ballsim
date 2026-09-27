@@ -33,12 +33,7 @@ body {
       rgba(217, 119, 6, 0.08) 0%,
       transparent 55%
     ),
-    linear-gradient(
-      180deg,
-      #0c0a09 0%,
-      #18181b 45%,
-      #09090b 100%
-    );
+    linear-gradient(180deg, #0c0a09 0%, #18181b 45%, #09090b 100%);
 }
 
 .splash-vignette {
@@ -163,4 +158,3 @@ body {
     animation: none;
   }
 }
-

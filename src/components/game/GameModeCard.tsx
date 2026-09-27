@@ -21,14 +21,18 @@ export function GameModeCard(props: { mode: GameModeDefinition }) {
           <h2 className="text-xl font-semibold tracking-tight text-zinc-50">
             {mode.name}
           </h2>
-          <p className="text-sm font-medium text-amber-400/90">{mode.tagline}</p>
+          <p className="text-sm font-medium text-amber-400/90">
+            {mode.tagline}
+          </p>
         </div>
         <StatusBadge
           label={mode.statusLabel}
           tone={mode.available ? "success" : "info"}
         />
       </div>
-      <p className="text-sm leading-relaxed text-zinc-400">{mode.description}</p>
+      <p className="text-sm leading-relaxed text-zinc-400">
+        {mode.description}
+      </p>
       <ul className="space-y-1.5 text-sm text-zinc-300">
         {mode.features.map((feature) => (
           <li key={feature} className="flex gap-2">

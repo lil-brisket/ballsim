@@ -191,9 +191,7 @@ export function DlProspectCard(props: {
         ]}
       />
 
-      <p className="mt-3 text-xs text-zinc-500">
-        {row.whyBullets[0]}
-      </p>
+      <p className="mt-3 text-xs text-zinc-500">{row.whyBullets[0]}</p>
     </article>
   );
 }
@@ -237,14 +235,17 @@ export function DlEligibleCard(props: {
 }) {
   const { saveId, row, returnPath } = props;
   return (
-    <article className={cn(panelClass, densityPadding.compact, "text-zinc-400")}>
+    <article
+      className={cn(panelClass, densityPadding.compact, "text-zinc-400")}
+    >
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <PlayerEntityLink saveId={saveId} playerId={row.playerId}>
             {row.name}
           </PlayerEntityLink>
           <p className="mt-0.5 text-xs text-zinc-600">
-            OVR {row.overall} · POT {row.potential} · {row.projectedMpg} proj. MPG
+            OVR {row.overall} · POT {row.potential} · {row.projectedMpg} proj.
+            MPG
           </p>
           <p className="mt-1 text-xs text-zinc-500">
             {row.strongCandidate ? "Strong DL candidate" : "Optional"}

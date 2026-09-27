@@ -40,13 +40,14 @@ export type FranchiseEraTransition = {
   drivers: EraDriver[];
 };
 
-export const FRANCHISE_ERA_LABELS: Record<FranchiseEraClassification, string> = {
-  new_franchise: "New Franchise",
-  rebuilding: "Rebuilding",
-  competitive_window: "Competitive Window",
-  contender: "Contender",
-  golden_era: "Golden Era",
-  decline: "Decline",
-  financial_crisis: "Financial Crisis",
-  recovery: "Recovery",
-};
+export const FRANCHISE_ERA_LABELS: Record<FranchiseEraClassification, string> =
+  {
+    new_franchise: "New Franchise",
+    rebuilding: "Rebuilding",
+    competitive_window: "Competitive Window",
+    contender: "Contender",
+    golden_era: "Golden Era",
+    decline: "Decline",
+    financial_crisis: "Financial Crisis",
+    recovery: "Recovery",
+  };

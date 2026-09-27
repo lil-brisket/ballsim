@@ -8,10 +8,7 @@ const CELL = "px-4 py-3";
 /**
  * Staff directory row — Role | Staff | Age | Salary | Contract | Specialty | Actions.
  */
-export function StaffRow(props: {
-  saveId: string;
-  member: StaffMemberView;
-}) {
+export function StaffRow(props: { saveId: string; member: StaffMemberView }) {
   const { saveId, member } = props;
   return (
     <tr className="border-t border-zinc-800">
@@ -46,7 +43,9 @@ export function VacantStaffRow(props: {
   return (
     <tr className="border-t border-zinc-800">
       <td className={`${CELL} text-zinc-400`}>{props.entry.roleLabel}</td>
-      <td className={`${CELL} font-medium uppercase tracking-wide text-amber-400`}>
+      <td
+        className={`${CELL} font-medium uppercase tracking-wide text-amber-400`}
+      >
         Vacant
       </td>
       <td className={`${CELL} text-zinc-600`}>—</td>
@@ -92,7 +91,9 @@ export function StaffMemberCard(props: {
         <div>
           <dt className="text-zinc-500">Contract</dt>
           <dd className="text-zinc-200">
-            {member.yearsRemaining != null ? `${member.yearsRemaining} yrs` : "—"}
+            {member.yearsRemaining != null
+              ? `${member.yearsRemaining} yrs`
+              : "—"}
           </dd>
         </div>
         <div className="col-span-2">

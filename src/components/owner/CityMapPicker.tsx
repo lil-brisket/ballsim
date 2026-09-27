@@ -4,10 +4,7 @@ import { useCallback, useMemo, useState } from "react";
 import { selectCityAction } from "@/application/actions";
 import { GeographicMap } from "@/components/map/GeographicMap";
 import type { MapCity } from "@/components/map/map-city";
-import {
-  LEAGUE_AREA_LABELS,
-  type LeagueArea,
-} from "@/domain/game-settings";
+import { LEAGUE_AREA_LABELS, type LeagueArea } from "@/domain/game-settings";
 import type { CityPickOption } from "@/state/selectors";
 
 export function CityMapPicker(props: {
@@ -69,9 +66,7 @@ export function CityMapPicker(props: {
         <p className="text-xs font-semibold uppercase tracking-wide text-amber-500">
           {LEAGUE_AREA_LABELS[props.area]}
         </p>
-        <p className="text-sm text-zinc-400">
-          {props.cities.length} cities
-        </p>
+        <p className="text-sm text-zinc-400">{props.cities.length} cities</p>
       </header>
 
       <div className="grid min-h-0 flex-1 gap-4 lg:grid-cols-[minmax(0,1fr)_22rem] lg:grid-rows-1 lg:items-stretch">
@@ -85,7 +80,10 @@ export function CityMapPicker(props: {
 
         <aside className="flex min-h-0 flex-col gap-3 overflow-hidden rounded-lg border border-zinc-800 bg-zinc-900/50 px-4 py-4 lg:h-full">
           <div className="space-y-2">
-            <label className="block text-sm text-zinc-400" htmlFor="city-search">
+            <label
+              className="block text-sm text-zinc-400"
+              htmlFor="city-search"
+            >
               Search cities
             </label>
             <input
@@ -130,8 +128,12 @@ export function CityMapPicker(props: {
                 <p className="text-xs font-semibold uppercase tracking-wide text-amber-500/90">
                   Selected market
                 </p>
-                <p className="text-lg font-medium text-zinc-100">{selected.city}</p>
-                <p className="text-sm text-zinc-400">{selected.locationLabel}</p>
+                <p className="text-lg font-medium text-zinc-100">
+                  {selected.city}
+                </p>
+                <p className="text-sm text-zinc-400">
+                  {selected.locationLabel}
+                </p>
               </div>
               <form action={selectCityAction}>
                 <input type="hidden" name="saveId" value={props.saveId} />

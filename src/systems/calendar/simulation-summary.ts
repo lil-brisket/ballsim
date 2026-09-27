@@ -85,10 +85,15 @@ export function buildSimulationSummary(
   const team = teamId ? state.world.teams[teamId] : null;
 
   const transactions = teamId
-    ? getTeamTransactions(state, teamId, {
-        from: options.fromDate,
-        to: options.toDate,
-      }, events)
+    ? getTeamTransactions(
+        state,
+        teamId,
+        {
+          from: options.fromDate,
+          to: options.toDate,
+        },
+        events,
+      )
     : [];
 
   const teamEvents: SimulationSummaryItem[] = transactions

@@ -32,9 +32,19 @@ export function DlPipelineSummary(props: {
     : "—";
 
   return (
-    <div className={cn("grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5", densityGap.default)}>
+    <div
+      className={cn(
+        "grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5",
+        densityGap.default,
+      )}
+    >
       <StatCard label="Record" value={recordValue} mono density="compact" />
-      <StatCard label="Assigned" value={props.assignedCount} mono density="compact" />
+      <StatCard
+        label="Assigned"
+        value={props.assignedCount}
+        mono
+        density="compact"
+      />
       <StatCard
         label="Ready"
         value={
@@ -68,10 +78,20 @@ export function DlPipelineSummary(props: {
       {props.leagueRank != null || props.streakLabel ? (
         <div className="col-span-2 flex flex-wrap gap-4 sm:col-span-3 lg:col-span-5">
           {props.leagueRank != null ? (
-            <Metric label="DL Rank" value={`#${props.leagueRank}`} mono density="compact" />
+            <Metric
+              label="DL Rank"
+              value={`#${props.leagueRank}`}
+              mono
+              density="compact"
+            />
           ) : null}
           {props.streakLabel ? (
-            <Metric label="Streak" value={props.streakLabel} mono density="compact" />
+            <Metric
+              label="Streak"
+              value={props.streakLabel}
+              mono
+              density="compact"
+            />
           ) : null}
         </div>
       ) : null}

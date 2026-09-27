@@ -21,11 +21,7 @@ import {
   type StaffOfferView,
 } from "@/state/staff-hub-selectors";
 
-function marketHref(
-  saveId: string,
-  role?: string,
-  sort?: string,
-): string {
+function marketHref(saveId: string, role?: string, sort?: string): string {
   const params = new URLSearchParams();
   if (role) params.set("role", role);
   if (sort) params.set("sort", sort);

@@ -21,8 +21,7 @@ function withDailyCompressedSchedule(state: GameState): GameState {
   // Force the old 1-round-per-day layout by rewriting dates after generation.
   const games = { ...state.competition.games };
   const opener =
-    state.competition.season.regularSeasonStartDate ??
-    "2026-10-01";
+    state.competition.season.regularSeasonStartDate ?? "2026-10-01";
   const sorted = Object.values(games)
     .filter((g) => g.competitionType === "regular_season")
     .sort((a, b) => a.date.localeCompare(b.date) || a.id.localeCompare(b.id));
@@ -91,7 +90,10 @@ describe("schedule regeneration across seasons", () => {
     );
     const compressedSpan = calendarDaysBetween(
       [...compressed].map((g) => g.date).sort()[0]!,
-      [...compressed].map((g) => g.date).sort().at(-1)!,
+      [...compressed]
+        .map((g) => g.date)
+        .sort()
+        .at(-1)!,
     );
     expect(compressedSpan).toBeLessThan(40);
 

@@ -1,6 +1,4 @@
-import {
-  assignToDevelopmentLeagueAction,
-} from "@/application/actions";
+import { assignToDevelopmentLeagueAction } from "@/application/actions";
 import type { DraftDlRecommendation } from "@/systems/development-league/recommendations";
 
 export function PostDraftDevelopmentReview(props: {

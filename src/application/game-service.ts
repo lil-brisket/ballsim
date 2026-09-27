@@ -102,9 +102,7 @@ import {
   applyConfirmControlledFranchises,
   type ControlledFranchiseIdentityInput,
 } from "@/systems/confirm-controlled-franchises";
-import {
-  recordOwnershipEvidence,
-} from "@/systems/ownership-confidence-engine";
+import { recordOwnershipEvidence } from "@/systems/ownership-confidence-engine";
 import {
   scoreDraftSelection,
   scoreFacilityUpgrade,
@@ -188,7 +186,10 @@ import {
   toPhaseDashboardView,
   type PhaseDashboardView,
 } from "@/state/phase-dashboard";
-import { toLeagueHubView, type LeagueHubView } from "@/state/league-hub-selectors";
+import {
+  toLeagueHubView,
+  type LeagueHubView,
+} from "@/state/league-hub-selectors";
 import {
   toContractHubView,
   type ContractHubView,
@@ -240,7 +241,10 @@ import type { ExpansionState } from "@/domain/entities/expansion";
 import type { LeagueEconomy } from "@/domain/entities/league-economy";
 import type { RelocationProcess } from "@/domain/entities/relocation";
 import { hireStaff } from "@/systems/staff";
-import { fireStaffWithBuyout, renewStaffContract } from "@/systems/staff-contract-lifecycle";
+import {
+  fireStaffWithBuyout,
+  renewStaffContract,
+} from "@/systems/staff-contract-lifecycle";
 import {
   acceptStaffOffer,
   makeStaffOffer,
@@ -260,13 +264,15 @@ import {
   listGameDayPromotionDefinitions,
 } from "@/systems/game-day-promotions/game-day-promotion-catalog";
 import { projectGameDayPromotion } from "@/systems/game-day-promotions/project-game-day-promotion";
-import { addCalendarDays, calendarDaysBetween, formatCalendarDate, parseCalendarDate } from "@/domain/calendar-date";
+import {
+  addCalendarDays,
+  calendarDaysBetween,
+  formatCalendarDate,
+  parseCalendarDate,
+} from "@/domain/calendar-date";
 import { buildSimulationSummary } from "@/systems/calendar/simulation-summary";
 import { setTicketPrice } from "@/systems/ticket-pricing";
-import {
-  advanceRelocationStage,
-  cancelRelocation,
-} from "@/systems/relocation";
+import { advanceRelocationStage, cancelRelocation } from "@/systems/relocation";
 import type { RelocationTarget } from "@/domain/entities/relocation";
 import type { OwnerNavGroup } from "@/application/owner-nav-config";
 import { ownerNavGroupsForState } from "@/application/owner-nav-config";
@@ -307,10 +313,7 @@ import {
   assignPlayerToDevelopmentLeague,
   recallPlayerFromDevelopmentLeague,
 } from "@/systems/development-league";
-import {
-  assignScoutToProspect,
-  scoutRegionCoverage,
-} from "@/systems/scouting";
+import { assignScoutToProspect, scoutRegionCoverage } from "@/systems/scouting";
 import {
   addToDraftBoard,
   removeFromDraftBoard,
@@ -333,11 +336,18 @@ import {
   type CalendarMonthGrid,
 } from "@/systems/calendar";
 
-import { resolvePhaseResolution, resolveSeasonAnchors } from "@/systems/league-rules/league-calendar";
+import {
+  resolvePhaseResolution,
+  resolveSeasonAnchors,
+} from "@/systems/league-rules/league-calendar";
 import { getPhaseDefinition } from "@/systems/phase-engine";
 import { processDerivedProjections } from "@/systems/media-hub";
 import { advanceLeaguePhase } from "@/systems/simulation/offseason-lifecycle";
-import { isInLeaguePhase, previewAdvance, getActivePhaseId } from "@/systems/phase-engine";
+import {
+  isInLeaguePhase,
+  previewAdvance,
+  getActivePhaseId,
+} from "@/systems/phase-engine";
 import { getActionBlockReason } from "@/systems/league-rules";
 import { enterOffseasonFromPostseason } from "@/systems/simulation/season-lifecycle";
 import {
@@ -345,7 +355,10 @@ import {
   needsRegularSeasonInitialization,
 } from "@/systems/simulation/planned-season-dates";
 import { runAiContinuity } from "@/systems/simulation/ai-continuity";
-import { canAiExecute, isUserAssistCompletelyOff } from "@/systems/simulation/management-policy";
+import {
+  canAiExecute,
+  isUserAssistCompletelyOff,
+} from "@/systems/simulation/management-policy";
 import { resolveSimulationPhaseKey } from "@/systems/simulation/simulation-phase";
 import type { AdvanceSimulationResult } from "@/systems/simulation/types";
 import {
@@ -370,7 +383,10 @@ import {
   hasActiveOwnerDecision,
   resolvePendingOwnerDecision,
 } from "@/systems/owner-decisions";
-import { PLAYER_POSITIONS, type PlayerPosition } from "@/domain/entities/player";
+import {
+  PLAYER_POSITIONS,
+  type PlayerPosition,
+} from "@/domain/entities/player";
 import { bootstrapWorld } from "@/systems/world-pipeline";
 import {
   advanceFantasyDraftClock,
@@ -428,8 +444,7 @@ export type OwnerCommandFailure = {
 };
 
 export type OwnerCommandResult<T extends object = object> =
-  | OwnerCommandSuccess<T>
-  | OwnerCommandFailure;
+  OwnerCommandSuccess<T> | OwnerCommandFailure;
 
 export type AdvanceDayResult = CreateGameResult & {
   events: DomainEvent[];
@@ -746,7 +761,8 @@ export type CalendarPageView = {
   selectedDate: string;
   monthGrid: CalendarMonthGrid;
   inspector: import("@/systems/calendar/calendar-inspector").CalendarDateInspectorView;
-  leagueContext: import("@/state/standings-selectors").CalendarLeagueContextView | null;
+  leagueContext:
+    import("@/state/standings-selectors").CalendarLeagueContextView | null;
   nextTeamGameDate: string | null;
   timeDisabled: boolean;
   timeDisabledFlags: {
@@ -765,7 +781,8 @@ export type CalendarPageView = {
     message: string | null;
     resolveHref: string | null;
   };
-  simulationSummary: import("@/systems/calendar/simulation-summary").SimulationSummary | null;
+  simulationSummary:
+    import("@/systems/calendar/simulation-summary").SimulationSummary | null;
 };
 
 export type LoadCalendarPageViewOptions = {
@@ -825,7 +842,11 @@ export async function loadCalendarPageView(
   // When URL does not pin year/month and preseason init is still pending, open
   // on the preseason month so the PRESEASON milestone is visible. selectedDate
   // stays on currentDate (e.g. opening night).
-  if (!hasExplicitYear && !hasExplicitMonth && needsRegularSeasonInitialization(state)) {
+  if (
+    !hasExplicitYear &&
+    !hasExplicitMonth &&
+    needsRegularSeasonInitialization(state)
+  ) {
     const plannedPreseason = derivePlannedPreseasonStartDate(state);
     if (plannedPreseason) {
       const parsedPreseason = parseCalendarDate(plannedPreseason);
@@ -1445,10 +1466,7 @@ export async function confirmOwnerTeamIdentity(
 }
 
 export type SimulationStopCondition =
-  | "blocking_decision"
-  | "user_team_game"
-  | "important_event"
-  | "phase_change";
+  "blocking_decision" | "user_team_game" | "important_event" | "phase_change";
 
 export type AdvanceOwnerTimeOptions = {
   days?: number;
@@ -1500,7 +1518,7 @@ export async function advanceOwnerTime(
         const team = teamId ? workingState.world.teams[teamId] : undefined;
         const teamLabel = team
           ? `${team.city} ${team.name}`
-          : teamId ?? "a franchise";
+          : (teamId ?? "a franchise");
         const switchHint =
           teamId && teamId !== workingState.user.activeOwnerTeamId
             ? ` Switch to ${teamLabel} using the franchise selector in the header to resolve it.`
@@ -1512,7 +1530,9 @@ export async function advanceOwnerTime(
 
       if (isUserOnDraftClock(workingState)) {
         const franchiseAssist = getOwnedFranchiseAssistance(workingState);
-        if (!canAiExecute(workingState.settings, "DRAFT_PICK", franchiseAssist)) {
+        if (
+          !canAiExecute(workingState.settings, "DRAFT_PICK", franchiseAssist)
+        ) {
           return fail(
             "Cannot advance time while your team is on the draft clock. Make a draft selection first.",
           );
@@ -1537,9 +1557,8 @@ export async function advanceOwnerTime(
 
       // Preflight: reconcile phase pointer with date/state before simulating.
       {
-        const { reconcilePhaseWithState } = await import(
-          "@/systems/simulation/phase-lifecycle"
-        );
+        const { reconcilePhaseWithState } =
+          await import("@/systems/simulation/phase-lifecycle");
         const preflight = reconcilePhaseWithState(workingState);
         workingState = preflight.state;
         preEvents.push(...preflight.events);
@@ -1581,21 +1600,21 @@ export async function advanceOwnerTime(
       });
 
       // Postflight: final phase reconciliation + full invariant validation.
-      const { reconcilePhaseWithState } = await import(
-        "@/systems/simulation/phase-lifecycle"
-      );
-      const { assertSimulationState } = await import(
-        "@/systems/simulation/validate-simulation-state"
-      );
-      const { buildSimulationSummary } = await import(
-        "@/systems/calendar/simulation-summary"
-      );
+      const { reconcilePhaseWithState } =
+        await import("@/systems/simulation/phase-lifecycle");
+      const { assertSimulationState } =
+        await import("@/systems/simulation/validate-simulation-state");
+      const { buildSimulationSummary } =
+        await import("@/systems/calendar/simulation-summary");
       const postflight = reconcilePhaseWithState(result.state, rng);
       assertSimulationState(postflight.state, "full");
 
       const fromDate = workingState.world.calendar.currentDate;
       const allEvents = [...preEvents, ...result.events, ...postflight.events];
-      const withProjections = processDerivedProjections(postflight.state, allEvents);
+      const withProjections = processDerivedProjections(
+        postflight.state,
+        allEvents,
+      );
 
       const saved = await persistWorkingState(
         saveId,
@@ -1771,9 +1790,7 @@ export async function listOwnerTradeCandidates(
   saveId: string,
   outgoingPlayerId: string,
   store?: SaveGameStore,
-): Promise<
-  OwnerCommandResult<{ candidates: TradeFinderRowView[] }>
-> {
+): Promise<OwnerCommandResult<{ candidates: TradeFinderRowView[] }>> {
   const loaded = await getStore(store).load(saveId);
   if (!loaded) {
     return fail("Save not found.");
@@ -1886,10 +1903,7 @@ export async function executeOwnerTrade(
     }
   }
 
-  if (
-    proposal.sideA.teamId !== teamId &&
-    proposal.sideB.teamId !== teamId
-  ) {
+  if (proposal.sideA.teamId !== teamId && proposal.sideB.teamId !== teamId) {
     return fail("Trade proposal does not involve your team.");
   }
 
@@ -1936,7 +1950,13 @@ export async function acceptOwnerDecision(
   decisionId: string,
   store?: SaveGameStore,
 ): Promise<OwnerCommandResult> {
-  return resolveOwnerTradeDecision(saveId, decisionId, "accept", "owner", store);
+  return resolveOwnerTradeDecision(
+    saveId,
+    decisionId,
+    "accept",
+    "owner",
+    store,
+  );
 }
 
 /**
@@ -1947,7 +1967,13 @@ export async function declineOwnerDecision(
   decisionId: string,
   store?: SaveGameStore,
 ): Promise<OwnerCommandResult> {
-  return resolveOwnerTradeDecision(saveId, decisionId, "decline", "owner", store);
+  return resolveOwnerTradeDecision(
+    saveId,
+    decisionId,
+    "decline",
+    "owner",
+    store,
+  );
 }
 
 /**
@@ -1997,8 +2023,7 @@ async function resolveOwnerTradeDecision(
     return fail("Unsupported owner decision type.");
   }
 
-  const proposal =
-    pending.payload.currentProposal ?? pending.payload.proposal;
+  const proposal = pending.payload.currentProposal ?? pending.payload.proposal;
   const evaluateAsTeamId = pending.payload.userTeamId;
 
   let working = loaded.state;
@@ -2013,11 +2038,7 @@ async function resolveOwnerTradeDecision(
     shouldExecute = false;
     historyStatus = "declined";
   } else {
-    const evaluation = evaluateTradeOffer(
-      working,
-      evaluateAsTeamId,
-      proposal,
-    );
+    const evaluation = evaluateTradeOffer(working, evaluateAsTeamId, proposal);
     shouldExecute = evaluation.accepted;
     historyStatus = "delegated";
   }
@@ -2245,9 +2266,7 @@ export async function signOwnerFreeAgent(
   const offerId = asOfferId(
     `offer_owner_${teamId}_${playerId}_${state.world.calendar.currentDate}`,
   );
-  const contractId = asContractId(
-    `contract_owner_${playerId}_${year}`,
-  );
+  const contractId = asContractId(`contract_owner_${playerId}_${year}`);
   const terms: ContractInput = {
     id: contractId,
     playerId,
@@ -2430,10 +2449,12 @@ export async function letAiHandlePhaseAndAdvance(
       if (!loaded) {
         return fail("Save not found.");
       }
-      if (isUserAssistCompletelyOff(
-        loaded.state.settings,
-        getOwnedFranchiseAssistance(loaded.state),
-      )) {
+      if (
+        isUserAssistCompletelyOff(
+          loaded.state.settings,
+          getOwnedFranchiseAssistance(loaded.state),
+        )
+      ) {
         return fail(
           "AI assistance is off. Delegate at least one responsibility in settings first.",
         );
@@ -2497,17 +2518,21 @@ export async function continuePastPhaseAnyway(
       const phaseKey = resolveSimulationPhaseKey(loaded.state);
       const today = loaded.state.world.calendar.currentDate;
       const activeTeamId = loaded.state.user.activeOwnerTeamId;
-      let working: GameState = withOwnedFranchise(loaded.state, activeTeamId, (f) => ({
-        ...f,
-        phaseSkips: [
-          ...f.phaseSkips,
-          {
-            phaseKey,
-            skippedOn: today,
-            reason: "User chose Continue Anyway",
-          },
-        ],
-      }));
+      let working: GameState = withOwnedFranchise(
+        loaded.state,
+        activeTeamId,
+        (f) => ({
+          ...f,
+          phaseSkips: [
+            ...f.phaseSkips,
+            {
+              phaseKey,
+              skippedOn: today,
+              reason: "User chose Continue Anyway",
+            },
+          ],
+        }),
+      );
 
       const rng = createSeededRng(working.meta.rngState);
       if (isInLeaguePhase(working, "offseason.free_agency")) {
@@ -2555,7 +2580,9 @@ export async function beginOffseason(
       }
 
       if (loaded.state.competition.season.phase !== "postseason") {
-        return fail("Begin offseason requires the Season Review (postseason) phase.");
+        return fail(
+          "Begin offseason requires the Season Review (postseason) phase.",
+        );
       }
 
       const commitToken = loaded.updatedAt;
@@ -2611,7 +2638,9 @@ export async function selectOwnerDraftProspect(
       }
 
       const commitToken = loaded.updatedAt;
-      const draftYear = draftYearForSeason(loaded.state.competition.season.year);
+      const draftYear = draftYearForSeason(
+        loaded.state.competition.season.year,
+      );
       const draftClassId = draftClassIdFor(draftYear);
       const rng = createSeededRng(loaded.state.meta.rngState);
 
@@ -2708,13 +2737,16 @@ export async function assignOwnerScoutToProspect(
   prospectPlayerId: string,
   store?: SaveGameStore,
 ): Promise<OwnerCommandResult> {
-  return mutateActiveFranchiseDraft(saveId, (state) =>
-    assignScoutToProspect(
-      state,
-      state.user.activeOwnerTeamId,
-      asPlayerId(prospectPlayerId),
-    ),
-  store);
+  return mutateActiveFranchiseDraft(
+    saveId,
+    (state) =>
+      assignScoutToProspect(
+        state,
+        state.user.activeOwnerTeamId,
+        asPlayerId(prospectPlayerId),
+      ),
+    store,
+  );
 }
 
 export async function assignOwnerPlayerToDevelopmentLeague(
@@ -2780,9 +2812,11 @@ export async function scoutOwnerRegion(
   region: "domestic" | "international",
   store?: SaveGameStore,
 ): Promise<OwnerCommandResult> {
-  return mutateActiveFranchiseDraft(saveId, (state) =>
-    scoutRegionCoverage(state, state.user.activeOwnerTeamId, region),
-  store);
+  return mutateActiveFranchiseDraft(
+    saveId,
+    (state) => scoutRegionCoverage(state, state.user.activeOwnerTeamId, region),
+    store,
+  );
 }
 
 export async function addOwnerDraftBoardProspect(
@@ -2790,13 +2824,16 @@ export async function addOwnerDraftBoardProspect(
   prospectPlayerId: string,
   store?: SaveGameStore,
 ): Promise<OwnerCommandResult> {
-  return mutateActiveFranchiseDraft(saveId, (state) =>
-    addToDraftBoard(
-      state,
-      state.user.activeOwnerTeamId,
-      asPlayerId(prospectPlayerId),
-    ),
-  store);
+  return mutateActiveFranchiseDraft(
+    saveId,
+    (state) =>
+      addToDraftBoard(
+        state,
+        state.user.activeOwnerTeamId,
+        asPlayerId(prospectPlayerId),
+      ),
+    store,
+  );
 }
 
 export async function removeOwnerDraftBoardProspect(
@@ -2804,13 +2841,16 @@ export async function removeOwnerDraftBoardProspect(
   prospectPlayerId: string,
   store?: SaveGameStore,
 ): Promise<OwnerCommandResult> {
-  return mutateActiveFranchiseDraft(saveId, (state) =>
-    removeFromDraftBoard(
-      state,
-      state.user.activeOwnerTeamId,
-      asPlayerId(prospectPlayerId),
-    ),
-  store);
+  return mutateActiveFranchiseDraft(
+    saveId,
+    (state) =>
+      removeFromDraftBoard(
+        state,
+        state.user.activeOwnerTeamId,
+        asPlayerId(prospectPlayerId),
+      ),
+    store,
+  );
 }
 
 export async function toggleOwnerDraftBoardPriority(
@@ -2818,13 +2858,16 @@ export async function toggleOwnerDraftBoardPriority(
   prospectPlayerId: string,
   store?: SaveGameStore,
 ): Promise<OwnerCommandResult> {
-  return mutateActiveFranchiseDraft(saveId, (state) =>
-    toggleDraftBoardPriority(
-      state,
-      state.user.activeOwnerTeamId,
-      asPlayerId(prospectPlayerId),
-    ),
-  store);
+  return mutateActiveFranchiseDraft(
+    saveId,
+    (state) =>
+      toggleDraftBoardPriority(
+        state,
+        state.user.activeOwnerTeamId,
+        asPlayerId(prospectPlayerId),
+      ),
+    store,
+  );
 }
 
 export async function interviewOwnerProspect(
@@ -2832,13 +2875,16 @@ export async function interviewOwnerProspect(
   prospectPlayerId: string,
   store?: SaveGameStore,
 ): Promise<OwnerCommandResult> {
-  return mutateActiveFranchiseDraft(saveId, (state) =>
-    conductProspectInterview(
-      state,
-      state.user.activeOwnerTeamId,
-      asPlayerId(prospectPlayerId),
-    ),
-  store);
+  return mutateActiveFranchiseDraft(
+    saveId,
+    (state) =>
+      conductProspectInterview(
+        state,
+        state.user.activeOwnerTeamId,
+        asPlayerId(prospectPlayerId),
+      ),
+    store,
+  );
 }
 
 export async function makeOwnerFreeAgentOffer(
@@ -3400,8 +3446,7 @@ export async function loadMediaPageView(
 
   // Stable ordering: importance → relevance → date → id
   const sortedItems = [...filteredItems].sort((a, b) => {
-    const imp =
-      IMPORTANCE_RANK[b.importance] - IMPORTANCE_RANK[a.importance];
+    const imp = IMPORTANCE_RANK[b.importance] - IMPORTANCE_RANK[a.importance];
     if (imp !== 0) {
       return imp;
     }
@@ -3716,7 +3761,9 @@ function findSurplusPlayer(
   }
   if (maxCount <= 1) {
     // Still allow trading a low-overall player when no surplus position.
-    const sorted = [...team.roster].sort((a, b) => (a < b ? -1 : a > b ? 1 : 0));
+    const sorted = [...team.roster].sort((a, b) =>
+      a < b ? -1 : a > b ? 1 : 0,
+    );
     return sorted[sorted.length - 1];
   }
   const surplusPositions = PLAYER_POSITIONS.filter(
@@ -3765,8 +3812,7 @@ export async function loadOwnerStaffDetail(
   staffId: string,
   store?: SaveGameStore,
 ): Promise<
-  | (CreateGameResult & { staff: import("@/domain/entities/staff").Staff })
-  | null
+  (CreateGameResult & { staff: import("@/domain/entities/staff").Staff }) | null
 > {
   const loaded = await getStore(store).load(saveId);
   if (!loaded) {
@@ -3823,10 +3869,15 @@ export async function renewOwnerStaffContract(
   return runOwnerFranchiseCommand(
     saveId,
     (state) =>
-      renewStaffContract(state, state.user.activeOwnerTeamId, asStaffId(staffId), {
-        years,
-        annualSalary,
-      }),
+      renewStaffContract(
+        state,
+        state.user.activeOwnerTeamId,
+        asStaffId(staffId),
+        {
+          years,
+          annualSalary,
+        },
+      ),
     store,
   );
 }
@@ -3907,8 +3958,7 @@ export async function setOwnerTicketPrice(
 ): Promise<OwnerCommandResult> {
   return runOwnerFranchiseCommand(
     saveId,
-    (state) =>
-      setTicketPrice(state, state.user.activeOwnerTeamId, ticketPrice),
+    (state) => setTicketPrice(state, state.user.activeOwnerTeamId, ticketPrice),
     store,
   );
 }
@@ -4079,7 +4129,8 @@ export async function loadOwnerGameDayPromotionEventView(
   const businessFunds = state.business.finances[teamId]?.businessFunds ?? 0;
   const committedSpend = promoState?.committedSpend ?? 0;
 
-  let currentPromotion: GameDayPromotionEventPageView["currentPromotion"] = null;
+  let currentPromotion: GameDayPromotionEventPageView["currentPromotion"] =
+    null;
   if (assignment && assignment.status !== "cancelled") {
     const def = getGameDayPromotionDefinition(assignment.promotionId);
     currentPromotion = {
@@ -4180,9 +4231,7 @@ export async function loadOwnerGameDayPromotionEventView(
   return {
     gameId,
     date: game.date,
-    opponentName: opponent
-      ? `${opponent.city} ${opponent.name}`
-      : "Unknown",
+    opponentName: opponent ? `${opponent.city} ${opponent.name}` : "Unknown",
     opponentAbbreviation: opponent?.abbreviation ?? "???",
     home,
     status: game.status,
@@ -4205,19 +4254,23 @@ export async function signOwnerSponsorship(
   },
   store?: SaveGameStore,
 ): Promise<OwnerCommandResult> {
-  return runOwnerFranchiseCommand(saveId, (state) => {
-    const year = state.competition.season.year;
-    const teamId = state.user.activeOwnerTeamId;
-    return signSponsorship(state, teamId, {
-      id: asSponsorshipId(`sponsor_${teamId}_${year}_${input.sponsorName}`),
-      sponsorName: input.sponsorName,
-      annualValue: input.annualValue,
-      startYear: year,
-      endYear: year + Math.max(1, input.years) - 1,
-      reputationFloor: 30,
-      playoffBonus: Math.round(input.annualValue * 0.1),
-    });
-  }, store);
+  return runOwnerFranchiseCommand(
+    saveId,
+    (state) => {
+      const year = state.competition.season.year;
+      const teamId = state.user.activeOwnerTeamId;
+      return signSponsorship(state, teamId, {
+        id: asSponsorshipId(`sponsor_${teamId}_${year}_${input.sponsorName}`),
+        sponsorName: input.sponsorName,
+        annualValue: input.annualValue,
+        startYear: year,
+        endYear: year + Math.max(1, input.years) - 1,
+        reputationFloor: 30,
+        playoffBonus: Math.round(input.annualValue * 0.1),
+      });
+    },
+    store,
+  );
 }
 
 export async function advanceOwnerRelocation(
@@ -4225,31 +4278,34 @@ export async function advanceOwnerRelocation(
   targetJson?: string,
   store?: SaveGameStore,
 ): Promise<OwnerCommandResult> {
-  return runOwnerFranchiseCommand(saveId, (state) => {
-    const teamId = state.user.activeOwnerTeamId;
-    const process = state.business.relocationByTeamId[teamId];
-    const starting =
-      process === undefined || process.stage === "none";
-    if (starting) {
-      if (!isRelocationAccessible(state, teamId)) {
-        if (!isOffseasonPeriod(state)) {
+  return runOwnerFranchiseCommand(
+    saveId,
+    (state) => {
+      const teamId = state.user.activeOwnerTeamId;
+      const process = state.business.relocationByTeamId[teamId];
+      const starting = process === undefined || process.stage === "none";
+      if (starting) {
+        if (!isRelocationAccessible(state, teamId)) {
+          if (!isOffseasonPeriod(state)) {
+            throw new Error(
+              "Relocation can only be started during the offseason.",
+            );
+          }
+          const assessment = assessRelocation(state, teamId);
           throw new Error(
-            "Relocation can only be started during the offseason.",
+            assessment.status === "blocked_tenure"
+              ? "Relocation is blocked by franchise tenure or cooldown."
+              : "Relocation is not a relevant strategic option for this franchise right now.",
           );
         }
-        const assessment = assessRelocation(state, teamId);
-        throw new Error(
-          assessment.status === "blocked_tenure"
-            ? "Relocation is blocked by franchise tenure or cooldown."
-            : "Relocation is not a relevant strategic option for this franchise right now.",
-        );
       }
-    }
-    const target = targetJson
-      ? (JSON.parse(targetJson) as RelocationTarget)
-      : undefined;
-    return advanceRelocationStage(state, teamId, target);
-  }, store);
+      const target = targetJson
+        ? (JSON.parse(targetJson) as RelocationTarget)
+        : undefined;
+      return advanceRelocationStage(state, teamId, target);
+    },
+    store,
+  );
 }
 
 export async function cancelOwnerRelocation(
@@ -4267,42 +4323,51 @@ export async function proposeOwnerExpansion(
   saveId: string,
   store?: SaveGameStore,
 ): Promise<OwnerCommandResult> {
-  return runOwnerFranchiseCommand(saveId, (state) => {
-    const phase = state.competition.season.phase;
-    if (phase !== "offseason" && phase !== "postseason") {
-      throw new Error(
-        "Expansion can only be proposed during Season Review or the offseason.",
-      );
-    }
-    const assessment = assessExpansion(state);
-    if (!assessment.canPropose || assessment.status === "in_progress") {
-      if (assessment.status === "in_progress") {
-        throw new Error("Expansion is already in progress.");
+  return runOwnerFranchiseCommand(
+    saveId,
+    (state) => {
+      const phase = state.competition.season.phase;
+      if (phase !== "offseason" && phase !== "postseason") {
+        throw new Error(
+          "Expansion can only be proposed during Season Review or the offseason.",
+        );
       }
-      throw new Error(
-        assessment.summaryReasons[0] ??
-          "Expansion is not available given league readiness, markets, or capacity.",
+      const assessment = assessExpansion(state);
+      if (!assessment.canPropose || assessment.status === "in_progress") {
+        if (assessment.status === "in_progress") {
+          throw new Error("Expansion is already in progress.");
+        }
+        throw new Error(
+          assessment.summaryReasons[0] ??
+            "Expansion is not available given league readiness, markets, or capacity.",
+        );
+      }
+      const divisionId = pickExpansionDivisionId(state);
+      const division = state.world.divisions[divisionId]!;
+      const destinations = assessment.marketOpportunity.destinations.slice(
+        0,
+        4,
       );
-    }
-    const divisionId = pickExpansionDivisionId(state);
-    const division = state.world.divisions[divisionId]!;
-    const destinations = assessment.marketOpportunity.destinations.slice(0, 4);
-    if (destinations.length === 0) {
-      throw new Error("proposeOwnerExpansion: no expansion markets available.");
-    }
-    return proposeExpansion(
-      state,
-      destinations.map((destination) => ({
-        city: destination.city,
-        name: destination.name,
-        abbreviation: destination.abbreviation,
-        marketSize: destination.marketSize,
-        conferenceId: division.conferenceId,
-        divisionId: division.id,
-      })),
-      EXPANSION_FEE_DEFAULT,
-    );
-  }, store);
+      if (destinations.length === 0) {
+        throw new Error(
+          "proposeOwnerExpansion: no expansion markets available.",
+        );
+      }
+      return proposeExpansion(
+        state,
+        destinations.map((destination) => ({
+          city: destination.city,
+          name: destination.name,
+          abbreviation: destination.abbreviation,
+          marketSize: destination.marketSize,
+          conferenceId: division.conferenceId,
+          divisionId: division.id,
+        })),
+        EXPANSION_FEE_DEFAULT,
+      );
+    },
+    store,
+  );
 }
 
 export async function approveOwnerExpansion(
@@ -4371,8 +4436,7 @@ export async function loadTeamManagementView(
     return null;
   }
   const state = loaded.state;
-  const scope =
-    transactionQuery?.scope === "league" ? "league" : "team";
+  const scope = transactionQuery?.scope === "league" ? "league" : "team";
   const sort =
     transactionQuery?.sort === "oldest" ||
     transactionQuery?.sort === "type" ||
@@ -4408,9 +4472,9 @@ export async function loadTeamManagementView(
 
 async function runTeamManagementMutation(
   saveId: string,
-  mutate: (state: GameState) =>
-    | { ok: true; state: GameState }
-    | { ok: false; error: string },
+  mutate: (
+    state: GameState,
+  ) => { ok: true; state: GameState } | { ok: false; error: string },
   store?: SaveGameStore,
 ): Promise<OwnerCommandResult> {
   const saveStore = getStore(store);
@@ -4480,10 +4544,7 @@ function mapRotationEntriesForCommand(
     normalMaximumMinutes: entry.normalMaximumMinutes ?? 0,
     absoluteMaximumMinutes: entry.absoluteMaximumMinutes ?? 0,
     rotationPriority: entry.rotationPriority as 1 | 2 | 3 | 4 | 5,
-    rotationStatus: entry.rotationStatus as
-      | "active"
-      | "inactive"
-      | "emergency",
+    rotationStatus: entry.rotationStatus as "active" | "inactive" | "emergency",
     role: entry.role as
       | "starter"
       | "sixth_man"
@@ -4498,8 +4559,7 @@ function mapRotationEntriesForCommand(
       "PG" | "SG" | "SF" | "PF" | "C"
     >,
     minutePriorityBias: (entry.minutePriorityBias ?? 0) as -1 | 0 | 1,
-    overrideMedicalRecommendation:
-      entry.overrideMedicalRecommendation === true,
+    overrideMedicalRecommendation: entry.overrideMedicalRecommendation === true,
   }));
 }
 
@@ -4546,10 +4606,7 @@ export async function updateOwnerLineupAndRotation(
         inactive: input.inactive.map((id) => asPlayerId(id)),
         rotation: mapRotationEntriesForCommand(input.rotation),
         rotationStyle: input.rotationStyle as
-          | "tight"
-          | "balanced"
-          | "deep"
-          | undefined,
+          "tight" | "balanced" | "deep" | undefined,
         rotationPhilosophy: input.rotationPhilosophy as
           | "deep"
           | "balanced"
@@ -4567,11 +4624,7 @@ export async function updateOwnerLineupAndRotation(
           | "custom"
           | undefined,
         closingLineupPolicy: input.closingLineupPolicy as
-          | "auto"
-          | "best_five"
-          | "starters"
-          | "custom"
-          | undefined,
+          "auto" | "best_five" | "starters" | "custom" | undefined,
         closingLineupIds: input.closingLineupIds?.map((id) => asPlayerId(id)),
       }),
     store,
@@ -4626,19 +4679,14 @@ export async function previewOwnerOptimizeRotation(
   }
   const teamId = asTeamId(input.teamId);
   const current = getTeamRosterManagement(loaded.state, teamId);
-  const afterLineup = mergeLineupIntoManagement(
-    loaded.state,
-    teamId,
-    current,
-    {
-      startingLineup: input.startingLineup.map((slot) => ({
-        playerId: asPlayerId(slot.playerId),
-        slot: slot.slot as "PG" | "SG" | "SF" | "PF" | "C",
-      })),
-      bench: input.bench.map((id) => asPlayerId(id)),
-      inactive: input.inactive.map((id) => asPlayerId(id)),
-    },
-  );
+  const afterLineup = mergeLineupIntoManagement(loaded.state, teamId, current, {
+    startingLineup: input.startingLineup.map((slot) => ({
+      playerId: asPlayerId(slot.playerId),
+      slot: slot.slot as "PG" | "SG" | "SF" | "PF" | "C",
+    })),
+    bench: input.bench.map((id) => asPlayerId(id)),
+    inactive: input.inactive.map((id) => asPlayerId(id)),
+  });
   const applied = applyRotationEditsToManagement(
     loaded.state,
     teamId,
@@ -4646,10 +4694,7 @@ export async function previewOwnerOptimizeRotation(
     {
       rotation: mapRotationEntriesForCommand(input.rotation),
       rotationStyle: input.rotationStyle as
-        | "tight"
-        | "balanced"
-        | "deep"
-        | undefined,
+        "tight" | "balanced" | "deep" | undefined,
       rotationPhilosophy: input.rotationPhilosophy as
         | "deep"
         | "balanced"
@@ -4667,11 +4712,7 @@ export async function previewOwnerOptimizeRotation(
         | "custom"
         | undefined,
       closingLineupPolicy: input.closingLineupPolicy as
-        | "auto"
-        | "best_five"
-        | "starters"
-        | "custom"
-        | undefined,
+        "auto" | "best_five" | "starters" | "custom" | undefined,
       closingLineupIds: input.closingLineupIds?.map((id) => asPlayerId(id)),
     },
   );
@@ -4684,14 +4725,15 @@ export async function previewOwnerOptimizeRotation(
     applied.management,
   );
   const preview = previewOptimizeRotation(draftState, teamId, {
-    rotationPreset: (input.rotationPreset as
-      | "auto"
-      | "balanced"
-      | "star_heavy"
-      | "deep"
-      | "development"
-      | "custom"
-      | undefined) ?? "auto",
+    rotationPreset:
+      (input.rotationPreset as
+        | "auto"
+        | "balanced"
+        | "star_heavy"
+        | "deep"
+        | "development"
+        | "custom"
+        | undefined) ?? "auto",
     configuredBy: "user",
   });
   return {
@@ -4741,9 +4783,7 @@ export async function updateOwnerRotation(
           absoluteMaximumMinutes: entry.absoluteMaximumMinutes ?? 0,
           rotationPriority: entry.rotationPriority as 1 | 2 | 3 | 4 | 5,
           rotationStatus: entry.rotationStatus as
-            | "active"
-            | "inactive"
-            | "emergency",
+            "active" | "inactive" | "emergency",
           role: entry.role as
             | "starter"
             | "sixth_man"
@@ -4762,10 +4802,7 @@ export async function updateOwnerRotation(
             entry.overrideMedicalRecommendation === true,
         })),
         rotationStyle: input.rotationStyle as
-          | "tight"
-          | "balanced"
-          | "deep"
-          | undefined,
+          "tight" | "balanced" | "deep" | undefined,
         rotationPhilosophy: input.rotationPhilosophy as
           | "deep"
           | "balanced"
@@ -4783,11 +4820,7 @@ export async function updateOwnerRotation(
           | "custom"
           | undefined,
         closingLineupPolicy: input.closingLineupPolicy as
-          | "auto"
-          | "best_five"
-          | "starters"
-          | "custom"
-          | undefined,
+          "auto" | "best_five" | "starters" | "custom" | undefined,
         closingLineupIds: input.closingLineupIds?.map((id) => asPlayerId(id)),
       }),
     store,
@@ -4858,13 +4891,9 @@ export async function updateOwnerCoachingPhilosophy(
         philosophy: {
           pace: input.pace as "fast" | "balanced" | "halfCourt",
           offensiveEmphasis: input.offensiveEmphasis as
-            | "threePointHeavy"
-            | "balanced"
-            | "inside",
+            "threePointHeavy" | "balanced" | "inside",
           defensiveApproach: input.defensiveApproach as
-            | "aggressive"
-            | "balanced"
-            | "conservative",
+            "aggressive" | "balanced" | "conservative",
         },
       }),
     store,
@@ -5056,11 +5085,7 @@ export async function swapFantasyDraftTeams(
   return mutateFantasyDraft(
     saveId,
     (state) => ({
-      state: swapTeamsInOrder(
-        state,
-        asTeamId(teamIdA),
-        asTeamId(teamIdB),
-      ),
+      state: swapTeamsInOrder(state, asTeamId(teamIdA), asTeamId(teamIdB)),
       events: [],
     }),
     store,
@@ -5332,11 +5357,7 @@ export async function setOwnerFantasyDraftAutoPickStrategy(
   return mutateFantasyDraft(
     saveId,
     (state) => ({
-      state: setFantasyDraftAutoPickStrategy(
-        state,
-        asTeamId(teamId),
-        strategy,
-      ),
+      state: setFantasyDraftAutoPickStrategy(state, asTeamId(teamId), strategy),
       events: [],
     }),
     store,
@@ -5387,4 +5408,3 @@ export async function continueAfterFantasyDraft(
   }
   return withDashboard(loaded);
 }
-

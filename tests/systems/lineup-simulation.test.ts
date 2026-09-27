@@ -9,7 +9,10 @@ import { createTestRng } from "../helpers/determinism";
 
 describe("lineup simulation integration", () => {
   it("uses saved starting lineup player ids when available", () => {
-    const state = generateRosters(createTestGameState(), createTestRng(3)).state;
+    const state = generateRosters(
+      createTestGameState(),
+      createTestRng(3),
+    ).state;
     const teamIds = Object.keys(state.world.teams).sort();
     const homeId = asTeamId(teamIds[0]!);
     const awayId = asTeamId(teamIds[1]!);

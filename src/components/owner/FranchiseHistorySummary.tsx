@@ -73,9 +73,7 @@ function formatSeasonMetric(
   };
 }
 
-export function FranchiseHistorySummary(props: {
-  view: FranchiseHistoryView;
-}) {
+export function FranchiseHistorySummary(props: { view: FranchiseHistoryView }) {
   const { milestones, ownerTenureYears } = props.view;
   const best = formatBestRecord(milestones.bestRecord);
   const highestValue = formatSeasonMetric(
@@ -89,15 +87,16 @@ export function FranchiseHistorySummary(props: {
 
   return (
     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-      <SummaryMetric
-        label="Championships"
-        value={milestones.championships}
-      />
+      <SummaryMetric label="Championships" value={milestones.championships} />
       <SummaryMetric
         label="Playoff appearances"
         value={milestones.playoffAppearances}
       />
-      <SummaryMetric label="Best record" value={best.value} detail={best.detail} />
+      <SummaryMetric
+        label="Best record"
+        value={best.value}
+        detail={best.detail}
+      />
       <SummaryMetric
         label="Highest franchise value"
         value={highestValue.value}

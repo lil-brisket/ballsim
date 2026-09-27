@@ -104,7 +104,9 @@ export function TeamSnapshotPanel(props: {
             </ul>
           </div>
         ) : (
-          <p className="text-sm text-emerald-400/90">Roster health looks stable.</p>
+          <p className="text-sm text-emerald-400/90">
+            Roster health looks stable.
+          </p>
         )}
       </div>
     </Section>

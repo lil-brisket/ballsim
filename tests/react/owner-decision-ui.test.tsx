@@ -26,9 +26,7 @@ describe("AI co-control copy", () => {
   });
 
   it("shows override language when all visible areas are delegated", () => {
-    render(
-      <DelegationSummary assistance={applyPreset("full_management")} />,
-    );
+    render(<DelegationSummary assistance={applyPreset("full_management")} />);
     expect(
       screen.getByText(/you can still override any AI move manually/i),
     ).toBeTruthy();

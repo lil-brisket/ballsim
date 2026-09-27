@@ -45,12 +45,7 @@ export function resolveGameDayPromotionEffects(
     return null;
   }
 
-  const context = buildEffectivenessContext(
-    state,
-    teamId,
-    game,
-    definition.id,
-  );
+  const context = buildEffectivenessContext(state, teamId, game, definition.id);
   const evaluated = evaluatePromotionEffectiveness(definition, context);
   const demandBoost = Math.max(
     0,

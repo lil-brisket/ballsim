@@ -24,10 +24,7 @@ import {
 } from "@/systems/development-league/recommendations";
 
 const ASSIGN_SCORE_THRESHOLD = 40;
-const PROMOTE_READINESS: ReadonlySet<string> = new Set([
-  "ready",
-  "near_ready",
-]);
+const PROMOTE_READINESS: ReadonlySet<string> = new Set(["ready", "near_ready"]);
 
 /**
  * Run AI DL decisions for all non-user-controlled franchises.

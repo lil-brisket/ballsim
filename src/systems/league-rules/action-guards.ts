@@ -46,9 +46,7 @@ export function canPerformAction(
         ...action.proposal.sideA.playerIds,
         ...action.proposal.sideB.playerIds,
       ]) {
-        violations.push(
-          ...checkRetiredPlayerBlocked(state, playerId, "trade"),
-        );
+        violations.push(...checkRetiredPlayerBlocked(state, playerId, "trade"));
       }
       for (const pickId of [
         ...action.proposal.sideA.draftPickIds,
@@ -85,18 +83,14 @@ export function canPerformAction(
     }
     case "issue_rfa_qualifying_offer": {
       violations.push(
-        ...checkIssueQualifyingOffer(
-          state,
-          action.playerId,
-          action.teamId,
-        ).violations,
+        ...checkIssueQualifyingOffer(state, action.playerId, action.teamId)
+          .violations,
       );
       break;
     }
     case "match_rfa_offer": {
       violations.push(
-        ...checkMatchRfaOffer(state, action.playerId, action.teamId)
-          .violations,
+        ...checkMatchRfaOffer(state, action.playerId, action.teamId).violations,
       );
       break;
     }
@@ -115,11 +109,8 @@ export function canPerformAction(
         ),
       );
       violations.push(
-        ...checkContractExtensionWindow(
-          state,
-          action.playerId,
-          action.teamId,
-        ).violations,
+        ...checkContractExtensionWindow(state, action.playerId, action.teamId)
+          .violations,
       );
       break;
     }

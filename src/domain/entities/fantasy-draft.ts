@@ -2,11 +2,7 @@ import type { ContractId, PlayerId, TeamId } from "@/domain/ids";
 
 export const FANTASY_DRAFT_SCHEMA_VERSION = 2;
 
-export type FantasyDraftStatus =
-  | "setup"
-  | "active"
-  | "paused"
-  | "complete";
+export type FantasyDraftStatus = "setup" | "active" | "paused" | "complete";
 
 export const FANTASY_DRAFT_STATUSES: readonly FantasyDraftStatus[] = [
   "setup",
@@ -65,11 +61,7 @@ export type FantasyDraftTimer = {
 };
 
 export type FantasyDraftPickAssessment =
-  | "Excellent"
-  | "Strong"
-  | "Good"
-  | "Fair"
-  | "Reach";
+  "Excellent" | "Strong" | "Good" | "Fair" | "Reach";
 
 export type FantasyDraftPickAnalysis = {
   pickNumber: number;
@@ -86,11 +78,7 @@ export type FantasyDraftPickAnalysis = {
 };
 
 export type FantasyDraftPositionBalanceLevel =
-  | "Excellent"
-  | "Good"
-  | "Average"
-  | "Below Average"
-  | "Weak";
+  "Excellent" | "Good" | "Average" | "Below Average" | "Weak";
 
 export type FantasyDraftPositionBalance = {
   position: string;
@@ -275,7 +263,8 @@ export function createEmptyFantasyDraft(input: {
     selections: [],
     timer: {
       enabled: timerSeconds !== null && timerSeconds > 0,
-      secondsPerPick: timerSeconds !== null && timerSeconds > 0 ? timerSeconds : 0,
+      secondsPerPick:
+        timerSeconds !== null && timerSeconds > 0 ? timerSeconds : 0,
       pickStartedAt: null,
     },
     pausedAt: null,
@@ -292,12 +281,11 @@ export function createEmptyFantasyDraft(input: {
 }
 
 export type FantasyDraftPlayerTier =
-  | "elite"
-  | "starter"
-  | "rotation"
-  | "development";
+  "elite" | "starter" | "rotation" | "development";
 
-export function fantasyDraftPlayerTier(overall: number): FantasyDraftPlayerTier {
+export function fantasyDraftPlayerTier(
+  overall: number,
+): FantasyDraftPlayerTier {
   if (overall >= 85) {
     return "elite";
   }

@@ -31,16 +31,10 @@ export type SkillAttributeKey =
   | "rebounding";
 
 export type PhysicalAttributeKey =
-  | "speed"
-  | "strength"
-  | "athleticism"
-  | "stamina";
+  "speed" | "strength" | "athleticism" | "stamina";
 
 export type MentalAttributeKey =
-  | "basketballIq"
-  | "offensiveIq"
-  | "defensiveIq"
-  | "consistency";
+  "basketballIq" | "offensiveIq" | "defensiveIq" | "consistency";
 
 export type CategoryMix = {
   skills: number;

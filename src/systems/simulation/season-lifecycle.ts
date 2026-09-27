@@ -7,11 +7,11 @@ import { startPlayoffs } from "@/systems/playoff-simulation";
 import { generateSchedule } from "@/systems/schedule-generation";
 import { generateDevelopmentLeagueSchedule } from "@/systems/development-league/schedule-generation";
 import { transitionPhase } from "@/systems/simulation/phase-machine";
+import { getActivePhaseId, setActivePhase } from "@/systems/phase-engine";
 import {
-  getActivePhaseId,
-  setActivePhase,
-} from "@/systems/phase-engine";
-import { canBeginRegularSeason, canBeginPlayoffs } from "@/systems/league-rules";
+  canBeginRegularSeason,
+  canBeginPlayoffs,
+} from "@/systems/league-rules";
 import { snapshotTradeDeadline } from "@/systems/league-rules/snapshot-trade-deadline";
 import {
   derivePlannedRegularSeasonStartDate,
@@ -49,7 +49,9 @@ function withRegularSeasonStartDate(
   state: GameState,
   regularSeasonStartDate: string,
 ): GameState {
-  if (state.competition.season.regularSeasonStartDate === regularSeasonStartDate) {
+  if (
+    state.competition.season.regularSeasonStartDate === regularSeasonStartDate
+  ) {
     return state;
   }
   return {
@@ -67,7 +69,9 @@ function withRegularSeasonStartDate(
 /**
  * Begin the regular season from preseason.preparation (user-controlled advance).
  */
-export function beginRegularSeasonFromPreseason(state: GameState): SystemResult {
+export function beginRegularSeasonFromPreseason(
+  state: GameState,
+): SystemResult {
   if (getActivePhaseId(state) !== "preseason.preparation") {
     throw new Error(
       `beginRegularSeasonFromPreseason requires preseason.preparation; got "${getActivePhaseId(state)}".`,
@@ -76,7 +80,8 @@ export function beginRegularSeasonFromPreseason(state: GameState): SystemResult 
   const gate = canBeginRegularSeason(state);
   if (!gate.allowed) {
     throw new Error(
-      gate.blockReason ?? "Season cannot begin — roster validation is incomplete.",
+      gate.blockReason ??
+        "Season cannot begin — roster validation is incomplete.",
     );
   }
   const events: DomainEvent[] = [];

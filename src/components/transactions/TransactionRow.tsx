@@ -22,7 +22,9 @@ function badgeTone(type: string): string {
   }
 }
 
-export function TransactionTypeBadge(props: { type: TransactionRowView["type"] }) {
+export function TransactionTypeBadge(props: {
+  type: TransactionRowView["type"];
+}) {
   return (
     <StatusBadge
       label={transactionTypeLabel(props.type)}
@@ -37,8 +39,7 @@ export function TransactionRow(props: {
   activityMode?: TransactionActivityMode;
 }) {
   const { saveId, row } = props;
-  const emphasize =
-    props.activityMode === "myTeam" && row.isMyTeam;
+  const emphasize = props.activityMode === "myTeam" && row.isMyTeam;
 
   return (
     <article
@@ -182,12 +183,14 @@ function formatDateHeader(iso: string): string {
   try {
     const [y, m, d] = iso.split("-").map(Number);
     const utc = new Date(Date.UTC(y!, m! - 1, d!, 12, 0, 0));
-    return utc.toLocaleDateString("en-US", {
-      month: "short",
-      day: "numeric",
-      year: "numeric",
-      timeZone: "UTC",
-    }).toUpperCase();
+    return utc
+      .toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+        timeZone: "UTC",
+      })
+      .toUpperCase();
   } catch {
     return iso;
   }

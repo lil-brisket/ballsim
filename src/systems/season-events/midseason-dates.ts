@@ -44,10 +44,7 @@ export function listScheduledRegularSeasonDates(state: GameState): string[] {
  */
 export function deriveMidseasonAnchorDate(state: GameState): string | null {
   const config = seasonEventsConfig(state.settings);
-  const fraction = Math.min(
-    1,
-    Math.max(0, config.midseasonAnchor.fraction),
-  );
+  const fraction = Math.min(1, Math.max(0, config.midseasonAnchor.fraction));
   const dates = listScheduledRegularSeasonDates(state);
   if (dates.length > 0) {
     if (dates.length === 1) {

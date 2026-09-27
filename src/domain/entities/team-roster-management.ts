@@ -16,12 +16,7 @@ export type LineupSlot = {
 
 /** Descriptive rotation label — ordering uses rotationPriority. */
 export type RotationRole =
-  | "starter"
-  | "sixth_man"
-  | "rotation"
-  | "bench"
-  | "deep_bench"
-  | "emergency";
+  "starter" | "sixth_man" | "rotation" | "bench" | "deep_bench" | "emergency";
 
 /** Rotation pool membership — distinct from player availability. */
 export type RotationStatus = "active" | "inactive" | "emergency";
@@ -55,28 +50,15 @@ export type RotationEntry = {
 };
 
 export type RotationPhilosophy =
-  | "deep"
-  | "balanced"
-  | "tight"
-  | "star_heavy"
-  | "development";
+  "deep" | "balanced" | "tight" | "star_heavy" | "development";
 
 /** Legacy alias kept for coaching presets; maps to philosophy + depth. */
 export type RotationStyle = "tight" | "balanced" | "deep";
 
 export type RotationPreset =
-  | "auto"
-  | "balanced"
-  | "star_heavy"
-  | "deep"
-  | "development"
-  | "custom";
+  "auto" | "balanced" | "star_heavy" | "deep" | "development" | "custom";
 
-export type ClosingLineupPolicy =
-  | "auto"
-  | "best_five"
-  | "starters"
-  | "custom";
+export type ClosingLineupPolicy = "auto" | "best_five" | "starters" | "custom";
 
 export type RosterConfiguredBy = "default" | "user" | "ai";
 
@@ -193,9 +175,7 @@ export function isPlayerPosition(value: string): value is PlayerPosition {
 }
 
 export function isRotationPriority(value: number): value is RotationPriority {
-  return (
-    Number.isInteger(value) && value >= 1 && value <= 5
-  );
+  return Number.isInteger(value) && value >= 1 && value <= 5;
 }
 
 export function isMinutePriorityBias(
@@ -222,9 +202,7 @@ export function styleFromPhilosophy(
   return "balanced";
 }
 
-export function depthForPhilosophy(
-  philosophy: RotationPhilosophy,
-): number {
+export function depthForPhilosophy(philosophy: RotationPhilosophy): number {
   switch (philosophy) {
     case "tight":
     case "star_heavy":

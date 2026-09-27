@@ -142,10 +142,7 @@ export async function createSaveAction(formData: FormData): Promise<void> {
       const parsed = JSON.parse(settingsJson) as unknown;
       const validated = validateGameSettings(parsed);
       if (!validated.ok) {
-        redirectWithError(
-          "/new/setup?mode=owner",
-          validated.errors.join("; "),
-        );
+        redirectWithError("/new/setup?mode=owner", validated.errors.join("; "));
       }
       settings = validated.settings;
     } catch {
@@ -355,7 +352,6 @@ export async function advanceWeekAction(formData: FormData): Promise<void> {
   redirect(path);
 }
 
-
 export async function advanceMonthAction(formData: FormData): Promise<void> {
   const saveId = String(formData.get("saveId") ?? "");
   const path = returnPath(formData, saveId);
@@ -392,8 +388,6 @@ export async function simulateToEndOfSeasonAction(
     result.summary?.fromDate,
   );
 }
-
-
 
 export async function advanceUntilPhaseAction(
   formData: FormData,
@@ -446,7 +440,6 @@ function redirectWithSummary(
     `${path}${separator}simSummary=1&daysAdvanced=${daysAdvanced}&highlights=${highlightCount}${fromParam}`,
   );
 }
-
 
 export async function simulateToDateAction(formData: FormData): Promise<void> {
   const saveId = String(formData.get("saveId") ?? "");
@@ -660,7 +653,9 @@ export async function executeTradeAction(formData: FormData): Promise<void> {
   redirect(path);
 }
 
-export async function toggleTradeBlockAction(formData: FormData): Promise<void> {
+export async function toggleTradeBlockAction(
+  formData: FormData,
+): Promise<void> {
   const saveId = String(formData.get("saveId") ?? "");
   const playerId = String(formData.get("playerId") ?? "");
   const listedRaw = String(formData.get("listed") ?? "");
@@ -679,7 +674,10 @@ export async function listTradeCandidatesAction(
   saveId: string,
   outgoingPlayerId: string,
 ): Promise<
-  | { ok: true; candidates: import("@/state/roster-page-selectors").TradeFinderRowView[] }
+  | {
+      ok: true;
+      candidates: import("@/state/roster-page-selectors").TradeFinderRowView[];
+    }
   | { ok: false; error: string }
 > {
   const result = await listOwnerTradeCandidates(saveId, outgoingPlayerId);
@@ -793,9 +791,7 @@ export async function dismissPhaseTaskAction(
   redirect(path);
 }
 
-export async function beginOffseasonAction(
-  formData: FormData,
-): Promise<void> {
+export async function beginOffseasonAction(formData: FormData): Promise<void> {
   const saveId = String(formData.get("saveId") ?? "");
   const path = returnPath(formData, saveId);
   const result = await beginOffseason(saveId);
@@ -835,10 +831,7 @@ export async function assignToDevelopmentLeagueAction(
 ): Promise<void> {
   const saveId = String(formData.get("saveId") ?? "");
   const playerId = String(formData.get("playerId") ?? "");
-  const path = returnPath(
-    formData,
-    `/dashboard/${saveId}/development-league`,
-  );
+  const path = returnPath(formData, `/dashboard/${saveId}/development-league`);
   const result = await assignOwnerPlayerToDevelopmentLeague(saveId, playerId);
   if (!result.ok) {
     redirectWithError(path, result.error);
@@ -852,10 +845,7 @@ export async function recallFromDevelopmentLeagueAction(
 ): Promise<void> {
   const saveId = String(formData.get("saveId") ?? "");
   const playerId = String(formData.get("playerId") ?? "");
-  const path = returnPath(
-    formData,
-    `/dashboard/${saveId}/development-league`,
-  );
+  const path = returnPath(formData, `/dashboard/${saveId}/development-league`);
   const result = await recallOwnerPlayerFromDevelopmentLeague(saveId, playerId);
   if (!result.ok) {
     redirectWithError(path, result.error);
@@ -894,7 +884,9 @@ export async function addDraftBoardAction(formData: FormData): Promise<void> {
   redirect(path);
 }
 
-export async function removeDraftBoardAction(formData: FormData): Promise<void> {
+export async function removeDraftBoardAction(
+  formData: FormData,
+): Promise<void> {
   const saveId = String(formData.get("saveId") ?? "");
   const prospectPlayerId = String(formData.get("prospectPlayerId") ?? "");
   const path = returnPath(formData, `/dashboard/${saveId}/draft`);
@@ -1115,7 +1107,9 @@ export async function negotiateStaffOfferAction(
   redirect(path);
 }
 
-export async function acceptStaffOfferAction(formData: FormData): Promise<void> {
+export async function acceptStaffOfferAction(
+  formData: FormData,
+): Promise<void> {
   const saveId = String(formData.get("saveId") ?? "");
   const offerId = String(formData.get("offerId") ?? "");
   const path = returnPath(formData, saveId);
@@ -1205,11 +1199,7 @@ export async function changeGameDayPromotionAction(
   const gameId = String(formData.get("gameId") ?? "");
   const promotionId = String(formData.get("promotionId") ?? "");
   const path = returnPath(formData, saveId);
-  const result = await changeOwnerGameDayPromotion(
-    saveId,
-    gameId,
-    promotionId,
-  );
+  const result = await changeOwnerGameDayPromotion(saveId, gameId, promotionId);
   if (!result.ok) {
     redirectWithError(path, result.error);
   }
@@ -1238,10 +1228,7 @@ export async function advanceRelocationAction(
   const saveId = String(formData.get("saveId") ?? "");
   const targetJson = String(formData.get("targetJson") ?? "");
   const path = returnPath(formData, saveId);
-  const result = await advanceOwnerRelocation(
-    saveId,
-    targetJson || undefined,
-  );
+  const result = await advanceOwnerRelocation(saveId, targetJson || undefined);
   if (!result.ok) {
     redirectWithError(path, result.error);
   }
@@ -1451,9 +1438,7 @@ export async function updateCoachingPhilosophyAction(
     teamId,
     pace: String(formData.get("pace") ?? "balanced"),
     offensiveEmphasis: String(formData.get("offensiveEmphasis") ?? "balanced"),
-    defensiveApproach: String(
-      formData.get("defensiveApproach") ?? "balanced",
-    ),
+    defensiveApproach: String(formData.get("defensiveApproach") ?? "balanced"),
   });
   if (!result.ok) {
     redirectWithError(path, result.error);
@@ -1491,11 +1476,9 @@ export async function configureFantasyDraftSetupAction(
 ): Promise<void> {
   const saveId = String(formData.get("saveId") ?? "");
   const draftType = String(formData.get("draftType") ?? "snake") as
-    | "snake"
-    | "linear";
+    "snake" | "linear";
   const orderMode = String(formData.get("orderMode") ?? "random") as
-    | "random"
-    | "manual";
+    "random" | "manual";
   const timerRaw = String(formData.get("timerSeconds") ?? "");
   const timerSeconds =
     timerRaw === "" || timerRaw === "off" ? null : Number(timerRaw);

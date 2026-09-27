@@ -44,8 +44,7 @@ function focusRosterDecisions(
 ): PhaseFocus[] {
   const items: PhaseFocus[] = [];
   if (context.pendingTeamOptions + context.pendingPlayerOptions > 0) {
-    const count =
-      context.pendingTeamOptions + context.pendingPlayerOptions;
+    const count = context.pendingTeamOptions + context.pendingPlayerOptions;
     items.push({
       focusKey: "pending_options",
       title: `${count} player${count === 1 ? "" : "s"} need decisions`,

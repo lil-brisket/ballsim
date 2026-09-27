@@ -1,11 +1,12 @@
-import type { StaffContractId, StaffId, StaffOfferId, TeamId } from "@/domain/ids";
+import type {
+  StaffContractId,
+  StaffId,
+  StaffOfferId,
+  TeamId,
+} from "@/domain/ids";
 
 export type StaffOfferStatus =
-  | "pending"
-  | "negotiating"
-  | "accepted"
-  | "rejected"
-  | "withdrawn";
+  "pending" | "negotiating" | "accepted" | "rejected" | "withdrawn";
 
 export const STAFF_OFFER_STATUSES: readonly StaffOfferStatus[] = [
   "pending",
@@ -98,7 +99,9 @@ export function assertStaffOfferShape(
     !Number.isInteger(offer.terms.annualSalary) ||
     offer.terms.annualSalary < 0
   ) {
-    throw new Error("StaffOffer terms.annualSalary must be a non-negative integer.");
+    throw new Error(
+      "StaffOffer terms.annualSalary must be a non-negative integer.",
+    );
   }
   if (
     typeof offer.terms.years !== "number" ||
@@ -132,8 +135,6 @@ function assertNonEmptyId(value: string, field: string): void {
 
 function assertCalendarDate(value: string, field: string): void {
   if (typeof value !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(value)) {
-    throw new Error(
-      `StaffOffer ${field} must be a YYYY-MM-DD calendar date.`,
-    );
+    throw new Error(`StaffOffer ${field} must be a YYYY-MM-DD calendar date.`);
   }
 }

@@ -14,7 +14,7 @@ Fictional basketball simulation / management game (Owner Mode foundation).
 
 - [`GAME_DESIGN.md`](./GAME_DESIGN.md) — authoritative game design
 - [`ARCHITECTURE.md`](./ARCHITECTURE.md) — authoritative technical architecture
-- [`docs/testing.md`](./docs/testing.md) — testing stack, conventions, and CI
+- [`CHANGELOG.md`](./CHANGELOG.md) — notable persistence, tooling, and dependency changes
 
 ## Scripts
 
@@ -24,9 +24,13 @@ npm run test
 npm run test:watch
 npm run test:coverage
 npm run lint
+npm run format
+npm run format:check
 npm run db:migrate
 npm run db:generate
 ```
+
+`npm run test:coverage` runs the same Vitest projects as `npm test` and writes `coverage/` (HTML + LCOV). CI uploads that folder as an artifact and sends `coverage/lcov.info` to Codecov. Set a `CODECOV_TOKEN` repository secret if the Codecov upload should authenticate (public tokenless upload may still work).
 
 ## Environment
 

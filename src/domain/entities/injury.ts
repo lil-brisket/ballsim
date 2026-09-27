@@ -3,7 +3,10 @@
  * Severity ≠ status. Multiple active injuries are supported.
  */
 
-import type { PlayerAttributes, PlayerPosition } from "@/domain/entities/player";
+import type {
+  PlayerAttributes,
+  PlayerPosition,
+} from "@/domain/entities/player";
 
 /** Calendar date as YYYY-MM-DD. */
 export type InjuryCalendarDate = string;
@@ -210,7 +213,12 @@ export function isExposureSource(value: string): value is ExposureSource {
 export function migrateLegacySeverity(
   value: string | undefined | null,
 ): InjurySeverity {
-  if (value === "minor" || value === "moderate" || value === "major" || value === "severe") {
+  if (
+    value === "minor" ||
+    value === "moderate" ||
+    value === "major" ||
+    value === "severe"
+  ) {
     return value;
   }
   if (value === "unknown") {

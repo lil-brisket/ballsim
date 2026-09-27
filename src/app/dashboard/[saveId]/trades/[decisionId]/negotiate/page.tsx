@@ -22,8 +22,7 @@ export default async function TradeNegotiatePage(props: PageProps) {
   );
   if (!pending || pending.type !== "trade_offer") notFound();
 
-  const proposal =
-    pending.payload.currentProposal ?? pending.payload.proposal;
+  const proposal = pending.payload.currentProposal ?? pending.payload.proposal;
   const userTeamId = pending.payload.userTeamId;
   const offeringTeamId = pending.payload.offeringTeamId;
   const userTeam = state.world.teams[userTeamId];
@@ -66,19 +65,13 @@ export default async function TradeNegotiatePage(props: PageProps) {
         <ul className="mt-2 list-inside list-disc text-zinc-300">
           {cpuSide.playerIds.map((id) => {
             const p = state.world.players[id];
-            return (
-              <li key={id}>
-                {p ? `${p.firstName} ${p.lastName}` : id}
-              </li>
-            );
+            return <li key={id}>{p ? `${p.firstName} ${p.lastName}` : id}</li>;
           })}
           {cpuSide.draftPickIds.map((id) => {
             const pick = state.world.draftPicks[id];
             return (
               <li key={id}>
-                {pick
-                  ? `${pick.seasonYear} R${pick.round}`
-                  : id}
+                {pick ? `${pick.seasonYear} R${pick.round}` : id}
               </li>
             );
           })}
@@ -92,17 +85,30 @@ export default async function TradeNegotiatePage(props: PageProps) {
         <input type="hidden" name="offeringTeamId" value={offeringTeamId} />
         <input type="hidden" name="userTeamId" value={userTeamId} />
         {cpuSide.playerIds.map((id) => (
-          <input key={`cpu-p-${id}`} type="hidden" name="cpuPlayerIds" value={id} />
+          <input
+            key={`cpu-p-${id}`}
+            type="hidden"
+            name="cpuPlayerIds"
+            value={id}
+          />
         ))}
         {cpuSide.draftPickIds.map((id) => (
-          <input key={`cpu-k-${id}`} type="hidden" name="cpuPickIds" value={id} />
+          <input
+            key={`cpu-k-${id}`}
+            type="hidden"
+            name="cpuPickIds"
+            value={id}
+          />
         ))}
 
         <fieldset className="rounded-md border border-zinc-700 px-4 py-3">
           <legend className="px-1 text-zinc-50">Players you send</legend>
           <div className="mt-2 grid gap-1 sm:grid-cols-2">
             {userPlayers.map((player) => (
-              <label key={player.id} className="flex items-center gap-2 text-zinc-300">
+              <label
+                key={player.id}
+                className="flex items-center gap-2 text-zinc-300"
+              >
                 <input
                   type="checkbox"
                   name="userPlayerIds"
@@ -119,7 +125,10 @@ export default async function TradeNegotiatePage(props: PageProps) {
           <legend className="px-1 text-zinc-50">Picks you send</legend>
           <div className="mt-2 grid gap-1 sm:grid-cols-2">
             {userPicks.map((pick) => (
-              <label key={pick.id} className="flex items-center gap-2 text-zinc-300">
+              <label
+                key={pick.id}
+                className="flex items-center gap-2 text-zinc-300"
+              >
                 <input
                   type="checkbox"
                   name="userPickIds"

@@ -176,10 +176,7 @@ export function TornadoLogo(props: TeamLogoProps) {
 export function MountainPeakLogo(props: TeamLogoProps) {
   return (
     <LogoFrame {...props} title={props.title ?? "Peak"}>
-      <path
-        d="M8 48 L24 20 L32 32 L40 14 L56 48 Z"
-        fill={props.primaryColor}
-      />
+      <path d="M8 48 L24 20 L32 32 L40 14 L56 48 Z" fill={props.primaryColor} />
       <path d="M24 20 L28 28 L32 32 L40 14 Z" fill={props.accentColor} />
       <path
         d="M20 48 L32 28 L44 48"

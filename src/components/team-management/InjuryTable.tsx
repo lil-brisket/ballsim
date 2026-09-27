@@ -2,7 +2,10 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
-import type { InjuryReportView, InjuryRowView } from "@/state/team-management-selectors";
+import type {
+  InjuryReportView,
+  InjuryRowView,
+} from "@/state/team-management-selectors";
 import { EmptyState } from "@/components/owner/EmptyState";
 import { StatusBadge } from "@/components/owner/StatusBadge";
 
@@ -67,10 +70,7 @@ function formatReturn(row: InjuryRowView): string {
   return "—";
 }
 
-function InjuryPlayerCard(props: {
-  saveId: string;
-  row: InjuryRowView;
-}) {
+function InjuryPlayerCard(props: { saveId: string; row: InjuryRowView }) {
   const { row, saveId } = props;
   const recoveryPct =
     row.recoveryProgress != null
@@ -108,9 +108,7 @@ function InjuryPlayerCard(props: {
         <div>
           <div className="text-zinc-500">Injury</div>
           <div className="text-zinc-200">
-            {row.isLegacyUndisclosed
-              ? "Undisclosed"
-              : row.injuryType ?? "—"}
+            {row.isLegacyUndisclosed ? "Undisclosed" : (row.injuryType ?? "—")}
             {row.bodyPart && row.bodyPart !== "unknown"
               ? ` (${row.bodyPart})`
               : ""}
@@ -182,7 +180,9 @@ export function InjuryTable(props: {
   const [query, setQuery] = useState("");
 
   const rows = useMemo(() => {
-    let filtered = props.report.rows.filter((row) => matchesFilter(row, filter));
+    let filtered = props.report.rows.filter((row) =>
+      matchesFilter(row, filter),
+    );
     const q = query.trim().toLowerCase();
     if (q) {
       filtered = filtered.filter((row) =>

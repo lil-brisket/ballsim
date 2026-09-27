@@ -35,8 +35,7 @@ export function generateDraftProspects(
   if (teamCount < 1) {
     throw new Error("Cannot generate prospects: no teams in world.");
   }
-  const prospectCount =
-    pickCount + teamCount * DRAFT_EXTRA_PROSPECTS_PER_TEAM;
+  const prospectCount = pickCount + teamCount * DRAFT_EXTRA_PROSPECTS_PER_TEAM;
 
   const generated: Array<{
     playerId: ReturnType<typeof asPlayerId>;

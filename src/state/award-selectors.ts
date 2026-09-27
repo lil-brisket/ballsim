@@ -1,7 +1,4 @@
-import type {
-  AwardDefinitionId,
-  AwardResult,
-} from "@/domain/entities/awards";
+import type { AwardDefinitionId, AwardResult } from "@/domain/entities/awards";
 import type { PlayerId } from "@/domain/ids";
 import type { GameState } from "@/state/game-state";
 import { AWARD_DEFINITIONS } from "@/systems/awards/award-definitions";
@@ -69,7 +66,9 @@ export type LeagueAwardRowView = {
 function subjectName(state: GameState, result: AwardResult): string {
   if (result.winner.subjectType === "coach") {
     const coach = state.world.coaches[result.winner.subjectId];
-    return coach ? `${coach.firstName} ${coach.lastName}` : result.winner.subjectId;
+    return coach
+      ? `${coach.firstName} ${coach.lastName}`
+      : result.winner.subjectId;
   }
   const player = state.world.players[result.winner.subjectId];
   return player
@@ -77,10 +76,7 @@ function subjectName(state: GameState, result: AwardResult): string {
     : result.winner.subjectId;
 }
 
-function subjectHref(
-  saveId: string,
-  result: AwardResult,
-): string | null {
+function subjectHref(saveId: string, result: AwardResult): string | null {
   if (result.winner.subjectType === "player") {
     return `/dashboard/${saveId}/players/${result.winner.subjectId}`;
   }

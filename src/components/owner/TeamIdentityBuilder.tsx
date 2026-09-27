@@ -2,7 +2,10 @@
 
 import { useMemo, useState } from "react";
 import { confirmTeamIdentityAction } from "@/application/actions";
-import { TeamColorFields, type TeamColorChannel } from "@/components/owner/TeamColorFields";
+import {
+  TeamColorFields,
+  type TeamColorChannel,
+} from "@/components/owner/TeamColorFields";
 import { TeamIdentityPreview } from "@/components/team/TeamIdentityPreview";
 import { TeamLogoMark } from "@/components/team/logos/TeamLogoMark";
 import { TeamNicknameField } from "@/components/team/TeamNicknameField";
@@ -18,9 +21,7 @@ import {
   type TeamLogoId,
 } from "@/data/team-branding/logo-catalog";
 import { TEAM_BRANDING_PRESETS } from "@/data/team-branding/branding-presets";
-import {
-  normalizeHexColor,
-} from "@/domain/entities/team-branding";
+import { normalizeHexColor } from "@/domain/entities/team-branding";
 import { evaluateTeamIdentityContrast } from "@/domain/color-contrast";
 import { validateTeamNickname } from "@/domain/team-nickname";
 import {

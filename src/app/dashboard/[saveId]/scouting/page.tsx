@@ -109,10 +109,7 @@ export default async function ScoutingPage({ params, searchParams }: Props) {
                     className="flex flex-wrap items-center justify-between gap-2 px-4 py-2 text-sm"
                   >
                     <div>
-                      <PlayerEntityLink
-                        saveId={saveId}
-                        playerId={row.playerId}
-                      >
+                      <PlayerEntityLink saveId={saveId} playerId={row.playerId}>
                         {row.firstName} {row.lastName}
                       </PlayerEntityLink>
                       <p className="text-xs text-zinc-500">

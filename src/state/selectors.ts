@@ -478,9 +478,7 @@ export function listCitiesForTeamPick(state: GameState): CityPickOption[] {
     };
   });
 
-  options.sort((a, b) =>
-    a.city < b.city ? -1 : a.city > b.city ? 1 : 0,
-  );
+  options.sort((a, b) => (a.city < b.city ? -1 : a.city > b.city ? 1 : 0));
   return options;
 }
 
@@ -572,7 +570,9 @@ export function toFreeAgentViews(state: GameState): FreeAgentView[] {
   return views;
 }
 
-export function toFreeAgencyOfferViews(state: GameState): FreeAgencyOfferView[] {
+export function toFreeAgencyOfferViews(
+  state: GameState,
+): FreeAgencyOfferView[] {
   const teamId = state.user.activeOwnerTeamId;
   const views: FreeAgencyOfferView[] = [];
   for (const offer of Object.values(state.business.freeAgency.offers)) {
@@ -809,7 +809,9 @@ export function toEventLogView(
   state: GameState,
   limit?: number,
 ): EventLogEntryView[] {
-  const entries = getActiveOwnedFranchise(state).eventLog.map((event) => toEventLogEntry(event));
+  const entries = getActiveOwnedFranchise(state).eventLog.map((event) =>
+    toEventLogEntry(event),
+  );
   const newestFirst = [...entries].reverse();
   return limit === undefined ? newestFirst : newestFirst.slice(0, limit);
 }
@@ -883,9 +885,7 @@ function describeDomainEvent(event: DomainEvent): string {
     }
     case "PlayerPayrollPaid":
       return `Player payroll paid${
-        typeof payload.amount === "number"
-          ? ` (${payload.amount})`
-          : ""
+        typeof payload.amount === "number" ? ` (${payload.amount})` : ""
       }`;
     default:
       return event.type;
@@ -916,7 +916,9 @@ export function toNotificationsView(state: GameState): NotificationView[] {
       });
     }
   }
-  entries.sort((a, b) => (a.occurredOn < b.occurredOn ? 1 : a.occurredOn > b.occurredOn ? -1 : 0));
+  entries.sort((a, b) =>
+    a.occurredOn < b.occurredOn ? 1 : a.occurredOn > b.occurredOn ? -1 : 0,
+  );
   return entries;
 }
 
@@ -967,7 +969,12 @@ export function toFinancesView(state: GameState): FinancesView {
     capSpace: getTeamCapSpace(team.id, year, state, salaryCap),
     staffBudget,
     staffPayroll,
-    staffBudgetSpace: getTeamStaffBudgetSpace(team.id, year, state, staffBudget),
+    staffBudgetSpace: getTeamStaffBudgetSpace(
+      team.id,
+      year,
+      state,
+      staffBudget,
+    ),
   };
 }
 
@@ -1138,8 +1145,10 @@ export function toDashboardSnapshot(state: GameState): DashboardSnapshot {
     leagueName: state.world.league.name,
     mode: state.user.mode,
     teamSelectionLocked: state.world.calendar.lastSimulatedDate !== null,
-    citySelectionConfirmed: getActiveOwnedFranchise(state).citySelectionConfirmed,
-    franchiseIdentityConfirmed: getActiveOwnedFranchise(state).franchiseIdentityConfirmed,
+    citySelectionConfirmed:
+      getActiveOwnedFranchise(state).citySelectionConfirmed,
+    franchiseIdentityConfirmed:
+      getActiveOwnedFranchise(state).franchiseIdentityConfirmed,
     fantasyDraftMode: state.settings.draft.mode === "fantasy",
     fantasyDraftStatus: state.world.fantasyDraft?.status ?? null,
     userOnDraftClock: isUserOnDraftClock(state),
@@ -1165,9 +1174,10 @@ export function toDashboardSnapshot(state: GameState): DashboardSnapshot {
         wins: ownedStanding.wins,
         losses: ownedStanding.losses,
         isActive: ownedId === state.user.activeOwnerTeamId,
-        blockingDecisionCount: getPendingDecisionsForTeam(state, ownedId).filter(
-          (d) => d.blockingLevel === "blocking",
-        ).length,
+        blockingDecisionCount: getPendingDecisionsForTeam(
+          state,
+          ownedId,
+        ).filter((d) => d.blockingLevel === "blocking").length,
         unreadNotificationCount: franchise.notifications.filter((n) => !n.read)
           .length,
       };
@@ -1189,15 +1199,18 @@ export function toDashboardSnapshot(state: GameState): DashboardSnapshot {
     upcomingGames: toUpcomingGamesView(state, 5),
     objectives: toObjectivesView(state),
     recentActivity: toEventLogView(state, 10),
-    notifications: getActiveOwnedFranchise(state).notifications.slice(-10).map((notification) => ({
-      id: notification.id,
-      type: notification.type,
-      severity: notification.severity,
-      message: notification.message,
-      read: notification.read,
-    })),
-    unreadNotificationCount: getActiveOwnedFranchise(state).notifications.filter((n) => !n.read)
-      .length,
+    notifications: getActiveOwnedFranchise(state)
+      .notifications.slice(-10)
+      .map((notification) => ({
+        id: notification.id,
+        type: notification.type,
+        severity: notification.severity,
+        message: notification.message,
+        read: notification.read,
+      })),
+    unreadNotificationCount: getActiveOwnedFranchise(
+      state,
+    ).notifications.filter((n) => !n.read).length,
     activeFranchiseAi: {
       managementPreset: getActiveOwnedFranchise(state).managementPreset,
       assistance: { ...getActiveOwnedFranchise(state).aiAssistance },
@@ -1297,10 +1310,7 @@ export type GameRotationPanelView = {
 };
 
 /** True when a finalized current-season game can open a box-score page. */
-export function canOpenGameBoxScore(
-  state: GameState,
-  gameId: string,
-): boolean {
+export function canOpenGameBoxScore(state: GameState, gameId: string): boolean {
   const game = state.competition.games[gameId];
   if (!game || game.status !== "final") {
     return false;
@@ -1384,9 +1394,7 @@ export function toGameBoxScoreView(
       branding: homeIdentity.branding,
       score: game.score.home,
       teamStats: toTeamStatsView(homeTeamStats),
-      players: homeRows.map((row) =>
-        toPlayerBoxScoreRow(state, row),
-      ),
+      players: homeRows.map((row) => toPlayerBoxScoreRow(state, row)),
     },
     away: {
       teamId: awayIdentity.teamId,
@@ -1396,9 +1404,7 @@ export function toGameBoxScoreView(
       branding: awayIdentity.branding,
       score: game.score.away,
       teamStats: toTeamStatsView(awayTeamStats),
-      players: awayRows.map((row) =>
-        toPlayerBoxScoreRow(state, row),
-      ),
+      players: awayRows.map((row) => toPlayerBoxScoreRow(state, row)),
     },
     winner,
     winnerName,
@@ -1461,8 +1467,7 @@ function toRotationPanelView(
         entry.periodNumber <= 4
           ? `Q${entry.periodNumber}`
           : `OT${entry.periodNumber - 4}`;
-      const abbr =
-        entry.teamId === game.homeTeamId ? homeAbbr : awayAbbr;
+      const abbr = entry.teamId === game.homeTeamId ? homeAbbr : awayAbbr;
       return {
         clockLabel: `${minutes}:${seconds.toString().padStart(2, "0")} ${periodLabel}`,
         teamAbbreviation: abbr,
@@ -1581,9 +1586,7 @@ function toPlayerBoxScoreRow(
     playerName = `${row.firstName} ${row.lastName}`;
   } else {
     const live = state.world.players[row.playerId];
-    playerName = live
-      ? `${live.firstName} ${live.lastName}`
-      : row.playerId;
+    playerName = live ? `${live.firstName} ${live.lastName}` : row.playerId;
   }
   return {
     playerId: row.playerId,
@@ -1757,9 +1760,7 @@ export type FantasyDraftSummaryView = {
   teamNames: Record<string, { name: string; abbreviation: string }>;
 };
 
-function mapNeedLevel(
-  level: string,
-): "HIGH" | "MEDIUM" | "LOW" {
+function mapNeedLevel(level: string): "HIGH" | "MEDIUM" | "LOW" {
   if (level === "critical" || level === "major") return "HIGH";
   if (level === "moderate") return "MEDIUM";
   return "LOW";
@@ -1795,9 +1796,7 @@ export function toFantasyDraftView(
 
   const current = getCurrentPick(state);
   const next = getNextPick(state);
-  const onClockTeam = current
-    ? state.world.teams[current.teamId]
-    : undefined;
+  const onClockTeam = current ? state.world.teams[current.teamId] : undefined;
   const nextTeam = next ? state.world.teams[next.teamId] : undefined;
   const activeOwnerTeamId = state.user.activeOwnerTeamId;
 
@@ -1819,8 +1818,7 @@ export function toFantasyDraftView(
 
   const controlledFranchises = state.user.ownedTeamIds.map((teamId) => {
     const team = state.world.teams[teamId];
-    const strategy =
-      draft.autoPickStrategy[teamId] ?? "queue_then_best_fit";
+    const strategy = draft.autoPickStrategy[teamId] ?? "queue_then_best_fit";
     return {
       teamId,
       teamName: team ? `${team.city} ${team.name}` : teamId,
@@ -1937,9 +1935,7 @@ export function toFantasyDraftView(
       const player = state.world.players[playerId];
       return {
         playerId,
-        name: player
-          ? `${player.firstName} ${player.lastName}`
-          : playerId,
+        name: player ? `${player.firstName} ${player.lastName}` : playerId,
         position: player?.position ?? "?",
         overall: player
           ? calculatePlayerOverall(player.position, player.attributes)
@@ -2020,8 +2016,7 @@ export function toFantasyDraftView(
     activeRoster,
     positionCounts,
     selections,
-    undraftedCount:
-      draft.poolPlayerIds.length - draft.selectedPlayerIds.length,
+    undraftedCount: draft.poolPlayerIds.length - draft.selectedPlayerIds.length,
     selectionsMade,
   };
 }
@@ -2104,12 +2099,10 @@ export function toFantasyDraftSummaryView(
     status: draft.status,
     totalPicks: draft.totalPicks,
     selectionsMade: draft.selections.length,
-    undraftedCount:
-      draft.poolPlayerIds.length - draft.selectedPlayerIds.length,
+    undraftedCount: draft.poolPlayerIds.length - draft.selectedPlayerIds.length,
     controlledTeamIds: [...state.user.ownedTeamIds],
     teamSummaries: draft.teamSummaries ?? {},
     leagueRecap: draft.leagueRecap ?? null,
     teamNames,
   };
 }
-

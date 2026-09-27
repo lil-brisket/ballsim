@@ -51,8 +51,7 @@ function sentimentTarget(
 }
 
 function smoothToward(current: number, target: number): number {
-  const next =
-    current + (target - current) * FAN_SENTIMENT_SMOOTHING;
+  const next = current + (target - current) * FAN_SENTIMENT_SMOOTHING;
   return Math.round(clampSentiment(next));
 }
 

@@ -42,7 +42,9 @@ export default async function FacilitiesPage({
             Youth facilities slightly help developing players. Fan facilities do
             not yet change sentiment in this build.
           </li>
-          <li>Upgrades cost cash up front and raise weekly operating expense.</li>
+          <li>
+            Upgrades cost cash up front and raise weekly operating expense.
+          </li>
         </ul>
       </Section>
 
@@ -80,7 +82,9 @@ export default async function FacilitiesPage({
                     </button>
                   </form>
                 ) : (
-                  <span className="text-sm text-zinc-500">Max / in progress</span>
+                  <span className="text-sm text-zinc-500">
+                    Max / in progress
+                  </span>
                 )}
               </li>
             ))}

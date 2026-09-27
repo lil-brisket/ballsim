@@ -67,7 +67,8 @@ describe("updateLineupAndRotationCommand", () => {
       configuredBy: "user",
     });
     const inactiveId =
-      recommended.inactive[0] ?? recommended.bench[recommended.bench.length - 1]!;
+      recommended.inactive[0] ??
+      recommended.bench[recommended.bench.length - 1]!;
     const bench = recommended.bench.filter((id) => id !== inactiveId);
     const inactive = recommended.inactive.includes(inactiveId)
       ? recommended.inactive
@@ -188,9 +189,9 @@ describe("optimize preview vs persist", () => {
     });
     expect(preview.management.rotation.length).toBeGreaterThan(0);
     // Persisted state object still matches original rotation blob
-    expect(JSON.stringify(getTeamRosterManagement(state, teamId).rotation)).toBe(
-      beforeJson,
-    );
+    expect(
+      JSON.stringify(getTeamRosterManagement(state, teamId).rotation),
+    ).toBe(beforeJson);
 
     const saveResult = updateLineupAndRotationCommand(state, {
       teamId,

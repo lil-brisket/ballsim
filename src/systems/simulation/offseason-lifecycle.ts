@@ -61,10 +61,7 @@ export function advanceOffseasonStage(state: GameState): SystemResult {
  * User-controlled advance to the next league phase.
  * Runs exit hooks for the departing phase, then moves the phase pointer.
  */
-export function advanceLeaguePhase(
-  state: GameState,
-  rng?: Rng,
-): SystemResult {
+export function advanceLeaguePhase(state: GameState, rng?: Rng): SystemResult {
   if (!canAdvancePhase(state)) {
     const preview = previewAdvance(state);
     throw new Error(
@@ -256,7 +253,10 @@ export function initializeNewSeason(state: GameState): SystemResult {
   return systemResult(next, phaseResult.events);
 }
 
-function isDraftOrderFullyUsed(state: GameState, draftClassId: string): boolean {
+function isDraftOrderFullyUsed(
+  state: GameState,
+  draftClassId: string,
+): boolean {
   const draft = state.world.drafts[draftClassId];
   if (draft === undefined || draft.order.length === 0) {
     return false;

@@ -40,11 +40,7 @@ export function generatePlayerName(
   return { firstName, lastName, nationality };
 }
 
-function pickName(
-  pool: readonly string[],
-  poolName: string,
-  rng: Rng,
-): string {
+function pickName(pool: readonly string[], poolName: string, rng: Rng): string {
   if (pool.length === 0) {
     throw new Error(`Player name pool "${poolName}" must not be empty.`);
   }

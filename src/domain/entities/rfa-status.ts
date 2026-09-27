@@ -88,13 +88,17 @@ export function assertRfaStatusShape(status: RfaStatusInput | RfaStatus): void {
     !Number.isFinite(status.qualifyingOfferSalary) ||
     status.qualifyingOfferSalary < 0
   ) {
-    throw new Error("RfaStatus qualifyingOfferSalary must be a non-negative number.");
+    throw new Error(
+      "RfaStatus qualifyingOfferSalary must be a non-negative number.",
+    );
   }
   if (typeof status.hasQualifyingOffer !== "boolean") {
     throw new Error("RfaStatus hasQualifyingOffer must be a boolean.");
   }
   if (!isRfaResolution(status.resolution)) {
-    throw new Error(`RfaStatus resolution invalid: ${String(status.resolution)}`);
+    throw new Error(
+      `RfaStatus resolution invalid: ${String(status.resolution)}`,
+    );
   }
   if (status.activeOfferSheet !== null) {
     const sheet = status.activeOfferSheet;

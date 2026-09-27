@@ -37,7 +37,9 @@ describe("multi-year unattended simulation (CI gate)", () => {
       });
       expect(result.seasonsCompleted).toBe(1);
       expect(result.finalState.competition.season.phase).toBe("preseason");
-      const userAssistEvents = getActiveOwnedFranchise(result.finalState).eventLog.filter(
+      const userAssistEvents = getActiveOwnedFranchise(
+        result.finalState,
+      ).eventLog.filter(
         (event) =>
           event.type === "AiAssistAction" &&
           (event.payload as { teamId?: string }).teamId ===
@@ -149,7 +151,12 @@ describe("multi-year delegation profiles", () => {
   }> = [
     { name: "all off", assistance: allOff, seasons: 1, seedOffset: 10 },
     { name: "roster only", assistance: rosterOnly, seasons: 1, seedOffset: 11 },
-    { name: "roster + FA", assistance: rosterAndFa, seasons: 1, seedOffset: 12 },
+    {
+      name: "roster + FA",
+      assistance: rosterAndFa,
+      seasons: 1,
+      seedOffset: 12,
+    },
     {
       name: "roster + FA + coaching",
       assistance: rosterFaCoaching,

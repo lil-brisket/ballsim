@@ -19,7 +19,5 @@ export default async function InjuriesRedirectPage({
     }
   }
   const suffix = qs.toString();
-  redirect(
-    `/dashboard/${saveId}/roster/injuries${suffix ? `?${suffix}` : ""}`,
-  );
+  redirect(`/dashboard/${saveId}/roster/injuries${suffix ? `?${suffix}` : ""}`);
 }

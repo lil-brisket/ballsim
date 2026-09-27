@@ -38,9 +38,7 @@ export function TeamBadge(props: {
         </p>
         <p
           className={`font-mono text-xs ${brandingView ? "" : "text-zinc-500"}`}
-          style={
-            brandingView ? { color: brandingView.accentColor } : undefined
-          }
+          style={brandingView ? { color: brandingView.accentColor } : undefined}
         >
           {props.abbreviation}
         </p>

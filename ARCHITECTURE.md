@@ -8,13 +8,13 @@ Before implementing a system, check `GAME_DESIGN.md` and this file for existing 
 
 ## Technology stack (locked)
 
-| Concern | Choice |
-| --- | --- |
-| Language | TypeScript |
-| App / UI | Next.js (App Router) + React |
-| Styling | Tailwind CSS |
-| Persistence | SQLite via Prisma |
-| Testing | Vitest |
+| Concern     | Choice                       |
+| ----------- | ---------------------------- |
+| Language    | TypeScript                   |
+| App / UI    | Next.js (App Router) + React |
+| Styling     | Tailwind CSS                 |
+| Persistence | SQLite via Prisma            |
+| Testing     | Vitest                       |
 
 Do not change this stack unless a concrete technical limitation makes a choice unsuitable. Document the limitation and proposed change here before switching.
 
@@ -28,7 +28,7 @@ Prisma ORM 7 requires a driver adapter. On this Windows environment, `better-sql
 UI (Next.js app / components)
   -> Application (commands, GameService facades)
     -> Domain / Systems (GameState, entities, SystemResult, events, RNG)
-      -> Persistence (Prisma SaveGame record; serialize GameState JSON)
+      -> Persistence (Prisma SaveGame stateJson + SaveTeam/SavePlayer projections)
 ```
 
 Rules:
@@ -245,21 +245,62 @@ UI and other listeners consume events through application-layer orchestration la
 
 ## Persistence
 
-Initial `SaveGame` Prisma record:
+`SaveGame` Prisma envelope:
 
-| Field | Purpose |
-| --- | --- |
-| `id` | Save identity |
-| `name` | Display name |
-| `schemaVersion` | Serialized state schema version |
-| `stateJson` | Serialized authoritative `GameState` |
-| `createdAt` | Created timestamp |
-| `updatedAt` | Updated timestamp |
+| Field           | Purpose                              |
+| --------------- | ------------------------------------ |
+| `id`            | Save identity                        |
+| `name`          | Display name                         |
+| `schemaVersion` | Serialized state schema version      |
+| `stateJson`     | Serialized authoritative `GameState` |
+| `createdAt`     | Created timestamp                    |
+| `updatedAt`     | Updated timestamp                    |
+
+`stateJson` is still the source of truth for simulation. Normalized child tables are **query projections** so listings (roster, team directory) do not need to parse the blob.
+
+Listing indexes on `SaveGame`: `name` (filter/search) and `updatedAt` (`list()` is `orderBy: { updatedAt: "desc" }`). Child tables index `(saveGameId, …)` query paths (conference, team name, player team, player name, position). Composite primary keys already cover `saveGameId`. These migrations are additive (`CREATE INDEX` only) and do not rewrite existing `SaveGame` rows.
+
+### Normalized query tables (current slice)
+
+| Model        | Grain                    | Purpose                                                                                                          |
+| ------------ | ------------------------ | ---------------------------------------------------------------------------------------------------------------- |
+| `SaveTeam`   | `(saveGameId, teamId)`   | Team directory: name, city, abbreviation, conference, division, arena, reputation                                |
+| `SavePlayer` | `(saveGameId, playerId)` | Player directory: name, `teamId` (nullable FA), position, age, derived overall, potential, availability, retired |
+
+`SavePlayer.teamId` is the domain team id, not a Prisma foreign key to `SaveTeam`. Writes replace all projection rows for a save; an FK would fight that replace-all pattern.
+
+### Planned later slices (do not add until a UI query needs them)
+
+| Model               | Likely grain           | Query need                                         |
+| ------------------- | ---------------------- | -------------------------------------------------- |
+| `SaveStanding`      | `(saveGameId, teamId)` | Standings pages without loading full `competition` |
+| `SaveTeamFinance`   | `(saveGameId, teamId)` | Finance listings (cash / payroll snapshot)         |
+| `SaveCompletedGame` | `(saveGameId, gameId)` | Scoreboard / recent-results lists                  |
+
+Simulation, validation, and `schemaVersion` migrations continue to operate on `GameState` only. Prisma rows must never become a second mechanics model.
+
+### Dual-write and backfill
+
+`PrismaSaveGameStore` writes `stateJson` and projection rows in **one transaction** on `create` and `save`. Delete removes children then the envelope (cascade is also declared on the relations).
+
+Load still returns `deserializeGameState(stateJson)`. If a legacy row has blob data but empty `SaveTeam` / `SavePlayer` tables, load **backfills** projections from that deserialized state and does not bump `SaveGame.updatedAt`.
+
+`MemorySaveGameStore` stays blob-only; projection tables are a Prisma concern.
+
+`projectSaveEntities` (`src/persistence/mappers/save-projection-mapper.ts`) is a pure mapper (domain ids sorted) used by the Prisma adapter. Overall on `SavePlayer` is derived via `calculatePlayerOverall` at write time.
+
+### Migration strategy
+
+1. Additive Prisma migrations only. Do not rewrite or drop `stateJson`.
+2. Existing saves keep working: blob load path is unchanged; projections fill on next `save` or on first `load` backfill.
+3. Do not backfill by rewriting `stateJson` or bumping `GameState.schemaVersion` for this change — it is a persistence-shape change, not a game-state schema change.
+4. If a later slice adds more tables, follow the same dual-write + empty-table backfill pattern.
+5. Rollback is dropping the new tables; `SaveGame` rows remain valid.
 
 Application code depends on `SaveGameStore` (`list` / `create` / `load` / `save` / `delete`). Adapters:
 
-- `PrismaSaveGameStore` — production (single-row create/update of `stateJson`; `deleteMany` by id)
-- `MemorySaveGameStore` — tests
+- `PrismaSaveGameStore` — production (`stateJson` + `SaveTeam` / `SavePlayer` in one transaction)
+- `MemorySaveGameStore` — tests (blob only)
 
 Compatibility wrappers (`createSaveGame`, `getSaveGame`, `updateSaveGameState`, `deleteSaveGame`, etc.) delegate to the Prisma store.
 
@@ -267,8 +308,8 @@ Save deletion is by `SaveGame.id` only. There is no user/session ownership check
 
 Owner Mode new-save is rejected when the current `SaveGame` row count is `>= MAX_OWNER_SAVE_SLOTS` (10). This is a current-row check in `createNewOwnerSave` (`list` then `create`), not a lifetime creation counter and not an atomic database constraint. Concurrent creates could theoretically exceed the cap; that is accepted for the current single-user local SQLite model. Multiplayer or multi-process creation would need an atomic reservation/transaction.
 
-Save pipeline: `serializeGameState` (JSON.stringify) → parse clone → `validateGameState` → write blob.  
-Load pipeline: read `stateJson` → JSON.parse → migrate v1→v16 → `validateGameState` → return `GameState`.
+Save pipeline: `serializeGameState` (JSON.stringify) → parse clone → `validateGameState` → write blob + replace projection rows in one transaction.  
+Load pipeline: read `stateJson` → JSON.parse → migrate → `validateGameState` → return `GameState`; backfill empty projection tables from that state.
 
 `serializeGameState` and `deserializeGameState` must not call each other. Crash consistency beyond Prisma/SQLite’s existing guarantees is out of scope.
 
@@ -277,7 +318,7 @@ Load/save flow:
 1. Application loads via `SaveGameStore`
 2. Mapper deserializes `stateJson` → migrate → validate → `GameState`
 3. Systems produce `SystemResult`
-4. Store validates a serialized clone, then writes `stateJson` in a single row update
+4. Store validates a serialized clone, then writes `stateJson` and query projections in a single transaction
 
 ## Application ↔ UI communication
 
@@ -301,12 +342,12 @@ Load/save flow:
 
 ## Risks
 
-| Risk | Mitigation |
-| --- | --- |
-| Save format churn | `schemaVersion` + explicit migrations |
-| God-object state | Typed slices (`meta` / `world` / `competition` / `business` / `user`) |
-| JSON blob query limits | Start with blob; extract query tables only when UI proves need |
-| Logic leaking into UI | Layer rules above; systems tested without React |
-| Non-determinism | Injected seeded `Rng` |
-| Prisma client in client bundles | Persistence modules use `server-only` |
-| Scope creep | No fake systems; implement only requested features |
+| Risk                            | Mitigation                                                                             |
+| ------------------------------- | -------------------------------------------------------------------------------------- |
+| Save format churn               | `schemaVersion` + explicit migrations                                                  |
+| God-object state                | Typed slices (`meta` / `world` / `competition` / `business` / `user`)                  |
+| JSON blob query limits          | Dual-write listing projections (`SaveTeam` / `SavePlayer`); blob remains authoritative |
+| Logic leaking into UI           | Layer rules above; systems tested without React                                        |
+| Non-determinism                 | Injected seeded `Rng`                                                                  |
+| Prisma client in client bundles | Persistence modules use `server-only`                                                  |
+| Scope creep                     | No fake systems; implement only requested features                                     |

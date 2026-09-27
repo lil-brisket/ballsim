@@ -49,12 +49,18 @@ export type SimulationPhaseKey =
  * Derived display/control context for the current simulation phase.
  * Persisted authority is competition.phase.activePhaseId (with legacy fallback).
  */
-export function resolveSimulationPhase(state: GameState): SimulationPhaseContext {
+export function resolveSimulationPhase(
+  state: GameState,
+): SimulationPhaseContext {
   const calendar = getCalendarContext(state);
   const season = state.competition.season;
   const resolved = resolveCurrentPhase(state);
   const phaseKey = resolveSimulationPhaseKey(state);
-  const labels = labelsForPhaseKey(phaseKey, calendar.displayLabel, resolved.name);
+  const labels = labelsForPhaseKey(
+    phaseKey,
+    calendar.displayLabel,
+    resolved.name,
+  );
   const responsibility = computePhaseResponsibility(state);
   const dayInPhase = computeDayInPhase(state);
   const phaseDurationDays =
@@ -79,7 +85,9 @@ export function resolveSimulationPhase(state: GameState): SimulationPhaseContext
   };
 }
 
-export function resolveSimulationPhaseKey(state: GameState): SimulationPhaseKey {
+export function resolveSimulationPhaseKey(
+  state: GameState,
+): SimulationPhaseKey {
   const phaseId = getActivePhaseId(state);
   const calendar = getCalendarContext(state);
 

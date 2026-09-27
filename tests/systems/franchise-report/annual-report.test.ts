@@ -135,16 +135,51 @@ describe("annual franchise report", () => {
       },
       financial: {
         startingCash: 20_000_000,
-        endingCash: { value: -5_000_000, prior: 20_000_000, delta: -25_000_000, deltaPct: -1.25 },
-        revenue: { value: 100_000_000, prior: 110_000_000, delta: -10_000_000, deltaPct: -0.09 },
-        expenses: { value: 140_000_000, prior: 100_000_000, delta: 40_000_000, deltaPct: 0.4 },
-        netIncome: { value: -40_000_000, prior: 10_000_000, delta: -50_000_000, deltaPct: -5 },
-        payroll: { value: 120_000_000, prior: 90_000_000, delta: 30_000_000, deltaPct: 0.33 },
+        endingCash: {
+          value: -5_000_000,
+          prior: 20_000_000,
+          delta: -25_000_000,
+          deltaPct: -1.25,
+        },
+        revenue: {
+          value: 100_000_000,
+          prior: 110_000_000,
+          delta: -10_000_000,
+          deltaPct: -0.09,
+        },
+        expenses: {
+          value: 140_000_000,
+          prior: 100_000_000,
+          delta: 40_000_000,
+          deltaPct: 0.4,
+        },
+        netIncome: {
+          value: -40_000_000,
+          prior: 10_000_000,
+          delta: -50_000_000,
+          deltaPct: -5,
+        },
+        payroll: {
+          value: 120_000_000,
+          prior: 90_000_000,
+          delta: 30_000_000,
+          deltaPct: 0.33,
+        },
       },
       commercial: {
-        attendance: { value: 800_000, prior: 700_000, delta: 100_000, deltaPct: 0.14 },
+        attendance: {
+          value: 800_000,
+          prior: 700_000,
+          delta: 100_000,
+          deltaPct: 0.14,
+        },
         ticketPrice: { value: 50, prior: null, delta: null, deltaPct: null },
-        sponsorshipRevenue: { value: 20_000_000, prior: null, delta: null, deltaPct: null },
+        sponsorshipRevenue: {
+          value: 20_000_000,
+          prior: null,
+          delta: null,
+          deltaPct: null,
+        },
       },
       organizational: {
         meanFacilityLevel: { value: 3, prior: 2, delta: 1, deltaPct: 0.5 },

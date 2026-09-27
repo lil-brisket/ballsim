@@ -67,7 +67,6 @@ describe("v30 → v31 migration", () => {
     const loaded = deserializeGameState(JSON.stringify(parsed));
     expect(loaded.meta.schemaVersion).toBe(GAME_STATE_SCHEMA_VERSION);
 
-
     for (const teamId of Object.keys(loaded.world.teams)) {
       const process = loaded.business.relocationByTeamId[teamId]!;
       expect(process.cityStartSeasonYear).toBeGreaterThan(0);
@@ -114,7 +113,8 @@ describe("v30 → v31 migration", () => {
             ...state.business.relocationByTeamId[teamId]!,
             stage: "none",
             cityStartSeasonYear: state.competition.season.year,
-            lastCompletedRelocationSeasonYear: state.competition.season.year - 1,
+            lastCompletedRelocationSeasonYear:
+              state.competition.season.year - 1,
             cooldownSeasonsRemaining: 5,
             failedAttemptCooldownSeasonsRemaining: 0,
             fee: 0,
@@ -164,9 +164,9 @@ describe("v30 → v31 migration", () => {
 
     const loaded = deserializeGameState(serializeGameState(state));
     expect(loaded.world.teams[teamId]!.city).toBe("Harbor");
-    expect(
-      loaded.business.franchiseHistory[teamId]!.seasons[0]!.city,
-    ).toBe("Oldtown");
+    expect(loaded.business.franchiseHistory[teamId]!.seasons[0]!.city).toBe(
+      "Oldtown",
+    );
     expect(
       loaded.business.relocationByTeamId[teamId]!
         .lastCompletedRelocationSeasonYear,

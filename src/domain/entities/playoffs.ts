@@ -1,9 +1,7 @@
 import type { GameId, PlayoffSeriesId, TeamId } from "@/domain/ids";
 
 export type PlayoffTournamentStatus =
-  | "not_started"
-  | "in_progress"
-  | "complete";
+  "not_started" | "in_progress" | "complete";
 
 export type PlayoffSeriesStatus = "pending" | "active" | "complete";
 

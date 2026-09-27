@@ -29,10 +29,7 @@ export function deriveStatusFromInjury(
   const restriction = injury.gameRestriction;
 
   if (medicallyRecovered) {
-    if (
-      injury.maximumWorkloadMpg != null &&
-      injury.maximumWorkloadMpg < 36
-    ) {
+    if (injury.maximumWorkloadMpg != null && injury.maximumWorkloadMpg < 36) {
       return "recovery";
     }
     if (injury.reinjuryRisk >= 0.12) {

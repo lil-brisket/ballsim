@@ -10,7 +10,10 @@ import type {
   PickGradeSummary,
   ScoutConfidence,
 } from "@/domain/entities/scouting-types";
-import { ratingRangeMidpoint, ratingRangeWidth } from "@/domain/entities/scouting-types";
+import {
+  ratingRangeMidpoint,
+  ratingRangeWidth,
+} from "@/domain/entities/scouting-types";
 import type { TeamId } from "@/domain/ids";
 import type { GameState } from "@/state/game-state";
 import {
@@ -140,7 +143,8 @@ export function gradeDraftForTeam(
   return {
     overallGrade,
     bestPickPlayerId: best.pick.playerId,
-    biggestReachPlayerId: reach.grade.riskScore >= 18 ? reach.pick.playerId : null,
+    biggestReachPlayerId:
+      reach.grade.riskScore >= 18 ? reach.pick.playerId : null,
     needAddressed,
     explanation: needAddressed
       ? `Draft addressed roster needs with overall ${overallGrade} grade.`

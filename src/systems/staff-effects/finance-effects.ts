@@ -1,7 +1,11 @@
 import type { GameState } from "@/state/game-state";
 import type { TeamId } from "@/domain/ids";
 import { findTeamStaffByRole } from "@/systems/staff-effects/find";
-import { averageAttrs, clamp, diminishAbove } from "@/systems/staff-effects/shared";
+import {
+  averageAttrs,
+  clamp,
+  diminishAbove,
+} from "@/systems/staff-effects/shared";
 
 /**
  * Finance Director — business efficiency ONLY.

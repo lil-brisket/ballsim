@@ -8,10 +8,7 @@
  *   placeholder's previous city so markets stay unique.
  * - Rejects after citySelectionConfirmed or after first time advance.
  */
-import {
-  isCityInArea,
-  normalizeCityName,
-} from "@/data/league/city-locations";
+import { isCityInArea, normalizeCityName } from "@/data/league/city-locations";
 import type { LeagueArea } from "@/domain/game-settings";
 import type { TeamId } from "@/domain/ids";
 import type { GameState } from "@/state/game-state";
@@ -23,8 +20,7 @@ import {
 import { uniqueTeamAbbreviation } from "@/systems/team-abbreviation";
 
 export type ApplyOwnerCitySelectionResult =
-  | { ok: true; state: GameState }
-  | { ok: false; error: string };
+  { ok: true; state: GameState } | { ok: false; error: string };
 
 function leagueAreaFromState(state: GameState): LeagueArea {
   return state.settings.league.area ?? "north_america";

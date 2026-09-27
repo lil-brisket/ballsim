@@ -107,9 +107,9 @@ describe("resolveTeamHref", () => {
       );
     }
     if (unowned) {
-      expect(
-        resolveTeamHref(state, asTeamId(unowned), "save_drawer"),
-      ).toBe("/dashboard/save_drawer/league");
+      expect(resolveTeamHref(state, asTeamId(unowned), "save_drawer")).toBe(
+        "/dashboard/save_drawer/league",
+      );
     }
   });
 });
@@ -160,11 +160,7 @@ describe("toPlayerDrawerView", () => {
     );
     expect(otherTeam).toBeTruthy();
     const oppId = otherTeam!.roster[0]!;
-    const oppView = toPlayerDrawerView(
-      state,
-      asPlayerId(oppId),
-      "save_drawer",
-    );
+    const oppView = toPlayerDrawerView(state, asPlayerId(oppId), "save_drawer");
     expect(oppView).not.toBeNull();
     expect(oppView!.contract).toBeNull();
     expect(oppView!.navigation.contractHref).toBeNull();

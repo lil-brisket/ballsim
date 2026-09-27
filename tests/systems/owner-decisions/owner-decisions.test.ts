@@ -109,7 +109,10 @@ function meaningfulPlayerSwapProposal(state: GameState): {
 describe("v39 → v40 migration", () => {
   it("adds empty pendingOwnerDecisions and ownerDecisionHistory", () => {
     let modern = createTestGameState({ saveId: "mig_v40" });
-    modern = bootstrapWorld(modern, createSeededRng(modern.meta.rngState)).state;
+    modern = bootstrapWorld(
+      modern,
+      createSeededRng(modern.meta.rngState),
+    ).state;
 
     const parsed = JSON.parse(serializeGameState(modern)) as Record<
       string,
@@ -148,10 +151,12 @@ describe("owner trade offer enqueue", () => {
     expect(result.outcome).toBe("queued");
     expect(hasActiveOwnerDecision(result.state.user)).toBe(true);
     expect(result.state.user.pendingOwnerDecisions).toHaveLength(1);
-    expect(result.state.user.pendingOwnerDecisions[0]?.type).toBe("trade_offer");
-    expect(result.state.world.teams[state.user.activeOwnerTeamId]!.roster).toEqual(
-      beforeUserRoster,
+    expect(result.state.user.pendingOwnerDecisions[0]?.type).toBe(
+      "trade_offer",
     );
+    expect(
+      result.state.world.teams[state.user.activeOwnerTeamId]!.roster,
+    ).toEqual(beforeUserRoster);
   });
 
   it("skips when an active decision already exists", () => {
@@ -318,7 +323,9 @@ describe("simulation pause on owner decision", () => {
     const advance = await advanceOwnerTime("od_persist", { days: 1 }, store);
     expect(advance.ok).toBe(false);
     if (!advance.ok) {
-      expect(advance.error).toMatch(/pending owner decision|needs your attention/i);
+      expect(advance.error).toMatch(
+        /pending owner decision|needs your attention/i,
+      );
     }
 
     const dash = toOwnerDashboardView(loaded!.state);
@@ -420,11 +427,7 @@ describe("owner decision commands", () => {
 
   it("resumes simulation after resolving a pending offer", async () => {
     const { store, decisionId } = await seedPendingOffer("od_resume");
-    const declined = await declineOwnerDecision(
-      "od_resume",
-      decisionId,
-      store,
-    );
+    const declined = await declineOwnerDecision("od_resume", decisionId, store);
     expect(declined.ok).toBe(true);
 
     const advance = await advanceOwnerTime("od_resume", { days: 1 }, store);

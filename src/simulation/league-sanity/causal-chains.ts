@@ -83,7 +83,8 @@ function verdictFor(
     return { verdict: "fail", note: "expected positive, observed negative" };
   }
   if (expected === "negative") {
-    if (r <= -0.05) return { verdict: "pass", note: "directionally consistent" };
+    if (r <= -0.05)
+      return { verdict: "pass", note: "directionally consistent" };
     if (r <= 0.05) return { verdict: "warn", note: "near zero / weak" };
     return { verdict: "fail", note: "expected negative, observed positive" };
   }
@@ -97,7 +98,10 @@ function verdictFor(
   if (r > 0.7) {
     return { verdict: "warn", note: "unusually strong link" };
   }
-  return { verdict: "fail", note: "expected weak positive, observed non-positive" };
+  return {
+    verdict: "fail",
+    note: "expected weak positive, observed non-positive",
+  };
 }
 
 export function evaluateCausalChains(

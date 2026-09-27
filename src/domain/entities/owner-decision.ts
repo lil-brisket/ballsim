@@ -12,10 +12,7 @@ export const OWNER_DECISION_HISTORY_MAX = 50;
 export type OwnerDecisionType = "trade_offer";
 
 export type OwnerDecisionStatus =
-  | "accepted"
-  | "declined"
-  | "delegated"
-  | "expired";
+  "accepted" | "declined" | "delegated" | "expired";
 
 export type OwnerDecisionSource = "owner" | "owner_ai" | "system";
 
@@ -23,11 +20,7 @@ export type OwnerDecisionSource = "owner" | "owner_ai" | "system";
 export type OwnerDecisionBlockingLevel = "blocking" | "non_blocking";
 
 export type TradeOfferStatus =
-  | "pending"
-  | "negotiating"
-  | "accepted"
-  | "declined"
-  | "expired";
+  "pending" | "negotiating" | "accepted" | "declined" | "expired";
 
 export type TradeMotivation =
   | { type: "positional_need"; targetPosition: PlayerPosition }
@@ -103,7 +96,9 @@ export type UserSliceRef = {
 };
 
 function isOpenOfferStatus(status: TradeOfferStatus | undefined): boolean {
-  return status === undefined || status === "pending" || status === "negotiating";
+  return (
+    status === undefined || status === "pending" || status === "negotiating"
+  );
 }
 
 /**

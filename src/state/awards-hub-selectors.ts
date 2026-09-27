@@ -40,9 +40,7 @@ export function toAwardsHubView(
   const currentSeasonYear = state.competition.season.year;
   const base = toLeagueAwardsView(state, saveId, filters);
   const selectedSeasonYear =
-    filters?.seasonYear ??
-    base.seasons[0] ??
-    currentSeasonYear;
+    filters?.seasonYear ?? base.seasons[0] ?? currentSeasonYear;
   const isBrowsingHistorical = selectedSeasonYear !== currentSeasonYear;
 
   const filtered = toLeagueAwardsView(state, saveId, {
@@ -50,7 +48,8 @@ export function toAwardsHubView(
   });
 
   const rows: AwardsHubRow[] = filtered.rows.map((row) => {
-    const def = AWARD_DEFINITIONS[row.result.awardId as keyof typeof AWARD_DEFINITIONS];
+    const def =
+      AWARD_DEFINITIONS[row.result.awardId as keyof typeof AWARD_DEFINITIONS];
     return {
       ...row,
       seasonYear: row.result.seasonYear,

@@ -13,7 +13,10 @@ import {
 } from "@/systems/relocation-config";
 import type { GameState } from "@/state/game-state";
 import { GAME_STATE_SCHEMA_VERSION } from "@/state/game-state";
-import { serializeGameState, deserializeGameState } from "@/persistence/mappers/game-state-mapper";
+import {
+  serializeGameState,
+  deserializeGameState,
+} from "@/persistence/mappers/game-state-mapper";
 
 function withTenure(state: GameState, seasonsInCity: number): GameState {
   const teamId = state.user.activeOwnerTeamId;
@@ -158,9 +161,9 @@ describe("relocation assessment", () => {
     const before = state.world.teams[state.user.activeOwnerTeamId]!.city;
     assessRelocation(state);
     expect(state.world.teams[state.user.activeOwnerTeamId]!.city).toBe(before);
-    expect(state.business.relocationByTeamId[state.user.activeOwnerTeamId]!.stage).toBe(
-      "none",
-    );
+    expect(
+      state.business.relocationByTeamId[state.user.activeOwnerTeamId]!.stage,
+    ).toBe("none");
   });
 });
 
@@ -196,7 +199,9 @@ describe("relocation stages and completion", () => {
     expect(state.world.teams[teamId]!.abbreviation).toBe(TARGET.abbreviation);
     expect(state.business.franchiseOps[teamId]!.marketSize).toBe(72);
     expect(state.business.franchiseOps[teamId]!.fanSentiment).toBeLessThan(70);
-    expect(state.business.finances[teamId]!.businessFunds).toBeLessThan(100_000_000);
+    expect(state.business.finances[teamId]!.businessFunds).toBeLessThan(
+      100_000_000,
+    );
     expect(
       state.business.relocationByTeamId[teamId]!.cooldownSeasonsRemaining,
     ).toBe(RELOCATION_COOLDOWN_SEASONS);
@@ -210,7 +215,9 @@ describe("relocation stages and completion", () => {
     let state = createTestGameState({ saveId: "reloc_occupied" });
     const teamId = state.user.activeOwnerTeamId;
     state = withTenure(state, RELOCATION_MIN_SEASONS_IN_CITY + 2);
-    const other = Object.values(state.world.teams).find((t) => t.id !== teamId)!;
+    const other = Object.values(state.world.teams).find(
+      (t) => t.id !== teamId,
+    )!;
     const occupiedTarget = {
       city: other.city,
       name: "Intruders",

@@ -24,10 +24,7 @@ export type LegacyRotationEntryV46 = {
 export function migrateLegacyRotationEntry(
   legacy: LegacyRotationEntryV46,
 ): RotationEntry {
-  const plannedMinutes = Math.max(
-    0,
-    Math.floor(legacy.plannedMinutes ?? 0),
-  );
+  const plannedMinutes = Math.max(0, Math.floor(legacy.plannedMinutes ?? 0));
   const role: RotationRole = inferRoleFromLegacy(
     legacy.role === "starter" ? "starter" : "bench",
     plannedMinutes,
@@ -36,10 +33,10 @@ export function migrateLegacyRotationEntry(
   const scaled = applyTemplateToMinutes(role, plannedMinutes);
 
   const preferredPositions = (
-    Array.isArray(legacy.eligiblePositions)
-      ? legacy.eligiblePositions
-      : []
-  ).filter((p): p is PlayerPosition => typeof p === "string") as PlayerPosition[];
+    Array.isArray(legacy.eligiblePositions) ? legacy.eligiblePositions : []
+  ).filter(
+    (p): p is PlayerPosition => typeof p === "string",
+  ) as PlayerPosition[];
 
   return {
     playerId: legacy.playerId as PlayerId,
@@ -57,8 +54,7 @@ export function migrateLegacyRotationEntry(
     // Conservative: only active if they had planned minutes
     rotationStatus: plannedMinutes > 0 ? "active" : "inactive",
     role,
-    preferredPositions:
-      preferredPositions.length > 0 ? preferredPositions : [],
+    preferredPositions: preferredPositions.length > 0 ? preferredPositions : [],
     secondaryPositions: [],
     minutePriorityBias: 0,
   };

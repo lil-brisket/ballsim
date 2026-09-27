@@ -12,7 +12,10 @@ export type {
 } from "@/simulation/validation/types";
 
 export { collectGameSnapshot } from "@/simulation/validation/collect-game-stats";
-export { aggregateSnapshots, summarizeMetric } from "@/simulation/validation/aggregate";
+export {
+  aggregateSnapshots,
+  summarizeMetric,
+} from "@/simulation/validation/aggregate";
 export {
   checkGameInvariants,
   checkTeamSnapshotInvariants,

@@ -10,7 +10,10 @@ import {
 } from "@/domain/entities/finances";
 import type { TeamId } from "@/domain/ids";
 import type { GameState } from "@/state/game-state";
-import { calculateCashRunway, type CashRunwayView } from "@/state/franchise-selectors";
+import {
+  calculateCashRunway,
+  type CashRunwayView,
+} from "@/state/franchise-selectors";
 import { getFinancialStatement } from "@/systems/team-finances";
 
 export type PeriodRevenueView = {
@@ -98,7 +101,9 @@ function revenueFromBooks(books: TeamFinanceBooks): PeriodRevenueView {
   };
 }
 
-function operatingFromBooks(books: TeamFinanceBooks): PeriodOperatingExpensesView {
+function operatingFromBooks(
+  books: TeamFinanceBooks,
+): PeriodOperatingExpensesView {
   return {
     staff: books.expenses.staff,
     facilities: books.expenses.facilities,
@@ -213,7 +218,8 @@ export function toFranchisePnLView(state: GameState): FranchisePnLView {
   const statement = getFinancialStatement(state, teamId, year);
   const priorMonthId = priorCalendarMonthId(monthId);
   const priorYear = year - 1;
-  const priorBooks = state.business.finances[teamId]?.booksByYear[String(priorYear)];
+  const priorBooks =
+    state.business.finances[teamId]?.booksByYear[String(priorYear)];
 
   return {
     currentMonth: monthPeriodView(state, teamId, monthId, runway),

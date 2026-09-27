@@ -26,7 +26,10 @@ import {
 import { setMarketingBudget } from "@/systems/marketing";
 import { signSponsorship } from "@/systems/sponsorships";
 import { AI_SPONSOR_MEDIA_VALUE_PER_POINT } from "@/systems/sponsorships-config";
-import { setPremiumTicketPrice, setTicketPrice } from "@/systems/ticket-pricing";
+import {
+  setPremiumTicketPrice,
+  setTicketPrice,
+} from "@/systems/ticket-pricing";
 import {
   PREMIUM_TICKET_PRICE_MAX,
   PREMIUM_TICKET_PRICE_MIN,
@@ -176,7 +179,10 @@ export function ticketPriceFromPreferences(
     -attendancePull * AI_TICKET_PRICE_STEP_MAX * 0.65 +
     revenuePull * AI_TICKET_PRICE_STEP_MAX * 0.35;
   let step = Math.round(
-    Math.max(-AI_TICKET_PRICE_STEP_MAX, Math.min(AI_TICKET_PRICE_STEP_MAX, rawStep)),
+    Math.max(
+      -AI_TICKET_PRICE_STEP_MAX,
+      Math.min(AI_TICKET_PRICE_STEP_MAX, rawStep),
+    ),
   );
   if (sentiment < 35 && step > 0) {
     step = Math.min(step, 0);
@@ -201,8 +207,7 @@ export function premiumTicketPriceFromPreferences(
 ): number {
   const attendancePull = (prefs.attendancePriority - 0.5) * 2;
   const revenuePull = prefs.spendWillingness - prefs.cashPreservation;
-  const rawStep =
-    -attendancePull * 15 + revenuePull * 20;
+  const rawStep = -attendancePull * 15 + revenuePull * 20;
   let step = Math.round(Math.max(-25, Math.min(25, rawStep)));
   if (prefs.cashPreservation > 0.65 && Math.abs(step) <= 5) {
     return current;

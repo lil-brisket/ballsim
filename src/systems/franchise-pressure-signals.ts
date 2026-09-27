@@ -1,6 +1,4 @@
-import {
-  getOwnedFranchiseOrUndefined,
-} from "@/state/owner-context";
+import { getOwnedFranchiseOrUndefined } from "@/state/owner-context";
 /**
  * Shared franchise pressure signals — simulation-level, not narrative-owned.
  *
@@ -76,7 +74,10 @@ export function computeFranchisePressureSignals(
   const attendanceDeclining = clampPreference(
     inputs.consecutiveAttendanceDeclineMonths >= 2
       ? 0.35 +
-          Math.min(0.45, (inputs.consecutiveAttendanceDeclineMonths - 2) * 0.2) +
+          Math.min(
+            0.45,
+            (inputs.consecutiveAttendanceDeclineMonths - 2) * 0.2,
+          ) +
           Math.max(0, (inputs.attendanceDownPctVsPriorMonth ?? 0) / 20) * 0.2 +
           (inputs.vsLeagueFillPct !== null && inputs.vsLeagueFillPct <= -3
             ? 0.15
@@ -106,7 +107,10 @@ export function computeFranchisePressureSignals(
       ? clampPreference(
           0.55 +
             Math.min(0.3, (inputs.vsLeagueTicketPricePct ?? 0) / 40) +
-            Math.min(0.15, Math.abs(inputs.sentimentChangeVsPriorMonth ?? 0) / 20),
+            Math.min(
+              0.15,
+              Math.abs(inputs.sentimentChangeVsPriorMonth ?? 0) / 20,
+            ),
         )
       : priceElevated && attendanceDown
         ? 0.35
@@ -261,9 +265,7 @@ export function buildFranchisePressureSignals(
       ? ops.ticketPrice
       : prices.reduce((sum, price) => sum + price, 0) / prices.length;
   const vsLeagueTicketPricePct =
-    meanPrice > 0
-      ? ((ops.ticketPrice - meanPrice) / meanPrice) * 100
-      : null;
+    meanPrice > 0 ? ((ops.ticketPrice - meanPrice) / meanPrice) * 100 : null;
 
   // Approximate fill vs league from history attendance when possible
   const attendances: number[] = [];
@@ -277,10 +279,7 @@ export function buildFranchisePressureSignals(
     state.business.franchiseHistory[teamId]?.seasons[
       (state.business.franchiseHistory[teamId]?.seasons.length ?? 0) - 1
     ]?.attendance ?? null;
-  if (
-    ownAttendance !== null &&
-    attendances.length >= 2
-  ) {
+  if (ownAttendance !== null && attendances.length >= 2) {
     const meanAtt =
       attendances.reduce((sum, value) => sum + value, 0) / attendances.length;
     if (meanAtt > 0) {
@@ -305,8 +304,7 @@ export function buildFranchisePressureSignals(
   // AI path uses winPct as primary performance signal).
   const streakKind: "W" | "L" | null =
     games >= 5 ? (winPct < 0.35 ? "L" : winPct > 0.65 ? "W" : null) : null;
-  const streakLength =
-    streakKind === "L" ? Math.round((0.5 - winPct) * 20) : 0;
+  const streakLength = streakKind === "L" ? Math.round((0.5 - winPct) * 20) : 0;
 
   return computeFranchisePressureSignals({
     consecutiveAttendanceDeclineMonths: consecutiveDecline,

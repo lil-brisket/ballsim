@@ -72,7 +72,8 @@ describe("time-advance commit guard", () => {
       expect(failures).toHaveLength(1);
       if (!failures[0]!.ok) {
         expect(
-          failures[0].error === "Simulation already in progress for this save." ||
+          failures[0].error ===
+            "Simulation already in progress for this save." ||
             failures[0].error === SAVE_VERSION_CONFLICT_USER_MESSAGE,
         ).toBe(true);
       }

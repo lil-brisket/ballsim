@@ -24,7 +24,12 @@ function paired(
   for (const snap of snapshots) {
     const xv = x(snap);
     const yv = y(snap);
-    if (xv === null || yv === null || !Number.isFinite(xv) || !Number.isFinite(yv)) {
+    if (
+      xv === null ||
+      yv === null ||
+      !Number.isFinite(xv) ||
+      !Number.isFinite(yv)
+    ) {
       continue;
     }
     xs.push(xv);
@@ -177,7 +182,14 @@ export function computeLeagueSanityCorrelations(
 
   const sameSeason: RelationshipResult[] = sameSeasonDefs.map((def) => {
     const { xs, ys } = paired(snapshots, def.x, def.y);
-    const pair = makeCorrelationPair(def.name, def.xLabel, def.yLabel, xs, ys, 0);
+    const pair = makeCorrelationPair(
+      def.name,
+      def.xLabel,
+      def.yLabel,
+      xs,
+      ys,
+      0,
+    );
     const expectation = DEFAULT_SANITY_RELATIONSHIPS[def.key]!;
     return {
       ...pair,
@@ -186,16 +198,26 @@ export function computeLeagueSanityCorrelations(
     };
   });
 
-  const marketing = franchiseSeries(snapshots, (s) => s.marketingBudget).lagReady;
+  const marketing = franchiseSeries(
+    snapshots,
+    (s) => s.marketingBudget,
+  ).lagReady;
   const attendance = franchiseSeries(snapshots, (s) => s.attendance).lagReady;
-  const facilities = franchiseSeries(snapshots, (s) => s.meanFacilityLevel).lagReady;
+  const facilities = franchiseSeries(
+    snapshots,
+    (s) => s.meanFacilityLevel,
+  ).lagReady;
   const revenue = franchiseSeries(snapshots, (s) => s.revenue).lagReady;
   const payroll = franchiseSeries(snapshots, (s) => s.payroll).lagReady;
   const winPct = franchiseSeries(snapshots, (s) => s.winPct).lagReady;
-  const franchiseValue = franchiseSeries(snapshots, (s) => s.franchiseValue)
-    .lagReady;
-  const sponsorship = franchiseSeries(snapshots, (s) => s.sponsorshipRevenue)
-    .lagReady;
+  const franchiseValue = franchiseSeries(
+    snapshots,
+    (s) => s.franchiseValue,
+  ).lagReady;
+  const sponsorship = franchiseSeries(
+    snapshots,
+    (s) => s.sponsorshipRevenue,
+  ).lagReady;
   const cash = franchiseSeries(snapshots, (s) => s.cash).lagReady;
   const investment = franchiseSeries(
     snapshots,
@@ -262,7 +284,14 @@ export function computeLeagueSanityCorrelations(
 
   const lagged: CorrelationPair[] = laggedDefs.map((def) => {
     const { xs, ys } = concatLagged(def.xMap, def.yMap, def.lag);
-    return makeCorrelationPair(def.name, def.xLabel, def.yLabel, xs, ys, def.lag);
+    return makeCorrelationPair(
+      def.name,
+      def.xLabel,
+      def.yLabel,
+      xs,
+      ys,
+      def.lag,
+    );
   });
 
   return { sameSeason, lagged };

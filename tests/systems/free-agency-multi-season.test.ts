@@ -1,10 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { createContract } from "@/domain/entities/contract";
-import {
-  asContractId,
-  asOfferId,
-  asPlayerId,
-} from "@/domain/ids";
+import { asContractId, asOfferId, asPlayerId } from "@/domain/ids";
 import { validateGameState } from "@/persistence/validate-game-state";
 import { CBL_GAME_SETTINGS } from "@/domain/game-settings";
 import { createInitialGameState } from "@/state/create-initial-state";
@@ -65,7 +61,9 @@ describe("free-agency multi-season expire/re-sign cycles", () => {
       }).state;
       const signed = acceptOffer(offered, offerId).state;
       expect(signed.world.players[playerId]!.contractId).toBe(contractId);
-      expect(signed.business.freeAgency.offers[offerId]!.status).toBe("accepted");
+      expect(signed.business.freeAgency.offers[offerId]!.status).toBe(
+        "accepted",
+      );
       expect(() => validateGameState(signed)).not.toThrow();
 
       // Advance season year + offseason expiration
@@ -79,8 +77,7 @@ describe("free-agency multi-season expire/re-sign cycles", () => {
             year,
             phase: "offseason",
             offseasonStage: "contract_expiration",
-            offseasonStageEnteredDate:
-              signed.world.calendar.currentDate,
+            offseasonStageEnteredDate: signed.world.calendar.currentDate,
             freeAgencyExtendedUntil: null,
           },
         },
@@ -98,9 +95,9 @@ describe("free-agency multi-season expire/re-sign cycles", () => {
     }
 
     // Historical accepted offers from all cycles remain without freezing validation
-    const acceptedCount = Object.values(state.business.freeAgency.offers).filter(
-      (o) => o.status === "accepted",
-    ).length;
+    const acceptedCount = Object.values(
+      state.business.freeAgency.offers,
+    ).filter((o) => o.status === "accepted").length;
     expect(acceptedCount).toBe(3);
   });
 });

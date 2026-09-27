@@ -169,11 +169,7 @@ export function FantasyDraftBoard({ saveId, draft, error }: Props) {
         className="hidden"
       >
         <input type="hidden" name="saveId" value={saveId} />
-        <input
-          type="hidden"
-          name="playerId"
-          value={quickDraftPlayerId ?? ""}
-        />
+        <input type="hidden" name="playerId" value={quickDraftPlayerId ?? ""} />
       </form>
 
       {playerDetail ? (

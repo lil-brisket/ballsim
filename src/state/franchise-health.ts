@@ -51,9 +51,7 @@ import {
   toStaffView,
   type FranchiseBusinessView,
 } from "@/state/franchise-selectors";
-import {
-  readAttendanceRealization,
-} from "@/state/franchise-value";
+import { readAttendanceRealization } from "@/state/franchise-value";
 import {
   meanRosterOverall,
   youngRosterSharePct,
@@ -73,11 +71,7 @@ import { toRosterView } from "@/state/selectors";
 // ---------------------------------------------------------------------------
 
 export type DimensionStatus =
-  | "excellent"
-  | "strong"
-  | "adequate"
-  | "concerning"
-  | "critical";
+  "excellent" | "strong" | "adequate" | "concerning" | "critical";
 
 export type DimensionTrend =
   | "strongly_improving"
@@ -117,7 +111,10 @@ export type FranchiseHealthView = {
   condition: DimensionStatus;
   summary: string;
   dimensions: Record<FranchiseHealthDimensionKey, DimensionHealth>;
-  biggestStrength: { dimension: FranchiseHealthDimensionKey; label: string } | null;
+  biggestStrength: {
+    dimension: FranchiseHealthDimensionKey;
+    label: string;
+  } | null;
   biggestRisk: { dimension: FranchiseHealthDimensionKey; label: string } | null;
   primaryDriver: string | null;
 };
@@ -182,7 +179,9 @@ const VALUE_TREND_STRONG_PCT = 12;
  * Pure Franchise Health view for the controlled team.
  * Composes existing selectors; does not reimplement demand, valuation, or SSOT health.
  */
-export function calculateFranchiseHealth(state: GameState): FranchiseHealthView {
+export function calculateFranchiseHealth(
+  state: GameState,
+): FranchiseHealthView {
   const teamId = asTeamId(state.user.activeOwnerTeamId);
   const business = toFranchiseBusinessView(state);
   const year = state.competition.season.year;
@@ -191,8 +190,19 @@ export function calculateFranchiseHealth(state: GameState): FranchiseHealthView 
   const snapshots = getActiveOwnedFranchise(state).narrative.snapshots;
   const history = state.business.franchiseHistory[teamId]?.seasons ?? [];
 
-  const competitive = scoreCompetitive(state, teamId, calendar.playoffRace, snapshots);
-  const financial = scoreFinancial(state, teamId, business, statement.netIncome, snapshots);
+  const competitive = scoreCompetitive(
+    state,
+    teamId,
+    calendar.playoffRace,
+    snapshots,
+  );
+  const financial = scoreFinancial(
+    state,
+    teamId,
+    business,
+    statement.netIncome,
+    snapshots,
+  );
   const commercial = scoreCommercial(state, teamId, business, snapshots);
   const fan = scoreFan(state, teamId, business, snapshots);
   const organizational = scoreOrganizational(state, history);
@@ -210,8 +220,17 @@ export function calculateFranchiseHealth(state: GameState): FranchiseHealthView 
   const biggestStrength = pickExtreme(dimensions, "high");
   const biggestRisk = pickExtreme(dimensions, "low");
   const condition = deriveCondition(dimensions);
-  const summary = buildSummary(condition, dimensions, biggestStrength, biggestRisk);
-  const primaryDriver = buildPrimaryDriver(dimensions, biggestStrength, biggestRisk);
+  const summary = buildSummary(
+    condition,
+    dimensions,
+    biggestStrength,
+    biggestRisk,
+  );
+  const primaryDriver = buildPrimaryDriver(
+    dimensions,
+    biggestStrength,
+    biggestRisk,
+  );
 
   return {
     condition,
@@ -338,7 +357,9 @@ function scoreCompetitive(
   }
 
   // Injuries — soft penalty when multiple players unavailable.
-  const injured = toRosterView(state).filter((p) => p.injuryKind !== "available");
+  const injured = toRosterView(state).filter(
+    (p) => p.injuryKind !== "available",
+  );
   if (injured.length >= 3) {
     score = clamp(score - 5, 0, 100);
     drivers.push({
@@ -410,7 +431,12 @@ function scoreCompetitive(
   const trend = trendFromWinPctSnapshots(snapshots);
   if (confidence === "low") {
     // Suppress strong trend claims with sparse data.
-    return finalizeDimension(score, trend && trend !== "stable" ? null : trend, confidence, drivers);
+    return finalizeDimension(
+      score,
+      trend && trend !== "stable" ? null : trend,
+      confidence,
+      drivers,
+    );
   }
   return finalizeDimension(score, trend, confidence, drivers);
 }
@@ -568,7 +594,9 @@ function scoreFinancial(
   };
 }
 
-function financialStatusFromHealth(health: FinancialHealthState): DimensionStatus {
+function financialStatusFromHealth(
+  health: FinancialHealthState,
+): DimensionStatus {
   switch (health) {
     case "healthy":
       return "excellent";
@@ -599,7 +627,11 @@ function trendFromFinancialSnapshots(
       return null;
     }
     const cashPct = ((latest.cash - prior.cash) / Math.abs(prior.cash)) * 100;
-    return trendFromDelta(cashPct, VALUE_TREND_SOFT_PCT, VALUE_TREND_STRONG_PCT);
+    return trendFromDelta(
+      cashPct,
+      VALUE_TREND_SOFT_PCT,
+      VALUE_TREND_STRONG_PCT,
+    );
   }
   const bandDelta = latestOrd - priorOrd;
   if (bandDelta >= 2) {
@@ -613,7 +645,11 @@ function trendFromFinancialSnapshots(
       return "stable";
     }
     const cashPct = ((latest.cash - prior.cash) / Math.abs(prior.cash)) * 100;
-    return trendFromDelta(cashPct, VALUE_TREND_SOFT_PCT, VALUE_TREND_STRONG_PCT);
+    return trendFromDelta(
+      cashPct,
+      VALUE_TREND_SOFT_PCT,
+      VALUE_TREND_STRONG_PCT,
+    );
   }
   if (bandDelta === -1) {
     return "declining";
@@ -649,7 +685,8 @@ function scoreCommercial(
   if (hasSettledHome) {
     drivers.push({
       key: "fill_rate",
-      direction: fillPct >= 70 ? "positive" : fillPct < 55 ? "negative" : "positive",
+      direction:
+        fillPct >= 70 ? "positive" : fillPct < 55 ? "negative" : "positive",
       impact: fillPct >= 85 || fillPct < 50 ? "major" : "moderate",
       label: `Arena fill ${fillPct}%`,
       explanation: `Last home fill rate was ${fillPct}% (market realization ${(realization * 100).toFixed(0)}%).`,
@@ -679,7 +716,10 @@ function scoreCommercial(
       s.startYear <= year &&
       s.endYear >= year,
   );
-  const sponsorAnnual = activeSponsors.reduce((sum, s) => sum + s.annualValue, 0);
+  const sponsorAnnual = activeSponsors.reduce(
+    (sum, s) => sum + s.annualValue,
+    0,
+  );
   if (activeSponsors.length === 0) {
     score = clamp(score - 8, 0, 100);
     drivers.push({
@@ -687,7 +727,8 @@ function scoreCommercial(
       direction: "negative",
       impact: "moderate",
       label: "No active sponsorship",
-      explanation: "There is no active sponsorship deal contributing commercial revenue.",
+      explanation:
+        "There is no active sponsorship deal contributing commercial revenue.",
     });
   } else {
     score = clamp(score + 6, 0, 100);
@@ -967,7 +1008,12 @@ function scoreOrganizational(
 
   drivers.push({
     key: "facilities",
-    direction: meanFacility >= 3.5 ? "positive" : meanFacility <= 2 ? "negative" : "positive",
+    direction:
+      meanFacility >= 3.5
+        ? "positive"
+        : meanFacility <= 2
+          ? "negative"
+          : "positive",
     impact: meanFacility >= 4 || meanFacility <= 1.5 ? "major" : "minor",
     label: `Facilities L${meanFacility.toFixed(1)}`,
     explanation: `Mean facility level is ${meanFacility.toFixed(1)} of ${FACILITY_LEVEL_MAX}.`,
@@ -1048,7 +1094,11 @@ function scoreStrategic(
           : ownershipMood === "concerned"
             ? -8
             : -14;
-  alignment = clamp(Math.round(alignment * 0.85 + (alignment + moodBoost) * 0.15), 0, 100);
+  alignment = clamp(
+    Math.round(alignment * 0.85 + (alignment + moodBoost) * 0.15),
+    0,
+    100,
+  );
 
   drivers.push({
     key: "owner_patience",
@@ -1250,7 +1300,8 @@ function trendFromValueSnapshots(
     const latest = snapshots[snapshots.length - 1]!;
     if (prior.franchiseValue > 0) {
       const pct =
-        ((latest.franchiseValue - prior.franchiseValue) / prior.franchiseValue) *
+        ((latest.franchiseValue - prior.franchiseValue) /
+          prior.franchiseValue) *
         100;
       return trendFromDelta(pct, VALUE_TREND_SOFT_PCT, VALUE_TREND_STRONG_PCT);
     }
@@ -1319,12 +1370,12 @@ function buildSummary(
   strength: { dimension: FranchiseHealthDimensionKey; label: string } | null,
   risk: { dimension: FranchiseHealthDimensionKey; label: string } | null,
 ): string {
-  const highs = DIMENSION_KEYS.filter(
-    (k) => dimensions[k].score >= 65,
-  ).map((k) => DIMENSION_LABELS[k].toLowerCase());
-  const lows = DIMENSION_KEYS.filter(
-    (k) => dimensions[k].score < 45,
-  ).map((k) => DIMENSION_LABELS[k].toLowerCase());
+  const highs = DIMENSION_KEYS.filter((k) => dimensions[k].score >= 65).map(
+    (k) => DIMENSION_LABELS[k].toLowerCase(),
+  );
+  const lows = DIMENSION_KEYS.filter((k) => dimensions[k].score < 45).map((k) =>
+    DIMENSION_LABELS[k].toLowerCase(),
+  );
 
   const strengthClause =
     highs.length >= 2

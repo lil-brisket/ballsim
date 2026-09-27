@@ -49,7 +49,11 @@ describe("simulate-to-date", () => {
   it("rejects simulating to a past date", async () => {
     const { store, state } = await seedRegularSave("sim_past", 31);
     const past = addCalendarDays(state.world.calendar.currentDate, -3);
-    const result = await advanceOwnerTime("sim_past", { targetDate: past }, store);
+    const result = await advanceOwnerTime(
+      "sim_past",
+      { targetDate: past },
+      store,
+    );
     expect(result.ok).toBe(false);
     if (!result.ok) {
       expect(result.error).toMatch(/backward/i);

@@ -86,11 +86,15 @@ export function FantasyDraftPlayerPanel(props: {
           <div className="flex flex-wrap gap-3">
             <div className="rounded-lg border border-amber-700/50 bg-amber-950/30 px-4 py-2 text-center">
               <p className="text-[10px] uppercase text-amber-500/80">Overall</p>
-              <p className="font-mono text-2xl text-amber-400">{detail.overall}</p>
+              <p className="font-mono text-2xl text-amber-400">
+                {detail.overall}
+              </p>
             </div>
             <div className="rounded-lg border border-zinc-800 px-4 py-2 text-center">
               <p className="text-[10px] uppercase text-zinc-500">Potential</p>
-              <p className="font-mono text-xl text-zinc-100">{detail.potential}</p>
+              <p className="font-mono text-xl text-zinc-100">
+                {detail.potential}
+              </p>
             </div>
             <div className="space-y-1 text-xs text-zinc-400">
               <div>Dev: {detail.developmentStage}</div>

@@ -226,9 +226,9 @@ describe("createTeam", () => {
   });
 
   it("rejects empty player id in roster", () => {
-    expect(() =>
-      createTeam(validInput({ roster: [asPlayerId("")] })),
-    ).toThrow(/roster/);
+    expect(() => createTeam(validInput({ roster: [asPlayerId("")] }))).toThrow(
+      /roster/,
+    );
   });
 
   it("rejects duplicate player ids in roster", () => {
@@ -243,7 +243,9 @@ describe("createTeam", () => {
 
   it("rejects non-array roster", () => {
     expect(() =>
-      createTeam(validInput({ roster: "invalid" as unknown as TeamInput["roster"] })),
+      createTeam(
+        validInput({ roster: "invalid" as unknown as TeamInput["roster"] }),
+      ),
     ).toThrow(/roster must be an array/);
   });
 
@@ -265,9 +267,9 @@ describe("createTeam", () => {
   });
 
   it("rejects empty staff id", () => {
-    expect(() =>
-      createTeam(validInput({ staff: [asStaffId("")] })),
-    ).toThrow(/staff/);
+    expect(() => createTeam(validInput({ staff: [asStaffId("")] }))).toThrow(
+      /staff/,
+    );
   });
 
   it("rejects duplicate staff ids", () => {
@@ -282,7 +284,9 @@ describe("createTeam", () => {
 
   it("rejects non-array staff", () => {
     expect(() =>
-      createTeam(validInput({ staff: "invalid" as unknown as TeamInput["staff"] })),
+      createTeam(
+        validInput({ staff: "invalid" as unknown as TeamInput["staff"] }),
+      ),
     ).toThrow(/staff must be an array/);
   });
 
@@ -315,9 +319,9 @@ describe("createTeam", () => {
   });
 
   it("preserves valid arena id", () => {
-    expect(createTeam(validInput({ arenaId: asArenaId("arena_home") })).arenaId).toBe(
-      "arena_home",
-    );
+    expect(
+      createTeam(validInput({ arenaId: asArenaId("arena_home") })).arenaId,
+    ).toBe("arena_home");
   });
 
   it("rejects empty arena id", () => {
@@ -332,7 +336,9 @@ describe("createTeam", () => {
   });
 
   it("rejects reputation 0", () => {
-    expect(() => createTeam(validInput({ reputation: 0 }))).toThrow(/reputation/);
+    expect(() => createTeam(validInput({ reputation: 0 }))).toThrow(
+      /reputation/,
+    );
   });
 
   it("rejects reputation 100", () => {
