@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { MediaUnreadBadge } from "@/components/media-hub/MediaUnreadBadge";
+import { cn, focusRingClass } from "@/components/ui/styles";
 import type {
   MediaHubTab,
   MediaLatestFilter,
@@ -53,18 +54,24 @@ export function MediaTabNav(props: {
 
   return (
     <div className="space-y-3">
-      <nav className="flex flex-wrap gap-2" aria-label="Media hub tabs">
+      <nav
+        className="flex flex-nowrap gap-2 overflow-x-auto"
+        aria-label="Media hub tabs"
+      >
         {TABS.map((tab) => {
           const active = activeTab === tab.id;
           return (
             <Link
               key={tab.id}
               href={tabHref(saveId, tab.id)}
-              className={`inline-flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-sm ${
+              aria-current={active ? "page" : undefined}
+              className={cn(
+                "inline-flex shrink-0 items-center gap-1.5 rounded-md border px-3 py-1.5 text-sm",
+                focusRingClass,
                 active
                   ? "border-amber-600 bg-amber-950/30 text-amber-300"
-                  : "border-zinc-700 text-zinc-400 hover:border-zinc-500 hover:text-zinc-200"
-              }`}
+                  : "border-zinc-700 text-zinc-400 hover:border-zinc-500 hover:text-zinc-200",
+              )}
             >
               {tab.label}
               {tab.id === "latest" ? (
@@ -76,18 +83,24 @@ export function MediaTabNav(props: {
       </nav>
 
       {activeTab === "latest" ? (
-        <div className="flex flex-wrap gap-2" aria-label="Latest filters">
+        <div
+          className="flex flex-nowrap gap-2 overflow-x-auto"
+          aria-label="Latest filters"
+        >
           {LATEST_FILTERS.map((filter) => {
             const active = latestFilter === filter.id;
             return (
               <Link
                 key={filter.id}
                 href={tabHref(saveId, "latest", filter.id)}
-                className={`rounded-full border px-3 py-1 text-xs ${
+                aria-current={active ? "page" : undefined}
+                className={cn(
+                  "shrink-0 rounded-full border px-3 py-1 text-xs",
+                  focusRingClass,
                   active
                     ? "border-amber-600 text-amber-400"
-                    : "border-zinc-700 text-zinc-500 hover:border-zinc-500 hover:text-zinc-300"
-                }`}
+                    : "border-zinc-700 text-zinc-500 hover:border-zinc-500 hover:text-zinc-300",
+                )}
               >
                 {filter.label}
               </Link>

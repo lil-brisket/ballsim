@@ -1,3 +1,4 @@
+import Link from "next/link";
 import {
   SocialPostCard,
   type SocialPostCardProps,
@@ -50,7 +51,17 @@ export function SocialFeed(props: {
               Reactions
               {headline ? (
                 <span className="ml-2 normal-case tracking-normal text-zinc-400">
-                  · {headline}
+                  ·{" "}
+                  {props.mediaHrefBase ? (
+                    <Link
+                      href={props.mediaHrefBase}
+                      className="hover:text-amber-400 hover:underline"
+                    >
+                      {headline}
+                    </Link>
+                  ) : (
+                    headline
+                  )}
                 </span>
               ) : null}
             </p>

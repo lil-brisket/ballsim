@@ -1,14 +1,15 @@
 import { notFound } from "next/navigation";
 import { markAllMediaReadAction } from "@/application/actions";
 import { loadMediaPageView } from "@/application/game-service";
+import { FranchiseMediaAttention } from "@/components/media-hub/FranchiseMediaAttention";
 import { MediaFeed } from "@/components/media-hub/MediaFeed";
+import { MediaOverview } from "@/components/media-hub/MediaOverview";
 import { MediaTabNav } from "@/components/media-hub/MediaTabNav";
 import { MediaUnreadBadge } from "@/components/media-hub/MediaUnreadBadge";
 import { SocialFeed } from "@/components/media-hub/SocialFeed";
 import { ErrorState } from "@/components/owner/EmptyState";
 import { PageHeader } from "@/components/owner/PageHeader";
 import { Section } from "@/components/owner/Section";
-import { StatCard } from "@/components/owner/StatCard";
 
 type MediaPageProps = {
   params: Promise<{ saveId: string }>;
@@ -45,7 +46,12 @@ export default async function MediaPage({
     ? `/dashboard/${saveId}/media?${returnQs}`
     : `/dashboard/${saveId}/media`;
 
-  const attention = view.franchiseAttention;
+  const feedItems = view.items.map((item) => ({
+    ...item,
+    saveId,
+    returnPath,
+    reactionCount: item.reactionCount,
+  }));
 
   return (
     <>
@@ -68,52 +74,36 @@ export default async function MediaPage({
       />
       {error ? <ErrorState message={error} /> : null}
 
-      <MediaTabNav
+      <MediaOverview
+        view={view}
         saveId={saveId}
-        activeTab={view.tab}
-        latestFilter={view.latestFilter}
-        unreadCount={view.unreadCount}
+        returnPath={returnPath}
+        feedHref={`${returnPath}#your-feed`}
       />
 
-      {view.tab === "social" ? (
-        <SocialFeed posts={view.socialPosts} />
-      ) : (
-        <MediaFeed
-          showFeatured={view.tab === "latest" || view.tab === "team"}
-          items={view.items.map((item) => ({
-            ...item,
-            saveId,
-            returnPath,
-            reactionCount: item.reactionCount,
-          }))}
-        />
-      )}
-
-      <Section title="Franchise Attention">
-        <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <StatCard
-            label="Media attention"
-            value={`${attention.mediaAttention}`}
+      <div id="your-feed" className="min-w-0 scroll-mt-4">
+        <Section title="Your Feed">
+          <MediaTabNav
+            saveId={saveId}
+            activeTab={view.tab}
+            latestFilter={view.latestFilter}
+            unreadCount={view.unreadCount}
           />
-          <StatCard label="Awareness" value={`${attention.awareness}`} />
-          <StatCard label="Fan sentiment" value={`${attention.fanSentiment}`} />
-          <StatCard label="Reputation" value={`${attention.reputation}`} />
-        </section>
-        <ul className="mt-3 space-y-2 text-sm text-zinc-300">
-          <li>
-            Demand contribution (forecast):{" "}
-            {attention.demandWeighted != null ? attention.demandWeighted : "—"}{" "}
-            weighted points
-          </li>
-          <li>
-            Higher media attention slightly increases monthly sponsorship cash
-            (tuning range ~0.85–1.25). It does not guarantee ROI.
-          </li>
-          <li>
-            Media rises from simulation events and decays weekly toward neutral.
-          </li>
-        </ul>
-      </Section>
+          {view.tab === "social" ? (
+            <SocialFeed
+              posts={view.socialPosts}
+              mediaHrefBase={`/dashboard/${saveId}/media`}
+            />
+          ) : (
+            <MediaFeed
+              featuredStoryId={view.featuredStoryId}
+              items={feedItems}
+            />
+          )}
+        </Section>
+      </div>
+
+      <FranchiseMediaAttention attention={view.franchiseAttention} />
     </>
   );
 }

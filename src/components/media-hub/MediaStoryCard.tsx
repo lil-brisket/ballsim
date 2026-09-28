@@ -64,13 +64,13 @@ function tierClasses(
   }
   if (tier === "major") {
     return cn(
-      "border-zinc-700 bg-zinc-900/50 px-4 py-4",
+      "border-zinc-700 border-l-2 border-l-amber-600/70 bg-zinc-900/50 px-5 py-4",
       unread && "border-amber-800/40 bg-amber-950/15",
     );
   }
   if (tier === "background") {
     return cn(
-      "border-zinc-800/60 bg-transparent px-3 py-2",
+      "border-zinc-800/60 bg-transparent px-3 py-2 text-sm",
       unread && "border-amber-900/30",
     );
   }
@@ -146,7 +146,7 @@ export function MediaStoryCard(props: MediaStoryCardProps) {
             className={cn(
               "text-zinc-400",
               featured ? "text-sm leading-relaxed" : "text-sm",
-              tier === "background" && "line-clamp-2 text-xs",
+              tier === "background" && "line-clamp-2 text-zinc-500",
             )}
           >
             {summary}
