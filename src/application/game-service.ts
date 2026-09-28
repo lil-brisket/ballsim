@@ -62,19 +62,6 @@ import {
   type PlayerId,
   type TeamId,
 } from "@/domain/ids";
-import {
-  isMediaUnread,
-  type MediaHubTab,
-  type MediaItem,
-  type MediaLatestFilter,
-  type MediaStoryType,
-} from "@/domain/entities/media-item";
-import type {
-  SocialAuthorType,
-  SocialPost,
-} from "@/domain/entities/social-post";
-import type { ImportanceLevel } from "@/domain/entities/event-source";
-import { IMPORTANCE_RANK } from "@/domain/entities/event-source";
 import { createSeededRng, type Rng } from "@/domain/rng";
 import { validateGameState } from "@/persistence/validate-game-state";
 import { prismaSaveGameStore } from "@/persistence/save-game-repository";
@@ -158,7 +145,6 @@ import {
   type TeamDrawerView,
   type StaffDrawerView,
 } from "@/state/entity-drawer-selectors";
-import { resolveTeamHref } from "@/state/resolve-team-href";
 import { toLeagueAwardsView } from "@/state/award-selectors";
 import {
   toExpansionView,
@@ -237,6 +223,10 @@ import {
   type LeagueScheduleView,
   type LeagueScheduleFilters,
 } from "@/state/league-schedule-selectors";
+import {
+  toMediaHubView,
+  type MediaHubView,
+} from "@/state/media-hub-selectors";
 import type { ExpansionState } from "@/domain/entities/expansion";
 import type { LeagueEconomy } from "@/domain/entities/league-economy";
 import type { RelocationProcess } from "@/domain/entities/relocation";
@@ -3025,202 +3015,6 @@ export async function markOwnerNotificationsRead(
   }
 }
 
-export type MediaStoryEntityView = {
-  id: string;
-  name: string;
-  canOpen?: boolean;
-  href?: string;
-  abbreviation?: string;
-};
-
-export type MediaStoryView = {
-  id: string;
-  headline: string;
-  summary: string;
-  occurredOn: string;
-  storyType: MediaStoryType;
-  importance: ImportanceLevel;
-  relevanceScore: number;
-  unread: boolean;
-  gameId?: string;
-  canOpenGame: boolean;
-  players: MediaStoryEntityView[];
-  teams: MediaStoryEntityView[];
-  reactionCount: number;
-};
-
-export type SocialPostView = {
-  id: string;
-  occurredOn: string;
-  authorType: SocialAuthorType;
-  authorLabel: string;
-  content: string;
-  importance: ImportanceLevel;
-  relatedMediaId?: string;
-  relatedHeadline?: string;
-};
-
-export type MediaFranchiseAttentionView = {
-  mediaAttention: number;
-  awareness: number;
-  fanSentiment: number;
-  reputation: number;
-  demandWeighted: number | null;
-};
-
-export type MediaPageView = {
-  saveId: string;
-  tab: MediaHubTab;
-  latestFilter: MediaLatestFilter;
-  items: MediaStoryView[];
-  socialPosts: SocialPostView[];
-  unreadCount: number;
-  franchiseAttention: MediaFranchiseAttentionView;
-};
-
-function toMediaStoryView(
-  state: GameState,
-  saveId: string,
-  item: MediaItem,
-): MediaStoryView {
-  const readState = getActiveOwnedFranchise(state).mediaReadState ?? {};
-  const players = (item.playerIds ?? []).map((playerId) => {
-    const player = state.world.players[playerId];
-    const name = player
-      ? `${player.firstName} ${player.lastName}`
-      : String(playerId);
-    return {
-      id: playerId,
-      name,
-      canOpen: isPlayerInOwnerScope(state, playerId),
-    };
-  });
-  const teams = (item.teamIds ?? []).map((teamId) => {
-    const team = state.world.teams[teamId];
-    return {
-      id: teamId,
-      name: team ? `${team.city} ${team.name}` : String(teamId),
-      abbreviation: team?.abbreviation,
-      href: resolveTeamHref(state, teamId, saveId),
-    };
-  });
-  const gameId = item.gameId ? String(item.gameId) : undefined;
-  return {
-    id: item.id,
-    headline: item.headline,
-    summary: item.summary,
-    occurredOn: item.occurredOn,
-    storyType: item.storyType,
-    importance: item.importance,
-    relevanceScore: item.relevanceScore,
-    unread: isMediaUnread(item, readState),
-    gameId,
-    canOpenGame: gameId ? canOpenGameBoxScore(state, gameId) : false,
-    players,
-    teams,
-    reactionCount: 0,
-  };
-}
-
-function toSocialPostView(
-  post: SocialPost,
-  headlineByMediaId?: Map<string, string>,
-): SocialPostView {
-  const relatedMediaId = post.relatedMediaId
-    ? String(post.relatedMediaId)
-    : undefined;
-  return {
-    id: post.id,
-    occurredOn: post.occurredOn,
-    authorType: post.authorType,
-    authorLabel: post.authorLabel,
-    content: post.content,
-    importance: post.importance,
-    relatedMediaId,
-    relatedHeadline: relatedMediaId
-      ? headlineByMediaId?.get(relatedMediaId)
-      : undefined,
-  };
-}
-
-function matchesLatestFilter(
-  item: MediaItem,
-  filter: MediaLatestFilter,
-): boolean {
-  if (filter === "all") {
-    return true;
-  }
-  if (filter === "game") {
-    return item.storyType === "game";
-  }
-  if (filter === "player") {
-    return item.storyType === "player" || item.storyType === "injury";
-  }
-  // trends: high-signal league/player developments
-  return (
-    item.importance === "critical" ||
-    item.importance === "high" ||
-    item.storyType === "injury"
-  );
-}
-
-function filterMediaItemsForTab(
-  items: readonly MediaItem[],
-  tab: MediaHubTab,
-  latestFilter: MediaLatestFilter,
-  activeTeamId: TeamId,
-): MediaItem[] {
-  if (tab === "social") {
-    return [];
-  }
-  if (tab === "transactions") {
-    return items.filter((item) => item.storyType === "transaction");
-  }
-  if (tab === "games") {
-    return items.filter((item) => item.storyType === "game");
-  }
-  if (tab === "injuries") {
-    return items.filter((item) => item.storyType === "injury");
-  }
-  if (tab === "league") {
-    return items.filter((item) => item.storyType === "league");
-  }
-  if (tab === "team") {
-    return items.filter(
-      (item) =>
-        (item.teamIds?.includes(activeTeamId) ?? false) ||
-        item.relevanceScore >= 40,
-    );
-  }
-  // latest
-  return items.filter((item) => matchesLatestFilter(item, latestFilter));
-}
-
-function parseMediaHubTab(raw: string | undefined): MediaHubTab {
-  switch (raw) {
-    case "team":
-    case "transactions":
-    case "games":
-    case "injuries":
-    case "league":
-    case "social":
-      return raw;
-    default:
-      return "latest";
-  }
-}
-
-function parseMediaLatestFilter(raw: string | undefined): MediaLatestFilter {
-  switch (raw) {
-    case "game":
-    case "player":
-    case "trends":
-      return raw;
-    default:
-      return "all";
-  }
-}
-
 /**
  * League Hub — single-pass overview for the league experience.
  */
@@ -3423,92 +3217,12 @@ export async function loadMediaPageView(
   saveId: string,
   options: { tab?: string; filter?: string } = {},
   store?: SaveGameStore,
-): Promise<MediaPageView | null> {
+): Promise<MediaHubView | null> {
   const loaded = await getStore(store).load(saveId);
   if (!loaded) {
     return null;
   }
-  const state = loaded.state;
-  const franchise = getActiveOwnedFranchise(state);
-  const mediaFeed = franchise.mediaFeed ?? { items: [] };
-  const socialFeed = franchise.socialFeed ?? { posts: [] };
-  const readState = franchise.mediaReadState ?? {};
-  const tab = parseMediaHubTab(options.tab);
-  const latestFilter = parseMediaLatestFilter(options.filter);
-  const activeTeamId = state.user.activeOwnerTeamId;
-
-  const filteredItems = filterMediaItemsForTab(
-    mediaFeed.items,
-    tab,
-    latestFilter,
-    activeTeamId,
-  );
-
-  // Stable ordering: importance → relevance → date → id
-  const sortedItems = [...filteredItems].sort((a, b) => {
-    const imp = IMPORTANCE_RANK[b.importance] - IMPORTANCE_RANK[a.importance];
-    if (imp !== 0) {
-      return imp;
-    }
-    if (b.relevanceScore !== a.relevanceScore) {
-      return b.relevanceScore - a.relevanceScore;
-    }
-    const d = b.occurredOn.localeCompare(a.occurredOn);
-    if (d !== 0) {
-      return d;
-    }
-    return b.id.localeCompare(a.id);
-  });
-
-  const unreadCount = mediaFeed.items.filter((item) =>
-    isMediaUnread(item, readState),
-  ).length;
-
-  const biz = toFranchiseBusinessView(state);
-  const mediaContributor = biz.forecast.demandContributors.find(
-    (c) => c.key === "mediaAttention",
-  );
-
-  const reactionCountByMedia = new Map<string, number>();
-  for (const post of socialFeed.posts) {
-    if (post.relatedMediaId) {
-      const key = String(post.relatedMediaId);
-      reactionCountByMedia.set(key, (reactionCountByMedia.get(key) ?? 0) + 1);
-    }
-  }
-
-  const headlineByMediaId = new Map(
-    mediaFeed.items.map((item) => [item.id, item.headline] as const),
-  );
-
-  const items = sortedItems.map((item) => {
-    const view = toMediaStoryView(state, saveId, item);
-    return {
-      ...view,
-      reactionCount: reactionCountByMedia.get(item.id) ?? 0,
-    };
-  });
-
-  return {
-    saveId,
-    tab,
-    latestFilter,
-    items,
-    socialPosts:
-      tab === "social"
-        ? socialFeed.posts.map((post) =>
-            toSocialPostView(post, headlineByMediaId),
-          )
-        : [],
-    unreadCount,
-    franchiseAttention: {
-      mediaAttention: biz.mediaAttention,
-      awareness: biz.awareness,
-      fanSentiment: biz.fanSentiment,
-      reputation: biz.reputation,
-      demandWeighted: mediaContributor ? mediaContributor.weighted : null,
-    },
-  };
+  return toMediaHubView(loaded.state, options);
 }
 
 /** Mark one Media Hub item read for the active owned franchise. */

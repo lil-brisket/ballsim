@@ -3,13 +3,11 @@ import {
   type MediaStoryCardProps,
 } from "@/components/media-hub/MediaStoryCard";
 import { EmptyState } from "@/components/owner/EmptyState";
-import { pickFeaturedStoryId } from "@/components/media-hub/media-importance-tiers";
 
 export function MediaFeed(props: {
   items: MediaStoryCardProps[];
   emptyMessage?: string;
-  /** When true, lift top major story as Featured. */
-  showFeatured?: boolean;
+  featuredStoryId: string | null;
 }) {
   if (props.items.length === 0) {
     return (
@@ -19,49 +17,25 @@ export function MediaFeed(props: {
     );
   }
 
-  const featuredId =
-    props.showFeatured === false
-      ? null
-      : pickFeaturedStoryId(
-          props.items.map((item) => ({
-            id: item.id,
-            importance: item.importance,
-            relevanceScore: item.relevanceScore ?? 0,
-            occurredOn: item.occurredOn,
-          })),
-        );
-
-  const featured = featuredId
-    ? props.items.find((i) => i.id === featuredId)
-    : null;
-  const rest = featuredId
-    ? props.items.filter((i) => i.id !== featuredId)
+  const rest = props.featuredStoryId
+    ? props.items.filter((item) => item.id !== props.featuredStoryId)
     : props.items;
+
+  if (rest.length === 0) {
+    return null;
+  }
 
   return (
     <div className="space-y-6">
-      {featured ? (
-        <section aria-label="Featured story">
-          <MediaStoryCard {...featured} featured />
-        </section>
-      ) : null}
-
-      {rest.length > 0 ? (
-        <section aria-label="Latest stories">
-          {featured ? (
-            <h2 className="mb-3 font-mono text-[0.65rem] uppercase tracking-[0.14em] text-zinc-500">
-              Latest
-            </h2>
-          ) : null}
-          <ul className="space-y-3">
-            {rest.map((item) => (
-              <li key={item.id}>
-                <MediaStoryCard {...item} />
-              </li>
-            ))}
-          </ul>
-        </section>
-      ) : null}
+      <section aria-label="Latest stories">
+        <ul className="space-y-3">
+          {rest.map((item) => (
+            <li key={item.id}>
+              <MediaStoryCard {...item} />
+            </li>
+          ))}
+        </ul>
+      </section>
     </div>
   );
 }
