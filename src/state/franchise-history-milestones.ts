@@ -77,10 +77,11 @@ function isLosingSeason(season: FranchiseSeasonRecord): boolean {
 }
 
 /**
- * Compare records for best win% / best record.
- * Higher win% → more wins → earlier season.
+ * Regular-season record strength: positive when `a` is the stronger record.
+ * Higher win% → more wins. Ties are not broken here; pickers break ties by
+ * earliest season.
  */
-function compareBestRecord(
+export function compareSeasonRecords(
   a: FranchiseSeasonRecord,
   b: FranchiseSeasonRecord,
 ): number {
@@ -88,10 +89,7 @@ function compareBestRecord(
   if (pctDiff !== 0) {
     return pctDiff;
   }
-  if (a.wins !== b.wins) {
-    return a.wins - b.wins;
-  }
-  return b.seasonYear - a.seasonYear;
+  return a.wins - b.wins;
 }
 
 function toBestRecordMetric(season: FranchiseSeasonRecord): BestRecordMetric {
@@ -103,7 +101,8 @@ function toBestRecordMetric(season: FranchiseSeasonRecord): BestRecordMetric {
   };
 }
 
-function pickBestRecord(
+/** Strongest record; ties → earliest season. */
+export function pickBestRecord(
   seasons: FranchiseSeasonRecord[],
 ): BestRecordMetric | null {
   if (seasons.length === 0) {
@@ -112,11 +111,30 @@ function pickBestRecord(
   let best = seasons[0]!;
   for (let i = 1; i < seasons.length; i += 1) {
     const candidate = seasons[i]!;
-    if (compareBestRecord(candidate, best) > 0) {
+    const diff = compareSeasonRecords(candidate, best);
+    if (diff > 0 || (diff === 0 && candidate.seasonYear < best.seasonYear)) {
       best = candidate;
     }
   }
   return toBestRecordMetric(best);
+}
+
+/** Weakest record; ties → earliest season. */
+export function pickWorstRecord(
+  seasons: FranchiseSeasonRecord[],
+): BestRecordMetric | null {
+  if (seasons.length === 0) {
+    return null;
+  }
+  let worst = seasons[0]!;
+  for (let i = 1; i < seasons.length; i += 1) {
+    const candidate = seasons[i]!;
+    const diff = compareSeasonRecords(candidate, worst);
+    if (diff < 0 || (diff === 0 && candidate.seasonYear < worst.seasonYear)) {
+      worst = candidate;
+    }
+  }
+  return toBestRecordMetric(worst);
 }
 
 function pickHighestValue(

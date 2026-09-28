@@ -18,7 +18,7 @@ const MONTH_NAMES = [
   "December",
 ] as const;
 
-function formatPeriodLabel(period: string | null): string | null {
+export function formatPeriodLabel(period: string | null): string | null {
   if (!period) return null;
   const match = /^(\d{4})-(\d{2})$/.exec(period);
   if (!match) return period;
