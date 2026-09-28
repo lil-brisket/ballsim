@@ -3,10 +3,17 @@ import {
   type FacilityCategory,
   type FranchiseOps,
 } from "@/domain/entities/franchise-ops";
-import type { FranchiseSeasonRecord } from "@/domain/entities/franchise-history";
+import {
+  isFinalsAppearance,
+  isPlayoffAppearance,
+  type FranchiseSeasonRecord,
+} from "@/domain/entities/franchise-history";
 import {
   computeFranchiseHistoryMilestones,
   getSeasonHistoricalHighlights,
+  pickBestRecord,
+  pickWorstRecord,
+  type BestRecordMetric,
   type FranchiseHistoryMilestones,
   type HistoricalHighlight,
 } from "@/state/franchise-history-milestones";
@@ -523,24 +530,136 @@ export function toExpansionView(state: GameState): ExpansionState {
 }
 
 export function toFranchiseHistoryView(state: GameState): FranchiseHistoryView {
-  const teamId = state.user.activeOwnerTeamId;
-  const history = state.business.franchiseHistory[teamId];
-  const seasons = history ? [...history.seasons] : [];
+  const teamHistory = toTeamHistoryView(state, state.user.activeOwnerTeamId);
   const milestones = computeFranchiseHistoryMilestones(
-    seasons,
+    teamHistory.seasons,
     getActiveOwnedFranchise(state).ownerStartSeasonYear,
     state.competition.season.year,
   );
+  return {
+    seasons: teamHistory.seasons,
+    milestones,
+    ownerTenureYears: milestones.currentOwnershipTenureYears,
+  };
+}
+
+export type TeamHistorySummary = {
+  totalSeasons: number;
+  wins: number;
+  losses: number;
+  winPct: number;
+  championships: number;
+  finalsAppearances: number;
+  playoffAppearances: number;
+  bestRecord: BestRecordMetric | null;
+  worstRecord: BestRecordMetric | null;
+};
+
+export type TeamHistoryView = {
+  teamId: string;
+  /** Current identity when the team exists; else latest season snapshot. */
+  teamName: string;
+  hasHistory: boolean;
+  summary: TeamHistorySummary;
+  /** Chronological completed seasons with historical city/name per row. */
+  seasons: FranchiseHistorySeasonRow[];
+};
+
+export type TeamRecordsRow = {
+  teamId: string;
+  teamName: string;
+  summary: TeamHistorySummary;
+};
+
+function resolveHistoricalTeamName(
+  state: GameState,
+  teamId: string,
+  seasons: readonly FranchiseSeasonRecord[],
+): string {
+  const team = state.world.teams[teamId];
+  if (team) {
+    return `${team.city} ${team.name}`;
+  }
+  const latest = seasons[seasons.length - 1];
+  return latest ? `${latest.city} ${latest.name}` : teamId;
+}
+
+function summarizeTeamSeasons(
+  seasons: readonly FranchiseSeasonRecord[],
+): TeamHistorySummary {
+  let wins = 0;
+  let losses = 0;
+  let championships = 0;
+  let finalsAppearances = 0;
+  let playoffAppearances = 0;
+  for (const season of seasons) {
+    wins += season.wins;
+    losses += season.losses;
+    if (season.championship) {
+      championships += 1;
+    }
+    if (isFinalsAppearance(season.playoffResult)) {
+      finalsAppearances += 1;
+    }
+    if (isPlayoffAppearance(season.playoffResult)) {
+      playoffAppearances += 1;
+    }
+  }
+  const games = wins + losses;
+  return {
+    totalSeasons: seasons.length,
+    wins,
+    losses,
+    winPct: games === 0 ? 0 : wins / games,
+    championships,
+    finalsAppearances,
+    playoffAppearances,
+    bestRecord: pickBestRecord([...seasons]),
+    worstRecord: pickWorstRecord([...seasons]),
+  };
+}
+
+/**
+ * All-time franchise record from completed FranchiseSeasonRecord snapshots.
+ * Never reads live standings; teamId is stable across relocation.
+ */
+export function toTeamHistoryView(
+  state: GameState,
+  teamId: string,
+): TeamHistoryView {
+  const seasons = [
+    ...(state.business.franchiseHistory[teamId]?.seasons ?? []),
+  ].sort((a, b) => a.seasonYear - b.seasonYear);
   const highlightsByYear = getSeasonHistoricalHighlights(seasons);
   return {
+    teamId,
+    teamName: resolveHistoricalTeamName(state, teamId, seasons),
+    hasHistory: seasons.length > 0,
+    summary: summarizeTeamSeasons(seasons),
     seasons: seasons.map((season) => ({
       ...season,
       playoffLabel: formatPlayoffResultLabel(season),
       highlights: highlightsByYear.get(season.seasonYear) ?? [],
     })),
-    milestones,
-    ownerTenureYears: milestones.currentOwnershipTenureYears,
   };
+}
+
+/** League-wide team records table: titles → finals → playoff apps → win%. */
+export function toTeamRecordsView(state: GameState): TeamRecordsRow[] {
+  return Object.keys(state.business.franchiseHistory)
+    .map((teamId) => {
+      const view = toTeamHistoryView(state, teamId);
+      return { teamId, teamName: view.teamName, summary: view.summary };
+    })
+    .filter((row) => row.summary.totalSeasons > 0)
+    .sort(
+      (a, b) =>
+        b.summary.championships - a.summary.championships ||
+        b.summary.finalsAppearances - a.summary.finalsAppearances ||
+        b.summary.playoffAppearances - a.summary.playoffAppearances ||
+        b.summary.winPct - a.summary.winPct ||
+        a.teamName.localeCompare(b.teamName),
+    );
 }
 
 function requireOps(state: GameState, teamId: string): FranchiseOps {

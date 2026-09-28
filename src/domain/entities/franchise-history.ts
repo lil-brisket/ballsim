@@ -32,6 +32,11 @@ export function playoffResultDepth(result: PlayoffResultSnapshot): number {
   return PLAYOFF_RESULT_DEPTH[result];
 }
 
+/** Reached the championship series (lost it as "finals" or won it). */
+export function isFinalsAppearance(result: PlayoffResultSnapshot): boolean {
+  return playoffResultDepth(result) >= PLAYOFF_RESULT_DEPTH.finals;
+}
+
 export type FranchiseSeasonRecord = {
   seasonId: SeasonId;
   seasonYear: number;
