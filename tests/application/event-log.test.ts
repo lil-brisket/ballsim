@@ -25,14 +25,17 @@ import {
   deserializeGameState,
   serializeGameState,
 } from "@/persistence/mappers/game-state-mapper";
+import { asTeamId } from "@/domain/ids";
 import {
   appendEventLog,
   EVENT_LOG_MAX,
   GAME_STATE_SCHEMA_VERSION,
   type GameState,
 } from "@/state/game-state";
+import { createDefaultOwnedFranchiseState } from "@/state/owned-franchise-state";
 import { toEventLogView } from "@/state/selectors";
 import { TEST_RNG_SEED } from "../helpers/determinism";
+import { FIXTURE_PRESEASON_START } from "../fixtures/dates";
 
 describe("eventLog persistence", () => {
   let store: ReturnType<typeof createMemorySaveGameStore>;
@@ -86,15 +89,21 @@ describe("eventLog persistence", () => {
   });
 
   it("bounds eventLog to EVENT_LOG_MAX most recent", () => {
+    const teamId = asTeamId("team_a");
     const base = {
       user: {
-        controlledTeamId: "team_a",
+        ownedTeamIds: [teamId],
+        activeOwnerTeamId: teamId,
+        ownedFranchises: {
+          [teamId]: createDefaultOwnedFranchiseState({
+            seasonYear: 2026,
+            currentDate: FIXTURE_PRESEASON_START,
+          }),
+        },
         mode: "owner" as const,
-        objectives: [],
-        notifications: [],
-        eventLog: [],
-        appliedGameplayConsequenceKeys: {},
-        narrative: { situations: [], snapshots: [], cooldowns: {} },
+        pendingOwnerDecisions: [],
+        ownerDecisionHistory: [],
+        franchisePhaseState: {},
       },
     } as unknown as GameState;
 

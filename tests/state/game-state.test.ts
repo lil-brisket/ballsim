@@ -7,6 +7,7 @@ import {
   deserializeGameState,
   serializeGameState,
 } from "@/persistence/mappers/game-state-mapper";
+import { FIXTURE_PRESEASON_START } from "../fixtures/dates";
 
 describe("createInitialGameState", () => {
   it("creates composed slices with owner mode defaults", () => {
@@ -47,7 +48,7 @@ describe("createInitialGameState", () => {
     });
     const snapshot = toDashboardSnapshot(state);
     expect(snapshot.leagueName).toBe("Continental Basketball League");
-    expect(snapshot.currentDate).toBe("2026-10-01");
+    expect(snapshot.currentDate).toBe(FIXTURE_PRESEASON_START);
     expect(snapshot.controlledStanding).toEqual({ wins: 0, losses: 0 });
     expect(snapshot.recentResults).toEqual([]);
     expect(snapshot.teamCount).toBe(12);

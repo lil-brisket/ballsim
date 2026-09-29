@@ -3,7 +3,6 @@ import { systemResult, type SystemResult } from "@/domain/system-result";
 import type { GameState } from "@/state/game-state";
 import { mergeDraftPicksForSeason } from "@/domain/draft-picks/generate-draft-picks";
 import { generateFantasyPlayerPool } from "@/systems/fantasy-draft/player-pool";
-import { canBeginRegularSeason } from "@/systems/league-rules/phase-prerequisites";
 import { generateRosters } from "@/systems/roster-generation";
 import { generatePreseasonSchedule } from "@/systems/preseason-schedule-generation";
 import { generateSchedule } from "@/systems/schedule-generation";
@@ -36,10 +35,11 @@ export function bootstrapWorld(state: GameState, rng: Rng): SystemResult {
   // Materialize the regular-season schedule early so calendar projections
   // can display upcoming games before the first simulation step.
   // This does not initialize the regular season or advance phase.
+  // Roster completeness is not required — fantasy drafts still have empty
+  // rosters here, and generateSchedule only needs teams.
   if (
     current.competition.schedule.gameIds.length === 0 &&
-    needsRegularSeasonInitialization(current) &&
-    canBeginRegularSeason(current).allowed
+    needsRegularSeasonInitialization(current)
   ) {
     const scheduled = generateSchedule(current);
     current = scheduled.state;

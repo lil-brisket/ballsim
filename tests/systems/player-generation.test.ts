@@ -32,6 +32,10 @@ import {
   potentialGapBandForAge,
 } from "@/systems/player-generation-config";
 import { generateRosters } from "@/systems/roster-generation";
+import {
+  DEFAULT_ROSTER_SIZE,
+  rosterPositionForSlot,
+} from "@/systems/roster-generation-config";
 
 const SAMPLE_SIZE = 5000;
 
@@ -484,7 +488,7 @@ describe("player generation", () => {
 });
 
 describe("generateRosters with player generation engine", () => {
-  it("fills each team with ten players in fixed position slots", () => {
+  it("fills each team with DEFAULT_ROSTER_SIZE players in fixed position slots", () => {
     const state = createInitialGameState({
       saveId: "save_roster_slots",
       rngSeed: 21,
@@ -495,24 +499,18 @@ describe("generateRosters with player generation engine", () => {
     const teamCount = Object.keys(state.world.teams).length;
     const players = Object.values(result.state.world.players);
 
-    expect(players).toHaveLength(teamCount * 10);
+    expect(players).toHaveLength(teamCount * DEFAULT_ROSTER_SIZE);
 
     for (const teamId of Object.keys(state.world.teams)) {
-      const teamPlayers = players
-        .filter((player) => player.teamId === teamId)
-        .sort((left, right) => left.id.localeCompare(right.id));
-      expect(teamPlayers.map((player) => player.position)).toEqual([
-        "PG",
-        "SG",
-        "SF",
-        "PF",
-        "C",
-        "PG",
-        "SG",
-        "SF",
-        "PF",
-        "C",
-      ]);
+      const roster = result.state.world.teams[teamId]!.roster;
+      const teamPlayers = roster.map(
+        (playerId) => result.state.world.players[playerId]!,
+      );
+      expect(teamPlayers.map((player) => player.position)).toEqual(
+        Array.from({ length: DEFAULT_ROSTER_SIZE }, (_, slot) =>
+          rosterPositionForSlot(slot),
+        ),
+      );
       for (const player of teamPlayers) {
         const overall = calculatePlayerOverall(
           player.position,

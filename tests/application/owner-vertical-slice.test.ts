@@ -25,10 +25,14 @@ import {
   loadOwnerSaveView,
   selectOwnerCity,
   confirmOwnerTeamIdentity,
+  assignOwnerPlayerToDevelopmentLeague,
+  saveOwnerGame,
   selectOwnerDraftProspect,
   selectOwnerTeam,
   signOwnerFreeAgent,
 } from "@/application/game-service";
+import { createPlayer } from "@/domain/entities/player";
+import { createDefaultDevelopmentLeagueProfile } from "@/domain/entities/development-league";
 import { CBL_GAME_SETTINGS, cloneGameSettings } from "@/domain/game-settings";
 import { getTeamCitiesForArea } from "@/data/league/team-cities-by-area";
 import { createMemorySaveGameStore } from "@/persistence/memory-save-game-store";
@@ -37,9 +41,12 @@ import {
   serializeGameState,
 } from "@/persistence/mappers/game-state-mapper";
 import { validateGameState } from "@/persistence/validate-game-state";
+import { isDevelopmentLeagueEligible } from "@/systems/development-league/eligibility";
 import { isUserOnDraftClock } from "@/systems/draft";
 import { listFreeAgents } from "@/systems/free-agency";
 import { getActivePhaseId } from "@/systems/phase-engine";
+import { reconcileRosterManagement } from "@/systems/roster-management";
+import { TRADE_ROSTER_RULES } from "@/systems/trades-config";
 import { TEST_RNG_SEED } from "../helpers/determinism";
 
 const LONG_TIMEOUT_MS = 600_000;
@@ -650,6 +657,75 @@ describe("Owner Mode vertical slice", () => {
       const faPool = listFreeAgents(atFa!.state);
       expect(faPool.playerIds.length).toBeGreaterThan(0);
 
+      let faState = (await store.load(saveId))!.state;
+      const faTeamId = faState.user.activeOwnerTeamId;
+      let freeSpotGuard = 0;
+      while (
+        faState.world.teams[faTeamId]!.roster.length >=
+          TRADE_ROSTER_RULES.maxRosterSize &&
+        freeSpotGuard < 8
+      ) {
+        freeSpotGuard += 1;
+        const faRoster = faState.world.teams[faTeamId]!.roster;
+        const dlCandidate = faRoster
+          .map((playerId) => faState.world.players[playerId])
+          .find(
+            (player) =>
+              player != null &&
+              isDevelopmentLeagueEligible(player, faTeamId, faState),
+          );
+        if (dlCandidate) {
+          const assigned = await assignOwnerPlayerToDevelopmentLeague(
+            saveId,
+            dlCandidate.id,
+            store,
+          );
+          expect(assigned.ok).toBe(true);
+          if (!assigned.ok) {
+            throw new Error(assigned.error);
+          }
+        } else {
+          const droppedId = faRoster[faRoster.length - 1]!;
+          const dropped = faState.world.players[droppedId]!;
+          const prior =
+            dropped.developmentLeague ??
+            createDefaultDevelopmentLeagueProfile();
+          const parked = createPlayer({
+            ...dropped,
+            developmentLeague: {
+              ...prior,
+              status: "assigned",
+              parentTeamId: faTeamId,
+              assignedThisSeason: true,
+              firstAssignedSeasonYear:
+                prior.firstAssignedSeasonYear ??
+                faState.competition.season.year,
+            },
+          });
+          const team = faState.world.teams[faTeamId]!;
+          let next = {
+            ...faState,
+            world: {
+              ...faState.world,
+              players: {
+                ...faState.world.players,
+                [droppedId]: parked,
+              },
+              teams: {
+                ...faState.world.teams,
+                [faTeamId]: {
+                  ...team,
+                  roster: team.roster.slice(0, -1),
+                },
+              },
+            },
+          };
+          next = reconcileRosterManagement(next, faTeamId);
+          await saveOwnerGame(saveId, next, store);
+        }
+        faState = (await store.load(saveId))!.state;
+      }
+
       const signTarget = faPool.playerIds[0]!;
       const signed = await signOwnerFreeAgent(
         saveId,
@@ -693,6 +769,18 @@ describe("Owner Mode vertical slice", () => {
           ) {
             const advanced = await advanceLeaguePhaseCommand(saveId, store);
             if (!advanced.ok) {
+              const pending = snap!.state.user.pendingOwnerDecisions[0];
+              if (advanced.error.includes("decision") && pending) {
+                const declined = await declineOwnerDecision(
+                  saveId,
+                  pending.id,
+                  store,
+                );
+                if (!declined.ok) {
+                  throw new Error(declined.error);
+                }
+                continue;
+              }
               throw new Error(advanced.error);
             }
           } else {

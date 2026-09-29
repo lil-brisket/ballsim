@@ -338,6 +338,9 @@ export function appendEventLog(
     return state;
   }
   const targetTeamId = teamId ?? state.user.activeOwnerTeamId;
+  if (!targetTeamId) {
+    return state;
+  }
   const franchise = state.user.ownedFranchises[targetTeamId];
   if (!franchise) {
     return state;

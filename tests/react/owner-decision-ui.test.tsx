@@ -52,9 +52,7 @@ describe("PendingOwnerDecisionPanel", () => {
       />,
     );
     expect(screen.getByText(/Simulation paused/i)).toBeTruthy();
-    expect(
-      screen.getByText(/Trade offer requires your decision/i),
-    ).toBeTruthy();
+    expect(screen.getByText(/Boston Breakers Trade Offer/i)).toBeTruthy();
     expect(screen.getByText("Alex Johnson")).toBeTruthy();
     expect(screen.getByText("John Smith")).toBeTruthy();
     expect(screen.getByRole("button", { name: "Accept" })).toBeTruthy();

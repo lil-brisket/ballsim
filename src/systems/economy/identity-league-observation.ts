@@ -11,14 +11,20 @@ import type { GameState } from "@/state/game-state";
 import { bootstrapWorld } from "@/systems/world-pipeline";
 import { advanceSimulation } from "@/systems/simulation/advance-simulation";
 import {
+  draftYearForSeason,
   getActiveDraftOnClockSlot,
   isUserOnDraftClock,
   makeDraftSelection,
 } from "@/systems/draft";
 import { draftClassIdFor } from "@/domain/entities/draft";
-import { draftYearForSeason } from "@/systems/draft";
+import {
+  declinePlayerOption,
+  declineTeamOption,
+  getContractStatus,
+} from "@/domain/entities/contract";
 import { runAiTeamDecisions } from "@/systems/ai-team-decisions";
 import { tryAdvanceUserManagedPhase } from "@/systems/phase-engine";
+import { resolvePendingOwnerDecision } from "@/systems/owner-decisions";
 import { enterOffseasonFromPostseason } from "@/systems/simulation/season-lifecycle";
 import {
   assertIdentityAxesUnchanged,
@@ -56,6 +62,56 @@ function persistRng(state: GameState, rng: Rng): GameState {
   };
 }
 
+function declineBlockingDecisions(state: GameState): GameState {
+  let current = state;
+  const pending = [...current.user.pendingOwnerDecisions];
+  for (const decision of pending) {
+    if (decision.blockingLevel !== "blocking") {
+      continue;
+    }
+    const resolved = resolvePendingOwnerDecision(current, {
+      decisionId: decision.id,
+      status: "declined",
+      decisionSource: "system",
+    });
+    current = resolved.state;
+  }
+  return current;
+}
+
+function resolveOwnedContractOptions(state: GameState): GameState {
+  const year = state.competition.season.year;
+  const owned = new Set(state.user.ownedTeamIds as string[]);
+  let contracts = state.business.contracts;
+  let changed = false;
+  for (const [contractId, contract] of Object.entries(contracts)) {
+    if (!owned.has(contract.teamId)) {
+      continue;
+    }
+    const status = getContractStatus(contract, year);
+    let next = contract;
+    if (status === "team_option") {
+      next = declineTeamOption(next);
+    } else if (status === "player_option") {
+      next = declinePlayerOption(next);
+    }
+    if (next !== contract) {
+      contracts = { ...contracts, [contractId]: next };
+      changed = true;
+    }
+  }
+  if (!changed) {
+    return state;
+  }
+  return {
+    ...state,
+    business: {
+      ...state.business,
+      contracts,
+    },
+  };
+}
+
 function autoPickUserDraft(state: GameState): GameState {
   const slot = getActiveDraftOnClockSlot(state);
   if (!slot || !isUserOnDraftClock(state)) {
@@ -89,8 +145,10 @@ function resolveOffseason(state: GameState, rng: Rng): GameState {
     current = persistRng(enterOffseasonFromPostseason(current).state, rng);
   }
   let guard = 0;
-  while (guard < 120) {
+  while (guard < 200) {
     guard += 1;
+    current = persistRng(declineBlockingDecisions(current), rng);
+    current = persistRng(resolveOwnedContractOptions(current), rng);
     if (current.competition.season.phase === "preseason") {
       return current;
     }
@@ -125,6 +183,8 @@ function simulateOneSeason(state: GameState, rng: Rng): GameState {
   let days = 0;
   while (days < MAX_DAYS_PER_SEASON) {
     days += 1;
+    current = persistRng(declineBlockingDecisions(current), rng);
+    current = persistRng(resolveOwnedContractOptions(current), rng);
     if (isUserOnDraftClock(current)) {
       current = persistRng(autoPickUserDraft(current), rng);
       current = persistRng(runAiTeamDecisions(current, rng).state, rng);

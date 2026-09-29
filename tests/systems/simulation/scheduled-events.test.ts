@@ -1,4 +1,5 @@
 import { describe, expect, it, afterEach } from "vitest";
+import { addCalendarDays } from "@/domain/calendar-date";
 import { createSeededRng } from "@/domain/rng";
 import { createInitialGameState } from "@/state/create-initial-state";
 import { CBL_GAME_SETTINGS } from "@/domain/game-settings";
@@ -46,6 +47,7 @@ describe("scheduled events", () => {
 
   it("executes due events once in (triggerDate, id) order", () => {
     const { state, rng } = baseState();
+    const today = state.world.calendar.currentDate;
     const order: string[] = [];
     registerScheduledEventHandler("noop", (current, event) => {
       order.push(event.id);
@@ -55,17 +57,17 @@ describe("scheduled events", () => {
     let current = scheduleEvent(state, {
       id: "evt_b",
       type: "noop",
-      triggerDate: "2026-10-01",
+      triggerDate: today,
     }).state;
     current = scheduleEvent(current, {
       id: "evt_a",
       type: "noop",
-      triggerDate: "2026-10-01",
+      triggerDate: today,
     }).state;
     current = scheduleEvent(current, {
       id: "evt_early",
       type: "noop",
-      triggerDate: "2026-09-30",
+      triggerDate: addCalendarDays(today, -1),
     }).state;
 
     const first = processScheduledEvents(current, rng);
@@ -88,7 +90,7 @@ describe("scheduled events", () => {
     const withEvent = scheduleEvent(state, {
       id: "evt_fail",
       type: "noop",
-      triggerDate: "2026-10-01",
+      triggerDate: state.world.calendar.currentDate,
     }).state;
 
     expect(() => processScheduledEvents(withEvent, rng)).toThrow(
@@ -102,7 +104,7 @@ describe("scheduled events", () => {
     let current = scheduleEvent(state, {
       id: "evt_persist",
       type: "noop",
-      triggerDate: "2026-10-01",
+      triggerDate: state.world.calendar.currentDate,
     }).state;
     current = processScheduledEvents(current, rng).state;
     expect(current.world.scheduledEvents.evt_persist?.status).toBe("executed");
