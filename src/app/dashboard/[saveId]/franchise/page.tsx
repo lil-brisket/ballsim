@@ -1,6 +1,8 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { loadFranchiseHubView } from "@/application/game-service";
+import { FacilitiesSummarySection } from "@/components/franchise/FacilitiesSummarySection";
+import { FinanceSnapshotCard } from "@/components/franchise/FinanceSnapshotCard";
+import { RelocationSummarySection } from "@/components/franchise/RelocationSummarySection";
 import { ManagementDecisionPanel } from "@/components/management/ManagementDecisionPanel";
 import { EmptyState, ErrorState } from "@/components/owner/EmptyState";
 import { FranchiseHistorySummary } from "@/components/owner/FranchiseHistorySummary";
@@ -9,15 +11,23 @@ import { PageHeader } from "@/components/owner/PageHeader";
 import { Section } from "@/components/owner/Section";
 import { StatusBadge } from "@/components/owner/StatusBadge";
 import { ProgressBar } from "@/components/ui/ProgressBar";
+import { StatCard } from "@/components/ui/StatCard";
 
 type PageProps = {
   params: Promise<{ saveId: string }>;
   searchParams: Promise<{ error?: string }>;
 };
 
+function formatDriver(key: string | null): string | null {
+  if (!key) {
+    return null;
+  }
+  return key.replaceAll("_", " ");
+}
+
 /**
- * Franchise Hub — long-term organizational state and objectives.
- * Intentionally high-level; deep work lives on subsystem pages.
+ * Franchise Hub — ownership / GM command center.
+ * Deep work lives on subsystem pages; this surface does not submit actions.
  */
 export default async function FranchiseOverviewPage({
   params,
@@ -30,6 +40,9 @@ export default async function FranchiseOverviewPage({
     notFound();
   }
 
+  const positive = formatDriver(view.valueExplanation.topPositiveDriver);
+  const negative = formatDriver(view.valueExplanation.topNegativeDriver);
+
   return (
     <div className="space-y-4">
       <PageHeader
@@ -38,7 +51,6 @@ export default async function FranchiseOverviewPage({
       />
       {error ? <ErrorState message={error} /> : null}
 
-      {/* 1. Franchise Header */}
       <div className="flex flex-wrap items-baseline justify-between gap-3 border-b border-zinc-800 pb-3">
         <div>
           <p className="font-mono text-[0.65rem] uppercase tracking-[0.16em] text-zinc-500">
@@ -59,37 +71,59 @@ export default async function FranchiseOverviewPage({
           <p className="text-lg font-medium text-zinc-100">
             <MoneyDisplay amount={view.franchiseValue} />
           </p>
+          <p className="text-xs capitalize text-zinc-500">
+            {view.valueExplanation.standing.replaceAll("_", " ")}
+          </p>
         </div>
       </div>
 
-      {/* 2. Organizational Snapshot — 3–4 metrics max */}
-      <Section title="Organizational Snapshot">
-        <dl className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <Snap
-            label="Record"
-            value={`${view.snapshot.wins}–${view.snapshot.losses}`}
+      <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <StatCard
+          label="Record"
+          value={`${view.snapshot.wins}–${view.snapshot.losses}`}
+          density="compact"
+        />
+        <StatCard
+          label="Fan sentiment"
+          value={String(view.snapshot.fanSentiment)}
+          density="compact"
+        />
+        <StatCard
+          label="Health"
+          value={view.snapshot.franchiseHealthLabel ?? "—"}
+          density="compact"
+        />
+        <StatCard
+          label="Value"
+          value={<MoneyDisplay amount={view.snapshot.franchiseValue} />}
+          density="compact"
+        />
+      </section>
+      {view.snapshot.franchiseHealthSummary ? (
+        <p className="text-xs leading-relaxed text-zinc-500">
+          {view.snapshot.franchiseHealthSummary}
+        </p>
+      ) : null}
+      {positive || negative ? (
+        <p className="text-xs text-zinc-500">
+          {positive ? `Driven by ${positive}` : null}
+          {positive && negative ? " · " : null}
+          {negative ? `Pressed by ${negative}` : null}
+        </p>
+      ) : null}
+
+      <Section title="Management">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <FinanceSnapshotCard
+            snapshot={view.financeSnapshot}
+            saveId={saveId}
           />
-          <Snap
-            label="Fan sentiment"
-            value={String(view.snapshot.fanSentiment)}
+          <FacilitiesSummarySection
+            summary={view.facilitiesSummary}
+            saveId={saveId}
           />
-          <Snap
-            label="Health"
-            value={
-              view.snapshot.franchiseHealthLabel ? (
-                <span className="capitalize text-sm">
-                  {view.snapshot.franchiseHealthLabel}
-                </span>
-              ) : (
-                "—"
-              )
-            }
-          />
-          <Snap
-            label="Value"
-            value={<MoneyDisplay amount={view.snapshot.franchiseValue} />}
-          />
-        </dl>
+          <RelocationSummarySection summary={view.relocationSummary} />
+        </div>
       </Section>
 
       <ManagementDecisionPanel
@@ -100,7 +134,6 @@ export default async function FranchiseOverviewPage({
         emptyMessage="No franchise-level decisions need attention right now."
       />
 
-      {/* 3. Objectives */}
       <Section title="Objectives">
         {view.objectives.length === 0 ? (
           <EmptyState message="No active ownership objectives." />
@@ -143,7 +176,6 @@ export default async function FranchiseOverviewPage({
         )}
       </Section>
 
-      {/* 4. Franchise History */}
       <Section title="Franchise History">
         {view.history.seasons.length === 0 ? (
           <EmptyState message="No franchise history recorded yet." />
@@ -151,43 +183,6 @@ export default async function FranchiseOverviewPage({
           <FranchiseHistorySummary view={view.history} />
         )}
       </Section>
-
-      {/* 5. Subsystem Links */}
-      <Section title="Manage">
-        <div className="grid gap-3 sm:grid-cols-2">
-          {view.links.map((link) => (
-            <Link
-              key={link.href + link.title}
-              href={link.href}
-              className="block rounded-xl border border-zinc-800 bg-zinc-900/50 px-4 py-4 transition-colors hover:border-amber-700/60 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-500"
-            >
-              <p className="font-mono text-[0.65rem] uppercase tracking-[0.16em] text-amber-500">
-                {link.title}
-              </p>
-              <p className="mt-1 text-sm text-zinc-300">{link.description}</p>
-              <p className="mt-3 text-sm font-medium text-amber-400">
-                {link.cta}
-              </p>
-            </Link>
-          ))}
-        </div>
-      </Section>
-
-      <p className="text-sm text-zinc-500">
-        Major franchise moves such as relocation are available from the
-        Offseason Hub when eligible — not as permanent destinations.
-      </p>
-    </div>
-  );
-}
-
-function Snap(props: { label: string; value: React.ReactNode }) {
-  return (
-    <div>
-      <dt className="text-[0.65rem] uppercase tracking-wide text-zinc-500">
-        {props.label}
-      </dt>
-      <dd className="mt-0.5 font-medium text-zinc-100">{props.value}</dd>
     </div>
   );
 }

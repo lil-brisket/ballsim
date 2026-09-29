@@ -3,6 +3,9 @@
  * Does not duplicate detailed staff/finance/roster information.
  */
 
+import type { FacilityCategory } from "@/domain/entities/franchise-ops";
+import type { RelocationProcess } from "@/domain/entities/relocation";
+import type { SeasonPhase } from "@/domain/entities/season";
 import type { GameState } from "@/state/game-state";
 import type { ActionCenterItem } from "@/state/action-center-selectors";
 import {
@@ -15,18 +18,32 @@ import {
   toFacilitiesView,
   toFranchiseBusinessView,
   toFranchiseHistoryView,
+  toRelocationView,
   toSponsorshipsView,
   type FranchiseHistoryView,
 } from "@/state/franchise-selectors";
-import { explainFranchiseValue } from "@/state/franchise-value";
-import { calculateFranchiseHealth } from "@/state/franchise-health";
+import {
+  explainFranchiseValue,
+  type FranchiseStanding,
+  type FranchiseValueDriverKey,
+} from "@/state/franchise-value";
+import {
+  calculateFranchiseHealth,
+  formatDimensionStatus,
+} from "@/state/franchise-health";
+import {
+  assessRelocation,
+  type RelocationAssessment,
+} from "@/state/relocation-assessment";
 import { toObjectivesView, type ObjectiveView } from "@/state/selectors";
+import type { FinancialHealthState } from "@/systems/financial-health";
 
 export type FranchiseHubSnapshot = {
   wins: number;
   losses: number;
   fanSentiment: number;
   franchiseHealthLabel: string | null;
+  franchiseHealthSummary: string | null;
   franchiseValue: number;
 };
 
@@ -37,6 +54,50 @@ export type FranchiseHubLink = {
   cta: string;
 };
 
+export type FranchiseValueExplanationSummary = {
+  standing: FranchiseStanding;
+  topPositiveDriver: FranchiseValueDriverKey | null;
+  topNegativeDriver: FranchiseValueDriverKey | null;
+};
+
+export type FranchiseFinanceSnapshot = {
+  cash: number;
+  health: FinancialHealthState;
+  runwayWeeks: number | null;
+  projectedCash: number;
+};
+
+export type FacilityLevelSummary = {
+  category: FacilityCategory;
+  level: number;
+  upgrading: boolean;
+};
+
+export type FranchiseFacilitiesSummary = {
+  levels: FacilityLevelSummary[];
+  upgradingCount: number;
+  availableUpgradeCount: number;
+  weeklyOpex: number;
+  arenaCapacity: number;
+};
+
+export type RelocationSummaryState =
+  | "not_available"
+  | "eligible"
+  | "in_progress"
+  | "cooldown";
+
+export type FranchiseRelocationSummary = {
+  state: RelocationSummaryState;
+  statusLabel: string;
+  marketSize: number;
+  estimatedFee: number;
+  cooldownSeasonsRemaining: number;
+  primaryDriver: string | null;
+  /** Set only when the relocation workflow page is actually open. */
+  href: string | null;
+};
+
 export type FranchiseHubView = {
   saveId: string;
   teamId: string;
@@ -45,6 +106,10 @@ export type FranchiseHubView = {
   ownerTenureYears: number;
   franchiseValue: number;
   snapshot: FranchiseHubSnapshot;
+  valueExplanation: FranchiseValueExplanationSummary;
+  financeSnapshot: FranchiseFinanceSnapshot;
+  facilitiesSummary: FranchiseFacilitiesSummary;
+  relocationSummary: FranchiseRelocationSummary;
   objectives: ObjectiveView[];
   history: FranchiseHistoryView;
   links: FranchiseHubLink[];
@@ -83,6 +148,56 @@ export function sortFranchiseObjectives(
   });
 }
 
+function toRelocationPresentationState(
+  assessment: RelocationAssessment,
+  process: RelocationProcess,
+  phase: SeasonPhase,
+): RelocationSummaryState {
+  if (assessment.status === "in_progress") {
+    return "in_progress";
+  }
+  const cooldownRemaining = Math.max(
+    assessment.tenure.cooldownSeasonsRemaining,
+    assessment.tenure.failedAttemptCooldownSeasonsRemaining,
+    process.cooldownSeasonsRemaining,
+    process.failedAttemptCooldownSeasonsRemaining,
+  );
+  if (assessment.status === "blocked_tenure" || cooldownRemaining > 0) {
+    return "cooldown";
+  }
+  if (assessment.canStart && phase === "offseason") {
+    return "eligible";
+  }
+  return "not_available";
+}
+
+export function toFranchiseRelocationSummary(
+  saveId: string,
+  assessment: RelocationAssessment,
+  process: RelocationProcess,
+  phase: SeasonPhase,
+): FranchiseRelocationSummary {
+  const state = toRelocationPresentationState(assessment, process, phase);
+  const href =
+    state === "eligible" || (state === "in_progress" && phase === "offseason")
+      ? `/dashboard/${saveId}/relocation`
+      : null;
+  return {
+    state,
+    statusLabel: assessment.status.replaceAll("_", " "),
+    marketSize: assessment.marketConstraint.marketSize,
+    estimatedFee: assessment.estimatedCost.fee,
+    cooldownSeasonsRemaining: Math.max(
+      assessment.tenure.cooldownSeasonsRemaining,
+      assessment.tenure.failedAttemptCooldownSeasonsRemaining,
+      process.cooldownSeasonsRemaining,
+      process.failedAttemptCooldownSeasonsRemaining,
+    ),
+    primaryDriver: assessment.primaryDrivers[0] ?? null,
+    href,
+  };
+}
+
 export function toFranchiseHubView(state: GameState): FranchiseHubView {
   const saveId = state.meta.saveId;
   const teamId = getActiveOwnerTeamId(state);
@@ -95,6 +210,15 @@ export function toFranchiseHubView(state: GameState): FranchiseHubView {
   const owner = toOwnerDashboardView(state);
   const standing = state.competition.standings.byTeamId[teamId];
   const health = calculateFranchiseHealth(state);
+  const assessment = assessRelocation(state);
+  const relocationProcess = toRelocationView(state);
+  const phase = state.competition.season.phase;
+  const relocationSummary = toFranchiseRelocationSummary(
+    saveId,
+    assessment,
+    relocationProcess,
+    phase,
+  );
 
   const activeObjectives = sortFranchiseObjectives(
     toObjectivesView(state).filter(
@@ -119,6 +243,16 @@ export function toFranchiseHubView(state: GameState): FranchiseHubView {
     daysUntilTradeDeadline: owner.daysUntilTradeDeadline,
   });
 
+  const facilityDecisions = filterDomainDecisions(
+    actionCenter.items,
+    ["facilities"],
+    5,
+  );
+  const relocationDecision = relocationDecisionFromSummary(relocationSummary);
+  const decisions = relocationDecision
+    ? [relocationDecision, ...facilityDecisions].slice(0, 5)
+    : facilityDecisions;
+
   return {
     saveId,
     teamId,
@@ -131,10 +265,36 @@ export function toFranchiseHubView(state: GameState): FranchiseHubView {
       losses: standing?.losses ?? 0,
       fanSentiment: business.fanSentiment,
       franchiseHealthLabel: health.condition
-        ? `${health.condition.replaceAll("_", " ")}${health.summary ? ` — ${health.summary}` : ""}`
+        ? formatDimensionStatus(health.condition)
         : null,
+      franchiseHealthSummary: health.summary || null,
       franchiseValue: value.total,
     },
+    valueExplanation: {
+      standing: value.standing,
+      topPositiveDriver: value.topPositiveDriver,
+      topNegativeDriver: value.topNegativeDriver,
+    },
+    financeSnapshot: {
+      cash: business.cashRunway.cash,
+      health: business.cashRunway.health,
+      runwayWeeks: business.cashRunway.runwayWeeks,
+      projectedCash: business.cashRunway.projectedCash,
+    },
+    facilitiesSummary: {
+      levels: facilities.map((row) => ({
+        category: row.category,
+        level: row.level,
+        upgrading: row.upgradeWeeksRemaining > 0,
+      })),
+      upgradingCount: facilities.filter((row) => row.upgradeWeeksRemaining > 0)
+        .length,
+      availableUpgradeCount: facilities.filter((row) => row.upgradeCost != null)
+        .length,
+      weeklyOpex: business.cashRunway.outflowBreakdown.facilities,
+      arenaCapacity: business.arenaCapacity,
+    },
+    relocationSummary,
     objectives: activeObjectives,
     history,
     links: [
@@ -177,6 +337,37 @@ export function toFranchiseHubView(state: GameState): FranchiseHubView {
         cta: "View History",
       },
     ],
-    decisions: filterDomainDecisions(actionCenter.items, ["facilities"], 5),
+    decisions,
+  };
+}
+
+/**
+ * Front Office caps action items at ACTION_QUEUE_CAP, so relocation is often
+ * dropped. When the Franchise presentation href is live, surface that same
+ * destination without inventing a new action.
+ */
+function relocationDecisionFromSummary(
+  summary: FranchiseRelocationSummary,
+): ActionCenterItem | null {
+  if (summary.href == null) {
+    return null;
+  }
+  return {
+    id: "action_relocation",
+    priority: 12,
+    severity: summary.state === "in_progress" ? "warning" : "info",
+    category: "relocation",
+    urgency: summary.state === "in_progress" ? "soon" : "routine",
+    deadline: null,
+    relevance: "franchise",
+    title:
+      summary.state === "in_progress"
+        ? "Relocation in progress"
+        : "Relocation opportunity",
+    description:
+      summary.primaryDriver ??
+      "Market and franchise conditions make relocation a legitimate option.",
+    href: summary.href,
+    hrefLabel: "Review Stay vs Move",
   };
 }
