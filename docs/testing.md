@@ -23,6 +23,8 @@ npm run test:coverage    # same projects as npm test, plus v8 coverage (text/htm
 npm run sim -- --seed=42 --games=100   # Simulation Lab CLI (default --channel pr)
 ```
 
+Every Vitest run writes `test-results.txt` at the repo root (gitignored): summary plus each failure with expected/received and a short stack. Override the path with `TEST_RESULTS_FILE`. A CLI `--reporter=` flag replaces config reporters; add `--reporter=./scripts/vitest-txt-reporter.ts` if you still want the file.
+
 ## Directory structure
 
 ```text

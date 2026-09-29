@@ -15,6 +15,7 @@ import tsconfigPaths from "vite-tsconfig-paths";
 export default defineConfig({
   plugins: [tsconfigPaths(), react()],
   test: {
+    reporters: ["default", "./scripts/vitest-txt-reporter.ts"],
     coverage: {
       provider: "v8",
       reporter: ["text", "json-summary", "html", "lcov"],
