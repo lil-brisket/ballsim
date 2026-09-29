@@ -13,11 +13,14 @@ import type { GameState } from "@/state/game-state";
 import { appendSeasonEventLog } from "@/state/game-state";
 import { attributeBasedAnnualSalary } from "@/systems/attribute-salary";
 import { DRAFT_ROOKIE_CONTRACT_YEARS } from "@/systems/draft-config";
+import { draftClassIdFor } from "@/domain/entities/draft";
 import {
   validateDraftSelection,
   type MakeDraftSelectionInput,
 } from "@/systems/draft/draft-validation";
 import type { DraftValidationResult } from "@/systems/draft/draft-types";
+import { getActiveDraftOnClockSlot } from "@/systems/draft/draft-clock";
+import { draftYearForSeason } from "@/systems/draft/draft-order";
 import { findTeamProspectEstimate } from "@/systems/draft/draft-scouting";
 import { createRatingRange } from "@/domain/entities/scouting-types";
 import { reconcileRosterManagement } from "@/systems/roster-management";
@@ -245,6 +248,44 @@ export function makeDraftSelection(
     state: next,
     events,
   };
+}
+
+/**
+ * Pick the on-clock slot for whoever owns it (user or CPU harness).
+ * Skips prospects already in world.players. Does not consume RNG.
+ */
+export function tryAutoPickActiveDraftSlot(state: GameState): GameState {
+  const slot = getActiveDraftOnClockSlot(state);
+  if (slot === undefined) {
+    return state;
+  }
+  const draftYear = draftYearForSeason(state.competition.season.year);
+  const draftClassId = draftClassIdFor(draftYear);
+  const draft = state.world.drafts[draftClassId];
+  if (draft === undefined || draft.status !== "active") {
+    return state;
+  }
+  const eligible = Object.values(draft.prospects)
+    .filter(
+      (prospect) =>
+        prospect.status === "eligible" &&
+        state.world.players[prospect.playerId] === undefined,
+    )
+    .sort((a, b) =>
+      a.playerId < b.playerId ? -1 : a.playerId > b.playerId ? 1 : 0,
+    );
+  for (const prospect of eligible) {
+    const result = makeDraftSelection(state, {
+      draftClassId,
+      draftPickId: slot.draftPickId,
+      prospectPlayerId: prospect.playerId,
+      teamId: slot.ownerTeamId,
+    });
+    if (result.success) {
+      return result.state;
+    }
+  }
+  return state;
 }
 
 export type { MakeDraftSelectionInput };

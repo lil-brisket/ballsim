@@ -7,6 +7,7 @@ import { bootstrapWorld } from "@/systems/world-pipeline";
 import { beginRegularSeasonFromPreseason } from "@/systems/simulation/season-lifecycle";
 import { generateRosters } from "@/systems/roster-generation";
 import { processSeasonEvents } from "@/systems/season-events";
+import { processMidseasonAwards } from "@/systems/season-events/process-midseason-awards";
 import { advanceSimulation } from "@/systems/simulation/advance-simulation";
 import { addCalendarDays } from "@/domain/calendar-date";
 import { runMidseasonAwards } from "@/systems/awards/award-pipeline";
@@ -14,6 +15,7 @@ import { getPrimaryLeagueFinalGames } from "@/systems/awards/award-stat-sources"
 import { qualifyAndStartTournament } from "@/systems/season-events/tournament-engine";
 import { createGame } from "@/domain/entities/game";
 import { asGameId } from "@/domain/ids";
+import { buildAwardResultId } from "@/domain/entities/awards";
 
 function bootRegularSeason(saveId: string) {
   let state = createInitialGameState({
@@ -126,6 +128,62 @@ describe("season events midseason cycle", () => {
       Object.keys(pipeline.state.business.awards.results).length,
     );
     void midseasonResults;
+  });
+
+  it("does not emit duplicate MidseasonAwardAnnounced ids for prior-year results", () => {
+    const { state } = bootRegularSeason("se_awards_ids");
+    const awards = state.competition.seasonEvents.midseasonAwards!;
+    const evaluated = runMidseasonAwards(state, awards.cutoffDate);
+    const midseasonResults = Object.values(
+      evaluated.state.business.awards.results,
+    ).filter((result) => result.period === "midseason");
+    const priorResults = Object.fromEntries(
+      midseasonResults.map((result) => {
+        const priorYear = result.seasonYear - 1;
+        const priorId = buildAwardResultId(
+          result.leagueId,
+          priorYear,
+          "midseason",
+          result.awardId,
+        );
+        return [
+          priorId,
+          { ...result, id: priorId, seasonYear: priorYear },
+        ];
+      }),
+    );
+    const seeded = {
+      ...evaluated.state,
+      world: {
+        ...evaluated.state.world,
+        calendar: {
+          ...evaluated.state.world.calendar,
+          currentDate: awards.announceDate,
+        },
+      },
+      business: {
+        ...evaluated.state.business,
+        awards: {
+          ...evaluated.state.business.awards,
+          results: {
+            ...evaluated.state.business.awards.results,
+            ...priorResults,
+          },
+        },
+      },
+      competition: {
+        ...evaluated.state.competition,
+        seasonEvents: {
+          ...evaluated.state.competition.seasonEvents,
+          midseasonAwards: { ...awards, status: "scheduled" as const },
+        },
+      },
+    };
+    const announced = processMidseasonAwards(seeded, awards.announceDate);
+    const ids = announced.events
+      .filter((event) => event.type === "MidseasonAwardAnnounced")
+      .map((event) => event.id);
+    expect(new Set(ids).size).toBe(ids.length);
   });
 
   it("tournament games do not alter regular-season standings", () => {

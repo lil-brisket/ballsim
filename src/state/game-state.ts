@@ -345,7 +345,18 @@ export function appendEventLog(
   if (!franchise) {
     return state;
   }
-  const merged = [...franchise.eventLog, ...newlyEmitted];
+  const seen = new Set(franchise.eventLog.map((event) => event.id));
+  const uniqueNew = newlyEmitted.filter((event) => {
+    if (seen.has(event.id)) {
+      return false;
+    }
+    seen.add(event.id);
+    return true;
+  });
+  if (uniqueNew.length === 0) {
+    return state;
+  }
+  const merged = [...franchise.eventLog, ...uniqueNew];
   const eventLog =
     merged.length > EVENT_LOG_MAX
       ? merged.slice(merged.length - EVENT_LOG_MAX)

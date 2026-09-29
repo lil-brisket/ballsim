@@ -7,6 +7,7 @@ import {
   PLAYER_RETIREMENT_HIGH_AGE,
   PLAYER_RETIREMENT_MIN_AGE,
 } from "@/systems/league-rules/invariants";
+import { withClearedDevelopmentLeagueAssignment } from "@/systems/development-league/assignment";
 
 /**
  * Probabilistic player retirement during season_transition.
@@ -58,12 +59,12 @@ export function processPlayerRetirements(
         ...current.world,
         players: {
           ...current.world.players,
-          [playerId]: {
+          [playerId]: withClearedDevelopmentLeagueAssignment({
             ...after,
             retired: true,
             teamId: null,
             contractId: null,
-          },
+          }),
         },
       },
     };
@@ -134,11 +135,11 @@ export function releasePlayerContractOnRetirement(
       ...state.world,
       players: {
         ...state.world.players,
-        [playerId]: {
+        [playerId]: withClearedDevelopmentLeagueAssignment({
           ...player,
           contractId: null,
           teamId: null,
-        },
+        }),
       },
     },
   };

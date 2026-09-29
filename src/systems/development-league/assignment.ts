@@ -29,6 +29,24 @@ export type DlAssignmentResult = {
   events: DomainEvent[];
 };
 
+/**
+ * Franchise membership ended (release, retirement). Assigned players must not
+ * keep `status: "assigned"` with a null teamId.
+ */
+export function withClearedDevelopmentLeagueAssignment(player: Player): Player {
+  if (player.developmentLeague.status !== "assigned") {
+    return player;
+  }
+  return {
+    ...player,
+    developmentLeague: {
+      ...player.developmentLeague,
+      status: "none",
+      parentTeamId: null,
+    },
+  };
+}
+
 function deriveInitialDlRole(
   player: Player,
   dlPeers: Player[],

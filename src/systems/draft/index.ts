@@ -18,6 +18,7 @@ export {
 } from "@/systems/draft/draft-validation";
 export {
   makeDraftSelection,
+  tryAutoPickActiveDraftSlot,
   type DraftSelectionResult,
 } from "@/systems/draft/draft-selection";
 export {

@@ -197,6 +197,65 @@ describe("free-agency pool", () => {
     );
   });
 
+  it("releasePlayerToFreeAgency clears Development League assignment", () => {
+    resetDomainEventSequenceForTests();
+    const state = baseState();
+    const teamId = state.user.activeOwnerTeamId;
+    const year = state.competition.season.year;
+    const playerId = asPlayerId("player_dl_released");
+    const contract = contractTerms({
+      contractId: "contract_dl_released",
+      playerId,
+      teamId,
+      startYear: year - 2,
+      endYear: year - 1,
+      salary: 1_500_000,
+    });
+    const basePlayer = createPlayer({
+      id: playerId,
+      teamId,
+      contractId: contract.id,
+    });
+    const seeded: GameState = {
+      ...state,
+      world: {
+        ...state.world,
+        players: {
+          [playerId]: {
+            ...basePlayer,
+            developmentLeague: {
+              ...basePlayer.developmentLeague,
+              status: "assigned",
+              parentTeamId: teamId,
+              assignedThisSeason: true,
+            },
+          },
+        },
+        teams: {
+          ...state.world.teams,
+          [teamId]: {
+            ...state.world.teams[teamId]!,
+            roster: [],
+          },
+        },
+      },
+      business: {
+        ...state.business,
+        contracts: { [contract.id]: contract },
+      },
+    };
+
+    const result = releasePlayerToFreeAgency(seeded, playerId);
+    expect(result.state.world.players[playerId]?.teamId).toBeNull();
+    expect(result.state.world.players[playerId]?.developmentLeague.status).toBe(
+      "none",
+    );
+    expect(
+      result.state.world.players[playerId]?.developmentLeague.parentTeamId,
+    ).toBeNull();
+    expect(() => validateGameState(result.state)).not.toThrow();
+  });
+
   it("throws when releasing a player with an active contract", () => {
     const state = baseState();
     const teamId = state.user.activeOwnerTeamId;

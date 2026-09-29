@@ -28,14 +28,18 @@ export function processMidseasonAwards(
   let current = pipeline.state;
   const events: DomainEvent[] = [...pipeline.events];
 
+  const seasonYear = current.competition.season.year;
   const resultIds = Object.keys(current.business.awards.results).filter(
-    (id) => id.includes(":midseason:") || id.includes(":midseason_"),
+    (id) => id.includes(`:${seasonYear}:midseason:`),
   );
 
-  // Prefer ids written by midseason award definitions
+  // This season only — prior-year midseason results share awardIds.
   const midseasonIds = Object.values(current.business.awards.results)
-    .filter((r) => r.period === "midseason")
-    .map((r) => r.id);
+    .filter(
+      (result) =>
+        result.period === "midseason" && result.seasonYear === seasonYear,
+    )
+    .map((result) => result.id);
 
   const nextAwards = {
     ...awards,
@@ -67,7 +71,7 @@ export function processMidseasonAwards(
       createSeasonDomainEvent({
         type: "MidseasonAwardAnnounced",
         occurredOn: awards.announceDate,
-        key: `${awards.seasonId}_${result.awardId}_announced`,
+        key: `${awards.seasonId}_${result.id}_announced`,
         payload: {
           awardId: result.awardId,
           resultId: result.id,

@@ -25,6 +25,7 @@ import { FREE_AGENCY_INTEREST_CONFIG } from "@/systems/free-agency-config";
 import { computeAwardReputationBonus } from "@/systems/awards/award-reputation";
 import { getTeamCapSpace, getTeamPayroll } from "@/systems/salary-cap";
 import { reconcileRosterManagement } from "@/systems/roster-management";
+import { withClearedDevelopmentLeagueAssignment } from "@/systems/development-league/assignment";
 import { stripPlayersFromAllTradeBlocks } from "@/systems/trades/trade-block";
 import { checkFreeAgencySigning } from "@/systems/league-rules/free-agency-rules";
 import { TRADE_ROSTER_RULES } from "@/systems/trades-config";
@@ -743,11 +744,11 @@ function clearPlayerTeamMembership(
       ...withoutRosters.world,
       players: {
         ...withoutRosters.world.players,
-        [playerId]: {
+        [playerId]: withClearedDevelopmentLeagueAssignment({
           ...player,
           teamId: null,
           contractId: clearContractId ? null : player.contractId,
-        },
+        }),
       },
     },
   };

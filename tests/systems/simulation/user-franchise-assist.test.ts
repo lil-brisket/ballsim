@@ -8,6 +8,7 @@ import { DEFAULT_ROSTER_SIZE } from "@/systems/roster-generation-config";
 import { STARTER_ROLES } from "@/systems/staff-generation";
 import { findTeamStaffByRole } from "@/systems/staff-effects";
 import { bootstrapWorld } from "@/systems/world-pipeline";
+import { getOwnedFranchise, withOwnedFranchise } from "@/state/owner-context";
 
 function bootstrapped(saveId: string) {
   let state = createTestGameState({ saveId });
@@ -16,10 +17,31 @@ function bootstrapped(saveId: string) {
 }
 
 describe("user-franchise-assist", () => {
+  it("copies settings assistance onto the owned franchise for new games", () => {
+    const settings = cloneGameSettings(
+      createTestGameState({ saveId: "assist_copy_src" }).settings,
+    );
+    settings.ai.managementPreset = "off";
+    settings.ai.assistance = applyPreset("off");
+    const state = createTestGameState({ saveId: "assist_copy", settings });
+    const franchise = getOwnedFranchise(state, state.user.activeOwnerTeamId);
+    expect(franchise.managementPreset).toBe("off");
+    expect(franchise.aiAssistance).toEqual(applyPreset("off"));
+  });
+
   it("does nothing when preset is off", () => {
-    const state = bootstrapped("assist_off");
+    let state = bootstrapped("assist_off");
     state.settings.ai.managementPreset = "off";
     state.settings.ai.assistance = applyPreset("off");
+    state = withOwnedFranchise(
+      state,
+      state.user.activeOwnerTeamId,
+      (franchise) => ({
+        ...franchise,
+        managementPreset: "off",
+        aiAssistance: applyPreset("off"),
+      }),
+    );
     const result = runUserFranchiseAssist(state, createSeededRng(1));
     const assistEvents = result.events.filter(
       (e) => e.type === "AiAssistAction",

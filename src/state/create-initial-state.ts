@@ -264,6 +264,8 @@ export function createInitialGameState(
           currentDate: preseasonStartDate,
           citySelectionConfirmed: false,
           franchiseIdentityConfirmed: false,
+          aiAssistance: { ...settings.ai.assistance },
+          managementPreset: settings.ai.managementPreset,
         }),
       },
       mode: "owner",

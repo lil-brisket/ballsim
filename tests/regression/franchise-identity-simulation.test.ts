@@ -16,10 +16,15 @@ import {
   advanceOwnerTime,
   confirmOwnerTeamIdentity,
   createNewOwnerSave,
+  declineOwnerDecision,
   selectOwnerCity,
 } from "@/application/game-service";
-import { CBL_GAME_SETTINGS, cloneGameSettings } from "@/domain/game-settings";
 import { brandingFromPalette } from "@/domain/entities/team-branding";
+import {
+  applyPreset,
+  CBL_GAME_SETTINGS,
+  cloneGameSettings,
+} from "@/domain/game-settings";
 import { getTeamIdentityFingerprint } from "@/domain/team-identity";
 import { createMemorySaveGameStore } from "@/persistence/memory-save-game-store";
 import {
@@ -38,6 +43,7 @@ async function createCustomIdentitySave(
   const settings = cloneGameSettings(CBL_GAME_SETTINGS);
   settings.league.area = "north_america";
   settings.ai.managementPreset = "full_management";
+  settings.ai.assistance = applyPreset("full_management");
   const created = await createNewOwnerSave(
     { settings, name: "Identity Regression", rngSeed: TEST_RNG_SEED },
     store,
@@ -106,7 +112,27 @@ describe("franchise identity persistence regression", () => {
 
       for (let day = 0; day < 30; day += 1) {
         const advanced = await advanceOwnerTime(saveId, { days: 1 }, store);
-        expect(advanced.ok).toBe(true);
+        if (
+          !advanced.ok &&
+          /pending owner decision/i.test(advanced.error)
+        ) {
+          const loaded = await store.load(saveId);
+          const blocking =
+            loaded?.state.user.pendingOwnerDecisions.filter(
+              (decision) => decision.blockingLevel === "blocking",
+            ) ?? [];
+          for (const decision of blocking) {
+            const declined = await declineOwnerDecision(
+              saveId,
+              decision.id,
+              store,
+            );
+            if (!declined.ok) {
+              throw new Error(declined.error);
+            }
+          }
+          continue;
+        }
         if (!advanced.ok) {
           throw new Error(advanced.error);
         }

@@ -1,5 +1,5 @@
 import { createDomainEvent, type DomainEvent } from "@/domain/events";
-import type { Rng } from "@/domain/rng";
+import { createSeededRng, type Rng } from "@/domain/rng";
 import { systemResult, type SystemResult } from "@/domain/system-result";
 import type { GameState } from "@/state/game-state";
 import { createEmptyPlayoffTournament } from "@/domain/entities/playoffs";
@@ -39,6 +39,7 @@ import { runLeagueStaffAiManagement } from "@/systems/staff-ai-management";
 import { expireSponsorshipsAtSeason } from "@/systems/sponsorships";
 import { transitionPhase } from "@/systems/simulation/phase-machine";
 import { beginRegularSeasonFromPreseason } from "@/systems/simulation/season-lifecycle";
+import { fillShortRosters } from "@/systems/roster-generation";
 import {
   advancePhase,
   canAdvancePhase,
@@ -128,6 +129,25 @@ export function advanceLeaguePhase(state: GameState, rng?: Rng): SystemResult {
   events.push(...enterResult.events);
 
   return systemResult(current, events);
+}
+
+function persistRng(state: GameState, rng: Rng): GameState {
+  return {
+    ...state,
+    meta: {
+      ...state.meta,
+      rngState: rng.getState(),
+    },
+  };
+}
+
+function fillShortRostersWithRng(state: GameState, rng?: Rng): SystemResult {
+  const fillRng = rng ?? createSeededRng(state.meta.rngState);
+  const filled = fillShortRosters(state, fillRng);
+  return {
+    ...filled,
+    state: persistRng(filled.state, fillRng),
+  };
 }
 
 function withEnsuredDraftPicks(state: GameState): GameState {
@@ -315,6 +335,9 @@ export function processPhaseExit(
     const initialized = initializeNewSeason(current);
     current = initialized.state;
     events.push(...initialized.events);
+    const filled = fillShortRostersWithRng(current, rng);
+    current = filled.state;
+    events.push(...filled.events);
     // initializeNewSeason already enters preseason — skip normal advance target
   }
 
@@ -534,6 +557,9 @@ export function processOffseasonLifecycle(
     const initialized = initializeNewSeason(current);
     current = initialized.state;
     events.push(...initialized.events);
+    const filled = fillShortRostersWithRng(current, rng);
+    current = filled.state;
+    events.push(...filled.events);
   }
 
   return systemResult(current, events);

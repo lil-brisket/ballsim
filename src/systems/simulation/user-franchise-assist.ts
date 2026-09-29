@@ -48,7 +48,11 @@ import { getTeamCapSpace } from "@/systems/salary-cap";
 import { hireStaff } from "@/systems/staff";
 import { findTeamStaffByRole } from "@/systems/staff-effects";
 import { draftClassIdFor } from "@/domain/entities/draft";
-import { draftYearForSeason, makeDraftSelection } from "@/systems/draft";
+import {
+  draftYearForSeason,
+  makeDraftSelection,
+  tryAutoPickActiveDraftSlot,
+} from "@/systems/draft";
 import { selectProspectForTeam } from "@/systems/ai-team-decisions";
 import { isUserOnDraftClock } from "@/systems/draft/draft-clock";
 import { createAiAssistLogEvent } from "@/systems/simulation/ai-assist-logging";
@@ -484,29 +488,35 @@ function pickDraftForNeed(
   }
 
   const prospectId = selectProspectForTeam(state, draft, teamId);
-  if (prospectId === undefined) {
-    return {
-      ...systemResult(withAppliedGameplayConsequence(state, key)),
-      didAct: false,
-    };
+  let picked = state;
+  let selectedProspectId = prospectId;
+  const selectionEvents: DomainEvent[] = [];
+  if (prospectId !== undefined) {
+    const result = makeDraftSelection(state, {
+      draftClassId,
+      draftPickId: onClock.draftPickId,
+      prospectPlayerId: prospectId,
+      teamId: onClock.ownerTeamId,
+    });
+    if (result.success) {
+      picked = result.state;
+      selectionEvents.push(...result.events);
+    }
+  }
+  if (picked === state) {
+    picked = tryAutoPickActiveDraftSlot(state);
+    if (picked === state) {
+      return { ...systemResult(state), didAct: false };
+    }
+    const usedSlot = picked.world.drafts[draftClassId]?.order.find(
+      (slot) => slot.draftPickId === onClock.draftPickId,
+    );
+    selectedProspectId = usedSlot?.selectedPlayerId;
   }
 
-  const result = makeDraftSelection(state, {
-    draftClassId,
-    draftPickId: onClock.draftPickId,
-    prospectPlayerId: prospectId,
-    teamId,
-  });
-  if (!result.success) {
-    return {
-      ...systemResult(withAppliedGameplayConsequence(state, key)),
-      didAct: false,
-    };
-  }
-
-  const next = withAppliedGameplayConsequence(result.state, key);
+  const next = withAppliedGameplayConsequence(picked, key);
   const events: DomainEvent[] = [
-    ...result.events,
+    ...selectionEvents,
     createAiAssistLogEvent({
       decision,
       occurredOn: date,
@@ -514,8 +524,8 @@ function pickDraftForNeed(
       reason: need.detail,
       trigger: need.needKey,
       before: { onClock: true },
-      after: { prospectPlayerId: prospectId },
-      playerId: prospectId,
+      after: { prospectPlayerId: selectedProspectId },
+      playerId: selectedProspectId,
     }),
   ];
   return { ...systemResult(next, events), didAct: true };

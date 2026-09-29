@@ -10,7 +10,6 @@ import {
   createNewOwnerSave,
   declineOwnerDecision,
   finishFreeAgency,
-  loadOwnerSave,
   selectOwnerDraftProspect,
   selectOwnerTeam,
 } from "@/application/game-service";
@@ -30,9 +29,8 @@ import {
 } from "@/persistence/mappers/game-state-mapper";
 import { validateGameState } from "@/persistence/validate-game-state";
 import type { GameState } from "@/state/game-state";
-import { isUserOnDraftClock } from "@/systems/draft";
+import { getActiveDraftOnClockSlot, isUserOnDraftClock } from "@/systems/draft";
 import { assertContinuityBoundary } from "@/systems/simulation/continuity-validation";
-import { canAiExecute } from "@/systems/simulation/management-policy";
 import { canAdvancePhase, getActivePhaseId } from "@/systems/phase-engine";
 import { calendarDaysBetween } from "@/domain/calendar-date";
 import { TEST_RNG_SEED } from "./determinism";
@@ -109,6 +107,14 @@ function daysForMode(mode: AdvanceMode, seasonIndex: number): number {
 
 function lifecycleFingerprint(state: GameState): string {
   return `${state.competition.season.year}|${getActivePhaseId(state)}|${state.world.calendar.currentDate}`;
+}
+
+function draftClockKey(state: GameState): string {
+  const slot = getActiveDraftOnClockSlot(state);
+  if (slot === undefined) {
+    return "none";
+  }
+  return `${slot.draftPickId}:${slot.overallPick}`;
 }
 
 function formatDiagnostics(
@@ -194,12 +200,22 @@ function assertBoundaryInvariants(state: GameState): void {
   }
 }
 
+function freeAgencyDaysElapsed(state: GameState): number {
+  const entered =
+    state.competition.phase?.enteredDate ??
+    state.competition.season.offseasonStageEnteredDate;
+  if (entered == null) {
+    return 0;
+  }
+  return calendarDaysBetween(entered, state.world.calendar.currentDate) + 1;
+}
+
 async function handleBlockedGates(
   saveId: string,
   store: ReturnType<typeof createMemorySaveGameStore>,
   _managementPreset: AiManagementPreset,
   calendarPrimary = false,
-): Promise<boolean> {
+): Promise<"none" | "handled" | "draft"> {
   const loaded = await store.load(saveId);
   if (!loaded) {
     throw new Error("Save missing in handleBlockedGates");
@@ -216,7 +232,7 @@ async function handleBlockedGates(
         throw new Error(declined.error);
       }
     }
-    return true;
+    return "handled";
   }
 
   if (!calendarPrimary && state.competition.season.phase === "postseason") {
@@ -224,33 +240,23 @@ async function handleBlockedGates(
     if (!began.ok) {
       throw new Error(began.error);
     }
-    return true;
+    return "handled";
   }
 
   const phaseId = getActivePhaseId(state);
   if (phaseId === "offseason.free_agency") {
-    const aiCannotManageFa =
-      !canAiExecute(state.settings, "MAINTAIN_MIN_ROSTER") &&
-      !canAiExecute(state.settings, "SIGN_EMERGENCY_FA") &&
-      !canAiExecute(state.settings, "SIGN_ROUTINE_FA");
-    const entered =
-      state.competition.phase?.enteredDate ??
-      state.competition.season.offseasonStageEnteredDate;
     const durationDays = state.settings.offseason.freeAgency.durationDays;
-    const daysInFa =
-      entered != null
-        ? calendarDaysBetween(entered, state.world.calendar.currentDate) + 1
-        : 0;
+    const daysInFa = freeAgencyDaysElapsed(state);
     if (
       !calendarPrimary &&
-      (aiCannotManageFa || daysInFa >= durationDays) &&
+      daysInFa >= durationDays &&
       canAdvancePhase(state)
     ) {
       const finished = await finishFreeAgency(saveId, store);
       if (!finished.ok) {
         throw new Error(finished.error);
       }
-      return true;
+      return "handled";
     }
   }
 
@@ -267,37 +273,35 @@ async function handleBlockedGates(
   ) {
     const advanced = await advanceLeaguePhaseCommand(saveId, store);
     if (advanced.ok) {
-      return true;
+      return "handled";
     }
   }
 
-  if (
-    isUserOnDraftClock(state) &&
-    !canAiExecute(state.settings, "DRAFT_PICK")
-  ) {
-    const view = await loadOwnerSave(saveId, store);
-    if (!view) {
-      throw new Error("Missing view for draft pick");
-    }
-    // loadOwnerSaveView has draft board — fall back to first eligible via store
+  if (isUserOnDraftClock(state)) {
     const { loadOwnerSaveView } = await import("@/application/game-service");
     const full = await loadOwnerSaveView(saveId, store);
     const prospect = full?.draftBoard?.eligibleProspects[0];
-    if (!prospect) {
+    if (prospect) {
+      const drafted = await selectOwnerDraftProspect(
+        saveId,
+        prospect.playerId,
+        store,
+      );
+      if (!drafted.ok) {
+        throw new Error(drafted.error);
+      }
+      return "draft";
+    }
+    const { tryAutoPickActiveDraftSlot } = await import("@/systems/draft");
+    const picked = tryAutoPickActiveDraftSlot(state);
+    if (picked === state) {
       throw new Error("No draft prospect available while on clock");
     }
-    const drafted = await selectOwnerDraftProspect(
-      saveId,
-      prospect.playerId,
-      store,
-    );
-    if (!drafted.ok) {
-      throw new Error(drafted.error);
-    }
-    return true;
+    await store.save({ id: saveId, state: picked });
+    return "draft";
   }
 
-  return false;
+  return "none";
 }
 
 /**
@@ -440,13 +444,25 @@ export async function runMultiYearSimulation(
       effectivePreset,
       options.calendarPrimary === true,
     );
-    if (handled) {
+    if (handled !== "none") {
       steps += 1;
       const afterGate = await store.load(saveId);
       if (afterGate) {
         const afterFp = lifecycleFingerprint(afterGate.state);
         if (afterFp !== beforeFp) {
           lastTransition = afterFp;
+        } else if (
+          handled === "draft" &&
+          draftClockKey(afterGate.state) === draftClockKey(before.state)
+        ) {
+          failProgress(
+            formatDiagnostics(
+              afterGate.state,
+              steps,
+              lastTransition,
+              "Draft clock auto-pick did not consume the on-clock slot",
+            ),
+          );
         }
       }
       continue;
@@ -456,7 +472,16 @@ export async function runMultiYearSimulation(
       0,
       before.state.competition.season.year - startYear,
     );
-    const days = daysForMode(options.advanceMode, seasonIndex);
+    let days = daysForMode(options.advanceMode, seasonIndex);
+    if (getActivePhaseId(before.state) === "offseason.free_agency") {
+      const durationDays =
+        before.state.settings.offseason.freeAgency.durationDays;
+      const remaining = Math.max(
+        1,
+        durationDays - freeAgencyDaysElapsed(before.state) + 1,
+      );
+      days = Math.min(days, remaining);
+    }
     const stopOnPhaseChange =
       days >= 30 || options.advanceMode === "until_phase";
 
@@ -480,7 +505,7 @@ export async function runMultiYearSimulation(
           effectivePreset,
           options.calendarPrimary === true,
         );
-        if (handledBlock) {
+        if (handledBlock !== "none") {
           lastTransition = `blocked:${result.error}`;
           continue;
         }
@@ -502,7 +527,7 @@ export async function runMultiYearSimulation(
         store,
         effectivePreset,
       );
-      if (!retryGate) {
+      if (retryGate === "none") {
         failProgress(
           formatDiagnostics(
             after.state,

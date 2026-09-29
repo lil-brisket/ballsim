@@ -1,5 +1,4 @@
 import { CBL_GAME_SETTINGS } from "@/domain/game-settings";
-import type { DraftClass } from "@/domain/entities/draft";
 import { draftClassIdFor } from "@/domain/entities/draft";
 import {
   FACILITY_CATEGORIES,
@@ -23,9 +22,8 @@ import { calculateFranchiseValue } from "@/state/franchise-value";
 import { projectCashHorizon } from "@/systems/cash-projection";
 import {
   draftYearForSeason,
-  getActiveDraftOnClockSlot,
   isUserOnDraftClock,
-  makeDraftSelection,
+  tryAutoPickActiveDraftSlot,
 } from "@/systems/draft";
 import {
   calculateFinancialHealth,
@@ -33,7 +31,10 @@ import {
 } from "@/systems/financial-health";
 import { getTeamPayroll } from "@/systems/salary-cap";
 import { advanceSimulation } from "@/systems/simulation/advance-simulation";
-import { tryAdvanceUserManagedPhase } from "@/systems/phase-engine";
+import {
+  getActivePhaseId,
+  tryAdvanceUserManagedPhase,
+} from "@/systems/phase-engine";
 import { enterOffseasonFromPostseason } from "@/systems/simulation/season-lifecycle";
 import { runAiTeamDecisions } from "@/systems/ai-team-decisions";
 import { setMarketingBudget } from "@/systems/marketing";
@@ -49,6 +50,7 @@ import {
 } from "@/systems/owner-objectives-config";
 import { bootstrapWorld } from "@/systems/world-pipeline";
 import type { TeamId } from "@/domain/ids";
+import { resolvePendingOwnerDecision } from "@/systems/owner-decisions";
 
 export const ECONOMY_SCENARIOS = [
   "baseline",
@@ -440,6 +442,27 @@ function teamCash(state: GameState, teamId: string): number {
   return state.business.finances[teamId]?.businessFunds ?? 0;
 }
 
+function setTeamCash(
+  state: GameState,
+  teamId: string,
+  businessFunds: number,
+): GameState {
+  const finances = state.business.finances[teamId];
+  if (!finances) {
+    return state;
+  }
+  return {
+    ...state,
+    business: {
+      ...state.business,
+      finances: {
+        ...state.business.finances,
+        [teamId]: { ...finances, businessFunds },
+      },
+    },
+  };
+}
+
 function emptyCapitalRollup(): {
   capitalAttempts: CapitalAttempt[];
   capitalRestricted: boolean;
@@ -673,7 +696,7 @@ export function applyEconomyScenario(
       marketing: { budget: 8_000_000, awareness: 20 },
     });
     next = setTicketPrice(next, teamId, 95).state;
-    return next;
+    return setTeamCash(next, teamId, 6_000_000);
   }
   if (scenario === "recovery") {
     const next = applyEconomyScenario(state, "distress");
@@ -694,58 +717,36 @@ export function applyEconomyScenario(
   return state;
 }
 
-function pickBestProspect(
-  state: GameState,
-  draft: DraftClass,
-): DraftClass["prospects"][string]["playerId"] | undefined {
-  const available = Object.values(draft.prospects).filter(
-    (prospect) => prospect.status === "eligible",
-  );
-  if (available.length === 0) {
-    return undefined;
-  }
-  available.sort((a, b) => {
-    const overallA = calculatePlayerOverall(
-      a.player.position,
-      a.player.attributes,
-    );
-    const overallB = calculatePlayerOverall(
-      b.player.position,
-      b.player.attributes,
-    );
-    if (overallA !== overallB) {
-      return overallB - overallA;
+function declineBlockingDecisions(state: GameState): GameState {
+  let current = state;
+  for (const decision of [...current.user.pendingOwnerDecisions]) {
+    if (decision.blockingLevel !== "blocking") {
+      continue;
     }
-    return a.playerId < b.playerId ? -1 : a.playerId > b.playerId ? 1 : 0;
-  });
-  return available[0]!.playerId;
+    const resolved = resolvePendingOwnerDecision(current, {
+      decisionId: decision.id,
+      status: "declined",
+      decisionSource: "system",
+    });
+    current = resolved.state;
+  }
+  return current;
+}
+
+function isActiveDraftIncomplete(state: GameState): boolean {
+  if (getActivePhaseId(state) !== "offseason.draft") {
+    return false;
+  }
+  const draftYear = draftYearForSeason(state.competition.season.year);
+  const draft = state.world.drafts[draftClassIdFor(draftYear)];
+  return draft !== undefined && draft.status === "active";
 }
 
 function autoPickUserDraft(state: GameState): GameState {
   if (!isUserOnDraftClock(state)) {
     return state;
   }
-  const slot = getActiveDraftOnClockSlot(state);
-  if (!slot) {
-    return state;
-  }
-  const draftYear = draftYearForSeason(state.competition.season.year);
-  const draftClassId = draftClassIdFor(draftYear);
-  const draft = state.world.drafts[draftClassId];
-  if (!draft || draft.status !== "active") {
-    return state;
-  }
-  const prospectId = pickBestProspect(state, draft);
-  if (!prospectId) {
-    return state;
-  }
-  const result = makeDraftSelection(state, {
-    draftClassId,
-    draftPickId: slot.draftPickId,
-    prospectPlayerId: prospectId,
-    teamId: state.user.activeOwnerTeamId,
-  });
-  return result.success ? result.state : state;
+  return tryAutoPickActiveDraftSlot(state);
 }
 
 /**
@@ -1061,14 +1062,25 @@ function resolveOffseason(state: GameState, rng: Rng): GameState {
     current = persistRng(enterOffseasonFromPostseason(current).state, rng);
   }
   let guard = 0;
-  while (guard < 120) {
+  while (guard < 200) {
     guard += 1;
+    current = persistRng(declineBlockingDecisions(current), rng);
     if (current.competition.season.phase === "preseason") {
       return current;
     }
     if (current.competition.season.phase === "postseason") {
       current = persistRng(enterOffseasonFromPostseason(current).state, rng);
       continue;
+    }
+    if (isActiveDraftIncomplete(current)) {
+      current = persistRng(tryAutoPickActiveDraftSlot(current), rng);
+      current = persistRng(runAiTeamDecisions(current, rng).state, rng);
+      current = persistRng(declineBlockingDecisions(current), rng);
+      const phaseAdvanced = tryAdvanceUserManagedPhase(current, rng);
+      if (phaseAdvanced) {
+        current = persistRng(phaseAdvanced, rng);
+        continue;
+      }
     }
     const phaseAdvanced = tryAdvanceUserManagedPhase(current, rng);
     if (phaseAdvanced) {
@@ -1088,7 +1100,9 @@ function resolveOffseason(state: GameState, rng: Rng): GameState {
       return current;
     }
   }
-  throw new Error("Economy harness: offseason did not reach preseason.");
+  throw new Error(
+    `Economy harness: offseason did not reach preseason. phase=${current.competition.season.phase} stage=${current.competition.season.offseasonStage} date=${current.world.calendar.currentDate} phaseId=${getActivePhaseId(current)} onClock=${isUserOnDraftClock(current)}`,
+  );
 }
 
 function simulateOneSeason(
@@ -1109,6 +1123,7 @@ function simulateOneSeason(
   let days = 0;
   while (days < MAX_DAYS_PER_SEASON) {
     days += 1;
+    current = persistRng(declineBlockingDecisions(current), rng);
     if (isUserOnDraftClock(current)) {
       current = persistRng(autoPickUserDraft(current), rng);
       current = persistRng(runAiTeamDecisions(current, rng).state, rng);
