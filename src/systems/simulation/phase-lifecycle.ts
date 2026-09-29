@@ -24,6 +24,7 @@ import {
   type LeaguePhaseId,
 } from "@/systems/phase-engine";
 import { canBeginRegularSeason } from "@/systems/league-rules";
+import { enforceMaxRosterViaDevelopmentLeague } from "@/systems/development-league/enforce-roster-cap";
 import { canAiExecute } from "@/systems/simulation/management-policy";
 import {
   advanceLeaguePhase,
@@ -153,18 +154,26 @@ export function syncPhaseForward(
     ) {
       return emptySync(state, resolution);
     }
-    if (!canAdvancePhase(state) || !canBeginRegularSeason(state).allowed) {
-      return emptySync(
-        state,
-        resolution,
-        "required_tasks",
-        formatCannotBeginRegularSeasonError(state),
-      );
+    const capped = enforceMaxRosterViaDevelopmentLeague(state);
+    const prepared = capped.state;
+    if (
+      !canAdvancePhase(prepared) ||
+      !canBeginRegularSeason(prepared).allowed
+    ) {
+      return {
+        ...emptySync(
+          prepared,
+          resolvePhaseResolution(prepared, date),
+          "required_tasks",
+          formatCannotBeginRegularSeasonError(prepared),
+        ),
+        events: capped.events,
+      };
     }
-    const begun = beginRegularSeasonFromPreseason(state);
+    const begun = beginRegularSeasonFromPreseason(prepared);
     return {
       state: begun.state,
-      events: begun.events,
+      events: [...capped.events, ...begun.events],
       transitioned: true,
       fromPhaseId,
       toPhaseId: getActivePhaseId(begun.state),

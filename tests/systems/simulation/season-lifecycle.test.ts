@@ -21,11 +21,20 @@ import { generateRosters } from "@/systems/roster-generation";
 import { createEmptyPlayoffTournament } from "@/domain/entities/playoffs";
 import { createEmptySeasonEventsState } from "@/domain/entities/season-events";
 import { createEmptyTeamStanding } from "@/domain/entities/standings";
-import { asSaveId, asSeasonId, type TeamId } from "@/domain/ids";
+import { asContractId, asPlayerId, asSaveId, asSeasonId, type TeamId } from "@/domain/ids";
 import { GAME_STATE_SCHEMA_VERSION, type GameState } from "@/state/game-state";
 import { createEmptyTeamFinanceBooks } from "@/domain/entities/finances";
 import { createDefaultOwnedFranchiseState } from "@/state/owned-franchise-state";
 import { createPhaseEBusinessDefaults } from "@/state/phase-e-defaults";
+import { createContract } from "@/domain/entities/contract";
+import { createDefaultDevelopmentLeagueProfile } from "@/domain/entities/development-league";
+import { createPlayer } from "@/domain/entities/player";
+import { TRADE_ROSTER_RULES } from "@/systems/trades-config";
+import { getTopLeagueRosterSize } from "@/systems/development-league/franchise-membership";
+import {
+  createPlayer as createTestPlayer,
+  uniformPlayerAttributes,
+} from "../../factories/player";
 
 describe("season lifecycle", () => {
   it("transitions preseason → regular and generates a same-day opener schedule", () => {
@@ -297,5 +306,73 @@ describe("season lifecycle", () => {
     const finished = simulatePlayoffs(result.state, rng).state;
     const afterPlayoffs = processSeasonLifecycle(finished);
     expect(afterPlayoffs.state.competition.season.phase).toBe("postseason");
+  });
+
+  it("sends draft overflow to the Development League so the season can open", () => {
+    const state = createInitialGameState({
+      saveId: "life_roster_cap",
+      rngSeed: 9,
+      settings: CBL_GAME_SETTINGS,
+    });
+    const rng = createSeededRng(state.meta.rngState);
+    let current = bootstrapWorld(state, rng).state;
+    const teamId = current.user.activeOwnerTeamId;
+    const year = current.competition.season.year;
+
+    for (let index = 0; index < 2; index += 1) {
+      const playerId = asPlayerId(`overflow_life_${index}`);
+      const contractId = asContractId(`contract_${playerId}`);
+      const player = createPlayer({
+        ...createTestPlayer({
+          id: playerId,
+          teamId,
+          contractId,
+          age: 21,
+          attributes: uniformPlayerAttributes(48 + index),
+          potential: { overall: 56 + index },
+        }),
+        developmentLeague: {
+          ...createDefaultDevelopmentLeagueProfile(),
+          draftSeasonYear: year,
+        },
+      });
+      const contract = createContract({
+        id: contractId,
+        playerId,
+        teamId,
+        startYear: year,
+        endYear: year + 1,
+        salaryByYear: {
+          [String(year)]: 1_500_000,
+          [String(year + 1)]: 1_500_000,
+        },
+      });
+      const team = current.world.teams[teamId]!;
+      current = {
+        ...current,
+        world: {
+          ...current.world,
+          players: { ...current.world.players, [playerId]: player },
+          teams: {
+            ...current.world.teams,
+            [teamId]: { ...team, roster: [...team.roster, playerId] },
+          },
+        },
+        business: {
+          ...current.business,
+          contracts: { ...current.business.contracts, [contractId]: contract },
+        },
+      };
+    }
+
+    expect(getTopLeagueRosterSize(teamId, current)).toBe(
+      TRADE_ROSTER_RULES.maxRosterSize + 2,
+    );
+
+    const result = beginRegularSeasonFromPreseason(current);
+    expect(result.state.competition.season.phase).toBe("regular");
+    expect(getTopLeagueRosterSize(teamId, result.state)).toBe(
+      TRADE_ROSTER_RULES.maxRosterSize,
+    );
   });
 });

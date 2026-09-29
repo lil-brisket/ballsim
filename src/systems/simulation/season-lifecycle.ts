@@ -13,6 +13,7 @@ import {
   canBeginPlayoffs,
 } from "@/systems/league-rules";
 import { snapshotTradeDeadline } from "@/systems/league-rules/snapshot-trade-deadline";
+import { enforceMaxRosterViaDevelopmentLeague } from "@/systems/development-league/enforce-roster-cap";
 import { derivePlannedRegularSeasonStartDate } from "@/systems/simulation/planned-season-dates";
 import { planSeasonEvents } from "@/systems/season-events";
 
@@ -74,15 +75,23 @@ export function beginRegularSeasonFromPreseason(
       `beginRegularSeasonFromPreseason requires preseason.preparation; got "${getActivePhaseId(state)}".`,
     );
   }
-  const gate = canBeginRegularSeason(state);
+  const events: DomainEvent[] = [];
+  let current = state;
+
+  // Draft (and similar) may push a roster over the season-start cap. Until
+  // waivers exist, overflow goes to the Development League when eligible —
+  // including the user franchise, which AI DL decisions do not touch.
+  const capped = enforceMaxRosterViaDevelopmentLeague(current);
+  current = capped.state;
+  events.push(...capped.events);
+
+  const gate = canBeginRegularSeason(current);
   if (!gate.allowed) {
     throw new Error(
       gate.blockReason ??
         "Season cannot begin — roster validation is incomplete.",
     );
   }
-  const events: DomainEvent[] = [];
-  let current = state;
 
   const phaseResult = transitionPhase(current, "regular");
   current = phaseResult.state;

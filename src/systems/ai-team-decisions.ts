@@ -61,13 +61,15 @@ import {
 } from "@/systems/roster-management";
 import { isDraftAiPhase, isFreeAgencyAiPhase } from "@/systems/phase-engine";
 import { runAiDevelopmentLeagueDecisions } from "@/systems/development-league/ai-decisions";
+import { enforceMaxRosterViaDevelopmentLeague } from "@/systems/development-league/enforce-roster-cap";
 
 export { isUserControlledTeam };
 
 const REQUIRED_POSITIONS: readonly PlayerPosition[] = PLAYER_POSITIONS;
 /**
  * Deterministic AI decisions for non-user teams.
- * Uses shared EffectivePreferences with owner AI. Never mutates the user team.
+ * Uses shared EffectivePreferences with owner AI. Roster-cap enforcement
+ * still applies to every franchise, including the user team.
  * Cap/legality remain hard constraints. Inaction is valid.
  */
 export function runAiTeamDecisions(state: GameState, _rng: Rng): SystemResult {
@@ -99,6 +101,10 @@ export function runAiTeamDecisions(state: GameState, _rng: Rng): SystemResult {
   const dl = runAiDevelopmentLeagueDecisions(current, _rng);
   current = dl.state;
   events.push(...dl.events);
+
+  const rosterCap = enforceMaxRosterViaDevelopmentLeague(current);
+  current = rosterCap.state;
+  events.push(...rosterCap.events);
 
   return systemResult(current, events);
 }

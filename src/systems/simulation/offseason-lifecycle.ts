@@ -40,6 +40,7 @@ import { expireSponsorshipsAtSeason } from "@/systems/sponsorships";
 import { transitionPhase } from "@/systems/simulation/phase-machine";
 import { beginRegularSeasonFromPreseason } from "@/systems/simulation/season-lifecycle";
 import { fillShortRosters } from "@/systems/roster-generation";
+import { enforceMaxRosterViaDevelopmentLeague } from "@/systems/development-league/enforce-roster-cap";
 import {
   advancePhase,
   canAdvancePhase,
@@ -144,9 +145,10 @@ function persistRng(state: GameState, rng: Rng): GameState {
 function fillShortRostersWithRng(state: GameState, rng?: Rng): SystemResult {
   const fillRng = rng ?? createSeededRng(state.meta.rngState);
   const filled = fillShortRosters(state, fillRng);
+  const capped = enforceMaxRosterViaDevelopmentLeague(filled.state);
   return {
-    ...filled,
-    state: persistRng(filled.state, fillRng),
+    ...systemResult(capped.state, [...filled.events, ...capped.events]),
+    state: persistRng(capped.state, fillRng),
   };
 }
 

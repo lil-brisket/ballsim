@@ -8,6 +8,7 @@ import { advanceCalendar } from "@/systems/calendar";
 import { generateRosters } from "@/systems/roster-generation";
 import { canBeginRegularSeason } from "@/systems/league-rules";
 import { canAdvancePhase } from "@/systems/phase-engine";
+import { enforceMaxRosterViaDevelopmentLeague } from "@/systems/development-league/enforce-roster-cap";
 import { runDailyPipeline } from "@/systems/simulation/daily-pipeline";
 import {
   completedMonthIdForSimulatedDate,
@@ -89,25 +90,32 @@ export function advanceSimulation(
 
   const allowOwnerManaged = options.allowOwnerManagedPhaseTransitions !== false;
 
+  const allEvents: DomainEvent[] = [];
+  let current = state;
+
   // Transactional pre-check: do not open the regular season when blocked.
   // Preseason days before the planned opener may still advance freely.
-  if (allowOwnerManaged && needsRegularSeasonInitialization(state)) {
-    const plannedOpener = derivePlannedRegularSeasonStartDate(state);
+  if (allowOwnerManaged && needsRegularSeasonInitialization(current)) {
+    const plannedOpener = derivePlannedRegularSeasonStartDate(current);
     if (
       plannedOpener != null &&
-      state.world.calendar.currentDate >= plannedOpener
+      current.world.calendar.currentDate >= plannedOpener
     ) {
-      if (!canAdvancePhase(state) || !canBeginRegularSeason(state).allowed) {
-        throw new Error(formatCannotBeginRegularSeasonError(state));
+      const capped = enforceMaxRosterViaDevelopmentLeague(current);
+      current = capped.state;
+      allEvents.push(...capped.events);
+      if (
+        !canAdvancePhase(current) ||
+        !canBeginRegularSeason(current).allowed
+      ) {
+        throw new Error(formatCannotBeginRegularSeasonError(current));
       }
     }
   }
 
-  const phaseBefore = state.competition.season.phase;
-  const previousDate = state.world.calendar.currentDate;
-  const identityBefore = lifecycleIdentity(state);
-  const allEvents: DomainEvent[] = [];
-  let current = state;
+  const phaseBefore = current.competition.season.phase;
+  const previousDate = current.world.calendar.currentDate;
+  const identityBefore = lifecycleIdentity(current);
   let scheduledEventsProcessed = 0;
   let gamesSimulated = 0;
   let weeklyPipelineRan = false;
