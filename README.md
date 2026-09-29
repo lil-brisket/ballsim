@@ -21,6 +21,7 @@ Fictional basketball simulation / management game (Owner Mode foundation).
 
 ```bash
 npm run dev
+npm run lab                 # Simulation Lab UI at /dev/sim-lab
 npm run lint
 npm run format
 npm run format:check
@@ -61,7 +62,21 @@ Every Vitest run writes `test-results.txt` (gitignored) with the pass/fail count
 
 ## Simulations
 
-Simulation Lab wraps production `simulateGame` / `advanceSimulation`. Default `--channel pr` fails on hard invariants only; `--channel nightly` also fails on statistical FAIL.
+Simulation Lab wraps production `simulateGame` / `advanceSimulation`. Use the UI **or** the CLI — you do not need to play Owner Mode first.
+
+### UI
+
+```bash
+npm run lab
+```
+
+Opens [`http://localhost:3000/dev/sim-lab`](http://localhost:3000/dev/sim-lab). Starts `npm run dev` if nothing is already listening on port 3000. Game batches, multi-season careers, and full schedule runs are tabs on that page.
+
+If the app is already running, you can also visit `/dev/sim-lab` directly.
+
+### CLI
+
+Default `--channel pr` fails on hard invariants only; `--channel nightly` also fails on statistical FAIL.
 
 ```bash
 npm run sim -- --seed=42 --games=100

@@ -1,3 +1,4 @@
+import type { GameSettings } from "@/domain/game-settings";
 import { runLeagueCareer } from "@/simulation/league-sanity/run-league-career";
 import { readEngineIdentity } from "@/simulation/lab/engine-identity";
 import { formatReproCommand } from "@/simulation/lab/repro";
@@ -8,6 +9,7 @@ export type RunLabSeasonOptions = {
   seed: number;
   seasons: number;
   mode?: "owner-career";
+  gameSettings?: GameSettings;
 };
 
 export type LongitudinalPoint = {
@@ -32,6 +34,7 @@ export function runLabSeason(options: RunLabSeasonOptions): LabSeasonResult {
   const career = runLeagueCareer({
     seed: options.seed,
     seasons,
+    gameSettings: options.gameSettings,
   });
 
   const engineIdentity = readEngineIdentity();

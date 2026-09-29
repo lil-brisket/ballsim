@@ -16,6 +16,7 @@
     "test:simulation": "vitest run --project simulation",
     "test:all": "vitest run",
     "sim": "tsx scripts/sim.ts",
+    "lab": "tsx scripts/open-sim-lab.ts",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage --project unit --project integration --project react",
     "bench:sim": "tsx scripts/benchmark-simulation.ts",

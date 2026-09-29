@@ -29,7 +29,23 @@ export {
 export {
   runLabSeason,
   type RunLabSeasonOptions,
+  type LongitudinalPoint,
+  type LabSeasonResult,
 } from "@/simulation/lab/run-lab-season";
+export {
+  LAB_LEAGUE_PRESETS,
+  isLabLeaguePreset,
+  settingsForLabPreset,
+  labPresetScheduleLabel,
+  type LabLeaguePreset,
+} from "@/simulation/lab/lab-league-preset";
+export {
+  LAB_DEFAULT_SCHEDULE_MAX_DAYS,
+  runLabSchedule,
+  type LabScheduleUntil,
+  type LabScheduleResult,
+  type RunLabScheduleOptions,
+} from "@/simulation/lab/run-lab-schedule";
 export {
   HARD_GAME_RULE_IDS,
   INVARIANT_REGISTRY,
@@ -47,4 +63,10 @@ export {
   runRegressionCases,
   defaultRegressionDir,
 } from "@/simulation/lab/regression/run-regression-cases";
+export {
+  LAB_MAX_GAMES,
+  LAB_MAX_SCHEDULE_DAYS,
+  LAB_MAX_SEASONS_CBL,
+  LAB_MAX_SEASONS_STANDARD,
+} from "@/simulation/lab/lab-limits";
 export { createLabScheduledGame } from "@/simulation/lab/create-lab-game";
