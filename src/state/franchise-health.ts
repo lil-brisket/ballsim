@@ -302,7 +302,7 @@ function scoreCompetitive(
   const games = wins + losses;
   const drivers: HealthDriver[] = [];
 
-  let confidence: HealthConfidence =
+  const confidence: HealthConfidence =
     games >= COMPETITIVE_MIN_GAMES ? "high" : games >= 3 ? "medium" : "low";
 
   // Primary band: win percentage once games exist; neutral mid before that.
@@ -676,7 +676,7 @@ function scoreCommercial(
 
   // Utilization band from realization / fill (monetization of capacity).
   let score = clamp(Math.round(realization * 100), 0, 100);
-  let confidence: HealthConfidence = hasSettledHome
+  const confidence: HealthConfidence = hasSettledHome
     ? "high"
     : snapshots.some((s) => s.fillRatePct > 0)
       ? "medium"

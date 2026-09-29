@@ -4,7 +4,7 @@ import { createSeededRng } from "@/domain/rng";
 import { createInitialGameState } from "@/state/create-initial-state";
 import { bootstrapWorld } from "@/systems/world-pipeline";
 import { processSeasonStaffDevelopment } from "@/systems/staff-development";
-import { asStaffId, asTeamId } from "@/domain/ids";
+import { asStaffId } from "@/domain/ids";
 import { testStaff } from "../helpers/staff";
 
 describe("staff development", () => {

@@ -42,7 +42,7 @@ describe("franchise identity persistence", () => {
   });
 
   it("migrates v26 ops missing axes to v27 without rewriting aiProfile", () => {
-    let state = createInitialGameState({
+    const state = createInitialGameState({
       saveId: "id_migrate",
       rngSeed: 55,
       settings: CBL_GAME_SETTINGS,

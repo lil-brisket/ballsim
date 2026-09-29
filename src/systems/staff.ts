@@ -8,7 +8,6 @@ import {
   type TeamId,
 } from "@/domain/ids";
 import { systemResult, type SystemResult } from "@/domain/system-result";
-import type { Staff } from "@/domain/entities/staff";
 import { createStaffContract } from "@/domain/entities/staff-contract";
 import type { GameState } from "@/state/game-state";
 import { appendSeasonEventLog } from "@/state/game-state";

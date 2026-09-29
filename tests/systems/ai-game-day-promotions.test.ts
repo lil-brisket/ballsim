@@ -21,7 +21,7 @@ describe("AI game-day promotions", () => {
     const userTeamId = state.user.activeOwnerTeamId;
 
     // Seed upcoming home games for every team.
-    let games = { ...state.competition.games };
+    const games = { ...state.competition.games };
     let i = 0;
     for (const teamId of Object.keys(state.world.teams)) {
       const opponent = (Object.keys(state.world.teams) as string[]).find(

@@ -28,7 +28,7 @@ import { POOR_ATTENDANCE_FILL_RATE_PCT } from "@/systems/owner-objectives-config
 import { withOwnedFranchise } from "@/state/owner-context";
 
 function bootstrappedState(saveId: string): GameState {
-  let state = createTestGameState({ saveId });
+  const state = createTestGameState({ saveId });
   const rng = createSeededRng(state.meta.rngState);
   return bootstrapWorld(state, rng).state;
 }

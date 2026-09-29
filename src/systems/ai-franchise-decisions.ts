@@ -208,7 +208,7 @@ export function premiumTicketPriceFromPreferences(
   const attendancePull = (prefs.attendancePriority - 0.5) * 2;
   const revenuePull = prefs.spendWillingness - prefs.cashPreservation;
   const rawStep = -attendancePull * 15 + revenuePull * 20;
-  let step = Math.round(Math.max(-25, Math.min(25, rawStep)));
+  const step = Math.round(Math.max(-25, Math.min(25, rawStep)));
   if (prefs.cashPreservation > 0.65 && Math.abs(step) <= 5) {
     return current;
   }
@@ -234,7 +234,7 @@ export function marketingBudgetFromPreferences(
   const desire =
     (prefs.marketingPriority - prefs.cashPreservation) *
     AI_MARKETING_BUDGET_STEP_MAX;
-  let step = Math.round(
+  const step = Math.round(
     Math.max(
       -AI_MARKETING_BUDGET_STEP_MAX,
       Math.min(AI_MARKETING_BUDGET_STEP_MAX, desire),

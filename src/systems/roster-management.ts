@@ -39,7 +39,6 @@ import { ROTATION_CONFIG } from "@/systems/rotation/rotation-config";
 import { analyzeRotationHealth } from "@/systems/rotation/rotation-health";
 import { redistributeRotationForInjuries } from "@/systems/rotation/rotation-injury-response";
 import {
-  formatFeasibilityBanner,
   hasHardFeasibilityIssues,
   validateRotationFeasibility,
 } from "@/systems/rotation/rotation-feasibility";
@@ -582,8 +581,6 @@ export function buildRotationFromRoster(
   const secondaryPool = Math.round(effectiveBenchPool * secondaryShare);
   const restPool = effectiveBenchPool - primaryPool - secondaryPool;
 
-  let benchAssigned = 0;
-
   const assignBenchSlice = (
     slice: typeof benchOrdered,
     pool: number,
@@ -618,7 +615,6 @@ export function buildRotationFromRoster(
       if (minutes > 0 && minutes < ROTATION_CONFIG.meaningfulRotationMinutes) {
         minutes = ROTATION_CONFIG.meaningfulRotationMinutes;
       }
-      benchAssigned += minutes;
       result.push(
         buildEntryFromTemplate({
           playerId: entry.playerId,
@@ -909,7 +905,7 @@ export function recommendRosterManagement(
     Math.max(playableCount, 5),
   );
 
-  let rotation = buildRotationFromRoster(
+  const rotation = buildRotationFromRoster(
     ranked,
     resolved.philosophy,
     effectiveDepth,

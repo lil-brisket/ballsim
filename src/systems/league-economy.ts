@@ -129,7 +129,7 @@ export function distributeMonthlyBroadcastPool(
   // Equal component (floor). Remainder after equal slices goes to weighted.
   const equalTotal = Math.floor(pool * shareRate);
   const equalEach = Math.floor(equalTotal / n);
-  let equalDistributed = equalEach * n;
+  const equalDistributed = equalEach * n;
   // Distribute leftover equal cents by sorted team id for determinism.
   let equalLeftover = equalTotal - equalDistributed;
 

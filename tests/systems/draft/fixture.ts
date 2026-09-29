@@ -7,7 +7,6 @@ import { createContract } from "@/domain/entities/contract";
 import {
   asContractId,
   asPlayerId,
-  asTeamId,
   type PlayerId,
   type TeamId,
 } from "@/domain/ids";

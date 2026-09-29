@@ -461,7 +461,7 @@ describe("fantasy draft queue and next pick", () => {
   });
 
   it("migration defaults queues and settings on serialize round-trip", () => {
-    let { state } = startDraft(createFantasyState(8));
+    const { state } = startDraft(createFantasyState(8));
     expect(state.world.fantasyDraft!.teamQueues).toEqual({});
     expect(state.world.fantasyDraft!.settings.confirmPicks).toBe(true);
     expect(state.world.fantasyDraft!.version).toBeGreaterThanOrEqual(2);

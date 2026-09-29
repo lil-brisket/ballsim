@@ -299,7 +299,7 @@ export function processPhaseExit(
   if (fromPhaseId === "offseason.draft") {
     const draftYear = draftYearForSeason(current.competition.season.year);
     const draftClassId = draftClassIdFor(draftYear);
-    let draft = current.world.drafts[draftClassId];
+    const draft = current.world.drafts[draftClassId];
     if (draft !== undefined && draft.status === "active" && rng) {
       // Remaining AI picks should already have been processed daily;
       // complete if fully used.

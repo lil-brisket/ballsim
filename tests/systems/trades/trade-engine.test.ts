@@ -341,7 +341,7 @@ describe("trade validation — invalid trades", () => {
 
   it("rejects player without active contract", () => {
     const state = createTradeFixture();
-    const { teamA, teamB } = teamIds(state);
+    const { teamA } = teamIds(state);
     const playerId = playerOnTeam(state, teamA, 0);
     const player = state.world.players[playerId]!;
     const broken = {

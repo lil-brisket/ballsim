@@ -238,7 +238,7 @@ export function ensureMockDrafts(
     leagueMock = computeLeagueMockDraft(state, draft, date);
   }
 
-  let teamDraftState = { ...draft.teamDraftState };
+  const teamDraftState = { ...draft.teamDraftState };
   for (const teamId of Object.keys(state.world.teams) as TeamId[]) {
     const existing = teamDraftState[teamId];
     if (!existing) continue;

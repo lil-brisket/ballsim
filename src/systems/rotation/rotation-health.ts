@@ -2,12 +2,9 @@
  * Rotation health analyzer — minutes balance, depth, position coverage, workload.
  */
 
-import type { Player, PlayerPosition } from "@/domain/entities/player";
+import type { PlayerPosition } from "@/domain/entities/player";
 import { PLAYER_POSITIONS } from "@/domain/entities/player";
-import type {
-  RotationEntry,
-  TeamRosterManagement,
-} from "@/domain/entities/team-roster-management";
+import type { TeamRosterManagement } from "@/domain/entities/team-roster-management";
 import type { PlayerId, TeamId } from "@/domain/ids";
 import type { GameState } from "@/state/game-state";
 import {

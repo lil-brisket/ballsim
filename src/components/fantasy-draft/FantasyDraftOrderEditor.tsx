@@ -1,7 +1,6 @@
 "use client";
 
 import {
-  useEffect,
   useRef,
   useState,
   useTransition,
@@ -31,15 +30,17 @@ export function FantasyDraftOrderEditor(props: FantasyDraftOrderEditorProps) {
   const [selectedTeamId, setSelectedTeamId] = useState<string | null>(null);
   const [dragTeamId, setDragTeamId] = useState<string | null>(null);
   const [dropTargetIndex, setDropTargetIndex] = useState<number | null>(null);
+  const [orderSource, setOrderSource] = useState(props.draftOrder);
   const [pending, startTransition] = useTransition();
   const suppressClickRef = useRef(false);
 
-  useEffect(() => {
+  if (props.draftOrder !== orderSource) {
+    setOrderSource(props.draftOrder);
     setEntries([...props.draftOrder]);
     setSelectedTeamId(null);
     setDragTeamId(null);
     setDropTargetIndex(null);
-  }, [props.draftOrder]);
+  }
 
   function submitMoveToIndex(teamId: string, toIndex: number) {
     const formData = new FormData();

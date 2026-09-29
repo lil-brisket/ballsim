@@ -71,7 +71,6 @@ describe("applyOwnerCitySelection", () => {
 
   it("available city relocates only the placeholder franchise", () => {
     const state = createNaState();
-    const cities = listCitiesForTeamPick(state);
     const available = openCity(state);
     const placeholderId = state.user.activeOwnerTeamId;
     const otherIds = Object.keys(state.world.teams).filter(

@@ -65,7 +65,7 @@ function isDistress(snap: LeagueSanityTeamSeasonSnapshot): boolean {
 
 export function aggregateLeagueSanitySnapshots(
   snapshots: readonly LeagueSanityTeamSeasonSnapshot[],
-  seasonsPerSimulation: number,
+  _seasonsPerSimulation: number,
 ): LeagueSanityAggregates {
   const byFranchise = new Map<string, LeagueSanityTeamSeasonSnapshot[]>();
   for (const snap of snapshots) {

@@ -5,7 +5,6 @@ import type {
   MetricSummary,
   ValidationAggregates,
   ValidationRunResult,
-  ValidationVerdict,
 } from "@/simulation/validation/types";
 
 function fmt(n: number, digits = 1): string {

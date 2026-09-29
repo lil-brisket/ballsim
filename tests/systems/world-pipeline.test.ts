@@ -4,7 +4,7 @@ import { createInitialGameState } from "@/state/create-initial-state";
 import { CBL_GAME_SETTINGS } from "@/domain/game-settings";
 import { bootstrapWorld, runWorldPipeline } from "@/systems/world-pipeline";
 import { beginRegularSeasonFromPreseason } from "@/systems/simulation/season-lifecycle";
-import { generateRosters } from "@/systems/roster-generation";
+import { generateRosters, fillShortRosters } from "@/systems/roster-generation";
 import { DEFAULT_ROSTER_SIZE } from "@/systems/roster-generation-config";
 import { generateSchedule } from "@/systems/schedule-generation";
 import { resetDomainEventSequenceForTests } from "@/domain/events/domain-event";
@@ -90,6 +90,37 @@ describe("roster and schedule generation", () => {
       expect(team).toBeDefined();
       expect(team!.roster).toContain(player.id);
     }
+  });
+
+  it("replenishes short rosters up to DEFAULT_ROSTER_SIZE", () => {
+    const state = createInitialGameState({
+      saveId: "save_roster_fill",
+      rngSeed: 22,
+      nowIso: "2026-08-13T12:00:00.000Z",
+      settings: CBL_GAME_SETTINGS,
+    });
+    const rng = createSeededRng(state.meta.rngState);
+    const generated = generateRosters(state, rng).state;
+    const teamId = Object.keys(generated.world.teams).sort()[0]!;
+    const team = generated.world.teams[teamId]!;
+    const shortened = {
+      ...generated,
+      world: {
+        ...generated.world,
+        teams: {
+          ...generated.world.teams,
+          [teamId]: { ...team, roster: team.roster.slice(0, 4) },
+        },
+      },
+    };
+    const filled = fillShortRosters(shortened, rng);
+    expect(filled.state.world.teams[teamId]!.roster).toHaveLength(
+      DEFAULT_ROSTER_SIZE,
+    );
+    const again = fillShortRosters(filled.state, rng);
+    expect(again.state.world.teams[teamId]!.roster).toEqual(
+      filled.state.world.teams[teamId]!.roster,
+    );
   });
 
   it("builds a double round-robin without changing season phase", () => {

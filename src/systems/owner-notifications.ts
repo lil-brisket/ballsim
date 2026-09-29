@@ -20,7 +20,6 @@ import {
 import { getCalendarContext } from "@/systems/simulation/calendar-context";
 import {
   getActiveOwnedFranchise,
-  getActiveOwnerTeamId,
   withOwnedFranchise,
 } from "@/state/owner-context";
 

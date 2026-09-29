@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { render } from "@testing-library/react";
 import { TeamLeaguePlacement } from "@/components/owner/TeamLeaguePlacement";
 import { listTeamsForSelection } from "@/state/selectors";
 import { createInitialGameState } from "@/state/create-initial-state";

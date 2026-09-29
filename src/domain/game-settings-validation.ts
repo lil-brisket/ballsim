@@ -33,7 +33,6 @@ import {
   type AiManagementPreset,
   type GameSettings,
   type InjuryFrequency,
-  type ManagementPhase,
   type TradeDeadlineRule,
 } from "@/domain/game-settings";
 import { tryResolveLeagueShape } from "@/domain/league-shape";
@@ -238,11 +237,11 @@ export function validateGameSettings(
     errors.push("financialRules.revenueSharingEnabled must be a boolean.");
   }
 
-  let salaryCap =
+  const salaryCap =
     financialRules.salaryCap === undefined
       ? DEFAULT_SALARY_CAP
       : financialRules.salaryCap;
-  let staffBudget =
+  const staffBudget =
     financialRules.staffBudget === undefined
       ? DEFAULT_STAFF_BUDGET
       : financialRules.staffBudget;

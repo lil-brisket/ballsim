@@ -8,7 +8,6 @@ import type { Player } from "@/domain/entities/player";
 import {
   asGameId,
   asPlayerId,
-  asSeasonId,
   asTeamId,
   type TeamId,
 } from "@/domain/ids";

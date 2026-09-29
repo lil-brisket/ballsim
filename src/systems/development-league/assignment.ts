@@ -33,7 +33,6 @@ function deriveInitialDlRole(
   player: Player,
   dlPeers: Player[],
 ): DevelopmentLeagueRole {
-  const overall = calculatePlayerOverall(player.position, player.attributes);
   const peers = [...dlPeers, player].sort(
     (a, b) =>
       calculatePlayerOverall(b.position, b.attributes) -

@@ -3,7 +3,6 @@ import type {
   PlayoffSeries,
   PlayoffTournament,
 } from "@/domain/entities/playoffs";
-import type { SeriesLength } from "@/domain/game-settings";
 import type { Rng } from "@/domain/rng";
 import { systemResult, type SystemResult } from "@/domain/system-result";
 import type { GameState } from "@/state/game-state";

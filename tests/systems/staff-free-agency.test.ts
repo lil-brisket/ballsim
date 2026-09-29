@@ -3,8 +3,7 @@ import { CBL_GAME_SETTINGS } from "@/domain/game-settings";
 import { createSeededRng } from "@/domain/rng";
 import { createInitialGameState } from "@/state/create-initial-state";
 import { bootstrapWorld } from "@/systems/world-pipeline";
-import { asStaffId, asStaffOfferId, asTeamId } from "@/domain/ids";
-import { testStaff } from "../helpers/staff";
+import { asStaffOfferId } from "@/domain/ids";
 import { fireStaff } from "@/systems/staff";
 import {
   calculateStaffBuyout,
@@ -19,7 +18,6 @@ import {
   listStaffFreeAgents,
 } from "@/systems/staff-free-agency";
 import { createStaffContract } from "@/domain/entities/staff-contract";
-import { asStaffContractId } from "@/domain/ids";
 import { findTeamStaffByRole } from "@/systems/staff-effects";
 
 describe("staff contracts / free agency", () => {

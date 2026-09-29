@@ -18,7 +18,9 @@ import {
   makeDraftSelection,
 } from "@/systems/draft";
 import { runAiTeamDecisions } from "@/systems/ai-team-decisions";
-import { advanceLeaguePhase } from "@/systems/simulation/offseason-lifecycle";
+import { enforceMaxRosterViaDevelopmentLeague } from "@/systems/development-league/enforce-roster-cap";
+import { resolvePendingOwnerDecision } from "@/systems/owner-decisions";
+import { fillShortRosters } from "@/systems/roster-generation";
 import { enterOffseasonFromPostseason } from "@/systems/simulation/season-lifecycle";
 import {
   getActivePhaseId,
@@ -81,9 +83,36 @@ function autoPickUserDraft(state: GameState): GameState {
   return result.success ? result.state : state;
 }
 
+function declineBlockingDecisions(state: GameState): GameState {
+  let current = state;
+  const pending = [...current.user.pendingOwnerDecisions];
+  for (const decision of pending) {
+    if (decision.blockingLevel !== "blocking") {
+      continue;
+    }
+    const resolved = resolvePendingOwnerDecision(current, {
+      decisionId: decision.id,
+      status: "declined",
+      decisionSource: "system",
+    });
+    current = resolved.state;
+  }
+  return current;
+}
+
 function tryAdvanceUserPhase(state: GameState, rng: Rng): GameState | null {
   const next = tryAdvanceUserManagedPhase(state, rng);
   return next ? persistRng(next, rng) : null;
+}
+
+function tryOpenRegularSeason(state: GameState, rng: Rng): GameState {
+  const cleared = persistRng(declineBlockingDecisions(state), rng);
+  const trimmed = persistRng(
+    enforceMaxRosterViaDevelopmentLeague(cleared).state,
+    rng,
+  );
+  const filled = persistRng(fillShortRosters(trimmed, rng).state, rng);
+  return tryAdvanceUserPhase(filled, rng) ?? filled;
 }
 
 function resolveOffseason(state: GameState, rng: Rng): GameState {
@@ -92,20 +121,11 @@ function resolveOffseason(state: GameState, rng: Rng): GameState {
     current = persistRng(enterOffseasonFromPostseason(current).state, rng);
   }
   let guard = 0;
-  while (guard < 120) {
+  while (guard < 200) {
     guard += 1;
+    current = persistRng(declineBlockingDecisions(current), rng);
     if (current.competition.season.phase === "preseason") {
-      const advanced = tryAdvanceUserPhase(current, rng);
-      if (advanced && advanced.competition.season.phase === "regular") {
-        return advanced;
-      }
-      if (getActivePhaseId(current) === "preseason.preparation") {
-        const toRegular = tryAdvanceUserPhase(current, rng);
-        if (toRegular) {
-          return toRegular;
-        }
-      }
-      return current;
+      return tryOpenRegularSeason(current, rng);
     }
     if (current.competition.season.phase === "postseason") {
       current = persistRng(enterOffseasonFromPostseason(current).state, rng);
@@ -126,8 +146,7 @@ function resolveOffseason(state: GameState, rng: Rng): GameState {
       rng,
     );
     if (current.competition.season.phase === "preseason") {
-      const toRegular = tryAdvanceUserPhase(current, rng);
-      return toRegular ?? current;
+      return tryOpenRegularSeason(current, rng);
     }
   }
   throw new Error("League sanity: offseason did not reach preseason.");
@@ -140,14 +159,12 @@ function simulateOneSeason(state: GameState, rng: Rng): GameState {
 
   // Leave starting preseason if needed
   if (getActivePhaseId(current) === "preseason.preparation") {
-    const advanced = tryAdvanceUserPhase(current, rng);
-    if (advanced) {
-      current = advanced;
-    }
+    current = tryOpenRegularSeason(current, rng);
   }
 
   while (days < MAX_DAYS_PER_SEASON) {
     days += 1;
+    current = persistRng(declineBlockingDecisions(current), rng);
     if (isUserOnDraftClock(current)) {
       current = persistRng(autoPickUserDraft(current), rng);
       current = persistRng(runAiTeamDecisions(current, rng).state, rng);
@@ -215,10 +232,7 @@ export function runLeagueCareer(
 
   // Enter regular season from initial preseason
   if (getActivePhaseId(state) === "preseason.preparation") {
-    const advanced = tryAdvanceUserPhase(state, rng);
-    if (advanced) {
-      state = advanced;
-    }
+    state = tryOpenRegularSeason(state, rng);
   }
 
   const snapshots: LeagueSanityTeamSeasonSnapshot[] = [];

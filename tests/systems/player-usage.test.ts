@@ -87,7 +87,6 @@ describe("role vs attributes", () => {
   it("same attributes: primary > secondary > scorer > role_player > low_usage weights", () => {
     const usageScore = 70;
     const scoring = 70;
-    const creation = 70;
     const order: OffensiveRole[] = [
       "primary_creator",
       "secondary_creator",

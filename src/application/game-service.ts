@@ -4,8 +4,6 @@ import {
   withOwnedFranchise,
   withActiveOwnerTeam,
   getOwnedTeamIds,
-  getBlockingDecisions,
-  getPendingDecisionsForTeam,
   isOwnedFranchise,
   withAddedOwnedFranchise,
   getOwnedFranchiseAssistance,
@@ -326,11 +324,7 @@ import {
   type CalendarMonthGrid,
 } from "@/systems/calendar";
 
-import {
-  resolvePhaseResolution,
-  resolveSeasonAnchors,
-} from "@/systems/league-rules/league-calendar";
-import { getPhaseDefinition } from "@/systems/phase-engine";
+import { resolveSeasonAnchors } from "@/systems/league-rules/league-calendar";
 import { processDerivedProjections } from "@/systems/media-hub";
 import { advanceLeaguePhase } from "@/systems/simulation/offseason-lifecycle";
 import {
@@ -369,7 +363,6 @@ import {
 } from "@/state/roster-page-selectors";
 import {
   applyTradeCounterofferState,
-  getActiveOwnerDecision,
   hasActiveOwnerDecision,
   resolvePendingOwnerDecision,
 } from "@/systems/owner-decisions";
@@ -1843,7 +1836,7 @@ export async function executeOwnerTrade(
   }
 
   const rng = createSeededRng(loaded.state.meta.rngState);
-  let working = ensureAiTradeBlocks(loaded.state);
+  const working = ensureAiTradeBlocks(loaded.state);
 
   let proposal = input.proposal;
   if (proposal === undefined) {
@@ -4932,7 +4925,7 @@ export async function toggleFantasyDraftAutoPick(
   return mutateFantasyDraft(
     saveId,
     (state, _rng, nowIso) => {
-      let next = setFantasyDraftAutoPick(state, asTeamId(teamId), enabled);
+      const next = setFantasyDraftAutoPick(state, asTeamId(teamId), enabled);
       const advanced = advanceFantasyDraftClock(next, nowIso);
       return { state: advanced.state, events: advanced.events };
     },
@@ -4948,7 +4941,7 @@ export async function toggleFantasyDraftAutoPickAll(
   return mutateFantasyDraft(
     saveId,
     (state, _rng, nowIso) => {
-      let next = setFantasyDraftAutoPickAll(state, enabled);
+      const next = setFantasyDraftAutoPickAll(state, enabled);
       const advanced = advanceFantasyDraftClock(next, nowIso);
       return { state: advanced.state, events: advanced.events };
     },
@@ -4977,7 +4970,7 @@ export async function resumeOwnerFantasyDraft(
   return mutateFantasyDraft(
     saveId,
     (state, _rng, nowIso) => {
-      let next = resumeFantasyDraft(state, nowIso);
+      const next = resumeFantasyDraft(state, nowIso);
       const advanced = advanceFantasyDraftClock(next, nowIso);
       return { state: advanced.state, events: advanced.events };
     },

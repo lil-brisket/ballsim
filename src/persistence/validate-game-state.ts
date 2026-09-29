@@ -2491,21 +2491,6 @@ function assertNonNegativeIntegerMoney(value: unknown, path: string): void {
   }
 }
 
-function assertIntegerInRange(
-  value: unknown,
-  min: number,
-  max: number,
-  path: string,
-): asserts value is number {
-  assertNumber(value, path);
-  if (!Number.isInteger(value)) {
-    fail(`${path} must be an integer.`);
-  }
-  if (value < min || value > max) {
-    fail(`${path} must be between ${min} and ${max}.`);
-  }
-}
-
 function validateTeamFinanceBooksByYear(
   booksByYear: Record<string, unknown>,
   path: string,

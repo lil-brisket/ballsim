@@ -158,7 +158,7 @@ describe("active owner calendar scope", () => {
 
   it("month grid only shows games for the active controlled team", async () => {
     const saveId = "active_owner_density";
-    const { store, teamA, state } = await seedMultiTeamSave(saveId, 91);
+    const { teamA, state } = await seedMultiTeamSave(saveId, 91);
     const opener =
       state.competition.season.regularSeasonStartDate ??
       state.world.calendar.currentDate;

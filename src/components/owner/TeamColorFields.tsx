@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { isHexColor, normalizeHexColor } from "@/domain/entities/team-branding";
 
 export type TeamColorChannel = "primary" | "secondary" | "accent";
@@ -48,10 +48,12 @@ function ColorChannelField(props: {
   onCommit: (hex: string) => void;
 }) {
   const [draftHex, setDraftHex] = useState(props.committedColor);
+  const [committedSource, setCommittedSource] = useState(props.committedColor);
 
-  useEffect(() => {
+  if (props.committedColor !== committedSource) {
+    setCommittedSource(props.committedColor);
     setDraftHex(props.committedColor);
-  }, [props.committedColor]);
+  }
 
   function commitDraft(raw: string) {
     const normalized = normalizeHexColor(raw);

@@ -3,7 +3,7 @@ import { generateRosters } from "@/systems/roster-generation";
 import { getEmergencyLineup } from "@/systems/roster-management";
 import { simulateScheduledGame } from "@/systems/game-simulation";
 import { createGame } from "@/domain/entities/game";
-import { asGameId, asSeasonId, asTeamId } from "@/domain/ids";
+import { asGameId, asTeamId } from "@/domain/ids";
 import { createTestGameState } from "../factories/game-state";
 import { createTestRng } from "../helpers/determinism";
 

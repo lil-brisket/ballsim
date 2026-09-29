@@ -17,7 +17,6 @@ import {
   asPlayerId,
   asSeasonId,
   asTeamId,
-  type PlayerId,
   type TeamId,
 } from "@/domain/ids";
 import type { GameState } from "@/state/game-state";

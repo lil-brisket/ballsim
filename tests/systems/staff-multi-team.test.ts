@@ -5,7 +5,6 @@ import { createInitialGameState } from "@/state/create-initial-state";
 import { bootstrapWorld } from "@/systems/world-pipeline";
 import { findTeamStaffByRole } from "@/systems/staff-effects";
 import { hireStaff, fireStaff } from "@/systems/staff";
-import { asTeamId } from "@/domain/ids";
 
 describe("staff multi-team owner safety", () => {
   it("staff belonging to one owned team is not treated as belonging to another", () => {

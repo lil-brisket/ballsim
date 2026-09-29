@@ -104,7 +104,7 @@ export function makeFantasyDraftSelection(
   const nextPickNumber =
     pick.pickNumber >= draft.totalPicks ? null : pick.pickNumber + 1;
 
-  let updatedDraft: FantasyDraft = {
+  const updatedDraft: FantasyDraft = {
     ...draft,
     selectedPlayerIds: [...draft.selectedPlayerIds, input.playerId],
     selections: [...draft.selections, selection],

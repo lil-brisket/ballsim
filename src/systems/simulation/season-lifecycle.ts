@@ -13,10 +13,7 @@ import {
   canBeginPlayoffs,
 } from "@/systems/league-rules";
 import { snapshotTradeDeadline } from "@/systems/league-rules/snapshot-trade-deadline";
-import {
-  derivePlannedRegularSeasonStartDate,
-  needsRegularSeasonInitialization,
-} from "@/systems/simulation/planned-season-dates";
+import { derivePlannedRegularSeasonStartDate } from "@/systems/simulation/planned-season-dates";
 import { planSeasonEvents } from "@/systems/season-events";
 
 export {

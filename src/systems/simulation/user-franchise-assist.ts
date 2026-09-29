@@ -504,7 +504,7 @@ function pickDraftForNeed(
     };
   }
 
-  let next = withAppliedGameplayConsequence(result.state, key);
+  const next = withAppliedGameplayConsequence(result.state, key);
   const events: DomainEvent[] = [
     ...result.events,
     createAiAssistLogEvent({

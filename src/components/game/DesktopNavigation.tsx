@@ -1,11 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useSyncExternalStore } from "react";
 import type { OwnerNavGroup } from "@/application/owner-nav-config";
 import { NavGroups } from "@/components/game/NavGroups";
 import { cn, focusRingClass } from "@/components/ui/styles";
 
 const STORAGE_KEY = "ballsim:ownerNavCollapsed";
+
+const collapsedListeners = new Set<() => void>();
 
 function readCollapsedPreference(): boolean {
   try {
@@ -15,26 +17,38 @@ function readCollapsedPreference(): boolean {
   }
 }
 
+function subscribeCollapsed(onStoreChange: () => void): () => void {
+  collapsedListeners.add(onStoreChange);
+  window.addEventListener("storage", onStoreChange);
+  return () => {
+    collapsedListeners.delete(onStoreChange);
+    window.removeEventListener("storage", onStoreChange);
+  };
+}
+
+function writeCollapsedPreference(next: boolean): void {
+  try {
+    window.localStorage.setItem(STORAGE_KEY, next ? "1" : "0");
+  } catch {
+    // ignore
+  }
+  for (const listener of collapsedListeners) {
+    listener();
+  }
+}
+
 export function DesktopNavigation(props: {
   saveId: string;
   groups?: readonly OwnerNavGroup[];
 }) {
-  const [collapsed, setCollapsed] = useState(false);
-
-  useEffect(() => {
-    setCollapsed(readCollapsedPreference());
-  }, []);
+  const collapsed = useSyncExternalStore(
+    subscribeCollapsed,
+    readCollapsedPreference,
+    () => false,
+  );
 
   function toggleCollapsed() {
-    setCollapsed((value) => {
-      const next = !value;
-      try {
-        window.localStorage.setItem(STORAGE_KEY, next ? "1" : "0");
-      } catch {
-        // ignore
-      }
-      return next;
-    });
+    writeCollapsedPreference(!collapsed);
   }
 
   return (

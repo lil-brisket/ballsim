@@ -81,7 +81,6 @@ import type { TeamId as BrandTeamId } from "@/domain/ids";
 import { reconstructGameSettingsFromState } from "@/state/reconstruct-game-settings";
 import { generateAxesForExistingProfile } from "@/systems/franchise-identity-generation";
 import {
-  DEFAULT_GAME_SETTINGS,
   DEFAULT_TRADE_DEADLINE_RULE,
   isTradeDeadlineRule,
   legacyManagementModeToPreset,
@@ -2272,6 +2271,16 @@ type UserSlicePreV26 = {
   appliedGameplayConsequenceKeys: GameState["user"]["ownedFranchises"][string]["appliedGameplayConsequenceKeys"];
 };
 
+/** Dual-shaped user blob while v26–v40 still pass through legacy and modern ownership. */
+type UserSliceV26ToV40 = Record<string, unknown> & {
+  ownerStartSeasonYear?: number;
+  explicitDecisions?: Record<string, true>;
+  phaseSkips?: unknown[];
+  pendingOwnerDecisions?: unknown[];
+  ownerDecisionHistory?: unknown[];
+  citySelectionConfirmed?: boolean;
+};
+
 type GameStateV24 = {
   meta: Omit<GameState["meta"], "schemaVersion"> & {
     schemaVersion: 24;
@@ -2449,7 +2458,7 @@ type GameStateV26 = {
   world: GameState["world"];
   competition: CompetitionSlicePreV49;
   business: GameState["business"];
-  user: Record<string, any>;
+  user: UserSliceV26ToV40;
 };
 
 /**
@@ -2520,7 +2529,7 @@ type GameStateV27 = {
   world: GameState["world"];
   competition: CompetitionSlicePreV49;
   business: GameState["business"];
-  user: Record<string, any>;
+  user: UserSliceV26ToV40;
 };
 
 /**
@@ -2629,7 +2638,7 @@ type GameStateV28 = {
     playoffs: GameState["competition"]["playoffs"];
   };
   business: GameState["business"];
-  user: Record<string, any>;
+  user: UserSliceV26ToV40;
 };
 
 /**
@@ -2738,7 +2747,7 @@ type GameStateV29 = {
   world: GameState["world"];
   competition: CompetitionSlicePreV49;
   business: GameState["business"];
-  user: Record<string, any>;
+  user: UserSliceV26ToV40;
 };
 
 /**
@@ -2780,7 +2789,7 @@ type GameStateV30 = {
   world: GameState["world"];
   competition: CompetitionSlicePreV49;
   business: GameState["business"];
-  user: Record<string, any>;
+  user: UserSliceV26ToV40;
 };
 
 /**
@@ -2857,7 +2866,7 @@ type GameStateV31 = {
   world: GameState["world"];
   competition: CompetitionSlicePreV49;
   business: GameState["business"];
-  user: Record<string, any>;
+  user: UserSliceV26ToV40;
 };
 
 /**
@@ -2939,7 +2948,7 @@ type GameStateV32 = {
   world: GameState["world"];
   competition: CompetitionSlicePreV49;
   business: GameState["business"];
-  user: Record<string, any>;
+  user: UserSliceV26ToV40;
 };
 
 /**
@@ -2986,7 +2995,7 @@ type GameStateV33 = {
   world: GameState["world"];
   competition: CompetitionSlicePreV49;
   business: GameState["business"];
-  user: Record<string, any>;
+  user: UserSliceV26ToV40;
 };
 
 /**
@@ -3062,7 +3071,7 @@ type GameStateV34 = {
   world: GameState["world"];
   competition: CompetitionSlicePreV49;
   business: Omit<GameState["business"], "gameArchive" | "playerHistory">;
-  user: Record<string, any>;
+  user: UserSliceV26ToV40;
 };
 
 type GameStateV35 = {
@@ -3076,7 +3085,7 @@ type GameStateV35 = {
     gameArchive?: GameState["business"]["gameArchive"];
     playerHistory?: GameState["business"]["playerHistory"];
   };
-  user: Record<string, any>;
+  user: UserSliceV26ToV40;
 };
 
 type GameStateV36 = {
@@ -3106,7 +3115,7 @@ type GameStateV36 = {
     playoffs: GameState["competition"]["playoffs"];
   };
   business: GameState["business"];
-  user: Record<string, any>;
+  user: UserSliceV26ToV40;
 };
 
 type GameStateV37 = {
@@ -3123,7 +3132,7 @@ type GameStateV37 = {
   world: GameState["world"];
   competition: CompetitionSlicePreV49;
   business: GameState["business"];
-  user: Record<string, any>;
+  user: UserSliceV26ToV40;
 };
 
 type GameStateV38 = {
@@ -3140,7 +3149,7 @@ type GameStateV38 = {
   world: GameState["world"];
   competition: CompetitionSlicePreV49;
   business: GameState["business"];
-  user: Record<string, any>;
+  user: UserSliceV26ToV40;
 };
 
 type GameStateV39 = {
@@ -3151,7 +3160,7 @@ type GameStateV39 = {
   world: GameState["world"];
   competition: CompetitionSlicePreV49;
   business: GameState["business"];
-  user: Record<string, any>;
+  user: UserSliceV26ToV40;
 };
 
 type GameStateV40 = {
@@ -3162,7 +3171,7 @@ type GameStateV40 = {
   world: GameState["world"];
   competition: CompetitionSlicePreV49;
   business: GameState["business"];
-  user: Record<string, any>;
+  user: UserSliceV26ToV40;
 };
 
 /**
@@ -4627,9 +4636,6 @@ function migratePlayerInjuryFields(raw: Record<string, unknown>): Player {
   const migrated = migrateLegacyInjuryStatus(
     legacyInjury ?? { kind: "healthy" },
   );
-  const { injury: _removed, ...rest } = raw as Record<string, unknown> & {
-    injury?: unknown;
-  };
   return {
     ...base,
     availability: migrated.availability,

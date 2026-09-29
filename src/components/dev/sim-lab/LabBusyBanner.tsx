@@ -6,10 +6,15 @@ import { SimulationProgressBanner } from "@/components/game/SimulationProgressBa
 
 export function useLabRunElapsed(pending: boolean): number {
   const [elapsedMs, setElapsedMs] = useState(0);
+  const [wasPending, setWasPending] = useState(pending);
+
+  if (pending !== wasPending) {
+    setWasPending(pending);
+    setElapsedMs(0);
+  }
 
   useEffect(() => {
     if (!pending) {
-      setElapsedMs(0);
       return;
     }
     const started = Date.now();

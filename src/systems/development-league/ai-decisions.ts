@@ -13,15 +13,18 @@ import {
   assignPlayerToDevelopmentLeague,
   recallPlayerFromDevelopmentLeague,
 } from "@/systems/development-league/assignment";
+import { enforceMaxRosterViaDevelopmentLeague } from "@/systems/development-league/enforce-roster-cap";
 import { isDevelopmentLeagueEligible } from "@/systems/development-league/eligibility";
 import {
   getDevelopmentLeagueRosterPlayers,
   getTopLeagueRosterPlayers,
+  getTopLeagueRosterSize,
 } from "@/systems/development-league/franchise-membership";
 import {
   getDevelopmentReadiness,
   getDlAssignmentRecommendation,
 } from "@/systems/development-league/recommendations";
+import { TRADE_ROSTER_RULES } from "@/systems/trades-config";
 
 const ASSIGN_SCORE_THRESHOLD = 40;
 const PROMOTE_READINESS: ReadonlySet<string> = new Set(["ready", "near_ready"]);
@@ -72,7 +75,12 @@ export function runAiDevelopmentLeagueDecisions(
       .sort((a, b) => b.rec.score - a.rec.score);
 
     for (const { player } of candidates) {
-      // Keep at least min roster after assignment
+      if (
+        getTopLeagueRosterSize(teamId, current) <=
+        TRADE_ROSTER_RULES.maxRosterSize
+      ) {
+        break;
+      }
       const result = assignPlayerToDevelopmentLeague(
         current,
         player.id,
@@ -83,6 +91,12 @@ export function runAiDevelopmentLeagueDecisions(
         events.push(...result.events);
       }
     }
+
+    const trimmed = enforceMaxRosterViaDevelopmentLeague(current, {
+      teamIds: [teamId],
+    });
+    current = trimmed.state;
+    events.push(...trimmed.events);
   }
 
   return systemResult(current, events);

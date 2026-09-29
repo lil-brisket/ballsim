@@ -74,7 +74,8 @@ function stateWithStaff(players: ReturnType<typeof createPlayer>[]): {
 describe("staff isolation from player injuries", () => {
   it("injury creation and recovery never mutate staff morale or attributes", () => {
     const player = createPlayer({ id: "p1", teamId: "team_1" });
-    let { state, staff } = stateWithStaff([player]);
+    const { staff, state: initialState } = stateWithStaff([player]);
+    let state = initialState;
     const moraleBefore = staff.morale;
     const attrsBefore = { ...(staff.attributes as Record<string, number>) };
 

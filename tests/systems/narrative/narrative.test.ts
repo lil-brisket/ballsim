@@ -302,7 +302,7 @@ describe("narrative lifecycle and actions", () => {
 describe("narrative processNarrativeLayer", () => {
   it("facility_completed emits a story notification without an active situation", () => {
     const rng = createTestRng();
-    let state = createCblInitialGameState(rng);
+    const state = createCblInitialGameState(rng);
     const teamId = state.user.activeOwnerTeamId;
     const dayEvents = [
       {
@@ -365,7 +365,7 @@ describe("narrative processNarrativeLayer", () => {
 
   it("spam filter suppresses same-stage reopen", () => {
     const rng = createTestRng();
-    let state = createCblInitialGameState(rng);
+    const state = createCblInitialGameState(rng);
     const context = buildNarrativeContext(state, { cadence: "monthly" });
     const candidate: DetectorCandidate = {
       detectorKey: "attendance_decline",

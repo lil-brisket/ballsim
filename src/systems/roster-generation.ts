@@ -132,3 +132,132 @@ export function generateRosters(state: GameState, rng: Rng): SystemResult {
     },
   });
 }
+
+function nextFillPlayerId(
+  teamId: string,
+  players: Record<string, Player>,
+  startSlot: number,
+): { playerId: ReturnType<typeof asPlayerId>; nextSlot: number } {
+  let slot = startSlot;
+  let playerId = asPlayerId(`player_${teamId}_fill_${slot}`);
+  while (players[playerId] !== undefined) {
+    slot += 1;
+    playerId = asPlayerId(`player_${teamId}_fill_${slot}`);
+  }
+  return { playerId, nextSlot: slot + 1 };
+}
+
+/**
+ * Adds generated players so every team reaches {@link DEFAULT_ROSTER_SIZE}.
+ * Used after offseason attrition when the free-agent pool cannot fill holes.
+ */
+export function fillShortRosters(state: GameState, rng: Rng): SystemResult {
+  const teamIds = (
+    Object.keys(state.world.teams) as ReturnType<typeof asTeamId>[]
+  ).sort((a, b) => (a < b ? -1 : a > b ? 1 : 0));
+  const shortTeamIds = teamIds.filter(
+    (teamId) =>
+      (state.world.teams[teamId]?.roster.length ?? 0) < DEFAULT_ROSTER_SIZE,
+  );
+  if (shortTeamIds.length === 0) {
+    return systemResult(state);
+  }
+
+  const players: Record<string, Player> = { ...state.world.players };
+  const contracts: Record<string, Contract> = { ...state.business.contracts };
+  const teams: Record<string, (typeof state.world.teams)[string]> = {
+    ...state.world.teams,
+  };
+  const currentYear = state.competition.season.year;
+
+  for (const teamId of shortTeamIds) {
+    const team = teams[teamId]!;
+    const roster = [...team.roster];
+    let slot = roster.length;
+    while (roster.length < DEFAULT_ROSTER_SIZE) {
+      const next = nextFillPlayerId(teamId, players, slot);
+      slot = next.nextSlot;
+      const playerId = next.playerId;
+      const position = rosterPositionForSlot(roster.length);
+      const contractId = asContractId(`contract_${playerId}`);
+      const player = generatePlayerWithRng(rng, {
+        id: playerId,
+        teamId: team.id,
+        contractId,
+        position,
+      });
+      players[playerId] = player;
+      roster.push(playerId);
+
+      const salaryPerYear = attributeBasedAnnualSalary(player.attributes);
+      const yearsRemaining = rng.nextInt(1, 4);
+      const startYear = currentYear;
+      const endYear = currentYear + yearsRemaining - 1;
+      const salaryByYear: Record<string, number> = {};
+      for (let year = startYear; year <= endYear; year += 1) {
+        salaryByYear[String(year)] = salaryPerYear;
+      }
+      contracts[contractId] = createContract({
+        id: contractId,
+        playerId,
+        teamId: team.id,
+        startYear,
+        endYear,
+        salaryByYear,
+      });
+    }
+    teams[teamId] = { ...team, roster };
+  }
+
+  let next: GameState = {
+    ...state,
+    world: {
+      ...state.world,
+      players,
+      teams,
+    },
+    business: {
+      ...state.business,
+      contracts,
+      finances: { ...state.business.finances },
+    },
+  };
+
+  for (const teamId of shortTeamIds) {
+    const management = recommendRosterManagement(next, teamId, {
+      configuredBy: "default",
+    });
+    next = {
+      ...next,
+      world: {
+        ...next.world,
+        teams: {
+          ...next.world.teams,
+          [teamId]: {
+            ...next.world.teams[teamId]!,
+            rosterManagement: management,
+          },
+        },
+      },
+    };
+  }
+
+  const finances = { ...next.business.finances };
+  for (const teamId of shortTeamIds) {
+    const existingFinance = finances[teamId];
+    if (existingFinance) {
+      finances[teamId] = {
+        ...existingFinance,
+        payroll: getTeamPayroll(teamId, currentYear, next),
+      };
+    }
+  }
+
+  return systemResult({
+    ...next,
+    business: {
+      ...next.business,
+      finances,
+    },
+  });
+}

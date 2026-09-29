@@ -179,7 +179,7 @@ export function preferencesForMigration(
   role: StaffRole,
   overall: number,
   age: number,
-  experience: number,
+  _experience: number,
 ): StaffPreferences {
   const desired = annualSalaryFromOverall(role, overall);
   const minimum = Math.round(desired * 0.8);

@@ -3,7 +3,7 @@ import type { PhaseAttentionSummary } from "@/state/phase-dashboard";
 export function PhaseAttentionSummaryPanel(props: {
   attention: PhaseAttentionSummary;
 }) {
-  const { required, recommended, optional, counts } = props.attention;
+  const { required, counts } = props.attention;
   const total = counts.required + counts.recommended + counts.optional;
 
   if (total === 0) {

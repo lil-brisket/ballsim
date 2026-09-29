@@ -47,10 +47,6 @@ export function validateRotationFeasibility(
   const available = availablePlayerMinutesForGame(overtimePeriods);
   const issues: RotationFeasibilityIssue[] = [];
 
-  const pool = management.rotation.filter(
-    (entry) =>
-      entry.rotationStatus === "active" || entry.rotationStatus === "emergency",
-  );
   // Feasibility for max/min uses active (and emergency only if needed — use active first)
   const active = management.rotation.filter(
     (entry) => entry.rotationStatus === "active",

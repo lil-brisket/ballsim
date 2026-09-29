@@ -381,20 +381,20 @@ export function resolveFranchisePreferencesFromParts(
       pressureMarketingNudge +
       trajectory.marketOpportunity * 0.08,
   );
-  let attendancePriority = modulate(
+  const attendancePriority = modulate(
     "attendancePriority",
     baseline.attendancePriority +
       deltas.attendancePriority +
       pressureAttendanceNudge +
       pressure.attendanceDeclining * 0.08,
   );
-  let developmentPriority = modulate(
+  const developmentPriority = modulate(
     "developmentPriority",
     baseline.developmentPriority +
       deltas.developmentPriority +
       trajectory.rebuildPressure * 0.05,
   );
-  let riskAppetite = modulate(
+  const riskAppetite = modulate(
     "riskAppetite",
     baseline.riskAppetite +
       deltas.riskAppetite -

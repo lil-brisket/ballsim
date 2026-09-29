@@ -123,7 +123,6 @@ export function minuteBalanceOutScore(input: {
   context: RotationGameContext;
 }): number {
   const deficit = minutesDeficit(input);
-  const max = effectiveMaximum(input.entry, input.context);
   const overNormal = input.actualMinutes - input.entry.normalMaximumMinutes;
   const overAbs = input.actualMinutes - input.entry.absoluteMaximumMinutes;
 

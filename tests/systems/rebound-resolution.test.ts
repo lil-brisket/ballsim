@@ -481,7 +481,7 @@ describe("resolveRebound statistical behavior", () => {
 
     const sampleSize = 8_000;
     for (let seed = 0; seed < sampleSize; seed += 1) {
-      const defensivePlayers = positions.map((position, index) =>
+      const defensivePlayers = positions.map((position) =>
         makePlayer(`def_${position}`, DEFENSE_TEAM, {
           position,
           rebounding: 70,

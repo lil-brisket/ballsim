@@ -7,13 +7,13 @@ import {
 import { validateGameState } from "@/persistence/validate-game-state";
 import { createGame } from "@/domain/entities/game";
 import { createSeededRng } from "@/domain/rng";
-import { asGameId, asSeasonId, asTeamId } from "@/domain/ids";
+import { asGameId, asTeamId } from "@/domain/ids";
 import { GAME_STATE_SCHEMA_VERSION } from "@/state/game-state";
 import { bootstrapWorld } from "@/systems/world-pipeline";
 
 describe("v34 → v35 migration", () => {
   function bootstrappedState(saveId: string) {
-    let state = createTestGameState({ saveId });
+    const state = createTestGameState({ saveId });
     const rng = createSeededRng(state.meta.rngState);
     return bootstrapWorld(state, rng).state;
   }

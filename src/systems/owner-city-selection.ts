@@ -14,7 +14,6 @@ import type { TeamId } from "@/domain/ids";
 import type { GameState } from "@/state/game-state";
 import {
   getActiveOwnedFranchise,
-  getActiveOwnerTeamId,
   withOwnedFranchise,
 } from "@/state/owner-context";
 import { uniqueTeamAbbreviation } from "@/systems/team-abbreviation";

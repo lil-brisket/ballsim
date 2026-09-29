@@ -44,7 +44,7 @@ import { bootstrapWorld } from "@/systems/world-pipeline";
 import { forecastNextHomeGameDay } from "@/systems/demand/forecast-game-day";
 
 function bootstrap(seed = 42): GameState {
-  let state = createInitialGameState({
+  const state = createInitialGameState({
     saveId: `econ_${seed}`,
     rngSeed: seed,
     settings: CBL_GAME_SETTINGS,

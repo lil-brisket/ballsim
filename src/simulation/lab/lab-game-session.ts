@@ -110,7 +110,7 @@ export function createLabGameSession(
   let awayPlayers = generated.awayPlayers;
   let homeTeamId = asTeamId("team_validation_home");
   let awayTeamId = asTeamId("team_validation_away");
-  let rotationSetup =
+  const rotationSetup =
     rotation === "on"
       ? buildLabRotationState(homePlayers, awayPlayers, options.seed)
       : null;

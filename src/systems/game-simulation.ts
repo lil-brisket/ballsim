@@ -34,7 +34,6 @@ import {
   type GameClock,
 } from "@/systems/game-clock";
 import {
-  GAME_SIMULATION_CONFIG,
   mergeGameSimulationConfig,
   type GameSimulationConfig,
 } from "@/systems/game-simulation-config";
@@ -877,26 +876,6 @@ function philosophyForTeam(
     return context.awayCoachingPhilosophy ?? DEFAULT_COACHING_PHILOSOPHY;
   }
   return DEFAULT_COACHING_PHILOSOPHY;
-}
-
-function addSecondsToOnCourtPlayers(
-  secondsOnCourt: Map<string, number>,
-  homeOnCourt: readonly Player[],
-  awayOnCourt: readonly Player[],
-  elapsedSeconds: number,
-): void {
-  for (const player of homeOnCourt) {
-    secondsOnCourt.set(
-      player.id,
-      (secondsOnCourt.get(player.id) ?? 0) + elapsedSeconds,
-    );
-  }
-  for (const player of awayOnCourt) {
-    secondsOnCourt.set(
-      player.id,
-      (secondsOnCourt.get(player.id) ?? 0) + elapsedSeconds,
-    );
-  }
 }
 
 function selectStartingLineup(

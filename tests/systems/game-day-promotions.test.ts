@@ -95,7 +95,7 @@ describe("game-day promotions scheduling", () => {
     const { state, teamId, otherTeamId } = setupWithHomeGame(30);
     const awayId = asGameId("game_away");
     const date = addCalendarDays(state.world.calendar.currentDate, 30);
-    let next = {
+    const next = {
       ...state,
       competition: {
         ...state.competition,

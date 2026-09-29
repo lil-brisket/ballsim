@@ -142,7 +142,7 @@ export function buildRotationPlan(input: {
     })
     .slice(0, depth);
 
-  let activePlayerIds = rankedActive.map((entry) => entry.playerId);
+  const activePlayerIds = rankedActive.map((entry) => entry.playerId);
 
   // Ensure at least 5 available
   if (activePlayerIds.length < 5) {

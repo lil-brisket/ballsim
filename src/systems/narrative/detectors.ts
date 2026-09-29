@@ -350,11 +350,6 @@ export function detectExpectationGap(
   let beating = false;
   let missing = false;
   if (winObjective?.target && winObjective.target > 0) {
-    const expectedPace =
-      winObjective.target *
-      (context.wins + context.losses > 0
-        ? (context.wins + context.losses) / Math.max(winObjective.target * 2, 1)
-        : 0);
     // Simpler: compare current wins to linear pace assuming ~82 or settings length.
     const gamesPlayed = context.wins + context.losses;
     if (gamesPlayed >= 10 && winObjective.target > 0) {

@@ -68,7 +68,7 @@ export function GameModeCard(props: { mode: GameModeDefinition }) {
   return (
     <article
       className={`flex flex-col gap-4 rounded-xl border p-6 ${unavailableClasses}`}
-      aria-disabled="true"
+      aria-label={`${mode.name}. ${mode.tagline} ${mode.actionLabel}`}
     >
       {body}
     </article>

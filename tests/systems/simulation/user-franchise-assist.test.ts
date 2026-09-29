@@ -28,7 +28,7 @@ describe("user-franchise-assist", () => {
   });
 
   it("continuity can fill roster below minimum during free agency", () => {
-    let state = bootstrapped("assist_roster");
+    const state = bootstrapped("assist_roster");
     state.settings.ai.managementPreset = "continuity";
     state.settings.ai.assistance = applyPreset("continuity");
     state.competition.season.phase = "offseason";
@@ -62,7 +62,7 @@ describe("user-franchise-assist", () => {
   });
 
   it("hires missing starter staff under continuity", () => {
-    let state = bootstrapped("assist_staff");
+    const state = bootstrapped("assist_staff");
     state.settings.ai.managementPreset = "continuity";
     state.settings.ai.assistance = applyPreset("continuity");
     const teamId = state.user.activeOwnerTeamId;

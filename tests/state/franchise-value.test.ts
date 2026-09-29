@@ -12,7 +12,7 @@ import type {
   PlayoffResultSnapshot,
 } from "@/domain/entities/franchise-history";
 import { createDomainEvent } from "@/domain/events";
-import { asSeasonId, asTeamId, type TeamId } from "@/domain/ids";
+import { asSeasonId, type TeamId } from "@/domain/ids";
 import { createSeededRng } from "@/domain/rng";
 import { appendEventLog, type GameState } from "@/state/game-state";
 import {
@@ -154,33 +154,6 @@ function withLeague(
     business: {
       ...state.business,
       leagueEconomy: { ...state.business.leagueEconomy, ...patch },
-    },
-  };
-}
-
-function withStandings(
-  state: GameState,
-  wins: number,
-  losses: number,
-): GameState {
-  const teamId = teamIdOf(state);
-  const prior = state.competition.standings.byTeamId[teamId]!;
-  return {
-    ...state,
-    competition: {
-      ...state.competition,
-      standings: {
-        ...state.competition.standings,
-        byTeamId: {
-          ...state.competition.standings.byTeamId,
-          [teamId]: {
-            ...prior,
-            wins,
-            losses,
-            winPercentage: wins + losses > 0 ? wins / (wins + losses) : 0,
-          },
-        },
-      },
     },
   };
 }

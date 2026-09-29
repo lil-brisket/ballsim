@@ -65,7 +65,6 @@ describe("owner-context", () => {
   it("isolates franchise mutations", () => {
     const state = freshState();
     const teamIds = Object.keys(state.world.teams).sort();
-    const primary = asTeamId(teamIds[0]!);
     const secondary = asTeamId(teamIds[1]!);
     let next = withAddedOwnedFranchise(
       state,

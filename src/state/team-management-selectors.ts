@@ -17,7 +17,7 @@ import { calculatePlayerOverall } from "@/domain/player-overall-rating";
 import type { PlayerId, TeamId } from "@/domain/ids";
 import type { GameState } from "@/state/game-state";
 import { getControlledTeam } from "@/state/selectors";
-import { getActiveOwnerTeamId, getOwnedTeamIds } from "@/state/owner-context";
+import { getActiveOwnerTeamId } from "@/state/owner-context";
 import { getTeamTransactions } from "@/state/team-transaction-selectors";
 import {
   getPlayerAvailability,

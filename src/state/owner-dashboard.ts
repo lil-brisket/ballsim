@@ -4,7 +4,6 @@ import { getTeamCapSpace, getTeamPayroll } from "@/systems/salary-cap";
 import { STARTER_ROLES } from "@/systems/staff-generation";
 import { getFinancialStatement } from "@/systems/team-finances";
 import { TICKET_PRICE_MAX, TICKET_PRICE_MIN } from "@/systems/ticket-pricing";
-import type { TeamId } from "@/domain/ids";
 import { asTeamId } from "@/domain/ids";
 import type { GameState } from "@/state/game-state";
 import {

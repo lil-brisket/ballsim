@@ -146,7 +146,7 @@ export function tickDailyRecovery(
   rng: Rng,
 ): InjuryServiceResult {
   const date = state.world.calendar.currentDate;
-  let current = state;
+  const current = state;
   const events: DomainEvent[] = [];
   const players = { ...current.world.players };
   let changed = false;
@@ -186,7 +186,7 @@ export function tickDailyRecovery(
 
     const remaining: PlayerInjury[] = [];
     for (const injury of next.activeInjuries) {
-      let ticked = tickInjuryDailyRecovery(injury, next, medical, rng);
+      const ticked = tickInjuryDailyRecovery(injury, next, medical, rng);
       const cleared = maybeFullyClearInjury(ticked);
       if (cleared == null) {
         // Archive

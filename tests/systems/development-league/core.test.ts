@@ -3,7 +3,6 @@ import { createContract } from "@/domain/entities/contract";
 import { createDefaultDevelopmentLeagueProfile } from "@/domain/entities/development-league";
 import { createPlayer } from "@/domain/entities/player";
 import { asContractId, asPlayerId, asTeamId } from "@/domain/ids";
-import { calculatePlayerOverall } from "@/domain/player-overall-rating";
 import { createTestGameState } from "../../factories/game-state";
 import {
   createPlayer as createTestPlayer,

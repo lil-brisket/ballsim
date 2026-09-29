@@ -45,7 +45,7 @@ export function financialHealthInputFromState(
 export function assertCapitalSpendingAllowed(
   state: GameState,
   teamId: TeamId,
-  action: string,
+  _action: string,
 ): void {
   if (!isOwnedFranchise(state, teamId)) {
     return;

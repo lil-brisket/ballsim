@@ -100,7 +100,6 @@ export function advanceScoutAssignments(state: GameState, rng: Rng): GameState {
 
   let nextDraft = draft;
   const classSize = Object.keys(draft.prospects).length;
-  const teamIds = Object.keys(draft.teamDraftState).sort();
 
   // Also advance for teams that have assignments but ensure all teams exist
   for (const teamId of Object.keys(state.world.teams).sort() as TeamId[]) {
@@ -119,7 +118,7 @@ export function advanceScoutAssignments(state: GameState, rng: Rng): GameState {
       continue;
     }
 
-    let scouting = [...teamState.scouting];
+    const scouting = [...teamState.scouting];
     for (const assignment of teamState.scoutAssignments) {
       const prospect = nextDraft.prospects[assignment.prospectPlayerId];
       if (!prospect || prospect.status !== "eligible") continue;

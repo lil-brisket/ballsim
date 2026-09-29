@@ -87,7 +87,6 @@ export function runAiTeamDecisions(state: GameState, _rng: Rng): SystemResult {
     }
   }
 
-  const calendar = getCalendarContext(current);
   const tradeWindow = checkTradeWindow(current);
   if (tradeWindow.allowed) {
     const trade = runAiTrades(current);

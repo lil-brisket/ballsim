@@ -507,7 +507,7 @@ describe("Owner Mode vertical slice", () => {
 
       // Advance through preseason → regular
       await ensureRegularSeason(saveId, store);
-      let phaseResult = await advanceOwnerTime(
+      const phaseResult = await advanceOwnerTime(
         saveId,
         { days: 10, stopOnPhaseChange: true },
         store,
@@ -758,7 +758,7 @@ describe("Owner Mode vertical slice", () => {
         expect(selected.ok).toBe(true);
 
         await ensureRegularSeason(created.save.id, store);
-        let result = await advanceOwnerTime(
+        const result = await advanceOwnerTime(
           created.save.id,
           { days: 10, stopOnPhaseChange: true },
           store,

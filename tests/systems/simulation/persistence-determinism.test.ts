@@ -13,18 +13,6 @@ import { GAME_STATE_SCHEMA_VERSION } from "@/state/game-state";
 import { addCalendarDays } from "@/domain/calendar-date";
 import { resetDomainEventSequenceForTests } from "@/domain/events/domain-event";
 
-function normalizeMeta(state: ReturnType<typeof createInitialGameState>) {
-  return JSON.parse(
-    JSON.stringify({
-      ...state,
-      meta: {
-        ...state.meta,
-        updatedAt: "normalized",
-      },
-    }),
-  );
-}
-
 describe("simulation persistence and determinism", () => {
   it("migrates schemaVersion 20 into simulation backbone fields", () => {
     const modern = createInitialGameState({

@@ -149,7 +149,7 @@ describe("game archive size measurement", () => {
 
     // Surface measurement for operators reading test output
     for (const row of sizes) {
-      // eslint-disable-next-line no-console
+       
       console.log(
         `[game-archive-size] seasons=${row.seasons} games=${row.games} bytes=${row.bytes}`,
       );

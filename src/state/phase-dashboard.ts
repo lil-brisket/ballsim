@@ -4,7 +4,6 @@ import {
   evaluatePhaseFocus,
   evaluatePhaseTasks,
   evaluatePhaseTasksForOwnedTeams,
-  getPhaseDefinition,
   previewAdvance,
   resolveCurrentPhase,
   type PhaseAdvancePreview,
@@ -78,7 +77,6 @@ export function toPhaseDashboardView(
     focus[0]?.title ??
     null;
 
-  const def = getPhaseDefinition(resolved.phaseId);
   const showAdvanceControl = false; // calendar-primary: phase advance demoted
 
   return {

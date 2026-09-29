@@ -46,7 +46,7 @@ export function tryEnqueueCpuToUserTradeOffer(
     counterpartyFilter: (id) => owned.has(id),
   });
 
-  let enqueued = 0;
+  const enqueued = 0;
   for (const candidate of ranked) {
     if (enqueued >= TRADE_OFFER_DAILY_CAP) break;
     if (!validateTrade(state, candidate.proposal).valid) continue;

@@ -130,7 +130,7 @@ describe("trade finder", () => {
     const { teamA, teamB } = teamIds(state);
     const playerA = playerOnTeam(state, teamA, 0);
     const playerB = playerOnTeam(state, teamB, 0);
-    let next = addToTradeBlock(state, teamB, {
+    const next = addToTradeBlock(state, teamB, {
       kind: "player",
       playerId: playerB,
     }).state;
@@ -190,7 +190,7 @@ describe("trade finder", () => {
 describe("trade evaluation and AI", () => {
   it("accepts when netValue >= 0", () => {
     const state = createTradeFixture();
-    const { teamA, teamB } = teamIds(state);
+    const { teamB } = teamIds(state);
     const proposal = playerForPlayerProposal(state);
     const evaluation = evaluateTradeOffer(state, teamB, proposal);
     expect(typeof evaluation.netValue).toBe("number");

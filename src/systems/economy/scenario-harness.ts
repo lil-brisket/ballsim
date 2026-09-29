@@ -676,7 +676,7 @@ export function applyEconomyScenario(
     return next;
   }
   if (scenario === "recovery") {
-    let next = applyEconomyScenario(state, "distress");
+    const next = applyEconomyScenario(state, "distress");
     return applyRecoveryPolicy(next, teamId);
   }
   if (scenario === "aggressive") {
@@ -1210,9 +1210,14 @@ export function runEconomyScenario(
     throw new Error("runEconomyScenario: seasonCount must be an integer >= 1.");
   }
   const seed = options.seed ?? HARNESS_SEED;
-  let { state, rng, capitalRollup } = bootstrapEconomyScenario(scenario, {
+  const {
+    rng,
+    capitalRollup,
+    state: initialState,
+  } = bootstrapEconomyScenario(scenario, {
     seed,
   });
+  let state = initialState;
   const teamId = state.user.activeOwnerTeamId;
   const seasons: SeasonEconomySnapshot[] = [];
   const actions: OwnerActionLogEntry[] = [];

@@ -63,7 +63,7 @@ describe("season events foundation", () => {
     const holiday = Object.values(state.competition.seasonEvents.holidays)[0];
     expect(holiday).toBeDefined();
 
-    let current = {
+    const current = {
       ...state,
       world: {
         ...state.world,
@@ -118,7 +118,7 @@ describe("season events foundation", () => {
     const campaign = Object.values(
       state.competition.seasonEvents.fanVoting,
     )[0]!;
-    let current = {
+    const current = {
       ...state,
       world: {
         ...state.world,

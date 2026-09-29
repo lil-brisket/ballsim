@@ -4,7 +4,6 @@ import type { TradeProposal } from "@/domain/entities/trade-proposal";
 import {
   asContractId,
   asPlayerId,
-  asTeamId,
   type PlayerId,
   type TeamId,
 } from "@/domain/ids";

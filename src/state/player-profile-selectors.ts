@@ -20,7 +20,6 @@ import {
   topAttributesByPosition,
   type PlayerAttributeEvaluation,
 } from "@/domain/player-evaluation";
-import { calculatePlayerOverall } from "@/domain/player-overall-rating";
 import type { PlayerId, SeasonId } from "@/domain/ids";
 import type { GameState } from "@/state/game-state";
 import {

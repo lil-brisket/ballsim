@@ -4,7 +4,6 @@
 
 import type { Player, PlayerPosition } from "@/domain/entities/player";
 import type { RotationEntry } from "@/domain/entities/team-roster-management";
-import type { PlayerId } from "@/domain/ids";
 
 export type LineupValidationResult = {
   valid: boolean;

@@ -21,7 +21,7 @@ import { computeStaffOverall } from "@/domain/entities/staff";
 
 describe("staff effects", () => {
   function boot() {
-    let state = createInitialGameState({
+    const state = createInitialGameState({
       saveId: "staff_fx_1",
       rngSeed: 44,
       settings: CBL_GAME_SETTINGS,

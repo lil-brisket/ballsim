@@ -85,10 +85,10 @@ const countriesCollection = feature(
   world.objects.countries,
 ) as FeatureCollection<Geometry, CountryProperties>;
 
-let cachedFeatures: Partial<
+const cachedFeatures: Partial<
   Record<LeagueArea, Feature<Geometry, CountryProperties>[]>
 > = {};
-let cachedAdmin1: Partial<
+const cachedAdmin1: Partial<
   Record<LeagueArea, Feature<Geometry, CountryProperties>[]>
 > = {};
 

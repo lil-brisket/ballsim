@@ -124,7 +124,7 @@ function scheduleSeriesGames(
   series: PlayoffSeries[],
   date: string,
 ): { state: GameState; series: PlayoffSeries[]; gameIds: GameId[] } {
-  let games = { ...state.competition.games };
+  const games = { ...state.competition.games };
   const gameIds: GameId[] = [...tournament.gameIds];
   const nextSeries: PlayoffSeries[] = [];
 

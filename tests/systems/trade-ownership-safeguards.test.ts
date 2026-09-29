@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { CBL_GAME_SETTINGS } from "@/domain/game-settings";
 import type { TradeProposal } from "@/domain/entities/trade-proposal";
-import { asPlayerId, asTeamId, type PlayerId, type TeamId } from "@/domain/ids";
+import { asTeamId, type PlayerId } from "@/domain/ids";
 import { createInitialGameState } from "@/state/create-initial-state";
 import {
   withAddedOwnedFranchise,

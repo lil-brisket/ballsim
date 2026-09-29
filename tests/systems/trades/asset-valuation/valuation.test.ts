@@ -198,12 +198,6 @@ describe("negotiation and expiration", () => {
         },
       },
     };
-    const proposal = playerForPlayerProposal(working);
-    // Ensure sides: B offers to A
-    const offerProposal = {
-      sideA: { ...proposal.sideB, teamId: teamB },
-      sideB: { ...proposal.sideA, teamId: teamA },
-    };
     // Fix player ownership in proposal to match teams
     const fixed = {
       sideA: {

@@ -319,7 +319,7 @@ describe("calculateFranchiseHealth", () => {
   });
 
   it("uses fan sentiment primarily and flags elevated ticket prices", () => {
-    let happy = setFanSentiment(bootstrapped("health_fan_h"), 82);
+    const happy = setFanSentiment(bootstrapped("health_fan_h"), 82);
     let unhappy = setFanSentiment(bootstrapped("health_fan_u"), 28);
     // Raise only controlled team price far above league mean.
     unhappy = setTicketPrice(unhappy, 120);
