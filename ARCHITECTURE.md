@@ -53,6 +53,8 @@ src/
   systems/             # Simulation systems (added incrementally)
   simulation/
     validation/        # Statistical validation harness (box-score aggregates; uses production simulateGame)
+    lab/               # Simulation Lab / QA harness: runLabGames, scenarios, reports (wraps simulateGame / advanceSimulation)
+    league-sanity/     # Multi-year career analytics
   persistence/         # Prisma client, repositories, mappers
 ```
 
@@ -339,6 +341,8 @@ Load/save flow:
 - Important simulation logic must gain tests when introduced.
 - Prefer testing systems with seeded `Rng` for reproducibility.
 - Conventions, factories, React/jsdom isolation, and CI: [`docs/testing.md`](./docs/testing.md).
+- **Simulation Lab** (`src/simulation/lab/`, `npm run sim`, `npm run test:simulation`) wraps production `simulateGame` / `advanceSimulation` / `runLeagueCareer`. It does not replace the engine. Rotation-on is the Lab default; `--rotation=off` is legacy CLI parity only. PR CI uses the `pr` exit policy (HARD_FAILURE only). Nightly uses `--channel nightly` (HARD or statistical FAIL). Statistical baselines stay monitor-only until `evaluateGraduation` (±3×MAD over 5 nightly values). `runSimulationValidation` remains the throw-on-invariant statistical CLI.
+- Season RNG: `advanceSimulation` passes the live `Rng` into `processSeasonLifecycle` and `runWeeklyPipeline`. Those functions still accept an omitted rng for existing tests and reconstruct from `meta.rngState` in that case. Callers must persist `rng.getState()` into `meta.rngState` after `advanceSimulation`. `validateGameSettings` currently forces `playInEnabled: false`; play-in consumption is therefore latent, but the injector is in place.
 
 ## Risks
 

@@ -23,7 +23,9 @@ export {
 export {
   combineVerdicts,
   evaluatePlausibility,
+  PLAUSIBILITY_BANDS,
 } from "@/simulation/validation/plausibility";
+export type { PlausibilityBand } from "@/simulation/validation/plausibility";
 export { computeValidationChecksum } from "@/simulation/validation/checksum";
 export {
   evaluatePlayerCorrelations,

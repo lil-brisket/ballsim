@@ -1,0 +1,8 @@
+{
+  "status": "monitor",
+  "seed": 42,
+  "games": 100,
+  "scenario": "normal",
+  "rotation": "on",
+  "notes": "Monitor-only. Promote to WARNING only after 5 nightly runs fall inside ±3×MAD of the baseline median (src/simulation/lab/graduation.ts). HARD requires an arithmetic identity, not a statistical band."
+}

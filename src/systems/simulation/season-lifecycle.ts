@@ -1,5 +1,5 @@
 import type { DomainEvent } from "@/domain/events";
-import { createSeededRng } from "@/domain/rng";
+import { createSeededRng, type Rng } from "@/domain/rng";
 import { systemResult, type SystemResult } from "@/domain/system-result";
 import type { GameState } from "@/state/game-state";
 import { runYearlyAwards } from "@/systems/awards/award-pipeline";
@@ -139,7 +139,10 @@ export function beginRegularSeasonFromPreseason(
  * Preseason is user-paced via beginRegularSeasonFromPreseason / advanceLeaguePhase.
  * Postseason is a player-paced Season Review checkpoint.
  */
-export function processSeasonLifecycle(state: GameState): SystemResult {
+export function processSeasonLifecycle(
+  state: GameState,
+  rng?: Rng,
+): SystemResult {
   const events: DomainEvent[] = [];
   let current = state;
   const phase = current.competition.season.phase;
@@ -164,13 +167,13 @@ export function processSeasonLifecycle(state: GameState): SystemResult {
     const liveTeamCount = Object.keys(current.world.teams).length;
 
     if (playoffTeams > 0 && playoffTeams <= liveTeamCount) {
-      const rng = createSeededRng(current.meta.rngState);
-      const started = startPlayoffs(current, rng);
+      const stream = rng ?? createSeededRng(current.meta.rngState);
+      const started = startPlayoffs(current, stream);
       current = {
         ...started.state,
         meta: {
           ...started.state.meta,
-          rngState: rng.getState(),
+          rngState: stream.getState(),
         },
       };
       events.push(...started.events);

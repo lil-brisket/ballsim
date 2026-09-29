@@ -7,9 +7,10 @@ import tsconfigPaths from "vite-tsconfig-paths";
  * - unit: milliseconds (default with integration in `npm test`)
  * - integration: seconds (one game / week / season-scale unit suites)
  * - regression: minutes (multi-year, economy, league-sanity) via `npm run test:regression`
+ * - simulation: Lab 100-game / season-RNG batches via `npm run test:simulation` (PR CI)
  * - stress: opt-in via STRESS=1 inside specific files
  *
- * `npm run test:all` runs every project including regression.
+ * `npm test` excludes simulation and regression. `npm run test:all` runs every project.
  */
 export default defineConfig({
   plugins: [tsconfigPaths(), react()],
@@ -39,6 +40,9 @@ export default defineConfig({
             "tests/systems/playoffs-integration.test.ts",
             "tests/systems/simulation/season-lifecycle.test.ts",
             "tests/systems/simulation/performance-budget.test.ts",
+            "tests/simulation/lab/invariants-hard.test.ts",
+            "tests/simulation/lab/season-rng-desync.test.ts",
+            "tests/simulation/lab/long-horizon.test.ts",
             "tests/regression/**",
           ],
         },
@@ -68,6 +72,18 @@ export default defineConfig({
             "tests/systems/economic-scenarios.test.ts",
             "tests/simulation/league-sanity/**/*.test.ts",
             "tests/regression/**/*.test.ts",
+          ],
+        },
+      },
+      {
+        extends: true,
+        test: {
+          name: "simulation",
+          environment: "node",
+          include: [
+            "tests/simulation/lab/invariants-hard.test.ts",
+            "tests/simulation/lab/season-rng-desync.test.ts",
+            "tests/simulation/lab/long-horizon.test.ts",
           ],
         },
       },

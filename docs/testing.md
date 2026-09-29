@@ -16,9 +16,11 @@ Domain, state, systems, and persistence tests run in the **Node** Vitest project
 ## Commands
 
 ```bash
-npm test              # vitest run (CI / one-shot: unit + integration + react)
-npm run test:watch    # watch mode
-npm run test:coverage # same projects as npm test, plus v8 coverage (text/html/lcov)
+npm test                 # vitest run (CI / one-shot: unit + integration + react)
+npm run test:simulation  # Lab 100-game rotation-on + season RNG (PR CI; not in npm test)
+npm run test:watch       # watch mode
+npm run test:coverage    # same projects as npm test, plus v8 coverage (text/html/lcov)
+npm run sim -- --seed=42 --games=100   # Simulation Lab CLI (default --channel pr)
 ```
 
 ## Directory structure
@@ -33,6 +35,8 @@ tests/
   fixtures/     # static sample constants
   helpers/      # shared test utilities (RNG, clocks)
   react/        # jsdom + Testing Library smoke only
+  simulation/
+    lab/        # Simulation Lab (fast unit files in npm test; 100-game/season in test:simulation)
 ```
 
 Vitest isolation:
@@ -85,6 +89,10 @@ Simulation correctness depends on reproducibility:
 - Call `resetDomainEventSequenceForTests` (via `resetTestEventSequence`) when event IDs matter.
 - Stochastic systems must accept an injected `Rng` (see `ARCHITECTURE.md`).
 
+## Simulation Lab
+
+`src/simulation/lab/` wraps production `simulateGame` / `advanceSimulation`. Fast Lab unit tests (mapper, 2-game checksum, planted failure, scenarios) stay in `npm test`. The 100-game rotation-on suite and season RNG check run via `npm run test:simulation` (PR CI). Statistical FAIL does not fail the `pr` channel; `--channel nightly` does.
+
 ## React tests
 
 - Only synchronous presentational components (or test-only smoke components under `tests/react/`).
@@ -101,9 +109,10 @@ GitHub Actions (`.github/workflows/ci.yml`) on `push` / `pull_request`:
 4. `npm run lint` (stylistic rules deferred to Prettier via `eslint-config-prettier`)
 5. `npm run format:check`
 6. `npm run test:coverage` (unit + integration + react, writes `coverage/lcov.info`)
-7. Upload `coverage/` as a workflow artifact (`coverage-report`)
-8. Upload `coverage/lcov.info` to Codecov (`codecov/codecov-action@v5`; optional `CODECOV_TOKEN` repo secret)
-9. `npm run build` with `DATABASE_URL=file:./prisma/ci.db`
+7. `npm run test:simulation` (Lab rotation-on 100 games, season RNG)
+8. Upload `coverage/` as a workflow artifact (`coverage-report`)
+9. Upload `coverage/lcov.info` to Codecov (`codecov/codecov-action@v5`; optional `CODECOV_TOKEN` repo secret)
+10. `npm run build` with `DATABASE_URL=file:./prisma/ci.db`
 
 Coverage HTML/LCOV live under `coverage/` (gitignored). Codecov project/patch status is configured in `codecov.yml` (auto target, 2% project drop tolerance; patch is informational).
 

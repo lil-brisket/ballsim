@@ -36,6 +36,9 @@ jobs:
       - name: Test with coverage
         run: npm run test:coverage
 
+      - name: Simulation Lab (rotation-on, 100 games)
+        run: npm run test:simulation
+
       - name: Upload coverage artifact
         uses: actions/upload-artifact@v4
         if: always()

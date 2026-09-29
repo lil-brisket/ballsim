@@ -1,0 +1,47 @@
+name: Simulation Lab Nightly
+
+on:
+  schedule:
+    - cron: "0 6 * * *"
+  workflow_dispatch:
+
+jobs:
+  nightly:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    env:
+      DATABASE_URL: file:./prisma/ci.db
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Simulation Lab (PR-hard invariants)
+        run: npm run test:simulation
+
+      - name: Regression suites
+        run: npm run test:regression
+
+      - name: 10k games (nightly statistical channel)
+        run: npm run sim -- --seed=42 --games=10000 --quiet --channel nightly --format json --out lab-nightly-10k.json
+
+      - name: 10-season owner career
+        run: npm run sim -- --seed=42 --mode owner-career --seasons 10 --channel nightly --format json --out lab-nightly-career.json
+
+      - name: Upload Lab artifacts
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: lab-nightly-reports
+          path: |
+            lab-nightly-10k.json
+            lab-nightly-career.json
+          if-no-files-found: warn

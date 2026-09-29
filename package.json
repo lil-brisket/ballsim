@@ -13,7 +13,9 @@
     "test:unit": "vitest run --project unit",
     "test:integration": "vitest run --project integration",
     "test:regression": "vitest run --project regression",
+    "test:simulation": "vitest run --project simulation",
     "test:all": "vitest run",
+    "sim": "tsx scripts/sim.ts",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage --project unit --project integration --project react",
     "bench:sim": "tsx scripts/benchmark-simulation.ts",
@@ -59,6 +61,7 @@
     "prettier": "^3.9.9",
     "prisma": "^7.9.1",
     "tailwindcss": "^4",
+    "tsx": "^4.23.15",
     "typescript": "^5",
     "vite-tsconfig-paths": "^6.1.1",
     "vitest": "^4.1.10"

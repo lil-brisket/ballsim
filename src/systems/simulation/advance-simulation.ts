@@ -283,7 +283,7 @@ function advanceOneDay(
     };
   }
 
-  const seasonLife = processSeasonLifecycle(current);
+  const seasonLife = processSeasonLifecycle(current, rng);
   current = seasonLife.state;
   events.push(...seasonLife.events);
 
@@ -391,7 +391,7 @@ function advanceOneDay(
   if (getIsoWeekId(newDate) !== getIsoWeekId(simulatedDate)) {
     const completedWeekId = completedWeekIdForSimulatedDate(simulatedDate);
     const weeklyStart = performance.now();
-    const weekly = runWeeklyPipeline(current, completedWeekId);
+    const weekly = runWeeklyPipeline(current, completedWeekId, rng);
     if (profiler) {
       profiler.addSeason("weeklyMs", performance.now() - weeklyStart);
     }

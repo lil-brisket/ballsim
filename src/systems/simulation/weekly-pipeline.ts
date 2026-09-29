@@ -9,7 +9,7 @@ import { processWeeklyMarketing } from "@/systems/marketing";
 import { processWeeklyMediaDecay } from "@/systems/media";
 import { runAiFranchiseDecisions } from "@/systems/ai-franchise-decisions";
 import { runAiGameDayPromotionDecisions } from "@/systems/game-day-promotions/ai-game-day-promotions";
-import { createSeededRng } from "@/domain/rng";
+import { createSeededRng, type Rng } from "@/domain/rng";
 
 export type WeeklyPipelineResult = SystemResult & {
   weeklyPipelineRan: boolean;
@@ -25,6 +25,7 @@ export type WeeklyPipelineResult = SystemResult & {
 export function runWeeklyPipeline(
   state: GameState,
   completedWeekId: string,
+  rng?: Rng,
 ): WeeklyPipelineResult {
   if (state.world.calendar.lastSimulatedWeekId === completedWeekId) {
     return {
@@ -68,19 +69,24 @@ export function runWeeklyPipeline(
     },
   };
 
-  const ai = runAiFranchiseDecisions(
-    current,
-    createSeededRng(current.meta.rngState),
-  );
+  const stream = rng ?? createSeededRng(current.meta.rngState);
+  const ai = runAiFranchiseDecisions(current, stream);
   current = ai.state;
   events.push(...ai.events);
 
-  const aiPromos = runAiGameDayPromotionDecisions(
-    current,
-    createSeededRng(current.meta.rngState),
-  );
+  const aiPromos = runAiGameDayPromotionDecisions(current, stream);
   current = aiPromos.state;
   events.push(...aiPromos.events);
+
+  if (rng) {
+    current = {
+      ...current,
+      meta: {
+        ...current.meta,
+        rngState: rng.getState(),
+      },
+    };
+  }
 
   return {
     ...systemResult(current, events),

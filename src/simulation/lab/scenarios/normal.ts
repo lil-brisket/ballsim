@@ -1,0 +1,19 @@
+import type { Player } from "@/domain/entities/player";
+import type { Rng } from "@/domain/rng";
+import { generateValidationRosters } from "@/simulation/validation/run-validation";
+
+/**
+ * Scenario: normal
+ * Base generator: generateValidationRosters (src/simulation/validation/run-validation.ts)
+ * Transformation: none
+ * RNG stream: sequential from the Lab run seed (Phase 0/1) or deriveSeed(seed, "normal") (Phase 2+)
+ * Determinism: same seed ⇒ identical player ids and attributes
+ */
+export function buildNormalRosters(
+  rng: Rng,
+  rosterSize?: number,
+): { homePlayers: Player[]; awayPlayers: Player[] } {
+  return generateValidationRosters(rng, rosterSize);
+}
+
+export const NORMAL_SCENARIO_ID = "normal";
