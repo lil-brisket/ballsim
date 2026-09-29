@@ -70,9 +70,7 @@ function withWeakRelocationCase(state: GameState): GameState {
         ...state.competition.standings,
         byTeamId: {
           ...state.competition.standings.byTeamId,
-          [teamId]: standing
-            ? { ...standing, wins: 12, losses: 50 }
-            : standing,
+          [teamId]: standing ? { ...standing, wins: 12, losses: 50 } : standing,
         },
       },
     },
@@ -172,7 +170,9 @@ describe("franchise-hub-selectors", () => {
     const hub = toFranchiseHubView(state);
     const business = toFranchiseBusinessView(state);
 
-    expect(hub.facilitiesSummary.levels).toHaveLength(FACILITY_CATEGORIES.length);
+    expect(hub.facilitiesSummary.levels).toHaveLength(
+      FACILITY_CATEGORIES.length,
+    );
     for (const row of hub.facilitiesSummary.levels) {
       expect(row).toEqual({
         category: row.category,
@@ -211,9 +211,9 @@ describe("franchise-hub-selectors", () => {
     const hub = toFranchiseHubView(state);
     expect(hub.relocationSummary.state).toBe("not_available");
     expect(hub.relocationSummary.href).toBeNull();
-    expect(
-      hub.decisions.some((item) => item.id === "action_relocation"),
-    ).toBe(false);
+    expect(hub.decisions.some((item) => item.id === "action_relocation")).toBe(
+      false,
+    );
   });
 
   it("marks offseason canStart as eligible with a live relocation href", () => {
@@ -261,9 +261,9 @@ describe("franchise-hub-selectors", () => {
     const hub = toFranchiseHubView(state);
     expect(hub.relocationSummary.state).toBe("in_progress");
     expect(hub.relocationSummary.href).toBeNull();
-    expect(
-      hub.decisions.some((item) => item.id === "action_relocation"),
-    ).toBe(false);
+    expect(hub.decisions.some((item) => item.id === "action_relocation")).toBe(
+      false,
+    );
   });
 
   it("marks tenure cooldown without a live href", () => {
@@ -277,9 +277,9 @@ describe("franchise-hub-selectors", () => {
     const hub = toFranchiseHubView(state);
     expect(hub.relocationSummary.state).toBe("cooldown");
     expect(hub.relocationSummary.href).toBeNull();
-    expect(
-      hub.decisions.some((item) => item.id === "action_relocation"),
-    ).toBe(false);
+    expect(hub.decisions.some((item) => item.id === "action_relocation")).toBe(
+      false,
+    );
   });
 
   it("sorts active objectives first", () => {

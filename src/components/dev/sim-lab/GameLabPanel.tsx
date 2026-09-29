@@ -3,7 +3,10 @@
 import { useState, useTransition } from "react";
 import { runGameLabAction } from "@/app/dev/sim-lab/actions";
 import type { GameLabSuccess } from "@/application/sim-lab";
-import { LabBusyBanner, useLabRunElapsed } from "@/components/dev/sim-lab/LabBusyBanner";
+import {
+  LabBusyBanner,
+  useLabRunElapsed,
+} from "@/components/dev/sim-lab/LabBusyBanner";
 import { LabReportView } from "@/components/dev/sim-lab/LabReportView";
 import {
   labFieldClass,
@@ -46,7 +49,9 @@ export function GameLabPanel(props: {
 
   return (
     <div className="space-y-4">
-      <div className={`${panelClass} grid gap-3 p-4 sm:grid-cols-2 lg:grid-cols-4`}>
+      <div
+        className={`${panelClass} grid gap-3 p-4 sm:grid-cols-2 lg:grid-cols-4`}
+      >
         <label className="text-sm text-zinc-400">
           Seed
           <input

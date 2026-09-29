@@ -40,8 +40,7 @@ export function FacilitiesSummarySection(props: {
         ))}
       </ul>
       <p className="mt-3 text-xs text-zinc-500">
-        Weekly facility OPEX{" "}
-        <MoneyDisplay amount={summary.weeklyOpex} />
+        Weekly facility OPEX <MoneyDisplay amount={summary.weeklyOpex} />
       </p>
     </ActionCard>
   );

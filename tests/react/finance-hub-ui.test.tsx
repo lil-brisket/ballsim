@@ -1,7 +1,10 @@
 import { afterEach, describe, expect, it } from "vitest";
 import { cleanup, render, screen } from "@testing-library/react";
 import { CashPressureSection } from "@/components/finances/CashPressureSection";
-import { FinancialLedger, FinancialTrend } from "@/components/finances/FinancialLedger";
+import {
+  FinancialLedger,
+  FinancialTrend,
+} from "@/components/finances/FinancialLedger";
 import { FinancialStatStrip } from "@/components/finances/FinancialStatStrip";
 import type { CashRunwayView } from "@/state/franchise-selectors";
 import type { FinanceHubView } from "@/state/finance-hub-selectors";

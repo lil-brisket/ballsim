@@ -102,8 +102,18 @@ export function compareLabGoldenBaseline(input: {
   const current = scoreDistributionsFromSnapshots(input.snapshots);
   const alpha = input.alpha ?? LAB_DEFAULT_KS_ALPHA;
   return [
-    ksCheck("team_points", input.baseline.teamPoints, current.teamPoints, alpha),
-    ksCheck("game_totals", input.baseline.gameTotals, current.gameTotals, alpha),
+    ksCheck(
+      "team_points",
+      input.baseline.teamPoints,
+      current.teamPoints,
+      alpha,
+    ),
+    ksCheck(
+      "game_totals",
+      input.baseline.gameTotals,
+      current.gameTotals,
+      alpha,
+    ),
     ksCheck(
       "abs_differential",
       input.baseline.absoluteDifferentials,

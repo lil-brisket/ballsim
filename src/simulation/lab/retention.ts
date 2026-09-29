@@ -6,7 +6,10 @@ import {
   writeFileSync,
 } from "node:fs";
 import { join } from "node:path";
-import { LAB_MANIFEST_FILENAME, type ManifestHost } from "@/simulation/lab/manifest";
+import {
+  LAB_MANIFEST_FILENAME,
+  type ManifestHost,
+} from "@/simulation/lab/manifest";
 import {
   labIndexPath,
   loadLabRunIndex,
@@ -73,11 +76,7 @@ function catalogLabRuns(
   const readFile =
     host?.readFile ?? ((filePath: string) => readFileSync(filePath, "utf8"));
   for (const entry of loadLabRunIndex(resultsRoot, host).runs) {
-    const manifestPath = join(
-      resultsRoot,
-      entry.runId,
-      LAB_MANIFEST_FILENAME,
-    );
+    const manifestPath = join(resultsRoot, entry.runId, LAB_MANIFEST_FILENAME);
     if (exists(manifestPath)) {
       byId.set(entry.runId, entry);
     }
@@ -125,7 +124,9 @@ function catalogLabRuns(
       engineVersion:
         typeof manifest.engineVersion === "number" ? manifest.engineVersion : 0,
       scenarioName:
-        typeof manifest.scenarioName === "string" ? manifest.scenarioName : name,
+        typeof manifest.scenarioName === "string"
+          ? manifest.scenarioName
+          : name,
       scenarioVersion:
         typeof manifest.scenarioVersion === "number"
           ? manifest.scenarioVersion

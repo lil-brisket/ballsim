@@ -42,10 +42,7 @@ export type AwardsHubRow = LeagueAwardRowView & {
  * - not_applicable: window closed or event absent/cancelled with no result
  */
 export type AwardAvailability =
-  | "won"
-  | "pending"
-  | "not_started"
-  | "not_applicable";
+  "won" | "pending" | "not_started" | "not_applicable";
 
 export type CurrentSeasonAwardSlot = {
   key: string;
@@ -85,7 +82,11 @@ const TIER_GROUP_LABELS: Record<AwardTier, string> = {
   monthly: "Monthly awards",
 };
 
-const TIER_GROUP_ORDER: readonly AwardTier[] = ["major", "midseason", "monthly"];
+const TIER_GROUP_ORDER: readonly AwardTier[] = [
+  "major",
+  "midseason",
+  "monthly",
+];
 
 function toHubRows(
   state: GameState,
@@ -165,8 +166,7 @@ export function toCurrentSeasonAwardGroups(
   const rows = toHubRows(state, { seasonYear });
   const yearlyRow = (awardId: AwardDefinitionId, period: string | null) =>
     rows.find(
-      (row) =>
-        row.result.awardId === awardId && row.result.period === period,
+      (row) => row.result.awardId === awardId && row.result.period === period,
     ) ?? null;
 
   const defs = Object.values(AWARD_DEFINITIONS);
@@ -181,18 +181,30 @@ export function toCurrentSeasonAwardGroups(
     .filter((def) => def.tier === "midseason")
     .map((def) => {
       const winner = yearlyRow(def.id, "midseason");
-      return slotFor(def, null, winner ? "won" : midseasonStatus(state), winner);
+      return slotFor(
+        def,
+        null,
+        winner ? "won" : midseasonStatus(state),
+        winner,
+      );
     });
 
   const monthly: CurrentSeasonAwardSlot[] = rows
     .filter((row) => row.result.cadence === "monthly")
     .map((row) =>
-      slotFor(AWARD_DEFINITIONS[row.result.awardId], row.result.period, "won", row),
+      slotFor(
+        AWARD_DEFINITIONS[row.result.awardId],
+        row.result.period,
+        "won",
+        row,
+      ),
     );
   const phase = state.competition.season.phase;
   if (phase === "preseason") {
     for (const awardId of MONTHLY_AWARD_IDS) {
-      monthly.push(slotFor(AWARD_DEFINITIONS[awardId], null, "not_started", null));
+      monthly.push(
+        slotFor(AWARD_DEFINITIONS[awardId], null, "not_started", null),
+      );
     }
   } else if (phase === "regular") {
     const currentMonth = getCalendarMonthId(state.world.calendar.currentDate);
@@ -210,7 +222,8 @@ export function toCurrentSeasonAwardGroups(
   monthly.sort(
     (a, b) =>
       (b.period ?? "").localeCompare(a.period ?? "") ||
-      MONTHLY_AWARD_IDS.indexOf(a.awardId) - MONTHLY_AWARD_IDS.indexOf(b.awardId),
+      MONTHLY_AWARD_IDS.indexOf(a.awardId) -
+        MONTHLY_AWARD_IDS.indexOf(b.awardId),
   );
 
   const byTier: Record<AwardTier, CurrentSeasonAwardSlot[]> = {
@@ -277,7 +290,9 @@ export type AwardHistoryView = {
   seasons: AwardHistorySeason[];
 };
 
-const AWARD_CATALOG_ORDER = Object.keys(AWARD_DEFINITIONS) as AwardDefinitionId[];
+const AWARD_CATALOG_ORDER = Object.keys(
+  AWARD_DEFINITIONS,
+) as AwardDefinitionId[];
 
 function isCompletedAwardSeason(
   state: GameState,

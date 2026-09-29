@@ -1,9 +1,4 @@
-import {
-  existsSync,
-  mkdirSync,
-  readFileSync,
-  writeFileSync,
-} from "node:fs";
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { type LabRunMode, type ManifestHost } from "@/simulation/lab/manifest";
 
@@ -35,8 +30,7 @@ export function loadLabRunIndex(
   host?: ManifestHost,
 ): LabRunIndex {
   const filePath = labIndexPath(resultsRoot);
-  const exists =
-    host?.exists?.(filePath) ?? existsSync(filePath);
+  const exists = host?.exists?.(filePath) ?? existsSync(filePath);
   if (!exists) {
     return { runs: [] };
   }

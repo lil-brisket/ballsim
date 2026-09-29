@@ -20,7 +20,10 @@ export function CashPressureSection(props: { cashRunway: CashRunwayView }) {
     { label: "Broadcast", amount: cashRunway.inflowBreakdown.broadcast },
   ];
   const outflows = [
-    { label: "Player payroll", amount: cashRunway.outflowBreakdown.playerPayroll },
+    {
+      label: "Player payroll",
+      amount: cashRunway.outflowBreakdown.playerPayroll,
+    },
     { label: "Staff", amount: cashRunway.outflowBreakdown.staff },
     { label: "Facilities", amount: cashRunway.outflowBreakdown.facilities },
     { label: "Marketing", amount: cashRunway.outflowBreakdown.marketing },

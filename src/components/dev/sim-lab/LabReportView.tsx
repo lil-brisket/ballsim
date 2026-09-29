@@ -1,7 +1,10 @@
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { StatCard } from "@/components/ui/StatCard";
 import { panelClass } from "@/components/ui/styles";
-import type { CheckResult, ValidationVerdict } from "@/simulation/validation/types";
+import type {
+  CheckResult,
+  ValidationVerdict,
+} from "@/simulation/validation/types";
 import type { LabFailure, LabReport } from "@/simulation/lab/types";
 import { formatFixed, formatPct } from "@/components/dev/sim-lab/format";
 
@@ -69,7 +72,11 @@ export function LabReportView(props: {
     <div className="space-y-4">
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard label="Games" value={props.report.gamesSimulated} mono />
-        <StatCard label="Wall time" value={formatFixed(props.wallMs / 1000, 2) + "s"} mono />
+        <StatCard
+          label="Wall time"
+          value={formatFixed(props.wallMs / 1000, 2) + "s"}
+          mono
+        />
         <StatCard
           label="Hard failures"
           value={props.report.hardFailures.length}
@@ -117,7 +124,9 @@ export function LabReportView(props: {
       </p>
 
       <div className={panelClass + " p-4"}>
-        <h3 className="text-sm font-medium text-zinc-200">Statistical checks</h3>
+        <h3 className="text-sm font-medium text-zinc-200">
+          Statistical checks
+        </h3>
         {props.report.statChecks.length === 0 ? (
           <p className="mt-2 text-sm text-zinc-500">None (low game count)</p>
         ) : (

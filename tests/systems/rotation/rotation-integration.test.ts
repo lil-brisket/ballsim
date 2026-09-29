@@ -5,12 +5,7 @@
 import { describe, expect, it } from "vitest";
 import { createGame } from "@/domain/entities/game";
 import type { Player } from "@/domain/entities/player";
-import {
-  asGameId,
-  asPlayerId,
-  asTeamId,
-  type TeamId,
-} from "@/domain/ids";
+import { asGameId, asPlayerId, asTeamId, type TeamId } from "@/domain/ids";
 import { createPlayer } from "../../factories/player";
 import { createTestGameState } from "../../factories/game-state";
 import { createTestRng } from "../../helpers/determinism";

@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { ksTwoSample, ksVerdict, LAB_DEFAULT_KS_ALPHA } from "@/simulation/lab/ks";
+import {
+  ksTwoSample,
+  ksVerdict,
+  LAB_DEFAULT_KS_ALPHA,
+} from "@/simulation/lab/ks";
 
 describe("ksTwoSample", () => {
   it("returns D=0 and p=1 for identical samples", () => {

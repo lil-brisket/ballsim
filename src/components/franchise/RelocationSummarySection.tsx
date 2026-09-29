@@ -20,9 +20,7 @@ export function RelocationSummarySection(props: {
   const { summary } = props;
   const body = (
     <>
-      <p className="mt-3 text-xs text-zinc-400">
-        {STATE_COPY[summary.state]}
-      </p>
+      <p className="mt-3 text-xs text-zinc-400">{STATE_COPY[summary.state]}</p>
       <ul className="mt-3 space-y-1 text-xs text-zinc-400">
         <li className="flex justify-between gap-2">
           <span>Market size</span>

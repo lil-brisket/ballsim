@@ -27,7 +27,10 @@ import {
 } from "@/simulation/lab";
 import { LAB_CLI_USAGE } from "@/simulation/lab/lab-config";
 
-function printReport(report: LabReport, options: ReturnType<typeof parseLabArgv>): void {
+function printReport(
+  report: LabReport,
+  options: ReturnType<typeof parseLabArgv>,
+): void {
   const text = formatLabReport(report, {
     json: options.format === "json",
     quiet: options.quiet && options.format !== "json",

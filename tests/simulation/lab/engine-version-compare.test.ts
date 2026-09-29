@@ -64,7 +64,9 @@ describe("compareEngineVersions", () => {
 
 describe("compareScenarioVersions", () => {
   it("refuses mismatched scenarioVersion for the same scenario", () => {
-    expect(() => compareScenarioVersions(1, 2)).toThrow(/scenarioVersion 1 !== 2/);
+    expect(() => compareScenarioVersions(1, 2)).toThrow(
+      /scenarioVersion 1 !== 2/,
+    );
     const left = stubManifest(ENGINE_VERSION);
     const right = { ...stubManifest(ENGINE_VERSION), scenarioVersion: 2 };
     expect(() => compareLabManifests(left, right)).toThrow(/scenarioVersion/);

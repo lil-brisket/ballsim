@@ -6,7 +6,10 @@ import {
   toCurrentSeasonAwardGroups,
   type CurrentSeasonAwardSlot,
 } from "@/state/awards-hub-selectors";
-import { addPlayerToState, createAwardsTestState } from "../systems/awards/helpers";
+import {
+  addPlayerToState,
+  createAwardsTestState,
+} from "../systems/awards/helpers";
 import { awardResult, teamIds, withAwards } from "./history-fixtures";
 
 function slot(
@@ -51,9 +54,23 @@ describe("toAwardHistoryView", () => {
     const [teamA] = teamIds(state);
     state = addPlayerToState(state, "p1", teamA!);
     state = withAwards(state, [
-      awardResult({ awardId: "mvp", seasonYear: 2026, winnerId: "p1", teamId: teamA }),
-      awardResult({ awardId: "mvp", seasonYear: 2027, winnerId: "p1", teamId: teamA }),
-      awardResult({ awardId: "midseason_mvp", seasonYear: 2028, winnerId: "p1" }),
+      awardResult({
+        awardId: "mvp",
+        seasonYear: 2026,
+        winnerId: "p1",
+        teamId: teamA,
+      }),
+      awardResult({
+        awardId: "mvp",
+        seasonYear: 2027,
+        winnerId: "p1",
+        teamId: teamA,
+      }),
+      awardResult({
+        awardId: "midseason_mvp",
+        seasonYear: 2028,
+        winnerId: "p1",
+      }),
     ]);
 
     const view = toAwardHistoryView(state, { seasonYear: "all" });
@@ -67,7 +84,11 @@ describe("toAwardHistoryView", () => {
     let state = createAwardsTestState({ seasonYear: 2028 });
     state = withAwards(state, [
       awardResult({ awardId: "mvp", seasonYear: 2027, winnerId: "p1" }),
-      awardResult({ awardId: "midseason_mvp", seasonYear: 2028, winnerId: "p1" }),
+      awardResult({
+        awardId: "midseason_mvp",
+        seasonYear: 2028,
+        winnerId: "p1",
+      }),
     ]);
     const view = toAwardHistoryView(state);
     expect(view.selectedSeason).toBe(2027);
@@ -78,7 +99,11 @@ describe("toAwardHistoryView", () => {
     let state = createAwardsTestState({ seasonYear: 2026, phase: "playoffs" });
     state = withAwards(state, [
       awardResult({ awardId: "mvp", seasonYear: 2026, winnerId: "p1" }),
-      awardResult({ awardId: "midseason_mvp", seasonYear: 2026, winnerId: "p2" }),
+      awardResult({
+        awardId: "midseason_mvp",
+        seasonYear: 2026,
+        winnerId: "p2",
+      }),
     ]);
     const season = toAwardHistoryView(state).seasons[0]!;
     expect(season.yearlyByAwardId.mvp?.winnerSubjectId).toBe("p1");
@@ -137,13 +162,16 @@ describe("toCurrentSeasonAwardGroups", () => {
     const base = createAwardsTestState({ phase: "regular" });
     expect(slot(base, "midseason_mvp")?.status).toBe("not_applicable");
     expect(
-      slot(withMidseason(base, "scheduled", "2025-12-01"), "midseason_mvp")?.status,
+      slot(withMidseason(base, "scheduled", "2025-12-01"), "midseason_mvp")
+        ?.status,
     ).toBe("not_started");
     expect(
-      slot(withMidseason(base, "scheduled", "2026-01-16"), "midseason_mvp")?.status,
+      slot(withMidseason(base, "scheduled", "2026-01-16"), "midseason_mvp")
+        ?.status,
     ).toBe("pending");
     expect(
-      slot(withMidseason(base, "cancelled", "2026-01-16"), "midseason_mvp")?.status,
+      slot(withMidseason(base, "cancelled", "2026-01-16"), "midseason_mvp")
+        ?.status,
     ).toBe("not_applicable");
   });
 
@@ -157,7 +185,9 @@ describe("toCurrentSeasonAwardGroups", () => {
         period: "2026-03",
       }),
     ]);
-    const monthly = toCurrentSeasonAwardGroups(state).find((g) => g.tier === "monthly")!;
+    const monthly = toCurrentSeasonAwardGroups(state).find(
+      (g) => g.tier === "monthly",
+    )!;
     const current = monthly.slots.filter((s) => s.period === "2026-04");
     expect(current.every((s) => s.status === "pending")).toBe(true);
     const march = monthly.slots.find((s) => s.period === "2026-03");

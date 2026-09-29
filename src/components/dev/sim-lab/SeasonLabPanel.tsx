@@ -11,7 +11,10 @@ import {
   YAxis,
 } from "recharts";
 import { runSeasonLabAction } from "@/app/dev/sim-lab/actions";
-import { LabBusyBanner, useLabRunElapsed } from "@/components/dev/sim-lab/LabBusyBanner";
+import {
+  LabBusyBanner,
+  useLabRunElapsed,
+} from "@/components/dev/sim-lab/LabBusyBanner";
 import {
   formatDurationMs,
   formatFixed,
@@ -28,7 +31,8 @@ import type { LabLeaguePreset } from "@/simulation/lab/lab-league-preset";
 
 function SeasonChart(props: {
   label: string;
-  dataKey: "meanWinPct" | "meanRosterAge" | "meanPayroll" | "meanRosterStrength";
+  dataKey:
+    "meanWinPct" | "meanRosterAge" | "meanPayroll" | "meanRosterStrength";
   points: SeasonLabSuccess["series"];
 }) {
   if (props.points.length === 0) {
@@ -171,14 +175,24 @@ export function SeasonLabPanel(props: {
               value={result.report.seasonsSimulated ?? result.series.length}
               mono
             />
-            <StatCard label="Wall time" value={formatDurationMs(result.wallMs)} mono />
-            <StatCard label="Teams / season" value={result.series[0]?.teamCount ?? "—"} mono />
+            <StatCard
+              label="Wall time"
+              value={formatDurationMs(result.wallMs)}
+              mono
+            />
+            <StatCard
+              label="Teams / season"
+              value={result.series[0]?.teamCount ?? "—"}
+              mono
+            />
             <StatCard
               label="Last mean win%"
               value={
                 result.series.length === 0
                   ? "—"
-                  : formatPct(result.series[result.series.length - 1]!.meanWinPct)
+                  : formatPct(
+                      result.series[result.series.length - 1]!.meanWinPct,
+                    )
               }
               mono
             />
@@ -220,12 +234,23 @@ export function SeasonLabPanel(props: {
                 </thead>
                 <tbody>
                   {result.series.map((row) => (
-                    <tr key={row.seasonIndex} className="border-t border-zinc-800">
+                    <tr
+                      key={row.seasonIndex}
+                      className="border-t border-zinc-800"
+                    >
                       <td className="py-2 font-mono">{row.seasonIndex}</td>
-                      <td className="py-2 font-mono">{formatPct(row.meanWinPct)}</td>
-                      <td className="py-2 font-mono">{formatFixed(row.meanRosterAge)}</td>
-                      <td className="py-2 font-mono">{formatFixed(row.meanPayroll, 0)}</td>
-                      <td className="py-2 font-mono">{formatFixed(row.meanRosterStrength)}</td>
+                      <td className="py-2 font-mono">
+                        {formatPct(row.meanWinPct)}
+                      </td>
+                      <td className="py-2 font-mono">
+                        {formatFixed(row.meanRosterAge)}
+                      </td>
+                      <td className="py-2 font-mono">
+                        {formatFixed(row.meanPayroll, 0)}
+                      </td>
+                      <td className="py-2 font-mono">
+                        {formatFixed(row.meanRosterStrength)}
+                      </td>
                     </tr>
                   ))}
                 </tbody>

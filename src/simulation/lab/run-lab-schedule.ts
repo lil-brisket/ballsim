@@ -225,7 +225,7 @@ export function runLabSchedule(
   }
 
   const seedList = buildMasterSeedList(options.seed, SCHEDULE_SCENARIO_ID);
-    const persisted = persistLabRun(options, {
+  const persisted = persistLabRun(options, {
     scenarioName: SCHEDULE_SCENARIO_ID,
     scenarioVersion: scenarioVersionFor(SCHEDULE_SCENARIO_ID),
     config: {

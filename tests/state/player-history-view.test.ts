@@ -25,7 +25,12 @@ function retire(state: GameState, playerId: string): GameState {
       ...state.world,
       players: {
         ...state.world.players,
-        [playerId]: { ...player, retired: true, teamId: null, contractId: null },
+        [playerId]: {
+          ...player,
+          retired: true,
+          teamId: null,
+          contractId: null,
+        },
       },
     },
   };
@@ -38,7 +43,12 @@ describe("player history selectors", () => {
   function withLeague(state: GameState): GameState {
     return withFranchiseHistory(state, {
       [champ!]: [
-        seasonRecord({ year: 2026, playoffResult: "champion", city: "Champ", name: "City" }),
+        seasonRecord({
+          year: 2026,
+          playoffResult: "champion",
+          city: "Champ",
+          name: "City",
+        }),
         seasonRecord({ year: 2027, playoffResult: "first_round" }),
       ],
       [other!]: [
@@ -101,9 +111,24 @@ describe("player history selectors", () => {
       bench: [playerSeason({ year: 2026, teamId: champ! })],
     });
     state = withAwards(state, [
-      awardResult({ awardId: "mvp", seasonYear: 2026, winnerId: "star", teamId: champ }),
-      awardResult({ awardId: "mvp", seasonYear: 2027, winnerId: "star", teamId: champ }),
-      awardResult({ awardId: "sixth_man", seasonYear: 2026, winnerId: "bench", teamId: champ }),
+      awardResult({
+        awardId: "mvp",
+        seasonYear: 2026,
+        winnerId: "star",
+        teamId: champ,
+      }),
+      awardResult({
+        awardId: "mvp",
+        seasonYear: 2027,
+        winnerId: "star",
+        teamId: champ,
+      }),
+      awardResult({
+        awardId: "sixth_man",
+        seasonYear: 2026,
+        winnerId: "bench",
+        teamId: champ,
+      }),
     ]);
     expect(toPlayerHistoryView(state, "star").awardTotals).toEqual([
       expect.objectContaining({ awardId: "mvp", count: 2 }),
@@ -123,11 +148,14 @@ describe("player history selectors", () => {
     });
     const index = toPlayerHistoryIndex(state);
     const retired = index.find((e) => e.playerId === "retired_one");
-    expect(retired).toMatchObject({ displayName: "retired_one Player", retired: true });
+    expect(retired).toMatchObject({
+      displayName: "retired_one Player",
+      retired: true,
+    });
 
-    expect(filterPlayerHistoryIndex(index, "retired_one").map((e) => e.playerId)).toEqual([
-      "retired_one",
-    ]);
+    expect(
+      filterPlayerHistoryIndex(index, "retired_one").map((e) => e.playerId),
+    ).toEqual(["retired_one"]);
     expect(filterPlayerHistoryIndex(index, "PLAYER").length).toBe(index.length);
     expect(toPlayerHistoryView(state, "retired_one").retired).toBe(true);
     expect(toPlayerHistoryView(state, "active_one").retired).toBe(false);
@@ -137,7 +165,9 @@ describe("player history selectors", () => {
     const state = withPlayerHistory(base, {
       ghost: [playerSeason({ year: 2026, teamId: null })],
     });
-    const entry = toPlayerHistoryIndex(state).find((e) => e.playerId === "ghost");
+    const entry = toPlayerHistoryIndex(state).find(
+      (e) => e.playerId === "ghost",
+    );
     expect(entry?.displayName).toBe("ghost");
     expect(filterPlayerHistoryIndex([entry!], "gho")).toHaveLength(1);
     expect(toPlayerHistoryView(state, "ghost").teamsPlayed).toBe(0);

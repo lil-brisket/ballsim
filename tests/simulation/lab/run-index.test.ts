@@ -74,7 +74,10 @@ describe("Lab run index and retention", () => {
     expect(existsSync(join(resultsRoot, "keep-b"))).toBe(true);
     expect(existsSync(join(resultsRoot, "keep-c"))).toBe(true);
     const index = loadLabRunIndex(resultsRoot);
-    expect(index.runs.map((row) => row.runId).sort()).toEqual(["keep-b", "keep-c"]);
+    expect(index.runs.map((row) => row.runId).sort()).toEqual([
+      "keep-b",
+      "keep-c",
+    ]);
   });
 
   it("does not prune when keep is omitted", () => {
@@ -99,6 +102,8 @@ describe("Lab run index and retention", () => {
     });
     expect(existsSync(join(resultsRoot, "keep-one"))).toBe(true);
     expect(existsSync(join(resultsRoot, "keep-two"))).toBe(true);
-    expect(pruneLabRuns({ resultsRoot, keep: 1 }).removed).toEqual(["keep-one"]);
+    expect(pruneLabRuns({ resultsRoot, keep: 1 }).removed).toEqual([
+      "keep-one",
+    ]);
   });
 });

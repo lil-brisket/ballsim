@@ -22,7 +22,9 @@ const TH = "px-3 py-2 font-medium";
 const TD = "px-3 py-2";
 
 function formatRecord(record: BestRecordMetric | null): string {
-  return record ? `${record.wins}-${record.losses} (${record.seasonYear})` : "—";
+  return record
+    ? `${record.wins}-${record.losses} (${record.seasonYear})`
+    : "—";
 }
 
 function TeamRecordsTable(props: {
@@ -58,7 +60,10 @@ function TeamRecordsTable(props: {
                     tab: "teams",
                     team: row.teamId,
                   })}
-                  className={cn("text-amber-400 hover:underline", focusRingClass)}
+                  className={cn(
+                    "text-amber-400 hover:underline",
+                    focusRingClass,
+                  )}
                 >
                   {row.teamName}
                 </Link>
@@ -78,7 +83,9 @@ function TeamRecordsTable(props: {
 function Metric(props: { label: string; value: string | number }) {
   return (
     <div>
-      <p className="text-xs uppercase tracking-wide text-zinc-500">{props.label}</p>
+      <p className="text-xs uppercase tracking-wide text-zinc-500">
+        {props.label}
+      </p>
       <p className="mt-1 text-lg text-zinc-50">{props.value}</p>
     </div>
   );
@@ -97,14 +104,34 @@ function TeamHistoryDetail(props: {
         {!team.hasHistory ? (
           <EmptyState message="No completed seasons yet." />
         ) : (
-          <div className={cn(panelClass, "grid gap-4 p-4 sm:grid-cols-3 lg:grid-cols-4")}>
-            <Metric label="All-time record" value={`${summary.wins}-${summary.losses}`} />
+          <div
+            className={cn(
+              panelClass,
+              "grid gap-4 p-4 sm:grid-cols-3 lg:grid-cols-4",
+            )}
+          >
+            <Metric
+              label="All-time record"
+              value={`${summary.wins}-${summary.losses}`}
+            />
             <Metric label="Seasons" value={summary.totalSeasons} />
             <Metric label="Championships" value={summary.championships} />
-            <Metric label="Finals appearances" value={summary.finalsAppearances} />
-            <Metric label="Playoff appearances" value={summary.playoffAppearances} />
-            <Metric label="Best season" value={formatRecord(summary.bestRecord)} />
-            <Metric label="Worst season" value={formatRecord(summary.worstRecord)} />
+            <Metric
+              label="Finals appearances"
+              value={summary.finalsAppearances}
+            />
+            <Metric
+              label="Playoff appearances"
+              value={summary.playoffAppearances}
+            />
+            <Metric
+              label="Best season"
+              value={formatRecord(summary.bestRecord)}
+            />
+            <Metric
+              label="Worst season"
+              value={formatRecord(summary.worstRecord)}
+            />
           </div>
         )}
       </Section>
@@ -128,8 +155,13 @@ function TeamHistoryDetail(props: {
           ) : (
             <ul className="space-y-3">
               {props.ownerStory.map((item) => (
-                <li key={item.id} className="rounded-lg border border-zinc-800 px-4 py-3">
-                  <p className="text-xs uppercase tracking-wide text-zinc-500">{item.meta}</p>
+                <li
+                  key={item.id}
+                  className="rounded-lg border border-zinc-800 px-4 py-3"
+                >
+                  <p className="text-xs uppercase tracking-wide text-zinc-500">
+                    {item.meta}
+                  </p>
                   <p className="mt-1 font-medium text-zinc-100">{item.title}</p>
                   <p className="mt-1 text-sm text-zinc-400">{item.summary}</p>
                 </li>

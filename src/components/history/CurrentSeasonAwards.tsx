@@ -17,7 +17,10 @@ const STATUS_COPY: Record<AwardAvailability, string> = {
   not_applicable: "",
 };
 
-function AwardSlotCard(props: { saveId: string; slot: CurrentSeasonAwardSlot }) {
+function AwardSlotCard(props: {
+  saveId: string;
+  slot: CurrentSeasonAwardSlot;
+}) {
   const { slot } = props;
   return (
     <li className={cn(panelClass, "px-4 py-3")}>
@@ -50,13 +53,19 @@ export function CurrentSeasonAwards(props: {
     <div className="space-y-6">
       <p className="text-sm text-zinc-400">{props.seasonYear} season</p>
       {props.groups.map((group) => {
-        const slots = group.slots.filter((slot) => slot.status !== "not_applicable");
+        const slots = group.slots.filter(
+          (slot) => slot.status !== "not_applicable",
+        );
         if (slots.length === 0) return null;
         return (
           <Section key={group.tier} title={group.label}>
             <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
               {slots.map((slot) => (
-                <AwardSlotCard key={slot.key} saveId={props.saveId} slot={slot} />
+                <AwardSlotCard
+                  key={slot.key}
+                  saveId={props.saveId}
+                  slot={slot}
+                />
               ))}
             </ul>
           </Section>

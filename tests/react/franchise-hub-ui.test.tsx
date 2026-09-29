@@ -57,9 +57,9 @@ describe("Franchise hub UI", () => {
     expect(screen.getByText("Manage Facilities")).toBeTruthy();
     expect(screen.getByText("arena")).toBeTruthy();
     expect(screen.getByText(/1 upgrade in progress/)).toBeTruthy();
-    expect(
-      screen.getByRole("link").getAttribute("href"),
-    ).toBe("/dashboard/save_1/facilities");
+    expect(screen.getByRole("link").getAttribute("href")).toBe(
+      "/dashboard/save_1/facilities",
+    );
     expect(container.querySelector("form")).toBeNull();
   });
 
@@ -77,7 +77,9 @@ describe("Franchise hub UI", () => {
 
   it("does not offer Explore Relocation when href is null", () => {
     render(
-      <RelocationSummarySection summary={relocation({ state: "not_available" })} />,
+      <RelocationSummarySection
+        summary={relocation({ state: "not_available" })}
+      />,
     );
     expect(screen.getByText("Relocation")).toBeTruthy();
     expect(screen.queryByText("Explore Relocation")).toBeNull();

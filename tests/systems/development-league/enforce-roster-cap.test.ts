@@ -101,9 +101,9 @@ describe("enforceMaxRosterViaDevelopmentLeague", () => {
     expect(getTopLeagueRosterSize(teamId, result.state)).toBe(
       TRADE_ROSTER_RULES.maxRosterSize,
     );
-    expect(getDevelopmentLeagueRosterPlayerIds(teamId, result.state)).toHaveLength(
-      2,
-    );
+    expect(
+      getDevelopmentLeagueRosterPlayerIds(teamId, result.state),
+    ).toHaveLength(2);
     expect(
       isPlayerDlAssigned(result.state.world.players[`overflow_${teamId}_0`]!),
     ).toBe(true);

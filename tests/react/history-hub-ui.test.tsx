@@ -9,7 +9,10 @@ import {
   type HistoryHubParams,
   type HistoryHubRoute,
 } from "@/state/history-hub-selectors";
-import { addPlayerToState, createAwardsTestState } from "../systems/awards/helpers";
+import {
+  addPlayerToState,
+  createAwardsTestState,
+} from "../systems/awards/helpers";
 import {
   awardResult,
   playerSeason,
@@ -64,28 +67,59 @@ function oneSeasonState(): GameState {
   const [a, b] = teamIds(state);
   state = addPlayerToState(state, "star", a!);
   state = withFranchiseHistory(state, {
-    [a!]: [seasonRecord({ year: 2025, playoffResult: "champion", wins: 60, losses: 22, city: "Alpha", name: "Aces" })],
-    [b!]: [seasonRecord({ year: 2025, playoffResult: "finals", city: "Beta", name: "Bees" })],
+    [a!]: [
+      seasonRecord({
+        year: 2025,
+        playoffResult: "champion",
+        wins: 60,
+        losses: 22,
+        city: "Alpha",
+        name: "Aces",
+      }),
+    ],
+    [b!]: [
+      seasonRecord({
+        year: 2025,
+        playoffResult: "finals",
+        city: "Beta",
+        name: "Bees",
+      }),
+    ],
   });
-  state = withPlayerHistory(state, { star: [playerSeason({ year: 2025, teamId: a! })] });
+  state = withPlayerHistory(state, {
+    star: [playerSeason({ year: 2025, teamId: a! })],
+  });
   return withAwards(state, [
-    awardResult({ awardId: "mvp", seasonYear: 2025, winnerId: "star", teamId: a }),
+    awardResult({
+      awardId: "mvp",
+      seasonYear: 2025,
+      winnerId: "star",
+      teamId: a,
+    }),
   ]);
 }
 
 describe("HistoryHub", () => {
   it("renders the shared header and tab navigation", () => {
     renderHub(emptyState(), "awards", {});
-    expect(screen.getByRole("heading", { name: "League History" })).toBeTruthy();
     expect(
-      screen.getByText("Awards, champions, and franchise records across all seasons."),
+      screen.getByRole("heading", { name: "League History" }),
     ).toBeTruthy();
-    const nav = screen.getByRole("navigation", { name: "League history sections" });
+    expect(
+      screen.getByText(
+        "Awards, champions, and franchise records across all seasons.",
+      ),
+    ).toBeTruthy();
+    const nav = screen.getByRole("navigation", {
+      name: "League history sections",
+    });
     const current = within(nav).getByRole("link", { name: "Current Season" });
     expect(current.getAttribute("aria-current")).toBe("page");
-    expect(within(nav).getByRole("link", { name: "Team Records" }).getAttribute("href")).toBe(
-      "/dashboard/save_awards/awards?tab=teams",
-    );
+    expect(
+      within(nav)
+        .getByRole("link", { name: "Team Records" })
+        .getAttribute("href"),
+    ).toBe("/dashboard/save_awards/awards?tab=teams");
   });
 
   it("shows empty states on a save with no history", () => {
@@ -97,7 +131,9 @@ describe("HistoryHub", () => {
     expect(screen.getByText("No award history available yet.")).toBeTruthy();
     awards.unmount();
     renderHub(state, "history", { tab: "players" });
-    expect(screen.getByText("No player history available for this save.")).toBeTruthy();
+    expect(
+      screen.getByText("No player history available for this save."),
+    ).toBeTruthy();
   });
 
   it("renders pending current-season awards as season ongoing", () => {

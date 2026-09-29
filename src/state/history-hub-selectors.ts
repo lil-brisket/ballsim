@@ -83,7 +83,8 @@ export type HistoryHubView = {
 
 function isHistoryHubTab(value: string | undefined): value is HistoryHubTab {
   return (
-    value !== undefined && (HISTORY_HUB_TABS as readonly string[]).includes(value)
+    value !== undefined &&
+    (HISTORY_HUB_TABS as readonly string[]).includes(value)
   );
 }
 
@@ -115,12 +116,14 @@ export function resolveHistoryHubTab(
 }
 
 function toOwnerStory(state: GameState): OwnerStoryItem[] {
-  const situations = toOwnerDashboardView(state).situations.map((situation) => ({
-    id: situation.id,
-    meta: `${situation.updatedOn} · ${situation.category} · ${situation.status}`,
-    title: situation.title,
-    summary: situation.summary,
-  }));
+  const situations = toOwnerDashboardView(state).situations.map(
+    (situation) => ({
+      id: situation.id,
+      meta: `${situation.updatedOn} · ${situation.category} · ${situation.status}`,
+      title: situation.title,
+      summary: situation.summary,
+    }),
+  );
   const narrative = toNotificationsView(state)
     .filter((notification) => notification.type === "narrative")
     .slice(0, OWNER_STORY_LIMIT)

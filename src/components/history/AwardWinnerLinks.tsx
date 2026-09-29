@@ -7,7 +7,10 @@ export function AwardWinnerName(props: { saveId: string; row: AwardsHubRow }) {
     return <span className="text-zinc-100">{props.row.winnerName}</span>;
   }
   return (
-    <PlayerEntityLink saveId={props.saveId} playerId={props.row.winnerSubjectId}>
+    <PlayerEntityLink
+      saveId={props.saveId}
+      playerId={props.row.winnerSubjectId}
+    >
       {props.row.winnerName}
     </PlayerEntityLink>
   );

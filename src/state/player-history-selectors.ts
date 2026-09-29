@@ -63,7 +63,12 @@ function resolvePlayerIdentity(
 } {
   const player = state.world.players[playerId];
   if (!player) {
-    return { displayName: playerId, firstName: null, lastName: null, retired: false };
+    return {
+      displayName: playerId,
+      firstName: null,
+      lastName: null,
+      retired: false,
+    };
   }
   return {
     displayName: `${player.firstName} ${player.lastName}`,
@@ -73,11 +78,7 @@ function resolvePlayerIdentity(
   };
 }
 
-function franchiseSeason(
-  state: GameState,
-  teamId: string,
-  seasonYear: number,
-) {
+function franchiseSeason(state: GameState, teamId: string, seasonYear: number) {
   return state.business.franchiseHistory[teamId]?.seasons.find(
     (season) => season.seasonYear === seasonYear,
   );
@@ -100,7 +101,9 @@ export function toPlayerHistoryIndex(
     })
     .sort(
       (a, b) =>
-        (a.lastName ?? a.displayName).localeCompare(b.lastName ?? b.displayName) ||
+        (a.lastName ?? a.displayName).localeCompare(
+          b.lastName ?? b.displayName,
+        ) ||
         a.displayName.localeCompare(b.displayName) ||
         a.playerId.localeCompare(b.playerId),
     );
@@ -156,7 +159,9 @@ export function toPlayerHistoryView(
   const distinctTeams = new Set(
     teamSequence
       .map((stop) => stop.teamId)
-      .filter((teamId): teamId is NonNullable<typeof teamId> => teamId !== null),
+      .filter(
+        (teamId): teamId is NonNullable<typeof teamId> => teamId !== null,
+      ),
   );
 
   return {

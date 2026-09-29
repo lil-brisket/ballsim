@@ -221,10 +221,7 @@ import {
   type LeagueScheduleView,
   type LeagueScheduleFilters,
 } from "@/state/league-schedule-selectors";
-import {
-  toMediaHubView,
-  type MediaHubView,
-} from "@/state/media-hub-selectors";
+import { toMediaHubView, type MediaHubView } from "@/state/media-hub-selectors";
 import type { ExpansionState } from "@/domain/entities/expansion";
 import type { LeagueEconomy } from "@/domain/entities/league-economy";
 import type { RelocationProcess } from "@/domain/entities/relocation";

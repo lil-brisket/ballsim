@@ -20,10 +20,7 @@ type FinancesPageProps = {
 
 function HeaderLink(props: { href: string; label: string }) {
   return (
-    <Link
-      href={props.href}
-      className="text-sm text-amber-400 hover:underline"
-    >
+    <Link href={props.href} className="text-sm text-amber-400 hover:underline">
       {props.label}
     </Link>
   );
@@ -100,8 +97,7 @@ export default async function FinancesPage({
 
       <Section title="Profitability">
         <p className="mb-3 text-sm text-zinc-100">
-          Net income{" "}
-          <MoneyDisplay amount={season.profitability.netIncome} />
+          Net income <MoneyDisplay amount={season.profitability.netIncome} />
           <span className="ml-2 text-xs font-normal text-zinc-500">
             Capital this month{" "}
             <MoneyDisplay amount={month.investment.capital} />

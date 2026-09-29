@@ -2,7 +2,10 @@
 
 import { useState, useTransition } from "react";
 import { runScheduleLabAction } from "@/app/dev/sim-lab/actions";
-import { LabBusyBanner, useLabRunElapsed } from "@/components/dev/sim-lab/LabBusyBanner";
+import {
+  LabBusyBanner,
+  useLabRunElapsed,
+} from "@/components/dev/sim-lab/LabBusyBanner";
 import {
   formatDurationMs,
   formatFixed,
@@ -113,7 +116,9 @@ export function ScheduleLabPanel(props: {
             value={until}
             disabled={pending}
             onChange={(event) =>
-              setUntil(event.target.value === "playoffs" ? "playoffs" : "regular")
+              setUntil(
+                event.target.value === "playoffs" ? "playoffs" : "regular",
+              )
             }
           >
             <option value="regular">Regular season complete</option>
@@ -137,7 +142,9 @@ export function ScheduleLabPanel(props: {
         <div className="space-y-4">
           <div className="flex flex-wrap items-center gap-2">
             <StatusBadge
-              label={schedule.status === "completed" ? "completed" : "hit max days"}
+              label={
+                schedule.status === "completed" ? "completed" : "hit max days"
+              }
               tone={schedule.status === "completed" ? "success" : "warning"}
             />
             <StatusBadge
@@ -150,9 +157,21 @@ export function ScheduleLabPanel(props: {
             />
           </div>
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-            <StatCard label="Wall time" value={formatDurationMs(schedule.wallMs)} mono />
-            <StatCard label="Days advanced" value={schedule.daysAdvanced} mono />
-            <StatCard label="Games simulated" value={schedule.gamesSimulated} mono />
+            <StatCard
+              label="Wall time"
+              value={formatDurationMs(schedule.wallMs)}
+              mono
+            />
+            <StatCard
+              label="Days advanced"
+              value={schedule.daysAdvanced}
+              mono
+            />
+            <StatCard
+              label="Games simulated"
+              value={schedule.gamesSimulated}
+              mono
+            />
             <StatCard
               label="Regular final"
               value={`${schedule.gameCounts.regularFinal} / ${schedule.gameCounts.regularScheduled}`}
@@ -201,11 +220,15 @@ export function ScheduleLabPanel(props: {
               <dl className="mt-3 grid gap-2 text-sm sm:grid-cols-2">
                 <div className="flex justify-between gap-4">
                   <dt className="text-zinc-400">Possessions</dt>
-                  <dd className="font-mono">{schedule.averageGameCost.possessions}</dd>
+                  <dd className="font-mono">
+                    {schedule.averageGameCost.possessions}
+                  </dd>
                 </div>
                 <div className="flex justify-between gap-4">
                   <dt className="text-zinc-400">Events</dt>
-                  <dd className="font-mono">{schedule.averageGameCost.events}</dd>
+                  <dd className="font-mono">
+                    {schedule.averageGameCost.events}
+                  </dd>
                 </div>
                 <div className="flex justify-between gap-4">
                   <dt className="text-zinc-400">ms / possession</dt>
@@ -223,7 +246,9 @@ export function ScheduleLabPanel(props: {
             </div>
           ) : null}
           <div className={`${panelClass} p-4`}>
-            <h3 className="text-sm font-medium text-zinc-200">Season cost model</h3>
+            <h3 className="text-sm font-medium text-zinc-200">
+              Season cost model
+            </h3>
             <ul className="mt-3 space-y-2 text-sm">
               {COST_ROWS.map((row) => {
                 const ms = schedule.seasonCost[row.key];

@@ -15,7 +15,10 @@ import {
 import { formatReproCommand } from "@/simulation/lab/repro";
 import type { LabGoldenBaseline } from "@/simulation/lab/golden-baseline";
 import type { LabReport } from "@/simulation/lab/types";
-import type { GameSnapshot, TeamGameSnapshot } from "@/simulation/validation/types";
+import type {
+  GameSnapshot,
+  TeamGameSnapshot,
+} from "@/simulation/validation/types";
 
 const dirs: string[] = [];
 
@@ -56,7 +59,11 @@ function stubTeam(side: "home" | "away", points: number): TeamGameSnapshot {
   };
 }
 
-function stubGame(homePoints: number, awayPoints: number, index: number): GameSnapshot {
+function stubGame(
+  homePoints: number,
+  awayPoints: number,
+  index: number,
+): GameSnapshot {
   return {
     gameId: `g${index}`,
     homeScore: homePoints,
@@ -171,7 +178,9 @@ describe("runLabGames golden baseline", () => {
       persist: false,
       writeBaselinePath: goldenPath,
     });
-    const parsed = JSON.parse(readFileSync(goldenPath, "utf8")) as LabGoldenBaseline;
+    const parsed = JSON.parse(
+      readFileSync(goldenPath, "utf8"),
+    ) as LabGoldenBaseline;
     parsed.teamPoints = Array.from({ length: 40 }, () => 0);
     writeFileSync(goldenPath, `${JSON.stringify(parsed)}\n`, "utf8");
     const compared = runLabGames({

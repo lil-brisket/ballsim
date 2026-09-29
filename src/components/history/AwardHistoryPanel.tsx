@@ -62,7 +62,10 @@ export function AwardHistoryPanel(props: {
               </thead>
               <tbody>
                 {view.seasons.map((season) => (
-                  <tr key={season.seasonYear} className="border-b border-zinc-900/80">
+                  <tr
+                    key={season.seasonYear}
+                    className="border-b border-zinc-900/80"
+                  >
                     <td className={`${TD} font-mono text-amber-400`}>
                       {season.seasonYear}
                     </td>
@@ -72,9 +75,15 @@ export function AwardHistoryPanel(props: {
                         <td key={def.id} className={TD}>
                           {row ? (
                             <div className="space-y-0.5">
-                              <AwardWinnerName saveId={props.saveId} row={row} />
+                              <AwardWinnerName
+                                saveId={props.saveId}
+                                row={row}
+                              />
                               <div className="text-xs">
-                                <AwardWinnerTeam saveId={props.saveId} row={row} />
+                                <AwardWinnerTeam
+                                  saveId={props.saveId}
+                                  row={row}
+                                />
                               </div>
                             </div>
                           ) : (

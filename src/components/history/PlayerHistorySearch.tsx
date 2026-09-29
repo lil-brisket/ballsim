@@ -58,7 +58,8 @@ export function PlayerHistorySearch(props: {
                 <span className="text-zinc-100">{entry.displayName}</span>
                 <span className="text-xs text-zinc-500">
                   {entry.retired ? "Retired · " : ""}
-                  {entry.seasonsPlayed} {entry.seasonsPlayed === 1 ? "season" : "seasons"}
+                  {entry.seasonsPlayed}{" "}
+                  {entry.seasonsPlayed === 1 ? "season" : "seasons"}
                 </span>
               </Link>
             </li>

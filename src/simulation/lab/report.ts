@@ -148,11 +148,7 @@ export function formatLabReport(
   }
 
   if (report.calibrationChecks != null && report.calibrationChecks.length > 0) {
-    lines.push(
-      "",
-      "CALIBRATION",
-      "----------------------------------------",
-    );
+    lines.push("", "CALIBRATION", "----------------------------------------");
     for (const check of report.calibrationChecks) {
       lines.push(`${check.verdict.padEnd(7)} ${check.message}`);
     }

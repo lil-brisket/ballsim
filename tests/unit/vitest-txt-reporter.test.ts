@@ -56,7 +56,9 @@ describe("formatTxtReport", () => {
     expect(text).toContain("Outcome: failed");
     expect(text).toContain("Files: 1 failed | 2 passed (3)");
     expect(text).toContain("Tests: 1 failed | 4 passed | 0 skipped (5)");
-    expect(text).toContain("1) [unit] tests/systems/simulation/scheduled-events.test.ts");
+    expect(text).toContain(
+      "1) [unit] tests/systems/simulation/scheduled-events.test.ts",
+    );
     expect(text).toContain("Expected: executed");
     expect(text).toContain("Received: pending");
     expect(text).toContain("scheduled-events.test.ts:108:63");

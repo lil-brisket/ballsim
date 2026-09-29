@@ -82,10 +82,7 @@ export type FranchiseFacilitiesSummary = {
 };
 
 export type RelocationSummaryState =
-  | "not_available"
-  | "eligible"
-  | "in_progress"
-  | "cooldown";
+  "not_available" | "eligible" | "in_progress" | "cooldown";
 
 export type FranchiseRelocationSummary = {
   state: RelocationSummaryState;

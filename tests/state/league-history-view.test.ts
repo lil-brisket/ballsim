@@ -2,7 +2,11 @@ import { describe, expect, it } from "vitest";
 import type { GameState } from "@/state/game-state";
 import { toLeagueHistoryView } from "@/state/league-history-selectors";
 import { createTestGameState } from "../factories/game-state";
-import { seasonRecord, teamIds, withFranchiseHistory } from "./history-fixtures";
+import {
+  seasonRecord,
+  teamIds,
+  withFranchiseHistory,
+} from "./history-fixtures";
 
 function setup(): { state: GameState; ids: string[] } {
   const state = createTestGameState({ saveId: "league_history" });
@@ -15,9 +19,27 @@ describe("toLeagueHistoryView", () => {
     const [a, b, c] = ids;
     const view = toLeagueHistoryView(
       withFranchiseHistory(state, {
-        [a!]: [seasonRecord({ year: 2026, playoffResult: "champion", wins: 60, losses: 22, city: "Alpha", name: "Aces" })],
-        [b!]: [seasonRecord({ year: 2026, playoffResult: "finals", city: "Beta", name: "Bees" })],
-        [c!]: [seasonRecord({ year: 2026, playoffResult: "conference_finals" })],
+        [a!]: [
+          seasonRecord({
+            year: 2026,
+            playoffResult: "champion",
+            wins: 60,
+            losses: 22,
+            city: "Alpha",
+            name: "Aces",
+          }),
+        ],
+        [b!]: [
+          seasonRecord({
+            year: 2026,
+            playoffResult: "finals",
+            city: "Beta",
+            name: "Bees",
+          }),
+        ],
+        [c!]: [
+          seasonRecord({ year: 2026, playoffResult: "conference_finals" }),
+        ],
       }),
     );
     expect(view.seasons).toEqual([
@@ -38,8 +60,12 @@ describe("toLeagueHistoryView", () => {
     const view = toLeagueHistoryView(
       withFranchiseHistory(state, {
         [ids[0]!]: [seasonRecord({ year: 2026, playoffResult: "champion" })],
-        [ids[1]!]: [seasonRecord({ year: 2026, playoffResult: "second_round" })],
-        [ids[2]!]: [seasonRecord({ year: 2026, playoffResult: "second_round" })],
+        [ids[1]!]: [
+          seasonRecord({ year: 2026, playoffResult: "second_round" }),
+        ],
+        [ids[2]!]: [
+          seasonRecord({ year: 2026, playoffResult: "second_round" }),
+        ],
       }),
     );
     expect(view.seasons[0]!.runnerUpTeamId).toBeUndefined();
@@ -100,7 +126,9 @@ describe("toLeagueHistoryView", () => {
 
   it("returns an empty view with no completed seasons", () => {
     const { state, ids } = setup();
-    const view = toLeagueHistoryView(withFranchiseHistory(state, { [ids[0]!]: [] }));
+    const view = toLeagueHistoryView(
+      withFranchiseHistory(state, { [ids[0]!]: [] }),
+    );
     expect(view.seasons).toEqual([]);
     expect(view.hasRunnerUpData).toBe(false);
   });

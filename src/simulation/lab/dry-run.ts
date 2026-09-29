@@ -1,7 +1,13 @@
 import { ENGINE_VERSION } from "@/simulation/lab/engine-version";
 import { resolveLabGameConfig } from "@/simulation/lab/lab-game-session";
-import { buildMasterSeedList, type LabSeedListEntry } from "@/simulation/lab/lab-seeds";
-import { DEFAULT_LAB_RESULTS_ROOT, type LabRunMode } from "@/simulation/lab/manifest";
+import {
+  buildMasterSeedList,
+  type LabSeedListEntry,
+} from "@/simulation/lab/lab-seeds";
+import {
+  DEFAULT_LAB_RESULTS_ROOT,
+  type LabRunMode,
+} from "@/simulation/lab/manifest";
 import { formatReproCommand } from "@/simulation/lab/repro";
 import {
   OWNER_CAREER_SCENARIO_ID,

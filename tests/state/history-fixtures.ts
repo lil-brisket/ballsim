@@ -140,7 +140,10 @@ export function awardResult(input: {
   };
 }
 
-export function withAwards(state: GameState, results: AwardResult[]): GameState {
+export function withAwards(
+  state: GameState,
+  results: AwardResult[],
+): GameState {
   const byId: Record<string, AwardResult> = {};
   for (const result of results) byId[result.id] = result;
   return {

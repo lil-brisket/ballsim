@@ -6,15 +6,15 @@ This audit is the implementation gate for the League History / Awards Hub. Each 
 
 ## Feature map
 
-| Requested feature | Existing data source | Existing selector | Missing? | Plan |
-|---|---|---|---|---|
-| Current-season awards | `business.awards.results` (`AwardHistoryState`) | `toAwardsHubView` (`src/state/awards-hub-selectors.ts`) | No | Extend with per-slot `AwardAvailability` |
-| Historical award winners | `business.awards.results` | `toLeagueAwardsView`, `listAwardResults` (`src/state/award-selectors.ts`) | No | Add layout-agnostic `toAwardHistoryView` |
-| League champion by season | `business.franchiseHistory[*].seasons[].championship` | none (league-wide) | Partial | New `toLeagueHistoryView` (`src/state/league-history-selectors.ts`) |
-| Runner-up | `FranchiseSeasonRecord.playoffResult === "finals"` (power-of-2 brackets only) | none | Derivable (defensive) | Show only when exactly one non-champion `"finals"` team exists; otherwise omit. No schema change |
-| Conference champions | not stored | none | Yes | Omit |
-| Team all-time records | `business.franchiseHistory` | `toFranchiseHistoryView` (owner team only), `computeFranchiseHistoryMilestones` | Partial | Add `toTeamHistoryView(state, teamId)`; owner view wraps it |
-| Player career history | `business.playerHistory`, `business.awards` | profile selectors only | Yes (hub) | New `src/state/player-history-selectors.ts` |
+| Requested feature         | Existing data source                                                          | Existing selector                                                               | Missing?              | Plan                                                                                             |
+| ------------------------- | ----------------------------------------------------------------------------- | ------------------------------------------------------------------------------- | --------------------- | ------------------------------------------------------------------------------------------------ |
+| Current-season awards     | `business.awards.results` (`AwardHistoryState`)                               | `toAwardsHubView` (`src/state/awards-hub-selectors.ts`)                         | No                    | Extend with per-slot `AwardAvailability`                                                         |
+| Historical award winners  | `business.awards.results`                                                     | `toLeagueAwardsView`, `listAwardResults` (`src/state/award-selectors.ts`)       | No                    | Add layout-agnostic `toAwardHistoryView`                                                         |
+| League champion by season | `business.franchiseHistory[*].seasons[].championship`                         | none (league-wide)                                                              | Partial               | New `toLeagueHistoryView` (`src/state/league-history-selectors.ts`)                              |
+| Runner-up                 | `FranchiseSeasonRecord.playoffResult === "finals"` (power-of-2 brackets only) | none                                                                            | Derivable (defensive) | Show only when exactly one non-champion `"finals"` team exists; otherwise omit. No schema change |
+| Conference champions      | not stored                                                                    | none                                                                            | Yes                   | Omit                                                                                             |
+| Team all-time records     | `business.franchiseHistory`                                                   | `toFranchiseHistoryView` (owner team only), `computeFranchiseHistoryMilestones` | Partial               | Add `toTeamHistoryView(state, teamId)`; owner view wraps it                                      |
+| Player career history     | `business.playerHistory`, `business.awards`                                   | profile selectors only                                                          | Yes (hub)             | New `src/state/player-history-selectors.ts`                                                      |
 
 Schema decision: no `GAME_STATE_SCHEMA_VERSION` bump (currently `61`). Legacy saves already migrate empty `awards` (v56→v57) and `gameArchive` / `playerHistory` (v35→v36).
 

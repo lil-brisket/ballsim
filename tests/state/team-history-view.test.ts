@@ -5,7 +5,11 @@ import {
   toTeamRecordsView,
 } from "@/state/franchise-selectors";
 import { createTestGameState } from "../factories/game-state";
-import { seasonRecord, teamIds, withFranchiseHistory } from "./history-fixtures";
+import {
+  seasonRecord,
+  teamIds,
+  withFranchiseHistory,
+} from "./history-fixtures";
 
 describe("toTeamHistoryView", () => {
   const base = createTestGameState({ saveId: "team_history" });
@@ -13,14 +17,44 @@ describe("toTeamHistoryView", () => {
 
   const state = withFranchiseHistory(base, {
     [a!]: [
-      seasonRecord({ year: 2026, wins: 30, losses: 52, playoffResult: "missed" }),
-      seasonRecord({ year: 2027, wins: 55, losses: 27, playoffResult: "champion" }),
-      seasonRecord({ year: 2028, wins: 50, losses: 32, playoffResult: "finals" }),
-      seasonRecord({ year: 2029, wins: 60, losses: 22, playoffResult: "champion" }),
+      seasonRecord({
+        year: 2026,
+        wins: 30,
+        losses: 52,
+        playoffResult: "missed",
+      }),
+      seasonRecord({
+        year: 2027,
+        wins: 55,
+        losses: 27,
+        playoffResult: "champion",
+      }),
+      seasonRecord({
+        year: 2028,
+        wins: 50,
+        losses: 32,
+        playoffResult: "finals",
+      }),
+      seasonRecord({
+        year: 2029,
+        wins: 60,
+        losses: 22,
+        playoffResult: "champion",
+      }),
     ],
     [b!]: [
-      seasonRecord({ year: 2026, wins: 45, losses: 37, playoffResult: "first_round" }),
-      seasonRecord({ year: 2027, wins: 30, losses: 52, playoffResult: "missed" }),
+      seasonRecord({
+        year: 2026,
+        wins: 45,
+        losses: 37,
+        playoffResult: "first_round",
+      }),
+      seasonRecord({
+        year: 2027,
+        wins: 30,
+        losses: 52,
+        playoffResult: "missed",
+      }),
     ],
   });
 
@@ -35,8 +69,16 @@ describe("toTeamHistoryView", () => {
 
   it("picks best and worst seasons by win percentage", () => {
     const view = toTeamHistoryView(state, a!);
-    expect(view.summary.bestRecord).toMatchObject({ wins: 60, losses: 22, seasonYear: 2029 });
-    expect(view.summary.worstRecord).toMatchObject({ wins: 30, losses: 52, seasonYear: 2026 });
+    expect(view.summary.bestRecord).toMatchObject({
+      wins: 60,
+      losses: 22,
+      seasonYear: 2029,
+    });
+    expect(view.summary.worstRecord).toMatchObject({
+      wins: 30,
+      losses: 52,
+      seasonYear: 2026,
+    });
   });
 
   it("breaks identical records toward the earliest season", () => {
@@ -61,8 +103,18 @@ describe("toTeamHistoryView", () => {
   it("keeps relocated seasons on the same teamId with historical names", () => {
     const relocated = withFranchiseHistory(base, {
       [a!]: [
-        seasonRecord({ year: 2026, city: "Old City", name: "Originals", playoffResult: "champion" }),
-        seasonRecord({ year: 2027, city: "New City", name: "Movers", relocated: true }),
+        seasonRecord({
+          year: 2026,
+          city: "Old City",
+          name: "Originals",
+          playoffResult: "champion",
+        }),
+        seasonRecord({
+          year: 2027,
+          city: "New City",
+          name: "Movers",
+          relocated: true,
+        }),
       ],
     });
     const view = toTeamHistoryView(relocated, a!);
@@ -95,7 +147,9 @@ describe("toTeamHistoryView", () => {
     const franchise = toFranchiseHistoryView(owned);
     expect(franchise.seasons).toEqual(team.seasons);
     expect(franchise.milestones.championships).toBe(team.summary.championships);
-    expect(franchise.milestones.playoffAppearances).toBe(team.summary.playoffAppearances);
+    expect(franchise.milestones.playoffAppearances).toBe(
+      team.summary.playoffAppearances,
+    );
   });
 });
 

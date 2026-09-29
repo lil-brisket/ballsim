@@ -100,7 +100,7 @@ export function runLabSweep(options: RunSweepOptions): SweepResult {
     seed: options.seed,
   });
   const persist = options.persist === true;
-    const persisted = persistLabRun(options, {
+  const persisted = persistLabRun(options, {
     scenarioName: "sweep",
     scenarioVersion: scenarioVersionFor("normal"),
     config: {

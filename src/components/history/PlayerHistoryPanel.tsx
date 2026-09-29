@@ -13,13 +13,18 @@ import type {
 function Metric(props: { label: string; value: string | number }) {
   return (
     <div>
-      <p className="text-xs uppercase tracking-wide text-zinc-500">{props.label}</p>
+      <p className="text-xs uppercase tracking-wide text-zinc-500">
+        {props.label}
+      </p>
       <p className="mt-1 text-lg text-zinc-50">{props.value}</p>
     </div>
   );
 }
 
-function PlayerHistoryDetail(props: { saveId: string; player: PlayerHistoryView }) {
+function PlayerHistoryDetail(props: {
+  saveId: string;
+  player: PlayerHistoryView;
+}) {
   const { player } = props;
   return (
     <Section
@@ -27,7 +32,10 @@ function PlayerHistoryDetail(props: { saveId: string; player: PlayerHistoryView 
       action={
         <Link
           href={player.profileHref}
-          className={cn("text-sm text-amber-400 hover:underline", focusRingClass)}
+          className={cn(
+            "text-sm text-amber-400 hover:underline",
+            focusRingClass,
+          )}
         >
           View player profile
         </Link>
@@ -41,21 +49,34 @@ function PlayerHistoryDetail(props: { saveId: string; player: PlayerHistoryView 
             <Metric label="Seasons played" value={player.seasonsPlayed} />
             <Metric label="Teams played for" value={player.teamsPlayed} />
             <Metric label="Championships" value={player.championships} />
-            <Metric label="Status" value={player.retired ? "Retired" : "Active"} />
+            <Metric
+              label="Status"
+              value={player.retired ? "Retired" : "Active"}
+            />
           </div>
 
           <div className="grid gap-6 lg:grid-cols-2">
             <div className="space-y-2">
-              <h3 className="text-sm font-medium text-zinc-300">Team history</h3>
+              <h3 className="text-sm font-medium text-zinc-300">
+                Team history
+              </h3>
               <p className="text-xs text-zinc-500">
                 Team of record at each season&apos;s end.
               </p>
               <ul className="divide-y divide-zinc-900 text-sm">
                 {player.teamSequence.map((stop) => (
-                  <li key={stop.seasonYear} className="flex items-baseline gap-3 py-1.5">
-                    <span className="font-mono text-amber-400">{stop.seasonYear}</span>
+                  <li
+                    key={stop.seasonYear}
+                    className="flex items-baseline gap-3 py-1.5"
+                  >
+                    <span className="font-mono text-amber-400">
+                      {stop.seasonYear}
+                    </span>
                     {stop.teamId ? (
-                      <TeamEntityLink saveId={props.saveId} teamId={stop.teamId}>
+                      <TeamEntityLink
+                        saveId={props.saveId}
+                        teamId={stop.teamId}
+                      >
                         {stop.teamName ?? stop.teamId}
                       </TeamEntityLink>
                     ) : (
@@ -77,7 +98,10 @@ function PlayerHistoryDetail(props: { saveId: string; player: PlayerHistoryView 
               ) : (
                 <ul className="divide-y divide-zinc-900 text-sm">
                   {player.awardTotals.map((award) => (
-                    <li key={award.awardId} className="flex justify-between py-1.5">
+                    <li
+                      key={award.awardId}
+                      className="flex justify-between py-1.5"
+                    >
                       <span className="text-zinc-200">{award.displayName}</span>
                       <span className="text-zinc-400">×{award.count}</span>
                     </li>
@@ -104,7 +128,10 @@ export function PlayerHistoryPanel(props: {
   return (
     <div className="space-y-8">
       {props.selectedPlayer ? (
-        <PlayerHistoryDetail saveId={props.saveId} player={props.selectedPlayer} />
+        <PlayerHistoryDetail
+          saveId={props.saveId}
+          player={props.selectedPlayer}
+        />
       ) : null}
       <Section title="Player search">
         <PlayerHistorySearch

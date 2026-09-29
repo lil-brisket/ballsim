@@ -149,7 +149,6 @@ describe("game archive size measurement", () => {
 
     // Surface measurement for operators reading test output
     for (const row of sizes) {
-       
       console.log(
         `[game-archive-size] seasons=${row.seasons} games=${row.games} bytes=${row.bytes}`,
       );

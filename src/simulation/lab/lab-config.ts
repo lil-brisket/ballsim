@@ -1,6 +1,9 @@
 import { readFileSync } from "node:fs";
 import { isLabScenarioId } from "@/simulation/lab/scenarios";
-import { isLabSweepSampler, type LabSweepSampler } from "@/simulation/lab/sweep/space";
+import {
+  isLabSweepSampler,
+  type LabSweepSampler,
+} from "@/simulation/lab/sweep/space";
 import type { LabRotationMode, SimChannel } from "@/simulation/lab/types";
 import { assertLabKeep } from "@/simulation/lab/retention";
 
@@ -194,7 +197,10 @@ export function parseLabFileConfig(raw: unknown): LabFileConfig {
   assignPositiveInt(config, record, "jobs");
   assignPositiveInt(config, record, "chunkSize");
   if (record.timeoutMs != null) {
-    if (!Number.isInteger(record.timeoutMs) || (record.timeoutMs as number) < 0) {
+    if (
+      !Number.isInteger(record.timeoutMs) ||
+      (record.timeoutMs as number) < 0
+    ) {
       throw new Error("Lab config timeoutMs must be a non-negative integer.");
     }
     config.timeoutMs = record.timeoutMs as number;
@@ -210,7 +216,10 @@ export function parseLabFileConfig(raw: unknown): LabFileConfig {
     throw new Error("Lab config sweep must be a string.");
   }
   if (record.sampler != null) {
-    if (typeof record.sampler !== "string" || !isLabSweepSampler(record.sampler)) {
+    if (
+      typeof record.sampler !== "string" ||
+      !isLabSweepSampler(record.sampler)
+    ) {
       throw new Error("Lab config sampler must be grid, lhs, or sobol.");
     }
     config.sampler = record.sampler;

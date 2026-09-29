@@ -10,7 +10,11 @@ export function HistoryHub(props: { view: HistoryHubView }) {
   const { view } = props;
   return (
     <>
-      <HistoryHubHeader saveId={view.saveId} route={view.route} activeTab={view.tab} />
+      <HistoryHubHeader
+        saveId={view.saveId}
+        route={view.route}
+        activeTab={view.tab}
+      />
       {view.currentSeason ? (
         <CurrentSeasonAwards
           saveId={view.saveId}
@@ -19,7 +23,11 @@ export function HistoryHub(props: { view: HistoryHubView }) {
         />
       ) : null}
       {view.awardHistory ? (
-        <AwardHistoryPanel saveId={view.saveId} route={view.route} view={view.awardHistory} />
+        <AwardHistoryPanel
+          saveId={view.saveId}
+          route={view.route}
+          view={view.awardHistory}
+        />
       ) : null}
       {view.leagueHistory ? (
         <LeagueHistoryTable saveId={view.saveId} view={view.leagueHistory} />

@@ -26,17 +26,27 @@ export function LeagueHistoryTable(props: {
         <tbody>
           {props.view.seasons.map((row) => (
             <tr key={row.seasonYear} className="border-b border-zinc-900/80">
-              <td className={`${TD} font-mono text-amber-400`}>{row.seasonYear}</td>
+              <td className={`${TD} font-mono text-amber-400`}>
+                {row.seasonYear}
+              </td>
               <td className={TD}>
-                <TeamEntityLink saveId={props.saveId} teamId={row.championTeamId}>
+                <TeamEntityLink
+                  saveId={props.saveId}
+                  teamId={row.championTeamId}
+                >
                   {row.championName}
                 </TeamEntityLink>
-                <span className="ml-2 text-xs text-zinc-500">{row.championRecord}</span>
+                <span className="ml-2 text-xs text-zinc-500">
+                  {row.championRecord}
+                </span>
               </td>
               {showRunnerUp ? (
                 <td className={TD}>
                   {row.runnerUpTeamId && row.runnerUpName ? (
-                    <TeamEntityLink saveId={props.saveId} teamId={row.runnerUpTeamId}>
+                    <TeamEntityLink
+                      saveId={props.saveId}
+                      teamId={row.runnerUpTeamId}
+                    >
                       {row.runnerUpName}
                     </TeamEntityLink>
                   ) : (

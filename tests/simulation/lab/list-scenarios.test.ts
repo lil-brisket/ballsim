@@ -21,9 +21,9 @@ describe("listLabScenarios", () => {
     expect(
       listings.find((item) => item.id === OWNER_CAREER_SCENARIO_ID)?.kind,
     ).toBe("owner-career");
-    expect(listings.find((item) => item.id === SCHEDULE_SCENARIO_ID)?.kind).toBe(
-      "schedule",
-    );
+    expect(
+      listings.find((item) => item.id === SCHEDULE_SCENARIO_ID)?.kind,
+    ).toBe("schedule");
     const text = formatLabScenarioList(listings);
     expect(text).toContain("normal  v1  game");
     expect(text).toContain("owner-career  v1  owner-career");
