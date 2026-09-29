@@ -37,6 +37,7 @@ describe("sim lab application wrappers", () => {
       games: 2,
       scenarioId: "normal",
       rotation: "off",
+      persist: false,
     });
     expect(result.ok).toBe(true);
     if (result.ok) {

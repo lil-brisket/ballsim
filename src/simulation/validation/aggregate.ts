@@ -1,3 +1,4 @@
+import { meanCi95 } from "@/simulation/validation/mean-ci";
 import type {
   GameSnapshot,
   HomeAwaySplit,
@@ -10,9 +11,32 @@ function sortedCopy(values: readonly number[]): number[] {
   return [...values].sort((a, b) => a - b);
 }
 
+function withMeanCi95(summary: {
+  n: number;
+  mean: number;
+  median: number;
+  min: number;
+  max: number;
+  stdev: number;
+}): MetricSummary {
+  const ci = meanCi95(summary.mean, summary.stdev, summary.n);
+  return {
+    ...summary,
+    ci95Low: ci?.low ?? null,
+    ci95High: ci?.high ?? null,
+  };
+}
+
 export function summarizeMetric(values: readonly number[]): MetricSummary {
   if (values.length === 0) {
-    return { n: 0, mean: 0, median: 0, min: 0, max: 0, stdev: 0 };
+    return withMeanCi95({
+      n: 0,
+      mean: 0,
+      median: 0,
+      min: 0,
+      max: 0,
+      stdev: 0,
+    });
   }
   const n = values.length;
   let sum = 0;
@@ -34,7 +58,7 @@ export function summarizeMetric(values: readonly number[]): MetricSummary {
   const mid = Math.floor(n / 2);
   const median =
     n % 2 === 1 ? sorted[mid]! : (sorted[mid - 1]! + sorted[mid]!) / 2;
-  return { n, mean, median, min, max, stdev };
+  return withMeanCi95({ n, mean, median, min, max, stdev });
 }
 
 function summarizeNullable(values: readonly (number | null)[]): MetricSummary {

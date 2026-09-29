@@ -8,139 +8,26 @@
 
 import { writeFileSync } from "node:fs";
 import {
+  formatDryRunPreview,
   formatLabReport,
+  formatLabScenarioList,
+  formatSweepReport,
   labExitCode,
+  LabRunInterruptedError,
+  listLabScenarios,
+  loadSweepSpace,
+  parseLabArgv,
+  previewLabGamesRun,
+  previewLabSeasonRun,
   runLabGames,
+  runLabGamesAsync,
   runLabSeason,
+  runLabSweep,
   type LabReport,
-  type SimChannel,
 } from "@/simulation/lab";
-import { isLabScenarioId } from "@/simulation/lab/scenarios";
-import type { LabRotationMode } from "@/simulation/lab/types";
+import { LAB_CLI_USAGE } from "@/simulation/lab/lab-config";
 
-type ParsedArgs = {
-  seed: number | string;
-  games: number;
-  scenario: string;
-  rotation: LabRotationMode;
-  format: "json" | "text";
-  out?: string;
-  quiet: boolean;
-  channel: SimChannel;
-  mode: "game" | "owner-career";
-  seasons: number;
-};
-
-function parseArgs(argv: string[]): ParsedArgs {
-  let seed: number | string = 42;
-  let games = 100;
-  let scenario = "normal";
-  let rotation: LabRotationMode = "on";
-  let format: "json" | "text" = "text";
-  let out: string | undefined;
-  let quiet = false;
-  let channel: SimChannel = "pr";
-  let mode: "game" | "owner-career" = "game";
-  let seasons = 1;
-
-  for (let index = 0; index < argv.length; index += 1) {
-    const arg = argv[index]!;
-    const next = argv[index + 1];
-    const [flag, inline] = arg.includes("=")
-      ? arg.split("=", 2)
-      : [arg, undefined];
-    const value = inline ?? next;
-    const consume = inline == null && next != null;
-
-    if (flag === "--help" || flag === "-h") {
-      console.log(
-        "Usage: npm run sim -- [--seed S] [--games N] [--scenario ID] [--rotation on|off] [--format json|text] [--out path] [--quiet] [--channel pr|nightly] [--mode game|owner-career] [--seasons N]",
-      );
-      process.exit(0);
-    }
-
-    if (flag === "--seed") {
-      if (value == null) throw new Error("--seed requires a value");
-      const asNumber = Number(value);
-      seed =
-        Number.isFinite(asNumber) && value.trim() !== "" ? asNumber : value;
-      if (consume && inline == null) index += 1;
-    } else if (flag === "--games") {
-      const parsed = Number(value);
-      if (!Number.isInteger(parsed) || parsed < 1) {
-        throw new Error("--games requires a positive integer");
-      }
-      games = parsed;
-      if (consume && inline == null) index += 1;
-    } else if (flag === "--scenario") {
-      if (value == null) throw new Error("--scenario requires a value");
-      scenario = value;
-      if (consume && inline == null) index += 1;
-    } else if (flag === "--rotation") {
-      if (value !== "on" && value !== "off") {
-        throw new Error("--rotation must be on or off");
-      }
-      rotation = value;
-      if (consume && inline == null) index += 1;
-    } else if (flag === "--format") {
-      if (value !== "json" && value !== "text") {
-        throw new Error("--format must be json or text");
-      }
-      format = value;
-      if (consume && inline == null) index += 1;
-    } else if (flag === "--out") {
-      if (value == null) throw new Error("--out requires a path");
-      out = value;
-      if (consume && inline == null) index += 1;
-    } else if (flag === "--quiet") {
-      quiet = true;
-    } else if (flag === "--channel") {
-      if (value !== "pr" && value !== "nightly") {
-        throw new Error("--channel must be pr or nightly");
-      }
-      channel = value;
-      if (consume && inline == null) index += 1;
-    } else if (flag === "--mode") {
-      if (value !== "game" && value !== "owner-career") {
-        throw new Error("--mode must be game or owner-career");
-      }
-      mode = value;
-      if (consume && inline == null) index += 1;
-    } else if (flag === "--seasons") {
-      const parsed = Number(value);
-      if (!Number.isInteger(parsed) || parsed < 1) {
-        throw new Error("--seasons requires a positive integer");
-      }
-      seasons = parsed;
-      if (consume && inline == null) index += 1;
-    } else {
-      throw new Error(`Unknown argument: ${arg}`);
-    }
-  }
-
-  if (
-    mode === "game" &&
-    !isLabScenarioId(scenario) &&
-    scenario !== "owner-career"
-  ) {
-    throw new Error(`Unknown scenario: ${scenario}`);
-  }
-
-  return {
-    seed,
-    games,
-    scenario,
-    rotation,
-    format,
-    out,
-    quiet,
-    channel,
-    mode,
-    seasons,
-  };
-}
-
-function printReport(report: LabReport, options: ParsedArgs): void {
+function printReport(report: LabReport, options: ReturnType<typeof parseLabArgv>): void {
   const text = formatLabReport(report, {
     json: options.format === "json",
     quiet: options.quiet && options.format !== "json",
@@ -148,36 +35,205 @@ function printReport(report: LabReport, options: ParsedArgs): void {
   if (options.out) {
     writeFileSync(options.out, text, "utf8");
   }
+  if (report.manifestPath) {
+    process.stderr.write(`Wrote ${report.manifestPath}\n`);
+  }
   process.stdout.write(text);
   process.exitCode = labExitCode(report, options.channel);
 }
 
-function main(): void {
-  const options = parseArgs(process.argv.slice(2));
+async function main(): Promise<void> {
+  const options = parseLabArgv(process.argv.slice(2));
+  if (options.help) {
+    console.log(LAB_CLI_USAGE);
+    return;
+  }
+  if (options.listScenarios) {
+    const listings = listLabScenarios();
+    const text =
+      options.format === "json"
+        ? `${JSON.stringify(listings, null, 2)}\n`
+        : formatLabScenarioList(listings);
+    if (options.out) {
+      writeFileSync(options.out, text, "utf8");
+    }
+    process.stdout.write(text);
+    return;
+  }
   if (options.mode === "owner-career") {
     if (typeof options.seed !== "number") {
       throw new Error("owner-career mode requires a numeric --seed");
     }
+    if (
+      options.baseline != null ||
+      options.writeBaseline != null ||
+      options.calibrate ||
+      options.ksAlpha != null
+    ) {
+      throw new Error(
+        "--baseline, --write-baseline, --calibrate, and --ks-alpha apply to game mode only",
+      );
+    }
+    if (options.dryRun) {
+      const preview = previewLabSeasonRun({
+        seed: options.seed,
+        seasons: options.seasons,
+        persist: options.persist,
+        resultsRoot: options.resultsDir,
+        keep: options.keep,
+      });
+      const text =
+        options.format === "json"
+          ? `${JSON.stringify(preview, null, 2)}\n`
+          : formatDryRunPreview(preview);
+      if (options.out) {
+        writeFileSync(options.out, text, "utf8");
+      }
+      process.stdout.write(text);
+      return;
+    }
     const { report } = runLabSeason({
       seed: options.seed,
       seasons: options.seasons,
+      persist: options.persist,
+      resultsRoot: options.resultsDir,
+      runId: options.runId,
+      keep: options.keep,
     });
     printReport(report, options);
     return;
   }
-  const report = runLabGames({
-    seed: options.seed,
-    games: options.games,
-    scenarioId: options.scenario,
-    rotation: options.rotation,
-  });
-  printReport(report, options);
+  const abort = new AbortController();
+  const onInterrupt = (): void => {
+    abort.abort();
+  };
+  process.once("SIGINT", onInterrupt);
+  process.once("SIGTERM", onInterrupt);
+  try {
+    if (options.dryRun) {
+      if (options.sweep != null) {
+        const space = loadSweepSpace(options.sweep);
+        const preview = {
+          mode: "sweep" as const,
+          sampler: options.sampler,
+          samples: options.samples,
+          seed: options.seed,
+          games: options.games,
+          scenario: options.scenario,
+          rotation: options.rotation,
+          parameters: space.parameters.map((param) => param.name),
+        };
+        const text =
+          options.format === "json"
+            ? `${JSON.stringify(preview, null, 2)}\n`
+            : [
+                "LAB DRY RUN (no simulation)",
+                `mode=sweep sampler=${preview.sampler} samples=${preview.samples}`,
+                `seed=${preview.seed} games=${preview.games} scenario=${preview.scenario} rotation=${preview.rotation}`,
+                `parameters=${preview.parameters.join(",")}`,
+                "",
+              ].join("\n");
+        if (options.out) {
+          writeFileSync(options.out, text, "utf8");
+        }
+        process.stdout.write(text);
+        return;
+      }
+      const preview = previewLabGamesRun({
+        seed: options.seed,
+        games: options.games,
+        scenarioId: options.scenario,
+        rotation: options.rotation,
+        persist: options.persist,
+        resultsRoot: options.resultsDir,
+        keep: options.keep,
+      });
+      const text =
+        options.format === "json"
+          ? `${JSON.stringify(preview, null, 2)}\n`
+          : formatDryRunPreview(preview);
+      if (options.out) {
+        writeFileSync(options.out, text, "utf8");
+      }
+      process.stdout.write(text);
+      return;
+    }
+    if (options.sweep != null) {
+      if (
+        options.baseline != null ||
+        options.writeBaseline != null ||
+        options.calibrate
+      ) {
+        throw new Error(
+          "--sweep cannot be combined with --baseline, --write-baseline, or --calibrate",
+        );
+      }
+      const result = runLabSweep({
+        space: loadSweepSpace(options.sweep),
+        sampler: options.sampler,
+        sampleCount: options.samples,
+        seed: options.seed,
+        games: options.games,
+        scenarioId: options.scenario,
+        rotation: options.rotation,
+        channel: options.channel,
+        persist: options.persist,
+        resultsRoot: options.resultsDir,
+        runId: options.runId,
+        keep: options.keep,
+        signal: abort.signal,
+      });
+      const text =
+        options.format === "json"
+          ? `${JSON.stringify(result, null, 2)}\n`
+          : formatSweepReport(result);
+      if (options.out) {
+        writeFileSync(options.out, text, "utf8");
+      }
+      if (result.manifestPath) {
+        process.stderr.write(`Wrote ${result.manifestPath}\n`);
+      }
+      process.stdout.write(text);
+      return;
+    }
+    const runOptions = {
+      seed: options.seed,
+      games: options.games,
+      scenarioId: options.scenario,
+      rotation: options.rotation,
+      channel: options.channel,
+      persist: options.persist,
+      resultsRoot: options.resultsDir,
+      runId: options.runId,
+      jobs: options.jobs,
+      chunkSize: options.chunkSize,
+      timeoutMs: options.timeoutMs,
+      resume: options.resume,
+      signal: abort.signal,
+      baselinePath: options.baseline,
+      writeBaselinePath: options.writeBaseline,
+      calibrate: options.calibrate,
+      ksAlpha: options.ksAlpha,
+      keep: options.keep,
+    };
+    const report =
+      options.jobs > 1 || options.timeoutMs > 0
+        ? await runLabGamesAsync(runOptions)
+        : runLabGames(runOptions);
+    printReport(report, options);
+  } finally {
+    process.removeListener("SIGINT", onInterrupt);
+    process.removeListener("SIGTERM", onInterrupt);
+  }
 }
 
-try {
-  main();
-} catch (error) {
+main().catch((error: unknown) => {
+  if (error instanceof LabRunInterruptedError) {
+    console.error(error.message);
+    process.exitCode = 1;
+    return;
+  }
   const message = error instanceof Error ? error.message : String(error);
   console.error(`Simulation Lab failed: ${message}`);
   process.exitCode = 1;
-}
+});

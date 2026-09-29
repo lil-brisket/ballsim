@@ -27,8 +27,12 @@ function lineMetric(
   const mean = asPct ? fmtPct(summary.mean) : fmt(summary.mean);
   const median = asPct ? fmtPct(summary.median) : fmt(summary.median);
   const stdev = asPct ? fmtPct(summary.stdev) : fmt(summary.stdev);
+  const ci =
+    summary.ci95Low != null && summary.ci95High != null
+      ? `  95%CI=[${asPct ? fmtPct(summary.ci95Low) : fmt(summary.ci95Low)}, ${asPct ? fmtPct(summary.ci95High) : fmt(summary.ci95High)}]`
+      : "";
   return [
-    `${label.padEnd(24)} mean=${mean}  median=${median}  stdev=${stdev}`,
+    `${label.padEnd(24)} mean=${mean}  median=${median}  stdev=${stdev}  n=${summary.n}${ci}`,
     `${"".padEnd(24)} min=${asPct ? fmtPct(summary.min) : fmt(summary.min)}  max=${asPct ? fmtPct(summary.max) : fmt(summary.max)}`,
   ].join("\n");
 }

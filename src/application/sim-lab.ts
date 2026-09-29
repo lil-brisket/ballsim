@@ -58,12 +58,14 @@ export type GameLabInput = {
   games: number;
   scenarioId: string;
   rotation: LabRotationMode;
+  persist?: boolean;
 };
 
 export type SeasonLabInput = {
   seed: number;
   seasons: number;
   preset: LabLeaguePreset;
+  persist?: boolean;
 };
 
 export type ScheduleLabInput = {
@@ -71,6 +73,7 @@ export type ScheduleLabInput = {
   preset: LabLeaguePreset;
   until: LabScheduleUntil;
   maxDays?: number;
+  persist?: boolean;
 };
 
 function asPositiveInt(value: number, label: string): number | SimLabFailure {
@@ -87,7 +90,9 @@ function asFiniteSeed(value: number): number | SimLabFailure {
   return Math.trunc(value);
 }
 
-export function runGameLab(input: GameLabInput): GameLabSuccess | SimLabFailure {
+export function runGameLab(
+  input: GameLabInput,
+): GameLabSuccess | SimLabFailure {
   const seed = asFiniteSeed(input.seed);
   if (typeof seed !== "number") {
     return seed;
@@ -115,6 +120,7 @@ export function runGameLab(input: GameLabInput): GameLabSuccess | SimLabFailure 
     games,
     scenarioId: input.scenarioId,
     rotation: input.rotation,
+    persist: input.persist !== false,
   });
   return {
     ok: true,
@@ -140,7 +146,9 @@ export function runSeasonLab(
     return { ok: false, error: `Unknown league preset: ${input.preset}` };
   }
   const seasonCap =
-    input.preset === "standard" ? LAB_MAX_SEASONS_STANDARD : LAB_MAX_SEASONS_CBL;
+    input.preset === "standard"
+      ? LAB_MAX_SEASONS_STANDARD
+      : LAB_MAX_SEASONS_CBL;
   if (seasons > seasonCap) {
     return {
       ok: false,
@@ -152,7 +160,9 @@ export function runSeasonLab(
   const { report, series } = runLabSeason({
     seed,
     seasons,
+    preset: input.preset,
     gameSettings: settingsForLabPreset(input.preset),
+    persist: input.persist !== false,
   });
   return {
     ok: true,
@@ -193,6 +203,7 @@ export function runScheduleLab(
     preset: input.preset,
     until: input.until,
     maxDays: parsedDays,
+    persist: input.persist !== false,
   });
   return { ok: true, result };
 }

@@ -87,7 +87,14 @@ function serializeAggregates(agg: ValidationAggregates): unknown {
   };
 }
 
-function roundSummary(summary: MetricSummary): MetricSummary {
+function roundSummary(summary: MetricSummary): {
+  n: number;
+  mean: number;
+  median: number;
+  min: number;
+  max: number;
+  stdev: number;
+} {
   return {
     n: summary.n,
     mean: round6(summary.mean),

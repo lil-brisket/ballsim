@@ -93,7 +93,17 @@ Simulation correctness depends on reproducibility:
 
 ## Simulation Lab
 
-`src/simulation/lab/` wraps production `simulateGame` / `advanceSimulation`. Fast Lab unit tests (mapper, 2-game checksum, planted failure, scenarios) stay in `npm test`. The 100-game rotation-on suite and season RNG check run via `npm run test:simulation` (PR CI). Statistical FAIL does not fail the `pr` channel; `--channel nightly` does.
+`src/simulation/lab/` wraps production `simulateGame` / `advanceSimulation`. Fast Lab unit tests (mapper, 2-game checksum, planted failure, scenarios, manifest, engineVersion) stay in `npm test`. The 100-game rotation-on suite and season RNG check run via `npm run test:simulation` (PR CI). Statistical FAIL does not fail the `pr` channel; `--channel nightly` does.
+
+Game batches use per-game RNG streams: `deriveSeed(master, "{scenarioId}:roster")` for rosters and `deriveSeed(master, "{scenarioId}:game:{n}")` for each game. That layout is `ENGINE_VERSION` 1 — bump [`src/simulation/lab/engine-version.ts`](../src/simulation/lab/engine-version.ts) on any later change that alters output for a fixed seed.
+
+CLI (`npm run sim`) writes `results/<runId>/manifest.json` before the first game. Flags: `--no-persist`, `--results-dir`, `--run-id`. Replay a game-mode run with `runLabGamesFromManifest`. `npm run sim:compare -- a.json b.json` refuses mismatched `engineVersion` (and `scenarioVersion` when the scenario name matches). Hard failures write `results/<runId>/failures/<n>.ndjson` and `<n>.json`; `npm run sim:replay -- --run <runId> --game <n>` re-runs that game from its seed and diffs the stored event log. Game batches also stream `results/<runId>/games.ndjson` (snapshot + `gameIndex` + `gameSeed`) so aggregates can be recomputed. Lab text reports print mean, 95% CI, and n; they also print two-sample n needed to detect d=0.2 and d=0.5 at 80% power. CI fields are not part of the checksum. Persisted game runs write `checkpoint.json` after each game; `--resume --run-id <id>` continues from it. `--jobs N` (with `--rotation=off`) parallelizes independent games; `--timeout-ms` kills a hung game. Rotation-on cannot use `--jobs > 1` (shared rotation/injury state). SIGINT/SIGTERM abort and leave the checkpoint. `--sweep [space.json]` runs a parameter sweep (`--sampler grid|lhs|sobol`, `--samples N`) and writes `sweep.ndjson` plus a Spearman sensitivity ranking. `--write-baseline path` writes a golden of team points, game totals, and absolute differentials. `--baseline path` compares the current run with a two-sample KS test (default `--ks-alpha 0.01`); mismatched `engineVersion` is refused. `--calibrate` checks NBA-inspired mean ranges (wider than `PLAUSIBILITY_BANDS`, which stay hashed into engine identity). A KS or calibration FAIL fails the run on every channel. These checks are opt-in and are not part of the checksum. `--config path` supplies JSON defaults; CLI flags override the file. `--dry-run` prints engineVersion, scenario version, and seed streams without simulating. `--list-scenarios` prints every Lab scenario id and its `scenarioVersion` (bump `LAB_SCENARIO_VERSIONS` when a scenario definition changes; bump `ENGINE_VERSION` too if that change alters output for a fixed seed). Persisted runs append `results/index.json`. `--keep N` deletes the oldest run directories beyond N.
+
+```bash
+npm run sim -- --seed=42 --games=100
+npm run sim:compare -- results/<runA>/manifest.json results/<runB>/manifest.json
+npm run sim:replay -- --run <runId> --game 0
+```
 
 ## React tests
 

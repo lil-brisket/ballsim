@@ -10,6 +10,7 @@
 
 ### Tooling
 
+- Simulation Lab writes `results/<runId>/manifest.json` before the first game (`ENGINE_VERSION`, git SHA, resolved config, seed list). `npm run sim:compare` refuses mismatched engine versions. Game-mode RNG is per-game streams (`{scenarioId}:game:{n}`); bump `ENGINE_VERSION` when a change alters output for a fixed seed. Hard invariant failures write `results/<runId>/failures/<n>.ndjson` plus `<n>.json`; `npm run sim:replay` diffs a single game against that event log. Game-mode aggregates report mean, 95% CI, and n; persisted runs stream `results/<runId>/games.ndjson` and `checkpoint.json` (`--resume`). `--jobs N` parallelizes `--rotation=off` games; `--timeout-ms` bounds a game. `--sweep` samples a config space (grid / Latin hypercube / Sobol) and writes a Spearman sensitivity ranking. `--write-baseline` / `--baseline` compare score distributions with a two-sample KS test; `--calibrate` checks NBA-inspired mean bands. `--config` loads JSON defaults; `--dry-run` and `--list-scenarios` inspect without simulating. Persisted runs append `results/index.json`; `--keep N` prunes older directories. KS, calibration, and CI fields are omitted from the checksum.
 - CI runs `npm run test:coverage`, uploads `coverage/` as an artifact, and sends LCOV to Codecov.
 - Prettier (`format` / `format:check`) with `eslint-config-prettier`. CI also runs `format:check`.
 

@@ -20,6 +20,7 @@ describe("runLabGames", () => {
 
   it("includes engine identity definition checksums", () => {
     const identity = readEngineIdentity();
+    expect(identity.engineVersion).toBeGreaterThan(0);
     expect(identity.packageVersion.length).toBeGreaterThan(0);
     expect(identity.schemaVersion).toBeGreaterThan(0);
     expect(identity.gameInvariantsChecksum).toMatch(/^[0-9a-f]{8}$/);

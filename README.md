@@ -78,10 +78,24 @@ If the app is already running, you can also visit `/dev/sim-lab` directly.
 
 Default `--channel pr` fails on hard invariants only; `--channel nightly` also fails on statistical FAIL.
 
+Each `npm run sim` writes `results/<runId>/manifest.json` **before the first game** (engine version, git SHA, resolved config, seed list). Opt out with `--no-persist`. Compare two manifests with `npm run sim:compare` — mismatched `engineVersion` is refused. Hard invariant failures also write `results/<runId>/failures/<gameIndex>.ndjson` (event log) and `<gameIndex>.json` (seed, config, failures). Replay that game with `npm run sim:replay`. Game-mode runs also stream `results/<runId>/games.ndjson` (raw per-game snapshots) and `checkpoint.json`. Resume with `--resume --run-id <id>`. `--jobs N` requires `--rotation=off`. `--timeout-ms` bounds a single game. `--sweep` runs a config-space sweep (`grid` / Latin hypercube / Sobol) and prints a ranked sensitivity table. `--write-baseline path` saves score distributions; `--baseline path` runs a two-sample KS test (default α=0.01) against that golden. `--calibrate` checks NBA-inspired mean bands. KS or calibration FAIL exits non-zero on every channel. `--config path` loads JSON defaults (CLI flags win). `--dry-run` prints the resolved run without simulating. `--list-scenarios` prints ids and scenario versions. Persisted runs append `results/index.json`. `--keep N` prunes older run directories.
+
 ```bash
 npm run sim -- --seed=42 --games=100
 npm run sim -- --seed=42 --scenario=superteam --rotation=off --channel=pr
+npm run sim -- --seed=42 --rotation=off --jobs=4 --games=1000
+npm run sim -- --resume --run-id <runId> --seed=42 --rotation=off --games=1000
 npm run sim -- --seed=42 --mode owner-career --seasons 10 --channel nightly
+npm run sim -- --seed=42 --games=2 --sweep --sampler lhs --samples 8 --rotation=off
+npm run sim -- --seed=42 --games=2 --sweep space.json --sampler sobol --samples 16
+npm run sim -- --seed=42 --games=20 --write-baseline results/golden.json --rotation=off
+npm run sim -- --seed=42 --games=20 --baseline results/golden.json --rotation=off
+npm run sim -- --seed=42 --games=20 --calibrate --rotation=off
+npm run sim -- --list-scenarios
+npm run sim -- --config lab.json --dry-run
+npm run sim -- --seed=42 --games=2 --keep 10 --rotation=off
+npm run sim:compare -- results/<runA>/manifest.json results/<runB>/manifest.json
+npm run sim:replay -- --run <runId> --game 0
 ```
 
 Game-mode `--scenario` values: `normal`, `superteam`, `weak`, `shooting`, `rebounding`, `min-roster`, `matchup-90-40`, `injury-heavy`, `overtime`.

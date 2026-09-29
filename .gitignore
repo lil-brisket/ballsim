@@ -14,6 +14,9 @@
 /coverage
 /test-results.txt
 
+# Simulation Lab run artifacts
+/results
+
 # next.js
 /.next/
 /out/

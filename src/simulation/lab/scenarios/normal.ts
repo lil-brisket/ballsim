@@ -6,7 +6,8 @@ import { generateValidationRosters } from "@/simulation/validation/run-validatio
  * Scenario: normal
  * Base generator: generateValidationRosters (src/simulation/validation/run-validation.ts)
  * Transformation: none
- * RNG stream: sequential from the Lab run seed (Phase 0/1) or deriveSeed(seed, "normal") (Phase 2+)
+ * RNG stream: deriveSeed(seed, "{scenarioId}:roster") for rosters;
+ * each game uses deriveSeed(seed, "{scenarioId}:game:{n}")
  * Determinism: same seed ⇒ identical player ids and attributes
  */
 export function buildNormalRosters(

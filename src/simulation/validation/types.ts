@@ -56,6 +56,10 @@ export type MetricSummary = {
   min: number;
   max: number;
   stdev: number;
+  /** Wald 95% CI low bound. Null when n < 2. Not part of checksum. */
+  ci95Low: number | null;
+  /** Wald 95% CI high bound. Null when n < 2. Not part of checksum. */
+  ci95High: number | null;
 };
 
 export type PooledShooting = {

@@ -32,6 +32,7 @@ export {
   pearsonCorrelation,
 } from "@/simulation/validation/correlations";
 export { formatValidationReport } from "@/simulation/validation/report";
+export { meanCi95, Z_95 } from "@/simulation/validation/mean-ci";
 export { buildMatchupRosters } from "@/simulation/validation/matchup-rosters";
 export {
   generateValidationRosters,

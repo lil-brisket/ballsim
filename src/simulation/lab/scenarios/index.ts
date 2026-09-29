@@ -1,4 +1,4 @@
-import { deriveSeed } from "@/domain/rng";
+import { labRosterSeed } from "@/simulation/lab/lab-seeds";
 import type { LabScenarioBuilder } from "@/simulation/lab/types";
 import { buildInjuryHeavyRosters } from "@/simulation/lab/scenarios/injury-heavy";
 import { buildMatchupScenarioRosters } from "@/simulation/lab/scenarios/matchup";
@@ -50,5 +50,5 @@ export function scenarioRngSeed(
   master: number | string,
   scenarioId: string,
 ): number {
-  return deriveSeed(master, scenarioId);
+  return labRosterSeed(master, scenarioId);
 }

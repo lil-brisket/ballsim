@@ -8,6 +8,13 @@ import { hashPayload } from "@/simulation/analytics/hash";
 import { settingsForLabPreset } from "@/simulation/lab/lab-league-preset";
 import type { LabLeaguePreset } from "@/simulation/lab/lab-league-preset";
 import { readEngineIdentity } from "@/simulation/lab/engine-identity";
+import { buildMasterSeedList } from "@/simulation/lab/lab-seeds";
+import { persistLabRun } from "@/simulation/lab/persist-run";
+import type { LabPersistOptions } from "@/simulation/lab/manifest";
+import {
+  SCHEDULE_SCENARIO_ID,
+  scenarioVersionFor,
+} from "@/simulation/lab/scenario-version";
 import { runAiTeamDecisions } from "@/systems/ai-team-decisions";
 import {
   draftYearForSeason,
@@ -16,7 +23,10 @@ import {
   makeDraftSelection,
 } from "@/systems/draft";
 import { resolvePendingOwnerDecision } from "@/systems/owner-decisions";
-import { getActivePhaseId, tryAdvanceUserManagedPhase } from "@/systems/phase-engine";
+import {
+  getActivePhaseId,
+  tryAdvanceUserManagedPhase,
+} from "@/systems/phase-engine";
 import { advanceSimulation } from "@/systems/simulation/advance-simulation";
 import { isRegularSeasonComplete } from "@/systems/simulation/season-lifecycle";
 import {
@@ -36,7 +46,7 @@ export type RunLabScheduleOptions = {
   preset: LabLeaguePreset;
   until: LabScheduleUntil;
   maxDays?: number;
-};
+} & LabPersistOptions;
 
 export type LabScheduleGameCounts = {
   regularScheduled: number;
@@ -74,6 +84,8 @@ export type LabScheduleResult = {
   checksum: string;
   reproCommand: string;
   engineIdentity: ReturnType<typeof readEngineIdentity>;
+  runId?: string;
+  manifestPath?: string;
 };
 
 function persistRng(state: GameState, rng: Rng): GameState {
@@ -182,7 +194,11 @@ function summarizeStandings(state: GameState): LabScheduleStandingsSummary {
   };
 }
 
-function shouldStop(state: GameState, until: LabScheduleUntil, sawRegular: boolean): boolean {
+function shouldStop(
+  state: GameState,
+  until: LabScheduleUntil,
+  sawRegular: boolean,
+): boolean {
   if (until === "regular") {
     return isRegularSeasonComplete(state);
   }
@@ -197,7 +213,9 @@ function shouldStop(state: GameState, until: LabScheduleUntil, sawRegular: boole
  * Unattended full-schedule run: bootstrap a league, play the regular season
  * (and optionally playoffs), and collect timing + standings diagnostics.
  */
-export function runLabSchedule(options: RunLabScheduleOptions): LabScheduleResult {
+export function runLabSchedule(
+  options: RunLabScheduleOptions,
+): LabScheduleResult {
   const maxDays = options.maxDays ?? LAB_DEFAULT_SCHEDULE_MAX_DAYS;
   if (!Number.isInteger(maxDays) || maxDays < 1) {
     throw new Error("runLabSchedule: maxDays must be a positive integer.");
@@ -205,6 +223,21 @@ export function runLabSchedule(options: RunLabScheduleOptions): LabScheduleResul
   if (options.until !== "regular" && options.until !== "playoffs") {
     throw new Error("runLabSchedule: until must be regular or playoffs.");
   }
+
+  const seedList = buildMasterSeedList(options.seed, SCHEDULE_SCENARIO_ID);
+    const persisted = persistLabRun(options, {
+    scenarioName: SCHEDULE_SCENARIO_ID,
+    scenarioVersion: scenarioVersionFor(SCHEDULE_SCENARIO_ID),
+    config: {
+      mode: "schedule",
+      seed: options.seed,
+      scenarioId: SCHEDULE_SCENARIO_ID,
+      preset: options.preset,
+      until: options.until,
+      maxDays,
+    },
+    seedList,
+  });
 
   const settings = settingsForLabPreset(options.preset);
   let state = createInitialGameState({
@@ -333,5 +366,9 @@ export function runLabSchedule(options: RunLabScheduleOptions): LabScheduleResul
     checksum,
     reproCommand,
     engineIdentity,
+    ...(persisted.runId != null ? { runId: persisted.runId } : {}),
+    ...(persisted.manifestPath != null
+      ? { manifestPath: persisted.manifestPath }
+      : {}),
   };
 }

@@ -27,6 +27,9 @@ export const HARD_GAME_RULE_IDS = [
   "SCORE_NONNEG",
   "DUPLICATE_PLAYER",
   "PLAYER_TEAM_MATCHUP",
+  "CLOCK_NEGATIVE",
+  "FOUL_LIMIT",
+  "ROSTER_SIZE",
 ] as const;
 
 export const ROTATION_HARD_RULE_IDS = [
@@ -56,6 +59,9 @@ export const INVARIANT_REGISTRY: Record<string, InvariantRegistryEntry> = {
   SCORE_NONNEG: { severity: "HARD_FAILURE", scope: "game" },
   DUPLICATE_PLAYER: { severity: "HARD_FAILURE", scope: "game" },
   PLAYER_TEAM_MATCHUP: { severity: "HARD_FAILURE", scope: "game" },
+  CLOCK_NEGATIVE: { severity: "HARD_FAILURE", scope: "game" },
+  FOUL_LIMIT: { severity: "HARD_FAILURE", scope: "game" },
+  ROSTER_SIZE: { severity: "HARD_FAILURE", scope: "game" },
   NEGATIVE_SECONDS: { severity: "HARD_FAILURE", scope: "game" },
   TEAM_SECONDS_MISMATCH: { severity: "HARD_FAILURE", scope: "game" },
   LAB_OT_PERIODS_HIGH: { severity: "WARNING", scope: "game" },

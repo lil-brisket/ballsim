@@ -8,7 +8,7 @@ import { buildMatchupRosters } from "@/simulation/validation/matchup-rosters";
  * Scenario: matchup-90-40
  * Base generator: generateValidationRosters
  * Transformation: existing buildMatchupRosters (offense keys 90 vs 40)
- * RNG stream: deriveSeed(seed, "matchup")
+ * RNG stream: deriveSeed(seed, "matchup-90-40:roster") for rosters
  * Determinism: same seed ⇒ identical player ids and attributes
  *
  * Lab games use the strong-offense vs weak-offense pair.

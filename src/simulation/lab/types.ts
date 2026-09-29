@@ -1,5 +1,6 @@
 import type { Player } from "@/domain/entities/player";
 import type { Rng } from "@/domain/rng";
+import type { LabPowerEstimate } from "@/simulation/lab/confidence";
 import type {
   CheckResult,
   ValidationAggregates,
@@ -22,6 +23,7 @@ export type RawInvariantFailure = {
 };
 
 export type EngineIdentity = {
+  engineVersion: number;
   packageVersion: string;
   schemaVersion: number;
   gameInvariantsChecksum: string;
@@ -55,6 +57,19 @@ export type LabReport = {
   aggregates: ValidationAggregates | null;
   overtimeHighCount: number;
   seasonsSimulated?: number;
+  runId?: string;
+  manifestPath?: string;
+  failureArtifacts?: {
+    gameIndex: number;
+    ndjsonPath: string;
+    jsonPath: string;
+  }[];
+  gamesNdjsonPath?: string;
+  checkpointPath?: string;
+  powerEstimates?: LabPowerEstimate[];
+  ksChecks?: CheckResult[];
+  calibrationChecks?: CheckResult[];
+  baselinePath?: string;
 };
 
 export type LabFailureContext = {
