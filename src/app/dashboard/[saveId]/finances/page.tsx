@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { loadFinanceHubView } from "@/application/game-service";
+import { CashPressureSection } from "@/components/finances/CashPressureSection";
 import {
   FinancialLedger,
   FinancialTrend,
@@ -16,6 +17,17 @@ type FinancesPageProps = {
   params: Promise<{ saveId: string }>;
   searchParams: Promise<{ error?: string }>;
 };
+
+function HeaderLink(props: { href: string; label: string }) {
+  return (
+    <Link
+      href={props.href}
+      className="text-sm text-amber-400 hover:underline"
+    >
+      {props.label}
+    </Link>
+  );
+}
 
 export default async function FinancesPage({
   params,
@@ -33,6 +45,7 @@ export default async function FinancesPage({
   const month = pnl.currentMonth;
   const statement = finances.statement;
   const { cashRunway, lastGameDay, forecast } = business;
+  const base = `/dashboard/${saveId}`;
 
   return (
     <div className="space-y-4">
@@ -40,17 +53,25 @@ export default async function FinancesPage({
         title="Finances"
         subtitle={`${view.teamName} · Season ${view.seasonYear}`}
         actions={
-          <Link
-            href={`/dashboard/${saveId}/team/contracts`}
-            className="text-sm text-amber-400 hover:underline"
-          >
-            Contracts
-          </Link>
+          <>
+            <HeaderLink href={`${base}/team/contracts`} label="Contracts" />
+            <HeaderLink href={`${base}/business`} label="Marketing" />
+            <HeaderLink href={`${base}/facilities`} label="Facilities" />
+            <HeaderLink href={`${base}/sponsorships`} label="Sponsorships" />
+          </>
         }
       />
       {error ? <ErrorState message={error} /> : null}
 
-      {/* 1. Financial Position */}
+      {view.warnings.length > 0 ? (
+        <ManagementDecisionPanel
+          title="Financial Warnings"
+          items={view.warnings}
+          saveId={saveId}
+          currentDate={view.currentDate}
+        />
+      ) : null}
+
       <Section title="Financial Position">
         <FinancialStatStrip view={view} />
         <ul className="mt-3 space-y-1.5 text-sm text-zinc-300">
@@ -66,20 +87,26 @@ export default async function FinancesPage({
                 : `${cashRunway.runwayWeeks} weeks`}
             </span>
           </li>
+          <li className="flex justify-between font-medium text-zinc-100">
+            <span>Season net income</span>
+            <MoneyDisplay amount={season.profitability.netIncome} />
+          </li>
         </ul>
       </Section>
 
-      {view.warnings.length > 0 ? (
-        <ManagementDecisionPanel
-          title="Financial Warnings"
-          items={view.warnings}
-          saveId={saveId}
-          currentDate={view.currentDate}
-        />
-      ) : null}
+      <Section title="Cash Pressure">
+        <CashPressureSection cashRunway={cashRunway} />
+      </Section>
 
-      {/* 2. Operating Performance */}
-      <Section title="Operating Performance">
+      <Section title="Profitability">
+        <p className="mb-3 text-sm text-zinc-100">
+          Net income{" "}
+          <MoneyDisplay amount={season.profitability.netIncome} />
+          <span className="ml-2 text-xs font-normal text-zinc-500">
+            Capital this month{" "}
+            <MoneyDisplay amount={month.investment.capital} />
+          </span>
+        </p>
         <div className="grid gap-4 sm:grid-cols-2">
           <div>
             <h3 className="mb-2 text-sm font-medium text-zinc-200">
@@ -141,10 +168,6 @@ export default async function FinancesPage({
                   <MoneyDisplay amount={amount} />
                 </li>
               ))}
-              <li className="flex justify-between border-t border-zinc-800 pt-1 font-medium text-zinc-100">
-                <span>Net income</span>
-                <MoneyDisplay amount={season.profitability.netIncome} />
-              </li>
             </ul>
           </div>
         </div>
@@ -154,7 +177,6 @@ export default async function FinancesPage({
         </p>
       </Section>
 
-      {/* 3. Commitments */}
       <Section title="Commitments">
         <p className="mb-2 text-sm text-zinc-500">
           Commitment limits — these do not draw from Business Funds.
@@ -191,14 +213,12 @@ export default async function FinancesPage({
         </ul>
       </Section>
 
-      {/* 4. Financial Activity */}
-      <Section title="Financial Activity">
-        <FinancialLedger entries={view.ledger} />
-      </Section>
-
-      {/* 5. Trend */}
       <Section title="Trend">
         <FinancialTrend points={view.trend} />
+      </Section>
+
+      <Section title="Financial Activity">
+        <FinancialLedger entries={view.ledger} />
       </Section>
 
       {lastGameDay ? (
