@@ -11,11 +11,19 @@
 import { createGame } from "@/domain/entities/game";
 import { CBL_GAME_SETTINGS } from "@/domain/game-settings";
 import { asGameId, asSeasonId, asTeamId } from "@/domain/ids";
-import { createSeededRng } from "@/domain/rng";
+import { createSeededRng, type Rng } from "@/domain/rng";
 import { createInitialGameState } from "@/state/create-initial-state";
+import type { GameState } from "@/state/game-state";
 import { generateValidationRosters } from "@/simulation/validation";
 import { simulateGame } from "@/systems/game-simulation";
+import { enforceMaxRosterViaDevelopmentLeague } from "@/systems/development-league/enforce-roster-cap";
+import { resolvePendingOwnerDecision } from "@/systems/owner-decisions";
+import { fillShortRosters } from "@/systems/roster-generation";
 import { advanceSimulation } from "@/systems/simulation/advance-simulation";
+import {
+  derivePlannedRegularSeasonStartDate,
+  needsRegularSeasonInitialization,
+} from "@/systems/simulation/season-lifecycle";
 import {
   averageGameCost,
   createSimulationProfiler,
@@ -23,6 +31,47 @@ import {
   formatSeasonProfiler,
 } from "@/systems/simulation/simulation-profiler";
 import { bootstrapWorld } from "@/systems/world-pipeline";
+
+function persistRng(state: GameState, rng: Rng): GameState {
+  return {
+    ...state,
+    meta: { ...state.meta, rngState: rng.getState() },
+  };
+}
+
+function declineBlockingDecisions(state: GameState): GameState {
+  let current = state;
+  const pending = [...current.user.pendingOwnerDecisions];
+  for (const decision of pending) {
+    if (decision.blockingLevel !== "blocking") {
+      continue;
+    }
+    const resolved = resolvePendingOwnerDecision(current, {
+      decisionId: decision.id,
+      status: "declined",
+      decisionSource: "system",
+    });
+    current = resolved.state;
+  }
+  return current;
+}
+
+function prepareUnattendedAdvance(state: GameState, rng: Rng): GameState {
+  let current = persistRng(declineBlockingDecisions(state), rng);
+  const plannedOpener = derivePlannedRegularSeasonStartDate(current);
+  if (
+    needsRegularSeasonInitialization(current) &&
+    plannedOpener != null &&
+    current.world.calendar.currentDate >= plannedOpener
+  ) {
+    current = persistRng(
+      enforceMaxRosterViaDevelopmentLeague(current).state,
+      rng,
+    );
+    current = persistRng(fillShortRosters(current, rng).state, rng);
+  }
+  return current;
+}
 
 function parseArgs(argv: string[]): {
   season: boolean;
@@ -101,11 +150,7 @@ function runSeasonBenchmark(): void {
     settings: CBL_GAME_SETTINGS,
   });
   const rng = createSeededRng(state.meta.rngState);
-  state = bootstrapWorld(state, rng).state;
-  state = {
-    ...state,
-    meta: { ...state.meta, rngState: rng.getState() },
-  };
+  state = persistRng(bootstrapWorld(state, rng).state, rng);
 
   const profiler = createSimulationProfiler();
   const startPhase = state.competition.season.phase;
@@ -117,16 +162,13 @@ function runSeasonBenchmark(): void {
 
   while (days < maxDays) {
     const phaseBefore = state.competition.season.phase;
+    state = prepareUnattendedAdvance(state, rng);
     const result = advanceSimulation(state, rng, {
       days: 1,
       profiler,
     });
-    state = result.state;
+    state = persistRng(result.state, rng);
     days += 1;
-    state = {
-      ...state,
-      meta: { ...state.meta, rngState: rng.getState() },
-    };
 
     if (state.competition.season.phase === "regular") {
       sawRegular = true;
@@ -168,11 +210,8 @@ function runUntilPhaseAudit(): void {
     settings: CBL_GAME_SETTINGS,
   });
   const rng = createSeededRng(state.meta.rngState);
-  state = bootstrapWorld(state, rng).state;
-  state = {
-    ...state,
-    meta: { ...state.meta, rngState: rng.getState() },
-  };
+  state = persistRng(bootstrapWorld(state, rng).state, rng);
+  state = prepareUnattendedAdvance(state, rng);
 
   const requested = 400;
   const identityBefore = `${state.competition.season.phase}|${state.competition.season.offseasonStage}|${state.competition.season.year}`;

@@ -27,6 +27,7 @@ export type ShotResolution = {
  *
  * Formula:
  *   baseProbability = shootingAbility / RATING_MAX
+ *   + baselineProbability
  *   + shotTypeAdjustment
  *   - (defenseRating / RATING_MAX) * defensiveImpact
  *   - fatigue * fatigueImpact
@@ -47,7 +48,11 @@ export function calculateShotProbability(input: ResolveShotInput): number {
   const fatiguePenalty = input.fatigue * SHOT_RESOLUTION_CONFIG.fatigueImpact;
 
   const unclamped =
-    baseProbability + shotTypeAdjustment - defensivePenalty - fatiguePenalty;
+    baseProbability +
+    SHOT_RESOLUTION_CONFIG.baselineProbability +
+    shotTypeAdjustment -
+    defensivePenalty -
+    fatiguePenalty;
 
   return clampProbability(unclamped);
 }

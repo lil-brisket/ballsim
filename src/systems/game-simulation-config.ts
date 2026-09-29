@@ -10,10 +10,10 @@ export const GAME_SIMULATION_CONFIG = {
   startingLineupSize: 5,
   /** Base action weights before attribute modifiers (turnover/foul stay rare). */
   actionBaseWeights: {
-    shot: 55,
-    pass: 30,
+    shot: 26,
+    pass: 54,
     turnover: 6,
-    foul: 9,
+    foul: 14,
   },
   /** Clamp for weight(action) = base * modifiers. */
   actionWeightMin: 1,
@@ -25,9 +25,9 @@ export const GAME_SIMULATION_CONFIG = {
   attributeModifierScale: 0.35,
   /** Foul subtype weights when foul action is chosen. */
   foulSubtypeWeights: {
-    defensiveNonShooting: 70,
-    defensiveShooting: 22,
-    offensive: 8,
+    defensiveNonShooting: 55,
+    defensiveShooting: 38,
+    offensive: 7,
   },
   /** Default possession clock cost range (seconds) by outcome category. */
   possessionTimeSeconds: {

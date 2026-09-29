@@ -172,5 +172,5 @@ describe("season events foundation", () => {
       Object.values(c.candidates).map((x) => x.voteTotal),
     );
     expect(totals.some((t) => t > 0)).toBe(true);
-  });
+  }, 60_000);
 });

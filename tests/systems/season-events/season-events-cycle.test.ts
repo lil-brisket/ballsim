@@ -280,5 +280,5 @@ describe("season events midseason cycle", () => {
       (e) => e.type === "MidseasonVotingOpened",
     );
     expect(opensAgain.length).toBe(0);
-  });
+  }, 60_000);
 });

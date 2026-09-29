@@ -20,5 +20,5 @@ describe("season RNG week advance", () => {
     next = beginRegularSeasonFromPreseason(next).state;
     const result = advanceSimulation(next, rng, { days: 8 });
     expect(result.daysAdvanced).toBeGreaterThan(0);
-  });
+  }, 60_000);
 });

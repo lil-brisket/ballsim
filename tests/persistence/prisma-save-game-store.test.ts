@@ -1,6 +1,6 @@
 vi.mock("server-only", () => ({}));
 
-import { execSync } from "node:child_process";
+import { execFileSync } from "node:child_process";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
@@ -28,6 +28,8 @@ const repoRoot = path.resolve(
   path.dirname(fileURLToPath(import.meta.url)),
   "../..",
 );
+const prismaCli = path.join(repoRoot, "node_modules", "prisma", "build", "index.js");
+const migrateHookTimeoutMs = 60_000;
 const tempDir = mkdtempSync(path.join(tmpdir(), "ballsim-save-proj-"));
 const dbFile = path.join(tempDir, "test.db").replace(/\\/g, "/");
 const databaseUrl = `file:${dbFile}`;
@@ -53,14 +55,14 @@ describe("PrismaSaveGameStore normalized projections", () => {
   let store: ReturnType<typeof createPrismaSaveGameStore>;
 
   beforeAll(() => {
-    execSync("npx prisma migrate deploy", {
+    execFileSync(process.execPath, [prismaCli, "migrate", "deploy"], {
       cwd: repoRoot,
       env: { ...process.env, DATABASE_URL: databaseUrl },
       stdio: "pipe",
     });
     prisma = createClient();
     store = createPrismaSaveGameStore(prisma);
-  });
+  }, migrateHookTimeoutMs);
 
   afterAll(async () => {
     await prisma.$disconnect();

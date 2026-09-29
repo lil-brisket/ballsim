@@ -74,6 +74,10 @@ describe("SHOT_RESOLUTION_CONFIG", () => {
     expect(SHOT_RESOLUTION_CONFIG.twoPointAdjustment).toBeGreaterThan(0);
     expect(SHOT_RESOLUTION_CONFIG.threePointAdjustment).toBeLessThan(0);
   });
+
+  it("applies a negative baseline so ratings do not map 1:1 to make chance", () => {
+    expect(SHOT_RESOLUTION_CONFIG.baselineProbability).toBeLessThan(0);
+  });
 });
 
 describe("calculateShotProbability", () => {

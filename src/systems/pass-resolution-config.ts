@@ -32,8 +32,8 @@ export const PASS_RESOLUTION_CONFIG = {
   passingImpact: 0.22,
   ballHandlingImpact: 0.1,
   defensivePressureImpact: 0.18,
-  minAssist: 0.05,
-  maxAssist: 0.5,
-  baselineAssist: 0.08,
-  assistPassingImpact: 0.35,
+  minAssist: 0.15,
+  maxAssist: 0.62,
+  baselineAssist: 0.32,
+  assistPassingImpact: 0.42,
 } as const;
