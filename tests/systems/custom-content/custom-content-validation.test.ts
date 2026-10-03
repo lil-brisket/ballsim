@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 import { GAME_STATE_SCHEMA_VERSION } from "@/state/game-state";
-import { parseCustomContentJson } from "@/systems/custom-content/parse";
+import {
+  parseCustomContentJson,
+  rosterTeamCountFromPackageJson,
+} from "@/systems/custom-content/parse";
 import { validateRosterPackage } from "@/systems/custom-content/validate-roster";
 import { validateDraftClassPackage } from "@/systems/custom-content/validate-draft-class";
 import {
@@ -16,6 +19,13 @@ describe("custom content validation", () => {
     expect(parsed.ok).toBe(false);
     expect(parsed.normalized).toBeUndefined();
     expect(parsed.errors[0]?.code).toBe("invalid_json");
+  });
+
+  it("reads team count from a roster package", () => {
+    const pkg = makeFullRosterPackage({ teamCount: 12 });
+    expect(rosterTeamCountFromPackageJson(JSON.stringify(pkg))).toBe(12);
+    expect(rosterTeamCountFromPackageJson("")).toBeNull();
+    expect(rosterTeamCountFromPackageJson("{not json")).toBeNull();
   });
 
   it("rejects unsupported formatVersion", () => {

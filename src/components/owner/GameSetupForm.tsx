@@ -10,12 +10,17 @@ import {
   SUPPORTED_TEAM_COUNTS,
   LEAGUE_AREA_LABELS,
   LEAGUE_AREA_OPTIONS,
+  isSupportedTeamCount,
   maxControlledTeamCountForLeague,
   type GameSettings,
   type InjuryFrequency,
   type LeagueArea,
   type SeriesLength,
 } from "@/domain/game-settings";
+import {
+  applyCustomRosterTeamCount,
+  isLockedCustomRosterTeamCount,
+} from "@/domain/custom-roster-setup";
 import {
   countDelegatedVisiblePhases,
   visibleDelegationPhaseCount,
@@ -31,6 +36,7 @@ import {
   CustomRosterPackageField,
   customRosterHasErrors,
 } from "@/components/owner/CustomRosterPackageField";
+import { rosterTeamCountFromPackageJson } from "@/systems/custom-content";
 import { AiTeamManagementSection } from "@/components/owner/ai-management";
 import { formatMoney } from "@/components/owner/MoneyDisplay";
 import {
@@ -65,6 +71,10 @@ export function GameSetupForm({
   const validation = useMemo(() => validateGameSettings(settings), [settings]);
   const errors = validation.ok ? [] : validation.errors;
   const isCustom = preset === "custom";
+  const loadedRosterTeamCount = rosterTeamCountFromPackageJson(rosterPackageJson);
+  const rosterTeamCountLocked = isLockedCustomRosterTeamCount(
+    loadedRosterTeamCount,
+  );
   const customRosterInvalid =
     settings.draft.mode === "custom" &&
     customRosterHasErrors(
@@ -74,9 +84,21 @@ export function GameSetupForm({
       settings.financialRules.salaryCapEnabled,
     );
 
+  function settingsWithLoadedRoster(base: GameSettings): GameSettings {
+    if (!isLockedCustomRosterTeamCount(loadedRosterTeamCount)) {
+      return base;
+    }
+    return applyCustomRosterTeamCount(base, loadedRosterTeamCount);
+  }
+
   function applyPreset(next: LeagueSetupPresetId) {
-    setPreset(next);
-    setSettings(settingsForPreset(next, settings));
+    const nextSettings = settingsWithLoadedRoster(
+      settingsForPreset(next, settings),
+    );
+    setPreset(
+      isLockedCustomRosterTeamCount(loadedRosterTeamCount) ? "custom" : next,
+    );
+    setSettings(nextSettings);
     setStep("configure");
   }
 
@@ -94,8 +116,17 @@ export function GameSetupForm({
   }
 
   function reset() {
-    setSettings(resetSettingsForPreset(preset));
+    setSettings(settingsWithLoadedRoster(resetSettingsForPreset(preset)));
     setStep("configure");
+  }
+
+  function handleRosterPackageJsonChange(value: string) {
+    setRosterPackageJson(value);
+    const teamCount = rosterTeamCountFromPackageJson(value);
+    if (teamCount === null || !isSupportedTeamCount(teamCount)) {
+      return;
+    }
+    updateSettings(applyCustomRosterTeamCount(settings, teamCount));
   }
 
   function submit() {
@@ -114,6 +145,9 @@ export function GameSetupForm({
   }
 
   function setDraftMode(mode: GameSettings["draft"]["mode"]) {
+    if (mode !== "custom") {
+      setRosterPackageJson("");
+    }
     updateSettings({
       ...settings,
       draft: {
@@ -260,6 +294,46 @@ export function GameSetupForm({
         />
       </div>
 
+      <Section title="Roster source">
+        <SelectField
+          label="Roster source"
+          value={
+            settings.draft.mode === "standard"
+              ? 0
+              : settings.draft.mode === "fantasy"
+                ? 1
+                : 2
+          }
+          options={[
+            { value: 0, label: "Generated roster" },
+            { value: 1, label: "Fantasy draft" },
+            { value: 2, label: "Custom roster" },
+          ]}
+          onChange={(value) =>
+            setDraftMode(
+              value === 0 ? "standard" : value === 1 ? "fantasy" : "custom",
+            )
+          }
+        />
+        {settings.draft.mode === "fantasy" ? (
+          <p className="text-sm text-zinc-400 sm:col-span-2">
+            Draft order, timer, and snake/linear settings are configured
+            after you choose your franchises.
+          </p>
+        ) : null}
+        {settings.draft.mode === "custom" ? (
+          <div className="sm:col-span-2">
+            <CustomRosterPackageField
+              teamCount={settings.league.teamCount}
+              salaryCap={settings.financialRules.salaryCap}
+              salaryCapEnabled={settings.financialRules.salaryCapEnabled}
+              packageJson={rosterPackageJson}
+              onPackageJsonChange={handleRosterPackageJsonChange}
+            />
+          </div>
+        ) : null}
+      </Section>
+
       <fieldset className="space-y-3">
         <legend className="text-sm font-medium text-zinc-200">
           League configuration
@@ -301,6 +375,7 @@ export function GameSetupForm({
                 value,
                 label: String(value),
               }))}
+              disabled={rosterTeamCountLocked}
               onChange={(value) =>
                 updateSettings({
                   ...settings,
@@ -308,6 +383,11 @@ export function GameSetupForm({
                 })
               }
             />
+            {rosterTeamCountLocked ? (
+              <p className="text-xs text-zinc-500 sm:col-span-2">
+                Team count comes from the loaded custom roster package.
+              </p>
+            ) : null}
             <SelectField
               label="Conferences"
               value={settings.league.conferenceCount}
@@ -432,44 +512,6 @@ export function GameSetupForm({
                 }
               />
             </div>
-          </Section>
-
-          <Section title="Draft">
-            <SelectField
-              label="Roster source"
-              value={
-                settings.draft.mode === "standard"
-                  ? 0
-                  : settings.draft.mode === "fantasy"
-                    ? 1
-                    : 2
-              }
-              options={[
-                { value: 0, label: "Generated roster" },
-                { value: 1, label: "Fantasy draft" },
-                { value: 2, label: "Custom roster" },
-              ]}
-              onChange={(value) =>
-                setDraftMode(
-                  value === 0 ? "standard" : value === 1 ? "fantasy" : "custom",
-                )
-              }
-            />
-            {settings.draft.mode === "fantasy" ? (
-              <p className="text-sm text-zinc-400">
-                Draft order, timer, and snake/linear settings are configured
-                after you choose your franchises.
-              </p>
-            ) : null}
-            {settings.draft.mode === "custom" ? (
-              <CustomRosterPackageField
-                teamCount={settings.league.teamCount}
-                salaryCap={settings.financialRules.salaryCap}
-                salaryCapEnabled={settings.financialRules.salaryCapEnabled}
-                packageJson={rosterPackageJson}
-                onPackageJsonChange={setRosterPackageJson}
-              />
-            ) : null}
           </Section>
 
           <Section title="League history">
@@ -647,40 +689,6 @@ export function GameSetupForm({
         </div>
       </Section>
 
-      {isCustom ? null : (
-        <Section title="Roster source">
-          <SelectField
-            label="Roster source"
-            value={
-              settings.draft.mode === "standard"
-                ? 0
-                : settings.draft.mode === "fantasy"
-                  ? 1
-                  : 2
-            }
-            options={[
-              { value: 0, label: "Generated roster" },
-              { value: 1, label: "Fantasy draft" },
-              { value: 2, label: "Custom roster" },
-            ]}
-            onChange={(value) =>
-              setDraftMode(
-                value === 0 ? "standard" : value === 1 ? "fantasy" : "custom",
-              )
-            }
-          />
-          {settings.draft.mode === "custom" ? (
-            <CustomRosterPackageField
-              teamCount={settings.league.teamCount}
-              salaryCap={settings.financialRules.salaryCap}
-              salaryCapEnabled={settings.financialRules.salaryCapEnabled}
-              packageJson={rosterPackageJson}
-              onPackageJsonChange={setRosterPackageJson}
-            />
-          ) : null}
-        </Section>
-      )}
-
       {errors.length > 0 ? (
         <ul className="space-y-1 rounded-md border border-red-900/60 bg-red-950/40 p-3 text-sm text-red-300">
           {errors.map((error) => (
@@ -739,19 +747,22 @@ function SelectField({
   value,
   options,
   onChange,
+  disabled = false,
 }: {
   label: string;
   value: number;
   options: Array<{ value: number; label: string }>;
   onChange: (value: number) => void;
+  disabled?: boolean;
 }) {
   return (
     <label className="block space-y-1 text-sm text-zinc-300">
       <span>{label}</span>
       <select
         value={value}
+        disabled={disabled}
         onChange={(event) => onChange(Number(event.target.value))}
-        className="w-full rounded-md border border-zinc-700 bg-zinc-950 px-3 py-2 text-zinc-100"
+        className="w-full rounded-md border border-zinc-700 bg-zinc-950 px-3 py-2 text-zinc-100 disabled:cursor-not-allowed disabled:opacity-50"
       >
         {options.map((option) => (
           <option key={option.value} value={option.value}>

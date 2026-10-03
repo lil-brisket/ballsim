@@ -14,6 +14,7 @@ export {
 export {
   parseCustomContentJson,
   parseCustomContentEnvelope,
+  rosterTeamCountFromPackageJson,
 } from "@/systems/custom-content/parse";
 export { validateRosterPackage } from "@/systems/custom-content/validate-roster";
 export { validateDraftClassPackage } from "@/systems/custom-content/validate-draft-class";

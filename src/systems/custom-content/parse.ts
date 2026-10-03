@@ -229,6 +229,31 @@ export function parseCustomContentJson(
   }
 }
 
+export function rosterTeamCountFromPackageJson(
+  packageJson: string,
+): number | null {
+  if (packageJson.length === 0) {
+    return null;
+  }
+  const parsed = parseCustomContentJson(packageJson);
+  if (!parsed.ok || parsed.normalized === undefined) {
+    return null;
+  }
+  const envelope = parseCustomContentEnvelope(parsed.normalized);
+  if (!envelope.ok || envelope.normalized === undefined) {
+    return null;
+  }
+  if (envelope.normalized.type !== "roster") {
+    return null;
+  }
+  const payload = envelope.normalized.payload;
+  if (payload === null || typeof payload !== "object" || Array.isArray(payload)) {
+    return null;
+  }
+  const teams = (payload as { teams?: unknown }).teams;
+  return Array.isArray(teams) ? teams.length : null;
+}
+
 export function parseCustomContentEnvelope(
   raw: unknown,
 ): ImportValidationResult<CustomContentPackage> {
