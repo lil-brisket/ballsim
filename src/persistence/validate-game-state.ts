@@ -788,6 +788,26 @@ export function validateGameState(state: unknown): asserts state is GameState {
     }
   }
 
+  if (
+    !("pendingDraftClassDecisions" in user) ||
+    user.pendingDraftClassDecisions === null ||
+    typeof user.pendingDraftClassDecisions !== "object" ||
+    Array.isArray(user.pendingDraftClassDecisions)
+  ) {
+    fail("user.pendingDraftClassDecisions must be an object.");
+  } else {
+    for (const [key, rawDecision] of Object.entries(
+      user.pendingDraftClassDecisions as Record<string, unknown>,
+    )) {
+      validatePendingDraftClassDecision(
+        rawDecision,
+        `user.pendingDraftClassDecisions[${key}]`,
+        key,
+        fail,
+      );
+    }
+  }
+
   assertRecord(user.franchisePhaseState, "user.franchisePhaseState");
   for (const [teamKey, entry] of Object.entries(
     user.franchisePhaseState as Record<string, unknown>,
@@ -2631,6 +2651,57 @@ function validateScheduledEvents(events: unknown): void {
     void (value.status as ScheduledEventStatus);
 
     assertRecord(value.payload, `${path}.payload`);
+  }
+}
+
+function validatePendingDraftClassDecision(
+  value: unknown,
+  path: string,
+  key: string,
+  failFn: (message: string) => never,
+): void {
+  if (value === null || typeof value !== "object" || Array.isArray(value)) {
+    failFn(`${path} must be an object.`);
+  }
+  const decision = value as Record<string, unknown>;
+  if (
+    typeof decision.draftYear !== "number" ||
+    !Number.isInteger(decision.draftYear)
+  ) {
+    failFn(`${path}.draftYear must be an integer.`);
+  }
+  if (String(decision.draftYear) !== key) {
+    failFn(`${path} key must equal String(draftYear).`);
+  }
+  if (typeof decision.resolved !== "boolean") {
+    failFn(`${path}.resolved must be a boolean.`);
+  }
+  if (decision.resolved === true) {
+    if (decision.source !== "generated" && decision.source !== "custom") {
+      failFn(`${path}.source must be "generated" or "custom" when resolved.`);
+    }
+    if (decision.source === "custom") {
+      if (
+        typeof decision.customContentId !== "string" ||
+        decision.customContentId.length === 0
+      ) {
+        failFn(
+          `${path}.customContentId is required when source is "custom".`,
+        );
+      }
+    }
+  } else if (
+    decision.source !== undefined &&
+    decision.source !== "generated" &&
+    decision.source !== "custom"
+  ) {
+    failFn(`${path}.source must be "generated" or "custom" when present.`);
+  }
+  if (
+    decision.customContentId !== undefined &&
+    typeof decision.customContentId !== "string"
+  ) {
+    failFn(`${path}.customContentId must be a string when present.`);
   }
 }
 

@@ -27,6 +27,10 @@ import {
 } from "@/domain/game-settings-presets";
 import { validateGameSettings } from "@/domain/game-settings-validation";
 import { createSaveAction } from "@/application/actions";
+import {
+  CustomRosterPackageField,
+  customRosterHasErrors,
+} from "@/components/owner/CustomRosterPackageField";
 import { AiTeamManagementSection } from "@/components/owner/ai-management";
 import { formatMoney } from "@/components/owner/MoneyDisplay";
 import {
@@ -56,10 +60,19 @@ export function GameSetupForm({
   const [name, setName] = useState(defaultName);
   const [step, setStep] = useState<"configure" | "confirm">("configure");
   const [pending, startTransition] = useTransition();
+  const [rosterPackageJson, setRosterPackageJson] = useState("");
 
   const validation = useMemo(() => validateGameSettings(settings), [settings]);
   const errors = validation.ok ? [] : validation.errors;
   const isCustom = preset === "custom";
+  const customRosterInvalid =
+    settings.draft.mode === "custom" &&
+    customRosterHasErrors(
+      rosterPackageJson,
+      settings.league.teamCount,
+      settings.financialRules.salaryCap,
+      settings.financialRules.salaryCapEnabled,
+    );
 
   function applyPreset(next: LeagueSetupPresetId) {
     setPreset(next);
@@ -86,14 +99,32 @@ export function GameSetupForm({
   }
 
   function submit() {
-    if (!validation.ok || atSaveLimit) {
+    if (!validation.ok || atSaveLimit || customRosterInvalid) {
       return;
     }
     const formData = new FormData();
     formData.set("name", name);
     formData.set("settingsJson", JSON.stringify(settings));
+    if (settings.draft.mode === "custom") {
+      formData.set("rosterPackageJson", rosterPackageJson);
+    }
     startTransition(() => {
       void createSaveAction(formData);
+    });
+  }
+
+  function setDraftMode(mode: GameSettings["draft"]["mode"]) {
+    updateSettings({
+      ...settings,
+      draft: {
+        ...settings.draft,
+        mode,
+        type: settings.draft.type ?? "snake",
+        timerSeconds: settings.draft.timerSeconds ?? null,
+        orderMode: settings.draft.orderMode ?? "random",
+        userPickPosition: null,
+        randomizeUserPick: false,
+      },
     });
   }
 
@@ -150,7 +181,16 @@ export function GameSetupForm({
             label="AI responsibilities"
             value={`${countDelegatedVisiblePhases(settings.ai.assistance)} of ${visibleDelegationPhaseCount()} delegated to AI`}
           />
-          <ReviewRow label="Draft" value={settings.draft.mode} />
+          <ReviewRow
+            label="Draft"
+            value={
+              settings.draft.mode === "custom"
+                ? "Custom roster"
+                : settings.draft.mode === "fantasy"
+                  ? "Fantasy draft"
+                  : "Generated roster"
+            }
+          />
           {settings.draft.mode === "fantasy" ? (
             <ReviewRow
               label="Fantasy setup"
@@ -194,7 +234,7 @@ export function GameSetupForm({
           </button>
           <button
             type="button"
-            disabled={pending || atSaveLimit || !validation.ok}
+            disabled={pending || atSaveLimit || !validation.ok || customRosterInvalid}
             onClick={submit}
             className="rounded-md bg-amber-600 px-4 py-2 text-sm font-medium text-zinc-950 hover:bg-amber-500 disabled:cursor-not-allowed disabled:opacity-50"
           >
@@ -396,25 +436,23 @@ export function GameSetupForm({
 
           <Section title="Draft">
             <SelectField
-              label="Startup draft"
-              value={settings.draft.mode === "standard" ? 0 : 1}
+              label="Roster source"
+              value={
+                settings.draft.mode === "standard"
+                  ? 0
+                  : settings.draft.mode === "fantasy"
+                    ? 1
+                    : 2
+              }
               options={[
-                { value: 0, label: "Standard rosters" },
+                { value: 0, label: "Generated roster" },
                 { value: 1, label: "Fantasy draft" },
+                { value: 2, label: "Custom roster" },
               ]}
               onChange={(value) =>
-                updateSettings({
-                  ...settings,
-                  draft: {
-                    ...settings.draft,
-                    mode: value === 0 ? "standard" : "fantasy",
-                    type: settings.draft.type ?? "snake",
-                    timerSeconds: settings.draft.timerSeconds ?? null,
-                    orderMode: settings.draft.orderMode ?? "random",
-                    userPickPosition: null,
-                    randomizeUserPick: false,
-                  },
-                })
+                setDraftMode(
+                  value === 0 ? "standard" : value === 1 ? "fantasy" : "custom",
+                )
               }
             />
             {settings.draft.mode === "fantasy" ? (
@@ -422,6 +460,15 @@ export function GameSetupForm({
                 Draft order, timer, and snake/linear settings are configured
                 after you choose your franchises.
               </p>
+            ) : null}
+            {settings.draft.mode === "custom" ? (
+              <CustomRosterPackageField
+                teamCount={settings.league.teamCount}
+                salaryCap={settings.financialRules.salaryCap}
+                salaryCapEnabled={settings.financialRules.salaryCapEnabled}
+                packageJson={rosterPackageJson}
+                onPackageJsonChange={setRosterPackageJson}
+              />
             ) : null}
           </Section>
 
@@ -600,6 +647,40 @@ export function GameSetupForm({
         </div>
       </Section>
 
+      {isCustom ? null : (
+        <Section title="Roster source">
+          <SelectField
+            label="Roster source"
+            value={
+              settings.draft.mode === "standard"
+                ? 0
+                : settings.draft.mode === "fantasy"
+                  ? 1
+                  : 2
+            }
+            options={[
+              { value: 0, label: "Generated roster" },
+              { value: 1, label: "Fantasy draft" },
+              { value: 2, label: "Custom roster" },
+            ]}
+            onChange={(value) =>
+              setDraftMode(
+                value === 0 ? "standard" : value === 1 ? "fantasy" : "custom",
+              )
+            }
+          />
+          {settings.draft.mode === "custom" ? (
+            <CustomRosterPackageField
+              teamCount={settings.league.teamCount}
+              salaryCap={settings.financialRules.salaryCap}
+              salaryCapEnabled={settings.financialRules.salaryCapEnabled}
+              packageJson={rosterPackageJson}
+              onPackageJsonChange={setRosterPackageJson}
+            />
+          ) : null}
+        </Section>
+      )}
+
       {errors.length > 0 ? (
         <ul className="space-y-1 rounded-md border border-red-900/60 bg-red-950/40 p-3 text-sm text-red-300">
           {errors.map((error) => (
@@ -618,7 +699,7 @@ export function GameSetupForm({
         </button>
         <button
           type="button"
-          disabled={atSaveLimit || !validation.ok}
+          disabled={atSaveLimit || !validation.ok || customRosterInvalid}
           onClick={() => setStep("confirm")}
           className="rounded-md bg-amber-600 px-4 py-2 text-sm font-medium text-zinc-950 hover:bg-amber-500 disabled:cursor-not-allowed disabled:opacity-50"
         >

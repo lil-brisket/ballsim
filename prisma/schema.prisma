@@ -65,3 +65,20 @@ model SavePlayer {
   @@index([saveGameId, lastName, firstName])
   @@index([saveGameId, position])
 }
+
+/// Local custom roster / draft-class package library. Not player authority.
+model CustomContentPackage {
+  id            String   @id @default(uuid())
+  contentId     String   @unique
+  type          String
+  title         String
+  description   String?
+  author        String?
+  formatVersion Int
+  payloadJson   String
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  published     Boolean  @default(false)
+  downloadCount Int      @default(0)
+  voteCount     Int      @default(0)
+}

@@ -12,6 +12,7 @@ import {
   finishFreeAgency,
   selectOwnerDraftProspect,
   selectOwnerTeam,
+  resolveOwnerDraftClassDecision,
 } from "@/application/game-service";
 import {
   cloneGameSettings,
@@ -258,6 +259,18 @@ async function handleBlockedGates(
       }
       return "handled";
     }
+  }
+
+  if (!calendarPrimary && phaseId === "offseason.draft_preparation") {
+    const resolved = await resolveOwnerDraftClassDecision(
+      saveId,
+      { source: "generated" },
+      store,
+    );
+    if (!resolved.ok) {
+      throw new Error(resolved.error);
+    }
+    return "handled";
   }
 
   // Auto-advance user-managed phases when nothing required remains.

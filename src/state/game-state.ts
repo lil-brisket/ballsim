@@ -41,6 +41,7 @@ import type { Standings } from "@/domain/entities/standings";
 import type { Team } from "@/domain/entities/team";
 import type { ScheduledEvent } from "@/domain/entities/scheduled-event";
 import type { SeasonEventsState } from "@/domain/entities/season-events";
+import type { PendingDraftClassDecision } from "@/domain/entities/draft-class-decision";
 import type { TradeBlock } from "@/domain/entities/trade-block";
 import type {
   AiAssistancePhases,
@@ -59,7 +60,7 @@ import type {
   FranchisePhaseState,
 } from "@/systems/phase-engine/phase-types";
 
-export const GAME_STATE_SCHEMA_VERSION = 61;
+export const GAME_STATE_SCHEMA_VERSION = 62;
 
 /** League personnel market for staff free agency (not a business-finance concept). */
 export type StaffMarketState = {
@@ -272,6 +273,10 @@ export type UserSlice = {
   pendingOwnerDecisions: PendingOwnerDecision[];
   /** Bounded history of resolved owner decisions + rejection fingerprints. */
   ownerDecisionHistory: OwnerDecisionRecord[];
+  /**
+   * One-time new-season rookie class choice, keyed by draft year string.
+   */
+  pendingDraftClassDecisions: Record<string, PendingDraftClassDecision>;
   /**
    * Per-franchise phase UI dismissals only (schema v49+).
    * Task completion is derived from game state — never persisted here.

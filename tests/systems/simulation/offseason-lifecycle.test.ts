@@ -10,7 +10,7 @@ import {
 } from "@/systems/simulation/offseason-lifecycle";
 import { transitionPhase } from "@/systems/simulation/phase-machine";
 import { advanceSimulation } from "@/systems/simulation/advance-simulation";
-import { completeDraft, createDraft, activateDraft } from "@/systems/draft";
+import { completeDraft, createDraft, activateDraft, autoResolveGeneratedDraftClass } from "@/systems/draft";
 import { draftClassIdFor } from "@/domain/entities/draft";
 import { draftYearForSeason } from "@/systems/draft";
 import { getActivePhaseId, setActivePhase } from "@/systems/phase-engine";
@@ -59,6 +59,7 @@ describe("offseason lifecycle", () => {
     // roster → draft prep → draft → FA → staff
     current = advanceLeaguePhase(current, rng).state;
     expect(getActivePhaseId(current)).toBe("offseason.draft_preparation");
+    current = autoResolveGeneratedDraftClass(current, rng).state;
     current = advanceLeaguePhase(current, rng).state;
     expect(getActivePhaseId(current)).toBe("offseason.draft");
 
@@ -139,6 +140,9 @@ describe("offseason lifecycle", () => {
       getActivePhaseId(current) !== "preseason.preparation" &&
       current.competition.season.year === state.competition.season.year
     ) {
+      if (getActivePhaseId(current) === "offseason.draft_preparation") {
+        current = autoResolveGeneratedDraftClass(current, rng).state;
+      }
       if (getActivePhaseId(current) === "offseason.draft") {
         const draftYear = draftYearForSeason(current.competition.season.year);
         const draftClassId = draftClassIdFor(draftYear);

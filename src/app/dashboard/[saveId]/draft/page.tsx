@@ -6,6 +6,7 @@ import {
   toggleDraftBoardPriorityAction,
 } from "@/application/actions";
 import { loadOwnerSaveView } from "@/application/game-service";
+import { DraftClassDecisionPanel } from "@/components/draft/DraftClassDecisionPanel";
 import { DraftBoardPanel } from "@/components/draft/DraftBoardPanel";
 import { DraftHeaderStrip } from "@/components/draft/DraftHeaderStrip";
 import { DraftPickSummary } from "@/components/draft/DraftPickSummary";
@@ -19,6 +20,7 @@ import { TeamLogoMark } from "@/components/team/logos/TeamLogoMark";
 import { TeamEntityLink } from "@/components/entity/TeamEntityLink";
 import { PlayerEntityLink } from "@/components/entity/PlayerEntityLink";
 import { draftClassIdFor } from "@/domain/entities/draft";
+import { getActivePhaseId } from "@/systems/phase-engine/resolve-current-phase";
 import { prismaSaveGameStore } from "@/persistence/save-game-repository";
 import { toDraftHubView } from "@/state/draft-hub-selectors";
 import {
@@ -60,6 +62,15 @@ export default async function DraftPage({
     state && draftYear
       ? state.world.drafts[draftClassIdFor(draftYear)]
       : undefined;
+  const awaitingDraftClassDecision = Boolean(
+    state &&
+      draftYear &&
+      !draft &&
+      (getActivePhaseId(state) === "offseason.draft_preparation" ||
+        getActivePhaseId(state) === "offseason.draft") &&
+      state.user.pendingDraftClassDecisions[String(draftYear)]?.resolved !==
+        true,
+  );
 
   let recommendations: ReturnType<typeof getDraftRecommendations> = [];
   let needs: ReturnType<typeof calculateTeamDraftNeeds> | null = null;
@@ -127,7 +138,16 @@ export default async function DraftPage({
 
       {hub ? <DraftHeaderStrip view={hub} /> : null}
 
-      {!board || !state || !draft || !teamId ? (
+      {awaitingDraftClassDecision && state && draftYear ? (
+        <DraftClassDecisionPanel
+          saveId={saveId}
+          draftYear={draftYear}
+          seasonYear={state.competition.season.year}
+          returnPath={returnPath}
+        />
+      ) : null}
+
+      {awaitingDraftClassDecision ? null : !board || !state || !draft || !teamId ? (
         <EmptyState
           message={
             hub?.inactiveReason ??

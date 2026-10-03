@@ -100,6 +100,25 @@ function buildTasksForPhase(
   }
 
   if (phaseId === "offseason.draft_preparation") {
+    const draftYear = draftYearForSeason(state.competition.season.year);
+    const decision =
+      state.user.pendingDraftClassDecisions[String(draftYear)];
+    if (decision === undefined || decision.resolved !== true) {
+      tasks.push({
+        taskKey: `draft_class_decision:${draftYear}`,
+        type: "draft_class_decision",
+        phaseId,
+        priority: "required",
+        title: `Prepare the ${draftYear} Draft Class`,
+        detail:
+          "Choose a generated rookie class or import a custom draft class.",
+        explanation:
+          "The draft cannot start until this season's rookie class is confirmed.",
+        href: `/dashboard/${saveId}/draft`,
+        teamId,
+        focusKey: "draft_class",
+      });
+    }
     if (context.bestDraftPick !== null) {
       tasks.push({
         taskKey: `scout_needs:${teamId}`,
