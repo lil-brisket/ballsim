@@ -69,7 +69,7 @@ export function CityMapPicker(props: {
         <p className="text-sm text-zinc-400">{props.cities.length} cities</p>
       </header>
 
-      <div className="grid min-h-0 flex-1 gap-4 lg:grid-cols-[minmax(0,1fr)_22rem] lg:grid-rows-1 lg:items-stretch">
+      <div className="grid min-h-0 flex-1 gap-4 overflow-hidden lg:grid-cols-[minmax(0,1fr)_22rem] lg:grid-rows-1 lg:items-stretch">
         <GeographicMap
           area={props.area}
           cities={mapCities}
@@ -78,7 +78,7 @@ export function CityMapPicker(props: {
           fill
         />
 
-        <aside className="flex min-h-0 flex-col gap-3 overflow-hidden rounded-lg border border-zinc-800 bg-zinc-900/50 px-4 py-4 lg:h-full">
+        <aside className="flex min-h-[12rem] flex-1 flex-col gap-3 overflow-hidden rounded-lg border border-zinc-800 bg-zinc-900/50 px-4 py-4 lg:h-full lg:min-h-0">
           <div className="space-y-2">
             <label
               className="block text-sm text-zinc-400"
@@ -123,7 +123,7 @@ export function CityMapPicker(props: {
           </ul>
 
           {selected ? (
-            <div className="shrink-0 space-y-3 border-t border-zinc-800 pt-3">
+            <div className="sticky bottom-0 z-10 shrink-0 space-y-3 border-t border-zinc-800 bg-zinc-900/95 pt-3">
               <div>
                 <p className="text-xs font-semibold uppercase tracking-wide text-amber-500/90">
                   Selected market

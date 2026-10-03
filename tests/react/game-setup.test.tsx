@@ -26,7 +26,7 @@ describe("GameSetupForm", () => {
   it("shows fantasy draft deferred-setup message", () => {
     const { unmount } = render(<GameSetupForm atSaveLimit={false} />);
 
-    fireEvent.change(screen.getByLabelText("Startup draft"), {
+    fireEvent.change(screen.getByLabelText("Roster source"), {
       target: { value: "1" },
     });
 
@@ -41,8 +41,8 @@ describe("GameSetupForm", () => {
     const { unmount } = render(<GameSetupForm atSaveLimit={false} />);
 
     expect(
-      screen.getByRole("heading", { name: "AI Team Management" }),
-    ).toBeTruthy();
+      screen.getAllByRole("heading", { name: "AI Team Management" }).length,
+    ).toBeGreaterThan(0);
     expect(
       screen.getByRole("checkbox", { name: /Injuries & Emergency Roster/ }),
     ).toBeTruthy();

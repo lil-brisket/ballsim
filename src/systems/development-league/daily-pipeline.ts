@@ -21,6 +21,7 @@ import type { GameState } from "@/state/game-state";
 import { DL_MIN_ROSTER_FOR_GAME } from "@/systems/development-league/config";
 import { getDevelopmentLeagueRosterPlayerIds } from "@/systems/development-league/franchise-membership";
 import { simulateScheduledGame } from "@/systems/game-simulation";
+import type { GameSimulationFidelity } from "@/systems/game-simulation";
 import { processPostGameInjuryExposures } from "@/systems/injury/injury-post-game";
 import { buildGameIdsByDate } from "@/systems/schedule-date-index";
 import type { SimulationProfiler } from "@/systems/simulation/simulation-profiler";
@@ -200,6 +201,10 @@ export function runDevelopmentLeaguePipeline(
   state: GameState,
   rng: Rng,
   profiler?: SimulationProfiler,
+  options?: {
+    fidelity?: GameSimulationFidelity;
+    ownerTeamId?: TeamId;
+  },
 ): DlDailyPipelineResult {
   const events: DomainEvent[] = [];
   let current = state;
@@ -236,6 +241,8 @@ export function runDevelopmentLeaguePipeline(
     const { finalGame, event } = simulateScheduledGame(current, game, rng, {
       profiler,
       rosterOverrides: overrides,
+      fidelity: options?.fidelity,
+      ownerTeamId: options?.ownerTeamId,
     });
     if (profiler) {
       profiler.addSeason("gameSimMs", performance.now() - gameStart);

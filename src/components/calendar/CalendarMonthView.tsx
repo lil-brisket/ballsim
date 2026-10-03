@@ -79,6 +79,7 @@ export function CalendarMonthView(props: {
   currentDate: string;
   nextTeamGameDate: string | null;
   navigationDisabled?: boolean;
+  resultOverlays?: Readonly<Record<string, string>>;
   onSelectDate: (date: string) => void;
   onChangeMonth: (year: number, month: number) => void;
   onJumpToday: () => void;
@@ -155,15 +156,28 @@ export function CalendarMonthView(props: {
           </div>
         ))}
         {props.grid.weeks.flatMap((week) =>
-          week.map((cell) => (
-            <CalendarDayCell
-              key={cell.date}
-              cell={cell}
-              selected={cell.date === props.selectedDate}
-              disabled={disabled}
-              onSelect={props.onSelectDate}
-            />
-          )),
+          week.map((cell) => {
+            const overlay = props.resultOverlays?.[cell.date];
+            const liveCell = {
+              ...cell,
+              isToday: cell.date === props.currentDate,
+              isPast: cell.date < props.currentDate,
+              isFuture: cell.date > props.currentDate,
+              teamGame:
+                cell.teamGame && overlay
+                  ? { ...cell.teamGame, resultLabel: overlay }
+                  : cell.teamGame,
+            };
+            return (
+              <CalendarDayCell
+                key={cell.date}
+                cell={liveCell}
+                selected={cell.date === props.selectedDate}
+                disabled={disabled}
+                onSelect={props.onSelectDate}
+              />
+            );
+          }),
         )}
       </div>
 

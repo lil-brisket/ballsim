@@ -154,6 +154,70 @@ export function getCalendarMonthGrid(
   return { year, month, weeks, currentDate, nextTeamGameDate };
 }
 
+export function buildPlaceholderMonthGrid(
+  year: number,
+  month: number,
+  currentDate: string,
+): CalendarMonthGrid {
+  if (
+    !Number.isInteger(year) ||
+    !Number.isInteger(month) ||
+    month < 1 ||
+    month > 12
+  ) {
+    throw new Error(
+      `buildPlaceholderMonthGrid requires year and month 1–12; got ${year}-${month}.`,
+    );
+  }
+  const monthStart = formatCalendarDate(year, month, 1);
+  const nextMonthStart =
+    month === 12
+      ? formatCalendarDate(year + 1, 1, 1)
+      : formatCalendarDate(year, month + 1, 1);
+  const monthEnd = addCalendarDays(nextMonthStart, -1);
+  const startWeekday = weekdayMondayFirst(monthStart);
+  const gridStart = addCalendarDays(monthStart, -startWeekday);
+  const endWeekday = weekdayMondayFirst(monthEnd);
+  const gridEnd = addCalendarDays(monthEnd, 6 - endWeekday);
+
+  const weeks: CalendarDayCell[][] = [];
+  let cursor = gridStart;
+  while (cursor <= gridEnd) {
+    const week: CalendarDayCell[] = [];
+    for (let dayIndex = 0; dayIndex < 7; dayIndex += 1) {
+      const { year: cellYear, month: cellMonth } = parseCalendarDate(cursor);
+      week.push({
+        date: cursor,
+        inMonth: cellYear === year && cellMonth === month,
+        isToday: cursor === currentDate,
+        isPast: cursor < currentDate,
+        isFuture: cursor > currentDate,
+        events: [],
+        indicatorCounts: {
+          games: 0,
+          actionRequired: 0,
+          deadlines: 0,
+          other: 0,
+        },
+        teamGame: null,
+        specialEvents: [],
+        isNextTeamGame: false,
+        leagueMilestones: [],
+      });
+      cursor = addCalendarDays(cursor, 1);
+    }
+    weeks.push(week);
+  }
+
+  return {
+    year,
+    month,
+    weeks,
+    currentDate,
+    nextTeamGameDate: null,
+  };
+}
+
 function weekdayMondayFirst(isoDate: string): number {
   const { year, month, day } = parseCalendarDate(isoDate);
   const utcDay = new Date(Date.UTC(year, month - 1, day, 12, 0, 0)).getUTCDay();

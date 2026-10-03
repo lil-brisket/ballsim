@@ -13,6 +13,8 @@ export function DateInspector(props: {
   timeDisabled: boolean;
   /** Active owner franchise — kept for callers that need explicit scoping. */
   userTeamId?: TeamId;
+  simulating?: boolean;
+  onSimulate: (targetDate: string) => void;
 }) {
   const { inspector } = props;
   const statusLabel =
@@ -160,6 +162,8 @@ export function DateInspector(props: {
                 inspector.action === "simulate_to_date" &&
                 inspector.simulationPreview.canSimulate
               }
+              simulating={props.simulating}
+              onSimulate={props.onSimulate}
             />
           </section>
         ) : (

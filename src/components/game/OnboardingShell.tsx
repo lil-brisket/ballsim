@@ -23,7 +23,7 @@ export function OnboardingShell(props: {
     <main
       className={`mx-auto flex w-full flex-col px-6 ${
         fillViewport
-          ? "h-dvh max-h-dvh min-h-0 gap-3 overflow-hidden py-4 max-lg:h-auto max-lg:max-h-none max-lg:overflow-y-auto"
+          ? "h-dvh max-h-dvh min-h-0 gap-3 overflow-hidden py-4"
           : "flex-1 gap-8 py-12"
       } ${props.className ?? "max-w-4xl"}`}
     >

@@ -23,7 +23,13 @@ export type AdvanceSimulationResult = {
   /** Whether the requested advance finished or paused early. */
   status: "completed" | "paused";
   /** Why the advance paused (omit when completed). */
-  stopReason?: "pending_owner_decision" | "phase_change";
+  stopReason?: "pending_owner_decision" | "phase_change" | "user_team_game";
+};
+
+export type SimulationTeamGameProgress = {
+  opponentAbbreviation: string;
+  resultLabel: string | null;
+  home: boolean;
 };
 
 /** Progress snapshot emitted during long advances (UI / benchmarks). */
@@ -31,11 +37,14 @@ export type SimulationProgress = {
   daysRequested: number;
   daysAdvanced: number;
   currentDate: string;
+  /** Calendar date whose games were just simulated (before +1). */
+  completedDate: string;
   phase: SeasonPhase;
   offseasonStage: string;
   seasonYear: number;
   gamesSimulated: number;
   percentComplete: number;
+  teamGame?: SimulationTeamGameProgress | null;
 };
 
 export type AdvanceSimulationOptions = {
@@ -59,4 +68,14 @@ export type AdvanceSimulationOptions = {
   profiler?: SimulationProfiler;
   /** Optional progress callback (e.g. UI / CLI). */
   onProgress?: (progress: SimulationProgress) => void;
+  /**
+   * CPU vs CPU games can use statistical box scores during owner calendar jumps.
+   * Owner-team games always use the possession engine. Default "possession".
+   */
+  gameFidelity?: "possession" | "box_score";
+  /**
+   * When true, stop before simulating a day that has a scheduled owner-team game,
+   * except the first day of this advance (so today's game cannot be skipped).
+   */
+  stopBeforeUserTeamGame?: boolean;
 };

@@ -34,7 +34,10 @@ export {
   advanceLeaguePhase,
   initializeNewSeason,
 } from "@/systems/simulation/offseason-lifecycle";
-export { advanceSimulation } from "@/systems/simulation/advance-simulation";
+export {
+  advanceSimulation,
+  advanceSimulationAsync,
+} from "@/systems/simulation/advance-simulation";
 export {
   SEASON_LIFECYCLE_CONFIG,
   DEFAULT_REGULAR_SEASON_START_DATE,
@@ -101,6 +104,7 @@ export type {
   AdvanceSimulationResult,
   AdvanceSimulationOptions,
   SimulationProgress,
+  SimulationTeamGameProgress,
 } from "@/systems/simulation/types";
 export {
   createSimulationProfiler,

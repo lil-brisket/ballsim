@@ -270,19 +270,22 @@ async function handleBlockedGates(
     if (!resolved.ok) {
       throw new Error(resolved.error);
     }
-    return "handled";
   }
+
+  const afterGates = await store.load(saveId);
+  const gatedState = afterGates?.state ?? state;
+  const gatedPhaseId = getActivePhaseId(gatedState);
 
   // Auto-advance user-managed phases when nothing required remains.
   // Free agency is handled above so AI gets its configured window first.
   if (
     !calendarPrimary &&
-    (phaseId === "offseason.roster_decisions" ||
-      phaseId === "offseason.draft_preparation" ||
-      phaseId === "offseason.draft" ||
-      phaseId === "offseason.staff_development" ||
-      phaseId === "preseason.preparation") &&
-    canAdvancePhase(state)
+    (gatedPhaseId === "offseason.roster_decisions" ||
+      gatedPhaseId === "offseason.draft_preparation" ||
+      gatedPhaseId === "offseason.draft" ||
+      gatedPhaseId === "offseason.staff_development" ||
+      gatedPhaseId === "preseason.preparation") &&
+    canAdvancePhase(gatedState)
   ) {
     const advanced = await advanceLeaguePhaseCommand(saveId, store);
     if (advanced.ok) {
@@ -290,7 +293,7 @@ async function handleBlockedGates(
     }
   }
 
-  if (isUserOnDraftClock(state)) {
+  if (isUserOnDraftClock(gatedState)) {
     const { loadOwnerSaveView } = await import("@/application/game-service");
     const full = await loadOwnerSaveView(saveId, store);
     const prospect = full?.draftBoard?.eligibleProspects[0];
@@ -306,8 +309,8 @@ async function handleBlockedGates(
       return "draft";
     }
     const { tryAutoPickActiveDraftSlot } = await import("@/systems/draft");
-    const picked = tryAutoPickActiveDraftSlot(state);
-    if (picked === state) {
+    const picked = tryAutoPickActiveDraftSlot(gatedState);
+    if (picked === gatedState) {
       throw new Error("No draft prospect available while on clock");
     }
     await store.save({ id: saveId, state: picked });

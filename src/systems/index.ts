@@ -135,6 +135,7 @@ export {
   simulateScheduledGame,
   requestPossessionSeconds,
   type SimulateGameContext,
+  type GameSimulationFidelity,
 } from "@/systems/game-simulation";
 export {
   GAME_SIMULATION_CONFIG,

@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { asTeamId } from "@/domain/ids";
 
 vi.mock("server-only", () => ({}));
@@ -8,11 +8,18 @@ vi.mock("@/application/actions", () => ({
 }));
 
 const push = vi.fn();
+const replace = vi.fn();
+const refresh = vi.fn();
+const streamMocks = vi.hoisted(() => ({
+  streamSimulateToDate: vi.fn(),
+}));
 
 vi.mock("next/navigation", () => ({
-  useRouter: () => ({ push, refresh: vi.fn() }),
+  useRouter: () => ({ push, replace, refresh }),
   usePathname: () => "/dashboard/save_cal/calendar",
 }));
+
+vi.mock("@/components/calendar/stream-simulate-to-date", () => streamMocks);
 
 import type { CalendarPageView } from "@/application/game-service";
 import { CalendarWorkspace } from "@/components/calendar/CalendarWorkspace";
@@ -219,6 +226,7 @@ describe("CalendarWorkspace redesign", () => {
   });
 
   it("uses Next Game as date navigation only", () => {
+    replace.mockClear();
     push.mockClear();
     const { unmount } = render(
       <SimulationActivityProvider>
@@ -232,10 +240,11 @@ describe("CalendarWorkspace redesign", () => {
       </SimulationActivityProvider>,
     );
     fireEvent.click(screen.getByRole("button", { name: /Next Game →/i }));
-    expect(push).toHaveBeenCalled();
-    const href = String(push.mock.calls[0]?.[0] ?? "");
+    expect(replace).toHaveBeenCalled();
+    const href = String(replace.mock.calls[0]?.[0] ?? "");
     expect(href).toContain("date=2026-09-18");
     expect(href).not.toContain("simulate");
+    expect(replace.mock.calls[0]?.[1]).toEqual({ scroll: false });
     unmount();
   });
 
@@ -279,6 +288,8 @@ describe("CalendarWorkspace redesign", () => {
       .mockReturnValue({
         simulationPending: true,
         setSimulationPending: vi.fn(),
+        simulationProgress: null,
+        setSimulationProgress: vi.fn(),
       });
 
     const { unmount } = render(
@@ -318,5 +329,177 @@ describe("CalendarWorkspace redesign", () => {
     expect(push).not.toHaveBeenCalled();
     spy.mockRestore();
     unmount();
+  });
+
+  it("does not reset scroll when selecting a date", () => {
+    replace.mockClear();
+    const { unmount } = render(
+      <SimulationActivityProvider>
+        <CalendarWorkspace
+          view={makeView()}
+          saveId="save_cal"
+          showSimSummary={false}
+          daysAdvanced={0}
+          highlightCount={0}
+        />
+      </SimulationActivityProvider>,
+    );
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: "2026-09-18, next team game, HOME vs Rivermen",
+      }),
+    );
+    expect(replace).toHaveBeenCalled();
+    expect(replace.mock.calls[0]?.[1]).toEqual({ scroll: false });
+    unmount();
+  });
+
+  it("keeps scroll position when changing month", () => {
+    push.mockClear();
+    const { unmount } = render(
+      <SimulationActivityProvider>
+        <CalendarWorkspace
+          view={makeView()}
+          saveId="save_cal"
+          showSimSummary={false}
+          daysAdvanced={0}
+          highlightCount={0}
+        />
+      </SimulationActivityProvider>,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Next" }));
+    expect(push).toHaveBeenCalled();
+    expect(push.mock.calls[0]?.[1]).toEqual({ scroll: false });
+    unmount();
+  });
+
+  it("moves the current-date highlight and overlays the team result during playback", async () => {
+    streamMocks.streamSimulateToDate.mockImplementation(
+      async (_saveId, _target, onEvent) => {
+        onEvent({
+          type: "progress",
+          daysRequested: 5,
+          daysAdvanced: 5,
+          currentDate: "2026-09-18",
+          completedDate: "2026-09-18",
+          phase: "regular",
+          offseasonStage: "in_season",
+          seasonYear: 2026,
+          gamesSimulated: 12,
+          percentComplete: 100,
+          teamGame: {
+            opponentAbbreviation: "RIV",
+            resultLabel: "W 110-102",
+            home: true,
+          },
+        });
+      },
+    );
+    const { unmount } = render(
+      <SimulationActivityProvider>
+        <CalendarWorkspace
+          view={makeView()}
+          saveId="save_cal"
+          showSimSummary={false}
+          daysAdvanced={0}
+          highlightCount={0}
+        />
+      </SimulationActivityProvider>,
+    );
+    fireEvent.click(screen.getByRole("button", { name: /Simulate to date/i }));
+    await waitFor(() => {
+      expect(
+        screen.getByRole("button", {
+          name: /2026-09-18, current simulation date/,
+        }),
+      ).toBeTruthy();
+      expect(screen.getByText("W 110-102")).toBeTruthy();
+      expect(screen.getByText(/Day 5 \/ 5/)).toBeTruthy();
+    });
+    unmount();
+  });
+
+  it("flips the visible month when live current date leaves the loaded grid", async () => {
+    streamMocks.streamSimulateToDate.mockImplementation(
+      async (_saveId, _target, onEvent) => {
+        onEvent({
+          type: "progress",
+          daysRequested: 20,
+          daysAdvanced: 19,
+          currentDate: "2026-10-02",
+          completedDate: "2026-10-01",
+          phase: "regular",
+          offseasonStage: "in_season",
+          seasonYear: 2026,
+          gamesSimulated: 40,
+          percentComplete: 95,
+          teamGame: null,
+        });
+      },
+    );
+    const { unmount } = render(
+      <SimulationActivityProvider>
+        <CalendarWorkspace
+          view={makeView()}
+          saveId="save_cal"
+          showSimSummary={false}
+          daysAdvanced={0}
+          highlightCount={0}
+        />
+      </SimulationActivityProvider>,
+    );
+    fireEvent.click(screen.getByRole("button", { name: /Simulate to date/i }));
+    await waitFor(() => {
+      expect(screen.getByText("October 2026")).toBeTruthy();
+      expect(screen.getByText("2026-10-02")).toBeTruthy();
+    });
+    unmount();
+  });
+
+  it("opens the date inspector in a drawer on small screens", async () => {
+    const matchMedia = window.matchMedia;
+    Object.defineProperty(window, "matchMedia", {
+      writable: true,
+      configurable: true,
+      value: (query: string) => ({
+        matches: false,
+        media: query,
+        addEventListener: () => undefined,
+        removeEventListener: () => undefined,
+        addListener: () => undefined,
+        removeListener: () => undefined,
+        dispatchEvent: () => false,
+        onchange: null,
+      }),
+    });
+    const { unmount } = render(
+      <SimulationActivityProvider>
+        <CalendarWorkspace
+          view={makeView()}
+          saveId="save_cal"
+          showSimSummary={false}
+          daysAdvanced={0}
+          highlightCount={0}
+        />
+      </SimulationActivityProvider>,
+    );
+    expect(screen.queryByRole("dialog")).toBeNull();
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: "2026-09-18, next team game, HOME vs Rivermen",
+      }),
+    );
+    await waitFor(() => {
+      expect(screen.getByRole("dialog")).toBeTruthy();
+      expect(
+        screen.getByRole("button", { name: /Simulate to date/i }),
+      ).toBeTruthy();
+    });
+    unmount();
+    Object.defineProperty(window, "matchMedia", {
+      writable: true,
+      configurable: true,
+      value: matchMedia,
+    });
   });
 });

@@ -75,6 +75,9 @@ import {
   buildTeamStaffGameContext,
   type TeamStaffGameContext,
 } from "@/systems/staff-effects";
+import { simulateGameBoxScore } from "@/systems/game-simulation-box-score";
+
+export type GameSimulationFidelity = "possession" | "box_score";
 
 export type SimulateGameContext = {
   homePlayers: readonly Player[];
@@ -361,13 +364,17 @@ export function simulateGame(
 
 /**
  * Simulates all scheduled games for the given world date.
- * Produces GameCompleted domain events; uses possession-based simulateGame.
+ * Produces GameCompleted domain events. CPU vs CPU can use box-score fidelity.
  */
 export function simulateGamesForDate(
   state: GameState,
   rng: Rng,
   date: string,
   profiler?: SimulationProfiler,
+  options?: {
+    fidelity?: GameSimulationFidelity;
+    ownerTeamId?: TeamId;
+  },
 ): SystemResult {
   const games = { ...state.competition.games };
   const events: DomainEvent[] = [];
@@ -403,6 +410,8 @@ export function simulateGamesForDate(
     const gameStart = performance.now();
     const { finalGame, event } = simulateScheduledGame(working, game, rng, {
       profiler,
+      fidelity: options?.fidelity,
+      ownerTeamId: options?.ownerTeamId,
     });
     if (profiler) {
       profiler.addSeason("gameSimMs", performance.now() - gameStart);
@@ -448,6 +457,8 @@ export function simulateScheduledGame(
   options?: {
     profiler?: SimulationProfiler;
     rosterOverrides?: Partial<Record<TeamId, PlayerId[]>>;
+    fidelity?: GameSimulationFidelity;
+    ownerTeamId?: TeamId;
   },
 ): { finalGame: Game; event: DomainEvent } {
   if (game.status !== "scheduled") {
@@ -476,24 +487,27 @@ export function simulateScheduledGame(
     options?.rosterOverrides?.[game.awayTeamId] != null
       ? { players: selectStartingLineup(awayPlayers, 5) }
       : getEmergencyLineup(state, game.awayTeamId);
-  const result = simulateGame(
-    game,
-    {
-      homePlayers,
-      awayPlayers,
-      homeStartingLineup: homeLineup.players,
-      awayStartingLineup: awayLineup.players,
-      homeCoachingPhilosophy:
-        homeTeam?.coachingPhilosophy ?? DEFAULT_COACHING_PHILOSOPHY,
-      awayCoachingPhilosophy:
-        awayTeam?.coachingPhilosophy ?? DEFAULT_COACHING_PHILOSOPHY,
-      homeStaffContext: buildTeamStaffGameContext(state, game.homeTeamId),
-      awayStaffContext: buildTeamStaffGameContext(state, game.awayTeamId),
-      profiler: options?.profiler,
-      gameState: state,
-    },
-    rng,
-  );
+  const useBoxScore =
+    options?.fidelity === "box_score" &&
+    options.ownerTeamId !== game.homeTeamId &&
+    options.ownerTeamId !== game.awayTeamId;
+  const simContext: SimulateGameContext = {
+    homePlayers,
+    awayPlayers,
+    homeStartingLineup: homeLineup.players,
+    awayStartingLineup: awayLineup.players,
+    homeCoachingPhilosophy:
+      homeTeam?.coachingPhilosophy ?? DEFAULT_COACHING_PHILOSOPHY,
+    awayCoachingPhilosophy:
+      awayTeam?.coachingPhilosophy ?? DEFAULT_COACHING_PHILOSOPHY,
+    homeStaffContext: buildTeamStaffGameContext(state, game.homeTeamId),
+    awayStaffContext: buildTeamStaffGameContext(state, game.awayTeamId),
+    profiler: options?.profiler,
+    gameState: state,
+  };
+  const result = useBoxScore
+    ? simulateGameBoxScore(game, simContext, rng)
+    : simulateGame(game, simContext, rng);
 
   const finalGame = buildFinalizedGame(game, state, result, {
     homePlayers,

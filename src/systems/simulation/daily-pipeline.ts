@@ -22,6 +22,7 @@ import type { TeamId } from "@/domain/ids";
 import { runDevelopmentLeaguePipeline } from "@/systems/development-league/daily-pipeline";
 import { reconcileRosterManagement } from "@/systems/roster-management";
 import { scheduledGameIdsForDate } from "@/systems/schedule-date-index";
+import type { GameSimulationFidelity } from "@/systems/game-simulation";
 
 export type DailyPipelineResult = SystemResult & {
   gamesSimulated: number;
@@ -59,6 +60,10 @@ export function runDailyPipeline(
   state: GameState,
   rng: Rng,
   profiler?: SimulationProfiler,
+  options?: {
+    fidelity?: GameSimulationFidelity;
+    ownerTeamId?: TeamId;
+  },
 ): DailyPipelineResult {
   const events: DomainEvent[] = [];
   let current = state;
@@ -69,7 +74,10 @@ export function runDailyPipeline(
 
   if (phase === "regular") {
     current = reconcileTeamsForScheduledGames(current, date);
-    const gamesResult = simulateGamesForDate(current, rng, date, profiler);
+    const gamesResult = simulateGamesForDate(current, rng, date, profiler, {
+      fidelity: options?.fidelity,
+      ownerTeamId: options?.ownerTeamId,
+    });
     current = gamesResult.state;
     events.push(...gamesResult.events);
     gamesSimulated += gamesResult.events.length;
@@ -87,7 +95,10 @@ export function runDailyPipeline(
       }
     }
 
-    const dlResult = runDevelopmentLeaguePipeline(current, rng, profiler);
+    const dlResult = runDevelopmentLeaguePipeline(current, rng, profiler, {
+      fidelity: options?.fidelity,
+      ownerTeamId: options?.ownerTeamId,
+    });
     current = dlResult.state;
     events.push(...dlResult.events);
     gamesSimulated += dlResult.gamesSimulated;
@@ -98,7 +109,10 @@ export function runDailyPipeline(
     current.competition.playoffs.status === "in_progress"
   ) {
     const playoffStart = performance.now();
-    const playoffResult = simulateNextPlayoffGame(current, rng);
+    const playoffResult = simulateNextPlayoffGame(current, rng, {
+      fidelity: options?.fidelity,
+      ownerTeamId: options?.ownerTeamId,
+    });
     if (profiler) {
       profiler.addSeason("gameSimMs", performance.now() - playoffStart);
       profiler.bumpPlayoffGames(

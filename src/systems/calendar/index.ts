@@ -10,6 +10,7 @@ export {
 
 export {
   getCalendarMonthGrid,
+  buildPlaceholderMonthGrid,
   type CalendarDayCell,
   type CalendarDayIndicatorCounts,
   type CalendarMonthGrid,

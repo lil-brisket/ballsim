@@ -213,6 +213,21 @@ export function buildCalendarSimulationPreview(
     }
 
     if (!needsInit) {
+      const nextOwnerGame = range.yourTeam.events.find(
+        (event) => event.date > state.world.calendar.currentDate,
+      );
+      const todayOwnerGame = range.yourTeam.events.find(
+        (event) => event.date === state.world.calendar.currentDate,
+      );
+      if (todayOwnerGame && nextOwnerGame) {
+        lines.push(
+          `Today's team game will be simulated first, then time stops at your next game on ${nextOwnerGame.date}.`,
+        );
+      } else if (nextOwnerGame) {
+        lines.push(
+          `Stops at your next team game on ${nextOwnerGame.date}.`,
+        );
+      }
       lines.push(
         `${range.days} day${range.days === 1 ? "" : "s"} of world simulation`,
       );

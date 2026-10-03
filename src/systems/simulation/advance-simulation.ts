@@ -1,10 +1,15 @@
 import { getCalendarMonthId, getIsoWeekId } from "@/domain/calendar-date";
 import type { DomainEvent } from "@/domain/events";
 import type { Rng } from "@/domain/rng";
+import type { TeamId } from "@/domain/ids";
 import { hasBlockingOwnerDecision } from "@/domain/entities/owner-decision";
 import { expireDatedTradeOffers } from "@/systems/owner-decisions/enqueue-trade-offer";
 import type { GameState } from "@/state/game-state";
 import { advanceCalendar } from "@/systems/calendar";
+import {
+  getTeamGameForDate,
+  projectTeamGameView,
+} from "@/systems/calendar/schedule-projection";
 import { generateRosters } from "@/systems/roster-generation";
 import { canBeginRegularSeason } from "@/systems/league-rules";
 import { canAdvancePhase } from "@/systems/phase-engine";
@@ -81,6 +86,45 @@ export function advanceSimulation(
   rng: Rng,
   options: AdvanceSimulationOptions = {},
 ): AdvanceSimulationResult {
+  const session = createAdvanceSession(state, rng, options);
+  while (session.step()) {
+    /* sync */
+  }
+  return session.result();
+}
+
+/**
+ * Same as {@link advanceSimulation}, yielding to the event loop after each day
+ * so streamed progress can flush to the client.
+ */
+export async function advanceSimulationAsync(
+  state: GameState,
+  rng: Rng,
+  options: AdvanceSimulationOptions = {},
+): Promise<AdvanceSimulationResult> {
+  const session = createAdvanceSession(state, rng, options);
+  while (session.step()) {
+    await yieldToEventLoop();
+  }
+  return session.result();
+}
+
+function yieldToEventLoop(): Promise<void> {
+  return new Promise((resolve) => {
+    setImmediate(resolve);
+  });
+}
+
+type AdvanceSession = {
+  step: () => boolean;
+  result: () => AdvanceSimulationResult;
+};
+
+function createAdvanceSession(
+  state: GameState,
+  rng: Rng,
+  options: AdvanceSimulationOptions,
+): AdvanceSession {
   const days = options.days ?? 1;
   if (!Number.isInteger(days) || days < 1) {
     throw new Error(
@@ -93,8 +137,6 @@ export function advanceSimulation(
   const allEvents: DomainEvent[] = [];
   let current = state;
 
-  // Transactional pre-check: do not open the regular season when blocked.
-  // Preseason days before the planned opener may still advance freely.
   if (allowOwnerManaged && needsRegularSeasonInitialization(current)) {
     const plannedOpener = derivePlannedRegularSeasonStartDate(current);
     if (
@@ -116,84 +158,121 @@ export function advanceSimulation(
   const phaseBefore = current.competition.season.phase;
   const previousDate = current.world.calendar.currentDate;
   const identityBefore = lifecycleIdentity(current);
+  const ownerTeamId = current.user.activeOwnerTeamId;
   let scheduledEventsProcessed = 0;
   let gamesSimulated = 0;
   let weeklyPipelineRan = false;
   let monthlyPipelineRan = false;
   let daysAdvanced = 0;
   let stopReason: AdvanceSimulationResult["stopReason"];
+  let dayIndex = 0;
+  let finished = false;
 
-  for (let dayIndex = 0; dayIndex < days; dayIndex += 1) {
-    const dayResult = advanceOneDay(current, rng, {
-      profiler: options.profiler,
-      allowOwnerManagedPhaseTransitions: allowOwnerManaged,
-    });
-    current = dayResult.state;
-    allEvents.push(...dayResult.events);
-    scheduledEventsProcessed += dayResult.scheduledEventsProcessed;
-    gamesSimulated += dayResult.gamesSimulated;
-    weeklyPipelineRan = weeklyPipelineRan || dayResult.weeklyPipelineRan;
-    monthlyPipelineRan = monthlyPipelineRan || dayResult.monthlyPipelineRan;
-    daysAdvanced += 1;
-
-    if (options.onProgress) {
-      const progress: SimulationProgress = {
-        daysRequested: days,
-        daysAdvanced,
-        currentDate: current.world.calendar.currentDate,
-        phase: current.competition.season.phase,
-        offseasonStage: current.competition.season.offseasonStage,
-        seasonYear: current.competition.season.year,
-        gamesSimulated,
-        percentComplete: Math.min(100, (daysAdvanced / days) * 100),
-      };
-      options.onProgress(progress);
-    }
-
-    // Owner decisions pause only after a fully completed day.
-    if (hasBlockingOwnerDecision(current.user)) {
-      stopReason = "pending_owner_decision";
-      break;
-    }
-
-    if (
-      options.stopOnPhaseChange &&
-      lifecycleIdentity(current) !== identityBefore
-    ) {
-      stopReason = "phase_change";
-      break;
-    }
-
-    // Phase-boundary day already stopped competition; if stopOnPhaseChange
-    // was false, still halt after initializing regular season so callers
-    // that requested a multi-day jump don't accidentally play opener games
-    // in the same run when identity changed via regularSeasonInitialized.
-    if (dayResult.regularSeasonInitialized && options.stopOnPhaseChange) {
-      stopReason = "phase_change";
-      break;
-    }
+  function finish(): AdvanceSimulationResult {
+    const phaseAfter = current.competition.season.phase;
+    const status: AdvanceSimulationResult["status"] = stopReason
+      ? "paused"
+      : "completed";
+    return {
+      state: current,
+      events: allEvents,
+      previousDate,
+      currentDate: current.world.calendar.currentDate,
+      daysAdvanced,
+      phaseBefore,
+      phaseAfter,
+      phaseChanged: phaseBefore !== phaseAfter,
+      scheduledEventsProcessed,
+      gamesSimulated,
+      weeklyPipelineRan,
+      monthlyPipelineRan,
+      status,
+      ...(stopReason ? { stopReason } : {}),
+    };
   }
 
-  const phaseAfter = current.competition.season.phase;
-  const status: AdvanceSimulationResult["status"] = stopReason
-    ? "paused"
-    : "completed";
-
   return {
-    state: current,
-    events: allEvents,
-    previousDate,
-    currentDate: current.world.calendar.currentDate,
-    daysAdvanced,
-    phaseBefore,
-    phaseAfter,
-    phaseChanged: phaseBefore !== phaseAfter,
-    scheduledEventsProcessed,
-    gamesSimulated,
-    weeklyPipelineRan,
-    monthlyPipelineRan,
-    status,
-    ...(stopReason ? { stopReason } : {}),
+    step(): boolean {
+      if (finished || dayIndex >= days) {
+        finished = true;
+        return false;
+      }
+
+      const dateAboutToSimulate = current.world.calendar.currentDate;
+      if (
+        options.stopBeforeUserTeamGame === true &&
+        dayIndex > 0 &&
+        !needsRegularSeasonInitialization(current) &&
+        ownerHasScheduledGameOnDate(current, ownerTeamId, dateAboutToSimulate)
+      ) {
+        stopReason = "user_team_game";
+        finished = true;
+        return false;
+      }
+
+      const dayResult = advanceOneDay(current, rng, {
+        profiler: options.profiler,
+        allowOwnerManagedPhaseTransitions: allowOwnerManaged,
+        gameFidelity: options.gameFidelity,
+        ownerTeamId,
+      });
+      current = dayResult.state;
+      allEvents.push(...dayResult.events);
+      scheduledEventsProcessed += dayResult.scheduledEventsProcessed;
+      gamesSimulated += dayResult.gamesSimulated;
+      weeklyPipelineRan = weeklyPipelineRan || dayResult.weeklyPipelineRan;
+      monthlyPipelineRan = monthlyPipelineRan || dayResult.monthlyPipelineRan;
+      daysAdvanced += 1;
+      dayIndex += 1;
+
+      if (options.onProgress) {
+        const progress: SimulationProgress = {
+          daysRequested: days,
+          daysAdvanced,
+          currentDate: current.world.calendar.currentDate,
+          completedDate: dateAboutToSimulate,
+          phase: current.competition.season.phase,
+          offseasonStage: current.competition.season.offseasonStage,
+          seasonYear: current.competition.season.year,
+          gamesSimulated,
+          percentComplete: Math.min(100, (daysAdvanced / days) * 100),
+          teamGame: ownerTeamGameProgress(
+            current,
+            ownerTeamId,
+            dateAboutToSimulate,
+          ),
+        };
+        options.onProgress(progress);
+      }
+
+      if (hasBlockingOwnerDecision(current.user)) {
+        stopReason = "pending_owner_decision";
+        finished = true;
+        return false;
+      }
+
+      if (
+        options.stopOnPhaseChange &&
+        lifecycleIdentity(current) !== identityBefore
+      ) {
+        stopReason = "phase_change";
+        finished = true;
+        return false;
+      }
+
+      if (dayResult.regularSeasonInitialized && options.stopOnPhaseChange) {
+        stopReason = "phase_change";
+        finished = true;
+        return false;
+      }
+
+      if (dayIndex >= days) {
+        finished = true;
+        return false;
+      }
+      return true;
+    },
+    result: finish,
   };
 }
 
@@ -210,6 +289,8 @@ type OneDayResult = {
 type OneDayOptions = {
   profiler?: SimulationProfiler;
   allowOwnerManagedPhaseTransitions?: boolean;
+  gameFidelity?: "possession" | "box_score";
+  ownerTeamId?: TeamId;
 };
 
 function advanceOneDay(
@@ -314,7 +395,10 @@ function advanceOneDay(
   current = scheduled.state;
   events.push(...scheduled.events);
 
-  const daily = runDailyPipeline(current, rng, profiler);
+  const daily = runDailyPipeline(current, rng, profiler, {
+    fidelity: dayOptions.gameFidelity,
+    ownerTeamId: dayOptions.ownerTeamId,
+  });
   current = daily.state;
   events.push(...daily.events);
 
@@ -457,6 +541,53 @@ function advanceOneDay(
 function bootstrapRostersAndPicks(state: GameState, rng: Rng): GameState {
   const afterRosters = generateRosters(state, rng);
   return ensureDraftPicksLocal(afterRosters.state);
+}
+
+function ownerHasScheduledGameOnDate(
+  state: GameState,
+  teamId: TeamId,
+  date: string,
+): boolean {
+  const scheduled = getTeamGameForDate(state, teamId, date);
+  if (scheduled != null && scheduled.status === "scheduled") {
+    return true;
+  }
+  const playoffs = state.competition.playoffs;
+  if (playoffs.status !== "in_progress") {
+    return false;
+  }
+  const active = [...playoffs.series]
+    .filter((series) => series.status === "active")
+    .sort((left, right) => {
+      if (left.round !== right.round) {
+        return left.round - right.round;
+      }
+      return left.slot - right.slot;
+    });
+  const next = active[0];
+  if (next == null) {
+    return false;
+  }
+  return (
+    next.higherSeedTeamId === teamId || next.lowerSeedTeamId === teamId
+  );
+}
+
+function ownerTeamGameProgress(
+  state: GameState,
+  teamId: TeamId,
+  date: string,
+): SimulationProgress["teamGame"] {
+  const game = getTeamGameForDate(state, teamId, date);
+  if (game == null || game.status !== "final") {
+    return null;
+  }
+  const view = projectTeamGameView(state, teamId, game);
+  return {
+    opponentAbbreviation: view.opponentAbbreviation,
+    resultLabel: view.resultLabel,
+    home: view.home,
+  };
 }
 
 function ensureDraftPicksLocal(state: GameState): GameState {

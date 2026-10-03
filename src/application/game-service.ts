@@ -314,7 +314,11 @@ import {
   makeOffer,
   withdrawOffer,
 } from "@/systems/free-agency";
-import { advanceSimulation } from "@/systems/simulation/advance-simulation";
+import {
+  advanceSimulation,
+  advanceSimulationAsync,
+} from "@/systems/simulation/advance-simulation";
+import type { SimulationProgress } from "@/systems/simulation/types";
 import { buildSimulationHighlights } from "@/systems/simulation/simulation-highlights";
 import {
   buildCalendarDateInspectorView,
@@ -1811,6 +1815,10 @@ export type AdvanceOwnerTimeOptions = {
     | "end_of_season";
   /** Optional early-stop conditions for multi-day advances. */
   stopConditions?: SimulationStopCondition[];
+  /** Stream per-day progress (calendar playback). */
+  onProgress?: (progress: SimulationProgress) => void;
+  /** Caller already holds {@link runWithSimulationDedupe} for this save. */
+  skipInProcessDedupe?: boolean;
 };
 
 export async function advanceOwnerTime(
@@ -1826,7 +1834,7 @@ export async function advanceOwnerTime(
   }>
 > {
   try {
-    return await withTimeAdvanceDedupe(saveId, async () => {
+    const runAdvance = async () => {
       const saveStore = getStore(store);
       const loaded = await saveStore.load(saveId);
       if (!loaded) {
@@ -1920,11 +1928,17 @@ export async function advanceOwnerTime(
         isCalendarTarget;
 
       const rng = createSeededRng(rngState);
+      const useBoxScore = isCalendarTarget || resolved.days > 1;
+      const stopBeforeUserTeamGame =
+        isCalendarTarget || stopConditions.includes("user_team_game");
 
-      const result = advanceSimulation(workingState, rng, {
+      const result = await advanceSimulationAsync(workingState, rng, {
         days: resolved.days,
         stopOnPhaseChange,
         allowOwnerManagedPhaseTransitions: true,
+        gameFidelity: useBoxScore ? "box_score" : "possession",
+        stopBeforeUserTeamGame,
+        onProgress: options.onProgress,
       });
 
       // Postflight: final phase reconciliation + full invariant validation.
@@ -1966,7 +1980,11 @@ export async function advanceOwnerTime(
         highlights,
         summary,
       };
-    });
+    };
+    if (options.skipInProcessDedupe === true) {
+      return await runAdvance();
+    }
+    return await withTimeAdvanceDedupe(saveId, runAdvance);
   } catch (error) {
     return fail(mapTimeAdvancePersistenceError(error));
   }

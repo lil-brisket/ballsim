@@ -88,4 +88,18 @@ describe("CityMapPicker", () => {
     expect(container.querySelector('input[name="nickname"]')).toBeNull();
     unmount();
   });
+
+  it("keeps the city list in a bounded scrolling region and pins Continue", () => {
+    const { container, unmount } = render(
+      <CityMapPicker saveId="save_1" area="north_america" cities={CITIES} />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Toronto" }));
+    const list = container.querySelector("ul");
+    expect(list?.className).toContain("overflow-y-auto");
+    const continueButton = screen.getByRole("button", {
+      name: "Continue with Toronto",
+    });
+    expect(continueButton.closest("div")?.className).toContain("sticky");
+    unmount();
+  });
 });

@@ -11,9 +11,19 @@ import {
 } from "react";
 import { useFormStatus } from "react-dom";
 
+export type SimulationActivityProgress = {
+  currentDate: string;
+  daysAdvanced: number;
+  daysRequested: number;
+  percentComplete: number;
+  phase: string;
+} | null;
+
 type SimulationActivityContextValue = {
   simulationPending: boolean;
   setSimulationPending: (pending: boolean) => void;
+  simulationProgress: SimulationActivityProgress;
+  setSimulationProgress: (progress: SimulationActivityProgress) => void;
 };
 
 const SimulationActivityContext =
@@ -27,13 +37,31 @@ export function SimulationActivityProvider(props: {
   const [simulationPending, setSimulationPendingState] = useState(
     props.initialPending === true,
   );
+  const [simulationProgress, setSimulationProgressState] =
+    useState<SimulationActivityProgress>(null);
   const setSimulationPending = useCallback((pending: boolean) => {
     setSimulationPendingState(pending);
   }, []);
+  const setSimulationProgress = useCallback(
+    (progress: SimulationActivityProgress) => {
+      setSimulationProgressState(progress);
+    },
+    [],
+  );
 
   const value = useMemo(
-    () => ({ simulationPending, setSimulationPending }),
-    [simulationPending, setSimulationPending],
+    () => ({
+      simulationPending,
+      setSimulationPending,
+      simulationProgress,
+      setSimulationProgress,
+    }),
+    [
+      simulationPending,
+      setSimulationPending,
+      simulationProgress,
+      setSimulationProgress,
+    ],
   );
 
   return (
@@ -49,6 +77,8 @@ export function useSimulationActivity(): SimulationActivityContextValue {
     return {
       simulationPending: false,
       setSimulationPending: () => {},
+      simulationProgress: null,
+      setSimulationProgress: () => {},
     };
   }
   return ctx;

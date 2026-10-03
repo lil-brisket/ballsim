@@ -112,4 +112,103 @@ describe("advanceSimulation", () => {
       /days must be an integer >= 1/,
     );
   });
+
+  it("stops on the morning of the next owner team game after the first day", () => {
+    resetDomainEventSequenceForTests();
+    const state = createInitialGameState({
+      saveId: "adv_stop_game",
+      rngSeed: 11,
+      settings: CBL_GAME_SETTINGS,
+    });
+    const rng = createSeededRng(state.meta.rngState);
+    let current = bootstrapWorld(state, rng).state;
+    current = beginRegularSeasonFromPreseason(current).state;
+    const teamId = current.user.activeOwnerTeamId;
+    const firstDate = current.world.calendar.currentDate;
+    const ownerGames = Object.values(current.competition.games)
+      .filter(
+        (game) =>
+          game.status === "scheduled" &&
+          (game.homeTeamId === teamId || game.awayTeamId === teamId) &&
+          game.competitionType === "regular_season",
+      )
+      .sort((left, right) => left.date.localeCompare(right.date));
+    const laterGame = ownerGames.find((game) => game.date > firstDate);
+    expect(laterGame).toBeTruthy();
+
+    const result = advanceSimulation(current, rng, {
+      days: 40,
+      stopBeforeUserTeamGame: true,
+      gameFidelity: "box_score",
+    });
+
+    expect(result.stopReason).toBe("user_team_game");
+    expect(result.status).toBe("paused");
+    expect(result.currentDate).toBe(laterGame!.date);
+    const landed = Object.values(result.state.competition.games).find(
+      (game) => game.id === laterGame!.id,
+    );
+    expect(landed?.status).toBe("scheduled");
+  });
+
+  it("plays today's owner game on the first day then stops at the next one", () => {
+    resetDomainEventSequenceForTests();
+    const state = createInitialGameState({
+      saveId: "adv_play_today",
+      rngSeed: 12,
+      settings: CBL_GAME_SETTINGS,
+    });
+    const rng = createSeededRng(state.meta.rngState);
+    let current = bootstrapWorld(state, rng).state;
+    current = beginRegularSeasonFromPreseason(current).state;
+    const teamId = current.user.activeOwnerTeamId;
+    const ownerGames = Object.values(current.competition.games)
+      .filter(
+        (game) =>
+          game.status === "scheduled" &&
+          (game.homeTeamId === teamId || game.awayTeamId === teamId) &&
+          game.competitionType === "regular_season",
+      )
+      .sort((left, right) => left.date.localeCompare(right.date));
+    const todayGame = ownerGames.find(
+      (game) => game.date === current.world.calendar.currentDate,
+    );
+    if (todayGame == null) {
+      const next = ownerGames[0];
+      expect(next).toBeTruthy();
+      current = {
+        ...current,
+        world: {
+          ...current.world,
+          calendar: {
+            ...current.world.calendar,
+            currentDate: next!.date,
+          },
+        },
+      };
+    }
+    const startDate = current.world.calendar.currentDate;
+    const todayId = Object.values(current.competition.games).find(
+      (game) =>
+        game.date === startDate &&
+        (game.homeTeamId === teamId || game.awayTeamId === teamId),
+    )?.id;
+    const following = ownerGames.find((game) => game.date > startDate);
+
+    const result = advanceSimulation(current, rng, {
+      days: 40,
+      stopBeforeUserTeamGame: true,
+      gameFidelity: "box_score",
+    });
+
+    expect(todayId).toBeTruthy();
+    expect(result.state.competition.games[todayId!]?.status).toBe("final");
+    if (following) {
+      expect(result.stopReason).toBe("user_team_game");
+      expect(result.currentDate).toBe(following.date);
+      expect(result.state.competition.games[following.id]?.status).toBe(
+        "scheduled",
+      );
+    }
+  });
 });

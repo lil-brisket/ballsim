@@ -43,7 +43,10 @@ import {
 } from "@/persistence/mappers/game-state-mapper";
 import { validateGameState } from "@/persistence/validate-game-state";
 import { isDevelopmentLeagueEligible } from "@/systems/development-league/eligibility";
-import { isUserOnDraftClock } from "@/systems/draft";
+import {
+  isUserOnDraftClock,
+  tryAutoPickActiveDraftSlot,
+} from "@/systems/draft";
 import { listFreeAgents } from "@/systems/free-agency";
 import { getActivePhaseId } from "@/systems/phase-engine";
 import { reconcileRosterManagement } from "@/systems/roster-management";
@@ -576,6 +579,16 @@ describe("Owner Mode vertical slice", () => {
           guard += 1;
           continue;
         }
+        if (phaseId === "offseason.draft_preparation") {
+          const resolved = await resolveOwnerDraftClassDecision(
+            saveId,
+            { source: "generated" },
+            store,
+          );
+          if (!resolved.ok) {
+            throw new Error(resolved.error);
+          }
+        }
         const advanced = await advanceLeaguePhaseCommand(saveId, store);
         if (!advanced.ok) {
           const pending = current!.state.user.pendingOwnerDecisions[0];
@@ -600,7 +613,7 @@ describe("Owner Mode vertical slice", () => {
 
       // Draft: pick whenever on the clock until draft completes / we leave draft
       guard = 0;
-      while (guard < 40) {
+      while (guard < 80) {
         const snap = await store.load(saveId);
         expect(snap).not.toBeNull();
         const phaseId = getActivePhaseId(snap!.state);
@@ -624,6 +637,12 @@ describe("Owner Mode vertical slice", () => {
             throw new Error(drafted.error);
           }
         } else {
+          const autoPicked = tryAutoPickActiveDraftSlot(snap!.state);
+          if (autoPicked !== snap!.state) {
+            await store.save({ id: saveId, state: autoPicked });
+            guard += 1;
+            continue;
+          }
           const advanced = await advanceOwnerTime(
             saveId,
             { days: 5, stopOnPhaseChange: true },

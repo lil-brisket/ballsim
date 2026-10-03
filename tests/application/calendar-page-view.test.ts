@@ -79,6 +79,13 @@ describe("loadCalendarPageView consolidated shape", () => {
     expect(view!.inspector.date).toBe(future);
     expect(view!.inspector.action).toBe("simulate_to_date");
     expect(view!.inspector.simulationPreview).not.toBeNull();
+    expect(
+      view!.inspector.simulationPreview!.summaryLines.some((line) =>
+        /Stops at your next team game|Today's team game will be simulated first/i.test(
+          line,
+        ),
+      ),
+    ).toBe(true);
     expect(view!.leagueContext).not.toBeNull();
     expect(view!.nextTeamGameDate).not.toBeNull();
     expect(view!.monthGrid.nextTeamGameDate).toBe(view!.nextTeamGameDate);

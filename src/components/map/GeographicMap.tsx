@@ -107,7 +107,7 @@ export function GeographicMap(props: {
       <div
         className={
           fill
-            ? "min-h-0 w-full overflow-hidden rounded-lg border border-zinc-800 bg-zinc-950 max-lg:aspect-[var(--map-ar)] lg:h-full lg:min-h-0 lg:flex-1 lg:aspect-auto"
+            ? "max-h-[36vh] min-h-0 w-full overflow-hidden rounded-lg border border-zinc-800 bg-zinc-950 max-lg:aspect-[var(--map-ar)] lg:h-full lg:max-h-none lg:min-h-0 lg:flex-1 lg:aspect-auto"
             : "overflow-hidden rounded-lg border border-zinc-800 bg-zinc-950"
         }
         style={

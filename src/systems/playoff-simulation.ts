@@ -18,6 +18,7 @@ import {
 } from "@/systems/playoff-scheduling";
 import { recordSeriesGameResult } from "@/systems/playoff-series";
 import { simulateScheduledGame } from "@/systems/game-simulation";
+import type { GameSimulationFidelity } from "@/systems/game-simulation";
 import { asGameId, asTeamId, type TeamId } from "@/domain/ids";
 import { createGame } from "@/domain/entities/game";
 
@@ -170,6 +171,10 @@ function simulatePlayInGames(
 export function simulateNextPlayoffGame(
   state: GameState,
   rng: Rng,
+  options?: {
+    fidelity?: GameSimulationFidelity;
+    ownerTeamId?: TeamId;
+  },
 ): SystemResult {
   const playoffs = state.competition.playoffs;
   if (playoffs.status === "not_started") {
@@ -221,6 +226,10 @@ export function simulateNextPlayoffGame(
     stateWithGame,
     scheduled,
     rng,
+    {
+      fidelity: options?.fidelity,
+      ownerTeamId: options?.ownerTeamId,
+    },
   );
   games[scheduled.id] = finalGame;
 
