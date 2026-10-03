@@ -137,6 +137,19 @@ export function canAdvanceFromPhase(
 ): PhasePrerequisiteResult {
   const violations: RuleViolation[] = [];
 
+  if (
+    fromPhaseId === "offseason.season_transition" ||
+    fromPhaseId === "end_of_season.wrap_up"
+  ) {
+    violations.push({
+      code: "AUTOMATIC_PHASE",
+      message:
+        "This phase runs automatically. Advance time one day to continue.",
+      tier: "phase_lock",
+      action: "advance_phase",
+    });
+  }
+
   if (fromPhaseId === "offseason.draft") {
     const draftComplete = Object.values(state.world.drafts).some(
       (d) => d.status === "complete",

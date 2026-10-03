@@ -6,6 +6,7 @@ import { CBL_GAME_SETTINGS } from "@/domain/game-settings";
 import { bootstrapWorld } from "@/systems/world-pipeline";
 import {
   advanceLeaguePhase,
+  initializeNewSeason,
   processOffseasonLifecycle,
 } from "@/systems/simulation/offseason-lifecycle";
 import { transitionPhase } from "@/systems/simulation/phase-machine";
@@ -162,6 +163,70 @@ describe("offseason lifecycle", () => {
     expect(
       current.business.franchiseHistory[teamId]!.seasons.length,
     ).toBeGreaterThan(0);
+  });
+
+  it("initializeNewSeason archives and writes history when transition was skipped", () => {
+    const { state, rng } = enterOffseason();
+    const teamId = state.user.activeOwnerTeamId;
+    const teamIds = Object.keys(state.world.teams);
+    const homeTeamId = teamIds[0]!;
+    const awayTeamId = teamIds.find((id) => id !== homeTeamId)!;
+    const gameId = `game_skip_transition_${state.competition.season.id}`;
+    const seeded = {
+      ...state,
+      competition: {
+        ...state.competition,
+        games: {
+          [gameId]: {
+            id: gameId,
+            seasonId: state.competition.season.id,
+            date: state.world.calendar.currentDate,
+            homeTeamId,
+            awayTeamId,
+            status: "final" as const,
+            competitionType: "regular" as const,
+            homeScore: 110,
+            awayScore: 100,
+            boxScore: [],
+            events: [],
+            playerStats: [],
+            homeTeamSnapshot: null,
+            awayTeamSnapshot: null,
+          },
+        },
+        standings: {
+          byTeamId: {
+            ...state.competition.standings.byTeamId,
+            [homeTeamId]: {
+              ...state.competition.standings.byTeamId[homeTeamId]!,
+              wins: 65,
+              losses: 17,
+              winPercentage: 65 / 82,
+            },
+          },
+        },
+      },
+    } as GameState;
+
+    const yearBefore = seeded.competition.season.year;
+    const next = initializeNewSeason(seeded, rng).state;
+    expect(next.competition.season.year).toBe(yearBefore + 1);
+    expect(Object.keys(next.competition.games)).toHaveLength(0);
+    expect(next.business.gameArchive[gameId]).toBeDefined();
+    const record = next.business.franchiseHistory[teamId]?.seasons.find(
+      (season) => season.seasonYear === yearBefore,
+    );
+    expect(record).toBeDefined();
+    if (homeTeamId === teamId) {
+      expect(record?.wins).toBe(65);
+      expect(record?.losses).toBe(17);
+    }
+  });
+
+  it("blocks user advance from automatic season_transition", () => {
+    const { state, rng } = enterOffseason();
+    expect(getActivePhaseId(state)).toBe("offseason.season_transition");
+    expect(() => advanceLeaguePhase(state, rng)).toThrow(/automatically/i);
   });
 
   it("appends exactly one franchise history record during season_transition", () => {

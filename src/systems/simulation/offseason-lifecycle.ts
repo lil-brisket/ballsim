@@ -175,7 +175,7 @@ function withEnsuredDraftPicks(state: GameState): GameState {
  * Atomic new-season initialization after staff_development exit /
  * when entering preseason.preparation from offseason.
  */
-export function initializeNewSeason(state: GameState): SystemResult {
+export function initializeNewSeason(state: GameState, rng?: Rng): SystemResult {
   const phaseId = getActivePhaseId(state);
   if (
     phaseId !== "offseason.staff_development" &&
@@ -189,19 +189,32 @@ export function initializeNewSeason(state: GameState): SystemResult {
     // May already be transitioning
   }
 
-  const nextYear = state.competition.season.year + 1;
+  const events: DomainEvent[] = [];
+  let current = state;
+  const resolveRng = rng ?? createSeededRng(current.meta.rngState);
+  if (!hasFranchiseHistoryForCurrentSeason(current)) {
+    const finalized = finalizeCompletedSeason(current, resolveRng);
+    current = finalized.state;
+    events.push(...finalized.events);
+  } else {
+    const archived = archiveCompletedSeasonGames(current);
+    current = archived.state;
+    events.push(...archived.events);
+  }
+
+  const nextYear = current.competition.season.year + 1;
   const nextSeasonId = asSeasonId(`season_${nextYear}`);
 
   const standingsByTeamId: Record<
     string,
     ReturnType<typeof createEmptyTeamStanding>
   > = {};
-  for (const teamId of Object.keys(state.world.teams).sort() as TeamId[]) {
+  for (const teamId of Object.keys(current.world.teams).sort() as TeamId[]) {
     standingsByTeamId[teamId] = createEmptyTeamStanding(teamId);
   }
 
   let next: GameState = {
-    ...state,
+    ...current,
     competition: {
       season: {
         id: nextSeasonId,
@@ -216,7 +229,7 @@ export function initializeNewSeason(state: GameState): SystemResult {
       },
       phase: {
         activePhaseId: "preseason.preparation",
-        enteredDate: state.world.calendar.currentDate,
+        enteredDate: current.world.calendar.currentDate,
       },
       schedule: {
         seasonId: nextSeasonId,
@@ -242,7 +255,7 @@ export function initializeNewSeason(state: GameState): SystemResult {
 
   const clearedPromotions: GameState["business"]["gameDayPromotionsByTeamId"] =
     {};
-  for (const teamId of Object.keys(state.world.teams).sort()) {
+  for (const teamId of Object.keys(current.world.teams).sort()) {
     clearedPromotions[teamId] =
       createEmptyGameDayPromotionSeasonState(nextSeasonId);
   }
@@ -272,7 +285,7 @@ export function initializeNewSeason(state: GameState): SystemResult {
       },
     },
   };
-  return systemResult(next, phaseResult.events);
+  return systemResult(next, [...events, ...phaseResult.events]);
 }
 
 function isDraftOrderFullyUsed(
@@ -297,6 +310,15 @@ export function processPhaseExit(
 ): SystemResult {
   const events: DomainEvent[] = [];
   let current = state;
+
+  if (fromPhaseId === "offseason.season_transition") {
+    const finalized = finalizeCompletedSeason(
+      current,
+      rng ?? createSeededRng(current.meta.rngState),
+    );
+    current = finalized.state;
+    events.push(...finalized.events);
+  }
 
   if (fromPhaseId === "offseason.roster_decisions") {
     const released = releaseExpiredContracts(current);
@@ -334,7 +356,7 @@ export function processPhaseExit(
   }
 
   if (fromPhaseId === "offseason.staff_development") {
-    const initialized = initializeNewSeason(current);
+    const initialized = initializeNewSeason(current, rng);
     current = initialized.state;
     events.push(...initialized.events);
     const filled = fillShortRostersWithRng(current, rng);
@@ -399,7 +421,14 @@ export function processPhaseEnter(
   return systemResult(current, events);
 }
 
-function runSeasonTransition(state: GameState, rng: Rng): SystemResult {
+function hasFranchiseHistoryForCurrentSeason(state: GameState): boolean {
+  const seasonId = state.competition.season.id;
+  return Object.values(state.business.franchiseHistory).some((history) =>
+    history.seasons.some((season) => season.seasonId === seasonId),
+  );
+}
+
+function finalizeCompletedSeason(state: GameState, rng: Rng): SystemResult {
   const events: DomainEvent[] = [];
   let current = state;
 
@@ -463,15 +492,20 @@ function runSeasonTransition(state: GameState, rng: Rng): SystemResult {
   current = relocation.state;
   events.push(...relocation.events);
 
+  return systemResult(current, events);
+}
+
+function runSeasonTransition(state: GameState, rng: Rng): SystemResult {
+  const finalized = finalizeCompletedSeason(state, rng);
   const entered = enterPhase(
-    current,
+    finalized.state,
     "offseason.roster_decisions",
     "season_transition_complete",
   );
-  current = entered.state;
-  events.push(...entered.events);
-
-  return systemResult(current, events);
+  return systemResult(entered.state, [
+    ...finalized.events,
+    ...entered.events,
+  ]);
 }
 
 /**
@@ -549,7 +583,7 @@ export function processOffseasonLifecycle(
     current.competition.season.offseasonStage === "league_initialization" &&
     current.competition.phase?.activePhaseId === undefined
   ) {
-    const initialized = initializeNewSeason(current);
+    const initialized = initializeNewSeason(current, rng);
     current = initialized.state;
     events.push(...initialized.events);
     const filled = fillShortRostersWithRng(current, rng);
