@@ -193,6 +193,47 @@ export function stripTradedAssetsFromTradeBlocks(
  * Removes the given players from every team's persisted trade block.
  * Used when players leave a roster outside of executeTrade (e.g. free agency).
  */
+/**
+ * Drops persisted trade-block assets that the listing team no longer owns.
+ * Matches {@link validateGameState} ownership rules so saves remain loadable
+ * after FA signings and other non-trade roster moves.
+ */
+export function reconcileTradeBlocks(state: GameState): GameState {
+  const tradeBlocks = state.business.tradeBlocks;
+  if (tradeBlocks == null) {
+    return state;
+  }
+  let changed = false;
+  const next: Record<string, TradeBlock> = { ...tradeBlocks };
+  for (const [teamId, block] of Object.entries(tradeBlocks)) {
+    if (block == null || !Array.isArray(block.assets)) {
+      continue;
+    }
+    const assets = block.assets.filter((asset) => {
+      if (asset.kind === "player") {
+        const player = state.world.players[asset.playerId];
+        return player !== undefined && player.teamId === teamId;
+      }
+      const pick = state.world.draftPicks[asset.draftPickId];
+      return pick !== undefined && pick.ownerTeamId === teamId;
+    });
+    if (assets.length !== block.assets.length) {
+      next[teamId] = { teamId: block.teamId, assets };
+      changed = true;
+    }
+  }
+  if (!changed) {
+    return state;
+  }
+  return {
+    ...state,
+    business: {
+      ...state.business,
+      tradeBlocks: next,
+    },
+  };
+}
+
 export function stripPlayersFromAllTradeBlocks(
   tradeBlocks: Record<string, TradeBlock>,
   playerIds: readonly PlayerId[],

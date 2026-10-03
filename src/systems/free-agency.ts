@@ -475,6 +475,12 @@ export function acceptOffer(
         },
       },
     },
+    business: {
+      ...next.business,
+      tradeBlocks: stripPlayersFromAllTradeBlocks(next.business.tradeBlocks, [
+        offer.playerId,
+      ]),
+    },
   };
 
   const offers: Record<string, FreeAgencyOffer> = {

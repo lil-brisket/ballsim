@@ -1,14 +1,24 @@
 import { describe, expect, it } from "vitest";
+import { createContract } from "@/domain/entities/contract";
+import { asContractId, asOfferId } from "@/domain/ids";
+import { acceptOffer, makeOffer } from "@/systems/free-agency";
 import {
   addToTradeBlock,
   executeTrade,
   findTrades,
   generateAiTradeProposal,
   getTradeBlock,
+  reconcileTradeBlocks,
   removeFromTradeBlock,
   evaluateTradeOffer,
   validateTrade,
 } from "@/systems/trades";
+import { validateGameState } from "@/persistence/validate-game-state";
+import {
+  deserializeGameState,
+  serializeGameState,
+} from "@/persistence/mappers/game-state-mapper";
+import { getTeamCapSpace } from "@/systems/salary-cap";
 import {
   createTradeFixture,
   pickForTeam,
@@ -96,6 +106,99 @@ describe("trade block", () => {
 
     expect(getTradeBlock(stale, teamA).assets).toHaveLength(0);
     expect(stale.business.tradeBlocks[teamA]!.assets).toHaveLength(1);
+    expect(() => validateGameState(stale)).toThrow(/not owned by that team/);
+
+    const cleaned = reconcileTradeBlocks(stale);
+    expect(cleaned.business.tradeBlocks[teamA]!.assets).toHaveLength(0);
+    expect(() => validateGameState(cleaned)).not.toThrow();
+  });
+
+  it("heals stale trade-block assets on deserialize", () => {
+    const state = createTradeFixture();
+    const { teamA, teamB } = teamIds(state);
+    const playerId = playerOnTeam(state, teamA, 0);
+    const withBlock = addToTradeBlock(state, teamA, {
+      kind: "player",
+      playerId,
+    }).state;
+    const parsed = JSON.parse(serializeGameState(withBlock)) as {
+      world: {
+        players: Record<string, { teamId: string | null }>;
+        teams: Record<string, { roster: string[] }>;
+      };
+    };
+    parsed.world.players[playerId]!.teamId = teamB;
+    parsed.world.teams[teamA]!.roster = parsed.world.teams[teamA]!.roster.filter(
+      (id) => id !== playerId,
+    );
+    parsed.world.teams[teamB]!.roster = [
+      ...parsed.world.teams[teamB]!.roster,
+      playerId,
+    ];
+    const loaded = deserializeGameState(JSON.stringify(parsed));
+    expect(
+      loaded.business.tradeBlocks[teamA]?.assets.some(
+        (asset) => asset.kind === "player" && asset.playerId === playerId,
+      ) ?? false,
+    ).toBe(false);
+  });
+
+  it("clears the listing team's block when a listed player signs in free agency", () => {
+    const state = createTradeFixture();
+    const { teamA, teamB } = teamIds(state);
+    const playerId = playerOnTeam(state, teamA, 0);
+    const listed = addToTradeBlock(state, teamA, {
+      kind: "player",
+      playerId,
+    }).state;
+    const released = {
+      ...listed,
+      world: {
+        ...listed.world,
+        players: {
+          ...listed.world.players,
+          [playerId]: {
+            ...listed.world.players[playerId]!,
+            teamId: null,
+            contractId: null,
+          },
+        },
+        teams: {
+          ...listed.world.teams,
+          [teamA]: {
+            ...listed.world.teams[teamA]!,
+            roster: listed.world.teams[teamA]!.roster.filter(
+              (id) => id !== playerId,
+            ),
+          },
+        },
+      },
+    };
+    const year = released.competition.season.year;
+    const salary = Math.min(1_250_000, getTeamCapSpace(teamB, year, released));
+    const offerId = asOfferId("offer_stale_block");
+    const offered = makeOffer(released, {
+      id: offerId,
+      playerId,
+      teamId: teamB,
+      terms: createContract({
+        id: asContractId("contract_stale_block"),
+        playerId,
+        teamId: teamB,
+        startYear: year,
+        endYear: year,
+        salaryByYear: { [String(year)]: salary },
+      }),
+    }).state;
+    const accepted = acceptOffer(offered, offerId);
+    expect(accepted.state.business.freeAgency.offers[offerId]?.status).toBe(
+      "accepted",
+    );
+    expect(
+      accepted.state.business.tradeBlocks[teamA]?.assets.some(
+        (asset) => asset.kind === "player" && asset.playerId === playerId,
+      ) ?? false,
+    ).toBe(false);
   });
 
   it("clears traded assets from trade blocks on execute", () => {

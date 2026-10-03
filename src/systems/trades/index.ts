@@ -26,6 +26,7 @@ export {
   removeFromTradeBlock,
   isAssetOwnedByTeam,
   stripPlayersFromAllTradeBlocks,
+  reconcileTradeBlocks,
   type TradeBlockAssetRef,
 } from "@/systems/trades/trade-block";
 export {
