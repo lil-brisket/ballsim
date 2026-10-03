@@ -8,6 +8,10 @@ export type Density = "compact" | "default" | "comfortable";
 export const focusRingClass =
   "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-500";
 
+/** 44px minimum hit area for primary controls on touch devices. */
+export const tapTargetClass =
+  "inline-flex min-h-11 items-center justify-center";
+
 export const panelClass = "rounded-xl border border-zinc-800 bg-zinc-900/60";
 
 export const panelDashedClass =

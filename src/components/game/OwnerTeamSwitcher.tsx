@@ -73,7 +73,7 @@ function ActiveFranchiseLabel(props: {
 }
 
 const displayClassName =
-  "flex items-center gap-3 rounded-lg border border-zinc-700 bg-zinc-950/60 px-3 py-2 text-left";
+  "flex min-h-11 items-center gap-3 rounded-lg border border-zinc-700 bg-zinc-950/60 px-3 py-2 text-left";
 
 const interactiveClassName = `${displayClassName} hover:border-amber-600/60 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-500`;
 
@@ -140,7 +140,7 @@ export function OwnerTeamSwitcher(props: {
         <div
           role="listbox"
           aria-label="Owned franchises"
-          className="absolute left-0 z-30 mt-2 w-80 rounded-xl border border-zinc-700 bg-zinc-950 p-2 shadow-xl"
+          className="absolute left-0 z-30 mt-2 w-[min(20rem,calc(100vw-2rem))] rounded-xl border border-zinc-700 bg-zinc-950 p-2 shadow-xl"
         >
           <p className="px-2 py-1 text-xs font-medium uppercase tracking-wide text-zinc-500">
             My Franchises
@@ -153,7 +153,7 @@ export function OwnerTeamSwitcher(props: {
                   role="option"
                   aria-selected={team.isActive}
                   onClick={() => selectTeam(team.id)}
-                  className="flex w-full items-center gap-3 rounded-lg px-2 py-2 text-left hover:bg-zinc-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-500"
+                  className="flex min-h-11 w-full items-center gap-3 rounded-lg px-2 py-2 text-left hover:bg-zinc-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-500"
                 >
                   <FranchiseMark team={team} size="sm" />
                   <span className="min-w-0 flex-1">

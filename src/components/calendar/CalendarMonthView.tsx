@@ -89,7 +89,7 @@ export function CalendarMonthView(props: {
   const next = shiftMonth(props.grid.year, props.grid.month, 1);
   const disabled = props.navigationDisabled === true;
   const navButtonClass =
-    "rounded-md border border-zinc-700 px-3 py-1.5 text-sm text-zinc-200 hover:border-amber-600 disabled:pointer-events-none disabled:opacity-40";
+    "inline-flex min-h-11 items-center rounded-md border border-zinc-700 px-3 text-sm text-zinc-200 hover:border-amber-600 disabled:pointer-events-none disabled:opacity-40";
 
   return (
     <div className="space-y-3">
@@ -116,7 +116,7 @@ export function CalendarMonthView(props: {
             type="button"
             disabled={disabled}
             onClick={props.onJumpToday}
-            className="rounded-md border border-amber-700/50 bg-amber-950/30 px-3 py-1.5 text-sm text-amber-200 hover:border-amber-500 disabled:pointer-events-none disabled:opacity-40"
+            className="inline-flex min-h-11 items-center rounded-md border border-amber-700/50 bg-amber-950/30 px-3 text-sm text-amber-200 hover:border-amber-500 disabled:pointer-events-none disabled:opacity-40"
           >
             Today
           </button>
@@ -133,7 +133,7 @@ export function CalendarMonthView(props: {
               type="button"
               disabled={disabled}
               onClick={props.onJumpNextGame}
-              className="rounded-md border border-sky-700/50 bg-sky-950/30 px-3 py-1.5 text-sm text-sky-200 hover:border-sky-500 disabled:pointer-events-none disabled:opacity-40"
+              className="inline-flex min-h-11 items-center rounded-md border border-sky-700/50 bg-sky-950/30 px-3 text-sm text-sky-200 hover:border-sky-500 disabled:pointer-events-none disabled:opacity-40"
             >
               Next Game → {formatShortDate(props.nextTeamGameDate)}
             </button>

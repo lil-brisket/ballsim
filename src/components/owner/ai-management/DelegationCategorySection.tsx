@@ -79,7 +79,7 @@ export function DelegationCategorySection({
             event.stopPropagation();
             onSelectAllCategory();
           }}
-          className="shrink-0 rounded border border-zinc-700 px-2 py-1 text-xs text-zinc-300 hover:border-zinc-500 hover:text-zinc-100"
+          className="inline-flex min-h-11 shrink-0 items-center rounded border border-zinc-700 px-3 text-xs text-zinc-300 hover:border-zinc-500 hover:text-zinc-100"
         >
           Select All
         </button>

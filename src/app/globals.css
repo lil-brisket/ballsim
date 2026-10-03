@@ -158,3 +158,31 @@ body {
     animation: none;
   }
 }
+
+/* Skip double-tap zoom delay so buttons respond on the first tap. */
+button,
+a,
+summary,
+[role="button"],
+input,
+select,
+textarea,
+label {
+  touch-action: manipulation;
+}
+
+button,
+a,
+summary,
+[role="button"] {
+  -webkit-tap-highlight-color: rgba(217, 119, 6, 0.28);
+}
+
+.table-sticky-first th:first-child,
+.table-sticky-first td:first-child {
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  background-color: #18181b;
+  box-shadow: 1px 0 0 #27272a;
+}

@@ -25,7 +25,7 @@ function AdvanceButton(props: {
       type="submit"
       disabled={disabled}
       aria-busy={pending}
-      className="rounded-md border border-zinc-700 px-4 py-2 text-sm text-zinc-200 hover:border-amber-600 disabled:opacity-40 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-500"
+      className="inline-flex min-h-11 items-center justify-center rounded-md border border-zinc-700 px-4 py-2 text-sm text-zinc-200 hover:border-amber-600 disabled:opacity-40 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-500"
     >
       {pending ? props.pendingLabel : props.label}
     </button>
@@ -118,13 +118,13 @@ export function AdvanceTimeControls(props: {
             type="button"
             disabled={controlsDisabled}
             onClick={() => setDialogOpen(true)}
-            className="rounded-md border border-zinc-800 px-3 py-2 text-xs text-zinc-500 hover:border-zinc-600 hover:text-zinc-300 disabled:opacity-40"
+            className="inline-flex min-h-11 items-center justify-center rounded-md border border-zinc-800 px-3 py-2 text-xs text-zinc-500 hover:border-zinc-600 hover:text-zinc-300 disabled:opacity-40"
           >
             {untilLabel}
           </button>
         ) : (
           <details className="w-full sm:w-auto">
-            <summary className="cursor-pointer list-none rounded-md border border-zinc-800 px-3 py-2 text-xs text-zinc-500 hover:border-zinc-600 hover:text-zinc-300">
+            <summary className="inline-flex min-h-11 cursor-pointer list-none items-center rounded-md border border-zinc-800 px-3 py-2 text-xs text-zinc-500 hover:border-zinc-600 hover:text-zinc-300">
               Advanced…
             </summary>
             <div className="mt-2 space-y-1">

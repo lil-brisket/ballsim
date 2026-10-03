@@ -106,7 +106,7 @@ export function GameBoxScore({ boxScore }: GameBoxScoreProps) {
       </header>
 
       <Section title="Team comparison">
-        <DataTable headers={["Statistic", "Away", "Home"]}>
+        <DataTable headers={["Statistic", "Away", "Home"]} stickyFirstColumn>
           {(
             [
               ["Points", away.teamStats.points, home.teamStats.points],
@@ -158,7 +158,7 @@ function PlayerTable({
     );
   }
   return (
-    <DataTable headers={PLAYER_HEADERS}>
+    <DataTable headers={PLAYER_HEADERS} stickyFirstColumn>
       {players.map((player) => (
         <tr key={player.playerId} className="border-t border-zinc-800">
           <td className="px-3 py-2 text-zinc-100">{player.playerName}</td>

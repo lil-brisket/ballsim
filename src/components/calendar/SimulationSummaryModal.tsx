@@ -236,7 +236,7 @@ export function SimulationSummaryModal(props: {
           <button
             type="button"
             onClick={dismiss}
-            className="rounded-md bg-amber-600 px-4 py-1.5 text-sm font-medium text-zinc-950 hover:bg-amber-500"
+            className="inline-flex min-h-11 items-center rounded-md bg-amber-600 px-4 text-sm font-medium text-zinc-950 hover:bg-amber-500"
           >
             Continue
           </button>

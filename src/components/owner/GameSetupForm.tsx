@@ -228,15 +228,17 @@ export function GameSetupForm({
           <button
             type="button"
             onClick={() => setStep("configure")}
-            className="rounded-md border border-zinc-700 px-4 py-2 text-sm text-zinc-200 hover:border-amber-600"
+            className="inline-flex min-h-11 items-center rounded-md border border-zinc-700 px-4 py-2 text-sm text-zinc-200 hover:border-amber-600"
           >
             Back
           </button>
           <button
             type="button"
-            disabled={pending || atSaveLimit || !validation.ok || customRosterInvalid}
+            disabled={
+              pending || atSaveLimit || !validation.ok || customRosterInvalid
+            }
             onClick={submit}
-            className="rounded-md bg-amber-600 px-4 py-2 text-sm font-medium text-zinc-950 hover:bg-amber-500 disabled:cursor-not-allowed disabled:opacity-50"
+            className="inline-flex min-h-11 items-center rounded-md bg-amber-600 px-4 py-2 text-sm font-medium text-zinc-950 hover:bg-amber-500 disabled:cursor-not-allowed disabled:opacity-50"
           >
             {pending ? "Creating…" : "Create franchise"}
           </button>
@@ -279,7 +281,7 @@ export function GameSetupForm({
               key={id}
               type="button"
               onClick={() => applyPreset(id)}
-              className={`rounded-md px-3 py-1.5 text-sm ${
+              className={`inline-flex min-h-11 items-center rounded-md px-3 text-sm ${
                 preset === id
                   ? "bg-amber-600 text-zinc-950"
                   : "border border-zinc-700 text-zinc-300 hover:border-amber-600"
@@ -587,7 +589,7 @@ export function GameSetupForm({
                   ownership: { controlledTeamCount: 1 },
                 })
               }
-              className={`rounded-md px-3 py-1.5 text-sm ${
+              className={`inline-flex min-h-11 items-center rounded-md px-3 text-sm ${
                 settings.ownership.controlledTeamCount === 1
                   ? "bg-amber-600 text-zinc-950"
                   : "border border-zinc-700 text-zinc-300 hover:border-amber-600"
@@ -610,7 +612,7 @@ export function GameSetupForm({
                   ownership: { controlledTeamCount: Math.max(2, next) },
                 });
               }}
-              className={`rounded-md px-3 py-1.5 text-sm ${
+              className={`inline-flex min-h-11 items-center rounded-md px-3 text-sm ${
                 settings.ownership.controlledTeamCount > 1
                   ? "bg-amber-600 text-zinc-950"
                   : "border border-zinc-700 text-zinc-300 hover:border-amber-600"
@@ -693,7 +695,7 @@ export function GameSetupForm({
         <button
           type="button"
           onClick={reset}
-          className="rounded-md border border-zinc-700 px-4 py-2 text-sm text-zinc-200 hover:border-amber-600"
+          className="inline-flex min-h-11 items-center rounded-md border border-zinc-700 px-4 py-2 text-sm text-zinc-200 hover:border-amber-600"
         >
           Reset to defaults
         </button>
@@ -701,7 +703,7 @@ export function GameSetupForm({
           type="button"
           disabled={atSaveLimit || !validation.ok || customRosterInvalid}
           onClick={() => setStep("confirm")}
-          className="rounded-md bg-amber-600 px-4 py-2 text-sm font-medium text-zinc-950 hover:bg-amber-500 disabled:cursor-not-allowed disabled:opacity-50"
+          className="inline-flex min-h-11 items-center rounded-md bg-amber-600 px-4 py-2 text-sm font-medium text-zinc-950 hover:bg-amber-500 disabled:cursor-not-allowed disabled:opacity-50"
         >
           Review and create
         </button>
@@ -898,7 +900,7 @@ function InjuryFrequencyField({
               aria-checked={selected}
               tabIndex={selected ? 0 : -1}
               onClick={() => onChange(frequency)}
-              className={`flex-1 rounded px-3 py-2 text-center text-sm transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-500 ${
+              className={`flex-1 min-h-11 rounded px-3 py-2 text-center text-sm transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-500 ${
                 selected
                   ? "bg-amber-600 font-medium text-zinc-950"
                   : "text-zinc-400 hover:bg-zinc-900 hover:text-zinc-200"

@@ -1,6 +1,11 @@
 import Link from "next/link";
 import { parseCalendarDate } from "@/domain/calendar-date";
-import { cn, focusRingClass, panelClass } from "@/components/ui/styles";
+import {
+  cn,
+  focusRingClass,
+  panelClass,
+  tapTargetClass,
+} from "@/components/ui/styles";
 
 function formatLongDate(isoDate: string): string {
   try {
@@ -61,7 +66,8 @@ export function FrontOfficeHeader(props: {
           <Link
             href={calendarHref}
             className={cn(
-              "rounded-md bg-amber-600 px-3 py-1.5 text-sm font-medium text-zinc-950 hover:bg-amber-500",
+              tapTargetClass,
+              "rounded-md bg-amber-600 px-3 text-sm font-medium text-zinc-950 hover:bg-amber-500",
               focusRingClass,
             )}
           >
@@ -70,7 +76,8 @@ export function FrontOfficeHeader(props: {
           <Link
             href={`${calendarHref}?focus=next-game`}
             className={cn(
-              "rounded-md border border-zinc-700 px-3 py-1.5 text-sm text-zinc-200 hover:border-amber-600",
+              tapTargetClass,
+              "rounded-md border border-zinc-700 px-3 text-sm text-zinc-200 hover:border-amber-600",
               focusRingClass,
             )}
             title="Simulate until the next team game or a blocking decision, whichever comes first"

@@ -3,7 +3,12 @@ import { Suspense } from "react";
 import { getGameModeDefinition } from "@/application/game-mode-catalog";
 import type { DashboardSnapshot } from "@/state/selectors";
 import { OwnerTeamSwitcher } from "@/components/game/OwnerTeamSwitcher";
-import { cn, focusRingClass, panelClass } from "@/components/ui/styles";
+import {
+  cn,
+  focusRingClass,
+  panelClass,
+  tapTargetClass,
+} from "@/components/ui/styles";
 
 function NotificationsBell(props: { saveId: string; unreadCount: number }) {
   const href = `/dashboard/${props.saveId}/notifications`;
@@ -17,7 +22,8 @@ function NotificationsBell(props: { saveId: string; unreadCount: number }) {
       href={href}
       aria-label={label}
       className={cn(
-        "relative inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-zinc-700 text-zinc-300 hover:border-amber-600 hover:text-amber-400",
+        tapTargetClass,
+        "relative h-11 w-11 shrink-0 rounded-md border border-zinc-700 text-zinc-300 hover:border-amber-600 hover:text-amber-400",
         focusRingClass,
       )}
     >

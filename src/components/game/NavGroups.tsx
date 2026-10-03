@@ -172,7 +172,7 @@ function NavLink(props: {
       aria-current={active ? "page" : undefined}
       aria-label={collapsed || badge ? ariaLabel : undefined}
       className={cn(
-        "flex items-center gap-2 rounded-md px-3 py-2 text-sm",
+        "flex min-h-11 items-center gap-2 rounded-md px-3 py-2 text-sm",
         focusRingClass,
         active
           ? "border-l-2 border-amber-500 bg-amber-600/15 font-medium text-amber-400"

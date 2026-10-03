@@ -89,7 +89,7 @@ export function GameRow(props: GameRowProps) {
   const body = (
     <div
       className={cn(
-        "flex items-center justify-between gap-3 rounded-lg border border-zinc-800 px-3 py-2 text-sm",
+        "flex min-h-11 items-center justify-between gap-3 rounded-lg border border-zinc-800 px-3 py-2 text-sm",
         props.className,
       )}
     >

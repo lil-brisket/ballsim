@@ -10,7 +10,7 @@ import {
 import { createPortal } from "react-dom";
 import type { OwnerNavGroup } from "@/application/owner-nav-config";
 import { NavGroups } from "@/components/game/NavGroups";
-import { cn, focusRingClass } from "@/components/ui/styles";
+import { cn, focusRingClass, tapTargetClass } from "@/components/ui/styles";
 
 const FOCUSABLE =
   'a[href], button:not([disabled]), textarea:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])';
@@ -111,7 +111,8 @@ export function MobileNavigationDrawer(props: {
                   onClick={() => setOpen(false)}
                   aria-label="Close menu"
                   className={cn(
-                    "rounded-md border border-zinc-700 px-2.5 py-1 text-sm text-zinc-300 hover:border-zinc-500",
+                    tapTargetClass,
+                    "min-w-11 rounded-md border border-zinc-700 px-2.5 text-sm text-zinc-300 hover:border-zinc-500",
                     focusRingClass,
                   )}
                 >
@@ -140,7 +141,8 @@ export function MobileNavigationDrawer(props: {
       <button
         type="button"
         className={cn(
-          "w-full rounded-md border border-zinc-700 px-3 py-2 text-sm text-zinc-200 hover:border-amber-600",
+          tapTargetClass,
+          "w-full rounded-md border border-zinc-700 px-3 text-sm text-zinc-200 hover:border-amber-600",
           focusRingClass,
         )}
         aria-expanded={open}

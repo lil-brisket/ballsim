@@ -66,7 +66,7 @@ export function AiTeamManagementSection({
             onClick={() =>
               onAssistanceChange(selectAllVisiblePhases(assistance))
             }
-            className="rounded-md border border-amber-700/60 bg-amber-950/40 px-3 py-1.5 text-xs font-medium text-amber-200 hover:border-amber-500"
+            className="inline-flex min-h-11 items-center rounded-md border border-amber-700/60 bg-amber-950/40 px-3 text-xs font-medium text-amber-200 hover:border-amber-500"
           >
             Select All
           </button>
@@ -75,7 +75,7 @@ export function AiTeamManagementSection({
             onClick={() =>
               onAssistanceChange(clearAllVisiblePhases(assistance))
             }
-            className="rounded-md border border-zinc-700 px-3 py-1.5 text-xs text-zinc-400 hover:border-zinc-500 hover:text-zinc-200"
+            className="inline-flex min-h-11 items-center rounded-md border border-zinc-700 px-3 text-xs text-zinc-400 hover:border-zinc-500 hover:text-zinc-200"
           >
             Clear All
           </button>

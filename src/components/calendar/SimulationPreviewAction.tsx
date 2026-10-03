@@ -12,7 +12,7 @@ function SimulateSubmitButton(props: { disabled?: boolean }) {
       type="submit"
       disabled={disabled}
       aria-busy={pending}
-      className="w-full rounded-md bg-amber-600 px-4 py-2 text-sm font-medium text-zinc-950 hover:bg-amber-500 disabled:opacity-40 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-500"
+      className="inline-flex min-h-11 w-full items-center justify-center rounded-md bg-amber-600 px-4 py-2 text-sm font-medium text-zinc-950 hover:bg-amber-500 disabled:opacity-40 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-500"
     >
       {pending ? "Simulating…" : "Simulate to date"}
     </button>

@@ -8,7 +8,7 @@ import {
   useSyncExternalStore,
 } from "react";
 import { createPortal } from "react-dom";
-import { cn, focusRingClass } from "@/components/ui/styles";
+import { cn, focusRingClass, tapTargetClass } from "@/components/ui/styles";
 
 export type DrawerSize = "sm" | "md" | "lg";
 
@@ -164,7 +164,8 @@ export function Drawer(props: {
             onClick={close}
             aria-label="Close"
             className={cn(
-              "shrink-0 rounded-md border border-zinc-700 px-2.5 py-1 text-sm text-zinc-300 hover:border-zinc-500 hover:text-zinc-100",
+              tapTargetClass,
+              "min-w-11 shrink-0 rounded-md border border-zinc-700 px-2.5 text-sm text-zinc-300 hover:border-zinc-500 hover:text-zinc-100",
               focusRingClass,
             )}
           >

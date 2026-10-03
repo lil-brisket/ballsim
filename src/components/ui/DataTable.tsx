@@ -2,10 +2,18 @@ export function DataTable(props: {
   headers: string[];
   children: React.ReactNode;
   caption?: string;
+  stickyFirstColumn?: boolean;
 }) {
   return (
-    <div className="overflow-x-auto rounded-xl border border-zinc-800">
-      <table className="min-w-full text-left text-sm">
+    <div className="overflow-x-auto rounded-xl border border-zinc-800 [-webkit-overflow-scrolling:touch]">
+      <table
+        className={[
+          "min-w-full text-left text-sm",
+          props.stickyFirstColumn ? "table-sticky-first" : "",
+        ]
+          .filter(Boolean)
+          .join(" ")}
+      >
         {props.caption ? (
           <caption className="sr-only">{props.caption}</caption>
         ) : null}

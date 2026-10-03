@@ -90,7 +90,7 @@ export function NextActionPanel(props: { action: NextActionPresentation }) {
       {action.href && action.hrefLabel ? (
         <Link
           href={action.href}
-          className="mt-3 inline-flex rounded-md border border-amber-600/60 px-3 py-1.5 text-sm text-amber-300 hover:bg-amber-950/50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-500"
+          className="mt-3 inline-flex min-h-11 items-center rounded-md border border-amber-600/60 px-3 py-1.5 text-sm text-amber-300 hover:bg-amber-950/50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-500"
         >
           {action.hrefLabel}
         </Link>

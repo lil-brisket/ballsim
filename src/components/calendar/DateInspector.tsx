@@ -4,7 +4,7 @@ import type { TeamId } from "@/domain/ids";
 import { TeamEntityLink } from "@/components/entity/TeamEntityLink";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { SimulationPreviewAction } from "@/components/calendar/SimulationPreviewAction";
-import { cn, focusRingClass } from "@/components/ui/styles";
+import { cn, focusRingClass, tapTargetClass } from "@/components/ui/styles";
 
 export function DateInspector(props: {
   saveId: string;
@@ -77,7 +77,8 @@ export function DateInspector(props: {
               <Link
                 href={`/dashboard/${props.saveId}/games/${inspector.teamGame.gameId}`}
                 className={cn(
-                  "inline-block text-xs text-amber-400 hover:text-amber-300",
+                  tapTargetClass,
+                  "rounded-md border border-amber-700/50 bg-amber-950/30 px-3 text-sm text-amber-300 hover:border-amber-500",
                   focusRingClass,
                 )}
               >
