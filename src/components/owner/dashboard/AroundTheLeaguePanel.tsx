@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { OwnerDashboardMediaHeadline } from "@/state/owner-dashboard";
 import { EmptyState } from "@/components/owner/EmptyState";
 import { Section } from "@/components/owner/Section";
+import { touchTargetTextClass } from "@/components/ui/styles";
 
 /**
  * Around the League — Phase 2 uses existing reliable media headlines only.
@@ -19,7 +20,7 @@ export function AroundTheLeaguePanel(props: {
       action={
         <Link
           href={mediaHref}
-          className="text-sm text-amber-400 hover:text-amber-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-500"
+          className={`${touchTargetTextClass} text-sm text-amber-400 hover:text-amber-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-500`}
         >
           Media Hub
         </Link>

@@ -3,7 +3,13 @@ import { Suspense } from "react";
 import { getGameModeDefinition } from "@/application/game-mode-catalog";
 import type { DashboardSnapshot } from "@/state/selectors";
 import { OwnerTeamSwitcher } from "@/components/game/OwnerTeamSwitcher";
-import { cn, focusRingClass, panelClass } from "@/components/ui/styles";
+import {
+  cn,
+  focusRingClass,
+  panelClass,
+  touchTargetClass,
+  touchTargetTextClass,
+} from "@/components/ui/styles";
 
 function NotificationsBell(props: { saveId: string; unreadCount: number }) {
   const href = `/dashboard/${props.saveId}/notifications`;
@@ -17,7 +23,8 @@ function NotificationsBell(props: { saveId: string; unreadCount: number }) {
       href={href}
       aria-label={label}
       className={cn(
-        "relative inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-zinc-700 text-zinc-300 hover:border-amber-600 hover:text-amber-400",
+        touchTargetClass,
+        "relative shrink-0 rounded-md border border-zinc-700 text-zinc-300 hover:border-amber-600 hover:text-amber-400",
         focusRingClass,
       )}
     >
@@ -51,6 +58,7 @@ export function GameHeader(props: {
   saveId: string;
   saveName: string;
   dashboard: DashboardSnapshot;
+  menu?: React.ReactNode;
 }) {
   const { dashboard, saveId } = props;
   const modeDef = getGameModeDefinition(dashboard.mode);
@@ -64,10 +72,12 @@ export function GameHeader(props: {
       )}
     >
       <div className="flex min-w-0 flex-wrap items-center gap-3">
-        <div className="flex shrink-0 items-center gap-2">
+        <div className="flex min-w-0 shrink-0 items-center gap-2">
+          {props.menu}
           <Link
             href="/home"
             className={cn(
+              touchTargetTextClass,
               "text-sm font-medium text-zinc-100 hover:text-amber-400",
               focusRingClass,
             )}

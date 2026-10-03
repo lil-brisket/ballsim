@@ -10,7 +10,7 @@ export function Section(props: {
   const density = props.density ?? "default";
   return (
     <section className={cn(densitySectionSpace[density], props.className)}>
-      <div className="flex items-center justify-between gap-4">
+      <div className="flex min-h-11 items-center justify-between gap-4">
         <h2 className="text-lg font-medium text-zinc-100">{props.title}</h2>
         {props.action}
       </div>

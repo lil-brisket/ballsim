@@ -4,6 +4,7 @@ import {
 } from "@/application/actions";
 import type { OwnerDashboardSituationView } from "@/state/owner-dashboard";
 import { StatusBadge } from "@/components/owner/StatusBadge";
+import { cn, touchTargetClass } from "@/components/ui/styles";
 
 export function FranchiseSituations(props: {
   saveId: string;
@@ -59,7 +60,7 @@ export function FranchiseSituations(props: {
                   </li>
                 ))}
             </ul>
-            <div className="mt-3 flex flex-wrap gap-2">
+            <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:flex-wrap">
               {situation.actions.map((action) => (
                 <form
                   key={action.id}
@@ -80,7 +81,10 @@ export function FranchiseSituations(props: {
                   />
                   <button
                     type="submit"
-                    className="rounded-md border border-amber-700/60 bg-amber-950/40 px-3 py-1.5 text-xs text-amber-200 hover:border-amber-500"
+                    className={cn(
+                      touchTargetClass,
+                      "w-full rounded-md border border-amber-700/60 bg-amber-950/40 px-3 text-xs text-amber-200 hover:border-amber-500 sm:w-auto",
+                    )}
                   >
                     {action.label}
                   </button>
@@ -101,7 +105,10 @@ export function FranchiseSituations(props: {
                 />
                 <button
                   type="submit"
-                  className="rounded-md border border-zinc-700 px-3 py-1.5 text-xs text-zinc-300 hover:border-zinc-500"
+                  className={cn(
+                    touchTargetClass,
+                    "w-full rounded-md border border-zinc-700 px-3 text-xs text-zinc-300 hover:border-zinc-500 sm:w-auto",
+                  )}
                 >
                   Acknowledge
                 </button>

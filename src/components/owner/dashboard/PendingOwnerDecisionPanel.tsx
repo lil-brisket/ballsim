@@ -9,6 +9,7 @@ import {
 import { ActiveTeamBanner } from "@/components/game/ActiveTeamBanner";
 import { TeamLogoMark } from "@/components/team/logos/TeamLogoMark";
 import type { TeamBrandingView } from "@/state/team-branding-view";
+import { cn, touchTargetClass } from "@/components/ui/styles";
 
 export type PendingTradeOfferViewModel = {
   decisionId: string;
@@ -151,49 +152,64 @@ export function PendingOwnerDecisionPanel(props: {
         </ul>
       ) : null}
 
-      <div className="mt-5 flex flex-wrap gap-2">
-        <form action={acceptOwnerDecisionAction}>
+      <div className="mt-5 flex flex-col gap-2 sm:flex-row sm:flex-wrap">
+        <form action={acceptOwnerDecisionAction} className="w-full sm:w-auto">
           <input type="hidden" name="saveId" value={props.saveId} />
           <input type="hidden" name="decisionId" value={offer.decisionId} />
           <input type="hidden" name="returnPath" value={props.returnPath} />
           <button
             type="submit"
-            className="rounded-md bg-emerald-700 px-3 py-1.5 text-sm font-medium text-zinc-50 hover:bg-emerald-600"
+            className={cn(
+              touchTargetClass,
+              "w-full rounded-md bg-emerald-700 px-3 text-sm font-medium text-zinc-50 hover:bg-emerald-600 sm:w-auto",
+            )}
           >
             Accept
           </button>
         </form>
         <Link
           href={reviewHref}
-          className="rounded-md border border-amber-600/70 bg-amber-900/40 px-3 py-1.5 text-sm font-medium text-amber-50 hover:border-amber-400"
+          className={cn(
+            touchTargetClass,
+            "w-full rounded-md border border-amber-600/70 bg-amber-900/40 px-3 text-sm font-medium text-amber-50 hover:border-amber-400 sm:w-auto",
+          )}
         >
           Review
         </Link>
         <Link
           href={negotiateHref}
-          className="rounded-md border border-zinc-500 px-3 py-1.5 text-sm text-zinc-100 hover:border-zinc-300"
+          className={cn(
+            touchTargetClass,
+            "w-full rounded-md border border-zinc-500 px-3 text-sm text-zinc-100 hover:border-zinc-300 sm:w-auto",
+          )}
         >
           Negotiate
         </Link>
-        <form action={declineOwnerDecisionAction}>
+        <form action={declineOwnerDecisionAction} className="w-full sm:w-auto">
           <input type="hidden" name="saveId" value={props.saveId} />
           <input type="hidden" name="decisionId" value={offer.decisionId} />
           <input type="hidden" name="returnPath" value={props.returnPath} />
           <button
             type="submit"
-            className="rounded-md border border-zinc-600 px-3 py-1.5 text-sm text-zinc-200 hover:border-zinc-400"
+            className={cn(
+              touchTargetClass,
+              "w-full rounded-md border border-zinc-600 px-3 text-sm text-zinc-200 hover:border-zinc-400 sm:w-auto",
+            )}
           >
             Decline
           </button>
         </form>
         {!offer.bothSidesOwned ? (
-          <form action={askAiOwnerDecisionAction}>
+          <form action={askAiOwnerDecisionAction} className="w-full sm:w-auto">
             <input type="hidden" name="saveId" value={props.saveId} />
             <input type="hidden" name="decisionId" value={offer.decisionId} />
             <input type="hidden" name="returnPath" value={props.returnPath} />
             <button
               type="submit"
-              className="rounded-md bg-amber-600 px-3 py-1.5 text-sm font-medium text-zinc-950 hover:bg-amber-500"
+              className={cn(
+                touchTargetClass,
+                "w-full rounded-md bg-amber-600 px-3 text-sm font-medium text-zinc-950 hover:bg-amber-500 sm:w-auto",
+              )}
             >
               Ask AI
             </button>

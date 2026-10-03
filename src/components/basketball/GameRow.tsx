@@ -3,7 +3,11 @@ import { TeamEntityLink } from "@/components/entity/TeamEntityLink";
 import { GameResultLink } from "@/components/owner/GameResultLink";
 import { TeamLogoMark } from "@/components/team/logos/TeamLogoMark";
 import type { TeamBrandingView } from "@/state/team-branding-view";
-import { cn, focusRingClass } from "@/components/ui/styles";
+import {
+  cn,
+  focusRingClass,
+  touchTargetTextClass,
+} from "@/components/ui/styles";
 
 export type GameRowProps = {
   saveId: string;
@@ -51,7 +55,11 @@ export function GameRow(props: GameRowProps) {
         <TeamEntityLink
           saveId={props.saveId}
           teamId={props.opponentTeamId}
-          className={cn("text-zinc-100 hover:text-amber-400", focusRingClass)}
+          className={cn(
+            touchTargetTextClass,
+            "text-zinc-100 hover:text-amber-400",
+            focusRingClass,
+          )}
         >
           {props.opponentName ?? props.opponentAbbreviation}
         </TeamEntityLink>
@@ -64,18 +72,35 @@ export function GameRow(props: GameRowProps) {
   );
 
   const score = hasResult ? (
-    <span
-      className={cn(
-        "font-mono text-sm",
-        props.won ? "text-emerald-400" : "text-rose-400",
-      )}
-    >
-      {props.won ? "W" : "L"} {props.teamScore}–{props.opponentScore}
-    </span>
+    props.canOpenResult !== false ? (
+      <GameResultLink
+        saveId={props.saveId}
+        gameId={props.gameId}
+        canOpen
+        className={cn(
+          touchTargetTextClass,
+          "font-mono text-sm",
+          props.won ? "text-emerald-400" : "text-rose-400",
+          focusRingClass,
+        )}
+      >
+        {props.won ? "W" : "L"} {props.teamScore}–{props.opponentScore}
+      </GameResultLink>
+    ) : (
+      <span
+        className={cn(
+          "font-mono text-sm",
+          props.won ? "text-emerald-400" : "text-rose-400",
+        )}
+      >
+        {props.won ? "W" : "L"} {props.teamScore}–{props.opponentScore}
+      </span>
+    )
   ) : props.calendarHref ? (
     <Link
       href={props.calendarHref}
       className={cn(
+        touchTargetTextClass,
         "text-xs text-amber-400 hover:text-amber-300",
         focusRingClass,
       )}
@@ -86,14 +111,14 @@ export function GameRow(props: GameRowProps) {
     <span className="text-xs text-zinc-500">Scheduled</span>
   );
 
-  const body = (
+  return (
     <div
       className={cn(
-        "flex items-center justify-between gap-3 rounded-lg border border-zinc-800 px-3 py-2 text-sm",
+        "flex min-h-11 items-center justify-between gap-3 rounded-lg border border-zinc-800 px-3 py-2 text-sm",
         props.className,
       )}
     >
-      <div className="min-w-0 flex items-center gap-3">
+      <div className="flex min-w-0 items-center gap-3">
         <span className="shrink-0 font-mono text-xs text-zinc-500">
           {props.date}
         </span>
@@ -102,14 +127,4 @@ export function GameRow(props: GameRowProps) {
       <div className="shrink-0">{score}</div>
     </div>
   );
-
-  if (hasResult && props.canOpenResult !== false) {
-    return (
-      <GameResultLink saveId={props.saveId} gameId={props.gameId} canOpen>
-        {body}
-      </GameResultLink>
-    );
-  }
-
-  return body;
 }

@@ -2,7 +2,11 @@ import { TeamEntityLink } from "@/components/entity/TeamEntityLink";
 import { GameResultLink } from "@/components/owner/GameResultLink";
 import { TeamLogoMark } from "@/components/team/logos/TeamLogoMark";
 import type { TeamBrandingView } from "@/state/team-branding-view";
-import { cn, focusRingClass } from "@/components/ui/styles";
+import {
+  cn,
+  focusRingClass,
+  touchTargetTextClass,
+} from "@/components/ui/styles";
 
 export type LeagueGameRowProps = {
   saveId: string;
@@ -61,7 +65,11 @@ export function LeagueGameRow(props: LeagueGameRowProps) {
       <TeamEntityLink
         saveId={props.saveId}
         teamId={props.awayTeamId}
-        className={cn("text-zinc-100 hover:text-amber-400", focusRingClass)}
+        className={cn(
+          touchTargetTextClass,
+          "text-zinc-100 hover:text-amber-400",
+          focusRingClass,
+        )}
       >
         {props.awayAbbreviation}
       </TeamEntityLink>
@@ -73,7 +81,11 @@ export function LeagueGameRow(props: LeagueGameRowProps) {
       <TeamEntityLink
         saveId={props.saveId}
         teamId={props.homeTeamId}
-        className={cn("text-zinc-100 hover:text-amber-400", focusRingClass)}
+        className={cn(
+          touchTargetTextClass,
+          "text-zinc-100 hover:text-amber-400",
+          focusRingClass,
+        )}
       >
         {props.homeAbbreviation}
       </TeamEntityLink>
@@ -86,9 +98,18 @@ export function LeagueGameRow(props: LeagueGameRowProps) {
   );
 
   const score = isFinal ? (
-    <span className="font-mono text-sm text-zinc-200">
+    <GameResultLink
+      saveId={props.saveId}
+      gameId={props.gameId}
+      canOpen
+      className={cn(
+        touchTargetTextClass,
+        "font-mono text-sm text-zinc-200",
+        focusRingClass,
+      )}
+    >
       {props.awayScore}–{props.homeScore}
-    </span>
+    </GameResultLink>
   ) : props.status === "in_progress" ? (
     <span className="text-xs font-medium text-emerald-400">Live</span>
   ) : props.status === "postponed" ? (
@@ -99,10 +120,10 @@ export function LeagueGameRow(props: LeagueGameRowProps) {
     <span className="text-xs text-zinc-500">Scheduled</span>
   );
 
-  const body = (
+  return (
     <div
       className={cn(
-        "flex items-center justify-between gap-3 rounded-lg border border-zinc-800 px-3 py-2 text-sm",
+        "flex min-h-11 items-center justify-between gap-3 rounded-lg border border-zinc-800 px-3 py-2 text-sm",
         props.className,
       )}
     >
@@ -115,14 +136,4 @@ export function LeagueGameRow(props: LeagueGameRowProps) {
       <div className="shrink-0">{score}</div>
     </div>
   );
-
-  if (isFinal) {
-    return (
-      <GameResultLink saveId={props.saveId} gameId={props.gameId} canOpen>
-        {body}
-      </GameResultLink>
-    );
-  }
-
-  return body;
 }

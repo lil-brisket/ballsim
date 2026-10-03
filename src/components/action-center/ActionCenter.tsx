@@ -2,7 +2,7 @@ import Link from "next/link";
 import type { ActionCenterView } from "@/state/action-center-selectors";
 import { ActionCard } from "@/components/ui/ActionCard";
 import { StatusBadge } from "@/components/ui/StatusBadge";
-import { cn, panelClass } from "@/components/ui/styles";
+import { cn, panelClass, touchTargetClass, touchTargetTextClass } from "@/components/ui/styles";
 
 /**
  * Front Office Action Center.
@@ -77,7 +77,10 @@ export function ActionCenter(props: {
             <input type="hidden" name="returnPath" value={props.returnPath} />
             <button
               type="submit"
-              className="rounded-md border border-emerald-700/60 bg-emerald-950/40 px-3 py-1.5 text-sm text-emerald-300 hover:border-emerald-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-500"
+              className={cn(
+                touchTargetClass,
+                "rounded-md border border-emerald-700/60 bg-emerald-950/40 px-3 text-sm text-emerald-300 hover:border-emerald-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-500",
+              )}
             >
               Let AI Handle
             </button>
@@ -134,7 +137,10 @@ export function ActionCenter(props: {
           Next Game is your primary focus while the queue is quiet.{" "}
           <Link
             href={`/dashboard/${props.saveId}/calendar`}
-            className="text-amber-400 hover:text-amber-300"
+            className={cn(
+              touchTargetTextClass,
+              "text-amber-400 hover:text-amber-300",
+            )}
           >
             Open Calendar
           </Link>

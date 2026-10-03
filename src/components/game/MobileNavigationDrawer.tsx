@@ -10,7 +10,7 @@ import {
 import { createPortal } from "react-dom";
 import type { OwnerNavGroup } from "@/application/owner-nav-config";
 import { NavGroups } from "@/components/game/NavGroups";
-import { cn, focusRingClass } from "@/components/ui/styles";
+import { cn, focusRingClass, touchTargetClass } from "@/components/ui/styles";
 
 const FOCUSABLE =
   'a[href], button:not([disabled]), textarea:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])';
@@ -30,6 +30,8 @@ function useIsClient(): boolean {
 export function MobileNavigationDrawer(props: {
   saveId: string;
   groups?: readonly OwnerNavGroup[];
+  /** Compact trigger for the sticky header. Default is a full-width bar. */
+  compact?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const panelRef = useRef<HTMLDivElement>(null);
@@ -98,10 +100,10 @@ export function MobileNavigationDrawer(props: {
               aria-modal="true"
               aria-labelledby={titleId}
               className={cn(
-                "drawer-nav-enter relative z-10 flex h-full w-[min(20rem,85vw)] flex-col border-r border-zinc-700 bg-zinc-900 shadow-xl",
+                "drawer-nav-enter relative z-10 flex h-dvh w-[min(20rem,85vw)] flex-col border-r border-zinc-700 bg-zinc-900 shadow-xl",
               )}
             >
-              <div className="flex items-center justify-between border-b border-zinc-800 px-4 py-3">
+              <div className="flex items-center justify-between border-b border-zinc-800 px-4 py-3 pt-[max(0.75rem,env(safe-area-inset-top))]">
                 <h2 id={titleId} className="text-sm font-medium text-zinc-100">
                   Menu
                 </h2>
@@ -111,7 +113,8 @@ export function MobileNavigationDrawer(props: {
                   onClick={() => setOpen(false)}
                   aria-label="Close menu"
                   className={cn(
-                    "rounded-md border border-zinc-700 px-2.5 py-1 text-sm text-zinc-300 hover:border-zinc-500",
+                    touchTargetClass,
+                    "rounded-md border border-zinc-700 px-2.5 text-sm text-zinc-300 hover:border-zinc-500",
                     focusRingClass,
                   )}
                 >
@@ -119,7 +122,7 @@ export function MobileNavigationDrawer(props: {
                 </button>
               </div>
               <nav
-                className="min-h-0 flex-1 overflow-y-auto p-3"
+                className="min-h-0 flex-1 overflow-y-auto p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]"
                 aria-label="Owner Mode"
               >
                 <NavGroups
@@ -140,7 +143,10 @@ export function MobileNavigationDrawer(props: {
       <button
         type="button"
         className={cn(
-          "w-full rounded-md border border-zinc-700 px-3 py-2 text-sm text-zinc-200 hover:border-amber-600",
+          touchTargetClass,
+          props.compact
+            ? "rounded-md border border-zinc-700 px-3 text-sm text-zinc-200 hover:border-amber-600"
+            : "w-full rounded-md border border-zinc-700 px-3 text-sm text-zinc-200 hover:border-amber-600",
           focusRingClass,
         )}
         aria-expanded={open}

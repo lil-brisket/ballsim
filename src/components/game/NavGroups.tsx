@@ -7,7 +7,7 @@ import type {
   OwnerNavItem,
 } from "@/application/owner-nav-config";
 import { OWNER_NAV_GROUPS } from "@/application/owner-nav-config";
-import { cn, focusRingClass } from "@/components/ui/styles";
+import { cn, focusRingClass, touchTargetClass } from "@/components/ui/styles";
 
 export const NAV_ICONS: Record<string, React.ReactNode> = {
   home: (
@@ -172,7 +172,8 @@ function NavLink(props: {
       aria-current={active ? "page" : undefined}
       aria-label={collapsed || badge ? ariaLabel : undefined}
       className={cn(
-        "flex items-center gap-2 rounded-md px-3 py-2 text-sm",
+        touchTargetClass,
+        "w-full justify-start gap-2 rounded-md px-3 text-sm",
         focusRingClass,
         active
           ? "border-l-2 border-amber-500 bg-amber-600/15 font-medium text-amber-400"

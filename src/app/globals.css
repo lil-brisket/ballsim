@@ -25,6 +25,19 @@ body {
   font-family: var(--font-geist-sans), ui-sans-serif, sans-serif;
 }
 
+.safe-area-top {
+  padding-top: env(safe-area-inset-top);
+}
+
+.safe-area-bottom {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+.safe-area-y {
+  padding-top: env(safe-area-inset-top);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
 /* Splash / landing court atmosphere */
 .splash-court {
   background:

@@ -3,7 +3,7 @@ import type { OwnerDashboardTeam } from "@/state/owner-dashboard";
 import type { RecentFormView } from "@/state/recent-form-selectors";
 import { PlayerEntityLink } from "@/components/entity/PlayerEntityLink";
 import { Section } from "@/components/owner/Section";
-import { cn, panelClass } from "@/components/ui/styles";
+import { cn, panelClass, touchTargetTextClass } from "@/components/ui/styles";
 
 function ordinal(n: number): string {
   const rem100 = n % 100;
@@ -40,7 +40,10 @@ export function TeamSnapshotPanel(props: {
       action={
         <Link
           href={`/dashboard/${saveId}/team`}
-          className="text-sm text-amber-400 hover:text-amber-300"
+          className={cn(
+            touchTargetTextClass,
+            "text-sm text-amber-400 hover:text-amber-300",
+          )}
         >
           Team Hub
         </Link>

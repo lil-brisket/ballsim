@@ -1,6 +1,11 @@
 import Link from "next/link";
 import { parseCalendarDate } from "@/domain/calendar-date";
-import { cn, focusRingClass, panelClass } from "@/components/ui/styles";
+import {
+  cn,
+  focusRingClass,
+  panelClass,
+  touchTargetClass,
+} from "@/components/ui/styles";
 
 function formatLongDate(isoDate: string): string {
   try {
@@ -57,11 +62,12 @@ export function FrontOfficeHeader(props: {
           </p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:flex-wrap sm:items-center">
           <Link
             href={calendarHref}
             className={cn(
-              "rounded-md bg-amber-600 px-3 py-1.5 text-sm font-medium text-zinc-950 hover:bg-amber-500",
+              touchTargetClass,
+              "w-full rounded-md bg-amber-600 px-3 text-sm font-medium text-zinc-950 hover:bg-amber-500 sm:w-auto",
               focusRingClass,
             )}
           >
@@ -70,13 +76,16 @@ export function FrontOfficeHeader(props: {
           <Link
             href={`${calendarHref}?focus=next-game`}
             className={cn(
-              "rounded-md border border-zinc-700 px-3 py-1.5 text-sm text-zinc-200 hover:border-amber-600",
+              touchTargetClass,
+              "w-full rounded-md border border-zinc-700 px-3 text-sm text-zinc-200 hover:border-amber-600 sm:w-auto",
               focusRingClass,
             )}
-            title="Simulate until the next team game or a blocking decision, whichever comes first"
           >
             Simulate to next game
           </Link>
+          <p className="text-xs text-zinc-500 sm:max-w-xs">
+            Advances until the next team game or a blocking decision.
+          </p>
         </div>
       </div>
 

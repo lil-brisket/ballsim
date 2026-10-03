@@ -21,6 +21,7 @@ import {
 } from "@/components/game/NextActionPanel";
 import { ActionQueue } from "@/components/owner/dashboard/ActionQueue";
 import { SaveCard } from "@/components/game/SaveCard";
+import { MobileNavigationDrawer } from "@/components/game/MobileNavigationDrawer";
 import { listGameModeDefinitions } from "@/application/game-mode-catalog";
 import { OWNER_NAV_GROUPS } from "@/application/owner-nav-config";
 import type { DashboardSnapshot } from "@/state/selectors";
@@ -280,6 +281,15 @@ describe("game shell UI", () => {
     expect(
       screen.getByRole("link", { name: "Open Draft" }).getAttribute("href"),
     ).toBe("/dashboard/save_test/draft");
+    unmount();
+  });
+
+  it("mobile menu trigger uses the shared 44px touch target", () => {
+    const { unmount } = render(
+      <MobileNavigationDrawer saveId="save_test" compact />,
+    );
+    const menu = screen.getByRole("button", { name: "Menu" });
+    expect(menu.className).toContain("min-h-11");
     unmount();
   });
 });

@@ -3,6 +3,7 @@ import type { NotificationView } from "@/state/selectors";
 import { EventCard } from "@/components/game/EventCard";
 import { EmptyState } from "@/components/owner/EmptyState";
 import { Section } from "@/components/owner/Section";
+import { touchTargetTextClass } from "@/components/ui/styles";
 
 export function DashboardNotifications(props: {
   notifications: NotificationView[];
@@ -14,7 +15,7 @@ export function DashboardNotifications(props: {
       action={
         <Link
           href={`/dashboard/${props.saveId}/notifications`}
-          className="text-sm text-amber-400 hover:text-amber-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-500"
+          className={`${touchTargetTextClass} text-sm text-amber-400 hover:text-amber-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-500`}
         >
           View all
         </Link>

@@ -2,7 +2,8 @@ import type { ReactNode } from "react";
 import { takeOverFranchiseAction } from "@/application/actions";
 import { TeamEntityLink } from "@/components/entity/TeamEntityLink";
 import { TeamIdentityInline } from "@/components/team/TeamIdentityInline";
-import { cn } from "@/components/ui/styles";
+import { MobileListCard } from "@/components/ui/MobileListCard";
+import { cn, touchTargetClass } from "@/components/ui/styles";
 import {
   formatStreak,
   type StandingsGroup,
@@ -188,7 +189,10 @@ function columnsFor(
             <input type="hidden" name="teamId" value={row.teamId} />
             <button
               type="submit"
-              className="rounded-md border border-zinc-700 px-2 py-1 text-xs text-zinc-300 hover:border-amber-600 hover:text-amber-300"
+              className={cn(
+                touchTargetClass,
+                "rounded-md border border-zinc-700 px-2 text-xs text-zinc-300 hover:border-amber-600 hover:text-amber-300",
+              )}
             >
               Take Over
             </button>
@@ -229,7 +233,72 @@ export function StandingsTable(props: {
           {props.group.name}
         </h2>
       )}
-      <div className="overflow-x-auto">
+      <ul className="flex flex-col gap-2 md:hidden">
+        {props.group.rows.map((row) => {
+          const rank = displayedRank(row, props.group.kind);
+          const playoff = playoffLabelText(row.playoffLabel);
+          const statsLine =
+            props.page.stats === "advanced"
+              ? `PPG ${formatRate(row.ppg)} · NET ${formatRate(row.net)}`
+              : `${row.wins}–${row.losses} · GB ${formatGb(displayedGb(row, props.group.kind))}`;
+          return (
+            <li key={row.teamId}>
+              <MobileListCard
+                className={
+                  row.isUserTeam
+                    ? "border-amber-700/50 bg-amber-950/30"
+                    : undefined
+                }
+                title={
+                  <TeamEntityLink
+                    saveId={props.saveId}
+                    teamId={row.teamId}
+                    className="inline-flex min-h-11 items-center gap-2 hover:text-amber-400"
+                  >
+                    <span className="font-mono text-zinc-500">#{rank}</span>
+                    <TeamIdentityInline
+                      city={row.city}
+                      name={row.name}
+                      abbreviation={row.abbreviation}
+                      branding={row.branding}
+                      size="sm"
+                    />
+                  </TeamEntityLink>
+                }
+                subtitle={
+                  row.isUserTeam
+                    ? `${statsLine} · you`
+                    : playoff
+                      ? `${statsLine} · ${playoff}`
+                      : statsLine
+                }
+                action={
+                  ownedIds.has(row.teamId) ? null : (
+                    <form action={takeOverFranchiseAction}>
+                      <input
+                        type="hidden"
+                        name="saveId"
+                        value={props.saveId}
+                      />
+                      <input type="hidden" name="teamId" value={row.teamId} />
+                      <button
+                        type="submit"
+                        className={cn(
+                          touchTargetClass,
+                          "rounded-md border border-zinc-700 px-3 text-xs text-zinc-300 hover:border-amber-600 hover:text-amber-300",
+                        )}
+                      >
+                        Take Over
+                      </button>
+                    </form>
+                  )
+                }
+              />
+            </li>
+          );
+        })}
+      </ul>
+      <div className="hidden overflow-x-auto md:block">
         <table className={cn("w-full text-left text-sm", minWidth)}>
           <thead className="text-zinc-500">
             <tr>

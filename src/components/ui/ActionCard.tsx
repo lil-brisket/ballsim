@@ -4,6 +4,7 @@ import {
   densityPadding,
   focusRingClass,
   panelClass,
+  touchTargetTextClass,
   type Density,
 } from "@/components/ui/styles";
 
@@ -29,15 +30,15 @@ export function ActionCard(
     ({ href: string; onClick?: never } | { href?: never; onClick: () => void }),
 ) {
   const density = props.density ?? "default";
-  const className = cn(
+  const hasSecondary = Boolean(props.secondaryHref && props.secondaryLabel);
+  const surfaceClass = cn(
     panelClass,
-    densityPadding[density],
-    "block text-left transition-colors hover:border-amber-700/60 hover:bg-zinc-900",
+    "text-left transition-colors hover:border-amber-700/60 hover:bg-zinc-900",
     focusRingClass,
     props.className,
   );
 
-  const body = (
+  const main = (
     <>
       {props.badge ? <div className="mb-2">{props.badge}</div> : null}
       <h3 className="text-sm font-medium text-zinc-100">{props.title}</h3>
@@ -45,37 +46,68 @@ export function ActionCard(
         <p className="mt-1 text-xs text-zinc-400">{props.description}</p>
       ) : null}
       {props.children}
-      {props.footer || props.secondaryHref ? (
-        <div className="mt-3 flex flex-wrap items-center gap-3">
-          {props.footer}
-          {props.secondaryHref && props.secondaryLabel ? (
-            <Link
-              href={props.secondaryHref}
-              className={cn(
-                "text-xs text-zinc-400 hover:text-zinc-200",
-                focusRingClass,
-              )}
-              onClick={(event) => event.stopPropagation()}
-            >
-              {props.secondaryLabel}
-            </Link>
-          ) : null}
-        </div>
-      ) : null}
     </>
   );
 
+  if (props.href && hasSecondary) {
+    return (
+      <article className={surfaceClass}>
+        <Link
+          href={props.href}
+          className={cn("block", densityPadding[density], focusRingClass)}
+        >
+          {main}
+          {props.footer ? <div className="mt-3">{props.footer}</div> : null}
+        </Link>
+        <div className="border-t border-zinc-800 px-4 py-1">
+          <Link
+            href={props.secondaryHref!}
+            className={cn(
+              touchTargetTextClass,
+              "text-xs text-zinc-400 hover:text-zinc-200",
+              focusRingClass,
+            )}
+          >
+            {props.secondaryLabel}
+          </Link>
+        </div>
+      </article>
+    );
+  }
+
+  const paddedClass = cn(surfaceClass, densityPadding[density], "block");
+  const footerRow =
+    props.footer || hasSecondary ? (
+      <div className="mt-3 flex flex-wrap items-center gap-3">
+        {props.footer}
+        {hasSecondary ? (
+          <Link
+            href={props.secondaryHref!}
+            className={cn(
+              touchTargetTextClass,
+              "text-xs text-zinc-400 hover:text-zinc-200",
+              focusRingClass,
+            )}
+          >
+            {props.secondaryLabel}
+          </Link>
+        ) : null}
+      </div>
+    ) : null;
+
   if (props.href) {
     return (
-      <Link href={props.href} className={className}>
-        {body}
+      <Link href={props.href} className={paddedClass}>
+        {main}
+        {footerRow}
       </Link>
     );
   }
 
   return (
-    <button type="button" onClick={props.onClick} className={className}>
-      {body}
+    <button type="button" onClick={props.onClick} className={paddedClass}>
+      {main}
+      {footerRow}
     </button>
   );
 }

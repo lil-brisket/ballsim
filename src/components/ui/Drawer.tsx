@@ -8,7 +8,7 @@ import {
   useSyncExternalStore,
 } from "react";
 import { createPortal } from "react-dom";
-import { cn, focusRingClass } from "@/components/ui/styles";
+import { cn, focusRingClass, touchTargetClass } from "@/components/ui/styles";
 
 export type DrawerSize = "sm" | "md" | "lg";
 
@@ -132,13 +132,13 @@ export function Drawer(props: {
         }
         aria-describedby={props.description ? descriptionId : undefined}
         className={cn(
-          "relative z-10 flex max-h-[90vh] w-full flex-col border-zinc-700 bg-zinc-900 shadow-xl",
-          "rounded-t-xl border-t sm:h-full sm:max-h-none sm:rounded-none sm:border-l sm:border-t-0",
+          "relative z-10 flex max-h-[90dvh] w-full flex-col border-zinc-700 bg-zinc-900 shadow-xl",
+          "rounded-t-xl border-t sm:h-dvh sm:max-h-none sm:rounded-none sm:border-l sm:border-t-0",
           SIZE_CLASS[size],
           "drawer-panel-enter-mobile sm:drawer-panel-enter-desktop",
         )}
       >
-        <div className="flex shrink-0 items-start gap-3 border-b border-zinc-800 px-4 py-3">
+        <div className="flex shrink-0 items-start gap-3 border-b border-zinc-800 px-4 py-3 sm:pt-[max(0.75rem,env(safe-area-inset-top))]">
           <div className="min-w-0 flex-1">
             {props.header ? (
               props.header
@@ -164,7 +164,8 @@ export function Drawer(props: {
             onClick={close}
             aria-label="Close"
             className={cn(
-              "shrink-0 rounded-md border border-zinc-700 px-2.5 py-1 text-sm text-zinc-300 hover:border-zinc-500 hover:text-zinc-100",
+              touchTargetClass,
+              "shrink-0 rounded-md border border-zinc-700 px-2.5 text-sm text-zinc-300 hover:border-zinc-500 hover:text-zinc-100",
               focusRingClass,
             )}
           >
@@ -177,7 +178,7 @@ export function Drawer(props: {
         </div>
 
         {props.footer ? (
-          <div className="shrink-0 border-t border-zinc-800 px-4 py-3">
+          <div className="safe-area-bottom shrink-0 border-t border-zinc-800 px-4 py-3">
             {props.footer}
           </div>
         ) : null}

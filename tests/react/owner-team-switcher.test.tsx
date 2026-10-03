@@ -132,6 +132,19 @@ describe("OwnerTeamSwitcher", () => {
     unmount();
   });
 
+  it("dismisses the franchise list from the backdrop", () => {
+    const { unmount } = render(
+      <OwnerTeamSwitcher saveId="save123" ownedTeams={multiTeam()} />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: /switch franchise/i }));
+    expect(screen.getByRole("listbox")).toBeTruthy();
+    fireEvent.click(
+      screen.getByRole("button", { name: "Dismiss franchise list" }),
+    );
+    expect(screen.queryByRole("listbox")).toBeNull();
+    unmount();
+  });
+
   it("submits returnPath for the current roster route when switching", async () => {
     navigationState.pathname = "/dashboard/save123/roster";
     const unmount = await switchToWolves();

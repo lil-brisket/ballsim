@@ -10,15 +10,16 @@ export function Overlay(props: {
   transparent?: boolean;
 }) {
   return (
-    <div
-      role="presentation"
-      className={cn(
-        "fixed inset-0 z-50",
-        props.transparent ? "bg-transparent" : "bg-black/60",
-        props.className,
-      )}
-      onClick={props.onClick}
-    >
+    <div className={cn("fixed inset-0 z-50", props.className)}>
+      <button
+        type="button"
+        aria-label="Close overlay"
+        className={cn(
+          "absolute inset-0",
+          props.transparent ? "bg-transparent" : "bg-black/60",
+        )}
+        onClick={props.onClick}
+      />
       {props.children}
     </div>
   );

@@ -10,7 +10,8 @@ import { PlayerEntityLink } from "@/components/entity/PlayerEntityLink";
 import { ContractSummary } from "@/components/owner/ContractSummary";
 import { DataTable } from "@/components/owner/DataTable";
 import { StatusBadge } from "@/components/owner/StatusBadge";
-import { cn, focusRingClass } from "@/components/ui/styles";
+import { MobileListCard } from "@/components/ui/MobileListCard";
+import { cn, focusRingClass, touchTargetClass, touchTargetTextClass } from "@/components/ui/styles";
 
 type SortKey =
   "overall" | "age" | "salary" | "years" | "position" | "role" | "name";
@@ -20,6 +21,36 @@ type FilterChip = "all" | PlayerPosition | "starters" | "injured" | "on_block";
 const POSITION_ORDER = Object.fromEntries(
   PLAYER_POSITIONS.map((position, index) => [position, index]),
 ) as Record<string, number>;
+
+function TradeBlockButton(props: {
+  saveId: string;
+  playerId: string;
+  onTradeBlock: boolean;
+  returnPath: string;
+}) {
+  return (
+    <form action={toggleTradeBlockAction}>
+      <input type="hidden" name="saveId" value={props.saveId} />
+      <input type="hidden" name="playerId" value={props.playerId} />
+      <input
+        type="hidden"
+        name="listed"
+        value={props.onTradeBlock ? "false" : "true"}
+      />
+      <input type="hidden" name="returnPath" value={props.returnPath} />
+      <button
+        type="submit"
+        className={cn(
+          touchTargetClass,
+          "rounded-md border border-zinc-700 px-3 text-xs text-amber-400 hover:border-amber-600 hover:text-amber-300",
+          focusRingClass,
+        )}
+      >
+        {props.onTradeBlock ? "Remove block" : "Add to block"}
+      </button>
+    </form>
+  );
+}
 
 function defaultCompare(
   a: RosterPagePlayerView,
@@ -143,7 +174,8 @@ export function RosterManagementTable(props: {
             type="button"
             onClick={() => setChip(entry.id)}
             className={cn(
-              "rounded-md px-2.5 py-1 text-xs",
+              touchTargetClass,
+              "rounded-md px-2.5 text-xs",
               focusRingClass,
               chip === entry.id
                 ? "bg-amber-600/20 text-amber-300"
@@ -197,7 +229,54 @@ export function RosterManagementTable(props: {
         </label>
       </div>
 
-      <div className="overflow-x-auto">
+      <ul className="flex flex-col gap-2 md:hidden">
+        {filtered.map((player) => (
+          <li key={player.playerId}>
+            <MobileListCard
+              title={
+                <PlayerEntityLink
+                  saveId={props.saveId}
+                  playerId={player.playerId}
+                  className={cn(
+                    touchTargetTextClass,
+                    "px-0 text-amber-400",
+                    focusRingClass,
+                  )}
+                >
+                  {player.firstName} {player.lastName}
+                </PlayerEntityLink>
+              }
+              subtitle={`${player.position} · ${player.roleDisplayLabel} · Age ${player.age}`}
+              meta={
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="font-mono text-zinc-100">
+                    OVR {player.overall}
+                  </span>
+                  <StatusBadge
+                    label={player.availabilityLabel}
+                    tone={player.canPlay ? "available" : player.injuryKind}
+                  />
+                  {player.onTradeBlock ? (
+                    <span className="font-mono text-[0.6rem] uppercase text-amber-500">
+                      Block
+                    </span>
+                  ) : null}
+                </div>
+              }
+              action={
+                <TradeBlockButton
+                  saveId={props.saveId}
+                  playerId={player.playerId}
+                  onTradeBlock={player.onTradeBlock}
+                  returnPath={props.returnPath}
+                />
+              }
+            />
+          </li>
+        ))}
+      </ul>
+
+      <div className="hidden overflow-x-auto md:block">
         <DataTable
           headers={[
             "Player",
@@ -265,33 +344,12 @@ export function RosterManagementTable(props: {
                   />
                 </td>
                 <td className="px-3 py-2">
-                  <form action={toggleTradeBlockAction}>
-                    <input type="hidden" name="saveId" value={props.saveId} />
-                    <input
-                      type="hidden"
-                      name="playerId"
-                      value={player.playerId}
-                    />
-                    <input
-                      type="hidden"
-                      name="listed"
-                      value={player.onTradeBlock ? "false" : "true"}
-                    />
-                    <input
-                      type="hidden"
-                      name="returnPath"
-                      value={props.returnPath}
-                    />
-                    <button
-                      type="submit"
-                      className={cn(
-                        "text-xs text-amber-400 hover:text-amber-300",
-                        focusRingClass,
-                      )}
-                    >
-                      {player.onTradeBlock ? "Remove block" : "Add to block"}
-                    </button>
-                  </form>
+                  <TradeBlockButton
+                    saveId={props.saveId}
+                    playerId={player.playerId}
+                    onTradeBlock={player.onTradeBlock}
+                    returnPath={props.returnPath}
+                  />
                 </td>
               </tr>
             );

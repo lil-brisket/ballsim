@@ -6,7 +6,13 @@ import { EmptyState } from "@/components/owner/EmptyState";
 import { Section } from "@/components/owner/Section";
 import { TeamLogoMark } from "@/components/team/logos/TeamLogoMark";
 import { PlayerEntityLink } from "@/components/entity/PlayerEntityLink";
-import { cn, focusRingClass, panelClass } from "@/components/ui/styles";
+import {
+  cn,
+  focusRingClass,
+  panelClass,
+  touchTargetClass,
+  touchTargetTextClass,
+} from "@/components/ui/styles";
 import { parseCalendarDate } from "@/domain/calendar-date";
 
 function calendarDateHref(saveId: string, isoDate: string): string {
@@ -36,7 +42,11 @@ export function NextGamePanel(props: {
       action={
         <Link
           href={scheduleHref}
-          className="text-sm text-amber-400 hover:text-amber-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-500"
+          className={cn(
+            touchTargetTextClass,
+            "text-sm text-amber-400 hover:text-amber-300",
+            focusRingClass,
+          )}
         >
           Schedule
         </Link>
@@ -119,7 +129,7 @@ export function NextGamePanel(props: {
               </div>
             ) : null}
 
-            <div className="flex flex-wrap gap-2 text-sm">
+            <div className="flex flex-col gap-2 text-sm sm:flex-row sm:flex-wrap">
               <Link
                 href={
                   nextGame.gameId
@@ -127,7 +137,8 @@ export function NextGamePanel(props: {
                     : scheduleHref
                 }
                 className={cn(
-                  "rounded-md border border-zinc-700 px-2.5 py-1 text-zinc-200 hover:border-amber-600",
+                  touchTargetClass,
+                  "w-full rounded-md border border-zinc-700 px-3 text-zinc-200 hover:border-amber-600 sm:w-auto",
                   focusRingClass,
                 )}
               >
@@ -136,7 +147,8 @@ export function NextGamePanel(props: {
               <Link
                 href={rotationHref}
                 className={cn(
-                  "rounded-md border border-zinc-700 px-2.5 py-1 text-zinc-200 hover:border-amber-600",
+                  touchTargetClass,
+                  "w-full rounded-md border border-zinc-700 px-3 text-zinc-200 hover:border-amber-600 sm:w-auto",
                   focusRingClass,
                 )}
               >
@@ -145,7 +157,8 @@ export function NextGamePanel(props: {
               <Link
                 href={calendarDateHref(props.saveId, nextGame.date)}
                 className={cn(
-                  "rounded-md bg-amber-600/90 px-2.5 py-1 font-medium text-zinc-950 hover:bg-amber-500",
+                  touchTargetClass,
+                  "w-full rounded-md bg-amber-600/90 px-3 font-medium text-zinc-950 hover:bg-amber-500 sm:w-auto",
                   focusRingClass,
                 )}
               >

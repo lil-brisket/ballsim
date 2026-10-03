@@ -21,6 +21,7 @@ import { RecentActivity } from "@/components/owner/dashboard/RecentActivity";
 import { RecentResultsPanel } from "@/components/owner/dashboard/RecentResultsPanel";
 import { TeamSnapshotPanel } from "@/components/owner/dashboard/TeamSnapshotPanel";
 import { ErrorState } from "@/components/owner/EmptyState";
+import { cn, touchTargetClass, touchTargetTextClass } from "@/components/ui/styles";
 import { buildActionCenterView } from "@/state/action-center-selectors";
 import { recentFormFromResults } from "@/state/recent-form-selectors";
 
@@ -84,7 +85,10 @@ export default async function DashboardPage({
       {showOffseasonShortcut ? (
         <Link
           href={`/dashboard/${saveId}/offseason`}
-          className="inline-flex rounded-md border border-amber-700/50 bg-amber-950/30 px-3 py-2 text-sm text-amber-200 hover:border-amber-600"
+          className={cn(
+            touchTargetClass,
+            "rounded-md border border-amber-700/50 bg-amber-950/30 px-3 text-sm text-amber-200 hover:border-amber-600",
+          )}
         >
           Open Offseason Command Center
         </Link>
@@ -111,7 +115,10 @@ export default async function DashboardPage({
               />
               <button
                 type="submit"
-                className="rounded-md bg-amber-600 px-3 py-1.5 text-sm font-medium text-zinc-950 hover:bg-amber-500"
+                className={cn(
+                  touchTargetClass,
+                  "w-full rounded-md bg-amber-600 px-3 text-sm font-medium text-zinc-950 hover:bg-amber-500 sm:w-auto",
+                )}
               >
                 Switch to {dash.pendingTradeOffer.receivingTeamName}
               </button>
@@ -147,7 +154,10 @@ export default async function DashboardPage({
           before advancing time.{" "}
           <Link
             href={`/dashboard/${saveId}/draft`}
-            className="font-medium text-amber-300 underline"
+            className={cn(
+              touchTargetTextClass,
+              "font-medium text-amber-300 underline",
+            )}
           >
             Open Draft
           </Link>
@@ -174,7 +184,10 @@ export default async function DashboardPage({
           </p>
           <Link
             href={`/dashboard/${saveId}/calendar`}
-            className="inline-block rounded-md bg-amber-600 px-4 py-2 text-sm font-medium text-zinc-950 hover:bg-amber-500"
+            className={cn(
+              touchTargetClass,
+              "rounded-md bg-amber-600 px-4 text-sm font-medium text-zinc-950 hover:bg-amber-500",
+            )}
           >
             Open Calendar
           </Link>
