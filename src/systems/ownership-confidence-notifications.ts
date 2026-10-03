@@ -14,6 +14,7 @@ import {
   createOwnerNotification,
   type OwnerNotification,
 } from "@/domain/entities/owner-notification";
+import { retainOwnerNotifications } from "@/systems/owner-notifications";
 import type {
   OwnershipMood,
   StrategicReversal,
@@ -63,7 +64,10 @@ function appendNotification(
     getActiveOwnerTeamId(state),
     (franchise) => ({
       ...franchise,
-      notifications: [...franchise.notifications, notification],
+      notifications: retainOwnerNotifications(
+        [...franchise.notifications, notification],
+        notification.occurredOn,
+      ),
     }),
   );
 }

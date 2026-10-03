@@ -96,7 +96,14 @@ describe("player history archival", () => {
       status: "final",
       score: { home: 100, away: 90 },
       periodScores: [{ home: 100, away: 90 }],
-      events: [],
+      events: [
+        {
+          sequence: 1,
+          type: "shot_made",
+          playerId: homePlayer.id,
+          teamId: homeTeamId,
+        },
+      ],
       playerStats: [
         emptyPlayerStats(
           homePlayer.id,
@@ -159,6 +166,8 @@ describe("player history archival", () => {
     let current = processOffseasonLifecycle(state, rng).state;
     expect(current.business.gameArchive[game.id]).toBeDefined();
     expect(current.competition.games[game.id]).toBeDefined();
+    expect(current.competition.games[game.id]!.events).toHaveLength(1);
+    expect(current.business.gameArchive[game.id]!.events).toEqual([]);
     expect(getActivePhaseId(current)).toBe("offseason.roster_decisions");
 
     // Advance through draft prep → draft → FA → staff → preseason

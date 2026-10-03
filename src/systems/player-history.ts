@@ -20,7 +20,8 @@ import { getPlayerSeasonGames } from "@/state/game-access";
 /**
  * Archives finalized competition.games into business.gameArchive.
  * Idempotent: skips gameIds already present (does not overwrite).
- * Games remain in competition.games until initializeNewSeason.
+ * Play-by-play is dropped on archive — box scores remain the source
+ * of player history. Games remain in competition.games until initializeNewSeason.
  */
 export function archiveCompletedSeasonGames(state: GameState): SystemResult {
   let archive = state.business.gameArchive;
@@ -37,7 +38,7 @@ export function archiveCompletedSeasonGames(state: GameState): SystemResult {
       archive = { ...archive };
       changed = true;
     }
-    archive[game.id] = game;
+    archive[game.id] = compactGameForArchive(game);
   }
 
   if (!changed) {
@@ -51,6 +52,13 @@ export function archiveCompletedSeasonGames(state: GameState): SystemResult {
       gameArchive: archive,
     },
   });
+}
+
+function compactGameForArchive(game: Game): Game {
+  if (game.events.length === 0) {
+    return game;
+  }
+  return { ...game, events: [] };
 }
 
 function accumulateStatLine(

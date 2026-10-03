@@ -110,4 +110,71 @@ describe("staff AI management", () => {
     }
     expect(AI_STAFF_REPLACE_OVERALL_GAP).toBeGreaterThanOrEqual(8);
   });
+
+  it("fills a vacancy with the next candidate when the top free agent refuses", () => {
+    let state = createInitialGameState({
+      saveId: "staff_ai_skip_picky",
+      rngSeed: 57,
+      settings: CBL_GAME_SETTINGS,
+    });
+    state = bootstrapWorld(state, createSeededRng(state.meta.rngState)).state;
+    const owned = new Set(state.user.ownedTeamIds);
+    const cpuTeamId = Object.keys(state.world.teams).find(
+      (id) => !owned.has(id as never),
+    ) as typeof state.user.activeOwnerTeamId;
+
+    const medical = findTeamStaffByRole(state, cpuTeamId, "medical");
+    if (medical) {
+      state = fireStaff(state, cpuTeamId, medical.id).state;
+    }
+
+    const picky = testStaff({
+      id: asStaffId("staff_ai_picky_med"),
+      role: "medical",
+      teamId: null,
+      overall: 95,
+      preferences: {
+        ...testStaff({
+          id: asStaffId("staff_ai_picky_prefs"),
+          role: "medical",
+        }).preferences,
+        minimumSalary: 50_000_000,
+        desiredSalary: 60_000_000,
+      },
+    });
+    const willing = testStaff({
+      id: asStaffId("staff_ai_willing_med"),
+      role: "medical",
+      teamId: null,
+      overall: 94,
+    });
+    const staff = { ...state.world.staff, [picky.id]: picky, [willing.id]: willing };
+    for (const member of Object.values(staff)) {
+      if (
+        member.role === "medical" &&
+        member.teamId === null &&
+        member.id !== picky.id &&
+        member.id !== willing.id
+      ) {
+        delete staff[member.id];
+      }
+    }
+    state = {
+      ...state,
+      world: {
+        ...state.world,
+        staff,
+      },
+    };
+
+    state = runTeamStaffAiManagement(
+      state,
+      cpuTeamId,
+      createSeededRng(3),
+    ).state;
+
+    expect(findTeamStaffByRole(state, cpuTeamId, "medical")?.id).toBe(
+      willing.id,
+    );
+  });
 });

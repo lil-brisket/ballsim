@@ -474,7 +474,7 @@ function finalizeCompletedSeason(state: GameState, rng: Rng): SystemResult {
   current = staffReleased.state;
   events.push(...staffReleased.events);
 
-  current = refreshStaffFreeAgentPool(current, rng, 1);
+  current = refreshStaffFreeAgentPool(current, rng);
 
   const staffAi = runLeagueStaffAiManagement(current, rng);
   current = staffAi.state;

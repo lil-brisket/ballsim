@@ -56,6 +56,7 @@ import {
   getTeamStaffPayroll,
 } from "@/systems/staff-budget";
 import { getFinancialStatement } from "@/systems/team-finances";
+import { isOwnerNotificationStillUnread } from "@/systems/owner-notifications";
 import { getCalendarContext } from "@/systems/simulation/calendar-context";
 import { deriveDefaultTeamBranding } from "@/systems/team-branding-generation";
 import {
@@ -909,7 +910,10 @@ export function toNotificationsView(state: GameState): NotificationView[] {
         message: notification.message,
         occurredOn: notification.occurredOn,
         severity: notification.severity,
-        read: notification.read,
+        read: !isOwnerNotificationStillUnread(
+          notification,
+          state.world.calendar.currentDate,
+        ),
         relatedObjectiveId: notification.relatedObjectiveId ?? null,
         teamId,
         teamName,
@@ -1178,8 +1182,9 @@ export function toDashboardSnapshot(state: GameState): DashboardSnapshot {
           state,
           ownedId,
         ).filter((d) => d.blockingLevel === "blocking").length,
-        unreadNotificationCount: franchise.notifications.filter((n) => !n.read)
-          .length,
+        unreadNotificationCount: franchise.notifications.filter((n) =>
+          isOwnerNotificationStillUnread(n, state.world.calendar.currentDate),
+        ).length,
       };
     }),
     teamCount: Object.keys(state.world.teams).length,
@@ -1206,11 +1211,14 @@ export function toDashboardSnapshot(state: GameState): DashboardSnapshot {
         type: notification.type,
         severity: notification.severity,
         message: notification.message,
-        read: notification.read,
+        read: !isOwnerNotificationStillUnread(
+          notification,
+          state.world.calendar.currentDate,
+        ),
       })),
-    unreadNotificationCount: getActiveOwnedFranchise(
-      state,
-    ).notifications.filter((n) => !n.read).length,
+    unreadNotificationCount: getActiveOwnedFranchise(state).notifications.filter(
+      (n) => isOwnerNotificationStillUnread(n, state.world.calendar.currentDate),
+    ).length,
     activeFranchiseAi: {
       managementPreset: getActiveOwnedFranchise(state).managementPreset,
       assistance: { ...getActiveOwnedFranchise(state).aiAssistance },

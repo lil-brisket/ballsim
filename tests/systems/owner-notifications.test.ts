@@ -4,8 +4,15 @@ import { asOwnerNotificationId, asOwnerObjectiveId } from "@/domain/ids";
 import { createSeededRng } from "@/domain/rng";
 import { createInitialGameState } from "@/state/create-initial-state";
 import { CBL_GAME_SETTINGS } from "@/domain/game-settings";
-import { generateOwnerNotifications } from "@/systems/owner-notifications";
-import { SIGNIFICANT_FINANCIAL_CHANGE } from "@/systems/owner-objectives-config";
+import { addCalendarDays } from "@/domain/calendar-date";
+import {
+  generateOwnerNotifications,
+  retainOwnerNotifications,
+} from "@/systems/owner-notifications";
+import {
+  OWNER_NOTIFICATIONS_MAX,
+  SIGNIFICANT_FINANCIAL_CHANGE,
+} from "@/systems/owner-objectives-config";
 import { bootstrapWorld } from "@/systems/world-pipeline";
 import { createDomainEvent } from "@/domain/events";
 import { testOwnerObjective as createOwnerObjective } from "../helpers/owner-objective";
@@ -261,5 +268,97 @@ describe("owner notifications", () => {
         (n) => n.type === "financial_health_changed",
       ),
     ).toHaveLength(1);
+  });
+
+  it("marks notifications older than the unread window as read even without new events", () => {
+    let state = createInitialGameState({
+      saveId: "notif_age",
+      rngSeed: 9,
+      settings: CBL_GAME_SETTINGS,
+    });
+    const rng = createSeededRng(state.meta.rngState);
+    state = bootstrapWorld(state, rng).state;
+    const date = state.world.calendar.currentDate;
+    const teamId = state.user.activeOwnerTeamId;
+    state = withOwnedFranchise(state, teamId, (franchise) => ({
+      ...franchise,
+      notifications: [
+        createOwnerNotification({
+          id: asOwnerNotificationId("notif_stale"),
+          type: "calendar_milestone",
+          title: "Old milestone",
+          message: "From a prior season",
+          occurredOn: addCalendarDays(date, -91),
+          severity: "info",
+          read: false,
+          dedupeKey: "stale:old",
+          relatedTeamId: teamId,
+        }),
+        createOwnerNotification({
+          id: asOwnerNotificationId("notif_recent"),
+          type: "calendar_milestone",
+          title: "Recent milestone",
+          message: "Still actionable",
+          occurredOn: addCalendarDays(date, -10),
+          severity: "warning",
+          read: false,
+          dedupeKey: "recent:new",
+          relatedTeamId: teamId,
+        }),
+      ],
+    }));
+    const result = generateOwnerNotifications(state);
+    const notes = getActiveOwnedFranchise(result.state).notifications;
+    expect(notes.find((n) => n.id === "notif_stale")?.read).toBe(true);
+    expect(notes.find((n) => n.id === "notif_recent")?.read).toBe(false);
+  });
+
+  it("drops oldest read calendar notifications once over the storage cap", () => {
+    const date = "2026-10-01";
+    const notes = Array.from({ length: OWNER_NOTIFICATIONS_MAX + 5 }, (_, i) =>
+      createOwnerNotification({
+        id: asOwnerNotificationId(`notif_cap_${i}`),
+        type: "calendar_milestone",
+        title: "Cap filler",
+        message: `Entry ${i}`,
+        occurredOn: addCalendarDays(date, -200 + i),
+        severity: "info",
+        read: true,
+        dedupeKey: `cap:${i}`,
+      }),
+    );
+    const retained = retainOwnerNotifications(notes, date);
+    expect(retained).toHaveLength(OWNER_NOTIFICATIONS_MAX);
+    expect(retained[0]?.id).toBe("notif_cap_5");
+  });
+
+  it("keeps completed-objective notifications when trimming history", () => {
+    const date = "2026-10-01";
+    const objective = createOwnerNotification({
+      id: asOwnerNotificationId("notif_obj_keep"),
+      type: "objective_completed",
+      title: "Objective completed",
+      message: "Make playoffs",
+      occurredOn: addCalendarDays(date, -200),
+      severity: "success",
+      read: true,
+      dedupeKey: "objective_completed:obj_keep",
+      relatedObjectiveId: asOwnerObjectiveId("obj_keep"),
+    });
+    const filler = Array.from({ length: OWNER_NOTIFICATIONS_MAX }, (_, i) =>
+      createOwnerNotification({
+        id: asOwnerNotificationId(`notif_fill_${i}`),
+        type: "home_sellout",
+        title: "Sellout",
+        message: `Game ${i}`,
+        occurredOn: addCalendarDays(date, -180 + i),
+        severity: "info",
+        read: true,
+        dedupeKey: `sellout:${i}`,
+      }),
+    );
+    const retained = retainOwnerNotifications([objective, ...filler], date);
+    expect(retained.some((n) => n.type === "objective_completed")).toBe(true);
+    expect(retained).toHaveLength(OWNER_NOTIFICATIONS_MAX);
   });
 });

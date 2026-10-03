@@ -42,6 +42,15 @@ export const AWARENESS_NOTIFICATION_BANDS = [25, 50, 75] as const;
 /** Warn when runway weeks are at or below this and net burn > 0. */
 export const CASH_RUNWAY_WARNING_WEEKS = 8;
 
+/**
+ * Unread inbox window. Older owner notifications stay in history as read.
+ * Calendar milestones from prior seasons should not keep the bell at 99+.
+ */
+export const OWNER_NOTIFICATION_UNREAD_DAYS = 90;
+
+/** Max stored owner notifications per franchise. Oldest entries drop. */
+export const OWNER_NOTIFICATIONS_MAX = 80;
+
 export const GAMEPLAY_LOSS_EXPENSE = 50_000;
 export const GAMEPLAY_PLAYOFF_QUALIFICATION_REVENUE = 2_000_000;
 export const GAMEPLAY_PLAYOFF_SERIES_WIN_REVENUE = 1_500_000;

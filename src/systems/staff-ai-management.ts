@@ -156,18 +156,33 @@ function roleLeagueAverage(state: GameState, role: StaffRole): number {
   return Math.round(sum / members.length);
 }
 
+function isStaffRetired(staff: Staff): boolean {
+  const last = staff.careerHistory[staff.careerHistory.length - 1];
+  return last?.kind === "retired";
+}
+
+function unemployedCandidatesForRole(
+  state: GameState,
+  role: StaffRole,
+): Staff[] {
+  return Object.values(state.world.staff)
+    .filter(
+      (member) =>
+        member.teamId === null &&
+        member.role === role &&
+        !isStaffRetired(member),
+    )
+    .sort((a, b) => {
+      if (b.overall !== a.overall) return b.overall - a.overall;
+      return a.id < b.id ? -1 : a.id > b.id ? 1 : 0;
+    });
+}
+
 function bestUnemployedForRole(
   state: GameState,
   role: StaffRole,
 ): Staff | null {
-  let best: Staff | null = null;
-  for (const staff of Object.values(state.world.staff)) {
-    if (staff.teamId !== null || staff.role !== role) continue;
-    if (!best || staff.overall > best.overall) {
-      best = staff;
-    }
-  }
-  return best;
+  return unemployedCandidatesForRole(state, role)[0] ?? null;
 }
 
 function tryHireBestAvailable(
@@ -176,39 +191,43 @@ function tryHireBestAvailable(
   role: StaffRole,
   _rng: Rng,
 ): SystemResult | null {
-  const candidate = bestUnemployedForRole(state, role);
-  if (!candidate) return null;
-
   const year = state.competition.season.year;
-  const salary = Math.max(
-    candidate.preferences.minimumSalary,
-    Math.round(
-      (candidate.preferences.desiredSalary +
-        candidate.preferences.minimumSalary) /
-        2,
-    ),
-  );
-  const space = getTeamStaffBudgetSpace(teamId, year, state);
-  if (salary > space) return null;
+  let current = state;
 
-  try {
+  for (const candidate of unemployedCandidatesForRole(current, role)) {
+    const space = getTeamStaffBudgetSpace(teamId, year, current);
+    if (space < candidate.preferences.minimumSalary) continue;
+    const salary = Math.min(
+      space,
+      Math.max(
+        candidate.preferences.minimumSalary,
+        candidate.preferences.desiredSalary,
+      ),
+    );
+
     const offerId = asStaffOfferId(
       `ai_staff_offer_${candidate.id}_${teamId}_${year}`,
     );
-    let current = makeStaffOffer(state, {
-      id: offerId,
-      staffId: candidate.id,
-      teamId,
-      annualSalary: salary,
-      years: STAFF_DEFAULT_CONTRACT_YEARS,
-    }).state;
-    current = negotiateStaffOffer(current, offerId).state;
-    const offer = current.world.staffMarket.offers[offerId];
-    if (!offer || offer.status === "rejected") {
-      return null;
+    if (current.world.staffMarket.offers[offerId]) continue;
+
+    try {
+      let next = makeStaffOffer(current, {
+        id: offerId,
+        staffId: candidate.id,
+        teamId,
+        annualSalary: salary,
+        years: STAFF_DEFAULT_CONTRACT_YEARS,
+      }).state;
+      next = negotiateStaffOffer(next, offerId).state;
+      const offer = next.world.staffMarket.offers[offerId];
+      if (!offer || offer.status === "rejected") {
+        current = next;
+        continue;
+      }
+      return acceptStaffOffer(next, offerId);
+    } catch {
+      continue;
     }
-    return acceptStaffOffer(current, offerId);
-  } catch {
-    return null;
   }
+  return null;
 }

@@ -13,10 +13,13 @@ import {
 } from "@/systems/financial-health";
 import {
   AWARENESS_NOTIFICATION_BANDS,
+  OWNER_NOTIFICATIONS_MAX,
+  OWNER_NOTIFICATION_UNREAD_DAYS,
   OWNER_STREAK_NOTIFICATION_THRESHOLD,
   POOR_ATTENDANCE_FILL_RATE_PCT,
   SIGNIFICANT_FINANCIAL_CHANGE,
 } from "@/systems/owner-objectives-config";
+import { calendarDaysBetween } from "@/domain/calendar-date";
 import { getCalendarContext } from "@/systems/simulation/calendar-context";
 import {
   getActiveOwnedFranchise,
@@ -29,6 +32,74 @@ export type GenerateOwnerNotificationsOptions = {
   /** Same-day events not yet appended to franchise.eventLog. */
   dayEvents?: readonly DomainEvent[];
 };
+
+export function isOwnerNotificationStillUnread(
+  notification: OwnerNotification,
+  currentDate: string,
+): boolean {
+  if (notification.read) {
+    return false;
+  }
+  return (
+    calendarDaysBetween(notification.occurredOn, currentDate) <=
+    OWNER_NOTIFICATION_UNREAD_DAYS
+  );
+}
+
+function isProtectedOwnerNotification(notification: OwnerNotification): boolean {
+  return (
+    notification.type === "objective_completed" ||
+    notification.type === "objective_failed" ||
+    notification.relatedObjectiveId !== undefined
+  );
+}
+
+export function retainOwnerNotifications(
+  notifications: readonly OwnerNotification[],
+  currentDate: string,
+): OwnerNotification[] {
+  const aged = notifications.map((notification) => {
+    if (isOwnerNotificationStillUnread(notification, currentDate)) {
+      return notification;
+    }
+    if (notification.read) {
+      return notification;
+    }
+    return { ...notification, read: true };
+  });
+  const overflow = aged.length - OWNER_NOTIFICATIONS_MAX;
+  if (overflow <= 0) {
+    return aged;
+  }
+  let dropped = 0;
+  return aged.filter((notification) => {
+    if (dropped >= overflow) {
+      return true;
+    }
+    if (notification.read && !isProtectedOwnerNotification(notification)) {
+      dropped += 1;
+      return false;
+    }
+    return true;
+  });
+}
+
+function ownerNotificationsUnchanged(
+  previous: readonly OwnerNotification[],
+  next: readonly OwnerNotification[],
+): boolean {
+  if (previous.length !== next.length) {
+    return false;
+  }
+  return previous.every((notification, index) => {
+    const retained = next[index];
+    return (
+      retained !== undefined &&
+      retained.id === notification.id &&
+      retained.read === notification.read
+    );
+  });
+}
 
 /**
  * Appends owner-facing notifications for state transitions.
@@ -222,14 +293,22 @@ export function generateOwnerNotifications(
   appendAwarenessBandNotification(state, teamId, date, append);
   appendCalendarStoryNotifications(state, teamId, date, append);
 
-  if (additions.length === 0) {
+  const franchise = getActiveOwnedFranchise(state);
+  const retained = retainOwnerNotifications(
+    [...franchise.notifications, ...additions],
+    date,
+  );
+  if (
+    additions.length === 0 &&
+    ownerNotificationsUnchanged(franchise.notifications, retained)
+  ) {
     return systemResult(state);
   }
 
   return systemResult(
-    withOwnedFranchise(state, teamId, (franchise) => ({
-      ...franchise,
-      notifications: [...franchise.notifications, ...additions],
+    withOwnedFranchise(state, teamId, (ownedFranchise) => ({
+      ...ownedFranchise,
+      notifications: retained,
     })),
   );
 }

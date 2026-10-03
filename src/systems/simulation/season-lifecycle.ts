@@ -16,6 +16,7 @@ import { snapshotTradeDeadline } from "@/systems/league-rules/snapshot-trade-dea
 import { enforceMaxRosterViaDevelopmentLeague } from "@/systems/development-league/enforce-roster-cap";
 import { derivePlannedRegularSeasonStartDate } from "@/systems/simulation/planned-season-dates";
 import { planSeasonEvents } from "@/systems/season-events";
+import { runLeagueStaffAiManagement } from "@/systems/staff-ai-management";
 
 export {
   derivePlannedPreseasonStartDate,
@@ -84,6 +85,14 @@ export function beginRegularSeasonFromPreseason(
   const capped = enforceMaxRosterViaDevelopmentLeague(current);
   current = capped.state;
   events.push(...capped.events);
+
+  const rng = createSeededRng(current.meta.rngState);
+  const staffed = runLeagueStaffAiManagement(current, rng);
+  current = {
+    ...staffed.state,
+    meta: { ...staffed.state.meta, rngState: rng.getState() },
+  };
+  events.push(...staffed.events);
 
   const gate = canBeginRegularSeason(current);
   if (!gate.allowed) {

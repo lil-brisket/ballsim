@@ -403,6 +403,8 @@ export {
   OWNER_OBJECTIVE_CASH_CONSEQUENCE_TYPES,
   objectiveAppliesCashConsequence,
   OWNER_STREAK_NOTIFICATION_THRESHOLD,
+  OWNER_NOTIFICATION_UNREAD_DAYS,
+  OWNER_NOTIFICATIONS_MAX,
   SIGNIFICANT_FINANCIAL_CHANGE,
   GAMEPLAY_LOSS_EXPENSE,
   GAMEPLAY_PLAYOFF_QUALIFICATION_REVENUE,
@@ -415,7 +417,11 @@ export {
   hasAppliedGameplayConsequence,
   withAppliedGameplayConsequence,
 } from "@/systems/gameplay-financial-consequences";
-export { generateOwnerNotifications } from "@/systems/owner-notifications";
+export {
+  generateOwnerNotifications,
+  isOwnerNotificationStillUnread,
+  retainOwnerNotifications,
+} from "@/systems/owner-notifications";
 export {
   calculateFinancialHealth,
   calculateBusinessHealth,
