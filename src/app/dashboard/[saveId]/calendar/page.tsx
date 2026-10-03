@@ -17,13 +17,14 @@ type CalendarPageProps = {
     highlights?: string;
     fromDate?: string;
     focus?: string;
+    resumeTo?: string;
   }>;
 };
 
 /**
  * Owner Mode Calendar — primary time-navigation surface.
  * Month grid + Date Inspector + compact league context.
- * Selecting a date does not simulate; only the inspector action does.
+ * Tapping a future date confirms a simulate-to-date jump.
  */
 export default async function CalendarPage({
   params,
@@ -82,6 +83,7 @@ export default async function CalendarPage({
         daysAdvanced={Number.isFinite(daysAdvanced) ? daysAdvanced : 0}
         highlightCount={Number.isFinite(highlightCount) ? highlightCount : 0}
         fromDate={sp.fromDate ?? null}
+        resumeTo={sp.resumeTo ?? null}
       />
     </>
   );

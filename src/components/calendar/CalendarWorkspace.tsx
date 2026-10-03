@@ -11,7 +11,13 @@ import { CalendarLeagueContextPanel } from "@/components/calendar/CalendarLeague
 import { SimulationSummaryModal } from "@/components/calendar/SimulationSummaryModal";
 import { SimulationPausedBanner } from "@/components/calendar/SimulationPausedBanner";
 import { SeasonLifecycleBanner } from "@/components/calendar/SeasonLifecycleBanner";
+import { SimulateToDateConfirm } from "@/components/calendar/SimulateToDateConfirm";
 import { streamSimulateToDate } from "@/components/calendar/stream-simulate-to-date";
+import {
+  readCalendarResumeTarget,
+  remainingSimulateTarget,
+  writeCalendarResumeTarget,
+} from "@/components/calendar/calendar-resume-target";
 import { useSimulationActivity } from "@/components/game/simulation-activity";
 import { SimulationProgressBanner } from "@/components/game/SimulationProgressBanner";
 import { Drawer } from "@/components/ui/Drawer";
@@ -43,8 +49,8 @@ function useIsDesktopCalendar(): boolean {
     () =>
       typeof window.matchMedia === "function"
         ? window.matchMedia("(min-width: 1024px)").matches
-        : true,
-    () => true,
+        : false,
+    () => false,
   );
 }
 
@@ -53,12 +59,16 @@ function buildCalendarHref(input: {
   year: number;
   month: number;
   date?: string;
+  resumeTo?: string | null;
 }): string {
   const params = new URLSearchParams();
   params.set("year", String(input.year));
   params.set("month", String(input.month));
   if (input.date) {
     params.set("date", input.date);
+  }
+  if (input.resumeTo) {
+    params.set("resumeTo", input.resumeTo);
   }
   return `/dashboard/${input.saveId}/calendar?${params.toString()}`;
 }
@@ -91,6 +101,7 @@ export function CalendarWorkspace(props: {
   daysAdvanced: number;
   highlightCount: number;
   fromDate?: string | null;
+  resumeTo?: string | null;
 }) {
   const isDesktop = useIsDesktopCalendar();
   const router = useRouter();
@@ -102,6 +113,15 @@ export function CalendarWorkspace(props: {
   } = useSimulationActivity();
   const [selectedDate, setSelectedDate] = useState(props.view.selectedDate);
   const [mobileDetailOpen, setMobileDetailOpen] = useState(false);
+  const [confirmTargetDate, setConfirmTargetDate] = useState<string | null>(
+    null,
+  );
+  const [resumeTarget, setResumeTarget] = useState<string | null>(
+    () =>
+      props.resumeTo && props.resumeTo > props.view.currentDate
+        ? props.resumeTo
+        : null,
+  );
   const [simError, setSimError] = useState<string | null>(null);
   const [playback, setPlayback] = useState<PlaybackFrame | null>(null);
   const [resultOverlays, setResultOverlays] = useState<Record<string, string>>(
@@ -117,6 +137,23 @@ export function CalendarWorkspace(props: {
   useEffect(() => {
     setSelectedDate(props.view.selectedDate);
   }, [props.view.selectedDate]);
+
+  useEffect(() => {
+    const fromUrl =
+      props.resumeTo && props.resumeTo > props.view.currentDate
+        ? props.resumeTo
+        : null;
+    const stored = readCalendarResumeTarget(props.saveId);
+    const next =
+      fromUrl ??
+      (stored && stored > props.view.currentDate ? stored : null);
+    setResumeTarget(next);
+    if (fromUrl) {
+      writeCalendarResumeTarget(props.saveId, fromUrl);
+    } else if (stored && stored <= props.view.currentDate) {
+      writeCalendarResumeTarget(props.saveId, null);
+    }
+  }, [props.resumeTo, props.saveId, props.view.currentDate]);
 
   useEffect(() => {
     if (playback) {
@@ -138,6 +175,7 @@ export function CalendarWorkspace(props: {
     year: props.view.year,
     month: props.view.month,
     date: selectedDate,
+    resumeTo: resumeTarget,
   });
 
   const liveCurrentDate = playback?.currentDate ?? props.view.currentDate;
@@ -155,7 +193,7 @@ export function CalendarWorkspace(props: {
   const navigationDisabled = simulationPending || playback != null;
 
   function navigate(
-    next: { year: number; month: number; date?: string },
+    next: { year: number; month: number; date?: string; resumeTo?: string | null },
     mode: "replace" | "push" = "replace",
   ) {
     if (navigationDisabled) return;
@@ -164,6 +202,7 @@ export function CalendarWorkspace(props: {
       year: next.year,
       month: next.month,
       date: next.date,
+      resumeTo: next.resumeTo === undefined ? resumeTarget : next.resumeTo,
     });
     startTransition(() => {
       if (mode === "push") {
@@ -177,6 +216,12 @@ export function CalendarWorkspace(props: {
   function handleSelectDate(date: string) {
     if (navigationDisabled) return;
     setSelectedDate(date);
+    if (date > props.view.currentDate && !props.view.timeDisabled) {
+      setConfirmTargetDate(date);
+      setMobileDetailOpen(false);
+      return;
+    }
+    setConfirmTargetDate(null);
     setMobileDetailOpen(true);
     const { year, month } = parseCalendarDate(date);
     navigate({ year, month, date }, "replace");
@@ -195,6 +240,7 @@ export function CalendarWorkspace(props: {
     if (navigationDisabled) return;
     const { year, month } = parseCalendarDate(props.view.currentDate);
     setSelectedDate(props.view.currentDate);
+    setConfirmTargetDate(null);
     navigate({
       year,
       month,
@@ -208,6 +254,11 @@ export function CalendarWorkspace(props: {
     if (!next) return;
     const { year, month } = parseCalendarDate(next);
     setSelectedDate(next);
+    if (next > props.view.currentDate && !props.view.timeDisabled) {
+      setConfirmTargetDate(next);
+      setMobileDetailOpen(false);
+      return;
+    }
     navigate({ year, month, date: next });
   }
 
@@ -217,11 +268,19 @@ export function CalendarWorkspace(props: {
     setPlayback(null);
     setResultOverlays({});
     setSimulationPending(false);
+    const remaining = remainingSimulateTarget({
+      requestedTargetDate: done.requestedTargetDate,
+      currentDate: done.currentDate,
+      stopReason: done.stopReason,
+    });
+    writeCalendarResumeTarget(props.saveId, remaining);
+    setResumeTarget(remaining);
     const href = buildCalendarHref({
       saveId: props.saveId,
       year: parseCalendarDate(done.currentDate).year,
       month: parseCalendarDate(done.currentDate).month,
       date: done.currentDate,
+      resumeTo: remaining,
     });
     const separator = href.includes("?") ? "&" : "?";
     startTransition(() => {
@@ -284,6 +343,7 @@ export function CalendarWorkspace(props: {
   async function handleSimulate(targetDate: string) {
     if (navigationDisabled) return;
     setSimError(null);
+    setConfirmTargetDate(null);
     setMobileDetailOpen(false);
     setSimulationPending(true);
     setPlayback({
@@ -327,6 +387,13 @@ export function CalendarWorkspace(props: {
     }
   }
 
+  function clearResumeTarget() {
+    writeCalendarResumeTarget(props.saveId, null);
+    setResumeTarget(null);
+    const { year, month } = parseCalendarDate(liveCurrentDate);
+    navigate({ year, month, date: selectedDate, resumeTo: null }, "replace");
+  }
+
   const busy = isPending || simulationPending || playback != null;
   const inspector = (
     <DateInspector
@@ -337,6 +404,8 @@ export function CalendarWorkspace(props: {
       userTeamId={props.view.userTeamId}
       simulating={playback != null}
       onSimulate={handleSimulate}
+      showSimulateAction={isDesktop}
+      hideTitle={!isDesktop}
     />
   );
 
@@ -380,6 +449,34 @@ export function CalendarWorkspace(props: {
         currentDate={liveCurrentDate}
       />
 
+      {resumeTarget && !props.view.timeDisabled && !busy ? (
+        <div
+          role="status"
+          className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-sky-700/50 bg-sky-950/30 px-4 py-3"
+        >
+          <p className="text-sm text-sky-100">
+            Continue simulation through{" "}
+            <span className="font-mono font-medium">{resumeTarget}</span>
+          </p>
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={() => handleSimulate(resumeTarget)}
+              className="rounded-md bg-amber-600 px-4 py-2 text-sm font-medium text-zinc-950 hover:bg-amber-500"
+            >
+              Continue to {resumeTarget}
+            </button>
+            <button
+              type="button"
+              onClick={clearResumeTarget}
+              className="rounded-md border border-zinc-700 px-3 py-2 text-sm text-zinc-200 hover:border-zinc-500"
+            >
+              Dismiss
+            </button>
+          </div>
+        </div>
+      ) : null}
+
       <SeasonLifecycleBanner
         seasonInitializationRequired={props.view.seasonInitializationRequired}
         openingDayPending={props.view.openingDayPending}
@@ -396,6 +493,7 @@ export function CalendarWorkspace(props: {
         onChangeMonth={handleChangeMonth}
         onJumpToday={handleJumpToday}
         onJumpNextGame={handleJumpNextGame}
+        layout="grid"
       />
 
       {isDesktop ? (
@@ -417,6 +515,15 @@ export function CalendarWorkspace(props: {
         </>
       )}
 
+      {confirmTargetDate ? (
+        <SimulateToDateConfirm
+          date={confirmTargetDate}
+          disabled={busy || props.view.timeDisabled}
+          onConfirm={handleSimulate}
+          onCancel={() => setConfirmTargetDate(null)}
+        />
+      ) : null}
+
       <SimulationSummaryModal
         open={props.showSimSummary}
         daysAdvanced={props.daysAdvanced}
@@ -426,6 +533,7 @@ export function CalendarWorkspace(props: {
         teamLabel={props.view.simulationSummary?.teamLabel}
         record={props.view.simulationSummary?.record}
         teamEvents={props.view.simulationSummary?.teamEvents}
+        teamGames={props.view.simulationSummary?.teamGames}
         leagueEvents={props.view.simulationSummary?.leagueEvents}
         injuryNotes={props.view.simulationSummary?.injuryNotes}
         transactionCount={props.view.simulationSummary?.transactionCount}

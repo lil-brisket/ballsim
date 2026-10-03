@@ -23,6 +23,27 @@ import { beginRegularSeasonFromPreseason } from "@/systems/simulation/season-lif
 import { resetDomainEventSequenceForTests } from "@/domain/events/domain-event";
 import { serializeGameState } from "@/persistence/mappers/game-state-mapper";
 
+async function seedPreseasonSave(id: string, seed: number) {
+  resetDomainEventSequenceForTests();
+  const store = createMemorySaveGameStore();
+  let state = createInitialGameState({
+    saveId: id,
+    rngSeed: seed,
+    settings: CBL_GAME_SETTINGS,
+  });
+  const rng = createSeededRng(state.meta.rngState);
+  state = bootstrapWorld(state, rng).state;
+  state = {
+    ...state,
+    meta: {
+      ...state.meta,
+      rngState: rng.getState(),
+    },
+  };
+  await store.create({ id, name: id, state });
+  return { store, state };
+}
+
 async function seedRegularSave(id: string, seed: number) {
   resetDomainEventSequenceForTests();
   const store = createMemorySaveGameStore();
@@ -84,11 +105,13 @@ describe("simulate-to-date", () => {
     );
     expect(result.ok).toBe(true);
     if (!result.ok) return;
-    expect(result.simulation.currentDate > from).toBe(true);
-    expect(result.simulation.currentDate <= target).toBe(true);
-    if (result.simulation.currentDate !== target) {
-      expect(result.simulation.stopReason).toBe("user_team_game");
+    expect(result.simulation.stopReason).not.toBe("user_team_game");
+    expect(result.simulation.stopReason).not.toBe("phase_change");
+    if (result.simulation.stopReason === "pending_owner_decision") {
+      expect(result.simulation.currentDate > from).toBe(true);
+      expect(result.simulation.currentDate <= target).toBe(true);
     } else {
+      expect(result.simulation.currentDate).toBe(target);
       expect(result.simulation.daysAdvanced).toBe(3);
     }
 
@@ -96,6 +119,28 @@ describe("simulate-to-date", () => {
     expect(reloaded!.state.world.calendar.currentDate).toBe(
       result.simulation.currentDate,
     );
+  });
+
+  it("lands on a preseason target without overshooting before opening night", async () => {
+    const { store, state } = await seedPreseasonSave("sim_pre_jump", 36);
+    const from = state.world.calendar.currentDate;
+    const target = addCalendarDays(from, 4);
+    const result = await advanceOwnerTime(
+      "sim_pre_jump",
+      { targetDate: target },
+      store,
+    );
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.simulation.stopReason).not.toBe("user_team_game");
+    expect(result.simulation.stopReason).not.toBe("phase_change");
+    if (result.simulation.stopReason === "pending_owner_decision") {
+      expect(result.simulation.currentDate > from).toBe(true);
+      expect(result.simulation.currentDate <= target).toBe(true);
+    } else {
+      expect(result.simulation.currentDate).toBe(target);
+      expect(result.simulation.daysAdvanced).toBe(4);
+    }
   });
 
   it("persists media feed fields after multi-day advance", async () => {

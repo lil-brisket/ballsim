@@ -1,9 +1,14 @@
 import { describe, expect, it } from "vitest";
-import { toLeagueScheduleView } from "@/state/league-schedule-selectors";
+import {
+  groupLeagueScheduleRowsByDate,
+  toLeagueScheduleView,
+} from "@/state/league-schedule-selectors";
 import { toLeagueInjuryBriefing } from "@/state/league-injury-selectors";
 import { createTestGameState } from "../factories/game-state";
 import { bootstrapWorld } from "@/systems/world-pipeline";
 import { createSeededRng } from "@/domain/rng";
+import { addCalendarDays } from "@/domain/calendar-date";
+import { beginRegularSeasonFromPreseason } from "@/systems/simulation/season-lifecycle";
 import {
   mediaPresentationTier,
   pickFeaturedStoryId,
@@ -35,6 +40,43 @@ describe("league-schedule-selectors", () => {
         true,
       );
     }
+  });
+
+  it("lists every current-season final when status is final", () => {
+    let state = createTestGameState({ saveId: "sched_finals" });
+    const rng = createSeededRng(state.meta.rngState);
+    state = bootstrapWorld(state, rng).state;
+    state = beginRegularSeasonFromPreseason(state).state;
+    const currentDate = state.world.calendar.currentDate;
+    const games = { ...state.competition.games };
+    const ids = Object.keys(games).slice(0, 15);
+    expect(ids.length).toBe(15);
+    for (let index = 0; index < ids.length; index += 1) {
+      const gameId = ids[index]!;
+      const game = games[gameId]!;
+      games[gameId] = {
+        ...game,
+        status: "final",
+        date: addCalendarDays(currentDate, -(index + 1)),
+        score: { home: 110, away: 100 },
+      };
+    }
+    state = {
+      ...state,
+      competition: {
+        ...state.competition,
+        games,
+      },
+    };
+
+    const capped = toLeagueScheduleView(state, {});
+    expect(capped.recent.length).toBeLessThanOrEqual(12);
+
+    const allFinals = toLeagueScheduleView(state, { status: "final" });
+    expect(allFinals.recent.length).toBe(15);
+    const grouped = groupLeagueScheduleRowsByDate(allFinals.recent);
+    expect(grouped.length).toBeGreaterThan(0);
+    expect(grouped.every((group) => group.games.length > 0)).toBe(true);
   });
 });
 

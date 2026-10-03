@@ -42,6 +42,7 @@ describe("streamSimulateToDate", () => {
               fromDate: "2026-10-01",
               toDate: "2026-10-02",
               currentDate: "2026-10-02",
+              requestedTargetDate: "2026-10-05",
               stopReason: "user_team_game",
             })}\n`,
           ),

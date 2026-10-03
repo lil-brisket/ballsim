@@ -15,6 +15,10 @@ export function DateInspector(props: {
   userTeamId?: TeamId;
   simulating?: boolean;
   onSimulate: (targetDate: string) => void;
+  /** When false, preview copy stays but the Simulate control is omitted (sheet footer). */
+  showSimulateAction?: boolean;
+  /** Hide the date heading when a parent sheet already shows it. */
+  hideTitle?: boolean;
 }) {
   const { inspector } = props;
   const statusLabel =
@@ -32,15 +36,17 @@ export function DateInspector(props: {
 
   return (
     <aside className="flex h-full flex-col rounded-lg border border-zinc-800 bg-zinc-950/50">
-      <div className="border-b border-zinc-800 px-4 py-3">
-        <div className="flex flex-wrap items-center gap-2">
-          <h3 className="text-base font-medium text-zinc-100">
-            {inspector.longDateLabel}
-          </h3>
-          <StatusBadge label={statusLabel} tone={statusTone} />
+      {props.hideTitle ? null : (
+        <div className="border-b border-zinc-800 px-4 py-3">
+          <div className="flex flex-wrap items-center gap-2">
+            <h3 className="text-base font-medium text-zinc-100">
+              {inspector.longDateLabel}
+            </h3>
+            <StatusBadge label={statusLabel} tone={statusTone} />
+          </div>
+          <p className="mt-1 font-mono text-xs text-zinc-500">{inspector.date}</p>
         </div>
-        <p className="mt-1 font-mono text-xs text-zinc-500">{inspector.date}</p>
-      </div>
+      )}
 
       <div className="flex-1 space-y-4 overflow-y-auto px-4 py-3">
         <section className="space-y-1">
@@ -76,15 +82,17 @@ export function DateInspector(props: {
                   ? ` · ${inspector.teamGame.resultLabel}`
                   : ` · ${inspector.teamGame.status}`}
               </p>
-              <Link
-                href={`/dashboard/${props.saveId}/games/${inspector.teamGame.gameId}`}
-                className={cn(
-                  "inline-block text-xs text-amber-400 hover:text-amber-300",
-                  focusRingClass,
-                )}
-              >
-                View game
-              </Link>
+              {inspector.teamGame.status === "final" ? (
+                <Link
+                  href={`/dashboard/${props.saveId}/games/${inspector.teamGame.gameId}`}
+                  className={cn(
+                    "inline-flex min-h-11 items-center text-xs text-amber-400 hover:text-amber-300",
+                    focusRingClass,
+                  )}
+                >
+                  View game
+                </Link>
+              ) : null}
             </div>
           ) : (
             <p className="text-sm text-zinc-400">No team game</p>
@@ -151,25 +159,27 @@ export function DateInspector(props: {
                 {inspector.simulationPreview.blockReason}
               </p>
             ) : null}
-            <SimulationPreviewAction
-              saveId={props.saveId}
-              returnPath={props.returnPath}
-              targetDate={inspector.date}
-              disabled={
-                props.timeDisabled || !inspector.simulationPreview.canSimulate
-              }
-              canSimulate={
-                inspector.action === "simulate_to_date" &&
-                inspector.simulationPreview.canSimulate
-              }
-              simulating={props.simulating}
-              onSimulate={props.onSimulate}
-            />
+            {props.showSimulateAction === false ? null : (
+              <SimulationPreviewAction
+                saveId={props.saveId}
+                returnPath={props.returnPath}
+                targetDate={inspector.date}
+                disabled={
+                  props.timeDisabled || !inspector.simulationPreview.canSimulate
+                }
+                canSimulate={
+                  inspector.action === "simulate_to_date" &&
+                  inspector.simulationPreview.canSimulate
+                }
+                simulating={props.simulating}
+                onSimulate={props.onSimulate}
+              />
+            )}
           </section>
         ) : (
           <p className="border-t border-zinc-800 pt-3 text-xs text-zinc-500">
-            Select a future date to preview and confirm a simulation jump.
-            Selecting a date alone does not advance time.
+            Select a future date to simulate through that day. Past dates show
+            results for games already played.
           </p>
         )}
       </div>

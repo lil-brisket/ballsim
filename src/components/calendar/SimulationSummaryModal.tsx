@@ -13,7 +13,8 @@ export function SimulationSummaryModal(props: {
   recentHighlights: readonly CalendarPageMediaHighlight[];
   teamLabel?: string | null;
   record?: { wins: number; losses: number; gamesPlayed: number } | null;
-  teamEvents?: readonly { date: string; headline: string }[];
+  teamEvents?: readonly { date: string; headline: string; gameId?: string }[];
+  teamGames?: readonly { date: string; headline: string; gameId?: string }[];
   leagueEvents?: readonly { date: string; headline: string }[];
   injuryNotes?: readonly string[];
   transactionCount?: number;
@@ -79,12 +80,18 @@ export function SimulationSummaryModal(props: {
   const attention = [...(props.attentionItems ?? []), ...attentionFromInjuries];
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 p-4 sm:items-center">
+    <div className="fixed inset-0 z-50 flex items-end justify-center p-4 sm:items-center">
+      <button
+        type="button"
+        aria-label="Dismiss simulation summary"
+        className="absolute inset-0 bg-black/60"
+        onClick={dismiss}
+      />
       <div
         role="dialog"
         aria-modal="true"
         aria-labelledby="simulation-summary-title"
-        className="max-h-[85vh] w-full max-w-lg overflow-hidden rounded-xl border border-zinc-700 bg-zinc-900 shadow-xl"
+        className="relative z-10 flex max-h-[85dvh] w-full max-w-lg flex-col overflow-hidden rounded-xl border border-zinc-700 bg-zinc-900 shadow-xl"
       >
         <div className="border-b border-zinc-800 px-5 py-4">
           <p className="font-mono text-[0.65rem] uppercase tracking-[0.16em] text-amber-500">
@@ -104,7 +111,7 @@ export function SimulationSummaryModal(props: {
           ) : null}
         </div>
 
-        <div className="max-h-[55vh] space-y-4 overflow-y-auto px-5 py-4">
+        <div className="max-h-[55dvh] min-h-0 flex-1 space-y-4 overflow-y-auto px-5 py-4">
           {props.teamLabel || props.record ? (
             <section className="space-y-2 rounded-md border border-zinc-800 bg-zinc-950/40 px-3 py-3">
               <p className="text-xs uppercase tracking-wide text-zinc-500">
@@ -187,6 +194,36 @@ export function SimulationSummaryModal(props: {
             </section>
           ) : null}
 
+          {props.teamGames && props.teamGames.length > 0 ? (
+            <section className="space-y-2">
+              <p className="text-xs uppercase tracking-wide text-zinc-500">
+                Box scores
+              </p>
+              <ul className="space-y-1.5">
+                {props.teamGames.map((game) => (
+                  <li
+                    key={`${game.date}-${game.gameId ?? game.headline}`}
+                    className="rounded-md border border-zinc-800 px-3 py-2 text-sm text-zinc-100"
+                  >
+                    <span className="font-mono text-xs text-amber-400/80">
+                      {game.date}
+                    </span>
+                    {game.gameId && props.saveId ? (
+                      <Link
+                        href={`/dashboard/${props.saveId}/games/${game.gameId}`}
+                        className="mt-0.5 block text-amber-300 hover:text-amber-200"
+                      >
+                        {game.headline}
+                      </Link>
+                    ) : (
+                      <p>{game.headline}</p>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            </section>
+          ) : null}
+
           {props.teamEvents && props.teamEvents.length > 0 ? (
             <section className="space-y-2">
               <p className="text-xs uppercase tracking-wide text-zinc-500">
@@ -232,11 +269,11 @@ export function SimulationSummaryModal(props: {
           ) : null}
         </div>
 
-        <div className="flex justify-end border-t border-zinc-800 px-5 py-3">
+        <div className="safe-area-bottom flex justify-end border-t border-zinc-800 px-5 py-3">
           <button
             type="button"
             onClick={dismiss}
-            className="rounded-md bg-amber-600 px-4 py-1.5 text-sm font-medium text-zinc-950 hover:bg-amber-500"
+            className="inline-flex min-h-11 items-center justify-center rounded-md bg-amber-600 px-4 text-sm font-medium text-zinc-950 hover:bg-amber-500 touch-manipulation active:opacity-80"
           >
             Continue
           </button>

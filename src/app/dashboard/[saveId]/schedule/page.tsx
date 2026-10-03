@@ -10,7 +10,7 @@ import {
 } from "@/components/league/team-filter-utils";
 import { EmptyState, ErrorState } from "@/components/owner/EmptyState";
 import { PageHeader } from "@/components/owner/PageHeader";
-import { shiftFocusDate } from "@/state/league-schedule-selectors";
+import { shiftFocusDate, groupLeagueScheduleRowsByDate } from "@/state/league-schedule-selectors";
 import { cn, focusRingClass } from "@/components/ui/styles";
 
 type SchedulePageProps = {
@@ -244,29 +244,62 @@ export default async function SchedulePage({
           {view.recent.length > 0 ? (
             <section>
               <h2 className="mb-2 font-mono text-xs uppercase tracking-[0.14em] text-zinc-500">
-                Recent Results
+                {statusFilter === "final" ? "Results" : "Recent Results"}
               </h2>
-              <ul className="space-y-2">
-                {view.recent.map((game) => (
-                  <li key={game.gameId}>
-                    <LeagueGameRow
-                      saveId={saveId}
-                      gameId={game.gameId}
-                      date={game.date}
-                      homeTeamId={game.homeTeamId}
-                      awayTeamId={game.awayTeamId}
-                      homeAbbreviation={game.homeAbbreviation}
-                      awayAbbreviation={game.awayAbbreviation}
-                      homeBranding={game.homeBranding}
-                      awayBranding={game.awayBranding}
-                      homeScore={game.homeScore}
-                      awayScore={game.awayScore}
-                      status={game.status}
-                      competitionType={game.competitionType}
-                    />
-                  </li>
-                ))}
-              </ul>
+              {statusFilter === "final" ? (
+                <div className="space-y-4">
+                  {groupLeagueScheduleRowsByDate(view.recent).map((group) => (
+                    <div key={group.date} className="space-y-2">
+                      <h3 className="font-mono text-xs text-zinc-400">
+                        {group.date}
+                      </h3>
+                      <ul className="space-y-2">
+                        {group.games.map((game) => (
+                          <li key={game.gameId}>
+                            <LeagueGameRow
+                              saveId={saveId}
+                              gameId={game.gameId}
+                              date={game.date}
+                              homeTeamId={game.homeTeamId}
+                              awayTeamId={game.awayTeamId}
+                              homeAbbreviation={game.homeAbbreviation}
+                              awayAbbreviation={game.awayAbbreviation}
+                              homeBranding={game.homeBranding}
+                              awayBranding={game.awayBranding}
+                              homeScore={game.homeScore}
+                              awayScore={game.awayScore}
+                              status={game.status}
+                              competitionType={game.competitionType}
+                            />
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <ul className="space-y-2">
+                  {view.recent.map((game) => (
+                    <li key={game.gameId}>
+                      <LeagueGameRow
+                        saveId={saveId}
+                        gameId={game.gameId}
+                        date={game.date}
+                        homeTeamId={game.homeTeamId}
+                        awayTeamId={game.awayTeamId}
+                        homeAbbreviation={game.homeAbbreviation}
+                        awayAbbreviation={game.awayAbbreviation}
+                        homeBranding={game.homeBranding}
+                        awayBranding={game.awayBranding}
+                        homeScore={game.homeScore}
+                        awayScore={game.awayScore}
+                        status={game.status}
+                        competitionType={game.competitionType}
+                      />
+                    </li>
+                  ))}
+                </ul>
+              )}
             </section>
           ) : null}
         </>

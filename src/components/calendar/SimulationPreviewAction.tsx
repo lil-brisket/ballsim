@@ -40,8 +40,8 @@ export function SimulationPreviewAction(props: {
         </p>
       ) : (
         <p className="text-xs text-zinc-500">
-          Simulation stops at your next team game. CPU games use a fast
-          box-score path.
+          Simulates all games through this date, including yours. CPU games
+          use a fast box-score path.
         </p>
       )}
     </div>

@@ -76,6 +76,7 @@ import {
   type PhaseResponsibility,
 } from "@/systems/simulation/phase-responsibility";
 import { isContractActive } from "@/domain/entities/contract";
+import { hasBlockingOwnerDecision } from "@/domain/entities/owner-decision";
 import { isMediaUnread } from "@/domain/entities/media-item";
 import { derivePlayoffResults } from "@/systems/franchise-history";
 import { getActiveOwnedFranchise } from "@/state/owner-context";
@@ -726,7 +727,7 @@ function buildFlags(data: CanonicalDashboardData): OwnerDashboardFlags {
         data.snapshot.controlledStanding.losses ===
         0,
     seasonReviewPending: data.state.competition.season.phase === "postseason",
-    pendingOwnerDecision: data.state.user.pendingOwnerDecisions.length > 0,
+    pendingOwnerDecision: hasBlockingOwnerDecision(data.state.user),
   };
 }
 

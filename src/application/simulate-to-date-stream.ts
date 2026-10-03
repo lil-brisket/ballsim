@@ -12,6 +12,7 @@ export type SimulateToDateDoneEvent = {
   fromDate: string;
   toDate: string;
   currentDate: string;
+  requestedTargetDate: string;
   stopReason?: string;
 };
 

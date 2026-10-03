@@ -91,7 +91,7 @@ describe("preseason → regular phase-boundary simulation", () => {
     expect(played.every((g) => g.status === "final")).toBe(true);
   });
 
-  it("simulateToDate stops at opener with phase_change, not at target date", async () => {
+  it("simulateToDate plays through the opener and reaches the target date", async () => {
     resetDomainEventSequenceForTests();
     const store = createMemorySaveGameStore();
     let state = createInitialGameState({
@@ -101,7 +101,7 @@ describe("preseason → regular phase-boundary simulation", () => {
     });
     const rng = createSeededRng(state.meta.rngState);
     state = bootstrapWorld(state, rng).state;
-    // Start one day before the planned opener so simulate-to-date hits the boundary quickly.
+    // Start one day before the planned opener so simulate-to-date crosses the boundary.
     state = {
       ...state,
       world: {
@@ -131,26 +131,33 @@ describe("preseason → regular phase-boundary simulation", () => {
     expect(result.ok).toBe(true);
     if (!result.ok) return;
 
-    expect(result.simulation.stopReason).toBe("phase_change");
-    expect(result.simulation.phaseChanged).toBe(true);
-    expect(result.simulation.gamesSimulated).toBe(0);
-    expect(result.simulation.currentDate).not.toBe(target);
+    expect(result.simulation.stopReason).not.toBe("phase_change");
+    expect(result.simulation.stopReason).not.toBe("user_team_game");
+    expect(result.simulation.gamesSimulated).toBeGreaterThan(0);
+    if (result.simulation.stopReason === "pending_owner_decision") {
+      expect(result.simulation.currentDate > from).toBe(true);
+      expect(result.simulation.currentDate <= target).toBe(true);
+    } else {
+      expect(result.simulation.currentDate).toBe(target);
+    }
 
     const reloaded = await store.load("sim_to_date_pre");
     expect(reloaded).not.toBeNull();
     const after = reloaded!.state;
-    expect(result.simulation.currentDate).toBe(
-      after.competition.season.regularSeasonStartDate,
-    );
+    expect(after.world.calendar.currentDate).toBe(target);
     expect(after.competition.season.phase).toBe("regular");
     expect(after.competition.schedule.gameIds.length).toBeGreaterThan(0);
 
-    const openers = Object.values(after.competition.games).filter(
-      (g) =>
-        g.date === after.competition.season.regularSeasonStartDate &&
-        g.competitionType === "regular_season",
-    );
-    expect(openers.every((g) => g.status === "scheduled")).toBe(true);
+    const openerDate = after.competition.season.regularSeasonStartDate;
+    expect(openerDate).toBeTruthy();
+    if (openerDate && openerDate < target) {
+      const openers = Object.values(after.competition.games).filter(
+        (g) =>
+          g.date === openerDate && g.competitionType === "regular_season",
+      );
+      expect(openers.length).toBeGreaterThan(0);
+      expect(openers.every((g) => g.status === "final")).toBe(true);
+    }
   });
 
   it("does not mutate state when regular-season gates fail", () => {

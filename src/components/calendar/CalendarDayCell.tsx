@@ -4,6 +4,24 @@ function dayNumber(isoDate: string): string {
   return String(Number(isoDate.slice(8, 10)));
 }
 
+export function calendarDayAriaLabel(cell: CalendarDayCellData): string {
+  const teamGame = cell.teamGame;
+  const specialCount = cell.specialEvents.length;
+  const parts = [
+    cell.date,
+    cell.isToday ? "current simulation date" : null,
+    cell.isNextTeamGame ? "next team game" : null,
+    teamGame
+      ? `${teamGame.homeAwayLabel} vs ${teamGame.opponentName}${
+          teamGame.resultLabel ? ` ${teamGame.resultLabel}` : ""
+        }`
+      : null,
+    ...(cell.leagueMilestones ?? []).map((milestone) => milestone.label),
+    specialCount > 0 ? `${specialCount} special events` : null,
+  ];
+  return parts.filter(Boolean).join(", ");
+}
+
 export function formatShortDate(isoDate: string): string {
   const month = Number(isoDate.slice(5, 7));
   const day = Number(isoDate.slice(8, 10));
@@ -78,19 +96,6 @@ export function CalendarDayCell(props: {
   const specialCount = cell.specialEvents.length;
   const milestoneCount = (cell.leagueMilestones ?? []).length;
 
-  const ariaParts = [
-    cell.date,
-    cell.isToday ? "current simulation date" : null,
-    cell.isNextTeamGame ? "next team game" : null,
-    teamGame
-      ? `${teamGame.homeAwayLabel} vs ${teamGame.opponentName}${
-          teamGame.resultLabel ? ` ${teamGame.resultLabel}` : ""
-        }`
-      : null,
-    ...(cell.leagueMilestones ?? []).map((milestone) => milestone.label),
-    specialCount > 0 ? `${specialCount} special events` : null,
-  ];
-
   return (
     <button
       type="button"
@@ -98,7 +103,7 @@ export function CalendarDayCell(props: {
       onClick={() => {
         if (!disabled) onSelect(cell.date);
       }}
-      aria-label={ariaParts.filter(Boolean).join(", ")}
+      aria-label={calendarDayAriaLabel(cell)}
       aria-pressed={selected}
       className={[
         "flex min-h-[5.5rem] flex-col gap-1 rounded-md border p-1.5 text-left transition-colors sm:min-h-[6.75rem] sm:p-2",

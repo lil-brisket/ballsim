@@ -6,6 +6,8 @@ import {
   CalendarDayCell,
   formatShortDate,
 } from "@/components/calendar/CalendarDayCell";
+import { CalendarAgendaList } from "@/components/calendar/CalendarAgendaList";
+import { cn, touchTargetClass } from "@/components/ui/styles";
 
 const WEEKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"] as const;
 
@@ -84,13 +86,31 @@ export function CalendarMonthView(props: {
   onChangeMonth: (year: number, month: number) => void;
   onJumpToday: () => void;
   onJumpNextGame: () => void;
+  layout?: "grid" | "agenda";
 }) {
   const title = `${MONTH_NAMES[props.grid.month - 1]} ${props.grid.year}`;
   const prev = shiftMonth(props.grid.year, props.grid.month, -1);
   const next = shiftMonth(props.grid.year, props.grid.month, 1);
   const disabled = props.navigationDisabled === true;
-  const navButtonClass =
-    "rounded-md border border-zinc-700 px-3 py-1.5 text-sm text-zinc-200 hover:border-amber-600 disabled:pointer-events-none disabled:opacity-40";
+  const layout = props.layout ?? "grid";
+  const navButtonClass = cn(
+    touchTargetClass,
+    "rounded-md border border-zinc-700 px-3 text-sm text-zinc-200 hover:border-amber-600 disabled:pointer-events-none disabled:opacity-40",
+  );
+
+  const liveDays = props.grid.weeks.flat().map((cell) => {
+    const overlay = props.resultOverlays?.[cell.date];
+    return {
+      ...cell,
+      isToday: cell.date === props.currentDate,
+      isPast: cell.date < props.currentDate,
+      isFuture: cell.date > props.currentDate,
+      teamGame:
+        cell.teamGame && overlay
+          ? { ...cell.teamGame, resultLabel: overlay }
+          : cell.teamGame,
+    };
+  });
 
   return (
     <div className="space-y-3">
@@ -117,7 +137,10 @@ export function CalendarMonthView(props: {
             type="button"
             disabled={disabled}
             onClick={props.onJumpToday}
-            className="rounded-md border border-amber-700/50 bg-amber-950/30 px-3 py-1.5 text-sm text-amber-200 hover:border-amber-500 disabled:pointer-events-none disabled:opacity-40"
+            className={cn(
+              touchTargetClass,
+              "rounded-md border border-amber-700/50 bg-amber-950/30 px-3 text-sm text-amber-200 hover:border-amber-500 disabled:pointer-events-none disabled:opacity-40",
+            )}
           >
             Today
           </button>
@@ -134,7 +157,10 @@ export function CalendarMonthView(props: {
               type="button"
               disabled={disabled}
               onClick={props.onJumpNextGame}
-              className="rounded-md border border-sky-700/50 bg-sky-950/30 px-3 py-1.5 text-sm text-sky-200 hover:border-sky-500 disabled:pointer-events-none disabled:opacity-40"
+              className={cn(
+                touchTargetClass,
+                "rounded-md border border-sky-700/50 bg-sky-950/30 px-3 text-sm text-sky-200 hover:border-sky-500 disabled:pointer-events-none disabled:opacity-40",
+              )}
             >
               Next Game → {formatShortDate(props.nextTeamGameDate)}
             </button>
@@ -142,44 +168,40 @@ export function CalendarMonthView(props: {
         </div>
       </div>
 
-      <div
-        className={`grid grid-cols-7 gap-1 sm:gap-1.5 ${
-          disabled ? "pointer-events-none opacity-60" : ""
-        }`}
-      >
-        {WEEKDAYS.map((day) => (
-          <div
-            key={day}
-            className="px-1 py-1 text-center text-[10px] uppercase tracking-wide text-zinc-500 sm:text-xs"
-          >
-            {day}
-          </div>
-        ))}
-        {props.grid.weeks.flatMap((week) =>
-          week.map((cell) => {
-            const overlay = props.resultOverlays?.[cell.date];
-            const liveCell = {
-              ...cell,
-              isToday: cell.date === props.currentDate,
-              isPast: cell.date < props.currentDate,
-              isFuture: cell.date > props.currentDate,
-              teamGame:
-                cell.teamGame && overlay
-                  ? { ...cell.teamGame, resultLabel: overlay }
-                  : cell.teamGame,
-            };
-            return (
-              <CalendarDayCell
-                key={cell.date}
-                cell={liveCell}
-                selected={cell.date === props.selectedDate}
-                disabled={disabled}
-                onSelect={props.onSelectDate}
-              />
-            );
-          }),
-        )}
-      </div>
+      {layout === "agenda" ? (
+        <div className={disabled ? "pointer-events-none opacity-60" : ""}>
+          <CalendarAgendaList
+            days={liveDays}
+            selectedDate={props.selectedDate}
+            disabled={disabled}
+            onSelectDate={props.onSelectDate}
+          />
+        </div>
+      ) : (
+        <div
+          className={`grid grid-cols-7 gap-1 sm:gap-1.5 ${
+            disabled ? "pointer-events-none opacity-60" : ""
+          }`}
+        >
+          {WEEKDAYS.map((day) => (
+            <div
+              key={day}
+              className="px-1 py-1 text-center text-[10px] uppercase tracking-wide text-zinc-500 sm:text-xs"
+            >
+              {day}
+            </div>
+          ))}
+          {liveDays.map((cell) => (
+            <CalendarDayCell
+              key={cell.date}
+              cell={cell}
+              selected={cell.date === props.selectedDate}
+              disabled={disabled}
+              onSelect={props.onSelectDate}
+            />
+          ))}
+        </div>
+      )}
 
       <CalendarMilestoneLegend grid={props.grid} />
     </div>

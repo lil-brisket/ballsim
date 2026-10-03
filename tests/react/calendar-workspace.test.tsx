@@ -210,14 +210,12 @@ describe("CalendarWorkspace redesign", () => {
       </SimulationActivityProvider>,
     );
 
-    expect(screen.getByText("Friday, September 18, 2026")).toBeTruthy();
-    expect(screen.getAllByText("HOME").length).toBeGreaterThan(0);
     expect(screen.getByText("League context")).toBeTruthy();
     expect(screen.getByText("#3")).toBeTruthy();
-    expect(
-      screen.getByRole("button", { name: /Simulate to date/i }),
-    ).toBeTruthy();
+    expect(screen.getByText("September 2026")).toBeTruthy();
+    expect(screen.getByText("Mon")).toBeTruthy();
 
+    expect(screen.queryByRole("dialog")).toBeNull();
     expect(screen.queryByText("Simulation shortcuts")).toBeNull();
     expect(screen.queryByText("Stop conditions")).toBeNull();
     expect(screen.queryByText("1 Day")).toBeNull();
@@ -225,9 +223,10 @@ describe("CalendarWorkspace redesign", () => {
     unmount();
   });
 
-  it("uses Next Game as date navigation only", () => {
+  it("uses Next Game to confirm a simulate-to-date jump", () => {
     replace.mockClear();
     push.mockClear();
+    streamMocks.streamSimulateToDate.mockClear();
     const { unmount } = render(
       <SimulationActivityProvider>
         <CalendarWorkspace
@@ -240,15 +239,17 @@ describe("CalendarWorkspace redesign", () => {
       </SimulationActivityProvider>,
     );
     fireEvent.click(screen.getByRole("button", { name: /Next Game →/i }));
-    expect(replace).toHaveBeenCalled();
-    const href = String(replace.mock.calls[0]?.[0] ?? "");
-    expect(href).toContain("date=2026-09-18");
-    expect(href).not.toContain("simulate");
-    expect(replace.mock.calls[0]?.[1]).toEqual({ scroll: false });
+    expect(screen.getByRole("dialog")).toBeTruthy();
+    expect(
+      screen.getByRole("button", { name: /Simulate to date/i }),
+    ).toBeTruthy();
+    expect(streamMocks.streamSimulateToDate).not.toHaveBeenCalled();
+    expect(replace).not.toHaveBeenCalled();
     unmount();
   });
 
-  it("does not render simulate action for past dates", () => {
+  it("does not simulate when selecting a past date", () => {
+    streamMocks.streamSimulateToDate.mockClear();
     const pastInspector = {
       date: "2026-09-10",
       longDateLabel: "Thursday, September 10, 2026",
@@ -278,6 +279,7 @@ describe("CalendarWorkspace redesign", () => {
     expect(
       screen.queryByRole("button", { name: /Simulate to date/i }),
     ).toBeNull();
+    expect(streamMocks.streamSimulateToDate).not.toHaveBeenCalled();
     unmount();
   });
 
@@ -331,8 +333,9 @@ describe("CalendarWorkspace redesign", () => {
     unmount();
   });
 
-  it("does not reset scroll when selecting a date", () => {
+  it("confirms before simulating when a future date is pressed", async () => {
     replace.mockClear();
+    streamMocks.streamSimulateToDate.mockClear();
     const { unmount } = render(
       <SimulationActivityProvider>
         <CalendarWorkspace
@@ -349,8 +352,17 @@ describe("CalendarWorkspace redesign", () => {
         name: "2026-09-18, next team game, HOME vs Rivermen",
       }),
     );
-    expect(replace).toHaveBeenCalled();
-    expect(replace.mock.calls[0]?.[1]).toEqual({ scroll: false });
+    expect(screen.getByRole("dialog")).toBeTruthy();
+    expect(screen.getByText(/Simulate through 2026-09-18/)).toBeTruthy();
+    expect(streamMocks.streamSimulateToDate).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole("button", { name: /Simulate to date/i }));
+    await waitFor(() => {
+      expect(streamMocks.streamSimulateToDate).toHaveBeenCalledWith(
+        "save_cal",
+        "2026-09-18",
+        expect.any(Function),
+      );
+    });
     unmount();
   });
 
@@ -406,6 +418,11 @@ describe("CalendarWorkspace redesign", () => {
         />
       </SimulationActivityProvider>,
     );
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: "2026-09-18, next team game, HOME vs Rivermen",
+      }),
+    );
     fireEvent.click(screen.getByRole("button", { name: /Simulate to date/i }));
     await waitFor(() => {
       expect(
@@ -413,7 +430,7 @@ describe("CalendarWorkspace redesign", () => {
           name: /2026-09-18, current simulation date/,
         }),
       ).toBeTruthy();
-      expect(screen.getByText("W 110-102")).toBeTruthy();
+      expect(screen.getByText(/W 110-102/)).toBeTruthy();
       expect(screen.getByText(/Day 5 \/ 5/)).toBeTruthy();
     });
     unmount();
@@ -448,6 +465,11 @@ describe("CalendarWorkspace redesign", () => {
         />
       </SimulationActivityProvider>,
     );
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: "2026-09-18, next team game, HOME vs Rivermen",
+      }),
+    );
     fireEvent.click(screen.getByRole("button", { name: /Simulate to date/i }));
     await waitFor(() => {
       expect(screen.getByText("October 2026")).toBeTruthy();
@@ -456,7 +478,7 @@ describe("CalendarWorkspace redesign", () => {
     unmount();
   });
 
-  it("opens the date inspector in a drawer on small screens", async () => {
+  it("keeps the month grid on mobile and does not auto-open a drawer", async () => {
     const matchMedia = window.matchMedia;
     Object.defineProperty(window, "matchMedia", {
       writable: true,
@@ -483,23 +505,44 @@ describe("CalendarWorkspace redesign", () => {
         />
       </SimulationActivityProvider>,
     );
+    expect(screen.getByText("Mon")).toBeTruthy();
+    expect(screen.getByText("September 2026")).toBeTruthy();
     expect(screen.queryByRole("dialog")).toBeNull();
     fireEvent.click(
       screen.getByRole("button", {
-        name: "2026-09-18, next team game, HOME vs Rivermen",
+        name: "2026-09-13, current simulation date",
       }),
     );
     await waitFor(() => {
       expect(screen.getByRole("dialog")).toBeTruthy();
-      expect(
-        screen.getByRole("button", { name: /Simulate to date/i }),
-      ).toBeTruthy();
     });
+    expect(
+      screen.queryByRole("button", { name: /Simulate to date/i }),
+    ).toBeNull();
     unmount();
     Object.defineProperty(window, "matchMedia", {
       writable: true,
       configurable: true,
       value: matchMedia,
     });
+  });
+
+  it("shows Continue after a mid-jump owner decision pause", () => {
+    const { unmount } = render(
+      <SimulationActivityProvider>
+        <CalendarWorkspace
+          view={makeView()}
+          saveId="save_cal"
+          showSimSummary={false}
+          daysAdvanced={0}
+          highlightCount={0}
+          resumeTo="2026-10-01"
+        />
+      </SimulationActivityProvider>,
+    );
+    expect(
+      screen.getByRole("button", { name: /Continue to 2026-10-01/ }),
+    ).toBeTruthy();
+    unmount();
   });
 });

@@ -340,6 +340,7 @@ import { getActionBlockReason } from "@/systems/league-rules";
 import { enterOffseasonFromPostseason } from "@/systems/simulation/season-lifecycle";
 import {
   derivePlannedPreseasonStartDate,
+  derivePlannedRegularSeasonStartDate,
   needsRegularSeasonInitialization,
 } from "@/systems/simulation/planned-season-dates";
 import { runAiContinuity } from "@/systems/simulation/ai-continuity";
@@ -367,6 +368,7 @@ import {
 } from "@/state/roster-page-selectors";
 import {
   applyTradeCounterofferState,
+  getActiveOwnerDecision,
   hasActiveOwnerDecision,
   resolvePendingOwnerDecision,
 } from "@/systems/owner-decisions";
@@ -1270,7 +1272,12 @@ export async function loadCalendarPageView(
             reason: "owner_decision" as const,
             message:
               "Simulation paused — a required owner decision must be resolved.",
-            resolveHref: `/dashboard/${saveId}`,
+            resolveHref: (() => {
+              const blocking = getActiveOwnerDecision(state.user);
+              return blocking
+                ? `/dashboard/${saveId}/trades/${blocking.id}`
+                : `/dashboard/${saveId}`;
+            })(),
           }
         : { reason: null, message: null, resolveHref: null },
     simulationSummary: (() => {
@@ -1918,22 +1925,34 @@ export async function advanceOwnerTime(
       }
 
       const stopConditions = options.stopConditions ?? [];
-      // Owner calendar simulate-to-date always pauses at phase boundaries so the
-      // user can see the new phase (e.g. regular-season schedule) before continuing.
       const isCalendarTarget =
         options.targetDate != null || options.targetMode != null;
       const stopOnPhaseChange =
         options.stopOnPhaseChange === true ||
-        stopConditions.includes("phase_change") ||
-        isCalendarTarget;
+        stopConditions.includes("phase_change");
 
       const rng = createSeededRng(rngState);
       const useBoxScore = isCalendarTarget || resolved.days > 1;
       const stopBeforeUserTeamGame =
-        isCalendarTarget || stopConditions.includes("user_team_game");
+        stopConditions.includes("user_team_game");
+      // Regular-season init consumes a simulation step without moving the
+      // calendar. Only add that extra step when this jump actually reaches
+      // the opener; preseason-only jumps must land on the requested date.
+      const plannedOpener = derivePlannedRegularSeasonStartDate(workingState);
+      const jumpIncludesRegularSeasonInit =
+        isCalendarTarget &&
+        needsRegularSeasonInitialization(workingState) &&
+        plannedOpener != null &&
+        addCalendarDays(
+          workingState.world.calendar.currentDate,
+          resolved.days,
+        ) >= plannedOpener;
+      const days = jumpIncludesRegularSeasonInit
+        ? resolved.days + 1
+        : resolved.days;
 
       const result = await advanceSimulationAsync(workingState, rng, {
-        days: resolved.days,
+        days,
         stopOnPhaseChange,
         allowOwnerManagedPhaseTransitions: true,
         gameFidelity: useBoxScore ? "box_score" : "possession",

@@ -56,6 +56,7 @@ export async function POST(
           fromDate: result.summary?.fromDate ?? targetDate,
           toDate: result.summary?.toDate ?? result.simulation.currentDate,
           currentDate: result.simulation.currentDate,
+          requestedTargetDate: targetDate,
           stopReason: result.simulation.stopReason,
         });
         controller.close();

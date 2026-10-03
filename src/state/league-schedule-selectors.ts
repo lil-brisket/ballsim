@@ -122,9 +122,7 @@ export function toLeagueScheduleView(
   const upcoming = rows
     .filter((r) => r.date > focusDate && r.status !== "final")
     .sort(sortGames)
-    .slice(0, 24);
-
-  // Also include scheduled games on focus date that aren't final in upcoming? No — today section covers focus date.
+    .slice(0, filters.status === "final" ? undefined : 24);
 
   const recent = rows
     .filter((r) => r.date < focusDate && r.status === "final")
@@ -134,8 +132,9 @@ export function toLeagueScheduleView(
         return d;
       }
       return b.gameId.localeCompare(a.gameId);
-    })
-    .slice(0, 12);
+    });
+  const cappedRecent =
+    filters.status === "final" ? recent : recent.slice(0, 12);
 
   const teams = Object.values(state.world.teams)
     .map((t) => ({
@@ -162,7 +161,7 @@ export function toLeagueScheduleView(
     myTeamId,
     today,
     upcoming,
-    recent,
+    recent: cappedRecent,
     teams,
     seasonPhase: phase,
     emptyReason,
@@ -171,4 +170,19 @@ export function toLeagueScheduleView(
 
 export function shiftFocusDate(iso: string, deltaDays: number): string {
   return addCalendarDays(iso, deltaDays);
+}
+
+export function groupLeagueScheduleRowsByDate(
+  rows: LeagueScheduleGameRow[],
+): Array<{ date: string; games: LeagueScheduleGameRow[] }> {
+  const groups: Array<{ date: string; games: LeagueScheduleGameRow[] }> = [];
+  for (const row of rows) {
+    const last = groups[groups.length - 1];
+    if (last && last.date === row.date) {
+      last.games.push(row);
+    } else {
+      groups.push({ date: row.date, games: [row] });
+    }
+  }
+  return groups;
 }

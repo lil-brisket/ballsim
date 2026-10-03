@@ -13,6 +13,7 @@ export type SimulationSummaryItem = {
   date: string;
   headline: string;
   kind: "team" | "league";
+  gameId?: string;
 };
 
 export type SimulationSummary = {
@@ -26,6 +27,7 @@ export type SimulationSummary = {
     gamesPlayed: number;
   } | null;
   standingsDelta: number | null;
+  teamGames: SimulationSummaryItem[];
   teamEvents: SimulationSummaryItem[];
   leagueEvents: SimulationSummaryItem[];
   transactionCount: number;
@@ -49,14 +51,11 @@ function countTeamGamesInRange(
   fromDate: string,
   toDate: string,
 ): { wins: number; losses: number; gamesPlayed: number } {
+  const games = listTeamGamesInRange(state, teamId, fromDate, toDate);
   let wins = 0;
   let losses = 0;
-  for (const game of Object.values(state.competition.games)) {
-    if (game.status !== "final") continue;
-    if (game.date < fromDate || game.date > toDate) continue;
+  for (const game of games) {
     const isHome = game.homeTeamId === teamId;
-    const isAway = game.awayTeamId === teamId;
-    if (!isHome && !isAway) continue;
     const homeScore = game.score.home;
     const awayScore = game.score.away;
     const won = isHome ? homeScore > awayScore : awayScore > homeScore;
@@ -64,6 +63,47 @@ function countTeamGamesInRange(
     else losses += 1;
   }
   return { wins, losses, gamesPlayed: wins + losses };
+}
+
+function listTeamGamesInRange(
+  state: GameState,
+  teamId: TeamId,
+  fromDate: string,
+  toDate: string,
+) {
+  return Object.values(state.competition.games)
+    .filter((game) => {
+      if (game.status !== "final") return false;
+      if (game.date < fromDate || game.date > toDate) return false;
+      return game.homeTeamId === teamId || game.awayTeamId === teamId;
+    })
+    .sort((a, b) => {
+      const byDate = a.date.localeCompare(b.date);
+      if (byDate !== 0) return byDate;
+      return a.id.localeCompare(b.id);
+    });
+}
+
+function teamGameHeadline(
+  state: GameState,
+  teamId: TeamId,
+  game: GameState["competition"]["games"][string],
+): string {
+  const isHome = game.homeTeamId === teamId;
+  const opponentId = isHome ? game.awayTeamId : game.homeTeamId;
+  const opponent = state.world.teams[opponentId];
+  const opponentLabel = opponent
+    ? opponent.abbreviation
+    : String(opponentId);
+  const teamScore = isHome ? game.score.home : game.score.away;
+  const opponentScore = isHome ? game.score.away : game.score.home;
+  const result =
+    teamScore === opponentScore
+      ? "T"
+      : teamScore > opponentScore
+        ? "W"
+        : "L";
+  return `${result} ${teamScore}–${opponentScore} vs ${opponentLabel}`;
 }
 
 function eventHeadline(event: DomainEvent): string {
@@ -93,6 +133,17 @@ export function buildSimulationSummary(
           to: options.toDate,
         },
         events,
+      )
+    : [];
+
+  const teamGames: SimulationSummaryItem[] = teamId
+    ? listTeamGamesInRange(state, teamId, options.fromDate, options.toDate).map(
+        (game) => ({
+          date: game.date,
+          headline: teamGameHeadline(state, teamId, game),
+          kind: "team" as const,
+          gameId: game.id,
+        }),
       )
     : [];
 
@@ -150,6 +201,7 @@ export function buildSimulationSummary(
       ? countTeamGamesInRange(state, teamId, options.fromDate, options.toDate)
       : null,
     standingsDelta: null,
+    teamGames,
     teamEvents,
     leagueEvents,
     transactionCount: transactions.length,

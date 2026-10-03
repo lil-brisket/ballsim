@@ -81,7 +81,7 @@ describe("loadCalendarPageView consolidated shape", () => {
     expect(view!.inspector.simulationPreview).not.toBeNull();
     expect(
       view!.inspector.simulationPreview!.summaryLines.some((line) =>
-        /Stops at your next team game|Today's team game will be simulated first/i.test(
+        /Includes your games through this date|Includes today's team game/i.test(
           line,
         ),
       ),

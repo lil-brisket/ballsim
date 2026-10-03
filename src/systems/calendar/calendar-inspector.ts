@@ -219,13 +219,12 @@ export function buildCalendarSimulationPreview(
       const todayOwnerGame = range.yourTeam.events.find(
         (event) => event.date === state.world.calendar.currentDate,
       );
-      if (todayOwnerGame && nextOwnerGame) {
+      if (todayOwnerGame) {
+        lines.push("Includes today's team game.");
+      }
+      if (nextOwnerGame) {
         lines.push(
-          `Today's team game will be simulated first, then time stops at your next game on ${nextOwnerGame.date}.`,
-        );
-      } else if (nextOwnerGame) {
-        lines.push(
-          `Stops at your next team game on ${nextOwnerGame.date}.`,
+          `Includes your games through this date (next is ${nextOwnerGame.date}).`,
         );
       }
       lines.push(
