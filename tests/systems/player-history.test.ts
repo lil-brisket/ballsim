@@ -24,7 +24,7 @@ import {
   advanceLeaguePhase,
   processOffseasonLifecycle,
 } from "@/systems/simulation/offseason-lifecycle";
-import { completeDraft, createDraft, activateDraft } from "@/systems/draft";
+import { completeDraft, createDraft, activateDraft, autoResolveGeneratedDraftClass } from "@/systems/draft";
 import { draftClassIdFor } from "@/domain/entities/draft";
 import { draftYearForSeason } from "@/systems/draft";
 import { transitionPhase } from "@/systems/simulation/phase-machine";
@@ -163,6 +163,9 @@ describe("player history archival", () => {
 
     // Advance through draft prep → draft → FA → staff → preseason
     while (getActivePhaseId(current) !== "preseason.preparation") {
+      if (getActivePhaseId(current) === "offseason.draft_preparation") {
+        current = autoResolveGeneratedDraftClass(current, rng).state;
+      }
       if (getActivePhaseId(current) === "offseason.draft") {
         const draftYear = draftYearForSeason(current.competition.season.year);
         const draftClassId = draftClassIdFor(draftYear);

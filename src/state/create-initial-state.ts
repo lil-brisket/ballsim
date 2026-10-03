@@ -271,6 +271,7 @@ export function createInitialGameState(
       mode: "owner",
       pendingOwnerDecisions: [],
       ownerDecisionHistory: [],
+      pendingDraftClassDecisions: {},
       franchisePhaseState: {
         [activeOwnerTeamId]: { dismissed: [] },
       },
@@ -599,6 +600,7 @@ export function createFourTeamInitialGameState(
       mode: "owner",
       pendingOwnerDecisions: [],
       ownerDecisionHistory: [],
+      pendingDraftClassDecisions: {},
       franchisePhaseState: {
         [userTeamId]: { dismissed: [] },
       },

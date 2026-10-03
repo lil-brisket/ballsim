@@ -4,6 +4,7 @@ import type { GameState } from "@/state/game-state";
 import { mergeDraftPicksForSeason } from "@/domain/draft-picks/generate-draft-picks";
 import { generateFantasyPlayerPool } from "@/systems/fantasy-draft/player-pool";
 import { generateRosters } from "@/systems/roster-generation";
+import { applyRosterPackage } from "@/systems/custom-content/apply-roster";
 import { generatePreseasonSchedule } from "@/systems/preseason-schedule-generation";
 import { generateSchedule } from "@/systems/schedule-generation";
 import { advanceSimulation } from "@/systems/simulation/advance-simulation";
@@ -16,6 +17,7 @@ export type WorldPipelineCommand = {
 /**
  * Ensures roster and draft picks exist (world-gen bootstrap).
  * Fantasy mode generates an unassigned player pool instead of team rosters.
+ * Custom mode applies a roster package instead of generateRosters.
  *
  * Lifecycle owns phase transition (preseason → regular). Bootstrap may
  * pre-materialize the main regular-season schedule so calendar projections can
@@ -24,11 +26,25 @@ export type WorldPipelineCommand = {
  *
  * Idempotent; safe before advance day or on new save creation.
  */
-export function bootstrapWorld(state: GameState, rng: Rng): SystemResult {
-  const afterPlayers =
-    state.settings.draft.mode === "fantasy"
-      ? generateFantasyPlayerPool(state, rng)
-      : generateRosters(state, rng);
+export function bootstrapWorld(
+  state: GameState,
+  rng: Rng,
+  rosterPackage?: unknown,
+): SystemResult {
+  let afterPlayers: SystemResult;
+  if (state.settings.draft.mode === "fantasy") {
+    afterPlayers = generateFantasyPlayerPool(state, rng);
+  } else if (state.settings.draft.mode === "custom") {
+    if (rosterPackage !== undefined) {
+      afterPlayers = applyRosterPackage(state, rosterPackage, rng);
+    } else if (Object.keys(state.world.players).length > 0) {
+      afterPlayers = systemResult(state);
+    } else {
+      throw new Error("Custom roster mode requires a roster package.");
+    }
+  } else {
+    afterPlayers = generateRosters(state, rng);
+  }
   let current = ensureDraftPicks(afterPlayers.state);
   const events = [...afterPlayers.events];
 

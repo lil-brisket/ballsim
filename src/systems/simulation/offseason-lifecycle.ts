@@ -12,7 +12,7 @@ import { asSeasonId, type TeamId } from "@/domain/ids";
 import {
   activateDraft,
   completeDraft,
-  createDraft,
+  maybeCreateDraftForDecision,
   draftYearForSeason,
 } from "@/systems/draft";
 import { advanceScoutAssignments } from "@/systems/scouting/scouting-progression";
@@ -367,25 +367,18 @@ export function processPhaseEnter(
   }
 
   if (toPhaseId === "offseason.draft_preparation" && rng) {
-    const draftYear = draftYearForSeason(current.competition.season.year);
-    const draftClassId = draftClassIdFor(draftYear);
-    if (current.world.drafts[draftClassId] === undefined) {
-      const created = createDraft(current, rng);
-      current = created.state;
-      events.push(...created.events);
-    }
+    const created = maybeCreateDraftForDecision(current, rng);
+    current = created.state;
+    events.push(...created.events);
   }
 
   if (toPhaseId === "offseason.draft" && rng) {
     const draftYear = draftYearForSeason(current.competition.season.year);
     const draftClassId = draftClassIdFor(draftYear);
-    let draft = current.world.drafts[draftClassId];
-    if (draft === undefined) {
-      const created = createDraft(current, rng);
-      current = created.state;
-      events.push(...created.events);
-      draft = current.world.drafts[draftClassId];
-    }
+    const created = maybeCreateDraftForDecision(current, rng);
+    current = created.state;
+    events.push(...created.events);
+    const draft = current.world.drafts[draftClassId];
     if (draft !== undefined && draft.status === "not_started") {
       const activated = activateDraft(current, draftClassId);
       current = activated.state;
@@ -514,8 +507,8 @@ export function processOffseasonLifecycle(
     const draftClassId = draftClassIdFor(draftYear);
     let draft = current.world.drafts[draftClassId];
 
-    if (draft === undefined && phaseId === "offseason.draft") {
-      const created = createDraft(current, rng);
+    if (draft === undefined) {
+      const created = maybeCreateDraftForDecision(current, rng);
       current = created.state;
       events.push(...created.events);
       draft = current.world.drafts[draftClassId];

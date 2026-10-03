@@ -150,7 +150,7 @@ export const LEAGUE_AREA_OPTIONS: readonly LeagueArea[] = [
   "south_america",
   "global",
 ] as const;
-export type DraftMode = "standard" | "fantasy";
+export type DraftMode = "standard" | "fantasy" | "custom";
 export type FantasyDraftSettingsType = "snake" | "linear";
 export type FantasyDraftOrderModeSetting = "random" | "manual";
 export type LeagueHistoryMode = "new" | "generated";
@@ -539,7 +539,7 @@ export function isLeagueArea(value: unknown): value is LeagueArea {
 }
 
 export function isDraftMode(value: unknown): value is DraftMode {
-  return value === "standard" || value === "fantasy";
+  return value === "standard" || value === "fantasy" || value === "custom";
 }
 
 export function isFantasyDraftSettingsType(

@@ -1,3 +1,4 @@
+import { autoResolveGeneratedDraftClass } from "@/systems/draft";
 import type { Rng } from "@/domain/rng";
 import type { GameState } from "@/state/game-state";
 import {
@@ -28,11 +29,15 @@ export function tryAdvanceUserManagedPhase(
   if (!USER_MANAGED_PHASES.has(phaseId)) {
     return null;
   }
-  if (!canAdvancePhase(state)) {
+  let current = state;
+  if (phaseId === "offseason.draft_preparation") {
+    current = autoResolveGeneratedDraftClass(current, rng).state;
+  }
+  if (!canAdvancePhase(current)) {
     return null;
   }
   try {
-    return advanceLeaguePhase(state, rng).state;
+    return advanceLeaguePhase(current, rng).state;
   } catch {
     return null;
   }

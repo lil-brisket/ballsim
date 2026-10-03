@@ -98,7 +98,10 @@ type CompetitionSlicePreV49 = Omit<
   GameState["competition"],
   "phase" | "seasonEvents"
 >;
-type UserSlicePreV49 = Omit<GameState["user"], "franchisePhaseState">;
+type UserSlicePreV49 = Omit<
+  GameState["user"],
+  "franchisePhaseState" | "pendingDraftClassDecisions"
+>;
 import {
   isAiProfile,
   type AiProfile,
@@ -231,6 +234,7 @@ const MIGRATE_ONE_STEP: Record<number, (state: unknown) => unknown> = {
   58: (state) => migrateV58ToV59(state as GameStateV58),
   59: (state) => migrateV59ToV60(state as GameStateV59),
   60: (state) => migrateV60ToV61(state as GameStateV60),
+  61: (state) => migrateV61ToV62(state as GameStateV61),
 };
 
 function legacyUserRecord(user: unknown): Record<string, unknown> {
@@ -5304,10 +5308,15 @@ type GameStateV60 = Omit<GameState, "meta" | "competition"> & {
   competition: Omit<GameState["competition"], "seasonEvents">;
 };
 
+type GameStateV61 = Omit<GameState, "meta" | "user"> & {
+  meta: Omit<GameState["meta"], "schemaVersion"> & { schemaVersion: 61 };
+  user: Omit<GameState["user"], "pendingDraftClassDecisions">;
+};
+
 /**
  * Deterministic v60 → v61: empty seasonEvents framework on competition.
  */
-function migrateV60ToV61(state: GameStateV60): GameState {
+function migrateV60ToV61(state: GameStateV60): GameStateV61 {
   return {
     ...state,
     meta: {
@@ -5317,6 +5326,23 @@ function migrateV60ToV61(state: GameStateV60): GameState {
     competition: {
       ...state.competition,
       seasonEvents: createEmptySeasonEventsState(),
+    },
+  } as GameStateV61;
+}
+
+/**
+ * Deterministic v61 → v62: empty pendingDraftClassDecisions on user.
+ */
+function migrateV61ToV62(state: GameStateV61): GameState {
+  return {
+    ...state,
+    meta: {
+      ...state.meta,
+      schemaVersion: 62,
+    },
+    user: {
+      ...state.user,
+      pendingDraftClassDecisions: {},
     },
   };
 }

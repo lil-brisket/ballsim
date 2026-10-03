@@ -279,6 +279,7 @@ describe("season lifecycle", () => {
         mode: "owner",
         pendingOwnerDecisions: [],
         ownerDecisionHistory: [],
+        pendingDraftClassDecisions: {},
         franchisePhaseState: {
           [generated.teams[0]!.id]: { dismissed: [] },
         },

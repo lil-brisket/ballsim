@@ -228,6 +228,7 @@ function createEightTeamPopulatedState(rngSeed: number): GameState {
       mode: "owner",
       pendingOwnerDecisions: [],
       ownerDecisionHistory: [],
+      pendingDraftClassDecisions: {},
       franchisePhaseState: {
         [generated.teams[0]!.id]: { dismissed: [] },
       },

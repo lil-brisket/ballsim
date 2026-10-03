@@ -30,6 +30,7 @@ import {
   selectOwnerDraftProspect,
   selectOwnerTeam,
   signOwnerFreeAgent,
+  resolveOwnerDraftClassDecision,
 } from "@/application/game-service";
 import { createPlayer } from "@/domain/entities/player";
 import { createDefaultDevelopmentLeagueProfile } from "@/domain/entities/development-league";
@@ -115,6 +116,17 @@ async function advanceUntilSeasonPhase(
       phaseId === "offseason.free_agency" ||
       phaseId === "offseason.staff_development"
     ) {
+      if (phaseId === "offseason.draft_preparation") {
+        const resolved = await resolveOwnerDraftClassDecision(
+          saveId,
+          { source: "generated" },
+          store,
+        );
+        if (!resolved.ok) {
+          throw new Error(resolved.error);
+        }
+        continue;
+      }
       const advanced = await advanceLeaguePhaseCommand(saveId, store);
       if (!advanced.ok) {
         throw new Error(advanced.error);

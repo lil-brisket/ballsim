@@ -19,6 +19,7 @@ import type { PlayerId, TeamId } from "@/domain/ids";
 import type { GameState } from "@/state/game-state";
 import { getActiveOwnedFranchise } from "@/state/owner-context";
 import { getActivePhaseId, setActivePhase } from "@/systems/phase-engine";
+import { autoResolveGeneratedDraftClass } from "@/systems/draft";
 
 function aiTeamIds(state: GameState): TeamId[] {
   return (Object.keys(state.world.teams) as TeamId[]).filter(
@@ -78,6 +79,7 @@ function toDraft(
 ): GameState {
   let current = enterRosterDecisions(state, rng);
   current = advanceLeaguePhase(current, rng).state; // draft_preparation
+  current = autoResolveGeneratedDraftClass(current, rng).state;
   current = advanceLeaguePhase(current, rng).state; // draft
   return processOffseasonLifecycle(current, rng).state;
 }

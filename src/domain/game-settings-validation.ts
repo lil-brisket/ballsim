@@ -274,7 +274,7 @@ export function validateGameSettings(
   const timerSeconds = draft.timerSeconds;
   const orderMode = draft.orderMode;
   if (draftMode !== undefined && !isDraftMode(draftMode)) {
-    errors.push('draft.mode must be "standard" or "fantasy".');
+    errors.push('draft.mode must be "standard", "fantasy", or "custom".');
   }
   if (draftType !== undefined && !isFantasyDraftSettingsType(draftType)) {
     errors.push('draft.type must be "snake" or "linear".');
@@ -308,13 +308,16 @@ export function validateGameSettings(
     errors.push("draft.randomizeUserPick must be a boolean.");
   }
   if (
-    draftMode === "standard" &&
+    (draftMode === "standard" || draftMode === "custom") &&
     userPickPosition !== undefined &&
     userPickPosition !== null
   ) {
     errors.push("draft.userPickPosition requires fantasy draft mode.");
   }
-  if (draftMode === "standard" && randomizeUserPick === true) {
+  if (
+    (draftMode === "standard" || draftMode === "custom") &&
+    randomizeUserPick === true
+  ) {
     errors.push("draft.randomizeUserPick requires fantasy draft mode.");
   }
 

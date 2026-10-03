@@ -10,7 +10,7 @@ export {
 } from "@/systems/draft/draft-order";
 export { generateDraftProspects } from "@/systems/draft/draft-prospects";
 export { generateDraftScouting } from "@/systems/draft/draft-scouting";
-export { createDraft } from "@/systems/draft/draft-creation";
+export { createDraft, createDraftFromPackage, replaceDraftProspects, maybeCreateDraftForDecision, autoResolveGeneratedDraftClass } from "@/systems/draft/draft-creation";
 export { activateDraft, completeDraft } from "@/systems/draft/draft-lifecycle";
 export {
   validateDraftSelection,
