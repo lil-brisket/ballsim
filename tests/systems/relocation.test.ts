@@ -7,6 +7,7 @@ import {
   tickRelocationCooldowns,
 } from "@/systems/relocation";
 import { assessRelocation } from "@/state/relocation-assessment";
+import { isRelocationAccessible } from "@/state/owner-season-context";
 import {
   RELOCATION_COOLDOWN_SEASONS,
   RELOCATION_MIN_SEASONS_IN_CITY,
@@ -134,6 +135,69 @@ describe("relocation assessment", () => {
     expect(assessment.marketConstraint.weakMarket).toBe(true);
     expect(["consider", "strong_case"]).toContain(assessment.status);
     expect(assessment.canStart).toBe(true);
+  });
+
+  it("offers an upmarket consider path for a successful mid-market team in the offseason", () => {
+    let state = createTestGameState({ saveId: "reloc_upmarket" });
+    state = withTenure(state, RELOCATION_MIN_SEASONS_IN_CITY + 2);
+    state = withMarketAndOps(state, {
+      marketSize: 56,
+      wins: 48,
+      losses: 18,
+      cash: 80_000_000,
+      fanSentiment: 70,
+    });
+    const assessment = assessRelocation(state);
+    expect(assessment.canStart).toBe(true);
+    expect(assessment.status).toBe("consider");
+    expect(
+      assessment.destinationOpportunity.some(
+        (destination) =>
+          destination.credibleImprovement && destination.marketSizeDelta >= 8,
+      ),
+    ).toBe(true);
+  });
+
+  it("keeps in-season relocation inaccessible even when upmarket consider is true", () => {
+    let state = createTestGameState({ saveId: "reloc_inseason" });
+    state = withTenure(state, RELOCATION_MIN_SEASONS_IN_CITY + 2);
+    state = withMarketAndOps(state, {
+      marketSize: 56,
+      wins: 48,
+      losses: 18,
+      cash: 80_000_000,
+    });
+    state = {
+      ...state,
+      competition: {
+        ...state.competition,
+        season: {
+          ...state.competition.season,
+          phase: "regular",
+        },
+      },
+    };
+    expect(isRelocationAccessible(state)).toBe(false);
+  });
+
+  it("does not offer upmarket relocation when no destination is a meaningful upgrade", () => {
+    let state = createTestGameState({ saveId: "reloc_no_upgrade" });
+    state = withTenure(state, RELOCATION_MIN_SEASONS_IN_CITY + 2);
+    state = withMarketAndOps(state, {
+      marketSize: 92,
+      wins: 48,
+      losses: 18,
+      cash: 80_000_000,
+    });
+    const assessment = assessRelocation(state);
+    expect(
+      assessment.destinationOpportunity.some(
+        (destination) =>
+          destination.credibleImprovement && destination.marketSizeDelta >= 8,
+      ),
+    ).toBe(false);
+    expect(assessment.status).not.toBe("consider");
+    expect(assessment.canStart).toBe(false);
   });
 
   it("blocks start when tenure is too short even if economics qualify", () => {

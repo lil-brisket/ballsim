@@ -94,7 +94,25 @@ export type FranchiseOps = {
   patience: number;
   /** E14 — risk axis 1–99 (how much roster/financial variance it accepts). */
   riskTolerance: number;
+  /**
+   * Rolling home fill rates (attendance / capacity) for franchise-value
+   * realization. Independent of the bounded owner event log.
+   */
+  homeFillSeries: number[];
 };
+
+/** Max home-fill samples retained per franchise (about one full season). */
+export const HOME_FILL_SERIES_MAX = 82;
+
+export function appendHomeFillSample(
+  series: readonly number[],
+  fill: number,
+): number[] {
+  const next = [...series, fill];
+  return next.length > HOME_FILL_SERIES_MAX
+    ? next.slice(next.length - HOME_FILL_SERIES_MAX)
+    : next;
+}
 
 export function isFacilityCategory(value: unknown): value is FacilityCategory {
   return (
@@ -146,5 +164,6 @@ export function createDefaultFranchiseOps(
     spendingTolerance: overrides.spendingTolerance ?? 50,
     patience: overrides.patience ?? 50,
     riskTolerance: overrides.riskTolerance ?? 50,
+    homeFillSeries: overrides.homeFillSeries ?? [],
   };
 }

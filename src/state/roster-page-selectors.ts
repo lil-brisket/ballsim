@@ -231,7 +231,7 @@ export function evaluateRosterNeeds(
         continue;
       }
       const fit = fitAtPosition(player, position);
-      if (fit == null) {
+      if (fit == null || fit.fit !== "primary") {
         continue;
       }
       eligibleCount += 1;
@@ -282,6 +282,9 @@ function classifyNeedLevel(
   }
   if (healthyCount === 1 && h1 >= 75) {
     return "weak";
+  }
+  if (healthyCount >= 2 && h1 >= 88) {
+    return depthScore >= 80 && healthyCount >= 3 ? "strong" : "adequate";
   }
   if (healthyCount >= 2 && depthScore < 75) {
     return "weak";

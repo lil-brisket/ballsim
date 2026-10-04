@@ -76,7 +76,7 @@ export default async function RelocationPage({
     <>
       <PageHeader
         title="Relocation"
-        subtitle="Late-game franchise decision — stay and invest, or move at a cost"
+        subtitle="Stay and invest in a weak market, or pay a fee to move up"
       />
       {error ? <ErrorState message={error} /> : null}
 

@@ -111,7 +111,11 @@ describe("eventLog persistence", () => {
       createDomainEvent({
         type: "GameCompleted",
         occurredOn: "2026-01-01",
-        payload: { index },
+        payload: {
+          index,
+          homeTeamId: teamId,
+          awayTeamId: asTeamId("team_b"),
+        },
       }),
     );
 

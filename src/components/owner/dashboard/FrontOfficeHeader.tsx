@@ -34,7 +34,7 @@ export function FrontOfficeHeader(props: {
   teamName: string;
   wins: number;
   losses: number;
-  leagueRank: number;
+  leagueRank: number | null;
   nextOpponentLabel?: string | null;
 }) {
   const calendarHref = `/dashboard/${props.saveId}/calendar`;
@@ -102,7 +102,9 @@ export function FrontOfficeHeader(props: {
           <dt className="font-mono text-[0.65rem] uppercase tracking-wide text-zinc-500">
             Rank
           </dt>
-          <dd className="font-mono text-zinc-100">#{props.leagueRank}</dd>
+          <dd className="font-mono text-zinc-100">
+            {props.leagueRank == null ? "—" : `#${props.leagueRank}`}
+          </dd>
         </div>
         {props.nextOpponentLabel ? (
           <div>

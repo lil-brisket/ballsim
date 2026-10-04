@@ -13,7 +13,8 @@ export function TeamHubHeader(props: { hub: TeamHubView }) {
           {hub.city} {hub.name}
         </h1>
         <p className="mt-1 text-sm text-zinc-400">
-          {hub.wins}–{hub.losses} · #{hub.leagueRank}
+          {hub.wins}–{hub.losses} ·{" "}
+          {hub.leagueRank == null ? "—" : `#${hub.leagueRank}`}
           {hub.recentForm.streak ? ` · ${hub.recentForm.streak}` : ""}
           {" · "}
           {hub.seasonPhase}

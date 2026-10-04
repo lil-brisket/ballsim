@@ -13,7 +13,7 @@ export const FREE_AGENCY_INTEREST_CONFIG = {
    * Award reputation is applied directly as a score delta (capped).
    */
   factorWeights: {
-    money: 0,
+    money: 1,
     teamQuality: 0,
     playingTime: 0,
     location: 0,

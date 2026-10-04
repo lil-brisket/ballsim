@@ -5,11 +5,13 @@ import { resolveFranchisePreferences } from "@/systems/franchise-ai-preferences"
 import type { StrategicPosture } from "@/systems/franchise-strategic-posture";
 import { getTeamCapSpace } from "@/systems/salary-cap";
 import { getContractSalaryForYear } from "@/domain/entities/contract";
+import { getRetentionPriority } from "@/systems/trades/asset-valuation/retention-priority";
 import {
   STRATEGIC_POSTURE_ADJUSTMENTS,
   TEAM_FIT_ADJUSTMENT_BANDS,
   TRADE_BLOCK_VALUE_BONUS,
   AGE_VALUE_MODIFIERS,
+  RETENTION_PRIORITY_WEIGHTS,
 } from "@/systems/trades-config";
 import { getTradeBlock } from "@/systems/trades/trade-block";
 import { getBaseAssetValue } from "@/systems/trades/asset-valuation/base-asset-value";
@@ -48,6 +50,10 @@ export function getTeamAssetValue(
   if (asset.kind === "player") {
     const player = state.world.players[asset.playerId];
     if (player) {
+      const overall = calculatePlayerOverall(
+        player.position,
+        player.attributes,
+      );
       const needs = calculateTradeNeeds(state, teamId);
       const pos = needs.byPosition.find((p) => p.position === player.position);
       if (pos) {
@@ -55,17 +61,16 @@ export function getTeamAssetValue(
         if (needScore >= tradeNeedLevelScore("major")) {
           rosterFit += 8 + needScore;
           reasons.push(`Team has a positional need at ${player.position}`);
-        } else if (pos.surplus) {
+        } else if (pos.surplus && overall < 85) {
           rosterFit -= 6;
           reasons.push(`Surplus at ${player.position}`);
         }
       }
 
-      const overall = calculatePlayerOverall(
-        player.position,
-        player.attributes,
-      );
-      const adj = postureAdjustments(posture, player.age, "player");
+      let adj = postureAdjustments(posture, player.age, "player");
+      if (overall >= 85 && player.teamId === teamId && adj < 0) {
+        adj = 0;
+      }
       strategicFit += adj;
       if (adj >= 5) {
         reasons.push(postureReason(posture, player.age));
@@ -136,7 +141,19 @@ export function getTeamAssetValue(
       (base.value + rosterFit + strategicFit + contractAdj + financialAdj) * 10,
     ) / 10;
 
-  return { value, reasons };
+  let retained = value;
+  if (asset.kind === "player") {
+    const player = state.world.players[asset.playerId];
+    if (player && player.teamId === teamId) {
+      const retention = getRetentionPriority(state, teamId, asset.playerId);
+      if (retention >= RETENTION_PRIORITY_WEIGHTS.coreThreshold) {
+        retained = Math.round((value * (1 + (retention - 70) / 200)) * 10) / 10;
+        reasons.push("Core player retention raises the asking price");
+      }
+    }
+  }
+
+  return { value: retained, reasons };
 }
 
 function postureAdjustments(

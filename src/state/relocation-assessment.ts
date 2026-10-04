@@ -160,6 +160,8 @@ function interpretEconomicStatus(input: {
   basketball: HealthBand;
   business: HealthBand;
   financialPressure: boolean;
+  tenureClear: boolean;
+  hasUpmarketDestination: boolean;
 }): Exclude<RelocationAssessmentStatus, "blocked_tenure" | "in_progress"> {
   const {
     weakMarket,
@@ -167,8 +169,19 @@ function interpretEconomicStatus(input: {
     basketball,
     business,
     financialPressure,
+    tenureClear,
+    hasUpmarketDestination,
   } = input;
   const marketBinding = weakMarket || softRealization;
+
+  if (
+    !marketBinding &&
+    tenureClear &&
+    (basketball === "strong" || basketball === "moderate") &&
+    hasUpmarketDestination
+  ) {
+    return "consider";
+  }
 
   if (!marketBinding) {
     // Strong market: relocation is not an escape from poor basketball.
@@ -240,11 +253,19 @@ export function assessRelocation(
   });
 
   const bestCredible = destinations.find((d) => d.credibleImprovement);
+  const bestUpmarket = destinations.find(
+    (d) => d.credibleImprovement && d.marketSizeDelta >= 8,
+  );
   const feeDelta = Math.max(0, bestCredible?.marketSizeDelta ?? 0);
   const estimatedFee =
     RELOCATION_TRANSITION_FEE + feeDelta * RELOCATION_FEE_PER_MARKET_SIZE_POINT;
 
   const primaryDrivers: string[] = [];
+  if (bestUpmarket && !weakMarket && !softRealization) {
+    primaryDrivers.push(
+      `A larger market is available (about +${bestUpmarket.marketSizeDelta} market size) — pay a fee to move up, rather than escaping distress.`,
+    );
+  }
   const constraints: string[] = [];
   const stayAdvantages: string[] = [];
 
@@ -319,6 +340,8 @@ export function assessRelocation(
     basketball,
     business,
     financialPressure,
+    tenureClear: !tenureBlocked,
+    hasUpmarketDestination: bestUpmarket !== undefined,
   });
 
   let status: RelocationAssessmentStatus;

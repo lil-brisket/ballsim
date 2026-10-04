@@ -4,6 +4,7 @@ import type {
 } from "@/systems/narrative/types";
 import { priorityForDetectorKey } from "@/systems/narrative/priority";
 import { OWNER_STREAK_NOTIFICATION_THRESHOLD } from "@/systems/owner-objectives-config";
+import { OWNER_OBJECTIVE_WIN_SAMPLE_GAMES } from "@/systems/owner-objectives-config";
 import type { GameState } from "@/state/game-state";
 import { assessRelocation } from "@/state/relocation-assessment";
 import { assessExpansion } from "@/state/expansion-assessment";
@@ -277,11 +278,8 @@ export function detectFinancialPressure(
   const critical =
     context.healthBand === "critical" || context.healthBand === "insolvent";
   const warning = context.healthBand === "warning";
-  const revenueDown =
-    (context.ticketMerchChangeVsPriorMonth ?? 0) <= -8 &&
-    context.snapshots.length >= 3;
 
-  if (!critical && !warning && !revenueDown) {
+  if (!critical && !warning) {
     if (
       context.openDetectorKeys.has("financial_pressure") &&
       (context.healthBand === "healthy" || context.healthBand === "stable")
@@ -314,13 +312,17 @@ export function detectFinancialPressure(
     evidence: {
       healthBand: context.healthBand,
       cash: context.currentCash,
-      runwayWeeks: context.runwayWeeks ?? -1,
       ticketMerchChangePct: context.ticketMerchChangeVsPriorMonth ?? 0,
+      ...(context.runwayWeeks != null
+        ? { runwayWeeks: context.runwayWeeks }
+        : {}),
     },
     templateContext: {
       healthBand: context.healthBand,
       cash: context.currentCash,
-      runwayWeeks: context.runwayWeeks ?? -1,
+      ...(context.runwayWeeks != null
+        ? { runwayWeeks: context.runwayWeeks }
+        : {}),
       ticketMerchChangePct: context.ticketMerchChangeVsPriorMonth ?? 0,
     },
     actions: [
@@ -387,6 +389,28 @@ export function detectExpectationGap(
   }
 
   if (!beating && !missing) {
+    if (context.openDetectorKeys.has("expectation_gap")) {
+      return {
+        detectorKey: "expectation_gap",
+        kind: "situation",
+        category: "ownership",
+        stage: 1,
+        severity: "informational",
+        priorityHint: priorityForDetectorKey("expectation_gap"),
+        evidence: {
+          resolved: true,
+          wins: context.wins,
+          losses: context.losses,
+        },
+        templateContext: {
+          beating: false,
+          missing: false,
+          wins: context.wins,
+          losses: context.losses,
+        },
+        resolve: true,
+      };
+    }
     return null;
   }
 
@@ -545,10 +569,33 @@ export function detectObjectiveProgress(
     return null;
   }
 
-  const active = context.objectives.filter(
-    (objective) => objective.status === "active" && objective.gap !== null,
-  );
+  const gamesPlayed = context.wins + context.losses;
+  const active = context.objectives.filter((objective) => {
+    if (objective.status !== "active" || objective.gap === null) {
+      return false;
+    }
+    if (
+      objective.type === "minimum_win_total" &&
+      gamesPlayed < OWNER_OBJECTIVE_WIN_SAMPLE_GAMES
+    ) {
+      return false;
+    }
+    return true;
+  });
   if (active.length === 0) {
+    if (context.openDetectorKeys.has("objective_progress")) {
+      return {
+        detectorKey: "objective_progress",
+        kind: "situation",
+        category: "ownership",
+        stage: 1,
+        severity: "informational",
+        priorityHint: priorityForDetectorKey("objective_progress"),
+        evidence: { resolved: true },
+        templateContext: { resolved: true },
+        resolve: true,
+      };
+    }
     return null;
   }
 
@@ -570,6 +617,19 @@ export function detectObjectiveProgress(
   );
   const focus = materialMiss ?? nearHit;
   if (!focus || focus.gap === null || focus.target === null) {
+    if (context.openDetectorKeys.has("objective_progress")) {
+      return {
+        detectorKey: "objective_progress",
+        kind: "situation",
+        category: "ownership",
+        stage: 1,
+        severity: "informational",
+        priorityHint: priorityForDetectorKey("objective_progress"),
+        evidence: { resolved: true },
+        templateContext: { resolved: true },
+        resolve: true,
+      };
+    }
     return null;
   }
 
@@ -882,7 +942,7 @@ export function detectRelocationPressure(
   };
 }
 
-/** Reads ExpansionAssessment — three gates. */
+/** Reads ExpansionAssessment — opportunity only, situation so open-key/cooldown work. */
 export function detectExpansionDiscussion(
   state: GameState,
   context: NarrativeContext,
@@ -891,10 +951,20 @@ export function detectExpansionDiscussion(
     return null;
   }
   const assessment = assessExpansion(state);
-  if (
-    assessment.status === "not_relevant" ||
-    assessment.status === "in_progress"
-  ) {
+  if (assessment.status !== "opportunity") {
+    if (context.openDetectorKeys.has("expansion_discussion")) {
+      return {
+        detectorKey: "expansion_discussion",
+        kind: "situation",
+        category: "league",
+        stage: 0,
+        severity: "informational",
+        priorityHint: priorityForDetectorKey("expansion_discussion"),
+        evidence: { resolved: true, status: assessment.status },
+        templateContext: { status: assessment.status, resolved: true },
+        resolve: true,
+      };
+    }
     return null;
   }
   if (context.openDetectorKeys.has("expansion_discussion")) {
@@ -903,10 +973,10 @@ export function detectExpansionDiscussion(
 
   return {
     detectorKey: "expansion_discussion",
-    kind: "story",
+    kind: "situation",
     category: "league",
     stage: 0,
-    severity: assessment.status === "opportunity" ? "notable" : "informational",
+    severity: "notable",
     priorityHint: priorityForDetectorKey("expansion_discussion"),
     evidence: {
       status: assessment.status,
@@ -923,5 +993,6 @@ export function detectExpansionDiscussion(
       summary: assessment.summaryReasons[0] ?? "",
       marketCount: assessment.marketOpportunity.destinations.length,
     },
+    expiresAfterDays: 90,
   };
 }

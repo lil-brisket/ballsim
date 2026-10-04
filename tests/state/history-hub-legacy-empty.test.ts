@@ -84,11 +84,11 @@ describe("resolveHistoryHubTab (legacy deep links)", () => {
   const state = createTestGameState({ saveId: "deep_links" });
   const year = state.competition.season.year;
 
-  it("defaults /awards to the current season", () => {
-    expect(resolveHistoryHubTab(state, "awards", {})).toBe("current");
+  it("defaults /awards to award history when the current year has no winners", () => {
+    expect(resolveHistoryHubTab(state, "awards", {})).toBe("awards");
     expect(
       resolveHistoryHubTab(state, "awards", { season: String(year) }),
-    ).toBe("current");
+    ).toBe("awards");
   });
 
   it("sends /awards?season=<past year> to the Awards tab", () => {

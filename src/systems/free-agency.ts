@@ -24,6 +24,15 @@ import { appendSeasonEventLog } from "@/state/game-state";
 import { FREE_AGENCY_INTEREST_CONFIG } from "@/systems/free-agency-config";
 import { computeAwardReputationBonus } from "@/systems/awards/award-reputation";
 import { getTeamCapSpace, getTeamPayroll } from "@/systems/salary-cap";
+import { getLeagueSalaryCap } from "@/systems/league-salary-cap";
+import {
+  isVetMinExceptionSalary,
+  REPLACEMENT_LEVEL_OVERALL,
+  salaryForPlayer,
+  vetMinSalary,
+} from "@/systems/salary-scale";
+import { VET_MIN_EXCEPTION_ENABLED } from "@/systems/salary-cap-config";
+import { calculatePlayerOverall } from "@/domain/player-overall-rating";
 import { reconcileRosterManagement } from "@/systems/roster-management";
 import { withClearedDevelopmentLeagueAssignment } from "@/systems/development-league/assignment";
 import { stripPlayersFromAllTradeBlocks } from "@/systems/trades/trade-block";
@@ -57,7 +66,48 @@ export const defaultEvaluatePlayerInterest: EvaluatePlayerInterest = (
   const factors = emptyInterestFactors();
   const awardBonus = computeAwardReputationBonus(playerId, state);
   factors.reputation = awardBonus;
-  const score = FREE_AGENCY_INTEREST_CONFIG.baselineScore + awardBonus;
+
+  const player = state.world.players[playerId];
+  if (player) {
+    const year = state.competition.season.year;
+    let offered: number | null = null;
+    for (const offer of Object.values(state.business.freeAgency.offers)) {
+      if (
+        offer.playerId === playerId &&
+        offer.teamId === teamId &&
+        isOpenOffer(offer.status)
+      ) {
+        offered = getContractSalaryForYear(offer.terms, year) ?? null;
+        break;
+      }
+    }
+    if (offered != null) {
+      const overall = calculatePlayerOverall(
+        player.position,
+        player.attributes,
+      );
+      const cap = getLeagueSalaryCap(state);
+      const market = salaryForPlayer({
+        overall,
+        age: player.age,
+        years: 0,
+        cap,
+        kind: "fa",
+      });
+      const acceptsVetMin =
+        overall < REPLACEMENT_LEVEL_OVERALL &&
+        offered >= vetMinSalary(cap);
+      const ratio = market > 0 ? offered / market : 1;
+      factors.money = acceptsVetMin
+        ? 0
+        : Math.round(Math.max(-40, Math.min(20, (ratio - 0.7) * 80 - 20)));
+    }
+  }
+
+  const score =
+    FREE_AGENCY_INTEREST_CONFIG.baselineScore +
+    awardBonus +
+    factors.money * FREE_AGENCY_INTEREST_CONFIG.factorWeights.money;
   return {
     playerId,
     teamId,
@@ -68,12 +118,12 @@ export const defaultEvaluatePlayerInterest: EvaluatePlayerInterest = (
 };
 
 /**
- * Free agent iff the player exists and has no active contract for the season year.
- * Pool is derived — never persisted.
+ * Free agent iff the player exists, is not retired, and has no active contract
+ * for the season year. Pool is derived — never persisted.
  */
 export function isFreeAgent(state: GameState, playerId: PlayerId): boolean {
   const player = state.world.players[playerId];
-  if (player === undefined) {
+  if (player === undefined || player.retired === true) {
     return false;
   }
   return !playerHasActiveContract(player, state);
@@ -373,9 +423,13 @@ export function acceptOffer(
   }
 
   const capSpace = getTeamCapSpace(offer.teamId, offer.terms.startYear, state);
+  const usesMinException =
+    VET_MIN_EXCEPTION_ENABLED &&
+    isVetMinExceptionSalary(firstYearSalary, getLeagueSalaryCap(state));
   if (
     state.settings.financialRules.salaryCapEnabled &&
-    firstYearSalary > capSpace
+    firstYearSalary > capSpace &&
+    !usesMinException
   ) {
     return invalidateStaleOffer(
       state,

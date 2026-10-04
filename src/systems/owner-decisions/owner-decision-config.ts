@@ -16,4 +16,4 @@ export const USER_TRADE_INTERRUPT_MIN_INCOMING_VALUE = 62;
 export const USER_TRADE_INTERRUPT_MIN_ABS_NET = 18;
 
 /** Minimum player overall among assets offered to the user to count as "meaningful". */
-export const USER_TRADE_INTERRUPT_MIN_PLAYER_OVERALL = 68;
+export const USER_TRADE_INTERRUPT_MIN_PLAYER_OVERALL = 80;

@@ -5,6 +5,7 @@ import type { Rng } from "@/domain/rng";
 import { createSeededRng } from "@/domain/rng";
 import { systemResult, type SystemResult } from "@/domain/system-result";
 import type { GameState } from "@/state/game-state";
+import { appendHomeFillSample } from "@/domain/entities/franchise-ops";
 import {
   calculateTicketDemand,
   fanFacilityDemandRaw,
@@ -243,26 +244,45 @@ export function processHomeGameTicketRevenue(
     );
 
     const yearKey = String(year);
+    const fill = capacity > 0 ? actual.attendance / capacity : 0;
     const finances = current.business.finances[teamId];
-    if (finances) {
-      const priorAttendance = finances.attendanceByYear[yearKey] ?? 0;
-      current = {
-        ...current,
-        business: {
-          ...current.business,
-          finances: {
-            ...current.business.finances,
-            [teamId]: {
-              ...finances,
-              attendanceByYear: {
-                ...finances.attendanceByYear,
-                [yearKey]: priorAttendance + actual.attendance,
+    const liveOps = current.business.franchiseOps[teamId];
+    current = {
+      ...current,
+      business: {
+        ...current.business,
+        ...(liveOps
+          ? {
+              franchiseOps: {
+                ...current.business.franchiseOps,
+                [teamId]: {
+                  ...liveOps,
+                  homeFillSeries: appendHomeFillSample(
+                    liveOps.homeFillSeries ?? [],
+                    fill,
+                  ),
+                },
               },
-            },
-          },
-        },
-      };
-    }
+            }
+          : {}),
+        ...(finances
+          ? {
+              finances: {
+                ...current.business.finances,
+                [teamId]: {
+                  ...finances,
+                  attendanceByYear: {
+                    ...finances.attendanceByYear,
+                    [yearKey]:
+                      (finances.attendanceByYear[yearKey] ?? 0) +
+                      actual.attendance,
+                  },
+                },
+              },
+            }
+          : {}),
+      },
+    };
 
     current = withAppliedGameplayConsequence(current, key);
   }

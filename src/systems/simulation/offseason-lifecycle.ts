@@ -42,6 +42,10 @@ import { beginRegularSeasonFromPreseason } from "@/systems/simulation/season-lif
 import { fillShortRosters } from "@/systems/roster-generation";
 import { enforceMaxRosterViaDevelopmentLeague } from "@/systems/development-league/enforce-roster-cap";
 import {
+  expireSituation,
+} from "@/systems/narrative/lifecycle";
+import { withOwnedFranchise } from "@/state/owner-context";
+import {
   advancePhase,
   canAdvancePhase,
   enterPhase,
@@ -176,6 +180,10 @@ function withEnsuredDraftPicks(state: GameState): GameState {
  * when entering preseason.preparation from offseason.
  */
 export function initializeNewSeason(state: GameState, rng?: Rng): SystemResult {
+  if (isNewSeasonAlreadyInitialized(state)) {
+    return systemResult(state);
+  }
+
   const phaseId = getActivePhaseId(state);
   if (
     phaseId !== "offseason.staff_development" &&
@@ -285,7 +293,56 @@ export function initializeNewSeason(state: GameState, rng?: Rng): SystemResult {
       },
     },
   };
+  next = expireSeasonalSituations(next);
   return systemResult(next, [...events, ...phaseResult.events]);
+}
+
+function isNewSeasonAlreadyInitialized(state: GameState): boolean {
+  const year = state.competition.season.year;
+  const anyFinal = Object.values(state.competition.games).some(
+    (game) => game.status === "final",
+  );
+  if (anyFinal) {
+    return false;
+  }
+  const historyThisYear = Object.values(state.business.franchiseHistory).some(
+    (history) => history.seasons.some((season) => season.seasonYear === year),
+  );
+  if (historyThisYear) {
+    return false;
+  }
+  const historyPrior = Object.values(state.business.franchiseHistory).some(
+    (history) =>
+      history.seasons.some((season) => season.seasonYear === year - 1),
+  );
+  return historyPrior && Object.keys(state.competition.games).length === 0;
+}
+
+function expireSeasonalSituations(state: GameState): GameState {
+  const date = state.world.calendar.currentDate;
+  const keys = new Set(["expectation_gap", "objective_progress"]);
+  let current = state;
+  for (const teamId of current.user.ownedTeamIds) {
+    current = withOwnedFranchise(current, teamId, (franchise) => ({
+      ...franchise,
+      narrative: {
+        ...franchise.narrative,
+        situations: franchise.narrative.situations.map((situation) => {
+          if (!keys.has(situation.detectorKey)) {
+            return situation;
+          }
+          if (
+            situation.status === "resolved" ||
+            situation.status === "expired"
+          ) {
+            return situation;
+          }
+          return expireSituation(situation, date);
+        }),
+      },
+    }));
+  }
+  return current;
 }
 
 function isDraftOrderFullyUsed(

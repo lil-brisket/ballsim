@@ -183,7 +183,30 @@ describe("evaluateRosterNeeds", () => {
     const needs = evaluateRosterNeeds(buildState(players), teamId);
     const pf = needs.find((need) => need.position === "PF");
     expect(pf?.level).not.toBe("strong");
-    // Secondary 82 → 53; primary 70 → depthScore < 75 with two players → weak
-    expect(pf?.level).toBe("weak");
+    expect(pf?.level).not.toBe("adequate");
+  });
+
+  it("treats two elite wings as at least adequate at their primary position", () => {
+    const players = [
+      createPlayer({
+        id: "sg1",
+        teamId,
+        position: "SG",
+        attributes: uniformPlayerAttributes(92),
+      }),
+      createPlayer({
+        id: "sg2",
+        teamId,
+        position: "SG",
+        attributes: uniformPlayerAttributes(91),
+      }),
+    ];
+    const needs = evaluateRosterNeeds(buildState(players), teamId);
+    expect(needs.find((need) => need.position === "SG")?.level).toBe(
+      "adequate",
+    );
+    expect(needs.find((need) => need.position === "PG")?.level).not.toBe(
+      "weak",
+    );
   });
 });

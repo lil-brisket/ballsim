@@ -194,6 +194,53 @@ describe("player history archival", () => {
     );
   });
 
+  it("drops rotation traces when compacting archived games", () => {
+    const { state, game, homePlayer, homeTeamId } = enterFinalizationWithGame();
+    const withTrace = {
+      ...state,
+      competition: {
+        ...state.competition,
+        games: {
+          [game.id]: {
+            ...game,
+            rotationMeta: {
+              home: [
+                {
+                  playerId: homePlayer.id,
+                  targetMinutes: 32,
+                  minimumMinutes: 20,
+                  normalMaximumMinutes: 36,
+                  absoluteMaximumMinutes: 40,
+                  role: "starter",
+                },
+              ],
+              away: [],
+              trace: [
+                {
+                  sequence: 1,
+                  periodNumber: 1,
+                  secondsRemaining: 720,
+                  teamId: homeTeamId,
+                  playerOutId: null,
+                  playerInId: homePlayer.id,
+                  reason: "start",
+                  forced: false,
+                },
+              ],
+              explanations: { [homePlayer.id]: ["opening lineup"] },
+            },
+          },
+        },
+      },
+    };
+    const archived = archiveCompletedSeasonGames(withTrace).state;
+    const stored = archived.business.gameArchive[game.id];
+    expect(stored).toBeDefined();
+    expect(stored!.events).toEqual([]);
+    expect(stored!.rotationMeta).toBeNull();
+    expect(stored!.playerStats[0]!.points).toBe(28);
+  });
+
   it("is idempotent: double finalization does not duplicate archive or season records", () => {
     const { state, rng, game, homePlayer } = enterFinalizationWithGame();
     const once = processOffseasonLifecycle(state, rng).state;

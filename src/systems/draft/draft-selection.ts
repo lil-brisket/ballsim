@@ -11,7 +11,9 @@ import {
 import { asContractId, type DraftClassId } from "@/domain/ids";
 import type { GameState } from "@/state/game-state";
 import { appendSeasonEventLog } from "@/state/game-state";
-import { attributeBasedAnnualSalary } from "@/systems/attribute-salary";
+import { salaryForPlayer } from "@/systems/salary-scale";
+import { getLeagueSalaryCap } from "@/systems/league-salary-cap";
+import { calculatePlayerOverall } from "@/domain/player-overall-rating";
 import { DRAFT_ROOKIE_CONTRACT_YEARS } from "@/systems/draft-config";
 import { draftClassIdFor } from "@/domain/entities/draft";
 import {
@@ -63,7 +65,16 @@ export function makeDraftSelection(
   const contractId = asContractId(`contract_${playerId}`);
   const seasonYear = state.competition.season.year;
   const endYear = seasonYear + DRAFT_ROOKIE_CONTRACT_YEARS - 1;
-  const salaryPerYear = attributeBasedAnnualSalary(prospect.player.attributes);
+  const salaryPerYear = salaryForPlayer({
+    overall: calculatePlayerOverall(
+      prospect.player.position,
+      prospect.player.attributes,
+    ),
+    age: prospect.player.age,
+    years: 0,
+    cap: getLeagueSalaryCap(state),
+    kind: "rookie",
+  });
   const salaryByYear: Record<string, number> = {};
   for (let year = seasonYear; year <= endYear; year += 1) {
     salaryByYear[String(year)] = salaryPerYear;

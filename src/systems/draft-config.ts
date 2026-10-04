@@ -8,6 +8,17 @@ export const MAX_DRAFT_PROSPECT_AGE = 22;
  */
 export const DRAFT_EXTRA_PROSPECTS_PER_TEAM = 1;
 
+export const DRAFT_QUALITY_BY_PICK_BAND = [
+  { maxPick: 14, qualityMin: 62, qualityMax: 85, potMin: 8, potMax: 22 },
+  { maxPick: 30, qualityMin: 55, qualityMax: 76, potMin: 6, potMax: 16 },
+  { maxPick: 45, qualityMin: 48, qualityMax: 68, potMin: 3, potMax: 12 },
+  { maxPick: 999, qualityMin: 40, qualityMax: 58, potMin: 0, potMax: 8 },
+] as const;
+
+export const DRAFT_LATE_STEAL_CHANCE = 0.05;
+export const DRAFT_LATE_STEAL_QUALITY_MIN = 60;
+export const DRAFT_LATE_STEAL_QUALITY_MAX = 78;
+
 /** Inclusive attribute/potential noise amplitude for scouting (±). */
 export const DRAFT_SCOUT_ATTRIBUTE_NOISE = 8;
 

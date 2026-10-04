@@ -13,7 +13,7 @@ export function TeamDecisionPanel(props: {
   const standingLine =
     team.conferenceRank !== null && team.conferenceName
       ? `${team.wins}–${team.losses} · ${team.conferenceRank}${ordinal(team.conferenceRank)} in ${team.conferenceName}`
-      : `${team.wins}–${team.losses} · #${team.leagueRank} overall`;
+      : `${team.wins}–${team.losses} · ${team.leagueRank == null ? "—" : `#${team.leagueRank}`} overall`;
 
   const payrollContext =
     team.payrollVsLeaguePct !== null

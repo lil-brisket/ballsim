@@ -38,6 +38,7 @@ export function createPhaseEBusinessDefaults(
   >;
   franchiseReportCache: Record<string, never>;
   gameArchive: Record<string, never>;
+  gameArchiveIndex: import("@/domain/entities/game-archive-index").GameArchiveIndex;
   playerHistory: Record<string, never>;
   awards: ReturnType<typeof createEmptyAwardHistory>;
   gameDayPromotionsByTeamId: Record<string, GameDayPromotionSeasonState>;
@@ -98,6 +99,7 @@ export function createPhaseEBusinessDefaults(
     franchiseHistory,
     franchiseReportCache: {},
     gameArchive: {},
+    gameArchiveIndex: { byPlayerId: {}, bySeasonId: {} },
     playerHistory: {},
     awards: createEmptyAwardHistory(),
     gameDayPromotionsByTeamId,

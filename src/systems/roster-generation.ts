@@ -4,7 +4,9 @@ import { createContract, type Contract } from "@/domain/entities/contract";
 import type { Rng } from "@/domain/rng";
 import { systemResult, type SystemResult } from "@/domain/system-result";
 import type { GameState } from "@/state/game-state";
-import { attributeBasedAnnualSalary } from "@/systems/attribute-salary";
+import { salaryForPlayer } from "@/systems/salary-scale";
+import { getLeagueSalaryCap } from "@/systems/league-salary-cap";
+import { calculatePlayerOverall } from "@/domain/player-overall-rating";
 import { generatePlayerWithRng } from "@/systems/player-generation";
 import {
   DEFAULT_ROSTER_SIZE,
@@ -35,6 +37,12 @@ export function generateRosters(state: GameState, rng: Rng): SystemResult {
 
   const teamIds = Object.keys(state.world.teams).sort();
 
+  const occupiedNames = new Set<string>();
+  for (const existing of Object.values(state.world.players)) {
+    if (existing.retired === true) continue;
+    occupiedNames.add(`${existing.firstName} ${existing.lastName}`);
+  }
+
   for (const teamId of teamIds) {
     const rosterPlayerIds: ReturnType<typeof asPlayerId>[] = [];
     for (let slot = 0; slot < DEFAULT_ROSTER_SIZE; slot += 1) {
@@ -47,11 +55,19 @@ export function generateRosters(state: GameState, rng: Rng): SystemResult {
         teamId: state.world.teams[teamId]!.id,
         contractId,
         position,
+        occupiedNames,
       });
+      occupiedNames.add(`${player.firstName} ${player.lastName}`);
       players[playerId] = player;
       rosterPlayerIds.push(playerId);
 
-      const salaryPerYear = attributeBasedAnnualSalary(player.attributes);
+      const salaryPerYear = salaryForPlayer({
+        overall: calculatePlayerOverall(player.position, player.attributes),
+        age: player.age,
+        years: 0,
+        cap: getLeagueSalaryCap(state),
+        kind: "fa",
+      });
       const yearsRemaining = rng.nextInt(1, 4);
       const startYear = currentYear;
       const endYear = currentYear + yearsRemaining - 1;
@@ -169,6 +185,11 @@ export function fillShortRosters(state: GameState, rng: Rng): SystemResult {
     ...state.world.teams,
   };
   const currentYear = state.competition.season.year;
+  const occupiedNames = new Set<string>();
+  for (const existing of Object.values(players)) {
+    if (existing.retired === true) continue;
+    occupiedNames.add(`${existing.firstName} ${existing.lastName}`);
+  }
 
   for (const teamId of shortTeamIds) {
     const team = teams[teamId]!;
@@ -185,11 +206,19 @@ export function fillShortRosters(state: GameState, rng: Rng): SystemResult {
         teamId: team.id,
         contractId,
         position,
+        occupiedNames,
       });
+      occupiedNames.add(`${player.firstName} ${player.lastName}`);
       players[playerId] = player;
       roster.push(playerId);
 
-      const salaryPerYear = attributeBasedAnnualSalary(player.attributes);
+      const salaryPerYear = salaryForPlayer({
+        overall: calculatePlayerOverall(player.position, player.attributes),
+        age: player.age,
+        years: 0,
+        cap: getLeagueSalaryCap(state),
+        kind: "fa",
+      });
       const yearsRemaining = rng.nextInt(1, 4);
       const startYear = currentYear;
       const endYear = currentYear + yearsRemaining - 1;

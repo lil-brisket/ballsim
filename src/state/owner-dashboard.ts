@@ -177,7 +177,7 @@ export type OwnerDashboardRosterProblem = {
 export type OwnerDashboardTeam = {
   wins: number;
   losses: number;
-  leagueRank: number;
+  leagueRank: number | null;
   conferenceRank: number | null;
   conferenceName: string | null;
   strength: number;

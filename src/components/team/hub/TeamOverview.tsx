@@ -46,7 +46,9 @@ export function TeamOverview(props: { hub: TeamHubView }) {
   const conferenceLine =
     hub.standings.conferenceRank != null && hub.standings.conferenceName
       ? `${hub.standings.conferenceRank}${ordinal(hub.standings.conferenceRank)} · ${hub.standings.conferenceName}`
-      : `#${hub.leagueRank} overall`;
+      : hub.leagueRank == null
+        ? "Unranked"
+        : `#${hub.leagueRank} overall`;
 
   return (
     <Section title="Overview">

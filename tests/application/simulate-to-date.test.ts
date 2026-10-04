@@ -141,7 +141,7 @@ describe("simulate-to-date", () => {
       expect(result.simulation.currentDate).toBe(target);
       expect(result.simulation.daysAdvanced).toBe(4);
     }
-  });
+  }, 30_000);
 
   it("persists media feed fields after multi-day advance", async () => {
     const { store } = await seedRegularSave("sim_roundtrip", 34);

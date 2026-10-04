@@ -167,6 +167,15 @@ export function readAttendanceRealization(
   state: GameState,
   teamId: TeamId,
 ): number {
+  const series = state.business.franchiseOps[teamId]?.homeFillSeries;
+  if (series && series.length > 0) {
+    const fillSum = series.reduce((sum, fill) => sum + fill, 0);
+    return clamp(
+      fillSum / series.length,
+      MARKET_REALIZATION_MIN,
+      MARKET_REALIZATION_MAX,
+    );
+  }
   let fillSum = 0;
   let games = 0;
   for (const event of getActiveOwnedFranchise(state).eventLog) {

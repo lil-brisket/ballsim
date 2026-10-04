@@ -32,7 +32,9 @@ export function TeamSnapshotPanel(props: {
   const standingLine =
     team.conferenceRank !== null && team.conferenceName
       ? `${team.conferenceRank}${ordinal(team.conferenceRank)} in ${team.conferenceName}`
-      : `#${team.leagueRank} overall`;
+      : team.leagueRank == null
+        ? "Unranked"
+        : `#${team.leagueRank} overall`;
 
   return (
     <Section

@@ -16,15 +16,23 @@ import type { PlayerId } from "@/domain/ids";
 import { systemResult, type SystemResult } from "@/domain/system-result";
 import type { GameState } from "@/state/game-state";
 import { getPlayerSeasonGames } from "@/state/game-access";
+import {
+  buildGameArchiveIndex,
+  indexArchivedGame,
+} from "@/domain/entities/game-archive-index";
 
 /**
  * Archives finalized competition.games into business.gameArchive.
  * Idempotent: skips gameIds already present (does not overwrite).
- * Play-by-play is dropped on archive — box scores remain the source
- * of player history. Games remain in competition.games until initializeNewSeason.
+ * Play-by-play and rotation traces are dropped on archive — box scores remain
+ * the source of player history. Games remain in competition.games until
+ * initializeNewSeason.
  */
 export function archiveCompletedSeasonGames(state: GameState): SystemResult {
   let archive = state.business.gameArchive;
+  let index =
+    state.business.gameArchiveIndex ??
+    buildGameArchiveIndex(state.business.gameArchive);
   let changed = false;
 
   for (const game of Object.values(state.competition.games)) {
@@ -39,6 +47,7 @@ export function archiveCompletedSeasonGames(state: GameState): SystemResult {
       changed = true;
     }
     archive[game.id] = compactGameForArchive(game);
+    index = indexArchivedGame(index, archive[game.id]!);
   }
 
   if (!changed) {
@@ -50,15 +59,33 @@ export function archiveCompletedSeasonGames(state: GameState): SystemResult {
     business: {
       ...state.business,
       gameArchive: archive,
+      gameArchiveIndex: index,
     },
   });
 }
 
-function compactGameForArchive(game: Game): Game {
-  if (game.events.length === 0) {
-    return game;
-  }
-  return { ...game, events: [] };
+export function compactGameForArchive(game: Game): Game {
+  return {
+    ...game,
+    events: [],
+    rotationMeta: null,
+    periodScores: (game.periodScores ?? []).map((period) => ({ ...period })),
+    playerStats: (game.playerStats ?? []).map((row) => ({
+      ...row,
+      firstName: null,
+      lastName: null,
+    })),
+    homeTeamSnapshot: game.homeTeamSnapshot
+      ? {
+          ...game.homeTeamSnapshot,
+        }
+      : null,
+    awayTeamSnapshot: game.awayTeamSnapshot
+      ? {
+          ...game.awayTeamSnapshot,
+        }
+      : null,
+  };
 }
 
 function accumulateStatLine(

@@ -5,7 +5,12 @@ import { GAME_STATE_SCHEMA_VERSION } from "@/state/game-state";
 import type { NarrativeMonthSnapshot } from "@/domain/entities/narrative-situation";
 import { createSeededRng } from "@/domain/rng";
 import { createTestRng, TEST_RNG_SEED } from "../../helpers/determinism";
-import { detectAttendanceDecline } from "@/systems/narrative/detectors";
+import {
+  detectAttendanceDecline,
+  detectExpectationGap,
+  detectFinancialPressure,
+  detectObjectiveProgress,
+} from "@/systems/narrative/detectors";
 import { buildNarrativeContext } from "@/systems/narrative/build-narrative-context";
 import { aggregateCandidates } from "@/systems/narrative/aggregation";
 import { applySpamFilters, selectDailyStories } from "@/systems/narrative/spam";
@@ -395,5 +400,67 @@ describe("narrative migration", () => {
       cooldowns: {},
     });
     expect(state.meta.schemaVersion).toBe(GAME_STATE_SCHEMA_VERSION);
+  });
+});
+
+describe("playtest correctness detectors", () => {
+  it("does not open financial pressure while healthy", () => {
+    const state = createCblInitialGameState(createTestRng());
+    const context = baseContext(state, {
+      healthBand: "healthy",
+      ticketMerchChangeVsPriorMonth: -12,
+      snapshots: [snapshot("2026-01", 80), snapshot("2026-02", 70), snapshot("2026-03", 60)],
+      runwayWeeks: null,
+    });
+    expect(detectFinancialPressure(context)).toBeNull();
+  });
+
+  it("opens financial pressure only for warning/critical/insolvent", () => {
+    const state = createCblInitialGameState(createTestRng());
+    const warning = detectFinancialPressure(
+      baseContext(state, { healthBand: "warning", runwayWeeks: 4 }),
+    );
+    expect(warning?.detectorKey).toBe("financial_pressure");
+    expect(warning?.evidence.runwayWeeks).toBe(4);
+    const insolvent = detectFinancialPressure(
+      baseContext(state, { healthBand: "insolvent", runwayWeeks: null }),
+    );
+    expect(insolvent?.templateContext.runwayWeeks).toBeUndefined();
+  });
+
+  it("resolves expectation gap when the miss is gone", () => {
+    const state = createCblInitialGameState(createTestRng());
+    const context = baseContext(state, {
+      cadence: "weekly",
+      wins: 5,
+      losses: 5,
+      openDetectorKeys: new Set(["expectation_gap"]),
+      objectives: [],
+    });
+    const candidate = detectExpectationGap(context);
+    expect(candidate?.resolve).toBe(true);
+  });
+
+  it("does not warn on win-total gap before the sample", () => {
+    const state = createCblInitialGameState(createTestRng());
+    const context = baseContext(state, {
+      cadence: "monthly",
+      wins: 0,
+      losses: 0,
+      objectives: [
+        {
+          id: "obj_wins",
+          type: "minimum_win_total",
+          description: "Win 40",
+          target: 40,
+          progress: 0,
+          gap: 40,
+          status: "active",
+          category: "competitive",
+        },
+      ],
+    });
+    expect(detectObjectiveProgress(context)?.resolve).toBeUndefined();
+    expect(detectObjectiveProgress(context)).toBeNull();
   });
 });

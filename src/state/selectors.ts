@@ -125,7 +125,7 @@ export type DashboardSnapshot = {
   revenueTotal: number;
   expensesTotal: number;
   netIncome: number;
-  standingsRank: number;
+  standingsRank: number | null;
   controlledStanding: { wins: number; losses: number };
   recentResults: Array<{
     gameId: string;
@@ -1195,7 +1195,10 @@ export function toDashboardSnapshot(state: GameState): DashboardSnapshot {
     revenueTotal: statement.revenue.total,
     expensesTotal: statement.expenses.total,
     netIncome: statement.netIncome,
-    standingsRank: userStanding?.rank ?? standings.length,
+    standingsRank:
+      standing.wins + standing.losses === 0
+        ? null
+        : (userStanding?.rank ?? standings.length),
     controlledStanding: {
       wins: standing.wins,
       losses: standing.losses,

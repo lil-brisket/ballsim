@@ -11,10 +11,10 @@ import {
   AGE_VALUE_MODIFIERS,
   CONTRACT_VALUE_MODIFIERS,
   DRAFT_PICK_VALUE_ROUND_1,
-  DRAFT_PICK_VALUE_ROUND_2,
   INJURY_PENALTIES,
   PLAYER_TRADE_VALUE_WEIGHTS,
   RECENT_PERFORMANCE_WEIGHT,
+  STAR_TRADE_VALUE_PREMIUM,
 } from "@/systems/trades-config";
 import {
   pickValueFromProjection,
@@ -67,7 +67,7 @@ function basePlayerValue(
   const contract = contractValue(state, player, overall, reasons);
   const injury = injuryValue(player, overall, reasons);
 
-  const value =
+  let value =
     ability * w.ability +
     potential * w.potential +
     ageCurve * w.ageCurve +
@@ -75,6 +75,16 @@ function basePlayerValue(
     trajectory * w.trajectory +
     contract * w.contract +
     injury * w.injury;
+
+  if (overall >= 90) {
+    value *= STAR_TRADE_VALUE_PREMIUM.overall90;
+    reasons.push("Elite star premium");
+  } else if (overall >= 85) {
+    value *= STAR_TRADE_VALUE_PREMIUM.overall85;
+    reasons.push("Star premium");
+  } else if (overall >= 80) {
+    value *= STAR_TRADE_VALUE_PREMIUM.overall80;
+  }
 
   if (player.developmentLeague.status === "assigned") {
     reasons.push("Development-league assignment");
@@ -112,11 +122,13 @@ function basePickValue(
     reasons.push("Second-round pick");
   }
 
-  // Soft floor near legacy constants so mid-pack R1 stays near 80.
+  const yearsOut = Math.max(0, pick.seasonYear - year);
   const floor =
-    pick.round === 1
-      ? DRAFT_PICK_VALUE_ROUND_1 * 0.55
-      : DRAFT_PICK_VALUE_ROUND_2 * 0.55;
+    pick.round === 1 && yearsOut <= 0
+      ? DRAFT_PICK_VALUE_ROUND_1 * 0.35
+      : pick.round === 1 && yearsOut === 1
+        ? DRAFT_PICK_VALUE_ROUND_1 * 0.2
+        : 0;
   return {
     value: Math.round(Math.max(floor, value) * 10) / 10,
     reasons,

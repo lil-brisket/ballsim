@@ -165,6 +165,16 @@ export const TRADE_OFFER_QUALITY_FLOOR = 55;
 
 /** Max CPU→user offers enqueued per team per day. */
 export const TRADE_OFFER_DAILY_CAP = 1;
+export const TRADE_OFFER_WEEKLY_CAP = 3;
+export const TRADE_OFFER_SEASONAL_CAP = 24;
+export const TRADE_OFFER_PENDING_QUEUE_MAX = 8;
+
+/** Convex star premium applied to base player value above these overalls. */
+export const STAR_TRADE_VALUE_PREMIUM = {
+  overall80: 1.25,
+  overall85: 1.65,
+  overall90: 2.2,
+} as const;
 
 /** Offer expiration windows (calendar days). */
 export const TRADE_OFFER_EXPIRATION = {
@@ -184,7 +194,7 @@ export const RECENT_PERFORMANCE_WEIGHT = {
   limitedRecentWeight: 0.2,
   fullRecentWeight: 0.3,
   rollingWindow: 10,
-  expectedPtsPerOvr: 0.28,
+  expectedPtsPerOvr: 0.22,
 } as const;
 
 /** Days since acquisition treated as "recently acquired". */

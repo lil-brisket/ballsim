@@ -21,7 +21,12 @@ import {
   type TeamId,
 } from "@/domain/ids";
 import type { GameState } from "@/state/game-state";
-import { TRADE_OFFER_EXPIRATION } from "@/systems/trades-config";
+import {
+  TRADE_OFFER_EXPIRATION,
+  TRADE_OFFER_PENDING_QUEUE_MAX,
+  TRADE_OFFER_SEASONAL_CAP,
+  TRADE_OFFER_WEEKLY_CAP,
+} from "@/systems/trades-config";
 import { getCalendarContext } from "@/systems/simulation/calendar-context";
 import { evaluateTrade } from "@/systems/trades/asset-valuation/complete-trade-evaluation";
 
@@ -124,6 +129,36 @@ export function enqueueTradeOfferForOwner(
       outcome: "skipped",
       state,
       reason: "duplicate_pending_id",
+    };
+  }
+
+  const pendingTradeOffers = state.user.pendingOwnerDecisions.filter(
+    (decision) => decision.type === "trade_offer",
+  );
+  if (pendingTradeOffers.length >= TRADE_OFFER_PENDING_QUEUE_MAX) {
+    return {
+      outcome: "skipped",
+      state,
+      reason: "pending_queue_full",
+    };
+  }
+
+  const today = state.world.calendar.currentDate;
+  const weekAgo = addCalendarDays(today, -7);
+  const seasonStart = `${state.competition.season.year}-01-01`;
+  const weeklyCount = countTradeOffersSince(state, weekAgo);
+  if (weeklyCount >= TRADE_OFFER_WEEKLY_CAP) {
+    return {
+      outcome: "skipped",
+      state,
+      reason: "weekly_cap",
+    };
+  }
+  if (countTradeOffersSince(state, seasonStart) >= TRADE_OFFER_SEASONAL_CAP) {
+    return {
+      outcome: "skipped",
+      state,
+      reason: "seasonal_cap",
     };
   }
 
@@ -386,6 +421,18 @@ export function expireDatedTradeOffers(state: GameState): {
     expiredIds.push(decision.id);
   }
   return { state: working, expiredIds };
+}
+
+function countTradeOffersSince(state: GameState, sinceDate: string): number {
+  const pending = state.user.pendingOwnerDecisions.filter(
+    (decision) =>
+      decision.type === "trade_offer" && decision.createdOn >= sinceDate,
+  ).length;
+  const history = state.user.ownerDecisionHistory.filter(
+    (record) =>
+      record.type === "trade_offer" && record.createdOn >= sinceDate,
+  ).length;
+  return pending + history;
 }
 
 /** @deprecated use getActiveOwnerDecision — re-export for callers. */

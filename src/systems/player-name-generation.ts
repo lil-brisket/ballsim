@@ -25,19 +25,70 @@ const DEFAULT_POOLS: PlayerNamePools = {
   nationalities: PLAYER_NATIONALITIES,
 };
 
+export type GeneratePlayerNameOptions = {
+  occupiedNames?: ReadonlySet<string>;
+  /** Extra RNG draws after the first pick when retrying collisions. */
+  maxRetries?: number;
+};
+
+const DEFAULT_MAX_NAME_RETRIES = 24;
+
+function fullName(firstName: string, lastName: string): string {
+  return `${firstName} ${lastName}`;
+}
+
 /**
  * Selects first name, last name, and nationality from expandable pools.
  * Does not mutate pools. No knowledge of ratings, teams, or UI.
+ *
+ * When occupiedNames is set, retries against active collisions. Retries consume
+ * extra RNG draws after the first name draw; the first draw order is unchanged.
+ * If retries are exhausted, a roman suffix is appended to the last name.
  */
 export function generatePlayerName(
   rng: Rng,
   pools: PlayerNamePools = DEFAULT_POOLS,
+  options: GeneratePlayerNameOptions = {},
 ): GeneratedPlayerName {
-  const firstName = pickName(pools.firstNames, "firstNames", rng);
-  const lastName = pickName(pools.lastNames, "lastNames", rng);
+  const occupied = options.occupiedNames;
+  const maxRetries = options.maxRetries ?? DEFAULT_MAX_NAME_RETRIES;
+  let firstName = pickName(pools.firstNames, "firstNames", rng);
+  let lastName = pickName(pools.lastNames, "lastNames", rng);
   const nationality = pickNationality(pools.nationalities, rng);
 
+  if (occupied && occupied.size > 0) {
+    let attempts = 0;
+    while (occupied.has(fullName(firstName, lastName)) && attempts < maxRetries) {
+      attempts += 1;
+      firstName = pickName(pools.firstNames, "firstNames", rng);
+      lastName = pickName(pools.lastNames, "lastNames", rng);
+    }
+    if (occupied.has(fullName(firstName, lastName))) {
+      lastName = suffixLastName(lastName, occupied, firstName);
+    }
+  }
+
   return { firstName, lastName, nationality };
+}
+
+const NAME_SUFFIXES = [" Jr", " II", " III", " IV", " V"] as const;
+
+function suffixLastName(
+  lastName: string,
+  occupied: ReadonlySet<string>,
+  firstName: string,
+): string {
+  for (const suffix of NAME_SUFFIXES) {
+    const candidate = `${lastName}${suffix}`;
+    if (!occupied.has(fullName(firstName, candidate))) {
+      return candidate;
+    }
+  }
+  let serial = 2;
+  while (occupied.has(fullName(firstName, `${lastName} ${serial}`))) {
+    serial += 1;
+  }
+  return `${lastName} ${serial}`;
 }
 
 function pickName(pool: readonly string[], poolName: string, rng: Rng): string {

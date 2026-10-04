@@ -314,10 +314,7 @@ function expectedPhaseFromDate(
   const seasonPhase = state.competition.season.phase;
   const playoffs = state.competition.playoffs;
 
-  if (
-    (seasonPhase === "playoffs" || playoffs.status === "in_progress") &&
-    playoffs.status !== "complete"
-  ) {
+  if (seasonPhase === "playoffs" && playoffs.status === "in_progress") {
     return { phaseId: "playoffs", window: null };
   }
 

@@ -211,6 +211,9 @@ function evaluateOne(
     objective.lifecycle === "seasonal" &&
     objective.seasonYear !== seasonYear
   ) {
+    if (objective.status === "active") {
+      return { ...objective, status: "failed" };
+    }
     return objective;
   }
 

@@ -10,6 +10,9 @@ export const OWNER_OBJECTIVE_MID_OVERALL = 65;
 export const OWNER_OBJECTIVE_WIN_TARGET_MID = 40;
 export const OWNER_OBJECTIVE_WIN_TARGET_WEAK = 35;
 
+/** Regular-season games required before win-total pace warnings fire. */
+export const OWNER_OBJECTIVE_WIN_SAMPLE_GAMES = 10;
+
 /** Payroll limit objective uses the league salary cap. */
 export const OWNER_OBJECTIVE_PAYROLL_LIMIT = DEFAULT_SALARY_CAP;
 
@@ -59,7 +62,8 @@ export const GAMEPLAY_OBJECTIVE_PENALTY = 500_000;
 
 /** AI free-agency: one-year deals at this fraction of remaining cap space (capped). */
 export const AI_FA_SALARY_CAP_FRACTION = 0.15;
-export const AI_FA_MAX_SALARY = 8_000_000;
+/** Hard cap leftover — prefer salaryForPlayer. Kept as an absolute dollar ceiling. */
+export const AI_FA_MAX_SALARY = 50_000_000;
 export const AI_FA_MIN_SALARY = 1_000_000;
 
 /** Small-market threshold for contextual generation (marketSize 1–99). */

@@ -147,6 +147,45 @@ describe("AI team decisions", () => {
     );
   });
 
+  it("does not sign retired players during free agency", () => {
+    let state = createInitialGameState({
+      saveId: "ai_fa_retired",
+      rngSeed: 22,
+      settings: CBL_GAME_SETTINGS,
+    });
+    const rng = createSeededRng(state.meta.rngState);
+    state = bootstrapWorld(state, rng).state;
+    state = toFreeAgency(state, rng);
+
+    const aiTeamId = aiTeamIds(state)[0]!;
+    const retiredId = state.world.teams[aiTeamId]!.roster.at(-1)!;
+    state = expireContractAndRelease(state, retiredId);
+    state = {
+      ...state,
+      world: {
+        ...state.world,
+        players: {
+          ...state.world.players,
+          [retiredId]: {
+            ...state.world.players[retiredId]!,
+            retired: true,
+            teamId: null,
+            contractId: null,
+          },
+        },
+      },
+    };
+
+    expect(listFreeAgents(state).playerIds).not.toContain(retiredId);
+
+    const result = runAiTeamDecisions(state, rng).state;
+    expect(result.world.players[retiredId]?.retired).toBe(true);
+    expect(result.world.players[retiredId]?.teamId).toBeNull();
+    for (const team of Object.values(result.world.teams)) {
+      expect(team.roster).not.toContain(retiredId);
+    }
+  });
+
   it("is deterministic for the same RNG state", () => {
     let state = createInitialGameState({
       saveId: "ai_det",

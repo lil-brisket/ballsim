@@ -612,6 +612,16 @@ export function validateGameState(state: unknown): asserts state is GameState {
         `business.franchiseOps[${teamId}].riskTolerance must be an integer 1–99.`,
       );
     }
+    if (ops.homeFillSeries !== undefined) {
+      if (
+        !Array.isArray(ops.homeFillSeries) ||
+        ops.homeFillSeries.some((fill) => typeof fill !== "number")
+      ) {
+        fail(
+          `business.franchiseOps[${teamId}].homeFillSeries must be an array of numbers.`,
+        );
+      }
+    }
     if (!(teamId in relocationByTeamId)) {
       fail(`business.relocationByTeamId missing team "${teamId}".`);
     }

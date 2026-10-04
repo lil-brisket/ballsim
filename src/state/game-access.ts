@@ -48,6 +48,34 @@ export function getPlayerSeasonGames(
   playerId: PlayerId,
   seasonId: SeasonId,
 ): Game[] {
+  const index = state.business.gameArchiveIndex?.byPlayerId[playerId];
+  if (index && index.length > 0) {
+    const games: Game[] = [];
+    const seen = new Set<string>();
+    for (const gameId of index) {
+      const archived = state.business.gameArchive[gameId];
+      if (
+        archived &&
+        archived.seasonId === seasonId &&
+        archived.status === "final"
+      ) {
+        games.push(archived);
+        seen.add(gameId);
+      }
+    }
+    const current = {
+      ...state.competition.games,
+      ...(state.competition.developmentLeague?.games ?? {}),
+    };
+    for (const game of Object.values(current)) {
+      if (seen.has(game.id)) continue;
+      if (game.seasonId !== seasonId || game.status !== "final") continue;
+      if (game.playerStats.some((row) => row.playerId === playerId)) {
+        games.push(game);
+      }
+    }
+    return games;
+  }
   return getPlayerGames(state, playerId).filter(
     (game) => game.seasonId === seasonId && game.status === "final",
   );

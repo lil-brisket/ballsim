@@ -117,6 +117,8 @@ import type {
 } from "@/domain/entities/owner-objective";
 import { DEFAULT_OWNER_PHILOSOPHY } from "@/domain/entities/owner-philosophy";
 import { defaultOwnerPatience } from "@/systems/owner-philosophy-config";
+import { compactGameForArchive } from "@/systems/player-history";
+import { buildGameArchiveIndex } from "@/domain/entities/game-archive-index";
 import { reconcilePhaseWithState } from "@/systems/simulation/phase-lifecycle";
 import { reconcileTradeBlocks } from "@/systems/trades/trade-block";
 
@@ -236,6 +238,8 @@ const MIGRATE_ONE_STEP: Record<number, (state: unknown) => unknown> = {
   59: (state) => migrateV59ToV60(state as GameStateV59),
   60: (state) => migrateV60ToV61(state as GameStateV60),
   61: (state) => migrateV61ToV62(state as GameStateV61),
+  62: (state) => migrateV62ToV63(state as GameStateV62),
+  63: (state) => migrateV63ToV64(state as GameStateV63),
 };
 
 function legacyUserRecord(user: unknown): Record<string, unknown> {
@@ -5335,7 +5339,7 @@ function migrateV60ToV61(state: GameStateV60): GameStateV61 {
 /**
  * Deterministic v61 → v62: empty pendingDraftClassDecisions on user.
  */
-function migrateV61ToV62(state: GameStateV61): GameState {
+function migrateV61ToV62(state: GameStateV61): GameStateV62 {
   return {
     ...state,
     meta: {
@@ -5345,6 +5349,59 @@ function migrateV61ToV62(state: GameStateV61): GameState {
     user: {
       ...state.user,
       pendingDraftClassDecisions: {},
+    },
+  } as GameStateV62;
+}
+
+type GameStateV62 = Omit<GameState, "meta"> & {
+  meta: Omit<GameState["meta"], "schemaVersion"> & { schemaVersion: 62 };
+};
+
+type GameStateV63 = Omit<GameState, "meta"> & {
+  meta: Omit<GameState["meta"], "schemaVersion"> & { schemaVersion: 63 };
+};
+
+function migrateV62ToV63(state: GameStateV62): GameStateV63 {
+  const franchiseOps: GameState["business"]["franchiseOps"] = {};
+  for (const [teamId, ops] of Object.entries(state.business.franchiseOps)) {
+    const record = ops as GameState["business"]["franchiseOps"][string] & {
+      homeFillSeries?: number[];
+    };
+    franchiseOps[teamId] = {
+      ...record,
+      homeFillSeries: Array.isArray(record.homeFillSeries)
+        ? record.homeFillSeries
+        : [],
+    };
+  }
+  return {
+    ...state,
+    meta: {
+      ...state.meta,
+      schemaVersion: 63,
+    },
+    business: {
+      ...state.business,
+      franchiseOps,
+    },
+  } as GameStateV63;
+}
+
+function migrateV63ToV64(state: GameStateV63): GameState {
+  const gameArchive: GameState["business"]["gameArchive"] = {};
+  for (const [gameId, game] of Object.entries(state.business.gameArchive ?? {})) {
+    gameArchive[gameId] = compactGameForArchive(game as Game);
+  }
+  return {
+    ...state,
+    meta: {
+      ...state.meta,
+      schemaVersion: 64,
+    },
+    business: {
+      ...state.business,
+      gameArchive,
+      gameArchiveIndex: buildGameArchiveIndex(gameArchive),
     },
   };
 }

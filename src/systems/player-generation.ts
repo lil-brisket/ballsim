@@ -47,6 +47,11 @@ export type GeneratePlayerOptions = {
   archetype?: PlayerArchetype;
   /** When set, skips the age RNG roll. */
   age?: number;
+  /** When set, skips the quality RNG roll. */
+  quality?: number;
+  /** Occupied "First Last" names among active players. Extra draws on retry. */
+  occupiedNames?: ReadonlySet<string>;
+  potentialGap?: { min: number; max: number };
 };
 
 /**
@@ -73,7 +78,10 @@ export function generatePlayerWithRng(
 ): Player {
   const playerId = options.id ?? asPlayerId(`player_gen_${rng.getState()}`);
 
-  const quality = rng.nextInt(MIN_PLAYER_QUALITY, MAX_PLAYER_QUALITY);
+  const quality =
+    options.quality !== undefined
+      ? options.quality
+      : rng.nextInt(MIN_PLAYER_QUALITY, MAX_PLAYER_QUALITY);
 
   const position = options.position ?? rng.pick(PLAYER_POSITIONS);
 
@@ -104,7 +112,11 @@ export function generatePlayerWithRng(
   } else {
     age = rng.nextInt(MIN_PLAYER_AGE, MAX_PLAYER_AGE);
   }
-  const { firstName, lastName, nationality } = generatePlayerName(rng);
+  const { firstName, lastName, nationality } = generatePlayerName(
+    rng,
+    undefined,
+    { occupiedNames: options.occupiedNames },
+  );
 
   const body = POSITION_BODY_RANGES[position];
   const heightInches = rng.nextInt(body.minHeightInches, body.maxHeightInches);
@@ -118,7 +130,7 @@ export function generatePlayerWithRng(
   );
 
   const currentOverall = calculatePlayerOverall(position, attributes);
-  const gapBand = potentialGapBandForAge(age);
+  const gapBand = options.potentialGap ?? potentialGapBandForAge(age);
   const gap = rng.nextInt(gapBand.min, gapBand.max);
   const potentialOverall = clampRating(currentOverall + gap);
 

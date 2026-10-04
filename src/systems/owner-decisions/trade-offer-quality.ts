@@ -10,6 +10,7 @@ import {
   USER_TRADE_INTERRUPT_MIN_PLAYER_OVERALL,
 } from "@/systems/owner-decisions/owner-decision-config";
 import { calculatePlayerOverall } from "@/domain/player-overall-rating";
+import { projectDraftPick } from "@/systems/trades/asset-valuation/pick-projection";
 
 /**
  * Whether a CPU-accepted trade is meaningful enough to pause simulation.
@@ -46,12 +47,21 @@ export function isInterruptWorthyTradeOffer(
   }
 
   for (const pickId of incoming.pickIds) {
+    const pick = state.world.draftPicks[pickId];
     const value = getBaseAssetValue(state, {
       kind: "draftPick",
       draftPickId: pickId,
     }).value;
+    if (pick) {
+      const projection = projectDraftPick(state, pick);
+      const lottery =
+        projection.tier === "strong_lottery" ||
+        projection.tier === "likely_lottery";
+      if (lottery) {
+        hasMeaningfulPick = true;
+      }
+    }
     if (value > 0) {
-      hasMeaningfulPick = true;
       incomingObjective += value;
     }
   }
@@ -59,15 +69,6 @@ export function isInterruptWorthyTradeOffer(
   const objectiveNet = Math.abs(
     cpuEvaluation.objectiveNetValue ?? cpuEvaluation.netValue,
   );
-
-  const evaluation = cpuEvaluation.evaluation;
-  const strongStrategicFit =
-    evaluation !== undefined && evaluation.strategicFit >= 0.65;
-  const significantRosterImprovement =
-    evaluation !== undefined && evaluation.rosterFit >= 0.65;
-  const meaningfulValueDifference =
-    Math.abs(cpuEvaluation.netValue) >= USER_TRADE_INTERRUPT_MIN_ABS_NET ||
-    objectiveNet >= USER_TRADE_INTERRUPT_MIN_ABS_NET;
 
   const offerScore = Math.max(
     incomingObjective,
@@ -82,20 +83,14 @@ export function isInterruptWorthyTradeOffer(
   if (hasMeaningfulPick) {
     return true;
   }
-  if (
-    hasMeaningfulPlayer &&
-    incomingObjective >= USER_TRADE_INTERRUPT_MIN_INCOMING_VALUE
-  ) {
+  if (hasMeaningfulPlayer) {
     return true;
   }
   if (
-    meaningfulValueDifference ||
-    strongStrategicFit ||
-    significantRosterImprovement
+    incomingObjective >= USER_TRADE_INTERRUPT_MIN_INCOMING_VALUE &&
+    objectiveNet >= USER_TRADE_INTERRUPT_MIN_ABS_NET * 2
   ) {
-    if (incomingObjective >= 55 || hasMeaningfulPlayer) {
-      return true;
-    }
+    return true;
   }
   return false;
 }

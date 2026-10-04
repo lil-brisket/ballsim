@@ -115,7 +115,11 @@ export function GameHeader(props: {
         <p className="min-w-0 truncate text-sm text-zinc-300">
           <span className="font-mono text-zinc-100">{record}</span>
           <span className="text-zinc-500"> · </span>
-          <span className="text-zinc-400">#{dashboard.standingsRank}</span>
+          <span className="text-zinc-400">
+            {dashboard.standingsRank == null
+              ? "—"
+              : `#${dashboard.standingsRank}`}
+          </span>
         </p>
 
         <NotificationsBell

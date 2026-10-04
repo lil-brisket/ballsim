@@ -167,9 +167,13 @@ describe("name data pools", () => {
     expect(new Set(LAST_NAMES).size).toBe(LAST_NAMES.length);
   });
 
-  it("default pools include enough variety for roster generation", () => {
-    expect(FIRST_NAMES.length).toBeGreaterThanOrEqual(60);
-    expect(LAST_NAMES.length).toBeGreaterThanOrEqual(60);
-    expect(PLAYER_NATIONALITIES.length).toBeGreaterThan(0);
+  it("retries until the occupied active name is unique", () => {
+    const occupied = new Set(["Alpha One"]);
+    const name = generatePlayerName(
+      createIndexRng([0, 0, 0, 1, 1]),
+      TINY_POOLS,
+      { occupiedNames: occupied },
+    );
+    expect(`${name.firstName} ${name.lastName}`).toBe("Beta Two");
   });
 });

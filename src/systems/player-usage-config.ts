@@ -22,12 +22,12 @@ export const PLAYER_USAGE_CONFIG = {
    * A 90-rated role_player must still out-weight a 50-rated primary_creator.
    */
   roleMultipliers: {
-    primary_creator: 1.2,
-    secondary_creator: 1.1,
-    scorer: 1.08,
+    primary_creator: 1.55,
+    secondary_creator: 1.3,
+    scorer: 1.2,
     role_player: 1.0,
-    low_usage: 0.75,
-    bench: 0.7,
+    low_usage: 0.6,
+    bench: 0.5,
   } satisfies Record<OffensiveRole, number>,
 } as const;
 

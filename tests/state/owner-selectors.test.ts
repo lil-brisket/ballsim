@@ -20,13 +20,17 @@ describe("owner selectors", () => {
       createDomainEvent({
         type: "GameCompleted",
         occurredOn: state.world.calendar.currentDate,
-        payload: { gameId: "g1" },
+        payload: {
+          gameId: "g1",
+          homeTeamId: state.user.activeOwnerTeamId,
+          awayTeamId: state.user.activeOwnerTeamId,
+        },
       }),
     ]);
     const dash = toDashboardSnapshot(state);
     expect(dash.controlledTeam.id).toBe(state.user.activeOwnerTeamId);
     expect(dash.currentDate).toBe(state.world.calendar.currentDate);
-    expect(dash.standingsRank).toBeGreaterThan(0);
+    expect(dash.standingsRank).toBeNull();
     expect(dash.cash).toBeTypeOf("number");
     expect(dash.revenueTotal).toBeTypeOf("number");
     expect(dash.recentActivity).toHaveLength(1);

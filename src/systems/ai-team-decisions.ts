@@ -31,12 +31,13 @@ import {
   boundedPreferenceDelta,
 } from "@/systems/franchise-ai-preferences-config";
 import {
-  AI_FA_MAX_SALARY,
   AI_FA_MIN_SALARY,
 } from "@/systems/owner-objectives-config";
 import { DEFAULT_ROSTER_SIZE } from "@/systems/roster-generation-config";
 import { computeAwardReputationBonus } from "@/systems/awards/award-reputation";
 import { getTeamCapSpace } from "@/systems/salary-cap";
+import { getLeagueSalaryCap } from "@/systems/league-salary-cap";
+import { isSalaryLowball, salaryForPlayer } from "@/systems/salary-scale";
 import { getCalendarContext } from "@/systems/simulation/calendar-context";
 import { checkTradeWindow } from "@/systems/league-rules/trade-rules";
 import { draftYearForSeason, makeDraftSelection } from "@/systems/draft";
@@ -188,12 +189,23 @@ function runAiFreeAgency(state: GameState): SystemResult {
       continue;
     }
 
-    const fraction = faSalaryCapFraction(prefs);
-    const salary = Math.min(
-      AI_FA_MAX_SALARY,
-      Math.max(AI_FA_MIN_SALARY, Math.floor(capSpace * fraction)),
+    const overall = calculatePlayerOverall(
+      candidate.position,
+      candidate.attributes,
     );
-    if (salary > capSpace) {
+    const market = salaryForPlayer({
+      overall,
+      age: candidate.age,
+      years: 0,
+      cap: getLeagueSalaryCap(current),
+      kind: "fa",
+    });
+    const salary = Math.min(capSpace, market);
+    if (
+      salary > capSpace ||
+      isSalaryLowball(salary, market) ||
+      salary < AI_FA_MIN_SALARY
+    ) {
       current = withAppliedGameplayConsequence(current, key);
       continue;
     }
@@ -514,7 +526,10 @@ function pickBestAffordableFreeAgent(
   const missing = missingPositions(state, teamId);
   const pool = listFreeAgents(state)
     .playerIds.map((playerId) => state.world.players[playerId])
-    .filter((player): player is Player => player !== undefined);
+    .filter(
+      (player): player is Player =>
+        player !== undefined && player.retired !== true,
+    );
 
   const ranked = [...pool].sort((a, b) => {
     const aMissing = missing.includes(a.position) ? 0 : 1;
@@ -530,13 +545,18 @@ function pickBestAffordableFreeAgent(
     return a.id < b.id ? -1 : a.id > b.id ? 1 : 0;
   });
 
-  const fraction = faSalaryCapFraction(prefs);
+  const cap = getLeagueSalaryCap(state);
   for (const player of ranked) {
-    const salary = Math.min(
-      AI_FA_MAX_SALARY,
-      Math.max(AI_FA_MIN_SALARY, Math.floor(capSpace * fraction)),
-    );
-    if (salary <= capSpace) {
+    const overall = calculatePlayerOverall(player.position, player.attributes);
+    const market = salaryForPlayer({
+      overall,
+      age: player.age,
+      years: 0,
+      cap,
+      kind: "fa",
+    });
+    const salary = Math.min(capSpace, market);
+    if (salary <= capSpace && salary >= AI_FA_MIN_SALARY && !isSalaryLowball(salary, market)) {
       return player;
     }
   }

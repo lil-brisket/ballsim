@@ -39,12 +39,19 @@ import {
   withAppliedGameplayConsequence,
 } from "@/systems/gameplay-financial-consequences";
 import {
-  AI_FA_MAX_SALARY,
   AI_FA_MIN_SALARY,
 } from "@/systems/owner-objectives-config";
 import { calculatePlayerOverall } from "@/domain/player-overall-rating";
 import { DEFAULT_ROSTER_SIZE } from "@/systems/roster-generation-config";
 import { getTeamCapSpace } from "@/systems/salary-cap";
+import { getLeagueSalaryCap } from "@/systems/league-salary-cap";
+import {
+  isSalaryLowball,
+  isVetMinExceptionSalary,
+  REPLACEMENT_LEVEL_OVERALL,
+  salaryForPlayer,
+  vetMinSalary,
+} from "@/systems/salary-scale";
 import { hireStaff } from "@/systems/staff";
 import { findTeamStaffByRole } from "@/systems/staff-effects";
 import { draftClassIdFor } from "@/domain/entities/draft";
@@ -299,13 +306,17 @@ function fillRosterForNeed(
     const capSpace = current.settings.financialRules.salaryCapEnabled
       ? getTeamCapSpace(teamId, seasonYear, current)
       : Number.MAX_SAFE_INTEGER;
-    if (capSpace < AI_FA_MIN_SALARY) {
+    const isEmergencyFill =
+      need.actionId === "MAINTAIN_MIN_ROSTER" ||
+      need.actionId === "SIGN_INJURY_REPLACEMENT" ||
+      need.actionId === "SIGN_EMERGENCY_FA";
+    if (!isEmergencyFill && capSpace < AI_FA_MIN_SALARY) {
       break;
     }
 
     // Routine FA: do not spend most of available cap.
     if (isRoutine && capSpace > 0) {
-      const maxSpend = Math.min(AI_FA_MAX_SALARY, Math.floor(capSpace * 0.25));
+      const maxSpend = Math.floor(capSpace * 0.25);
       if (maxSpend < AI_FA_MIN_SALARY) {
         break;
       }
@@ -318,7 +329,8 @@ function fillRosterForNeed(
     );
     const candidate = pickBestAffordableFreeAgent(current, teamId, capSpace, {
       excludePlayerIds: excluded,
-      preferCheap: isRoutine || need.actionId === "SIGN_EMERGENCY_FA",
+      preferCheap: isRoutine || isEmergencyFill,
+      allowMinException: isEmergencyFill,
     });
     if (candidate === undefined) {
       break;
@@ -333,6 +345,7 @@ function fillRosterForNeed(
       decision,
       need,
       beforeSize,
+      isEmergencyFill,
     );
     if (signedOne === null) {
       break;
@@ -354,15 +367,30 @@ function trySignFreeAgent(
   decision: PolicyDecision,
   need: ManagementNeed,
   beforeSize: number,
+  allowMinException: boolean,
 ): SystemResult | null {
   const capSpace = state.settings.financialRules.salaryCapEnabled
     ? getTeamCapSpace(teamId, seasonYear, state)
     : Number.MAX_SAFE_INTEGER;
-  const salary = Math.min(
-    AI_FA_MAX_SALARY,
-    Math.max(AI_FA_MIN_SALARY, Math.floor(capSpace * 0.15)),
-  );
-  if (salary > capSpace) {
+  const overall = calculatePlayerOverall(candidate.position, candidate.attributes);
+  const cap = getLeagueSalaryCap(state);
+  const faMarket = salaryForPlayer({
+    overall,
+    age: candidate.age,
+    years: 0,
+    cap,
+    kind: "fa",
+  });
+  const useVetMin =
+    allowMinException &&
+    overall < REPLACEMENT_LEVEL_OVERALL &&
+    capSpace < faMarket;
+  const market = useVetMin ? vetMinSalary(cap) : faMarket;
+  const salary = useVetMin ? market : Math.min(capSpace, market);
+  if (
+    (!useVetMin && (salary > capSpace || isSalaryLowball(salary, market))) ||
+    (useVetMin && !isVetMinExceptionSalary(salary, cap))
+  ) {
     return null;
   }
 
@@ -627,6 +655,7 @@ function pickBestAffordableFreeAgent(
   options: {
     excludePlayerIds?: Set<PlayerId>;
     preferCheap?: boolean;
+    allowMinException?: boolean;
   } = {},
 ): Player | undefined {
   const missing = missingPositions(state, teamId);
@@ -657,18 +686,28 @@ function pickBestAffordableFreeAgent(
     return a.id < b.id ? -1 : a.id > b.id ? 1 : 0;
   });
 
+  const cap = getLeagueSalaryCap(state);
+  const minDeal = vetMinSalary(cap);
   for (const player of ranked) {
-    if (capSpace >= AI_FA_MIN_SALARY) {
-      // Smart: never sign a "max-level" free agent under routine.
-      if (options.preferCheap) {
-        const overall = calculatePlayerOverall(
-          player.position,
-          player.attributes,
-        );
-        if (overall >= 80) {
-          continue;
-        }
-      }
+    const overall = calculatePlayerOverall(player.position, player.attributes);
+    if (options.preferCheap && overall >= 80) {
+      continue;
+    }
+    const faMarket = salaryForPlayer({
+      overall,
+      age: player.age,
+      years: 0,
+      cap,
+      kind: "fa",
+    });
+    if (capSpace >= faMarket && faMarket >= AI_FA_MIN_SALARY) {
+      return player;
+    }
+    if (
+      options.allowMinException &&
+      overall < REPLACEMENT_LEVEL_OVERALL &&
+      isVetMinExceptionSalary(minDeal, cap)
+    ) {
       return player;
     }
   }

@@ -243,6 +243,17 @@ describe("weighted selection", () => {
     expect(counts.get("low")!).toBeGreaterThan(0);
   });
 
+  it("gives a 95 primary creator a clear shot-share edge over a 75 floor player", () => {
+    const star = createPlayer({ id: "star", attributes: attrs(95) });
+    const floor = createPlayer({ id: "floor", attributes: attrs(75) });
+    const normalized = normalizeUsageProfiles(
+      buildOffensiveUsageProfiles([star, floor]),
+    );
+    expect(normalized.shotShares.get("star")!).toBeGreaterThan(
+      normalized.shotShares.get("floor")! * 1.25,
+    );
+  });
+
   it("different seeds produce different pick sequences", () => {
     const players = [
       createPlayer({ id: "a", attributes: attrs(80) }),

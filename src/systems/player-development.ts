@@ -113,6 +113,34 @@ export function developPlayer(
   });
 }
 
+/**
+ * Peel attributes until overall is at or below stored potential.
+ */
+export function clampPlayerToPotential(player: Player): Player {
+  const attributes = { ...player.attributes };
+  while (
+    calculatePlayerOverall(player.position, attributes) >
+    player.potential.overall
+  ) {
+    let bestKey: keyof PlayerAttributes | null = null;
+    let bestVal = -1;
+    for (const key of PLAYER_ATTRIBUTE_KEYS) {
+      if (attributes[key] > RATING_MIN && attributes[key] > bestVal) {
+        bestVal = attributes[key];
+        bestKey = key;
+      }
+    }
+    if (bestKey === null) {
+      break;
+    }
+    attributes[bestKey] -= 1;
+  }
+  return createPlayer({
+    ...player,
+    attributes,
+  });
+}
+
 function enforceOverallCeiling(
   position: PlayerPosition,
   attributes: PlayerAttributes,

@@ -29,7 +29,9 @@ import {
 } from "@/systems/free-agency";
 import { FREE_AGENCY_INTEREST_CONFIG } from "@/systems/free-agency-config";
 import { getTeamCapSpace } from "@/systems/salary-cap";
-import { createPlayer } from "../factories/player";
+import { getLeagueSalaryCap } from "@/systems/league-salary-cap";
+import { salaryForPlayer, vetMinSalary } from "@/systems/salary-scale";
+import { createPlayer, uniformPlayerAttributes } from "../factories/player";
 import { TEST_NOW_ISO, TEST_RNG_SEED } from "../helpers/determinism";
 
 function baseState(): GameState {
@@ -145,6 +147,44 @@ describe("free-agency pool", () => {
     };
     expect(isFreeAgent(next, playerId)).toBe(false);
     expect(listFreeAgents(next).playerIds).not.toContain(playerId);
+  });
+
+  it("does not list retired players as free agents", () => {
+    const base = baseState();
+    const { state, playerId } = withFreeAgent(base);
+    const retired: GameState = {
+      ...state,
+      world: {
+        ...state.world,
+        players: {
+          ...state.world.players,
+          [playerId]: {
+            ...state.world.players[playerId]!,
+            retired: true,
+            teamId: null,
+            contractId: null,
+          },
+        },
+      },
+    };
+    expect(isFreeAgent(retired, playerId)).toBe(false);
+    expect(listFreeAgents(retired).playerIds).not.toContain(playerId);
+    expect(getFreeAgent(retired, playerId)).toBeUndefined();
+    expect(retired.world.players[playerId]?.retired).toBe(true);
+    expect(() =>
+      makeOffer(retired, {
+        id: asOfferId("offer_retired"),
+        playerId,
+        teamId: retired.user.activeOwnerTeamId,
+        terms: contractTerms({
+          contractId: "contract_retired_offer",
+          playerId,
+          teamId: retired.user.activeOwnerTeamId,
+          startYear: retired.competition.season.year,
+          salary: 1_250_000,
+        }),
+      }),
+    ).toThrow(/not a free agent/);
   });
 
   it("releasePlayerToFreeAgency cleans membership for inactive contracts", () => {
@@ -359,6 +399,51 @@ describe("free-agency interest", () => {
       uninterestedEvaluator,
     );
     expect(interest.interested).toBe(false);
+  });
+
+  it("rejects an $8M offer for a 90+ free agent", () => {
+    const base = baseState();
+    const playerId = asPlayerId("player_star_fa");
+    const player = createPlayer({
+      id: playerId,
+      teamId: null,
+      contractId: null,
+      attributes: uniformPlayerAttributes(92),
+    });
+    const state: GameState = {
+      ...base,
+      world: {
+        ...base.world,
+        players: {
+          ...base.world.players,
+          [playerId]: player,
+        },
+      },
+    };
+    const teamId = state.user.activeOwnerTeamId;
+    const year = state.competition.season.year;
+    const offered = makeOffer(state, {
+      id: asOfferId("offer_star_lowball"),
+      playerId,
+      teamId,
+      terms: contractTerms({
+        contractId: "contract_star_lowball",
+        playerId,
+        teamId,
+        startYear: year,
+        salary: 8_000_000,
+      }),
+    }).state;
+    const interest = getPlayerInterest(offered, playerId, teamId);
+    expect(interest.interested).toBe(false);
+    const market = salaryForPlayer({
+      overall: 92,
+      age: player.age,
+      years: 0,
+      cap: getLeagueSalaryCap(state),
+      kind: "fa",
+    });
+    expect(market).toBeGreaterThan(8_000_000);
   });
 });
 
@@ -743,6 +828,77 @@ describe("free-agency accept", () => {
     ).toBe(true);
     expect(result.state.world.players[playerId]!.contractId).toBeNull();
   });
+
+  it("allows a vet-min signing when remaining cap space is insufficient", () => {
+    const base = baseState();
+    const teamId = base.user.activeOwnerTeamId;
+    const year = base.competition.season.year;
+    const cap = getLeagueSalaryCap(base);
+    const hogId = asPlayerId("player_cap_hog");
+    const hogContract = contractTerms({
+      contractId: "contract_cap_hog",
+      playerId: hogId,
+      teamId,
+      startYear: year,
+      salary: cap,
+    });
+    const hog = createPlayer({
+      id: hogId,
+      teamId,
+      contractId: hogContract.id,
+    });
+    const faId = asPlayerId("player_vet_min_fa");
+    const fa = createPlayer({
+      id: faId,
+      teamId: null,
+      contractId: null,
+      attributes: uniformPlayerAttributes(55),
+    });
+    const state: GameState = {
+      ...base,
+      world: {
+        ...base.world,
+        players: {
+          ...base.world.players,
+          [hogId]: hog,
+          [faId]: fa,
+        },
+        teams: {
+          ...base.world.teams,
+          [teamId]: {
+            ...base.world.teams[teamId]!,
+            roster: [...(base.world.teams[teamId]?.roster ?? []), hogId],
+          },
+        },
+      },
+      business: {
+        ...base.business,
+        contracts: {
+          ...base.business.contracts,
+          [hogContract.id]: hogContract,
+        },
+      },
+    };
+    expect(getTeamCapSpace(teamId, year, state)).toBeLessThanOrEqual(0);
+    const offerId = asOfferId("offer_vet_min_ex");
+    const offered = makeOffer(state, {
+      id: offerId,
+      playerId: faId,
+      teamId,
+      terms: contractTerms({
+        contractId: "contract_vet_min_ex",
+        playerId: faId,
+        teamId,
+        startYear: year,
+        salary: vetMinSalary(cap),
+      }),
+    }).state;
+    const accepted = acceptOffer(offered, offerId);
+    expect(accepted.state.business.freeAgency.offers[offerId]?.status).toBe(
+      "accepted",
+    );
+    expect(accepted.state.world.teams[teamId]!.roster).toContain(faId);
+  });
 });
 
 describe("free-agency persistence", () => {
@@ -815,7 +971,7 @@ describe("free-agency invariants", () => {
           playerId,
           teamId,
           startYear: year,
-          salary: 1_000_000,
+          salary: 10_000_000,
         }),
       }).state,
       offerId,
@@ -880,7 +1036,7 @@ describe("free-agency invariants", () => {
             playerId,
             teamId: teamA,
             startYear: year,
-            salary: 1_000_000,
+            salary: 10_000_000,
           }),
         },
       ).state,

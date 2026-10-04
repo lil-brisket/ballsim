@@ -138,6 +138,14 @@ export function renderNarrative(
         severity,
       };
     case "expectation_gap":
+      if (candidate.resolve) {
+        return {
+          title: "Expectations back in line",
+          summary: "Results are no longer far enough from expectations to stay on the board.",
+          body: `The franchise sits at ${num(ctx, "wins")}-${num(ctx, "losses")}, and the earlier expectation-gap situation has cleared.`,
+          severity: "informational",
+        };
+      }
       if (bool(ctx, "beating")) {
         return pick(rng, [
           {
@@ -180,6 +188,14 @@ export function renderNarrative(
         severity,
       };
     case "objective_progress":
+      if (candidate.resolve) {
+        return {
+          title: "Objective watch closed",
+          summary: "The earlier ownership-objective warning no longer applies.",
+          body: "Seasonal objective pace is no longer far enough off-target to warrant an active situation.",
+          severity: "informational",
+        };
+      }
       if (bool(ctx, "failing")) {
         return {
           title: "Ownership objective at risk",

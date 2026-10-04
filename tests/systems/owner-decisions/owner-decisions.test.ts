@@ -443,13 +443,13 @@ describe("interrupt-worthy with meaningful player", () => {
     let state = createTestGameState({ saveId: "od_worthy" });
     state = bootstrapWorld(state, createSeededRng(state.meta.rngState)).state;
     const built = meaningfulPlayerSwapProposal(state);
-    state = built.state;
     const cpuPlayer = built.proposal.sideA.playerIds[0]!;
+    state = boostPlayerOverall(built.state, cpuPlayer, 82);
     const overall = calculatePlayerOverall(
       state.world.players[cpuPlayer]!.position,
       state.world.players[cpuPlayer]!.attributes,
     );
-    expect(overall).toBeGreaterThanOrEqual(68);
+    expect(overall).toBeGreaterThanOrEqual(80);
 
     const evalResult = {
       accepted: true,

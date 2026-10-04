@@ -113,8 +113,8 @@ describe("HistoryHub", () => {
     const nav = screen.getByRole("navigation", {
       name: "League history sections",
     });
-    const current = within(nav).getByRole("link", { name: "Current Season" });
-    expect(current.getAttribute("aria-current")).toBe("page");
+    const awards = within(nav).getByRole("link", { name: "Awards" });
+    expect(awards.getAttribute("aria-current")).toBe("page");
     expect(
       within(nav)
         .getByRole("link", { name: "Team Records" })
@@ -128,7 +128,9 @@ describe("HistoryHub", () => {
     expect(screen.getByText("No completed seasons yet.")).toBeTruthy();
     league.unmount();
     const awards = renderHub(state, "awards", { tab: "awards" });
-    expect(screen.getByText("No award history available yet.")).toBeTruthy();
+    expect(
+      screen.getAllByText("No award history available yet.").length,
+    ).toBeGreaterThan(0);
     awards.unmount();
     renderHub(state, "history", { tab: "players" });
     expect(
@@ -137,7 +139,7 @@ describe("HistoryHub", () => {
   });
 
   it("renders pending current-season awards as season ongoing", () => {
-    renderHub(emptyState(), "awards", {});
+    renderHub(emptyState(), "awards", { tab: "current" });
     expect(screen.getAllByText("Season ongoing.").length).toBeGreaterThan(0);
   });
 

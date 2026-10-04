@@ -12,7 +12,7 @@ import { systemResult, type SystemResult } from "@/domain/system-result";
 import type { GameState } from "@/state/game-state";
 import { facilityDevelopmentMultiplier } from "@/systems/facilities";
 import { FACILITY_LEVEL_MAX } from "@/domain/entities/franchise-ops";
-import { developPlayer } from "@/systems/player-development";
+import { developPlayer, clampPlayerToPotential } from "@/systems/player-development";
 import { developmentStageForAge } from "@/systems/player-generation-config";
 import { trainerDevelopmentMultiplier } from "@/systems/staff-effects";
 import {
@@ -93,6 +93,7 @@ export function processSeasonPlayerDevelopment(
         dlBonus,
         PLAYER_ATTRIBUTE_KEYS,
       );
+      withDlBonus = clampPlayerToPotential(withDlBonus);
     }
     nextPlayers[playerId] = withDlBonus;
 

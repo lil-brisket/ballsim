@@ -60,7 +60,7 @@ import type {
   FranchisePhaseState,
 } from "@/systems/phase-engine/phase-types";
 
-export const GAME_STATE_SCHEMA_VERSION = 62;
+export const GAME_STATE_SCHEMA_VERSION = 64;
 
 /** League personnel market for staff free agency (not a business-finance concept). */
 export type StaffMarketState = {
@@ -174,6 +174,11 @@ export type BusinessSlice = {
    * Populated at season_finalization before competition.games is wiped.
    */
   gameArchive: GameArchive;
+  /**
+   * Secondary indexes for archived games (playerId / seasonId → gameIds).
+   * Rebuilt on archive; optional on pre-v64 fixtures.
+   */
+  gameArchiveIndex?: import("@/domain/entities/game-archive-index").GameArchiveIndex;
   /**
    * Per-player season-end snapshots (not game logs).
    * Career highs / stints are derived from gameArchive.
@@ -354,6 +359,13 @@ export function appendEventLog(
   const uniqueNew = newlyEmitted.filter((event) => {
     if (seen.has(event.id)) {
       return false;
+    }
+    if (event.type === "GameCompleted") {
+      const homeTeamId = event.payload.homeTeamId;
+      const awayTeamId = event.payload.awayTeamId;
+      if (homeTeamId !== targetTeamId && awayTeamId !== targetTeamId) {
+        return false;
+      }
     }
     seen.add(event.id);
     return true;

@@ -112,6 +112,12 @@ export function resolveHistoryHubTab(
   if (season !== undefined && season !== state.competition.season.year) {
     return "awards";
   }
+  const currentHasWinners = toCurrentSeasonAwardGroups(state).some((group) =>
+    group.slots.some((slot) => slot.status === "won"),
+  );
+  if (route === "awards" && !currentHasWinners) {
+    return "awards";
+  }
   return "current";
 }
 

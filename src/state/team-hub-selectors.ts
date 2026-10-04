@@ -58,7 +58,7 @@ export type TeamHubView = {
   };
   wins: number;
   losses: number;
-  leagueRank: number;
+  leagueRank: number | null;
   seasonPhase: string;
   offseasonStage: string;
   strength: number;

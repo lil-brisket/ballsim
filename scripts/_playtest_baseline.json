@@ -1,0 +1,71 @@
+{
+  "seasonYear": 2026,
+  "schemaVersion": 64,
+  "rngSeed": 42001,
+  "notes": "Seeded CBL bootstrap (createInitialGameState + bootstrapWorld). Not the 10-year Owner Mode playtest save. 10-year qualitative context: 6/10 titles, 49 of 90+ including retired, $1–8M stars, 79–3, 255MB save.",
+  "talent": {
+    "activePlayers": 180,
+    "retiredPlayers": 0,
+    "ovrBuckets": {
+      "below60": 55,
+      "from60to69": 40,
+      "from70to79": 46,
+      "from80to84": 16,
+      "from85to89": 19,
+      "from90": 4
+    },
+    "ovr80": 39,
+    "ovr85": 23,
+    "ovr90": 4,
+    "medianOvr": 68,
+    "meanOvr": 67.9,
+    "medianAge": 27,
+    "meanAge": 27.2,
+    "overStoredPotential": 0
+  },
+  "draft": {
+    "byPickBand": [
+      { "band": "picks 1-14", "count": 0, "meanOvr": 0, "meanPotential": 0 },
+      { "band": "picks 15-30", "count": 0, "meanOvr": 0, "meanPotential": 0 },
+      { "band": "picks 31-45", "count": 0, "meanOvr": 0, "meanPotential": 0 },
+      { "band": "picks 46-60", "count": 0, "meanOvr": 0, "meanPotential": 0 }
+    ]
+  },
+  "economy": {
+    "salaryByOvrBand": [
+      { "band": "90+", "count": 4, "meanSalary": 23125000, "maxSalary": 25000000 },
+      { "band": "85-89", "count": 19, "meanSalary": 17289474, "maxSalary": 18000000 },
+      { "band": "80-84", "count": 16, "meanSalary": 11662500, "maxSalary": 12000000 },
+      { "band": "70-79", "count": 46, "meanSalary": 5203261, "maxSalary": 7000000 },
+      { "band": "60-69", "count": 40, "meanSalary": 1803125, "maxSalary": 2500000 },
+      { "band": "<60", "count": 55, "meanSalary": 1200000, "maxSalary": 1200000 }
+    ],
+    "maxSalary": 25000000,
+    "meanSalaryPctCap": 82.1,
+    "teamCashMean": 18000000,
+    "teamCashMax": 18000000
+  },
+  "trades": {
+    "playerTradedEvents": 0,
+    "moved85": 0,
+    "moved90": 0,
+    "firstsExchanged": 0,
+    "pendingOwnerTradeOffers": 0
+  },
+  "gameplay": {
+    "ppgByOvrBand": [
+      { "band": "90+", "games": 0, "meanPpg": 0 },
+      { "band": "85-89", "games": 0, "meanPpg": 0 },
+      { "band": "80-84", "games": 0, "meanPpg": 0 },
+      { "band": "70-79", "games": 0, "meanPpg": 0 },
+      { "band": "60-69", "games": 0, "meanPpg": 0 },
+      { "band": "<60", "games": 0, "meanPpg": 0 }
+    ],
+    "meanPpgActive": 0
+  },
+  "persistence": {
+    "gameArchiveCount": 0,
+    "gameArchiveBytes": 2,
+    "eventLogCount": 0
+  }
+}
