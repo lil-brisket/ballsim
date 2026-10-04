@@ -25,6 +25,11 @@ export {
   needsRegularSeasonInitialization,
   derivePlannedRegularSeasonStartDate,
   derivePlannedPreseasonStartDate,
+  deriveUpcomingRegularSeasonStartDate,
+  deriveUpcomingPreseasonStartDate,
+  canonicalRegularSeasonStartDate,
+  canonicalPreseasonStartDate,
+  upcomingSeasonYear,
   enterOffseasonFromPostseason,
   beginRegularSeasonFromPreseason,
 } from "@/systems/simulation/season-lifecycle";
@@ -41,6 +46,8 @@ export {
 export {
   SEASON_LIFECYCLE_CONFIG,
   DEFAULT_REGULAR_SEASON_START_DATE,
+  REGULAR_SEASON_START_MONTH,
+  REGULAR_SEASON_START_DAY,
 } from "@/systems/simulation/season-lifecycle-config";
 export {
   getCalendarContext,

@@ -39,6 +39,7 @@ import { runLeagueStaffAiManagement } from "@/systems/staff-ai-management";
 import { expireSponsorshipsAtSeason } from "@/systems/sponsorships";
 import { transitionPhase } from "@/systems/simulation/phase-machine";
 import { beginRegularSeasonFromPreseason } from "@/systems/simulation/season-lifecycle";
+import { canonicalPreseasonStartDate } from "@/systems/simulation/season-lifecycle-config";
 import { fillShortRosters } from "@/systems/roster-generation";
 import { enforceMaxRosterViaDevelopmentLeague } from "@/systems/development-league/enforce-roster-cap";
 import {
@@ -212,6 +213,19 @@ export function initializeNewSeason(state: GameState, rng?: Rng): SystemResult {
 
   const nextYear = current.competition.season.year + 1;
   const nextSeasonId = asSeasonId(`season_${nextYear}`);
+  const canonicalPreseason = canonicalPreseasonStartDate(nextYear);
+  if (current.world.calendar.currentDate < canonicalPreseason) {
+    current = {
+      ...current,
+      world: {
+        ...current.world,
+        calendar: {
+          ...current.world.calendar,
+          currentDate: canonicalPreseason,
+        },
+      },
+    };
+  }
 
   const standingsByTeamId: Record<
     string,

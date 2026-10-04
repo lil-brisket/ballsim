@@ -67,11 +67,15 @@ export function getLeagueMilestones(
   // Single source: derivePlannedRegularSeasonStartDate.
   const plannedOpener = derivePlannedRegularSeasonStartDate(state);
   const plannedPreseasonStart = derivePlannedPreseasonStartDate(state);
+  // During offseason, committed regularSeasonStartDate is last year's opener.
+  // Anchors already point at the upcoming canonical opener.
   const seasonStart =
-    state.competition.season.regularSeasonStartDate ??
-    anchors.regularSeasonStart ??
-    plannedOpener ??
-    bounds.earliest;
+    state.competition.season.phase === "offseason"
+      ? (anchors.regularSeasonStart ?? plannedOpener)
+      : (state.competition.season.regularSeasonStartDate ??
+        anchors.regularSeasonStart ??
+        plannedOpener ??
+        bounds.earliest);
   const deadline =
     state.competition.season.tradeDeadlineDate ??
     resolveHardLockTradeDeadlineDate(seasonStart, bounds.latest);

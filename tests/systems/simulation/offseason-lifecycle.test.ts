@@ -9,6 +9,7 @@ import {
   initializeNewSeason,
   processOffseasonLifecycle,
 } from "@/systems/simulation/offseason-lifecycle";
+import { beginRegularSeasonFromPreseason } from "@/systems/simulation/season-lifecycle";
 import { transitionPhase } from "@/systems/simulation/phase-machine";
 import { advanceSimulation } from "@/systems/simulation/advance-simulation";
 import { completeDraft, createDraft, activateDraft, autoResolveGeneratedDraftClass } from "@/systems/draft";
@@ -87,8 +88,16 @@ describe("offseason lifecycle", () => {
     expect(current.competition.season.phase).toBe("preseason");
     expect(getActivePhaseId(current)).toBe("preseason.preparation");
     expect(current.competition.season.year).toBe(yearBefore + 1);
+    expect(current.world.calendar.currentDate).toBe("2027-09-10");
+    expect(current.competition.phase.enteredDate).toBe("2027-09-10");
     expect(current.competition.schedule.gameIds).toHaveLength(0);
     expect(current.competition.playoffs.status).toBe("not_started");
+
+    const opened = beginRegularSeasonFromPreseason(current);
+    expect(opened.state.competition.season.regularSeasonStartDate).toBe(
+      "2027-10-01",
+    );
+    expect(opened.state.world.calendar.currentDate).toBe("2027-10-01");
   });
 
   it("clears detailed game box scores on new season while preserving franchise history", () => {

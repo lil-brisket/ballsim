@@ -1,4 +1,3 @@
-import { addCalendarDays } from "@/domain/calendar-date";
 import { createEmptyPlayoffTournament } from "@/domain/entities/playoffs";
 import { createEmptySeasonEventsState } from "@/domain/entities/season-events";
 import { createEmptyTeamStanding } from "@/domain/entities/standings";
@@ -40,8 +39,7 @@ import { generateLeagueStaff } from "@/systems/staff-generation";
 import { resolvePaletteIdFromBranding } from "@/domain/entities/team-branding";
 import { paletteLogoKey } from "@/domain/team-identity";
 import { deriveDefaultTeamBranding } from "@/systems/team-branding-generation";
-import { PRESEASON_LENGTH_DAYS } from "@/systems/simulation/offseason-calendar-config";
-import { DEFAULT_REGULAR_SEASON_START_DATE } from "@/systems/simulation/season-lifecycle-config";
+import { canonicalPreseasonStartDate } from "@/systems/simulation/season-lifecycle-config";
 
 export type CreateInitialGameStateInput = {
   saveId: string;
@@ -174,10 +172,7 @@ export function createInitialGameState(
     rngSeed,
     startingSeasonYear,
   );
-  const preseasonStartDate = addCalendarDays(
-    DEFAULT_REGULAR_SEASON_START_DATE,
-    -PRESEASON_LENGTH_DAYS,
-  );
+  const preseasonStartDate = canonicalPreseasonStartDate(startingSeasonYear);
 
   let state: GameState = {
     meta: {
@@ -402,10 +397,7 @@ export function createFourTeamInitialGameState(
     rngSeed,
     startingSeasonYear,
   );
-  const preseasonStartDate = addCalendarDays(
-    DEFAULT_REGULAR_SEASON_START_DATE,
-    -PRESEASON_LENGTH_DAYS,
-  );
+  const preseasonStartDate = canonicalPreseasonStartDate(startingSeasonYear);
 
   const fourTeamSettings: GameSettings = input.settings ?? {
     league: {

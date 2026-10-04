@@ -21,6 +21,11 @@ import { runLeagueStaffAiManagement } from "@/systems/staff-ai-management";
 export {
   derivePlannedPreseasonStartDate,
   derivePlannedRegularSeasonStartDate,
+  deriveUpcomingPreseasonStartDate,
+  deriveUpcomingRegularSeasonStartDate,
+  canonicalPreseasonStartDate,
+  canonicalRegularSeasonStartDate,
+  upcomingSeasonYear,
   needsRegularSeasonInitialization,
 } from "@/systems/simulation/planned-season-dates";
 

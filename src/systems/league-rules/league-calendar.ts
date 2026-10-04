@@ -19,6 +19,8 @@ import {
 } from "@/systems/simulation/offseason-calendar-config";
 import {
   derivePlannedRegularSeasonStartDate,
+  deriveUpcomingPreseasonStartDate,
+  deriveUpcomingRegularSeasonStartDate,
   needsRegularSeasonInitialization,
 } from "@/systems/simulation/planned-season-dates";
 import { evaluatePhaseTasks } from "@/systems/phase-engine/evaluate-phase-tasks";
@@ -119,16 +121,21 @@ function lastFinalGameDate(
 
 export function resolveSeasonAnchors(state: GameState): SeasonAnchors {
   const bounds = scheduleBounds(state);
+  // Offseason still belongs to the completed year. Point opener/preseason at the
+  // upcoming canonical dates so staff development holds until next September
+  // instead of ending at last year's (already past) preseason.
+  const inOffseason = state.competition.season.phase === "offseason";
   // Precedence: committed start date → schedule bounds → planned opener (preseason only).
   // Planned values apply only while needsRegularSeasonInitialization; they must not
   // invent openings after the season has progressed.
   const plannedOpener = needsRegularSeasonInitialization(state)
     ? derivePlannedRegularSeasonStartDate(state)
     : null;
-  const regularSeasonStart =
-    state.competition.season.regularSeasonStartDate ??
-    bounds.earliest ??
-    plannedOpener;
+  const regularSeasonStart = inOffseason
+    ? deriveUpcomingRegularSeasonStartDate(state)
+    : (state.competition.season.regularSeasonStartDate ??
+      bounds.earliest ??
+      plannedOpener);
 
   const regularSeasonEnd =
     lastFinalGameDate(state, "regular_season") ?? bounds.latest;
@@ -158,9 +165,11 @@ export function resolveSeasonAnchors(state: GameState): SeasonAnchors {
         ? addCalendarDays(seasonEndAnchor, 1 + SEASON_REVIEW_LENGTH_DAYS)
         : null);
 
-  const preseasonStart = regularSeasonStart
-    ? addCalendarDays(regularSeasonStart, -PRESEASON_LENGTH_DAYS)
-    : null;
+  const preseasonStart = inOffseason
+    ? deriveUpcomingPreseasonStartDate(state)
+    : regularSeasonStart
+      ? addCalendarDays(regularSeasonStart, -PRESEASON_LENGTH_DAYS)
+      : null;
 
   return {
     regularSeasonStart,

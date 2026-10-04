@@ -9,12 +9,22 @@
  * - currentDate — simulation's current day
  * - preseason start — phase.enteredDate while in preseason.preparation
  * - regularSeasonStartDate — opening night (committed or planned)
+ *
+ * Opening night is canonical per season year ({year}-10-01). Offseason windows
+ * use the upcoming year so staff development holds until the next preseason
+ * instead of sliding with playoff length.
  */
 
 import { addCalendarDays } from "@/domain/calendar-date";
 import type { GameState } from "@/state/game-state";
 import { getActivePhaseId } from "@/systems/phase-engine";
 import { PRESEASON_LENGTH_DAYS } from "@/systems/simulation/offseason-calendar-config";
+import { canonicalRegularSeasonStartDate } from "@/systems/simulation/season-lifecycle-config";
+
+export {
+  canonicalPreseasonStartDate,
+  canonicalRegularSeasonStartDate,
+} from "@/systems/simulation/season-lifecycle-config";
 
 /**
  * True when the league is still in preseason and has not yet entered the regular season.
@@ -28,6 +38,37 @@ export function needsRegularSeasonInitialization(state: GameState): boolean {
 }
 
 /**
+ * Season year whose opener/preseason the calendar should target next.
+ * Offseason still belongs to the completed year, so windows look at year + 1.
+ */
+export function upcomingSeasonYear(state: GameState): number {
+  if (state.competition.season.phase === "offseason") {
+    return state.competition.season.year + 1;
+  }
+  return state.competition.season.year;
+}
+
+/**
+ * Upcoming opening night: canonical {year}-10-01, or currentDate when the
+ * calendar has already overrun that date (never rewind).
+ */
+export function deriveUpcomingRegularSeasonStartDate(state: GameState): string {
+  const canonical = canonicalRegularSeasonStartDate(upcomingSeasonYear(state));
+  const current = state.world.calendar.currentDate;
+  return current > canonical ? current : canonical;
+}
+
+/**
+ * Upcoming preseason start: 21 days before {@link deriveUpcomingRegularSeasonStartDate}.
+ */
+export function deriveUpcomingPreseasonStartDate(state: GameState): string {
+  return addCalendarDays(
+    deriveUpcomingRegularSeasonStartDate(state),
+    -PRESEASON_LENGTH_DAYS,
+  );
+}
+
+/**
  * Planned opener for display / milestones while still in preseason.
  * Derived only — never written to regularSeasonStartDate (that field is authoritative
  * after beginRegularSeasonFromPreseason). Must not alone enter the regular season.
@@ -35,8 +76,7 @@ export function needsRegularSeasonInitialization(state: GameState): boolean {
  * When initialization is no longer pending, returns the committed regularSeasonStartDate
  * (or null if unset).
  *
- * While pending: opener = phase.enteredDate + PRESEASON_LENGTH_DAYS
- * (new saves enter on preseason start, not opening night).
+ * While pending: opener = canonical {season.year}-10-01 (or currentDate if later).
  */
 export function derivePlannedRegularSeasonStartDate(
   state: GameState,
@@ -44,9 +84,7 @@ export function derivePlannedRegularSeasonStartDate(
   if (!needsRegularSeasonInitialization(state)) {
     return state.competition.season.regularSeasonStartDate;
   }
-  const entered =
-    state.competition.phase?.enteredDate ?? state.world.calendar.currentDate;
-  return addCalendarDays(entered, PRESEASON_LENGTH_DAYS);
+  return deriveUpcomingRegularSeasonStartDate(state);
 }
 
 /**

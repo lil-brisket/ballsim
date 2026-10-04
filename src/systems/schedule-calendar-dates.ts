@@ -13,7 +13,7 @@
 import { addCalendarDays } from "@/domain/calendar-date";
 import type { GameState } from "@/state/game-state";
 import { derivePlannedRegularSeasonStartDate } from "@/systems/simulation/planned-season-dates";
-import { DEFAULT_REGULAR_SEASON_START_DATE } from "@/systems/simulation/season-lifecycle-config";
+import { canonicalRegularSeasonStartDate } from "@/systems/simulation/season-lifecycle-config";
 
 export type ScheduleCalendarConfig = {
   /** Target games per team per week (drives season span from round count). */
@@ -60,7 +60,7 @@ export function resolveRegularSeasonScheduleAnchor(state: GameState): string {
   if (planned != null && planned.length > 0) {
     return planned;
   }
-  return DEFAULT_REGULAR_SEASON_START_DATE;
+  return canonicalRegularSeasonStartDate(state.competition.season.year);
 }
 
 /**

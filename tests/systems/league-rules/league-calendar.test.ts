@@ -6,6 +6,7 @@ import type { GameState } from "@/state/game-state";
 import { bootstrapWorld } from "@/systems/world-pipeline";
 import {
   getExpectedPhaseWindow,
+  resolveOffseasonWindows,
   resolvePhaseResolution,
   resolveSeasonAnchors,
 } from "@/systems/league-rules/league-calendar";
@@ -119,5 +120,55 @@ describe("league-calendar phase resolution", () => {
     expect(resolution.reason).toBe("blocking_decision");
     expect(resolution.blockedBy).toBe("owner_decision");
     expect(resolution.phaseId).toBe("offseason.draft");
+  });
+
+  it("holds staff development until next year's canonical preseason", () => {
+    const base = bootState();
+    const opened = {
+      ...base,
+      competition: {
+        ...base.competition,
+        season: {
+          ...base.competition.season,
+          regularSeasonStartDate: "2026-10-01",
+          phase: "offseason" as const,
+          offseasonStage: "staff_development" as const,
+          offseasonStageEnteredDate: "2027-06-15",
+        },
+        phase: {
+          activePhaseId: "offseason.staff_development" as LeaguePhaseId,
+          enteredDate: "2027-06-15",
+        },
+      },
+      world: {
+        ...base.world,
+        calendar: {
+          ...base.world.calendar,
+          currentDate: "2027-07-20",
+        },
+      },
+    };
+
+    const anchors = resolveSeasonAnchors(opened);
+    expect(anchors.preseasonStart).toBe("2027-09-10");
+    expect(anchors.regularSeasonStart).toBe("2027-10-01");
+
+    const staff = getExpectedPhaseWindow(opened, "offseason.staff_development");
+    expect(staff?.end).toBe("2027-09-10");
+    const preseason = getExpectedPhaseWindow(opened, "preseason.preparation");
+    expect(preseason?.start).toBe("2027-09-10");
+    expect(preseason?.end).toBe("2027-10-01");
+
+    const midSummer = resolvePhaseResolution(opened, "2027-07-20");
+    expect(midSummer.phaseId).toBe("offseason.staff_development");
+
+    const onPreseason = resolvePhaseResolution(opened, "2027-09-10");
+    expect(onPreseason.phaseId).toBe("preseason.preparation");
+
+    const windows = resolveOffseasonWindows(opened);
+    const staffWindow = windows.find(
+      (w) => w.phaseId === "offseason.staff_development",
+    );
+    expect(staffWindow?.end).toBe("2027-09-10");
   });
 });
