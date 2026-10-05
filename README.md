@@ -16,6 +16,7 @@ Fictional basketball simulation / management game (Owner Mode foundation).
 - [`ARCHITECTURE.md`](./ARCHITECTURE.md) — authoritative technical architecture
 - [`CHANGELOG.md`](./CHANGELOG.md) — notable persistence, tooling, and dependency changes
 - [`docs/testing.md`](./docs/testing.md) — Vitest layout, determinism, Simulation Lab, CI
+- [`docs/test-catalog.md`](./docs/test-catalog.md) — what to run: Vitest projects, Lab CLI, file index
 
 ## Scripts
 

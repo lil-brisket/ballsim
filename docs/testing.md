@@ -1,6 +1,6 @@
 # Testing Guide
 
-Concise conventions for unit, integration, and React tests in this project.
+Concise conventions for unit, integration, and React tests in this project. For a command-and-file index of every suite and simulation CLI, see [`test-catalog.md`](./test-catalog.md).
 
 ## Stack
 

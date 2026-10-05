@@ -42,6 +42,7 @@ export default defineConfig({
             "tests/systems/simulation/season-lifecycle.test.ts",
             "tests/systems/simulation/performance-budget.test.ts",
             "tests/simulation/lab/invariants-hard.test.ts",
+            "tests/simulation/lab/simulate-game-pbt.test.ts",
             "tests/simulation/lab/season-rng-desync.test.ts",
             "tests/simulation/lab/long-horizon.test.ts",
             "tests/regression/**",
@@ -83,6 +84,7 @@ export default defineConfig({
           environment: "node",
           include: [
             "tests/simulation/lab/invariants-hard.test.ts",
+            "tests/simulation/lab/simulate-game-pbt.test.ts",
             "tests/simulation/lab/season-rng-desync.test.ts",
             "tests/simulation/lab/long-horizon.test.ts",
           ],
