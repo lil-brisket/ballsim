@@ -28,6 +28,7 @@ import {
 } from "@/systems/phase-engine";
 import { collectLeagueSanitySnapshots } from "@/simulation/league-sanity/collect";
 import type { LeagueSanityTeamSeasonSnapshot } from "@/simulation/league-sanity/types";
+import type { GameSimulationFidelity } from "@/systems/game-simulation";
 
 const MAX_DAYS_PER_SEASON = 500;
 
@@ -37,6 +38,15 @@ export type RunLeagueCareerOptions = {
   simulationIndex?: number;
   gameSettings?: GameSettings;
   saveId?: string;
+  /** Defaults to possession-level simulation. */
+  gameFidelity?: GameSimulationFidelity;
+  /**
+   * Skip daily CPU AI during regular season and playoffs.
+   * Offseason draft/FA still run. Default false.
+   */
+  skipOwnerGameplay?: boolean;
+  /** Called after each season reaches postseason, before offseason resolution. */
+  onSeasonComplete?: (state: GameState, seasonIndex: number) => void;
 };
 
 export type LeagueCareerResult = {
@@ -115,7 +125,11 @@ function tryOpenRegularSeason(state: GameState, rng: Rng): GameState {
   return tryAdvanceUserPhase(filled, rng) ?? filled;
 }
 
-function resolveOffseason(state: GameState, rng: Rng): GameState {
+function resolveOffseason(
+  state: GameState,
+  rng: Rng,
+  gameFidelity?: GameSimulationFidelity,
+): GameState {
   let current = persistRng(state, rng);
   if (current.competition.season.phase === "postseason") {
     current = persistRng(enterOffseasonFromPostseason(current).state, rng);
@@ -142,7 +156,7 @@ function resolveOffseason(state: GameState, rng: Rng): GameState {
       continue;
     }
     current = persistRng(
-      advanceSimulation(current, rng, { days: 1 }).state,
+      advanceSimulation(current, rng, { days: 1, gameFidelity }).state,
       rng,
     );
     if (current.competition.season.phase === "preseason") {
@@ -152,7 +166,12 @@ function resolveOffseason(state: GameState, rng: Rng): GameState {
   throw new Error("League sanity: offseason did not reach preseason.");
 }
 
-function simulateOneSeason(state: GameState, rng: Rng): GameState {
+function simulateOneSeason(
+  state: GameState,
+  rng: Rng,
+  gameFidelity?: GameSimulationFidelity,
+  skipOwnerGameplay?: boolean,
+): GameState {
   let current = persistRng(state, rng);
   const startYear = current.competition.season.year;
   let days = 0;
@@ -182,7 +201,11 @@ function simulateOneSeason(state: GameState, rng: Rng): GameState {
         continue;
       }
     }
-    const advanced = advanceSimulation(current, rng, { days: 1 });
+    const advanced = advanceSimulation(current, rng, {
+      days: 1,
+      gameFidelity,
+      skipOwnerGameplay,
+    });
     current = persistRng(advanced.state, rng);
     const season = current.competition.season;
     if (season.year === startYear && season.phase === "postseason") {
@@ -216,6 +239,9 @@ export function runLeagueCareer(
     simulationIndex = 0,
     gameSettings = CBL_GAME_SETTINGS,
     saveId = `league_sanity_${seed}_${simulationIndex}`,
+    gameFidelity,
+    skipOwnerGameplay,
+    onSeasonComplete,
   } = options;
   if (!Number.isInteger(seasons) || seasons < 1) {
     throw new Error("runLeagueCareer: seasons must be an integer >= 1.");
@@ -239,14 +265,15 @@ export function runLeagueCareer(
   const teamCount = Object.keys(state.world.teams).length;
 
   for (let seasonIndex = 0; seasonIndex < seasons; seasonIndex += 1) {
-    state = simulateOneSeason(state, rng);
+    state = simulateOneSeason(state, rng, gameFidelity, skipOwnerGameplay);
+    onSeasonComplete?.(state, seasonIndex);
     const seasonSnaps = collectLeagueSanitySnapshots(
       state,
       simulationIndex,
       seasonIndex,
     );
     snapshots.push(...seasonSnaps);
-    state = resolveOffseason(state, rng);
+    state = resolveOffseason(state, rng, gameFidelity);
   }
 
   return {

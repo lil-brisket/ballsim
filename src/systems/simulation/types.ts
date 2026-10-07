@@ -74,6 +74,11 @@ export type AdvanceSimulationOptions = {
    */
   gameFidelity?: "possession" | "box_score";
   /**
+   * Skip daily CPU AI / owner notifications / objectives.
+   * Games, standings, playoffs, and awards still run. Default false.
+   */
+  skipOwnerGameplay?: boolean;
+  /**
    * When true, stop before simulating a day that has a scheduled owner-team game,
    * except the first day of this advance (so today's game cannot be skipped).
    */

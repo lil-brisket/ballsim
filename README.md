@@ -51,10 +51,22 @@ Single file:
 npx vitest run tests/systems/game-sim-state.test.ts
 ```
 
-25-season soak (skipped unless `STRESS=1`):
+30-team trade invariants (100 random player/pick trades; roster 8–15 and payroll at or under the salary cap). CPU/AI trading exists to confirm that path works — not as a load the decade sim has to run every calendar day. Also included in `npm run test:integration` / `npm test`:
+
+```bash
+npx vitest run tests/systems/trades/thirty-team-trade-invariants.test.ts
+```
+
+50-season soak (skipped unless `STRESS=1`):
 
 ```bash
 STRESS=1 npx vitest run tests/application/multi-year-simulation-stress.test.ts
+```
+
+PowerShell:
+
+```powershell
+$env:STRESS=1; npx vitest run tests/application/multi-year-simulation-stress.test.ts
 ```
 
 Every Vitest run writes `test-results.txt` (gitignored) with the pass/fail counts and each failure’s reason. Open that file after `npm test`. Override the path with `TEST_RESULTS_FILE`.
@@ -107,7 +119,10 @@ npm run bench:sim:game
 npm run bench:sim:season
 npm run sanity:league        # default 10 sims × 5 seasons
 npm run sanity:compare -- baseline.json current.json
+npm run generate:league-history   # 10 Standard seasons → tests/fixtures/league-history.json
 ```
+
+`generate:league-history` uses `createSeededRng` (default seed 42) and writes standings, completed playoff brackets, and award winners. It skips daily CPU trade AI during the regular season and playoffs; offseason draft/FA still run. Trading is checked by the 30-team invariant test above, not by this fixture.
 
 Diagnostic CLIs (not npm scripts):
 

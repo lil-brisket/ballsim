@@ -215,6 +215,7 @@ function createAdvanceSession(
         allowOwnerManagedPhaseTransitions: allowOwnerManaged,
         gameFidelity: options.gameFidelity,
         ownerTeamId,
+        skipOwnerGameplay: options.skipOwnerGameplay === true,
       });
       current = dayResult.state;
       allEvents.push(...dayResult.events);
@@ -291,6 +292,7 @@ type OneDayOptions = {
   allowOwnerManagedPhaseTransitions?: boolean;
   gameFidelity?: "possession" | "box_score";
   ownerTeamId?: TeamId;
+  skipOwnerGameplay?: boolean;
 };
 
 function advanceOneDay(
@@ -423,14 +425,16 @@ function advanceOneDay(
     profiler.addSeason("ticketsMs", performance.now() - ticketsStart);
   }
 
-  const gameplayStart = performance.now();
-  const gameplay = runOwnerGameplay(current, rng, {
-    dayEvents: tickets.events,
-  });
-  current = gameplay.state;
-  events.push(...gameplay.events);
-  if (profiler) {
-    profiler.addSeason("ownerGameplayMs", performance.now() - gameplayStart);
+  if (dayOptions.skipOwnerGameplay !== true) {
+    const gameplayStart = performance.now();
+    const gameplay = runOwnerGameplay(current, rng, {
+      dayEvents: tickets.events,
+    });
+    current = gameplay.state;
+    events.push(...gameplay.events);
+    if (profiler) {
+      profiler.addSeason("ownerGameplayMs", performance.now() - gameplayStart);
+    }
   }
 
   const lifecycleChanged =

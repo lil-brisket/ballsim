@@ -26,6 +26,7 @@
     "bench:sim:season": "tsx scripts/benchmark-simulation.ts --season",
     "sanity:league": "tsx scripts/league-sanity-report.ts",
     "sanity:compare": "tsx scripts/league-sanity-compare.ts",
+    "generate:league-history": "tsx scripts/generate-league-history.ts",
     "playtest:metrics": "tsx scripts/playtest-metrics.ts",
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",
