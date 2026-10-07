@@ -10,7 +10,7 @@ import { bootstrapWorld } from "@/systems/world-pipeline";
 import { testStaff } from "../helpers/staff";
 
 describe("staff payroll", () => {
-  it("processWeeklyStaffPayroll does not drain business funds (commitment limit)", () => {
+  it("processWeeklyStaffPayroll drains weekly staff salary from business funds", () => {
     let state = createInitialGameState({
       saveId: "payroll_test",
       rngSeed: 5,
@@ -72,7 +72,10 @@ describe("staff payroll", () => {
     const fundsBefore = state.business.finances[teamId]!.businessFunds;
     const result = processWeeklyStaffPayroll(state);
     const fundsAfter = result.state.business.finances[teamId]!.businessFunds;
-    expect(fundsAfter).toBe(fundsBefore);
+    const weekly = Math.round(
+      getTeamStaffPayroll(teamId, year, result.state) / 52,
+    );
+    expect(fundsAfter).toBe(fundsBefore - weekly);
     expect(
       getTeamStaffPayroll(teamId, year, result.state),
     ).toBeGreaterThanOrEqual(annual);

@@ -5,7 +5,7 @@
  */
 
 /** Dollars of structural potential per marketSize point (1–99). */
-export const MARKET_POTENTIAL_PER_POINT = 5_000_000;
+export const MARKET_POTENTIAL_PER_POINT = 2_800_000;
 
 /**
  * Share of market potential that is always counted regardless of realization.
@@ -60,13 +60,13 @@ export const CASH_LOG_DOLLARS = 1_200_000;
 export const CASH_CONTRIBUTION_CAP = 12_000_000;
 
 /** Competitive: dollars at 100% trailing win rate. */
-export const PERFORMANCE_WIN_PCT_DOLLARS = 45_000_000;
+export const PERFORMANCE_WIN_PCT_DOLLARS = 80_000_000;
 
 /** Competitive: dollars at 100% playoff appearance rate over trail. */
-export const PERFORMANCE_PLAYOFF_RATE_DOLLARS = 35_000_000;
+export const PERFORMANCE_PLAYOFF_RATE_DOLLARS = 55_000_000;
 
 /** Extra dollars scaled by mean playoff depth score (0–1) over trail. */
-export const PERFORMANCE_PLAYOFF_DEPTH_DOLLARS = 25_000_000;
+export const PERFORMANCE_PLAYOFF_DEPTH_DOLLARS = 40_000_000;
 
 /** Current-season win% momentum weight vs trailing (when games played). */
 export const PERFORMANCE_CURRENT_MOMENTUM_WEIGHT = 0.25;
@@ -75,7 +75,7 @@ export const PERFORMANCE_CURRENT_MOMENTUM_WEIGHT = 0.25;
  * Championship stock base premium before diminishing returns.
  * effective = sum(decay(age)); premium = BASE × (1 - exp(-k × effective))
  */
-export const CHAMPIONSHIP_BASE_PREMIUM = 95_000_000;
+export const CHAMPIONSHIP_BASE_PREMIUM = 140_000_000;
 export const CHAMPIONSHIP_DIMINISHING_K = 0.45;
 
 /**
@@ -131,4 +131,4 @@ export const FRANCHISE_STANDING_THRESHOLDS = {
 } as const;
 
 /** Default fill-rate realization when no home games have settled yet. */
-export const DEFAULT_ATTENDANCE_REALIZATION = 0.75;
+export const DEFAULT_ATTENDANCE_REALIZATION = 0.55;

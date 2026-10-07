@@ -64,7 +64,7 @@ export function generateRosters(state: GameState, rng: Rng): SystemResult {
       const salaryPerYear = salaryForPlayer({
         overall: calculatePlayerOverall(player.position, player.attributes),
         age: player.age,
-        years: 0,
+        years: Math.max(0, player.age - 19),
         cap: getLeagueSalaryCap(state),
         kind: "fa",
       });
@@ -215,7 +215,7 @@ export function fillShortRosters(state: GameState, rng: Rng): SystemResult {
       const salaryPerYear = salaryForPlayer({
         overall: calculatePlayerOverall(player.position, player.attributes),
         age: player.age,
-        years: 0,
+        years: Math.max(0, player.age - 19),
         cap: getLeagueSalaryCap(state),
         kind: "fa",
       });

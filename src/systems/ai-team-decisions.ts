@@ -37,7 +37,11 @@ import { DEFAULT_ROSTER_SIZE } from "@/systems/roster-generation-config";
 import { computeAwardReputationBonus } from "@/systems/awards/award-reputation";
 import { getTeamCapSpace } from "@/systems/salary-cap";
 import { getLeagueSalaryCap } from "@/systems/league-salary-cap";
-import { isSalaryLowball, salaryForPlayer } from "@/systems/salary-scale";
+import {
+  isSalaryLowball,
+  salaryForPlayer,
+  serviceYearsForSalary,
+} from "@/systems/salary-scale";
 import { getCalendarContext } from "@/systems/simulation/calendar-context";
 import { checkTradeWindow } from "@/systems/league-rules/trade-rules";
 import { draftYearForSeason, makeDraftSelection } from "@/systems/draft";
@@ -196,7 +200,13 @@ function runAiFreeAgency(state: GameState): SystemResult {
     const market = salaryForPlayer({
       overall,
       age: candidate.age,
-      years: 0,
+      years: serviceYearsForSalary({
+        age: candidate.age,
+        seasonYear: current.competition.season.year,
+        draftSeasonYear: candidate.developmentLeague?.draftSeasonYear ?? null,
+        seasonsPlayed:
+          current.business.playerHistory[candidate.id]?.seasons.length ?? 0,
+      }),
       cap: getLeagueSalaryCap(current),
       kind: "fa",
     });
@@ -551,7 +561,12 @@ function pickBestAffordableFreeAgent(
     const market = salaryForPlayer({
       overall,
       age: player.age,
-      years: 0,
+      years: serviceYearsForSalary({
+        age: player.age,
+        seasonYear: state.competition.season.year,
+        draftSeasonYear: player.developmentLeague?.draftSeasonYear ?? null,
+        seasonsPlayed: state.business.playerHistory[player.id]?.seasons.length ?? 0,
+      }),
       cap,
       kind: "fa",
     });

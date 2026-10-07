@@ -50,6 +50,7 @@ import {
   isVetMinExceptionSalary,
   REPLACEMENT_LEVEL_OVERALL,
   salaryForPlayer,
+  serviceYearsForSalary,
   vetMinSalary,
 } from "@/systems/salary-scale";
 import { hireStaff } from "@/systems/staff";
@@ -377,7 +378,13 @@ function trySignFreeAgent(
   const faMarket = salaryForPlayer({
     overall,
     age: candidate.age,
-    years: 0,
+    years: serviceYearsForSalary({
+      age: candidate.age,
+      seasonYear: seasonYear,
+      draftSeasonYear: candidate.developmentLeague?.draftSeasonYear ?? null,
+      seasonsPlayed:
+        state.business.playerHistory[candidate.id]?.seasons.length ?? 0,
+    }),
     cap,
     kind: "fa",
   });
@@ -696,7 +703,13 @@ function pickBestAffordableFreeAgent(
     const faMarket = salaryForPlayer({
       overall,
       age: player.age,
-      years: 0,
+      years: serviceYearsForSalary({
+        age: player.age,
+        seasonYear: state.competition.season.year,
+        draftSeasonYear: player.developmentLeague?.draftSeasonYear ?? null,
+        seasonsPlayed:
+          state.business.playerHistory[player.id]?.seasons.length ?? 0,
+      }),
       cap,
       kind: "fa",
     });

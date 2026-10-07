@@ -134,6 +134,7 @@ export const RETENTION_PRIORITY_WEIGHTS = {
   highPotentialYoung: 30,
   recentDraftPickBonus: 25,
   recentlyAcquiredBonus: 35,
+  franchiseStar: 70,
   onTradeBlockPenalty: -80,
   redundantVetPenalty: -20,
   coreThreshold: 75,

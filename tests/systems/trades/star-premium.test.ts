@@ -6,6 +6,7 @@ import { evaluateTrade } from "@/systems/trades/asset-valuation/complete-trade-e
 import { makeTradeDecision } from "@/systems/trades/asset-valuation/trade-decision";
 import { isInterruptWorthyTradeOffer } from "@/systems/owner-decisions/trade-offer-quality";
 import { evaluateTradeOffer } from "@/systems/trades/trade-evaluation";
+import { shouldNotShopPlayer } from "@/systems/trades/asset-valuation/retention-priority";
 
 describe("star trade premium", () => {
   it("rejects a 92 for a 59 and a late first", () => {
@@ -54,6 +55,8 @@ describe("star trade premium", () => {
     );
     expect(decision.action).toBe("reject");
     expect(evaluation.sentValue).toBeGreaterThan(evaluation.receivedValue);
+    expect(shouldNotShopPlayer(state, teamA, starId)).toBe(true);
+    expect(evaluateTradeOffer(state, teamA, proposal).accepted).toBe(false);
   });
 
   it("still values a 75-for-75 swap as roughly even", () => {

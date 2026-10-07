@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
 import { createContract } from "@/domain/entities/contract";
 import { asContractId, asOfferId } from "@/domain/ids";
+import type { Rng } from "@/domain/rng";
 import { acceptOffer, makeOffer } from "@/systems/free-agency";
+import { processPlayerRetirements } from "@/systems/player-retirement";
 import {
   addToTradeBlock,
   executeTrade,
@@ -128,9 +130,9 @@ describe("trade block", () => {
       };
     };
     parsed.world.players[playerId]!.teamId = teamB;
-    parsed.world.teams[teamA]!.roster = parsed.world.teams[teamA]!.roster.filter(
-      (id) => id !== playerId,
-    );
+    parsed.world.teams[teamA]!.roster = parsed.world.teams[
+      teamA
+    ]!.roster.filter((id) => id !== playerId);
     parsed.world.teams[teamB]!.roster = [
       ...parsed.world.teams[teamB]!.roster,
       playerId,
@@ -199,6 +201,37 @@ describe("trade block", () => {
         (asset) => asset.kind === "player" && asset.playerId === playerId,
       ) ?? false,
     ).toBe(false);
+  });
+
+  it("clears the listing team's block when a listed player retires", () => {
+    const state = createTradeFixture();
+    const { teamA } = teamIds(state);
+    const playerId = playerOnTeam(state, teamA, 0);
+    const listed = addToTradeBlock(state, teamA, {
+      kind: "player",
+      playerId,
+    }).state;
+    const aged = {
+      ...listed,
+      world: {
+        ...listed.world,
+        players: {
+          ...listed.world.players,
+          [playerId]: {
+            ...listed.world.players[playerId]!,
+            age: 40,
+          },
+        },
+      },
+    };
+    const retired = processPlayerRetirements(aged, ALWAYS_RETIRE_RNG);
+    expect(retired.state.world.players[playerId]!.retired).toBe(true);
+    expect(
+      retired.state.business.tradeBlocks[teamA]?.assets.some(
+        (asset) => asset.kind === "player" && asset.playerId === playerId,
+      ) ?? false,
+    ).toBe(false);
+    expect(() => validateGameState(retired.state)).not.toThrow();
   });
 
   it("clears traded assets from trade blocks on execute", () => {
@@ -350,3 +383,11 @@ describe("trade evaluation and AI", () => {
     expect(executed.state).not.toBe(next);
   });
 });
+
+const ALWAYS_RETIRE_RNG: Rng = {
+  next: () => 0,
+  nextInt: (min) => min,
+  pick: <T>(items: readonly T[]) => items[0]!,
+  chance: () => true,
+  getState: () => 0,
+};

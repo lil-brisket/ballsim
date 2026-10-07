@@ -1,6 +1,7 @@
 /**
  * Fast statistical box-score simulation for CPU vs CPU games.
- * Produces a valid GameResult without a possession loop or play-by-play.
+ * Projects the same attributes as possession sim (shot/FT make rates, usage,
+ * passing, rebounding, steal, block) without a possession loop or play-by-play.
  * Deterministic when supplied with a deterministic Rng.
  */
 
@@ -10,12 +11,13 @@ import {
   type GamePlayerStats,
   type GameScore,
 } from "@/domain/entities/game";
+import type { Player, PlayerPosition } from "@/domain/entities/player";
+import { RATING_MAX } from "@/domain/entities/player";
 import {
   aggregateTeamStats,
   createGameResult,
   type GameResult,
 } from "@/domain/entities/game-result";
-import type { Player } from "@/domain/entities/player";
 import type { TeamId } from "@/domain/ids";
 import { calculatePlayerOverall } from "@/domain/player-overall-rating";
 import type { Rng } from "@/domain/rng";
@@ -25,7 +27,15 @@ import {
   mergeGameSimulationConfig,
   type GameSimulationConfig,
 } from "@/systems/game-simulation-config";
+import { FREE_THROW_RESOLUTION_CONFIG } from "@/systems/free-throw-resolution-config";
+import { POSITION_REBOUND_MODIFIERS } from "@/systems/rebound-resolution-config";
 import { ROTATION_CONFIG } from "@/systems/rotation/rotation-config";
+import { SHOT_RESOLUTION_CONFIG } from "@/systems/shot-resolution-config";
+import {
+  calculateUsageScore,
+  creationAbility,
+  scoringAbility,
+} from "@/systems/player-usage";
 
 export type SimulateBoxScoreContext = {
   homePlayers: readonly Player[];
@@ -43,6 +53,22 @@ const SCORE_FLOOR = 78;
 const SCORE_CEILING = 142;
 const REGULATION_TEAM_MINUTES = ROTATION_CONFIG.regulationPlayerMinutes;
 const PLAYING_ROTATION_SIZE = 10;
+
+const ASSIST_TO_FGM_RATE = 0.58;
+const POSITION_STEAL_MODIFIERS: Readonly<Record<PlayerPosition, number>> = {
+  PG: 6,
+  SG: 4,
+  SF: 1,
+  PF: -2,
+  C: -4,
+};
+const POSITION_BLOCK_MODIFIERS: Readonly<Record<PlayerPosition, number>> = {
+  PG: -6,
+  SG: -4,
+  SF: 0,
+  PF: 5,
+  C: 10,
+};
 
 export function simulateGameBoxScore(
   game: Game,
@@ -76,20 +102,27 @@ export function simulateGameBoxScore(
     rng,
   );
 
+  const possessionsHome = rng.nextInt(92, 108);
+  const possessionsAway = rng.nextInt(92, 108);
+
   const homeRows = buildTeamBoxScore({
     players: context.homePlayers,
     available: homeAvailable,
     starters: context.homeStartingLineup,
+    opponent: awayAvailable,
     teamId: game.homeTeamId,
     points: homePoints,
+    possessions: possessionsHome,
     rng,
   });
   const awayRows = buildTeamBoxScore({
     players: context.awayPlayers,
     available: awayAvailable,
     starters: context.awayStartingLineup,
+    opponent: homeAvailable,
     teamId: game.awayTeamId,
     points: awayPoints,
+    possessions: possessionsAway,
     rng,
   });
 
@@ -106,9 +139,6 @@ export function simulateGameBoxScore(
     periodCount,
     rng,
   );
-
-  const possessionsHome = rng.nextInt(92, 108);
-  const possessionsAway = rng.nextInt(92, 108);
 
   const result = createGameResult({
     gameId: game.id,
@@ -185,12 +215,8 @@ function rollFinalScore(
     BASE_TEAM_POINTS + (homeRating - awayRating) * POINTS_PER_OVERALL;
   const awayBase =
     BASE_TEAM_POINTS + (awayRating - homeRating) * POINTS_PER_OVERALL;
-  let home = clampScore(
-    Math.round(homeBase) + rng.nextInt(-10, 10),
-  );
-  let away = clampScore(
-    Math.round(awayBase) + rng.nextInt(-10, 10),
-  );
+  let home = clampScore(Math.round(homeBase) + rng.nextInt(-10, 10));
+  let away = clampScore(Math.round(awayBase) + rng.nextInt(-10, 10));
   if (home === away) {
     if (rng.chance(0.5)) {
       home = Math.min(SCORE_CEILING, home + 1);
@@ -232,11 +258,13 @@ function buildTeamBoxScore(input: {
   players: readonly Player[];
   available: readonly Player[];
   starters: readonly Player[] | undefined;
+  opponent: readonly Player[];
   teamId: TeamId;
   points: number;
+  possessions: number;
   rng: Rng;
 }): GamePlayerStats[] {
-  const { players, available, teamId, points, rng } = input;
+  const { players, available, teamId, points, possessions, rng } = input;
   const ranked = [...available].sort(
     (a, b) =>
       calculatePlayerOverall(b.position, b.attributes) -
@@ -253,37 +281,115 @@ function buildTeamBoxScore(input: {
   );
 
   const minutes = allocateMinutes(rotation, rng);
-  const weights = rotation.map((player, index) => {
-    const overall = calculatePlayerOverall(player.position, player.attributes);
-    return Math.max(1, overall * Math.max(1, minutes[index] ?? 0));
+  const oppInterior = Math.max(
+    58,
+    meanAttribute(input.opponent, "interiorDefense"),
+  );
+  const oppPerimeter = Math.max(
+    62,
+    meanAttribute(input.opponent, "perimeterDefense"),
+  );
+
+  const scoringWeights = rotation.map((player, index) => {
+    const usage = calculateUsageScore(player);
+    return Math.max(
+      1,
+      usage * scoringAbility(player) * Math.max(1, minutes[index] ?? 0),
+    );
   });
-  const playerPoints = allocateByWeight(weights, points);
-  const oreb = allocateByWeight(weights, rng.nextInt(8, 16));
-  const dreb = allocateByWeight(weights, rng.nextInt(28, 42));
-  const ast = allocateByWeight(weights, rng.nextInt(14, 28));
-  const tov = allocateByWeight(weights, rng.nextInt(10, 18));
-  const fouls = allocateByWeight(weights, rng.nextInt(16, 26));
-  const stl = allocateByWeight(weights, rng.nextInt(5, 12));
-  const blk = allocateByWeight(weights, rng.nextInt(3, 8));
+  const playerPoints = allocateByWeight(scoringWeights, points);
+
+  const shooting = rotation.map((player, index) =>
+    shootingFromPoints(
+      player,
+      playerPoints[index] ?? 0,
+      oppInterior,
+      oppPerimeter,
+    ),
+  );
+  const teamFgm = shooting.reduce((sum, line) => sum + line.fgm, 0);
+
+  const assistTotal = Math.min(
+    teamFgm,
+    Math.max(
+      0,
+      Math.round(teamFgm * ASSIST_TO_FGM_RATE) + rng.nextInt(-2, 2),
+    ),
+  );
+  const orebTotal = Math.round(possessions * 0.11) + rng.nextInt(-2, 2);
+  const drebTotal = Math.round(possessions * 0.32) + rng.nextInt(-3, 3);
+  const tovTotal = Math.round(possessions * 0.14) + rng.nextInt(-2, 2);
+  const stlTotal = Math.round(possessions * 0.075) + rng.nextInt(-2, 1);
+  const blkTotal = Math.round(possessions * 0.05) + rng.nextInt(-1, 1);
+  const foulTotal = rng.nextInt(16, 26);
+
+  const ast = allocateByWeight(
+    rotation.map((player, index) =>
+      skillWeight(
+        creationAbility(player) + player.attributes.passing,
+        minutes[index] ?? 0,
+      ),
+    ),
+    Math.max(0, assistTotal),
+  );
+  const oreb = allocateByWeight(
+    rotation.map((player, index) =>
+      skillWeight(
+        player.attributes.rebounding + POSITION_REBOUND_MODIFIERS[player.position],
+        minutes[index] ?? 0,
+      ),
+    ),
+    Math.max(0, orebTotal),
+  );
+  const dreb = allocateByWeight(
+    rotation.map((player, index) =>
+      skillWeight(
+        player.attributes.rebounding +
+          POSITION_REBOUND_MODIFIERS[player.position] +
+          4,
+        minutes[index] ?? 0,
+      ),
+    ),
+    Math.max(0, drebTotal),
+  );
+  const tov = allocateByWeight(
+    rotation.map((player, index) => {
+      const handle =
+        (player.attributes.ballHandling + player.attributes.basketballIq) / 2;
+      return skillWeight(Math.max(8, RATING_MAX - handle), minutes[index] ?? 0);
+    }),
+    Math.max(0, tovTotal),
+  );
+  const fouls = allocateByWeight(
+    rotation.map((player, index) =>
+      skillWeight(player.attributes.interiorDefense, minutes[index] ?? 0),
+    ),
+    foulTotal,
+  );
+  const stl = allocateByWeight(
+    rotation.map((player, index) =>
+      skillWeight(
+        player.attributes.steal + POSITION_STEAL_MODIFIERS[player.position],
+        minutes[index] ?? 0,
+      ),
+    ),
+    Math.max(0, stlTotal),
+  );
+  const blk = allocateByWeight(
+    rotation.map((player, index) =>
+      skillWeight(
+        player.attributes.block + POSITION_BLOCK_MODIFIERS[player.position],
+        minutes[index] ?? 0,
+      ),
+    ),
+    Math.max(0, blkTotal),
+  );
 
   const byId = new Map<string, GamePlayerStats>();
   for (let index = 0; index < rotation.length; index += 1) {
     const player = rotation[index]!;
-    const shooting = decomposePoints(playerPoints[index] ?? 0, rng);
-    const missFg = rng.nextInt(
-      0,
-      Math.max(0, Math.floor(shooting.fgm * 1.1)) + 2,
-    );
-    const missThree = Math.min(
-      missFg,
-      rng.nextInt(0, Math.max(0, shooting.threePm) + 2),
-    );
-    const missFt = rng.nextInt(
-      0,
-      Math.max(0, Math.floor(shooting.ftm * 0.5)) + 1,
-    );
-    const fga = shooting.fgm + missFg;
-    const threePa = shooting.threePm + missThree;
+    const line = shooting[index]!;
+    const fga = line.fga;
     const row: GamePlayerStats = {
       playerId: player.id,
       teamId,
@@ -299,13 +405,13 @@ function buildTeamBoxScore(input: {
       blocks: blk[index] ?? 0,
       turnovers: tov[index] ?? 0,
       fouls: fouls[index] ?? 0,
-      fieldGoalsMade: shooting.fgm,
+      fieldGoalsMade: line.fgm,
       fieldGoalsAttempted: fga,
-      threePointersMade: shooting.threePm,
-      threePointersAttempted: threePa,
-      freeThrowsMade: shooting.ftm,
-      freeThrowsAttempted: shooting.ftm + missFt,
-      touches: fga + (ast[index] ?? 0) + (tov[index] ?? 0) + shooting.ftm,
+      threePointersMade: line.threePm,
+      threePointersAttempted: line.threePa,
+      freeThrowsMade: line.ftm,
+      freeThrowsAttempted: line.fta,
+      touches: fga + (ast[index] ?? 0) + (tov[index] ?? 0) + line.ftm,
       started: starterIds.has(player.id) && (minutes[index] ?? 0) > 0,
     };
     byId.set(player.id, row);
@@ -350,30 +456,145 @@ function allocateMinutes(rotation: readonly Player[], rng: Rng): number[] {
   );
 }
 
-function decomposePoints(
+function shootingFromPoints(
+  player: Player,
   points: number,
-  rng: Rng,
-): { fgm: number; threePm: number; ftm: number } {
+  oppInterior: number,
+  oppPerimeter: number,
+): {
+  fgm: number;
+  fga: number;
+  threePm: number;
+  threePa: number;
+  ftm: number;
+  fta: number;
+} {
   if (points <= 0) {
-    return { fgm: 0, threePm: 0, ftm: 0 };
+    return { fgm: 0, fga: 0, threePm: 0, threePa: 0, ftm: 0, fta: 0 };
   }
-  const maxThrees = Math.floor(points / 3);
-  const threePm =
-    maxThrees === 0
+
+  const twoPct = twoPointMakeRate(player, oppInterior);
+  const threePct = threePointMakeRate(player, oppPerimeter);
+  const ftPct = freeThrowMakeRate(player);
+  const threeShare = threePointScoringShare(player);
+  const ftShare = clamp(
+    0.1,
+    0.22,
+    0.12 + (player.attributes.finishing - 50) / 400,
+  );
+
+  let threePm = Math.round((points * threeShare) / 3);
+  let ftm = Math.round(points * ftShare);
+  let remaining = points - 3 * threePm - ftm;
+  if (remaining < 0) {
+    ftm = Math.max(0, ftm + remaining);
+    remaining = points - 3 * threePm - ftm;
+  }
+  if (remaining < 0) {
+    const cut = Math.ceil(-remaining / 3);
+    threePm = Math.max(0, threePm - cut);
+    remaining = points - 3 * threePm - ftm;
+  }
+  let twoPm = Math.floor(Math.max(0, remaining) / 2);
+  ftm += remaining - 2 * twoPm;
+  if (ftm < 0) {
+    twoPm = Math.max(0, twoPm + Math.floor(ftm / 2));
+    ftm = points - 2 * twoPm - 3 * threePm;
+  }
+  while (2 * twoPm + 3 * threePm + ftm > points && twoPm > 0) {
+    twoPm -= 1;
+    ftm += 2;
+  }
+  while (2 * twoPm + 3 * threePm + ftm < points) {
+    ftm += 1;
+  }
+  if (ftm < 0) {
+    ftm = 0;
+    twoPm = Math.floor(points / 2);
+    threePm = 0;
+    ftm = points - 2 * twoPm;
+  }
+
+  const twoPa =
+    twoPm === 0 ? 0 : Math.max(twoPm, Math.round(twoPm / Math.max(0.12, twoPct)));
+  const threePa =
+    threePm === 0
       ? 0
-      : rng.nextInt(
-          Math.min(maxThrees, Math.max(0, Math.floor(points * 0.08))),
-          Math.min(maxThrees, Math.max(0, Math.floor(points * 0.2))),
-        );
-  const remaining = points - 3 * threePm;
-  let twoPm = Math.floor(remaining / 2);
-  let ftm = remaining - 2 * twoPm;
-  if (ftm > 12) {
-    const extraTwos = Math.floor((ftm - 4) / 2);
-    twoPm += extraTwos;
-    ftm -= extraTwos * 2;
+      : Math.max(threePm, Math.round(threePm / Math.max(0.12, threePct)));
+  const fta =
+    ftm === 0 ? 0 : Math.max(ftm, Math.round(ftm / Math.max(0.4, ftPct)));
+
+  return {
+    fgm: twoPm + threePm,
+    fga: twoPa + threePa,
+    threePm,
+    threePa,
+    ftm,
+    fta,
+  };
+}
+
+function threePointScoringShare(player: Player): number {
+  const threePoint = player.attributes.threePoint;
+  const tendency = Math.pow(Math.max(0, threePoint - 52) / 47, 1.15);
+  return clamp(0.08, 0.46, 0.1 + 0.36 * tendency);
+}
+
+function twoPointMakeRate(player: Player, oppInterior: number): number {
+  const ability =
+    (player.attributes.finishing + player.attributes.midRange) / 2;
+  return clampShotProbability(
+    ability / RATING_MAX +
+      SHOT_RESOLUTION_CONFIG.baselineProbability +
+      SHOT_RESOLUTION_CONFIG.twoPointAdjustment -
+      (oppInterior / RATING_MAX) * SHOT_RESOLUTION_CONFIG.defensiveImpact,
+  );
+}
+
+function threePointMakeRate(player: Player, oppPerimeter: number): number {
+  return clampShotProbability(
+    player.attributes.threePoint / RATING_MAX +
+      SHOT_RESOLUTION_CONFIG.baselineProbability +
+      SHOT_RESOLUTION_CONFIG.threePointAdjustment -
+      (oppPerimeter / RATING_MAX) * SHOT_RESOLUTION_CONFIG.defensiveImpact -
+      0.015,
+  );
+}
+
+function freeThrowMakeRate(player: Player): number {
+  return Math.min(
+    FREE_THROW_RESOLUTION_CONFIG.maxProbability,
+    Math.max(
+      FREE_THROW_RESOLUTION_CONFIG.minProbability,
+      player.attributes.freeThrow / RATING_MAX,
+    ),
+  );
+}
+
+function clampShotProbability(value: number): number {
+  return Math.min(
+    SHOT_RESOLUTION_CONFIG.maxProbability,
+    Math.max(SHOT_RESOLUTION_CONFIG.minProbability, value),
+  );
+}
+
+function skillWeight(skill: number, minutes: number): number {
+  return Math.max(1, Math.max(1, skill) * Math.max(1, minutes));
+}
+
+function meanAttribute(
+  players: readonly Player[],
+  key: "interiorDefense" | "perimeterDefense",
+): number {
+  if (players.length === 0) {
+    return 70;
   }
-  return { fgm: twoPm + threePm, threePm, ftm };
+  const sum = players.reduce((total, player) => total + player.attributes[key], 0);
+  return sum / players.length;
+}
+
+function clamp(min: number, max: number, value: number): number {
+  return Math.min(max, Math.max(min, value));
 }
 
 function allocateByWeight(weights: readonly number[], total: number): number[] {

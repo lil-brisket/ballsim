@@ -84,6 +84,8 @@ describe("GameSimState", () => {
           offensiveRebounds: 0,
           defensiveRebounds: 0,
           assists: 0,
+          steals: 0,
+          blocks: 0,
           turnovers: 0,
           fouls: 0,
           fieldGoalsMade: 1,

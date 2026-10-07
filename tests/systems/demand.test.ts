@@ -23,7 +23,7 @@ describe("demand", () => {
     const result = calculateTicketDemand(baseInputs);
     expect(result.score).toBeGreaterThan(0);
     expect(result.score).toBeLessThanOrEqual(100);
-    expect(result.contributions.marketSize.weighted).toBeCloseTo(11.4, 0);
+    expect(result.contributions.marketSize.weighted).toBeCloseTo(8.4, 0);
     expect(Object.keys(result.contributions).length).toBeGreaterThan(0);
   });
 
@@ -61,6 +61,15 @@ describe("demand", () => {
     const high = concessionsFromAttendance(10_000, 90);
     expect(high).toBeGreaterThan(low);
     expect(low).toBeGreaterThanOrEqual(0);
+  });
+
+  it("winning increases demand more than a matching market bump", () => {
+    const losing = calculateTicketDemand({ ...baseInputs, winPct: 0.25 });
+    const winning = calculateTicketDemand({ ...baseInputs, winPct: 0.75 });
+    expect(winning.score).toBeGreaterThan(losing.score);
+    expect(winning.contributions.winPct.weighted).toBeGreaterThan(
+      winning.contributions.marketSize.weighted,
+    );
   });
 
   it("awareness influences demand score", () => {

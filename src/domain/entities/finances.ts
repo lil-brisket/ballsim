@@ -5,8 +5,8 @@ import type { TeamId } from "@/domain/ids";
  *
  * Accounting books (booksByYear / booksByMonth) record posted revenue and
  * expenses. They are NOT a cash ledger. businessFunds on TeamFinances is the
- * authoritative business-ops currency. Player salary cap and staff budget are
- * separate commitment limits and never draw from businessFunds.
+ * authoritative business-ops currency. Weekly player payroll drains
+ * businessFunds without posting playerSalaries (those stay derived).
  *
  * playerSalaries is derived from contracts on statements — never posted.
  */
@@ -64,11 +64,10 @@ export type TeamFinanceBooks = {
  * Business-funds journal for a calendar month (YYYY-MM).
  * Never mutates businessFunds; written only as a side effect of mutators.
  * openBusinessFunds is the balance immediately before the first mutation in the month.
- * Player/staff payroll no longer posts here (commitment limits only).
+ * playerPayrollOutflow accumulates weekly player payroll cash drains.
  */
 export type TeamBusinessFundsMonthLedger = {
   openBusinessFunds: number;
-  /** @deprecated Always 0 — player payroll no longer drains business funds. */
   playerPayrollOutflow: number;
   /** Sum of all signed business-funds deltas in this month. */
   netBusinessFundsChange: number;

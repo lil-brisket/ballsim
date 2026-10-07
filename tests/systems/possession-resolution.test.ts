@@ -144,6 +144,8 @@ function emptyDelta(
     offensiveRebounds: 0,
     defensiveRebounds: 0,
     assists: 0,
+    steals: 0,
+    blocks: 0,
     turnovers: 0,
     fouls: 0,
     fieldGoalsMade: 0,
@@ -842,6 +844,156 @@ describe("resolvePossession invalid input", () => {
         null as unknown as Rng,
       ),
     ).toThrow(/Rng/);
+  });
+});
+
+describe("resolvePossession stocks and three-point assists", () => {
+  it("credits a steal on a pass turnover against a high-steal defender", () => {
+    const result = resolvePossession(
+      {
+        ...baseInput({
+          action: "pass",
+          passerId: asPlayerId("off_1"),
+          receiverId: asPlayerId("off_2"),
+          defenderId: asPlayerId("def_1"),
+        }),
+        defensivePlayers: [
+          createPlayer({
+            id: "def_1",
+            teamId: DEFENSE,
+            position: "PG",
+            attributes: {
+              steal: 92,
+              perimeterDefense: 50,
+              interiorDefense: 50,
+              rebounding: 50,
+              block: 40,
+            },
+          }),
+          createPlayer({
+            id: "def_2",
+            teamId: DEFENSE,
+            position: "C",
+            attributes: {
+              perimeterDefense: 40,
+              interiorDefense: 40,
+              rebounding: 90,
+            },
+          }),
+        ],
+      },
+      createStubRng([0.99]),
+    );
+
+    expect(result.events.map((e) => e.type)).toEqual(["turnover", "steal"]);
+    expect(result.playerStats).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ playerId: "off_1", turnovers: 1 }),
+        expect.objectContaining({ playerId: "def_1", steals: 1 }),
+      ]),
+    );
+  });
+
+  it("credits a block on a missed two-point shot against a rim protector", () => {
+    const result = resolvePossession(
+      {
+        ...baseInput({
+          action: "shot",
+          shooterId: asPlayerId("off_1"),
+          defenderId: asPlayerId("def_2"),
+          shotType: "two_point",
+        }),
+        defensivePlayers: [
+          createPlayer({
+            id: "def_1",
+            teamId: DEFENSE,
+            position: "PG",
+            attributes: {
+              perimeterDefense: 50,
+              interiorDefense: 50,
+              rebounding: 50,
+              block: 40,
+            },
+          }),
+          createPlayer({
+            id: "def_2",
+            teamId: DEFENSE,
+            position: "C",
+            attributes: {
+              perimeterDefense: 40,
+              interiorDefense: 40,
+              rebounding: 90,
+              block: 94,
+            },
+          }),
+        ],
+      },
+      createStubRng([0.99, ...missThenDefensiveReboundRolls(2, 2)]),
+    );
+
+    expect(result.events.map((e) => e.type)).toEqual([
+      "shot_missed",
+      "block",
+      "rebound",
+    ]);
+    expect(result.playerStats).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ playerId: "def_2", blocks: 1 }),
+      ]),
+    );
+  });
+
+  it("credits a three-point assist when the receiver is a specialist", () => {
+    const result = resolvePossession(
+      {
+        ...baseInput({
+          action: "pass",
+          passerId: asPlayerId("off_1"),
+          receiverId: asPlayerId("off_2"),
+          defenderId: asPlayerId("def_1"),
+        }),
+        offensivePlayers: [
+          createPlayer({
+            id: "off_1",
+            teamId: OFFENSE,
+            position: "PG",
+            attributes: {
+              finishing: 80,
+              midRange: 80,
+              threePoint: 80,
+              passing: 90,
+              ballHandling: 90,
+            },
+          }),
+          createPlayer({
+            id: "off_2",
+            teamId: OFFENSE,
+            position: "SG",
+            attributes: {
+              finishing: 55,
+              midRange: 60,
+              threePoint: 90,
+              passing: 70,
+              ballHandling: 70,
+            },
+          }),
+        ],
+      },
+      createStubRng([0, 0, 0]),
+    );
+
+    expect(result.pointsScored).toBe(3);
+    expect(result.events.map((e) => e.type)).toEqual(["shot_made", "assist"]);
+    expect(result.playerStats).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          playerId: "off_2",
+          points: 3,
+          threePointersMade: 1,
+        }),
+        expect.objectContaining({ playerId: "off_1", assists: 1 }),
+      ]),
+    );
   });
 });
 

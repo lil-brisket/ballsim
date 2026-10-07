@@ -11,13 +11,17 @@ import { systemResult, type SystemResult } from "@/domain/system-result";
 import { createStaffContract } from "@/domain/entities/staff-contract";
 import type { GameState } from "@/state/game-state";
 import { appendSeasonEventLog } from "@/state/game-state";
-import { STAFF_DEFAULT_CONTRACT_YEARS } from "@/systems/staff-config";
+import {
+  STAFF_DEFAULT_CONTRACT_YEARS,
+  STAFF_PAYROLL_WEEKS_PER_YEAR,
+} from "@/systems/staff-config";
 import {
   annualSalaryForStaff,
   findTeamStaffByRole,
 } from "@/systems/staff-effects";
 import { isStaffContractActive } from "@/domain/entities/staff-contract";
-import { getTeamStaffBudgetSpace } from "@/systems/staff-budget";
+import { getTeamStaffBudgetSpace, getTeamStaffPayroll } from "@/systems/staff-budget";
+import { applyBusinessFundsImpact } from "@/systems/team-finances";
 import { appendCareerEntry } from "@/domain/entities/staff-development";
 import { createStaff } from "@/domain/entities/staff";
 import { invalidateStaffOffers } from "@/systems/staff-contract-lifecycle";
@@ -252,9 +256,23 @@ export function fireStaff(
 }
 
 /**
- * Staff payroll is a commitment limit (staff budget), not a business-funds drain.
- * Kept as a no-op for weekly pipeline compatibility.
+ * Drains weekly staff payroll from businessFunds and posts the staff expense.
  */
 export function processWeeklyStaffPayroll(state: GameState): SystemResult {
-  return systemResult(state);
+  const year = state.competition.season.year;
+  let current = state;
+  const events: DomainEvent[] = [];
+
+  for (const team of Object.values(state.world.teams)) {
+    const annual = getTeamStaffPayroll(team.id, year, current);
+    const weekly = Math.round(annual / STAFF_PAYROLL_WEEKS_PER_YEAR);
+    if (weekly <= 0) continue;
+    const impact = applyBusinessFundsImpact(current, team.id, -weekly, year, {
+      expenseCategory: "staff",
+    });
+    current = impact.state;
+    events.push(...impact.events);
+  }
+
+  return systemResult(current, events);
 }

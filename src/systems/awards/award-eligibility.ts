@@ -75,11 +75,28 @@ export function getPlayerRookieSeasonYear(
  * (no prior qualifying primary season). Mid-season monthly awards use this
  * even before ROY min-games thresholds are met.
  */
+function isRookieClassPlayer(
+  state: GameState,
+  playerId: PlayerId,
+  seasonYear: number,
+): boolean {
+  const player = state.world.players[playerId];
+  if (!player) return false;
+  const draftYear = player.developmentLeague?.draftSeasonYear ?? null;
+  if (draftYear != null) {
+    return draftYear === seasonYear;
+  }
+  return player.age <= AWARD_ELIGIBILITY_CONFIG.rookieOfYear.maxAge;
+}
+
 export function isRookieEligible(
   state: GameState,
   playerId: PlayerId,
   seasonYear: number,
 ): boolean {
+  if (!isRookieClassPlayer(state, playerId, seasonYear)) {
+    return false;
+  }
   if (hasPriorQualifyingPrimarySeason(state, playerId, seasonYear)) {
     return false;
   }

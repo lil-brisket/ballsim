@@ -244,6 +244,12 @@ weight    weight
 
 **Touches** are box-score instrumentation only (`GamePlayerStats.touches`). A touch is meaningful on-ball offensive involvement. A player gets **at most one touch per possession** (overlapping events dedup). Touches do not influence selection or resolution. Shooting fouls credit the fouled shooter once whether or not an FGA is recorded; completed-pass receivers are the only success-dependent credit.
 
+## Game simulation fidelity
+
+Owner Mode calendar jumps use `fidelity: "box_score"` for CPU vs CPU games. That path is [`simulateGameBoxScore`](src/systems/game-simulation-box-score.ts): a statistical projection of the **same attributes** as possession sim (shot/FT make rates from `SHOT_RESOLUTION_CONFIG` / `FREE_THROW_RESOLUTION_CONFIG`, usage for scoring, passing for assists, rebound/steal/block ratings plus position modifiers). It does not run a possession loop and writes no play-by-play.
+
+Games involving the owner team still use possession [`simulateGame`](src/systems/game-simulation.ts) even when fidelity is `box_score`. Box-score is not a second sport: FG/3P/FT and the full counting line (PTS/AST/REB/STL/BLK/TO) should land in the same Lab-style bands as possession.
+
 ## Design rules
 
 - Prefer real, tested foundation pieces over fake "working" placeholders.

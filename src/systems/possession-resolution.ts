@@ -31,11 +31,13 @@ import { resolveShot, type ShotResolution } from "@/systems/shot-resolution";
 import type { ShotType } from "@/systems/shot-resolution-config";
 import {
   addAssist,
+  addBlock,
   addFieldGoal,
   addFoul,
   addFreeThrow,
   addPoints,
   addRebound,
+  addSteal,
   addTouch,
   addTurnover,
   createPossessionStatsAccumulator,
@@ -332,6 +334,7 @@ function resolveShotBranch(ctx: ExecutionContext): void {
   addFieldGoal(ctx.stats, shooter.id, decision.shotType, false);
   pushEvent(ctx.stats, "shot_missed", shooter.id, ctx.input.offensiveTeamId);
   ctx.possessionOutcome = "shot_missed";
+  maybeCreditBlock(ctx, defender, decision.shotType);
   resolveReboundAfterMiss(ctx);
 }
 
@@ -363,6 +366,7 @@ function resolvePassBranch(ctx: ExecutionContext): void {
   if (pass.outcome === "turnover") {
     addTurnover(ctx.stats, passer.id);
     pushEvent(ctx.stats, "turnover", passer.id, ctx.input.offensiveTeamId);
+    maybeCreditSteal(ctx, defender, passer);
     ctx.possessionAction = "turnover";
     ctx.possessionOutcome = "turnover";
     flipPossession(ctx);
@@ -378,8 +382,7 @@ function resolvePassBranch(ctx: ExecutionContext): void {
     return;
   }
 
-  // Immediate receiver shot — no second decision phase. v1 uses two_point.
-  const shotType: ShotType = "two_point";
+  const shotType = catchAndShootType(receiver);
   const shot = resolveShot(
     {
       shooter: receiver,
@@ -406,6 +409,7 @@ function resolvePassBranch(ctx: ExecutionContext): void {
 
   addFieldGoal(ctx.stats, receiver.id, shotType, false);
   pushEvent(ctx.stats, "shot_missed", receiver.id, ctx.input.offensiveTeamId);
+  maybeCreditBlock(ctx, defender, shotType);
   resolveReboundAfterMiss(ctx);
 }
 
@@ -588,6 +592,44 @@ function flipPossession(ctx: ExecutionContext): void {
     offensiveTeamId: ctx.input.defensiveTeamId,
     defensiveTeamId: ctx.input.offensiveTeamId,
   };
+}
+
+function catchAndShootType(receiver: Player): ShotType {
+  const twoSkill =
+    (receiver.attributes.finishing + receiver.attributes.midRange) / 2;
+  if (
+    receiver.attributes.threePoint >= 74 &&
+    receiver.attributes.threePoint >= twoSkill
+  ) {
+    return "three_point";
+  }
+  return "two_point";
+}
+
+function maybeCreditSteal(
+  ctx: ExecutionContext,
+  defender: Player,
+  ballHandler: Player,
+): void {
+  if (
+    defender.attributes.steal >= 70 &&
+    defender.attributes.steal + 8 >= ballHandler.attributes.ballHandling
+  ) {
+    addSteal(ctx.stats, defender.id);
+    pushEvent(ctx.stats, "steal", defender.id, ctx.input.defensiveTeamId);
+  }
+}
+
+function maybeCreditBlock(
+  ctx: ExecutionContext,
+  defender: Player,
+  shotType: ShotType,
+): void {
+  const threshold = shotType === "three_point" ? 88 : 72;
+  if (defender.attributes.block >= threshold) {
+    addBlock(ctx.stats, defender.id);
+    pushEvent(ctx.stats, "block", defender.id, ctx.input.defensiveTeamId);
+  }
 }
 
 /** Keeps resolvePass defensivePressure within the existing 1–99 contract. */

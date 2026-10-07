@@ -185,6 +185,72 @@ describe("yearly awards", () => {
     expect(awardWinnerId(evaluateRoy(state))).toBe("rookie");
   });
 
+  it("does not award ROY to a first-season veteran", () => {
+    let state = createAwardsTestState({ seasonYear: 2026 });
+    const [teamA, teamB] = primaryTeamIds(state);
+    state = addPlayerToState(state, "vet", teamA, { age: 28 });
+    state = addPlayerToState(state, "kid", teamB, { age: 21 });
+    state = injectGames(state, [
+      ...generatePlayerGames({
+        playerId: "vet",
+        teamId: teamA,
+        opponentId: teamB,
+        count: 40,
+        datePrefix: "2026-01",
+        perGame: { points: 24, minutes: 34, rebounds: 6, assists: 5 },
+      }),
+      ...generatePlayerGames({
+        playerId: "kid",
+        teamId: teamB,
+        opponentId: teamA,
+        count: 40,
+        datePrefix: "2026-01",
+        perGame: { points: 12, minutes: 24, rebounds: 3, assists: 2 },
+      }),
+    ]);
+    expect(awardWinnerId(evaluateRoy(state))).toBe("kid");
+  });
+
+  it("does not award DPOY to a scorer with empty stocks", () => {
+    let state = createAwardsTestState();
+    const [teamA, teamB] = primaryTeamIds(state);
+    state = addPlayerToState(state, "scorer", teamA);
+    state = addPlayerToState(state, "rim", teamB);
+    state = injectGames(state, [
+      ...generatePlayerGames({
+        playerId: "scorer",
+        teamId: teamA,
+        opponentId: teamB,
+        count: 55,
+        datePrefix: "2026-01",
+        perGame: {
+          points: 17,
+          minutes: 34,
+          rebounds: 7,
+          assists: 3,
+          steals: 0,
+          blocks: 0,
+        },
+      }),
+      ...generatePlayerGames({
+        playerId: "rim",
+        teamId: teamB,
+        opponentId: teamA,
+        count: 55,
+        datePrefix: "2026-01",
+        perGame: {
+          points: 9,
+          minutes: 30,
+          rebounds: 11,
+          assists: 1,
+          steals: 2,
+          blocks: 3,
+        },
+      }),
+    ]);
+    expect(awardWinnerId(evaluateDpoy(state))).toBe("rim");
+  });
+
   it("excludes majority starters from Sixth Man", () => {
     let state = createAwardsTestState();
     const [teamA, teamB] = primaryTeamIds(state);

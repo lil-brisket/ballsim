@@ -59,6 +59,11 @@ export type MultiYearSimOptions = {
    * Time advance + syncPhaseForward own phase transitions.
    */
   calendarPrimary?: boolean;
+  /**
+   * Invoked after team select (`seasonsCompleted = 0`) and at each
+   * new-year preseason boundary, including the final season.
+   */
+  onSeasonBoundary?: (state: GameState, seasonsCompleted: number) => void;
 };
 
 export type MultiYearSimDiagnostics = {
@@ -385,6 +390,7 @@ export async function runMultiYearSimulation(
   let lastTransition = lifecycleFingerprint(afterSelect.state);
   let seasonsCompleted = 0;
   let prevYear = startYear;
+  options.onSeasonBoundary?.(afterSelect.state, 0);
 
   while (steps < maxSteps) {
     const before = await store.load(saveId);
@@ -401,6 +407,7 @@ export async function runMultiYearSimulation(
     ) {
       assertBoundaryInvariants(before.state);
       seasonsCompleted = options.seasons;
+      options.onSeasonBoundary?.(before.state, seasonsCompleted);
       return {
         saveId,
         store,
@@ -418,6 +425,7 @@ export async function runMultiYearSimulation(
       assertBoundaryInvariants(before.state);
       seasonsCompleted = beforeYear - startYear;
       prevYear = beforeYear;
+      options.onSeasonBoundary?.(before.state, seasonsCompleted);
 
       if (seasonsCompleted >= options.seasons) {
         return {

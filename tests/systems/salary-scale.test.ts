@@ -4,6 +4,7 @@ import {
   isSalaryLowball,
   isVetMinExceptionSalary,
   salaryForPlayer,
+  serviceYearsForSalary,
   vetMinSalary,
 } from "@/systems/salary-scale";
 
@@ -63,5 +64,28 @@ describe("salaryForPlayer", () => {
     expect(
       isVetMinExceptionSalary(DEFAULT_SALARY_CAP * 0.25, DEFAULT_SALARY_CAP),
     ).toBe(false);
+  });
+
+  it("infers service years from history, then draft class, then age", () => {
+    expect(
+      serviceYearsForSalary({
+        age: 28,
+        seasonYear: 2026,
+        seasonsPlayed: 6,
+      }),
+    ).toBe(6);
+    expect(
+      serviceYearsForSalary({
+        age: 22,
+        seasonYear: 2026,
+        draftSeasonYear: 2024,
+      }),
+    ).toBe(2);
+    expect(
+      serviceYearsForSalary({
+        age: 28,
+        seasonYear: 2026,
+      }),
+    ).toBe(9);
   });
 });

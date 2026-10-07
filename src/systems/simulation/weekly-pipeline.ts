@@ -10,6 +10,8 @@ import { processWeeklyMediaDecay } from "@/systems/media";
 import { runAiFranchiseDecisions } from "@/systems/ai-franchise-decisions";
 import { runAiGameDayPromotionDecisions } from "@/systems/game-day-promotions/ai-game-day-promotions";
 import { createSeededRng, type Rng } from "@/domain/rng";
+import { processWeeklyPlayerPayroll } from "@/systems/player-payroll";
+import { processWeeklyStaffPayroll } from "@/systems/staff";
 
 export type WeeklyPipelineResult = SystemResult & {
   weeklyPipelineRan: boolean;
@@ -38,8 +40,13 @@ export function runWeeklyPipeline(
   let current = state;
   const events: SystemResult["events"] = [];
 
-  // Staff and player payroll are commitment limits (staff budget / salary cap),
-  // not business-funds drains — skip weekly cash deductions.
+  const staffPayroll = processWeeklyStaffPayroll(current);
+  current = staffPayroll.state;
+  events.push(...staffPayroll.events);
+
+  const playerPayroll = processWeeklyPlayerPayroll(current);
+  current = playerPayroll.state;
+  events.push(...playerPayroll.events);
 
   const facilityOpex = processWeeklyFacilityOpex(current);
   current = facilityOpex.state;

@@ -13,7 +13,12 @@ export const AWARD_ELIGIBILITY_CONFIG = {
   defensivePlayerOfMonth: { minGames: 5, minMinutes: 100 },
   mvp: { minGames: 50, minMinutes: 1200 },
   dpoy: { minGames: 50, minMinutes: 1000 },
-  rookieOfYear: { minGames: 30, minMinutes: 600 },
+  rookieOfYear: {
+    minGames: 30,
+    minMinutes: 600,
+    /** Generated vets without a draft year cannot take ROY. */
+    maxAge: 24,
+  },
   sixthMan: {
     minGames: 30,
     minMinutes: 600,

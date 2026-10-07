@@ -29,6 +29,7 @@ import {
   isVetMinExceptionSalary,
   REPLACEMENT_LEVEL_OVERALL,
   salaryForPlayer,
+  serviceYearsForSalary,
   vetMinSalary,
 } from "@/systems/salary-scale";
 import { VET_MIN_EXCEPTION_ENABLED } from "@/systems/salary-cap-config";
@@ -90,7 +91,12 @@ export const defaultEvaluatePlayerInterest: EvaluatePlayerInterest = (
       const market = salaryForPlayer({
         overall,
         age: player.age,
-        years: 0,
+        years: serviceYearsForSalary({
+          age: player.age,
+          seasonYear: year,
+          draftSeasonYear: player.developmentLeague?.draftSeasonYear ?? null,
+          seasonsPlayed: state.business.playerHistory[player.id]?.seasons.length ?? 0,
+        }),
         cap,
         kind: "fa",
       });

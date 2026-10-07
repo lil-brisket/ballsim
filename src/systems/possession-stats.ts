@@ -14,6 +14,8 @@ export type PlayerStatsDelta = {
   offensiveRebounds: number;
   defensiveRebounds: number;
   assists: number;
+  steals: number;
+  blocks: number;
   turnovers: number;
   fouls: number;
   fieldGoalsMade: number;
@@ -135,6 +137,20 @@ export function addAssist(
   ensureDelta(accumulator, playerId).assists += 1;
 }
 
+export function addSteal(
+  accumulator: PossessionStatsAccumulator,
+  playerId: PlayerId,
+): void {
+  ensureDelta(accumulator, playerId).steals += 1;
+}
+
+export function addBlock(
+  accumulator: PossessionStatsAccumulator,
+  playerId: PlayerId,
+): void {
+  ensureDelta(accumulator, playerId).blocks += 1;
+}
+
 export function addTurnover(
   accumulator: PossessionStatsAccumulator,
   playerId: PlayerId,
@@ -175,6 +191,8 @@ export function finalizePlayerStatsDeltas(
       delta.offensiveRebounds !== 0 ||
       delta.defensiveRebounds !== 0 ||
       delta.assists !== 0 ||
+      delta.steals !== 0 ||
+      delta.blocks !== 0 ||
       delta.turnovers !== 0 ||
       delta.fouls !== 0 ||
       delta.fieldGoalsMade !== 0 ||
@@ -246,6 +264,8 @@ export function applyPossessionResolution(
       offensiveRebounds: row.offensiveRebounds + delta.offensiveRebounds,
       defensiveRebounds: row.defensiveRebounds + delta.defensiveRebounds,
       assists: row.assists + delta.assists,
+      steals: row.steals + delta.steals,
+      blocks: row.blocks + delta.blocks,
       turnovers: row.turnovers + delta.turnovers,
       fouls: row.fouls + delta.fouls,
       fieldGoalsMade: row.fieldGoalsMade + delta.fieldGoalsMade,
@@ -291,6 +311,8 @@ function ensureDelta(
     offensiveRebounds: 0,
     defensiveRebounds: 0,
     assists: 0,
+    steals: 0,
+    blocks: 0,
     turnovers: 0,
     fouls: 0,
     fieldGoalsMade: 0,

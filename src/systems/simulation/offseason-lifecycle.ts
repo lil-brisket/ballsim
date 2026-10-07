@@ -41,6 +41,7 @@ import { transitionPhase } from "@/systems/simulation/phase-machine";
 import { beginRegularSeasonFromPreseason } from "@/systems/simulation/season-lifecycle";
 import { canonicalPreseasonStartDate } from "@/systems/simulation/season-lifecycle-config";
 import { fillShortRosters } from "@/systems/roster-generation";
+import { processCpuContractExtensions } from "@/systems/contract-extensions";
 import { enforceMaxRosterViaDevelopmentLeague } from "@/systems/development-league/enforce-roster-cap";
 import {
   expireSituation,
@@ -477,6 +478,12 @@ export function processPhaseEnter(
       current = activated.state;
       events.push(...activated.events);
     }
+  }
+
+  if (toPhaseId === "offseason.roster_decisions") {
+    const extensions = processCpuContractExtensions(current);
+    current = extensions.state;
+    events.push(...extensions.events);
   }
 
   if (toPhaseId === "offseason.free_agency") {

@@ -94,7 +94,7 @@ export function recordExpense(
  * Negative amount → expense category + businessFunds decrease (absolute value posted).
  * Zero is a no-op.
  *
- * Never used for player or staff payroll (those are commitment limits).
+ * Player payroll uses applyCashOnlyImpact instead (statement salaries stay derived).
  */
 export function applyBusinessFundsImpact(
   state: GameState,
@@ -147,16 +147,29 @@ export function applyBusinessFundsImpact(
 export const applyCashAndBooksImpact = applyBusinessFundsImpact;
 
 /**
- * @deprecated Player payroll no longer drains business funds.
- * Kept as a no-op for call-site migration; prefer removing callers.
+ * Adjusts businessFunds without posting books. Used for player payroll so
+ * statement salaries stay derived from contracts.
  */
 export function applyCashOnlyImpact(
   state: GameState,
-  _teamId: TeamId,
-  _amount: number,
+  teamId: TeamId,
+  amount: number,
   _options: { period: string } = { period: "weekly" },
 ): SystemResult {
-  return systemResult(state);
+  assertTeamAndFinanceExist(state, teamId);
+  if (typeof amount !== "number" || !Number.isFinite(amount)) {
+    throw new Error("Cash-only impact amount must be a finite number.");
+  }
+  if (!Number.isInteger(amount)) {
+    throw new Error("Cash-only impact amount must be an integer.");
+  }
+  if (amount === 0) {
+    return systemResult(state);
+  }
+  const next = applyBusinessFundsDelta(state, teamId, amount, {
+    playerPayrollOutflow: amount < 0 ? Math.abs(amount) : 0,
+  });
+  return systemResult(next);
 }
 
 /**
@@ -279,6 +292,7 @@ function applyBusinessFundsDelta(
   state: GameState,
   teamId: TeamId,
   amount: number,
+  options: { playerPayrollOutflow?: number } = {},
 ): GameState {
   const existing = state.business.finances[teamId]!;
   const monthId = getCalendarMonthId(state.world.calendar.currentDate);
@@ -287,7 +301,8 @@ function applyBusinessFundsDelta(
   const openBusinessFunds = prior?.openBusinessFunds ?? existing.businessFunds;
   const nextLedgerEntry: TeamBusinessFundsMonthLedger = {
     openBusinessFunds,
-    playerPayrollOutflow: prior?.playerPayrollOutflow ?? 0,
+    playerPayrollOutflow:
+      (prior?.playerPayrollOutflow ?? 0) + (options.playerPayrollOutflow ?? 0),
     netBusinessFundsChange: (prior?.netBusinessFundsChange ?? 0) + amount,
   };
 

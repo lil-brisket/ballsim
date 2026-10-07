@@ -104,6 +104,61 @@ describe("simulateGameBoxScore", () => {
     expect(a.playerStats).toEqual(b.playerStats);
   });
 
+  it("gives assists to passers and rebounds/blocks to bigs", () => {
+    const home = [
+      createPlayer({
+        id: asPlayerId("home_pg"),
+        teamId: HOME,
+        position: "PG",
+        firstName: "Pass",
+        lastName: "First",
+        attributes: {
+          passing: 95,
+          ballHandling: 92,
+          finishing: 70,
+          midRange: 70,
+          threePoint: 70,
+          rebounding: 40,
+          steal: 88,
+          block: 35,
+        },
+      }),
+      ...makeRoster(HOME, "home", 9).slice(1),
+    ];
+    home[1] = createPlayer({
+      id: asPlayerId("home_c"),
+      teamId: HOME,
+      position: "C",
+      firstName: "Rim",
+      lastName: "Protect",
+      attributes: {
+        passing: 38,
+        ballHandling: 40,
+        finishing: 78,
+        midRange: 55,
+        threePoint: 32,
+        rebounding: 95,
+        steal: 40,
+        block: 94,
+        interiorDefense: 90,
+      },
+    });
+    const away = makeRoster(AWAY, "away", 10);
+    const result = simulateGameBoxScore(
+      scheduledGame(),
+      { homePlayers: home, awayPlayers: away },
+      createTestRng(7),
+    );
+    const pg = result.playerStats.find((row) => row.playerId === "home_pg");
+    const center = result.playerStats.find((row) => row.playerId === "home_c");
+    expect(pg).toBeDefined();
+    expect(center).toBeDefined();
+    expect(pg!.assists).toBeGreaterThan(center!.assists);
+    expect(center!.rebounds).toBeGreaterThan(pg!.rebounds);
+    expect(center!.blocks).toBeGreaterThan(pg!.blocks);
+    expect(pg!.steals).toBeGreaterThanOrEqual(center!.steals);
+  });
+
   it("is faster than a short possession sim on the same rosters", () => {
     const home = makeRoster(HOME, "home", 10);
     const away = makeRoster(AWAY, "away", 10);

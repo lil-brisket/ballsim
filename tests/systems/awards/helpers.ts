@@ -144,6 +144,7 @@ export function addPlayerToState(
   state: GameState,
   playerId: string,
   teamId: string,
+  overrides: { age?: number } = {},
 ): GameState {
   const player = createPlayer({
     id: playerId,
@@ -151,6 +152,7 @@ export function addPlayerToState(
     firstName: playerId,
     lastName: "Player",
     contractId: null,
+    age: overrides.age,
   });
   const team = state.world.teams[teamId];
   if (!team) throw new Error(`missing team ${teamId}`);

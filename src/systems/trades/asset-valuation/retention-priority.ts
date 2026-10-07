@@ -34,6 +34,9 @@ export function getRetentionPriority(
   if (overall >= maxOvr && overall >= 78) {
     priority += RETENTION_PRIORITY_WEIGHTS.topOverallOnTeam;
   }
+  if (overall >= 82 && player.age < 32) {
+    priority += RETENTION_PRIORITY_WEIGHTS.franchiseStar;
+  }
 
   const potentialGap = player.potential.overall - overall;
   if (player.age <= 23 && potentialGap >= 8) {

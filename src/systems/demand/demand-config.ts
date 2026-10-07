@@ -12,15 +12,15 @@ export const DEMAND_PRICE_ELASTICITY = 0.65;
  * and marquee opponents nudge demand without rewriting the model.
  */
 export const DEMAND_CONTRIBUTOR_WEIGHTS = {
-  marketSize: 0.19,
-  fanSentiment: 0.2,
-  reputation: 0.14,
-  awareness: 0.11,
-  mediaAttention: 0.09,
-  leaguePopularity: 0.09,
-  winPct: 0.11,
-  fanFacility: 0.03,
-  opponentWinPct: 0.04,
+  marketSize: 0.14,
+  fanSentiment: 0.16,
+  reputation: 0.12,
+  awareness: 0.09,
+  mediaAttention: 0.07,
+  leaguePopularity: 0.07,
+  winPct: 0.22,
+  fanFacility: 0.04,
+  opponentWinPct: 0.09,
 } as const;
 
 /** Merchandise revenue per attendee (integer dollars, before sentiment/star). */

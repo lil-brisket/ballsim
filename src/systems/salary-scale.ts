@@ -15,6 +15,24 @@ export type SalaryForPlayerInput = {
   kind: SalaryKind;
 };
 
+export type ServiceYearsInput = {
+  age: number;
+  seasonYear: number;
+  draftSeasonYear?: number | null;
+  seasonsPlayed?: number;
+};
+
+/** Infer NBA-style service years from history, draft class, or age. */
+export function serviceYearsForSalary(input: ServiceYearsInput): number {
+  if (input.seasonsPlayed != null && input.seasonsPlayed > 0) {
+    return input.seasonsPlayed;
+  }
+  if (input.draftSeasonYear != null) {
+    return Math.max(0, input.seasonYear - input.draftSeasonYear);
+  }
+  return Math.max(0, input.age - 19);
+}
+
 /** Veteran minimum as a fraction of the salary cap. */
 export const VET_MIN_CAP_FRACTION = 0.012;
 

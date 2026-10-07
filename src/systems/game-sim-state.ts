@@ -223,6 +223,8 @@ export function applyPossessionToSimState(
     row.offensiveRebounds += delta.offensiveRebounds;
     row.defensiveRebounds += delta.defensiveRebounds;
     row.assists += delta.assists;
+    row.steals += delta.steals;
+    row.blocks += delta.blocks;
     row.turnovers += delta.turnovers;
     row.fouls += delta.fouls;
     row.fieldGoalsMade += delta.fieldGoalsMade;

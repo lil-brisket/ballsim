@@ -52,6 +52,12 @@ export function defensiveStatImpact(rates: AwardPerGameRates): number {
   return rates.steals * 2.5 + rates.blocks * 2.5 + rates.rebounds * 0.35;
 }
 
+/** 0–100 iron-man score. Not a percentile — ties at 82 GP stay 100, not 50. */
+export function availabilityScore(games: number, teamGames: number): number {
+  if (teamGames <= 0) return 0;
+  return Math.min(100, (games / teamGames) * 100);
+}
+
 export function efficiencyIndex(eff: AwardEfficiencySnapshot): number {
   const ts = eff.tsPct ?? 0.45;
   const efg = eff.eFgPct ?? 0.45;

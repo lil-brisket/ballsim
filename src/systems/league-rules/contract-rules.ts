@@ -29,7 +29,6 @@ export function checkContractExtensionWindow(
       ],
     };
   }
-  // Windows exist; full extension writer is deferred.
   if (phaseId === "offseason.roster_decisions") {
     return { allowed: true, violations: [] };
   }
@@ -37,9 +36,9 @@ export function checkContractExtensionWindow(
     allowed: false,
     violations: [
       {
-        code: "EXTENSION_NOT_IMPLEMENTED",
+        code: "EXTENSION_WINDOW_CLOSED",
         message:
-          "Contract extensions are only legal during roster decisions (system deferred).",
+          "Contract extensions are only legal during roster decisions.",
         tier: "phase_lock",
         action: "contract_extension",
       },

@@ -1,4 +1,5 @@
 import type { PlayerPosition } from "@/domain/entities/player";
+import { calculatePlayerOverall } from "@/domain/player-overall-rating";
 import type { TradeProposal } from "@/domain/entities/trade-proposal";
 import type { DraftPickId, PlayerId, TeamId } from "@/domain/ids";
 import type { GameState } from "@/state/game-state";
@@ -163,6 +164,8 @@ function listExpendableAssets(state: GameState, teamId: TeamId): AssetRef[] {
     }
     const player = state.world.players[playerId];
     if (!player) continue;
+    const overall = calculatePlayerOverall(player.position, player.attributes);
+    if (overall >= 82 && player.age < 32) continue;
     const des = getTradeDesirability(
       state,
       teamId,

@@ -1,4 +1,5 @@
 import { createDomainEvent, type DomainEvent } from "@/domain/events";
+import { asPlayerId } from "@/domain/ids";
 import type { Rng } from "@/domain/rng";
 import { systemResult, type SystemResult } from "@/domain/system-result";
 import type { GameState } from "@/state/game-state";
@@ -8,6 +9,7 @@ import {
   PLAYER_RETIREMENT_MIN_AGE,
 } from "@/systems/league-rules/invariants";
 import { withClearedDevelopmentLeagueAssignment } from "@/systems/development-league/assignment";
+import { stripPlayersFromAllTradeBlocks } from "@/systems/trades/trade-block";
 
 /**
  * Probabilistic player retirement during season_transition.
@@ -81,6 +83,13 @@ export function processPlayerRetirements(
     current = {
       ...current,
       world: { ...current.world, teams },
+      business: {
+        ...current.business,
+        tradeBlocks: stripPlayersFromAllTradeBlocks(
+          current.business.tradeBlocks,
+          [asPlayerId(playerId)],
+        ),
+      },
     };
 
     const retiredEvent = createDomainEvent({

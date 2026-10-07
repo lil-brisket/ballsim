@@ -19,6 +19,7 @@ import {
 } from "@/systems/awards/award-eligibility";
 import { getAwardDefinition } from "@/systems/awards/award-definitions";
 import {
+  availabilityScore,
   defensiveStatImpact,
   efficiencyFromTotals,
   efficiencyIndex,
@@ -190,14 +191,13 @@ function scoreProductionPool(
   });
   const availability = pool.map((agg) => {
     if (!agg.teamId) return 0;
-    const tgp = teamGamesPlayed(teamRecords.get(agg.teamId));
-    return tgp === 0 ? 0 : agg.games / tgp;
+    return availabilityScore(agg.games, teamGamesPlayed(teamRecords.get(agg.teamId)));
   });
 
   const prodPct = percentileScores(production);
   const effPct = percentileScores(efficiency);
   const teamPct = percentileScores(teamSuccess);
-  const availPct = percentileScores(availability);
+  const availPct = availability;
 
   return pool.map((agg, i) => {
     const components: Record<string, number> = {
@@ -309,12 +309,11 @@ export function evaluateDefensivePlayerOfMonth(
   });
   const availability = pool.map((agg) => {
     if (!agg.teamId) return 0;
-    const tgp = teamGamesPlayed(teamRecords.get(agg.teamId));
-    return tgp === 0 ? 0 : agg.games / tgp;
+    return availabilityScore(agg.games, teamGamesPlayed(teamRecords.get(agg.teamId)));
   });
 
   const defPct = percentileScores(defImpact);
-  const availPct = percentileScores(availability);
+  const availPct = availability;
 
   const scored = pool.map((agg, i) => {
     const { score, breakdown } = weightedScore(
@@ -387,15 +386,14 @@ export function evaluateMvp(
   });
   const availability = pool.map((agg) => {
     if (!agg.teamId) return 0;
-    const tgp = teamGamesPlayed(teamRecords.get(agg.teamId));
-    return tgp === 0 ? 0 : agg.games / tgp;
+    return availabilityScore(agg.games, teamGamesPlayed(teamRecords.get(agg.teamId)));
   });
   const defImpact = pool.map((agg) => defensiveStatImpact(perGameRates(agg)));
 
   const impactPct = percentileScores(impact);
   const effPct = percentileScores(efficiency);
   const teamPct = percentileScores(teamSuccess);
-  const availPct = percentileScores(availability);
+  const availPct = availability;
   const defPct = percentileScores(defImpact);
   const twoWay = impactPct.map((off, i) => (off + defPct[i]!) / 2);
 
@@ -460,7 +458,7 @@ export function evaluateDpoy(
 
   const defImpact = pool.map((agg) => {
     const rates = perGameRates(agg);
-    return defensiveStatImpact(rates) + rates.steals + rates.blocks;
+    return defensiveStatImpact(rates);
   });
   const teamDef = pool.map((agg) => {
     if (!agg.teamId) return 0;
@@ -582,14 +580,13 @@ export function evaluateSixthMan(
   });
   const availability = pool.map((agg) => {
     if (!agg.teamId) return 0;
-    const tgp = teamGamesPlayed(teamRecords.get(agg.teamId));
-    return tgp === 0 ? 0 : agg.games / tgp;
+    return availabilityScore(agg.games, teamGamesPlayed(teamRecords.get(agg.teamId)));
   });
 
   const prodPct = percentileScores(production);
   const effPct = percentileScores(efficiency);
   const benchPct = percentileScores(benchImpact);
-  const availPct = percentileScores(availability);
+  const availPct = availability;
 
   const scored = pool.map((agg, i) => {
     const { score, breakdown } = weightedScore(

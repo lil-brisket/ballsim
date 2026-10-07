@@ -4,22 +4,23 @@ import {
   getIsoWeekId,
 } from "@/domain/calendar-date";
 import { FACILITY_CATEGORIES } from "@/domain/entities/franchise-ops";
-import type { TeamId } from "@/domain/ids";
+import { asTeamId, type TeamId } from "@/domain/ids";
 import type { GameState } from "@/state/game-state";
 import { forecastNextHomeGameDay } from "@/systems/demand/forecast-game-day";
 import { facilityWeeklyOpex } from "@/systems/facilities-config";
 import { MARKETING_WEEKS_PER_YEAR } from "@/systems/marketing-config";
 import { estimateMonthlyBroadcastShare } from "@/systems/league-economy";
 import { estimateMonthlySponsorshipPayout } from "@/systems/sponsorships";
+import { PLAYER_PAYROLL_WEEKS_PER_YEAR } from "@/systems/player-payroll";
+import { getTeamPayroll } from "@/systems/salary-cap";
+import { getTeamStaffPayroll } from "@/systems/staff-budget";
+import { STAFF_PAYROLL_WEEKS_PER_YEAR } from "@/systems/staff-config";
 
 /**
- * Business-ops weekly outflow only (facilities + marketing).
- * Player and staff payroll are commitment limits, not business-funds drains.
+ * Business-ops weekly outflow (payroll + facilities + marketing).
  */
 export type WeeklyOutflowBreakdown = {
-  /** Always 0 — player payroll does not drain business funds. */
   playerPayroll: number;
-  /** Always 0 — staff payroll does not drain business funds. */
   staff: number;
   facilities: number;
   marketing: number;
@@ -77,12 +78,21 @@ export function computeWeeklyOutflowBreakdown(
     ? Math.floor(ops.marketing.budget / MARKETING_WEEKS_PER_YEAR)
     : 0;
 
+  const year = state.competition.season.year;
+  const playerPayroll = Math.round(
+    getTeamPayroll(asTeamId(teamId), year, state) / PLAYER_PAYROLL_WEEKS_PER_YEAR,
+  );
+  const staff = Math.round(
+    getTeamStaffPayroll(asTeamId(teamId), year, state) /
+      STAFF_PAYROLL_WEEKS_PER_YEAR,
+  );
+
   return {
-    playerPayroll: 0,
-    staff: 0,
+    playerPayroll,
+    staff,
     facilities: facilityWeekly,
     marketing: marketingWeekly,
-    total: facilityWeekly + marketingWeekly,
+    total: playerPayroll + staff + facilityWeekly + marketingWeekly,
   };
 }
 
