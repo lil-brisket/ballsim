@@ -11,6 +11,7 @@ import { cn, focusRingClass } from "@/components/ui/styles";
 function badgeTone(type: string): string {
   switch (type) {
     case "PlayerTraded":
+    case "DraftPickTraded":
       return "warning";
     case "FreeAgentSigned":
     case "ContractSigned":

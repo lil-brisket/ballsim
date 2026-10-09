@@ -493,6 +493,25 @@ function describeDomainEvent(
         playerIds: playerId ? [playerId] : undefined,
         href: `/dashboard/${saveId}/media?tab=transactions`,
       };
+    case "DraftPickTraded": {
+      const round =
+        typeof payload.round === "number" ? payload.round : null;
+      const year =
+        typeof payload.seasonYear === "number" ? payload.seasonYear : null;
+      const pickLabel =
+        round != null && year != null ? `${year} R${round}` : "Draft pick";
+      return {
+        title: `${pickLabel} traded`,
+        description:
+          fromTeamId && toTeamId
+            ? `${teamDisplayName(state, fromTeamId)} → ${teamDisplayName(state, toTeamId)}`
+            : undefined,
+        teamIds: [fromTeamId, toTeamId].filter(
+          (id): id is TeamId => id !== undefined,
+        ),
+        href: `/dashboard/${saveId}/media?tab=transactions`,
+      };
+    }
     case "ContractSigned":
     case "FreeAgentSigned":
       return {

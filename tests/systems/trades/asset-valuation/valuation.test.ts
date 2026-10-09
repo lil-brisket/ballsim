@@ -1,17 +1,27 @@
 import { describe, expect, it } from "vitest";
-import { createTradeFixture, playerOnTeam, teamIds } from "../fixture";
 import {
+  createTradeFixture,
+  pickForTeam,
+  playerForPlayerProposal,
+  playerOnTeam,
+  teamIds,
+} from "../fixture";
+import {
+  addToTradeBlock,
   evaluateTrade,
   getBaseAssetValue,
+  getRetentionPriority,
   getTeamAssetValue,
   getTradeDesirability,
   makeTradeDecision,
   projectDraftPick,
   tradeDecisionSeed,
+  wasRecentlyAcquired,
 } from "@/systems/trades";
+import { createDomainEvent } from "@/domain/events";
+import { appendSeasonEventLog } from "@/state/game-state";
+import { TRADE_BLOCK_VALUE_BONUS } from "@/systems/trades-config";
 import { calculateTradeNeeds } from "@/systems/trades/trade-needs";
-import { getRetentionPriority } from "@/systems/trades/asset-valuation/retention-priority";
-import { pickForTeam, playerForPlayerProposal } from "../fixture";
 import { gmTradeAcceptanceThreshold } from "@/systems/staff-effects";
 import { validateTrade } from "@/systems/trades";
 import {
@@ -134,6 +144,50 @@ describe("asset valuation — deterministic", () => {
     expect(lotteryValue).toBeGreaterThan(lateValue);
     expect(lotteryProj.rangeHigh).toBeGreaterThan(lotteryProj.rangeLow);
   });
+
+  it("ranks same-win teams by win percentage and losses", () => {
+    let state = createTradeFixture();
+    const { teamA, teamB } = teamIds(state);
+    state = {
+      ...state,
+      competition: {
+        ...state.competition,
+        standings: {
+          ...state.competition.standings,
+          byTeamId: {
+            ...state.competition.standings.byTeamId,
+            [teamA]: {
+              ...(state.competition.standings.byTeamId[teamA] ?? {
+                teamId: teamA,
+                wins: 0,
+                losses: 0,
+              }),
+              wins: 10,
+              losses: 20,
+              winPercentage: 10 / 30,
+            },
+            [teamB]: {
+              ...(state.competition.standings.byTeamId[teamB] ?? {
+                teamId: teamB,
+                wins: 0,
+                losses: 0,
+              }),
+              wins: 10,
+              losses: 5,
+              winPercentage: 10 / 15,
+            },
+          },
+        },
+      },
+    };
+    const worsePick =
+      state.world.draftPicks[pickForTeam(state, teamA, 1, 1)]!;
+    const betterPick =
+      state.world.draftPicks[pickForTeam(state, teamB, 1, 1)]!;
+    expect(
+      projectDraftPick(state, worsePick).projectedOverallPick,
+    ).toBeLessThan(projectDraftPick(state, betterPick).projectedOverallPick);
+  });
 });
 
 describe("team valuation and desirability", () => {
@@ -151,6 +205,29 @@ describe("team valuation and desirability", () => {
     const priority = getRetentionPriority(state, teamA, starId);
     expect(priority).toBeGreaterThanOrEqual(0);
     expect(priority).toBeLessThanOrEqual(100);
+  });
+
+  it("recently-acquired hold applies from seasonEventLog", () => {
+    let state = createTradeFixture();
+    const { teamA, teamB } = teamIds(state);
+    const playerId = playerOnTeam(state, teamA, 1);
+    expect(wasRecentlyAcquired(state, playerId)).toBe(false);
+    const before = getRetentionPriority(state, teamA, playerId);
+    state = appendSeasonEventLog(state, [
+      createDomainEvent({
+        type: "PlayerTraded",
+        occurredOn: state.world.calendar.currentDate,
+        payload: {
+          playerId,
+          fromTeamId: teamB,
+          toTeamId: teamA,
+        },
+      }),
+    ]);
+    expect(wasRecentlyAcquired(state, playerId)).toBe(true);
+    expect(getRetentionPriority(state, teamA, playerId)).toBeGreaterThan(
+      before,
+    );
   });
 
   it("makeTradeDecision uses explicit seed not game RNG", () => {
@@ -178,6 +255,67 @@ describe("team valuation and desirability", () => {
       seed,
     );
     expect(d1).toEqual(d2);
+  });
+
+  it("strategicFit is independent of valueDifference", () => {
+    const state = createTradeFixture();
+    const { teamA, teamB } = teamIds(state);
+    const pickId = pickForTeam(state, teamA, 1, 1);
+    const proposal = {
+      sideA: {
+        teamId: teamA,
+        playerIds: [playerOnTeam(state, teamA, 0)],
+        draftPickIds: [pickId],
+      },
+      sideB: {
+        teamId: teamB,
+        playerIds: [playerOnTeam(state, teamB, 0)],
+        draftPickIds: [] as never[],
+      },
+    };
+    const evaluation = evaluateTrade(state, teamA, proposal);
+    expect(Math.abs(evaluation.valueDifference)).toBeGreaterThan(8);
+    const valueMapped = Math.max(
+      0,
+      Math.min(1, 0.5 + evaluation.valueDifference / 80),
+    );
+    expect(Math.abs(evaluation.strategicFit - valueMapped)).toBeGreaterThan(
+      0.05,
+    );
+  });
+
+  it("does not raise team value for assets already on the trade block", () => {
+    const state = createTradeFixture();
+    const { teamA } = teamIds(state);
+    const playerId = playerOnTeam(state, teamA, 0);
+    const before = getTeamAssetValue(state, teamA, {
+      kind: "player",
+      playerId,
+    }).value;
+    const listed = addToTradeBlock(state, teamA, {
+      kind: "player",
+      playerId,
+    }).state;
+    const after = getTeamAssetValue(listed, teamA, {
+      kind: "player",
+      playerId,
+    }).value;
+    expect(after).toBe(before);
+  });
+
+  it("applies the trade-block bonus once at evaluateTrade, not in team value", () => {
+    const state = createTradeFixture();
+    const { teamA } = teamIds(state);
+    const proposal = playerForPlayerProposal(state);
+    const incomingId = proposal.sideB.playerIds[0]!;
+    const evaluation = evaluateTrade(state, teamA, proposal);
+    const incomingValue = getTeamAssetValue(state, teamA, {
+      kind: "player",
+      playerId: incomingId,
+    }).value;
+    expect(evaluation.tradeBlockBonus).toBe(0);
+    expect(evaluation.receivedValue).toBe(incomingValue);
+    expect(TRADE_BLOCK_VALUE_BONUS).toBe(10);
   });
 });
 

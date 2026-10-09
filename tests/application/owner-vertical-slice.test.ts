@@ -21,6 +21,7 @@ import {
   declineOwnerDecision,
   executeOwnerTrade,
   finishFreeAgency,
+  listOwnerTradeCandidates,
   loadOwnerSave,
   loadOwnerSaveView,
   selectOwnerCity,
@@ -508,10 +509,22 @@ describe("Owner Mode vertical slice", () => {
       expect(view).not.toBeNull();
       expect(view!.roster.length).toBeGreaterThan(0);
 
-      const outgoing = view!.roster[0]!;
+      let outgoingPlayerId: string | undefined;
+      for (const player of view!.roster) {
+        const listed = await listOwnerTradeCandidates(
+          saveId,
+          player.playerId,
+          store,
+        );
+        if (listed.ok && listed.candidates.length > 0) {
+          outgoingPlayerId = player.playerId;
+          break;
+        }
+      }
+      expect(outgoingPlayerId).toBeDefined();
       const traded = await executeOwnerTrade(
         saveId,
-        { outgoingPlayerId: outgoing.playerId },
+        { outgoingPlayerId: outgoingPlayerId! },
         store,
       );
       expect(traded.ok).toBe(true);

@@ -3,6 +3,7 @@ import type { Player } from "@/domain/entities/player";
 import type { Team } from "@/domain/entities/team";
 import type { PlayerId } from "@/domain/ids";
 import type { GameState } from "@/state/game-state";
+import { checkRetiredPlayerBlocked } from "@/systems/league-rules/retirement-rules";
 import type { TradeValidationIssue } from "@/systems/trades/trade-types";
 
 export type TradeEligibilityContext = {
@@ -21,6 +22,20 @@ export type TradeEligibilityRule = (
  * offering team. Additional rules can be appended without changing TradeProposal.
  */
 export const defaultTradeEligibilityRules: TradeEligibilityRule[] = [
+  (context) => {
+    const retired = checkRetiredPlayerBlocked(
+      context.state,
+      context.player.id as PlayerId,
+      "trade",
+    );
+    if (retired.length > 0) {
+      return {
+        code: retired[0]!.code,
+        message: retired[0]!.message,
+      };
+    }
+    return null;
+  },
   (context) => {
     if (context.player.contractId === null) {
       return {

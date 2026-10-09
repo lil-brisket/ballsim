@@ -101,6 +101,18 @@ export function generateHeadline(
         summary: `${name} moves from ${from} to ${to}.`,
       };
     }
+    case "DraftPickTraded": {
+      const from = teamName(state, str(p, "fromTeamId"));
+      const to = teamName(state, str(p, "toTeamId"));
+      const round = num(p, "round");
+      const year = num(p, "seasonYear");
+      const pickLabel =
+        round != null && year != null ? `${year} R${round}` : "A draft pick";
+      return {
+        headline: `${pickLabel} traded to ${to}`,
+        summary: `${from} send ${pickLabel} to ${to}.`,
+      };
+    }
     case "PlayerReleased": {
       const name = playerName(state, str(p, "playerId"));
       const team = teamName(state, str(p, "teamId"));

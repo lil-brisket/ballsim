@@ -500,6 +500,60 @@ describe("trade execution", () => {
     expect(result.events.filter((e) => e.type === "PlayerTraded")).toHaveLength(
       2,
     );
+    expect(
+      result.events.filter((e) => e.type === "DraftPickTraded"),
+    ).toHaveLength(1);
+    const pickEvent = result.events.find((e) => e.type === "DraftPickTraded")!;
+    expect(pickEvent.payload.draftPickId).toBe(pickA);
+    expect(pickEvent.payload.fromTeamId).toBe(teamA);
+    expect(pickEvent.payload.toTeamId).toBe(teamB);
+    expect(pickEvent.payload.round).toBe(1);
+  });
+
+  it("emits DraftPickTraded for pick-only trades", () => {
+    resetDomainEventSequenceForTests();
+    const state = createTradeFixture();
+    const { teamA, teamB } = teamIds(state);
+    const pickA = pickForTeam(state, teamA, 1, 1);
+    const pickB = pickForTeam(state, teamB, 1, 2);
+    const result = executeTrade(state, {
+      sideA: {
+        teamId: teamA,
+        playerIds: [],
+        draftPickIds: [pickA],
+      },
+      sideB: {
+        teamId: teamB,
+        playerIds: [],
+        draftPickIds: [pickB],
+      },
+    });
+    expect(result.success).toBe(true);
+    expect(result.events.filter((e) => e.type === "PlayerTraded")).toHaveLength(
+      0,
+    );
+    expect(
+      result.events.filter((e) => e.type === "DraftPickTraded"),
+    ).toHaveLength(2);
+  });
+
+  it("rejects retired players", () => {
+    const state = createTradeFixture();
+    const { teamA } = teamIds(state);
+    const playerA = playerOnTeam(state, teamA, 0);
+    const retired = {
+      ...state,
+      world: {
+        ...state.world,
+        players: {
+          ...state.world.players,
+          [playerA]: { ...state.world.players[playerA]!, retired: true },
+        },
+      },
+    };
+    const result = validateTrade(retired, playerForPlayerProposal(retired));
+    expect(result.valid).toBe(false);
+    expect(result.errors.some((e) => e.code === "PLAYER_RETIRED")).toBe(true);
   });
 
   it("refreshes payroll from post-trade contracts", () => {

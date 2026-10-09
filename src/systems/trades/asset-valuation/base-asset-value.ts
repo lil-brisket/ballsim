@@ -10,9 +10,11 @@ import type { GameState } from "@/state/game-state";
 import {
   AGE_VALUE_MODIFIERS,
   CONTRACT_VALUE_MODIFIERS,
+  DL_TRADE_VALUE_PENALTY,
   DRAFT_PICK_VALUE_ROUND_1,
   INJURY_PENALTIES,
   PLAYER_TRADE_VALUE_WEIGHTS,
+  PROSPECT_TRADE_VALUE,
   RECENT_PERFORMANCE_WEIGHT,
   STAR_TRADE_VALUE_PREMIUM,
 } from "@/systems/trades-config";
@@ -64,8 +66,8 @@ function basePlayerValue(
   const ageCurve = ageCurveValue(player, overall, reasons);
   const performance = performanceValue(state, player, overall, reasons);
   const trajectory = trajectoryValue(player, potentialGap, reasons);
-  const contract = contractValue(state, player, overall, reasons);
-  const injury = injuryValue(player, overall, reasons);
+  const contractAdj = contractAdjustment(state, player, overall, reasons);
+  const injuryPenalty = injuryPenaltyValue(player, reasons);
 
   let value =
     ability * w.ability +
@@ -73,8 +75,10 @@ function basePlayerValue(
     ageCurve * w.ageCurve +
     performance * w.performance +
     trajectory * w.trajectory +
-    contract * w.contract +
-    injury * w.injury;
+    overall * w.contract +
+    overall * w.injury;
+
+  value += prospectPremium(player, potentialGap, reasons);
 
   if (overall >= 90) {
     value *= STAR_TRADE_VALUE_PREMIUM.overall90;
@@ -86,7 +90,11 @@ function basePlayerValue(
     value *= STAR_TRADE_VALUE_PREMIUM.overall80;
   }
 
+  value += contractAdj;
+  value -= injuryPenalty;
+
   if (player.developmentLeague.status === "assigned") {
+    value -= DL_TRADE_VALUE_PENALTY;
     reasons.push("Development-league assignment");
   }
 
@@ -233,51 +241,71 @@ function trajectoryValue(
   return overall;
 }
 
-function contractValue(
+function prospectPremium(
+  player: Player,
+  potentialGap: number,
+  reasons: string[],
+): number {
+  const cfg = PROSPECT_TRADE_VALUE;
+  if (player.age > cfg.maxAge || potentialGap <= 0) {
+    return 0;
+  }
+  let bonus = Math.min(cfg.maxBonus, potentialGap * cfg.gapScale);
+  if (player.age <= cfg.extraYoungMaxAge) {
+    bonus += cfg.extraYoungBonus;
+  }
+  bonus = Math.min(cfg.maxBonus, bonus);
+  if (bonus > 0) {
+    reasons.push("Youth and remaining potential");
+  }
+  return bonus;
+}
+
+function contractAdjustment(
   state: GameState,
   player: Player,
   overall: number,
   reasons: string[],
 ): number {
   if (!player.contractId) {
-    return overall;
+    return 0;
   }
   const contract = state.business.contracts[player.contractId];
   if (!contract) {
-    return overall;
+    return 0;
   }
   const year = state.competition.season.year;
   if (getContractStatus(contract, year) !== "active") {
-    return overall;
+    return 0;
   }
   const salary = getContractSalaryForYear(contract, year) ?? 0;
   const fair = overall * CONTRACT_VALUE_MODIFIERS.fairSalaryPerOvr;
   const surplusMillions = (salary - fair) / 1_000_000;
+  const yearsLeft = Math.max(0, contract.endYear - year + 1);
   let adj = 0;
   if (surplusMillions > 1) {
     adj -= surplusMillions * CONTRACT_VALUE_MODIFIERS.overpaidPenaltyPerMillion;
-    reasons.push("Long-term contract reduces value");
+    reasons.push(
+      yearsLeft >= CONTRACT_VALUE_MODIFIERS.longDealYearsThreshold
+        ? "Long-term contract reduces value"
+        : "Overpaid contract reduces value",
+    );
   } else if (surplusMillions < -1) {
     adj +=
       Math.abs(surplusMillions) *
       CONTRACT_VALUE_MODIFIERS.underpaidBonusPerMillion;
     reasons.push("Favorable contract value");
   }
-  const yearsLeft = Math.max(0, contract.endYear - year + 1);
   if (
     yearsLeft >= CONTRACT_VALUE_MODIFIERS.longDealYearsThreshold &&
     surplusMillions > 2
   ) {
     adj -= CONTRACT_VALUE_MODIFIERS.longDealOverpaidExtra;
   }
-  return overall + adj;
+  return adj;
 }
 
-function injuryValue(
-  player: Player,
-  overall: number,
-  reasons: string[],
-): number {
+function injuryPenaltyValue(player: Player, reasons: string[]): number {
   let penalty = 0;
   for (const injury of player.activeInjuries) {
     const restriction = injury.gameRestriction;
@@ -292,7 +320,7 @@ function injuryValue(
   if (penalty > 0) {
     reasons.push("Injury status reduces trade value");
   }
-  return overall - penalty;
+  return penalty;
 }
 
 /** Convenience for callers that already have a DraftPick entity. */

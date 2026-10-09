@@ -8,9 +8,11 @@ import {
 } from "@/systems/owner-decisions/owner-decision-config";
 import { isInterruptWorthyTradeOffer } from "@/systems/owner-decisions/trade-offer-quality";
 import {
+  countTradeOffersSince,
   enqueueTradeOfferForOwner,
   type EnqueueTradeOfferResult,
 } from "@/systems/owner-decisions/enqueue-trade-offer";
+import { TRADE_OFFER_DAILY_CAP } from "@/systems/trades-config";
 import { evaluateTradeOffer } from "@/systems/trades/trade-evaluation";
 import { getTradeBlock } from "@/systems/trades/trade-block";
 import { validateTrade } from "@/systems/trades/trade-validation";
@@ -21,7 +23,6 @@ import {
   type TradeMotivation,
 } from "@/systems/trades/cpu-trade-generator";
 import { shouldNotShopPlayer } from "@/systems/trades/asset-valuation/retention-priority";
-import { TRADE_OFFER_DAILY_CAP } from "@/systems/trades-config";
 
 /**
  * Budgeted search for a meaningful CPU → owned-franchise trade offer.
@@ -46,9 +47,17 @@ export function tryEnqueueCpuToUserTradeOffer(
     counterpartyFilter: (id) => owned.has(id),
   });
 
-  const enqueued = 0;
+  let enqueued = countTradeOffersSince(
+    state,
+    state.world.calendar.currentDate,
+  );
+  if (enqueued >= TRADE_OFFER_DAILY_CAP) {
+    return { outcome: "skipped", state, reason: "daily_cap" };
+  }
   for (const candidate of ranked) {
-    if (enqueued >= TRADE_OFFER_DAILY_CAP) break;
+    if (enqueued >= TRADE_OFFER_DAILY_CAP) {
+      return { outcome: "skipped", state, reason: "daily_cap" };
+    }
     if (!validateTrade(state, candidate.proposal).valid) continue;
     const cpuEval = evaluateTradeOffer(state, cpuTeamId, candidate.proposal);
     if (!cpuEval.accepted) continue;
@@ -72,6 +81,7 @@ export function tryEnqueueCpuToUserTradeOffer(
       },
     );
     if (result.outcome === "queued") {
+      enqueued += 1;
       return result;
     }
   }

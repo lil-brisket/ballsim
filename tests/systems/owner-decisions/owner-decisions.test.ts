@@ -34,6 +34,7 @@ import {
   isInterruptWorthyTradeOffer,
   resolvePendingOwnerDecision,
   tradeOfferFingerprint,
+  tryEnqueueCpuToUserTradeOffer,
 } from "@/systems/owner-decisions";
 import { advanceSimulation } from "@/systems/simulation/advance-simulation";
 import { evaluateTradeOffer } from "@/systems/trades";
@@ -180,6 +181,24 @@ describe("owner trade offer enqueue", () => {
     expect(second.outcome).toBe("skipped");
     expect(second.reason).toBe("duplicate_pending_fingerprint");
     expect(second.state.user.pendingOwnerDecisions).toHaveLength(1);
+  });
+
+  it("tryEnqueueCpuToUserTradeOffer skips when the daily cap is already filled", () => {
+    let state = createTestGameState({ saveId: "od_daily_cap" });
+    state = bootstrapWorld(state, createSeededRng(state.meta.rngState)).state;
+    const built = meaningfulPlayerSwapProposal(state);
+    const queued = enqueueTradeOfferForOwner(
+      built.state,
+      built.offeringTeamId,
+      built.proposal,
+    );
+    expect(queued.outcome).toBe("queued");
+    const again = tryEnqueueCpuToUserTradeOffer(
+      queued.state,
+      built.offeringTeamId,
+    );
+    expect(again.outcome).toBe("skipped");
+    expect(again.reason).toBe("daily_cap");
   });
 
   it("skips re-offer after decline fingerprint cooldown", () => {

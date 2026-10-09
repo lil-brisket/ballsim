@@ -15,6 +15,7 @@ export {
   getRetentionPriority,
   isCoreRetentionPlayer,
   shouldNotShopPlayer,
+  wasRecentlyAcquired,
 } from "@/systems/trades/asset-valuation/retention-priority";
 export {
   evaluateTrade,

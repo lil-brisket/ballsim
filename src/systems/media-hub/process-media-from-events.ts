@@ -50,6 +50,7 @@ function storyTypeForEvent(event: DomainEvent): MediaStoryType {
       return "injury";
     case "ContractSigned":
     case "PlayerTraded":
+    case "DraftPickTraded":
     case "PlayerReleased":
     case "FreeAgentSigned":
     case "FreeAgencyOfferInvalidated":
@@ -143,9 +144,10 @@ export function processMediaFromEvents(
     const { headline, summary } = generateHeadline(event, state);
     const mediaId = asMediaItemId(`media_${sourceKey}`);
     const storyGroupId =
-      event.type === "PlayerTraded" && related.tradeId
+      (event.type === "PlayerTraded" || event.type === "DraftPickTraded") &&
+      related.tradeId
         ? `trade_${related.tradeId}`
-        : event.type === "PlayerTraded"
+        : event.type === "PlayerTraded" || event.type === "DraftPickTraded"
           ? `trade_${[...related.teamIds].sort().join("_")}_${event.occurredOn}`
           : undefined;
 

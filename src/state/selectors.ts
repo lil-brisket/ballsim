@@ -79,6 +79,7 @@ export type DashboardSnapshot = {
   seasonPhase: string;
   offseasonStage: string;
   calendarDisplayLabel: string;
+  tradesOpen: boolean;
   leagueName: string;
   mode: GameMode;
   teamSelectionLocked: boolean;
@@ -844,6 +845,8 @@ function describeDomainEvent(event: DomainEvent): string {
       return `Free agent signed${payload.playerId ? `: ${String(payload.playerId)}` : ""}`;
     case "PlayerTraded":
       return `Player traded${payload.playerId ? `: ${String(payload.playerId)}` : ""}`;
+    case "DraftPickTraded":
+      return `Draft pick traded${payload.draftPickId ? `: ${String(payload.draftPickId)}` : ""}`;
     case "PlayerReleased":
       return `Player released${payload.playerId ? `: ${String(payload.playerId)}` : ""}`;
     case "DraftPickMade":
@@ -1146,6 +1149,7 @@ export function toDashboardSnapshot(state: GameState): DashboardSnapshot {
     seasonPhase: state.competition.season.phase,
     offseasonStage: state.competition.season.offseasonStage,
     calendarDisplayLabel: getCalendarContext(state).displayLabel,
+    tradesOpen: getCalendarContext(state).tradesOpen,
     leagueName: state.world.league.name,
     mode: state.user.mode,
     teamSelectionLocked: state.world.calendar.lastSimulatedDate !== null,

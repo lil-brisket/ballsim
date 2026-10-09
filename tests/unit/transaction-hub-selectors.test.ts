@@ -64,6 +64,7 @@ function signingEvent(input: {
 describe("transaction-hub-selectors", () => {
   it("filter groups map to domain event types", () => {
     expect(TRANSACTION_FILTER_GROUPS.trades).toContain("PlayerTraded");
+    expect(TRANSACTION_FILTER_GROUPS.trades).toContain("DraftPickTraded");
     expect(TRANSACTION_FILTER_GROUPS.signings).toContain("FreeAgentSigned");
     expect(TRANSACTION_FILTER_GROUPS.releases).toContain("PlayerReleased");
     expect(TRANSACTION_FILTER_GROUPS.draft).toContain("DraftPickMade");

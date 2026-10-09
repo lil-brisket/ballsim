@@ -105,6 +105,10 @@ export const DOMAIN_EVENT_REGISTRY: Record<
     notifyCat: "important",
     social: { minPosts: 1, maxPosts: 2 },
   }),
+  DraftPickTraded: occurred("transaction", "medium", {
+    notify: true,
+    social: { minPosts: 0, maxPosts: 1 },
+  }),
   PlayerReleased: occurred("transaction", "medium", { notify: true }),
   DraftPickMade: occurred("league", "high", {
     notify: true,

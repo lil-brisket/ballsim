@@ -43,6 +43,7 @@ const AWARD_EVENT_TYPES: readonly DomainEventType[] = [
 function categoryLabelForTransaction(type: DomainEventType): string {
   switch (type) {
     case "PlayerTraded":
+    case "DraftPickTraded":
       return "Trade";
     case "FreeAgentSigned":
     case "ContractSigned":

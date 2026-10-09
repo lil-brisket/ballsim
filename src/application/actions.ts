@@ -103,6 +103,10 @@ import {
   undoOwnerFantasyDraftPick,
   updateOwnerFantasyDraftSettings,
 } from "@/application/game-service";
+import {
+  parseTradeProposal,
+  type TradeProposal,
+} from "@/domain/entities/trade-proposal";
 import type { FantasyDraftAutoPickStrategy } from "@/domain/entities/fantasy-draft";
 import { isFantasyDraftAutoPickStrategy } from "@/domain/entities/fantasy-draft";
 import type { FantasyDraftPlayerDetailView } from "@/state/selectors";
@@ -670,7 +674,19 @@ export async function executeTradeAction(formData: FormData): Promise<void> {
   const saveId = String(formData.get("saveId") ?? "");
   const outgoingPlayerId = String(formData.get("outgoingPlayerId") ?? "");
   const path = returnPath(formData, saveId);
-  const result = await executeOwnerTrade(saveId, { outgoingPlayerId });
+  const proposalJson = String(formData.get("proposalJson") ?? "").trim();
+  let proposal: TradeProposal | undefined;
+  if (proposalJson.length > 0) {
+    const parsed = parseTradeProposal(proposalJson);
+    if (parsed === null) {
+      redirectWithError(path, "Invalid trade proposal.");
+    }
+    proposal = parsed;
+  }
+  const result = await executeOwnerTrade(saveId, {
+    outgoingPlayerId,
+    proposal,
+  });
   if (!result.ok) {
     redirectWithError(path, result.error);
   }

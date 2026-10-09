@@ -5,8 +5,9 @@ import {
 } from "@/systems/trades-config";
 
 /**
- * Isolated draft-pick valuation for trade evaluation.
- * v1 uses round only; year-based differentiation can be added later.
+ * Round-only fallback (80 / 50). Live trades, Finder, and ownership
+ * alignment use `getBaseAssetValue` (slot curve + year discount).
+ * Kept as the R1/R2 floor constants' characterization helper.
  */
 export function calculateDraftPickValue(pick: DraftPick): number {
   return pick.round === 1 ? DRAFT_PICK_VALUE_ROUND_1 : DRAFT_PICK_VALUE_ROUND_2;

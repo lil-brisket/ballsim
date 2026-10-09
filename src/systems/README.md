@@ -71,7 +71,7 @@ Weekly pipeline also runs `processWeeklyPlayerPayroll`: cash-only salary outflow
 
 `roster-rules` is a validation building block (`createRosterRulesConfig` / `validateRoster`). A fully assigned roster is a partition: `players.length === startingLineupSize + benchSize + inactiveSize`. Min/max roster size is independent of that composition sum. Validators throw `Error` and do not mutate input, accept a `Team`, or look up GameState.
 
-Trade systems: every user/AI/Finder proposal becomes a `TradeProposal`, passes `validateTrade`, and only `executeTrade` mutates ownership. Trade Block and Trade Finder never write roster/pick ownership. Pure `generateDraftPicksForSeason` is used by migrations and bootstrap merge.
+Trade systems: every user/AI/Finder proposal becomes a `TradeProposal`, passes `validateTrade`, and only `executeTrade` mutates ownership. Trade Block and Trade Finder never write roster/pick ownership. Live pricing is `getBaseAssetValue` (`PICK_VALUE_CURVE` + star premiums); `calculateDraftPickValue` is the leftover 80/50 helper. Finder acquire can send owned picks for an off-block target. Pure `generateDraftPicksForSeason` is used by migrations and bootstrap merge.
 
 Draft systems: `createDraft` builds prospects + order + scouting in memory and inserts a complete `DraftClass` only on success. Prospects are not in `world.players` until `makeDraftSelection`, which inserts the reserved `playerId` snapshot (no second `generatePlayerWithRng` call, no RNG). Undrafted eligible prospects never enter the free-agent pool.
 

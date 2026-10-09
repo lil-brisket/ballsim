@@ -99,11 +99,20 @@ export function shouldNotShopPlayer(
   );
 }
 
-function wasRecentlyAcquired(state: GameState, playerId: PlayerId): boolean {
+export function wasRecentlyAcquired(
+  state: GameState,
+  playerId: PlayerId,
+): boolean {
   const today = state.world.calendar.currentDate;
   const cutoff = addCalendarDays(today, -RECENTLY_ACQUIRED_DAYS);
-  for (const franchise of Object.values(state.user.ownedFranchises)) {
-    for (const event of franchise.eventLog) {
+  const logs = [
+    state.competition.seasonEventLog,
+    ...Object.values(state.user.ownedFranchises).map(
+      (franchise) => franchise.eventLog,
+    ),
+  ];
+  for (const log of logs) {
+    for (const event of log) {
       if (event.type !== "PlayerTraded") continue;
       if (event.occurredOn < cutoff) continue;
       const payload = event.payload as { playerId?: string };

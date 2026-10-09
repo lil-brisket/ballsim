@@ -17,6 +17,18 @@ export const TRADE_SALARY_MATCHING_PERCENT = 0.25;
 /** Trade Finder returns at most this many valid candidates. */
 export const TRADE_FINDER_MAX_CANDIDATES = 50;
 
+/** CPU acquire packages: max outgoing assets assembled for one target. */
+export const CPU_TRADE_PACKAGE_MAX_ASSETS = 6;
+
+/** Minimum overall to consider acquiring as a "star/starter" package target. */
+export const CPU_TRADE_ACQUIRE_MIN_OVERALL = 78;
+
+/** Incoming package must reach this fraction of the target's team-side value. */
+export const CPU_TRADE_PACKAGE_VALUE_RATIO = 0.9;
+
+/** Cap acquire targets scored per CPU search. */
+export const CPU_TRADE_ACQUIRE_TARGET_CAP = 12;
+
 /** Round-1 pick baseline trade value (legacy + floor for slot curve). */
 export const DRAFT_PICK_VALUE_ROUND_1 = 80;
 
@@ -48,11 +60,24 @@ export const AGE_VALUE_MODIFIERS = {
 
 /** Contract surplus / length adjustments (points on value scale). */
 export const CONTRACT_VALUE_MODIFIERS = {
-  overpaidPenaltyPerMillion: 1.2,
+  overpaidPenaltyPerMillion: 2,
   underpaidBonusPerMillion: 0.8,
   longDealYearsThreshold: 3,
   longDealOverpaidExtra: 4,
   fairSalaryPerOvr: 180_000,
+} as const;
+
+/**
+ * Post-composite youth/upside bonus. Age and potential are also in the
+ * weighted mix, but those weights cannot create a prospect market because
+ * every component is overall-plus-a-nudge. This bonus is the actual gap.
+ */
+export const PROSPECT_TRADE_VALUE = {
+  maxAge: 23,
+  extraYoungMaxAge: 21,
+  gapScale: 1.2,
+  maxBonus: 28,
+  extraYoungBonus: 8,
 } as const;
 
 /** Injury penalties by severity band. */
@@ -61,6 +86,9 @@ export const INJURY_PENALTIES = {
   limited: 5,
   monitor: 2,
 } as const;
+
+/** Base-value hit while assigned to the development league. */
+export const DL_TRADE_VALUE_PENALTY = 8;
 
 /** Non-linear overall-pick value curve anchors (overallPick → value). */
 export const PICK_VALUE_CURVE = [
@@ -158,7 +186,8 @@ export const TRADE_ACCEPTANCE_THRESHOLDS = {
   financialWeight: 0.1,
   varianceBand: 6,
   counterMinNet: -8,
-  counterMaxNet: 12,
+  /** Counter band ends at the accept threshold (score <= threshold + this). */
+  counterMaxNet: 0,
 } as const;
 
 /** Minimum offer quality to interrupt simulation. */

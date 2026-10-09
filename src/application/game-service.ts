@@ -43,7 +43,10 @@ import {
   declineTeamOption,
   exerciseTeamOption,
 } from "@/domain/entities/contract";
-import type { TradeProposal } from "@/domain/entities/trade-proposal";
+import {
+  proposalSendsPlayer,
+  type TradeProposal,
+} from "@/domain/entities/trade-proposal";
 import type { DomainEvent } from "@/domain/events";
 import {
   asContractId,
@@ -356,6 +359,7 @@ import {
   executeTrade,
   findTrades,
   getTradeBlock,
+  rebalanceCpuCounterProposal,
   removeFromTradeBlock,
   validateTrade,
   type TradeFinderCandidate,
@@ -2218,58 +2222,19 @@ export async function executeOwnerTrade(
   }
 
   const rng = createSeededRng(loaded.state.meta.rngState);
+  // Finder discovery only — never persist these surplus listings.
   const working = ensureAiTradeBlocks(loaded.state);
 
   let proposal = input.proposal;
-  if (proposal === undefined) {
-    const candidates = findTrades(working, {
-      direction: "move",
-      teamId,
-      asset: { kind: "player", playerId },
-    });
-    const accepted = candidates.find((candidate) => {
-      const evalB = evaluateTradeOffer(
-        working,
-        candidate.counterpartyTeamId,
-        candidate.proposal,
-      );
-      const evalA = evaluateTradeOffer(working, teamId, candidate.proposal);
-      return evalB.accepted && evalA.accepted;
-    });
-    if (accepted === undefined) {
-      // Fall back: try other roster players for an acceptable 1-for-1.
-      for (const otherId of team.roster) {
-        if (otherId === playerId) {
-          continue;
-        }
-        const otherCandidates = findTrades(working, {
-          direction: "move",
-          teamId,
-          asset: { kind: "player", playerId: otherId },
-        });
-        const hit = otherCandidates.find((candidate) => {
-          const evalB = evaluateTradeOffer(
-            working,
-            candidate.counterpartyTeamId,
-            candidate.proposal,
-          );
-          return evalB.accepted;
-        });
-        if (hit !== undefined) {
-          proposal = hit.proposal;
-          break;
-        }
-      }
-    } else {
-      proposal = accepted.proposal;
+  if (proposal !== undefined) {
+    if (!proposalSendsPlayer(proposal, teamId, playerId)) {
+      return fail("Trade proposal does not send the selected player.");
     }
+  } else {
+    proposal = findAcceptedProposalForPlayer(working, teamId, playerId);
     if (proposal === undefined) {
       return fail("No acceptable trade candidate found for that player.");
     }
-  }
-
-  if (proposal.sideA.teamId !== teamId && proposal.sideB.teamId !== teamId) {
-    return fail("Trade proposal does not involve your team.");
   }
 
   const counterpartId =
@@ -2281,7 +2246,7 @@ export async function executeOwnerTrade(
     return fail("Counterpart rejected the trade proposal.");
   }
 
-  const executed = executeTrade(working, proposal);
+  const executed = executeTrade(loaded.state, proposal);
   if (!executed.success) {
     return fail(
       executed.validation.errors[0]?.message ?? "Trade validation failed.",
@@ -2290,7 +2255,7 @@ export async function executeOwnerTrade(
 
   const withEvidence = recordOwnershipEvidence(
     executed.state,
-    scoreTradeDecision(working, proposal),
+    scoreTradeDecision(loaded.state, proposal),
   );
 
   try {
@@ -2509,8 +2474,6 @@ export async function submitTradeCounteroffer(
     });
     working = resolved.state;
   } else if (cpuEval.decisionAction === "counter") {
-    // Simple CPU counter: keep original assets from CPU side, accept user's
-    // outgoing set when still valid — otherwise reject.
     const original =
       pending.payload.originalProposal ?? pending.payload.proposal;
     const cpuSide =
@@ -2521,19 +2484,14 @@ export async function submitTradeCounteroffer(
       counterProposal.sideA.teamId === pending.payload.userTeamId
         ? counterProposal.sideA
         : counterProposal.sideB;
-    const cpuCounter: TradeProposal = {
-      sideA: {
-        teamId: pending.payload.offeringTeamId,
-        playerIds: [...cpuSide.playerIds],
-        draftPickIds: [...cpuSide.draftPickIds],
-      },
-      sideB: {
-        teamId: pending.payload.userTeamId,
-        playerIds: [...userSide.playerIds],
-        draftPickIds: [...userSide.draftPickIds],
-      },
-    };
-    if (!validateTrade(working, cpuCounter).valid) {
+    const cpuCounter = rebalanceCpuCounterProposal(
+      working,
+      pending.payload.offeringTeamId,
+      pending.payload.userTeamId,
+      cpuSide,
+      userSide,
+    );
+    if (!cpuCounter || !validateTrade(working, cpuCounter).valid) {
       const resolved = resolvePendingOwnerDecision(
         applyTradeCounterofferState(
           working,
@@ -3794,6 +3752,28 @@ async function applyOwnerContractOption(
   } catch (error) {
     return fail(error instanceof Error ? error.message : String(error));
   }
+}
+
+function findAcceptedProposalForPlayer(
+  working: GameState,
+  teamId: TeamId,
+  playerId: PlayerId,
+): TradeProposal | undefined {
+  const candidates = findTrades(working, {
+    direction: "move",
+    teamId,
+    asset: { kind: "player", playerId },
+  });
+  const accepted = candidates.find((candidate) => {
+    const evalB = evaluateTradeOffer(
+      working,
+      candidate.counterpartyTeamId,
+      candidate.proposal,
+    );
+    const evalA = evaluateTradeOffer(working, teamId, candidate.proposal);
+    return evalB.accepted && evalA.accepted;
+  });
+  return accepted?.proposal;
 }
 
 /**

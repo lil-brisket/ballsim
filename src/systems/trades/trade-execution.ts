@@ -251,6 +251,38 @@ export function executeTrade(
       }),
     );
   }
+  for (const pickId of proposal.sideA.draftPickIds) {
+    const pick = draftPicks[pickId]!;
+    events.push(
+      createDomainEvent({
+        type: "DraftPickTraded",
+        occurredOn,
+        payload: {
+          draftPickId: pickId,
+          fromTeamId: teamIdA,
+          toTeamId: teamIdB,
+          round: pick.round,
+          seasonYear: pick.seasonYear,
+        },
+      }),
+    );
+  }
+  for (const pickId of proposal.sideB.draftPickIds) {
+    const pick = draftPicks[pickId]!;
+    events.push(
+      createDomainEvent({
+        type: "DraftPickTraded",
+        occurredOn,
+        payload: {
+          draftPickId: pickId,
+          fromTeamId: teamIdB,
+          toTeamId: teamIdA,
+          round: pick.round,
+          seasonYear: pick.seasonYear,
+        },
+      }),
+    );
+  }
 
   next = appendSeasonEventLog(next, events);
 

@@ -15,7 +15,7 @@ import { calculatePlayerOverall } from "@/domain/player-overall-rating";
 import type { PlayerId, TeamId } from "@/domain/ids";
 import type { GameState } from "@/state/game-state";
 import { buildOwnershipExpectations } from "@/systems/ownership-expectations";
-import { calculateDraftPickValue } from "@/systems/trades/draft-pick-value";
+import { getBaseAssetValue } from "@/systems/trades/asset-valuation/base-asset-value";
 import { getTeamPayroll } from "@/systems/salary-cap";
 
 export type DecisionSignalInput = {
@@ -142,16 +142,16 @@ export function scoreTradeDecision(
 
   let pickNet = 0;
   for (const pickId of incomingPicks) {
-    const pick = state.world.draftPicks[pickId];
-    if (pick) {
-      pickNet += calculateDraftPickValue(pick);
-    }
+    pickNet += getBaseAssetValue(state, {
+      kind: "draftPick",
+      draftPickId: pickId,
+    }).value;
   }
   for (const pickId of outgoingPicks) {
-    const pick = state.world.draftPicks[pickId];
-    if (pick) {
-      pickNet -= calculateDraftPickValue(pick);
-    }
+    pickNet -= getBaseAssetValue(state, {
+      kind: "draftPick",
+      draftPickId: pickId,
+    }).value;
   }
 
   const competitive = exp.competitiveExpectation;

@@ -1,5 +1,4 @@
 import type { TeamId } from "@/domain/ids";
-import type { StrategicPosture } from "@/systems/franchise-strategic-posture";
 import { TRADE_ACCEPTANCE_THRESHOLDS } from "@/systems/trades-config";
 import type { TradeEvaluation } from "@/systems/trades/asset-valuation/complete-trade-evaluation";
 
@@ -7,7 +6,6 @@ export type TradeDecisionContext = {
   teamId: TeamId;
   gmThreshold: number;
   tradeIsValid: boolean;
-  strategicPosture?: StrategicPosture;
 };
 
 export type TradeDecisionAction = "accept" | "reject" | "counter";

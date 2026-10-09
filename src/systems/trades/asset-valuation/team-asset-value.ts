@@ -9,11 +9,9 @@ import { getRetentionPriority } from "@/systems/trades/asset-valuation/retention
 import {
   STRATEGIC_POSTURE_ADJUSTMENTS,
   TEAM_FIT_ADJUSTMENT_BANDS,
-  TRADE_BLOCK_VALUE_BONUS,
   AGE_VALUE_MODIFIERS,
   RETENTION_PRIORITY_WEIGHTS,
 } from "@/systems/trades-config";
-import { getTradeBlock } from "@/systems/trades/trade-block";
 import { getBaseAssetValue } from "@/systems/trades/asset-valuation/base-asset-value";
 import {
   calculateTradeNeeds,
@@ -89,29 +87,12 @@ export function getTeamAssetValue(
           reasons.push("Salary pressure for over-cap team");
         }
       }
-
-      const block = getTradeBlock(state, teamId);
-      if (
-        block.assets.some(
-          (a) => a.kind === "player" && a.playerId === asset.playerId,
-        )
-      ) {
-        rosterFit += TRADE_BLOCK_VALUE_BONUS * 0.4;
-      }
     }
   } else {
     const pickAdj = postureAdjustments(posture, null, "pick");
     strategicFit += pickAdj;
     if (pickAdj >= 5) {
       reasons.push("Fits future-asset strategy");
-    }
-    const block = getTradeBlock(state, teamId);
-    if (
-      block.assets.some(
-        (a) => a.kind === "draftPick" && a.draftPickId === asset.draftPickId,
-      )
-    ) {
-      rosterFit += TRADE_BLOCK_VALUE_BONUS * 0.4;
     }
   }
 
@@ -136,10 +117,15 @@ export function getTeamAssetValue(
     TEAM_FIT_ADJUSTMENT_BANDS.financialMax,
   );
 
+  const unclamped =
+    base.value + rosterFit + strategicFit + contractAdj + financialAdj;
+  const combinedMin =
+    base.value * TEAM_FIT_ADJUSTMENT_BANDS.combinedMultiplierMin;
+  const combinedMax =
+    base.value * TEAM_FIT_ADJUSTMENT_BANDS.combinedMultiplierMax;
   const value =
-    Math.round(
-      (base.value + rosterFit + strategicFit + contractAdj + financialAdj) * 10,
-    ) / 10;
+    Math.round(Math.max(combinedMin, Math.min(combinedMax, unclamped)) * 10) /
+    10;
 
   let retained = value;
   if (asset.kind === "player") {

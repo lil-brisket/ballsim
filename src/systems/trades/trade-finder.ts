@@ -34,10 +34,11 @@ export type TradeFinderCandidate = {
  * Candidate-generation only. Calls validateTrade; never executeTrade.
  * Returns legally valid candidates regardless of AI acceptance.
  *
- * v1 boundary:
- * - one outgoing asset (search target)
- * - one incoming trade-block asset
- * - optionally one additional incoming pick (player+pick packages)
+ * Packages:
+ * - one outgoing asset vs one incoming trade-block asset
+ * - optionally one additional incoming pick (their player + their pick)
+ * - outgoing player + one of our picks vs their player (buy-up)
+ * - acquire of an off-block player using owned picks
  * - deterministic order; max TRADE_FINDER_MAX_CANDIDATES
  */
 export function findTrades(
@@ -99,7 +100,46 @@ function collectMoveCandidates(
         maybePush(state, candidates, proposal, otherTeamId);
       }
     }
+
+    if (outgoing.kind === "player") {
+      const ourPicks = ownedAvailablePickIds(state, teamId).slice(0, 3);
+      for (const incoming of assets) {
+        if (incoming.kind !== "player") {
+          continue;
+        }
+        for (const pickId of ourPicks) {
+          if (candidates.length >= TRADE_FINDER_MAX_CANDIDATES) {
+            return;
+          }
+          const proposal: TradeProposal = {
+            sideA: {
+              teamId,
+              playerIds: [outgoing.playerId],
+              draftPickIds: [pickId],
+            },
+            sideB: {
+              teamId: otherTeamId,
+              playerIds: [incoming.playerId],
+              draftPickIds: [],
+            },
+          };
+          maybePush(state, candidates, proposal, otherTeamId);
+        }
+      }
+    }
   }
+}
+
+export function ownedAvailablePickIds(
+  state: GameState,
+  teamId: TeamId,
+): DraftPickId[] {
+  return Object.values(state.world.draftPicks)
+    .filter(
+      (pick) => pick.ownerTeamId === teamId && pick.status === "available",
+    )
+    .map((pick) => pick.id)
+    .sort((a, b) => (a < b ? -1 : a > b ? 1 : 0));
 }
 
 function collectAcquireCandidates(
@@ -110,14 +150,6 @@ function collectAcquireCandidates(
 ): void {
   const ownerTeamId = findAssetOwner(state, target);
   if (ownerTeamId === undefined || ownerTeamId === teamId) {
-    return;
-  }
-
-  const ownerBlock = getTradeBlock(state, ownerTeamId);
-  const targetOnBlock = ownerBlock.assets.some((asset) =>
-    assetsEqual(toFinderAsset(asset), target),
-  );
-  if (!targetOnBlock) {
     return;
   }
 
@@ -159,6 +191,25 @@ function collectAcquireCandidates(
           teamId: ownerTeamId,
           playerIds: target.kind === "player" ? [target.playerId] : [],
           draftPickIds: target.kind === "draftPick" ? [target.draftPickId] : [],
+        },
+      };
+      maybePush(state, candidates, proposal, ownerTeamId);
+    }
+  }
+
+  if (target.kind === "player") {
+    const ourPicks = ownedAvailablePickIds(state, teamId).slice(0, 4);
+    if (ourPicks.length > 0 && candidates.length < TRADE_FINDER_MAX_CANDIDATES) {
+      const proposal: TradeProposal = {
+        sideA: {
+          teamId,
+          playerIds: [],
+          draftPickIds: ourPicks,
+        },
+        sideB: {
+          teamId: ownerTeamId,
+          playerIds: [target.playerId],
+          draftPickIds: [],
         },
       };
       maybePush(state, candidates, proposal, ownerTeamId);
@@ -236,16 +287,6 @@ function toFinderAsset(asset: TradeBlockAsset): TradeFinderAsset {
     return { kind: "player", playerId: asset.playerId };
   }
   return { kind: "draftPick", draftPickId: asset.draftPickId };
-}
-
-function assetsEqual(a: TradeFinderAsset, b: TradeFinderAsset): boolean {
-  if (a.kind === "player" && b.kind === "player") {
-    return a.playerId === b.playerId;
-  }
-  if (a.kind === "draftPick" && b.kind === "draftPick") {
-    return a.draftPickId === b.draftPickId;
-  }
-  return false;
 }
 
 function findAssetOwner(

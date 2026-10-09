@@ -163,7 +163,8 @@ Direct per-win cash bonuses are not used; winning already pays through attendanc
 Implemented trade foundation:
 
 - Two-team `TradeProposal` (`sideA` / `sideB`) with shared `validateTrade` / `executeTrade`
-- Trade Block, Trade Finder (candidates only), basic `evaluateTradeOffer` / `generateAiTradeProposal`
+- Trade Block and Trade Finder (candidates only). Finder acquire can package owned picks for off-block targets; CPU `assembleAcquirePackage` buys OVR ≥ 78
+- Live accept uses `getBaseAssetValue` (slot curve + star premiums) then `evaluateTrade` / `makeTradeDecision`. `calculateDraftPickValue` is the leftover round-only 80/50 helper
 - Draft pick ownership (`world.draftPicks`) with a rolling three-season horizon
 
 Implemented draft foundation (v1):
@@ -186,10 +187,16 @@ Players store current ability as category attributes on a **1–99** integer sca
 **Potential** is stored separately as a developmental ceiling (`potential.overall`, same 1–99 scale). It is not derived from current attributes at runtime. During player generation:
 
 1. Derive current overall from position + attributes (`calculatePlayerOverall`).
-2. Roll an age-banded gap: young (`age <= 24`) 4–22; prime (`25–30`) 1–10; veteran (`age >= 31`) 0–5.
+2. Roll an age-banded gap with mass toward the minimum: young (`age <= 24`) 4–16; prime (`25–30`) 1–8; veteran (`age >= 31`) 0–3.
 3. `potential.overall = clamp(currentOverall + gap, 1, 99)`.
 
-**Quality** is a generation-time latent attribute-center (40–85). It is not stored on `Player` and is not current overall or potential.
+Lottery draft prospects still use pick-banded gaps (top 14: 8–22). Later rounds use narrower ceilings.
+
+**Quality** is a generation-time latent attribute-center (40–85). Default generation rolls a **pyramid** (most mass 50–68, rare 81–85), not uniform. When quality is not forced, generation then applies an age offset (developing −5, declining −4) so opening-day rookies are worse than primes. Forced quality (draft pick bands, tests) skips the offset. Opening-day rosters and short-roster fills further clip quality by slot (starters 0–4, rotation 5–9, bench 10+). Short-roster fills take matching unsigned free agents before minting. It is not stored on `Player` and is not current overall or potential.
+
+**Age** at generation is prime-heavy (not uniform 20–34). 33–34 year olds are scarce.
+
+Retirement during `season_transition` uses `calculatePlayerOverall` (not attribute-mean). Chance is 0 before age 32; 80+ overall linger, sub-60 leave sooner.
 
 **Position** (`PG` | `SG` | `SF` | `PF` | `C`) and **archetype** (machine-readable style tag such as `floor_general`) are stored on the player. Archetype influences how attributes are _generated_ (position baseline + archetype modifiers + RNG). It is not the source of truth for ability and does not assign a stored overall rating. Attributes remain the ability model. Uncommon position/archetype pairs are allowed on stored players; compatibility is a generation constraint only.
 
@@ -238,7 +245,8 @@ weight    weight
 
 - **usageScore** mixes scoring ability, creation ability, ball handling, and offensive IQ (config in `player-usage-config.ts`), floored by `USAGE_SCORE_FLOOR`.
 - **Roles** (`primary_creator`, `secondary_creator`, `scorer`, `role_player`, `low_usage`) are assigned by usageScore rank inside the pool. Players outside the pool are `bench` and are not ranked. Roles are never stored on `Player`.
-- Role multipliers are modest so attributes dominate (e.g. a 90-rated role player still out-weights a 50-rated primary).
+- Role multipliers concentrate touches on the primary (`primary_creator` 1.75, `low_usage` 0.52). Attributes still dominate: a 90-rated role player out-weights a 50-rated primary.
+- Box-score scoring weights are `(usageScore × scoringAbility) ^ boxScoreScoringExponent × minutes`. Possession sim does not use the exponent (shot weight is already usage × role × scoring).
 - **Receiver** selection uses shot weight (passes toward scoring threats) and does **not** change pass completion probability.
 - Team depth is the normalize step: adding another high-usage teammate reduces existing shares. No fixed superstar percentages.
 
@@ -246,7 +254,7 @@ weight    weight
 
 ## Game simulation fidelity
 
-Owner Mode calendar jumps use `fidelity: "box_score"` for CPU vs CPU games. That path is [`simulateGameBoxScore`](src/systems/game-simulation-box-score.ts): a statistical projection of the **same attributes** as possession sim (shot/FT make rates from `SHOT_RESOLUTION_CONFIG` / `FREE_THROW_RESOLUTION_CONFIG`, usage for scoring, passing for assists, rebound/steal/block ratings plus position modifiers). It does not run a possession loop and writes no play-by-play.
+Owner Mode calendar jumps use `fidelity: "box_score"` for CPU vs CPU games. That path is [`simulateGameBoxScore`](src/systems/game-simulation-box-score.ts): a statistical projection of the **same attributes** as possession sim (shot/FT make rates from `SHOT_RESOLUTION_CONFIG` / `FREE_THROW_RESOLUTION_CONFIG`, usage with a star exponent for scoring, passing for assists, rebound/steal/block ratings plus position modifiers). Free-throw make chance is `freeThrow / 99 + baselineProbability` (currently +0.035), then clamped. It does not run a possession loop and writes no play-by-play. Players who are `out` / `suspended` sit; `limited` / `questionable` / `minor` / `recovery` play reduced minutes. Injury creation still runs after the game via `processPostGameInjuryExposures` from those minutes.
 
 Games involving the owner team still use possession [`simulateGame`](src/systems/game-simulation.ts) even when fidelity is `box_score`. Box-score is not a second sport: FG/3P/FT and the full counting line (PTS/AST/REB/STL/BLK/TO) should land in the same Lab-style bands as possession.
 

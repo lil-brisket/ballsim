@@ -2,7 +2,11 @@
 
 import { useEffect, useState, useTransition } from "react";
 import Link from "next/link";
-import { listTradeCandidatesAction } from "@/application/actions";
+import {
+  executeTradeAction,
+  listTradeCandidatesAction,
+} from "@/application/actions";
+import { ConfirmDialog } from "@/components/owner/ConfirmDialog";
 import type {
   RosterPagePlayerView,
   TradeFinderRowView,
@@ -56,8 +60,9 @@ export function TradeFinderView(props: {
   return (
     <div className="space-y-4">
       <p className="text-sm text-zinc-400">
-        Discover candidate trades for a roster player. Review in the player
-        workflow — this tab does not execute trades.
+        Discover candidate trades for a roster player. Confirming a row
+        executes that exact proposal — it does not re-search or swap a
+        different player.
       </p>
       <label className="flex flex-col gap-1 text-xs text-zinc-500">
         Outgoing player
@@ -116,15 +121,47 @@ export function TradeFinderView(props: {
                   {row.incomingSummary}
                 </td>
                 <td className="px-3 py-2">
-                  <Link
-                    href={row.reviewHref}
-                    className={cn(
-                      "text-xs text-amber-400 hover:text-amber-300",
-                      focusRingClass,
-                    )}
-                  >
-                    Review trade →
-                  </Link>
+                  <div className="flex items-center gap-3">
+                    <ConfirmDialog
+                      title="Execute this trade"
+                      description={`Send ${row.outgoingSummary} to ${row.counterpartyName} for ${row.incomingSummary}.`}
+                      confirmLabel="Confirm this trade"
+                    >
+                      <form action={executeTradeAction}>
+                        <input type="hidden" name="saveId" value={props.saveId} />
+                        <input
+                          type="hidden"
+                          name="outgoingPlayerId"
+                          value={outgoingPlayerId}
+                        />
+                        <input
+                          type="hidden"
+                          name="proposalJson"
+                          value={JSON.stringify(row.proposal)}
+                        />
+                        <input
+                          type="hidden"
+                          name="returnPath"
+                          value={`/dashboard/${props.saveId}/roster?tab=trade-finder`}
+                        />
+                        <button
+                          type="submit"
+                          className="rounded-md bg-amber-600 px-3 py-1.5 text-sm font-medium text-zinc-950 hover:bg-amber-500"
+                        >
+                          Execute
+                        </button>
+                      </form>
+                    </ConfirmDialog>
+                    <Link
+                      href={row.reviewHref}
+                      className={cn(
+                        "text-xs text-zinc-500 hover:text-amber-300",
+                        focusRingClass,
+                      )}
+                    >
+                      Player
+                    </Link>
+                  </div>
                 </td>
               </tr>
             ))}

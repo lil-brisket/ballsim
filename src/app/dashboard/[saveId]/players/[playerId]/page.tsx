@@ -39,10 +39,7 @@ export default async function PlayerDetailPage({
 
   const { player, dashboard } = view;
   const returnPath = `/dashboard/${saveId}/players/${playerId}`;
-  const canTrade =
-    player.onControlledRoster &&
-    (dashboard.seasonPhase === "regular" ||
-      dashboard.seasonPhase === "preseason");
+  const canTrade = player.onControlledRoster && dashboard.tradesOpen;
 
   const activeTab: PlayerProfileTab =
     tabParam && isPlayerProfileTab(tabParam) ? tabParam : "overview";
@@ -51,7 +48,7 @@ export default async function PlayerDetailPage({
     <Section title="Actions">
       <ConfirmDialog
         title="Execute trade"
-        description="Find and execute the first acceptable 1-for-1 trade for this player using the canonical trade system."
+        description="Find and execute the first acceptable trade for this player. Does not trade a different roster player."
         confirmLabel="Trade"
       >
         <form action={executeTradeAction}>

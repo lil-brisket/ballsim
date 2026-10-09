@@ -1,12 +1,11 @@
 /**
- * Characterization tests — lock legacy trade behavior before valuation refactor.
- * These assert current contracts so refactors preserve salary rules, pick ownership,
- * block behavior, and evaluateTradeOffer shape.
+ * Characterization tests — lock salary rules, pick ownership, block behavior,
+ * and evaluateTradeOffer shape. Live pick pricing uses getBaseAssetValue
+ * (slot curve); the leftover 80/50 helper is locked in formula.test.ts.
  */
 import { describe, expect, it } from "vitest";
 import {
   addToTradeBlock,
-  calculateDraftPickValue,
   evaluateTradeOffer,
   executeTrade,
   generateAiTradeProposal,
@@ -16,41 +15,12 @@ import {
 import { applyTradeSalaryRule } from "@/systems/trades/trade-salary-rules";
 import { gmTradeAcceptanceThreshold } from "@/systems/staff-effects";
 import {
-  DRAFT_PICK_VALUE_ROUND_1,
-  DRAFT_PICK_VALUE_ROUND_2,
-} from "@/systems/trades-config";
-import {
   createTradeFixture,
   pickForTeam,
   playerForPlayerProposal,
   playerOnTeam,
   teamIds,
 } from "./fixture";
-import { createDraftPick } from "@/domain/entities/draft-pick";
-import { asDraftPickId, asTeamId } from "@/domain/ids";
-
-describe("legacy characterization — draft pick value", () => {
-  it("uses round-only constants for R1 and R2", () => {
-    const r1 = createDraftPick({
-      id: asDraftPickId("pick_t_2026_r1"),
-      originalTeamId: asTeamId("t1"),
-      ownerTeamId: asTeamId("t1"),
-      seasonYear: 2026,
-      round: 1,
-    });
-    const r2 = createDraftPick({
-      id: asDraftPickId("pick_t_2027_r2"),
-      originalTeamId: asTeamId("t1"),
-      ownerTeamId: asTeamId("t1"),
-      seasonYear: 2027,
-      round: 2,
-    });
-    expect(calculateDraftPickValue(r1)).toBe(DRAFT_PICK_VALUE_ROUND_1);
-    expect(calculateDraftPickValue(r2)).toBe(DRAFT_PICK_VALUE_ROUND_2);
-    expect(DRAFT_PICK_VALUE_ROUND_1).toBe(80);
-    expect(DRAFT_PICK_VALUE_ROUND_2).toBe(50);
-  });
-});
 
 describe("legacy characterization — evaluateTradeOffer", () => {
   it("returns accepted/net/incoming/outgoing/tradeBlockBonus shape", () => {

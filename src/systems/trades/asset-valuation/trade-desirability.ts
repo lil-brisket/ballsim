@@ -2,7 +2,10 @@ import type { DraftPickId, PlayerId, TeamId } from "@/domain/ids";
 import type { GameState } from "@/state/game-state";
 import { getTradeBlock } from "@/systems/trades/trade-block";
 import { TRADE_DESIRABILITY_WEIGHTS } from "@/systems/trades-config";
-import { getRetentionPriority } from "@/systems/trades/asset-valuation/retention-priority";
+import {
+  getRetentionPriority,
+  wasRecentlyAcquired,
+} from "@/systems/trades/asset-valuation/retention-priority";
 import {
   calculateTradeNeeds,
   tradeNeedLevelScore,
@@ -66,6 +69,10 @@ function playerDesirability(
     score -= retention * TRADE_DESIRABILITY_WEIGHTS.retentionPenaltyScale;
     if (retention >= 75) {
       reasons.push("High retention priority");
+    }
+    if (wasRecentlyAcquired(state, playerId)) {
+      score -= TRADE_DESIRABILITY_WEIGHTS.recentlyAcquiredMovePenalty;
+      reasons.push("Recently acquired");
     }
   } else {
     const needs = calculateTradeNeeds(state, teamId);

@@ -21,6 +21,7 @@ const FILTER_TYPES = [
   "FreeAgentSigned",
   "ContractSigned",
   "PlayerTraded",
+  "DraftPickTraded",
   "PlayerReleased",
   "DraftPickMade",
   "StaffHired",

@@ -13,6 +13,7 @@ export {
 } from "@/domain/entities/owner-decision";
 export {
   enqueueTradeOfferForOwner,
+  countTradeOffersSince,
   resolvePendingOwnerDecision,
   isFingerprintOnCooldown,
   applyTradeCounterofferState,

@@ -15,6 +15,7 @@ import { transitionPhase } from "@/systems/simulation/phase-machine";
 import { validateTrade } from "@/systems/trades/trade-validation";
 import type { TradeProposal } from "@/domain/entities/trade-proposal";
 import { TRADE_DEADLINE_SEASON_FRACTION } from "@/systems/league-rules/invariants";
+import { checkTradeWindow } from "@/systems/league-rules/trade-rules";
 
 describe("calendar context", () => {
   it("resolves trade deadline from league calendar span at 60% hard lock", () => {
@@ -168,5 +169,54 @@ describe("calendar context", () => {
     expect(ctx.seasonSegment).toBe("deadline_window");
     expect(ctx.deadlineWindow).toBe(true);
     expect(ctx.displayLabel).toBe("Trade Deadline");
+  });
+
+  it("opens trades in preseason and offseason, matching checkTradeWindow", () => {
+    const preseason = createInitialGameState({
+      saveId: "cal_preseason_trades",
+      settings: CBL_GAME_SETTINGS,
+    });
+    expect(preseason.competition.season.phase).toBe("preseason");
+    expect(areTradesOpen("preseason", preseason.world.calendar.currentDate, null)).toBe(
+      false,
+    );
+    expect(getCalendarContext(preseason).tradesOpen).toBe(true);
+    expect(checkTradeWindow(preseason).allowed).toBe(true);
+
+    const offseason = {
+      ...preseason,
+      competition: {
+        ...preseason.competition,
+        phase: {
+          ...preseason.competition.phase,
+          activePhaseId: "offseason.free_agency" as const,
+        },
+        season: {
+          ...preseason.competition.season,
+          phase: "offseason" as const,
+          offseasonStage: "free_agency" as const,
+        },
+      },
+    };
+    expect(getCalendarContext(offseason).tradesOpen).toBe(true);
+    expect(checkTradeWindow(offseason).allowed).toBe(true);
+
+    const transition = {
+      ...preseason,
+      competition: {
+        ...preseason.competition,
+        phase: {
+          ...preseason.competition.phase,
+          activePhaseId: "offseason.season_transition" as const,
+        },
+        season: {
+          ...preseason.competition.season,
+          phase: "offseason" as const,
+          offseasonStage: "season_finalization" as const,
+        },
+      },
+    };
+    expect(getCalendarContext(transition).tradesOpen).toBe(false);
+    expect(checkTradeWindow(transition).allowed).toBe(false);
   });
 });

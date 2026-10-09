@@ -1,7 +1,13 @@
 import type { TradeProposal } from "@/domain/entities/trade-proposal";
 import type { DraftPickId, PlayerId, TeamId } from "@/domain/ids";
 import type { GameState } from "@/state/game-state";
-import { TRADE_BLOCK_VALUE_BONUS } from "@/systems/trades-config";
+import type { StrategicPosture } from "@/systems/franchise-strategic-posture";
+import { resolveFranchisePreferences } from "@/systems/franchise-ai-preferences";
+import {
+  AGE_VALUE_MODIFIERS,
+  STRATEGIC_POSTURE_ADJUSTMENTS,
+  TRADE_BLOCK_VALUE_BONUS,
+} from "@/systems/trades-config";
 import { getTradeBlock } from "@/systems/trades/trade-block";
 import { getTeamAssetValue } from "@/systems/trades/asset-valuation/team-asset-value";
 import { getTradeDesirability } from "@/systems/trades/asset-valuation/trade-desirability";
@@ -120,7 +126,14 @@ export function evaluateTrade(
     incomingPlayerIds,
     outgoingPlayerIds,
   );
-  const strategicFit = clamp01(0.5 + valueDifference / 80);
+  const strategicFit = computeStrategicFit(
+    state,
+    evaluatingTeamId,
+    incomingPlayerIds,
+    outgoingPlayerIds,
+    incomingPickIds,
+    outgoingPickIds,
+  );
 
   let recommendation: TradeEvaluation["recommendation"] = "even";
   if (valueDifference >= 8) recommendation = "favor_receive";
@@ -184,6 +197,45 @@ function assetsFromPerspective(
   throw new Error(
     `Evaluating team "${evaluatingTeamId}" is not a party to the proposal.`,
   );
+}
+
+function computeStrategicFit(
+  state: GameState,
+  teamId: TeamId,
+  incomingPlayers: PlayerId[],
+  outgoingPlayers: PlayerId[],
+  incomingPicks: DraftPickId[],
+  outgoingPicks: DraftPickId[],
+): number {
+  const posture: StrategicPosture =
+    resolveFranchisePreferences(state, teamId)?.posture ?? "maintaining";
+  let points = 0;
+  for (const playerId of incomingPlayers) {
+    const player = state.world.players[playerId];
+    if (player) points += postureFitPoints(posture, player.age, "player");
+  }
+  for (const playerId of outgoingPlayers) {
+    const player = state.world.players[playerId];
+    if (player) points -= postureFitPoints(posture, player.age, "player");
+  }
+  points += incomingPicks.length * postureFitPoints(posture, null, "pick");
+  points -= outgoingPicks.length * postureFitPoints(posture, null, "pick");
+  return clamp01(0.5 + points / 40);
+}
+
+function postureFitPoints(
+  posture: StrategicPosture,
+  age: number | null,
+  kind: "player" | "pick",
+): number {
+  const table =
+    STRATEGIC_POSTURE_ADJUSTMENTS[posture] ??
+    STRATEGIC_POSTURE_ADJUSTMENTS.maintaining;
+  if (kind === "pick") return table.pick;
+  if (age === null) return 0;
+  if (age <= AGE_VALUE_MODIFIERS.youthMaxAge) return table.youth;
+  if (age >= 30) return table.veteran;
+  return Math.round((table.youth + table.veteran) / 4);
 }
 
 function computeRosterFit(

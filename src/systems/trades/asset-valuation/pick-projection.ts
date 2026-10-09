@@ -158,10 +158,26 @@ function rankTeamsWorstToBest(state: GameState, teamIds: TeamId[]): TeamId[] {
     const sa = state.competition.standings.byTeamId[a];
     const sb = state.competition.standings.byTeamId[b];
     const winsA = sa?.wins ?? 0;
+    const lossesA = sa?.losses ?? 0;
     const winsB = sb?.wins ?? 0;
+    const lossesB = sb?.losses ?? 0;
+    const pctA = winPercentage(winsA, lossesA, sa?.winPercentage);
+    const pctB = winPercentage(winsB, lossesB, sb?.winPercentage);
+    if (pctA !== pctB) return pctA - pctB;
     if (winsA !== winsB) return winsA - winsB;
+    if (lossesA !== lossesB) return lossesB - lossesA;
     return a < b ? -1 : a > b ? 1 : 0;
   });
+}
+
+function winPercentage(
+  wins: number,
+  losses: number,
+  stored: number | undefined,
+): number {
+  const played = wins + losses;
+  if (played > 0) return wins / played;
+  return stored ?? 0;
 }
 
 function clamp01(value: number): number {

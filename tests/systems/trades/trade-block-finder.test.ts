@@ -283,6 +283,9 @@ describe("trade finder", () => {
       expect(validateTrade(next, candidate.proposal).valid).toBe(true);
     }
     expect(next).toEqual(before);
+    expect(
+      candidates.some((c) => c.proposal.sideA.draftPickIds.length > 0),
+    ).toBe(true);
   });
 
   it("filters invalid proposals", () => {

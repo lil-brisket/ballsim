@@ -31,6 +31,7 @@ export {
 } from "@/systems/trades/trade-block";
 export {
   findTrades,
+  ownedAvailablePickIds,
   type FindTradesInput,
   type TradeFinderAsset,
   type TradeFinderCandidate,
@@ -47,6 +48,7 @@ export {
   getTeamAssetValue,
   getTradeDesirability,
   getRetentionPriority,
+  wasRecentlyAcquired,
   makeTradeDecision,
   tradeDecisionSeed,
   projectDraftPick,
@@ -58,6 +60,7 @@ export {
 } from "@/systems/trades/trade-needs";
 export {
   generateCpuTradeCandidates,
+  rebalanceCpuCounterProposal,
   type CpuTradeCandidate,
   type TradeMotivation,
 } from "@/systems/trades/cpu-trade-generator";

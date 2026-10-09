@@ -20,7 +20,7 @@ import {
 /** Filter chips — maps to DomainEventType sets (single source). */
 export const TRANSACTION_FILTER_GROUPS = {
   all: null,
-  trades: ["PlayerTraded"] as const satisfies readonly DomainEventType[],
+  trades: ["PlayerTraded", "DraftPickTraded"] as const satisfies readonly DomainEventType[],
   signings: [
     "FreeAgentSigned",
     "ContractSigned",
@@ -184,6 +184,15 @@ function describeSimple(state: GameState, event: DomainEvent): string {
       return `Signed ${player?.name ?? "player"}${team ? ` — ${team.name}` : ""}`;
     case "PlayerTraded":
       return `Trade: ${player?.name ?? "player"} (${from?.abbreviation ?? "?"} → ${to?.abbreviation ?? "?"})`;
+    case "DraftPickTraded": {
+      const round = payload.round;
+      const year = payload.seasonYear;
+      const pickLabel =
+        typeof round === "number" && typeof year === "number"
+          ? `${year} R${round}`
+          : "draft pick";
+      return `Trade: ${pickLabel} (${from?.abbreviation ?? "?"} → ${to?.abbreviation ?? "?"})`;
+    }
     case "PlayerReleased":
       return `Released ${player?.name ?? "player"}${team ? ` — ${team.name}` : ""}`;
     case "DraftPickMade":
@@ -251,8 +260,17 @@ function eventMatchesGroup(
   return (types as readonly DomainEventType[]).includes(type);
 }
 
+function pickAssetLabel(payload: Record<string, unknown>): string {
+  const round = payload.round;
+  const year = payload.seasonYear;
+  if (typeof round === "number" && typeof year === "number") {
+    return `${year} R${round}`;
+  }
+  return "Draft pick";
+}
+
 function tradePairKey(event: DomainEvent): string | null {
-  if (event.type !== "PlayerTraded") {
+  if (event.type !== "PlayerTraded" && event.type !== "DraftPickTraded") {
     return null;
   }
   const payload = event.payload as Record<string, unknown>;
@@ -333,8 +351,21 @@ function buildRows(
 
       const sideAPlayers: TransactionEntityRef[] = [];
       const sideBPlayers: TransactionEntityRef[] = [];
+      const sideAAssets: string[] = [];
+      const sideBAssets: string[] = [];
+      let hasPlayer = false;
       for (const e of group) {
         const p = e.payload as Record<string, unknown>;
+        if (e.type === "DraftPickTraded") {
+          const label = pickAssetLabel(p);
+          if (String(p.fromTeamId) === teamAId) {
+            sideAAssets.push(label);
+          } else {
+            sideBAssets.push(label);
+          }
+          continue;
+        }
+        hasPlayer = true;
         const player = resolvePlayer(state, p.playerId);
         if (!player) {
           continue;
@@ -351,14 +382,14 @@ function buildRows(
         tradeSides.push({
           team: teamB,
           players: sideAPlayers,
-          assets: [],
+          assets: sideAAssets,
         });
       }
       if (teamA) {
         tradeSides.push({
           team: teamA,
           players: sideBPlayers,
-          assets: [],
+          assets: sideBAssets,
         });
       }
 
@@ -367,7 +398,7 @@ function buildRows(
 
       rows.push({
         id: `trade_${key}`,
-        type: "PlayerTraded",
+        type: hasPlayer ? "PlayerTraded" : "DraftPickTraded",
         occurredOn: event.occurredOn,
         description:
           tradeSides.length === 2
@@ -699,6 +730,7 @@ export function toTransactionHubView(
 export function transactionTypeLabel(type: DomainEventType): string {
   switch (type) {
     case "PlayerTraded":
+    case "DraftPickTraded":
       return "Trade";
     case "FreeAgentSigned":
       return "Signing";

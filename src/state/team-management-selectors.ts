@@ -760,6 +760,7 @@ const TRANSACTION_TYPES: readonly DomainEventType[] = [
   "ContractSigned",
   "FreeAgentSigned",
   "PlayerTraded",
+  "DraftPickTraded",
   "PlayerReleased",
   "DraftPickMade",
   "CoachHired",
@@ -869,6 +870,8 @@ function describeTransactionEvent(
       return `Signed ${playerName}${teamName ? ` — ${teamName}` : ""}`;
     case "PlayerTraded":
       return `Trade: ${playerName} (${fromTeam} → ${toTeam})`;
+    case "DraftPickTraded":
+      return `Trade: draft pick (${fromTeam} → ${toTeam})`;
     case "PlayerReleased":
       return `Released ${playerName}${teamName ? ` — ${teamName}` : ""}`;
     case "DraftPickMade":

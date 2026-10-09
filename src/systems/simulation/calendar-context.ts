@@ -14,6 +14,7 @@ import { STARTER_ROLES } from "@/systems/staff-generation";
 import { CALENDAR_CONTEXT_CONFIG } from "@/systems/simulation/calendar-context-config";
 import { assessRelocation } from "@/state/relocation-assessment";
 import { TRADE_DEADLINE_SEASON_FRACTION } from "@/systems/league-rules/invariants";
+import { checkTradeWindow } from "@/systems/league-rules/trade-rules";
 
 export type SeasonSegment =
   "none" | "early" | "mid" | "deadline_window" | "late";
@@ -94,11 +95,12 @@ export function getCalendarContext(state: GameState): CalendarContext {
     state,
   );
 
-  const tradesOpen = areTradesOpen(
+  const regularDeadlineOpen = areTradesOpen(
     lifecyclePhase,
     currentDate,
     tradeDeadlineDate,
   );
+  const tradesOpen = checkTradeWindow(state).allowed;
   const daysUntilTradeDeadline =
     tradeDeadlineDate === null
       ? null
@@ -106,7 +108,7 @@ export function getCalendarContext(state: GameState): CalendarContext {
 
   const seasonSegment = resolveSeasonSegment({
     lifecyclePhase,
-    tradesOpen,
+    tradesOpen: regularDeadlineOpen,
     daysUntilTradeDeadline,
     regularSeasonProgress,
   });

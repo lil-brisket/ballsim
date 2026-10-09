@@ -423,7 +423,7 @@ export function expireDatedTradeOffers(state: GameState): {
   return { state: working, expiredIds };
 }
 
-function countTradeOffersSince(state: GameState, sinceDate: string): number {
+export function countTradeOffersSince(state: GameState, sinceDate: string): number {
   const pending = state.user.pendingOwnerDecisions.filter(
     (decision) =>
       decision.type === "trade_offer" && decision.createdOn >= sinceDate,
