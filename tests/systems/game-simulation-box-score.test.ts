@@ -15,10 +15,7 @@ import { createTestGameState } from "../factories/game-state";
 import { createSeededRng } from "@/domain/rng";
 import { bootstrapWorld } from "@/systems/world-pipeline";
 import { simulateGameBoxScore } from "@/systems/game-simulation-box-score";
-import {
-  simulateGame,
-  simulateScheduledGame,
-} from "@/systems/game-simulation";
+import { simulateGame, simulateScheduledGame } from "@/systems/game-simulation";
 
 const HOME = asTeamId("team_home");
 const AWAY = asTeamId("team_away");
@@ -159,6 +156,105 @@ describe("simulateGameBoxScore", () => {
     expect(pg!.steals).toBeGreaterThanOrEqual(center!.steals);
   });
 
+  it("gives a superstar a concentrated share of team points", () => {
+    const star = createPlayer({
+      id: asPlayerId("home_star"),
+      teamId: HOME,
+      position: "SG",
+      firstName: "Star",
+      lastName: "Scorer",
+      attributes: {
+        finishing: 95,
+        midRange: 94,
+        threePoint: 93,
+        ballHandling: 92,
+        passing: 80,
+        offensiveIq: 90,
+      },
+    });
+    const home = [
+      star,
+      ...makeRoster(HOME, "home", 9).map((player, index) =>
+        createPlayer({
+          id: player.id,
+          teamId: HOME,
+          position: player.position,
+          firstName: "Role",
+          lastName: `P${index + 1}`,
+          attributes: {
+            finishing: 68,
+            midRange: 66,
+            threePoint: 64,
+            ballHandling: 62,
+            passing: 60,
+            offensiveIq: 61,
+          },
+        }),
+      ),
+    ];
+    const away = makeRoster(AWAY, "away", 10);
+    const result = simulateGameBoxScore(
+      scheduledGame(),
+      { homePlayers: home, awayPlayers: away },
+      createTestRng(21),
+    );
+    const starRow = result.playerStats.find((row) => row.playerId === star.id);
+    expect(starRow).toBeDefined();
+    expect(starRow!.points / result.score.home).toBeGreaterThan(0.22);
+    expect(starRow!.points / result.score.home).toBeLessThan(0.4);
+  });
+
+  it("reduces minutes for limited players in the box-score rotation", () => {
+    const limited = createPlayer({
+      id: asPlayerId("home_1"),
+      teamId: HOME,
+      position: "PG",
+      firstName: "Hurt",
+      lastName: "Starter",
+      availability: "limited",
+      attributes: {
+        finishing: 88,
+        midRange: 86,
+        threePoint: 84,
+        ballHandling: 90,
+        passing: 88,
+        offensiveIq: 85,
+      },
+    });
+    const healthy = createPlayer({
+      id: asPlayerId("home_2"),
+      teamId: HOME,
+      position: "SG",
+      firstName: "Healthy",
+      lastName: "Wing",
+      availability: "available",
+      attributes: {
+        finishing: 70,
+        midRange: 68,
+        threePoint: 66,
+        ballHandling: 64,
+        passing: 62,
+        offensiveIq: 63,
+      },
+    });
+    const home = [limited, healthy, ...makeRoster(HOME, "home", 8).slice(2)];
+    const away = makeRoster(AWAY, "away", 10);
+    const result = simulateGameBoxScore(
+      scheduledGame(),
+      { homePlayers: home, awayPlayers: away },
+      createTestRng(5),
+    );
+    const limitedRow = result.playerStats.find(
+      (row) => row.playerId === limited.id,
+    );
+    const healthyRow = result.playerStats.find(
+      (row) => row.playerId === healthy.id,
+    );
+    expect(limitedRow).toBeDefined();
+    expect(healthyRow).toBeDefined();
+    expect(limitedRow!.minutes).toBeLessThan(healthyRow!.minutes);
+  });
+
   it("is faster than a short possession sim on the same rosters", () => {
     const home = makeRoster(HOME, "home", 10);
     const away = makeRoster(AWAY, "away", 10);
@@ -223,10 +319,15 @@ describe("simulateScheduledGame box_score fidelity", () => {
       },
     };
 
-    const { finalGame } = simulateScheduledGame(state, game, createTestRng(11), {
-      fidelity: "box_score",
-      ownerTeamId: asTeamId("team_someone_else"),
-    });
+    const { finalGame } = simulateScheduledGame(
+      state,
+      game,
+      createTestRng(11),
+      {
+        fidelity: "box_score",
+        ownerTeamId: asTeamId("team_someone_else"),
+      },
+    );
     expect(finalGame.status).toBe("final");
     expect(finalGame.events).toEqual([]);
     expect(() => assertCompletedGameBoxScore(finalGame)).not.toThrow();
@@ -262,10 +363,15 @@ describe("simulateScheduledGame box_score fidelity", () => {
       },
     };
 
-    const { finalGame } = simulateScheduledGame(state, game, createTestRng(12), {
-      fidelity: "box_score",
-      ownerTeamId: homeTeamId,
-    });
+    const { finalGame } = simulateScheduledGame(
+      state,
+      game,
+      createTestRng(12),
+      {
+        fidelity: "box_score",
+        ownerTeamId: homeTeamId,
+      },
+    );
     expect(finalGame.events.length).toBeGreaterThan(0);
   });
 });

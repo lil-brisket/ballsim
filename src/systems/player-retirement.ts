@@ -1,5 +1,6 @@
 import { createDomainEvent, type DomainEvent } from "@/domain/events";
 import { asPlayerId } from "@/domain/ids";
+import { calculatePlayerOverall } from "@/domain/player-overall-rating";
 import type { Rng } from "@/domain/rng";
 import { systemResult, type SystemResult } from "@/domain/system-result";
 import type { GameState } from "@/state/game-state";
@@ -37,7 +38,10 @@ export function processPlayerRetirements(
       continue;
     }
 
-    const chance = retirementProbability(player.age, overallFromPlayer(player));
+    const chance = playerRetirementProbability(
+      player.age,
+      calculatePlayerOverall(player.position, player.attributes),
+    );
     if (chance <= 0 || !rng.chance(chance)) {
       continue;
     }
@@ -154,15 +158,14 @@ export function releasePlayerContractOnRetirement(
   };
 }
 
-function overallFromPlayer(player: {
-  attributes: Record<string, number>;
-}): number {
-  const values = Object.values(player.attributes);
-  if (values.length === 0) return 50;
-  return Math.round(values.reduce((a, b) => a + b, 0) / values.length);
-}
-
-function retirementProbability(age: number, overall: number): number {
+/**
+ * Age-and-ability retirement chance. Uses derived overall, not attribute mean.
+ * 80+ linger; sub-60 leave sooner. Zero below {@link PLAYER_RETIREMENT_MIN_AGE}.
+ */
+export function playerRetirementProbability(
+  age: number,
+  overall: number,
+): number {
   if (age < PLAYER_RETIREMENT_MIN_AGE) {
     return 0;
   }

@@ -26,7 +26,7 @@ export const RFA_MAX_YEARS_OF_SERVICE = 4;
 export const RFA_QUALIFYING_OFFER_MULTIPLIER = 1.1;
 
 /** Minimum age band where retirement probability becomes non-zero. */
-export const PLAYER_RETIREMENT_MIN_AGE = 34;
+export const PLAYER_RETIREMENT_MIN_AGE = 32;
 
 /** Age at which retirement pressure rises sharply. */
 export const PLAYER_RETIREMENT_HIGH_AGE = 38;

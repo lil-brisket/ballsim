@@ -21,13 +21,16 @@ export type FreeThrowResult = {
  * Does not use finishing / midRange / threePoint or resolveShot(), which apply
  * 2PT/3PT defender and fatigue logic inappropriate for free throws.
  *
- * Formula: freeThrow / RATING_MAX → clamp(minProbability, maxProbability)
+ * Formula: freeThrow / RATING_MAX + baselineProbability
+ * → clamp(minProbability, maxProbability)
  */
 export function calculateFreeThrowProbability(
   input: ResolveFreeThrowInput,
 ): number {
   validateResolveFreeThrowInput(input);
-  const unclamped = input.shooter.attributes.freeThrow / RATING_MAX;
+  const unclamped =
+    input.shooter.attributes.freeThrow / RATING_MAX +
+    FREE_THROW_RESOLUTION_CONFIG.baselineProbability;
   return clampProbability(unclamped);
 }
 

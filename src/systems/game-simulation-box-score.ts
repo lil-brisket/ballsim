@@ -27,7 +27,7 @@ import {
   mergeGameSimulationConfig,
   type GameSimulationConfig,
 } from "@/systems/game-simulation-config";
-import { FREE_THROW_RESOLUTION_CONFIG } from "@/systems/free-throw-resolution-config";
+import { calculateFreeThrowProbability } from "@/systems/free-throw-resolution";
 import { POSITION_REBOUND_MODIFIERS } from "@/systems/rebound-resolution-config";
 import { ROTATION_CONFIG } from "@/systems/rotation/rotation-config";
 import { SHOT_RESOLUTION_CONFIG } from "@/systems/shot-resolution-config";
@@ -36,6 +36,7 @@ import {
   creationAbility,
   scoringAbility,
 } from "@/systems/player-usage";
+import { PLAYER_USAGE_CONFIG } from "@/systems/player-usage-config";
 
 export type SimulateBoxScoreContext = {
   homePlayers: readonly Player[];
@@ -53,6 +54,15 @@ const SCORE_FLOOR = 78;
 const SCORE_CEILING = 142;
 const REGULATION_TEAM_MINUTES = ROTATION_CONFIG.regulationPlayerMinutes;
 const PLAYING_ROTATION_SIZE = 10;
+/** Minutes multiplier for players who are not fully available. */
+const BOX_SCORE_MINUTES_BY_AVAILABILITY: Readonly<
+  Partial<Record<Player["availability"], number>>
+> = {
+  limited: 0.45,
+  questionable: 0.7,
+  minor: 0.8,
+  recovery: 0.75,
+};
 
 const ASSIST_TO_FGM_RATE = 0.58;
 const POSITION_STEAL_MODIFIERS: Readonly<Record<PlayerPosition, number>> = {
@@ -166,8 +176,7 @@ export function simulateGameBoxScore(
     context.profiler.recordGame({
       possessions,
       events: 0,
-      playersInvolved:
-        context.homePlayers.length + context.awayPlayers.length,
+      playersInvolved: context.homePlayers.length + context.awayPlayers.length,
       totalMs,
       validationMs: 0,
       decisionSelectionMs: 0,
@@ -275,7 +284,10 @@ function buildTeamBoxScore(input: {
     Math.min(PLAYING_ROTATION_SIZE, ranked.length),
   );
   const starterIds = new Set(
-    (input.starters ?? rotation.slice(0, GAME_SIMULATION_CONFIG.startingLineupSize))
+    (
+      input.starters ??
+      rotation.slice(0, GAME_SIMULATION_CONFIG.startingLineupSize)
+    )
       .slice(0, GAME_SIMULATION_CONFIG.startingLineupSize)
       .map((player) => player.id),
   );
@@ -290,11 +302,13 @@ function buildTeamBoxScore(input: {
     meanAttribute(input.opponent, "perimeterDefense"),
   );
 
+  const scoringExponent = PLAYER_USAGE_CONFIG.boxScoreScoringExponent;
   const scoringWeights = rotation.map((player, index) => {
     const usage = calculateUsageScore(player);
+    const talent = Math.max(1, usage * scoringAbility(player));
     return Math.max(
       1,
-      usage * scoringAbility(player) * Math.max(1, minutes[index] ?? 0),
+      Math.pow(talent, scoringExponent) * Math.max(1, minutes[index] ?? 0),
     );
   });
   const playerPoints = allocateByWeight(scoringWeights, points);
@@ -311,10 +325,7 @@ function buildTeamBoxScore(input: {
 
   const assistTotal = Math.min(
     teamFgm,
-    Math.max(
-      0,
-      Math.round(teamFgm * ASSIST_TO_FGM_RATE) + rng.nextInt(-2, 2),
-    ),
+    Math.max(0, Math.round(teamFgm * ASSIST_TO_FGM_RATE) + rng.nextInt(-2, 2)),
   );
   const orebTotal = Math.round(possessions * 0.11) + rng.nextInt(-2, 2);
   const drebTotal = Math.round(possessions * 0.32) + rng.nextInt(-3, 3);
@@ -335,7 +346,8 @@ function buildTeamBoxScore(input: {
   const oreb = allocateByWeight(
     rotation.map((player, index) =>
       skillWeight(
-        player.attributes.rebounding + POSITION_REBOUND_MODIFIERS[player.position],
+        player.attributes.rebounding +
+          POSITION_REBOUND_MODIFIERS[player.position],
         minutes[index] ?? 0,
       ),
     ),
@@ -441,14 +453,16 @@ function allocateMinutes(rotation: readonly Player[], rng: Rng): number[] {
   if (rotation.length <= 5) {
     return rotation.map(() => ROTATION_CONFIG.regulationMinutes);
   }
-  const curve = rotation.map((_, index) => {
-    if (index < 5) {
-      return rng.nextInt(26, 36);
-    }
-    if (index < 8) {
-      return rng.nextInt(12, 22);
-    }
-    return rng.nextInt(4, 14);
+  const curve = rotation.map((player, index) => {
+    const availabilityFactor =
+      BOX_SCORE_MINUTES_BY_AVAILABILITY[player.availability] ?? 1;
+    const base =
+      index < 5
+        ? rng.nextInt(26, 36)
+        : index < 8
+          ? rng.nextInt(12, 22)
+          : rng.nextInt(4, 14);
+    return Math.max(1, Math.round(base * availabilityFactor));
   });
   const allocated = allocateByWeight(curve, REGULATION_TEAM_MINUTES);
   return allocated.map((value) =>
@@ -516,7 +530,9 @@ function shootingFromPoints(
   }
 
   const twoPa =
-    twoPm === 0 ? 0 : Math.max(twoPm, Math.round(twoPm / Math.max(0.12, twoPct)));
+    twoPm === 0
+      ? 0
+      : Math.max(twoPm, Math.round(twoPm / Math.max(0.12, twoPct)));
   const threePa =
     threePm === 0
       ? 0
@@ -562,13 +578,7 @@ function threePointMakeRate(player: Player, oppPerimeter: number): number {
 }
 
 function freeThrowMakeRate(player: Player): number {
-  return Math.min(
-    FREE_THROW_RESOLUTION_CONFIG.maxProbability,
-    Math.max(
-      FREE_THROW_RESOLUTION_CONFIG.minProbability,
-      player.attributes.freeThrow / RATING_MAX,
-    ),
-  );
+  return calculateFreeThrowProbability({ shooter: player });
 }
 
 function clampShotProbability(value: number): number {
@@ -589,7 +599,10 @@ function meanAttribute(
   if (players.length === 0) {
     return 70;
   }
-  const sum = players.reduce((total, player) => total + player.attributes[key], 0);
+  const sum = players.reduce(
+    (total, player) => total + player.attributes[key],
+    0,
+  );
   return sum / players.length;
 }
 

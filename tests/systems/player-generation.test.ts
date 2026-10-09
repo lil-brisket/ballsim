@@ -14,6 +14,7 @@ import {
   PLAYER_ARCHETYPES,
 } from "@/domain/entities/player-archetype";
 import { isPlayerNationality } from "@/domain/entities/player-nationality";
+import { asPlayerId } from "@/domain/ids";
 import { calculatePlayerOverall } from "@/domain/player-overall-rating";
 import { createSeededRng } from "@/domain/rng";
 import { createInitialGameState } from "@/state/create-initial-state";
@@ -21,20 +22,30 @@ import { CBL_GAME_SETTINGS } from "@/domain/game-settings";
 import {
   generatePlayer,
   generatePlayerWithRng,
+  rollPlayerAge,
+  rollPlayerQuality,
+  rollPotentialGap,
 } from "@/systems/player-generation";
 import {
   developmentStageForAge,
   MAX_PERSONALITY,
   MAX_PLAYER_AGE,
+  MAX_PLAYER_QUALITY,
   MIN_PERSONALITY,
   MIN_PLAYER_AGE,
+  MIN_PLAYER_QUALITY,
   POSITION_BODY_RANGES,
   potentialGapBandForAge,
+  qualityAdjustedForAge,
 } from "@/systems/player-generation-config";
-import { generateRosters } from "@/systems/roster-generation";
+import {
+  fillShortRosters,
+  generateRosters,
+} from "@/systems/roster-generation";
 import {
   DEFAULT_ROSTER_SIZE,
   rosterPositionForSlot,
+  rosterQualityBandForSlot,
 } from "@/systems/roster-generation-config";
 
 const SAMPLE_SIZE = 5000;
@@ -272,8 +283,11 @@ describe("player generation", () => {
         ages.filter((age) => age === MIN_PLAYER_AGE).length / samples.length;
       const maxBoundShare =
         ages.filter((age) => age === MAX_PLAYER_AGE).length / samples.length;
+      const veteranShare =
+        ages.filter((age) => age >= 33).length / samples.length;
       expect(minBoundShare).toBeLessThanOrEqual(0.5);
-      expect(maxBoundShare).toBeLessThanOrEqual(0.5);
+      expect(maxBoundShare).toBeLessThan(0.08);
+      expect(veteranShare).toBeLessThan(0.08);
     });
 
     it("varies each personality trait", () => {
@@ -476,13 +490,145 @@ describe("player generation", () => {
       expect(player.lastName).toBe("Griffin");
       expect(player.position).toBe("SG");
       expect(player.archetype).toBe("three_and_d_wing");
-      expect(player.age).toBe(32);
+      expect(player.age).toBe(30);
       expect(player.nationality).toBe("Canada");
     });
 
     it("does not store quality on the player entity", () => {
       const player = generatePlayer(12345);
       expect("quality" in player).toBe(false);
+    });
+  });
+
+  describe("population pyramid", () => {
+    it("rolls quality inside 40–85 with rare star mass", () => {
+      const rng = createSeededRng(99);
+      const qualities = Array.from({ length: SAMPLE_SIZE }, () =>
+        rollPlayerQuality(rng),
+      );
+      expect(Math.min(...qualities)).toBeGreaterThanOrEqual(MIN_PLAYER_QUALITY);
+      expect(Math.max(...qualities)).toBeLessThanOrEqual(MAX_PLAYER_QUALITY);
+      const starShare =
+        qualities.filter((quality) => quality >= 81).length / qualities.length;
+      const depthShare =
+        qualities.filter((quality) => quality >= 50 && quality <= 68).length /
+        qualities.length;
+      expect(starShare).toBeLessThan(0.03);
+      expect(depthShare).toBeGreaterThan(0.5);
+    });
+
+    it("rolls prime-heavy ages inside 20–34", () => {
+      const rng = createSeededRng(3);
+      const ages = Array.from({ length: SAMPLE_SIZE }, () => rollPlayerAge(rng));
+      expect(Math.min(...ages)).toBeGreaterThanOrEqual(MIN_PLAYER_AGE);
+      expect(Math.max(...ages)).toBeLessThanOrEqual(MAX_PLAYER_AGE);
+      const oldShare = ages.filter((age) => age >= 33).length / ages.length;
+      expect(oldShare).toBeLessThan(0.08);
+    });
+
+    it("clips quality to a roster band", () => {
+      const rng = createSeededRng(7);
+      const bench = rosterQualityBandForSlot(12);
+      for (let i = 0; i < 200; i += 1) {
+        const quality = rollPlayerQuality(rng, bench);
+        expect(quality).toBeGreaterThanOrEqual(bench.min);
+        expect(quality).toBeLessThanOrEqual(bench.max);
+      }
+    });
+
+    it("weights potential gaps toward the band minimum", () => {
+      const rng = createSeededRng(13);
+      const band = { min: 4, max: 16 };
+      const gaps = Array.from({ length: SAMPLE_SIZE }, () =>
+        rollPotentialGap(rng, band),
+      );
+      const mean = gaps.reduce((sum, gap) => sum + gap, 0) / gaps.length;
+      expect(mean).toBeLessThan((band.min + band.max) / 2);
+      expect(Math.min(...gaps)).toBe(band.min);
+      expect(Math.max(...gaps)).toBeLessThanOrEqual(band.max);
+    });
+
+    it(
+      "keeps generated overall and potential rare at the top",
+      { timeout: 60_000 },
+      () => {
+        const overalls = samples.map((sample) =>
+          calculatePlayerOverall(
+            sample.player.position,
+            sample.player.attributes,
+          ),
+        );
+        const potentials = samples.map(
+          (sample) => sample.player.potential.overall,
+        );
+        const n = samples.length;
+        const band60to69 = overalls.filter((o) => o >= 60 && o <= 69).length;
+        const band80to89 = overalls.filter((o) => o >= 80 && o <= 89).length;
+        const overall90 = overalls.filter((o) => o >= 90).length;
+        const pot90 = potentials.filter((p) => p >= 90).length;
+        const pot99 = potentials.filter((p) => p === 99).length;
+
+        expect(band80to89 / n).toBeLessThan(0.14);
+        expect(overall90 / n).toBeLessThan(0.03);
+        expect(band60to69).toBeGreaterThan(band80to89);
+        expect(pot90 / n).toBeGreaterThan(0.02);
+        expect(pot90 / n).toBeLessThan(0.1);
+        expect(pot99 / n).toBeLessThan(0.015);
+      },
+    );
+
+    it("keeps opening-day rookies worse than primes at the same rolled quality", () => {
+      let youngLower = 0;
+      for (let seed = 1; seed <= 200; seed += 1) {
+        const young = generatePlayer(seed, { age: 22, position: "SG" });
+        const prime = generatePlayer(seed, { age: 27, position: "SG" });
+        const youngOvr = calculatePlayerOverall(
+          young.position,
+          young.attributes,
+        );
+        const primeOvr = calculatePlayerOverall(
+          prime.position,
+          prime.attributes,
+        );
+        if (youngOvr < primeOvr) {
+          youngLower += 1;
+        }
+      }
+      expect(youngLower).toBeGreaterThan(170);
+      expect(qualityAdjustedForAge(80, 22)).toBe(75);
+      expect(qualityAdjustedForAge(80, 27)).toBe(80);
+      expect(qualityAdjustedForAge(80, 33)).toBe(76);
+    });
+
+    it("does not age-adjust forced quality", () => {
+      const young = generatePlayer(9, {
+        quality: 80,
+        age: 21,
+        position: "SG",
+        archetype: "scoring_guard",
+      });
+      const prime = generatePlayer(9, {
+        quality: 80,
+        age: 27,
+        position: "SG",
+        archetype: "scoring_guard",
+      });
+      expect(young.attributes).toEqual(prime.attributes);
+    });
+
+    it("lets lottery-band prospects reach 90 potential", () => {
+      let hits = 0;
+      for (let seed = 1; seed <= 200; seed += 1) {
+        const player = generatePlayer(seed, {
+          age: 20,
+          quality: 80,
+          potentialGap: { min: 8, max: 22 },
+        });
+        if (player.potential.overall >= 90) {
+          hits += 1;
+        }
+      }
+      expect(hits).toBeGreaterThan(20);
     });
   });
 });
@@ -535,5 +681,78 @@ describe("generateRosters with player generation engine", () => {
         );
       }
     }
+  });
+
+  it("orders starter overall above rotation and bench", () => {
+    const state = createInitialGameState({
+      saveId: "save_roster_pyramid",
+      rngSeed: 21,
+      nowIso: "2026-08-13T12:00:00.000Z",
+      settings: CBL_GAME_SETTINGS,
+    });
+    const result = generateRosters(state, createSeededRng(state.meta.rngState));
+    const starter: number[] = [];
+    const rotation: number[] = [];
+    const bench: number[] = [];
+    for (const team of Object.values(result.state.world.teams)) {
+      team.roster.forEach((playerId, slot) => {
+        const player = result.state.world.players[playerId]!;
+        const overall = calculatePlayerOverall(
+          player.position,
+          player.attributes,
+        );
+        if (slot <= 4) starter.push(overall);
+        else if (slot <= 9) rotation.push(overall);
+        else bench.push(overall);
+      });
+    }
+    const mean = (values: number[]) =>
+      values.reduce((sum, value) => sum + value, 0) / values.length;
+    expect(mean(starter)).toBeGreaterThan(mean(rotation));
+    expect(mean(rotation)).toBeGreaterThan(mean(bench));
+    expect(rosterQualityBandForSlot(0)).toEqual({ min: 64, max: 85 });
+    expect(rosterQualityBandForSlot(9)).toEqual({ min: 52, max: 72 });
+    expect(rosterQualityBandForSlot(14)).toEqual({ min: 40, max: 60 });
+  });
+
+  it("fills a short roster from matching free agents before minting", () => {
+    const state = createInitialGameState({
+      saveId: "save_roster_fa_fill",
+      rngSeed: 21,
+      nowIso: "2026-08-13T12:00:00.000Z",
+      settings: CBL_GAME_SETTINGS,
+    });
+    const generated = generateRosters(
+      state,
+      createSeededRng(state.meta.rngState),
+    ).state;
+    const teamId = Object.keys(generated.world.teams).sort()[0]!;
+    const team = generated.world.teams[teamId]!;
+    const missingPosition = rosterPositionForSlot(4);
+    const freeAgent = generatePlayerWithRng(createSeededRng(9001), {
+      id: asPlayerId("player_fill_fa"),
+      teamId: null,
+      contractId: null,
+      position: missingPosition,
+      age: 27,
+    });
+    const shortened = {
+      ...generated,
+      world: {
+        ...generated.world,
+        players: {
+          ...generated.world.players,
+          [freeAgent.id]: freeAgent,
+        },
+        teams: {
+          ...generated.world.teams,
+          [teamId]: { ...team, roster: team.roster.slice(0, 4) },
+        },
+      },
+    };
+    const filled = fillShortRosters(shortened, createSeededRng(44));
+    expect(filled.state.world.teams[teamId]!.roster).toContain(freeAgent.id);
+    expect(filled.state.world.players[freeAgent.id]!.teamId).toBe(team.id);
+    expect(filled.state.world.players[freeAgent.id]!.contractId).not.toBeNull();
   });
 });

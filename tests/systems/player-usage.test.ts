@@ -250,7 +250,7 @@ describe("weighted selection", () => {
       buildOffensiveUsageProfiles([star, floor]),
     );
     expect(normalized.shotShares.get("star")!).toBeGreaterThan(
-      normalized.shotShares.get("floor")! * 1.25,
+      normalized.shotShares.get("floor")! * 1.45,
     );
   });
 

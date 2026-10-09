@@ -76,6 +76,23 @@ describe("calculateFreeThrowProbability", () => {
     );
   });
 
+  it("lifts a typical generated rating above the 72% league floor", () => {
+    const probability = calculateFreeThrowProbability(
+      baseInput({
+        shooter: createPlayer({
+          id: "typical",
+          attributes: { freeThrow: 68 },
+        }),
+      }),
+    );
+    expect(probability).toBeCloseTo(
+      68 / 99 + FREE_THROW_RESOLUTION_CONFIG.baselineProbability,
+      10,
+    );
+    expect(probability).toBeGreaterThanOrEqual(0.72);
+    expect(probability).toBeLessThanOrEqual(0.78);
+  });
+
   it("increases when freeThrow rating is higher", () => {
     const weaker = calculateFreeThrowProbability(
       baseInput({

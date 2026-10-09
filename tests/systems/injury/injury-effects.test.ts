@@ -117,7 +117,7 @@ describe("injury risk / exposure", () => {
       isBackToBack: true,
     });
     const p = computeInjuryProbability(player, event, "medium", 1);
-    expect(p).toBeGreaterThan(0);
+    expect(p).toBeGreaterThan(0.01);
     expect(p).toBeLessThan(0.35);
   });
 

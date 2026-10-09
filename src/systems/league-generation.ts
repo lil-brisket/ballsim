@@ -37,6 +37,7 @@ import { uniqueTeamAbbreviation } from "@/systems/team-abbreviation";
 import {
   DEFAULT_ROSTER_SIZE,
   rosterPositionForSlot,
+  rosterQualityBandForSlot,
 } from "@/systems/roster-generation-config";
 import { generateTeamBranding } from "@/systems/team-branding-generation";
 
@@ -166,6 +167,7 @@ export function generateLeague(
             id: playerId,
             teamId,
             position: rosterPositionForSlot(slot),
+            qualityBand: rosterQualityBandForSlot(slot),
           });
           players.push(player);
           rosterPlayerIds.push(playerId);

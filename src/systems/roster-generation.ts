@@ -1,5 +1,5 @@
 import { asContractId, asPlayerId, asTeamId } from "@/domain/ids";
-import { type Player } from "@/domain/entities/player";
+import { type Player, type PlayerPosition } from "@/domain/entities/player";
 import { createContract, type Contract } from "@/domain/entities/contract";
 import type { Rng } from "@/domain/rng";
 import { systemResult, type SystemResult } from "@/domain/system-result";
@@ -11,6 +11,7 @@ import { generatePlayerWithRng } from "@/systems/player-generation";
 import {
   DEFAULT_ROSTER_SIZE,
   rosterPositionForSlot,
+  rosterQualityBandForSlot,
 } from "@/systems/roster-generation-config";
 import { recommendRosterManagement } from "@/systems/roster-management";
 import { getTeamPayroll } from "@/systems/salary-cap";
@@ -56,6 +57,7 @@ export function generateRosters(state: GameState, rng: Rng): SystemResult {
         contractId,
         position,
         occupiedNames,
+        qualityBand: rosterQualityBandForSlot(slot),
       });
       occupiedNames.add(`${player.firstName} ${player.lastName}`);
       players[playerId] = player;
@@ -149,6 +151,37 @@ export function generateRosters(state: GameState, rng: Rng): SystemResult {
   });
 }
 
+function takeFillFreeAgent(
+  players: Record<string, Player>,
+  position: PlayerPosition,
+): Player | null {
+  const candidates = Object.values(players).filter(
+    (player) =>
+      player.retired !== true &&
+      player.teamId === null &&
+      player.contractId == null &&
+      player.position === position,
+  );
+  if (candidates.length === 0) {
+    return null;
+  }
+  candidates.sort((left, right) => {
+    const overallLeft = calculatePlayerOverall(
+      left.position,
+      left.attributes,
+    );
+    const overallRight = calculatePlayerOverall(
+      right.position,
+      right.attributes,
+    );
+    if (overallLeft !== overallRight) {
+      return overallRight - overallLeft;
+    }
+    return left.id < right.id ? -1 : left.id > right.id ? 1 : 0;
+  });
+  return candidates[0] ?? null;
+}
+
 function nextFillPlayerId(
   teamId: string,
   players: Record<string, Player>,
@@ -196,22 +229,39 @@ export function fillShortRosters(state: GameState, rng: Rng): SystemResult {
     const roster = [...team.roster];
     let slot = roster.length;
     while (roster.length < DEFAULT_ROSTER_SIZE) {
-      const next = nextFillPlayerId(teamId, players, slot);
-      slot = next.nextSlot;
-      const playerId = next.playerId;
       const position = rosterPositionForSlot(roster.length);
-      const contractId = asContractId(`contract_${playerId}`);
-      const player = generatePlayerWithRng(rng, {
-        id: playerId,
-        teamId: team.id,
-        contractId,
-        position,
-        occupiedNames,
-      });
-      occupiedNames.add(`${player.firstName} ${player.lastName}`);
-      players[playerId] = player;
-      roster.push(playerId);
+      const existing = takeFillFreeAgent(players, position);
+      let player: Player;
+      if (existing) {
+        const contractId = asContractId(
+          `contract_fill_${existing.id}_${currentYear}`,
+        );
+        player = {
+          ...existing,
+          teamId: team.id,
+          contractId,
+        };
+        players[existing.id] = player;
+        roster.push(existing.id);
+      } else {
+        const next = nextFillPlayerId(teamId, players, slot);
+        slot = next.nextSlot;
+        const playerId = next.playerId;
+        const contractId = asContractId(`contract_${playerId}`);
+        player = generatePlayerWithRng(rng, {
+          id: playerId,
+          teamId: team.id,
+          contractId,
+          position,
+          occupiedNames,
+          qualityBand: rosterQualityBandForSlot(roster.length),
+        });
+        occupiedNames.add(`${player.firstName} ${player.lastName}`);
+        players[playerId] = player;
+        roster.push(playerId);
+      }
 
+      const contractId = player.contractId!;
       const salaryPerYear = salaryForPlayer({
         overall: calculatePlayerOverall(player.position, player.attributes),
         age: player.age,
@@ -228,7 +278,7 @@ export function fillShortRosters(state: GameState, rng: Rng): SystemResult {
       }
       contracts[contractId] = createContract({
         id: contractId,
-        playerId,
+        playerId: player.id,
         teamId: team.id,
         startYear,
         endYear,

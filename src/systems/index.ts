@@ -8,6 +8,8 @@ export {
 export {
   DEFAULT_ROSTER_SIZE,
   rosterPositionForSlot,
+  rosterQualityBandForSlot,
+  ROSTER_QUALITY_BY_SLOT,
 } from "@/systems/roster-generation-config";
 export {
   createRosterRulesConfig,
@@ -38,8 +40,12 @@ export { applyRotationSubstitutions } from "@/systems/rotation-simulation";
 export {
   generatePlayer,
   generatePlayerWithRng,
+  rollPlayerAge,
+  rollPlayerQuality,
+  rollPotentialGap,
   type GeneratePlayerOptions,
 } from "@/systems/player-generation";
+export { playerRetirementProbability } from "@/systems/player-retirement";
 export { developPlayer } from "@/systems/player-development";
 export {
   processSeasonPlayerDevelopment,

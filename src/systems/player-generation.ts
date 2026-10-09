@@ -31,8 +31,12 @@ import {
   MIN_PLAYER_QUALITY,
   MIN_PERSONALITY,
   POSITION_BODY_RANGES,
+  ageWeightForValue,
   developmentStageForAge,
   potentialGapBandForAge,
+  qualityAdjustedForAge,
+  qualityWeightForValue,
+  type QualityBand,
 } from "@/systems/player-generation-config";
 
 /**
@@ -49,6 +53,11 @@ export type GeneratePlayerOptions = {
   age?: number;
   /** When set, skips the quality RNG roll. */
   quality?: number;
+  /**
+   * When `quality` is omitted, roll the pyramid inside this inclusive band.
+   * Ignored when `quality` is set (no extra RNG).
+   */
+  qualityBand?: QualityBand;
   /** Occupied "First Last" names among active players. Extra draws on retry. */
   occupiedNames?: ReadonlySet<string>;
   potentialGap?: { min: number; max: number };
@@ -78,10 +87,10 @@ export function generatePlayerWithRng(
 ): Player {
   const playerId = options.id ?? asPlayerId(`player_gen_${rng.getState()}`);
 
-  const quality =
+  const rolledQuality =
     options.quality !== undefined
       ? options.quality
-      : rng.nextInt(MIN_PLAYER_QUALITY, MAX_PLAYER_QUALITY);
+      : rollPlayerQuality(rng, options.qualityBand);
 
   const position = options.position ?? rng.pick(PLAYER_POSITIONS);
 
@@ -110,8 +119,12 @@ export function generatePlayerWithRng(
     }
     age = options.age;
   } else {
-    age = rng.nextInt(MIN_PLAYER_AGE, MAX_PLAYER_AGE);
+    age = rollPlayerAge(rng);
   }
+  const quality =
+    options.quality !== undefined
+      ? rolledQuality
+      : qualityAdjustedForAge(rolledQuality, age);
   const { firstName, lastName, nationality } = generatePlayerName(
     rng,
     undefined,
@@ -131,7 +144,7 @@ export function generatePlayerWithRng(
 
   const currentOverall = calculatePlayerOverall(position, attributes);
   const gapBand = options.potentialGap ?? potentialGapBandForAge(age);
-  const gap = rng.nextInt(gapBand.min, gapBand.max);
+  const gap = rollPotentialGap(rng, gapBand);
   const potentialOverall = clampRating(currentOverall + gap);
 
   const personality = {
@@ -172,4 +185,111 @@ export function generatePlayerWithRng(
 
 function clampRating(value: number): number {
   return Math.min(RATING_MAX, Math.max(RATING_MIN, value));
+}
+
+/**
+ * One `rng.next()` — prime-heavy opening-day ages.
+ */
+export function rollPlayerAge(rng: Rng): number {
+  const values: number[] = [];
+  const weights: number[] = [];
+  for (let age = MIN_PLAYER_AGE; age <= MAX_PLAYER_AGE; age += 1) {
+    const weight = ageWeightForValue(age);
+    if (weight <= 0) {
+      continue;
+    }
+    values.push(age);
+    weights.push(weight);
+  }
+  if (values.length === 0) {
+    throw new Error("No age weights configured.");
+  }
+  return pickWeightedInteger(rng, values, weights);
+}
+
+/**
+ * One `rng.next()` — pyramid quality, optionally clipped to a band.
+ */
+export function rollPlayerQuality(rng: Rng, band?: QualityBand): number {
+  const min = band?.min ?? MIN_PLAYER_QUALITY;
+  const max = band?.max ?? MAX_PLAYER_QUALITY;
+  assertQualityBand(min, max);
+  const values: number[] = [];
+  const weights: number[] = [];
+  for (let quality = min; quality <= max; quality += 1) {
+    const weight = qualityWeightForValue(quality);
+    if (weight <= 0) {
+      continue;
+    }
+    values.push(quality);
+    weights.push(weight);
+  }
+  if (values.length === 0) {
+    throw new Error(`No quality weight in band ${min}-${max}.`);
+  }
+  return pickWeightedInteger(rng, values, weights);
+}
+
+/**
+ * One `rng.next()` — mass toward `band.min`.
+ */
+export function rollPotentialGap(
+  rng: Rng,
+  band: { min: number; max: number },
+): number {
+  if (
+    !Number.isInteger(band.min) ||
+    !Number.isInteger(band.max) ||
+    band.max < band.min
+  ) {
+    throw new Error("Potential gap band must be integers with max >= min.");
+  }
+  const values: number[] = [];
+  const weights: number[] = [];
+  const span = band.max - band.min;
+  for (let gap = band.min; gap <= band.max; gap += 1) {
+    values.push(gap);
+    const t = span === 0 ? 0 : (gap - band.min) / span;
+    weights.push(3 - 2 * t);
+  }
+  return pickWeightedInteger(rng, values, weights);
+}
+
+function assertQualityBand(min: number, max: number): void {
+  if (!Number.isInteger(min) || !Number.isInteger(max) || max < min) {
+    throw new Error("Quality band must be integers with max >= min.");
+  }
+}
+
+function pickWeightedInteger(
+  rng: Rng,
+  values: readonly number[],
+  weights: readonly number[],
+): number {
+  if (values.length === 0 || values.length !== weights.length) {
+    throw new Error(
+      "pickWeightedInteger requires matching non-empty values and weights.",
+    );
+  }
+  let total = 0;
+  for (const weight of weights) {
+    if (Number.isFinite(weight) && weight > 0) {
+      total += weight;
+    }
+  }
+  if (total <= 0) {
+    throw new Error("pickWeightedInteger requires a positive weight sum.");
+  }
+  let cursor = rng.next() * total;
+  for (let index = 0; index < values.length; index += 1) {
+    const weight = weights[index]!;
+    if (!Number.isFinite(weight) || weight <= 0) {
+      continue;
+    }
+    cursor -= weight;
+    if (cursor < 0) {
+      return values[index]!;
+    }
+  }
+  return values[values.length - 1]!;
 }

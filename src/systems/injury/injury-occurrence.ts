@@ -24,10 +24,16 @@ const FREQUENCY_MULT: Record<InjuryFrequency, number> = {
   high: 1.55,
 };
 
-/** Base probability per exposure event (before modifiers). Tunable. */
-const BASE_RATE: Record<InjuryExposureEvent["source"], number> = {
-  game_acute: 0.0045,
-  game_overuse: 0.0025,
+/**
+ * Base probability per exposure event (before modifiers).
+ * Game rates are sized so a box-score decade snapshot lands near 3–8% injured.
+ */
+export const INJURY_EXPOSURE_BASE_RATE: Record<
+  InjuryExposureEvent["source"],
+  number
+> = {
+  game_acute: 0.018,
+  game_overuse: 0.01,
   practice: 0.0012,
   rehab: 0.0003,
   offseason_training: 0.0008,
@@ -44,7 +50,8 @@ export function computeInjuryProbability(
     return 0;
   }
 
-  let p = BASE_RATE[event.source] * FREQUENCY_MULT[injuryFrequency];
+  let p =
+    INJURY_EXPOSURE_BASE_RATE[event.source] * FREQUENCY_MULT[injuryFrequency];
 
   // Minutes / fatigue for game exposures
   if (event.minutesPlayed != null) {

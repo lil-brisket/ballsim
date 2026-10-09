@@ -18,17 +18,22 @@ export const PLAYER_USAGE_CONFIG = {
     offensiveIq: 0.15,
   },
   /**
-   * Modest role multipliers so attributes dominate.
-   * A 90-rated role_player must still out-weight a 50-rated primary_creator.
+   * Role multipliers concentrate touches on the primary without beating
+   * attributes: a 90-rated role_player still out-weights a 50-rated primary.
    */
   roleMultipliers: {
-    primary_creator: 1.55,
-    secondary_creator: 1.3,
-    scorer: 1.2,
+    primary_creator: 1.75,
+    secondary_creator: 1.4,
+    scorer: 1.22,
     role_player: 1.0,
-    low_usage: 0.6,
-    bench: 0.5,
+    low_usage: 0.52,
+    bench: 0.4,
   } satisfies Record<OffensiveRole, number>,
+  /**
+   * Extra star exponent for box-score scoring weights only.
+   * Possession sim already has usageScore × scoring in shot weight.
+   */
+  boxScoreScoringExponent: 1.2,
 } as const;
 
 export type PlayerUsageConfig = {
@@ -40,6 +45,7 @@ export type PlayerUsageConfig = {
     offensiveIq: number;
   };
   roleMultipliers: Record<OffensiveRole, number>;
+  boxScoreScoringExponent: number;
 };
 
 export function mergePlayerUsageConfig(
@@ -47,6 +53,7 @@ export function mergePlayerUsageConfig(
     usageScoreFloor: number;
     usageScoreMix: Partial<PlayerUsageConfig["usageScoreMix"]>;
     roleMultipliers: Partial<Record<OffensiveRole, number>>;
+    boxScoreScoringExponent: number;
   }>,
 ): PlayerUsageConfig {
   if (overrides == null) {
@@ -54,6 +61,7 @@ export function mergePlayerUsageConfig(
       usageScoreFloor: PLAYER_USAGE_CONFIG.usageScoreFloor,
       usageScoreMix: { ...PLAYER_USAGE_CONFIG.usageScoreMix },
       roleMultipliers: { ...PLAYER_USAGE_CONFIG.roleMultipliers },
+      boxScoreScoringExponent: PLAYER_USAGE_CONFIG.boxScoreScoringExponent,
     };
   }
   return {
@@ -67,5 +75,8 @@ export function mergePlayerUsageConfig(
       ...PLAYER_USAGE_CONFIG.roleMultipliers,
       ...overrides.roleMultipliers,
     },
+    boxScoreScoringExponent:
+      overrides.boxScoreScoringExponent ??
+      PLAYER_USAGE_CONFIG.boxScoreScoringExponent,
   };
 }
