@@ -4,14 +4,20 @@ import { loadOwnerSaveView } from "@/application/game-service";
 import { resolveOnboardingRoute } from "@/application/onboarding-routing";
 import { OnboardingShell } from "@/components/game/OnboardingShell";
 import { CityMapPicker } from "@/components/owner/CityMapPicker";
+import { ErrorState } from "@/components/owner/EmptyState";
 import { isLeagueArea } from "@/domain/game-settings";
 
 type TeamPickPageProps = {
   params: Promise<{ saveId: string }>;
+  searchParams: Promise<{ error?: string }>;
 };
 
-export default async function TeamPickPage({ params }: TeamPickPageProps) {
+export default async function TeamPickPage({
+  params,
+  searchParams,
+}: TeamPickPageProps) {
   const { saveId } = await params;
+  const { error } = await searchParams;
   const view = await loadOwnerSaveView(saveId);
   if (!view) {
     notFound();
@@ -52,6 +58,11 @@ export default async function TeamPickPage({ params }: TeamPickPageProps) {
       className="max-w-6xl"
       fillViewport
     >
+      {error ? (
+        <div className="shrink-0">
+          <ErrorState message={error} />
+        </div>
+      ) : null}
       <CityMapPicker saveId={saveId} area={area} cities={view.cities} />
     </OnboardingShell>
   );

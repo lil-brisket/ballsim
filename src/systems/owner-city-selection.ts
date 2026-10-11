@@ -4,8 +4,9 @@
  * Invariants:
  * - Does not create or delete teams (teamCount unchanged).
  * - Always relocates the placeholder (current activeOwnerTeamId).
- * - If another team already sits in the chosen city, that team swaps into the
- *   placeholder's previous city so markets stay unique.
+ * - If another team already sits in the chosen city, one occupant swaps into
+ *   the placeholder's previous city.
+ * - Pre-existing shared markets (two teams in one city) are preserved.
  * - Rejects after citySelectionConfirmed or after first time advance.
  */
 import { isCityInArea, normalizeCityName } from "@/data/league/city-locations";
@@ -23,6 +24,35 @@ export type ApplyOwnerCitySelectionResult =
 
 function leagueAreaFromState(state: GameState): LeagueArea {
   return state.settings.league.area ?? "north_america";
+}
+
+function marketKey(city: string): string {
+  return normalizeCityName(city) ?? city.trim().toLowerCase();
+}
+
+function marketCounts(
+  teams: GameState["world"]["teams"],
+): Map<string, number> {
+  const counts = new Map<string, number>();
+  for (const team of Object.values(teams)) {
+    const key = marketKey(team.city);
+    counts.set(key, (counts.get(key) ?? 0) + 1);
+  }
+  return counts;
+}
+
+function introducesNewSharedMarket(
+  before: GameState["world"]["teams"],
+  after: GameState["world"]["teams"],
+): boolean {
+  const beforeCounts = marketCounts(before);
+  const afterCounts = marketCounts(after);
+  for (const [market, afterCount] of afterCounts) {
+    if (afterCount > 1 && afterCount > (beforeCounts.get(market) ?? 0)) {
+      return true;
+    }
+  }
+  return false;
 }
 
 function findTeamByCity(
@@ -126,11 +156,7 @@ export function applyOwnerCitySelection(
     abbreviation,
   };
 
-  const cities = Object.values(nextTeams).map((team) =>
-    normalizeCityName(team.city),
-  );
-  const uniqueCities = new Set(cities);
-  if (uniqueCities.size !== cities.length) {
+  if (introducesNewSharedMarket(state.world.teams, nextTeams)) {
     return {
       ok: false,
       error: "Relocation would produce duplicate city assignments.",

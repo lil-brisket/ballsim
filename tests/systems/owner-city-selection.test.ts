@@ -1,7 +1,11 @@
 import { describe, expect, it } from "vitest";
 import { applyOwnerCitySelection } from "@/systems/owner-city-selection";
 import { uniqueTeamAbbreviation } from "@/systems/team-abbreviation";
-import { CBL_GAME_SETTINGS, cloneGameSettings } from "@/domain/game-settings";
+import {
+  CBL_GAME_SETTINGS,
+  DEFAULT_GAME_SETTINGS,
+  cloneGameSettings,
+} from "@/domain/game-settings";
 import { createInitialGameState } from "@/state/create-initial-state";
 import { listCitiesForTeamPick } from "@/state/selectors";
 import { TEST_RNG_SEED } from "../helpers/determinism";
@@ -175,6 +179,68 @@ describe("applyOwnerCitySelection", () => {
     expect(
       getActiveOwnedFranchise(result.state).franchiseIdentityConfirmed,
     ).toBe(false);
+  });
+
+  it("confirms a 30-team Standard city pick without duplicate-city errors", () => {
+    const state = createInitialGameState({
+      saveId: "city_sel_standard_30",
+      rngSeed: TEST_RNG_SEED,
+      settings: cloneGameSettings(DEFAULT_GAME_SETTINGS),
+    });
+    const cities = listCitiesForTeamPick(state);
+    const result = applyOwnerCitySelection(state, cities[0]!.city);
+    expect(result.ok).toBe(true);
+    if (!result.ok) {
+      return;
+    }
+    expect(getActiveOwnedFranchise(result.state).citySelectionConfirmed).toBe(
+      true,
+    );
+  });
+
+  it("confirms a city pick when two teams already share a market", () => {
+    const state = createNaState();
+    const others = Object.values(state.world.teams).filter(
+      (team) => team.id !== state.user.activeOwnerTeamId,
+    );
+    const first = others[0]!;
+    const second = others[1]!;
+    const shared = {
+      ...state,
+      world: {
+        ...state.world,
+        teams: {
+          ...state.world.teams,
+          [first.id]: { ...first, city: "Los Angeles" },
+          [second.id]: { ...second, city: "Los Angeles" },
+        },
+      },
+    };
+    const result = applyOwnerCitySelection(shared, "Atlanta");
+    expect(result.ok).toBe(true);
+    if (!result.ok) {
+      return;
+    }
+    expect(result.state.world.teams[state.user.activeOwnerTeamId]!.city).toBe(
+      "Atlanta",
+    );
+    expect(
+      Object.values(result.state.world.teams).filter(
+        (team) => team.city === "Los Angeles",
+      ).length,
+    ).toBe(2);
+    expect(getActiveOwnedFranchise(result.state).citySelectionConfirmed).toBe(
+      true,
+    );
+
+    const takeShared = applyOwnerCitySelection(shared, "Los Angeles");
+    expect(takeShared.ok).toBe(true);
+    if (!takeShared.ok) {
+      return;
+    }
+    expect(
+      takeShared.state.world.teams[state.user.activeOwnerTeamId]!.city,
+    ).toBe("Los Angeles");
   });
 
   it("preserves branding when taking a city that already has a team", () => {

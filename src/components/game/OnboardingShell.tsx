@@ -2,11 +2,14 @@ import Link from "next/link";
 
 export type OnboardingStep = "mode" | "setup" | "franchise";
 
-const STEPS: { id: OnboardingStep; label: string }[] = [
-  { id: "mode", label: "Mode" },
-  { id: "setup", label: "Setup" },
-  { id: "franchise", label: "Franchise" },
+const STEPS: { id: OnboardingStep; label: string; href: string }[] = [
+  { id: "mode", label: "Mode", href: "/home" },
+  { id: "setup", label: "Setup", href: "/new/setup?mode=owner" },
+  { id: "franchise", label: "Franchise", href: "" },
 ];
+
+const focusRing =
+  "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-500";
 
 export function OnboardingShell(props: {
   step: OnboardingStep;
@@ -30,7 +33,7 @@ export function OnboardingShell(props: {
       <div className="flex shrink-0 flex-wrap items-center justify-between gap-3">
         <Link
           href="/owner"
-          className="text-sm text-zinc-400 hover:text-amber-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-500"
+          className={`text-sm text-zinc-400 hover:text-amber-400 ${focusRing}`}
         >
           ← Owner Mode
         </Link>
@@ -38,19 +41,30 @@ export function OnboardingShell(props: {
           {STEPS.map((step, index) => {
             const active = index === stepIndex;
             const done = index < stepIndex;
+            const label = `${index + 1}. ${step.label}`;
+            const className = `rounded-full px-3 py-1 ${
+              active
+                ? "bg-amber-600/20 font-medium text-amber-400"
+                : done
+                  ? `text-zinc-400 hover:text-amber-400 ${focusRing}`
+                  : "text-zinc-600"
+            }`;
+
+            if (done && step.href) {
+              return (
+                <Link key={step.id} href={step.href} className={className}>
+                  {label}
+                </Link>
+              );
+            }
+
             return (
               <span
                 key={step.id}
-                className={`rounded-full px-3 py-1 ${
-                  active
-                    ? "bg-amber-600/20 font-medium text-amber-400"
-                    : done
-                      ? "text-zinc-400"
-                      : "text-zinc-600"
-                }`}
+                className={className}
                 aria-current={active ? "step" : undefined}
               >
-                {index + 1}. {step.label}
+                {label}
               </span>
             );
           })}
