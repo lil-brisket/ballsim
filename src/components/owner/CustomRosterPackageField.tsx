@@ -104,8 +104,8 @@ export function CustomRosterPackageField(props: {
                 Show {preview.warnings.length} warnings
               </summary>
               <ul className="mt-2 list-disc space-y-1 pl-5 text-xs text-amber-100/90">
-                {preview.warnings.map((entry) => (
-                  <li key={`${entry.path}:${entry.code}`}>
+                {preview.warnings.map((entry, index) => (
+                  <li key={`${entry.path}:${entry.code}:${index}`}>
                     {entry.path}: {entry.message}
                   </li>
                 ))}

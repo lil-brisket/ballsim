@@ -90,7 +90,7 @@ export function applyCustomRosterTeamCount(
     },
     draft: {
       ...next.draft,
-      mode: "custom",
+      mode: next.draft.mode === "fantasy" ? "fantasy" : "custom",
       userPickPosition: null,
       randomizeUserPick: false,
     },

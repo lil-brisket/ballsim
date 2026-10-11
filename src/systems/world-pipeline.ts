@@ -3,6 +3,7 @@ import { systemResult, type SystemResult } from "@/domain/system-result";
 import type { GameState } from "@/state/game-state";
 import { mergeDraftPicksForSeason } from "@/domain/draft-picks/generate-draft-picks";
 import { generateFantasyPlayerPool } from "@/systems/fantasy-draft/player-pool";
+import { generateFantasyPlayerPoolFromRosterPackage } from "@/systems/fantasy-draft/custom-roster-pool";
 import { generateRosters } from "@/systems/roster-generation";
 import { applyRosterPackage } from "@/systems/custom-content/apply-roster";
 import { generatePreseasonSchedule } from "@/systems/preseason-schedule-generation";
@@ -17,6 +18,9 @@ export type WorldPipelineCommand = {
 /**
  * Ensures roster and draft picks exist (world-gen bootstrap).
  * Fantasy mode generates an unassigned player pool instead of team rosters.
+ * Fantasy plus a roster package imports those players, pads the pool with
+ * generated fillers so every team can draft a full roster, and leaves
+ * undrafted players as free agents.
  * Custom mode applies a roster package instead of generateRosters.
  *
  * Lifecycle owns phase transition (preseason → regular). Bootstrap may
@@ -33,7 +37,10 @@ export function bootstrapWorld(
 ): SystemResult {
   let afterPlayers: SystemResult;
   if (state.settings.draft.mode === "fantasy") {
-    afterPlayers = generateFantasyPlayerPool(state, rng);
+    afterPlayers =
+      rosterPackage !== undefined
+        ? generateFantasyPlayerPoolFromRosterPackage(state, rosterPackage, rng)
+        : generateFantasyPlayerPool(state, rng);
   } else if (state.settings.draft.mode === "custom") {
     if (rosterPackage !== undefined) {
       afterPlayers = applyRosterPackage(state, rosterPackage, rng);

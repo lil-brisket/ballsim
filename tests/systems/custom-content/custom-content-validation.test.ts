@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { GAME_STATE_SCHEMA_VERSION } from "@/state/game-state";
+import { PLAYER_ATTRIBUTE_KEYS } from "@/domain/entities/player";
 import {
   parseCustomContentJson,
   rosterTeamCountFromPackageJson,
@@ -12,6 +13,23 @@ import {
   makePlayerSource,
   makeRosterPackage,
 } from "../../helpers/custom-content";
+import type { PlayerSourceRecord, RosterPlayerSource } from "@/systems/custom-content/package-types";
+
+const STAR_ATTRIBUTES = Object.fromEntries(
+  PLAYER_ATTRIBUTE_KEYS.map((key) => [key, 92]),
+) as PlayerSourceRecord["attributes"];
+
+function eightManTeam(
+  overrides: Partial<PlayerSourceRecord> = {},
+): RosterPlayerSource[] {
+  return Array.from({ length: 8 }, (_, index) => ({
+    ...makePlayerSource({
+      ...overrides,
+      sourceId: `nba_${index}`,
+    }),
+    teamSourceId: "t0",
+  }));
+}
 
 describe("custom content validation", () => {
   it("rejects invalid JSON without a partial result", () => {
@@ -123,6 +141,135 @@ describe("custom content validation", () => {
     });
     expect(result.ok).toBe(false);
     expect(result.errors.some((entry) => entry.code === "draft_year_in_past")).toBe(
+      true,
+    );
+  });
+
+  it("accepts NBA-sized centers and star overalls without body or overall warnings", () => {
+    const pkg = makeRosterPackage({
+      teams: [{ sourceId: "t0", name: "Centers" }],
+      players: eightManTeam({
+        position: "C",
+        archetype: "rim_protector",
+        heightInches: 88,
+        weightPounds: 305,
+        attributes: STAR_ATTRIBUTES,
+        potential: { overall: 94 },
+      }),
+    });
+    const result = validateRosterPackage(pkg, {
+      teamCount: 1,
+      schemaVersion: GAME_STATE_SCHEMA_VERSION,
+    });
+    expect(result.ok).toBe(true);
+    expect(
+      result.warnings.some(
+        (entry) =>
+          entry.code === "unusual_height_for_position" ||
+          entry.code === "unusual_weight_for_position" ||
+          entry.code === "unusual_overall",
+      ),
+    ).toBe(false);
+  });
+
+  it("does not warn when a legal roster is smaller than the default 15", () => {
+    const pkg = makeRosterPackage({
+      teams: [{ sourceId: "t0", name: "Core" }],
+      players: eightManTeam({
+        position: "PG",
+        archetype: "scoring_guard",
+      }),
+    });
+    const result = validateRosterPackage(pkg, {
+      teamCount: 1,
+      schemaVersion: GAME_STATE_SCHEMA_VERSION,
+    });
+    expect(result.ok).toBe(true);
+    expect(
+      result.warnings.some((entry) => entry.code === "roster_size_differs_from_default"),
+    ).toBe(false);
+  });
+
+  it("does not warn when a veteran custom star has 99 potential", () => {
+    const pkg = makeRosterPackage({
+      teams: [{ sourceId: "t0", name: "Stars" }],
+      players: eightManTeam({
+        position: "C",
+        archetype: "rim_protector",
+        age: 32,
+        heightInches: 83,
+        weightPounds: 284,
+        attributes: STAR_ATTRIBUTES,
+        potential: { overall: 99 },
+      }),
+    });
+    const result = validateRosterPackage(pkg, {
+      teamCount: 1,
+      schemaVersion: GAME_STATE_SCHEMA_VERSION,
+    });
+    expect(result.ok).toBe(true);
+    expect(
+      result.warnings.some((entry) => entry.code === "potential_above_age_ceiling"),
+    ).toBe(false);
+  });
+
+  it("accepts a light NBA point guard without body warnings", () => {
+    const pkg = makeRosterPackage({
+      teams: [{ sourceId: "t0", name: "Guards" }],
+      players: eightManTeam({
+        position: "PG",
+        archetype: "scoring_guard",
+        heightInches: 74,
+        weightPounds: 164,
+      }),
+    });
+    const result = validateRosterPackage(pkg, {
+      teamCount: 1,
+      schemaVersion: GAME_STATE_SCHEMA_VERSION,
+    });
+    expect(result.ok).toBe(true);
+    expect(
+      result.warnings.some(
+        (entry) =>
+          entry.code === "unusual_height_for_position" ||
+          entry.code === "unusual_weight_for_position",
+      ),
+    ).toBe(false);
+  });
+
+  it("still rejects bodies outside the NBA import envelope", () => {
+    const tooTall = makeRosterPackage({
+      teams: [{ sourceId: "t0", name: "A" }],
+      players: eightManTeam({
+        position: "C",
+        archetype: "rim_protector",
+        heightInches: 91,
+        weightPounds: 250,
+      }),
+    });
+    const tooLight = makeRosterPackage({
+      teams: [{ sourceId: "t0", name: "A" }],
+      players: eightManTeam({
+        position: "PG",
+        archetype: "scoring_guard",
+        heightInches: 74,
+        weightPounds: 150,
+      }),
+    });
+    const tallResult = validateRosterPackage(tooTall, {
+      teamCount: 1,
+      schemaVersion: GAME_STATE_SCHEMA_VERSION,
+    });
+    const lightResult = validateRosterPackage(tooLight, {
+      teamCount: 1,
+      schemaVersion: GAME_STATE_SCHEMA_VERSION,
+    });
+    expect(tallResult.ok).toBe(false);
+    expect(tallResult.errors.some((entry) => entry.code === "height_out_of_bounds")).toBe(
+      true,
+    );
+    expect(lightResult.ok).toBe(false);
+    expect(lightResult.errors.some((entry) => entry.code === "weight_out_of_bounds")).toBe(
       true,
     );
   });

@@ -15,9 +15,11 @@ import {
 } from "@/domain/entities/player";
 import { calculatePlayerOverall } from "@/domain/player-overall-rating";
 import {
-  POSITION_BODY_RANGES,
-  potentialGapBandForAge,
-} from "@/systems/player-generation-config";
+  CUSTOM_ROSTER_BODY_ENVELOPE,
+  CUSTOM_ROSTER_OVERALL_HIGH_WARNING,
+  CUSTOM_ROSTER_OVERALL_LOW_WARNING,
+  CUSTOM_ROSTER_POSITION_BODY_RANGES,
+} from "@/systems/custom-content/body-envelope";
 import {
   issue,
   type PlayerSourceRecord,
@@ -28,17 +30,8 @@ function isPlayerPosition(value: string): value is PlayerPosition {
   return (PLAYER_POSITIONS as readonly string[]).includes(value);
 }
 
-const BODY_ENVELOPE = {
-  minHeightInches: 72,
-  maxHeightInches: 84,
-  minWeightPounds: 180,
-  maxWeightPounds: 260,
-};
-
 const MIN_PLAUSIBLE_AGE = 18;
 const MAX_PLAUSIBLE_AGE = 45;
-const OVERALL_LOW_WARNING = 40;
-const OVERALL_HIGH_WARNING = 85;
 
 const PERSONALITY_KEYS = [
   "workEthic",
@@ -176,18 +169,18 @@ export function readPlayerSourceRecord(
       ),
     );
   } else if (
-    heightInches < BODY_ENVELOPE.minHeightInches ||
-    heightInches > BODY_ENVELOPE.maxHeightInches
+    heightInches < CUSTOM_ROSTER_BODY_ENVELOPE.minHeightInches ||
+    heightInches > CUSTOM_ROSTER_BODY_ENVELOPE.maxHeightInches
   ) {
     errors.push(
       issue(
         `${path}.heightInches`,
         "height_out_of_bounds",
-        `${path}.heightInches is outside plausible bounds (${BODY_ENVELOPE.minHeightInches}–${BODY_ENVELOPE.maxHeightInches}).`,
+        `${path}.heightInches is outside plausible bounds (${CUSTOM_ROSTER_BODY_ENVELOPE.minHeightInches}–${CUSTOM_ROSTER_BODY_ENVELOPE.maxHeightInches}).`,
       ),
     );
   } else if (typeof position === "string" && isPlayerPosition(position)) {
-    const range = POSITION_BODY_RANGES[position as PlayerPosition];
+    const range = CUSTOM_ROSTER_POSITION_BODY_RANGES[position];
     if (heightInches < range.minHeightInches || heightInches > range.maxHeightInches) {
       warnings.push(
         issue(
@@ -209,18 +202,18 @@ export function readPlayerSourceRecord(
       ),
     );
   } else if (
-    weightPounds < BODY_ENVELOPE.minWeightPounds ||
-    weightPounds > BODY_ENVELOPE.maxWeightPounds
+    weightPounds < CUSTOM_ROSTER_BODY_ENVELOPE.minWeightPounds ||
+    weightPounds > CUSTOM_ROSTER_BODY_ENVELOPE.maxWeightPounds
   ) {
     errors.push(
       issue(
         `${path}.weightPounds`,
         "weight_out_of_bounds",
-        `${path}.weightPounds is outside plausible bounds (${BODY_ENVELOPE.minWeightPounds}–${BODY_ENVELOPE.maxWeightPounds}).`,
+        `${path}.weightPounds is outside plausible bounds (${CUSTOM_ROSTER_BODY_ENVELOPE.minWeightPounds}–${CUSTOM_ROSTER_BODY_ENVELOPE.maxWeightPounds}).`,
       ),
     );
   } else if (typeof position === "string" && isPlayerPosition(position)) {
-    const range = POSITION_BODY_RANGES[position as PlayerPosition];
+    const range = CUSTOM_ROSTER_POSITION_BODY_RANGES[position];
     if (weightPounds < range.minWeightPounds || weightPounds > range.maxWeightPounds) {
       warnings.push(
         issue(
@@ -304,23 +297,15 @@ export function readPlayerSourceRecord(
     typeof age === "number"
   ) {
     const overall = calculatePlayerOverall(position, attributes);
-    if (overall < OVERALL_LOW_WARNING || overall > OVERALL_HIGH_WARNING) {
+    if (
+      overall < CUSTOM_ROSTER_OVERALL_LOW_WARNING ||
+      overall > CUSTOM_ROSTER_OVERALL_HIGH_WARNING
+    ) {
       warnings.push(
         issue(
           `${path}.attributes`,
           "unusual_overall",
           `${path} overall ${overall} is far from typical league range.`,
-          "warning",
-        ),
-      );
-    }
-    const band = potentialGapBandForAge(age);
-    if (potential.overall > overall + band.max) {
-      warnings.push(
-        issue(
-          `${path}.potential.overall`,
-          "potential_above_age_ceiling",
-          `${path}.potential.overall exceeds the age-appropriate ceiling.`,
           "warning",
         ),
       );

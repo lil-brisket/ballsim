@@ -51,6 +51,41 @@ describe("custom roster save creation", () => {
     expect(loaded!.state.settings.draft.mode).toBe("custom");
   });
 
+  it("creates a fantasy save from a custom roster and pads the pool", async () => {
+    const store = createMemorySaveGameStore();
+    const settings = cloneGameSettings(CBL_GAME_SETTINGS);
+    settings.draft.mode = "fantasy";
+    const pkg = makeFullRosterPackage({
+      teamCount: settings.league.teamCount,
+      playersPerTeam: 8,
+    });
+    const result = await createNewOwnerSave(
+      { name: "Custom Fantasy", settings, rosterPackage: pkg, rngSeed: 23 },
+      store,
+    );
+    expect(result.ok).toBe(true);
+    if (!result.ok) {
+      return;
+    }
+    const loaded = await store.load(result.save.id);
+    expect(loaded).not.toBeNull();
+    expect(() => validateGameState(loaded!.state)).not.toThrow();
+    expect(loaded!.state.settings.draft.mode).toBe("fantasy");
+    expect(loaded!.state.world.fantasyDraft).not.toBeNull();
+    expect(
+      Object.values(loaded!.state.world.players).every(
+        (player) => player.teamId === null,
+      ),
+    ).toBe(true);
+    const customCount = Object.keys(loaded!.state.world.players).filter((id) =>
+      id.startsWith("custom_"),
+    ).length;
+    expect(customCount).toBe(settings.league.teamCount * 8);
+    expect(Object.keys(loaded!.state.world.players).length).toBeGreaterThan(
+      customCount,
+    );
+  });
+
   it("does not create a save when the package has errors", async () => {
     const store = createMemorySaveGameStore();
     const settings = cloneGameSettings(CBL_GAME_SETTINGS);

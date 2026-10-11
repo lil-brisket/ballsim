@@ -21,6 +21,16 @@ describe("applyCustomRosterTeamCount", () => {
     expect(next.playoffs.playoffTeams).toBe(8);
   });
 
+  it("keeps fantasy draft mode when a custom roster is loaded", () => {
+    const settings = {
+      ...DEFAULT_GAME_SETTINGS,
+      draft: { ...DEFAULT_GAME_SETTINGS.draft, mode: "fantasy" as const },
+    };
+    const next = applyCustomRosterTeamCount(settings, 12);
+    expect(next.draft.mode).toBe("fantasy");
+    expect(next.league.teamCount).toBe(12);
+  });
+
   it("disables divisions when the roster size cannot support them", () => {
     const next = applyCustomRosterTeamCount(DEFAULT_GAME_SETTINGS, 10);
     expect(next.league.teamCount).toBe(10);

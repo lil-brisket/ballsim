@@ -613,6 +613,11 @@ export async function createNewOwnerSave(
     return fail("Custom roster mode requires a roster package.");
   }
 
+  const usesRosterPackage =
+    rosterPackage !== undefined &&
+    (validated.settings.draft.mode === "custom" ||
+      validated.settings.draft.mode === "fantasy");
+
   const saveId = crypto.randomUUID();
   const nowIso = new Date().toISOString();
   let state = createInitialGameState({
@@ -622,7 +627,7 @@ export async function createNewOwnerSave(
     settings: validated.settings,
   });
 
-  if (validated.settings.draft.mode === "custom" && rosterPackage !== undefined) {
+  if (usesRosterPackage && rosterPackage !== undefined) {
     const preview = validateRosterPackage(rosterPackage, {
       teamCount: Object.keys(state.world.teams).length,
       schemaVersion: state.meta.schemaVersion,

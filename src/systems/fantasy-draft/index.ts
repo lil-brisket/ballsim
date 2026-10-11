@@ -11,6 +11,7 @@ export {
   isFantasyDraftContractId,
 } from "@/systems/fantasy-draft/fantasy-contracts";
 export { generateFantasyPlayerPool } from "@/systems/fantasy-draft/player-pool";
+export { generateFantasyPlayerPoolFromRosterPackage } from "@/systems/fantasy-draft/custom-roster-pool";
 export {
   getPickOwnerForNumber,
   getCurrentPick,

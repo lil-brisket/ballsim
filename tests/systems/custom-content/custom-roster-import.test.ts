@@ -109,4 +109,42 @@ describe("custom roster import", () => {
       Object.values(fantasyBoot.world.players).every((player) => player.teamId === null),
     ).toBe(true);
   });
+
+  it("pads a custom roster into a full 15-man fantasy pool", () => {
+    const fantasySettings = cloneGameSettings(CBL_GAME_SETTINGS);
+    fantasySettings.draft.mode = "fantasy";
+    const state = createInitialGameState({
+      saveId: "custom_boot_fantasy_package",
+      rngSeed: 21,
+      settings: fantasySettings,
+    });
+    const teamCount = Object.keys(state.world.teams).length;
+    const pkg = makeFullRosterPackage({ teamCount, playersPerTeam: 8 });
+    const boot = bootstrapWorld(
+      state,
+      createSeededRng(state.meta.rngState),
+      pkg,
+    ).state;
+    const draft = boot.world.fantasyDraft;
+    expect(draft).not.toBeNull();
+    expect(draft?.picksPerTeam).toBe(DEFAULT_ROSTER_SIZE);
+    expect(draft?.totalPicks).toBe(teamCount * DEFAULT_ROSTER_SIZE);
+    expect(draft?.poolPlayerIds.length ?? 0).toBeGreaterThan(draft?.totalPicks ?? 0);
+    expect(
+      Object.values(boot.world.teams).every((team) => team.roster.length === 0),
+    ).toBe(true);
+    expect(
+      Object.values(boot.world.players).every((player) => player.teamId === null),
+    ).toBe(true);
+    const customCount = Object.keys(boot.world.players).filter((id) =>
+      id.startsWith("custom_"),
+    ).length;
+    const fillCount = Object.keys(boot.world.players).filter((id) =>
+      id.startsWith("fantasy_fill_"),
+    ).length;
+    expect(customCount).toBe(teamCount * 8);
+    expect(fillCount).toBeGreaterThan(0);
+    expect(Object.keys(boot.world.players).length).toBe(customCount + fillCount);
+    expect(Object.values(boot.world.teams)[0]?.name).toBe("Team 0");
+  });
 });

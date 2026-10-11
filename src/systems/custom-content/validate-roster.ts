@@ -1,5 +1,4 @@
 import { TRADE_ROSTER_RULES } from "@/systems/trades-config";
-import { DEFAULT_ROSTER_SIZE } from "@/systems/roster-generation-config";
 import {
   issue,
   validationResult,
@@ -254,15 +253,6 @@ export function validateRosterPayload(
           "payload.players",
           "roster_size_out_of_bounds",
           `Team "${sourceId}" roster size ${count} is outside ${TRADE_ROSTER_RULES.minRosterSize}–${TRADE_ROSTER_RULES.maxRosterSize}.`,
-        ),
-      );
-    } else if (count !== DEFAULT_ROSTER_SIZE) {
-      warnings.push(
-        issue(
-          "payload.players",
-          "roster_size_differs_from_default",
-          `Team "${sourceId}" roster size ${count} differs from the league default ${DEFAULT_ROSTER_SIZE}.`,
-          "warning",
         ),
       );
     }
