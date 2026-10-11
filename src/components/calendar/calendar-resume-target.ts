@@ -1,3 +1,5 @@
+import { isOwnerInterruptStopReason } from "@/systems/simulation/types";
+
 const STORAGE_PREFIX = "bball.calendarResumeTo.";
 
 function isIsoDate(value: string): boolean {
@@ -50,7 +52,7 @@ export function remainingSimulateTarget(input: {
   if (requested <= input.currentDate) {
     return null;
   }
-  if (input.stopReason !== "pending_owner_decision") {
+  if (!isOwnerInterruptStopReason(input.stopReason)) {
     return null;
   }
   return requested;

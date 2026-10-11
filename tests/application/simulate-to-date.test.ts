@@ -107,7 +107,10 @@ describe("simulate-to-date", () => {
     if (!result.ok) return;
     expect(result.simulation.stopReason).not.toBe("user_team_game");
     expect(result.simulation.stopReason).not.toBe("phase_change");
-    if (result.simulation.stopReason === "pending_owner_decision") {
+    if (
+      result.simulation.stopReason === "pending_owner_decision" ||
+      result.simulation.stopReason === "draft_clock"
+    ) {
       expect(result.simulation.currentDate > from).toBe(true);
       expect(result.simulation.currentDate <= target).toBe(true);
     } else {
@@ -134,7 +137,10 @@ describe("simulate-to-date", () => {
     if (!result.ok) return;
     expect(result.simulation.stopReason).not.toBe("user_team_game");
     expect(result.simulation.stopReason).not.toBe("phase_change");
-    if (result.simulation.stopReason === "pending_owner_decision") {
+    if (
+      result.simulation.stopReason === "pending_owner_decision" ||
+      result.simulation.stopReason === "draft_clock"
+    ) {
       expect(result.simulation.currentDate > from).toBe(true);
       expect(result.simulation.currentDate <= target).toBe(true);
     } else {

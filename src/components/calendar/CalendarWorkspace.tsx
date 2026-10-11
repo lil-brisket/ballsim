@@ -1,10 +1,20 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState, useTransition, useSyncExternalStore } from "react";
+import {
+  useEffect,
+  useMemo,
+  useReducer,
+  useRef,
+  useState,
+  useTransition,
+  useSyncExternalStore,
+} from "react";
 import { useRouter } from "next/navigation";
 import type { CalendarPageView } from "@/application/game-service";
+import { resolveCalendarTradeInterruptAction } from "@/application/actions";
 import type { SimulateToDateStreamEvent } from "@/application/simulate-to-date-stream";
 import type { SimulationProgress } from "@/systems/simulation/types";
+import { isOwnerInterruptStopReason } from "@/systems/simulation/types";
 import { CalendarMonthView } from "@/components/calendar/CalendarMonthView";
 import { DateInspector } from "@/components/calendar/DateInspector";
 import { CalendarLeagueContextPanel } from "@/components/calendar/CalendarLeagueContext";
@@ -18,6 +28,14 @@ import {
   remainingSimulateTarget,
   writeCalendarResumeTarget,
 } from "@/components/calendar/calendar-resume-target";
+import {
+  INITIAL_INTERRUPT_STATE,
+  interruptBannerVisible,
+  interruptModalOpen,
+  reduceInterruptState,
+  type InterruptResolveAction,
+} from "@/components/calendar/calendar-interrupt-state";
+import { OwnerDecisionInterruptModal } from "@/components/calendar/OwnerDecisionInterruptModal";
 import { useSimulationActivity } from "@/components/game/simulation-activity";
 import { SimulationProgressBanner } from "@/components/game/SimulationProgressBanner";
 import { Drawer } from "@/components/ui/Drawer";
@@ -102,6 +120,7 @@ export function CalendarWorkspace(props: {
   highlightCount: number;
   fromDate?: string | null;
   resumeTo?: string | null;
+  autoResume?: boolean;
 }) {
   const isDesktop = useIsDesktopCalendar();
   const router = useRouter();
@@ -131,6 +150,14 @@ export function CalendarWorkspace(props: {
   const drainingRef = useRef(false);
   const doneRef = useRef<Extract<SimulateToDateStreamEvent, { type: "done" }> | null>(
     null,
+  );
+  const [interruptState, dispatchInterrupt] = useReducer(
+    reduceInterruptState,
+    INITIAL_INTERRUPT_STATE,
+  );
+  const autoResumeFiredRef = useRef(false);
+  const handleSimulateRef = useRef<(targetDate: string) => Promise<void>>(
+    async () => undefined,
   );
 
   /* eslint-disable react-hooks/set-state-in-effect -- sync URL-driven view props and playback into local UI state */
@@ -282,12 +309,16 @@ export function CalendarWorkspace(props: {
       date: done.currentDate,
       resumeTo: remaining,
     });
-    const separator = href.includes("?") ? "&" : "?";
     startTransition(() => {
-      router.replace(
-        `${href}${separator}simSummary=1&daysAdvanced=${done.daysAdvanced}&highlights=${done.highlightCount}&fromDate=${done.fromDate}`,
-        { scroll: false },
-      );
+      if (isOwnerInterruptStopReason(done.stopReason)) {
+        router.replace(href, { scroll: false });
+      } else {
+        const separator = href.includes("?") ? "&" : "?";
+        router.replace(
+          `${href}${separator}simSummary=1&daysAdvanced=${done.daysAdvanced}&highlights=${done.highlightCount}&fromDate=${done.fromDate}`,
+          { scroll: false },
+        );
+      }
       router.refresh();
     });
   }
@@ -386,6 +417,87 @@ export function CalendarWorkspace(props: {
       );
     }
   }
+  handleSimulateRef.current = handleSimulate;
+
+  /* eslint-disable react-hooks/set-state-in-effect -- interrupt sync and leftover auto-resume */
+  useEffect(() => {
+    dispatchInterrupt({ type: "sync", interrupt: props.view.interrupt });
+  }, [props.view.interrupt]);
+
+  useEffect(() => {
+    if (interruptState.status !== "resuming") {
+      return;
+    }
+    const target = interruptState.resumeTo;
+    dispatchInterrupt({ type: "resume_started" });
+    void handleSimulateRef.current(target);
+  }, [interruptState]);
+
+  useEffect(() => {
+    if (!props.autoResume) {
+      return;
+    }
+    if (autoResumeFiredRef.current) {
+      return;
+    }
+    if (
+      props.view.timeDisabled ||
+      isPending ||
+      simulationPending ||
+      playback != null
+    ) {
+      return;
+    }
+    autoResumeFiredRef.current = true;
+    const { year, month } = parseCalendarDate(liveCurrentDate);
+    navigate(
+      { year, month, date: selectedDate, resumeTo: resumeTarget },
+      "replace",
+    );
+    if (resumeTarget) {
+      void handleSimulateRef.current(resumeTarget);
+    }
+  }, [
+    props.autoResume,
+    props.view.timeDisabled,
+    isPending,
+    simulationPending,
+    playback,
+    liveCurrentDate,
+    selectedDate,
+    resumeTarget,
+  ]);
+  /* eslint-enable react-hooks/set-state-in-effect */
+
+  async function resolveTradeInterrupt(action: InterruptResolveAction) {
+    if (
+      interruptState.status !== "interrupted" ||
+      interruptState.interrupt.kind !== "trade_offer"
+    ) {
+      return;
+    }
+    const decisionId = interruptState.interrupt.decisionId;
+    dispatchInterrupt({ type: "start_resolve", action });
+    const result = await resolveCalendarTradeInterruptAction(
+      props.saveId,
+      decisionId,
+      action,
+      resumeTarget,
+    );
+    if (!result.ok) {
+      dispatchInterrupt({ type: "resolve_error", error: result.error });
+      return;
+    }
+    if (result.resumeTo) {
+      writeCalendarResumeTarget(props.saveId, result.resumeTo);
+      setResumeTarget(result.resumeTo);
+    }
+    dispatchInterrupt({
+      type: "resolve_success",
+      interrupt: result.interrupt,
+      resumeTo: result.resumeTo,
+    });
+  }
 
   function clearResumeTarget() {
     writeCalendarResumeTarget(props.saveId, null);
@@ -442,12 +554,58 @@ export function CalendarWorkspace(props: {
         </p>
       ) : null}
 
-      <SimulationPausedBanner
-        reason={props.view.pauseBanner.reason}
-        message={props.view.pauseBanner.message}
-        resolveHref={props.view.pauseBanner.resolveHref}
-        currentDate={liveCurrentDate}
-      />
+      {interruptModalOpen(interruptState) &&
+      (interruptState.status === "interrupted" ||
+        interruptState.status === "resolving") ? (
+        <OwnerDecisionInterruptModal
+          interrupt={interruptState.interrupt}
+          resumeTo={resumeTarget}
+          busy={interruptState.status === "resolving"}
+          error={
+            interruptState.status === "interrupted" ? interruptState.error : null
+          }
+          onAccept={() => {
+            void resolveTradeInterrupt("accept");
+          }}
+          onDecline={() => {
+            void resolveTradeInterrupt("decline");
+          }}
+          onLetAiDecide={() => {
+            void resolveTradeInterrupt("let_ai_decide");
+          }}
+          onNegotiate={() => {
+            if (
+              interruptState.status !== "interrupted" ||
+              interruptState.interrupt.kind !== "trade_offer"
+            ) {
+              return;
+            }
+            const params = new URLSearchParams();
+            if (resumeTarget) {
+              params.set("resumeTo", resumeTarget);
+            }
+            const query = params.toString();
+            router.push(
+              `/dashboard/${props.saveId}/trades/${interruptState.interrupt.decisionId}/negotiate${query ? `?${query}` : ""}`,
+            );
+          }}
+          onStopSimulation={() => dispatchInterrupt({ type: "dismiss" })}
+        />
+      ) : null}
+
+      {!interruptModalOpen(interruptState) ? (
+        <SimulationPausedBanner
+          reason={props.view.pauseBanner.reason}
+          message={props.view.pauseBanner.message}
+          resolveHref={props.view.pauseBanner.resolveHref}
+          currentDate={liveCurrentDate}
+          onResolve={
+            interruptBannerVisible(interruptState) || props.view.interrupt
+              ? () => dispatchInterrupt({ type: "reopen" })
+              : undefined
+          }
+        />
+      ) : null}
 
       {resumeTarget && !props.view.timeDisabled && !busy ? (
         <div

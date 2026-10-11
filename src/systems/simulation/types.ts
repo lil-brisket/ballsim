@@ -23,8 +23,24 @@ export type AdvanceSimulationResult = {
   /** Whether the requested advance finished or paused early. */
   status: "completed" | "paused";
   /** Why the advance paused (omit when completed). */
-  stopReason?: "pending_owner_decision" | "phase_change" | "user_team_game";
+  stopReason?: SimulationStopReason;
 };
+
+export type SimulationStopReason =
+  | "pending_owner_decision"
+  | "draft_clock"
+  | "phase_change"
+  | "user_team_game";
+
+export type OwnerInterruptStopReason =
+  | "pending_owner_decision"
+  | "draft_clock";
+
+export function isOwnerInterruptStopReason(
+  reason: string | null | undefined,
+): reason is OwnerInterruptStopReason {
+  return reason === "pending_owner_decision" || reason === "draft_clock";
+}
 
 export type SimulationTeamGameProgress = {
   opponentAbbreviation: string;

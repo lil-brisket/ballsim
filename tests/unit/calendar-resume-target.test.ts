@@ -30,4 +30,14 @@ describe("remainingSimulateTarget", () => {
       }),
     ).toBeNull();
   });
+
+  it("keeps the leftover target for draft_clock", () => {
+    expect(
+      remainingSimulateTarget({
+        requestedTargetDate: "2026-10-15",
+        currentDate: "2026-10-03",
+        stopReason: "draft_clock",
+      }),
+    ).toBe("2026-10-15");
+  });
 });

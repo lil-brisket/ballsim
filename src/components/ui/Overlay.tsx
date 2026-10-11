@@ -8,18 +8,31 @@ export function Overlay(props: {
   children?: React.ReactNode;
   /** When true, overlay is invisible but still captures clicks (for drawer patterns). */
   transparent?: boolean;
+  /** When false, backdrop is not a close control and ESC is not handled here. */
+  dismissible?: boolean;
 }) {
+  const dismissible = props.dismissible !== false;
   return (
     <div className={cn("fixed inset-0 z-50", props.className)}>
-      <button
-        type="button"
-        aria-label="Close overlay"
-        className={cn(
-          "absolute inset-0",
-          props.transparent ? "bg-transparent" : "bg-black/60",
-        )}
-        onClick={props.onClick}
-      />
+      {dismissible ? (
+        <button
+          type="button"
+          aria-label="Close overlay"
+          className={cn(
+            "absolute inset-0",
+            props.transparent ? "bg-transparent" : "bg-black/60",
+          )}
+          onClick={props.onClick}
+        />
+      ) : (
+        <div
+          className={cn(
+            "absolute inset-0",
+            props.transparent ? "bg-transparent" : "bg-black/60",
+          )}
+          aria-hidden="true"
+        />
+      )}
       {props.children}
     </div>
   );

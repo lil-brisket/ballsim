@@ -4,6 +4,7 @@ import type { Rng } from "@/domain/rng";
 import type { TeamId } from "@/domain/ids";
 import { hasBlockingOwnerDecision } from "@/domain/entities/owner-decision";
 import { expireDatedTradeOffers } from "@/systems/owner-decisions/enqueue-trade-offer";
+import { shouldStopForDraftClock } from "@/systems/simulation/draft-clock-stop";
 import type { GameState } from "@/state/game-state";
 import { advanceCalendar } from "@/systems/calendar";
 import {
@@ -77,7 +78,11 @@ import { processWindowExpirations } from "@/systems/expire-transactions";
  * that changes `{ phase, offseasonStage, year, seasonSegment }`. Never bypasses lifecycle.
  *
  * After each completed day, stops if an active owner decision is pending
- * (e.g. incoming trade offer). Never interrupts mid-pipeline.
+ * (e.g. incoming trade offer) or the owned team is on the draft clock without
+ * pick assist. Never interrupts mid-pipeline. If the clock appears during a
+ * day's phase sync, that day still finishes (calendar already +1), then the
+ * after-day check pauses. A day that starts already on the clock is not
+ * simulated. Blocking trades take priority over draft clock.
  *
  * Callers must persist rng.getState() into meta.rngState after this runs.
  */
@@ -210,6 +215,18 @@ function createAdvanceSession(
         return false;
       }
 
+      // Trade-first: a queued blocking offer still runs one day then pauses
+      // (existing after-day behavior). Draft clock without a trade refuses
+      // to start the day so we do not advance while already on the clock.
+      if (
+        !hasBlockingOwnerDecision(current.user) &&
+        shouldStopForDraftClock(current)
+      ) {
+        stopReason = "draft_clock";
+        finished = true;
+        return false;
+      }
+
       const dayResult = advanceOneDay(current, rng, {
         profiler: options.profiler,
         allowOwnerManagedPhaseTransitions: allowOwnerManaged,
@@ -248,6 +265,12 @@ function createAdvanceSession(
 
       if (hasBlockingOwnerDecision(current.user)) {
         stopReason = "pending_owner_decision";
+        finished = true;
+        return false;
+      }
+
+      if (shouldStopForDraftClock(current)) {
+        stopReason = "draft_clock";
         finished = true;
         return false;
       }

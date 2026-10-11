@@ -1,4 +1,7 @@
-import type { SimulationProgress } from "@/systems/simulation/types";
+import type {
+  SimulationProgress,
+  SimulationStopReason,
+} from "@/systems/simulation/types";
 
 export type SimulateToDateProgressEvent = {
   type: "progress";
@@ -13,7 +16,7 @@ export type SimulateToDateDoneEvent = {
   toDate: string;
   currentDate: string;
   requestedTargetDate: string;
-  stopReason?: string;
+  stopReason?: SimulationStopReason;
 };
 
 export type SimulateToDateErrorEvent = {

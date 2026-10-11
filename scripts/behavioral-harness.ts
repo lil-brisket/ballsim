@@ -214,6 +214,12 @@ function advanceDays(state: GameState, rng: Rng, days: number): GameState {
     if (result.stopReason === "pending_owner_decision") {
       current = persistRng(declineBlockingDecisions(current), rng);
     }
+    if (result.stopReason === "draft_clock") {
+      idleSteps += 1;
+      if (idleSteps > 200) {
+        throw new Error("Behavioral harness: draft clock did not clear.");
+      }
+    }
   }
   return current;
 }

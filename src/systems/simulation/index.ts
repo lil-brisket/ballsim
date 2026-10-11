@@ -112,7 +112,11 @@ export type {
   AdvanceSimulationOptions,
   SimulationProgress,
   SimulationTeamGameProgress,
+  SimulationStopReason,
+  OwnerInterruptStopReason,
 } from "@/systems/simulation/types";
+export { isOwnerInterruptStopReason } from "@/systems/simulation/types";
+export { shouldStopForDraftClock } from "@/systems/simulation/draft-clock-stop";
 export {
   createSimulationProfiler,
   formatGameCostModel,

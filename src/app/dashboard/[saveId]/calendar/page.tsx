@@ -18,6 +18,7 @@ type CalendarPageProps = {
     fromDate?: string;
     focus?: string;
     resumeTo?: string;
+    autoResume?: string;
   }>;
 };
 
@@ -60,6 +61,7 @@ export default async function CalendarPage({
       showSimSummary && Number.isFinite(daysAdvanced) && daysAdvanced > 0
         ? daysAdvanced
         : undefined,
+    resumeTo: sp.resumeTo,
   });
   if (!view) {
     notFound();
@@ -83,7 +85,8 @@ export default async function CalendarPage({
         daysAdvanced={Number.isFinite(daysAdvanced) ? daysAdvanced : 0}
         highlightCount={Number.isFinite(highlightCount) ? highlightCount : 0}
         fromDate={sp.fromDate ?? null}
-        resumeTo={sp.resumeTo ?? null}
+        resumeTo={sp.resumeTo ?? view.resumeTo}
+        autoResume={sp.autoResume === "1"}
       />
     </>
   );

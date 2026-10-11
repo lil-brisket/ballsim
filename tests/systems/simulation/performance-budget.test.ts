@@ -111,7 +111,10 @@ describe("simulation performance budgets (soft)", () => {
     expect(elapsed).toBeLessThan(WEEK_SOFT_MS);
     // Trade offers may pause mid-week; still require meaningful progress.
     expect(result.daysAdvanced).toBeGreaterThanOrEqual(1);
-    if (result.stopReason !== "pending_owner_decision") {
+    if (
+      result.stopReason !== "pending_owner_decision" &&
+      result.stopReason !== "draft_clock"
+    ) {
       expect(result.daysAdvanced).toBe(7);
     }
   }, 60_000);

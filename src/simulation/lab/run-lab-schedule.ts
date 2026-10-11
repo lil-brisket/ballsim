@@ -320,6 +320,15 @@ export function runLabSchedule(
       }
     }
 
+    if (result.stopReason === "draft_clock") {
+      idleSteps += 1;
+      if (idleSteps > 200) {
+        throw new Error("runLabSchedule: draft clock did not clear.");
+      }
+      state = persistRng(autoPickUserDraft(state), rng);
+      state = persistRng(runAiTeamDecisions(state, rng).state, rng);
+    }
+
     if (state.competition.season.phase === "regular") {
       sawRegular = true;
     }

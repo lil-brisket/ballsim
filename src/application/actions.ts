@@ -28,6 +28,8 @@ import {
   acceptOwnerDecision,
   declineOwnerDecision,
   delegateOwnerDecisionToAi,
+  resolveCalendarTradeInterrupt,
+  calendarHrefAfterOwnerMutation,
   fireOwnerStaff,
   hireOwnerStaff,
   renewOwnerStaffContract,
@@ -635,6 +637,26 @@ export async function askAiOwnerDecisionAction(
   redirect(path);
 }
 
+export async function resolveCalendarTradeInterruptAction(
+  saveId: string,
+  decisionId: string,
+  mode: "accept" | "decline" | "let_ai_decide",
+  resumeTo: string | null,
+): Promise<
+  import("@/application/game-service").ResolveCalendarInterruptResult
+> {
+  const result = await resolveCalendarTradeInterrupt(
+    saveId,
+    decisionId,
+    mode,
+    resumeTo,
+  );
+  if (result.ok) {
+    revalidateOwner(saveId);
+  }
+  return result;
+}
+
 export async function submitTradeCounterofferAction(
   formData: FormData,
 ): Promise<void> {
@@ -667,7 +689,13 @@ export async function submitTradeCounterofferAction(
     redirectWithError(path, result.error);
   }
   revalidateOwner(saveId);
-  redirect(path);
+  const resumeToRaw = String(formData.get("resumeTo") ?? "");
+  const calendarHref = await calendarHrefAfterOwnerMutation(
+    saveId,
+    resumeToRaw || null,
+    { autoResumeIfClear: true },
+  );
+  redirect(calendarHref ?? path);
 }
 
 export async function executeTradeAction(formData: FormData): Promise<void> {
@@ -852,7 +880,13 @@ export async function draftProspectAction(formData: FormData): Promise<void> {
     redirectWithError(path, result.error);
   }
   revalidateOwner(saveId);
-  redirect(path);
+  const resumeToRaw = String(formData.get("resumeTo") ?? "");
+  const calendarHref = await calendarHrefAfterOwnerMutation(
+    saveId,
+    resumeToRaw || null,
+    { autoResumeIfClear: true },
+  );
+  redirect(calendarHref ?? path);
 }
 
 export async function assignScoutAction(formData: FormData): Promise<void> {

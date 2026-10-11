@@ -22,6 +22,8 @@ export function SimulationPausedBanner(props: {
   /** Optional structured reasons when available from summary/attention. */
   reasons?: SimulationPauseReasonItem[];
   continueHref?: string | null;
+  /** When set, the primary button re-opens the in-place interrupt instead of navigating. */
+  onResolve?: () => void;
 }) {
   if (!props.reason || !props.message) {
     return null;
@@ -94,7 +96,15 @@ export function SimulationPausedBanner(props: {
       </ul>
 
       <div className="flex flex-wrap gap-2">
-        {props.resolveHref ? (
+        {props.onResolve ? (
+          <button
+            type="button"
+            onClick={props.onResolve}
+            className="rounded-md bg-amber-600 px-4 py-2 text-sm font-medium text-zinc-950 hover:bg-amber-500"
+          >
+            {props.reason === "draft_clock" ? "Open Draft" : "Resolve Decision"}
+          </button>
+        ) : props.resolveHref ? (
           <Link
             href={props.resolveHref}
             className="rounded-md bg-amber-600 px-4 py-2 text-sm font-medium text-zinc-950 hover:bg-amber-500"

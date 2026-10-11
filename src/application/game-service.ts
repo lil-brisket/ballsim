@@ -353,6 +353,12 @@ import {
 } from "@/systems/simulation/management-policy";
 import { resolveSimulationPhaseKey } from "@/systems/simulation/simulation-phase";
 import type { AdvanceSimulationResult } from "@/systems/simulation/types";
+import { shouldStopForDraftClock } from "@/systems/simulation/draft-clock-stop";
+import {
+  buildCalendarInterrupt,
+  remainingResumeTo,
+  type CalendarInterrupt,
+} from "@/state/calendar-interrupt";
 import {
   addToTradeBlock,
   evaluateTradeOffer,
@@ -1124,6 +1130,8 @@ export type CalendarPageView = {
     message: string | null;
     resolveHref: string | null;
   };
+  interrupt: CalendarInterrupt | null;
+  resumeTo: string | null;
   simulationSummary:
     import("@/systems/calendar/simulation-summary").SimulationSummary | null;
 };
@@ -1135,6 +1143,7 @@ export type LoadCalendarPageViewOptions = {
   /** When set with daysAdvanced, rebuilds a team-first simulation summary. */
   simulationFromDate?: string;
   daysAdvanced?: number;
+  resumeTo?: string | null;
 };
 
 /**
@@ -1289,6 +1298,8 @@ export async function loadCalendarPageView(
             })(),
           }
         : { reason: null, message: null, resolveHref: null },
+    interrupt: buildCalendarInterrupt(state, saveId),
+    resumeTo: remainingResumeTo(currentDate, options.resumeTo),
     simulationSummary: (() => {
       const daysAdvanced = options.daysAdvanced;
       if (
@@ -1881,10 +1892,7 @@ export async function advanceOwnerTime(
       }
 
       if (isUserOnDraftClock(workingState)) {
-        const franchiseAssist = getOwnedFranchiseAssistance(workingState);
-        if (
-          !canAiExecute(workingState.settings, "DRAFT_PICK", franchiseAssist)
-        ) {
+        if (shouldStopForDraftClock(workingState)) {
           return fail(
             "Cannot advance time while your team is on the draft clock. Make a draft selection first.",
           );
@@ -1897,7 +1905,10 @@ export async function advanceOwnerTime(
           workingState = continuity.state;
           rngState = rngDraft.getState();
           preEvents.push(...continuity.events);
-          if (isUserOnDraftClock(workingState)) {
+          if (
+            shouldStopForDraftClock(workingState) ||
+            isUserOnDraftClock(workingState)
+          ) {
             return fail(
               "Cannot advance time while your team is on the draft clock. Make a draft selection first.",
             );
@@ -2326,6 +2337,75 @@ export async function delegateOwnerDecisionToAi(
     "owner_ai",
     store,
   );
+}
+
+export type ResolveCalendarInterruptResult =
+  | { ok: true; interrupt: CalendarInterrupt | null; resumeTo: string | null }
+  | { ok: false; error: string };
+
+/**
+ * Resolve a Calendar trade interrupt and return the next interrupt (if any)
+ * plus the leftover resume target. Idempotent when the decision is already
+ * in history.
+ */
+export async function resolveCalendarTradeInterrupt(
+  saveId: string,
+  decisionId: string,
+  mode: "accept" | "decline" | "let_ai_decide",
+  resumeTo: string | null,
+  store?: SaveGameStore,
+): Promise<ResolveCalendarInterruptResult> {
+  const result =
+    mode === "accept"
+      ? await acceptOwnerDecision(saveId, decisionId, store)
+      : mode === "decline"
+        ? await declineOwnerDecision(saveId, decisionId, store)
+        : await delegateOwnerDecisionToAi(saveId, decisionId, store);
+  if (!result.ok) {
+    return { ok: false, error: result.error };
+  }
+  const loaded = await getStore(store).load(saveId);
+  if (!loaded) {
+    return { ok: false, error: "Save not found." };
+  }
+  return {
+    ok: true,
+    interrupt: buildCalendarInterrupt(loaded.state, saveId),
+    resumeTo: remainingResumeTo(
+      loaded.state.world.calendar.currentDate,
+      resumeTo,
+    ),
+  };
+}
+
+/** Calendar href after a mutation that may still leave an interrupt pending. */
+export async function calendarHrefAfterOwnerMutation(
+  saveId: string,
+  resumeTo: string | null,
+  options: { autoResumeIfClear: boolean },
+  store?: SaveGameStore,
+): Promise<string | null> {
+  if (!resumeTo || !/^\d{4}-\d{2}-\d{2}$/.test(resumeTo)) {
+    return null;
+  }
+  const loaded = await getStore(store).load(saveId);
+  if (!loaded) {
+    return null;
+  }
+  const leftover = remainingResumeTo(
+    loaded.state.world.calendar.currentDate,
+    resumeTo,
+  );
+  const params = new URLSearchParams();
+  if (leftover) {
+    params.set("resumeTo", leftover);
+  }
+  const interrupt = buildCalendarInterrupt(loaded.state, saveId);
+  if (options.autoResumeIfClear && leftover && interrupt == null) {
+    params.set("autoResume", "1");
+  }
+  const query = params.toString();
+  return `/dashboard/${saveId}/calendar${query ? `?${query}` : ""}`;
 }
 
 async function resolveOwnerTradeDecision(

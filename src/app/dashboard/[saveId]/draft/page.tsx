@@ -35,7 +35,7 @@ import { toScoutingReportView } from "@/systems/scouting/scouting-reports";
 
 type DraftPageProps = {
   params: Promise<{ saveId: string }>;
-  searchParams: Promise<{ error?: string }>;
+  searchParams: Promise<{ error?: string; resumeTo?: string }>;
 };
 
 export default async function DraftPage({
@@ -43,13 +43,16 @@ export default async function DraftPage({
   searchParams,
 }: DraftPageProps) {
   const { saveId } = await params;
-  const { error } = await searchParams;
+  const { error, resumeTo } = await searchParams;
   const view = await loadOwnerSaveView(saveId);
   if (!view) {
     notFound();
   }
 
   const returnPath = `/dashboard/${saveId}/draft`;
+  const pickReturnPath = resumeTo
+    ? `/dashboard/${saveId}/calendar?resumeTo=${encodeURIComponent(resumeTo)}`
+    : returnPath;
   const board = view.draftBoard;
   const loaded = await prismaSaveGameStore.load(saveId);
   const state = loaded?.state;
@@ -308,8 +311,15 @@ export default async function DraftPage({
                               <input
                                 type="hidden"
                                 name="returnPath"
-                                value={returnPath}
+                                value={pickReturnPath}
                               />
+                              {resumeTo ? (
+                                <input
+                                  type="hidden"
+                                  name="resumeTo"
+                                  value={resumeTo}
+                                />
+                              ) : null}
                               <button
                                 type="submit"
                                 className="text-xs font-medium text-amber-400 hover:underline"

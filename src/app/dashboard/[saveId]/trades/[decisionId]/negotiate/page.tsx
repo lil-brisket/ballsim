@@ -7,6 +7,7 @@ import { asDraftPickId, asPlayerId, asTeamId } from "@/domain/ids";
 
 type PageProps = {
   params: Promise<{ saveId: string; decisionId: string }>;
+  searchParams: Promise<{ resumeTo?: string }>;
 };
 
 /**
@@ -14,6 +15,7 @@ type PageProps = {
  */
 export default async function TradeNegotiatePage(props: PageProps) {
   const { saveId, decisionId } = await props.params;
+  const { resumeTo } = await props.searchParams;
   const loaded = await prismaSaveGameStore.load(saveId);
   if (!loaded) notFound();
   const state = loaded.state;
@@ -41,7 +43,9 @@ export default async function TradeNegotiatePage(props: PageProps) {
     (pick) => pick.ownerTeamId === userTeamId && pick.status === "available",
   );
 
-  const returnPath = `/dashboard/${saveId}/trades/${decisionId}`;
+  const returnPath = resumeTo
+    ? `/dashboard/${saveId}/calendar?resumeTo=${encodeURIComponent(resumeTo)}`
+    : `/dashboard/${saveId}/trades/${decisionId}`;
 
   return (
     <div className="mx-auto max-w-3xl space-y-6 px-4 py-6 text-sm text-zinc-200">
@@ -81,7 +85,10 @@ export default async function TradeNegotiatePage(props: PageProps) {
       <form action={submitTradeCounterofferAction} className="space-y-4">
         <input type="hidden" name="saveId" value={saveId} />
         <input type="hidden" name="decisionId" value={decisionId} />
-        <input type="hidden" name="returnPath" value={`/dashboard/${saveId}`} />
+        <input type="hidden" name="returnPath" value={returnPath} />
+        {resumeTo ? (
+          <input type="hidden" name="resumeTo" value={resumeTo} />
+        ) : null}
         <input type="hidden" name="offeringTeamId" value={offeringTeamId} />
         <input type="hidden" name="userTeamId" value={userTeamId} />
         {cpuSide.playerIds.map((id) => (

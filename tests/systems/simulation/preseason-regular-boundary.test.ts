@@ -134,7 +134,10 @@ describe("preseason → regular phase-boundary simulation", () => {
     expect(result.simulation.stopReason).not.toBe("phase_change");
     expect(result.simulation.stopReason).not.toBe("user_team_game");
     expect(result.simulation.gamesSimulated).toBeGreaterThan(0);
-    if (result.simulation.stopReason === "pending_owner_decision") {
+    if (
+      result.simulation.stopReason === "pending_owner_decision" ||
+      result.simulation.stopReason === "draft_clock"
+    ) {
       expect(result.simulation.currentDate > from).toBe(true);
       expect(result.simulation.currentDate <= target).toBe(true);
     } else {

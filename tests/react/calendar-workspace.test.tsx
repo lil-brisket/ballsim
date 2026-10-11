@@ -3,15 +3,21 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { asTeamId } from "@/domain/ids";
 
 vi.mock("server-only", () => ({}));
-vi.mock("@/application/actions", () => ({
-  simulateToDateAction: vi.fn(),
-}));
 
 const push = vi.fn();
 const replace = vi.fn();
 const refresh = vi.fn();
 const streamMocks = vi.hoisted(() => ({
   streamSimulateToDate: vi.fn(),
+}));
+const actionMocks = vi.hoisted(() => ({
+  resolveCalendarTradeInterruptAction: vi.fn(),
+}));
+
+vi.mock("@/application/actions", () => ({
+  simulateToDateAction: vi.fn(),
+  resolveCalendarTradeInterruptAction:
+    actionMocks.resolveCalendarTradeInterruptAction,
 }));
 
 vi.mock("next/navigation", () => ({
@@ -153,6 +159,8 @@ function makeView(overrides: Partial<CalendarPageView> = {}): CalendarPageView {
       message: null,
       resolveHref: null,
     },
+    interrupt: null,
+    resumeTo: null,
     simulationSummary: null,
     ...overrides,
   };
@@ -543,6 +551,315 @@ describe("CalendarWorkspace redesign", () => {
     expect(
       screen.getByRole("button", { name: /Continue to 2026-10-01/ }),
     ).toBeTruthy();
+    unmount();
+  });
+});
+
+const tradeReview = {
+  decisionId: "od_1",
+  offeringTeamName: "Boston Celtics",
+  receivingTeamName: "Toronto Hawks",
+  motivationLabel: "Looking for help at SF",
+  youReceive: [
+    {
+      id: "p1",
+      kind: "player" as const,
+      name: "Wei Bright",
+      detail: "C · OVR 59",
+      href: null,
+    },
+  ],
+  youSend: [
+    {
+      id: "p2",
+      kind: "player" as const,
+      name: "OG Anunoby",
+      detail: "SF · OVR 84",
+      href: null,
+    },
+  ],
+  recommendation: "favor_send" as const,
+  netValue: -52,
+  reasons: ["Trade favors the other side on asset value"],
+  rosterFitPct: 61,
+  strategicFitPct: 50,
+  financialPct: 75,
+  rosterImpact: [],
+  bothSidesOwned: false,
+};
+
+function interruptView(): CalendarPageView {
+  return makeView({
+    timeDisabled: true,
+    timeDisabledFlags: {
+      userOnDraftClock: false,
+      seasonReviewPending: false,
+      pendingOwnerDecision: true,
+    },
+    pauseBanner: {
+      reason: "owner_decision",
+      message: "Simulation paused — a required owner decision must be resolved.",
+      resolveHref: "/dashboard/save_cal/trades/od_1",
+    },
+    interrupt: {
+      kind: "trade_offer",
+      decisionId: "od_1",
+      review: tradeReview,
+    },
+    resumeTo: "2026-10-01",
+  });
+}
+
+describe("CalendarWorkspace in-sim interrupt", () => {
+  it("opens the trade interrupt dialog from view.interrupt", () => {
+    const { unmount } = render(
+      <SimulationActivityProvider>
+        <CalendarWorkspace
+          view={interruptView()}
+          saveId="save_cal"
+          showSimSummary={false}
+          daysAdvanced={0}
+          highlightCount={0}
+          resumeTo="2026-10-01"
+        />
+      </SimulationActivityProvider>,
+    );
+    expect(screen.getByRole("dialog")).toBeTruthy();
+    expect(screen.queryByLabelText("Close overlay")).toBeNull();
+    expect(screen.getByText(/Boston Celtics → Toronto Hawks/)).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Accept" })).toBeTruthy();
+    unmount();
+  });
+
+  it("Stop simulation closes the modal, keeps the pause banner, and does not sim", () => {
+    streamMocks.streamSimulateToDate.mockClear();
+    const { unmount } = render(
+      <SimulationActivityProvider>
+        <CalendarWorkspace
+          view={interruptView()}
+          saveId="save_cal"
+          showSimSummary={false}
+          daysAdvanced={0}
+          highlightCount={0}
+          resumeTo="2026-10-01"
+        />
+      </SimulationActivityProvider>,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Stop simulation" }));
+    expect(screen.queryByRole("button", { name: "Accept" })).toBeNull();
+    expect(screen.getByRole("status").textContent).toMatch(/Simulation paused/i);
+    expect(screen.getByRole("button", { name: "Resolve Decision" })).toBeTruthy();
+    expect(streamMocks.streamSimulateToDate).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole("button", { name: "Resolve Decision" }));
+    expect(screen.getByRole("button", { name: "Accept" })).toBeTruthy();
+    unmount();
+  });
+
+  it("Accept/Decline double-click does not double-resume", async () => {
+    streamMocks.streamSimulateToDate.mockClear();
+    streamMocks.streamSimulateToDate.mockResolvedValue(undefined);
+    actionMocks.resolveCalendarTradeInterruptAction.mockClear();
+    let release: ((value: unknown) => void) | undefined;
+    actionMocks.resolveCalendarTradeInterruptAction.mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          release = resolve;
+        }),
+    );
+    const { unmount } = render(
+      <SimulationActivityProvider>
+        <CalendarWorkspace
+          view={interruptView()}
+          saveId="save_cal"
+          showSimSummary={false}
+          daysAdvanced={0}
+          highlightCount={0}
+          resumeTo="2026-10-01"
+        />
+      </SimulationActivityProvider>,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Accept" }));
+    fireEvent.click(screen.getByRole("button", { name: "Accept" }));
+    expect(actionMocks.resolveCalendarTradeInterruptAction).toHaveBeenCalledTimes(
+      1,
+    );
+    release?.({ ok: true, interrupt: null, resumeTo: "2026-10-01" });
+    await waitFor(() => {
+      expect(streamMocks.streamSimulateToDate).toHaveBeenCalledTimes(1);
+    });
+    expect(streamMocks.streamSimulateToDate).toHaveBeenCalledWith(
+      "save_cal",
+      "2026-10-01",
+      expect.any(Function),
+    );
+    unmount();
+  });
+
+  it("Let AI decide closes the modal and resumes", async () => {
+    streamMocks.streamSimulateToDate.mockClear();
+    streamMocks.streamSimulateToDate.mockResolvedValue(undefined);
+    actionMocks.resolveCalendarTradeInterruptAction.mockReset();
+    actionMocks.resolveCalendarTradeInterruptAction.mockResolvedValue({
+      ok: true,
+      interrupt: null,
+      resumeTo: "2026-10-01",
+    });
+    const { unmount } = render(
+      <SimulationActivityProvider>
+        <CalendarWorkspace
+          view={interruptView()}
+          saveId="save_cal"
+          showSimSummary={false}
+          daysAdvanced={0}
+          highlightCount={0}
+          resumeTo="2026-10-01"
+        />
+      </SimulationActivityProvider>,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Let AI decide" }));
+    await waitFor(() => {
+      expect(streamMocks.streamSimulateToDate).toHaveBeenCalledTimes(1);
+    });
+    expect(actionMocks.resolveCalendarTradeInterruptAction).toHaveBeenCalledWith(
+      "save_cal",
+      "od_1",
+      "let_ai_decide",
+      "2026-10-01",
+    );
+    unmount();
+  });
+
+  it("keeps the modal open and shows an error when the action fails", async () => {
+    streamMocks.streamSimulateToDate.mockClear();
+    actionMocks.resolveCalendarTradeInterruptAction.mockReset();
+    actionMocks.resolveCalendarTradeInterruptAction.mockResolvedValue({
+      ok: false,
+      error: "Trade validation failed.",
+    });
+    const { unmount } = render(
+      <SimulationActivityProvider>
+        <CalendarWorkspace
+          view={interruptView()}
+          saveId="save_cal"
+          showSimSummary={false}
+          daysAdvanced={0}
+          highlightCount={0}
+          resumeTo="2026-10-01"
+        />
+      </SimulationActivityProvider>,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Decline" }));
+    await waitFor(() => {
+      expect(screen.getByRole("alert").textContent).toMatch(
+        /Trade validation failed/,
+      );
+    });
+    expect(screen.getByRole("button", { name: "Decline" })).toBeTruthy();
+    expect(streamMocks.streamSimulateToDate).not.toHaveBeenCalled();
+    unmount();
+  });
+
+  it("autoResume fires once and clears the URL param", async () => {
+    streamMocks.streamSimulateToDate.mockClear();
+    streamMocks.streamSimulateToDate.mockResolvedValue(undefined);
+    replace.mockClear();
+    const { unmount } = render(
+      <SimulationActivityProvider>
+        <CalendarWorkspace
+          view={makeView()}
+          saveId="save_cal"
+          showSimSummary={false}
+          daysAdvanced={0}
+          highlightCount={0}
+          resumeTo="2026-10-01"
+          autoResume
+        />
+      </SimulationActivityProvider>,
+    );
+    await waitFor(() => {
+      expect(streamMocks.streamSimulateToDate).toHaveBeenCalledTimes(1);
+    });
+    expect(replace).toHaveBeenCalled();
+    const href = String(replace.mock.calls[0]?.[0] ?? "");
+    expect(href).not.toMatch(/autoResume=/);
+    unmount();
+  });
+
+  it("does not open SimulationSummaryModal on an interrupt stop", async () => {
+    streamMocks.streamSimulateToDate.mockImplementation(
+      async (_saveId, _target, onEvent) => {
+        onEvent({
+          type: "done",
+          ok: true,
+          daysAdvanced: 2,
+          highlightCount: 1,
+          fromDate: "2026-09-13",
+          toDate: "2026-09-15",
+          currentDate: "2026-09-15",
+          requestedTargetDate: "2026-10-01",
+          stopReason: "pending_owner_decision",
+        });
+      },
+    );
+    replace.mockClear();
+    const { unmount } = render(
+      <SimulationActivityProvider>
+        <CalendarWorkspace
+          view={makeView()}
+          saveId="save_cal"
+          showSimSummary={false}
+          daysAdvanced={0}
+          highlightCount={0}
+        />
+      </SimulationActivityProvider>,
+    );
+    fireEvent.click(screen.getByRole("button", { name: /Next Game →/ }));
+    fireEvent.click(screen.getByRole("button", { name: /Simulate to date/i }));
+    await waitFor(() => {
+      expect(replace).toHaveBeenCalled();
+    });
+    const href = String(replace.mock.calls.at(-1)?.[0] ?? "");
+    expect(href).not.toMatch(/simSummary=1/);
+    expect(screen.queryByText(/days advanced/i)).toBeNull();
+    unmount();
+  });
+
+  it("opens SimulationSummaryModal after a completed resume with no interrupt", async () => {
+    streamMocks.streamSimulateToDate.mockImplementation(
+      async (_saveId, _target, onEvent) => {
+        onEvent({
+          type: "done",
+          ok: true,
+          daysAdvanced: 16,
+          highlightCount: 3,
+          fromDate: "2026-09-15",
+          toDate: "2026-10-01",
+          currentDate: "2026-10-01",
+          requestedTargetDate: "2026-10-01",
+        });
+      },
+    );
+    replace.mockClear();
+    const { unmount } = render(
+      <SimulationActivityProvider>
+        <CalendarWorkspace
+          view={makeView()}
+          saveId="save_cal"
+          showSimSummary={false}
+          daysAdvanced={0}
+          highlightCount={0}
+          resumeTo="2026-10-01"
+        />
+      </SimulationActivityProvider>,
+    );
+    fireEvent.click(
+      screen.getByRole("button", { name: /Continue to 2026-10-01/ }),
+    );
+    await waitFor(() => {
+      expect(replace).toHaveBeenCalled();
+    });
+    const href = String(replace.mock.calls.at(-1)?.[0] ?? "");
+    expect(href).toMatch(/simSummary=1/);
     unmount();
   });
 });

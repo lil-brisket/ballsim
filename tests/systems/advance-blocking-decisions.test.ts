@@ -13,22 +13,32 @@ vi.mock("@/persistence/save-game-repository", () => ({
 }));
 
 import { advanceOwnerTime } from "@/application/game-service";
+import { applyPreset } from "@/domain/ai-management-presets";
 import { CBL_GAME_SETTINGS } from "@/domain/game-settings";
+import {
+  createDraftOrderSlot,
+  createEmptyDraftClass,
+  draftClassIdFor,
+} from "@/domain/entities/draft";
 import {
   type PendingOwnerDecision,
   buildTradeOfferPayload,
 } from "@/domain/entities/owner-decision";
 import { createSeededRng } from "@/domain/rng";
-import { asOwnerDecisionId, asTeamId } from "@/domain/ids";
+import { asDraftPickId, asOwnerDecisionId, asTeamId } from "@/domain/ids";
 import { createMemorySaveGameStore } from "@/persistence/memory-save-game-store";
 import { createInitialGameState } from "@/state/create-initial-state";
 import {
   withActiveOwnerTeam,
   withAddedOwnedFranchise,
+  withOwnedFranchise,
 } from "@/state/owner-context";
 import { createDefaultOwnedFranchiseState } from "@/state/owned-franchise-state";
+import { draftYearForSeason } from "@/systems/draft";
+import { setActivePhase } from "@/systems/phase-engine";
 import { bootstrapWorld } from "@/systems/world-pipeline";
 import { advanceSimulation } from "@/systems/simulation/advance-simulation";
+import { remainingSimulateTarget } from "@/components/calendar/calendar-resume-target";
 
 function stubBlockingDecision(
   primaryTeamId: ReturnType<typeof asTeamId>,
@@ -181,5 +191,121 @@ describe("advance blocking decisions", () => {
     );
     expect(result.error).toMatch(/resolve the pending owner decision/i);
     expect(result.error).toMatch(/switch to/i);
+  });
+});
+
+function withOwnedTeamOnDraftClock(
+  state: ReturnType<typeof multiOwnedState>["state"],
+  ownerTeamId: ReturnType<typeof asTeamId>,
+  draftSelection: "off" | "full",
+) {
+  let next = setActivePhase(state, "offseason.draft");
+  const draftYear = draftYearForSeason(next.competition.season.year);
+  const draftClassId = draftClassIdFor(draftYear);
+  const draft = {
+    ...createEmptyDraftClass({ id: draftClassId, seasonYear: draftYear }),
+    status: "active" as const,
+    order: [
+      createDraftOrderSlot({
+        draftPickId: asDraftPickId("dp_clock_test"),
+        overallPick: 7,
+        round: 1,
+        ownerTeamId,
+        status: "available",
+      }),
+    ],
+  };
+  next = {
+    ...next,
+    world: {
+      ...next.world,
+      drafts: { ...next.world.drafts, [draftClassId]: draft },
+    },
+  };
+  const preset = draftSelection === "full" ? "full_management" : "off";
+  return withOwnedFranchise(next, ownerTeamId, (franchise) => ({
+    ...franchise,
+    managementPreset: preset,
+    aiAssistance: {
+      ...applyPreset(preset),
+      draftSelection,
+    },
+  }));
+}
+
+describe("advance draft clock stop", () => {
+  it("does not simulate a day already on the clock without assist", () => {
+    const { state, primary } = multiOwnedState();
+    const onClock = withOwnedTeamOnDraftClock(state, primary, "off");
+    const currentDate = onClock.world.calendar.currentDate;
+
+    const result = advanceSimulation(
+      onClock,
+      createSeededRng(onClock.meta.rngState),
+      { days: 5 },
+    );
+    expect(result.status).toBe("paused");
+    expect(result.stopReason).toBe("draft_clock");
+    expect(result.daysAdvanced).toBe(0);
+    expect(result.state.world.calendar.currentDate).toBe(currentDate);
+  });
+
+  it("does not stop for draft clock when pick assist can execute", () => {
+    const { state, primary } = multiOwnedState();
+    const onClock = withOwnedTeamOnDraftClock(state, primary, "full");
+
+    const result = advanceSimulation(
+      onClock,
+      createSeededRng(onClock.meta.rngState),
+      { days: 2 },
+    );
+    expect(result.stopReason).not.toBe("draft_clock");
+  });
+
+  it("prefers a blocking trade over draft clock when both are active", () => {
+    const { state, primary, secondary } = multiOwnedState();
+    const onClock = withOwnedTeamOnDraftClock(state, primary, "off");
+    const decision = stubBlockingDecision(
+      primary,
+      [primary, secondary],
+      "blocking",
+    );
+    const both = {
+      ...onClock,
+      user: {
+        ...onClock.user,
+        pendingOwnerDecisions: [decision],
+      },
+    };
+
+    const result = advanceSimulation(
+      both,
+      createSeededRng(both.meta.rngState),
+      { days: 5 },
+    );
+    expect(result.stopReason).toBe("pending_owner_decision");
+    expect(result.daysAdvanced).toBe(1);
+  });
+});
+
+describe("remainingSimulateTarget interrupt stops", () => {
+  it("keeps the leftover target for draft_clock", () => {
+    expect(
+      remainingSimulateTarget({
+        requestedTargetDate: "2026-10-15",
+        currentDate: "2026-10-03",
+        stopReason: "draft_clock",
+      }),
+    ).toBe("2026-10-15");
+  });
+
+  it("does not clear the leftover while an interrupt is still short of the target", () => {
+    expect(
+      remainingSimulateTarget({
+        requestedTargetDate: "2026-10-15",
+        currentDate: "2026-10-14",
+        stopReason: "pending_owner_decision",
+      }),
+    ).toBe("2026-10-15");
   });
 });
