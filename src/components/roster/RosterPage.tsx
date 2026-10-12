@@ -11,6 +11,7 @@ import { RosterManagementTable } from "@/components/roster/RosterManagementTable
 import { RosterNeeds } from "@/components/roster/RosterNeeds";
 import { TradeBlockRosterView } from "@/components/roster/TradeBlockView";
 import { TradeFinderView } from "@/components/roster/TradeFinderView";
+import { SectionHeading } from "@/components/ui/SectionHeading";
 import { cn, focusRingClass } from "@/components/ui/styles";
 
 export type RosterManagementTab =
@@ -74,8 +75,8 @@ export function RosterPage(props: { view: RosterPageView }) {
               "rounded-md px-3 py-1.5 text-sm",
               focusRingClass,
               tab === entry.id
-                ? "bg-amber-600/20 text-amber-300"
-                : "border border-zinc-700 text-zinc-400 hover:border-zinc-500",
+                ? "bg-team font-semibold text-on-team"
+                : "border border-surface-line text-zinc-300 hover:border-team-ink",
             )}
           >
             {entry.label}
@@ -91,13 +92,11 @@ export function RosterPage(props: { view: RosterPageView }) {
           ) : (
             <section aria-label="Roster table" className="space-y-3">
               <div className="flex flex-wrap items-center justify-between gap-2">
-                <h2 className="font-mono text-[0.65rem] uppercase tracking-[0.16em] text-zinc-500">
-                  Roster
-                </h2>
-                <p className="text-xs text-zinc-600">
+                <SectionHeading as="h2" title="Roster" />
+                <p className="text-xs text-zinc-400">
                   <Link
                     href={view.lineupHref}
-                    className="text-amber-400 hover:text-amber-300"
+                    className="text-team-ink hover:underline"
                   >
                     Edit lineup &amp; rotation
                   </Link>

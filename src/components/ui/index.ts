@@ -18,6 +18,7 @@ export {
   type ScoreNumeralSize,
   type ScoreNumeralTone,
 } from "@/components/ui/ScoreNumeral";
+export { RatingBars, type RatingBarItem } from "@/components/ui/RatingBars";
 export { Section } from "@/components/ui/Section";
 export { SectionHeading } from "@/components/ui/SectionHeading";
 export { StatCard } from "@/components/ui/StatCard";

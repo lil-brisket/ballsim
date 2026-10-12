@@ -34,6 +34,10 @@
   --live: #f43f5e;
   --warning: #f59e0b;
 
+  /* Rating tier (set per element via data-tier, see rating-tier.ts). */
+  --tier: #a1a1aa;
+  --tier-rgb: 161 161 170;
+
   /* Glow / shadow. */
   --shadow-arena: 0 10px 30px -12px rgb(0 0 0 / 0.8);
   --glow-team:
@@ -55,6 +59,7 @@
   --color-surface-arena: var(--surface-arena);
   --color-surface-raised: var(--surface-raised);
   --color-surface-line: var(--surface-line);
+  --color-tier: var(--tier);
   --color-win: var(--win);
   --color-loss: var(--loss);
   --color-live: var(--live);
@@ -438,4 +443,34 @@ body {
   box-shadow:
     inset 3px 0 0 var(--team-ink),
     0 0 18px -10px rgb(var(--team-ink-rgb) / 0.9);
+}
+
+/*
+ * Rating tiers: colour by overall band. Put data-tier on an ancestor (see
+ * ratingTier() in src/presentation/rating-tier.ts) and use text-tier /
+ * border-tier / bg-tier. Bands are chosen to stay readable on arena surfaces.
+ */
+[data-tier="elite"] {
+  --tier: #f5b800;
+  --tier-rgb: 245 184 0;
+}
+
+[data-tier="star"] {
+  --tier: #a78bfa;
+  --tier-rgb: 167 139 250;
+}
+
+[data-tier="starter"] {
+  --tier: #38bdf8;
+  --tier-rgb: 56 189 248;
+}
+
+[data-tier="role"] {
+  --tier: #94a3b8;
+  --tier-rgb: 148 163 184;
+}
+
+[data-tier="bench"] {
+  --tier: #a1a1aa;
+  --tier-rgb: 161 161 170;
 }

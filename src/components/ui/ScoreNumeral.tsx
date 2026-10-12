@@ -1,7 +1,8 @@
 import { cn } from "@/components/ui/styles";
 
 export type ScoreNumeralSize = "sm" | "md" | "lg" | "xl";
-export type ScoreNumeralTone = "default" | "team" | "win" | "loss" | "muted";
+export type ScoreNumeralTone =
+  "default" | "team" | "tier" | "win" | "loss" | "muted";
 
 const SIZE: Record<ScoreNumeralSize, string> = {
   sm: "text-2xl",
@@ -13,6 +14,7 @@ const SIZE: Record<ScoreNumeralSize, string> = {
 const TONE: Record<ScoreNumeralTone, string> = {
   default: "text-zinc-50",
   team: "text-team-ink",
+  tier: "text-tier",
   win: "text-win",
   loss: "text-loss",
   muted: "text-zinc-500",

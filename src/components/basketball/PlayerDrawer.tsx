@@ -3,11 +3,12 @@
 import Link from "next/link";
 import { useEffect, useRef } from "react";
 import { PlayerProfileHero } from "@/components/basketball/PlayerProfileHero";
-import { ProfileStatTiles } from "@/components/basketball/ProfileStatTiles";
 import { MoneyDisplay } from "@/components/owner/MoneyDisplay";
 import { Drawer } from "@/components/ui/Drawer";
+import { RatingBars } from "@/components/ui/RatingBars";
 import { Section } from "@/components/ui/Section";
 import { StatusBadge } from "@/components/ui/StatusBadge";
+import { TickerBar } from "@/components/ui/TickerBar";
 import { cn, focusRingClass, touchTargetClass } from "@/components/ui/styles";
 import type { PlayerDrawerView } from "@/state/entity-drawer-selectors";
 
@@ -144,17 +145,19 @@ export function PlayerDrawer(props: {
 
           {props.view.ratings.keyAttributes.length > 0 ? (
             <Section title="Key ratings" density="compact">
-              <ProfileStatTiles
+              <RatingBars
+                aria-label="Key ratings"
                 items={props.view.ratings.keyAttributes.map((attribute) => ({
                   label: attribute.attribute,
-                  value: attribute.rating == null ? "—" : attribute.rating,
+                  rating: attribute.rating,
                 }))}
               />
             </Section>
           ) : null}
 
           <Section title="Season averages" density="compact">
-            <ProfileStatTiles
+            <TickerBar
+              aria-label="Season averages"
               items={[
                 { label: "GP", value: props.view.performance.games },
                 {
@@ -175,7 +178,8 @@ export function PlayerDrawer(props: {
 
           {props.view.contract ? (
             <Section title="Contract" density="compact">
-              <ProfileStatTiles
+              <TickerBar
+                aria-label="Contract"
                 items={[
                   {
                     label: "Salary",

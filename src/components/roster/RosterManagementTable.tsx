@@ -5,53 +5,37 @@ import type { PlayerPosition } from "@/domain/entities/player";
 import { PLAYER_POSITIONS } from "@/domain/entities/player";
 import type { RosterPagePlayerView } from "@/state/roster-page-selectors";
 import { rotationRoleSortKey } from "@/state/roster-page-selectors";
-import { toggleTradeBlockAction } from "@/application/actions";
 import { PlayerPortrait } from "@/components/basketball/PlayerPortrait";
 import { PlayerEntityLink } from "@/components/entity/PlayerEntityLink";
 import { ContractSummary } from "@/components/owner/ContractSummary";
 import { DataTable } from "@/components/owner/DataTable";
 import { StatusBadge } from "@/components/owner/StatusBadge";
+import { PlayerActionMenu } from "@/components/roster/PlayerActionMenu";
+import { RosterCard } from "@/components/roster/RosterCard";
 import { MobileListCard } from "@/components/ui/MobileListCard";
-import { cn, focusRingClass, touchTargetClass, touchTargetTextClass } from "@/components/ui/styles";
+import {
+  cn,
+  focusRingClass,
+  touchTargetClass,
+  touchTargetTextClass,
+} from "@/components/ui/styles";
+import { ratingTier } from "@/presentation/rating-tier";
 
 type SortKey =
   "overall" | "age" | "salary" | "years" | "position" | "role" | "name";
 
 type FilterChip = "all" | PlayerPosition | "starters" | "injured" | "on_block";
 
+type RosterView = "cards" | "table";
+
 const POSITION_ORDER = Object.fromEntries(
   PLAYER_POSITIONS.map((position, index) => [position, index]),
 ) as Record<string, number>;
 
-function TradeBlockButton(props: {
-  saveId: string;
-  playerId: string;
-  onTradeBlock: boolean;
-  returnPath: string;
-}) {
-  return (
-    <form action={toggleTradeBlockAction}>
-      <input type="hidden" name="saveId" value={props.saveId} />
-      <input type="hidden" name="playerId" value={props.playerId} />
-      <input
-        type="hidden"
-        name="listed"
-        value={props.onTradeBlock ? "false" : "true"}
-      />
-      <input type="hidden" name="returnPath" value={props.returnPath} />
-      <button
-        type="submit"
-        className={cn(
-          touchTargetClass,
-          "rounded-md border border-zinc-700 px-3 text-xs text-amber-400 hover:border-amber-600 hover:text-amber-300",
-          focusRingClass,
-        )}
-      >
-        {props.onTradeBlock ? "Remove block" : "Add to block"}
-      </button>
-    </form>
-  );
-}
+const controlClass = cn(
+  "min-h-11 rounded-md border border-surface-line bg-surface-arena px-3 text-sm text-zinc-100",
+  focusRingClass,
+);
 
 function defaultCompare(
   a: RosterPagePlayerView,
@@ -83,6 +67,8 @@ export function RosterManagementTable(props: {
   const [sortKey, setSortKey] = useState<SortKey>("overall");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
   const [chip, setChip] = useState<FilterChip>("all");
+  // Phones always get the compact list; the toggle only appears from md up.
+  const [view, setView] = useState<RosterView>("cards");
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -162,151 +148,117 @@ export function RosterManagementTable(props: {
     { id: "on_block", label: "On Block" },
   ];
 
+  const viewOptions: { id: RosterView; label: string }[] = [
+    { id: "cards", label: "Cards" },
+    { id: "table", label: "Table" },
+  ];
+
   return (
     <div className="space-y-4">
-      <div
-        className="flex flex-wrap gap-2"
-        role="group"
-        aria-label="Roster filters"
-      >
-        {chips.map((entry) => (
-          <button
-            key={entry.id}
-            type="button"
-            onClick={() => setChip(entry.id)}
-            className={cn(
-              touchTargetClass,
-              "rounded-md px-2.5 text-xs",
-              focusRingClass,
-              chip === entry.id
-                ? "bg-amber-600/20 text-amber-300"
-                : "border border-zinc-700 text-zinc-400 hover:border-zinc-500",
-            )}
-          >
-            {entry.label}
-          </button>
-        ))}
-      </div>
-
-      <div className="flex flex-wrap gap-3">
-        <label className="flex flex-col gap-1 text-xs text-zinc-500">
-          Filter
-          <input
-            type="search"
-            value={query}
-            onChange={(event) => setQuery(event.target.value)}
-            placeholder="Name, role, status…"
-            className="rounded-md border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-zinc-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-500"
-          />
-        </label>
-        <label className="flex flex-col gap-1 text-xs text-zinc-500">
-          Sort by
-          <select
-            value={sortKey}
-            onChange={(event) => setSortKey(event.target.value as SortKey)}
-            className="rounded-md border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-zinc-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-500"
-          >
-            <option value="overall">Overall</option>
-            <option value="name">Name</option>
-            <option value="position">Position</option>
-            <option value="age">Age</option>
-            <option value="salary">Salary</option>
-            <option value="years">Years remaining</option>
-            <option value="role">Role</option>
-          </select>
-        </label>
-        <label className="flex flex-col gap-1 text-xs text-zinc-500">
-          Direction
-          <select
-            value={sortDir}
-            onChange={(event) =>
-              setSortDir(event.target.value as "asc" | "desc")
-            }
-            className="rounded-md border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-zinc-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-500"
-          >
-            <option value="desc">Descending</option>
-            <option value="asc">Ascending</option>
-          </select>
-        </label>
-      </div>
-
-      <ul className="flex flex-col gap-2 md:hidden">
-        {filtered.map((player) => (
-          <li key={player.playerId}>
-            <MobileListCard
-              title={
-                <span className="flex items-center gap-2">
-                  <PlayerPortrait
-                    playerId={player.playerId}
-                    portrait={player.portrait}
-                    firstName={player.firstName}
-                    lastName={player.lastName}
-                    size="sm"
-                  />
-                  <PlayerEntityLink
-                    saveId={props.saveId}
-                    playerId={player.playerId}
-                    className={cn(
-                      touchTargetTextClass,
-                      "px-0 text-amber-400",
-                      focusRingClass,
-                    )}
-                  >
-                    {player.firstName} {player.lastName}
-                  </PlayerEntityLink>
-                </span>
-              }
-              subtitle={`${player.position} · ${player.roleDisplayLabel} · Age ${player.age}`}
-              meta={
-                <div className="flex flex-wrap items-center gap-2">
-                  <span className="font-mono text-zinc-100">
-                    OVR {player.overall}
-                  </span>
-                  <StatusBadge
-                    label={player.availabilityLabel}
-                    tone={player.canPlay ? "available" : player.injuryKind}
-                  />
-                  {player.onTradeBlock ? (
-                    <span className="font-mono text-[0.6rem] uppercase text-amber-500">
-                      Block
-                    </span>
-                  ) : null}
-                </div>
-              }
-              action={
-                <TradeBlockButton
-                  saveId={props.saveId}
-                  playerId={player.playerId}
-                  onTradeBlock={player.onTradeBlock}
-                  returnPath={props.returnPath}
-                />
-              }
-            />
-          </li>
-        ))}
-      </ul>
-
-      <div className="hidden overflow-x-auto md:block">
-        <DataTable
-          headers={[
-            "Player",
-            "Pos",
-            "OVR",
-            "Age",
-            "Role",
-            "Contract",
-            "Years",
-            "Status",
-            "Actions",
-          ]}
+      {/* One compact toolbar: position chips, then search / sort / view. */}
+      <div className="space-y-3 rounded-xl border border-surface-line bg-surface-arena p-3">
+        <div
+          className="flex flex-wrap gap-2"
+          role="group"
+          aria-label="Roster filters"
         >
-          {filtered.map((player) => {
-            const expiring =
-              player.contractYearsRemaining != null &&
-              player.contractYearsRemaining <= 1;
-            return (
-              <tr key={player.playerId} className="border-t border-zinc-800">
-                <td className="px-3 py-2">
+          {chips.map((entry) => (
+            <button
+              key={entry.id}
+              type="button"
+              onClick={() => setChip(entry.id)}
+              aria-pressed={chip === entry.id}
+              className={cn(
+                touchTargetClass,
+                "rounded-md px-2.5 text-xs",
+                focusRingClass,
+                chip === entry.id
+                  ? "bg-team text-on-team font-semibold"
+                  : "border border-surface-line text-zinc-300 hover:border-team-ink",
+              )}
+            >
+              {entry.label}
+            </button>
+          ))}
+        </div>
+
+        <div className="flex flex-wrap items-center gap-2">
+          <label className="min-w-40 flex-1">
+            <span className="sr-only">Filter</span>
+            <input
+              type="search"
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              placeholder="Filter by name, role, status…"
+              className={cn(controlClass, "w-full")}
+            />
+          </label>
+          <label>
+            <span className="sr-only">Sort by</span>
+            <select
+              value={sortKey}
+              onChange={(event) => setSortKey(event.target.value as SortKey)}
+              className={controlClass}
+            >
+              <option value="overall">Sort: Overall</option>
+              <option value="name">Sort: Name</option>
+              <option value="position">Sort: Position</option>
+              <option value="age">Sort: Age</option>
+              <option value="salary">Sort: Salary</option>
+              <option value="years">Sort: Years remaining</option>
+              <option value="role">Sort: Role</option>
+            </select>
+          </label>
+          <button
+            type="button"
+            onClick={() =>
+              setSortDir((value) => (value === "desc" ? "asc" : "desc"))
+            }
+            aria-label={
+              sortDir === "desc"
+                ? "Sort direction: descending"
+                : "Sort direction: ascending"
+            }
+            className={cn(controlClass, "min-w-11 text-center")}
+          >
+            <span aria-hidden>{sortDir === "desc" ? "↓" : "↑"}</span>
+          </button>
+
+          <div
+            role="group"
+            aria-label="Roster view"
+            className="ml-auto hidden overflow-hidden rounded-md border border-surface-line md:flex"
+          >
+            {viewOptions.map((option) => (
+              <button
+                key={option.id}
+                type="button"
+                aria-pressed={view === option.id}
+                onClick={() => setView(option.id)}
+                className={cn(
+                  touchTargetClass,
+                  "px-3 text-xs",
+                  focusRingClass,
+                  view === option.id
+                    ? "bg-team text-on-team font-semibold"
+                    : "text-zinc-300 hover:text-team-ink",
+                )}
+              >
+                {option.label}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Phones: compact list in both views. */}
+      <ul className="flex flex-col gap-2 md:hidden">
+        {filtered.map((player) => {
+          const name = `${player.firstName} ${player.lastName}`;
+          return (
+            <li key={player.playerId} data-tier={ratingTier(player.overall).id}>
+              <MobileListCard
+                title={
                   <span className="flex items-center gap-2">
                     <PlayerPortrait
                       playerId={player.playerId}
@@ -318,63 +270,163 @@ export function RosterManagementTable(props: {
                     <PlayerEntityLink
                       saveId={props.saveId}
                       playerId={player.playerId}
+                      className={cn(
+                        touchTargetTextClass,
+                        "px-0 text-team-ink",
+                        focusRingClass,
+                      )}
                     >
-                      {player.firstName} {player.lastName}
+                      {name}
                     </PlayerEntityLink>
                   </span>
-                  {player.onTradeBlock ? (
-                    <span className="ml-2 font-mono text-[0.6rem] uppercase text-amber-500">
-                      Block
+                }
+                subtitle={`${player.position} · ${player.roleDisplayLabel} · Age ${player.age}`}
+                meta={
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="font-display text-xl font-bold tabular-nums text-tier">
+                      {player.overall}
                     </span>
-                  ) : null}
-                </td>
-                <td className="px-3 py-2 text-zinc-400">{player.position}</td>
-                <td className="px-3 py-2 text-zinc-200">{player.overall}</td>
-                <td className="hidden px-3 py-2 text-zinc-400 sm:table-cell">
-                  {player.age}
-                </td>
-                <td className="hidden px-3 py-2 text-zinc-400 md:table-cell">
-                  {player.roleDisplayLabel}
-                  {player.depthSlot ? (
-                    <span className="ml-1 font-mono text-[0.6rem] text-zinc-600">
-                      ({player.depthSlot})
-                    </span>
-                  ) : null}
-                </td>
-                <td className="hidden px-3 py-2 lg:table-cell">
-                  <ContractSummary
-                    salary={player.contractSalary}
-                    endYear={player.contractEndYear}
-                    yearsRemaining={player.contractYearsRemaining}
-                  />
-                  {expiring && player.contractEndYear != null ? (
-                    <span className="mt-0.5 block font-mono text-[0.6rem] uppercase text-amber-400">
-                      {player.contractEndYear} expiring
-                    </span>
-                  ) : null}
-                </td>
-                <td className="hidden px-3 py-2 text-zinc-400 xl:table-cell">
-                  {player.contractYearsRemaining ?? "—"}
-                </td>
-                <td className="px-3 py-2">
-                  <StatusBadge
-                    label={player.availabilityLabel}
-                    tone={player.canPlay ? "available" : player.injuryKind}
-                  />
-                </td>
-                <td className="px-3 py-2">
-                  <TradeBlockButton
+                    <StatusBadge
+                      label={player.availabilityLabel}
+                      tone={player.canPlay ? "available" : player.injuryKind}
+                    />
+                    {player.onTradeBlock ? (
+                      <span className="font-mono text-[0.6rem] uppercase text-team-ink">
+                        Block
+                      </span>
+                    ) : null}
+                  </div>
+                }
+                action={
+                  <PlayerActionMenu
                     saveId={props.saveId}
                     playerId={player.playerId}
+                    playerName={name}
                     onTradeBlock={player.onTradeBlock}
                     returnPath={props.returnPath}
                   />
-                </td>
-              </tr>
-            );
-          })}
-        </DataTable>
-      </div>
+                }
+              />
+            </li>
+          );
+        })}
+      </ul>
+
+      {view === "cards" ? (
+        <ul className="hidden gap-3 md:grid md:grid-cols-2 2xl:grid-cols-3">
+          {filtered.map((player, index) => (
+            <li
+              key={player.playerId}
+              className="enter-up"
+              style={{ "--i": Math.min(index, 8) } as React.CSSProperties}
+            >
+              <RosterCard
+                saveId={props.saveId}
+                player={player}
+                returnPath={props.returnPath}
+              />
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <div className="hidden overflow-x-auto md:block">
+          <DataTable
+            headers={[
+              "Player",
+              "Pos",
+              "OVR",
+              "Age",
+              "Role",
+              "Contract",
+              "Years",
+              "Status",
+              "Actions",
+            ]}
+          >
+            {filtered.map((player) => {
+              const expiring =
+                player.contractYearsRemaining != null &&
+                player.contractYearsRemaining <= 1;
+              const name = `${player.firstName} ${player.lastName}`;
+              return (
+                <tr
+                  key={player.playerId}
+                  data-tier={ratingTier(player.overall).id}
+                  className="border-t border-zinc-800"
+                >
+                  <td className="px-3 py-2">
+                    <span className="flex items-center gap-2">
+                      <PlayerPortrait
+                        playerId={player.playerId}
+                        portrait={player.portrait}
+                        firstName={player.firstName}
+                        lastName={player.lastName}
+                        size="sm"
+                      />
+                      <PlayerEntityLink
+                        saveId={props.saveId}
+                        playerId={player.playerId}
+                      >
+                        {name}
+                      </PlayerEntityLink>
+                    </span>
+                    {player.onTradeBlock ? (
+                      <span className="ml-2 font-mono text-[0.6rem] uppercase text-team-ink">
+                        Block
+                      </span>
+                    ) : null}
+                  </td>
+                  <td className="px-3 py-2 text-zinc-400">{player.position}</td>
+                  <td className="px-3 py-2 font-display text-lg font-bold tabular-nums text-tier">
+                    {player.overall}
+                  </td>
+                  <td className="hidden px-3 py-2 text-zinc-400 sm:table-cell">
+                    {player.age}
+                  </td>
+                  <td className="hidden px-3 py-2 text-zinc-400 md:table-cell">
+                    {player.roleDisplayLabel}
+                    {player.depthSlot ? (
+                      <span className="ml-1 font-mono text-[0.6rem] text-zinc-600">
+                        ({player.depthSlot})
+                      </span>
+                    ) : null}
+                  </td>
+                  <td className="hidden px-3 py-2 lg:table-cell">
+                    <ContractSummary
+                      salary={player.contractSalary}
+                      endYear={player.contractEndYear}
+                      yearsRemaining={player.contractYearsRemaining}
+                    />
+                    {expiring && player.contractEndYear != null ? (
+                      <span className="mt-0.5 block font-mono text-[0.6rem] uppercase text-warning">
+                        {player.contractEndYear} expiring
+                      </span>
+                    ) : null}
+                  </td>
+                  <td className="hidden px-3 py-2 text-zinc-400 xl:table-cell">
+                    {player.contractYearsRemaining ?? "—"}
+                  </td>
+                  <td className="px-3 py-2">
+                    <StatusBadge
+                      label={player.availabilityLabel}
+                      tone={player.canPlay ? "available" : player.injuryKind}
+                    />
+                  </td>
+                  <td className="px-3 py-2">
+                    <PlayerActionMenu
+                      saveId={props.saveId}
+                      playerId={player.playerId}
+                      playerName={name}
+                      onTradeBlock={player.onTradeBlock}
+                      returnPath={props.returnPath}
+                    />
+                  </td>
+                </tr>
+              );
+            })}
+          </DataTable>
+        </div>
+      )}
     </div>
   );
 }

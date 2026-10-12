@@ -1,6 +1,8 @@
 import { InjuryBadge } from "@/components/basketball/InjuryBadge";
 import { PlayerPortrait } from "@/components/basketball/PlayerPortrait";
 import type { PlayerPortraitAssignment } from "@/domain/entities/player-portrait";
+import { ScoreNumeral } from "@/components/ui/ScoreNumeral";
+import { ratingTier } from "@/presentation/rating-tier";
 import {
   cn,
   densityPadding,
@@ -58,8 +60,12 @@ export function PlayerCard(props: {
 
   return (
     <article
+      data-tier={
+        props.overall != null ? ratingTier(props.overall).id : undefined
+      }
       className={cn(
         !props.bare && panelClass,
+        !props.bare && props.overall != null && "border-l-4 border-l-tier",
         !props.bare && densityPadding[density],
         props.className,
       )}
@@ -89,14 +95,15 @@ export function PlayerCard(props: {
           </div>
         </div>
         {fields.overall && props.overall != null ? (
-          <div className="shrink-0 text-right">
-            <p className="text-lg font-semibold text-amber-400">
-              {props.overall}
-            </p>
-            <p className="font-mono text-[0.6rem] uppercase tracking-wide text-zinc-500">
-              OVR
-            </p>
-          </div>
+          <ScoreNumeral
+            value={props.overall}
+            label="OVR"
+            labelBelow
+            size="md"
+            tone="tier"
+            align="end"
+            className="shrink-0"
+          />
         ) : null}
       </div>
 

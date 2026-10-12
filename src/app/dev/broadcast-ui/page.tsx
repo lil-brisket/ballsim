@@ -5,8 +5,10 @@
  * team-colour contrast can be checked. Not linked from production navigation.
  */
 
+import { PlayerProfileHero } from "@/components/basketball/PlayerProfileHero";
 import {
   ArenaPanel,
+  RatingBars,
   ScoreNumeral,
   SectionHeading,
   TeamBadge,
@@ -179,6 +181,33 @@ export default function BroadcastUiShowcasePage() {
                 </ArenaPanel>
               ))}
             </div>
+
+            <PlayerProfileHero
+              playerId="dev_player"
+              firstName="Luka"
+              lastName="Doncic"
+              position="PG"
+              age={29}
+              overall={95}
+              teamName={theme.name}
+              teamAbbreviation="DEV"
+              branding={theme.branding}
+              availabilityStatus="healthy"
+            />
+
+            <ArenaPanel raised as="div">
+              <RatingBars
+                aria-label="Key ratings"
+                items={[
+                  { label: "Three point", rating: 94 },
+                  { label: "Ball handling", rating: 86 },
+                  { label: "Passing", rating: 77 },
+                  { label: "Rebounding", rating: 64 },
+                  { label: "Defense", rating: 52 },
+                  { label: "Free throw", rating: null },
+                ]}
+              />
+            </ArenaPanel>
 
             <div className="flex flex-wrap items-center gap-4">
               {(["sm", "md", "lg", "xl"] as const).map((size) => (
