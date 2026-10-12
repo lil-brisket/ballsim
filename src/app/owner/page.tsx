@@ -7,6 +7,7 @@ import {
 import { latestValidSaveForMode } from "@/application/save-preview-helpers";
 import { OwnerEntryActions } from "@/components/game/OwnerEntryActions";
 import { ErrorState } from "@/components/owner/EmptyState";
+import { SectionHeading } from "@/components/ui/SectionHeading";
 
 export const dynamic = "force-dynamic";
 
@@ -32,20 +33,20 @@ export default async function OwnerEntryPage({
       <div>
         <Link
           href="/home"
-          className={`text-sm text-zinc-400 hover:text-amber-400 ${focusRing}`}
+          className={`inline-flex min-h-11 items-center text-sm text-zinc-300 hover:text-team-ink ${focusRing}`}
         >
           ← Choose mode
         </Link>
       </div>
 
       <header className="space-y-2">
-        <p className="font-mono text-xs uppercase tracking-[0.18em] text-amber-500">
-          {modeDef.name}
-        </p>
-        <h1 className="text-3xl font-semibold tracking-tight text-zinc-50">
-          {modeDef.tagline}
-        </h1>
-        <p className="text-zinc-400">What would you like to do?</p>
+        <SectionHeading
+          as="h1"
+          size="lg"
+          eyebrow={modeDef.name}
+          title={modeDef.tagline}
+        />
+        <p className="text-zinc-300">What would you like to do?</p>
       </header>
 
       {error ? <ErrorState message={error} /> : null}

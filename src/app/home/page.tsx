@@ -4,6 +4,7 @@ import { GameBrand } from "@/components/game/GameBrand";
 import { GameModeCard } from "@/components/game/GameModeCard";
 import { SplashBackground } from "@/components/game/SplashBackground";
 import { ErrorState } from "@/components/owner/EmptyState";
+import { SectionHeading } from "@/components/ui/SectionHeading";
 
 type HomePageProps = {
   searchParams: Promise<{ error?: string }>;
@@ -17,20 +18,20 @@ export default async function HomePage({ searchParams }: HomePageProps) {
     <main className="relative flex flex-1 flex-col overflow-hidden">
       <SplashBackground />
       <div className="relative z-10 mx-auto flex w-full max-w-5xl flex-1 flex-col gap-10 px-6 py-12 sm:py-16">
-        <header className="space-y-3 text-center sm:text-left">
-          <GameBrand />
-          <p className="mx-auto max-w-xl text-zinc-400 sm:mx-0">
-            Build your basketball story.
-          </p>
-          <h2 className="pt-2 text-lg font-medium text-zinc-200">
-            Choose your mode
-          </h2>
+        <header className="space-y-6">
+          <GameBrand className="justify-center sm:justify-start" />
+          <SectionHeading
+            as="h2"
+            size="lg"
+            eyebrow="Build your basketball story"
+            title="Choose your mode"
+          />
         </header>
 
         {error ? <ErrorState message={error} /> : null}
 
         <section
-          className="grid gap-4 md:grid-cols-2 lg:grid-cols-3"
+          className="grid gap-5 md:grid-cols-2 lg:grid-cols-3"
           aria-label="Game modes"
         >
           {modes.map((mode) => (
@@ -41,7 +42,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
         <footer className="flex justify-center sm:justify-start">
           <Link
             href="/settings"
-            className="text-sm text-zinc-500 hover:text-amber-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-500"
+            className="inline-flex min-h-11 items-center text-sm text-zinc-400 hover:text-team-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-500"
           >
             Settings
           </Link>

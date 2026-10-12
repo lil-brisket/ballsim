@@ -1465,6 +1465,8 @@ export type OwnerSavePreview =
       currentDate: string;
       seasonPhase: DashboardSnapshot["seasonPhase"];
       teamSelectionLocked: boolean;
+      /** Controlled team's current record, for the save card. */
+      record?: { wins: number; losses: number };
     }
   | {
       ok: false;
@@ -1513,6 +1515,10 @@ export async function listOwnerSavePreviews(
         currentDate: dashboard.currentDate,
         seasonPhase: dashboard.seasonPhase,
         teamSelectionLocked: dashboard.teamSelectionLocked,
+        record: {
+          wins: dashboard.controlledStanding.wins,
+          losses: dashboard.controlledStanding.losses,
+        },
       });
     } catch {
       previews.push({

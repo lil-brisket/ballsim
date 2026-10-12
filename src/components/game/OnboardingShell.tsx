@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { SectionHeading } from "@/components/ui/SectionHeading";
 
 export type OnboardingStep = "mode" | "setup" | "franchise";
 
@@ -33,21 +34,24 @@ export function OnboardingShell(props: {
       <div className="flex shrink-0 flex-wrap items-center justify-between gap-3">
         <Link
           href="/owner"
-          className={`text-sm text-zinc-400 hover:text-amber-400 ${focusRing}`}
+          className={`inline-flex min-h-11 items-center text-sm text-zinc-300 hover:text-team-ink ${focusRing}`}
         >
           ← Owner Mode
         </Link>
-        <nav aria-label="New game steps" className="flex gap-2 text-xs">
+        <nav
+          aria-label="New game steps"
+          className="flex gap-2 font-display text-sm uppercase tracking-wide"
+        >
           {STEPS.map((step, index) => {
             const active = index === stepIndex;
             const done = index < stepIndex;
             const label = `${index + 1}. ${step.label}`;
-            const className = `rounded-full px-3 py-1 ${
+            const className = `rounded-full border px-3 py-1 ${
               active
-                ? "bg-amber-600/20 font-medium text-amber-400"
+                ? "border-team-ink bg-team font-bold text-on-team"
                 : done
-                  ? `text-zinc-400 hover:text-amber-400 ${focusRing}`
-                  : "text-zinc-600"
+                  ? `border-surface-line text-zinc-200 hover:border-team-ink hover:text-team-ink ${focusRing}`
+                  : "border-transparent text-zinc-500"
             }`;
 
             if (done && step.href) {
@@ -71,20 +75,16 @@ export function OnboardingShell(props: {
         </nav>
       </div>
 
-      <header className="shrink-0 space-y-1">
-        <p className="font-mono text-xs uppercase tracking-[0.18em] text-amber-500">
-          New Game
-        </p>
-        <h1
-          className={`${
-            fillViewport ? "text-2xl" : "text-3xl"
-          } font-semibold tracking-tight text-zinc-50`}
-        >
-          {props.title}
-        </h1>
+      <header className="shrink-0 space-y-2">
+        <SectionHeading
+          as="h1"
+          size={fillViewport ? "md" : "lg"}
+          eyebrow="New Game"
+          title={props.title}
+        />
         {props.subtitle ? (
           <p
-            className={`max-w-2xl text-zinc-400 ${
+            className={`max-w-2xl text-zinc-300 ${
               fillViewport ? "text-sm" : ""
             }`}
           >

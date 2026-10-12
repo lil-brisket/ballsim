@@ -6,6 +6,7 @@ import {
 import { filterSavePreviewsForMode } from "@/application/save-preview-helpers";
 import { SaveCard } from "@/components/game/SaveCard";
 import { EmptyState, ErrorState } from "@/components/owner/EmptyState";
+import { SectionHeading } from "@/components/ui/SectionHeading";
 import type { GameMode } from "@/state/game-state";
 
 export const dynamic = "force-dynamic";
@@ -36,14 +37,17 @@ export default async function SavesPage({ searchParams }: SavesPageProps) {
       <header className="space-y-2">
         <Link
           href={backHref}
-          className="text-sm text-zinc-400 hover:text-amber-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-500"
+          className="inline-flex min-h-11 items-center text-sm text-zinc-300 hover:text-team-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-500"
         >
           {backLabel}
         </Link>
-        <h1 className="text-3xl font-semibold tracking-tight text-zinc-50">
-          {modeFilter === "owner" ? "Load Owner Save" : "Load Game"}
-        </h1>
-        <p className="text-zinc-400">
+        <SectionHeading
+          as="h1"
+          size="lg"
+          eyebrow="Saves"
+          title={modeFilter === "owner" ? "Load Owner Save" : "Load Game"}
+        />
+        <p className="text-zinc-300">
           Open an existing save or delete one to free a slot (
           {allPreviews.length}/{MAX_OWNER_SAVE_SLOTS}).
         </p>
@@ -58,7 +62,7 @@ export default async function SavesPage({ searchParams }: SavesPageProps) {
           }
         />
       ) : (
-        <ul className="space-y-2">
+        <ul className="space-y-3">
           {previews.map((preview) => (
             <SaveCard key={preview.id} preview={preview} />
           ))}

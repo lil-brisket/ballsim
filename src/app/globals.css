@@ -474,3 +474,53 @@ body {
   --tier: #a1a1aa;
   --tier-rgb: 161 161 170;
 }
+
+/*
+ * Splash court lines draw themselves in. Each line sets pathLength="1", so a
+ * dash length of 1 is the full line; with no animation (reduced motion) the
+ * offset stays 0 and the lines render fully drawn.
+ */
+.court-line {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 0;
+}
+
+@keyframes court-draw {
+  from {
+    stroke-dashoffset: 1;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+.court-line-animate .court-line {
+  animation: court-draw 2.2s cubic-bezier(0.4, 0, 0.2, 1) both;
+  animation-delay: calc(var(--i, 0) * 140ms);
+}
+
+@keyframes splash-glow {
+  0%,
+  100% {
+    opacity: 0.55;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+.splash-glow {
+  background: radial-gradient(
+    ellipse 45% 35% at 50% 45%,
+    rgb(var(--team-primary-rgb) / 0.22),
+    transparent 70%
+  );
+  animation: splash-glow 6s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .court-line-animate .court-line,
+  .splash-glow {
+    animation: none;
+  }
+}
