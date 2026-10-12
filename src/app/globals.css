@@ -159,6 +159,21 @@ body {
   animation: drawer-slide-in 200ms ease-out;
 }
 
+@keyframes drawer-modal-enter {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.drawer-panel-enter-modal {
+  animation: drawer-modal-enter 200ms ease-out;
+}
+
 .drawer-nav-enter {
   animation: drawer-slide-in-left 200ms ease-out;
 }
@@ -167,6 +182,7 @@ body {
   .drawer-backdrop-enter,
   .drawer-panel-enter-mobile,
   .drawer-panel-enter-desktop,
+  .drawer-panel-enter-modal,
   .drawer-nav-enter {
     animation: none;
   }

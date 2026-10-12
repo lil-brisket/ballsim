@@ -1,13 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { InjuryBadge } from "@/components/basketball/InjuryBadge";
-import { PlayerCard } from "@/components/basketball/PlayerCard";
-import { StatLine } from "@/components/basketball/StatLine";
+import { useEffect, useRef } from "react";
+import { PlayerProfileHero } from "@/components/basketball/PlayerProfileHero";
+import { ProfileStatTiles } from "@/components/basketball/ProfileStatTiles";
+import { MoneyDisplay } from "@/components/owner/MoneyDisplay";
 import { Drawer } from "@/components/ui/Drawer";
 import { Section } from "@/components/ui/Section";
-import { focusRingClass, cn } from "@/components/ui/styles";
-import { MoneyDisplay } from "@/components/owner/MoneyDisplay";
+import { StatusBadge } from "@/components/ui/StatusBadge";
+import { cn, focusRingClass, touchTargetClass } from "@/components/ui/styles";
 import type { PlayerDrawerView } from "@/state/entity-drawer-selectors";
 
 function DrawerSkeleton() {
@@ -17,13 +18,25 @@ function DrawerSkeleton() {
       aria-busy="true"
       aria-label="Loading"
     >
-      <div className="h-16 rounded-lg bg-zinc-800" />
+      <div className="h-28 rounded-lg bg-zinc-800" />
       <div className="h-8 w-2/3 rounded bg-zinc-800" />
       <div className="h-24 rounded-lg bg-zinc-800" />
       <div className="h-24 rounded-lg bg-zinc-800" />
     </div>
   );
 }
+
+const primaryActionClass = cn(
+  touchTargetClass,
+  "rounded-md bg-amber-600 px-4 text-sm font-medium text-zinc-950 hover:bg-amber-500",
+  focusRingClass,
+);
+
+const secondaryActionClass = cn(
+  touchTargetClass,
+  "rounded-md border border-zinc-700 px-4 text-sm text-zinc-300 hover:border-zinc-500",
+  focusRingClass,
+);
 
 export function PlayerDrawer(props: {
   open: boolean;
@@ -35,22 +48,30 @@ export function PlayerDrawer(props: {
   const title = props.view
     ? `${props.view.identity.firstName} ${props.view.identity.lastName}`
     : "Player";
+  const bodyRef = useRef<HTMLDivElement>(null);
+  const playerId = props.view?.playerId;
+
+  useEffect(() => {
+    if (!props.open) return;
+    if (bodyRef.current) {
+      bodyRef.current.scrollTop = 0;
+    }
+  }, [props.open, playerId]);
 
   return (
     <Drawer
       open={props.open}
       onOpenChange={props.onOpenChange}
       title={title}
-      size="md"
+      size="xl"
+      placement="modal"
+      bodyRef={bodyRef}
       footer={
         props.view ? (
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
             <Link
               href={props.view.navigation.playerHref}
-              className={cn(
-                "rounded-md border border-amber-700/50 bg-amber-950/40 px-3 py-1.5 text-sm text-amber-300 hover:border-amber-600",
-                focusRingClass,
-              )}
+              className={primaryActionClass}
               onClick={() => props.onOpenChange(false)}
             >
               View full player
@@ -58,10 +79,7 @@ export function PlayerDrawer(props: {
             {props.view.navigation.contractHref ? (
               <Link
                 href={props.view.navigation.contractHref}
-                className={cn(
-                  "rounded-md border border-zinc-700 px-3 py-1.5 text-sm text-zinc-300 hover:border-zinc-500",
-                  focusRingClass,
-                )}
+                className={secondaryActionClass}
                 onClick={() => props.onOpenChange(false)}
               >
                 View contract
@@ -70,10 +88,7 @@ export function PlayerDrawer(props: {
             {props.view.navigation.developmentHref ? (
               <Link
                 href={props.view.navigation.developmentHref}
-                className={cn(
-                  "rounded-md border border-zinc-700 px-3 py-1.5 text-sm text-zinc-300 hover:border-zinc-500",
-                  focusRingClass,
-                )}
+                className={secondaryActionClass}
                 onClick={() => props.onOpenChange(false)}
               >
                 View development
@@ -113,8 +128,7 @@ export function PlayerDrawer(props: {
 
       {props.status === "ready" && props.view ? (
         <div className="space-y-6">
-          <PlayerCard
-            bare
+          <PlayerProfileHero
             firstName={props.view.identity.firstName}
             lastName={props.view.identity.lastName}
             position={props.view.identity.position}
@@ -122,51 +136,44 @@ export function PlayerDrawer(props: {
             overall={props.view.identity.overall}
             teamName={props.view.team.teamName}
             teamAbbreviation={props.view.team.abbreviation}
-            injuryStatus={props.view.availability.status}
-            fields={{ role: false, contract: false }}
+            branding={props.view.team.branding}
+            availabilityStatus={props.view.availability.status}
           />
-
-          <Section title="Availability" density="compact">
-            <InjuryBadge status={props.view.availability.status} />
-          </Section>
 
           {props.view.ratings.keyAttributes.length > 0 ? (
             <Section title="Key ratings" density="compact">
-              <StatLine
-                density="compact"
-                items={props.view.ratings.keyAttributes.map((a) => ({
-                  label: a.attribute,
-                  value: a.rating,
+              <ProfileStatTiles
+                items={props.view.ratings.keyAttributes.map((attribute) => ({
+                  label: attribute.attribute,
+                  value: attribute.rating == null ? "—" : attribute.rating,
                 }))}
               />
             </Section>
           ) : null}
 
-          {props.view.performance.games > 0 ? (
-            <Section title="Season averages" density="compact">
-              <StatLine
-                items={[
-                  { label: "GP", value: props.view.performance.games },
-                  {
-                    label: "PPG",
-                    value: props.view.performance.ppg ?? "—",
-                  },
-                  {
-                    label: "RPG",
-                    value: props.view.performance.rpg ?? "—",
-                  },
-                  {
-                    label: "APG",
-                    value: props.view.performance.apg ?? "—",
-                  },
-                ]}
-              />
-            </Section>
-          ) : null}
+          <Section title="Season averages" density="compact">
+            <ProfileStatTiles
+              items={[
+                { label: "GP", value: props.view.performance.games },
+                {
+                  label: "PPG",
+                  value: props.view.performance.ppg ?? "—",
+                },
+                {
+                  label: "RPG",
+                  value: props.view.performance.rpg ?? "—",
+                },
+                {
+                  label: "APG",
+                  value: props.view.performance.apg ?? "—",
+                },
+              ]}
+            />
+          </Section>
 
           {props.view.contract ? (
             <Section title="Contract" density="compact">
-              <StatLine
+              <ProfileStatTiles
                 items={[
                   {
                     label: "Salary",
@@ -183,10 +190,16 @@ export function PlayerDrawer(props: {
                   },
                   {
                     label: "Status",
-                    value: props.view.contract.status,
+                    value: <StatusBadge label={props.view.contract.status} />,
                   },
                 ]}
               />
+            </Section>
+          ) : props.view.navigation.contractHref ? (
+            <Section title="Contract" density="compact">
+              <p className="text-sm text-zinc-400">
+                Contract details unavailable
+              </p>
             </Section>
           ) : null}
         </div>

@@ -1,9 +1,10 @@
-import { describe, expect, it, vi, beforeEach } from "vitest";
+import { describe, expect, it, vi, beforeEach, afterEach } from "vitest";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { EntityDrawerProvider } from "@/components/entity/EntityDrawerProvider";
 import { PlayerEntityLink } from "@/components/entity/PlayerEntityLink";
 import { StaffEntityLink } from "@/components/entity/StaffEntityLink";
 import { TeamEntityLink } from "@/components/entity/TeamEntityLink";
+import { resetDrawerScrollLockForTests } from "@/components/ui/drawer-scroll-lock";
 
 const fetchPlayer = vi.fn();
 const fetchTeam = vi.fn();
@@ -56,6 +57,11 @@ describe("EntityDrawerProvider", () => {
     fetchPlayer.mockReset();
     fetchTeam.mockReset();
     fetchStaff.mockReset();
+    resetDrawerScrollLockForTests();
+  });
+
+  afterEach(() => {
+    resetDrawerScrollLockForTests();
   });
 
   it("opens player drawer from PlayerEntityLink", async () => {
@@ -81,6 +87,58 @@ describe("EntityDrawerProvider", () => {
     await waitFor(() => {
       expect(screen.queryByText("View full player")).toBeNull();
     });
+    unmount();
+  });
+
+  it("reopens the same player after close", async () => {
+    fetchPlayer.mockResolvedValue(samplePlayer);
+    const { unmount } = render(
+      <EntityDrawerProvider saveId="save_test">
+        <PlayerEntityLink saveId="save_test" playerId="player_1">
+          Alex Rivera
+        </PlayerEntityLink>
+      </EntityDrawerProvider>,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Alex Rivera" }));
+    await waitFor(() => {
+      expect(screen.getByText("View full player")).toBeTruthy();
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Close" }));
+    await waitFor(() => {
+      expect(screen.queryByText("View full player")).toBeNull();
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "Alex Rivera" }));
+    await waitFor(() => {
+      expect(screen.getByText("View full player")).toBeTruthy();
+    });
+    expect(screen.getByText("18.2")).toBeTruthy();
+    unmount();
+  });
+
+  it("locks body overflow while the player modal is open", async () => {
+    fetchPlayer.mockResolvedValue(samplePlayer);
+    const { unmount } = render(
+      <EntityDrawerProvider saveId="save_test">
+        <PlayerEntityLink saveId="save_test" playerId="player_1">
+          Alex Rivera
+        </PlayerEntityLink>
+      </EntityDrawerProvider>,
+    );
+
+    expect(document.body.style.overflow).toBe("");
+    fireEvent.click(screen.getByRole("button", { name: "Alex Rivera" }));
+    await waitFor(() => {
+      expect(screen.getByText("View full player")).toBeTruthy();
+    });
+    expect(document.body.style.overflow).toBe("hidden");
+
+    fireEvent.click(screen.getByRole("button", { name: "Close" }));
+    await waitFor(() => {
+      expect(screen.queryByText("View full player")).toBeNull();
+    });
+    expect(document.body.style.overflow).toBe("");
     unmount();
   });
 
@@ -142,6 +200,16 @@ describe("EntityDrawerProvider", () => {
       expect(screen.getByText("View team")).toBeTruthy();
     });
     expect(screen.getByText("View schedule")).toBeTruthy();
+    const teamDialog = screen.getByRole("dialog");
+    expect(teamDialog.className).toMatch(/sm:border-l/);
+    expect(teamDialog.className).toMatch(/max-w-md/);
+    expect(teamDialog.parentElement?.className).toMatch(/sm:justify-end/);
+    expect(document.body.style.overflow).toBe("hidden");
+    fireEvent.click(screen.getByRole("button", { name: "Close" }));
+    await waitFor(() => {
+      expect(screen.queryByText("View team")).toBeNull();
+    });
+    expect(document.body.style.overflow).toBe("");
     unmount();
   });
 

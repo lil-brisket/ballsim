@@ -4,6 +4,11 @@ export {
   type PlayerCardFields,
 } from "@/components/basketball/PlayerCard";
 export { PlayerDrawer } from "@/components/basketball/PlayerDrawer";
+export { PlayerProfileHero } from "@/components/basketball/PlayerProfileHero";
+export {
+  ProfileStatTiles,
+  type ProfileStatTileItem,
+} from "@/components/basketball/ProfileStatTiles";
 export { StaffDrawer } from "@/components/basketball/StaffDrawer";
 export { RosterRow } from "@/components/basketball/RosterRow";
 export { StatLine, type StatLineItem } from "@/components/basketball/StatLine";
