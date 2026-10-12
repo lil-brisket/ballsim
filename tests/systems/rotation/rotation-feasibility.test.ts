@@ -19,7 +19,7 @@ import { expectedTeamPlayerSeconds } from "@/systems/rotation/rotation-invariant
 import { createPlayer } from "../../factories/player";
 
 function entry(
-  partial: Partial<RotationEntry> & { playerId: string },
+  partial: Omit<Partial<RotationEntry>, "playerId"> & { playerId: string },
 ): RotationEntry {
   const role = partial.role ?? "bench";
   const template = ROLE_TEMPLATES[role];

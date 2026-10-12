@@ -276,9 +276,6 @@ describe("createGame", () => {
   it("rejects non-array events", () => {
     expect(() =>
       createGame({
-        competitionType: "regular_season",
-        homeTeamSnapshot: null,
-        awayTeamSnapshot: null,
         ...validInput(),
         events: "not-an-array" as unknown as GameEvent[],
       }),
@@ -337,9 +334,6 @@ describe("createGame", () => {
   it("rejects non-array playerStats", () => {
     expect(() =>
       createGame({
-        competitionType: "regular_season",
-        homeTeamSnapshot: null,
-        awayTeamSnapshot: null,
         ...validInput(),
         playerStats: "not-an-array" as unknown as GamePlayerStats[],
       }),

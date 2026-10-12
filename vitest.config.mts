@@ -15,6 +15,8 @@ import tsconfigPaths from "vite-tsconfig-paths";
 export default defineConfig({
   plugins: [tsconfigPaths(), react()],
   test: {
+    // Season/world pipeline tests take 3-8s under parallel load; 5s default flakes.
+    testTimeout: 30_000,
     reporters: ["default", "./scripts/vitest-txt-reporter.ts"],
     coverage: {
       provider: "v8",

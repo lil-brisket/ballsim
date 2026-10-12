@@ -78,8 +78,10 @@ function baseContext(
 
 describe("narrative attendance_decline detector", () => {
   it("stays silent with a single-month dip", () => {
-    const rng = createTestRng();
-    let state = createCblInitialGameState(rng);
+    let state = createCblInitialGameState({
+      saveId: "narrative-test",
+      rngSeed: TEST_RNG_SEED,
+    });
     state = withSnapshots(state, [
       snapshot("2026-01", 80),
       snapshot("2026-02", 78),
@@ -96,8 +98,10 @@ describe("narrative attendance_decline detector", () => {
   });
 
   it("triggers after two consecutive declining months when unusual vs league", () => {
-    const rng = createTestRng();
-    let state = createCblInitialGameState(rng);
+    let state = createCblInitialGameState({
+      saveId: "narrative-test",
+      rngSeed: TEST_RNG_SEED,
+    });
     state = withSnapshots(state, [
       snapshot("2026-01", 82),
       snapshot("2026-02", 74),
@@ -258,8 +262,10 @@ describe("narrative lifecycle and actions", () => {
   });
 
   it("reduce_ticket_price runs setTicketPrice via adapter", () => {
-    const rng = createTestRng();
-    let state = createCblInitialGameState(rng);
+    let state = createCblInitialGameState({
+      saveId: "narrative-test",
+      rngSeed: TEST_RNG_SEED,
+    });
     const teamId = state.user.activeOwnerTeamId;
     const before = state.business.franchiseOps[teamId]!.ticketPrice;
     const situation = createNarrativeSituation({
@@ -307,7 +313,10 @@ describe("narrative lifecycle and actions", () => {
 describe("narrative processNarrativeLayer", () => {
   it("facility_completed emits a story notification without an active situation", () => {
     const rng = createTestRng();
-    const state = createCblInitialGameState(rng);
+    const state = createCblInitialGameState({
+      saveId: "narrative-test",
+      rngSeed: TEST_RNG_SEED,
+    });
     const teamId = state.user.activeOwnerTeamId;
     const dayEvents = [
       {
@@ -338,7 +347,10 @@ describe("narrative processNarrativeLayer", () => {
   it("is deterministic for the same state and seed", () => {
     const rngA = createSeededRng(TEST_RNG_SEED);
     const rngB = createSeededRng(TEST_RNG_SEED);
-    let state = createCblInitialGameState(createTestRng());
+    let state = createCblInitialGameState({
+      saveId: "narrative-test",
+      rngSeed: TEST_RNG_SEED,
+    });
     state = withSnapshots(state, [
       snapshot("2026-01", 85, { fanSentiment: 55 }),
       snapshot("2026-02", 72, { fanSentiment: 48 }),
@@ -369,8 +381,10 @@ describe("narrative processNarrativeLayer", () => {
   });
 
   it("spam filter suppresses same-stage reopen", () => {
-    const rng = createTestRng();
-    const state = createCblInitialGameState(rng);
+    const state = createCblInitialGameState({
+      saveId: "narrative-test",
+      rngSeed: TEST_RNG_SEED,
+    });
     const context = buildNarrativeContext(state, { cadence: "monthly" });
     const candidate: DetectorCandidate = {
       detectorKey: "attendance_decline",
@@ -393,7 +407,10 @@ describe("narrative processNarrativeLayer", () => {
 
 describe("narrative migration", () => {
   it("createInitialGameState includes empty narrative", () => {
-    const state = createCblInitialGameState(createTestRng());
+    const state = createCblInitialGameState({
+      saveId: "narrative-test",
+      rngSeed: TEST_RNG_SEED,
+    });
     expect(getActiveOwnedFranchise(state).narrative).toEqual({
       situations: [],
       snapshots: [],
@@ -405,18 +422,28 @@ describe("narrative migration", () => {
 
 describe("playtest correctness detectors", () => {
   it("does not open financial pressure while healthy", () => {
-    const state = createCblInitialGameState(createTestRng());
+    const state = createCblInitialGameState({
+      saveId: "narrative-test",
+      rngSeed: TEST_RNG_SEED,
+    });
     const context = baseContext(state, {
       healthBand: "healthy",
       ticketMerchChangeVsPriorMonth: -12,
-      snapshots: [snapshot("2026-01", 80), snapshot("2026-02", 70), snapshot("2026-03", 60)],
+      snapshots: [
+        snapshot("2026-01", 80),
+        snapshot("2026-02", 70),
+        snapshot("2026-03", 60),
+      ],
       runwayWeeks: null,
     });
     expect(detectFinancialPressure(context)).toBeNull();
   });
 
   it("opens financial pressure only for warning/critical/insolvent", () => {
-    const state = createCblInitialGameState(createTestRng());
+    const state = createCblInitialGameState({
+      saveId: "narrative-test",
+      rngSeed: TEST_RNG_SEED,
+    });
     const warning = detectFinancialPressure(
       baseContext(state, { healthBand: "warning", runwayWeeks: 4 }),
     );
@@ -429,7 +456,10 @@ describe("playtest correctness detectors", () => {
   });
 
   it("resolves expectation gap when the miss is gone", () => {
-    const state = createCblInitialGameState(createTestRng());
+    const state = createCblInitialGameState({
+      saveId: "narrative-test",
+      rngSeed: TEST_RNG_SEED,
+    });
     const context = baseContext(state, {
       cadence: "weekly",
       wins: 5,
@@ -442,7 +472,10 @@ describe("playtest correctness detectors", () => {
   });
 
   it("does not warn on win-total gap before the sample", () => {
-    const state = createCblInitialGameState(createTestRng());
+    const state = createCblInitialGameState({
+      saveId: "narrative-test",
+      rngSeed: TEST_RNG_SEED,
+    });
     const context = baseContext(state, {
       cadence: "monthly",
       wins: 0,

@@ -4,9 +4,12 @@
  *
  * Captured before fanFacility / opponentWinPct weight changes:
  * mid score 53, high 76, low 27 for the representative input sets below.
+ *
+ * Re-captured after the win%-weighted demand rebalance (market 0.19 → 0.14,
+ * win% 0.11 → 0.22): the high-market input set no longer dominates.
  */
-export const DEMAND_BASELINE_MID_SCORE = 53;
-export const DEMAND_BASELINE_HIGH_SCORE = 76;
+export const DEMAND_BASELINE_MID_SCORE = 51;
+export const DEMAND_BASELINE_HIGH_SCORE = 71;
 export const DEMAND_BASELINE_LOW_SCORE = 27;
 
 /** Allowed absolute score drift after intentional weight rebalance. */

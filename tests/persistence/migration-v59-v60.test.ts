@@ -74,7 +74,9 @@ describe("v59 → v60 migration", () => {
       },
     };
 
-    const roundTrip = deserializeGameState(serializeGameState(withMedia));
+    const roundTrip = deserializeGameState(
+      serializeGameState(withMedia as unknown as typeof state),
+    );
     const franchise = roundTrip.user.ownedFranchises[teamId];
     expect(franchise.mediaFeed.items).toHaveLength(1);
     expect(franchise.mediaFeed.items[0]?.headline).toBe("Test trade");

@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { createDefaultDevelopmentLeagueProfile } from "@/domain/entities/development-league";
 import { NEUTRAL_TEAM_PLAY_STYLE } from "@/domain/entities/team";
 import { DEFAULT_COACHING_PHILOSOPHY } from "@/domain/coaching/coaching-philosophy";
 import { createInitialGameState } from "@/state/create-initial-state";
@@ -1658,6 +1659,7 @@ describe("GameState schema migration", () => {
       conditioning: 100,
       injuryHistory: [],
       development: { stage: "prime" },
+      developmentLeague: createDefaultDevelopmentLeagueProfile(),
     });
 
     const full: typeof state = {

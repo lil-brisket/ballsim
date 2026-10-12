@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { DEFAULT_SEASON_EVENTS_SETTINGS } from "@/domain/game-settings";
 import { createEmptyPlayoffTournament } from "@/domain/entities/playoffs";
 import { createEmptySeasonEventsState } from "@/domain/entities/season-events";
 import { createEmptyTeamStanding } from "@/domain/entities/standings";
@@ -107,6 +108,7 @@ function createEightTeamGameState(rngSeed: number): {
         playInEnabled: false,
       },
       simulation: { frequency: "daily" },
+      seasonEvents: { ...DEFAULT_SEASON_EVENTS_SETTINGS },
       ai: {
         difficulty: "normal",
         managementPreset: "continuity",

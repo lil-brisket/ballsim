@@ -12,7 +12,12 @@ import {
 import { beginRegularSeasonFromPreseason } from "@/systems/simulation/season-lifecycle";
 import { transitionPhase } from "@/systems/simulation/phase-machine";
 import { advanceSimulation } from "@/systems/simulation/advance-simulation";
-import { completeDraft, createDraft, activateDraft, autoResolveGeneratedDraftClass } from "@/systems/draft";
+import {
+  completeDraft,
+  createDraft,
+  activateDraft,
+  autoResolveGeneratedDraftClass,
+} from "@/systems/draft";
 import { draftClassIdFor } from "@/domain/entities/draft";
 import { draftYearForSeason } from "@/systems/draft";
 import { getActivePhaseId, setActivePhase } from "@/systems/phase-engine";
@@ -138,7 +143,7 @@ describe("offseason lifecycle", () => {
           },
         },
       },
-    } as GameState;
+    } as unknown as GameState;
 
     current = processOffseasonLifecycle(current, rng).state;
     expect(
@@ -215,7 +220,7 @@ describe("offseason lifecycle", () => {
           },
         },
       },
-    } as GameState;
+    } as unknown as GameState;
 
     const yearBefore = seeded.competition.season.year;
     const next = initializeNewSeason(seeded, rng).state;

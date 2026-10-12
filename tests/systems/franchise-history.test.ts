@@ -311,7 +311,7 @@ describe("appendFranchiseSeasonRecord", () => {
           },
         },
       },
-    };
+    } as unknown as GameState;
     advanced = appendAllFranchiseSeasonRecords(advanced).state;
     const all = advanced.business.franchiseHistory[teamId]!.seasons;
     expect(all).toHaveLength(2);

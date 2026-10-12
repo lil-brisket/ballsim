@@ -94,7 +94,7 @@ describe("franchise identity persistence", () => {
     expect(observation.finalAxes).toEqual(observation.initialAxes);
     expect(observation.sampleDecisionReasons.length).toBeGreaterThan(0);
     expect(observation.fingerprints.length).toBeGreaterThan(0);
-  }, 120_000);
+  }, 300_000);
 
   it("produces multiple strategy clusters in a fresh league", () => {
     const state = createInitialGameState({

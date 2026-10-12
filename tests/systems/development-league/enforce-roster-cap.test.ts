@@ -149,6 +149,8 @@ describe("enforceMaxRosterViaDevelopmentLeague", () => {
     expect(getTopLeagueRosterSize(userTeamId, result.state)).toBe(
       TRADE_ROSTER_RULES.maxRosterSize,
     );
-    expect(getTopLeagueRosterSize(otherTeamId, result.state)).toBe(overflow);
+    expect(getTopLeagueRosterSize(asTeamId(otherTeamId), result.state)).toBe(
+      overflow,
+    );
   });
 });

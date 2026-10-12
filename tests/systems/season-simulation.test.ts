@@ -186,9 +186,6 @@ describe("simulateSeason", () => {
         games: {
           ...scheduled.competition.games,
           [gameId]: createGame({
-            competitionType: "regular_season",
-            homeTeamSnapshot: null,
-            awayTeamSnapshot: null,
             ...game,
             homeTeamId: asTeamId("team_missing_home"),
           }),
@@ -285,9 +282,6 @@ describe("simulateSeason", () => {
         games: {
           ...scheduled.competition.games,
           [gameId]: createGame({
-            competitionType: "regular_season",
-            homeTeamSnapshot: null,
-            awayTeamSnapshot: null,
             ...game,
             awayTeamId: asTeamId("team_missing_away"),
           }),

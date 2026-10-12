@@ -54,6 +54,8 @@ function withMarketAndOps(
     marketSize: number;
     cash?: number;
     fanSentiment?: number;
+    /** Settled home-game fill rate; without it realization falls back to the default (soft). */
+    fill?: number;
     wins?: number;
     losses?: number;
   },
@@ -86,6 +88,8 @@ function withMarketAndOps(
           ...ops,
           marketSize: input.marketSize,
           fanSentiment: input.fanSentiment ?? ops.fanSentiment,
+          homeFillSeries:
+            input.fill === undefined ? ops.homeFillSeries : [input.fill],
         },
       },
       finances: {
@@ -115,6 +119,7 @@ describe("relocation assessment", () => {
       wins: 10,
       losses: 50,
       cash: 80_000_000,
+      fill: 0.85,
     });
     const assessment = assessRelocation(state);
     expect(assessment.canStart).toBe(false);
@@ -188,6 +193,7 @@ describe("relocation assessment", () => {
       wins: 48,
       losses: 18,
       cash: 80_000_000,
+      fill: 0.85,
     });
     const assessment = assessRelocation(state);
     expect(
