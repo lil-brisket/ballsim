@@ -15,7 +15,9 @@ function assignment(playerId = "player_1"): PlayerPortraitAssignment {
   };
 }
 
-function portrait(overrides: Partial<Parameters<typeof PlayerPortrait>[0]> = {}) {
+function portrait(
+  overrides: Partial<Parameters<typeof PlayerPortrait>[0]> = {},
+) {
   return (
     <PlayerPortrait
       playerId="player_1"
@@ -30,7 +32,9 @@ function portrait(overrides: Partial<Parameters<typeof PlayerPortrait>[0]> = {})
 describe("PlayerPortrait", () => {
   it("renders decorative initials and a reserved lg box", () => {
     const { container, unmount } = render(portrait());
-    const root = container.querySelector("[data-portrait-player-id='player_1']");
+    const root = container.querySelector(
+      "[data-portrait-player-id='player_1']",
+    );
     expect(root).toBeTruthy();
     expect(root?.getAttribute("aria-hidden")).toBe("true");
     expect(root?.getAttribute("data-portrait-size")).toBe("lg");
@@ -39,16 +43,20 @@ describe("PlayerPortrait", () => {
     expect((root as HTMLElement).style.height).toBe(`${PORTRAIT_SIZE_PX.lg}px`);
     expect(root?.className).toMatch(/h-24/);
     expect(root?.className).toMatch(/w-24/);
-    expect(screen.getByText("AR", { hidden: true })).toBeTruthy();
+    expect(screen.getByText("AR")).toBeTruthy();
     expect(screen.queryByRole("img")).toBeNull();
     unmount();
   });
 
   it("keeps initials in the accessible-hidden label for a slash composition", () => {
     const { unmount } = render(
-      portrait({ playerId: "player_slash_probe", firstName: "Luka", lastName: "Doncic" }),
+      portrait({
+        playerId: "player_slash_probe",
+        firstName: "Luka",
+        lastName: "Doncic",
+      }),
     );
-    expect(screen.getByText("LD", { hidden: true })).toBeTruthy();
+    expect(screen.getByText("LD")).toBeTruthy();
     unmount();
   });
 
@@ -123,7 +131,9 @@ describe("PlayerPortrait", () => {
   });
   it("renders the persisted procedural face for a valid assignment", () => {
     const { container, unmount } = render(portrait({ portrait: assignment() }));
-    const root = container.querySelector("[data-portrait-player-id='player_1']");
+    const root = container.querySelector(
+      "[data-portrait-player-id='player_1']",
+    );
     expect(root?.getAttribute("data-portrait-state")).toBe("assigned");
     expect(container.querySelector("[data-portrait-face='true']")).toBeTruthy();
     expect(root?.textContent).not.toContain("AR");
@@ -147,8 +157,16 @@ describe("PlayerPortrait", () => {
   it("falls back to initials for null or invalid assignments", () => {
     for (const bad of [
       null,
-      { version: 1, traits: { skinTone: 99 }, salt: 0 } as unknown as PlayerPortraitAssignment,
-      { version: 7, traits: assignment().traits, salt: 0 } as unknown as PlayerPortraitAssignment,
+      {
+        version: 1,
+        traits: { skinTone: 99 },
+        salt: 0,
+      } as unknown as PlayerPortraitAssignment,
+      {
+        version: 7,
+        traits: assignment().traits,
+        salt: 0,
+      } as unknown as PlayerPortraitAssignment,
     ]) {
       const { container, unmount } = render(portrait({ portrait: bad }));
       expect(container.querySelector("[data-portrait-face]")).toBeNull();

@@ -27,7 +27,7 @@ describe("GameSetupForm", () => {
   it("shows fantasy draft deferred-setup message", () => {
     const { unmount } = render(<GameSetupForm atSaveLimit={false} />);
 
-    fireEvent.change(screen.getByLabelText("Roster source"), {
+    fireEvent.change(screen.getByLabelText("Opening"), {
       target: { value: "1" },
     });
 
@@ -55,7 +55,7 @@ describe("GameSetupForm", () => {
     const { unmount } = render(<GameSetupForm atSaveLimit={false} />);
 
     fireEvent.change(screen.getByLabelText("Roster source"), {
-      target: { value: "2" },
+      target: { value: "1" },
     });
 
     const fileInput = screen.getByLabelText("Custom roster package");

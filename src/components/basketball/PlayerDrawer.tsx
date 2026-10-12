@@ -49,7 +49,7 @@ export function PlayerDrawer(props: {
   const title = props.view
     ? `${props.view.identity.firstName} ${props.view.identity.lastName}`
     : "Player";
-  const bodyRef = useRef<HTMLDivElement>(null);
+  const bodyRef = useRef<HTMLDivElement | null>(null);
   const playerId = props.view?.playerId;
 
   useEffect(() => {
@@ -66,7 +66,9 @@ export function PlayerDrawer(props: {
       title={title}
       size="xl"
       placement="modal"
-      bodyRef={bodyRef}
+      onBodyElement={(element) => {
+        bodyRef.current = element;
+      }}
       footer={
         props.view ? (
           <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">

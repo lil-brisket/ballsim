@@ -147,7 +147,9 @@ describe("Franchise history UI", () => {
       },
     ];
     const { unmount } = render(
-      <FranchiseHistorySeasonTable seasons={[...seasons]} />,
+      <FranchiseHistorySeasonTable
+        seasons={[...seasons] as FranchiseHistoryView["seasons"]}
+      />,
     );
     expect(screen.getByText("Attendance")).toBeTruthy();
     expect(screen.getByText("—")).toBeTruthy();

@@ -159,8 +159,10 @@ export function CalendarWorkspace(props: {
   const handleSimulateRef = useRef<(targetDate: string) => Promise<void>>(
     async () => undefined,
   );
-  const simAnnouncementRef = useRef<string | null>(null);
-  const simAnnouncementKeyRef = useRef<string | null>(null);
+  const [simAnnouncement, setSimAnnouncement] = useState<{
+    key: string;
+    text: string;
+  } | null>(null);
 
   /* eslint-disable react-hooks/set-state-in-effect -- sync URL-driven view props and playback into local UI state */
   useEffect(() => {
@@ -427,7 +429,9 @@ export function CalendarWorkspace(props: {
       );
     }
   }
-  handleSimulateRef.current = handleSimulate;
+  useEffect(() => {
+    handleSimulateRef.current = handleSimulate;
+  });
 
   /* eslint-disable react-hooks/set-state-in-effect -- interrupt sync and leftover auto-resume */
   useEffect(() => {
@@ -517,15 +521,20 @@ export function CalendarWorkspace(props: {
   }
 
   const busy = isPending || simulationPending || playback != null;
-  if (playback == null) {
-    simAnnouncementRef.current = null;
-    simAnnouncementKeyRef.current = null;
-  } else {
-    const announcementKey = `${playback.phase}:${monthKey(playback.currentDate)}`;
-    if (simAnnouncementKeyRef.current !== announcementKey) {
-      simAnnouncementKeyRef.current = announcementKey;
-      simAnnouncementRef.current = `Simulating ${playback.phase} · ${playback.currentDate}`;
-    }
+  // Announce once per phase/month so screen readers are not flooded per day.
+  const announcementKey =
+    playback == null
+      ? null
+      : `${playback.phase}:${monthKey(playback.currentDate)}`;
+  if ((simAnnouncement?.key ?? null) !== announcementKey) {
+    setSimAnnouncement(
+      playback == null || announcementKey == null
+        ? null
+        : {
+            key: announcementKey,
+            text: `Simulating ${playback.phase} · ${playback.currentDate}`,
+          },
+    );
   }
   const inspector = (
     <DateInspector
@@ -573,7 +582,7 @@ export function CalendarWorkspace(props: {
           aria-live="polite"
           aria-atomic="true"
         >
-          {simAnnouncementRef.current}
+          {simAnnouncement?.text}
         </p>
       ) : simulationPending ? (
         <p

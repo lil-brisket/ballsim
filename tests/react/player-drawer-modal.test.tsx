@@ -72,7 +72,7 @@ describe("PlayerDrawer modal", () => {
     expect(screen.getByText("78")).toBeTruthy();
     expect(screen.getByText("Overall")).toBeTruthy();
     expect(screen.getByText("available")).toBeTruthy();
-    expect(screen.getByText("AR", { hidden: true })).toBeTruthy();
+    expect(screen.getByText("AR")).toBeTruthy();
     expect(screen.queryByText("Availability")).toBeNull();
 
     expect(screen.getByText("Key ratings")).toBeTruthy();

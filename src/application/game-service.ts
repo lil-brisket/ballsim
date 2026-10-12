@@ -551,7 +551,10 @@ function withPlayerPortraits(state: GameState): GameState {
   try {
     return ensurePlayerPortraits(state).state;
   } catch (error) {
-    console.error("Player portrait assignment failed; continuing without.", error);
+    console.error(
+      "Player portrait assignment failed; continuing without.",
+      error,
+    );
     return state;
   }
 }
@@ -637,7 +640,10 @@ export async function createNewOwnerSave(
     }
   }
 
-  if (validated.settings.draft.mode === "custom" && rosterPackage === undefined) {
+  if (
+    validated.settings.draft.mode === "custom" &&
+    rosterPackage === undefined
+  ) {
     return fail("Custom roster mode requires a roster package.");
   }
 
@@ -686,7 +692,9 @@ export async function createNewOwnerSave(
     };
     validateGameState(state);
   } catch (error) {
-    return fail(error instanceof Error ? error.message : "Failed to create save.");
+    return fail(
+      error instanceof Error ? error.message : "Failed to create save.",
+    );
   }
 
   const loaded = await saveStore.create({
@@ -701,10 +709,7 @@ export async function createNewOwnerSave(
 export async function upsertCustomContentPackage(
   payloadJson: string,
   store?: CustomContentStore,
-): Promise<
-  | { ok: true; contentId: string }
-  | { ok: false; error: string }
-> {
+): Promise<{ ok: true; contentId: string } | { ok: false; error: string }> {
   let parsed: unknown;
   try {
     parsed = JSON.parse(payloadJson) as unknown;
@@ -787,7 +792,9 @@ export async function updateOwnerCustomRosterPlayer(
     );
     return withDashboard(persisted);
   } catch (error) {
-    return fail(error instanceof Error ? error.message : "Failed to update player.");
+    return fail(
+      error instanceof Error ? error.message : "Failed to update player.",
+    );
   }
 }
 
@@ -802,7 +809,10 @@ export async function removeOwnerCustomRosterPlayer(
     if (!loaded) {
       return fail("Save not found.");
     }
-    const updated = removeCustomRosterPlayer(loaded.state, asPlayerId(playerId));
+    const updated = removeCustomRosterPlayer(
+      loaded.state,
+      asPlayerId(playerId),
+    );
     validateGameState(updated.state);
     const persisted = await persistWorkingState(
       saveId,
@@ -814,7 +824,9 @@ export async function removeOwnerCustomRosterPlayer(
     );
     return withDashboard(persisted);
   } catch (error) {
-    return fail(error instanceof Error ? error.message : "Failed to remove player.");
+    return fail(
+      error instanceof Error ? error.message : "Failed to remove player.",
+    );
   }
 }
 
@@ -830,12 +842,7 @@ export async function addOwnerCustomRosterPlayer(
       return fail("Save not found.");
     }
     const rng = createSeededRng(loaded.state.meta.rngState);
-    const updated = addCustomRosterPlayer(
-      loaded.state,
-      source,
-      rng,
-      saveId,
-    );
+    const updated = addCustomRosterPlayer(loaded.state, source, rng, saveId);
     validateGameState(updated.state);
     const persisted = await persistWorkingState(
       saveId,
@@ -847,7 +854,9 @@ export async function addOwnerCustomRosterPlayer(
     );
     return withDashboard(persisted);
   } catch (error) {
-    return fail(error instanceof Error ? error.message : "Failed to add player.");
+    return fail(
+      error instanceof Error ? error.message : "Failed to add player.",
+    );
   }
 }
 
@@ -925,8 +934,7 @@ export async function resolveOwnerDraftClassDecision(
       draftYear,
       resolved: true,
       source: "custom",
-      customContentId:
-        input.contentId ?? preview.normalized?.contentId,
+      customContentId: input.contentId ?? preview.normalized?.contentId,
     });
     validateGameState(next);
     const persisted = await persistWorkingState(
@@ -953,7 +961,10 @@ export async function exportOwnerRoster(
   if (!loaded) {
     return fail("Save not found.");
   }
-  return { ok: true, json: JSON.stringify(exportRoster(loaded.state), null, 2) };
+  return {
+    ok: true,
+    json: JSON.stringify(exportRoster(loaded.state), null, 2),
+  };
 }
 
 export async function exportOwnerDraftClass(
@@ -1199,8 +1210,9 @@ export async function loadCalendarPageView(
       },
     };
     validateGameState(state);
-    state = (await persistWorkingState(saveId, state, rng.getState(), saveStore))
-      .state;
+    state = (
+      await persistWorkingState(saveId, state, rng.getState(), saveStore)
+    ).state;
   }
 
   const currentDate = state.world.calendar.currentDate;
@@ -1557,7 +1569,10 @@ export async function saveOwnerGame(
 ): Promise<CreateGameResult> {
   const withPortraits = withPlayerPortraits(state);
   validateGameState(withPortraits);
-  const saved = await getStore(store).save({ id: saveId, state: withPortraits });
+  const saved = await getStore(store).save({
+    id: saveId,
+    state: withPortraits,
+  });
   return {
     save: toSaveSummary(saved),
     dashboard: toDashboardSnapshot(saved.state),
@@ -1992,8 +2007,7 @@ export async function advanceOwnerTime(
 
       const rng = createSeededRng(rngState);
       const useBoxScore = isCalendarTarget || resolved.days > 1;
-      const stopBeforeUserTeamGame =
-        stopConditions.includes("user_team_game");
+      const stopBeforeUserTeamGame = stopConditions.includes("user_team_game");
       // Regular-season init consumes a simulation step without moving the
       // calendar. Only add that extra step when this jump actually reaches
       // the opener; preseason-only jumps must land on the requested date.

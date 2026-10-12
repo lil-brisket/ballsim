@@ -37,7 +37,7 @@ describe("RosterRow", () => {
     expect(portrait?.getAttribute("data-portrait-size")).toBe("sm");
     expect(portrait?.getAttribute("aria-hidden")).toBe("true");
     expect((portrait as HTMLElement).style.width).toBe("32px");
-    expect(screen.getByText("AR", { hidden: true })).toBeTruthy();
+    expect(screen.getByText("AR")).toBeTruthy();
     unmount();
   });
 });

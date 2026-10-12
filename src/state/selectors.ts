@@ -1234,8 +1234,10 @@ export function toDashboardSnapshot(state: GameState): DashboardSnapshot {
           state.world.calendar.currentDate,
         ),
       })),
-    unreadNotificationCount: getActiveOwnedFranchise(state).notifications.filter(
-      (n) => isOwnerNotificationStillUnread(n, state.world.calendar.currentDate),
+    unreadNotificationCount: getActiveOwnedFranchise(
+      state,
+    ).notifications.filter((n) =>
+      isOwnerNotificationStillUnread(n, state.world.calendar.currentDate),
     ).length,
     activeFranchiseAi: {
       managementPreset: getActiveOwnedFranchise(state).managementPreset,

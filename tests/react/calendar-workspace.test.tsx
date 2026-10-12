@@ -458,7 +458,9 @@ describe("CalendarWorkspace redesign", () => {
       expect(screen.getByText(/W 110-102/)).toBeTruthy();
       expect(screen.queryByText(/Simulating —/)).toBeNull();
       expect(screen.queryByText(/% complete/)).toBeNull();
-      expect(screen.getByRole("status").textContent).toMatch(/Simulating regular/);
+      expect(screen.getByRole("status").textContent).toMatch(
+        /Simulating regular/,
+      );
       expect(screen.getByRole("status").textContent).toMatch(/2026-09-18/);
       const grid = container.querySelector(".grid.grid-cols-7");
       expect(grid?.className).toContain("pointer-events-none");
@@ -677,7 +679,8 @@ function interruptView(): CalendarPageView {
     },
     pauseBanner: {
       reason: "owner_decision",
-      message: "Simulation paused — a required owner decision must be resolved.",
+      message:
+        "Simulation paused — a required owner decision must be resolved.",
       resolveHref: "/dashboard/save_cal/trades/od_1",
     },
     interrupt: {
@@ -726,8 +729,12 @@ describe("CalendarWorkspace in-sim interrupt", () => {
     );
     fireEvent.click(screen.getByRole("button", { name: "Stop simulation" }));
     expect(screen.queryByRole("button", { name: "Accept" })).toBeNull();
-    expect(screen.getByRole("status").textContent).toMatch(/Simulation paused/i);
-    expect(screen.getByRole("button", { name: "Resolve Decision" })).toBeTruthy();
+    expect(screen.getByRole("status").textContent).toMatch(
+      /Simulation paused/i,
+    );
+    expect(
+      screen.getByRole("button", { name: "Resolve Decision" }),
+    ).toBeTruthy();
     expect(streamMocks.streamSimulateToDate).not.toHaveBeenCalled();
     fireEvent.click(screen.getByRole("button", { name: "Resolve Decision" }));
     expect(screen.getByRole("button", { name: "Accept" })).toBeTruthy();
@@ -759,9 +766,9 @@ describe("CalendarWorkspace in-sim interrupt", () => {
     );
     fireEvent.click(screen.getByRole("button", { name: "Accept" }));
     fireEvent.click(screen.getByRole("button", { name: "Accept" }));
-    expect(actionMocks.resolveCalendarTradeInterruptAction).toHaveBeenCalledTimes(
-      1,
-    );
+    expect(
+      actionMocks.resolveCalendarTradeInterruptAction,
+    ).toHaveBeenCalledTimes(1);
     release?.({ ok: true, interrupt: null, resumeTo: "2026-10-01" });
     await waitFor(() => {
       expect(streamMocks.streamSimulateToDate).toHaveBeenCalledTimes(1);
@@ -799,12 +806,9 @@ describe("CalendarWorkspace in-sim interrupt", () => {
     await waitFor(() => {
       expect(streamMocks.streamSimulateToDate).toHaveBeenCalledTimes(1);
     });
-    expect(actionMocks.resolveCalendarTradeInterruptAction).toHaveBeenCalledWith(
-      "save_cal",
-      "od_1",
-      "let_ai_decide",
-      "2026-10-01",
-    );
+    expect(
+      actionMocks.resolveCalendarTradeInterruptAction,
+    ).toHaveBeenCalledWith("save_cal", "od_1", "let_ai_decide", "2026-10-01");
     unmount();
   });
 

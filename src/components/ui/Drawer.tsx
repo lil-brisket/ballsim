@@ -48,7 +48,7 @@ export function Drawer(props: {
   /** Right-rail (default) or centered modal. Team/Staff/Calendar stay on drawer. */
   placement?: DrawerPlacement;
   /** Scrollable body node — used to reset scroll without remounting. */
-  bodyRef?: React.Ref<HTMLDivElement>;
+  onBodyElement?: (element: HTMLDivElement | null) => void;
   /** Accessible label override when header slot replaces title text. */
   "aria-label"?: string;
 }) {
@@ -61,6 +61,7 @@ export function Drawer(props: {
   const closeRef = useRef<HTMLButtonElement>(null);
   const previousFocusRef = useRef<HTMLElement | null>(null);
   const mounted = useIsClient();
+  const { onBodyElement } = props;
 
   const close = useCallback(() => {
     props.onOpenChange(false);
@@ -200,7 +201,7 @@ export function Drawer(props: {
         </div>
 
         <div
-          ref={props.bodyRef}
+          ref={onBodyElement}
           data-drawer-body=""
           className="min-h-0 flex-1 overflow-y-auto px-4 py-4"
         >
