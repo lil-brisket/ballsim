@@ -1,6 +1,7 @@
 "use client";
 
 import { PlayerPortrait } from "@/components/basketball/PlayerPortrait";
+import type { PlayerPortraitAssignment } from "@/domain/entities/player-portrait";
 import { PlayerEntityLink } from "@/components/entity/PlayerEntityLink";
 
 type ProspectCardProps = {
@@ -8,6 +9,8 @@ type ProspectCardProps = {
   playerId: string;
   firstName: string;
   lastName: string;
+  /** Persisted portrait from the view model; null/absent → initials plate. */
+  portrait?: PlayerPortraitAssignment | null;
   position: string;
   age?: number | null;
   nationality?: string | null;
@@ -37,6 +40,7 @@ export function ProspectCard(props: ProspectCardProps) {
             playerId={props.playerId}
             firstName={props.firstName}
             lastName={props.lastName}
+            portrait={props.portrait}
             size="sm"
           />
           <div className="min-w-0">

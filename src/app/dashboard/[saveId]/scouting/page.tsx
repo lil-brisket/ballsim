@@ -1,3 +1,4 @@
+import { selectPlayerPortrait } from "@/state/player-portrait-selectors";
 import { notFound } from "next/navigation";
 import {
   assignScoutAction,
@@ -153,6 +154,7 @@ export default async function ScoutingPage({ params, searchParams }: Props) {
                       <ProspectCard
                         saveId={saveId}
                         playerId={prospect.playerId}
+                        portrait={selectPlayerPortrait(state, prospect.playerId)}
                         firstName={prospect.player.firstName}
                         lastName={prospect.player.lastName}
                         position={

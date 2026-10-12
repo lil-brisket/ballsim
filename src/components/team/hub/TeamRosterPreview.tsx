@@ -23,6 +23,7 @@ export function TeamRosterPreview(props: { saveId: string; hub: TeamHubView }) {
             key={player.playerId}
             saveId={saveId}
             playerId={player.playerId}
+            portrait={player.portrait}
             firstName={player.firstName}
             lastName={player.lastName}
             position={player.position}
@@ -43,6 +44,7 @@ export function TeamRosterPreview(props: { saveId: string; hub: TeamHubView }) {
                 key={`inj-${player.playerId}`}
                 saveId={saveId}
                 playerId={player.playerId}
+                portrait={player.portrait}
                 firstName={player.firstName}
                 lastName={player.lastName}
                 position={player.position}

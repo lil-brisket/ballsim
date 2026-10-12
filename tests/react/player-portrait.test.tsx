@@ -4,6 +4,16 @@ import {
   PlayerPortrait,
   PORTRAIT_SIZE_PX,
 } from "@/components/basketball/PlayerPortrait";
+import type { PlayerPortraitAssignment } from "@/domain/entities/player-portrait";
+import { derivePortraitTraits } from "@/systems/portraits/assign-player-portraits";
+
+function assignment(playerId = "player_1"): PlayerPortraitAssignment {
+  return {
+    version: 1,
+    traits: derivePortraitTraits("save_ui", playerId, 0),
+    salt: 0,
+  };
+}
 
 function portrait(overrides: Partial<Parameters<typeof PlayerPortrait>[0]> = {}) {
   return (
@@ -110,5 +120,68 @@ describe("PlayerPortrait", () => {
     const mdRoot = md.container.querySelector("[data-portrait-size='md']");
     expect((mdRoot as HTMLElement).style.width).toBe("64px");
     md.unmount();
+  });
+  it("renders the persisted procedural face for a valid assignment", () => {
+    const { container, unmount } = render(portrait({ portrait: assignment() }));
+    const root = container.querySelector("[data-portrait-player-id='player_1']");
+    expect(root?.getAttribute("data-portrait-state")).toBe("assigned");
+    expect(container.querySelector("[data-portrait-face='true']")).toBeTruthy();
+    expect(root?.textContent).not.toContain("AR");
+    expect(container.querySelector("img")).toBeNull();
+    expect((root as HTMLElement).style.width).toBe("96px");
+    unmount();
+  });
+
+  it("renders identical faces for the same assignment and different faces otherwise", () => {
+    const a = render(portrait({ portrait: assignment("player_a") }));
+    const markupA = a.container.querySelector("svg")?.outerHTML;
+    a.unmount();
+    const again = render(portrait({ portrait: assignment("player_a") }));
+    expect(again.container.querySelector("svg")?.outerHTML).toBe(markupA);
+    again.unmount();
+    const b = render(portrait({ portrait: assignment("player_b") }));
+    expect(b.container.querySelector("svg")?.outerHTML).not.toBe(markupA);
+    b.unmount();
+  });
+
+  it("falls back to initials for null or invalid assignments", () => {
+    for (const bad of [
+      null,
+      { version: 1, traits: { skinTone: 99 }, salt: 0 } as unknown as PlayerPortraitAssignment,
+      { version: 7, traits: assignment().traits, salt: 0 } as unknown as PlayerPortraitAssignment,
+    ]) {
+      const { container, unmount } = render(portrait({ portrait: bad }));
+      expect(container.querySelector("[data-portrait-face]")).toBeNull();
+      expect(container.textContent).toContain("AR");
+      expect(
+        container
+          .querySelector("[data-portrait-player-id]")
+          ?.getAttribute("data-portrait-state"),
+      ).toBe("missing");
+      unmount();
+    }
+  });
+
+  it("keeps honoring a ready raster overlay above the face", () => {
+    const { container, unmount } = render(
+      portrait({
+        portrait: assignment(),
+        state: "ready",
+        src: "/portraits/x.webp",
+      }),
+    );
+    expect(container.querySelector("[data-portrait-face='true']")).toBeTruthy();
+    expect(container.querySelector("img")?.getAttribute("src")).toBe(
+      "/portraits/x.webp",
+    );
+    unmount();
+  });
+
+  it("never renders an img without a src", () => {
+    const { container, unmount } = render(
+      portrait({ portrait: assignment(), state: "ready", src: "" }),
+    );
+    expect(container.querySelector("img")).toBeNull();
+    unmount();
   });
 });

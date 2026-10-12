@@ -49,7 +49,7 @@ src/
   application/         # Use-cases / server commands
   domain/              # Entities, events, RNG, SystemResult
   data/                # Static string pools (e.g. name lists); not typed domain catalogs
-  presentation/        # UI-adjacent pure helpers (portrait hash/paths); not simulation, not React
+  presentation/        # UI-adjacent pure helpers (portrait fallback hash/overlay paths); not simulation, not React
   state/               # GameState composition + factories + selectors
   systems/             # Simulation systems (added incrementally)
   simulation/
@@ -124,6 +124,16 @@ GameState
 `schemaVersion` 25 adds top-level `GameState.settings` (`GameSettings`): league size/structure, regular-season games per team, playoff field/series/play-in, simulation frequency, AI difficulty (persisted for later use), and financial rule toggles. Pre-v25 saves reconstruct settings from the live league (e.g. 12-team CBL → 22 games / 8 playoff teams) rather than stamping Standard 30/82/16. Settings are configuration; runtime remains on world/competition/business/user. After expansion, do not treat `settings.league.teamCount` as the live team count.
 
 `schemaVersion` 37 adds offseason stage entry dates (`offseasonStageEnteredDate`, `freeAgencyExtendedUntil`), configurable free-agency duration under `settings.offseason.freeAgency`, AI management/assist settings (`ai.managementMode`, `ai.assistance`), and user continuity records (`explicitDecisions`, `phaseSkips`). Pre-v37 saves migrate with `smart_assist` defaults, FA duration 30 days, and stage entry date set to `currentDate` when already in an offseason stage.
+
+`schemaVersion` 65 adds `world.playerPortraits`: a persisted procedural portrait (`PlayerPortraitAssignment` — generator version, trait indices, collision salt) keyed by player / draft-prospect id. Pre-v65 saves migrate by running the pure `ensurePlayerPortraits` (no RNG, no I/O), so repeated loads of an un-resaved save show identical faces.
+
+### Player portraits
+
+- **Boundary:** `ensurePlayerPortraits` (`src/systems/portraits/`) is called in the application layer on every save write (`persistWorkingState`, `createNewOwnerSave`, `saveOwnerGame`). Any path that adds a player or prospect is covered there; systems don't call it. Failures are caught and logged, and the save proceeds without new portraits.
+- **Identity:** traits come from FNV-1a over `saveId:playerId:salt`. This is a presentation hash, never domain RNG. Prospect ids carry over through selection, so a drafted rookie keeps their prospect portrait. Valid entries are never overwritten, and age, ratings, team and contract don't feed into the traits.
+- **Uniqueness / exhaustion:** each new face avoids the trait signatures of active players (non-retired, plus prospects in drafts that aren't complete), trying up to 32 salts. If every salt collides, the salt-0 face is kept and flagged `duplicate: true`. `getPortraitCapacityReport` reports utilization.
+- **Repair:** `npm run portraits:backfill` (`repairPlayerPortraits`) fills missing or invalid entries in every save, one CAS write per save. It can be re-run safely.
+- **UI:** selectors attach `portrait` to player view models via `selectPlayerPortrait`. `PlayerPortrait` renders `PortraitFace` (inline SVG) when the entry is valid, and the initials plate otherwise. The optional raster overlay (`src`) still renders on top. Nothing is generated during render or page load.
 
 `schemaVersion` 14 adds `competition.playoffs` (`PlayoffTournament`). Pre-v14 saves migrate with `createEmptyPlayoffTournament()` (`not_started`, empty field). Empty/inactive playoffs are valid; a missing or null `playoffs` field is not.
 

@@ -1,3 +1,5 @@
+import type { PlayerPortraitAssignment } from "@/domain/entities/player-portrait";
+import { selectPlayerPortrait } from "@/state/player-portrait-selectors";
 import {
   getContractSalaryForYear,
   getContractStatus,
@@ -32,6 +34,8 @@ import {
 
 export type PlayerDrawerView = {
   playerId: string;
+  /** Persisted portrait (world.playerPortraits); null → initials fallback. */
+  portrait: PlayerPortraitAssignment | null;
   identity: {
     firstName: string;
     lastName: string;
@@ -83,6 +87,7 @@ export type TeamDrawerRecentGame = {
 
 export type TeamDrawerTopPlayer = {
   playerId: string;
+  portrait: PlayerPortraitAssignment | null;
   firstName: string;
   lastName: string;
   position: string;
@@ -195,6 +200,7 @@ export function toPlayerDrawerView(
 
   return {
     playerId: String(playerId),
+    portrait: selectPlayerPortrait(state, playerId),
     identity: {
       firstName: player.firstName,
       lastName: player.lastName,
@@ -315,6 +321,7 @@ export function toTeamDrawerView(
     if (!p) continue;
     rosterPlayers.push({
       playerId: String(pid),
+      portrait: selectPlayerPortrait(state, pid),
       firstName: p.firstName,
       lastName: p.lastName,
       position: p.position,

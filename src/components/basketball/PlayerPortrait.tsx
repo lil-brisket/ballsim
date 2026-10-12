@@ -5,8 +5,15 @@ import {
   portraitPlateIndex,
 } from "@/presentation/portrait-hash";
 import { cn } from "@/components/ui/styles";
+import { PortraitFace } from "@/components/basketball/PortraitFace";
+import {
+  isValidPortraitAssignment,
+  type PlayerPortraitAssignment,
+} from "@/domain/entities/player-portrait";
 
 export type PortraitState =
+  /** Persisted procedural face, no raster overlay. */
+  | "assigned"
   | "missing"
   | "pending"
   | "ready"
@@ -20,6 +27,9 @@ export type PlayerPortraitProps = {
   firstName: string;
   lastName: string;
   size: PlayerPortraitSize;
+  /** Persisted procedural portrait (world.playerPortraits). Invalid/null → initials plate. */
+  portrait?: PlayerPortraitAssignment | null;
+  /** Raster overlay state; defaults from `portrait` ("assigned" or "missing"). */
   state?: PortraitState;
   /** Only honored when state === "ready". */
   src?: string;
@@ -152,11 +162,16 @@ function resolveVisualState(
 }
 
 /**
- * Deterministic player identity mark. Pure props; no client hooks.
- * Always decorative in Milestone 1 (name is adjacent at every call site).
+ * Player identity mark. Renders the persisted procedural face when `portrait`
+ * is valid, else the deterministic initials plate. Pure props; no client hooks.
+ * Always decorative (name is adjacent at every call site).
  */
 export function PlayerPortrait(props: PlayerPortraitProps) {
-  const state = resolveVisualState(props.state ?? "missing", props.src);
+  const face = isValidPortraitAssignment(props.portrait) ? props.portrait : null;
+  const state = resolveVisualState(
+    props.state ?? (face !== null ? "assigned" : "missing"),
+    props.src,
+  );
   const hash = hashPlayerIdForPortrait(props.playerId);
   const plateIndex = portraitPlateIndex(hash);
   const compositionIndex = portraitCompositionIndex(hash);
@@ -177,18 +192,24 @@ export function PlayerPortrait(props: PlayerPortraitProps) {
       data-portrait-state={state}
       data-portrait-player-id={props.playerId}
     >
-      <FallbackMark
-        plateIndex={plateIndex}
-        compositionIndex={compositionIndex}
-      />
-      <span
-        className={cn(
-          "relative z-10 flex h-full w-full items-center justify-center font-mono font-semibold text-zinc-50 [text-shadow:0_1px_2px_rgb(0_0_0_/_0.85)]",
-          INITIALS_CLASS[props.size],
-        )}
-      >
-        {initials}
-      </span>
+      {face !== null ? (
+        <PortraitFace traits={face.traits} />
+      ) : (
+        <>
+          <FallbackMark
+            plateIndex={plateIndex}
+            compositionIndex={compositionIndex}
+          />
+          <span
+            className={cn(
+              "relative z-10 flex h-full w-full items-center justify-center font-mono font-semibold text-zinc-50 [text-shadow:0_1px_2px_rgb(0_0_0_/_0.85)]",
+              INITIALS_CLASS[props.size],
+            )}
+          >
+            {initials}
+          </span>
+        </>
+      )}
       {showOverlay ? (
         <img
           src={props.src}

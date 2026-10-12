@@ -1,4 +1,6 @@
+import { PlayerPortrait } from "@/components/basketball/PlayerPortrait";
 import { PlayerEntityLink } from "@/components/entity/PlayerEntityLink";
+import { splitDisplayName } from "@/presentation/portrait-hash";
 import { TeamEntityLink } from "@/components/entity/TeamEntityLink";
 import { StatusBadge } from "@/components/owner/StatusBadge";
 import {
@@ -80,7 +82,13 @@ export function TransactionRow(props: {
               </p>
               <ul className="mt-1.5 space-y-1">
                 {side.players.map((player) => (
-                  <li key={player.id}>
+                  <li key={player.id} className="flex items-center gap-2">
+                    <PlayerPortrait
+                      playerId={player.id}
+                      portrait={player.portrait}
+                      {...splitDisplayName(player.name)}
+                      size="xs"
+                    />
                     <PlayerEntityLink
                       saveId={saveId}
                       playerId={player.id}
@@ -110,17 +118,24 @@ export function TransactionRow(props: {
           <p className="text-sm text-zinc-200">{row.description}</p>
           <div className="flex flex-wrap gap-2 text-sm">
             {row.players.map((player) => (
-              <PlayerEntityLink
-                key={player.id}
-                saveId={saveId}
-                playerId={player.id}
-                className={cn(
-                  "text-amber-400/90 hover:text-amber-300",
-                  focusRingClass,
-                )}
-              >
-                {player.name}
-              </PlayerEntityLink>
+              <span key={player.id} className="inline-flex items-center gap-1.5">
+                <PlayerPortrait
+                  playerId={player.id}
+                  portrait={player.portrait}
+                  {...splitDisplayName(player.name)}
+                  size="xs"
+                />
+                <PlayerEntityLink
+                  saveId={saveId}
+                  playerId={player.id}
+                  className={cn(
+                    "text-amber-400/90 hover:text-amber-300",
+                    focusRingClass,
+                  )}
+                >
+                  {player.name}
+                </PlayerEntityLink>
+              </span>
             ))}
             {row.teams.map((team) => (
               <TeamEntityLink

@@ -164,6 +164,7 @@ function createEightTeamGameState(rngSeed: number): {
       drafts: {},
       fantasyDraft: null,
       scheduledEvents: {},
+      playerPortraits: {},
     },
     competition: {
       season: {

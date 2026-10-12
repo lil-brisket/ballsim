@@ -10,7 +10,7 @@ This is a fully fictional basketball simulation and management game.
 
 - There are no real NBA teams, players, leagues, cities, or copyrighted assets.
 - There are no traditional basketball graphics (no 2D/3D on-court simulation).
-- Front-office player portraits are presentation identity only: original fictional art or a deterministic SVG fallback keyed by stable player id. They are not licensed photography, not NBA 2K assets, and not simulation graphics.
+- Front-office player portraits are presentation identity only: a procedural SVG headshot whose traits are persisted per save when a player or prospect is created, kept for the whole career, and unique among active players. An optional original raster overlay can sit on top, and an initials plate is the fallback. They are not licensed photography, not NBA 2K assets, and not simulation graphics, and they never affect gameplay.
 - Games are simulated through data, statistics, events, and text.
 
 Working product title: **Basketball** (subject to rename).

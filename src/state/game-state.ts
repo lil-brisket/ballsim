@@ -55,12 +55,13 @@ import type {
 } from "@/domain/entities/media-item";
 import type { SocialFeedState } from "@/domain/entities/social-post";
 import type { SaveId, TeamId } from "@/domain/ids";
+import type { PlayerPortraitAssignment } from "@/domain/entities/player-portrait";
 import type {
   CompetitionPhaseState,
   FranchisePhaseState,
 } from "@/systems/phase-engine/phase-types";
 
-export const GAME_STATE_SCHEMA_VERSION = 64;
+export const GAME_STATE_SCHEMA_VERSION = 65;
 
 /** League personnel market for staff free agency (not a business-finance concept). */
 export type StaffMarketState = {
@@ -104,6 +105,11 @@ export type WorldSlice = {
   /** Startup fantasy draft; null when league uses standard roster generation. */
   fantasyDraft: FantasyDraft | null;
   scheduledEvents: Record<string, ScheduledEvent>;
+  /**
+   * Persisted procedural portrait per player / draft prospect id (schema v65+).
+   * Presentation identity only; assigned by ensurePlayerPortraits at persist time.
+   */
+  playerPortraits: Record<string, PlayerPortraitAssignment>;
 };
 
 export type CompetitionSlice = {

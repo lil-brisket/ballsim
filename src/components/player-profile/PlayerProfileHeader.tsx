@@ -13,6 +13,7 @@ export function PlayerProfileHeader(props: { player: PlayerProfileView }) {
         <div className="flex min-w-0 items-start gap-4">
           <PlayerPortrait
             playerId={player.playerId}
+            portrait={player.portrait}
             firstName={player.firstName}
             lastName={player.lastName}
             size="lg"

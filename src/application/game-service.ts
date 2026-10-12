@@ -1,4 +1,5 @@
 import "server-only";
+import { ensurePlayerPortraits } from "@/systems/portraits/assign-player-portraits";
 import {
   getActiveOwnedFranchise,
   withOwnedFranchise,
@@ -537,6 +538,21 @@ function withDashboard(
 }
 
 /**
+ * Shared portrait boundary for every save write: assigns a persisted portrait
+ * to any player / draft prospect missing one. Never blocks persistence — on
+ * failure the state is saved without new portraits (UI falls back to the
+ * initials plate) and the next write retries.
+ */
+function withPlayerPortraits(state: GameState): GameState {
+  try {
+    return ensurePlayerPortraits(state).state;
+  } catch (error) {
+    console.error("Player portrait assignment failed; continuing without.", error);
+    return state;
+  }
+}
+
+/**
  * Persist working state after successful command validation.
  * Writes RNG only on the working copy being saved.
  * Appends newlyEmittedEvents exactly once into user.eventLog (bounded).
@@ -550,7 +566,9 @@ async function persistWorkingState(
   newlyEmittedEvents: readonly DomainEvent[] = [],
   options: { ifUpdatedAt?: Date } = {},
 ): Promise<LoadedSaveGame> {
-  const withEvents = appendEventLog(working, newlyEmittedEvents);
+  const withEvents = withPlayerPortraits(
+    appendEventLog(working, newlyEmittedEvents),
+  );
   validateGameState(withEvents);
   const nowIso = new Date().toISOString();
   const nextState: GameState = {
@@ -653,10 +671,11 @@ export async function createNewOwnerSave(
   const rng = createSeededRng(state.meta.rngState);
   try {
     const bootstrapped = bootstrapWorld(state, rng, rosterPackage);
+    const withPortraits = withPlayerPortraits(bootstrapped.state);
     state = {
-      ...bootstrapped.state,
+      ...withPortraits,
       meta: {
-        ...bootstrapped.state.meta,
+        ...withPortraits.meta,
         rngState: rng.getState(),
         updatedAt: nowIso,
       },
@@ -1174,7 +1193,8 @@ export async function loadCalendarPageView(
       },
     };
     validateGameState(state);
-    await persistWorkingState(saveId, state, rng.getState(), saveStore);
+    state = (await persistWorkingState(saveId, state, rng.getState(), saveStore))
+      .state;
   }
 
   const currentDate = state.world.calendar.currentDate;
@@ -1517,8 +1537,9 @@ export async function saveOwnerGame(
   state: GameState,
   store?: SaveGameStore,
 ): Promise<CreateGameResult> {
-  validateGameState(state);
-  const saved = await getStore(store).save({ id: saveId, state });
+  const withPortraits = withPlayerPortraits(state);
+  validateGameState(withPortraits);
+  const saved = await getStore(store).save({ id: saveId, state: withPortraits });
   return {
     save: toSaveSummary(saved),
     dashboard: toDashboardSnapshot(saved.state),

@@ -203,6 +203,7 @@ export function createInitialGameState(
       drafts: {},
       fantasyDraft: null,
       scheduledEvents: {},
+      playerPortraits: {},
     },
     competition: {
       season: {
@@ -529,6 +530,7 @@ export function createFourTeamInitialGameState(
       drafts: {},
       fantasyDraft: null,
       scheduledEvents: {},
+      playerPortraits: {},
     },
     competition: {
       season: {

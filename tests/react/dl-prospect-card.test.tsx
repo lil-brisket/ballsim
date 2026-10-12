@@ -35,6 +35,7 @@ function prospect(
 ): DlProspectRowView {
   return {
     playerId: "p1",
+    portrait: null,
     name: "Alex Prospect",
     overall: 72,
     potential: 84,

@@ -9,6 +9,7 @@ function playerView(
 ): PlayerDrawerView {
   return {
     playerId: "player_1",
+    portrait: null,
     identity: {
       firstName: "Alex",
       lastName: "Rivera",

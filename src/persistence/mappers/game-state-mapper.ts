@@ -46,6 +46,7 @@ import {
   type RotationStyle,
 } from "@/domain/entities/team-roster-management";
 import { migrateLegacyRotationEntry } from "@/systems/rotation/migrate-rotation-entry";
+import { ensurePlayerPortraits } from "@/systems/portraits/assign-player-portraits";
 import type {
   ArenaId,
   ConferenceId,
@@ -240,6 +241,7 @@ const MIGRATE_ONE_STEP: Record<number, (state: unknown) => unknown> = {
   61: (state) => migrateV61ToV62(state as GameStateV61),
   62: (state) => migrateV62ToV63(state as GameStateV62),
   63: (state) => migrateV63ToV64(state as GameStateV63),
+  64: (state) => migrateV64ToV65(state as GameStateV64),
 };
 
 function legacyUserRecord(user: unknown): Record<string, unknown> {
@@ -5387,7 +5389,7 @@ function migrateV62ToV63(state: GameStateV62): GameStateV63 {
   } as GameStateV63;
 }
 
-function migrateV63ToV64(state: GameStateV63): GameState {
+function migrateV63ToV64(state: GameStateV63): GameStateV64 {
   const gameArchive: GameState["business"]["gameArchive"] = {};
   for (const [gameId, game] of Object.entries(state.business.gameArchive ?? {})) {
     gameArchive[gameId] = compactGameForArchive(game as Game);
@@ -5404,4 +5406,29 @@ function migrateV63ToV64(state: GameStateV63): GameState {
       gameArchiveIndex: buildGameArchiveIndex(gameArchive),
     },
   };
+}
+
+type GameStateV64 = Omit<GameState, "meta" | "world"> & {
+  meta: Omit<GameState["meta"], "schemaVersion"> & { schemaVersion: 64 };
+  world: Omit<GameState["world"], "playerPortraits">;
+};
+
+/**
+ * Deterministic v64 → v65: add world.playerPortraits and backfill every
+ * player / prospect via ensurePlayerPortraits (pure; no RNG, no I/O).
+ * Repeated loads of an un-resaved legacy save yield identical portraits.
+ */
+function migrateV64ToV65(state: GameStateV64): GameState {
+  const withRegistry: GameState = {
+    ...state,
+    meta: {
+      ...state.meta,
+      schemaVersion: 65,
+    },
+    world: {
+      ...state.world,
+      playerPortraits: {},
+    },
+  };
+  return ensurePlayerPortraits(withRegistry).state;
 }

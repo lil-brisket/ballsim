@@ -187,6 +187,7 @@ export function PlayerPoolTable(props: {
                   <span className="flex items-center gap-2">
                     <PlayerPortrait
                       playerId={player.playerId}
+                      portrait={player.portrait}
                       firstName={player.firstName}
                       lastName={player.lastName}
                       size="sm"

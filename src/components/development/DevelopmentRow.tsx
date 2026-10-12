@@ -37,6 +37,7 @@ export function DevelopmentRow(props: {
         <span className="flex items-center gap-2">
           <PlayerPortrait
             playerId={row.playerId}
+            portrait={row.portrait}
             firstName={nameParts.firstName}
             lastName={nameParts.lastName}
             size="sm"

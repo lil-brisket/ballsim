@@ -1,5 +1,6 @@
 import { InjuryBadge } from "@/components/basketball/InjuryBadge";
 import { PlayerPortrait } from "@/components/basketball/PlayerPortrait";
+import type { PlayerPortraitAssignment } from "@/domain/entities/player-portrait";
 import { TeamLogoMark } from "@/components/team/logos/TeamLogoMark";
 import type { TeamBrandingView } from "@/state/team-branding-view";
 
@@ -7,6 +8,8 @@ export function PlayerProfileHero(props: {
   playerId: string;
   firstName: string;
   lastName: string;
+  /** Persisted portrait from the view model; null/absent → initials plate. */
+  portrait?: PlayerPortraitAssignment | null;
   position: string;
   age: number;
   overall: number;
@@ -32,6 +35,7 @@ export function PlayerProfileHero(props: {
           playerId={props.playerId}
           firstName={props.firstName}
           lastName={props.lastName}
+          portrait={props.portrait}
           size="lg"
         />
 

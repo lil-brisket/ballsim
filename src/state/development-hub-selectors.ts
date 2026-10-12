@@ -3,6 +3,8 @@
  * Composes roster + playerHistory; does not invent development focus or causal trainer links.
  */
 
+import { selectPlayerPortrait } from "@/state/player-portrait-selectors";
+import type { PlayerPortraitAssignment } from "@/domain/entities/player-portrait";
 import type { GameState } from "@/state/game-state";
 import type { ActionCenterItem } from "@/state/action-center-selectors";
 import {
@@ -19,6 +21,8 @@ import { isPlayerDlAssigned } from "@/systems/development-league/franchise-membe
 
 export type DevelopmentHubRow = {
   playerId: string;
+  /** Persisted portrait (world.playerPortraits); null → initials fallback. */
+  portrait: PlayerPortraitAssignment | null;
   playerName: string;
   position: string;
   age: number;
@@ -105,6 +109,7 @@ export function toDevelopmentHubView(state: GameState): DevelopmentHubView {
 
     rowsRaw.push({
       playerId: player.id,
+      portrait: selectPlayerPortrait(state, player.id),
       playerName: `${player.firstName} ${player.lastName}`,
       position: player.position,
       age: player.age,

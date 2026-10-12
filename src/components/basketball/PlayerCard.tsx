@@ -1,5 +1,6 @@
 import { InjuryBadge } from "@/components/basketball/InjuryBadge";
 import { PlayerPortrait } from "@/components/basketball/PlayerPortrait";
+import type { PlayerPortraitAssignment } from "@/domain/entities/player-portrait";
 import {
   cn,
   densityPadding,
@@ -35,6 +36,8 @@ export function PlayerCard(props: {
   playerId: string;
   firstName: string;
   lastName: string;
+  /** Persisted portrait from the view model; null/absent → initials plate. */
+  portrait?: PlayerPortraitAssignment | null;
   position?: string;
   overall?: number;
   age?: number;
@@ -67,6 +70,7 @@ export function PlayerCard(props: {
             playerId={props.playerId}
             firstName={props.firstName}
             lastName={props.lastName}
+            portrait={props.portrait}
             size="md"
           />
           <div className="min-w-0">

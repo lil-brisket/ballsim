@@ -44,6 +44,7 @@ export function FreeAgentRosterView(props: {
                 <span className="flex items-center gap-2">
                   <PlayerPortrait
                     playerId={agent.playerId}
+                    portrait={agent.portrait}
                     firstName={agent.firstName}
                     lastName={agent.lastName}
                     size="sm"

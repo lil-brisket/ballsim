@@ -1,3 +1,5 @@
+import { selectPlayerPortrait } from "@/state/player-portrait-selectors";
+import type { PlayerPortraitAssignment } from "@/domain/entities/player-portrait";
 import {
   getContractSalaryForYear,
   getContractStatus,
@@ -213,6 +215,8 @@ export type CityPickOption = {
 
 export type RosterPlayerView = {
   playerId: string;
+  /** Persisted portrait (world.playerPortraits); null → initials fallback. */
+  portrait: PlayerPortraitAssignment | null;
   firstName: string;
   lastName: string;
   position: string;
@@ -239,6 +243,8 @@ export type StandingRowView = {
 
 export type FreeAgentView = {
   playerId: string;
+  /** Persisted portrait (world.playerPortraits); null → initials fallback. */
+  portrait: PlayerPortraitAssignment | null;
   firstName: string;
   lastName: string;
   position: string;
@@ -350,6 +356,8 @@ export type NotificationView = {
 
 export type PlayerDetailView = {
   playerId: string;
+  /** Persisted portrait (world.playerPortraits); null → initials fallback. */
+  portrait: PlayerPortraitAssignment | null;
   firstName: string;
   lastName: string;
   position: string;
@@ -504,6 +512,7 @@ export function toRosterView(state: GameState): RosterPlayerView[] {
       contract !== undefined ? Math.max(0, contract.endYear - year + 1) : null;
     rows.push({
       playerId: player.id,
+      portrait: selectPlayerPortrait(state, player.id),
       firstName: player.firstName,
       lastName: player.lastName,
       position: player.position,
@@ -561,6 +570,7 @@ export function toFreeAgentViews(state: GameState): FreeAgentView[] {
     }
     views.push({
       playerId: player.id,
+      portrait: selectPlayerPortrait(state, player.id),
       firstName: player.firstName,
       lastName: player.lastName,
       position: player.position,
@@ -1069,6 +1079,7 @@ function playerEntityToDetail(
 
   return {
     playerId: player.id,
+    portrait: selectPlayerPortrait(state, player.id),
     firstName: player.firstName,
     lastName: player.lastName,
     position: player.position,
@@ -1622,6 +1633,8 @@ export type { TeamId };
 
 export type FantasyDraftPoolPlayerView = {
   playerId: string;
+  /** Persisted portrait (world.playerPortraits); null → initials fallback. */
+  portrait: PlayerPortraitAssignment | null;
   firstName: string;
   lastName: string;
   position: string;
@@ -1859,6 +1872,7 @@ export function toFantasyDraftView(
       : undefined;
     poolPlayers.push({
       playerId: String(player.id),
+      portrait: selectPlayerPortrait(state, player.id),
       firstName: player.firstName,
       lastName: player.lastName,
       position: player.position,

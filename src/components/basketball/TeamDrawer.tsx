@@ -145,6 +145,7 @@ export function TeamDrawer(props: {
                     key={player.playerId}
                     saveId={props.saveId}
                     playerId={player.playerId}
+                    portrait={player.portrait}
                     firstName={player.firstName}
                     lastName={player.lastName}
                     position={player.position}

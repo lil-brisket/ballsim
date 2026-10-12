@@ -38,6 +38,7 @@ describe("development-hub-selectors", () => {
         changeLabel: "90 → 90",
         potential: 90,
         onDevelopmentLeague: false,
+        portrait: null,
       },
       {
         playerId: "b",
@@ -50,6 +51,7 @@ describe("development-hub-selectors", () => {
         changeLabel: "67 → 70",
         potential: 85,
         onDevelopmentLeague: false,
+        portrait: null,
       },
     ];
     const sorted = sortDevelopmentRows(rows);

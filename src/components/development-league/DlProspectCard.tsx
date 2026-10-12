@@ -3,6 +3,7 @@ import {
   recallFromDevelopmentLeagueAction,
 } from "@/application/actions";
 import { PlayerPortrait } from "@/components/basketball/PlayerPortrait";
+import type { PlayerPortraitAssignment } from "@/domain/entities/player-portrait";
 import { StatLine } from "@/components/basketball/StatLine";
 import { PlayerEntityLink } from "@/components/entity/PlayerEntityLink";
 import { splitDisplayName } from "@/presentation/portrait-hash";
@@ -118,6 +119,7 @@ export function DlProspectCard(props: {
         <div className="flex min-w-0 items-start gap-2">
           <PlayerPortrait
             playerId={row.playerId}
+            portrait={row.portrait}
             firstName={nameParts.firstName}
             lastName={nameParts.lastName}
             size="sm"
@@ -209,6 +211,7 @@ export function DlProspectCard(props: {
 
 type EligibleRowData = {
   playerId: string;
+  portrait?: PlayerPortraitAssignment | null;
   name: string;
   overall: number;
   potential: number;
@@ -254,6 +257,7 @@ export function DlEligibleCard(props: {
         <div className="flex min-w-0 items-start gap-2">
           <PlayerPortrait
             playerId={row.playerId}
+            portrait={row.portrait}
             firstName={nameParts.firstName}
             lastName={nameParts.lastName}
             size="sm"
@@ -294,6 +298,7 @@ export function DlEligibleRow(props: {
         <span className="flex items-center gap-2">
           <PlayerPortrait
             playerId={row.playerId}
+            portrait={row.portrait}
             firstName={nameParts.firstName}
             lastName={nameParts.lastName}
             size="sm"

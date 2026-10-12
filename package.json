@@ -28,6 +28,7 @@
     "sanity:compare": "tsx scripts/league-sanity-compare.ts",
     "generate:league-history": "tsx scripts/generate-league-history.ts",
     "playtest:metrics": "tsx scripts/playtest-metrics.ts",
+    "portraits:backfill": "tsx --conditions=react-server scripts/backfill-player-portraits.ts",
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",
     "postinstall": "prisma generate"

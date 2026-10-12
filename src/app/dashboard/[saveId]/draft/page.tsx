@@ -1,3 +1,4 @@
+import { selectPlayerPortrait } from "@/state/player-portrait-selectors";
 import { notFound } from "next/navigation";
 import {
   addDraftBoardAction,
@@ -279,6 +280,7 @@ export default async function DraftPage({
                         <ProspectCard
                           saveId={saveId}
                           playerId={prospect.playerId}
+                          portrait={selectPlayerPortrait(state, prospect.playerId)}
                           firstName={prospect.firstName}
                           lastName={prospect.lastName}
                           position={prospect.position}

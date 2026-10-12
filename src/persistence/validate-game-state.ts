@@ -234,6 +234,7 @@ export function validateGameState(state: unknown): asserts state is GameState {
     "drafts",
     "fantasyDraft",
     "scheduledEvents",
+    "playerPortraits",
   ] as const) {
     if (!(key in world)) {
       fail(`world missing required field "${key}".`);
@@ -322,6 +323,9 @@ export function validateGameState(state: unknown): asserts state is GameState {
   }
   assertRecord(world.scheduledEvents, "world.scheduledEvents");
   validateScheduledEvents(world.scheduledEvents);
+  // Shape only: entries are presentation identity, and coverage is filled by
+  // ensurePlayerPortraits at persist time. Invalid entries render a fallback.
+  assertRecord(world.playerPortraits, "world.playerPortraits");
 
   const competition = state.competition;
   assertRecord(competition, "competition");

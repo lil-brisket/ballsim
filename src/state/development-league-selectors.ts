@@ -3,6 +3,8 @@
  * Presentation-only; composes DL eligibility/readiness systems.
  */
 
+import { selectPlayerPortrait } from "@/state/player-portrait-selectors";
+import type { PlayerPortraitAssignment } from "@/domain/entities/player-portrait";
 import { DL_MAX_SEASONS } from "@/domain/entities/development-league";
 import type { DevelopmentReadiness } from "@/domain/entities/development-league";
 import type { TeamStanding } from "@/domain/entities/standings";
@@ -34,6 +36,8 @@ export const DL_WHY_BULLETS_FALLBACK =
 
 export type DlProspectRowView = {
   playerId: string;
+  /** Persisted portrait (world.playerPortraits); null → initials fallback. */
+  portrait: PlayerPortraitAssignment | null;
   name: string;
   overall: number;
   potential: number;
@@ -93,6 +97,7 @@ export type DevelopmentLeagueDashboardView = {
   recentResults: DlRecentResultView[];
   eligibleToAssign: Array<{
     playerId: string;
+    portrait: PlayerPortraitAssignment | null;
     name: string;
     overall: number;
     potential: number;
@@ -216,6 +221,7 @@ export function toDevelopmentLeagueDashboardView(
 
     prospects.push({
       playerId: player.id,
+      portrait: selectPlayerPortrait(state, player.id),
       name: `${player.firstName} ${player.lastName}`,
       overall,
       potential,
@@ -302,6 +308,7 @@ export function toDevelopmentLeagueDashboardView(
       const rec = getDlAssignmentRecommendation(p, teamId, state);
       return {
         playerId: p.id,
+        portrait: selectPlayerPortrait(state, p.id),
         name: `${p.firstName} ${p.lastName}`,
         overall: rec.overall,
         potential: p.potential.overall,

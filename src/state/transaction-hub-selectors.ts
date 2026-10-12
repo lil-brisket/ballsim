@@ -3,6 +3,8 @@
  * Presentation-only; badges driven by DomainEventType.
  */
 
+import type { PlayerPortraitAssignment } from "@/domain/entities/player-portrait";
+import { selectPlayerPortrait } from "@/state/player-portrait-selectors";
 import type { DomainEvent, DomainEventType } from "@/domain/events";
 import type { TeamId } from "@/domain/ids";
 import type { GameState } from "@/state/game-state";
@@ -51,6 +53,8 @@ export type TransactionEntityRef = {
   name: string;
   abbreviation?: string;
   branding?: TeamBrandingView | null;
+  /** Players only: persisted portrait. */
+  portrait?: PlayerPortraitAssignment | null;
 };
 
 export type TradeSideView = {
@@ -150,6 +154,7 @@ function resolvePlayer(
   return {
     id: playerId,
     name: player ? `${player.firstName} ${player.lastName}` : playerId,
+    portrait: selectPlayerPortrait(state, playerId),
   };
 }
 

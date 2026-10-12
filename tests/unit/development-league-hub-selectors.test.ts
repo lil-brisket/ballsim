@@ -26,6 +26,7 @@ function prospectFixture(
     Pick<DlProspectRowView, "playerId" | "name" | "readiness">,
 ): DlProspectRowView {
   return {
+    portrait: null,
     overall: 70,
     potential: 80,
     potentialHeadroom: 10,
