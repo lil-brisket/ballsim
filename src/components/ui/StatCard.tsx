@@ -1,12 +1,9 @@
-import {
-  cn,
-  densityPadding,
-  panelClass,
-  type Density,
-} from "@/components/ui/styles";
+import { ArenaPanel } from "@/components/ui/ArenaPanel";
+import { cn, type Density } from "@/components/ui/styles";
 
 /**
- * Metric surface for page-level stats. Do not nest StatCards inside Panel.
+ * Metric surface for page-level stats: mono eyebrow label over a large
+ * scoreboard value. Do not nest StatCards inside Panel.
  */
 export function StatCard(props: {
   label: string;
@@ -15,15 +12,26 @@ export function StatCard(props: {
   density?: Density;
   className?: string;
 }) {
-  const density = props.density ?? "comfortable";
   return (
-    <div className={cn(panelClass, densityPadding[density], props.className)}>
-      <h2 className="text-sm font-medium text-zinc-400">{props.label}</h2>
+    <ArenaPanel
+      as="div"
+      raised
+      density={props.density ?? "comfortable"}
+      className={props.className}
+    >
+      <h2 className="font-mono text-[0.65rem] uppercase tracking-[0.16em] text-zinc-400">
+        {props.label}
+      </h2>
       <div
-        className={cn("mt-2 text-xl text-zinc-50", props.mono && "font-mono")}
+        className={cn(
+          "mt-2 text-zinc-50",
+          props.mono
+            ? "font-mono text-xl"
+            : "font-display text-3xl font-bold tabular-nums",
+        )}
       >
         {props.value}
       </div>
-    </div>
+    </ArenaPanel>
   );
 }

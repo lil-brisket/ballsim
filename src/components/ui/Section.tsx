@@ -1,3 +1,4 @@
+import { SectionHeading } from "@/components/ui/SectionHeading";
 import { cn, densitySectionSpace, type Density } from "@/components/ui/styles";
 
 export function Section(props: {
@@ -10,10 +11,12 @@ export function Section(props: {
   const density = props.density ?? "default";
   return (
     <section className={cn(densitySectionSpace[density], props.className)}>
-      <div className="flex min-h-11 items-center justify-between gap-4">
-        <h2 className="text-lg font-medium text-zinc-100">{props.title}</h2>
-        {props.action}
-      </div>
+      <SectionHeading
+        as="h2"
+        title={props.title}
+        action={props.action}
+        className="min-h-11"
+      />
       {props.children}
     </section>
   );

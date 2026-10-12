@@ -5,6 +5,8 @@ import { Section } from "@/components/owner/Section";
 import type { LeagueHubSnapshot } from "@/state/league-hub-selectors";
 import type { StandingsRowEnriched } from "@/state/standings-selectors";
 import { formatStreak } from "@/state/standings-selectors";
+import { ArenaPanel } from "@/components/ui/ArenaPanel";
+import { TickerBar } from "@/components/ui/TickerBar";
 import { cn, focusRingClass } from "@/components/ui/styles";
 
 export function LeagueSnapshotPanel(props: { snapshot: LeagueHubSnapshot }) {
@@ -25,21 +27,16 @@ export function LeagueSnapshotPanel(props: { snapshot: LeagueHubSnapshot }) {
 
   return (
     <Section title="League Snapshot">
-      <dl className="grid gap-3 sm:grid-cols-3 lg:grid-cols-5">
-        {metrics.map((m) => (
-          <div
-            key={m.label}
-            className="rounded-lg border border-zinc-800 bg-zinc-900/40 px-3 py-2"
-          >
-            <dt className="font-mono text-[0.65rem] uppercase tracking-wide text-zinc-500">
-              {m.label}
-            </dt>
-            <dd className="mt-1 text-sm font-medium text-zinc-100">
-              {m.value}
-            </dd>
-          </div>
-        ))}
-      </dl>
+      <ArenaPanel as="div" raised density="compact">
+        <TickerBar
+          aria-label="League snapshot"
+          items={metrics.map((m) => ({
+            label: m.label,
+            value: m.value,
+            tone: m.label === "Your record" ? "team" : "default",
+          }))}
+        />
+      </ArenaPanel>
     </Section>
   );
 }

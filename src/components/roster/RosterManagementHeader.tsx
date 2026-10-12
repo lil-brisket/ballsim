@@ -2,72 +2,49 @@
 
 import type { RosterPageView } from "@/state/roster-page-selectors";
 import { MoneyDisplay } from "@/components/owner/MoneyDisplay";
-import { Metric } from "@/components/ui/Metric";
-import { cn, panelClass } from "@/components/ui/styles";
+import { ArenaPanel } from "@/components/ui/ArenaPanel";
+import { SectionHeading } from "@/components/ui/SectionHeading";
+import { TickerBar, type TickerItem } from "@/components/ui/TickerBar";
 
 export function RosterManagementHeader(props: { view: RosterPageView }) {
   const { team, summary } = props.view;
+  const items: TickerItem[] = [
+    {
+      label: "Roster",
+      value: `${summary.rosterCount} / ${summary.rosterMax}`,
+      tone: "team",
+    },
+    { label: "Rotation", value: String(summary.rotationPlayerCount) },
+    {
+      label: "Injured",
+      value: String(summary.injuredCount),
+      tone: summary.injuredCount > 0 ? "loss" : "default",
+    },
+    { label: "On Block", value: String(summary.tradeBlockPlayerCount) },
+    { label: "Payroll", value: <MoneyDisplay amount={summary.payroll} /> },
+    { label: "Cap Space", value: <MoneyDisplay amount={summary.capSpace} /> },
+  ];
+  if (summary.openSpots > 0) {
+    items.push({ label: "Open Spots", value: String(summary.openSpots) });
+  }
+
   return (
-    <header
-      className={cn(
-        panelClass,
-        "flex flex-wrap items-start justify-between gap-4 px-4 py-3",
-      )}
+    <ArenaPanel
+      as="header"
+      edge="top"
+      density="compact"
+      className="flex flex-wrap items-center justify-between gap-4"
       aria-label="Roster summary"
     >
       <div>
-        <p className="font-mono text-[0.65rem] uppercase tracking-[0.16em] text-zinc-500">
-          Roster Management
-        </p>
-        <h1 className="mt-1 text-xl font-semibold text-zinc-50">
-          {team.city} {team.name}
-        </h1>
-        <p className="mt-1 text-sm text-zinc-400">{team.abbreviation}</p>
+        <SectionHeading
+          as="h1"
+          eyebrow="Roster Management"
+          title={`${team.city} ${team.name}`}
+        />
+        <p className="mt-1 text-sm text-zinc-300">{team.abbreviation}</p>
       </div>
-      <div className="flex flex-wrap gap-x-6 gap-y-3">
-        <Metric
-          label="Roster"
-          value={`${summary.rosterCount} / ${summary.rosterMax}`}
-          density="compact"
-          mono
-        />
-        <Metric
-          label="Rotation"
-          value={String(summary.rotationPlayerCount)}
-          density="compact"
-          mono
-        />
-        <Metric
-          label="Injured"
-          value={String(summary.injuredCount)}
-          density="compact"
-          mono
-        />
-        <Metric
-          label="On Block"
-          value={String(summary.tradeBlockPlayerCount)}
-          density="compact"
-          mono
-        />
-        <Metric
-          label="Payroll"
-          value={<MoneyDisplay amount={summary.payroll} />}
-          density="compact"
-        />
-        <Metric
-          label="Cap Space"
-          value={<MoneyDisplay amount={summary.capSpace} />}
-          density="compact"
-        />
-        {summary.openSpots > 0 ? (
-          <Metric
-            label="Open Spots"
-            value={String(summary.openSpots)}
-            density="compact"
-            mono
-          />
-        ) : null}
-      </div>
-    </header>
+      <TickerBar aria-label="Roster summary" items={items} />
+    </ArenaPanel>
   );
 }

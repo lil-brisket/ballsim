@@ -1,6 +1,10 @@
 import Link from "next/link";
 import { parseCalendarDate } from "@/domain/calendar-date";
-import { cn, focusRingClass, panelClass } from "@/components/ui/styles";
+import { ArenaPanel } from "@/components/ui/ArenaPanel";
+import { ScoreNumeral } from "@/components/ui/ScoreNumeral";
+import { SectionHeading } from "@/components/ui/SectionHeading";
+import { TickerBar, type TickerItem } from "@/components/ui/TickerBar";
+import { cn, focusRingClass, touchTargetClass } from "@/components/ui/styles";
 
 function formatLongDate(isoDate: string): string {
   try {
@@ -27,34 +31,38 @@ export function LeagueHeader(props: {
   playoffBanner?: string | null;
 }) {
   return (
-    <header
-      className={cn(panelClass, "space-y-2 p-4 sm:p-5")}
-      aria-label="League"
+    <ArenaPanel
+      as="header"
+      hero
+      edge="top"
+      density="comfortable"
+      aria-labelledby="league-title"
     >
       <div className="flex flex-wrap items-start justify-between gap-3">
-        <div className="min-w-0">
-          <p className="font-mono text-[0.65rem] uppercase tracking-[0.16em] text-amber-500">
-            League
-          </p>
-          <h1 className="mt-1 text-2xl font-medium text-zinc-50">
-            {props.leagueName}
-          </h1>
-          <p className="mt-1 text-sm text-zinc-400">
+        <div className="min-w-0 space-y-2">
+          <SectionHeading
+            as="h1"
+            size="lg"
+            id="league-title"
+            eyebrow="League"
+            title={props.leagueName}
+          />
+          <p className="text-sm text-zinc-200">
             {formatLongDate(props.currentDate)}
-            <span className="mx-2 text-zinc-700">·</span>
+            <span className="mx-2 text-zinc-600">·</span>
             {props.seasonYear} · {props.seasonPhaseLabel}
           </p>
-          <p className="mt-0.5 text-xs text-zinc-500">
+          <p className="text-xs text-zinc-400">
             Your team · {props.userTeamLabel}
           </p>
         </div>
         {props.playoffBanner ? (
-          <p className="rounded-md border border-amber-800/40 bg-amber-950/30 px-3 py-1.5 text-sm text-amber-300">
+          <p className="rounded-md border border-warning/40 bg-warning/10 px-3 py-1.5 text-sm text-amber-200">
             {props.playoffBanner}
           </p>
         ) : null}
       </div>
-    </header>
+    </ArenaPanel>
   );
 }
 
@@ -81,69 +89,65 @@ export function MyTeamContextStrip(props: {
         ? `${props.gamesBack} GB`
         : `${props.gamesBack.toFixed(1)} GB`;
 
+  const items: TickerItem[] = [
+    { label: "Conference", value: `#${props.conferenceRank} ${confShort}` },
+    { label: "Games back", value: gb },
+  ];
+  if (props.streakLabel) {
+    items.push({ label: "Streak", value: props.streakLabel });
+  }
+  items.push({
+    label: "League Leader",
+    value: `${props.leagueLeader.abbreviation} ${props.leagueLeader.wins}–${props.leagueLeader.losses}`,
+  });
+  if (props.cutoffTeam) {
+    items.push({
+      label: "Playoff Cutoff",
+      value: `${props.cutoffTeam.abbreviation} ${props.cutoffTeam.wins}–${props.cutoffTeam.losses}`,
+    });
+  }
+
   return (
-    <section
-      className={cn(panelClass, "p-4")}
-      aria-label="Your team in the league"
+    <ArenaPanel
+      as="section"
+      raised
+      edge="left"
+      density="compact"
+      className="space-y-3"
+      aria-labelledby="my-team-context-title"
     >
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div className="min-w-0 space-y-1">
-          <p className="font-mono text-[0.65rem] uppercase tracking-[0.14em] text-zinc-500">
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <div className="min-w-0">
+          <p className="font-mono text-[0.65rem] uppercase tracking-[0.16em] text-team-ink">
             Your Team
           </p>
-          <p className="text-lg font-medium text-zinc-50">
+          <p
+            id="my-team-context-title"
+            className="font-display text-2xl font-bold uppercase leading-tight tracking-wide text-zinc-50"
+          >
             {props.city} {props.name}
           </p>
-          <p className="font-mono text-sm text-zinc-200">
-            {props.wins}–{props.losses}
-            <span className="mx-2 text-zinc-700">·</span>#{props.conferenceRank}{" "}
-            {confShort}
-            <span className="mx-2 text-zinc-700">·</span>
-            {gb}
-            {props.streakLabel ? (
-              <>
-                <span className="mx-2 text-zinc-700">·</span>
-                {props.streakLabel}
-              </>
-            ) : null}
-          </p>
         </div>
+        <ScoreNumeral
+          value={`${props.wins}–${props.losses}`}
+          label="Record"
+          labelBelow
+          size="md"
+          tone="team"
+          align="center"
+        />
         <Link
           href={`/dashboard/${props.saveId}/team`}
           className={cn(
-            "rounded-md bg-amber-600 px-3 py-1.5 text-sm font-medium text-zinc-950 hover:bg-amber-500",
+            touchTargetClass,
+            "rounded-lg border-2 border-team-ink bg-team px-4 font-display text-lg font-bold uppercase tracking-wide text-on-team hover:brightness-110",
             focusRingClass,
           )}
         >
           View Team
         </Link>
       </div>
-      <dl className="mt-3 grid gap-3 sm:grid-cols-2">
-        <div>
-          <dt className="font-mono text-[0.65rem] uppercase tracking-wide text-zinc-500">
-            League Leader
-          </dt>
-          <dd className="mt-0.5 text-sm text-zinc-200">
-            {props.leagueLeader.abbreviation}{" "}
-            <span className="font-mono text-zinc-400">
-              {props.leagueLeader.wins}–{props.leagueLeader.losses}
-            </span>
-          </dd>
-        </div>
-        {props.cutoffTeam ? (
-          <div>
-            <dt className="font-mono text-[0.65rem] uppercase tracking-wide text-zinc-500">
-              Playoff Cutoff
-            </dt>
-            <dd className="mt-0.5 text-sm text-zinc-200">
-              {props.cutoffTeam.abbreviation}{" "}
-              <span className="font-mono text-zinc-400">
-                {props.cutoffTeam.wins}–{props.cutoffTeam.losses}
-              </span>
-            </dd>
-          </div>
-        ) : null}
-      </dl>
-    </section>
+      <TickerBar aria-label="Standing context" items={items} />
+    </ArenaPanel>
   );
 }

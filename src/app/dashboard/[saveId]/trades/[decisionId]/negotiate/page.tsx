@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { SectionHeading } from "@/components/ui/SectionHeading";
 import { notFound } from "next/navigation";
 import { submitTradeCounterofferAction } from "@/application/actions";
 import { prismaSaveGameStore } from "@/persistence/save-game-repository";
@@ -50,7 +51,7 @@ export default async function TradeNegotiatePage(props: PageProps) {
   return (
     <div className="mx-auto max-w-3xl space-y-6 px-4 py-6 text-sm text-zinc-200">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-2xl font-semibold text-zinc-50">Negotiate trade</h1>
+        <SectionHeading as="h1" size="lg" title="Negotiate trade" />
         <Link
           href={returnPath}
           className="rounded-md border border-zinc-600 px-3 py-1.5 hover:border-zinc-400"
