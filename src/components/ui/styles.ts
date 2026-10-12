@@ -1,6 +1,12 @@
 /**
  * Shared BallSim UI surface tokens and density scales.
  * Prefer these over ad-hoc zinc panel classes in new components.
+ *
+ * Broadcast / arena primitives (team-themed via the `--team-*` CSS variables,
+ * see TeamThemeScope): ArenaPanel for hero and primary surfaces, ScoreNumeral
+ * for big numbers, TickerBar for label/value strips, TeamBadge for logo plates
+ * and SectionHeading for section titles. `panelClass` / `Panel` remain for
+ * quiet secondary boxes while pages migrate.
  */
 
 export type Density = "compact" | "default" | "comfortable";

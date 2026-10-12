@@ -7,6 +7,38 @@
   --accent: #d97706;
   --panel: #18181b;
   --line: #27272a;
+
+  /*
+   * Team theming. Neutral amber defaults so pages outside a save still work.
+   * A save's shell overrides these inline via teamThemeVars()
+   * (src/presentation/team-theme.ts), which also derives --team-on-primary
+   * (text on a solid team plate) and --team-ink (team colour readable on the
+   * dark surfaces below).
+   */
+  --team-primary: #d97706;
+  --team-secondary: #f59e0b;
+  --team-primary-rgb: 217 119 6;
+  --team-on-primary: #0a0a0a;
+  --team-ink: #f59e0b;
+  --team-ink-rgb: 245 158 11;
+
+  /* Arena surface scale, deepest to most raised. */
+  --surface-deep: #050507;
+  --surface-arena: #0f0f12;
+  --surface-raised: #18181b;
+  --surface-line: #2a2a30;
+
+  /* Semantic broadcast colours. */
+  --win: #22c55e;
+  --loss: #ef4444;
+  --live: #f43f5e;
+  --warning: #f59e0b;
+
+  /* Glow / shadow. */
+  --shadow-arena: 0 10px 30px -12px rgb(0 0 0 / 0.8);
+  --glow-team:
+    0 0 0 1px rgb(var(--team-ink-rgb) / 0.35),
+    0 0 24px -6px rgb(var(--team-ink-rgb) / 0.45);
 }
 
 @theme inline {
@@ -15,8 +47,25 @@
   --color-accent: var(--accent);
   --color-panel: var(--panel);
   --color-line: var(--line);
+  --color-team: var(--team-primary);
+  --color-team-secondary: var(--team-secondary);
+  --color-team-ink: var(--team-ink);
+  --color-on-team: var(--team-on-primary);
+  --color-surface-deep: var(--surface-deep);
+  --color-surface-arena: var(--surface-arena);
+  --color-surface-raised: var(--surface-raised);
+  --color-surface-line: var(--surface-line);
+  --color-win: var(--win);
+  --color-loss: var(--loss);
+  --color-live: var(--live);
+  --color-warning: var(--warning);
+  --shadow-arena: var(--shadow-arena);
+  --shadow-team-glow: var(--glow-team);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+  --font-display:
+    var(--font-barlow-condensed), var(--font-geist-sans), ui-sans-serif,
+    sans-serif;
 }
 
 body {
@@ -185,5 +234,176 @@ body {
   .drawer-panel-enter-modal,
   .drawer-nav-enter {
     animation: none;
+  }
+}
+
+/*
+ * Broadcast / arena primitives (see src/components/ui/ArenaPanel.tsx etc.).
+ */
+
+.arena-panel {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  border: 1px solid var(--surface-line);
+  border-radius: 0.875rem;
+  background:
+    linear-gradient(180deg, rgb(255 255 255 / 0.03) 0%, transparent 40%),
+    var(--surface-arena);
+  box-shadow: var(--shadow-arena);
+}
+
+.arena-panel[data-raised="true"] {
+  background:
+    linear-gradient(180deg, rgb(255 255 255 / 0.04) 0%, transparent 45%),
+    var(--surface-raised);
+}
+
+/* Team-colour edge: a 3px bar on the leading or top edge. */
+.arena-panel[data-edge="left"]::before,
+.arena-panel[data-edge="top"]::before {
+  content: "";
+  position: absolute;
+  z-index: 0;
+  background: linear-gradient(
+    var(--edge-dir, 180deg),
+    var(--team-ink),
+    var(--team-primary)
+  );
+  pointer-events: none;
+}
+
+.arena-panel[data-edge="left"]::before {
+  inset: 0 auto 0 0;
+  width: 3px;
+}
+
+.arena-panel[data-edge="top"]::before {
+  --edge-dir: 90deg;
+  inset: 0 0 auto 0;
+  height: 3px;
+}
+
+.arena-panel[data-glow="true"] {
+  box-shadow: var(--shadow-arena), var(--glow-team);
+}
+
+/* Hero: team-colour wash plus a slow sheen. */
+.arena-panel[data-hero="true"] {
+  background:
+    radial-gradient(
+      ellipse 90% 120% at 0% 0%,
+      rgb(var(--team-primary-rgb) / 0.35) 0%,
+      transparent 60%
+    ),
+    radial-gradient(
+      ellipse 60% 80% at 100% 100%,
+      rgb(var(--team-ink-rgb) / 0.12) 0%,
+      transparent 70%
+    ),
+    var(--surface-arena);
+}
+
+.arena-panel[data-hero="true"]::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    repeating-linear-gradient(
+      0deg,
+      rgb(255 255 255 / 0.025) 0px,
+      rgb(255 255 255 / 0.025) 1px,
+      transparent 1px,
+      transparent 3px
+    ),
+    linear-gradient(
+      105deg,
+      transparent 35%,
+      rgb(255 255 255 / 0.06) 50%,
+      transparent 65%
+    );
+  background-size:
+    100% 100%,
+    250% 100%;
+  animation: arena-sheen 9s ease-in-out infinite;
+}
+
+.arena-panel > * {
+  position: relative;
+  z-index: 1;
+}
+
+@keyframes arena-sheen {
+  0% {
+    background-position:
+      0 0,
+      120% 0;
+  }
+  60%,
+  100% {
+    background-position:
+      0 0,
+      -120% 0;
+  }
+}
+
+/* Staggered entrance: set --i on each child (0, 1, 2...) for the delay. */
+@keyframes enter-up {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.enter-up {
+  animation: enter-up 420ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
+  animation-delay: calc(var(--i, 0) * 60ms);
+}
+
+.hover-lift {
+  transition:
+    transform 160ms ease-out,
+    box-shadow 160ms ease-out;
+}
+
+@media (hover: hover) {
+  .hover-lift:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-arena), var(--glow-team);
+  }
+}
+
+/* Live / next-up pulse ring. */
+@keyframes team-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgb(var(--team-ink-rgb) / 0.5);
+  }
+  50% {
+    box-shadow: 0 0 0 6px rgb(var(--team-ink-rgb) / 0);
+  }
+}
+
+.team-pulse {
+  animation: team-pulse 2.2s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .arena-panel[data-hero="true"]::after,
+  .enter-up,
+  .team-pulse {
+    animation: none;
+  }
+
+  .hover-lift,
+  .hover-lift:hover {
+    transition: none;
+    transform: none;
   }
 }

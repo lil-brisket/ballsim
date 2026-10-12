@@ -1,4 +1,5 @@
 export { ActionCard } from "@/components/ui/ActionCard";
+export { ArenaPanel } from "@/components/ui/ArenaPanel";
 export { DataTable } from "@/components/ui/DataTable";
 export { MobileListCard } from "@/components/ui/MobileListCard";
 export {
@@ -12,9 +13,22 @@ export { Overlay } from "@/components/ui/Overlay";
 export { PageHeader } from "@/components/ui/PageHeader";
 export { Panel } from "@/components/ui/Panel";
 export { ProgressBar } from "@/components/ui/ProgressBar";
+export {
+  ScoreNumeral,
+  type ScoreNumeralSize,
+  type ScoreNumeralTone,
+} from "@/components/ui/ScoreNumeral";
 export { Section } from "@/components/ui/Section";
+export { SectionHeading } from "@/components/ui/SectionHeading";
 export { StatCard } from "@/components/ui/StatCard";
 export { StatusBadge } from "@/components/ui/StatusBadge";
+export { TeamBadge, type TeamBadgeSize } from "@/components/ui/TeamBadge";
+export { TeamThemeScope, teamThemeStyle } from "@/components/ui/TeamThemeScope";
+export {
+  TickerBar,
+  type TickerItem,
+  type TickerTone,
+} from "@/components/ui/TickerBar";
 export {
   cn,
   densityGap,
