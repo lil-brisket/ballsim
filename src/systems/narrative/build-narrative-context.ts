@@ -365,8 +365,8 @@ export function buildNarrativeContext(
   const winPct = games > 0 ? wins / games : 0;
   const streak = standing?.streak;
   const streakKind =
-    streak?.kind === "W" || streak?.kind === "L" ? streak.kind : "N";
-  const streakLength = streak?.length ?? 0;
+    streak?.type === "W" || streak?.type === "L" ? streak.type : "N";
+  const streakLength = streak?.count ?? 0;
 
   const objectives: ObjectiveGapView[] = getActiveOwnedFranchise(
     state,

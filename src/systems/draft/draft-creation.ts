@@ -132,7 +132,9 @@ export function replaceDraftProspects(
     world: {
       ...state.world,
       drafts: Object.fromEntries(
-        Object.entries(state.world.drafts).filter(([id]) => id !== draftClassId),
+        Object.entries(state.world.drafts).filter(
+          ([id]) => id !== draftClassId,
+        ),
       ),
     },
   };
@@ -178,7 +180,7 @@ export function maybeCreateDraftForDecision(
 ): SystemResult {
   const draftYear = draftYearForSeason(state.competition.season.year);
   const draftClassId = draftClassIdFor(draftYear);
-  let current = ensureDraftClassDecision(state, draftYear);
+  const current = ensureDraftClassDecision(state, draftYear);
   if (current.world.drafts[draftClassId] !== undefined) {
     return systemResult(current);
   }

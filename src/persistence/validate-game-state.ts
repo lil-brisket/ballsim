@@ -1213,7 +1213,9 @@ export function validateGameState(state: unknown): asserts state is GameState {
   }
 
   // DL-assigned players: franchise ownership via teamId, not on Team.roster
-  for (const [playerId, playerValue] of Object.entries(world.players)) {
+  for (const [playerId, playerValue] of Object.entries(
+    world.players as Record<string, { teamId?: string | null }>,
+  )) {
     const dl = (
       playerValue as {
         developmentLeague?: { status?: string; parentTeamId?: string | null };
@@ -2699,9 +2701,7 @@ function validatePendingDraftClassDecision(
         typeof decision.customContentId !== "string" ||
         decision.customContentId.length === 0
       ) {
-        failFn(
-          `${path}.customContentId is required when source is "custom".`,
-        );
+        failFn(`${path}.customContentId is required when source is "custom".`);
       }
     }
   } else if (

@@ -111,7 +111,7 @@ export function executeTrade(
     players[playerId] = {
       ...player,
       teamId: teamIdB,
-      developmentLeague: nextDl,
+      developmentLeague: nextDl ?? player.developmentLeague,
     };
     // DL-assigned players stay off top-league roster; transfer ownership only
     if (!wasDlAssigned && !teamB.roster.includes(playerId)) {
@@ -141,7 +141,7 @@ export function executeTrade(
     players[playerId] = {
       ...player,
       teamId: teamIdA,
-      developmentLeague: nextDl,
+      developmentLeague: nextDl ?? player.developmentLeague,
     };
     if (!wasDlAssigned && !teamA.roster.includes(playerId)) {
       teamA.roster = [...teamA.roster, playerId];

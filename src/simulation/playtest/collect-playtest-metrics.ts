@@ -140,7 +140,8 @@ export function collectPlaytestMetrics(state: GameState): PlaytestMetrics {
   const year = state.competition.season.year;
   const cap = getLeagueSalaryCap(state);
   const active = activePlayersOf(state);
-  const retiredCount = Object.values(state.world.players).length - active.length;
+  const retiredCount =
+    Object.values(state.world.players).length - active.length;
 
   const ovrs: number[] = [];
   const ages: number[] = [];
@@ -224,7 +225,10 @@ export function collectPlaytestMetrics(state: GameState): PlaytestMetrics {
       if (playerId) {
         const player = state.world.players[playerId];
         if (player && player.retired !== true) {
-          const ovr = calculatePlayerOverall(player.position, player.attributes);
+          const ovr = calculatePlayerOverall(
+            player.position,
+            player.attributes,
+          );
           if (ovr >= 85) moved85 += 1;
           if (ovr >= 90) moved90 += 1;
         }
@@ -278,8 +282,10 @@ export function collectPlaytestMetrics(state: GameState): PlaytestMetrics {
       if (ovr < band.min || ovr > band.max) continue;
       const history = state.business.playerHistory[player.id];
       const season = history?.seasons.find((row) => row.seasonYear === year);
-      if (!season || season.stats.games <= 0) continue;
-      ppgs.push(season.stats.points / season.stats.games);
+      if (!season || season.competition.regular.games <= 0) continue;
+      ppgs.push(
+        season.competition.regular.points / season.competition.regular.games,
+      );
     }
     return {
       band: band.band,
@@ -292,8 +298,10 @@ export function collectPlaytestMetrics(state: GameState): PlaytestMetrics {
   for (const player of active) {
     const history = state.business.playerHistory[player.id];
     const season = history?.seasons.find((row) => row.seasonYear === year);
-    if (!season || season.stats.games <= 0) continue;
-    allPpg.push(season.stats.points / season.stats.games);
+    if (!season || season.competition.regular.games <= 0) continue;
+    allPpg.push(
+      season.competition.regular.points / season.competition.regular.games,
+    );
   }
 
   const archiveJson = JSON.stringify(state.business.gameArchive);

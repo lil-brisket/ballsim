@@ -944,7 +944,8 @@ function migratePlayerV5ToV6(player: PlayerV5): Player {
     injuryHistory: [],
     development: { ...player.development },
     nationality: LEGACY_PLAYER_NATIONALITY,
-  };
+    // Pre-DL save: normalizeDevelopmentLeagueProfile fills this in a later step.
+  } as unknown as Player;
 }
 
 /**
@@ -1293,7 +1294,8 @@ function migrateV9ToV10(state: GameStateV9): GameStateV10 {
         touches: 0,
         started: false,
       })) as Game["playerStats"],
-    };
+      // competitionType and team snapshots are backfilled by later migrations.
+    } as unknown as Game;
   }
 
   return {
@@ -1684,7 +1686,7 @@ function migrateV13ToV14(state: GameStateV13): GameStateV14 {
       standings: state.competition.standings,
       playoffs: createEmptyPlayoffTournament(),
       seasonEventLog: [],
-    },
+    } as unknown as CompetitionSlicePreV49,
     business: state.business,
     user: state.user,
   };
@@ -1734,7 +1736,7 @@ function migrateV14ToV15(state: GameStateV14): GameStateV15 {
       contracts: state.business.contracts,
       finances,
     },
-    user: hasModernOwnershipUser(legacyUserRecord(state.user))
+    user: (hasModernOwnershipUser(legacyUserRecord(state.user))
       ? state.user
       : {
           controlledTeamId: resolveLegacyControlledTeamId(
@@ -1742,7 +1744,7 @@ function migrateV14ToV15(state: GameStateV14): GameStateV15 {
           ) as TeamId,
           mode: state.user.mode,
           objectives: [],
-        },
+        }) as GameStateV15["user"],
   };
 }
 
@@ -2042,7 +2044,7 @@ function migrateV20ToV21(state: GameStateV20): GameStateV21 {
           ).freeAgencyExtendedUntil ?? null,
       },
       seasonEventLog: [],
-    },
+    } as unknown as CompetitionSlicePreV49,
     business: state.business,
     user: state.user,
   };
@@ -3332,7 +3334,7 @@ function migrateV36ToV37(state: GameStateV36): GameStateV37 {
             seasonEventLog?: GameState["competition"]["seasonEventLog"];
           }
         ).seasonEventLog ?? [],
-    },
+    } as unknown as CompetitionSlicePreV49,
     user: {
       ...state.user,
       explicitDecisions: state.user.explicitDecisions ?? {},
@@ -3835,7 +3837,7 @@ function migrateV42ToV43(state: GameStateV42): GameStateV43 {
             ).status ??
             (record.status === "accepted"
               ? "accepted"
-              : record.status === "expired"
+              : (record.status as string) === "expired"
                 ? "expired"
                 : "declined"),
           motivation: (
@@ -4389,7 +4391,7 @@ function migrateV48ToV49(state: GameStateV48): GameStateV49 {
         activePhaseId,
         enteredDate,
       },
-    },
+    } as unknown as GameState["competition"],
     user: {
       ...state.user,
       franchisePhaseState,
@@ -4792,7 +4794,7 @@ function migrateV53ToV54(state: GameStateV53): GameState {
         rfaQualificationComplete:
           state.competition.season.rfaQualificationComplete === true,
       },
-    },
+    } as unknown as GameState["competition"],
     business: {
       ...state.business,
       rfaStatuses: state.business.rfaStatuses ?? {},
@@ -5391,7 +5393,9 @@ function migrateV62ToV63(state: GameStateV62): GameStateV63 {
 
 function migrateV63ToV64(state: GameStateV63): GameStateV64 {
   const gameArchive: GameState["business"]["gameArchive"] = {};
-  for (const [gameId, game] of Object.entries(state.business.gameArchive ?? {})) {
+  for (const [gameId, game] of Object.entries(
+    state.business.gameArchive ?? {},
+  )) {
     gameArchive[gameId] = compactGameForArchive(game as Game);
   }
   return {

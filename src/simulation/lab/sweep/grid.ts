@@ -16,7 +16,7 @@ export function gridLevels(space: LabSweepSpace): (string | number)[][] {
       }
       return values;
     }
-    const levels = 5;
+    const levels: number = 5;
     const values: number[] = [];
     for (let index = 0; index < levels; index += 1) {
       const unit = levels === 1 ? 0 : index / (levels - 1);

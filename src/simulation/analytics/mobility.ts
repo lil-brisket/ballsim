@@ -52,7 +52,7 @@ export function assignCompetitiveTier(
     playoffDepth: number;
   }[],
 ): Map<string, CompetitiveTier> {
-  const bySeason = new Map<number, typeof seasons>();
+  const bySeason = new Map<number, (typeof seasons)[number][]>();
   for (const row of seasons) {
     const list = bySeason.get(row.seasonIndex) ?? [];
     list.push(row);
@@ -123,7 +123,7 @@ export function computeCompetitiveMobility(
   }[],
 ): CompetitiveMobilityReport {
   const tiers = assignCompetitiveTier(seasons);
-  const byTeam = new Map<string, typeof seasons>();
+  const byTeam = new Map<string, (typeof seasons)[number][]>();
   for (const row of seasons) {
     const list = byTeam.get(row.teamKey) ?? [];
     list.push(row);
@@ -219,7 +219,7 @@ export function computeValueMobility(
     franchiseValue: number;
   }[],
 ): ValueMobilityReport {
-  const bySeason = new Map<number, typeof seasons>();
+  const bySeason = new Map<number, (typeof seasons)[number][]>();
   for (const row of seasons) {
     const list = bySeason.get(row.seasonIndex) ?? [];
     list.push(row);
@@ -245,7 +245,7 @@ export function computeValueMobility(
     }
   }
 
-  const byTeam = new Map<string, typeof seasons>();
+  const byTeam = new Map<string, (typeof seasons)[number][]>();
   for (const row of seasons) {
     const list = byTeam.get(row.teamKey) ?? [];
     list.push(row);

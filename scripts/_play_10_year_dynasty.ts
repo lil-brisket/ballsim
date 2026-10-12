@@ -13,10 +13,7 @@ import { DEFAULT_GAME_SETTINGS } from "@/domain/game-settings";
 import { calculatePlayerOverall } from "@/domain/player-overall-rating";
 import { createSeededRng, type Rng } from "@/domain/rng";
 import { createInitialGameState } from "@/state/create-initial-state";
-import {
-  GAME_STATE_SCHEMA_VERSION,
-  type GameState,
-} from "@/state/game-state";
+import { GAME_STATE_SCHEMA_VERSION, type GameState } from "@/state/game-state";
 import { bootstrapWorld } from "@/systems/world-pipeline";
 import { applyOwnerCitySelection } from "@/systems/owner-city-selection";
 import { applyOwnerFranchiseBranding } from "@/systems/owner-franchise-branding";
@@ -150,7 +147,7 @@ type RelocationAttemptLog = {
 type PlayLog = {
   saveId: string;
   settings: {
-    preset: "standard";
+    preset: "standard" | "custom";
     teamCount: number;
     gamesPerTeam: number;
     playoffTeams: number;
@@ -187,7 +184,13 @@ function reviewSaveBalance(
 ): {
   lines: string[];
   flags: string[];
-  overall: { min: number; p50: number; p90: number; max: number; stars90: number };
+  overall: {
+    min: number;
+    p50: number;
+    p90: number;
+    max: number;
+    stars90: number;
+  };
   scoring: { maxPpg: number; p90Ppg: number; games82Plus30Ppg: number };
   userPayrollVsOverall: string[];
 } {
@@ -214,7 +217,9 @@ function reviewSaveBalance(
     `Overall n=${overalls.length} min=${overall.min} p50=${overall.p50} p90=${overall.p90} max=${overall.max} 90+=${stars90}`,
   );
   if (stars90 > 40) {
-    flags.push(`Too many 90+ players league-wide (${stars90}). Superstar inflation.`);
+    flags.push(
+      `Too many 90+ players league-wide (${stars90}). Superstar inflation.`,
+    );
   }
   if (overall.max >= 98) {
     flags.push(`Peak overall ${overall.max} is extremely high.`);
@@ -277,7 +282,11 @@ function reviewSaveBalance(
 
   const records = play.seasons
     .filter((season) => season.wins + season.losses >= 40)
-    .map((season) => ({ year: season.year, wins: season.wins, losses: season.losses }));
+    .map((season) => ({
+      year: season.year,
+      wins: season.wins,
+      losses: season.losses,
+    }));
   for (const row of records) {
     lines.push(`Record ${row.year}: ${row.wins}-${row.losses}`);
     if (row.wins >= 70) {
@@ -316,9 +325,7 @@ function emptySeasonLog(year: number, state?: GameState): SeasonLog {
     notes: [],
     city: team ? `${team.city} ${team.name}` : "",
     marketSize: ops?.marketSize ?? 0,
-    cash: teamId
-      ? (state?.business.finances[teamId]?.businessFunds ?? 0)
-      : 0,
+    cash: teamId ? (state?.business.finances[teamId]?.businessFunds ?? 0) : 0,
     fanSentiment: ops?.fanSentiment ?? 0,
     attendanceRealization:
       state && teamId ? readAttendanceRealization(state, teamId) : 0,
@@ -579,7 +586,10 @@ function overallOf(state: GameState, playerId: PlayerId): number {
 }
 
 function prospectOverall(prospect: { player: Player }): number {
-  return calculatePlayerOverall(prospect.player.position, prospect.player.attributes);
+  return calculatePlayerOverall(
+    prospect.player.position,
+    prospect.player.attributes,
+  );
 }
 
 function playerLabel(state: GameState, playerId: PlayerId): string {
@@ -594,8 +604,16 @@ function teamLabel(state: GameState, teamId: TeamId): string {
 }
 
 function ownedPicks(state: GameState, teamId: TeamId): DraftPickId[] {
-  return (Object.values(state.world.draftPicks) as { id: DraftPickId; ownerTeamId: TeamId; status: string }[])
-    .filter((pick) => pick.ownerTeamId === teamId && pick.status === "available")
+  return (
+    Object.values(state.world.draftPicks) as {
+      id: DraftPickId;
+      ownerTeamId: TeamId;
+      status: string;
+    }[]
+  )
+    .filter(
+      (pick) => pick.ownerTeamId === teamId && pick.status === "available",
+    )
     .map((pick) => pick.id)
     .sort((a, b) => (a < b ? -1 : a > b ? 1 : 0));
 }
@@ -679,16 +697,14 @@ function resolveContractOptions(state: GameState, log: SeasonLog): GameState {
   };
 }
 
-function resolveIncomingOffers(
-  state: GameState,
-  log: SeasonLog,
-): GameState {
+function resolveIncomingOffers(state: GameState, log: SeasonLog): GameState {
   let current = state;
   const teamId = current.user.activeOwnerTeamId;
   const pending = [...current.user.pendingOwnerDecisions];
   for (const decision of pending) {
     if (decision.type !== "trade_offer") continue;
-    const proposal = decision.payload.currentProposal ?? decision.payload.proposal;
+    const proposal =
+      decision.payload.currentProposal ?? decision.payload.proposal;
     const ourSide =
       proposal.sideA.teamId === teamId ? proposal.sideA : proposal.sideB;
     const theirSide =
@@ -733,8 +749,10 @@ function makePackages(
 ): Array<{ playerIds: PlayerId[]; draftPickIds: DraftPickId[] }> {
   const firsts = picks.filter((id) => id.includes("_r1"));
   const seconds = picks.filter((id) => id.includes("_r2"));
-  const packages: Array<{ playerIds: PlayerId[]; draftPickIds: DraftPickId[] }> =
-    [];
+  const packages: Array<{
+    playerIds: PlayerId[];
+    draftPickIds: DraftPickId[];
+  }> = [];
   if (seconds[0]) packages.push({ playerIds: [], draftPickIds: [seconds[0]] });
   if (firsts[0]) packages.push({ playerIds: [], draftPickIds: [firsts[0]] });
   if (firsts[0] && seconds[0]) {
@@ -768,7 +786,11 @@ function huntStars(state: GameState, log: SeasonLog): GameState {
   let current = state;
   const teamId = current.user.activeOwnerTeamId;
   let tradesLanded = 0;
-  const stars = (Object.values(current.world.players) as GameState["world"]["players"][PlayerId][])
+  const stars = (
+    Object.values(
+      current.world.players,
+    ) as GameState["world"]["players"][PlayerId][]
+  )
     .filter((player) => {
       if (!player || player.retired || player.teamId == null) return false;
       if (player.teamId === teamId) return false;
@@ -1032,7 +1054,7 @@ function setRotations(state: GameState): GameState {
   return withTeamRosterManagement(
     state,
     teamId,
-    recommendRosterManagement(state, teamId, { configuredBy: "owner" }),
+    recommendRosterManagement(state, teamId, { configuredBy: "user" }),
   );
 }
 
@@ -1040,7 +1062,7 @@ function resolveDraftClass(state: GameState, rng: Rng): GameState {
   const draftYear = draftYearForSeason(state.competition.season.year);
   const existing = getDraftClassDecision(state, draftYear);
   if (existing?.resolved === true) return state;
-  let next = withDraftClassDecision(state, {
+  const next = withDraftClassDecision(state, {
     draftYear,
     resolved: true,
     source: "generated",
@@ -1111,7 +1133,7 @@ function gmWindow(
   } else if (phase === "preseason.preparation") {
     current = runHuntOnce(current, log, "preseason");
     current = persistRng(setRotations(current), rng);
-  } else if (phase === "regular.regular_season" || phase === "regular") {
+  } else if (phase === "regular") {
     const deadline = current.competition.season.tradeDeadlineDate;
     const today = current.world.calendar.currentDate;
     if (deadline && today >= deadline) {
@@ -1151,8 +1173,12 @@ function prepareAdvance(state: GameState, rng: Rng, log: SeasonLog): GameState {
   return persistRng(current, rng);
 }
 
-function tryAdvancePhase(state: GameState, rng: Rng, log: SeasonLog): GameState {
-  let current = gmWindow(state, rng, log, "full");
+function tryAdvancePhase(
+  state: GameState,
+  rng: Rng,
+  log: SeasonLog,
+): GameState {
+  const current = gmWindow(state, rng, log, "full");
   const preview = previewAdvance(current);
   if (!preview.canAdvance) {
     if (preview.blockReason) {
@@ -1213,14 +1239,10 @@ function checkSeasonHealth(
   for (const team of teams) {
     const roster = team.roster;
     if (roster.length < 5) {
-      push(
-        `Roster too small: ${team.city} ${team.name} has ${roster.length}.`,
-      );
+      push(`Roster too small: ${team.city} ${team.name} has ${roster.length}.`);
     }
     if (roster.length > TRADE_ROSTER_RULES.maxRosterSize + 8) {
-      push(
-        `Roster bloated: ${team.city} ${team.name} has ${roster.length}.`,
-      );
+      push(`Roster bloated: ${team.city} ${team.name} has ${roster.length}.`);
     }
     for (const playerId of roster) {
       if (seenPlayers.has(playerId)) {
@@ -1245,7 +1267,7 @@ function checkSeasonHealth(
 
   const year = state.competition.season.year;
   const phaseId = getActivePhaseId(state);
-  if (phaseId === "regular.regular_season" || phaseId === "regular") {
+  if (phaseId === "regular") {
     let rosteredWithoutActiveContract = 0;
     let activeContractOrphans = 0;
     for (const player of Object.values(state.world.players)) {
@@ -1287,7 +1309,9 @@ function checkSeasonHealth(
     .filter((season) => season.wins + season.losses > 0)
     .map((season) => season.year);
   for (const completedYear of completedYears) {
-    const row = history.seasons.find((entry) => entry.seasonYear === completedYear);
+    const row = history.seasons.find(
+      (entry) => entry.seasonYear === completedYear,
+    );
     if (row?.championTeamId == null) {
       push(`League history missing champion for ${completedYear}.`);
     }
@@ -1298,14 +1322,15 @@ function checkSeasonHealth(
     if (archiveCount === 0) {
       push("gameArchive is empty after a completed season.");
     }
-    const playerHistoryCount = Object.keys(state.business.playerHistory ?? {})
-      .length;
+    const playerHistoryCount = Object.keys(
+      state.business.playerHistory ?? {},
+    ).length;
     if (playerHistoryCount === 0) {
       push("playerHistory is empty after a completed season.");
     }
-    const yearlyAwards = Object.values(state.business.awards?.results ?? {}).filter(
-      (award) => award.cadence === "yearly",
-    );
+    const yearlyAwards = Object.values(
+      state.business.awards?.results ?? {},
+    ).filter((award) => award.cadence === "yearly");
     if (yearlyAwards.length === 0) {
       push("No yearly awards recorded after a completed season.");
     }
@@ -1427,9 +1452,9 @@ async function main(): Promise<void> {
     throw new Error(`Save ${LOAD_SAVE_ID} was not found.`);
   }
 
-  let saveId = row.id;
+  const saveId = row.id;
   let state = deserializeGameState(row.stateJson);
-  let rng = createSeededRng(state.meta.rngState);
+  const rng = createSeededRng(state.meta.rngState);
   play.saveId = saveId;
   activePlay = play;
   play.settings = {
@@ -1442,8 +1467,7 @@ async function main(): Promise<void> {
     salaryCap: state.settings.financialRules.salaryCap,
     luxuryTaxEnabled: state.settings.financialRules.luxuryTaxEnabled,
     city: state.world.teams[state.user.activeOwnerTeamId]?.city ?? "",
-    nickname:
-      state.world.teams[state.user.activeOwnerTeamId]?.name ?? NICKNAME,
+    nickname: state.world.teams[state.user.activeOwnerTeamId]?.name ?? NICKNAME,
     marketSize:
       state.business.franchiseOps[state.user.activeOwnerTeamId]?.marketSize ??
       0,
@@ -1464,7 +1488,9 @@ async function main(): Promise<void> {
   if (openingLog.trades.length > 0) {
     console.log(`Opening trades:\n  ${openingLog.trades.join("\n  ")}`);
   }
-  console.log("Skipping opening DB persist (dev server holds SQLite). Simulating in memory.");
+  console.log(
+    "Skipping opening DB persist (dev server holds SQLite). Simulating in memory.",
+  );
 
   let seasonIndex = 0;
   let idle = 0;
@@ -1472,79 +1498,133 @@ async function main(): Promise<void> {
   const maxSteps = 50_000;
 
   try {
-  while (seasonIndex < TARGET_SEASONS && steps < maxSteps) {
-    steps += 1;
-    const year = state.competition.season.year;
-    let log = play.seasons[seasonIndex];
-    if (!log || log.year !== year) {
-      log = emptySeasonLog(year, state);
-      play.seasons[seasonIndex] = log;
-    }
+    while (seasonIndex < TARGET_SEASONS && steps < maxSteps) {
+      steps += 1;
+      const year = state.competition.season.year;
+      let log = play.seasons[seasonIndex];
+      if (!log || log.year !== year) {
+        log = emptySeasonLog(year, state);
+        play.seasons[seasonIndex] = log;
+      }
 
-    state = prepareAdvance(state, rng, log);
-    const phase = getActivePhaseId(state);
-    const seasonPhase = state.competition.season.phase;
-    const gameCount = Object.keys(state.competition.games ?? {}).length;
-    const archiveCount = Object.keys(state.business.gameArchive ?? {}).length;
-    const live = state.competition.standings?.byTeamId?.[state.user.activeOwnerTeamId];
-    if (live && (live.wins > 0 || live.losses > 0)) {
-      log.wins = live.wins;
-      log.losses = live.losses;
-    }
-    if (state.competition.playoffs?.championTeamId === state.user.activeOwnerTeamId) {
-      log.championship = true;
-      log.playoffResult = "champion";
-    }
+      state = prepareAdvance(state, rng, log);
+      const phase = getActivePhaseId(state);
+      const seasonPhase = state.competition.season.phase;
+      const gameCount = Object.keys(state.competition.games ?? {}).length;
+      const archiveCount = Object.keys(state.business.gameArchive ?? {}).length;
+      const live =
+        state.competition.standings?.byTeamId?.[state.user.activeOwnerTeamId];
+      if (live && (live.wins > 0 || live.losses > 0)) {
+        log.wins = live.wins;
+        log.losses = live.losses;
+      }
+      if (
+        state.competition.playoffs?.championTeamId ===
+        state.user.activeOwnerTeamId
+      ) {
+        log.championship = true;
+        log.playoffResult = "champion";
+      }
 
-    if (seasonPhase === "postseason") {
-      const entered = enterOffseasonFromPostseason(state);
-      state = persistRng(entered.state, rng);
-      const day = advanceSimulation(state, rng, {
-        days: 1,
-        gameFidelity: "box_score",
+      if (seasonPhase === "postseason") {
+        const entered = enterOffseasonFromPostseason(state);
+        state = persistRng(entered.state, rng);
+        const day = advanceSimulation(state, rng, {
+          days: 1,
+          gameFidelity: "box_score",
+        });
+        state = persistRng(day.state, rng);
+        idle = 0;
+        if (state.competition.season.year > year) {
+          snapshotSeason(state, log);
+          checkSeasonHealth(state, play, log.year);
+          console.log(
+            `Season ${log.year} done: ${log.wins}-${log.losses} ${log.playoffResult ?? ""} ${log.championship ? "CHAMPION" : ""} | ${log.city} mkt=${log.marketSize} reloc=${log.relocationStage}/${log.relocationStatus} cash=${Math.round(log.cash / 1_000_000)}M trades=${log.trades.length} FA=${log.signings.length} games=${gameCount} archive=${archiveCount}`,
+          );
+          seasonIndex += 1;
+          writeFileSync(
+            resolve("scripts/_play_10_year_report.json"),
+            JSON.stringify({ play }, null, 2),
+          );
+        }
+        continue;
+      }
+
+      if (phase.startsWith("offseason.")) {
+        const beforePhase = phase;
+        const beforeYear = state.competition.season.year;
+        state = tryAdvancePhase(state, rng, log);
+        if (
+          getActivePhaseId(state) === beforePhase &&
+          state.competition.season.year === beforeYear
+        ) {
+          const day = advanceSimulation(state, rng, {
+            days: beforePhase === "offseason.draft" ? 1 : 3,
+            ...SIM_ADVANCE,
+          });
+          state = persistRng(day.state, rng);
+          if (day.stopReason === "pending_owner_decision") {
+            state = resolveIncomingOffers(state, log);
+          }
+          if (day.stopReason === "draft_clock") {
+            state = persistRng(pickBestProspect(state, log), rng);
+          }
+        }
+        if (state.competition.season.year > beforeYear) {
+          snapshotSeason(state, log);
+          checkSeasonHealth(state, play, log.year);
+          console.log(
+            `Season ${log.year} done: ${log.wins}-${log.losses} ${log.playoffResult ?? ""} ${log.championship ? "CHAMPION" : ""} | ${log.city} mkt=${log.marketSize} reloc=${log.relocationStage}/${log.relocationStatus} cash=${Math.round(log.cash / 1_000_000)}M trades=${log.trades.length} FA=${log.signings.length} games=${gameCount} archive=${archiveCount}`,
+          );
+          seasonIndex += 1;
+          idle = 0;
+          writeFileSync(
+            resolve("scripts/_play_10_year_report.json"),
+            JSON.stringify({ play }, null, 2),
+          );
+        } else {
+          idle += 1;
+        }
+        continue;
+      }
+
+      if (isUserOnDraftClock(state)) {
+        state = persistRng(pickBestProspect(state, log), rng);
+        idle += 1;
+        if (idle > 80) {
+          play.issues.push(`Draft clock stuck in ${year} ${phase}`);
+          break;
+        }
+        continue;
+      }
+
+      const deadline = state.competition.season.tradeDeadlineDate;
+      const today = state.world.calendar.currentDate;
+      if (deadline && today >= deadline) {
+        state = gmWindow(state, rng, log, "full");
+      }
+
+      const result = advanceSimulation(state, rng, {
+        days: 21,
+        ...SIM_ADVANCE,
       });
-      state = persistRng(day.state, rng);
-      idle = 0;
+      state = persistRng(result.state, rng);
+      if (result.stopReason === "pending_owner_decision") {
+        state = resolveIncomingOffers(state, log);
+        idle = 0;
+        continue;
+      }
+      if (result.stopReason === "draft_clock") {
+        state = persistRng(pickBestProspect(state, log), rng);
+        idle = 0;
+        continue;
+      }
+
       if (state.competition.season.year > year) {
         snapshotSeason(state, log);
         checkSeasonHealth(state, play, log.year);
         console.log(
-          `Season ${log.year} done: ${log.wins}-${log.losses} ${log.playoffResult ?? ""} ${log.championship ? "CHAMPION" : ""} | ${log.city} mkt=${log.marketSize} reloc=${log.relocationStage}/${log.relocationStatus} cash=${Math.round(log.cash / 1_000_000)}M trades=${log.trades.length} FA=${log.signings.length} games=${gameCount} archive=${archiveCount}`,
-        );
-        seasonIndex += 1;
-        writeFileSync(
-          resolve("scripts/_play_10_year_report.json"),
-          JSON.stringify({ play }, null, 2),
-        );
-      }
-      continue;
-    }
-
-    if (phase.startsWith("offseason.")) {
-      const beforePhase = phase;
-      const beforeYear = state.competition.season.year;
-      state = tryAdvancePhase(state, rng, log);
-      if (
-        getActivePhaseId(state) === beforePhase &&
-        state.competition.season.year === beforeYear
-      ) {
-        const day = advanceSimulation(state, rng, {
-          days: beforePhase === "offseason.draft" ? 1 : 3,
-          ...SIM_ADVANCE,
-        });
-        state = persistRng(day.state, rng);
-        if (day.stopReason === "pending_owner_decision") {
-          state = resolveIncomingOffers(state, log);
-        }
-        if (day.stopReason === "draft_clock") {
-          state = persistRng(pickBestProspect(state, log), rng);
-        }
-      }
-      if (state.competition.season.year > beforeYear) {
-        snapshotSeason(state, log);
-        checkSeasonHealth(state, play, log.year);
-        console.log(
-          `Season ${log.year} done: ${log.wins}-${log.losses} ${log.playoffResult ?? ""} ${log.championship ? "CHAMPION" : ""} | ${log.city} mkt=${log.marketSize} reloc=${log.relocationStage}/${log.relocationStatus} cash=${Math.round(log.cash / 1_000_000)}M trades=${log.trades.length} FA=${log.signings.length} games=${gameCount} archive=${archiveCount}`,
+          `Season ${log.year} rolled: ${log.wins}-${log.losses} ${log.playoffResult ?? ""} ${log.championship ? "CHAMPION" : ""} | trades=${log.trades.length} FA=${log.signings.length}`,
         );
         seasonIndex += 1;
         idle = 0;
@@ -1552,169 +1632,124 @@ async function main(): Promise<void> {
           resolve("scripts/_play_10_year_report.json"),
           JSON.stringify({ play }, null, 2),
         );
-      } else {
-        idle += 1;
+        continue;
       }
-      continue;
-    }
 
-    if (isUserOnDraftClock(state)) {
-      state = persistRng(pickBestProspect(state, log), rng);
       idle += 1;
-      if (idle > 80) {
-        play.issues.push(`Draft clock stuck in ${year} ${phase}`);
+      if (idle > 500) {
+        play.issues.push(
+          `Idle loop at ${state.world.calendar.currentDate} phase=${getActivePhaseId(state)} season=${state.competition.season.phase} games=${gameCount}`,
+        );
+        snapshotSeason(state, log);
+        checkSeasonHealth(state, play, log.year);
         break;
       }
-      continue;
+      if (steps % 1 === 0) {
+        process.stdout.write(
+          `  ${state.world.calendar.currentDate} ${getActivePhaseId(state)} ${seasonPhase} ${live?.wins ?? 0}-${live?.losses ?? 0} games=${gameCount} arch=${archiveCount} ovr8=${topEightOverall(state, state.user.activeOwnerTeamId)}\n`,
+        );
+      }
     }
 
-    const deadline = state.competition.season.tradeDeadlineDate;
-    const today = state.world.calendar.currentDate;
-    if (deadline && today >= deadline) {
-      state = gmWindow(state, rng, log, "full");
-    }
-
-    const result = advanceSimulation(state, rng, {
-      days: 21,
-      ...SIM_ADVANCE,
-    });
-    state = persistRng(result.state, rng);
-    if (result.stopReason === "pending_owner_decision") {
-      state = resolveIncomingOffers(state, log);
-      idle = 0;
-      continue;
-    }
-    if (result.stopReason === "draft_clock") {
-      state = persistRng(pickBestProspect(state, log), rng);
-      idle = 0;
-      continue;
-    }
-
-    if (state.competition.season.year > year) {
-      snapshotSeason(state, log);
-      checkSeasonHealth(state, play, log.year);
-      console.log(
-        `Season ${log.year} rolled: ${log.wins}-${log.losses} ${log.playoffResult ?? ""} ${log.championship ? "CHAMPION" : ""} | trades=${log.trades.length} FA=${log.signings.length}`,
-      );
-      seasonIndex += 1;
-      idle = 0;
-      writeFileSync(
-        resolve("scripts/_play_10_year_report.json"),
-        JSON.stringify({ play }, null, 2),
-      );
-      continue;
-    }
-
-    idle += 1;
-    if (idle > 500) {
+    if (seasonIndex < TARGET_SEASONS) {
       play.issues.push(
-        `Idle loop at ${state.world.calendar.currentDate} phase=${getActivePhaseId(state)} season=${state.competition.season.phase} games=${gameCount}`,
-      );
-      snapshotSeason(state, log);
-      checkSeasonHealth(state, play, log.year);
-      break;
-    }
-    if (steps % 1 === 0) {
-      process.stdout.write(
-        `  ${state.world.calendar.currentDate} ${getActivePhaseId(state)} ${seasonPhase} ${live?.wins ?? 0}-${live?.losses ?? 0} games=${gameCount} arch=${archiveCount} ovr8=${topEightOverall(state, state.user.activeOwnerTeamId)}\n`,
+        `Stopped after ${seasonIndex} of ${TARGET_SEASONS} seasons (${steps} steps, date=${state.world.calendar.currentDate}, phase=${getActivePhaseId(state)}).`,
       );
     }
-  }
 
-  if (seasonIndex < TARGET_SEASONS) {
-    play.issues.push(
-      `Stopped after ${seasonIndex} of ${TARGET_SEASONS} seasons (${steps} steps, date=${state.world.calendar.currentDate}, phase=${getActivePhaseId(state)}).`,
+    if (play.seasons.length > 0) {
+      const last = play.seasons[play.seasons.length - 1]!;
+      if (!last.phaseAtEnd) snapshotSeason(state, last);
+      checkSeasonHealth(state, play, last.year);
+    }
+
+    const history = toLeagueHistoryView(state);
+    const teamId = state.user.activeOwnerTeamId;
+    const titles = history.seasons.filter(
+      (row) => row.championTeamId === teamId,
     );
-  }
-
-  if (play.seasons.length > 0) {
-    const last = play.seasons[play.seasons.length - 1]!;
-    if (!last.phaseAtEnd) snapshotSeason(state, last);
-    checkSeasonHealth(state, play, last.year);
-  }
-
-  const history = toLeagueHistoryView(state);
-  const teamId = state.user.activeOwnerTeamId;
-  const titles = history.seasons.filter((row) => row.championTeamId === teamId);
-  console.log("\n=== League champions ===");
-  for (const row of [...history.seasons].reverse()) {
-    const ours = row.championTeamId === teamId ? " ← US" : "";
+    console.log("\n=== League champions ===");
+    for (const row of [...history.seasons].reverse()) {
+      const ours = row.championTeamId === teamId ? " ← US" : "";
+      console.log(
+        `${row.seasonYear} ${row.championName} ${row.championRecord}${ours}`,
+      );
+    }
     console.log(
-      `${row.seasonYear} ${row.championName} ${row.championRecord}${ours}`,
+      `\nTitles: ${titles.length}/${history.seasons.length}. Final roster:`,
     );
-  }
-  console.log(
-    `\nTitles: ${titles.length}/${history.seasons.length}. Final roster:`,
-  );
-  console.log(
-    rankedRoster(state, teamId)
-      .slice(0, 10)
-      .map((id) => playerLabel(state, id))
-      .join("\n"),
-  );
-
-  if (titles.length === 0) {
-    play.opportunities.push(
-      `No championships in ${history.seasons.length} completed seasons.`,
-    );
-  } else {
-    play.opportunities.push(
-      `Won ${titles.length} of ${history.seasons.length} completed seasons.`,
-    );
-  }
-  const relocated = play.relocationAttempts.some((row) =>
-    row.outcome.includes("now "),
-  );
-  const completedMove = play.seasons.some(
-    (season, index) =>
-      index > 0 &&
-      play.seasons[0] &&
-      season.city !== "" &&
-      play.seasons[0].city !== "" &&
-      season.city.split(" ")[0] !== play.seasons[0].city.split(" ")[0],
-  );
-  if (!relocated && !completedMove) {
-    play.issues.push(
-      "Relocation did not complete. See relocationAttempts for tenure/market gates.",
-    );
-  }
-  console.log("\n=== Relocation attempts ===");
-  for (const attempt of play.relocationAttempts) {
     console.log(
-      `${attempt.date} ${attempt.phase} ${attempt.stageBefore}->${attempt.stageAfter} ${attempt.outcome}`,
+      rankedRoster(state, teamId)
+        .slice(0, 10)
+        .map((id) => playerLabel(state, id))
+        .join("\n"),
     );
-  }
-  if (play.seasons.every((season) => season.trades.length === 0)) {
-    play.issues.push("Never completed a star-for-picks trade.");
-    play.opportunities.push(
-      "Trade market rarely accepted pick-only packages for 82+ players.",
-    );
-  }
-  if (play.seasons.every((season) => season.signings.length === 0)) {
-    play.issues.push("Never signed a free agent.");
-    play.opportunities.push(
-      "Cap space or FA pool quality blocked win-now signings.",
-    );
-  }
-  play.opportunities.push(
-    "Incoming trade offers were frequent enough to pause simulation; a bulk-resolve or AI-assist default would help long sims.",
-  );
 
-  const review = reviewSaveBalance(state, play, history);
-  console.log("\n=== Save review ===");
-  for (const line of review.lines) {
-    console.log(line);
-  }
-  for (const flag of review.flags) {
-    play.issues.push(flag);
-    console.log(`FLAG: ${flag}`);
-  }
+    if (titles.length === 0) {
+      play.opportunities.push(
+        `No championships in ${history.seasons.length} completed seasons.`,
+      );
+    } else {
+      play.opportunities.push(
+        `Won ${titles.length} of ${history.seasons.length} completed seasons.`,
+      );
+    }
+    const relocated = play.relocationAttempts.some((row) =>
+      row.outcome.includes("now "),
+    );
+    const completedMove = play.seasons.some(
+      (season, index) =>
+        index > 0 &&
+        play.seasons[0] &&
+        season.city !== "" &&
+        play.seasons[0].city !== "" &&
+        season.city.split(" ")[0] !== play.seasons[0].city.split(" ")[0],
+    );
+    if (!relocated && !completedMove) {
+      play.issues.push(
+        "Relocation did not complete. See relocationAttempts for tenure/market gates.",
+      );
+    }
+    console.log("\n=== Relocation attempts ===");
+    for (const attempt of play.relocationAttempts) {
+      console.log(
+        `${attempt.date} ${attempt.phase} ${attempt.stageBefore}->${attempt.stageAfter} ${attempt.outcome}`,
+      );
+    }
+    if (play.seasons.every((season) => season.trades.length === 0)) {
+      play.issues.push("Never completed a star-for-picks trade.");
+      play.opportunities.push(
+        "Trade market rarely accepted pick-only packages for 82+ players.",
+      );
+    }
+    if (play.seasons.every((season) => season.signings.length === 0)) {
+      play.issues.push("Never signed a free agent.");
+      play.opportunities.push(
+        "Cap space or FA pool quality blocked win-now signings.",
+      );
+    }
+    play.opportunities.push(
+      "Incoming trade offers were frequent enough to pause simulation; a bulk-resolve or AI-assist default would help long sims.",
+    );
 
-  await persistSave(db, saveId, SAVE_NAME, state, false);
-  const reportPath = resolve("scripts/_play_10_year_report.json");
-  writeFileSync(reportPath, JSON.stringify({ play, history, review }, null, 2));
-  console.log(`\nSaved report ${reportPath}`);
-  console.log(`Open in UI: /dashboard/${saveId}`);
+    const review = reviewSaveBalance(state, play, history);
+    console.log("\n=== Save review ===");
+    for (const line of review.lines) {
+      console.log(line);
+    }
+    for (const flag of review.flags) {
+      play.issues.push(flag);
+      console.log(`FLAG: ${flag}`);
+    }
+
+    await persistSave(db, saveId, SAVE_NAME, state, false);
+    const reportPath = resolve("scripts/_play_10_year_report.json");
+    writeFileSync(
+      reportPath,
+      JSON.stringify({ play, history, review }, null, 2),
+    );
+    console.log(`\nSaved report ${reportPath}`);
+    console.log(`Open in UI: /dashboard/${saveId}`);
   } catch (error) {
     const crash =
       error instanceof Error

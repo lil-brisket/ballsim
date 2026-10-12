@@ -4,7 +4,7 @@
  */
 import { writeFileSync } from "node:fs";
 import path from "node:path";
-import type { Reporter, TestCase, TestModule } from "vitest/reporters";
+import type { Reporter, TestCase, TestModule } from "vitest/node";
 
 export const DEFAULT_RESULTS_FILE = "test-results.txt";
 const MAX_MESSAGE_CHARS = 2000;
@@ -253,7 +253,7 @@ function failureFromCase(
 
 export function resolveResultsPath(
   cwd = process.cwd(),
-  env: NodeJS.ProcessEnv = process.env,
+  env: Record<string, string | undefined> = process.env,
 ): string {
   const override = env.TEST_RESULTS_FILE?.trim();
   if (override && override.length > 0) {

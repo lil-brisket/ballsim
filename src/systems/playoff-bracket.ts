@@ -3,7 +3,11 @@ import type {
   PlayoffSeries,
   PlayoffTournament,
 } from "@/domain/entities/playoffs";
-import { asPlayoffSeriesId, type TeamId } from "@/domain/ids";
+import {
+  asPlayoffSeriesId,
+  type PlayoffSeriesId,
+  type TeamId,
+} from "@/domain/ids";
 
 /**
  * Classic single-elim seed order for a power-of-2 field.
@@ -254,7 +258,7 @@ function buildTwelveTeamBracket(
     { slot: 3, byeSeed: 3, feederSlot: 1 },
   ];
 
-  const qfIds: string[] = [];
+  const qfIds: PlayoffSeriesId[] = [];
   for (const spec of qfSpecs) {
     const id = asPlayoffSeriesId(`playoff_r1_s${spec.slot}`);
     qfIds.push(id);
