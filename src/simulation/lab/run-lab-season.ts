@@ -11,7 +11,17 @@ import {
   scenarioVersionFor,
 } from "@/simulation/lab/scenario-version";
 import type { LabLeaguePreset } from "@/simulation/lab/lab-league-preset";
-import type { LabReport } from "@/simulation/lab/types";
+import { toLabFailure } from "@/simulation/lab/map-failure";
+import {
+  evaluateSeasonInvariants,
+  type SeasonGameRow,
+} from "@/simulation/lab/season-invariants";
+import type { GameSimulationFidelity } from "@/systems/game-simulation";
+import type {
+  LabFailure,
+  LabFailureContext,
+  LabReport,
+} from "@/simulation/lab/types";
 
 export type RunLabSeasonOptions = {
   seed: number;
@@ -19,6 +29,13 @@ export type RunLabSeasonOptions = {
   mode?: "owner-career";
   gameSettings?: GameSettings;
   preset?: LabLeaguePreset;
+  /** League game fidelity; default is the possession engine for every game. */
+  fidelity?: GameSimulationFidelity;
+  /**
+   * Headless owner: no owner gameplay, and the owner's games use the league
+   * fidelity like any other CPU team.
+   */
+  skipOwnerGameplay?: boolean;
 } & LabPersistOptions;
 
 export type LongitudinalPoint = {
@@ -57,18 +74,51 @@ export function runLabSeason(options: RunLabSeasonOptions): LabSeasonResult {
     seedList,
   });
 
-  const career = runLeagueCareer({
-    seed: options.seed,
-    seasons,
-    gameSettings: options.gameSettings,
-  });
-
   const engineIdentity = readEngineIdentity();
   const reproCommand = formatReproCommand({
     seed: options.seed,
     scenarioId: "owner-career",
     mode: "owner-career",
     seasons,
+  });
+  const failureCtx: LabFailureContext = {
+    seed: options.seed,
+    scenarioId: OWNER_CAREER_SCENARIO_ID,
+    reproCommand,
+    engineIdentity,
+  };
+
+  const hardFailures: LabFailure[] = [];
+  const career = runLeagueCareer({
+    seed: options.seed,
+    seasons,
+    gameSettings: options.gameSettings,
+    gameFidelity: options.fidelity,
+    skipOwnerGameplay: options.skipOwnerGameplay,
+    onSeasonComplete: (state, seasonIndex) => {
+      const games: SeasonGameRow[] = Object.values(state.competition.games)
+        .filter(
+          (game) =>
+            game.status === "final" &&
+            game.competitionType === "regular_season",
+        )
+        .map((game) => ({
+          id: game.id,
+          homeTeamId: game.homeTeamId,
+          awayTeamId: game.awayTeamId,
+          score: game.score,
+          periodScores: game.periodScores,
+          playerStats: game.playerStats,
+        }));
+      for (const raw of evaluateSeasonInvariants(games)) {
+        hardFailures.push(
+          toLabFailure(
+            { ...raw, context: { ...raw.context, seasonIndex } },
+            failureCtx,
+          ),
+        );
+      }
+    },
   });
 
   const bySeason = new Map<number, typeof career.snapshots>();
@@ -109,7 +159,7 @@ export function runLabSeason(options: RunLabSeasonOptions): LabSeasonResult {
     rotation: "on",
     engineIdentity,
     reproCommand,
-    hardFailures: [],
+    hardFailures,
     warnings: [],
     statChecks: [],
     checksum,

@@ -255,6 +255,86 @@ describe("simulateGameBoxScore", () => {
     expect(limitedRow!.minutes).toBeLessThan(healthyRow!.minutes);
   });
 
+  it("conserves 240 team minutes and never exceeds 48 per player", () => {
+    for (let seed = 1; seed <= 40; seed += 1) {
+      const home = makeRoster(HOME, "home", 8 + (seed % 8));
+      const away = makeRoster(AWAY, "away", 15);
+      const result = simulateGameBoxScore(
+        scheduledGame(),
+        { homePlayers: home, awayPlayers: away },
+        createTestRng(seed),
+      );
+      for (const teamId of [HOME, AWAY]) {
+        const rows = result.playerStats.filter((row) => row.teamId === teamId);
+        expect(rows.reduce((sum, row) => sum + row.minutes, 0)).toBe(240);
+        expect(Math.max(...rows.map((row) => row.minutes))).toBeLessThanOrEqual(
+          48,
+        );
+      }
+    }
+  });
+
+  it("does not inflate free throws by dumping odd leftover points into FTs", () => {
+    let ftm = 0;
+    let fta = 0;
+    let points = 0;
+    for (let seed = 1; seed <= 60; seed += 1) {
+      const result = simulateGameBoxScore(
+        scheduledGame(),
+        {
+          homePlayers: makeRoster(HOME, "home", 10),
+          awayPlayers: makeRoster(AWAY, "away", 10),
+        },
+        createTestRng(seed),
+      );
+      for (const row of result.playerStats) {
+        ftm += row.freeThrowsMade;
+        fta += row.freeThrowsAttempted;
+        points += row.points;
+      }
+    }
+    // Possession sim: ~15 FTA and ~11% of points from the line per team.
+    expect(ftm / points).toBeLessThan(0.16);
+    expect(fta / 120).toBeLessThan(20);
+    expect(ftm / fta).toBeGreaterThan(0.6);
+  });
+
+  it("keeps a star's scoring and shooting believable", () => {
+    const home = makeRoster(HOME, "home", 10);
+    home[0] = createPlayer({
+      id: asPlayerId("star"),
+      teamId: HOME,
+      position: "SG",
+      attributes: {
+        finishing: 97,
+        midRange: 97,
+        threePoint: 97,
+        ballHandling: 95,
+        passing: 90,
+        offensiveIq: 95,
+      },
+    });
+    let starPoints = 0;
+    let starFgm = 0;
+    let starFga = 0;
+    const games = 80;
+    for (let seed = 1; seed <= games; seed += 1) {
+      const result = simulateGameBoxScore(
+        scheduledGame(),
+        { homePlayers: home, awayPlayers: makeRoster(AWAY, "away", 10) },
+        createTestRng(seed),
+      );
+      const star = result.playerStats.find(
+        (row) => row.playerId === asPlayerId("star"),
+      )!;
+      starPoints += star.points;
+      starFgm += star.fieldGoalsMade;
+      starFga += star.fieldGoalsAttempted;
+    }
+    expect(starPoints / games).toBeLessThan(34);
+    expect(starFgm / starFga).toBeLessThan(0.56);
+  });
+
   it("is faster than a short possession sim on the same rosters", () => {
     const home = makeRoster(HOME, "home", 10);
     const away = makeRoster(AWAY, "away", 10);

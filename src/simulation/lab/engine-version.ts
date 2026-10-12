@@ -8,5 +8,12 @@
  *
  * Version 1 is the first explicit engine version. It includes per-game Lab
  * seed streams (`{scenarioId}:roster` and `{scenarioId}:game:{n}`).
+ *
+ * Version 2: stored player minutes are conserved per team (largest-remainder
+ * rounding of on-court seconds, `finalizeMinutesOnSimState`) instead of being
+ * floored per player, which lost ~6 of 240 team minutes. Box-score projection
+ * was also recalibrated to the possession engine (points, shot mix, rates,
+ * counting-stat rates). Possession outcomes (scores, shots, RNG stream) are
+ * unchanged.
  */
-export const ENGINE_VERSION = 1;
+export const ENGINE_VERSION = 2;

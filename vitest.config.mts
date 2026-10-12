@@ -45,6 +45,8 @@ export default defineConfig({
             "tests/systems/simulation/performance-budget.test.ts",
             "tests/systems/trades/thirty-team-trade-invariants.test.ts",
             "tests/simulation/lab/invariants-hard.test.ts",
+            "tests/simulation/lab/fidelity-parity.test.ts",
+            "tests/simulation/lab/season-fidelity.test.ts",
             "tests/simulation/lab/simulate-game-pbt.test.ts",
             "tests/simulation/lab/simulate-game-box-score-stats.test.ts",
             "tests/simulation/lab/season-rng-desync.test.ts",
@@ -89,6 +91,8 @@ export default defineConfig({
           environment: "node",
           include: [
             "tests/simulation/lab/invariants-hard.test.ts",
+            "tests/simulation/lab/fidelity-parity.test.ts",
+            "tests/simulation/lab/season-fidelity.test.ts",
             "tests/simulation/lab/simulate-game-pbt.test.ts",
             "tests/simulation/lab/simulate-game-box-score-stats.test.ts",
             "tests/simulation/lab/season-rng-desync.test.ts",

@@ -176,6 +176,7 @@ export function prepareLabGamesRun(
     scenarioId: resolved.scenarioId,
     games: options.games,
     rotation: resolved.rotation,
+    fidelity: options.fidelity,
   });
   const failureCtx: LabFailureContext = {
     seed: options.seed,
@@ -189,6 +190,7 @@ export function prepareLabGamesRun(
     games: options.games,
     scenarioId: resolved.scenarioId,
     rotation: resolved.rotation,
+    ...(options.fidelity === "box_score" ? { fidelity: options.fidelity } : {}),
     ...(options.channel != null ? { channel: options.channel } : {}),
     ...(options.rosterSize != null ? { rosterSize: options.rosterSize } : {}),
     ...(jobs !== LAB_DEFAULT_JOBS ? { jobs } : {}),

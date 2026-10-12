@@ -204,6 +204,7 @@ async function main(): Promise<void> {
       games: options.games,
       scenarioId: options.scenario,
       rotation: options.rotation,
+      fidelity: options.fidelity,
       channel: options.channel,
       persist: options.persist,
       resultsRoot: options.resultsDir,

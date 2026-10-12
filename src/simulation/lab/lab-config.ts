@@ -5,6 +5,7 @@ import {
   type LabSweepSampler,
 } from "@/simulation/lab/sweep/space";
 import type { LabRotationMode, SimChannel } from "@/simulation/lab/types";
+import type { GameSimulationFidelity } from "@/systems/game-simulation";
 import { assertLabKeep } from "@/simulation/lab/retention";
 
 export type LabFileConfig = {
@@ -12,6 +13,7 @@ export type LabFileConfig = {
   games?: number;
   scenario?: string;
   rotation?: LabRotationMode;
+  fidelity?: GameSimulationFidelity;
   format?: "json" | "text";
   out?: string;
   quiet?: boolean;
@@ -40,6 +42,7 @@ export type LabCliState = {
   games: number;
   scenario: string;
   rotation: LabRotationMode;
+  fidelity: GameSimulationFidelity;
   format: "json" | "text";
   out?: string;
   quiet: boolean;
@@ -72,6 +75,7 @@ export const LAB_CLI_DEFAULTS: LabCliState = {
   games: 100,
   scenario: "normal",
   rotation: "on",
+  fidelity: "possession",
   format: "text",
   quiet: false,
   channel: "pr",
@@ -90,13 +94,14 @@ export const LAB_CLI_DEFAULTS: LabCliState = {
 };
 
 export const LAB_CLI_USAGE =
-  "Usage: npm run sim -- [--config path] [--seed S] [--games N] [--scenario ID] [--rotation on|off] [--format json|text] [--out path] [--quiet] [--channel pr|nightly] [--mode game|owner-career] [--seasons N] [--no-persist] [--results-dir path] [--run-id id] [--jobs N] [--chunk-size N] [--timeout-ms N] [--resume] [--sweep [path]] [--sampler grid|lhs|sobol] [--samples N] [--baseline path] [--write-baseline path] [--calibrate] [--ks-alpha A] [--keep N] [--dry-run] [--list-scenarios]";
+  "Usage: npm run sim -- [--config path] [--seed S] [--games N] [--scenario ID] [--rotation on|off] [--fidelity possession|box_score] [--format json|text] [--out path] [--quiet] [--channel pr|nightly] [--mode game|owner-career] [--seasons N] [--no-persist] [--results-dir path] [--run-id id] [--jobs N] [--chunk-size N] [--timeout-ms N] [--resume] [--sweep [path]] [--sampler grid|lhs|sobol] [--samples N] [--baseline path] [--write-baseline path] [--calibrate] [--ks-alpha A] [--keep N] [--dry-run] [--list-scenarios]";
 
 const FILE_KEYS = new Set([
   "seed",
   "games",
   "scenario",
   "rotation",
+  "fidelity",
   "format",
   "out",
   "quiet",
@@ -149,6 +154,12 @@ export function parseLabFileConfig(raw: unknown): LabFileConfig {
       throw new Error("Lab config rotation must be on or off.");
     }
     config.rotation = record.rotation;
+  }
+  if (record.fidelity != null) {
+    if (record.fidelity !== "possession" && record.fidelity !== "box_score") {
+      throw new Error("Lab config fidelity must be possession or box_score.");
+    }
+    config.fidelity = record.fidelity;
   }
   if (record.format != null) {
     if (record.format !== "json" && record.format !== "text") {
@@ -276,6 +287,7 @@ export function mergeLabConfig(input: {
     games: cli.games ?? file.games ?? LAB_CLI_DEFAULTS.games,
     scenario: cli.scenario ?? file.scenario ?? LAB_CLI_DEFAULTS.scenario,
     rotation: cli.rotation ?? file.rotation ?? LAB_CLI_DEFAULTS.rotation,
+    fidelity: cli.fidelity ?? file.fidelity ?? LAB_CLI_DEFAULTS.fidelity,
     format: cli.format ?? file.format ?? LAB_CLI_DEFAULTS.format,
     out: cli.out ?? file.out,
     quiet: cli.quiet ?? file.quiet ?? LAB_CLI_DEFAULTS.quiet,
@@ -365,6 +377,12 @@ export function parseLabCliOverrides(argv: string[]): Partial<LabCliState> {
         throw new Error("--rotation must be on or off");
       }
       cli.rotation = value;
+      if (consume && inline == null) index += 1;
+    } else if (flag === "--fidelity") {
+      if (value !== "possession" && value !== "box_score") {
+        throw new Error("--fidelity must be possession or box_score");
+      }
+      cli.fidelity = value;
       if (consume && inline == null) index += 1;
     } else if (flag === "--format") {
       if (value !== "json" && value !== "text") {

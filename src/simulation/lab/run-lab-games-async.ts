@@ -39,6 +39,7 @@ export async function runLabGamesAsync(
     games: options.games,
     scenarioId: state.session.scenarioId,
     rotation: state.session.rotation,
+    fidelity: state.session.fidelity,
     rosterSize: options.rosterSize,
     seedList: state.session.seedList,
     warmupIndexes:

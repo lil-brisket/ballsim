@@ -47,11 +47,21 @@ export type SimulateBoxScoreContext = {
   profiler?: SimulationProfiler;
 };
 
-const BASE_TEAM_POINTS = 108;
+/**
+ * Box-score is a projection of the possession sim, not a second sport: these
+ * constants are calibrated so Lab aggregates (points, shooting splits, counting
+ * stats) match `simulateGame` on the same rosters. See
+ * tests/simulation/lab/fidelity-parity.test.ts for the enforced tolerances.
+ */
+const BASE_TEAM_POINTS = 96;
 const HOME_COURT_OVERALL_EDGE = 2;
 const POINTS_PER_OVERALL = 0.45;
-const SCORE_FLOOR = 78;
-const SCORE_CEILING = 142;
+/** Half-width of the uniform per-team score noise (possession-sim SD ~13). */
+const SCORE_NOISE = 22;
+const SCORE_FLOOR = 60;
+const SCORE_CEILING = 140;
+const POSSESSIONS_MIN = 82;
+const POSSESSIONS_MAX = 92;
 const REGULATION_TEAM_MINUTES = ROTATION_CONFIG.regulationPlayerMinutes;
 const PLAYING_ROTATION_SIZE = 10;
 /** Minutes multiplier for players who are not fully available. */
@@ -64,7 +74,40 @@ const BOX_SCORE_MINUTES_BY_AVAILABILITY: Readonly<
   recovery: 0.75,
 };
 
-const ASSIST_TO_FGM_RATE = 0.58;
+const ASSIST_TO_FGM_RATE = 0.485;
+
+/**
+ * How a player's points split into 3PM / 2PM / FTM, and additive make-rate
+ * offsets applied on top of the shared possession-sim formulas. Tuned against
+ * the possession engine (Lab, seed 42); re-tune when shot or FT config changes.
+ */
+const BOX_SCORE_SHOT_CALIBRATION = {
+  threeShareBase: 0.13,
+  threeShareSlope: 0.5,
+  threeShareMin: 0.12,
+  threeShareMax: 0.62,
+  ftShareBase: 0.03,
+  ftShareFinishingSlope: 1 / 500,
+  ftShareMin: 0.04,
+  ftShareMax: 0.2,
+  twoPointRateOffset: 0.03,
+  threePointRateOffset: 0.04,
+  freeThrowRateOffset: 0.005,
+  /**
+   * Possession-sim outcomes move less with raw ratings than the bare rating
+   * formulas do (shot quality, contests, fatigue wash some of it out). Make
+   * rates are pulled toward these league anchors by `rateSpread` so box-score
+   * stars do not shoot 55% and weak rosters do not collapse.
+   */
+  rateSpread: 0.6,
+  twoPointAnchor: 0.44,
+  threePointAnchor: 0.393,
+  freeThrowAnchor: 0.73,
+} as const;
+
+function compressRate(raw: number, anchor: number): number {
+  return anchor + BOX_SCORE_SHOT_CALIBRATION.rateSpread * (raw - anchor);
+}
 const POSITION_STEAL_MODIFIERS: Readonly<Record<PlayerPosition, number>> = {
   PG: 6,
   SG: 4,
@@ -112,8 +155,8 @@ export function simulateGameBoxScore(
     rng,
   );
 
-  const possessionsHome = rng.nextInt(92, 108);
-  const possessionsAway = rng.nextInt(92, 108);
+  const possessionsHome = rng.nextInt(POSSESSIONS_MIN, POSSESSIONS_MAX);
+  const possessionsAway = rng.nextInt(POSSESSIONS_MIN, POSSESSIONS_MAX);
 
   const homeRows = buildTeamBoxScore({
     players: context.homePlayers,
@@ -224,8 +267,12 @@ function rollFinalScore(
     BASE_TEAM_POINTS + (homeRating - awayRating) * POINTS_PER_OVERALL;
   const awayBase =
     BASE_TEAM_POINTS + (awayRating - homeRating) * POINTS_PER_OVERALL;
-  let home = clampScore(Math.round(homeBase) + rng.nextInt(-10, 10));
-  let away = clampScore(Math.round(awayBase) + rng.nextInt(-10, 10));
+  let home = clampScore(
+    Math.round(homeBase) + rng.nextInt(-SCORE_NOISE, SCORE_NOISE),
+  );
+  let away = clampScore(
+    Math.round(awayBase) + rng.nextInt(-SCORE_NOISE, SCORE_NOISE),
+  );
   if (home === away) {
     if (rng.chance(0.5)) {
       home = Math.min(SCORE_CEILING, home + 1);
@@ -327,11 +374,11 @@ function buildTeamBoxScore(input: {
     teamFgm,
     Math.max(0, Math.round(teamFgm * ASSIST_TO_FGM_RATE) + rng.nextInt(-2, 2)),
   );
-  const orebTotal = Math.round(possessions * 0.11) + rng.nextInt(-2, 2);
-  const drebTotal = Math.round(possessions * 0.32) + rng.nextInt(-3, 3);
-  const tovTotal = Math.round(possessions * 0.14) + rng.nextInt(-2, 2);
-  const stlTotal = Math.round(possessions * 0.075) + rng.nextInt(-2, 1);
-  const blkTotal = Math.round(possessions * 0.05) + rng.nextInt(-1, 1);
+  const orebTotal = Math.round(possessions * 0.125) + rng.nextInt(-2, 2);
+  const drebTotal = Math.round(possessions * 0.38) + rng.nextInt(-3, 3);
+  const tovTotal = Math.round(possessions * 0.203) + rng.nextInt(-2, 2);
+  const stlTotal = Math.round(possessions * 0.0563) + rng.nextInt(-2, 1);
+  const blkTotal = Math.round(possessions * 0.0498) + rng.nextInt(-1, 1);
   const foulTotal = rng.nextInt(16, 26);
 
   const ast = allocateByWeight(
@@ -464,10 +511,47 @@ function allocateMinutes(rotation: readonly Player[], rng: Rng): number[] {
           : rng.nextInt(4, 14);
     return Math.max(1, Math.round(base * availabilityFactor));
   });
-  const allocated = allocateByWeight(curve, REGULATION_TEAM_MINUTES);
-  return allocated.map((value) =>
-    Math.min(ROTATION_CONFIG.regulationMinutes, Math.max(0, value)),
+  return allocateCappedByWeight(
+    curve,
+    REGULATION_TEAM_MINUTES,
+    ROTATION_CONFIG.regulationMinutes,
   );
+}
+
+/**
+ * Largest-remainder allocation with a per-slot cap. Excess above the cap is
+ * redistributed to uncapped slots so the total is conserved whenever
+ * `cap * count >= total`.
+ */
+function allocateCappedByWeight(
+  weights: readonly number[],
+  total: number,
+  cap: number,
+): number[] {
+  const result = Array.from({ length: weights.length }, () => 0);
+  let remaining = Math.min(total, cap * weights.length);
+  let open = weights.map((_, index) => index);
+  while (remaining > 0 && open.length > 0) {
+    const share = allocateByWeight(
+      open.map((index) => weights[index] ?? 0),
+      remaining,
+    );
+    let overflow = 0;
+    const stillOpen: number[] = [];
+    open.forEach((index, slot) => {
+      const next = (result[index] ?? 0) + (share[slot] ?? 0);
+      if (next >= cap) {
+        overflow += next - cap;
+        result[index] = cap;
+      } else {
+        result[index] = next;
+        stillOpen.push(index);
+      }
+    });
+    remaining = overflow;
+    open = stillOpen;
+  }
+  return result;
 }
 
 function shootingFromPoints(
@@ -492,9 +576,11 @@ function shootingFromPoints(
   const ftPct = freeThrowMakeRate(player);
   const threeShare = threePointScoringShare(player);
   const ftShare = clamp(
-    0.1,
-    0.22,
-    0.12 + (player.attributes.finishing - 50) / 400,
+    BOX_SCORE_SHOT_CALIBRATION.ftShareMin,
+    BOX_SCORE_SHOT_CALIBRATION.ftShareMax,
+    BOX_SCORE_SHOT_CALIBRATION.ftShareBase +
+      (player.attributes.finishing - 50) *
+        BOX_SCORE_SHOT_CALIBRATION.ftShareFinishingSlope,
   );
 
   let threePm = Math.round((points * threeShare) / 3);
@@ -510,7 +596,15 @@ function shootingFromPoints(
     remaining = points - 3 * threePm - ftm;
   }
   let twoPm = Math.floor(Math.max(0, remaining) / 2);
-  ftm += remaining - 2 * twoPm;
+  let leftover = remaining - 2 * twoPm;
+  if (leftover === 1 && twoPm >= 1 && points % 4 < 2) {
+    // An odd leftover point is a swap of one 2PM for one 3PM about half the
+    // time (deterministic on points) instead of always an extra free throw.
+    twoPm -= 1;
+    threePm += 1;
+    leftover = 0;
+  }
+  ftm += leftover;
   if (ftm < 0) {
     twoPm = Math.max(0, twoPm + Math.floor(ftm / 2));
     ftm = points - 2 * twoPm - 3 * threePm;
@@ -553,32 +647,52 @@ function shootingFromPoints(
 function threePointScoringShare(player: Player): number {
   const threePoint = player.attributes.threePoint;
   const tendency = Math.pow(Math.max(0, threePoint - 52) / 47, 1.15);
-  return clamp(0.08, 0.46, 0.1 + 0.36 * tendency);
+  return clamp(
+    BOX_SCORE_SHOT_CALIBRATION.threeShareMin,
+    BOX_SCORE_SHOT_CALIBRATION.threeShareMax,
+    BOX_SCORE_SHOT_CALIBRATION.threeShareBase +
+      BOX_SCORE_SHOT_CALIBRATION.threeShareSlope * tendency,
+  );
 }
 
 function twoPointMakeRate(player: Player, oppInterior: number): number {
   const ability =
     (player.attributes.finishing + player.attributes.midRange) / 2;
   return clampShotProbability(
-    ability / RATING_MAX +
-      SHOT_RESOLUTION_CONFIG.baselineProbability +
-      SHOT_RESOLUTION_CONFIG.twoPointAdjustment -
-      (oppInterior / RATING_MAX) * SHOT_RESOLUTION_CONFIG.defensiveImpact,
+    compressRate(
+      ability / RATING_MAX +
+        SHOT_RESOLUTION_CONFIG.baselineProbability +
+        SHOT_RESOLUTION_CONFIG.twoPointAdjustment -
+        (oppInterior / RATING_MAX) * SHOT_RESOLUTION_CONFIG.defensiveImpact +
+        BOX_SCORE_SHOT_CALIBRATION.twoPointRateOffset,
+      BOX_SCORE_SHOT_CALIBRATION.twoPointAnchor,
+    ),
   );
 }
 
 function threePointMakeRate(player: Player, oppPerimeter: number): number {
   return clampShotProbability(
-    player.attributes.threePoint / RATING_MAX +
-      SHOT_RESOLUTION_CONFIG.baselineProbability +
-      SHOT_RESOLUTION_CONFIG.threePointAdjustment -
-      (oppPerimeter / RATING_MAX) * SHOT_RESOLUTION_CONFIG.defensiveImpact -
-      0.015,
+    compressRate(
+      player.attributes.threePoint / RATING_MAX +
+        SHOT_RESOLUTION_CONFIG.baselineProbability +
+        SHOT_RESOLUTION_CONFIG.threePointAdjustment -
+        (oppPerimeter / RATING_MAX) * SHOT_RESOLUTION_CONFIG.defensiveImpact +
+        BOX_SCORE_SHOT_CALIBRATION.threePointRateOffset,
+      BOX_SCORE_SHOT_CALIBRATION.threePointAnchor,
+    ),
   );
 }
 
 function freeThrowMakeRate(player: Player): number {
-  return calculateFreeThrowProbability({ shooter: player });
+  return clamp(
+    0.4,
+    0.98,
+    compressRate(
+      calculateFreeThrowProbability({ shooter: player }) +
+        BOX_SCORE_SHOT_CALIBRATION.freeThrowRateOffset,
+      BOX_SCORE_SHOT_CALIBRATION.freeThrowAnchor,
+    ),
+  );
 }
 
 function clampShotProbability(value: number): number {

@@ -257,7 +257,15 @@ weight    weight
 
 Owner Mode calendar jumps use `fidelity: "box_score"` for CPU vs CPU games. That path is [`simulateGameBoxScore`](src/systems/game-simulation-box-score.ts): a statistical projection of the **same attributes** as possession sim (shot/FT make rates from `SHOT_RESOLUTION_CONFIG` / `FREE_THROW_RESOLUTION_CONFIG`, usage with a star exponent for scoring, passing for assists, rebound/steal/block ratings plus position modifiers). Free-throw make chance is `freeThrow / 99 + baselineProbability` (currently +0.035), then clamped. It does not run a possession loop and writes no play-by-play. Players who are `out` / `suspended` sit; `limited` / `questionable` / `minor` / `recovery` play reduced minutes. Injury creation still runs after the game via `processPostGameInjuryExposures` from those minutes.
 
-Games involving the owner team still use possession [`simulateGame`](src/systems/game-simulation.ts) even when fidelity is `box_score`. Box-score is not a second sport: FG/3P/FT and the full counting line (PTS/AST/REB/STL/BLK/TO) should land in the same Lab-style bands as possession.
+Games involving the owner team still use possession [`simulateGame`](src/systems/game-simulation.ts) even when fidelity is `box_score`. A **headless** owner (`skipOwnerGameplay`, used by league-sanity and Lab season runs) is nobody's team to watch, so its games use the league fidelity like every other CPU team; otherwise the one possession-engine team stands out against a box-score league (a 9-73 owner at 73.7 PPG next to a ~95 PPG league).
+
+**Box-score is not a second sport.** It is calibrated to, and tested against, the possession sim on the canonical Lab scenario (`normal`, seed 42, rotation on):
+
+- The Lab runs either engine (`npm run sim -- --fidelity=box_score`). `tests/simulation/lab/fidelity-parity.test.ts` runs both with `--calibrate` semantics and fails if team PPG differs by more than 3, or FG% / 3P% / FT% by more than 2 / 2.5 / 2.5 points. `CALIBRATION_BANDS` apply to both.
+- Points are rolled around `BASE_TEAM_POINTS` with possession-like spread (SD about 13 per team). Each player's points then split into 3PM / 2PM / FTM using calibrated shares, and attempts are back-computed from makes at make rates that are pulled toward league anchors (`rateSpread`), because possession outcomes move less with raw ratings than the bare rating formulas do. This keeps stars from shooting 55% and keeps free throws near 15 FTA per team (an odd leftover point is no longer always booked as a free throw).
+- Counting stats (AST, REB, STL, BLK, TO) scale from a possession count with rates matched to the possession sim. Minutes always sum to 240 per team and no player exceeds 48.
+- Stored possession minutes are also conserved per team (seconds are rounded with largest remainder, not floored per player).
+- Known limit: possession scoring depends strongly on the drawn roster's shooters (about 79-97 PPG across Lab seeds, 3PA 16-35), while box-score is nearly constant, so parity is anchored on the canonical seed, not on every roster. Lab season runs enforce `season-invariants` as hard failures: team PPG within 15 of the league and inside 70-135; no scorer above 1.35x the #2-#6 scorers' mean or above 40 PPG; every game's team minutes equal 240 + 25 per OT.
 
 ## Design rules
 

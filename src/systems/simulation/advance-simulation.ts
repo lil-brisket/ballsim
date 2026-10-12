@@ -422,7 +422,13 @@ function advanceOneDay(
 
   const daily = runDailyPipeline(current, rng, profiler, {
     fidelity: dayOptions.gameFidelity,
-    ownerTeamId: dayOptions.ownerTeamId,
+    // A headless owner (skipOwnerGameplay) is nobody's team to watch, so its
+    // games use the league fidelity like every other CPU team instead of being
+    // the lone possession-engine team in a box-score league.
+    ownerTeamId:
+      dayOptions.skipOwnerGameplay === true
+        ? undefined
+        : dayOptions.ownerTeamId,
   });
   current = daily.state;
   events.push(...daily.events);
@@ -595,9 +601,7 @@ function ownerHasScheduledGameOnDate(
   if (next == null) {
     return false;
   }
-  return (
-    next.higherSeedTeamId === teamId || next.lowerSeedTeamId === teamId
-  );
+  return next.higherSeedTeamId === teamId || next.lowerSeedTeamId === teamId;
 }
 
 function ownerTeamGameProgress(

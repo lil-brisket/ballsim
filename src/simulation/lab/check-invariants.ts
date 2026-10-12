@@ -7,6 +7,10 @@ import type {
   RawInvariantFailure,
 } from "@/simulation/lab/types";
 import { collectGameSnapshot } from "@/simulation/validation/collect-game-stats";
+import {
+  checkMinutesConservation,
+  type SeasonGameRow,
+} from "@/simulation/lab/season-invariants";
 import { TRADE_ROSTER_RULES } from "@/systems/trades-config";
 import { ROTATION_CONFIG } from "@/systems/rotation/rotation-config";
 
@@ -64,6 +68,22 @@ export function checkInvariants(
       failures.push({ rule: "ENGINE_THROW", detail: message, context });
     }
   }
+  failures.push(
+    ...checkMinutesConservation([
+      seasonGameRowFromResult(
+        state.result,
+        state.homePlayerIds,
+        state.awayPlayerIds,
+      ),
+    ]).map((failure) => ({
+      ...failure,
+      context: {
+        ...context,
+        ...failure.context,
+        gameId: state.result?.gameId,
+      },
+    })),
+  );
   failures.push(...checkClock(state.result, context));
   failures.push(...checkFoulLimits(state.result, state.rotation, context));
   return failures;
@@ -147,4 +167,31 @@ export function eventsFromResult(result: GameResult | null): GameEvent[] {
     return [];
   }
   return result.events.map((event) => ({ ...event }));
+}
+
+function seasonGameRowFromResult(
+  result: GameResult,
+  homePlayerIds: ReadonlySet<string>,
+  awayPlayerIds: ReadonlySet<string>,
+): SeasonGameRow {
+  return {
+    id: result.gameId,
+    homeTeamId: result.homeTeamId,
+    awayTeamId: result.awayTeamId,
+    score: result.score,
+    periodScores: result.periodScores,
+    // Possession-engine rows leave teamId null until the Game is finalized.
+    playerStats: result.playerStats.map((row) => ({
+      playerId: row.playerId,
+      minutes: row.minutes,
+      points: row.points,
+      teamId:
+        row.teamId ??
+        (homePlayerIds.has(row.playerId)
+          ? result.homeTeamId
+          : awayPlayerIds.has(row.playerId)
+            ? result.awayTeamId
+            : null),
+    })),
+  };
 }
