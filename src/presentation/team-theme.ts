@@ -70,8 +70,31 @@ function lighten(hex: string, amount: number): string {
   );
 }
 
-function isReadableInk(hex: string): boolean {
-  return (contrastRatio(hex, TEAM_INK_SURFACE) ?? 0) >= TEAM_INK_MIN_CONTRAST;
+/** Heaviest primary tint components lay over a panel (e.g. `bg-team/30`). */
+const TEAM_TINT_MAX_ALPHA = 0.3;
+
+/** Mix `fg` over `bg` at `alpha` (0..1). */
+function blend(fg: string, bg: string, alpha: number): string | null {
+  const f = parseHexColor(fg);
+  const b = parseHexColor(bg);
+  if (!f || !b) {
+    return null;
+  }
+  return toHex(
+    f.r * alpha + b.r * (1 - alpha),
+    f.g * alpha + b.g * (1 - alpha),
+    f.b * alpha + b.b * (1 - alpha),
+  );
+}
+
+/** Ink must read on the plain panel and on the panel tinted by the primary. */
+function isReadableInk(hex: string, primary: string): boolean {
+  const tinted = blend(primary, TEAM_INK_SURFACE, TEAM_TINT_MAX_ALPHA);
+  return [TEAM_INK_SURFACE, tinted].every(
+    (surface) =>
+      surface !== null &&
+      (contrastRatio(hex, surface) ?? 0) >= TEAM_INK_MIN_CONTRAST,
+  );
 }
 
 /**
@@ -84,7 +107,8 @@ export function resolveTeamInk(colors: TeamThemeColors): string {
     colors.secondaryColor,
     colors.accentColor,
   ].filter((c): c is string => typeof c === "string" && !!parseHexColor(c));
-  const readable = candidates.find(isReadableInk);
+  const primary = candidates[0];
+  const readable = candidates.find((c) => isReadableInk(c, primary));
   if (readable) {
     return readable.toUpperCase();
   }
@@ -94,7 +118,7 @@ export function resolveTeamInk(colors: TeamThemeColors): string {
   }
   for (let step = 1; step <= 10; step += 1) {
     const mixed = lighten(base, step / 10);
-    if (isReadableInk(mixed)) {
+    if (isReadableInk(mixed, base)) {
       return mixed;
     }
   }
