@@ -128,21 +128,17 @@ export function CalendarWorkspace(props: {
   const isDesktop = useIsDesktopCalendar();
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
-  const {
-    simulationPending,
-    setSimulationPending,
-    setSimulationProgress,
-  } = useSimulationActivity();
+  const { simulationPending, setSimulationPending, setSimulationProgress } =
+    useSimulationActivity();
   const [selectedDate, setSelectedDate] = useState(props.view.selectedDate);
   const [mobileDetailOpen, setMobileDetailOpen] = useState(false);
   const [confirmTargetDate, setConfirmTargetDate] = useState<string | null>(
     null,
   );
-  const [resumeTarget, setResumeTarget] = useState<string | null>(
-    () =>
-      props.resumeTo && props.resumeTo > props.view.currentDate
-        ? props.resumeTo
-        : null,
+  const [resumeTarget, setResumeTarget] = useState<string | null>(() =>
+    props.resumeTo && props.resumeTo > props.view.currentDate
+      ? props.resumeTo
+      : null,
   );
   const [simError, setSimError] = useState<string | null>(null);
   const [playback, setPlayback] = useState<PlaybackFrame | null>(null);
@@ -151,9 +147,10 @@ export function CalendarWorkspace(props: {
   );
   const queueRef = useRef<PlaybackFrame[]>([]);
   const drainingRef = useRef(false);
-  const doneRef = useRef<Extract<SimulateToDateStreamEvent, { type: "done" }> | null>(
-    null,
-  );
+  const doneRef = useRef<Extract<
+    SimulateToDateStreamEvent,
+    { type: "done" }
+  > | null>(null);
   const [interruptState, dispatchInterrupt] = useReducer(
     reduceInterruptState,
     INITIAL_INTERRUPT_STATE,
@@ -177,8 +174,7 @@ export function CalendarWorkspace(props: {
         : null;
     const stored = readCalendarResumeTarget(props.saveId);
     const next =
-      fromUrl ??
-      (stored && stored > props.view.currentDate ? stored : null);
+      fromUrl ?? (stored && stored > props.view.currentDate ? stored : null);
     setResumeTarget(next);
     if (fromUrl) {
       writeCalendarResumeTarget(props.saveId, fromUrl);
@@ -219,13 +215,22 @@ export function CalendarWorkspace(props: {
     ) {
       return props.view.monthGrid;
     }
-    return buildPlaceholderMonthGrid(parsed.year, parsed.month, liveCurrentDate);
+    return buildPlaceholderMonthGrid(
+      parsed.year,
+      parsed.month,
+      liveCurrentDate,
+    );
   }, [liveCurrentDate, props.view.monthGrid]);
 
   const navigationDisabled = simulationPending || playback != null;
 
   function navigate(
-    next: { year: number; month: number; date?: string; resumeTo?: string | null },
+    next: {
+      year: number;
+      month: number;
+      date?: string;
+      resumeTo?: string | null;
+    },
     mode: "replace" | "push" = "replace",
   ) {
     if (navigationDisabled) return;
@@ -533,6 +538,26 @@ export function CalendarWorkspace(props: {
       onSimulate={handleSimulate}
       showSimulateAction={isDesktop}
       hideTitle={!isDesktop}
+      userTeamName={`${props.view.dashboard.controlledTeam.city} ${props.view.dashboard.controlledTeam.name}`}
+      userBranding={props.view.dashboard.controlledTeam.branding}
+      teamBranding={props.view.teamBranding}
+    />
+  );
+  const monthView = (
+    <CalendarMonthView
+      grid={displayedGrid}
+      selectedDate={selectedDate}
+      currentDate={liveCurrentDate}
+      nextTeamGameDate={props.view.nextTeamGameDate}
+      navigationDisabled={navigationDisabled}
+      resultOverlays={resultOverlays}
+      teamBranding={props.view.teamBranding}
+      simulating={playback != null}
+      onSelectDate={handleSelectDate}
+      onChangeMonth={handleChangeMonth}
+      onJumpToday={handleJumpToday}
+      onJumpNextGame={handleJumpNextGame}
+      layout="grid"
     />
   );
 
@@ -575,7 +600,9 @@ export function CalendarWorkspace(props: {
           resumeTo={resumeTarget}
           busy={interruptState.status === "resolving"}
           error={
-            interruptState.status === "interrupted" ? interruptState.error : null
+            interruptState.status === "interrupted"
+              ? interruptState.error
+              : null
           }
           onAccept={() => {
             void resolveTradeInterrupt("accept");
@@ -653,28 +680,17 @@ export function CalendarWorkspace(props: {
         openingDayPending={props.view.openingDayPending}
       />
 
-      <CalendarMonthView
-        grid={displayedGrid}
-        selectedDate={selectedDate}
-        currentDate={liveCurrentDate}
-        nextTeamGameDate={props.view.nextTeamGameDate}
-        navigationDisabled={navigationDisabled}
-        resultOverlays={resultOverlays}
-        simulating={playback != null}
-        onSelectDate={handleSelectDate}
-        onChangeMonth={handleChangeMonth}
-        onJumpToday={handleJumpToday}
-        onJumpNextGame={handleJumpNextGame}
-        layout="grid"
-      />
-
       {isDesktop ? (
-        <div className="grid gap-4 lg:grid-cols-[minmax(0,1.4fr)_minmax(16rem,0.8fr)]">
-          {inspector}
+        <>
+          <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_21rem]">
+            {monthView}
+            <div className="sticky top-4">{inspector}</div>
+          </div>
           <CalendarLeagueContextPanel context={props.view.leagueContext} />
-        </div>
+        </>
       ) : (
         <>
+          {monthView}
           <CalendarLeagueContextPanel context={props.view.leagueContext} />
           <Drawer
             open={mobileDetailOpen && !playback}

@@ -2,7 +2,9 @@ import type { GameBoxScoreView } from "@/state/selectors";
 import type { TeamBrandingView } from "@/state/team-branding-view";
 import { DataTable } from "@/components/owner/DataTable";
 import { Section } from "@/components/owner/Section";
-import { TeamLogoMark } from "@/components/team/logos/TeamLogoMark";
+import { ArenaPanel } from "@/components/ui/ArenaPanel";
+import { ScoreNumeral } from "@/components/ui/ScoreNumeral";
+import { TeamBadge } from "@/components/ui/TeamBadge";
 
 type GameBoxScoreProps = {
   boxScore: GameBoxScoreView;
@@ -28,42 +30,49 @@ function MatchupTeamBlock(props: {
   abbreviation: string;
   score: number;
   branding: TeamBrandingView | null;
+  winner: boolean;
   align?: "left" | "right";
 }) {
   const alignRight = props.align === "right";
   return (
-    <div className={alignRight ? "sm:text-right" : undefined}>
-      <p className="text-sm text-zinc-500">{props.label}</p>
-      <div
-        className={`mt-1 flex items-center gap-3 ${
-          alignRight ? "sm:flex-row-reverse" : ""
-        }`}
-      >
-        {props.branding ? (
-          <span
-            className="inline-flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-zinc-700"
-            style={{ backgroundColor: props.branding.primaryColor }}
-          >
-            <TeamLogoMark
-              branding={props.branding}
-              size="lg"
-              title={`${props.city} ${props.name}`}
-            />
-          </span>
-        ) : (
-          <span className="inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-lg border border-amber-700/40 bg-amber-950/50 font-mono text-xs font-semibold text-amber-400">
-            {props.abbreviation}
-          </span>
-        )}
-        <div>
-          <p className="text-lg font-medium text-zinc-100">
-            {props.city} {props.name}
-          </p>
-          <p className="font-mono text-3xl text-zinc-50">{props.score}</p>
-        </div>
+    <div
+      className={`flex items-center gap-4 ${
+        alignRight ? "sm:flex-row-reverse sm:text-right" : ""
+      }`}
+    >
+      <TeamBadge
+        branding={props.branding}
+        name={`${props.city} ${props.name}`}
+        size="xl"
+        decorative
+      />
+      <div className="min-w-0">
+        <p className="font-mono text-[0.65rem] uppercase tracking-[0.2em] text-zinc-400">
+          {props.label} · {props.abbreviation}
+        </p>
+        <p className="font-display text-2xl font-bold uppercase leading-tight tracking-wide text-zinc-50">
+          {props.city} {props.name}
+        </p>
+        <ScoreNumeral
+          value={props.score}
+          size="xl"
+          tone={props.winner ? "team" : "muted"}
+          align={alignRight ? "end" : "start"}
+          className="mt-1"
+        />
       </div>
     </div>
   );
+}
+
+function periodLabel(index: number): string {
+  return index < 4 ? `Q${index + 1}` : `OT${index - 3}`;
+}
+
+type SideView = GameBoxScoreView["home"];
+
+function topPerformers(side: SideView) {
+  return [...side.players].sort((a, b) => b.points - a.points).slice(0, 2);
 }
 
 export function GameBoxScore({ boxScore }: GameBoxScoreProps) {
@@ -78,8 +87,20 @@ export function GameBoxScore({ boxScore }: GameBoxScoreProps) {
 
   return (
     <div className="space-y-8">
-      <header className="rounded-xl border border-zinc-800 bg-zinc-900/60 px-6 py-5">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <ArenaPanel
+        as="header"
+        hero
+        glow
+        density="comfortable"
+        aria-labelledby="game-final-title"
+      >
+        <p
+          id="game-final-title"
+          className="mb-4 text-center font-display text-lg font-bold uppercase tracking-[0.4em] text-team-ink"
+        >
+          Final
+        </p>
+        <div className="grid gap-6 sm:grid-cols-[1fr_auto_1fr] sm:items-center">
           <MatchupTeamBlock
             label="Away"
             city={away.city}
@@ -87,8 +108,14 @@ export function GameBoxScore({ boxScore }: GameBoxScoreProps) {
             abbreviation={away.abbreviation}
             score={away.score}
             branding={away.branding}
+            winner={boxScore.winner === "away"}
           />
-          <div className="text-center text-zinc-500">—</div>
+          <div
+            aria-hidden
+            className="hidden font-display text-3xl text-zinc-500 sm:block"
+          >
+            –
+          </div>
           <MatchupTeamBlock
             label="Home"
             city={home.city}
@@ -96,14 +123,91 @@ export function GameBoxScore({ boxScore }: GameBoxScoreProps) {
             abbreviation={home.abbreviation}
             score={home.score}
             branding={home.branding}
+            winner={boxScore.winner === "home"}
             align="right"
           />
         </div>
-        <p className="mt-4 text-sm text-amber-400/90">
+        <p className="mt-5 text-sm font-medium text-team-ink">
           {boxScore.winnerName} wins by {boxScore.margin}
         </p>
-        <p className="mt-1 text-sm text-zinc-500">{metaParts.join(" · ")}</p>
-      </header>
+        <p className="mt-1 text-sm text-zinc-300">{metaParts.join(" · ")}</p>
+      </ArenaPanel>
+
+      {boxScore.periods.length > 0 ? (
+        <Section title="Scoring by period">
+          <DataTable
+            headers={[
+              "Team",
+              ...boxScore.periods.map((_, index) => periodLabel(index)),
+              "Total",
+            ]}
+          >
+            {(
+              [
+                [away, "away"],
+                [home, "home"],
+              ] as const
+            ).map(([side, key]) => (
+              <tr key={key} className="border-t border-zinc-800">
+                <td className="px-3 py-2 font-display text-lg font-bold uppercase tracking-wide text-zinc-100">
+                  {side.abbreviation}
+                </td>
+                {boxScore.periods.map((period, index) => (
+                  <td
+                    key={periodLabel(index)}
+                    className="px-3 py-2 font-mono tabular-nums text-zinc-300"
+                  >
+                    {period[key]}
+                  </td>
+                ))}
+                <td
+                  className={`px-3 py-2 font-display text-xl font-extrabold tabular-nums ${
+                    boxScore.winner === key ? "text-team-ink" : "text-zinc-400"
+                  }`}
+                >
+                  {side.score}
+                </td>
+              </tr>
+            ))}
+          </DataTable>
+        </Section>
+      ) : null}
+
+      <Section title="Top performers">
+        <ul className="grid gap-3 sm:grid-cols-2">
+          {([away, home] as const).flatMap((side) =>
+            topPerformers(side).map((player) => (
+              <li key={player.playerId}>
+                <ArenaPanel as="div" raised density="compact" edge="left">
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="font-mono text-[0.65rem] uppercase tracking-[0.16em] text-zinc-400">
+                        {side.abbreviation}
+                      </p>
+                      <p className="truncate font-display text-xl font-bold uppercase tracking-wide text-zinc-50">
+                        {player.playerName}
+                      </p>
+                      <p className="font-mono text-xs text-zinc-300">
+                        {player.rebounds} REB · {player.assists} AST ·{" "}
+                        {player.minutes} MIN
+                      </p>
+                    </div>
+                    <ScoreNumeral
+                      value={player.points}
+                      label="PTS"
+                      labelBelow
+                      size="lg"
+                      tone="team"
+                      align="end"
+                      className="shrink-0"
+                    />
+                  </div>
+                </ArenaPanel>
+              </li>
+            )),
+          )}
+        </ul>
+      </Section>
 
       <Section title="Team comparison">
         <DataTable headers={["Statistic", "Away", "Home"]}>

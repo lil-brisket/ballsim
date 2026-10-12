@@ -21,6 +21,10 @@ import {
 } from "@/state/team-management-selectors";
 import { toTeamHubView } from "@/state/team-hub-selectors";
 import {
+  toBrandingView,
+  type TeamBrandingView,
+} from "@/state/team-branding-view";
+import {
   applyCoachingPresetCommand,
   applyLineupRecommendationCommand,
   updateCoachingPhilosophyCommand,
@@ -1132,6 +1136,8 @@ export type CalendarPageView = {
   leagueContext:
     import("@/state/standings-selectors").CalendarLeagueContextView | null;
   nextTeamGameDate: string | null;
+  /** Branding by team id so calendar cells and the inspector can show opponent badges. */
+  teamBranding: Record<string, TeamBrandingView>;
   timeDisabled: boolean;
   timeDisabledFlags: {
     userOnDraftClock: boolean;
@@ -1291,6 +1297,12 @@ export async function loadCalendarPageView(
     inspector,
     leagueContext,
     nextTeamGameDate,
+    teamBranding: Object.fromEntries(
+      Object.values(state.world.teams).flatMap((team) => {
+        const branding = toBrandingView(team.branding);
+        return branding ? [[team.id, branding] as const] : [];
+      }),
+    ),
     timeDisabled:
       timeDisabledFlags.userOnDraftClock ||
       timeDisabledFlags.pendingOwnerDecision,

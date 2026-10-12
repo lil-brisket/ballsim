@@ -4,6 +4,9 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import type { CalendarPageMediaHighlight } from "@/application/game-service";
+import { ScoreNumeral } from "@/components/ui/ScoreNumeral";
+import { focusRingClass } from "@/components/ui/styles";
+import { parseGameResultHeadline } from "@/presentation/game-result-headline";
 
 export function SimulationSummaryModal(props: {
   open: boolean;
@@ -91,20 +94,26 @@ export function SimulationSummaryModal(props: {
         role="dialog"
         aria-modal="true"
         aria-labelledby="simulation-summary-title"
-        className="relative z-10 flex max-h-[85dvh] w-full max-w-lg flex-col overflow-hidden rounded-xl border border-zinc-700 bg-zinc-900 shadow-xl"
+        className="relative z-10 flex max-h-[85dvh] w-full max-w-lg flex-col overflow-hidden rounded-2xl border border-surface-line bg-surface-arena shadow-arena"
       >
-        <div className="border-b border-zinc-800 px-5 py-4">
-          <p className="font-mono text-[0.65rem] uppercase tracking-[0.16em] text-amber-500">
+        <div
+          className="border-b border-surface-line px-5 py-4"
+          style={{
+            background:
+              "radial-gradient(ellipse 90% 140% at 0% 0%, rgb(var(--team-primary-rgb) / 0.4), transparent 70%)",
+          }}
+        >
+          <p className="font-mono text-[0.65rem] uppercase tracking-[0.2em] text-team-ink">
             Simulation Complete
           </p>
           <h3
             id="simulation-summary-title"
-            className="mt-1 text-lg font-medium text-zinc-50"
+            className="mt-1 font-display text-3xl font-extrabold uppercase leading-none tracking-wide text-zinc-50"
           >
             {rangeLabel}
           </h3>
           {props.highlightCount > 0 ? (
-            <p className="mt-1 text-sm text-zinc-400">
+            <p className="mt-1 text-sm text-zinc-300">
               {props.highlightCount} highlight
               {props.highlightCount === 1 ? "" : "s"} recorded
             </p>
@@ -113,33 +122,37 @@ export function SimulationSummaryModal(props: {
 
         <div className="max-h-[55dvh] min-h-0 flex-1 space-y-4 overflow-y-auto px-5 py-4">
           {props.teamLabel || props.record ? (
-            <section className="space-y-2 rounded-md border border-zinc-800 bg-zinc-950/40 px-3 py-3">
-              <p className="text-xs uppercase tracking-wide text-zinc-500">
+            <section className="space-y-3 rounded-xl border border-team-ink/30 bg-team/15 px-4 py-3">
+              <p className="font-mono text-[0.65rem] uppercase tracking-[0.16em] text-team-ink">
                 Your Team{props.teamLabel ? ` — ${props.teamLabel}` : ""}
               </p>
               {props.record ? (
-                <ul className="space-y-1 text-sm text-zinc-200">
-                  <li>
-                    ✓ {props.record.gamesPlayed} game
-                    {props.record.gamesPlayed === 1 ? "" : "s"}
-                  </li>
-                  {props.record.wins > 0 ? (
-                    <li className="text-emerald-400">
-                      ✓ {props.record.wins} win
-                      {props.record.wins === 1 ? "" : "s"}
-                    </li>
-                  ) : null}
-                  {props.record.losses > 0 ? (
-                    <li className="text-rose-400">
-                      ✗ {props.record.losses} loss
-                      {props.record.losses === 1 ? "" : "es"}
-                    </li>
-                  ) : null}
-                </ul>
+                <div className="flex flex-wrap items-end gap-x-6 gap-y-2">
+                  <ScoreNumeral
+                    value={props.record.gamesPlayed}
+                    label={props.record.gamesPlayed === 1 ? "Game" : "Games"}
+                    labelBelow
+                    size="lg"
+                  />
+                  <ScoreNumeral
+                    value={props.record.wins}
+                    label={props.record.wins === 1 ? "Win" : "Wins"}
+                    labelBelow
+                    size="lg"
+                    tone="win"
+                  />
+                  <ScoreNumeral
+                    value={props.record.losses}
+                    label={props.record.losses === 1 ? "Loss" : "Losses"}
+                    labelBelow
+                    size="lg"
+                    tone="loss"
+                  />
+                </div>
               ) : null}
               {typeof props.transactionCount === "number" &&
               props.transactionCount > 0 ? (
-                <p className="text-xs text-zinc-400">
+                <p className="text-xs text-zinc-300">
                   {props.transactionCount} transaction
                   {props.transactionCount === 1 ? "" : "s"}
                 </p>
@@ -151,14 +164,14 @@ export function SimulationSummaryModal(props: {
           (typeof props.transactionCount === "number" &&
             props.transactionCount > 0) ? (
             <section className="space-y-2">
-              <p className="text-xs uppercase tracking-wide text-zinc-500">
+              <p className="font-mono text-[0.65rem] uppercase tracking-[0.16em] text-zinc-400">
                 League
               </p>
               <ul className="space-y-1.5">
                 {props.leagueEvents?.slice(0, 5).map((event) => (
                   <li
                     key={`${event.date}-${event.headline}`}
-                    className="rounded-md border border-zinc-800 px-3 py-2 text-sm text-zinc-300"
+                    className="rounded-md border border-surface-line px-3 py-2 text-sm text-zinc-300"
                   >
                     <span className="font-mono text-xs text-zinc-500">
                       {event.date}
@@ -172,17 +185,17 @@ export function SimulationSummaryModal(props: {
 
           {attention.length > 0 ? (
             <section className="space-y-2">
-              <p className="text-xs uppercase tracking-wide text-amber-500">
+              <p className="font-mono text-[0.65rem] uppercase tracking-[0.16em] text-warning">
                 Attention
               </p>
               <ul className="space-y-1.5">
                 {attention.slice(0, 6).map((item) => (
                   <li
                     key={item.id}
-                    className="rounded-md border border-amber-800/40 bg-amber-950/20 px-3 py-2 text-sm text-amber-100"
+                    className="rounded-md border border-warning/40 bg-warning/10 px-3 py-2 text-sm text-amber-100"
                   >
                     {item.href ? (
-                      <Link href={item.href} className="hover:text-amber-300">
+                      <Link href={item.href} className="hover:text-team-ink">
                         {item.title}
                       </Link>
                     ) : (
@@ -196,46 +209,76 @@ export function SimulationSummaryModal(props: {
 
           {props.teamGames && props.teamGames.length > 0 ? (
             <section className="space-y-2">
-              <p className="text-xs uppercase tracking-wide text-zinc-500">
+              <p className="font-mono text-[0.65rem] uppercase tracking-[0.16em] text-zinc-400">
                 Box scores
               </p>
               <ul className="space-y-1.5">
-                {props.teamGames.map((game) => (
-                  <li
-                    key={`${game.date}-${game.gameId ?? game.headline}`}
-                    className="rounded-md border border-zinc-800 px-3 py-2 text-sm text-zinc-100"
-                  >
-                    <span className="font-mono text-xs text-amber-400/80">
-                      {game.date}
-                    </span>
-                    {game.gameId && props.saveId ? (
-                      <Link
-                        href={`/dashboard/${props.saveId}/games/${game.gameId}`}
-                        className="mt-0.5 block text-amber-300 hover:text-amber-200"
+                {props.teamGames.map((game) => {
+                  const parsed = parseGameResultHeadline(game.headline);
+                  const tone =
+                    parsed?.result === "W"
+                      ? "border-l-win"
+                      : parsed?.result === "L"
+                        ? "border-l-loss"
+                        : "border-l-zinc-500";
+                  const scoreTone =
+                    parsed?.result === "W"
+                      ? "text-win"
+                      : parsed?.result === "L"
+                        ? "text-loss"
+                        : "text-zinc-100";
+                  const body = parsed ? (
+                    <span className="flex items-center justify-between gap-3">
+                      <span className="font-display text-xl font-bold uppercase tracking-wide text-zinc-50">
+                        vs {parsed.opponent}
+                      </span>
+                      <span
+                        className={`font-display text-2xl font-extrabold tabular-nums ${scoreTone}`}
                       >
-                        {game.headline}
-                      </Link>
-                    ) : (
-                      <p>{game.headline}</p>
-                    )}
-                  </li>
-                ))}
+                        {parsed.result} {parsed.teamScore}–
+                        {parsed.opponentScore}
+                      </span>
+                    </span>
+                  ) : (
+                    game.headline
+                  );
+                  return (
+                    <li
+                      key={`${game.date}-${game.gameId ?? game.headline}`}
+                      className={`rounded-lg border border-l-4 border-surface-line bg-surface-raised px-3 py-2 text-sm text-zinc-100 ${tone}`}
+                    >
+                      <span className="font-mono text-xs text-zinc-400">
+                        {game.date}
+                      </span>
+                      {game.gameId && props.saveId ? (
+                        <Link
+                          href={`/dashboard/${props.saveId}/games/${game.gameId}`}
+                          className={`mt-0.5 block rounded hover:text-team-ink ${focusRingClass}`}
+                        >
+                          {body}
+                        </Link>
+                      ) : (
+                        <p>{body}</p>
+                      )}
+                    </li>
+                  );
+                })}
               </ul>
             </section>
           ) : null}
 
           {props.teamEvents && props.teamEvents.length > 0 ? (
             <section className="space-y-2">
-              <p className="text-xs uppercase tracking-wide text-zinc-500">
+              <p className="font-mono text-[0.65rem] uppercase tracking-[0.16em] text-zinc-400">
                 Team events
               </p>
               <ul className="space-y-1.5">
                 {props.teamEvents.map((event) => (
                   <li
                     key={`${event.date}-${event.headline}`}
-                    className="rounded-md border border-zinc-800 px-3 py-2 text-sm text-zinc-100"
+                    className="rounded-md border border-surface-line px-3 py-2 text-sm text-zinc-100"
                   >
-                    <span className="font-mono text-xs text-amber-400/80">
+                    <span className="font-mono text-xs text-team-ink">
                       {event.date}
                     </span>
                     <p>{event.headline}</p>
@@ -269,11 +312,11 @@ export function SimulationSummaryModal(props: {
           ) : null}
         </div>
 
-        <div className="safe-area-bottom flex justify-end border-t border-zinc-800 px-5 py-3">
+        <div className="safe-area-bottom flex justify-end border-t border-surface-line px-5 py-3">
           <button
             type="button"
             onClick={dismiss}
-            className="inline-flex min-h-11 items-center justify-center rounded-md bg-amber-600 px-4 text-sm font-medium text-zinc-950 hover:bg-amber-500 touch-manipulation active:opacity-80"
+            className="inline-flex min-h-11 items-center justify-center rounded-md bg-team px-5 font-display text-lg font-extrabold uppercase tracking-wide text-on-team hover:brightness-110 touch-manipulation active:opacity-80"
           >
             Continue
           </button>

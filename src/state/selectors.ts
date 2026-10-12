@@ -1312,6 +1312,8 @@ export type GameBoxScoreView = {
   winnerName: string;
   margin: number;
   isCurrentSeason: boolean;
+  /** Points per period (quarters, then overtimes), for the scoreboard table. */
+  periods: Array<{ home: number; away: number }>;
   rotation: GameRotationPanelView | null;
 };
 
@@ -1436,6 +1438,10 @@ export function toGameBoxScoreView(
     winnerName,
     margin,
     isCurrentSeason: true,
+    periods: game.periodScores.map((period) => ({
+      home: period.home,
+      away: period.away,
+    })),
     rotation: toRotationPanelView(
       game,
       homeIdentity.abbreviation,

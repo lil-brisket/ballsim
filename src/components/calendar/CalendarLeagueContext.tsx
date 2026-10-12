@@ -1,3 +1,5 @@
+import { ArenaPanel } from "@/components/ui/ArenaPanel";
+import { TickerBar, type TickerItem } from "@/components/ui/TickerBar";
 import type { CalendarLeagueContextView } from "@/state/standings-selectors";
 
 export function CalendarLeagueContextPanel(props: {
@@ -5,20 +7,22 @@ export function CalendarLeagueContextPanel(props: {
 }) {
   if (!props.context) {
     return (
-      <aside className="rounded-lg border border-zinc-800 bg-zinc-950/50 p-4">
-        <h3 className="text-sm font-medium text-zinc-100">League context</h3>
-        <p className="mt-2 text-sm text-zinc-500">
+      <ArenaPanel as="aside" raised>
+        <h3 className="font-display text-xl font-bold uppercase tracking-wide text-zinc-50">
+          League context
+        </h3>
+        <p className="mt-2 text-sm text-zinc-400">
           Standings are unavailable for this phase.
         </p>
-      </aside>
+      </ArenaPanel>
     );
   }
 
   const c = props.context;
-  const rows: { label: string; value: string }[] = [
+  const items: TickerItem[] = [
     { label: "Conference", value: `#${c.conferenceRank}` },
     { label: "Division", value: `#${c.divisionRank}` },
-    { label: "Record", value: `${c.wins}–${c.losses}` },
+    { label: "Record", value: `${c.wins}–${c.losses}`, tone: "team" },
     { label: "Conf", value: `${c.conferenceWins}–${c.conferenceLosses}` },
     { label: "Div", value: `${c.divisionWins}–${c.divisionLosses}` },
     {
@@ -29,22 +33,16 @@ export function CalendarLeagueContextPanel(props: {
   ];
 
   return (
-    <aside className="rounded-lg border border-zinc-800 bg-zinc-950/50 p-4">
-      <h3 className="text-sm font-medium text-zinc-100">League context</h3>
-      <p className="mt-1 text-xs text-zinc-500">
-        {c.conferenceName} · {c.divisionName}
-      </p>
-      <dl className="mt-3 space-y-2">
-        {rows.map((row) => (
-          <div
-            key={row.label}
-            className="flex items-baseline justify-between gap-3 text-sm"
-          >
-            <dt className="text-zinc-500">{row.label}</dt>
-            <dd className="font-mono text-zinc-100">{row.value}</dd>
-          </div>
-        ))}
-      </dl>
-    </aside>
+    <ArenaPanel as="aside" raised density="compact" className="space-y-2">
+      <div className="flex flex-wrap items-baseline justify-between gap-2">
+        <h3 className="font-display text-xl font-bold uppercase tracking-wide text-zinc-50">
+          League context
+        </h3>
+        <p className="text-xs text-zinc-400">
+          {c.conferenceName} · {c.divisionName}
+        </p>
+      </div>
+      <TickerBar aria-label="League context" items={items} />
+    </ArenaPanel>
   );
 }

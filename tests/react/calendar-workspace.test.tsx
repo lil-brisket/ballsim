@@ -144,6 +144,7 @@ function makeView(overrides: Partial<CalendarPageView> = {}): CalendarPageView {
       streakLabel: "W4",
     },
     nextTeamGameDate: selectedDate,
+    teamBranding: {},
     timeDisabled: false,
     timeDisabledFlags: {
       userOnDraftClock: false,
@@ -233,13 +234,13 @@ describe("CalendarWorkspace redesign", () => {
       name: "2026-09-13, current simulation date",
     });
     expect(today.getAttribute("data-sim-cursor")).toBeNull();
-    expect(today.className).toContain("border-amber-500");
-    expect(today.className).not.toContain("ring-amber-400");
+    expect(today.className).toContain("border-team-ink");
+    expect(today.className).not.toContain("ring-offset-2");
     const nextGame = screen.getByRole("button", {
       name: "2026-09-18, next team game, HOME vs Rivermen",
     });
-    expect(nextGame.className).toContain("ring-sky-500/70");
-    expect(nextGame.className).toContain("ring-amber-500/80");
+    expect(nextGame.className).toContain("team-pulse");
+    expect(nextGame.className).toContain("ring-zinc-100");
     unmount();
   });
 
@@ -451,9 +452,9 @@ describe("CalendarWorkspace redesign", () => {
         name: /2026-09-18, simulating, current simulation date/,
       });
       expect(cursor.getAttribute("data-sim-cursor")).toBe("true");
-      expect(cursor.className).toContain("ring-amber-400");
-      expect(cursor.className).not.toContain("ring-sky-500/70");
-      expect(cursor.className).not.toContain("ring-amber-500/80");
+      expect(cursor.className).toContain("ring-offset-2");
+      expect(cursor.className).not.toContain("team-pulse");
+      expect(cursor.className).not.toContain("ring-zinc-100");
       expect(screen.getByText(/W 110-102/)).toBeTruthy();
       expect(screen.queryByText(/Simulating —/)).toBeNull();
       expect(screen.queryByText(/% complete/)).toBeNull();
@@ -510,9 +511,9 @@ describe("CalendarWorkspace redesign", () => {
         name: /2026-09-18, next team game, HOME vs Rivermen/,
       });
       expect(selectedDay.getAttribute("data-sim-cursor")).toBeNull();
-      expect(selectedDay.className).not.toContain("ring-sky-500/70");
-      expect(selectedDay.className).not.toContain("ring-amber-500/80");
-      expect(selectedDay.className).not.toContain("ring-amber-400");
+      expect(selectedDay.className).not.toContain("team-pulse");
+      expect(selectedDay.className).not.toContain("ring-zinc-100");
+      expect(selectedDay.className).not.toContain("ring-offset-2");
     });
     unmount();
   });
@@ -559,7 +560,7 @@ describe("CalendarWorkspace redesign", () => {
         name: /2026-10-02, simulating, current simulation date/,
       });
       expect(cursor.getAttribute("data-sim-cursor")).toBe("true");
-      expect(cursor.className).toContain("ring-amber-400");
+      expect(cursor.className).toContain("ring-offset-2");
     });
     unmount();
   });

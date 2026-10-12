@@ -59,13 +59,15 @@ export function SimulationPausedBanner(props: {
   return (
     <div
       role="status"
-      className="space-y-4 rounded-xl border border-amber-700/50 bg-amber-950/40 px-4 py-4"
+      className="space-y-4 rounded-xl border border-warning/50 border-l-4 border-l-warning bg-warning/10 px-4 py-4"
     >
       <div>
-        <p className="font-mono text-[0.65rem] uppercase tracking-[0.16em] text-amber-400">
+        <p className="font-mono text-[0.65rem] uppercase tracking-[0.16em] text-warning">
           Simulation Paused
         </p>
-        <h2 className="mt-1 text-lg font-medium text-amber-100">{longDate}</h2>
+        <h2 className="mt-1 font-display text-2xl font-bold uppercase tracking-wide text-zinc-50">
+          {longDate}
+        </h2>
         {reasons.length > 1 ? (
           <p className="mt-1 text-sm text-amber-200/90">
             {reasons.length} items need your attention
@@ -77,7 +79,7 @@ export function SimulationPausedBanner(props: {
         {reasons.map((item) => (
           <li
             key={item.id}
-            className="rounded-lg border border-amber-800/40 bg-amber-950/30 px-3 py-2"
+            className="rounded-lg border border-surface-line bg-surface-arena px-3 py-2"
           >
             <p className="text-sm font-medium text-amber-50">{item.title}</p>
             {item.detail ? (
@@ -86,7 +88,7 @@ export function SimulationPausedBanner(props: {
             {item.href ? (
               <Link
                 href={item.href}
-                className="mt-2 inline-block text-xs font-medium text-amber-300 hover:text-amber-200"
+                className="mt-2 inline-block text-xs font-medium text-team-ink hover:underline"
               >
                 {item.hrefLabel ?? "Review"} →
               </Link>
@@ -100,14 +102,14 @@ export function SimulationPausedBanner(props: {
           <button
             type="button"
             onClick={props.onResolve}
-            className="rounded-md bg-amber-600 px-4 py-2 text-sm font-medium text-zinc-950 hover:bg-amber-500"
+            className="rounded-md bg-team px-4 py-2 text-sm font-semibold text-on-team hover:brightness-110"
           >
             {props.reason === "draft_clock" ? "Open Draft" : "Resolve Decision"}
           </button>
         ) : props.resolveHref ? (
           <Link
             href={props.resolveHref}
-            className="rounded-md bg-amber-600 px-4 py-2 text-sm font-medium text-zinc-950 hover:bg-amber-500"
+            className="rounded-md bg-team px-4 py-2 text-sm font-semibold text-on-team hover:brightness-110"
           >
             {reasons.length > 1 ? "Review Actions" : "Resolve Decision"}
           </Link>

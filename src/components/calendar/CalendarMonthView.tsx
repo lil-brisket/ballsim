@@ -7,7 +7,8 @@ import {
   formatShortDate,
 } from "@/components/calendar/CalendarDayCell";
 import { CalendarAgendaList } from "@/components/calendar/CalendarAgendaList";
-import { cn, touchTargetClass } from "@/components/ui/styles";
+import { cn, focusRingClass, touchTargetClass } from "@/components/ui/styles";
+import type { TeamBrandingView } from "@/state/team-branding-view";
 
 const WEEKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"] as const;
 
@@ -49,8 +50,8 @@ function CalendarMilestoneLegend(props: { grid: CalendarMonthGrid }) {
   }
 
   return (
-    <div className="rounded-lg border border-zinc-800 bg-zinc-950/40 px-3 py-2">
-      <p className="text-[10px] uppercase tracking-wide text-zinc-500">
+    <div className="rounded-lg border border-surface-line bg-surface-arena px-3 py-2">
+      <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-zinc-400">
         League milestones
       </p>
       <div className="mt-2 flex flex-wrap gap-2">
@@ -67,7 +68,7 @@ function CalendarMilestoneLegend(props: { grid: CalendarMonthGrid }) {
             >
               {milestone.shortLabel}
             </span>
-            <span className="text-zinc-500">{milestone.label}</span>
+            <span className="text-zinc-400">{milestone.label}</span>
           </span>
         ))}
       </div>
@@ -82,6 +83,8 @@ export function CalendarMonthView(props: {
   nextTeamGameDate: string | null;
   navigationDisabled?: boolean;
   resultOverlays?: Readonly<Record<string, string>>;
+  /** Branding by team id, for opponent badges on game days. */
+  teamBranding?: Readonly<Record<string, TeamBrandingView>>;
   onSelectDate: (date: string) => void;
   onChangeMonth: (year: number, month: number) => void;
   onJumpToday: () => void;
@@ -101,7 +104,8 @@ export function CalendarMonthView(props: {
   const layout = props.layout ?? "grid";
   const navButtonClass = cn(
     touchTargetClass,
-    "rounded-md border border-zinc-700 px-3 text-sm text-zinc-200 hover:border-amber-600 disabled:pointer-events-none disabled:opacity-40",
+    "rounded-md border border-surface-line px-3 text-sm text-zinc-200 hover:border-team-ink disabled:pointer-events-none disabled:opacity-40",
+    focusRingClass,
   );
 
   const liveDays = props.grid.weeks.flat().map((cell) => {
@@ -122,10 +126,12 @@ export function CalendarMonthView(props: {
     <div className="space-y-3">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="space-y-1">
-          <h2 className="text-lg font-medium text-zinc-100">{title}</h2>
-          <p className="text-xs text-zinc-500">
+          <h2 className="font-display text-3xl font-extrabold uppercase leading-none tracking-wide text-zinc-50">
+            {title}
+          </h2>
+          <p className="text-xs text-zinc-400">
             Current date{" "}
-            <span className="font-mono font-medium text-amber-300">
+            <span className="font-mono font-medium text-team-ink">
               {props.currentDate}
             </span>
           </p>
@@ -145,7 +151,8 @@ export function CalendarMonthView(props: {
             onClick={props.onJumpToday}
             className={cn(
               touchTargetClass,
-              "rounded-md border border-amber-700/50 bg-amber-950/30 px-3 text-sm text-amber-200 hover:border-amber-500 disabled:pointer-events-none disabled:opacity-40",
+              "rounded-md border border-team-ink/60 bg-team/20 px-3 text-sm text-team-ink hover:border-team-ink disabled:pointer-events-none disabled:opacity-40",
+              focusRingClass,
             )}
           >
             Today
@@ -165,7 +172,8 @@ export function CalendarMonthView(props: {
               onClick={props.onJumpNextGame}
               className={cn(
                 touchTargetClass,
-                "rounded-md border border-sky-700/50 bg-sky-950/30 px-3 text-sm text-sky-200 hover:border-sky-500 disabled:pointer-events-none disabled:opacity-40",
+                "rounded-md bg-team px-3 text-sm font-semibold text-on-team hover:brightness-110 disabled:pointer-events-none disabled:opacity-40",
+                focusRingClass,
               )}
             >
               Next Game → {formatShortDate(props.nextTeamGameDate)}
@@ -188,7 +196,7 @@ export function CalendarMonthView(props: {
           {WEEKDAYS.map((day) => (
             <div
               key={day}
-              className="px-1 py-1 text-center text-[10px] uppercase tracking-wide text-zinc-500 sm:text-xs"
+              className="px-1 py-1 text-center font-mono text-[10px] uppercase tracking-[0.14em] text-zinc-400 sm:text-xs"
             >
               {day}
             </div>
@@ -200,6 +208,11 @@ export function CalendarMonthView(props: {
               selected={cell.date === props.selectedDate}
               disabled={disabled}
               simulating={simulating}
+              opponentBranding={
+                cell.teamGame
+                  ? props.teamBranding?.[cell.teamGame.opponentTeamId]
+                  : undefined
+              }
               onSelect={props.onSelectDate}
             />
           ))}

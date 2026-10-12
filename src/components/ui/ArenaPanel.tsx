@@ -20,7 +20,7 @@ export function ArenaPanel(props: {
   className?: string;
   /** e.g. `{ "--i": 2 }` to stagger an `.enter-up` entrance. */
   style?: CSSProperties;
-  as?: "div" | "section" | "article" | "header";
+  as?: "div" | "section" | "article" | "header" | "aside";
   "aria-labelledby"?: string;
 }) {
   const Tag = props.as ?? "section";

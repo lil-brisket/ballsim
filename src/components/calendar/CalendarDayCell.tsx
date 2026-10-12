@@ -1,3 +1,6 @@
+import { TeamBadge } from "@/components/ui/TeamBadge";
+import { focusRingClass } from "@/components/ui/styles";
+import type { TeamBrandingView } from "@/state/team-branding-view";
 import type { CalendarDayCell as CalendarDayCellData } from "@/systems/calendar";
 
 function dayNumber(isoDate: string): string {
@@ -89,27 +92,57 @@ function LeagueMilestoneChips(props: {
   );
 }
 
-function dayCellHighlightClass(input: {
+function resultTone(label: string | null): "win" | "loss" | null {
+  if (label?.startsWith("W")) return "win";
+  if (label?.startsWith("L")) return "loss";
+  return null;
+}
+
+function dayCellStateClass(input: {
   cell: CalendarDayCellData;
   selected: boolean;
   simulating: boolean;
+  hasContent: boolean;
 }): string {
-  const { cell, selected, simulating } = input;
+  const { cell, selected, simulating, hasContent } = input;
+  const tone = resultTone(cell.teamGame?.resultLabel ?? null);
+  const classes: string[] = [];
+
+  if (!cell.inMonth) {
+    classes.push("border-transparent bg-transparent");
+  } else if (!hasContent) {
+    // Empty days recede.
+    classes.push("border-surface-line/40 bg-surface-deep/40");
+  } else {
+    classes.push("border-surface-line bg-surface-arena");
+  }
+
+  if (cell.teamGame) {
+    classes.push(
+      "border-l-4",
+      tone === "win"
+        ? "border-l-win"
+        : tone === "loss"
+          ? "border-l-loss"
+          : "border-l-zinc-500",
+    );
+  }
+
   if (simulating && cell.isToday) {
-    return "border-amber-400 bg-amber-950/40 ring-2 ring-amber-400 ring-offset-2 ring-offset-zinc-950";
+    classes.push(
+      "border-team-ink bg-team/30 ring-2 ring-team-ink ring-offset-2 ring-offset-surface-deep",
+    );
+  } else if (!simulating) {
+    if (cell.isToday) {
+      classes.push("border-team-ink bg-team/25 ring-2 ring-team-ink");
+    }
+    if (cell.isNextTeamGame && !cell.isToday) {
+      classes.push("ring-2 ring-team-ink/80 team-pulse");
+    }
+    classes.push(selected ? "ring-2 ring-zinc-100" : "hover:border-zinc-500");
   }
-  if (simulating) {
-    return "";
-  }
-  return [
-    cell.isToday ? "border-amber-500 bg-amber-950/40" : "",
-    cell.isNextTeamGame && !cell.isToday
-      ? "border-sky-700/50 ring-2 ring-sky-500/70"
-      : "",
-    selected ? "ring-2 ring-amber-500/80" : "hover:border-zinc-600",
-  ]
-    .filter(Boolean)
-    .join(" ");
+
+  return classes.join(" ");
 }
 
 export function CalendarDayCell(props: {
@@ -117,6 +150,8 @@ export function CalendarDayCell(props: {
   selected: boolean;
   disabled?: boolean;
   simulating?: boolean;
+  /** Opponent branding for the team game on this day, when known. */
+  opponentBranding?: TeamBrandingView | null;
   onSelect: (date: string) => void;
 }) {
   const { cell, selected, onSelect } = props;
@@ -126,6 +161,8 @@ export function CalendarDayCell(props: {
   const teamGame = cell.teamGame;
   const specialCount = cell.specialEvents.length;
   const milestoneCount = (cell.leagueMilestones ?? []).length;
+  const hasContent = teamGame != null || specialCount > 0 || milestoneCount > 0;
+  const tone = resultTone(teamGame?.resultLabel ?? null);
 
   return (
     <button
@@ -138,57 +175,76 @@ export function CalendarDayCell(props: {
       aria-pressed={selected}
       data-sim-cursor={simCursor ? "true" : undefined}
       className={[
-        "flex min-h-[5.5rem] flex-col gap-1 rounded-md border p-1.5 text-left transition-colors sm:min-h-[6.75rem] sm:p-2",
-        "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-500",
-        cell.inMonth
-          ? "border-zinc-800 bg-zinc-950/50"
-          : "border-zinc-900/80 bg-zinc-950/20",
-        dayCellHighlightClass({ cell, selected, simulating }),
-        cell.isPast && !cell.isToday ? "opacity-75" : "",
+        "flex min-h-[5.5rem] flex-col gap-1 rounded-lg border p-1.5 text-left transition-colors sm:min-h-[6.75rem] sm:p-2",
+        focusRingClass,
+        dayCellStateClass({ cell, selected, simulating, hasContent }),
+        cell.isPast && !cell.isToday && !teamGame ? "opacity-70" : "",
         disabled ? "cursor-not-allowed" : "",
         disabled && !simulating ? "opacity-50" : "",
       ]
         .filter(Boolean)
         .join(" ")}
     >
-      <span
-        className={[
-          "font-mono text-xs sm:text-sm",
-          cell.inMonth ? "text-zinc-200" : "text-zinc-600",
-          cell.isToday ? "font-semibold text-amber-300" : "",
-        ]
-          .filter(Boolean)
-          .join(" ")}
-      >
-        {dayNumber(cell.date)}
+      <span className="flex items-start justify-between gap-1">
+        <span
+          className={[
+            "font-display text-sm font-bold leading-none sm:text-base",
+            !cell.inMonth
+              ? "text-zinc-600"
+              : cell.isToday
+                ? "text-team-ink"
+                : hasContent
+                  ? "text-zinc-100"
+                  : "text-zinc-500",
+          ].join(" ")}
+        >
+          {dayNumber(cell.date)}
+        </span>
+        {cell.isNextTeamGame && !cell.isToday ? (
+          <span className="rounded bg-team-ink px-1 font-mono text-[8px] font-bold uppercase leading-4 text-zinc-950 sm:text-[9px]">
+            Next
+          </span>
+        ) : null}
       </span>
 
       <LeagueMilestoneChips milestones={cell.leagueMilestones ?? []} />
 
       {teamGame ? (
-        <div className="mt-auto space-y-0.5">
-          <span
-            className={[
-              "inline-block rounded px-1 py-0.5 text-[10px] font-semibold uppercase tracking-wide",
-              teamGame.home
-                ? "bg-emerald-950/60 text-emerald-300"
-                : "bg-sky-950/60 text-sky-300",
-            ].join(" ")}
-          >
-            {teamGame.homeAwayLabel}
+        <div className="mt-auto flex flex-col items-start gap-0.5">
+          <span className="flex items-center gap-1">
+            <TeamBadge
+              branding={props.opponentBranding}
+              name={teamGame.opponentName}
+              size="sm"
+              decorative
+              className="!h-6 !w-6 sm:!h-8 sm:!w-8"
+            />
+            <span
+              className="font-mono text-[9px] font-semibold uppercase text-zinc-400 sm:text-[10px]"
+              title={teamGame.home ? "Home" : "Away"}
+              aria-hidden
+            >
+              {teamGame.home ? "vs" : "@"}
+            </span>
           </span>
-          <p className="truncate font-mono text-[11px] font-medium text-zinc-100 sm:text-xs">
+          <p className="max-w-full truncate font-display text-xs font-bold uppercase leading-none tracking-wide text-zinc-50 sm:text-sm">
             {teamGame.opponentAbbreviation}
           </p>
-          <p className="hidden truncate text-[10px] text-zinc-400 sm:block">
-            {teamGame.opponentName}
-          </p>
           {teamGame.resultLabel ? (
-            <p className="font-mono text-[11px] font-semibold text-zinc-100">
+            <p
+              className={[
+                "font-display text-[11px] font-extrabold leading-tight tabular-nums sm:whitespace-nowrap sm:text-sm",
+                tone === "win"
+                  ? "text-win"
+                  : tone === "loss"
+                    ? "text-loss"
+                    : "text-zinc-100",
+              ].join(" ")}
+            >
               {teamGame.resultLabel}
             </p>
           ) : teamGame.startTimeLabel ? (
-            <p className="text-[10px] text-zinc-500">
+            <p className="text-[10px] text-zinc-400">
               {teamGame.startTimeLabel}
             </p>
           ) : null}
@@ -200,7 +256,7 @@ export function CalendarDayCell(props: {
             title={`${specialCount} event${specialCount === 1 ? "" : "s"}`}
             aria-hidden
           />
-          <p className="mt-0.5 text-[10px] text-zinc-500">
+          <p className="mt-0.5 text-[10px] text-zinc-400">
             {specialCount === 1 ? "Event" : `${specialCount} events`}
           </p>
         </div>
