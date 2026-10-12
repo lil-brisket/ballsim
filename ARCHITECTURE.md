@@ -49,6 +49,7 @@ src/
   application/         # Use-cases / server commands
   domain/              # Entities, events, RNG, SystemResult
   data/                # Static string pools (e.g. name lists); not typed domain catalogs
+  presentation/        # UI-adjacent pure helpers (portrait hash/paths); not simulation, not React
   state/               # GameState composition + factories + selectors
   systems/             # Simulation systems (added incrementally)
   simulation/

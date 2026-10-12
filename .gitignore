@@ -54,3 +54,6 @@ next-env.d.ts
 /src/generated/prisma
 
 tmp-development-stats.json
+
+# Generated player portrait overlays (presentation cache, not GameState)
+/portraits/

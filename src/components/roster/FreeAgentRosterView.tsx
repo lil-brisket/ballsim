@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { FreeAgentView } from "@/state/selectors";
+import { PlayerPortrait } from "@/components/basketball/PlayerPortrait";
 import { PlayerEntityLink } from "@/components/entity/PlayerEntityLink";
 import { DataTable } from "@/components/owner/DataTable";
 import { EmptyState } from "@/components/owner/EmptyState";
@@ -40,12 +41,20 @@ export function FreeAgentRosterView(props: {
           {props.freeAgents.slice(0, 40).map((agent) => (
             <tr key={agent.playerId} className="border-t border-zinc-800">
               <td className="px-3 py-2">
-                <PlayerEntityLink
-                  saveId={props.saveId}
-                  playerId={agent.playerId}
-                >
-                  {agent.firstName} {agent.lastName}
-                </PlayerEntityLink>
+                <span className="flex items-center gap-2">
+                  <PlayerPortrait
+                    playerId={agent.playerId}
+                    firstName={agent.firstName}
+                    lastName={agent.lastName}
+                    size="sm"
+                  />
+                  <PlayerEntityLink
+                    saveId={props.saveId}
+                    playerId={agent.playerId}
+                  >
+                    {agent.firstName} {agent.lastName}
+                  </PlayerEntityLink>
+                </span>
               </td>
               <td className="px-3 py-2 text-zinc-400">{agent.position}</td>
               <td className="px-3 py-2 text-zinc-200">{agent.overall}</td>

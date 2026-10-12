@@ -1,5 +1,7 @@
 import Link from "next/link";
+import { PlayerPortrait } from "@/components/basketball/PlayerPortrait";
 import { PlayerEntityLink } from "@/components/entity/PlayerEntityLink";
+import { splitDisplayName } from "@/presentation/portrait-hash";
 import { StatusBadge } from "@/components/owner/StatusBadge";
 import { cn } from "@/components/ui/styles";
 import type { DevelopmentHubRow } from "@/state/development-hub-selectors";
@@ -27,13 +29,22 @@ export function DevelopmentRow(props: {
 }) {
   const { saveId, row } = props;
   const notable = row.changeDelta !== null && Math.abs(row.changeDelta) >= 1;
+  const nameParts = splitDisplayName(row.playerName);
 
   return (
     <tr className="border-t border-zinc-800">
       <td className="px-3 py-2">
-        <PlayerEntityLink saveId={saveId} playerId={row.playerId}>
-          {row.playerName}
-        </PlayerEntityLink>
+        <span className="flex items-center gap-2">
+          <PlayerPortrait
+            playerId={row.playerId}
+            firstName={nameParts.firstName}
+            lastName={nameParts.lastName}
+            size="sm"
+          />
+          <PlayerEntityLink saveId={saveId} playerId={row.playerId}>
+            {row.playerName}
+          </PlayerEntityLink>
+        </span>
         <p className="text-xs text-zinc-500">
           {row.position} · {row.age}
         </p>

@@ -6,6 +6,7 @@ import { PLAYER_POSITIONS } from "@/domain/entities/player";
 import type { RosterPagePlayerView } from "@/state/roster-page-selectors";
 import { rotationRoleSortKey } from "@/state/roster-page-selectors";
 import { toggleTradeBlockAction } from "@/application/actions";
+import { PlayerPortrait } from "@/components/basketball/PlayerPortrait";
 import { PlayerEntityLink } from "@/components/entity/PlayerEntityLink";
 import { ContractSummary } from "@/components/owner/ContractSummary";
 import { DataTable } from "@/components/owner/DataTable";
@@ -234,17 +235,25 @@ export function RosterManagementTable(props: {
           <li key={player.playerId}>
             <MobileListCard
               title={
-                <PlayerEntityLink
-                  saveId={props.saveId}
-                  playerId={player.playerId}
-                  className={cn(
-                    touchTargetTextClass,
-                    "px-0 text-amber-400",
-                    focusRingClass,
-                  )}
-                >
-                  {player.firstName} {player.lastName}
-                </PlayerEntityLink>
+                <span className="flex items-center gap-2">
+                  <PlayerPortrait
+                    playerId={player.playerId}
+                    firstName={player.firstName}
+                    lastName={player.lastName}
+                    size="sm"
+                  />
+                  <PlayerEntityLink
+                    saveId={props.saveId}
+                    playerId={player.playerId}
+                    className={cn(
+                      touchTargetTextClass,
+                      "px-0 text-amber-400",
+                      focusRingClass,
+                    )}
+                  >
+                    {player.firstName} {player.lastName}
+                  </PlayerEntityLink>
+                </span>
               }
               subtitle={`${player.position} · ${player.roleDisplayLabel} · Age ${player.age}`}
               meta={
@@ -297,12 +306,20 @@ export function RosterManagementTable(props: {
             return (
               <tr key={player.playerId} className="border-t border-zinc-800">
                 <td className="px-3 py-2">
-                  <PlayerEntityLink
-                    saveId={props.saveId}
-                    playerId={player.playerId}
-                  >
-                    {player.firstName} {player.lastName}
-                  </PlayerEntityLink>
+                  <span className="flex items-center gap-2">
+                    <PlayerPortrait
+                      playerId={player.playerId}
+                      firstName={player.firstName}
+                      lastName={player.lastName}
+                      size="sm"
+                    />
+                    <PlayerEntityLink
+                      saveId={props.saveId}
+                      playerId={player.playerId}
+                    >
+                      {player.firstName} {player.lastName}
+                    </PlayerEntityLink>
+                  </span>
                   {player.onTradeBlock ? (
                     <span className="ml-2 font-mono text-[0.6rem] uppercase text-amber-500">
                       Block

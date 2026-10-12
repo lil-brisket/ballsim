@@ -129,6 +129,7 @@ export function PlayerDrawer(props: {
       {props.status === "ready" && props.view ? (
         <div className="space-y-6">
           <PlayerProfileHero
+            playerId={props.view.playerId}
             firstName={props.view.identity.firstName}
             lastName={props.view.identity.lastName}
             position={props.view.identity.position}

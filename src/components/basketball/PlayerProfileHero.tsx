@@ -1,14 +1,10 @@
 import { InjuryBadge } from "@/components/basketball/InjuryBadge";
+import { PlayerPortrait } from "@/components/basketball/PlayerPortrait";
 import { TeamLogoMark } from "@/components/team/logos/TeamLogoMark";
 import type { TeamBrandingView } from "@/state/team-branding-view";
 
-function initials(firstName: string, lastName: string): string {
-  const first = firstName.trim().charAt(0);
-  const last = lastName.trim().charAt(0);
-  return `${first}${last}`.toUpperCase();
-}
-
 export function PlayerProfileHero(props: {
+  playerId: string;
   firstName: string;
   lastName: string;
   position: string;
@@ -20,7 +16,6 @@ export function PlayerProfileHero(props: {
   availabilityStatus: string;
 }) {
   const name = `${props.firstName} ${props.lastName}`;
-  const monogram = initials(props.firstName, props.lastName);
   const teamLabel = props.teamName ?? "Free agent";
 
   return (
@@ -33,22 +28,12 @@ export function PlayerProfileHero(props: {
         />
       ) : null}
       <div className="relative flex flex-col gap-4 p-4 sm:flex-row sm:items-start sm:gap-5 sm:p-5">
-        {props.branding ? (
-          <span
-            className="inline-flex h-24 w-24 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-zinc-700 text-2xl font-semibold text-zinc-50 sm:h-28 sm:w-28 sm:text-3xl"
-            style={{ backgroundColor: props.branding.primaryColor }}
-            aria-hidden="true"
-          >
-            {monogram}
-          </span>
-        ) : (
-          <span
-            className="inline-flex h-24 w-24 shrink-0 items-center justify-center rounded-xl border border-amber-700/40 bg-amber-950/50 font-mono text-2xl font-semibold text-amber-400 sm:h-28 sm:w-28 sm:text-3xl"
-            aria-hidden="true"
-          >
-            {monogram}
-          </span>
-        )}
+        <PlayerPortrait
+          playerId={props.playerId}
+          firstName={props.firstName}
+          lastName={props.lastName}
+          size="lg"
+        />
 
         <div className="min-w-0 flex-1">
           <h3 className="text-2xl font-semibold text-zinc-50 sm:text-3xl">

@@ -1,5 +1,6 @@
 "use client";
 
+import { PlayerPortrait } from "@/components/basketball/PlayerPortrait";
 import { PlayerEntityLink } from "@/components/entity/PlayerEntityLink";
 
 type ProspectCardProps = {
@@ -31,17 +32,25 @@ export function ProspectCard(props: ProspectCardProps) {
   return (
     <article className="rounded-lg border border-zinc-800 bg-zinc-950/60 p-3 text-sm">
       <header className="flex items-start justify-between gap-2">
-        <div>
-          <h3 className="font-medium text-zinc-100">
-            <PlayerEntityLink saveId={props.saveId} playerId={props.playerId}>
-              {props.firstName} {props.lastName}
-            </PlayerEntityLink>
-          </h3>
-          <p className="text-xs text-zinc-500">
-            {props.position}
-            {props.age != null ? ` · Age ${props.age}` : ""}
-            {props.nationality ? ` · ${props.nationality}` : ""}
-          </p>
+        <div className="flex min-w-0 items-start gap-2">
+          <PlayerPortrait
+            playerId={props.playerId}
+            firstName={props.firstName}
+            lastName={props.lastName}
+            size="sm"
+          />
+          <div className="min-w-0">
+            <h3 className="font-medium text-zinc-100">
+              <PlayerEntityLink saveId={props.saveId} playerId={props.playerId}>
+                {props.firstName} {props.lastName}
+              </PlayerEntityLink>
+            </h3>
+            <p className="text-xs text-zinc-500">
+              {props.position}
+              {props.age != null ? ` · Age ${props.age}` : ""}
+              {props.nationality ? ` · ${props.nationality}` : ""}
+            </p>
+          </div>
         </div>
         <div className="text-right">
           <div className="text-lg font-semibold text-amber-300">

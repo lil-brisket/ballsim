@@ -1,4 +1,5 @@
 import { InjuryBadge } from "@/components/basketball/InjuryBadge";
+import { PlayerPortrait } from "@/components/basketball/PlayerPortrait";
 import {
   cn,
   densityPadding,
@@ -31,6 +32,7 @@ const DEFAULT_FIELDS: Required<PlayerCardFields> = {
  * rotation-specific (RotationPlayerCard).
  */
 export function PlayerCard(props: {
+  playerId: string;
   firstName: string;
   lastName: string;
   position?: string;
@@ -60,19 +62,27 @@ export function PlayerCard(props: {
       )}
     >
       <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <h3 className="truncate text-base font-medium text-zinc-50">
-            {name}
-          </h3>
-          <p className="mt-0.5 text-xs text-zinc-400">
-            {[
-              fields.position && props.position,
-              fields.age && props.age != null ? `Age ${props.age}` : null,
-              fields.role && props.role,
-            ]
-              .filter(Boolean)
-              .join(" · ")}
-          </p>
+        <div className="flex min-w-0 items-start gap-3">
+          <PlayerPortrait
+            playerId={props.playerId}
+            firstName={props.firstName}
+            lastName={props.lastName}
+            size="md"
+          />
+          <div className="min-w-0">
+            <h3 className="truncate text-base font-medium text-zinc-50">
+              {name}
+            </h3>
+            <p className="mt-0.5 text-xs text-zinc-400">
+              {[
+                fields.position && props.position,
+                fields.age && props.age != null ? `Age ${props.age}` : null,
+                fields.role && props.role,
+              ]
+                .filter(Boolean)
+                .join(" · ")}
+            </p>
+          </div>
         </div>
         {fields.overall && props.overall != null ? (
           <div className="shrink-0 text-right">

@@ -15,7 +15,9 @@ import { PageHeader } from "@/components/owner/PageHeader";
 import { Section } from "@/components/owner/Section";
 import { StatusBadge } from "@/components/owner/StatusBadge";
 import { Metric } from "@/components/ui/Metric";
+import { PlayerPortrait } from "@/components/basketball/PlayerPortrait";
 import { PlayerEntityLink } from "@/components/entity/PlayerEntityLink";
+import { splitDisplayName } from "@/presentation/portrait-hash";
 import { ManagementDecisionPanel } from "@/components/management/ManagementDecisionPanel";
 import { toFreeAgencyHubView } from "@/state/free-agency-hub-selectors";
 
@@ -110,7 +112,14 @@ export default async function FreeAgencyPage({
                     key={offer.offerId}
                     className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-zinc-800 px-4 py-3 text-sm"
                   >
-                    <div>
+                    <div className="flex min-w-0 items-start gap-2">
+                      <PlayerPortrait
+                        playerId={offer.playerId}
+                        firstName={splitDisplayName(offer.playerName).firstName}
+                        lastName={splitDisplayName(offer.playerName).lastName}
+                        size="sm"
+                      />
+                      <div>
                       <p className="text-zinc-100">
                         <PlayerEntityLink
                           saveId={saveId}
@@ -127,6 +136,7 @@ export default async function FreeAgencyPage({
                           "—"
                         )}
                       </p>
+                      </div>
                     </div>
                     <div className="flex items-center gap-3">
                       <StatusBadge label={offer.status} />
@@ -174,12 +184,20 @@ export default async function FreeAgencyPage({
                 {hub.market.slice(0, 40).map((agent) => (
                   <tr key={agent.playerId} className="border-t border-zinc-800">
                     <td className="px-3 py-2 text-zinc-100">
-                      <PlayerEntityLink
-                        saveId={saveId}
-                        playerId={agent.playerId}
-                      >
-                        {agent.firstName} {agent.lastName}
-                      </PlayerEntityLink>
+                      <span className="flex items-center gap-2">
+                        <PlayerPortrait
+                          playerId={agent.playerId}
+                          firstName={agent.firstName}
+                          lastName={agent.lastName}
+                          size="sm"
+                        />
+                        <PlayerEntityLink
+                          saveId={saveId}
+                          playerId={agent.playerId}
+                        >
+                          {agent.firstName} {agent.lastName}
+                        </PlayerEntityLink>
+                      </span>
                     </td>
                     <td className="px-3 py-2 text-zinc-400">
                       {agent.position}
@@ -271,12 +289,22 @@ export default async function FreeAgencyPage({
                     key={signing.offerId}
                     className="flex flex-wrap justify-between gap-2 rounded-lg border border-zinc-800 px-4 py-2"
                   >
-                    <PlayerEntityLink
-                      saveId={saveId}
-                      playerId={signing.playerId}
-                    >
-                      {signing.playerName}
-                    </PlayerEntityLink>
+                    <span className="flex items-center gap-2">
+                      <PlayerPortrait
+                        playerId={signing.playerId}
+                        firstName={
+                          splitDisplayName(signing.playerName).firstName
+                        }
+                        lastName={splitDisplayName(signing.playerName).lastName}
+                        size="sm"
+                      />
+                      <PlayerEntityLink
+                        saveId={saveId}
+                        playerId={signing.playerId}
+                      >
+                        {signing.playerName}
+                      </PlayerEntityLink>
+                    </span>
                     <span className="text-zinc-500">
                       {signing.years}y ·{" "}
                       {signing.salary != null ? (

@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { PlayerPortrait } from "@/components/basketball/PlayerPortrait";
 import type {
   FantasyDraftPoolPlayerView,
   FantasyDraftView,
@@ -183,13 +184,21 @@ export function PlayerPoolTable(props: {
                 }`}
               >
                 <td className="py-2 pr-2">
-                  <button
-                    type="button"
-                    onClick={() => onOpenPlayer(player.playerId)}
-                    className="text-left font-medium text-amber-200 underline-offset-2 hover:underline focus:outline-none focus:ring-2 focus:ring-amber-600"
-                  >
-                    {player.firstName} {player.lastName}
-                  </button>
+                  <span className="flex items-center gap-2">
+                    <PlayerPortrait
+                      playerId={player.playerId}
+                      firstName={player.firstName}
+                      lastName={player.lastName}
+                      size="sm"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => onOpenPlayer(player.playerId)}
+                      className="text-left font-medium text-amber-200 underline-offset-2 hover:underline focus:outline-none focus:ring-2 focus:ring-amber-600"
+                    >
+                      {player.firstName} {player.lastName}
+                    </button>
+                  </span>
                   {player.isDrafted ? (
                     <div className="text-[10px] text-zinc-500">
                       {player.draftedByAbbreviation}

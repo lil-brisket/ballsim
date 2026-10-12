@@ -4,6 +4,13 @@ export {
   type PlayerCardFields,
 } from "@/components/basketball/PlayerCard";
 export { PlayerDrawer } from "@/components/basketball/PlayerDrawer";
+export {
+  PlayerPortrait,
+  PORTRAIT_SIZE_PX,
+  type PlayerPortraitProps,
+  type PlayerPortraitSize,
+  type PortraitState,
+} from "@/components/basketball/PlayerPortrait";
 export { PlayerProfileHero } from "@/components/basketball/PlayerProfileHero";
 export {
   ProfileStatTiles,

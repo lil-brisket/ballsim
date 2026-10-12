@@ -1,4 +1,5 @@
 import { InjuryBadge } from "@/components/basketball/InjuryBadge";
+import { PlayerPortrait } from "@/components/basketball/PlayerPortrait";
 import { PlayerEntityLink } from "@/components/entity/PlayerEntityLink";
 import { cn, type Density } from "@/components/ui/styles";
 
@@ -27,6 +28,12 @@ export function RosterRow(props: {
         props.className,
       )}
     >
+      <PlayerPortrait
+        playerId={props.playerId}
+        firstName={props.firstName}
+        lastName={props.lastName}
+        size="sm"
+      />
       <div className="min-w-0 flex-1">
         <PlayerEntityLink
           saveId={props.saveId}

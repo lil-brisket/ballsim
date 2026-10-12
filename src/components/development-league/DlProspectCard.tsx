@@ -2,8 +2,10 @@ import {
   assignToDevelopmentLeagueAction,
   recallFromDevelopmentLeagueAction,
 } from "@/application/actions";
+import { PlayerPortrait } from "@/components/basketball/PlayerPortrait";
 import { StatLine } from "@/components/basketball/StatLine";
 import { PlayerEntityLink } from "@/components/entity/PlayerEntityLink";
+import { splitDisplayName } from "@/presentation/portrait-hash";
 import { ProgressBar } from "@/components/ui/ProgressBar";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import {
@@ -101,6 +103,7 @@ export function DlProspectCard(props: {
   const { saveId, row, returnPath, showRecall = true } = props;
   const showRecallControl = showRecall;
   const ready = row.readiness === "ready";
+  const nameParts = splitDisplayName(row.name);
 
   return (
     <article
@@ -112,13 +115,21 @@ export function DlProspectCard(props: {
       )}
     >
       <div className="flex flex-wrap items-start justify-between gap-3">
-        <div className="min-w-0">
-          <PlayerEntityLink saveId={saveId} playerId={row.playerId}>
-            {row.name}
-          </PlayerEntityLink>
-          <p className="mt-0.5 text-xs text-zinc-500">
-            Age {row.age} · {row.role}
-          </p>
+        <div className="flex min-w-0 items-start gap-2">
+          <PlayerPortrait
+            playerId={row.playerId}
+            firstName={nameParts.firstName}
+            lastName={nameParts.lastName}
+            size="sm"
+          />
+          <div className="min-w-0">
+            <PlayerEntityLink saveId={saveId} playerId={row.playerId}>
+              {row.name}
+            </PlayerEntityLink>
+            <p className="mt-0.5 text-xs text-zinc-500">
+              Age {row.age} · {row.role}
+            </p>
+          </div>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <StatusBadge
@@ -234,22 +245,31 @@ export function DlEligibleCard(props: {
   returnPath: string;
 }) {
   const { saveId, row, returnPath } = props;
+  const nameParts = splitDisplayName(row.name);
   return (
     <article
       className={cn(panelClass, densityPadding.compact, "text-zinc-400")}
     >
       <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <PlayerEntityLink saveId={saveId} playerId={row.playerId}>
-            {row.name}
-          </PlayerEntityLink>
-          <p className="mt-0.5 text-xs text-zinc-600">
-            OVR {row.overall} · POT {row.potential} · {row.projectedMpg} proj.
-            MPG
-          </p>
-          <p className="mt-1 text-xs text-zinc-500">
-            {row.strongCandidate ? "Strong DL candidate" : "Optional"}
-          </p>
+        <div className="flex min-w-0 items-start gap-2">
+          <PlayerPortrait
+            playerId={row.playerId}
+            firstName={nameParts.firstName}
+            lastName={nameParts.lastName}
+            size="sm"
+          />
+          <div>
+            <PlayerEntityLink saveId={saveId} playerId={row.playerId}>
+              {row.name}
+            </PlayerEntityLink>
+            <p className="mt-0.5 text-xs text-zinc-600">
+              OVR {row.overall} · POT {row.potential} · {row.projectedMpg} proj.
+              MPG
+            </p>
+            <p className="mt-1 text-xs text-zinc-500">
+              {row.strongCandidate ? "Strong DL candidate" : "Optional"}
+            </p>
+          </div>
         </div>
         <AssignButton
           saveId={saveId}
@@ -267,12 +287,21 @@ export function DlEligibleRow(props: {
   returnPath: string;
 }) {
   const { saveId, row, returnPath } = props;
+  const nameParts = splitDisplayName(row.name);
   return (
     <tr className="border-t border-zinc-800 text-zinc-400">
       <td className="px-3 py-2">
-        <PlayerEntityLink saveId={saveId} playerId={row.playerId}>
-          {row.name}
-        </PlayerEntityLink>
+        <span className="flex items-center gap-2">
+          <PlayerPortrait
+            playerId={row.playerId}
+            firstName={nameParts.firstName}
+            lastName={nameParts.lastName}
+            size="sm"
+          />
+          <PlayerEntityLink saveId={saveId} playerId={row.playerId}>
+            {row.name}
+          </PlayerEntityLink>
+        </span>
       </td>
       <td className="px-3 py-2 font-mono text-zinc-300">{row.overall}</td>
       <td className="px-3 py-2 font-mono">{row.potential}</td>
