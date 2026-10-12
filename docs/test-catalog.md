@@ -6,23 +6,23 @@ Every Vitest run writes `test-results.txt` at the repo root (gitignored). Covera
 
 ## Pick a command
 
-| I want to…                                                   | Run                                                                                       |
-| ------------------------------------------------------------ | ----------------------------------------------------------------------------------------- |
-| Fast default suite (unit + integration + React)              | `npm test`                                                                                |
-| Domain / systems / persistence units only                    | `npm run test:unit`                                                                       |
-| Season / playoffs / week-scale integration                   | `npm run test:integration`                                                                |
-| Lab hard-invariants, 1000-game PBT, season RNG, long horizon | `npm run test:simulation`                                                                 |
-| Multi-year, economy, league-sanity                           | `npm run test:regression`                                                                 |
-| Every Vitest project                                         | `npm run test:all`                                                                        |
-| Watch mode                                                   | `npm run test:watch`                                                                      |
-| One file                                                     | `npx vitest run path/to/file.test.ts`                                                     |
-| 50-season soak                                               | `STRESS=1 npx vitest run tests/application/multi-year-simulation-stress.test.ts`          |
-| Simulation Lab UI                                            | `npm run lab` then [http://localhost:3000/dev/sim-lab](http://localhost:3000/dev/sim-lab) |
-| Lab CLI (games / career / schedule)                          | `npm run sim -- --seed=42 --games=100`                                                    |
-| Statistical validation (1000 games)                          | `npx tsx scripts/validate-simulation-stats.ts --games 1000 --seed 12345`                  |
-| League sanity report                                         | `npm run sanity:league`                                                                   |
-| Game / season timing                                         | `npm run bench:sim`                                                                       |
-| Typecheck / lint / format (CI)                               | `npx tsc --noEmit` · `npm run lint` · `npm run format:check`                              |
+| I want to…                                                                                       | Run                                                                                       |
+| ------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------- |
+| Fast default suite (unit + integration + React)                                                  | `npm test`                                                                                |
+| Domain / systems / persistence units only                                                        | `npm run test:unit`                                                                       |
+| Season / playoffs / week-scale integration                                                       | `npm run test:integration`                                                                |
+| Lab hard-invariants, 1000-game PBT, fidelity parity, season invariants, season RNG, long horizon | `npm run test:simulation`                                                                 |
+| Multi-year, economy, league-sanity                                                               | `npm run test:regression`                                                                 |
+| Every Vitest project                                                                             | `npm run test:all`                                                                        |
+| Watch mode                                                                                       | `npm run test:watch`                                                                      |
+| One file                                                                                         | `npx vitest run path/to/file.test.ts`                                                     |
+| 50-season soak                                                                                   | `STRESS=1 npx vitest run tests/application/multi-year-simulation-stress.test.ts`          |
+| Simulation Lab UI                                                                                | `npm run lab` then [http://localhost:3000/dev/sim-lab](http://localhost:3000/dev/sim-lab) |
+| Lab CLI (games / career / schedule)                                                              | `npm run sim -- --seed=42 --games=100`                                                    |
+| Statistical validation (1000 games)                                                              | `npx tsx scripts/validate-simulation-stats.ts --games 1000 --seed 12345`                  |
+| League sanity report                                                                             | `npm run sanity:league`                                                                   |
+| Game / season timing                                                                             | `npm run bench:sim`                                                                       |
+| Typecheck / lint / format (CI)                                                                   | `npx tsc --noEmit` · `npm run lint` · `npm run format:check`                              |
 
 `npm test` does **not** run simulation or regression. PR CI runs `npm run test:coverage` then `npm run test:simulation`.
 
@@ -35,7 +35,7 @@ Defined in [`vitest.config.mts`](../vitest.config.mts).
 | `unit`        | `test:unit`              | All `tests/**/*.test.ts` except the files listed below                | milliseconds–seconds |
 | `integration` | `test:integration`       | Season, playoffs, lifecycle, performance budget, owner vertical slice | seconds              |
 | `react`       | (included in `npm test`) | `tests/**/*.test.tsx` (jsdom)                                         | seconds              |
-| `simulation`  | `test:simulation`        | Five Lab batches (PR CI)                                              | seconds–minutes      |
+| `simulation`  | `test:simulation`        | Eight Lab batches (PR CI)                                             | seconds–minutes      |
 | `regression`  | `test:regression`        | Multi-year, economy, league-sanity, `tests/regression/`               | minutes              |
 
 ### Integration (explicit include)
@@ -48,13 +48,15 @@ Defined in [`vitest.config.mts`](../vitest.config.mts).
 
 ### Simulation (explicit include)
 
-| File                                                                                                  | What it asserts                                                               |
-| ----------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------- |
-| [`tests/simulation/lab/invariants-hard.test.ts`](../tests/simulation/lab/invariants-hard.test.ts)     | 100 rotation-on Lab games, seed 42, zero hard failures                        |
-| [`tests/simulation/lab/simulate-game-pbt.test.ts`](../tests/simulation/lab/simulate-game-pbt.test.ts) | 1000 fast-check seeds → `simulateGame` → Lab `checkInvariants` (rotation off) |
-| [`tests/simulation/lab/simulate-game-box-score-stats.test.ts`](../tests/simulation/lab/simulate-game-box-score-stats.test.ts) | 5000 seeds → `simulateGame` box scores: pooled FG% 42–48%, 3P% 33–38%, no ties |
-| [`tests/simulation/lab/season-rng-desync.test.ts`](../tests/simulation/lab/season-rng-desync.test.ts) | Injected RNG stays aligned with `meta.rngState` at playoff start              |
-| [`tests/simulation/lab/long-horizon.test.ts`](../tests/simulation/lab/long-horizon.test.ts)           | One in-memory owner-career season                                             |
+| File                                                                                                                          | What it asserts                                                                                                                                  |
+| ----------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| [`tests/simulation/lab/invariants-hard.test.ts`](../tests/simulation/lab/invariants-hard.test.ts)                             | 100 rotation-on Lab games, seed 42, zero hard failures                                                                                           |
+| [`tests/simulation/lab/simulate-game-pbt.test.ts`](../tests/simulation/lab/simulate-game-pbt.test.ts)                         | 1000 fast-check seeds → `simulateGame` → Lab `checkInvariants` (rotation off)                                                                    |
+| [`tests/simulation/lab/simulate-game-box-score-stats.test.ts`](../tests/simulation/lab/simulate-game-box-score-stats.test.ts) | 5000 seeds → `simulateGame` box scores: pooled FG% 42–48%, 3P% 33–39%, no ties                                                                   |
+| [`tests/simulation/lab/fidelity-parity.test.ts`](../tests/simulation/lab/fidelity-parity.test.ts)                             | Seed 42, 300 games per fidelity with `--calibrate`: both pass the bands and box-score stays within tolerance of possession on PPG, FG%, 3P%, FT% |
+| [`tests/simulation/lab/season-fidelity.test.ts`](../tests/simulation/lab/season-fidelity.test.ts)                             | Box-score league with a headless owner: no team-PPG, scorer-outlier or minutes season failures                                                   |
+| [`tests/simulation/lab/season-rng-desync.test.ts`](../tests/simulation/lab/season-rng-desync.test.ts)                         | Injected RNG stays aligned with `meta.rngState` at playoff start                                                                                 |
+| [`tests/simulation/lab/long-horizon.test.ts`](../tests/simulation/lab/long-horizon.test.ts)                                   | One in-memory owner-career season                                                                                                                |
 
 Other Lab tests under `tests/simulation/lab/` stay in **unit** (`npm test`).
 

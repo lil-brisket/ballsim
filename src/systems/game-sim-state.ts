@@ -37,6 +37,8 @@ export type GameSimState = {
   playerStatsById: Map<string, GamePlayerStats>;
   /** Stable finalize order (home roster then away roster). */
   playerStatsOrder: PlayerId[];
+  /** Roster side of every player, fixed at tip-off. */
+  playerSide: Map<string, "home" | "away">;
   possessionIndex: number;
   eventSequenceStart: number;
   possessionCounts: { home: number; away: number };
@@ -85,6 +87,7 @@ export function createGameSimState(
 ): GameSimState {
   const playerStatsById = new Map<string, GamePlayerStats>();
   const playerStatsOrder: PlayerId[] = [];
+  const playerSide = new Map<string, "home" | "away">();
 
   const starterIds = new Set<string>([
     ...input.homeOnCourt.map((player) => player.id),
@@ -96,12 +99,14 @@ export function createGameSimState(
     row.started = starterIds.has(player.id);
     playerStatsById.set(player.id, row);
     playerStatsOrder.push(player.id);
+    playerSide.set(player.id, "home");
   }
   for (const player of input.awayPlayers) {
     const row = createEmptyGamePlayerStats(player.id);
     row.started = starterIds.has(player.id);
     playerStatsById.set(player.id, row);
     playerStatsOrder.push(player.id);
+    playerSide.set(player.id, "away");
   }
 
   const onCourtIds = starterIds;
@@ -123,6 +128,7 @@ export function createGameSimState(
     events: [],
     playerStatsById,
     playerStatsOrder,
+    playerSide,
     possessionIndex: 0,
     eventSequenceStart: 0,
     possessionCounts: { home: 0, away: 0 },
@@ -241,13 +247,50 @@ export function appendPeriodScore(sim: GameSimState, delta: GameScore): void {
   sim.periodScores.push({ home: delta.home, away: delta.away });
 }
 
+/**
+ * Converts on-court seconds to whole minutes per player. Seconds are
+ * authoritative; flooring each player independently loses up to a minute per
+ * rotation player (a team summed to ~234 instead of 240), so each team's
+ * remainder minutes go to the largest fractional parts and the team total
+ * equals round(team seconds / 60).
+ */
 export function finalizeMinutesOnSimState(sim: GameSimState): void {
+  const byTeam = new Map<string, { playerId: string; seconds: number }[]>();
   for (const playerId of sim.playerStatsOrder) {
     const row = sim.playerStatsById.get(playerId);
     if (row == null) {
       continue;
     }
-    row.minutes = Math.floor((sim.secondsOnCourt.get(playerId) ?? 0) / 60);
+    const key = sim.playerSide.get(playerId) ?? "";
+    const group = byTeam.get(key) ?? [];
+    group.push({ playerId, seconds: sim.secondsOnCourt.get(playerId) ?? 0 });
+    byTeam.set(key, group);
+  }
+  for (const group of byTeam.values()) {
+    const totalSeconds = group.reduce((sum, entry) => sum + entry.seconds, 0);
+    const floors = group.map((entry) => Math.floor(entry.seconds / 60));
+    let remainder =
+      Math.round(totalSeconds / 60) -
+      floors.reduce((sum, value) => sum + value, 0);
+    const order = group
+      .map((entry, index) => ({
+        index,
+        fraction: entry.seconds / 60 - floors[index]!,
+      }))
+      .sort((a, b) => b.fraction - a.fraction || a.index - b.index);
+    for (const { index } of order) {
+      if (remainder <= 0) {
+        break;
+      }
+      floors[index] = floors[index]! + 1;
+      remainder -= 1;
+    }
+    group.forEach((entry, index) => {
+      const row = sim.playerStatsById.get(entry.playerId);
+      if (row != null) {
+        row.minutes = floors[index]!;
+      }
+    });
   }
 }
 

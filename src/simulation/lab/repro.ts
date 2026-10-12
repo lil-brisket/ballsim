@@ -3,6 +3,7 @@ export type ReproCommandInput = {
   scenarioId: string;
   games?: number;
   rotation?: "on" | "off";
+  fidelity?: "possession" | "box_score";
   mode?: string;
   seasons?: number;
   channel?: "pr" | "nightly";
@@ -19,6 +20,9 @@ export function formatReproCommand(input: ReproCommandInput): string {
   }
   if (input.rotation === "off") {
     parts.push("--rotation=off");
+  }
+  if (input.fidelity === "box_score") {
+    parts.push("--fidelity=box_score");
   }
   if (input.mode != null && input.mode !== "game") {
     parts.push(`--mode=${input.mode}`);

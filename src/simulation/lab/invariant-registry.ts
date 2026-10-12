@@ -30,6 +30,7 @@ export const HARD_GAME_RULE_IDS = [
   "CLOCK_NEGATIVE",
   "FOUL_LIMIT",
   "ROSTER_SIZE",
+  "MINUTES_NOT_CONSERVED",
 ] as const;
 
 export const ROTATION_HARD_RULE_IDS = [
@@ -62,6 +63,9 @@ export const INVARIANT_REGISTRY: Record<string, InvariantRegistryEntry> = {
   CLOCK_NEGATIVE: { severity: "HARD_FAILURE", scope: "game" },
   FOUL_LIMIT: { severity: "HARD_FAILURE", scope: "game" },
   ROSTER_SIZE: { severity: "HARD_FAILURE", scope: "game" },
+  MINUTES_NOT_CONSERVED: { severity: "HARD_FAILURE", scope: "game" },
+  TEAM_PPG_OUT_OF_RANGE: { severity: "HARD_FAILURE", scope: "team" },
+  PLAYER_PPG_OUTLIER: { severity: "HARD_FAILURE", scope: "player" },
   NEGATIVE_SECONDS: { severity: "HARD_FAILURE", scope: "game" },
   TEAM_SECONDS_MISMATCH: { severity: "HARD_FAILURE", scope: "game" },
   LAB_OT_PERIODS_HIGH: { severity: "WARNING", scope: "game" },

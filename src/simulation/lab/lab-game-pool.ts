@@ -41,6 +41,7 @@ export function createInProcessIndependentWorker(
     games: init.games,
     scenarioId: init.scenarioId,
     rotation: init.rotation,
+    fidelity: init.fidelity,
     rosterSize: init.rosterSize,
     seedList: init.seedList,
   };

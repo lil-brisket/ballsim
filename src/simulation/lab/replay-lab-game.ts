@@ -74,6 +74,7 @@ export function replayLabGame(options: ReplayLabGameOptions): LabReplayResult {
     games: manifest.config.games ?? options.gameIndex + 1,
     scenarioId: manifest.config.scenarioId,
     rotation: manifest.config.rotation,
+    fidelity: manifest.config.fidelity,
     rosterSize: manifest.config.rosterSize,
     seedList: manifest.seedList,
   });

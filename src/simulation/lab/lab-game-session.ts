@@ -31,7 +31,11 @@ import type {
   LabScenarioBuilder,
   RawInvariantFailure,
 } from "@/simulation/lab/types";
-import { simulateGame } from "@/systems/game-simulation";
+import {
+  simulateGame,
+  type GameSimulationFidelity,
+} from "@/systems/game-simulation";
+import { simulateGameBoxScore } from "@/systems/game-simulation-box-score";
 import { processPostGameInjuryExposures } from "@/systems/injury/injury-post-game";
 
 export type LabGameSessionOptions = {
@@ -42,6 +46,7 @@ export type LabGameSessionOptions = {
   buildRosters?: LabScenarioBuilder;
   rosterSize?: number;
   seedList?: LabSeedListEntry[];
+  fidelity?: GameSimulationFidelity;
 };
 
 export type LabGameSession = {
@@ -49,6 +54,7 @@ export type LabGameSession = {
   games: number;
   scenarioId: string;
   rotation: LabRotationMode;
+  fidelity: GameSimulationFidelity;
   seedList: LabSeedListEntry[];
   homePlayers: Player[];
   awayPlayers: Player[];
@@ -126,6 +132,7 @@ export function createLabGameSession(
     games: options.games,
     scenarioId,
     rotation,
+    fidelity: options.fidelity ?? "possession",
     seedList,
     homePlayers,
     awayPlayers,
@@ -163,25 +170,39 @@ export function playLabGame(
   const thrown: RawInvariantFailure[] = [];
   let result: GameResult | null = null;
   try {
-    const simulated = simulateGame(
-      game,
-      {
-        homePlayers: gameHomePlayers,
-        awayPlayers: gameAwayPlayers,
-        homeStartingLineup: session.rotationSetup
-          ? homeFirst
-            ? session.rotationSetup.homeStarters
-            : session.rotationSetup.awayStarters
-          : undefined,
-        awayStartingLineup: session.rotationSetup
-          ? homeFirst
-            ? session.rotationSetup.awayStarters
-            : session.rotationSetup.homeStarters
-          : undefined,
-        gameState: session.rotationSetup?.state,
-      },
-      rng,
-    );
+    const homeStartingLineup = session.rotationSetup
+      ? homeFirst
+        ? session.rotationSetup.homeStarters
+        : session.rotationSetup.awayStarters
+      : undefined;
+    const awayStartingLineup = session.rotationSetup
+      ? homeFirst
+        ? session.rotationSetup.awayStarters
+        : session.rotationSetup.homeStarters
+      : undefined;
+    const simulated =
+      session.fidelity === "box_score"
+        ? simulateGameBoxScore(
+            game,
+            {
+              homePlayers: gameHomePlayers,
+              awayPlayers: gameAwayPlayers,
+              homeStartingLineup,
+              awayStartingLineup,
+            },
+            rng,
+          )
+        : simulateGame(
+            game,
+            {
+              homePlayers: gameHomePlayers,
+              awayPlayers: gameAwayPlayers,
+              homeStartingLineup,
+              awayStartingLineup,
+              gameState: session.rotationSetup?.state,
+            },
+            rng,
+          );
     result = afterSimulateGame ? afterSimulateGame(simulated) : simulated;
     if (
       session.scenarioId === INJURY_HEAVY_SCENARIO_ID &&

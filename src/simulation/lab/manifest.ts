@@ -1,3 +1,4 @@
+import type { GameSimulationFidelity } from "@/systems/game-simulation";
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { readEngineIdentity } from "@/simulation/lab/engine-identity";
@@ -28,6 +29,8 @@ export type LabResolvedConfig = {
   games?: number;
   seasons?: number;
   rotation?: LabRotationMode;
+  /** Absent means "possession" (pre-fidelity manifests). */
+  fidelity?: GameSimulationFidelity;
   channel?: SimChannel;
   rosterSize?: number;
   preset?: LabLeaguePreset;

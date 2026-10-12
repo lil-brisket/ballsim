@@ -12,11 +12,11 @@ export type CalibrationBand = {
 };
 
 export const CALIBRATION_BANDS = {
-  team_points: { min: 70, max: 140 },
-  game_totals: { min: 140, max: 280 },
-  field_goal_pct: { min: 0.35, max: 0.58 },
-  three_point_pct: { min: 0.25, max: 0.45 },
-  free_throw_pct: { min: 0.6, max: 0.9 },
+  team_points: { min: 88, max: 120 },
+  game_totals: { min: 176, max: 240 },
+  field_goal_pct: { min: 0.42, max: 0.5 },
+  three_point_pct: { min: 0.34, max: 0.44 },
+  free_throw_pct: { min: 0.72, max: 0.82 },
 } as const satisfies Record<string, CalibrationBand>;
 
 export type CalibrationAggregates = {

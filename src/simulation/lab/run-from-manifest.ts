@@ -43,6 +43,7 @@ export function runLabGamesFromManifest(
     games: manifest.config.games,
     scenarioId: manifest.config.scenarioId,
     rotation: manifest.config.rotation,
+    fidelity: manifest.config.fidelity,
     rosterSize: manifest.config.rosterSize,
     channel: manifest.config.channel,
     seedList: manifest.seedList,

@@ -76,3 +76,31 @@ describe("parseLabArgv", () => {
     expect(parsed.keep).toBe(4);
   });
 });
+
+describe("fidelity option", () => {
+  it("defaults to possession and accepts box_score from CLI or file", () => {
+    expect(parseLabArgv([]).fidelity).toBe("possession");
+    expect(parseLabArgv(["--fidelity=box_score"]).fidelity).toBe("box_score");
+    expect(parseLabArgv(["--fidelity", "possession"]).fidelity).toBe(
+      "possession",
+    );
+    expect(parseLabFileConfig({ fidelity: "box_score" }).fidelity).toBe(
+      "box_score",
+    );
+    expect(
+      mergeLabConfig({
+        file: { fidelity: "box_score" },
+        cli: {},
+      }).fidelity,
+    ).toBe("box_score");
+  });
+
+  it("rejects unknown fidelities", () => {
+    expect(() => parseLabArgv(["--fidelity=fast"])).toThrow(
+      /--fidelity must be possession or box_score/,
+    );
+    expect(() => parseLabFileConfig({ fidelity: "fast" })).toThrow(
+      /fidelity must be possession or box_score/,
+    );
+  });
+});

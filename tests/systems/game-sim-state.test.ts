@@ -16,6 +16,7 @@ import {
   assertGameSimStatsConservation,
   createGameSimState,
   finalizeGameSimState,
+  finalizeMinutesOnSimState,
   lineupCacheKey,
 } from "@/systems/game-sim-state";
 
@@ -142,6 +143,40 @@ describe("GameSimState", () => {
         new Set(away.map((p) => p.id)),
       ),
     ).toThrow(/stats conservation/);
+  });
+});
+
+describe("finalizeMinutesOnSimState", () => {
+  it("conserves each team's minutes instead of flooring every player", () => {
+    const home = makeRoster(HOME, "home", 10);
+    const away = makeRoster(AWAY, "away", 10);
+    const sim = createGameSimState({
+      game: scheduledGame(),
+      homePlayers: home,
+      awayPlayers: away,
+      homeOnCourt: home.slice(0, 5),
+      awayOnCourt: away.slice(0, 5),
+    });
+    // 14400 seconds per team split into ten uneven, non-minute-aligned slices
+    // (flooring each of these independently loses 5 of 240 minutes).
+    const slices = [2130, 2090, 1999, 1801, 1750, 1460, 1190, 940, 650, 390];
+    expect(slices.reduce((a, b) => a + b, 0)).toBe(14400);
+    for (const roster of [home, away]) {
+      roster.forEach((player, index) => {
+        sim.secondsOnCourt.set(player.id, slices[index]!);
+      });
+    }
+    finalizeMinutesOnSimState(sim);
+    for (const roster of [home, away]) {
+      const rows = roster.map((player) => sim.playerStatsById.get(player.id)!);
+      expect(rows.reduce((sum, row) => sum + row.minutes, 0)).toBe(240);
+      roster.forEach((player, index) => {
+        const exact = slices[index]! / 60;
+        expect(
+          Math.abs(sim.playerStatsById.get(player.id)!.minutes - exact),
+        ).toBeLessThan(1);
+      });
+    }
   });
 });
 
