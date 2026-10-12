@@ -53,17 +53,20 @@ export function DesktopNavigation(props: {
 
   return (
     <nav
-      className={cn("hidden shrink-0 lg:block", collapsed ? "w-14" : "w-56")}
+      className={cn(
+        "arena-panel hidden shrink-0 p-2 lg:block",
+        collapsed ? "w-16" : "w-60",
+      )}
       aria-label="Owner Mode"
     >
-      <div className="mb-3 flex items-center justify-end">
+      <div className="mb-2 flex items-center justify-end">
         <button
           type="button"
           onClick={toggleCollapsed}
           aria-pressed={collapsed}
           aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
           className={cn(
-            "rounded-md border border-zinc-700 px-2 py-1 text-xs text-zinc-400 hover:border-amber-600 hover:text-amber-400",
+            "rounded-md border border-surface-line px-2 py-1 text-xs text-zinc-400 hover:border-team-ink hover:text-team-ink",
             focusRingClass,
           )}
         >

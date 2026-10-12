@@ -8,9 +8,17 @@ import {
   useSyncExternalStore,
 } from "react";
 import { createPortal } from "react-dom";
+import Link from "next/link";
 import type { OwnerNavGroup } from "@/application/owner-nav-config";
 import { NavGroups } from "@/components/game/NavGroups";
-import { cn, focusRingClass, touchTargetClass } from "@/components/ui/styles";
+import { teamThemeStyle } from "@/components/ui/TeamThemeScope";
+import {
+  cn,
+  focusRingClass,
+  touchTargetClass,
+  touchTargetTextClass,
+} from "@/components/ui/styles";
+import type { TeamThemeColors } from "@/presentation/team-theme";
 
 const FOCUSABLE =
   'a[href], button:not([disabled]), textarea:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])';
@@ -25,13 +33,15 @@ function useIsClient(): boolean {
 
 /**
  * Mobile navigation overlay drawer. Independent of desktop sidebar UX;
- * shares NavGroups + owner-nav-config data.
+ * shares NavGroups + owner-nav-config data. The drawer portals to <body>,
+ * outside the shell's team-colour scope, so it re-applies `branding` itself.
  */
 export function MobileNavigationDrawer(props: {
   saveId: string;
   groups?: readonly OwnerNavGroup[];
   /** Compact trigger for the sticky header. Default is a full-width bar. */
   compact?: boolean;
+  branding?: TeamThemeColors | null;
 }) {
   const [open, setOpen] = useState(false);
   const panelRef = useRef<HTMLDivElement>(null);
@@ -87,7 +97,10 @@ export function MobileNavigationDrawer(props: {
   const drawer =
     mounted && open
       ? createPortal(
-          <div className="fixed inset-0 z-50 flex lg:hidden">
+          <div
+            className="fixed inset-0 z-50 flex lg:hidden"
+            style={teamThemeStyle(props.branding)}
+          >
             <button
               type="button"
               aria-label="Close menu"
@@ -100,13 +113,29 @@ export function MobileNavigationDrawer(props: {
               aria-modal="true"
               aria-labelledby={titleId}
               className={cn(
-                "drawer-nav-enter relative z-10 flex h-dvh w-[min(20rem,85vw)] flex-col border-r border-zinc-700 bg-zinc-900 shadow-xl",
+                "drawer-nav-enter relative z-10 flex h-dvh w-[min(20rem,85vw)] flex-col border-r border-surface-line bg-surface-arena shadow-arena",
               )}
             >
-              <div className="flex items-center justify-between border-b border-zinc-800 px-4 py-3 pt-[max(0.75rem,env(safe-area-inset-top))]">
-                <h2 id={titleId} className="text-sm font-medium text-zinc-100">
-                  Menu
-                </h2>
+              <div className="flex items-center justify-between gap-3 border-b border-surface-line px-4 py-3 pt-[max(0.75rem,env(safe-area-inset-top))]">
+                <div className="min-w-0">
+                  <h2
+                    id={titleId}
+                    className="font-mono text-[0.65rem] uppercase tracking-[0.16em] text-team-ink"
+                  >
+                    Menu
+                  </h2>
+                  <Link
+                    href="/home"
+                    onClick={() => setOpen(false)}
+                    className={cn(
+                      touchTargetTextClass,
+                      "-ml-2 font-display text-xl font-bold uppercase tracking-wider text-zinc-50 hover:text-team-ink",
+                      focusRingClass,
+                    )}
+                  >
+                    BallSim
+                  </Link>
+                </div>
                 <button
                   ref={closeRef}
                   type="button"
@@ -114,7 +143,7 @@ export function MobileNavigationDrawer(props: {
                   aria-label="Close menu"
                   className={cn(
                     touchTargetClass,
-                    "rounded-md border border-zinc-700 px-2.5 text-sm text-zinc-300 hover:border-zinc-500",
+                    "rounded-md border border-surface-line px-2.5 text-sm text-zinc-300 hover:border-team-ink",
                     focusRingClass,
                   )}
                 >
@@ -144,9 +173,8 @@ export function MobileNavigationDrawer(props: {
         type="button"
         className={cn(
           touchTargetClass,
-          props.compact
-            ? "rounded-md border border-zinc-700 px-3 text-sm text-zinc-200 hover:border-amber-600"
-            : "w-full rounded-md border border-zinc-700 px-3 text-sm text-zinc-200 hover:border-amber-600",
+          "rounded-lg border border-surface-line bg-surface-deep/60 px-3 font-display text-base font-bold uppercase tracking-wide text-zinc-200 hover:border-team-ink hover:text-team-ink",
+          !props.compact && "w-full",
           focusRingClass,
         )}
         aria-expanded={open}

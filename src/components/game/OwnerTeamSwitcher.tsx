@@ -4,9 +4,9 @@ import { useEffect, useState, useTransition } from "react";
 import { createPortal } from "react-dom";
 import { usePathname, useSearchParams } from "next/navigation";
 import { switchActiveOwnerTeamAction } from "@/application/actions";
-import { TeamLogoMark } from "@/components/team/logos/TeamLogoMark";
+import { TeamBadge } from "@/components/ui/TeamBadge";
 import type { DashboardSnapshot } from "@/state/selectors";
-import { cn, touchTargetClass } from "@/components/ui/styles";
+import { cn, focusRingClass, touchTargetClass } from "@/components/ui/styles";
 
 type OwnedTeamSummary = DashboardSnapshot["ownedTeams"][number];
 
@@ -37,19 +37,14 @@ export function buildOwnerReturnPath(
 }
 
 function FranchiseMark(props: { team: OwnedTeamSummary; size: "sm" | "md" }) {
-  const { team, size } = props;
-  const box = size === "md" ? "h-9 w-9" : "h-8 w-8";
+  const { team } = props;
   return (
-    <span
-      className={`inline-flex ${box} shrink-0 items-center justify-center overflow-hidden rounded-md border border-zinc-700`}
-      style={{ backgroundColor: team.branding.primaryColor }}
-    >
-      <TeamLogoMark
-        branding={team.branding}
-        size="sm"
-        title={`${team.city} ${team.name}`}
-      />
-    </span>
+    <TeamBadge
+      branding={team.branding}
+      name={`${team.city} ${team.name}`}
+      size={props.size}
+      decorative
+    />
   );
 }
 
@@ -62,22 +57,27 @@ function ActiveFranchiseLabel(props: {
     <>
       <FranchiseMark team={active} size="md" />
       <span className="min-w-0">
-        <span className="block truncate font-medium text-zinc-100">
+        <span className="block truncate font-display text-lg font-bold uppercase leading-tight tracking-wide text-zinc-50 sm:text-2xl">
           {active.city} {active.name}
         </span>
-        <span className="block text-xs text-zinc-500">
-          {active.wins}-{active.losses}
-          {canSwitchTeams ? " · Switch franchise" : ""}
-        </span>
+        {canSwitchTeams ? (
+          <span className="block font-mono text-[0.65rem] uppercase tracking-[0.16em] text-zinc-500">
+            Switch franchise
+          </span>
+        ) : null}
       </span>
     </>
   );
 }
 
 const displayClassName =
-  "flex min-h-11 items-center gap-3 rounded-lg border border-zinc-700 bg-zinc-950/60 px-3 py-2 text-left";
+  "flex min-h-11 min-w-0 max-w-full items-center gap-3 rounded-lg py-1 pr-2 text-left";
 
-const interactiveClassName = `${displayClassName} touch-manipulation hover:border-amber-600/60 active:opacity-80 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-500`;
+const interactiveClassName = cn(
+  displayClassName,
+  "touch-manipulation hover:bg-white/5 active:opacity-80",
+  focusRingClass,
+);
 
 export function OwnerTeamSwitcher(props: {
   saveId: string;
@@ -145,7 +145,7 @@ export function OwnerTeamSwitcher(props: {
         className={interactiveClassName}
       >
         <ActiveFranchiseLabel active={active} canSwitchTeams />
-        <span className="ml-1 text-zinc-500" aria-hidden>
+        <span className="ml-1 shrink-0 text-team-ink" aria-hidden>
           ▾
         </span>
       </button>
@@ -166,9 +166,9 @@ export function OwnerTeamSwitcher(props: {
         <div
           role="listbox"
           aria-label="Owned franchises"
-          className="absolute left-0 z-[46] mt-2 w-[min(20rem,calc(100vw-2rem))] rounded-xl border border-zinc-700 bg-zinc-950 p-2 shadow-xl"
+          className="absolute left-0 z-[46] mt-2 w-[min(20rem,calc(100vw-2rem))] rounded-xl border border-surface-line bg-surface-arena p-2 shadow-arena"
         >
-          <p className="px-2 py-1 text-xs font-medium uppercase tracking-wide text-zinc-500">
+          <p className="px-2 py-1 font-mono text-[0.65rem] uppercase tracking-[0.16em] text-team-ink">
             My Franchises
           </p>
           <ul className="space-y-1">
@@ -181,7 +181,9 @@ export function OwnerTeamSwitcher(props: {
                   onClick={() => selectTeam(team.id)}
                   className={cn(
                     touchTargetClass,
-                    "w-full justify-start gap-3 rounded-lg px-2 text-left hover:bg-zinc-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-500",
+                    "w-full justify-start gap-3 rounded-lg px-2 text-left hover:bg-white/5",
+                    team.isActive && "nav-active",
+                    focusRingClass,
                   )}
                 >
                   <FranchiseMark team={team} size="sm" />

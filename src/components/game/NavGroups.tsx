@@ -176,19 +176,19 @@ function NavLink(props: {
         "w-full justify-start gap-2 rounded-md px-3 text-sm",
         focusRingClass,
         active
-          ? "border-l-2 border-amber-500 bg-amber-600/15 font-medium text-amber-400"
-          : "border-l-2 border-transparent text-zinc-400 hover:bg-zinc-800/60 hover:text-zinc-200",
+          ? "nav-active font-semibold"
+          : "text-zinc-400 hover:bg-white/5 hover:text-zinc-100",
         collapsed && "justify-center px-2",
       )}
     >
-      <NavIcon name={item.icon} />
+      <NavIcon name={item.icon} className="h-5 w-5 shrink-0" />
       {!collapsed ? (
         <>
           <span className="min-w-0 truncate">{item.label}</span>
           <NavBadge item={item} />
         </>
       ) : badge && badge.count > 0 ? (
-        <span className="absolute right-1 top-1 h-1.5 w-1.5 rounded-full bg-amber-500" />
+        <span className="absolute right-1 top-1 h-1.5 w-1.5 rounded-full bg-team-ink" />
       ) : null}
     </Link>
   );
@@ -215,21 +215,21 @@ export function NavGroups(props: {
             className={cn(
               seasonal &&
                 !props.collapsed &&
-                "rounded-lg border border-dashed border-zinc-700/80 bg-zinc-950/40 py-2",
+                "rounded-lg border border-dashed border-surface-line bg-surface-deep/40 py-2",
             )}
           >
             {!props.collapsed ? (
               <p
                 className={cn(
                   "mb-1 px-3 font-mono text-[0.65rem] uppercase tracking-[0.16em]",
-                  seasonal ? "text-amber-700/80" : "text-zinc-600",
+                  seasonal ? "text-team-ink" : "text-team-ink/70",
                 )}
               >
                 {group.label}
                 {seasonal ? " · Seasonal" : ""}
               </p>
             ) : (
-              <div className="mb-1 border-t border-zinc-800/80" aria-hidden />
+              <div className="mb-1 border-t border-surface-line" aria-hidden />
             )}
             <ul className="space-y-0.5">
               {group.items.map((item) => {

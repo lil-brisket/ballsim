@@ -407,3 +407,35 @@ body {
     transform: none;
   }
 }
+
+/*
+ * In-save shell (GameShell). Team colours come from the inline --team-*
+ * variables set on the shell root.
+ */
+.shell-backdrop {
+  background:
+    radial-gradient(
+      ellipse 70% 320px at 15% 0%,
+      rgb(var(--team-primary-rgb) / 0.22) 0%,
+      transparent 100%
+    ),
+    radial-gradient(
+      ellipse 50% 260px at 90% 0%,
+      rgb(var(--team-ink-rgb) / 0.08) 0%,
+      transparent 100%
+    ),
+    var(--surface-deep);
+}
+
+/* Active sidebar item: team-ink accent bar, wash and soft glow. */
+.nav-active {
+  color: var(--team-ink);
+  background: linear-gradient(
+    90deg,
+    rgb(var(--team-ink-rgb) / 0.18) 0%,
+    rgb(var(--team-ink-rgb) / 0.04) 100%
+  );
+  box-shadow:
+    inset 3px 0 0 var(--team-ink),
+    0 0 18px -10px rgb(var(--team-ink-rgb) / 0.9);
+}

@@ -2,11 +2,13 @@ import Link from "next/link";
 import { Suspense } from "react";
 import { getGameModeDefinition } from "@/application/game-mode-catalog";
 import type { DashboardSnapshot } from "@/state/selectors";
+import { formatShortDate } from "@/components/calendar/CalendarDayCell";
 import { OwnerTeamSwitcher } from "@/components/game/OwnerTeamSwitcher";
+import { ArenaPanel } from "@/components/ui/ArenaPanel";
+import { TickerBar, type TickerItem } from "@/components/ui/TickerBar";
 import {
   cn,
   focusRingClass,
-  panelClass,
   touchTargetClass,
   touchTargetTextClass,
 } from "@/components/ui/styles";
@@ -24,7 +26,7 @@ function NotificationsBell(props: { saveId: string; unreadCount: number }) {
       aria-label={label}
       className={cn(
         touchTargetClass,
-        "relative shrink-0 rounded-md border border-zinc-700 text-zinc-300 hover:border-amber-600 hover:text-amber-400",
+        "relative shrink-0 rounded-lg border border-surface-line bg-surface-deep/60 text-zinc-300 hover:border-team-ink hover:text-team-ink",
         focusRingClass,
       )}
     >
@@ -35,14 +37,14 @@ function NotificationsBell(props: { saveId: string; unreadCount: number }) {
         strokeWidth="1.75"
         strokeLinecap="round"
         strokeLinejoin="round"
-        className="h-4 w-4"
+        className="h-5 w-5"
         aria-hidden="true"
       >
         <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" />
         <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" />
       </svg>
       {props.unreadCount > 0 ? (
-        <span className="absolute -right-1.5 -top-1.5 inline-flex min-w-[1.15rem] items-center justify-center rounded-full bg-amber-500 px-1 font-mono text-[0.65rem] font-semibold leading-4 text-zinc-950">
+        <span className="absolute -right-1.5 -top-1.5 inline-flex min-w-[1.15rem] items-center justify-center rounded-full bg-team-ink px-1 font-mono text-[0.65rem] font-semibold leading-4 text-zinc-950">
           {props.unreadCount > 99 ? "99+" : props.unreadCount}
         </span>
       ) : null}
@@ -51,8 +53,10 @@ function NotificationsBell(props: { saveId: string; unreadCount: number }) {
 }
 
 /**
- * Global in-save header: where am I, who am I managing, what day is it?
- * Financial snapshot lives on Dashboard / Finances — not here.
+ * Global in-save header, styled as a broadcast scoreboard bar: who am I
+ * managing (team switcher), and a ticker with date, record and rank.
+ * Unread notifications live on the bell. Financial snapshot lives on
+ * Dashboard / Finances — not here.
  */
 export function GameHeader(props: {
   saveId: string;
@@ -63,70 +67,69 @@ export function GameHeader(props: {
   const { dashboard, saveId } = props;
   const modeDef = getGameModeDefinition(dashboard.mode);
   const record = `${dashboard.controlledStanding.wins}–${dashboard.controlledStanding.losses}`;
+  const tickerItems: TickerItem[] = [
+    { label: "Date", value: formatShortDate(dashboard.currentDate) },
+    { label: "Season", value: dashboard.seasonYear },
+    { label: "Record", value: record, tone: "team" },
+    {
+      label: "Rank",
+      value:
+        dashboard.standingsRank == null ? "—" : `#${dashboard.standingsRank}`,
+    },
+  ];
 
   return (
-    <header
-      className={cn(
-        panelClass,
-        "flex flex-col gap-3 p-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4 sm:p-4",
-      )}
+    <ArenaPanel
+      as="header"
+      edge="top"
+      density="compact"
+      className="flex flex-col gap-2 sm:p-4"
     >
-      <div className="flex min-w-0 flex-wrap items-center gap-3">
-        <div className="flex min-w-0 shrink-0 items-center gap-2">
-          {props.menu}
-          <Link
-            href="/home"
-            className={cn(
-              touchTargetTextClass,
-              "text-sm font-medium text-zinc-100 hover:text-amber-400",
-              focusRingClass,
-            )}
-          >
-            BallSim
-          </Link>
-          <span className="hidden text-zinc-700 sm:inline" aria-hidden>
-            |
-          </span>
-          <span className="hidden font-mono text-[0.65rem] uppercase tracking-[0.16em] text-amber-500 sm:inline">
-            {modeDef.name}
-          </span>
-        </div>
-
-        <Suspense fallback={null}>
-          <OwnerTeamSwitcher
-            saveId={saveId}
-            ownedTeams={dashboard.ownedTeams}
-          />
-        </Suspense>
+      <div className="hidden items-center gap-2 sm:flex">
+        <Link
+          href="/home"
+          className={cn(
+            touchTargetTextClass,
+            "-my-2 -ml-2 font-display text-base font-bold uppercase tracking-wider text-zinc-100 hover:text-team-ink",
+            focusRingClass,
+          )}
+        >
+          BallSim
+        </Link>
+        <span className="text-zinc-700" aria-hidden>
+          /
+        </span>
+        <span className="font-mono text-[0.65rem] uppercase tracking-[0.16em] text-team-ink">
+          {modeDef.name}
+        </span>
       </div>
 
-      <div className="flex min-w-0 flex-wrap items-center gap-3 sm:justify-end">
-        <div className="min-w-0">
-          <p className="font-mono text-sm text-zinc-200">
-            {dashboard.currentDate}
-          </p>
-          <p className="text-xs text-zinc-500">Season {dashboard.seasonYear}</p>
+      <div className="flex min-w-0 items-center gap-3">
+        {props.menu}
+        <div className="min-w-0 flex-1">
+          <Suspense fallback={null}>
+            <OwnerTeamSwitcher
+              saveId={saveId}
+              ownedTeams={dashboard.ownedTeams}
+            />
+          </Suspense>
         </div>
-
-        <span className="hidden text-zinc-700 sm:inline" aria-hidden>
-          |
-        </span>
-
-        <p className="min-w-0 truncate text-sm text-zinc-300">
-          <span className="font-mono text-zinc-100">{record}</span>
-          <span className="text-zinc-500"> · </span>
-          <span className="text-zinc-400">
-            {dashboard.standingsRank == null
-              ? "—"
-              : `#${dashboard.standingsRank}`}
-          </span>
-        </p>
-
+        <TickerBar
+          aria-label="Season status"
+          items={tickerItems}
+          className="hidden md:flex"
+        />
         <NotificationsBell
           saveId={saveId}
           unreadCount={dashboard.unreadNotificationCount}
         />
       </div>
-    </header>
+
+      <TickerBar
+        aria-label="Season status"
+        items={tickerItems}
+        className="border-t border-surface-line pt-2 md:hidden"
+      />
+    </ArenaPanel>
   );
 }
