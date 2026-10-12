@@ -2,7 +2,12 @@ import Link from "next/link";
 import type { OwnerDashboardMediaHeadline } from "@/state/owner-dashboard";
 import { EmptyState } from "@/components/owner/EmptyState";
 import { Section } from "@/components/owner/Section";
-import { touchTargetTextClass } from "@/components/ui/styles";
+import { ArenaPanel } from "@/components/ui/ArenaPanel";
+import {
+  cn,
+  focusRingClass,
+  touchTargetTextClass,
+} from "@/components/ui/styles";
 
 /**
  * Around the League — Phase 2 uses existing reliable media headlines only.
@@ -20,44 +25,53 @@ export function AroundTheLeaguePanel(props: {
       action={
         <Link
           href={mediaHref}
-          className={`${touchTargetTextClass} text-sm text-amber-400 hover:text-amber-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-500`}
+          className={cn(
+            touchTargetTextClass,
+            "text-sm text-team-ink hover:underline",
+            focusRingClass,
+          )}
         >
           Media Hub
         </Link>
       }
     >
       {props.headlines.length === 0 ? (
-        <div className="rounded-xl border border-zinc-800 bg-zinc-900/50 px-4 py-4">
+        <ArenaPanel as="div" density="default">
           <EmptyState message="No league stories yet. Advance the season to fill the briefing." />
-        </div>
+        </ArenaPanel>
       ) : (
-        <ul className="space-y-2">
-          {props.headlines.slice(0, 5).map((item) => (
-            <li key={item.id}>
-              <Link
-                href={item.href}
-                className="block rounded-lg border border-zinc-800 bg-zinc-900/40 px-4 py-3 transition-colors hover:border-zinc-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-500"
-              >
-                <div className="flex flex-wrap items-center gap-2">
-                  <p className="text-sm font-medium text-zinc-100">
-                    {item.headline}
+        <ArenaPanel as="div" edge="left" density="compact" className="!p-0">
+          <ul className="divide-y divide-surface-line">
+            {props.headlines.slice(0, 5).map((item) => (
+              <li key={item.id}>
+                <Link
+                  href={item.href}
+                  className={cn(
+                    "block px-4 py-3 transition-colors hover:bg-white/5",
+                    focusRingClass,
+                  )}
+                >
+                  <div className="flex flex-wrap items-center gap-2">
+                    {item.unread ? (
+                      <span className="rounded bg-live px-1.5 py-0.5 font-mono text-[0.6rem] font-bold uppercase tracking-wide text-zinc-950">
+                        New
+                      </span>
+                    ) : null}
+                    <p className="font-display text-lg font-bold uppercase leading-tight tracking-wide text-zinc-50">
+                      {item.headline}
+                    </p>
+                  </div>
+                  <p className="mt-1 line-clamp-1 text-xs text-zinc-300">
+                    {item.summary}
                   </p>
-                  {item.unread ? (
-                    <span className="font-mono text-[0.65rem] uppercase tracking-wide text-amber-400">
-                      New
-                    </span>
-                  ) : null}
-                </div>
-                <p className="mt-1 line-clamp-2 text-xs text-zinc-400">
-                  {item.summary}
-                </p>
-                <p className="mt-1 font-mono text-[0.65rem] text-zinc-600">
-                  {item.occurredOn} · {item.importance}
-                </p>
-              </Link>
-            </li>
-          ))}
-        </ul>
+                  <p className="mt-1 font-mono text-[0.65rem] uppercase tracking-wide text-zinc-500">
+                    {item.occurredOn} · {item.importance}
+                  </p>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </ArenaPanel>
       )}
     </Section>
   );

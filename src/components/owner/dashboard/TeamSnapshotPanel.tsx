@@ -3,7 +3,9 @@ import type { OwnerDashboardTeam } from "@/state/owner-dashboard";
 import type { RecentFormView } from "@/state/recent-form-selectors";
 import { PlayerEntityLink } from "@/components/entity/PlayerEntityLink";
 import { Section } from "@/components/owner/Section";
-import { cn, panelClass, touchTargetTextClass } from "@/components/ui/styles";
+import { ArenaPanel } from "@/components/ui/ArenaPanel";
+import { TickerBar } from "@/components/ui/TickerBar";
+import { cn, touchTargetTextClass } from "@/components/ui/styles";
 
 function ordinal(n: number): string {
   const rem100 = n % 100;
@@ -44,49 +46,30 @@ export function TeamSnapshotPanel(props: {
           href={`/dashboard/${saveId}/team`}
           className={cn(
             touchTargetTextClass,
-            "text-sm text-amber-400 hover:text-amber-300",
+            "text-sm text-team-ink hover:underline",
           )}
         >
           Team Hub
         </Link>
       }
     >
-      <div className={cn(panelClass, "space-y-4 px-4 py-4")}>
-        <dl className="grid grid-cols-2 gap-3 text-sm sm:grid-cols-4">
-          <div>
-            <dt className="font-mono text-[0.65rem] uppercase tracking-wide text-zinc-500">
-              Record
-            </dt>
-            <dd className="mt-0.5 font-mono text-zinc-100">
-              {team.wins}–{team.losses}
-            </dd>
-          </div>
-          <div>
-            <dt className="font-mono text-[0.65rem] uppercase tracking-wide text-zinc-500">
-              Rank
-            </dt>
-            <dd className="mt-0.5 text-zinc-100">{standingLine}</dd>
-          </div>
-          <div>
-            <dt className="font-mono text-[0.65rem] uppercase tracking-wide text-zinc-500">
-              Form (L5)
-            </dt>
-            <dd className="mt-0.5 font-mono text-zinc-100">
-              {recentForm.marks || "—"}
-              {recentForm.streak ? (
-                <span className="ml-2 text-xs text-zinc-500">
-                  {recentForm.streak}
-                </span>
-              ) : null}
-            </dd>
-          </div>
-          <div>
-            <dt className="font-mono text-[0.65rem] uppercase tracking-wide text-zinc-500">
-              Strength
-            </dt>
-            <dd className="mt-0.5 font-mono text-zinc-100">{team.strength}</dd>
-          </div>
-        </dl>
+      <ArenaPanel as="div" raised className="space-y-4">
+        <TickerBar
+          aria-label="Team snapshot"
+          items={[
+            {
+              label: "Record",
+              value: `${team.wins}–${team.losses}`,
+              tone: "team",
+            },
+            { label: "Rank", value: standingLine },
+            {
+              label: "Form (L5)",
+              value: `${recentForm.marks || "—"}${recentForm.streak ? ` ${recentForm.streak}` : ""}`,
+            },
+            { label: "Strength", value: team.strength },
+          ]}
+        />
 
         {team.rosterProblems.length > 0 ? (
           <div>
@@ -99,7 +82,7 @@ export function TeamSnapshotPanel(props: {
                   <PlayerEntityLink
                     saveId={saveId}
                     playerId={problem.playerId}
-                    className="text-zinc-200 hover:text-amber-400"
+                    className="text-zinc-200 hover:text-team-ink"
                   >
                     {problem.name}
                   </PlayerEntityLink>
@@ -113,7 +96,7 @@ export function TeamSnapshotPanel(props: {
             Roster health looks stable.
           </p>
         )}
-      </div>
+      </ArenaPanel>
     </Section>
   );
 }

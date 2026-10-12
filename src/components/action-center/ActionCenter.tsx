@@ -2,7 +2,13 @@ import Link from "next/link";
 import type { ActionCenterView } from "@/state/action-center-selectors";
 import { ActionCard } from "@/components/ui/ActionCard";
 import { StatusBadge } from "@/components/ui/StatusBadge";
-import { cn, panelClass, touchTargetClass, touchTargetTextClass } from "@/components/ui/styles";
+import { ArenaPanel } from "@/components/ui/ArenaPanel";
+import {
+  cn,
+  focusRingClass,
+  touchTargetClass,
+  touchTargetTextClass,
+} from "@/components/ui/styles";
 
 /**
  * Front Office Action Center.
@@ -22,19 +28,16 @@ export function ActionCenter(props: {
   if (view.items.length === 0) {
     return (
       <section
-        className={cn(
-          panelClass,
-          "border-emerald-800/40 bg-emerald-950/20 px-4 py-4",
-        )}
+        className="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-xl border border-win/30 bg-win/10 px-4 py-3"
         aria-label="Action center"
       >
-        <p className="font-mono text-[0.65rem] uppercase tracking-[0.16em] text-emerald-500">
+        <p className="font-mono text-[0.65rem] uppercase tracking-[0.16em] text-win">
           Action Center
         </p>
-        <h2 className="mt-1 text-base font-medium text-zinc-50">
+        <h2 className="font-display text-lg font-bold uppercase tracking-wide text-zinc-50">
           You&apos;re in good shape
         </h2>
-        <p className="mt-1 text-sm text-zinc-400">
+        <p className="text-sm text-zinc-300">
           No urgent franchise decisions require your attention right now.
         </p>
       </section>
@@ -42,34 +45,33 @@ export function ActionCenter(props: {
   }
 
   return (
-    <section
-      className={cn(
-        "space-y-3",
-        isActionsFocal &&
-          "rounded-xl border border-amber-800/50 bg-amber-950/15 p-4 sm:p-5",
-      )}
-      aria-label="Action center"
+    <ArenaPanel
+      edge="left"
+      glow={isActionsFocal}
+      density={isActionsFocal ? "comfortable" : "compact"}
+      className="space-y-3"
+      aria-labelledby="action-center-title"
     >
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <p
-            className={cn(
-              "font-mono text-[0.65rem] uppercase tracking-[0.16em]",
-              isActionsFocal ? "text-amber-400" : "text-zinc-500",
-            )}
-          >
-            Action Center
-          </p>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+          <span
+            aria-hidden
+            className="inline-flex h-2.5 w-2.5 rounded-full bg-live team-pulse"
+          />
           <h2
+            id="action-center-title"
             className={cn(
-              "mt-1 font-medium text-zinc-50",
-              isActionsFocal ? "text-xl" : "text-base",
+              "font-display font-bold uppercase tracking-wide text-zinc-50",
+              isActionsFocal ? "text-2xl" : "text-xl",
             )}
           >
             {view.urgentCount > 0
               ? `${view.urgentCount} action${view.urgentCount === 1 ? "" : "s"} need attention`
               : "Action queue"}
           </h2>
+          <p className="font-mono text-[0.65rem] uppercase tracking-[0.16em] text-zinc-400">
+            Action Center
+          </p>
         </div>
         {props.aiCanHandle && props.letAiHandleAction ? (
           <form action={props.letAiHandleAction}>
@@ -79,7 +81,8 @@ export function ActionCenter(props: {
               type="submit"
               className={cn(
                 touchTargetClass,
-                "rounded-md border border-emerald-700/60 bg-emerald-950/40 px-3 text-sm text-emerald-300 hover:border-emerald-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-500",
+                "rounded-md border border-win/60 bg-win/10 px-3 text-sm text-win hover:border-win",
+                focusRingClass,
               )}
             >
               Let AI Handle
@@ -105,9 +108,9 @@ export function ActionCenter(props: {
               density={isActionsFocal ? "comfortable" : "compact"}
               className={
                 item.severity === "critical"
-                  ? "border-rose-800/50 bg-rose-950/20"
+                  ? "border-loss/50 bg-loss/10"
                   : item.severity === "warning"
-                    ? "border-amber-800/40 bg-amber-950/15"
+                    ? "border-warning/40 bg-warning/10"
                     : undefined
               }
               badge={
@@ -121,7 +124,7 @@ export function ActionCenter(props: {
                 </div>
               }
               footer={
-                <span className="text-xs font-medium text-amber-400">
+                <span className="text-xs font-medium text-team-ink">
                   {item.hrefLabel} →
                 </span>
               }
@@ -133,19 +136,19 @@ export function ActionCenter(props: {
       </ul>
 
       {!isActionsFocal ? (
-        <p className="text-xs text-zinc-500">
+        <p className="text-xs text-zinc-400">
           Next Game is your primary focus while the queue is quiet.{" "}
           <Link
             href={`/dashboard/${props.saveId}/calendar`}
             className={cn(
               touchTargetTextClass,
-              "text-amber-400 hover:text-amber-300",
+              "text-team-ink hover:underline",
             )}
           >
             Open Calendar
           </Link>
         </p>
       ) : null}
-    </section>
+    </ArenaPanel>
   );
 }

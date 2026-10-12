@@ -13,15 +13,18 @@ import { AroundTheLeaguePanel } from "@/components/owner/dashboard/AroundTheLeag
 import { DashboardNotifications } from "@/components/owner/dashboard/DashboardNotifications";
 import { FranchiseHealthPanel } from "@/components/owner/dashboard/FranchiseHealthPanel";
 import { FranchiseSituations } from "@/components/owner/dashboard/FranchiseSituations";
-import { FrontOfficeHeader } from "@/components/owner/dashboard/FrontOfficeHeader";
-import { NextGamePanel } from "@/components/owner/dashboard/NextGamePanel";
+import { MatchupBanner } from "@/components/owner/dashboard/MatchupBanner";
 import { OwnerPanel } from "@/components/owner/dashboard/OwnerPanel";
 import { PendingOwnerDecisionPanel } from "@/components/owner/dashboard/PendingOwnerDecisionPanel";
 import { RecentActivity } from "@/components/owner/dashboard/RecentActivity";
 import { RecentResultsPanel } from "@/components/owner/dashboard/RecentResultsPanel";
 import { TeamSnapshotPanel } from "@/components/owner/dashboard/TeamSnapshotPanel";
 import { ErrorState } from "@/components/owner/EmptyState";
-import { cn, touchTargetClass, touchTargetTextClass } from "@/components/ui/styles";
+import {
+  cn,
+  touchTargetClass,
+  touchTargetTextClass,
+} from "@/components/ui/styles";
 import { buildActionCenterView } from "@/state/action-center-selectors";
 import { recentFormFromResults } from "@/state/recent-form-selectors";
 
@@ -56,28 +59,36 @@ export default async function DashboardPage({
   });
 
   const recentForm = recentFormFromResults(dashboard.recentResults);
-  const nextGame = dash.team.upcomingGames[0];
-  const nextOpponentLabel = nextGame
-    ? `${nextGame.home ? "vs" : "@"} ${nextGame.opponentAbbreviation}`
-    : null;
   const isNextGameFocal = actionCenter.focalMode === "next-game";
+  const isActionsFocal = actionCenter.focalMode === "actions";
+  const actionCenterEl = (
+    <ActionCenter
+      view={actionCenter}
+      saveId={saveId}
+      returnPath={returnPath}
+      aiCanHandle={aiCanHandle}
+      letAiHandleAction={letAiHandlePhaseAction}
+    />
+  );
   const showOffseasonShortcut = dash.seasonPhase === "offseason";
 
   return (
     <div className="space-y-8">
-      <FrontOfficeHeader
+      {isActionsFocal ? actionCenterEl : null}
+
+      <MatchupBanner
         saveId={saveId}
         saveName={save.name}
         leagueName={dash.leagueName}
         currentDate={dash.currentDate}
         seasonYear={dash.seasonYear}
         seasonPhaseLabel={phase.primaryLabel}
+        team={dash.team}
         teamCity={dash.controlledTeam.city}
         teamName={dash.controlledTeam.name}
-        wins={dash.team.wins}
-        losses={dash.team.losses}
-        leagueRank={dash.team.leagueRank}
-        nextOpponentLabel={nextOpponentLabel}
+        teamBranding={dash.controlledTeam.branding}
+        recentForm={recentForm}
+        isFocal={isNextGameFocal}
       />
 
       {error ? <ErrorState message={error} /> : null}
@@ -194,34 +205,21 @@ export default async function DashboardPage({
         </div>
       ) : null}
 
-      <ActionCenter
-        view={actionCenter}
-        saveId={saveId}
-        returnPath={returnPath}
-        aiCanHandle={aiCanHandle}
-        letAiHandleAction={letAiHandlePhaseAction}
-      />
+      {isActionsFocal ? null : actionCenterEl}
 
+      <RecentResultsPanel saveId={saveId} games={recentForm.games} />
+
+      {/* Secondary tier: supporting context, quieter than the hero. */}
       <div className="grid gap-8 lg:grid-cols-2 lg:items-start">
-        <NextGamePanel
-          team={dash.team}
-          saveId={saveId}
-          teamRecord={`${dash.team.wins}–${dash.team.losses}`}
-          recentForm={recentForm}
-          isFocal={isNextGameFocal}
-        />
         <TeamSnapshotPanel
           team={dash.team}
           saveId={saveId}
           recentForm={recentForm}
         />
-      </div>
-
-      <RecentResultsPanel saveId={saveId} games={recentForm.games} />
-
-      <div className="grid gap-8 lg:grid-cols-2 lg:items-start">
         <AroundTheLeaguePanel headlines={dash.mediaHeadlines} saveId={saveId} />
-        <div className="opacity-90">
+        <FranchiseHealthPanel health={dash.health} insights={dash.insights} />
+        <OwnerPanel owner={dash.owner} />
+        <div className="opacity-90 lg:col-span-2">
           <RecentActivity activity={dash.activity.slice(0, 5)} />
         </div>
       </div>
@@ -231,11 +229,6 @@ export default async function DashboardPage({
         situations={dash.situations}
         returnPath={returnPath}
       />
-
-      <div className="grid gap-8 lg:grid-cols-2">
-        <FranchiseHealthPanel health={dash.health} insights={dash.insights} />
-        <OwnerPanel owner={dash.owner} />
-      </div>
 
       <DashboardNotifications
         notifications={dash.notifications}
