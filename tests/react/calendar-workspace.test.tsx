@@ -228,6 +228,18 @@ describe("CalendarWorkspace redesign", () => {
     expect(screen.queryByText("Stop conditions")).toBeNull();
     expect(screen.queryByText("1 Day")).toBeNull();
     expect(screen.queryByLabelText("Calendar filters")).toBeNull();
+
+    const today = screen.getByRole("button", {
+      name: "2026-09-13, current simulation date",
+    });
+    expect(today.getAttribute("data-sim-cursor")).toBeNull();
+    expect(today.className).toContain("border-amber-500");
+    expect(today.className).not.toContain("ring-amber-400");
+    const nextGame = screen.getByRole("button", {
+      name: "2026-09-18, next team game, HOME vs Rivermen",
+    });
+    expect(nextGame.className).toContain("ring-sky-500/70");
+    expect(nextGame.className).toContain("ring-amber-500/80");
     unmount();
   });
 
@@ -315,6 +327,8 @@ describe("CalendarWorkspace redesign", () => {
     );
 
     expect(screen.getByText(/Simulation in progress/i)).toBeTruthy();
+    expect(screen.queryByText(/Simulating —/)).toBeNull();
+    expect(screen.queryByText(/% complete/)).toBeNull();
     expect(
       (screen.getByRole("button", { name: "Prev" }) as HTMLButtonElement)
         .disabled,
@@ -415,6 +429,61 @@ describe("CalendarWorkspace redesign", () => {
         });
       },
     );
+    const { container, unmount } = render(
+      <SimulationActivityProvider>
+        <CalendarWorkspace
+          view={makeView()}
+          saveId="save_cal"
+          showSimSummary={false}
+          daysAdvanced={0}
+          highlightCount={0}
+        />
+      </SimulationActivityProvider>,
+    );
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: "2026-09-18, next team game, HOME vs Rivermen",
+      }),
+    );
+    fireEvent.click(screen.getByRole("button", { name: /Simulate to date/i }));
+    await waitFor(() => {
+      const cursor = screen.getByRole("button", {
+        name: /2026-09-18, simulating, current simulation date/,
+      });
+      expect(cursor.getAttribute("data-sim-cursor")).toBe("true");
+      expect(cursor.className).toContain("ring-amber-400");
+      expect(cursor.className).not.toContain("ring-sky-500/70");
+      expect(cursor.className).not.toContain("ring-amber-500/80");
+      expect(screen.getByText(/W 110-102/)).toBeTruthy();
+      expect(screen.queryByText(/Simulating —/)).toBeNull();
+      expect(screen.queryByText(/% complete/)).toBeNull();
+      expect(screen.getByRole("status").textContent).toMatch(/Simulating regular/);
+      expect(screen.getByRole("status").textContent).toMatch(/2026-09-18/);
+      const grid = container.querySelector(".grid.grid-cols-7");
+      expect(grid?.className).toContain("pointer-events-none");
+      expect(grid?.className).not.toContain("opacity-60");
+    });
+    unmount();
+  });
+
+  it("suppresses selected and next-game rings on every cell while simulating", async () => {
+    streamMocks.streamSimulateToDate.mockImplementation(
+      async (_saveId, _target, onEvent) => {
+        onEvent({
+          type: "progress",
+          daysRequested: 5,
+          daysAdvanced: 1,
+          currentDate: "2026-09-13",
+          completedDate: "2026-09-13",
+          phase: "regular",
+          offseasonStage: "in_season",
+          seasonYear: 2026,
+          gamesSimulated: 0,
+          percentComplete: 20,
+          teamGame: null,
+        });
+      },
+    );
     const { unmount } = render(
       <SimulationActivityProvider>
         <CalendarWorkspace
@@ -433,13 +502,17 @@ describe("CalendarWorkspace redesign", () => {
     );
     fireEvent.click(screen.getByRole("button", { name: /Simulate to date/i }));
     await waitFor(() => {
-      expect(
-        screen.getByRole("button", {
-          name: /2026-09-18, current simulation date/,
-        }),
-      ).toBeTruthy();
-      expect(screen.getByText(/W 110-102/)).toBeTruthy();
-      expect(screen.getByText(/Day 5 \/ 5/)).toBeTruthy();
+      const cursor = screen.getByRole("button", {
+        name: /2026-09-13, simulating, current simulation date/,
+      });
+      expect(cursor.getAttribute("data-sim-cursor")).toBe("true");
+      const selectedDay = screen.getByRole("button", {
+        name: /2026-09-18, next team game, HOME vs Rivermen/,
+      });
+      expect(selectedDay.getAttribute("data-sim-cursor")).toBeNull();
+      expect(selectedDay.className).not.toContain("ring-sky-500/70");
+      expect(selectedDay.className).not.toContain("ring-amber-500/80");
+      expect(selectedDay.className).not.toContain("ring-amber-400");
     });
     unmount();
   });
@@ -482,6 +555,11 @@ describe("CalendarWorkspace redesign", () => {
     await waitFor(() => {
       expect(screen.getByText("October 2026")).toBeTruthy();
       expect(screen.getByText("2026-10-02")).toBeTruthy();
+      const cursor = screen.getByRole("button", {
+        name: /2026-10-02, simulating, current simulation date/,
+      });
+      expect(cursor.getAttribute("data-sim-cursor")).toBe("true");
+      expect(cursor.className).toContain("ring-amber-400");
     });
     unmount();
   });

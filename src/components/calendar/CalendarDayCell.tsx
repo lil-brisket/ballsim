@@ -4,11 +4,16 @@ function dayNumber(isoDate: string): string {
   return String(Number(isoDate.slice(8, 10)));
 }
 
-export function calendarDayAriaLabel(cell: CalendarDayCellData): string {
+export function calendarDayAriaLabel(
+  cell: CalendarDayCellData,
+  options?: { simulating?: boolean },
+): string {
   const teamGame = cell.teamGame;
   const specialCount = cell.specialEvents.length;
+  const simulatingToday = options?.simulating === true && cell.isToday;
   const parts = [
     cell.date,
+    simulatingToday ? "simulating" : null,
     cell.isToday ? "current simulation date" : null,
     cell.isNextTeamGame ? "next team game" : null,
     teamGame
@@ -84,14 +89,40 @@ function LeagueMilestoneChips(props: {
   );
 }
 
+function dayCellHighlightClass(input: {
+  cell: CalendarDayCellData;
+  selected: boolean;
+  simulating: boolean;
+}): string {
+  const { cell, selected, simulating } = input;
+  if (simulating && cell.isToday) {
+    return "border-amber-400 bg-amber-950/40 ring-2 ring-amber-400 ring-offset-2 ring-offset-zinc-950";
+  }
+  if (simulating) {
+    return "";
+  }
+  return [
+    cell.isToday ? "border-amber-500 bg-amber-950/40" : "",
+    cell.isNextTeamGame && !cell.isToday
+      ? "border-sky-700/50 ring-2 ring-sky-500/70"
+      : "",
+    selected ? "ring-2 ring-amber-500/80" : "hover:border-zinc-600",
+  ]
+    .filter(Boolean)
+    .join(" ");
+}
+
 export function CalendarDayCell(props: {
   cell: CalendarDayCellData;
   selected: boolean;
   disabled?: boolean;
+  simulating?: boolean;
   onSelect: (date: string) => void;
 }) {
   const { cell, selected, onSelect } = props;
   const disabled = props.disabled === true;
+  const simulating = props.simulating === true;
+  const simCursor = simulating && cell.isToday;
   const teamGame = cell.teamGame;
   const specialCount = cell.specialEvents.length;
   const milestoneCount = (cell.leagueMilestones ?? []).length;
@@ -103,21 +134,19 @@ export function CalendarDayCell(props: {
       onClick={() => {
         if (!disabled) onSelect(cell.date);
       }}
-      aria-label={calendarDayAriaLabel(cell)}
+      aria-label={calendarDayAriaLabel(cell, { simulating })}
       aria-pressed={selected}
+      data-sim-cursor={simCursor ? "true" : undefined}
       className={[
         "flex min-h-[5.5rem] flex-col gap-1 rounded-md border p-1.5 text-left transition-colors sm:min-h-[6.75rem] sm:p-2",
         "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-500",
         cell.inMonth
           ? "border-zinc-800 bg-zinc-950/50"
           : "border-zinc-900/80 bg-zinc-950/20",
-        cell.isToday ? "border-amber-500 bg-amber-950/40" : "",
-        cell.isNextTeamGame && !cell.isToday
-          ? "border-sky-700/50 ring-2 ring-sky-500/70"
-          : "",
-        selected ? "ring-2 ring-amber-500/80" : "hover:border-zinc-600",
+        dayCellHighlightClass({ cell, selected, simulating }),
         cell.isPast && !cell.isToday ? "opacity-75" : "",
-        disabled ? "cursor-not-allowed opacity-50" : "",
+        disabled ? "cursor-not-allowed" : "",
+        disabled && !simulating ? "opacity-50" : "",
       ]
         .filter(Boolean)
         .join(" ")}

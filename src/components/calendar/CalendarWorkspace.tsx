@@ -37,7 +37,6 @@ import {
 } from "@/components/calendar/calendar-interrupt-state";
 import { OwnerDecisionInterruptModal } from "@/components/calendar/OwnerDecisionInterruptModal";
 import { useSimulationActivity } from "@/components/game/simulation-activity";
-import { SimulationProgressBanner } from "@/components/game/SimulationProgressBanner";
 import { Drawer } from "@/components/ui/Drawer";
 import { parseCalendarDate } from "@/domain/calendar-date";
 import {
@@ -46,6 +45,10 @@ import {
 } from "@/systems/calendar";
 
 const PLAYBACK_MS_PER_DAY = 110;
+
+function monthKey(isoDate: string): string {
+  return isoDate.slice(0, 7);
+}
 
 function useIsDesktopCalendar(): boolean {
   return useSyncExternalStore(
@@ -159,6 +162,8 @@ export function CalendarWorkspace(props: {
   const handleSimulateRef = useRef<(targetDate: string) => Promise<void>>(
     async () => undefined,
   );
+  const simAnnouncementRef = useRef<string | null>(null);
+  const simAnnouncementKeyRef = useRef<string | null>(null);
 
   /* eslint-disable react-hooks/set-state-in-effect -- sync URL-driven view props and playback into local UI state */
   useEffect(() => {
@@ -507,6 +512,16 @@ export function CalendarWorkspace(props: {
   }
 
   const busy = isPending || simulationPending || playback != null;
+  if (playback == null) {
+    simAnnouncementRef.current = null;
+    simAnnouncementKeyRef.current = null;
+  } else {
+    const announcementKey = `${playback.phase}:${monthKey(playback.currentDate)}`;
+    if (simAnnouncementKeyRef.current !== announcementKey) {
+      simAnnouncementKeyRef.current = announcementKey;
+      simAnnouncementRef.current = `Simulating ${playback.phase} · ${playback.currentDate}`;
+    }
+  }
   const inspector = (
     <DateInspector
       saveId={props.saveId}
@@ -523,20 +538,18 @@ export function CalendarWorkspace(props: {
 
   return (
     <div
-      className={`space-y-6 ${busy ? "opacity-80" : ""}`}
+      className={`space-y-6 ${busy && playback == null ? "opacity-80" : ""}`}
       aria-busy={playback != null || undefined}
     >
       {playback ? (
-        <SimulationProgressBanner
-          busy
-          seasonYear={playback.seasonYear}
-          phase={playback.phase}
-          currentDate={playback.currentDate}
-          daysAdvanced={playback.daysAdvanced}
-          daysRequested={playback.daysRequested}
-          gamesSimulated={playback.gamesSimulated}
-          percentComplete={playback.percentComplete}
-        />
+        <p
+          className="sr-only"
+          role="status"
+          aria-live="polite"
+          aria-atomic="true"
+        >
+          {simAnnouncementRef.current}
+        </p>
       ) : simulationPending ? (
         <p
           role="status"
@@ -647,6 +660,7 @@ export function CalendarWorkspace(props: {
         nextTeamGameDate={props.view.nextTeamGameDate}
         navigationDisabled={navigationDisabled}
         resultOverlays={resultOverlays}
+        simulating={playback != null}
         onSelectDate={handleSelectDate}
         onChangeMonth={handleChangeMonth}
         onJumpToday={handleJumpToday}

@@ -87,11 +87,17 @@ export function CalendarMonthView(props: {
   onJumpToday: () => void;
   onJumpNextGame: () => void;
   layout?: "grid" | "agenda";
+  simulating?: boolean;
 }) {
   const title = `${MONTH_NAMES[props.grid.month - 1]} ${props.grid.year}`;
   const prev = shiftMonth(props.grid.year, props.grid.month, -1);
   const next = shiftMonth(props.grid.year, props.grid.month, 1);
   const disabled = props.navigationDisabled === true;
+  const simulating = props.simulating === true;
+  const lockClass = cn(
+    disabled ? "pointer-events-none" : "",
+    disabled && !simulating ? "opacity-60" : "",
+  );
   const layout = props.layout ?? "grid";
   const navButtonClass = cn(
     touchTargetClass,
@@ -169,7 +175,7 @@ export function CalendarMonthView(props: {
       </div>
 
       {layout === "agenda" ? (
-        <div className={disabled ? "pointer-events-none opacity-60" : ""}>
+        <div className={lockClass}>
           <CalendarAgendaList
             days={liveDays}
             selectedDate={props.selectedDate}
@@ -178,11 +184,7 @@ export function CalendarMonthView(props: {
           />
         </div>
       ) : (
-        <div
-          className={`grid grid-cols-7 gap-1 sm:gap-1.5 ${
-            disabled ? "pointer-events-none opacity-60" : ""
-          }`}
-        >
+        <div className={cn("grid grid-cols-7 gap-1 sm:gap-1.5", lockClass)}>
           {WEEKDAYS.map((day) => (
             <div
               key={day}
@@ -197,6 +199,7 @@ export function CalendarMonthView(props: {
               cell={cell}
               selected={cell.date === props.selectedDate}
               disabled={disabled}
+              simulating={simulating}
               onSelect={props.onSelectDate}
             />
           ))}
