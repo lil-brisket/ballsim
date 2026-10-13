@@ -18,6 +18,7 @@ import {
 } from "@/systems/playoff-scheduling";
 import { recordSeriesGameResult } from "@/systems/playoff-series";
 import { simulateScheduledGame } from "@/systems/game-simulation";
+import { storePlayByPlayLogs } from "@/systems/play-by-play-store";
 import type { GameSimulationFidelity } from "@/systems/game-simulation";
 import { asGameId, asTeamId, type TeamId } from "@/domain/ids";
 import { createGame } from "@/domain/entities/game";
@@ -136,14 +137,25 @@ function simulatePlayInGames(
     competition: { ...current.competition, games },
   };
 
-  const simA = simulateScheduledGame(current, gameA, rng);
+  // Fidelity is always possession here, so the owner id only turns on
+  // play-by-play recording for the owner's play-in game.
+  const ownerTeamId = current.user.activeOwnerTeamId;
+  const simA = simulateScheduledGame(current, gameA, rng, { ownerTeamId });
   games = { ...games, [simA.finalGame.id]: simA.finalGame };
   current = { ...current, competition: { ...current.competition, games } };
+  current = storePlayByPlayLogs(
+    current,
+    simA.playByPlay != null ? { [simA.finalGame.id]: simA.playByPlay } : {},
+  );
   events.push(simA.event);
 
-  const simB = simulateScheduledGame(current, gameB, rng);
+  const simB = simulateScheduledGame(current, gameB, rng, { ownerTeamId });
   games = { ...games, [simB.finalGame.id]: simB.finalGame };
   current = { ...current, competition: { ...current.competition, games } };
+  current = storePlayByPlayLogs(
+    current,
+    simB.playByPlay != null ? { [simB.finalGame.id]: simB.playByPlay } : {},
+  );
   events.push(simB.event);
 
   const gameAWinner =
@@ -222,7 +234,7 @@ export function simulateNextPlayoffGame(
     },
   };
 
-  const { finalGame, event } = simulateScheduledGame(
+  const { finalGame, event, playByPlay } = simulateScheduledGame(
     stateWithGame,
     scheduled,
     rng,
@@ -270,14 +282,17 @@ export function simulateNextPlayoffGame(
   const events: DomainEvent[] = [event];
 
   return systemResult(
-    {
-      ...state,
-      competition: {
-        ...state.competition,
-        games,
-        playoffs: nextPlayoffs,
+    storePlayByPlayLogs(
+      {
+        ...state,
+        competition: {
+          ...state.competition,
+          games,
+          playoffs: nextPlayoffs,
+        },
       },
-    },
+      playByPlay != null ? { [finalGame.id]: playByPlay } : {},
+    ),
     events,
   );
 }

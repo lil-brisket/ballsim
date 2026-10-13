@@ -26,6 +26,7 @@ import {
 } from "@/state/team-branding-view";
 import { TEAM_TRANSACTION_EVENT_TYPES } from "@/state/team-transaction-selectors";
 import { assessExpansion } from "@/state/expansion-assessment";
+import { canWatchGame } from "@/state/watch-game-selectors";
 import { getCalendarContext } from "@/systems/simulation/calendar-context";
 
 export const LEAGUE_HUB_TIER2_LIMIT = 3;
@@ -46,6 +47,8 @@ export type LeagueGameResultRow = {
   homeBranding: TeamBrandingView | null;
   awayBranding: TeamBrandingView | null;
   competitionType: string;
+  /** True when a play-by-play log exists (show Watch link). */
+  canWatch: boolean;
 };
 
 export type LeagueTransactionBrief = {
@@ -254,6 +257,7 @@ export function toLeagueHubView(state: GameState): LeagueHubView {
       homeBranding: toBrandingView(home?.branding),
       awayBranding: toBrandingView(away?.branding),
       competitionType: game.competitionType,
+      canWatch: canWatchGame(state, game.id),
     };
   });
 

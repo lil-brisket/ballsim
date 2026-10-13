@@ -107,6 +107,8 @@ Notes for each `GameState.schemaVersion` bump that changed persisted shape, olde
 
 `schemaVersion` 65 adds `world.playerPortraits`: a persisted procedural portrait (`PlayerPortraitAssignment` — generator version, trait indices, collision salt) keyed by player / draft-prospect id. Pre-v65 saves migrate by running the pure `ensurePlayerPortraits` (no RNG, no I/O), so repeated loads of an un-resaved save show identical faces.
 
+`schemaVersion` 66 adds `competition.playByPlay: Record<GameId, PlayByPlayLog>` (`src/domain/entities/play-by-play.ts`): a compact columnar log (player index table plus parallel `period` / `clock` / `poss` / `code` / `side` / `player` / `player2` arrays, ~6 KB per game) for the active owner team's possession-sim games of the current season, including play-in, midseason tournament and playoff games. Only main-competition games are recorded; Development League games are not. `simulateScheduledGame` sets `recordPlayByPlay` when the owner plays. Recording draws no RNG, so results are identical with or without it. `GameResult.playByPlay` only carries the log in memory; `storePlayByPlayLogs` writes it to the map, and `initializeNewSeason` clears it. From v66, finalized games no longer persist the thin `Game.events` array (it was never read and cost ~37 KB per possession game). Older saves keep their stored events, and `migrateV65ToV66` only adds an empty map. `validateGameState` requires every key to reference a final current-season game, checks the code table and `player2` rules, period and clock ranges, and that each player was in the game on the recorded side. It also replays the log to the exact final score, period scores and per-player points. Owner involvement is not validated, because a team can be sold mid-season.
+
 ### Owner Mode vertical slice (Phase C)
 
 Production new games use a **12-team** league via `generateLeague` (`rosterSize: 0`) then `bootstrapWorld` / `generateRosters`. Placeholder `user.controlledTeamId` is the first sorted team id until `selectOwnerTeam` (allowed only while `calendar.lastSimulatedDate === null`).
@@ -138,6 +140,13 @@ GameState
 - **Uniqueness / exhaustion:** each new face avoids the trait signatures of active players (non-retired, plus prospects in drafts that aren't complete), trying up to 32 salts. If every salt collides, the salt-0 face is kept and flagged `duplicate: true`. `getPortraitCapacityReport` reports utilization.
 - **Repair:** `npm run portraits:backfill` (`repairPlayerPortraits`) fills missing or invalid entries in every save, one CAS write per save. It can be re-run safely.
 - **UI:** selectors attach `portrait` to player view models via `selectPlayerPortrait`. `PlayerPortrait` renders `PortraitFace` (inline SVG) when the entry is valid, and the initials plate otherwise. The optional raster overlay (`src`) still renders on top. Nothing is generated during render or page load.
+
+### Watch Game (play-by-play)
+
+- **Recording (systems):** `possession-resolution` pushes `PossessionPlay` rows next to its existing stat credits. Nothing extra happens unless `recordPlays` is set. `game-sim-state` stamps each row with the period, the clock when the possession started, and the possession number. `sim-bridge` records substitutions at rotation checkpoints. Assister, blocker, stealer and fouled player go in `player2` on the primary row, never as separate rows. The code table lives in `src/domain/entities/play-by-play.ts`.
+- **Storage:** `competition.playByPlay` holds one log per owner game for the current season (see schema v66).
+- **Decoding (state):** `src/state/watch-game-selectors.ts` turns a log into `WatchGameView` (`src/state/watch-game-view.ts`). That covers feed text, the running score, highlights (lead change, tie, 8-0 run, clutch, foul-out, and-one) and key moments. It also builds the live box score and the shot-type summary for any number of revealed plays. It only decodes and tallies; it holds no simulation logic.
+- **UI:** the route is `/dashboard/[saveId]/games/[gameId]/watch`, loaded by `loadOwnerWatchGameView`. Its components live in `src/components/game/watch/`. `WatchGameClient` owns playback state (revealed count, playing, speed) and calls the pure selectors; nothing is simulated in the browser. Row view models carry a `canWatch` flag (`canWatchGame`), so the Watch links on the schedule, dashboard, league hub and box score only appear when a log exists.
 
 Slice boundaries may be refined as domain models grow, but composition remains mandatory to avoid one undifferentiated mega-object.
 

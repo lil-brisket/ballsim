@@ -24,12 +24,22 @@ export default async function GameBoxScorePage({ params }: GamePageProps) {
         title="Box score"
         subtitle={`${boxScore.away.abbreviation} @ ${boxScore.home.abbreviation}`}
         actions={
-          <Link
-            href={`/dashboard/${saveId}/schedule`}
-            className="text-sm text-zinc-300 hover:text-team-ink"
-          >
-            ← Schedule
-          </Link>
+          <>
+            {view.canWatch ? (
+              <Link
+                href={`/dashboard/${saveId}/games/${gameId}/watch`}
+                className="text-sm text-amber-400 hover:text-amber-300"
+              >
+                Watch replay →
+              </Link>
+            ) : null}
+            <Link
+              href={`/dashboard/${saveId}/schedule`}
+              className="text-sm text-zinc-300 hover:text-team-ink"
+            >
+              ← Schedule
+            </Link>
+          </>
         }
       />
       <GameBoxScore boxScore={boxScore} />

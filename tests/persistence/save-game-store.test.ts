@@ -189,6 +189,7 @@ function createEightTeamPopulatedState(rngSeed: number): GameState {
         gameIds: [],
       },
       games: {},
+      playByPlay: {},
       standings,
       playoffs: createEmptyPlayoffTournament(),
       developmentLeague: {
@@ -265,7 +266,8 @@ function assertPopulatedFixture(state: GameState): void {
     (game) => game.status === "final",
   );
   expect(finalGames.length).toBeGreaterThan(0);
-  expect(finalGames.some((game) => game.events.length > 0)).toBe(true);
+  // v66: thin per-game events are no longer persisted on Game.
+  expect(finalGames.every((game) => game.events.length === 0)).toBe(true);
   expect(finalGames.some((game) => game.playerStats.length > 0)).toBe(true);
 
   expect(Object.keys(state.business.contracts).length).toBeGreaterThan(0);

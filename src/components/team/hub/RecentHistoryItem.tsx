@@ -23,6 +23,7 @@ export function RecentHistoryItem(props: {
           opponentScore={game.opponentScore}
           won={game.won}
           canOpenResult
+          canWatch={game.canWatch}
         />
       </li>
     );

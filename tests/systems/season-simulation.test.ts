@@ -67,7 +67,8 @@ describe("simulateSeason", () => {
     for (const gameId of result.state.competition.schedule.gameIds) {
       const game = result.state.competition.games[gameId]!;
       expect(game.status).toBe("final");
-      expect(game.events.length).toBeGreaterThan(0);
+      // v66: thin per-game events are no longer persisted on Game.
+      expect(game.events).toEqual([]);
       expect(game.playerStats.length).toBeGreaterThan(0);
       expect(game.score.home).not.toBe(game.score.away);
     }

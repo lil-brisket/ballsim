@@ -5,7 +5,10 @@
 import type { Player } from "@/domain/entities/player";
 import type { PlayerId, TeamId } from "@/domain/ids";
 import type { GameState } from "@/state/game-state";
-import type { GameSimState } from "@/systems/game-sim-state";
+import {
+  appendSubstitutionPlay,
+  type GameSimState,
+} from "@/systems/game-sim-state";
 import { GAME_SIMULATION_CONFIG } from "@/systems/game-simulation-config";
 import { isPlayerAvailable } from "@/systems/player-availability";
 import { cloneTeamRosterManagement } from "@/domain/entities/team-roster-management";
@@ -249,6 +252,13 @@ function applySideSubstitutions(input: {
       type: "substitution",
       teamId,
       playerId: decision.playerInId,
+    });
+    appendSubstitutionPlay(sim, {
+      periodNumber,
+      secondsRemaining,
+      teamId,
+      playerOutId: decision.playerOutId,
+      playerInId: decision.playerInId,
     });
     if (!sim.secondsOnCourt.has(decision.playerInId)) {
       sim.secondsOnCourt.set(decision.playerInId, 0);

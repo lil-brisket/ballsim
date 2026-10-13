@@ -139,6 +139,8 @@ import {
   type CityPickOption,
   type TeamListEntry,
 } from "@/state/selectors";
+import { canWatchGame, toWatchGameView } from "@/state/watch-game-selectors";
+import type { WatchGameView } from "@/state/watch-game-view";
 import {
   toPlayerProfileView,
   type PlayerProfileView,
@@ -1434,7 +1436,9 @@ export async function loadOwnerGameBoxScoreView(
   saveId: string,
   gameId: string,
   store?: SaveGameStore,
-): Promise<(CreateGameResult & { boxScore: GameBoxScoreView }) | null> {
+): Promise<
+  (CreateGameResult & { boxScore: GameBoxScoreView; canWatch: boolean }) | null
+> {
   const loaded = await getStore(store).load(saveId);
   if (!loaded) {
     return null;
@@ -1450,6 +1454,30 @@ export async function loadOwnerGameBoxScoreView(
     save: toSaveSummary(loaded),
     dashboard: toDashboardSnapshot(loaded.state),
     boxScore,
+    canWatch: canWatchGame(loaded.state, gameId),
+  };
+}
+
+/**
+ * Watch Game payload: box-score eligibility gates the game (current-season,
+ * final, belongs to this save); `watch` is null when no log was recorded.
+ */
+export async function loadOwnerWatchGameView(
+  saveId: string,
+  gameId: string,
+  store?: SaveGameStore,
+): Promise<(CreateGameResult & { watch: WatchGameView | null }) | null> {
+  const loaded = await getStore(store).load(saveId);
+  if (!loaded) {
+    return null;
+  }
+  if (!canOpenGameBoxScore(loaded.state, gameId)) {
+    return null;
+  }
+  return {
+    save: toSaveSummary(loaded),
+    dashboard: toDashboardSnapshot(loaded.state),
+    watch: toWatchGameView(loaded.state, gameId),
   };
 }
 

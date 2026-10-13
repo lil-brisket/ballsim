@@ -43,9 +43,7 @@ import { canonicalPreseasonStartDate } from "@/systems/simulation/season-lifecyc
 import { fillShortRosters } from "@/systems/roster-generation";
 import { processCpuContractExtensions } from "@/systems/contract-extensions";
 import { enforceMaxRosterViaDevelopmentLeague } from "@/systems/development-league/enforce-roster-cap";
-import {
-  expireSituation,
-} from "@/systems/narrative/lifecycle";
+import { expireSituation } from "@/systems/narrative/lifecycle";
 import { withOwnedFranchise } from "@/state/owner-context";
 import {
   advancePhase,
@@ -260,6 +258,7 @@ export function initializeNewSeason(state: GameState, rng?: Rng): SystemResult {
         gameIdsByDate: {},
       },
       games: {},
+      playByPlay: {},
       standings: { byTeamId: standingsByTeamId },
       playoffs: createEmptyPlayoffTournament(),
       developmentLeague: {
@@ -580,10 +579,7 @@ function runSeasonTransition(state: GameState, rng: Rng): SystemResult {
     "offseason.roster_decisions",
     "season_transition_complete",
   );
-  return systemResult(entered.state, [
-    ...finalized.events,
-    ...entered.events,
-  ]);
+  return systemResult(entered.state, [...finalized.events, ...entered.events]);
 }
 
 /**

@@ -16,7 +16,11 @@ import {
 import type { Player } from "@/domain/entities/player";
 import type { RotationEntry } from "@/domain/entities/team-roster-management";
 import type { GameId, PlayerId, SeasonId, TeamId } from "@/domain/ids";
-import type { PlayerStatsDelta } from "@/systems/possession-stats";
+import { PLAY_CODE, type PlayByPlayLog } from "@/domain/entities/play-by-play";
+import type {
+  PlayerStatsDelta,
+  PossessionPlay,
+} from "@/systems/possession-stats";
 import type { RotationPlan } from "@/systems/rotation/rotation-planner";
 import type { RotationTraceEntry } from "@/systems/rotation/rotation-trace";
 import type { FoulTroubleLevel } from "@/systems/rotation/rotation-foul-trouble";
@@ -68,6 +72,10 @@ export type GameSimState = {
   /** Windows already evaluated this period (avoid double-firing). */
   windowsFiredThisPeriod: Set<string>;
   overtimePeriodCount: number;
+  /** Play-by-play buffer; null unless the game records a log (owner games). */
+  playByPlay: PlayByPlayLog | null;
+  /** Player id → index in playByPlay.players. */
+  playByPlayIndex: Map<string, number>;
 };
 
 export type CreateGameSimStateInput = {
@@ -76,6 +84,7 @@ export type CreateGameSimStateInput = {
   awayPlayers: readonly Player[];
   homeOnCourt: readonly Player[];
   awayOnCourt: readonly Player[];
+  recordPlayByPlay?: boolean;
 };
 
 /**
@@ -152,7 +161,108 @@ export function createGameSimState(
     elapsedGameSeconds: 0,
     windowsFiredThisPeriod: new Set(),
     overtimePeriodCount: 0,
+    playByPlay:
+      input.recordPlayByPlay === true
+        ? {
+            v: 1,
+            players: [],
+            period: [],
+            clock: [],
+            poss: [],
+            code: [],
+            side: [],
+            player: [],
+            player2: [],
+          }
+        : null,
+    playByPlayIndex: new Map(),
   };
+}
+
+function playByPlayPlayerIndex(sim: GameSimState, playerId: PlayerId): number {
+  const existing = sim.playByPlayIndex.get(playerId);
+  if (existing !== undefined) {
+    return existing;
+  }
+  const index = sim.playByPlay!.players.length;
+  sim.playByPlay!.players.push(playerId);
+  sim.playByPlayIndex.set(playerId, index);
+  return index;
+}
+
+function appendPlayRow(
+  sim: GameSimState,
+  row: {
+    period: number;
+    clock: number;
+    poss: number;
+    code: number;
+    teamId: TeamId;
+    playerId: PlayerId;
+    player2Id: PlayerId | null;
+  },
+): void {
+  const log = sim.playByPlay!;
+  log.period.push(row.period);
+  log.clock.push(Math.max(0, Math.round(row.clock)));
+  log.poss.push(row.poss);
+  log.code.push(row.code);
+  log.side.push(row.teamId === sim.homeTeamId ? 0 : 1);
+  log.player.push(playByPlayPlayerIndex(sim, row.playerId));
+  log.player2.push(
+    row.player2Id == null ? -1 : playByPlayPlayerIndex(sim, row.player2Id),
+  );
+}
+
+/**
+ * Stamps one possession's plays with period, start-of-possession clock and
+ * possession number. No-op when the game is not recording.
+ */
+export function appendPossessionPlays(
+  sim: GameSimState,
+  plays: readonly PossessionPlay[] | null,
+  periodNumber: number,
+  possessionStartSeconds: number,
+): void {
+  if (sim.playByPlay == null || plays == null) {
+    return;
+  }
+  for (const play of plays) {
+    appendPlayRow(sim, {
+      period: periodNumber,
+      clock: possessionStartSeconds,
+      poss: sim.possessionIndex,
+      code: play.code,
+      teamId: play.teamId,
+      playerId: play.playerId,
+      player2Id: play.player2Id,
+    });
+  }
+}
+
+/** Records a substitution at a rotation checkpoint. No-op when not recording. */
+export function appendSubstitutionPlay(
+  sim: GameSimState,
+  input: {
+    periodNumber: number;
+    secondsRemaining: number;
+    teamId: TeamId;
+    playerOutId: PlayerId;
+    playerInId: PlayerId;
+  },
+): void {
+  if (sim.playByPlay == null) {
+    return;
+  }
+  appendPlayRow(sim, {
+    period: input.periodNumber,
+    clock: input.secondsRemaining,
+    poss: sim.possessionIndex,
+    code: PLAY_CODE.substitution,
+    teamId: input.teamId,
+    playerId: input.playerOutId,
+    player2Id: input.playerInId,
+  });
 }
 
 /**

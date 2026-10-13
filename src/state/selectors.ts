@@ -140,6 +140,8 @@ export type DashboardSnapshot = {
     opponentScore: number;
     won: boolean;
     opponentBranding: TeamBrandingView | null;
+    /** True when a play-by-play log exists for this game (Watch link). */
+    canWatch?: boolean;
   }>;
   upcomingGames: ScheduleGameView[];
   objectives: ObjectiveView[];
@@ -1149,6 +1151,9 @@ export function toDashboardSnapshot(state: GameState): DashboardSnapshot {
         opponentScore,
         won: teamScore > opponentScore,
         opponentBranding: toBrandingView(opponent?.branding),
+        canWatch:
+          canOpenGameBoxScore(state, game.id) &&
+          state.competition.playByPlay[game.id] != null,
       };
     });
 
@@ -1519,7 +1524,7 @@ function toRotationPanelView(
   };
 }
 
-function resolveTeamIdentity(
+export function resolveTeamIdentity(
   snapshot: Game["homeTeamSnapshot"],
   live: GameState["world"]["teams"][string] | undefined,
   teamId: string,

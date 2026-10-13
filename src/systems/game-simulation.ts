@@ -11,6 +11,7 @@ import {
   type GameResult,
 } from "@/domain/entities/game-result";
 import { assertCompletedGameBoxScore } from "@/domain/entities/game-box-score";
+import type { PlayByPlayLog } from "@/domain/entities/play-by-play";
 import type { Player } from "@/domain/entities/player";
 import { calculatePlayerOverall } from "@/domain/player-overall-rating";
 import { asPossessionId, type PlayerId, type TeamId } from "@/domain/ids";
@@ -40,6 +41,7 @@ import {
 import {
   applyPossessionToSimState,
   appendPeriodScore,
+  appendPossessionPlays,
   assertGameSimStatsConservation,
   createGameSimState,
   finalizeGameSimState,
@@ -76,6 +78,7 @@ import {
   type TeamStaffGameContext,
 } from "@/systems/staff-effects";
 import { simulateGameBoxScore } from "@/systems/game-simulation-box-score";
+import { storePlayByPlayLogs } from "@/systems/play-by-play-store";
 
 export type GameSimulationFidelity = "possession" | "box_score";
 
@@ -113,6 +116,11 @@ export type SimulateGameContext = {
   profiler?: SimulationProfiler;
   /** Optional GameState for rotation substitutions mid-game. */
   gameState?: GameState;
+  /**
+   * Record a compact play-by-play log on `GameResult.playByPlay` (owner
+   * games). Draws no random numbers: results are identical either way.
+   */
+  recordPlayByPlay?: boolean;
 };
 
 type TeamFoulCounters = {
@@ -172,6 +180,7 @@ export function simulateGame(
     awayPlayers: context.awayPlayers,
     homeOnCourt,
     awayOnCourt,
+    recordPlayByPlay: context.recordPlayByPlay === true,
   });
   initializeRotationForSim(
     sim,
@@ -336,6 +345,9 @@ export function simulateGame(
     events: finalizedGame.events.map((event) => ({ ...event })),
     rotationMeta: finalizedGame.rotationMeta,
   });
+  if (sim.playByPlay != null) {
+    result.playByPlay = sim.playByPlay;
+  }
 
   const totalMs = performance.now() - totalStart;
   const possessions = sim.possessionIndex;
@@ -378,6 +390,7 @@ export function simulateGamesForDate(
 ): SystemResult {
   const games = { ...state.competition.games };
   const events: DomainEvent[] = [];
+  const playByPlayLogs: Record<string, PlayByPlayLog> = {};
 
   let working = state;
   if (
@@ -408,16 +421,24 @@ export function simulateGamesForDate(
     }
 
     const gameStart = performance.now();
-    const { finalGame, event } = simulateScheduledGame(working, game, rng, {
-      profiler,
-      fidelity: options?.fidelity,
-      ownerTeamId: options?.ownerTeamId,
-    });
+    const { finalGame, event, playByPlay } = simulateScheduledGame(
+      working,
+      game,
+      rng,
+      {
+        profiler,
+        fidelity: options?.fidelity,
+        ownerTeamId: options?.ownerTeamId,
+      },
+    );
     if (profiler) {
       profiler.addSeason("gameSimMs", performance.now() - gameStart);
     }
     games[gameId] = finalGame;
     events.push(event);
+    if (playByPlay != null) {
+      playByPlayLogs[gameId] = playByPlay;
+    }
     // Advance injury recovery for both teams after each completed game
     working = advanceInjuryRecoveryAfterGame(
       working,
@@ -431,13 +452,16 @@ export function simulateGamesForDate(
   }
 
   return systemResult(
-    {
-      ...working,
-      competition: {
-        ...working.competition,
-        games,
+    storePlayByPlayLogs(
+      {
+        ...working,
+        competition: {
+          ...working.competition,
+          games,
+        },
       },
-    },
+      playByPlayLogs,
+    ),
     events,
   );
 }
@@ -460,7 +484,7 @@ export function simulateScheduledGame(
     fidelity?: GameSimulationFidelity;
     ownerTeamId?: TeamId;
   },
-): { finalGame: Game; event: DomainEvent } {
+): { finalGame: Game; event: DomainEvent; playByPlay: PlayByPlayLog | null } {
   if (game.status !== "scheduled") {
     throw new Error(
       `simulateScheduledGame requires status "scheduled"; ${game.id} is "${game.status}".`,
@@ -487,10 +511,11 @@ export function simulateScheduledGame(
     options?.rosterOverrides?.[game.awayTeamId] != null
       ? { players: selectStartingLineup(awayPlayers, 5) }
       : getEmergencyLineup(state, game.awayTeamId);
-  const useBoxScore =
-    options?.fidelity === "box_score" &&
-    options.ownerTeamId !== game.homeTeamId &&
-    options.ownerTeamId !== game.awayTeamId;
+  const isOwnerGame =
+    options?.ownerTeamId != null &&
+    (options.ownerTeamId === game.homeTeamId ||
+      options.ownerTeamId === game.awayTeamId);
+  const useBoxScore = options?.fidelity === "box_score" && !isOwnerGame;
   const simContext: SimulateGameContext = {
     homePlayers,
     awayPlayers,
@@ -504,6 +529,10 @@ export function simulateScheduledGame(
     awayStaffContext: buildTeamStaffGameContext(state, game.awayTeamId),
     profiler: options?.profiler,
     gameState: state,
+    // Owner games keep a watchable log; DL games live outside
+    // competition.games, so they never get one.
+    recordPlayByPlay:
+      isOwnerGame && game.competitionType !== "development_league",
   };
   const result = useBoxScore
     ? simulateGameBoxScore(game, simContext, rng)
@@ -526,7 +555,7 @@ export function simulateScheduledGame(
     },
   });
 
-  return { finalGame, event };
+  return { finalGame, event, playByPlay: result.playByPlay ?? null };
 }
 
 /**
@@ -612,7 +641,10 @@ export function buildFinalizedGame(
     status: "final",
     score: { ...result.score },
     periodScores: result.periodScores.map((period) => ({ ...period })),
-    events: result.events.map((event) => ({ ...event })),
+    // Thin per-game events are no longer persisted (v66): nothing read them
+    // and they cost ~37 KB per possession game. Owner games keep a compact
+    // log in competition.playByPlay instead.
+    events: [],
     playerStats,
     homeTeamSnapshot: homeSnapshot,
     awayTeamSnapshot: awaySnapshot,
@@ -711,6 +743,8 @@ function simulatePeriod(args: {
     args.timers.addDecision(performance.now() - decisionStart);
 
     sim.possessionIndex += 1;
+    const possessionPeriod = clock.periodNumber;
+    const possessionStartSeconds = clock.remainingSeconds;
     const defensiveFoulsBefore =
       defensiveTeamId === sim.homeTeamId ? teamFouls.home : teamFouls.away;
 
@@ -728,6 +762,7 @@ function simulatePeriod(args: {
         fatigue: averageOnCourtFatigue(sim, offensivePlayers),
         defensivePressureMultiplier:
           tactical.defensiveModifiers.defensivePressureMultiplier,
+        recordPlays: sim.playByPlay != null,
       },
       args.rng,
     );
@@ -735,6 +770,12 @@ function simulatePeriod(args: {
 
     const statsStart = performance.now();
     applyPossessionToSimState(sim, resolution);
+    appendPossessionPlays(
+      sim,
+      resolution.plays,
+      possessionPeriod,
+      possessionStartSeconds,
+    );
     args.timers.addStats(performance.now() - statsStart);
 
     sim.eventSequenceStart = nextEventSequenceStart(

@@ -21,7 +21,13 @@ import { generateRosters } from "@/systems/roster-generation";
 import { createEmptyPlayoffTournament } from "@/domain/entities/playoffs";
 import { createEmptySeasonEventsState } from "@/domain/entities/season-events";
 import { createEmptyTeamStanding } from "@/domain/entities/standings";
-import { asContractId, asPlayerId, asSaveId, asSeasonId, type TeamId } from "@/domain/ids";
+import {
+  asContractId,
+  asPlayerId,
+  asSaveId,
+  asSeasonId,
+  type TeamId,
+} from "@/domain/ids";
 import { GAME_STATE_SCHEMA_VERSION, type GameState } from "@/state/game-state";
 import { createEmptyTeamFinanceBooks } from "@/domain/entities/finances";
 import { createDefaultOwnedFranchiseState } from "@/state/owned-franchise-state";
@@ -246,6 +252,7 @@ describe("season lifecycle", () => {
         },
         schedule: { seasonId, gameIds: [], gameIdsByDate: {} },
         games: {},
+        playByPlay: {},
         standings,
         playoffs: createEmptyPlayoffTournament(),
         developmentLeague: {

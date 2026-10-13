@@ -12,6 +12,7 @@ import {
   type TeamBrandingView,
 } from "@/state/team-branding-view";
 import { addCalendarDays } from "@/domain/calendar-date";
+import { canWatchGame } from "@/state/watch-game-selectors";
 
 export type LeagueScheduleGameRow = {
   gameId: string;
@@ -30,6 +31,8 @@ export type LeagueScheduleGameRow = {
   competitionType: string;
   /** User can manage home game-day event. */
   canManageEvent: boolean;
+  /** True when a play-by-play log exists (show Watch link). */
+  canWatch: boolean;
 };
 
 export type LeagueScheduleView = {
@@ -79,6 +82,7 @@ function toRow(
     awayScore: isFinal ? game.score.away : null,
     competitionType: game.competitionType,
     canManageEvent: game.homeTeamId === myTeamId,
+    canWatch: canWatchGame(state, game.id),
   };
 }
 

@@ -38,6 +38,7 @@ export function LeagueRecentResultsPanel(props: {
                 awayScore={game.awayScore}
                 status="final"
                 competitionType={game.competitionType}
+                canWatch={game.canWatch}
               />
             </li>
           ))}

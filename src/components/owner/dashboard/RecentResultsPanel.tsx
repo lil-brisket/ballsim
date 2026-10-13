@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { GameResultLink } from "@/components/owner/GameResultLink";
 import { EmptyState } from "@/components/owner/EmptyState";
 import { Section } from "@/components/owner/Section";
@@ -75,6 +76,17 @@ export function RecentResultsPanel(props: {
                   {game.won ? "W" : "L"} {game.teamScore}–{game.opponentScore}
                 </span>
               </GameResultLink>
+              {game.canWatch ? (
+                <Link
+                  href={`/dashboard/${props.saveId}/games/${game.gameId}/watch`}
+                  className={cn(
+                    "mt-1 inline-flex min-h-11 items-center px-1 text-xs text-amber-400 hover:text-amber-300",
+                    focusRingClass,
+                  )}
+                >
+                  Watch
+                </Link>
+              ) : null}
             </li>
           ))}
         </ul>

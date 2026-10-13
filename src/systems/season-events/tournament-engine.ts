@@ -13,6 +13,7 @@ import type { PlayoffSeries } from "@/domain/entities/playoffs";
 import { systemResult, type SystemResult } from "@/domain/system-result";
 import type { GameState } from "@/state/game-state";
 import { simulateScheduledGame } from "@/systems/game-simulation";
+import { storePlayByPlayLogs } from "@/systems/play-by-play-store";
 import {
   ensureSeasonEventsState,
   withSeasonEvents,
@@ -203,17 +204,27 @@ export function simulateTournamentGamesForDate(
       if (game.date < date) {
         // Catch-up: still simulate overdue games
       }
-      const { finalGame, event } = simulateScheduledGame(current, game, rng);
-      current = {
-        ...current,
-        competition: {
-          ...current.competition,
-          games: {
-            ...current.competition.games,
-            [gameId]: finalGame,
+      // Fidelity is always possession here, so the owner id only turns on
+      // play-by-play recording for the owner's tournament games.
+      const { finalGame, event, playByPlay } = simulateScheduledGame(
+        current,
+        game,
+        rng,
+        { ownerTeamId: current.user.activeOwnerTeamId },
+      );
+      current = storePlayByPlayLogs(
+        {
+          ...current,
+          competition: {
+            ...current.competition,
+            games: {
+              ...current.competition.games,
+              [gameId]: finalGame,
+            },
           },
         },
-      };
+        playByPlay != null ? { [gameId]: playByPlay } : {},
+      );
       events.push(event);
 
       const homeWon = finalGame.score.home > finalGame.score.away;

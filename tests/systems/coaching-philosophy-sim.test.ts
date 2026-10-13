@@ -86,6 +86,7 @@ describe("requestPossessionSeconds pace", () => {
       }),
       steps: [],
       events: [],
+      plays: null,
       playerStats: [],
       pointsScored: 0,
       scoringTeamId: null,
