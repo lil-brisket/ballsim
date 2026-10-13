@@ -399,7 +399,7 @@ describe("simulateScheduledGame box_score fidelity", () => {
       },
     };
 
-    const { finalGame } = simulateScheduledGame(
+    const { finalGame, playByPlay } = simulateScheduledGame(
       state,
       game,
       createTestRng(11),
@@ -410,6 +410,7 @@ describe("simulateScheduledGame box_score fidelity", () => {
     );
     expect(finalGame.status).toBe("final");
     expect(finalGame.events).toEqual([]);
+    expect(playByPlay).toBeNull();
     expect(() => assertCompletedGameBoxScore(finalGame)).not.toThrow();
   });
 
@@ -443,7 +444,7 @@ describe("simulateScheduledGame box_score fidelity", () => {
       },
     };
 
-    const { finalGame } = simulateScheduledGame(
+    const { finalGame, playByPlay } = simulateScheduledGame(
       state,
       game,
       createTestRng(12),
@@ -452,6 +453,10 @@ describe("simulateScheduledGame box_score fidelity", () => {
         ownerTeamId: homeTeamId,
       },
     );
-    expect(finalGame.events.length).toBeGreaterThan(0);
+    // Only the possession engine produces a play-by-play log; thin events
+    // are no longer persisted on Game (v66).
+    expect(finalGame.events).toEqual([]);
+    expect(playByPlay).not.toBeNull();
+    expect(playByPlay!.code.length).toBeGreaterThan(0);
   });
 });

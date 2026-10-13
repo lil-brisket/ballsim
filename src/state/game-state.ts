@@ -15,6 +15,7 @@ import type { FranchiseReportCache } from "@/domain/entities/annual-franchise-re
 import type { GameDayPromotionSeasonState } from "@/domain/entities/game-day-promotion";
 import type { TeamFinances } from "@/domain/entities/finances";
 import type { Game } from "@/domain/entities/game";
+import type { PlayByPlayLog } from "@/domain/entities/play-by-play";
 import type { GameArchive } from "@/domain/entities/game-archive";
 import type { League } from "@/domain/entities/league";
 import type { LeagueEconomy } from "@/domain/entities/league-economy";
@@ -61,7 +62,7 @@ import type {
   FranchisePhaseState,
 } from "@/systems/phase-engine/phase-types";
 
-export const GAME_STATE_SCHEMA_VERSION = 65;
+export const GAME_STATE_SCHEMA_VERSION = 66;
 
 /** League personnel market for staff free agency (not a business-finance concept). */
 export type StaffMarketState = {
@@ -121,6 +122,12 @@ export type CompetitionSlice = {
   phase: CompetitionPhaseState;
   schedule: Schedule;
   games: Record<string, Game>;
+  /**
+   * Compact play-by-play logs keyed by game id (schema v66+). Only the owner
+   * team's final games of the current season; cleared at season rollover.
+   * Every key must reference a final current-season game in `games`.
+   */
+  playByPlay: Record<string, PlayByPlayLog>;
   standings: Standings;
   playoffs: PlayoffTournament;
   /**

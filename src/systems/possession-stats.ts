@@ -5,6 +5,7 @@ import {
   type GameEventType,
 } from "@/domain/entities/game";
 import type { PlayerId, TeamId } from "@/domain/ids";
+import type { PlayCode } from "@/domain/entities/play-by-play";
 import type { ShotType } from "@/systems/shot-resolution-config";
 
 export type PlayerStatsDelta = {
@@ -27,8 +28,21 @@ export type PlayerStatsDelta = {
   touches: number;
 };
 
+/**
+ * One play-by-play row produced inside a possession (owner games only).
+ * Clock, period and possession number are stamped by the game loop.
+ */
+export type PossessionPlay = {
+  code: PlayCode;
+  playerId: PlayerId;
+  player2Id: PlayerId | null;
+  teamId: TeamId;
+};
+
 export type PossessionStatsAccumulator = {
   events: GameEvent[];
+  /** Null unless the caller asked for play-by-play (no cost otherwise). */
+  plays: PossessionPlay[] | null;
   deltas: Map<string, PlayerStatsDelta>;
   /** Players already credited a touch this possession (dedup). */
   touchedPlayerIds: Set<string>;
@@ -38,6 +52,7 @@ export type PossessionStatsAccumulator = {
 
 export function createPossessionStatsAccumulator(
   eventSequenceStart: number,
+  recordPlays = false,
 ): PossessionStatsAccumulator {
   if (!Number.isInteger(eventSequenceStart) || eventSequenceStart < 0) {
     throw new Error(
@@ -46,6 +61,7 @@ export function createPossessionStatsAccumulator(
   }
   return {
     events: [],
+    plays: recordPlays ? [] : null,
     deltas: new Map(),
     touchedPlayerIds: new Set(),
     pointsScored: 0,
@@ -70,6 +86,17 @@ export function pushEvent(
     teamId,
   });
   accumulator.nextSequence += 1;
+}
+
+/** Records a play-by-play row; no-op unless recording is on. */
+export function pushPlay(
+  accumulator: PossessionStatsAccumulator,
+  code: PlayCode,
+  playerId: PlayerId,
+  player2Id: PlayerId | null,
+  teamId: TeamId,
+): void {
+  accumulator.plays?.push({ code, playerId, player2Id, teamId });
 }
 
 export function addPoints(

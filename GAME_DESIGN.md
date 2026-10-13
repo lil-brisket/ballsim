@@ -37,6 +37,7 @@ Owner Mode surfaces (minimal vertical-slice UI exists for dashboard/roster/stand
 - Roster
 - Player Profile
 - Schedule
+- Watch Game (owner games with a recorded play-by-play log: a progressive text feed with play/pause/speed/skip, a score ticker, a live box score, a shot-type summary and a key-moments recap. It has no court rendering. Shot location is not modelled, so there is no shot chart.)
 - Standings
 - Finances
 - Team
@@ -270,7 +271,7 @@ weight    weight
 
 Owner Mode calendar jumps use `fidelity: "box_score"` for CPU vs CPU games. That path is [`simulateGameBoxScore`](src/systems/game-simulation-box-score.ts): a statistical projection of the **same attributes** as possession sim (shot/FT make rates from `SHOT_RESOLUTION_CONFIG` / `FREE_THROW_RESOLUTION_CONFIG`, usage with a star exponent for scoring, passing for assists, rebound/steal/block ratings plus position modifiers). Free-throw make chance is `freeThrow / 99 + baselineProbability` (currently +0.035), then clamped. It does not run a possession loop and writes no play-by-play. Players who are `out` / `suspended` sit; `limited` / `questionable` / `minor` / `recovery` play reduced minutes. Injury creation still runs after the game via `processPostGameInjuryExposures` from those minutes.
 
-Games involving the owner team still use possession [`simulateGame`](src/systems/game-simulation.ts) even when fidelity is `box_score`. A **headless** owner (`skipOwnerGameplay`, used by league-sanity and Lab season runs) is nobody's team to watch, so its games use the league fidelity like every other CPU team; otherwise the one possession-engine team stands out against a box-score league (a 9-73 owner at 73.7 PPG next to a ~95 PPG league).
+Games involving the owner team still use possession [`simulateGame`](src/systems/game-simulation.ts) even when fidelity is `box_score`. Only those games record a watchable play-by-play log (`competition.playByPlay`, current season only). CPU possession games keep box scores but no per-play data. A **headless** owner (`skipOwnerGameplay`, used by league-sanity and Lab season runs) is nobody's team to watch, so its games use the league fidelity like every other CPU team; otherwise the one possession-engine team stands out against a box-score league (a 9-73 owner at 73.7 PPG next to a ~95 PPG league).
 
 **Box-score is not a second sport.** It is calibrated to, and tested against, the possession sim on the canonical Lab scenario (`normal`, seed 42, rotation on):
 

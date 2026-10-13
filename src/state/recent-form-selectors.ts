@@ -6,6 +6,7 @@
 
 import type { GameState } from "@/state/game-state";
 import type { TeamId } from "@/domain/ids";
+import { canWatchGame } from "@/state/watch-game-selectors";
 import {
   toBrandingView,
   type TeamBrandingView,
@@ -23,6 +24,8 @@ export type RecentFormGame = {
   teamScore: number;
   opponentScore: number;
   won: boolean;
+  /** True when a play-by-play log exists (show Watch link). */
+  canWatch?: boolean;
 };
 
 export type RecentFormView = {
@@ -79,6 +82,7 @@ export function getRecentForm(
         teamScore,
         opponentScore,
         won: teamScore > opponentScore,
+        canWatch: canWatchGame(state, game.id),
       } satisfies RecentFormGame;
     });
 
@@ -106,6 +110,7 @@ export function recentFormFromResults(
     won: boolean;
     opponentBranding?: TeamBrandingView | null;
     opponentTeamId?: string;
+    canWatch?: boolean;
   }>,
 ): RecentFormView {
   const games: RecentFormGame[] = results
@@ -120,6 +125,7 @@ export function recentFormFromResults(
       teamScore: result.teamScore,
       opponentScore: result.opponentScore,
       won: result.won,
+      canWatch: result.canWatch ?? false,
     }));
 
   const wins = games.filter((g) => g.won).length;

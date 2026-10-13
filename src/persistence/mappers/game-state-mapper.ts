@@ -242,6 +242,7 @@ const MIGRATE_ONE_STEP: Record<number, (state: unknown) => unknown> = {
   62: (state) => migrateV62ToV63(state as GameStateV62),
   63: (state) => migrateV63ToV64(state as GameStateV63),
   64: (state) => migrateV64ToV65(state as GameStateV64),
+  65: (state) => migrateV65ToV66(state as GameStateV65),
 };
 
 function legacyUserRecord(user: unknown): Record<string, unknown> {
@@ -5422,8 +5423,10 @@ type GameStateV64 = Omit<GameState, "meta" | "world"> & {
  * player / prospect via ensurePlayerPortraits (pure; no RNG, no I/O).
  * Repeated loads of an un-resaved legacy save yield identical portraits.
  */
-function migrateV64ToV65(state: GameStateV64): GameState {
-  const withRegistry: GameState = {
+function migrateV64ToV65(state: GameStateV64): GameStateV65 {
+  // ensurePlayerPortraits is typed on the current GameState; the v65 shape
+  // only lacks competition.playByPlay, which it never reads or writes.
+  const withRegistry = {
     ...state,
     meta: {
       ...state.meta,
@@ -5433,6 +5436,38 @@ function migrateV64ToV65(state: GameStateV64): GameState {
       ...state.world,
       playerPortraits: {},
     },
+    competition: { ...state.competition, playByPlay: {} },
+  } as GameState;
+  const migrated = ensurePlayerPortraits(withRegistry).state;
+  const { playByPlay: _dropped, ...competition } = migrated.competition;
+  void _dropped;
+  return {
+    ...migrated,
+    meta: { ...migrated.meta, schemaVersion: 65 },
+    competition,
   };
-  return ensurePlayerPortraits(withRegistry).state;
+}
+
+type GameStateV65 = Omit<GameState, "meta" | "competition"> & {
+  meta: Omit<GameState["meta"], "schemaVersion"> & { schemaVersion: 65 };
+  competition: Omit<GameState["competition"], "playByPlay">;
+};
+
+/**
+ * Deterministic v65 → v66: add competition.playByPlay (empty; legacy games
+ * have no recorded log). Thin Game.events already saved are left as-is; new
+ * games stop writing them.
+ */
+function migrateV65ToV66(state: GameStateV65): GameState {
+  return {
+    ...state,
+    meta: {
+      ...state.meta,
+      schemaVersion: 66,
+    },
+    competition: {
+      ...state.competition,
+      playByPlay: {},
+    },
+  };
 }

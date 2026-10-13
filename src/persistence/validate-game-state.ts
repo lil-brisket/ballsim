@@ -25,6 +25,11 @@ import {
 } from "@/domain/entities/game";
 import type { PlayoffTournament } from "@/domain/entities/playoffs";
 import {
+  assertPlayByPlayLog,
+  playCodePoints,
+} from "@/domain/entities/play-by-play";
+import { GAME_SIMULATION_CONFIG } from "@/systems/game-simulation-config";
+import {
   isOwnerObjectiveCategory,
   isOwnerObjectiveLifecycle,
   isOwnerObjectiveRole,
@@ -334,6 +339,7 @@ export function validateGameState(state: unknown): asserts state is GameState {
     "phase",
     "schedule",
     "games",
+    "playByPlay",
     "standings",
     "playoffs",
     "developmentLeague",
@@ -1664,6 +1670,7 @@ export function validateGameState(state: unknown): asserts state is GameState {
   for (const [gameKey, gameValue] of Object.entries(competition.games)) {
     validateGame(gameKey, gameValue, seasonId, teamIds, playerIds);
   }
+  validatePlayByPlayLogs(state as GameState);
 
   validatePlayoffReferences(
     competition.playoffs as PlayoffTournament,
@@ -3344,6 +3351,108 @@ function validateFantasyDraft(
       failFn(
         `world.fantasyDraft.selections[${i}].playerId is missing from world.players.`,
       );
+    }
+  }
+}
+
+/**
+ * competition.playByPlay (v66+): every key references a final current-season
+ * game in competition.games (this is the retention bound), the log is
+ * structurally valid, its players took part in the game on the recorded side,
+ * and replaying it reproduces the final score, period scores and each
+ * player's points.
+ *
+ * Owner-team involvement is not enforced: a franchise can be sold mid-season,
+ * and its already-recorded logs must not make the save unloadable.
+ */
+function validatePlayByPlayLogs(state: GameState): void {
+  const competition = state.competition;
+  assertRecord(competition.playByPlay, "competition.playByPlay");
+  const games = competition.games as Record<string, Game | undefined>;
+  const seasonId = competition.season.id;
+
+  for (const [gameId, log] of Object.entries(competition.playByPlay)) {
+    const path = `competition.playByPlay[${gameId}]`;
+    const game = games[gameId];
+    if (game == null) {
+      fail(`${path} references a game missing from competition.games.`);
+    }
+    if (game.status !== "final") {
+      fail(`${path} references game ${gameId} that is not final.`);
+    }
+    if (game.seasonId !== seasonId) {
+      fail(`${path} references game ${gameId} outside the current season.`);
+    }
+
+    try {
+      assertPlayByPlayLog(log, path, {
+        periodCount: game.periodScores.length,
+        regulationPeriodCount: GAME_SIMULATION_CONFIG.regulationPeriodCount,
+        regulationPeriodSeconds: GAME_SIMULATION_CONFIG.regulationPeriodSeconds,
+        overtimePeriodSeconds: GAME_SIMULATION_CONFIG.overtimePeriodSeconds,
+      });
+    } catch (error) {
+      fail(error instanceof Error ? error.message : String(error));
+    }
+
+    const sideByPlayerId = new Map<string, number>();
+    const pointsByPlayerId = new Map<string, number>();
+    for (const row of game.playerStats) {
+      if (row.teamId === game.homeTeamId) {
+        sideByPlayerId.set(row.playerId, 0);
+      } else if (row.teamId === game.awayTeamId) {
+        sideByPlayerId.set(row.playerId, 1);
+      }
+      pointsByPlayerId.set(row.playerId, row.points);
+    }
+    for (const [index, playerId] of log.players.entries()) {
+      if (!sideByPlayerId.has(playerId)) {
+        fail(
+          `${path}.players[${index}] "${playerId}" has no box-score row in game ${gameId}.`,
+        );
+      }
+    }
+
+    const score = [0, 0];
+    const periodPoints = game.periodScores.map(() => [0, 0]);
+    const replayedPoints = new Map<string, number>();
+    for (let index = 0; index < log.code.length; index += 1) {
+      const playerId = log.players[log.player[index]!]!;
+      const side = log.side[index]!;
+      if (sideByPlayerId.get(playerId) !== side) {
+        fail(`${path}[${index}].side does not match ${playerId}'s team.`);
+      }
+      const points = playCodePoints(log.code[index]!);
+      if (points === 0) {
+        continue;
+      }
+      score[side]! += points;
+      periodPoints[log.period[index]! - 1]![side]! += points;
+      replayedPoints.set(
+        playerId,
+        (replayedPoints.get(playerId) ?? 0) + points,
+      );
+    }
+
+    if (score[0] !== game.score.home || score[1] !== game.score.away) {
+      fail(
+        `${path} replays to ${score[0]}-${score[1]} but game ${gameId} final is ${game.score.home}-${game.score.away}.`,
+      );
+    }
+    for (const [periodIndex, period] of game.periodScores.entries()) {
+      const replayed = periodPoints[periodIndex]!;
+      if (replayed[0] !== period.home || replayed[1] !== period.away) {
+        fail(
+          `${path} period ${periodIndex + 1} replays to ${replayed[0]}-${replayed[1]} but game ${gameId} recorded ${period.home}-${period.away}.`,
+        );
+      }
+    }
+    for (const [playerId, points] of pointsByPlayerId) {
+      if ((replayedPoints.get(playerId) ?? 0) !== points) {
+        fail(
+          `${path} replays ${replayedPoints.get(playerId) ?? 0} points for ${playerId} but the box score has ${points}.`,
+        );
+      }
     }
   }
 }

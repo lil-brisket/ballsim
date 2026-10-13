@@ -14,6 +14,10 @@ import {
   getPlayoffTeamCount,
   SERIES_WINS_TO_CLINCH,
 } from "@/systems/playoff-config";
+import {
+  simulateNextPlayoffGame,
+  startPlayoffs,
+} from "@/systems/playoff-simulation";
 import { simulateSeason } from "@/systems/season-simulation";
 import { updateStandings } from "@/systems/standings";
 import { createPhaseEBusinessDefaults } from "@/state/phase-e-defaults";
@@ -189,6 +193,7 @@ function createEightTeamGameState(rngSeed: number): {
         gameIds: [],
       },
       games: {},
+      playByPlay: {},
       standings,
       playoffs: createEmptyPlayoffTournament(),
       developmentLeague: {
@@ -313,6 +318,60 @@ describe("playoffs season integration", () => {
         gameIds: series.gameIds,
         wins: series.wins,
       })),
+    );
+  });
+
+  it("records play-by-play for every owner playoff game and no other", () => {
+    resetDomainEventSequenceForTests();
+    const { state, rng } = createEightTeamGameState(TEST_RNG_SEED);
+    const playoffTeams = state.settings.playoffs.playoffTeams;
+    // playoffTeams = 0 makes simulateSeason stop after the regular season.
+    const regular = simulateSeason(
+      {
+        ...state,
+        settings: {
+          ...state.settings,
+          playoffs: { ...state.settings.playoffs, playoffTeams: 0 },
+        },
+      },
+      rng,
+    ).state;
+    let current: GameState = {
+      ...regular,
+      settings: {
+        ...regular.settings,
+        playoffs: { ...regular.settings.playoffs, playoffTeams },
+      },
+    };
+    const logsBeforePlayoffs = Object.keys(
+      current.competition.playByPlay,
+    ).length;
+    current = startPlayoffs(current, rng).state;
+    const owner = current.competition.playoffs.qualifiedTeams[0]!.teamId;
+
+    let guard = 0;
+    while (current.competition.playoffs.status !== "complete" && guard < 200) {
+      guard += 1;
+      current = simulateNextPlayoffGame(current, rng, {
+        ownerTeamId: owner,
+      }).state;
+    }
+    expect(current.competition.playoffs.status).toBe("complete");
+
+    const playoffGames = current.competition.playoffs.series.flatMap(
+      (series) => series.gameIds,
+    );
+    const ownerGames = playoffGames.filter((gameId) => {
+      const game = current.competition.games[gameId]!;
+      return game.homeTeamId === owner || game.awayTeamId === owner;
+    });
+    expect(ownerGames.length).toBeGreaterThanOrEqual(4);
+    const logged = Object.keys(current.competition.playByPlay).filter(
+      (gameId) => (playoffGames as string[]).includes(gameId),
+    );
+    expect(logged.sort()).toEqual([...ownerGames].sort());
+    expect(Object.keys(current.competition.playByPlay)).toHaveLength(
+      logsBeforePlayoffs + ownerGames.length,
     );
   });
 

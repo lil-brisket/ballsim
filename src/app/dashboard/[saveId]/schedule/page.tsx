@@ -10,7 +10,10 @@ import {
 } from "@/components/league/team-filter-utils";
 import { EmptyState, ErrorState } from "@/components/owner/EmptyState";
 import { PageHeader } from "@/components/owner/PageHeader";
-import { shiftFocusDate, groupLeagueScheduleRowsByDate } from "@/state/league-schedule-selectors";
+import {
+  shiftFocusDate,
+  groupLeagueScheduleRowsByDate,
+} from "@/state/league-schedule-selectors";
 import { cn, focusRingClass } from "@/components/ui/styles";
 
 type SchedulePageProps = {
@@ -197,6 +200,7 @@ export default async function SchedulePage({
                       awayScore={game.awayScore}
                       status={game.status}
                       competitionType={game.competitionType}
+                      canWatch={game.canWatch}
                     />
                     {game.canManageEvent ? (
                       <Link
@@ -234,6 +238,7 @@ export default async function SchedulePage({
                       awayScore={game.awayScore}
                       status={game.status}
                       competitionType={game.competitionType}
+                      canWatch={game.canWatch}
                     />
                   </li>
                 ))}
@@ -270,6 +275,7 @@ export default async function SchedulePage({
                               awayScore={game.awayScore}
                               status={game.status}
                               competitionType={game.competitionType}
+                              canWatch={game.canWatch}
                             />
                           </li>
                         ))}
@@ -295,6 +301,7 @@ export default async function SchedulePage({
                         awayScore={game.awayScore}
                         status={game.status}
                         competitionType={game.competitionType}
+                        canWatch={game.canWatch}
                       />
                     </li>
                   ))}

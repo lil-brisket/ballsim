@@ -6,6 +6,7 @@ import {
 } from "@/domain/entities/possession";
 import { RATING_MAX, RATING_MIN, type Player } from "@/domain/entities/player";
 import type { GameEvent } from "@/domain/entities/game";
+import { PLAY_CODE } from "@/domain/entities/play-by-play";
 import type { PlayerId, PossessionId, TeamId } from "@/domain/ids";
 import type { Rng } from "@/domain/rng";
 import {
@@ -44,7 +45,9 @@ import {
   fieldGoalPoints,
   finalizePlayerStatsDeltas,
   pushEvent,
+  pushPlay,
   type PlayerStatsDelta,
+  type PossessionPlay,
   type PossessionStatsAccumulator,
 } from "@/systems/possession-stats";
 
@@ -74,6 +77,11 @@ export type ResolvePossessionInput = {
    * Applied to perimeterDefense before resolvePass; defaults to 1 (no-op).
    */
   defensivePressureMultiplier?: number;
+  /**
+   * When true, also returns play-by-play rows in `plays`. Recording draws no
+   * random numbers, so results are identical either way.
+   */
+  recordPlays?: boolean;
 };
 
 export type PossessionStep =
@@ -92,6 +100,8 @@ export type PossessionResolution = {
   possession: Possession;
   steps: PossessionStep[];
   events: GameEvent[];
+  /** Play-by-play rows; null unless `recordPlays` was set. */
+  plays: PossessionPlay[] | null;
   playerStats: PlayerStatsDelta[];
   pointsScored: number;
   scoringTeamId: TeamId | null;
@@ -144,7 +154,10 @@ export function resolvePossession(
     fatigue,
     resolved,
     steps: [],
-    stats: createPossessionStatsAccumulator(eventSequenceStart),
+    stats: createPossessionStatsAccumulator(
+      eventSequenceStart,
+      input.recordPlays === true,
+    ),
     defensiveTeamFoulsAfter: input.defensiveTeamFoulsBefore,
     nextPossession: {
       offensiveTeamId: input.offensiveTeamId,
@@ -189,6 +202,7 @@ export function resolvePossession(
     possession,
     steps: ctx.steps,
     events: ctx.stats.events.map((event) => ({ ...event })),
+    plays: ctx.stats.plays,
     playerStats: finalizePlayerStatsDeltas(ctx.stats),
     pointsScored,
     scoringTeamId,
@@ -326,6 +340,7 @@ function resolveShotBranch(ctx: ExecutionContext): void {
     addFieldGoal(ctx.stats, shooter.id, decision.shotType, true);
     addPoints(ctx.stats, shooter.id, points);
     pushEvent(ctx.stats, "shot_made", shooter.id, ctx.input.offensiveTeamId);
+    pushShotPlay(ctx, decision.shotType, true, shooter.id, null);
     ctx.possessionOutcome = "shot_made";
     flipPossession(ctx);
     return;
@@ -334,7 +349,8 @@ function resolveShotBranch(ctx: ExecutionContext): void {
   addFieldGoal(ctx.stats, shooter.id, decision.shotType, false);
   pushEvent(ctx.stats, "shot_missed", shooter.id, ctx.input.offensiveTeamId);
   ctx.possessionOutcome = "shot_missed";
-  maybeCreditBlock(ctx, defender, decision.shotType);
+  const blockerId = maybeCreditBlock(ctx, defender, decision.shotType);
+  pushShotPlay(ctx, decision.shotType, false, shooter.id, blockerId);
   resolveReboundAfterMiss(ctx);
 }
 
@@ -366,7 +382,14 @@ function resolvePassBranch(ctx: ExecutionContext): void {
   if (pass.outcome === "turnover") {
     addTurnover(ctx.stats, passer.id);
     pushEvent(ctx.stats, "turnover", passer.id, ctx.input.offensiveTeamId);
-    maybeCreditSteal(ctx, defender, passer);
+    const stealerId = maybeCreditSteal(ctx, defender, passer);
+    pushPlay(
+      ctx.stats,
+      PLAY_CODE.turnover,
+      passer.id,
+      stealerId,
+      ctx.input.offensiveTeamId,
+    );
     ctx.possessionAction = "turnover";
     ctx.possessionOutcome = "turnover";
     flipPossession(ctx);
@@ -403,13 +426,15 @@ function resolvePassBranch(ctx: ExecutionContext): void {
     pushEvent(ctx.stats, "shot_made", receiver.id, ctx.input.offensiveTeamId);
     addAssist(ctx.stats, passer.id);
     pushEvent(ctx.stats, "assist", passer.id, ctx.input.offensiveTeamId);
+    pushShotPlay(ctx, shotType, true, receiver.id, passer.id);
     flipPossession(ctx);
     return;
   }
 
   addFieldGoal(ctx.stats, receiver.id, shotType, false);
   pushEvent(ctx.stats, "shot_missed", receiver.id, ctx.input.offensiveTeamId);
-  maybeCreditBlock(ctx, defender, shotType);
+  const blockerId = maybeCreditBlock(ctx, defender, shotType);
+  pushShotPlay(ctx, shotType, false, receiver.id, blockerId);
   resolveReboundAfterMiss(ctx);
 }
 
@@ -422,6 +447,13 @@ function resolveTurnoverBranch(ctx: ExecutionContext): void {
   addTouch(ctx.stats, player.id);
   addTurnover(ctx.stats, player.id);
   pushEvent(ctx.stats, "turnover", player.id, ctx.input.offensiveTeamId);
+  pushPlay(
+    ctx.stats,
+    PLAY_CODE.turnover,
+    player.id,
+    null,
+    ctx.input.offensiveTeamId,
+  );
   flipPossession(ctx);
 }
 
@@ -441,6 +473,13 @@ function resolveFoulBranch(ctx: ExecutionContext): void {
     addTouch(ctx.stats, fouler.id);
     addFoul(ctx.stats, fouler.id);
     pushEvent(ctx.stats, "foul", fouler.id, ctx.input.offensiveTeamId);
+    pushPlay(
+      ctx.stats,
+      PLAY_CODE.offensiveFoul,
+      fouler.id,
+      fouled.id,
+      ctx.input.offensiveTeamId,
+    );
     flipPossession(ctx);
     return;
   }
@@ -485,6 +524,16 @@ function resolveFoulBranch(ctx: ExecutionContext): void {
     if (foulResult.basketCounts) {
       addPoints(ctx.stats, fouled.id, fieldGoalPoints(shotType));
     }
+    // The fouled attempt has no shot GameEvent but counts as an FGA, so the
+    // play log records it (shot row first, then the foul).
+    pushShotPlay(ctx, shotType, foulResult.basketCounts, fouled.id, null);
+    pushPlay(
+      ctx.stats,
+      PLAY_CODE.shootingFoul,
+      fouler.id,
+      fouled.id,
+      ctx.input.defensiveTeamId,
+    );
 
     resolveFreeThrowSequence(ctx, fouled, foulResult.freeThrowsAwarded);
     return;
@@ -501,6 +550,13 @@ function resolveFoulBranch(ctx: ExecutionContext): void {
 
   addFoul(ctx.stats, fouler.id);
   pushEvent(ctx.stats, "foul", fouler.id, ctx.input.defensiveTeamId);
+  pushPlay(
+    ctx.stats,
+    PLAY_CODE.personalFoul,
+    fouler.id,
+    fouled.id,
+    ctx.input.defensiveTeamId,
+  );
 
   if (foulResult.freeThrowsAwarded > 0) {
     resolveFreeThrowSequence(ctx, fouled, foulResult.freeThrowsAwarded);
@@ -541,6 +597,13 @@ function resolveFreeThrowSequence(
     ctx.steps.push({ type: "free_throw", result: ft });
     pushEvent(ctx.stats, "free_throw", shooter.id, ctx.input.offensiveTeamId);
     addFreeThrow(ctx.stats, shooter.id, ft.made);
+    pushPlay(
+      ctx.stats,
+      ft.made ? PLAY_CODE.freeThrowMade : PLAY_CODE.freeThrowMissed,
+      shooter.id,
+      null,
+      ctx.input.offensiveTeamId,
+    );
     if (ft.made) {
       addPoints(ctx.stats, shooter.id, 1);
       lastMade = true;
@@ -575,6 +638,15 @@ function resolveReboundAfterMiss(ctx: ExecutionContext): void {
   ctx.steps.push({ type: "rebound", result: rebound });
   addRebound(ctx.stats, rebound.playerId, rebound.type);
   pushEvent(ctx.stats, "rebound", rebound.playerId, rebound.teamId);
+  pushPlay(
+    ctx.stats,
+    rebound.type === "offensive"
+      ? PLAY_CODE.offensiveRebound
+      : PLAY_CODE.defensiveRebound,
+    rebound.playerId,
+    null,
+    rebound.teamId,
+  );
 
   if (rebound.type === "offensive") {
     ctx.nextPossession = {
@@ -606,30 +678,55 @@ function catchAndShootType(receiver: Player): ShotType {
   return "two_point";
 }
 
+/** Returns the credited stealer's id, or null when no steal is credited. */
 function maybeCreditSteal(
   ctx: ExecutionContext,
   defender: Player,
   ballHandler: Player,
-): void {
+): PlayerId | null {
   if (
     defender.attributes.steal >= 70 &&
     defender.attributes.steal + 8 >= ballHandler.attributes.ballHandling
   ) {
     addSteal(ctx.stats, defender.id);
     pushEvent(ctx.stats, "steal", defender.id, ctx.input.defensiveTeamId);
+    return defender.id;
   }
+  return null;
 }
 
+/** Returns the credited blocker's id, or null when no block is credited. */
 function maybeCreditBlock(
   ctx: ExecutionContext,
   defender: Player,
   shotType: ShotType,
-): void {
+): PlayerId | null {
   const threshold = shotType === "three_point" ? 88 : 72;
   if (defender.attributes.block >= threshold) {
     addBlock(ctx.stats, defender.id);
     pushEvent(ctx.stats, "block", defender.id, ctx.input.defensiveTeamId);
+    return defender.id;
   }
+  return null;
+}
+
+/** `player2Id` is the assister on a make, the blocker on a miss. */
+function pushShotPlay(
+  ctx: ExecutionContext,
+  shotType: ShotType,
+  made: boolean,
+  shooterId: PlayerId,
+  player2Id: PlayerId | null,
+): void {
+  const code =
+    shotType === "three_point"
+      ? made
+        ? PLAY_CODE.threeMade
+        : PLAY_CODE.threeMissed
+      : made
+        ? PLAY_CODE.twoMade
+        : PLAY_CODE.twoMissed;
+  pushPlay(ctx.stats, code, shooterId, player2Id, ctx.input.offensiveTeamId);
 }
 
 /** Keeps resolvePass defensivePressure within the existing 1–99 contract. */

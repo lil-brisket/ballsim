@@ -227,6 +227,7 @@ export function createInitialGameState(
         gameIdsByDate: {},
       },
       games: {},
+      playByPlay: {},
       standings,
       playoffs: createEmptyPlayoffTournament(),
       developmentLeague: {
@@ -554,6 +555,7 @@ export function createFourTeamInitialGameState(
         gameIdsByDate: {},
       },
       games: {},
+      playByPlay: {},
       standings,
       playoffs: createEmptyPlayoffTournament(),
       developmentLeague: {

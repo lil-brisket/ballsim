@@ -8,6 +8,7 @@ import {
   type GameScore,
 } from "@/domain/entities/game";
 import type { GameId, SeasonId, TeamId } from "@/domain/ids";
+import type { PlayByPlayLog } from "@/domain/entities/play-by-play";
 
 export type GameTeamStats = {
   teamId: TeamId;
@@ -64,6 +65,11 @@ export type GameResult = {
   events: GameEvent[];
   /** Frozen rotation snapshot + trace; null when unavailable. */
   rotationMeta: GameRotationMeta | null;
+  /**
+   * In-memory transport only: set when the sim ran with recordPlayByPlay.
+   * Never stored on Game; persisted via competition.playByPlay.
+   */
+  playByPlay?: PlayByPlayLog;
 };
 
 export type GameResultInput = {

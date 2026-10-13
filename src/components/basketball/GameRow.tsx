@@ -24,6 +24,8 @@ export type GameRowProps = {
   won?: boolean | null;
   /** When true, link completed games to box score */
   canOpenResult?: boolean;
+  /** When true, show a Watch link (play-by-play recorded) */
+  canWatch?: boolean;
   /** Optional calendar deep link for upcoming games */
   calendarHref?: string;
   className?: string;
@@ -124,7 +126,21 @@ export function GameRow(props: GameRowProps) {
         </span>
         {opponentLabel}
       </div>
-      <div className="shrink-0">{score}</div>
+      <div className="flex shrink-0 items-center gap-3">
+        {hasResult && props.canWatch ? (
+          <Link
+            href={`/dashboard/${props.saveId}/games/${props.gameId}/watch`}
+            className={cn(
+              touchTargetTextClass,
+              "text-xs text-amber-400 hover:text-amber-300",
+              focusRingClass,
+            )}
+          >
+            Watch
+          </Link>
+        ) : null}
+        {score}
+      </div>
     </div>
   );
 }
