@@ -10,14 +10,18 @@ export const DEMAND_PRICE_ELASTICITY = 0.65;
  * Weight applied to each demand contributor (must sum to 1).
  * fanFacility and opponentWinPct are intentionally small so facilities
  * and marquee opponents nudge demand without rewriting the model.
+ * marketSize raised from 0.14 (partial revert of the prior win%-weighted
+ * rebalance) so market size has enough pull on demand to show up in
+ * realized attendance; taken from mediaAttention/leaguePopularity, the
+ * two least central contributors, so winPct's weight is undisturbed.
  */
 export const DEMAND_CONTRIBUTOR_WEIGHTS = {
-  marketSize: 0.14,
+  marketSize: 0.18,
   fanSentiment: 0.16,
   reputation: 0.12,
   awareness: 0.09,
-  mediaAttention: 0.07,
-  leaguePopularity: 0.07,
+  mediaAttention: 0.05,
+  leaguePopularity: 0.05,
   winPct: 0.22,
   fanFacility: 0.04,
   opponentWinPct: 0.09,

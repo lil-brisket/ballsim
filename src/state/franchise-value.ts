@@ -257,7 +257,7 @@ function calculateFinancialValue(input: {
   return { revenue, profitability, cash };
 }
 
-function calculatePerformanceValue(input: {
+export function calculatePerformanceValue(input: {
   trailingWinPct: number;
   playoffRate: number;
   playoffDepth: number;

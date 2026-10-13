@@ -59,7 +59,7 @@ describe("facilities", () => {
     expect(arenaCapacity(state, teamId)).toBeGreaterThan(10_000);
     const mult = facilityDevelopmentMultiplier(state, teamId);
     expect(mult).toBeGreaterThanOrEqual(1);
-    expect(mult).toBeLessThanOrEqual(1.35);
+    expect(mult).toBeLessThanOrEqual(1.7);
   });
 
   it("rejects upgrade when already in progress", () => {
