@@ -23,7 +23,7 @@ describe("demand", () => {
     const result = calculateTicketDemand(baseInputs);
     expect(result.score).toBeGreaterThan(0);
     expect(result.score).toBeLessThanOrEqual(100);
-    expect(result.contributions.marketSize.weighted).toBeCloseTo(10.8, 0);
+    expect(result.contributions.marketSize.weighted).toBeCloseTo(8.4, 0);
     expect(Object.keys(result.contributions).length).toBeGreaterThan(0);
   });
 

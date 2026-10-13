@@ -36,7 +36,6 @@ import { computeAwardReputationBonus } from "@/systems/awards/award-reputation";
 import { getTeamCapSpace } from "@/systems/salary-cap";
 import { getLeagueSalaryCap } from "@/systems/league-salary-cap";
 import {
-  applyContractNegotiationNoise,
   isSalaryLowball,
   salaryForPlayer,
   serviceYearsForSalary,
@@ -196,7 +195,6 @@ function runAiFreeAgency(state: GameState): SystemResult {
       candidate.position,
       candidate.attributes,
     );
-    const leagueCap = getLeagueSalaryCap(current);
     const market = salaryForPlayer({
       overall,
       age: candidate.age,
@@ -207,16 +205,10 @@ function runAiFreeAgency(state: GameState): SystemResult {
         seasonsPlayed:
           current.business.playerHistory[candidate.id]?.seasons.length ?? 0,
       }),
-      cap: leagueCap,
+      cap: getLeagueSalaryCap(current),
       kind: "fa",
     });
-    const negotiated = applyContractNegotiationNoise(
-      current,
-      market,
-      teamId,
-      leagueCap,
-    );
-    const salary = Math.min(capSpace, negotiated);
+    const salary = Math.min(capSpace, market);
     if (
       salary > capSpace ||
       isSalaryLowball(salary, market) ||

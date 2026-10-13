@@ -4,10 +4,7 @@ import { createContract, type Contract } from "@/domain/entities/contract";
 import type { Rng } from "@/domain/rng";
 import { systemResult, type SystemResult } from "@/domain/system-result";
 import type { GameState } from "@/state/game-state";
-import {
-  applyContractNegotiationNoise,
-  salaryForPlayer,
-} from "@/systems/salary-scale";
+import { salaryForPlayer } from "@/systems/salary-scale";
 import { getLeagueSalaryCap } from "@/systems/league-salary-cap";
 import { calculatePlayerOverall } from "@/domain/player-overall-rating";
 import { generatePlayerWithRng } from "@/systems/player-generation";
@@ -66,20 +63,13 @@ export function generateRosters(state: GameState, rng: Rng): SystemResult {
       players[playerId] = player;
       rosterPlayerIds.push(playerId);
 
-      const leagueCap = getLeagueSalaryCap(state);
-      const marketSalary = salaryForPlayer({
+      const salaryPerYear = salaryForPlayer({
         overall: calculatePlayerOverall(player.position, player.attributes),
         age: player.age,
         years: Math.max(0, player.age - 19),
-        cap: leagueCap,
+        cap: getLeagueSalaryCap(state),
         kind: "fa",
       });
-      const salaryPerYear = applyContractNegotiationNoise(
-        state,
-        marketSalary,
-        asTeamId(teamId),
-        leagueCap,
-      );
       const yearsRemaining = rng.nextInt(1, 4);
       const startYear = currentYear;
       const endYear = currentYear + yearsRemaining - 1;
@@ -269,20 +259,13 @@ export function fillShortRosters(state: GameState, rng: Rng): SystemResult {
       }
 
       const contractId = player.contractId!;
-      const leagueCap = getLeagueSalaryCap(state);
-      const marketSalary = salaryForPlayer({
+      const salaryPerYear = salaryForPlayer({
         overall: calculatePlayerOverall(player.position, player.attributes),
         age: player.age,
         years: Math.max(0, player.age - 19),
-        cap: leagueCap,
+        cap: getLeagueSalaryCap(state),
         kind: "fa",
       });
-      const salaryPerYear = applyContractNegotiationNoise(
-        state,
-        marketSalary,
-        asTeamId(teamId),
-        leagueCap,
-      );
       const yearsRemaining = rng.nextInt(1, 4);
       const startYear = currentYear;
       const endYear = currentYear + yearsRemaining - 1;
