@@ -166,10 +166,7 @@ function takeFillFreeAgent(
     return null;
   }
   candidates.sort((left, right) => {
-    const overallLeft = calculatePlayerOverall(
-      left.position,
-      left.attributes,
-    );
+    const overallLeft = calculatePlayerOverall(left.position, left.attributes);
     const overallRight = calculatePlayerOverall(
       right.position,
       right.attributes,

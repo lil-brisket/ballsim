@@ -15,5 +15,13 @@
  * was also recalibrated to the possession engine (points, shot mix, rates,
  * counting-stat rates). Possession outcomes (scores, shots, RNG stream) are
  * unchanged.
+ *
+ * Version 3: facility-driven player development now uses the facility
+ * levels from `FACILITY_DEVELOPMENT_LAG_SEASONS` seasons ago
+ * (`laggedFacilityDevelopmentMultiplier`) instead of the current season's
+ * levels, so facility investment pays off in roster development with a
+ * real delay instead of the same season, with a larger effect size
+ * (1.0-1.35 → 1.0-1.7). Franchise valuation also weights performance more
+ * and has less inertia (`franchise-value-config.ts`).
  */
-export const ENGINE_VERSION = 2;
+export const ENGINE_VERSION = 3;

@@ -30,9 +30,7 @@ import {
   AI_YOUTH_AGE_MAX,
   boundedPreferenceDelta,
 } from "@/systems/franchise-ai-preferences-config";
-import {
-  AI_FA_MIN_SALARY,
-} from "@/systems/owner-objectives-config";
+import { AI_FA_MIN_SALARY } from "@/systems/owner-objectives-config";
 import { DEFAULT_ROSTER_SIZE } from "@/systems/roster-generation-config";
 import { computeAwardReputationBonus } from "@/systems/awards/award-reputation";
 import { getTeamCapSpace } from "@/systems/salary-cap";
@@ -565,13 +563,18 @@ function pickBestAffordableFreeAgent(
         age: player.age,
         seasonYear: state.competition.season.year,
         draftSeasonYear: player.developmentLeague?.draftSeasonYear ?? null,
-        seasonsPlayed: state.business.playerHistory[player.id]?.seasons.length ?? 0,
+        seasonsPlayed:
+          state.business.playerHistory[player.id]?.seasons.length ?? 0,
       }),
       cap,
       kind: "fa",
     });
     const salary = Math.min(capSpace, market);
-    if (salary <= capSpace && salary >= AI_FA_MIN_SALARY && !isSalaryLowball(salary, market)) {
+    if (
+      salary <= capSpace &&
+      salary >= AI_FA_MIN_SALARY &&
+      !isSalaryLowball(salary, market)
+    ) {
       return player;
     }
   }

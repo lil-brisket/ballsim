@@ -10,8 +10,11 @@ export const MARKET_POTENTIAL_PER_POINT = 2_800_000;
 /**
  * Share of market potential that is always counted regardless of realization.
  * marketValue = potential × (MARKET_REALIZATION_FLOOR + (1 - floor) × realization)
+ * Lowered from 0.65 so market value leans more on realized demand (which
+ * itself tracks winning via ticket-demand's winPct weight) instead of being
+ * mostly a fixed, performance-independent floor.
  */
-export const MARKET_REALIZATION_FLOOR = 0.65;
+export const MARKET_REALIZATION_FLOOR = 0.5;
 
 /** Clamp for attendance/capture realization before applying to market. */
 export const MARKET_REALIZATION_MIN = 0.45;
@@ -60,13 +63,13 @@ export const CASH_LOG_DOLLARS = 1_200_000;
 export const CASH_CONTRIBUTION_CAP = 12_000_000;
 
 /** Competitive: dollars at 100% trailing win rate. */
-export const PERFORMANCE_WIN_PCT_DOLLARS = 80_000_000;
+export const PERFORMANCE_WIN_PCT_DOLLARS = 110_000_000;
 
 /** Competitive: dollars at 100% playoff appearance rate over trail. */
-export const PERFORMANCE_PLAYOFF_RATE_DOLLARS = 55_000_000;
+export const PERFORMANCE_PLAYOFF_RATE_DOLLARS = 70_000_000;
 
 /** Extra dollars scaled by mean playoff depth score (0–1) over trail. */
-export const PERFORMANCE_PLAYOFF_DEPTH_DOLLARS = 40_000_000;
+export const PERFORMANCE_PLAYOFF_DEPTH_DOLLARS = 50_000_000;
 
 /** Current-season win% momentum weight vs trailing (when games played). */
 export const PERFORMANCE_CURRENT_MOMENTUM_WEIGHT = 0.25;
@@ -75,14 +78,16 @@ export const PERFORMANCE_CURRENT_MOMENTUM_WEIGHT = 0.25;
  * Championship stock base premium before diminishing returns.
  * effective = sum(decay(age)); premium = BASE × (1 - exp(-k × effective))
  */
-export const CHAMPIONSHIP_BASE_PREMIUM = 140_000_000;
+export const CHAMPIONSHIP_BASE_PREMIUM = 110_000_000;
 export const CHAMPIONSHIP_DIMINISHING_K = 0.45;
 
 /**
  * Exponential recency decay half-life in seasons (≈ weight 0.5 at this age).
  * Age 0 (this season / just won) ≈ 1.0; older titles fade toward ~0.1 by age 20.
+ * Shortened from 7 so a title's lingering value-floor effect fades faster,
+ * letting other franchises close the value gap sooner (dynasty lock-in).
  */
-export const CHAMPIONSHIP_DECAY_HALF_LIFE_SEASONS = 7;
+export const CHAMPIONSHIP_DECAY_HALF_LIFE_SEASONS = 5;
 
 /** League multiplier bounds (Layer 4). */
 export const LEAGUE_MULTIPLIER_MIN = 0.9;
@@ -105,9 +110,11 @@ export const LEAGUE_CYCLE_SCORE: Record<
 
 /**
  * Inertia: total = (1 - α) × lastSnapshot + α × mark.
- * Mid-season noise only moves the mark.
+ * Mid-season noise only moves the mark. Raised from 0.3 so current-season
+ * performance/market swings move value faster, instead of a team's value
+ * rank being locked in almost entirely by its own history (value mobility).
  */
-export const FRANCHISE_VALUE_INERTIA_ALPHA = 0.3;
+export const FRANCHISE_VALUE_INERTIA_ALPHA = 0.45;
 
 /**
  * Optional YoY / vs-last-snapshot safety rail.

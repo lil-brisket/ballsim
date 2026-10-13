@@ -30,8 +30,20 @@ export function arenaCapacity(state: GameState, teamId: TeamId): number {
 
 /**
  * Development multiplier from practice, training, and medical facility levels.
- * Range roughly 1.0–1.35 at max levels.
+ * Range roughly 1.0–1.7 at max levels. Raised from 1.0–1.35: the smaller
+ * range left the lagged development payoff too weak to show up against the
+ * facilities-vs-payroll budget tradeoff (facility spend competing with FA
+ * spend for the same cash) in the facilities → roster-strength signal.
  */
+export function facilityDevelopmentMultiplierFromLevels(
+  practice: number,
+  training: number,
+  medical: number,
+): number {
+  const raw = (practice + training + medical) / (3 * FACILITY_LEVEL_MAX);
+  return 1 + raw * 0.7;
+}
+
 export function facilityDevelopmentMultiplier(
   state: GameState,
   teamId: TeamId,
@@ -40,11 +52,43 @@ export function facilityDevelopmentMultiplier(
   if (!ops) {
     return 1;
   }
-  const practice = ops.facilities.practice.level;
-  const training = ops.facilities.training.level;
-  const medical = ops.facilities.medical.level;
-  const raw = (practice + training + medical) / (3 * FACILITY_LEVEL_MAX);
-  return 1 + raw * 0.35;
+  return facilityDevelopmentMultiplierFromLevels(
+    ops.facilities.practice.level,
+    ops.facilities.training.level,
+    ops.facilities.medical.level,
+  );
+}
+
+/**
+ * Number of completed seasons by which a facility's development boost lags
+ * behind investment (practice/training/medical infrastructure takes time to
+ * change a roster's development curve — it is not instantaneous).
+ */
+export const FACILITY_DEVELOPMENT_LAG_SEASONS = 2;
+
+/**
+ * Development multiplier using the facility levels from
+ * {@link FACILITY_DEVELOPMENT_LAG_SEASONS} seasons ago (via franchise
+ * history), falling back to the current level when history is too short
+ * (new/expansion franchises). This is what makes facility investment pay
+ * off in roster development with a real delay rather than the same season.
+ */
+export function laggedFacilityDevelopmentMultiplier(
+  state: GameState,
+  teamId: TeamId,
+): number {
+  const history = state.business.franchiseHistory[teamId]?.seasons;
+  const lag = FACILITY_DEVELOPMENT_LAG_SEASONS;
+  if (history && history.length > lag) {
+    const record = history[history.length - 1 - lag]!;
+    const levels = record.facilityLevels;
+    return facilityDevelopmentMultiplierFromLevels(
+      levels.practice,
+      levels.training,
+      levels.medical,
+    );
+  }
+  return facilityDevelopmentMultiplier(state, teamId);
 }
 
 export function startFacilityUpgrade(

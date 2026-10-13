@@ -258,10 +258,10 @@ describe("franchise value — championship decay", () => {
   it("decays with age and stays above a floor", () => {
     expect(championshipDecayWeight(0)).toBeCloseTo(1, 5);
     expect(championshipDecayWeight(1)).toBeGreaterThan(0.85);
-    expect(championshipDecayWeight(5)).toBeGreaterThan(0.55);
-    expect(championshipDecayWeight(5)).toBeLessThan(0.7);
-    expect(championshipDecayWeight(10)).toBeGreaterThan(0.3);
-    expect(championshipDecayWeight(10)).toBeLessThan(0.45);
+    expect(championshipDecayWeight(5)).toBeGreaterThan(0.45);
+    expect(championshipDecayWeight(5)).toBeLessThan(0.55);
+    expect(championshipDecayWeight(10)).toBeGreaterThan(0.2);
+    expect(championshipDecayWeight(10)).toBeLessThan(0.3);
     expect(championshipDecayWeight(20)).toBeLessThan(0.2);
     expect(championshipDecayWeight(20)).toBeGreaterThanOrEqual(0.08);
   });
