@@ -1,4 +1,4 @@
-import { writeFileSync } from "node:fs";
+import { mkdirSync, writeFileSync } from "node:fs";
 import { createPlayer, PLAYER_ATTRIBUTE_KEYS } from "@/domain/entities/player";
 import type { Player } from "@/domain/entities/player";
 import { calculatePlayerOverall } from "@/domain/player-overall-rating";
@@ -231,7 +231,11 @@ const out = {
   attributeKeyCount: PLAYER_ATTRIBUTE_KEYS.length,
 };
 
-writeFileSync("tmp-development-stats.json", JSON.stringify(out, null, 2));
+mkdirSync("reports", { recursive: true });
+writeFileSync(
+  "reports/tmp-development-stats.json",
+  JSON.stringify(out, null, 2),
+);
 console.error(
   "OK mean annual change",
   out.oneStep.meanAnnualChange,

@@ -1,150 +1,79 @@
-# Basketball
+# Ballsim
 
-Fictional basketball simulation / management game (Owner Mode foundation).
+Ballsim is a basketball franchise management game for the browser. You own a team in a fully fictional league: you set ticket prices and budgets, hire staff, sign free agents, make trades and draft picks, and watch the results play out across many seasons. Every game is simulated possession by possession from player ratings, coaching and fatigue, and is shown as box scores, play-by-play and standings, with no on-court graphics. The simulation uses a seeded RNG, so the same save and the same seed always produce the same league. All teams, players, cities and leagues are generated; nothing is based on real people or licensed assets.
 
-## Stack
+## Screenshots
 
-- TypeScript
-- Next.js + React
-- Tailwind CSS
-- SQLite via Prisma (`@prisma/adapter-libsql`)
-- Vitest
+> Placeholder. Capture these screens from a Standard (30-team) save in its first regular season, and save them as PNGs under `docs/screenshots/`.
+
+1. **Splash and mode select** (`/` and `/home`)
+2. **Game setup** (`/new/setup?mode=owner`), with the Standard preset and the roster source options visible
+3. **Choose your franchise location**, the city map (`/new/<saveId>/team`)
+4. **Owner dashboard** (`/dashboard/<saveId>`) in mid-season, with the action center and notifications
+5. **Calendar** (`/dashboard/<saveId>/calendar`) with the "Simulate to date" confirmation open
+6. **Game page** (`/dashboard/<saveId>/games/<gameId>`), showing the box score and play-by-play of a close game
+7. **Standings** (`/dashboard/<saveId>/standings`)
+8. **Finances** (`/dashboard/<saveId>/finances`), showing the season revenue and expense breakdown
+9. **Trade negotiation** (`/dashboard/<saveId>/trades/<decisionId>/negotiate`)
+10. **Draft board** (`/dashboard/<saveId>/draft`) during the offseason draft
+11. **Player profile** (`/dashboard/<saveId>/players/<playerId>`), with a procedural portrait and career stats
+12. **Simulation Lab** (`/dev/sim-lab`) after a 100-game batch
+
+## Features
+
+- **Owner Mode.** Run one franchise, or several at once, inside a living league:
+  - **Business:** finances, ticket pricing, marketing, sponsorships, facilities, media, relocation and league expansion.
+  - **Basketball operations:** roster, rotations and lineups, coaching staff, trades, free agency, scouting, the draft and a development league.
+  - **Owner objectives:** season goals and ownership confidence.
+- **Flexible league setup.** Start from the Standard preset (30 teams, 82 games, 16 playoff teams, best-of-7) or the compact CBL preset (12 / 22 / 8), or tune team count, conferences, schedule length, playoff format, salary cap, luxury tax and revenue sharing yourself. Rosters can be generated, built through a fantasy draft or imported as a custom roster package, and you can generate prior league history before your first season.
+- **Possession-level game simulation.** Shots, passes, fouls, rebounds, injuries and fatigue are resolved from player attributes and team tendencies. A faster box-score mode, calibrated against the possession engine, is available for long simulations.
+- **A league that runs without you.** AI teams sign free agents, draft, trade and manage their own business. Players age, develop, decline and retire. Awards, the All-Star game, fan voting, a midseason cup, the playoffs and franchise history are tracked season after season.
+- **Simulation Lab.** A developer UI and CLI (`npm run lab`, `npm run sim`) for running seeded batches of games or multi-season careers, checking invariants and calibration bands, and comparing runs.
+- **Procedural portraits.** Every player gets a unique generated SVG headshot that stays with them for their whole career.
+
+## Quick start
+
+Requires **Node 22** (see `.nvmrc`).
+
+```bash
+npm install                 # also runs `prisma generate`
+cp .env.example .env        # local SQLite: DATABASE_URL="file:./prisma/dev.db"
+npm run db:migrate          # creates prisma/dev.db and applies migrations
+npm run dev
+```
+
+Open [http://localhost:3000](http://localhost:3000).
+
+## Your first season
+
+1. **Start a career.** On the splash screen click through to **Choose your mode** and pick **Owner Mode**.
+2. **Set up the league.** On **Game setup**, keep the **Standard** preset for a full-size league (or pick **CBL** for a quick 12-team season), choose a roster source (**Generated roster** is the simplest), give the save a name, and confirm.
+3. **Pick your franchise.** Choose a city on the map, then set the team name, colors and logo. If you chose a fantasy draft, you draft your roster next.
+4. **Get your bearings.** The dashboard shows the next game, your objectives and anything that needs a decision. Check **Roster**, **Team management → Rotations** and **Finances** before the season starts.
+5. **Advance time.** From the **Calendar** you can simulate one day, **Simulate to next game**, **Simulate to date**, or **Advance phase** to jump to the next part of the season. The sim stops when a decision needs you, for example an incoming trade offer.
+6. **Manage as you go.** Adjust ticket prices and marketing, answer trade offers, and watch fan sentiment and cash. Open any finished game to read its box score.
+7. **Playoffs and offseason.** After the regular season come the playoffs, then the offseason: re-sign or release players in **Contracts**, bid in **Free agency**, scout and make your picks in the **Draft**, then advance into next season's preseason.
+
+## Development
+
+```bash
+npm run dev            # app at http://localhost:3000
+npm run lab            # Simulation Lab at /dev/sim-lab
+npm test               # unit + integration + React tests
+npm run lint
+npm run format:check
+npx tsc --noEmit
+```
+
+The full list of scripts, test suites, Simulation Lab CLI flags and diagnostic tools is in [`docs/testing.md`](./docs/testing.md#command-reference).
+
+Stack: TypeScript, Next.js and React, Tailwind CSS, SQLite via Prisma (`@prisma/adapter-libsql`), Vitest.
 
 ## Docs
 
-- [`GAME_DESIGN.md`](./GAME_DESIGN.md) — authoritative game design
-- [`ARCHITECTURE.md`](./ARCHITECTURE.md) — authoritative technical architecture
-- [`CHANGELOG.md`](./CHANGELOG.md) — notable persistence, tooling, and dependency changes
-- [`docs/testing.md`](./docs/testing.md) — Vitest layout, determinism, Simulation Lab, CI
-- [`docs/test-catalog.md`](./docs/test-catalog.md) — what to run: Vitest projects, Lab CLI, file index
-
-## Scripts
-
-```bash
-npm run dev
-npm run lab                 # Simulation Lab UI at /dev/sim-lab
-npm run lint
-npm run format
-npm run format:check
-npm run db:migrate
-npm run db:generate
-```
-
-## Tests
-
-Suites live under `tests/`. `npm test` is unit + integration + React only. Lab 100-game batches and multi-year regression are separate.
-
-```bash
-npm test                     # unit + integration + react
-npm run test:unit
-npm run test:integration
-npm run test:simulation      # Lab 100-game rotation-on + season RNG (PR CI)
-npm run test:regression      # multi-year, economy, league-sanity (nightly CI)
-npm run test:all             # every Vitest project
-npm run test:watch
-npm run test:coverage        # same projects as npm test, plus coverage/
-```
-
-Single file:
-
-```bash
-npx vitest run tests/systems/game-sim-state.test.ts
-```
-
-30-team trade invariants (100 random player/pick trades; roster 8–15 and payroll at or under the salary cap). CPU/AI trading exists to confirm that path works — not as a load the decade sim has to run every calendar day. Also included in `npm run test:integration` / `npm test`:
-
-```bash
-npx vitest run tests/systems/trades/thirty-team-trade-invariants.test.ts
-```
-
-50-season soak (skipped unless `STRESS=1`):
-
-```bash
-STRESS=1 npx vitest run tests/application/multi-year-simulation-stress.test.ts
-```
-
-PowerShell:
-
-```powershell
-$env:STRESS=1; npx vitest run tests/application/multi-year-simulation-stress.test.ts
-```
-
-Every Vitest run writes `test-results.txt` (gitignored) with the pass/fail counts and each failure’s reason. Open that file after `npm test`. Override the path with `TEST_RESULTS_FILE`.
-
-`npm run test:coverage` writes `coverage/` (HTML + LCOV). CI uploads that folder as an artifact and sends `coverage/lcov.info` to Codecov. Set a `CODECOV_TOKEN` repository secret if the Codecov upload should authenticate (public tokenless upload may still work).
-
-## Simulations
-
-Simulation Lab wraps production `simulateGame` / `advanceSimulation`. Use the UI **or** the CLI — you do not need to play Owner Mode first.
-
-### UI
-
-```bash
-npm run lab
-```
-
-Opens [`http://localhost:3000/dev/sim-lab`](http://localhost:3000/dev/sim-lab). Starts `npm run dev` if nothing is already listening on port 3000. Game batches, multi-season careers, and full schedule runs are tabs on that page.
-
-If the app is already running, you can also visit `/dev/sim-lab` directly.
-
-### CLI
-
-Default `--channel pr` fails on hard invariants only; `--channel nightly` also fails on statistical FAIL.
-
-Each `npm run sim` writes `results/<runId>/manifest.json` **before the first game** (engine version, git SHA, resolved config, seed list). Opt out with `--no-persist`. Compare two manifests with `npm run sim:compare` — mismatched `engineVersion` is refused. Hard invariant failures also write `results/<runId>/failures/<gameIndex>.ndjson` (event log) and `<gameIndex>.json` (seed, config, failures). Replay that game with `npm run sim:replay`. Game-mode runs also stream `results/<runId>/games.ndjson` (raw per-game snapshots) and `checkpoint.json`. Resume with `--resume --run-id <id>`. `--jobs N` requires `--rotation=off`. `--timeout-ms` bounds a single game. `--sweep` runs a config-space sweep (`grid` / Latin hypercube / Sobol) and prints a ranked sensitivity table. `--write-baseline path` saves score distributions; `--baseline path` runs a two-sample KS test (default α=0.01) against that golden. `--calibrate` checks NBA-inspired mean bands. KS or calibration FAIL exits non-zero on every channel. `--config path` loads JSON defaults (CLI flags win). `--dry-run` prints the resolved run without simulating. `--list-scenarios` prints ids and scenario versions. Persisted runs append `results/index.json`. `--keep N` prunes older run directories.
-
-```bash
-npm run sim -- --seed=42 --games=100
-npm run sim -- --seed=42 --scenario=superteam --rotation=off --channel=pr
-npm run sim -- --seed=42 --rotation=off --jobs=4 --games=1000
-npm run sim -- --resume --run-id <runId> --seed=42 --rotation=off --games=1000
-npm run sim -- --seed=42 --mode owner-career --seasons 10 --channel nightly
-npm run sim -- --seed=42 --games=2 --sweep --sampler lhs --samples 8 --rotation=off
-npm run sim -- --seed=42 --games=2 --sweep space.json --sampler sobol --samples 16
-npm run sim -- --seed=42 --games=20 --write-baseline results/golden.json --rotation=off
-npm run sim -- --seed=42 --games=20 --baseline results/golden.json --rotation=off
-npm run sim -- --seed=42 --games=20 --calibrate --rotation=off
-npm run sim -- --list-scenarios
-npm run sim -- --config lab.json --dry-run
-npm run sim -- --seed=42 --games=2 --keep 10 --rotation=off
-npm run sim:compare -- results/<runA>/manifest.json results/<runB>/manifest.json
-npm run sim:replay -- --run <runId> --game 0
-```
-
-Game-mode `--scenario` values: `normal`, `superteam`, `weak`, `shooting`, `rebounding`, `min-roster`, `matchup-90-40`, `injury-heavy`, `overtime`.
-
-```bash
-npm run bench:sim            # game cost model + season profiler
-npm run bench:sim:game
-npm run bench:sim:season
-npm run sanity:league        # default 10 sims × 5 seasons
-npm run sanity:compare -- baseline.json current.json
-npm run generate:league-history   # 10 Standard seasons → tests/fixtures/league-history.json
-```
-
-`generate:league-history` uses `createSeededRng` (default seed 42) and writes standings, completed playoff brackets, and award winners. It skips daily CPU trade AI during the regular season and playoffs; offseason draft/FA still run. Trading is checked by the 30-team invariant test above, not by this fixture.
-
-Diagnostic CLIs (not npm scripts):
-
-```bash
-npx tsx scripts/validate-simulation-stats.ts --games 1000 --seed 12345
-npx tsx scripts/injury-simulation-analysis.ts
-npx tsx scripts/behavioral-harness.ts
-npx tsx scripts/inspect-owner-economy.ts baseline 1
-npx tsx scripts/analyze-player-population.ts
-npx tsx scripts/analyze-player-development.ts
-```
-
-League sanity example:
-
-```bash
-npx tsx scripts/league-sanity-report.ts --sims 10 --seasons 5 --seed 42 --format json --out sanity.json
-```
-
-## Environment
-
-Copy `.env.example` to `.env` (already created for local SQLite):
-
-```env
-DATABASE_URL="file:./prisma/dev.db"
-```
+- [`GAME_DESIGN.md`](./GAME_DESIGN.md): authoritative game design
+- [`ARCHITECTURE.md`](./ARCHITECTURE.md): authoritative technical architecture
+- [`CHANGELOG.md`](./CHANGELOG.md): notable persistence, tooling and dependency changes
+- [`docs/testing.md`](./docs/testing.md): Vitest layout, determinism, Simulation Lab, CI, command reference
+- [`docs/test-catalog.md`](./docs/test-catalog.md): what to run, with an index of Vitest projects, Lab CLI options and test files
+- [`docs/agent-skills.md`](./docs/agent-skills.md): where agent skills live and how to link them for Claude Code or Windsurf

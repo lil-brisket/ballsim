@@ -61,6 +61,10 @@ src/
 
 Typed domain catalogs such as `PlayerArchetype` and `PlayerNationality` live under `domain/entities/`, not `data/`. Name string pools (`first-names`, `last-names`) are expandable data under `src/data/names/`.
 
+### Save schema history
+
+Notes for each `GameState.schemaVersion` bump that changed persisted shape, oldest first. The current version is `GAME_STATE_SCHEMA_VERSION` in `src/state/game-state.ts`; migrations live in `src/persistence/mappers/game-state-mapper.ts`. Versions not listed here have no architecture-level notes.
+
 `schemaVersion` 6 adds `Player.nationality`. Pre-nationality saves migrate with a fixed legacy default of `"USA"` (no RNG).
 
 `schemaVersion` 7 adds Team relationship fields: conference ID, roster references, staff references, team finance placeholder, arena ID, and reputation. Legacy teams migrate with conference derived from division, empty roster/staff, `{}` finances, deterministic `arena_${teamId}`, and reputation `50`.
@@ -75,23 +79,33 @@ Typed domain catalogs such as `PlayerArchetype` and `PlayerNationality` live und
 
 `schemaVersion` 13 expands `TeamStanding` (win %, points for/against/differential, streak, conference/division records). Pre-v13 saves recompute standings via `calculateStandings` from teams, games, and schedule.
 
-`schemaVersion` 14 adds `competition.playoffs`. Pre-v14 saves migrate with an empty `PlayoffTournament` (`not_started`).
+`schemaVersion` 14 adds `competition.playoffs` (`PlayoffTournament`). Pre-v14 saves migrate with `createEmptyPlayoffTournament()` (`not_started`, empty field). Empty/inactive playoffs are valid; a missing or null `playoffs` field is not.
 
-`schemaVersion` 15 adds `user.objectives` and `TeamFinances.revenue` / `expenses`. Pre-v15 saves migrate with `objectives: []` and `revenue: 0` / `expenses: 0`. Owner Mode exposes a derived non-persisted `OwnerGameState` view via `toOwnerGameState` — it is never a field on `GameState` and has no separate schema version.
+`schemaVersion` 15 adds `user.objectives` and `TeamFinances.revenue` / `expenses`. Pre-v15 saves migrate with `objectives: []` and `revenue: 0` / `expenses: 0`. Owner Mode exposes a derived non-persisted `OwnerGameState` view via `toOwnerGameState` — it is never a field on `GameState` and has no separate schema version. `toOwnerGameState(state)` derives a live-reference view (selected team, finances, roster, staff ids, league grouping).
 
 `schemaVersion` 16 expands `Contract` from `salaryPerYear` / `yearsRemaining` to `startYear` / `endYear` / `salaryByYear` plus optional `teamOption` / `playerOption`. Pre-v16 contracts migrate using `competition.season.year` as `startYear`, expand flat salary across remaining years, and never invent options. Historical migration steps emit literal target schema versions (not the current `GAME_STATE_SCHEMA_VERSION` constant). Contract status is derived (not persisted). Salary-cap payroll is derived from contracts; `TeamFinances.payroll` remains a snapshot only.
 
 `schemaVersion` 17 adds `business.freeAgency.offers`. Pre-v17 saves migrate with empty offers.
 
-`schemaVersion` 18 adds `world.draftPicks` and `business.tradeBlocks`. Pre-v18 saves migrate with empty trade blocks and deterministic draft picks for the next three seasons via pure `generateDraftPicksForSeason` (no RNG). `originalTeamId` is immutable; only `ownerTeamId` changes in trades.
+`schemaVersion` 18 adds `world.draftPicks` and `business.tradeBlocks`. Pre-v18 saves migrate with empty trade blocks and deterministic draft picks for the next three seasons via pure `generateDraftPicksForSeason` (no RNG). `originalTeamId` is immutable; only `ownerTeamId` changes in trades. Trade Block entries are references to existing players/picks (status on the entry only). The trade engine (`validateTrade` / `executeTrade`) is the only authoritative mutation path for player/pick trades.
 
-`schemaVersion` 19 adds `world.drafts` (draft class aggregates: prospects, order, scouting, selections). Pre-v19 saves migrate with empty `drafts: {}`. Prospect snapshots live on the draft class until selection; selection inserts the reserved player id into `world.players`.
+`schemaVersion` 19 adds `world.drafts` (draft class aggregates: prospects, order, scouting, selections). Pre-v19 saves migrate with empty `drafts: {}`. Prospect snapshots live on the draft class until selection; selection inserts the reserved player id into `world.players`. `createDraft` / `activateDraft` / `makeDraftSelection` / `completeDraft` own the draft lifecycle. Selection does not consume RNG; order ownership for an active draft is `DraftOrderSlot.ownerTeamId` (pick-asset ownership is not mutated by the draft system).
 
-`schemaVersion` 20 replaces scalar `TeamFinances.revenue` / `expenses` with period-keyed `booksByYear` (category revenue and posted expenses). Pre-v20 non-zero `revenue` maps to `books[seasonYear].revenue.other`; non-zero `expenses` maps to `books[seasonYear].expenses.operations`. Zeros are discarded. Player salary expense on financial statements is derived from contracts via `getTeamPayroll`; it is never stored in books. `cash` is unchanged by revenue/expense posting.
+`schemaVersion` 20 replaces scalar `TeamFinances.revenue` / `expenses` with period-keyed `booksByYear` (category revenue and posted expenses). Pre-v20 non-zero `revenue` maps to `books[seasonYear].revenue.other`; non-zero `expenses` maps to `books[seasonYear].expenses.operations`. Zeros are discarded. Player salary expense on financial statements is derived from contracts via `getTeamPayroll`; it is never stored in books. `cash` is unchanged by revenue/expense posting. `recordRevenue` / `recordExpense` are additive posts; `getFinancialStatement` derives totals and contract-based player salaries. Totals and `playerSalaries` are never persisted. `applyCashAndBooksImpact` posts books and adjusts `cash` by the same signed amount for gameplay consequences.
 
 `schemaVersion` 21 adds the Owner Mode simulation backbone: `calendar.lastSimulatedDate` / `lastSimulatedWeekId`, `season.offseasonStage`, `world.scheduledEvents`, and `postseason` on `SeasonPhase`.
 
-`schemaVersion` 22 adds Owner Mode gameplay: objective `status` / `seasonYear` / `consequenceApplied` (replacing `completed`), `user.notifications`, and `user.appliedGameplayConsequenceKeys` for idempotent financial and AI consequence guards.
+`schemaVersion` 22 adds Owner Mode gameplay: objective `status` / `seasonYear` / `consequenceApplied` (replacing `completed`), `user.notifications`, and `user.appliedGameplayConsequenceKeys` for idempotent financial and AI consequence guards. Phase B gameplay order inside `advanceSimulation` is: daily pipeline → AI team decisions → financial consequences → owner objectives → owner notifications.
+
+`schemaVersion` 24 adds Phase E franchise depth under `business`: `staffContracts`, `sponsorships`, `franchiseOps` (operational knobs + slow metrics only — not a miscellaneous bucket), `leagueEconomy`, `relocationByTeamId`, `expansion`, and `franchiseHistory`. Calendar gains `lastSimulatedMonthId`. Facility upgrades post through existing `expenses.facilities` (no separate capex ledger). Live franchise value is a selector (`calculateFranchiseValue`), never a mutable live field. Demand is the sole attendance calculator. Media is event-driven only.
+
+`schemaVersion` 25 adds top-level `GameState.settings` (`GameSettings`): league size/structure, regular-season games per team, playoff field/series/play-in, simulation frequency, AI difficulty (persisted for later use), and financial rule toggles. Pre-v25 saves reconstruct settings from the live league (e.g. 12-team CBL → 22 games / 8 playoff teams) rather than stamping Standard 30/82/16. Settings are configuration; runtime remains on world/competition/business/user. After expansion, do not treat `settings.league.teamCount` as the live team count.
+
+`schemaVersion` 30 adds `user.narrative` (situations, lean month snapshots, cooldowns) for the owner narrative layer. Narrative interprets simulation state and emits stories/situations; it does not invent hidden simulation truth. Milestone `OwnerNotification`s remain separate.
+
+`schemaVersion` 37 adds offseason stage entry dates (`offseasonStageEnteredDate`, `freeAgencyExtendedUntil`), configurable free-agency duration under `settings.offseason.freeAgency`, AI management/assist settings (`ai.managementMode`, `ai.assistance`), and user continuity records (`explicitDecisions`, `phaseSkips`). Pre-v37 saves migrate with `smart_assist` defaults, FA duration 30 days, and stage entry date set to `currentDate` when already in an offseason stage.
+
+`schemaVersion` 65 adds `world.playerPortraits`: a persisted procedural portrait (`PlayerPortraitAssignment` — generator version, trait indices, collision salt) keyed by player / draft-prospect id. Pre-v65 saves migrate by running the pure `ensurePlayerPortraits` (no RNG, no I/O), so repeated loads of an un-resaved save show identical faces.
 
 ### Owner Mode vertical slice (Phase C)
 
@@ -117,16 +131,6 @@ GameState
 #                   appliedGameplayConsequenceKeys, narrative
 ```
 
-`schemaVersion` 30 adds `user.narrative` (situations, lean month snapshots, cooldowns) for the owner narrative layer. Narrative interprets simulation state and emits stories/situations; it does not invent hidden simulation truth. Milestone `OwnerNotification`s remain separate.
-
-`schemaVersion` 24 adds Phase E franchise depth under `business`: `staffContracts`, `sponsorships`, `franchiseOps` (operational knobs + slow metrics only — not a miscellaneous bucket), `leagueEconomy`, `relocationByTeamId`, `expansion`, and `franchiseHistory`. Calendar gains `lastSimulatedMonthId`. Facility upgrades post through existing `expenses.facilities` (no separate capex ledger). Live franchise value is a selector (`calculateFranchiseValue`), never a mutable live field. Demand is the sole attendance calculator. Media is event-driven only.
-
-`schemaVersion` 25 adds top-level `GameState.settings` (`GameSettings`): league size/structure, regular-season games per team, playoff field/series/play-in, simulation frequency, AI difficulty (persisted for later use), and financial rule toggles. Pre-v25 saves reconstruct settings from the live league (e.g. 12-team CBL → 22 games / 8 playoff teams) rather than stamping Standard 30/82/16. Settings are configuration; runtime remains on world/competition/business/user. After expansion, do not treat `settings.league.teamCount` as the live team count.
-
-`schemaVersion` 37 adds offseason stage entry dates (`offseasonStageEnteredDate`, `freeAgencyExtendedUntil`), configurable free-agency duration under `settings.offseason.freeAgency`, AI management/assist settings (`ai.managementMode`, `ai.assistance`), and user continuity records (`explicitDecisions`, `phaseSkips`). Pre-v37 saves migrate with `smart_assist` defaults, FA duration 30 days, and stage entry date set to `currentDate` when already in an offseason stage.
-
-`schemaVersion` 65 adds `world.playerPortraits`: a persisted procedural portrait (`PlayerPortraitAssignment` — generator version, trait indices, collision salt) keyed by player / draft-prospect id. Pre-v65 saves migrate by running the pure `ensurePlayerPortraits` (no RNG, no I/O), so repeated loads of an un-resaved save show identical faces.
-
 ### Player portraits
 
 - **Boundary:** `ensurePlayerPortraits` (`src/systems/portraits/`) is called in the application layer on every save write (`persistWorkingState`, `createNewOwnerSave`, `saveOwnerGame`). Any path that adds a player or prospect is covered there; systems don't call it. Failures are caught and logged, and the save proceeds without new portraits.
@@ -135,23 +139,9 @@ GameState
 - **Repair:** `npm run portraits:backfill` (`repairPlayerPortraits`) fills missing or invalid entries in every save, one CAS write per save. It can be re-run safely.
 - **UI:** selectors attach `portrait` to player view models via `selectPlayerPortrait`. `PlayerPortrait` renders `PortraitFace` (inline SVG) when the entry is valid, and the initials plate otherwise. The optional raster overlay (`src`) still renders on top. Nothing is generated during render or page load.
 
-`schemaVersion` 14 adds `competition.playoffs` (`PlayoffTournament`). Pre-v14 saves migrate with `createEmptyPlayoffTournament()` (`not_started`, empty field). Empty/inactive playoffs are valid; a missing or null `playoffs` field is not.
-
-`schemaVersion` 15 adds owner objectives on `user.objectives` and extends `business.finances` with `revenue` and `expenses`. `toOwnerGameState(state)` derives a live-reference Owner Mode view (selected team, finances, roster, staff ids, league grouping). It must not be persisted independently.
-
-`schemaVersion` 16 expands contracts under `business.contracts` to multi-year `salaryByYear` with optional team/player options. Cap space helpers derive payroll from contracts only.
-
-`schemaVersion` 18 stores draft picks under `world.draftPicks` and trade-block listings under `business.tradeBlocks`. Trade Block entries are references to existing players/picks (status on the entry only). The trade engine (`validateTrade` / `executeTrade`) is the only authoritative mutation path for player/pick trades.
-
-`schemaVersion` 19 stores draft classes under `world.drafts`. `createDraft` / `activateDraft` / `makeDraftSelection` / `completeDraft` own draft lifecycle. Selection does not consume RNG; order ownership for an active draft is `DraftOrderSlot.ownerTeamId` (pick-asset ownership is not mutated by the draft system).
-
-`schemaVersion` 20 stores team accounting books under `business.finances[*].booksByYear`. `recordRevenue` / `recordExpense` are additive posts; `getFinancialStatement` derives totals and contract-based player salaries. Totals and `playerSalaries` are never persisted. `applyCashAndBooksImpact` posts books and adjusts `cash` by the same signed amount for gameplay consequences.
-
-`schemaVersion` 22 stores owner notifications and applied gameplay consequence keys on `user`. Phase B gameplay order inside `advanceSimulation` is: daily pipeline → AI team decisions → financial consequences → owner objectives → owner notifications.
-
 Slice boundaries may be refined as domain models grow, but composition remains mandatory to avoid one undifferentiated mega-object.
 
-`schemaVersion` enables save migrations as the model evolves. Roster building blocks such as `player-name-generation` and `player-attribute-generation` accept an injected `Rng`. The player-generation engine composes those blocks into a full `Player` via `generatePlayer(seed)` / `generatePlayerWithRng(rng)`. Roster generation owns slots, contracts, and payroll, and calls the player generator per slot. Annual player development is a building block: `developPlayer(player, rng)` returns a new `Player` (attribute-level change, derived overall, stage from age). It does not increment age; a future season tick should age players and then call `developPlayer`. It is not wired into `runWorldPipeline` yet. Roster rules validation is a building block (`src/systems/roster-rules.ts`): `createRosterRulesConfig` / `validateRoster` throw on invalid configuration or assignment. Min/max size is independent of the starting/bench/inactive composition sum; a fully assigned roster must partition players so `players.length === startingLineupSize + benchSize + inactiveSize`. It does not mutate `GameState` or `Team`, and does not return `SystemResult`. Season schedule generation is a building block (`generateSeasonSchedule` in `src/systems/schedule-generation.ts`): config is `teamIds` + `seasonLength` (games per team); circle/Berger rounds with a separate home/away phase; `validateSeasonSchedule` checks invariants. Even team counts may use a prefix of the next round-robin cycle; odd team counts accept only complete cycles (`seasonLength` multiple of `n - 1`). The world adapter `generateSchedule(state)` uses `defaultSeasonLength` (double round-robin), maps each round to one shared calendar date, and returns `SystemResult`. No `Game.round` field — the calendar date is the time slot.
+`schemaVersion` enables save migrations as the model evolves. Roster building blocks such as `player-name-generation` and `player-attribute-generation` accept an injected `Rng`. The player-generation engine composes those blocks into a full `Player` via `generatePlayer(seed)` / `generatePlayerWithRng(rng)`. Roster generation owns slots, contracts, and payroll, and calls the player generator per slot. Annual player development: `developPlayer(player, rng)` returns a new `Player` (attribute-level change, derived overall, stage from age) and does not increment age. The offseason season tick (`processSeasonPlayerDevelopment`, run from the offseason lifecycle during season finalization) ages every player by one year and then calls `developPlayer`. Roster rules validation is a building block (`src/systems/roster-rules.ts`): `createRosterRulesConfig` / `validateRoster` throw on invalid configuration or assignment. Min/max size is independent of the starting/bench/inactive composition sum; a fully assigned roster must partition players so `players.length === startingLineupSize + benchSize + inactiveSize`. It does not mutate `GameState` or `Team`, and does not return `SystemResult`. Season schedule generation is a building block (`generateSeasonSchedule` in `src/systems/schedule-generation.ts`): config is `teamIds` + `seasonLength` (games per team); circle/Berger rounds with a separate home/away phase; `validateSeasonSchedule` checks invariants. Even team counts may use a prefix of the next round-robin cycle; odd team counts accept only complete cycles (`seasonLength` multiple of `n - 1`). The world adapter `generateSchedule(state)` uses `defaultSeasonLength` (double round-robin), maps each round to one shared calendar date, and returns `SystemResult`. No `Game.round` field — the calendar date is the time slot.
 
 ## Systems and state transitions
 
@@ -343,7 +333,10 @@ Load/save flow:
 ## World simulation & AI (architectural intent)
 
 - Advance-day processing is a world pipeline (`runWorldPipeline`), not a single-team update.
-- AI team decisions remain a future algorithmic layer under `systems/` (not implemented).
+- AI team decisions are implemented as a deterministic algorithmic layer under `systems/`, driven by shared franchise preferences (`resolveFranchisePreferences`):
+  - `runAiTeamDecisions` (`src/systems/ai-team-decisions.ts`) runs in the daily owner-gameplay step: offseason free agency and draft picks, trades while the trade window is open, roster-management upkeep, development-league moves, and max-roster enforcement.
+  - `runAiFranchiseDecisions` (`src/systems/ai-franchise-decisions.ts`) runs in the weekly pipeline: ticket and premium pricing, marketing budget, sponsorships, and facility upgrades.
+  - Both skip user-owned franchises (`isUserControlledTeam`); only max-roster enforcement applies to every team. Owner-delegated AI assistance is configured separately (`src/systems/simulation/ai-assist-settings.ts`). Cap and legality rules stay hard constraints, and doing nothing is a valid outcome.
 - LLMs are out of scope for core sim/decision loops unless explicitly justified later.
 
 ## Testing

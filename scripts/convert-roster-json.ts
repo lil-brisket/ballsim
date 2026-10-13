@@ -1,6 +1,6 @@
 import { readFileSync, writeFileSync } from "node:fs";
 import { randomUUID } from "node:crypto";
-import { resolve } from "node:path";
+import { basename, resolve } from "node:path";
 import { GAME_STATE_SCHEMA_VERSION } from "@/state/game-state";
 import {
   CUSTOM_CONTENT_FORMAT_VERSION,
@@ -10,44 +10,36 @@ import {
 import type { PlayerNationality } from "@/domain/entities/player";
 import { isPlayerNationality } from "@/domain/entities/player-nationality";
 
-const SOURCE = resolve("NBA_2027_28_Projected_Core_Roster.json");
-const OUTPUT = resolve("NBA_2027_28_Projected_Core_Roster.package.json");
+/**
+ * Converts a flat roster JSON (teams + players with `displayName`) into a
+ * custom roster package for Owner Mode import, and validates it.
+ *
+ *   npx tsx scripts/convert-roster-json.ts --in roster.json [--out roster.package.json]
+ *
+ * Keep source rosters in a gitignored folder such as `local-content/`.
+ */
+function readFlag(flag: string): string | undefined {
+  const index = process.argv.indexOf(flag);
+  if (index < 0 || index + 1 >= process.argv.length) {
+    return undefined;
+  }
+  return process.argv[index + 1];
+}
+
+const inputArg = readFlag("--in");
+if (!inputArg) {
+  console.error(
+    "Usage: npx tsx scripts/convert-roster-json.ts --in <roster.json> [--out <roster.package.json>]",
+  );
+  process.exit(1);
+}
+const SOURCE = resolve(inputArg);
+const OUTPUT = resolve(
+  readFlag("--out") ?? SOURCE.replace(/\.json$/i, "") + ".package.json",
+);
 
 const RATING_MIN = 1;
 const RATING_MAX = 99;
-
-const TEAM_IDENTITY: Record<string, { city: string; name: string }> = {
-  atl: { city: "Atlanta", name: "Hawks" },
-  bos: { city: "Boston", name: "Celtics" },
-  brk: { city: "Brooklyn", name: "Nets" },
-  nyk: { city: "New York", name: "Knicks" },
-  phi: { city: "Philadelphia", name: "76ers" },
-  tor: { city: "Toronto", name: "Raptors" },
-  chi: { city: "Chicago", name: "Bulls" },
-  cle: { city: "Cleveland", name: "Cavaliers" },
-  det: { city: "Detroit", name: "Pistons" },
-  ind: { city: "Indianapolis", name: "Pacers" },
-  mil: { city: "Milwaukee", name: "Bucks" },
-  cha: { city: "Charlotte", name: "Hornets" },
-  mia: { city: "Miami", name: "Heat" },
-  orl: { city: "Orlando", name: "Magic" },
-  was: { city: "Washington", name: "Wizards" },
-  den: { city: "Denver", name: "Nuggets" },
-  min: { city: "Minneapolis", name: "Timberwolves" },
-  okc: { city: "Oklahoma City", name: "Thunder" },
-  por: { city: "Portland", name: "Trail Blazers" },
-  uta: { city: "Salt Lake City", name: "Jazz" },
-  gsw: { city: "San Francisco", name: "Warriors" },
-  lac: { city: "Los Angeles", name: "Clippers" },
-  lal: { city: "Los Angeles", name: "Lakers" },
-  pho: { city: "Phoenix", name: "Suns" },
-  sac: { city: "Sacramento", name: "Kings" },
-  dal: { city: "Dallas", name: "Mavericks" },
-  hou: { city: "Houston", name: "Rockets" },
-  mem: { city: "Memphis", name: "Grizzlies" },
-  nop: { city: "New Orleans", name: "Pelicans" },
-  sas: { city: "San Antonio", name: "Spurs" },
-};
 
 const NATIONALITY_ALIASES: Record<string, PlayerNationality> = {
   Austria: "Germany",
@@ -76,6 +68,7 @@ type SourceTeam = {
   id: string;
   abbreviation: string;
   name: string;
+  city?: string;
 };
 
 type SourcePlayer = {
@@ -102,7 +95,10 @@ function asRating(value: number): number {
   return clamp(Math.round(value), RATING_MIN, RATING_MAX);
 }
 
-function splitDisplayName(displayName: string): { firstName: string; lastName: string } {
+function splitDisplayName(displayName: string): {
+  firstName: string;
+  lastName: string;
+} {
   const parts = displayName.trim().split(/\s+/);
   if (parts.length === 1) {
     return { firstName: parts[0]!, lastName: parts[0]! };
@@ -156,28 +152,24 @@ const pkg = {
   type: "roster" as const,
   contentId: randomUUID(),
   metadata: {
-    title: source.metadata?.name ?? "NBA 2027-28 Projected Core Roster",
+    title: source.metadata?.name ?? "Custom roster",
     version: "1.0.0",
     createdAt: now,
     updatedAt: now,
     author: "converted",
-    description:
-      "Converted from NBA_2027_28_Projected_Core_Roster.json for Owner Mode custom roster import.",
+    description: `Converted from ${basename(SOURCE)} for Owner Mode custom roster import.`,
   },
   compatibility: {
     gameStateSchemaVersion: GAME_STATE_SCHEMA_VERSION,
     minSchemaVersion: GAME_STATE_SCHEMA_VERSION,
   },
   payload: {
-    teams: source.teams.map((team) => {
-      const identity = TEAM_IDENTITY[team.id];
-      return {
-        sourceId: team.id,
-        name: identity?.name ?? team.name,
-        city: identity?.city,
-        abbreviation: team.abbreviation,
-      };
-    }),
+    teams: source.teams.map((team) => ({
+      sourceId: team.id,
+      name: team.name,
+      city: team.city,
+      abbreviation: team.abbreviation,
+    })),
     players: dedupePlayersByName(
       source.players.map((player) => {
         const { firstName, lastName } = splitDisplayName(player.displayName);

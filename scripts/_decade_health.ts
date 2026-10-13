@@ -22,7 +22,7 @@ import { salaryForPlayer, serviceYearsForSalary } from "@/systems/salary-scale";
 const SEED = 42;
 const SEASONS = 10;
 const FIDELITY = "box_score" as const;
-const OUT = resolve("tmp-decade-health.json");
+const OUT = resolve("reports/tmp-decade-health.json");
 
 type Acc = {
   games: number;
@@ -254,8 +254,12 @@ function collectSeason(state: GameState, seasonIndex: number) {
     calculatePlayerOverall(player.position, player.attributes),
   );
   const ages = rostered.map((player) => player.age);
-  const injured = rostered.filter((player) => player.availability !== "available");
-  const retired = Object.values(state.world.players).filter((player) => player.retired);
+  const injured = rostered.filter(
+    (player) => player.availability !== "available",
+  );
+  const retired = Object.values(state.world.players).filter(
+    (player) => player.retired,
+  );
 
   const ovrBuckets = {
     below60: overalls.filter((value) => value < 60).length,
@@ -277,9 +281,7 @@ function collectSeason(state: GameState, seasonIndex: number) {
         ppg: games > 0 ? round1(row.pointsFor / games) : 0,
         oppg: games > 0 ? round1(row.pointsAgainst / games) : 0,
         diff: row.pointDifferential,
-        payrollM: round1(
-          getTeamPayroll(row.teamId, year, state) / 1_000_000,
-        ),
+        payrollM: round1(getTeamPayroll(row.teamId, year, state) / 1_000_000),
         rosterSize: state.world.teams[row.teamId]?.roster.length ?? 0,
         meanOvr: round1(
           mean(
@@ -300,9 +302,10 @@ function collectSeason(state: GameState, seasonIndex: number) {
     cadence: "yearly",
   }).map((award) => ({
     awardId: award.awardId,
-    winner: award.winner.subjectType === "player"
-      ? playerName(state, award.winner.subjectId as PlayerId)
-      : award.winner.subjectId,
+    winner:
+      award.winner.subjectType === "player"
+        ? playerName(state, award.winner.subjectId as PlayerId)
+        : award.winner.subjectId,
     team: award.winner.teamId ? teamName(state, award.winner.teamId) : null,
     ppg: round1(award.context.statSnapshot.perGame.points),
     rpg: round1(award.context.statSnapshot.perGame.rebounds),
@@ -316,8 +319,10 @@ function collectSeason(state: GameState, seasonIndex: number) {
   const championId = state.competition.playoffs.championTeamId;
   const flags: string[] = [];
   const regular = scoringEnv(regularGames);
-  if (regular.teamPpg < 100) flags.push(`Scoring low: ${regular.teamPpg} team PPG`);
-  if (regular.teamPpg > 122) flags.push(`Scoring high: ${regular.teamPpg} team PPG`);
+  if (regular.teamPpg < 100)
+    flags.push(`Scoring low: ${regular.teamPpg} team PPG`);
+  if (regular.teamPpg > 122)
+    flags.push(`Scoring high: ${regular.teamPpg} team PPG`);
   if (regular.fgPct < 0.42 || regular.fgPct > 0.48) {
     flags.push(`FG% ${regular.fgPct} outside 42–48%`);
   }
@@ -329,14 +334,21 @@ function collectSeason(state: GameState, seasonIndex: number) {
   }
   const best = standings[0];
   const worst = standings[standings.length - 1];
-  if (best && best.wins >= 70) flags.push(`Best record ${best.wins}-${best.losses} is historic`);
-  if (worst && worst.wins <= 10) flags.push(`Worst record ${worst.wins}-${worst.losses} is tanked`);
-  if (ovrBuckets.from90 > 30) flags.push(`${ovrBuckets.from90} rostered 90+ players`);
+  if (best && best.wins >= 70)
+    flags.push(`Best record ${best.wins}-${best.losses} is historic`);
+  if (worst && worst.wins <= 10)
+    flags.push(`Worst record ${worst.wins}-${worst.losses} is tanked`);
+  if (ovrBuckets.from90 > 30)
+    flags.push(`${ovrBuckets.from90} rostered 90+ players`);
   const mvp = yearlyAwards.find((row) => row.awardId === "mvp");
-  if (mvp && mvp.ppg < 22) flags.push(`MVP scored ${mvp.ppg} PPG (usage too even)`);
-  if (mvp && mvp.ppg > 36) flags.push(`MVP scored ${mvp.ppg} PPG (usage too concentrated)`);
-  if (ppgs[0] != null && ppgs[0] < 22) flags.push(`Scoring leader ${ppgs[0]} PPG`);
-  if (ppgs[0] != null && ppgs[0] > 38) flags.push(`Scoring leader ${ppgs[0]} PPG`);
+  if (mvp && mvp.ppg < 22)
+    flags.push(`MVP scored ${mvp.ppg} PPG (usage too even)`);
+  if (mvp && mvp.ppg > 36)
+    flags.push(`MVP scored ${mvp.ppg} PPG (usage too concentrated)`);
+  if (ppgs[0] != null && ppgs[0] < 22)
+    flags.push(`Scoring leader ${ppgs[0]} PPG`);
+  if (ppgs[0] != null && ppgs[0] > 38)
+    flags.push(`Scoring leader ${ppgs[0]} PPG`);
 
   return {
     seasonIndex,
@@ -354,7 +366,9 @@ function collectSeason(state: GameState, seasonIndex: number) {
       maxOvr: overalls.length === 0 ? 0 : Math.max(...overalls),
       meanAge: round1(mean(ages)),
       injured: injured.length,
-      injuredPct: round3(rostered.length === 0 ? 0 : injured.length / rostered.length),
+      injuredPct: round3(
+        rostered.length === 0 ? 0 : injured.length / rostered.length,
+      ),
       ovrBuckets,
     },
     scoringLeaders: qualified.slice(0, 10),
@@ -412,7 +426,8 @@ function collectStarPay(state: GameState, year: number) {
         age: player.age,
         seasonYear: year,
         draftSeasonYear: player.developmentLeague?.draftSeasonYear ?? null,
-        seasonsPlayed: state.business.playerHistory[player.id]?.seasons.length ?? 0,
+        seasonsPlayed:
+          state.business.playerHistory[player.id]?.seasons.length ?? 0,
       }),
       cap,
       kind: "fa",
