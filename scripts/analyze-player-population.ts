@@ -1,4 +1,4 @@
-import { writeFileSync } from "node:fs";
+import { mkdirSync, writeFileSync } from "node:fs";
 import { generatePlayer } from "@/systems/player-generation";
 import { calculatePlayerOverall } from "@/domain/player-overall-rating";
 import type { Player } from "@/domain/entities/player";
@@ -210,7 +210,11 @@ const out = {
   },
 };
 
-writeFileSync("tmp-population-stats.json", JSON.stringify(out, null, 2));
+mkdirSync("reports", { recursive: true });
+writeFileSync(
+  "reports/tmp-population-stats.json",
+  JSON.stringify(out, null, 2),
+);
 console.error(
   "OK mean overall",
   out.overall.mean,

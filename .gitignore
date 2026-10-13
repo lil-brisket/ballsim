@@ -53,7 +53,17 @@ next-env.d.ts
 
 /src/generated/prisma
 
-tmp-development-stats.json
+# Ad-hoc analysis reports (scripts/_decade_health.ts, analyze-player-*.ts)
+/reports
+# Scratch output at the repo root
+/tmp-*
+
+# Personal roster/content files with real-world names; never commit (game is fully fictional)
+/local-content
+
+# Agent skills: .agents/skills is the source of truth (skills-lock.json); these are local mirrors
+/.claude/skills
+/.windsurf/skills
 
 # Generated player portrait overlays (presentation cache, not GameState)
 /portraits/

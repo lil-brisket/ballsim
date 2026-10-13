@@ -1,8 +1,8 @@
 import json
 from pathlib import Path
 
-d = json.loads(Path("tmp-decade-health.json").read_text(encoding="utf-8"))
-out = Path("tmp-decade-health-summary.txt")
+d = json.loads(Path("reports/tmp-decade-health.json").read_text(encoding="utf-8"))
+out = Path("reports/tmp-decade-health-summary.txt")
 lines = []
 
 
