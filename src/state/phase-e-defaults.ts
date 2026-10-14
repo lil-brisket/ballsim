@@ -3,6 +3,7 @@ import { createIdleExpansionState } from "@/domain/entities/expansion";
 import { createEmptyFranchiseHistory } from "@/domain/entities/franchise-history";
 import {
   createDefaultFranchiseOps,
+  createStartingFacilities,
   type FranchiseOps,
 } from "@/domain/entities/franchise-ops";
 import {
@@ -20,11 +21,14 @@ import { generateFranchiseIdentity } from "@/systems/franchise-identity-generati
  *
  * @param rngSeed — save meta.rngSeed for deterministic identity; 0 is allowed
  *   for pure structural migrations that will be re-seeded later.
+ * @param options.marketSizedArenas — new leagues start big markets with bigger
+ *   arenas; migrations leave it off so old saves migrate unchanged.
  */
 export function createPhaseEBusinessDefaults(
   teamIds: readonly TeamId[],
   rngSeed = 0,
   cityStartSeasonYear = 0,
+  options: { marketSizedArenas?: boolean } = {},
 ): {
   staffContracts: Record<string, never>;
   sponsorships: Record<string, never>;
@@ -74,6 +78,9 @@ export function createPhaseEBusinessDefaults(
     });
     franchiseOps[teamId] = createDefaultFranchiseOps({
       marketSize,
+      ...(options.marketSizedArenas
+        ? { facilities: createStartingFacilities(marketSize) }
+        : {}),
       aiProfile: identity.aiProfile,
       spendingTolerance: identity.spendingTolerance,
       patience: identity.patience,

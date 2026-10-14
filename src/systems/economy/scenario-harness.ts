@@ -1172,6 +1172,9 @@ export function bootstrapEconomyScenario(
   });
   const rng = createSeededRng(state.meta.rngState);
   state = persistRng(bootstrapWorld(state, rng).state, rng);
+  // New leagues size arenas to market; scenarios compare one lever at a
+  // time, so every scenario starts the owner team from the same arena.
+  state = setFacilityLevels(state, state.user.activeOwnerTeamId, { arena: 1 });
   const capitalRollup = emptyCapitalRollup();
   state = applyEconomyScenario(state, scenario, { capitalRollup });
   return { state, rng, capitalRollup };

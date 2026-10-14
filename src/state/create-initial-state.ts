@@ -171,6 +171,7 @@ export function createInitialGameState(
     teamIds,
     rngSeed,
     startingSeasonYear,
+    { marketSizedArenas: true },
   );
   const preseasonStartDate = canonicalPreseasonStartDate(startingSeasonYear);
 
@@ -398,6 +399,7 @@ export function createFourTeamInitialGameState(
     teamIds,
     rngSeed,
     startingSeasonYear,
+    { marketSizedArenas: true },
   );
   const preseasonStartDate = canonicalPreseasonStartDate(startingSeasonYear);
 
