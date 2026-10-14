@@ -67,3 +67,5 @@ next-env.d.ts
 
 # Generated player portrait overlays (presentation cache, not GameState)
 /portraits/
+# Temporary worktrees from scripts/generate-golden-saves.ts
+/.golden-worktrees/
