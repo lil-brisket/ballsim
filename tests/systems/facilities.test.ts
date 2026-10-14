@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { createDefaultFranchiseOps } from "@/domain/entities/franchise-ops";
+import {
+  createDefaultFranchiseOps,
+  startingArenaLevelForMarket,
+} from "@/domain/entities/franchise-ops";
 import { asTeamId } from "@/domain/ids";
 import { createSeededRng } from "@/domain/rng";
 import { createInitialGameState } from "@/state/create-initial-state";
@@ -79,5 +82,26 @@ describe("facilities", () => {
   it("defaults franchise ops levels at 1", () => {
     const ops = createDefaultFranchiseOps();
     expect(ops.facilities.arena.level).toBe(1);
+  });
+
+  it("sizes a new league's starting arenas to market size", () => {
+    expect(startingArenaLevelForMarket(35)).toBe(1);
+    expect(startingArenaLevelForMarket(50)).toBe(2);
+    expect(startingArenaLevelForMarket(79)).toBe(3);
+
+    const state = createInitialGameState({
+      saveId: "fac_market",
+      rngSeed: 11,
+      settings: CBL_GAME_SETTINGS,
+    });
+    const levels = new Set<number>();
+    for (const ops of Object.values(state.business.franchiseOps)) {
+      expect(ops.facilities.arena.level).toBe(
+        startingArenaLevelForMarket(ops.marketSize),
+      );
+      levels.add(ops.facilities.arena.level);
+    }
+    // Market sizes span 35-79, so a league opens with more than one arena size.
+    expect(levels.size).toBeGreaterThan(1);
   });
 });

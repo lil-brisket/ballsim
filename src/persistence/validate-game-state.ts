@@ -1035,10 +1035,17 @@ export function validateGameState(state: unknown): asserts state is GameState {
 
     if (offerValue.status === "accepted") {
       const acceptedContractId = offerValue.contractId as string;
+      const signedPlayer = world.players[offerValue.playerId as string];
+      assertRecord(signedPlayer, `world.players[${offerValue.playerId}]`);
       if (!contractIds.has(acceptedContractId)) {
-        fail(
-          `business.freeAgency.offers[${offerId}].contractId "${acceptedContractId}" is missing from business.contracts.`,
-        );
+        // Retirement (and custom-content edits) delete the contract while the
+        // accepted offer stays as history. Only a live binding must resolve.
+        if (signedPlayer.contractId === acceptedContractId) {
+          fail(
+            `business.freeAgency.offers[${offerId}].contractId "${acceptedContractId}" is missing from business.contracts.`,
+          );
+        }
+        continue;
       }
       const linkedContract = business.contracts[acceptedContractId];
       assertRecord(linkedContract, `business.contracts[${acceptedContractId}]`);
@@ -1047,30 +1054,35 @@ export function validateGameState(state: unknown): asserts state is GameState {
           `business.freeAgency.offers[${offerId}] accepted contract playerId must match offer.playerId.`,
         );
       }
-      if (linkedContract.teamId !== offerValue.teamId) {
+      // A trade moves the contract (same id) to the acquiring team, so the
+      // current holder may differ from the signing team. Live membership is
+      // checked against the holder, which must be a real team.
+      const holderTeamId = linkedContract.teamId as string;
+      if (
+        holderTeamId !== offerValue.teamId &&
+        !(holderTeamId in world.teams)
+      ) {
         fail(
-          `business.freeAgency.offers[${offerId}] accepted contract teamId must match offer.teamId.`,
+          `business.freeAgency.offers[${offerId}] accepted contract teamId must match offer.teamId or a team that acquired the contract.`,
         );
       }
-      const signedPlayer = world.players[offerValue.playerId as string];
-      assertRecord(signedPlayer, `world.players[${offerValue.playerId}]`);
       // Accepted offers are historical records. Live membership invariants apply
       // only while the offer's contract is still the player's current binding.
       // After expiration/release/re-sign, player.contractId diverges — that is valid.
       if (signedPlayer.contractId === acceptedContractId) {
-        if (signedPlayer.teamId !== offerValue.teamId) {
+        if (signedPlayer.teamId !== holderTeamId) {
           fail(
-            `business.freeAgency.offers[${offerId}] accepted: player.teamId must equal offer.teamId.`,
+            `business.freeAgency.offers[${offerId}] accepted: player.teamId must equal the contract's team.`,
           );
         }
-        const signingTeam = world.teams[offerValue.teamId as string];
-        assertRecord(signingTeam, `world.teams[${offerValue.teamId}]`);
-        if (!Array.isArray(signingTeam.roster)) {
-          fail(`world.teams[${offerValue.teamId}].roster must be an array.`);
+        const holderTeam = world.teams[holderTeamId];
+        assertRecord(holderTeam, `world.teams[${holderTeamId}]`);
+        if (!Array.isArray(holderTeam.roster)) {
+          fail(`world.teams[${holderTeamId}].roster must be an array.`);
         }
-        if (!(signingTeam.roster as unknown[]).includes(offerValue.playerId)) {
+        if (!(holderTeam.roster as unknown[]).includes(offerValue.playerId)) {
           fail(
-            `business.freeAgency.offers[${offerId}] accepted: player must be on signing team roster.`,
+            `business.freeAgency.offers[${offerId}] accepted: player must be on the contract team's roster.`,
           );
         }
       }

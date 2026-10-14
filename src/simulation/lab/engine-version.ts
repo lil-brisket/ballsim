@@ -23,5 +23,15 @@
  * real delay instead of the same season, with a larger effect size
  * (1.0-1.35 → 1.0-1.7). Franchise valuation also weights performance more
  * and has less inertia (`franchise-value-config.ts`).
+ *
+ * Version 4: box-score team points come from a fitted model of team shooting,
+ * top-3 scorers, rebounding and opponent defense (`expectedTeamPoints`)
+ * instead of a fixed 96-point base plus overall difference, and box-score make
+ * rates / shot mix were re-fitted per player against the possession sim
+ * across generated leagues (the old values were tuned on one Lab roster pair
+ * and ran ~9 PPG and 1-3 shooting points high on league rosters). RNG draw
+ * order is unchanged. Recommended lineups now fill five starters from
+ * recovery/minor players when needed, and new franchises start with an arena
+ * sized to their market.
  */
-export const ENGINE_VERSION = 3;
+export const ENGINE_VERSION = 4;

@@ -154,6 +154,46 @@ describe("roster-management", () => {
     expect(emergency.players.length).toBeLessThanOrEqual(5);
   });
 
+  it("fills five starters from recovery/minor players when few are fully healthy", () => {
+    // Regression: 3 healthy + recovery/minor players count as available, so
+    // the emergency path trusted a 3-man recommended lineup and the game ran
+    // 48 minutes with 3 on court (TEAM_SECONDS_MISMATCH).
+    let state = bootstrappedState();
+    const teamId = state.user.activeOwnerTeamId;
+    const roster = state.world.teams[teamId]!.roster;
+    const players = { ...state.world.players };
+    roster.forEach((playerId, index) => {
+      const availability =
+        index < 3 ? "available" : index % 2 === 0 ? "recovery" : "minor";
+      players[playerId] = { ...players[playerId]!, availability };
+    });
+    state = {
+      ...state,
+      world: {
+        ...state.world,
+        players,
+        teams: {
+          ...state.world.teams,
+          [teamId]: {
+            ...state.world.teams[teamId]!,
+            rosterManagement: {
+              ...state.world.teams[teamId]!.rosterManagement,
+              startingLineup: state.world.teams[
+                teamId
+              ]!.rosterManagement.startingLineup.slice(0, 3),
+            },
+          },
+        },
+      },
+    };
+
+    const recommended = recommendRosterManagement(state, teamId);
+    expect(recommended.startingLineup).toHaveLength(5);
+    const lineup = getEmergencyLineup(state, teamId);
+    expect(lineup.players).toHaveLength(5);
+    expect(new Set(lineup.players.map((player) => player.id)).size).toBe(5);
+  });
+
   it("does not silently normalize planned minutes", () => {
     const state = bootstrappedState();
     const teamId = state.user.activeOwnerTeamId;

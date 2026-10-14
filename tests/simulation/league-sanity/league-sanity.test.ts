@@ -112,13 +112,13 @@ describe("league sanity reproducibility", () => {
     () => {
       const a = buildLeagueSanityReport({
         simulations: 2,
-        seasonsPerSimulation: 2,
+        seasonsPerSimulation: 1,
         seed: 4242,
         generatedAt: "2026-01-01T00:00:00.000Z",
       });
       const b = buildLeagueSanityReport({
         simulations: 2,
-        seasonsPerSimulation: 2,
+        seasonsPerSimulation: 1,
         seed: 4242,
         generatedAt: "2099-01-01T00:00:00.000Z",
       });

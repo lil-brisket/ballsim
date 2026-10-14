@@ -1,6 +1,9 @@
 import type { ExpansionCandidateMarket } from "@/domain/entities/expansion";
 import { createIdleExpansionState } from "@/domain/entities/expansion";
-import { createDefaultFranchiseOps } from "@/domain/entities/franchise-ops";
+import {
+  createDefaultFranchiseOps,
+  createStartingFacilities,
+} from "@/domain/entities/franchise-ops";
 import { createEmptyFranchiseHistory } from "@/domain/entities/franchise-history";
 import { createIdleRelocation } from "@/domain/entities/relocation";
 import { createTeam, NEUTRAL_TEAM_PLAY_STYLE } from "@/domain/entities/team";
@@ -343,6 +346,7 @@ export function completeExpansion(state: GameState, rng: Rng): SystemResult {
             });
             return createDefaultFranchiseOps({
               marketSize: candidate.marketSize,
+              facilities: createStartingFacilities(candidate.marketSize),
               aiProfile: identity.aiProfile,
               spendingTolerance: identity.spendingTolerance,
               patience: identity.patience,

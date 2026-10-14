@@ -53,9 +53,31 @@ export type SimulateBoxScoreContext = {
  * stats) match `simulateGame` on the same rosters. See
  * tests/simulation/lab/fidelity-parity.test.ts for the enforced tolerances.
  */
-const BASE_TEAM_POINTS = 96;
-const HOME_COURT_OVERALL_EDGE = 2;
-const POINTS_PER_OVERALL = 0.45;
+/**
+ * Expected team points from the team's top-8 shooting, its top-3 scorers
+ * (the possession sim funnels shots to its best scorers, so stars move points
+ * more than a team mean does), rebounding, and the opponent's rotation
+ * defense. Fitted (OLS) to possession-sim means over every pairing of 12
+ * generated leagues (1,584 team-sides); 6 held-out leagues give RMSE 4.0
+ * (mostly game noise), bias +0.6. The previous fixed 96-point base was tuned
+ * on one Lab roster pair, scored ~9 points high on typical league rosters and
+ * ignored absolute talent. The possession sim has no home-court term, so
+ * neither does this.
+ */
+const EXPECTED_POINTS_MODEL = {
+  intercept: -32.338,
+  /** Top-8 mean scoringAbility (finishing, midRange, threePoint). */
+  shooting: 0.589,
+  /** Mean scoringAbility of the three best scorers in the top 8. */
+  topScorers: 1.257,
+  /** Top-8 mean rebounding (second chances). */
+  rebounding: 0.154,
+  /** Opponent available-roster mean interiorDefense. */
+  opponentInteriorDefense: -0.418,
+  /** Opponent available-roster mean perimeterDefense. */
+  opponentPerimeterDefense: -0.092,
+} as const;
+const TOP_SCORER_COUNT = 3;
 /** Half-width of the uniform per-team score noise (possession-sim SD ~13). */
 const SCORE_NOISE = 22;
 const SCORE_FLOOR = 60;
@@ -74,39 +96,54 @@ const BOX_SCORE_MINUTES_BY_AVAILABILITY: Readonly<
   recovery: 0.75,
 };
 
-const ASSIST_TO_FGM_RATE = 0.485;
+/** Possession sim assists ~51% of made field goals on league rosters. */
+const ASSIST_TO_FGM_RATE = 0.51;
 
 /**
- * How a player's points split into 3PM / 2PM / FTM, and additive make-rate
- * offsets applied on top of the shared possession-sim formulas. Tuned against
- * the possession engine (Lab, seed 42); re-tune when shot or FT config changes.
+ * How a player's points split into 3PM / 2PM / FTM, and the map from the
+ * shared possession-sim rating formulas to make rates. Slopes are fitted per
+ * player (attempt-weighted OLS) to possession-sim results over every pairing
+ * of 8 generated leagues: possession make rates track the bare formulas almost
+ * 1:1 (0.95-1.0), so there is no compression toward a league anchor.
+ * Intercepts, three share and FT share are then tuned so team rates match the
+ * possession sim on held-out leagues — points-first allocation hands weak
+ * shooters extra attempts, which a per-player fit alone would miss. Re-fit
+ * when shot or FT config changes.
  */
 const BOX_SCORE_SHOT_CALIBRATION = {
-  threeShareBase: 0.13,
-  threeShareSlope: 0.5,
-  threeShareMin: 0.12,
-  threeShareMax: 0.62,
-  ftShareBase: 0.03,
-  ftShareFinishingSlope: 1 / 500,
+  threeShareBase: -0.0055,
+  threeShareSlope: 0.745,
+  threeShareMin: 0,
+  threeShareMax: 0.7,
+  ftShareBase: 0.093,
+  ftShareFinishingSlope: 0,
   ftShareMin: 0.04,
-  ftShareMax: 0.2,
-  twoPointRateOffset: 0.03,
-  threePointRateOffset: 0.04,
-  freeThrowRateOffset: 0.005,
+  ftShareMax: 0.25,
+  twoPoint: { intercept: 0.0125, slope: 0.9772, knee: 0.53 },
+  threePoint: { intercept: 0.053, slope: 0.951, knee: 0.45 },
+  freeThrow: { intercept: 0.007, slope: 0.9984, knee: 1 },
   /**
-   * Possession-sim outcomes move less with raw ratings than the bare rating
-   * formulas do (shot quality, contests, fatigue wash some of it out). Make
-   * rates are pulled toward these league anchors by `rateSpread` so box-score
-   * stars do not shoot 55% and weak rosters do not collapse.
+   * Above `knee`, make rates rise at this fraction of the linear map. The
+   * possession sim lets a 97-rated scorer shoot ~59% from the field; box
+   * score keeps elite shooters believable (GAME_DESIGN: top scorers 25-32
+   * PPG) without moving team rates for typical rosters.
    */
-  rateSpread: 0.6,
-  twoPointAnchor: 0.44,
-  threePointAnchor: 0.393,
-  freeThrowAnchor: 0.73,
+  kneeSlope: 0.4,
 } as const;
 
-function compressRate(raw: number, anchor: number): number {
-  return anchor + BOX_SCORE_SHOT_CALIBRATION.rateSpread * (raw - anchor);
+function calibratedRate(
+  raw: number,
+  map: {
+    readonly intercept: number;
+    readonly slope: number;
+    readonly knee: number;
+  },
+): number {
+  const linear = map.intercept + map.slope * raw;
+  if (linear <= map.knee) {
+    return linear;
+  }
+  return map.knee + (linear - map.knee) * BOX_SCORE_SHOT_CALIBRATION.kneeSlope;
 }
 const POSITION_STEAL_MODIFIERS: Readonly<Record<PlayerPosition, number>> = {
   PG: 6,
@@ -147,11 +184,9 @@ export function simulateGameBoxScore(
     );
   }
 
-  const homeRating = teamRating(homeAvailable);
-  const awayRating = teamRating(awayAvailable);
   const { home: homePoints, away: awayPoints } = rollFinalScore(
-    homeRating + HOME_COURT_OVERALL_EDGE,
-    awayRating,
+    expectedTeamPoints(homeAvailable, awayAvailable),
+    expectedTeamPoints(awayAvailable, homeAvailable),
     rng,
   );
 
@@ -243,30 +278,38 @@ function availablePlayers(roster: readonly Player[]): Player[] {
   );
 }
 
-function teamRating(players: readonly Player[]): number {
-  const ranked = [...players].sort(
+export function expectedTeamPoints(
+  offense: readonly Player[],
+  defense: readonly Player[],
+): number {
+  const ranked = [...offense].sort(
     (a, b) =>
       calculatePlayerOverall(b.position, b.attributes) -
       calculatePlayerOverall(a.position, a.attributes),
   );
   const sample = ranked.slice(0, Math.min(8, ranked.length));
-  const sum = sample.reduce(
-    (total, player) =>
-      total + calculatePlayerOverall(player.position, player.attributes),
-    0,
+  const scoring = sample.map(scoringAbility);
+  const shooting = mean(scoring);
+  const topScorers = mean(
+    [...scoring].sort((a, b) => b - a).slice(0, TOP_SCORER_COUNT),
   );
-  return sum / sample.length;
+  const rebounding = mean(sample.map((player) => player.attributes.rebounding));
+  const model = EXPECTED_POINTS_MODEL;
+  return (
+    model.intercept +
+    model.shooting * shooting +
+    model.topScorers * topScorers +
+    model.rebounding * rebounding +
+    model.opponentInteriorDefense * meanAttribute(defense, "interiorDefense") +
+    model.opponentPerimeterDefense * meanAttribute(defense, "perimeterDefense")
+  );
 }
 
 function rollFinalScore(
-  homeRating: number,
-  awayRating: number,
+  homeBase: number,
+  awayBase: number,
   rng: Rng,
 ): GameScore {
-  const homeBase =
-    BASE_TEAM_POINTS + (homeRating - awayRating) * POINTS_PER_OVERALL;
-  const awayBase =
-    BASE_TEAM_POINTS + (awayRating - homeRating) * POINTS_PER_OVERALL;
   let home = clampScore(
     Math.round(homeBase) + rng.nextInt(-SCORE_NOISE, SCORE_NOISE),
   );
@@ -659,26 +702,24 @@ function twoPointMakeRate(player: Player, oppInterior: number): number {
   const ability =
     (player.attributes.finishing + player.attributes.midRange) / 2;
   return clampShotProbability(
-    compressRate(
+    calibratedRate(
       ability / RATING_MAX +
         SHOT_RESOLUTION_CONFIG.baselineProbability +
         SHOT_RESOLUTION_CONFIG.twoPointAdjustment -
-        (oppInterior / RATING_MAX) * SHOT_RESOLUTION_CONFIG.defensiveImpact +
-        BOX_SCORE_SHOT_CALIBRATION.twoPointRateOffset,
-      BOX_SCORE_SHOT_CALIBRATION.twoPointAnchor,
+        (oppInterior / RATING_MAX) * SHOT_RESOLUTION_CONFIG.defensiveImpact,
+      BOX_SCORE_SHOT_CALIBRATION.twoPoint,
     ),
   );
 }
 
 function threePointMakeRate(player: Player, oppPerimeter: number): number {
   return clampShotProbability(
-    compressRate(
+    calibratedRate(
       player.attributes.threePoint / RATING_MAX +
         SHOT_RESOLUTION_CONFIG.baselineProbability +
         SHOT_RESOLUTION_CONFIG.threePointAdjustment -
-        (oppPerimeter / RATING_MAX) * SHOT_RESOLUTION_CONFIG.defensiveImpact +
-        BOX_SCORE_SHOT_CALIBRATION.threePointRateOffset,
-      BOX_SCORE_SHOT_CALIBRATION.threePointAnchor,
+        (oppPerimeter / RATING_MAX) * SHOT_RESOLUTION_CONFIG.defensiveImpact,
+      BOX_SCORE_SHOT_CALIBRATION.threePoint,
     ),
   );
 }
@@ -687,10 +728,9 @@ function freeThrowMakeRate(player: Player): number {
   return clamp(
     0.4,
     0.98,
-    compressRate(
-      calculateFreeThrowProbability({ shooter: player }) +
-        BOX_SCORE_SHOT_CALIBRATION.freeThrowRateOffset,
-      BOX_SCORE_SHOT_CALIBRATION.freeThrowAnchor,
+    calibratedRate(
+      calculateFreeThrowProbability({ shooter: player }),
+      BOX_SCORE_SHOT_CALIBRATION.freeThrow,
     ),
   );
 }
@@ -718,6 +758,10 @@ function meanAttribute(
     0,
   );
   return sum / players.length;
+}
+
+function mean(values: readonly number[]): number {
+  return values.reduce((total, value) => total + value, 0) / values.length;
 }
 
 function clamp(min: number, max: number, value: number): number {

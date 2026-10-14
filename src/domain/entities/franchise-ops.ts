@@ -148,6 +148,36 @@ export function createDefaultFacilities(): FacilitiesState {
   return facilities;
 }
 
+/** Market size at or above which a franchise starts with a level-2 arena. */
+export const STARTING_ARENA_LEVEL_2_MARKET = 50;
+/** Market size at or above which a franchise starts with a level-3 arena. */
+export const STARTING_ARENA_LEVEL_3_MARKET = 65;
+
+/**
+ * Starting arena level from market size. Bigger markets open with bigger
+ * buildings, so market size shows up in attendance instead of every team
+ * selling out the same 12k-seat arena.
+ */
+export function startingArenaLevelForMarket(marketSize: number): number {
+  if (marketSize >= STARTING_ARENA_LEVEL_3_MARKET) {
+    return 3;
+  }
+  if (marketSize >= STARTING_ARENA_LEVEL_2_MARKET) {
+    return 2;
+  }
+  return FACILITY_LEVEL_MIN;
+}
+
+/** Default facilities with the arena sized to the market. */
+export function createStartingFacilities(marketSize: number): FacilitiesState {
+  const facilities = createDefaultFacilities();
+  facilities.arena = {
+    level: startingArenaLevelForMarket(marketSize),
+    upgradeWeeksRemaining: 0,
+  };
+  return facilities;
+}
+
 export function createDefaultFranchiseOps(
   overrides: Partial<FranchiseOps> = {},
 ): FranchiseOps {

@@ -173,6 +173,24 @@ describe("economic scenarios (Phase 1A)", () => {
     });
     state = bootstrapWorld(state, createSeededRng(state.meta.rngState)).state;
     const teamId = state.user.activeOwnerTeamId;
+    // New leagues size the starting arena to market; start this check at 1.
+    const startOps = state.business.franchiseOps[teamId]!;
+    state = {
+      ...state,
+      business: {
+        ...state.business,
+        franchiseOps: {
+          ...state.business.franchiseOps,
+          [teamId]: {
+            ...startOps,
+            facilities: {
+              ...startOps.facilities,
+              arena: { level: 1, upgradeWeeksRemaining: 0 },
+            },
+          },
+        },
+      },
+    };
 
     const level1 = arenaCapacity(state, teamId);
     expect(level1).toBe(ARENA_CAPACITY_BY_LEVEL[0]);

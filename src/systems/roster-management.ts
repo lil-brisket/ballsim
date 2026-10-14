@@ -790,8 +790,17 @@ export function recommendRosterManagement(
     startingLineup.push({ playerId: candidate.id, slot });
   }
 
+  // Recovery / minor players can play (see player-availability) but only
+  // start when the preferred pool cannot fill five; otherwise a banged-up
+  // team gets a short lineup that plays a whole game with < 5 on court.
+  const playableFallback = players.filter(
+    (player) =>
+      player.availability === "recovery" || player.availability === "minor",
+  );
   while (startingLineup.length < TRADE_ROSTER_RULES.startingLineupSize) {
-    const candidate = available.find((player) => !used.has(player.id));
+    const candidate =
+      available.find((player) => !used.has(player.id)) ??
+      playableFallback.find((player) => !used.has(player.id));
     if (candidate == null) {
       break;
     }
@@ -1180,14 +1189,17 @@ export function getEmergencyLineup(
 
   if (availableIds.length >= size) {
     const recommended = recommendRosterManagement(state, teamId);
-    const players = recommended.startingLineup.map(
-      (slot) => state.world.players[slot.playerId]!,
-    );
-    return {
-      players,
-      slots: recommended.startingLineup.map((slot) => ({ ...slot })),
-      emergency: false,
-    };
+    // A short recommended lineup would play the whole game with < 5 on court.
+    if (recommended.startingLineup.length === size) {
+      const players = recommended.startingLineup.map(
+        (slot) => state.world.players[slot.playerId]!,
+      );
+      return {
+        players,
+        slots: recommended.startingLineup.map((slot) => ({ ...slot })),
+        emergency: false,
+      };
+    }
   }
 
   const rosterPlayers = team.roster
