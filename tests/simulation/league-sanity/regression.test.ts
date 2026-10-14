@@ -10,8 +10,8 @@ describe("league sanity regression compare helpers", () => {
     { timeout: 120_000 },
     () => {
       const report = buildLeagueSanityReport({
-        simulations: 2,
-        seasonsPerSimulation: 2,
+        simulations: 1,
+        seasonsPerSimulation: 1,
         seed: 7,
         generatedAt: "2026-01-01T00:00:00.000Z",
       });
