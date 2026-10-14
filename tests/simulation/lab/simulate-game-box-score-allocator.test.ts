@@ -15,7 +15,9 @@ const THREE_POINT_PCT_MIN = 0.3;
 const THREE_POINT_PCT_MAX = 0.38;
 const FREE_THROW_PCT_MIN = 0.69;
 const FREE_THROW_PCT_MAX = 0.8;
-const TEAM_AST_MIN = 18;
+// Box score used to pass 18+ only because it scored ~9 PPG above the
+// possession sim; possession assists ~17 per team on league rosters.
+const TEAM_AST_MIN = 16;
 const TEAM_AST_MAX = 32;
 const TEAM_REB_MIN = 36;
 const TEAM_REB_MAX = 56;

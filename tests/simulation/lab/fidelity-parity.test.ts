@@ -5,18 +5,28 @@ import type { LabReport } from "@/simulation/lab/types";
 /**
  * GAME_DESIGN.md: box-score is a projection of the possession sim, not a
  * second sport. Both fidelities run the same seeded Lab scenario and must
- * agree on the headline shooting and scoring rates.
+ * agree on the headline shooting rates; scoring must agree on average across
+ * many roster pairs.
  */
 const SEED = 42;
 const GAMES = 300;
 
 /** Max |box_score - possession| on the canonical scenario. */
 const TOLERANCE = {
-  teamPoints: 3,
   fieldGoalPct: 0.02,
   threePointPct: 0.025,
   freeThrowPct: 0.025,
 } as const;
+
+/**
+ * Scoring is checked across many roster pairs rather than on the canonical
+ * pair alone. A single pair carries 2-4 points of roster-specific model error,
+ * and the old single-pair PPG gate let box-score run ~9 points high on typical
+ * rosters while matching seed 42.
+ */
+const PAIR_SEEDS = 40;
+const PAIR_GAMES = 30;
+const PAIR_PPG_TOLERANCE = 1.5;
 
 function headline(report: LabReport) {
   const aggregates = report.aggregates;
@@ -71,13 +81,9 @@ describe("fidelity parity (possession vs box_score)", () => {
     expect(possession.reproCommand).not.toContain("--fidelity");
   });
 
-  it("keeps FG%, 3P%, FT% and PPG within tolerance of each other", () => {
+  it("keeps FG%, 3P% and FT% within tolerance of each other", () => {
     const a = headline(possession);
     const b = headline(boxScore);
-    expect(
-      Math.abs(b.teamPoints - a.teamPoints),
-      `PPG possession=${a.teamPoints} box_score=${b.teamPoints}`,
-    ).toBeLessThanOrEqual(TOLERANCE.teamPoints);
     expect(
       Math.abs(b.fieldGoalPct - a.fieldGoalPct),
       `FG% possession=${a.fieldGoalPct} box_score=${b.fieldGoalPct}`,
@@ -91,4 +97,27 @@ describe("fidelity parity (possession vs box_score)", () => {
       `FT% possession=${a.freeThrowPct} box_score=${b.freeThrowPct}`,
     ).toBeLessThanOrEqual(TOLERANCE.freeThrowPct);
   });
+
+  it(
+    "keeps mean PPG within tolerance across many roster pairs",
+    { timeout: 240_000 },
+    () => {
+      let possessionPoints = 0;
+      let boxScorePoints = 0;
+      for (let seed = 1; seed <= PAIR_SEEDS; seed += 1) {
+        possessionPoints += headline(
+          runLabGames({ seed, games: PAIR_GAMES, fidelity: "possession" }),
+        ).teamPoints;
+        boxScorePoints += headline(
+          runLabGames({ seed, games: PAIR_GAMES, fidelity: "box_score" }),
+        ).teamPoints;
+      }
+      const a = possessionPoints / PAIR_SEEDS;
+      const b = boxScorePoints / PAIR_SEEDS;
+      expect(
+        Math.abs(b - a),
+        `mean PPG possession=${a} box_score=${b}`,
+      ).toBeLessThanOrEqual(PAIR_PPG_TOLERANCE);
+    },
+  );
 });
