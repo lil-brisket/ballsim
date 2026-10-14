@@ -47,16 +47,26 @@ src/
   app/                 # Next.js routes and layouts (UI only)
   components/          # Presentational UI
   application/         # Use-cases / server commands
+    game-service.ts    # Barrel: named re-exports of game-service/* (import from here)
+    game-service/      # Owner use-cases by domain (save-lifecycle, owner-time-advance, trades-decisions, ...); internal.ts = shared helpers, not re-exported
+    actions.ts         # Barrel (no directive): named re-exports of actions/*
+    actions/           # "use server" modules, one per domain; shared.ts = non-async helpers (no directive)
   domain/              # Entities, events, RNG, SystemResult
   data/                # Static string pools (e.g. name lists); not typed domain catalogs
   presentation/        # UI-adjacent pure helpers (portrait fallback hash/overlay paths); not simulation, not React
   state/               # GameState composition + factories + selectors
+    selectors.ts       # Barrel: named re-exports of selectors/* (dashboard, teams-roster, market, schedule, box-score, fantasy-draft)
+    owner-dashboard.ts # toOwnerDashboardView + core builders; owner-dashboard/ holds types, trade-inbox, action items, metrics
   systems/             # Simulation systems (added incrementally)
   simulation/
     validation/        # Statistical validation harness (box-score aggregates; uses production simulateGame)
     lab/               # Simulation Lab / QA harness: runLabGames, scenarios, reports (wraps simulateGame / advanceSimulation)
     league-sanity/     # Multi-year career analytics
   persistence/         # Prisma client, repositories, mappers
+    validate-game-state.ts   # validateGameState (body kept whole); validate-game-state/ holds the per-slice helper validators
+    mappers/
+      game-state-mapper.ts   # Envelope, MIGRATE_ONE_STEP dispatch, (de)serialize
+      game-state-migrations/ # One-step migrations grouped by source version (v01-v07 ... v56-v65); shared.ts = cross-range legacy helpers
 ```
 
 Typed domain catalogs such as `PlayerArchetype` and `PlayerNationality` live under `domain/entities/`, not `data/`. Name string pools (`first-names`, `last-names`) are expandable data under `src/data/names/`.
@@ -271,6 +281,12 @@ UI and other listeners consume events through application-layer orchestration la
 `stateJson` is still the source of truth for simulation. Normalized child tables are **query projections** so listings (roster, team directory) do not need to parse the blob.
 
 Listing indexes on `SaveGame`: `name` (filter/search) and `updatedAt` (`list()` is `orderBy: { updatedAt: "desc" }`). Child tables index `(saveGameId, …)` query paths (conference, team name, player team, player name, position). Composite primary keys already cover `saveGameId`. These migrations are additive (`CREATE INDEX` only) and do not rewrite existing `SaveGame` rows.
+
+### Migrations and golden saves
+
+Each one-step migration lives in `src/persistence/mappers/game-state-migrations/`, in the range file named for its source version. A new `migrateVnToVn+1` goes in the last range file (or a new range file) and must be registered in `MIGRATE_ONE_STEP` in `game-state-mapper.ts`.
+
+`tests/fixtures/saves/vNN.json.gz` are genuine saves produced by the commit that introduced each schema version (v1, v5, v11, ..., v65). `tests/persistence/golden-saves.test.ts` loads every fixture through the full chain and `validateGameState`, and pins a sha256 of the migrated output. Adding a migration changes every digest by design: review the change, then update the snapshot with `-u`. To add or replace a fixture, add its commit to `scripts/generate-golden-saves.ts` and run `npx tsx scripts/generate-golden-saves.ts <version>`.
 
 ### Normalized query tables (current slice)
 
