@@ -149,6 +149,10 @@ import {
   migrateV65ToV66,
   type GameStateV65,
 } from "@/persistence/mappers/game-state-migrations/v56-v65";
+import {
+  migrateV66ToV67,
+  type GameStateV66,
+} from "@/persistence/mappers/game-state-migrations/v66-v75";
 
 const gameStateEnvelopeSchema = z.object({
   meta: z.object({
@@ -270,6 +274,7 @@ const MIGRATE_ONE_STEP: Record<number, (state: unknown) => unknown> = {
   63: (state) => migrateV63ToV64(state as GameStateV63),
   64: (state) => migrateV64ToV65(state as GameStateV64),
   65: (state) => migrateV65ToV66(state as GameStateV65),
+  66: (state) => migrateV66ToV67(state as GameStateV66),
 };
 
 /**

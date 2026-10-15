@@ -54,11 +54,24 @@ export async function createSaveAction(formData: FormData): Promise<void> {
       );
     }
   }
+  const participationJson = String(formData.get("participationJson") ?? "");
+  let participation: unknown;
+  if (participationJson.length > 0) {
+    try {
+      participation = JSON.parse(participationJson) as unknown;
+    } catch {
+      redirectWithError(
+        "/new/setup?mode=owner",
+        "Invalid participation settings.",
+      );
+    }
+  }
   const result = await createNewOwnerSave({
     name,
     settings,
     rosterPackage,
     rosterContentId: rosterContentId.length > 0 ? rosterContentId : undefined,
+    participation,
   });
   if (!result.ok) {
     redirectWithError("/new/setup?mode=owner", result.error);

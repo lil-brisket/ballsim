@@ -230,6 +230,7 @@ function createEightTeamGameState(rngSeed: number): {
       mode: "owner",
       pendingOwnerDecisions: [],
       ownerDecisionHistory: [],
+      participation: { mode: "single" },
       pendingDraftClassDecisions: {},
       franchisePhaseState: {
         [controlledTeamId]: { dismissed: [] },

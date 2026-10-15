@@ -3,7 +3,12 @@ import {
   type GameSettings,
   cloneGameSettings,
   DEFAULT_GAME_SETTINGS,
+  maxControlledTeamCountForLeague,
 } from "@/domain/game-settings";
+import {
+  LOCAL_SHARED_LEAGUE_AVAILABLE,
+  parseParticipationSetup,
+} from "@/domain/participation";
 import type {
   SaveGameStore,
   SaveGameSummary,
@@ -39,6 +44,8 @@ export async function createNewOwnerSave(
     settings?: GameSettings;
     rosterPackage?: unknown;
     rosterContentId?: string;
+    /** Raw participation setup; omitted means single player. */
+    participation?: unknown;
   },
   store?: SaveGameStore,
   customStore?: CustomContentStore,
@@ -57,6 +64,20 @@ export async function createNewOwnerSave(
   const validated = validateGameSettings(settingsInput);
   if (!validated.ok) {
     return fail(`Invalid game settings: ${validated.errors.join("; ")}`);
+  }
+
+  const participation = parseParticipationSetup(
+    input.participation,
+    maxControlledTeamCountForLeague(validated.settings.league.teamCount),
+  );
+  if (!participation.ok) {
+    return fail(participation.errors.join("; "));
+  }
+  if (
+    participation.value.mode === "local_shared" &&
+    !LOCAL_SHARED_LEAGUE_AVAILABLE
+  ) {
+    return fail("Local shared leagues are not available yet.");
   }
 
   let rosterPackage = input.rosterPackage;

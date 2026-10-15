@@ -393,6 +393,43 @@ describe("GameSetupForm", () => {
     unmount();
   });
 
+  it("offers Single Player and shows multiplayer formats as unavailable", () => {
+    const { unmount } = render(<GameSetupForm atSaveLimit={false} />);
+
+    const save = screen.getByRole("heading", { name: "Save Details" });
+    const participants = screen.getByRole("heading", {
+      name: "League Participants",
+    });
+    expect(
+      save.compareDocumentPosition(participants) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+
+    const single = screen.getByRole("radio", { name: "Single Player" });
+    const local = screen.getByRole("radio", { name: "Local Shared League" });
+    const online = screen.getByRole("radio", { name: "Online Multiplayer" });
+    expect((single as HTMLInputElement).checked).toBe(true);
+    expect((local as HTMLInputElement).disabled).toBe(true);
+    expect((online as HTMLInputElement).disabled).toBe(true);
+    expect(screen.getByText("Planned")).toBeTruthy();
+    unmount();
+  });
+
+  it("submits single-player participation and summarizes it on review", () => {
+    const { unmount } = render(<GameSetupForm atSaveLimit={false} />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Skip to review" }));
+    const group = screen.getByRole("region", { name: "League Participants" });
+    expect(group.textContent).toContain("Single Player");
+    fireEvent.click(screen.getByRole("button", { name: "Create franchise" }));
+
+    const formData = vi.mocked(createSaveAction).mock.calls[0]![0];
+    expect(JSON.parse(String(formData.get("participationJson")))).toEqual({
+      mode: "single",
+    });
+    unmount();
+  });
+
   it("restores a stored draft when restoreDraft is set", async () => {
     window.sessionStorage.setItem(
       NEW_GAME_DRAFT_KEY,

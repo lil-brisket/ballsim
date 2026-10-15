@@ -5,6 +5,7 @@ import {
 } from "@/state/game-state";
 import { parseCalendarDate } from "@/domain/calendar-date";
 import { validateGameSettings } from "@/domain/game-settings-validation";
+import { participationStateErrors } from "@/domain/participation";
 import {
   SEASON_PHASES,
   type SeasonPhase,
@@ -678,6 +679,15 @@ export function validateGameState(state: unknown): asserts state is GameState {
       `user.ownedFranchises[${franchiseKey}]`,
       fail,
     );
+  }
+
+  const participationErrors = participationStateErrors(
+    user.participation,
+    user.ownedTeamIds as string[],
+    user.activeOwnerTeamId as string,
+  );
+  if (participationErrors.length > 0) {
+    fail(participationErrors.join(" "));
   }
 
   if (

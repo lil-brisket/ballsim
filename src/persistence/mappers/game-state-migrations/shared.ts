@@ -17,7 +17,7 @@ export type CompetitionSlicePreV49 = Omit<
 
 export type UserSlicePreV49 = Omit<
   GameState["user"],
-  "franchisePhaseState" | "pendingDraftClassDecisions"
+  "franchisePhaseState" | "pendingDraftClassDecisions" | "participation"
 >;
 
 export function legacyUserRecord(user: unknown): Record<string, unknown> {

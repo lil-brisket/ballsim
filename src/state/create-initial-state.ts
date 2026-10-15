@@ -4,6 +4,7 @@ import { createEmptyTeamStanding } from "@/domain/entities/standings";
 import { createTeam, NEUTRAL_TEAM_PLAY_STYLE } from "@/domain/entities/team";
 import { DEFAULT_COACHING_PHILOSOPHY } from "@/domain/coaching/coaching-philosophy";
 import { createSeededRng } from "@/domain/rng";
+import { DEFAULT_PARTICIPATION_STATE } from "@/domain/participation";
 import {
   cloneGameSettings,
   CBL_GAME_SETTINGS,
@@ -273,6 +274,7 @@ export function createInitialGameState(
       franchisePhaseState: {
         [activeOwnerTeamId]: { dismissed: [] },
       },
+      participation: { ...DEFAULT_PARTICIPATION_STATE },
     },
   };
 
@@ -602,6 +604,7 @@ export function createFourTeamInitialGameState(
       franchisePhaseState: {
         [userTeamId]: { dismissed: [] },
       },
+      participation: { ...DEFAULT_PARTICIPATION_STATE },
     },
   };
   return {

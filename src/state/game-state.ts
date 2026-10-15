@@ -57,12 +57,13 @@ import type {
 import type { SocialFeedState } from "@/domain/entities/social-post";
 import type { SaveId, TeamId } from "@/domain/ids";
 import type { PlayerPortraitAssignment } from "@/domain/entities/player-portrait";
+import type { ParticipationState } from "@/domain/participation";
 import type {
   CompetitionPhaseState,
   FranchisePhaseState,
 } from "@/systems/phase-engine/phase-types";
 
-export const GAME_STATE_SCHEMA_VERSION = 66;
+export const GAME_STATE_SCHEMA_VERSION = 67;
 
 /** League personnel market for staff free agency (not a business-finance concept). */
 export type StaffMarketState = {
@@ -300,6 +301,11 @@ export type UserSlice = {
    * Task completion is derived from game state — never persisted here.
    */
   franchisePhaseState: Record<string, FranchisePhaseState>;
+  /**
+   * Which person controls each owned team (schema v67+).
+   * Union of participant teamIds always equals ownedTeamIds.
+   */
+  participation: ParticipationState;
 };
 
 export type AiAssistResolvedNeed = {

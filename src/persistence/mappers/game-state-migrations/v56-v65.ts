@@ -1,4 +1,5 @@
 import type { GameState } from "@/state/game-state";
+import type { GameStateV66 } from "@/persistence/mappers/game-state-migrations/v66-v75";
 import type { Game } from "@/domain/entities/game";
 import { createEmptyAwardHistory } from "@/domain/entities/awards";
 import { asSeasonId } from "@/domain/ids";
@@ -364,7 +365,7 @@ export type GameStateV65 = Omit<GameState, "meta" | "competition"> & {
  * have no recorded log). Thin Game.events already saved are left as-is; new
  * games stop writing them.
  */
-export function migrateV65ToV66(state: GameStateV65): GameState {
+export function migrateV65ToV66(state: GameStateV65): GameStateV66 {
   return {
     ...state,
     meta: {

@@ -36,6 +36,10 @@ import {
   type LeagueSetupPresetId,
 } from "@/domain/game-settings-presets";
 import { validateGameSettings } from "@/domain/game-settings-validation";
+import {
+  LOCAL_SHARED_LEAGUE_AVAILABLE,
+  type ParticipationMode,
+} from "@/domain/participation";
 import { createSaveAction } from "@/application/actions";
 import {
   CustomRosterPackageField,
@@ -98,6 +102,7 @@ const SECTION_IDS = {
   league: "setup-league-format",
   roster: "setup-roster-and-draft",
   save: "setup-save-details",
+  participants: "setup-league-participants",
   advanced: "advanced-injuries",
   ai: "advanced-ai",
   history: "advanced-history",
@@ -131,6 +136,41 @@ const OPENING_OPTIONS: ReadonlyArray<RadioCardOption<OpeningId>> = [
       "All players enter a pool and teams draft from scratch. Draft order, timer and snake/linear format are configured after you choose your franchises.",
   },
 ];
+
+type ParticipationOptionId = ParticipationMode | "online";
+
+const PARTICIPATION_OPTIONS: ReadonlyArray<
+  RadioCardOption<ParticipationOptionId>
+> = [
+  {
+    value: "single",
+    title: "Single Player",
+    description:
+      "You manage your franchises; the AI runs every other team. Next you pick your city and teams.",
+  },
+  {
+    value: "local_shared",
+    title: "Local Shared League",
+    description:
+      "Friends share this device, each managing their own franchises and taking turns before the league advances.",
+    meta: "Coming soon",
+    disabled: !LOCAL_SHARED_LEAGUE_AVAILABLE,
+  },
+  {
+    value: "online",
+    title: "Online Multiplayer",
+    description:
+      "Players join one league from their own devices. Needs accounts and a hosted server, which Ballsim does not have yet.",
+    meta: "Planned",
+    disabled: true,
+  },
+];
+
+const PARTICIPATION_LABELS: Record<ParticipationOptionId, string> = {
+  single: "Single Player",
+  local_shared: "Local Shared League",
+  online: "Online Multiplayer",
+};
 
 const PRESET_COPY: Record<
   LeagueSetupPresetId,
@@ -171,6 +211,8 @@ export function GameSetupForm({
   const [rosterPackageJson, setRosterPackageJson] = useState("");
   const [useCustomRoster, setUseCustomRoster] = useState(false);
   const [rosterDropped, setRosterDropped] = useState(false);
+  const [participationMode, setParticipationMode] =
+    useState<ParticipationMode>("single");
   const pendingFocusId = useRef<string | null>(null);
 
   const validation = useMemo(() => validateGameSettings(settings), [settings]);
@@ -288,6 +330,10 @@ export function GameSetupForm({
     const formData = new FormData();
     formData.set("name", name);
     formData.set("settingsJson", JSON.stringify(settings));
+    formData.set(
+      "participationJson",
+      JSON.stringify({ mode: participationMode }),
+    );
     if (useCustomRoster) {
       formData.set("rosterPackageJson", rosterPackageJson);
     }
@@ -441,6 +487,10 @@ export function GameSetupForm({
         <SummaryRow label="Roster source" value={rosterSourceLabel} />
         <SummaryRow label="Opening" value={openingLabel} />
         <SummaryRow label="Controlled teams" value={controlledLabel} />
+        <SummaryRow
+          label="Participants"
+          value={PARTICIPATION_LABELS[participationMode]}
+        />
         <SummaryRow label="Salary cap" value={capLabel} />
       </dl>
       <p aria-live="polite" className="text-xs text-zinc-400">
@@ -502,6 +552,19 @@ export function GameSetupForm({
         >
           <ReviewRow label="Save name" value={name} />
           <ReviewRow label="Franchise control" value={controlledLabel} />
+        </ReviewGroup>
+        <ReviewGroup
+          title="League Participants"
+          onEdit={() => goTo("setup", SECTION_IDS.participants)}
+        >
+          <ReviewRow
+            label="Format"
+            value={PARTICIPATION_LABELS[participationMode]}
+          />
+          <ReviewRow
+            label="After creation"
+            value="Choose your city, then your franchises"
+          />
         </ReviewGroup>
         <ReviewGroup
           title="Advanced"
@@ -991,6 +1054,24 @@ export function GameSetupForm({
               </div>
             ) : null}
           </div>
+        </SetupSection>
+
+        <SetupSection
+          id={SECTION_IDS.participants}
+          title="League Participants"
+          description="Choose who plays in this league."
+        >
+          <RadioCardGroup
+            legend="League format"
+            options={PARTICIPATION_OPTIONS}
+            value={participationMode}
+            onChange={(mode) => {
+              if (mode !== "online") {
+                setParticipationMode(mode);
+              }
+            }}
+            columns={3}
+          />
         </SetupSection>
 
         {errorsBlock}

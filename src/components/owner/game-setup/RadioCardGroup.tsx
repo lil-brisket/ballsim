@@ -8,6 +8,8 @@ export type RadioCardOption<T extends string> = {
   title: string;
   description: string;
   meta?: string;
+  /** Shown but not selectable (e.g. a planned feature). */
+  disabled?: boolean;
 };
 
 /**
@@ -45,12 +47,19 @@ export function RadioCardGroup<T extends string>({
           const titleId = `${uid}-${option.value}-title`;
           const descId = `${uid}-${option.value}-desc`;
           return (
-            <label key={option.value} className="block cursor-pointer">
+            <label
+              key={option.value}
+              className={cn(
+                "block",
+                option.disabled ? "cursor-not-allowed" : "cursor-pointer",
+              )}
+            >
               <input
                 type="radio"
                 name={uid}
                 value={option.value}
                 checked={option.value === value}
+                disabled={option.disabled}
                 onChange={() => onChange(option.value)}
                 aria-labelledby={titleId}
                 aria-describedby={descId}
@@ -58,7 +67,8 @@ export function RadioCardGroup<T extends string>({
               />
               <span
                 className={cn(
-                  "block h-full min-h-11 rounded-lg border border-zinc-700 bg-zinc-950 p-3 text-left transition-colors hover:border-amber-600",
+                  "block h-full min-h-11 rounded-lg border border-zinc-700 bg-zinc-950 p-3 text-left transition-colors",
+                  option.disabled ? "opacity-60" : "hover:border-amber-600",
                   "peer-checked:border-amber-600 peer-checked:bg-amber-600/10 peer-checked:ring-1 peer-checked:ring-amber-600",
                   "peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-amber-500",
                 )}
@@ -73,7 +83,12 @@ export function RadioCardGroup<T extends string>({
                   {option.description}
                 </span>
                 {option.meta ? (
-                  <span className="mt-2 block text-xs font-medium text-amber-300">
+                  <span
+                    className={cn(
+                      "mt-2 block text-xs font-medium",
+                      option.disabled ? "text-zinc-400" : "text-amber-300",
+                    )}
+                  >
                     {option.meta}
                   </span>
                 ) : null}
