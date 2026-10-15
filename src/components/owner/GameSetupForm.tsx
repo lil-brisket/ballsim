@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import {
   useEffect,
   useMemo,
@@ -38,6 +39,7 @@ import {
 import { validateGameSettings } from "@/domain/game-settings-validation";
 import {
   LOCAL_SHARED_LEAGUE_AVAILABLE,
+  ONLINE_LEAGUE_AVAILABLE,
   MAX_LOCAL_PARTICIPANTS,
   MIN_LOCAL_PARTICIPANTS,
   PARTICIPANT_NAME_MAX_LENGTH,
@@ -96,6 +98,8 @@ type GameSetupFormProps = {
   restoreDraft?: boolean;
   /** Server-rendered notices (errors, save limit) shown under the header. */
   notices?: ReactNode;
+  /** Username of the signed-in account; required to host an online league. */
+  signedInAs?: string | null;
 };
 
 type FormStep = "setup" | "advanced" | "confirm";
@@ -144,31 +148,34 @@ const OPENING_OPTIONS: ReadonlyArray<RadioCardOption<OpeningId>> = [
 
 type ParticipationOptionId = ParticipationMode | "online";
 
-const PARTICIPATION_OPTIONS: ReadonlyArray<
-  RadioCardOption<ParticipationOptionId>
-> = [
-  {
-    value: "single",
-    title: "Single Player",
-    description:
-      "You manage your franchises; the AI runs every other team. Next you pick your city and teams.",
-  },
-  {
-    value: "local_shared",
-    title: "Local Shared League",
-    description:
-      "Friends share this device, each managing their own franchises and taking turns before the league advances.",
-    disabled: !LOCAL_SHARED_LEAGUE_AVAILABLE,
-  },
-  {
-    value: "online",
-    title: "Online Multiplayer",
-    description:
-      "Players join one league from their own devices. Needs accounts and a hosted server, which Ballsim does not have yet.",
-    meta: "Planned",
-    disabled: true,
-  },
-];
+function participationOptions(
+  signedInAs: string | null,
+): ReadonlyArray<RadioCardOption<ParticipationOptionId>> {
+  const onlineAvailable = ONLINE_LEAGUE_AVAILABLE && signedInAs !== null;
+  return [
+    {
+      value: "single",
+      title: "Single Player",
+      description:
+        "You manage your franchises; the AI runs every other team. Next you pick your city and teams.",
+    },
+    {
+      value: "local_shared",
+      title: "Local Shared League",
+      description:
+        "Friends share this device, each managing their own franchises and taking turns before the league advances.",
+      disabled: !LOCAL_SHARED_LEAGUE_AVAILABLE,
+    },
+    {
+      value: "online",
+      title: "Online Multiplayer",
+      description:
+        "Players join from their own devices with an invite link. You'll be the host.",
+      meta: onlineAvailable ? undefined : "Sign in required",
+      disabled: !onlineAvailable,
+    },
+  ];
+}
 
 const PARTICIPATION_LABELS: Record<ParticipationOptionId, string> = {
   single: "Single Player",
@@ -214,6 +221,7 @@ export function GameSetupForm({
   defaultName = "Harbor Franchise",
   restoreDraft = false,
   notices,
+  signedInAs = null,
 }: GameSetupFormProps) {
   const [preset, setPreset] = useState<LeagueSetupPresetId>("standard");
   const [settings, setSettings] = useState<GameSettings>(() =>
@@ -253,6 +261,11 @@ export function GameSetupForm({
     settings.league.teamCount,
   );
   const localShared = participationMode === "local_shared";
+  const online = participationMode === "online";
+  const participationOptionList = useMemo(
+    () => participationOptions(signedInAs),
+    [signedInAs],
+  );
   const participantsTotal = participants.reduce(
     (sum, participant) => sum + participant.teamCount,
     0,
@@ -262,10 +275,10 @@ export function GameSetupForm({
       parseParticipationSetup(
         localShared
           ? { mode: "local_shared", participants }
-          : { mode: "single" },
+          : { mode: online ? "online" : "single" },
         maxControlled,
       ),
-    [localShared, participants, maxControlled],
+    [localShared, online, participants, maxControlled],
   );
   const participationErrors = participationSetup.ok
     ? []
@@ -290,14 +303,19 @@ export function GameSetupForm({
     setRosterPackageJson(draft.rosterPackageJson);
     setRosterDropped(draft.rosterDropped);
     if (draft.participation) {
+      const restored = draft.participation.mode;
       setParticipationMode(
-        LOCAL_SHARED_LEAGUE_AVAILABLE ? draft.participation.mode : "single",
+        (restored === "local_shared" && !LOCAL_SHARED_LEAGUE_AVAILABLE) ||
+          (restored === "online" &&
+            !(ONLINE_LEAGUE_AVAILABLE && signedInAs !== null))
+          ? "single"
+          : restored,
       );
       if (draft.participation.participants.length >= MIN_LOCAL_PARTICIPANTS) {
         setParticipants(draft.participation.participants);
       }
     }
-  }, [restoreDraft]);
+  }, [restoreDraft, signedInAs]);
   /* eslint-enable react-hooks/set-state-in-effect */
 
   useEffect(() => {
@@ -670,7 +688,9 @@ export function GameSetupForm({
             value={
               localShared
                 ? "Host picks the city, then each player's franchises are assigned"
-                : "Choose your city, then your franchises"
+                : online
+                  ? "Pick your city and franchises, then invite players"
+                  : "Choose your city, then your franchises"
             }
           />
         </ReviewGroup>
@@ -1183,15 +1203,28 @@ export function GameSetupForm({
         >
           <RadioCardGroup
             legend="League format"
-            options={PARTICIPATION_OPTIONS}
+            options={participationOptionList}
             value={participationMode}
-            onChange={(mode) => {
-              if (mode !== "online") {
-                setParticipationMode(mode);
-              }
-            }}
+            onChange={setParticipationMode}
             columns={3}
           />
+          {signedInAs === null ? (
+            <p className="text-sm text-zinc-400">
+              <Link
+                href="/login?next=/new/setup?mode=owner"
+                className="text-amber-300 underline hover:text-amber-200"
+              >
+                Sign in to host an online league
+              </Link>
+            </p>
+          ) : null}
+          {online && signedInAs !== null ? (
+            <p className="text-sm text-zinc-400">
+              Hosting as {signedInAs}. After you create the league and pick your
+              franchises, invite players from League Members. Each player takes
+              over one AI team when they join.
+            </p>
+          ) : null}
           {localShared ? (
             <div className="space-y-4">
               <div className="max-w-xs">

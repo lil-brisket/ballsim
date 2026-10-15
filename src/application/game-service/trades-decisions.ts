@@ -3,6 +3,11 @@ import {
   isOtherParticipantTeam,
   participantTeamAccessError,
 } from "@/systems/participation";
+import {
+  counterPlayerTradeOffer,
+  isPlayerTradeOffer,
+  proposePlayerTrade,
+} from "@/systems/player-trades";
 import type { SaveGameStore } from "@/persistence/save-game-store";
 import {
   asPlayerId,
@@ -185,7 +190,7 @@ export async function executeOwnerTrade(
       : proposal.sideA.teamId;
   if (isOtherParticipantTeam(working, counterpartId)) {
     return fail(
-      "Trades between participants are not supported yet. The AI cannot accept on another player's behalf.",
+      "That franchise belongs to another player. Send them an offer from Propose to a player instead.",
     );
   }
   const evaluation = evaluateTradeOffer(working, counterpartId, proposal);
@@ -368,10 +373,17 @@ async function resolveOwnerTradeDecision(
   if (pending.type !== "trade_offer") {
     return fail("Unsupported owner decision type.");
   }
-  const accessError = participantTeamAccessError(
-    loaded.state,
-    pending.payload.userTeamId,
-  );
+  // The proposer of a player offer may withdraw it (decline their own offer).
+  const withdrawing =
+    mode === "decline" &&
+    isPlayerTradeOffer(loaded.state, pending) &&
+    participantTeamAccessError(
+      loaded.state,
+      pending.payload.offeringTeamId,
+    ) === null;
+  const accessError = withdrawing
+    ? null
+    : participantTeamAccessError(loaded.state, pending.payload.userTeamId);
   if (accessError) {
     return fail(accessError);
   }
@@ -475,6 +487,32 @@ export async function submitTradeCounteroffer(
   const validation = validateTrade(loaded.state, counterProposal);
   if (!validation.valid) {
     return fail(validation.errors[0]?.message ?? "Counteroffer is invalid.");
+  }
+
+  if (isPlayerTradeOffer(loaded.state, pending)) {
+    // Another human made this offer: send the counter back to them instead
+    // of letting the AI answer on their behalf.
+    const countered = counterPlayerTradeOffer(
+      loaded.state,
+      pending,
+      counterProposal,
+    );
+    if (!countered.ok) {
+      return fail(countered.error);
+    }
+    try {
+      const saved = await persistWorkingState(
+        saveId,
+        countered.state,
+        loaded.state.meta.rngState,
+        saveStore,
+        [],
+        { ifUpdatedAt: loaded.updatedAt },
+      );
+      return withDashboard(saved);
+    } catch (error) {
+      return fail(error instanceof Error ? error.message : String(error));
+    }
   }
 
   let working = loaded.state;
@@ -598,4 +636,37 @@ function findAcceptedProposalForPlayer(
     return evalB.accepted && evalA.accepted;
   });
   return accepted?.proposal;
+}
+
+/**
+ * Send a trade offer from the active participant to another participant's
+ * franchise. It lands in their inbox; only they can accept it.
+ */
+export async function proposeTradeToParticipant(
+  saveId: string,
+  proposal: TradeProposal,
+  store?: SaveGameStore,
+): Promise<OwnerCommandResult> {
+  const saveStore = getStore(store);
+  const loaded = await saveStore.load(saveId);
+  if (!loaded) {
+    return fail("Save not found.");
+  }
+  const proposed = proposePlayerTrade(loaded.state, proposal);
+  if (!proposed.ok) {
+    return fail(proposed.error);
+  }
+  try {
+    const saved = await persistWorkingState(
+      saveId,
+      proposed.state,
+      loaded.state.meta.rngState,
+      saveStore,
+      [],
+      { ifUpdatedAt: loaded.updatedAt },
+    );
+    return withDashboard(saved);
+  } catch (error) {
+    return fail(error instanceof Error ? error.message : String(error));
+  }
 }

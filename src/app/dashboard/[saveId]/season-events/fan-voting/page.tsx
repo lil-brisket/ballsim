@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { prismaSaveGameStore } from "@/persistence/save-game-repository";
+import { getRequestSaveStore } from "@/application/request-save-store";
 import { PageHeader } from "@/components/owner/PageHeader";
 import { Section } from "@/components/owner/Section";
 import { EmptyState } from "@/components/owner/EmptyState";
@@ -20,7 +20,7 @@ function movementGlyph(movement: string): string {
 
 export default async function FanVotingPage({ params }: PageProps) {
   const { saveId } = await params;
-  const loaded = await prismaSaveGameStore.load(saveId);
+  const loaded = await getRequestSaveStore().load(saveId);
   if (!loaded) notFound();
 
   const hub = toFanVotingHubView(loaded.state);

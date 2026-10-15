@@ -8,6 +8,7 @@ import {
   submitTradeCounteroffer,
   calendarHrefAfterOwnerMutation,
   executeOwnerTrade,
+  proposeTradeToParticipant,
   setOwnerPlayerTradeBlock,
   listOwnerTradeCandidates,
 } from "@/application/game-service";
@@ -142,6 +143,26 @@ export async function executeTradeAction(formData: FormData): Promise<void> {
     outgoingPlayerId,
     proposal,
   });
+  if (!result.ok) {
+    redirectWithError(path, result.error);
+  }
+  revalidateOwner(saveId);
+  redirect(path);
+}
+
+/** Send a trade offer to another participant's franchise. */
+export async function proposePlayerTradeAction(
+  formData: FormData,
+): Promise<void> {
+  const saveId = String(formData.get("saveId") ?? "");
+  const path = returnPath(formData, saveId);
+  const proposal = parseTradeProposal(
+    String(formData.get("proposalJson") ?? ""),
+  );
+  if (proposal === null) {
+    redirectWithError(path, "Invalid trade proposal.");
+  }
+  const result = await proposeTradeToParticipant(saveId, proposal);
   if (!result.ok) {
     redirectWithError(path, result.error);
   }

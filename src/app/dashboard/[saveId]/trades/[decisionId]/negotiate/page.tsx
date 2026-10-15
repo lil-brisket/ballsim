@@ -2,7 +2,7 @@ import Link from "next/link";
 import { SectionHeading } from "@/components/ui/SectionHeading";
 import { notFound } from "next/navigation";
 import { submitTradeCounterofferAction } from "@/application/actions";
-import { prismaSaveGameStore } from "@/persistence/save-game-repository";
+import { getRequestSaveStore } from "@/application/request-save-store";
 import type { TradeProposal } from "@/domain/entities/trade-proposal";
 import { asDraftPickId, asPlayerId, asTeamId } from "@/domain/ids";
 
@@ -17,7 +17,7 @@ type PageProps = {
 export default async function TradeNegotiatePage(props: PageProps) {
   const { saveId, decisionId } = await props.params;
   const { resumeTo } = await props.searchParams;
-  const loaded = await prismaSaveGameStore.load(saveId);
+  const loaded = await getRequestSaveStore().load(saveId);
   if (!loaded) notFound();
   const state = loaded.state;
   const pending = state.user.pendingOwnerDecisions.find(

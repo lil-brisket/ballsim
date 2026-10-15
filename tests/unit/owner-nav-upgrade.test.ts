@@ -161,3 +161,46 @@ describe("owner nav config invariants", () => {
     expect(ids.indexOf("offseason")).toBeLessThan(ids.indexOf("team"));
   });
 });
+
+describe("shared league nav items", () => {
+  function hrefsFor(mode: "single" | "local_shared" | "online"): string[] {
+    const base = baseState();
+    const state: GameState = {
+      ...base,
+      user: {
+        ...base.user,
+        participation:
+          mode === "single"
+            ? { mode: "single" }
+            : {
+                mode,
+                participants: [],
+                activeParticipantId: "p1",
+                readyParticipantIds: [],
+                assignmentsConfirmed: true,
+              },
+      },
+    };
+    return ownerNavGroupsForState(state).flatMap((g) =>
+      g.items.map((i) => i.href),
+    );
+  }
+
+  it("single-player leagues show neither item", () => {
+    const hrefs = hrefsFor("single");
+    expect(hrefs).not.toContain("/trades/propose");
+    expect(hrefs).not.toContain("/league-members");
+  });
+
+  it("local shared shows Propose Trade only", () => {
+    const hrefs = hrefsFor("local_shared");
+    expect(hrefs).toContain("/trades/propose");
+    expect(hrefs).not.toContain("/league-members");
+  });
+
+  it("online shows Propose Trade and League Members", () => {
+    const hrefs = hrefsFor("online");
+    expect(hrefs).toContain("/trades/propose");
+    expect(hrefs).toContain("/league-members");
+  });
+});

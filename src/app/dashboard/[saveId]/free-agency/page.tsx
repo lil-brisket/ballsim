@@ -7,7 +7,7 @@ import {
   signFreeAgentAction,
   withdrawFreeAgentOfferAction,
 } from "@/application/actions";
-import { prismaSaveGameStore } from "@/persistence/save-game-repository";
+import { getRequestSaveStore } from "@/application/request-save-store";
 import { ConfirmDialog } from "@/components/owner/ConfirmDialog";
 import { DataTable } from "@/components/owner/DataTable";
 import { EmptyState, ErrorState } from "@/components/owner/EmptyState";
@@ -33,7 +33,7 @@ export default async function FreeAgencyPage({
 }: FreeAgencyPageProps) {
   const { saveId } = await params;
   const { error } = await searchParams;
-  const loaded = await prismaSaveGameStore.load(saveId);
+  const loaded = await getRequestSaveStore().load(saveId);
   if (!loaded) {
     notFound();
   }

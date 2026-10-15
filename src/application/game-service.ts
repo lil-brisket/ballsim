@@ -13,6 +13,7 @@ export {
   setOwnerPlayerTradeBlock,
   listOwnerTradeCandidates,
   executeOwnerTrade,
+  proposeTradeToParticipant,
   acceptOwnerDecision,
   declineOwnerDecision,
   delegateOwnerDecisionToAi,

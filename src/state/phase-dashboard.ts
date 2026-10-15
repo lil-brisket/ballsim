@@ -1,5 +1,6 @@
 import type { TeamId } from "@/domain/ids";
 import type { GameState } from "@/state/game-state";
+import { getActorTeamIds } from "@/systems/participation";
 import {
   evaluatePhaseFocus,
   evaluatePhaseTasks,
@@ -51,7 +52,7 @@ export function toPhaseDashboardView(
   const saveId = state.meta.saveId;
 
   const ownedSummaries = evaluatePhaseTasksForOwnedTeams(state);
-  const ownedTeams: PhaseTeamAttentionView[] = state.user.ownedTeamIds.map(
+  const ownedTeams: PhaseTeamAttentionView[] = getActorTeamIds(state).map(
     (id) => {
       const team = state.world.teams[id];
       const summary = ownedSummaries[id] ?? {

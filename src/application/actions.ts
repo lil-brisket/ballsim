@@ -39,6 +39,7 @@ export {
   resolveCalendarTradeInterruptAction,
   submitTradeCounterofferAction,
   executeTradeAction,
+  proposePlayerTradeAction,
   toggleTradeBlockAction,
   listTradeCandidatesAction,
 } from "@/application/actions/decisions-trades";

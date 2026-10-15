@@ -44,8 +44,8 @@ describe("parseParticipationSetup", () => {
     }
   });
 
-  it("rejects unknown modes, including online", () => {
-    expect(parseParticipationSetup({ mode: "online" }, 5).ok).toBe(false);
+  it("rejects unknown modes", () => {
+    expect(parseParticipationSetup({ mode: "lan_party" }, 5).ok).toBe(false);
   });
 
   it("rejects too few or too many participants", () => {
@@ -239,5 +239,87 @@ describe("participationStateErrors", () => {
         "t1",
       ),
     ).not.toEqual([]);
+  });
+});
+
+describe("online participation", () => {
+  function onlineParticipant(
+    id: string,
+    teamIds: string[],
+    isHost: boolean,
+    userId: string | undefined,
+  ): LocalParticipant {
+    return {
+      id,
+      displayName: id,
+      teamIds,
+      isHost,
+      plannedTeamCount: teamIds.length,
+      ...(userId === undefined ? {} : { userId }),
+    };
+  }
+  function online(participants: LocalParticipant[]): ParticipationState {
+    return {
+      mode: "online",
+      participants,
+      activeParticipantId: participants[0]!.id,
+      readyParticipantIds: [],
+      assignmentsConfirmed: true,
+    };
+  }
+
+  it("parses online setup and allows a host-only league", () => {
+    expect(parseParticipationSetup({ mode: "online" }, 5)).toEqual({
+      ok: true,
+      value: { mode: "online" },
+    });
+    expect(
+      participationStateErrors(
+        online([onlineParticipant("p1", ["t1"], true, "u1")]),
+        ["t1"],
+        "t1",
+      ),
+    ).toEqual([]);
+  });
+
+  it("requires a distinct account per online participant", () => {
+    const missing = online([
+      onlineParticipant("p1", ["t1"], true, "u1"),
+      onlineParticipant("p2", ["t2"], false, undefined),
+    ]);
+    expect(participationStateErrors(missing, ["t1", "t2"], "t1").join(" ")).toMatch(
+      /userId is required/,
+    );
+    const shared = online([
+      onlineParticipant("p1", ["t1"], true, "u1"),
+      onlineParticipant("p2", ["t2"], false, "u1"),
+    ]);
+    expect(participationStateErrors(shared, ["t1", "t2"], "t1").join(" ")).toMatch(
+      /already a participant/,
+    );
+  });
+
+  it("rejects accounts on local participants and foreign active teams", () => {
+    const localWithAccount: ParticipationState = {
+      mode: "local_shared",
+      participants: [
+        onlineParticipant("p1", ["t1"], true, "u1"),
+        onlineParticipant("p2", ["t2"], false, undefined),
+      ],
+      activeParticipantId: "p1",
+      readyParticipantIds: [],
+      assignmentsConfirmed: true,
+    };
+    expect(
+      participationStateErrors(localWithAccount, ["t1", "t2"], "t1").join(" "),
+    ).toMatch(/only allowed in online leagues/);
+
+    const foreignActive = online([
+      { ...onlineParticipant("p1", ["t1"], true, "u1"), activeTeamId: "t2" },
+      onlineParticipant("p2", ["t2"], false, "u2"),
+    ]);
+    expect(
+      participationStateErrors(foreignActive, ["t1", "t2"], "t1").join(" "),
+    ).toMatch(/activeTeamId must be one of its teams/);
   });
 });

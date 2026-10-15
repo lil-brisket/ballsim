@@ -151,6 +151,27 @@ const MIDSEASON_CUP_NAV_ITEM: OwnerNavItem = {
   icon: "playoffs",
 };
 
+const PROPOSE_TRADE_NAV_ITEM: OwnerNavItem = {
+  href: "/trades/propose",
+  label: "Propose Trade",
+  icon: "transactions",
+};
+
+const LEAGUE_MEMBERS_NAV_ITEM: OwnerNavItem = {
+  href: "/league-members",
+  label: "League Members",
+  icon: "league",
+};
+
+/** Items that only exist for shared (local or online) leagues. */
+function sharedLeagueNavExtras(state: GameState): OwnerNavItem[] {
+  const mode = state.user.participation.mode;
+  if (mode === "single") return [];
+  return mode === "online"
+    ? [PROPOSE_TRADE_NAV_ITEM, LEAGUE_MEMBERS_NAV_ITEM]
+    : [PROPOSE_TRADE_NAV_ITEM];
+}
+
 function isPlayoffsNavPhase(phase: SeasonPhase): boolean {
   return phase === "playoffs" || phase === "postseason";
 }
@@ -198,6 +219,7 @@ export function ownerNavGroupsForState(state: GameState): OwnerNavGroup[] {
     }
     if (group.id === "league") {
       const extras = [
+        ...sharedLeagueNavExtras(state),
         ...(isPlayoffsNavPhase(phase) ? [PLAYOFFS_NAV_ITEM] : []),
         ...midseasonNavExtras(state),
       ];

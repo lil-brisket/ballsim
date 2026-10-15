@@ -29,6 +29,7 @@ function participation(
   overrides: Partial<Participation> = {},
 ): Participation {
   return {
+    mode: "local_shared",
     activeParticipantId: activeId,
     assignmentsConfirmed: true,
     advanceBlockedReason: null,
@@ -170,6 +171,22 @@ describe("ParticipantBar", () => {
     expect(container.textContent).toContain("Sam: ✓ ready");
     expect(container.textContent).toContain("Alex: waiting");
     expect(container.textContent).toContain("Waiting on Alex to press Ready.");
+    unmount();
+  });
+
+  it("online mode hides pass buttons and links to league members", () => {
+    const { container, unmount } = render(
+      <ParticipantBar
+        saveId="save123"
+        participation={participation("p1", { mode: "online" })}
+      />,
+    );
+    expect(container.textContent).toContain("Signed in as");
+    expect(container.textContent).not.toContain("Playing as");
+    expect(screen.queryByRole("button", { name: /Pass to/ })).toBeNull();
+    const link = screen.getByRole("link", { name: "League members" });
+    expect(link.getAttribute("href")).toBe("/dashboard/save123/league-members");
+    expect(screen.getByRole("button", { name: "I'm ready" })).toBeTruthy();
     unmount();
   });
 });

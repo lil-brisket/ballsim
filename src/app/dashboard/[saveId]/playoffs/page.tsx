@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { prismaSaveGameStore } from "@/persistence/save-game-repository";
+import { getRequestSaveStore } from "@/application/request-save-store";
 import { EmptyState, ErrorState } from "@/components/owner/EmptyState";
 import { PageHeader } from "@/components/owner/PageHeader";
 import { Section } from "@/components/owner/Section";
@@ -28,7 +28,7 @@ export default async function PlayoffsPage({
 }: PageProps) {
   const { saveId } = await params;
   const { error } = await searchParams;
-  const loaded = await prismaSaveGameStore.load(saveId);
+  const loaded = await getRequestSaveStore().load(saveId);
   if (!loaded) {
     notFound();
   }

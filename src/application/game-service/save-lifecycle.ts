@@ -8,9 +8,13 @@ import {
 import {
   controlledTeamCountForSetup,
   LOCAL_SHARED_LEAGUE_AVAILABLE,
+  ONLINE_LEAGUE_AVAILABLE,
   parseParticipationSetup,
 } from "@/domain/participation";
-import { createLocalSharedParticipation } from "@/systems/participation";
+import {
+  createLocalSharedParticipation,
+  createOnlineParticipation,
+} from "@/systems/participation";
 import type {
   SaveGameStore,
   SaveGameSummary,
@@ -48,6 +52,8 @@ export async function createNewOwnerSave(
     rosterContentId?: string;
     /** Raw participation setup; omitted means single player. */
     participation?: unknown;
+    /** Signed-in creator; required for online leagues (becomes host). */
+    hostUser?: { id: string; username: string } | null;
   },
   store?: SaveGameStore,
   customStore?: CustomContentStore,
@@ -80,6 +86,14 @@ export async function createNewOwnerSave(
     !LOCAL_SHARED_LEAGUE_AVAILABLE
   ) {
     return fail("Local shared leagues are not available yet.");
+  }
+  if (participation.value.mode === "online") {
+    if (!ONLINE_LEAGUE_AVAILABLE) {
+      return fail("Online leagues are not available yet.");
+    }
+    if (!input.hostUser) {
+      return fail("Sign in to create an online league.");
+    }
   }
   const sharedTeamCount = controlledTeamCountForSetup(participation.value);
   const gameSettings: GameSettings =
@@ -172,6 +186,23 @@ export async function createNewOwnerSave(
         },
       };
     }
+    if (participation.value.mode === "online" && input.hostUser) {
+      state = {
+        ...state,
+        user: {
+          ...state.user,
+          participation: createOnlineParticipation(
+            {
+              userId: input.hostUser.id,
+              displayName: input.hostUser.username,
+            },
+            state.user.activeOwnerTeamId,
+            state.settings.ownership.controlledTeamCount,
+            () => crypto.randomUUID(),
+          ),
+        },
+      };
+    }
     validateGameState(state);
   } catch (error) {
     return fail(
@@ -232,6 +263,7 @@ export type OwnerSavePreview =
       record?: { wins: number; losses: number };
       /** Local shared league player count; null for single-player saves. */
       participantCount?: number | null;
+      participationMode?: "single" | "local_shared" | "online";
     }
   | {
       ok: false;
@@ -257,14 +289,8 @@ export async function listOwnerSavePreviews(
     try {
       const loaded = await saveStore.load(summary.id);
       if (!loaded) {
-        previews.push({
-          ok: false,
-          id: summary.id,
-          name: summary.name,
-          updatedAt: summary.updatedAt,
-          createdAt: summary.createdAt,
-          error: "Save could not be loaded.",
-        });
+        // Online leagues you are not a member of (or a save deleted since
+        // listing) are not shown at all — not even their names.
         continue;
       }
       const dashboard = toDashboardSnapshot(loaded.state);
@@ -281,6 +307,7 @@ export async function listOwnerSavePreviews(
         seasonPhase: dashboard.seasonPhase,
         teamSelectionLocked: dashboard.teamSelectionLocked,
         participantCount: dashboard.participation?.participants.length ?? null,
+        participationMode: dashboard.participation?.mode ?? "single",
         record: {
           wins: dashboard.controlledStanding.wins,
           losses: dashboard.controlledStanding.losses,

@@ -6,6 +6,7 @@ import type { CalendarContext } from "@/systems/simulation/calendar-context";
 import { asTeamId } from "@/domain/ids";
 import { derivePlayoffResults } from "@/systems/franchise-history";
 import { getActiveOwnedFranchise } from "@/state/owner-context";
+import { getActorTeamIds } from "@/systems/participation";
 import { calculateFranchiseValue } from "@/state/franchise-value";
 import type {
   OwnerDashboardPendingTradeOffer,
@@ -19,6 +20,7 @@ export function buildPendingTradeOfferView(
   state: GameState,
 ): OwnerDashboardPendingTradeOffer | null {
   const activeTeamId = state.user.activeOwnerTeamId;
+  const visible = new Set<string>(getActorTeamIds(state));
   const pending =
     state.user.pendingOwnerDecisions.find(
       (d) =>
@@ -33,7 +35,8 @@ export function buildPendingTradeOfferView(
         d.type === "trade_offer" &&
         (d.payload.status === undefined ||
           d.payload.status === "pending" ||
-          d.payload.status === "negotiating"),
+          d.payload.status === "negotiating") &&
+        visible.has(d.payload.userTeamId),
     );
   if (!pending) {
     return null;
@@ -80,12 +83,14 @@ export function buildPendingTradeOfferView(
 }
 
 export function buildTradeInbox(state: GameState): OwnerDashboardTradeInbox {
+  const visible = new Set<string>(getActorTeamIds(state));
   const open = state.user.pendingOwnerDecisions.filter(
     (d) =>
       d.type === "trade_offer" &&
       (d.payload.status === undefined ||
         d.payload.status === "pending" ||
-        d.payload.status === "negotiating"),
+        d.payload.status === "negotiating") &&
+      visible.has(d.payload.userTeamId),
   );
   const active = state.user.activeOwnerTeamId;
   return {

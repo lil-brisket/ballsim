@@ -90,7 +90,11 @@ export function SaveCard(props: {
                 <StatusBadge label={modeDef.name} tone="info" />
                 {preview.participantCount != null ? (
                   <StatusBadge
-                    label={`Local shared · ${preview.participantCount} players`}
+                    label={`${
+                      preview.participationMode === "online"
+                        ? "Online"
+                        : "Local shared"
+                    } · ${preview.participantCount} players`}
                     tone="info"
                   />
                 ) : null}

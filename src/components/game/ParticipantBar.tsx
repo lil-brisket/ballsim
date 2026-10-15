@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import {
   readyAllParticipantsAction,
@@ -41,6 +42,7 @@ export function ParticipantBar(props: {
   const active = participation.participants.find((p) => p.isActive);
   const others = participation.participants.filter((p) => !p.isActive);
   const activeIsHost = active?.isHost ?? false;
+  const online = participation.mode === "online";
 
   function submit(
     action: (formData: FormData) => Promise<unknown>,
@@ -60,12 +62,15 @@ export function ParticipantBar(props: {
 
   return (
     <section
-      aria-label="Local shared league players"
+      aria-label={
+        online ? "Online league players" : "Local shared league players"
+      }
       className="flex flex-col gap-2 border-t border-surface-line pt-2"
     >
       <div className="flex flex-wrap items-center gap-2">
         <p className="text-sm text-zinc-100">
-          Playing as <strong>{active?.displayName ?? "Unknown"}</strong>
+          {online ? "Signed in as" : "Playing as"}{" "}
+          <strong>{active?.displayName ?? "Unknown"}</strong>
           {activeIsHost ? (
             <span className="ml-2 rounded-full border border-team-ink px-2 py-0.5 font-mono text-[0.65rem] uppercase tracking-wider text-team-ink">
               Host
@@ -73,7 +78,16 @@ export function ParticipantBar(props: {
           ) : null}
         </p>
 
-        {others.map((p) => (
+        {online ? (
+          <Link
+            href={`/dashboard/${saveId}/league-members`}
+            className={cn(buttonClass, "inline-flex items-center")}
+          >
+            League members
+          </Link>
+        ) : null}
+
+        {(online ? [] : others).map((p) => (
           <button
             key={p.id}
             type="button"

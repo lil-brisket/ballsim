@@ -3,6 +3,7 @@ import {
   listOwnerSaves,
   MAX_OWNER_SAVE_SLOTS,
 } from "@/application/game-service";
+import { getCurrentUser } from "@/application/auth/session";
 import { GameSetupForm } from "@/components/owner/GameSetupForm";
 import { ErrorState } from "@/components/owner/EmptyState";
 
@@ -20,12 +21,14 @@ export default async function GameSetupPage({ searchParams }: SetupPageProps) {
     redirect("/home");
   }
 
+  const user = await getCurrentUser();
   const saves = await listOwnerSaves();
   const atSaveLimit = saves.length >= MAX_OWNER_SAVE_SLOTS;
 
   return (
     <GameSetupForm
       atSaveLimit={atSaveLimit}
+      signedInAs={user?.username ?? null}
       restoreDraft={Boolean(error)}
       notices={
         <>

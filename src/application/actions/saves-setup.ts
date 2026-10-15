@@ -18,6 +18,7 @@ import {
   readyAllParticipants,
 } from "@/application/game-service";
 import { revalidatePath } from "next/cache";
+import { getCurrentUser } from "@/application/auth/session";
 import { redirect } from "next/navigation";
 import {
   redirectWithError,
@@ -75,6 +76,7 @@ export async function createSaveAction(formData: FormData): Promise<void> {
     rosterPackage,
     rosterContentId: rosterContentId.length > 0 ? rosterContentId : undefined,
     participation,
+    hostUser: await getCurrentUser(),
   });
   if (!result.ok) {
     redirectWithError("/new/setup?mode=owner", result.error);

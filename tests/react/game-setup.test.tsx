@@ -393,7 +393,7 @@ describe("GameSetupForm", () => {
     unmount();
   });
 
-  it("offers Single Player and Local Shared, with online marked planned", () => {
+  it("offers Single Player and Local Shared, with online requiring sign in", () => {
     const { unmount } = render(<GameSetupForm atSaveLimit={false} />);
 
     const save = screen.getByRole("heading", { name: "Save Details" });
@@ -411,7 +411,46 @@ describe("GameSetupForm", () => {
     expect((single as HTMLInputElement).checked).toBe(true);
     expect((local as HTMLInputElement).disabled).toBe(false);
     expect((online as HTMLInputElement).disabled).toBe(true);
-    expect(screen.getByText("Planned")).toBeTruthy();
+    expect(screen.getByText("Sign in required")).toBeTruthy();
+    const signIn = screen.getByRole("link", {
+      name: "Sign in to host an online league",
+    });
+    expect(signIn.getAttribute("href")).toBe(
+      "/login?next=/new/setup?mode=owner",
+    );
+    unmount();
+  });
+
+  it("lets a signed-in user host an online league", () => {
+    const { unmount } = render(
+      <GameSetupForm atSaveLimit={false} signedInAs="coach_dana" />,
+    );
+    const online = screen.getByRole("radio", {
+      name: "Online Multiplayer",
+    }) as HTMLInputElement;
+    expect(online.disabled).toBe(false);
+    expect(screen.queryByText("Sign in required")).toBeNull();
+    expect(
+      screen.queryByRole("link", { name: "Sign in to host an online league" }),
+    ).toBeNull();
+
+    fireEvent.click(online);
+    expect(online.checked).toBe(true);
+    expect(document.body.textContent).toContain("Hosting as coach_dana.");
+    expect(document.body.textContent).toContain("invite players");
+
+    fireEvent.click(screen.getByRole("button", { name: "Skip to review" }));
+    const group = screen.getByRole("region", { name: "League Participants" });
+    expect(group.textContent).toContain("Online Multiplayer");
+    expect(group.textContent).toContain(
+      "Pick your city and franchises, then invite players",
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Create franchise" }));
+
+    const formData = vi.mocked(createSaveAction).mock.calls[0]![0];
+    expect(JSON.parse(String(formData.get("participationJson")))).toEqual({
+      mode: "online",
+    });
     unmount();
   });
 

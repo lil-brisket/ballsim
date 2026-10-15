@@ -14,7 +14,7 @@ import { draftYearForSeason } from "@/systems/draft";
 import { resolveScoutingRegion } from "@/domain/entities/scouting-regions";
 import { toScoutingReportView } from "@/systems/scouting/scouting-reports";
 import { ProspectCard } from "@/components/draft/ProspectCard";
-import { prismaSaveGameStore } from "@/persistence/save-game-repository";
+import { getRequestSaveStore } from "@/application/request-save-store";
 import { toScoutingHubView } from "@/state/scouting-hub-selectors";
 import { PlayerEntityLink } from "@/components/entity/PlayerEntityLink";
 
@@ -26,7 +26,7 @@ type Props = {
 export default async function ScoutingPage({ params, searchParams }: Props) {
   const { saveId } = await params;
   const { error, prospect: focusProspect } = await searchParams;
-  const loaded = await prismaSaveGameStore.load(saveId);
+  const loaded = await getRequestSaveStore().load(saveId);
   if (!loaded) notFound();
   const state = loaded.state;
   const hub = toScoutingHubView(state);

@@ -21,9 +21,48 @@ model SaveGame {
   updatedAt     DateTime     @updatedAt
   teams         SaveTeam[]
   players       SavePlayer[]
+  invites       LeagueInvite[]
 
   @@index([name])
   @@index([updatedAt])
+}
+
+/// Online play account. Username is stored lowercase and is the login name.
+model User {
+  id           String    @id
+  username     String    @unique
+  passwordHash String
+  createdAt    DateTime  @default(now())
+  sessions     Session[]
+}
+
+/// Database session. `id` is the SHA-256 of the cookie token, never the token.
+model Session {
+  id        String   @id
+  userId    String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+/// Invite link for an online league. `tokenHash` is the SHA-256 of the link token.
+/// League membership itself lives in GameState (participant.userId) so it
+/// changes atomically with team ownership.
+model LeagueInvite {
+  id              String    @id
+  saveGameId      String
+  tokenHash       String    @unique
+  createdByUserId String
+  expiresAt       DateTime
+  revokedAt       DateTime?
+  maxUses         Int
+  uses            Int       @default(0)
+  createdAt       DateTime  @default(now())
+  saveGame        SaveGame  @relation(fields: [saveGameId], references: [id], onDelete: Cascade)
+
+  @@index([saveGameId])
 }
 
 /// Query projection of a domain Team for one save. Not the domain entity.

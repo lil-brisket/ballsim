@@ -1,6 +1,8 @@
 import "server-only";
 import {
   advanceBlockedReason,
+  getActiveParticipant,
+  getParticipantForTeam,
   withReadyReset,
 } from "@/systems/participation";
 import type {
@@ -108,6 +110,14 @@ export async function advanceOwnerTime(
         const teamLabel = team
           ? `${team.city} ${team.name}`
           : (teamId ?? "a franchise");
+        const owner = teamId
+          ? getParticipantForTeam(workingState, teamId)
+          : null;
+        if (owner && owner.id !== getActiveParticipant(workingState)?.id) {
+          return fail(
+            `${owner.displayName} must resolve a pending decision for ${teamLabel} before time can advance.`,
+          );
+        }
         const switchHint =
           teamId && teamId !== workingState.user.activeOwnerTeamId
             ? ` Switch to ${teamLabel} using the franchise selector in the header to resolve it.`

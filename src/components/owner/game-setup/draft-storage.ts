@@ -36,10 +36,14 @@ function parseParticipationDraft(
     return undefined;
   }
   const record = value as Record<string, unknown>;
-  if (
-    !isParticipationMode(record.mode) ||
-    !Array.isArray(record.participants)
-  ) {
+  if (!isParticipationMode(record.mode)) {
+    return undefined;
+  }
+  // Online and single drafts carry no required participants.
+  if (record.mode === "online" && !Array.isArray(record.participants)) {
+    return { mode: "online", participants: [] };
+  }
+  if (!Array.isArray(record.participants)) {
     return undefined;
   }
   const participants: LocalParticipantSetup[] = [];

@@ -1,15 +1,16 @@
 /**
- * Pure state transitions for local shared leagues (hotseat play).
+ * Pure state transitions for shared leagues: local (hotseat) and online.
  *
  * Simulation never reads any of this — it keys off user.ownedTeamIds. These
  * helpers only decide which participant owns which human team, who is acting,
  * and whether the league may advance.
  */
 
-import type {
-  LocalParticipant,
-  LocalParticipantSetup,
-  LocalSharedParticipation,
+import {
+  MAX_ONLINE_PARTICIPANTS,
+  type LocalParticipant,
+  type LocalParticipantSetup,
+  type SharedParticipation,
 } from "@/domain/participation";
 import type { TeamId } from "@/domain/ids";
 import type { GameState } from "@/state/game-state";
@@ -18,11 +19,19 @@ export type ParticipationResult =
   | { ok: true; state: GameState }
   | { ok: false; error: string };
 
-export function getLocalParticipation(
+/** Participation for local shared or online leagues; null for single player. */
+export function getSharedParticipation(
   state: GameState,
-): LocalSharedParticipation | null {
+): SharedParticipation | null {
   const participation = state.user.participation;
-  return participation.mode === "local_shared" ? participation : null;
+  return participation.mode === "single" ? null : participation;
+}
+
+/** @deprecated Prefer {@link getSharedParticipation}. */
+export const getLocalParticipation = getSharedParticipation;
+
+export function isOnlineLeague(state: GameState): boolean {
+  return state.user.participation.mode === "online";
 }
 
 export function getActiveParticipant(
@@ -86,7 +95,7 @@ export function createLocalSharedParticipation(
   setup: readonly LocalParticipantSetup[],
   anchorTeamId: string,
   createParticipantId: () => string,
-): LocalSharedParticipation {
+): SharedParticipation {
   const participants = setup.map(
     (entry, index): LocalParticipant => ({
       id: createParticipantId(),
@@ -107,7 +116,7 @@ export function createLocalSharedParticipation(
 
 function withLocal(
   state: GameState,
-  local: LocalSharedParticipation,
+  local: SharedParticipation,
   activeOwnerTeamId: TeamId = state.user.activeOwnerTeamId,
 ): GameState {
   return {
@@ -124,6 +133,12 @@ export function withActiveParticipant(
   const local = getLocalParticipation(state);
   if (!local) {
     return { ok: false, error: "This league has a single player." };
+  }
+  if (local.mode === "online") {
+    return {
+      ok: false,
+      error: "In online leagues each player signs in on their own device.",
+    };
   }
   const next = local.participants.find((p) => p.id === participantId);
   if (!next) {
@@ -253,7 +268,11 @@ export function withConfirmedAssignments(
   }
   const host = local.participants.find((p) => p.isHost)!;
   const anchorId = state.user.activeOwnerTeamId;
-  if (assignments.get(anchorId) !== host.id) {
+  // Online onboarding: the host is the only participant yet, so unassigned
+  // teams default to them.
+  const ownerOf = (teamId: string) =>
+    assignments.get(teamId) ?? (local.mode === "online" ? host.id : undefined);
+  if (ownerOf(anchorId) !== host.id) {
     return {
       ok: false,
       error: `${host.displayName} (host) must keep the initial franchise.`,
@@ -263,7 +282,7 @@ export function withConfirmedAssignments(
     local.participants.map((p) => [p.id, []]),
   );
   for (const teamId of state.user.ownedTeamIds) {
-    const participantId = assignments.get(teamId);
+    const participantId = ownerOf(teamId);
     const bucket =
       participantId === undefined ? undefined : byParticipant.get(participantId);
     if (!bucket) {
@@ -350,4 +369,238 @@ export function withTeamAddedToActiveParticipant(
         : p,
     ),
   });
+}
+
+// ---------------------------------------------------------------------------
+// Online leagues
+// ---------------------------------------------------------------------------
+
+export type OnlineMember = { userId: string; displayName: string };
+
+/** Build onboarding participation for a new online league (host only). */
+export function createOnlineParticipation(
+  host: OnlineMember,
+  anchorTeamId: string,
+  plannedTeamCount: number,
+  createParticipantId: () => string,
+): SharedParticipation {
+  const id = createParticipantId();
+  return {
+    mode: "online",
+    participants: [
+      {
+        id,
+        displayName: host.displayName,
+        teamIds: [anchorTeamId],
+        plannedTeamCount,
+        isHost: true,
+        userId: host.userId,
+      },
+    ],
+    activeParticipantId: id,
+    readyParticipantIds: [],
+    assignmentsConfirmed: false,
+  };
+}
+
+export function getParticipantForUser(
+  state: GameState,
+  userId: string,
+): LocalParticipant | null {
+  const shared = getSharedParticipation(state);
+  if (!shared || shared.mode !== "online") {
+    return null;
+  }
+  return shared.participants.find((p) => p.userId === userId) ?? null;
+}
+
+/**
+ * Per-request view of an online league as the signed-in user: they become
+ * the active participant, acting as their remembered (or first) franchise.
+ * Null when the user is not a member.
+ */
+export function withActingUser(
+  state: GameState,
+  userId: string,
+): GameState | null {
+  const shared = getSharedParticipation(state);
+  const participant = getParticipantForUser(state, userId);
+  if (!shared || !participant) {
+    return null;
+  }
+  const team =
+    participant.activeTeamId !== undefined &&
+    participant.teamIds.includes(participant.activeTeamId)
+      ? participant.activeTeamId
+      : participant.teamIds[0];
+  if (team === undefined) {
+    return null;
+  }
+  return withLocal(
+    state,
+    { ...shared, activeParticipantId: participant.id },
+    team as TeamId,
+  );
+}
+
+/**
+ * Online leagues: remember the acting participant's current franchise so the
+ * next request (which re-derives the active team) lands on it again.
+ */
+export function withActiveTeamRemembered(state: GameState): GameState {
+  const shared = getSharedParticipation(state);
+  if (!shared || shared.mode !== "online") {
+    return state;
+  }
+  const activeTeam = state.user.activeOwnerTeamId;
+  let changed = false;
+  const participants = shared.participants.map((p) => {
+    if (
+      p.id !== shared.activeParticipantId ||
+      !p.teamIds.includes(activeTeam) ||
+      p.activeTeamId === activeTeam
+    ) {
+      return p;
+    }
+    changed = true;
+    return { ...p, activeTeamId: activeTeam };
+  });
+  return changed ? withLocal(state, { ...shared, participants }) : state;
+}
+
+/**
+ * Add a newly joined member who takes over `teamId` (an AI-controlled team).
+ * The caller adds the franchise to ownedTeamIds in the same transition.
+ */
+export function withJoinedParticipant(
+  state: GameState,
+  member: OnlineMember,
+  teamId: string,
+  createParticipantId: () => string,
+): ParticipationResult {
+  const shared = getSharedParticipation(state);
+  if (!shared || shared.mode !== "online") {
+    return { ok: false, error: "This is not an online league." };
+  }
+  if (!shared.assignmentsConfirmed) {
+    return {
+      ok: false,
+      error: "The host is still setting up this league. Try again later.",
+    };
+  }
+  if (shared.participants.some((p) => p.userId === member.userId)) {
+    return { ok: false, error: "You are already in this league." };
+  }
+  if (shared.participants.length >= MAX_ONLINE_PARTICIPANTS) {
+    return { ok: false, error: "This league is full." };
+  }
+  if (getParticipantForTeam(state, teamId)) {
+    return { ok: false, error: "That franchise already has a manager." };
+  }
+  return {
+    ok: true,
+    state: withLocal(state, {
+      ...shared,
+      participants: [
+        ...shared.participants,
+        {
+          id: createParticipantId(),
+          displayName: member.displayName,
+          teamIds: [teamId],
+          plannedTeamCount: 1,
+          isHost: false,
+          userId: member.userId,
+        },
+      ],
+    }),
+  };
+}
+
+/**
+ * Remove a participant from the participation record. Their teams must
+ * already be relinquished to the AI (removed from ownedTeamIds) by the caller.
+ * If the active participant leaves, the host becomes active.
+ */
+export function withParticipantRemoved(
+  state: GameState,
+  participantId: string,
+): ParticipationResult {
+  const shared = getSharedParticipation(state);
+  if (!shared) {
+    return { ok: false, error: "This league has a single player." };
+  }
+  const leaving = shared.participants.find((p) => p.id === participantId);
+  if (!leaving) {
+    return { ok: false, error: "Unknown participant." };
+  }
+  if (leaving.isHost) {
+    return {
+      ok: false,
+      error: "Transfer host to another player before the host leaves.",
+    };
+  }
+  const participants = shared.participants.filter(
+    (p) => p.id !== participantId,
+  );
+  const host = participants.find((p) => p.isHost)!;
+  const activeParticipantId =
+    shared.activeParticipantId === participantId
+      ? host.id
+      : shared.activeParticipantId;
+  const activeOwner = participants.find((p) => p.id === activeParticipantId)!;
+  const activeTeam = activeOwner.teamIds.includes(state.user.activeOwnerTeamId)
+    ? state.user.activeOwnerTeamId
+    : (activeOwner.teamIds[0] as TeamId);
+  return {
+    ok: true,
+    state: withLocal(
+      state,
+      {
+        ...shared,
+        participants,
+        activeParticipantId,
+        readyParticipantIds: shared.readyParticipantIds.filter(
+          (id) => id !== participantId,
+        ),
+      },
+      activeTeam,
+    ),
+  };
+}
+
+/** Make `participantId` the host (the previous host becomes a member). */
+export function withHostTransferred(
+  state: GameState,
+  participantId: string,
+): ParticipationResult {
+  const shared = getSharedParticipation(state);
+  if (!shared) {
+    return { ok: false, error: "This league has a single player." };
+  }
+  if (!shared.participants.some((p) => p.id === participantId)) {
+    return { ok: false, error: "Unknown participant." };
+  }
+  return {
+    ok: true,
+    state: withLocal(state, {
+      ...shared,
+      participants: shared.participants.map((p) => ({
+        ...p,
+        isHost: p.id === participantId,
+      })),
+    }),
+  };
+}
+
+/**
+ * Teams whose private data (inbox, notifications, phase tasks) the acting
+ * person may see: the active participant's teams in shared leagues, every
+ * owned team in single player.
+ */
+export function getActorTeamIds(state: GameState): readonly TeamId[] {
+  const active = getActiveParticipant(state);
+  if (!active) {
+    return state.user.ownedTeamIds;
+  }
+  return state.user.ownedTeamIds.filter((id) => active.teamIds.includes(id));
 }

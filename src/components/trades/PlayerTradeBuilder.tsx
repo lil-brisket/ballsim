@@ -1,0 +1,230 @@
+"use client";
+
+import { useState } from "react";
+import {
+  declineOwnerDecisionAction,
+  proposePlayerTradeAction,
+} from "@/application/actions";
+
+export type TradeBuilderPlayer = {
+  id: string;
+  name: string;
+  position: string;
+  overall: number;
+  age: number;
+};
+
+export type TradeBuilderPick = {
+  id: string;
+  label: string;
+};
+
+export type TradeBuilderTeam = {
+  id: string;
+  /** "{Player} — {City Name}" */
+  label: string;
+  players: TradeBuilderPlayer[];
+  picks: TradeBuilderPick[];
+};
+
+export type SentOffer = {
+  id: string;
+  toLabel: string;
+  sends: string[];
+  receives: string[];
+};
+
+type Props = {
+  saveId: string;
+  returnPath: string;
+  myTeamId: string;
+  myTeam: Omit<TradeBuilderTeam, "label">;
+  targets: TradeBuilderTeam[];
+  sentOffers: SentOffer[];
+  error?: string;
+};
+
+function toggle(list: string[], id: string): string[] {
+  return list.includes(id) ? list.filter((x) => x !== id) : [...list, id];
+}
+
+export function PlayerTradeBuilder(props: Props) {
+  const { saveId, returnPath, myTeamId, myTeam, targets, sentOffers, error } =
+    props;
+  const [targetId, setTargetId] = useState(targets[0]?.id ?? "");
+  const [sendPlayers, setSendPlayers] = useState<string[]>([]);
+  const [sendPicks, setSendPicks] = useState<string[]>([]);
+  const [askPlayers, setAskPlayers] = useState<string[]>([]);
+  const [askPicks, setAskPicks] = useState<string[]>([]);
+
+  const target = targets.find((t) => t.id === targetId);
+  const canSubmit =
+    target !== undefined &&
+    sendPlayers.length + sendPicks.length > 0 &&
+    askPlayers.length + askPicks.length > 0;
+
+  const proposalJson = JSON.stringify({
+    sideA: {
+      teamId: myTeamId,
+      playerIds: sendPlayers,
+      draftPickIds: sendPicks,
+    },
+    sideB: { teamId: targetId, playerIds: askPlayers, draftPickIds: askPicks },
+  });
+
+  function changeTarget(id: string) {
+    setTargetId(id);
+    setAskPlayers([]);
+    setAskPicks([]);
+  }
+
+  return (
+    <div className="space-y-6">
+      {error ? (
+        <p
+          role="alert"
+          className="rounded-md border border-red-700 bg-red-950/40 px-3 py-2 text-red-200"
+        >
+          {error}
+        </p>
+      ) : null}
+
+      <form action={proposePlayerTradeAction} className="space-y-4">
+        <input type="hidden" name="saveId" value={saveId} />
+        <input type="hidden" name="returnPath" value={returnPath} />
+        <input type="hidden" name="proposalJson" value={proposalJson} />
+
+        <label className="flex flex-col gap-1 text-zinc-300">
+          Trade with
+          <select
+            value={targetId}
+            onChange={(e) => changeTarget(e.target.value)}
+            className="rounded-md border border-zinc-600 bg-zinc-900 px-2 py-1.5"
+          >
+            {targets.map((t) => (
+              <option key={t.id} value={t.id}>
+                {t.label}
+              </option>
+            ))}
+          </select>
+        </label>
+
+        <div className="grid gap-4 md:grid-cols-2">
+          <AssetColumn
+            title="You send"
+            verb="Send"
+            players={myTeam.players}
+            picks={myTeam.picks}
+            selectedPlayers={sendPlayers}
+            selectedPicks={sendPicks}
+            onPlayer={(id) => setSendPlayers((l) => toggle(l, id))}
+            onPick={(id) => setSendPicks((l) => toggle(l, id))}
+          />
+          <AssetColumn
+            title="You receive"
+            verb="Ask for"
+            players={target?.players ?? []}
+            picks={target?.picks ?? []}
+            selectedPlayers={askPlayers}
+            selectedPicks={askPicks}
+            onPlayer={(id) => setAskPlayers((l) => toggle(l, id))}
+            onPick={(id) => setAskPicks((l) => toggle(l, id))}
+          />
+        </div>
+
+        <button
+          type="submit"
+          disabled={!canSubmit}
+          className="rounded-md bg-amber-600 px-3 py-1.5 font-medium text-zinc-950 hover:bg-amber-500 disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          Propose trade
+        </button>
+      </form>
+
+      <section aria-labelledby="sent-offers-heading" className="space-y-2">
+        <h2 id="sent-offers-heading" className="font-medium text-zinc-50">
+          Sent offers
+        </h2>
+        {sentOffers.length === 0 ? (
+          <p className="text-zinc-500">No offers waiting on another player.</p>
+        ) : (
+          <ul className="space-y-2">
+            {sentOffers.map((offer) => (
+              <li
+                key={offer.id}
+                className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-zinc-700 px-3 py-2"
+              >
+                <div>
+                  <p className="text-zinc-50">To {offer.toLabel}</p>
+                  <p className="text-zinc-400">
+                    You send: {offer.sends.join(", ") || "nothing"}
+                  </p>
+                  <p className="text-zinc-400">
+                    You receive: {offer.receives.join(", ") || "nothing"}
+                  </p>
+                </div>
+                <form action={declineOwnerDecisionAction}>
+                  <input type="hidden" name="saveId" value={saveId} />
+                  <input type="hidden" name="decisionId" value={offer.id} />
+                  <input type="hidden" name="returnPath" value={returnPath} />
+                  <button
+                    type="submit"
+                    className="rounded-md border border-zinc-600 px-3 py-1.5 hover:border-zinc-400"
+                  >
+                    Withdraw
+                  </button>
+                </form>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+    </div>
+  );
+}
+
+function AssetColumn(props: {
+  title: string;
+  verb: "Send" | "Ask for";
+  players: TradeBuilderPlayer[];
+  picks: TradeBuilderPick[];
+  selectedPlayers: string[];
+  selectedPicks: string[];
+  onPlayer: (id: string) => void;
+  onPick: (id: string) => void;
+}) {
+  return (
+    <fieldset className="rounded-md border border-zinc-700 px-4 py-3">
+      <legend className="px-1 text-zinc-50">{props.title}</legend>
+      <div className="mt-2 space-y-1">
+        {props.players.map((p) => (
+          <label key={p.id} className="flex items-center gap-2 text-zinc-300">
+            <input
+              type="checkbox"
+              aria-label={`${props.verb} ${p.name}`}
+              checked={props.selectedPlayers.includes(p.id)}
+              onChange={() => props.onPlayer(p.id)}
+            />
+            <span>
+              {p.name} ({p.position}) OVR {p.overall} · Age {p.age}
+            </span>
+          </label>
+        ))}
+        {props.picks.map((k) => (
+          <label key={k.id} className="flex items-center gap-2 text-zinc-300">
+            <input
+              type="checkbox"
+              aria-label={`${props.verb} ${k.label}`}
+              checked={props.selectedPicks.includes(k.id)}
+              onChange={() => props.onPick(k.id)}
+            />
+            <span>{k.label}</span>
+          </label>
+        ))}
+        {props.players.length === 0 && props.picks.length === 0 ? (
+          <p className="text-zinc-500">No tradable assets</p>
+        ) : null}
+      </div>
+    </fieldset>
+  );
+}

@@ -4,7 +4,7 @@ import {
   acceptOwnerDecisionAction,
   declineOwnerDecisionAction,
 } from "@/application/actions";
-import { prismaSaveGameStore } from "@/persistence/save-game-repository";
+import { getRequestSaveStore } from "@/application/request-save-store";
 import { TradeReviewPanel } from "@/components/trades/TradeReviewPanel";
 import { buildTradeReviewView } from "@/state/trade-review-view";
 
@@ -14,7 +14,7 @@ type PageProps = {
 
 export default async function TradeReviewPage(props: PageProps) {
   const { saveId, decisionId } = await props.params;
-  const loaded = await prismaSaveGameStore.load(saveId);
+  const loaded = await getRequestSaveStore().load(saveId);
   if (!loaded) notFound();
   const review = buildTradeReviewView(loaded.state, decisionId);
   if (!review) notFound();

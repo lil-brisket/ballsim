@@ -1,10 +1,10 @@
 import "server-only";
+import { getRequestSaveStore } from "@/application/request-save-store";
 import type {
   LoadedSaveGame,
   SaveGameSummary,
   SaveGameStore,
 } from "@/persistence/save-game-store";
-import { prismaSaveGameStore } from "@/persistence/save-game-repository";
 import type { CustomContentStore } from "@/persistence/custom-content-store";
 import { prismaCustomContentStore } from "@/persistence/custom-content-repository";
 import { toDashboardSnapshot } from "@/state/selectors";
@@ -36,7 +36,7 @@ export function toSaveSummary(loaded: LoadedSaveGame): SaveGameSummary {
 }
 
 export function getStore(store?: SaveGameStore): SaveGameStore {
-  return store ?? prismaSaveGameStore;
+  return store ?? getRequestSaveStore();
 }
 
 export function getCustomStore(store?: CustomContentStore): CustomContentStore {

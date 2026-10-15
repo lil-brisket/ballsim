@@ -26,11 +26,13 @@ import {
 import { canOpenGameBoxScore } from "@/state/selectors/box-score";
 import {
   advanceBlockedReason,
+  getActorTeamIds,
   getLocalParticipation,
   getParticipantForTeam,
 } from "@/systems/participation";
 
 export type ParticipationView = {
+  mode: "local_shared" | "online";
   activeParticipantId: string;
   assignmentsConfirmed: boolean;
   /** Why the league cannot advance yet, or null when it can. */
@@ -52,6 +54,7 @@ function toParticipationView(state: GameState): ParticipationView | null {
     return null;
   }
   return {
+    mode: local.mode,
     activeParticipantId: local.activeParticipantId,
     assignmentsConfirmed: local.assignmentsConfirmed,
     advanceBlockedReason: advanceBlockedReason(state),
@@ -311,7 +314,7 @@ function describeDomainEvent(event: DomainEvent): string {
 
 export function toNotificationsView(state: GameState): NotificationView[] {
   const entries: NotificationView[] = [];
-  for (const teamId of getOwnedTeamIds(state)) {
+  for (const teamId of getActorTeamIds(state)) {
     const franchise = state.user.ownedFranchises[teamId];
     const team = state.world.teams[teamId];
     if (!franchise || !team) {

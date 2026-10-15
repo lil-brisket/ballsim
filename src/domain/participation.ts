@@ -10,19 +10,37 @@
  * never used for permission checks.
  */
 
-export type ParticipationMode = "single" | "local_shared";
+export type ParticipationMode = "single" | "local_shared" | "online";
+
+/** Modes where several people share one league. */
+export type SharedParticipationMode = Exclude<ParticipationMode, "single">;
 
 export const PARTICIPATION_MODES: readonly ParticipationMode[] = [
   "single",
   "local_shared",
+  "online",
 ];
 
 export const MIN_LOCAL_PARTICIPANTS = 2;
 export const MAX_LOCAL_PARTICIPANTS = 4;
+/** Online leagues start with the host alone; others join by invite. */
+export const MIN_ONLINE_PARTICIPANTS = 1;
+export const MAX_ONLINE_PARTICIPANTS = 8;
 export const PARTICIPANT_NAME_MAX_LENGTH = 24;
 
 /** Local shared (hotseat) leagues can be created from new-game setup. */
 export const LOCAL_SHARED_LEAGUE_AVAILABLE = true;
+/** Online leagues can be created by a signed-in user. */
+export const ONLINE_LEAGUE_AVAILABLE = true;
+
+export function participantLimits(mode: SharedParticipationMode): {
+  min: number;
+  max: number;
+} {
+  return mode === "online"
+    ? { min: MIN_ONLINE_PARTICIPANTS, max: MAX_ONLINE_PARTICIPANTS }
+    : { min: MIN_LOCAL_PARTICIPANTS, max: MAX_LOCAL_PARTICIPANTS };
+}
 
 export type LocalParticipant = {
   /** Stable generated id — the identity used for every ownership check. */
@@ -33,11 +51,24 @@ export type LocalParticipant = {
   /** Franchises this participant chose to control at setup. */
   plannedTeamCount: number;
   isHost: boolean;
+  /** Online leagues: the signed-in account behind this participant. */
+  userId?: string;
+  /**
+   * Online leagues: the franchise this participant last acted as. Each
+   * request acts as the signed-in participant, so the shared
+   * user.activeOwnerTeamId cannot remember it per person.
+   */
+  activeTeamId?: string;
 };
 
-export type LocalSharedParticipation = {
-  mode: "local_shared";
+export type SharedParticipation = {
+  mode: SharedParticipationMode;
   participants: LocalParticipant[];
+  /**
+   * Local: who holds the device. Online: who the current request acts as
+   * (overwritten per request from the session; the persisted value is
+   * simply whoever saved last).
+   */
   activeParticipantId: string;
   /** Participants who finished managing for the current advance window. */
   readyParticipantIds: string[];
@@ -48,7 +79,10 @@ export type LocalSharedParticipation = {
   assignmentsConfirmed: boolean;
 };
 
-export type ParticipationState = { mode: "single" } | LocalSharedParticipation;
+/** @deprecated Prefer {@link SharedParticipation}. */
+export type LocalSharedParticipation = SharedParticipation;
+
+export type ParticipationState = { mode: "single" } | SharedParticipation;
 
 export const DEFAULT_PARTICIPATION_STATE: ParticipationState = {
   mode: "single",
@@ -74,7 +108,9 @@ export type LocalParticipantSetup = {
 
 export type ParticipationSetupInput =
   | { mode: "single" }
-  | { mode: "local_shared"; participants: LocalParticipantSetup[] };
+  | { mode: "local_shared"; participants: LocalParticipantSetup[] }
+  /** The signed-in creator becomes the host; others join by invite. */
+  | { mode: "online" };
 
 export const DEFAULT_PARTICIPATION_SETUP: ParticipationSetupInput = {
   mode: "single",
@@ -122,10 +158,13 @@ export function parseParticipationSetup(
   if (input.mode === "single") {
     return { ok: true, value: { mode: "single" } };
   }
+  if (input.mode === "online") {
+    return { ok: true, value: { mode: "online" } };
+  }
   if (input.mode !== "local_shared") {
     return {
       ok: false,
-      errors: ["Choose Single Player or Local Shared League."],
+      errors: ["Choose Single Player, Local Shared League or Online."],
     };
   }
 
@@ -191,7 +230,7 @@ export function parseParticipationSetup(
 export function controlledTeamCountForSetup(
   setup: ParticipationSetupInput,
 ): number | null {
-  if (setup.mode === "single") {
+  if (setup.mode !== "local_shared") {
     return null;
   }
   return setup.participants.reduce((sum, p) => sum + p.teamCount, 0);
@@ -227,14 +266,14 @@ export function participationStateErrors(
     return [`${path}.participants must be an array.`];
   }
   const participants = record.participants as unknown[];
-  if (
-    participants.length < MIN_LOCAL_PARTICIPANTS ||
-    participants.length > MAX_LOCAL_PARTICIPANTS
-  ) {
+  const online = record.mode === "online";
+  const limits = participantLimits(record.mode);
+  if (participants.length < limits.min || participants.length > limits.max) {
     errors.push(
-      `${path}.participants must contain ${MIN_LOCAL_PARTICIPANTS}–${MAX_LOCAL_PARTICIPANTS} entries.`,
+      `${path}.participants must contain ${limits.min}–${limits.max} entries.`,
     );
   }
+  const userIds = new Set<string>();
 
   if (typeof record.assignmentsConfirmed !== "boolean") {
     errors.push(`${path}.assignmentsConfirmed must be a boolean.`);
@@ -262,6 +301,23 @@ export function participationStateErrors(
     ids.add(p.id);
     if (!normalizeParticipantName(p.displayName).ok) {
       errors.push(`${at}.displayName is invalid.`);
+    }
+    if (online) {
+      if (typeof p.userId !== "string" || p.userId.length === 0) {
+        errors.push(`${at}.userId is required in online leagues.`);
+      } else if (userIds.has(p.userId)) {
+        errors.push(`${at}.userId is already a participant.`);
+      } else {
+        userIds.add(p.userId);
+      }
+    } else if (p.userId !== undefined) {
+      errors.push(`${at}.userId is only allowed in online leagues.`);
+    }
+    if (
+      p.activeTeamId !== undefined &&
+      (!Array.isArray(p.teamIds) || !p.teamIds.includes(p.activeTeamId))
+    ) {
+      errors.push(`${at}.activeTeamId must be one of its teams.`);
     }
     if (typeof p.isHost !== "boolean") {
       errors.push(`${at}.isHost must be a boolean.`);

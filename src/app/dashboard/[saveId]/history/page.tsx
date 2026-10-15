@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { prismaSaveGameStore } from "@/persistence/save-game-repository";
+import { getRequestSaveStore } from "@/application/request-save-store";
 import { ErrorState } from "@/components/owner/EmptyState";
 import { HistoryHub } from "@/components/history/HistoryHub";
 import {
@@ -15,7 +15,7 @@ type PageProps = {
 export default async function HistoryPage({ params, searchParams }: PageProps) {
   const { saveId } = await params;
   const { error, ...query } = await searchParams;
-  const loaded = await prismaSaveGameStore.load(saveId);
+  const loaded = await getRequestSaveStore().load(saveId);
   if (!loaded) {
     notFound();
   }

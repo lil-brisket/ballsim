@@ -22,7 +22,7 @@ import { TeamEntityLink } from "@/components/entity/TeamEntityLink";
 import { PlayerEntityLink } from "@/components/entity/PlayerEntityLink";
 import { draftClassIdFor } from "@/domain/entities/draft";
 import { getActivePhaseId } from "@/systems/phase-engine/resolve-current-phase";
-import { prismaSaveGameStore } from "@/persistence/save-game-repository";
+import { getRequestSaveStore } from "@/application/request-save-store";
 import { toDraftHubView } from "@/state/draft-hub-selectors";
 import {
   calculateTeamDraftNeeds,
@@ -55,7 +55,7 @@ export default async function DraftPage({
     ? `/dashboard/${saveId}/calendar?resumeTo=${encodeURIComponent(resumeTo)}`
     : returnPath;
   const board = view.draftBoard;
-  const loaded = await prismaSaveGameStore.load(saveId);
+  const loaded = await getRequestSaveStore().load(saveId);
   const state = loaded?.state;
   const hub = state ? toDraftHubView(state) : null;
   const teamId = state?.user.activeOwnerTeamId;

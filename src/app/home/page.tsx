@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { signOutAction } from "@/application/actions/auth";
+import { getCurrentUser } from "@/application/auth/session";
 import { listGameModeDefinitions } from "@/application/game-mode-catalog";
 import { GameBrand } from "@/components/game/GameBrand";
 import { GameModeCard } from "@/components/game/GameModeCard";
@@ -13,6 +15,7 @@ type HomePageProps = {
 export default async function HomePage({ searchParams }: HomePageProps) {
   const { error } = await searchParams;
   const modes = listGameModeDefinitions();
+  const user = await getCurrentUser();
 
   return (
     <main className="relative flex flex-1 flex-col overflow-hidden">
@@ -39,13 +42,34 @@ export default async function HomePage({ searchParams }: HomePageProps) {
           ))}
         </section>
 
-        <footer className="flex justify-center sm:justify-start">
+        <footer className="flex flex-wrap items-center justify-center gap-x-6 sm:justify-start">
           <Link
             href="/settings"
             className="inline-flex min-h-11 items-center text-sm text-zinc-400 hover:text-team-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-500"
           >
             Settings
           </Link>
+          {user ? (
+            <form
+              action={signOutAction}
+              className="flex items-center gap-2 text-sm text-zinc-400"
+            >
+              <span>Signed in as {user.username} ·</span>
+              <button
+                type="submit"
+                className="inline-flex min-h-11 items-center text-zinc-300 underline hover:text-team-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-500"
+              >
+                Sign out
+              </button>
+            </form>
+          ) : (
+            <Link
+              href="/login"
+              className="inline-flex min-h-11 items-center text-sm text-zinc-400 hover:text-team-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-500"
+            >
+              Sign in for online leagues
+            </Link>
+          )}
         </footer>
       </div>
     </main>
