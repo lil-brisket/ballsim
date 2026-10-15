@@ -102,6 +102,8 @@ export function checkNonNegativeBoxScoreFields(
     defensiveRebounds: number;
     rebounds: number;
     assists: number;
+    steals?: number;
+    blocks?: number;
     turnovers: number;
     fouls: number;
   },
@@ -120,6 +122,8 @@ export function checkNonNegativeBoxScoreFields(
     ["defensiveRebounds", stats.defensiveRebounds],
     ["rebounds", stats.rebounds],
     ["assists", stats.assists],
+    ["steals", stats.steals],
+    ["blocks", stats.blocks],
     ["turnovers", stats.turnovers],
     ["fouls", stats.fouls],
   ];

@@ -4,8 +4,6 @@ import type {
   PlayerPosition,
 } from "@/domain/entities/player";
 import {
-  addPlayerSeasonStatLines,
-  createEmptyPlayerSeasonStatLine,
   type PlayerHistory,
   type PlayerSeasonRecord,
   type PlayerSeasonStatLine,
@@ -24,7 +22,7 @@ import type { PlayerId, SeasonId } from "@/domain/ids";
 import type { GameState } from "@/state/game-state";
 import {
   getAllFinalGames,
-  getPlayerGames,
+  getPlayerFinalGames,
   getPlayerSeasonGames,
 } from "@/state/game-access";
 import { getTeamPayroll } from "@/systems/salary-cap";
@@ -48,6 +46,16 @@ import {
 } from "@/systems/development-league/recommendations";
 import { getDevelopmentLeagueSeasonsRemaining } from "@/domain/entities/development-league";
 import { getControlledTeam } from "@/state/selectors";
+import {
+  accumulatePlayerStatLine,
+  addPlayerStatLines,
+  aggregatePlayerGames,
+  createEmptyPlayerStatLine,
+  classifyCompetition,
+  isTopLeagueStatGame,
+  type PlayerStatBuckets,
+  type PlayerStatLine,
+} from "@/domain/player-stat-aggregation";
 
 export type CareerHighStatKey =
   | "points"
@@ -160,6 +168,8 @@ export type PlayerContractProfileView = {
 
 export type SeasonAveragesView = {
   games: number;
+  /** Pre-v57 box scores never record a start, so older seasons undercount. */
+  gamesStarted: number;
   mpg: number;
   ppg: number;
   rpg: number;
@@ -167,12 +177,64 @@ export type SeasonAveragesView = {
   spg: number;
   bpg: number;
   topg: number;
+  orpg: number;
+  drpg: number;
+  pfpg: number;
+  doubleDoubles: number;
+  tripleDoubles: number;
   fgPct: number | null;
   threePct: number | null;
   ftPct: number | null;
 };
 
+/**
+ * One season of a player's stats. Lines are summed from box scores when the
+ * season's games are archived ("games"); otherwise they fall back to the
+ * season-end snapshot ("snapshot"), which lacks GS, ORB/DRB, PF, DD and TD.
+ */
+export type PlayerSeasonStatsView = {
+  seasonId: string;
+  seasonYear: number;
+  current: boolean;
+  /** Season-end age/OVR from the snapshot; live values for the current season. */
+  age: number | null;
+  overall: number | null;
+  source: "games" | "snapshot";
+  regular: PlayerStatLine;
+  playoffs: PlayerStatLine;
+  development: PlayerStatLine;
+  combined: PlayerStatLine;
+};
+
+export type PlayerCareerStatsView = {
+  regular: PlayerStatLine;
+  playoffs: PlayerStatLine;
+  development: PlayerStatLine;
+  combined: PlayerStatLine;
+  /** False when a snapshot-only season leaves GS/ORB/DRB/PF/DD/TD incomplete. */
+  extendedColumnsComplete: boolean;
+};
+
+/** Statistics data shared by the player card and the full profile page. */
+export type PlayerStatsBundle = {
+  currentSeasonId: string;
+  /** Oldest first; includes the current season once it has games. */
+  seasons: PlayerSeasonStatsView[];
+  career: PlayerCareerStatsView;
+  /** Current season only; fetch other seasons with fetchPlayerGameSeriesAction. */
+  currentSeasonGames: PlayerGameSeriesPoint[];
+};
+
+/** Development data shared by the player card and the full profile page. */
+export type PlayerDevelopmentBundle = {
+  /** Actual ratings only — no projections. */
+  ratingHistory: PlayerRatingHistoryPoint[];
+  trackingStartedSeasonYear: number | null;
+};
+
 export type PlayerProfileView = PlayerDetailView & {
+  stats: PlayerStatsBundle;
+  development: PlayerDevelopmentBundle;
   seasonStatLine: PlayerSeasonStatLine;
   seasonAverages: SeasonAveragesView | null;
   playoffStatLine: PlayerSeasonStatLine;
@@ -190,7 +252,11 @@ export type PlayerProfileView = PlayerDetailView & {
   teamStints: PlayerTeamStint[];
   careerHighs: CareerHighView[];
   bestSeasons: BestSeasonView[];
-  careerTotals: PlayerSeasonStatLine;
+  /** Oldest first, including the current season once it has games or a snapshot. */
+  seasonLines: PlayerSeasonStatsView[];
+  career: PlayerCareerStatsView;
+  /** Top-league career totals (career.combined). */
+  careerTotals: PlayerStatLine;
   careerAverages: SeasonAveragesView | null;
   contractProfile: PlayerContractProfileView | null;
   trackingStartedSeasonYear: number | null;
@@ -252,37 +318,14 @@ function statValueFromRow(
   }
 }
 
-function accumulateLine(
-  line: PlayerSeasonStatLine,
-  row: GamePlayerStats,
-): PlayerSeasonStatLine {
-  return {
-    games: line.games + 1,
-    minutes: line.minutes + row.minutes,
-    points: line.points + row.points,
-    rebounds: line.rebounds + row.rebounds,
-    assists: line.assists + row.assists,
-    steals: line.steals + row.steals,
-    blocks: line.blocks + row.blocks,
-    turnovers: line.turnovers + row.turnovers,
-    fgMade: line.fgMade + row.fieldGoalsMade,
-    fgAttempted: line.fgAttempted + row.fieldGoalsAttempted,
-    threeMade: line.threeMade + row.threePointersMade,
-    threeAttempted: line.threeAttempted + row.threePointersAttempted,
-    ftMade: line.ftMade + row.freeThrowsMade,
-    ftAttempted: line.ftAttempted + row.freeThrowsAttempted,
-  };
-}
-
-function averagesFromLine(
-  line: PlayerSeasonStatLine,
-): SeasonAveragesView | null {
+function averagesFromLine(line: PlayerStatLine): SeasonAveragesView | null {
   if (line.games === 0) {
     return null;
   }
   const g = line.games;
   return {
     games: g,
+    gamesStarted: line.gamesStarted,
     mpg: round1(line.minutes / g),
     ppg: round1(line.points / g),
     rpg: round1(line.rebounds / g),
@@ -290,6 +333,11 @@ function averagesFromLine(
     spg: round1(line.steals / g),
     bpg: round1(line.blocks / g),
     topg: round1(line.turnovers / g),
+    orpg: round1(line.offensiveRebounds / g),
+    drpg: round1(line.defensiveRebounds / g),
+    pfpg: round1(line.fouls / g),
+    doubleDoubles: line.doubleDoubles,
+    tripleDoubles: line.tripleDoubles,
     fgPct: pct(line.fgMade, line.fgAttempted),
     threePct: pct(line.threeMade, line.threeAttempted),
     ftPct: pct(line.ftMade, line.ftAttempted),
@@ -360,44 +408,20 @@ export function aggregatePlayerSeasonStats(
   state: GameState,
   playerId: PlayerId,
   seasonId?: SeasonId,
-): {
-  regular: PlayerSeasonStatLine;
-  playoffs: PlayerSeasonStatLine;
-  development: PlayerSeasonStatLine;
-  combined: PlayerSeasonStatLine;
-} {
+): PlayerStatBuckets {
   const targetSeasonId = seasonId ?? state.competition.season.id;
-  const games = getPlayerSeasonGames(state, playerId, targetSeasonId);
-  let regular = createEmptyPlayerSeasonStatLine();
-  let playoffs = createEmptyPlayerSeasonStatLine();
-  let development = createEmptyPlayerSeasonStatLine();
-
-  for (const game of games) {
-    const row = game.playerStats.find((stat) => stat.playerId === playerId);
-    if (!row) continue;
-    if (game.competitionType === "playoffs") {
-      playoffs = accumulateLine(playoffs, row);
-    } else if (game.competitionType === "development_league") {
-      development = accumulateLine(development, row);
-    } else {
-      regular = accumulateLine(regular, row);
-    }
-  }
-
-  return {
-    regular,
-    playoffs,
-    development,
-    combined: addPlayerSeasonStatLines(regular, playoffs),
-  };
+  return aggregatePlayerGames(
+    getPlayerSeasonGames(state, playerId, targetSeasonId),
+    playerId,
+  );
 }
 
 export function derivePlayerTeamStints(
   state: GameState,
   playerId: PlayerId,
 ): PlayerTeamStint[] {
-  const games = getPlayerGames(state, playerId).filter(
-    (game) => game.status === "final",
+  const games = getPlayerFinalGames(state, playerId).filter(
+    isTopLeagueStatGame,
   );
   const bySeasonTeam = new Map<
     string,
@@ -456,8 +480,8 @@ export function deriveCareerHighs(
   state: GameState,
   playerId: PlayerId,
 ): CareerHighView[] {
-  const games = getPlayerGames(state, playerId).filter(
-    (game) => game.status === "final",
+  const games = getPlayerFinalGames(state, playerId).filter(
+    isTopLeagueStatGame,
   );
   const best = new Map<CareerHighStatKey, CareerHighView>();
 
@@ -500,12 +524,7 @@ export function deriveCareerHighs(
 }
 
 export function deriveBestSeasons(
-  history: PlayerHistory | undefined,
-  currentPartial: {
-    seasonYear: number;
-    overall: number;
-    combined: PlayerSeasonStatLine;
-  } | null,
+  seasons: readonly PlayerSeasonStatsView[],
 ): BestSeasonView[] {
   type Candidate = {
     seasonYear: number;
@@ -515,36 +534,20 @@ export function deriveBestSeasons(
     apg: number;
   };
 
-  const candidates: Candidate[] = [];
-
-  if (history) {
-    for (const season of history.seasons) {
-      const g = season.competition.combined.games;
-      candidates.push({
+  // The in-progress season only competes once it has games.
+  const candidates: Candidate[] = seasons
+    .filter((season) => !season.current || season.combined.games > 0)
+    .map((season) => {
+      const line = season.combined;
+      const g = line.games;
+      return {
         seasonYear: season.seasonYear,
-        overall: season.overall,
-        ppg: g > 0 ? season.competition.combined.points / g : 0,
-        rpg: g > 0 ? season.competition.combined.rebounds / g : 0,
-        apg: g > 0 ? season.competition.combined.assists / g : 0,
-      });
-    }
-  }
-
-  if (currentPartial && currentPartial.combined.games > 0) {
-    const g = currentPartial.combined.games;
-    const already = candidates.some(
-      (c) => c.seasonYear === currentPartial.seasonYear,
-    );
-    if (!already) {
-      candidates.push({
-        seasonYear: currentPartial.seasonYear,
-        overall: currentPartial.overall,
-        ppg: currentPartial.combined.points / g,
-        rpg: currentPartial.combined.rebounds / g,
-        apg: currentPartial.combined.assists / g,
-      });
-    }
-  }
+        overall: season.overall ?? 0,
+        ppg: g > 0 ? line.points / g : 0,
+        rpg: g > 0 ? line.rebounds / g : 0,
+        apg: g > 0 ? line.assists / g : 0,
+      };
+    });
 
   if (candidates.length === 0) {
     return [];
@@ -603,9 +606,7 @@ export function toPlayerGameLogView(
   state: GameState,
   playerId: PlayerId,
 ): PlayerGameLogRowView[] {
-  const games = getPlayerGames(state, playerId).filter(
-    (game) => game.status === "final",
-  );
+  const games = getPlayerFinalGames(state, playerId);
   const rows: PlayerGameLogRowView[] = [];
 
   for (const game of games) {
@@ -661,17 +662,17 @@ export function toPlayerRecentFormView(
   playerId: PlayerId,
   seasonLine: PlayerSeasonStatLine,
 ): RecentFormView {
-  const games = getPlayerGames(state, playerId)
-    .filter((game) => game.status === "final")
+  const games = getPlayerFinalGames(state, playerId)
+    .filter(isTopLeagueStatGame)
     .sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0));
 
   function lineFor(n: number): PlayerSeasonStatLine | null {
     const slice = games.slice(0, n);
     if (slice.length === 0) return null;
-    let line = createEmptyPlayerSeasonStatLine();
+    let line = createEmptyPlayerStatLine();
     for (const game of slice) {
       const row = game.playerStats.find((stat) => stat.playerId === playerId);
-      if (row) line = accumulateLine(line, row);
+      if (row) line = accumulatePlayerStatLine(line, row);
     }
     return line;
   }
@@ -700,121 +701,180 @@ export function toPlayerRecentFormView(
   return { last5, last10, seasonAverages, last5Averages };
 }
 
-export function toPlayerCareerTotals(
-  history: PlayerHistory | undefined,
-  currentCombined: PlayerSeasonStatLine,
-  currentSeasonYear: number,
-): PlayerSeasonStatLine {
-  let totals = createEmptyPlayerSeasonStatLine();
-  if (history) {
-    for (const season of history.seasons) {
-      if (season.seasonYear === currentSeasonYear) {
-        continue;
-      }
-      totals = addPlayerSeasonStatLines(totals, season.competition.combined);
-    }
-  }
-  return addPlayerSeasonStatLines(totals, currentCombined);
+function widenSnapshotLine(line: PlayerSeasonStatLine): PlayerStatLine {
+  return { ...createEmptyPlayerStatLine(), ...line };
 }
 
-export function toPlayerTrendSeries(
+/**
+ * Per-season stat lines, one per seasonId. Box scores are authoritative;
+ * a snapshot is used only for a season with no archived games, so a season
+ * is never counted from both sources.
+ */
+export function toPlayerSeasonStatsViews(
+  state: GameState,
+  playerId: PlayerId,
+  history: PlayerHistory | undefined,
+  current: { age: number; overall: number },
+): PlayerSeasonStatsView[] {
+  const currentSeason = state.competition.season;
+  const gamesBySeason = new Map<string, Game[]>();
+  for (const game of getPlayerFinalGames(state, playerId)) {
+    const list = gamesBySeason.get(game.seasonId);
+    if (list) list.push(game);
+    else gamesBySeason.set(game.seasonId, [game]);
+  }
+
+  const snapshots = new Map<string, PlayerSeasonRecord>();
+  for (const season of history?.seasons ?? []) {
+    snapshots.set(season.seasonId, season);
+  }
+
+  const seasonIds = new Set<string>([
+    ...gamesBySeason.keys(),
+    ...snapshots.keys(),
+  ]);
+  const views: PlayerSeasonStatsView[] = [];
+  for (const seasonId of seasonIds) {
+    const snapshot = snapshots.get(seasonId);
+    const isCurrent = seasonId === currentSeason.id;
+    const games = gamesBySeason.get(seasonId);
+    const buckets: PlayerStatBuckets = games
+      ? aggregatePlayerGames(games, playerId)
+      : {
+          regular: widenSnapshotLine(snapshot!.competition.regular),
+          playoffs: widenSnapshotLine(snapshot!.competition.playoffs),
+          development: widenSnapshotLine(snapshot!.competition.development),
+          combined: widenSnapshotLine(snapshot!.competition.combined),
+        };
+    views.push({
+      seasonId,
+      seasonYear:
+        snapshot?.seasonYear ??
+        (isCurrent
+          ? currentSeason.year
+          : seasonYearFromId(seasonId as SeasonId, currentSeason.year)),
+      current: isCurrent,
+      age: snapshot?.age ?? (isCurrent ? current.age : null),
+      overall: snapshot?.overall ?? (isCurrent ? current.overall : null),
+      source: games ? "games" : "snapshot",
+      ...buckets,
+    });
+  }
+
+  views.sort((a, b) => a.seasonYear - b.seasonYear);
+  return views;
+}
+
+/** Career = sum of season lines; averages divide career totals by career GP. */
+export function toPlayerCareerStatsView(
+  seasons: readonly PlayerSeasonStatsView[],
+): PlayerCareerStatsView {
+  let regular = createEmptyPlayerStatLine();
+  let playoffs = createEmptyPlayerStatLine();
+  let development = createEmptyPlayerStatLine();
+  for (const season of seasons) {
+    regular = addPlayerStatLines(regular, season.regular);
+    playoffs = addPlayerStatLines(playoffs, season.playoffs);
+    development = addPlayerStatLines(development, season.development);
+  }
+  return {
+    regular,
+    playoffs,
+    development,
+    combined: addPlayerStatLines(regular, playoffs),
+    extendedColumnsComplete: seasons.every(
+      (season) => season.source === "games" || season.combined.games === 0,
+    ),
+  };
+}
+
+const STAT_TREND_METRICS = [
+  "ppg",
+  "rpg",
+  "apg",
+  "spg",
+  "bpg",
+  "mpg",
+  "fgPct",
+  "threePct",
+  "ftPct",
+] as const;
+
+function statTrendValue(line: PlayerStatLine, metric: string): number | null {
+  const g = line.games;
+  switch (metric) {
+    case "ppg":
+      return g > 0 ? round1(line.points / g) : null;
+    case "rpg":
+      return g > 0 ? round1(line.rebounds / g) : null;
+    case "apg":
+      return g > 0 ? round1(line.assists / g) : null;
+    case "spg":
+      return g > 0 ? round1(line.steals / g) : null;
+    case "bpg":
+      return g > 0 ? round1(line.blocks / g) : null;
+    case "mpg":
+      return g > 0 ? round1(line.minutes / g) : null;
+    case "fgPct":
+      return pct(line.fgMade, line.fgAttempted);
+    case "threePct":
+      return pct(line.threeMade, line.threeAttempted);
+    case "ftPct":
+      return pct(line.ftMade, line.ftAttempted);
+    default:
+      return null;
+  }
+}
+
+/** Season-by-season per-game stat trend (top league, regular + playoffs). */
+export function toPlayerStatTrendSeries(
+  seasons: readonly PlayerSeasonStatsView[],
+  metric: string,
+): TrendPoint[] {
+  return seasons
+    .filter((season) => season.combined.games > 0)
+    .map((season) => ({
+      season: season.seasonYear,
+      value: statTrendValue(season.combined, metric),
+    }));
+}
+
+/**
+ * Rating trend: season-end snapshots plus the live current rating.
+ * metric is "ovr" or an attribute key.
+ */
+export function toPlayerRatingTrendSeries(
   history: PlayerHistory | undefined,
   metric: string,
   current?: {
     seasonYear: number;
     overall: number;
     attributes: PlayerAttributes;
-    combined: PlayerSeasonStatLine;
   },
 ): TrendPoint[] {
-  const points: TrendPoint[] = [];
-  const seasons = [...(history?.seasons ?? [])];
+  const ratingOf = (
+    overall: number,
+    attributes: PlayerAttributes,
+  ): number | null => {
+    if (metric === "ovr") return overall;
+    if (metric in attributes) {
+      return attributes[metric as keyof PlayerAttributes];
+    }
+    return null;
+  };
 
-  for (const season of seasons) {
+  const points: TrendPoint[] = (history?.seasons ?? []).map((season) => ({
+    season: season.seasonYear,
+    value: ratingOf(season.overall, season.attributes),
+  }));
+  if (current && !points.some((p) => p.season === current.seasonYear)) {
     points.push({
-      season: season.seasonYear,
-      value: metricValueFromSeason(season, metric),
+      season: current.seasonYear,
+      value: ratingOf(current.overall, current.attributes),
     });
   }
-
-  if (current) {
-    const exists = points.some((p) => p.season === current.seasonYear);
-    if (!exists && current.combined.games > 0) {
-      points.push({
-        season: current.seasonYear,
-        value: metricValueFromPartial(current, metric),
-      });
-    }
-  }
-
   points.sort((a, b) => a.season - b.season);
   return points;
-}
-
-function metricValueFromSeason(
-  season: PlayerSeasonRecord,
-  metric: string,
-): number | null {
-  const line = season.competition.combined;
-  const g = line.games;
-  switch (metric) {
-    case "ppg":
-      return g > 0 ? round1(line.points / g) : null;
-    case "rpg":
-      return g > 0 ? round1(line.rebounds / g) : null;
-    case "apg":
-      return g > 0 ? round1(line.assists / g) : null;
-    case "mpg":
-      return g > 0 ? round1(line.minutes / g) : null;
-    case "fgPct":
-      return pct(line.fgMade, line.fgAttempted);
-    case "threePct":
-      return pct(line.threeMade, line.threeAttempted);
-    case "ftPct":
-      return pct(line.ftMade, line.ftAttempted);
-    case "ovr":
-      return season.overall;
-    default:
-      if (metric in season.attributes) {
-        return season.attributes[metric as keyof PlayerAttributes];
-      }
-      return null;
-  }
-}
-
-function metricValueFromPartial(
-  current: {
-    overall: number;
-    attributes: PlayerAttributes;
-    combined: PlayerSeasonStatLine;
-  },
-  metric: string,
-): number | null {
-  const line = current.combined;
-  const g = line.games;
-  switch (metric) {
-    case "ppg":
-      return g > 0 ? round1(line.points / g) : null;
-    case "rpg":
-      return g > 0 ? round1(line.rebounds / g) : null;
-    case "apg":
-      return g > 0 ? round1(line.assists / g) : null;
-    case "mpg":
-      return g > 0 ? round1(line.minutes / g) : null;
-    case "fgPct":
-      return pct(line.fgMade, line.fgAttempted);
-    case "threePct":
-      return pct(line.threeMade, line.threeAttempted);
-    case "ftPct":
-      return pct(line.ftMade, line.ftAttempted);
-    case "ovr":
-      return current.overall;
-    default:
-      if (metric in current.attributes) {
-        return current.attributes[metric as keyof PlayerAttributes];
-      }
-      return null;
-  }
 }
 
 export function toPlayerAttributeDevelopmentSeries(
@@ -828,6 +888,96 @@ export function toPlayerAttributeDevelopmentSeries(
       value: season.attributes[attributeKey],
     }))
     .sort((a, b) => a.season - b.season);
+}
+
+/** One counted top-league game, for game-by-game charts. */
+export type PlayerGameSeriesPoint = {
+  gameId: string;
+  date: string;
+  bucket: "regular" | "playoffs";
+  opponentAbbreviation: string;
+  minutes: number;
+  points: number;
+  rebounds: number;
+  assists: number;
+  steals: number;
+  blocks: number;
+  fgMade: number;
+  fgAttempted: number;
+  threeMade: number;
+  threeAttempted: number;
+  ftMade: number;
+  ftAttempted: number;
+};
+
+/** Chronological regular-season and playoff games for one season. */
+export function toPlayerGameSeries(
+  state: GameState,
+  playerId: PlayerId,
+  seasonId: SeasonId,
+): PlayerGameSeriesPoint[] {
+  const points: PlayerGameSeriesPoint[] = [];
+  for (const game of getPlayerSeasonGames(state, playerId, seasonId)) {
+    const bucket = classifyCompetition(game.competitionType);
+    if (bucket !== "regular" && bucket !== "playoffs") continue;
+    const row = game.playerStats.find((stat) => stat.playerId === playerId);
+    if (!row) continue;
+    const opponentId =
+      row.teamId === game.homeTeamId ? game.awayTeamId : game.homeTeamId;
+    points.push({
+      gameId: game.id,
+      date: game.date,
+      bucket,
+      opponentAbbreviation: resolveGameTeamIdentity(state, game, opponentId)
+        .abbreviation,
+      minutes: row.minutes,
+      points: row.points,
+      rebounds: row.rebounds,
+      assists: row.assists,
+      steals: row.steals,
+      blocks: row.blocks,
+      fgMade: row.fieldGoalsMade,
+      fgAttempted: row.fieldGoalsAttempted,
+      threeMade: row.threePointersMade,
+      threeAttempted: row.threePointersAttempted,
+      ftMade: row.freeThrowsMade,
+      ftAttempted: row.freeThrowsAttempted,
+    });
+  }
+  points.sort((a, b) =>
+    a.date === b.date
+      ? a.gameId.localeCompare(b.gameId)
+      : a.date.localeCompare(b.date),
+  );
+  return points;
+}
+
+/**
+ * Actual ratings only: season-end snapshots (taken before offseason
+ * development) plus the live rating. Never projected.
+ */
+export type PlayerRatingHistoryPoint = {
+  seasonYear: number;
+  age: number | null;
+  overall: number;
+  /** The live rating today, not a season-end snapshot. */
+  current: boolean;
+};
+
+export function toPlayerRatingHistory(
+  history: PlayerHistory | undefined,
+  current: { seasonYear: number; age: number; overall: number },
+): PlayerRatingHistoryPoint[] {
+  const points: PlayerRatingHistoryPoint[] = [...(history?.seasons ?? [])]
+    .sort((a, b) => a.seasonYear - b.seasonYear)
+    .map((season) => ({
+      seasonYear: season.seasonYear,
+      age: season.age,
+      overall: season.overall,
+      current: false,
+    }));
+  points.push({ ...current, current: true });
+  return points;
 }
 
 export function toPlayerContractProfileView(
@@ -894,18 +1044,17 @@ export function toPlayerProfileView(
   const gameLog = toPlayerGameLogView(state, playerId);
   const teamStints = derivePlayerTeamStints(state, playerId);
   const careerHighs = deriveCareerHighs(state, playerId);
-  const careerTotals = toPlayerCareerTotals(
-    history,
-    seasonStats.combined,
-    state.competition.season.year,
-  );
+  const seasonLines = toPlayerSeasonStatsViews(state, playerId, history, {
+    age: detail.age,
+    overall: detail.overall,
+  });
+  const career = toPlayerCareerStatsView(seasonLines);
+  const bestSeasons = deriveBestSeasons(seasonLines);
   const currentPartial = {
     seasonYear: state.competition.season.year,
     overall: detail.overall,
     attributes: detail.attributes as PlayerAttributes,
-    combined: seasonStats.combined,
   };
-  const bestSeasons = deriveBestSeasons(history, currentPartial);
   const recentForm = toPlayerRecentFormView(
     state,
     playerId,
@@ -928,22 +1077,16 @@ export function toPlayerProfileView(
     (a, b) => a.seasonYear - b.seasonYear,
   );
 
-  const trendMetrics = [
-    "ppg",
-    "rpg",
-    "apg",
-    "mpg",
-    "fgPct",
-    "threePct",
-    "ftPct",
-    "ovr",
-  ] as const;
   const trendSeries: Record<string, TrendPoint[]> = {};
-  for (const metric of trendMetrics) {
-    trendSeries[metric] = toPlayerTrendSeries(history, metric, currentPartial);
+  for (const metric of STAT_TREND_METRICS) {
+    trendSeries[metric] = toPlayerStatTrendSeries(seasonLines, metric);
   }
-  for (const key of attributeKeys) {
-    trendSeries[key] = toPlayerTrendSeries(history, key, currentPartial);
+  for (const metric of ["ovr", ...attributeKeys]) {
+    trendSeries[metric] = toPlayerRatingTrendSeries(
+      history,
+      metric,
+      currentPartial,
+    );
   }
 
   const worldPlayer = state.world.players[playerId];
@@ -992,8 +1135,28 @@ export function toPlayerProfileView(
     teamStints,
     careerHighs,
     bestSeasons,
-    careerTotals,
-    careerAverages: averagesFromLine(careerTotals),
+    stats: {
+      currentSeasonId: String(state.competition.season.id),
+      seasons: seasonLines,
+      career,
+      currentSeasonGames: toPlayerGameSeries(
+        state,
+        playerId,
+        state.competition.season.id,
+      ),
+    },
+    development: {
+      ratingHistory: toPlayerRatingHistory(history, {
+        seasonYear: state.competition.season.year,
+        age: detail.age,
+        overall: detail.overall,
+      }),
+      trackingStartedSeasonYear: history?.trackingStartedSeasonYear ?? null,
+    },
+    seasonLines,
+    career,
+    careerTotals: career.combined,
+    careerAverages: averagesFromLine(career.combined),
     contractProfile,
     trackingStartedSeasonYear: history?.trackingStartedSeasonYear ?? null,
     currentSeasonYear: state.competition.season.year,

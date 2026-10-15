@@ -66,6 +66,8 @@ export function validateCompletedGameBoxScore(
         defensiveRebounds: row.defensiveRebounds,
         rebounds: row.rebounds,
         assists: row.assists,
+        steals: row.steals,
+        blocks: row.blocks,
         turnovers: row.turnovers,
         fouls: row.fouls,
       }),

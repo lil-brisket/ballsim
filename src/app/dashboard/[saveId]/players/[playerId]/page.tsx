@@ -1,5 +1,9 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import {
+  ARCHETYPE_LABELS,
+  type PlayerArchetype,
+} from "@/domain/entities/player-archetype";
 import { executeTradeAction } from "@/application/actions";
 import { loadOwnerPlayerView } from "@/application/game-service";
 import { ConfirmDialog } from "@/components/owner/ConfirmDialog";
@@ -11,14 +15,16 @@ import { PlayerCareer } from "@/components/player-profile/PlayerCareer";
 import { PlayerContract } from "@/components/player-profile/PlayerContract";
 import { PlayerGameLog } from "@/components/player-profile/PlayerGameLog";
 import { PlayerOverview } from "@/components/player-profile/PlayerOverview";
-import { PlayerProfileHeader } from "@/components/player-profile/PlayerProfileHeader";
+import { PlayerAttributeTrends } from "@/components/player-profile/PlayerAttributeTrends";
 import {
-  isPlayerProfileTab,
   PlayerProfileNav,
+  resolvePlayerProfileTab,
   type PlayerProfileTab,
 } from "@/components/player-profile/PlayerProfileNav";
-import { PlayerStats } from "@/components/player-profile/PlayerStats";
-import { PlayerTrends } from "@/components/player-profile/PlayerTrends";
+import { PlayerProfileSummary } from "@/components/player-profile/PlayerProfileSummary";
+import { DevelopmentTab } from "@/components/basketball/player-card/DevelopmentTab";
+import { StatisticsTab } from "@/components/basketball/player-card/StatisticsTab";
+import { PlayerProfileHero } from "@/components/basketball/PlayerProfileHero";
 import { DevelopmentLeaguePlayerActions } from "@/components/player-profile/DevelopmentLeaguePlayerActions";
 
 type PlayerPageProps = {
@@ -41,8 +47,9 @@ export default async function PlayerDetailPage({
   const returnPath = `/dashboard/${saveId}/players/${playerId}`;
   const canTrade = player.onControlledRoster && dashboard.tradesOpen;
 
-  const activeTab: PlayerProfileTab =
-    tabParam && isPlayerProfileTab(tabParam) ? tabParam : "overview";
+  const activeTab: PlayerProfileTab = resolvePlayerProfileTab(tabParam);
+  const archetypeLabel =
+    ARCHETYPE_LABELS[player.archetype as PlayerArchetype] ?? player.archetype;
 
   const tradeActions = canTrade ? (
     <Section title="Actions">
@@ -83,7 +90,24 @@ export default async function PlayerDetailPage({
       {error ? <ErrorState message={error} /> : null}
 
       <div className="space-y-4">
-        <PlayerProfileHeader player={player} />
+        <PlayerProfileHero
+          playerId={player.playerId}
+          portrait={player.portrait}
+          firstName={player.firstName}
+          lastName={player.lastName}
+          position={player.position}
+          age={player.age}
+          overall={player.overall}
+          potential={player.potentialOverall}
+          archetypeLabel={archetypeLabel}
+          heightInches={player.heightInches}
+          weightPounds={player.weightPounds}
+          teamName={player.teamName}
+          teamAbbreviation={player.teamAbbreviation}
+          branding={player.teamBranding}
+          availabilityStatus={player.injuryKind}
+        />
+        <PlayerProfileSummary player={player} />
         <PlayerProfileNav
           saveId={saveId}
           playerId={playerId}
@@ -108,8 +132,26 @@ export default async function PlayerDetailPage({
         {activeTab === "attributes" ? (
           <PlayerAttributesPanel player={player} />
         ) : null}
-        {activeTab === "stats" ? <PlayerStats player={player} /> : null}
-        {activeTab === "trends" ? <PlayerTrends player={player} /> : null}
+        {activeTab === "stats" ? (
+          <StatisticsTab
+            saveId={saveId}
+            playerId={playerId}
+            stats={player.stats}
+          />
+        ) : null}
+        {activeTab === "development" ? (
+          <>
+            <DevelopmentTab
+              identity={{
+                overall: player.overall,
+                potential: player.potentialOverall,
+                age: player.age,
+              }}
+              development={player.development}
+            />
+            <PlayerAttributeTrends player={player} />
+          </>
+        ) : null}
         {activeTab === "gamelog" ? (
           <PlayerGameLog player={player} saveId={saveId} />
         ) : null}

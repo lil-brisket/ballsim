@@ -5,8 +5,10 @@ import type {
   TeamDrawerView,
   StaffDrawerView,
 } from "@/state/entity-drawer-selectors";
+import type { PlayerGameSeriesPoint } from "@/state/player-profile-selectors";
 import {
   loadPlayerDrawerView,
+  loadPlayerGameSeries,
   loadTeamDrawerView,
   loadStaffDrawerView,
   upsertCustomContentPackage,
@@ -30,6 +32,15 @@ export async function fetchPlayerDrawerViewAction(
   playerId: string,
 ): Promise<PlayerDrawerView | null> {
   return loadPlayerDrawerView(saveId, playerId);
+}
+
+/** Client-callable game-by-game series for a non-current season (no redirect). */
+export async function fetchPlayerGameSeriesAction(
+  saveId: string,
+  playerId: string,
+  seasonId: string,
+): Promise<PlayerGameSeriesPoint[] | null> {
+  return loadPlayerGameSeries(saveId, playerId, seasonId);
 }
 
 /** Client-callable team drawer fetch (no redirect). */

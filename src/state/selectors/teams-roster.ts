@@ -92,6 +92,7 @@ export type PlayerDetailView = {
   potentialOverall: number;
   teamId: string | null;
   teamName: string | null;
+  teamAbbreviation: string | null;
   teamBranding: TeamBrandingView | null;
   onControlledRoster: boolean;
   injuryKind: string;
@@ -366,6 +367,7 @@ function playerEntityToDetail(
     potentialOverall: player.potential.overall,
     teamId: player.teamId,
     teamName: team ? `${team.city} ${team.name}` : null,
+    teamAbbreviation: team?.abbreviation ?? null,
     teamBranding: toBrandingView(team?.branding),
     onControlledRoster,
     injuryKind: player.availability,

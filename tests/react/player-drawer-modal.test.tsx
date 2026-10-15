@@ -1,3 +1,4 @@
+import { createEmptyPlayerStatLine } from "@/domain/player-stat-aggregation";
 import { describe, expect, it, vi, beforeEach, afterEach } from "vitest";
 import {
   fireEvent,
@@ -37,6 +38,7 @@ function playerView(
   overrides: Partial<PlayerDrawerView> = {},
 ): PlayerDrawerView {
   return {
+    saveId: "save_test",
     playerId: "player_1",
     portrait: null,
     identity: {
@@ -60,7 +62,33 @@ function playerView(
     availability: { status: "available" },
     ratings: { attributes: { ...BASE_ATTRIBUTES } },
     contract: null,
-    performance: { games: 10, ppg: 18.2, rpg: 4.1, apg: 6.5 },
+    performance: {
+      games: 10,
+      mpg: 31.4,
+      ppg: 18.2,
+      rpg: 4.1,
+      apg: 6.5,
+      spg: 1.3,
+      bpg: 0.4,
+    },
+    stats: {
+      currentSeasonId: "season_2026",
+      seasons: [],
+      career: {
+        regular: createEmptyPlayerStatLine(),
+        playoffs: createEmptyPlayerStatLine(),
+        development: createEmptyPlayerStatLine(),
+        combined: createEmptyPlayerStatLine(),
+        extendedColumnsComplete: true,
+      },
+      currentSeasonGames: [],
+    },
+    development: {
+      ratingHistory: [
+        { seasonYear: 2026, age: 24, overall: 78, current: true },
+      ],
+      trackingStartedSeasonYear: null,
+    },
     navigation: {
       playerHref: "/dashboard/save_test/players/player_1",
       teamHref: "/dashboard/save_test/team",
@@ -112,7 +140,7 @@ describe("PlayerDrawer modal", () => {
     expect(screen.getByText("AR")).toBeTruthy();
     expect(screen.queryByText("Availability")).toBeNull();
 
-    expect(screen.getByText("Ratings")).toBeTruthy();
+    expect(screen.getByRole("tab", { name: "Overview" })).toBeTruthy();
     expect(screen.getByText("Season averages")).toBeTruthy();
     expect(screen.getByText("18.2")).toBeTruthy();
 
@@ -227,7 +255,15 @@ describe("PlayerDrawer modal", () => {
 
   it("shows season averages with em dashes when games are zero", () => {
     const view = playerView({
-      performance: { games: 0, ppg: null, rpg: null, apg: null },
+      performance: {
+        games: 0,
+        mpg: null,
+        ppg: null,
+        rpg: null,
+        apg: null,
+        spg: null,
+        bpg: null,
+      },
     });
     const { unmount } = render(
       <PlayerDrawer open status="ready" view={view} onOpenChange={vi.fn()} />,
@@ -281,6 +317,7 @@ describe("PlayerDrawer modal", () => {
         onOpenChange={vi.fn()}
       />,
     );
+    fireEvent.click(screen.getByRole("tab", { name: "Attributes" }));
     const list = screen.getByRole("list", { name: "Category ratings" });
     expect(within(list).getAllByRole("button")).toHaveLength(7);
 
@@ -328,7 +365,15 @@ describe("PlayerDrawer modal", () => {
         abbreviation: "MTF",
         branding: null,
       },
-      performance: { games: 4, ppg: 11.1, rpg: 8.4, apg: 1.2 },
+      performance: {
+        games: 4,
+        mpg: 22.0,
+        ppg: 11.1,
+        rpg: 8.4,
+        apg: 1.2,
+        spg: 0.5,
+        bpg: 0.8,
+      },
       ratings: {
         attributes: {
           ...BASE_ATTRIBUTES,
@@ -370,6 +415,7 @@ describe("PlayerDrawer modal", () => {
     expect(screen.queryByText("Alex Rivera")).toBeNull();
     expect(screen.getByText("Metro Foxes")).toBeTruthy();
     expect(screen.getByText("11.1")).toBeTruthy();
+    fireEvent.click(screen.getByRole("tab", { name: "Attributes" }));
     expect(screen.getByText("Rebounding breakdown")).toBeTruthy();
     if (body instanceof HTMLElement) {
       expect(body.scrollTop).toBe(0);

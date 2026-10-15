@@ -1,3 +1,5 @@
+import { AttributeRadar } from "@/components/basketball/player-card/AttributeRadar";
+import { PlayerRatingGrid } from "@/components/basketball/PlayerRatingGrid";
 import { Section } from "@/components/owner/Section";
 import { AttributeBar } from "@/components/player-profile/AttributeBar";
 import type { PlayerAttributes } from "@/domain/entities/player";
@@ -29,8 +31,21 @@ export function PlayerAttributesPanel(props: { player: PlayerProfileView }) {
 
   return (
     <div className="space-y-6">
+      <AttributeRadar
+        attributes={player.attributes as PlayerAttributes}
+        size="md"
+      />
+      <Section title="Ratings" density="compact">
+        <PlayerRatingGrid
+          key={player.playerId}
+          attributes={player.attributes as PlayerAttributes}
+        />
+      </Section>
+      <p className="font-mono text-[0.65rem] uppercase tracking-[0.18em] text-amber-400">
+        Attribute detail and development
+      </p>
       {RATING_CATEGORIES.map((category) => (
-        <Section key={category.key} title={category.label}>
+        <Section key={category.key} title={category.label} density="compact">
           <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
             {category.attributes.map((key) => {
               const value = player.attributes[key];

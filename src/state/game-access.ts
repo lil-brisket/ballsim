@@ -42,6 +42,41 @@ export function getPlayerGames(state: GameState, playerId: PlayerId): Game[] {
   );
 }
 
+/**
+ * Finalized games (archived + current + DL, deduped by gameId) where the
+ * player has a row. Uses the archive index so cost scales with the player's
+ * own games, not the whole archive.
+ */
+export function getPlayerFinalGames(
+  state: GameState,
+  playerId: PlayerId,
+): Game[] {
+  const index = state.business.gameArchiveIndex;
+  if (!index) {
+    return getPlayerGames(state, playerId).filter(
+      (game) => game.status === "final",
+    );
+  }
+  const byId = new Map<string, Game>();
+  for (const gameId of index.byPlayerId[playerId] ?? []) {
+    const archived = state.business.gameArchive[gameId];
+    if (archived && archived.status === "final") {
+      byId.set(gameId, archived);
+    }
+  }
+  const current = {
+    ...state.competition.games,
+    ...(state.competition.developmentLeague?.games ?? {}),
+  };
+  for (const game of Object.values(current)) {
+    if (byId.has(game.id) || game.status !== "final") continue;
+    if (game.playerStats.some((row) => row.playerId === playerId)) {
+      byId.set(game.id, game);
+    }
+  }
+  return [...byId.values()];
+}
+
 /** Finalized games for a player in a specific season. */
 export function getPlayerSeasonGames(
   state: GameState,

@@ -14,6 +14,15 @@ import { STAFF_ROLE_DISPLAY } from "@/domain/entities/staff-roles";
 import type { StaffRole } from "@/domain/entities/staff";
 import { asStaffId, type PlayerId, type TeamId } from "@/domain/ids";
 import { calculatePlayerOverall } from "@/domain/player-overall-rating";
+import { createEmptyPlayerStatLine } from "@/domain/player-stat-aggregation";
+import {
+  toPlayerCareerStatsView,
+  toPlayerGameSeries,
+  toPlayerRatingHistory,
+  toPlayerSeasonStatsViews,
+  type PlayerDevelopmentBundle,
+  type PlayerStatsBundle,
+} from "@/state/player-profile-selectors";
 import type { GameState } from "@/state/game-state";
 import { getActiveOwnerTeamId, isOwnedFranchise } from "@/state/owner-context";
 import { resolveTeamHref } from "@/state/resolve-team-href";
@@ -35,6 +44,8 @@ import {
 } from "@/systems/staff-ratings";
 
 export type PlayerDrawerView = {
+  /** Lets the card fetch other seasons' game series on demand. */
+  saveId: string;
   playerId: string;
   /** Persisted portrait (world.playerPortraits); null → initials fallback. */
   portrait: PlayerPortraitAssignment | null;
@@ -69,12 +80,18 @@ export type PlayerDrawerView = {
     yearsRemaining: number;
     status: string;
   } | null;
+  /** Current-season top-league averages (regular + playoffs). */
   performance: {
     games: number;
+    mpg: number | null;
     ppg: number | null;
     rpg: number | null;
     apg: number | null;
+    spg: number | null;
+    bpg: number | null;
   };
+  stats: PlayerStatsBundle;
+  development: PlayerDevelopmentBundle;
   navigation: {
     playerHref: string;
     teamHref: string | null;
@@ -159,19 +176,17 @@ export function toPlayerDrawerView(
   const year = state.competition.season.year;
   const overall = calculatePlayerOverall(player.position, player.attributes);
 
-  let games = 0;
-  let points = 0;
-  let rebounds = 0;
-  let assists = 0;
-  for (const game of Object.values(state.competition.games)) {
-    if (game.status !== "final") continue;
-    const row = game.playerStats.find((s) => s.playerId === playerId);
-    if (!row) continue;
-    games += 1;
-    points += row.points;
-    rebounds += row.rebounds;
-    assists += row.assists;
-  }
+  const season = state.competition.season;
+  const history = state.business.playerHistory[playerId];
+  const seasons = toPlayerSeasonStatsViews(state, playerId, history, {
+    age: player.age,
+    overall,
+  });
+  const currentLine =
+    seasons.find((entry) => entry.current)?.combined ??
+    createEmptyPlayerStatLine();
+  const games = currentLine.games;
+  const perGame = (total: number) => (games > 0 ? round1(total / games) : null);
 
   let contract: PlayerDrawerView["contract"] = null;
   if (onControlledRoster && player.contractId) {
@@ -190,6 +205,7 @@ export function toPlayerDrawerView(
     : null;
 
   return {
+    saveId,
     playerId: String(playerId),
     portrait: selectPlayerPortrait(state, playerId),
     identity: {
@@ -219,9 +235,26 @@ export function toPlayerDrawerView(
     contract,
     performance: {
       games,
-      ppg: games > 0 ? round1(points / games) : null,
-      rpg: games > 0 ? round1(rebounds / games) : null,
-      apg: games > 0 ? round1(assists / games) : null,
+      mpg: perGame(currentLine.minutes),
+      ppg: perGame(currentLine.points),
+      rpg: perGame(currentLine.rebounds),
+      apg: perGame(currentLine.assists),
+      spg: perGame(currentLine.steals),
+      bpg: perGame(currentLine.blocks),
+    },
+    stats: {
+      currentSeasonId: String(season.id),
+      seasons,
+      career: toPlayerCareerStatsView(seasons),
+      currentSeasonGames: toPlayerGameSeries(state, playerId, season.id),
+    },
+    development: {
+      ratingHistory: toPlayerRatingHistory(history, {
+        seasonYear: season.year,
+        age: player.age,
+        overall,
+      }),
+      trackingStartedSeasonYear: history?.trackingStartedSeasonYear ?? null,
     },
     navigation: {
       playerHref: `/dashboard/${saveId}/players/${playerId}`,

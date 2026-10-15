@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { DataTable } from "@/components/owner/DataTable";
+import { CardTable } from "@/components/player-profile/CardTable";
 import { EmptyState } from "@/components/owner/EmptyState";
 import { Section } from "@/components/owner/Section";
 import { TeamLogoMark } from "@/components/team/logos/TeamLogoMark";
@@ -125,7 +125,7 @@ export function PlayerCareer(props: {
             {player.bestSeasons.map((best) => (
               <div
                 key={best.kind}
-                className="rounded-xl border border-zinc-800 bg-zinc-900/60 px-4 py-3"
+                className="rounded-lg border border-surface-line border-b-team-ink bg-surface-deep/80 px-4 py-3"
               >
                 <p className="text-xs text-zinc-500">{best.label}</p>
                 <p className="mt-1 text-lg text-zinc-100">{best.valueLabel}</p>
@@ -140,7 +140,7 @@ export function PlayerCareer(props: {
         {player.careerHighs.length === 0 ? (
           <EmptyState message="No career highs yet." />
         ) : (
-          <DataTable headers={["Stat", "Value", "Context", "Game"]}>
+          <CardTable headers={["Stat", "Value", "Context", "Game"]}>
             {player.careerHighs.map((high) => (
               <tr key={high.stat} className="border-t border-zinc-800">
                 <td className="px-3 py-2 text-zinc-100">
@@ -182,7 +182,7 @@ export function PlayerCareer(props: {
                 </td>
               </tr>
             ))}
-          </DataTable>
+          </CardTable>
         )}
       </Section>
 

@@ -23,7 +23,7 @@ import {
   toGameBoxScoreView,
 } from "@/state/selectors";
 import { type TradeFinderCandidate, findTrades } from "@/systems/trades";
-import { asPlayerId, asTeamId } from "@/domain/ids";
+import { asPlayerId, asSeasonId, asTeamId } from "@/domain/ids";
 import {
   toStaffView,
   toFacilitiesView,
@@ -47,7 +47,9 @@ import {
   toRosterPageView,
 } from "@/state/roster-page-selectors";
 import {
+  type PlayerGameSeriesPoint,
   type PlayerProfileView,
+  toPlayerGameSeries,
   toPlayerProfileView,
 } from "@/state/player-profile-selectors";
 import {
@@ -242,6 +244,24 @@ export async function loadPlayerDrawerView(
     return null;
   }
   return toPlayerDrawerView(loaded.state, asPlayerId(playerId), saveId);
+}
+
+/** Game-by-game series for one season; the drawer loads the current season eagerly. */
+export async function loadPlayerGameSeries(
+  saveId: string,
+  playerId: string,
+  seasonId: string,
+  store?: SaveGameStore,
+): Promise<PlayerGameSeriesPoint[] | null> {
+  const loaded = await getStore(store).load(saveId);
+  if (!loaded || !loaded.state.world.players[playerId]) {
+    return null;
+  }
+  return toPlayerGameSeries(
+    loaded.state,
+    asPlayerId(playerId),
+    asSeasonId(seasonId),
+  );
 }
 
 /** Quick-view drawer payload for any league team. */

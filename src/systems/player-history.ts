@@ -1,12 +1,13 @@
 import {
   createEmptyPlayerHistory,
-  createEmptyPlayerSeasonStatLine,
-  addPlayerSeasonStatLines,
   type PlayerHistory,
   type PlayerSeasonRecord,
-  type PlayerSeasonStatLine,
 } from "@/domain/entities/player-history";
-import type { Game, GamePlayerStats } from "@/domain/entities/game";
+import type { Game } from "@/domain/entities/game";
+import {
+  aggregatePlayerGames,
+  toPlayerSeasonStatLine,
+} from "@/domain/player-stat-aggregation";
 import {
   getContractSalaryForYear,
   isContractActive,
@@ -88,62 +89,17 @@ export function compactGameForArchive(game: Game): Game {
   };
 }
 
-function accumulateStatLine(
-  line: PlayerSeasonStatLine,
-  row: GamePlayerStats,
-): PlayerSeasonStatLine {
-  return {
-    games: line.games + 1,
-    minutes: line.minutes + row.minutes,
-    points: line.points + row.points,
-    rebounds: line.rebounds + row.rebounds,
-    assists: line.assists + row.assists,
-    steals: line.steals + row.steals,
-    blocks: line.blocks + row.blocks,
-    turnovers: line.turnovers + row.turnovers,
-    fgMade: line.fgMade + row.fieldGoalsMade,
-    fgAttempted: line.fgAttempted + row.fieldGoalsAttempted,
-    threeMade: line.threeMade + row.threePointersMade,
-    threeAttempted: line.threeAttempted + row.threePointersAttempted,
-    ftMade: line.ftMade + row.freeThrowsMade,
-    ftAttempted: line.ftAttempted + row.freeThrowsAttempted,
-  };
-}
-
+/** Season-end lines in the persisted shape; classification lives in player-stat-aggregation. */
 function aggregatePlayerSeasonLines(
   games: Game[],
   playerId: PlayerId,
-): {
-  regular: PlayerSeasonStatLine;
-  playoffs: PlayerSeasonStatLine;
-  development: PlayerSeasonStatLine;
-  combined: PlayerSeasonStatLine;
-} {
-  let regular = createEmptyPlayerSeasonStatLine();
-  let playoffs = createEmptyPlayerSeasonStatLine();
-  let development = createEmptyPlayerSeasonStatLine();
-
-  for (const game of games) {
-    const row = game.playerStats.find((stat) => stat.playerId === playerId);
-    if (!row) {
-      continue;
-    }
-    if (game.competitionType === "playoffs") {
-      playoffs = accumulateStatLine(playoffs, row);
-    } else if (game.competitionType === "development_league") {
-      development = accumulateStatLine(development, row);
-    } else if (game.competitionType === "preseason") {
-      continue;
-    } else {
-      regular = accumulateStatLine(regular, row);
-    }
-  }
-
+): PlayerSeasonRecord["competition"] {
+  const buckets = aggregatePlayerGames(games, playerId);
   return {
-    regular,
-    playoffs,
-    development,
-    combined: addPlayerSeasonStatLines(regular, playoffs),
+    regular: toPlayerSeasonStatLine(buckets.regular),
+    playoffs: toPlayerSeasonStatLine(buckets.playoffs),
+    development: toPlayerSeasonStatLine(buckets.development),
+    combined: toPlayerSeasonStatLine(buckets.combined),
   };
 }
 

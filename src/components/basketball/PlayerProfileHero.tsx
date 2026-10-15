@@ -48,10 +48,62 @@ export function PlayerProfileHero(props: {
   teamAbbreviation: string | null;
   branding: TeamBrandingView | null;
   availabilityStatus: string;
+  /** "compact" is a single identity row for tabs that scroll long content. */
+  variant?: "full" | "compact";
 }) {
   const teamLabel = props.teamName ?? "Free agent";
   const tier = ratingTier(props.overall);
   const watermark = props.teamAbbreviation ?? "FA";
+
+  if (props.variant === "compact") {
+    return (
+      <TeamThemeScope branding={props.branding}>
+        <div
+          data-tier={tier.id}
+          data-hero-variant="compact"
+          className="flex items-center gap-3 overflow-hidden rounded-xl border border-team-ink/50 px-3 py-2"
+          style={{
+            background:
+              "linear-gradient(135deg, var(--team-primary) 0%, rgb(var(--team-primary-rgb) / 0.55) 55%, var(--surface-deep) 100%)",
+          }}
+        >
+          <span className="inline-flex shrink-0 overflow-hidden rounded-lg">
+            <PlayerPortrait
+              playerId={props.playerId}
+              firstName={props.firstName}
+              lastName={props.lastName}
+              portrait={props.portrait}
+              size="md"
+              className="border-0"
+            />
+          </span>
+          <div className="min-w-0 flex-1">
+            <p className="font-display truncate text-xl font-extrabold uppercase leading-tight tracking-wide text-white sm:text-2xl">
+              {props.firstName} {props.lastName}
+            </p>
+            <div className="mt-1 flex flex-wrap items-center gap-1.5">
+              <Chip accent>{props.position}</Chip>
+              <Chip>{props.teamAbbreviation ?? "FA"}</Chip>
+              <Chip>Age {props.age}</Chip>
+              {props.archetypeLabel ? (
+                <Chip>{props.archetypeLabel}</Chip>
+              ) : null}
+            </div>
+          </div>
+          <div className="flex shrink-0 flex-col items-end gap-1">
+            <span className="rounded border border-tier bg-surface-deep px-2 py-0.5 font-mono text-xs font-bold text-tier">
+              OVR {props.overall}
+            </span>
+            {props.potential != null ? (
+              <span className="rounded-full border border-tier px-2 py-px font-mono text-[0.65rem] font-semibold uppercase tracking-[0.12em] text-tier">
+                POT {props.potential}
+              </span>
+            ) : null}
+          </div>
+        </div>
+      </TeamThemeScope>
+    );
+  }
 
   return (
     <TeamThemeScope branding={props.branding}>

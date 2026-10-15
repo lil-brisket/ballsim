@@ -1,14 +1,18 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useRef } from "react";
-import { PlayerRatingGrid } from "@/components/basketball/PlayerRatingGrid";
+import { useEffect, useId, useRef, useState } from "react";
 import { PlayerProfileHero } from "@/components/basketball/PlayerProfileHero";
-import { MoneyDisplay } from "@/components/owner/MoneyDisplay";
+import { AttributesTab } from "@/components/basketball/player-card/AttributesTab";
+import { DevelopmentTab } from "@/components/basketball/player-card/DevelopmentTab";
+import { OverviewTab } from "@/components/basketball/player-card/OverviewTab";
+import {
+  PlayerCardTabList,
+  PlayerCardTabPanel,
+  type PlayerCardTabId,
+} from "@/components/basketball/player-card/PlayerCardTabs";
+import { StatisticsTab } from "@/components/basketball/player-card/StatisticsTab";
 import { Drawer } from "@/components/ui/Drawer";
-import { Section } from "@/components/ui/Section";
-import { StatusBadge } from "@/components/ui/StatusBadge";
-import { ScoreNumeral } from "@/components/ui/ScoreNumeral";
 import { cn, focusRingClass, touchTargetClass } from "@/components/ui/styles";
 import type { PlayerDrawerView } from "@/state/entity-drawer-selectors";
 
@@ -34,10 +38,60 @@ function DrawerSkeleton() {
   );
 }
 
-function StatTile(props: { label: string; value: React.ReactNode }) {
+function PlayerCardBody(props: {
+  view: PlayerDrawerView;
+  onTabChange: () => void;
+}) {
+  const [tab, setTab] = useState<PlayerCardTabId>("overview");
+  const baseId = useId();
+  const { view } = props;
+
+  function changeTab(next: PlayerCardTabId) {
+    if (next === tab) return;
+    setTab(next);
+    props.onTabChange();
+  }
+
   return (
-    <div className="min-w-0 rounded-lg border border-surface-line border-b-team-ink bg-surface-deep/80 px-3 py-3">
-      <ScoreNumeral value={props.value} label={props.label} labelBelow />
+    <div>
+      <div className="sticky top-0 z-10 -mx-4 -mt-4 bg-zinc-900 px-4 pt-2 border-b border-zinc-800">
+        <PlayerCardTabList baseId={baseId} active={tab} onChange={changeTab} />
+      </div>
+      <PlayerCardTabPanel baseId={baseId} tab={tab}>
+        <PlayerProfileHero
+          variant={tab === "overview" ? "full" : "compact"}
+          playerId={view.playerId}
+          portrait={view.portrait}
+          firstName={view.identity.firstName}
+          lastName={view.identity.lastName}
+          position={view.identity.position}
+          age={view.identity.age}
+          overall={view.identity.overall}
+          potential={view.identity.potential}
+          archetypeLabel={view.identity.archetypeLabel}
+          heightInches={view.identity.heightInches}
+          weightPounds={view.identity.weightPounds}
+          teamName={view.team.teamName}
+          teamAbbreviation={view.team.abbreviation}
+          branding={view.team.branding}
+          availabilityStatus={view.availability.status}
+        />
+        {tab === "overview" ? <OverviewTab view={view} /> : null}
+        {tab === "attributes" ? <AttributesTab view={view} /> : null}
+        {tab === "statistics" ? (
+          <StatisticsTab
+            saveId={view.saveId}
+            playerId={view.playerId}
+            stats={view.stats}
+          />
+        ) : null}
+        {tab === "development" ? (
+          <DevelopmentTab
+            identity={view.identity}
+            development={view.development}
+          />
+        ) : null}
+      </PlayerCardTabPanel>
     </div>
   );
 }
@@ -144,84 +198,13 @@ export function PlayerDrawer(props: {
       ) : null}
 
       {props.status === "ready" && props.view ? (
-        <div className="space-y-6">
-          <PlayerProfileHero
-            playerId={props.view.playerId}
-            portrait={props.view.portrait}
-            firstName={props.view.identity.firstName}
-            lastName={props.view.identity.lastName}
-            position={props.view.identity.position}
-            age={props.view.identity.age}
-            overall={props.view.identity.overall}
-            potential={props.view.identity.potential}
-            archetypeLabel={props.view.identity.archetypeLabel}
-            heightInches={props.view.identity.heightInches}
-            weightPounds={props.view.identity.weightPounds}
-            teamName={props.view.team.teamName}
-            teamAbbreviation={props.view.team.abbreviation}
-            branding={props.view.team.branding}
-            availabilityStatus={props.view.availability.status}
-          />
-
-          <Section title="Ratings" density="compact">
-            <PlayerRatingGrid
-              key={props.view.playerId}
-              attributes={props.view.ratings.attributes}
-            />
-          </Section>
-
-          <Section title="Season averages" density="compact">
-            <div
-              role="group"
-              aria-label="Season averages"
-              className="grid grid-cols-2 gap-2 sm:grid-cols-4"
-            >
-              <StatTile label="GP" value={props.view.performance.games} />
-              <StatTile label="PPG" value={props.view.performance.ppg ?? "—"} />
-              <StatTile label="RPG" value={props.view.performance.rpg ?? "—"} />
-              <StatTile label="APG" value={props.view.performance.apg ?? "—"} />
-            </div>
-          </Section>
-
-          {props.view.contract ? (
-            <Section title="Contract" density="compact">
-              <div
-                role="group"
-                aria-label="Contract"
-                className="grid grid-cols-3 gap-2"
-              >
-                <StatTile
-                  label="Salary"
-                  value={
-                    props.view.contract.salary != null ? (
-                      <span className="text-2xl sm:text-3xl">
-                        <MoneyDisplay amount={props.view.contract.salary} />
-                      </span>
-                    ) : (
-                      "—"
-                    )
-                  }
-                />
-                <StatTile
-                  label="Years"
-                  value={props.view.contract.yearsRemaining}
-                />
-                <div className="flex min-w-0 flex-col items-start justify-center gap-1 rounded-lg border border-surface-line border-b-team-ink bg-surface-deep/80 px-3 py-3">
-                  <StatusBadge label={props.view.contract.status} />
-                  <span className="font-mono text-[0.65rem] uppercase tracking-[0.18em] text-zinc-400">
-                    Status
-                  </span>
-                </div>
-              </div>
-            </Section>
-          ) : props.view.navigation.contractHref ? (
-            <Section title="Contract" density="compact">
-              <p className="text-sm text-zinc-400">
-                Contract details unavailable
-              </p>
-            </Section>
-          ) : null}
-        </div>
+        <PlayerCardBody
+          key={props.view.playerId}
+          view={props.view}
+          onTabChange={() => {
+            if (bodyRef.current) bodyRef.current.scrollTop = 0;
+          }}
+        />
       ) : null}
     </Drawer>
   );

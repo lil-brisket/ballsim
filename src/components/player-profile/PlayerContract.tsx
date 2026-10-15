@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { DataTable } from "@/components/owner/DataTable";
+import { CardTable } from "@/components/player-profile/CardTable";
 import { EmptyState } from "@/components/owner/EmptyState";
 import { MoneyDisplay } from "@/components/owner/MoneyDisplay";
 import { Section } from "@/components/owner/Section";
@@ -86,7 +86,7 @@ export function PlayerContract(props: {
         {profile.salaryByYear.length === 0 ? (
           <EmptyState message="No salary-by-year entries." />
         ) : (
-          <DataTable headers={["Year", "Salary"]}>
+          <CardTable headers={["Year", "Salary"]}>
             {profile.salaryByYear.map((entry) => (
               <tr key={entry.year} className="border-t border-zinc-800">
                 <td className="px-3 py-2 text-zinc-100">{entry.year}</td>
@@ -95,7 +95,7 @@ export function PlayerContract(props: {
                 </td>
               </tr>
             ))}
-          </DataTable>
+          </CardTable>
         )}
       </Section>
     </div>
@@ -104,8 +104,10 @@ export function PlayerContract(props: {
 
 function Info(props: { label: string; value: React.ReactNode }) {
   return (
-    <div className="rounded-xl border border-zinc-800 bg-zinc-900/60 p-4">
-      <p className="text-xs text-zinc-500">{props.label}</p>
+    <div className="rounded-lg border border-surface-line border-b-team-ink bg-surface-deep/80 p-3">
+      <p className="font-mono text-[0.65rem] uppercase tracking-[0.14em] text-zinc-400">
+        {props.label}
+      </p>
       <div className="mt-1 text-sm text-zinc-100">{props.value}</div>
     </div>
   );

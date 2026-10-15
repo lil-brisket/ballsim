@@ -1,0 +1,123 @@
+"use client";
+
+import type { PlayerSeasonStatsView } from "@/state/player-profile-selectors";
+import { cn, focusRingClass } from "@/components/ui/styles";
+import {
+  SPLIT_LABELS,
+  seasonOptionLabel,
+  type StatMode,
+  type StatScope,
+  type StatSplit,
+} from "./stat-view";
+
+export const selectClass = cn(
+  "min-h-11 rounded-md border border-zinc-700 bg-zinc-950 px-2 text-sm text-zinc-100",
+  focusRingClass,
+);
+
+function Segmented<T extends string>(props: {
+  label: string;
+  value: T;
+  options: { value: T; label: string }[];
+  onChange: (value: T) => void;
+}) {
+  return (
+    <div role="group" aria-label={props.label} className="flex flex-col gap-1">
+      <span className="font-mono text-[0.65rem] uppercase tracking-[0.14em] text-zinc-400">
+        {props.label}
+      </span>
+      <div className="flex overflow-hidden rounded-md border border-zinc-700">
+        {props.options.map((option) => {
+          const pressed = option.value === props.value;
+          return (
+            <button
+              key={option.value}
+              type="button"
+              aria-pressed={pressed}
+              onClick={() => props.onChange(option.value)}
+              className={cn(
+                "min-h-11 px-3 text-sm",
+                pressed
+                  ? "bg-amber-600 font-medium text-zinc-950"
+                  : "text-zinc-300 hover:bg-zinc-800",
+                focusRingClass,
+              )}
+            >
+              {option.label}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+export function StatControls(props: {
+  baseId: string;
+  scope: StatScope;
+  onScope: (scope: StatScope) => void;
+  seasons: PlayerSeasonStatsView[];
+  seasonId: string | null;
+  onSeason: (seasonId: string) => void;
+  splits: StatSplit[];
+  split: StatSplit;
+  onSplit: (split: StatSplit) => void;
+  mode: StatMode;
+  onMode: (mode: StatMode) => void;
+}) {
+  const newestFirst = [...props.seasons].reverse();
+  const seasonSelectId = `${props.baseId}-season`;
+  return (
+    <div className="flex flex-wrap items-end gap-x-4 gap-y-3">
+      <Segmented
+        label="Scope"
+        value={props.scope}
+        onChange={props.onScope}
+        options={[
+          { value: "season", label: "Season" },
+          { value: "career", label: "Career" },
+        ]}
+      />
+      {props.scope === "season" && newestFirst.length > 0 ? (
+        <div className="flex flex-col gap-1">
+          <label
+            htmlFor={seasonSelectId}
+            className="font-mono text-[0.65rem] uppercase tracking-[0.14em] text-zinc-400"
+          >
+            Season
+          </label>
+          <select
+            id={seasonSelectId}
+            value={props.seasonId ?? ""}
+            onChange={(event) => props.onSeason(event.target.value)}
+            className={selectClass}
+          >
+            {newestFirst.map((season) => (
+              <option key={season.seasonId} value={season.seasonId}>
+                {seasonOptionLabel(season)}
+              </option>
+            ))}
+          </select>
+        </div>
+      ) : null}
+      <Segmented
+        label="Split"
+        value={props.split}
+        onChange={props.onSplit}
+        options={props.splits.map((split) => ({
+          value: split,
+          label: SPLIT_LABELS[split],
+        }))}
+      />
+      <Segmented
+        label="View"
+        value={props.mode}
+        onChange={props.onMode}
+        options={[
+          { value: "perGame", label: "Per game" },
+          { value: "totals", label: "Totals" },
+        ]}
+      />
+    </div>
+  );
+}

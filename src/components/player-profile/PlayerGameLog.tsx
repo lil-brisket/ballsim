@@ -105,9 +105,9 @@ export function PlayerGameLog(props: {
         </div>
       }
     >
-      <div className="overflow-x-auto rounded-xl border border-zinc-800">
+      <div className="overflow-x-auto rounded-lg border border-zinc-800">
         <table className="min-w-full text-left text-sm">
-          <thead className="bg-zinc-900 text-zinc-400">
+          <thead className="bg-zinc-900/60 font-mono text-[0.65rem] uppercase tracking-[0.14em] text-zinc-400">
             <tr>
               {(
                 [
@@ -126,7 +126,7 @@ export function PlayerGameLog(props: {
                   ["ftMade", "FT"],
                 ] as Array<[SortKey, string]>
               ).map(([key, label]) => (
-                <th key={key} className="px-3 py-2 font-medium">
+                <th key={key} className="px-3 py-2 font-normal">
                   <button
                     type="button"
                     className="hover:text-amber-400"
