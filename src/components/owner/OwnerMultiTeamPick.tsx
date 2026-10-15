@@ -142,7 +142,7 @@ function FilterPillRow(props: {
   onChange: (next: string | null) => void;
 }) {
   const pillClass = (active: boolean) =>
-    `rounded-full border px-3 py-1 text-xs ${
+    `rounded-full border px-3 py-1 text-xs focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-500 ${
       active
         ? "border-amber-600 text-amber-400"
         : "border-zinc-700 text-zinc-400 hover:border-zinc-500"
@@ -156,6 +156,7 @@ function FilterPillRow(props: {
       <div className="flex flex-wrap gap-2">
         <button
           type="button"
+          aria-pressed={props.value === null}
           className={pillClass(props.value === null)}
           onClick={() => props.onChange(null)}
         >
@@ -165,6 +166,7 @@ function FilterPillRow(props: {
           <button
             key={option.id}
             type="button"
+            aria-pressed={props.value === option.id}
             className={pillClass(props.value === option.id)}
             onClick={() => props.onChange(option.id)}
           >
@@ -497,9 +499,9 @@ export function OwnerMultiTeamPick(props: {
 
       {controlledTeamCount > 1 ? (
         <div className="space-y-2 rounded-lg border border-zinc-800 bg-zinc-950/40 px-3 py-3">
-          <p className="text-[10px] font-medium uppercase tracking-wide text-zinc-500">
+          <h3 className="text-[10px] font-medium uppercase tracking-wide text-zinc-500">
             Controlled Franchises
-          </p>
+          </h3>
           <p className="text-sm text-zinc-300">
             {selectedIds.length} of {controlledTeamCount}
           </p>
@@ -530,9 +532,9 @@ export function OwnerMultiTeamPick(props: {
       ) : (
         <>
           <div className="space-y-2">
-            <p className="text-[10px] font-medium uppercase tracking-wide text-zinc-500">
+            <h3 className="text-[10px] font-medium uppercase tracking-wide text-zinc-500">
               Selected
-            </p>
+            </h3>
             <ul className="space-y-2">
               {pinnedTeams.map(renderFranchiseCard)}
             </ul>
@@ -563,9 +565,9 @@ export function OwnerMultiTeamPick(props: {
           ) : null}
 
           <div className="space-y-2">
-            <p className="text-[10px] font-medium uppercase tracking-wide text-zinc-500">
+            <h3 className="text-[10px] font-medium uppercase tracking-wide text-zinc-500">
               Franchises
-            </p>
+            </h3>
             {availableTeams.length === 0 ? (
               <p className="text-sm text-zinc-500">
                 {selectedIds.length >= controlledTeamCount
@@ -581,9 +583,18 @@ export function OwnerMultiTeamPick(props: {
         </>
       )}
 
+      {!exactCount ? (
+        <p role="status" className="text-sm text-amber-500">
+          Select {controlledTeamCount} franchise
+          {controlledTeamCount === 1 ? "" : "s"} to continue (
+          {selectedIds.length} selected).
+        </p>
+      ) : null}
+
       <div className="flex flex-wrap gap-3">
         <button
           type="button"
+          aria-busy={pending}
           disabled={!allValid || pending}
           onClick={submit}
           className="rounded-md bg-amber-600 px-4 py-2 text-sm font-medium text-zinc-950 hover:bg-amber-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-500 disabled:cursor-not-allowed disabled:opacity-50"

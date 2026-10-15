@@ -1,16 +1,76 @@
 import Link from "next/link";
 import { SectionHeading } from "@/components/ui/SectionHeading";
 
-export type OnboardingStep = "mode" | "setup" | "franchise";
+export type OnboardingStep = "mode" | "setup" | "advanced" | "franchise";
 
 const STEPS: { id: OnboardingStep; label: string; href: string }[] = [
   { id: "mode", label: "Mode", href: "/home" },
   { id: "setup", label: "Setup", href: "/new/setup?mode=owner" },
+  { id: "advanced", label: "Advanced", href: "" },
   { id: "franchise", label: "Franchise", href: "" },
 ];
 
 const focusRing =
   "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-500";
+
+export function OnboardingSteps(props: {
+  step: OnboardingStep;
+  /** Makes a non-active step a button (client-controlled steps). */
+  onSelect?: Partial<Record<OnboardingStep, () => void>>;
+}) {
+  const stepIndex = STEPS.findIndex((s) => s.id === props.step);
+  return (
+    <nav
+      aria-label="New game steps"
+      className="flex flex-wrap gap-2 font-display text-sm uppercase tracking-wide"
+    >
+      {STEPS.map((step, index) => {
+        const active = index === stepIndex;
+        const done = index < stepIndex;
+        const label = `${index + 1}. ${step.label}`;
+        const select = props.onSelect?.[step.id];
+        const className = `inline-flex min-h-11 items-center rounded-full border px-3 py-1 ${
+          active
+            ? "border-team-ink bg-team font-bold text-on-team"
+            : done || select
+              ? `border-surface-line text-zinc-200 hover:border-team-ink hover:text-team-ink ${focusRing}`
+              : "border-transparent text-zinc-500"
+        }`;
+
+        if (!active && select) {
+          return (
+            <button
+              key={step.id}
+              type="button"
+              onClick={select}
+              className={className}
+            >
+              {label}
+            </button>
+          );
+        }
+
+        if (done && step.href) {
+          return (
+            <Link key={step.id} href={step.href} className={className}>
+              {label}
+            </Link>
+          );
+        }
+
+        return (
+          <span
+            key={step.id}
+            className={className}
+            aria-current={active ? "step" : undefined}
+          >
+            {label}
+          </span>
+        );
+      })}
+    </nav>
+  );
+}
 
 export function OnboardingShell(props: {
   step: OnboardingStep;
@@ -19,8 +79,9 @@ export function OnboardingShell(props: {
   children: React.ReactNode;
   className?: string;
   fillViewport?: boolean;
+  /** Replaces the default step nav (used by client-controlled flows). */
+  steps?: React.ReactNode;
 }) {
-  const stepIndex = STEPS.findIndex((s) => s.id === props.step);
   const fillViewport = props.fillViewport === true;
 
   return (
@@ -38,44 +99,14 @@ export function OnboardingShell(props: {
         >
           ← Owner Mode
         </Link>
-        <nav
-          aria-label="New game steps"
-          className="flex gap-2 font-display text-sm uppercase tracking-wide"
-        >
-          {STEPS.map((step, index) => {
-            const active = index === stepIndex;
-            const done = index < stepIndex;
-            const label = `${index + 1}. ${step.label}`;
-            const className = `rounded-full border px-3 py-1 ${
-              active
-                ? "border-team-ink bg-team font-bold text-on-team"
-                : done
-                  ? `border-surface-line text-zinc-200 hover:border-team-ink hover:text-team-ink ${focusRing}`
-                  : "border-transparent text-zinc-500"
-            }`;
-
-            if (done && step.href) {
-              return (
-                <Link key={step.id} href={step.href} className={className}>
-                  {label}
-                </Link>
-              );
-            }
-
-            return (
-              <span
-                key={step.id}
-                className={className}
-                aria-current={active ? "step" : undefined}
-              >
-                {label}
-              </span>
-            );
-          })}
-        </nav>
+        {props.steps ?? <OnboardingSteps step={props.step} />}
       </div>
 
-      <header className="shrink-0 space-y-2">
+      <header
+        id="onboarding-header"
+        tabIndex={-1}
+        className="shrink-0 space-y-2 outline-none"
+      >
         <SectionHeading
           as="h1"
           size={fillViewport ? "md" : "lg"}

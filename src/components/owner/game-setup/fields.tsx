@@ -1,0 +1,244 @@
+"use client";
+
+import { type ReactNode } from "react";
+import {
+  INJURY_FREQUENCIES,
+  INJURY_FREQUENCY_LABELS,
+  type InjuryFrequency,
+} from "@/domain/game-settings";
+import { formatMoney } from "@/components/owner/MoneyDisplay";
+import { cn, focusRingClass } from "@/components/ui/styles";
+
+export const inputClass =
+  "min-h-11 w-full rounded-md border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-500 disabled:cursor-not-allowed disabled:opacity-50";
+
+export const secondaryButtonClass = cn(
+  "inline-flex min-h-11 items-center rounded-md border border-zinc-700 px-4 py-2 text-sm text-zinc-200 hover:border-amber-600",
+  focusRingClass,
+);
+
+export const primaryButtonClass = cn(
+  "inline-flex min-h-11 items-center rounded-md bg-amber-600 px-4 py-2 text-sm font-medium text-zinc-950 hover:bg-amber-500 disabled:cursor-not-allowed disabled:opacity-50",
+  focusRingClass,
+);
+
+export function SetupSection({
+  id,
+  title,
+  description,
+  children,
+}: {
+  id: string;
+  title: string;
+  description?: string;
+  children: ReactNode;
+}) {
+  return (
+    <section
+      aria-labelledby={id}
+      className="space-y-4 rounded-xl border border-zinc-800 bg-zinc-900/40 p-4 sm:p-5"
+    >
+      <div className="space-y-1">
+        <h2
+          id={id}
+          tabIndex={-1}
+          className="text-base font-semibold text-zinc-100 outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-500"
+        >
+          {title}
+        </h2>
+        {description ? (
+          <p className="text-sm text-zinc-400">{description}</p>
+        ) : null}
+      </div>
+      {children}
+    </section>
+  );
+}
+
+export function FieldGrid({ children }: { children: ReactNode }) {
+  return <div className="grid gap-4 sm:grid-cols-2">{children}</div>;
+}
+
+export function SelectField({
+  label,
+  value,
+  options,
+  onChange,
+  disabled = false,
+}: {
+  label: string;
+  value: number;
+  options: Array<{ value: number; label: string }>;
+  onChange: (value: number) => void;
+  disabled?: boolean;
+}) {
+  return (
+    <label className="block space-y-1 text-sm text-zinc-300">
+      <span>{label}</span>
+      <select
+        value={value}
+        disabled={disabled}
+        onChange={(event) => onChange(Number(event.target.value))}
+        className={inputClass}
+      >
+        {options.map((option) => (
+          <option key={option.value} value={option.value}>
+            {option.label}
+          </option>
+        ))}
+      </select>
+    </label>
+  );
+}
+
+export function ToggleField({
+  label,
+  checked,
+  onChange,
+}: {
+  label: string;
+  checked: boolean;
+  onChange: (checked: boolean) => void;
+}) {
+  return (
+    <label className="flex min-h-11 items-center gap-3 text-sm text-zinc-300">
+      <input
+        type="checkbox"
+        checked={checked}
+        onChange={(event) => onChange(event.target.checked)}
+        className="size-5 rounded border-zinc-600 bg-zinc-950 text-amber-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-500"
+      />
+      {label}
+    </label>
+  );
+}
+
+export function MoneyInputField({
+  label,
+  value,
+  min,
+  max,
+  defaultValue,
+  disabled = false,
+  onChange,
+}: {
+  label: string;
+  value: number;
+  min: number;
+  max: number;
+  defaultValue: number;
+  disabled?: boolean;
+  onChange: (value: number) => void;
+}) {
+  const millions = value / 1_000_000;
+  return (
+    <label className="block space-y-1 text-sm text-zinc-300 sm:col-span-2">
+      <span className="block font-medium text-zinc-200">
+        {label} — {formatMoney(value)}
+      </span>
+      <span className="block text-xs text-zinc-500">
+        Range {formatMoney(min)}–{formatMoney(max)}. Default{" "}
+        {formatMoney(defaultValue)}.
+      </span>
+      <span className="flex flex-wrap items-center gap-2">
+        <input
+          type="number"
+          inputMode="decimal"
+          disabled={disabled}
+          min={min / 1_000_000}
+          max={max / 1_000_000}
+          step={1}
+          value={Number.isFinite(millions) ? millions : ""}
+          onChange={(event) => {
+            const raw = event.target.value;
+            if (raw === "") {
+              return;
+            }
+            const parsed = Number(raw);
+            if (!Number.isFinite(parsed)) {
+              return;
+            }
+            const dollars = Math.round(parsed * 1_000_000);
+            onChange(Math.min(max, Math.max(min, dollars)));
+          }}
+          className={cn(inputClass, "w-32")}
+        />
+        <span className="text-xs text-zinc-500">million dollars</span>
+      </span>
+    </label>
+  );
+}
+
+export function InjuryFrequencyField({
+  value,
+  onChange,
+}: {
+  value: InjuryFrequency;
+  onChange: (value: InjuryFrequency) => void;
+}) {
+  const selectedIndex = INJURY_FREQUENCIES.indexOf(value);
+  const selectedLabel = INJURY_FREQUENCY_LABELS[value];
+
+  function setByIndex(index: number) {
+    const next = INJURY_FREQUENCIES[Math.max(0, Math.min(2, index))];
+    if (next) {
+      onChange(next);
+    }
+  }
+
+  return (
+    <div className="space-y-2 text-sm text-zinc-300 sm:col-span-2">
+      <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+        <span className="font-medium text-zinc-200">
+          Injury frequency — {selectedLabel}
+        </span>
+      </div>
+      <p className="text-xs text-zinc-500">
+        Affects how frequently players become injured during simulation.
+      </p>
+      <div
+        role="radiogroup"
+        aria-label={`Injury frequency — ${selectedLabel}`}
+        className="flex rounded-md border border-zinc-700 bg-zinc-950 p-0.5"
+        onKeyDown={(event) => {
+          if (event.key === "ArrowLeft" || event.key === "ArrowDown") {
+            event.preventDefault();
+            setByIndex(selectedIndex - 1);
+          } else if (event.key === "ArrowRight" || event.key === "ArrowUp") {
+            event.preventDefault();
+            setByIndex(selectedIndex + 1);
+          } else if (event.key === "Home") {
+            event.preventDefault();
+            setByIndex(0);
+          } else if (event.key === "End") {
+            event.preventDefault();
+            setByIndex(2);
+          }
+        }}
+      >
+        {INJURY_FREQUENCIES.map((frequency) => {
+          const selected = frequency === value;
+          return (
+            <button
+              key={frequency}
+              type="button"
+              role="radio"
+              aria-checked={selected}
+              tabIndex={selected ? 0 : -1}
+              onClick={() => onChange(frequency)}
+              className={cn(
+                "min-h-11 flex-1 rounded px-3 py-2 text-center text-sm transition-colors",
+                focusRingClass,
+                selected
+                  ? "bg-amber-600 font-medium text-zinc-950"
+                  : "text-zinc-400 hover:bg-zinc-900 hover:text-zinc-200",
+              )}
+            >
+              {INJURY_FREQUENCY_LABELS[frequency]}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}

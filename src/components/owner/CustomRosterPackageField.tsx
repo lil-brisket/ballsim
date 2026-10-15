@@ -3,9 +3,14 @@
 import { useMemo, useState } from "react";
 import { ErrorState } from "@/components/ui/EmptyState";
 import { StatusBadge } from "@/components/ui/StatusBadge";
+import {
+  SUPPORTED_TEAM_COUNTS,
+  isSupportedTeamCount,
+} from "@/domain/game-settings";
 import { GAME_STATE_SCHEMA_VERSION } from "@/state/game-state";
 import {
   parseCustomContentJson,
+  rosterTeamCountFromPackageJson,
   validateRosterPackage,
   type ImportValidationResult,
   type RosterPackage,
@@ -19,6 +24,7 @@ export function CustomRosterPackageField(props: {
   onPackageJsonChange: (value: string) => void;
 }) {
   const [fileName, setFileName] = useState<string | null>(null);
+  const [readError, setReadError] = useState(false);
   const preview = useMemo((): ImportValidationResult<RosterPackage> | null => {
     if (props.packageJson.length === 0) {
       return null;
@@ -44,6 +50,11 @@ export function CustomRosterPackageField(props: {
   const playerCount = preview?.normalized?.payload.players.length ?? 0;
   const errorCount = preview?.errors.length ?? 0;
   const warningCount = preview?.warnings.length ?? 0;
+  const invalidJson =
+    preview?.errors.some((entry) => entry.code === "invalid_json") ?? false;
+  const packageTeamCount = rosterTeamCountFromPackageJson(props.packageJson);
+  const unsupportedTeamCount =
+    packageTeamCount !== null && !isSupportedTeamCount(packageTeamCount);
 
   return (
     <div className="space-y-3">
@@ -52,9 +63,10 @@ export function CustomRosterPackageField(props: {
         <input
           type="file"
           accept="application/json,.json"
-          className="mt-2 block w-full text-sm text-zinc-400 file:mr-3 file:rounded-md file:border file:border-zinc-700 file:bg-zinc-900 file:px-3 file:py-1.5 file:text-zinc-200"
+          className="mt-2 block w-full text-sm text-zinc-400 file:mr-3 file:rounded-md file:border file:border-zinc-700 file:bg-zinc-900 file:min-h-11 file:px-3 file:py-1.5 file:text-zinc-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-500"
           onChange={(event) => {
             const file = event.target.files?.[0];
+            setReadError(false);
             if (!file) {
               setFileName(null);
               props.onPackageJsonChange("");
@@ -65,6 +77,11 @@ export function CustomRosterPackageField(props: {
             reader.onload = () => {
               props.onPackageJsonChange(String(reader.result ?? ""));
             };
+            reader.onerror = () => {
+              setReadError(true);
+              setFileName(null);
+              props.onPackageJsonChange("");
+            };
             reader.readAsText(file);
           }}
         />
@@ -74,7 +91,18 @@ export function CustomRosterPackageField(props: {
       ) : (
         <p className="text-xs text-zinc-500">Upload a JSON roster package.</p>
       )}
-      {preview ? (
+      {readError ? (
+        <ErrorState message="Could not read the file. Choose a JSON file and try again." />
+      ) : null}
+      {invalidJson ? (
+        <ErrorState message="This file isn't valid JSON. Check the file and upload it again." />
+      ) : null}
+      {unsupportedTeamCount ? (
+        <ErrorState
+          message={`This package has ${packageTeamCount} teams. Supported league sizes are ${SUPPORTED_TEAM_COUNTS.join(", ")} — add or remove teams in the package and upload it again.`}
+        />
+      ) : null}
+      {preview && !invalidJson ? (
         <div className="space-y-2 rounded-md border border-zinc-800 bg-zinc-950/60 p-3 text-sm">
           <p className="text-zinc-200">
             {teamCount} teams · {playerCount} players

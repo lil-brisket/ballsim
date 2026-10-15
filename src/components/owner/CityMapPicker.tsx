@@ -1,11 +1,34 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useFormStatus } from "react-dom";
 import { selectCityAction } from "@/application/actions";
 import { GeographicMap } from "@/components/map/GeographicMap";
 import type { MapCity } from "@/components/map/map-city";
 import { LEAGUE_AREA_LABELS, type LeagueArea } from "@/domain/game-settings";
 import type { CityPickOption } from "@/state/selectors";
+
+const FOCUS_RING =
+  "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-500";
+
+function formatCoordinates(lat: number, lng: number): string {
+  const latPart = `${Math.abs(lat).toFixed(2)}° ${lat >= 0 ? "N" : "S"}`;
+  const lngPart = `${Math.abs(lng).toFixed(2)}° ${lng >= 0 ? "E" : "W"}`;
+  return `${latPart}, ${lngPart}`;
+}
+
+function SubmitButton(props: { label: string }) {
+  const { pending } = useFormStatus();
+  return (
+    <button
+      type="submit"
+      disabled={pending}
+      className={`min-h-[44px] w-full rounded-md bg-amber-600 px-3 py-2 text-sm font-medium text-zinc-950 hover:bg-amber-500 ${FOCUS_RING} disabled:cursor-not-allowed disabled:bg-zinc-700 disabled:text-zinc-400`}
+    >
+      {pending ? "Founding franchise…" : props.label}
+    </button>
+  );
+}
 
 export function CityMapPicker(props: {
   saveId: string;
@@ -14,6 +37,7 @@ export function CityMapPicker(props: {
 }) {
   const [selectedCity, setSelectedCity] = useState<string | null>(null);
   const [query, setQuery] = useState("");
+  const itemRefs = useRef(new Map<string, HTMLLIElement>());
 
   const selected =
     props.cities.find((city) => city.city === selectedCity) ?? null;
@@ -55,10 +79,23 @@ export function CityMapPicker(props: {
     [props.cities],
   );
 
-  const ctaLabel = selected
-    ? `Continue with ${selected.city}`
-    : "Select a city";
-  const submitDisabled = !selected;
+  // Keep the list in sync when a city is picked on the map. Only items in the
+  // filtered list have a registered node, so hidden cities are skipped.
+  useEffect(() => {
+    if (!selectedCity) {
+      return;
+    }
+    const node = itemRefs.current.get(selectedCity);
+    if (node && typeof node.scrollIntoView === "function") {
+      node.scrollIntoView({ block: "nearest" });
+    }
+  }, [selectedCity]);
+
+  const trimmedQuery = query.trim();
+  const countLabel =
+    filtered.length === 0
+      ? `No cities match “${trimmedQuery}”`
+      : `${filtered.length} ${filtered.length === 1 ? "city" : "cities"}`;
 
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-2">
@@ -66,7 +103,6 @@ export function CityMapPicker(props: {
         <p className="text-xs font-semibold uppercase tracking-wide text-amber-500">
           {LEAGUE_AREA_LABELS[props.area]}
         </p>
-        <p className="text-sm text-zinc-400">{props.cities.length} cities</p>
       </header>
 
       <div className="grid min-h-0 flex-1 gap-4 overflow-hidden lg:grid-cols-[minmax(0,1fr)_22rem] lg:grid-rows-1 lg:items-stretch">
@@ -78,7 +114,7 @@ export function CityMapPicker(props: {
           fill
         />
 
-        <aside className="flex min-h-[12rem] flex-1 flex-col gap-3 overflow-hidden rounded-lg border border-zinc-800 bg-zinc-900/50 px-4 py-4 lg:h-full lg:min-h-0">
+        <aside className="flex min-h-[24rem] flex-1 flex-col gap-3 overflow-hidden rounded-lg border border-zinc-800 bg-zinc-900/50 px-4 py-4 lg:h-full lg:min-h-0">
           <div className="space-y-2">
             <label
               className="block text-sm text-zinc-400"
@@ -92,59 +128,110 @@ export function CityMapPicker(props: {
               value={query}
               onChange={(event) => setQuery(event.target.value)}
               placeholder="Search cities..."
-              className="w-full rounded-md border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-500"
+              className={`min-h-[44px] w-full rounded-md border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-600 ${FOCUS_RING}`}
             />
+            <p
+              role="status"
+              aria-live="polite"
+              className="text-xs text-zinc-400"
+            >
+              {countLabel}
+            </p>
           </div>
 
-          <ul className="min-h-0 flex-1 space-y-1 overflow-y-auto rounded-lg border border-zinc-800">
-            {filtered.map((city) => {
-              const isSelected = city.city === selectedCity;
-              return (
-                <li key={city.city}>
-                  <button
-                    type="button"
-                    onClick={() => selectCity(city.city)}
-                    className={`flex w-full items-start justify-between gap-3 px-3 py-2 text-left text-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-amber-500 ${
-                      isSelected
-                        ? "bg-amber-600/20 text-zinc-100"
-                        : "bg-zinc-900/40 text-zinc-200 hover:bg-zinc-800/80"
-                    }`}
+          {filtered.length === 0 ? (
+            <div className="flex min-h-0 flex-1 flex-col items-start justify-center gap-3 rounded-lg border border-zinc-800 px-3 py-4">
+              <p className="text-sm text-zinc-400">
+                No cities match your search.
+              </p>
+              <button
+                type="button"
+                onClick={() => setQuery("")}
+                className={`min-h-[44px] rounded-md border border-zinc-700 px-3 py-2 text-sm text-zinc-200 hover:bg-zinc-800 ${FOCUS_RING}`}
+              >
+                Clear search
+              </button>
+            </div>
+          ) : (
+            <ul
+              aria-label="Cities"
+              className="min-h-0 flex-1 space-y-1 overflow-y-auto rounded-lg border border-zinc-800"
+            >
+              {filtered.map((city) => {
+                const isSelected = city.city === selectedCity;
+                return (
+                  <li
+                    key={city.city}
+                    ref={(node) => {
+                      if (node) {
+                        itemRefs.current.set(city.city, node);
+                      } else {
+                        itemRefs.current.delete(city.city);
+                      }
+                    }}
                   >
-                    <span>
-                      <span className="block font-medium">{city.city}</span>
-                      <span className="block text-xs text-zinc-500">
-                        {city.locationLabel}
+                    <button
+                      type="button"
+                      aria-pressed={isSelected}
+                      onClick={() => selectCity(city.city)}
+                      className={`flex min-h-[44px] w-full items-center justify-between gap-3 border-l-4 px-3 py-2 text-left text-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-amber-500 ${
+                        isSelected
+                          ? "border-amber-500 bg-amber-600/20 text-zinc-100"
+                          : "border-transparent bg-zinc-900/40 text-zinc-200 hover:bg-zinc-800/80"
+                      }`}
+                    >
+                      <span>
+                        <span className="block font-medium">{city.city}</span>
+                        <span className="block text-xs text-zinc-500">
+                          {city.locationLabel}
+                        </span>
                       </span>
-                    </span>
-                  </button>
-                </li>
-              );
-            })}
-          </ul>
+                      {isSelected ? (
+                        <span className="shrink-0 text-xs font-semibold text-amber-400">
+                          <span aria-hidden="true">✓ </span>Selected
+                        </span>
+                      ) : null}
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
 
           {selected ? (
             <div className="sticky bottom-0 z-10 shrink-0 space-y-3 border-t border-zinc-800 bg-zinc-900/95 pt-3">
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-wide text-amber-500/90">
+              <section aria-labelledby="selected-market-heading">
+                <h2
+                  id="selected-market-heading"
+                  className="text-xs font-semibold uppercase tracking-wide text-amber-500/90"
+                >
                   Selected market
-                </p>
+                </h2>
                 <p className="text-lg font-medium text-zinc-100">
                   {selected.city}
                 </p>
                 <p className="text-sm text-zinc-400">
                   {selected.locationLabel}
                 </p>
-              </div>
+                <dl className="mt-1 grid grid-cols-[auto_1fr] gap-x-3 text-xs text-zinc-400">
+                  <dt className="text-zinc-500">League area</dt>
+                  <dd>{LEAGUE_AREA_LABELS[props.area]}</dd>
+                  <dt className="text-zinc-500">Coordinates</dt>
+                  <dd>{formatCoordinates(selected.lat, selected.lng)}</dd>
+                </dl>
+                <p className="mt-2 text-xs text-zinc-400">
+                  Your franchise relocates here. If another team already plays
+                  in this city, it moves to your franchise&apos;s previous city.
+                </p>
+                <p className="mt-1 text-xs text-zinc-500">
+                  Market size and starting facilities are set by the league, not
+                  by the city you choose.
+                </p>
+              </section>
               <form action={selectCityAction}>
                 <input type="hidden" name="saveId" value={props.saveId} />
                 <input type="hidden" name="city" value={selected.city} />
-                <button
-                  type="submit"
-                  disabled={submitDisabled}
-                  className="w-full rounded-md bg-amber-600 px-3 py-2 text-sm font-medium text-zinc-950 hover:bg-amber-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-500 disabled:cursor-not-allowed disabled:bg-zinc-700 disabled:text-zinc-400"
-                >
-                  {ctaLabel}
-                </button>
+                <SubmitButton label={`Continue with ${selected.city}`} />
               </form>
             </div>
           ) : (

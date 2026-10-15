@@ -8,9 +8,9 @@ import {
   initializeFantasyDraftOrder,
   loadFantasyDraftView,
 } from "@/application/game-service";
+import { OnboardingShell } from "@/components/game/OnboardingShell";
 import { FantasyDraftOrderEditor } from "@/components/fantasy-draft/FantasyDraftOrderEditor";
 import { ErrorState } from "@/components/owner/EmptyState";
-import { PageHeader } from "@/components/owner/PageHeader";
 import { Section } from "@/components/owner/Section";
 
 type SetupPageProps = {
@@ -40,11 +40,11 @@ export default async function FantasyDraftSetupPage({
   }
 
   return (
-    <main className="mx-auto max-w-4xl space-y-8 px-4 py-10 text-zinc-100">
-      <PageHeader
-        title="Fantasy Draft Setup"
-        subtitle="Configure draft format and order before the league begins"
-      />
+    <OnboardingShell
+      step="franchise"
+      title="Fantasy Draft Setup"
+      subtitle="Configure draft format and order before the league begins"
+    >
       {error ? <ErrorState message={error} /> : null}
 
       <Section title="Draft format">
@@ -130,6 +130,6 @@ export default async function FantasyDraftSetupPage({
           Confirm Draft Order
         </button>
       </form>
-    </main>
+    </OnboardingShell>
   );
 }

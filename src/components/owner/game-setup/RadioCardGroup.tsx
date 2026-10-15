@@ -1,0 +1,87 @@
+"use client";
+
+import { useId } from "react";
+import { cn } from "@/components/ui/styles";
+
+export type RadioCardOption<T extends string> = {
+  value: T;
+  title: string;
+  description: string;
+  meta?: string;
+};
+
+/**
+ * Native radio inputs styled as cards. Arrow-key navigation and the single tab
+ * stop come from the browser's radio group behaviour.
+ */
+export function RadioCardGroup<T extends string>({
+  legend,
+  options,
+  value,
+  onChange,
+  columns = 2,
+}: {
+  legend: string;
+  options: ReadonlyArray<RadioCardOption<T>>;
+  value: T;
+  onChange: (value: T) => void;
+  columns?: 2 | 3;
+}) {
+  const uid = useId();
+  return (
+    <div className="space-y-2">
+      <p id={`${uid}-legend`} className="text-sm font-medium text-zinc-200">
+        {legend}
+      </p>
+      <div
+        role="radiogroup"
+        aria-labelledby={`${uid}-legend`}
+        className={cn(
+          "grid gap-3",
+          columns === 3 ? "sm:grid-cols-3" : "sm:grid-cols-2",
+        )}
+      >
+        {options.map((option) => {
+          const titleId = `${uid}-${option.value}-title`;
+          const descId = `${uid}-${option.value}-desc`;
+          return (
+            <label key={option.value} className="block cursor-pointer">
+              <input
+                type="radio"
+                name={uid}
+                value={option.value}
+                checked={option.value === value}
+                onChange={() => onChange(option.value)}
+                aria-labelledby={titleId}
+                aria-describedby={descId}
+                className="peer sr-only"
+              />
+              <span
+                className={cn(
+                  "block h-full min-h-11 rounded-lg border border-zinc-700 bg-zinc-950 p-3 text-left transition-colors hover:border-amber-600",
+                  "peer-checked:border-amber-600 peer-checked:bg-amber-600/10 peer-checked:ring-1 peer-checked:ring-amber-600",
+                  "peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-amber-500",
+                )}
+              >
+                <span
+                  id={titleId}
+                  className="block text-sm font-medium text-zinc-100"
+                >
+                  {option.title}
+                </span>
+                <span id={descId} className="mt-1 block text-xs text-zinc-400">
+                  {option.description}
+                </span>
+                {option.meta ? (
+                  <span className="mt-2 block text-xs font-medium text-amber-300">
+                    {option.meta}
+                  </span>
+                ) : null}
+              </span>
+            </label>
+          );
+        })}
+      </div>
+    </div>
+  );
+}

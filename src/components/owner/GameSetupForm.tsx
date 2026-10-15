@@ -1,8 +1,14 @@
 "use client";
 
-import { useMemo, useState, useTransition, type ReactNode } from "react";
 import {
-  INJURY_FREQUENCIES,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  useTransition,
+  type ReactNode,
+} from "react";
+import {
   INJURY_FREQUENCY_LABELS,
   SUPPORTED_GAMES_PER_TEAM,
   SUPPORTED_PLAYOFF_TEAM_COUNTS,
@@ -13,7 +19,6 @@ import {
   isSupportedTeamCount,
   maxControlledTeamCountForLeague,
   type GameSettings,
-  type InjuryFrequency,
   type LeagueArea,
   type SeriesLength,
 } from "@/domain/game-settings";
@@ -40,6 +45,31 @@ import { rosterTeamCountFromPackageJson } from "@/systems/custom-content";
 import { AiTeamManagementSection } from "@/components/owner/ai-management";
 import { formatMoney } from "@/components/owner/MoneyDisplay";
 import {
+  clearNewGameDraft,
+  loadNewGameDraft,
+  saveNewGameDraft,
+} from "@/components/owner/game-setup/draft-storage";
+import {
+  FieldGrid,
+  InjuryFrequencyField,
+  MoneyInputField,
+  SelectField,
+  SetupSection,
+  ToggleField,
+  inputClass,
+  primaryButtonClass,
+  secondaryButtonClass,
+} from "@/components/owner/game-setup/fields";
+import {
+  RadioCardGroup,
+  type RadioCardOption,
+} from "@/components/owner/game-setup/RadioCardGroup";
+import { cn, focusRingClass } from "@/components/ui/styles";
+import {
+  OnboardingShell,
+  OnboardingSteps,
+} from "@/components/game/OnboardingShell";
+import {
   DEFAULT_SALARY_CAP,
   MAX_SALARY_CAP,
   MIN_SALARY_CAP,
@@ -53,26 +83,100 @@ import {
 type GameSetupFormProps = {
   atSaveLimit: boolean;
   defaultName?: string;
+  /** True when the page loaded after a server-side create error. */
+  restoreDraft?: boolean;
+  /** Server-rendered notices (errors, save limit) shown under the header. */
+  notices?: ReactNode;
 };
+
+type FormStep = "setup" | "advanced" | "confirm";
+
+type RosterSourceId = "generated" | "custom";
+type OpeningId = "assigned" | "fantasy";
+
+const SECTION_IDS = {
+  league: "setup-league-format",
+  roster: "setup-roster-and-draft",
+  save: "setup-save-details",
+  advanced: "advanced-injuries",
+  ai: "advanced-ai",
+  history: "advanced-history",
+  financial: "advanced-financial",
+} as const;
+
+const ROSTER_SOURCE_OPTIONS: ReadonlyArray<RadioCardOption<RosterSourceId>> = [
+  {
+    value: "generated",
+    title: "Generated rosters",
+    description: "The league creates every team's roster for you.",
+  },
+  {
+    value: "custom",
+    title: "Imported roster package",
+    description:
+      "Load a JSON roster package. League size is set by the package's team count.",
+  },
+];
+
+const OPENING_OPTIONS: ReadonlyArray<RadioCardOption<OpeningId>> = [
+  {
+    value: "assigned",
+    title: "Assigned team rosters",
+    description: "Each team starts with its roster.",
+  },
+  {
+    value: "fantasy",
+    title: "Fantasy draft",
+    description:
+      "All players enter a pool and teams draft from scratch. Draft order, timer and snake/linear format are configured after you choose your franchises.",
+  },
+];
+
+const PRESET_COPY: Record<
+  LeagueSetupPresetId,
+  { title: string; text: string }
+> = {
+  standard: {
+    title: "Standard",
+    text: "A full-size league with a full-length season.",
+  },
+  cbl: {
+    title: "CBL",
+    text: "The classic compact league with a short season.",
+  },
+  custom: {
+    title: "Custom",
+    text: "Start from your current settings and edit any rule.",
+  },
+};
+
+function leagueNumbers(settings: GameSettings): string {
+  return `${settings.league.teamCount} teams · ${settings.regularSeason.gamesPerTeam} games · ${settings.playoffs.playoffTeams} playoff teams · best of ${settings.playoffs.seriesLength}`;
+}
 
 export function GameSetupForm({
   atSaveLimit,
   defaultName = "Harbor Franchise",
+  restoreDraft = false,
+  notices,
 }: GameSetupFormProps) {
-  const [preset, setPreset] = useState<LeagueSetupPresetId>("custom");
+  const [preset, setPreset] = useState<LeagueSetupPresetId>("standard");
   const [settings, setSettings] = useState<GameSettings>(() =>
-    settingsForPreset("custom"),
+    settingsForPreset("standard"),
   );
   const [name, setName] = useState(defaultName);
-  const [step, setStep] = useState<"configure" | "confirm">("configure");
+  const [step, setStep] = useState<FormStep>("setup");
+  const [cameFrom, setCameFrom] = useState<"setup" | "advanced">("setup");
   const [pending, startTransition] = useTransition();
   const [rosterPackageJson, setRosterPackageJson] = useState("");
   const [useCustomRoster, setUseCustomRoster] = useState(false);
+  const [rosterDropped, setRosterDropped] = useState(false);
+  const pendingFocusId = useRef<string | null>(null);
 
   const validation = useMemo(() => validateGameSettings(settings), [settings]);
   const errors = validation.ok ? [] : validation.errors;
-  const isCustom = preset === "custom";
-  const loadedRosterTeamCount = rosterTeamCountFromPackageJson(rosterPackageJson);
+  const loadedRosterTeamCount =
+    rosterTeamCountFromPackageJson(rosterPackageJson);
   const rosterTeamCountLocked = isLockedCustomRosterTeamCount(
     loadedRosterTeamCount,
   );
@@ -85,6 +189,35 @@ export function GameSetupForm({
       settings.financialRules.salaryCapEnabled,
     );
   const fantasyOpening = settings.draft.mode === "fantasy";
+
+  // Restore after a server-side error redirect; otherwise drop any stale draft.
+  // Done in an effect so server and first client render match.
+  /* eslint-disable react-hooks/set-state-in-effect -- restore client-only sessionStorage draft after hydration */
+  useEffect(() => {
+    if (!restoreDraft) {
+      clearNewGameDraft();
+      return;
+    }
+    const draft = loadNewGameDraft();
+    if (!draft) {
+      return;
+    }
+    setName(draft.name);
+    setPreset(draft.preset);
+    setSettings(draft.settings);
+    setUseCustomRoster(draft.useCustomRoster);
+    setRosterPackageJson(draft.rosterPackageJson);
+    setRosterDropped(draft.rosterDropped);
+  }, [restoreDraft]);
+  /* eslint-enable react-hooks/set-state-in-effect */
+
+  useEffect(() => {
+    if (pendingFocusId.current === null) {
+      return;
+    }
+    document.getElementById(pendingFocusId.current)?.focus();
+    pendingFocusId.current = null;
+  }, [step]);
 
   function settingsWithLoadedRoster(base: GameSettings): GameSettings {
     if (!isLockedCustomRosterTeamCount(loadedRosterTeamCount)) {
@@ -101,7 +234,6 @@ export function GameSetupForm({
       isLockedCustomRosterTeamCount(loadedRosterTeamCount) ? "custom" : next,
     );
     setSettings(nextSettings);
-    setStep("configure");
   }
 
   function updateSettings(next: GameSettings) {
@@ -119,12 +251,14 @@ export function GameSetupForm({
 
   function reset() {
     setSettings(settingsWithLoadedRoster(resetSettingsForPreset(preset)));
-    setStep("configure");
   }
 
   function handleRosterPackageJsonChange(value: string) {
     setRosterPackageJson(value);
     setUseCustomRoster(value.length > 0);
+    if (value.length > 0) {
+      setRosterDropped(false);
+    }
     const teamCount = rosterTeamCountFromPackageJson(value);
     if (teamCount === null || !isSupportedTeamCount(teamCount)) {
       return;
@@ -132,10 +266,25 @@ export function GameSetupForm({
     updateSettings(applyCustomRosterTeamCount(settings, teamCount));
   }
 
+  const blockedReason: string | null = atSaveLimit
+    ? "You have reached the save limit. Delete a save to create another."
+    : errors.length > 0
+      ? `Fix ${errors.length} ${errors.length === 1 ? "issue" : "issues"} above.`
+      : customRosterInvalid
+        ? "Upload a valid roster package."
+        : null;
+
   function submit() {
     if (!validation.ok || atSaveLimit || customRosterInvalid) {
       return;
     }
+    saveNewGameDraft({
+      name,
+      preset,
+      settings,
+      useCustomRoster,
+      rosterPackageJson,
+    });
     const formData = new FormData();
     formData.set("name", name);
     formData.set("settingsJson", JSON.stringify(settings));
@@ -145,6 +294,14 @@ export function GameSetupForm({
     startTransition(() => {
       void createSaveAction(formData);
     });
+  }
+
+  function goTo(next: FormStep, focusId?: string) {
+    if (next === "confirm") {
+      setCameFrom(step === "advanced" ? "advanced" : "setup");
+    }
+    pendingFocusId.current = focusId ?? "onboarding-header";
+    setStep(next);
   }
 
   function applyDraftMode(mode: GameSettings["draft"]["mode"]) {
@@ -162,7 +319,7 @@ export function GameSetupForm({
     });
   }
 
-  function setRosterSource(source: "generated" | "custom") {
+  function setRosterSource(source: RosterSourceId) {
     if (source === "generated") {
       setRosterPackageJson("");
       setUseCustomRoster(false);
@@ -173,24 +330,133 @@ export function GameSetupForm({
     applyDraftMode(fantasyOpening ? "fantasy" : "custom");
   }
 
-  function setOpening(opening: "assigned" | "fantasy") {
+  function setOpening(opening: OpeningId) {
     applyDraftMode(
-      opening === "fantasy" ? "fantasy" : useCustomRoster ? "custom" : "standard",
+      opening === "fantasy"
+        ? "fantasy"
+        : useCustomRoster
+          ? "custom"
+          : "standard",
     );
   }
 
-  if (step === "confirm") {
+  const rosterSourceLabel = useCustomRoster
+    ? "Imported roster package"
+    : "Generated rosters";
+  const openingLabel = fantasyOpening
+    ? "Fantasy draft"
+    : "Assigned team rosters";
+  const controlledLabel =
+    settings.ownership.controlledTeamCount === 1
+      ? "1 team"
+      : `${settings.ownership.controlledTeamCount} teams`;
+  const capLabel = settings.financialRules.salaryCapEnabled
+    ? formatMoney(settings.financialRules.salaryCap)
+    : "Off";
+  const delegationLabel = `${countDelegatedVisiblePhases(settings.ai.assistance)} of ${visibleDelegationPhaseCount()} delegated to AI`;
+  const historyLabel =
+    settings.history.mode === "generated" ? "Generated" : "New league";
+
+  const stepperActive = step === "setup" ? "setup" : "advanced";
+  const stepCopy: Record<FormStep, { title: string; subtitle: string }> = {
+    setup: {
+      title: "Game setup",
+      subtitle:
+        "Configure league rules for this Owner Mode career. Settings are saved with the franchise and drive simulation. A save is created only when you confirm below.",
+    },
+    advanced: {
+      title: "Advanced settings",
+      subtitle:
+        "Optional. These apply to every preset; editing one switches the preset to Custom.",
+    },
+    confirm: {
+      title: "Review and create",
+      subtitle: "Review your league rules before creating the franchise save.",
+    },
+  };
+
+  function frame(content: ReactNode) {
     return (
+      <OnboardingShell
+        step={stepperActive}
+        title={stepCopy[step].title}
+        subtitle={stepCopy[step].subtitle}
+        steps={
+          <OnboardingSteps
+            step={stepperActive}
+            onSelect={{
+              setup: () => goTo("setup"),
+              advanced: () => goTo("advanced"),
+            }}
+          />
+        }
+      >
+        {notices}
+        {content}
+      </OnboardingShell>
+    );
+  }
+
+  const errorsBlock =
+    errors.length > 0 ? (
+      <ul
+        role="alert"
+        className="space-y-1 rounded-md border border-red-900/60 bg-red-950/40 p-3 text-sm text-red-300"
+      >
+        {errors.map((error) => (
+          <li key={error}>{error}</li>
+        ))}
+      </ul>
+    ) : null;
+
+  const blockedNote = blockedReason ? (
+    <p id="review-blocked-reason" className="text-sm text-zinc-400">
+      {blockedReason}
+    </p>
+  ) : null;
+  const describedBy = blockedReason ? "review-blocked-reason" : undefined;
+
+  const summaryAside = (
+    <aside
+      aria-labelledby="setup-summary-heading"
+      className="mt-6 space-y-3 rounded-xl border border-zinc-800 bg-zinc-900/60 p-4 lg:sticky lg:top-6 lg:mt-0"
+    >
+      <h2
+        id="setup-summary-heading"
+        className="text-base font-semibold text-zinc-100"
+      >
+        Summary
+      </h2>
+      <dl className="space-y-2 text-sm">
+        <SummaryRow label="Preset" value={PRESET_COPY[preset].title} />
+        <SummaryRow label="Teams" value={String(settings.league.teamCount)} />
+        <SummaryRow
+          label="Games"
+          value={String(settings.regularSeason.gamesPerTeam)}
+        />
+        <SummaryRow
+          label="Playoffs"
+          value={`${settings.playoffs.playoffTeams} teams, best of ${settings.playoffs.seriesLength}`}
+        />
+        <SummaryRow label="Roster source" value={rosterSourceLabel} />
+        <SummaryRow label="Opening" value={openingLabel} />
+        <SummaryRow label="Controlled teams" value={controlledLabel} />
+        <SummaryRow label="Salary cap" value={capLabel} />
+      </dl>
+      <p aria-live="polite" className="text-xs text-zinc-400">
+        {blockedReason ? "Not ready to review yet." : "Ready to review."}
+      </p>
+    </aside>
+  );
+
+  if (step === "confirm") {
+    return frame(
       <div className="space-y-6">
-        <header className="space-y-2">
-          <h2 className="text-xl font-medium text-zinc-100">Confirm setup</h2>
-          <p className="text-sm text-zinc-400">
-            Review your league rules before creating the franchise save.
-          </p>
-        </header>
-        <dl className="grid gap-3 rounded-lg border border-zinc-800 bg-zinc-950/60 p-4 text-sm sm:grid-cols-2">
-          <ReviewRow label="Save name" value={name} />
-          <ReviewRow label="Preset" value={presetLabel(preset)} />
+        <ReviewGroup
+          title="League Format"
+          onEdit={() => goTo("setup", SECTION_IDS.league)}
+        >
+          <ReviewRow label="Preset" value={PRESET_COPY[preset].title} />
           <ReviewRow label="Teams" value={String(settings.league.teamCount)} />
           <ReviewRow
             label="Conferences"
@@ -205,18 +471,6 @@ export function GameSetupForm({
             value={leagueAreaLabel(settings.league.area ?? "north_america")}
           />
           <ReviewRow
-            label="Franchise control"
-            value={
-              settings.ownership.controlledTeamCount === 1
-                ? "1 team"
-                : `${settings.ownership.controlledTeamCount} teams`
-            }
-          />
-          <ReviewRow
-            label="Injury frequency"
-            value={INJURY_FREQUENCY_LABELS[settings.injuryFrequency]}
-          />
-          <ReviewRow
             label="Games per team"
             value={String(settings.regularSeason.gamesPerTeam)}
           />
@@ -228,40 +482,38 @@ export function GameSetupForm({
             label="Series length"
             value={`Best of ${settings.playoffs.seriesLength}`}
           />
-          <ReviewRow
-            label="AI responsibilities"
-            value={`${countDelegatedVisiblePhases(settings.ai.assistance)} of ${visibleDelegationPhaseCount()} delegated to AI`}
-          />
-          <ReviewRow
-            label="Roster source"
-            value={useCustomRoster ? "Custom roster" : "Generated roster"}
-          />
-          <ReviewRow
-            label="Opening"
-            value={
-              fantasyOpening ? "Fantasy draft" : "Assigned team rosters"
-            }
-          />
+        </ReviewGroup>
+        <ReviewGroup
+          title="Roster and Draft"
+          onEdit={() => goTo("setup", SECTION_IDS.roster)}
+        >
+          <ReviewRow label="Roster source" value={rosterSourceLabel} />
+          <ReviewRow label="Opening" value={openingLabel} />
           {fantasyOpening ? (
             <ReviewRow
               label="Fantasy setup"
               value="Configured after franchise selection"
             />
           ) : null}
+        </ReviewGroup>
+        <ReviewGroup
+          title="Save Details"
+          onEdit={() => goTo("setup", SECTION_IDS.save)}
+        >
+          <ReviewRow label="Save name" value={name} />
+          <ReviewRow label="Franchise control" value={controlledLabel} />
+        </ReviewGroup>
+        <ReviewGroup
+          title="Advanced"
+          onEdit={() => goTo("advanced", SECTION_IDS.advanced)}
+        >
           <ReviewRow
-            label="League history"
-            value={
-              settings.history.mode === "generated" ? "Generated" : "New league"
-            }
+            label="Injury frequency"
+            value={INJURY_FREQUENCY_LABELS[settings.injuryFrequency]}
           />
-          <ReviewRow
-            label="Player Salary Cap"
-            value={
-              settings.financialRules.salaryCapEnabled
-                ? formatMoney(settings.financialRules.salaryCap)
-                : "Off"
-            }
-          />
+          <ReviewRow label="AI responsibilities" value={delegationLabel} />
+          <ReviewRow label="League history" value={historyLabel} />
+          <ReviewRow label="Player Salary Cap" value={capLabel} />
           <ReviewRow
             label="Staff Budget"
             value={formatMoney(settings.financialRules.staffBudget)}
@@ -274,142 +526,258 @@ export function GameSetupForm({
             label="Revenue sharing"
             value={settings.financialRules.revenueSharingEnabled ? "On" : "Off"}
           />
-        </dl>
+        </ReviewGroup>
         <div className="flex flex-wrap gap-3">
           <button
             type="button"
-            onClick={() => setStep("configure")}
-            className="rounded-md border border-zinc-700 px-4 py-2 text-sm text-zinc-200 hover:border-amber-600"
+            onClick={() => goTo(cameFrom)}
+            className={secondaryButtonClass}
           >
             Back
           </button>
           <button
             type="button"
-            disabled={pending || atSaveLimit || !validation.ok || customRosterInvalid}
+            disabled={
+              pending || atSaveLimit || !validation.ok || customRosterInvalid
+            }
             onClick={submit}
-            className="rounded-md bg-amber-600 px-4 py-2 text-sm font-medium text-zinc-950 hover:bg-amber-500 disabled:cursor-not-allowed disabled:opacity-50"
+            className={primaryButtonClass}
           >
             {pending ? "Creating…" : "Create franchise"}
           </button>
         </div>
-      </div>
+      </div>,
     );
   }
 
-  return (
-    <div className="space-y-8">
-      <div className="space-y-2">
-        <label className="block text-sm text-zinc-300" htmlFor="save-name">
-          Save name
-        </label>
-        <input
-          id="save-name"
-          value={name}
-          onChange={(event) => setName(event.target.value)}
-          disabled={atSaveLimit}
-          className="w-full rounded-md border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-100 outline-none ring-amber-500/40 focus:ring-2 disabled:opacity-50"
-        />
-      </div>
+  const presetOptions: ReadonlyArray<RadioCardOption<LeagueSetupPresetId>> = (
+    ["standard", "cbl", "custom"] as const
+  ).map((id) => ({
+    value: id,
+    title: PRESET_COPY[id].title,
+    description: PRESET_COPY[id].text,
+    meta: leagueNumbers(id === "custom" ? settings : settingsForPreset(id)),
+  }));
 
-      <Section title="Roster source">
-        <SelectField
-          label="Roster source"
-          value={useCustomRoster ? 1 : 0}
-          options={[
-            { value: 0, label: "Generated roster" },
-            { value: 1, label: "Custom roster" },
-          ]}
-          onChange={(value) =>
-            setRosterSource(value === 1 ? "custom" : "generated")
-          }
-        />
-        <SelectField
-          label="Opening"
-          value={fantasyOpening ? 1 : 0}
-          options={[
-            { value: 0, label: "Assigned team rosters" },
-            { value: 1, label: "Fantasy draft" },
-          ]}
-          onChange={(value) =>
-            setOpening(value === 1 ? "fantasy" : "assigned")
-          }
-        />
-        {fantasyOpening ? (
-          <p className="text-sm text-zinc-400 sm:col-span-2">
-            Draft order, timer, and snake/linear settings are configured
-            after you choose your franchises.
-            {useCustomRoster
-              ? " Imported players enter the pool; generated players fill out 15-man drafts. Anyone not drafted becomes a free agent."
-              : null}
-          </p>
-        ) : null}
-        {useCustomRoster ? (
-          <div className="sm:col-span-2">
-            <CustomRosterPackageField
-              teamCount={settings.league.teamCount}
-              salaryCap={settings.financialRules.salaryCap}
-              salaryCapEnabled={settings.financialRules.salaryCapEnabled}
-              packageJson={rosterPackageJson}
-              onPackageJsonChange={handleRosterPackageJsonChange}
-            />
-          </div>
-        ) : null}
-      </Section>
+  const injurySummary = INJURY_FREQUENCY_LABELS[settings.injuryFrequency];
+  const financialSummary = `Cap ${capLabel}, Luxury tax ${settings.financialRules.luxuryTaxEnabled ? "on" : "off"}`;
 
-      <fieldset className="space-y-3">
-        <legend className="text-sm font-medium text-zinc-200">
-          League configuration
-        </legend>
-        <p className="text-sm text-zinc-400">
-          Build your league below, or start from an optional template.
-        </p>
-        <div className="flex flex-wrap gap-2">
-          {(
-            [
-              ["custom", "Custom league"],
-              ["standard", "Standard template — 30 / 82 / 16"],
-              ["cbl", "CBL template — 12 / 22 / 8"],
-            ] as const
-          ).map(([id, label]) => (
-            <button
-              key={id}
-              type="button"
-              onClick={() => applyPreset(id)}
-              className={`rounded-md px-3 py-1.5 text-sm ${
-                preset === id
-                  ? "bg-amber-600 text-zinc-950"
-                  : "border border-zinc-700 text-zinc-300 hover:border-amber-600"
-              }`}
-            >
-              {label}
-            </button>
-          ))}
-        </div>
-      </fieldset>
+  const blockedButtons = blockedReason !== null;
 
-      {isCustom ? (
+  if (step === "advanced") {
+    return frame(
+      <div className="gap-6 space-y-6 lg:grid lg:grid-cols-[minmax(0,1fr)_20rem] lg:items-start lg:space-y-0">
         <div className="space-y-6">
-          <Section title="League">
-            <SelectField
-              label="Number of teams"
-              value={settings.league.teamCount}
-              options={SUPPORTED_TEAM_COUNTS.map((value) => ({
-                value,
-                label: String(value),
-              }))}
-              disabled={rosterTeamCountLocked}
-              onChange={(value) =>
-                updateSettings({
-                  ...settings,
-                  league: { ...settings.league, teamCount: value },
-                })
-              }
-            />
-            {rosterTeamCountLocked ? (
-              <p className="text-xs text-zinc-500 sm:col-span-2">
-                Team count comes from the loaded custom roster package.
-              </p>
-            ) : null}
+          <SetupSection
+            id={SECTION_IDS.advanced}
+            title="Injuries"
+            description={`Current: ${injurySummary}`}
+          >
+            <FieldGrid>
+              <InjuryFrequencyField
+                value={settings.injuryFrequency}
+                onChange={(injuryFrequency) =>
+                  updateSettings({ ...settings, injuryFrequency })
+                }
+              />
+            </FieldGrid>
+          </SetupSection>
+
+          <SetupSection
+            id={SECTION_IDS.ai}
+            title="AI Team Management"
+            description={`Current: ${delegationLabel}`}
+          >
+            <FieldGrid>
+              <div className="sm:col-span-2">
+                <AiTeamManagementSection
+                  assistance={settings.ai.assistance}
+                  onAssistanceChange={(assistance) =>
+                    updateSettings({
+                      ...settings,
+                      ai: {
+                        ...settings.ai,
+                        managementPreset: "custom",
+                        assistance,
+                      },
+                    })
+                  }
+                />
+              </div>
+            </FieldGrid>
+          </SetupSection>
+
+          <SetupSection
+            id={SECTION_IDS.history}
+            title="League History"
+            description={`Current: ${settings.history.mode === "new" ? "Completely new league" : "Generated prior history"}`}
+          >
+            <FieldGrid>
+              <SelectField
+                label="Starting world"
+                value={settings.history.mode === "new" ? 0 : 1}
+                options={[
+                  { value: 0, label: "Completely new league" },
+                  { value: 1, label: "Generate prior history" },
+                ]}
+                onChange={(value) =>
+                  updateSettings({
+                    ...settings,
+                    history: { mode: value === 0 ? "new" : "generated" },
+                  })
+                }
+              />
+            </FieldGrid>
+          </SetupSection>
+
+          <SetupSection
+            id={SECTION_IDS.financial}
+            title="Financial Rules"
+            description={`Current: ${financialSummary}`}
+          >
+            <FieldGrid>
+              <ToggleField
+                label="Player Salary Cap enabled"
+                checked={settings.financialRules.salaryCapEnabled}
+                onChange={(checked) =>
+                  updateSettings({
+                    ...settings,
+                    financialRules: {
+                      ...settings.financialRules,
+                      salaryCapEnabled: checked,
+                    },
+                  })
+                }
+              />
+              <MoneyInputField
+                label="Player Salary Cap"
+                value={settings.financialRules.salaryCap}
+                min={MIN_SALARY_CAP}
+                max={MAX_SALARY_CAP}
+                defaultValue={DEFAULT_SALARY_CAP}
+                disabled={!settings.financialRules.salaryCapEnabled}
+                onChange={(salaryCap) =>
+                  updateSettings({
+                    ...settings,
+                    financialRules: {
+                      ...settings.financialRules,
+                      salaryCap,
+                    },
+                  })
+                }
+              />
+              <MoneyInputField
+                label="Staff Budget"
+                value={settings.financialRules.staffBudget}
+                min={MIN_STAFF_BUDGET}
+                max={MAX_STAFF_BUDGET}
+                defaultValue={DEFAULT_STAFF_BUDGET}
+                onChange={(staffBudget) =>
+                  updateSettings({
+                    ...settings,
+                    financialRules: {
+                      ...settings.financialRules,
+                      staffBudget,
+                    },
+                  })
+                }
+              />
+              <ToggleField
+                label="Luxury tax"
+                checked={settings.financialRules.luxuryTaxEnabled}
+                onChange={(checked) =>
+                  updateSettings({
+                    ...settings,
+                    financialRules: {
+                      ...settings.financialRules,
+                      luxuryTaxEnabled: checked,
+                    },
+                  })
+                }
+              />
+              <ToggleField
+                label="Revenue sharing"
+                checked={settings.financialRules.revenueSharingEnabled}
+                onChange={(checked) =>
+                  updateSettings({
+                    ...settings,
+                    financialRules: {
+                      ...settings.financialRules,
+                      revenueSharingEnabled: checked,
+                    },
+                  })
+                }
+              />
+            </FieldGrid>
+          </SetupSection>
+
+          {errorsBlock}
+
+          <div className="space-y-2">
+            <div className="flex flex-wrap gap-3">
+              <button
+                type="button"
+                onClick={() => goTo("setup")}
+                className={secondaryButtonClass}
+              >
+                Back
+              </button>
+              <button
+                type="button"
+                disabled={blockedButtons}
+                aria-describedby={describedBy}
+                onClick={() => goTo("confirm")}
+                className={primaryButtonClass}
+              >
+                Review and create
+              </button>
+            </div>
+            {blockedNote}
+          </div>
+        </div>
+        {summaryAside}
+      </div>,
+    );
+  }
+
+  return frame(
+    <div className="gap-6 space-y-6 lg:grid lg:grid-cols-[minmax(0,1fr)_20rem] lg:items-start lg:space-y-0">
+      <div className="space-y-6">
+        <SetupSection
+          id={SECTION_IDS.league}
+          title="League Format"
+          description="Pick a starting point, then change any rule. Editing a rule switches the preset to Custom."
+        >
+          <RadioCardGroup
+            legend="Preset"
+            columns={3}
+            options={presetOptions}
+            value={preset}
+            onChange={applyPreset}
+          />
+          <FieldGrid>
+            <div className="space-y-1">
+              <SelectField
+                label="Number of teams"
+                value={settings.league.teamCount}
+                options={SUPPORTED_TEAM_COUNTS.map((value) => ({
+                  value,
+                  label: String(value),
+                }))}
+                disabled={rosterTeamCountLocked}
+                onChange={(value) =>
+                  updateSettings({
+                    ...settings,
+                    league: { ...settings.league, teamCount: value },
+                  })
+                }
+              />
+              {rosterTeamCountLocked ? (
+                <p className="text-xs text-zinc-500">
+                  Team count comes from the loaded custom roster package.
+                </p>
+              ) : null}
+            </div>
             <SelectField
               label="Conferences"
               value={settings.league.conferenceCount}
@@ -421,16 +789,6 @@ export function GameSetupForm({
                 updateSettings({
                   ...settings,
                   league: { ...settings.league, conferenceCount: value },
-                })
-              }
-            />
-            <ToggleField
-              label="Divisions"
-              checked={settings.league.divisionsEnabled}
-              onChange={(checked) =>
-                updateSettings({
-                  ...settings,
-                  league: { ...settings.league, divisionsEnabled: checked },
                 })
               }
             />
@@ -451,20 +809,16 @@ export function GameSetupForm({
                 })
               }
             />
-          </Section>
-
-          <Section title="League rules">
-            <div className="sm:col-span-2">
-              <InjuryFrequencyField
-                value={settings.injuryFrequency}
-                onChange={(injuryFrequency) =>
-                  updateSettings({ ...settings, injuryFrequency })
-                }
-              />
-            </div>
-          </Section>
-
-          <Section title="Regular season">
+            <ToggleField
+              label="Divisions"
+              checked={settings.league.divisionsEnabled}
+              onChange={(checked) =>
+                updateSettings({
+                  ...settings,
+                  league: { ...settings.league, divisionsEnabled: checked },
+                })
+              }
+            />
             <SelectField
               label="Games per team"
               value={settings.regularSeason.gamesPerTeam}
@@ -482,9 +836,6 @@ export function GameSetupForm({
                 })
               }
             />
-          </Section>
-
-          <Section title="Playoffs">
             <SelectField
               label="Playoff teams"
               value={settings.playoffs.playoffTeams}
@@ -516,234 +867,168 @@ export function GameSetupForm({
                 })
               }
             />
-          </Section>
+          </FieldGrid>
+        </SetupSection>
 
-          <Section title="AI">
-            <div className="sm:col-span-2">
-              <AiTeamManagementSection
-                assistance={settings.ai.assistance}
-                onAssistanceChange={(assistance) =>
-                  updateSettings({
-                    ...settings,
-                    ai: {
-                      ...settings.ai,
-                      managementPreset: "custom",
-                      assistance,
-                    },
-                  })
-                }
+        <SetupSection id={SECTION_IDS.roster} title="Roster and Draft">
+          <RadioCardGroup
+            legend="Roster source"
+            options={ROSTER_SOURCE_OPTIONS}
+            value={useCustomRoster ? "custom" : "generated"}
+            onChange={setRosterSource}
+          />
+          <RadioCardGroup
+            legend="Opening"
+            options={OPENING_OPTIONS}
+            value={fantasyOpening ? "fantasy" : "assigned"}
+            onChange={setOpening}
+          />
+          {useCustomRoster ? (
+            <div className="space-y-3">
+              {rosterDropped && rosterPackageJson.length === 0 ? (
+                <p
+                  role="status"
+                  className="rounded-md border border-amber-800/60 bg-amber-950/30 px-3 py-2 text-sm text-amber-200"
+                >
+                  Your roster package was too large to keep — upload it again.
+                </p>
+              ) : null}
+              <CustomRosterPackageField
+                teamCount={settings.league.teamCount}
+                salaryCap={settings.financialRules.salaryCap}
+                salaryCapEnabled={settings.financialRules.salaryCapEnabled}
+                packageJson={rosterPackageJson}
+                onPackageJsonChange={handleRosterPackageJsonChange}
               />
             </div>
-          </Section>
+          ) : null}
+          {fantasyOpening && useCustomRoster ? (
+            <p className="text-sm text-zinc-400">
+              Imported players enter the pool; generated players fill out 15-man
+              drafts. Anyone not drafted becomes a free agent.
+            </p>
+          ) : null}
+        </SetupSection>
 
-          <Section title="League history">
-            <SelectField
-              label="Starting world"
-              value={settings.history.mode === "new" ? 0 : 1}
-              options={[
-                { value: 0, label: "Completely new league" },
-                { value: 1, label: "Generate prior history" },
-              ]}
-              onChange={(value) =>
-                updateSettings({
-                  ...settings,
-                  history: { mode: value === 0 ? "new" : "generated" },
-                })
-              }
+        <SetupSection id={SECTION_IDS.save} title="Save Details">
+          <div className="space-y-1">
+            <label className="block text-sm text-zinc-300" htmlFor="save-name">
+              Save name
+            </label>
+            <input
+              id="save-name"
+              value={name}
+              onChange={(event) => setName(event.target.value)}
+              disabled={atSaveLimit}
+              className={inputClass}
             />
-          </Section>
+          </div>
+          <div className="space-y-3">
+            <p className="text-sm font-medium text-zinc-200">
+              Franchise control
+            </p>
+            <p className="text-sm text-zinc-400">
+              Decide how many franchises you will control. You choose the
+              specific teams after the league is generated.
+            </p>
+            <div className="flex flex-wrap gap-2">
+              <ControlButton
+                selected={settings.ownership.controlledTeamCount === 1}
+                onClick={() =>
+                  updateSettings({
+                    ...settings,
+                    ownership: { controlledTeamCount: 1 },
+                  })
+                }
+              >
+                Control 1 team
+              </ControlButton>
+              <ControlButton
+                selected={settings.ownership.controlledTeamCount > 1}
+                onClick={() => {
+                  const max = maxControlledTeamCountForLeague(
+                    settings.league.teamCount,
+                  );
+                  const next = Math.min(
+                    Math.max(2, settings.ownership.controlledTeamCount),
+                    max,
+                  );
+                  updateSettings({
+                    ...settings,
+                    ownership: { controlledTeamCount: Math.max(2, next) },
+                  });
+                }}
+              >
+                Control multiple teams
+              </ControlButton>
+            </div>
+            {settings.ownership.controlledTeamCount > 1 ? (
+              <div className="max-w-xs">
+                <SelectField
+                  label="Number of controlled teams"
+                  value={settings.ownership.controlledTeamCount}
+                  options={Array.from(
+                    {
+                      length: Math.max(
+                        0,
+                        maxControlledTeamCountForLeague(
+                          settings.league.teamCount,
+                        ) - 1,
+                      ),
+                    },
+                    (_, index) => {
+                      const value = index + 2;
+                      return { value, label: String(value) };
+                    },
+                  )}
+                  onChange={(value) =>
+                    updateSettings({
+                      ...settings,
+                      ownership: { controlledTeamCount: value },
+                    })
+                  }
+                />
+              </div>
+            ) : null}
+          </div>
+        </SetupSection>
 
-          <Section title="Financial rules">
-            <ToggleField
-              label="Player Salary Cap enabled"
-              checked={settings.financialRules.salaryCapEnabled}
-              onChange={(checked) =>
-                updateSettings({
-                  ...settings,
-                  financialRules: {
-                    ...settings.financialRules,
-                    salaryCapEnabled: checked,
-                  },
-                })
-              }
-            />
-            <MoneyInputField
-              label="Player Salary Cap"
-              value={settings.financialRules.salaryCap}
-              min={MIN_SALARY_CAP}
-              max={MAX_SALARY_CAP}
-              defaultValue={DEFAULT_SALARY_CAP}
-              disabled={!settings.financialRules.salaryCapEnabled}
-              onChange={(salaryCap) =>
-                updateSettings({
-                  ...settings,
-                  financialRules: {
-                    ...settings.financialRules,
-                    salaryCap,
-                  },
-                })
-              }
-            />
-            <MoneyInputField
-              label="Staff Budget"
-              value={settings.financialRules.staffBudget}
-              min={MIN_STAFF_BUDGET}
-              max={MAX_STAFF_BUDGET}
-              defaultValue={DEFAULT_STAFF_BUDGET}
-              onChange={(staffBudget) =>
-                updateSettings({
-                  ...settings,
-                  financialRules: {
-                    ...settings.financialRules,
-                    staffBudget,
-                  },
-                })
-              }
-            />
-            <ToggleField
-              label="Luxury tax"
-              checked={settings.financialRules.luxuryTaxEnabled}
-              onChange={(checked) =>
-                updateSettings({
-                  ...settings,
-                  financialRules: {
-                    ...settings.financialRules,
-                    luxuryTaxEnabled: checked,
-                  },
-                })
-              }
-            />
-            <ToggleField
-              label="Revenue sharing"
-              checked={settings.financialRules.revenueSharingEnabled}
-              onChange={(checked) =>
-                updateSettings({
-                  ...settings,
-                  financialRules: {
-                    ...settings.financialRules,
-                    revenueSharingEnabled: checked,
-                  },
-                })
-              }
-            />
-          </Section>
-        </div>
-      ) : (
-        <p className="rounded-lg border border-zinc-800 bg-zinc-950/50 p-4 text-sm text-zinc-400">
-          {preset === "standard"
-            ? "30 teams, 82 games, 16 playoff teams, best-of-7. Choose Custom to edit individual rules."
-            : "12 teams, 22 games, 8 playoff teams, best-of-7 (classic CBL). Choose Custom to edit individual rules."}
-        </p>
-      )}
+        {errorsBlock}
 
-      <Section title="Franchise control">
-        <div className="sm:col-span-2 space-y-3">
-          <p className="text-sm text-zinc-400">
-            Decide how many franchises you will control. You choose the specific
-            teams after the league is generated.
-          </p>
-          <div className="flex flex-wrap gap-2">
+        <div className="space-y-2">
+          <div className="flex flex-wrap gap-3">
             <button
               type="button"
-              onClick={() =>
-                updateSettings({
-                  ...settings,
-                  ownership: { controlledTeamCount: 1 },
-                })
-              }
-              className={`rounded-md px-3 py-1.5 text-sm ${
-                settings.ownership.controlledTeamCount === 1
-                  ? "bg-amber-600 text-zinc-950"
-                  : "border border-zinc-700 text-zinc-300 hover:border-amber-600"
-              }`}
+              disabled={blockedButtons}
+              aria-describedby={describedBy}
+              onClick={() => goTo("advanced")}
+              className={primaryButtonClass}
             >
-              Control 1 team
+              Next: Advanced settings
             </button>
             <button
               type="button"
-              onClick={() => {
-                const max = maxControlledTeamCountForLeague(
-                  settings.league.teamCount,
-                );
-                const next = Math.min(
-                  Math.max(2, settings.ownership.controlledTeamCount),
-                  max,
-                );
-                updateSettings({
-                  ...settings,
-                  ownership: { controlledTeamCount: Math.max(2, next) },
-                });
-              }}
-              className={`rounded-md px-3 py-1.5 text-sm ${
-                settings.ownership.controlledTeamCount > 1
-                  ? "bg-amber-600 text-zinc-950"
-                  : "border border-zinc-700 text-zinc-300 hover:border-amber-600"
-              }`}
+              disabled={blockedButtons}
+              aria-describedby={describedBy}
+              onClick={() => goTo("confirm")}
+              className={secondaryButtonClass}
             >
-              Control multiple teams
+              Skip to review
+            </button>
+            <button
+              type="button"
+              onClick={reset}
+              className={secondaryButtonClass}
+            >
+              Reset to defaults
             </button>
           </div>
-          {settings.ownership.controlledTeamCount > 1 ? (
-            <SelectField
-              label="Number of controlled teams"
-              value={settings.ownership.controlledTeamCount}
-              options={Array.from(
-                {
-                  length: Math.max(
-                    0,
-                    maxControlledTeamCountForLeague(settings.league.teamCount) -
-                      1,
-                  ),
-                },
-                (_, index) => {
-                  const value = index + 2;
-                  return { value, label: String(value) };
-                },
-              )}
-              onChange={(value) =>
-                updateSettings({
-                  ...settings,
-                  ownership: { controlledTeamCount: value },
-                })
-              }
-            />
-          ) : null}
+          {blockedNote}
         </div>
-      </Section>
-
-      {errors.length > 0 ? (
-        <ul className="space-y-1 rounded-md border border-red-900/60 bg-red-950/40 p-3 text-sm text-red-300">
-          {errors.map((error) => (
-            <li key={error}>{error}</li>
-          ))}
-        </ul>
-      ) : null}
-
-      <div className="flex flex-wrap gap-3">
-        <button
-          type="button"
-          onClick={reset}
-          className="rounded-md border border-zinc-700 px-4 py-2 text-sm text-zinc-200 hover:border-amber-600"
-        >
-          Reset to defaults
-        </button>
-        <button
-          type="button"
-          disabled={atSaveLimit || !validation.ok || customRosterInvalid}
-          onClick={() => setStep("confirm")}
-          className="rounded-md bg-amber-600 px-4 py-2 text-sm font-medium text-zinc-950 hover:bg-amber-500 disabled:cursor-not-allowed disabled:opacity-50"
-        >
-          Review and create
-        </button>
       </div>
-    </div>
+      {summaryAside}
+    </div>,
   );
-}
-
-function presetLabel(preset: LeagueSetupPresetId): string {
-  if (preset === "standard") return "Standard";
-  if (preset === "cbl") return "CBL";
-  return "Custom";
 }
 
 function leagueAreaIndex(area: LeagueArea): number {
@@ -755,194 +1040,69 @@ function leagueAreaLabel(area: LeagueArea): string {
   return LEAGUE_AREA_LABELS[area];
 }
 
-function Section({ title, children }: { title: string; children: ReactNode }) {
+function ControlButton({
+  selected,
+  onClick,
+  children,
+}: {
+  selected: boolean;
+  onClick: () => void;
+  children: ReactNode;
+}) {
   return (
-    <section className="space-y-3 rounded-lg border border-zinc-800 p-4">
-      <h3 className="text-sm font-medium text-zinc-100">{title}</h3>
-      <div className="grid gap-3 sm:grid-cols-2">{children}</div>
-    </section>
+    <button
+      type="button"
+      aria-pressed={selected}
+      onClick={onClick}
+      className={cn(
+        "min-h-11 rounded-md px-3 py-1.5 text-sm",
+        focusRingClass,
+        selected
+          ? "bg-amber-600 text-zinc-950"
+          : "border border-zinc-700 text-zinc-300 hover:border-amber-600",
+      )}
+    >
+      {children}
+    </button>
   );
 }
 
-function SelectField({
-  label,
-  value,
-  options,
-  onChange,
-  disabled = false,
-}: {
-  label: string;
-  value: number;
-  options: Array<{ value: number; label: string }>;
-  onChange: (value: number) => void;
-  disabled?: boolean;
-}) {
+function SummaryRow({ label, value }: { label: string; value: string }) {
   return (
-    <label className="block space-y-1 text-sm text-zinc-300">
-      <span>{label}</span>
-      <select
-        value={value}
-        disabled={disabled}
-        onChange={(event) => onChange(Number(event.target.value))}
-        className="w-full rounded-md border border-zinc-700 bg-zinc-950 px-3 py-2 text-zinc-100 disabled:cursor-not-allowed disabled:opacity-50"
-      >
-        {options.map((option) => (
-          <option key={option.value} value={option.value}>
-            {option.label}
-          </option>
-        ))}
-      </select>
-    </label>
-  );
-}
-
-function ToggleField({
-  label,
-  checked,
-  onChange,
-}: {
-  label: string;
-  checked: boolean;
-  onChange: (checked: boolean) => void;
-}) {
-  return (
-    <label className="flex items-center gap-3 text-sm text-zinc-300">
-      <input
-        type="checkbox"
-        checked={checked}
-        onChange={(event) => onChange(event.target.checked)}
-        className="size-4 rounded border-zinc-600 bg-zinc-950 text-amber-600"
-      />
-      {label}
-    </label>
-  );
-}
-
-function MoneyInputField({
-  label,
-  value,
-  min,
-  max,
-  defaultValue,
-  disabled = false,
-  onChange,
-}: {
-  label: string;
-  value: number;
-  min: number;
-  max: number;
-  defaultValue: number;
-  disabled?: boolean;
-  onChange: (value: number) => void;
-}) {
-  const millions = value / 1_000_000;
-  return (
-    <label className="block space-y-1 text-sm text-zinc-300 sm:col-span-2">
-      <span className="font-medium text-zinc-200">
-        {label} — {formatMoney(value)}
-      </span>
-      <p className="text-xs text-zinc-500">
-        Range {formatMoney(min)}–{formatMoney(max)}. Default{" "}
-        {formatMoney(defaultValue)}.
-      </p>
-      <div className="flex flex-wrap items-center gap-2">
-        <input
-          type="number"
-          inputMode="decimal"
-          disabled={disabled}
-          min={min / 1_000_000}
-          max={max / 1_000_000}
-          step={1}
-          value={Number.isFinite(millions) ? millions : ""}
-          onChange={(event) => {
-            const raw = event.target.value;
-            if (raw === "") {
-              return;
-            }
-            const parsed = Number(raw);
-            if (!Number.isFinite(parsed)) {
-              return;
-            }
-            const dollars = Math.round(parsed * 1_000_000);
-            onChange(Math.min(max, Math.max(min, dollars)));
-          }}
-          className="w-32 rounded-md border border-zinc-700 bg-zinc-950 px-3 py-2 text-zinc-100 outline-none ring-amber-500/40 focus:ring-2 disabled:opacity-50"
-        />
-        <span className="text-xs text-zinc-500">million dollars</span>
-      </div>
-    </label>
-  );
-}
-
-function InjuryFrequencyField({
-  value,
-  onChange,
-}: {
-  value: InjuryFrequency;
-  onChange: (value: InjuryFrequency) => void;
-}) {
-  const selectedIndex = INJURY_FREQUENCIES.indexOf(value);
-  const selectedLabel = INJURY_FREQUENCY_LABELS[value];
-
-  function setByIndex(index: number) {
-    const next = INJURY_FREQUENCIES[Math.max(0, Math.min(2, index))];
-    if (next) {
-      onChange(next);
-    }
-  }
-
-  return (
-    <div className="space-y-2 text-sm text-zinc-300">
-      <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
-        <span className="font-medium text-zinc-200">
-          Injury frequency — {selectedLabel}
-        </span>
-      </div>
-      <p className="text-xs text-zinc-500">
-        Affects how frequently players become injured during simulation.
-      </p>
-      <div
-        role="radiogroup"
-        aria-label={`Injury frequency — ${selectedLabel}`}
-        className="flex rounded-md border border-zinc-700 bg-zinc-950 p-0.5"
-        onKeyDown={(event) => {
-          if (event.key === "ArrowLeft" || event.key === "ArrowDown") {
-            event.preventDefault();
-            setByIndex(selectedIndex - 1);
-          } else if (event.key === "ArrowRight" || event.key === "ArrowUp") {
-            event.preventDefault();
-            setByIndex(selectedIndex + 1);
-          } else if (event.key === "Home") {
-            event.preventDefault();
-            setByIndex(0);
-          } else if (event.key === "End") {
-            event.preventDefault();
-            setByIndex(2);
-          }
-        }}
-      >
-        {INJURY_FREQUENCIES.map((frequency) => {
-          const selected = frequency === value;
-          return (
-            <button
-              key={frequency}
-              type="button"
-              role="radio"
-              aria-checked={selected}
-              tabIndex={selected ? 0 : -1}
-              onClick={() => onChange(frequency)}
-              className={`flex-1 rounded px-3 py-2 text-center text-sm transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-500 ${
-                selected
-                  ? "bg-amber-600 font-medium text-zinc-950"
-                  : "text-zinc-400 hover:bg-zinc-900 hover:text-zinc-200"
-              }`}
-            >
-              {INJURY_FREQUENCY_LABELS[frequency]}
-            </button>
-          );
-        })}
-      </div>
+    <div className="flex justify-between gap-3">
+      <dt className="text-zinc-500">{label}</dt>
+      <dd className="text-right font-medium text-zinc-100">{value}</dd>
     </div>
+  );
+}
+
+function ReviewGroup({
+  title,
+  onEdit,
+  children,
+}: {
+  title: string;
+  onEdit: () => void;
+  children: ReactNode;
+}) {
+  return (
+    <section
+      aria-label={title}
+      className="space-y-3 rounded-lg border border-zinc-800 bg-zinc-950/60 p-4"
+    >
+      <div className="flex items-center justify-between gap-3">
+        <h3 className="text-sm font-medium text-zinc-100">{title}</h3>
+        <button
+          type="button"
+          onClick={onEdit}
+          aria-label={`Edit ${title}`}
+          className={secondaryButtonClass}
+        >
+          Edit
+        </button>
+      </div>
+      <dl className="grid gap-3 text-sm sm:grid-cols-2">{children}</dl>
+    </section>
   );
 }
 
