@@ -2,27 +2,42 @@
 
 import Link from "next/link";
 import { useEffect, useRef } from "react";
+import { PlayerRatingGrid } from "@/components/basketball/PlayerRatingGrid";
 import { PlayerProfileHero } from "@/components/basketball/PlayerProfileHero";
 import { MoneyDisplay } from "@/components/owner/MoneyDisplay";
 import { Drawer } from "@/components/ui/Drawer";
-import { RatingBars } from "@/components/ui/RatingBars";
 import { Section } from "@/components/ui/Section";
 import { StatusBadge } from "@/components/ui/StatusBadge";
-import { TickerBar } from "@/components/ui/TickerBar";
+import { ScoreNumeral } from "@/components/ui/ScoreNumeral";
 import { cn, focusRingClass, touchTargetClass } from "@/components/ui/styles";
 import type { PlayerDrawerView } from "@/state/entity-drawer-selectors";
 
 function DrawerSkeleton() {
   return (
     <div
-      className="animate-pulse space-y-4"
+      className="animate-pulse space-y-4 motion-reduce:animate-none"
       aria-busy="true"
       aria-label="Loading"
     >
-      <div className="h-28 rounded-lg bg-zinc-800" />
-      <div className="h-8 w-2/3 rounded bg-zinc-800" />
-      <div className="h-24 rounded-lg bg-zinc-800" />
-      <div className="h-24 rounded-lg bg-zinc-800" />
+      <div className="h-56 rounded-xl bg-zinc-800 sm:h-52" />
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+        {Array.from({ length: 7 }, (_, i) => (
+          <div key={i} className="h-24 rounded-lg bg-zinc-800" />
+        ))}
+      </div>
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+        {Array.from({ length: 4 }, (_, i) => (
+          <div key={i} className="h-20 rounded-lg bg-zinc-800" />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function StatTile(props: { label: string; value: React.ReactNode }) {
+  return (
+    <div className="min-w-0 rounded-lg border border-surface-line border-b-team-ink bg-surface-deep/80 px-3 py-3">
+      <ScoreNumeral value={props.value} label={props.label} labelBelow />
     </div>
   );
 }
@@ -65,7 +80,6 @@ export function PlayerDrawer(props: {
       onOpenChange={props.onOpenChange}
       title={title}
       size="xl"
-      placement="modal"
       onBodyElement={(element) => {
         bodyRef.current = element;
       }}
@@ -139,69 +153,66 @@ export function PlayerDrawer(props: {
             position={props.view.identity.position}
             age={props.view.identity.age}
             overall={props.view.identity.overall}
+            potential={props.view.identity.potential}
+            archetypeLabel={props.view.identity.archetypeLabel}
+            heightInches={props.view.identity.heightInches}
+            weightPounds={props.view.identity.weightPounds}
             teamName={props.view.team.teamName}
             teamAbbreviation={props.view.team.abbreviation}
             branding={props.view.team.branding}
             availabilityStatus={props.view.availability.status}
           />
 
-          {props.view.ratings.keyAttributes.length > 0 ? (
-            <Section title="Key ratings" density="compact">
-              <RatingBars
-                aria-label="Key ratings"
-                items={props.view.ratings.keyAttributes.map((attribute) => ({
-                  label: attribute.attribute,
-                  rating: attribute.rating,
-                }))}
-              />
-            </Section>
-          ) : null}
+          <Section title="Ratings" density="compact">
+            <PlayerRatingGrid
+              key={props.view.playerId}
+              attributes={props.view.ratings.attributes}
+            />
+          </Section>
 
           <Section title="Season averages" density="compact">
-            <TickerBar
+            <div
+              role="group"
               aria-label="Season averages"
-              items={[
-                { label: "GP", value: props.view.performance.games },
-                {
-                  label: "PPG",
-                  value: props.view.performance.ppg ?? "—",
-                },
-                {
-                  label: "RPG",
-                  value: props.view.performance.rpg ?? "—",
-                },
-                {
-                  label: "APG",
-                  value: props.view.performance.apg ?? "—",
-                },
-              ]}
-            />
+              className="grid grid-cols-2 gap-2 sm:grid-cols-4"
+            >
+              <StatTile label="GP" value={props.view.performance.games} />
+              <StatTile label="PPG" value={props.view.performance.ppg ?? "—"} />
+              <StatTile label="RPG" value={props.view.performance.rpg ?? "—"} />
+              <StatTile label="APG" value={props.view.performance.apg ?? "—"} />
+            </div>
           </Section>
 
           {props.view.contract ? (
             <Section title="Contract" density="compact">
-              <TickerBar
+              <div
+                role="group"
                 aria-label="Contract"
-                items={[
-                  {
-                    label: "Salary",
-                    value:
-                      props.view.contract.salary != null ? (
+                className="grid grid-cols-3 gap-2"
+              >
+                <StatTile
+                  label="Salary"
+                  value={
+                    props.view.contract.salary != null ? (
+                      <span className="text-2xl sm:text-3xl">
                         <MoneyDisplay amount={props.view.contract.salary} />
-                      ) : (
-                        "—"
-                      ),
-                  },
-                  {
-                    label: "Years",
-                    value: props.view.contract.yearsRemaining,
-                  },
-                  {
-                    label: "Status",
-                    value: <StatusBadge label={props.view.contract.status} />,
-                  },
-                ]}
-              />
+                      </span>
+                    ) : (
+                      "—"
+                    )
+                  }
+                />
+                <StatTile
+                  label="Years"
+                  value={props.view.contract.yearsRemaining}
+                />
+                <div className="flex min-w-0 flex-col items-start justify-center gap-1 rounded-lg border border-surface-line border-b-team-ink bg-surface-deep/80 px-3 py-3">
+                  <StatusBadge label={props.view.contract.status} />
+                  <span className="font-mono text-[0.65rem] uppercase tracking-[0.18em] text-zinc-400">
+                    Status
+                  </span>
+                </div>
+              </div>
             </Section>
           ) : props.view.navigation.contractHref ? (
             <Section title="Contract" density="compact">

@@ -47,7 +47,7 @@ export function StaffDrawer(props: {
       onOpenChange={props.onOpenChange}
       title={title}
       description={props.view?.identity.roleLabel}
-      size="md"
+      size="lg"
       footer={
         props.view ? (
           <div className="flex flex-wrap gap-2">

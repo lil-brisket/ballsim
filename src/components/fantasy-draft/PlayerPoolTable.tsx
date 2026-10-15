@@ -2,16 +2,11 @@
 
 import { useMemo, useState } from "react";
 import { PlayerPortrait } from "@/components/basketball/PlayerPortrait";
+import { formatHeight } from "@/presentation/player-rating-categories";
 import type {
   FantasyDraftPoolPlayerView,
   FantasyDraftView,
 } from "@/state/selectors";
-
-function formatHeight(inches: number): string {
-  const feet = Math.floor(inches / 12);
-  const rem = inches % 12;
-  return `${feet}'${rem}"`;
-}
 
 export function PlayerPoolTable(props: {
   draft: FantasyDraftView;

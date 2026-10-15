@@ -11,7 +11,7 @@ export function SimulateToDateConfirm(props: {
 }) {
   return (
     <Overlay
-      className="flex items-end justify-center p-4 sm:items-center"
+      className="flex items-center justify-center p-4"
       onClick={props.onCancel}
     >
       <div

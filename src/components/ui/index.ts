@@ -2,11 +2,7 @@ export { ActionCard } from "@/components/ui/ActionCard";
 export { ArenaPanel } from "@/components/ui/ArenaPanel";
 export { DataTable } from "@/components/ui/DataTable";
 export { MobileListCard } from "@/components/ui/MobileListCard";
-export {
-  Drawer,
-  type DrawerPlacement,
-  type DrawerSize,
-} from "@/components/ui/Drawer";
+export { Drawer, type DrawerSize } from "@/components/ui/Drawer";
 export { EmptyState, ErrorState } from "@/components/ui/EmptyState";
 export { Metric } from "@/components/ui/Metric";
 export { Overlay } from "@/components/ui/Overlay";

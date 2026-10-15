@@ -239,12 +239,12 @@ export function RotationPlayerCard(props: {
   const stats = player.seasonStats;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/70 p-0 sm:items-center sm:p-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
       <div
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        className="flex max-h-[95vh] w-full max-w-lg flex-col overflow-hidden rounded-t-xl border border-zinc-700 bg-zinc-900 shadow-xl sm:rounded-xl"
+        className="flex max-h-[90dvh] w-full max-w-lg flex-col overflow-hidden rounded-xl border border-zinc-700 bg-zinc-900 shadow-xl"
       >
         <div className="flex items-start justify-between gap-3 border-b border-zinc-800 px-5 py-4">
           <div>

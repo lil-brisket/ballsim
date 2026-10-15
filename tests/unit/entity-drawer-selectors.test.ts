@@ -135,6 +135,35 @@ describe("toPlayerDrawerView", () => {
     expect(view!.navigation.playerHref).toContain(`/players/${playerId}`);
   });
 
+  it("returns potential, archetype label, size and raw attributes", () => {
+    const base = createTestGameState({ saveId: "save_drawer" });
+    const pid = asPlayerId("player_card_fields");
+    const player = createPlayer({
+      id: pid,
+      teamId: null,
+      contractId: null,
+      archetype: "floor_general",
+      heightInches: 79,
+      weightPounds: 210,
+      potential: { overall: 91 },
+    });
+    const state: GameState = {
+      ...base,
+      world: {
+        ...base.world,
+        players: { ...base.world.players, [pid]: player },
+      },
+    };
+    const view = toPlayerDrawerView(state, pid, "save_drawer");
+    expect(view).not.toBeNull();
+    expect(view!.identity.potential).toBe(91);
+    expect(view!.identity.archetypeLabel).toBe("Floor General");
+    expect(view!.identity.heightInches).toBe(79);
+    expect(view!.identity.weightPounds).toBe(210);
+    expect(view!.identity.nationality).toBe(player.nationality);
+    expect(view!.ratings.attributes).toEqual(player.attributes);
+  });
+
   it("includes contract only for controlled roster players", () => {
     const state = withSeededRosters(
       createTestGameState({ saveId: "save_drawer" }),

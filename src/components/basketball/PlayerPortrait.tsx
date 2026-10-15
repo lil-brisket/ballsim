@@ -13,14 +13,9 @@ import {
 
 export type PortraitState =
   /** Persisted procedural face, no raster overlay. */
-  | "assigned"
-  | "missing"
-  | "pending"
-  | "ready"
-  | "failed"
-  | "invalid";
+  "assigned" | "missing" | "pending" | "ready" | "failed" | "invalid";
 
-export type PlayerPortraitSize = "xs" | "sm" | "md" | "lg";
+export type PlayerPortraitSize = "xs" | "sm" | "md" | "lg" | "xl";
 
 export type PlayerPortraitProps = {
   playerId: string;
@@ -41,6 +36,7 @@ export const PORTRAIT_SIZE_PX: Record<PlayerPortraitSize, number> = {
   sm: 32,
   md: 64,
   lg: 96,
+  xl: 144,
 };
 
 const SIZE_CLASS: Record<PlayerPortraitSize, string> = {
@@ -48,6 +44,7 @@ const SIZE_CLASS: Record<PlayerPortraitSize, string> = {
   sm: "h-8 w-8",
   md: "h-16 w-16",
   lg: "h-24 w-24",
+  xl: "h-36 w-36",
 };
 
 const INITIALS_CLASS: Record<PlayerPortraitSize, string> = {
@@ -55,6 +52,7 @@ const INITIALS_CLASS: Record<PlayerPortraitSize, string> = {
   sm: "text-[10px]",
   md: "text-lg",
   lg: "text-2xl",
+  xl: "text-4xl",
 };
 
 const PLATE_FILLS = [
@@ -167,7 +165,9 @@ function resolveVisualState(
  * Always decorative (name is adjacent at every call site).
  */
 export function PlayerPortrait(props: PlayerPortraitProps) {
-  const face = isValidPortraitAssignment(props.portrait) ? props.portrait : null;
+  const face = isValidPortraitAssignment(props.portrait)
+    ? props.portrait
+    : null;
   const state = resolveVisualState(
     props.state ?? (face !== null ? "assigned" : "missing"),
     props.src,
@@ -177,7 +177,8 @@ export function PlayerPortrait(props: PlayerPortraitProps) {
   const compositionIndex = portraitCompositionIndex(hash);
   const initials = initialsOf(props.firstName, props.lastName);
   const px = PORTRAIT_SIZE_PX[props.size];
-  const showOverlay = state === "ready" && props.src != null && props.src.length > 0;
+  const showOverlay =
+    state === "ready" && props.src != null && props.src.length > 0;
 
   return (
     <span

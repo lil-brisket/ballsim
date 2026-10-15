@@ -1,29 +1,8 @@
 import { Section } from "@/components/owner/Section";
 import { AttributeBar } from "@/components/player-profile/AttributeBar";
 import type { PlayerAttributes } from "@/domain/entities/player";
+import { RATING_CATEGORIES } from "@/presentation/player-rating-categories";
 import type { PlayerProfileView } from "@/state/player-profile-selectors";
-
-const CATEGORIES: Array<{
-  title: string;
-  keys: Array<keyof PlayerAttributes>;
-}> = [
-  { title: "Scoring", keys: ["finishing", "midRange"] },
-  { title: "Shooting", keys: ["threePoint", "freeThrow"] },
-  { title: "Playmaking", keys: ["ballHandling", "passing"] },
-  { title: "Rebounding", keys: ["rebounding"] },
-  {
-    title: "Defense",
-    keys: ["perimeterDefense", "interiorDefense", "steal", "block"],
-  },
-  {
-    title: "Athleticism",
-    keys: ["speed", "strength", "athleticism", "stamina"],
-  },
-  {
-    title: "Mental",
-    keys: ["basketballIq", "offensiveIq", "defensiveIq", "consistency"],
-  },
-];
 
 function formatLabel(key: string): string {
   return key.replace(/([A-Z])/g, " $1");
@@ -50,10 +29,10 @@ export function PlayerAttributesPanel(props: { player: PlayerProfileView }) {
 
   return (
     <div className="space-y-6">
-      {CATEGORIES.map((category) => (
-        <Section key={category.title} title={category.title}>
+      {RATING_CATEGORIES.map((category) => (
+        <Section key={category.key} title={category.label}>
           <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-            {category.keys.map((key) => {
+            {category.attributes.map((key) => {
               const value = player.attributes[key];
               let highlight: "strong" | "weak" | null = null;
               if (value >= strongCut && value >= 75) highlight = "strong";

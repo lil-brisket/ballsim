@@ -1,3 +1,5 @@
+import { ARCHETYPE_LABELS } from "@/domain/entities/player-archetype";
+import type { PlayerAttributes } from "@/domain/entities/player";
 import type { PlayerPortraitAssignment } from "@/domain/entities/player-portrait";
 import { selectPlayerPortrait } from "@/state/player-portrait-selectors";
 import {
@@ -42,6 +44,11 @@ export type PlayerDrawerView = {
     position: string;
     age: number;
     overall: number;
+    potential: number;
+    archetypeLabel: string;
+    heightInches: number;
+    weightPounds: number;
+    nationality: string;
   };
   team: {
     teamId: string | null;
@@ -53,7 +60,8 @@ export type PlayerDrawerView = {
     status: string;
   };
   ratings: {
-    keyAttributes: Array<{ attribute: string; rating: number }>;
+    /** Raw attribute values; grouped into categories in presentation. */
+    attributes: PlayerAttributes;
   };
   /** Controlled-roster only. */
   contract: {
@@ -133,23 +141,6 @@ function round1(n: number): number {
   return Math.round(n * 10) / 10;
 }
 
-function topAttributeEntries(
-  attributes: Record<string, number>,
-  limit = 5,
-): Array<{ attribute: string; rating: number }> {
-  return Object.entries(attributes)
-    .sort((a, b) => b[1]! - a[1]!)
-    .slice(0, limit)
-    .map(([attribute, rating]) => ({ attribute, rating }));
-}
-
-function formatAttributeLabel(key: string): string {
-  return key
-    .replace(/([A-Z])/g, " $1")
-    .replace(/^./, (c) => c.toUpperCase())
-    .trim();
-}
-
 /**
  * Build a player drawer view. Public fields always; contract/dev hrefs only
  * when on the controlled roster.
@@ -207,6 +198,11 @@ export function toPlayerDrawerView(
       position: player.position,
       age: player.age,
       overall,
+      potential: player.potential.overall,
+      archetypeLabel: ARCHETYPE_LABELS[player.archetype],
+      heightInches: player.heightInches,
+      weightPounds: player.weightPounds,
+      nationality: player.nationality,
     },
     team: {
       teamId: player.teamId ? String(player.teamId) : null,
@@ -218,12 +214,7 @@ export function toPlayerDrawerView(
       status: player.availability,
     },
     ratings: {
-      keyAttributes: topAttributeEntries(
-        player.attributes as unknown as Record<string, number>,
-      ).map((a) => ({
-        attribute: formatAttributeLabel(a.attribute),
-        rating: a.rating,
-      })),
+      attributes: { ...player.attributes },
     },
     contract,
     performance: {

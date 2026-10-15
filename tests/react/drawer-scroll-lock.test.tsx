@@ -41,7 +41,7 @@ describe("drawer scroll lock", () => {
   });
 });
 
-describe("Drawer placement", () => {
+describe("Drawer layout", () => {
   beforeEach(() => {
     resetDrawerScrollLockForTests();
   });
@@ -50,29 +50,9 @@ describe("Drawer placement", () => {
     resetDrawerScrollLockForTests();
   });
 
-  it("keeps the default rail classes for drawer placement", () => {
+  it("always renders as a centered modal", () => {
     const { unmount } = render(
-      <Drawer open onOpenChange={() => undefined} title="Team">
-        Body
-      </Drawer>,
-    );
-    const dialog = screen.getByRole("dialog");
-    expect(dialog.getAttribute("data-drawer-placement")).toBe("drawer");
-    expect(dialog.className).toMatch(/sm:border-l/);
-    expect(dialog.className).toMatch(/max-w-md/);
-    expect(dialog.parentElement?.className).toMatch(/sm:justify-end/);
-    unmount();
-  });
-
-  it("centers the modal placement without rail classes", () => {
-    const { unmount } = render(
-      <Drawer
-        open
-        onOpenChange={() => undefined}
-        title="Player"
-        placement="modal"
-        size="xl"
-      >
+      <Drawer open onOpenChange={() => undefined} title="Player" size="xl">
         Body
       </Drawer>,
     );

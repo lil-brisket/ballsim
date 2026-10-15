@@ -48,7 +48,7 @@ export function TeamDrawer(props: {
       open={props.open}
       onOpenChange={props.onOpenChange}
       title={title}
-      size="md"
+      size="lg"
       footer={
         props.view ? (
           <div className="flex flex-wrap gap-2">

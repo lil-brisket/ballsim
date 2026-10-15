@@ -15,7 +15,6 @@ import {
 import { cn, focusRingClass, touchTargetClass } from "@/components/ui/styles";
 
 export type DrawerSize = "sm" | "md" | "lg" | "xl";
-export type DrawerPlacement = "drawer" | "modal";
 
 const SIZE_CLASS: Record<DrawerSize, string> = {
   sm: "max-w-sm",
@@ -45,16 +44,12 @@ export function Drawer(props: {
   children: React.ReactNode;
   footer?: React.ReactNode;
   size?: DrawerSize;
-  /** Right-rail (default) or centered modal. Team/Staff/Calendar stay on drawer. */
-  placement?: DrawerPlacement;
   /** Scrollable body node — used to reset scroll without remounting. */
   onBodyElement?: (element: HTMLDivElement | null) => void;
   /** Accessible label override when header slot replaces title text. */
   "aria-label"?: string;
 }) {
   const size = props.size ?? "md";
-  const placement = props.placement ?? "drawer";
-  const isModal = placement === "modal";
   const titleId = useId();
   const descriptionId = useId();
   const panelRef = useRef<HTMLDivElement>(null);
@@ -128,20 +123,13 @@ export function Drawer(props: {
 
   const panel = (
     <div
-      data-drawer-placement={placement}
-      className={
-        isModal
-          ? "fixed inset-0 z-50 flex items-stretch justify-center p-0 sm:items-center sm:p-6"
-          : "fixed inset-0 z-50 flex items-end justify-center sm:items-stretch sm:justify-end"
-      }
+      data-drawer-placement="modal"
+      className="fixed inset-0 z-50 flex items-stretch justify-center p-0 sm:items-center sm:p-6"
     >
       <button
         type="button"
         aria-label="Close drawer"
-        className={cn(
-          "drawer-backdrop-enter absolute inset-0 bg-black/60",
-          isModal && "backdrop-blur-sm",
-        )}
+        className="drawer-backdrop-enter absolute inset-0 bg-black/60 backdrop-blur-sm"
         onClick={close}
       />
       <div
@@ -153,16 +141,12 @@ export function Drawer(props: {
           props.header ? (props["aria-label"] ?? props.title) : undefined
         }
         aria-describedby={props.description ? descriptionId : undefined}
-        data-drawer-placement={placement}
+        data-drawer-placement="modal"
         className={cn(
           "relative z-10 flex w-full flex-col border-zinc-700 bg-zinc-900 shadow-xl",
-          isModal
-            ? "h-[100dvh] max-h-[100dvh] rounded-none border-0 sm:h-auto sm:max-h-[min(90dvh,52rem)] sm:rounded-xl sm:border"
-            : "max-h-[90dvh] rounded-t-xl border-t sm:h-dvh sm:max-h-none sm:rounded-none sm:border-l sm:border-t-0",
+          "h-[100dvh] max-h-[100dvh] rounded-none border-0 sm:h-auto sm:max-h-[min(90dvh,52rem)] sm:rounded-xl sm:border",
           SIZE_CLASS[size],
-          isModal
-            ? "drawer-panel-enter-modal"
-            : "drawer-panel-enter-mobile sm:drawer-panel-enter-desktop",
+          "drawer-panel-enter-modal",
         )}
       >
         <div className="flex shrink-0 items-start gap-3 border-b border-zinc-800 px-4 py-3 sm:pt-[max(0.75rem,env(safe-area-inset-top))]">

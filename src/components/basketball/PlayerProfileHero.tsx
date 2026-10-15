@@ -1,17 +1,35 @@
 import { InjuryBadge } from "@/components/basketball/InjuryBadge";
 import { PlayerPortrait } from "@/components/basketball/PlayerPortrait";
 import type { PlayerPortraitAssignment } from "@/domain/entities/player-portrait";
-import { ArenaPanel } from "@/components/ui/ArenaPanel";
 import { ScoreNumeral } from "@/components/ui/ScoreNumeral";
 import { TeamBadge } from "@/components/ui/TeamBadge";
 import { TeamThemeScope } from "@/components/ui/TeamThemeScope";
+import { formatHeight } from "@/presentation/player-rating-categories";
 import { ratingTier } from "@/presentation/rating-tier";
 import type { TeamBrandingView } from "@/state/team-branding-view";
 
+const HEX_CLIP =
+  "polygon(50% 0%, 100% 18%, 100% 78%, 50% 100%, 0% 78%, 0% 18%)";
+
+function Chip(props: { children: React.ReactNode; accent?: boolean }) {
+  return (
+    <span
+      className={
+        props.accent
+          ? "inline-flex items-center rounded bg-team px-2 py-0.5 font-mono text-[0.7rem] font-bold uppercase tracking-[0.14em] text-on-team"
+          : "inline-flex items-center rounded border border-white/20 bg-black/30 px-2 py-0.5 font-mono text-[0.7rem] uppercase tracking-[0.12em] text-zinc-100"
+      }
+    >
+      {props.children}
+    </span>
+  );
+}
+
 /**
- * Large portrait on a plate in the player's team colours, with the overall
- * rating as the dominant element. Themed by the player's team (neutral amber
- * for free agents), not by the controlled franchise.
+ * NBA 2K-style banner: team-colour gradient with a faded team watermark, a
+ * bottom-anchored portrait, the last name as the dominant headline and a
+ * tier-coloured OVR hex badge. Themed by the player's team (neutral amber for
+ * free agents), not by the controlled franchise.
  */
 export function PlayerProfileHero(props: {
   playerId: string;
@@ -22,33 +40,51 @@ export function PlayerProfileHero(props: {
   position: string;
   age: number;
   overall: number;
+  potential?: number;
+  archetypeLabel?: string;
+  heightInches?: number;
+  weightPounds?: number;
   teamName: string | null;
   teamAbbreviation: string | null;
   branding: TeamBrandingView | null;
   availabilityStatus: string;
 }) {
-  const name = `${props.firstName} ${props.lastName}`;
   const teamLabel = props.teamName ?? "Free agent";
   const tier = ratingTier(props.overall);
+  const watermark = props.teamAbbreviation ?? "FA";
 
   return (
     <TeamThemeScope branding={props.branding}>
-      <ArenaPanel
-        as="div"
-        hero
-        edge="left"
-        density="comfortable"
-        className="enter-up"
+      <div
+        data-tier={tier.id}
+        className="enter-up relative isolate overflow-hidden rounded-xl border border-team-ink/50"
+        style={{
+          background:
+            "linear-gradient(135deg, var(--team-primary) 0%, rgb(var(--team-primary-rgb) / 0.55) 48%, var(--surface-deep) 100%)",
+        }}
       >
         <div
-          data-tier={tier.id}
-          className="flex flex-col gap-4 sm:flex-row sm:items-center sm:gap-6"
+          aria-hidden
+          className="pointer-events-none absolute inset-0 -z-10"
+          style={{
+            background:
+              "repeating-linear-gradient(115deg, rgb(255 255 255 / 0.05) 0 10px, transparent 10px 24px)",
+          }}
+        />
+        <span
+          aria-hidden
+          data-testid="hero-watermark"
+          className="font-display pointer-events-none absolute -bottom-4 right-0 -z-10 select-none text-[8rem] font-extrabold uppercase leading-none tracking-tight text-white/10 sm:text-[10rem]"
         >
+          {watermark}
+        </span>
+
+        <div className="grid grid-cols-[auto_minmax(0,1fr)] items-end gap-x-4 gap-y-3 px-4 pt-5 sm:grid-cols-[auto_minmax(0,1fr)_auto] sm:gap-x-6 sm:px-6 sm:pt-6">
           <span
-            className="inline-flex shrink-0 self-start rounded-2xl border border-team-ink/40 p-2 sm:self-center"
+            className="order-1 inline-flex shrink-0 overflow-hidden rounded-t-2xl"
             style={{
               background:
-                "linear-gradient(160deg, var(--team-primary), rgb(var(--team-primary-rgb) / 0.35))",
+                "linear-gradient(160deg, rgb(255 255 255 / 0.18), rgb(0 0 0 / 0.35))",
             }}
           >
             <PlayerPortrait
@@ -56,18 +92,64 @@ export function PlayerProfileHero(props: {
               firstName={props.firstName}
               lastName={props.lastName}
               portrait={props.portrait}
-              size="lg"
+              size="xl"
+              className="border-0"
             />
           </span>
 
-          <div className="min-w-0 flex-1">
-            <h3 className="font-display text-3xl font-extrabold uppercase leading-none tracking-wide text-zinc-50 sm:text-4xl">
-              {name}
-            </h3>
-            <p className="mt-1.5 font-mono text-xs uppercase tracking-[0.14em] text-zinc-300">
-              {props.position} · Age {props.age}
+          <div className="order-2 justify-self-end self-start sm:order-3 sm:self-center sm:pb-5">
+            <div
+              className="relative h-36 w-32 sm:h-40 sm:w-36"
+              style={{
+                filter: "drop-shadow(0 0 14px rgb(var(--tier-rgb) / 0.6))",
+              }}
+            >
+              <div
+                className="absolute inset-0 bg-tier"
+                style={{ clipPath: HEX_CLIP }}
+              />
+              <div
+                className="absolute inset-[3px] flex flex-col items-center justify-center gap-1 bg-surface-deep"
+                style={{ clipPath: HEX_CLIP }}
+              >
+                <ScoreNumeral
+                  value={props.overall}
+                  label="OVR"
+                  labelBelow
+                  size="lg"
+                  tone="tier"
+                  align="center"
+                />
+                {props.potential != null ? (
+                  <span className="rounded-full border border-tier px-2 py-px font-mono text-[0.65rem] font-semibold uppercase tracking-[0.12em] text-tier">
+                    POT {props.potential}
+                  </span>
+                ) : null}
+              </div>
+            </div>
+          </div>
+
+          <div className="order-3 col-span-2 min-w-0 pb-4 sm:order-2 sm:col-span-1 sm:pb-5">
+            <p className="font-mono text-xs uppercase tracking-[0.24em] text-zinc-200">
+              {props.firstName}
             </p>
-            <p className="mt-2 flex flex-wrap items-center gap-2 text-sm text-zinc-200">
+            <h3 className="font-display break-words text-4xl font-extrabold uppercase leading-none tracking-wide text-white [text-shadow:0_2px_12px_rgb(0_0_0_/_0.5)] sm:text-6xl">
+              {props.lastName}
+            </h3>
+            <div className="mt-3 flex flex-wrap items-center gap-1.5">
+              <Chip accent>{props.position}</Chip>
+              {props.archetypeLabel ? (
+                <Chip>{props.archetypeLabel}</Chip>
+              ) : null}
+              {props.heightInches != null ? (
+                <Chip>{formatHeight(props.heightInches)}</Chip>
+              ) : null}
+              {props.weightPounds != null ? (
+                <Chip>{props.weightPounds} lbs</Chip>
+              ) : null}
+              <Chip>Age {props.age}</Chip>
+            </div>
+            <div className="mt-3 flex flex-wrap items-center gap-2 text-sm text-zinc-100">
               {props.branding ? (
                 <TeamBadge
                   branding={props.branding}
@@ -76,29 +158,24 @@ export function PlayerProfileHero(props: {
                   decorative
                 />
               ) : props.teamAbbreviation ? (
-                <span className="inline-flex h-8 min-w-8 items-center justify-center rounded-md border border-team-ink/40 px-1 font-mono text-[10px] font-semibold text-team-ink">
+                <span className="inline-flex h-8 min-w-8 items-center justify-center rounded-md border border-white/30 px-1 font-mono text-[10px] font-semibold text-white">
                   {props.teamAbbreviation}
                 </span>
               ) : null}
-              <span>{teamLabel}</span>
-            </p>
-            <div className="mt-3">
+              <span className="font-medium">{teamLabel}</span>
               <InjuryBadge status={props.availabilityStatus} />
             </div>
           </div>
-
-          <div className="shrink-0 self-start rounded-xl border-2 border-tier bg-surface-deep/60 px-5 py-3 sm:self-center">
-            <ScoreNumeral
-              value={props.overall}
-              label="Overall"
-              labelBelow
-              size="xl"
-              tone="tier"
-              align="center"
-            />
-          </div>
         </div>
-      </ArenaPanel>
+        <div
+          aria-hidden
+          className="h-1 w-full"
+          style={{
+            background:
+              "linear-gradient(90deg, var(--team-secondary), transparent)",
+          }}
+        />
+      </div>
     </TeamThemeScope>
   );
 }

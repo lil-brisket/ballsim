@@ -31,6 +31,11 @@ const samplePlayer = {
     position: "PG",
     age: 24,
     overall: 78,
+    potential: 88,
+    archetypeLabel: "Floor General",
+    heightInches: 79,
+    weightPounds: 205,
+    nationality: "USA",
   },
   team: {
     teamId: "team_1",
@@ -40,7 +45,27 @@ const samplePlayer = {
   },
   availability: { status: "available" },
   ratings: {
-    keyAttributes: [{ attribute: "Ball Handle", rating: 82 }],
+    attributes: {
+      speed: 60,
+      strength: 60,
+      athleticism: 60,
+      stamina: 60,
+      finishing: 60,
+      midRange: 60,
+      threePoint: 60,
+      freeThrow: 60,
+      ballHandling: 82,
+      passing: 70,
+      perimeterDefense: 60,
+      interiorDefense: 60,
+      steal: 60,
+      block: 60,
+      rebounding: 60,
+      basketballIq: 60,
+      offensiveIq: 60,
+      defensiveIq: 60,
+      consistency: 60,
+    },
   },
   contract: null,
   performance: { games: 10, ppg: 18.2, rpg: 4.1, apg: 6.5 },
@@ -201,9 +226,10 @@ describe("EntityDrawerProvider", () => {
     });
     expect(screen.getByText("View schedule")).toBeTruthy();
     const teamDialog = screen.getByRole("dialog");
-    expect(teamDialog.className).toMatch(/sm:border-l/);
-    expect(teamDialog.className).toMatch(/max-w-md/);
-    expect(teamDialog.parentElement?.className).toMatch(/sm:justify-end/);
+    expect(teamDialog.getAttribute("data-drawer-placement")).toBe("modal");
+    expect(teamDialog.className).toMatch(/max-w-lg/);
+    expect(teamDialog.parentElement?.className).toMatch(/sm:items-center/);
+    expect(teamDialog.parentElement?.className).not.toMatch(/sm:justify-end/);
     expect(document.body.style.overflow).toBe("hidden");
     fireEvent.click(screen.getByRole("button", { name: "Close" }));
     await waitFor(() => {

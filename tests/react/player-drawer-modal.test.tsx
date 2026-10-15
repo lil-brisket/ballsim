@@ -1,8 +1,37 @@
 import { describe, expect, it, vi, beforeEach, afterEach } from "vitest";
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import {
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
 import { PlayerDrawer } from "@/components/basketball/PlayerDrawer";
 import { resetDrawerScrollLockForTests } from "@/components/ui/drawer-scroll-lock";
+import type { PlayerAttributes } from "@/domain/entities/player";
 import type { PlayerDrawerView } from "@/state/entity-drawer-selectors";
+
+const BASE_ATTRIBUTES: PlayerAttributes = {
+  speed: 60,
+  strength: 60,
+  athleticism: 60,
+  stamina: 60,
+  finishing: 60,
+  midRange: 60,
+  threePoint: 60,
+  freeThrow: 60,
+  ballHandling: 90,
+  passing: 80,
+  perimeterDefense: 60,
+  interiorDefense: 60,
+  steal: 60,
+  block: 60,
+  rebounding: 60,
+  basketballIq: 60,
+  offensiveIq: 60,
+  defensiveIq: 60,
+  consistency: 60,
+};
 
 function playerView(
   overrides: Partial<PlayerDrawerView> = {},
@@ -16,6 +45,11 @@ function playerView(
       position: "PG",
       age: 24,
       overall: 78,
+      potential: 88,
+      archetypeLabel: "Floor General",
+      heightInches: 79,
+      weightPounds: 205,
+      nationality: "USA",
     },
     team: {
       teamId: "team_1",
@@ -24,9 +58,7 @@ function playerView(
       branding: null,
     },
     availability: { status: "available" },
-    ratings: {
-      keyAttributes: [{ attribute: "Ball Handle", rating: 82 }],
-    },
+    ratings: { attributes: { ...BASE_ATTRIBUTES } },
     contract: null,
     performance: { games: 10, ppg: 18.2, rpg: 4.1, apg: 6.5 },
     navigation: {
@@ -67,17 +99,20 @@ describe("PlayerDrawer modal", () => {
     expect(dialog.parentElement?.className).not.toMatch(/sm:justify-end/);
 
     expect(screen.getAllByText("Alex Rivera").length).toBeGreaterThan(0);
-    expect(screen.getByText(/PG · Age 24/)).toBeTruthy();
+    expect(screen.getByText("PG")).toBeTruthy();
+    expect(screen.getByText("Floor General")).toBeTruthy();
+    expect(screen.getByText(`6'7"`)).toBeTruthy();
+    expect(screen.getByText("205 lbs")).toBeTruthy();
+    expect(screen.getByText("Age 24")).toBeTruthy();
+    expect(screen.getByText("POT 88")).toBeTruthy();
     expect(screen.getByText("Harbor Waves")).toBeTruthy();
     expect(screen.getByText("78")).toBeTruthy();
-    expect(screen.getByText("Overall")).toBeTruthy();
+    expect(screen.getByText("OVR")).toBeTruthy();
     expect(screen.getByText("available")).toBeTruthy();
     expect(screen.getByText("AR")).toBeTruthy();
     expect(screen.queryByText("Availability")).toBeNull();
 
-    expect(screen.getByText("Key ratings")).toBeTruthy();
-    expect(screen.getByText("Ball Handle")).toBeTruthy();
-    expect(screen.getByText("82")).toBeTruthy();
+    expect(screen.getByText("Ratings")).toBeTruthy();
     expect(screen.getByText("Season averages")).toBeTruthy();
     expect(screen.getByText("18.2")).toBeTruthy();
 
@@ -237,14 +272,36 @@ describe("PlayerDrawer modal", () => {
     unmount();
   });
 
-  it("omits key ratings when none are present", () => {
-    const view = playerView({
-      ratings: { keyAttributes: [] },
-    });
+  it("renders seven category tiles and expands sub-attributes on click", () => {
     const { unmount } = render(
-      <PlayerDrawer open status="ready" view={view} onOpenChange={vi.fn()} />,
+      <PlayerDrawer
+        open
+        status="ready"
+        view={playerView()}
+        onOpenChange={vi.fn()}
+      />,
     );
-    expect(screen.queryByText("Key ratings")).toBeNull();
+    const list = screen.getByRole("list", { name: "Category ratings" });
+    expect(within(list).getAllByRole("button")).toHaveLength(7);
+
+    // Best category (Playmaking) starts open.
+    const playmaking = within(list).getByRole("button", { name: /Playmaking/ });
+    expect(playmaking.getAttribute("aria-expanded")).toBe("true");
+    expect(screen.getByText("Ball Handling")).toBeTruthy();
+    expect(screen.getByText("Passing")).toBeTruthy();
+    expect(screen.queryByText("Finishing")).toBeNull();
+
+    const inside = within(list).getByRole("button", { name: /Inside Scoring/ });
+    expect(inside.getAttribute("aria-expanded")).toBe("false");
+    fireEvent.click(inside);
+    expect(inside.getAttribute("aria-expanded")).toBe("true");
+    expect(playmaking.getAttribute("aria-expanded")).toBe("false");
+    expect(screen.getByText("Finishing")).toBeTruthy();
+    expect(screen.queryByText("Ball Handling")).toBeNull();
+
+    fireEvent.click(inside);
+    expect(inside.getAttribute("aria-expanded")).toBe("false");
+    expect(screen.queryByText("Finishing")).toBeNull();
     unmount();
   });
 
@@ -259,6 +316,11 @@ describe("PlayerDrawer modal", () => {
         position: "C",
         age: 29,
         overall: 84,
+        potential: 90,
+        archetypeLabel: "Rim Protector",
+        heightInches: 83,
+        weightPounds: 245,
+        nationality: "USA",
       },
       team: {
         teamId: "team_2",
@@ -268,7 +330,12 @@ describe("PlayerDrawer modal", () => {
       },
       performance: { games: 4, ppg: 11.1, rpg: 8.4, apg: 1.2 },
       ratings: {
-        keyAttributes: [{ attribute: "Rebounding", rating: 90 }],
+        attributes: {
+          ...BASE_ATTRIBUTES,
+          ballHandling: 40,
+          passing: 40,
+          rebounding: 95,
+        },
       },
     });
 
@@ -303,7 +370,7 @@ describe("PlayerDrawer modal", () => {
     expect(screen.queryByText("Alex Rivera")).toBeNull();
     expect(screen.getByText("Metro Foxes")).toBeTruthy();
     expect(screen.getByText("11.1")).toBeTruthy();
-    expect(screen.getByText("Rebounding")).toBeTruthy();
+    expect(screen.getByText("Rebounding breakdown")).toBeTruthy();
     if (body instanceof HTMLElement) {
       expect(body.scrollTop).toBe(0);
     }
