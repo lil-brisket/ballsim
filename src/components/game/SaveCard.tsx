@@ -88,6 +88,12 @@ export function SaveCard(props: {
                   {preview.name}
                 </p>
                 <StatusBadge label={modeDef.name} tone="info" />
+                {preview.participantCount != null ? (
+                  <StatusBadge
+                    label={`Local shared · ${preview.participantCount} players`}
+                    tone="info"
+                  />
+                ) : null}
               </div>
               <p className="text-sm text-zinc-200">{teamLabel}</p>
               <p className="font-mono text-xs text-zinc-300">

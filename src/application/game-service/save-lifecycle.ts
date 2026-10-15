@@ -6,9 +6,11 @@ import {
   maxControlledTeamCountForLeague,
 } from "@/domain/game-settings";
 import {
+  controlledTeamCountForSetup,
   LOCAL_SHARED_LEAGUE_AVAILABLE,
   parseParticipationSetup,
 } from "@/domain/participation";
+import { createLocalSharedParticipation } from "@/systems/participation";
 import type {
   SaveGameStore,
   SaveGameSummary,
@@ -79,6 +81,14 @@ export async function createNewOwnerSave(
   ) {
     return fail("Local shared leagues are not available yet.");
   }
+  const sharedTeamCount = controlledTeamCountForSetup(participation.value);
+  const gameSettings: GameSettings =
+    sharedTeamCount === null
+      ? validated.settings
+      : {
+          ...validated.settings,
+          ownership: { controlledTeamCount: sharedTeamCount },
+        };
 
   let rosterPackage = input.rosterPackage;
   if (
@@ -117,7 +127,7 @@ export async function createNewOwnerSave(
     saveId,
     rngSeed: input.rngSeed,
     nowIso,
-    settings: validated.settings,
+    settings: gameSettings,
   });
 
   if (usesRosterPackage && rosterPackage !== undefined) {
@@ -149,6 +159,19 @@ export async function createNewOwnerSave(
         updatedAt: nowIso,
       },
     };
+    if (participation.value.mode === "local_shared") {
+      state = {
+        ...state,
+        user: {
+          ...state.user,
+          participation: createLocalSharedParticipation(
+            participation.value.participants,
+            state.user.activeOwnerTeamId,
+            () => crypto.randomUUID(),
+          ),
+        },
+      };
+    }
     validateGameState(state);
   } catch (error) {
     return fail(
@@ -207,6 +230,8 @@ export type OwnerSavePreview =
       teamSelectionLocked: boolean;
       /** Controlled team's current record, for the save card. */
       record?: { wins: number; losses: number };
+      /** Local shared league player count; null for single-player saves. */
+      participantCount?: number | null;
     }
   | {
       ok: false;
@@ -255,6 +280,7 @@ export async function listOwnerSavePreviews(
         currentDate: dashboard.currentDate,
         seasonPhase: dashboard.seasonPhase,
         teamSelectionLocked: dashboard.teamSelectionLocked,
+        participantCount: dashboard.participation?.participants.length ?? null,
         record: {
           wins: dashboard.controlledStanding.wins,
           losses: dashboard.controlledStanding.losses,

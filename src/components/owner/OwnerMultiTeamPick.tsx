@@ -19,6 +19,13 @@ import type { TeamListEntry } from "@/state/selectors";
 
 type IdentityDraftMap = Record<string, ControlledFranchiseIdentityDraft>;
 
+export type FranchisePickParticipant = {
+  id: string;
+  displayName: string;
+  isHost: boolean;
+  plannedTeamCount: number;
+};
+
 type FilterOption = {
   id: string;
   label: string;
@@ -189,6 +196,8 @@ export function OwnerMultiTeamPick(props: {
   controlledTeamCount: number;
   teams: readonly TeamListEntry[];
   divisionsEnabled?: boolean;
+  /** Local shared leagues: per-participant franchise assignment. */
+  participants?: readonly FranchisePickParticipant[];
 }) {
   const {
     saveId,
@@ -196,7 +205,10 @@ export function OwnerMultiTeamPick(props: {
     controlledTeamCount,
     teams,
     divisionsEnabled = true,
+    participants,
   } = props;
+  const hostId =
+    participants?.find((p) => p.isHost)?.id ?? participants?.[0]?.id;
 
   const sortedTeams = useMemo(
     () =>
@@ -215,6 +227,9 @@ export function OwnerMultiTeamPick(props: {
     const anchor = teams.find((team) => team.id === anchorTeamId);
     return anchor ? { [anchorTeamId]: seedDraft(anchor) } : {};
   });
+  const [assignments, setAssignments] = useState<Record<string, string>>(() =>
+    participants && hostId ? { [anchorTeamId]: hostId } : {},
+  );
   const [expandedId, setExpandedId] = useState<string | null>(anchorTeamId);
   const [conferenceFilter, setConferenceFilter] = useState<string | null>(null);
   const [divisionFilter, setDivisionFilter] = useState<string | null>(null);
@@ -300,8 +315,29 @@ export function OwnerMultiTeamPick(props: {
   }, [selectedIds, drafts, teams, selectedDrafts]);
 
   const exactCount = selectedIds.length === controlledTeamCount;
+
+  const assignedCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+    for (const id of selectedIds) {
+      const owner = assignments[id];
+      if (owner) {
+        counts[owner] = (counts[owner] ?? 0) + 1;
+      }
+    }
+    return counts;
+  }, [selectedIds, assignments]);
+
+  const assignmentsOk =
+    !participants ||
+    (selectedIds.every((id) => Boolean(assignments[id])) &&
+      participants.every(
+        (p) => (assignedCounts[p.id] ?? 0) === p.plannedTeamCount,
+      ));
+
   const allValid =
-    exactCount && selectedIds.every((id) => validationById[id]?.ok === true);
+    exactCount &&
+    assignmentsOk &&
+    selectedIds.every((id) => validationById[id]?.ok === true);
 
   function ensureDraft(team: TeamListEntry): ControlledFranchiseIdentityDraft {
     return drafts[team.id] ?? seedDraft(team);
@@ -316,6 +352,11 @@ export function OwnerMultiTeamPick(props: {
         if (expandedId === teamId) {
           setExpandedId(anchorTeamId);
         }
+        setAssignments((prev) => {
+          const next = { ...prev };
+          delete next[teamId];
+          return next;
+        });
         return current.filter((id) => id !== teamId);
       }
       if (current.length >= controlledTeamCount) {
@@ -328,6 +369,19 @@ export function OwnerMultiTeamPick(props: {
           [teamId]: prev[teamId] ?? seedDraft(team),
         }));
         setExpandedId(teamId);
+        if (participants) {
+          const counts: Record<string, number> = {};
+          for (const id of current) {
+            const owner = assignments[id];
+            if (owner) counts[owner] = (counts[owner] ?? 0) + 1;
+          }
+          const target = participants.find(
+            (p) => (counts[p.id] ?? 0) < p.plannedTeamCount,
+          );
+          if (target) {
+            setAssignments((prev) => ({ ...prev, [teamId]: target.id }));
+          }
+        }
       }
       return [...current, teamId];
     });
@@ -353,6 +407,7 @@ export function OwnerMultiTeamPick(props: {
           secondaryColor: draft.secondaryColor,
           accentColor: draft.accentColor,
           logoId: draft.logoId,
+          ...(participants ? { participantId: assignments[draft.teamId] } : {}),
         })),
       ),
     );
@@ -467,6 +522,36 @@ export function OwnerMultiTeamPick(props: {
           </button>
         </div>
 
+        {checked && participants ? (
+          <div className="px-3 pb-3">
+            <label className="flex items-center gap-2 text-xs text-zinc-400">
+              <span>Managed by</span>
+              <select
+                aria-label={`Managed by for ${team.city} ${team.name}`}
+                value={assignments[team.id] ?? ""}
+                disabled={isAnchor}
+                onChange={(event) =>
+                  setAssignments((prev) => ({
+                    ...prev,
+                    [team.id]: event.target.value,
+                  }))
+                }
+                className="rounded-md border border-zinc-700 bg-zinc-900 px-2 py-1 text-sm text-zinc-100 disabled:opacity-60"
+              >
+                {assignments[team.id] ? null : (
+                  <option value="">Unassigned</option>
+                )}
+                {participants.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.displayName}
+                    {p.isHost ? " (host)" : ""}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </div>
+        ) : null}
+
         {expanded && draft ? (
           <div className="px-3 pb-3">
             <ControlledFranchiseIdentityEditor
@@ -491,9 +576,19 @@ export function OwnerMultiTeamPick(props: {
             : `Select ${controlledTeamCount} franchises`}
         </h2>
         <p className="mt-1 text-sm text-zinc-400">
-          Select the franchises you want to control, then customize each
-          team&apos;s identity. Generated names, colours, and logos are used as
-          defaults.
+          {participants ? (
+            <>
+              Choose each player&apos;s franchises, then customize each
+              team&apos;s identity. Generated names, colours, and logos are used
+              as defaults.
+            </>
+          ) : (
+            <>
+              Select the franchises you want to control, then customize each
+              team&apos;s identity. Generated names, colours, and logos are used
+              as defaults.
+            </>
+          )}
         </p>
       </div>
 
@@ -582,6 +677,31 @@ export function OwnerMultiTeamPick(props: {
           </div>
         </>
       )}
+
+      {participants ? (
+        <p className="text-sm text-zinc-300" data-testid="participant-progress">
+          {participants
+            .map(
+              (p) =>
+                `${p.displayName}${p.isHost ? " (host)" : ""}: ${assignedCounts[p.id] ?? 0} of ${p.plannedTeamCount}`,
+            )
+            .join(" · ")}
+        </p>
+      ) : null}
+
+      {participants && exactCount && !assignmentsOk ? (
+        <p role="status" className="text-sm text-amber-500">
+          Each player needs exactly their planned number of franchises:{" "}
+          {participants
+            .filter((p) => (assignedCounts[p.id] ?? 0) !== p.plannedTeamCount)
+            .map(
+              (p) =>
+                `${p.displayName} has ${assignedCounts[p.id] ?? 0} of ${p.plannedTeamCount}`,
+            )
+            .join(", ")}
+          .
+        </p>
+      ) : null}
 
       {!exactCount ? (
         <p role="status" className="text-sm text-amber-500">

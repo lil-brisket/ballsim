@@ -15,6 +15,16 @@ import {
 } from "@/systems/confirm-controlled-franchises";
 import { applyOwnerCitySelection } from "@/systems/owner-city-selection";
 import { applyOwnerFranchiseBranding } from "@/systems/owner-franchise-branding";
+import {
+  type ParticipationResult,
+  participantTeamAccessError,
+  withActiveParticipant,
+  withActiveParticipantReady,
+  withAllParticipantsReady,
+  withHostAnchorTeam,
+  withTeamAddedToActiveParticipant,
+} from "@/systems/participation";
+import type { GameState } from "@/state/game-state";
 import type { OwnerCommandResult } from "@/application/game-service/types";
 import {
   getStore,
@@ -79,11 +89,15 @@ export async function selectOwnerTeam(
       franchiseIdentityConfirmed: true,
     },
   );
+  const anchored = withHostAnchorTeam(working, typedTeamId);
+  if (!anchored.ok) {
+    return fail(anchored.error);
+  }
 
   try {
     const saved = await persistWorkingState(
       saveId,
-      working,
+      anchored.state,
       loaded.state.meta.rngState,
       saveStore,
     );
@@ -110,6 +124,10 @@ export async function switchActiveOwnerTeam(
   const typedTeamId = asTeamId(teamId);
   if (!isOwnedFranchise(loaded.state, typedTeamId)) {
     return fail(`Team "${teamId}" is not one of your owned franchises.`);
+  }
+  const accessError = participantTeamAccessError(loaded.state, typedTeamId);
+  if (accessError) {
+    return fail(accessError);
   }
   if (loaded.state.user.activeOwnerTeamId === typedTeamId) {
     return withDashboard(loaded);
@@ -161,11 +179,11 @@ export async function takeOverFranchise(
   });
 
   try {
-    const working = withAddedOwnedFranchise(
-      loaded.state,
+    const working = withTeamAddedToActiveParticipant(
+      withAddedOwnedFranchise(loaded.state, typedTeamId, franchise, {
+        setActive: true,
+      }),
       typedTeamId,
-      franchise,
-      { setActive: true },
     );
     const saved = await persistWorkingState(
       saveId,
@@ -320,4 +338,70 @@ export async function confirmOwnerTeamIdentity(
   } catch (error) {
     return fail(error instanceof Error ? error.message : String(error));
   }
+}
+
+async function applyParticipationCommand(
+  saveId: string,
+  transition: (state: GameState) => ParticipationResult,
+  store?: SaveGameStore,
+): Promise<OwnerCommandResult> {
+  const saveStore = getStore(store);
+  const loaded = await saveStore.load(saveId);
+  if (!loaded) {
+    return fail("Save not found.");
+  }
+  const result = transition(loaded.state);
+  if (!result.ok) {
+    return fail(result.error);
+  }
+  if (result.state === loaded.state) {
+    return withDashboard(loaded);
+  }
+  try {
+    const saved = await persistWorkingState(
+      saveId,
+      result.state,
+      loaded.state.meta.rngState,
+      saveStore,
+      [],
+      { ifUpdatedAt: loaded.updatedAt },
+    );
+    return withDashboard(saved);
+  } catch (error) {
+    return fail(error instanceof Error ? error.message : String(error));
+  }
+}
+
+/** Local shared league: hand control to another participant (UI context). */
+export async function switchParticipant(
+  saveId: string,
+  participantId: string,
+  store?: SaveGameStore,
+): Promise<OwnerCommandResult> {
+  return applyParticipationCommand(
+    saveId,
+    (state) => withActiveParticipant(state, participantId),
+    store,
+  );
+}
+
+/** Local shared league: the active participant is (or is no longer) ready. */
+export async function setActiveParticipantReady(
+  saveId: string,
+  ready: boolean,
+  store?: SaveGameStore,
+): Promise<OwnerCommandResult> {
+  return applyParticipationCommand(
+    saveId,
+    (state) => withActiveParticipantReady(state, ready),
+    store,
+  );
+}
+
+/** Local shared league: host marks every participant ready. */
+export async function readyAllParticipants(
+  saveId: string,
+  store?: SaveGameStore,
+): Promise<OwnerCommandResult> {
+  return applyParticipationCommand(saveId, withAllParticipantsReady, store);
 }

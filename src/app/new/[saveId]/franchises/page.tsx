@@ -48,11 +48,25 @@ export default async function AdditionalFranchisesPage({ params }: PageProps) {
     view.settings.ownership?.controlledTeamCount ??
     DEFAULT_OWNERSHIP_SETTINGS.controlledTeamCount;
 
+  const participation = view.dashboard.participation;
+  const participants = participation
+    ? participation.participants.map((p) => ({
+        id: p.id,
+        displayName: p.displayName,
+        isHost: p.isHost,
+        plannedTeamCount: p.plannedTeamCount,
+      }))
+    : undefined;
+
   return (
     <OnboardingShell
       step="franchise"
       title="Controlled Franchises"
-      subtitle="Select the franchises you want to control, then customize each team's identity."
+      subtitle={
+        participants
+          ? "Choose each player's franchises, then customize each team's identity."
+          : "Select the franchises you want to control, then customize each team's identity."
+      }
       className="max-w-3xl"
     >
       <OwnerMultiTeamPick
@@ -61,6 +75,7 @@ export default async function AdditionalFranchisesPage({ params }: PageProps) {
         controlledTeamCount={controlledTeamCount}
         teams={view.teams}
         divisionsEnabled={view.settings.league.divisionsEnabled}
+        participants={participants}
       />
     </OnboardingShell>
   );

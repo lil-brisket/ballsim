@@ -4,8 +4,20 @@ import {
   type LeagueSetupPresetId,
 } from "@/domain/game-settings-presets";
 import { validateGameSettings } from "@/domain/game-settings-validation";
+import {
+  MAX_LOCAL_PARTICIPANTS,
+  isParticipationMode,
+  type LocalParticipantSetup,
+  type ParticipationMode,
+} from "@/domain/participation";
 
 export const NEW_GAME_DRAFT_KEY = "ballsim:new-game-draft";
+
+/** Participation form state; participants are kept even in single mode. */
+export type NewGameParticipationDraft = {
+  mode: ParticipationMode;
+  participants: LocalParticipantSetup[];
+};
 
 export type NewGameDraft = {
   name: string;
@@ -14,7 +26,39 @@ export type NewGameDraft = {
   useCustomRoster: boolean;
   rosterPackageJson: string;
   rosterDropped: boolean;
+  participation?: NewGameParticipationDraft;
 };
+
+function parseParticipationDraft(
+  value: unknown,
+): NewGameParticipationDraft | undefined {
+  if (value === null || typeof value !== "object" || Array.isArray(value)) {
+    return undefined;
+  }
+  const record = value as Record<string, unknown>;
+  if (
+    !isParticipationMode(record.mode) ||
+    !Array.isArray(record.participants)
+  ) {
+    return undefined;
+  }
+  const participants: LocalParticipantSetup[] = [];
+  for (const entry of record.participants as unknown[]) {
+    if (entry === null || typeof entry !== "object") return undefined;
+    const { displayName, teamCount } = entry as Record<string, unknown>;
+    if (
+      typeof displayName !== "string" ||
+      typeof teamCount !== "number" ||
+      !Number.isInteger(teamCount) ||
+      teamCount < 1
+    ) {
+      return undefined;
+    }
+    participants.push({ displayName, teamCount });
+  }
+  if (participants.length > MAX_LOCAL_PARTICIPANTS) return undefined;
+  return { mode: record.mode, participants };
+}
 
 function storage(): Storage | null {
   try {
@@ -82,6 +126,7 @@ export function loadNewGameDraft(): NewGameDraft | null {
           ? data.rosterPackageJson
           : "",
       rosterDropped: data.rosterDropped === true,
+      participation: parseParticipationDraft(data.participation),
     };
   } catch {
     return null;

@@ -24,6 +24,48 @@ import {
   toStandingsView,
 } from "@/state/selectors/teams-roster";
 import { canOpenGameBoxScore } from "@/state/selectors/box-score";
+import {
+  advanceBlockedReason,
+  getLocalParticipation,
+  getParticipantForTeam,
+} from "@/systems/participation";
+
+export type ParticipationView = {
+  activeParticipantId: string;
+  assignmentsConfirmed: boolean;
+  /** Why the league cannot advance yet, or null when it can. */
+  advanceBlockedReason: string | null;
+  participants: Array<{
+    id: string;
+    displayName: string;
+    isHost: boolean;
+    isActive: boolean;
+    isReady: boolean;
+    teamIds: string[];
+    plannedTeamCount: number;
+  }>;
+};
+
+function toParticipationView(state: GameState): ParticipationView | null {
+  const local = getLocalParticipation(state);
+  if (!local) {
+    return null;
+  }
+  return {
+    activeParticipantId: local.activeParticipantId,
+    assignmentsConfirmed: local.assignmentsConfirmed,
+    advanceBlockedReason: advanceBlockedReason(state),
+    participants: local.participants.map((p) => ({
+      id: p.id,
+      displayName: p.displayName,
+      isHost: p.isHost,
+      isActive: p.id === local.activeParticipantId,
+      isReady: local.readyParticipantIds.includes(p.id),
+      teamIds: [...p.teamIds],
+      plannedTeamCount: p.plannedTeamCount,
+    })),
+  };
+}
 
 export type DashboardSnapshot = {
   saveId: string;
@@ -69,9 +111,13 @@ export type DashboardSnapshot = {
     wins: number;
     losses: number;
     isActive: boolean;
+    /** Local shared leagues: the participant managing this team. */
+    participantId: string | null;
     blockingDecisionCount: number;
     unreadNotificationCount: number;
   }>;
+  /** Local shared league (hotseat) state; null for single-player saves. */
+  participation: ParticipationView | null;
   teamCount: number;
   playerCount: number;
   payroll: number;
@@ -381,6 +427,7 @@ export function toDashboardSnapshot(state: GameState): DashboardSnapshot {
         wins: ownedStanding.wins,
         losses: ownedStanding.losses,
         isActive: ownedId === state.user.activeOwnerTeamId,
+        participantId: getParticipantForTeam(state, ownedId)?.id ?? null,
         blockingDecisionCount: getPendingDecisionsForTeam(
           state,
           ownedId,
@@ -390,6 +437,7 @@ export function toDashboardSnapshot(state: GameState): DashboardSnapshot {
         ).length,
       };
     }),
+    participation: toParticipationView(state),
     teamCount: Object.keys(state.world.teams).length,
     playerCount: Object.keys(state.world.players).length,
     payroll: getTeamPayroll(team.id, year, state),

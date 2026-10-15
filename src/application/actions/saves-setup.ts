@@ -13,6 +13,9 @@ import {
   confirmOwnedFranchises,
   selectOwnerCity,
   confirmOwnerTeamIdentity,
+  switchParticipant,
+  setActiveParticipantReady,
+  readyAllParticipants,
 } from "@/application/game-service";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
@@ -131,6 +134,47 @@ export async function switchActiveOwnerTeamAction(
   redirect(path);
 }
 
+export async function switchParticipantAction(
+  formData: FormData,
+): Promise<void> {
+  const saveId = String(formData.get("saveId") ?? "");
+  const participantId = String(formData.get("participantId") ?? "");
+  const path = returnPath(formData, saveId);
+  const result = await switchParticipant(saveId, participantId);
+  if (!result.ok) {
+    redirectWithError(path, result.error);
+  }
+  revalidateOwner(saveId);
+  redirect(path);
+}
+
+export async function setParticipantReadyAction(
+  formData: FormData,
+): Promise<void> {
+  const saveId = String(formData.get("saveId") ?? "");
+  const ready = String(formData.get("ready") ?? "") === "true";
+  const path = returnPath(formData, saveId);
+  const result = await setActiveParticipantReady(saveId, ready);
+  if (!result.ok) {
+    redirectWithError(path, result.error);
+  }
+  revalidateOwner(saveId);
+  redirect(path);
+}
+
+export async function readyAllParticipantsAction(
+  formData: FormData,
+): Promise<void> {
+  const saveId = String(formData.get("saveId") ?? "");
+  const path = returnPath(formData, saveId);
+  const result = await readyAllParticipants(saveId);
+  if (!result.ok) {
+    redirectWithError(path, result.error);
+  }
+  revalidateOwner(saveId);
+  redirect(path);
+}
+
 export async function takeOverFranchiseAction(
   formData: FormData,
 ): Promise<void> {
@@ -156,6 +200,7 @@ export async function confirmControlledFranchisesAction(
     secondaryColor: string;
     accentColor: string;
     logoId: string;
+    participantId?: string;
   }> = [];
   try {
     const parsed: unknown = JSON.parse(rawJson);
@@ -174,6 +219,10 @@ export async function confirmControlledFranchisesAction(
         secondaryColor: String(record.secondaryColor ?? ""),
         accentColor: String(record.accentColor ?? ""),
         logoId: String(record.logoId ?? ""),
+        participantId:
+          typeof record.participantId === "string"
+            ? record.participantId
+            : undefined,
       };
     });
   } catch {

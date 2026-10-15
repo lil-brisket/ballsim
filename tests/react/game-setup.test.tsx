@@ -393,7 +393,7 @@ describe("GameSetupForm", () => {
     unmount();
   });
 
-  it("offers Single Player and shows multiplayer formats as unavailable", () => {
+  it("offers Single Player and Local Shared, with online marked planned", () => {
     const { unmount } = render(<GameSetupForm atSaveLimit={false} />);
 
     const save = screen.getByRole("heading", { name: "Save Details" });
@@ -409,7 +409,7 @@ describe("GameSetupForm", () => {
     const local = screen.getByRole("radio", { name: "Local Shared League" });
     const online = screen.getByRole("radio", { name: "Online Multiplayer" });
     expect((single as HTMLInputElement).checked).toBe(true);
-    expect((local as HTMLInputElement).disabled).toBe(true);
+    expect((local as HTMLInputElement).disabled).toBe(false);
     expect((online as HTMLInputElement).disabled).toBe(true);
     expect(screen.getByText("Planned")).toBeTruthy();
     unmount();
@@ -428,6 +428,220 @@ describe("GameSetupForm", () => {
       mode: "single",
     });
     unmount();
+  });
+
+  describe("Local Shared League", () => {
+    function pickLocalShared() {
+      fireEvent.click(
+        screen.getByRole("radio", { name: "Local Shared League" }),
+      );
+    }
+    function setValue(label: string, value: string) {
+      fireEvent.change(screen.getByLabelText(label), { target: { value } });
+    }
+    function reviewButton() {
+      return screen.getByRole("button", {
+        name: "Skip to review",
+      }) as HTMLButtonElement;
+    }
+    function alertText(): string {
+      return screen
+        .getAllByRole("alert")
+        .map((el) => el.textContent ?? "")
+        .join(" | ");
+    }
+    function storeDraft(participation: unknown) {
+      window.sessionStorage.setItem(
+        NEW_GAME_DRAFT_KEY,
+        JSON.stringify({
+          name: "Restored",
+          preset: "standard",
+          settings: settingsForPreset("standard"),
+          useCustomRoster: false,
+          rosterPackageJson: "",
+          rosterDropped: false,
+          participation,
+        }),
+      );
+    }
+
+    it("shows player rows when selected and hides them for single player", () => {
+      const { unmount } = render(<GameSetupForm atSaveLimit={false} />);
+
+      expect(screen.queryByLabelText("Number of players")).toBeNull();
+      pickLocalShared();
+      expect(
+        (screen.getByLabelText("Number of players") as HTMLSelectElement).value,
+      ).toBe("2");
+      expect(
+        (screen.getByLabelText("Player 1 name") as HTMLInputElement).value,
+      ).toBe("Player 1");
+      expect(screen.getByLabelText("Player 2 name")).toBeTruthy();
+      expect(screen.queryByLabelText("Player 3 name")).toBeNull();
+      expect(screen.getByText("Host")).toBeTruthy();
+      expect(screen.getByText("2 of 5 franchises assigned")).toBeTruthy();
+      expect(
+        screen.getByText(/Set by League Participants \(2 teams\)/),
+      ).toBeTruthy();
+      expect(screen.queryByText("Control 1 team")).toBeNull();
+      unmount();
+    });
+
+    it("adds and removes player rows when the count changes", () => {
+      const { unmount } = render(<GameSetupForm atSaveLimit={false} />);
+      pickLocalShared();
+
+      setValue("Number of players", "4");
+      expect(screen.getByLabelText("Player 4 name")).toBeTruthy();
+      setValue("Number of players", "3");
+      expect(screen.queryByLabelText("Player 4 name")).toBeNull();
+      expect(screen.getByLabelText("Player 3 name")).toBeTruthy();
+      unmount();
+    });
+
+    it("limits each player's team choices to the remaining franchises", () => {
+      const { unmount } = render(<GameSetupForm atSaveLimit={false} />);
+      pickLocalShared();
+      setValue("Number of players", "3");
+      setValue("Player 1 teams", "3");
+
+      expect(screen.getByText("5 of 5 franchises assigned")).toBeTruthy();
+      const options = Array.from(
+        (screen.getByLabelText("Player 2 teams") as HTMLSelectElement).options,
+      ).map((option) => option.value);
+      expect(options).toEqual(["1"]);
+      expect(reviewButton().disabled).toBe(false);
+      unmount();
+    });
+
+    it("blocks review when a restored total is over the league maximum", async () => {
+      storeDraft({
+        mode: "local_shared",
+        participants: [
+          { displayName: "A", teamCount: 2 },
+          { displayName: "B", teamCount: 2 },
+          { displayName: "C", teamCount: 2 },
+        ],
+      });
+      const { unmount } = render(
+        <GameSetupForm atSaveLimit={false} restoreDraft />,
+      );
+
+      await waitFor(() => {
+        expect(reviewButton().disabled).toBe(true);
+      });
+      expect(alertText()).toContain("at most 5");
+      unmount();
+    });
+
+    it("blocks review for duplicate and blank names", () => {
+      const { unmount } = render(<GameSetupForm atSaveLimit={false} />);
+      pickLocalShared();
+
+      setValue("Player 2 name", "player 1");
+      expect(reviewButton().disabled).toBe(true);
+      expect(alertText()).toContain("unique");
+
+      setValue("Player 2 name", "   ");
+      expect(reviewButton().disabled).toBe(true);
+      expect(alertText()).toContain("required");
+
+      setValue("Player 2 name", "Sam");
+      expect(reviewButton().disabled).toBe(false);
+      unmount();
+    });
+
+    it("submits participants and shows them on review", () => {
+      const { unmount } = render(<GameSetupForm atSaveLimit={false} />);
+      pickLocalShared();
+      setValue("Player 1 name", "Alex");
+      setValue("Player 2 name", "Sam");
+      setValue("Player 2 teams", "2");
+
+      fireEvent.click(screen.getByRole("button", { name: "Skip to review" }));
+      const group = screen.getByRole("region", { name: "League Participants" });
+      expect(group.textContent).toContain("Alex (host) — 1 team");
+      expect(group.textContent).toContain("Sam — 2 teams");
+      expect(group.textContent).toContain(
+        "Host picks the city, then each player's franchises are assigned",
+      );
+
+      fireEvent.click(screen.getByRole("button", { name: "Create franchise" }));
+      const formData = vi.mocked(createSaveAction).mock.calls[0]![0];
+      expect(JSON.parse(String(formData.get("participationJson")))).toEqual({
+        mode: "local_shared",
+        participants: [
+          { displayName: "Alex", teamCount: 1 },
+          { displayName: "Sam", teamCount: 2 },
+        ],
+      });
+      const stored = JSON.parse(
+        window.sessionStorage.getItem(NEW_GAME_DRAFT_KEY) ?? "null",
+      );
+      expect(stored.participation.mode).toBe("local_shared");
+      unmount();
+    });
+
+    it("keeps participant names when editing from review", () => {
+      const { unmount } = render(<GameSetupForm atSaveLimit={false} />);
+      pickLocalShared();
+      setValue("Player 1 name", "Alex");
+      fireEvent.click(screen.getByRole("button", { name: "Skip to review" }));
+      fireEvent.click(
+        screen.getByRole("button", { name: "Edit League Participants" }),
+      );
+
+      expect(
+        (screen.getByLabelText("Player 1 name") as HTMLInputElement).value,
+      ).toBe("Alex");
+      fireEvent.click(screen.getByRole("button", { name: "Skip to review" }));
+      expect(
+        screen.getByRole("region", { name: "League Participants" }).textContent,
+      ).toContain("Alex (host)");
+      unmount();
+    });
+
+    it("restores participants from a stored draft", async () => {
+      storeDraft({
+        mode: "local_shared",
+        participants: [
+          { displayName: "Alex", teamCount: 2 },
+          { displayName: "Sam", teamCount: 1 },
+          { displayName: "Kim", teamCount: 1 },
+        ],
+      });
+      const { unmount } = render(
+        <GameSetupForm atSaveLimit={false} restoreDraft />,
+      );
+
+      await waitFor(() => {
+        expect(
+          (screen.getByLabelText("Player 3 name") as HTMLInputElement).value,
+        ).toBe("Kim");
+      });
+      expect(
+        (screen.getByLabelText("Player 1 name") as HTMLInputElement).value,
+      ).toBe("Alex");
+      expect(
+        (screen.getByLabelText("Player 1 teams") as HTMLSelectElement).value,
+      ).toBe("2");
+      unmount();
+    });
+
+    it("ignores a malformed participation block in a stored draft", async () => {
+      storeDraft({ mode: "local_shared", participants: "nope" });
+      const { unmount } = render(
+        <GameSetupForm atSaveLimit={false} restoreDraft />,
+      );
+
+      await waitFor(() => {
+        expect(
+          (screen.getByLabelText("Save name") as HTMLInputElement).value,
+        ).toBe("Restored");
+      });
+      expect(isRadioChecked("Single Player")).toBe(true);
+      unmount();
+    });
   });
 
   it("restores a stored draft when restoreDraft is set", async () => {

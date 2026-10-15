@@ -82,8 +82,16 @@ const interactiveClassName = cn(
 export function OwnerTeamSwitcher(props: {
   saveId: string;
   ownedTeams: readonly OwnedTeamSummary[];
+  /** Local shared league: only list this participant's franchises. */
+  activeParticipantId?: string | null;
 }) {
-  const { saveId, ownedTeams } = props;
+  const { saveId, activeParticipantId } = props;
+  const ownedTeams =
+    activeParticipantId == null
+      ? props.ownedTeams
+      : props.ownedTeams.filter(
+          (team) => team.participantId === activeParticipantId,
+        );
   const active = ownedTeams.find((team) => team.isActive) ?? ownedTeams[0];
   const canSwitchTeams = ownedTeams.length > 1;
   const [open, setOpen] = useState(false);

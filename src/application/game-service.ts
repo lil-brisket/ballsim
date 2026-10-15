@@ -78,6 +78,9 @@ export {
   confirmOwnedFranchises,
   selectOwnerCity,
   confirmOwnerTeamIdentity,
+  switchParticipant,
+  setActiveParticipantReady,
+  readyAllParticipants,
 } from "@/application/game-service/franchise-setup";
 export {
   type SimulationStopCondition,

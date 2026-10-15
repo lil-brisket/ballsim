@@ -1,4 +1,8 @@
 import "server-only";
+import {
+  advanceBlockedReason,
+  withReadyReset,
+} from "@/systems/participation";
 import type { SaveGameStore } from "@/persistence/save-game-store";
 import { getActionBlockReason } from "@/systems/league-rules";
 import { asPlayerId, asOfferId, asContractId } from "@/domain/ids";
@@ -129,6 +133,10 @@ export async function finishFreeAgency(
       if (!isInLeaguePhase(loaded.state, "offseason.free_agency")) {
         return fail("Finish free agency requires offseason free_agency stage.");
       }
+      const participantsBlocked = advanceBlockedReason(loaded.state);
+      if (participantsBlocked) {
+        return fail(participantsBlocked);
+      }
 
       const commitToken = loaded.updatedAt;
       const rng = createSeededRng(loaded.state.meta.rngState);
@@ -143,7 +151,7 @@ export async function finishFreeAgency(
         // Persist stopped at draft clock without requiring another advance.
       }
 
-      working = processDerivedProjections(working, emitted);
+      working = withReadyReset(processDerivedProjections(working, emitted));
 
       const saved = await persistWorkingState(
         saveId,

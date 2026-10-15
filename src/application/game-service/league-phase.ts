@@ -1,4 +1,8 @@
 import "server-only";
+import {
+  advanceBlockedReason,
+  withReadyReset,
+} from "@/systems/participation";
 import type { SaveGameStore } from "@/persistence/save-game-store";
 import {
   previewAdvance,
@@ -131,6 +135,10 @@ export async function letAiHandlePhaseAndAdvance(
       if (!loaded) {
         return fail("Save not found.");
       }
+      const participantsBlocked = advanceBlockedReason(loaded.state);
+      if (participantsBlocked) {
+        return fail(participantsBlocked);
+      }
       if (
         isUserAssistCompletelyOff(
           loaded.state.settings,
@@ -164,7 +172,9 @@ export async function letAiHandlePhaseAndAdvance(
       working = dayResult.state;
       emitted.push(...dayResult.events);
 
-      working = processDerivedProjections(working, emitted);
+      working = withReadyReset(
+        processDerivedProjections(working, emitted),
+      );
 
       const saved = await persistWorkingState(
         saveId,
@@ -194,6 +204,10 @@ export async function continuePastPhaseAnyway(
       const loaded = await saveStore.load(saveId);
       if (!loaded) {
         return fail("Save not found.");
+      }
+      const participantsBlocked = advanceBlockedReason(loaded.state);
+      if (participantsBlocked) {
+        return fail(participantsBlocked);
       }
 
       const commitToken = loaded.updatedAt;
@@ -228,7 +242,9 @@ export async function continuePastPhaseAnyway(
       });
       working = dayResult.state;
 
-      working = processDerivedProjections(working, dayResult.events);
+      working = withReadyReset(
+        processDerivedProjections(working, dayResult.events),
+      );
 
       const saved = await persistWorkingState(
         saveId,
@@ -260,6 +276,10 @@ export async function beginOffseason(
       if (!loaded) {
         return fail("Save not found.");
       }
+      const participantsBlocked = advanceBlockedReason(loaded.state);
+      if (participantsBlocked) {
+        return fail(participantsBlocked);
+      }
 
       if (loaded.state.competition.season.phase !== "postseason") {
         return fail(
@@ -276,7 +296,9 @@ export async function beginOffseason(
       working = dayResult.state;
       emitted.push(...dayResult.events);
 
-      working = processDerivedProjections(working, emitted);
+      working = withReadyReset(
+        processDerivedProjections(working, emitted),
+      );
 
       const saved = await persistWorkingState(
         saveId,

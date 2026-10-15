@@ -41,6 +41,7 @@ function ownedTeam(
     wins: 10,
     losses: 5,
     isActive: false,
+    participantId: null,
     blockingDecisionCount: 0,
     unreadNotificationCount: 0,
     ...overrides,
@@ -129,6 +130,45 @@ describe("OwnerTeamSwitcher", () => {
     expect(
       screen.getByRole("option", { name: /Vancouver Wolves/i }),
     ).toBeTruthy();
+    unmount();
+  });
+
+  it("lists only the active participant's teams in a shared league", () => {
+    const teams = [
+      ownedTeam({
+        id: "team_a",
+        city: "Toronto",
+        name: "Huskies",
+        isActive: true,
+        participantId: "p1",
+      }),
+      ownedTeam({
+        id: "team_b",
+        city: "Vancouver",
+        name: "Wolves",
+        participantId: "p2",
+      }),
+      ownedTeam({
+        id: "team_c",
+        city: "Calgary",
+        name: "Flames",
+        participantId: "p1",
+      }),
+    ];
+    const { unmount } = render(
+      <OwnerTeamSwitcher
+        saveId="save123"
+        ownedTeams={teams}
+        activeParticipantId="p1"
+      />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: /switch franchise/i }));
+    expect(
+      screen.getByRole("option", { name: /Calgary Flames/i }),
+    ).toBeTruthy();
+    expect(screen.queryByRole("option", { name: /Vancouver Wolves/i })).toBe(
+      null,
+    );
     unmount();
   });
 

@@ -23,6 +23,10 @@ import {
   withOwnedFranchise,
 } from "@/state/owner-context";
 import { createDefaultOwnedFranchiseState } from "@/state/owned-franchise-state";
+import {
+  getLocalParticipation,
+  withConfirmedAssignments,
+} from "@/systems/participation";
 
 export type ControlledFranchiseIdentityInput = {
   teamId: string;
@@ -31,6 +35,8 @@ export type ControlledFranchiseIdentityInput = {
   secondaryColor: string;
   accentColor: string;
   logoId: string;
+  /** Local shared leagues: the participant who will manage this team. */
+  participantId?: string;
 };
 
 export type ConfirmControlledFranchisesResult =
@@ -253,6 +259,20 @@ export function applyConfirmControlledFranchises(
       ownedFranchises,
     },
   };
+
+  if (getLocalParticipation(working)) {
+    const assignments = new Map<string, string>();
+    for (const entry of franchises) {
+      if (entry.participantId) {
+        assignments.set(entry.teamId, entry.participantId);
+      }
+    }
+    const assigned = withConfirmedAssignments(working, assignments);
+    if (!assigned.ok) {
+      return assigned;
+    }
+    working = assigned.state;
+  }
 
   return { ok: true, state: working };
 }

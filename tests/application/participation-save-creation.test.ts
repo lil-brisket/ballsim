@@ -47,14 +47,18 @@ describe("participation on save creation", () => {
     }
   });
 
-  it("rejects unavailable or invalid formats without creating a save", async () => {
+  it("rejects online, invalid or over-cap formats without creating a save", async () => {
     const inputs: unknown[] = [
       { mode: "online" },
       {
         mode: "local_shared",
+        participants: [{ displayName: "Alex", teamCount: 1 }],
+      },
+      {
+        mode: "local_shared",
         participants: [
-          { displayName: "Alex", teamCount: 1 },
-          { displayName: "Sam", teamCount: 1 },
+          { displayName: "Alex", teamCount: 3 },
+          { displayName: "Sam", teamCount: 3 },
         ],
       },
       "nonsense",

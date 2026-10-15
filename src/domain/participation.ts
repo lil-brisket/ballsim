@@ -21,11 +21,8 @@ export const MIN_LOCAL_PARTICIPANTS = 2;
 export const MAX_LOCAL_PARTICIPANTS = 4;
 export const PARTICIPANT_NAME_MAX_LENGTH = 24;
 
-/**
- * Local shared leagues are modeled and validated but not playable until
- * per-participant assignment and ready-gated advancement ship.
- */
-export const LOCAL_SHARED_LEAGUE_AVAILABLE = false;
+/** Local shared (hotseat) leagues can be created from new-game setup. */
+export const LOCAL_SHARED_LEAGUE_AVAILABLE = true;
 
 export type LocalParticipant = {
   /** Stable generated id — the identity used for every ownership check. */
@@ -33,18 +30,25 @@ export type LocalParticipant = {
   displayName: string;
   /** Subset of user.ownedTeamIds; disjoint across participants. */
   teamIds: string[];
+  /** Franchises this participant chose to control at setup. */
+  plannedTeamCount: number;
   isHost: boolean;
 };
 
-export type ParticipationState =
-  | { mode: "single" }
-  | {
-      mode: "local_shared";
-      participants: LocalParticipant[];
-      activeParticipantId: string;
-      /** Participants who finished managing for the current advance window. */
-      readyParticipantIds: string[];
-    };
+export type LocalSharedParticipation = {
+  mode: "local_shared";
+  participants: LocalParticipant[];
+  activeParticipantId: string;
+  /** Participants who finished managing for the current advance window. */
+  readyParticipantIds: string[];
+  /**
+   * False during onboarding, before every participant has been assigned
+   * their franchises; only the host's anchor team exists until then.
+   */
+  assignmentsConfirmed: boolean;
+};
+
+export type ParticipationState = { mode: "single" } | LocalSharedParticipation;
 
 export const DEFAULT_PARTICIPATION_STATE: ParticipationState = {
   mode: "single",
@@ -232,6 +236,11 @@ export function participationStateErrors(
     );
   }
 
+  if (typeof record.assignmentsConfirmed !== "boolean") {
+    errors.push(`${path}.assignmentsConfirmed must be a boolean.`);
+  }
+  const confirmed = record.assignmentsConfirmed === true;
+
   const ownedSet = new Set(ownedTeamIds);
   const ids = new Set<string>();
   const assignedTeams = new Map<string, string>();
@@ -259,9 +268,21 @@ export function participationStateErrors(
     } else if (p.isHost) {
       hostCount += 1;
     }
-    if (!Array.isArray(p.teamIds) || p.teamIds.length === 0) {
-      errors.push(`${at}.teamIds must contain at least one team.`);
+    const planned = p.plannedTeamCount;
+    if (typeof planned !== "number" || !Number.isInteger(planned) || planned < 1) {
+      errors.push(`${at}.plannedTeamCount must be a positive integer.`);
       return;
+    }
+    if (!Array.isArray(p.teamIds)) {
+      errors.push(`${at}.teamIds must be an array.`);
+      return;
+    }
+    if (confirmed && p.teamIds.length !== planned) {
+      errors.push(
+        `${at} controls ${p.teamIds.length} teams but planned ${planned}.`,
+      );
+    } else if (!confirmed && p.teamIds.length > planned) {
+      errors.push(`${at} controls more teams than planned.`);
     }
     for (const teamId of p.teamIds as unknown[]) {
       if (typeof teamId !== "string" || !ownedSet.has(teamId)) {

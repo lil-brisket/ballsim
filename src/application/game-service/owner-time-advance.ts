@@ -1,4 +1,8 @@
 import "server-only";
+import {
+  advanceBlockedReason,
+  withReadyReset,
+} from "@/systems/participation";
 import type {
   SimulationProgress,
   AdvanceSimulationResult,
@@ -89,6 +93,11 @@ export async function advanceOwnerTime(
       let workingState = loaded.state;
       let rngState = loaded.state.meta.rngState;
       const preEvents: DomainEvent[] = [];
+
+      const participantsBlocked = advanceBlockedReason(workingState);
+      if (participantsBlocked) {
+        return fail(participantsBlocked);
+      }
 
       if (hasActiveOwnerDecision(workingState.user)) {
         const blocking = workingState.user.pendingOwnerDecisions.find(
@@ -208,9 +217,8 @@ export async function advanceOwnerTime(
 
       const fromDate = workingState.world.calendar.currentDate;
       const allEvents = [...preEvents, ...result.events, ...postflight.events];
-      const withProjections = processDerivedProjections(
-        postflight.state,
-        allEvents,
+      const withProjections = withReadyReset(
+        processDerivedProjections(postflight.state, allEvents),
       );
 
       const saved = await persistWorkingState(

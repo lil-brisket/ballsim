@@ -38,6 +38,11 @@ import {
 import { validateGameSettings } from "@/domain/game-settings-validation";
 import {
   LOCAL_SHARED_LEAGUE_AVAILABLE,
+  MAX_LOCAL_PARTICIPANTS,
+  MIN_LOCAL_PARTICIPANTS,
+  PARTICIPANT_NAME_MAX_LENGTH,
+  parseParticipationSetup,
+  type LocalParticipantSetup,
   type ParticipationMode,
 } from "@/domain/participation";
 import { createSaveAction } from "@/application/actions";
@@ -153,7 +158,6 @@ const PARTICIPATION_OPTIONS: ReadonlyArray<
     title: "Local Shared League",
     description:
       "Friends share this device, each managing their own franchises and taking turns before the league advances.",
-    meta: "Coming soon",
     disabled: !LOCAL_SHARED_LEAGUE_AVAILABLE,
   },
   {
@@ -190,6 +194,17 @@ const PRESET_COPY: Record<
   },
 };
 
+function defaultParticipants(count: number): LocalParticipantSetup[] {
+  return Array.from({ length: count }, (_, index) => ({
+    displayName: `Player ${index + 1}`,
+    teamCount: 1,
+  }));
+}
+
+function teamsLabel(count: number): string {
+  return count === 1 ? "1 team" : `${count} teams`;
+}
+
 function leagueNumbers(settings: GameSettings): string {
   return `${settings.league.teamCount} teams · ${settings.regularSeason.gamesPerTeam} games · ${settings.playoffs.playoffTeams} playoff teams · best of ${settings.playoffs.seriesLength}`;
 }
@@ -213,6 +228,9 @@ export function GameSetupForm({
   const [rosterDropped, setRosterDropped] = useState(false);
   const [participationMode, setParticipationMode] =
     useState<ParticipationMode>("single");
+  const [participants, setParticipants] = useState<LocalParticipantSetup[]>(
+    () => defaultParticipants(MIN_LOCAL_PARTICIPANTS),
+  );
   const pendingFocusId = useRef<string | null>(null);
 
   const validation = useMemo(() => validateGameSettings(settings), [settings]);
@@ -231,6 +249,27 @@ export function GameSetupForm({
       settings.financialRules.salaryCapEnabled,
     );
   const fantasyOpening = settings.draft.mode === "fantasy";
+  const maxControlled = maxControlledTeamCountForLeague(
+    settings.league.teamCount,
+  );
+  const localShared = participationMode === "local_shared";
+  const participantsTotal = participants.reduce(
+    (sum, participant) => sum + participant.teamCount,
+    0,
+  );
+  const participationSetup = useMemo(
+    () =>
+      parseParticipationSetup(
+        localShared
+          ? { mode: "local_shared", participants }
+          : { mode: "single" },
+        maxControlled,
+      ),
+    [localShared, participants, maxControlled],
+  );
+  const participationErrors = participationSetup.ok
+    ? []
+    : participationSetup.errors;
 
   // Restore after a server-side error redirect; otherwise drop any stale draft.
   // Done in an effect so server and first client render match.
@@ -250,6 +289,14 @@ export function GameSetupForm({
     setUseCustomRoster(draft.useCustomRoster);
     setRosterPackageJson(draft.rosterPackageJson);
     setRosterDropped(draft.rosterDropped);
+    if (draft.participation) {
+      setParticipationMode(
+        LOCAL_SHARED_LEAGUE_AVAILABLE ? draft.participation.mode : "single",
+      );
+      if (draft.participation.participants.length >= MIN_LOCAL_PARTICIPANTS) {
+        setParticipants(draft.participation.participants);
+      }
+    }
   }, [restoreDraft]);
   /* eslint-enable react-hooks/set-state-in-effect */
 
@@ -308,16 +355,42 @@ export function GameSetupForm({
     updateSettings(applyCustomRosterTeamCount(settings, teamCount));
   }
 
+  function updateParticipant(
+    index: number,
+    patch: Partial<LocalParticipantSetup>,
+  ) {
+    setParticipants((current) =>
+      current.map((participant, i) =>
+        i === index ? { ...participant, ...patch } : participant,
+      ),
+    );
+  }
+
+  function setParticipantCount(count: number) {
+    setParticipants((current) =>
+      count <= current.length
+        ? current.slice(0, count)
+        : [...current, ...defaultParticipants(count).slice(current.length)],
+    );
+  }
+
+  const issueCount =
+    errors.length + (localShared ? participationErrors.length : 0);
   const blockedReason: string | null = atSaveLimit
     ? "You have reached the save limit. Delete a save to create another."
-    : errors.length > 0
-      ? `Fix ${errors.length} ${errors.length === 1 ? "issue" : "issues"} above.`
+    : issueCount > 0
+      ? `Fix ${issueCount} ${issueCount === 1 ? "issue" : "issues"} above.`
       : customRosterInvalid
         ? "Upload a valid roster package."
         : null;
 
   function submit() {
-    if (!validation.ok || atSaveLimit || customRosterInvalid) {
+    if (
+      !validation.ok ||
+      !participationSetup.ok ||
+      atSaveLimit ||
+      customRosterInvalid
+    ) {
       return;
     }
     saveNewGameDraft({
@@ -326,14 +399,12 @@ export function GameSetupForm({
       settings,
       useCustomRoster,
       rosterPackageJson,
+      participation: { mode: participationMode, participants },
     });
     const formData = new FormData();
     formData.set("name", name);
     formData.set("settingsJson", JSON.stringify(settings));
-    formData.set(
-      "participationJson",
-      JSON.stringify({ mode: participationMode }),
-    );
+    formData.set("participationJson", JSON.stringify(participationSetup.value));
     if (useCustomRoster) {
       formData.set("rosterPackageJson", rosterPackageJson);
     }
@@ -392,10 +463,13 @@ export function GameSetupForm({
   const openingLabel = fantasyOpening
     ? "Fantasy draft"
     : "Assigned team rosters";
-  const controlledLabel =
-    settings.ownership.controlledTeamCount === 1
-      ? "1 team"
-      : `${settings.ownership.controlledTeamCount} teams`;
+  const controlledLabel = teamsLabel(
+    localShared ? participantsTotal : settings.ownership.controlledTeamCount,
+  );
+  const participantSummaries = participants.map((participant, index) => {
+    const playerName = participant.displayName.trim() || `Player ${index + 1}`;
+    return `${playerName}${index === 0 ? " (host)" : ""} — ${teamsLabel(participant.teamCount)}`;
+  });
   const capLabel = settings.financialRules.salaryCapEnabled
     ? formatMoney(settings.financialRules.salaryCap)
     : "Off";
@@ -455,6 +529,18 @@ export function GameSetupForm({
       </ul>
     ) : null;
 
+  const participationErrorsBlock =
+    localShared && participationErrors.length > 0 ? (
+      <ul
+        role="alert"
+        className="space-y-1 rounded-md border border-red-900/60 bg-red-950/40 p-3 text-sm text-red-300"
+      >
+        {participationErrors.map((error) => (
+          <li key={error}>{error}</li>
+        ))}
+      </ul>
+    ) : null;
+
   const blockedNote = blockedReason ? (
     <p id="review-blocked-reason" className="text-sm text-zinc-400">
       {blockedReason}
@@ -491,6 +577,15 @@ export function GameSetupForm({
           label="Participants"
           value={PARTICIPATION_LABELS[participationMode]}
         />
+        {localShared
+          ? participantSummaries.map((summary, index) => (
+              <SummaryRow
+                key={index}
+                label={`Player ${index + 1}`}
+                value={summary}
+              />
+            ))
+          : null}
         <SummaryRow label="Salary cap" value={capLabel} />
       </dl>
       <p aria-live="polite" className="text-xs text-zinc-400">
@@ -561,9 +656,22 @@ export function GameSetupForm({
             label="Format"
             value={PARTICIPATION_LABELS[participationMode]}
           />
+          {localShared
+            ? participantSummaries.map((summary, index) => (
+                <ReviewRow
+                  key={index}
+                  label={`Player ${index + 1}`}
+                  value={summary}
+                />
+              ))
+            : null}
           <ReviewRow
             label="After creation"
-            value="Choose your city, then your franchises"
+            value={
+              localShared
+                ? "Host picks the city, then each player's franchises are assigned"
+                : "Choose your city, then your franchises"
+            }
           />
         </ReviewGroup>
         <ReviewGroup
@@ -601,7 +709,11 @@ export function GameSetupForm({
           <button
             type="button"
             disabled={
-              pending || atSaveLimit || !validation.ok || customRosterInvalid
+              pending ||
+              atSaveLimit ||
+              !validation.ok ||
+              !participationSetup.ok ||
+              customRosterInvalid
             }
             onClick={submit}
             className={primaryButtonClass}
@@ -990,69 +1102,77 @@ export function GameSetupForm({
             <p className="text-sm font-medium text-zinc-200">
               Franchise control
             </p>
-            <p className="text-sm text-zinc-400">
-              Decide how many franchises you will control. You choose the
-              specific teams after the league is generated.
-            </p>
-            <div className="flex flex-wrap gap-2">
-              <ControlButton
-                selected={settings.ownership.controlledTeamCount === 1}
-                onClick={() =>
-                  updateSettings({
-                    ...settings,
-                    ownership: { controlledTeamCount: 1 },
-                  })
-                }
-              >
-                Control 1 team
-              </ControlButton>
-              <ControlButton
-                selected={settings.ownership.controlledTeamCount > 1}
-                onClick={() => {
-                  const max = maxControlledTeamCountForLeague(
-                    settings.league.teamCount,
-                  );
-                  const next = Math.min(
-                    Math.max(2, settings.ownership.controlledTeamCount),
-                    max,
-                  );
-                  updateSettings({
-                    ...settings,
-                    ownership: { controlledTeamCount: Math.max(2, next) },
-                  });
-                }}
-              >
-                Control multiple teams
-              </ControlButton>
-            </div>
-            {settings.ownership.controlledTeamCount > 1 ? (
-              <div className="max-w-xs">
-                <SelectField
-                  label="Number of controlled teams"
-                  value={settings.ownership.controlledTeamCount}
-                  options={Array.from(
-                    {
-                      length: Math.max(
-                        0,
-                        maxControlledTeamCountForLeague(
-                          settings.league.teamCount,
-                        ) - 1,
-                      ),
-                    },
-                    (_, index) => {
-                      const value = index + 2;
-                      return { value, label: String(value) };
-                    },
-                  )}
-                  onChange={(value) =>
-                    updateSettings({
-                      ...settings,
-                      ownership: { controlledTeamCount: value },
-                    })
-                  }
-                />
-              </div>
-            ) : null}
+            {localShared ? (
+              <p className="text-sm text-zinc-400">
+                Set by League Participants ({teamsLabel(participantsTotal)})
+              </p>
+            ) : (
+              <>
+                <p className="text-sm text-zinc-400">
+                  Decide how many franchises you will control. You choose the
+                  specific teams after the league is generated.
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  <ControlButton
+                    selected={settings.ownership.controlledTeamCount === 1}
+                    onClick={() =>
+                      updateSettings({
+                        ...settings,
+                        ownership: { controlledTeamCount: 1 },
+                      })
+                    }
+                  >
+                    Control 1 team
+                  </ControlButton>
+                  <ControlButton
+                    selected={settings.ownership.controlledTeamCount > 1}
+                    onClick={() => {
+                      const max = maxControlledTeamCountForLeague(
+                        settings.league.teamCount,
+                      );
+                      const next = Math.min(
+                        Math.max(2, settings.ownership.controlledTeamCount),
+                        max,
+                      );
+                      updateSettings({
+                        ...settings,
+                        ownership: { controlledTeamCount: Math.max(2, next) },
+                      });
+                    }}
+                  >
+                    Control multiple teams
+                  </ControlButton>
+                </div>
+                {settings.ownership.controlledTeamCount > 1 ? (
+                  <div className="max-w-xs">
+                    <SelectField
+                      label="Number of controlled teams"
+                      value={settings.ownership.controlledTeamCount}
+                      options={Array.from(
+                        {
+                          length: Math.max(
+                            0,
+                            maxControlledTeamCountForLeague(
+                              settings.league.teamCount,
+                            ) - 1,
+                          ),
+                        },
+                        (_, index) => {
+                          const value = index + 2;
+                          return { value, label: String(value) };
+                        },
+                      )}
+                      onChange={(value) =>
+                        updateSettings({
+                          ...settings,
+                          ownership: { controlledTeamCount: value },
+                        })
+                      }
+                    />
+                  </div>
+                ) : null}
+              </>
+            )}
           </div>
         </SetupSection>
 
@@ -1072,6 +1192,90 @@ export function GameSetupForm({
             }}
             columns={3}
           />
+          {localShared ? (
+            <div className="space-y-4">
+              <div className="max-w-xs">
+                <SelectField
+                  label="Number of players"
+                  value={participants.length}
+                  options={Array.from(
+                    {
+                      length:
+                        MAX_LOCAL_PARTICIPANTS - MIN_LOCAL_PARTICIPANTS + 1,
+                    },
+                    (_, index) => {
+                      const value = index + MIN_LOCAL_PARTICIPANTS;
+                      return { value, label: String(value) };
+                    },
+                  )}
+                  onChange={setParticipantCount}
+                />
+              </div>
+              <ul className="space-y-3">
+                {participants.map((participant, index) => {
+                  const othersTotal = participantsTotal - participant.teamCount;
+                  const upper = Math.max(
+                    1,
+                    participant.teamCount,
+                    maxControlled - othersTotal,
+                  );
+                  return (
+                    <li key={index}>
+                      <FieldGrid>
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-2">
+                            <label
+                              className="block text-sm text-zinc-300"
+                              htmlFor={`participant-name-${index}`}
+                            >
+                              Player {index + 1} name
+                            </label>
+                            {index === 0 ? (
+                              <span className="rounded bg-amber-600/20 px-1.5 py-0.5 text-xs text-amber-300">
+                                Host
+                              </span>
+                            ) : null}
+                          </div>
+                          <input
+                            id={`participant-name-${index}`}
+                            value={participant.displayName}
+                            maxLength={PARTICIPANT_NAME_MAX_LENGTH}
+                            onChange={(event) =>
+                              updateParticipant(index, {
+                                displayName: event.target.value,
+                              })
+                            }
+                            className={inputClass}
+                          />
+                        </div>
+                        <SelectField
+                          label={`Player ${index + 1} teams`}
+                          value={participant.teamCount}
+                          options={Array.from({ length: upper }, (_, i) => ({
+                            value: i + 1,
+                            label: String(i + 1),
+                          }))}
+                          onChange={(teamCount) =>
+                            updateParticipant(index, { teamCount })
+                          }
+                        />
+                      </FieldGrid>
+                    </li>
+                  );
+                })}
+              </ul>
+              <p aria-live="polite" className="text-sm text-zinc-200">
+                {participantsTotal} of {maxControlled} franchises assigned
+              </p>
+              <p className="text-sm text-zinc-400">
+                Players take turns on this device. Each player presses Ready
+                before the league advances. Teams nobody picks stay
+                AI-controlled. After creating the league, each player&apos;s
+                franchises are chosen on the Controlled Franchises step.
+              </p>
+              {participationErrorsBlock}
+            </div>
+          ) : null}
         </SetupSection>
 
         {errorsBlock}

@@ -35,6 +35,9 @@ export default async function TeamManagementLayout({
           <OwnerTeamSwitcher
             saveId={saveId}
             ownedTeams={loaded.dashboard.ownedTeams}
+            activeParticipantId={
+              loaded.dashboard.participation?.activeParticipantId
+            }
           />
         </Suspense>
       </div>

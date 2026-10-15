@@ -5,6 +5,8 @@ import {
   PARTICIPANT_NAME_MAX_LENGTH,
   parseParticipationSetup,
   participationStateErrors,
+  type LocalParticipant,
+  type LocalSharedParticipation,
   type ParticipationState,
 } from "@/domain/participation";
 
@@ -115,19 +117,27 @@ describe("parseParticipationSetup", () => {
 
 describe("participationStateErrors", () => {
   const owned = ["t1", "t2", "t3"];
+  function participant(
+    id: string,
+    displayName: string,
+    teamIds: string[],
+    isHost: boolean,
+    plannedTeamCount = teamIds.length,
+  ): LocalParticipant {
+    return { id, displayName, teamIds, isHost, plannedTeamCount };
+  }
   function local(
-    overrides: Partial<
-      Extract<ParticipationState, { mode: "local_shared" }>
-    > = {},
+    overrides: Partial<LocalSharedParticipation> = {},
   ): ParticipationState {
     return {
       mode: "local_shared",
       participants: [
-        { id: "p1", displayName: "Alex", teamIds: ["t1"], isHost: true },
-        { id: "p2", displayName: "Sam", teamIds: ["t2", "t3"], isHost: false },
+        participant("p1", "Alex", ["t1"], true),
+        participant("p2", "Sam", ["t2", "t3"], false),
       ],
       activeParticipantId: "p1",
       readyParticipantIds: [],
+      assignmentsConfirmed: true,
       ...overrides,
     };
   }
@@ -139,11 +149,35 @@ describe("participationStateErrors", () => {
     expect(participationStateErrors(local(), owned, "t1")).toEqual([]);
   });
 
+  it("accepts onboarding state where only the host holds the anchor", () => {
+    const onboarding = local({
+      assignmentsConfirmed: false,
+      participants: [
+        participant("p1", "Alex", ["t1"], true, 1),
+        participant("p2", "Sam", [], false, 2),
+      ],
+    });
+    expect(participationStateErrors(onboarding, ["t1"], "t1")).toEqual([]);
+  });
+
+  it("requires confirmed participants to hold their planned team count", () => {
+    const short = local({
+      participants: [
+        participant("p1", "Alex", ["t1"], true),
+        participant("p2", "Sam", ["t2", "t3"], false, 3),
+      ],
+    });
+    expect(participationStateErrors(short, owned, "t1").join(" ")).toMatch(
+      /controls 2 teams but planned 3/,
+    );
+  });
+
   it("requires every owned team to be assigned exactly once", () => {
     const unassigned = local({
+      assignmentsConfirmed: false,
       participants: [
-        { id: "p1", displayName: "Alex", teamIds: ["t1"], isHost: true },
-        { id: "p2", displayName: "Sam", teamIds: ["t2"], isHost: false },
+        participant("p1", "Alex", ["t1"], true),
+        participant("p2", "Sam", ["t2"], false, 2),
       ],
     });
     expect(participationStateErrors(unassigned, owned, "t1").join(" ")).toMatch(
@@ -151,8 +185,8 @@ describe("participationStateErrors", () => {
     );
     const doubled = local({
       participants: [
-        { id: "p1", displayName: "Alex", teamIds: ["t1", "t2"], isHost: true },
-        { id: "p2", displayName: "Sam", teamIds: ["t2", "t3"], isHost: false },
+        participant("p1", "Alex", ["t1", "t2"], true),
+        participant("p2", "Sam", ["t2", "t3"], false),
       ],
     });
     expect(participationStateErrors(doubled, owned, "t1").join(" ")).toMatch(
@@ -163,20 +197,20 @@ describe("participationStateErrors", () => {
   it("rejects AI teams in an assignment", () => {
     const withAi = local({
       participants: [
-        { id: "p1", displayName: "Alex", teamIds: ["t1", "ai"], isHost: true },
-        { id: "p2", displayName: "Sam", teamIds: ["t2", "t3"], isHost: false },
+        participant("p1", "Alex", ["t1", "ai"], true),
+        participant("p2", "Sam", ["t2", "t3"], false),
       ],
     });
     expect(participationStateErrors(withAi, owned, "t1").join(" ")).toMatch(
-      /"ai" not in user\.ownedTeamIds/,
+      /"ai" not in user.ownedTeamIds/,
     );
   });
 
   it("requires exactly one host", () => {
     const noHost = local({
       participants: [
-        { id: "p1", displayName: "Alex", teamIds: ["t1"], isHost: false },
-        { id: "p2", displayName: "Sam", teamIds: ["t2", "t3"], isHost: false },
+        participant("p1", "Alex", ["t1"], false),
+        participant("p2", "Sam", ["t2", "t3"], false),
       ],
     });
     expect(participationStateErrors(noHost, owned, "t1").join(" ")).toMatch(

@@ -3,6 +3,7 @@ import { Suspense } from "react";
 import { getGameModeDefinition } from "@/application/game-mode-catalog";
 import type { DashboardSnapshot } from "@/state/selectors";
 import { formatShortDate } from "@/components/calendar/CalendarDayCell";
+import { ParticipantBar } from "@/components/game/ParticipantBar";
 import { OwnerTeamSwitcher } from "@/components/game/OwnerTeamSwitcher";
 import { ArenaPanel } from "@/components/ui/ArenaPanel";
 import { TickerBar, type TickerItem } from "@/components/ui/TickerBar";
@@ -111,6 +112,7 @@ export function GameHeader(props: {
             <OwnerTeamSwitcher
               saveId={saveId}
               ownedTeams={dashboard.ownedTeams}
+              activeParticipantId={dashboard.participation?.activeParticipantId}
             />
           </Suspense>
         </div>
@@ -124,6 +126,13 @@ export function GameHeader(props: {
           unreadCount={dashboard.unreadNotificationCount}
         />
       </div>
+
+      <Suspense fallback={null}>
+        <ParticipantBar
+          saveId={saveId}
+          participation={dashboard.participation}
+        />
+      </Suspense>
 
       <TickerBar
         aria-label="Season status"

@@ -1,4 +1,8 @@
 import "server-only";
+import {
+  isOtherParticipantTeam,
+  participantTeamAccessError,
+} from "@/systems/participation";
 import type { SaveGameStore } from "@/persistence/save-game-store";
 import {
   asPlayerId,
@@ -115,6 +119,9 @@ export async function listOwnerTradeCandidates(
     asset: { kind: "player", playerId },
   });
   const accepted = raw.filter((candidate) => {
+    if (isOtherParticipantTeam(working, candidate.counterpartyTeamId)) {
+      return false;
+    }
     const evalB = evaluateTradeOffer(
       working,
       candidate.counterpartyTeamId,
@@ -176,6 +183,11 @@ export async function executeOwnerTrade(
     proposal.sideA.teamId === teamId
       ? proposal.sideB.teamId
       : proposal.sideA.teamId;
+  if (isOtherParticipantTeam(working, counterpartId)) {
+    return fail(
+      "Trades between participants are not supported yet. The AI cannot accept on another player's behalf.",
+    );
+  }
   const evaluation = evaluateTradeOffer(working, counterpartId, proposal);
   if (!evaluation.accepted) {
     return fail("Counterpart rejected the trade proposal.");
@@ -356,6 +368,13 @@ async function resolveOwnerTradeDecision(
   if (pending.type !== "trade_offer") {
     return fail("Unsupported owner decision type.");
   }
+  const accessError = participantTeamAccessError(
+    loaded.state,
+    pending.payload.userTeamId,
+  );
+  if (accessError) {
+    return fail(accessError);
+  }
 
   const proposal = pending.payload.currentProposal ?? pending.payload.proposal;
   const evaluateAsTeamId = pending.payload.userTeamId;
@@ -444,6 +463,13 @@ export async function submitTradeCounteroffer(
   }
   if (!loaded.state.user.ownedTeamIds.includes(pending.payload.userTeamId)) {
     return fail("Trade offer is not for an owned franchise.");
+  }
+  const accessError = participantTeamAccessError(
+    loaded.state,
+    pending.payload.userTeamId,
+  );
+  if (accessError) {
+    return fail(accessError);
   }
 
   const validation = validateTrade(loaded.state, counterProposal);
@@ -560,6 +586,9 @@ function findAcceptedProposalForPlayer(
     asset: { kind: "player", playerId },
   });
   const accepted = candidates.find((candidate) => {
+    if (isOtherParticipantTeam(working, candidate.counterpartyTeamId)) {
+      return false;
+    }
     const evalB = evaluateTradeOffer(
       working,
       candidate.counterpartyTeamId,
