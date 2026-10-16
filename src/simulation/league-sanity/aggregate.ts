@@ -168,6 +168,7 @@ export function aggregateLeagueSanitySnapshots(
   const competitiveMobility = computeCompetitiveMobility(
     snapshots.map((s) => ({
       teamKey: franchiseKey(s),
+      leagueKey: String(s.simulationIndex),
       seasonIndex: s.seasonIndex,
       winPct: s.winPct,
       playoff: s.playoff,
@@ -180,6 +181,7 @@ export function aggregateLeagueSanitySnapshots(
   const valueMobility = computeValueMobility(
     snapshots.map((s) => ({
       teamKey: franchiseKey(s),
+      leagueKey: String(s.simulationIndex),
       seasonIndex: s.seasonIndex,
       franchiseValue: s.franchiseValue,
     })),
