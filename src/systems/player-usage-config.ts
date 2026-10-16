@@ -33,7 +33,7 @@ export const PLAYER_USAGE_CONFIG = {
    * Extra star exponent for box-score scoring weights only.
    * Possession sim already has usageScore × scoring in shot weight.
    */
-  boxScoreScoringExponent: 1.2,
+  boxScoreScoringExponent: 1.5,
 } as const;
 
 export type PlayerUsageConfig = {

@@ -9,6 +9,7 @@ import {
 import {
   blockProbability,
   calculateShotProbability,
+  effectiveShootingAbility,
   resolveShot,
   type ResolveShotInput,
 } from "@/systems/shot-resolution";
@@ -351,5 +352,34 @@ describe("blockProbability", () => {
     // Every two-point miss against block >= 72 used to be a block.
     expect(blockProbability(defender(72), "two_point")).toBeLessThan(0.2);
     expect(blockProbability(defender(55), "two_point")).toBeLessThan(0.1);
+  });
+});
+
+describe("effectiveShootingAbility (#90)", () => {
+  const { abilityKnee, abilityKneeSlope } = SHOT_RESOLUTION_CONFIG;
+
+  it("is the identity at or below the knee", () => {
+    expect(effectiveShootingAbility(50)).toBe(50);
+    expect(effectiveShootingAbility(abilityKnee)).toBe(abilityKnee);
+  });
+
+  it("gives each point above the knee a fraction of a point", () => {
+    expect(effectiveShootingAbility(abilityKnee + 10)).toBeCloseTo(
+      abilityKnee + 10 * abilityKneeSlope,
+    );
+  });
+
+  it("keeps an elite shooter's two-point make chance believable", () => {
+    const elite = calculateShotProbability(
+      baseInput({
+        shooter: createPlayer({
+          id: "elite",
+          attributes: { finishing: 97, midRange: 97, threePoint: 97 },
+        }),
+      }),
+    );
+    // Linear in rating this was ~0.69 against a 70 defender.
+    expect(elite).toBeLessThan(0.62);
+    expect(elite).toBeGreaterThan(0.5);
   });
 });

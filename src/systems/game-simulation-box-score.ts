@@ -33,7 +33,10 @@ import {
   REBOUND_RESOLUTION_CONFIG,
 } from "@/systems/rebound-resolution-config";
 import { playerReboundBaseStrength } from "@/systems/rebound-resolution";
-import { blockProbability } from "@/systems/shot-resolution";
+import {
+  blockProbability,
+  effectiveShootingAbility,
+} from "@/systems/shot-resolution";
 import { ROTATION_CONFIG } from "@/systems/rotation/rotation-config";
 import { SHOT_RESOLUTION_CONFIG } from "@/systems/shot-resolution-config";
 import {
@@ -62,26 +65,40 @@ export type SimulateBoxScoreContext = {
  * Expected team points from the team's top-8 shooting, its top-3 scorers
  * (the possession sim funnels shots to its best scorers, so stars move points
  * more than a team mean does), rebounding, and the opponent's rotation
- * defense. Fitted (OLS) to possession-sim means over every pairing of 12
- * generated leagues (1,584 team-sides); 6 held-out leagues give RMSE 4.0
- * (mostly game noise), bias +0.6. The previous fixed 96-point base was tuned
- * on one Lab roster pair, scored ~9 points high on typical league rosters and
- * ignored absolute talent. The possession sim has no home-court term, so
- * neither does this.
+ * defense. Fitted (OLS) to possession games through simulateScheduledGame
+ * (real lineups, coaching and staff) on 12 bootstrapped 30-team leagues
+ * (21,600 team-sides); 6 held-out leagues give bias -0.1 and per-game RMSE
+ * 12.0, mostly game noise. Refit for engine v8 (shot curve, wider talent
+ * tail). The possession sim has no home-court term, so neither does this.
  */
 const EXPECTED_POINTS_MODEL = {
-  intercept: -32.338,
-  /** Top-8 mean scoringAbility (finishing, midRange, threePoint). */
-  shooting: 0.589,
-  /** Mean scoringAbility of the three best scorers in the top 8. */
-  topScorers: 1.257,
+  intercept: -34.483,
+  /** Top-8 mean of {@link effectiveScoringAbility}. */
+  shooting: 0.621,
+  /** Mean effectiveScoringAbility of the three best scorers in the top 8. */
+  topScorers: 1.244,
   /** Top-8 mean rebounding (second chances). */
-  rebounding: 0.154,
+  rebounding: 0.279,
   /** Opponent available-roster mean interiorDefense. */
-  opponentInteriorDefense: -0.418,
+  opponentInteriorDefense: -0.29,
   /** Opponent available-roster mean perimeterDefense. */
-  opponentPerimeterDefense: -0.092,
+  opponentPerimeterDefense: -0.276,
 } as const;
+
+/**
+ * Scoring ability after the possession sim's diminishing-returns shot curve
+ * (finishing, midRange and threePoint each through effectiveShootingAbility),
+ * so team points stay linear in it across ordinary and elite rosters.
+ */
+function effectiveScoringAbility(player: Player): number {
+  const { finishing, midRange, threePoint } = player.attributes;
+  return (
+    (effectiveShootingAbility(finishing) +
+      effectiveShootingAbility(midRange) +
+      effectiveShootingAbility(threePoint)) /
+    3
+  );
+}
 const TOP_SCORER_COUNT = 3;
 /** Half-width of the uniform per-team score noise (possession-sim SD ~13). */
 const SCORE_NOISE = 22;
@@ -113,7 +130,9 @@ const ASSIST_TO_FGM_RATE = 0.51;
  * Intercepts, three share and FT share are then tuned so team rates match the
  * possession sim on held-out leagues — points-first allocation hands weak
  * shooters extra attempts, which a per-player fit alone would miss. Re-fit
- * when shot or FT config changes.
+ * when shot or FT config changes (engine v8 lowered the three-point and FT
+ * intercepts so Lab and league rates match the possession sim with the
+ * shooting knee and the steeper star exponent).
  */
 const BOX_SCORE_SHOT_CALIBRATION = {
   threeShareBase: -0.0055,
@@ -124,31 +143,18 @@ const BOX_SCORE_SHOT_CALIBRATION = {
   ftShareFinishingSlope: 0,
   ftShareMin: 0.04,
   ftShareMax: 0.25,
-  twoPoint: { intercept: 0.0125, slope: 0.9772, knee: 0.53 },
-  threePoint: { intercept: 0.053, slope: 0.951, knee: 0.45 },
-  freeThrow: { intercept: 0.007, slope: 0.9984, knee: 1 },
-  /**
-   * Above `knee`, make rates rise at this fraction of the linear map. The
-   * possession sim lets a 97-rated scorer shoot ~59% from the field; box
-   * score keeps elite shooters believable (GAME_DESIGN: top scorers 25-32
-   * PPG) without moving team rates for typical rosters.
-   */
-  kneeSlope: 0.4,
+  // Elite shooters are kept believable by the shared diminishing-returns
+  // curve (effectiveShootingAbility), not a box-score-only knee.
+  twoPoint: { intercept: 0.0125, slope: 0.9772 },
+  threePoint: { intercept: 0.033, slope: 0.951 },
+  freeThrow: { intercept: -0.008, slope: 0.9984 },
 } as const;
 
 function calibratedRate(
   raw: number,
-  map: {
-    readonly intercept: number;
-    readonly slope: number;
-    readonly knee: number;
-  },
+  map: { readonly intercept: number; readonly slope: number },
 ): number {
-  const linear = map.intercept + map.slope * raw;
-  if (linear <= map.knee) {
-    return linear;
-  }
-  return map.knee + (linear - map.knee) * BOX_SCORE_SHOT_CALIBRATION.kneeSlope;
+  return map.intercept + map.slope * raw;
 }
 const POSITION_STEAL_MODIFIERS: Readonly<Record<PlayerPosition, number>> = {
   PG: 6,
@@ -289,7 +295,7 @@ export function expectedTeamPoints(
       calculatePlayerOverall(a.position, a.attributes),
   );
   const sample = ranked.slice(0, Math.min(8, ranked.length));
-  const scoring = sample.map(scoringAbility);
+  const scoring = sample.map(effectiveScoringAbility);
   const shooting = mean(scoring);
   const topScorers = mean(
     [...scoring].sort((a, b) => b - a).slice(0, TOP_SCORER_COUNT),
@@ -814,7 +820,7 @@ function twoPointMakeRate(player: Player, oppInterior: number): number {
     (player.attributes.finishing + player.attributes.midRange) / 2;
   return clampShotProbability(
     calibratedRate(
-      ability / RATING_MAX +
+      effectiveShootingAbility(ability) / RATING_MAX +
         SHOT_RESOLUTION_CONFIG.baselineProbability +
         SHOT_RESOLUTION_CONFIG.twoPointAdjustment -
         (oppInterior / RATING_MAX) * SHOT_RESOLUTION_CONFIG.defensiveImpact,
@@ -826,7 +832,7 @@ function twoPointMakeRate(player: Player, oppInterior: number): number {
 function threePointMakeRate(player: Player, oppPerimeter: number): number {
   return clampShotProbability(
     calibratedRate(
-      player.attributes.threePoint / RATING_MAX +
+      effectiveShootingAbility(player.attributes.threePoint) / RATING_MAX +
         SHOT_RESOLUTION_CONFIG.baselineProbability +
         SHOT_RESOLUTION_CONFIG.threePointAdjustment -
         (oppPerimeter / RATING_MAX) * SHOT_RESOLUTION_CONFIG.defensiveImpact,

@@ -33,7 +33,7 @@ export const ROSTER_QUALITY_BY_SLOT: readonly {
   qualityMin: number;
   qualityMax: number;
 }[] = [
-  { maxSlot: 4, qualityMin: 64, qualityMax: 85 },
+  { maxSlot: 4, qualityMin: 64, qualityMax: 90 },
   { maxSlot: 9, qualityMin: 52, qualityMax: 72 },
   { maxSlot: 999, qualityMin: 40, qualityMax: 60 },
 ];

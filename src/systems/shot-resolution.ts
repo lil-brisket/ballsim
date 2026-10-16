@@ -27,7 +27,8 @@ export type ShotResolution = {
  * Pure probability for a shot attempt. Does not consume RNG.
  *
  * Formula:
- *   baseProbability = shootingAbility / RATING_MAX
+ *   baseProbability = effectiveAbility(shootingAbility) / RATING_MAX
+ *     (ratings above abilityKnee count abilityKneeSlope per point)
  *   + baselineProbability
  *   + shotTypeAdjustment
  *   - (defenseRating / RATING_MAX) * defensiveImpact
@@ -43,7 +44,8 @@ export function calculateShotProbability(input: ResolveShotInput): number {
   const { shootingAbility, defenseRating, shotTypeAdjustment } =
     resolveShotFactors(input);
 
-  const baseProbability = shootingAbility / RATING_MAX;
+  const baseProbability =
+    effectiveShootingAbility(shootingAbility) / RATING_MAX;
   const defensivePenalty =
     (defenseRating / RATING_MAX) * SHOT_RESOLUTION_CONFIG.defensiveImpact;
   const fatiguePenalty = input.fatigue * SHOT_RESOLUTION_CONFIG.fatigueImpact;
@@ -89,6 +91,14 @@ function resolveShotFactors(input: ResolveShotInput): {
     defenseRating: input.defender.attributes.perimeterDefense,
     shotTypeAdjustment: SHOT_RESOLUTION_CONFIG.threePointAdjustment,
   };
+}
+
+/** Diminishing returns above the knee, so elite shooters stay believable. */
+export function effectiveShootingAbility(rating: number): number {
+  const { abilityKnee, abilityKneeSlope } = SHOT_RESOLUTION_CONFIG;
+  return rating <= abilityKnee
+    ? rating
+    : abilityKnee + (rating - abilityKnee) * abilityKneeSlope;
 }
 
 function clampProbability(value: number): number {

@@ -51,5 +51,13 @@
  * a block >= 72 defender, cutting possession blocks from ~12 to ~4-5 per team.
  * The rebound positioning multiplier rises 2 -> 3.1 (OREB ~14 -> ~11). Box
  * score projects OREB and blocks from rosters with the same formulas.
+ *
+ * Version 8: shooting ability has diminishing returns above 75
+ * (`effectiveShootingAbility`, half weight per point) in both engines, with
+ * the make-probability baseline raised -0.2 -> -0.18 so league scoring holds.
+ * The box-score-only make-rate knee is gone and its points model is refit on
+ * real-pipeline possession games. Player generation adds an 86-90 quality
+ * band (starter slots up to 90), giving ~3 players at 90+ per league with
+ * top scorers near 30 PPG instead of 31-35 PPG at ~59% FG.
  */
-export const ENGINE_VERSION = 7;
+export const ENGINE_VERSION = 8;
