@@ -19,6 +19,8 @@ import {
 } from "@/systems/roster-generation-config";
 import { recommendRosterManagement } from "@/systems/roster-management";
 import { getContractSigningYear, getTeamPayroll } from "@/systems/salary-cap";
+import { aiPayrollRoom } from "@/systems/ai-payroll-budget";
+import { isUserControlledTeam } from "@/state/owner-context";
 
 /**
  * Fills empty team rosters with fictional players and starter contracts.
@@ -220,10 +222,11 @@ function isReplacementLevel(player: Player): boolean {
  * Adds players so every team reaches {@link DEFAULT_ROSTER_SIZE}.
  * Used after offseason attrition when the free-agent pool cannot fill holes.
  *
- * With the salary cap on, a fill respects cap space: the best free agent whose
- * market salary fits signs at market; otherwise a replacement-level player
- * signs a one-year minimum deal (the vet-min exception), so filling a roster
- * never pushes a team over the cap with market contracts.
+ * A fill respects the team's room (an AI team's affordable cap space; none
+ * for an owner's team): the best free agent whose market salary fits signs at
+ * market; otherwise a replacement-level player signs a one-year minimum deal
+ * (the vet-min exception), so filling a roster never pushes a team over the
+ * cap or its budget with market contracts.
  */
 export function fillShortRosters(state: GameState, rng: Rng): SystemResult {
   const teamIds = (
@@ -244,7 +247,6 @@ export function fillShortRosters(state: GameState, rng: Rng): SystemResult {
   };
   const currentYear = getContractSigningYear(state);
   const cap = getLeagueSalaryCap(state);
-  const capEnabled = state.settings.financialRules.salaryCapEnabled;
   const minSalary = vetMinSalary(cap);
   const occupiedNames = new Set<string>();
   for (const existing of Object.values(players)) {
@@ -256,10 +258,17 @@ export function fillShortRosters(state: GameState, rng: Rng): SystemResult {
     const team = teams[teamId]!;
     const roster = [...team.roster];
     let slot = roster.length;
-    let payroll = getTeamPayroll(teamId, currentYear, state);
+    const startPayroll = getTeamPayroll(teamId, currentYear, state);
+    let payroll = startPayroll;
+    // AI teams stay within what they can afford (#93). An owner's roster is
+    // only topped up with one-year minimum deals: an automatic fill must not
+    // commit the owner to market contracts they never chose.
+    const startRoom = isUserControlledTeam(state, teamId)
+      ? 0
+      : aiPayrollRoom(state, teamId, currentYear);
     while (roster.length < DEFAULT_ROSTER_SIZE) {
       const position = rosterPositionForSlot(roster.length);
-      const capSpace = capEnabled ? cap - payroll : Number.MAX_SAFE_INTEGER;
+      const capSpace = startRoom - (payroll - startPayroll);
       const fits = (candidate: Player) =>
         fillMarketSalary(candidate, cap) <= capSpace;
       const existing =

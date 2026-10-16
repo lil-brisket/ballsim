@@ -256,6 +256,15 @@ export function facilityUpgradeFromPreferences(
   if (cash < AI_FACILITY_MIN_CASH) {
     return null;
   }
+  // One capital project at a time: with healthy finances, chaining upgrades
+  // across categories every four weeks maxed facilities within a few seasons.
+  if (
+    Object.values(ops.facilities).some(
+      (facility) => facility.upgradeWeeksRemaining > 0,
+    )
+  ) {
+    return null;
+  }
   if (prefs.cashPreservation > 0.75 && cash < AI_FACILITY_CONSERVATIVE_CASH) {
     return null;
   }

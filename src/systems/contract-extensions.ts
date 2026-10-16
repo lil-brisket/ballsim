@@ -12,6 +12,8 @@ import type { TeamId } from "@/domain/ids";
 import { calculatePlayerOverall } from "@/domain/player-overall-rating";
 import { systemResult, type SystemResult } from "@/domain/system-result";
 import type { GameState } from "@/state/game-state";
+import { isUserControlledTeam } from "@/state/owner-context";
+import { aiPayrollRoom } from "@/systems/ai-payroll-budget";
 import { getLeagueSalaryCap } from "@/systems/league-salary-cap";
 import { getContractSigningYear, getTeamCapSpace } from "@/systems/salary-cap";
 import { salaryForPlayer, serviceYearsForSalary } from "@/systems/salary-scale";
@@ -80,7 +82,10 @@ function extendTeamStars(
     const extraYears = remainingYears <= 1 ? MAX_ADDED_YEARS : 0;
     const endYear = contract.endYear + extraYears;
     const raise = market - (nextSalary ?? 0);
-    const space = getTeamCapSpace(teamId, year, current, cap);
+    // AI teams also stay within what they can afford (#93).
+    const space = isUserControlledTeam(current, teamId)
+      ? getTeamCapSpace(teamId, year, current, cap)
+      : aiPayrollRoom(current, teamId, year);
     if (raise > 0 && space < raise) continue;
 
     const salaryByYear = { ...contract.salaryByYear };
