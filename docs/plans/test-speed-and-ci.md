@@ -1,4 +1,15 @@
-# Execute "Test Speed and CI Plan" (with verified corrections)
+# Test speed and CI plan
+
+## Outcome (2026-10-16)
+
+Measurements are in [`test-speed-baseline.md`](./test-speed-baseline.md). The baseline changed the plan in three places:
+
+- **Task 1:** `npm test` wall time came from three minutes-long files. They (or just their slow tests) moved to a new `slow` tier (`tests/**/*.slow.test.ts`, `npm run test:slow`). It runs as its own PR CI job and is not part of `npm test`. Suites with timeouts over 30s moved from `unit` to `integration`. The broad ">3s per file" move was skipped because both tiers are in `npm test`, so it would not have sped anything up.
+- **Task 2 (cached world helper):** dropped. `bootstrapWorld` costs about 10–30ms and tests almost never share a `saveId` and seed.
+- **Task 3:** integration was under 30% of coverage time, so it stays in `test:coverage`. The CI jobs are `static`, `test`, `slow`, `simulation` and `build`.
+- **Also done:** fixed the 8 test files already failing in PR tiers (7 React files missing a `server-only` mock, plus one stale fixture; `migration-v66-v67` asserting a mode that became valid). The 2 failing multi-year regression tests are left for a separate issue.
+
+Result: `npm test` went from 229s to 58s locally, with every file passing.
 
 ## Context
 

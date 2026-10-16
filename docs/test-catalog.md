@@ -25,7 +25,7 @@ Every Vitest run writes `test-results.txt` at the repo root (gitignored). Covera
 | Game / season timing                                                                             | `npm run bench:sim`                                                                       |
 | Typecheck / lint / format (CI)                                                                   | `npx tsc --noEmit` · `npm run lint` · `npm run format:check`                              |
 
-`npm test` does **not** run slow, simulation or regression. PR CI runs `npm run test:coverage` then `npm run test:simulation`.
+`npm test` does **not** run slow, simulation or regression. PR CI runs `npm run test:coverage`, `npm run test:slow` and `npm run test:simulation` as parallel jobs (see [`testing.md`](./testing.md#ci)).
 
 ## Vitest projects
 
