@@ -93,8 +93,16 @@ async function hotseat() {
     return roster[roster.length - 1]!;
   };
   const proposal: TradeProposal = {
-    sideA: { teamId: alexTeam, playerIds: [lastPlayer(alexTeam)], draftPickIds: [] },
-    sideB: { teamId: asTeamId(samTeam), playerIds: [lastPlayer(samTeam)], draftPickIds: [] },
+    sideA: {
+      teamId: alexTeam,
+      playerIds: [lastPlayer(alexTeam)],
+      draftPickIds: [],
+    },
+    sideB: {
+      teamId: asTeamId(samTeam),
+      playerIds: [lastPlayer(samTeam)],
+      draftPickIds: [],
+    },
   };
   return { store, saveId, alexTeam, samTeam, alex: alex!, sam: sam!, proposal };
 }
@@ -121,8 +129,9 @@ describe("trades between participants", () => {
   it("only the recipient can accept, and accepting executes the trade", async () => {
     const { store, saveId, proposal, sam, alexTeam, samTeam } = await hotseat();
     await proposeTradeToParticipant(saveId, proposal, store);
-    const decisionId = (await store.load(saveId))!.state.user
-      .pendingOwnerDecisions.at(-1)!.id;
+    const decisionId = (await store.load(
+      saveId,
+    ))!.state.user.pendingOwnerDecisions.at(-1)!.id;
 
     const selfAccept = await acceptOwnerDecision(saveId, decisionId, store);
     expect(selfAccept.ok).toBe(false);
@@ -142,9 +151,12 @@ describe("trades between participants", () => {
   it("lets the proposer withdraw their offer", async () => {
     const { store, saveId, proposal } = await hotseat();
     await proposeTradeToParticipant(saveId, proposal, store);
-    const decisionId = (await store.load(saveId))!.state.user
-      .pendingOwnerDecisions.at(-1)!.id;
-    expect((await declineOwnerDecision(saveId, decisionId, store)).ok).toBe(true);
+    const decisionId = (await store.load(
+      saveId,
+    ))!.state.user.pendingOwnerDecisions.at(-1)!.id;
+    expect((await declineOwnerDecision(saveId, decisionId, store)).ok).toBe(
+      true,
+    );
     expect(
       (await store.load(saveId))!.state.user.pendingOwnerDecisions.some(
         (d) => d.id === decisionId,
@@ -155,8 +167,9 @@ describe("trades between participants", () => {
   it("sends a counteroffer back to the proposer", async () => {
     const { store, saveId, proposal, sam, alexTeam } = await hotseat();
     await proposeTradeToParticipant(saveId, proposal, store);
-    const decisionId = (await store.load(saveId))!.state.user
-      .pendingOwnerDecisions.at(-1)!.id;
+    const decisionId = (await store.load(
+      saveId,
+    ))!.state.user.pendingOwnerDecisions.at(-1)!.id;
     await switchParticipant(saveId, sam.id, store);
     const counter: TradeProposal = {
       sideA: proposal.sideB,
@@ -169,7 +182,8 @@ describe("trades between participants", () => {
       store,
     );
     expect(countered.ok).toBe(true);
-    const pending = (await store.load(saveId))!.state.user.pendingOwnerDecisions;
+    const pending = (await store.load(saveId))!.state.user
+      .pendingOwnerDecisions;
     expect(pending.some((d) => d.id === decisionId)).toBe(false);
     expect(pending.at(-1)!.payload.userTeamId).toBe(alexTeam);
   });

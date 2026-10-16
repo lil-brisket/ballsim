@@ -100,8 +100,8 @@ describe("star trade premium", () => {
       sideB: { teamId: teamB, playerIds: [], draftPickIds: [pickId] },
     };
     const cpuEval = evaluateTradeOffer(state, teamB, proposal);
-    expect(
-      isInterruptWorthyTradeOffer(state, teamA, proposal, cpuEval),
-    ).toBe(false);
+    expect(isInterruptWorthyTradeOffer(state, teamA, proposal, cpuEval)).toBe(
+      false,
+    );
   });
 });

@@ -131,7 +131,8 @@ describe("submitTradeCounteroffer", () => {
     const after = await store.load(saveId);
     const pending = after!.state.user.pendingOwnerDecisions[0];
     if (pending && pending.type === "trade_offer") {
-      const current = pending.payload.currentProposal ?? pending.payload.proposal;
+      const current =
+        pending.payload.currentProposal ?? pending.payload.proposal;
       const cpuSide =
         current.sideA.teamId === cpuTeamId ? current.sideA : current.sideB;
       expect(

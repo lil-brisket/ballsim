@@ -91,7 +91,12 @@ describe("custom roster save creation", () => {
     const settings = cloneGameSettings(CBL_GAME_SETTINGS);
     settings.draft.mode = "custom";
     const result = await createNewOwnerSave(
-      { name: "Bad Save", settings, rosterPackage: { not: "a package" }, rngSeed: 22 },
+      {
+        name: "Bad Save",
+        settings,
+        rosterPackage: { not: "a package" },
+        rngSeed: 22,
+      },
       store,
     );
     expect(result.ok).toBe(false);

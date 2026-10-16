@@ -30,9 +30,7 @@ function marketKey(city: string): string {
   return normalizeCityName(city) ?? city.trim().toLowerCase();
 }
 
-function marketCounts(
-  teams: GameState["world"]["teams"],
-): Map<string, number> {
+function marketCounts(teams: GameState["world"]["teams"]): Map<string, number> {
   const counts = new Map<string, number>();
   for (const team of Object.values(teams)) {
     const key = marketKey(team.city);

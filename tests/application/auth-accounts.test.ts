@@ -63,7 +63,10 @@ describe("accounts", () => {
   it("rejects duplicate usernames case-insensitively and weak passwords", async () => {
     const store = createMemoryAccountStore();
     await signUp(store, { username: "alex", password: "password123" });
-    const dup = await signUp(store, { username: "ALEX", password: "password123" });
+    const dup = await signUp(store, {
+      username: "ALEX",
+      password: "password123",
+    });
     expect(dup.ok).toBe(false);
     const weak = await signUp(store, { username: "sam", password: "short" });
     expect(weak.ok).toBe(false);
@@ -72,9 +75,15 @@ describe("accounts", () => {
   it("signs in with the right password only, with one generic error", async () => {
     const store = createMemoryAccountStore();
     await signUp(store, { username: "alex", password: "password123" });
-    const good = await signIn(store, { username: "Alex", password: "password123" });
+    const good = await signIn(store, {
+      username: "Alex",
+      password: "password123",
+    });
     expect(good.ok).toBe(true);
-    const wrong = await signIn(store, { username: "alex", password: "nope-nope" });
+    const wrong = await signIn(store, {
+      username: "alex",
+      password: "nope-nope",
+    });
     const missing = await signIn(store, { username: "nobody", password: "x" });
     expect(wrong.ok || missing.ok).toBe(false);
     if (!wrong.ok && !missing.ok) {

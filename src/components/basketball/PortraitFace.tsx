@@ -434,10 +434,7 @@ export function PortraitFace(props: { traits: PortraitTraits }) {
     >
       <rect width="64" height="64" fill={PLATE} />
       {backHair(t.hairStyle, hair)}
-      <path
-        d="M4 64 C6 52 18 48 32 48 C46 48 58 52 60 64 Z"
-        fill={JERSEY}
-      />
+      <path d="M4 64 C6 52 18 48 32 48 C46 48 58 52 60 64 Z" fill={JERSEY} />
       <path
         d="M26 48.5 L32 55 L38 48.5"
         fill="none"

@@ -259,8 +259,14 @@ describe("player portrait lifecycle", () => {
     expect(afterFirst.state.world.playerPortraits).toEqual(original);
 
     const second = await repairPlayerPortraits(store);
-    expect(second[0]).toMatchObject({ saveId, status: "unchanged", assigned: 0 });
+    expect(second[0]).toMatchObject({
+      saveId,
+      status: "unchanged",
+      assigned: 0,
+    });
     const afterSecond = (await store.load(saveId))!;
-    expect(afterSecond.updatedAt.getTime()).toBe(afterFirst.updatedAt.getTime());
+    expect(afterSecond.updatedAt.getTime()).toBe(
+      afterFirst.updatedAt.getTime(),
+    );
   });
 });

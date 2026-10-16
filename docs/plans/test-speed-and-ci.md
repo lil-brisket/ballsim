@@ -4,17 +4,17 @@
 
 The user supplied a plan to make `npm test` and PR CI faster without weakening tests, changing `src/` behavior, or adding paid CI. I checked its claims against the repo. Most hold. Several do not, and two of them block the plan's own acceptance criteria:
 
-| Plan claim / assumption | Actual (verified) | Effect on plan |
-| --- | --- | --- |
-| CI can be compared against a recent green run | Master CI is **red at Format check**: 99 files fail Prettier (~57 in `src/`). Tests, simulation and build have been **skipped** on every run since. | New Step A (user approved): formatting-only commit first. Before/after CI comparison uses the first green run on the branch, not master. |
-| CI runs on push to the main branch | `ci.yml` triggers on `push: branches: [main]`, but the default branch is `master` (changed in `003f07c`, 2026-10-12). Pushes to master no longer run CI. | Fix trigger to `master` in Task 3. |
-| `test:coverage` means "unit + react" | It is `unit + integration + react`. | Dropping integration from coverage is a real change; decide with Task 0 numbers (rule below). |
-| Branch protection may require job `check` | `master` is not protected (API 404). | No required-check rename needed. Mention in PR anyway. |
-| `resetDomainEventSequenceForTests` makes cached worlds risky (event ids) | `createDomainEvent` uses `crypto.randomUUID()` when available (Node 22 always), so `eventSequence` never reaches an id (`src/domain/events/domain-event.ts:133-155`). | Event-id risk is moot. Real cached-world risks are listed in Task 2. Still migrate file by file. |
-| Slow-in-unit list | Confirmed, plus `tests/systems/player-generation.test.ts` (two 60s cases). `simulate-to-date` has no large timeout; Task 0 decides. | Add player-generation (split slow cases out). |
-| Duplicate `season-rng-desync` | `tests/systems/simulation/season-rng-desync.test.ts` (unit; seed 42, 8 days, asserts `daysAdvanced > 0`) is a subset of `tests/simulation/lab/season-rng-desync.test.ts` (simulation tier; same boot path, seed 7, advances the whole regular season with RNG alignment asserts). | Deletion is justified. Note the lab copy runs in the `simulation` CI job, not `npm test`. |
-| 50 `scripts/_*` scratch files, unreferenced | Confirmed 50. Only references: `tsconfig.tsbuildinfo` (generated), a `.gitignore` comment naming `_decade_health.ts`, and `_play_10_year_dynasty.ts` → its own JSON output. 3 of them fail Prettier. | Delete them **before** the format commit; fix the `.gitignore` comment. |
-| `performance-budget` strict in nightly | `sim-nightly.yml` runs simulation + regression only, not integration. | Task 4 must add a nightly step that runs it strictly. |
+| Plan claim / assumption                                                  | Actual (verified)                                                                                                                                                                                                                                                                 | Effect on plan                                                                                                                           |
+| ------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| CI can be compared against a recent green run                            | Master CI is **red at Format check**: 99 files fail Prettier (~57 in `src/`). Tests, simulation and build have been **skipped** on every run since.                                                                                                                               | New Step A (user approved): formatting-only commit first. Before/after CI comparison uses the first green run on the branch, not master. |
+| CI runs on push to the main branch                                       | `ci.yml` triggers on `push: branches: [main]`, but the default branch is `master` (changed in `003f07c`, 2026-10-12). Pushes to master no longer run CI.                                                                                                                          | Fix trigger to `master` in Task 3.                                                                                                       |
+| `test:coverage` means "unit + react"                                     | It is `unit + integration + react`.                                                                                                                                                                                                                                               | Dropping integration from coverage is a real change; decide with Task 0 numbers (rule below).                                            |
+| Branch protection may require job `check`                                | `master` is not protected (API 404).                                                                                                                                                                                                                                              | No required-check rename needed. Mention in PR anyway.                                                                                   |
+| `resetDomainEventSequenceForTests` makes cached worlds risky (event ids) | `createDomainEvent` uses `crypto.randomUUID()` when available (Node 22 always), so `eventSequence` never reaches an id (`src/domain/events/domain-event.ts:133-155`).                                                                                                             | Event-id risk is moot. Real cached-world risks are listed in Task 2. Still migrate file by file.                                         |
+| Slow-in-unit list                                                        | Confirmed, plus `tests/systems/player-generation.test.ts` (two 60s cases). `simulate-to-date` has no large timeout; Task 0 decides.                                                                                                                                               | Add player-generation (split slow cases out).                                                                                            |
+| Duplicate `season-rng-desync`                                            | `tests/systems/simulation/season-rng-desync.test.ts` (unit; seed 42, 8 days, asserts `daysAdvanced > 0`) is a subset of `tests/simulation/lab/season-rng-desync.test.ts` (simulation tier; same boot path, seed 7, advances the whole regular season with RNG alignment asserts). | Deletion is justified. Note the lab copy runs in the `simulation` CI job, not `npm test`.                                                |
+| 50 `scripts/_*` scratch files, unreferenced                              | Confirmed 50. Only references: `tsconfig.tsbuildinfo` (generated), a `.gitignore` comment naming `_decade_health.ts`, and `_play_10_year_dynasty.ts` → its own JSON output. 3 of them fail Prettier.                                                                              | Delete them **before** the format commit; fix the `.gitignore` comment.                                                                  |
+| `performance-budget` strict in nightly                                   | `sim-nightly.yml` runs simulation + regression only, not integration.                                                                                                                                                                                                             | Task 4 must add a nightly step that runs it strictly.                                                                                    |
 
 Note: the user's memory says not to run suites unprompted. This plan explicitly calls for measurement and verification runs, so those runs are in scope. Timing JSON goes to the scratchpad, not the repo.
 
@@ -59,9 +59,15 @@ First action after approval: write this corrected plan to `docs/plans/test-speed
 Helper `tests/helpers/cached-world.ts` (main session):
 
 ```ts
-cachedWorld({ saveId, rngSeed, settings = CBL_GAME_SETTINGS, settingsKey = "cbl", stage })
-  // stage: "bootstrap" | "regular-season"
-  // returns { state: structuredClone(cached.state), rng: createSeededRng(cached.rngState) }
+cachedWorld({
+  saveId,
+  rngSeed,
+  settings = CBL_GAME_SETTINGS,
+  settingsKey = "cbl",
+  stage,
+});
+// stage: "bootstrap" | "regular-season"
+// returns { state: structuredClone(cached.state), rng: createSeededRng(cached.rngState) }
 ```
 
 - Module-level `Map` keyed by `saveId|rngSeed|settingsKey|stage`. Vitest's default `isolate: true` gives each file its own module, so the cache is per file.
@@ -72,6 +78,7 @@ cachedWorld({ saveId, rngSeed, settings = CBL_GAME_SETTINGS, settingsKey = "cbl"
 - Real risks: (1) `createInitialGameState` uses `crypto.randomUUID` for some ids, so cached clones share ids that fresh builds would not. Skip any test that compares two separately bootstrapped states for distinctness. (2) Only migrate call sites that match the exact pattern, with no rng use between seed and bootstrap and no custom roster package.
 
 Migration (implementer, batches of ~3 files): `owner-decisions` (11 calls), `owner-notifications`, `hard-locks`, `ai-team-decisions`, `world-pipeline`, `phase5-hub-selectors`, `ticket-revenue`, `advance-simulation`, `migration-v39`, `phase5-offseason-lifecycle`. Brief per batch: no assertion changes; run each file alone before and after and report pass counts and durations; skip and report any file whose results change. Review every diff.
+
 - End: `npm test`, `npm run test:regression`.
 
 ## Task 3: CI split (implementer writes, main reviews YAML)

@@ -157,7 +157,11 @@ describe("online league creation and access", () => {
     const { base, saveId } = await withGuest();
     const guestId = shared((await base.load(saveId))!.state).participants[1]!
       .id;
-    const result = await switchParticipant(saveId, guestId, actingAs(base, HOST));
+    const result = await switchParticipant(
+      saveId,
+      guestId,
+      actingAs(base, HOST),
+    );
     expect(result.ok).toBe(false);
   });
 });
@@ -171,8 +175,9 @@ describe("invites", () => {
 
     const invite = await createLeagueInvite(ctx(HOST), saveId);
     if (!invite.ok) throw new Error(invite.error);
-    expect((await revokeLeagueInvite(ctx(HOST), saveId, invite.invite.id)).ok)
-      .toBe(true);
+    expect(
+      (await revokeLeagueInvite(ctx(HOST), saveId, invite.invite.id)).ok,
+    ).toBe(true);
     expect((await previewLeagueInvite(ctx(STRANGER), invite.token)).ok).toBe(
       false,
     );
@@ -199,7 +204,11 @@ describe("invites", () => {
     const { ctx, saveId, anchorId, accounts } = await createOnlineLeague();
     const invite = await createLeagueInvite(ctx(HOST), saveId);
     if (!invite.ok) throw new Error(invite.error);
-    const taken = await joinLeagueWithInvite(ctx(GUEST), invite.token, anchorId);
+    const taken = await joinLeagueWithInvite(
+      ctx(GUEST),
+      invite.token,
+      anchorId,
+    );
     expect(taken.ok).toBe(false);
     const [stored] = await accounts.listInvites(saveId);
     expect(stored!.uses).toBe(0);
@@ -209,7 +218,9 @@ describe("invites", () => {
     const { ctx, saveId, base } = await createOnlineLeague();
     const invite = await createLeagueInvite(ctx(HOST), saveId, { days: 1 });
     if (!invite.ok) throw new Error(invite.error);
-    const teamId = Object.keys((await base.load(saveId))!.state.world.teams)[1]!;
+    const teamId = Object.keys(
+      (await base.load(saveId))!.state.world.teams,
+    )[1]!;
     expect(
       (await joinLeagueWithInvite(ctx(null), invite.token, teamId)).ok,
     ).toBe(false);
@@ -245,9 +256,9 @@ describe("online turns and concurrency", () => {
     expect(
       (await advanceOwnerTime(saveId, { days: 1 }, actingAs(base, GUEST))).ok,
     ).toBe(true);
-    expect(shared((await base.load(saveId))!.state).readyParticipantIds).toEqual(
-      [],
-    );
+    expect(
+      shared((await base.load(saveId))!.state).readyParticipantIds,
+    ).toEqual([]);
     // A retried advance cannot simulate the same window twice.
     expect((await advanceOwnerTime(saveId, { days: 1 }, guestStore)).ok).toBe(
       false,
@@ -284,9 +295,9 @@ describe("online turns and concurrency", () => {
     await expect(
       actingAs(base, STRANGER).save({ id: saveId, state }),
     ).rejects.toThrow(/not a member/);
-    await expect(actingAs(base, HOST).save({ id: saveId, state })).rejects.toThrow(
-      /must follow a load/,
-    );
+    await expect(
+      actingAs(base, HOST).save({ id: saveId, state }),
+    ).rejects.toThrow(/must follow a load/);
   });
 
   it("only lets the host delete the league", async () => {
@@ -318,7 +329,9 @@ describe("membership changes", () => {
     expect(
       (await removeOnlineParticipant(ctx(GUEST), saveId, guestId)).ok,
     ).toBe(false);
-    expect((await transferOnlineHost(ctx(HOST), saveId, guestId)).ok).toBe(true);
+    expect((await transferOnlineHost(ctx(HOST), saveId, guestId)).ok).toBe(
+      true,
+    );
     let state = (await base.load(saveId))!.state;
     expect(shared(state).participants.find((p) => p.isHost)!.userId).toBe(
       GUEST.id,

@@ -9,8 +9,14 @@
  * permission.
  */
 
-import type { AccountStore, LeagueInviteRecord } from "@/persistence/account-store";
-import type { LoadedSaveGame, SaveGameStore } from "@/persistence/save-game-store";
+import type {
+  AccountStore,
+  LeagueInviteRecord,
+} from "@/persistence/account-store";
+import type {
+  LoadedSaveGame,
+  SaveGameStore,
+} from "@/persistence/save-game-store";
 import type { AccountUser } from "@/application/auth/accounts";
 import { hashToken, newSecretToken } from "@/application/auth/credentials";
 import { asTeamId } from "@/domain/ids";
@@ -46,8 +52,7 @@ export type OnlineLeagueContext = {
 };
 
 export type OnlineResult<T = object> =
-  | ({ ok: true } & T)
-  | { ok: false; error: string };
+  ({ ok: true } & T) | { ok: false; error: string };
 
 export type InviteView = {
   id: string;

@@ -60,7 +60,8 @@ export async function repairPlayerPortraits(
     } catch (error) {
       results.push({
         saveId: summary.id,
-        status: error instanceof SaveVersionConflictError ? "conflict" : "failed",
+        status:
+          error instanceof SaveVersionConflictError ? "conflict" : "failed",
         assigned: 0,
         capacity: null,
         error: error instanceof Error ? error.message : String(error),

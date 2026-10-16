@@ -38,9 +38,7 @@ import {
   hasAppliedGameplayConsequence,
   withAppliedGameplayConsequence,
 } from "@/systems/gameplay-financial-consequences";
-import {
-  AI_FA_MIN_SALARY,
-} from "@/systems/owner-objectives-config";
+import { AI_FA_MIN_SALARY } from "@/systems/owner-objectives-config";
 import { calculatePlayerOverall } from "@/domain/player-overall-rating";
 import { DEFAULT_ROSTER_SIZE } from "@/systems/roster-generation-config";
 import { getTeamCapSpace } from "@/systems/salary-cap";
@@ -373,7 +371,10 @@ function trySignFreeAgent(
   const capSpace = state.settings.financialRules.salaryCapEnabled
     ? getTeamCapSpace(teamId, seasonYear, state)
     : Number.MAX_SAFE_INTEGER;
-  const overall = calculatePlayerOverall(candidate.position, candidate.attributes);
+  const overall = calculatePlayerOverall(
+    candidate.position,
+    candidate.attributes,
+  );
   const cap = getLeagueSalaryCap(state);
   const faMarket = salaryForPlayer({
     overall,

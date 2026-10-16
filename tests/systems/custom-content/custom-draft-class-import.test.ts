@@ -6,7 +6,10 @@ import { bootstrapWorld } from "@/systems/world-pipeline";
 import { createDraftFromPackage } from "@/systems/draft";
 import { validateGameState } from "@/persistence/validate-game-state";
 import { canonicalCustomPlayerId } from "@/systems/custom-content/normalize";
-import { makeDraftClassPackage, makePlayerSource } from "../../helpers/custom-content";
+import {
+  makeDraftClassPackage,
+  makePlayerSource,
+} from "../../helpers/custom-content";
 
 describe("custom draft class import", () => {
   it("inserts prospects into DraftClass and not world.players", () => {

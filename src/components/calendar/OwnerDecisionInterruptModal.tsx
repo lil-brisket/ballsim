@@ -162,4 +162,3 @@ function appendResumeTo(href: string, resumeTo: string | null): string {
   const separator = href.includes("?") ? "&" : "?";
   return `${href}${separator}resumeTo=${encodeURIComponent(resumeTo)}`;
 }
-

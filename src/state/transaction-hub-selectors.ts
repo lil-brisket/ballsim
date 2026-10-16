@@ -22,7 +22,10 @@ import {
 /** Filter chips — maps to DomainEventType sets (single source). */
 export const TRANSACTION_FILTER_GROUPS = {
   all: null,
-  trades: ["PlayerTraded", "DraftPickTraded"] as const satisfies readonly DomainEventType[],
+  trades: [
+    "PlayerTraded",
+    "DraftPickTraded",
+  ] as const satisfies readonly DomainEventType[],
   signings: [
     "FreeAgentSigned",
     "ContractSigned",

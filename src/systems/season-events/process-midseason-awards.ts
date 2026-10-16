@@ -29,8 +29,8 @@ export function processMidseasonAwards(
   const events: DomainEvent[] = [...pipeline.events];
 
   const seasonYear = current.competition.season.year;
-  const resultIds = Object.keys(current.business.awards.results).filter(
-    (id) => id.includes(`:${seasonYear}:midseason:`),
+  const resultIds = Object.keys(current.business.awards.results).filter((id) =>
+    id.includes(`:${seasonYear}:midseason:`),
   );
 
   // This season only — prior-year midseason results share awardIds.

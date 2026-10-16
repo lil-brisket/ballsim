@@ -1,8 +1,5 @@
 import "server-only";
-import {
-  advanceBlockedReason,
-  withReadyReset,
-} from "@/systems/participation";
+import { advanceBlockedReason, withReadyReset } from "@/systems/participation";
 import type { SaveGameStore } from "@/persistence/save-game-store";
 import {
   previewAdvance,
@@ -172,9 +169,7 @@ export async function letAiHandlePhaseAndAdvance(
       working = dayResult.state;
       emitted.push(...dayResult.events);
 
-      working = withReadyReset(
-        processDerivedProjections(working, emitted),
-      );
+      working = withReadyReset(processDerivedProjections(working, emitted));
 
       const saved = await persistWorkingState(
         saveId,
@@ -296,9 +291,7 @@ export async function beginOffseason(
       working = dayResult.state;
       emitted.push(...dayResult.events);
 
-      working = withReadyReset(
-        processDerivedProjections(working, emitted),
-      );
+      working = withReadyReset(processDerivedProjections(working, emitted));
 
       const saved = await persistWorkingState(
         saveId,

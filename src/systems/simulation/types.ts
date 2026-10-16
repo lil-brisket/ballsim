@@ -27,14 +27,9 @@ export type AdvanceSimulationResult = {
 };
 
 export type SimulationStopReason =
-  | "pending_owner_decision"
-  | "draft_clock"
-  | "phase_change"
-  | "user_team_game";
+  "pending_owner_decision" | "draft_clock" | "phase_change" | "user_team_game";
 
-export type OwnerInterruptStopReason =
-  | "pending_owner_decision"
-  | "draft_clock";
+export type OwnerInterruptStopReason = "pending_owner_decision" | "draft_clock";
 
 export function isOwnerInterruptStopReason(
   reason: string | null | undefined,

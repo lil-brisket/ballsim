@@ -16,8 +16,7 @@ import type { TeamId } from "@/domain/ids";
 import type { GameState } from "@/state/game-state";
 
 export type ParticipationResult =
-  | { ok: true; state: GameState }
-  | { ok: false; error: string };
+  { ok: true; state: GameState } | { ok: false; error: string };
 
 /** Participation for local shared or online leagues; null for single player. */
 export function getSharedParticipation(
@@ -96,15 +95,13 @@ export function createLocalSharedParticipation(
   anchorTeamId: string,
   createParticipantId: () => string,
 ): SharedParticipation {
-  const participants = setup.map(
-    (entry, index): LocalParticipant => ({
-      id: createParticipantId(),
-      displayName: entry.displayName,
-      teamIds: index === 0 ? [anchorTeamId] : [],
-      plannedTeamCount: entry.teamCount,
-      isHost: index === 0,
-    }),
-  );
+  const participants = setup.map((entry, index): LocalParticipant => ({
+    id: createParticipantId(),
+    displayName: entry.displayName,
+    teamIds: index === 0 ? [anchorTeamId] : [],
+    plannedTeamCount: entry.teamCount,
+    isHost: index === 0,
+  }));
   return {
     mode: "local_shared",
     participants,
@@ -182,7 +179,10 @@ export function withActiveParticipantReady(
         .map((p) => p.id)
         .filter((pid) => pid === id || others.includes(pid))
     : others;
-  return { ok: true, state: withLocal(state, { ...local, readyParticipantIds }) };
+  return {
+    ok: true,
+    state: withLocal(state, { ...local, readyParticipantIds }),
+  };
 }
 
 /** Host override: mark every participant ready so the league can advance. */
@@ -218,9 +218,7 @@ export function withReadyReset(state: GameState): GameState {
 }
 
 /** Participants who still have to press Ready. Empty for single player. */
-export function getWaitingParticipants(
-  state: GameState,
-): LocalParticipant[] {
+export function getWaitingParticipants(state: GameState): LocalParticipant[] {
   const local = getLocalParticipation(state);
   if (!local) {
     return [];
@@ -284,7 +282,9 @@ export function withConfirmedAssignments(
   for (const teamId of state.user.ownedTeamIds) {
     const participantId = ownerOf(teamId);
     const bucket =
-      participantId === undefined ? undefined : byParticipant.get(participantId);
+      participantId === undefined
+        ? undefined
+        : byParticipant.get(participantId);
     if (!bucket) {
       return {
         ok: false,

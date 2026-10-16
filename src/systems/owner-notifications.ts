@@ -46,7 +46,9 @@ export function isOwnerNotificationStillUnread(
   );
 }
 
-function isProtectedOwnerNotification(notification: OwnerNotification): boolean {
+function isProtectedOwnerNotification(
+  notification: OwnerNotification,
+): boolean {
   return (
     notification.type === "objective_completed" ||
     notification.type === "objective_failed" ||

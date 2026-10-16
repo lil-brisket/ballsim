@@ -146,10 +146,7 @@ describe("season events midseason cycle", () => {
           "midseason",
           result.awardId,
         );
-        return [
-          priorId,
-          { ...result, id: priorId, seasonYear: priorYear },
-        ];
+        return [priorId, { ...result, id: priorId, seasonYear: priorYear }];
       }),
     );
     const seeded = {

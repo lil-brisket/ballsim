@@ -11,8 +11,14 @@ import {
   replaceDraftProspects,
 } from "@/systems/draft";
 import { canonicalCustomPlayerId } from "@/systems/custom-content/normalize";
-import { makeDraftClassPackage, makePlayerSource } from "../../helpers/custom-content";
-import { processOffseasonLifecycle, processPhaseEnter } from "@/systems/simulation/offseason-lifecycle";
+import {
+  makeDraftClassPackage,
+  makePlayerSource,
+} from "../../helpers/custom-content";
+import {
+  processOffseasonLifecycle,
+  processPhaseEnter,
+} from "@/systems/simulation/offseason-lifecycle";
 import { transitionPhase } from "@/systems/simulation/phase-machine";
 import { setActivePhase } from "@/systems/phase-engine";
 import { draftClassIdFor } from "@/domain/entities/draft";
@@ -111,9 +117,9 @@ describe("custom draft class lifecycle", () => {
     state = processPhaseEnter(state, "offseason.draft_preparation", rng).state;
     const draftYear = draftYearForSeason(state.competition.season.year);
     const draftClassId = draftClassIdFor(draftYear);
-    expect(state.user.pendingDraftClassDecisions[String(draftYear)]?.resolved).toBe(
-      false,
-    );
+    expect(
+      state.user.pendingDraftClassDecisions[String(draftYear)]?.resolved,
+    ).toBe(false);
     expect(state.world.drafts[draftClassId]).toBeUndefined();
     state = processOffseasonLifecycle(state, rng).state;
     expect(state.world.drafts[draftClassId]).toBeUndefined();

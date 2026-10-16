@@ -14,7 +14,9 @@ export function createMemoryCustomContentStore(): CustomContentStore {
     ): Promise<CustomContentPackageRecord[]> {
       return [...rows.values()]
         .filter((row) => (type === undefined ? true : row.type === type))
-        .sort((left, right) => right.updatedAt.getTime() - left.updatedAt.getTime())
+        .sort(
+          (left, right) => right.updatedAt.getTime() - left.updatedAt.getTime(),
+        )
         .map((row) => ({ ...row }));
     },
     async getByContentId(

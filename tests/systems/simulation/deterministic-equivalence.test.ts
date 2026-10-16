@@ -21,9 +21,7 @@ function bootRegularSeason(seed: number) {
 }
 
 describe("calendar-driven deterministic equivalence", () => {
-  it(
-    "1×N day advances match a single N-day advance",
-    () => {
+  it("1×N day advances match a single N-day advance", () => {
     const days = 5;
     const seed = 42;
 
@@ -43,9 +41,7 @@ describe("calendar-driven deterministic equivalence", () => {
     );
     expect(bulk.meta.rngState).toEqual(oneByOne.meta.rngState);
     expect(getActivePhaseSafe(bulk)).toBe(getActivePhaseSafe(oneByOne));
-    },
-    30_000,
-  );
+  }, 30_000);
 });
 
 function getActivePhaseSafe(state: {

@@ -145,7 +145,12 @@ export function ensurePlayerPortraits(
       duplicates += 1;
       assignment = {
         version: PORTRAIT_GENERATOR_VERSION,
-        traits: derivePortraitTraits(state.meta.saveId, playerId, 0, cardinality),
+        traits: derivePortraitTraits(
+          state.meta.saveId,
+          playerId,
+          0,
+          cardinality,
+        ),
         salt: 0,
         duplicate: true,
       };

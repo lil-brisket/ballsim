@@ -38,10 +38,7 @@ import {
   potentialGapBandForAge,
   qualityAdjustedForAge,
 } from "@/systems/player-generation-config";
-import {
-  fillShortRosters,
-  generateRosters,
-} from "@/systems/roster-generation";
+import { fillShortRosters, generateRosters } from "@/systems/roster-generation";
 import {
   DEFAULT_ROSTER_SIZE,
   rosterPositionForSlot,
@@ -519,7 +516,9 @@ describe("player generation", () => {
 
     it("rolls prime-heavy ages inside 20–34", () => {
       const rng = createSeededRng(3);
-      const ages = Array.from({ length: SAMPLE_SIZE }, () => rollPlayerAge(rng));
+      const ages = Array.from({ length: SAMPLE_SIZE }, () =>
+        rollPlayerAge(rng),
+      );
       expect(Math.min(...ages)).toBeGreaterThanOrEqual(MIN_PLAYER_AGE);
       expect(Math.max(...ages)).toBeLessThanOrEqual(MAX_PLAYER_AGE);
       const oldShare = ages.filter((age) => age >= 33).length / ages.length;

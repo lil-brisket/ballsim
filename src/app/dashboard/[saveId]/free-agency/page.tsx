@@ -116,28 +116,31 @@ export default async function FreeAgencyPage({
                     <div className="flex min-w-0 items-start gap-2">
                       <PlayerPortrait
                         playerId={offer.playerId}
-                        portrait={selectPlayerPortrait(loaded.state, offer.playerId)}
+                        portrait={selectPlayerPortrait(
+                          loaded.state,
+                          offer.playerId,
+                        )}
                         firstName={splitDisplayName(offer.playerName).firstName}
                         lastName={splitDisplayName(offer.playerName).lastName}
                         size="sm"
                       />
                       <div>
-                      <p className="text-zinc-100">
-                        <PlayerEntityLink
-                          saveId={saveId}
-                          playerId={offer.playerId}
-                        >
-                          {offer.playerName}
-                        </PlayerEntityLink>
-                      </p>
-                      <p className="text-zinc-500">
-                        {offer.years}y ·{" "}
-                        {offer.salary !== null ? (
-                          <MoneyDisplay amount={offer.salary} />
-                        ) : (
-                          "—"
-                        )}
-                      </p>
+                        <p className="text-zinc-100">
+                          <PlayerEntityLink
+                            saveId={saveId}
+                            playerId={offer.playerId}
+                          >
+                            {offer.playerName}
+                          </PlayerEntityLink>
+                        </p>
+                        <p className="text-zinc-500">
+                          {offer.years}y ·{" "}
+                          {offer.salary !== null ? (
+                            <MoneyDisplay amount={offer.salary} />
+                          ) : (
+                            "—"
+                          )}
+                        </p>
                       </div>
                     </div>
                     <div className="flex items-center gap-3">
@@ -189,7 +192,10 @@ export default async function FreeAgencyPage({
                       <span className="flex items-center gap-2">
                         <PlayerPortrait
                           playerId={agent.playerId}
-                          portrait={selectPlayerPortrait(loaded.state, agent.playerId)}
+                          portrait={selectPlayerPortrait(
+                            loaded.state,
+                            agent.playerId,
+                          )}
                           firstName={agent.firstName}
                           lastName={agent.lastName}
                           size="sm"
@@ -295,7 +301,10 @@ export default async function FreeAgencyPage({
                     <span className="flex items-center gap-2">
                       <PlayerPortrait
                         playerId={signing.playerId}
-                        portrait={selectPlayerPortrait(loaded.state, signing.playerId)}
+                        portrait={selectPlayerPortrait(
+                          loaded.state,
+                          signing.playerId,
+                        )}
                         firstName={
                           splitDisplayName(signing.playerName).firstName
                         }

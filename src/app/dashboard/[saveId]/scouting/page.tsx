@@ -154,7 +154,10 @@ export default async function ScoutingPage({ params, searchParams }: Props) {
                       <ProspectCard
                         saveId={saveId}
                         playerId={prospect.playerId}
-                        portrait={selectPlayerPortrait(state, prospect.playerId)}
+                        portrait={selectPlayerPortrait(
+                          state,
+                          prospect.playerId,
+                        )}
                         firstName={prospect.player.firstName}
                         lastName={prospect.player.lastName}
                         position={

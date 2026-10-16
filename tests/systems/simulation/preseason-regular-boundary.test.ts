@@ -155,8 +155,7 @@ describe("preseason → regular phase-boundary simulation", () => {
     expect(openerDate).toBeTruthy();
     if (openerDate && openerDate < target) {
       const openers = Object.values(after.competition.games).filter(
-        (g) =>
-          g.date === openerDate && g.competitionType === "regular_season",
+        (g) => g.date === openerDate && g.competitionType === "regular_season",
       );
       expect(openers.length).toBeGreaterThan(0);
       expect(openers.every((g) => g.status === "final")).toBe(true);

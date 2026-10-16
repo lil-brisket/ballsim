@@ -37,8 +37,7 @@ export function checkContractExtensionWindow(
     violations: [
       {
         code: "EXTENSION_WINDOW_CLOSED",
-        message:
-          "Contract extensions are only legal during roster decisions.",
+        message: "Contract extensions are only legal during roster decisions.",
         tier: "phase_lock",
         action: "contract_extension",
       },

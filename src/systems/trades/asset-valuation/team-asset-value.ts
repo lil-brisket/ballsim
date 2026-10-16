@@ -133,7 +133,7 @@ export function getTeamAssetValue(
     if (player && player.teamId === teamId) {
       const retention = getRetentionPriority(state, teamId, asset.playerId);
       if (retention >= RETENTION_PRIORITY_WEIGHTS.coreThreshold) {
-        retained = Math.round((value * (1 + (retention - 70) / 200)) * 10) / 10;
+        retained = Math.round(value * (1 + (retention - 70) / 200) * 10) / 10;
         reasons.push("Core player retention raises the asking price");
       }
     }

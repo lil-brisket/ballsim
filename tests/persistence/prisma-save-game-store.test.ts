@@ -28,7 +28,13 @@ const repoRoot = path.resolve(
   path.dirname(fileURLToPath(import.meta.url)),
   "../..",
 );
-const prismaCli = path.join(repoRoot, "node_modules", "prisma", "build", "index.js");
+const prismaCli = path.join(
+  repoRoot,
+  "node_modules",
+  "prisma",
+  "build",
+  "index.js",
+);
 const migrateHookTimeoutMs = 60_000;
 const tempDir = mkdtempSync(path.join(tmpdir(), "ballsim-save-proj-"));
 const dbFile = path.join(tempDir, "test.db").replace(/\\/g, "/");

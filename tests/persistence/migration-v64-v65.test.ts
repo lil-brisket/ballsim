@@ -12,7 +12,10 @@ import { createTestGameState } from "../factories/game-state";
 
 function legacyV64Json(): string {
   const base = createTestGameState({ saveId: "mig_v65" });
-  const modern = bootstrapWorld(base, createSeededRng(base.meta.rngState)).state;
+  const modern = bootstrapWorld(
+    base,
+    createSeededRng(base.meta.rngState),
+  ).state;
   const parsed = JSON.parse(serializeGameState(modern)) as Record<
     string,
     Record<string, unknown>

@@ -63,7 +63,11 @@ async function startSession(
   const expiresAt = new Date(
     now.getTime() + SESSION_TTL_DAYS * 24 * 60 * 60 * 1000,
   );
-  await store.createSession({ id: hashToken(token), userId: user.id, expiresAt });
+  await store.createSession({
+    id: hashToken(token),
+    userId: user.id,
+    expiresAt,
+  });
   return { ok: true, user, token, expiresAt };
 }
 

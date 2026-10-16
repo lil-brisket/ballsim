@@ -47,10 +47,7 @@ export function tryEnqueueCpuToUserTradeOffer(
     counterpartyFilter: (id) => owned.has(id),
   });
 
-  let enqueued = countTradeOffersSince(
-    state,
-    state.world.calendar.currentDate,
-  );
+  let enqueued = countTradeOffersSince(state, state.world.calendar.currentDate);
   if (enqueued >= TRADE_OFFER_DAILY_CAP) {
     return { outcome: "skipped", state, reason: "daily_cap" };
   }

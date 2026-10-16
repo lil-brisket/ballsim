@@ -60,9 +60,8 @@ export function TradeFinderView(props: {
   return (
     <div className="space-y-4">
       <p className="text-sm text-zinc-400">
-        Discover candidate trades for a roster player. Confirming a row
-        executes that exact proposal — it does not re-search or swap a
-        different player.
+        Discover candidate trades for a roster player. Confirming a row executes
+        that exact proposal — it does not re-search or swap a different player.
       </p>
       <label className="flex flex-col gap-1 text-xs text-zinc-500">
         Outgoing player
@@ -128,7 +127,11 @@ export function TradeFinderView(props: {
                       confirmLabel="Confirm this trade"
                     >
                       <form action={executeTradeAction}>
-                        <input type="hidden" name="saveId" value={props.saveId} />
+                        <input
+                          type="hidden"
+                          name="saveId"
+                          value={props.saveId}
+                        />
                         <input
                           type="hidden"
                           name="outgoingPlayerId"

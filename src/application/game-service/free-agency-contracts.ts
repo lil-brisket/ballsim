@@ -1,8 +1,5 @@
 import "server-only";
-import {
-  advanceBlockedReason,
-  withReadyReset,
-} from "@/systems/participation";
+import { advanceBlockedReason, withReadyReset } from "@/systems/participation";
 import type { SaveGameStore } from "@/persistence/save-game-store";
 import { getActionBlockReason } from "@/systems/league-rules";
 import { asPlayerId, asOfferId, asContractId } from "@/domain/ids";

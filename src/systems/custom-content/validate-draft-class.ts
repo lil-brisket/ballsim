@@ -85,7 +85,12 @@ export function validateDraftClassPayload(
   const identityKeys = new Set<string>();
   for (let index = 0; index < prospectsRaw.length; index += 1) {
     const path = `payload.prospects[${index}]`;
-    const source = readPlayerSourceRecord(prospectsRaw[index], path, errors, warnings);
+    const source = readPlayerSourceRecord(
+      prospectsRaw[index],
+      path,
+      errors,
+      warnings,
+    );
     if (source === undefined) {
       continue;
     }
@@ -110,7 +115,10 @@ export function validateDraftClassPayload(
       );
     }
     identityKeys.add(identity);
-    const canonicalId = canonicalCustomPlayerId(envelopeContentId, source.sourceId);
+    const canonicalId = canonicalCustomPlayerId(
+      envelopeContentId,
+      source.sourceId,
+    );
     if (context.existingPlayerIds?.has(canonicalId)) {
       errors.push(
         issue(
@@ -150,7 +158,11 @@ export function validateDraftClassPackage(
   }
   if (envelope.normalized.type !== "draft_class") {
     errors.push(
-      issue("type", "wrong_package_type", 'Package type must be "draft_class".'),
+      issue(
+        "type",
+        "wrong_package_type",
+        'Package type must be "draft_class".',
+      ),
     );
     return validationResult(errors, warnings);
   }

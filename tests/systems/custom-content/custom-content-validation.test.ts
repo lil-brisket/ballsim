@@ -13,7 +13,10 @@ import {
   makePlayerSource,
   makeRosterPackage,
 } from "../../helpers/custom-content";
-import type { PlayerSourceRecord, RosterPlayerSource } from "@/systems/custom-content/package-types";
+import type {
+  PlayerSourceRecord,
+  RosterPlayerSource,
+} from "@/systems/custom-content/package-types";
 
 const STAR_ATTRIBUTES = Object.fromEntries(
   PLAYER_ATTRIBUTE_KEYS.map((key) => [key, 92]),
@@ -54,9 +57,11 @@ describe("custom content validation", () => {
     );
     expect(result.ok).toBe(false);
     expect(result.normalized).toBeUndefined();
-    expect(result.errors.some((entry) => entry.code === "unsupported_format_version")).toBe(
-      true,
-    );
+    expect(
+      result.errors.some(
+        (entry) => entry.code === "unsupported_format_version",
+      ),
+    ).toBe(true);
   });
 
   it("rejects ratings outside 1–99", () => {
@@ -80,9 +85,9 @@ describe("custom content validation", () => {
       schemaVersion: GAME_STATE_SCHEMA_VERSION,
     });
     expect(result.ok).toBe(false);
-    expect(result.errors.some((entry) => entry.code === "rating_out_of_range")).toBe(
-      true,
-    );
+    expect(
+      result.errors.some((entry) => entry.code === "rating_out_of_range"),
+    ).toBe(true);
   });
 
   it("rejects archetype/position incompatibility", () => {
@@ -107,7 +112,9 @@ describe("custom content validation", () => {
     });
     expect(result.ok).toBe(false);
     expect(
-      result.errors.some((entry) => entry.code === "archetype_position_incompatible"),
+      result.errors.some(
+        (entry) => entry.code === "archetype_position_incompatible",
+      ),
     ).toBe(true);
   });
 
@@ -124,9 +131,9 @@ describe("custom content validation", () => {
       schemaVersion: GAME_STATE_SCHEMA_VERSION,
     });
     expect(result.ok).toBe(true);
-    expect(result.warnings.some((entry) => entry.code === "missing_author")).toBe(
-      true,
-    );
+    expect(
+      result.warnings.some((entry) => entry.code === "missing_author"),
+    ).toBe(true);
   });
 
   it("rejects a past draft year", () => {
@@ -140,9 +147,9 @@ describe("custom content validation", () => {
       draftHorizonYear: 2029,
     });
     expect(result.ok).toBe(false);
-    expect(result.errors.some((entry) => entry.code === "draft_year_in_past")).toBe(
-      true,
-    );
+    expect(
+      result.errors.some((entry) => entry.code === "draft_year_in_past"),
+    ).toBe(true);
   });
 
   it("accepts NBA-sized centers and star overalls without body or overall warnings", () => {
@@ -186,7 +193,9 @@ describe("custom content validation", () => {
     });
     expect(result.ok).toBe(true);
     expect(
-      result.warnings.some((entry) => entry.code === "roster_size_differs_from_default"),
+      result.warnings.some(
+        (entry) => entry.code === "roster_size_differs_from_default",
+      ),
     ).toBe(false);
   });
 
@@ -209,7 +218,9 @@ describe("custom content validation", () => {
     });
     expect(result.ok).toBe(true);
     expect(
-      result.warnings.some((entry) => entry.code === "potential_above_age_ceiling"),
+      result.warnings.some(
+        (entry) => entry.code === "potential_above_age_ceiling",
+      ),
     ).toBe(false);
   });
 
@@ -265,12 +276,12 @@ describe("custom content validation", () => {
       schemaVersion: GAME_STATE_SCHEMA_VERSION,
     });
     expect(tallResult.ok).toBe(false);
-    expect(tallResult.errors.some((entry) => entry.code === "height_out_of_bounds")).toBe(
-      true,
-    );
+    expect(
+      tallResult.errors.some((entry) => entry.code === "height_out_of_bounds"),
+    ).toBe(true);
     expect(lightResult.ok).toBe(false);
-    expect(lightResult.errors.some((entry) => entry.code === "weight_out_of_bounds")).toBe(
-      true,
-    );
+    expect(
+      lightResult.errors.some((entry) => entry.code === "weight_out_of_bounds"),
+    ).toBe(true);
   });
 });

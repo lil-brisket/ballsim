@@ -11,7 +11,10 @@ import {
 } from "@/systems/custom-content/post-save-edit";
 import { validateGameState } from "@/persistence/validate-game-state";
 import { canonicalCustomPlayerId } from "@/systems/custom-content/normalize";
-import { makeFullRosterPackage, makePlayerSource } from "../../helpers/custom-content";
+import {
+  makeFullRosterPackage,
+  makePlayerSource,
+} from "../../helpers/custom-content";
 
 describe("custom roster editing", () => {
   function boot() {
@@ -33,7 +36,9 @@ describe("custom roster editing", () => {
 
   it("updates identity through domain constructors", () => {
     const { state, pkg } = boot();
-    const playerId = asPlayerId(canonicalCustomPlayerId(pkg.contentId, "t0_p0"));
+    const playerId = asPlayerId(
+      canonicalCustomPlayerId(pkg.contentId, "t0_p0"),
+    );
     const updated = updateCustomRosterPlayer(state, playerId, {
       firstName: "Edited",
       lastName: "Name",
@@ -44,7 +49,9 @@ describe("custom roster editing", () => {
 
   it("hard-removes a player before games are played", () => {
     const { state, pkg } = boot();
-    const playerId = asPlayerId(canonicalCustomPlayerId(pkg.contentId, "t0_p0"));
+    const playerId = asPlayerId(
+      canonicalCustomPlayerId(pkg.contentId, "t0_p0"),
+    );
     const removed = removeCustomRosterPlayer(state, playerId);
     expect(() => validateGameState(removed.state)).not.toThrow();
     expect(removed.state.world.players[playerId]).toBeUndefined();
