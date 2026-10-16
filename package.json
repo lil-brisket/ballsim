@@ -15,6 +15,7 @@
     "test": "vitest run --project unit --project integration --project react",
     "test:unit": "vitest run --project unit",
     "test:integration": "vitest run --project integration",
+    "test:slow": "vitest run --project slow",
     "test:regression": "vitest run --project regression",
     "test:simulation": "vitest run --project simulation",
     "test:all": "vitest run",
