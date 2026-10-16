@@ -19,10 +19,8 @@ import {
   type ScheduleGameView,
   toUpcomingGamesView,
 } from "@/state/selectors/schedule";
-import {
-  getControlledTeam,
-  toStandingsView,
-} from "@/state/selectors/teams-roster";
+import { getControlledTeam } from "@/state/selectors/teams-roster";
+import { leagueRankForTeam } from "@/state/selectors/league-rank";
 import { canOpenGameBoxScore } from "@/state/selectors/box-score";
 import {
   advanceBlockedReason,
@@ -129,6 +127,7 @@ export type DashboardSnapshot = {
   revenueTotal: number;
   expensesTotal: number;
   netIncome: number;
+  /** League rank of the controlled team (`leagueRankForTeam`); null before its first game. */
   standingsRank: number | null;
   controlledStanding: { wins: number; losses: number };
   recentResults: Array<{
@@ -355,8 +354,6 @@ export function toDashboardSnapshot(state: GameState): DashboardSnapshot {
   const userQualified = playoffs.qualifiedTeams.some(
     (entry) => entry.teamId === team.id,
   );
-  const standings = toStandingsView(state);
-  const userStanding = standings.find((row) => row.isUserTeam);
   const statement = getFinancialStatement(state, team.id, year);
 
   const recentResults = Object.values(state.competition.games)
@@ -449,10 +446,7 @@ export function toDashboardSnapshot(state: GameState): DashboardSnapshot {
     revenueTotal: statement.revenue.total,
     expensesTotal: statement.expenses.total,
     netIncome: statement.netIncome,
-    standingsRank:
-      standing.wins + standing.losses === 0
-        ? null
-        : (userStanding?.rank ?? standings.length),
+    standingsRank: leagueRankForTeam(state, team.id),
     controlledStanding: {
       wins: standing.wins,
       losses: standing.losses,

@@ -5,6 +5,7 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { MoneyDisplay } from "@/components/owner/MoneyDisplay";
 import { Section } from "@/components/ui/Section";
 import { TeamLogoMark } from "@/components/team/logos/TeamLogoMark";
+import { groupRankLabel, leagueRankLabel } from "@/presentation/rank-label";
 
 export function TeamDecisionPanel(props: {
   team: OwnerDashboardTeam;
@@ -13,8 +14,8 @@ export function TeamDecisionPanel(props: {
   const { team, saveId } = props;
   const standingLine =
     team.conferenceRank !== null && team.conferenceName
-      ? `${team.wins}–${team.losses} · ${team.conferenceRank}${ordinal(team.conferenceRank)} in ${team.conferenceName}`
-      : `${team.wins}–${team.losses} · ${team.leagueRank == null ? "—" : `#${team.leagueRank}`} overall`;
+      ? `${team.wins}–${team.losses} · ${groupRankLabel(team.conferenceName, team.conferenceRank)}`
+      : `${team.wins}–${team.losses} · ${leagueRankLabel(team.leagueRank)}`;
 
   const payrollContext =
     team.payrollVsLeaguePct !== null
@@ -142,21 +143,4 @@ export function TeamDecisionPanel(props: {
       </div>
     </Section>
   );
-}
-
-function ordinal(n: number): string {
-  const mod100 = n % 100;
-  if (mod100 >= 11 && mod100 <= 13) {
-    return "th";
-  }
-  switch (n % 10) {
-    case 1:
-      return "st";
-    case 2:
-      return "nd";
-    case 3:
-      return "rd";
-    default:
-      return "th";
-  }
 }

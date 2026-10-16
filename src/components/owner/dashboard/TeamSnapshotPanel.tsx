@@ -6,21 +6,7 @@ import { Section } from "@/components/ui/Section";
 import { ArenaPanel } from "@/components/ui/ArenaPanel";
 import { TickerBar } from "@/components/ui/TickerBar";
 import { cn, touchTargetTextClass } from "@/components/ui/styles";
-
-function ordinal(n: number): string {
-  const rem100 = n % 100;
-  if (rem100 >= 11 && rem100 <= 13) return "th";
-  switch (n % 10) {
-    case 1:
-      return "st";
-    case 2:
-      return "nd";
-    case 3:
-      return "rd";
-    default:
-      return "th";
-  }
-}
+import { groupRankLabel, leagueRankLabel } from "@/presentation/rank-label";
 
 /**
  * Team snapshot strip for Front Office — lists and metrics, not a card grid.
@@ -33,10 +19,10 @@ export function TeamSnapshotPanel(props: {
   const { team, saveId, recentForm } = props;
   const standingLine =
     team.conferenceRank !== null && team.conferenceName
-      ? `${team.conferenceRank}${ordinal(team.conferenceRank)} in ${team.conferenceName}`
+      ? groupRankLabel(team.conferenceName, team.conferenceRank)
       : team.leagueRank == null
         ? "Unranked"
-        : `#${team.leagueRank} overall`;
+        : leagueRankLabel(team.leagueRank);
 
   return (
     <Section

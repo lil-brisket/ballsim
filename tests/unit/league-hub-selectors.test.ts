@@ -21,7 +21,8 @@ describe("league-hub-selectors", () => {
     expect(hub.transactions.length).toBeLessThanOrEqual(LEAGUE_HUB_TIER2_LIMIT);
     expect(hub.injuries.length).toBeLessThanOrEqual(LEAGUE_HUB_TIER2_LIMIT);
     expect(hub.media.length).toBeLessThanOrEqual(LEAGUE_HUB_TIER2_LIMIT);
-    expect(hub.snapshot.userRank).toBeGreaterThan(0);
+    // No games played yet, so the team is unranked (see league-rank.test.ts).
+    expect(hub.snapshot.userRank).toBeNull();
   });
 
   it("highlights user team in standings preview", () => {

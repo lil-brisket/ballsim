@@ -27,6 +27,7 @@ import type { GameState } from "@/state/game-state";
 import { getActiveOwnerTeamId, isOwnedFranchise } from "@/state/owner-context";
 import { resolveTeamHref } from "@/state/resolve-team-href";
 import { getControlledTeam } from "@/state/selectors";
+import { leagueRankForTeam } from "@/state/selectors/league-rank";
 import {
   toBrandingView,
   type TeamBrandingView,
@@ -133,7 +134,8 @@ export type TeamDrawerView = {
   performance: {
     wins: number;
     losses: number;
-    rank: number;
+    /** League rank (`leagueRankForTeam`); null before the team's first game. */
+    rank: number | null;
     streak: { type: "W" | "L" | null; count: number };
   };
   roster: {
@@ -267,26 +269,6 @@ export function toPlayerDrawerView(
         : null,
     },
   };
-}
-
-function leagueRankForTeam(state: GameState, teamId: TeamId): number {
-  const rows = Object.values(state.competition.standings.byTeamId).map((s) => ({
-    teamId: s.teamId,
-    wins: s.wins,
-    losses: s.losses,
-    winPercentage: s.winPercentage,
-  }));
-  rows.sort((a, b) => {
-    if (b.winPercentage !== a.winPercentage) {
-      return b.winPercentage - a.winPercentage;
-    }
-    if (b.wins !== a.wins) return b.wins - a.wins;
-    return a.losses - b.losses;
-  });
-  const idx = rows.findIndex((r) => r.teamId === teamId);
-  if (idx >= 0) return idx + 1;
-  // Team missing from standings (preseason) — treat as unranked but valid.
-  return Math.max(1, rows.length);
 }
 
 function recentGamesForTeam(

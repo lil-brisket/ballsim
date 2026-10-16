@@ -1,6 +1,7 @@
 import { TeamCard } from "@/components/basketball/TeamCard";
 import { SectionHeading } from "@/components/ui/SectionHeading";
 import type { TeamHubView } from "@/state/team-hub-selectors";
+import { leagueRankLabel } from "@/presentation/rank-label";
 
 export function TeamHubHeader(props: { hub: TeamHubView }) {
   const { hub } = props;
@@ -14,8 +15,7 @@ export function TeamHubHeader(props: { hub: TeamHubView }) {
           title={`${hub.city} ${hub.name}`}
         />
         <p className="text-sm text-zinc-300">
-          {hub.wins}–{hub.losses} ·{" "}
-          {hub.leagueRank == null ? "—" : `#${hub.leagueRank}`}
+          {hub.wins}–{hub.losses} · {leagueRankLabel(hub.leagueRank)}
           {hub.recentForm.streak ? ` · ${hub.recentForm.streak}` : ""}
           {" · "}
           {hub.seasonPhase}
