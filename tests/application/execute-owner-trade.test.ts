@@ -130,19 +130,27 @@ describe("executeOwnerTrade", () => {
     const { store, saveId, state } = await seedSave();
     const teamId = state.user.activeOwnerTeamId;
     const roster = state.world.teams[teamId]!.roster;
-    const { playerId } = await firstCandidate(saveId, store, teamId, roster);
 
-    const traded = await executeOwnerTrade(
-      saveId,
-      { outgoingPlayerId: playerId },
-      store,
-    );
-    expect(traded.ok).toBe(true);
-    if (!traded.ok) {
-      throw new Error(traded.error);
+    // Auto-search also requires our own side to accept, so a player with
+    // Finder rows can still have no auto-acceptable trade (about 1 in 40
+    // fresh saves for the first listed player). Use the first player that
+    // auto-search can move; a miss returns before anything is saved.
+    let playerId: PlayerId | undefined;
+    for (const candidateId of roster) {
+      const attempt = await executeOwnerTrade(
+        saveId,
+        { outgoingPlayerId: candidateId },
+        store,
+      );
+      if (attempt.ok) {
+        playerId = candidateId;
+        break;
+      }
+      expect(attempt.error).toMatch(/no acceptable trade candidate/i);
     }
+    expect(playerId).toBeDefined();
 
     const after = await store.load(saveId);
-    expect(after!.state.world.teams[teamId]!.roster).not.toContain(playerId);
+    expect(after!.state.world.teams[teamId]!.roster).not.toContain(playerId!);
   });
 });

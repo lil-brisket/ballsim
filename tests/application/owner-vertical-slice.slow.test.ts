@@ -34,6 +34,7 @@ import {
   resolveOwnerDraftClassDecision,
 } from "@/application/game-service";
 import { createPlayer } from "@/domain/entities/player";
+import type { TradeProposal } from "@/domain/entities/trade-proposal";
 import { createDefaultDevelopmentLeagueProfile } from "@/domain/entities/development-league";
 import { CBL_GAME_SETTINGS, cloneGameSettings } from "@/domain/game-settings";
 import { getTeamCitiesForArea } from "@/data/league/team-cities-by-area";
@@ -509,7 +510,12 @@ describe("Owner Mode vertical slice", () => {
       expect(view).not.toBeNull();
       expect(view!.roster.length).toBeGreaterThan(0);
 
+      // Execute a listed Finder row, as the trade finder UI does. Without a
+      // proposal, executeOwnerTrade auto-searches and also requires our own
+      // side to accept, which a listed (counterparty-accepted) row does not
+      // guarantee; that made this step fail on roughly 1 in 40 fresh saves.
       let outgoingPlayerId: string | undefined;
+      let proposal: TradeProposal | undefined;
       for (const player of view!.roster) {
         const listed = await listOwnerTradeCandidates(
           saveId,
@@ -518,13 +524,14 @@ describe("Owner Mode vertical slice", () => {
         );
         if (listed.ok && listed.candidates.length > 0) {
           outgoingPlayerId = player.playerId;
+          proposal = listed.candidates[0]!.proposal;
           break;
         }
       }
       expect(outgoingPlayerId).toBeDefined();
       const traded = await executeOwnerTrade(
         saveId,
-        { outgoingPlayerId: outgoingPlayerId! },
+        { outgoingPlayerId: outgoingPlayerId!, proposal },
         store,
       );
       expect(traded.ok).toBe(true);
