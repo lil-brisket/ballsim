@@ -474,9 +474,39 @@ export function resolveFranchisePreferencesFromParts(
 }
 
 /**
+ * Results per state object. The AI trade search values every asset in every
+ * candidate trade, and each valuation asks for the same team's preferences,
+ * whose cash-runway projection dominated the daily pipeline. Everything the
+ * preferences read is updated by copying, never in place, so an updated state
+ * is a new key and an entry never goes stale.
+ */
+const preferencesByState = new WeakMap<
+  GameState,
+  Map<TeamId, ResolvedFranchisePreferences | null>
+>();
+
+/**
  * Resolve preferences for a team from live GameState (pure read).
+ * Memoized per state object; treat the result as read-only.
  */
 export function resolveFranchisePreferences(
+  state: GameState,
+  teamId: TeamId,
+): ResolvedFranchisePreferences | null {
+  let byTeam = preferencesByState.get(state);
+  if (byTeam === undefined) {
+    byTeam = new Map();
+    preferencesByState.set(state, byTeam);
+  }
+  if (byTeam.has(teamId)) {
+    return byTeam.get(teamId) ?? null;
+  }
+  const resolved = computeFranchisePreferences(state, teamId);
+  byTeam.set(teamId, resolved);
+  return resolved;
+}
+
+function computeFranchisePreferences(
   state: GameState,
   teamId: TeamId,
 ): ResolvedFranchisePreferences | null {
