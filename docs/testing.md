@@ -136,7 +136,7 @@ The nightly workflow (`.github/workflows/sim-nightly.yml`) runs simulation, the 
 - **`unit`** stays under the 30s default timeout. A test that needs a longer timeout belongs in another tier; do not raise it in place.
 - **`integration`** (explicit list in `vitest.config.mts`) holds seconds-long suites, including unit-style files whose tests set timeouts above 30s.
 - **`slow`** picks up any `tests/**/*.slow.test.ts` by glob: single tests that take minutes but should still gate PRs. Split just the slow cases into a `*.slow.test.ts` sibling rather than moving a whole file of fast tests.
-- **`regression`** is for multi-season, economy and league-sanity suites. It runs nightly only.
+- **`regression`** is for multi-season, economy and league-sanity suites. It runs nightly only, at most 4 files at a time, so the multi-year suites don't starve each other and overrun their timeouts.
 - Wall-clock assertions go through `PERF_BUDGET_MODE` (see `performance-budget.test.ts`): strict locally and nightly, warn-only in PR CI.
 - Measure before optimizing: `npx vitest run --project unit --reporter=json --outputFile=<file>` gives per-test durations. Baseline numbers are in [`plans/test-speed-baseline.md`](./plans/test-speed-baseline.md). `bootstrapWorld` costs about 10–30ms, so caching worlds is not worth it; the long tests are long because they simulate seasons.
 
