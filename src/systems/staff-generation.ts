@@ -1,5 +1,6 @@
 import { FIRST_NAMES } from "@/data/names/first-names";
 import { LAST_NAMES } from "@/data/names/last-names";
+import { fictionalLastName } from "@/data/names/reserved-player-names";
 import { createCoach } from "@/domain/entities/coach";
 import {
   createStaff,
@@ -42,11 +43,17 @@ function createStaffMember(
     teamId,
     seasonYear,
   });
+  const firstName = rng.pick(FIRST_NAMES);
+  const lastName = fictionalLastName(
+    firstName,
+    rng.pick(LAST_NAMES),
+    LAST_NAMES,
+  );
   return createStaff({
     id,
     teamId,
-    firstName: rng.pick(FIRST_NAMES),
-    lastName: rng.pick(LAST_NAMES),
+    firstName,
+    lastName,
     role,
     ...profile,
   });

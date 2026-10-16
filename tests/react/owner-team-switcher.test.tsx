@@ -151,7 +151,7 @@ describe("OwnerTeamSwitcher", () => {
       ownedTeam({
         id: "team_c",
         city: "Calgary",
-        name: "Flames",
+        name: "Glaciers",
         participantId: "p1",
       }),
     ];
@@ -164,7 +164,7 @@ describe("OwnerTeamSwitcher", () => {
     );
     fireEvent.click(screen.getByRole("button", { name: /switch franchise/i }));
     expect(
-      screen.getByRole("option", { name: /Calgary Flames/i }),
+      screen.getByRole("option", { name: /Calgary Glaciers/i }),
     ).toBeTruthy();
     expect(screen.queryByRole("option", { name: /Vancouver Wolves/i })).toBe(
       null,

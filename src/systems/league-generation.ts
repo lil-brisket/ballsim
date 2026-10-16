@@ -2,6 +2,7 @@ import { CONFERENCE_NAMES } from "@/data/league/conference-names";
 import { DIVISION_NAMES } from "@/data/league/division-names";
 import { getTeamCitiesForArea } from "@/data/league/team-cities-by-area";
 import { TEAM_NICKNAMES } from "@/data/league/team-nicknames";
+import { isReservedTeamName } from "@/data/league/reserved-team-names";
 import {
   createConference,
   type Conference,
@@ -438,7 +439,10 @@ function generateTeamNames(
   }
 
   const cities = takeUniqueNames(cityPool, count, "city", rng);
-  const nicknames = takeUniqueNames(TEAM_NICKNAMES, count, "nickname", rng);
+  const nicknames = withoutReservedPairs(
+    cities,
+    takeUniqueNames(TEAM_NICKNAMES, count, "nickname", rng),
+  );
 
   const usedAbbreviations = new Set<string>();
   const result: TeamNameData[] = [];
@@ -452,6 +456,35 @@ function generateTeamNames(
   }
 
   return result;
+}
+
+/**
+ * Re-pairs any city + nickname that forms a real team by swapping nicknames
+ * with the next team (wrapping around) for which neither new pair is real.
+ * Deterministic and draws no RNG, so the rest of generation is unchanged.
+ * Exported for tests.
+ */
+export function withoutReservedPairs(
+  cities: readonly string[],
+  drawnNicknames: readonly string[],
+): string[] {
+  const nicknames = [...drawnNicknames];
+  for (let i = 0; i < cities.length; i += 1) {
+    if (!isReservedTeamName(cities[i]!, nicknames[i]!)) {
+      continue;
+    }
+    for (let step = 1; step < cities.length; step += 1) {
+      const j = (i + step) % cities.length;
+      if (
+        !isReservedTeamName(cities[i]!, nicknames[j]!) &&
+        !isReservedTeamName(cities[j]!, nicknames[i]!)
+      ) {
+        [nicknames[i], nicknames[j]] = [nicknames[j]!, nicknames[i]!];
+        break;
+      }
+    }
+  }
+  return nicknames;
 }
 
 function assertGenerationIntegrity(result: GeneratedLeague): void {

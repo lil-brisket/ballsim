@@ -123,6 +123,7 @@ export function TeamIdentityBuilder(props: {
       currentPaletteId: selectedPaletteId,
       currentLogoId: logoId,
       usedNicknames,
+      city: props.city,
     });
     setNickname(next.nickname);
     setPrimaryColor(normalizeHexColor(next.primaryColor));

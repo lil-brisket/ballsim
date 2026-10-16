@@ -7,9 +7,16 @@
  * - If another team already sits in the chosen city, one occupant swaps into
  *   the placeholder's previous city.
  * - Pre-existing shared markets (two teams in one city) are preserved.
+ * - A moved team whose generated nickname forms a real team in its new city
+ *   ("Calgary Flames") gets the first fictional unused nickname instead.
  * - Rejects after citySelectionConfirmed or after first time advance.
  */
 import { isCityInArea, normalizeCityName } from "@/data/league/city-locations";
+import {
+  firstFictionalNickname,
+  isReservedTeamName,
+} from "@/data/league/reserved-team-names";
+import { TEAM_NICKNAMES } from "@/data/league/team-nicknames";
 import type { LeagueArea } from "@/domain/game-settings";
 import type { TeamId } from "@/domain/ids";
 import type { GameState } from "@/state/game-state";
@@ -153,6 +160,24 @@ export function applyOwnerCitySelection(
     city: canonicalCity,
     abbreviation,
   };
+
+  // Both teams still carry generated nicknames; neither may form a real team
+  // in its new city.
+  for (const teamId of [placeholderId, displacedId]) {
+    const team = teamId ? nextTeams[teamId] : undefined;
+    if (!team || !isReservedTeamName(team.city, team.name)) {
+      continue;
+    }
+    const usedNicknames = new Set(Object.values(nextTeams).map((t) => t.name));
+    const nickname = firstFictionalNickname(
+      team.city,
+      TEAM_NICKNAMES,
+      usedNicknames,
+    );
+    if (nickname) {
+      nextTeams[team.id] = { ...team, name: nickname };
+    }
+  }
 
   if (introducesNewSharedMarket(state.world.teams, nextTeams)) {
     return {

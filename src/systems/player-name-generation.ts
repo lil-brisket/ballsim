@@ -1,5 +1,6 @@
 import { FIRST_NAMES } from "@/data/names/first-names";
 import { LAST_NAMES } from "@/data/names/last-names";
+import { fictionalLastName } from "@/data/names/reserved-player-names";
 import {
   isPlayerNationality,
   PLAYER_NATIONALITIES,
@@ -53,7 +54,11 @@ export function generatePlayerName(
   const occupied = options.occupiedNames;
   const maxRetries = options.maxRetries ?? DEFAULT_MAX_NAME_RETRIES;
   let firstName = pickName(pools.firstNames, "firstNames", rng);
-  let lastName = pickName(pools.lastNames, "lastNames", rng);
+  let lastName = fictionalLastName(
+    firstName,
+    pickName(pools.lastNames, "lastNames", rng),
+    pools.lastNames,
+  );
   const nationality = pickNationality(pools.nationalities, rng);
 
   if (occupied && occupied.size > 0) {
@@ -64,7 +69,11 @@ export function generatePlayerName(
     ) {
       attempts += 1;
       firstName = pickName(pools.firstNames, "firstNames", rng);
-      lastName = pickName(pools.lastNames, "lastNames", rng);
+      lastName = fictionalLastName(
+        firstName,
+        pickName(pools.lastNames, "lastNames", rng),
+        pools.lastNames,
+      );
     }
     if (occupied.has(fullName(firstName, lastName))) {
       lastName = suffixLastName(lastName, occupied, firstName);

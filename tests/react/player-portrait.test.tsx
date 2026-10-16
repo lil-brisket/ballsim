@@ -52,8 +52,8 @@ describe("PlayerPortrait", () => {
     const { unmount } = render(
       portrait({
         playerId: "player_slash_probe",
-        firstName: "Luka",
-        lastName: "Doncic",
+        firstName: "Leo",
+        lastName: "Drake",
       }),
     );
     expect(screen.getByText("LD")).toBeTruthy();

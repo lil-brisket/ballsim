@@ -99,7 +99,7 @@ function finalGameInput(overrides: Partial<GameInput> = {}): GameInput {
     homeTeamSnapshot: {
       teamId: HOME,
       city: "Boston",
-      name: "Celtics",
+      name: "Harriers",
       abbreviation: "BOS",
       branding: {
         primaryColor: "#0B1F3A",
@@ -111,7 +111,7 @@ function finalGameInput(overrides: Partial<GameInput> = {}): GameInput {
     awayTeamSnapshot: {
       teamId: AWAY,
       city: "New York",
-      name: "Knicks",
+      name: "Kestrels",
       abbreviation: "NYK",
       branding: {
         primaryColor: "#0B1F3A",
