@@ -161,4 +161,34 @@ describe("resolveFranchisePreferences", () => {
       expect(resolved!.debug.primaryInfluences.length).toBeGreaterThan(0);
     }
   });
+
+  it("reuses the result for the same state and recomputes after an update", () => {
+    let state = createInitialGameState({
+      saveId: "pref_memo",
+      rngSeed: 45,
+      settings: CBL_GAME_SETTINGS,
+    });
+    const rng = createSeededRng(state.meta.rngState);
+    state = bootstrapWorld(state, rng).state;
+    const teamId = (Object.keys(state.world.teams) as TeamId[]).sort()[0]!;
+    const before = resolveFranchisePreferences(state, teamId)!;
+    expect(resolveFranchisePreferences(state, teamId)).toBe(before);
+
+    const finances = state.business.finances[teamId]!;
+    const poorer = {
+      ...state,
+      business: {
+        ...state.business,
+        finances: {
+          ...state.business.finances,
+          [teamId]: {
+            ...finances,
+            businessFunds: finances.businessFunds - 100_000_000,
+          },
+        },
+      },
+    };
+    const after = resolveFranchisePreferences(poorer, teamId)!;
+    expect(after.context.cash).toBe(before.context.cash - 100_000_000);
+  });
 });

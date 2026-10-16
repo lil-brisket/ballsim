@@ -55,6 +55,7 @@ export function indexArchivedGame(
 ): GameArchiveIndex {
   const byPlayerId = { ...index.byPlayerId };
   const bySeasonId = { ...index.bySeasonId };
+  bySeasonId[game.seasonId] = [...(bySeasonId[game.seasonId] ?? [])];
   pushSorted(bySeasonId, game.seasonId, game.id);
   const seenPlayers = new Set<string>();
   for (const row of game.playerStats) {
