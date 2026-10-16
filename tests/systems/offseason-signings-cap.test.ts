@@ -132,9 +132,12 @@ describe("offseason signings and the salary cap (#82)", () => {
     expect(getContractSigningYear(state)).toBe(completedYear + 1);
 
     const before = new Set(state.world.teams[teamId]!.roster);
+    // Count free agents only: the same AI run can also trade for a player,
+    // and a traded player keeps their existing contract.
+    const freeAgentsBefore = new Set(listFreeAgents(state).playerIds);
     const after = runAiTeamDecisions(state, rng).state;
     const signed = after.world.teams[teamId]!.roster.filter(
-      (playerId) => !before.has(playerId),
+      (playerId) => !before.has(playerId) && freeAgentsBefore.has(playerId),
     );
     expect(signed.length).toBeGreaterThan(0);
 
