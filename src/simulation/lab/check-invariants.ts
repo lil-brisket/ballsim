@@ -54,7 +54,7 @@ export function checkInvariants(
     });
   } else {
     try {
-      const snapshot = collectGameSnapshot(state.result);
+      const snapshot = collectGameSnapshot(state.result, state);
       failures.push(
         ...collectRawGameFailures(
           state.result,

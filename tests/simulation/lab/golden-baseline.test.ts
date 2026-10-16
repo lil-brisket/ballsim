@@ -49,6 +49,8 @@ function stubTeam(side: "home" | "away", points: number): TeamGameSnapshot {
     defensiveRebounds: 0,
     rebounds: 0,
     assists: 0,
+    steals: 0,
+    blocks: 0,
     turnovers: 0,
     fouls: 0,
     possessions: 90,

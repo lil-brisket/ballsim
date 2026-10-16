@@ -56,6 +56,8 @@ function serializeAggregates(agg: ValidationAggregates): unknown {
     defensiveRebounds: roundSummary(agg.defensiveRebounds),
     totalRebounds: roundSummary(agg.totalRebounds),
     assists: roundSummary(agg.assists),
+    steals: roundSummary(agg.steals),
+    blocks: roundSummary(agg.blocks),
     turnovers: roundSummary(agg.turnovers),
     fouls: roundSummary(agg.fouls),
     freeThrowAttempts: roundSummary(agg.freeThrowAttempts),

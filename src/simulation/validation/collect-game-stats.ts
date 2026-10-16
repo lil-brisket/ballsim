@@ -13,10 +13,33 @@ function shootingPct(made: number, attempted: number): number | null {
   return made / attempted;
 }
 
+/** Player ids per side, for rows not yet stamped with a teamId (possession sim). */
+export type SnapshotSidePlayerIds = {
+  homePlayerIds: ReadonlySet<string>;
+  awayPlayerIds: ReadonlySet<string>;
+};
+
+function sumPlayerStat(
+  result: GameResult,
+  teamId: string,
+  sideIds: ReadonlySet<string> | undefined,
+  key: "steals" | "blocks",
+): number {
+  return result.playerStats
+    .filter((row) =>
+      row.teamId === null
+        ? sideIds?.has(row.playerId as string) === true
+        : row.teamId === teamId,
+    )
+    .reduce((total, row) => total + row[key], 0);
+}
+
 function teamSnapshot(
   side: TeamSide,
   stats: GameTeamStats,
   possessions: number,
+  result: GameResult,
+  sideIds: ReadonlySet<string> | undefined,
 ): TeamGameSnapshot {
   return {
     side,
@@ -32,6 +55,9 @@ function teamSnapshot(
     defensiveRebounds: stats.defensiveRebounds,
     rebounds: stats.rebounds,
     assists: stats.assists,
+    // Team stats do not carry steals/blocks; sum the player rows.
+    steals: sumPlayerStat(result, stats.teamId, sideIds, "steals"),
+    blocks: sumPlayerStat(result, stats.teamId, sideIds, "blocks"),
     turnovers: stats.turnovers,
     fouls: stats.fouls,
     possessions,
@@ -47,9 +73,13 @@ function teamSnapshot(
 
 /**
  * Maps an authoritative GameResult into a validation snapshot.
- * Does not invent steals/blocks or other untracked stats.
+ * Steals and blocks are summed from player rows; pass `sides` when rows may
+ * not carry a teamId yet.
  */
-export function collectGameSnapshot(result: GameResult): GameSnapshot {
+export function collectGameSnapshot(
+  result: GameResult,
+  sides?: SnapshotSidePlayerIds,
+): GameSnapshot {
   const differential = result.score.home - result.score.away;
   return {
     gameId: result.gameId,
@@ -69,11 +99,15 @@ export function collectGameSnapshot(result: GameResult): GameSnapshot {
       "home",
       result.teamStats.home,
       result.possessionCounts.home,
+      result,
+      sides?.homePlayerIds,
     ),
     away: teamSnapshot(
       "away",
       result.teamStats.away,
       result.possessionCounts.away,
+      result,
+      sides?.awayPlayerIds,
     ),
   };
 }

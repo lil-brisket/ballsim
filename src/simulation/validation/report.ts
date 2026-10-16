@@ -81,6 +81,8 @@ export function formatValidationReport(result: ValidationRunResult): string {
     section("PLAYMAKING / POSSESSION"),
     lineMetric("Assists", a.assists),
     lineMetric("Turnovers", a.turnovers),
+    lineMetric("Steals", a.steals),
+    lineMetric("Blocks", a.blocks),
     lineMetric("AST/FGM", a.assistToFgmRatio),
     "",
     section("FOULS"),

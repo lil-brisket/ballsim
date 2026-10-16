@@ -19,6 +19,21 @@ export const SHOT_RESOLUTION_CONFIG = {
   fatigueImpact: 0.12,
 } as const;
 
+/**
+ * Block chance on a missed shot, credited to the contesting defender:
+ *
+ *   p = maxProbability[shotType] * t^exponent,
+ *   t = clamp((block - floorRating) / (99 - floorRating), 0, 1)
+ *
+ * Tuned so about 10% of missed field goals are blocked (NBA ~10%), nearly all
+ * of them on two-pointers, and elite rim protectors average 2-3 per game.
+ */
+export const BLOCK_RESOLUTION_CONFIG = {
+  floorRating: 35,
+  exponent: 1.2,
+  maxProbability: { two_point: 0.32, three_point: 0.05 },
+} as const;
+
 export const SHOT_TYPES = ["two_point", "three_point"] as const;
 
 export type ShotType = (typeof SHOT_TYPES)[number];

@@ -92,7 +92,7 @@ export function harnessLabGame(
   return {
     gameIndex,
     gameSeed: played.gameSeed,
-    snapshot: collectGameSnapshot(played.result),
+    snapshot: collectGameSnapshot(played.result, ids),
     playerStats: playerStatsFromResult(played.result),
     rawFailures,
     events: eventsFromResult(played.result),

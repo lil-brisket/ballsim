@@ -26,15 +26,16 @@ import type { PlayerPosition } from "@/domain/entities/player";
  * They are small enough that a highly-rated guard can still beat a
  * poorly-rated center (e.g. 90 PG → 82 vs 50 C → 58).
  *
- * With equal talent, defensivePositioningMultiplier = 2 yields
- * P(OREB) ≈ 1/3 and P(DREB) ≈ 2/3 before variance.
+ * With equal talent, defensivePositioningMultiplier = 3.1 yields
+ * P(OREB) ≈ 0.24 before variance (NBA teams rebound ~24% of their misses).
+ * The box score uses the same contest to project offensive rebounds.
  */
 
 export const REBOUND_RESOLUTION_CONFIG = {
   /** Half-width of per-player variance band. */
   varianceAmplitude: 8,
   /** Structural defensive positioning advantage at the team-contest stage. */
-  defensivePositioningMultiplier: 2,
+  defensivePositioningMultiplier: 3.1,
   /** Floor for effective strength so every candidate keeps a positive weight. */
   minStrength: 1,
 } as const;

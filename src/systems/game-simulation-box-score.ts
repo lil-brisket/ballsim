@@ -28,7 +28,12 @@ import {
   type GameSimulationConfig,
 } from "@/systems/game-simulation-config";
 import { calculateFreeThrowProbability } from "@/systems/free-throw-resolution";
-import { POSITION_REBOUND_MODIFIERS } from "@/systems/rebound-resolution-config";
+import {
+  POSITION_REBOUND_MODIFIERS,
+  REBOUND_RESOLUTION_CONFIG,
+} from "@/systems/rebound-resolution-config";
+import { playerReboundBaseStrength } from "@/systems/rebound-resolution";
+import { blockProbability } from "@/systems/shot-resolution";
 import { ROTATION_CONFIG } from "@/systems/rotation/rotation-config";
 import { SHOT_RESOLUTION_CONFIG } from "@/systems/shot-resolution-config";
 import {
@@ -152,13 +157,6 @@ const POSITION_STEAL_MODIFIERS: Readonly<Record<PlayerPosition, number>> = {
   PF: -2,
   C: -4,
 };
-const POSITION_BLOCK_MODIFIERS: Readonly<Record<PlayerPosition, number>> = {
-  PG: -6,
-  SG: -4,
-  SF: 0,
-  PF: 5,
-  C: 10,
-};
 
 export function simulateGameBoxScore(
   game: Game,
@@ -214,7 +212,10 @@ export function simulateGameBoxScore(
     rng,
   });
 
-  const playerStats = [...homeRows, ...awayRows];
+  const playerStats = [
+    ...creditBoxScoreBlocks(homeRows, homeAvailable, awayRows, rng),
+    ...creditBoxScoreBlocks(awayRows, awayAvailable, homeRows, rng),
+  ];
   const homePlayerStats = playerStats.filter(
     (row) => row.teamId === game.homeTeamId,
   );
@@ -417,11 +418,16 @@ function buildTeamBoxScore(input: {
     teamFgm,
     Math.max(0, Math.round(teamFgm * ASSIST_TO_FGM_RATE) + rng.nextInt(-2, 2)),
   );
-  const orebTotal = Math.round(possessions * 0.125) + rng.nextInt(-2, 2);
+  const teamMisses =
+    shooting.reduce((sum, line) => sum + line.fga, 0) - teamFgm;
+  const orebTotal =
+    Math.round(
+      teamMisses *
+        offensiveReboundRate(rotation, minutes, rankedTop(input.opponent)),
+    ) + rng.nextInt(-2, 2);
   const drebTotal = Math.round(possessions * 0.38) + rng.nextInt(-3, 3);
   const tovTotal = Math.round(possessions * 0.203) + rng.nextInt(-2, 2);
   const stlTotal = Math.round(possessions * 0.0563) + rng.nextInt(-2, 1);
-  const blkTotal = Math.round(possessions * 0.0498) + rng.nextInt(-1, 1);
   const foulTotal = rng.nextInt(16, 26);
 
   const ast = allocateByWeight(
@@ -477,15 +483,6 @@ function buildTeamBoxScore(input: {
     ),
     Math.max(0, stlTotal),
   );
-  const blk = allocateByWeight(
-    rotation.map((player, index) =>
-      skillWeight(
-        player.attributes.block + POSITION_BLOCK_MODIFIERS[player.position],
-        minutes[index] ?? 0,
-      ),
-    ),
-    Math.max(0, blkTotal),
-  );
 
   const byId = new Map<string, GamePlayerStats>();
   for (let index = 0; index < rotation.length; index += 1) {
@@ -504,7 +501,8 @@ function buildTeamBoxScore(input: {
       defensiveRebounds: dreb[index] ?? 0,
       assists: ast[index] ?? 0,
       steals: stl[index] ?? 0,
-      blocks: blk[index] ?? 0,
+      // Credited after both teams are built (creditBoxScoreBlocks).
+      blocks: 0,
       turnovers: tov[index] ?? 0,
       fouls: fouls[index] ?? 0,
       fieldGoalsMade: line.fgm,
@@ -534,6 +532,119 @@ function buildTeamBoxScore(input: {
       minutes: 0,
     };
   });
+}
+
+/**
+ * Typical minutes by rotation rank, standing in for the opponent's minutes,
+ * which are not allocated yet when a team's box score is built.
+ */
+const TYPICAL_ROTATION_MINUTES: readonly number[] = [
+  34, 33, 32, 31, 30, 18, 16, 14,
+];
+
+/** Top of the opponent rotation by overall, as the box score has no minutes for it yet. */
+function rankedTop(players: readonly Player[]): Player[] {
+  return [...players]
+    .sort(
+      (a, b) =>
+        calculatePlayerOverall(b.position, b.attributes) -
+        calculatePlayerOverall(a.position, a.attributes),
+    )
+    .slice(0, PLAYING_ROTATION_SIZE);
+}
+
+function meanReboundStrength(
+  players: readonly Player[],
+  minutes?: readonly number[],
+): number {
+  let weighted = 0;
+  let total = 0;
+  players.forEach((player, index) => {
+    const weight = minutes ? (minutes[index] ?? 0) : 1;
+    weighted += playerReboundBaseStrength(player) * weight;
+    total += weight;
+  });
+  return total > 0 ? weighted / total : 0;
+}
+
+/**
+ * Share of a team's misses it rebounds, from the possession engine's team
+ * contest: offense / (offense + defense * defensivePositioningMultiplier).
+ */
+function offensiveReboundRate(
+  rotation: readonly Player[],
+  minutes: readonly number[],
+  opponent: readonly Player[],
+): number {
+  const offense = Math.max(1, meanReboundStrength(rotation, minutes));
+  const defense =
+    Math.max(1, meanReboundStrength(opponent, TYPICAL_ROTATION_MINUTES)) *
+    REBOUND_RESOLUTION_CONFIG.defensivePositioningMultiplier;
+  return offense / (offense + defense);
+}
+
+/**
+ * Blocks by `defenseRows` on the misses in `offenseRows`. Like the possession
+ * engine, each miss is contested by a defender in proportion to minutes and
+ * blocked with that defender's {@link blockProbability}.
+ */
+function creditBoxScoreBlocks(
+  defenseRows: readonly GamePlayerStats[],
+  defensePlayers: readonly Player[],
+  offenseRows: readonly GamePlayerStats[],
+  rng: Rng,
+): GamePlayerStats[] {
+  const playersById = new Map(
+    defensePlayers.map((player) => [player.id as string, player]),
+  );
+  const contesting = defenseRows
+    .map((row, index) => ({
+      index,
+      row,
+      player: playersById.get(row.playerId as string),
+    }))
+    .filter(
+      (entry): entry is typeof entry & { player: Player } =>
+        entry.player !== undefined && entry.row.minutes > 0,
+    );
+  const totalMinutes = contesting.reduce(
+    (sum, entry) => sum + entry.row.minutes,
+    0,
+  );
+  if (totalMinutes <= 0) {
+    return [...defenseRows];
+  }
+  const twoWeights = contesting.map(
+    (entry) => entry.row.minutes * blockProbability(entry.player, "two_point"),
+  );
+  const threeWeights = contesting.map(
+    (entry) =>
+      entry.row.minutes * blockProbability(entry.player, "three_point"),
+  );
+  const sum = (values: readonly number[]) =>
+    values.reduce((total, value) => total + value, 0);
+  let threeMisses = 0;
+  let twoMisses = 0;
+  for (const row of offenseRows) {
+    threeMisses += row.threePointersAttempted - row.threePointersMade;
+    twoMisses +=
+      row.fieldGoalsAttempted -
+      row.threePointersAttempted -
+      (row.fieldGoalsMade - row.threePointersMade);
+  }
+  const expected =
+    (twoMisses * sum(twoWeights) + threeMisses * sum(threeWeights)) /
+    totalMinutes;
+  const total = Math.max(0, Math.round(expected) + rng.nextInt(-1, 1));
+  const blocks = allocateByWeight(
+    twoWeights.map((weight, i) => weight + (threeWeights[i] ?? 0)),
+    total,
+  );
+  const next = [...defenseRows];
+  contesting.forEach((entry, i) => {
+    next[entry.index] = { ...entry.row, blocks: blocks[i] ?? 0 };
+  });
+  return next;
 }
 
 function allocateMinutes(rotation: readonly Player[], rng: Rng): number[] {
