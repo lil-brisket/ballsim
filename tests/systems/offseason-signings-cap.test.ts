@@ -101,6 +101,28 @@ function releaseFromTeam(
 }
 
 describe("offseason signings and the salary cap (#82)", () => {
+  it("tops up an owner's short roster with minimum deals only (#93)", () => {
+    const { state: initial, rng } = setup("fill_owner_minimum", 34);
+    const ownerId = initial.user.activeOwnerTeamId;
+    const state = releaseFromTeam(initial, ownerId, 2);
+    const year = getContractSigningYear(state);
+    const cap = getLeagueSalaryCap(state);
+    expect(getTeamPayroll(ownerId, year, state)).toBeLessThan(cap);
+
+    const before = new Set(state.world.teams[ownerId]!.roster);
+    const filled = fillShortRosters(state, rng).state;
+    const added = filled.world.teams[ownerId]!.roster.filter(
+      (playerId) => !before.has(playerId),
+    );
+    expect(added).toHaveLength(2);
+    for (const playerId of added) {
+      const contract =
+        filled.business.contracts[filled.world.players[playerId]!.contractId!]!;
+      expect(getContractSalaryForYear(contract, year)).toBe(vetMinSalary(cap));
+      expect(contract.endYear).toBe(contract.startYear);
+    }
+  });
+
   it("signs offseason contracts for the upcoming season", () => {
     const { state: initial, rng } = setup("offseason_signing_year", 31);
     let state = toFreeAgency(initial, rng);

@@ -725,7 +725,10 @@ describe("generateRosters with player generation engine", () => {
       state,
       createSeededRng(state.meta.rngState),
     ).state;
-    const teamId = Object.keys(generated.world.teams).sort()[0]!;
+    // An AI team: an owner's roster is only topped up with minimum deals.
+    const teamId = Object.keys(generated.world.teams)
+      .sort()
+      .find((id) => id !== generated.user.activeOwnerTeamId)!;
     const team = generated.world.teams[teamId]!;
     const missingPosition = rosterPositionForSlot(4);
     const freeAgent = generatePlayerWithRng(createSeededRng(9001), {

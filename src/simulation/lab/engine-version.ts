@@ -39,5 +39,11 @@
  * respects the salary cap (minimum deals when a market contract does not
  * fit). Multi-season rosters and payrolls change; single-game output for
  * fixed rosters does not.
+ *
+ * Version 6: player salaries are paid over the regular season (exactly the
+ * annual payroll, whatever the calendar skips), every team receives a
+ * cap-linked national media share, and AI teams sign and extend within a
+ * revenue-and-cash payroll budget. Multi-season finances and rosters change;
+ * single-game output does not.
  */
-export const ENGINE_VERSION = 5;
+export const ENGINE_VERSION = 6;

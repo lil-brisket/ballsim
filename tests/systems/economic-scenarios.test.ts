@@ -315,8 +315,12 @@ describe("economic scenarios (Phase 2 harness)", () => {
             attempt.kind === "marketing_increase",
         ),
       ).toBe(true);
+      // A 35% payroll overpay is now paid in full over the season (#93), so
+      // cash can dip below zero from payroll even when every upgrade was
+      // affordable when made. Overspending must stay a constraint, not an
+      // unbounded collapse.
       if (season.cashFlow.minCash < 0) {
-        expect(action.capitalRestricted).toBe(true);
+        expect(season.cashFlow.minCash).toBeGreaterThan(-0.15 * season.payroll);
       }
       assertCashFlowInvariants(season);
     },

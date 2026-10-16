@@ -33,7 +33,8 @@ import {
 import { AI_FA_MIN_SALARY } from "@/systems/owner-objectives-config";
 import { DEFAULT_ROSTER_SIZE } from "@/systems/roster-generation-config";
 import { computeAwardReputationBonus } from "@/systems/awards/award-reputation";
-import { getContractSigningYear, getTeamCapSpace } from "@/systems/salary-cap";
+import { aiPayrollRoom } from "@/systems/ai-payroll-budget";
+import { getContractSigningYear } from "@/systems/salary-cap";
 import { getLeagueSalaryCap } from "@/systems/league-salary-cap";
 import {
   isSalaryLowball,
@@ -224,9 +225,8 @@ function runAiFreeAgencyRound(
       continue;
     }
 
-    const capSpace = current.settings.financialRules.salaryCapEnabled
-      ? getTeamCapSpace(teamId, seasonYear, current)
-      : Number.MAX_SAFE_INTEGER;
+    // Cap space, limited by what the team can afford (#93).
+    const capSpace = aiPayrollRoom(current, teamId, seasonYear);
     if (capSpace < AI_FA_MIN_SALARY) {
       current = markDone(current, teamId);
       continue;
