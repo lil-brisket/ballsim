@@ -1,6 +1,5 @@
 import { defineConfig } from "vitest/config";
 import react from "@vitejs/plugin-react";
-import tsconfigPaths from "vite-tsconfig-paths";
 
 /**
  * Test tiers (Phase 5):
@@ -13,7 +12,11 @@ import tsconfigPaths from "vite-tsconfig-paths";
  * `npm test` excludes simulation and regression. `npm run test:all` runs every project.
  */
 export default defineConfig({
-  plugins: [tsconfigPaths(), react()],
+  plugins: [react()],
+  // Native `@/*` alias resolution. Replaces the vite-tsconfig-paths plugin,
+  // whose single stateful instance was shared (and reset) across every
+  // project's Vite server (issue #96).
+  resolve: { tsconfigPaths: true },
   test: {
     // Season/world pipeline tests take 3-8s under parallel load; 5s default flakes.
     testTimeout: 30_000,

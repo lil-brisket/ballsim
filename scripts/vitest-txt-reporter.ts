@@ -7,8 +7,12 @@ import path from "node:path";
 import type { Reporter, TestCase, TestModule } from "vitest/node";
 
 export const DEFAULT_RESULTS_FILE = "test-results.txt";
+export const COLLECTION_FAILURE_NAME = "(module collection)";
 const MAX_MESSAGE_CHARS = 2000;
 const MAX_STACK_LINES = 12;
+// Import-time errors usually originate in tooling (Vite/Vitest/plugins), so
+// their stacks are kept unfiltered and longer.
+const MAX_FULL_STACK_LINES = 30;
 
 export type TxtError = {
   name?: string;
@@ -72,7 +76,10 @@ export function trimFailureMessage(message: string): string {
   return `${cut.slice(0, MAX_MESSAGE_CHARS)}\n… (truncated)`;
 }
 
-function usefulStackLines(stack: string | undefined): string[] {
+export function usefulStackLines(
+  stack: string | undefined,
+  fullStack = false,
+): string[] {
   if (!stack) {
     return [];
   }
@@ -80,6 +87,11 @@ function usefulStackLines(stack: string | undefined): string[] {
     .split("\n")
     .map((line) => line.trim())
     .filter((line) => line.length > 0);
+  if (fullStack) {
+    return lines
+      .filter((line) => line.startsWith("at "))
+      .slice(0, MAX_FULL_STACK_LINES);
+  }
   const relevant = lines.filter(
     (line) =>
       line.includes("tests/") ||
@@ -96,7 +108,11 @@ function usefulStackLines(stack: string | undefined): string[] {
   return chosen;
 }
 
-function formatErrorBlock(error: TxtError, indent: string): string {
+function formatErrorBlock(
+  error: TxtError,
+  indent: string,
+  fullStack = false,
+): string {
   const lines: string[] = [];
   const title = [error.name, trimFailureMessage(error.message ?? "")]
     .filter((part) => part && part.length > 0)
@@ -115,7 +131,7 @@ function formatErrorBlock(error: TxtError, indent: string): string {
       lines.push(`${indent}${diffLine}`);
     }
   }
-  for (const stackLine of usefulStackLines(error.stack)) {
+  for (const stackLine of usefulStackLines(error.stack, fullStack)) {
     lines.push(`${indent}${stackLine}`);
   }
   return lines.join("\n");
@@ -135,7 +151,7 @@ export function formatTxtReport(input: TxtReportInput): string {
     lines.push("Unhandled errors", "----------------");
     for (const [index, error] of input.unhandledErrors.entries()) {
       lines.push(`${index + 1})`);
-      lines.push(formatErrorBlock(error, "   "));
+      lines.push(formatErrorBlock(error, "   ", true));
       lines.push("");
     }
   }
@@ -151,8 +167,9 @@ export function formatTxtReport(input: TxtReportInput): string {
     const project = failure.project.length > 0 ? ` [${failure.project}]` : "";
     lines.push(`${index + 1})${project} ${failure.file}`);
     lines.push(`   ${failure.name}`);
+    const fullStack = failure.name === COLLECTION_FAILURE_NAME;
     for (const error of failure.errors) {
-      lines.push(formatErrorBlock(error, "   "));
+      lines.push(formatErrorBlock(error, "   ", fullStack));
     }
     lines.push("");
   }
@@ -199,7 +216,7 @@ function collectFailures(testModules: ReadonlyArray<TestModule>): {
       failures.push({
         project: testModule.project.name,
         file: testModule.relativeModuleId,
-        name: "(module collection)",
+        name: COLLECTION_FAILURE_NAME,
         errors: [asTxtError(collectionError)],
       });
     }
@@ -262,6 +279,16 @@ export function resolveResultsPath(
   return path.join(cwd, DEFAULT_RESULTS_FILE);
 }
 
+/**
+ * Sibling of the results file that is only written on failing runs, so a
+ * later passing run (which overwrites the results file) keeps the evidence of
+ * a flaky failure.
+ */
+export function lastFailurePath(resultsPath: string): string {
+  const parsed = path.parse(resultsPath);
+  return path.join(parsed.dir, `${parsed.name}.last-failure${parsed.ext}`);
+}
+
 export default class TxtReporter implements Reporter {
   private startedAt = Date.now();
 
@@ -297,5 +324,12 @@ export default class TxtReporter implements Reporter {
     const outPath = resolveResultsPath();
     writeFileSync(outPath, text, "utf8");
     process.stderr.write(`Wrote ${path.relative(process.cwd(), outPath)}\n`);
+    if (counts.failures.length > 0 || unhandledErrors.length > 0) {
+      const failurePath = lastFailurePath(outPath);
+      writeFileSync(failurePath, text, "utf8");
+      process.stderr.write(
+        `Wrote ${path.relative(process.cwd(), failurePath)}\n`,
+      );
+    }
   }
 }

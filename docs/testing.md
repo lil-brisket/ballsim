@@ -7,7 +7,7 @@ Concise conventions for unit, integration, and React tests in this project. For 
 | Layer              | Tool                                              |
 | ------------------ | ------------------------------------------------- |
 | Runner             | Vitest 4                                          |
-| Path aliases       | `vite-tsconfig-paths` (`@/*` → `src/*`)           |
+| Path aliases       | Vite `resolve.tsconfigPaths` (`@/*` → `src/*`)    |
 | Coverage           | `@vitest/coverage-v8`                             |
 | React (jsdom only) | `@testing-library/react` + `@testing-library/dom` |
 
@@ -24,7 +24,7 @@ npm run sim -- --seed=42 --games=100   # Simulation Lab CLI (default --channel p
 npm run sim -- --seed=42 --games=300 --fidelity=box_score --calibrate   # box-score path against the same bands
 ```
 
-Every Vitest run writes `test-results.txt` at the repo root (gitignored): summary plus each failure with expected/received and a short stack. Override the path with `TEST_RESULTS_FILE`. A CLI `--reporter=` flag replaces config reporters; add `--reporter=./scripts/vitest-txt-reporter.ts` if you still want the file.
+Every Vitest run writes `test-results.txt` at the repo root (gitignored): summary plus each failure with expected/received and a short stack (import-time "module collection" failures keep the full stack). Failing runs also write `test-results.last-failure.txt`, which a later passing run does not overwrite, so flaky failures stay inspectable. Override the path with `TEST_RESULTS_FILE`. A CLI `--reporter=` flag replaces config reporters; add `--reporter=./scripts/vitest-txt-reporter.ts` if you still want the file.
 
 ## Directory structure
 
