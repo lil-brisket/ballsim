@@ -118,6 +118,12 @@ export function evaluateCausalChains(
   const facilities = seriesByFranchise(snapshots, (s) => s.meanFacilityLevel);
   const revenue = seriesByFranchise(snapshots, (s) => s.revenue);
   const rosterStrength = seriesByFranchise(snapshots, (s) => s.rosterStrength);
+  // No returning players (first season) counts as league-average development;
+  // at lag 2 those seasons are never the outcome side.
+  const development = seriesByFranchise(
+    snapshots,
+    (s) => s.developmentDelta ?? 0,
+  );
   const payroll = seriesByFranchise(snapshots, (s) => s.payroll);
 
   const defs: {
@@ -179,6 +185,17 @@ export function evaluateCausalChains(
       yMap: rosterStrength,
       xLabel: "meanFacilityLevel",
       yLabel: "rosterStrength",
+    },
+    {
+      id: "facilities_player_development",
+      description:
+        "Facilities → age-adjusted development of returning players (lag 2)",
+      expected: "positive",
+      lag: 2,
+      xMap: facilities,
+      yMap: development,
+      xLabel: "meanFacilityLevel",
+      yLabel: "developmentDelta",
     },
     {
       id: "payroll_wins",
