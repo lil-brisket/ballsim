@@ -39,12 +39,25 @@ const TIER_ORDER: CompetitiveTier[] = [
 ];
 
 /**
- * Assign competitive tier from season outcomes.
+ * Rows from several independent leagues (league-sanity runs one league per
+ * simulation) must be ranked within their own league: pooling them compares
+ * franchises that never played each other and overstates rank persistence.
+ */
+function leagueSeasonKey(row: {
+  leagueKey?: string;
+  seasonIndex: number;
+}): string {
+  return `${row.leagueKey ?? ""}|${row.seasonIndex}`;
+}
+
+/**
+ * Assign competitive tier from season outcomes, within each league-season.
  * Contender = playoff + top win% quartile among playoff teams, or deep playoff.
  */
 export function assignCompetitiveTier(
   seasons: readonly {
     teamKey: string;
+    leagueKey?: string;
     seasonIndex: number;
     winPct: number;
     playoff: boolean;
@@ -52,11 +65,12 @@ export function assignCompetitiveTier(
     playoffDepth: number;
   }[],
 ): Map<string, CompetitiveTier> {
-  const bySeason = new Map<number, (typeof seasons)[number][]>();
+  const bySeason = new Map<string, (typeof seasons)[number][]>();
   for (const row of seasons) {
-    const list = bySeason.get(row.seasonIndex) ?? [];
+    const key = leagueSeasonKey(row);
+    const list = bySeason.get(key) ?? [];
     list.push(row);
-    bySeason.set(row.seasonIndex, list);
+    bySeason.set(key, list);
   }
   const result = new Map<string, CompetitiveTier>();
   for (const [, rows] of bySeason) {
@@ -114,6 +128,7 @@ function transitionRate(
 export function computeCompetitiveMobility(
   seasons: readonly {
     teamKey: string;
+    leagueKey?: string;
     seasonIndex: number;
     winPct: number;
     playoff: boolean;
@@ -215,15 +230,17 @@ export function computeCompetitiveMobility(
 export function computeValueMobility(
   seasons: readonly {
     teamKey: string;
+    leagueKey?: string;
     seasonIndex: number;
     franchiseValue: number;
   }[],
 ): ValueMobilityReport {
-  const bySeason = new Map<number, (typeof seasons)[number][]>();
+  const bySeason = new Map<string, (typeof seasons)[number][]>();
   for (const row of seasons) {
-    const list = bySeason.get(row.seasonIndex) ?? [];
+    const key = leagueSeasonKey(row);
+    const list = bySeason.get(key) ?? [];
     list.push(row);
-    bySeason.set(row.seasonIndex, list);
+    bySeason.set(key, list);
   }
 
   const quartile = new Map<string, "bottom" | "middle" | "top">();

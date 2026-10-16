@@ -68,7 +68,7 @@ export type SimulateBoxScoreContext = {
  * defense. Fitted (OLS) to possession games through simulateScheduledGame
  * (real lineups, coaching and staff) on 12 bootstrapped 30-team leagues
  * (21,600 team-sides); 6 held-out leagues give bias -0.1 and per-game RMSE
- * 12.0, mostly game noise. Refit for engine v6 (shot curve, wider talent
+ * 12.0, mostly game noise. Refit for engine v8 (shot curve, wider talent
  * tail). The possession sim has no home-court term, so neither does this.
  */
 const EXPECTED_POINTS_MODEL = {
@@ -130,7 +130,7 @@ const ASSIST_TO_FGM_RATE = 0.51;
  * Intercepts, three share and FT share are then tuned so team rates match the
  * possession sim on held-out leagues — points-first allocation hands weak
  * shooters extra attempts, which a per-player fit alone would miss. Re-fit
- * when shot or FT config changes (engine v6 lowered the three-point and FT
+ * when shot or FT config changes (engine v8 lowered the three-point and FT
  * intercepts so Lab and league rates match the possession sim with the
  * shooting knee and the steeper star exponent).
  */

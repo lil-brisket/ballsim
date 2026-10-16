@@ -1,7 +1,10 @@
+import { addCalendarDays } from "@/domain/calendar-date";
 import type { EconomicCycle } from "@/domain/entities/league-economy";
 import type { TeamId } from "@/domain/ids";
 import { systemResult, type SystemResult } from "@/domain/system-result";
 import type { GameState } from "@/state/game-state";
+import { getLeagueSalaryCap } from "@/systems/league-salary-cap";
+import { regularSeasonShareOfWeek } from "@/systems/regular-season-pay";
 import { applyCashAndBooksImpact } from "@/systems/team-finances";
 
 const CYCLE_DRIFT: Record<
@@ -188,6 +191,56 @@ export function distributeMonthlyBroadcastPool(
   }
 
   return result as Record<TeamId, number>;
+}
+
+/**
+ * National media rights paid equally to every team each season, as a share
+ * of the salary cap. Without them league revenue ran ~38% of the cap per team
+ * in a standard league and ~16% in CBL, so the median team lost $25-40M a
+ * year on an ordinary payroll (#93). The cap does not shrink with the
+ * schedule but gate revenue does, so shorter seasons get a larger share:
+ * 0.35 of the cap at 82 games, ~0.53 at CBL's 22.
+ */
+export const NATIONAL_MEDIA_CAP_SHARE = 0.35;
+export const NATIONAL_MEDIA_SHORT_SEASON_BONUS = 0.25;
+const FULL_SEASON_GAMES = 82;
+
+export function nationalMediaCapShare(state: GameState): number {
+  const games = state.settings.regularSeason.gamesPerTeam;
+  const shortfall = 1 - Math.min(1, Math.max(0, games / FULL_SEASON_GAMES));
+  return (
+    NATIONAL_MEDIA_CAP_SHARE + NATIONAL_MEDIA_SHORT_SEASON_BONUS * shortfall
+  );
+}
+
+export function nationalMediaPerTeamPerSeason(state: GameState): number {
+  return Math.round(getLeagueSalaryCap(state) * nationalMediaCapShare(state));
+}
+
+/**
+ * Pays the week's share of national media rights (same regular-season
+ * schedule as player payroll) into revenue.broadcast for every team.
+ */
+export function processWeeklyNationalMedia(
+  state: GameState,
+  weekEndDate: string = addCalendarDays(state.world.calendar.currentDate, -1),
+): SystemResult {
+  const share = regularSeasonShareOfWeek(state, weekEndDate);
+  const amount = Math.round(nationalMediaPerTeamPerSeason(state) * share);
+  if (amount <= 0) {
+    return systemResult(state);
+  }
+  const year = state.competition.season.year;
+  let current = state;
+  const events: SystemResult["events"] = [];
+  for (const teamId of Object.keys(state.world.teams).sort() as TeamId[]) {
+    const impact = applyCashAndBooksImpact(current, teamId, amount, year, {
+      revenueCategory: "broadcast",
+    });
+    current = impact.state;
+    events.push(...impact.events);
+  }
+  return systemResult(current, events);
 }
 
 /** Per-team monthly broadcast estimate (for projections). */

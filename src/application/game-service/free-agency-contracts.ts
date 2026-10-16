@@ -22,6 +22,7 @@ import {
   mapTimeAdvancePersistenceError,
 } from "@/application/time-advance-mutation";
 import { isInLeaguePhase } from "@/systems/phase-engine";
+import { getContractSigningYear } from "@/systems/salary-cap";
 import { advanceLeaguePhase } from "@/systems/simulation/offseason-lifecycle";
 import { advanceSimulation } from "@/systems/simulation/advance-simulation";
 import { isUserOnDraftClock } from "@/systems/draft";
@@ -58,7 +59,7 @@ export async function signOwnerFreeAgent(
 
   const playerId = asPlayerId(input.playerId);
   const teamId = state.user.activeOwnerTeamId;
-  const year = state.competition.season.year;
+  const year = getContractSigningYear(state);
   const pool = listFreeAgents(state);
   if (!pool.playerIds.includes(playerId)) {
     return fail("Player is not an available free agent.");
@@ -183,7 +184,7 @@ export async function makeOwnerFreeAgentOffer(
   }
   const playerId = asPlayerId(input.playerId);
   const teamId = state.user.activeOwnerTeamId;
-  const year = state.competition.season.year;
+  const year = getContractSigningYear(state);
   if (!listFreeAgents(state).playerIds.includes(playerId)) {
     return fail("Player is not an available free agent.");
   }

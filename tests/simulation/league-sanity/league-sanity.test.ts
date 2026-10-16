@@ -46,6 +46,7 @@ function fakeSnap(
     youngSharePct: 30,
     meanSalary: 5_000_000,
     rosterStrength: 70,
+    developmentDelta: 0,
     reputation: 55,
     fanSentiment: 50,
     relocated: false,
@@ -102,6 +103,33 @@ describe("league sanity aggregation", () => {
       simulations: 1,
     });
     expect(Array.isArray(warnings)).toBe(true);
+  });
+});
+
+describe("facilities -> player development chain (#91)", () => {
+  it("passes when returning players develop more two seasons after investment", () => {
+    const snaps: LeagueSanityTeamSeasonSnapshot[] = [];
+    const levels = [1, 2, 3, 4, 5, 2, 4, 1];
+    levels.forEach((level, team) => {
+      for (let season = 0; season < 4; season += 1) {
+        snaps.push(
+          fakeSnap({
+            teamId: `team_${team}`,
+            teamKey: `0:team_${team}`,
+            seasonIndex: season,
+            seasonYear: 2026 + season,
+            meanFacilityLevel: level,
+            // Season 0 has no returning players.
+            developmentDelta: season === 0 ? null : (level - 3) * 0.6,
+          }),
+        );
+      }
+    });
+    const chain = evaluateCausalChains(snaps).find(
+      (c) => c.id === "facilities_player_development",
+    );
+    expect(chain?.verdict).toBe("pass");
+    expect(chain?.observed.r).toBeGreaterThan(0.9);
   });
 });
 

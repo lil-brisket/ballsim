@@ -30,8 +30,8 @@ export const AI_TICKET_PRICE_STEP_MAX = 5;
 /** Max absolute marketing budget step per weekly AI decision. */
 export const AI_MARKETING_BUDGET_STEP_MAX = 750_000;
 
-/** Minimum cash before AI considers facility upgrades. */
-export const AI_FACILITY_MIN_CASH = 8_000_000;
+/** Minimum cash before AI considers facility upgrades (raised from 8M with the national media share, #93). */
+export const AI_FACILITY_MIN_CASH = 12_000_000;
 
 /** Conservative orgs need more cash buffer before upgrading. */
 export const AI_FACILITY_CONSERVATIVE_CASH = 20_000_000;

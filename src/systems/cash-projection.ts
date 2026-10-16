@@ -9,11 +9,17 @@ import type { GameState } from "@/state/game-state";
 import { forecastNextHomeGameDay } from "@/systems/demand/forecast-game-day";
 import { facilityWeeklyOpex } from "@/systems/facilities-config";
 import { MARKETING_WEEKS_PER_YEAR } from "@/systems/marketing-config";
-import { estimateMonthlyBroadcastShare } from "@/systems/league-economy";
+import {
+  estimateMonthlyBroadcastShare,
+  nationalMediaPerTeamPerSeason,
+} from "@/systems/league-economy";
 import { estimateMonthlySponsorshipPayout } from "@/systems/sponsorships";
-import { PLAYER_PAYROLL_WEEKS_PER_YEAR } from "@/systems/player-payroll";
 import { getTeamPayroll } from "@/systems/salary-cap";
 import { getTeamStaffPayroll } from "@/systems/staff-budget";
+import {
+  regularSeasonShareOfWeek,
+  typicalRegularSeasonWeekShare,
+} from "@/systems/regular-season-pay";
 import { STAFF_PAYROLL_WEEKS_PER_YEAR } from "@/systems/staff-config";
 
 /**
@@ -79,9 +85,10 @@ export function computeWeeklyOutflowBreakdown(
     : 0;
 
   const year = state.competition.season.year;
+  // A full regular-season week; salaries are not paid in the offseason.
   const playerPayroll = Math.round(
-    getTeamPayroll(asTeamId(teamId), year, state) /
-      PLAYER_PAYROLL_WEEKS_PER_YEAR,
+    getTeamPayroll(asTeamId(teamId), year, state) *
+      typicalRegularSeasonWeekShare(state),
   );
   const staff = Math.round(
     getTeamStaffPayroll(asTeamId(teamId), year, state) /
@@ -148,6 +155,12 @@ export function projectBusinessFundsHorizon(
     state,
     teamId as TeamId,
   );
+  const annualPayroll = getTeamPayroll(
+    asTeamId(teamId),
+    state.competition.season.year,
+    state,
+  );
+  const nationalMedia = nationalMediaPerTeamPerSeason(state);
   const homeDates = remainingHomeGameDates(state, teamId);
   const currentDate = state.world.calendar.currentDate;
   const lastGameDate = homeDates[homeDates.length - 1];
@@ -176,7 +189,14 @@ export function projectBusinessFundsHorizon(
       gateInflow += gameDayRevenue;
     }
     if (getIsoWeekId(next) !== getIsoWeekId(date)) {
-      funds -= weeklyOutflow;
+      // Payroll and national media follow the regular-season schedule.
+      const share = regularSeasonShareOfWeek(state, date);
+      const media = Math.round(nationalMedia * share);
+      funds +=
+        media -
+        (weeklyOutflow - outflow.playerPayroll) -
+        Math.round(annualPayroll * share);
+      broadcastInflow += media;
       weeksCharged += 1;
       if (funds <= 0 && runwayWeeks === null) {
         runwayWeeks = weeksCharged;

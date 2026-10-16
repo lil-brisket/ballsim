@@ -271,8 +271,8 @@ export function calculatePerformanceValue(input: {
 
 /**
  * Championship recency weight. Age 0 (current season) ≈ 1.
- * Documented decay: ~0.90 at age 1, ~0.65 at 5, ~0.35 at 10, ~0.10 at 20
- * with half-life ≈ 7 seasons: weight = 0.5^(age / halfLife) with floor 0.08.
+ * weight = 0.5^(age / CHAMPIONSHIP_DECAY_HALF_LIFE_SEASONS) with floor 0.08:
+ * at the 5-season half-life ~0.87 at age 1, 0.5 at 5, 0.25 at 10, floor by 20.
  */
 export function championshipDecayWeight(seasonsAgo: number): number {
   if (seasonsAgo < 0) {
