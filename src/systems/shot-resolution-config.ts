@@ -7,12 +7,18 @@
  *
  * baselineProbability offsets rating/99 so a typical usage-weighted shooter
  * lands near ~50% 2PT / ~35% 3PT instead of mapping ratings to make chance 1:1.
+ *
+ * Shooting ability has diminishing returns above `abilityKnee`: each rating
+ * point there counts `abilityKneeSlope` of a point. Without it a 97-rated
+ * scorer shot ~59% from the field and averaged ~49 PPG (#90).
  */
 
 export const SHOT_RESOLUTION_CONFIG = {
+  abilityKnee: 75,
+  abilityKneeSlope: 0.5,
   minProbability: 0.08,
   maxProbability: 0.7,
-  baselineProbability: -0.2,
+  baselineProbability: -0.18,
   twoPointAdjustment: 0.06,
   threePointAdjustment: -0.08,
   defensiveImpact: 0.22,

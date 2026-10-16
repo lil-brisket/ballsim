@@ -709,7 +709,7 @@ describe("generateRosters with player generation engine", () => {
       values.reduce((sum, value) => sum + value, 0) / values.length;
     expect(mean(starter)).toBeGreaterThan(mean(rotation));
     expect(mean(rotation)).toBeGreaterThan(mean(bench));
-    expect(rosterQualityBandForSlot(0)).toEqual({ min: 64, max: 85 });
+    expect(rosterQualityBandForSlot(0)).toEqual({ min: 64, max: 90 });
     expect(rosterQualityBandForSlot(9)).toEqual({ min: 52, max: 72 });
     expect(rosterQualityBandForSlot(14)).toEqual({ min: 40, max: 60 });
   });

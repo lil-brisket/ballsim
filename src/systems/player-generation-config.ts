@@ -13,7 +13,7 @@ export const MAX_PLAYER_AGE = 34;
  * Default rolls use {@link PLAYER_QUALITY_WEIGHT_BANDS} (pyramid, not uniform).
  */
 export const MIN_PLAYER_QUALITY = 40;
-export const MAX_PLAYER_QUALITY = 85;
+export const MAX_PLAYER_QUALITY = 90;
 
 export type QualityBand = {
   min: number;
@@ -35,6 +35,9 @@ export const PLAYER_QUALITY_WEIGHT_BANDS: readonly {
   { min: 69, max: 75, weight: 12 },
   { min: 76, max: 80, weight: 6 },
   { min: 81, max: 85, weight: 2 },
+  // Superstar tail (#90): a few 90+ overall players per league. Possible now
+  // that the shooting knee keeps elite scorers near 25-32 PPG.
+  { min: 86, max: 90, weight: 1.2 },
 ];
 
 /** Per-integer density for {@link PLAYER_QUALITY_WEIGHT_BANDS}. */
