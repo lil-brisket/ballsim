@@ -34,10 +34,22 @@
  * recovery/minor players when needed, and new franchises start with an arena
  * sized to their market.
  *
- * Version 5: blocks are a rating-scaled chance on each missed shot
+ * Version 5: offseason contracts start with the upcoming season, closing the
+ * free-agency window completes AI free agency, and the short-roster fill
+ * respects the salary cap (minimum deals when a market contract does not
+ * fit). Multi-season rosters and payrolls change; single-game output for
+ * fixed rosters does not.
+ *
+ * Version 6: player salaries are paid over the regular season (exactly the
+ * annual payroll, whatever the calendar skips), every team receives a
+ * cap-linked national media share, and AI teams sign and extend within a
+ * revenue-and-cash payroll budget. Multi-season finances and rosters change;
+ * single-game output does not.
+ *
+ * Version 7: blocks are a rating-scaled chance on each missed shot
  * (`blockProbability`, one RNG draw per miss) instead of every miss against
  * a block >= 72 defender, cutting possession blocks from ~12 to ~4-5 per team.
  * The rebound positioning multiplier rises 2 -> 3.1 (OREB ~14 -> ~11). Box
  * score projects OREB and blocks from rosters with the same formulas.
  */
-export const ENGINE_VERSION = 5;
+export const ENGINE_VERSION = 7;

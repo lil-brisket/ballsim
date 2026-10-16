@@ -14,6 +14,7 @@ import {
   type PlayoffResultSnapshot,
 } from "@/domain/entities/franchise-history";
 import type { TeamId } from "@/domain/ids";
+import { calculatePlayerOverall } from "@/domain/player-overall-rating";
 import type { GameState } from "@/state/game-state";
 import { calculateFranchiseValue } from "@/state/franchise-value";
 import {
@@ -122,6 +123,54 @@ function isExpansionTeam(state: GameState, teamId: TeamId): boolean {
 }
 
 /**
+ * Age-adjusted development of each team's returning players: overall now
+ * minus their last season-end record while on this team, less the league
+ * mean change for players of the same age. Separates facility-driven
+ * development from roster churn (#91).
+ */
+function developmentDeltasByTeam(state: GameState): Map<string, number> {
+  const year = state.competition.season.year;
+  const rows: { teamId: string; age: number; delta: number }[] = [];
+  for (const [teamId, team] of Object.entries(state.world.teams)) {
+    for (const playerId of team.roster) {
+      const player = state.world.players[playerId];
+      const seasons = state.business.playerHistory[playerId]?.seasons ?? [];
+      const last = [...seasons]
+        .filter((record) => record.seasonYear < year)
+        .sort((a, b) => b.seasonYear - a.seasonYear)[0];
+      if (!player || !last || last.contractSnapshot.teamId !== teamId) {
+        continue;
+      }
+      rows.push({
+        teamId,
+        age: player.age,
+        delta:
+          calculatePlayerOverall(player.position, player.attributes) -
+          last.overall,
+      });
+    }
+  }
+  const byAge = new Map<number, { sum: number; n: number }>();
+  for (const row of rows) {
+    const acc = byAge.get(row.age) ?? { sum: 0, n: 0 };
+    acc.sum += row.delta;
+    acc.n += 1;
+    byAge.set(row.age, acc);
+  }
+  const byTeam = new Map<string, { sum: number; n: number }>();
+  for (const row of rows) {
+    const age = byAge.get(row.age)!;
+    const acc = byTeam.get(row.teamId) ?? { sum: 0, n: 0 };
+    acc.sum += row.delta - age.sum / age.n;
+    acc.n += 1;
+    byTeam.set(row.teamId, acc);
+  }
+  return new Map(
+    [...byTeam].map(([teamId, acc]) => [teamId, acc.sum / acc.n] as const),
+  );
+}
+
+/**
  * Snapshot all teams at the current season boundary (postseason / season end).
  */
 export function collectLeagueSanitySnapshots(
@@ -134,6 +183,7 @@ export function collectLeagueSanitySnapshots(
   const ranks = leagueRanks(state);
   const championId = state.competition.playoffs.championTeamId;
   const snapshots: LeagueSanityTeamSeasonSnapshot[] = [];
+  const development = developmentDeltasByTeam(state);
 
   for (const teamId of Object.keys(state.world.teams).sort() as TeamId[]) {
     const standing = state.competition.standings.byTeamId[teamId];
@@ -190,6 +240,7 @@ export function collectLeagueSanitySnapshots(
       youngSharePct: youngRosterSharePct(state, teamId),
       meanSalary: meanRosterSalary(state, teamId, year),
       rosterStrength: meanRosterOverall(state, teamId),
+      developmentDelta: development.get(teamId) ?? null,
       reputation: state.world.teams[teamId]?.reputation ?? 50,
       fanSentiment: ops.fanSentiment,
       relocated: Boolean(relocated),

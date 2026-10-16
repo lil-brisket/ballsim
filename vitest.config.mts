@@ -98,6 +98,9 @@ export default defineConfig({
         test: {
           name: "slow",
           environment: "node",
+          // Tests here may run for minutes. The world-pipeline RNG test takes
+          // 22-40s on CI, so the 30s default timed it out.
+          testTimeout: 120_000,
           include: ["tests/**/*.slow.test.ts"],
         },
       },
@@ -106,6 +109,10 @@ export default defineConfig({
         test: {
           name: "regression",
           environment: "node",
+          // Every file here simulates whole seasons on one core. At the default
+          // (cores - 1) workers they starve each other and the multi-year suites
+          // overrun their 600s timeouts (issue #87).
+          maxWorkers: 4,
           include: [
             "tests/application/multi-year-simulation*.test.ts",
             "tests/persistence/migration-multi-year.test.ts",

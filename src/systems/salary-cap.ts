@@ -56,6 +56,16 @@ export function getTeamContractualSalaryObligation(
 }
 
 /**
+ * First season a player contract signed today covers. The offseason still
+ * belongs to the completed year, and contracts ending that year are already
+ * finished then, so offseason signings start with the upcoming season.
+ */
+export function getContractSigningYear(state: GameState): number {
+  const season = state.competition.season;
+  return season.phase === "offseason" ? season.year + 1 : season.year;
+}
+
+/**
  * Cap space = league salaryCap − derived player payroll.
  * Prefer omitting salaryCap to use the league setting automatically.
  */

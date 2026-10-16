@@ -9,7 +9,6 @@ import {
   toFreeAgentViews,
   toFreeAgencyOfferViews,
   toOpenFreeAgencyOfferViews,
-  toFinancesView,
   type FreeAgentView,
   type FreeAgencyOfferView,
 } from "@/state/selectors";
@@ -20,6 +19,11 @@ import {
 } from "@/state/action-center-selectors";
 import { toOwnerDashboardView } from "@/state/owner-dashboard";
 import { isInLeaguePhase } from "@/systems/phase-engine";
+import {
+  getContractSigningYear,
+  getTeamCapSpace,
+  getTeamPayroll,
+} from "@/systems/salary-cap";
 
 export type FreeAgencyRecentSigning = {
   offerId: string;
@@ -54,7 +58,7 @@ export function toFreeAgencyHubView(state: GameState): FreeAgencyHubView {
   const saveId = state.meta.saveId;
   const teamId = getActiveOwnerTeamId(state);
   const team = state.world.teams[teamId];
-  const finances = toFinancesView(state);
+  const signingYear = getContractSigningYear(state);
   const owner = toOwnerDashboardView(state);
   const active = isInLeaguePhase(state, "offseason.free_agency");
 
@@ -96,8 +100,10 @@ export function toFreeAgencyHubView(state: GameState): FreeAgencyHubView {
     currentDate: owner.currentDate,
     teamName: team ? `${team.city} ${team.name}` : "Team",
     rosterCount: team?.roster.length ?? 0,
-    playerPayroll: finances.playerPayroll,
-    capSpace: finances.capSpace,
+    // Offers start with the upcoming season in the offseason, so show the
+    // payroll and cap space they are checked against.
+    playerPayroll: getTeamPayroll(teamId, signingYear, state),
+    capSpace: getTeamCapSpace(teamId, signingYear, state),
     availableCount: market.length,
     exposesTrueOverall: true,
     market,

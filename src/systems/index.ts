@@ -51,10 +51,7 @@ export {
   processSeasonPlayerDevelopment,
   combinedDevelopmentMultiplier,
 } from "@/systems/season-player-development";
-export {
-  processWeeklyPlayerPayroll,
-  PLAYER_PAYROLL_WEEKS_PER_YEAR,
-} from "@/systems/player-payroll";
+export { processWeeklyPlayerPayroll } from "@/systems/player-payroll";
 export {
   SHOT_RESOLUTION_CONFIG,
   SHOT_TYPES,

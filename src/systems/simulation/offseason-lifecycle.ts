@@ -42,6 +42,7 @@ import { beginRegularSeasonFromPreseason } from "@/systems/simulation/season-lif
 import { canonicalPreseasonStartDate } from "@/systems/simulation/season-lifecycle-config";
 import { fillShortRosters } from "@/systems/roster-generation";
 import { processCpuContractExtensions } from "@/systems/contract-extensions";
+import { completeAiFreeAgency } from "@/systems/ai-team-decisions";
 import { enforceMaxRosterViaDevelopmentLeague } from "@/systems/development-league/enforce-roster-cap";
 import { expireSituation } from "@/systems/narrative/lifecycle";
 import { withOwnedFranchise } from "@/state/owner-context";
@@ -406,6 +407,11 @@ export function processPhaseExit(
   }
 
   if (fromPhaseId === "offseason.free_agency") {
+    // AI teams finish their remaining signings before the window closes, so
+    // short rosters are not left to the end-of-offseason fill.
+    const completed = completeAiFreeAgency(current);
+    current = completed.state;
+    events.push(...completed.events);
     const withdrawn = withdrawOpenFreeAgencyOffers(current);
     current = withdrawn.state;
     events.push(...withdrawn.events);

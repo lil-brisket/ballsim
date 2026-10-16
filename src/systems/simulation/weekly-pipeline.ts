@@ -11,6 +11,7 @@ import { runAiFranchiseDecisions } from "@/systems/ai-franchise-decisions";
 import { runAiGameDayPromotionDecisions } from "@/systems/game-day-promotions/ai-game-day-promotions";
 import { createSeededRng, type Rng } from "@/domain/rng";
 import { processWeeklyPlayerPayroll } from "@/systems/player-payroll";
+import { processWeeklyNationalMedia } from "@/systems/league-economy";
 import { processWeeklyStaffPayroll } from "@/systems/staff";
 
 export type WeeklyPipelineResult = SystemResult & {
@@ -47,6 +48,10 @@ export function runWeeklyPipeline(
   const playerPayroll = processWeeklyPlayerPayroll(current);
   current = playerPayroll.state;
   events.push(...playerPayroll.events);
+
+  const nationalMedia = processWeeklyNationalMedia(current);
+  current = nationalMedia.state;
+  events.push(...nationalMedia.events);
 
   const facilityOpex = processWeeklyFacilityOpex(current);
   current = facilityOpex.state;
