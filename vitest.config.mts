@@ -98,6 +98,9 @@ export default defineConfig({
         test: {
           name: "slow",
           environment: "node",
+          // Tests here may run for minutes. The world-pipeline RNG test takes
+          // 22-40s on CI, so the 30s default timed it out.
+          testTimeout: 120_000,
           include: ["tests/**/*.slow.test.ts"],
         },
       },
