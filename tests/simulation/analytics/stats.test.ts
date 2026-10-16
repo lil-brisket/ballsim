@@ -96,4 +96,30 @@ describe("simulation analytics mobility", () => {
     expect(report.nFranchiseYears).toBe(24);
     expect(report.rankPersistence).not.toBeNull();
   });
+
+  it("ranks franchise value within each league, not across leagues (#92)", () => {
+    // Two leagues on very different value scales. Within each league the
+    // order fully reverses every season.
+    const seasons = [0, 1].flatMap((league) =>
+      Array.from({ length: 8 }, (_, team) =>
+        [0, 1, 2, 3].map((seasonIndex) => ({
+          teamKey: `${league}:t${team}`,
+          leagueKey: String(league),
+          seasonIndex,
+          franchiseValue:
+            (league === 0 ? 100 : 10_000) +
+            (seasonIndex % 2 === 0 ? team : 7 - team),
+        })),
+      ).flat(),
+    );
+    const perLeague = computeValueMobility(seasons);
+    expect(perLeague.rankPersistence).toBeCloseTo(-1);
+    expect(perLeague.bottomToTopRate).toBe(1);
+
+    // Pooled, league scale alone made ranks look stuck.
+    const pooled = computeValueMobility(
+      seasons.map(({ leagueKey: _league, ...row }) => row),
+    );
+    expect(pooled.rankPersistence!).toBeGreaterThan(0.5);
+  });
 });
