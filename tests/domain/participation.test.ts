@@ -287,16 +287,16 @@ describe("online participation", () => {
       onlineParticipant("p1", ["t1"], true, "u1"),
       onlineParticipant("p2", ["t2"], false, undefined),
     ]);
-    expect(participationStateErrors(missing, ["t1", "t2"], "t1").join(" ")).toMatch(
-      /userId is required/,
-    );
+    expect(
+      participationStateErrors(missing, ["t1", "t2"], "t1").join(" "),
+    ).toMatch(/userId is required/);
     const shared = online([
       onlineParticipant("p1", ["t1"], true, "u1"),
       onlineParticipant("p2", ["t2"], false, "u1"),
     ]);
-    expect(participationStateErrors(shared, ["t1", "t2"], "t1").join(" ")).toMatch(
-      /already a participant/,
-    );
+    expect(
+      participationStateErrors(shared, ["t1", "t2"], "t1").join(" "),
+    ).toMatch(/already a participant/);
   });
 
   it("rejects accounts on local participants and foreign active teams", () => {

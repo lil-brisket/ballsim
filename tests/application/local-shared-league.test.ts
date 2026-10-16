@@ -154,10 +154,13 @@ describe("local shared league", () => {
     const participation = local(loaded!.state);
     expect(participation.assignmentsConfirmed).toBe(true);
     expect(participation.activeParticipantId).toBe(alex.id);
-    expect(participation.participants.find((p) => p.id === alex.id)!.teamIds)
-      .toEqual([anchorId]);
     expect(
-      [...participation.participants.find((p) => p.id === sam.id)!.teamIds].sort(),
+      participation.participants.find((p) => p.id === alex.id)!.teamIds,
+    ).toEqual([anchorId]);
+    expect(
+      [
+        ...participation.participants.find((p) => p.id === sam.id)!.teamIds,
+      ].sort(),
     ).toEqual([...others].sort());
     expect([...loaded!.state.user.ownedTeamIds].sort()).toEqual(
       [anchorId, ...others].sort(),
@@ -196,7 +199,9 @@ describe("local shared league", () => {
     const unchanged = await store.load(saveId);
     expect(unchanged!.updatedAt).toEqual(before!.updatedAt);
 
-    expect((await setActiveParticipantReady(saveId, true, store)).ok).toBe(true);
+    expect((await setActiveParticipantReady(saveId, true, store)).ok).toBe(
+      true,
+    );
     const stillBlocked = await advanceOwnerTime(saveId, { days: 1 }, store);
     expect(stillBlocked.ok).toBe(false);
     if (!stillBlocked.ok) {
@@ -255,9 +260,7 @@ describe("local shared league", () => {
       JSON.stringify(value).replace(/"evt_[^"]+"/g, '"evt"');
     expect(shared.meta.rngState).toBe(single.meta.rngState);
     expect(comparable(shared.world)).toBe(comparable(single.world));
-    expect(comparable(shared.competition)).toBe(
-      comparable(single.competition),
-    );
+    expect(comparable(shared.competition)).toBe(comparable(single.competition));
     expect(comparable(shared.business)).toBe(comparable(single.business));
   });
 });

@@ -106,7 +106,11 @@ function fillFantasyPool(state: GameState, rng: Rng): SystemResult {
   }
 
   const fillIds: PlayerId[] = [];
-  for (let index = 0; existingIds.length + fillIds.length < targetSize; index += 1) {
+  for (
+    let index = 0;
+    existingIds.length + fillIds.length < targetSize;
+    index += 1
+  ) {
     const playerId = asPlayerId(`fantasy_fill_${index}`);
     if (players[playerId] !== undefined) {
       continue;

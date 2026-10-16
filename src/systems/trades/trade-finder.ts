@@ -199,7 +199,10 @@ function collectAcquireCandidates(
 
   if (target.kind === "player") {
     const ourPicks = ownedAvailablePickIds(state, teamId).slice(0, 4);
-    if (ourPicks.length > 0 && candidates.length < TRADE_FINDER_MAX_CANDIDATES) {
+    if (
+      ourPicks.length > 0 &&
+      candidates.length < TRADE_FINDER_MAX_CANDIDATES
+    ) {
       const proposal: TradeProposal = {
         sideA: {
           teamId,

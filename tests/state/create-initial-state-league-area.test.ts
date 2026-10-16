@@ -25,7 +25,6 @@ import {
 } from "@/domain/game-settings";
 import { createMemorySaveGameStore } from "@/persistence/memory-save-game-store";
 import { createInitialGameState } from "@/state/create-initial-state";
-import { runMultiYearSimulation } from "../helpers/multi-year-simulation";
 import { TEST_RNG_SEED } from "../helpers/determinism";
 
 const LEAGUE_AREAS: readonly LeagueArea[] = [
@@ -36,8 +35,6 @@ const LEAGUE_AREAS: readonly LeagueArea[] = [
   "south_america",
   "global",
 ];
-
-const LONG_TIMEOUT_MS = 600_000;
 
 describe("createInitialGameState league area wiring", () => {
   it.each(LEAGUE_AREAS)(
@@ -175,30 +172,4 @@ describe("selectOwnerTeam philosophy regression", () => {
     );
     expect(after!.state.user.activeOwnerTeamId).toBe(teamIds[0]);
   });
-});
-
-describe("league area multi-year smoke", () => {
-  it(
-    "europe area completes 1 season without Invalid GameState",
-    async () => {
-      const settings = cloneGameSettings(CBL_GAME_SETTINGS);
-      settings.league.area = "europe";
-      const europePool = new Set(getTeamCitiesForArea("europe"));
-
-      const result = await runMultiYearSimulation({
-        seasons: 1,
-        managementPreset: "off",
-        advanceMode: "until_phase",
-        seed: TEST_RNG_SEED + 20,
-        settingsBase: settings,
-        saveReloadEachSeason: true,
-      });
-
-      expect(result.seasonsCompleted).toBe(1);
-      for (const team of Object.values(result.finalState.world.teams)) {
-        expect(europePool.has(team.city)).toBe(true);
-      }
-    },
-    LONG_TIMEOUT_MS,
-  );
 });

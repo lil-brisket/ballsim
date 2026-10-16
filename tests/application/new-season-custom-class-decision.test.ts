@@ -32,7 +32,10 @@ import { setActivePhase } from "@/systems/phase-engine";
 import { processPhaseEnter } from "@/systems/simulation/offseason-lifecycle";
 import { draftYearForSeason } from "@/systems/draft";
 import { draftClassIdFor } from "@/domain/entities/draft";
-import { makeDraftClassPackage, makePlayerSource } from "../helpers/custom-content";
+import {
+  makeDraftClassPackage,
+  makePlayerSource,
+} from "../helpers/custom-content";
 
 describe("new-season custom class decision", () => {
   it("prompts once and does not recreate after resolved", async () => {
@@ -51,9 +54,9 @@ describe("new-season custom class decision", () => {
     const rng = createSeededRng(state.meta.rngState);
     state = processPhaseEnter(state, "offseason.draft_preparation", rng).state;
     const draftYear = draftYearForSeason(state.competition.season.year);
-    expect(state.user.pendingDraftClassDecisions[String(draftYear)]?.resolved).toBe(
-      false,
-    );
+    expect(
+      state.user.pendingDraftClassDecisions[String(draftYear)]?.resolved,
+    ).toBe(false);
     expect(state.world.drafts[draftClassIdFor(draftYear)]).toBeUndefined();
 
     await store.save({ id: created.save.id, state });

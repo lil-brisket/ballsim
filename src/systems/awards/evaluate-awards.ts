@@ -191,7 +191,10 @@ function scoreProductionPool(
   });
   const availability = pool.map((agg) => {
     if (!agg.teamId) return 0;
-    return availabilityScore(agg.games, teamGamesPlayed(teamRecords.get(agg.teamId)));
+    return availabilityScore(
+      agg.games,
+      teamGamesPlayed(teamRecords.get(agg.teamId)),
+    );
   });
 
   const prodPct = percentileScores(production);
@@ -309,7 +312,10 @@ export function evaluateDefensivePlayerOfMonth(
   });
   const availability = pool.map((agg) => {
     if (!agg.teamId) return 0;
-    return availabilityScore(agg.games, teamGamesPlayed(teamRecords.get(agg.teamId)));
+    return availabilityScore(
+      agg.games,
+      teamGamesPlayed(teamRecords.get(agg.teamId)),
+    );
   });
 
   const defPct = percentileScores(defImpact);
@@ -386,7 +392,10 @@ export function evaluateMvp(
   });
   const availability = pool.map((agg) => {
     if (!agg.teamId) return 0;
-    return availabilityScore(agg.games, teamGamesPlayed(teamRecords.get(agg.teamId)));
+    return availabilityScore(
+      agg.games,
+      teamGamesPlayed(teamRecords.get(agg.teamId)),
+    );
   });
   const defImpact = pool.map((agg) => defensiveStatImpact(perGameRates(agg)));
 
@@ -580,7 +589,10 @@ export function evaluateSixthMan(
   });
   const availability = pool.map((agg) => {
     if (!agg.teamId) return 0;
-    return availabilityScore(agg.games, teamGamesPlayed(teamRecords.get(agg.teamId)));
+    return availabilityScore(
+      agg.games,
+      teamGamesPlayed(teamRecords.get(agg.teamId)),
+    );
   });
 
   const prodPct = percentileScores(production);

@@ -180,10 +180,8 @@ describe("asset valuation — deterministic", () => {
         },
       },
     };
-    const worsePick =
-      state.world.draftPicks[pickForTeam(state, teamA, 1, 1)]!;
-    const betterPick =
-      state.world.draftPicks[pickForTeam(state, teamB, 1, 1)]!;
+    const worsePick = state.world.draftPicks[pickForTeam(state, teamA, 1, 1)]!;
+    const betterPick = state.world.draftPicks[pickForTeam(state, teamB, 1, 1)]!;
     expect(
       projectDraftPick(state, worsePick).projectedOverallPick,
     ).toBeLessThan(projectDraftPick(state, betterPick).projectedOverallPick);

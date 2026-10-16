@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
+vi.mock("server-only", () => ({}));
 import { fireEvent, render, screen, within } from "@testing-library/react";
 import { EntityDrawerProvider } from "@/components/entity/EntityDrawerProvider";
 import { HistoryHub } from "@/components/history/HistoryHub";

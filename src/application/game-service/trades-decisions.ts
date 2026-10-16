@@ -377,10 +377,8 @@ async function resolveOwnerTradeDecision(
   const withdrawing =
     mode === "decline" &&
     isPlayerTradeOffer(loaded.state, pending) &&
-    participantTeamAccessError(
-      loaded.state,
-      pending.payload.offeringTeamId,
-    ) === null;
+    participantTeamAccessError(loaded.state, pending.payload.offeringTeamId) ===
+      null;
   const accessError = withdrawing
     ? null
     : participantTeamAccessError(loaded.state, pending.payload.userTeamId);

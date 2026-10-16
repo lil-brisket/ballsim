@@ -17,7 +17,10 @@ describe("v62 → current schema migration", () => {
     (parsed.meta as Record<string, unknown>).schemaVersion = 62;
     const business = parsed.business as Record<string, unknown>;
     delete business.gameArchiveIndex;
-    const ops = business.franchiseOps as Record<string, Record<string, unknown>>;
+    const ops = business.franchiseOps as Record<
+      string,
+      Record<string, unknown>
+    >;
     for (const teamOps of Object.values(ops)) {
       delete teamOps.homeFillSeries;
     }

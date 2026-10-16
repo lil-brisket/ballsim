@@ -13,9 +13,7 @@ import { resetDomainEventSequenceForTests } from "@/domain/events/domain-event";
  * advanceLeaguePhase manually — calendar-driven progression only.
  */
 describe("multi-year calendar-driven phase sync", () => {
-  it(
-    "advances many days through the regular season without manual phase advance",
-    () => {
+  it("advances many days through the regular season without manual phase advance", () => {
     resetDomainEventSequenceForTests();
     const state = createInitialGameState({
       saveId: "multi_cal",
@@ -37,7 +35,5 @@ describe("multi-year calendar-driven phase sync", () => {
     expect(result.state.competition.season.phase).not.toBe("preseason");
     expect(getActivePhaseId(result.state)).toBeTruthy();
     expect(startPhase).toBeTruthy();
-    },
-    60_000,
-  );
+  }, 60_000);
 });

@@ -80,7 +80,8 @@ export function computeWeeklyOutflowBreakdown(
 
   const year = state.competition.season.year;
   const playerPayroll = Math.round(
-    getTeamPayroll(asTeamId(teamId), year, state) / PLAYER_PAYROLL_WEEKS_PER_YEAR,
+    getTeamPayroll(asTeamId(teamId), year, state) /
+      PLAYER_PAYROLL_WEEKS_PER_YEAR,
   );
   const staff = Math.round(
     getTeamStaffPayroll(asTeamId(teamId), year, state) /

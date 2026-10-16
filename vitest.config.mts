@@ -5,11 +5,14 @@ import react from "@vitejs/plugin-react";
  * Test tiers (Phase 5):
  * - unit: milliseconds (default with integration in `npm test`)
  * - integration: seconds (one game / week / season-scale unit suites)
+ * - slow: any `*.slow.test.ts` under tests/, single tests that take minutes but must
+ *   still gate PRs, via `npm run test:slow` (own PR CI job)
  * - regression: minutes (multi-year, economy, league-sanity) via `npm run test:regression`
  * - simulation: Lab 100-game / season-RNG batches via `npm run test:simulation` (PR CI)
  * - stress: opt-in via STRESS=1 inside specific files
  *
- * `npm test` excludes simulation and regression. `npm run test:all` runs every project.
+ * `npm test` excludes slow, simulation and regression. `npm run test:all` runs every project.
+ * Keep unit tests under the 30s default; tests that need a longer timeout belong in another tier.
  */
 export default defineConfig({
   plugins: [react()],
@@ -37,16 +40,25 @@ export default defineConfig({
           include: ["tests/**/*.test.ts"],
           exclude: [
             "tests/**/*.test.tsx",
+            "tests/**/*.slow.test.ts",
             "tests/application/multi-year-simulation*.test.ts",
             "tests/persistence/migration-multi-year.test.ts",
             "tests/systems/economic-scenarios.test.ts",
             "tests/simulation/league-sanity/**",
-            "tests/application/owner-vertical-slice.test.ts",
             "tests/systems/season-simulation.test.ts",
             "tests/systems/playoffs-integration.test.ts",
             "tests/systems/simulation/season-lifecycle.test.ts",
             "tests/systems/simulation/performance-budget.test.ts",
             "tests/systems/trades/thirty-team-trade-invariants.test.ts",
+            "tests/systems/player-generation.test.ts",
+            "tests/systems/fantasy-draft/fantasy-draft.test.ts",
+            "tests/systems/fantasy-draft/fantasy-draft-analysis.test.ts",
+            "tests/systems/season-events/season-events-cycle.test.ts",
+            "tests/systems/season-events/season-events-e2e.test.ts",
+            "tests/systems/season-events/season-events-foundation.test.ts",
+            "tests/systems/simulation/multi-year-calendar-driven.test.ts",
+            "tests/application/time-advance-commit-guard.test.ts",
+            "tests/simulation/lab/simulate-game-box-score-allocator.test.ts",
             "tests/simulation/lab/invariants-hard.test.ts",
             "tests/simulation/lab/fidelity-parity.test.ts",
             "tests/simulation/lab/season-fidelity.test.ts",
@@ -68,9 +80,25 @@ export default defineConfig({
             "tests/systems/playoffs-integration.test.ts",
             "tests/systems/simulation/season-lifecycle.test.ts",
             "tests/systems/simulation/performance-budget.test.ts",
-            "tests/application/owner-vertical-slice.test.ts",
             "tests/systems/trades/thirty-team-trade-invariants.test.ts",
+            "tests/systems/player-generation.test.ts",
+            "tests/systems/fantasy-draft/fantasy-draft.test.ts",
+            "tests/systems/fantasy-draft/fantasy-draft-analysis.test.ts",
+            "tests/systems/season-events/season-events-cycle.test.ts",
+            "tests/systems/season-events/season-events-e2e.test.ts",
+            "tests/systems/season-events/season-events-foundation.test.ts",
+            "tests/systems/simulation/multi-year-calendar-driven.test.ts",
+            "tests/application/time-advance-commit-guard.test.ts",
+            "tests/simulation/lab/simulate-game-box-score-allocator.test.ts",
           ],
+        },
+      },
+      {
+        extends: true,
+        test: {
+          name: "slow",
+          environment: "node",
+          include: ["tests/**/*.slow.test.ts"],
         },
       },
       {

@@ -58,7 +58,10 @@ export function generatePlayerName(
 
   if (occupied && occupied.size > 0) {
     let attempts = 0;
-    while (occupied.has(fullName(firstName, lastName)) && attempts < maxRetries) {
+    while (
+      occupied.has(fullName(firstName, lastName)) &&
+      attempts < maxRetries
+    ) {
       attempts += 1;
       firstName = pickName(pools.firstNames, "firstNames", rng);
       lastName = pickName(pools.lastNames, "lastNames", rng);

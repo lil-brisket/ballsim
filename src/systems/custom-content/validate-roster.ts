@@ -43,16 +43,27 @@ function readTeam(
   const name = record.name;
   if (typeof sourceId !== "string" || sourceId.trim().length === 0) {
     errors.push(
-      issue(`${path}.sourceId`, "missing_source_id", `${path}.sourceId is required.`),
+      issue(
+        `${path}.sourceId`,
+        "missing_source_id",
+        `${path}.sourceId is required.`,
+      ),
     );
   }
   if (typeof name !== "string" || name.trim().length === 0) {
-    errors.push(issue(`${path}.name`, "invalid_team_name", `${path}.name is required.`));
+    errors.push(
+      issue(`${path}.name`, "invalid_team_name", `${path}.name is required.`),
+    );
   }
   if (record.city !== undefined && typeof record.city !== "string") {
-    errors.push(issue(`${path}.city`, "invalid_city", `${path}.city must be a string.`));
+    errors.push(
+      issue(`${path}.city`, "invalid_city", `${path}.city must be a string.`),
+    );
   }
-  if (record.abbreviation !== undefined && typeof record.abbreviation !== "string") {
+  if (
+    record.abbreviation !== undefined &&
+    typeof record.abbreviation !== "string"
+  ) {
     errors.push(
       issue(
         `${path}.abbreviation`,
@@ -87,9 +98,18 @@ function readContract(
     return undefined;
   }
   const years = record.years;
-  if (typeof years !== "number" || !Number.isInteger(years) || years < 1 || years > 6) {
+  if (
+    typeof years !== "number" ||
+    !Number.isInteger(years) ||
+    years < 1 ||
+    years > 6
+  ) {
     errors.push(
-      issue(`${path}.years`, "invalid_contract_years", `${path}.years must be 1–6.`),
+      issue(
+        `${path}.years`,
+        "invalid_contract_years",
+        `${path}.years must be 1–6.`,
+      ),
     );
   }
   if (
@@ -134,11 +154,21 @@ export function validateRosterPayload(
   const teamsRaw = asArray(record.teams);
   const playersRaw = asArray(record.players);
   if (teamsRaw === null) {
-    errors.push(issue("payload.teams", "invalid_teams", "payload.teams must be an array."));
+    errors.push(
+      issue(
+        "payload.teams",
+        "invalid_teams",
+        "payload.teams must be an array.",
+      ),
+    );
   }
   if (playersRaw === null) {
     errors.push(
-      issue("payload.players", "invalid_players", "payload.players must be an array."),
+      issue(
+        "payload.players",
+        "invalid_players",
+        "payload.players must be an array.",
+      ),
     );
   }
   if (teamsRaw === null || playersRaw === null) {
@@ -181,7 +211,12 @@ export function validateRosterPayload(
   for (let index = 0; index < playersRaw.length; index += 1) {
     const path = `payload.players[${index}]`;
     const playerRecord = asRecord(playersRaw[index]);
-    const source = readPlayerSourceRecord(playersRaw[index], path, errors, warnings);
+    const source = readPlayerSourceRecord(
+      playersRaw[index],
+      path,
+      errors,
+      warnings,
+    );
     if (playerRecord === null) {
       continue;
     }
@@ -194,7 +229,10 @@ export function validateRosterPayload(
           `${path}.teamSourceId must be a string or null.`,
         ),
       );
-    } else if (typeof teamSourceId === "string" && !teamSourceIds.has(teamSourceId)) {
+    } else if (
+      typeof teamSourceId === "string" &&
+      !teamSourceIds.has(teamSourceId)
+    ) {
       errors.push(
         issue(
           `${path}.teamSourceId`,
@@ -203,8 +241,15 @@ export function validateRosterPayload(
         ),
       );
     }
-    const contract = readContract(playerRecord.contract, `${path}.contract`, errors);
-    if (contract !== undefined && (teamSourceId === null || teamSourceId === undefined)) {
+    const contract = readContract(
+      playerRecord.contract,
+      `${path}.contract`,
+      errors,
+    );
+    if (
+      contract !== undefined &&
+      (teamSourceId === null || teamSourceId === undefined)
+    ) {
       errors.push(
         issue(
           `${path}.contract`,
@@ -226,7 +271,10 @@ export function validateRosterPayload(
       );
     }
     playerSourceIds.add(source.sourceId);
-    const canonicalId = canonicalCustomPlayerId(envelopeContentId, source.sourceId);
+    const canonicalId = canonicalCustomPlayerId(
+      envelopeContentId,
+      source.sourceId,
+    );
     if (context.existingPlayerIds?.has(canonicalId)) {
       errors.push(
         issue(
@@ -247,7 +295,10 @@ export function validateRosterPayload(
   }
 
   for (const [sourceId, count] of rosterCounts) {
-    if (count < TRADE_ROSTER_RULES.minRosterSize || count > TRADE_ROSTER_RULES.maxRosterSize) {
+    if (
+      count < TRADE_ROSTER_RULES.minRosterSize ||
+      count > TRADE_ROSTER_RULES.maxRosterSize
+    ) {
       errors.push(
         issue(
           "payload.players",

@@ -193,12 +193,18 @@ describe("player value formula", () => {
       stage: "prime",
       salary: 90 * 180_000,
     });
-    const v80 = getBaseAssetValue(state, { kind: "player", playerId: id80 })
-      .value;
-    const v85 = getBaseAssetValue(state, { kind: "player", playerId: id85 })
-      .value;
-    const v90 = getBaseAssetValue(state, { kind: "player", playerId: id90 })
-      .value;
+    const v80 = getBaseAssetValue(state, {
+      kind: "player",
+      playerId: id80,
+    }).value;
+    const v85 = getBaseAssetValue(state, {
+      kind: "player",
+      playerId: id85,
+    }).value;
+    const v90 = getBaseAssetValue(state, {
+      kind: "player",
+      playerId: id90,
+    }).value;
     expect(v80).toBeGreaterThan(90);
     expect(v85).toBeGreaterThan(v80);
     expect(v90).toBeGreaterThan(v85);
@@ -279,10 +285,14 @@ describe("player value formula", () => {
       stage: "prime",
       salary: fairSalary + 10_000_000,
     });
-    const fair = getBaseAssetValue(state, { kind: "player", playerId: fairId })
-      .value;
-    const over = getBaseAssetValue(state, { kind: "player", playerId: overId })
-      .value;
+    const fair = getBaseAssetValue(state, {
+      kind: "player",
+      playerId: fairId,
+    }).value;
+    const over = getBaseAssetValue(state, {
+      kind: "player",
+      playerId: overId,
+    }).value;
     expect(fair - over).toBeGreaterThanOrEqual(15);
     const reasons = getBaseAssetValue(state, {
       kind: "player",
@@ -315,8 +325,10 @@ describe("player value formula", () => {
       kind: "player",
       playerId: healthyId,
     }).value;
-    const hurt = getBaseAssetValue(state, { kind: "player", playerId: hurtId })
-      .value;
+    const hurt = getBaseAssetValue(state, {
+      kind: "player",
+      playerId: hurtId,
+    }).value;
     expect(healthy - hurt).toBeGreaterThanOrEqual(10);
   });
 

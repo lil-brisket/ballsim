@@ -22,6 +22,28 @@ const GAME_TIER1_MS = 1000;
 /** Soft warn: regular season week (~7 days) should finish quickly after optimizations. */
 const WEEK_SOFT_MS = 30_000;
 
+/**
+ * PR CI sets PERF_BUDGET_MODE=warn so shared-runner noise cannot fail a PR;
+ * locally and in the nightly workflow the wall-clock ceilings are strict.
+ */
+const WALL_CLOCK_WARN_ONLY = process.env.PERF_BUDGET_MODE === "warn";
+
+function expectUnderWallClockBudget(
+  label: string,
+  elapsedMs: number,
+  budgetMs: number,
+): void {
+  if (WALL_CLOCK_WARN_ONLY) {
+    if (elapsedMs >= budgetMs) {
+      console.warn(
+        `[perf] ${label} ${elapsedMs.toFixed(0)}ms exceeded ${budgetMs}ms (PERF_BUDGET_MODE=warn)`,
+      );
+    }
+    return;
+  }
+  expect(elapsedMs).toBeLessThan(budgetMs);
+}
+
 describe("simulation performance budgets (soft)", () => {
   it("production-length game stays under Tier 1 (sub-second) soft ceiling", () => {
     const rng = createSeededRng(42);
@@ -63,7 +85,7 @@ describe("simulation performance budgets (soft)", () => {
       );
     }
 
-    expect(elapsed).toBeLessThan(GAME_TIER1_MS);
+    expectUnderWallClockBudget("production game", elapsed, GAME_TIER1_MS);
   }, 15_000);
 
   it("7-day CBL advance stays under soft week ceiling", () => {
@@ -108,7 +130,7 @@ describe("simulation performance budgets (soft)", () => {
       );
     }
 
-    expect(elapsed).toBeLessThan(WEEK_SOFT_MS);
+    expectUnderWallClockBudget("7-day advance", elapsed, WEEK_SOFT_MS);
     // Trade offers may pause mid-week; still require meaningful progress.
     expect(result.daysAdvanced).toBeGreaterThanOrEqual(1);
     if (

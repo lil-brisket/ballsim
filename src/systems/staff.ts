@@ -20,7 +20,10 @@ import {
   findTeamStaffByRole,
 } from "@/systems/staff-effects";
 import { isStaffContractActive } from "@/domain/entities/staff-contract";
-import { getTeamStaffBudgetSpace, getTeamStaffPayroll } from "@/systems/staff-budget";
+import {
+  getTeamStaffBudgetSpace,
+  getTeamStaffPayroll,
+} from "@/systems/staff-budget";
 import { applyBusinessFundsImpact } from "@/systems/team-finances";
 import { appendCareerEntry } from "@/domain/entities/staff-development";
 import { createStaff } from "@/domain/entities/staff";

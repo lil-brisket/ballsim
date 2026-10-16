@@ -93,9 +93,9 @@ describe("reduceInterruptState", () => {
     });
     expect(state.status).toBe("interrupted");
     if (state.status !== "interrupted") return;
-    expect(state.interrupt.kind === "trade_offer" && state.interrupt.decisionId).toBe(
-      "od_2",
-    );
+    expect(
+      state.interrupt.kind === "trade_offer" && state.interrupt.decisionId,
+    ).toBe("od_2");
     expect(state.dismissed).toBe(false);
   });
 

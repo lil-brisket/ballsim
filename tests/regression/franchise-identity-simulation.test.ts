@@ -112,10 +112,7 @@ describe("franchise identity persistence regression", () => {
 
       for (let day = 0; day < 30; day += 1) {
         const advanced = await advanceOwnerTime(saveId, { days: 1 }, store);
-        if (
-          !advanced.ok &&
-          /pending owner decision/i.test(advanced.error)
-        ) {
+        if (!advanced.ok && /pending owner decision/i.test(advanced.error)) {
           const loaded = await store.load(saveId);
           const blocking =
             loaded?.state.user.pendingOwnerDecisions.filter(

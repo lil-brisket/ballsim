@@ -4,7 +4,12 @@ import {
   type Player,
   type PlayerInput,
 } from "@/domain/entities/player";
-import { asContractId, asPlayerId, asTeamId, type PlayerId } from "@/domain/ids";
+import {
+  asContractId,
+  asPlayerId,
+  asTeamId,
+  type PlayerId,
+} from "@/domain/ids";
 import type { Rng } from "@/domain/rng";
 import { systemResult, type SystemResult } from "@/domain/system-result";
 import type { GameState } from "@/state/game-state";
@@ -40,7 +45,10 @@ function canHardRemove(state: GameState): boolean {
   );
 }
 
-function playerToInput(player: Player, patch: CustomRosterPlayerPatch): PlayerInput {
+function playerToInput(
+  player: Player,
+  patch: CustomRosterPlayerPatch,
+): PlayerInput {
   return {
     id: player.id,
     teamId: player.teamId,

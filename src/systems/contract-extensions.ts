@@ -3,7 +3,10 @@
  * Rewrites remaining years of underpaid star deals to market salary.
  */
 
-import { createContract, getContractSalaryForYear } from "@/domain/entities/contract";
+import {
+  createContract,
+  getContractSalaryForYear,
+} from "@/domain/entities/contract";
 import { createDomainEvent, type DomainEvent } from "@/domain/events";
 import type { TeamId } from "@/domain/ids";
 import { calculatePlayerOverall } from "@/domain/player-overall-rating";

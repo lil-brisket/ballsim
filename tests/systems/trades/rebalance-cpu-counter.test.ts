@@ -51,7 +51,8 @@ describe("rebalanceCpuCounterProposal", () => {
     expect(rebalanced!.sideA.teamId).toBe(teamA);
     expect(rebalanced!.sideB.playerIds).toEqual([userWorse]);
     expect(
-      rebalanced!.sideA.playerIds.length + rebalanced!.sideA.draftPickIds.length,
+      rebalanced!.sideA.playerIds.length +
+        rebalanced!.sideA.draftPickIds.length,
     ).toBeGreaterThan(1);
   });
 });

@@ -57,10 +57,10 @@ export function generateDraftProspects(
     const age = rng.nextInt(MIN_DRAFT_PROSPECT_AGE, MAX_DRAFT_PROSPECT_AGE);
     const intendedPick = index + 1;
     const band =
-      DRAFT_QUALITY_BY_PICK_BAND.find((entry) => intendedPick <= entry.maxPick) ??
-      DRAFT_QUALITY_BY_PICK_BAND[DRAFT_QUALITY_BY_PICK_BAND.length - 1]!;
-    const steal =
-      intendedPick > 45 && rng.next() < DRAFT_LATE_STEAL_CHANCE;
+      DRAFT_QUALITY_BY_PICK_BAND.find(
+        (entry) => intendedPick <= entry.maxPick,
+      ) ?? DRAFT_QUALITY_BY_PICK_BAND[DRAFT_QUALITY_BY_PICK_BAND.length - 1]!;
+    const steal = intendedPick > 45 && rng.next() < DRAFT_LATE_STEAL_CHANCE;
     const quality = steal
       ? rng.nextInt(DRAFT_LATE_STEAL_QUALITY_MIN, DRAFT_LATE_STEAL_QUALITY_MAX)
       : rng.nextInt(band.qualityMin, band.qualityMax);

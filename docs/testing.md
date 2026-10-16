@@ -17,6 +17,7 @@ Domain, state, systems, and persistence tests run in the **Node** Vitest project
 
 ```bash
 npm test                 # vitest run (CI / one-shot: unit + integration + react)
+npm run test:slow        # minutes-long *.slow.test.ts files (PR CI; not in npm test)
 npm run test:simulation  # Lab 100-game rotation-on, fidelity parity, season invariants + RNG (PR CI; not in npm test)
 npm run test:watch       # watch mode
 npm run test:coverage    # same projects as npm test, plus v8 coverage (text/html/lcov)
@@ -114,20 +115,30 @@ npm run sim:replay -- --run <runId> --game 0
 
 ## CI
 
-GitHub Actions (`.github/workflows/ci.yml`) on `push` / `pull_request`:
+GitHub Actions (`.github/workflows/ci.yml`) on pushes to `master` and on every `pull_request`. Five jobs run in parallel on `ubuntu-latest`, each with Node **22** (matches `.nvmrc` and `engines.node >=22`; `@types/node` is `^22`) and `npm ci`. PR wall time is the slowest job.
 
-1. Node **22** (matches `.nvmrc` and `engines.node >=22`; `@types/node` is `^22`)
-2. `npm ci`
-3. `npx tsc --noEmit`
-4. `npm run lint` (stylistic rules deferred to Prettier via `eslint-config-prettier`)
-5. `npm run format:check`
-6. `npm run test:coverage` (unit + integration + react, writes `coverage/lcov.info`)
-7. `npm run test:simulation` (Lab rotation-on 100 games, possession vs box-score parity with `--calibrate`, headless-owner season invariants, season RNG)
-8. Upload `coverage/` as a workflow artifact (`coverage-report`)
-9. Upload `coverage/lcov.info` to Codecov (`codecov/codecov-action@v5`; optional `CODECOV_TOKEN` repo secret)
-10. `npm run build` with `DATABASE_URL=file:./prisma/ci.db`
+| Job          | Runs                                                                                                                                                                                                                                                                          |
+| ------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `static`     | `npx tsc --noEmit`, `npm run lint` (stylistic rules deferred to Prettier via `eslint-config-prettier`), `npm run format:check`                                                                                                                                                |
+| `test`       | `npm run test:coverage` (unit + integration + react, writes `coverage/lcov.info`) with `PERF_BUDGET_MODE=warn`; uploads `coverage/` as the `coverage-report` artifact and `coverage/lcov.info` to Codecov (`codecov/codecov-action@v5`; optional `CODECOV_TOKEN` repo secret) |
+| `slow`       | `npm run test:slow` (no coverage)                                                                                                                                                                                                                                             |
+| `simulation` | `npm run test:simulation` (Lab rotation-on 100 games, possession vs box-score parity with `--calibrate`, headless-owner season invariants, season RNG)                                                                                                                        |
+| `build`      | `npm run build`                                                                                                                                                                                                                                                               |
 
-Coverage HTML/LCOV live under `coverage/` (gitignored). Codecov project/patch status is configured in `codecov.yml` (auto target, 2% project drop tolerance; patch is informational).
+`DATABASE_URL=file:./prisma/ci.db` is set for every job.
+
+Coverage HTML/LCOV live under `coverage/` (gitignored). Codecov project/patch status is configured in `codecov.yml` (auto target, 2% project drop tolerance; patch is informational). Slow, simulation and regression tests do not contribute to coverage.
+
+The nightly workflow (`.github/workflows/sim-nightly.yml`) runs simulation, the performance budgets with strict wall-clock limits, regression and the 10k-game / 10-season Lab channels.
+
+## Keeping tests fast
+
+- **`unit`** stays under the 30s default timeout. A test that needs a longer timeout belongs in another tier; do not raise it in place.
+- **`integration`** (explicit list in `vitest.config.mts`) holds seconds-long suites, including unit-style files whose tests set timeouts above 30s.
+- **`slow`** picks up any `tests/**/*.slow.test.ts` by glob: single tests that take minutes but should still gate PRs. Split just the slow cases into a `*.slow.test.ts` sibling rather than moving a whole file of fast tests.
+- **`regression`** is for multi-season, economy and league-sanity suites. It runs nightly only.
+- Wall-clock assertions go through `PERF_BUDGET_MODE` (see `performance-budget.test.ts`): strict locally and nightly, warn-only in PR CI.
+- Measure before optimizing: `npx vitest run --project unit --reporter=json --outputFile=<file>` gives per-test durations. Baseline numbers are in [`plans/test-speed-baseline.md`](./plans/test-speed-baseline.md). `bootstrapWorld` costs about 10–30ms, so caching worlds is not worth it; the long tests are long because they simulate seasons.
 
 `next build` requires `DATABASE_URL` to be defined (Prisma client construction) but does **not** query the database during build for current dynamic routes. CI uses a real local SQLite `file:` URL, not a fake remote host. No migrate step is required for build today. Prisma adapter tests apply migrations themselves against a temp file.
 
@@ -149,12 +160,13 @@ npm run db:generate
 
 ### Tests
 
-Suites live under `tests/`. `npm test` is unit + integration + React only. Lab 100-game batches and multi-year regression are separate.
+Suites live under `tests/`. `npm test` is unit + integration + React only. Slow tests, Lab 100-game batches and multi-year regression are separate.
 
 ```bash
 npm test                     # unit + integration + react
 npm run test:unit
 npm run test:integration
+npm run test:slow            # *.slow.test.ts, minutes-long (PR CI)
 npm run test:simulation      # Lab 100-game rotation-on + season RNG (PR CI)
 npm run test:regression      # multi-year, economy, league-sanity (nightly CI)
 npm run test:all             # every Vitest project

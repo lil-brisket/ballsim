@@ -9,7 +9,9 @@ export function getDraftClassDecision(
   state: GameState,
   draftYear: number,
 ): PendingDraftClassDecision | undefined {
-  return state.user.pendingDraftClassDecisions[draftClassDecisionKey(draftYear)];
+  return state.user.pendingDraftClassDecisions[
+    draftClassDecisionKey(draftYear)
+  ];
 }
 
 export function isDraftClassDecisionResolved(

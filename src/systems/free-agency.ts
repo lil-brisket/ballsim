@@ -95,14 +95,14 @@ export const defaultEvaluatePlayerInterest: EvaluatePlayerInterest = (
           age: player.age,
           seasonYear: year,
           draftSeasonYear: player.developmentLeague?.draftSeasonYear ?? null,
-          seasonsPlayed: state.business.playerHistory[player.id]?.seasons.length ?? 0,
+          seasonsPlayed:
+            state.business.playerHistory[player.id]?.seasons.length ?? 0,
         }),
         cap,
         kind: "fa",
       });
       const acceptsVetMin =
-        overall < REPLACEMENT_LEVEL_OVERALL &&
-        offered >= vetMinSalary(cap);
+        overall < REPLACEMENT_LEVEL_OVERALL && offered >= vetMinSalary(cap);
       const ratio = market > 0 ? offered / market : 1;
       factors.money = acceptsVetMin
         ? 0

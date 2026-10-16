@@ -53,7 +53,9 @@ async function firstCandidate(
       return { playerId, row: listed.candidates[0]! };
     }
   }
-  throw new Error("Expected at least one Finder candidate in a new owner save.");
+  throw new Error(
+    "Expected at least one Finder candidate in a new owner save.",
+  );
 }
 
 describe("executeOwnerTrade", () => {

@@ -24,7 +24,12 @@ import {
   advanceLeaguePhase,
   processOffseasonLifecycle,
 } from "@/systems/simulation/offseason-lifecycle";
-import { completeDraft, createDraft, activateDraft, autoResolveGeneratedDraftClass } from "@/systems/draft";
+import {
+  completeDraft,
+  createDraft,
+  activateDraft,
+  autoResolveGeneratedDraftClass,
+} from "@/systems/draft";
 import { draftClassIdFor } from "@/domain/entities/draft";
 import { draftYearForSeason } from "@/systems/draft";
 import { transitionPhase } from "@/systems/simulation/phase-machine";

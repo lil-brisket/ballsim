@@ -27,6 +27,9 @@ jobs:
       - name: Simulation Lab (PR-hard invariants)
         run: npm run test:simulation
 
+      - name: Performance budgets (strict wall-clock)
+        run: npx vitest run tests/systems/simulation/performance-budget.test.ts --project integration
+
       - name: Regression suites
         run: npm run test:regression
 

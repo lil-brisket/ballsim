@@ -201,7 +201,9 @@ function withDraftStatus(
 
 function mutateFirstDraft(
   state: GameState,
-  mutate: (draft: GameState["world"]["drafts"][string]) => GameState["world"]["drafts"][string],
+  mutate: (
+    draft: GameState["world"]["drafts"][string],
+  ) => GameState["world"]["drafts"][string],
 ): GameState {
   const entries = Object.entries(state.world.drafts);
   const [draftId, draft] = entries[0]!;
@@ -335,7 +337,11 @@ function withPendingMatch(
     seasonYear: state.competition.season.year,
     qualifyingOfferSalary: 5_000_000,
   });
-  const terms = rfaTerms(playerId, offeringTeamId, state.competition.season.year);
+  const terms = rfaTerms(
+    playerId,
+    offeringTeamId,
+    state.competition.season.year,
+  );
   const status = {
     ...pending,
     resolution: "pending_match" as const,
@@ -392,7 +398,10 @@ const CASES: GuardCase[] = [
     rule: "trade-window",
     variant: "legal",
     setup: identity,
-    action: (state) => ({ kind: "player_trade", proposal: playerProposal(state) }),
+    action: (state) => ({
+      kind: "player_trade",
+      proposal: playerProposal(state),
+    }),
     allowed: true,
   },
   {
@@ -518,7 +527,10 @@ const CASES: GuardCase[] = [
         seasonYear: state.competition.season.year + 1,
         round: 1,
       });
-      return withPick(state, { ...valid, round: DRAFT_ROUNDS + 1 } as DraftPick);
+      return withPick(state, {
+        ...valid,
+        round: DRAFT_ROUNDS + 1,
+      } as DraftPick);
     },
     action: (state) => ({
       kind: "pick_trade",
@@ -1326,11 +1338,7 @@ const CASES: GuardCase[] = [
     variant: "boundary",
     setup: (state) => {
       const { teamA } = teamPair(state);
-      return withTeamRosterSize(
-        state,
-        teamA,
-        TRADE_ROSTER_RULES.maxRosterSize,
-      );
+      return withTeamRosterSize(state, teamA, TRADE_ROSTER_RULES.maxRosterSize);
     },
     action: () => ({ kind: "begin_regular_season" }),
     allowed: true,
@@ -1388,18 +1396,21 @@ describe("canPerformAction", () => {
     base = createDraft(fixture, rng).state;
   });
 
-  it.each(CASES)("$rule — $variant: $name", ({ setup, action, allowed, code }) => {
-    const state = setup(structuredClone(base));
-    const result = canPerformAction(state, action(state));
-    expect(result.allowed).toBe(allowed);
-    if (code !== undefined) {
-      expect(result.violations.map((violation) => violation.code)).toContain(
-        code,
-      );
-    } else {
-      expect(result.violations).toEqual([]);
-    }
-  });
+  it.each(CASES)(
+    "$rule — $variant: $name",
+    ({ setup, action, allowed, code }) => {
+      const state = setup(structuredClone(base));
+      const result = canPerformAction(state, action(state));
+      expect(result.allowed).toBe(allowed);
+      if (code !== undefined) {
+        expect(result.violations.map((violation) => violation.code)).toContain(
+          code,
+        );
+      } else {
+        expect(result.violations).toEqual([]);
+      }
+    },
+  );
 
   it("covers every LeagueAction kind", () => {
     const kinds = new Set(
@@ -1416,9 +1427,7 @@ describe("canPerformAction", () => {
       variantsByRule.set(row.rule, variants);
     }
     for (const [rule, variants] of variantsByRule) {
-      expect(variants, rule).toEqual(
-        new Set(["legal", "illegal", "boundary"]),
-      );
+      expect(variants, rule).toEqual(new Set(["legal", "illegal", "boundary"]));
     }
   });
 });

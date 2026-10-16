@@ -68,12 +68,11 @@ export default async function DraftPage({
       : undefined;
   const awaitingDraftClassDecision = Boolean(
     state &&
-      draftYear &&
-      !draft &&
-      (getActivePhaseId(state) === "offseason.draft_preparation" ||
-        getActivePhaseId(state) === "offseason.draft") &&
-      state.user.pendingDraftClassDecisions[String(draftYear)]?.resolved !==
-        true,
+    draftYear &&
+    !draft &&
+    (getActivePhaseId(state) === "offseason.draft_preparation" ||
+      getActivePhaseId(state) === "offseason.draft") &&
+    state.user.pendingDraftClassDecisions[String(draftYear)]?.resolved !== true,
   );
 
   let recommendations: ReturnType<typeof getDraftRecommendations> = [];
@@ -151,7 +150,10 @@ export default async function DraftPage({
         />
       ) : null}
 
-      {awaitingDraftClassDecision ? null : !board || !state || !draft || !teamId ? (
+      {awaitingDraftClassDecision ? null : !board ||
+        !state ||
+        !draft ||
+        !teamId ? (
         <EmptyState
           message={
             hub?.inactiveReason ??
@@ -280,7 +282,10 @@ export default async function DraftPage({
                         <ProspectCard
                           saveId={saveId}
                           playerId={prospect.playerId}
-                          portrait={selectPlayerPortrait(state, prospect.playerId)}
+                          portrait={selectPlayerPortrait(
+                            state,
+                            prospect.playerId,
+                          )}
                           firstName={prospect.firstName}
                           lastName={prospect.lastName}
                           position={prospect.position}

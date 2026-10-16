@@ -275,11 +275,7 @@ export function StandingsTable(props: {
                 action={
                   ownedIds.has(row.teamId) ? null : (
                     <form action={takeOverFranchiseAction}>
-                      <input
-                        type="hidden"
-                        name="saveId"
-                        value={props.saveId}
-                      />
+                      <input type="hidden" name="saveId" value={props.saveId} />
                       <input type="hidden" name="teamId" value={row.teamId} />
                       <button
                         type="submit"

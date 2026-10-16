@@ -494,8 +494,7 @@ function describeDomainEvent(
         href: `/dashboard/${saveId}/media?tab=transactions`,
       };
     case "DraftPickTraded": {
-      const round =
-        typeof payload.round === "number" ? payload.round : null;
+      const round = typeof payload.round === "number" ? payload.round : null;
       const year =
         typeof payload.seasonYear === "number" ? payload.seasonYear : null;
       const pickLabel =

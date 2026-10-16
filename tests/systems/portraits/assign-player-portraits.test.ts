@@ -92,14 +92,16 @@ describe("ensurePlayerPortraits", () => {
     expect(ids.length).toBeGreaterThan(100);
     expect(result.assigned).toBe(ids.length);
     for (const id of ids) {
-      expect(isValidPortraitAssignment(result.state.world.playerPortraits[id])).toBe(
-        true,
-      );
+      expect(
+        isValidPortraitAssignment(result.state.world.playerPortraits[id]),
+      ).toBe(true);
     }
   });
 
   it("gives active players unique faces", () => {
-    const { state } = ensurePlayerPortraits(withProspects(bootstrappedState(), 40));
+    const { state } = ensurePlayerPortraits(
+      withProspects(bootstrappedState(), 40),
+    );
     const signatures = Object.values(state.world.playerPortraits).map((entry) =>
       portraitTraitSignature(entry.traits),
     );
@@ -141,7 +143,9 @@ describe("ensurePlayerPortraits", () => {
     expect(repaired.assigned).toBe(1);
     expect(repaired.state.world.playerPortraits[keepId!]).toBe(custom);
     expect(
-      isValidPortraitAssignment(repaired.state.world.playerPortraits[brokenId!]),
+      isValidPortraitAssignment(
+        repaired.state.world.playerPortraits[brokenId!],
+      ),
     ).toBe(true);
   });
 
@@ -181,7 +185,11 @@ describe("ensurePlayerPortraits", () => {
         ...assigned.world,
         players: {
           ...assigned.world.players,
-          [rookieId]: createPlayer({ id: rookieId, teamId: null, contractId: null }),
+          [rookieId]: createPlayer({
+            id: rookieId,
+            teamId: null,
+            contractId: null,
+          }),
         },
       },
     };

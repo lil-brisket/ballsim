@@ -62,7 +62,9 @@ export function CalendarAgendaList(props: {
                 <span
                   className={cn(
                     "block truncate text-sm",
-                    cell.isToday ? "font-medium text-amber-200" : "text-zinc-100",
+                    cell.isToday
+                      ? "font-medium text-amber-200"
+                      : "text-zinc-100",
                   )}
                 >
                   {summary}

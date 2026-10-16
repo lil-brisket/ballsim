@@ -19,8 +19,7 @@ const SCRYPT_KEY_LENGTH = 64;
 const SCRYPT_MAXMEM = 64 * 1024 * 1024;
 
 export type CredentialResult<T> =
-  | { ok: true; value: T }
-  | { ok: false; error: string };
+  { ok: true; value: T } | { ok: false; error: string };
 
 /** Trim and lowercase; usernames are case-insensitive. */
 export function normalizeUsername(raw: unknown): CredentialResult<string> {
@@ -118,9 +117,7 @@ export async function verifyPassword(
     expected.length,
     { N, r, p, maxmem: SCRYPT_MAXMEM },
   );
-  return (
-    actual.length === expected.length && timingSafeEqual(actual, expected)
-  );
+  return actual.length === expected.length && timingSafeEqual(actual, expected);
 }
 
 /** 256-bit random token, URL-safe. Only its hash is ever stored. */

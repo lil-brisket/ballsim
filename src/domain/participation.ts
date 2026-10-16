@@ -325,7 +325,11 @@ export function participationStateErrors(
       hostCount += 1;
     }
     const planned = p.plannedTeamCount;
-    if (typeof planned !== "number" || !Number.isInteger(planned) || planned < 1) {
+    if (
+      typeof planned !== "number" ||
+      !Number.isInteger(planned) ||
+      planned < 1
+    ) {
       errors.push(`${at}.plannedTeamCount must be a positive integer.`);
       return;
     }

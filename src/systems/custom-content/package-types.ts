@@ -25,10 +25,7 @@ export type CustomContentCompatibility = {
   minSchemaVersion: number;
 };
 
-export type CustomContentEnvelope<
-  TType extends CustomContentType,
-  TPayload,
-> = {
+export type CustomContentEnvelope<TType extends CustomContentType, TPayload> = {
   formatVersion: typeof CUSTOM_CONTENT_FORMAT_VERSION;
   type: TType;
   contentId: string;
@@ -80,7 +77,10 @@ export type DraftClassPackagePayload = {
   prospects: PlayerSourceRecord[];
 };
 
-export type RosterPackage = CustomContentEnvelope<"roster", RosterPackagePayload>;
+export type RosterPackage = CustomContentEnvelope<
+  "roster",
+  RosterPackagePayload
+>;
 
 export type DraftClassPackage = CustomContentEnvelope<
   "draft_class",

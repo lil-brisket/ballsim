@@ -12,11 +12,7 @@ export function MobileListCard(props: {
 }) {
   return (
     <article
-      className={cn(
-        panelClass,
-        "flex flex-col gap-2 p-3",
-        props.className,
-      )}
+      className={cn(panelClass, "flex flex-col gap-2 p-3", props.className)}
     >
       <div className="min-w-0">
         <div className="text-sm font-medium text-zinc-100">{props.title}</div>

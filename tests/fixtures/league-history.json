@@ -963,10 +963,7 @@
             "lowerSeed": 8,
             "higherSeedTeamId": "team_division_conference_league_league_history_fixture_1_1_0",
             "lowerSeedTeamId": "team_division_conference_league_league_history_fixture_1_1_2",
-            "feederSeriesIds": [
-              "playoff_r0_s0",
-              "playoff_r0_s1"
-            ],
+            "feederSeriesIds": ["playoff_r0_s0", "playoff_r0_s1"],
             "wins": {
               "team_division_conference_league_league_history_fixture_1_1_0": 4,
               "team_division_conference_league_league_history_fixture_1_1_2": 0
@@ -988,10 +985,7 @@
             "lowerSeed": 5,
             "higherSeedTeamId": "team_division_conference_league_league_history_fixture_0_2_1",
             "lowerSeedTeamId": "team_division_conference_league_league_history_fixture_0_2_3",
-            "feederSeriesIds": [
-              "playoff_r0_s2",
-              "playoff_r0_s3"
-            ],
+            "feederSeriesIds": ["playoff_r0_s2", "playoff_r0_s3"],
             "wins": {
               "team_division_conference_league_league_history_fixture_0_2_1": 4,
               "team_division_conference_league_league_history_fixture_0_2_3": 3
@@ -1016,10 +1010,7 @@
             "lowerSeed": 10,
             "higherSeedTeamId": "team_division_conference_league_league_history_fixture_0_1_2",
             "lowerSeedTeamId": "team_division_conference_league_league_history_fixture_1_0_1",
-            "feederSeriesIds": [
-              "playoff_r0_s4",
-              "playoff_r0_s5"
-            ],
+            "feederSeriesIds": ["playoff_r0_s4", "playoff_r0_s5"],
             "wins": {
               "team_division_conference_league_league_history_fixture_0_1_2": 4,
               "team_division_conference_league_league_history_fixture_1_0_1": 0
@@ -1041,10 +1032,7 @@
             "lowerSeed": 6,
             "higherSeedTeamId": "team_division_conference_league_league_history_fixture_0_2_4",
             "lowerSeedTeamId": "team_division_conference_league_league_history_fixture_0_1_3",
-            "feederSeriesIds": [
-              "playoff_r0_s6",
-              "playoff_r0_s7"
-            ],
+            "feederSeriesIds": ["playoff_r0_s6", "playoff_r0_s7"],
             "wins": {
               "team_division_conference_league_league_history_fixture_0_2_4": 4,
               "team_division_conference_league_league_history_fixture_0_1_3": 2
@@ -1068,10 +1056,7 @@
             "lowerSeed": 4,
             "higherSeedTeamId": "team_division_conference_league_league_history_fixture_1_1_0",
             "lowerSeedTeamId": "team_division_conference_league_league_history_fixture_0_2_1",
-            "feederSeriesIds": [
-              "playoff_r1_s0",
-              "playoff_r1_s1"
-            ],
+            "feederSeriesIds": ["playoff_r1_s0", "playoff_r1_s1"],
             "wins": {
               "team_division_conference_league_league_history_fixture_1_1_0": 2,
               "team_division_conference_league_league_history_fixture_0_2_1": 4
@@ -1095,10 +1080,7 @@
             "lowerSeed": 3,
             "higherSeedTeamId": "team_division_conference_league_league_history_fixture_0_1_2",
             "lowerSeedTeamId": "team_division_conference_league_league_history_fixture_0_2_4",
-            "feederSeriesIds": [
-              "playoff_r1_s2",
-              "playoff_r1_s3"
-            ],
+            "feederSeriesIds": ["playoff_r1_s2", "playoff_r1_s3"],
             "wins": {
               "team_division_conference_league_league_history_fixture_0_1_2": 2,
               "team_division_conference_league_league_history_fixture_0_2_4": 4
@@ -1122,10 +1104,7 @@
             "lowerSeed": 4,
             "higherSeedTeamId": "team_division_conference_league_league_history_fixture_0_2_4",
             "lowerSeedTeamId": "team_division_conference_league_league_history_fixture_0_2_1",
-            "feederSeriesIds": [
-              "playoff_r2_s0",
-              "playoff_r2_s1"
-            ],
+            "feederSeriesIds": ["playoff_r2_s0", "playoff_r2_s1"],
             "wins": {
               "team_division_conference_league_league_history_fixture_0_2_4": 0,
               "team_division_conference_league_league_history_fixture_0_2_1": 4
@@ -5060,10 +5039,7 @@
             "lowerSeed": 9,
             "higherSeedTeamId": "team_division_conference_league_league_history_fixture_0_2_1",
             "lowerSeedTeamId": "team_division_conference_league_league_history_fixture_0_2_3",
-            "feederSeriesIds": [
-              "playoff_r0_s0",
-              "playoff_r0_s1"
-            ],
+            "feederSeriesIds": ["playoff_r0_s0", "playoff_r0_s1"],
             "wins": {
               "team_division_conference_league_league_history_fixture_0_2_1": 4,
               "team_division_conference_league_league_history_fixture_0_2_3": 3
@@ -5088,10 +5064,7 @@
             "lowerSeed": 5,
             "higherSeedTeamId": "team_division_conference_league_league_history_fixture_0_2_4",
             "lowerSeedTeamId": "team_division_conference_league_league_history_fixture_0_1_2",
-            "feederSeriesIds": [
-              "playoff_r0_s2",
-              "playoff_r0_s3"
-            ],
+            "feederSeriesIds": ["playoff_r0_s2", "playoff_r0_s3"],
             "wins": {
               "team_division_conference_league_league_history_fixture_0_2_4": 4,
               "team_division_conference_league_league_history_fixture_0_1_2": 1
@@ -5114,10 +5087,7 @@
             "lowerSeed": 7,
             "higherSeedTeamId": "team_division_conference_league_league_history_fixture_1_1_0",
             "lowerSeedTeamId": "team_division_conference_league_league_history_fixture_0_0_4",
-            "feederSeriesIds": [
-              "playoff_r0_s4",
-              "playoff_r0_s5"
-            ],
+            "feederSeriesIds": ["playoff_r0_s4", "playoff_r0_s5"],
             "wins": {
               "team_division_conference_league_league_history_fixture_1_1_0": 4,
               "team_division_conference_league_league_history_fixture_0_0_4": 0
@@ -5139,10 +5109,7 @@
             "lowerSeed": 11,
             "higherSeedTeamId": "team_division_conference_league_league_history_fixture_0_2_0",
             "lowerSeedTeamId": "team_division_conference_league_league_history_fixture_1_2_0",
-            "feederSeriesIds": [
-              "playoff_r0_s6",
-              "playoff_r0_s7"
-            ],
+            "feederSeriesIds": ["playoff_r0_s6", "playoff_r0_s7"],
             "wins": {
               "team_division_conference_league_league_history_fixture_0_2_0": 4,
               "team_division_conference_league_league_history_fixture_1_2_0": 0
@@ -5164,10 +5131,7 @@
             "lowerSeed": 4,
             "higherSeedTeamId": "team_division_conference_league_league_history_fixture_0_2_1",
             "lowerSeedTeamId": "team_division_conference_league_league_history_fixture_0_2_4",
-            "feederSeriesIds": [
-              "playoff_r1_s0",
-              "playoff_r1_s1"
-            ],
+            "feederSeriesIds": ["playoff_r1_s0", "playoff_r1_s1"],
             "wins": {
               "team_division_conference_league_league_history_fixture_0_2_1": 2,
               "team_division_conference_league_league_history_fixture_0_2_4": 4
@@ -5191,10 +5155,7 @@
             "lowerSeed": 3,
             "higherSeedTeamId": "team_division_conference_league_league_history_fixture_1_1_0",
             "lowerSeedTeamId": "team_division_conference_league_league_history_fixture_0_2_0",
-            "feederSeriesIds": [
-              "playoff_r1_s2",
-              "playoff_r1_s3"
-            ],
+            "feederSeriesIds": ["playoff_r1_s2", "playoff_r1_s3"],
             "wins": {
               "team_division_conference_league_league_history_fixture_1_1_0": 4,
               "team_division_conference_league_league_history_fixture_0_2_0": 1
@@ -5217,10 +5178,7 @@
             "lowerSeed": 4,
             "higherSeedTeamId": "team_division_conference_league_league_history_fixture_1_1_0",
             "lowerSeedTeamId": "team_division_conference_league_league_history_fixture_0_2_4",
-            "feederSeriesIds": [
-              "playoff_r2_s0",
-              "playoff_r2_s1"
-            ],
+            "feederSeriesIds": ["playoff_r2_s0", "playoff_r2_s1"],
             "wins": {
               "team_division_conference_league_league_history_fixture_1_1_0": 2,
               "team_division_conference_league_league_history_fixture_0_2_4": 4
@@ -9453,10 +9411,7 @@
             "lowerSeed": 9,
             "higherSeedTeamId": "team_division_conference_league_league_history_fixture_0_2_1",
             "lowerSeedTeamId": "team_division_conference_league_league_history_fixture_0_1_2",
-            "feederSeriesIds": [
-              "playoff_r0_s0",
-              "playoff_r0_s1"
-            ],
+            "feederSeriesIds": ["playoff_r0_s0", "playoff_r0_s1"],
             "wins": {
               "team_division_conference_league_league_history_fixture_0_2_1": 4,
               "team_division_conference_league_league_history_fixture_0_1_2": 1
@@ -9479,10 +9434,7 @@
             "lowerSeed": 12,
             "higherSeedTeamId": "team_division_conference_league_league_history_fixture_1_2_0",
             "lowerSeedTeamId": "team_division_conference_league_league_history_fixture_1_1_2",
-            "feederSeriesIds": [
-              "playoff_r0_s2",
-              "playoff_r0_s3"
-            ],
+            "feederSeriesIds": ["playoff_r0_s2", "playoff_r0_s3"],
             "wins": {
               "team_division_conference_league_league_history_fixture_1_2_0": 4,
               "team_division_conference_league_league_history_fixture_1_1_2": 1
@@ -9505,10 +9457,7 @@
             "lowerSeed": 7,
             "higherSeedTeamId": "team_division_conference_league_league_history_fixture_0_2_4",
             "lowerSeedTeamId": "team_division_conference_league_league_history_fixture_1_0_1",
-            "feederSeriesIds": [
-              "playoff_r0_s4",
-              "playoff_r0_s5"
-            ],
+            "feederSeriesIds": ["playoff_r0_s4", "playoff_r0_s5"],
             "wins": {
               "team_division_conference_league_league_history_fixture_0_2_4": 4,
               "team_division_conference_league_league_history_fixture_1_0_1": 3
@@ -9533,10 +9482,7 @@
             "lowerSeed": 14,
             "higherSeedTeamId": "team_division_conference_league_league_history_fixture_1_0_0",
             "lowerSeedTeamId": "team_division_conference_league_league_history_fixture_0_1_4",
-            "feederSeriesIds": [
-              "playoff_r0_s6",
-              "playoff_r0_s7"
-            ],
+            "feederSeriesIds": ["playoff_r0_s6", "playoff_r0_s7"],
             "wins": {
               "team_division_conference_league_league_history_fixture_1_0_0": 2,
               "team_division_conference_league_league_history_fixture_0_1_4": 4
@@ -9560,10 +9506,7 @@
             "lowerSeed": 4,
             "higherSeedTeamId": "team_division_conference_league_league_history_fixture_0_2_1",
             "lowerSeedTeamId": "team_division_conference_league_league_history_fixture_1_2_0",
-            "feederSeriesIds": [
-              "playoff_r1_s0",
-              "playoff_r1_s1"
-            ],
+            "feederSeriesIds": ["playoff_r1_s0", "playoff_r1_s1"],
             "wins": {
               "team_division_conference_league_league_history_fixture_0_2_1": 4,
               "team_division_conference_league_league_history_fixture_1_2_0": 1
@@ -9586,10 +9529,7 @@
             "lowerSeed": 14,
             "higherSeedTeamId": "team_division_conference_league_league_history_fixture_0_2_4",
             "lowerSeedTeamId": "team_division_conference_league_league_history_fixture_0_1_4",
-            "feederSeriesIds": [
-              "playoff_r1_s2",
-              "playoff_r1_s3"
-            ],
+            "feederSeriesIds": ["playoff_r1_s2", "playoff_r1_s3"],
             "wins": {
               "team_division_conference_league_league_history_fixture_0_2_4": 0,
               "team_division_conference_league_league_history_fixture_0_1_4": 4
@@ -9611,10 +9551,7 @@
             "lowerSeed": 14,
             "higherSeedTeamId": "team_division_conference_league_league_history_fixture_0_2_1",
             "lowerSeedTeamId": "team_division_conference_league_league_history_fixture_0_1_4",
-            "feederSeriesIds": [
-              "playoff_r2_s0",
-              "playoff_r2_s1"
-            ],
+            "feederSeriesIds": ["playoff_r2_s0", "playoff_r2_s1"],
             "wins": {
               "team_division_conference_league_league_history_fixture_0_2_1": 4,
               "team_division_conference_league_league_history_fixture_0_1_4": 2
@@ -13849,10 +13786,7 @@
             "lowerSeed": 16,
             "higherSeedTeamId": "team_division_conference_league_league_history_fixture_0_2_1",
             "lowerSeedTeamId": "team_division_conference_league_league_history_fixture_0_1_0",
-            "feederSeriesIds": [
-              "playoff_r0_s0",
-              "playoff_r0_s1"
-            ],
+            "feederSeriesIds": ["playoff_r0_s0", "playoff_r0_s1"],
             "wins": {
               "team_division_conference_league_league_history_fixture_0_2_1": 4,
               "team_division_conference_league_league_history_fixture_0_1_0": 1
@@ -13875,10 +13809,7 @@
             "lowerSeed": 12,
             "higherSeedTeamId": "team_division_conference_league_league_history_fixture_0_0_0",
             "lowerSeedTeamId": "team_division_conference_league_league_history_fixture_1_1_0",
-            "feederSeriesIds": [
-              "playoff_r0_s2",
-              "playoff_r0_s3"
-            ],
+            "feederSeriesIds": ["playoff_r0_s2", "playoff_r0_s3"],
             "wins": {
               "team_division_conference_league_league_history_fixture_0_0_0": 4,
               "team_division_conference_league_league_history_fixture_1_1_0": 0
@@ -13900,10 +13831,7 @@
             "lowerSeed": 15,
             "higherSeedTeamId": "team_division_conference_league_league_history_fixture_0_0_3",
             "lowerSeedTeamId": "team_division_conference_league_league_history_fixture_0_2_0",
-            "feederSeriesIds": [
-              "playoff_r0_s4",
-              "playoff_r0_s5"
-            ],
+            "feederSeriesIds": ["playoff_r0_s4", "playoff_r0_s5"],
             "wins": {
               "team_division_conference_league_league_history_fixture_0_0_3": 3,
               "team_division_conference_league_league_history_fixture_0_2_0": 4
@@ -13928,10 +13856,7 @@
             "lowerSeed": 6,
             "higherSeedTeamId": "team_division_conference_league_league_history_fixture_1_2_0",
             "lowerSeedTeamId": "team_division_conference_league_league_history_fixture_0_1_2",
-            "feederSeriesIds": [
-              "playoff_r0_s6",
-              "playoff_r0_s7"
-            ],
+            "feederSeriesIds": ["playoff_r0_s6", "playoff_r0_s7"],
             "wins": {
               "team_division_conference_league_league_history_fixture_1_2_0": 4,
               "team_division_conference_league_league_history_fixture_0_1_2": 3
@@ -13956,10 +13881,7 @@
             "lowerSeed": 9,
             "higherSeedTeamId": "team_division_conference_league_league_history_fixture_0_0_0",
             "lowerSeedTeamId": "team_division_conference_league_league_history_fixture_0_2_1",
-            "feederSeriesIds": [
-              "playoff_r1_s0",
-              "playoff_r1_s1"
-            ],
+            "feederSeriesIds": ["playoff_r1_s0", "playoff_r1_s1"],
             "wins": {
               "team_division_conference_league_league_history_fixture_0_0_0": 3,
               "team_division_conference_league_league_history_fixture_0_2_1": 4
@@ -13984,10 +13906,7 @@
             "lowerSeed": 15,
             "higherSeedTeamId": "team_division_conference_league_league_history_fixture_1_2_0",
             "lowerSeedTeamId": "team_division_conference_league_league_history_fixture_0_2_0",
-            "feederSeriesIds": [
-              "playoff_r1_s2",
-              "playoff_r1_s3"
-            ],
+            "feederSeriesIds": ["playoff_r1_s2", "playoff_r1_s3"],
             "wins": {
               "team_division_conference_league_league_history_fixture_1_2_0": 4,
               "team_division_conference_league_league_history_fixture_0_2_0": 1
@@ -14010,10 +13929,7 @@
             "lowerSeed": 9,
             "higherSeedTeamId": "team_division_conference_league_league_history_fixture_1_2_0",
             "lowerSeedTeamId": "team_division_conference_league_league_history_fixture_0_2_1",
-            "feederSeriesIds": [
-              "playoff_r2_s0",
-              "playoff_r2_s1"
-            ],
+            "feederSeriesIds": ["playoff_r2_s0", "playoff_r2_s1"],
             "wins": {
               "team_division_conference_league_league_history_fixture_1_2_0": 4,
               "team_division_conference_league_league_history_fixture_0_2_1": 1
@@ -18238,10 +18154,7 @@
             "lowerSeed": 8,
             "higherSeedTeamId": "team_division_conference_league_league_history_fixture_0_1_2",
             "lowerSeedTeamId": "team_division_conference_league_league_history_fixture_1_0_3",
-            "feederSeriesIds": [
-              "playoff_r0_s0",
-              "playoff_r0_s1"
-            ],
+            "feederSeriesIds": ["playoff_r0_s0", "playoff_r0_s1"],
             "wins": {
               "team_division_conference_league_league_history_fixture_0_1_2": 4,
               "team_division_conference_league_league_history_fixture_1_0_3": 1
@@ -18264,10 +18177,7 @@
             "lowerSeed": 5,
             "higherSeedTeamId": "team_division_conference_league_league_history_fixture_0_0_3",
             "lowerSeedTeamId": "team_division_conference_league_league_history_fixture_1_2_0",
-            "feederSeriesIds": [
-              "playoff_r0_s2",
-              "playoff_r0_s3"
-            ],
+            "feederSeriesIds": ["playoff_r0_s2", "playoff_r0_s3"],
             "wins": {
               "team_division_conference_league_league_history_fixture_0_0_3": 4,
               "team_division_conference_league_league_history_fixture_1_2_0": 0
@@ -18289,10 +18199,7 @@
             "lowerSeed": 7,
             "higherSeedTeamId": "team_division_conference_league_league_history_fixture_0_2_3",
             "lowerSeedTeamId": "team_division_conference_league_league_history_fixture_0_0_0",
-            "feederSeriesIds": [
-              "playoff_r0_s4",
-              "playoff_r0_s5"
-            ],
+            "feederSeriesIds": ["playoff_r0_s4", "playoff_r0_s5"],
             "wins": {
               "team_division_conference_league_league_history_fixture_0_2_3": 4,
               "team_division_conference_league_league_history_fixture_0_0_0": 2
@@ -18316,10 +18223,7 @@
             "lowerSeed": 6,
             "higherSeedTeamId": "team_division_conference_league_league_history_fixture_1_0_2",
             "lowerSeedTeamId": "team_division_conference_league_league_history_fixture_1_1_1",
-            "feederSeriesIds": [
-              "playoff_r0_s6",
-              "playoff_r0_s7"
-            ],
+            "feederSeriesIds": ["playoff_r0_s6", "playoff_r0_s7"],
             "wins": {
               "team_division_conference_league_league_history_fixture_1_0_2": 4,
               "team_division_conference_league_league_history_fixture_1_1_1": 3
@@ -18344,10 +18248,7 @@
             "lowerSeed": 4,
             "higherSeedTeamId": "team_division_conference_league_league_history_fixture_0_1_2",
             "lowerSeedTeamId": "team_division_conference_league_league_history_fixture_0_0_3",
-            "feederSeriesIds": [
-              "playoff_r1_s0",
-              "playoff_r1_s1"
-            ],
+            "feederSeriesIds": ["playoff_r1_s0", "playoff_r1_s1"],
             "wins": {
               "team_division_conference_league_league_history_fixture_0_1_2": 2,
               "team_division_conference_league_league_history_fixture_0_0_3": 4
@@ -18371,10 +18272,7 @@
             "lowerSeed": 3,
             "higherSeedTeamId": "team_division_conference_league_league_history_fixture_0_2_3",
             "lowerSeedTeamId": "team_division_conference_league_league_history_fixture_1_0_2",
-            "feederSeriesIds": [
-              "playoff_r1_s2",
-              "playoff_r1_s3"
-            ],
+            "feederSeriesIds": ["playoff_r1_s2", "playoff_r1_s3"],
             "wins": {
               "team_division_conference_league_league_history_fixture_0_2_3": 2,
               "team_division_conference_league_league_history_fixture_1_0_2": 4
@@ -18398,10 +18296,7 @@
             "lowerSeed": 4,
             "higherSeedTeamId": "team_division_conference_league_league_history_fixture_1_0_2",
             "lowerSeedTeamId": "team_division_conference_league_league_history_fixture_0_0_3",
-            "feederSeriesIds": [
-              "playoff_r2_s0",
-              "playoff_r2_s1"
-            ],
+            "feederSeriesIds": ["playoff_r2_s0", "playoff_r2_s1"],
             "wins": {
               "team_division_conference_league_league_history_fixture_1_0_2": 3,
               "team_division_conference_league_league_history_fixture_0_0_3": 4
@@ -22627,10 +22522,7 @@
             "lowerSeed": 8,
             "higherSeedTeamId": "team_division_conference_league_league_history_fixture_0_0_0",
             "lowerSeedTeamId": "team_division_conference_league_league_history_fixture_1_0_2",
-            "feederSeriesIds": [
-              "playoff_r0_s0",
-              "playoff_r0_s1"
-            ],
+            "feederSeriesIds": ["playoff_r0_s0", "playoff_r0_s1"],
             "wins": {
               "team_division_conference_league_league_history_fixture_0_0_0": 1,
               "team_division_conference_league_league_history_fixture_1_0_2": 4
@@ -22653,10 +22545,7 @@
             "lowerSeed": 13,
             "higherSeedTeamId": "team_division_conference_league_league_history_fixture_0_1_2",
             "lowerSeedTeamId": "team_division_conference_league_league_history_fixture_0_0_2",
-            "feederSeriesIds": [
-              "playoff_r0_s2",
-              "playoff_r0_s3"
-            ],
+            "feederSeriesIds": ["playoff_r0_s2", "playoff_r0_s3"],
             "wins": {
               "team_division_conference_league_league_history_fixture_0_1_2": 0,
               "team_division_conference_league_league_history_fixture_0_0_2": 4
@@ -22678,10 +22567,7 @@
             "lowerSeed": 15,
             "higherSeedTeamId": "team_division_conference_league_league_history_fixture_0_1_1",
             "lowerSeedTeamId": "team_division_conference_league_league_history_fixture_0_0_4",
-            "feederSeriesIds": [
-              "playoff_r0_s4",
-              "playoff_r0_s5"
-            ],
+            "feederSeriesIds": ["playoff_r0_s4", "playoff_r0_s5"],
             "wins": {
               "team_division_conference_league_league_history_fixture_0_1_1": 3,
               "team_division_conference_league_league_history_fixture_0_0_4": 4
@@ -22706,10 +22592,7 @@
             "lowerSeed": 6,
             "higherSeedTeamId": "team_division_conference_league_league_history_fixture_1_2_0",
             "lowerSeedTeamId": "team_division_conference_league_league_history_fixture_1_2_1",
-            "feederSeriesIds": [
-              "playoff_r0_s6",
-              "playoff_r0_s7"
-            ],
+            "feederSeriesIds": ["playoff_r0_s6", "playoff_r0_s7"],
             "wins": {
               "team_division_conference_league_league_history_fixture_1_2_0": 4,
               "team_division_conference_league_league_history_fixture_1_2_1": 0
@@ -22731,10 +22614,7 @@
             "lowerSeed": 13,
             "higherSeedTeamId": "team_division_conference_league_league_history_fixture_1_0_2",
             "lowerSeedTeamId": "team_division_conference_league_league_history_fixture_0_0_2",
-            "feederSeriesIds": [
-              "playoff_r1_s0",
-              "playoff_r1_s1"
-            ],
+            "feederSeriesIds": ["playoff_r1_s0", "playoff_r1_s1"],
             "wins": {
               "team_division_conference_league_league_history_fixture_1_0_2": 4,
               "team_division_conference_league_league_history_fixture_0_0_2": 2
@@ -22758,10 +22638,7 @@
             "lowerSeed": 15,
             "higherSeedTeamId": "team_division_conference_league_league_history_fixture_1_2_0",
             "lowerSeedTeamId": "team_division_conference_league_league_history_fixture_0_0_4",
-            "feederSeriesIds": [
-              "playoff_r1_s2",
-              "playoff_r1_s3"
-            ],
+            "feederSeriesIds": ["playoff_r1_s2", "playoff_r1_s3"],
             "wins": {
               "team_division_conference_league_league_history_fixture_1_2_0": 4,
               "team_division_conference_league_league_history_fixture_0_0_4": 0
@@ -22783,10 +22660,7 @@
             "lowerSeed": 8,
             "higherSeedTeamId": "team_division_conference_league_league_history_fixture_1_2_0",
             "lowerSeedTeamId": "team_division_conference_league_league_history_fixture_1_0_2",
-            "feederSeriesIds": [
-              "playoff_r2_s0",
-              "playoff_r2_s1"
-            ],
+            "feederSeriesIds": ["playoff_r2_s0", "playoff_r2_s1"],
             "wins": {
               "team_division_conference_league_league_history_fixture_1_2_0": 4,
               "team_division_conference_league_league_history_fixture_1_0_2": 1
@@ -27017,10 +26891,7 @@
             "lowerSeed": 8,
             "higherSeedTeamId": "team_division_conference_league_league_history_fixture_1_2_0",
             "lowerSeedTeamId": "team_division_conference_league_league_history_fixture_1_2_3",
-            "feederSeriesIds": [
-              "playoff_r0_s0",
-              "playoff_r0_s1"
-            ],
+            "feederSeriesIds": ["playoff_r0_s0", "playoff_r0_s1"],
             "wins": {
               "team_division_conference_league_league_history_fixture_1_2_0": 3,
               "team_division_conference_league_league_history_fixture_1_2_3": 4
@@ -27045,10 +26916,7 @@
             "lowerSeed": 5,
             "higherSeedTeamId": "team_division_conference_league_league_history_fixture_0_0_4",
             "lowerSeedTeamId": "team_division_conference_league_league_history_fixture_1_2_1",
-            "feederSeriesIds": [
-              "playoff_r0_s2",
-              "playoff_r0_s3"
-            ],
+            "feederSeriesIds": ["playoff_r0_s2", "playoff_r0_s3"],
             "wins": {
               "team_division_conference_league_league_history_fixture_0_0_4": 4,
               "team_division_conference_league_league_history_fixture_1_2_1": 1
@@ -27071,10 +26939,7 @@
             "lowerSeed": 15,
             "higherSeedTeamId": "team_division_conference_league_league_history_fixture_0_0_2",
             "lowerSeedTeamId": "team_division_conference_league_league_history_fixture_1_0_4",
-            "feederSeriesIds": [
-              "playoff_r0_s4",
-              "playoff_r0_s5"
-            ],
+            "feederSeriesIds": ["playoff_r0_s4", "playoff_r0_s5"],
             "wins": {
               "team_division_conference_league_league_history_fixture_0_0_2": 4,
               "team_division_conference_league_league_history_fixture_1_0_4": 3
@@ -27099,10 +26964,7 @@
             "lowerSeed": 14,
             "higherSeedTeamId": "team_division_conference_league_league_history_fixture_0_1_4",
             "lowerSeedTeamId": "team_division_conference_league_league_history_fixture_0_2_3",
-            "feederSeriesIds": [
-              "playoff_r0_s6",
-              "playoff_r0_s7"
-            ],
+            "feederSeriesIds": ["playoff_r0_s6", "playoff_r0_s7"],
             "wins": {
               "team_division_conference_league_league_history_fixture_0_1_4": 4,
               "team_division_conference_league_league_history_fixture_0_2_3": 1
@@ -27125,10 +26987,7 @@
             "lowerSeed": 8,
             "higherSeedTeamId": "team_division_conference_league_league_history_fixture_0_0_4",
             "lowerSeedTeamId": "team_division_conference_league_league_history_fixture_1_2_3",
-            "feederSeriesIds": [
-              "playoff_r1_s0",
-              "playoff_r1_s1"
-            ],
+            "feederSeriesIds": ["playoff_r1_s0", "playoff_r1_s1"],
             "wins": {
               "team_division_conference_league_league_history_fixture_0_0_4": 4,
               "team_division_conference_league_league_history_fixture_1_2_3": 2
@@ -27152,10 +27011,7 @@
             "lowerSeed": 11,
             "higherSeedTeamId": "team_division_conference_league_league_history_fixture_0_0_2",
             "lowerSeedTeamId": "team_division_conference_league_league_history_fixture_0_1_4",
-            "feederSeriesIds": [
-              "playoff_r1_s2",
-              "playoff_r1_s3"
-            ],
+            "feederSeriesIds": ["playoff_r1_s2", "playoff_r1_s3"],
             "wins": {
               "team_division_conference_league_league_history_fixture_0_0_2": 4,
               "team_division_conference_league_league_history_fixture_0_1_4": 3
@@ -27180,10 +27036,7 @@
             "lowerSeed": 7,
             "higherSeedTeamId": "team_division_conference_league_league_history_fixture_0_0_4",
             "lowerSeedTeamId": "team_division_conference_league_league_history_fixture_0_0_2",
-            "feederSeriesIds": [
-              "playoff_r2_s0",
-              "playoff_r2_s1"
-            ],
+            "feederSeriesIds": ["playoff_r2_s0", "playoff_r2_s1"],
             "wins": {
               "team_division_conference_league_league_history_fixture_0_0_4": 4,
               "team_division_conference_league_league_history_fixture_0_0_2": 2
@@ -31416,10 +31269,7 @@
             "lowerSeed": 8,
             "higherSeedTeamId": "team_division_conference_league_league_history_fixture_1_1_3",
             "lowerSeedTeamId": "team_division_conference_league_league_history_fixture_1_0_3",
-            "feederSeriesIds": [
-              "playoff_r0_s0",
-              "playoff_r0_s1"
-            ],
+            "feederSeriesIds": ["playoff_r0_s0", "playoff_r0_s1"],
             "wins": {
               "team_division_conference_league_league_history_fixture_1_1_3": 4,
               "team_division_conference_league_league_history_fixture_1_0_3": 0
@@ -31441,10 +31291,7 @@
             "lowerSeed": 12,
             "higherSeedTeamId": "team_division_conference_league_league_history_fixture_0_0_0",
             "lowerSeedTeamId": "team_division_conference_league_league_history_fixture_0_1_1",
-            "feederSeriesIds": [
-              "playoff_r0_s2",
-              "playoff_r0_s3"
-            ],
+            "feederSeriesIds": ["playoff_r0_s2", "playoff_r0_s3"],
             "wins": {
               "team_division_conference_league_league_history_fixture_0_0_0": 3,
               "team_division_conference_league_league_history_fixture_0_1_1": 4
@@ -31469,10 +31316,7 @@
             "lowerSeed": 15,
             "higherSeedTeamId": "team_division_conference_league_league_history_fixture_0_1_0",
             "lowerSeedTeamId": "team_division_conference_league_league_history_fixture_1_1_2",
-            "feederSeriesIds": [
-              "playoff_r0_s4",
-              "playoff_r0_s5"
-            ],
+            "feederSeriesIds": ["playoff_r0_s4", "playoff_r0_s5"],
             "wins": {
               "team_division_conference_league_league_history_fixture_0_1_0": 4,
               "team_division_conference_league_league_history_fixture_1_1_2": 3
@@ -31497,10 +31341,7 @@
             "lowerSeed": 14,
             "higherSeedTeamId": "team_division_conference_league_league_history_fixture_0_2_2",
             "lowerSeedTeamId": "team_division_conference_league_league_history_fixture_1_1_0",
-            "feederSeriesIds": [
-              "playoff_r0_s6",
-              "playoff_r0_s7"
-            ],
+            "feederSeriesIds": ["playoff_r0_s6", "playoff_r0_s7"],
             "wins": {
               "team_division_conference_league_league_history_fixture_0_2_2": 1,
               "team_division_conference_league_league_history_fixture_1_1_0": 4
@@ -31523,10 +31364,7 @@
             "lowerSeed": 12,
             "higherSeedTeamId": "team_division_conference_league_league_history_fixture_1_1_3",
             "lowerSeedTeamId": "team_division_conference_league_league_history_fixture_0_1_1",
-            "feederSeriesIds": [
-              "playoff_r1_s0",
-              "playoff_r1_s1"
-            ],
+            "feederSeriesIds": ["playoff_r1_s0", "playoff_r1_s1"],
             "wins": {
               "team_division_conference_league_league_history_fixture_1_1_3": 4,
               "team_division_conference_league_league_history_fixture_0_1_1": 2
@@ -31550,10 +31388,7 @@
             "lowerSeed": 14,
             "higherSeedTeamId": "team_division_conference_league_league_history_fixture_0_1_0",
             "lowerSeedTeamId": "team_division_conference_league_league_history_fixture_1_1_0",
-            "feederSeriesIds": [
-              "playoff_r1_s2",
-              "playoff_r1_s3"
-            ],
+            "feederSeriesIds": ["playoff_r1_s2", "playoff_r1_s3"],
             "wins": {
               "team_division_conference_league_league_history_fixture_0_1_0": 3,
               "team_division_conference_league_league_history_fixture_1_1_0": 4
@@ -31578,10 +31413,7 @@
             "lowerSeed": 14,
             "higherSeedTeamId": "team_division_conference_league_league_history_fixture_1_1_3",
             "lowerSeedTeamId": "team_division_conference_league_league_history_fixture_1_1_0",
-            "feederSeriesIds": [
-              "playoff_r2_s0",
-              "playoff_r2_s1"
-            ],
+            "feederSeriesIds": ["playoff_r2_s0", "playoff_r2_s1"],
             "wins": {
               "team_division_conference_league_league_history_fixture_1_1_3": 3,
               "team_division_conference_league_league_history_fixture_1_1_0": 4
@@ -35817,10 +35649,7 @@
             "lowerSeed": 8,
             "higherSeedTeamId": "team_division_conference_league_league_history_fixture_0_0_0",
             "lowerSeedTeamId": "team_division_conference_league_league_history_fixture_1_0_3",
-            "feederSeriesIds": [
-              "playoff_r0_s0",
-              "playoff_r0_s1"
-            ],
+            "feederSeriesIds": ["playoff_r0_s0", "playoff_r0_s1"],
             "wins": {
               "team_division_conference_league_league_history_fixture_0_0_0": 2,
               "team_division_conference_league_league_history_fixture_1_0_3": 4
@@ -35844,10 +35673,7 @@
             "lowerSeed": 13,
             "higherSeedTeamId": "team_division_conference_league_league_history_fixture_1_1_0",
             "lowerSeedTeamId": "team_division_conference_league_league_history_fixture_1_1_4",
-            "feederSeriesIds": [
-              "playoff_r0_s2",
-              "playoff_r0_s3"
-            ],
+            "feederSeriesIds": ["playoff_r0_s2", "playoff_r0_s3"],
             "wins": {
               "team_division_conference_league_league_history_fixture_1_1_0": 4,
               "team_division_conference_league_league_history_fixture_1_1_4": 1
@@ -35870,10 +35696,7 @@
             "lowerSeed": 7,
             "higherSeedTeamId": "team_division_conference_league_league_history_fixture_0_1_4",
             "lowerSeedTeamId": "team_division_conference_league_league_history_fixture_1_0_0",
-            "feederSeriesIds": [
-              "playoff_r0_s4",
-              "playoff_r0_s5"
-            ],
+            "feederSeriesIds": ["playoff_r0_s4", "playoff_r0_s5"],
             "wins": {
               "team_division_conference_league_league_history_fixture_0_1_4": 4,
               "team_division_conference_league_league_history_fixture_1_0_0": 3
@@ -35898,10 +35721,7 @@
             "lowerSeed": 14,
             "higherSeedTeamId": "team_division_conference_league_league_history_fixture_0_1_0",
             "lowerSeedTeamId": "team_division_conference_league_league_history_fixture_1_2_3",
-            "feederSeriesIds": [
-              "playoff_r0_s6",
-              "playoff_r0_s7"
-            ],
+            "feederSeriesIds": ["playoff_r0_s6", "playoff_r0_s7"],
             "wins": {
               "team_division_conference_league_league_history_fixture_0_1_0": 3,
               "team_division_conference_league_league_history_fixture_1_2_3": 4
@@ -35926,10 +35746,7 @@
             "lowerSeed": 8,
             "higherSeedTeamId": "team_division_conference_league_league_history_fixture_1_1_0",
             "lowerSeedTeamId": "team_division_conference_league_league_history_fixture_1_0_3",
-            "feederSeriesIds": [
-              "playoff_r1_s0",
-              "playoff_r1_s1"
-            ],
+            "feederSeriesIds": ["playoff_r1_s0", "playoff_r1_s1"],
             "wins": {
               "team_division_conference_league_league_history_fixture_1_1_0": 3,
               "team_division_conference_league_league_history_fixture_1_0_3": 4
@@ -35954,10 +35771,7 @@
             "lowerSeed": 14,
             "higherSeedTeamId": "team_division_conference_league_league_history_fixture_0_1_4",
             "lowerSeedTeamId": "team_division_conference_league_league_history_fixture_1_2_3",
-            "feederSeriesIds": [
-              "playoff_r1_s2",
-              "playoff_r1_s3"
-            ],
+            "feederSeriesIds": ["playoff_r1_s2", "playoff_r1_s3"],
             "wins": {
               "team_division_conference_league_league_history_fixture_0_1_4": 4,
               "team_division_conference_league_league_history_fixture_1_2_3": 0
@@ -35979,10 +35793,7 @@
             "lowerSeed": 8,
             "higherSeedTeamId": "team_division_conference_league_league_history_fixture_0_1_4",
             "lowerSeedTeamId": "team_division_conference_league_league_history_fixture_1_0_3",
-            "feederSeriesIds": [
-              "playoff_r2_s0",
-              "playoff_r2_s1"
-            ],
+            "feederSeriesIds": ["playoff_r2_s0", "playoff_r2_s1"],
             "wins": {
               "team_division_conference_league_league_history_fixture_0_1_4": 4,
               "team_division_conference_league_league_history_fixture_1_0_3": 3
@@ -40209,10 +40020,7 @@
             "lowerSeed": 9,
             "higherSeedTeamId": "team_division_conference_league_league_history_fixture_0_1_4",
             "lowerSeedTeamId": "team_division_conference_league_league_history_fixture_0_2_2",
-            "feederSeriesIds": [
-              "playoff_r0_s0",
-              "playoff_r0_s1"
-            ],
+            "feederSeriesIds": ["playoff_r0_s0", "playoff_r0_s1"],
             "wins": {
               "team_division_conference_league_league_history_fixture_0_1_4": 4,
               "team_division_conference_league_league_history_fixture_0_2_2": 1
@@ -40235,10 +40043,7 @@
             "lowerSeed": 5,
             "higherSeedTeamId": "team_division_conference_league_league_history_fixture_1_0_3",
             "lowerSeedTeamId": "team_division_conference_league_league_history_fixture_1_2_4",
-            "feederSeriesIds": [
-              "playoff_r0_s2",
-              "playoff_r0_s3"
-            ],
+            "feederSeriesIds": ["playoff_r0_s2", "playoff_r0_s3"],
             "wins": {
               "team_division_conference_league_league_history_fixture_1_0_3": 4,
               "team_division_conference_league_league_history_fixture_1_2_4": 3
@@ -40263,10 +40068,7 @@
             "lowerSeed": 10,
             "higherSeedTeamId": "team_division_conference_league_league_history_fixture_0_1_3",
             "lowerSeedTeamId": "team_division_conference_league_league_history_fixture_1_1_0",
-            "feederSeriesIds": [
-              "playoff_r0_s4",
-              "playoff_r0_s5"
-            ],
+            "feederSeriesIds": ["playoff_r0_s4", "playoff_r0_s5"],
             "wins": {
               "team_division_conference_league_league_history_fixture_0_1_3": 2,
               "team_division_conference_league_league_history_fixture_1_1_0": 4
@@ -40290,10 +40092,7 @@
             "lowerSeed": 11,
             "higherSeedTeamId": "team_division_conference_league_league_history_fixture_0_0_3",
             "lowerSeedTeamId": "team_division_conference_league_league_history_fixture_1_1_2",
-            "feederSeriesIds": [
-              "playoff_r0_s6",
-              "playoff_r0_s7"
-            ],
+            "feederSeriesIds": ["playoff_r0_s6", "playoff_r0_s7"],
             "wins": {
               "team_division_conference_league_league_history_fixture_0_0_3": 4,
               "team_division_conference_league_league_history_fixture_1_1_2": 0
@@ -40315,10 +40114,7 @@
             "lowerSeed": 4,
             "higherSeedTeamId": "team_division_conference_league_league_history_fixture_0_1_4",
             "lowerSeedTeamId": "team_division_conference_league_league_history_fixture_1_0_3",
-            "feederSeriesIds": [
-              "playoff_r1_s0",
-              "playoff_r1_s1"
-            ],
+            "feederSeriesIds": ["playoff_r1_s0", "playoff_r1_s1"],
             "wins": {
               "team_division_conference_league_league_history_fixture_0_1_4": 4,
               "team_division_conference_league_league_history_fixture_1_0_3": 0
@@ -40340,10 +40136,7 @@
             "lowerSeed": 10,
             "higherSeedTeamId": "team_division_conference_league_league_history_fixture_0_0_3",
             "lowerSeedTeamId": "team_division_conference_league_league_history_fixture_1_1_0",
-            "feederSeriesIds": [
-              "playoff_r1_s2",
-              "playoff_r1_s3"
-            ],
+            "feederSeriesIds": ["playoff_r1_s2", "playoff_r1_s3"],
             "wins": {
               "team_division_conference_league_league_history_fixture_0_0_3": 4,
               "team_division_conference_league_league_history_fixture_1_1_0": 2
@@ -40367,10 +40160,7 @@
             "lowerSeed": 3,
             "higherSeedTeamId": "team_division_conference_league_league_history_fixture_0_1_4",
             "lowerSeedTeamId": "team_division_conference_league_league_history_fixture_0_0_3",
-            "feederSeriesIds": [
-              "playoff_r2_s0",
-              "playoff_r2_s1"
-            ],
+            "feederSeriesIds": ["playoff_r2_s0", "playoff_r2_s1"],
             "wins": {
               "team_division_conference_league_league_history_fixture_0_1_4": 4,
               "team_division_conference_league_league_history_fixture_0_0_3": 2

@@ -101,8 +101,7 @@ function buildTasksForPhase(
 
   if (phaseId === "offseason.draft_preparation") {
     const draftYear = draftYearForSeason(state.competition.season.year);
-    const decision =
-      state.user.pendingDraftClassDecisions[String(draftYear)];
+    const decision = state.user.pendingDraftClassDecisions[String(draftYear)];
     if (decision === undefined || decision.resolved !== true) {
       tasks.push({
         taskKey: `draft_class_decision:${draftYear}`,

@@ -118,7 +118,10 @@ export function TransactionRow(props: {
           <p className="text-sm text-zinc-200">{row.description}</p>
           <div className="flex flex-wrap gap-2 text-sm">
             {row.players.map((player) => (
-              <span key={player.id} className="inline-flex items-center gap-1.5">
+              <span
+                key={player.id}
+                className="inline-flex items-center gap-1.5"
+              >
                 <PlayerPortrait
                   playerId={player.id}
                   portrait={player.portrait}

@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
+vi.mock("server-only", () => ({}));
 import { render, screen } from "@testing-library/react";
 
 vi.mock("@/application/actions", () => ({
@@ -23,7 +24,9 @@ describe("mobile tap targets", () => {
     );
     expect(container.querySelector("a a")).toBeNull();
     expect(
-      screen.getByRole("link", { name: /Review rotation/i }).getAttribute("href"),
+      screen
+        .getByRole("link", { name: /Review rotation/i })
+        .getAttribute("href"),
     ).toBe("/primary");
     expect(
       screen.getByRole("link", { name: "Open Calendar" }).getAttribute("href"),

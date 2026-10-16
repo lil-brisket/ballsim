@@ -64,9 +64,11 @@ describe("custom roster import", () => {
       createSeededRng(customState.meta.rngState),
       customPkg,
     ).state;
-    expect(Object.keys(customBoot.world.players).every((id) => id.startsWith("custom_"))).toBe(
-      true,
-    );
+    expect(
+      Object.keys(customBoot.world.players).every((id) =>
+        id.startsWith("custom_"),
+      ),
+    ).toBe(true);
     expect(
       Object.values(customBoot.world.players).some((player) =>
         player.id.includes("_fill_"),
@@ -83,7 +85,9 @@ describe("custom roster import", () => {
       createSeededRng(standardState.meta.rngState),
     ).state;
     expect(
-      Object.keys(standardBoot.world.players).some((id) => id.startsWith("custom_")),
+      Object.keys(standardBoot.world.players).some((id) =>
+        id.startsWith("custom_"),
+      ),
     ).toBe(false);
     expect(
       Object.values(standardBoot.world.teams).every(
@@ -103,10 +107,14 @@ describe("custom roster import", () => {
       createSeededRng(fantasyState.meta.rngState),
     ).state;
     expect(
-      Object.values(fantasyBoot.world.teams).every((team) => team.roster.length === 0),
+      Object.values(fantasyBoot.world.teams).every(
+        (team) => team.roster.length === 0,
+      ),
     ).toBe(true);
     expect(
-      Object.values(fantasyBoot.world.players).every((player) => player.teamId === null),
+      Object.values(fantasyBoot.world.players).every(
+        (player) => player.teamId === null,
+      ),
     ).toBe(true);
   });
 
@@ -129,12 +137,16 @@ describe("custom roster import", () => {
     expect(draft).not.toBeNull();
     expect(draft?.picksPerTeam).toBe(DEFAULT_ROSTER_SIZE);
     expect(draft?.totalPicks).toBe(teamCount * DEFAULT_ROSTER_SIZE);
-    expect(draft?.poolPlayerIds.length ?? 0).toBeGreaterThan(draft?.totalPicks ?? 0);
+    expect(draft?.poolPlayerIds.length ?? 0).toBeGreaterThan(
+      draft?.totalPicks ?? 0,
+    );
     expect(
       Object.values(boot.world.teams).every((team) => team.roster.length === 0),
     ).toBe(true);
     expect(
-      Object.values(boot.world.players).every((player) => player.teamId === null),
+      Object.values(boot.world.players).every(
+        (player) => player.teamId === null,
+      ),
     ).toBe(true);
     const customCount = Object.keys(boot.world.players).filter((id) =>
       id.startsWith("custom_"),
@@ -144,7 +156,9 @@ describe("custom roster import", () => {
     ).length;
     expect(customCount).toBe(teamCount * 8);
     expect(fillCount).toBeGreaterThan(0);
-    expect(Object.keys(boot.world.players).length).toBe(customCount + fillCount);
+    expect(Object.keys(boot.world.players).length).toBe(
+      customCount + fillCount,
+    );
     expect(Object.values(boot.world.teams)[0]?.name).toBe("Team 0");
   });
 });

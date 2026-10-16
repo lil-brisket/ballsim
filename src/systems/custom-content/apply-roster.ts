@@ -7,9 +7,7 @@ import type { GameState } from "@/state/game-state";
 import { attributeBasedAnnualSalary } from "@/systems/attribute-salary";
 import { recommendRosterManagement } from "@/systems/roster-management";
 import { getTeamPayroll } from "@/systems/salary-cap";
-import {
-  mapTeamSourceIds,
-} from "@/systems/custom-content/normalize";
+import { mapTeamSourceIds } from "@/systems/custom-content/normalize";
 import { createPlayerFromSource } from "@/systems/custom-content/create-player-from-source";
 import type { RosterPackage } from "@/systems/custom-content/package-types";
 import { validateRosterPackage } from "@/systems/custom-content/validate-roster";

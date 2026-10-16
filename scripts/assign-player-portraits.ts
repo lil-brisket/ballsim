@@ -35,11 +35,14 @@ function main(): void {
   const dryRun = process.argv.includes("--dry-run");
 
   if (saveId == null || playerId == null) {
-    throw new Error("Usage: --saveId SAVE --playerId ID [--source PATH] [--dry-run]");
+    throw new Error(
+      "Usage: --saveId SAVE --playerId ID [--source PATH] [--dry-run]",
+    );
   }
 
   const sourceExists = source != null && existsSync(source);
-  const hash = sourceExists && source != null ? contentHashOf(source) : "pending";
+  const hash =
+    sourceExists && source != null ? contentHashOf(source) : "pending";
   const relative = playerPortraitOverlayRelativePath(saveId, playerId, 1, hash);
   const destination = join(process.cwd(), relative);
   const destinationExists = existsSync(destination);

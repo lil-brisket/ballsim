@@ -3,21 +3,23 @@ name: CI
 on:
   push:
     branches:
-      - main
+      - master
   pull_request:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+env:
+  # Required at Prisma client construction during next build.
+  # Build does not query the DB for current dynamic routes; use a real local file URL.
+  DATABASE_URL: file:./prisma/ci.db
+
+# Jobs run in parallel; PR wall time is the slowest job, not the sum.
 jobs:
-  check:
+  static:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
-    env:
-      # Required at Prisma client construction during next build.
-      # Build does not query the DB for current dynamic routes; use a real local file URL.
-      DATABASE_URL: file:./prisma/ci.db
+    timeout-minutes: 15
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -40,11 +42,28 @@ jobs:
       - name: Format check
         run: npm run format:check
 
-      - name: Test with coverage
-        run: npm run test:coverage
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      # Wall-clock budgets warn instead of failing on shared runners;
+      # the nightly workflow runs them strictly.
+      PERF_BUDGET_MODE: warn
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
 
-      - name: Simulation Lab (rotation-on, 100 games)
-        run: npm run test:simulation
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Test with coverage (unit + integration + react)
+        run: npm run test:coverage
 
       - name: Upload coverage artifact
         uses: actions/upload-artifact@v4
@@ -62,6 +81,60 @@ jobs:
           fail_ci_if_error: false
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+
+  slow:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Slow tests (*.slow.test.ts)
+        run: npm run test:slow
+
+  simulation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Simulation Lab (rotation-on, 100 games)
+        run: npm run test:simulation
+
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
 
       - name: Build
         run: npm run build

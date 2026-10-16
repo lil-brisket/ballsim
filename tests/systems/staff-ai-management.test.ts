@@ -148,7 +148,11 @@ describe("staff AI management", () => {
       teamId: null,
       overall: 94,
     });
-    const staff = { ...state.world.staff, [picky.id]: picky, [willing.id]: willing };
+    const staff = {
+      ...state.world.staff,
+      [picky.id]: picky,
+      [willing.id]: willing,
+    };
     for (const member of Object.values(staff)) {
       if (
         member.role === "medical" &&

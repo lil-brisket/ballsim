@@ -22,7 +22,10 @@ import { getTradeDesirability } from "@/systems/trades/asset-valuation/trade-des
 import { shouldNotShopPlayer } from "@/systems/trades/asset-valuation/retention-priority";
 import { getBaseAssetValue } from "@/systems/trades/asset-valuation/base-asset-value";
 import { getTeamAssetValue } from "@/systems/trades/asset-valuation/team-asset-value";
-import { findTrades, ownedAvailablePickIds } from "@/systems/trades/trade-finder";
+import {
+  findTrades,
+  ownedAvailablePickIds,
+} from "@/systems/trades/trade-finder";
 import type { TradeAssetRef } from "@/systems/trades/asset-valuation/types";
 
 export type TradeMotivation =
@@ -77,7 +80,10 @@ export function generateCpuTradeCandidates(
     }
   }
 
-  if (motivation.type !== "rebuild" && motivation.type !== "asset_accumulation") {
+  if (
+    motivation.type !== "rebuild" &&
+    motivation.type !== "asset_accumulation"
+  ) {
     for (const target of listAcquireTargets(state, fromTeamId)) {
       const proposal = assembleAcquirePackage(
         state,
@@ -239,7 +245,9 @@ function listShopablePlayers(state: GameState, teamId: TeamId): AssetRef[] {
   const merged: AssetRef[] = [];
   for (const asset of [...fromBlock, ...rosterExtras, ...ownedPicks]) {
     const key =
-      asset.kind === "player" ? `player:${asset.playerId}` : `pick:${asset.draftPickId}`;
+      asset.kind === "player"
+        ? `player:${asset.playerId}`
+        : `pick:${asset.draftPickId}`;
     if (seen.has(key)) continue;
     seen.add(key);
     merged.push(asset);
@@ -270,7 +278,10 @@ function listPackageAssets(state: GameState, teamId: TeamId): AssetRef[] {
       if (shouldNotShopPlayer(state, teamId, playerId)) continue;
       const player = state.world.players[playerId];
       if (!player || player.retired === true) continue;
-      const overall = calculatePlayerOverall(player.position, player.attributes);
+      const overall = calculatePlayerOverall(
+        player.position,
+        player.attributes,
+      );
       if (overall >= 82 && player.age < 32) continue;
       rosterFillers.push({ kind: "player", playerId });
     }
@@ -317,7 +328,10 @@ function listAcquireTargets(state: GameState, fromTeamId: TeamId): AssetRef[] {
       if (!player || player.retired === true || player.teamId !== teamId) {
         continue;
       }
-      const overall = calculatePlayerOverall(player.position, player.attributes);
+      const overall = calculatePlayerOverall(
+        player.position,
+        player.attributes,
+      );
       if (overall < CPU_TRADE_ACQUIRE_MIN_OVERALL) continue;
       scored.push({
         asset: { kind: "player", playerId },
@@ -417,8 +431,14 @@ export function rebalanceCpuCounterProposal(
   state: GameState,
   cpuTeamId: TeamId,
   userTeamId: TeamId,
-  cpuOutgoing: { playerIds: readonly PlayerId[]; draftPickIds: readonly DraftPickId[] },
-  userOutgoing: { playerIds: readonly PlayerId[]; draftPickIds: readonly DraftPickId[] },
+  cpuOutgoing: {
+    playerIds: readonly PlayerId[];
+    draftPickIds: readonly DraftPickId[];
+  },
+  userOutgoing: {
+    playerIds: readonly PlayerId[];
+    draftPickIds: readonly DraftPickId[];
+  },
 ): TradeProposal | null {
   const cpuPlayers = [...cpuOutgoing.playerIds];
   const cpuPicks = [...cpuOutgoing.draftPickIds];
@@ -451,8 +471,7 @@ export function rebalanceCpuCounterProposal(
   }
 
   const pool = listPackageAssets(state, cpuTeamId).filter((asset) => {
-    const id =
-      asset.kind === "player" ? asset.playerId : asset.draftPickId;
+    const id = asset.kind === "player" ? asset.playerId : asset.draftPickId;
     return !used.has(id);
   });
   const pickFirst = [

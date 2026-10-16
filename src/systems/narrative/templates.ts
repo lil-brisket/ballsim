@@ -141,7 +141,8 @@ export function renderNarrative(
       if (candidate.resolve) {
         return {
           title: "Expectations back in line",
-          summary: "Results are no longer far enough from expectations to stay on the board.",
+          summary:
+            "Results are no longer far enough from expectations to stay on the board.",
           body: `The franchise sits at ${num(ctx, "wins")}-${num(ctx, "losses")}, and the earlier expectation-gap situation has cleared.`,
           severity: "informational",
         };

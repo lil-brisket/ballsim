@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import type { TradeProposal, TradeSide } from "@/domain/entities/trade-proposal";
+import type {
+  TradeProposal,
+  TradeSide,
+} from "@/domain/entities/trade-proposal";
 import { DEFAULT_GAME_SETTINGS } from "@/domain/game-settings";
 import type { DraftPickId, TeamId } from "@/domain/ids";
 import { createSeededRng, type Rng } from "@/domain/rng";
@@ -32,7 +35,10 @@ function sampleUnique<T>(items: readonly T[], count: number, rng: Rng): T[] {
   return picked;
 }
 
-function pickTwoDistinctTeams(teamIds: readonly TeamId[], rng: Rng): [TeamId, TeamId] {
+function pickTwoDistinctTeams(
+  teamIds: readonly TeamId[],
+  rng: Rng,
+): [TeamId, TeamId] {
   const indexA = rng.nextInt(0, teamIds.length - 1);
   let indexB = rng.nextInt(0, teamIds.length - 2);
   if (indexB >= indexA) {
@@ -173,9 +179,10 @@ describe("thirty-team random trade invariants", () => {
           team.roster.length,
           `${team.id} roster size`,
         ).toBeGreaterThanOrEqual(minRoster);
-        expect(team.roster.length, `${team.id} roster size`).toBeLessThanOrEqual(
-          maxRoster,
-        );
+        expect(
+          team.roster.length,
+          `${team.id} roster size`,
+        ).toBeLessThanOrEqual(maxRoster);
         expect(
           getTeamPayroll(team.id, year, state),
           `${team.id} payroll`,

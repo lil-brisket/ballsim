@@ -177,9 +177,9 @@ describe("calendar context", () => {
       settings: CBL_GAME_SETTINGS,
     });
     expect(preseason.competition.season.phase).toBe("preseason");
-    expect(areTradesOpen("preseason", preseason.world.calendar.currentDate, null)).toBe(
-      false,
-    );
+    expect(
+      areTradesOpen("preseason", preseason.world.calendar.currentDate, null),
+    ).toBe(false);
     expect(getCalendarContext(preseason).tradesOpen).toBe(true);
     expect(checkTradeWindow(preseason).allowed).toBe(true);
 

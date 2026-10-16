@@ -55,7 +55,11 @@ function assertRating(
 ): number | undefined {
   if (typeof value !== "number" || !Number.isInteger(value)) {
     errors.push(
-      issue(path, "invalid_rating", `${path} must be an integer ${RATING_MIN}–${RATING_MAX}.`),
+      issue(
+        path,
+        "invalid_rating",
+        `${path} must be an integer ${RATING_MIN}–${RATING_MAX}.`,
+      ),
     );
     return undefined;
   }
@@ -87,7 +91,11 @@ export function readPlayerSourceRecord(
   const sourceId = record.sourceId;
   if (typeof sourceId !== "string" || sourceId.trim().length === 0) {
     errors.push(
-      issue(`${path}.sourceId`, "missing_source_id", `${path}.sourceId is required.`),
+      issue(
+        `${path}.sourceId`,
+        "missing_source_id",
+        `${path}.sourceId is required.`,
+      ),
     );
   }
 
@@ -95,12 +103,20 @@ export function readPlayerSourceRecord(
   const lastName = record.lastName;
   if (typeof firstName !== "string" || firstName.trim().length === 0) {
     errors.push(
-      issue(`${path}.firstName`, "invalid_first_name", `${path}.firstName is required.`),
+      issue(
+        `${path}.firstName`,
+        "invalid_first_name",
+        `${path}.firstName is required.`,
+      ),
     );
   }
   if (typeof lastName !== "string" || lastName.trim().length === 0) {
     errors.push(
-      issue(`${path}.lastName`, "invalid_last_name", `${path}.lastName is required.`),
+      issue(
+        `${path}.lastName`,
+        "invalid_last_name",
+        `${path}.lastName is required.`,
+      ),
     );
   }
 
@@ -117,7 +133,13 @@ export function readPlayerSourceRecord(
 
   const age = record.age;
   if (typeof age !== "number" || !Number.isInteger(age) || age < 0) {
-    errors.push(issue(`${path}.age`, "invalid_age", `${path}.age must be a non-negative integer.`));
+    errors.push(
+      issue(
+        `${path}.age`,
+        "invalid_age",
+        `${path}.age must be a non-negative integer.`,
+      ),
+    );
   } else if (age < MIN_PLAUSIBLE_AGE || age > MAX_PLAUSIBLE_AGE) {
     errors.push(
       issue(
@@ -131,7 +153,11 @@ export function readPlayerSourceRecord(
   const position = record.position;
   if (typeof position !== "string" || !isPlayerPosition(position)) {
     errors.push(
-      issue(`${path}.position`, "invalid_position", `${path}.position is not a valid position.`),
+      issue(
+        `${path}.position`,
+        "invalid_position",
+        `${path}.position is not a valid position.`,
+      ),
     );
   }
 
@@ -160,7 +186,11 @@ export function readPlayerSourceRecord(
 
   const heightInches = record.heightInches;
   const weightPounds = record.weightPounds;
-  if (typeof heightInches !== "number" || !Number.isFinite(heightInches) || heightInches <= 0) {
+  if (
+    typeof heightInches !== "number" ||
+    !Number.isFinite(heightInches) ||
+    heightInches <= 0
+  ) {
     errors.push(
       issue(
         `${path}.heightInches`,
@@ -181,7 +211,10 @@ export function readPlayerSourceRecord(
     );
   } else if (typeof position === "string" && isPlayerPosition(position)) {
     const range = CUSTOM_ROSTER_POSITION_BODY_RANGES[position];
-    if (heightInches < range.minHeightInches || heightInches > range.maxHeightInches) {
+    if (
+      heightInches < range.minHeightInches ||
+      heightInches > range.maxHeightInches
+    ) {
       warnings.push(
         issue(
           `${path}.heightInches`,
@@ -193,7 +226,11 @@ export function readPlayerSourceRecord(
     }
   }
 
-  if (typeof weightPounds !== "number" || !Number.isFinite(weightPounds) || weightPounds <= 0) {
+  if (
+    typeof weightPounds !== "number" ||
+    !Number.isFinite(weightPounds) ||
+    weightPounds <= 0
+  ) {
     errors.push(
       issue(
         `${path}.weightPounds`,
@@ -214,7 +251,10 @@ export function readPlayerSourceRecord(
     );
   } else if (typeof position === "string" && isPlayerPosition(position)) {
     const range = CUSTOM_ROSTER_POSITION_BODY_RANGES[position];
-    if (weightPounds < range.minWeightPounds || weightPounds > range.maxWeightPounds) {
+    if (
+      weightPounds < range.minWeightPounds ||
+      weightPounds > range.maxWeightPounds
+    ) {
       warnings.push(
         issue(
           `${path}.weightPounds`,
@@ -230,7 +270,11 @@ export function readPlayerSourceRecord(
   const attributes = {} as PlayerAttributes;
   if (attributesRaw === null) {
     errors.push(
-      issue(`${path}.attributes`, "invalid_attributes", `${path}.attributes must be an object.`),
+      issue(
+        `${path}.attributes`,
+        "invalid_attributes",
+        `${path}.attributes must be an object.`,
+      ),
     );
   } else {
     for (const key of PLAYER_ATTRIBUTE_KEYS) {
@@ -249,7 +293,11 @@ export function readPlayerSourceRecord(
   let potential: PlayerPotential | undefined;
   if (potentialRaw === null) {
     errors.push(
-      issue(`${path}.potential`, "invalid_potential", `${path}.potential must be an object.`),
+      issue(
+        `${path}.potential`,
+        "invalid_potential",
+        `${path}.potential must be an object.`,
+      ),
     );
   } else {
     const overall = assertRating(
@@ -370,7 +418,8 @@ export function duplicateNameIssues(
     const [first, ...rest] = group;
     for (const other of rest) {
       const sameAttributes =
-        JSON.stringify(first!.attributes) === JSON.stringify(other.attributes) &&
+        JSON.stringify(first!.attributes) ===
+          JSON.stringify(other.attributes) &&
         first!.age === other.age &&
         first!.position === other.position &&
         first!.archetype === other.archetype;

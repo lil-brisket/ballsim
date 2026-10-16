@@ -217,13 +217,7 @@ export function parseCustomContentJson(
     return validationResult([], [], JSON.parse(raw) as unknown);
   } catch {
     return validationResult(
-      [
-        issue(
-          "",
-          "invalid_json",
-          "Package is not valid JSON.",
-        ),
-      ],
+      [issue("", "invalid_json", "Package is not valid JSON.")],
       [],
     );
   }
@@ -247,7 +241,11 @@ export function rosterTeamCountFromPackageJson(
     return null;
   }
   const payload = envelope.normalized.payload;
-  if (payload === null || typeof payload !== "object" || Array.isArray(payload)) {
+  if (
+    payload === null ||
+    typeof payload !== "object" ||
+    Array.isArray(payload)
+  ) {
     return null;
   }
   const teams = (payload as { teams?: unknown }).teams;
@@ -282,11 +280,7 @@ export function parseCustomContentEnvelope(
   const type = record.type;
   if (type !== "roster" && type !== "draft_class") {
     errors.push(
-      issue(
-        "type",
-        "invalid_type",
-        'type must be "roster" or "draft_class".',
-      ),
+      issue("type", "invalid_type", 'type must be "roster" or "draft_class".'),
     );
   }
 

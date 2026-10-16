@@ -92,17 +92,11 @@ function teamGameHeadline(
   const isHome = game.homeTeamId === teamId;
   const opponentId = isHome ? game.awayTeamId : game.homeTeamId;
   const opponent = state.world.teams[opponentId];
-  const opponentLabel = opponent
-    ? opponent.abbreviation
-    : String(opponentId);
+  const opponentLabel = opponent ? opponent.abbreviation : String(opponentId);
   const teamScore = isHome ? game.score.home : game.score.away;
   const opponentScore = isHome ? game.score.away : game.score.home;
   const result =
-    teamScore === opponentScore
-      ? "T"
-      : teamScore > opponentScore
-        ? "W"
-        : "L";
+    teamScore === opponentScore ? "T" : teamScore > opponentScore ? "W" : "L";
   return `${result} ${teamScore}–${opponentScore} vs ${opponentLabel}`;
 }
 
