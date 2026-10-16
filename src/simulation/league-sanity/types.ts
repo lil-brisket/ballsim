@@ -40,6 +40,12 @@ export type LeagueSanityTeamSeasonSnapshot = {
   youngSharePct: number;
   meanSalary: number;
   rosterStrength: number;
+  /**
+   * Mean overall change of returning players since last season's record,
+   * minus the league mean for players of the same age. Null when no player
+   * returned (first season, new franchise).
+   */
+  developmentDelta: number | null;
   reputation: number;
   fanSentiment: number;
   relocated: boolean;
