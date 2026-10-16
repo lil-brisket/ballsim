@@ -26,7 +26,7 @@ const defaultProps: ComponentProps<typeof TransactionFilters> = {
   range: "7d",
   teamValue: "my",
   search: "smith",
-  teams: [{ teamId: "t1", label: "Boston Celtics", abbreviation: "BOS" }],
+  teams: [{ teamId: "t1", label: "Boston Harriers", abbreviation: "BOS" }],
   myTeamId: "t1",
   limit: 50,
   sort: "contract",

@@ -184,8 +184,8 @@ export default function BroadcastUiShowcasePage() {
 
             <PlayerProfileHero
               playerId="dev_player"
-              firstName="Luka"
-              lastName="Doncic"
+              firstName="Leo"
+              lastName="Drake"
               position="PG"
               age={29}
               overall={95}

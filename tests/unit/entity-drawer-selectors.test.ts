@@ -214,7 +214,8 @@ describe("toTeamDrawerView", () => {
     const view = toTeamDrawerView(state, team.id, "save_drawer");
     expect(view).not.toBeNull();
     expect(view!.identity.abbreviation).toBe(team.abbreviation);
-    expect(view!.performance.rank).toBeGreaterThan(0);
+    // No games played yet, so the team is unranked (see league-rank.test.ts).
+    expect(view!.performance.rank).toBeNull();
     expect(view!.roster.topPlayers.length).toBeGreaterThan(0);
     expect(view!.navigation.scheduleHref).toContain("/schedule");
   });

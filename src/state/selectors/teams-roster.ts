@@ -23,6 +23,7 @@ import type { PlayerId } from "@/domain/ids";
 import { listFreeAgents } from "@/systems/free-agency";
 import { draftYearForSeason } from "@/systems/draft";
 import { draftClassIdFor } from "@/domain/entities/draft";
+import { leagueRankByTeamId } from "@/state/selectors/league-rank";
 
 export type TeamListEntry = {
   id: string;
@@ -241,6 +242,7 @@ export function toRosterView(state: GameState): RosterPlayerView[] {
 
 export function toStandingsView(state: GameState): StandingRowView[] {
   const owned = new Set(state.user.ownedTeamIds);
+  const rankById = leagueRankByTeamId(state);
   const rows: StandingRowView[] = [];
   for (const team of Object.values(state.world.teams)) {
     const standing =
@@ -254,20 +256,11 @@ export function toStandingsView(state: GameState): StandingRowView[] {
       wins: standing.wins,
       losses: standing.losses,
       isUserTeam: owned.has(team.id),
-      rank: 0,
+      rank: rankById.get(team.id) ?? rankById.size,
       branding: toBrandingView(team.branding),
     });
   }
-  rows.sort((a, b) => {
-    if (b.wins !== a.wins) {
-      return b.wins - a.wins;
-    }
-    if (a.losses !== b.losses) {
-      return a.losses - b.losses;
-    }
-    return a.abbreviation.localeCompare(b.abbreviation);
-  });
-  return rows.map((row, index) => ({ ...row, rank: index + 1 }));
+  return rows.sort((a, b) => a.rank - b.rank);
 }
 
 export function isPlayerInOwnerScope(

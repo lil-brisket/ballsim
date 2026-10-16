@@ -28,6 +28,7 @@ import { TEAM_TRANSACTION_EVENT_TYPES } from "@/state/team-transaction-selectors
 import { assessExpansion } from "@/state/expansion-assessment";
 import { canWatchGame } from "@/state/watch-game-selectors";
 import { getCalendarContext } from "@/systems/simulation/calendar-context";
+import { leagueRankForTeam } from "@/state/selectors/league-rank";
 
 export const LEAGUE_HUB_TIER2_LIMIT = 3;
 export const LEAGUE_HUB_STANDINGS_TOP = 5;
@@ -73,7 +74,8 @@ export type LeagueMediaBrief = {
 export type LeagueHubSnapshot = {
   leaderAbbreviation: string;
   leaderRecord: string;
-  userRank: number;
+  /** League rank (`leagueRankForTeam`); null before the user's first game. */
+  userRank: number | null;
   userRecord: string;
   bestRecord: string;
   worstRecord: string;
@@ -218,7 +220,7 @@ export function toLeagueHubView(state: GameState): LeagueHubView {
   const snapshot: LeagueHubSnapshot = {
     leaderAbbreviation: leader?.abbreviation ?? "—",
     leaderRecord: leader ? `${leader.wins}–${leader.losses}` : "—",
-    userRank: userRow?.leagueRank ?? 0,
+    userRank: leagueRankForTeam(state, teamId),
     userRecord: userRow ? `${userRow.wins}–${userRow.losses}` : "—",
     bestRecord: leader ? `${leader.wins}–${leader.losses}` : "—",
     worstRecord: worst ? `${worst.wins}–${worst.losses}` : "—",

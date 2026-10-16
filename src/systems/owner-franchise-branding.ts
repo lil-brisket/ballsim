@@ -21,6 +21,7 @@ import {
 import { validateTeamNickname } from "@/domain/team-nickname";
 import type { GameState } from "@/state/game-state";
 import { TEAM_NICKNAMES } from "@/data/league/team-nicknames";
+import { isReservedTeamName } from "@/data/league/reserved-team-names";
 import { TEAM_COLOR_PALETTES } from "@/data/team-branding/color-palettes";
 import { TEAM_LOGO_IDS } from "@/data/team-branding/logo-catalog";
 import type { Rng } from "@/domain/rng";
@@ -185,12 +186,18 @@ export function randomizeTeamIdentityDraft(input: {
   currentSecondaryColor?: string;
   currentAccentColor?: string;
   usedNicknames: readonly string[];
+  /** The team's city; nicknames that would form a real team are skipped. */
+  city?: string;
   rng?: Rng;
 }): RandomizedTeamIdentity {
   const rng = input.rng ?? createSeededRng(Date.now());
 
+  const city = input.city;
+  const fictionalNicknames = TEAM_NICKNAMES.filter(
+    (name) => !city || !isReservedTeamName(city, name),
+  );
   const used = new Set(input.usedNicknames.map((name) => name.toLowerCase()));
-  const availableNicknames = TEAM_NICKNAMES.filter((name) => {
+  const availableNicknames = fictionalNicknames.filter((name) => {
     const key = name.toLowerCase();
     if (key === input.currentNickname.toLowerCase()) {
       return true;
@@ -198,7 +205,7 @@ export function randomizeTeamIdentityDraft(input: {
     return !used.has(key);
   });
   const nicknamePool =
-    availableNicknames.length > 0 ? availableNicknames : [...TEAM_NICKNAMES];
+    availableNicknames.length > 0 ? availableNicknames : fictionalNicknames;
 
   const currentKey = identityKey({
     nickname: input.currentNickname,

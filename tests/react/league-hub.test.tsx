@@ -26,7 +26,7 @@ const sampleRow: StandingsRowEnriched = {
   teamId: "t1",
   abbreviation: "BOS",
   city: "Boston",
-  name: "Celtics",
+  name: "Harriers",
   wins: 42,
   losses: 21,
   winPercentage: 0.667,
@@ -65,7 +65,7 @@ describe("League Hub panels", () => {
           saveId="s1"
           teamId="t1"
           city="Boston"
-          name="Celtics"
+          name="Harriers"
           abbreviation="BOS"
           wins={42}
           losses={21}
@@ -143,14 +143,14 @@ describe("TransactionRow entity links", () => {
               { id: "p2", name: "Player B" },
             ],
             teams: [
-              { id: "t1", name: "Boston Celtics", abbreviation: "BOS" },
-              { id: "t2", name: "New York Knicks", abbreviation: "NYK" },
+              { id: "t1", name: "Boston Harriers", abbreviation: "BOS" },
+              { id: "t2", name: "New York Kestrels", abbreviation: "NYK" },
             ],
             tradeSides: [
               {
                 team: {
                   id: "t1",
-                  name: "Boston Celtics",
+                  name: "Boston Harriers",
                   abbreviation: "BOS",
                 },
                 players: [{ id: "p2", name: "Player B" }],
@@ -159,7 +159,7 @@ describe("TransactionRow entity links", () => {
               {
                 team: {
                   id: "t2",
-                  name: "New York Knicks",
+                  name: "New York Kestrels",
                   abbreviation: "NYK",
                 },
                 players: [{ id: "p1", name: "Player A" }],

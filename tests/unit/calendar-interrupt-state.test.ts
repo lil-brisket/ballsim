@@ -12,7 +12,7 @@ const tradeInterrupt: CalendarInterrupt = {
   decisionId: "od_1",
   review: {
     decisionId: "od_1",
-    offeringTeamName: "Boston Celtics",
+    offeringTeamName: "Boston Harriers",
     receivingTeamName: "Toronto Hawks",
     motivationLabel: "Looking for help at SF",
     youReceive: [],

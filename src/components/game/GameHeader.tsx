@@ -7,6 +7,7 @@ import { ParticipantBar } from "@/components/game/ParticipantBar";
 import { OwnerTeamSwitcher } from "@/components/game/OwnerTeamSwitcher";
 import { ArenaPanel } from "@/components/ui/ArenaPanel";
 import { TickerBar, type TickerItem } from "@/components/ui/TickerBar";
+import { rankNumberLabel } from "@/presentation/rank-label";
 import {
   cn,
   focusRingClass,
@@ -72,11 +73,7 @@ export function GameHeader(props: {
     { label: "Date", value: formatShortDate(dashboard.currentDate) },
     { label: "Season", value: dashboard.seasonYear },
     { label: "Record", value: record, tone: "team" },
-    {
-      label: "Rank",
-      value:
-        dashboard.standingsRank == null ? "—" : `#${dashboard.standingsRank}`,
-    },
+    { label: "League", value: rankNumberLabel(dashboard.standingsRank) },
   ];
 
   return (

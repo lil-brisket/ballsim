@@ -638,7 +638,7 @@ describe("CalendarWorkspace redesign", () => {
 
 const tradeReview = {
   decisionId: "od_1",
-  offeringTeamName: "Boston Celtics",
+  offeringTeamName: "Boston Harriers",
   receivingTeamName: "Toronto Hawks",
   motivationLabel: "Looking for help at SF",
   youReceive: [
@@ -708,7 +708,7 @@ describe("CalendarWorkspace in-sim interrupt", () => {
     );
     expect(screen.getByRole("dialog")).toBeTruthy();
     expect(screen.queryByLabelText("Close overlay")).toBeNull();
-    expect(screen.getByText(/Boston Celtics → Toronto Hawks/)).toBeTruthy();
+    expect(screen.getByText(/Boston Harriers → Toronto Hawks/)).toBeTruthy();
     expect(screen.getByRole("button", { name: "Accept" })).toBeTruthy();
     unmount();
   });

@@ -21,6 +21,7 @@ import {
   type TeamBrandingView,
 } from "@/state/team-branding-view";
 import { compareStandings } from "@/systems/standings";
+import { leagueRankByTeamId } from "@/state/selectors/league-rank";
 import type { PlayoffRaceStatus } from "@/systems/simulation/calendar-context";
 import { getCalendarContext } from "@/systems/simulation/calendar-context";
 
@@ -331,8 +332,10 @@ function buildEnrichedRows(state: GameState): StandingsRowEnriched[] {
     });
   }
 
-  const league = rankGroup(drafts);
-  const leagueLeaderStanding = league.leader;
+  const leagueRankById = leagueRankByTeamId(state);
+  const leagueLeaderStanding = drafts.find(
+    (row) => leagueRankById.get(row.standing.teamId) === 1,
+  )?.standing;
 
   const byConference = new Map<string, Draft[]>();
   const byDivision = new Map<string, Draft[]>();
@@ -371,7 +374,7 @@ function buildEnrichedRows(state: GameState): StandingsRowEnriched[] {
 
   return drafts.map((row) => {
     const conferenceRank = conferenceRankById.get(row.teamId) ?? 99;
-    const leagueRank = league.rankById.get(row.teamId) ?? 99;
+    const leagueRank = leagueRankById.get(row.standing.teamId) ?? 99;
     const divisionRank = divisionRankById.get(row.teamId) ?? 99;
     const confLeader =
       conferenceLeaderById.get(row.conferenceId) ?? row.standing;

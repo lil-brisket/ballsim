@@ -55,7 +55,7 @@ export function TeamCard(props: {
         ) : null}
         {props.rank != null ? (
           <Metric
-            label="Rank"
+            label="League rank"
             value={`#${props.rank}`}
             mono
             density="compact"

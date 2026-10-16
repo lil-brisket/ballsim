@@ -1,6 +1,7 @@
 import { Section } from "@/components/ui/Section";
 import { cn, panelClass } from "@/components/ui/styles";
 import type { TeamHubView } from "@/state/team-hub-selectors";
+import { groupRankLabel, leagueRankLabel } from "@/presentation/rank-label";
 
 function playoffStatusLabel(label: string | null): string {
   if (label == null || label === "na") {
@@ -22,21 +23,6 @@ function playoffStatusLabel(label: string | null): string {
   }
 }
 
-function ordinal(n: number): string {
-  const rem100 = n % 100;
-  if (rem100 >= 11 && rem100 <= 13) return "th";
-  switch (n % 10) {
-    case 1:
-      return "st";
-    case 2:
-      return "nd";
-    case 3:
-      return "rd";
-    default:
-      return "th";
-  }
-}
-
 /**
  * Current-state overview — replaces Team Snapshot.
  * Uses existing record / standings / form / injury counts only.
@@ -45,10 +31,13 @@ export function TeamOverview(props: { hub: TeamHubView }) {
   const { hub } = props;
   const conferenceLine =
     hub.standings.conferenceRank != null && hub.standings.conferenceName
-      ? `${hub.standings.conferenceRank}${ordinal(hub.standings.conferenceRank)} · ${hub.standings.conferenceName}`
+      ? groupRankLabel(
+          hub.standings.conferenceName,
+          hub.standings.conferenceRank,
+        )
       : hub.leagueRank == null
         ? "Unranked"
-        : `#${hub.leagueRank} overall`;
+        : leagueRankLabel(hub.leagueRank);
 
   return (
     <Section title="Overview">

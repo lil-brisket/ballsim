@@ -8,12 +8,13 @@ import { formatStreak } from "@/state/standings-selectors";
 import { ArenaPanel } from "@/components/ui/ArenaPanel";
 import { TickerBar } from "@/components/ui/TickerBar";
 import { cn, focusRingClass } from "@/components/ui/styles";
+import { rankNumberLabel } from "@/presentation/rank-label";
 
 export function LeagueSnapshotPanel(props: { snapshot: LeagueHubSnapshot }) {
   const s = props.snapshot;
   const metrics = [
     { label: "Leader", value: `${s.leaderAbbreviation} ${s.leaderRecord}` },
-    { label: "Your rank", value: s.userRank > 0 ? `#${s.userRank}` : "—" },
+    { label: "League rank", value: rankNumberLabel(s.userRank) },
     { label: "Your record", value: s.userRecord },
     { label: "Best", value: s.bestRecord },
     { label: "Worst", value: s.worstRecord },

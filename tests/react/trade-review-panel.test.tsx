@@ -7,7 +7,7 @@ import type { TradeReviewView } from "@/state/trade-review-view";
 
 const review: TradeReviewView = {
   decisionId: "od_1",
-  offeringTeamName: "Boston Celtics",
+  offeringTeamName: "Boston Harriers",
   receivingTeamName: "Toronto Hawks",
   motivationLabel: "Looking for help at SF",
   youReceive: [
@@ -52,7 +52,7 @@ describe("TradeReviewPanel", () => {
         showLetAiDecide
       />,
     );
-    expect(screen.getByText("Boston Celtics → Toronto Hawks")).toBeTruthy();
+    expect(screen.getByText("Boston Harriers → Toronto Hawks")).toBeTruthy();
     expect(screen.getByText(/Wei Bright/)).toBeTruthy();
     expect(screen.getByText(/Favors them/)).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: "Accept" }));

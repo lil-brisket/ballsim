@@ -14,6 +14,7 @@ import {
 import { parseCalendarDate } from "@/domain/calendar-date";
 import type { OwnerDashboardTeam } from "@/state/owner-dashboard";
 import type { RecentFormView } from "@/state/recent-form-selectors";
+import { rankNumberLabel } from "@/presentation/rank-label";
 
 function formatLongDate(isoDate: string): string {
   try {
@@ -168,8 +169,8 @@ export function MatchupBanner(props: {
                 tone="team"
               />
               <ScoreNumeral
-                value={team.leagueRank == null ? "—" : `#${team.leagueRank}`}
-                label="Rank"
+                value={rankNumberLabel(team.leagueRank)}
+                label="League rank"
                 size="md"
               />
             </div>
