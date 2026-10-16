@@ -26,7 +26,7 @@ import { draftYearForSeason } from "@/systems/draft/draft-order";
 import { findTeamProspectEstimate } from "@/systems/draft/draft-scouting";
 import { createRatingRange } from "@/domain/entities/scouting-types";
 import { reconcileRosterManagement } from "@/systems/roster-management";
-import { getTeamPayroll } from "@/systems/salary-cap";
+import { getContractSigningYear, getTeamPayroll } from "@/systems/salary-cap";
 
 export type DraftSelectionResult = {
   success: boolean;
@@ -63,7 +63,8 @@ export function makeDraftSelection(
   const ownerTeamId = slot.ownerTeamId;
   const playerId = prospect.playerId;
   const contractId = asContractId(`contract_${playerId}`);
-  const seasonYear = state.competition.season.year;
+  // The draft runs in the offseason, so rookie deals start next season.
+  const seasonYear = getContractSigningYear(state);
   const endYear = seasonYear + DRAFT_ROOKIE_CONTRACT_YEARS - 1;
   const salaryPerYear = salaryForPlayer({
     overall: calculatePlayerOverall(
@@ -218,7 +219,11 @@ export function makeDraftSelection(
           ...next.business.finances,
           [ownerTeamId]: {
             ...existingFinance,
-            payroll: getTeamPayroll(ownerTeamId, seasonYear, next),
+            payroll: getTeamPayroll(
+              ownerTeamId,
+              state.competition.season.year,
+              next,
+            ),
           },
         },
       },

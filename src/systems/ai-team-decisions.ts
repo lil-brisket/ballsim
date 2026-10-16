@@ -33,7 +33,7 @@ import {
 import { AI_FA_MIN_SALARY } from "@/systems/owner-objectives-config";
 import { DEFAULT_ROSTER_SIZE } from "@/systems/roster-generation-config";
 import { computeAwardReputationBonus } from "@/systems/awards/award-reputation";
-import { getTeamCapSpace } from "@/systems/salary-cap";
+import { getContractSigningYear, getTeamCapSpace } from "@/systems/salary-cap";
 import { getLeagueSalaryCap } from "@/systems/league-salary-cap";
 import {
   isSalaryLowball,
@@ -140,21 +140,73 @@ function maintainAiRosterManagement(state: GameState): GameState {
 }
 
 function runAiFreeAgency(state: GameState): SystemResult {
+  const date = state.world.calendar.currentDate;
+  return runAiFreeAgencyRound(state, {
+    consequenceKey: (teamId) => `ai_fa:${teamId}:${date}`,
+  }).result;
+}
+
+/** Upper bound on completion rounds; each round signs at most one player per team. */
+const AI_FA_COMPLETION_MAX_ROUNDS = DEFAULT_ROSTER_SIZE;
+
+/**
+ * Finishes AI free agency when the phase closes, so AI rosters do not depend
+ * on how many days the user spent in free agency. Each round gives every AI
+ * team one more signing, until a round signs nobody.
+ */
+export function completeAiFreeAgency(state: GameState): SystemResult {
   const events: DomainEvent[] = [];
   let current = state;
+  const attempted = new Set<string>();
+  for (let round = 0; round < AI_FA_COMPLETION_MAX_ROUNDS; round += 1) {
+    const { result, signed } = runAiFreeAgencyRound(current, {
+      consequenceKey: null,
+      attempted,
+    });
+    current = result.state;
+    events.push(...result.events);
+    if (signed === 0) {
+      break;
+    }
+  }
+  return systemResult(current, events);
+}
+
+/**
+ * One signing attempt per AI team. `consequenceKey` marks a team as done for
+ * the day; null attempts without recording (phase-exit completion), where
+ * `attempted` keeps a team from re-offering a player it already tried.
+ */
+function runAiFreeAgencyRound(
+  state: GameState,
+  options: {
+    consequenceKey: ((teamId: TeamId) => string) | null;
+    attempted?: Set<string>;
+  },
+): { result: SystemResult; signed: number } {
+  const { consequenceKey, attempted } = options;
+  const events: DomainEvent[] = [];
+  let current = state;
+  let signed = 0;
   const date = current.world.calendar.currentDate;
-  const seasonYear = current.competition.season.year;
+  const seasonYear = getContractSigningYear(current);
   const teamIds = (Object.keys(current.world.teams) as TeamId[])
     .filter((teamId) => !isUserControlledTeam(current, teamId))
     .sort((a, b) => (a < b ? -1 : a > b ? 1 : 0));
+  const markDone = (next: GameState, teamId: TeamId): GameState =>
+    consequenceKey === null
+      ? next
+      : withAppliedGameplayConsequence(next, consequenceKey(teamId));
 
   for (const teamId of teamIds) {
-    const key = `ai_fa:${teamId}:${date}`;
-    if (hasAppliedGameplayConsequence(current, key)) {
+    if (
+      consequenceKey !== null &&
+      hasAppliedGameplayConsequence(current, consequenceKey(teamId))
+    ) {
       continue;
     }
     if (!teamNeedsSigning(current, teamId)) {
-      current = withAppliedGameplayConsequence(current, key);
+      current = markDone(current, teamId);
       continue;
     }
 
@@ -168,7 +220,7 @@ function runAiFreeAgency(state: GameState): SystemResult {
       prefs.patiencePressure < 0.55 &&
       !teamUrgentlyNeedsSigning(current, teamId)
     ) {
-      current = withAppliedGameplayConsequence(current, key);
+      current = markDone(current, teamId);
       continue;
     }
 
@@ -176,7 +228,7 @@ function runAiFreeAgency(state: GameState): SystemResult {
       ? getTeamCapSpace(teamId, seasonYear, current)
       : Number.MAX_SAFE_INTEGER;
     if (capSpace < AI_FA_MIN_SALARY) {
-      current = withAppliedGameplayConsequence(current, key);
+      current = markDone(current, teamId);
       continue;
     }
 
@@ -185,9 +237,10 @@ function runAiFreeAgency(state: GameState): SystemResult {
       teamId,
       capSpace,
       prefs,
+      attempted,
     );
     if (candidate === undefined) {
-      current = withAppliedGameplayConsequence(current, key);
+      current = markDone(current, teamId);
       continue;
     }
 
@@ -214,10 +267,11 @@ function runAiFreeAgency(state: GameState): SystemResult {
       isSalaryLowball(salary, market) ||
       salary < AI_FA_MIN_SALARY
     ) {
-      current = withAppliedGameplayConsequence(current, key);
+      current = markDone(current, teamId);
       continue;
     }
 
+    attempted?.add(`${teamId}:${candidate.id}`);
     const offerId = asOfferId(`offer_ai_${teamId}_${candidate.id}_${date}`);
     const contractId = asContractId(
       `contract_ai_${candidate.id}_${date.replaceAll("-", "")}`,
@@ -243,13 +297,16 @@ function runAiFreeAgency(state: GameState): SystemResult {
       const accepted = acceptOffer(current, offerId);
       current = accepted.state;
       events.push(...accepted.events);
+      if (current.world.players[candidate.id]?.teamId === teamId) {
+        signed += 1;
+      }
     } catch {
       // Cap/interest/roster failures: skip without throwing out of the day loop.
     }
-    current = withAppliedGameplayConsequence(current, key);
+    current = markDone(current, teamId);
   }
 
-  return systemResult(current, events);
+  return { result: systemResult(current, events), signed };
 }
 
 function faSalaryCapFraction(prefs: EffectivePreferences | undefined): number {
@@ -530,13 +587,16 @@ function pickBestAffordableFreeAgent(
   teamId: TeamId,
   capSpace: number,
   prefs: EffectivePreferences | undefined,
+  attempted?: ReadonlySet<string>,
 ): Player | undefined {
   const missing = missingPositions(state, teamId);
   const pool = listFreeAgents(state)
     .playerIds.map((playerId) => state.world.players[playerId])
     .filter(
       (player): player is Player =>
-        player !== undefined && player.retired !== true,
+        player !== undefined &&
+        player.retired !== true &&
+        attempted?.has(`${teamId}:${player.id}`) !== true,
     );
 
   const ranked = [...pool].sort((a, b) => {

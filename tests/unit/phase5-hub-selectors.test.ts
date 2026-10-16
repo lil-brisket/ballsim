@@ -4,6 +4,8 @@ import { bootstrapWorld } from "@/systems/world-pipeline";
 import { createTestGameState } from "../factories/game-state";
 import { toScoutingHubView } from "@/state/scouting-hub-selectors";
 import { toFreeAgencyHubView } from "@/state/free-agency-hub-selectors";
+import { getTeamCapSpace, getTeamPayroll } from "@/systems/salary-cap";
+import { transitionPhase } from "@/systems/simulation/phase-machine";
 import { toAwardsHubView } from "@/state/awards-hub-selectors";
 import {
   resolveUserPlayoffStatus,
@@ -68,6 +70,20 @@ describe("free-agency-hub-selectors", () => {
     expect(hub.capSpace).toBe(finances.capSpace);
     expect(hub.exposesTrueOverall).toBe(true);
     expect(hub.inactiveReason).toBeTruthy();
+  });
+
+  it("shows next season's payroll and cap space in the offseason (#82)", () => {
+    let state = createTestGameState({ saveId: "fa_hub_offseason" });
+    state = bootstrapWorld(state, createSeededRng(state.meta.rngState)).state;
+    state = transitionPhase(state, "regular").state;
+    state = transitionPhase(state, "postseason").state;
+    state = transitionPhase(state, "offseason").state;
+    const teamId = state.user.activeOwnerTeamId;
+    const nextYear = state.competition.season.year + 1;
+
+    const hub = toFreeAgencyHubView(state);
+    expect(hub.playerPayroll).toBe(getTeamPayroll(teamId, nextYear, state));
+    expect(hub.capSpace).toBe(getTeamCapSpace(teamId, nextYear, state));
   });
 });
 
