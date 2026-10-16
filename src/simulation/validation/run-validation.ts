@@ -163,7 +163,10 @@ export function runSimulationValidation(
       { homePlayers: gameHomePlayers, awayPlayers: gameAwayPlayers },
       rng,
     );
-    const snapshot = collectGameSnapshot(result);
+    const snapshot = collectGameSnapshot(result, {
+      homePlayerIds: gameHomeIds,
+      awayPlayerIds: gameAwayIds,
+    });
     snapshots.push(snapshot);
     playerGameStats.push(playerStatsMap(result));
 

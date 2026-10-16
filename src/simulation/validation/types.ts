@@ -21,6 +21,8 @@ export type TeamGameSnapshot = {
   defensiveRebounds: number;
   rebounds: number;
   assists: number;
+  steals: number;
+  blocks: number;
   turnovers: number;
   fouls: number;
   possessions: number;
@@ -103,6 +105,8 @@ export type ValidationAggregates = {
   defensiveRebounds: MetricSummary;
   totalRebounds: MetricSummary;
   assists: MetricSummary;
+  steals: MetricSummary;
+  blocks: MetricSummary;
   turnovers: MetricSummary;
   fouls: MetricSummary;
   freeThrowAttempts: MetricSummary;

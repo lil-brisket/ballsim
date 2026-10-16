@@ -1,6 +1,7 @@
 import { RATING_MAX, RATING_MIN, type Player } from "@/domain/entities/player";
 import type { Rng } from "@/domain/rng";
 import {
+  BLOCK_RESOLUTION_CONFIG,
   SHOT_RESOLUTION_CONFIG,
   SHOT_TYPES,
   type ShotType,
@@ -138,4 +139,20 @@ function assertRating(value: number, field: string): void {
       `Shot ${field} must be an integer between ${RATING_MIN} and ${RATING_MAX}.`,
     );
   }
+}
+
+/**
+ * Block chance for the contesting defender on a missed shot. Shared by the
+ * possession engine (one draw per miss) and the box-score projection.
+ */
+export function blockProbability(defender: Player, shotType: ShotType): number {
+  const { floorRating, exponent, maxProbability } = BLOCK_RESOLUTION_CONFIG;
+  const t = Math.min(
+    1,
+    Math.max(
+      0,
+      (defender.attributes.block - floorRating) / (RATING_MAX - floorRating),
+    ),
+  );
+  return maxProbability[shotType] * t ** exponent;
 }

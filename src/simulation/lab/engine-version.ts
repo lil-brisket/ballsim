@@ -33,5 +33,11 @@
  * order is unchanged. Recommended lineups now fill five starters from
  * recovery/minor players when needed, and new franchises start with an arena
  * sized to their market.
+ *
+ * Version 5: blocks are a rating-scaled chance on each missed shot
+ * (`blockProbability`, one RNG draw per miss) instead of every miss against
+ * a block >= 72 defender, cutting possession blocks from ~12 to ~4-5 per team.
+ * The rebound positioning multiplier rises 2 -> 3.1 (OREB ~14 -> ~11). Box
+ * score projects OREB and blocks from rosters with the same formulas.
  */
-export const ENGINE_VERSION = 4;
+export const ENGINE_VERSION = 5;

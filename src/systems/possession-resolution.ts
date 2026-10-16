@@ -28,7 +28,11 @@ import {
   resolveRebound,
   type ReboundResult,
 } from "@/systems/rebound-resolution";
-import { resolveShot, type ShotResolution } from "@/systems/shot-resolution";
+import {
+  blockProbability,
+  resolveShot,
+  type ShotResolution,
+} from "@/systems/shot-resolution";
 import type { ShotType } from "@/systems/shot-resolution-config";
 import {
   addAssist,
@@ -695,14 +699,17 @@ function maybeCreditSteal(
   return null;
 }
 
-/** Returns the credited blocker's id, or null when no block is credited. */
+/**
+ * Returns the credited blocker's id, or null when no block is credited.
+ * Draws one RNG value only when the defender has a non-zero block chance.
+ */
 function maybeCreditBlock(
   ctx: ExecutionContext,
   defender: Player,
   shotType: ShotType,
 ): PlayerId | null {
-  const threshold = shotType === "three_point" ? 88 : 72;
-  if (defender.attributes.block >= threshold) {
+  const probability = blockProbability(defender, shotType);
+  if (probability > 0 && ctx.rng.chance(probability)) {
     addBlock(ctx.stats, defender.id);
     pushEvent(ctx.stats, "block", defender.id, ctx.input.defensiveTeamId);
     return defender.id;

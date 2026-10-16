@@ -2,10 +2,12 @@ import { describe, expect, it, vi } from "vitest";
 import type { Player } from "@/domain/entities/player";
 import { createSeededRng, type Rng } from "@/domain/rng";
 import {
+  BLOCK_RESOLUTION_CONFIG,
   SHOT_RESOLUTION_CONFIG,
   type ShotType,
 } from "@/systems/shot-resolution-config";
 import {
+  blockProbability,
   calculateShotProbability,
   resolveShot,
   type ResolveShotInput,
@@ -314,5 +316,40 @@ describe("resolveShot validation", () => {
         createTestRng(),
       ),
     ).not.toThrow();
+  });
+});
+
+describe("blockProbability", () => {
+  const defender = (block: number) =>
+    createPlayer({ id: `blocker_${block}`, attributes: { block } });
+
+  it("is zero at or below the floor rating", () => {
+    const floor = BLOCK_RESOLUTION_CONFIG.floorRating;
+    expect(blockProbability(defender(floor), "two_point")).toBe(0);
+    expect(blockProbability(defender(floor - 10), "three_point")).toBe(0);
+  });
+
+  it("rises with the block rating up to the configured maximum", () => {
+    const ratings = [50, 65, 80, 99];
+    const twos = ratings.map((r) => blockProbability(defender(r), "two_point"));
+    for (let i = 1; i < twos.length; i += 1) {
+      expect(twos[i]!).toBeGreaterThan(twos[i - 1]!);
+    }
+    expect(twos.at(-1)).toBeCloseTo(
+      BLOCK_RESOLUTION_CONFIG.maxProbability.two_point,
+    );
+  });
+
+  it("makes threes much harder to block than twos", () => {
+    const rim = defender(95);
+    expect(blockProbability(rim, "three_point")).toBeLessThan(
+      blockProbability(rim, "two_point") / 3,
+    );
+  });
+
+  it("no longer blocks every miss against a 72-rated defender (#95)", () => {
+    // Every two-point miss against block >= 72 used to be a block.
+    expect(blockProbability(defender(72), "two_point")).toBeLessThan(0.2);
+    expect(blockProbability(defender(55), "two_point")).toBeLessThan(0.1);
   });
 });

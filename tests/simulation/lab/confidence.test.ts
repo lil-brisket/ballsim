@@ -113,6 +113,8 @@ function stubAggregates(
     defensiveRebounds: zero,
     totalRebounds: zero,
     assists: zero,
+    steals: zero,
+    blocks: zero,
     turnovers: zero,
     fouls: zero,
     freeThrowAttempts: zero,

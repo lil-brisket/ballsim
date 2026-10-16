@@ -28,6 +28,19 @@ const PAIR_SEEDS = 40;
 const PAIR_GAMES = 30;
 const PAIR_PPG_TOLERANCE = 1.5;
 
+/**
+ * Counting stats the box score projects from rosters (#95). Both engines
+ * should also land near NBA rates: ~5 blocks and ~10-11 offensive rebounds.
+ */
+const PAIR_COUNTING_TOLERANCE = {
+  blocks: 1,
+  offensiveRebounds: 1.5,
+} as const;
+const COUNTING_BANDS = {
+  blocks: { min: 3, max: 6.5 },
+  offensiveRebounds: { min: 9, max: 13 },
+} as const;
+
 function headline(report: LabReport) {
   const aggregates = report.aggregates;
   if (aggregates == null) {
@@ -35,6 +48,8 @@ function headline(report: LabReport) {
   }
   return {
     teamPoints: aggregates.teamPoints.mean,
+    blocks: aggregates.blocks.mean,
+    offensiveRebounds: aggregates.offensiveRebounds.mean,
     fieldGoalPct: aggregates.fieldGoalPct.mean,
     threePointPct: aggregates.threePointPct.mean,
     freeThrowPct: aggregates.freeThrowPct.mean,
@@ -98,26 +113,54 @@ describe("fidelity parity (possession vs box_score)", () => {
     ).toBeLessThanOrEqual(TOLERANCE.freeThrowPct);
   });
 
-  it(
-    "keeps mean PPG within tolerance across many roster pairs",
-    { timeout: 240_000 },
-    () => {
-      let possessionPoints = 0;
-      let boxScorePoints = 0;
-      for (let seed = 1; seed <= PAIR_SEEDS; seed += 1) {
-        possessionPoints += headline(
-          runLabGames({ seed, games: PAIR_GAMES, fidelity: "possession" }),
-        ).teamPoints;
-        boxScorePoints += headline(
-          runLabGames({ seed, games: PAIR_GAMES, fidelity: "box_score" }),
-        ).teamPoints;
+  describe("across many roster pairs", () => {
+    type PairMeans = {
+      teamPoints: number;
+      blocks: number;
+      offensiveRebounds: number;
+    };
+    const means: Record<"possession" | "box_score", PairMeans> = {
+      possession: { teamPoints: 0, blocks: 0, offensiveRebounds: 0 },
+      box_score: { teamPoints: 0, blocks: 0, offensiveRebounds: 0 },
+    };
+
+    beforeAll(() => {
+      for (const fidelity of ["possession", "box_score"] as const) {
+        for (let seed = 1; seed <= PAIR_SEEDS; seed += 1) {
+          const line = headline(
+            runLabGames({ seed, games: PAIR_GAMES, fidelity }),
+          );
+          means[fidelity].teamPoints += line.teamPoints / PAIR_SEEDS;
+          means[fidelity].blocks += line.blocks / PAIR_SEEDS;
+          means[fidelity].offensiveRebounds +=
+            line.offensiveRebounds / PAIR_SEEDS;
+        }
       }
-      const a = possessionPoints / PAIR_SEEDS;
-      const b = boxScorePoints / PAIR_SEEDS;
+    }, 240_000);
+
+    it("keeps mean PPG within tolerance", () => {
+      const a = means.possession.teamPoints;
+      const b = means.box_score.teamPoints;
       expect(
         Math.abs(b - a),
         `mean PPG possession=${a} box_score=${b}`,
       ).toBeLessThanOrEqual(PAIR_PPG_TOLERANCE);
-    },
-  );
+    });
+
+    it.each(["blocks", "offensiveRebounds"] as const)(
+      "keeps mean %s within tolerance and a realistic band",
+      (stat) => {
+        const a = means.possession[stat];
+        const b = means.box_score[stat];
+        expect(
+          Math.abs(b - a),
+          `${stat} possession=${a} box_score=${b}`,
+        ).toBeLessThanOrEqual(PAIR_COUNTING_TOLERANCE[stat]);
+        for (const value of [a, b]) {
+          expect(value).toBeGreaterThanOrEqual(COUNTING_BANDS[stat].min);
+          expect(value).toBeLessThanOrEqual(COUNTING_BANDS[stat].max);
+        }
+      },
+    );
+  });
 });

@@ -92,6 +92,8 @@ export function aggregateSnapshots(
   const defensiveRebounds: number[] = [];
   const totalRebounds: number[] = [];
   const assists: number[] = [];
+  const steals: number[] = [];
+  const blocks: number[] = [];
   const turnovers: number[] = [];
   const fouls: number[] = [];
   const freeThrowAttempts: number[] = [];
@@ -141,6 +143,8 @@ export function aggregateSnapshots(
       defensiveRebounds.push(team.defensiveRebounds);
       totalRebounds.push(team.rebounds);
       assists.push(team.assists);
+      steals.push(team.steals);
+      blocks.push(team.blocks);
       turnovers.push(team.turnovers);
       fouls.push(team.fouls);
       freeThrowAttempts.push(team.freeThrowsAttempted);
@@ -208,6 +212,8 @@ export function aggregateSnapshots(
     defensiveRebounds: summarizeMetric(defensiveRebounds),
     totalRebounds: summarizeMetric(totalRebounds),
     assists: summarizeMetric(assists),
+    steals: summarizeMetric(steals),
+    blocks: summarizeMetric(blocks),
     turnovers: summarizeMetric(turnovers),
     fouls: summarizeMetric(fouls),
     freeThrowAttempts: summarizeMetric(freeThrowAttempts),

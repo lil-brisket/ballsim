@@ -163,9 +163,12 @@ function emptyDelta(
 function missThenDefensiveReboundRolls(
   offensiveCount: number,
   defensiveCount: number,
+  blockRoll = 0.99,
 ): number[] {
-  // variance rolls (ignored magnitudes as long as finite), chance false for OREB, pick last defense
+  // block chance (0.99 = no block), variance rolls (ignored magnitudes as
+  // long as finite), chance false for OREB, pick last defense
   return [
+    blockRoll,
     ...Array.from({ length: offensiveCount }, () => 0.5),
     ...Array.from({ length: defensiveCount }, () => 0.5),
     0.99, // chance(orebProb) → false → defensive
@@ -179,6 +182,7 @@ function missThenOffensiveReboundRolls(
   defensiveCount: number,
 ): number[] {
   return [
+    0.99, // block chance → no block
     ...Array.from({ length: offensiveCount }, () => 0.5),
     ...Array.from({ length: defensiveCount }, () => 0.5),
     0, // chance → true → offensive
@@ -928,7 +932,7 @@ describe("resolvePossession stocks and three-point assists", () => {
           }),
         ],
       },
-      createStubRng([0.99, ...missThenDefensiveReboundRolls(2, 2)]),
+      createStubRng([0.99, ...missThenDefensiveReboundRolls(2, 2, 0)]),
     );
 
     expect(result.events.map((e) => e.type)).toEqual([

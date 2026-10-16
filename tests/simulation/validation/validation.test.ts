@@ -48,6 +48,8 @@ function validTeam(
     defensiveRebounds: overrides.defensiveRebounds ?? 30,
     rebounds: overrides.rebounds ?? 40,
     assists: overrides.assists ?? 22,
+    steals: overrides.steals ?? 7,
+    blocks: overrides.blocks ?? 5,
     turnovers: overrides.turnovers ?? 14,
     fouls: overrides.fouls ?? 18,
     possessions,
@@ -134,7 +136,7 @@ describe("checkTeamSnapshotInvariants", () => {
 });
 
 describe("collectGameSnapshot", () => {
-  it("maps GameResult fields without inventing steals/blocks", () => {
+  it("maps GameResult fields and sums steals/blocks from player rows", () => {
     const homeId = asTeamId("team_home");
     const awayId = asTeamId("team_away");
     const homePlayer = asPlayerId("p_home");
@@ -152,6 +154,8 @@ describe("collectGameSnapshot", () => {
       offensiveRebounds: 10,
       defensiveRebounds: 30,
       assists: 20,
+      steals: 6,
+      blocks: 4,
       turnovers: 12,
       fouls: 15,
     };
@@ -201,8 +205,15 @@ describe("collectGameSnapshot", () => {
     expect(snapshot.totalScore).toBe(195);
     expect(snapshot.winner).toBe("home");
     expect(snapshot.home.fieldGoalPct).toBeCloseTo(0.5);
-    // Snapshot type has no steals/blocks fields
-    expect("steals" in snapshot.home).toBe(false);
+    // Rows without a teamId (possession sim) need the side's player ids.
+    expect(snapshot.home.steals).toBe(0);
+    const withSides = collectGameSnapshot(result, {
+      homePlayerIds: new Set([homePlayer]),
+      awayPlayerIds: new Set([awayPlayer]),
+    });
+    expect(withSides.home.steals).toBe(6);
+    expect(withSides.home.blocks).toBe(4);
+    expect(withSides.away.blocks).toBe(0);
   });
 });
 
