@@ -35,8 +35,11 @@ export const FAN_BASE_SENTIMENT_PER_POINT = 1_000_000;
  */
 export const BRAND_CURRENT_MOMENTUM_WEIGHT = 0.2;
 
-/** How many prior seasons feed brand / performance / revenue trailing windows. */
-export const HISTORY_TRAIL_SEASONS = 3;
+/**
+ * How many prior seasons feed brand / performance / revenue trailing windows.
+ * Shortened from 3 so value tracks recent results (#92).
+ */
+export const HISTORY_TRAIL_SEASONS = 2;
 
 /** Revenue year weights: current, prior, two years ago (renormalized when thin). */
 export const REVENUE_YEAR_WEIGHTS = [0.5, 0.3, 0.2] as const;
@@ -62,17 +65,26 @@ export const CASH_LOG_SCALE = 1_000_000;
 export const CASH_LOG_DOLLARS = 1_200_000;
 export const CASH_CONTRIBUTION_CAP = 12_000_000;
 
-/** Competitive: dollars at 100% trailing win rate. */
-export const PERFORMANCE_WIN_PCT_DOLLARS = 110_000_000;
+/**
+ * Competitive: dollars at 100% trailing win rate. The performance block was
+ * raised 1.5x (110M / 70M / 50M) so it, not the fixed market base, drives
+ * value movement (#92).
+ */
+export const PERFORMANCE_WIN_PCT_DOLLARS = 165_000_000;
 
 /** Competitive: dollars at 100% playoff appearance rate over trail. */
-export const PERFORMANCE_PLAYOFF_RATE_DOLLARS = 70_000_000;
+export const PERFORMANCE_PLAYOFF_RATE_DOLLARS = 105_000_000;
 
 /** Extra dollars scaled by mean playoff depth score (0–1) over trail. */
-export const PERFORMANCE_PLAYOFF_DEPTH_DOLLARS = 50_000_000;
+export const PERFORMANCE_PLAYOFF_DEPTH_DOLLARS = 75_000_000;
 
-/** Current-season win% momentum weight vs trailing (when games played). */
-export const PERFORMANCE_CURRENT_MOMENTUM_WEIGHT = 0.25;
+/**
+ * Current-season win% weight vs trailing (when games played). Raised from
+ * 0.25: performance carries most of the spread in value, and a mostly
+ * trailing win% kept its year-over-year correlation near 0.8 while
+ * competitive ranks turn over almost completely (#92).
+ */
+export const PERFORMANCE_CURRENT_MOMENTUM_WEIGHT = 0.5;
 
 /**
  * Championship stock base premium before diminishing returns.
@@ -110,11 +122,11 @@ export const LEAGUE_CYCLE_SCORE: Record<
 
 /**
  * Inertia: total = (1 - α) × lastSnapshot + α × mark.
- * Mid-season noise only moves the mark. Raised from 0.3 so current-season
- * performance/market swings move value faster, instead of a team's value
- * rank being locked in almost entirely by its own history (value mobility).
+ * Mid-season noise only moves the mark. Performance already uses a trailing
+ * window, so heavy inertia on top double-smoothed value and locked ranks in
+ * place (0.3 -> 0.45 -> 0.7; per-league rank persistence ~0.90 -> ~0.84, #92).
  */
-export const FRANCHISE_VALUE_INERTIA_ALPHA = 0.45;
+export const FRANCHISE_VALUE_INERTIA_ALPHA = 0.7;
 
 /**
  * Optional YoY / vs-last-snapshot safety rail.
