@@ -13,7 +13,7 @@ import { calculatePlayerOverall } from "@/domain/player-overall-rating";
 import { systemResult, type SystemResult } from "@/domain/system-result";
 import type { GameState } from "@/state/game-state";
 import { getLeagueSalaryCap } from "@/systems/league-salary-cap";
-import { getTeamCapSpace } from "@/systems/salary-cap";
+import { getContractSigningYear, getTeamCapSpace } from "@/systems/salary-cap";
 import { salaryForPlayer, serviceYearsForSalary } from "@/systems/salary-scale";
 
 const EXTENSION_OVERALL_FLOOR = 80;
@@ -21,7 +21,9 @@ const UNDERPAID_RATIO = 1.2;
 const MAX_ADDED_YEARS = 2;
 
 export function processCpuContractExtensions(state: GameState): SystemResult {
-  const year = state.competition.season.year;
+  // Runs in the offseason: rewrite from the season the extension first covers,
+  // not the completed one, and check cap space against that season.
+  const year = getContractSigningYear(state);
   const cap = getLeagueSalaryCap(state);
   let current = state;
   const events: DomainEvent[] = [];
@@ -56,13 +58,15 @@ function extendTeamStars(
     const contract = current.business.contracts[player.contractId];
     if (!contract || contract.teamId !== teamId) continue;
 
-    const currentSalary = getContractSalaryForYear(contract, year) ?? 0;
+    const nextSalary = getContractSalaryForYear(contract, year);
+    const currentSalary =
+      nextSalary ?? getContractSalaryForYear(contract, year - 1) ?? 0;
     const market = salaryForPlayer({
       overall,
       age: player.age,
       years: serviceYearsForSalary({
         age: player.age,
-        seasonYear: year,
+        seasonYear: current.competition.season.year,
         draftSeasonYear: player.developmentLeague?.draftSeasonYear ?? null,
         seasonsPlayed:
           current.business.playerHistory[playerId]?.seasons.length ?? 0,
@@ -75,7 +79,7 @@ function extendTeamStars(
     const remainingYears = Math.max(0, contract.endYear - year + 1);
     const extraYears = remainingYears <= 1 ? MAX_ADDED_YEARS : 0;
     const endYear = contract.endYear + extraYears;
-    const raise = market - currentSalary;
+    const raise = market - (nextSalary ?? 0);
     const space = getTeamCapSpace(teamId, year, current, cap);
     if (raise > 0 && space < raise) continue;
 

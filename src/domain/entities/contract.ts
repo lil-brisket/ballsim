@@ -107,11 +107,15 @@ export function getContractSalaryForYear(
   return value === undefined ? undefined : value;
 }
 
+/**
+ * A signed contract that starts in a later year (an offseason signing for next
+ * season) is binding, so it counts as active rather than expired.
+ */
 export function getContractStatus(
   contract: Contract,
   currentYear: number,
 ): ContractStatus {
-  if (contract.startYear <= currentYear && currentYear <= contract.endYear) {
+  if (currentYear <= contract.endYear) {
     return "active";
   }
   if (currentYear > contract.endYear) {

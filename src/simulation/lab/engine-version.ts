@@ -33,5 +33,11 @@
  * order is unchanged. Recommended lineups now fill five starters from
  * recovery/minor players when needed, and new franchises start with an arena
  * sized to their market.
+ *
+ * Version 5: offseason contracts start with the upcoming season, closing the
+ * free-agency window completes AI free agency, and the short-roster fill
+ * respects the salary cap (minimum deals when a market contract does not
+ * fit). Multi-season rosters and payrolls change; single-game output for
+ * fixed rosters does not.
  */
-export const ENGINE_VERSION = 4;
+export const ENGINE_VERSION = 5;

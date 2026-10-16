@@ -41,7 +41,7 @@ import {
 import { AI_FA_MIN_SALARY } from "@/systems/owner-objectives-config";
 import { calculatePlayerOverall } from "@/domain/player-overall-rating";
 import { DEFAULT_ROSTER_SIZE } from "@/systems/roster-generation-config";
-import { getTeamCapSpace } from "@/systems/salary-cap";
+import { getContractSigningYear, getTeamCapSpace } from "@/systems/salary-cap";
 import { getLeagueSalaryCap } from "@/systems/league-salary-cap";
 import {
   isSalaryLowball,
@@ -285,7 +285,7 @@ function fillRosterForNeed(
     }
   }
 
-  const seasonYear = current.competition.season.year;
+  const seasonYear = getContractSigningYear(current);
   const beforeSize = team.roster.length;
   const maxSignings = Math.max(1, targetSize - team.roster.length);
   let signed = 0;
@@ -381,7 +381,7 @@ function trySignFreeAgent(
     age: candidate.age,
     years: serviceYearsForSalary({
       age: candidate.age,
-      seasonYear: seasonYear,
+      seasonYear: state.competition.season.year,
       draftSeasonYear: candidate.developmentLeague?.draftSeasonYear ?? null,
       seasonsPlayed:
         state.business.playerHistory[candidate.id]?.seasons.length ?? 0,

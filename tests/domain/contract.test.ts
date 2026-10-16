@@ -134,6 +134,17 @@ describe("contract status and expiration", () => {
     expect(getContractStatus(contract, 2028)).toBe("expired");
     expect(isContractExpired(contract, 2028)).toBe(true);
   });
+
+  it("treats a signed contract that starts next season as active", () => {
+    const contract = createContract(
+      validInput({
+        startYear: 2027,
+        endYear: 2027,
+        salaryByYear: salaryMap(2027, 2027, 5_000_000),
+      }),
+    );
+    expect(getContractStatus(contract, 2026)).toBe("active");
+  });
 });
 
 describe("team option lifecycle", () => {

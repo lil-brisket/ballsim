@@ -4,7 +4,11 @@ import { createContract, type Contract } from "@/domain/entities/contract";
 import type { Rng } from "@/domain/rng";
 import { systemResult, type SystemResult } from "@/domain/system-result";
 import type { GameState } from "@/state/game-state";
-import { salaryForPlayer } from "@/systems/salary-scale";
+import {
+  REPLACEMENT_LEVEL_OVERALL,
+  salaryForPlayer,
+  vetMinSalary,
+} from "@/systems/salary-scale";
 import { getLeagueSalaryCap } from "@/systems/league-salary-cap";
 import { calculatePlayerOverall } from "@/domain/player-overall-rating";
 import { generatePlayerWithRng } from "@/systems/player-generation";
@@ -14,7 +18,7 @@ import {
   rosterQualityBandForSlot,
 } from "@/systems/roster-generation-config";
 import { recommendRosterManagement } from "@/systems/roster-management";
-import { getTeamPayroll } from "@/systems/salary-cap";
+import { getContractSigningYear, getTeamPayroll } from "@/systems/salary-cap";
 
 /**
  * Fills empty team rosters with fictional players and starter contracts.
@@ -154,13 +158,15 @@ export function generateRosters(state: GameState, rng: Rng): SystemResult {
 function takeFillFreeAgent(
   players: Record<string, Player>,
   position: PlayerPosition,
+  accept: (player: Player) => boolean = () => true,
 ): Player | null {
   const candidates = Object.values(players).filter(
     (player) =>
       player.retired !== true &&
       player.teamId === null &&
       player.contractId == null &&
-      player.position === position,
+      player.position === position &&
+      accept(player),
   );
   if (candidates.length === 0) {
     return null;
@@ -193,9 +199,31 @@ function nextFillPlayerId(
   return { playerId, nextSlot: slot + 1 };
 }
 
+function fillMarketSalary(player: Player, cap: number): number {
+  return salaryForPlayer({
+    overall: calculatePlayerOverall(player.position, player.attributes),
+    age: player.age,
+    years: Math.max(0, player.age - 19),
+    cap,
+    kind: "fa",
+  });
+}
+
+function isReplacementLevel(player: Player): boolean {
+  return (
+    calculatePlayerOverall(player.position, player.attributes) <=
+    REPLACEMENT_LEVEL_OVERALL
+  );
+}
+
 /**
- * Adds generated players so every team reaches {@link DEFAULT_ROSTER_SIZE}.
+ * Adds players so every team reaches {@link DEFAULT_ROSTER_SIZE}.
  * Used after offseason attrition when the free-agent pool cannot fill holes.
+ *
+ * With the salary cap on, a fill respects cap space: the best free agent whose
+ * market salary fits signs at market; otherwise a replacement-level player
+ * signs a one-year minimum deal (the vet-min exception), so filling a roster
+ * never pushes a team over the cap with market contracts.
  */
 export function fillShortRosters(state: GameState, rng: Rng): SystemResult {
   const teamIds = (
@@ -214,7 +242,10 @@ export function fillShortRosters(state: GameState, rng: Rng): SystemResult {
   const teams: Record<string, (typeof state.world.teams)[string]> = {
     ...state.world.teams,
   };
-  const currentYear = state.competition.season.year;
+  const currentYear = getContractSigningYear(state);
+  const cap = getLeagueSalaryCap(state);
+  const capEnabled = state.settings.financialRules.salaryCapEnabled;
+  const minSalary = vetMinSalary(cap);
   const occupiedNames = new Set<string>();
   for (const existing of Object.values(players)) {
     if (existing.retired === true) continue;
@@ -225,9 +256,15 @@ export function fillShortRosters(state: GameState, rng: Rng): SystemResult {
     const team = teams[teamId]!;
     const roster = [...team.roster];
     let slot = roster.length;
+    let payroll = getTeamPayroll(teamId, currentYear, state);
     while (roster.length < DEFAULT_ROSTER_SIZE) {
       const position = rosterPositionForSlot(roster.length);
-      const existing = takeFillFreeAgent(players, position);
+      const capSpace = capEnabled ? cap - payroll : Number.MAX_SAFE_INTEGER;
+      const fits = (candidate: Player) =>
+        fillMarketSalary(candidate, cap) <= capSpace;
+      const existing =
+        takeFillFreeAgent(players, position, fits) ??
+        takeFillFreeAgent(players, position, isReplacementLevel);
       let player: Player;
       if (existing) {
         const contractId = asContractId(
@@ -245,28 +282,34 @@ export function fillShortRosters(state: GameState, rng: Rng): SystemResult {
         slot = next.nextSlot;
         const playerId = next.playerId;
         const contractId = asContractId(`contract_${playerId}`);
-        player = generatePlayerWithRng(rng, {
-          id: playerId,
-          teamId: team.id,
-          contractId,
-          position,
-          occupiedNames,
-          qualityBand: rosterQualityBandForSlot(roster.length),
-        });
+        const generate = (rosterSlot: number) =>
+          generatePlayerWithRng(rng, {
+            id: playerId,
+            teamId: team.id,
+            contractId,
+            position,
+            occupiedNames,
+            qualityBand: rosterQualityBandForSlot(rosterSlot),
+          });
+        player = generate(roster.length);
+        if (!fits(player) && !isReplacementLevel(player)) {
+          // No room for this player's market deal: take a bench-level one
+          // who will sign for the minimum instead.
+          player = generate(DEFAULT_ROSTER_SIZE - 1);
+        }
         occupiedNames.add(`${player.firstName} ${player.lastName}`);
         players[playerId] = player;
         roster.push(playerId);
       }
 
       const contractId = player.contractId!;
-      const salaryPerYear = salaryForPlayer({
-        overall: calculatePlayerOverall(player.position, player.attributes),
-        age: player.age,
-        years: Math.max(0, player.age - 19),
-        cap: getLeagueSalaryCap(state),
-        kind: "fa",
-      });
-      const yearsRemaining = rng.nextInt(1, 4);
+      const market = fillMarketSalary(player, cap);
+      const atMinimum = market > capSpace;
+      const salaryPerYear = atMinimum ? minSalary : market;
+      // Draw the length either way so the RNG stream does not depend on it.
+      const drawnYears = rng.nextInt(1, 4);
+      const yearsRemaining = atMinimum ? 1 : drawnYears;
+      payroll += salaryPerYear;
       const startYear = currentYear;
       const endYear = currentYear + yearsRemaining - 1;
       const salaryByYear: Record<string, number> = {};
