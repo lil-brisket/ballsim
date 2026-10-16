@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
+vi.mock("server-only", () => ({}));
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 
 const fetchStaff = vi.fn();

@@ -1,10 +1,12 @@
 import { describe, expect, it, vi, beforeEach, afterEach } from "vitest";
+vi.mock("server-only", () => ({}));
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { EntityDrawerProvider } from "@/components/entity/EntityDrawerProvider";
 import { PlayerEntityLink } from "@/components/entity/PlayerEntityLink";
 import { StaffEntityLink } from "@/components/entity/StaffEntityLink";
 import { TeamEntityLink } from "@/components/entity/TeamEntityLink";
 import { resetDrawerScrollLockForTests } from "@/components/ui/drawer-scroll-lock";
+import { createEmptyPlayerStatLine } from "@/domain/player-stat-aggregation";
 
 const fetchPlayer = vi.fn();
 const fetchTeam = vi.fn();
@@ -68,7 +70,31 @@ const samplePlayer = {
     },
   },
   contract: null,
-  performance: { games: 10, ppg: 18.2, rpg: 4.1, apg: 6.5 },
+  performance: {
+    games: 10,
+    mpg: 31.4,
+    ppg: 18.2,
+    rpg: 4.1,
+    apg: 6.5,
+    spg: 1.3,
+    bpg: 0.4,
+  },
+  stats: {
+    currentSeasonId: "season_2026",
+    seasons: [],
+    career: {
+      regular: createEmptyPlayerStatLine(),
+      playoffs: createEmptyPlayerStatLine(),
+      development: createEmptyPlayerStatLine(),
+      combined: createEmptyPlayerStatLine(),
+      extendedColumnsComplete: true,
+    },
+    currentSeasonGames: [],
+  },
+  development: {
+    ratingHistory: [{ seasonYear: 2026, age: 24, overall: 78, current: true }],
+    trackingStartedSeasonYear: null,
+  },
   navigation: {
     playerHref: "/dashboard/save_test/players/player_1",
     teamHref: "/dashboard/save_test/team",

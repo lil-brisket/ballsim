@@ -1,5 +1,6 @@
 import { createEmptyPlayerStatLine } from "@/domain/player-stat-aggregation";
 import { describe, expect, it, vi, beforeEach, afterEach } from "vitest";
+vi.mock("server-only", () => ({}));
 import {
   fireEvent,
   render,

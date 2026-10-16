@@ -60,9 +60,15 @@ describe("v66 → v67 migration (league participation)", () => {
     expect(() =>
       validateGameState({
         ...state,
-        user: { ...state.user, participation: { mode: "online" } },
+        user: { ...state.user, participation: { mode: "lan" } },
       } as unknown as typeof state),
     ).toThrow(/user\.participation\.mode/);
+    expect(() =>
+      validateGameState({
+        ...state,
+        user: { ...state.user, participation: { mode: "online" } },
+      } as unknown as typeof state),
+    ).toThrow(/user\.participation\.participants must be an array/);
     const { participation: _omit, ...userWithout } = state.user;
     expect(() =>
       validateGameState({
