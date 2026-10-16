@@ -54,10 +54,12 @@ next-env.d.ts
 
 /src/generated/prisma
 
-# Ad-hoc analysis reports (scripts/_decade_health.ts, analyze-player-*.ts)
+# Ad-hoc analysis reports (analyze-player-*.ts)
 /reports
 # Scratch output at the repo root
 /tmp-*
+# Local scratch scripts and their output (never committed)
+/scripts/_*
 
 # Personal roster/content files with real-world names; never commit (game is fully fictional)
 /local-content
