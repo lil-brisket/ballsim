@@ -1,8 +1,9 @@
 import Link from "next/link";
+import { cn, focusRingClass, linkClass } from "@/components/ui/styles";
 import type { OwnerDashboardNextEvent } from "@/state/owner-dashboard";
-import { EmptyState } from "@/components/owner/EmptyState";
+import { EmptyState } from "@/components/ui/EmptyState";
 import { EventCard } from "@/components/game/EventCard";
-import { Section } from "@/components/owner/Section";
+import { Section } from "@/components/ui/Section";
 
 /** @deprecated Prefer AroundTheLeaguePanel — kept for offseason / legacy pages. */
 export { AroundTheLeaguePanel as LeagueNewsPanel } from "@/components/owner/dashboard/AroundTheLeaguePanel";
@@ -23,7 +24,7 @@ export function NextImportantEventPanel(props: {
       action={
         <Link
           href={calendarHref}
-          className="text-sm text-amber-400 hover:text-amber-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-500"
+          className={cn(linkClass, "text-sm", focusRingClass)}
         >
           Calendar
         </Link>
@@ -50,7 +51,7 @@ export function NextImportantEventPanel(props: {
           <li className="list-none px-1">
             <Link
               href={event.href ?? calendarHref}
-              className="text-sm text-amber-400 hover:text-amber-300"
+              className={cn(linkClass, "text-sm")}
             >
               {event.href ? "Open event" : "Open Calendar"}
             </Link>

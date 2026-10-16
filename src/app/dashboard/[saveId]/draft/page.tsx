@@ -1,3 +1,5 @@
+import type { Metadata } from "next";
+import { cn, linkClass } from "@/components/ui/styles";
 import { selectPlayerPortrait } from "@/state/player-portrait-selectors";
 import { notFound } from "next/navigation";
 import {
@@ -13,10 +15,10 @@ import { DraftHeaderStrip } from "@/components/draft/DraftHeaderStrip";
 import { DraftPickSummary } from "@/components/draft/DraftPickSummary";
 import { PostDraftDevelopmentReview } from "@/components/draft/PostDraftDevelopmentReview";
 import { ProspectCard } from "@/components/draft/ProspectCard";
-import { EmptyState, ErrorState } from "@/components/owner/EmptyState";
-import { PageHeader } from "@/components/owner/PageHeader";
-import { Section } from "@/components/owner/Section";
-import { StatusBadge } from "@/components/owner/StatusBadge";
+import { EmptyState, ErrorState } from "@/components/ui/EmptyState";
+import { PageHeader } from "@/components/ui/PageHeader";
+import { Section } from "@/components/ui/Section";
+import { StatusBadge } from "@/components/ui/StatusBadge";
 import { TeamLogoMark } from "@/components/team/logos/TeamLogoMark";
 import { TeamEntityLink } from "@/components/entity/TeamEntityLink";
 import { PlayerEntityLink } from "@/components/entity/PlayerEntityLink";
@@ -33,6 +35,8 @@ import {
 import { buildPostDraftDlRecommendations } from "@/systems/development-league/recommendations";
 import { prospectFunFact } from "@/systems/draft/prospect-fun-facts";
 import { toScoutingReportView } from "@/systems/scouting/scouting-reports";
+
+export const metadata: Metadata = { title: "Draft" };
 
 type DraftPageProps = {
   params: Promise<{ saveId: string }>;
@@ -181,7 +185,7 @@ export default async function DraftPage({
             </div>
           ) : null}
           {board.userOnClock ? (
-            <p className="mb-4 rounded-md border border-amber-700/50 bg-amber-950/40 px-4 py-3 text-sm text-amber-200">
+            <p className="mb-4 rounded-md border border-team-ink/50 bg-team/15 px-4 py-3 text-sm text-zinc-50">
               Your team is on the clock. Select a prospect below.
             </p>
           ) : (
@@ -198,7 +202,7 @@ export default async function DraftPage({
                     <li
                       key={slot.draftPickId}
                       className={`flex items-center gap-2 rounded px-2 py-1 ${
-                        slot.isUserPick ? "bg-amber-950/30" : ""
+                        slot.isUserPick ? "bg-team/15" : ""
                       }`}
                     >
                       <span className="font-mono text-zinc-400">
@@ -329,7 +333,7 @@ export default async function DraftPage({
                               ) : null}
                               <button
                                 type="submit"
-                                className="text-xs font-medium text-amber-400 hover:underline"
+                                className={cn(linkClass, "text-xs font-medium")}
                               >
                                 Draft
                               </button>
@@ -379,7 +383,7 @@ export default async function DraftPage({
                           className="flex justify-between text-zinc-300"
                         >
                           <span>{n.position}</span>
-                          <span className="capitalize text-amber-400/90">
+                          <span className="capitalize text-team-ink/90">
                             {n.level}
                           </span>
                         </li>

@@ -17,8 +17,8 @@ export type RotationQuarterPlayer = {
 };
 
 const ROLE_BAR: Record<string, string> = {
-  starter: "bg-amber-600",
-  sixth_man: "bg-amber-700/80",
+  starter: "bg-team-ink",
+  sixth_man: "bg-team-ink/80",
   rotation: "bg-zinc-500",
   bench: "bg-zinc-600",
   deep_bench: "bg-zinc-700",

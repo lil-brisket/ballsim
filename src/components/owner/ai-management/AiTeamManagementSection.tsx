@@ -66,7 +66,7 @@ export function AiTeamManagementSection({
             onClick={() =>
               onAssistanceChange(selectAllVisiblePhases(assistance))
             }
-            className="rounded-md border border-amber-700/60 bg-amber-950/40 px-3 py-1.5 text-xs font-medium text-amber-200 hover:border-amber-500"
+            className="rounded-md border border-team-ink/50 bg-team/20 px-3 py-1.5 text-xs font-medium text-team-ink hover:border-team-ink"
           >
             Select All
           </button>

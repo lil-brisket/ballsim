@@ -221,7 +221,7 @@ export function PlayerPortrait(props: PlayerPortraitProps) {
         />
       ) : null}
       {state === "pending" ? (
-        <span className="pointer-events-none absolute inset-0 z-30 rounded-xl ring-2 ring-inset ring-amber-600" />
+        <span className="pointer-events-none absolute inset-0 z-30 rounded-xl ring-2 ring-inset ring-team-ink" />
       ) : null}
     </span>
   );

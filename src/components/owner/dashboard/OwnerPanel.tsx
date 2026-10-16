@@ -3,8 +3,8 @@
 import { useState } from "react";
 import type { OwnerDashboardOwner } from "@/state/owner-dashboard";
 import { ObjectiveCard } from "@/components/game/ObjectiveCard";
-import { EmptyState } from "@/components/owner/EmptyState";
-import { Section } from "@/components/owner/Section";
+import { EmptyState } from "@/components/ui/EmptyState";
+import { Section } from "@/components/ui/Section";
 
 export function OwnerPanel(props: { owner: OwnerDashboardOwner }) {
   const { owner } = props;

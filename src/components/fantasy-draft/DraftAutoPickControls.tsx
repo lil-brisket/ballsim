@@ -28,7 +28,7 @@ export function DraftAutoPickControls(props: {
           <input type="hidden" name="saveId" value={saveId} />
           <button
             type="submit"
-            className="rounded-md bg-amber-600 px-3 py-2 text-sm text-zinc-950"
+            className="rounded-md bg-team px-3 py-2 text-sm text-on-team"
           >
             Resume Draft
           </button>

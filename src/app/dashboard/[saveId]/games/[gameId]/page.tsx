@@ -1,9 +1,12 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { loadOwnerGameBoxScoreView } from "@/application/game-service";
 import { GameBoxScore } from "@/components/owner/GameBoxScore";
 import { GameRotationPanel } from "@/components/owner/GameRotationPanel";
-import { PageHeader } from "@/components/owner/PageHeader";
+import { PageHeader } from "@/components/ui/PageHeader";
+
+export const metadata: Metadata = { title: "Game" };
 
 type GamePageProps = {
   params: Promise<{ saveId: string; gameId: string }>;
@@ -28,7 +31,7 @@ export default async function GameBoxScorePage({ params }: GamePageProps) {
             {view.canWatch ? (
               <Link
                 href={`/dashboard/${saveId}/games/${gameId}/watch`}
-                className="text-sm text-amber-400 hover:text-amber-300"
+                className="text-sm text-team-ink underline-offset-4 hover:underline"
               >
                 Watch replay →
               </Link>

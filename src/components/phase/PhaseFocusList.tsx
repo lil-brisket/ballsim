@@ -91,7 +91,7 @@ function PriorityMark(props: { priority: PhaseTask["priority"] }) {
     return <span className="text-red-400">●</span>;
   }
   if (props.priority === "recommended") {
-    return <span className="text-amber-400">●</span>;
+    return <span className="text-warning">●</span>;
   }
   return <span className="text-sky-400">●</span>;
 }

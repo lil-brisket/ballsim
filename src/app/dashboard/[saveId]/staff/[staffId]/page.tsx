@@ -1,14 +1,17 @@
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { loadOwnerStaffDetail } from "@/application/game-service";
 import { MoneyDisplay } from "@/components/owner/MoneyDisplay";
-import { PageHeader } from "@/components/owner/PageHeader";
-import { Section } from "@/components/owner/Section";
+import { PageHeader } from "@/components/ui/PageHeader";
+import { Section } from "@/components/ui/Section";
 import {
   STAFF_ATTRIBUTE_KEYS,
   STAFF_ROLE_DISPLAY,
 } from "@/domain/entities/staff-roles";
 import type { StaffRole } from "@/domain/entities/staff";
+
+export const metadata: Metadata = { title: "Staff Member" };
 
 type PageProps = {
   params: Promise<{ saveId: string; staffId: string }>;
@@ -33,7 +36,7 @@ export default async function StaffDetailPage({ params }: PageProps) {
       <p className="mb-4 text-sm text-zinc-400">
         <Link
           href={`/dashboard/${saveId}/staff-coaching/staff`}
-          className="hover:text-amber-400"
+          className="hover:text-team-ink"
         >
           ← Back to staff
         </Link>

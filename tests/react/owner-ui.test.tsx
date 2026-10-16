@@ -7,7 +7,7 @@ vi.mock("next/navigation", () => ({
 
 import { OwnerNav } from "@/components/owner/OwnerNav";
 import { MoneyDisplay } from "@/components/owner/MoneyDisplay";
-import { StatusBadge } from "@/components/owner/StatusBadge";
+import { StatusBadge } from "@/components/ui/StatusBadge";
 import { ConfirmDialog } from "@/components/owner/ConfirmDialog";
 import { OWNER_NAV_GROUPS } from "@/application/owner-nav-config";
 

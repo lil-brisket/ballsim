@@ -25,12 +25,12 @@ export function SimulationProgressBanner(props: SimulationProgressBannerProps) {
     <div
       role="status"
       aria-live="polite"
-      className="rounded-lg border border-amber-700/40 bg-amber-950/30 px-4 py-3 text-sm text-amber-100"
+      className="rounded-lg border border-team-ink/50 bg-team/15 px-4 py-3 text-sm text-zinc-100"
     >
-      <p className="font-medium text-amber-50">
+      <p className="font-medium text-zinc-50">
         {props.busy ? "Simulating" : "Last advance"} — Season {props.seasonYear}
       </p>
-      <p className="mt-1 text-amber-200/90">
+      <p className="mt-1 text-zinc-200">
         {props.phase} · {props.currentDate}
         {props.daysAdvanced != null && props.daysRequested != null
           ? ` · Day ${props.daysAdvanced} / ${props.daysRequested}`
@@ -46,11 +46,11 @@ export function SimulationProgressBanner(props: SimulationProgressBannerProps) {
             aria-hidden
           >
             <div
-              className="h-full rounded-full bg-amber-500 transition-[width]"
+              className="h-full rounded-full bg-team-ink transition-[width]"
               style={{ width: `${percent}%` }}
             />
           </div>
-          <p className="mt-1 text-xs text-amber-300/80">{percent}% complete</p>
+          <p className="mt-1 text-xs text-team-ink/80">{percent}% complete</p>
         </div>
       ) : null}
     </div>

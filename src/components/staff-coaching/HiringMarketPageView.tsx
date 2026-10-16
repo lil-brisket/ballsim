@@ -5,11 +5,11 @@ import {
   negotiateStaffOfferAction,
 } from "@/application/actions";
 import { StaffEntityLink } from "@/components/entity/StaffEntityLink";
-import { EmptyState, ErrorState } from "@/components/owner/EmptyState";
+import { EmptyState, ErrorState } from "@/components/ui/EmptyState";
 import { MoneyDisplay } from "@/components/owner/MoneyDisplay";
-import { PageHeader } from "@/components/owner/PageHeader";
-import { Section } from "@/components/owner/Section";
-import { StatusBadge } from "@/components/owner/StatusBadge";
+import { PageHeader } from "@/components/ui/PageHeader";
+import { Section } from "@/components/ui/Section";
+import { StatusBadge } from "@/components/ui/StatusBadge";
 import { StaffTermsDialog } from "@/components/staff-coaching/StaffTermsDialog";
 import { STAFF_ROLE_DISPLAY } from "@/domain/entities/staff-roles";
 import type { StaffRole } from "@/domain/entities/staff";
@@ -34,7 +34,7 @@ function marketHref(saveId: string, role?: string, sort?: string): string {
 function chipClass(active: boolean): string {
   return `rounded-full border px-3 py-1 text-xs ${
     active
-      ? "border-amber-600 text-amber-400"
+      ? "border-team-ink text-team-ink"
       : "border-zinc-700 text-zinc-400 hover:border-zinc-500"
   }`;
 }
@@ -213,7 +213,7 @@ function MarketActions(props: {
           <input type="hidden" name="returnPath" value={returnPath} />
           <button
             type="submit"
-            className="rounded-md border border-amber-700/50 px-3 py-1.5 text-sm text-amber-300 hover:border-amber-600"
+            className="rounded-md border border-team-ink/50 px-3 py-1.5 text-sm text-team-ink hover:border-team-ink"
           >
             Negotiate
           </button>
@@ -232,7 +232,7 @@ function MarketActions(props: {
           <input type="hidden" name="returnPath" value={returnPath} />
           <button
             type="submit"
-            className="rounded-md bg-amber-600 px-3 py-1.5 text-sm font-medium text-zinc-950 hover:bg-amber-500"
+            className="rounded-md bg-team px-3 py-1.5 text-sm font-medium text-on-team hover:brightness-110"
           >
             Accept
           </button>

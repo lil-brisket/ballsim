@@ -67,7 +67,7 @@ export function DraftConfirmDialog(props: {
               ref={confirmRef}
               type="submit"
               disabled={props.pending}
-              className="rounded-md bg-amber-600 px-3 py-2 text-sm font-medium text-zinc-950 disabled:opacity-50"
+              className="rounded-md bg-team px-3 py-2 text-sm font-medium text-on-team disabled:opacity-50"
             >
               Draft Player
             </button>

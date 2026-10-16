@@ -52,7 +52,7 @@ export function PlayerHistorySearch(props: {
                   "flex items-baseline justify-between gap-2 rounded-md px-2 py-1 text-sm hover:bg-zinc-900",
                   focusRingClass,
                   entry.playerId === props.selectedPlayerId &&
-                    "bg-amber-600/10 text-amber-300",
+                    "bg-team/15 text-team-ink",
                 )}
               >
                 <span className="text-zinc-100">{entry.displayName}</span>

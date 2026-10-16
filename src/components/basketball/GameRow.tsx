@@ -59,7 +59,7 @@ export function GameRow(props: GameRowProps) {
           teamId={props.opponentTeamId}
           className={cn(
             touchTargetTextClass,
-            "text-zinc-100 hover:text-amber-400",
+            "text-zinc-100 hover:text-team-ink",
             focusRingClass,
           )}
         >
@@ -103,7 +103,7 @@ export function GameRow(props: GameRowProps) {
       href={props.calendarHref}
       className={cn(
         touchTargetTextClass,
-        "text-xs text-amber-400 hover:text-amber-300",
+        "text-xs text-team-ink underline-offset-4 hover:underline",
         focusRingClass,
       )}
     >
@@ -132,7 +132,7 @@ export function GameRow(props: GameRowProps) {
             href={`/dashboard/${props.saveId}/games/${props.gameId}/watch`}
             className={cn(
               touchTargetTextClass,
-              "text-xs text-amber-400 hover:text-amber-300",
+              "text-xs text-team-ink underline-offset-4 hover:underline",
               focusRingClass,
             )}
           >

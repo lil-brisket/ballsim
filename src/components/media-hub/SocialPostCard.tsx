@@ -1,4 +1,4 @@
-import { StatusBadge } from "@/components/owner/StatusBadge";
+import { StatusBadge } from "@/components/ui/StatusBadge";
 import type { ImportanceLevel } from "@/domain/entities/event-source";
 import type { SocialAuthorType } from "@/domain/entities/social-post";
 

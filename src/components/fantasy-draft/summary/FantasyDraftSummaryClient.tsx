@@ -8,7 +8,7 @@ import type { FantasyDraftTeamSummary } from "@/domain/entities/fantasy-draft";
 function Stars(props: { count: number }) {
   return (
     <span
-      className="tracking-tight text-amber-400"
+      className="tracking-tight text-team-ink"
       aria-label={`${props.count} stars`}
     >
       {"★".repeat(props.count)}
@@ -30,7 +30,7 @@ function BalanceBar(props: { level: string }) {
   return (
     <div className="h-2 flex-1 overflow-hidden rounded-full bg-zinc-800">
       <div
-        className="h-full rounded-full bg-amber-500"
+        className="h-full rounded-full bg-team-ink"
         style={{ width: widths[props.level] ?? "40%" }}
       />
     </div>
@@ -80,7 +80,7 @@ function TeamSummaryPanel(props: {
             <div className="text-[10px] uppercase text-zinc-500">
               Draft Grade
             </div>
-            <div className="text-4xl font-bold text-amber-300">
+            <div className="text-4xl font-bold text-team-ink">
               {summary.draftGrade}
             </div>
             <div className="text-sm text-zinc-400">
@@ -217,15 +217,15 @@ function TeamSummaryPanel(props: {
         </div>
       </section>
 
-      <section className="rounded-xl border border-amber-800/40 bg-amber-950/20 p-4">
-        <h3 className="text-sm font-semibold uppercase text-amber-300/80">
+      <section className="rounded-xl border border-team-ink/50 bg-team/20 p-4">
+        <h3 className="text-sm font-semibold uppercase text-team-ink/80">
           What&apos;s Next?
         </h3>
         <ul className="mt-2 space-y-1 text-sm text-zinc-300">
           {summary.recommendedNextSteps.map((step, i) => (
             <li key={step}>
               {i === 0 ? (
-                <span className="font-medium text-amber-200">Priority: </span>
+                <span className="font-medium text-team-ink">Priority: </span>
               ) : null}
               {step}
             </li>
@@ -332,12 +332,12 @@ export function FantasyDraftSummaryClient(props: {
                 onClick={() => setActiveTeamId(teamId)}
                 className={`rounded-lg border px-3 py-2 text-sm ${
                   active
-                    ? "border-amber-600 bg-amber-950/40 text-amber-100"
+                    ? "border-team-ink bg-team/20 text-zinc-100"
                     : "border-zinc-800 text-zinc-400 hover:border-zinc-600"
                 }`}
               >
                 {meta?.name ?? teamId}{" "}
-                <span className="font-semibold text-amber-300">{grade}</span>
+                <span className="font-semibold text-team-ink">{grade}</span>
               </button>
             );
           })}
@@ -360,7 +360,7 @@ export function FantasyDraftSummaryClient(props: {
         <input type="hidden" name="saveId" value={saveId} />
         <button
           type="submit"
-          className="rounded-md bg-amber-600 px-4 py-2 text-sm font-medium text-zinc-950 hover:bg-amber-500"
+          className="rounded-md bg-team px-4 py-2 text-sm font-medium text-on-team hover:brightness-110"
         >
           Continue League
         </button>

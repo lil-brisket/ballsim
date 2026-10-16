@@ -55,7 +55,7 @@ export function StartingFiveEditor(props: {
                       : "col-start-2"
               }`}
             >
-              <p className="mb-2 font-mono text-xs text-amber-400">{slot}</p>
+              <p className="mb-2 font-mono text-xs text-team-ink">{slot}</p>
               <select
                 value={current}
                 onChange={(event) =>

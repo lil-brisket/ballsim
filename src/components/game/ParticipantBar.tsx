@@ -138,7 +138,7 @@ export function ParticipantBar(props: {
         <div
           role="alertdialog"
           aria-label="Confirm advance for everyone"
-          className="flex flex-wrap items-center gap-2 rounded-lg border border-amber-700/60 bg-amber-950/30 p-2 text-sm text-amber-100"
+          className="flex flex-wrap items-center gap-2 rounded-lg border border-warning/40 bg-warning/10 p-2 text-sm text-zinc-200"
         >
           <span>
             Other players may not have finished their turn. Mark everyone ready?
@@ -171,7 +171,7 @@ export function ParticipantBar(props: {
           ))}
         </ul>
         {participation.advanceBlockedReason ? (
-          <p className="mt-1 text-amber-300">
+          <p className="mt-1 text-warning">
             {participation.advanceBlockedReason}
           </p>
         ) : null}

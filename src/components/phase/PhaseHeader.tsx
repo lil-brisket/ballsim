@@ -13,7 +13,7 @@ export function PhaseHeader(props: {
       className="rounded-xl border border-zinc-700 bg-zinc-900/60 px-4 py-4"
       aria-label="Current phase"
     >
-      <p className="font-mono text-xs uppercase tracking-[0.16em] text-amber-500">
+      <p className="font-mono text-xs uppercase tracking-[0.16em] text-team-ink">
         {stage} · {seasonYear} · {currentDate}
       </p>
       <div className="mt-3 grid gap-3 sm:grid-cols-3">
@@ -52,8 +52,8 @@ export function PhaseHeader(props: {
       </div>
       <p className="mt-3 text-sm text-zinc-300">{view.resolved.objective}</p>
       {view.priorityLine ? (
-        <p className="mt-2 text-sm text-amber-200/90">
-          <span className="font-medium text-amber-400">Your priority:</span>{" "}
+        <p className="mt-2 text-sm text-zinc-200">
+          <span className="font-medium text-team-ink">Your priority:</span>{" "}
           {view.priorityLine}
         </p>
       ) : null}

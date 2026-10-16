@@ -28,7 +28,7 @@ export function PlaybackControls(props: {
           type="button"
           className={cn(
             BUTTON_CLASS,
-            "min-w-20 border-amber-600 bg-amber-950/40 text-amber-200",
+            "min-w-20 border-team-ink bg-team/15 text-team-ink",
           )}
           onClick={props.onTogglePlay}
           disabled={atEnd && !props.playing}
@@ -49,7 +49,7 @@ export function PlaybackControls(props: {
                 BUTTON_CLASS,
                 "px-2 font-mono",
                 props.speed === speed &&
-                  "border-amber-600 bg-amber-950/40 text-amber-200",
+                  "border-team-ink bg-team/15 text-team-ink",
               )}
               onClick={() => props.onSpeedChange(speed)}
             >

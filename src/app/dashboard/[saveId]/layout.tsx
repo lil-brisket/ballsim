@@ -1,3 +1,5 @@
+import type { Metadata } from "next";
+import { cache } from "react";
 import { notFound, redirect } from "next/navigation";
 import { loadOwnerSave } from "@/application/game-service";
 import { resolveOnboardingRoute } from "@/application/onboarding-routing";
@@ -8,12 +10,28 @@ type OwnerLayoutProps = {
   params: Promise<{ saveId: string }>;
 };
 
+/** One save load per request, shared by generateMetadata and the layout. */
+const loadSave = cache(loadOwnerSave);
+
+export async function generateMetadata({
+  params,
+}: Pick<OwnerLayoutProps, "params">): Promise<Metadata> {
+  const { saveId } = await params;
+  const loaded = await loadSave(saveId);
+  if (!loaded) {
+    return {};
+  }
+  const team = loaded.dashboard.controlledTeam;
+  const teamName = `${team.city} ${team.name}`;
+  return { title: { default: teamName, template: `%s · ${teamName}` } };
+}
+
 export default async function OwnerLayout({
   children,
   params,
 }: OwnerLayoutProps) {
   const { saveId } = await params;
-  const loaded = await loadOwnerSave(saveId);
+  const loaded = await loadSave(saveId);
   if (!loaded) {
     notFound();
   }

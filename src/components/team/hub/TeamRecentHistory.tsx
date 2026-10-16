@@ -1,5 +1,5 @@
-import { EmptyState } from "@/components/owner/EmptyState";
-import { Section } from "@/components/owner/Section";
+import { EmptyState } from "@/components/ui/EmptyState";
+import { Section } from "@/components/ui/Section";
 import { RecentHistoryItem } from "@/components/team/hub/RecentHistoryItem";
 import type { TeamRecentHistoryItem } from "@/state/team-recent-history-selectors";
 

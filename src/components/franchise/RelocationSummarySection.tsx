@@ -68,7 +68,7 @@ export function RelocationSummarySection(props: {
         title="Relocation"
         badge={badge}
         footer={
-          <span className="text-sm font-medium text-amber-400">
+          <span className="text-sm font-medium text-team-ink">
             Explore Relocation
           </span>
         }

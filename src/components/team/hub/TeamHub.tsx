@@ -1,4 +1,4 @@
-import { ErrorState } from "@/components/owner/EmptyState";
+import { ErrorState } from "@/components/ui/EmptyState";
 import { TeamHubSubNav } from "@/components/team/TeamHubSubNav";
 import { TeamHubHeader } from "@/components/team/hub/TeamHubHeader";
 import { TeamOverview } from "@/components/team/hub/TeamOverview";

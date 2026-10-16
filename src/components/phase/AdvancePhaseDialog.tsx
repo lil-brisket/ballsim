@@ -31,7 +31,7 @@ export function AdvancePhaseDialog(props: {
         ))}
       </ul>
       {preview.recommendedRemaining > 0 ? (
-        <p className="mt-2 text-sm text-amber-300/90">
+        <p className="mt-2 text-sm text-warning">
           {preview.recommendedRemaining} recommended action
           {preview.recommendedRemaining === 1 ? "" : "s"} remain on your
           franchise{props.view.ownedTeams.length > 1 ? "s" : ""}.
@@ -44,7 +44,7 @@ export function AdvancePhaseDialog(props: {
         {blocked ? (
           <Link
             href={props.view.attention.required[0]?.href ?? props.returnPath}
-            className="rounded-md border border-amber-700/60 bg-amber-950/40 px-3 py-1.5 text-sm text-amber-200 hover:border-amber-500"
+            className="rounded-md border border-warning/40 bg-warning/10 px-3 py-1.5 text-sm text-warning hover:border-warning"
           >
             Review required actions
           </Link>

@@ -92,7 +92,7 @@ function columnsFor(
           <TeamEntityLink
             saveId={saveId}
             teamId={row.teamId}
-            className="inline-flex items-center gap-2 hover:text-amber-400"
+            className="inline-flex items-center gap-2 hover:text-team-ink"
           >
             <TeamIdentityInline
               city={row.city}
@@ -102,9 +102,7 @@ function columnsFor(
               size="sm"
             />
           </TeamEntityLink>
-          {row.isUserTeam ? (
-            <span className="text-amber-400">— you</span>
-          ) : null}
+          {row.isUserTeam ? <span className="text-team-ink">— you</span> : null}
         </span>
       ),
     },
@@ -191,7 +189,7 @@ function columnsFor(
               type="submit"
               className={cn(
                 touchTargetClass,
-                "rounded-md border border-zinc-700 px-2 text-xs text-zinc-300 hover:border-amber-600 hover:text-amber-300",
+                "rounded-md border border-zinc-700 px-2 text-xs text-zinc-300 hover:border-team-ink hover:text-team-ink",
               )}
             >
               Take Over
@@ -245,15 +243,13 @@ export function StandingsTable(props: {
             <li key={row.teamId}>
               <MobileListCard
                 className={
-                  row.isUserTeam
-                    ? "border-amber-700/50 bg-amber-950/30"
-                    : undefined
+                  row.isUserTeam ? "border-team-ink/50 bg-team/15" : undefined
                 }
                 title={
                   <TeamEntityLink
                     saveId={props.saveId}
                     teamId={row.teamId}
-                    className="inline-flex min-h-11 items-center gap-2 hover:text-amber-400"
+                    className="inline-flex min-h-11 items-center gap-2 hover:text-team-ink"
                   >
                     <span className="font-mono text-zinc-500">#{rank}</span>
                     <TeamIdentityInline
@@ -281,7 +277,7 @@ export function StandingsTable(props: {
                         type="submit"
                         className={cn(
                           touchTargetClass,
-                          "rounded-md border border-zinc-700 px-3 text-xs text-zinc-300 hover:border-amber-600 hover:text-amber-300",
+                          "rounded-md border border-zinc-700 px-3 text-xs text-zinc-300 hover:border-team-ink hover:text-team-ink",
                         )}
                       >
                         Take Over
@@ -321,9 +317,8 @@ export function StandingsTable(props: {
                   key={row.teamId}
                   className={cn(
                     "border-t border-zinc-800",
-                    row.isUserTeam &&
-                      "bg-amber-950/30 font-medium text-amber-300",
-                    cutoff && "border-t border-dashed border-amber-700/60",
+                    row.isUserTeam && "bg-team/15 font-medium text-team-ink",
+                    cutoff && "border-t border-dashed border-team-ink/60",
                   )}
                 >
                   {columns.map((col) => (

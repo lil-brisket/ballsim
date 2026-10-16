@@ -1,5 +1,5 @@
 import type { GameRotationPanelView } from "@/state/selectors";
-import { Section } from "@/components/owner/Section";
+import { Section } from "@/components/ui/Section";
 
 export function GameRotationPanel(props: {
   rotation: GameRotationPanelView;
@@ -27,7 +27,7 @@ export function GameRotationPanel(props: {
                 <span className="font-mono text-zinc-400">
                   {entry.clockLabel}
                 </span>{" "}
-                <span className="text-amber-500/80">
+                <span className="text-zinc-500/80">
                   {entry.teamAbbreviation}
                 </span>{" "}
                 {entry.detail}

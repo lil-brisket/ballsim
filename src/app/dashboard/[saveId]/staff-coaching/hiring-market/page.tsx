@@ -1,6 +1,9 @@
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { loadStaffHiringMarketView } from "@/application/game-service";
 import { HiringMarketPageView } from "@/components/staff-coaching/HiringMarketPageView";
+
+export const metadata: Metadata = { title: "Hiring Market" };
 
 type PageProps = {
   params: Promise<{ saveId: string }>;

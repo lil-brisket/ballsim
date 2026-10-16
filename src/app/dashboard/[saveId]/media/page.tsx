@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { markAllMediaReadAction } from "@/application/actions";
 import { loadMediaPageView } from "@/application/game-service";
@@ -7,9 +8,11 @@ import { MediaOverview } from "@/components/media-hub/MediaOverview";
 import { MediaTabNav } from "@/components/media-hub/MediaTabNav";
 import { MediaUnreadBadge } from "@/components/media-hub/MediaUnreadBadge";
 import { SocialFeed } from "@/components/media-hub/SocialFeed";
-import { ErrorState } from "@/components/owner/EmptyState";
-import { PageHeader } from "@/components/owner/PageHeader";
-import { Section } from "@/components/owner/Section";
+import { ErrorState } from "@/components/ui/EmptyState";
+import { PageHeader } from "@/components/ui/PageHeader";
+import { Section } from "@/components/ui/Section";
+
+export const metadata: Metadata = { title: "Media Hub" };
 
 type MediaPageProps = {
   params: Promise<{ saveId: string }>;
@@ -64,7 +67,7 @@ export default async function MediaPage({
             <input type="hidden" name="returnPath" value={returnPath} />
             <button
               type="submit"
-              className="inline-flex items-center gap-2 rounded-md border border-zinc-700 px-3 py-1.5 text-sm text-zinc-200 hover:border-amber-600"
+              className="inline-flex items-center gap-2 rounded-md border border-zinc-700 px-3 py-1.5 text-sm text-zinc-200 hover:border-team-ink"
             >
               Mark all read
               <MediaUnreadBadge count={view.unreadCount} />

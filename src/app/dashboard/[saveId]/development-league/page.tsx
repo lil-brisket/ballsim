@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { loadDevelopmentLeagueHubView } from "@/application/game-service";
@@ -13,12 +14,14 @@ import {
 } from "@/components/development-league/DlProspectCard";
 import { DlTeamPerformancePanel } from "@/components/development-league/DlTeamPerformancePanel";
 import { PlayerEntityLink } from "@/components/entity/PlayerEntityLink";
-import { EmptyState, ErrorState } from "@/components/owner/EmptyState";
-import { PageHeader } from "@/components/owner/PageHeader";
-import { Section } from "@/components/owner/Section";
+import { EmptyState, ErrorState } from "@/components/ui/EmptyState";
+import { PageHeader } from "@/components/ui/PageHeader";
+import { Section } from "@/components/ui/Section";
 import { TeamIdentityInline } from "@/components/team/TeamIdentityInline";
 import { DataTable } from "@/components/ui/DataTable";
 import { cn, densityGap, focusRingClass } from "@/components/ui/styles";
+
+export const metadata: Metadata = { title: "Development League" };
 
 type PageProps = {
   params: Promise<{ saveId: string }>;
@@ -56,13 +59,19 @@ export default async function DevelopmentLeaguePage({
           <div className="flex flex-wrap gap-3 text-sm">
             <Link
               href={`/dashboard/${saveId}/development`}
-              className={cn("text-amber-400 hover:underline", focusRingClass)}
+              className={cn(
+                "text-team-ink underline-offset-4 hover:underline",
+                focusRingClass,
+              )}
             >
               Player Development
             </Link>
             <Link
               href={`/dashboard/${saveId}/roster`}
-              className={cn("text-amber-400 hover:underline", focusRingClass)}
+              className={cn(
+                "text-team-ink underline-offset-4 hover:underline",
+                focusRingClass,
+              )}
             >
               Roster
             </Link>

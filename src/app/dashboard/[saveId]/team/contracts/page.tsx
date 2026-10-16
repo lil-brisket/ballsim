@@ -1,13 +1,16 @@
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { loadContractHubView } from "@/application/game-service";
 import { ContractHubHeader } from "@/components/contracts/ContractHubHeader";
 import { ContractOverview } from "@/components/contracts/ContractOverview";
 import { ContractRow } from "@/components/contracts/ContractRow";
 import { ManagementDecisionPanel } from "@/components/management/ManagementDecisionPanel";
-import { DataTable } from "@/components/owner/DataTable";
-import { EmptyState, ErrorState } from "@/components/owner/EmptyState";
-import { Section } from "@/components/owner/Section";
+import { DataTable } from "@/components/ui/DataTable";
+import { EmptyState, ErrorState } from "@/components/ui/EmptyState";
+import { Section } from "@/components/ui/Section";
 import { TeamHubSubNav } from "@/components/team/TeamHubSubNav";
+
+export const metadata: Metadata = { title: "Contracts" };
 
 type ContractsPageProps = {
   params: Promise<{ saveId: string }>;

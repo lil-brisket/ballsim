@@ -2,8 +2,8 @@ import Link from "next/link";
 import { LeagueGameRow } from "@/components/basketball/LeagueGameRow";
 import { PlayerEntityLink } from "@/components/entity/PlayerEntityLink";
 import { TeamEntityLink } from "@/components/entity/TeamEntityLink";
-import { EmptyState } from "@/components/owner/EmptyState";
-import { Section } from "@/components/owner/Section";
+import { EmptyState } from "@/components/ui/EmptyState";
+import { Section } from "@/components/ui/Section";
 import type {
   LeagueGameResultRow,
   LeagueMediaBrief,
@@ -60,7 +60,7 @@ export function LeagueTransactionsBriefing(props: {
         <Link
           href={href}
           className={cn(
-            "text-sm text-amber-400 hover:text-amber-300",
+            "text-sm text-team-ink underline-offset-4 hover:underline",
             focusRingClass,
           )}
         >
@@ -109,7 +109,7 @@ export function LeagueInjuriesBriefing(props: {
                   saveId={props.saveId}
                   playerId={row.playerId}
                   className={cn(
-                    "text-zinc-100 hover:text-amber-400",
+                    "text-zinc-100 hover:text-team-ink",
                     focusRingClass,
                   )}
                 >
@@ -121,7 +121,7 @@ export function LeagueInjuriesBriefing(props: {
                       saveId={props.saveId}
                       teamId={row.teamId}
                       className={cn(
-                        "text-zinc-400 hover:text-amber-400",
+                        "text-zinc-400 hover:text-team-ink",
                         focusRingClass,
                       )}
                     >
@@ -153,7 +153,7 @@ export function LeagueMediaBriefing(props: {
         <Link
           href={href}
           className={cn(
-            "text-sm text-amber-400 hover:text-amber-300",
+            "text-sm text-team-ink underline-offset-4 hover:underline",
             focusRingClass,
           )}
         >
@@ -179,7 +179,7 @@ export function LeagueMediaBriefing(props: {
                     {item.headline}
                   </p>
                   {item.unread ? (
-                    <span className="font-mono text-[0.65rem] uppercase text-amber-400">
+                    <span className="font-mono text-[0.65rem] uppercase text-team-ink">
                       New
                     </span>
                   ) : null}

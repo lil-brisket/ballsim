@@ -6,7 +6,7 @@ import {
 } from "@/application/game-service";
 import { latestValidSaveForMode } from "@/application/save-preview-helpers";
 import { OwnerEntryActions } from "@/components/game/OwnerEntryActions";
-import { ErrorState } from "@/components/owner/EmptyState";
+import { ErrorState } from "@/components/ui/EmptyState";
 import { SectionHeading } from "@/components/ui/SectionHeading";
 
 export const dynamic = "force-dynamic";
@@ -16,7 +16,7 @@ type OwnerEntryPageProps = {
 };
 
 const focusRing =
-  "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-500";
+  "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-team-ink";
 
 export default async function OwnerEntryPage({
   searchParams,

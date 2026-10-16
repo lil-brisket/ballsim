@@ -1,7 +1,7 @@
 import { PlayerPortrait } from "@/components/basketball/PlayerPortrait";
 import { PlayerEntityLink } from "@/components/entity/PlayerEntityLink";
 import { ContractSummary } from "@/components/owner/ContractSummary";
-import { StatusBadge } from "@/components/owner/StatusBadge";
+import { StatusBadge } from "@/components/ui/StatusBadge";
 import { PlayerActionMenu } from "@/components/roster/PlayerActionMenu";
 import { ArenaPanel } from "@/components/ui/ArenaPanel";
 import { ScoreNumeral } from "@/components/ui/ScoreNumeral";

@@ -37,7 +37,7 @@ export function OwnerTeamPick(props: {
                   />
                 </span>
               ) : (
-                <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-amber-700/40 bg-amber-950/50 font-mono text-xs font-semibold text-amber-400">
+                <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-team-ink/50 bg-team/20 font-mono text-xs font-semibold text-team-ink">
                   {team.abbreviation}
                 </span>
               )}
@@ -58,7 +58,7 @@ export function OwnerTeamPick(props: {
               <input type="hidden" name="teamId" value={team.id} />
               <button
                 type="submit"
-                className="rounded-md bg-amber-600 px-3 py-1.5 text-sm font-medium text-zinc-950 hover:bg-amber-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-500"
+                className="rounded-md bg-team px-3 py-1.5 text-sm font-medium text-on-team hover:brightness-110 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-team-ink"
               >
                 Select
               </button>

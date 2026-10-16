@@ -29,12 +29,12 @@ export function GameResultLink({
       href={`/dashboard/${saveId}/games/${gameId}`}
       className={
         className ??
-        "group text-inherit hover:text-amber-400 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-amber-500"
+        "group text-inherit hover:text-team-ink focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-team-ink"
       }
     >
       {children}
       {showHint ? (
-        <span className="ml-2 text-xs text-zinc-600 group-hover:text-amber-500">
+        <span className="ml-2 text-xs text-zinc-600 group-hover:text-zinc-500">
           Box score →
         </span>
       ) : null}

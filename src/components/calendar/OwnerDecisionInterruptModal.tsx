@@ -77,7 +77,7 @@ export function OwnerDecisionInterruptModal(props: {
         aria-modal="true"
         aria-labelledby="owner-interrupt-title"
         tabIndex={-1}
-        className="relative z-10 max-h-[90dvh] w-full max-w-3xl overflow-y-auto rounded-xl border border-amber-700/50 bg-zinc-950 p-5 shadow-xl"
+        className="relative z-10 max-h-[90dvh] w-full max-w-3xl overflow-y-auto rounded-xl border border-warning/40 bg-zinc-950 p-5 shadow-xl"
       >
         {interrupt.kind === "trade_offer" ? (
           <TradeReviewPanel
@@ -98,7 +98,7 @@ export function OwnerDecisionInterruptModal(props: {
           />
         ) : (
           <div className="space-y-4 text-sm text-zinc-200">
-            <p className="font-mono text-[0.65rem] uppercase tracking-[0.16em] text-amber-400">
+            <p className="font-mono text-[0.65rem] uppercase tracking-[0.16em] text-warning">
               Simulation paused
             </p>
             <h2
@@ -121,7 +121,7 @@ export function OwnerDecisionInterruptModal(props: {
                 className={cn(
                   touchTargetClass,
                   focusRingClass,
-                  "rounded-md bg-amber-600 px-4 text-sm font-medium text-zinc-950 hover:bg-amber-500",
+                  "rounded-md bg-team px-4 text-sm font-medium text-on-team hover:brightness-110",
                 )}
               >
                 Make pick

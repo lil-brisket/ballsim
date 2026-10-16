@@ -1,5 +1,5 @@
 import { MoneyDisplay } from "@/components/owner/MoneyDisplay";
-import { StatusBadge } from "@/components/owner/StatusBadge";
+import { StatusBadge } from "@/components/ui/StatusBadge";
 
 export function EventCard(props: {
   title: string;
@@ -17,9 +17,9 @@ export function EventCard(props: {
     <li
       className={`flex items-start justify-between gap-3 rounded-lg border px-4 py-3 text-sm ${
         important
-          ? "border-amber-800/60 bg-amber-950/20"
+          ? "border-warning/40 bg-warning/10"
           : "border-zinc-800 bg-zinc-900/40"
-      } ${props.read === false ? "ring-1 ring-amber-700/30" : ""}`}
+      } ${props.read === false ? "ring-1 ring-team-ink/30" : ""}`}
     >
       <div className="min-w-0">
         <div className="flex flex-wrap items-center gap-2">

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { cn, focusRingClass } from "@/components/ui/styles";
 import { TeamLogoMark } from "@/components/team/logos/TeamLogoMark";
 import type { DashboardSnapshot } from "@/state/selectors";
 import type { TeamBrandingView } from "@/state/team-branding-view";
@@ -63,10 +64,10 @@ export function NextActionPanel(props: { action: NextActionPresentation }) {
   const { action } = props;
   return (
     <section
-      className="rounded-xl border border-amber-700/40 bg-amber-950/30 px-4 py-4"
+      className="rounded-xl border border-warning/40 bg-warning/10 px-4 py-4"
       aria-label="Suggested next action"
     >
-      <p className="font-mono text-xs uppercase tracking-[0.16em] text-amber-500">
+      <p className="font-mono text-xs uppercase tracking-[0.16em] text-warning">
         Next
       </p>
       <h2 className="mt-1 text-lg font-medium text-zinc-50">{action.title}</h2>
@@ -90,7 +91,10 @@ export function NextActionPanel(props: { action: NextActionPresentation }) {
       {action.href && action.hrefLabel ? (
         <Link
           href={action.href}
-          className="mt-3 inline-flex rounded-md border border-amber-600/60 px-3 py-1.5 text-sm text-amber-300 hover:bg-amber-950/50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-500"
+          className={cn(
+            "mt-3 inline-flex rounded-md border border-warning/40 px-3 py-1.5 text-sm text-warning hover:bg-warning/20",
+            focusRingClass,
+          )}
         >
           {action.hrefLabel}
         </Link>

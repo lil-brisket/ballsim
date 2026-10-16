@@ -2,7 +2,7 @@ import type { FantasyDraftView } from "@/state/selectors";
 
 const LEVEL_STYLE = {
   HIGH: "text-red-300",
-  MEDIUM: "text-amber-300",
+  MEDIUM: "text-warning",
   LOW: "text-zinc-400",
 } as const;
 

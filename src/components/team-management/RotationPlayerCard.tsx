@@ -115,10 +115,8 @@ function AvailabilitySection(props: { player: RotationPlayerCardData }) {
 
   if (status === "questionable") {
     return (
-      <div className="rounded-lg border border-amber-800/60 bg-amber-950/30 px-4 py-3">
-        <p className="text-sm font-medium text-amber-300">
-          {emoji} Questionable
-        </p>
+      <div className="rounded-lg border border-warning/40 bg-warning/10 px-4 py-3">
+        <p className="text-sm font-medium text-warning">{emoji} Questionable</p>
         <dl className="mt-2 space-y-1 text-xs text-zinc-300">
           {player.injuryType ? (
             <div>
@@ -325,7 +323,7 @@ export function RotationPlayerCard(props: {
                 <dt className="text-[10px] uppercase text-zinc-500">
                   Target MPG
                 </dt>
-                <dd className="font-mono text-amber-400">
+                <dd className="font-mono text-team-ink">
                   {player.targetMinutes}
                 </dd>
               </div>

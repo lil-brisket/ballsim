@@ -50,7 +50,7 @@ export function SimulateToDateConfirm(props: {
               }
             }}
             className={cn(
-              "rounded-md bg-amber-600 px-4 py-2 text-sm font-medium text-zinc-950 hover:bg-amber-500 disabled:opacity-40",
+              "rounded-md bg-team px-4 py-2 text-sm font-medium text-on-team hover:brightness-110 disabled:opacity-40",
               focusRingClass,
             )}
           >

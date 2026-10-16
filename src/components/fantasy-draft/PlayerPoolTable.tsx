@@ -190,7 +190,7 @@ export function PlayerPoolTable(props: {
                     <button
                       type="button"
                       onClick={() => onOpenPlayer(player.playerId)}
-                      className="text-left font-medium text-amber-200 underline-offset-2 hover:underline focus:outline-none focus:ring-2 focus:ring-amber-600"
+                      className="text-left font-medium text-team-ink underline-offset-2 hover:underline focus:outline-none focus:ring-2 focus:ring-team-ink"
                     >
                       {player.firstName} {player.lastName}
                     </button>
@@ -225,7 +225,7 @@ export function PlayerPoolTable(props: {
                           potential: player.potential,
                         })
                       }
-                      className="rounded bg-amber-700/80 px-2 py-1 text-xs text-amber-50 disabled:opacity-50"
+                      className="rounded bg-team px-2 py-1 text-xs text-on-team disabled:opacity-50"
                     >
                       Draft
                     </button>

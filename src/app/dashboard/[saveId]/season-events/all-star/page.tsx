@@ -1,11 +1,14 @@
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getRequestSaveStore } from "@/application/request-save-store";
-import { PageHeader } from "@/components/owner/PageHeader";
-import { Section } from "@/components/owner/Section";
-import { EmptyState } from "@/components/owner/EmptyState";
+import { PageHeader } from "@/components/ui/PageHeader";
+import { Section } from "@/components/ui/Section";
+import { EmptyState } from "@/components/ui/EmptyState";
 import { PlayerEntityLink } from "@/components/entity/PlayerEntityLink";
 import { TeamEntityLink } from "@/components/entity/TeamEntityLink";
 import { toAllStarHubView } from "@/state/all-star-hub-selectors";
+
+export const metadata: Metadata = { title: "All-Star" };
 
 type PageProps = {
   params: Promise<{ saveId: string }>;

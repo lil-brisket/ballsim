@@ -107,7 +107,7 @@ export function DelegationSummary({
           <button
             type="button"
             onClick={() => setExpanded((value) => !value)}
-            className="text-xs text-amber-500 hover:text-amber-400"
+            className="text-xs text-zinc-500 hover:text-team-ink"
           >
             {expanded ? "Hide details ▴" : "Show details ▾"}
           </button>

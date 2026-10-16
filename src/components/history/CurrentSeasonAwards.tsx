@@ -1,4 +1,4 @@
-import { Section } from "@/components/owner/Section";
+import { Section } from "@/components/ui/Section";
 import { panelClass, cn } from "@/components/ui/styles";
 import {
   AwardWinnerName,

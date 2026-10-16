@@ -1,9 +1,12 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { loadTeamManagementView } from "@/application/game-service";
-import { DataTable } from "@/components/owner/DataTable";
-import { EmptyState, ErrorState } from "@/components/owner/EmptyState";
-import { PageHeader } from "@/components/owner/PageHeader";
+import { DataTable } from "@/components/ui/DataTable";
+import { EmptyState, ErrorState } from "@/components/ui/EmptyState";
+import { PageHeader } from "@/components/ui/PageHeader";
+
+export const metadata: Metadata = { title: "Transactions" };
 
 type PageProps = {
   params: Promise<{ saveId: string }>;
@@ -93,7 +96,7 @@ export default async function TeamManagementTransactionsPage({
         Prefer the league ledger?{" "}
         <Link
           href={`/dashboard/${saveId}/transactions`}
-          className="text-amber-400 hover:text-amber-300"
+          className="text-team-ink underline-offset-4 hover:underline"
         >
           Open Transactions Hub
         </Link>
@@ -105,7 +108,7 @@ export default async function TeamManagementTransactionsPage({
           href={href({ scope: "team", page: "0" })}
           className={`rounded-full border px-3 py-1 text-xs ${
             scope === "team"
-              ? "border-amber-600 text-amber-400"
+              ? "border-team-ink text-team-ink"
               : "border-zinc-700 text-zinc-400"
           }`}
         >
@@ -115,7 +118,7 @@ export default async function TeamManagementTransactionsPage({
           href={href({ scope: "league", page: "0" })}
           className={`rounded-full border px-3 py-1 text-xs ${
             scope === "league"
-              ? "border-amber-600 text-amber-400"
+              ? "border-team-ink text-team-ink"
               : "border-zinc-700 text-zinc-400"
           }`}
         >
@@ -130,7 +133,7 @@ export default async function TeamManagementTransactionsPage({
             href={href({ type: filterType, page: "0" })}
             className={`rounded-full border px-3 py-1 text-xs ${
               type === filterType
-                ? "border-amber-600 text-amber-400"
+                ? "border-team-ink text-team-ink"
                 : "border-zinc-700 text-zinc-400 hover:border-zinc-500"
             }`}
           >
@@ -154,7 +157,7 @@ export default async function TeamManagementTransactionsPage({
             href={href({ sort: value, page: "0" })}
             className={`rounded-full border px-3 py-1 ${
               sort === value
-                ? "border-amber-600 text-amber-400"
+                ? "border-team-ink text-team-ink"
                 : "border-zinc-700 text-zinc-400"
             }`}
           >
@@ -187,7 +190,7 @@ export default async function TeamManagementTransactionsPage({
         {transactions.page > 0 ? (
           <Link
             href={href({ page: String(transactions.page - 1) })}
-            className="text-amber-400 hover:underline"
+            className="text-team-ink underline-offset-4 hover:underline"
           >
             Previous
           </Link>
@@ -195,7 +198,7 @@ export default async function TeamManagementTransactionsPage({
         {transactions.page + 1 < totalPages ? (
           <Link
             href={href({ page: String(transactions.page + 1) })}
-            className="text-amber-400 hover:underline"
+            className="text-team-ink underline-offset-4 hover:underline"
           >
             Next
           </Link>

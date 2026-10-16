@@ -20,7 +20,7 @@ const displayFont = Barlow_Condensed({
 });
 
 export const metadata: Metadata = {
-  title: "Basketball",
+  title: { default: "BallSim", template: "%s · BallSim" },
   description: "Fictional basketball simulation and franchise management.",
   other: {
     "darkreader-lock": "true",

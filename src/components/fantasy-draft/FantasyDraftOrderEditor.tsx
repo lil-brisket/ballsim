@@ -156,7 +156,7 @@ export function FantasyDraftOrderEditor(props: FantasyDraftOrderEditorProps) {
         nudge one step.
       </p>
       {selectedTeamId !== null ? (
-        <p className="text-sm text-amber-200/90" role="status">
+        <p className="text-sm text-team-ink/90" role="status">
           Selected for swap — click another team, or click again to cancel.
         </p>
       ) : null}
@@ -196,9 +196,9 @@ export function FantasyDraftOrderEditor(props: FantasyDraftOrderEditorProps) {
               className={[
                 "flex items-center justify-between rounded-lg border px-3 py-2 transition-colors",
                 isSelected
-                  ? "border-amber-500 bg-amber-950/40"
+                  ? "border-team-ink bg-team/20"
                   : isDropTarget
-                    ? "border-amber-600/80 bg-zinc-900"
+                    ? "border-team-ink/80 bg-zinc-900"
                     : "border-zinc-800 hover:border-zinc-600",
                 isDragging ? "opacity-50" : "",
                 pending
@@ -219,7 +219,7 @@ export function FantasyDraftOrderEditor(props: FantasyDraftOrderEditorProps) {
                 </span>
                 <span className="truncate">{entry.teamName}</span>
                 {entry.isUser ? (
-                  <span className="ml-2 shrink-0 rounded bg-amber-900/50 px-1.5 py-0.5 text-xs text-amber-200">
+                  <span className="ml-2 shrink-0 rounded bg-team/20 px-1.5 py-0.5 text-xs text-team-ink">
                     USER
                   </span>
                 ) : (

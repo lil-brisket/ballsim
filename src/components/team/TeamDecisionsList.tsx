@@ -1,7 +1,7 @@
 import Link from "next/link";
 import type { ActionCenterItem } from "@/state/action-center-selectors";
-import { EmptyState } from "@/components/owner/EmptyState";
-import { Section } from "@/components/owner/Section";
+import { EmptyState } from "@/components/ui/EmptyState";
+import { Section } from "@/components/ui/Section";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { cn, focusRingClass } from "@/components/ui/styles";
 
@@ -19,7 +19,7 @@ export function TeamDecisionsList(props: {
       action={
         <Link
           href={`/dashboard/${props.saveId}`}
-          className="text-sm text-amber-400 hover:text-amber-300"
+          className="text-sm text-team-ink underline-offset-4 hover:underline"
         >
           Front Office
         </Link>
@@ -48,7 +48,7 @@ export function TeamDecisionsList(props: {
               <Link
                 href={item.href}
                 className={cn(
-                  "shrink-0 rounded-md border border-zinc-700 px-2.5 py-1 text-xs text-zinc-200 hover:border-amber-600",
+                  "shrink-0 rounded-md border border-zinc-700 px-2.5 py-1 text-xs text-zinc-200 hover:border-team-ink",
                   focusRingClass,
                 )}
               >

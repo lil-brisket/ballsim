@@ -68,9 +68,9 @@ export function RadioCardGroup<T extends string>({
               <span
                 className={cn(
                   "block h-full min-h-11 rounded-lg border border-zinc-700 bg-zinc-950 p-3 text-left transition-colors",
-                  option.disabled ? "opacity-60" : "hover:border-amber-600",
-                  "peer-checked:border-amber-600 peer-checked:bg-amber-600/10 peer-checked:ring-1 peer-checked:ring-amber-600",
-                  "peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-amber-500",
+                  option.disabled ? "opacity-60" : "hover:border-team-ink",
+                  "peer-checked:border-team-ink peer-checked:bg-team/15 peer-checked:ring-1 peer-checked:ring-team-ink",
+                  "peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-team-ink",
                 )}
               >
                 <span
@@ -86,7 +86,7 @@ export function RadioCardGroup<T extends string>({
                   <span
                     className={cn(
                       "mt-2 block text-xs font-medium",
-                      option.disabled ? "text-zinc-400" : "text-amber-300",
+                      option.disabled ? "text-zinc-400" : "text-team-ink",
                     )}
                   >
                     {option.meta}

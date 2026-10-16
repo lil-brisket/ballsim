@@ -1,3 +1,5 @@
+import type { Metadata } from "next";
+import { cn, linkClass } from "@/components/ui/styles";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { loadFinanceHubView } from "@/application/game-service";
@@ -8,10 +10,12 @@ import {
 } from "@/components/finances/FinancialLedger";
 import { FinancialStatStrip } from "@/components/finances/FinancialStatStrip";
 import { ManagementDecisionPanel } from "@/components/management/ManagementDecisionPanel";
-import { ErrorState } from "@/components/owner/EmptyState";
+import { ErrorState } from "@/components/ui/EmptyState";
 import { MoneyDisplay } from "@/components/owner/MoneyDisplay";
-import { PageHeader } from "@/components/owner/PageHeader";
-import { Section } from "@/components/owner/Section";
+import { PageHeader } from "@/components/ui/PageHeader";
+import { Section } from "@/components/ui/Section";
+
+export const metadata: Metadata = { title: "Finances" };
 
 type FinancesPageProps = {
   params: Promise<{ saveId: string }>;
@@ -20,7 +24,7 @@ type FinancesPageProps = {
 
 function HeaderLink(props: { href: string; label: string }) {
   return (
-    <Link href={props.href} className="text-sm text-amber-400 hover:underline">
+    <Link href={props.href} className={cn(linkClass, "text-sm")}>
       {props.label}
     </Link>
   );

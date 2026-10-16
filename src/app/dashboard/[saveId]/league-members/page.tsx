@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { loadOwnerSaveView } from "@/application/game-service";
 import {
@@ -15,11 +16,13 @@ import {
   transferOnlineHostAction,
 } from "@/application/actions/online-league";
 import { InviteCreator } from "@/components/game/InviteCreator";
-import { ErrorState } from "@/components/owner/EmptyState";
-import { PageHeader } from "@/components/owner/PageHeader";
-import { Section } from "@/components/owner/Section";
-import { StatusBadge } from "@/components/owner/StatusBadge";
+import { ErrorState } from "@/components/ui/EmptyState";
+import { PageHeader } from "@/components/ui/PageHeader";
+import { Section } from "@/components/ui/Section";
+import { StatusBadge } from "@/components/ui/StatusBadge";
 import { cn, focusRingClass, touchTargetClass } from "@/components/ui/styles";
+
+export const metadata: Metadata = { title: "League Members" };
 
 type PageProps = {
   params: Promise<{ saveId: string }>;
@@ -53,7 +56,7 @@ function ConfirmForm(props: {
       <summary className={cn(buttonClass, "list-none")}>{props.label}</summary>
       <form
         action={props.action}
-        className="mt-2 flex flex-wrap items-center gap-2 rounded-lg border border-amber-700/60 bg-amber-950/30 p-2 text-sm text-amber-100"
+        className="mt-2 flex flex-wrap items-center gap-2 rounded-lg border border-team-ink/50 bg-team/15 p-2 text-sm text-zinc-100"
       >
         <input type="hidden" name="saveId" value={props.saveId} />
         {Object.entries(props.fields ?? {}).map(([name, value]) => (

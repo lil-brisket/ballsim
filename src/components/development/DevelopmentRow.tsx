@@ -2,7 +2,7 @@ import Link from "next/link";
 import { PlayerPortrait } from "@/components/basketball/PlayerPortrait";
 import { PlayerEntityLink } from "@/components/entity/PlayerEntityLink";
 import { splitDisplayName } from "@/presentation/portrait-hash";
-import { StatusBadge } from "@/components/owner/StatusBadge";
+import { StatusBadge } from "@/components/ui/StatusBadge";
 import { cn } from "@/components/ui/styles";
 import type { DevelopmentHubRow } from "@/state/development-hub-selectors";
 
@@ -76,7 +76,7 @@ export function DevelopmentRow(props: {
         {row.onDevelopmentLeague ? (
           <Link
             href={`/dashboard/${saveId}/development-league`}
-            className="text-xs text-amber-400 hover:underline"
+            className="text-xs text-team-ink underline-offset-4 hover:underline"
           >
             Yes
           </Link>

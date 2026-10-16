@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getRequestSaveStore } from "@/application/request-save-store";
 import { HistoryHub } from "@/components/history/HistoryHub";
@@ -5,6 +6,8 @@ import {
   toHistoryHubView,
   type HistoryHubParams,
 } from "@/state/history-hub-selectors";
+
+export const metadata: Metadata = { title: "Awards" };
 
 type PageProps = {
   params: Promise<{ saveId: string }>;

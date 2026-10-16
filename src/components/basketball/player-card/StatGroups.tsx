@@ -16,7 +16,7 @@ export function StatGroups(props: {
             aria-label={group.title}
             className="rounded-lg border border-zinc-800 bg-zinc-900/40 p-3"
           >
-            <h3 className="mb-2 font-mono text-[0.65rem] uppercase tracking-[0.18em] text-amber-400">
+            <h3 className="mb-2 font-mono text-[0.65rem] uppercase tracking-[0.18em] text-team-ink">
               {group.title}
             </h3>
             <dl className="grid grid-cols-2 gap-x-3 gap-y-2 sm:grid-cols-3">

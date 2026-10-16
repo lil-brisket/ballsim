@@ -1,8 +1,8 @@
 import type { TradeBlockView } from "@/state/roster-page-selectors";
 import { toggleTradeBlockAction } from "@/application/actions";
 import { PlayerEntityLink } from "@/components/entity/PlayerEntityLink";
-import { EmptyState } from "@/components/owner/EmptyState";
-import { Section } from "@/components/owner/Section";
+import { EmptyState } from "@/components/ui/EmptyState";
+import { Section } from "@/components/ui/Section";
 import { cn, focusRingClass, panelClass } from "@/components/ui/styles";
 
 export function TradeBlockRosterView(props: {

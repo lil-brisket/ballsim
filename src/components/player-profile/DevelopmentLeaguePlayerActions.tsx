@@ -45,7 +45,7 @@ export function DevelopmentLeaguePlayerActions(props: {
             <input type="hidden" name="returnPath" value={props.returnPath} />
             <button
               type="submit"
-              className="rounded border border-amber-600 bg-amber-950/40 px-3 py-1.5 text-xs text-amber-200 hover:bg-amber-900/50"
+              className="rounded border border-team-ink bg-team/15 px-3 py-1.5 text-xs text-zinc-100 hover:bg-team/20"
             >
               Send to Development League
             </button>
@@ -58,7 +58,7 @@ export function DevelopmentLeaguePlayerActions(props: {
             <input type="hidden" name="returnPath" value={props.returnPath} />
             <button
               type="submit"
-              className="rounded border border-zinc-600 px-3 py-1.5 text-xs text-zinc-100 hover:border-amber-500"
+              className="rounded border border-zinc-600 px-3 py-1.5 text-xs text-zinc-100 hover:border-team-ink"
             >
               Recall to Top League
             </button>

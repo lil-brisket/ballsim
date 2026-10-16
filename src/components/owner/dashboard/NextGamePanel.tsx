@@ -2,13 +2,14 @@ import Link from "next/link";
 import type { OwnerDashboardTeam } from "@/state/owner-dashboard";
 import type { RecentFormView } from "@/state/recent-form-selectors";
 import { TeamEntityLink } from "@/components/entity/TeamEntityLink";
-import { EmptyState } from "@/components/owner/EmptyState";
-import { Section } from "@/components/owner/Section";
+import { EmptyState } from "@/components/ui/EmptyState";
+import { Section } from "@/components/ui/Section";
 import { TeamLogoMark } from "@/components/team/logos/TeamLogoMark";
 import { PlayerEntityLink } from "@/components/entity/PlayerEntityLink";
 import {
   cn,
   focusRingClass,
+  linkClass,
   panelClass,
   touchTargetClass,
   touchTargetTextClass,
@@ -44,7 +45,8 @@ export function NextGamePanel(props: {
           href={scheduleHref}
           className={cn(
             touchTargetTextClass,
-            "text-sm text-amber-400 hover:text-amber-300",
+            linkClass,
+            "text-sm",
             focusRingClass,
           )}
         >
@@ -57,7 +59,7 @@ export function NextGamePanel(props: {
           panelClass,
           "px-4 py-4",
           props.isFocal &&
-            "border-amber-700/50 bg-zinc-900/80 shadow-[0_0_0_1px_rgba(245,158,11,0.12)]",
+            "border-team-ink/50 bg-zinc-900/80 shadow-[0_0_0_1px_rgb(var(--team-ink-rgb)/0.12)]",
         )}
       >
         {!nextGame ? (
@@ -91,7 +93,7 @@ export function NextGamePanel(props: {
                   saveId={props.saveId}
                   teamId={nextGame.opponentTeamId}
                   className={cn(
-                    "font-medium text-zinc-50 hover:text-amber-400",
+                    "font-medium text-zinc-50 hover:text-team-ink",
                     focusRingClass,
                   )}
                 >
@@ -115,7 +117,7 @@ export function NextGamePanel(props: {
                       <PlayerEntityLink
                         saveId={props.saveId}
                         playerId={problem.playerId}
-                        className="text-rose-200 hover:text-amber-300"
+                        className="text-rose-200 hover:text-team-ink"
                       >
                         {problem.name}
                       </PlayerEntityLink>
@@ -138,7 +140,7 @@ export function NextGamePanel(props: {
                 }
                 className={cn(
                   touchTargetClass,
-                  "w-full rounded-md border border-zinc-700 px-3 text-zinc-200 hover:border-amber-600 sm:w-auto",
+                  "w-full rounded-md border border-zinc-700 px-3 text-zinc-200 hover:border-team-ink sm:w-auto",
                   focusRingClass,
                 )}
               >
@@ -148,7 +150,7 @@ export function NextGamePanel(props: {
                 href={rotationHref}
                 className={cn(
                   touchTargetClass,
-                  "w-full rounded-md border border-zinc-700 px-3 text-zinc-200 hover:border-amber-600 sm:w-auto",
+                  "w-full rounded-md border border-zinc-700 px-3 text-zinc-200 hover:border-team-ink sm:w-auto",
                   focusRingClass,
                 )}
               >
@@ -158,7 +160,7 @@ export function NextGamePanel(props: {
                 href={calendarDateHref(props.saveId, nextGame.date)}
                 className={cn(
                   touchTargetClass,
-                  "w-full rounded-md bg-amber-600/90 px-3 font-medium text-zinc-950 hover:bg-amber-500 sm:w-auto",
+                  "w-full rounded-md bg-team px-3 font-medium text-on-team hover:brightness-110 sm:w-auto",
                   focusRingClass,
                 )}
               >

@@ -24,10 +24,10 @@ export function PhaseAttentionSummaryPanel(props: {
 
   return (
     <section
-      className="rounded-xl border border-amber-800/40 bg-amber-950/20 px-4 py-3"
+      className="rounded-xl border border-warning/40 bg-warning/10 px-4 py-3"
       aria-label="Needs attention"
     >
-      <p className="font-mono text-xs uppercase tracking-[0.16em] text-amber-500">
+      <p className="font-mono text-xs uppercase tracking-[0.16em] text-warning">
         Needs attention — {counts.required + counts.recommended}
       </p>
       <ul className="mt-2 flex flex-wrap gap-3 text-sm">
@@ -35,7 +35,7 @@ export function PhaseAttentionSummaryPanel(props: {
           Required: {counts.required}
           {required.length > 0 ? ` · ${required[0]!.title}` : ""}
         </li>
-        <li className="text-amber-300">Recommended: {counts.recommended}</li>
+        <li className="text-warning">Recommended: {counts.recommended}</li>
         <li className="text-sky-300">Optional: {counts.optional}</li>
       </ul>
     </section>

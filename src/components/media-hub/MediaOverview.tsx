@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { MediaStoryCard } from "@/components/media-hub/MediaStoryCard";
-import { EmptyState } from "@/components/owner/EmptyState";
-import { StatCard } from "@/components/owner/StatCard";
+import { EmptyState } from "@/components/ui/EmptyState";
+import { StatCard } from "@/components/ui/StatCard";
 import {
   MEDIA_HUB_STORY_TYPE_ORDER,
   type MediaHubView,
@@ -55,7 +55,7 @@ export function MediaOverview(props: {
               <div>
                 <Link
                   href={feedHref}
-                  className="text-sm font-normal text-amber-400 hover:underline"
+                  className="text-sm font-normal text-team-ink underline-offset-4 hover:underline"
                 >
                   View feed
                 </Link>

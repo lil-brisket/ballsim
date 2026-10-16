@@ -11,7 +11,7 @@ const STEPS: { id: OnboardingStep; label: string; href: string }[] = [
 ];
 
 const focusRing =
-  "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-500";
+  "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-team-ink";
 
 export function OnboardingSteps(props: {
   step: OnboardingStep;

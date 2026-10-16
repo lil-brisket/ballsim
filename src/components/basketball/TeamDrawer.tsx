@@ -55,7 +55,7 @@ export function TeamDrawer(props: {
             <Link
               href={props.view.navigation.teamHref}
               className={cn(
-                "rounded-md border border-amber-700/50 bg-amber-950/40 px-3 py-1.5 text-sm text-amber-300 hover:border-amber-600",
+                "rounded-md border border-team-ink/50 bg-team/15 px-3 py-1.5 text-sm text-team-ink hover:border-team-ink",
                 focusRingClass,
               )}
               onClick={() => props.onOpenChange(false)}
@@ -100,7 +100,7 @@ export function TeamDrawer(props: {
               type="button"
               onClick={props.onRetry}
               className={cn(
-                "rounded-md border border-zinc-700 px-3 py-1.5 text-sm text-zinc-200 hover:border-amber-600",
+                "rounded-md border border-zinc-700 px-3 py-1.5 text-sm text-zinc-200 hover:border-team-ink",
                 focusRingClass,
               )}
             >

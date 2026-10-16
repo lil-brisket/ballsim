@@ -20,7 +20,7 @@ import {
 import { normalizeHexColor } from "@/domain/entities/team-branding";
 
 const focusRing =
-  "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-500";
+  "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-team-ink";
 
 export type ControlledFranchiseIdentityDraft = {
   teamId: string;
@@ -160,8 +160,8 @@ export function ControlledFranchiseIdentityEditor(props: {
                 onClick={() => applyPalette(palette.id)}
                 className={`flex items-center gap-2 rounded-md border px-2 py-1.5 text-left text-xs ${focusRing} ${
                   selected
-                    ? "border-amber-500 bg-amber-500/10 text-amber-200"
-                    : "border-zinc-700 text-zinc-300 hover:border-amber-600/60"
+                    ? "border-team-ink bg-team/15 text-team-ink"
+                    : "border-zinc-700 text-zinc-300 hover:border-team-ink/60"
                 }`}
               >
                 <span className="flex gap-0.5">
@@ -226,8 +226,8 @@ export function ControlledFranchiseIdentityEditor(props: {
                         onClick={() => onChange({ ...draft, logoId: logo.id })}
                         className={`relative inline-flex h-9 w-9 items-center justify-center rounded-md border ${focusRing} ${
                           selected
-                            ? "border-2 border-amber-500 bg-amber-500/15 ring-1 ring-amber-500"
-                            : "border-zinc-700 hover:border-amber-600/60"
+                            ? "border-2 border-team-ink bg-team/15 ring-1 ring-team-ink"
+                            : "border-zinc-700 hover:border-team-ink/60"
                         }`}
                         style={{ backgroundColor: draft.primaryColor }}
                       >
@@ -244,7 +244,7 @@ export function ControlledFranchiseIdentityEditor(props: {
                         {selected ? (
                           <span
                             aria-hidden="true"
-                            className="absolute -right-1 -top-1 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-amber-500 text-[9px] font-bold text-zinc-950"
+                            className="absolute -right-1 -top-1 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-team text-[9px] font-bold text-on-team"
                           >
                             ✓
                           </span>

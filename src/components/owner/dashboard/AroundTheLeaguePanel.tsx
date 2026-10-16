@@ -1,7 +1,7 @@
 import Link from "next/link";
 import type { OwnerDashboardMediaHeadline } from "@/state/owner-dashboard";
-import { EmptyState } from "@/components/owner/EmptyState";
-import { Section } from "@/components/owner/Section";
+import { EmptyState } from "@/components/ui/EmptyState";
+import { Section } from "@/components/ui/Section";
 import { ArenaPanel } from "@/components/ui/ArenaPanel";
 import {
   cn,

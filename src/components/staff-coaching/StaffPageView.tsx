@@ -1,8 +1,8 @@
-import { DataTable } from "@/components/owner/DataTable";
-import { EmptyState, ErrorState } from "@/components/owner/EmptyState";
+import { DataTable } from "@/components/ui/DataTable";
+import { EmptyState, ErrorState } from "@/components/ui/EmptyState";
 import { MoneyDisplay } from "@/components/owner/MoneyDisplay";
-import { PageHeader } from "@/components/owner/PageHeader";
-import { Section } from "@/components/owner/Section";
+import { PageHeader } from "@/components/ui/PageHeader";
+import { Section } from "@/components/ui/Section";
 import { Metric } from "@/components/ui/Metric";
 import {
   StaffMemberCard,

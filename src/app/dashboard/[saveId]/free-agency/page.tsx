@@ -1,3 +1,5 @@
+import type { Metadata } from "next";
+import { cn, linkClass } from "@/components/ui/styles";
 import { selectPlayerPortrait } from "@/state/player-portrait-selectors";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -9,18 +11,20 @@ import {
 } from "@/application/actions";
 import { getRequestSaveStore } from "@/application/request-save-store";
 import { ConfirmDialog } from "@/components/owner/ConfirmDialog";
-import { DataTable } from "@/components/owner/DataTable";
-import { EmptyState, ErrorState } from "@/components/owner/EmptyState";
+import { DataTable } from "@/components/ui/DataTable";
+import { EmptyState, ErrorState } from "@/components/ui/EmptyState";
 import { MoneyDisplay } from "@/components/owner/MoneyDisplay";
-import { PageHeader } from "@/components/owner/PageHeader";
-import { Section } from "@/components/owner/Section";
-import { StatusBadge } from "@/components/owner/StatusBadge";
+import { PageHeader } from "@/components/ui/PageHeader";
+import { Section } from "@/components/ui/Section";
+import { StatusBadge } from "@/components/ui/StatusBadge";
 import { Metric } from "@/components/ui/Metric";
 import { PlayerPortrait } from "@/components/basketball/PlayerPortrait";
 import { PlayerEntityLink } from "@/components/entity/PlayerEntityLink";
 import { splitDisplayName } from "@/presentation/portrait-hash";
 import { ManagementDecisionPanel } from "@/components/management/ManagementDecisionPanel";
 import { toFreeAgencyHubView } from "@/state/free-agency-hub-selectors";
+
+export const metadata: Metadata = { title: "Free Agency" };
 
 type FreeAgencyPageProps = {
   params: Promise<{ saveId: string }>;
@@ -54,7 +58,7 @@ export default async function FreeAgencyPage({
         actions={
           <Link
             href={calendarHref}
-            className="rounded-md border border-amber-700/50 bg-amber-950/30 px-3 py-1.5 text-sm text-amber-200 hover:border-amber-600"
+            className="rounded-md border border-team-ink/50 bg-team/15 px-3 py-1.5 text-sm text-zinc-50 hover:border-team-ink"
           >
             Open Calendar
           </Link>
@@ -247,7 +251,7 @@ export default async function FreeAgencyPage({
                           />
                           <button
                             type="submit"
-                            className="text-xs text-amber-400 hover:underline"
+                            className={cn(linkClass, "text-xs")}
                           >
                             Sign
                           </button>
@@ -275,7 +279,7 @@ export default async function FreeAgencyPage({
                           <input type="hidden" name="years" value={1} />
                           <button
                             type="submit"
-                            className="text-xs text-zinc-400 hover:text-amber-400"
+                            className="text-xs text-zinc-400 hover:text-team-ink"
                           >
                             Offer
                           </button>
@@ -345,7 +349,7 @@ export default async function FreeAgencyPage({
               <input type="hidden" name="returnPath" value={returnPath} />
               <button
                 type="submit"
-                className="rounded-md border border-zinc-700 px-3 py-1.5 text-sm text-zinc-200 hover:border-amber-600"
+                className="rounded-md border border-zinc-700 px-3 py-1.5 text-sm text-zinc-200 hover:border-team-ink"
               >
                 Finish free agency
               </button>

@@ -140,7 +140,7 @@ function NavBadge(props: { item: OwnerNavItem }) {
       ? "bg-red-500 text-zinc-950"
       : badge.kind === "unread"
         ? "bg-zinc-600 text-zinc-100"
-        : "bg-amber-500 text-zinc-950";
+        : "bg-warning text-zinc-950";
   return (
     <span
       className={`ml-auto inline-flex min-w-[1.15rem] items-center justify-center rounded-full px-1.5 font-mono text-[0.65rem] font-semibold leading-4 ${kindClass}`}

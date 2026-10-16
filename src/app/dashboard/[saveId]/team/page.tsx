@@ -1,6 +1,9 @@
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { loadOwnerSaveView } from "@/application/game-service";
 import { TeamHub } from "@/components/team/hub/TeamHub";
+
+export const metadata: Metadata = { title: "Team" };
 
 type TeamPageProps = {
   params: Promise<{ saveId: string }>;

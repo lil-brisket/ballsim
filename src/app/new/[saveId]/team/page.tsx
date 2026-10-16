@@ -4,7 +4,8 @@ import { loadOwnerSaveView } from "@/application/game-service";
 import { resolveOnboardingRoute } from "@/application/onboarding-routing";
 import { OnboardingShell } from "@/components/game/OnboardingShell";
 import { CityMapPicker } from "@/components/owner/CityMapPicker";
-import { ErrorState } from "@/components/owner/EmptyState";
+import { ErrorState } from "@/components/ui/EmptyState";
+import { cn, focusRingClass, linkClass } from "@/components/ui/styles";
 import { isLeagueArea } from "@/domain/game-settings";
 
 type TeamPickPageProps = {
@@ -39,7 +40,7 @@ export default async function TeamPickPage({
         <p className="text-zinc-300">Team selection is locked for this save.</p>
         <Link
           href={`/dashboard/${saveId}`}
-          className="text-amber-400 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-500"
+          className={cn(linkClass, focusRingClass)}
         >
           Open dashboard
         </Link>

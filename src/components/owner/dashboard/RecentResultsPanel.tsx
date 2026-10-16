@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { GameResultLink } from "@/components/owner/GameResultLink";
-import { EmptyState } from "@/components/owner/EmptyState";
-import { Section } from "@/components/owner/Section";
+import { EmptyState } from "@/components/ui/EmptyState";
+import { Section } from "@/components/ui/Section";
 import { TeamBadge } from "@/components/ui/TeamBadge";
 import { cn, focusRingClass } from "@/components/ui/styles";
 import type { RecentFormGame } from "@/state/recent-form-selectors";
@@ -80,7 +80,7 @@ export function RecentResultsPanel(props: {
                 <Link
                   href={`/dashboard/${props.saveId}/games/${game.gameId}/watch`}
                   className={cn(
-                    "mt-1 inline-flex min-h-11 items-center px-1 text-xs text-amber-400 hover:text-amber-300",
+                    "mt-1 inline-flex min-h-11 items-center px-1 text-xs text-team-ink hover:underline underline-offset-4",
                     focusRingClass,
                   )}
                 >

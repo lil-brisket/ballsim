@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { RosterRow } from "@/components/basketball/RosterRow";
-import { Section } from "@/components/owner/Section";
+import { Section } from "@/components/ui/Section";
 import { cn, panelClass } from "@/components/ui/styles";
 import type { TeamHubView } from "@/state/team-hub-selectors";
 
@@ -12,7 +12,7 @@ export function TeamRosterPreview(props: { saveId: string; hub: TeamHubView }) {
     <Section
       title="Roster"
       action={
-        <Link href={rosterHref} className="text-sm text-amber-400">
+        <Link href={rosterHref} className="text-sm text-team-ink">
           View Roster
         </Link>
       }
@@ -57,7 +57,7 @@ export function TeamRosterPreview(props: { saveId: string; hub: TeamHubView }) {
         <div className="py-2">
           <Link
             href={rosterHref}
-            className="text-sm text-amber-400 hover:text-amber-300"
+            className="text-sm text-team-ink underline-offset-4 hover:underline"
           >
             View Roster →
           </Link>

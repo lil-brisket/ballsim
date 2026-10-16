@@ -1,7 +1,7 @@
 import { PlayerEntityLink } from "@/components/entity/PlayerEntityLink";
 import { TeamEntityLink } from "@/components/entity/TeamEntityLink";
 import { GameResultLink } from "@/components/owner/GameResultLink";
-import { StatusBadge } from "@/components/owner/StatusBadge";
+import { StatusBadge } from "@/components/ui/StatusBadge";
 import type { ImportanceLevel } from "@/domain/entities/event-source";
 import type { MediaStoryType } from "@/domain/entities/media-item";
 import { markMediaReadAction } from "@/application/actions";
@@ -58,25 +58,25 @@ function tierClasses(
 ): string {
   if (featured) {
     return cn(
-      "border-amber-700/50 bg-gradient-to-b from-amber-950/30 to-zinc-900/40 px-5 py-5",
-      unread && "ring-1 ring-amber-600/30",
+      "border-team-ink/50 bg-gradient-to-b from-team/15 to-zinc-900/40 px-5 py-5",
+      unread && "ring-1 ring-team-ink/30",
     );
   }
   if (tier === "major") {
     return cn(
-      "border-zinc-700 border-l-2 border-l-amber-600/70 bg-zinc-900/50 px-5 py-4",
-      unread && "border-amber-800/40 bg-amber-950/15",
+      "border-zinc-700 border-l-2 border-l-team-ink/70 bg-zinc-900/50 px-5 py-4",
+      unread && "border-team-ink/40 bg-team/15",
     );
   }
   if (tier === "background") {
     return cn(
       "border-zinc-800/60 bg-transparent px-3 py-2 text-sm",
-      unread && "border-amber-900/30",
+      unread && "border-team-ink/30",
     );
   }
   return cn(
     "border-zinc-800 bg-zinc-900/40 px-4 py-3",
-    unread && "border-amber-800/40 bg-amber-950/20",
+    unread && "border-team-ink/40 bg-team/15",
   );
 }
 
@@ -109,7 +109,7 @@ export function MediaStoryCard(props: MediaStoryCardProps) {
         <div className="min-w-0 space-y-1">
           <div className="flex flex-wrap items-center gap-2">
             {featured ? (
-              <span className="font-mono text-[0.65rem] uppercase tracking-[0.14em] text-amber-500">
+              <span className="font-mono text-[0.65rem] uppercase tracking-[0.14em] text-team-ink">
                 Featured
               </span>
             ) : null}
@@ -118,7 +118,7 @@ export function MediaStoryCard(props: MediaStoryCardProps) {
               {storyType}
             </span>
             {unread ? (
-              <span className="text-[11px] font-medium text-amber-400">
+              <span className="text-[11px] font-medium text-team-ink">
                 Unread
               </span>
             ) : null}
@@ -134,7 +134,7 @@ export function MediaStoryCard(props: MediaStoryCardProps) {
                 saveId={saveId}
                 gameId={gameId}
                 canOpen={canOpenGame}
-                className="hover:text-amber-400"
+                className="hover:text-team-ink"
               >
                 {headline}
               </GameResultLink>
@@ -159,7 +159,7 @@ export function MediaStoryCard(props: MediaStoryCardProps) {
             <input type="hidden" name="returnPath" value={returnPath} />
             <button
               type="submit"
-              className="text-xs text-amber-400 hover:underline"
+              className="text-xs text-team-ink underline-offset-4 hover:underline"
             >
               Mark read
             </button>

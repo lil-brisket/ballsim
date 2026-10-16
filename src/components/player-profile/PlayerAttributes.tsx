@@ -1,6 +1,6 @@
 import { AttributeRadar } from "@/components/basketball/player-card/AttributeRadar";
 import { PlayerRatingGrid } from "@/components/basketball/PlayerRatingGrid";
-import { Section } from "@/components/owner/Section";
+import { Section } from "@/components/ui/Section";
 import { AttributeBar } from "@/components/player-profile/AttributeBar";
 import type { PlayerAttributes } from "@/domain/entities/player";
 import { RATING_CATEGORIES } from "@/presentation/player-rating-categories";
@@ -41,7 +41,7 @@ export function PlayerAttributesPanel(props: { player: PlayerProfileView }) {
           attributes={player.attributes as PlayerAttributes}
         />
       </Section>
-      <p className="font-mono text-[0.65rem] uppercase tracking-[0.18em] text-amber-400">
+      <p className="font-mono text-[0.65rem] uppercase tracking-[0.18em] text-team-ink">
         Attribute detail and development
       </p>
       {RATING_CATEGORIES.map((category) => (

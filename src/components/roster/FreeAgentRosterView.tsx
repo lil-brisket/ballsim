@@ -2,8 +2,8 @@ import Link from "next/link";
 import type { FreeAgentView } from "@/state/selectors";
 import { PlayerPortrait } from "@/components/basketball/PlayerPortrait";
 import { PlayerEntityLink } from "@/components/entity/PlayerEntityLink";
-import { DataTable } from "@/components/owner/DataTable";
-import { EmptyState } from "@/components/owner/EmptyState";
+import { DataTable } from "@/components/ui/DataTable";
+import { EmptyState } from "@/components/ui/EmptyState";
 
 export function FreeAgentRosterView(props: {
   saveId: string;
@@ -31,7 +31,7 @@ export function FreeAgentRosterView(props: {
         </p>
         <Link
           href={props.freeAgencyHubHref}
-          className="text-sm text-amber-400 hover:text-amber-300"
+          className="text-sm text-team-ink underline-offset-4 hover:underline"
         >
           Full Free Agency →
         </Link>
@@ -63,7 +63,7 @@ export function FreeAgentRosterView(props: {
               <td className="px-3 py-2">
                 <Link
                   href={props.freeAgencyHubHref}
-                  className="text-xs text-amber-400 hover:text-amber-300"
+                  className="text-xs text-team-ink underline-offset-4 hover:underline"
                 >
                   View in Free Agency →
                 </Link>
@@ -77,7 +77,7 @@ export function FreeAgentRosterView(props: {
           Showing top 40 by overall.{" "}
           <Link
             href={props.freeAgencyHubHref}
-            className="text-amber-400 hover:text-amber-300"
+            className="text-team-ink underline-offset-4 hover:underline"
           >
             See all
           </Link>

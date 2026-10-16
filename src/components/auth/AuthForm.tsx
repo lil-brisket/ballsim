@@ -1,5 +1,10 @@
 import Link from "next/link";
-import { cn, focusRingClass, panelClass } from "@/components/ui/styles";
+import {
+  cn,
+  focusRingClass,
+  linkClass,
+  panelClass,
+} from "@/components/ui/styles";
 
 const inputClass = cn(
   "min-h-11 w-full rounded-md border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-100",
@@ -7,7 +12,7 @@ const inputClass = cn(
 );
 
 const buttonClass = cn(
-  "inline-flex min-h-11 items-center rounded-md bg-amber-600 px-4 py-2 text-sm font-medium text-zinc-950 hover:bg-amber-500",
+  "inline-flex min-h-11 items-center rounded-md bg-team px-4 py-2 text-sm font-medium text-on-team hover:brightness-110",
   focusRingClass,
 );
 
@@ -100,10 +105,7 @@ export function AuthForm({ mode, action, next, error }: AuthFormProps) {
 
       <p className="text-sm text-zinc-400">
         {signup ? "Already have an account? " : "New here? "}
-        <Link
-          href={otherHref}
-          className="text-amber-300 underline hover:text-amber-200"
-        >
+        <Link href={otherHref} className={cn(linkClass, "underline")}>
           {signup ? "Sign in" : "Create an account"}
         </Link>
       </p>

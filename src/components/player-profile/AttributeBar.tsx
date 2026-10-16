@@ -7,7 +7,7 @@ export function AttributeBar(props: {
   const clamped = Math.max(0, Math.min(100, props.value));
   const highlightClass =
     props.highlight === "strong"
-      ? "border-amber-700/60 bg-amber-950/20"
+      ? "border-team-ink/50 bg-team/15"
       : props.highlight === "weak"
         ? "border-zinc-700 bg-zinc-950/40"
         : "border-zinc-800";
@@ -20,7 +20,7 @@ export function AttributeBar(props: {
       </div>
       <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-zinc-800">
         <div
-          className="h-full rounded-full bg-amber-600"
+          className="h-full rounded-full bg-team-ink"
           style={{ width: `${clamped}%` }}
         />
       </div>

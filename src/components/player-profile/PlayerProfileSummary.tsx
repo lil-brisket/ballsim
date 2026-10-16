@@ -1,5 +1,5 @@
 import { MoneyDisplay } from "@/components/owner/MoneyDisplay";
-import { StatusBadge } from "@/components/owner/StatusBadge";
+import { StatusBadge } from "@/components/ui/StatusBadge";
 import type { PlayerProfileView } from "@/state/player-profile-selectors";
 
 function Fact(props: { label: string; children: React.ReactNode }) {

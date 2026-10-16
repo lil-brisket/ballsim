@@ -72,7 +72,7 @@ export function DraftQueuePanel(props: {
                       POT
                     </div>
                     {!entry.isAvailable ? (
-                      <div className="mt-1 text-xs text-amber-500/90">
+                      <div className="mt-1 text-xs text-zinc-500/90">
                         Drafted by {entry.draftedByAbbreviation ?? "—"}
                         {entry.pickNumber != null
                           ? ` · Pick #${entry.pickNumber}`
@@ -132,7 +132,7 @@ export function DraftQueuePanel(props: {
                                 potential: entry.potential,
                               })
                             }
-                            className="rounded bg-amber-700/80 px-2 py-0.5 text-[10px] text-amber-50 disabled:opacity-50"
+                            className="rounded bg-team px-2 py-0.5 text-[10px] text-on-team disabled:opacity-50"
                           >
                             Draft
                           </button>

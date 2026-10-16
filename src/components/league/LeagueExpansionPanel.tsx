@@ -8,10 +8,10 @@ import type { ExpansionAssessment } from "@/state/expansion-assessment";
 import type { ExpansionState } from "@/domain/entities/expansion";
 import type { LeagueEconomy } from "@/domain/entities/league-economy";
 import { MoneyDisplay } from "@/components/owner/MoneyDisplay";
-import { PageHeader } from "@/components/owner/PageHeader";
-import { Section } from "@/components/owner/Section";
-import { StatCard } from "@/components/owner/StatCard";
-import { ErrorState } from "@/components/owner/EmptyState";
+import { PageHeader } from "@/components/ui/PageHeader";
+import { Section } from "@/components/ui/Section";
+import { StatCard } from "@/components/ui/StatCard";
+import { ErrorState } from "@/components/ui/EmptyState";
 
 /**
  * Existing expansion + league economics UI — unchanged behavior.
@@ -147,7 +147,7 @@ export function LeagueExpansionPanel(props: {
                 <input type="hidden" name="returnPath" value={returnPath} />
                 <button
                   type="submit"
-                  className="rounded-md border border-zinc-700 px-3 py-1.5 text-sm text-zinc-200 hover:border-amber-600"
+                  className="rounded-md border border-zinc-700 px-3 py-1.5 text-sm text-zinc-200 hover:border-team-ink"
                 >
                   Propose expansion
                 </button>
@@ -163,7 +163,7 @@ export function LeagueExpansionPanel(props: {
                 <input type="hidden" name="returnPath" value={returnPath} />
                 <button
                   type="submit"
-                  className="rounded-md border border-zinc-700 px-3 py-1.5 text-sm text-zinc-200 hover:border-amber-600"
+                  className="rounded-md border border-zinc-700 px-3 py-1.5 text-sm text-zinc-200 hover:border-team-ink"
                 >
                   Approve {candidate.city} {candidate.name}
                 </button>
@@ -175,7 +175,7 @@ export function LeagueExpansionPanel(props: {
                 <input type="hidden" name="returnPath" value={returnPath} />
                 <button
                   type="submit"
-                  className="rounded-md border border-zinc-700 px-3 py-1.5 text-sm text-zinc-200 hover:border-amber-600"
+                  className="rounded-md border border-zinc-700 px-3 py-1.5 text-sm text-zinc-200 hover:border-team-ink"
                 >
                   Run expansion draft
                 </button>
@@ -187,7 +187,7 @@ export function LeagueExpansionPanel(props: {
                 <input type="hidden" name="returnPath" value={returnPath} />
                 <button
                   type="submit"
-                  className="rounded-md bg-amber-600 px-3 py-1.5 text-sm font-medium text-zinc-950 hover:bg-amber-500"
+                  className="rounded-md bg-team px-3 py-1.5 text-sm font-medium text-on-team hover:brightness-110"
                 >
                   Complete expansion
                 </button>

@@ -1,7 +1,7 @@
 import type { DepthChartView } from "@/state/roster-page-selectors";
 import { PLAYER_POSITIONS } from "@/domain/entities/player";
 import { PlayerEntityLink } from "@/components/entity/PlayerEntityLink";
-import { EmptyState } from "@/components/owner/EmptyState";
+import { EmptyState } from "@/components/ui/EmptyState";
 import { cn, panelClass } from "@/components/ui/styles";
 
 export function DepthChart(props: {
@@ -30,7 +30,7 @@ export function DepthChart(props: {
               className={cn(panelClass, "px-3 py-3")}
               aria-label={`${position} depth`}
             >
-              <h3 className="font-mono text-sm font-medium text-amber-400">
+              <h3 className="font-mono text-sm font-medium text-team-ink">
                 {position}
               </h3>
               {entries.length === 0 ? (

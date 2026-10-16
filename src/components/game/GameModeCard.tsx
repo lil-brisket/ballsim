@@ -3,7 +3,7 @@ import type {
   GameModeCatalogId,
   GameModeDefinition,
 } from "@/application/game-mode-catalog";
-import { StatusBadge } from "@/components/owner/StatusBadge";
+import { StatusBadge } from "@/components/ui/StatusBadge";
 import { cn, focusRingClass } from "@/components/ui/styles";
 
 /**

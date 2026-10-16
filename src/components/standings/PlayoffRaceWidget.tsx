@@ -15,7 +15,7 @@ function WinPctBar(props: { winPercentage: number; label: string }) {
       aria-label={props.label}
     >
       <div
-        className="h-full rounded-full bg-amber-500"
+        className="h-full rounded-full bg-team-ink"
         style={{ width: `${pct}%` }}
       />
     </div>
@@ -31,7 +31,7 @@ function RaceRow(props: {
     <li
       className={cn(
         "grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2 py-1.5",
-        team.isUserTeam && "text-amber-300",
+        team.isUserTeam && "text-team-ink",
       )}
       data-testid={`playoff-race-team-${team.teamId}`}
     >
@@ -40,7 +40,7 @@ function RaceRow(props: {
           <TeamEntityLink
             saveId={props.saveId}
             teamId={team.teamId}
-            className="min-w-0 truncate hover:text-amber-400"
+            className="min-w-0 truncate hover:text-team-ink"
           >
             <TeamIdentityInline
               city={team.city}
@@ -91,11 +91,11 @@ export function PlayoffRaceWidget(props: {
         role="separator"
         aria-label="Playoff cutoff"
       >
-        <span className="h-px flex-1 bg-amber-700/60" />
-        <span className="font-mono text-[0.65rem] uppercase tracking-[0.16em] text-amber-500">
+        <span className="h-px flex-1 bg-team-ink/60" />
+        <span className="font-mono text-[0.65rem] uppercase tracking-[0.16em] text-team-ink">
           Playoff
         </span>
-        <span className="h-px flex-1 bg-amber-700/60" />
+        <span className="h-px flex-1 bg-team-ink/60" />
       </div>
       <ol className="m-0 list-none p-0">
         {props.view.below.map((team) => (

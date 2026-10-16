@@ -70,7 +70,7 @@ export function LeagueGameRow(props: LeagueGameRowProps) {
         teamId={props.awayTeamId}
         className={cn(
           touchTargetTextClass,
-          "text-zinc-100 hover:text-amber-400",
+          "text-zinc-100 hover:text-team-ink",
           focusRingClass,
         )}
       >
@@ -86,14 +86,14 @@ export function LeagueGameRow(props: LeagueGameRowProps) {
         teamId={props.homeTeamId}
         className={cn(
           touchTargetTextClass,
-          "text-zinc-100 hover:text-amber-400",
+          "text-zinc-100 hover:text-team-ink",
           focusRingClass,
         )}
       >
         {props.homeAbbreviation}
       </TeamEntityLink>
       {props.competitionType === "playoffs" ? (
-        <span className="font-mono text-[0.65rem] uppercase text-amber-500/80">
+        <span className="font-mono text-[0.65rem] uppercase text-team-ink/80">
           Playoffs
         </span>
       ) : null}
@@ -142,7 +142,7 @@ export function LeagueGameRow(props: LeagueGameRowProps) {
             href={`/dashboard/${props.saveId}/games/${props.gameId}/watch`}
             className={cn(
               touchTargetTextClass,
-              "text-xs text-amber-400 hover:text-amber-300",
+              "text-xs text-team-ink underline-offset-4 hover:underline",
               focusRingClass,
             )}
           >

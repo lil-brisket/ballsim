@@ -19,9 +19,7 @@ export function FinanceSnapshotCard(props: {
       title="Finances"
       description="Cash position and near-term runway"
       footer={
-        <span className="text-sm font-medium text-amber-400">
-          View Finances
-        </span>
+        <span className="text-sm font-medium text-team-ink">View Finances</span>
       }
     >
       <dl className="mt-3 space-y-1.5 text-xs text-zinc-400">

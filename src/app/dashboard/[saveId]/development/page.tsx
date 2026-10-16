@@ -1,14 +1,17 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { loadDevelopmentHubView } from "@/application/game-service";
 import { DevelopmentRow } from "@/components/development/DevelopmentRow";
 import { ManagementDecisionPanel } from "@/components/management/ManagementDecisionPanel";
-import { DataTable } from "@/components/owner/DataTable";
-import { EmptyState, ErrorState } from "@/components/owner/EmptyState";
-import { PageHeader } from "@/components/owner/PageHeader";
-import { Section } from "@/components/owner/Section";
+import { DataTable } from "@/components/ui/DataTable";
+import { EmptyState, ErrorState } from "@/components/ui/EmptyState";
+import { PageHeader } from "@/components/ui/PageHeader";
+import { Section } from "@/components/ui/Section";
 import { StaffEntityLink } from "@/components/entity/StaffEntityLink";
 import { PlayerEntityLink } from "@/components/entity/PlayerEntityLink";
+
+export const metadata: Metadata = { title: "Development" };
 
 type PageProps = {
   params: Promise<{ saveId: string }>;
@@ -34,7 +37,7 @@ export default async function DevelopmentHubPage({
         actions={
           <Link
             href={`/dashboard/${saveId}/development-league`}
-            className="text-sm text-amber-400 hover:underline"
+            className="text-sm text-team-ink underline-offset-4 hover:underline"
           >
             Franchise Development League
           </Link>

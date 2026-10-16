@@ -1,5 +1,5 @@
 import type { SimulationPhaseContext } from "@/systems/simulation/simulation-phase";
-import { StatusBadge } from "@/components/owner/StatusBadge";
+import { StatusBadge } from "@/components/ui/StatusBadge";
 
 /**
  * Prominent phase status for Owner Mode. Presentation only.
@@ -26,7 +26,7 @@ export function SimulationPhaseBanner(props: {
       className="rounded-xl border border-zinc-700 bg-zinc-900/70 px-4 py-4"
       aria-label="Simulation phase"
     >
-      <p className="font-mono text-xs uppercase tracking-[0.18em] text-amber-500">
+      <p className="font-mono text-xs uppercase tracking-[0.18em] text-team-ink">
         Season {phase.seasonYear}
       </p>
       <div className="mt-1 flex flex-wrap items-baseline gap-2">

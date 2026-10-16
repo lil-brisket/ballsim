@@ -14,13 +14,13 @@ export function DraftHeader(props: { draft: FantasyDraftView }) {
       : "AI PICK";
 
   return (
-    <header className="rounded-xl border border-amber-800/40 bg-amber-950/30 p-5">
+    <header className="rounded-xl border border-team-ink/50 bg-team/20 p-5">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <div className="text-xs uppercase tracking-wide text-amber-300/80">
+          <div className="text-xs uppercase tracking-wide text-team-ink/80">
             ROUND {draft.currentRound ?? "—"} · {pickLabel}
           </div>
-          <h1 className="mt-1 text-2xl font-semibold text-amber-50">
+          <h1 className="mt-1 text-2xl font-semibold text-zinc-50">
             {draft.onClockTeamName ?? "—"}
           </h1>
           <p
@@ -28,7 +28,7 @@ export function DraftHeader(props: { draft: FantasyDraftView }) {
               draft.paused
                 ? "text-zinc-400"
                 : draft.onClockIsUser
-                  ? "text-amber-200"
+                  ? "text-team-ink"
                   : "text-sky-300"
             }`}
           >
@@ -42,7 +42,7 @@ export function DraftHeader(props: { draft: FantasyDraftView }) {
         </div>
         <div className="min-w-[140px] text-right">
           {draft.timerEnabled ? (
-            <p className="font-mono text-3xl text-amber-100">
+            <p className="font-mono text-3xl text-zinc-100">
               {draft.paused ? "⏸ " : ""}
               {draft.remainingSeconds ?? "—"}s
             </p>
@@ -53,7 +53,7 @@ export function DraftHeader(props: { draft: FantasyDraftView }) {
             </div>
             <div className="h-2 w-40 overflow-hidden rounded-full bg-zinc-800">
               <div
-                className="h-full rounded-full bg-amber-500"
+                className="h-full rounded-full bg-team-ink"
                 style={{ width: `${draft.draftProgressPercent}%` }}
               />
             </div>

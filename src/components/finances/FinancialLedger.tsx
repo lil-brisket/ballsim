@@ -1,4 +1,4 @@
-import { EmptyState } from "@/components/owner/EmptyState";
+import { EmptyState } from "@/components/ui/EmptyState";
 import { MoneyDisplay } from "@/components/owner/MoneyDisplay";
 import type { EventLogEntryView } from "@/state/selectors";
 import type { FinanceTrendPoint } from "@/state/finance-hub-selectors";

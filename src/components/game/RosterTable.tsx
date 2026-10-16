@@ -1,11 +1,12 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { cn, focusRingClass } from "@/components/ui/styles";
 import type { RosterPlayerView } from "@/state/selectors";
 import { PlayerEntityLink } from "@/components/entity/PlayerEntityLink";
 import { ContractSummary } from "@/components/owner/ContractSummary";
-import { DataTable } from "@/components/owner/DataTable";
-import { StatusBadge } from "@/components/owner/StatusBadge";
+import { DataTable } from "@/components/ui/DataTable";
+import { StatusBadge } from "@/components/ui/StatusBadge";
 
 type SortKey = "name" | "position" | "age" | "overall" | "status";
 
@@ -66,7 +67,10 @@ export function RosterTable(props: {
             value={query}
             onChange={(event) => setQuery(event.target.value)}
             placeholder="Name, position, status…"
-            className="rounded-md border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-zinc-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-500"
+            className={cn(
+              "rounded-md border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-zinc-100",
+              focusRingClass,
+            )}
           />
         </label>
         <label className="flex flex-col gap-1 text-xs text-zinc-500">
@@ -74,7 +78,10 @@ export function RosterTable(props: {
           <select
             value={sortKey}
             onChange={(event) => setSortKey(event.target.value as SortKey)}
-            className="rounded-md border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-zinc-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-500"
+            className={cn(
+              "rounded-md border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-zinc-100",
+              focusRingClass,
+            )}
           >
             <option value="overall">Overall</option>
             <option value="name">Name</option>
@@ -90,7 +97,10 @@ export function RosterTable(props: {
             onChange={(event) =>
               setSortDir(event.target.value as "asc" | "desc")
             }
-            className="rounded-md border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-zinc-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-500"
+            className={cn(
+              "rounded-md border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-zinc-100",
+              focusRingClass,
+            )}
           >
             <option value="desc">Descending</option>
             <option value="asc">Ascending</option>

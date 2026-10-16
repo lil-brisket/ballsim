@@ -588,7 +588,7 @@ export function CalendarWorkspace(props: {
         <p
           role="status"
           aria-live="polite"
-          className="rounded-md border border-amber-700/40 bg-amber-950/30 px-3 py-2 text-sm text-amber-100"
+          className="rounded-md border border-team-ink/50 bg-team/15 px-3 py-2 text-sm text-zinc-100"
         >
           Simulation in progress — calendar navigation is locked until it
           finishes.
@@ -669,7 +669,7 @@ export function CalendarWorkspace(props: {
             <button
               type="button"
               onClick={() => handleSimulate(resumeTarget)}
-              className="rounded-md bg-amber-600 px-4 py-2 text-sm font-medium text-zinc-950 hover:bg-amber-500"
+              className="rounded-md bg-team px-4 py-2 text-sm font-medium text-on-team hover:brightness-110"
             >
               Continue to {resumeTarget}
             </button>

@@ -44,7 +44,7 @@ export function VacantStaffRow(props: {
     <tr className="border-t border-zinc-800">
       <td className={`${CELL} text-zinc-400`}>{props.entry.roleLabel}</td>
       <td
-        className={`${CELL} font-medium uppercase tracking-wide text-amber-400`}
+        className={`${CELL} font-medium uppercase tracking-wide text-team-ink`}
       >
         Vacant
       </td>
@@ -53,7 +53,10 @@ export function VacantStaffRow(props: {
       <td className={`${CELL} text-zinc-600`}>—</td>
       <td className={`${CELL} text-zinc-600`}>—</td>
       <td className={CELL}>
-        <a href={href} className="text-sm text-amber-400 hover:underline">
+        <a
+          href={href}
+          className="text-sm text-team-ink underline-offset-4 hover:underline"
+        >
           Find Staff
         </a>
       </td>
@@ -115,12 +118,12 @@ export function VacantStaffCard(props: {
       <p className="font-mono text-[0.65rem] uppercase tracking-[0.16em] text-zinc-500">
         {props.entry.roleLabel}
       </p>
-      <p className="mt-1 font-medium uppercase tracking-wide text-amber-400">
+      <p className="mt-1 font-medium uppercase tracking-wide text-team-ink">
         Vacant
       </p>
       <a
         href={href}
-        className="mt-2 inline-block text-sm text-amber-400 hover:underline"
+        className="mt-2 inline-block text-sm text-team-ink underline-offset-4 hover:underline"
       >
         Find Staff
       </a>

@@ -1,12 +1,16 @@
+import type { Metadata } from "next";
+import { linkClass } from "@/components/ui/styles";
 import { notFound } from "next/navigation";
 import {
   markNotificationsReadAction,
   switchActiveOwnerTeamAction,
 } from "@/application/actions";
 import { loadOwnerSaveView } from "@/application/game-service";
-import { EmptyState, ErrorState } from "@/components/owner/EmptyState";
+import { EmptyState, ErrorState } from "@/components/ui/EmptyState";
 import { NotificationItem } from "@/components/owner/NotificationItem";
-import { PageHeader } from "@/components/owner/PageHeader";
+import { PageHeader } from "@/components/ui/PageHeader";
+
+export const metadata: Metadata = { title: "Notifications" };
 
 type NotificationsPageProps = {
   params: Promise<{ saveId: string }>;
@@ -49,7 +53,7 @@ export default async function NotificationsPage({
             <input type="hidden" name="returnPath" value={returnPath} />
             <button
               type="submit"
-              className="rounded-md border border-zinc-700 px-3 py-1.5 text-sm text-zinc-200 hover:border-amber-600"
+              className="rounded-md border border-zinc-700 px-3 py-1.5 text-sm text-zinc-200 hover:border-team-ink"
             >
               Mark all read
             </button>
@@ -63,7 +67,7 @@ export default async function NotificationsPage({
           href={`/dashboard/${saveId}/notifications`}
           className={`rounded-full border px-3 py-1 text-xs ${
             !team
-              ? "border-amber-600 text-amber-400"
+              ? "border-team-ink text-team-ink"
               : "border-zinc-700 text-zinc-400"
           }`}
         >
@@ -75,7 +79,7 @@ export default async function NotificationsPage({
             href={`/dashboard/${saveId}/notifications?team=${owned.id}`}
             className={`rounded-full border px-3 py-1 text-xs ${
               team === owned.id
-                ? "border-amber-600 text-amber-400"
+                ? "border-team-ink text-team-ink"
                 : "border-zinc-700 text-zinc-400"
             }`}
           >
@@ -93,7 +97,7 @@ export default async function NotificationsPage({
           }
           className={`rounded-full border px-3 py-1 text-xs ${
             !type
-              ? "border-amber-600 text-amber-400"
+              ? "border-team-ink text-team-ink"
               : "border-zinc-700 text-zinc-400"
           }`}
         >
@@ -108,7 +112,7 @@ export default async function NotificationsPage({
             }).toString()}`}
             className={`rounded-full border px-3 py-1 text-xs ${
               type === notificationType
-                ? "border-amber-600 text-amber-400"
+                ? "border-team-ink text-team-ink"
                 : "border-zinc-700 text-zinc-400"
             }`}
           >
@@ -133,10 +137,7 @@ export default async function NotificationsPage({
                       name="teamId"
                       value={notification.teamId}
                     />
-                    <button
-                      type="submit"
-                      className="text-amber-400 hover:underline"
-                    >
+                    <button type="submit" className={linkClass}>
                       Switch to team
                     </button>
                   </form>

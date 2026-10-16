@@ -80,7 +80,7 @@ function RecallButton(props: {
       <button
         type="submit"
         className={cn(
-          "rounded border border-zinc-700 px-2 py-1 text-xs text-zinc-300 hover:border-amber-500",
+          "rounded border border-zinc-700 px-2 py-1 text-xs text-zinc-300 hover:border-team-ink",
           focusRingClass,
         )}
       >
@@ -112,7 +112,7 @@ export function DlProspectCard(props: {
         panelClass,
         densityPadding.default,
         ready && "border-emerald-800/60",
-        row.readiness === "near_ready" && "border-amber-800/40",
+        row.readiness === "near_ready" && "border-warning/40",
       )}
     >
       <div className="flex flex-wrap items-start justify-between gap-3">
@@ -232,7 +232,7 @@ function AssignButton(props: {
       <button
         type="submit"
         className={cn(
-          "rounded border border-amber-600 bg-amber-950/40 px-2 py-1 text-xs text-amber-200 hover:bg-amber-900/50",
+          "rounded border border-team-ink bg-team/15 px-2 py-1 text-xs text-zinc-100 hover:bg-team/20",
           focusRingClass,
         )}
       >

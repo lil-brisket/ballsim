@@ -20,7 +20,7 @@ const NON_ATTRIBUTE_METRICS = new Set([
 ]);
 
 const selectClass =
-  "min-h-11 rounded-md border border-zinc-700 bg-zinc-950 px-2 text-sm text-zinc-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-500";
+  "min-h-11 rounded-md border border-zinc-700 bg-zinc-950 px-2 text-sm text-zinc-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-team-ink";
 
 const labelClass =
   "font-mono text-[0.65rem] uppercase tracking-[0.14em] text-zinc-400";

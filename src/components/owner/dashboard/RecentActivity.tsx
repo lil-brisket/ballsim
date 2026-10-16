@@ -1,7 +1,7 @@
 import type { EventLogEntryView } from "@/state/selectors";
 import { EventCard } from "@/components/game/EventCard";
-import { EmptyState } from "@/components/owner/EmptyState";
-import { Section } from "@/components/owner/Section";
+import { EmptyState } from "@/components/ui/EmptyState";
+import { Section } from "@/components/ui/Section";
 
 export function RecentActivity(props: { activity: EventLogEntryView[] }) {
   return (

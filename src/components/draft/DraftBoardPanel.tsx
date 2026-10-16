@@ -1,3 +1,5 @@
+import { cn, linkClass } from "@/components/ui/styles";
+
 type BoardEntry = {
   prospectPlayerId: string;
   name: string;
@@ -40,7 +42,7 @@ export function DraftBoardPanel({
             <span className="font-medium text-zinc-100">
               #{entry.rank} {entry.name}
               {entry.priority ? (
-                <span className="ml-2 text-[10px] uppercase text-amber-400">
+                <span className="ml-2 text-[10px] uppercase text-team-ink">
                   Priority
                 </span>
               ) : null}
@@ -60,10 +62,7 @@ export function DraftBoardPanel({
                 name="prospectPlayerId"
                 value={entry.prospectPlayerId}
               />
-              <button
-                type="submit"
-                className="text-xs text-amber-400 hover:underline"
-              >
+              <button type="submit" className={cn(linkClass, "text-xs")}>
                 {entry.priority ? "Unmark priority" : "Mark priority"}
               </button>
             </form>

@@ -50,7 +50,7 @@ export function RotationHealth(props: {
           health?.level === "invalid"
             ? "border-rose-800 bg-rose-950/20"
             : health?.level === "warning"
-              ? "border-amber-800 bg-amber-950/20"
+              ? "border-warning/40 bg-warning/10"
               : "border-zinc-800 bg-zinc-900/50"
         }`}
       >
@@ -68,9 +68,7 @@ export function RotationHealth(props: {
               <li
                 key={`${issue.code}-${issue.message}`}
                 className={
-                  issue.severity === "error"
-                    ? "text-rose-300"
-                    : "text-amber-300"
+                  issue.severity === "error" ? "text-rose-300" : "text-warning"
                 }
               >
                 {issue.message}

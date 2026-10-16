@@ -1,7 +1,7 @@
 import { loadOwnerSave } from "@/application/game-service";
 import { TeamManagementNav } from "@/components/team-management/TeamManagementNav";
 import { OwnerTeamSwitcher } from "@/components/game/OwnerTeamSwitcher";
-import { TeamBadge } from "@/components/owner/TeamBadge";
+import { TeamLabel } from "@/components/ui/TeamLabel";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 
@@ -25,7 +25,7 @@ export default async function TeamManagementLayout({
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <TeamBadge
+        <TeamLabel
           city={team.city}
           name={team.name}
           abbreviation={team.abbreviation}

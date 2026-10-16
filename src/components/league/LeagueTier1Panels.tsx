@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { TeamEntityLink } from "@/components/entity/TeamEntityLink";
-import { EmptyState } from "@/components/owner/EmptyState";
-import { Section } from "@/components/owner/Section";
+import { EmptyState } from "@/components/ui/EmptyState";
+import { Section } from "@/components/ui/Section";
 import type { LeagueHubSnapshot } from "@/state/league-hub-selectors";
 import type { StandingsRowEnriched } from "@/state/standings-selectors";
 import { formatStreak } from "@/state/standings-selectors";
@@ -56,7 +56,7 @@ export function LeagueStandingsSnapshot(props: {
         <Link
           href={standingsHref}
           className={cn(
-            "text-sm text-amber-400 hover:text-amber-300",
+            "text-sm text-team-ink underline-offset-4 hover:underline",
             focusRingClass,
           )}
         >
@@ -84,9 +84,9 @@ export function LeagueStandingsSnapshot(props: {
                   key={row.teamId}
                   className={cn(
                     "border-t border-zinc-800",
-                    row.isUserTeam && "bg-amber-950/25",
+                    row.isUserTeam && "bg-team/15",
                     row.conferenceRank === props.cutoffRank &&
-                      "border-t border-dashed border-amber-800/50",
+                      "border-t border-dashed border-team-ink/50",
                   )}
                 >
                   <td className="py-1.5 pr-2 font-mono text-zinc-500">
@@ -98,16 +98,16 @@ export function LeagueStandingsSnapshot(props: {
                       teamId={row.teamId}
                       className={cn(
                         row.isUserTeam
-                          ? "font-medium text-amber-300"
+                          ? "font-medium text-team-ink"
                           : "text-zinc-100",
-                        "hover:text-amber-400",
+                        "hover:text-team-ink",
                         focusRingClass,
                       )}
                     >
                       {row.abbreviation}
                     </TeamEntityLink>
                     {row.isUserTeam && props.includesUserOutsideTop ? (
-                      <span className="ml-2 text-[0.65rem] text-amber-500">
+                      <span className="ml-2 text-[0.65rem] text-team-ink">
                         you
                       </span>
                     ) : null}

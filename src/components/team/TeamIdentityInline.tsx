@@ -29,7 +29,7 @@ export function TeamIdentityInline(props: TeamIdentityInlineProps) {
         </span>
       ) : (
         <span
-          className={`inline-flex shrink-0 items-center justify-center rounded border border-amber-700/40 bg-amber-950/50 font-mono font-semibold text-amber-400 ${monogramClass}`}
+          className={`inline-flex shrink-0 items-center justify-center rounded border border-team-ink/50 bg-team/15 font-mono font-semibold text-team-ink ${monogramClass}`}
         >
           {props.abbreviation}
         </span>

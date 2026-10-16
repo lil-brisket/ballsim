@@ -3,7 +3,7 @@ import {
   SocialPostCard,
   type SocialPostCardProps,
 } from "@/components/media-hub/SocialPostCard";
-import { EmptyState } from "@/components/owner/EmptyState";
+import { EmptyState } from "@/components/ui/EmptyState";
 
 export type SocialPostWithStory = SocialPostCardProps & {
   relatedMediaId?: string;
@@ -55,7 +55,7 @@ export function SocialFeed(props: {
                   {props.mediaHrefBase ? (
                     <Link
                       href={props.mediaHrefBase}
-                      className="hover:text-amber-400 hover:underline"
+                      className="hover:text-team-ink underline-offset-4 hover:underline"
                     >
                       {headline}
                     </Link>

@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import {
@@ -7,9 +8,9 @@ import {
 import { executeTradeAction } from "@/application/actions";
 import { loadOwnerPlayerView } from "@/application/game-service";
 import { ConfirmDialog } from "@/components/owner/ConfirmDialog";
-import { ErrorState } from "@/components/owner/EmptyState";
-import { PageHeader } from "@/components/owner/PageHeader";
-import { Section } from "@/components/owner/Section";
+import { ErrorState } from "@/components/ui/EmptyState";
+import { PageHeader } from "@/components/ui/PageHeader";
+import { Section } from "@/components/ui/Section";
 import { PlayerAttributesPanel } from "@/components/player-profile/PlayerAttributes";
 import { PlayerCareer } from "@/components/player-profile/PlayerCareer";
 import { PlayerContract } from "@/components/player-profile/PlayerContract";
@@ -26,6 +27,8 @@ import { DevelopmentTab } from "@/components/basketball/player-card/DevelopmentT
 import { StatisticsTab } from "@/components/basketball/player-card/StatisticsTab";
 import { PlayerProfileHero } from "@/components/basketball/PlayerProfileHero";
 import { DevelopmentLeaguePlayerActions } from "@/components/player-profile/DevelopmentLeaguePlayerActions";
+
+export const metadata: Metadata = { title: "Player" };
 
 type PlayerPageProps = {
   params: Promise<{ saveId: string; playerId: string }>;
@@ -64,7 +67,7 @@ export default async function PlayerDetailPage({
           <input type="hidden" name="returnPath" value={returnPath} />
           <button
             type="submit"
-            className="rounded-md bg-amber-600 px-3 py-1.5 text-sm font-medium text-zinc-950 hover:bg-amber-500"
+            className="rounded-md bg-team px-3 py-1.5 text-sm font-medium text-on-team hover:brightness-110"
           >
             Confirm trade
           </button>
@@ -81,7 +84,7 @@ export default async function PlayerDetailPage({
         actions={
           <Link
             href={`/dashboard/${saveId}/roster`}
-            className="text-sm text-zinc-400 hover:text-amber-400"
+            className="text-sm text-zinc-400 hover:text-team-ink"
           >
             ← Roster
           </Link>

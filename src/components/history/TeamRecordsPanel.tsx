@@ -1,10 +1,10 @@
 import Link from "next/link";
-import { EmptyState } from "@/components/owner/EmptyState";
+import { EmptyState } from "@/components/ui/EmptyState";
 import {
   FranchiseHistorySeasonTable,
   FranchiseHistorySummary,
 } from "@/components/owner/FranchiseHistorySummary";
-import { Section } from "@/components/owner/Section";
+import { Section } from "@/components/ui/Section";
 import { cn, focusRingClass, panelClass } from "@/components/ui/styles";
 import { historyHubHref } from "@/components/history/history-hub-links";
 import type { BestRecordMetric } from "@/state/franchise-history-milestones";
@@ -51,7 +51,7 @@ function TeamRecordsTable(props: {
               key={row.teamId}
               className={cn(
                 "border-b border-zinc-900/80",
-                row.teamId === props.selectedTeamId && "bg-amber-600/10",
+                row.teamId === props.selectedTeamId && "bg-team/15",
               )}
             >
               <td className={TD}>
@@ -61,7 +61,7 @@ function TeamRecordsTable(props: {
                     team: row.teamId,
                   })}
                   className={cn(
-                    "text-amber-400 hover:underline",
+                    "text-team-ink underline-offset-4 hover:underline",
                     focusRingClass,
                   )}
                 >

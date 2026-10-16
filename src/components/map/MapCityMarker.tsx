@@ -14,7 +14,7 @@ export const MapCityMarker = memo(function MapCityMarker(props: {
   const status = props.selected ? "selected" : props.city.status;
   const visualRadius =
     status === "selected" ? 7 : status === "occupied" ? 4 : 5;
-  const fill = status === "occupied" ? "fill-zinc-500" : "fill-amber-500";
+  const fill = status === "occupied" ? "fill-zinc-500" : "fill-team-ink";
   const statusText =
     props.city.status === "occupied"
       ? `${props.city.detail ?? "Existing franchise"}`
@@ -37,7 +37,7 @@ export const MapCityMarker = memo(function MapCityMarker(props: {
       }`}</title>
       <circle
         r={props.hitRadius}
-        className="fill-transparent stroke-transparent outline-none focus-visible:stroke-amber-300"
+        className="fill-transparent stroke-transparent outline-none focus-visible:stroke-team-ink"
         strokeWidth={2}
         role="button"
         tabIndex={0}
@@ -57,20 +57,20 @@ export const MapCityMarker = memo(function MapCityMarker(props: {
       {status === "selected" ? (
         <circle
           r={visualRadius + 5}
-          className="pointer-events-none fill-none stroke-amber-300/80"
+          className="pointer-events-none fill-none stroke-team-ink/80"
           strokeWidth={2}
         />
       ) : null}
       {status === "selected" ? (
         <circle
           r={visualRadius + 8}
-          className="pointer-events-none fill-amber-500/20"
+          className="pointer-events-none fill-team-ink/20"
         />
       ) : null}
       <circle
         r={visualRadius}
         className={`pointer-events-none ${fill} ${
-          status === "occupied" ? "stroke-zinc-400/50" : "stroke-amber-200/70"
+          status === "occupied" ? "stroke-zinc-400/50" : "stroke-team-ink/70"
         }`}
         strokeWidth={status === "selected" ? 1.5 : 1}
       />

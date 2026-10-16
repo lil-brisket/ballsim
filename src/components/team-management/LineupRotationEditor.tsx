@@ -231,10 +231,10 @@ export function LineupRotationEditor(props: {
       ) : null}
 
       {optimizeChangelog != null && optimizeChangelog.length > 0 ? (
-        <div className="rounded-lg border border-amber-800/60 bg-amber-950/20 p-4">
+        <div className="rounded-lg border border-warning/40 bg-warning/10 p-4">
           <div className="flex items-start justify-between gap-3">
             <div>
-              <h3 className="text-sm font-medium text-amber-200">
+              <h3 className="text-sm font-medium text-warning">
                 Optimize summary
               </h3>
               <ul className="mt-2 space-y-1 text-xs text-zinc-300">
@@ -347,7 +347,7 @@ export function LineupRotationEditor(props: {
           />
           <button
             type="submit"
-            className="rounded-md bg-amber-600 px-3 py-2 text-sm font-medium text-zinc-950 hover:bg-amber-500"
+            className="rounded-md bg-team px-3 py-2 text-sm font-medium text-on-team hover:brightness-110"
           >
             Save Changes
           </button>

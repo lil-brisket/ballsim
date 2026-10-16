@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import {
@@ -7,6 +8,8 @@ import {
 import { getRequestSaveStore } from "@/application/request-save-store";
 import { TradeReviewPanel } from "@/components/trades/TradeReviewPanel";
 import { buildTradeReviewView } from "@/state/trade-review-view";
+
+export const metadata: Metadata = { title: "Trade" };
 
 type PageProps = {
   params: Promise<{ saveId: string; decisionId: string }>;

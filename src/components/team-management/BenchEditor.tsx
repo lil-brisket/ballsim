@@ -1,7 +1,7 @@
 "use client";
 
-import { DataTable } from "@/components/owner/DataTable";
-import { StatusBadge } from "@/components/owner/StatusBadge";
+import { DataTable } from "@/components/ui/DataTable";
+import { StatusBadge } from "@/components/ui/StatusBadge";
 import type {
   EditableRotationRow,
   PlayerCardLike,
@@ -53,7 +53,7 @@ export function BenchEditor(props: {
                   <button
                     type="button"
                     onClick={() => props.onMoveToInactive(playerId)}
-                    className="text-xs text-zinc-400 hover:text-amber-300"
+                    className="text-xs text-zinc-400 hover:text-team-ink"
                   >
                     Make inactive
                   </button>
@@ -90,7 +90,7 @@ export function BenchEditor(props: {
                   <button
                     type="button"
                     onClick={() => props.onMoveToBench(playerId)}
-                    className="text-xs text-zinc-400 hover:text-amber-300"
+                    className="text-xs text-zinc-400 hover:text-team-ink"
                   >
                     Move to bench
                   </button>

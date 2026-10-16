@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import {
@@ -6,10 +7,12 @@ import {
   scheduleGameDayPromotionAction,
 } from "@/application/actions";
 import { loadOwnerGameDayPromotionEventView } from "@/application/game-service";
-import { ErrorState } from "@/components/owner/EmptyState";
+import { ErrorState } from "@/components/ui/EmptyState";
 import { MoneyDisplay } from "@/components/owner/MoneyDisplay";
-import { PageHeader } from "@/components/owner/PageHeader";
-import { Section } from "@/components/owner/Section";
+import { PageHeader } from "@/components/ui/PageHeader";
+import { Section } from "@/components/ui/Section";
+
+export const metadata: Metadata = { title: "Game Day Event" };
 
 type PageProps = {
   params: Promise<{ saveId: string; gameId: string }>;
@@ -48,7 +51,7 @@ export default async function GameDayEventPage({
       <p className="mb-4 text-sm text-zinc-500">
         <Link
           href={`/dashboard/${saveId}/schedule`}
-          className="text-amber-400 hover:text-amber-300"
+          className="text-team-ink underline-offset-4 hover:underline"
         >
           ← Back to schedule
         </Link>
@@ -127,7 +130,7 @@ export default async function GameDayEventPage({
               <dd className="text-zinc-100 capitalize">
                 {view.result.fanResponse.replaceAll("_", " ")}
                 {view.result.underperformed ? (
-                  <span className="ml-2 text-amber-400">(underperformed)</span>
+                  <span className="ml-2 text-warning">(underperformed)</span>
                 ) : null}
               </dd>
             </div>
@@ -268,7 +271,7 @@ export default async function GameDayEventPage({
                       />
                       <button
                         type="submit"
-                        className="rounded-md bg-amber-600 px-3 py-1.5 text-sm font-medium text-zinc-950 hover:bg-amber-500"
+                        className="rounded-md bg-team px-3 py-1.5 text-sm font-medium text-on-team hover:brightness-110"
                       >
                         {view.currentPromotion ? "Switch" : "Schedule"}
                       </button>

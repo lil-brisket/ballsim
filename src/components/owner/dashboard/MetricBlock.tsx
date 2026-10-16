@@ -1,6 +1,6 @@
 import { MoneyDisplay } from "@/components/owner/MoneyDisplay";
 import { ArenaPanel } from "@/components/ui/ArenaPanel";
-import { StatusBadge } from "@/components/owner/StatusBadge";
+import { StatusBadge } from "@/components/ui/StatusBadge";
 
 export function MetricBlock(props: {
   label: string;

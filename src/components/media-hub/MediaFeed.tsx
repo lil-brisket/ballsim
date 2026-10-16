@@ -2,7 +2,7 @@ import {
   MediaStoryCard,
   type MediaStoryCardProps,
 } from "@/components/media-hub/MediaStoryCard";
-import { EmptyState } from "@/components/owner/EmptyState";
+import { EmptyState } from "@/components/ui/EmptyState";
 
 export function MediaFeed(props: {
   items: MediaStoryCardProps[];

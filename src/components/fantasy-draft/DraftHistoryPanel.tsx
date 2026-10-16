@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import type { FantasyDraftView } from "@/state/selectors";
+import { cn, linkClass } from "@/components/ui/styles";
 
 export function DraftHistoryPanel(props: { draft: FantasyDraftView }) {
   const [showAll, setShowAll] = useState(false);
@@ -17,7 +18,7 @@ export function DraftHistoryPanel(props: { draft: FantasyDraftView }) {
           <button
             type="button"
             onClick={() => setShowAll(true)}
-            className="text-xs text-amber-400 hover:underline"
+            className={cn(linkClass, "text-xs")}
           >
             View all
           </button>

@@ -7,7 +7,7 @@ import { cn, panelClass } from "@/components/ui/styles";
 const LEVEL_TONE: Record<RosterNeedLevel, string> = {
   strong: "text-emerald-400",
   adequate: "text-zinc-300",
-  weak: "text-amber-400",
+  weak: "text-warning",
   critical: "text-rose-400",
 };
 
@@ -35,7 +35,7 @@ export function RosterNeeds(props: { needs: RosterNeed[] }) {
             className="min-w-[5.5rem]"
             title={need.explanation}
           >
-            <span className="font-mono text-sm text-amber-400">
+            <span className="font-mono text-sm text-team-ink">
               {need.position}
             </span>
             <span

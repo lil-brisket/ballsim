@@ -1,10 +1,11 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { Suspense } from "react";
 import { notFound } from "next/navigation";
 import { loadTransactionHubView } from "@/application/game-service";
 import { parseTeamFilterParam } from "@/components/league/team-filter-utils";
-import { EmptyState, ErrorState } from "@/components/owner/EmptyState";
-import { PageHeader } from "@/components/owner/PageHeader";
+import { EmptyState, ErrorState } from "@/components/ui/EmptyState";
+import { PageHeader } from "@/components/ui/PageHeader";
 import { TransactionFilters } from "@/components/transactions/TransactionFilters";
 import { TransactionTimeline } from "@/components/transactions/TransactionRow";
 import {
@@ -13,6 +14,8 @@ import {
   TRANSACTION_HUB_PAGE_SIZE,
 } from "@/state/transaction-hub-selectors";
 import { cn, focusRingClass } from "@/components/ui/styles";
+
+export const metadata: Metadata = { title: "Transactions" };
 
 type PageProps = {
   params: Promise<{ saveId: string }>;
@@ -84,7 +87,7 @@ export default async function TransactionsHubPage({
     <Link
       href={basePath}
       className={cn(
-        "text-sm text-amber-400 hover:text-amber-300",
+        "text-sm text-team-ink underline-offset-4 hover:underline",
         focusRingClass,
       )}
     >
@@ -145,7 +148,7 @@ export default async function TransactionsHubPage({
             <Link
               href={loadMoreHref()}
               className={cn(
-                "inline-flex rounded-md border border-zinc-700 px-3 py-1.5 text-sm text-zinc-200 hover:border-amber-600",
+                "inline-flex rounded-md border border-zinc-700 px-3 py-1.5 text-sm text-zinc-200 hover:border-team-ink",
                 focusRingClass,
               )}
             >

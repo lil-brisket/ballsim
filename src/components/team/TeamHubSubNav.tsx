@@ -37,7 +37,7 @@ export function TeamHubSubNav(props: {
               "rounded-md px-3 py-1.5 text-sm",
               focusRingClass,
               active
-                ? "bg-amber-600/20 text-amber-300"
+                ? "bg-team/20 text-team-ink"
                 : "text-zinc-400 hover:text-zinc-200",
             )}
             aria-current={active ? "page" : undefined}

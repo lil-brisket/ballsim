@@ -69,7 +69,7 @@ export function MediaTabNav(props: {
                 "inline-flex shrink-0 items-center gap-1.5 rounded-md border px-3 py-1.5 text-sm",
                 focusRingClass,
                 active
-                  ? "border-amber-600 bg-amber-950/30 text-amber-300"
+                  ? "border-team-ink bg-team/15 text-team-ink"
                   : "border-zinc-700 text-zinc-400 hover:border-zinc-500 hover:text-zinc-200",
               )}
             >
@@ -98,7 +98,7 @@ export function MediaTabNav(props: {
                   "shrink-0 rounded-full border px-3 py-1 text-xs",
                   focusRingClass,
                   active
-                    ? "border-amber-600 text-amber-400"
+                    ? "border-team-ink text-team-ink"
                     : "border-zinc-700 text-zinc-500 hover:border-zinc-500 hover:text-zinc-300",
                 )}
               >

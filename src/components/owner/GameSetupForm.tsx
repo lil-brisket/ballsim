@@ -75,7 +75,7 @@ import {
   RadioCardGroup,
   type RadioCardOption,
 } from "@/components/owner/game-setup/RadioCardGroup";
-import { cn, focusRingClass } from "@/components/ui/styles";
+import { cn, focusRingClass, linkClass } from "@/components/ui/styles";
 import {
   OnboardingShell,
   OnboardingSteps,
@@ -1083,7 +1083,7 @@ export function GameSetupForm({
               {rosterDropped && rosterPackageJson.length === 0 ? (
                 <p
                   role="status"
-                  className="rounded-md border border-amber-800/60 bg-amber-950/30 px-3 py-2 text-sm text-amber-200"
+                  className="rounded-md border border-warning/40 bg-warning/10 px-3 py-2 text-sm text-zinc-200"
                 >
                   Your roster package was too large to keep — upload it again.
                 </p>
@@ -1212,7 +1212,7 @@ export function GameSetupForm({
             <p className="text-sm text-zinc-400">
               <Link
                 href="/login?next=/new/setup?mode=owner"
-                className="text-amber-300 underline hover:text-amber-200"
+                className={cn(linkClass, "underline")}
               >
                 Sign in to host an online league
               </Link>
@@ -1264,7 +1264,7 @@ export function GameSetupForm({
                               Player {index + 1} name
                             </label>
                             {index === 0 ? (
-                              <span className="rounded bg-amber-600/20 px-1.5 py-0.5 text-xs text-amber-300">
+                              <span className="rounded bg-team/20 px-1.5 py-0.5 text-xs text-team-ink">
                                 Host
                               </span>
                             ) : null}
@@ -1376,8 +1376,8 @@ function ControlButton({
         "min-h-11 rounded-md px-3 py-1.5 text-sm",
         focusRingClass,
         selected
-          ? "bg-amber-600 text-zinc-950"
-          : "border border-zinc-700 text-zinc-300 hover:border-amber-600",
+          ? "bg-team text-on-team"
+          : "border border-zinc-700 text-zinc-300 hover:border-team-ink",
       )}
     >
       {children}

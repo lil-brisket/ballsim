@@ -1,8 +1,8 @@
 import { notFound } from "next/navigation";
 import { loadTeamManagementView } from "@/application/game-service";
-import { ErrorState } from "@/components/owner/EmptyState";
+import { ErrorState } from "@/components/ui/EmptyState";
 import { InjuryTable } from "@/components/team-management/InjuryTable";
-import { PageHeader } from "@/components/owner/PageHeader";
+import { PageHeader } from "@/components/ui/PageHeader";
 
 export async function InjuriesPageView(props: {
   saveId: string;

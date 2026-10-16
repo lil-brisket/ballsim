@@ -1,8 +1,9 @@
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { loadOwnerSaveView } from "@/application/game-service";
-import { ErrorState } from "@/components/owner/EmptyState";
-import { PageHeader } from "@/components/owner/PageHeader";
-import { Section } from "@/components/owner/Section";
+import { ErrorState } from "@/components/ui/EmptyState";
+import { PageHeader } from "@/components/ui/PageHeader";
+import { Section } from "@/components/ui/Section";
 import { DelegationSummary } from "@/components/owner/ai-management/DelegationSummary";
 import {
   countDelegatedVisiblePhases,
@@ -10,6 +11,8 @@ import {
 } from "@/domain/ai-management-delegation";
 import { INJURY_FREQUENCY_LABELS } from "@/domain/game-settings";
 import { formatMoney } from "@/components/owner/MoneyDisplay";
+
+export const metadata: Metadata = { title: "Settings" };
 
 type SettingsPageProps = {
   params: Promise<{ saveId: string }>;

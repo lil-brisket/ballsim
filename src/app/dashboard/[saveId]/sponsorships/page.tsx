@@ -1,10 +1,13 @@
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { signSponsorshipAction } from "@/application/actions";
 import { loadOwnerSaveView } from "@/application/game-service";
-import { EmptyState, ErrorState } from "@/components/owner/EmptyState";
+import { EmptyState, ErrorState } from "@/components/ui/EmptyState";
 import { MoneyDisplay } from "@/components/owner/MoneyDisplay";
-import { PageHeader } from "@/components/owner/PageHeader";
-import { Section } from "@/components/owner/Section";
+import { PageHeader } from "@/components/ui/PageHeader";
+import { Section } from "@/components/ui/Section";
+
+export const metadata: Metadata = { title: "Sponsorships" };
 
 type PageProps = {
   params: Promise<{ saveId: string }>;
@@ -80,7 +83,7 @@ export default async function SponsorshipsPage({
           />
           <button
             type="submit"
-            className="rounded-md bg-amber-600 px-4 py-2 text-sm font-medium text-zinc-950 hover:bg-amber-500"
+            className="rounded-md bg-team px-4 py-2 text-sm font-medium text-on-team hover:brightness-110"
           >
             Sign
           </button>

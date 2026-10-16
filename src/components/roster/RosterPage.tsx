@@ -3,7 +3,7 @@
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import type { RosterPageView } from "@/state/roster-page-selectors";
-import { EmptyState } from "@/components/owner/EmptyState";
+import { EmptyState } from "@/components/ui/EmptyState";
 import { DepthChart } from "@/components/roster/DepthChart";
 import { FreeAgentRosterView } from "@/components/roster/FreeAgentRosterView";
 import { RosterManagementHeader } from "@/components/roster/RosterManagementHeader";

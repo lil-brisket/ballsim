@@ -39,7 +39,7 @@ export function StaffTermsDialog(props: {
           setOpen(true);
         }}
         className={cn(
-          "rounded-md border border-amber-700/50 bg-amber-950/40 px-3 py-1.5 text-sm text-amber-300 hover:border-amber-600",
+          "rounded-md border border-team-ink/50 bg-team/15 px-3 py-1.5 text-sm text-team-ink hover:border-team-ink",
           focusRingClass,
           props.triggerClassName,
         )}
@@ -130,7 +130,7 @@ export function StaffTermsDialog(props: {
                 <button
                   type="submit"
                   className={cn(
-                    "rounded-md bg-amber-600 px-3 py-1.5 text-sm font-medium text-zinc-950 hover:bg-amber-500",
+                    "rounded-md bg-team px-3 py-1.5 text-sm font-medium text-on-team hover:brightness-110",
                     focusRingClass,
                   )}
                 >

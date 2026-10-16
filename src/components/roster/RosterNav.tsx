@@ -28,9 +28,9 @@ export function RosterNav(props: { saveId: string }) {
             key={tab.href || "players"}
             href={href}
             aria-current={active ? "page" : undefined}
-            className={`rounded-full border px-3 py-1 text-xs focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-500 ${
+            className={`rounded-full border px-3 py-1 text-xs focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-team-ink ${
               active
-                ? "border-amber-600 text-amber-400"
+                ? "border-team-ink text-team-ink"
                 : "border-zinc-700 text-zinc-400 hover:border-zinc-500"
             }`}
           >

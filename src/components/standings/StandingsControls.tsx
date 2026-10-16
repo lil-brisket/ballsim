@@ -25,7 +25,7 @@ function pillClass(active: boolean): string {
   return cn(
     "rounded-full border px-3 py-1 text-xs",
     active
-      ? "border-amber-600 text-amber-400"
+      ? "border-team-ink text-team-ink"
       : "border-zinc-700 text-zinc-400 hover:border-zinc-500",
     focusRingClass,
   );
@@ -113,7 +113,7 @@ export function StandingsControls(props: {
             stats: DEFAULT_STANDINGS_STATS,
           })}
           className={cn(
-            "text-xs text-zinc-500 hover:text-amber-400",
+            "text-xs text-zinc-500 hover:text-team-ink",
             focusRingClass,
           )}
           data-testid="standings-reset"

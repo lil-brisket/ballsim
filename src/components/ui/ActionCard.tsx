@@ -33,7 +33,7 @@ export function ActionCard(
   const hasSecondary = Boolean(props.secondaryHref && props.secondaryLabel);
   const surfaceClass = cn(
     panelClass,
-    "text-left transition-colors hover:border-amber-700/60 hover:bg-zinc-900",
+    "text-left transition-colors hover:border-team-ink/60 hover:bg-zinc-900",
     focusRingClass,
     props.className,
   );

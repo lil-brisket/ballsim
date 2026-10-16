@@ -1,4 +1,4 @@
-import { Section } from "@/components/owner/Section";
+import { Section } from "@/components/ui/Section";
 import { cn, panelClass } from "@/components/ui/styles";
 import type { TeamHubView } from "@/state/team-hub-selectors";
 

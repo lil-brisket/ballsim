@@ -1,17 +1,21 @@
+import type { Metadata } from "next";
+import { cn, linkClass } from "@/components/ui/styles";
 import { notFound } from "next/navigation";
 import {
   advanceRelocationAction,
   cancelRelocationAction,
 } from "@/application/actions";
 import { loadOwnerSaveView } from "@/application/game-service";
-import { ErrorState } from "@/components/owner/EmptyState";
+import { ErrorState } from "@/components/ui/EmptyState";
 import { MoneyDisplay } from "@/components/owner/MoneyDisplay";
-import { PageHeader } from "@/components/owner/PageHeader";
-import { Section } from "@/components/owner/Section";
-import { StatCard } from "@/components/owner/StatCard";
+import { PageHeader } from "@/components/ui/PageHeader";
+import { Section } from "@/components/ui/Section";
+import { StatCard } from "@/components/ui/StatCard";
 import Link from "next/link";
 import { getRequestSaveStore } from "@/application/request-save-store";
 import { isRelocationAccessible } from "@/state/owner-season-context";
+
+export const metadata: Metadata = { title: "Relocation" };
 
 type PageProps = {
   params: Promise<{ saveId: string }>;
@@ -46,7 +50,7 @@ export default async function RelocationPage({
           <div className="mt-4 flex flex-wrap gap-3 text-sm">
             <Link
               href={`/dashboard/${saveId}/offseason`}
-              className="font-medium text-amber-400 hover:text-amber-300"
+              className={cn(linkClass, "font-medium")}
             >
               Back to Offseason Hub
             </Link>
@@ -104,7 +108,7 @@ export default async function RelocationPage({
           )}
         </ul>
         {assessment.constraints.length > 0 ? (
-          <ul className="mt-3 list-disc space-y-1 pl-5 text-sm text-amber-200/90">
+          <ul className="mt-3 list-disc space-y-1 pl-5 text-sm text-warning">
             {assessment.constraints.map((constraint) => (
               <li key={constraint}>{constraint}</li>
             ))}
@@ -125,19 +129,19 @@ export default async function RelocationPage({
         <div className="mt-3 flex flex-wrap gap-2 text-sm">
           <Link
             href={`/dashboard/${saveId}/business`}
-            className="rounded-md border border-zinc-700 px-3 py-1.5 text-zinc-200 hover:border-amber-600"
+            className="rounded-md border border-zinc-700 px-3 py-1.5 text-zinc-200 hover:border-team-ink"
           >
             Marketing & tickets
           </Link>
           <Link
             href={`/dashboard/${saveId}/facilities`}
-            className="rounded-md border border-zinc-700 px-3 py-1.5 text-zinc-200 hover:border-amber-600"
+            className="rounded-md border border-zinc-700 px-3 py-1.5 text-zinc-200 hover:border-team-ink"
           >
             Facilities
           </Link>
           <Link
             href={`/dashboard/${saveId}/roster`}
-            className="rounded-md border border-zinc-700 px-3 py-1.5 text-zinc-200 hover:border-amber-600"
+            className="rounded-md border border-zinc-700 px-3 py-1.5 text-zinc-200 hover:border-team-ink"
           >
             Roster
           </Link>
@@ -234,7 +238,7 @@ export default async function RelocationPage({
                     />
                     <button
                       type="submit"
-                      className="rounded-md bg-amber-600 px-4 py-2 text-sm font-medium text-zinc-950 hover:bg-amber-500"
+                      className="rounded-md bg-team px-4 py-2 text-sm font-medium text-on-team hover:brightness-110"
                     >
                       {relocation.stage === "none"
                         ? `Start → ${destination.city}`
@@ -248,7 +252,7 @@ export default async function RelocationPage({
               <input type="hidden" name="returnPath" value={returnPath} />
               <button
                 type="submit"
-                className="rounded-md bg-amber-600 px-4 py-2 text-sm font-medium text-zinc-950 hover:bg-amber-500"
+                className="rounded-md bg-team px-4 py-2 text-sm font-medium text-on-team hover:brightness-110"
               >
                 Advance stage
               </button>

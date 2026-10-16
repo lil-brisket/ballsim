@@ -1,6 +1,9 @@
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { loadOwnerSaveView } from "@/application/game-service";
 import { LeagueExpansionPanel } from "@/components/league/LeagueExpansionPanel";
+
+export const metadata: Metadata = { title: "League Expansion" };
 
 type PageProps = {
   params: Promise<{ saveId: string }>;

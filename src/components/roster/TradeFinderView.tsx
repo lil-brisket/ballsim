@@ -11,8 +11,8 @@ import type {
   RosterPagePlayerView,
   TradeFinderRowView,
 } from "@/state/roster-page-selectors";
-import { EmptyState } from "@/components/owner/EmptyState";
-import { DataTable } from "@/components/owner/DataTable";
+import { EmptyState } from "@/components/ui/EmptyState";
+import { DataTable } from "@/components/ui/DataTable";
 import { cn, focusRingClass } from "@/components/ui/styles";
 
 export function TradeFinderView(props: {
@@ -72,7 +72,7 @@ export function TradeFinderView(props: {
             setCandidates([]);
             setError(null);
           }}
-          className="max-w-md rounded-md border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-zinc-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-500"
+          className="max-w-md rounded-md border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-zinc-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-team-ink"
         >
           {props.roster.map((player) => (
             <option key={player.playerId} value={player.playerId}>
@@ -149,7 +149,7 @@ export function TradeFinderView(props: {
                         />
                         <button
                           type="submit"
-                          className="rounded-md bg-amber-600 px-3 py-1.5 text-sm font-medium text-zinc-950 hover:bg-amber-500"
+                          className="rounded-md bg-team px-3 py-1.5 text-sm font-medium text-on-team hover:brightness-110"
                         >
                           Execute
                         </button>
@@ -158,7 +158,7 @@ export function TradeFinderView(props: {
                     <Link
                       href={row.reviewHref}
                       className={cn(
-                        "text-xs text-zinc-500 hover:text-amber-300",
+                        "text-xs text-zinc-500 hover:text-team-ink",
                         focusRingClass,
                       )}
                     >

@@ -1,11 +1,14 @@
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { loadStandingsPageView } from "@/application/game-service";
-import { EmptyState, ErrorState } from "@/components/owner/EmptyState";
-import { PageHeader } from "@/components/owner/PageHeader";
+import { EmptyState, ErrorState } from "@/components/ui/EmptyState";
+import { PageHeader } from "@/components/ui/PageHeader";
 import { LeagueLeaders } from "@/components/standings/LeagueLeaders";
 import { PlayoffRaceWidget } from "@/components/standings/PlayoffRaceWidget";
 import { StandingsControls } from "@/components/standings/StandingsControls";
 import { StandingsTable } from "@/components/standings/StandingsTable";
+
+export const metadata: Metadata = { title: "Standings" };
 
 type StandingsPageProps = {
   params: Promise<{ saveId: string }>;
@@ -54,7 +57,7 @@ export default async function StandingsPage({
       <LeagueLeaders saveId={saveId} view={leaders} />
 
       {standings.mode === "playoffs" ? (
-        <p className="mb-3 rounded-md border border-amber-800/40 bg-amber-950/20 px-3 py-2 text-sm text-amber-300">
+        <p className="mb-3 rounded-md border border-team-ink/50 bg-team/15 px-3 py-2 text-sm text-team-ink">
           Playoffs in progress — regular-season cutoff markers are historical
           context only.
         </p>

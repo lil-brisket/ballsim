@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { PlayerEntityLink } from "@/components/entity/PlayerEntityLink";
 import { TeamEntityLink } from "@/components/entity/TeamEntityLink";
-import { EmptyState } from "@/components/owner/EmptyState";
+import { EmptyState } from "@/components/ui/EmptyState";
 import { ArenaPanel } from "@/components/ui/ArenaPanel";
 import { ScoreNumeral } from "@/components/ui/ScoreNumeral";
 import { TeamBadge } from "@/components/ui/TeamBadge";

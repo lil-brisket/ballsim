@@ -3,7 +3,7 @@ import {
   resolveNarrativeSituationAction,
 } from "@/application/actions";
 import type { OwnerDashboardSituationView } from "@/state/owner-dashboard";
-import { StatusBadge } from "@/components/owner/StatusBadge";
+import { StatusBadge } from "@/components/ui/StatusBadge";
 import { cn, touchTargetClass } from "@/components/ui/styles";
 
 export function FranchiseSituations(props: {
@@ -83,7 +83,7 @@ export function FranchiseSituations(props: {
                     type="submit"
                     className={cn(
                       touchTargetClass,
-                      "w-full rounded-md border border-amber-700/60 bg-amber-950/40 px-3 text-xs text-amber-200 hover:border-amber-500 sm:w-auto",
+                      "w-full rounded-md border border-warning/40 bg-warning/10 px-3 text-xs text-warning hover:border-warning sm:w-auto",
                     )}
                   >
                     {action.label}

@@ -2,8 +2,8 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
-import { EmptyState } from "@/components/owner/EmptyState";
-import { Section } from "@/components/owner/Section";
+import { EmptyState } from "@/components/ui/EmptyState";
+import { Section } from "@/components/ui/Section";
 import { TeamLogoMark } from "@/components/team/logos/TeamLogoMark";
 import type {
   PlayerGameLogRowView,
@@ -129,7 +129,7 @@ export function PlayerGameLog(props: {
                 <th key={key} className="px-3 py-2 font-normal">
                   <button
                     type="button"
-                    className="hover:text-amber-400"
+                    className="hover:text-team-ink"
                     onClick={() => toggleSort(key)}
                   >
                     {label}
@@ -145,7 +145,7 @@ export function PlayerGameLog(props: {
                 <td className="px-3 py-2">
                   <Link
                     href={`/dashboard/${props.saveId}/games/${row.gameId}`}
-                    className="font-mono text-amber-400 hover:underline"
+                    className="font-mono text-team-ink underline-offset-4 hover:underline"
                   >
                     {row.date}
                   </Link>

@@ -1,5 +1,5 @@
-import { Section } from "@/components/owner/Section";
-import { StatCard } from "@/components/owner/StatCard";
+import { Section } from "@/components/ui/Section";
+import { StatCard } from "@/components/ui/StatCard";
 import type { MediaFranchiseAttentionView } from "@/state/media-hub-selectors";
 
 export function FranchiseMediaAttention(props: {

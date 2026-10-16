@@ -1,9 +1,12 @@
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { loadTeamManagementView } from "@/application/game-service";
-import { ErrorState } from "@/components/owner/EmptyState";
-import { PageHeader } from "@/components/owner/PageHeader";
+import { ErrorState } from "@/components/ui/EmptyState";
+import { PageHeader } from "@/components/ui/PageHeader";
 import { TeamHubSubNav } from "@/components/team/TeamHubSubNav";
 import { LineupRotationEditor } from "@/components/team-management/LineupRotationEditor";
+
+export const metadata: Metadata = { title: "Lineup & Rotation" };
 
 type PageProps = {
   params: Promise<{ saveId: string }>;

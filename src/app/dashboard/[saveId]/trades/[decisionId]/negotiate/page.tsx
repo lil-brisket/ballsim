@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { SectionHeading } from "@/components/ui/SectionHeading";
 import { notFound } from "next/navigation";
@@ -5,6 +6,8 @@ import { submitTradeCounterofferAction } from "@/application/actions";
 import { getRequestSaveStore } from "@/application/request-save-store";
 import type { TradeProposal } from "@/domain/entities/trade-proposal";
 import { asDraftPickId, asPlayerId, asTeamId } from "@/domain/ids";
+
+export const metadata: Metadata = { title: "Negotiate Trade" };
 
 type PageProps = {
   params: Promise<{ saveId: string; decisionId: string }>;
@@ -154,7 +157,7 @@ export default async function TradeNegotiatePage(props: PageProps) {
 
         <button
           type="submit"
-          className="rounded-md bg-amber-600 px-3 py-1.5 font-medium text-zinc-950 hover:bg-amber-500"
+          className="rounded-md bg-team px-3 py-1.5 font-medium text-on-team hover:brightness-110"
         >
           Send counteroffer
         </button>

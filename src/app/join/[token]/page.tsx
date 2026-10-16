@@ -4,7 +4,12 @@ import { joinLeagueAction } from "@/application/actions/online-league";
 import { previewLeagueInvite } from "@/application/game-service/online-league";
 import { onlineLeagueContext } from "@/application/online/context";
 import { ErrorState } from "@/components/ui/EmptyState";
-import { cn, focusRingClass, touchTargetClass } from "@/components/ui/styles";
+import {
+  cn,
+  focusRingClass,
+  linkClass,
+  touchTargetClass,
+} from "@/components/ui/styles";
 
 type PageProps = {
   params: Promise<{ token: string }>;
@@ -38,7 +43,7 @@ export default async function JoinLeaguePage({
       {!result.ok ? (
         <>
           <ErrorState message={result.error} />
-          <Link href="/home" className="text-sm text-amber-400 underline">
+          <Link href="/home" className={cn(linkClass, "text-sm underline")}>
             Back to home
           </Link>
         </>
@@ -59,7 +64,7 @@ export default async function JoinLeaguePage({
               </Link>
               <Link
                 href={`/signup?next=${next}`}
-                className="text-sm text-amber-400 underline"
+                className={cn(linkClass, "text-sm underline")}
               >
                 Create an account
               </Link>

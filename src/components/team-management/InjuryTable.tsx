@@ -6,8 +6,8 @@ import type {
   InjuryReportView,
   InjuryRowView,
 } from "@/state/team-management-selectors";
-import { EmptyState } from "@/components/owner/EmptyState";
-import { StatusBadge } from "@/components/owner/StatusBadge";
+import { EmptyState } from "@/components/ui/EmptyState";
+import { StatusBadge } from "@/components/ui/StatusBadge";
 
 type InjuryFilter =
   | "all"
@@ -208,7 +208,7 @@ export function InjuryTable(props: {
             onClick={() => setFilter(entry.id)}
             className={`rounded-full border px-3 py-1 text-xs ${
               filter === entry.id
-                ? "border-amber-600 bg-amber-950/40 text-amber-200"
+                ? "border-team-ink bg-team/15 text-zinc-100"
                 : "border-zinc-700 bg-zinc-900 text-zinc-400 hover:border-zinc-500"
             }`}
           >

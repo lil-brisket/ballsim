@@ -79,7 +79,7 @@ export function TeamFilter(props: {
           className={cn(
             "rounded-full border px-3 py-1 text-xs",
             props.value === "all"
-              ? "border-amber-600 text-amber-400"
+              ? "border-team-ink text-team-ink"
               : "border-zinc-700 text-zinc-400 hover:border-zinc-500",
             focusRingClass,
           )}
@@ -92,7 +92,7 @@ export function TeamFilter(props: {
           className={cn(
             "rounded-full border px-3 py-1 text-xs",
             props.value === "my"
-              ? "border-amber-600 text-amber-400"
+              ? "border-team-ink text-team-ink"
               : "border-zinc-700 text-zinc-400 hover:border-zinc-500",
             focusRingClass,
           )}
@@ -105,7 +105,7 @@ export function TeamFilter(props: {
           className={cn(
             "rounded-full border px-3 py-1 text-xs",
             props.value !== "all" && props.value !== "my"
-              ? "border-amber-600 text-amber-400"
+              ? "border-team-ink text-team-ink"
               : "border-zinc-700 text-zinc-400 hover:border-zinc-500",
             focusRingClass,
           )}

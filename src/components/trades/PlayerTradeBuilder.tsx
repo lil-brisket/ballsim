@@ -135,7 +135,7 @@ export function PlayerTradeBuilder(props: Props) {
         <button
           type="submit"
           disabled={!canSubmit}
-          className="rounded-md bg-amber-600 px-3 py-1.5 font-medium text-zinc-950 hover:bg-amber-500 disabled:cursor-not-allowed disabled:opacity-50"
+          className="rounded-md bg-team px-3 py-1.5 font-medium text-on-team hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50"
         >
           Propose trade
         </button>

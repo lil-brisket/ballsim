@@ -68,7 +68,7 @@ export function CareerSeasonsTable(props: {
                       onClick={() => toggle(column.key)}
                       className={cn(
                         "inline-flex min-h-9 items-center gap-1 rounded px-1.5 uppercase tracking-[0.14em] hover:text-zinc-100",
-                        isActive && "text-amber-300",
+                        isActive && "text-team-ink",
                         focusRingClass,
                       )}
                     >
@@ -99,7 +99,7 @@ export function CareerSeasonsTable(props: {
             ))}
           </tbody>
           <tfoot>
-            <tr className="border-t-2 border-amber-700/60 bg-zinc-900/60 font-mono font-semibold tabular-nums text-amber-200">
+            <tr className="border-t-2 border-team-ink/50 bg-zinc-900/60 font-mono font-semibold tabular-nums text-team-ink">
               {columns.map((column) => (
                 <td key={column.key} className="px-2.5 py-2">
                   {column.key === "season"

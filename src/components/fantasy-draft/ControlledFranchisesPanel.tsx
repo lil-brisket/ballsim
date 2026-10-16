@@ -21,7 +21,7 @@ export function ControlledFranchisesPanel(props: {
             key={team.teamId}
             className={`flex flex-wrap items-center justify-between gap-2 rounded-lg border px-3 py-2 text-sm ${
               team.isActive
-                ? "border-amber-700/60 bg-amber-950/20"
+                ? "border-team-ink/50 bg-team/20"
                 : "border-zinc-800"
             }`}
           >
@@ -29,12 +29,12 @@ export function ControlledFranchisesPanel(props: {
               <div className="font-medium text-zinc-100">
                 {team.teamName}
                 {team.isActive ? (
-                  <span className="ml-2 text-xs text-amber-400">Active</span>
+                  <span className="ml-2 text-xs text-team-ink">Active</span>
                 ) : null}
               </div>
               <div className="mt-0.5 text-xs text-zinc-500">
                 {team.isOnClock ? (
-                  <span className="font-semibold text-amber-300">ON CLOCK</span>
+                  <span className="font-semibold text-team-ink">ON CLOCK</span>
                 ) : team.nextPickNumber != null ? (
                   <>Pick #{team.nextPickNumber}</>
                 ) : (

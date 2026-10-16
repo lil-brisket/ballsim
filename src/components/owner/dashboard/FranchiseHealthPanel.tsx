@@ -81,7 +81,7 @@ function conditionToneClass(
     return "text-zinc-200";
   }
   if (condition === "concerning") {
-    return "text-amber-400";
+    return "text-warning";
   }
   return "text-rose-400";
 }
@@ -100,7 +100,7 @@ function DimensionRow(props: {
       onClick={props.onSelect}
       className={`flex w-full items-center justify-between gap-3 rounded-lg px-3 py-2 text-left transition-colors ${
         props.selected
-          ? "bg-zinc-800/80 ring-1 ring-amber-500/40"
+          ? "bg-zinc-800/80 ring-1 ring-team-ink/40"
           : "hover:bg-zinc-800/40"
       }`}
     >
@@ -200,7 +200,7 @@ export function FranchiseHealthPanel(props: {
     <section aria-label="Franchise health" className="space-y-5">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <p className="font-mono text-xs uppercase tracking-[0.16em] text-amber-500">
+          <p className="font-mono text-xs uppercase tracking-[0.16em] text-team-ink">
             Franchise health
           </p>
           <h2
@@ -218,7 +218,7 @@ export function FranchiseHealthPanel(props: {
       {health.financialHealth === "critical" ? (
         <p
           role="status"
-          className="rounded-md border border-amber-800/60 bg-amber-950/40 px-4 py-3 text-sm text-amber-200"
+          className="rounded-md border border-warning/40 bg-warning/10 px-4 py-3 text-sm text-zinc-200"
         >
           Business funds are low. Major facility investments may be difficult —
           review Finances before large capital decisions.

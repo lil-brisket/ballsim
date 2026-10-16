@@ -1,4 +1,4 @@
-import { TeamBadge } from "@/components/owner/TeamBadge";
+import { TeamLabel } from "@/components/ui/TeamLabel";
 import { Metric } from "@/components/ui/Metric";
 import {
   cn,
@@ -43,11 +43,11 @@ export function TeamCard(props: {
         props.className,
       )}
     >
-      <TeamBadge
+      <TeamLabel
         city={props.city}
         name={props.name}
         abbreviation={props.abbreviation}
-        branding={props.branding ?? undefined}
+        branding={props.branding}
       />
       <div className="mt-3 flex flex-wrap gap-4">
         {record ? (

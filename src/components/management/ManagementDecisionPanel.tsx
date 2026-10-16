@@ -1,7 +1,7 @@
 import Link from "next/link";
 import type { ActionCenterItem } from "@/state/action-center-selectors";
-import { EmptyState } from "@/components/owner/EmptyState";
-import { Section } from "@/components/owner/Section";
+import { EmptyState } from "@/components/ui/EmptyState";
+import { Section } from "@/components/ui/Section";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { cn, focusRingClass } from "@/components/ui/styles";
 import { calendarDaysBetween } from "@/domain/calendar-date";
@@ -33,7 +33,7 @@ export function ManagementDecisionPanel(props: {
       action={
         <Link
           href={`/dashboard/${saveId}`}
-          className="text-sm text-amber-400 hover:text-amber-300"
+          className="text-sm text-team-ink underline-offset-4 hover:underline"
         >
           Front Office
         </Link>
@@ -64,11 +64,11 @@ export function ManagementDecisionPanel(props: {
                   </p>
                 ) : null}
                 {item.deadline && currentDate ? (
-                  <p className="mt-0.5 text-xs text-amber-400/90">
+                  <p className="mt-0.5 text-xs text-warning/90">
                     {formatDeadlineLabel(currentDate, item.deadline)}
                   </p>
                 ) : item.deadline ? (
-                  <p className="mt-0.5 text-xs text-amber-400/90">
+                  <p className="mt-0.5 text-xs text-warning/90">
                     Due {item.deadline}
                   </p>
                 ) : null}
@@ -76,7 +76,7 @@ export function ManagementDecisionPanel(props: {
               <Link
                 href={item.href}
                 className={cn(
-                  "shrink-0 rounded-md border border-zinc-700 px-2.5 py-1 text-xs text-zinc-200 hover:border-amber-600",
+                  "shrink-0 rounded-md border border-zinc-700 px-2.5 py-1 text-xs text-zinc-200 hover:border-team-ink",
                   focusRingClass,
                 )}
               >

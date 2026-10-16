@@ -41,7 +41,7 @@ export function RotationSettings(props: {
           type="button"
           onClick={props.onOptimize}
           disabled={props.optimizing}
-          className="rounded-md border border-amber-700 px-3 py-1.5 text-sm text-amber-300 hover:bg-amber-950 disabled:opacity-50"
+          className="rounded-md border border-team-ink/50 px-3 py-1.5 text-sm text-team-ink hover:bg-team/20 disabled:opacity-50"
         >
           {props.optimizing ? "Optimizing…" : "Optimize Rotation"}
         </button>

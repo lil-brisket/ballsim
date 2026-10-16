@@ -2,7 +2,7 @@ import { deleteSaveAction, openSaveAction } from "@/application/actions";
 import { getGameModeDefinition } from "@/application/game-mode-catalog";
 import type { OwnerSavePreview } from "@/application/game-service";
 import { ConfirmDialog } from "@/components/owner/ConfirmDialog";
-import { StatusBadge } from "@/components/owner/StatusBadge";
+import { StatusBadge } from "@/components/ui/StatusBadge";
 import { ArenaPanel } from "@/components/ui/ArenaPanel";
 import { ScoreNumeral } from "@/components/ui/ScoreNumeral";
 import { TeamBadge } from "@/components/ui/TeamBadge";

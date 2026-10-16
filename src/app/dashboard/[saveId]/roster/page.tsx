@@ -1,9 +1,12 @@
+import type { Metadata } from "next";
 import { Suspense } from "react";
 import { notFound } from "next/navigation";
 import { loadRosterPageView } from "@/application/game-service";
-import { ErrorState } from "@/components/owner/EmptyState";
+import { ErrorState } from "@/components/ui/EmptyState";
 import { TeamHubSubNav } from "@/components/team/TeamHubSubNav";
 import { RosterPage } from "@/components/roster/RosterPage";
+
+export const metadata: Metadata = { title: "Roster" };
 
 type RosterPageProps = {
   params: Promise<{ saveId: string }>;

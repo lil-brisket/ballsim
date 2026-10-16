@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { DataTable } from "@/components/owner/DataTable";
+import { DataTable } from "@/components/ui/DataTable";
 import { SortableTableControls } from "@/components/owner/SortableTableControls";
 import {
   RotationPlayerCard,
@@ -27,7 +27,7 @@ function rowTone(role: string, groupRole: string): string {
     return "opacity-50";
   }
   if (role === "starter") {
-    return "bg-amber-950/30";
+    return "bg-team/15";
   }
   if (role === "sixth_man" || role === "rotation") {
     return "bg-zinc-900/80";
@@ -92,7 +92,7 @@ function GroupTable(props: {
                 <button
                   type="button"
                   onClick={() => props.onSelect(row.playerId)}
-                  className="text-left text-zinc-100 hover:text-amber-300 hover:underline"
+                  className="text-left text-zinc-100 hover:text-team-ink hover:underline"
                 >
                   {row.firstName} {row.lastName}
                 </button>

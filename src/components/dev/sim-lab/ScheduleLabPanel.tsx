@@ -263,7 +263,7 @@ export function ScheduleLabPanel(props: {
                     </div>
                     <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-zinc-800">
                       <div
-                        className="h-full rounded-full bg-amber-500"
+                        className="h-full rounded-full bg-team-ink"
                         style={{ width: `${Math.min(100, pct)}%` }}
                       />
                     </div>

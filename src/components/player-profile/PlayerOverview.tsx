@@ -1,7 +1,7 @@
 import { AttributeRadar } from "@/components/basketball/player-card/AttributeRadar";
 import { RecentPerformanceChart } from "@/components/basketball/player-card/RecentPerformanceChart";
 import { StatTile } from "@/components/basketball/player-card/StatTile";
-import { EmptyState } from "@/components/owner/EmptyState";
+import { EmptyState } from "@/components/ui/EmptyState";
 import { Section } from "@/components/ui/Section";
 import type { PlayerAttributes } from "@/domain/entities/player";
 import { formatAttributeLabel } from "@/presentation/player-rating-categories";
@@ -123,9 +123,7 @@ export function PlayerOverview(props: {
                   className={`${panelClass} flex items-center justify-between text-sm`}
                 >
                   <span className="text-zinc-100">{item.label}</span>
-                  <span className="font-mono text-amber-400">
-                    {item.rating}
-                  </span>
+                  <span className="font-mono text-team-ink">{item.rating}</span>
                 </li>
               ))}
             </ul>
@@ -157,7 +155,7 @@ export function PlayerOverview(props: {
               <p className="font-mono text-[0.65rem] uppercase tracking-[0.14em] text-zinc-400">
                 {formatAttributeLabel(entry.attribute)}
               </p>
-              <p className="font-mono text-lg text-amber-300">{entry.rating}</p>
+              <p className="font-mono text-lg text-team-ink">{entry.rating}</p>
             </div>
           ))}
         </div>
@@ -172,7 +170,7 @@ export function PlayerOverview(props: {
                 className={panelClass}
               >
                 <span className="text-zinc-100">{award.displayName}</span>
-                <span className="ml-2 font-mono text-amber-400">
+                <span className="ml-2 font-mono text-team-ink">
                   {award.periodLabel
                     ? award.periodLabel
                     : String(award.seasonYear)}

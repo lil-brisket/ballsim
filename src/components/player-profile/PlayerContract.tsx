@@ -1,9 +1,9 @@
 import Link from "next/link";
 import { CardTable } from "@/components/player-profile/CardTable";
-import { EmptyState } from "@/components/owner/EmptyState";
+import { EmptyState } from "@/components/ui/EmptyState";
 import { MoneyDisplay } from "@/components/owner/MoneyDisplay";
-import { Section } from "@/components/owner/Section";
-import { StatusBadge } from "@/components/owner/StatusBadge";
+import { Section } from "@/components/ui/Section";
+import { StatusBadge } from "@/components/ui/StatusBadge";
 import type { PlayerProfileView } from "@/state/player-profile-selectors";
 
 export function PlayerContract(props: {
@@ -27,7 +27,7 @@ export function PlayerContract(props: {
         action={
           <Link
             href={`/dashboard/${props.saveId}/contracts`}
-            className="text-sm text-amber-400 hover:underline"
+            className="text-sm text-team-ink underline-offset-4 hover:underline"
           >
             View contracts
           </Link>

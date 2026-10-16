@@ -1,6 +1,7 @@
 import Link from "next/link";
+import { cn, focusRingClass } from "@/components/ui/styles";
 import { StatusBadge } from "@/components/ui/StatusBadge";
-import { EmptyState } from "@/components/owner/EmptyState";
+import { EmptyState } from "@/components/ui/EmptyState";
 import type { OffseasonTimelineEvent } from "@/state/offseason-hub-selectors";
 
 const STATUS_TONE: Record<OffseasonTimelineEvent["status"], string> = {
@@ -41,7 +42,10 @@ export function OffseasonTimeline(props: {
             {event.href ? (
               <Link
                 href={event.href}
-                className="flex flex-wrap items-center justify-between gap-3 px-4 py-3 text-sm transition-colors hover:bg-zinc-900/60 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-500"
+                className={cn(
+                  "flex flex-wrap items-center justify-between gap-3 px-4 py-3 text-sm transition-colors hover:bg-zinc-900/60",
+                  focusRingClass,
+                )}
               >
                 {content}
               </Link>

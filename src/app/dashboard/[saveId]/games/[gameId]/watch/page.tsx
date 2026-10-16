@@ -1,9 +1,12 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { loadOwnerWatchGameView } from "@/application/game-service";
 import { WatchGameClient } from "@/components/game/watch/WatchGameClient";
 import { WatchGameUnavailable } from "@/components/game/watch/WatchGameUnavailable";
-import { PageHeader } from "@/components/owner/PageHeader";
+import { PageHeader } from "@/components/ui/PageHeader";
+
+export const metadata: Metadata = { title: "Watch Game" };
 
 type WatchGamePageProps = {
   params: Promise<{ saveId: string; gameId: string }>;

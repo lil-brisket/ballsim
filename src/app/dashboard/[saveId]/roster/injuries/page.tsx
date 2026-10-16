@@ -1,4 +1,7 @@
+import type { Metadata } from "next";
 import { InjuriesPageView } from "@/components/roster/InjuriesPageView";
+
+export const metadata: Metadata = { title: "Injuries" };
 
 type PageProps = {
   params: Promise<{ saveId: string }>;

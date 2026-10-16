@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { Suspense } from "react";
 import { notFound } from "next/navigation";
@@ -8,13 +9,15 @@ import {
   parseTeamFilterParam,
   resolveTeamFilterId,
 } from "@/components/league/team-filter-utils";
-import { EmptyState, ErrorState } from "@/components/owner/EmptyState";
-import { PageHeader } from "@/components/owner/PageHeader";
+import { EmptyState, ErrorState } from "@/components/ui/EmptyState";
+import { PageHeader } from "@/components/ui/PageHeader";
 import {
   shiftFocusDate,
   groupLeagueScheduleRowsByDate,
 } from "@/state/league-schedule-selectors";
 import { cn, focusRingClass } from "@/components/ui/styles";
+
+export const metadata: Metadata = { title: "Schedule" };
 
 type SchedulePageProps = {
   params: Promise<{ saveId: string }>;
@@ -104,7 +107,7 @@ export default async function SchedulePage({
         <Link
           href={href({ date: prevDate })}
           className={cn(
-            "rounded-md border border-zinc-700 px-2 py-1 text-sm text-zinc-300 hover:border-amber-600",
+            "rounded-md border border-zinc-700 px-2 py-1 text-sm text-zinc-300 hover:border-team-ink",
             focusRingClass,
           )}
         >
@@ -115,8 +118,8 @@ export default async function SchedulePage({
           className={cn(
             "rounded-md border px-3 py-1 text-sm",
             focusDate === view.currentDate
-              ? "border-amber-600 text-amber-400"
-              : "border-zinc-700 text-zinc-300 hover:border-amber-600",
+              ? "border-team-ink text-team-ink"
+              : "border-zinc-700 text-zinc-300 hover:border-team-ink",
             focusRingClass,
           )}
         >
@@ -125,7 +128,7 @@ export default async function SchedulePage({
         <Link
           href={href({ date: nextDate })}
           className={cn(
-            "rounded-md border border-zinc-700 px-2 py-1 text-sm text-zinc-300 hover:border-amber-600",
+            "rounded-md border border-zinc-700 px-2 py-1 text-sm text-zinc-300 hover:border-team-ink",
             focusRingClass,
           )}
         >
@@ -160,7 +163,7 @@ export default async function SchedulePage({
             className={cn(
               "rounded-full border px-3 py-1 text-xs",
               statusFilter === id
-                ? "border-amber-600 text-amber-400"
+                ? "border-team-ink text-team-ink"
                 : "border-zinc-700 text-zinc-400",
               focusRingClass,
             )}
@@ -205,7 +208,7 @@ export default async function SchedulePage({
                     {game.canManageEvent ? (
                       <Link
                         href={`/dashboard/${saveId}/schedule/${game.gameId}/event`}
-                        className="ml-3 text-xs text-amber-400 hover:text-amber-300"
+                        className="ml-3 text-xs text-team-ink underline-offset-4 hover:underline"
                       >
                         Manage event
                       </Link>

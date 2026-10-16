@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { StatusBadge } from "@/components/owner/StatusBadge";
+import { StatusBadge } from "@/components/ui/StatusBadge";
 
 export function NotificationItem(props: {
   id: string;
@@ -15,7 +15,7 @@ export function NotificationItem(props: {
       className={`rounded-lg border px-4 py-3 ${
         props.read
           ? "border-zinc-800 bg-zinc-900/40"
-          : "border-amber-800/40 bg-amber-950/20"
+          : "border-team-ink/50 bg-team/20"
       }`}
     >
       <div className="flex items-start justify-between gap-3">

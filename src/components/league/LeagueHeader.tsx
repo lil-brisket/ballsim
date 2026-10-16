@@ -57,7 +57,7 @@ export function LeagueHeader(props: {
           </p>
         </div>
         {props.playoffBanner ? (
-          <p className="rounded-md border border-warning/40 bg-warning/10 px-3 py-1.5 text-sm text-amber-200">
+          <p className="rounded-md border border-warning/40 bg-warning/10 px-3 py-1.5 text-sm text-warning">
             {props.playoffBanner}
           </p>
         ) : null}

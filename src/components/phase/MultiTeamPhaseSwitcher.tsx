@@ -60,7 +60,7 @@ function AttentionCounts(props: { team: PhaseTeamAttentionView }) {
       ) : null}
       {requiredCount > 0 && recommendedCount > 0 ? " · " : null}
       {recommendedCount > 0 ? (
-        <span className="text-amber-400">{recommendedCount} rec</span>
+        <span className="text-warning">{recommendedCount} rec</span>
       ) : null}
     </span>
   );

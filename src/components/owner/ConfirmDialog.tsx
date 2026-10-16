@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Overlay } from "@/components/ui/Overlay";
-import { focusRingClass, cn } from "@/components/ui/styles";
+import { focusRingClass, cn, linkClass } from "@/components/ui/styles";
 
 /**
  * Presentation-only confirmation. Mutation must happen via form/server action
@@ -21,7 +21,7 @@ export function ConfirmDialog(props: {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className={cn("text-xs text-amber-400 hover:underline", focusRingClass)}
+        className={cn(linkClass, "text-xs", focusRingClass)}
       >
         {props.confirmLabel ?? "Confirm"}
       </button>

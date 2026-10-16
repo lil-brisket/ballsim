@@ -31,7 +31,7 @@ export function TeamNicknameField(props: {
           disabled={props.disabled}
           aria-invalid={props.error ? true : undefined}
           aria-describedby={describedBy.length > 0 ? describedBy : undefined}
-          className="min-w-0 flex-1 rounded-md border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-100 outline-none ring-amber-500/40 focus:ring-2 disabled:opacity-50"
+          className="min-w-0 flex-1 rounded-md border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-100 outline-none ring-team-ink/40 focus:ring-2 disabled:opacity-50"
         />
         {props.onRandomize ? (
           <button
@@ -39,7 +39,7 @@ export function TeamNicknameField(props: {
             onClick={props.onRandomize}
             disabled={props.disabled}
             aria-label="Randomize team name"
-            className="rounded-md border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-zinc-200 hover:bg-zinc-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-500 disabled:opacity-50"
+            className="rounded-md border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-zinc-200 hover:bg-zinc-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-team-ink disabled:opacity-50"
           >
             ↻
           </button>

@@ -1,6 +1,6 @@
 import { PlayerEntityLink } from "@/components/entity/PlayerEntityLink";
 import { MoneyDisplay } from "@/components/owner/MoneyDisplay";
-import { Section } from "@/components/owner/Section";
+import { Section } from "@/components/ui/Section";
 import type { ContractHubOverview } from "@/state/contract-hub-selectors";
 
 export function ContractOverview(props: {

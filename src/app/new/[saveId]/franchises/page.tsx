@@ -4,6 +4,7 @@ import { loadOwnerSaveView } from "@/application/game-service";
 import { resolveOnboardingRoute } from "@/application/onboarding-routing";
 import { OnboardingShell } from "@/components/game/OnboardingShell";
 import { OwnerMultiTeamPick } from "@/components/owner/OwnerMultiTeamPick";
+import { linkClass } from "@/components/ui/styles";
 import { DEFAULT_OWNERSHIP_SETTINGS } from "@/domain/game-settings";
 
 type PageProps = {
@@ -34,10 +35,7 @@ export default async function AdditionalFranchisesPage({ params }: PageProps) {
     return (
       <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-6 px-6 py-12">
         <p className="text-zinc-300">Team selection is locked for this save.</p>
-        <Link
-          href={`/dashboard/${saveId}`}
-          className="text-amber-400 hover:underline"
-        >
+        <Link href={`/dashboard/${saveId}`} className={linkClass}>
           Open dashboard
         </Link>
       </main>

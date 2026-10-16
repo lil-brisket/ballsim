@@ -140,7 +140,7 @@ export function PerformanceChart(props: {
             })
           }
           className={cn(
-            "rounded-md border border-zinc-700 px-3 py-1.5 text-sm text-zinc-200 hover:border-amber-600",
+            "rounded-md border border-zinc-700 px-3 py-1.5 text-sm text-zinc-200 hover:border-team-ink",
             focusRingClass,
           )}
         >

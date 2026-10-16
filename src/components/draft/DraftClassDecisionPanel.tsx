@@ -2,8 +2,8 @@
 
 import { useState, useTransition } from "react";
 import { resolveDraftClassDecisionAction } from "@/application/actions";
-import { ErrorState } from "@/components/owner/EmptyState";
-import { StatusBadge } from "@/components/owner/StatusBadge";
+import { ErrorState } from "@/components/ui/EmptyState";
+import { StatusBadge } from "@/components/ui/StatusBadge";
 import { GAME_STATE_SCHEMA_VERSION } from "@/state/game-state";
 import {
   parseCustomContentJson,
@@ -55,7 +55,7 @@ export function DraftClassDecisionPanel(props: {
         <button
           type="submit"
           disabled={pending}
-          className="rounded-md bg-amber-600 px-4 py-2 text-sm font-medium text-zinc-950 hover:bg-amber-500 disabled:opacity-50"
+          className="rounded-md bg-team px-4 py-2 text-sm font-medium text-on-team hover:brightness-110 disabled:opacity-50"
         >
           Use Generated Class
         </button>
@@ -115,7 +115,7 @@ export function DraftClassDecisionPanel(props: {
           <button
             type="submit"
             disabled={pending || packageJson.length === 0 || hasErrors}
-            className="rounded-md border border-zinc-700 px-4 py-2 text-sm text-zinc-200 hover:border-amber-600 disabled:cursor-not-allowed disabled:opacity-50"
+            className="rounded-md border border-zinc-700 px-4 py-2 text-sm text-zinc-200 hover:border-team-ink disabled:cursor-not-allowed disabled:opacity-50"
           >
             Import Custom Class
           </button>

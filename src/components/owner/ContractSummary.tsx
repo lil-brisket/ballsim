@@ -1,4 +1,4 @@
-import { StatusBadge } from "@/components/owner/StatusBadge";
+import { StatusBadge } from "@/components/ui/StatusBadge";
 
 export function ContractSummary(props: {
   salary: number | null;

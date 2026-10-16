@@ -57,7 +57,7 @@ export function ProspectCard(props: ProspectCardProps) {
           </div>
         </div>
         <div className="text-right">
-          <div className="text-lg font-semibold text-amber-300">
+          <div className="text-lg font-semibold text-team-ink">
             {props.scoutGrade ?? "—"}
           </div>
           <div className="text-[10px] uppercase tracking-wide text-zinc-500">
@@ -123,7 +123,7 @@ export function ProspectCard(props: ProspectCardProps) {
       ) : null}
 
       {props.onBoard ? (
-        <p className="mt-1 text-[10px] uppercase tracking-wide text-amber-500/80">
+        <p className="mt-1 text-[10px] uppercase tracking-wide text-team-ink/80">
           On draft board
         </p>
       ) : null}

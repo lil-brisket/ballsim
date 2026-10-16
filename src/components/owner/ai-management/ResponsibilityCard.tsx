@@ -25,16 +25,16 @@ export function ResponsibilityCard({
       onClick={onToggle}
       className={[
         "flex w-full flex-col gap-1 rounded-md border px-3 py-3 text-left transition-colors",
-        "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-500",
+        "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-team-ink",
         delegated
-          ? "border-amber-600/60 bg-amber-950/30 hover:border-amber-500/80"
+          ? "border-team-ink/60 bg-team/20 hover:border-team-ink/80"
           : "border-zinc-700 bg-zinc-950/60 hover:border-zinc-500",
       ].join(" ")}
     >
       <div className="flex items-start justify-between gap-2">
         <span className="text-sm font-medium text-zinc-100">{meta.label}</span>
         {delegated ? (
-          <span className="shrink-0 text-amber-400" aria-hidden="true">
+          <span className="shrink-0 text-team-ink" aria-hidden="true">
             ✓
           </span>
         ) : null}
@@ -43,7 +43,7 @@ export function ResponsibilityCard({
         {meta.description}
       </p>
       {delegated ? (
-        <span className="mt-1 text-[10px] font-semibold uppercase tracking-wider text-amber-500/90">
+        <span className="mt-1 text-[10px] font-semibold uppercase tracking-wider text-zinc-500/90">
           AI handles
         </span>
       ) : (

@@ -32,7 +32,7 @@ function AssetColumn(props: {
               {asset.href ? (
                 <Link
                   href={asset.href}
-                  className="font-medium text-amber-100 hover:underline"
+                  className="font-medium text-team-ink hover:underline"
                 >
                   {asset.name}
                 </Link>
@@ -93,7 +93,7 @@ export function TradeReviewPanel(props: {
       ) : null}
 
       {review.bothSidesOwned ? (
-        <p className="text-xs text-amber-200/90">
+        <p className="text-xs text-zinc-200/90">
           You control both franchises in this trade. Approving applies both
           sides — there is no hidden automatic approval.
         </p>
@@ -213,7 +213,7 @@ export function TradeReviewPanel(props: {
               onClick={props.onLetAiDecide}
               className={cn(
                 touchTargetClass,
-                "rounded-md bg-amber-600 px-3 text-sm font-medium text-zinc-950 hover:bg-amber-500 disabled:opacity-50",
+                "rounded-md bg-team px-3 text-sm font-medium text-on-team hover:brightness-110 disabled:opacity-50",
               )}
             >
               Let AI decide

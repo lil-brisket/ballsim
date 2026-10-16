@@ -1,17 +1,20 @@
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { loadFranchiseHubView } from "@/application/game-service";
 import { FacilitiesSummarySection } from "@/components/franchise/FacilitiesSummarySection";
 import { FinanceSnapshotCard } from "@/components/franchise/FinanceSnapshotCard";
 import { RelocationSummarySection } from "@/components/franchise/RelocationSummarySection";
 import { ManagementDecisionPanel } from "@/components/management/ManagementDecisionPanel";
-import { EmptyState, ErrorState } from "@/components/owner/EmptyState";
+import { EmptyState, ErrorState } from "@/components/ui/EmptyState";
 import { FranchiseHistorySummary } from "@/components/owner/FranchiseHistorySummary";
 import { MoneyDisplay } from "@/components/owner/MoneyDisplay";
-import { PageHeader } from "@/components/owner/PageHeader";
-import { Section } from "@/components/owner/Section";
-import { StatusBadge } from "@/components/owner/StatusBadge";
+import { PageHeader } from "@/components/ui/PageHeader";
+import { Section } from "@/components/ui/Section";
+import { StatusBadge } from "@/components/ui/StatusBadge";
 import { ProgressBar } from "@/components/ui/ProgressBar";
 import { StatCard } from "@/components/ui/StatCard";
+
+export const metadata: Metadata = { title: "Franchise" };
 
 type PageProps = {
   params: Promise<{ saveId: string }>;

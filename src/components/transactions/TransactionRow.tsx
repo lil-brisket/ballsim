@@ -2,7 +2,7 @@ import { PlayerPortrait } from "@/components/basketball/PlayerPortrait";
 import { PlayerEntityLink } from "@/components/entity/PlayerEntityLink";
 import { splitDisplayName } from "@/presentation/portrait-hash";
 import { TeamEntityLink } from "@/components/entity/TeamEntityLink";
-import { StatusBadge } from "@/components/owner/StatusBadge";
+import { StatusBadge } from "@/components/ui/StatusBadge";
 import {
   transactionTypeLabel,
   type TransactionActivityMode,
@@ -49,7 +49,7 @@ export function TransactionRow(props: {
       className={cn(
         "rounded-lg border px-3 py-3",
         emphasize
-          ? "border-amber-700/70 border-l-2 border-l-amber-500 bg-amber-950/20"
+          ? "border-team-ink/50 border-l-2 border-l-team-ink bg-team/15"
           : "border-zinc-800 bg-zinc-900/40",
       )}
     >
@@ -72,7 +72,7 @@ export function TransactionRow(props: {
                   saveId={saveId}
                   teamId={side.team.id}
                   className={cn(
-                    "font-medium text-zinc-200 hover:text-amber-400",
+                    "font-medium text-zinc-200 hover:text-team-ink",
                     focusRingClass,
                   )}
                 >
@@ -93,7 +93,7 @@ export function TransactionRow(props: {
                       saveId={saveId}
                       playerId={player.id}
                       className={cn(
-                        "text-sm text-zinc-100 hover:text-amber-400",
+                        "text-sm text-zinc-100 hover:text-team-ink",
                         focusRingClass,
                       )}
                     >
@@ -132,7 +132,7 @@ export function TransactionRow(props: {
                   saveId={saveId}
                   playerId={player.id}
                   className={cn(
-                    "text-amber-400/90 hover:text-amber-300",
+                    "text-team-ink/90 hover:text-team-ink",
                     focusRingClass,
                   )}
                 >
@@ -146,7 +146,7 @@ export function TransactionRow(props: {
                 saveId={saveId}
                 teamId={team.id}
                 className={cn(
-                  "text-zinc-400 hover:text-amber-400",
+                  "text-zinc-400 hover:text-team-ink",
                   focusRingClass,
                 )}
               >

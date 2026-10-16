@@ -1,13 +1,13 @@
 import Link from "next/link";
 import { openSaveAction } from "@/application/actions";
 import type { ValidOwnerSavePreview } from "@/application/save-preview-helpers";
-import { ErrorState } from "@/components/owner/EmptyState";
+import { ErrorState } from "@/components/ui/EmptyState";
 import { ScoreNumeral } from "@/components/ui/ScoreNumeral";
 import { TeamBadge } from "@/components/ui/TeamBadge";
 import { TeamThemeScope } from "@/components/ui/TeamThemeScope";
 
 const focusRing =
-  "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-500";
+  "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-team-ink";
 
 const panelClass = "arena-panel flex flex-col gap-3 p-6";
 

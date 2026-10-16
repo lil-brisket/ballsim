@@ -192,7 +192,7 @@ export function SimulationSummaryModal(props: {
                 {attention.slice(0, 6).map((item) => (
                   <li
                     key={item.id}
-                    className="rounded-md border border-warning/40 bg-warning/10 px-3 py-2 text-sm text-amber-100"
+                    className="rounded-md border border-warning/40 bg-warning/10 px-3 py-2 text-sm text-zinc-200"
                   >
                     {item.href ? (
                       <Link href={item.href} className="hover:text-team-ink">

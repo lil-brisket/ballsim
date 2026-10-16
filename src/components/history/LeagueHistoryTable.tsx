@@ -1,4 +1,4 @@
-import { EmptyState } from "@/components/owner/EmptyState";
+import { EmptyState } from "@/components/ui/EmptyState";
 import { TeamEntityLink } from "@/components/entity/TeamEntityLink";
 import type { LeagueHistoryView } from "@/state/league-history-selectors";
 
@@ -26,7 +26,7 @@ export function LeagueHistoryTable(props: {
         <tbody>
           {props.view.seasons.map((row) => (
             <tr key={row.seasonYear} className="border-b border-zinc-900/80">
-              <td className={`${TD} font-mono text-amber-400`}>
+              <td className={`${TD} font-mono text-team-ink`}>
                 {row.seasonYear}
               </td>
               <td className={TD}>

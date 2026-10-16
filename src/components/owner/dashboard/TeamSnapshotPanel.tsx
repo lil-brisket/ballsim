@@ -2,7 +2,7 @@ import Link from "next/link";
 import type { OwnerDashboardTeam } from "@/state/owner-dashboard";
 import type { RecentFormView } from "@/state/recent-form-selectors";
 import { PlayerEntityLink } from "@/components/entity/PlayerEntityLink";
-import { Section } from "@/components/owner/Section";
+import { Section } from "@/components/ui/Section";
 import { ArenaPanel } from "@/components/ui/ArenaPanel";
 import { TickerBar } from "@/components/ui/TickerBar";
 import { cn, touchTargetTextClass } from "@/components/ui/styles";

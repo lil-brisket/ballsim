@@ -19,7 +19,7 @@ export function SimLabWorkspace(props: { config: SimLabPageConfig }) {
 
   return (
     <main className="mx-auto min-h-screen w-full max-w-6xl px-6 py-8 text-zinc-100">
-      <h1 className="text-2xl font-semibold tracking-tight text-amber-500">
+      <h1 className="text-2xl font-semibold tracking-tight text-zinc-500">
         Simulation Lab
       </h1>
       <p className="mt-2 max-w-3xl text-sm text-zinc-400">
@@ -37,8 +37,8 @@ export function SimLabWorkspace(props: { config: SimLabPageConfig }) {
               type="button"
               className={
                 active
-                  ? "rounded-md bg-amber-600 px-3 py-1.5 text-sm font-medium text-zinc-950"
-                  : "rounded-md border border-zinc-700 px-3 py-1.5 text-sm text-zinc-300 hover:border-amber-600"
+                  ? "rounded-md bg-team px-3 py-1.5 text-sm font-medium text-on-team"
+                  : "rounded-md border border-zinc-700 px-3 py-1.5 text-sm text-zinc-300 hover:border-team-ink"
               }
               onClick={() => setTab(item.id)}
             >

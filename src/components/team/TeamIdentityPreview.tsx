@@ -92,7 +92,7 @@ export function TeamIdentityPreview(props: {
             <button
               type="button"
               onClick={props.onSwapHomeAway}
-              className="self-center rounded-md border border-white/30 bg-black/20 px-2.5 py-1 text-[11px] font-medium uppercase tracking-wide text-white/90 hover:border-amber-400/70 hover:text-amber-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-500"
+              className="self-center rounded-md border border-white/30 bg-black/20 px-2.5 py-1 text-[11px] font-medium uppercase tracking-wide text-white/90 hover:border-team-ink/70 hover:text-team-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-team-ink"
             >
               Swap Home/Away
             </button>

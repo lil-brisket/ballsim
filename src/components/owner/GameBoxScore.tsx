@@ -1,7 +1,7 @@
 import type { GameBoxScoreView } from "@/state/selectors";
 import type { TeamBrandingView } from "@/state/team-branding-view";
-import { DataTable } from "@/components/owner/DataTable";
-import { Section } from "@/components/owner/Section";
+import { DataTable } from "@/components/ui/DataTable";
+import { Section } from "@/components/ui/Section";
 import { ArenaPanel } from "@/components/ui/ArenaPanel";
 import { ScoreNumeral } from "@/components/ui/ScoreNumeral";
 import { TeamBadge } from "@/components/ui/TeamBadge";

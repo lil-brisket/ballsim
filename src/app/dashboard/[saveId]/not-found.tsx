@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { cn, focusRingClass, linkClass } from "@/components/ui/styles";
 
 export default function DashboardNotFound() {
   return (
@@ -8,10 +9,7 @@ export default function DashboardNotFound() {
         This save does not exist or could not be loaded. Return home and pick a
         valid save.
       </p>
-      <Link
-        href="/home"
-        className="text-sm text-amber-400 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-500"
-      >
+      <Link href="/home" className={cn(linkClass, "text-sm", focusRingClass)}>
         ← Home
       </Link>
     </main>

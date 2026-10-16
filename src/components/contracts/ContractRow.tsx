@@ -5,7 +5,7 @@ import {
 import { PlayerEntityLink } from "@/components/entity/PlayerEntityLink";
 import { ConfirmDialog } from "@/components/owner/ConfirmDialog";
 import { MoneyDisplay } from "@/components/owner/MoneyDisplay";
-import { StatusBadge } from "@/components/owner/StatusBadge";
+import { StatusBadge } from "@/components/ui/StatusBadge";
 import { cn } from "@/components/ui/styles";
 import type { ContractHubRow } from "@/state/contract-hub-selectors";
 
@@ -59,7 +59,7 @@ export function ContractRow(props: {
     <tr
       className={cn(
         "border-t border-zinc-800",
-        row.isExpiring && "bg-amber-950/10",
+        row.isExpiring && "bg-warning/10",
         row.isLargeCommitment && "font-medium",
       )}
     >
@@ -98,7 +98,7 @@ export function ContractRow(props: {
                 <input type="hidden" name="returnPath" value={returnPath} />
                 <button
                   type="submit"
-                  className="rounded-md bg-amber-600 px-2.5 py-1 text-xs font-medium text-zinc-950"
+                  className="rounded-md bg-team px-2.5 py-1 text-xs font-medium text-on-team"
                 >
                   Exercise
                 </button>

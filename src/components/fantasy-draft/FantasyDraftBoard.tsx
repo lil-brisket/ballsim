@@ -149,7 +149,7 @@ export function FantasyDraftBoard({ saveId, draft, error }: Props) {
                   key={entry.teamId}
                   className={
                     entry.teamId === draft.onClockTeamId
-                      ? "text-amber-300"
+                      ? "text-team-ink"
                       : "text-zinc-400"
                   }
                 >

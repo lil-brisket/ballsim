@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { PageHeader } from "@/components/owner/PageHeader";
+import { PageHeader } from "@/components/ui/PageHeader";
 import { cn, focusRingClass } from "@/components/ui/styles";
 import { historyHubHref } from "@/components/history/history-hub-links";
 import type {
@@ -40,7 +40,7 @@ export function HistoryHubHeader(props: {
                 "rounded-md px-3 py-1.5 text-sm",
                 focusRingClass,
                 active
-                  ? "bg-amber-600/20 text-amber-300"
+                  ? "bg-team/15 text-team-ink"
                   : "text-zinc-400 hover:text-zinc-200",
               )}
               aria-current={active ? "page" : undefined}

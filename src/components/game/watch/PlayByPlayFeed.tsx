@@ -158,7 +158,7 @@ export function PlayByPlayFeed(props: {
                   className={cn(
                     "min-w-0 break-words text-sm",
                     p.points > 0 && "font-semibold text-zinc-50",
-                    isFoul(p) && "text-amber-300",
+                    isFoul(p) && "text-warning",
                     p.points === 0 && !isFoul(p) && "text-zinc-300",
                   )}
                 >

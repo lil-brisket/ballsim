@@ -1,8 +1,9 @@
 import Link from "next/link";
+import { cn, focusRingClass, linkClass } from "@/components/ui/styles";
 import type { OwnerDashboardTeam } from "@/state/owner-dashboard";
-import { EmptyState } from "@/components/owner/EmptyState";
+import { EmptyState } from "@/components/ui/EmptyState";
 import { MoneyDisplay } from "@/components/owner/MoneyDisplay";
-import { Section } from "@/components/owner/Section";
+import { Section } from "@/components/ui/Section";
 import { TeamLogoMark } from "@/components/team/logos/TeamLogoMark";
 
 export function TeamDecisionPanel(props: {
@@ -28,7 +29,7 @@ export function TeamDecisionPanel(props: {
       action={
         <Link
           href={`/dashboard/${saveId}/team`}
-          className="text-sm text-amber-400 hover:text-amber-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-500"
+          className={cn(linkClass, "text-sm", focusRingClass)}
         >
           View Team
         </Link>
@@ -71,7 +72,7 @@ export function TeamDecisionPanel(props: {
             </ul>
             <Link
               href={`/dashboard/${saveId}/roster`}
-              className="mt-2 inline-block text-xs text-amber-400 hover:text-amber-300"
+              className={cn(linkClass, "mt-2 inline-block text-xs")}
             >
               Review Roster
             </Link>

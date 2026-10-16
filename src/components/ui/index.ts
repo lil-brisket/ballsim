@@ -20,6 +20,7 @@ export { SectionHeading } from "@/components/ui/SectionHeading";
 export { StatCard } from "@/components/ui/StatCard";
 export { StatusBadge } from "@/components/ui/StatusBadge";
 export { TeamBadge, type TeamBadgeSize } from "@/components/ui/TeamBadge";
+export { TeamLabel } from "@/components/ui/TeamLabel";
 export { TeamThemeScope, teamThemeStyle } from "@/components/ui/TeamThemeScope";
 export {
   TickerBar,
@@ -32,6 +33,7 @@ export {
   densityPadding,
   densitySectionSpace,
   focusRingClass,
+  linkClass,
   panelClass,
   panelDashedClass,
   touchTargetClass,

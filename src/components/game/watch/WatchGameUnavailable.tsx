@@ -3,13 +3,16 @@ import { EmptyState } from "@/components/ui";
 import {
   cn,
   focusRingClass,
+  linkClass,
   touchTargetTextClass,
 } from "@/components/ui/styles";
 
 const LINK_CLASS = cn(
   touchTargetTextClass,
-  "text-sm text-amber-400 hover:text-amber-300",
+  linkClass,
+  "text-sm",
   focusRingClass,
+  linkClass,
 );
 
 export function WatchGameUnavailable(props: {

@@ -42,7 +42,7 @@ export function ClosingLineupEditor(props: {
                   onClick={() => props.onTogglePlayer(row.playerId)}
                   className={`rounded px-2 py-1 text-xs ${
                     selected
-                      ? "bg-amber-700 text-zinc-950"
+                      ? "bg-team text-on-team"
                       : "bg-zinc-800 text-zinc-300"
                   }`}
                 >

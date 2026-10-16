@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { CardTable } from "@/components/player-profile/CardTable";
-import { EmptyState } from "@/components/owner/EmptyState";
-import { Section } from "@/components/owner/Section";
+import { EmptyState } from "@/components/ui/EmptyState";
+import { Section } from "@/components/ui/Section";
 import { TeamLogoMark } from "@/components/team/logos/TeamLogoMark";
 import type { PlayerProfileView } from "@/state/player-profile-selectors";
 
@@ -62,7 +62,7 @@ export function PlayerCareer(props: {
                   >
                     <span className="text-zinc-100">{award.displayName}</span>
                     <span className="ml-2 text-zinc-500">—</span>
-                    <span className="ml-2 font-mono text-amber-400">
+                    <span className="ml-2 font-mono text-team-ink">
                       {award.periodLabel ?? String(award.seasonYear)}
                     </span>
                     {award.teamName ? (
@@ -104,7 +104,7 @@ export function PlayerCareer(props: {
                 key={`${block.start}-${block.end}-${block.team}`}
                 className="rounded-lg border border-zinc-800 px-4 py-3 text-sm"
               >
-                <span className="font-mono text-amber-400">
+                <span className="font-mono text-team-ink">
                   {block.start === block.end
                     ? String(block.start)
                     : `${block.start}–${block.end}`}
@@ -146,7 +146,7 @@ export function PlayerCareer(props: {
                 <td className="px-3 py-2 text-zinc-100">
                   {HIGH_LABELS[high.stat] ?? high.stat}
                 </td>
-                <td className="px-3 py-2 font-mono text-amber-400">
+                <td className="px-3 py-2 font-mono text-team-ink">
                   {high.value}
                 </td>
                 <td className="px-3 py-2 text-sm text-zinc-400">
@@ -175,7 +175,7 @@ export function PlayerCareer(props: {
                 <td className="px-3 py-2">
                   <Link
                     href={`/dashboard/${props.saveId}/games/${high.gameId}`}
-                    className="text-amber-400 hover:underline"
+                    className="text-team-ink underline-offset-4 hover:underline"
                   >
                     Box score
                   </Link>
@@ -196,7 +196,7 @@ export function PlayerCareer(props: {
                 key={season.seasonId}
                 className="rounded-lg border border-zinc-800 px-4 py-3 text-sm"
               >
-                <span className="font-mono text-amber-400">
+                <span className="font-mono text-team-ink">
                   {season.seasonYear}
                 </span>
                 <span className="ml-3 text-zinc-100">

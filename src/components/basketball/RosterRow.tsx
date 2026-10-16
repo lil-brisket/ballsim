@@ -45,7 +45,7 @@ export function RosterRow(props: {
           saveId={props.saveId}
           playerId={props.playerId}
           canOpen={props.canOpen}
-          className="truncate text-sm text-team-ink hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-500"
+          className="truncate text-sm text-team-ink hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-team-ink"
         >
           {props.firstName} {props.lastName}
         </PlayerEntityLink>

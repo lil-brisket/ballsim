@@ -1,5 +1,5 @@
-import { EmptyState } from "@/components/owner/EmptyState";
-import { Section } from "@/components/owner/Section";
+import { EmptyState } from "@/components/ui/EmptyState";
+import { Section } from "@/components/ui/Section";
 import { AwardHistoryFilters } from "@/components/history/AwardHistoryFilters";
 import {
   AwardWinnerName,
@@ -66,7 +66,7 @@ export function AwardHistoryPanel(props: {
                     key={season.seasonYear}
                     className="border-b border-zinc-900/80"
                   >
-                    <td className={`${TD} font-mono text-amber-400`}>
+                    <td className={`${TD} font-mono text-team-ink`}>
                       {season.seasonYear}
                     </td>
                     {pivotDefinitions.map((def) => {

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { cn, focusRingClass, linkClass } from "@/components/ui/styles";
 import type { OffseasonQuickLink } from "@/state/offseason-hub-selectors";
 
 export function OffseasonQuickLinks(props: {
@@ -13,7 +14,7 @@ export function OffseasonQuickLinks(props: {
         <Link
           key={link.href}
           href={link.href}
-          className="text-amber-400 hover:text-amber-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-500"
+          className={cn(linkClass, focusRingClass)}
         >
           {link.label}
         </Link>

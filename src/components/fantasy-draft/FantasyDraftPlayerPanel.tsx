@@ -84,9 +84,9 @@ export function FantasyDraftPlayerPanel(props: {
 
         <div className="space-y-4 overflow-y-auto px-5 py-4">
           <div className="flex flex-wrap gap-3">
-            <div className="rounded-lg border border-amber-700/50 bg-amber-950/30 px-4 py-2 text-center">
-              <p className="text-[10px] uppercase text-amber-500/80">Overall</p>
-              <p className="font-mono text-2xl text-amber-400">
+            <div className="rounded-lg border border-team-ink/50 bg-team/20 px-4 py-2 text-center">
+              <p className="text-[10px] uppercase text-zinc-500/80">Overall</p>
+              <p className="font-mono text-2xl text-team-ink">
                 {detail.overall}
               </p>
             </div>
@@ -103,7 +103,7 @@ export function FantasyDraftPlayerPanel(props: {
           </div>
 
           {detail.isDrafted ? (
-            <p className="rounded-md border border-amber-800/50 bg-amber-950/30 px-3 py-2 text-sm text-amber-200">
+            <p className="rounded-md border border-team-ink/50 bg-team/20 px-3 py-2 text-sm text-team-ink">
               Already drafted by {detail.draftedByTeamName ?? "a team"}
               {detail.pickNumber != null
                 ? ` (Pick #${detail.pickNumber}, Round ${detail.round})`
@@ -194,7 +194,7 @@ export function FantasyDraftPlayerPanel(props: {
                     potential: detail.potential,
                   })
                 }
-                className="rounded-md bg-amber-600 px-3 py-2 text-sm font-medium text-zinc-950 disabled:opacity-50"
+                className="rounded-md bg-team px-3 py-2 text-sm font-medium text-on-team disabled:opacity-50"
               >
                 Draft Player
               </button>
@@ -205,7 +205,7 @@ export function FantasyDraftPlayerPanel(props: {
                 <button
                   type="submit"
                   disabled={pending}
-                  className="rounded-md bg-amber-600 px-3 py-2 text-sm font-medium text-zinc-950 disabled:opacity-50"
+                  className="rounded-md bg-team px-3 py-2 text-sm font-medium text-on-team disabled:opacity-50"
                 >
                   Draft Player
                 </button>

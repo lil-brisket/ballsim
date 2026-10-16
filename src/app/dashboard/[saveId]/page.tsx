@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import {
@@ -19,7 +20,7 @@ import { PendingOwnerDecisionPanel } from "@/components/owner/dashboard/PendingO
 import { RecentActivity } from "@/components/owner/dashboard/RecentActivity";
 import { RecentResultsPanel } from "@/components/owner/dashboard/RecentResultsPanel";
 import { TeamSnapshotPanel } from "@/components/owner/dashboard/TeamSnapshotPanel";
-import { ErrorState } from "@/components/owner/EmptyState";
+import { ErrorState } from "@/components/ui/EmptyState";
 import {
   cn,
   touchTargetClass,
@@ -27,6 +28,8 @@ import {
 } from "@/components/ui/styles";
 import { buildActionCenterView } from "@/state/action-center-selectors";
 import { recentFormFromResults } from "@/state/recent-form-selectors";
+
+export const metadata: Metadata = { title: "Front Office" };
 
 type DashboardPageProps = {
   params: Promise<{ saveId: string }>;
@@ -98,7 +101,7 @@ export default async function DashboardPage({
           href={`/dashboard/${saveId}/offseason`}
           className={cn(
             touchTargetClass,
-            "rounded-md border border-amber-700/50 bg-amber-950/30 px-3 text-sm text-amber-200 hover:border-amber-600",
+            "rounded-md border border-team-ink/50 bg-team/15 px-3 text-sm text-team-ink hover:border-team-ink",
           )}
         >
           Open Offseason Command Center
@@ -110,9 +113,9 @@ export default async function DashboardPage({
       dash.pendingTradeOffer.primaryTeamId !== dashboard.controlledTeam.id ? (
         <div
           role="status"
-          className="rounded-md border border-amber-700/50 bg-amber-950/40 px-4 py-3 text-sm text-amber-100"
+          className="rounded-md border border-warning/40 bg-warning/10 px-4 py-3 text-sm text-zinc-200"
         >
-          <p className="font-medium text-amber-200">
+          <p className="font-medium text-warning">
             {dash.pendingTradeOffer.receivingTeamName} needs your attention
             before time can advance.
           </p>
@@ -128,7 +131,7 @@ export default async function DashboardPage({
                 type="submit"
                 className={cn(
                   touchTargetClass,
-                  "w-full rounded-md bg-amber-600 px-3 text-sm font-medium text-zinc-950 hover:bg-amber-500 sm:w-auto",
+                  "w-full rounded-md bg-team px-3 text-sm font-medium text-on-team hover:brightness-110 sm:w-auto",
                 )}
               >
                 Switch to {dash.pendingTradeOffer.receivingTeamName}
@@ -147,7 +150,7 @@ export default async function DashboardPage({
       ) : null}
 
       {dash.tradeInbox.totalPending > 1 ? (
-        <p className="text-xs text-amber-200/80">
+        <p className="text-xs text-warning/80">
           {dash.tradeInbox.totalPending} trade offers pending
           {dash.tradeInbox.pendingForActiveTeam > 0
             ? ` (${dash.tradeInbox.pendingForActiveTeam} for this team)`
@@ -159,7 +162,7 @@ export default async function DashboardPage({
       {dash.flags.userOnDraftClock ? (
         <p
           role="status"
-          className="rounded-md border border-amber-700/50 bg-amber-950/40 px-4 py-3 text-sm text-amber-200"
+          className="rounded-md border border-warning/40 bg-warning/10 px-4 py-3 text-sm text-zinc-200"
         >
           Your team is on the draft clock. Make a selection on the Draft screen
           before advancing time.{" "}
@@ -167,7 +170,7 @@ export default async function DashboardPage({
             href={`/dashboard/${saveId}/draft`}
             className={cn(
               touchTargetTextClass,
-              "font-medium text-amber-300 underline",
+              "font-medium text-warning underline",
             )}
           >
             Open Draft
@@ -197,7 +200,7 @@ export default async function DashboardPage({
             href={`/dashboard/${saveId}/calendar`}
             className={cn(
               touchTargetClass,
-              "rounded-md bg-amber-600 px-4 text-sm font-medium text-zinc-950 hover:bg-amber-500",
+              "rounded-md bg-team px-4 text-sm font-medium text-on-team hover:brightness-110",
             )}
           >
             Open Calendar

@@ -38,7 +38,7 @@ function Segmented<T extends string>(props: {
               className={cn(
                 "min-h-11 px-3 text-sm",
                 pressed
-                  ? "bg-amber-600 font-medium text-zinc-950"
+                  ? "bg-team font-medium text-on-team"
                   : "text-zinc-300 hover:bg-zinc-800",
                 focusRingClass,
               )}

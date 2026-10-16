@@ -9,7 +9,7 @@ import { LEAGUE_AREA_LABELS, type LeagueArea } from "@/domain/game-settings";
 import type { CityPickOption } from "@/state/selectors";
 
 const FOCUS_RING =
-  "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-500";
+  "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-team-ink";
 
 function formatCoordinates(lat: number, lng: number): string {
   const latPart = `${Math.abs(lat).toFixed(2)}° ${lat >= 0 ? "N" : "S"}`;
@@ -23,7 +23,7 @@ function SubmitButton(props: { label: string }) {
     <button
       type="submit"
       disabled={pending}
-      className={`min-h-[44px] w-full rounded-md bg-amber-600 px-3 py-2 text-sm font-medium text-zinc-950 hover:bg-amber-500 ${FOCUS_RING} disabled:cursor-not-allowed disabled:bg-zinc-700 disabled:text-zinc-400`}
+      className={`min-h-[44px] w-full rounded-md bg-team px-3 py-2 text-sm font-medium text-on-team hover:brightness-110 ${FOCUS_RING} disabled:cursor-not-allowed disabled:bg-zinc-700 disabled:text-zinc-400`}
     >
       {pending ? "Founding franchise…" : props.label}
     </button>
@@ -100,7 +100,7 @@ export function CityMapPicker(props: {
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-2">
       <header className="flex shrink-0 items-baseline gap-3">
-        <p className="text-xs font-semibold uppercase tracking-wide text-amber-500">
+        <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
           {LEAGUE_AREA_LABELS[props.area]}
         </p>
       </header>
@@ -174,9 +174,9 @@ export function CityMapPicker(props: {
                       type="button"
                       aria-pressed={isSelected}
                       onClick={() => selectCity(city.city)}
-                      className={`flex min-h-[44px] w-full items-center justify-between gap-3 border-l-4 px-3 py-2 text-left text-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-amber-500 ${
+                      className={`flex min-h-[44px] w-full items-center justify-between gap-3 border-l-4 px-3 py-2 text-left text-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-team-ink ${
                         isSelected
-                          ? "border-amber-500 bg-amber-600/20 text-zinc-100"
+                          ? "border-team-ink bg-team/20 text-zinc-100"
                           : "border-transparent bg-zinc-900/40 text-zinc-200 hover:bg-zinc-800/80"
                       }`}
                     >
@@ -187,7 +187,7 @@ export function CityMapPicker(props: {
                         </span>
                       </span>
                       {isSelected ? (
-                        <span className="shrink-0 text-xs font-semibold text-amber-400">
+                        <span className="shrink-0 text-xs font-semibold text-team-ink">
                           <span aria-hidden="true">✓ </span>Selected
                         </span>
                       ) : null}
@@ -203,7 +203,7 @@ export function CityMapPicker(props: {
               <section aria-labelledby="selected-market-heading">
                 <h2
                   id="selected-market-heading"
-                  className="text-xs font-semibold uppercase tracking-wide text-amber-500/90"
+                  className="text-xs font-semibold uppercase tracking-wide text-zinc-500/90"
                 >
                   Selected market
                 </h2>

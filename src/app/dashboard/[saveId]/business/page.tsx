@@ -1,14 +1,18 @@
+import type { Metadata } from "next";
+import { cn, focusRingClass } from "@/components/ui/styles";
 import {
   setMarketingBudgetAction,
   setTicketPriceAction,
 } from "@/application/actions";
 import { loadOwnerSaveView } from "@/application/game-service";
 import { notFound } from "next/navigation";
-import { ErrorState } from "@/components/owner/EmptyState";
+import { ErrorState } from "@/components/ui/EmptyState";
 import { MoneyDisplay } from "@/components/owner/MoneyDisplay";
-import { PageHeader } from "@/components/owner/PageHeader";
-import { Section } from "@/components/owner/Section";
-import { StatCard } from "@/components/owner/StatCard";
+import { PageHeader } from "@/components/ui/PageHeader";
+import { Section } from "@/components/ui/Section";
+import { StatCard } from "@/components/ui/StatCard";
+
+export const metadata: Metadata = { title: "Business" };
 
 type PageProps = {
   params: Promise<{ saveId: string }>;
@@ -75,11 +79,17 @@ export default async function MarketingPage({
               defaultValue={biz.ticketPrice}
               min={10}
               max={250}
-              className="w-28 rounded-md border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-zinc-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-500"
+              className={cn(
+                "w-28 rounded-md border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-zinc-100",
+                focusRingClass,
+              )}
             />
             <button
               type="submit"
-              className="rounded-md bg-amber-600 px-4 py-2 text-sm font-medium text-zinc-950 hover:bg-amber-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-500"
+              className={cn(
+                "rounded-md bg-team px-4 py-2 text-sm font-medium text-on-team hover:brightness-110",
+                focusRingClass,
+              )}
             >
               Set price
             </button>
@@ -99,11 +109,17 @@ export default async function MarketingPage({
               defaultValue={biz.marketingBudget}
               min={0}
               step={100000}
-              className="w-40 rounded-md border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-zinc-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-500"
+              className={cn(
+                "w-40 rounded-md border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-zinc-100",
+                focusRingClass,
+              )}
             />
             <button
               type="submit"
-              className="rounded-md bg-amber-600 px-4 py-2 text-sm font-medium text-zinc-950 hover:bg-amber-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-500"
+              className={cn(
+                "rounded-md bg-team px-4 py-2 text-sm font-medium text-on-team hover:brightness-110",
+                focusRingClass,
+              )}
             >
               Set budget
             </button>

@@ -5,7 +5,7 @@ import {
 } from "@/application/game-service";
 import { filterSavePreviewsForMode } from "@/application/save-preview-helpers";
 import { SaveCard } from "@/components/game/SaveCard";
-import { EmptyState, ErrorState } from "@/components/owner/EmptyState";
+import { EmptyState, ErrorState } from "@/components/ui/EmptyState";
 import { SectionHeading } from "@/components/ui/SectionHeading";
 import type { GameMode } from "@/state/game-state";
 
@@ -37,7 +37,7 @@ export default async function SavesPage({ searchParams }: SavesPageProps) {
       <header className="space-y-2">
         <Link
           href={backHref}
-          className="inline-flex min-h-11 items-center text-sm text-zinc-300 hover:text-team-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-500"
+          className="inline-flex min-h-11 items-center text-sm text-zinc-300 hover:text-team-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-team-ink"
         >
           {backLabel}
         </Link>

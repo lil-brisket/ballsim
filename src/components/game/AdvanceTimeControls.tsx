@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, type ReactNode } from "react";
+import { cn, focusRingClass, linkClass } from "@/components/ui/styles";
 import { useFormStatus } from "react-dom";
 import {
   advanceDayAction,
@@ -25,7 +26,10 @@ function AdvanceButton(props: {
       type="submit"
       disabled={disabled}
       aria-busy={pending}
-      className="rounded-md border border-zinc-700 px-4 py-2 text-sm text-zinc-200 hover:border-amber-600 disabled:opacity-40 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-500"
+      className={cn(
+        "rounded-md border border-zinc-700 px-4 py-2 text-sm text-zinc-200 hover:border-team-ink disabled:opacity-40",
+        focusRingClass,
+      )}
     >
       {pending ? props.pendingLabel : props.label}
     </button>
@@ -38,7 +42,7 @@ function SimulationProgressStatus(props: { message: string }) {
     return null;
   }
   return (
-    <p role="status" aria-live="polite" className="text-sm text-amber-300/90">
+    <p role="status" aria-live="polite" className="text-sm text-team-ink/90">
       {props.message}
     </p>
   );
@@ -79,7 +83,7 @@ export function AdvanceTimeControls(props: {
         <div className="mb-2">{props.assistantSummary}</div>
       ) : null}
       {showWarning ? (
-        <p role="status" className="text-sm text-amber-400">
+        <p role="status" className="text-sm text-warning">
           ⚠ {props.unresolvedWarning}
         </p>
       ) : null}
@@ -130,10 +134,7 @@ export function AdvanceTimeControls(props: {
             <div className="mt-2 space-y-1">
               <p className="text-xs text-zinc-500">
                 Prefer the{" "}
-                <a
-                  href={calendarHref}
-                  className="text-amber-500 hover:text-amber-400"
-                >
+                <a href={calendarHref} className={linkClass}>
                   Calendar
                 </a>{" "}
                 for intentional time advancement.
@@ -188,7 +189,7 @@ export function AdvanceTimeControls(props: {
               {props.goToHref ? (
                 <a
                   href={props.goToHref}
-                  className="rounded-md border border-amber-600/60 px-3 py-1.5 text-sm text-amber-300 hover:bg-amber-950/50"
+                  className="rounded-md border border-warning/40 px-3 py-1.5 text-sm text-warning hover:bg-warning/20"
                 >
                   Handle manually
                 </a>
@@ -223,7 +224,7 @@ export function AdvanceTimeControls(props: {
                   <button
                     type="submit"
                     disabled={controlsDisabled}
-                    className="rounded-md bg-amber-600 px-3 py-1.5 text-sm font-medium text-zinc-950 hover:bg-amber-500 disabled:opacity-40"
+                    className="rounded-md bg-team px-3 py-1.5 text-sm font-medium text-on-team hover:brightness-110 disabled:opacity-40"
                   >
                     Continue Anyway
                   </button>
@@ -240,7 +241,7 @@ export function AdvanceTimeControls(props: {
                   <button
                     type="submit"
                     disabled={controlsDisabled}
-                    className="rounded-md bg-amber-600 px-3 py-1.5 text-sm font-medium text-zinc-950 hover:bg-amber-500 disabled:opacity-40"
+                    className="rounded-md bg-team px-3 py-1.5 text-sm font-medium text-on-team hover:brightness-110 disabled:opacity-40"
                   >
                     Continue Anyway
                   </button>

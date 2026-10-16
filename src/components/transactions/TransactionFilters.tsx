@@ -131,7 +131,7 @@ export function TransactionFilters(props: {
           className={cn(
             "rounded-full border px-3 py-1 text-xs uppercase tracking-[0.14em]",
             props.activityMode === "league"
-              ? "border-amber-600 text-amber-400"
+              ? "border-team-ink text-team-ink"
               : "border-zinc-700 text-zinc-400 hover:border-zinc-500",
             focusRingClass,
           )}
@@ -143,7 +143,7 @@ export function TransactionFilters(props: {
           className={cn(
             "rounded-full border px-3 py-1 text-xs uppercase tracking-[0.14em]",
             props.activityMode === "myTeam"
-              ? "border-amber-600 text-amber-400"
+              ? "border-team-ink text-team-ink"
               : "border-zinc-700 text-zinc-400 hover:border-zinc-500",
             focusRingClass,
           )}
@@ -328,7 +328,7 @@ export function TransactionFilters(props: {
         <button
           type="submit"
           className={cn(
-            "rounded-md border border-zinc-700 px-3 py-1.5 text-sm text-zinc-200 hover:border-amber-600",
+            "rounded-md border border-zinc-700 px-3 py-1.5 text-sm text-zinc-200 hover:border-team-ink",
             focusRingClass,
           )}
         >
@@ -338,7 +338,7 @@ export function TransactionFilters(props: {
           <Link
             href={props.basePath}
             className={cn(
-              "inline-flex items-center text-sm text-amber-400 hover:text-amber-300",
+              "inline-flex items-center text-sm text-team-ink underline-offset-4 hover:underline",
               focusRingClass,
             )}
           >

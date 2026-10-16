@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { PlayerEntityLink } from "@/components/entity/PlayerEntityLink";
-import { EmptyState } from "@/components/owner/EmptyState";
-import { Section } from "@/components/owner/Section";
+import { EmptyState } from "@/components/ui/EmptyState";
+import { Section } from "@/components/ui/Section";
 import { cn, panelClass } from "@/components/ui/styles";
 import type { TeamHubView } from "@/state/team-hub-selectors";
 
@@ -16,7 +16,7 @@ export function TeamRotationPreview(props: {
     <Section
       title="Rotation"
       action={
-        <Link href={rotationHref} className="text-sm text-amber-400">
+        <Link href={rotationHref} className="text-sm text-team-ink">
           Manage Lineup & Rotation
         </Link>
       }
@@ -84,14 +84,14 @@ export function TeamRotationPreview(props: {
           <span>
             {hub.rotation.totalPlanned} / {hub.rotation.target} minutes
             {!hub.rotation.plannedValid ? (
-              <span className="ml-2 text-amber-400">
+              <span className="ml-2 text-team-ink">
                 (Δ {hub.rotation.delta})
               </span>
             ) : null}
           </span>
           <Link
             href={rotationHref}
-            className="rounded-md border border-zinc-700 px-2.5 py-1 text-zinc-200 hover:border-amber-600"
+            className="rounded-md border border-zinc-700 px-2.5 py-1 text-zinc-200 hover:border-team-ink"
           >
             Manage Rotation
           </Link>

@@ -20,7 +20,7 @@ export function SortableTableControls<T extends string>(props: {
             value={props.query ?? ""}
             onChange={(event) => props.onQueryChange?.(event.target.value)}
             placeholder={props.queryPlaceholder ?? "Search…"}
-            className="rounded-md border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-zinc-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-500"
+            className="rounded-md border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-zinc-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-team-ink"
           />
         </label>
       ) : null}
@@ -29,7 +29,7 @@ export function SortableTableControls<T extends string>(props: {
         <select
           value={props.sortKey}
           onChange={(event) => props.onSortKeyChange(event.target.value as T)}
-          className="rounded-md border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-zinc-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-500"
+          className="rounded-md border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-zinc-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-team-ink"
         >
           {props.options.map((option) => (
             <option key={option.value} value={option.value}>
@@ -45,7 +45,7 @@ export function SortableTableControls<T extends string>(props: {
           onChange={(event) =>
             props.onSortDirChange(event.target.value as "asc" | "desc")
           }
-          className="rounded-md border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-zinc-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-500"
+          className="rounded-md border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-zinc-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-team-ink"
         >
           <option value="desc">Descending</option>
           <option value="asc">Ascending</option>

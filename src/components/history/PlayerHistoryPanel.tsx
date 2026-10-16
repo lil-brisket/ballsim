@@ -1,6 +1,6 @@
 import Link from "next/link";
-import { EmptyState } from "@/components/owner/EmptyState";
-import { Section } from "@/components/owner/Section";
+import { EmptyState } from "@/components/ui/EmptyState";
+import { Section } from "@/components/ui/Section";
 import { TeamEntityLink } from "@/components/entity/TeamEntityLink";
 import { cn, focusRingClass, panelClass } from "@/components/ui/styles";
 import { PlayerHistorySearch } from "@/components/history/PlayerHistorySearch";
@@ -33,7 +33,7 @@ function PlayerHistoryDetail(props: {
         <Link
           href={player.profileHref}
           className={cn(
-            "text-sm text-amber-400 hover:underline",
+            "text-sm text-team-ink underline-offset-4 hover:underline",
             focusRingClass,
           )}
         >
@@ -69,7 +69,7 @@ function PlayerHistoryDetail(props: {
                     key={stop.seasonYear}
                     className="flex items-baseline gap-3 py-1.5"
                   >
-                    <span className="font-mono text-amber-400">
+                    <span className="font-mono text-team-ink">
                       {stop.seasonYear}
                     </span>
                     {stop.teamId ? (
@@ -83,7 +83,7 @@ function PlayerHistoryDetail(props: {
                       <span className="text-zinc-500">No team</span>
                     )}
                     {stop.championship ? (
-                      <span className="text-xs uppercase tracking-wide text-amber-300">
+                      <span className="text-xs uppercase tracking-wide text-team-ink">
                         Champion
                       </span>
                     ) : null}

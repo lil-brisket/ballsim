@@ -29,7 +29,7 @@ export function ProgressBar(props: {
         className="h-1.5 w-full overflow-hidden rounded-full bg-zinc-800"
       >
         <div
-          className="h-full rounded-full bg-amber-500 transition-[width] duration-300 motion-reduce:transition-none"
+          className="h-full rounded-full bg-team-ink transition-[width] duration-300 motion-reduce:transition-none"
           style={{ width: `${pct}%` }}
         />
       </div>

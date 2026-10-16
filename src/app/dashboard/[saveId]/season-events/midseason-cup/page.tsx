@@ -1,9 +1,12 @@
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getRequestSaveStore } from "@/application/request-save-store";
-import { PageHeader } from "@/components/owner/PageHeader";
-import { Section } from "@/components/owner/Section";
-import { EmptyState } from "@/components/owner/EmptyState";
+import { PageHeader } from "@/components/ui/PageHeader";
+import { Section } from "@/components/ui/Section";
+import { EmptyState } from "@/components/ui/EmptyState";
 import { toMidseasonCupHubView } from "@/state/midseason-cup-selectors";
+
+export const metadata: Metadata = { title: "Midseason Cup" };
 
 type PageProps = {
   params: Promise<{ saveId: string }>;
@@ -29,7 +32,7 @@ export default async function MidseasonCupPage({ params }: PageProps) {
 
       {hub.championName ? (
         <Section title="Champion">
-          <p className="text-lg font-semibold text-amber-300">
+          <p className="text-lg font-semibold text-team-ink">
             🏆 {hub.championName}
           </p>
         </Section>

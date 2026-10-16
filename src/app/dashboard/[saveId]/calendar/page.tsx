@@ -1,9 +1,12 @@
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { loadCalendarPageView } from "@/application/game-service";
 import { CalendarWorkspace } from "@/components/calendar/CalendarWorkspace";
-import { ErrorState } from "@/components/owner/EmptyState";
-import { PageHeader } from "@/components/owner/PageHeader";
+import { ErrorState } from "@/components/ui/EmptyState";
+import { PageHeader } from "@/components/ui/PageHeader";
 import { parseCalendarDate } from "@/domain/calendar-date";
+
+export const metadata: Metadata = { title: "Calendar" };
 
 type CalendarPageProps = {
   params: Promise<{ saveId: string }>;

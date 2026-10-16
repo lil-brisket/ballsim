@@ -98,7 +98,7 @@ function PlayerCardBody(props: {
 
 const primaryActionClass = cn(
   touchTargetClass,
-  "rounded-md bg-amber-600 px-4 text-sm font-medium text-zinc-950 hover:bg-amber-500",
+  "rounded-md bg-team px-4 text-sm font-medium text-on-team hover:brightness-110",
   focusRingClass,
 );
 
@@ -181,7 +181,7 @@ export function PlayerDrawer(props: {
               type="button"
               onClick={props.onRetry}
               className={cn(
-                "rounded-md border border-zinc-700 px-3 py-1.5 text-sm text-zinc-200 hover:border-amber-600",
+                "rounded-md border border-zinc-700 px-3 py-1.5 text-sm text-zinc-200 hover:border-team-ink",
                 focusRingClass,
               )}
             >

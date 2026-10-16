@@ -5,7 +5,7 @@ import {
 } from "@/application/game-service";
 import { getCurrentUser } from "@/application/auth/session";
 import { GameSetupForm } from "@/components/owner/GameSetupForm";
-import { ErrorState } from "@/components/owner/EmptyState";
+import { ErrorState } from "@/components/ui/EmptyState";
 
 export const dynamic = "force-dynamic";
 

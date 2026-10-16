@@ -31,7 +31,7 @@ function FailureList(props: { title: string; items: LabFailure[] }) {
               key={`${item.rule}-${index}`}
               className="rounded-md border border-zinc-800 bg-zinc-950/60 px-3 py-2 text-sm"
             >
-              <p className="font-mono text-amber-300">
+              <p className="font-mono text-team-ink">
                 {item.rule} [{item.scope}]
               </p>
               <p className="mt-1 text-zinc-300">{item.detail}</p>

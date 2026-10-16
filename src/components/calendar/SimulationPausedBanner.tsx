@@ -69,7 +69,7 @@ export function SimulationPausedBanner(props: {
           {longDate}
         </h2>
         {reasons.length > 1 ? (
-          <p className="mt-1 text-sm text-amber-200/90">
+          <p className="mt-1 text-sm text-zinc-200/90">
             {reasons.length} items need your attention
           </p>
         ) : null}
@@ -81,9 +81,9 @@ export function SimulationPausedBanner(props: {
             key={item.id}
             className="rounded-lg border border-surface-line bg-surface-arena px-3 py-2"
           >
-            <p className="text-sm font-medium text-amber-50">{item.title}</p>
+            <p className="text-sm font-medium text-zinc-50">{item.title}</p>
             {item.detail ? (
-              <p className="mt-0.5 text-xs text-amber-200/80">{item.detail}</p>
+              <p className="mt-0.5 text-xs text-zinc-200/80">{item.detail}</p>
             ) : null}
             {item.href ? (
               <Link
@@ -117,7 +117,7 @@ export function SimulationPausedBanner(props: {
         {props.continueHref ? (
           <Link
             href={props.continueHref}
-            className="rounded-md border border-amber-700/60 px-4 py-2 text-sm text-amber-200 hover:border-amber-500"
+            className="rounded-md border border-warning/40 px-4 py-2 text-sm text-warning hover:border-warning"
           >
             Continue Anyway
           </Link>

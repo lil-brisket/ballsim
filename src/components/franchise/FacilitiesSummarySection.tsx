@@ -21,7 +21,7 @@ export function FacilitiesSummarySection(props: {
       title="Renovation"
       description={`Arena capacity ${summary.arenaCapacity.toLocaleString()} · ${upgradeLabel}`}
       footer={
-        <span className="text-sm font-medium text-amber-400">
+        <span className="text-sm font-medium text-team-ink">
           Manage Facilities
         </span>
       }

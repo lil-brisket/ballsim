@@ -3,7 +3,7 @@
 import { PlayerEntityLink } from "@/components/entity/PlayerEntityLink";
 import { TeamEntityLink } from "@/components/entity/TeamEntityLink";
 import { StatusBadge } from "@/components/ui/StatusBadge";
-import { EmptyState } from "@/components/owner/EmptyState";
+import { EmptyState } from "@/components/ui/EmptyState";
 import type { DraftPickSummaryRow } from "@/state/draft-hub-selectors";
 
 export function DraftPickSummary(props: {
@@ -29,7 +29,7 @@ export function DraftPickSummary(props: {
           {props.picks.map((pick) => (
             <tr
               key={pick.draftPickId}
-              className={pick.isUserPick ? "bg-amber-950/20" : undefined}
+              className={pick.isUserPick ? "bg-team/15" : undefined}
             >
               <td className="px-3 py-2 font-mono text-zinc-300">
                 #{pick.overallPick}

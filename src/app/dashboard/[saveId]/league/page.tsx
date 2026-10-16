@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { loadLeagueHubView } from "@/application/game-service";
@@ -15,8 +16,10 @@ import {
   LeagueRecentResultsPanel,
   LeagueTransactionsBriefing,
 } from "@/components/league/LeagueTier2Panels";
-import { ErrorState } from "@/components/owner/EmptyState";
+import { ErrorState } from "@/components/ui/EmptyState";
 import { cn, focusRingClass } from "@/components/ui/styles";
+
+export const metadata: Metadata = { title: "League" };
 
 type PageProps = {
   params: Promise<{ saveId: string }>;
@@ -70,7 +73,7 @@ export default async function LeagueHubPage({
           <Link
             href={`/dashboard/${saveId}/league/expansion`}
             className={cn(
-              "text-amber-400 hover:text-amber-300",
+              "text-team-ink underline-offset-4 hover:underline",
               focusRingClass,
             )}
           >

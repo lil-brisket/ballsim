@@ -21,7 +21,7 @@ const PREVIEW = {
 export default function LogoShowcasePage() {
   return (
     <main className="min-h-screen bg-zinc-950 px-6 py-8 text-zinc-100">
-      <h1 className="text-2xl font-semibold tracking-tight text-amber-500">
+      <h1 className="text-2xl font-semibold tracking-tight text-zinc-500">
         Franchise Logo Showcase
       </h1>
       <p className="mt-2 max-w-2xl text-sm text-zinc-400">
@@ -35,7 +35,7 @@ export default function LogoShowcasePage() {
           const logos = getLogosByCategory(category.id);
           return (
             <section key={category.id}>
-              <h2 className="mb-3 text-xs font-semibold uppercase tracking-wide text-amber-500">
+              <h2 className="mb-3 text-xs font-semibold uppercase tracking-wide text-zinc-500">
                 {category.label}{" "}
                 <span className="text-zinc-500">({logos.length})</span>
               </h2>

@@ -10,15 +10,15 @@ import { formatMoney } from "@/components/owner/MoneyDisplay";
 import { cn, focusRingClass } from "@/components/ui/styles";
 
 export const inputClass =
-  "min-h-11 w-full rounded-md border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-500 disabled:cursor-not-allowed disabled:opacity-50";
+  "min-h-11 w-full rounded-md border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-team-ink disabled:cursor-not-allowed disabled:opacity-50";
 
 export const secondaryButtonClass = cn(
-  "inline-flex min-h-11 items-center rounded-md border border-zinc-700 px-4 py-2 text-sm text-zinc-200 hover:border-amber-600",
+  "inline-flex min-h-11 items-center rounded-md border border-zinc-700 px-4 py-2 text-sm text-zinc-200 hover:border-team-ink",
   focusRingClass,
 );
 
 export const primaryButtonClass = cn(
-  "inline-flex min-h-11 items-center rounded-md bg-amber-600 px-4 py-2 text-sm font-medium text-zinc-950 hover:bg-amber-500 disabled:cursor-not-allowed disabled:opacity-50",
+  "inline-flex min-h-11 items-center rounded-md bg-team px-4 py-2 text-sm font-medium text-on-team hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50",
   focusRingClass,
 );
 
@@ -42,7 +42,7 @@ export function SetupSection({
         <h2
           id={id}
           tabIndex={-1}
-          className="text-base font-semibold text-zinc-100 outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-500"
+          className="text-base font-semibold text-zinc-100 outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-team-ink"
         >
           {title}
         </h2>
@@ -106,7 +106,7 @@ export function ToggleField({
         type="checkbox"
         checked={checked}
         onChange={(event) => onChange(event.target.checked)}
-        className="size-5 rounded border-zinc-600 bg-zinc-950 text-amber-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-500"
+        className="size-5 rounded border-zinc-600 bg-zinc-950 text-team-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-team-ink"
       />
       {label}
     </label>
@@ -230,7 +230,7 @@ export function InjuryFrequencyField({
                 "min-h-11 flex-1 rounded px-3 py-2 text-center text-sm transition-colors",
                 focusRingClass,
                 selected
-                  ? "bg-amber-600 font-medium text-zinc-950"
+                  ? "bg-team font-medium text-on-team"
                   : "text-zinc-400 hover:bg-zinc-900 hover:text-zinc-200",
               )}
             >

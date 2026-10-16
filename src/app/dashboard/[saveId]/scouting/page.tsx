@@ -1,3 +1,5 @@
+import type { Metadata } from "next";
+import { cn, linkClass } from "@/components/ui/styles";
 import { selectPlayerPortrait } from "@/state/player-portrait-selectors";
 import { notFound } from "next/navigation";
 import {
@@ -5,9 +7,9 @@ import {
   interviewProspectAction,
   scoutRegionAction,
 } from "@/application/actions";
-import { EmptyState, ErrorState } from "@/components/owner/EmptyState";
-import { PageHeader } from "@/components/owner/PageHeader";
-import { Section } from "@/components/owner/Section";
+import { EmptyState, ErrorState } from "@/components/ui/EmptyState";
+import { PageHeader } from "@/components/ui/PageHeader";
+import { Section } from "@/components/ui/Section";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { draftClassIdFor } from "@/domain/entities/draft";
 import { draftYearForSeason } from "@/systems/draft";
@@ -17,6 +19,8 @@ import { ProspectCard } from "@/components/draft/ProspectCard";
 import { getRequestSaveStore } from "@/application/request-save-store";
 import { toScoutingHubView } from "@/state/scouting-hub-selectors";
 import { PlayerEntityLink } from "@/components/entity/PlayerEntityLink";
+
+export const metadata: Metadata = { title: "Scouting" };
 
 type Props = {
   params: Promise<{ saveId: string }>;
@@ -76,7 +80,7 @@ export default async function ScoutingPage({ params, searchParams }: Props) {
                 <input type="hidden" name="returnPath" value={returnPath} />
                 <button
                   type="submit"
-                  className="rounded-md border border-zinc-700 px-3 py-1.5 text-xs text-amber-300 hover:bg-zinc-900"
+                  className="rounded-md border border-zinc-700 px-3 py-1.5 text-xs text-team-ink hover:bg-zinc-900"
                 >
                   Scout domestic region
                 </button>
@@ -87,7 +91,7 @@ export default async function ScoutingPage({ params, searchParams }: Props) {
                 <input type="hidden" name="returnPath" value={returnPath} />
                 <button
                   type="submit"
-                  className="rounded-md border border-zinc-700 px-3 py-1.5 text-xs text-amber-300 hover:bg-zinc-900"
+                  className="rounded-md border border-zinc-700 px-3 py-1.5 text-xs text-team-ink hover:bg-zinc-900"
                 >
                   Scout international region
                 </button>
@@ -147,7 +151,7 @@ export default async function ScoutingPage({ params, searchParams }: Props) {
                       key={prospect.playerId}
                       className={
                         focused
-                          ? "rounded-lg ring-1 ring-amber-600/60"
+                          ? "rounded-lg ring-1 ring-team-ink/60"
                           : undefined
                       }
                     >
@@ -191,7 +195,7 @@ export default async function ScoutingPage({ params, searchParams }: Props) {
                           />
                           <button
                             type="submit"
-                            className="text-xs text-amber-400 hover:underline"
+                            className={cn(linkClass, "text-xs")}
                           >
                             Assign scout
                           </button>

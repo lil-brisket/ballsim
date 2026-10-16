@@ -16,7 +16,7 @@ export function ScoutingReportPanel({
   onClose,
 }: Props) {
   return (
-    <div className="rounded-xl border border-amber-800/40 bg-zinc-950 p-4 shadow-xl">
+    <div className="rounded-xl border border-team-ink/50 bg-zinc-950 p-4 shadow-xl">
       <div className="mb-3 flex items-start justify-between gap-3">
         <div>
           <h2 className="text-lg font-semibold text-zinc-100">{playerName}</h2>

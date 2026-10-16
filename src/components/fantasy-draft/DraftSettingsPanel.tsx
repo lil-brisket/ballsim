@@ -24,7 +24,7 @@ export function DraftSettingsPanel(props: {
           className="rounded border border-zinc-700 px-3 py-1.5 text-xs text-zinc-300 hover:border-zinc-500"
         >
           Confirm picks:{" "}
-          <span className="font-semibold text-amber-300">
+          <span className="font-semibold text-team-ink">
             {props.draft.settings.confirmPicks ? "ON" : "OFF"}
           </span>{" "}
           (click to toggle)

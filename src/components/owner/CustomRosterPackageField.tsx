@@ -63,7 +63,7 @@ export function CustomRosterPackageField(props: {
         <input
           type="file"
           accept="application/json,.json"
-          className="mt-2 block w-full text-sm text-zinc-400 file:mr-3 file:rounded-md file:border file:border-zinc-700 file:bg-zinc-900 file:min-h-11 file:px-3 file:py-1.5 file:text-zinc-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-500"
+          className="mt-2 block w-full text-sm text-zinc-400 file:mr-3 file:rounded-md file:border file:border-zinc-700 file:bg-zinc-900 file:min-h-11 file:px-3 file:py-1.5 file:text-zinc-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-team-ink"
           onChange={(event) => {
             const file = event.target.files?.[0];
             setReadError(false);
@@ -127,11 +127,11 @@ export function CustomRosterPackageField(props: {
             </ul>
           ) : null}
           {preview.warnings.length > 0 ? (
-            <details className="text-amber-200">
+            <details className="text-zinc-200">
               <summary className="cursor-pointer text-xs">
                 Show {preview.warnings.length} warnings
               </summary>
-              <ul className="mt-2 list-disc space-y-1 pl-5 text-xs text-amber-100/90">
+              <ul className="mt-2 list-disc space-y-1 pl-5 text-xs text-zinc-200">
                 {preview.warnings.map((entry, index) => (
                   <li key={`${entry.path}:${entry.code}:${index}`}>
                     {entry.path}: {entry.message}

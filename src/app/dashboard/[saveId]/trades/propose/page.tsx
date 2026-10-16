@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getRequestSaveStore } from "@/application/request-save-store";
 import { SectionHeading } from "@/components/ui/SectionHeading";
@@ -7,6 +8,8 @@ import {
 } from "@/components/trades/PlayerTradeBuilder";
 import { calculatePlayerOverall } from "@/domain/player-overall-rating";
 import type { GameState } from "@/state/game-state";
+
+export const metadata: Metadata = { title: "Propose Trade" };
 
 type PageProps = {
   params: Promise<{ saveId: string }>;

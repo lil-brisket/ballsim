@@ -1,15 +1,19 @@
+import type { Metadata } from "next";
+import { cn, linkClass } from "@/components/ui/styles";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getRequestSaveStore } from "@/application/request-save-store";
 import { ActionCenter } from "@/components/action-center/ActionCenter";
-import { EmptyState, ErrorState } from "@/components/owner/EmptyState";
-import { PageHeader } from "@/components/owner/PageHeader";
-import { Section } from "@/components/owner/Section";
+import { EmptyState, ErrorState } from "@/components/ui/EmptyState";
+import { PageHeader } from "@/components/ui/PageHeader";
+import { Section } from "@/components/ui/Section";
 import { OffseasonHeaderStrip } from "@/components/offseason/OffseasonHeaderStrip";
 import { OffseasonTimeline } from "@/components/offseason/OffseasonTimeline";
 import { OffseasonStatusChecklist } from "@/components/offseason/OffseasonStatusChecklist";
 import { OffseasonQuickLinks } from "@/components/offseason/OffseasonQuickLinks";
 import { toOffseasonHubView } from "@/state/offseason-hub-selectors";
+
+export const metadata: Metadata = { title: "Offseason Hub" };
 
 type PageProps = {
   params: Promise<{ saveId: string }>;
@@ -46,7 +50,7 @@ export default async function OffseasonCommandCenterPage({
         <EmptyState message="The offseason has not begun for this franchise. Use the Calendar to advance through the current season." />
         <Link
           href={calendarHref}
-          className="inline-block text-sm font-medium text-amber-400 hover:text-amber-300"
+          className={cn(linkClass, "inline-block text-sm font-medium")}
         >
           Open Calendar
         </Link>
@@ -62,7 +66,7 @@ export default async function OffseasonCommandCenterPage({
         actions={
           <Link
             href={calendarHref}
-            className="rounded-md border border-amber-700/50 bg-amber-950/30 px-3 py-1.5 text-sm text-amber-200 hover:border-amber-600"
+            className="rounded-md border border-team-ink/50 bg-team/15 px-3 py-1.5 text-sm text-zinc-50 hover:border-team-ink"
           >
             Open Calendar
           </Link>

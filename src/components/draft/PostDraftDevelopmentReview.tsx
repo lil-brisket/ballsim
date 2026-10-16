@@ -58,7 +58,7 @@ export function PostDraftDevelopmentReview(props: {
                   />
                   <button
                     type="submit"
-                    className="rounded border border-amber-600 bg-amber-950/40 px-2 py-1 text-xs text-amber-200"
+                    className="rounded border border-team-ink bg-team/15 px-2 py-1 text-xs text-zinc-50"
                   >
                     Assign to DL
                   </button>
