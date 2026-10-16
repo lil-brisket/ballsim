@@ -1,5 +1,26 @@
+import { realpathSync } from "node:fs";
 import { defineConfig } from "vitest/config";
 import react from "@vitejs/plugin-react";
+
+// Vitest 4 on Windows fails every test file with "Cannot read properties of
+// undefined (reading 'config')" when started from a cwd whose drive letter is
+// lowercase (issue #96). The npm test scripts go through scripts/vitest.mjs,
+// which fixes the casing. A direct `npx vitest` from such a cwd stops here
+// with a clear message instead.
+if (process.platform === "win32") {
+  const cwd = process.cwd();
+  const canonicalCwd = realpathSync.native(cwd);
+  if (
+    cwd !== canonicalCwd &&
+    cwd.toLowerCase() === canonicalCwd.toLowerCase()
+  ) {
+    throw new Error(
+      `Vitest was started from "${cwd}", but Windows spells this path "${canonicalCwd}". ` +
+        `With this casing every test file fails at import (issue #96). ` +
+        `Use the npm test scripts, or cd to "${canonicalCwd}" and run again.`,
+    );
+  }
+}
 
 /**
  * Test tiers (Phase 5):
@@ -16,9 +37,8 @@ import react from "@vitejs/plugin-react";
  */
 export default defineConfig({
   plugins: [react()],
-  // Native `@/*` alias resolution. Replaces the vite-tsconfig-paths plugin,
-  // whose single stateful instance was shared (and reset) across every
-  // project's Vite server (issue #96).
+  // Native `@/*` alias resolution, which Vite recommends over the
+  // vite-tsconfig-paths plugin.
   resolve: { tsconfigPaths: true },
   test: {
     // Season/world pipeline tests take 3-8s under parallel load; 5s default flakes.

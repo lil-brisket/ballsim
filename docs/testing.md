@@ -27,6 +27,8 @@ npm run sim -- --seed=42 --games=300 --fidelity=box_score --calibrate   # box-sc
 
 Every Vitest run writes `test-results.txt` at the repo root (gitignored): summary plus each failure with expected/received and a short stack (import-time "module collection" failures keep the full stack). Failing runs also write `test-results.last-failure.txt`, which a later passing run does not overwrite, so flaky failures stay inspectable. Override the path with `TEST_RESULTS_FILE`. A CLI `--reporter=` flag replaces config reporters; add `--reporter=./scripts/vitest-txt-reporter.ts` if you still want the file.
 
+On Windows, Vitest 4 fails every test file with `Cannot read properties of undefined (reading 'config')` when it starts from a working directory with a lowercase drive letter (`c:\…`, as VS Code and some agent shells use). The npm test scripts start Vitest through `scripts/vitest.mjs`, which switches to the canonical `C:\…` path first. A direct `npx vitest` from a lowercase cwd stops with a startup error that says so. Run it from `C:\…` or use `npm run test:unit -- <path>` instead (issue #96, upstream vitest-dev/vitest#10812).
+
 ## Directory structure
 
 ```text
