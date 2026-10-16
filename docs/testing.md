@@ -117,17 +117,17 @@ npm run sim:replay -- --run <runId> --game 0
 
 GitHub Actions (`.github/workflows/ci.yml`) on pushes to `master` and on every `pull_request`. Five jobs run in parallel on `ubuntu-latest`, each with Node **22** (matches `.nvmrc` and `engines.node >=22`; `@types/node` is `^22`) and `npm ci`. PR wall time is the slowest job.
 
-| Job          | Runs                                                                                                                                                                                                                                                                          |
-| ------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `static`     | `npx tsc --noEmit`, `npm run lint` (stylistic rules deferred to Prettier via `eslint-config-prettier`), `npm run format:check`                                                                                                                                                |
-| `test`       | `npm run test:coverage` (unit + integration + react, writes `coverage/lcov.info`) with `PERF_BUDGET_MODE=warn`; uploads `coverage/` as the `coverage-report` artifact and `coverage/lcov.info` to Codecov (`codecov/codecov-action@v5`; optional `CODECOV_TOKEN` repo secret) |
-| `slow`       | `npm run test:slow` (no coverage)                                                                                                                                                                                                                                             |
-| `simulation` | `npm run test:simulation` (Lab rotation-on 100 games, possession vs box-score parity with `--calibrate`, headless-owner season invariants, season RNG)                                                                                                                        |
-| `build`      | `npm run build`                                                                                                                                                                                                                                                               |
+| Job          | Runs                                                                                                                                                         |
+| ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `static`     | `npx tsc --noEmit`, `npm run lint` (stylistic rules deferred to Prettier via `eslint-config-prettier`), `npm run format:check`                               |
+| `test`       | `npm run test:coverage` (unit + integration + react, writes `coverage/`) with `PERF_BUDGET_MODE=warn`; uploads `coverage/` as the `coverage-report` artifact |
+| `slow`       | `npm run test:slow` (no coverage)                                                                                                                            |
+| `simulation` | `npm run test:simulation` (Lab rotation-on 100 games, possession vs box-score parity with `--calibrate`, headless-owner season invariants, season RNG)       |
+| `build`      | `npm run build`                                                                                                                                              |
 
 `DATABASE_URL=file:./prisma/ci.db` is set for every job.
 
-Coverage HTML/LCOV live under `coverage/` (gitignored). Codecov project/patch status is configured in `codecov.yml` (auto target, 2% project drop tolerance; patch is informational). Slow, simulation and regression tests do not contribute to coverage.
+Coverage HTML/LCOV live under `coverage/` (gitignored). There is no coverage service or threshold; download the `coverage-report` artifact from a run to inspect it. Slow, simulation and regression tests do not contribute to coverage.
 
 The nightly workflow (`.github/workflows/sim-nightly.yml`) runs simulation, the performance budgets with strict wall-clock limits, regression and the 10k-game / 10-season Lab channels.
 
@@ -200,7 +200,7 @@ $env:STRESS=1; npx vitest run tests/application/multi-year-simulation-stress.tes
 
 Every Vitest run writes `test-results.txt` (gitignored) with the pass/fail counts and each failure’s reason. Open that file after `npm test`. Override the path with `TEST_RESULTS_FILE`.
 
-`npm run test:coverage` writes `coverage/` (HTML + LCOV). CI uploads that folder as an artifact and sends `coverage/lcov.info` to Codecov. Set a `CODECOV_TOKEN` repository secret if the Codecov upload should authenticate (public tokenless upload may still work).
+`npm run test:coverage` writes `coverage/` (HTML + LCOV). CI uploads that folder as the `coverage-report` artifact.
 
 ### Simulations
 

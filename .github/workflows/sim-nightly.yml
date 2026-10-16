@@ -13,10 +13,10 @@ jobs:
       DATABASE_URL: file:./prisma/ci.db
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Setup Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version: "22"
           cache: npm
@@ -40,7 +40,7 @@ jobs:
         run: npm run sim -- --seed=42 --mode owner-career --seasons 10 --channel nightly --format json --out lab-nightly-career.json
 
       - name: Upload Lab artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         if: always()
         with:
           name: lab-nightly-reports
