@@ -42,7 +42,7 @@ export function DraftBoardPanel({
             <span className="font-medium text-zinc-100">
               #{entry.rank} {entry.name}
               {entry.priority ? (
-                <span className="ml-2 text-xs uppercase text-team-ink">
+                <span className="ml-2 text-sm font-medium text-team-ink">
                   Priority
                 </span>
               ) : null}

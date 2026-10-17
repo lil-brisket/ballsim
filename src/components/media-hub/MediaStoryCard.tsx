@@ -10,7 +10,7 @@ import {
   mediaPresentationTier,
   type MediaPresentationTier,
 } from "@/components/media-hub/media-importance-tiers";
-import { cn } from "@/components/ui/styles";
+import { cn, focusRingClass, linkClass } from "@/components/ui/styles";
 
 export type MediaStoryCardEntity = {
   id: string;
@@ -156,7 +156,7 @@ export function MediaStoryCard(props: MediaStoryCardProps) {
             <input type="hidden" name="returnPath" value={returnPath} />
             <button
               type="submit"
-              className="text-sm text-team-ink underline-offset-4 hover:underline"
+              className={cn("text-sm", linkClass, focusRingClass)}
             >
               Mark read
             </button>

@@ -1260,7 +1260,7 @@ export function GameSetupForm({
                               Player {index + 1} name
                             </label>
                             {index === 0 ? (
-                              <span className="rounded bg-team/20 px-1.5 py-0.5 text-xs text-team-ink">
+                              <span className="rounded bg-team/20 px-1.5 py-0.5 text-sm text-team-ink">
                                 Host
                               </span>
                             ) : null}
@@ -1405,7 +1405,7 @@ function ReviewGroup({
       className="space-y-3 rounded-lg border border-zinc-800 bg-zinc-950/60 p-4"
     >
       <div className="flex items-center justify-between gap-3">
-        <h3 className="text-sm font-semibold text-zinc-100">{title}</h3>
+        <SectionHeading as="h3" title={title} />
         <button
           type="button"
           onClick={onEdit}

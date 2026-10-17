@@ -1,4 +1,5 @@
 import { buttonClass } from "@/components/ui/Button";
+import { SectionHeading } from "@/components/ui/SectionHeading";
 import type { ScoutingReportView } from "@/systems/scouting/scouting-reports";
 
 type Props = {
@@ -20,7 +21,7 @@ export function ScoutingReportPanel({
     <div className="rounded-xl border border-team-ink/50 bg-zinc-950 p-4 shadow-xl">
       <div className="mb-3 flex items-start justify-between gap-3">
         <div>
-          <h2 className="text-lg font-semibold text-zinc-100">{playerName}</h2>
+          <SectionHeading title={playerName} />
           <p className="text-sm text-zinc-500">
             Scouting report · {report.knowledgeLevel}
           </p>
@@ -95,9 +96,7 @@ export function ScoutingReportPanel({
           {(report.strengths.length > 0 || report.weaknesses.length > 0) && (
             <div className="grid gap-2 sm:grid-cols-2">
               <div>
-                <h3 className="text-sm font-medium text-emerald-400">
-                  Strengths
-                </h3>
+                <h3 className="text-sm font-medium text-win">Strengths</h3>
                 <ul className="mt-1 space-y-0.5 text-sm text-zinc-300">
                   {report.strengths.map((s) => (
                     <li key={s.label}>{s.label}</li>
@@ -105,9 +104,7 @@ export function ScoutingReportPanel({
                 </ul>
               </div>
               <div>
-                <h3 className="text-sm font-medium text-rose-400">
-                  Weaknesses
-                </h3>
+                <h3 className="text-sm font-medium text-loss">Weaknesses</h3>
                 <ul className="mt-1 space-y-0.5 text-sm text-zinc-300">
                   {report.weaknesses.map((w) => (
                     <li key={w.label}>{w.label}</li>

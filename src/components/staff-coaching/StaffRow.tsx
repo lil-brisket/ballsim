@@ -3,6 +3,8 @@ import { MoneyDisplay } from "@/components/owner/MoneyDisplay";
 import type { StaffMemberView } from "@/state/franchise-selectors";
 import type { StaffVacantRoleEntry } from "@/state/staff-hub-selectors";
 
+import { cn, focusRingClass, linkClass } from "@/components/ui/styles";
+
 const CELL = "px-4 py-3";
 
 /**
@@ -49,10 +51,7 @@ export function VacantStaffRow(props: {
       <td className={`${CELL} text-zinc-600`}>—</td>
       <td className={`${CELL} text-zinc-600`}>—</td>
       <td className={CELL}>
-        <a
-          href={href}
-          className="text-sm text-team-ink underline-offset-4 hover:underline"
-        >
+        <a href={href} className={cn("text-sm", linkClass, focusRingClass)}>
           Find Staff
         </a>
       </td>
@@ -113,7 +112,7 @@ export function VacantStaffCard(props: {
       <p className="mt-1 font-medium text-team-ink">Vacant</p>
       <a
         href={href}
-        className="mt-2 inline-block text-sm text-team-ink underline-offset-4 hover:underline"
+        className={cn("mt-2 inline-block text-sm", linkClass, focusRingClass)}
       >
         Find Staff
       </a>

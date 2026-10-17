@@ -26,7 +26,7 @@ export function LeagueHistoryTable(props: {
         <tbody>
           {props.view.seasons.map((row) => (
             <tr key={row.seasonYear} className="border-b border-zinc-900/80">
-              <td className={`${TD} font-mono text-team-ink`}>
+              <td className={`${TD} font-mono tabular-nums text-team-ink`}>
                 {row.seasonYear}
               </td>
               <td className={TD}>

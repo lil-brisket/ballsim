@@ -11,6 +11,8 @@ export function SectionHeading(props: {
   as?: "h1" | "h2" | "h3";
   size?: "md" | "lg";
   id?: string;
+  /** For headings that receive programmatic focus (e.g. form sections). */
+  tabIndex?: number;
   className?: string;
 }) {
   const Tag = props.as ?? "h2";
@@ -30,6 +32,7 @@ export function SectionHeading(props: {
         ) : null}
         <Tag
           id={props.id}
+          tabIndex={props.tabIndex}
           className={cn(
             "font-display font-bold uppercase leading-tight tracking-wide text-zinc-50",
             large ? "text-3xl sm:text-4xl" : "text-xl sm:text-2xl",
