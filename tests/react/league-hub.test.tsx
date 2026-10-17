@@ -1,5 +1,5 @@
-import { describe, expect, it, vi } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { cleanup, render, screen } from "@testing-library/react";
 
 vi.mock("server-only", () => ({}));
 vi.mock("@/application/actions", () => ({
@@ -17,7 +17,7 @@ import {
   LeagueSnapshotPanel,
   LeagueStandingsSnapshot,
 } from "@/components/league/LeagueTier1Panels";
-import { MyTeamContextStrip } from "@/components/league/LeagueHeader";
+import { LeagueHeader } from "@/components/league/LeagueHeader";
 import { LeagueTransactionsBriefing } from "@/components/league/LeagueTier2Panels";
 import { TransactionRow } from "@/components/transactions/TransactionRow";
 import type { StandingsRowEnriched } from "@/state/standings-selectors";
@@ -53,35 +53,35 @@ const sampleRow: StandingsRowEnriched = {
   branding: null,
 };
 
+afterEach(cleanup);
+
 function wrap(ui: React.ReactNode) {
   return <EntityDrawerProvider saveId="s1">{ui}</EntityDrawerProvider>;
 }
 
 describe("League Hub panels", () => {
-  it("renders my team context strip", () => {
+  it("leads the hero with your place in the race", () => {
     render(
       wrap(
-        <MyTeamContextStrip
+        <LeagueHeader
           saveId="s1"
-          teamId="t1"
-          city="Boston"
-          name="Harriers"
-          abbreviation="BOS"
-          wins={42}
-          losses={21}
-          conferenceRank={3}
-          conferenceName="Eastern Conference"
-          gamesBack={2.5}
-          streakLabel="W4"
-          leagueLeader={{ abbreviation: "OKC", wins: 48, losses: 15 }}
-          cutoffTeam={{ abbreviation: "ATL", wins: 38, losses: 25 }}
+          leagueName="Test League"
+          myTeam={{
+            conferenceRank: 3,
+            conferenceName: "Eastern Conference",
+            gamesBack: 2.5,
+            streakLabel: "W4",
+          }}
         />,
       ),
     );
-    expect(screen.getByText(/Your Team/i)).toBeTruthy();
-    expect(screen.getByText(/42–21/)).toBeTruthy();
-    expect(screen.getByText(/View Team/i)).toBeTruthy();
-    expect(screen.getByText(/League Leader/i)).toBeTruthy();
+    expect(screen.getByText("#3")).toBeTruthy();
+    expect(screen.getByText("Eastern seed")).toBeTruthy();
+    expect(screen.getByText("2.5")).toBeTruthy();
+    expect(screen.getByText("W4")).toBeTruthy();
+    const link = screen.getByRole("link", { name: /view team/i });
+    expect(link.getAttribute("href")).toBe("/dashboard/s1/team");
+    expect(screen.queryByText("Your Team")).toBeNull();
   });
 
   it("renders standings snapshot with team entity link", () => {
@@ -97,6 +97,7 @@ describe("League Hub panels", () => {
     );
     expect(screen.getByText("BOS")).toBeTruthy();
     expect(screen.getByText(/View Standings/i)).toBeTruthy();
+    expect(screen.getByText("W4").className).toContain("text-win");
   });
 
   it("renders snapshot metrics", () => {
@@ -118,7 +119,11 @@ describe("League Hub panels", () => {
       ),
     );
     expect(screen.getByText(/League Snapshot/i)).toBeTruthy();
-    expect(screen.getByText(/#5/)).toBeTruthy();
+    expect(screen.getByText("OKC 48–15")).toBeTruthy();
+    expect(screen.getByText("Contending")).toBeTruthy();
+    // Your record and rank live in the game header, not here.
+    expect(screen.queryByText("Your record")).toBeNull();
+    expect(screen.queryByText("League rank")).toBeNull();
   });
 
   it("shows empty transactions briefing", () => {

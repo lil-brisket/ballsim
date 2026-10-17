@@ -64,7 +64,6 @@ export default async function DashboardPage({
 
   const recentForm = recentFormFromResults(dashboard.recentResults);
   const isNextGameFocal = actionCenter.focalMode === "next-game";
-  const isActionsFocal = actionCenter.focalMode === "actions";
   const actionCenterEl = (
     <ActionCenter
       view={actionCenter}
@@ -72,21 +71,19 @@ export default async function DashboardPage({
       returnPath={returnPath}
       aiCanHandle={aiCanHandle}
       letAiHandleAction={letAiHandlePhaseAction}
+      alertOnly
     />
   );
   const showOffseasonShortcut = dash.seasonPhase === "offseason";
 
   return (
     <div className="space-y-8">
-      {isActionsFocal ? actionCenterEl : null}
+      {actionCenterEl}
 
       <MatchupBanner
         saveId={saveId}
         saveName={save.name}
         leagueName={dash.leagueName}
-        currentDate={dash.currentDate}
-        seasonYear={dash.seasonYear}
-        seasonPhaseLabel={phase.primaryLabel}
         team={dash.team}
         teamCity={dash.controlledTeam.city}
         teamName={dash.controlledTeam.name}
@@ -206,17 +203,18 @@ export default async function DashboardPage({
         </div>
       ) : null}
 
-      {isActionsFocal ? null : actionCenterEl}
-
-      <RecentResultsPanel saveId={saveId} games={recentForm.games} />
+      <RecentResultsPanel
+        saveId={saveId}
+        games={recentForm.games}
+        team={{
+          abbreviation: dash.controlledTeam.abbreviation,
+          branding: dash.controlledTeam.branding,
+        }}
+      />
 
       {/* Secondary tier: supporting context, quieter than the hero. */}
       <div className="grid gap-8 lg:grid-cols-2 lg:items-start">
-        <TeamSnapshotPanel
-          team={dash.team}
-          saveId={saveId}
-          recentForm={recentForm}
-        />
+        <TeamSnapshotPanel team={dash.team} saveId={saveId} />
         <AroundTheLeaguePanel headlines={dash.mediaHeadlines} saveId={saveId} />
         <FranchiseHealthPanel health={dash.health} insights={dash.insights} />
         <OwnerPanel owner={dash.owner} />

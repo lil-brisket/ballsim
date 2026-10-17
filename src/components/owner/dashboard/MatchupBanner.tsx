@@ -6,32 +6,10 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { ArenaPanel } from "@/components/ui/ArenaPanel";
 import { ScoreNumeral } from "@/components/ui/ScoreNumeral";
 import { TeamBadge } from "@/components/ui/TeamBadge";
-import {
-  cn,
-  focusRingClass,
-  touchTargetTextClass,
-} from "@/components/ui/styles";
-import { parseCalendarDate } from "@/domain/calendar-date";
+import { cn, focusRingClass } from "@/components/ui/styles";
 import type { OwnerDashboardTeam } from "@/state/owner-dashboard";
 import type { RecentFormView } from "@/state/recent-form-selectors";
 import { formatGameDate } from "@/presentation/game-date";
-import { rankNumberLabel } from "@/presentation/rank-label";
-
-function formatLongDate(isoDate: string): string {
-  try {
-    const { year, month, day } = parseCalendarDate(isoDate);
-    const utc = new Date(Date.UTC(year, month - 1, day, 12, 0, 0));
-    return utc.toLocaleDateString("en-US", {
-      weekday: "long",
-      month: "long",
-      day: "numeric",
-      year: "numeric",
-      timeZone: "UTC",
-    });
-  } catch {
-    return isoDate;
-  }
-}
 
 /** Last-five results, oldest to newest, as W/L dots. */
 function FormDots(props: { form: RecentFormView }) {
@@ -83,9 +61,6 @@ export function MatchupBanner(props: {
   saveId: string;
   saveName: string;
   leagueName: string;
-  currentDate: string;
-  seasonYear: number;
-  seasonPhaseLabel: string;
   team: OwnerDashboardTeam;
   teamCity: string;
   teamName: string;
@@ -117,12 +92,8 @@ export function MatchupBanner(props: {
       <div className="enter-up flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
         <p className="text-xs font-semibold uppercase tracking-[0.2em] text-team-ink">
           Front Office
-          <span className="mx-2 text-zinc-600">·</span>
-          {props.seasonYear} {props.seasonPhaseLabel}
         </p>
-        <p className="text-sm text-zinc-300">
-          {formatLongDate(props.currentDate)}
-          <span className="mx-2 text-zinc-600">·</span>
+        <p className="text-sm text-zinc-400">
           {props.saveName} · {props.leagueName}
         </p>
       </div>
@@ -152,11 +123,6 @@ export function MatchupBanner(props: {
                 size="md"
                 tone="team"
               />
-              <ScoreNumeral
-                value={rankNumberLabel(team.leagueRank)}
-                label="League rank"
-                size="md"
-              />
             </div>
           </div>
         </div>
@@ -177,9 +143,7 @@ export function MatchupBanner(props: {
                 decorative
               />
               <div className="min-w-0">
-                <p className="text-sm text-zinc-400">
-                  Next game · {formatGameDate(nextGame.date, { weekday: true })}
-                </p>
+                <p className="text-sm text-zinc-400">Next game</p>
                 <TeamEntityLink
                   saveId={saveId}
                   teamId={nextGame.opponentTeamId}
@@ -191,6 +155,8 @@ export function MatchupBanner(props: {
                   {nextGame.opponentName}
                 </TeamEntityLink>
                 <p className="mt-0.5 text-sm text-zinc-300">
+                  {formatGameDate(nextGame.date, { weekday: true })}
+                  <span className="mx-2 text-zinc-600">·</span>
                   {nextGame.home ? "Home game" : "Road game"}
                 </p>
               </div>
@@ -211,11 +177,7 @@ export function MatchupBanner(props: {
         {nextGame ? (
           <Link
             href={`/dashboard/${saveId}/games/${nextGame.gameId}`}
-            className={cn(
-              touchTargetTextClass,
-              "text-sm text-zinc-300 hover:text-team-ink",
-              focusRingClass,
-            )}
+            className={buttonClass({ variant: "quiet" })}
           >
             View game
           </Link>
@@ -255,24 +217,10 @@ export function MatchupBanner(props: {
         >
           Simulate to next game
         </Link>
-        <Link
-          href={calendarHref}
-          className={cn(
-            touchTargetTextClass,
-            "text-sm text-zinc-300 underline-offset-4 hover:text-team-ink hover:underline",
-            focusRingClass,
-          )}
-        >
+        <Link href={calendarHref} className={buttonClass({ variant: "quiet" })}>
           Open calendar
         </Link>
-        <Link
-          href={rotationHref}
-          className={cn(
-            touchTargetTextClass,
-            "text-sm text-zinc-300 underline-offset-4 hover:text-team-ink hover:underline",
-            focusRingClass,
-          )}
-        >
+        <Link href={rotationHref} className={buttonClass({ variant: "quiet" })}>
           Review rotation
         </Link>
         <p className="text-sm text-zinc-400 sm:ml-auto sm:max-w-xs sm:text-end">

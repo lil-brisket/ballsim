@@ -49,3 +49,4 @@ export {
 export { NumberStepper } from "@/components/ui/NumberStepper";
 export { Select } from "@/components/ui/Select";
 export { Tabs, type TabItem } from "@/components/ui/Tabs";
+export { ScoreBug } from "@/components/ui/ScoreBug";

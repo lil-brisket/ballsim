@@ -6,7 +6,11 @@ import { SectionHeading } from "@/components/ui/SectionHeading";
 import { formatGameDate } from "@/presentation/game-date";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { ArenaPanel } from "@/components/ui/ArenaPanel";
-import { cn, touchTargetTextClass } from "@/components/ui/styles";
+import {
+  cn,
+  focusRingClass,
+  touchTargetTextClass,
+} from "@/components/ui/styles";
 
 /**
  * Front Office Action Center.
@@ -19,9 +23,71 @@ export function ActionCenter(props: {
   returnPath: string;
   aiCanHandle?: boolean;
   letAiHandleAction?: (formData: FormData) => void | Promise<void>;
+  /**
+   * Render only a compact alert strip, and only when something blocks
+   * advancing (critical or warning items). Otherwise renders nothing.
+   */
+  alertOnly?: boolean;
 }) {
   const { view } = props;
   const isActionsFocal = view.focalMode === "actions";
+
+  if (props.alertOnly) {
+    if (!view.hasUrgentActions) {
+      return null;
+    }
+    const blocking = view.items.filter(
+      (item) => item.severity === "critical" || item.severity === "warning",
+    );
+    const hasCritical = blocking.some((item) => item.severity === "critical");
+    return (
+      <section
+        aria-label="Action center"
+        className={cn(
+          "space-y-2 rounded-xl border px-4 py-3",
+          hasCritical
+            ? "border-loss/50 bg-loss/10"
+            : "border-warning/40 bg-warning/10",
+        )}
+      >
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <p className="text-sm font-medium text-zinc-50">
+            {view.urgentCount} action{view.urgentCount === 1 ? "" : "s"} need
+            attention before time can advance
+          </p>
+          {props.aiCanHandle && props.letAiHandleAction ? (
+            <form action={props.letAiHandleAction}>
+              <input type="hidden" name="saveId" value={props.saveId} />
+              <input type="hidden" name="returnPath" value={props.returnPath} />
+              <button
+                type="submit"
+                className={buttonClass({ variant: "secondary" })}
+              >
+                Let AI Handle
+              </button>
+            </form>
+          ) : null}
+        </div>
+        <ul className="flex flex-col gap-x-6 sm:flex-row sm:flex-wrap">
+          {blocking.map((item) => (
+            <li key={item.id}>
+              <Link
+                href={item.href}
+                className={cn(
+                  touchTargetTextClass,
+                  "text-sm text-zinc-100 underline-offset-4 hover:underline",
+                  focusRingClass,
+                )}
+              >
+                {item.title}
+                <span className="ml-2 text-team-ink">{item.hrefLabel} →</span>
+              </Link>
+            </li>
+          ))}
+        </ul>
+      </section>
+    );
+  }
 
   if (view.items.length === 0) {
     return (

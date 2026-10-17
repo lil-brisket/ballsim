@@ -6,19 +6,29 @@ import type { LeagueHubSnapshot } from "@/state/league-hub-selectors";
 import type { StandingsRowEnriched } from "@/state/standings-selectors";
 import { formatStreak } from "@/state/standings-selectors";
 import { ArenaPanel } from "@/components/ui/ArenaPanel";
-import { TickerBar } from "@/components/ui/TickerBar";
+import { StreakChip } from "@/components/league/StreakChip";
+import { TickerBar, type TickerItem } from "@/components/ui/TickerBar";
 import { cn, focusRingClass } from "@/components/ui/styles";
-import { rankNumberLabel } from "@/presentation/rank-label";
 
-export function LeagueSnapshotPanel(props: { snapshot: LeagueHubSnapshot }) {
+/**
+ * One league strip (leader, playoff cutoff, worst, race). Your record and
+ * rank are in the game header; your seed and games back are in the hero.
+ */
+export function LeagueSnapshotPanel(props: {
+  snapshot: LeagueHubSnapshot;
+  cutoffTeam?: { abbreviation: string; wins: number; losses: number } | null;
+}) {
   const s = props.snapshot;
-  const metrics = [
+  const metrics: TickerItem[] = [
     { label: "Leader", value: `${s.leaderAbbreviation} ${s.leaderRecord}` },
-    { label: "League rank", value: rankNumberLabel(s.userRank) },
-    { label: "Your record", value: s.userRecord },
-    { label: "Best", value: s.bestRecord },
-    { label: "Worst", value: s.worstRecord },
   ];
+  if (props.cutoffTeam) {
+    metrics.push({
+      label: "Playoff cutoff",
+      value: `${props.cutoffTeam.abbreviation} ${props.cutoffTeam.wins}–${props.cutoffTeam.losses}`,
+    });
+  }
+  metrics.push({ label: "Worst", value: s.worstRecord });
   if (s.playoffRaceLabel) {
     metrics.push({ label: "Race", value: s.playoffRaceLabel });
   }
@@ -29,14 +39,7 @@ export function LeagueSnapshotPanel(props: { snapshot: LeagueHubSnapshot }) {
   return (
     <Section title="League Snapshot">
       <ArenaPanel as="div" raised density="compact">
-        <TickerBar
-          aria-label="League snapshot"
-          items={metrics.map((m) => ({
-            label: m.label,
-            value: m.value,
-            tone: m.label === "Your record" ? "team" : "default",
-          }))}
-        />
+        <TickerBar aria-label="League snapshot" items={metrics} />
       </ArenaPanel>
     </Section>
   );
@@ -72,11 +75,11 @@ export function LeagueStandingsSnapshot(props: {
           <table className="w-full min-w-[20rem] text-left text-sm">
             <thead className="text-zinc-500">
               <tr>
-                <th className="py-1 pr-2 font-medium">#</th>
+                <th className="py-1 pr-2 text-right font-medium">#</th>
                 <th className="py-1 pr-2 font-medium">Team</th>
-                <th className="py-1 pr-2 font-medium">W</th>
-                <th className="py-1 pr-2 font-medium">L</th>
-                <th className="py-1 pr-2 font-medium">Str</th>
+                <th className="py-1 pr-2 text-right font-medium">W</th>
+                <th className="py-1 pr-2 text-right font-medium">L</th>
+                <th className="py-1 pr-2 text-right font-medium">Streak</th>
               </tr>
             </thead>
             <tbody>
@@ -85,12 +88,13 @@ export function LeagueStandingsSnapshot(props: {
                   key={row.teamId}
                   className={cn(
                     "border-t border-zinc-800",
-                    row.isUserTeam && "bg-team/15",
+                    row.isUserTeam &&
+                      "bg-team/15 shadow-[inset_3px_0_0_0_rgb(var(--team-ink-rgb))]",
                     row.conferenceRank === props.cutoffRank &&
                       "border-t border-dashed border-team-ink/50",
                   )}
                 >
-                  <td className="py-1.5 pr-2 font-mono text-zinc-500">
+                  <td className="py-1.5 pr-2 text-right tabular-nums text-zinc-500">
                     {row.leagueRank}
                   </td>
                   <td className="py-1.5 pr-2">
@@ -111,10 +115,14 @@ export function LeagueStandingsSnapshot(props: {
                       <span className="ml-2 text-xs text-team-ink">you</span>
                     ) : null}
                   </td>
-                  <td className="py-1.5 pr-2 font-mono">{row.wins}</td>
-                  <td className="py-1.5 pr-2 font-mono">{row.losses}</td>
-                  <td className="py-1.5 pr-2 font-mono text-zinc-500">
-                    {formatStreak(row.streak)}
+                  <td className="py-1.5 pr-2 text-right tabular-nums">
+                    {row.wins}
+                  </td>
+                  <td className="py-1.5 pr-2 text-right tabular-nums">
+                    {row.losses}
+                  </td>
+                  <td className="py-1.5 pr-2 text-right">
+                    <StreakChip label={formatStreak(row.streak)} />
                   </td>
                 </tr>
               ))}

@@ -1,31 +1,57 @@
-import { GameRow } from "@/components/basketball/GameRow";
+import Link from "next/link";
+import { ScoreBug, type ScoreBugTeam } from "@/components/ui/ScoreBug";
+import { cn, focusRingClass } from "@/components/ui/styles";
 import { formatGameDate } from "@/presentation/game-date";
 import type { TeamRecentHistoryItem } from "@/state/team-recent-history-selectors";
 
-export function RecentHistoryItem(props: {
+export type RecentHistoryItemProps = {
   saveId: string;
   item: TeamRecentHistoryItem;
-}) {
+  /** The team whose history this is (for the score bug). */
+  team: Pick<ScoreBugTeam, "abbreviation" | "branding">;
+};
+
+export function RecentHistoryItem(props: RecentHistoryItemProps) {
   const { saveId, item } = props;
 
   if (item.kind === "game_result" && item.game) {
     const game = item.game;
     return (
       <li>
-        <GameRow
-          saveId={saveId}
-          gameId={game.gameId}
+        <ScoreBug
+          teams={
+            game.home
+              ? [
+                  {
+                    abbreviation: game.opponentAbbreviation,
+                    branding: game.opponentBranding,
+                    score: game.opponentScore,
+                  },
+                  { ...props.team, score: game.teamScore },
+                ]
+              : [
+                  { ...props.team, score: game.teamScore },
+                  {
+                    abbreviation: game.opponentAbbreviation,
+                    branding: game.opponentBranding,
+                    score: game.opponentScore,
+                  },
+                ]
+          }
           date={game.date}
-          home={game.home}
-          opponentAbbreviation={game.opponentAbbreviation}
-          opponentTeamId={game.opponentTeamId || undefined}
-          opponentBranding={game.opponentBranding}
-          teamScore={game.teamScore}
-          opponentScore={game.opponentScore}
-          won={game.won}
-          canOpenResult
-          canWatch={game.canWatch}
+          href={`/dashboard/${saveId}/games/${game.gameId}`}
         />
+        {game.canWatch ? (
+          <Link
+            href={`/dashboard/${saveId}/games/${game.gameId}/watch`}
+            className={cn(
+              "inline-flex min-h-11 items-center px-1 text-sm text-team-ink underline-offset-4 hover:underline",
+              focusRingClass,
+            )}
+          >
+            Watch
+          </Link>
+        ) : null}
       </li>
     );
   }
