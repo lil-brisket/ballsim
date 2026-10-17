@@ -10,6 +10,9 @@ import { TeamBadge } from "@/components/ui/TeamBadge";
 import type { TeamBrandingView } from "@/state/team-branding-view";
 import { SimulationPreviewAction } from "@/components/calendar/SimulationPreviewAction";
 import { cn, focusRingClass } from "@/components/ui/styles";
+import { buttonClass } from "@/components/ui/Button";
+import { CalendarGameStats } from "@/components/calendar/CalendarGameStats";
+import type { CalendarGameStatsView } from "@/state/selectors/calendar-game-stats";
 
 export function DateInspector(props: {
   saveId: string;
@@ -29,6 +32,11 @@ export function DateInspector(props: {
   userBranding?: TeamBrandingView | null;
   /** Branding by team id, to resolve the opponent badge. */
   teamBranding?: Readonly<Record<string, TeamBrandingView>>;
+  /** Compact stats for the selected date's final team game. */
+  teamGameStats?: CalendarGameStatsView | null;
+  /** Live simulation date; scheduled games on/after it can be played or watched. */
+  currentDate: string;
+  onWatch?: (gameId: string, gameDate: string) => void;
 }) {
   const { inspector } = props;
   const statusLabel =
@@ -132,15 +140,60 @@ export function DateInspector(props: {
                   : ` · ${inspector.teamGame.status}`}
               </p>
               {inspector.teamGame.status === "final" ? (
-                <Link
-                  href={`/dashboard/${props.saveId}/games/${inspector.teamGame.gameId}`}
-                  className={cn(
-                    "inline-flex min-h-11 items-center text-sm font-medium text-team-ink hover:underline",
-                    focusRingClass,
-                  )}
-                >
-                  View game
-                </Link>
+                props.teamGameStats ? (
+                  <CalendarGameStats
+                    saveId={props.saveId}
+                    stats={props.teamGameStats}
+                  />
+                ) : (
+                  <Link
+                    href={`/dashboard/${props.saveId}/games/${inspector.teamGame.gameId}`}
+                    className={cn(
+                      "inline-flex min-h-11 items-center text-sm font-medium text-team-ink hover:underline",
+                      focusRingClass,
+                    )}
+                  >
+                    View game
+                  </Link>
+                )
+              ) : null}
+              {inspector.teamGame.status === "scheduled" &&
+              inspector.date >= props.currentDate &&
+              !props.timeDisabled ? (
+                <div className="space-y-1">
+                  <div className="flex flex-wrap gap-2">
+                    {inspector.teamGame.watchable && props.onWatch ? (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (inspector.teamGame) {
+                            props.onWatch?.(
+                              inspector.teamGame.gameId,
+                              inspector.date,
+                            );
+                          }
+                        }}
+                        className={buttonClass({ variant: "primary" })}
+                      >
+                        Watch this game
+                      </button>
+                    ) : null}
+                    {inspector.date > props.currentDate ? (
+                      <button
+                        type="button"
+                        onClick={() => props.onSimulate(inspector.date)}
+                        className={buttonClass({ variant: "secondary" })}
+                      >
+                        Sim to this day
+                      </button>
+                    ) : null}
+                  </div>
+                  {inspector.date > props.currentDate ? (
+                    <p className="text-xs text-zinc-400">
+                      Sim stops before tip-off.
+                    </p>
+                  ) : null}
+                </div>
               ) : null}
             </div>
           ) : (

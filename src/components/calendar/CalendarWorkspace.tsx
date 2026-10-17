@@ -30,8 +30,10 @@ import {
 } from "@/components/calendar/stream-simulate-to-date";
 import {
   readCalendarResumeTarget,
+  readCalendarWatchTarget,
   remainingSimulateTarget,
   writeCalendarResumeTarget,
+  writeCalendarWatchTarget,
 } from "@/components/calendar/calendar-resume-target";
 import {
   INITIAL_INTERRUPT_STATE,
@@ -43,7 +45,7 @@ import {
 import { OwnerDecisionInterruptModal } from "@/components/calendar/OwnerDecisionInterruptModal";
 import { useSimulationActivity } from "@/components/game/simulation-activity";
 import { Drawer } from "@/components/ui/Drawer";
-import { parseCalendarDate } from "@/domain/calendar-date";
+import { addCalendarDays, parseCalendarDate } from "@/domain/calendar-date";
 import {
   buildPlaceholderMonthGrid,
   type CalendarMonthGrid,
@@ -159,6 +161,15 @@ export function CalendarWorkspace(props: {
       : null,
   );
   const [simError, setSimError] = useState<string | null>(null);
+  const [watchNotice, setWatchNotice] = useState<string | null>(null);
+  // Set while a run is heading to an owner game the user asked to watch.
+  const watchTargetRef = useRef<{ gameId: string; gameDate: string } | null>(
+    null,
+  );
+  const [watching, setWatching] = useState(false);
+  const [confirmWatchGame, setConfirmWatchGame] = useState<{
+    gameId: string;
+  } | null>(null);
   const [playback, setPlayback] = useState<PlaybackFrame | null>(null);
   const [resultOverlays, setResultOverlays] = useState<Record<string, string>>(
     {},
@@ -289,6 +300,14 @@ export function CalendarWorkspace(props: {
     if (navigationDisabled) return;
     setSelectedDate(date);
     if (date > props.view.currentDate && !props.view.timeDisabled) {
+      const teamGame = displayedGrid.weeks
+        .flat()
+        .find((cell) => cell.date === date)?.teamGame;
+      setConfirmWatchGame(
+        teamGame?.status === "scheduled" && teamGame.watchable
+          ? { gameId: teamGame.gameId }
+          : null,
+      );
       setConfirmTargetDate(date);
       setMobileDetailOpen(false);
       return;
@@ -327,11 +346,33 @@ export function CalendarWorkspace(props: {
     const { year, month } = parseCalendarDate(next);
     setSelectedDate(next);
     if (next > props.view.currentDate && !props.view.timeDisabled) {
+      const nextGame = props.view.nextTeamGame;
+      setConfirmWatchGame(
+        nextGame && nextGame.date === next ? { gameId: nextGame.gameId } : null,
+      );
       setConfirmTargetDate(next);
       setMobileDetailOpen(false);
       return;
     }
     navigate({ year, month, date: next });
+  }
+
+  function clearWatchTarget(options: { keepStored?: boolean } = {}) {
+    watchTargetRef.current = null;
+    setWatching(false);
+    if (!options.keepStored) {
+      writeCalendarWatchTarget(props.saveId, null);
+    }
+  }
+
+  function handleWatch(gameId: string, gameDate: string) {
+    if (navigationDisabled) return;
+    const target = { gameId, gameDate };
+    watchTargetRef.current = target;
+    setWatching(true);
+    setWatchNotice(null);
+    writeCalendarWatchTarget(props.saveId, target);
+    void handleSimulate(addCalendarDays(gameDate, 1));
   }
 
   function resetPlayback() {
@@ -346,6 +387,24 @@ export function CalendarWorkspace(props: {
     done: Extract<SimulateToDateStreamEvent, { type: "done" }>,
   ) {
     resetPlayback();
+    const watchTarget = watchTargetRef.current;
+    if (watchTarget) {
+      if (done.currentDate >= done.requestedTargetDate) {
+        clearWatchTarget();
+        writeCalendarResumeTarget(props.saveId, null);
+        setResumeTarget(null);
+        startTransition(() => {
+          router.push(
+            `/dashboard/${props.saveId}/games/${watchTarget.gameId}/watch`,
+          );
+        });
+        return;
+      }
+      // Stopped early (decision pause, etc.): keep the stored target so a
+      // resumed run still ends on the Watch page.
+      clearWatchTarget({ keepStored: true });
+      setWatchNotice("Stopped before tip-off — continue to watch the game.");
+    }
     const remaining = remainingSimulateTarget({
       requestedTargetDate: done.requestedTargetDate,
       currentDate: done.currentDate,
@@ -390,10 +449,15 @@ export function CalendarWorkspace(props: {
         const results = frames.flatMap((frame) =>
           frame.teamResult?.resultLabel ? [frame.teamResult] : [],
         );
-        if (results.length > 0) {
+        // Hide the result of the game the user is about to watch.
+        const watchDate = watchTargetRef.current?.gameDate;
+        const visibleResults = results.filter(
+          (result) => result.date !== watchDate,
+        );
+        if (visibleResults.length > 0) {
           setResultOverlays((current) => {
             const merged = { ...current };
-            for (const result of results) {
+            for (const result of visibleResults) {
               merged[result.date] = result.resultLabel;
             }
             return merged;
@@ -446,7 +510,19 @@ export function CalendarWorkspace(props: {
 
   async function handleSimulate(targetDate: string) {
     if (navigationDisabled) return;
+    const pendingWatch =
+      watchTargetRef.current ?? readCalendarWatchTarget(props.saveId);
+    if (
+      pendingWatch &&
+      addCalendarDays(pendingWatch.gameDate, 1) === targetDate
+    ) {
+      watchTargetRef.current = pendingWatch;
+      setWatching(true);
+    } else if (pendingWatch) {
+      clearWatchTarget();
+    }
     setSimError(null);
+    setWatchNotice(null);
     setConfirmTargetDate(null);
     setMobileDetailOpen(false);
     setSimulationPending(true);
@@ -474,6 +550,7 @@ export function CalendarWorkspace(props: {
         if (event.type === "error") {
           queueRef.current = [];
           doneRef.current = null;
+          clearWatchTarget();
           resetPlayback();
           setSimError(event.message);
           return;
@@ -482,6 +559,7 @@ export function CalendarWorkspace(props: {
         drainQueue();
       });
     } catch (error) {
+      clearWatchTarget();
       resetPlayback();
       setSimError(
         error instanceof Error ? error.message : "Simulation failed.",
@@ -495,6 +573,7 @@ export function CalendarWorkspace(props: {
   function handleStopSimulation() {
     if (stopRequestedRef.current) return;
     stopRequestedRef.current = true;
+    clearWatchTarget();
     setStopRequested(true);
     void requestStopSimulation(props.saveId).catch(() => {
       setSimError(
@@ -616,6 +695,9 @@ export function CalendarWorkspace(props: {
       simulating={playback != null}
       onSimulate={handleSimulate}
       showSimulateAction={isDesktop}
+      teamGameStats={props.view.teamGameStats}
+      currentDate={liveCurrentDate}
+      onWatch={handleWatch}
       hideTitle={!isDesktop}
       userTeamName={`${props.view.dashboard.controlledTeam.city} ${props.view.dashboard.controlledTeam.name}`}
       userBranding={props.view.dashboard.controlledTeam.branding}
@@ -657,8 +739,12 @@ export function CalendarWorkspace(props: {
           </p>
           <div className="min-w-0 space-y-1" aria-hidden="true">
             <p className="text-sm font-medium text-warning">
-              {stopRequested ? "Stopping simulation" : "Simulating"} ·{" "}
-              {formatGameDate(playback.currentDate)}
+              {stopRequested
+                ? "Stopping simulation"
+                : watching
+                  ? "Heading to tip-off"
+                  : "Simulating"}{" "}
+              · {formatGameDate(playback.currentDate)}
             </p>
             <p className="text-xs text-zinc-400">
               Day {playback.daysAdvanced} of {playback.daysRequested} ·{" "}
@@ -682,6 +768,12 @@ export function CalendarWorkspace(props: {
         >
           Simulation in progress — calendar navigation is locked until it
           finishes.
+        </p>
+      ) : null}
+
+      {watchNotice ? (
+        <p role="status" className="text-sm text-warning">
+          {watchNotice}
         </p>
       ) : null}
 
@@ -808,6 +900,8 @@ export function CalendarWorkspace(props: {
           disabled={busy || props.view.timeDisabled}
           onConfirm={handleSimulate}
           onCancel={() => setConfirmTargetDate(null)}
+          watchGame={confirmWatchGame ?? undefined}
+          onWatch={handleWatch}
         />
       ) : null}
 

@@ -10,7 +10,13 @@ export function SimulateToDateConfirm(props: {
   disabled?: boolean;
   onConfirm: (date: string) => void;
   onCancel: () => void;
+  /** Next owner game on this date; offers watching it live. */
+  watchGame?: { gameId: string };
+  onWatch?: (gameId: string, date: string) => void;
 }) {
+  const watchGame = props.watchGame;
+  const onWatch = props.onWatch;
+  const canWatch = watchGame != null && onWatch != null;
   return (
     <Overlay
       className="flex items-center justify-center p-4"
@@ -26,10 +32,16 @@ export function SimulateToDateConfirm(props: {
         <SectionHeading
           as="h3"
           id="simulate-to-date-title"
-          title={`Simulate through ${formatGameDate(props.date)}?`}
+          title={
+            canWatch
+              ? `Your next game is ${formatGameDate(props.date)}`
+              : `Simulate through ${formatGameDate(props.date)}?`
+          }
         />
         <p className="mt-2 text-sm text-zinc-400">
-          This plays all games, including yours, up to that day.
+          {canWatch
+            ? "Watch it live on the broadcast court, or sim to that day and stop before tip-off."
+            : "This plays all games, including yours, up to that day."}
         </p>
         <div className="mt-5 flex justify-end gap-2">
           <button
@@ -47,10 +59,26 @@ export function SimulateToDateConfirm(props: {
                 props.onConfirm(props.date);
               }
             }}
-            className={buttonClass({ variant: "primary" })}
+            className={buttonClass({
+              variant: canWatch ? "secondary" : "primary",
+            })}
           >
-            Simulate to date
+            {canWatch ? "Sim to day" : "Simulate to date"}
           </button>
+          {canWatch ? (
+            <button
+              type="button"
+              disabled={props.disabled}
+              onClick={() => {
+                if (!props.disabled) {
+                  onWatch(watchGame.gameId, props.date);
+                }
+              }}
+              className={buttonClass({ variant: "primary" })}
+            >
+              Watch game
+            </button>
+          ) : null}
         </div>
       </div>
     </Overlay>
