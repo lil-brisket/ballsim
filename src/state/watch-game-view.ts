@@ -27,6 +27,8 @@ export type WatchPlayer = {
   fullName: string;
   /** "J. Smith" — used in feed text. */
   shortName: string;
+  /** "Smith" — court token label (falls back to shortName when unknown). */
+  lastName: string;
   started: boolean;
   /** Final minutes from the box score (not derivable per play). */
   finalMinutes: number;
