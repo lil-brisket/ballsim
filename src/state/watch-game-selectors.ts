@@ -184,6 +184,7 @@ function toWatchTeam(state: GameState, game: Game, side: WatchSide): WatchTeam {
     name: identity.name,
     abbreviation: identity.abbreviation,
     branding: identity.branding ?? FALLBACK_BRANDING,
+    hasBranding: identity.branding != null,
   };
 }
 

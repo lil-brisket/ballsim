@@ -264,6 +264,7 @@ const VIEW: WatchGameView = {
     name: "Waves",
     abbreviation: "HOM",
     branding: BRANDING,
+    hasBranding: true,
   },
   away: {
     teamId: "t_a" as never,
@@ -272,6 +273,7 @@ const VIEW: WatchGameView = {
     name: "Hawks",
     abbreviation: "AWY",
     branding: BRANDING,
+    hasBranding: true,
   },
   finalScore: { home: 8, away: 10 },
   periodScores: [
