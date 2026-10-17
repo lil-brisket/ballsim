@@ -152,7 +152,7 @@ function FilterPillRow(props: {
   onChange: (next: string | null) => void;
 }) {
   const pillClass = (active: boolean) =>
-    `rounded-full border px-3 py-1 text-xs focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-team-ink ${
+    `inline-flex min-h-11 items-center rounded-full border px-3 py-1 text-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-team-ink ${
       active
         ? "border-team-ink text-team-ink"
         : "border-zinc-700 text-zinc-400 hover:border-zinc-500"
@@ -511,7 +511,7 @@ export function OwnerMultiTeamPick(props: {
               {checked ? (
                 <span
                   className={`mt-1 block text-sm ${
-                    identityComplete ? "text-emerald-400" : "text-zinc-2000"
+                    identityComplete ? "text-win" : "text-zinc-500"
                   }`}
                 >
                   {identityComplete

@@ -4,7 +4,12 @@ import { Metric } from "@/components/ui/Metric";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Section } from "@/components/ui/Section";
 import { TeamEntityLink } from "@/components/entity/TeamEntityLink";
-import { cn, focusRingClass, panelClass } from "@/components/ui/styles";
+import {
+  cn,
+  focusRingClass,
+  linkClass,
+  panelClass,
+} from "@/components/ui/styles";
 import { PlayerHistorySearch } from "@/components/history/PlayerHistorySearch";
 import type { HistoryHubRoute } from "@/state/history-hub-selectors";
 import type {
@@ -23,10 +28,7 @@ function PlayerHistoryDetail(props: {
       action={
         <Link
           href={player.profileHref}
-          className={cn(
-            "text-sm text-team-ink underline-offset-4 hover:underline",
-            focusRingClass,
-          )}
+          className={cn("text-sm", linkClass, focusRingClass)}
         >
           View player profile
         </Link>
@@ -58,7 +60,7 @@ function PlayerHistoryDetail(props: {
                     key={stop.seasonYear}
                     className="flex items-baseline gap-3 py-1.5"
                   >
-                    <span className="font-mono text-team-ink">
+                    <span className="tabular-nums text-team-ink">
                       {stop.seasonYear}
                     </span>
                     {stop.teamId ? (

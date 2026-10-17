@@ -6,7 +6,12 @@ import {
   FranchiseHistorySummary,
 } from "@/components/owner/FranchiseHistorySummary";
 import { Section } from "@/components/ui/Section";
-import { cn, focusRingClass, panelClass } from "@/components/ui/styles";
+import {
+  cn,
+  focusRingClass,
+  linkClass,
+  panelClass,
+} from "@/components/ui/styles";
 import { historyHubHref } from "@/components/history/history-hub-links";
 import type { BestRecordMetric } from "@/state/franchise-history-milestones";
 import type {
@@ -61,10 +66,7 @@ function TeamRecordsTable(props: {
                     tab: "teams",
                     team: row.teamId,
                   })}
-                  className={cn(
-                    "text-team-ink underline-offset-4 hover:underline",
-                    focusRingClass,
-                  )}
+                  className={cn(linkClass, focusRingClass)}
                 >
                   {row.teamName}
                 </Link>

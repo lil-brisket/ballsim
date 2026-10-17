@@ -31,7 +31,7 @@ export function DraftPickSummary(props: {
               key={pick.draftPickId}
               className={pick.isUserPick ? "bg-team/15" : undefined}
             >
-              <td className="px-3 py-2 font-mono text-zinc-300">
+              <td className="px-3 py-2 font-mono tabular-nums text-zinc-300">
                 #{pick.overallPick}
                 <span className="ml-1 text-zinc-600">R{pick.round}</span>
               </td>

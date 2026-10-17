@@ -99,7 +99,7 @@ export function ControlledFranchiseIdentityEditor(props: {
             </h3>
             <span
               data-testid="identity-preview-abbreviation"
-              className="rounded border border-zinc-600 bg-zinc-900 px-1.5 py-0.5 text-xs font-semibold tracking-wide text-zinc-200"
+              className="rounded border border-zinc-600 bg-zinc-900 px-1.5 py-0.5 text-sm font-semibold tracking-wide text-zinc-200"
             >
               {draft.abbreviation}
             </span>

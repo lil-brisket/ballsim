@@ -66,7 +66,9 @@ export function AwardHistoryPanel(props: {
                     key={season.seasonYear}
                     className="border-b border-zinc-900/80"
                   >
-                    <td className={`${TD} font-mono text-team-ink`}>
+                    <td
+                      className={`${TD} font-mono tabular-nums text-team-ink`}
+                    >
                       {season.seasonYear}
                     </td>
                     {pivotDefinitions.map((def) => {

@@ -10,6 +10,7 @@ import { formatMoney } from "@/components/owner/MoneyDisplay";
 import { buttonClass } from "@/components/ui/Button";
 import { NumberStepper } from "@/components/ui/NumberStepper";
 import { Select } from "@/components/ui/Select";
+import { SectionHeading } from "@/components/ui/SectionHeading";
 import { cn, focusRingClass } from "@/components/ui/styles";
 
 export const inputClass =
@@ -36,13 +37,7 @@ export function SetupSection({
       className="space-y-4 rounded-xl border border-zinc-800 bg-zinc-900/40 p-4 sm:p-5"
     >
       <div className="space-y-1">
-        <h2
-          id={id}
-          tabIndex={-1}
-          className="text-base font-semibold text-zinc-100 outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-team-ink"
-        >
-          {title}
-        </h2>
+        <SectionHeading id={id} tabIndex={-1} title={title} />
         {description ? (
           <p className="text-sm text-zinc-400">{description}</p>
         ) : null}

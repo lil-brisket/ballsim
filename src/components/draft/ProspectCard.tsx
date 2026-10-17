@@ -87,9 +87,7 @@ export function ProspectCard(props: ProspectCardProps) {
               #{props.projectedPick}
               {delta != null && delta !== 0 ? (
                 <span
-                  className={
-                    delta > 0 ? "ml-2 text-emerald-400" : "ml-2 text-rose-400"
-                  }
+                  className={delta > 0 ? "ml-2 text-win" : "ml-2 text-loss"}
                 >
                   {delta > 0 ? "↑" : "↓"} {Math.abs(delta)}
                 </span>
@@ -102,12 +100,12 @@ export function ProspectCard(props: ProspectCardProps) {
       {props.strengths?.length || props.weaknesses?.length ? (
         <div className="mt-2 space-y-1 text-sm">
           {props.strengths?.slice(0, 2).map((s) => (
-            <p key={s} className="text-emerald-400/90">
+            <p key={s} className="text-win">
               + {s}
             </p>
           ))}
           {props.weaknesses?.slice(0, 2).map((w) => (
-            <p key={w} className="text-rose-400/90">
+            <p key={w} className="text-loss">
               − {w}
             </p>
           ))}

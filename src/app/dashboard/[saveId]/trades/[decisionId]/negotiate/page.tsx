@@ -56,10 +56,7 @@ export default async function TradeNegotiatePage(props: PageProps) {
     <div className="mx-auto max-w-3xl space-y-6 px-4 py-6 text-sm text-zinc-200">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <SectionHeading as="h1" size="lg" title="Negotiate trade" />
-        <Link
-          href={returnPath}
-          className="rounded-md border border-zinc-600 px-3 py-1.5 hover:border-zinc-400"
-        >
+        <Link href={returnPath} className={buttonClass({ variant: "quiet" })}>
           Back to review
         </Link>
       </div>
@@ -70,7 +67,7 @@ export default async function TradeNegotiatePage(props: PageProps) {
       </p>
 
       <div className="rounded-md border border-zinc-700 bg-zinc-950/50 px-4 py-3">
-        <h2 className="font-medium text-zinc-50">They offer (unchanged)</h2>
+        <SectionHeading title="They offer (unchanged)" />
         <ul className="mt-2 list-inside list-disc text-zinc-300">
           {cpuSide.playerIds.map((id) => {
             const p = state.world.players[id];

@@ -205,7 +205,7 @@ export default async function DraftPage({
                         slot.isUserPick ? "bg-team/15" : ""
                       }`}
                     >
-                      <span className="font-mono text-zinc-400">
+                      <span className="tabular-nums text-zinc-400">
                         #{slot.overallPick}
                       </span>
                       {slot.ownerBranding ? (

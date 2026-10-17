@@ -144,7 +144,7 @@ export function TradeReviewPanel(props: {
           </tbody>
         </table>
         {review.rosterImpact.some((row) => row.after > row.before) ? (
-          <p className="mt-2 text-sm text-emerald-300/90">
+          <p className="mt-2 text-sm text-win">
             Incoming depth may push a player into the rotation.
           </p>
         ) : null}

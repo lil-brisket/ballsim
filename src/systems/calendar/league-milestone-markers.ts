@@ -108,8 +108,8 @@ const MILESTONE_DISPLAY: Record<LeagueMilestoneKey, MilestoneDisplay> = {
   },
   regularSeasonEnd: {
     shortLabel: "RS end",
-    chipClass: "bg-amber-950/70 text-amber-300",
-    dotClass: "bg-amber-400",
+    chipClass: "bg-warning/15 text-warning",
+    dotClass: "bg-warning",
   },
   playoffsStart: {
     shortLabel: "Playoffs",

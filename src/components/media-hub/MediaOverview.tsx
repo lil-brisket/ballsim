@@ -6,6 +6,7 @@ import {
   MEDIA_HUB_STORY_TYPE_ORDER,
   type MediaHubView,
 } from "@/state/media-hub-selectors";
+import { cn, focusRingClass, linkClass } from "@/components/ui/styles";
 import type { MediaStoryType } from "@/domain/entities/media-item";
 
 function recentActivityCaption(
@@ -55,7 +56,11 @@ export function MediaOverview(props: {
               <div>
                 <Link
                   href={feedHref}
-                  className="text-sm font-normal text-team-ink underline-offset-4 hover:underline"
+                  className={cn(
+                    "text-sm font-normal",
+                    linkClass,
+                    focusRingClass,
+                  )}
                 >
                   View feed
                 </Link>
