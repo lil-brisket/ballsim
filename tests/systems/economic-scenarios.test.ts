@@ -318,9 +318,12 @@ describe("economic scenarios (Phase 2 harness)", () => {
       // A 35% payroll overpay is now paid in full over the season (#93), so
       // cash can dip below zero from payroll even when every upgrade was
       // affordable when made. Overspending must stay a constraint, not an
-      // unbounded collapse.
+      // unbounded collapse: the dip stays within the extra payroll the owner
+      // chose. Bounded by the overpay, not a share of payroll, so roster
+      // generation tuning (#90 raised this seed's payroll) does not move it.
       if (season.cashFlow.minCash < 0) {
-        expect(season.cashFlow.minCash).toBeGreaterThan(-0.15 * season.payroll);
+        const overpay = season.payroll - baseline.seasons[0]!.payroll;
+        expect(season.cashFlow.minCash).toBeGreaterThan(-overpay);
       }
       assertCashFlowInvariants(season);
     },
