@@ -128,6 +128,32 @@ describe("CourtView", () => {
     expect(animate).not.toHaveBeenCalled();
   });
 
+  it("curls the shooter's token through the cut on a catch-and-shoot", () => {
+    const index = VIEW.plays.findIndex(
+      (p) => p.points > 1 && p.player2Id !== null,
+    );
+    const frame = buildCourtFrame(VIEW, index + 1);
+    expect(frame.lastPlay!.cut).not.toBeNull();
+    const targets: Element[] = [];
+    const animate = vi.fn(function (this: Element) {
+      targets.push(this);
+      return { cancel: vi.fn() };
+    });
+    Element.prototype.animate = animate as never;
+    const { rerender } = render(court(index));
+    rerender(court(index + 1));
+    expect(animate).toHaveBeenCalledTimes(2);
+    expect(targets[1]!.getAttribute("data-player-id")).toBe(
+      frame.lastPlay!.playerId,
+    );
+    const keyframes = (animate.mock.calls[1] as unknown[])[0] as Keyframe[];
+    expect(keyframes).toHaveLength(3);
+    expect(keyframes[1]).toMatchObject({
+      left: `${Math.round(frame.lastPlay!.cut!.x * 10000) / 100}%`,
+      top: `${Math.round(frame.lastPlay!.cut!.y * 10000) / 100}%`,
+    });
+  });
+
   it("shows a steal callout", () => {
     render(court(4));
     expect(screen.getByText("Steal · Reed")).toBeTruthy();

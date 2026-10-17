@@ -523,6 +523,72 @@ describe("buildCourtFrame (recorded real game)", () => {
     }
   });
 
+  it("keeps the ball holder on the ball while others drift", () => {
+    let drifted = 0;
+    frames.forEach((frame, n) => {
+      if (frame.ball.holderId !== null) {
+        const holder = frame.players.find(
+          (p) => p.playerId === frame.ball.holderId,
+        )!;
+        expect(holder.spot).toEqual(frame.ball.at);
+      }
+      const previous = frames[n - 1];
+      if (
+        previous &&
+        previous.possessionIndex === frame.possessionIndex &&
+        frame.lastPlay?.motion !== "substitution"
+      ) {
+        const touched = new Set([
+          frame.lastPlay?.playerId,
+          frame.lastPlay?.player2Id,
+          previous.lastPlay?.playerId,
+          previous.lastPlay?.player2Id,
+        ]);
+        for (const player of frame.players) {
+          const before = previous.players.find(
+            (p) => p.playerId === player.playerId,
+          );
+          if (before && !touched.has(player.playerId)) {
+            const moved = Math.hypot(
+              (player.spot.x - before.spot.x) * COURT_FEET.width,
+              (player.spot.y - before.spot.y) * COURT_FEET.length,
+            );
+            if (moved > 0) {
+              drifted += 1;
+            }
+          }
+        }
+      }
+    });
+    expect(drifted).toBeGreaterThan(0);
+  });
+
+  it("cuts the shooter only on assisted makes, off the straight line", () => {
+    let cuts = 0;
+    for (let n = 1; n <= total; n += 1) {
+      const lastPlay = frames[n]!.lastPlay!;
+      const assistedMake =
+        lastPlay.motion === "shot" &&
+        lastPlay.outcome === "made" &&
+        lastPlay.player2Id !== null;
+      if (!assistedMake) {
+        expect(lastPlay.cut).toBeNull();
+        continue;
+      }
+      if (lastPlay.cut === null) {
+        continue;
+      }
+      cuts += 1;
+      expect(inBounds(lastPlay.cut)).toBe(true);
+      const shooter = frames[n]!.players.find(
+        (p) => p.playerId === lastPlay.playerId,
+      )!;
+      // The cut ends at the shot spot, so it is never the shot spot itself.
+      expect(lastPlay.cut).not.toEqual(shooter.spot);
+    }
+    expect(cuts).toBeGreaterThan(0);
+  });
+
   it("tracks dense possession indexes in order", () => {
     const groups = possessionGroups(view);
     let previous = -1;

@@ -86,6 +86,11 @@ export type CourtLastPlay = {
    * One point means the ball did not move (whistle, substitution).
    */
   path: CourtPoint[];
+  /**
+   * Waypoint the shooter cuts through on the way to an assisted shot (from
+   * their previous spot to their shot spot); null for every other play.
+   */
+  cut: CourtPoint | null;
 };
 
 export type CourtShot = {
@@ -168,6 +173,19 @@ const SALT_SHOT = 1;
 const SALT_OFFENSE = 2;
 const SALT_DEFENSE = 3;
 const SALT_REBOUND = 4;
+const SALT_DRIFT = 5;
+const SALT_CUT = 6;
+
+/**
+ * Richer movement (court replay phase 5). Set either to 0 to turn it off:
+ * off-ball players drift up to this far from their spot each play, and an
+ * assisted shooter cuts this far off the straight line to the shot spot.
+ */
+const OFF_BALL_DRIFT_FEET = 1.2;
+const DEFENSE_DRIFT_SCALE = 0.6;
+const SHOOTER_CUT_FEET = 4;
+const MIN_CUT_LENGTH_FEET = 3;
+const COURT_MARGIN_FEET = 0.5;
 
 /** FNV-1a hash of `gameId:index:salt` (uint32). Presentation seed only. */
 export function courtSeed(gameId: string, index: number, salt = 0): number {
@@ -220,6 +238,35 @@ function distance(a: Feet, b: Feet): number {
 
 function samePoint(a: Feet, b: Feet): boolean {
   return distance(a, b) < 1e-6;
+}
+
+function insideCourt(point: Feet): Feet {
+  const clamp = (value: number, max: number) =>
+    Math.min(max - COURT_MARGIN_FEET, Math.max(COURT_MARGIN_FEET, value));
+  return {
+    x: clamp(point.x, COURT_FEET.width),
+    y: clamp(point.y, COURT_FEET.length),
+  };
+}
+
+/**
+ * Seeded waypoint off the straight line from `from` to `to` (a curl or a
+ * flare); null when the shooter barely moves or cuts are turned off.
+ */
+function cutPoint(from: Feet, to: Feet, seed: number): Feet | null {
+  const length = distance(from, to);
+  if (SHOOTER_CUT_FEET <= 0 || length < MIN_CUT_LENGTH_FEET) {
+    return null;
+  }
+  const next = unitStream(seed);
+  const side = next() < 0.5 ? -1 : 1;
+  const offset =
+    side * Math.min(length / 2, SHOOTER_CUT_FEET * (0.5 + next() / 2));
+  const mid = lerp(from, to, 0.35 + next() * 0.3);
+  return insideCourt({
+    x: mid.x + (-(to.y - from.y) / length) * offset,
+    y: mid.y + ((to.x - from.x) / length) * offset,
+  });
 }
 
 function shotSpotFeet(kind: WatchPlayKind, seed: number): Feet {
@@ -443,12 +490,14 @@ type StepResult = {
   motion: CourtMotion;
   outcome: CourtOutcome;
   path: Feet[];
+  cut: Feet | null;
 };
 
 type PossessionCourt = {
   offenseSide: WatchSide;
   ball: Ball;
   spotAt: (side: WatchSide, slot: number) => Feet;
+  slotOf: (id: PlayerId | null) => { side: WatchSide; slot: number } | null;
   step: (play: WatchPlay) => StepResult;
 };
 
@@ -547,6 +596,7 @@ function createPossessionCourt(
     offenseSide,
     ball: { at: spotOf(handler) ?? offense[0]!, holderId: handler },
     spotAt,
+    slotOf,
     step: (play) => {
       const before = court.ball.at;
       const path: Feet[] = [before];
@@ -558,6 +608,7 @@ function createPossessionCourt(
       const end = () => path[path.length - 1]!;
       let motion: CourtMotion = "substitution";
       let outcome: CourtOutcome = "none";
+      let cut: Feet | null = null;
 
       if (isFieldGoal(play.kind) || isFreeThrow(play.kind)) {
         motion = isFreeThrow(play.kind) ? "free_throw" : "shot";
@@ -568,6 +619,14 @@ function createPossessionCourt(
         const assister =
           motion === "shot" && play.points > 0 ? play.player2Id : null;
         add(spotOf(assister));
+        const from = spotOf(play.playerId);
+        if (assister !== null && from) {
+          cut = cutPoint(
+            from,
+            spot,
+            courtSeed(view.gameId, play.index, SALT_CUT),
+          );
+        }
         moveTo(play.playerId, spot, assister);
         add(spot);
         if (play.points > 0) {
@@ -635,7 +694,7 @@ function createPossessionCourt(
         add(spotOf(play.playerId));
         court.ball = { at: end(), holderId: null };
       }
-      return { play, motion, outcome, path };
+      return { play, motion, outcome, path, cut };
     },
   };
   return court;
@@ -677,6 +736,7 @@ function toLastPlay(
   motion: CourtMotion,
   outcome: CourtOutcome,
   path: Feet[],
+  cut: Feet | null = null,
 ): CourtLastPlay {
   return {
     index: play.index,
@@ -687,6 +747,7 @@ function toLastPlay(
     player2Id: play.player2Id,
     points: play.points,
     path: path.map(normalize),
+    cut: cut ? normalize(cut) : null,
   };
 }
 
@@ -732,6 +793,7 @@ export function buildCourtFrame(
         run.last.motion,
         run.last.outcome,
         path,
+        run.last.cut,
       );
     }
   }
@@ -757,6 +819,38 @@ export function buildCourtFrame(
     ]);
   }
 
+  // Off-ball drift, seeded by the latest non-substitution play. Slots that
+  // play touched (and the ball holder's) stay put so the ball path lines
+  // up; a substitute inherits the slot's exemption.
+  const exempt = new Set<string>();
+  const drift = new Map<string, Feet>();
+  if (court && lastPlayIndex >= 0 && OFF_BALL_DRIFT_FEET > 0) {
+    const touched = view.plays[lastPlayIndex]!;
+    for (const id of [
+      touched.playerId,
+      touched.player2Id,
+      court.ball.holderId,
+    ]) {
+      const found = court.slotOf(id);
+      if (found) {
+        exempt.add(`${found.side}:${found.slot}`);
+      }
+    }
+    const next = unitStream(courtSeed(view.gameId, lastPlayIndex, SALT_DRIFT));
+    for (const side of [0, 1] as const) {
+      const size =
+        side === court.offenseSide
+          ? OFF_BALL_DRIFT_FEET
+          : OFF_BALL_DRIFT_FEET * DEFENSE_DRIFT_SCALE;
+      for (let slot = 0; slot < SLOT_COUNT; slot += 1) {
+        drift.set(`${side}:${slot}`, {
+          x: (next() * 2 - 1) * size,
+          y: (next() * 2 - 1) * size,
+        });
+      }
+    }
+  }
+
   const shooterId =
     lastPlay && (lastPlay.motion === "shot" || lastPlay.motion === "free_throw")
       ? lastPlay.playerId
@@ -770,11 +864,16 @@ export function buildCourtFrame(
       if (!player) {
         return;
       }
-      const spot = court
+      const key = `${side}:${slot % SLOT_COUNT}`;
+      const offset = exempt.has(key) ? undefined : drift.get(key);
+      const base = court
         ? court.spotAt(side, slot)
         : side === offenseSide
           ? OFFENSE_BASE[slot % SLOT_COUNT]!
           : shade(OFFENSE_BASE[slot % SLOT_COUNT]!);
+      const spot = offset
+        ? insideCourt({ x: base.x + offset.x, y: base.y + offset.y })
+        : base;
       players.push({
         playerId,
         side,
