@@ -23,6 +23,7 @@ import {
   WatchGameClient,
 } from "@/components/game/watch/WatchGameClient";
 import { WatchGameUnavailable } from "@/components/game/watch/WatchGameUnavailable";
+import { buildLiveBoxScore } from "@/state/watch-game-selectors";
 import type {
   WatchGameView,
   WatchHighlight,
@@ -281,6 +282,7 @@ const VIEW: WatchGameView = {
       fullName: "Jalen Smith",
       shortName: "J. Smith",
       lastName: "Smith",
+      position: "PG",
       started: true,
       finalMinutes: 20,
     },
@@ -290,6 +292,7 @@ const VIEW: WatchGameView = {
       fullName: "Kyle Lee",
       shortName: "K. Lee",
       lastName: "Lee",
+      position: "SG",
       started: true,
       finalMinutes: 12,
     },
@@ -299,6 +302,7 @@ const VIEW: WatchGameView = {
       fullName: "Ben Bench",
       shortName: "B. Bench",
       lastName: "Bench",
+      position: "SF",
       started: false,
       finalMinutes: 8,
     },
@@ -308,6 +312,7 @@ const VIEW: WatchGameView = {
       fullName: "Marcus Jones",
       shortName: "M. Jones",
       lastName: "Jones",
+      position: "PG",
       started: true,
       finalMinutes: 22,
     },
@@ -317,6 +322,7 @@ const VIEW: WatchGameView = {
       fullName: "Tom Reed",
       shortName: "T. Reed",
       lastName: "Reed",
+      position: "SF",
       started: true,
       finalMinutes: 18,
     },
@@ -544,6 +550,133 @@ describe("WatchGameClient", () => {
     const sub = feed().getByText("B. Bench checks in for K. Lee");
     expect(sub.closest("li")).not.toBe(foul.closest("li"));
     expect(feed().getByText("End of Q1")).toBeTruthy();
+  });
+});
+
+describe("WatchGameClient court", () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+  });
+  afterEach(() => {
+    cleanup();
+    vi.useRealTimers();
+  });
+
+  const button = (name: string) =>
+    screen.getByRole("button", { name }) as HTMLButtonElement;
+  const tokenLabels = () =>
+    screen
+      .getAllByTestId("court-token")
+      .map((token) => token.getAttribute("aria-label"));
+  const card = () => within(screen.getByTestId("court-player-card"));
+  const cardStats = () =>
+    card()
+      .getAllByRole("definition")
+      .map((cell) => Number(cell.textContent));
+
+  it("steps by possession and pauses playback", () => {
+    renderClient();
+    expect(button("Previous possession").disabled).toBe(true);
+    fireEvent.click(button("Play"));
+    advance(5);
+    expect(screen.getByText(progressText(5))).toBeTruthy();
+
+    // Plays 5-6 are one possession (foul + free throw).
+    fireEvent.click(button("Next possession"));
+    expect(screen.getByText(progressText(7))).toBeTruthy();
+    expect(button("Play")).toBeTruthy();
+    advance(3);
+    expect(screen.getByText(progressText(7))).toBeTruthy();
+
+    // The substitution at play 7 comes along with the next possession.
+    fireEvent.click(button("Next possession"));
+    expect(screen.getByText(progressText(10))).toBeTruthy();
+    fireEvent.click(button("Previous possession"));
+    expect(screen.getByText(progressText(7))).toBeTruthy();
+    fireEvent.click(button("Previous possession"));
+    expect(screen.getByText(progressText(5))).toBeTruthy();
+
+    fireEvent.click(button("Skip to end"));
+    expect(button("Next possession").disabled).toBe(true);
+  });
+
+  it("shows playing, paused and replay-complete states", () => {
+    renderClient();
+    const status = () => screen.getByTestId("court-status").textContent;
+    expect(status()).toBe("Paused");
+    fireEvent.click(button("Play"));
+    expect(status()).toBe("Live");
+    fireEvent.click(button("Pause"));
+    expect(status()).toBe("Paused");
+    fireEvent.click(button("Skip to end"));
+    expect(status()).toBe("Replay complete");
+    // The scoreboard keeps the only "Final".
+    expect(screen.getAllByText("Final")).toHaveLength(1);
+  });
+
+  it("follows a key-moment jump", () => {
+    renderClient();
+    fireEvent.click(button("Skip to end"));
+    fireEvent.click(
+      screen.getByRole("button", { name: /Away takes the lead/ }),
+    );
+    expect(screen.getByText(progressText(11))).toBeTruthy();
+    expect(tokenLabels()).toContain("Marcus Jones, Visitor Hawks, 6 pts");
+  });
+
+  it("selects a player: card stats match the live box score", () => {
+    renderClient();
+    fireEvent.click(screen.getByRole("button", { name: /^Jalen Smith,/ }));
+    expect(card().getByText("Jalen Smith")).toBeTruthy();
+    expect(card().getByText(/PG · Harbor Waves · On court/)).toBeTruthy();
+    const row = screen
+      .getAllByRole("row")
+      .find((candidate) => candidate.textContent?.includes("J. Smith"))!;
+    expect(row.getAttribute("data-selected")).toBe("true");
+
+    for (const expected of [1, 2, 3, 4, 5, 7, 10, 11]) {
+      fireEvent.click(button("Next possession"));
+      expect(screen.getByText(progressText(expected))).toBeTruthy();
+      const live = buildLiveBoxScore(VIEW, expected).home.rows.find(
+        (r) => r.playerId === "h1",
+      )!;
+      expect(cardStats()).toEqual([
+        live.points,
+        live.rebounds,
+        live.assists,
+        live.steals,
+        live.blocks,
+        live.turnovers,
+      ]);
+    }
+
+    fireEvent.click(card().getByRole("button", { name: "Close" }));
+    expect(screen.queryByTestId("court-player-card")).toBeNull();
+    expect(row.getAttribute("data-selected")).toBeNull();
+  });
+
+  it("clicking the selected token again clears the selection", () => {
+    renderClient();
+    const token = () => screen.getByRole("button", { name: /^Kyle Lee,/ });
+    fireEvent.click(token());
+    expect(token().getAttribute("aria-pressed")).toBe("true");
+    fireEvent.click(token());
+    expect(token().getAttribute("aria-pressed")).toBe("false");
+    expect(screen.queryByTestId("court-player-card")).toBeNull();
+  });
+
+  it("reaches the same court by skipping as by stepping possessions", () => {
+    renderClient();
+    fireEvent.click(button("Skip to end"));
+    const skipped = tokenLabels();
+    fireEvent.click(button("Restart"));
+    expect(tokenLabels()).not.toEqual(skipped);
+    while (!button("Next possession").disabled) {
+      fireEvent.click(button("Next possession"));
+    }
+    expect(screen.getByText(progressText(PLAYS.length))).toBeTruthy();
+    expect(tokenLabels()).toEqual(skipped);
+    expect(skipped).toContain("Ben Bench, Harbor Waves, 2 pts");
   });
 });
 

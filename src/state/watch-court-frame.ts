@@ -349,6 +349,29 @@ export function possessionGroups(view: WatchGameView): CourtPossession[] {
   return groups;
 }
 
+/**
+ * `revealed` at the end of the next (1) or previous (-1) feed-row
+ * possession. Next from the last possession goes to the end of the log;
+ * previous from the first goes back to tip-off.
+ */
+export function stepPossession(
+  view: WatchGameView,
+  revealed: number,
+  direction: 1 | -1,
+): number {
+  const count = clampRevealed(view, revealed);
+  const ends = possessionGroups(view).map((group) => group.end);
+  if (direction > 0) {
+    return ends.find((end) => end > count) ?? view.plays.length;
+  }
+  for (let i = ends.length - 1; i >= 0; i -= 1) {
+    if (ends[i]! < count) {
+      return ends[i]!;
+    }
+  }
+  return 0;
+}
+
 const labelCache = new WeakMap<WatchGameView, Map<PlayerId, string>>();
 
 /** Token labels: last name, or the short name when teammates share it. */

@@ -26,6 +26,15 @@ import type {
 /** Away tokens switch to their secondary colour below this contrast ratio. */
 const MIN_TEAM_CONTRAST = 1.5;
 
+export type CourtStatus = "playing" | "paused" | "complete";
+
+// "Replay complete", not "Final": the scoreboard already says Final.
+const STATUS_LABEL: Record<CourtStatus, string> = {
+  playing: "Live",
+  paused: "Paused",
+  complete: "Replay complete",
+};
+
 /** Tokens this close to a sideline (normalized x) anchor their label inward. */
 const EDGE_LABEL_X = 0.15;
 
@@ -122,6 +131,8 @@ export function CourtView(props: {
   onShowShotChartChange?: (value: boolean) => void;
   selectedPlayerId?: PlayerId | null;
   onSelectPlayer?: (id: PlayerId) => void;
+  /** Playback state shown above the court; omitted on the dev page. */
+  status?: CourtStatus;
   className?: string;
 }) {
   const { frame, home, away, live } = props;
@@ -197,7 +208,28 @@ export function CourtView(props: {
 
   return (
     <div className={cn("space-y-2", props.className)}>
-      <div className="flex justify-end">
+      <div className="flex items-center justify-between gap-3">
+        {props.status ? (
+          <p
+            className="inline-flex items-center gap-2 text-sm text-zinc-300"
+            data-testid="court-status"
+          >
+            <span
+              aria-hidden="true"
+              className={cn(
+                "h-2 w-2 rounded-full",
+                props.status === "playing"
+                  ? "team-pulse bg-team-ink"
+                  : props.status === "paused"
+                    ? "bg-zinc-500"
+                    : "bg-zinc-300",
+              )}
+            />
+            {STATUS_LABEL[props.status]}
+          </p>
+        ) : (
+          <span />
+        )}
         <Button
           variant="secondary"
           aria-pressed={showShotChart}

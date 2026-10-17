@@ -16,6 +16,8 @@ export function PlaybackControls(props: {
   onSpeedChange: (speed: PlaybackSpeed) => void;
   onSkipToEnd: () => void;
   onRestart: () => void;
+  onPreviousPossession: () => void;
+  onNextPossession: () => void;
 }) {
   const atEnd = props.revealed >= props.total;
   return (
@@ -28,6 +30,22 @@ export function PlaybackControls(props: {
           disabled={atEnd && !props.playing}
         >
           {props.playing ? "Pause" : "Play"}
+        </button>
+        <button
+          type="button"
+          className={BUTTON_CLASS}
+          onClick={props.onPreviousPossession}
+          disabled={props.revealed <= 0}
+        >
+          Previous possession
+        </button>
+        <button
+          type="button"
+          className={BUTTON_CLASS}
+          onClick={props.onNextPossession}
+          disabled={atEnd}
+        >
+          Next possession
         </button>
         <div
           className="flex items-center gap-1"
