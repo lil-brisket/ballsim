@@ -13,6 +13,7 @@ import { RotationHealth } from "@/components/team-management/RotationHealth";
 import { RotationSettings } from "@/components/team-management/RotationSettings";
 import { RotationTable } from "@/components/team-management/RotationTable";
 import { StartingFiveEditor } from "@/components/team-management/StartingFiveEditor";
+import type { PlayerPortraitAssignment } from "@/domain/entities/player-portrait";
 import type {
   LineupView,
   RotationView,
@@ -36,6 +37,7 @@ export function LineupRotationEditor(props: {
   saveId: string;
   lineup: LineupView;
   rotation: RotationView;
+  portraits?: Record<string, PlayerPortraitAssignment | null>;
 }) {
   const returnPath = `/dashboard/${props.saveId}/team-management/lineups`;
   const initialRef = useRef(createEditorState(props.lineup, props.rotation));
@@ -193,6 +195,7 @@ export function LineupRotationEditor(props: {
         starters={state.starters}
         allPlayers={allPlayers}
         rowsById={rowsById}
+        portraits={props.portraits}
         onChangeStarter={(slot, playerId) =>
           markDirty(setStarterSlot(state, slot, playerId))
         }
@@ -211,6 +214,7 @@ export function LineupRotationEditor(props: {
         inactive={state.inactive}
         allPlayers={allPlayers}
         rowsById={rowsById}
+        portraits={props.portraits}
         onMoveToInactive={(playerId) =>
           markDirty(moveBenchToInactive(state, playerId))
         }
@@ -268,6 +272,7 @@ export function LineupRotationEditor(props: {
         closingPolicy={state.closingPolicy}
         closingIds={state.closingIds}
         editableRows={editableRows}
+        portraits={props.portraits}
         onPolicyChange={(closingPolicy) =>
           markDirty({ ...state, closingPolicy, preset: "custom" })
         }

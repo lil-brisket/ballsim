@@ -2,8 +2,8 @@
 
 import { SectionHeading } from "@/components/ui/SectionHeading";
 import { Button } from "@/components/ui/Button";
-import { DataTable } from "@/components/ui/DataTable";
-import { StatusBadge } from "@/components/ui/StatusBadge";
+import { PlayerChip } from "@/components/team-management/PlayerChip";
+import type { PlayerPortraitAssignment } from "@/domain/entities/player-portrait";
 import type {
   EditableRotationRow,
   PlayerCardLike,
@@ -16,52 +16,45 @@ export function BenchEditor(props: {
   rowsById: Map<string, EditableRotationRow>;
   onMoveToInactive: (playerId: string) => void;
   onMoveToBench: (playerId: string) => void;
+  portraits?: Record<string, PlayerPortraitAssignment | null>;
 }) {
+  const find = (playerId: string) =>
+    props.allPlayers.find((p) => p.playerId === playerId);
+
   return (
     <div className="space-y-6">
       <section>
         <SectionHeading title="Bench" className="mb-3" />
-        <DataTable
-          headers={["Player", "Pos", "Role", "Target MPG", "Status", ""]}
-        >
-          {props.bench.map((playerId) => {
-            const player = props.allPlayers.find(
-              (p) => p.playerId === playerId,
-            );
-            const row = props.rowsById.get(playerId);
-            if (!player) {
-              return null;
-            }
-            return (
-              <tr key={playerId} className="border-t border-zinc-800">
-                <td className="px-3 py-2 text-zinc-100">
-                  {player.firstName} {player.lastName}
-                </td>
-                <td className="px-3 py-2 font-mono text-zinc-400">
-                  {player.position}
-                </td>
-                <td className="px-3 py-2 capitalize text-zinc-400">
-                  {(row?.role ?? "bench").replaceAll("_", " ")}
-                </td>
-                <td className="px-3 py-2 text-zinc-300">
-                  {row?.targetMinutes ?? player.plannedMinutes}
-                </td>
-                <td className="px-3 py-2">
-                  <StatusBadge label={player.availabilityLabel} />
-                </td>
-                <td className="px-3 py-2">
+        {props.bench.length === 0 ? (
+          <p className="text-sm text-zinc-400">No bench players.</p>
+        ) : (
+          <ul className="flex flex-wrap gap-3">
+            {props.bench.map((playerId) => {
+              const player = find(playerId);
+              if (!player) {
+                return null;
+              }
+              return (
+                <li key={playerId} className="flex flex-col items-center gap-1">
+                  <PlayerChip
+                    player={player}
+                    portrait={props.portraits?.[playerId]}
+                    slotLabel={player.position}
+                    readOnly
+                  />
                   <Button
                     type="button"
                     variant="quiet"
                     onClick={() => props.onMoveToInactive(playerId)}
+                    aria-label={`Make ${player.firstName} ${player.lastName} inactive`}
                   >
                     Make inactive
                   </Button>
-                </td>
-              </tr>
-            );
-          })}
-        </DataTable>
+                </li>
+              );
+            })}
+          </ul>
+        )}
       </section>
 
       <section>
@@ -69,26 +62,26 @@ export function BenchEditor(props: {
         {props.inactive.length === 0 ? (
           <p className="text-sm text-zinc-500">No inactive players.</p>
         ) : (
-          <ul className="space-y-2 text-sm text-zinc-300">
+          <ul className="flex flex-wrap gap-3">
             {props.inactive.map((playerId) => {
-              const player = props.allPlayers.find(
-                (p) => p.playerId === playerId,
-              );
+              const player = find(playerId);
               if (!player) {
                 return null;
               }
               return (
-                <li
-                  key={playerId}
-                  className="flex flex-wrap items-center justify-between gap-2"
-                >
-                  <span>
-                    {player.firstName} {player.lastName} (OVR {player.overall})
-                  </span>
+                <li key={playerId} className="flex flex-col items-center gap-1">
+                  <PlayerChip
+                    player={player}
+                    portrait={props.portraits?.[playerId]}
+                    slotLabel={player.position}
+                    readOnly
+                    className="opacity-60"
+                  />
                   <Button
                     type="button"
                     variant="quiet"
                     onClick={() => props.onMoveToBench(playerId)}
+                    aria-label={`Move ${player.firstName} ${player.lastName} to bench`}
                   >
                     Move to bench
                   </Button>
