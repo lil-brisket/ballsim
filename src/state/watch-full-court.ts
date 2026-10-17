@@ -50,6 +50,11 @@ export type FullCourtFrame = Omit<CourtFrame, "shots"> & {
   /** End the current offense attacks. */
   attackingEnd: CourtEnd;
   /**
+   * End the team with the next possession (`ballSide`) will attack, in that
+   * possession's period; null once the game is over.
+   */
+  ballEnd: CourtEnd | null;
+  /**
    * Ball waypoints that bring the ball to the start of `lastPlay.path` from
    * the other end (or from centre court at tip-off): the previous ball spot,
    * the inbound spot after a make, a midcourt waypoint, then the first point
@@ -105,6 +110,33 @@ export function toFullCourt(point: CourtPoint, end: CourtEnd): FullCourtPoint {
   return end === "right"
     ? { x: round4(1 - along), y: round4(point.x) }
     : { x: round4(along), y: round4(1 - point.x) };
+}
+
+const newEndCache = new WeakMap<WatchGameView, Set<number>>();
+
+/**
+ * True when play `index` opens the game or a possession at a different end
+ * from the previous one, i.e. its frame carries a `transition` (the ball
+ * travels up the floor before the play). Playback pacing uses it.
+ */
+export function opensAtNewEnd(view: WatchGameView, index: number): boolean {
+  let starts = newEndCache.get(view);
+  if (!starts) {
+    starts = new Set<number>();
+    const groups = possessionGroups(view);
+    groups.forEach((group, i) => {
+      const previous = groups[i - 1];
+      if (
+        !previous ||
+        attackingEnd(previous.offenseSide, previous.period) !==
+          attackingEnd(group.offenseSide, group.period)
+      ) {
+        starts!.add(group.start);
+      }
+    });
+    newEndCache.set(view, starts);
+  }
+  return starts.has(index);
 }
 
 /**
@@ -210,6 +242,8 @@ export function buildFullCourtFrame(
     return { ...shot, at: toFullCourt(shot.at, shotEnd), end: shotEnd };
   });
 
+  const next = groups.find((g) => g.end > base.revealed);
+
   return {
     ...base,
     players,
@@ -219,6 +253,7 @@ export function buildFullCourtFrame(
     lastPlay,
     shots,
     attackingEnd: end,
+    ballEnd: next ? attackingEnd(next.offenseSide, next.period) : null,
     transition,
   };
 }

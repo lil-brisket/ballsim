@@ -32,6 +32,11 @@ export type CourtCamera = {
   /** Floor tilt in degrees; 0 is flat. */
   tilt: number;
   /**
+   * Scale for tokens and callouts that undoes the stage zoom, so a wide shot
+   * keeps 44px hit areas and readable labels; 1 unless zoomed out.
+   */
+  tokenScale: number;
+  /**
    * Stage `perspective-origin`: the middle of the floor on screen, so the
    * tilt reads straight on rather than leaning toward the stage centre.
    */
@@ -45,7 +50,9 @@ function round(value: number): number {
 /**
  * Camera for `view`. Broadcast follows the attacking end (`wide` frames the
  * whole floor inside the same viewport, for breaks and the final); Top-down
- * always shows the whole floor flat. `compact` (phone widths) follows tighter.
+ * always shows the whole floor flat. `compact` (phone widths) follows tighter
+ * and ignores `wide`: the whole floor at phone width stacks the 44px token
+ * hit areas on top of each other, so breaks and the final stay on the play.
  */
 export function courtCamera(
   view: CourtCameraView,
@@ -62,12 +69,13 @@ export function courtCamera(
       stageWidth: "100%",
       transform: "translate(0%, 0%) scale(1)",
       tilt: 0,
+      tokenScale: 1,
       perspectiveOrigin: "50% 50%",
     };
   }
   const aspect = `${follow} / ${width}`;
   const stageWidth = `${round((length / follow) * 100)}%`;
-  if (wide) {
+  if (wide && !compact) {
     // Shrink the floor to the viewport width and centre it vertically.
     const scale = follow / length;
     return {
@@ -76,6 +84,7 @@ export function courtCamera(
       stageWidth,
       transform: `translate(0%, ${round(((1 - scale) / 2) * 100)}%) scale(${round(scale)})`,
       tilt: BROADCAST_TILT_DEG,
+      tokenScale: round(1 / scale),
       perspectiveOrigin: "50% 50%",
     };
   }
@@ -86,6 +95,7 @@ export function courtCamera(
     stageWidth,
     transform: `translate(${round(-offset * 100)}%, 0%) scale(1)`,
     tilt: BROADCAST_TILT_DEG,
+    tokenScale: 1,
     perspectiveOrigin: `${round((offset + follow / 2 / length) * 100)}% 50%`,
   };
 }

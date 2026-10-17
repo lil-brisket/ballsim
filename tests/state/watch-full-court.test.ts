@@ -14,6 +14,7 @@ import {
   FULL_COURT_FEET,
   attackingEnd,
   buildFullCourtFrame,
+  opensAtNewEnd,
   toFullCourt,
   type FullCourtFrame,
   type FullCourtPoint,
@@ -408,6 +409,31 @@ describe("buildFullCourtFrame (recorded real game)", () => {
           attackingEnd(previous.offenseSide, previous.period) !==
             frame.attackingEnd);
       expect(frame.transition !== null).toBe(opening && endChanged);
+    });
+  });
+
+  it("flags exactly the plays whose frame carries a transition", () => {
+    for (let n = 1; n <= total; n += 1) {
+      const frame = frames[n]!;
+      const opening =
+        frame.lastPlay !== null &&
+        groups[frame.possessionIndex]?.start === frame.lastPlay.index;
+      expect(opensAtNewEnd(view, frame.lastPlay!.index)).toBe(
+        opening && frame.transition !== null,
+      );
+    }
+  });
+
+  it("points the next possession at the end that team attacks", () => {
+    frames.forEach((frame, n) => {
+      const next = groups.find((g) => g.end > n);
+      if (!next) {
+        expect(frame.ballSide).toBeNull();
+        expect(frame.ballEnd).toBeNull();
+        return;
+      }
+      expect(frame.ballSide).toBe(next.offenseSide);
+      expect(frame.ballEnd).toBe(attackingEnd(next.offenseSide, next.period));
     });
   });
 

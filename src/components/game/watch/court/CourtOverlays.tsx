@@ -19,11 +19,11 @@ export function CourtCallout(props: { text: string; at: CourtPoint }) {
   );
 }
 
-/** Period-end card over the lower court. */
+/** Period-end or final card, centred over the camera view. */
 export function CourtPeriodCard(props: { text: string }) {
   return (
     <div
-      className="court-period-card pointer-events-none absolute bottom-3 left-1/2 z-30 max-w-[90%] -translate-x-1/2 whitespace-nowrap rounded-md bg-black/80 px-3 py-1.5 text-sm font-medium text-zinc-50"
+      className="court-period-card pointer-events-none absolute left-1/2 top-1/2 z-40 max-w-[90%] -translate-x-1/2 -translate-y-1/2 whitespace-nowrap rounded-md bg-black/80 px-3 py-1.5 text-sm font-medium text-zinc-50"
       data-testid="court-period-card"
     >
       {props.text}

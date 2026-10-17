@@ -2,10 +2,8 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { CourtPlayerCard } from "@/components/game/watch/court/CourtPlayerCard";
-import {
-  CourtView,
-  type CourtStatus,
-} from "@/components/game/watch/court/CourtView";
+import type { CourtStatus } from "@/components/game/watch/court/CourtHeader";
+import { FullCourtView } from "@/components/game/watch/court/FullCourtView";
 import { KeyMomentsList } from "@/components/game/watch/KeyMomentsList";
 import { LiveBoxScore } from "@/components/game/watch/LiveBoxScore";
 import {
@@ -18,7 +16,8 @@ import { ShotSummaryPanel } from "@/components/game/watch/ShotSummaryPanel";
 import { playDelayMs } from "@/components/game/watch/playback-pacing";
 import { Panel, SectionHeading } from "@/components/ui";
 import type { PlayerId } from "@/domain/ids";
-import { buildCourtFrame, stepPossession } from "@/state/watch-court-frame";
+import { stepPossession } from "@/state/watch-court-frame";
+import { buildFullCourtFrame } from "@/state/watch-full-court";
 import {
   buildLiveBoxScore,
   periodLabel,
@@ -64,7 +63,7 @@ export function WatchGameClient(props: {
     [view, revealed],
   );
   const courtFrame = useMemo(
-    () => buildCourtFrame(view, revealed),
+    () => buildFullCourtFrame(view, revealed),
     [view, revealed],
   );
 
@@ -74,6 +73,10 @@ export function WatchGameClient(props: {
     previousPlay && nextPlay && previousPlay.period !== nextPlay.period
       ? `End of ${periodLabel(previousPlay.period)} · ${view.away.abbreviation} ${live.awayScore} – ${view.home.abbreviation} ${live.homeScore}`
       : null;
+
+  const finalCard = live.isFinal
+    ? `Final · ${view.away.abbreviation} ${live.awayScore} – ${view.home.abbreviation} ${live.homeScore}`
+    : null;
 
   const jumpTo = (next: number) => {
     setRevealed(next);
@@ -109,41 +112,41 @@ export function WatchGameClient(props: {
         onPreviousPossession={() => jumpTo(stepPossession(view, revealed, -1))}
         onNextPossession={() => jumpTo(stepPossession(view, revealed, 1))}
       />
-      <div className="grid min-w-0 gap-6 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
-        <Panel as="section" className="min-w-0 space-y-3">
-          <SectionHeading as="h2" title="Court" />
-          <CourtView
-            frame={courtFrame}
-            home={view.home}
-            away={view.away}
-            live={live}
-            status={courtStatus}
-            speed={speed}
-            periodBreak={periodBreak}
-            players={view.players}
-            selectedPlayerId={selectedPlayerId}
-            onSelectPlayer={(id) =>
-              setSelectedPlayerId((current) => (current === id ? null : id))
-            }
+      <Panel as="section" className="min-w-0 space-y-3">
+        <SectionHeading as="h2" title="Court" />
+        <FullCourtView
+          frame={courtFrame}
+          home={view.home}
+          away={view.away}
+          live={live}
+          status={courtStatus}
+          speed={speed}
+          periodBreak={periodBreak ?? finalCard}
+          wide={periodBreak !== null || live.isFinal}
+          final={live.isFinal}
+          players={view.players}
+          selectedPlayerId={selectedPlayerId}
+          onSelectPlayer={(id) =>
+            setSelectedPlayerId((current) => (current === id ? null : id))
+          }
+        />
+        {selectedPlayer && selectedRow ? (
+          <CourtPlayerCard
+            player={selectedPlayer}
+            team={selectedPlayer.side === 0 ? view.home : view.away}
+            row={selectedRow}
+            onClose={() => setSelectedPlayerId(null)}
           />
-          {selectedPlayer && selectedRow ? (
-            <CourtPlayerCard
-              player={selectedPlayer}
-              team={selectedPlayer.side === 0 ? view.home : view.away}
-              row={selectedRow}
-              onClose={() => setSelectedPlayerId(null)}
-            />
-          ) : null}
-        </Panel>
-        <div className="min-w-0 space-y-6">
-          <PlayByPlayFeed view={view} revealed={revealed} />
-          <KeyMomentsList
-            keyMoments={view.keyMoments}
-            revealed={revealed}
-            isFinal={live.isFinal}
-            onJump={(playIndex) => jumpTo(playIndex + 1)}
-          />
-        </div>
+        ) : null}
+      </Panel>
+      <div className="grid min-w-0 gap-6 lg:grid-cols-2">
+        <PlayByPlayFeed view={view} revealed={revealed} />
+        <KeyMomentsList
+          keyMoments={view.keyMoments}
+          revealed={revealed}
+          isFinal={live.isFinal}
+          onJump={(playIndex) => jumpTo(playIndex + 1)}
+        />
       </div>
       <LiveBoxScore
         live={live}

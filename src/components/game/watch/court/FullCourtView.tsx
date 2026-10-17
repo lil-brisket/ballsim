@@ -48,11 +48,14 @@ const VIEW_LABEL: Record<CourtCameraView, string> = {
   "top-down": "Top-down",
 };
 
+/** Centre logo opacity once the game is over. */
+const FINAL_LOGO_OPACITY = 0.7;
+
 const WORDMARK_CLASS =
   "pointer-events-none absolute flex items-center justify-center font-display text-sm font-semibold uppercase tracking-wide";
 
 /**
- * Full-court replay: the same tokens, ball and callouts as `CourtView` on a
+ * Full-court replay: player tokens, ball and callouts on a
  * landscape 94 × 50 ft floor painted in the home team's colours, with the
  * home wordmarks on the apron and its logo at centre court. Baselines are the
  * left and right edges, so frame (x, y) maps straight to (left, top).
@@ -76,6 +79,8 @@ export function FullCourtView(props: {
   players?: WatchPlayer[];
   /** Frame the whole floor in Broadcast (period breaks, the final). */
   wide?: boolean;
+  /** The game is over: the centre logo brightens. */
+  final?: boolean;
   className?: string;
 }) {
   const { frame, home, away, live } = props;
@@ -209,11 +214,23 @@ export function FullCourtView(props: {
     props.onShowShotChartChange?.(next);
   };
 
+  const arrow = (
+    <svg
+      aria-hidden="true"
+      viewBox="0 0 8 10"
+      className={cn(
+        "h-2.5 w-2 fill-current",
+        frame.ballEnd === "left" && "rotate-180",
+      )}
+    >
+      <path d="M0 0 L8 5 L0 10 Z" />
+    </svg>
+  );
+
   return (
     <div className={cn("space-y-2", props.className)}>
       <CourtHeader
         status={props.status}
-        ballTeam={frame.ballSide !== null ? teamOf(frame.ballSide) : null}
         showShotChart={showShotChart}
         onToggleShotChart={toggleShotChart}
         controls={
@@ -280,6 +297,24 @@ export function FullCourtView(props: {
           data-camera-view={view}
           data-camera-framing={camera.framing}
         >
+          {/* Before the floor so screen readers hear possession before the players. */}
+          {frame.ballSide !== null && frame.ballEnd !== null ? (
+            <p
+              data-testid="court-possession"
+              data-end={frame.ballEnd}
+              className="pointer-events-none absolute left-1/2 top-2 z-40 inline-flex -translate-x-1/2 items-center gap-1.5 rounded bg-black/70 px-2 py-0.5 text-sm font-medium text-zinc-50"
+            >
+              {frame.ballEnd === "left" ? arrow : null}
+              <span aria-hidden="true">
+                {teamOf(frame.ballSide).abbreviation}
+              </span>
+              {frame.ballEnd === "right" ? arrow : null}
+              <span className="sr-only">
+                Possession: {teamOf(frame.ballSide).city}{" "}
+                {teamOf(frame.ballSide).name}
+              </span>
+            </p>
+          ) : null}
           <div
             className="court-camera-stage"
             style={{
@@ -303,6 +338,7 @@ export function FullCourtView(props: {
                 {
                   backgroundColor: palette.floor,
                   "--court-tilt": `${camera.tilt}deg`,
+                  "--court-token-scale": camera.tokenScale,
                 } as CSSProperties
               }
             >
@@ -311,10 +347,13 @@ export function FullCourtView(props: {
                 <div
                   aria-hidden="true"
                   data-testid="court-centre-logo"
-                  className="pointer-events-none absolute left-1/2 top-1/2 aspect-square -translate-x-1/2 -translate-y-1/2"
+                  data-final={props.final ? "true" : undefined}
+                  className="court-centre-logo pointer-events-none absolute left-1/2 top-1/2 aspect-square -translate-x-1/2 -translate-y-1/2"
                   style={{
                     width: `calc(12 / ${LENGTH} * 100%)`,
-                    opacity: palette.logoOpacity,
+                    opacity: props.final
+                      ? FINAL_LOGO_OPACITY
+                      : palette.logoOpacity,
                   }}
                 >
                   <TeamLogoMark
@@ -330,6 +369,7 @@ export function FullCourtView(props: {
                 className="absolute inset-0 h-full w-full"
               >
                 <rect
+                  data-testid="court-lane"
                   x="0"
                   y={WIDTH / 2 - COURT_FEET.laneWidth / 2}
                   width={COURT_FEET.laneLength}
@@ -337,6 +377,7 @@ export function FullCourtView(props: {
                   fill={palette.lane}
                 />
                 <rect
+                  data-testid="court-lane"
                   x={LENGTH - COURT_FEET.laneLength}
                   y={WIDTH / 2 - COURT_FEET.laneWidth / 2}
                   width={COURT_FEET.laneLength}
@@ -455,15 +496,11 @@ export function FullCourtView(props: {
                   at={frame.ball.at}
                 />
               ) : null}
-
-              {props.periodBreak ? (
-                <CourtPeriodCard
-                  key={props.periodBreak}
-                  text={props.periodBreak}
-                />
-              ) : null}
             </div>
           </div>
+          {props.periodBreak ? (
+            <CourtPeriodCard key={props.periodBreak} text={props.periodBreak} />
+          ) : null}
         </div>
       </div>
     </div>

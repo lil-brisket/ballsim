@@ -3,7 +3,6 @@
 import type { ReactNode } from "react";
 import { Button } from "@/components/ui/Button";
 import { cn } from "@/components/ui/styles";
-import type { WatchTeam } from "@/state/watch-game-view";
 
 export type CourtStatus = "playing" | "paused" | "complete";
 
@@ -14,16 +13,14 @@ const STATUS_LABEL: Record<CourtStatus, string> = {
   complete: "Replay complete",
 };
 
-/** Status pill, possession line and shot chart toggle above the court. */
+/** Status pill, camera controls and shot chart toggle above the court. */
 export function CourtHeader(props: {
   status?: CourtStatus;
-  ballTeam: WatchTeam | null;
   showShotChart: boolean;
   onToggleShotChart: () => void;
   /** Extra controls shown before the shot chart toggle (camera view). */
   controls?: ReactNode;
 }) {
-  const { ballTeam } = props;
   const shotChartButton = (
     <Button
       variant="secondary"
@@ -53,24 +50,6 @@ export function CourtHeader(props: {
               )}
             />
             {STATUS_LABEL[props.status]}
-          </p>
-        ) : null}
-        {ballTeam ? (
-          <p
-            className="inline-flex items-center gap-1.5 text-sm text-zinc-300"
-            data-testid="court-possession"
-          >
-            <svg
-              aria-hidden="true"
-              viewBox="0 0 8 10"
-              className="h-2.5 w-2 fill-current"
-            >
-              <path d="M0 0 L8 5 L0 10 Z" />
-            </svg>
-            <span aria-hidden="true">{ballTeam.abbreviation} ball</span>
-            <span className="sr-only">
-              Possession: {ballTeam.city} {ballTeam.name}
-            </span>
           </p>
         ) : null}
       </div>

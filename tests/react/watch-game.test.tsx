@@ -24,8 +24,11 @@ import {
   TIP_OFF_MS,
   playDelayMs,
 } from "@/components/game/watch/playback-pacing";
+import { TRANSITION_MS } from "@/components/game/watch/court/court-motion";
 import { WatchGameClient } from "@/components/game/watch/WatchGameClient";
 import { WatchGameUnavailable } from "@/components/game/watch/WatchGameUnavailable";
+import { TeamThemeScope } from "@/components/ui";
+import { buildCourtPalette } from "@/state/court-palette";
 import { buildLiveBoxScore } from "@/state/watch-game-selectors";
 import type {
   WatchGameView,
@@ -488,9 +491,10 @@ describe("WatchGameClient", () => {
     });
     expect(screen.getByText(progressText(1))).toBeTruthy();
 
-    // Play 0 is a made three: it holds for the full shot pacing.
+    // Play 0 is a made three that opens the game: it holds for the full shot
+    // pacing plus the ball's trip up the floor from centre court.
     act(() => {
-      vi.advanceTimersByTime(PLAY_PACING_MS.three_made - 1);
+      vi.advanceTimersByTime(PLAY_PACING_MS.three_made + TRANSITION_MS - 1);
     });
     expect(screen.getByText(progressText(1))).toBeTruthy();
     act(() => {
@@ -620,6 +624,7 @@ describe("WatchGameClient", () => {
 describe("WatchGameClient court", () => {
   beforeEach(() => {
     vi.useFakeTimers();
+    window.localStorage.setItem("ballsim:courtView", "broadcast");
   });
   afterEach(() => {
     cleanup();
@@ -742,6 +747,89 @@ describe("WatchGameClient court", () => {
     );
     advance(1);
     expect(screen.queryByTestId("court-period-card")).toBeNull();
+  });
+
+  const ballSpot = () => {
+    const ball = screen.getByTestId("court-ball");
+    return `${ball.style.left} ${ball.style.top}`;
+  };
+  const framing = () =>
+    screen.getByTestId("court-camera").getAttribute("data-camera-framing");
+
+  it("ends on a Final card, a wide camera and a bright logo", () => {
+    renderClient();
+    fireEvent.click(button("Skip to end"));
+    expect(screen.getByTestId("court-period-card").textContent).toBe(
+      `Final · AWY ${VIEW.finalScore.away} – HOM ${VIEW.finalScore.home}`,
+    );
+    expect(framing()).toBe("wide");
+    expect(
+      screen.getByTestId("court-centre-logo").getAttribute("data-final"),
+    ).toBe("true");
+    expect(screen.queryByTestId("court-possession")).toBeNull();
+  });
+
+  it("lands on the same court after restart and skip as after playing through", () => {
+    renderClient();
+    fireEvent.click(button("Play"));
+    advance(PLAYS.length);
+    expect(screen.getByText(progressText(PLAYS.length))).toBeTruthy();
+    const stepped = { labels: tokenLabels(), ball: ballSpot() };
+    fireEvent.click(button("Restart"));
+    fireEvent.click(button("Skip to end"));
+    expect({ labels: tokenLabels(), ball: ballSpot() }).toEqual(stepped);
+  });
+
+  it("frames the whole floor during the end-of-Q1 break, then follows", () => {
+    renderClient();
+    fireEvent.click(button("Play"));
+    advance(7);
+    expect(framing()).toBe("follow");
+    advance(1);
+    expect(screen.getByTestId("court-period-card")).toBeTruthy();
+    expect(framing()).toBe("wide");
+    advance(1);
+    expect(framing()).toBe("follow");
+  });
+
+  it("switching camera view keeps the reveal position and playback", () => {
+    renderClient();
+    fireEvent.click(button("Play"));
+    advance(3);
+    fireEvent.click(button("Top-down"));
+    expect(
+      screen.getByTestId("court-camera").getAttribute("data-camera-view"),
+    ).toBe("top-down");
+    expect(screen.getByText(progressText(3))).toBeTruthy();
+    expect(button("Pause")).toBeTruthy();
+    fireEvent.click(button("Broadcast"));
+    expect(screen.getByText(progressText(3))).toBeTruthy();
+    expect(button("Pause")).toBeTruthy();
+  });
+
+  it("paints the home floor whatever theme scope the viewer is in", () => {
+    render(
+      <TeamThemeScope
+        branding={{
+          primaryColor: "#C8102E",
+          secondaryColor: "#F2F0E6",
+          accentColor: "#1D6B44",
+        }}
+      >
+        <WatchGameClient view={VIEW} saveId="save_test" />
+      </TeamThemeScope>,
+    );
+    const lane = buildCourtPalette(
+      VIEW.home.hasBranding ? VIEW.home.branding : null,
+    ).lane;
+    const lanes = screen.getAllByTestId("court-lane");
+    expect(lanes).toHaveLength(2);
+    for (const rect of lanes) {
+      expect(rect.getAttribute("fill")).toBe(lane);
+    }
+    expect(
+      screen.getByRole("group", { name: "Court, Harbor Waves home floor" }),
+    ).toBeTruthy();
   });
 
   it("reaches the same court by skipping as by stepping possessions", () => {
