@@ -71,7 +71,7 @@ function ColorChannelField(props: {
     <div className="space-y-1.5">
       <label
         htmlFor={`team-color-${props.channel}-hex`}
-        className="text-[10px] font-semibold uppercase tracking-wide text-zinc-400"
+        className="text-sm font-medium text-zinc-300"
       >
         {props.label}
       </label>
@@ -105,7 +105,7 @@ function ColorChannelField(props: {
               event.currentTarget.blur();
             }
           }}
-          className="min-w-0 flex-1 rounded-md border border-zinc-700 bg-zinc-950 px-2 py-1.5 font-mono text-xs uppercase text-zinc-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-team-ink"
+          className="min-w-0 flex-1 rounded-md border border-zinc-700 bg-zinc-950 px-2 py-1.5 font-mono text-sm uppercase text-zinc-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-team-ink"
         />
       </div>
     </div>

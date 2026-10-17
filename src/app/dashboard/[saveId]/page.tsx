@@ -151,7 +151,7 @@ export default async function DashboardPage({
       ) : null}
 
       {dash.tradeInbox.totalPending > 1 ? (
-        <p className="text-xs text-warning/80">
+        <p className="text-sm text-warning/80">
           {dash.tradeInbox.totalPending} trade offers pending
           {dash.tradeInbox.pendingForActiveTeam > 0
             ? ` (${dash.tradeInbox.pendingForActiveTeam} for this team)`
@@ -237,7 +237,7 @@ export default async function DashboardPage({
       />
 
       <details className="rounded-xl border border-zinc-800 bg-zinc-900/30 px-4 py-3">
-        <summary className="cursor-pointer font-mono text-[0.65rem] uppercase tracking-[0.16em] text-zinc-500">
+        <summary className="cursor-pointer text-sm text-zinc-400">
           Phase details (optional)
         </summary>
         <div className="mt-4">

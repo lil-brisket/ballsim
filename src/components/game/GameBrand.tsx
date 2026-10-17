@@ -47,7 +47,7 @@ export function GameBrand(props: GameBrandProps) {
         }
       />
       <div className={splash ? "text-center" : ""}>
-        <p className="font-mono text-xs uppercase tracking-[0.3em] text-team-ink">
+        <p className="text-xs font-semibold uppercase tracking-[0.3em] text-team-ink">
           Basketball
         </p>
         <h1

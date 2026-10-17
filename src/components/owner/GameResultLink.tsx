@@ -34,7 +34,7 @@ export function GameResultLink({
     >
       {children}
       {showHint ? (
-        <span className="ml-2 text-xs text-zinc-600 group-hover:text-zinc-500">
+        <span className="ml-2 text-sm text-zinc-600 group-hover:text-zinc-500">
           Box score →
         </span>
       ) : null}

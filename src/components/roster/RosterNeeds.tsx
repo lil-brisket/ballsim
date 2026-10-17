@@ -2,6 +2,7 @@ import type {
   RosterNeed,
   RosterNeedLevel,
 } from "@/state/roster-page-selectors";
+import { SectionHeading } from "@/components/ui/SectionHeading";
 import { cn, panelClass } from "@/components/ui/styles";
 
 const LEVEL_TONE: Record<RosterNeedLevel, string> = {
@@ -25,9 +26,7 @@ export function RosterNeeds(props: { needs: RosterNeed[] }) {
 
   return (
     <section className={cn(panelClass, "px-4 py-3")} aria-label="Roster needs">
-      <h2 className="font-mono text-[0.65rem] uppercase tracking-[0.16em] text-zinc-500">
-        Roster Needs
-      </h2>
+      <SectionHeading title="Roster Needs" />
       <ul className="mt-3 flex flex-wrap gap-x-6 gap-y-2">
         {props.needs.map((need) => (
           <li
@@ -35,7 +34,7 @@ export function RosterNeeds(props: { needs: RosterNeed[] }) {
             className="min-w-[5.5rem]"
             title={need.explanation}
           >
-            <span className="font-mono text-sm text-team-ink">
+            <span className="text-sm font-semibold text-team-ink">
               {need.position}
             </span>
             <span

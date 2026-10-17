@@ -61,9 +61,7 @@ function ActiveFranchiseLabel(props: {
           {active.city} {active.name}
         </span>
         {canSwitchTeams ? (
-          <span className="block font-mono text-[0.65rem] uppercase tracking-[0.16em] text-zinc-500">
-            Switch franchise
-          </span>
+          <span className="block text-sm text-zinc-400">Switch franchise</span>
         ) : null}
       </span>
     </>
@@ -176,7 +174,7 @@ export function OwnerTeamSwitcher(props: {
           aria-label="Owned franchises"
           className="absolute left-0 z-[46] mt-2 w-[min(20rem,calc(100vw-2rem))] rounded-xl border border-surface-line bg-surface-arena p-2 shadow-arena"
         >
-          <p className="px-2 py-1 font-mono text-[0.65rem] uppercase tracking-[0.16em] text-team-ink">
+          <p className="px-2 py-1 text-sm font-medium text-team-ink">
             My Franchises
           </p>
           <ul className="space-y-1">
@@ -200,7 +198,7 @@ export function OwnerTeamSwitcher(props: {
                       <span aria-hidden>{team.isActive ? "● " : "○ "}</span>
                       {team.city} {team.name}
                     </span>
-                    <span className="block text-xs text-zinc-500">
+                    <span className="block text-sm text-zinc-500">
                       {team.wins}-{team.losses}
                       {team.blockingDecisionCount > 0
                         ? ` · ⚠ ${team.blockingDecisionCount}`

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { formatGameDate } from "@/presentation/game-date";
 import { buttonClass } from "@/components/ui/Button";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -47,7 +48,7 @@ export default async function GameDayEventPage({
     <>
       <PageHeader
         title="Game-Day Event"
-        subtitle={`${view.home ? "vs" : "@"} ${view.opponentName} · ${view.date}`}
+        subtitle={`${view.home ? "vs" : "@"} ${view.opponentName} · ${formatGameDate(view.date, { weekday: true })}`}
       />
       <p className="mb-4 text-sm text-zinc-500">
         <Link
@@ -61,21 +62,21 @@ export default async function GameDayEventPage({
 
       <section className="mb-6 grid gap-3 sm:grid-cols-3">
         <div className="rounded-lg border border-zinc-800 bg-zinc-950/60 p-3">
-          <div className="text-xs text-zinc-500">Business cash</div>
+          <div className="text-sm text-zinc-400">Business cash</div>
           <div className="text-lg text-zinc-100">
             <MoneyDisplay amount={view.businessFunds} />
           </div>
         </div>
         <div className="rounded-lg border border-zinc-800 bg-zinc-950/60 p-3">
-          <div className="text-xs text-zinc-500">Committed promotions</div>
+          <div className="text-sm text-zinc-400">Committed promotions</div>
           <div className="text-lg text-zinc-100">
             <MoneyDisplay amount={view.committedSpend} />
           </div>
         </div>
         <div className="rounded-lg border border-zinc-800 bg-zinc-950/60 p-3">
-          <div className="text-xs text-zinc-500">Matchup</div>
+          <div className="text-sm text-zinc-400">Matchup</div>
           <div className="text-lg text-zinc-100">
-            {view.home ? "HOME" : "AWAY"} · {view.status}
+            {view.home ? "Home" : "Away"} · {view.status}
           </div>
         </div>
       </section>
@@ -228,7 +229,7 @@ export default async function GameDayEventPage({
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div className="min-w-0 flex-1">
                     <div className="font-medium text-zinc-100">{item.name}</div>
-                    <div className="mt-1 text-xs uppercase tracking-wide text-zinc-500">
+                    <div className="mt-1 text-sm capitalize text-zinc-500">
                       {item.category.replaceAll("_", " ")} · {item.leadTimeDays}
                       d lead · <MoneyDisplay amount={item.cost} />
                     </div>
@@ -249,7 +250,7 @@ export default async function GameDayEventPage({
                       </p>
                     ) : null}
                     {!item.available && item.reason ? (
-                      <p className="mt-2 text-xs text-rose-400">
+                      <p className="mt-2 text-sm text-rose-400">
                         {item.reason}
                       </p>
                     ) : null}

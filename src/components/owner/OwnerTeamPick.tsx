@@ -38,18 +38,18 @@ export function OwnerTeamPick(props: {
                   />
                 </span>
               ) : (
-                <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-team-ink/50 bg-team/20 font-mono text-xs font-semibold text-team-ink">
+                <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-team-ink/50 bg-team/20 text-sm font-semibold text-team-ink">
                   {team.abbreviation}
                 </span>
               )}
               <div className="min-w-0">
                 <p className="font-medium text-zinc-100">
                   {team.city} {team.name}{" "}
-                  <span className="font-mono text-xs text-zinc-500">
+                  <span className="text-sm text-zinc-400">
                     ({team.abbreviation})
                   </span>
                 </p>
-                <p className="text-xs text-zinc-500">
+                <p className="text-sm text-zinc-500">
                   {team.conferenceName} · {team.divisionName}
                 </p>
               </div>

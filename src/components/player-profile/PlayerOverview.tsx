@@ -21,16 +21,14 @@ function FormDelta(props: { label: string; recent: number; season: number }) {
   const arrow = Math.abs(diff) < 0.3 ? "→" : diff > 0 ? "↑" : "↓";
   return (
     <div className={panelClass}>
-      <p className="font-mono text-[0.65rem] uppercase tracking-[0.14em] text-zinc-400">
-        {props.label}
-      </p>
-      <p className="font-mono text-sm text-zinc-100">
+      <p className="text-sm text-zinc-400">{props.label}</p>
+      <p className="tabular-nums text-sm text-zinc-100">
         {props.recent.toFixed(1)}{" "}
         <span className={tone}>
           {arrow} {Math.abs(diff).toFixed(1)}
         </span>
       </p>
-      <p className="text-[10px] text-zinc-500">
+      <p className="text-sm text-zinc-500">
         vs {props.season.toFixed(1)} season
       </p>
     </div>
@@ -123,7 +121,9 @@ export function PlayerOverview(props: {
                   className={`${panelClass} flex items-center justify-between text-sm`}
                 >
                   <span className="text-zinc-100">{item.label}</span>
-                  <span className="font-mono text-team-ink">{item.rating}</span>
+                  <span className="tabular-nums text-team-ink">
+                    {item.rating}
+                  </span>
                 </li>
               ))}
             </ul>
@@ -140,7 +140,9 @@ export function PlayerOverview(props: {
                   className={`${panelClass} flex items-center justify-between text-sm`}
                 >
                   <span className="text-zinc-100">{item.label}</span>
-                  <span className="font-mono text-zinc-400">{item.rating}</span>
+                  <span className="tabular-nums text-zinc-400">
+                    {item.rating}
+                  </span>
                 </li>
               ))}
             </ul>
@@ -152,10 +154,12 @@ export function PlayerOverview(props: {
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">
           {player.keyAttributes.map((entry) => (
             <div key={entry.attribute} className={panelClass}>
-              <p className="font-mono text-[0.65rem] uppercase tracking-[0.14em] text-zinc-400">
+              <p className="text-sm text-zinc-400">
                 {formatAttributeLabel(entry.attribute)}
               </p>
-              <p className="font-mono text-lg text-team-ink">{entry.rating}</p>
+              <p className="tabular-nums text-lg text-team-ink">
+                {entry.rating}
+              </p>
             </div>
           ))}
         </div>
@@ -170,7 +174,7 @@ export function PlayerOverview(props: {
                 className={panelClass}
               >
                 <span className="text-zinc-100">{award.displayName}</span>
-                <span className="ml-2 font-mono text-team-ink">
+                <span className="ml-2 tabular-nums text-team-ink">
                   {award.periodLabel
                     ? award.periodLabel
                     : String(award.seasonYear)}
@@ -182,7 +186,7 @@ export function PlayerOverview(props: {
             ))}
           </ul>
           {player.awardCareerTotals.length > 0 ? (
-            <p className="mt-3 text-xs text-zinc-500">
+            <p className="mt-3 text-sm text-zinc-500">
               {player.awardCareerTotals
                 .map((t) => `${t.count}× ${t.shortLabel}`)
                 .join(" · ")}

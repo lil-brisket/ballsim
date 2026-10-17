@@ -121,12 +121,12 @@ export default async function DevelopmentLeaguePage({
                   <PlayerEntityLink saveId={saveId} playerId={p.playerId}>
                     {p.name}
                   </PlayerEntityLink>
-                  <span className="font-mono text-emerald-300">
+                  <span className="tabular-nums text-emerald-300">
                     {p.changeDelta !== null && p.changeDelta > 0
                       ? `+${p.changeDelta}`
                       : p.changeDelta}
                     {p.changeLabel ? (
-                      <span className="ml-2 text-xs text-zinc-600">
+                      <span className="ml-2 text-sm text-zinc-600">
                         {p.changeLabel}
                       </span>
                     ) : null}
@@ -145,7 +145,7 @@ export default async function DevelopmentLeaguePage({
                   <PlayerEntityLink saveId={saveId} playerId={p.playerId}>
                     {p.name}
                   </PlayerEntityLink>
-                  <span className="font-mono text-xs">
+                  <span className="tabular-nums text-sm">
                     {p.ppg !== null ? `${p.ppg.toFixed(1)} PPG` : "—"}
                     {p.rpg !== null ? ` · ${p.rpg.toFixed(1)} RPG` : ""}
                     {p.apg !== null ? ` · ${p.apg.toFixed(1)} APG` : ""}
@@ -165,7 +165,7 @@ export default async function DevelopmentLeaguePage({
 
       <DlAssignSection>
         <Section title="Assign from roster">
-          <p className="text-xs text-zinc-600">
+          <p className="text-sm text-zinc-600">
             Assignment is optional. Use this list when a prospect needs
             Development League minutes; day-to-day management is not required
             here.

@@ -16,17 +16,17 @@ export function StatGroups(props: {
             aria-label={group.title}
             className="rounded-lg border border-zinc-800 bg-zinc-900/40 p-3"
           >
-            <h3 className="mb-2 font-mono text-[0.65rem] uppercase tracking-[0.18em] text-team-ink">
+            <h3 className="mb-2 text-sm font-semibold text-team-ink">
               {group.title}
             </h3>
             <dl className="grid grid-cols-2 gap-x-3 gap-y-2 sm:grid-cols-3">
               {group.items.map((item) => (
                 <div key={item.key} className="min-w-0">
-                  <dt className="font-mono text-[0.65rem] uppercase tracking-[0.12em] text-zinc-400">
+                  <dt className="text-sm text-zinc-400">
                     {item.label}
                     {item.key === "gs" ? <sup aria-hidden> ‡</sup> : null}
                   </dt>
-                  <dd className="font-mono text-base tabular-nums text-zinc-100">
+                  <dd className="text-base tabular-nums text-zinc-100">
                     {item.value}
                   </dd>
                 </div>

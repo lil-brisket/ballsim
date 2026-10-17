@@ -11,6 +11,7 @@ import {
   TEAM_LOGO_CATEGORIES,
   getLogosByCategory,
 } from "@/data/team-branding/logo-catalog";
+import { SectionHeading } from "@/components/ui/SectionHeading";
 
 const PREVIEW = {
   primaryColor: "#0B1F3A",
@@ -21,9 +22,7 @@ const PREVIEW = {
 export default function LogoShowcasePage() {
   return (
     <main className="min-h-screen bg-zinc-950 px-6 py-8 text-zinc-100">
-      <h1 className="text-2xl font-semibold tracking-tight text-zinc-500">
-        Franchise Logo Showcase
-      </h1>
+      <SectionHeading as="h1" size="lg" title="Franchise Logo Showcase" />
       <p className="mt-2 max-w-2xl text-sm text-zinc-400">
         Visual QA for all {TEAM_LOGO_CATALOG.length} catalog logos. Review
         silhouette distinction, weight, and readability at small sizes. Not
@@ -35,10 +34,10 @@ export default function LogoShowcasePage() {
           const logos = getLogosByCategory(category.id);
           return (
             <section key={category.id}>
-              <h2 className="mb-3 text-xs font-semibold uppercase tracking-wide text-zinc-500">
-                {category.label}{" "}
-                <span className="text-zinc-500">({logos.length})</span>
-              </h2>
+              <SectionHeading
+                title={`${category.label} (${logos.length})`}
+                className="mb-3"
+              />
               <div className="grid grid-cols-4 gap-3 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10">
                 {logos.map((logo) => (
                   <div
@@ -53,10 +52,10 @@ export default function LogoShowcasePage() {
                       className="h-12 w-12"
                       title={logo.label}
                     />
-                    <span className="text-center text-[10px] text-zinc-400">
+                    <span className="text-center text-sm text-zinc-400">
                       {logo.label}
                     </span>
-                    <span className="text-center font-mono text-[9px] text-zinc-600">
+                    <span className="text-center text-sm text-zinc-500">
                       {logo.id}
                     </span>
                   </div>

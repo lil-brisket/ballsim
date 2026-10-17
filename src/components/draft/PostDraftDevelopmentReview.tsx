@@ -1,3 +1,4 @@
+import { SectionHeading } from "@/components/ui/SectionHeading";
 import { assignToDevelopmentLeagueAction } from "@/application/actions";
 import { buttonClass } from "@/components/ui/Button";
 import type { DraftDlRecommendation } from "@/systems/development-league/recommendations";
@@ -18,9 +19,7 @@ export function PostDraftDevelopmentReview(props: {
 
   return (
     <section className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-4">
-      <h2 className="text-lg font-semibold text-zinc-100">
-        Development Opportunities
-      </h2>
+      <SectionHeading title="Development opportunities" />
       <p className="mt-1 text-sm text-zinc-400">
         You drafted {review.totalDrafted} player
         {review.totalDrafted === 1 ? "" : "s"} this year.{" "}
@@ -38,11 +37,11 @@ export function PostDraftDevelopmentReview(props: {
             <div className="flex flex-wrap items-center justify-between gap-2">
               <div>
                 <p className="font-medium">{row.name}</p>
-                <p className="text-xs text-zinc-500">
+                <p className="text-sm text-zinc-500">
                   {row.overall} OVR / {row.potential} POT · Proj.{" "}
                   {Math.round(row.projectedMpg)} MPG
                 </p>
-                <p className="mt-1 text-xs text-zinc-400">
+                <p className="mt-1 text-sm text-zinc-400">
                   {row.recommendation === "development_league"
                     ? "Recommended: Development League"
                     : "Keep on top-league roster"}

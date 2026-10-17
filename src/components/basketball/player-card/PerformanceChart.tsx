@@ -2,6 +2,7 @@
 
 import { Select } from "@/components/ui/Select";
 import { Button } from "@/components/ui/Button";
+import { formatGameDate } from "@/presentation/game-date";
 import { useEffect, useState } from "react";
 import {
   CartesianGrid,
@@ -165,19 +166,19 @@ export function PerformanceChart(props: {
               <XAxis
                 dataKey="x"
                 stroke="#71717a"
-                tick={{ fill: "#a1a1aa", fontSize: 11 }}
+                tick={{ fill: "#a1a1aa", fontSize: 12 }}
                 allowDecimals={false}
                 label={{
                   value: xLabel,
                   position: "insideBottom",
                   offset: -10,
                   fill: "#a1a1aa",
-                  fontSize: 11,
+                  fontSize: 12,
                 }}
               />
               <YAxis
                 stroke="#71717a"
-                tick={{ fill: "#a1a1aa", fontSize: 11 }}
+                tick={{ fill: "#a1a1aa", fontSize: 12 }}
                 width={40}
                 domain={isPct ? [0, 100] : [0, "auto"]}
                 label={{
@@ -185,7 +186,7 @@ export function PerformanceChart(props: {
                   angle: -90,
                   position: "insideLeft",
                   fill: "#a1a1aa",
-                  fontSize: 11,
+                  fontSize: 12,
                 }}
               />
               <Tooltip
@@ -200,11 +201,11 @@ export function PerformanceChart(props: {
                   const item = payload?.[0]?.payload as Row | undefined;
                   if (!item) return "";
                   return seasonScope
-                    ? `Game ${item.x}: ${item.date ?? ""} vs ${item.opponent ?? ""}`
+                    ? `Game ${item.x}: ${item.date ? formatGameDate(item.date) : ""} vs ${item.opponent ?? ""}`
                     : `Season ${item.x}`;
                 }}
               />
-              <Legend wrapperStyle={{ fontSize: 11 }} verticalAlign="top" />
+              <Legend wrapperStyle={{ fontSize: 12 }} verticalAlign="top" />
               {careerAvg != null ? (
                 <ReferenceLine
                   y={careerAvg}
@@ -296,10 +297,7 @@ export function PerformanceChart(props: {
   return (
     <div className="space-y-3">
       <div className="flex flex-col gap-1">
-        <label
-          htmlFor={selectId}
-          className="font-mono text-[0.65rem] uppercase tracking-[0.14em] text-zinc-400"
-        >
+        <label htmlFor={selectId} className="text-sm text-zinc-400">
           Chart metric
         </label>
         <Select

@@ -13,6 +13,7 @@ import type {
 } from "@/state/franchise-health";
 import { formatDimensionStatus, trendSymbol } from "@/state/franchise-health";
 import type { FranchiseValueDriverKey } from "@/state/franchise-value";
+import { SectionHeading } from "@/components/ui/SectionHeading";
 import { MoneyDisplay } from "@/components/owner/MoneyDisplay";
 import {
   HealthToneBadge,
@@ -104,7 +105,7 @@ function DimensionRow(props: {
           : "hover:bg-zinc-800/40"
       }`}
     >
-      <span className="font-mono text-[0.65rem] uppercase tracking-[0.14em] text-zinc-400">
+      <span className="text-sm text-zinc-400">
         {DIMENSION_TITLE[props.dimensionKey]}
       </span>
       <span className="flex items-baseline gap-2 tabular-nums">
@@ -144,14 +145,14 @@ function DriverList(props: { drivers: HealthDriver[] }) {
     <div className="grid gap-4 sm:grid-cols-2">
       {positive.length > 0 ? (
         <div>
-          <p className="mb-1.5 font-mono text-[0.65rem] uppercase tracking-[0.14em] text-emerald-500/80">
+          <p className="mb-1.5 text-sm font-medium text-emerald-400">
             Positive
           </p>
           <ul className="space-y-2">
             {positive.map((driver) => (
               <li key={driver.key} className="text-sm text-zinc-300">
                 <span className="text-zinc-100">{driver.label}</span>
-                <span className="mt-0.5 block text-xs text-zinc-500">
+                <span className="mt-0.5 block text-sm text-zinc-500">
                   {driver.explanation}
                 </span>
               </li>
@@ -161,14 +162,12 @@ function DriverList(props: { drivers: HealthDriver[] }) {
       ) : null}
       {negative.length > 0 ? (
         <div>
-          <p className="mb-1.5 font-mono text-[0.65rem] uppercase tracking-[0.14em] text-rose-400/80">
-            Negative
-          </p>
+          <p className="mb-1.5 text-sm font-medium text-rose-400">Negative</p>
           <ul className="space-y-2">
             {negative.map((driver) => (
               <li key={driver.key} className="text-sm text-zinc-300">
                 <span className="text-zinc-100">{driver.label}</span>
-                <span className="mt-0.5 block text-xs text-zinc-500">
+                <span className="mt-0.5 block text-sm text-zinc-500">
                   {driver.explanation}
                 </span>
               </li>
@@ -200,14 +199,12 @@ export function FranchiseHealthPanel(props: {
     <section aria-label="Franchise health" className="space-y-5">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <p className="font-mono text-xs uppercase tracking-[0.16em] text-team-ink">
-            Franchise health
-          </p>
-          <h2
-            className={`mt-1 text-2xl font-medium ${conditionToneClass(fh.condition)}`}
+          <SectionHeading title="Franchise health" />
+          <p
+            className={`mt-3 text-2xl font-medium ${conditionToneClass(fh.condition)}`}
           >
             {formatDimensionStatus(fh.condition)}
-          </h2>
+          </p>
           <p className="mt-2 max-w-xl text-sm leading-relaxed text-zinc-400">
             {fh.summary}
           </p>
@@ -242,11 +239,11 @@ export function FranchiseHealthPanel(props: {
         {selected && selectedDimension ? (
           <div className="mt-4 border-t border-zinc-800 pt-4">
             <div className="mb-3 flex flex-wrap items-baseline justify-between gap-2">
-              <p className="font-mono text-[0.65rem] uppercase tracking-[0.16em] text-zinc-500">
+              <p className="text-sm font-medium text-zinc-300">
                 {DIMENSION_TITLE[selected]} — {selectedDimension.score}{" "}
                 {trendSymbol(selectedDimension.trend)}
               </p>
-              <p className="text-xs text-zinc-500">
+              <p className="text-sm text-zinc-500">
                 {formatDimensionStatus(selectedDimension.status)}
               </p>
             </div>
@@ -257,25 +254,19 @@ export function FranchiseHealthPanel(props: {
 
       <div className="grid gap-3 sm:grid-cols-3">
         <div className="rounded-xl border border-zinc-800 bg-zinc-900/40 px-4 py-3">
-          <p className="font-mono text-[0.65rem] uppercase tracking-[0.16em] text-zinc-500">
-            Biggest strength
-          </p>
+          <p className="text-sm text-zinc-400">Biggest strength</p>
           <p className="mt-1 text-sm text-zinc-100">
             {fh.biggestStrength?.label ?? "—"}
           </p>
         </div>
         <div className="rounded-xl border border-zinc-800 bg-zinc-900/40 px-4 py-3">
-          <p className="font-mono text-[0.65rem] uppercase tracking-[0.16em] text-zinc-500">
-            Biggest risk
-          </p>
+          <p className="text-sm text-zinc-400">Biggest risk</p>
           <p className="mt-1 text-sm text-zinc-100">
             {fh.biggestRisk?.label ?? "—"}
           </p>
         </div>
         <div className="rounded-xl border border-zinc-800 bg-zinc-900/40 px-4 py-3 sm:col-span-1">
-          <p className="font-mono text-[0.65rem] uppercase tracking-[0.16em] text-zinc-500">
-            Primary driver
-          </p>
+          <p className="text-sm text-zinc-400">Primary driver</p>
           <p className="mt-1 text-sm leading-snug text-zinc-300">
             {fh.primaryDriver ?? "—"}
           </p>
@@ -283,7 +274,7 @@ export function FranchiseHealthPanel(props: {
       </div>
 
       <details className="group rounded-xl border border-zinc-800 bg-zinc-900/30">
-        <summary className="cursor-pointer list-none px-4 py-3 font-mono text-[0.65rem] uppercase tracking-[0.16em] text-zinc-500 marker:content-none [&::-webkit-details-marker]:hidden">
+        <summary className="cursor-pointer list-none px-4 py-3 text-sm text-zinc-400 marker:content-none [&::-webkit-details-marker]:hidden">
           Supporting metrics
           <span className="ml-2 text-zinc-600 group-open:hidden">Show</span>
           <span className="ml-2 hidden text-zinc-600 group-open:inline">
@@ -292,9 +283,7 @@ export function FranchiseHealthPanel(props: {
         </summary>
         <div className="space-y-4 border-t border-zinc-800 px-4 py-4">
           <div>
-            <p className="mb-2 text-xs font-medium uppercase tracking-wide text-zinc-500">
-              Financial
-            </p>
+            <p className="mb-2 text-sm font-medium text-zinc-300">Financial</p>
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
               <MoneyMetric
                 label="Cash"
@@ -313,7 +302,7 @@ export function FranchiseHealthPanel(props: {
             </div>
           </div>
           <div>
-            <p className="mb-2 text-xs font-medium uppercase tracking-wide text-zinc-500">
+            <p className="mb-2 text-sm font-medium text-zinc-300">
               Demand / fans
             </p>
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -351,9 +340,7 @@ export function FranchiseHealthPanel(props: {
 
       {props.insights.length > 0 ? (
         <div className="space-y-2 rounded-xl border border-zinc-800 bg-zinc-900/40 px-4 py-3">
-          <p className="font-mono text-[0.65rem] uppercase tracking-[0.16em] text-zinc-500">
-            Observations
-          </p>
+          <p className="text-sm text-zinc-400">Observations</p>
           <ul className="space-y-2">
             {props.insights.map((insight) => (
               <li key={insight.id} className="text-sm text-zinc-300">

@@ -24,10 +24,7 @@ export default async function LineupsPage({ params, searchParams }: PageProps) {
   return (
     <>
       <TeamHubSubNav saveId={saveId} active="lineupRotation" />
-      <PageHeader
-        title="Lineup & Rotation"
-        subtitle="Starting five, minutes, roles, and closing lineup"
-      />
+      <PageHeader title="Lineup & Rotation" />
       {error ? <ErrorState message={error} /> : null}
       <LineupRotationEditor
         saveId={saveId}

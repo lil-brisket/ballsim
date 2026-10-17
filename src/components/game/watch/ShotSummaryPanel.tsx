@@ -1,4 +1,5 @@
 import { DataTable, Section } from "@/components/ui";
+import { SectionHeading } from "@/components/ui/SectionHeading";
 import { periodLabel } from "@/state/watch-game-selectors";
 import type {
   ShotLine,
@@ -24,7 +25,7 @@ function TeamShotCard(props: { team: WatchTeam; line: ShotLine }) {
   ];
   return (
     <div className="min-w-0 space-y-2">
-      <h3 className="font-display text-lg font-bold uppercase tracking-wide text-zinc-100">
+      <h3 className="text-sm font-semibold text-zinc-100">
         {props.team.abbreviation}
       </h3>
       <DataTable
@@ -43,7 +44,7 @@ function TeamShotCard(props: { team: WatchTeam; line: ShotLine }) {
           </tr>
         ))}
       </DataTable>
-      <p className="font-mono text-xs text-zinc-400">
+      <p className="text-sm tabular-nums text-zinc-400">
         Points {line.points} · Assisted{" "}
         {line.fgm === 0
           ? "—"
@@ -68,7 +69,7 @@ export function ShotSummaryPanel(props: {
 
   return (
     <Section title="Shot summary">
-      <p className="text-xs text-zinc-500">
+      <p className="text-sm text-zinc-500">
         Shot locations aren&apos;t tracked by the simulation, so this is a
         shot-type summary rather than a shot chart.
       </p>
@@ -77,9 +78,7 @@ export function ShotSummaryPanel(props: {
         <TeamShotCard team={view.home} line={summary.home.total} />
       </div>
 
-      <h3 className="font-display text-lg font-bold uppercase tracking-wide text-zinc-100">
-        By quarter
-      </h3>
+      <SectionHeading as="h3" title="By quarter" />
       <DataTable
         headers={[
           "Period",
@@ -125,9 +124,7 @@ export function ShotSummaryPanel(props: {
         })}
       </DataTable>
 
-      <h3 className="font-display text-lg font-bold uppercase tracking-wide text-zinc-100">
-        Top scorers
-      </h3>
+      <SectionHeading as="h3" title="Top scorers" />
       {top.length === 0 ? (
         <p className="text-sm text-zinc-500">No points scored yet.</p>
       ) : (
@@ -139,13 +136,13 @@ export function ShotSummaryPanel(props: {
             >
               <span className="min-w-0 truncate text-zinc-100">
                 {playerName.get(entry.playerId) ?? entry.playerId}{" "}
-                <span className="font-mono text-xs text-zinc-500">
+                <span className="text-sm text-zinc-500">
                   {entry.side === 0
                     ? view.home.abbreviation
                     : view.away.abbreviation}
                 </span>
               </span>
-              <span className="shrink-0 font-mono text-xs tabular-nums text-zinc-300">
+              <span className="shrink-0 font-mono text-sm tabular-nums text-zinc-300">
                 {entry.line.points} PTS · FG{" "}
                 {shotCell(entry.line.fgm, entry.line.fga)} · 3PT{" "}
                 {shotCell(entry.line.threePm, entry.line.threePa)}

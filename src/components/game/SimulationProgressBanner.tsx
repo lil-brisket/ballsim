@@ -4,6 +4,8 @@
  * callers stream progress (or after a completed advance).
  */
 
+import { formatGameDate } from "@/presentation/game-date";
+
 export type SimulationProgressBannerProps = {
   seasonYear: number;
   phase: string;
@@ -31,7 +33,7 @@ export function SimulationProgressBanner(props: SimulationProgressBannerProps) {
         {props.busy ? "Simulating" : "Last advance"} — Season {props.seasonYear}
       </p>
       <p className="mt-1 text-zinc-200">
-        {props.phase} · {props.currentDate}
+        {props.phase} · {formatGameDate(props.currentDate, { weekday: true })}
         {props.daysAdvanced != null && props.daysRequested != null
           ? ` · Day ${props.daysAdvanced} / ${props.daysRequested}`
           : null}
@@ -50,7 +52,7 @@ export function SimulationProgressBanner(props: SimulationProgressBannerProps) {
               style={{ width: `${percent}%` }}
             />
           </div>
-          <p className="mt-1 text-xs text-team-ink/80">{percent}% complete</p>
+          <p className="mt-1 text-sm text-team-ink/80">{percent}% complete</p>
         </div>
       ) : null}
     </div>

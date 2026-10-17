@@ -49,7 +49,7 @@ export function ProspectCard(props: ProspectCardProps) {
                 {props.firstName} {props.lastName}
               </PlayerEntityLink>
             </h3>
-            <p className="text-xs text-zinc-500">
+            <p className="text-sm text-zinc-500">
               {props.position}
               {props.age != null ? ` · Age ${props.age}` : ""}
               {props.nationality ? ` · ${props.nationality}` : ""}
@@ -60,13 +60,11 @@ export function ProspectCard(props: ProspectCardProps) {
           <div className="text-lg font-semibold text-team-ink">
             {props.scoutGrade ?? "—"}
           </div>
-          <div className="text-[10px] uppercase tracking-wide text-zinc-500">
-            Scout Grade
-          </div>
+          <div className="text-sm text-zinc-500">Scout Grade</div>
         </div>
       </header>
 
-      <dl className="mt-2 grid grid-cols-2 gap-2 text-xs text-zinc-400">
+      <dl className="mt-2 grid grid-cols-2 gap-2 text-sm text-zinc-400">
         <div>
           <dt className="text-zinc-600">Est. OVR</dt>
           <dd className="text-zinc-200">
@@ -102,7 +100,7 @@ export function ProspectCard(props: ProspectCardProps) {
       </dl>
 
       {props.strengths?.length || props.weaknesses?.length ? (
-        <div className="mt-2 space-y-1 text-xs">
+        <div className="mt-2 space-y-1 text-sm">
           {props.strengths?.slice(0, 2).map((s) => (
             <p key={s} className="text-emerald-400/90">
               + {s}
@@ -117,15 +115,13 @@ export function ProspectCard(props: ProspectCardProps) {
       ) : null}
 
       {props.funFact ? (
-        <p className="mt-2 border-t border-zinc-800 pt-2 text-xs italic text-zinc-500">
+        <p className="mt-2 border-t border-zinc-800 pt-2 text-sm italic text-zinc-500">
           {props.funFact}
         </p>
       ) : null}
 
       {props.onBoard ? (
-        <p className="mt-1 text-[10px] uppercase tracking-wide text-team-ink/80">
-          On draft board
-        </p>
+        <p className="mt-1 text-sm text-team-ink/80">On draft board</p>
       ) : null}
     </article>
   );

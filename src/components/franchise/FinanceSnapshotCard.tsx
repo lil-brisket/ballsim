@@ -22,7 +22,7 @@ export function FinanceSnapshotCard(props: {
         <span className="text-sm font-medium text-team-ink">View Finances</span>
       }
     >
-      <dl className="mt-3 space-y-1.5 text-xs text-zinc-400">
+      <dl className="mt-3 space-y-1.5 text-sm text-zinc-400">
         <div className="flex justify-between gap-2">
           <dt>Business funds</dt>
           <dd className="text-zinc-200">

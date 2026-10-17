@@ -131,7 +131,7 @@ export function TransactionFilters(props: {
         <Link
           href={href({ activity: undefined, limit: undefined })}
           className={cn(
-            "rounded-full border px-3 py-1 text-xs uppercase tracking-[0.14em]",
+            "rounded-full border px-3 py-1 text-sm",
             props.activityMode === "league"
               ? "border-team-ink text-team-ink"
               : "border-zinc-700 text-zinc-400 hover:border-zinc-500",
@@ -143,7 +143,7 @@ export function TransactionFilters(props: {
         <Link
           href={href({ activity: "myTeam", limit: undefined })}
           className={cn(
-            "rounded-full border px-3 py-1 text-xs uppercase tracking-[0.14em]",
+            "rounded-full border px-3 py-1 text-sm",
             props.activityMode === "myTeam"
               ? "border-team-ink text-team-ink"
               : "border-zinc-700 text-zinc-400 hover:border-zinc-500",
@@ -155,7 +155,7 @@ export function TransactionFilters(props: {
       </div>
 
       <div className="flex flex-wrap items-end gap-3">
-        <label className="flex min-w-[10rem] flex-1 flex-col gap-1 text-xs text-zinc-500">
+        <label className="flex min-w-[10rem] flex-1 flex-col gap-1 text-sm text-zinc-400">
           Transaction Type
           <Select
             aria-label="Transaction Type"
@@ -181,7 +181,7 @@ export function TransactionFilters(props: {
         </label>
 
         <div
-          className="flex min-w-[10rem] flex-1 flex-col gap-1 text-xs text-zinc-500"
+          className="flex min-w-[10rem] flex-1 flex-col gap-1 text-sm text-zinc-400"
           aria-label="Team"
         >
           <span>Team</span>
@@ -193,7 +193,7 @@ export function TransactionFilters(props: {
           />
         </div>
 
-        <label className="flex min-w-[10rem] flex-1 flex-col gap-1 text-xs text-zinc-500">
+        <label className="flex min-w-[10rem] flex-1 flex-col gap-1 text-sm text-zinc-400">
           Time
           <Select
             aria-label="Time"
@@ -224,7 +224,7 @@ export function TransactionFilters(props: {
           </Select>
         </label>
 
-        <label className="flex min-w-[10rem] flex-1 flex-col gap-1 text-xs text-zinc-500">
+        <label className="flex min-w-[10rem] flex-1 flex-col gap-1 text-sm text-zinc-400">
           Sort By
           <Select
             aria-label="Sort By"
@@ -250,7 +250,7 @@ export function TransactionFilters(props: {
 
       {props.range === "custom" ? (
         <div className="flex flex-wrap items-end gap-3">
-          <label className="flex min-w-[10rem] flex-1 flex-col gap-1 text-xs text-zinc-500">
+          <label className="flex min-w-[10rem] flex-1 flex-col gap-1 text-sm text-zinc-400">
             Start
             <input
               type="date"
@@ -266,7 +266,7 @@ export function TransactionFilters(props: {
               className={selectClass}
             />
           </label>
-          <label className="flex min-w-[10rem] flex-1 flex-col gap-1 text-xs text-zinc-500">
+          <label className="flex min-w-[10rem] flex-1 flex-col gap-1 text-sm text-zinc-400">
             End
             <input
               type="date"
@@ -283,7 +283,7 @@ export function TransactionFilters(props: {
             />
           </label>
           {dateError ? (
-            <p className="text-xs text-rose-300" role="alert">
+            <p className="text-sm text-rose-300" role="alert">
               {dateError}
             </p>
           ) : null}
@@ -316,7 +316,7 @@ export function TransactionFilters(props: {
         {props.activityMode !== "league" ? (
           <input type="hidden" name="activity" value={props.activityMode} />
         ) : null}
-        <label className="flex min-w-[12rem] flex-1 flex-col gap-1 text-xs text-zinc-500">
+        <label className="flex min-w-[12rem] flex-1 flex-col gap-1 text-sm text-zinc-400">
           Search
           <input
             id="transaction-search"

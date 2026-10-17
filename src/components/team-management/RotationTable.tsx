@@ -1,5 +1,6 @@
 "use client";
 
+import { SectionHeading } from "@/components/ui/SectionHeading";
 import { useMemo, useState } from "react";
 import { NumberStepper } from "@/components/ui/NumberStepper";
 import { Select } from "@/components/ui/Select";
@@ -68,9 +69,7 @@ function GroupTable(props: {
   }
   return (
     <div className="space-y-2">
-      <h3 className="font-mono text-xs uppercase tracking-wide text-zinc-500">
-        {props.title}
-      </h3>
+      <SectionHeading title={props.title} as="h3" />
       <DataTable
         headers={[
           "Player",
@@ -99,7 +98,7 @@ function GroupTable(props: {
                   {row.firstName} {row.lastName}
                 </button>
                 {row.workloadWarning ? (
-                  <p className="mt-0.5 text-[10px] text-orange-400">
+                  <p className="mt-0.5 text-sm text-orange-400">
                     {row.workloadWarning}
                   </p>
                 ) : null}
@@ -268,9 +267,7 @@ export function RotationTable(props: {
 
   return (
     <section className="space-y-4">
-      <h2 className="text-sm font-semibold uppercase tracking-wide text-zinc-400">
-        Rotation
-      </h2>
+      <SectionHeading title="Rotation" />
       <SortableTableControls
         sortKey={sortKey}
         sortDir={sortDir}

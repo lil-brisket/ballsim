@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { OwnerDashboardMediaHeadline } from "@/state/owner-dashboard";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { formatGameDate } from "@/presentation/game-date";
 import { Section } from "@/components/ui/Section";
 import { ArenaPanel } from "@/components/ui/ArenaPanel";
 import {
@@ -53,7 +54,7 @@ export function AroundTheLeaguePanel(props: {
                 >
                   <div className="flex flex-wrap items-center gap-2">
                     {item.unread ? (
-                      <span className="rounded bg-live px-1.5 py-0.5 font-mono text-[0.6rem] font-bold uppercase tracking-wide text-zinc-950">
+                      <span className="rounded bg-live px-1.5 py-0.5 text-xs font-bold uppercase tracking-wide text-zinc-950">
                         New
                       </span>
                     ) : null}
@@ -61,11 +62,11 @@ export function AroundTheLeaguePanel(props: {
                       {item.headline}
                     </p>
                   </div>
-                  <p className="mt-1 line-clamp-1 text-xs text-zinc-300">
+                  <p className="mt-1 line-clamp-1 text-sm text-zinc-300">
                     {item.summary}
                   </p>
-                  <p className="mt-1 font-mono text-[0.65rem] uppercase tracking-wide text-zinc-500">
-                    {item.occurredOn} · {item.importance}
+                  <p className="mt-1 text-sm text-zinc-500">
+                    {formatGameDate(item.occurredOn)} · {item.importance}
                   </p>
                 </Link>
               </li>

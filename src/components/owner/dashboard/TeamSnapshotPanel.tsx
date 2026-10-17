@@ -59,9 +59,7 @@ export function TeamSnapshotPanel(props: {
 
         {team.rosterProblems.length > 0 ? (
           <div>
-            <p className="font-mono text-[0.65rem] uppercase tracking-wide text-rose-400">
-              Health
-            </p>
+            <p className="text-sm font-medium text-rose-400">Health</p>
             <ul className="mt-1 space-y-1 text-sm text-zinc-300">
               {team.rosterProblems.slice(0, 4).map((problem) => (
                 <li key={problem.playerId}>

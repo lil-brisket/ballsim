@@ -3,6 +3,7 @@ import { deleteSaveAction, openSaveAction } from "@/application/actions";
 import { getGameModeDefinition } from "@/application/game-mode-catalog";
 import type { OwnerSavePreview } from "@/application/game-service";
 import { ConfirmDialog } from "@/components/owner/ConfirmDialog";
+import { formatGameDate } from "@/presentation/game-date";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { ArenaPanel } from "@/components/ui/ArenaPanel";
 import { ScoreNumeral } from "@/components/ui/ScoreNumeral";
@@ -51,7 +52,7 @@ export function SaveCard(props: {
           <p className="mt-1 text-sm text-rose-300" role="status">
             {preview.error}
           </p>
-          <p className="mt-1 font-mono text-xs text-zinc-400">
+          <p className="mt-1 text-sm text-zinc-400">
             Last updated {formatLastPlayed(preview.updatedAt)}
           </p>
         </div>
@@ -97,11 +98,12 @@ export function SaveCard(props: {
                 ) : null}
               </div>
               <p className="text-sm text-zinc-200">{teamLabel}</p>
-              <p className="font-mono text-xs text-zinc-300">
-                Season {preview.seasonYear} · {preview.currentDate} ·{" "}
+              <p className="text-sm text-zinc-300">
+                Season {preview.seasonYear} ·{" "}
+                {formatGameDate(preview.currentDate, { year: true })} ·{" "}
                 {preview.seasonPhase}
               </p>
-              <p className="text-xs text-zinc-400">
+              <p className="text-sm text-zinc-400">
                 Last played {formatLastPlayed(preview.updatedAt)}
               </p>
             </div>

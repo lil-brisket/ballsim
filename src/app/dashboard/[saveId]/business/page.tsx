@@ -9,6 +9,7 @@ import { loadOwnerSaveView } from "@/application/game-service";
 import { notFound } from "next/navigation";
 import { ErrorState } from "@/components/ui/EmptyState";
 import { MoneyDisplay } from "@/components/owner/MoneyDisplay";
+import { formatGameDate } from "@/presentation/game-date";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { Section } from "@/components/ui/Section";
 import { StatCard } from "@/components/ui/StatCard";
@@ -110,7 +111,7 @@ export default async function MarketingPage({
               Set budget
             </button>
           </form>
-          <p className="mt-2 text-xs text-zinc-500">
+          <p className="mt-2 text-sm text-zinc-500">
             Awareness {biz.awareness} · weekly burn{" "}
             <MoneyDisplay amount={biz.weeklyMarketingSpend} />
           </p>
@@ -119,7 +120,7 @@ export default async function MarketingPage({
 
       <div className="mt-8 grid gap-8 lg:grid-cols-2">
         <Section title="Forecast (next home game)">
-          <p className="mb-3 text-xs text-zinc-500">
+          <p className="mb-3 text-sm text-zinc-500">
             Live estimate from current knobs — not a past result.
           </p>
           <ul className="space-y-2 text-sm text-zinc-300">
@@ -161,10 +162,10 @@ export default async function MarketingPage({
               </span>
             </li>
           </ul>
-          <p className="mt-3 text-xs font-medium uppercase tracking-wide text-zinc-500">
+          <p className="mt-3 text-sm font-medium text-zinc-300">
             Demand contributors
           </p>
-          <ul className="mt-1 space-y-1 text-xs text-zinc-400">
+          <ul className="mt-1 space-y-1 text-sm text-zinc-400">
             {forecast.demandContributors.map((c) => (
               <li key={c.key} className="flex justify-between">
                 <span>{c.key}</span>
@@ -182,8 +183,8 @@ export default async function MarketingPage({
             </p>
           ) : (
             <>
-              <p className="mb-3 text-xs text-zinc-500">
-                From HomeGameDaySettled on {lastGameDay.occurredOn} — not a
+              <p className="mb-3 text-sm text-zinc-500">
+                Settled {formatGameDate(lastGameDay.occurredOn)} — not a
                 forecast.
               </p>
               <ul className="space-y-2 text-sm text-zinc-300">

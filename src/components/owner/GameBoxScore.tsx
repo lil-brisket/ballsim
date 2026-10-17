@@ -5,6 +5,7 @@ import { Section } from "@/components/ui/Section";
 import { ArenaPanel } from "@/components/ui/ArenaPanel";
 import { ScoreNumeral } from "@/components/ui/ScoreNumeral";
 import { TeamBadge } from "@/components/ui/TeamBadge";
+import { formatGameDate } from "@/presentation/game-date";
 
 type GameBoxScoreProps = {
   boxScore: GameBoxScoreView;
@@ -47,7 +48,7 @@ function MatchupTeamBlock(props: {
         decorative
       />
       <div className="min-w-0">
-        <p className="font-mono text-[0.65rem] uppercase tracking-[0.2em] text-zinc-400">
+        <p className="text-sm text-zinc-400">
           {props.label} · {props.abbreviation}
         </p>
         <p className="font-display text-2xl font-bold uppercase leading-tight tracking-wide text-zinc-50">
@@ -78,7 +79,7 @@ function topPerformers(side: SideView) {
 export function GameBoxScore({ boxScore }: GameBoxScoreProps) {
   const { away, home } = boxScore;
   const metaParts = [
-    boxScore.date,
+    formatGameDate(boxScore.date, { year: true }),
     boxScore.competitionTypeLabel,
     boxScore.seasonGameNumber != null
       ? `Game ${boxScore.seasonGameNumber}`
@@ -181,13 +182,13 @@ export function GameBoxScore({ boxScore }: GameBoxScoreProps) {
                 <ArenaPanel as="div" raised density="compact" edge="left">
                   <div className="flex items-center justify-between gap-3">
                     <div className="min-w-0">
-                      <p className="font-mono text-[0.65rem] uppercase tracking-[0.16em] text-zinc-400">
+                      <p className="text-sm text-zinc-400">
                         {side.abbreviation}
                       </p>
                       <p className="truncate font-display text-xl font-bold uppercase tracking-wide text-zinc-50">
                         {player.playerName}
                       </p>
-                      <p className="font-mono text-xs text-zinc-300">
+                      <p className="font-mono text-sm text-zinc-300">
                         {player.rebounds} REB · {player.assists} AST ·{" "}
                         {player.minutes} MIN
                       </p>

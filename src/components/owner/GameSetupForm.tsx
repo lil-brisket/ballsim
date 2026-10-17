@@ -90,6 +90,7 @@ import {
   MAX_STAFF_BUDGET,
   MIN_STAFF_BUDGET,
 } from "@/systems/staff-budget-config";
+import { SectionHeading } from "@/components/ui/SectionHeading";
 
 type GameSetupFormProps = {
   atSaveLimit: boolean;
@@ -571,12 +572,7 @@ export function GameSetupForm({
       aria-labelledby="setup-summary-heading"
       className="mt-6 space-y-3 rounded-xl border border-zinc-800 bg-zinc-900/60 p-4 lg:sticky lg:top-6 lg:mt-0"
     >
-      <h2
-        id="setup-summary-heading"
-        className="text-base font-semibold text-zinc-100"
-      >
-        Summary
-      </h2>
+      <SectionHeading id="setup-summary-heading" title="Summary" />
       <dl className="space-y-2 text-sm">
         <SummaryRow label="Preset" value={PRESET_COPY[preset].title} />
         <SummaryRow label="Teams" value={String(settings.league.teamCount)} />
@@ -606,7 +602,7 @@ export function GameSetupForm({
           : null}
         <SummaryRow label="Salary cap" value={capLabel} />
       </dl>
-      <p aria-live="polite" className="text-xs text-zinc-400">
+      <p aria-live="polite" className="text-sm text-zinc-400">
         {blockedReason ? "Not ready to review yet." : "Ready to review."}
       </p>
     </aside>
@@ -968,7 +964,7 @@ export function GameSetupForm({
                 }
               />
               {rosterTeamCountLocked ? (
-                <p className="text-xs text-zinc-500">
+                <p className="text-sm text-zinc-500">
                   Team count comes from the loaded custom roster package.
                 </p>
               ) : null}
@@ -1409,7 +1405,7 @@ function ReviewGroup({
       className="space-y-3 rounded-lg border border-zinc-800 bg-zinc-950/60 p-4"
     >
       <div className="flex items-center justify-between gap-3">
-        <h3 className="text-sm font-medium text-zinc-100">{title}</h3>
+        <h3 className="text-sm font-semibold text-zinc-100">{title}</h3>
         <button
           type="button"
           onClick={onEdit}

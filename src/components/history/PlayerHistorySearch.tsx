@@ -56,7 +56,7 @@ export function PlayerHistorySearch(props: {
                 )}
               >
                 <span className="text-zinc-100">{entry.displayName}</span>
-                <span className="text-xs text-zinc-500">
+                <span className="text-sm text-zinc-500">
                   {entry.retired ? "Retired · " : ""}
                   {entry.seasonsPlayed}{" "}
                   {entry.seasonsPlayed === 1 ? "season" : "seasons"}
@@ -67,7 +67,7 @@ export function PlayerHistorySearch(props: {
         </ul>
       )}
       {matches.length > RESULT_LIMIT ? (
-        <p className="text-xs text-zinc-500">
+        <p className="text-sm text-zinc-500">
           Showing {RESULT_LIMIT} of {matches.length}. Refine your search.
         </p>
       ) : null}

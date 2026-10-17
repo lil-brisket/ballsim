@@ -183,7 +183,7 @@ export default async function RelocationPage({
             </table>
           </div>
         )}
-        <p className="mt-2 text-xs text-zinc-500">
+        <p className="mt-2 text-sm text-zinc-500">
           {assessment.estimatedCost.transitionRiskSummary} Estimated fee about{" "}
           <MoneyDisplay amount={assessment.estimatedCost.fee} />.{" "}
           {assessment.estimatedCost.fanDisruptionSummary}

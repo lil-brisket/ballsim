@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { formatGameDate } from "@/presentation/game-date";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 
 export function NotificationItem(props: {
@@ -20,12 +21,14 @@ export function NotificationItem(props: {
     >
       <div className="flex items-start justify-between gap-3">
         <div>
-          <p className="font-medium text-zinc-100">{props.title}</p>
+          <p className="text-sm font-semibold text-zinc-100">{props.title}</p>
           <p className="mt-1 text-sm text-zinc-400">{props.message}</p>
         </div>
         <StatusBadge label={props.severity} tone={props.severity} />
       </div>
-      <p className="mt-2 font-mono text-xs text-zinc-600">{props.occurredOn}</p>
+      <p className="mt-2 text-xs text-zinc-500">
+        {formatGameDate(props.occurredOn, { year: true })}
+      </p>
     </div>
   );
 

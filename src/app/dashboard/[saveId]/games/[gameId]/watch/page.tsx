@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { formatGameDate } from "@/presentation/game-date";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { loadOwnerWatchGameView } from "@/application/game-service";
@@ -37,7 +38,7 @@ export default async function WatchGamePage({ params }: WatchGamePageProps) {
     <>
       <PageHeader
         title="Watch game"
-        subtitle={`${watch.away.abbreviation} @ ${watch.home.abbreviation} · ${watch.date}`}
+        subtitle={`${watch.away.abbreviation} @ ${watch.home.abbreviation} · ${formatGameDate(watch.date, { weekday: true })}`}
         actions={
           <Link
             href={boxScoreHref}

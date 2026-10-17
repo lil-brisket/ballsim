@@ -128,7 +128,7 @@ export default async function NotificationsPage({
         <ul className="space-y-2">
           {filtered.map((notification) => (
             <li key={`${notification.teamId}:${notification.id}`}>
-              <div className="mb-1 flex items-center justify-between gap-2 text-xs text-zinc-500">
+              <div className="mb-1 flex items-center justify-between gap-2 text-sm text-zinc-500">
                 <span>{notification.teamName}</span>
                 {notification.teamId !== view.dashboard.controlledTeam.id ? (
                   <form action={switchActiveOwnerTeamAction}>

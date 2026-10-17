@@ -27,7 +27,7 @@ function TeamBlock(props: {
         <p className="font-display text-2xl font-bold uppercase tracking-wide text-zinc-50">
           {props.team.abbreviation}
         </p>
-        <p className="truncate font-mono text-[0.65rem] uppercase tracking-[0.14em] text-zinc-400">
+        <p className="truncate text-sm text-zinc-400">
           {props.team.name} · Fouls {props.fouls}
         </p>
       </div>

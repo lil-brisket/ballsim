@@ -3,6 +3,7 @@ import {
   reorderFantasyDraftQueueAction,
 } from "@/application/actions";
 import type { FantasyDraftView } from "@/state/selectors";
+import { SectionHeading } from "@/components/ui/SectionHeading";
 
 export function DraftQueuePanel(props: {
   saveId: string;
@@ -24,14 +25,19 @@ export function DraftQueuePanel(props: {
 
   return (
     <section className="rounded-xl border border-zinc-800 p-4">
-      <h2 className="mb-2 text-sm font-semibold uppercase text-zinc-400">
-        Draft queue
-        {activeTeam ? (
-          <span className="ml-2 font-normal normal-case text-zinc-500">
-            · {activeTeam.abbreviation}
-          </span>
-        ) : null}
-      </h2>
+      <SectionHeading
+        className="mb-2"
+        title={
+          <>
+            Draft queue
+            {activeTeam ? (
+              <span className="ml-2 font-sans text-sm font-normal normal-case tracking-normal text-zinc-400">
+                · {activeTeam.abbreviation}
+              </span>
+            ) : null}
+          </>
+        }
+      />
       {draft.queue.length === 0 ? (
         <p className="text-sm text-zinc-500">
           No players queued. Add players from the player card.
@@ -67,12 +73,12 @@ export function DraftQueuePanel(props: {
                     <div className="truncate font-medium text-zinc-100">
                       {entry.firstName} {entry.lastName}
                     </div>
-                    <div className="text-xs text-zinc-500">
+                    <div className="text-sm text-zinc-500">
                       {entry.position} · {entry.overall} OVR · {entry.potential}{" "}
                       POT
                     </div>
                     {!entry.isAvailable ? (
-                      <div className="mt-1 text-xs text-zinc-500/90">
+                      <div className="mt-1 text-sm text-zinc-500/90">
                         Drafted by {entry.draftedByAbbreviation ?? "—"}
                         {entry.pickNumber != null
                           ? ` · Pick #${entry.pickNumber}`
@@ -95,7 +101,7 @@ export function DraftQueuePanel(props: {
                             <button
                               type="submit"
                               disabled={index === 0}
-                              className="rounded border border-zinc-700 px-1.5 py-0.5 text-[10px] disabled:opacity-30"
+                              className="rounded border border-zinc-700 px-1.5 py-0.5 text-sm disabled:opacity-30"
                               aria-label="Move up in queue"
                             >
                               ↑
@@ -112,7 +118,7 @@ export function DraftQueuePanel(props: {
                             <button
                               type="submit"
                               disabled={index >= draft.queue.length - 1}
-                              className="rounded border border-zinc-700 px-1.5 py-0.5 text-[10px] disabled:opacity-30"
+                              className="rounded border border-zinc-700 px-1.5 py-0.5 text-sm disabled:opacity-30"
                               aria-label="Move down in queue"
                             >
                               ↓
@@ -132,7 +138,7 @@ export function DraftQueuePanel(props: {
                                 potential: entry.potential,
                               })
                             }
-                            className="rounded bg-team px-2 py-0.5 text-[10px] text-on-team disabled:opacity-50"
+                            className="rounded bg-team px-2 py-0.5 text-sm text-on-team disabled:opacity-50"
                           >
                             Draft
                           </button>
@@ -149,7 +155,7 @@ export function DraftQueuePanel(props: {
                       />
                       <button
                         type="submit"
-                        className="rounded border border-zinc-700 px-2 py-0.5 text-[10px] text-zinc-400"
+                        className="rounded border border-zinc-700 px-2 py-0.5 text-sm text-zinc-400"
                       >
                         Remove
                       </button>

@@ -56,7 +56,7 @@ export function CalendarAgendaList(props: {
               )}
             >
               <span className="min-w-0">
-                <span className="block font-mono text-xs text-zinc-400">
+                <span className="block text-sm text-zinc-400">
                   {formatShortDate(cell.date)}
                 </span>
                 <span
@@ -71,7 +71,7 @@ export function CalendarAgendaList(props: {
                 </span>
               </span>
               {cell.isToday ? (
-                <span className="shrink-0 font-mono text-[0.65rem] uppercase tracking-wide text-team-ink">
+                <span className="shrink-0 text-sm font-medium text-team-ink">
                   Today
                 </span>
               ) : null}

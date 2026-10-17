@@ -60,7 +60,7 @@ export function InviteCreator(props: {
   return (
     <div className="space-y-3">
       <form onSubmit={create} className="flex flex-wrap items-end gap-3">
-        <label className="flex flex-col gap-1 text-xs text-zinc-400">
+        <label className="flex flex-col gap-1 text-sm text-zinc-400">
           Max uses (1–{maxUses})
           <NumberStepper
             min={1}
@@ -69,7 +69,7 @@ export function InviteCreator(props: {
             onValueChange={setUses}
           />
         </label>
-        <label className="flex flex-col gap-1 text-xs text-zinc-400">
+        <label className="flex flex-col gap-1 text-sm text-zinc-400">
           Days valid (1–{maxDays})
           <NumberStepper
             min={1}
@@ -103,7 +103,7 @@ export function InviteCreator(props: {
             aria-label="Invite link"
             value={link}
             onFocus={(e) => e.currentTarget.select()}
-            className={cn(inputClass, "w-full font-mono text-xs")}
+            className={cn(inputClass, "w-full text-sm")}
           />
           <div className="flex flex-wrap items-center gap-3">
             <button
@@ -113,7 +113,7 @@ export function InviteCreator(props: {
             >
               {copied ? "Copied" : "Copy"}
             </button>
-            <p className="text-xs text-zinc-300">
+            <p className="text-sm text-zinc-300">
               This link is shown once. Anyone with it can join while it has uses
               left.
             </p>

@@ -48,52 +48,40 @@ export function TeamOverview(props: { hub: TeamHubView }) {
         )}
       >
         <div>
-          <dt className="font-mono text-[0.65rem] uppercase text-zinc-500">
-            Record
-          </dt>
-          <dd className="font-mono text-zinc-100">
+          <dt className="text-sm text-zinc-400">Record</dt>
+          <dd className="tabular-nums text-zinc-100">
             {hub.wins}–{hub.losses}
           </dd>
         </div>
         <div>
-          <dt className="font-mono text-[0.65rem] uppercase text-zinc-500">
-            Conference
-          </dt>
+          <dt className="text-sm text-zinc-400">Conference</dt>
           <dd className="min-w-0 truncate text-zinc-100">{conferenceLine}</dd>
         </div>
         <div>
-          <dt className="font-mono text-[0.65rem] uppercase text-zinc-500">
-            Games Back
-          </dt>
-          <dd className="font-mono text-zinc-100">
+          <dt className="text-sm text-zinc-400">Games back</dt>
+          <dd className="tabular-nums text-zinc-100">
             {hub.standings.gamesBack != null ? hub.standings.gamesBack : "—"}
           </dd>
         </div>
         <div>
-          <dt className="font-mono text-[0.65rem] uppercase text-zinc-500">
-            Playoff Status
-          </dt>
+          <dt className="text-sm text-zinc-400">Playoff status</dt>
           <dd className="text-zinc-100">
             {playoffStatusLabel(hub.standings.playoffLabel)}
           </dd>
         </div>
         <div>
-          <dt className="font-mono text-[0.65rem] uppercase text-zinc-500">
-            Form (L5)
-          </dt>
-          <dd className="font-mono text-zinc-100">
+          <dt className="text-sm text-zinc-400">Form (L5)</dt>
+          <dd className="tabular-nums text-zinc-100">
             {hub.recentForm.marks || "—"}
             {hub.recentForm.streak ? (
-              <span className="ml-2 text-xs text-zinc-500">
+              <span className="ml-2 text-sm text-zinc-500">
                 {hub.recentForm.streak}
               </span>
             ) : null}
           </dd>
         </div>
         <div>
-          <dt className="font-mono text-[0.65rem] uppercase text-zinc-500">
-            Roster Health
-          </dt>
+          <dt className="text-sm text-zinc-400">Roster health</dt>
           <dd className="text-zinc-100">
             {hub.healthyCount} healthy
             {hub.injuredCount > 0 ? (

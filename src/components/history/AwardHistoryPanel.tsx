@@ -50,7 +50,7 @@ export function AwardHistoryPanel(props: {
         <Section title="Season awards">
           <div className="overflow-x-auto">
             <table className="w-full min-w-[640px] text-left text-sm">
-              <thead className="border-b border-zinc-800 text-xs uppercase text-zinc-500">
+              <thead className="border-b border-zinc-800 text-sm text-zinc-400">
                 <tr>
                   <th className={TH}>Season</th>
                   {pivotDefinitions.map((def) => (
@@ -79,7 +79,7 @@ export function AwardHistoryPanel(props: {
                                 saveId={props.saveId}
                                 row={row}
                               />
-                              <div className="text-xs">
+                              <div className="text-sm">
                                 <AwardWinnerTeam
                                   saveId={props.saveId}
                                   row={row}

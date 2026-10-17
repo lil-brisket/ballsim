@@ -143,7 +143,7 @@ function NavBadge(props: { item: OwnerNavItem }) {
         : "bg-warning text-zinc-950";
   return (
     <span
-      className={`ml-auto inline-flex min-w-[1.15rem] items-center justify-center rounded-full px-1.5 font-mono text-[0.65rem] font-semibold leading-4 ${kindClass}`}
+      className={`ml-auto inline-flex min-w-[1.15rem] items-center justify-center rounded-full px-1.5 text-xs font-semibold tabular-nums leading-4 ${kindClass}`}
     >
       {badge.count > 99 ? "99+" : badge.count}
     </span>
@@ -221,7 +221,7 @@ export function NavGroups(props: {
             {!props.collapsed ? (
               <p
                 className={cn(
-                  "mb-1 px-3 font-mono text-[0.65rem] uppercase tracking-[0.16em]",
+                  "mb-1 px-3 text-sm font-medium",
                   seasonal ? "text-team-ink" : "text-team-ink/70",
                 )}
               >

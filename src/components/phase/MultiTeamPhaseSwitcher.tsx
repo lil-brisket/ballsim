@@ -1,3 +1,4 @@
+import { SectionHeading } from "@/components/ui/SectionHeading";
 import { buttonClass } from "@/components/ui/Button";
 import type { PhaseTeamAttentionView } from "@/state/phase-dashboard";
 
@@ -13,9 +14,7 @@ export function MultiTeamPhaseSwitcher(props: {
 
   return (
     <section aria-label="Controlled teams" className="space-y-2">
-      <p className="font-mono text-xs uppercase tracking-[0.16em] text-zinc-500">
-        Your franchises
-      </p>
+      <SectionHeading title="Your franchises" />
       <ul className="flex flex-wrap gap-2">
         {props.teams.map((team) => (
           <li key={team.teamId}>
@@ -52,10 +51,10 @@ export function MultiTeamPhaseSwitcher(props: {
 function AttentionCounts(props: { team: PhaseTeamAttentionView }) {
   const { requiredCount, recommendedCount } = props.team;
   if (requiredCount === 0 && recommendedCount === 0) {
-    return <span className="text-xs text-zinc-500">✓</span>;
+    return <span className="text-sm text-zinc-500">✓</span>;
   }
   return (
-    <span className="text-xs text-zinc-400">
+    <span className="text-sm text-zinc-400">
       {requiredCount > 0 ? (
         <span className="text-red-400">{requiredCount} req</span>
       ) : null}

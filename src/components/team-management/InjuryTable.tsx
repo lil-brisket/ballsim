@@ -1,5 +1,7 @@
 "use client";
 
+import { SectionHeading } from "@/components/ui/SectionHeading";
+import { formatGameDate } from "@/presentation/game-date";
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import type {
@@ -94,7 +96,7 @@ function InjuryPlayerCard(props: { saveId: string; row: InjuryRowView }) {
           <div className="text-sm font-semibold text-zinc-100">
             {row.firstName} {row.lastName}
           </div>
-          <div className="mt-0.5 text-xs text-zinc-500">
+          <div className="mt-0.5 text-sm text-zinc-500">
             {row.position} · OVR {row.overall}
             {row.activeInjuryCount > 1
               ? ` · ${row.activeInjuryCount} active injuries`
@@ -104,7 +106,7 @@ function InjuryPlayerCard(props: { saveId: string; row: InjuryRowView }) {
         <StatusBadge label={row.statusLabel} tone={row.status} />
       </div>
 
-      <div className="mt-3 grid gap-2 text-xs text-zinc-400 sm:grid-cols-2">
+      <div className="mt-3 grid gap-2 text-sm text-zinc-400 sm:grid-cols-2">
         <div>
           <div className="text-zinc-500">Injury</div>
           <div className="text-zinc-200">
@@ -134,7 +136,7 @@ function InjuryPlayerCard(props: { saveId: string; row: InjuryRowView }) {
         </div>
         <div>
           <div className="text-zinc-500">Minutes</div>
-          <div className="font-mono text-zinc-200">
+          <div className="tabular-nums text-zinc-200">
             Rec {row.recommendedWorkloadMpg ?? "—"} / Max{" "}
             {row.maximumWorkloadMpg ?? "—"}
           </div>
@@ -225,9 +227,7 @@ export function InjuryTable(props: {
       />
 
       <section>
-        <h2 className="mb-2 text-sm font-medium text-zinc-300">
-          Current injuries
-        </h2>
+        <SectionHeading title="Current injuries" className="mb-3" />
         {rows.length === 0 ? (
           <EmptyState message="No players match this filter." />
         ) : (
@@ -245,14 +245,12 @@ export function InjuryTable(props: {
 
       {props.report.historyRows.length > 0 ? (
         <section className="rounded-xl border border-zinc-800 bg-zinc-950/40 p-4">
-          <h2 className="mb-2 text-sm font-medium text-zinc-300">
-            Recent injury history (roster)
-          </h2>
-          <ul className="space-y-1 text-xs text-zinc-400">
+          <SectionHeading title="Recent injury history" className="mb-3" />
+          <ul className="space-y-1 text-sm text-zinc-400">
             {props.report.historyRows.slice(0, 12).map((entry, index) => (
               <li key={`${entry.injuredOn}-${entry.type}-${index}`}>
-                {entry.injuredOn}: {entry.type} ({entry.bodyPart}) ·{" "}
-                {entry.severity}
+                {formatGameDate(entry.injuredOn)}: {entry.type} (
+                {entry.bodyPart}) · {entry.severity}
                 {entry.isReinjury ? " · reinjury" : ""}
                 {entry.isAggravation ? " · aggravation" : ""}
               </li>

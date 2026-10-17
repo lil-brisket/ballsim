@@ -11,6 +11,7 @@ import type {
 } from "@/state/league-hub-selectors";
 import type { LeagueInjuryRow } from "@/state/league-injury-selectors";
 import { cn, focusRingClass } from "@/components/ui/styles";
+import { formatGameDate } from "@/presentation/game-date";
 
 export function LeagueRecentResultsPanel(props: {
   saveId: string;
@@ -77,8 +78,8 @@ export function LeagueTransactionsBriefing(props: {
               key={row.id}
               className="rounded-lg border border-zinc-800 px-3 py-2 text-sm"
             >
-              <p className="font-mono text-[0.65rem] uppercase text-zinc-500">
-                {row.occurredOn} · {row.type}
+              <p className="text-sm text-zinc-500">
+                {formatGameDate(row.occurredOn)} · {row.type}
               </p>
               <p className="mt-0.5 text-zinc-200">{row.description}</p>
             </li>
@@ -130,7 +131,7 @@ export function LeagueInjuriesBriefing(props: {
                   </span>
                 ) : null}
               </div>
-              <span className="font-mono text-xs text-zinc-500">
+              <span className="text-sm text-zinc-500">
                 {row.severity} · {row.bodyPart}
               </span>
             </li>
@@ -179,13 +180,13 @@ export function LeagueMediaBriefing(props: {
                     {item.headline}
                   </p>
                   {item.unread ? (
-                    <span className="font-mono text-[0.65rem] uppercase text-team-ink">
+                    <span className="text-sm font-medium text-team-ink">
                       New
                     </span>
                   ) : null}
                 </div>
-                <p className="mt-0.5 line-clamp-1 text-xs text-zinc-500">
-                  {item.occurredOn} · {item.importance}
+                <p className="mt-0.5 line-clamp-1 text-sm text-zinc-500">
+                  {formatGameDate(item.occurredOn)} · {item.importance}
                 </p>
               </Link>
             </li>

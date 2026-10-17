@@ -66,7 +66,7 @@ export function ParticipantBar(props: {
           {online ? "Signed in as" : "Playing as"}{" "}
           <strong>{active?.displayName ?? "Unknown"}</strong>
           {activeIsHost ? (
-            <span className="ml-2 rounded-full border border-team-ink px-2 py-0.5 font-mono text-[0.65rem] uppercase tracking-wider text-team-ink">
+            <span className="ml-2 rounded-full border border-team-ink px-2 py-0.5 text-xs font-medium text-team-ink">
               Host
             </span>
           ) : null}
@@ -156,7 +156,7 @@ export function ParticipantBar(props: {
         </div>
       ) : null}
 
-      <div aria-live="polite" className="text-xs text-zinc-400">
+      <div aria-live="polite" className="text-sm text-zinc-400">
         <ul className="flex flex-wrap gap-x-3 gap-y-1">
           {participation.participants.map((p) => (
             <li key={p.id}>

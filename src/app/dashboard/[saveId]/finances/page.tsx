@@ -102,7 +102,7 @@ export default async function FinancesPage({
       <Section title="Profitability">
         <p className="mb-3 text-sm text-zinc-100">
           Net income <MoneyDisplay amount={season.profitability.netIncome} />
-          <span className="ml-2 text-xs font-normal text-zinc-500">
+          <span className="ml-2 text-sm font-normal text-zinc-500">
             Capital this month{" "}
             <MoneyDisplay amount={month.investment.capital} />
           </span>
@@ -171,7 +171,7 @@ export default async function FinancesPage({
             </ul>
           </div>
         </div>
-        <p className="mt-3 text-xs text-zinc-500">
+        <p className="mt-3 text-sm text-zinc-500">
           Current month net change:{" "}
           <MoneyDisplay amount={month.liquidity.netBusinessFundsChange} />
         </p>

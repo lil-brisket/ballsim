@@ -18,9 +18,7 @@ export function LeagueLeaders(props: {
 
   return (
     <Section title="League Leaders" density="compact" className="mb-4">
-      <p className="mb-2 font-mono text-[0.65rem] uppercase tracking-[0.16em] text-zinc-500">
-        Min {view.minGames} games
-      </p>
+      <p className="mb-2 text-sm text-zinc-400">Min {view.minGames} games</p>
       <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
         {view.cards.map((card) => (
           <div
@@ -28,9 +26,7 @@ export function LeagueLeaders(props: {
             className={cn(panelClass, "px-3 py-2")}
             data-testid={`standings-leader-${card.key}`}
           >
-            <p className="font-mono text-[0.65rem] uppercase tracking-[0.16em] text-zinc-500">
-              {card.label}
-            </p>
+            <p className="text-sm text-zinc-400">{card.label}</p>
             {card.leader ? (
               <>
                 <p className="mt-1 truncate text-sm font-medium text-zinc-100">
@@ -45,7 +41,7 @@ export function LeagueLeaders(props: {
                 <p className="font-mono text-lg text-zinc-50">
                   {formatLeaderValue(card.key, card.leader.value)}
                   {card.leader.teamAbbreviation ? (
-                    <span className="ml-2 text-xs text-zinc-500">
+                    <span className="ml-2 text-sm text-zinc-500">
                       {card.leader.teamAbbreviation}
                     </span>
                   ) : null}
@@ -61,7 +57,7 @@ export function LeagueLeaders(props: {
         ))}
       </div>
       {view.allEmpty ? (
-        <p className="mt-2 text-xs text-zinc-500">No qualified players yet.</p>
+        <p className="mt-2 text-sm text-zinc-500">No qualified players yet.</p>
       ) : null}
     </Section>
   );

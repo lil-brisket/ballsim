@@ -1,5 +1,6 @@
 "use client";
 
+import { SectionHeading } from "@/components/ui/SectionHeading";
 import { Button } from "@/components/ui/Button";
 import { DataTable } from "@/components/ui/DataTable";
 import { StatusBadge } from "@/components/ui/StatusBadge";
@@ -19,9 +20,7 @@ export function BenchEditor(props: {
   return (
     <div className="space-y-6">
       <section>
-        <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-zinc-400">
-          Bench
-        </h2>
+        <SectionHeading title="Bench" className="mb-3" />
         <DataTable
           headers={["Player", "Pos", "Role", "Target MPG", "Status", ""]}
         >
@@ -66,9 +65,7 @@ export function BenchEditor(props: {
       </section>
 
       <section>
-        <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-zinc-400">
-          Inactive
-        </h2>
+        <SectionHeading title="Inactive" className="mb-3" />
         {props.inactive.length === 0 ? (
           <p className="text-sm text-zinc-500">No inactive players.</p>
         ) : (

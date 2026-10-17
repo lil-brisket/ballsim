@@ -23,25 +23,19 @@ export function OwnerPanel(props: { owner: OwnerDashboardOwner }) {
       <div className="space-y-4">
         <div className="grid gap-3 sm:grid-cols-2">
           <div className="rounded-xl border border-zinc-800 bg-zinc-900/50 px-4 py-4">
-            <p className="font-mono text-[0.65rem] uppercase tracking-[0.16em] text-zinc-500">
-              Owner patience
-            </p>
+            <p className="text-sm text-zinc-400">Owner patience</p>
             <p className="mt-1 text-lg text-zinc-50">{owner.patience}</p>
           </div>
           <div className="rounded-xl border border-zinc-800 bg-zinc-900/50 px-4 py-4">
-            <p className="font-mono text-[0.65rem] uppercase tracking-[0.16em] text-zinc-500">
-              Franchise reputation
-            </p>
-            <p className="mt-1 text-2xl font-mono text-zinc-50">
+            <p className="text-sm text-zinc-400">Franchise reputation</p>
+            <p className="mt-1 text-2xl tabular-nums text-zinc-50">
               {owner.franchiseReputation}
             </p>
           </div>
         </div>
 
         <div className="rounded-xl border border-zinc-800 bg-zinc-900/40 px-4 py-3">
-          <p className="font-mono text-[0.65rem] uppercase tracking-[0.16em] text-zinc-500">
-            Current expectation
-          </p>
+          <p className="text-sm text-zinc-400">Current expectation</p>
           <p className="mt-1 text-sm text-zinc-200">
             {ownership.mandateSummary}
           </p>
@@ -57,17 +51,13 @@ export function OwnerPanel(props: { owner: OwnerDashboardOwner }) {
         </div>
 
         <div className="rounded-xl border border-zinc-800 bg-zinc-900/40 px-4 py-3">
-          <p className="font-mono text-[0.65rem] uppercase tracking-[0.16em] text-zinc-500">
-            Ownership mood
-          </p>
+          <p className="text-sm text-zinc-400">Ownership mood</p>
           <p className="mt-1 text-sm text-zinc-200">{ownership.moodLabel}</p>
         </div>
 
         {ownership.recentDecisions.length > 0 ? (
           <div className="rounded-xl border border-zinc-800 bg-zinc-900/40 px-4 py-3">
-            <p className="font-mono text-[0.65rem] uppercase tracking-[0.16em] text-zinc-500">
-              Recent decisions
-            </p>
+            <p className="text-sm text-zinc-400">Recent decisions</p>
             <ul className="mt-2 space-y-1">
               {ownership.recentDecisions.map((decision, index) => (
                 <li
@@ -87,9 +77,7 @@ export function OwnerPanel(props: { owner: OwnerDashboardOwner }) {
         ) : null}
 
         <div className="rounded-xl border border-zinc-800 bg-zinc-900/40 px-4 py-3">
-          <p className="font-mono text-[0.65rem] uppercase tracking-[0.16em] text-zinc-500">
-            Ownership concern
-          </p>
+          <p className="text-sm text-zinc-400">Ownership concern</p>
           <p className="mt-1 text-sm text-zinc-300">
             {ownership.concern ?? "None"}
           </p>
@@ -97,24 +85,22 @@ export function OwnerPanel(props: { owner: OwnerDashboardOwner }) {
 
         <div className="rounded-xl border border-zinc-800 bg-zinc-900/40 px-4 py-3">
           <div className="flex items-center justify-between gap-3">
-            <p className="font-mono text-[0.65rem] uppercase tracking-[0.16em] text-zinc-500">
-              Strategic alignment
-            </p>
+            <p className="text-sm text-zinc-400">Strategic alignment</p>
             <button
               type="button"
-              className="text-xs text-zinc-400 underline-offset-2 hover:text-zinc-200 hover:underline"
+              className="text-sm text-zinc-400 underline-offset-2 hover:text-zinc-200 hover:underline"
               onClick={() => setShowWhy((value) => !value)}
             >
               {showWhy ? "Hide why" : "Why?"}
             </button>
           </div>
-          <p className="mt-1 font-mono text-sm text-zinc-200">
+          <p className="mt-1 text-sm tabular-nums text-zinc-200">
             {alignmentBar} {ownership.alignmentScore}%
           </p>
           {showWhy ? (
             <div className="mt-3 grid gap-3 sm:grid-cols-2">
               <div>
-                <p className="text-xs uppercase tracking-wide text-zinc-500">
+                <p className="text-sm font-medium text-zinc-300">
                   Helping alignment
                 </p>
                 {ownership.whyHelping.length === 0 ? (
@@ -132,7 +118,7 @@ export function OwnerPanel(props: { owner: OwnerDashboardOwner }) {
                 )}
               </div>
               <div>
-                <p className="text-xs uppercase tracking-wide text-zinc-500">
+                <p className="text-sm font-medium text-zinc-300">
                   Hurting alignment
                 </p>
                 {ownership.whyHurting.length === 0 ? (
@@ -154,11 +140,9 @@ export function OwnerPanel(props: { owner: OwnerDashboardOwner }) {
         </div>
 
         <div className="rounded-xl border border-zinc-800 bg-zinc-900/40 px-4 py-3">
-          <p className="font-mono text-[0.65rem] uppercase tracking-[0.16em] text-zinc-500">
-            Ownership evaluation
-          </p>
+          <p className="text-sm text-zinc-400">Ownership evaluation</p>
           <p className="mt-1 text-sm text-zinc-200">{owner.career.headline}</p>
-          <p className="mt-1 text-xs text-zinc-500">
+          <p className="mt-1 text-sm text-zinc-500">
             {owner.career.band} · alignment {owner.career.alignmentScore} ·{" "}
             {owner.career.championships} titles ·{" "}
             {owner.career.playoffAppearances} playoff years

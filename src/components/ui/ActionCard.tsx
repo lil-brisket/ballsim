@@ -43,7 +43,7 @@ export function ActionCard(
       {props.badge ? <div className="mb-2">{props.badge}</div> : null}
       <h3 className="text-sm font-medium text-zinc-100">{props.title}</h3>
       {props.description ? (
-        <p className="mt-1 text-xs text-zinc-400">{props.description}</p>
+        <p className="mt-1 text-sm text-zinc-400">{props.description}</p>
       ) : null}
       {props.children}
     </>
@@ -64,7 +64,7 @@ export function ActionCard(
             href={props.secondaryHref!}
             className={cn(
               touchTargetTextClass,
-              "text-xs text-zinc-400 hover:text-zinc-200",
+              "text-sm text-zinc-400 hover:text-zinc-200",
               focusRingClass,
             )}
           >
@@ -85,7 +85,7 @@ export function ActionCard(
             href={props.secondaryHref!}
             className={cn(
               touchTargetTextClass,
-              "text-xs text-zinc-400 hover:text-zinc-200",
+              "text-sm text-zinc-400 hover:text-zinc-200",
               focusRingClass,
             )}
           >

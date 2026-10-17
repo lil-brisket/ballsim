@@ -1,5 +1,6 @@
 "use client";
 
+import { SectionHeading } from "@/components/ui/SectionHeading";
 import { PLAYER_POSITIONS } from "@/domain/entities/player";
 import { Select } from "@/components/ui/Select";
 import type {
@@ -24,9 +25,7 @@ export function StartingFiveEditor(props: {
 
   return (
     <section className="space-y-3">
-      <h2 className="text-sm font-semibold uppercase tracking-wide text-zinc-400">
-        Starting Five
-      </h2>
+      <SectionHeading title="Starting Five" />
       <div className="mx-auto grid max-w-xl grid-cols-3 gap-3 text-center">
         {PLAYER_POSITIONS.map((slot) => {
           const current =
@@ -56,7 +55,7 @@ export function StartingFiveEditor(props: {
                       : "col-start-2"
               }`}
             >
-              <p className="mb-2 font-mono text-xs text-team-ink">{slot}</p>
+              <p className="mb-2 text-sm font-medium text-team-ink">{slot}</p>
               <Select
                 value={current}
                 onChange={(event) =>
@@ -76,7 +75,7 @@ export function StartingFiveEditor(props: {
                 ))}
               </Select>
               {card ? (
-                <p className="mt-1 text-xs text-zinc-500">
+                <p className="mt-1 text-sm text-zinc-500">
                   OVR {card.overall} · {card.position} · {mpg} MPG ·{" "}
                   {card.availabilityLabel}
                 </p>

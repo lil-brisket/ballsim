@@ -197,7 +197,7 @@ export default async function DraftPage({
           <div className="grid gap-6 xl:grid-cols-[240px_1fr_280px]">
             <aside className="space-y-4">
               <Section title="Draft order">
-                <ul className="max-h-[28rem] space-y-1 overflow-y-auto text-xs">
+                <ul className="max-h-[28rem] space-y-1 overflow-y-auto text-sm">
                   {board.order.map((slot) => (
                     <li
                       key={slot.draftPickId}
@@ -236,9 +236,9 @@ export default async function DraftPage({
               </Section>
               <Section title="Selections">
                 {board.selections.length === 0 ? (
-                  <p className="text-xs text-zinc-500">None yet.</p>
+                  <p className="text-sm text-zinc-500">None yet.</p>
                 ) : (
-                  <ul className="max-h-48 space-y-1 overflow-y-auto text-xs text-zinc-300">
+                  <ul className="max-h-48 space-y-1 overflow-y-auto text-sm text-zinc-300">
                     {board.selections.map((selection) => (
                       <li
                         key={`${selection.overallPick}-${selection.playerId}`}
@@ -333,7 +333,7 @@ export default async function DraftPage({
                               ) : null}
                               <button
                                 type="submit"
-                                className={cn(linkClass, "text-xs font-medium")}
+                                className={cn(linkClass, "text-sm font-medium")}
                               >
                                 Draft
                               </button>
@@ -353,14 +353,14 @@ export default async function DraftPage({
                             />
                             <button
                               type="submit"
-                              className="text-xs text-zinc-400 hover:underline"
+                              className="text-sm text-zinc-400 hover:underline"
                             >
                               {onBoard ? "On board" : "Add to board"}
                             </button>
                           </form>
                         </div>
                         {mock?.availability ? (
-                          <p className="px-1 text-[10px] text-zinc-600">
+                          <p className="px-1 text-sm text-zinc-400">
                             {mock.availability}
                           </p>
                         ) : null}
@@ -374,7 +374,7 @@ export default async function DraftPage({
             <aside className="space-y-4">
               <Section title="Team needs">
                 {needs ? (
-                  <ul className="space-y-1 text-xs">
+                  <ul className="space-y-1 text-sm">
                     {needs.byPosition
                       .filter((n) => n.level !== "none")
                       .map((n) => (
@@ -395,13 +395,13 @@ export default async function DraftPage({
                     ) : null}
                   </ul>
                 ) : (
-                  <p className="text-xs text-zinc-500">Unavailable.</p>
+                  <p className="text-sm text-zinc-500">Unavailable.</p>
                 )}
               </Section>
 
               <Section title="Recommended">
                 {recommendations.length === 0 ? (
-                  <p className="text-xs text-zinc-500">
+                  <p className="text-sm text-zinc-500">
                     Scout prospects to unlock recommendations.
                   </p>
                 ) : (
@@ -415,11 +415,11 @@ export default async function DraftPage({
                           {index === 0 ? "Top pick · " : ""}
                           {rec.playerName}
                         </div>
-                        <p className="text-xs text-zinc-500">
+                        <p className="text-sm text-zinc-500">
                           {rec.position} · Grade {rec.scoutGrade} · Fit{" "}
                           {rec.teamFit} · Need {rec.teamNeed}
                         </p>
-                        <ul className="mt-1 space-y-0.5 text-xs text-zinc-400">
+                        <ul className="mt-1 space-y-0.5 text-sm text-zinc-400">
                           {rec.reasons.slice(0, 2).map((r) => (
                             <li key={r}>• {r}</li>
                           ))}

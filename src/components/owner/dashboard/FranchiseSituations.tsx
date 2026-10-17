@@ -4,6 +4,7 @@ import {
   resolveNarrativeSituationAction,
 } from "@/application/actions";
 import type { OwnerDashboardSituationView } from "@/state/owner-dashboard";
+import { SectionHeading } from "@/components/ui/SectionHeading";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { cn } from "@/components/ui/styles";
 
@@ -18,14 +19,7 @@ export function FranchiseSituations(props: {
 
   return (
     <section className="space-y-3" aria-label="Franchise situations">
-      <div>
-        <p className="font-mono text-xs uppercase tracking-[0.16em] text-sky-500">
-          Franchise situations
-        </p>
-        <h2 className="mt-1 text-lg font-medium text-zinc-50">
-          Active developments
-        </h2>
-      </div>
+      <SectionHeading title="Active developments" />
       <ul className="space-y-3">
         {props.situations.map((situation) => (
           <li
@@ -43,16 +37,16 @@ export function FranchiseSituations(props: {
                       : "info"
                 }
               />
-              <span className="text-xs uppercase tracking-wide text-zinc-500">
+              <span className="text-sm text-zinc-500">
                 {situation.category} · {situation.status}
               </span>
             </div>
-            <h3 className="mt-2 text-base font-medium text-zinc-100">
+            <h3 className="mt-2 text-sm font-semibold text-zinc-100">
               {situation.title}
             </h3>
             <p className="mt-1 text-sm text-zinc-300">{situation.summary}</p>
             <p className="mt-2 text-sm text-zinc-400">{situation.body}</p>
-            <ul className="mt-2 space-y-0.5 font-mono text-xs text-zinc-500">
+            <ul className="mt-2 space-y-0.5 text-sm text-zinc-500">
               {Object.entries(situation.evidence)
                 .slice(0, 5)
                 .map(([key, value]) => (
@@ -90,7 +84,7 @@ export function FranchiseSituations(props: {
                     {action.label}
                   </button>
                   {action.effectSummary ? (
-                    <p className="mt-1 text-[11px] leading-snug text-zinc-500">
+                    <p className="mt-1 text-sm leading-snug text-zinc-500">
                       {action.effectSummary}
                     </p>
                   ) : null}

@@ -4,6 +4,8 @@ import { openSaveAction } from "@/application/actions";
 import type { ValidOwnerSavePreview } from "@/application/save-preview-helpers";
 import { ErrorState } from "@/components/ui/EmptyState";
 import { ScoreNumeral } from "@/components/ui/ScoreNumeral";
+import { SectionHeading } from "@/components/ui/SectionHeading";
+import { formatGameDate } from "@/presentation/game-date";
 import { TeamBadge } from "@/components/ui/TeamBadge";
 import { TeamThemeScope } from "@/components/ui/TeamThemeScope";
 
@@ -26,9 +28,7 @@ export function OwnerEntryActions(props: {
           className={`${panelClass} border-team-ink/40`}
           aria-label="No Owner saves"
         >
-          <h2 className="text-lg font-medium text-zinc-50">
-            No Owner saves yet
-          </h2>
+          <SectionHeading title="No Owner saves yet" />
           <p className="text-sm text-zinc-300">
             Start your first franchise to begin.
           </p>
@@ -63,7 +63,7 @@ export function OwnerEntryActions(props: {
                   decorative
                 />
                 <div className="min-w-0 space-y-1">
-                  <p className="font-mono text-xs uppercase tracking-[0.16em] text-team-ink">
+                  <p className="text-xs font-semibold uppercase tracking-[0.16em] text-team-ink">
                     Continue
                   </p>
                   <h2 className="font-display text-3xl font-extrabold uppercase leading-none tracking-wide text-zinc-50">
@@ -71,9 +71,10 @@ export function OwnerEntryActions(props: {
                     {continueSave.controlledTeam.name}
                   </h2>
                   <p className="text-sm text-zinc-300">{continueSave.name}</p>
-                  <p className="font-mono text-xs text-zinc-300">
+                  <p className="text-sm text-zinc-300">
                     Season {continueSave.seasonYear} ·{" "}
-                    {continueSave.currentDate} · {continueSave.seasonPhase}
+                    {formatGameDate(continueSave.currentDate, { year: true })} ·{" "}
+                    {continueSave.seasonPhase}
                   </p>
                 </div>
                 {continueSave.record ? (
@@ -100,12 +101,10 @@ export function OwnerEntryActions(props: {
 
         <div className={panelClass}>
           <div className="space-y-1">
-            <p className="font-mono text-xs uppercase tracking-[0.16em] text-zinc-400">
-              Load Another Save
-            </p>
-            <h2 className="font-display text-2xl font-bold uppercase tracking-wide text-zinc-50">
-              Choose an existing Owner save
-            </h2>
+            <SectionHeading
+              eyebrow="Load Another Save"
+              title="Choose an existing Owner save"
+            />
             <p className="text-sm text-zinc-300">
               {hasAnySaves
                 ? "Open a different franchise or manage save slots."
@@ -127,12 +126,10 @@ export function OwnerEntryActions(props: {
         {continueSave ? (
           <div className={panelClass}>
             <div className="space-y-1">
-              <p className="font-mono text-xs uppercase tracking-[0.16em] text-zinc-400">
-                Start New Game
-              </p>
-              <h2 className="font-display text-2xl font-bold uppercase tracking-wide text-zinc-50">
-                Create a new franchise
-              </h2>
+              <SectionHeading
+                eyebrow="Start New Game"
+                title="Create a new franchise"
+              />
               <p className="text-sm text-zinc-300">
                 Configure league rules and begin a new Owner Mode career.
               </p>

@@ -2,6 +2,7 @@ import type { DepthChartView } from "@/state/roster-page-selectors";
 import { PLAYER_POSITIONS } from "@/domain/entities/player";
 import { PlayerEntityLink } from "@/components/entity/PlayerEntityLink";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { SectionHeading } from "@/components/ui/SectionHeading";
 import { cn, panelClass } from "@/components/ui/styles";
 
 export function DepthChart(props: {
@@ -18,9 +19,7 @@ export function DepthChart(props: {
 
   return (
     <section aria-label="Depth chart" className="space-y-3">
-      <h2 className="font-mono text-[0.65rem] uppercase tracking-[0.16em] text-zinc-500">
-        Depth Chart
-      </h2>
+      <SectionHeading title="Depth Chart" />
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
         {PLAYER_POSITIONS.map((position) => {
           const entries = props.depthChart[position];
@@ -30,11 +29,11 @@ export function DepthChart(props: {
               className={cn(panelClass, "px-3 py-3")}
               aria-label={`${position} depth`}
             >
-              <h3 className="font-mono text-sm font-medium text-team-ink">
+              <h3 className="text-sm font-semibold text-team-ink">
                 {position}
               </h3>
               {entries.length === 0 ? (
-                <p className="mt-2 text-xs text-zinc-600">—</p>
+                <p className="mt-2 text-sm text-zinc-600">—</p>
               ) : (
                 <ol className="mt-2 space-y-2">
                   {entries.slice(0, 5).map((entry, index) => (
@@ -44,7 +43,7 @@ export function DepthChart(props: {
                     >
                       <div className="flex items-baseline justify-between gap-1">
                         <span className="min-w-0 truncate">
-                          <span className="mr-1 font-mono text-[0.65rem] text-zinc-500">
+                          <span className="mr-1 tabular-nums text-sm text-zinc-500">
                             {index + 1}.
                           </span>
                           <PlayerEntityLink
@@ -54,11 +53,11 @@ export function DepthChart(props: {
                             {entry.firstName} {entry.lastName}
                           </PlayerEntityLink>
                         </span>
-                        <span className="shrink-0 font-mono text-xs text-zinc-400">
+                        <span className="shrink-0 text-sm tabular-nums text-zinc-400">
                           {entry.overall}
                         </span>
                       </div>
-                      <div className="mt-0.5 flex flex-wrap gap-2 font-mono text-[0.6rem] uppercase tracking-wide text-zinc-500">
+                      <div className="mt-0.5 flex flex-wrap gap-2 text-sm text-zinc-500">
                         <span>{entry.label}</span>
                         {!entry.canPlay ? (
                           <span className="text-rose-400">

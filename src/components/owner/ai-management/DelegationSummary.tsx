@@ -70,9 +70,7 @@ export function DelegationSummary({
 
       <div className="mt-3 grid gap-3 sm:grid-cols-2">
         <div>
-          <p className="text-xs uppercase tracking-wide text-zinc-500">
-            AI handles
-          </p>
+          <p className="text-sm text-zinc-400">AI handles</p>
           {aiCategories.length === 0 ? (
             <p className="mt-1 text-zinc-500">Nothing</p>
           ) : (
@@ -84,9 +82,7 @@ export function DelegationSummary({
           )}
         </div>
         <div>
-          <p className="text-xs uppercase tracking-wide text-zinc-500">
-            You handle
-          </p>
+          <p className="text-sm text-zinc-400">You handle</p>
           {youCategories.length === 0 ? (
             <p className="mt-1 text-zinc-500">
               All areas delegated during simulation — you can still override any
@@ -107,14 +103,14 @@ export function DelegationSummary({
           <button
             type="button"
             onClick={() => setExpanded((value) => !value)}
-            className="text-xs text-zinc-500 hover:text-team-ink"
+            className="text-sm text-zinc-500 hover:text-team-ink"
           >
             {expanded ? "Hide details ▴" : "Show details ▾"}
           </button>
           {expanded ? (
             <div className="mt-2 grid gap-3 sm:grid-cols-2">
               <div>
-                <p className="text-xs uppercase tracking-wide text-zinc-500">
+                <p className="text-sm text-zinc-400">
                   Delegated during simulation
                 </p>
                 <ul className="mt-1 list-inside list-disc text-zinc-400">
@@ -126,7 +122,7 @@ export function DelegationSummary({
                 </ul>
               </div>
               <div>
-                <p className="text-xs uppercase tracking-wide text-zinc-500">
+                <p className="text-sm text-zinc-400">
                   You remain responsible for
                 </p>
                 <ul className="mt-1 list-inside list-disc text-zinc-400">

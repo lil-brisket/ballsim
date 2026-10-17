@@ -2,6 +2,7 @@
 
 import { useState, type ReactNode } from "react";
 import { buttonClass } from "@/components/ui/Button";
+import { SectionHeading } from "@/components/ui/SectionHeading";
 import { linkClass } from "@/components/ui/styles";
 import { useFormStatus } from "react-dom";
 import {
@@ -85,9 +86,7 @@ export function AdvanceTimeControls(props: {
           ⚠ {props.unresolvedWarning}
         </p>
       ) : null}
-      <p className="text-xs uppercase tracking-wide text-zinc-500">
-        Secondary advance
-      </p>
+      <p className="text-sm text-zinc-400">Secondary advance</p>
       <div
         className="flex flex-wrap gap-2"
         role="group"
@@ -126,11 +125,11 @@ export function AdvanceTimeControls(props: {
           </button>
         ) : (
           <details className="w-full sm:w-auto">
-            <summary className="cursor-pointer list-none rounded-md border border-zinc-800 px-3 py-2 text-xs text-zinc-500 hover:border-zinc-600 hover:text-zinc-300">
+            <summary className="cursor-pointer list-none rounded-md border border-zinc-800 px-3 py-2 text-sm text-zinc-500 hover:border-zinc-600 hover:text-zinc-300">
               Advanced…
             </summary>
             <div className="mt-2 space-y-1">
-              <p className="text-xs text-zinc-500">
+              <p className="text-sm text-zinc-500">
                 Prefer the{" "}
                 <a href={calendarHref} className={linkClass}>
                   Calendar
@@ -165,12 +164,10 @@ export function AdvanceTimeControls(props: {
             aria-labelledby="phase-transition-title"
             className="w-full max-w-md rounded-xl border border-zinc-700 bg-zinc-900 p-5 shadow-xl"
           >
-            <h3
+            <SectionHeading
               id="phase-transition-title"
-              className="text-lg font-medium text-zinc-50"
-            >
-              {props.confirmTitle ?? "Unresolved decisions"}
-            </h3>
+              title={props.confirmTitle ?? "Unresolved decisions"}
+            />
             <p className="mt-2 text-sm text-zinc-400">
               {props.confirmDescription ??
                 props.unresolvedWarning ??

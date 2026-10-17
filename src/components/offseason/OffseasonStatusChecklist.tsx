@@ -17,7 +17,7 @@ export function OffseasonStatusChecklist(props: {
         >
           <div>
             <p className="text-sm font-medium text-zinc-100">{item.label}</p>
-            <p className="text-xs text-zinc-500">{item.detail}</p>
+            <p className="text-sm text-zinc-500">{item.detail}</p>
           </div>
           <StatusBadge
             label={item.done ? "Set" : "Open"}

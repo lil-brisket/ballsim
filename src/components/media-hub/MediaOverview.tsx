@@ -75,7 +75,7 @@ export function MediaOverview(props: {
             <div className="space-y-1">
               <span>{view.recentStoryCount}</span>
               {caption ? (
-                <p className="text-xs font-normal text-zinc-500">{caption}</p>
+                <p className="text-sm font-normal text-zinc-500">{caption}</p>
               ) : null}
             </div>
           }

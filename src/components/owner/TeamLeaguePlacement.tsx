@@ -18,7 +18,7 @@ export function TeamLeaguePlacement(props: {
 
   if (!showDivision) {
     return (
-      <span className="block text-xs text-zinc-400">{conferenceLabel}</span>
+      <span className="block text-sm text-zinc-400">{conferenceLabel}</span>
     );
   }
 
@@ -26,14 +26,14 @@ export function TeamLeaguePlacement(props: {
 
   if (compact) {
     return (
-      <span className="block text-xs text-zinc-400">
+      <span className="block text-sm text-zinc-400">
         {conferenceLabel} · {divisionLabel}
       </span>
     );
   }
 
   return (
-    <span className="block text-xs text-zinc-400">
+    <span className="block text-sm text-zinc-400">
       <span className="block">{conferenceLabel}</span>
       <span className="block">{divisionLabel}</span>
     </span>

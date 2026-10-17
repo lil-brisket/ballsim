@@ -2,7 +2,7 @@ import { ArenaPanel } from "@/components/ui/ArenaPanel";
 import { cn, type Density } from "@/components/ui/styles";
 
 /**
- * Metric surface for page-level stats: mono eyebrow label over a large
+ * Metric surface for page-level stats: sentence-case label over a large
  * scoreboard value. Do not nest StatCards inside Panel.
  */
 export function StatCard(props: {
@@ -19,7 +19,7 @@ export function StatCard(props: {
       density={props.density ?? "comfortable"}
       className={props.className}
     >
-      <h2 className="font-mono text-[0.65rem] uppercase tracking-[0.16em] text-zinc-400">
+      <h2 className="text-sm font-medium text-zinc-400">
         {props.label}
       </h2>
       <div

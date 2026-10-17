@@ -37,7 +37,7 @@ export function ScoreNumeral(props: {
   const size = props.size ?? "md";
   const align = props.align ?? "start";
   const label = props.label ? (
-    <span className="font-mono text-[0.65rem] uppercase tracking-[0.18em] text-zinc-400">
+    <span className="text-sm text-zinc-400">
       {props.label}
     </span>
   ) : null;

@@ -16,7 +16,7 @@ export function LeagueHistoryTable(props: {
   return (
     <div className="overflow-x-auto">
       <table className="w-full min-w-[480px] text-left text-sm">
-        <thead className="border-b border-zinc-800 text-xs uppercase text-zinc-500">
+        <thead className="border-b border-zinc-800 text-sm text-zinc-400">
           <tr>
             <th className={TH}>Season</th>
             <th className={TH}>Champion</th>
@@ -36,7 +36,7 @@ export function LeagueHistoryTable(props: {
                 >
                   {row.championName}
                 </TeamEntityLink>
-                <span className="ml-2 text-xs text-zinc-500">
+                <span className="ml-2 text-sm text-zinc-500">
                   {row.championRecord}
                 </span>
               </td>

@@ -14,10 +14,7 @@ export function Metric(props: {
   return (
     <div className={cn(props.className)}>
       <p
-        className={cn(
-          "font-mono uppercase tracking-[0.16em] text-zinc-500",
-          dense ? "text-[0.6rem]" : "text-[0.65rem]",
-        )}
+        className="text-sm text-zinc-400"
       >
         {props.label}
       </p>

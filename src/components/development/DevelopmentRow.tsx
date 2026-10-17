@@ -46,7 +46,7 @@ export function DevelopmentRow(props: {
             {row.playerName}
           </PlayerEntityLink>
         </span>
-        <p className="text-xs text-zinc-500">
+        <p className="text-sm text-zinc-500">
           {row.position} · {row.age}
         </p>
       </td>
@@ -68,7 +68,7 @@ export function DevelopmentRow(props: {
           {formatChange(row.changeDelta)}
         </span>
         {row.changeLabel ? (
-          <p className="text-[0.65rem] text-zinc-600">{row.changeLabel}</p>
+          <p className="text-sm text-zinc-600">{row.changeLabel}</p>
         ) : null}
       </td>
       <td className="px-3 py-2 text-zinc-400">{row.potential}</td>
@@ -76,12 +76,12 @@ export function DevelopmentRow(props: {
         {row.onDevelopmentLeague ? (
           <Link
             href={`/dashboard/${saveId}/development-league`}
-            className="text-xs text-team-ink underline-offset-4 hover:underline"
+            className="text-sm text-team-ink underline-offset-4 hover:underline"
           >
             Yes
           </Link>
         ) : (
-          <span className="text-xs text-zinc-600">No</span>
+          <span className="text-sm text-zinc-600">No</span>
         )}
       </td>
     </tr>

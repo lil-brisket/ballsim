@@ -24,9 +24,7 @@ export function TeamRotationPreview(props: {
     >
       <div className={cn(panelClass, "divide-y divide-zinc-800")}>
         <div className="px-4 py-2">
-          <p className="font-mono text-[0.65rem] uppercase text-zinc-500">
-            Starters
-          </p>
+          <p className="text-sm text-zinc-500">Starters</p>
           {hub.rotation.starters.length === 0 ? (
             <EmptyState message="No starters configured." />
           ) : (
@@ -37,14 +35,14 @@ export function TeamRotationPreview(props: {
                   className="flex items-center justify-between gap-2 py-1.5 text-sm"
                 >
                   <span className="min-w-0 truncate">
-                    <span className="mr-2 font-mono text-xs text-zinc-500">
+                    <span className="mr-2 text-sm text-zinc-500">
                       {row.position}
                     </span>
                     <PlayerEntityLink saveId={saveId} playerId={row.playerId}>
                       {row.firstName} {row.lastName}
                     </PlayerEntityLink>
                   </span>
-                  <span className="shrink-0 font-mono text-zinc-300">
+                  <span className="shrink-0 tabular-nums text-zinc-300">
                     {row.targetMinutes} MPG
                   </span>
                 </li>
@@ -53,9 +51,7 @@ export function TeamRotationPreview(props: {
           )}
         </div>
         <div className="px-4 py-2">
-          <p className="font-mono text-[0.65rem] uppercase text-zinc-500">
-            Bench
-          </p>
+          <p className="text-sm text-zinc-500">Bench</p>
           {hub.rotation.bench.length === 0 ? (
             <p className="mt-1 text-sm text-zinc-500">No bench minutes set.</p>
           ) : (
@@ -66,14 +62,14 @@ export function TeamRotationPreview(props: {
                   className="flex items-center justify-between gap-2 py-1.5 text-sm"
                 >
                   <span className="min-w-0 truncate">
-                    <span className="mr-2 font-mono text-xs text-zinc-500">
+                    <span className="mr-2 text-sm text-zinc-500">
                       {row.position}
                     </span>
                     <PlayerEntityLink saveId={saveId} playerId={row.playerId}>
                       {row.firstName} {row.lastName}
                     </PlayerEntityLink>
                   </span>
-                  <span className="shrink-0 font-mono text-zinc-300">
+                  <span className="shrink-0 tabular-nums text-zinc-300">
                     {row.targetMinutes} MPG
                   </span>
                 </li>
@@ -81,7 +77,7 @@ export function TeamRotationPreview(props: {
             </ul>
           )}
         </div>
-        <div className="flex flex-wrap items-center justify-between gap-2 px-4 py-2 text-xs text-zinc-500">
+        <div className="flex flex-wrap items-center justify-between gap-2 px-4 py-2 text-sm text-zinc-500">
           <span>
             {hub.rotation.totalPlanned} / {hub.rotation.target} minutes
             {!hub.rotation.plannedValid ? (

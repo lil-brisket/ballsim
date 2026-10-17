@@ -43,7 +43,7 @@ export default async function ScoutingPage({ params, searchParams }: Props) {
 
   return (
     <div className="space-y-4">
-      <PageHeader title="Scouting" subtitle="Who should you scout next?" />
+      <PageHeader title="Scouting" />
       {error ? <ErrorState message={error} /> : null}
 
       {!hub.active || !draft ? (
@@ -98,7 +98,7 @@ export default async function ScoutingPage({ params, searchParams }: Props) {
                 </button>
               </form>
             </div>
-            <p className="mt-2 text-xs text-zinc-500">
+            <p className="mt-2 text-sm text-zinc-500">
               Active assignments: {hub.coverage.assignments}. Exposure improves
               when you advance days on the Calendar during draft prep.
             </p>
@@ -118,7 +118,7 @@ export default async function ScoutingPage({ params, searchParams }: Props) {
                       <PlayerEntityLink saveId={saveId} playerId={row.playerId}>
                         {row.firstName} {row.lastName}
                       </PlayerEntityLink>
-                      <p className="text-xs text-zinc-500">
+                      <p className="text-sm text-zinc-500">
                         {row.position} · Age {row.age} · {row.region} ·{" "}
                         {row.knowledgeLevel}
                       </p>
@@ -196,7 +196,7 @@ export default async function ScoutingPage({ params, searchParams }: Props) {
                           />
                           <button
                             type="submit"
-                            className={cn(linkClass, "text-xs")}
+                            className={cn(linkClass, "text-sm")}
                           >
                             Assign scout
                           </button>
@@ -215,14 +215,14 @@ export default async function ScoutingPage({ params, searchParams }: Props) {
                           />
                           <button
                             type="submit"
-                            className="text-xs text-zinc-400 hover:underline"
+                            className="text-sm text-zinc-400 hover:underline"
                           >
                             {interview ? "Re-interview" : "Interview"}
                           </button>
                         </form>
                       </div>
                       {interview ? (
-                        <ul className="space-y-1 px-3 pb-3 text-xs italic text-zinc-500">
+                        <ul className="space-y-1 px-3 pb-3 text-sm italic text-zinc-500">
                           {interview.answers.slice(0, 2).map((a) => (
                             <li key={a.topic}>&ldquo;{a.quote}&rdquo;</li>
                           ))}
@@ -242,9 +242,7 @@ export default async function ScoutingPage({ params, searchParams }: Props) {
 function CoverageStat({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded-md border border-zinc-800 px-3 py-2">
-      <div className="text-[10px] uppercase tracking-wide text-zinc-600">
-        {label}
-      </div>
+      <div className="text-sm text-zinc-400">{label}</div>
       <div className="text-zinc-100">{value}</div>
     </div>
   );

@@ -83,7 +83,7 @@ export function PlayerCard(props: {
             <h3 className="truncate text-base font-medium text-zinc-50">
               {name}
             </h3>
-            <p className="mt-0.5 text-xs text-zinc-400">
+            <p className="mt-0.5 text-sm text-zinc-400">
               {[
                 fields.position && props.position,
                 fields.age && props.age != null ? `Age ${props.age}` : null,
@@ -112,12 +112,12 @@ export function PlayerCard(props: {
           <InjuryBadge status={props.injuryStatus} />
         ) : null}
         {fields.contract && props.contractLabel ? (
-          <span className="text-xs text-zinc-400">{props.contractLabel}</span>
+          <span className="text-sm text-zinc-400">{props.contractLabel}</span>
         ) : null}
       </div>
 
       {fields.team && props.teamName ? (
-        <p className="mt-3 text-xs text-zinc-400">
+        <p className="mt-3 text-sm text-zinc-400">
           {props.teamAbbreviation
             ? `${props.teamAbbreviation} · ${props.teamName}`
             : props.teamName}

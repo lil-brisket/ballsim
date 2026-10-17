@@ -21,7 +21,7 @@ export function GameRotationPanel(props: {
       {props.rotation.substitutions.length > 0 ? (
         <div className="mt-6">
           <h4 className="text-sm font-medium text-zinc-300">Substitutions</h4>
-          <ul className="mt-2 max-h-64 space-y-1 overflow-y-auto text-xs text-zinc-500">
+          <ul className="mt-2 max-h-64 space-y-1 overflow-y-auto text-sm text-zinc-500">
             {props.rotation.substitutions.map((entry, index) => (
               <li key={`${entry.clockLabel}-${index}`}>
                 <span className="font-mono text-zinc-400">
@@ -52,7 +52,7 @@ function MinuteCompare(props: {
           <li key={player.playerId} className="border-b border-zinc-800 pb-2">
             <div className="flex justify-between gap-2 text-zinc-200">
               <span>{player.name}</span>
-              <span className="font-mono text-zinc-400">
+              <span className="tabular-nums text-zinc-400">
                 {player.minutes}
                 {player.targetMinutes != null
                   ? ` / ${player.targetMinutes}`
@@ -61,7 +61,7 @@ function MinuteCompare(props: {
               </span>
             </div>
             {player.explanations.length > 0 ? (
-              <ul className="mt-1 text-xs text-zinc-500">
+              <ul className="mt-1 text-sm text-zinc-500">
                 {player.explanations.map((reason) => (
                   <li key={reason}>• {reason}</li>
                 ))}

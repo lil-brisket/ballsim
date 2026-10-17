@@ -61,7 +61,6 @@ export default async function MediaPage({
     <>
       <PageHeader
         title="Media Hub"
-        subtitle="The story of the league — narrative context around simulation events"
         actions={
           <form action={markAllMediaReadAction}>
             <input type="hidden" name="saveId" value={saveId} />

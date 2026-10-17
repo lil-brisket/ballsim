@@ -40,7 +40,7 @@ export function TickerBar(props: {
           key={item.label}
           className="flex shrink-0 flex-col justify-center gap-0.5 px-3 py-1 first:pl-0 last:pr-0"
         >
-          <dt className="font-mono text-[0.6rem] uppercase tracking-[0.18em] text-zinc-500">
+          <dt className="text-sm text-zinc-400">
             {item.label}
           </dt>
           <dd

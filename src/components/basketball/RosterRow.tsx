@@ -49,7 +49,7 @@ export function RosterRow(props: {
         >
           {props.firstName} {props.lastName}
         </PlayerEntityLink>
-        <p className="text-xs text-zinc-500">
+        <p className="text-sm text-zinc-500">
           {props.position}
           {props.age != null ? ` · ${props.age}` : ""}
         </p>

@@ -87,9 +87,9 @@ export function CustomRosterPackageField(props: {
         />
       </label>
       {fileName ? (
-        <p className="text-xs text-zinc-500">Selected: {fileName}</p>
+        <p className="text-sm text-zinc-500">Selected: {fileName}</p>
       ) : (
-        <p className="text-xs text-zinc-500">Upload a JSON roster package.</p>
+        <p className="text-sm text-zinc-500">Upload a JSON roster package.</p>
       )}
       {readError ? (
         <ErrorState message="Could not read the file. Choose a JSON file and try again." />
@@ -128,10 +128,10 @@ export function CustomRosterPackageField(props: {
           ) : null}
           {preview.warnings.length > 0 ? (
             <details className="text-zinc-200">
-              <summary className="cursor-pointer text-xs">
+              <summary className="cursor-pointer text-sm">
                 Show {preview.warnings.length} warnings
               </summary>
-              <ul className="mt-2 list-disc space-y-1 pl-5 text-xs text-zinc-200">
+              <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-zinc-200">
                 {preview.warnings.map((entry, index) => (
                   <li key={`${entry.path}:${entry.code}:${index}`}>
                     {entry.path}: {entry.message}

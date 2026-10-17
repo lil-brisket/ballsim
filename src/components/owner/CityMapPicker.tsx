@@ -102,7 +102,7 @@ export function CityMapPicker(props: {
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-2">
       <header className="flex shrink-0 items-baseline gap-3">
-        <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
+        <p className="text-sm font-medium text-zinc-300">
           {LEAGUE_AREA_LABELS[props.area]}
         </p>
       </header>
@@ -135,7 +135,7 @@ export function CityMapPicker(props: {
             <p
               role="status"
               aria-live="polite"
-              className="text-xs text-zinc-400"
+              className="text-sm text-zinc-400"
             >
               {countLabel}
             </p>
@@ -180,12 +180,12 @@ export function CityMapPicker(props: {
                     >
                       <span>
                         <span className="block font-medium">{city.city}</span>
-                        <span className="block text-xs text-zinc-500">
+                        <span className="block text-sm text-zinc-500">
                           {city.locationLabel}
                         </span>
                       </span>
                       {isSelected ? (
-                        <span className="shrink-0 text-xs font-semibold text-team-ink">
+                        <span className="shrink-0 text-sm font-semibold text-team-ink">
                           <span aria-hidden="true">✓ </span>Selected
                         </span>
                       ) : null}
@@ -201,7 +201,7 @@ export function CityMapPicker(props: {
               <section aria-labelledby="selected-market-heading">
                 <h2
                   id="selected-market-heading"
-                  className="text-xs font-semibold uppercase tracking-wide text-zinc-500/90"
+                  className="text-sm font-medium text-zinc-300"
                 >
                   Selected market
                 </h2>
@@ -211,17 +211,17 @@ export function CityMapPicker(props: {
                 <p className="text-sm text-zinc-400">
                   {selected.locationLabel}
                 </p>
-                <dl className="mt-1 grid grid-cols-[auto_1fr] gap-x-3 text-xs text-zinc-400">
+                <dl className="mt-1 grid grid-cols-[auto_1fr] gap-x-3 text-sm text-zinc-400">
                   <dt className="text-zinc-500">League area</dt>
                   <dd>{LEAGUE_AREA_LABELS[props.area]}</dd>
                   <dt className="text-zinc-500">Coordinates</dt>
                   <dd>{formatCoordinates(selected.lat, selected.lng)}</dd>
                 </dl>
-                <p className="mt-2 text-xs text-zinc-400">
+                <p className="mt-2 text-sm text-zinc-400">
                   Your franchise relocates here. If another team already plays
                   in this city, it moves to your franchise&apos;s previous city.
                 </p>
-                <p className="mt-1 text-xs text-zinc-500">
+                <p className="mt-1 text-sm text-zinc-500">
                   Market size and starting facilities are set by the league, not
                   by the city you choose.
                 </p>

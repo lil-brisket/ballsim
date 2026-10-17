@@ -36,7 +36,7 @@ export function TeamIdentityInline(props: TeamIdentityInlineProps) {
       )}
       <span className="min-w-0">
         {props.city} {props.name}{" "}
-        <span className="font-mono text-zinc-500">({props.abbreviation})</span>
+        <span className="text-zinc-500">({props.abbreviation})</span>
       </span>
     </span>
   );

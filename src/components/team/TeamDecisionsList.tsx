@@ -42,7 +42,7 @@ export function TeamDecisionsList(props: {
                   </p>
                   <StatusBadge label={item.severity} tone={item.severity} />
                 </div>
-                <p className="mt-0.5 truncate text-xs text-zinc-500">
+                <p className="mt-0.5 truncate text-sm text-zinc-500">
                   {item.description}
                 </p>
               </div>

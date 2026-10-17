@@ -1,3 +1,4 @@
+import { formatGameDate } from "@/presentation/game-date";
 import { TeamBadge } from "@/components/ui/TeamBadge";
 import { focusRingClass } from "@/components/ui/styles";
 import type { TeamBrandingView } from "@/state/team-branding-view";
@@ -30,24 +31,9 @@ export function calendarDayAriaLabel(
   return parts.filter(Boolean).join(", ");
 }
 
+/** "Oct 8". Kept for existing callers; prefer `formatGameDate`. */
 export function formatShortDate(isoDate: string): string {
-  const month = Number(isoDate.slice(5, 7));
-  const day = Number(isoDate.slice(8, 10));
-  const months = [
-    "Jan",
-    "Feb",
-    "Mar",
-    "Apr",
-    "May",
-    "Jun",
-    "Jul",
-    "Aug",
-    "Sep",
-    "Oct",
-    "Nov",
-    "Dec",
-  ];
-  return `${months[month - 1]} ${day}`;
+  return formatGameDate(isoDate);
 }
 
 function LeagueMilestoneChips(props: {
@@ -201,7 +187,7 @@ export function CalendarDayCell(props: {
           {dayNumber(cell.date)}
         </span>
         {cell.isNextTeamGame && !cell.isToday ? (
-          <span className="rounded bg-team-ink px-1 font-mono text-[8px] font-bold uppercase leading-4 text-zinc-950 sm:text-[9px]">
+          <span className="rounded bg-team-ink px-1 text-[8px] font-bold uppercase leading-4 text-zinc-950 sm:text-[9px]">
             Next
           </span>
         ) : null}
@@ -220,7 +206,7 @@ export function CalendarDayCell(props: {
               className="!h-6 !w-6 sm:!h-8 sm:!w-8"
             />
             <span
-              className="font-mono text-[9px] font-semibold uppercase text-zinc-400 sm:text-[10px]"
+              className="text-[10px] font-semibold uppercase text-zinc-400"
               title={teamGame.home ? "Home" : "Away"}
               aria-hidden
             >
@@ -244,9 +230,7 @@ export function CalendarDayCell(props: {
               {teamGame.resultLabel}
             </p>
           ) : teamGame.startTimeLabel ? (
-            <p className="text-[10px] text-zinc-400">
-              {teamGame.startTimeLabel}
-            </p>
+            <p className="text-xs text-zinc-400">{teamGame.startTimeLabel}</p>
           ) : null}
         </div>
       ) : milestoneCount === 0 && specialCount > 0 ? (
@@ -256,7 +240,7 @@ export function CalendarDayCell(props: {
             title={`${specialCount} event${specialCount === 1 ? "" : "s"}`}
             aria-hidden
           />
-          <p className="mt-0.5 text-[10px] text-zinc-400">
+          <p className="mt-0.5 text-xs text-zinc-400">
             {specialCount === 1 ? "Event" : `${specialCount} events`}
           </p>
         </div>

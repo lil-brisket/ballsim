@@ -67,7 +67,7 @@ export function ContractRow(props: {
         <PlayerEntityLink saveId={saveId} playerId={row.playerId}>
           {row.playerName}
         </PlayerEntityLink>
-        <p className="text-xs text-zinc-500">
+        <p className="text-sm text-zinc-500">
           {row.position}
           {row.age !== null ? ` · ${row.age}` : ""}
         </p>
@@ -77,7 +77,7 @@ export function ContractRow(props: {
       </td>
       <td className="px-3 py-2 text-zinc-400">{row.yearsRemaining}y</td>
       <td className="px-3 py-2 text-zinc-300">{row.expirationYear}</td>
-      <td className="px-3 py-2 text-xs text-zinc-400">{row.optionLabel}</td>
+      <td className="px-3 py-2 text-sm text-zinc-400">{row.optionLabel}</td>
       <td className="px-3 py-2">
         <StatusBadge
           label={statusLabel(row.contractState)}
@@ -98,7 +98,7 @@ export function ContractRow(props: {
                 <input type="hidden" name="returnPath" value={returnPath} />
                 <button
                   type="submit"
-                  className="rounded-md bg-team px-2.5 py-1 text-xs font-medium text-on-team"
+                  className="rounded-md bg-team px-2.5 py-1 text-sm font-medium text-on-team"
                 >
                   Exercise
                 </button>
@@ -115,7 +115,7 @@ export function ContractRow(props: {
                 <input type="hidden" name="returnPath" value={returnPath} />
                 <button
                   type="submit"
-                  className="rounded-md border border-rose-700 px-2.5 py-1 text-xs text-rose-300"
+                  className="rounded-md border border-rose-700 px-2.5 py-1 text-sm text-rose-300"
                 >
                   Decline
                 </button>
@@ -123,9 +123,9 @@ export function ContractRow(props: {
             </ConfirmDialog>
           </div>
         ) : row.hasPendingPlayerOption ? (
-          <span className="text-xs text-zinc-500">Player decision</span>
+          <span className="text-sm text-zinc-500">Player decision</span>
         ) : (
-          <span className="text-xs text-zinc-600">—</span>
+          <span className="text-sm text-zinc-600">—</span>
         )}
       </td>
     </tr>

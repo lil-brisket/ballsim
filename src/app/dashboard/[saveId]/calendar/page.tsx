@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { formatGameDate } from "@/presentation/game-date";
 import { notFound } from "next/navigation";
 import { loadCalendarPageView } from "@/application/game-service";
 import { CalendarWorkspace } from "@/components/calendar/CalendarWorkspace";
@@ -76,7 +77,7 @@ export default async function CalendarPage({
     <>
       <PageHeader
         title="Calendar"
-        subtitle={`${view.dashboard.controlledTeam.city} ${view.dashboard.controlledTeam.name} · ${view.currentDate}`}
+        subtitle={`${view.dashboard.controlledTeam.city} ${view.dashboard.controlledTeam.name} · ${formatGameDate(view.currentDate, { weekday: true })}`}
       />
 
       {sp.error ? <ErrorState message={sp.error} /> : null}

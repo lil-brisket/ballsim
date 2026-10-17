@@ -1,4 +1,5 @@
 import type { FantasyDraftView } from "@/state/selectors";
+import { SectionHeading } from "@/components/ui/SectionHeading";
 
 function RecCard(props: {
   label: string;
@@ -6,14 +7,14 @@ function RecCard(props: {
 }) {
   if (!props.player) {
     return (
-      <div className="rounded-lg border border-zinc-800 px-3 py-2 text-xs text-zinc-500">
+      <div className="rounded-lg border border-zinc-800 px-3 py-2 text-sm text-zinc-500">
         {props.label}: —
       </div>
     );
   }
   return (
-    <div className="rounded-lg border border-zinc-800 px-3 py-2 text-xs">
-      <div className="uppercase tracking-wide text-zinc-500">{props.label}</div>
+    <div className="rounded-lg border border-zinc-800 px-3 py-2 text-sm">
+      <div className="text-zinc-400">{props.label}</div>
       <div className="mt-1 font-medium text-zinc-100">
         {props.player.firstName} {props.player.lastName}
       </div>
@@ -28,10 +29,8 @@ function RecCard(props: {
 export function RecommendationsPanel(props: { draft: FantasyDraftView }) {
   return (
     <section className="rounded-xl border border-zinc-800 p-4">
-      <h2 className="mb-2 text-sm font-semibold uppercase text-zinc-400">
-        Recommendations
-      </h2>
-      <p className="mb-3 text-[11px] text-zinc-500">
+      <SectionHeading title="Recommendations" className="mb-2" />
+      <p className="mb-3 text-sm text-zinc-500">
         Informational only — you can draft any eligible player.
       </p>
       <div className="space-y-2">

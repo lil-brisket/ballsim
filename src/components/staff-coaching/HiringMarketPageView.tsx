@@ -33,7 +33,7 @@ function marketHref(saveId: string, role?: string, sort?: string): string {
 }
 
 function chipClass(active: boolean): string {
-  return `rounded-full border px-3 py-1 text-xs ${
+  return `rounded-full border px-3 py-1 text-sm ${
     active
       ? "border-team-ink text-team-ink"
       : "border-zinc-700 text-zinc-400 hover:border-zinc-500"
@@ -55,10 +55,7 @@ export function HiringMarketPageView(props: {
 
   return (
     <div className="space-y-4">
-      <PageHeader
-        title="Hiring Market"
-        subtitle="Free-agent staff available to hire"
-      />
+      <PageHeader title="Hiring Market" />
       {error ? <ErrorState message={error} /> : null}
 
       <div className="flex flex-wrap gap-2 text-sm">
@@ -164,7 +161,7 @@ function HireMarketRow(props: {
           {member.roleLabel} · OVR {member.overall} · POT {member.potential} ·
           Age {member.age}
         </p>
-        <p className="text-xs text-zinc-500">
+        <p className="text-sm text-zinc-500">
           Wants ~<MoneyDisplay amount={member.desiredSalary} /> · Min{" "}
           <MoneyDisplay amount={member.minimumSalary} />
         </p>

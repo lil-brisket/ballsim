@@ -11,6 +11,8 @@ import {
 } from "@/components/league/team-filter-utils";
 import { EmptyState, ErrorState } from "@/components/ui/EmptyState";
 import { PageHeader } from "@/components/ui/PageHeader";
+import { SectionHeading } from "@/components/ui/SectionHeading";
+import { formatGameDate } from "@/presentation/game-date";
 import {
   shiftFocusDate,
   groupLeagueScheduleRowsByDate,
@@ -97,10 +99,7 @@ export default async function SchedulePage({
 
   return (
     <div className="space-y-4">
-      <PageHeader
-        title="Schedule"
-        subtitle="League schedule — browse all games (Calendar controls simulation)"
-      />
+      <PageHeader title="Schedule" />
       {query.error ? <ErrorState message={query.error} /> : null}
 
       <div className="flex flex-wrap items-center gap-3">
@@ -134,11 +133,13 @@ export default async function SchedulePage({
         >
           Next →
         </Link>
-        <span className="font-mono text-sm text-zinc-400">{focusDate}</span>
+        <span className="text-sm text-zinc-400">
+          {formatGameDate(focusDate, { weekday: true })}
+        </span>
       </div>
 
       <Suspense
-        fallback={<p className="text-xs text-zinc-600">Loading filters…</p>}
+        fallback={<p className="text-sm text-zinc-500">Loading filters…</p>}
       >
         <TeamFilter
           teams={view.teams}
@@ -161,7 +162,7 @@ export default async function SchedulePage({
               status: id === "all" ? undefined : id,
             })}
             className={cn(
-              "rounded-full border px-3 py-1 text-xs",
+              "rounded-full border px-3 py-1 text-sm",
               statusFilter === id
                 ? "border-team-ink text-team-ink"
                 : "border-zinc-700 text-zinc-400",
@@ -178,11 +179,14 @@ export default async function SchedulePage({
       ) : (
         <>
           <section>
-            <h2 className="mb-2 font-mono text-xs uppercase tracking-[0.14em] text-zinc-500">
-              {focusDate === view.currentDate
-                ? `${focusDate} — Today`
-                : focusDate}
-            </h2>
+            <SectionHeading
+              className="mb-2"
+              title={
+                focusDate === view.currentDate
+                  ? `${formatGameDate(focusDate, { weekday: true })} — Today`
+                  : formatGameDate(focusDate, { weekday: true })
+              }
+            />
             {view.today.length === 0 ? (
               <p className="text-sm text-zinc-600">No games on this date.</p>
             ) : (
@@ -208,7 +212,7 @@ export default async function SchedulePage({
                     {game.canManageEvent ? (
                       <Link
                         href={`/dashboard/${saveId}/schedule/${game.gameId}/event`}
-                        className="ml-3 text-xs text-team-ink underline-offset-4 hover:underline"
+                        className="ml-3 text-sm text-team-ink underline-offset-4 hover:underline"
                       >
                         Manage event
                       </Link>
@@ -221,9 +225,7 @@ export default async function SchedulePage({
 
           {view.upcoming.length > 0 ? (
             <section>
-              <h2 className="mb-2 font-mono text-xs uppercase tracking-[0.14em] text-zinc-500">
-                Upcoming
-              </h2>
+              <SectionHeading className="mb-2" title="Upcoming" />
               <ul className="space-y-2">
                 {view.upcoming.map((game) => (
                   <li key={game.gameId}>
@@ -251,15 +253,16 @@ export default async function SchedulePage({
 
           {view.recent.length > 0 ? (
             <section>
-              <h2 className="mb-2 font-mono text-xs uppercase tracking-[0.14em] text-zinc-500">
-                {statusFilter === "final" ? "Results" : "Recent Results"}
-              </h2>
+              <SectionHeading
+                className="mb-2"
+                title={statusFilter === "final" ? "Results" : "Recent Results"}
+              />
               {statusFilter === "final" ? (
                 <div className="space-y-4">
                   {groupLeagueScheduleRowsByDate(view.recent).map((group) => (
                     <div key={group.date} className="space-y-2">
-                      <h3 className="font-mono text-xs text-zinc-400">
-                        {group.date}
+                      <h3 className="text-sm font-medium text-zinc-300">
+                        {formatGameDate(group.date, { weekday: true })}
                       </h3>
                       <ul className="space-y-2">
                         {group.games.map((game) => (

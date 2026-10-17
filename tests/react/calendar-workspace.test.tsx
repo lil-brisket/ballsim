@@ -376,7 +376,7 @@ describe("CalendarWorkspace redesign", () => {
       }),
     );
     expect(screen.getByRole("dialog")).toBeTruthy();
-    expect(screen.getByText(/Simulate through 2026-09-18/)).toBeTruthy();
+    expect(screen.getByText(/Simulate through Sep 18/)).toBeTruthy();
     expect(streamMocks.streamSimulateToDate).not.toHaveBeenCalled();
     fireEvent.click(screen.getByRole("button", { name: /Simulate to date/i }));
     await waitFor(() => {
@@ -461,7 +461,7 @@ describe("CalendarWorkspace redesign", () => {
       expect(screen.getByRole("status").textContent).toMatch(
         /Simulating regular/,
       );
-      expect(screen.getByRole("status").textContent).toMatch(/2026-09-18/);
+      expect(screen.getByRole("status").textContent).toMatch(/Sep 18/);
       const grid = container.querySelector(".grid.grid-cols-7");
       expect(grid?.className).toContain("pointer-events-none");
       expect(grid?.className).not.toContain("opacity-60");
@@ -557,7 +557,7 @@ describe("CalendarWorkspace redesign", () => {
     fireEvent.click(screen.getByRole("button", { name: /Simulate to date/i }));
     await waitFor(() => {
       expect(screen.getByText("October 2026")).toBeTruthy();
-      expect(screen.getByText("2026-10-02")).toBeTruthy();
+      expect(screen.getByText("Fri, Oct 2")).toBeTruthy();
       const cursor = screen.getByRole("button", {
         name: /2026-10-02, simulating, current simulation date/,
       });
@@ -630,7 +630,7 @@ describe("CalendarWorkspace redesign", () => {
       </SimulationActivityProvider>,
     );
     expect(
-      screen.getByRole("button", { name: /Continue to 2026-10-01/ }),
+      screen.getByRole("button", { name: /Continue to Oct 1$/ }),
     ).toBeTruthy();
     unmount();
   });
@@ -935,9 +935,7 @@ describe("CalendarWorkspace in-sim interrupt", () => {
         />
       </SimulationActivityProvider>,
     );
-    fireEvent.click(
-      screen.getByRole("button", { name: /Continue to 2026-10-01/ }),
-    );
+    fireEvent.click(screen.getByRole("button", { name: /Continue to Oct 1$/ }));
     await waitFor(() => {
       expect(replace).toHaveBeenCalled();
     });

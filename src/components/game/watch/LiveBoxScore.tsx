@@ -118,7 +118,7 @@ function TeamTable(props: {
                 {row.onCourt ? <span className="sr-only">on court</span> : null}
                 <span>{row.shortName}</span>
                 {row.fouledOut ? (
-                  <span className="rounded border border-rose-700/50 px-1 font-mono text-[0.65rem] text-rose-300">
+                  <span className="rounded border border-rose-700/50 px-1 text-xs text-rose-300">
                     FO
                   </span>
                 ) : null}

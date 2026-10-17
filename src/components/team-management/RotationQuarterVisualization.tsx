@@ -1,5 +1,6 @@
 "use client";
 
+import { SectionHeading } from "@/components/ui/SectionHeading";
 import { useMemo } from "react";
 import type {
   RotationEntry,
@@ -71,25 +72,25 @@ export function RotationQuarterVisualization(props: {
 
   return (
     <div className="rounded-lg border border-zinc-800 bg-zinc-900/50 p-4">
-      <h3 className="text-sm font-medium text-zinc-200">Projected Rotation</h3>
-      <p className="mt-1 text-xs text-zinc-500">
+      <SectionHeading title="Projected Rotation" as="h3" />
+      <p className="mt-2 text-sm text-zinc-500">
         Projected from Target MPG. Actual minutes may change based on game
         situation.
       </p>
       <div className="mt-4 grid grid-cols-2 gap-3 lg:grid-cols-4">
         {quarters.map((quarter) => (
           <div key={quarter.quarter} className="space-y-2">
-            <div className="text-center text-[10px] font-semibold uppercase tracking-wide text-zinc-500">
+            <div className="text-center text-sm font-medium text-zinc-400">
               Q{quarter.quarter}
             </div>
             <ul className="space-y-1.5">
               {quarter.players.slice(0, 8).map((entry) => (
                 <li key={`${quarter.quarter}-${entry.playerId}`}>
-                  <div className="flex items-center justify-between gap-1 text-[10px] text-zinc-400">
+                  <div className="flex items-center justify-between gap-1 text-sm text-zinc-400">
                     <span className="truncate">
                       {nameById.get(entry.playerId) ?? entry.playerId}
                     </span>
-                    <span className="font-mono text-zinc-500">
+                    <span className="tabular-nums text-zinc-500">
                       {entry.quarterMinutes}&apos;
                     </span>
                   </div>
@@ -104,7 +105,7 @@ export function RotationQuarterVisualization(props: {
                 </li>
               ))}
               {quarter.players.length === 0 ? (
-                <li className="text-[10px] text-zinc-600">No projection</li>
+                <li className="text-sm text-zinc-600">No projection</li>
               ) : null}
             </ul>
           </div>

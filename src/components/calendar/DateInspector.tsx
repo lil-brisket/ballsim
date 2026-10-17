@@ -4,6 +4,7 @@ import type { TeamId } from "@/domain/ids";
 import { TeamEntityLink } from "@/components/entity/TeamEntityLink";
 import { ArenaPanel } from "@/components/ui/ArenaPanel";
 import { ScoreNumeral } from "@/components/ui/ScoreNumeral";
+import { SectionHeading } from "@/components/ui/SectionHeading";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { TeamBadge } from "@/components/ui/TeamBadge";
 import type { TeamBrandingView } from "@/state/team-branding-view";
@@ -52,34 +53,28 @@ export function DateInspector(props: {
     >
       {props.hideTitle ? null : (
         <div className="border-b border-surface-line px-4 py-3">
-          <div className="flex flex-wrap items-center gap-2">
-            <h3 className="font-display text-2xl font-bold uppercase leading-tight tracking-wide text-zinc-50">
-              {inspector.longDateLabel}
-            </h3>
-            <StatusBadge label={statusLabel} tone={statusTone} />
-          </div>
-          <p className="mt-1 font-mono text-xs text-zinc-400">
-            {inspector.date}
-          </p>
+          <SectionHeading
+            as="h3"
+            title={inspector.longDateLabel}
+            action={<StatusBadge label={statusLabel} tone={statusTone} />}
+          />
         </div>
       )}
 
       <div className="flex-1 space-y-4 overflow-y-auto px-4 py-3">
         <section className="space-y-1">
-          <h4 className="font-mono text-[0.65rem] uppercase tracking-[0.16em] text-zinc-400">
+          <h4 className="text-sm font-medium text-zinc-300">
             Simulation status
           </h4>
           <p className="text-sm text-zinc-200">{inspector.phaseLabel}</p>
-          <p className="text-xs text-zinc-400">{inspector.simulationStatus}</p>
+          <p className="text-sm text-zinc-400">{inspector.simulationStatus}</p>
         </section>
 
         <section
           className="space-y-3 rounded-xl border border-team-ink/30 bg-team/15 px-3 py-3"
           aria-label="Your team"
         >
-          <h4 className="font-mono text-[0.65rem] uppercase tracking-[0.16em] text-team-ink">
-            Your team
-          </h4>
+          <h4 className="text-sm font-medium text-team-ink">Your team</h4>
           {inspector.teamGame ? (
             <div className="space-y-3">
               <div className="flex items-center justify-between gap-3">
@@ -105,7 +100,7 @@ export function DateInspector(props: {
                 />
               </div>
               <p className="font-display text-xl font-bold uppercase leading-tight tracking-wide text-zinc-50">
-                <span className="font-mono text-[0.65rem] font-semibold tracking-[0.16em] text-team-ink">
+                <span className="text-sm font-semibold text-team-ink">
                   {inspector.teamGame.homeAwayLabel}
                 </span>{" "}
                 vs{" "}
@@ -130,7 +125,7 @@ export function DateInspector(props: {
                   }
                 />
               ) : null}
-              <p className="text-xs text-zinc-300">
+              <p className="text-sm text-zinc-300">
                 {inspector.teamGame.seasonPhase}
                 {inspector.teamGame.resultLabel
                   ? ` · ${inspector.teamGame.resultLabel}`
@@ -154,9 +149,7 @@ export function DateInspector(props: {
         </section>
 
         <section className="space-y-2">
-          <h4 className="font-mono text-[0.65rem] uppercase tracking-[0.16em] text-zinc-400">
-            Special events
-          </h4>
+          <h4 className="text-sm font-medium text-zinc-300">Special events</h4>
           {inspector.specialEvents.length === 0 ? (
             <p className="text-sm text-zinc-400">None</p>
           ) : (
@@ -177,7 +170,7 @@ export function DateInspector(props: {
                     <p className="text-sm text-zinc-100">{event.title}</p>
                   )}
                   {event.description ? (
-                    <p className="mt-0.5 text-xs text-zinc-400">
+                    <p className="mt-0.5 text-sm text-zinc-400">
                       {event.description}
                     </p>
                   ) : null}
@@ -189,7 +182,7 @@ export function DateInspector(props: {
 
         {inspector.leagueContextSnippet ? (
           <section className="space-y-1">
-            <h4 className="font-mono text-[0.65rem] uppercase tracking-[0.16em] text-zinc-400">
+            <h4 className="text-sm font-medium text-zinc-300">
               League context
             </h4>
             <p className="text-sm text-zinc-300">
@@ -200,7 +193,7 @@ export function DateInspector(props: {
 
         {inspector.simulationPreview ? (
           <section className="space-y-2 border-t border-surface-line pt-3">
-            <h4 className="font-mono text-[0.65rem] uppercase tracking-[0.16em] text-zinc-400">
+            <h4 className="text-sm font-medium text-zinc-300">
               Simulation preview
             </h4>
             <ul className="space-y-1 text-sm text-zinc-300">
@@ -231,7 +224,7 @@ export function DateInspector(props: {
             )}
           </section>
         ) : (
-          <p className="border-t border-surface-line pt-3 text-xs text-zinc-400">
+          <p className="border-t border-surface-line pt-3 text-sm text-zinc-400">
             Select a future date to simulate through that day. Past dates show
             results for games already played.
           </p>

@@ -1,5 +1,6 @@
 "use client";
 
+import { SectionHeading } from "@/components/ui/SectionHeading";
 import { buttonClass } from "@/components/ui/Button";
 import { Select } from "@/components/ui/Select";
 import { useState } from "react";
@@ -144,9 +145,7 @@ export function PlayerTradeBuilder(props: Props) {
       </form>
 
       <section aria-labelledby="sent-offers-heading" className="space-y-2">
-        <h2 id="sent-offers-heading" className="font-medium text-zinc-50">
-          Sent offers
-        </h2>
+        <SectionHeading id="sent-offers-heading" title="Sent offers" />
         {sentOffers.length === 0 ? (
           <p className="text-zinc-500">No offers waiting on another player.</p>
         ) : (

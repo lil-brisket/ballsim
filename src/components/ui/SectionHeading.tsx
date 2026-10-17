@@ -24,7 +24,7 @@ export function SectionHeading(props: {
     >
       <div className="min-w-0">
         {props.eyebrow ? (
-          <p className="font-mono text-[0.65rem] uppercase tracking-[0.2em] text-team-ink">
+          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-team-ink">
             {props.eyebrow}
           </p>
         ) : null}

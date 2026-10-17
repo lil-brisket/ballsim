@@ -1,4 +1,4 @@
-/** DataTable styled like the player card tables (mono uppercase headers). */
+/** DataTable styled like the player card tables (sentence-case headers). */
 export function CardTable(props: {
   headers: string[];
   children: React.ReactNode;
@@ -11,7 +11,7 @@ export function CardTable(props: {
           <caption className="sr-only">{props.caption}</caption>
         ) : null}
         <thead className="bg-zinc-900/60">
-          <tr className="font-mono text-[0.65rem] uppercase tracking-[0.14em] text-zinc-400">
+          <tr className="text-sm text-zinc-400">
             {props.headers.map((header) => (
               <th key={header} scope="col" className="px-3 py-2 font-normal">
                 {header}

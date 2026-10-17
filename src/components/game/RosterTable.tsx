@@ -61,7 +61,7 @@ export function RosterTable(props: {
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap gap-3">
-        <label className="flex flex-col gap-1 text-xs text-zinc-500">
+        <label className="flex flex-col gap-1 text-sm text-zinc-500">
           Filter
           <input
             type="search"
@@ -74,7 +74,7 @@ export function RosterTable(props: {
             )}
           />
         </label>
-        <label className="flex flex-col gap-1 text-xs text-zinc-500">
+        <label className="flex flex-col gap-1 text-sm text-zinc-500">
           Sort by
           <Select
             value={sortKey}
@@ -87,7 +87,7 @@ export function RosterTable(props: {
             <option value="status">Status</option>
           </Select>
         </label>
-        <label className="flex flex-col gap-1 text-xs text-zinc-500">
+        <label className="flex flex-col gap-1 text-sm text-zinc-500">
           Direction
           <Select
             value={sortDir}

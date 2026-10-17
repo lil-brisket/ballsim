@@ -172,7 +172,7 @@ export function RosterManagementTable(props: {
               aria-pressed={chip === entry.id}
               className={cn(
                 touchTargetClass,
-                "rounded-md px-2.5 text-xs",
+                "rounded-md px-2.5 text-sm",
                 focusRingClass,
                 chip === entry.id
                   ? "bg-team text-on-team font-semibold"
@@ -239,7 +239,7 @@ export function RosterManagementTable(props: {
                 onClick={() => setView(option.id)}
                 className={cn(
                   touchTargetClass,
-                  "px-3 text-xs",
+                  "px-3 text-sm",
                   focusRingClass,
                   view === option.id
                     ? "bg-team text-on-team font-semibold"
@@ -293,9 +293,7 @@ export function RosterManagementTable(props: {
                       tone={player.canPlay ? "available" : player.injuryKind}
                     />
                     {player.onTradeBlock ? (
-                      <span className="font-mono text-[0.6rem] uppercase text-team-ink">
-                        Block
-                      </span>
+                      <span className="text-sm team-ink">Block</span>
                     ) : null}
                   </div>
                 }
@@ -373,9 +371,7 @@ export function RosterManagementTable(props: {
                       </PlayerEntityLink>
                     </span>
                     {player.onTradeBlock ? (
-                      <span className="ml-2 font-mono text-[0.6rem] uppercase text-team-ink">
-                        Block
-                      </span>
+                      <span className="ml-2 text-sm team-ink">Block</span>
                     ) : null}
                   </td>
                   <td className="px-3 py-2 text-zinc-400">{player.position}</td>
@@ -388,7 +384,7 @@ export function RosterManagementTable(props: {
                   <td className="hidden px-3 py-2 text-zinc-400 md:table-cell">
                     {player.roleDisplayLabel}
                     {player.depthSlot ? (
-                      <span className="ml-1 font-mono text-[0.6rem] text-zinc-600">
+                      <span className="ml-1 text-sm text-zinc-600">
                         ({player.depthSlot})
                       </span>
                     ) : null}
@@ -400,7 +396,7 @@ export function RosterManagementTable(props: {
                       yearsRemaining={player.contractYearsRemaining}
                     />
                     {expiring && player.contractEndYear != null ? (
-                      <span className="mt-0.5 block font-mono text-[0.6rem] uppercase text-warning">
+                      <span className="mt-0.5 block text-sm warning">
                         {player.contractEndYear} expiring
                       </span>
                     ) : null}

@@ -4,6 +4,7 @@ import { takeOverFranchiseAction } from "@/application/actions";
 import { TeamEntityLink } from "@/components/entity/TeamEntityLink";
 import { TeamIdentityInline } from "@/components/team/TeamIdentityInline";
 import { MobileListCard } from "@/components/ui/MobileListCard";
+import { SectionHeading } from "@/components/ui/SectionHeading";
 import { cn } from "@/components/ui/styles";
 import {
   formatStreak,
@@ -172,7 +173,7 @@ function columnsFor(
       key: "label",
       label: " ",
       render: (row) => (
-        <span className="text-xs text-zinc-500">
+        <span className="text-sm text-zinc-500">
           {playoffLabelText(row.playoffLabel)}
         </span>
       ),
@@ -225,9 +226,7 @@ export function StandingsTable(props: {
   return (
     <section aria-label={props.group.name}>
       {props.group.kind === "overall" ? null : (
-        <h2 className="mb-2 text-sm font-medium text-zinc-200">
-          {props.group.name}
-        </h2>
+        <SectionHeading className="mb-2" title={props.group.name} />
       )}
       <ul className="flex flex-col gap-2 md:hidden">
         {props.group.rows.map((row) => {

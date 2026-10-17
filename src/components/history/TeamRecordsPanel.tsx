@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Metric } from "@/components/ui/Metric";
 import { EmptyState } from "@/components/ui/EmptyState";
 import {
   FranchiseHistorySeasonTable,
@@ -36,7 +37,7 @@ function TeamRecordsTable(props: {
   return (
     <div className="overflow-x-auto">
       <table className="w-full min-w-[640px] text-left text-sm">
-        <thead className="border-b border-zinc-800 text-xs uppercase text-zinc-500">
+        <thead className="border-b border-zinc-800 text-sm text-zinc-400">
           <tr>
             <th className={TH}>Team</th>
             <th className={TH}>Titles</th>
@@ -76,17 +77,6 @@ function TeamRecordsTable(props: {
           ))}
         </tbody>
       </table>
-    </div>
-  );
-}
-
-function Metric(props: { label: string; value: string | number }) {
-  return (
-    <div>
-      <p className="text-xs uppercase tracking-wide text-zinc-500">
-        {props.label}
-      </p>
-      <p className="mt-1 text-lg text-zinc-50">{props.value}</p>
     </div>
   );
 }
@@ -159,9 +149,7 @@ function TeamHistoryDetail(props: {
                   key={item.id}
                   className="rounded-lg border border-zinc-800 px-4 py-3"
                 >
-                  <p className="text-xs uppercase tracking-wide text-zinc-500">
-                    {item.meta}
-                  </p>
+                  <p className="text-sm text-zinc-400">{item.meta}</p>
                   <p className="mt-1 font-medium text-zinc-100">{item.title}</p>
                   <p className="mt-1 text-sm text-zinc-400">{item.summary}</p>
                 </li>

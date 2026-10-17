@@ -63,15 +63,15 @@ export function DelegationCategorySection({
             <span className="text-base" aria-hidden="true">
               {category.icon}
             </span>
-            <h3 className="text-sm font-semibold uppercase tracking-wide text-zinc-200">
+            <h3 className="text-sm font-semibold text-zinc-100">
               {category.title}
             </h3>
             <span className="rounded bg-zinc-800 px-1.5 py-0.5 text-xs text-zinc-400">
               {delegated} / {total} AI
             </span>
-            <span className="text-xs text-zinc-500">{stateLabel}</span>
+            <span className="text-sm text-zinc-500">{stateLabel}</span>
           </div>
-          <p className="text-xs text-zinc-500">{category.description}</p>
+          <p className="text-sm text-zinc-500">{category.description}</p>
         </div>
         <Button
           variant="secondary"

@@ -118,7 +118,7 @@ export function DlProspectCard(props: {
             <PlayerEntityLink saveId={saveId} playerId={row.playerId}>
               {row.name}
             </PlayerEntityLink>
-            <p className="mt-0.5 text-xs text-zinc-500">
+            <p className="mt-0.5 text-sm text-zinc-500">
               Age {row.age} · {row.role}
             </p>
           </div>
@@ -140,28 +140,22 @@ export function DlProspectCard(props: {
 
       <div className="mt-3 flex flex-wrap items-end gap-4">
         <div>
-          <p className="font-mono text-[0.6rem] uppercase tracking-[0.16em] text-zinc-500">
-            OVR
-          </p>
-          <p className="font-mono text-lg text-zinc-50">{row.overall}</p>
+          <p className="text-sm text-zinc-400">OVR</p>
+          <p className="text-lg tabular-nums text-zinc-50">{row.overall}</p>
         </div>
         <div>
-          <p className="font-mono text-[0.6rem] uppercase tracking-[0.16em] text-zinc-500">
-            Change
-          </p>
+          <p className="text-sm text-zinc-400">Change</p>
           <div className="mt-0.5">
             <ChangeDelta delta={row.changeDelta} />
           </div>
           {row.changeLabel ? (
-            <p className="text-[0.65rem] text-zinc-600">{row.changeLabel}</p>
+            <p className="text-sm text-zinc-600">{row.changeLabel}</p>
           ) : null}
         </div>
         <div>
-          <p className="font-mono text-[0.6rem] uppercase tracking-[0.16em] text-zinc-500">
-            POT
-          </p>
-          <p className="font-mono text-zinc-300">{row.potential}</p>
-          <p className="text-[0.65rem] text-zinc-600">
+          <p className="text-sm text-zinc-400">POT</p>
+          <p className="tabular-nums text-zinc-300">{row.potential}</p>
+          <p className="text-sm text-zinc-600">
             {row.potentialHeadroom === 0
               ? "At ceiling"
               : `${row.potentialHeadroom} headroom`}
@@ -170,7 +164,7 @@ export function DlProspectCard(props: {
       </div>
 
       <div className="mt-3">
-        <p className="mb-1 text-xs text-zinc-500">
+        <p className="mb-1 text-sm text-zinc-500">
           Season {row.dlSeason} of {DL_MAX_SEASONS}
           {row.seasonsRemaining > 0
             ? ` · ${row.seasonsRemaining} left`
@@ -194,7 +188,7 @@ export function DlProspectCard(props: {
         ]}
       />
 
-      <p className="mt-3 text-xs text-zinc-500">{row.whyBullets[0]}</p>
+      <p className="mt-3 text-sm text-zinc-500">{row.whyBullets[0]}</p>
     </article>
   );
 }
@@ -250,11 +244,11 @@ export function DlEligibleCard(props: {
             <PlayerEntityLink saveId={saveId} playerId={row.playerId}>
               {row.name}
             </PlayerEntityLink>
-            <p className="mt-0.5 text-xs text-zinc-600">
+            <p className="mt-0.5 text-sm text-zinc-600">
               OVR {row.overall} · POT {row.potential} · {row.projectedMpg} proj.
               MPG
             </p>
-            <p className="mt-1 text-xs text-zinc-500">
+            <p className="mt-1 text-sm text-zinc-500">
               {row.strongCandidate ? "Strong DL candidate" : "Optional"}
             </p>
           </div>
@@ -294,7 +288,7 @@ export function DlEligibleRow(props: {
       </td>
       <td className="px-3 py-2 font-mono text-zinc-300">{row.overall}</td>
       <td className="px-3 py-2 font-mono">{row.potential}</td>
-      <td className="px-3 py-2 text-xs">
+      <td className="px-3 py-2 text-sm">
         {row.strongCandidate ? "Strong DL candidate" : "Optional"}
       </td>
       <td className="px-3 py-2">

@@ -64,13 +64,13 @@ export function RosterCard(props: {
             >
               {name}
             </PlayerEntityLink>
-            <p className="font-mono text-[0.65rem] uppercase tracking-[0.14em] text-zinc-300">
+            <p className="text-sm text-zinc-300">
               {player.position} · Age {player.age}
             </p>
-            <p className="mt-0.5 text-xs text-zinc-400">
+            <p className="mt-0.5 text-sm text-zinc-400">
               {player.roleDisplayLabel}
               {player.depthSlot ? (
-                <span className="ml-1 font-mono text-[0.6rem] text-zinc-500">
+                <span className="ml-1 text-sm text-zinc-500">
                   ({player.depthSlot})
                 </span>
               ) : null}
@@ -107,7 +107,7 @@ export function RosterCard(props: {
               yearsRemaining={player.contractYearsRemaining}
             />
             {expiring && player.contractEndYear != null ? (
-              <span className="mt-0.5 block font-mono text-[0.6rem] uppercase text-warning">
+              <span className="mt-0.5 block text-sm text-warning">
                 {player.contractEndYear} expiring
               </span>
             ) : null}

@@ -20,6 +20,7 @@ import type {
   FantasyDraftPlayerDetailView,
   FantasyDraftView,
 } from "@/state/selectors";
+import { SectionHeading } from "@/components/ui/SectionHeading";
 
 type Props = {
   saveId: string;
@@ -115,10 +116,11 @@ export function FantasyDraftBoard({ saveId, draft, error }: Props) {
           <TeamNeedsPanel draft={draft} />
           <RecommendationsPanel draft={draft} />
           <section className="rounded-xl border border-zinc-800 p-4">
-            <h2 className="mb-2 text-sm font-semibold uppercase text-zinc-400">
-              Current roster ({draft.activeRoster.length}/{draft.picksPerTeam})
-            </h2>
-            <div className="mb-3 flex flex-wrap gap-2 text-xs text-zinc-400">
+            <SectionHeading
+              title={`Current roster (${draft.activeRoster.length}/${draft.picksPerTeam})`}
+              className="mb-2"
+            />
+            <div className="mb-3 flex flex-wrap gap-2 text-sm text-zinc-400">
               {draft.positionCounts.map((row) => (
                 <span key={row.position}>
                   {row.position}: {row.count}
@@ -140,9 +142,7 @@ export function FantasyDraftBoard({ saveId, draft, error }: Props) {
           </section>
           <DraftHistoryPanel draft={draft} />
           <section className="rounded-xl border border-zinc-800 p-4">
-            <h2 className="mb-2 text-sm font-semibold uppercase text-zinc-400">
-              Draft order
-            </h2>
+            <SectionHeading title="Draft order" className="mb-2" />
             <ol className="max-h-64 space-y-1 overflow-y-auto text-sm">
               {draft.draftOrder.map((entry) => (
                 <li

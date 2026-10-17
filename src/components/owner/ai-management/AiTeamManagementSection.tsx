@@ -18,6 +18,7 @@ import type {
 import { AiAssistanceHelpPanel } from "@/components/owner/ai-management/AiAssistanceHelpPanel";
 import { DelegationCategorySection } from "@/components/owner/ai-management/DelegationCategorySection";
 import { DelegationSummary } from "@/components/owner/ai-management/DelegationSummary";
+import { SectionHeading } from "@/components/ui/SectionHeading";
 
 type AiTeamManagementSectionProps = {
   assistance: AiAssistancePhases;
@@ -44,13 +45,11 @@ export function AiTeamManagementSection({
   return (
     <div className="space-y-4">
       <div className="space-y-2">
-        <h3 className="text-base font-semibold text-zinc-100">
-          AI Team Management
-        </h3>
+        <SectionHeading as="h3" title="AI Team Management" />
         <p className="text-sm text-zinc-300">
           What would you like the AI to handle for you?
         </p>
-        <p className="text-xs text-zinc-500">
+        <p className="text-sm text-zinc-500">
           Select the areas you want the AI to manage during simulation. When
           enabled, the AI will fully handle that responsibility. Anything you
           leave disabled remains under your control.

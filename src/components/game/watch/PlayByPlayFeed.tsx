@@ -79,7 +79,7 @@ function HighlightBadges(props: { highlights: WatchHighlight[] }) {
 
 function PeriodSeparator(props: { label: string }) {
   return (
-    <li className="flex items-center gap-3 py-1 font-mono text-[0.65rem] uppercase tracking-[0.2em] text-zinc-500">
+    <li className="flex items-center gap-3 py-1 text-sm text-zinc-500">
       <span className="h-px flex-1 bg-surface-line" aria-hidden />
       <span>End of {props.label}</span>
       <span className="h-px flex-1 bg-surface-line" aria-hidden />
@@ -115,7 +115,7 @@ export function PlayByPlayFeed(props: {
       items.push(
         <li
           key={`sub-${play.index}`}
-          className="flex items-baseline gap-3 px-3 py-1 text-xs text-zinc-500"
+          className="flex items-baseline gap-3 px-3 py-1 text-sm text-zinc-500"
         >
           <span className="w-24 shrink-0 font-mono tabular-nums">
             {play.periodLabel} {play.clockLabel}
@@ -142,7 +142,7 @@ export function PlayByPlayFeed(props: {
               {play.periodLabel} {play.clockLabel}
             </p>
             <span
-              className="inline-block rounded border-l-4 bg-zinc-800 px-1.5 py-0.5 font-mono text-[0.65rem] uppercase text-zinc-200"
+              className="inline-block rounded border-l-4 bg-zinc-800 px-1.5 py-0.5 text-xs font-semibold uppercase text-zinc-200"
               style={{ borderLeftColor: team.branding.primaryColor }}
             >
               {team.abbreviation}
@@ -168,7 +168,7 @@ export function PlayByPlayFeed(props: {
               </div>
             ))}
           </div>
-          <p className="shrink-0 font-mono text-xs tabular-nums text-zinc-300">
+          <p className="shrink-0 font-mono text-sm tabular-nums text-zinc-300">
             <span className="sr-only">Score </span>
             {view.away.abbreviation} {last.awayScore}
             {" – "}

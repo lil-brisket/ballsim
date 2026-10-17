@@ -2,6 +2,7 @@ import Link from "next/link";
 import { TeamEntityLink } from "@/components/entity/TeamEntityLink";
 import { GameResultLink } from "@/components/owner/GameResultLink";
 import { TeamLogoMark } from "@/components/team/logos/TeamLogoMark";
+import { formatGameDate } from "@/presentation/game-date";
 import type { TeamBrandingView } from "@/state/team-branding-view";
 import {
   cn,
@@ -103,14 +104,14 @@ export function GameRow(props: GameRowProps) {
       href={props.calendarHref}
       className={cn(
         touchTargetTextClass,
-        "text-xs text-team-ink underline-offset-4 hover:underline",
+        "text-sm text-team-ink underline-offset-4 hover:underline",
         focusRingClass,
       )}
     >
       Calendar
     </Link>
   ) : (
-    <span className="text-xs text-zinc-500">Scheduled</span>
+    <span className="text-sm text-zinc-500">Scheduled</span>
   );
 
   return (
@@ -121,8 +122,8 @@ export function GameRow(props: GameRowProps) {
       )}
     >
       <div className="flex min-w-0 items-center gap-3">
-        <span className="shrink-0 font-mono text-xs text-zinc-500">
-          {props.date}
+        <span className="shrink-0 text-sm text-zinc-500">
+          {formatGameDate(props.date)}
         </span>
         {opponentLabel}
       </div>
@@ -132,7 +133,7 @@ export function GameRow(props: GameRowProps) {
             href={`/dashboard/${props.saveId}/games/${props.gameId}/watch`}
             className={cn(
               touchTargetTextClass,
-              "text-xs text-team-ink underline-offset-4 hover:underline",
+              "text-sm text-team-ink underline-offset-4 hover:underline",
               focusRingClass,
             )}
           >

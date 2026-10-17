@@ -33,7 +33,6 @@ export default async function DevelopmentHubPage({
     <div className="space-y-4">
       <PageHeader
         title="Player Development"
-        subtitle="Which players are changing — and what to watch"
         actions={
           <Link
             href={`/dashboard/${saveId}/development-league`}
@@ -48,34 +47,26 @@ export default async function DevelopmentHubPage({
       <div className="flex flex-wrap items-baseline justify-between gap-3 border-b border-zinc-800 pb-3">
         <dl className="flex flex-wrap gap-x-5 gap-y-2 text-sm">
           <div>
-            <dt className="text-[0.65rem] uppercase tracking-wide text-zinc-500">
-              Developing
-            </dt>
+            <dt className="text-sm text-zinc-400">Developing</dt>
             <dd className="font-medium text-zinc-100">
               {view.stageCounts.developing}
             </dd>
           </div>
           <div>
-            <dt className="text-[0.65rem] uppercase tracking-wide text-zinc-500">
-              Prime
-            </dt>
+            <dt className="text-sm text-zinc-400">Prime</dt>
             <dd className="font-medium text-zinc-100">
               {view.stageCounts.prime}
             </dd>
           </div>
           <div>
-            <dt className="text-[0.65rem] uppercase tracking-wide text-zinc-500">
-              Declining
-            </dt>
+            <dt className="text-sm text-zinc-400">Declining</dt>
             <dd className="font-medium text-zinc-100">
               {view.stageCounts.declining}
             </dd>
           </div>
         </dl>
-        <div className="max-w-xs text-right text-xs text-zinc-500">
-          <p className="uppercase tracking-wide text-zinc-600">
-            Development Staff Context
-          </p>
+        <div className="max-w-xs text-right text-sm text-zinc-500">
+          <p className="text-zinc-400">Development staff</p>
           {view.staffContext.trainerName && view.staffContext.trainerId ? (
             <p className="mt-0.5 text-zinc-300">
               <StaffEntityLink
@@ -91,7 +82,7 @@ export default async function DevelopmentHubPage({
           ) : (
             <p className="mt-0.5 text-zinc-600">No trainer on staff</p>
           )}
-          <p className="mt-1 text-[0.65rem] text-zinc-600">
+          <p className="mt-1 text-sm text-zinc-600">
             Organizational context only — not a causal development claim.
           </p>
         </div>
@@ -118,12 +109,12 @@ export default async function DevelopmentHubPage({
                 <PlayerEntityLink saveId={saveId} playerId={p.playerId}>
                   {p.playerName}
                 </PlayerEntityLink>
-                <span className="font-mono text-emerald-300">
+                <span className="tabular-nums text-emerald-300">
                   {p.changeDelta !== null && p.changeDelta > 0
                     ? `+${p.changeDelta}`
                     : p.changeDelta}
                   {p.changeLabel ? (
-                    <span className="ml-2 text-xs text-zinc-600">
+                    <span className="ml-2 text-sm text-zinc-600">
                       {p.changeLabel}
                     </span>
                   ) : null}

@@ -26,13 +26,13 @@ export function DevelopmentLeaguePlayerActions(props: {
         Development League
       </h3>
       {props.statusLabel ? (
-        <p className="mt-1 text-xs text-zinc-400">
+        <p className="mt-1 text-sm text-zinc-400">
           Status: {props.statusLabel}
           {props.readinessLabel ? ` · ${props.readinessLabel}` : ""}
         </p>
       ) : null}
       {props.whyBullets.length > 0 ? (
-        <ul className="mt-2 list-disc pl-4 text-xs text-zinc-500">
+        <ul className="mt-2 list-disc pl-4 text-sm text-zinc-500">
           {props.whyBullets.map((bullet) => (
             <li key={bullet}>{bullet}</li>
           ))}

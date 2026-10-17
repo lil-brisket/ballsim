@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { SectionHeading } from "@/components/ui/SectionHeading";
+import { Metric } from "@/components/ui/Metric";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Section } from "@/components/ui/Section";
 import { TeamEntityLink } from "@/components/entity/TeamEntityLink";
@@ -9,17 +11,6 @@ import type {
   PlayerHistoryIndexEntry,
   PlayerHistoryView,
 } from "@/state/player-history-selectors";
-
-function Metric(props: { label: string; value: string | number }) {
-  return (
-    <div>
-      <p className="text-xs uppercase tracking-wide text-zinc-500">
-        {props.label}
-      </p>
-      <p className="mt-1 text-lg text-zinc-50">{props.value}</p>
-    </div>
-  );
-}
 
 function PlayerHistoryDetail(props: {
   saveId: string;
@@ -57,10 +48,8 @@ function PlayerHistoryDetail(props: {
 
           <div className="grid gap-6 lg:grid-cols-2">
             <div className="space-y-2">
-              <h3 className="text-sm font-medium text-zinc-300">
-                Team history
-              </h3>
-              <p className="text-xs text-zinc-500">
+              <SectionHeading as="h3" title="Team history" />
+              <p className="text-sm text-zinc-500">
                 Team of record at each season&apos;s end.
               </p>
               <ul className="divide-y divide-zinc-900 text-sm">
@@ -83,7 +72,7 @@ function PlayerHistoryDetail(props: {
                       <span className="text-zinc-500">No team</span>
                     )}
                     {stop.championship ? (
-                      <span className="text-xs uppercase tracking-wide text-team-ink">
+                      <span className="text-sm font-medium text-team-ink">
                         Champion
                       </span>
                     ) : null}
@@ -92,7 +81,7 @@ function PlayerHistoryDetail(props: {
               </ul>
             </div>
             <div className="space-y-2">
-              <h3 className="text-sm font-medium text-zinc-300">Awards</h3>
+              <SectionHeading as="h3" title="Awards" />
               {player.awardTotals.length === 0 ? (
                 <p className="text-sm text-zinc-500">No awards yet.</p>
               ) : (

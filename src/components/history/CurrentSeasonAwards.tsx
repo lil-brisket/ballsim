@@ -24,7 +24,7 @@ function AwardSlotCard(props: {
   const { slot } = props;
   return (
     <li className={cn(panelClass, "px-4 py-3")}>
-      <p className="text-xs uppercase tracking-wide text-zinc-500">
+      <p className="text-sm text-zinc-400">
         {slot.displayName}
         {slot.periodLabel ? ` · ${slot.periodLabel}` : ""}
       </p>

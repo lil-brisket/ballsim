@@ -41,7 +41,7 @@ export function PlaybackControls(props: {
               aria-pressed={props.speed === speed}
               className={cn(
                 BUTTON_CLASS,
-                "px-2 font-mono",
+                "px-2 tabular-nums",
                 props.speed === speed &&
                   "border-team-ink bg-team/15 text-team-ink",
               )}
@@ -74,7 +74,7 @@ export function PlaybackControls(props: {
           aria-label="Playback progress"
           className="flex-1"
         />
-        <span className="shrink-0 font-mono text-xs text-zinc-400">
+        <span className="shrink-0 text-sm tabular-nums text-zinc-400">
           {props.revealed} / {props.total} plays
         </span>
       </div>

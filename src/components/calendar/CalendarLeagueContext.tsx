@@ -1,4 +1,5 @@
 import { ArenaPanel } from "@/components/ui/ArenaPanel";
+import { SectionHeading } from "@/components/ui/SectionHeading";
 import { TickerBar, type TickerItem } from "@/components/ui/TickerBar";
 import type { CalendarLeagueContextView } from "@/state/standings-selectors";
 
@@ -8,9 +9,7 @@ export function CalendarLeagueContextPanel(props: {
   if (!props.context) {
     return (
       <ArenaPanel as="aside" raised>
-        <h3 className="font-display text-xl font-bold uppercase tracking-wide text-zinc-50">
-          League context
-        </h3>
+        <SectionHeading as="h3" title="League context" />
         <p className="mt-2 text-sm text-zinc-400">
           Standings are unavailable for this phase.
         </p>
@@ -35,10 +34,8 @@ export function CalendarLeagueContextPanel(props: {
   return (
     <ArenaPanel as="aside" raised density="compact" className="space-y-2">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <h3 className="font-display text-xl font-bold uppercase tracking-wide text-zinc-50">
-          League context
-        </h3>
-        <p className="text-xs text-zinc-400">
+        <SectionHeading as="h3" title="League context" />
+        <p className="text-sm text-zinc-400">
           {c.conferenceName} · {c.divisionName}
         </p>
       </div>

@@ -214,7 +214,7 @@ export function FantasyDraftOrderEditor(props: FantasyDraftOrderEditorProps) {
                 >
                   ⠿
                 </span>
-                <span className="mr-3 font-mono text-zinc-500">
+                <span className="mr-3 tabular-nums text-zinc-500">
                   {index + 1}.
                 </span>
                 <span className="truncate">{entry.teamName}</span>
@@ -237,7 +237,7 @@ export function FantasyDraftOrderEditor(props: FantasyDraftOrderEditorProps) {
                   type="button"
                   disabled={pending || index === 0}
                   onClick={() => submitStep(entry.teamId, -1)}
-                  className="rounded border border-zinc-700 px-2 py-1 text-xs text-zinc-300 disabled:opacity-40"
+                  className="rounded border border-zinc-700 px-2 py-1 text-sm text-zinc-300 disabled:opacity-40"
                   aria-label={`Move ${entry.teamName} up`}
                 >
                   ↑
@@ -246,7 +246,7 @@ export function FantasyDraftOrderEditor(props: FantasyDraftOrderEditorProps) {
                   type="button"
                   disabled={pending || index === entries.length - 1}
                   onClick={() => submitStep(entry.teamId, 1)}
-                  className="rounded border border-zinc-700 px-2 py-1 text-xs text-zinc-300 disabled:opacity-40"
+                  className="rounded border border-zinc-700 px-2 py-1 text-sm text-zinc-300 disabled:opacity-40"
                   aria-label={`Move ${entry.teamName} down`}
                 >
                   ↓

@@ -15,7 +15,7 @@ export function AttributeBar(props: {
   return (
     <div className={`rounded-lg border px-3 py-2 ${highlightClass}`}>
       <div className="flex items-baseline justify-between gap-2">
-        <p className="text-xs capitalize text-zinc-500">{props.label}</p>
+        <p className="text-sm capitalize text-zinc-400">{props.label}</p>
         <p className="font-mono text-sm text-zinc-100">{props.value}</p>
       </div>
       <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-zinc-800">
@@ -25,7 +25,7 @@ export function AttributeBar(props: {
         />
       </div>
       {props.development ? (
-        <p className="mt-1 font-mono text-[10px] text-zinc-500">
+        <p className="mt-1 text-sm tabular-nums text-zinc-500">
           {props.development}
         </p>
       ) : null}

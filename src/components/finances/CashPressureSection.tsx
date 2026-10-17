@@ -64,9 +64,7 @@ export function CashPressureSection(props: { cashRunway: CashRunwayView }) {
         </li>
       </ul>
       <ul className="space-y-1.5 text-sm text-zinc-300">
-        <li className="text-xs uppercase tracking-wide text-zinc-500">
-          Weekly outflow
-        </li>
+        <li className="text-sm font-medium text-zinc-300">Weekly outflow</li>
         {outflows.map((entry) => (
           <li key={entry.label} className="flex justify-between gap-2">
             <span>{entry.label}</span>

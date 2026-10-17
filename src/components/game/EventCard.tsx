@@ -1,4 +1,5 @@
 import { MoneyDisplay } from "@/components/owner/MoneyDisplay";
+import { formatGameDate } from "@/presentation/game-date";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 
 export function EventCard(props: {
@@ -31,8 +32,10 @@ export function EventCard(props: {
         {props.description ? (
           <p className="mt-1 text-zinc-400">{props.description}</p>
         ) : null}
-        <p className="mt-1 font-mono text-xs text-zinc-600">
-          {[props.date, props.type].filter(Boolean).join(" · ")}
+        <p className="mt-1 text-sm text-zinc-500">
+          {[props.date ? formatGameDate(props.date) : undefined, props.type]
+            .filter(Boolean)
+            .join(" · ")}
         </p>
       </div>
       {props.amount != null ? (

@@ -130,7 +130,7 @@ export function GameModeCard(props: { mode: GameModeDefinition }) {
         <details className="group relative z-10 text-sm">
           <summary
             className={cn(
-              "inline-flex min-h-11 cursor-pointer list-none items-center gap-1 font-mono text-[0.65rem] uppercase tracking-[0.16em] text-zinc-300 hover:text-team-ink [&::-webkit-details-marker]:hidden",
+              "inline-flex min-h-11 cursor-pointer list-none items-center gap-1 text-sm font-medium text-zinc-300 hover:text-team-ink [&::-webkit-details-marker]:hidden",
               focusRingClass,
             )}
           >

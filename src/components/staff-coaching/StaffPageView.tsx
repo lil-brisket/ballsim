@@ -23,7 +23,7 @@ export function StaffPageView(props: { view: StaffHubView; error?: string }) {
 
   return (
     <div className="space-y-4">
-      <PageHeader title="Staff" subtitle="Who is operating the organization" />
+      <PageHeader title="Staff" />
       {error ? <ErrorState message={error} /> : null}
 
       <StaffPayrollCard view={view} />

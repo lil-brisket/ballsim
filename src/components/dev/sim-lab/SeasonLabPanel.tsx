@@ -193,7 +193,7 @@ export function SeasonLabPanel(props: {
               mono
             />
           </div>
-          <p className="font-mono text-xs text-zinc-500">
+          <p className="font-mono text-sm text-zinc-500">
             checksum={result.report.checksum} · {result.report.reproCommand}
           </p>
           <SeasonChart
@@ -219,7 +219,7 @@ export function SeasonLabPanel(props: {
           {result.series.length > 0 ? (
             <div className={`${panelClass} overflow-x-auto p-4`}>
               <table className="w-full text-left text-sm text-zinc-300">
-                <thead className="text-xs uppercase tracking-wide text-zinc-500">
+                <thead className="text-sm text-zinc-400">
                   <tr>
                     <th className="pb-2">Season</th>
                     <th className="pb-2">Win%</th>

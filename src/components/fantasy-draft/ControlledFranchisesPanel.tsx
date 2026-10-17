@@ -3,6 +3,7 @@ import {
   toggleFantasyDraftAutoPickAction,
 } from "@/application/actions";
 import type { FantasyDraftView } from "@/state/selectors";
+import { SectionHeading } from "@/components/ui/SectionHeading";
 import { buttonClass } from "@/components/ui/Button";
 
 export function ControlledFranchisesPanel(props: {
@@ -13,9 +14,7 @@ export function ControlledFranchisesPanel(props: {
 
   return (
     <section className="rounded-xl border border-zinc-800 p-4">
-      <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-zinc-400">
-        Controlled franchises
-      </h2>
+      <SectionHeading title="Controlled franchises" className="mb-3" />
       <ul className="space-y-2">
         {draft.controlledFranchises.map((team) => (
           <li
@@ -30,10 +29,10 @@ export function ControlledFranchisesPanel(props: {
               <div className="font-medium text-zinc-100">
                 {team.teamName}
                 {team.isActive ? (
-                  <span className="ml-2 text-xs text-team-ink">Active</span>
+                  <span className="ml-2 text-sm text-team-ink">Active</span>
                 ) : null}
               </div>
-              <div className="mt-0.5 text-xs text-zinc-500">
+              <div className="mt-0.5 text-sm text-zinc-500">
                 {team.isOnClock ? (
                   <span className="font-semibold text-team-ink">ON CLOCK</span>
                 ) : team.nextPickNumber != null ? (

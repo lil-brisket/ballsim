@@ -1,5 +1,7 @@
 "use client";
 
+import { SectionHeading } from "@/components/ui/SectionHeading";
+import { formatGameDate } from "@/presentation/game-date";
 import { buttonClass } from "@/components/ui/Button";
 import { Overlay } from "@/components/ui/Overlay";
 
@@ -21,12 +23,11 @@ export function SimulateToDateConfirm(props: {
         className="relative z-10 w-full max-w-md rounded-xl border border-zinc-700 bg-zinc-900 p-5 shadow-xl"
         onClick={(event) => event.stopPropagation()}
       >
-        <h3
+        <SectionHeading
+          as="h3"
           id="simulate-to-date-title"
-          className="text-lg font-medium text-zinc-50"
-        >
-          Simulate through {props.date}?
-        </h3>
+          title={`Simulate through ${formatGameDate(props.date)}?`}
+        />
         <p className="mt-2 text-sm text-zinc-400">
           This plays all games, including yours, up to that day.
         </p>

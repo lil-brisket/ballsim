@@ -107,7 +107,7 @@ function AvailabilitySection(props: { player: RotationPlayerCardData }) {
         <p className="text-sm font-medium text-emerald-300">
           {emoji} Available
         </p>
-        <p className="mt-1 text-xs text-zinc-400">
+        <p className="mt-1 text-sm text-zinc-400">
           No medical restrictions on minutes.
         </p>
       </div>
@@ -118,7 +118,7 @@ function AvailabilitySection(props: { player: RotationPlayerCardData }) {
     return (
       <div className="rounded-lg border border-warning/40 bg-warning/10 px-4 py-3">
         <p className="text-sm font-medium text-warning">{emoji} Questionable</p>
-        <dl className="mt-2 space-y-1 text-xs text-zinc-300">
+        <dl className="mt-2 space-y-1 text-sm text-zinc-300">
           {player.injuryType ? (
             <div>
               <dt className="inline text-zinc-500">Injury: </dt>
@@ -149,7 +149,7 @@ function AvailabilitySection(props: { player: RotationPlayerCardData }) {
     return (
       <div className="rounded-lg border border-orange-800/60 bg-orange-950/30 px-4 py-3">
         <p className="text-sm font-medium text-orange-300">{emoji} Limited</p>
-        <dl className="mt-2 space-y-1 text-xs text-zinc-300">
+        <dl className="mt-2 space-y-1 text-sm text-zinc-300">
           {player.injuryType ? (
             <div>
               <dt className="inline text-zinc-500">Injury: </dt>
@@ -191,7 +191,7 @@ function AvailabilitySection(props: { player: RotationPlayerCardData }) {
       <p className="text-sm font-medium text-rose-300">
         {emoji} {label}
       </p>
-      <dl className="mt-2 space-y-1 text-xs text-zinc-300">
+      <dl className="mt-2 space-y-1 text-sm text-zinc-300">
         {player.injuryType ? (
           <div>
             <dt className="inline text-zinc-500">Injury: </dt>
@@ -255,7 +255,7 @@ export function RotationPlayerCard(props: {
               {player.age != null ? ` · Age ${player.age}` : ""}
               {player.overall != null ? ` · OVR ${player.overall}` : ""}
             </p>
-            <p className="mt-0.5 text-xs capitalize text-zinc-500">
+            <p className="mt-0.5 text-sm capitalize text-zinc-500">
               {player.role.replaceAll("_", " ")}
               {player.teamName ? ` · ${player.teamName}` : ""}
             </p>
@@ -273,7 +273,7 @@ export function RotationPlayerCard(props: {
 
         <div className="space-y-4 overflow-y-auto px-5 py-4">
           <section>
-            <h4 className="mb-2 text-xs font-semibold uppercase tracking-wide text-zinc-500">
+            <h4 className="mb-2 text-sm font-medium text-zinc-300">
               Availability
             </h4>
             <AvailabilitySection player={player} />
@@ -281,7 +281,7 @@ export function RotationPlayerCard(props: {
 
           {stats ? (
             <section>
-              <h4 className="mb-2 text-xs font-semibold uppercase tracking-wide text-zinc-500">
+              <h4 className="mb-2 text-sm font-medium text-zinc-300">
                 Performance
               </h4>
               <div className="grid grid-cols-3 gap-2 text-center sm:grid-cols-4">
@@ -305,10 +305,10 @@ export function RotationPlayerCard(props: {
                     key={label}
                     className="rounded border border-zinc-800 bg-zinc-950/50 px-2 py-2"
                   >
-                    <p className="text-[10px] uppercase text-zinc-500">
-                      {label}
+                    <p className="text-sm text-zinc-400">{label}</p>
+                    <p className="text-sm tabular-nums text-zinc-100">
+                      {value}
                     </p>
-                    <p className="font-mono text-sm text-zinc-100">{value}</p>
                   </div>
                 ))}
               </div>
@@ -316,50 +316,40 @@ export function RotationPlayerCard(props: {
           ) : null}
 
           <section>
-            <h4 className="mb-2 text-xs font-semibold uppercase tracking-wide text-zinc-500">
-              Rotation
-            </h4>
+            <h4 className="mb-2 text-sm font-medium text-zinc-300">Rotation</h4>
             <dl className="grid grid-cols-2 gap-2 text-sm">
               <div className="rounded border border-zinc-800 px-3 py-2">
-                <dt className="text-[10px] uppercase text-zinc-500">
-                  Target MPG
-                </dt>
-                <dd className="font-mono text-team-ink">
+                <dt className="text-sm text-zinc-400">Target MPG</dt>
+                <dd className="tabular-nums text-team-ink">
                   {player.targetMinutes}
                 </dd>
               </div>
               <div className="rounded border border-zinc-800 px-3 py-2">
-                <dt className="text-[10px] uppercase text-zinc-500">
-                  Projected
-                </dt>
-                <dd className="font-mono text-zinc-100">
+                <dt className="text-sm text-zinc-400">Projected</dt>
+                <dd className="tabular-nums text-zinc-100">
                   {player.projectedMinutes ?? player.targetMinutes}
                 </dd>
               </div>
               <div className="rounded border border-zinc-800 px-3 py-2">
-                <dt className="text-[10px] uppercase text-zinc-500">
-                  Season MIN
-                </dt>
-                <dd className="font-mono text-zinc-100">
+                <dt className="text-sm text-zinc-400">Season MIN</dt>
+                <dd className="tabular-nums text-zinc-100">
                   {player.actualMinutes}
                 </dd>
               </div>
               <div className="rounded border border-zinc-800 px-3 py-2">
-                <dt className="text-[10px] uppercase text-zinc-500">
-                  Priority
-                </dt>
-                <dd className="font-mono text-zinc-100">{player.priority}</dd>
+                <dt className="text-sm text-zinc-400">Priority</dt>
+                <dd className="tabular-nums text-zinc-100">
+                  {player.priority}
+                </dd>
               </div>
               <div className="rounded border border-zinc-800 px-3 py-2">
-                <dt className="text-[10px] uppercase text-zinc-500">Role</dt>
+                <dt className="text-sm text-zinc-400">Role</dt>
                 <dd className="capitalize text-zinc-100">
                   {player.role.replaceAll("_", " ")}
                 </dd>
               </div>
               <div className="rounded border border-zinc-800 px-3 py-2">
-                <dt className="text-[10px] uppercase text-zinc-500">
-                  Play / Usage
-                </dt>
+                <dt className="text-sm text-zinc-400">Play / Usage</dt>
                 <dd className="text-zinc-100">
                   {playBiasLabel(player.minutePriorityBias)}
                 </dd>

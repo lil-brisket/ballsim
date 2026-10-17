@@ -105,9 +105,7 @@ export function PlayerContract(props: {
 function Info(props: { label: string; value: React.ReactNode }) {
   return (
     <div className="rounded-lg border border-surface-line border-b-team-ink bg-surface-deep/80 p-3">
-      <p className="font-mono text-[0.65rem] uppercase tracking-[0.14em] text-zinc-400">
-        {props.label}
-      </p>
+      <p className="text-sm text-zinc-400">{props.label}</p>
       <div className="mt-1 text-sm text-zinc-100">{props.value}</div>
     </div>
   );
