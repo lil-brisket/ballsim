@@ -30,19 +30,22 @@ export type OwnerNavGroup = {
 /** Static nav structure (canonical routes only). Offseason group injected at runtime. */
 export const OWNER_NAV_GROUPS: readonly OwnerNavGroup[] = [
   {
-    id: "home",
-    label: "Home",
-    items: [{ href: "", label: "Front Office", icon: "home" }],
-  },
-  {
-    id: "simulation",
-    label: "Simulation",
+    // Everyday destinations; unlabelled so the sidebar stays short.
+    id: "main",
+    label: "",
     items: [
+      { href: "", label: "Front Office", icon: "home" },
       {
         href: "/calendar",
         label: "Calendar",
         icon: "calendar",
         badgeKey: "calendar",
+      },
+      {
+        href: "/media",
+        label: "Media Hub",
+        icon: "media",
+        badgeKey: "media",
       },
     ],
   },
@@ -87,29 +90,13 @@ export const OWNER_NAV_GROUPS: readonly OwnerNavGroup[] = [
     ],
   },
   {
-    id: "media",
-    label: "Media",
-    items: [
-      {
-        href: "/media",
-        label: "Media Hub",
-        icon: "media",
-        badgeKey: "media",
-      },
-    ],
-  },
-  {
     id: "franchise",
     label: "Franchise",
     items: [
       { href: "/finances", label: "Finances", icon: "finances" },
       { href: "/franchise", label: "Franchise", icon: "franchise" },
+      { href: "/settings", label: "Settings", icon: "settings" },
     ],
-  },
-  {
-    id: "settings",
-    label: "Settings",
-    items: [{ href: "/settings", label: "Settings", icon: "settings" }],
   },
 ] as const;
 
@@ -212,7 +199,7 @@ export function ownerNavGroupsForState(state: GameState): OwnerNavGroup[] {
   const phase = state.competition.season.phase;
 
   for (const group of OWNER_NAV_GROUPS) {
-    if (group.id === "simulation" && isOffseasonPeriod(state)) {
+    if (group.id === "main" && isOffseasonPeriod(state)) {
       groups.push(withBadges(group, badges));
       groups.push(withBadges(OFFSEASON_GROUP, badges));
       continue;
