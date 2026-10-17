@@ -1,5 +1,6 @@
 "use client";
 
+import { buttonClass } from "@/components/ui/Button";
 import Link from "next/link";
 import {
   acceptOwnerDecisionAction,
@@ -9,7 +10,7 @@ import {
 import { ActiveTeamBanner } from "@/components/game/ActiveTeamBanner";
 import { TeamLogoMark } from "@/components/team/logos/TeamLogoMark";
 import type { TeamBrandingView } from "@/state/team-branding-view";
-import { cn, touchTargetClass } from "@/components/ui/styles";
+import { cn } from "@/components/ui/styles";
 
 export type PendingTradeOfferViewModel = {
   decisionId: string;
@@ -160,8 +161,8 @@ export function PendingOwnerDecisionPanel(props: {
           <button
             type="submit"
             className={cn(
-              touchTargetClass,
-              "w-full rounded-md bg-emerald-700 px-3 text-sm font-medium text-zinc-50 hover:bg-emerald-600 sm:w-auto",
+              buttonClass({ variant: "primary" }),
+              "w-full sm:w-auto",
             )}
           >
             Accept
@@ -170,8 +171,8 @@ export function PendingOwnerDecisionPanel(props: {
         <Link
           href={reviewHref}
           className={cn(
-            touchTargetClass,
-            "w-full rounded-md border border-warning/40 bg-warning/10 px-3 text-sm font-medium text-zinc-50 hover:border-warning sm:w-auto",
+            buttonClass({ variant: "secondary" }),
+            "w-full sm:w-auto",
           )}
         >
           Review
@@ -179,8 +180,8 @@ export function PendingOwnerDecisionPanel(props: {
         <Link
           href={negotiateHref}
           className={cn(
-            touchTargetClass,
-            "w-full rounded-md border border-zinc-500 px-3 text-sm text-zinc-100 hover:border-zinc-300 sm:w-auto",
+            buttonClass({ variant: "secondary" }),
+            "w-full sm:w-auto",
           )}
         >
           Negotiate
@@ -192,8 +193,8 @@ export function PendingOwnerDecisionPanel(props: {
           <button
             type="submit"
             className={cn(
-              touchTargetClass,
-              "w-full rounded-md border border-zinc-600 px-3 text-sm text-zinc-200 hover:border-zinc-400 sm:w-auto",
+              buttonClass({ variant: "secondary" }),
+              "w-full sm:w-auto",
             )}
           >
             Decline
@@ -207,8 +208,8 @@ export function PendingOwnerDecisionPanel(props: {
             <button
               type="submit"
               className={cn(
-                touchTargetClass,
-                "w-full rounded-md bg-team px-3 text-sm font-medium text-on-team hover:brightness-110 sm:w-auto",
+                buttonClass({ variant: "secondary" }),
+                "w-full sm:w-auto",
               )}
             >
               Ask AI

@@ -1,9 +1,10 @@
+import { buttonClass } from "@/components/ui/Button";
 import Link from "next/link";
 import type { ActionCenterItem } from "@/state/action-center-selectors";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Section } from "@/components/ui/Section";
 import { StatusBadge } from "@/components/ui/StatusBadge";
-import { cn, focusRingClass } from "@/components/ui/styles";
+import { cn } from "@/components/ui/styles";
 
 /**
  * Compact team-relevant decisions for Team Hub.
@@ -48,8 +49,8 @@ export function TeamDecisionsList(props: {
               <Link
                 href={item.href}
                 className={cn(
-                  "shrink-0 rounded-md border border-zinc-700 px-2.5 py-1 text-xs text-zinc-200 hover:border-team-ink",
-                  focusRingClass,
+                  buttonClass({ variant: "secondary" }),
+                  "shrink-0",
                 )}
               >
                 {item.hrefLabel}

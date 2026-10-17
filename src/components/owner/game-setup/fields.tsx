@@ -1,26 +1,23 @@
 "use client";
 
-import { type ReactNode } from "react";
+import { type ReactNode, useId } from "react";
 import {
   INJURY_FREQUENCIES,
   INJURY_FREQUENCY_LABELS,
   type InjuryFrequency,
 } from "@/domain/game-settings";
 import { formatMoney } from "@/components/owner/MoneyDisplay";
+import { buttonClass } from "@/components/ui/Button";
+import { NumberStepper } from "@/components/ui/NumberStepper";
+import { Select } from "@/components/ui/Select";
 import { cn, focusRingClass } from "@/components/ui/styles";
 
 export const inputClass =
   "min-h-11 w-full rounded-md border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-team-ink disabled:cursor-not-allowed disabled:opacity-50";
 
-export const secondaryButtonClass = cn(
-  "inline-flex min-h-11 items-center rounded-md border border-zinc-700 px-4 py-2 text-sm text-zinc-200 hover:border-team-ink",
-  focusRingClass,
-);
+export const secondaryButtonClass = buttonClass({ variant: "secondary" });
 
-export const primaryButtonClass = cn(
-  "inline-flex min-h-11 items-center rounded-md bg-team px-4 py-2 text-sm font-medium text-on-team hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50",
-  focusRingClass,
-);
+export const primaryButtonClass = buttonClass({ variant: "primary" });
 
 export function SetupSection({
   id,
@@ -75,18 +72,18 @@ export function SelectField({
   return (
     <label className="block space-y-1 text-sm text-zinc-300">
       <span>{label}</span>
-      <select
+      <Select
         value={value}
         disabled={disabled}
         onChange={(event) => onChange(Number(event.target.value))}
-        className={inputClass}
+        wrapperClassName="w-full"
       >
         {options.map((option) => (
           <option key={option.value} value={option.value}>
             {option.label}
           </option>
         ))}
-      </select>
+      </Select>
     </label>
   );
 }
@@ -131,41 +128,32 @@ export function MoneyInputField({
   onChange: (value: number) => void;
 }) {
   const millions = value / 1_000_000;
+  const inputId = useId();
   return (
-    <label className="block space-y-1 text-sm text-zinc-300 sm:col-span-2">
-      <span className="block font-medium text-zinc-200">
+    <div className="block space-y-1 text-sm text-zinc-300 sm:col-span-2">
+      <label htmlFor={inputId} className="block font-medium text-zinc-200">
         {label} — {formatMoney(value)}
-      </span>
+      </label>
       <span className="block text-xs text-zinc-500">
         Range {formatMoney(min)}–{formatMoney(max)}. Default{" "}
         {formatMoney(defaultValue)}.
       </span>
       <span className="flex flex-wrap items-center gap-2">
-        <input
-          type="number"
-          inputMode="decimal"
+        <NumberStepper
+          id={inputId}
           disabled={disabled}
           min={min / 1_000_000}
           max={max / 1_000_000}
           step={1}
-          value={Number.isFinite(millions) ? millions : ""}
-          onChange={(event) => {
-            const raw = event.target.value;
-            if (raw === "") {
-              return;
-            }
-            const parsed = Number(raw);
-            if (!Number.isFinite(parsed)) {
-              return;
-            }
+          value={Number.isFinite(millions) ? millions : undefined}
+          onValueChange={(parsed) => {
             const dollars = Math.round(parsed * 1_000_000);
             onChange(Math.min(max, Math.max(min, dollars)));
           }}
-          className={cn(inputClass, "w-32")}
         />
         <span className="text-xs text-zinc-500">million dollars</span>
       </span>
-    </label>
+    </div>
   );
 }
 

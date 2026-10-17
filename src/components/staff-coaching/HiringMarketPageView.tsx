@@ -1,3 +1,4 @@
+import { buttonClass } from "@/components/ui/Button";
 import Link from "next/link";
 import {
   acceptStaffOfferAction,
@@ -213,7 +214,7 @@ function MarketActions(props: {
           <input type="hidden" name="returnPath" value={returnPath} />
           <button
             type="submit"
-            className="rounded-md border border-team-ink/50 px-3 py-1.5 text-sm text-team-ink hover:border-team-ink"
+            className={buttonClass({ variant: "secondary" })}
           >
             Negotiate
           </button>
@@ -230,10 +231,7 @@ function MarketActions(props: {
           <input type="hidden" name="saveId" value={saveId} />
           <input type="hidden" name="offerId" value={offer.offerId} />
           <input type="hidden" name="returnPath" value={returnPath} />
-          <button
-            type="submit"
-            className="rounded-md bg-team px-3 py-1.5 text-sm font-medium text-on-team hover:brightness-110"
-          >
+          <button type="submit" className={buttonClass({ variant: "primary" })}>
             Accept
           </button>
         </form>

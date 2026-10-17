@@ -1,9 +1,10 @@
 import type { TradeBlockView } from "@/state/roster-page-selectors";
 import { toggleTradeBlockAction } from "@/application/actions";
 import { PlayerEntityLink } from "@/components/entity/PlayerEntityLink";
+import { buttonClass } from "@/components/ui/Button";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Section } from "@/components/ui/Section";
-import { cn, focusRingClass, panelClass } from "@/components/ui/styles";
+import { cn, panelClass } from "@/components/ui/styles";
 
 export function TradeBlockRosterView(props: {
   saveId: string;
@@ -57,10 +58,7 @@ export function TradeBlockRosterView(props: {
                   />
                   <button
                     type="submit"
-                    className={cn(
-                      "text-xs text-zinc-400 hover:text-zinc-200",
-                      focusRingClass,
-                    )}
+                    className={buttonClass({ variant: "quiet" })}
                   >
                     Remove
                   </button>

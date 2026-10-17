@@ -4,7 +4,7 @@ import { ArenaPanel } from "@/components/ui/ArenaPanel";
 import { ScoreNumeral } from "@/components/ui/ScoreNumeral";
 import { SectionHeading } from "@/components/ui/SectionHeading";
 import { TickerBar, type TickerItem } from "@/components/ui/TickerBar";
-import { cn, focusRingClass, touchTargetClass } from "@/components/ui/styles";
+import { buttonClass } from "@/components/ui/Button";
 
 function formatLongDate(isoDate: string): string {
   try {
@@ -138,11 +138,7 @@ export function MyTeamContextStrip(props: {
         />
         <Link
           href={`/dashboard/${props.saveId}/team`}
-          className={cn(
-            touchTargetClass,
-            "rounded-lg border-2 border-team-ink bg-team px-4 font-display text-lg font-bold uppercase tracking-wide text-on-team hover:brightness-110",
-            focusRingClass,
-          )}
+          className={buttonClass({ variant: "secondary", size: "lg" })}
         >
           View Team
         </Link>

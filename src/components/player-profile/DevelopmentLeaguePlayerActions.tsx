@@ -1,5 +1,6 @@
 "use client";
 
+import { buttonClass } from "@/components/ui/Button";
 import {
   assignToDevelopmentLeagueAction,
   recallFromDevelopmentLeagueAction,
@@ -45,7 +46,7 @@ export function DevelopmentLeaguePlayerActions(props: {
             <input type="hidden" name="returnPath" value={props.returnPath} />
             <button
               type="submit"
-              className="rounded border border-team-ink bg-team/15 px-3 py-1.5 text-xs text-zinc-100 hover:bg-team/20"
+              className={buttonClass({ variant: "primary" })}
             >
               Send to Development League
             </button>
@@ -58,7 +59,7 @@ export function DevelopmentLeaguePlayerActions(props: {
             <input type="hidden" name="returnPath" value={props.returnPath} />
             <button
               type="submit"
-              className="rounded border border-zinc-600 px-3 py-1.5 text-xs text-zinc-100 hover:border-team-ink"
+              className={buttonClass({ variant: "secondary" })}
             >
               Recall to Top League
             </button>

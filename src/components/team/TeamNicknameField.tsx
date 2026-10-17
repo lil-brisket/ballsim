@@ -1,5 +1,6 @@
 "use client";
 
+import { Button } from "@/components/ui/Button";
 export function TeamNicknameField(props: {
   id: string;
   value: string;
@@ -34,15 +35,15 @@ export function TeamNicknameField(props: {
           className="min-w-0 flex-1 rounded-md border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-100 outline-none ring-team-ink/40 focus:ring-2 disabled:opacity-50"
         />
         {props.onRandomize ? (
-          <button
+          <Button
             type="button"
+            variant="secondary"
             onClick={props.onRandomize}
             disabled={props.disabled}
             aria-label="Randomize team name"
-            className="rounded-md border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-zinc-200 hover:bg-zinc-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-team-ink disabled:opacity-50"
           >
             ↻
-          </button>
+          </Button>
         ) : null}
       </div>
       {props.error ? (

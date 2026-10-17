@@ -1,5 +1,6 @@
 "use client";
 
+import { Select } from "@/components/ui/Select";
 import { useMemo, useState } from "react";
 import { cn, focusRingClass } from "@/components/ui/styles";
 import type { RosterPlayerView } from "@/state/selectors";
@@ -75,36 +76,28 @@ export function RosterTable(props: {
         </label>
         <label className="flex flex-col gap-1 text-xs text-zinc-500">
           Sort by
-          <select
+          <Select
             value={sortKey}
             onChange={(event) => setSortKey(event.target.value as SortKey)}
-            className={cn(
-              "rounded-md border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-zinc-100",
-              focusRingClass,
-            )}
           >
             <option value="overall">Overall</option>
             <option value="name">Name</option>
             <option value="position">Position</option>
             <option value="age">Age</option>
             <option value="status">Status</option>
-          </select>
+          </Select>
         </label>
         <label className="flex flex-col gap-1 text-xs text-zinc-500">
           Direction
-          <select
+          <Select
             value={sortDir}
             onChange={(event) =>
               setSortDir(event.target.value as "asc" | "desc")
             }
-            className={cn(
-              "rounded-md border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-zinc-100",
-              focusRingClass,
-            )}
           >
             <option value="desc">Descending</option>
             <option value="asc">Ascending</option>
-          </select>
+          </Select>
         </label>
       </div>
 

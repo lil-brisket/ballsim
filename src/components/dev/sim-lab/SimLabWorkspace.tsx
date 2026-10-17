@@ -5,6 +5,7 @@ import { GameLabPanel } from "@/components/dev/sim-lab/GameLabPanel";
 import { ScheduleLabPanel } from "@/components/dev/sim-lab/ScheduleLabPanel";
 import { SeasonLabPanel } from "@/components/dev/sim-lab/SeasonLabPanel";
 import type { SimLabPageConfig } from "@/components/dev/sim-lab/config";
+import { Tabs } from "@/components/ui/Tabs";
 
 type LabTab = "games" | "seasons" | "schedule";
 
@@ -28,25 +29,16 @@ export function SimLabWorkspace(props: { config: SimLabPageConfig }) {
         runs stay on the server and can take minutes — keep this tab open.
       </p>
 
-      <div className="mt-6 flex flex-wrap gap-2">
-        {TABS.map((item) => {
-          const active = item.id === tab;
-          return (
-            <button
-              key={item.id}
-              type="button"
-              className={
-                active
-                  ? "rounded-md bg-team px-3 py-1.5 text-sm font-medium text-on-team"
-                  : "rounded-md border border-zinc-700 px-3 py-1.5 text-sm text-zinc-300 hover:border-team-ink"
-              }
-              onClick={() => setTab(item.id)}
-            >
-              {item.label}
-            </button>
-          );
-        })}
-      </div>
+      <Tabs
+        className="mt-6"
+        aria-label="Simulation lab sections"
+        activeKey={tab}
+        items={TABS.map((item) => ({
+          key: item.id,
+          label: item.label,
+          onSelect: () => setTab(item.id),
+        }))}
+      />
 
       <div className="mt-6">
         {tab === "games" ? (

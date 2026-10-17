@@ -1,3 +1,4 @@
+import { buttonClass } from "@/components/ui/Button";
 import Link from "next/link";
 import { PlayerEntityLink } from "@/components/entity/PlayerEntityLink";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -91,7 +92,7 @@ export function TeamRotationPreview(props: {
           </span>
           <Link
             href={rotationHref}
-            className="rounded-md border border-zinc-700 px-2.5 py-1 text-zinc-200 hover:border-team-ink"
+            className={buttonClass({ variant: "secondary" })}
           >
             Manage Rotation
           </Link>

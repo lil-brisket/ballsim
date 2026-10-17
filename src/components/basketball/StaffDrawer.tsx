@@ -1,5 +1,6 @@
 "use client";
 
+import { Button, buttonClass } from "@/components/ui/Button";
 import Link from "next/link";
 import {
   fireStaffAction,
@@ -82,13 +83,9 @@ export function StaffDrawer(props: {
         <div className="space-y-3 text-sm text-zinc-400">
           <p>Could not load staff member.</p>
           {props.onRetry ? (
-            <button
-              type="button"
-              onClick={props.onRetry}
-              className="rounded-md border border-zinc-700 px-3 py-1.5 text-zinc-200"
-            >
+            <Button type="button" variant="secondary" onClick={props.onRetry}>
               Retry
-            </button>
+            </Button>
           ) : null}
         </div>
       ) : null}
@@ -224,7 +221,7 @@ function StaffDrawerBody(props: { saveId: string; view: StaffDrawerView }) {
                 <input type="hidden" name="returnPath" value={returnPath} />
                 <button
                   type="submit"
-                  className="rounded-md border border-rose-700 px-3 py-1.5 text-sm text-rose-300"
+                  className={buttonClass({ variant: "danger" })}
                 >
                   Confirm fire
                 </button>

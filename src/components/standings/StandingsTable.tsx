@@ -1,9 +1,10 @@
 import type { ReactNode } from "react";
+import { buttonClass } from "@/components/ui/Button";
 import { takeOverFranchiseAction } from "@/application/actions";
 import { TeamEntityLink } from "@/components/entity/TeamEntityLink";
 import { TeamIdentityInline } from "@/components/team/TeamIdentityInline";
 import { MobileListCard } from "@/components/ui/MobileListCard";
-import { cn, touchTargetClass } from "@/components/ui/styles";
+import { cn } from "@/components/ui/styles";
 import {
   formatStreak,
   type StandingsGroup,
@@ -187,10 +188,7 @@ function columnsFor(
             <input type="hidden" name="teamId" value={row.teamId} />
             <button
               type="submit"
-              className={cn(
-                touchTargetClass,
-                "rounded-md border border-zinc-700 px-2 text-xs text-zinc-300 hover:border-team-ink hover:text-team-ink",
-              )}
+              className={buttonClass({ variant: "secondary" })}
             >
               Take Over
             </button>
@@ -275,10 +273,7 @@ export function StandingsTable(props: {
                       <input type="hidden" name="teamId" value={row.teamId} />
                       <button
                         type="submit"
-                        className={cn(
-                          touchTargetClass,
-                          "rounded-md border border-zinc-700 px-3 text-xs text-zinc-300 hover:border-team-ink hover:text-team-ink",
-                        )}
+                        className={buttonClass({ variant: "secondary" })}
                       >
                         Take Over
                       </button>

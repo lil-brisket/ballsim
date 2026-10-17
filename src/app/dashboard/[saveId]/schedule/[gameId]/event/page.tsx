@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { buttonClass } from "@/components/ui/Button";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import {
@@ -199,7 +200,7 @@ export default async function GameDayEventPage({
                 <input type="hidden" name="returnPath" value={returnPath} />
                 <button
                   type="submit"
-                  className="rounded-md border border-zinc-600 px-3 py-1.5 text-sm text-zinc-200 hover:bg-zinc-800"
+                  className={buttonClass({ variant: "secondary" })}
                 >
                   Remove event
                   {view.currentPromotion.refundFractionIfCancelled < 1
@@ -271,7 +272,7 @@ export default async function GameDayEventPage({
                       />
                       <button
                         type="submit"
-                        className="rounded-md bg-team px-3 py-1.5 text-sm font-medium text-on-team hover:brightness-110"
+                        className={buttonClass({ variant: "secondary" })}
                       >
                         {view.currentPromotion ? "Switch" : "Schedule"}
                       </button>

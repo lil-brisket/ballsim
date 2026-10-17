@@ -11,6 +11,8 @@ import type {
   RosterPagePlayerView,
   TradeFinderRowView,
 } from "@/state/roster-page-selectors";
+import { Select } from "@/components/ui/Select";
+import { buttonClass } from "@/components/ui/Button";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { DataTable } from "@/components/ui/DataTable";
 import { cn, focusRingClass } from "@/components/ui/styles";
@@ -65,14 +67,14 @@ export function TradeFinderView(props: {
       </p>
       <label className="flex flex-col gap-1 text-xs text-zinc-500">
         Outgoing player
-        <select
+        <Select
           value={outgoingPlayerId}
           onChange={(event) => {
             setOutgoingPlayerId(event.target.value);
             setCandidates([]);
             setError(null);
           }}
-          className="max-w-md rounded-md border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-zinc-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-team-ink"
+          wrapperClassName="max-w-md"
         >
           {props.roster.map((player) => (
             <option key={player.playerId} value={player.playerId}>
@@ -81,7 +83,7 @@ export function TradeFinderView(props: {
               {player.onTradeBlock ? " · on block" : ""}
             </option>
           ))}
-        </select>
+        </Select>
       </label>
 
       {pending ? (
@@ -149,7 +151,7 @@ export function TradeFinderView(props: {
                         />
                         <button
                           type="submit"
-                          className="rounded-md bg-team px-3 py-1.5 text-sm font-medium text-on-team hover:brightness-110"
+                          className={buttonClass({ variant: "primary" })}
                         >
                           Execute
                         </button>

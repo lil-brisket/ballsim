@@ -1,3 +1,4 @@
+import { buttonClass } from "@/components/ui/Button";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -130,8 +131,8 @@ export default async function DashboardPage({
               <button
                 type="submit"
                 className={cn(
-                  touchTargetClass,
-                  "w-full rounded-md bg-team px-3 text-sm font-medium text-on-team hover:brightness-110 sm:w-auto",
+                  buttonClass({ variant: "primary" }),
+                  "w-full sm:w-auto",
                 )}
               >
                 Switch to {dash.pendingTradeOffer.receivingTeamName}
@@ -198,10 +199,7 @@ export default async function DashboardPage({
           </p>
           <Link
             href={`/dashboard/${saveId}/calendar`}
-            className={cn(
-              touchTargetClass,
-              "rounded-md bg-team px-4 text-sm font-medium text-on-team hover:brightness-110",
-            )}
+            className={buttonClass({ variant: "secondary" })}
           >
             Open Calendar
           </Link>

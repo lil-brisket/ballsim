@@ -3,6 +3,7 @@
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import type { RosterPageView } from "@/state/roster-page-selectors";
+import { Tabs } from "@/components/ui/Tabs";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { DepthChart } from "@/components/roster/DepthChart";
 import { FreeAgentRosterView } from "@/components/roster/FreeAgentRosterView";
@@ -12,7 +13,6 @@ import { RosterNeeds } from "@/components/roster/RosterNeeds";
 import { TradeBlockRosterView } from "@/components/roster/TradeBlockView";
 import { TradeFinderView } from "@/components/roster/TradeFinderView";
 import { SectionHeading } from "@/components/ui/SectionHeading";
-import { cn, focusRingClass } from "@/components/ui/styles";
 
 export type RosterManagementTab =
   "roster" | "free-agents" | "trade-block" | "trade-finder";
@@ -59,30 +59,15 @@ export function RosterPage(props: { view: RosterPageView }) {
     <div className="space-y-6">
       <RosterManagementHeader view={view} />
 
-      <div
-        className="flex flex-wrap gap-2"
-        role="tablist"
+      <Tabs
         aria-label="Roster management"
-      >
-        {TABS.map((entry) => (
-          <button
-            key={entry.id}
-            type="button"
-            role="tab"
-            aria-selected={tab === entry.id}
-            onClick={() => setTab(entry.id)}
-            className={cn(
-              "rounded-md px-3 py-1.5 text-sm",
-              focusRingClass,
-              tab === entry.id
-                ? "bg-team font-semibold text-on-team"
-                : "border border-surface-line text-zinc-300 hover:border-team-ink",
-            )}
-          >
-            {entry.label}
-          </button>
-        ))}
-      </div>
+        activeKey={tab}
+        items={TABS.map((entry) => ({
+          key: entry.id,
+          label: entry.label,
+          onSelect: () => setTab(entry.id),
+        }))}
+      />
 
       {tab === "roster" ? (
         <div className="space-y-6">

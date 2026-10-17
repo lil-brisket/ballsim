@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { buttonClass as buttonClassFn } from "@/components/ui/Button";
 import { notFound } from "next/navigation";
 import { loadOwnerSaveView } from "@/application/game-service";
 import {
@@ -20,7 +21,7 @@ import { ErrorState } from "@/components/ui/EmptyState";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { Section } from "@/components/ui/Section";
 import { StatusBadge } from "@/components/ui/StatusBadge";
-import { cn, focusRingClass, touchTargetClass } from "@/components/ui/styles";
+import { cn } from "@/components/ui/styles";
 
 export const metadata: Metadata = { title: "League Members" };
 
@@ -29,10 +30,9 @@ type PageProps = {
   searchParams: Promise<{ error?: string }>;
 };
 
-const buttonClass = cn(
-  touchTargetClass,
-  "cursor-pointer rounded-lg border border-surface-line bg-surface-deep/60 px-3 text-sm text-zinc-200 hover:border-team-ink hover:text-team-ink",
-  focusRingClass,
+const memberButtonClass = cn(
+  "cursor-pointer",
+  buttonClassFn({ variant: "secondary" }),
 );
 
 function inviteStatus(invite: InviteView, now: Date): string {
@@ -53,7 +53,9 @@ function ConfirmForm(props: {
 }) {
   return (
     <details className="inline-block align-top">
-      <summary className={cn(buttonClass, "list-none")}>{props.label}</summary>
+      <summary className={cn(memberButtonClass, "list-none")}>
+        {props.label}
+      </summary>
       <form
         action={props.action}
         className="mt-2 flex flex-wrap items-center gap-2 rounded-lg border border-team-ink/50 bg-team/15 p-2 text-sm text-zinc-100"
@@ -63,7 +65,7 @@ function ConfirmForm(props: {
           <input key={name} type="hidden" name={name} value={value} />
         ))}
         <span>{props.warning}</span>
-        <button type="submit" className={buttonClass}>
+        <button type="submit" className={memberButtonClass}>
           {props.confirmLabel}
         </button>
       </form>
@@ -208,7 +210,7 @@ export default async function LeagueMembersPage({
                           name="inviteId"
                           value={invite.id}
                         />
-                        <button type="submit" className={buttonClass}>
+                        <button type="submit" className={memberButtonClass}>
                           Revoke
                         </button>
                       </form>

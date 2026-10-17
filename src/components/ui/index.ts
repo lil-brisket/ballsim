@@ -40,3 +40,12 @@ export {
   touchTargetTextClass,
   type Density,
 } from "@/components/ui/styles";
+export {
+  Button,
+  buttonClass,
+  type ButtonSize,
+  type ButtonVariant,
+} from "@/components/ui/Button";
+export { NumberStepper } from "@/components/ui/NumberStepper";
+export { Select } from "@/components/ui/Select";
+export { Tabs, type TabItem } from "@/components/ui/Tabs";

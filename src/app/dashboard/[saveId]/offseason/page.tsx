@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { buttonClass } from "@/components/ui/Button";
 import { cn, linkClass } from "@/components/ui/styles";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -66,7 +67,7 @@ export default async function OffseasonCommandCenterPage({
         actions={
           <Link
             href={calendarHref}
-            className="rounded-md border border-team-ink/50 bg-team/15 px-3 py-1.5 text-sm text-zinc-50 hover:border-team-ink"
+            className={buttonClass({ variant: "secondary" })}
           >
             Open Calendar
           </Link>

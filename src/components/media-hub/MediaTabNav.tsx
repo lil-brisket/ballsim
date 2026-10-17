@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { MediaUnreadBadge } from "@/components/media-hub/MediaUnreadBadge";
+import { Tabs } from "@/components/ui/Tabs";
 import { cn, focusRingClass } from "@/components/ui/styles";
 import type {
   MediaHubTab,
@@ -54,33 +55,19 @@ export function MediaTabNav(props: {
 
   return (
     <div className="space-y-3">
-      <nav
-        className="flex flex-nowrap gap-2 overflow-x-auto"
+      <Tabs
         aria-label="Media hub tabs"
-      >
-        {TABS.map((tab) => {
-          const active = activeTab === tab.id;
-          return (
-            <Link
-              key={tab.id}
-              href={tabHref(saveId, tab.id)}
-              aria-current={active ? "page" : undefined}
-              className={cn(
-                "inline-flex shrink-0 items-center gap-1.5 rounded-md border px-3 py-1.5 text-sm",
-                focusRingClass,
-                active
-                  ? "border-team-ink bg-team/15 text-team-ink"
-                  : "border-zinc-700 text-zinc-400 hover:border-zinc-500 hover:text-zinc-200",
-              )}
-            >
-              {tab.label}
-              {tab.id === "latest" ? (
-                <MediaUnreadBadge count={unreadCount} />
-              ) : null}
-            </Link>
-          );
-        })}
-      </nav>
+        activeKey={activeTab}
+        items={TABS.map((tab) => ({
+          key: tab.id,
+          label: tab.label,
+          href: tabHref(saveId, tab.id),
+          badge:
+            tab.id === "latest" ? (
+              <MediaUnreadBadge count={unreadCount} />
+            ) : undefined,
+        }))}
+      />
 
       {activeTab === "latest" ? (
         <div

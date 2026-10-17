@@ -1,3 +1,4 @@
+import { buttonClass } from "@/components/ui/Button";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -65,10 +66,7 @@ export default async function PlayerDetailPage({
           <input type="hidden" name="saveId" value={saveId} />
           <input type="hidden" name="outgoingPlayerId" value={playerId} />
           <input type="hidden" name="returnPath" value={returnPath} />
-          <button
-            type="submit"
-            className="rounded-md bg-team px-3 py-1.5 text-sm font-medium text-on-team hover:brightness-110"
-          >
+          <button type="submit" className={buttonClass({ variant: "primary" })}>
             Confirm trade
           </button>
         </form>

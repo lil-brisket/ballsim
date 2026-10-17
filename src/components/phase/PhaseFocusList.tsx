@@ -1,3 +1,4 @@
+import { buttonClass } from "@/components/ui/Button";
 import Link from "next/link";
 import type { PhaseFocus, PhaseTask } from "@/state/phase-dashboard";
 
@@ -56,7 +57,7 @@ export function PhaseTaskList(props: {
               <div className="flex flex-wrap gap-2">
                 <Link
                   href={task.href}
-                  className="rounded-md border border-zinc-600 px-2.5 py-1 text-xs text-zinc-200 hover:border-zinc-400"
+                  className={buttonClass({ variant: "secondary" })}
                 >
                   Open
                 </Link>
@@ -71,7 +72,7 @@ export function PhaseTaskList(props: {
                     <input type="hidden" name="taskKey" value={task.taskKey} />
                     <button
                       type="submit"
-                      className="rounded-md border border-zinc-700 px-2.5 py-1 text-xs text-zinc-500 hover:text-zinc-300"
+                      className={buttonClass({ variant: "quiet" })}
                     >
                       Dismiss
                     </button>

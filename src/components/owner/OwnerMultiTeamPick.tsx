@@ -1,5 +1,7 @@
 "use client";
 
+import { Button } from "@/components/ui/Button";
+import { Select } from "@/components/ui/Select";
 import { useMemo, useState, useTransition } from "react";
 import { confirmControlledFranchisesAction } from "@/application/actions";
 import {
@@ -526,7 +528,7 @@ export function OwnerMultiTeamPick(props: {
           <div className="px-3 pb-3">
             <label className="flex items-center gap-2 text-xs text-zinc-400">
               <span>Managed by</span>
-              <select
+              <Select
                 aria-label={`Managed by for ${team.city} ${team.name}`}
                 value={assignments[team.id] ?? ""}
                 disabled={isAnchor}
@@ -536,7 +538,6 @@ export function OwnerMultiTeamPick(props: {
                     [team.id]: event.target.value,
                   }))
                 }
-                className="rounded-md border border-zinc-700 bg-zinc-900 px-2 py-1 text-sm text-zinc-100 disabled:opacity-60"
               >
                 {assignments[team.id] ? null : (
                   <option value="">Unassigned</option>
@@ -547,7 +548,7 @@ export function OwnerMultiTeamPick(props: {
                     {p.isHost ? " (host)" : ""}
                   </option>
                 ))}
-              </select>
+              </Select>
             </label>
           </div>
         ) : null}
@@ -712,19 +713,18 @@ export function OwnerMultiTeamPick(props: {
       ) : null}
 
       <div className="flex flex-wrap gap-3">
-        <button
-          type="button"
+        <Button
+          variant="primary"
           aria-busy={pending}
           disabled={!allValid || pending}
           onClick={submit}
-          className="rounded-md bg-team px-4 py-2 text-sm font-medium text-on-team hover:brightness-110 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-team-ink disabled:cursor-not-allowed disabled:opacity-50"
         >
           {pending
             ? "Saving…"
             : controlledTeamCount === 1
               ? "Continue to dashboard"
               : `Continue with ${controlledTeamCount} franchises`}
-        </button>
+        </Button>
       </div>
     </div>
   );

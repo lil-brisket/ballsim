@@ -8,6 +8,8 @@ import { rotationRoleSortKey } from "@/state/roster-page-selectors";
 import { PlayerPortrait } from "@/components/basketball/PlayerPortrait";
 import { PlayerEntityLink } from "@/components/entity/PlayerEntityLink";
 import { ContractSummary } from "@/components/owner/ContractSummary";
+import { Button } from "@/components/ui/Button";
+import { Select } from "@/components/ui/Select";
 import { DataTable } from "@/components/ui/DataTable";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { PlayerActionMenu } from "@/components/roster/PlayerActionMenu";
@@ -195,10 +197,9 @@ export function RosterManagementTable(props: {
           </label>
           <label>
             <span className="sr-only">Sort by</span>
-            <select
+            <Select
               value={sortKey}
               onChange={(event) => setSortKey(event.target.value as SortKey)}
-              className={controlClass}
             >
               <option value="overall">Sort: Overall</option>
               <option value="name">Sort: Name</option>
@@ -207,10 +208,11 @@ export function RosterManagementTable(props: {
               <option value="salary">Sort: Salary</option>
               <option value="years">Sort: Years remaining</option>
               <option value="role">Sort: Role</option>
-            </select>
+            </Select>
           </label>
-          <button
+          <Button
             type="button"
+            variant="secondary"
             onClick={() =>
               setSortDir((value) => (value === "desc" ? "asc" : "desc"))
             }
@@ -219,10 +221,10 @@ export function RosterManagementTable(props: {
                 ? "Sort direction: descending"
                 : "Sort direction: ascending"
             }
-            className={cn(controlClass, "min-w-11 text-center")}
+            className="min-w-11"
           >
             <span aria-hidden>{sortDir === "desc" ? "↓" : "↑"}</span>
-          </button>
+          </Button>
 
           <div
             role="group"

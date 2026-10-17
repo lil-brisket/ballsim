@@ -1,3 +1,4 @@
+import { buttonClass } from "@/components/ui/Button";
 import {
   assignToDevelopmentLeagueAction,
   recallFromDevelopmentLeagueAction,
@@ -9,12 +10,7 @@ import { PlayerEntityLink } from "@/components/entity/PlayerEntityLink";
 import { splitDisplayName } from "@/presentation/portrait-hash";
 import { ProgressBar } from "@/components/ui/ProgressBar";
 import { StatusBadge } from "@/components/ui/StatusBadge";
-import {
-  cn,
-  densityPadding,
-  focusRingClass,
-  panelClass,
-} from "@/components/ui/styles";
+import { cn, densityPadding, panelClass } from "@/components/ui/styles";
 import { DL_MAX_SEASONS } from "@/domain/entities/development-league";
 import type { DlProspectRowView } from "@/state/development-league-selectors";
 
@@ -77,13 +73,7 @@ function RecallButton(props: {
       <input type="hidden" name="saveId" value={props.saveId} />
       <input type="hidden" name="playerId" value={props.playerId} />
       <input type="hidden" name="returnPath" value={props.returnPath} />
-      <button
-        type="submit"
-        className={cn(
-          "rounded border border-zinc-700 px-2 py-1 text-xs text-zinc-300 hover:border-team-ink",
-          focusRingClass,
-        )}
-      >
+      <button type="submit" className={buttonClass({ variant: "secondary" })}>
         Recall
       </button>
     </form>
@@ -229,13 +219,7 @@ function AssignButton(props: {
       <input type="hidden" name="saveId" value={props.saveId} />
       <input type="hidden" name="playerId" value={props.playerId} />
       <input type="hidden" name="returnPath" value={props.returnPath} />
-      <button
-        type="submit"
-        className={cn(
-          "rounded border border-team-ink bg-team/15 px-2 py-1 text-xs text-zinc-100 hover:bg-team/20",
-          focusRingClass,
-        )}
-      >
+      <button type="submit" className={buttonClass({ variant: "primary" })}>
         Assign
       </button>
     </form>

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { buttonClass } from "@/components/ui/Button";
 import {
   cn,
   focusRingClass,
@@ -8,11 +9,6 @@ import {
 
 const inputClass = cn(
   "min-h-11 w-full rounded-md border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-100",
-  focusRingClass,
-);
-
-const buttonClass = cn(
-  "inline-flex min-h-11 items-center rounded-md bg-team px-4 py-2 text-sm font-medium text-on-team hover:brightness-110",
   focusRingClass,
 );
 
@@ -98,7 +94,7 @@ export function AuthForm({ mode, action, next, error }: AuthFormProps) {
             </p>
           ) : null}
         </div>
-        <button type="submit" className={buttonClass}>
+        <button type="submit" className={buttonClass({ variant: "primary" })}>
           {signup ? "Create account" : "Sign in"}
         </button>
       </form>

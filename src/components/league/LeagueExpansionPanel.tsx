@@ -8,6 +8,7 @@ import type { ExpansionAssessment } from "@/state/expansion-assessment";
 import type { ExpansionState } from "@/domain/entities/expansion";
 import type { LeagueEconomy } from "@/domain/entities/league-economy";
 import { MoneyDisplay } from "@/components/owner/MoneyDisplay";
+import { buttonClass } from "@/components/ui/Button";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { Section } from "@/components/ui/Section";
 import { StatCard } from "@/components/ui/StatCard";
@@ -147,7 +148,7 @@ export function LeagueExpansionPanel(props: {
                 <input type="hidden" name="returnPath" value={returnPath} />
                 <button
                   type="submit"
-                  className="rounded-md border border-zinc-700 px-3 py-1.5 text-sm text-zinc-200 hover:border-team-ink"
+                  className={buttonClass({ variant: "secondary" })}
                 >
                   Propose expansion
                 </button>
@@ -163,7 +164,7 @@ export function LeagueExpansionPanel(props: {
                 <input type="hidden" name="returnPath" value={returnPath} />
                 <button
                   type="submit"
-                  className="rounded-md border border-zinc-700 px-3 py-1.5 text-sm text-zinc-200 hover:border-team-ink"
+                  className={buttonClass({ variant: "secondary" })}
                 >
                   Approve {candidate.city} {candidate.name}
                 </button>
@@ -175,7 +176,7 @@ export function LeagueExpansionPanel(props: {
                 <input type="hidden" name="returnPath" value={returnPath} />
                 <button
                   type="submit"
-                  className="rounded-md border border-zinc-700 px-3 py-1.5 text-sm text-zinc-200 hover:border-team-ink"
+                  className={buttonClass({ variant: "secondary" })}
                 >
                   Run expansion draft
                 </button>
@@ -187,7 +188,7 @@ export function LeagueExpansionPanel(props: {
                 <input type="hidden" name="returnPath" value={returnPath} />
                 <button
                   type="submit"
-                  className="rounded-md bg-team px-3 py-1.5 text-sm font-medium text-on-team hover:brightness-110"
+                  className={buttonClass({ variant: "primary" })}
                 >
                   Complete expansion
                 </button>

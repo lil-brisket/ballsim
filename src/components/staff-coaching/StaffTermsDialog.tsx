@@ -1,8 +1,9 @@
 "use client";
 
+import { Button } from "@/components/ui/Button";
+import { NumberStepper } from "@/components/ui/NumberStepper";
 import { useState } from "react";
 import { Overlay } from "@/components/ui/Overlay";
-import { cn, focusRingClass } from "@/components/ui/styles";
 import { MoneyDisplay } from "@/components/owner/MoneyDisplay";
 
 /**
@@ -31,21 +32,18 @@ export function StaffTermsDialog(props: {
 
   return (
     <>
-      <button
+      <Button
         type="button"
+        variant="secondary"
         onClick={() => {
           setAnnualSalary(props.defaultAnnualSalary);
           setYears(props.defaultYears);
           setOpen(true);
         }}
-        className={cn(
-          "rounded-md border border-team-ink/50 bg-team/15 px-3 py-1.5 text-sm text-team-ink hover:border-team-ink",
-          focusRingClass,
-          props.triggerClassName,
-        )}
+        className={props.triggerClassName}
       >
         {props.triggerLabel}
-      </button>
+      </Button>
       {open ? (
         <Overlay
           className="flex items-center justify-center p-4"
@@ -83,59 +81,50 @@ export function StaffTermsDialog(props: {
               {Object.entries(props.hiddenFields).map(([name, value]) => (
                 <input key={name} type="hidden" name={name} value={value} />
               ))}
-              <label className="block text-sm text-zinc-300">
-                Annual salary
-                <input
-                  type="number"
+              <div className="text-sm text-zinc-300">
+                <label htmlFor="staff-terms-annual-salary">Annual salary</label>
+                <NumberStepper
+                  id="staff-terms-annual-salary"
                   name="annualSalary"
                   min={0}
                   step={10000}
                   value={annualSalary}
-                  onChange={(event) =>
-                    setAnnualSalary(Number(event.target.value) || 0)
-                  }
-                  className="mt-1 w-full rounded-md border border-zinc-700 bg-zinc-950 px-3 py-1.5 text-zinc-100"
+                  onValueChange={setAnnualSalary}
+                  className="mt-1 flex"
+                  inputClassName="w-full min-w-28 flex-1"
                 />
-              </label>
-              <label className="block text-sm text-zinc-300">
-                Contract length (years)
-                <input
-                  type="number"
+              </div>
+              <div className="text-sm text-zinc-300">
+                <label htmlFor="staff-terms-years">
+                  Contract length (years)
+                </label>
+                <NumberStepper
+                  id="staff-terms-years"
                   name="years"
                   min={1}
                   max={10}
                   value={years}
-                  onChange={(event) =>
-                    setYears(Number(event.target.value) || 1)
-                  }
-                  className="mt-1 w-full rounded-md border border-zinc-700 bg-zinc-950 px-3 py-1.5 text-zinc-100"
+                  onValueChange={setYears}
+                  className="mt-1 flex"
+                  inputClassName="w-full min-w-28 flex-1"
                 />
-              </label>
+              </div>
               {props.showTotalPreview ? (
                 <p className="text-sm text-zinc-400">
                   New contract <MoneyDisplay amount={total} /> total
                 </p>
               ) : null}
               <div className="flex justify-end gap-2 pt-2">
-                <button
+                <Button
                   type="button"
+                  variant="secondary"
                   onClick={() => setOpen(false)}
-                  className={cn(
-                    "rounded-md border border-zinc-700 px-3 py-1.5 text-sm text-zinc-200 hover:border-zinc-500",
-                    focusRingClass,
-                  )}
                 >
                   Cancel
-                </button>
-                <button
-                  type="submit"
-                  className={cn(
-                    "rounded-md bg-team px-3 py-1.5 text-sm font-medium text-on-team hover:brightness-110",
-                    focusRingClass,
-                  )}
-                >
+                </Button>
+                <Button type="submit" variant="primary">
                   {props.submitLabel}
-                </button>
+                </Button>
               </div>
             </form>
           </div>

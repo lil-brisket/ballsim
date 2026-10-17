@@ -1,3 +1,4 @@
+import { buttonClass } from "@/components/ui/Button";
 import Link from "next/link";
 import type {
   GameModeCatalogId,
@@ -161,7 +162,8 @@ export function GameModeCard(props: { mode: GameModeDefinition }) {
             href={mode.entryHref!}
             aria-label={label}
             className={cn(
-              "mt-auto inline-flex min-h-11 items-center justify-center rounded-xl border-2 border-team-ink bg-team px-6 py-2 font-display text-xl font-extrabold uppercase tracking-wide text-on-team transition hover:brightness-110",
+              "mt-auto",
+              buttonClass({ variant: "primary", size: "lg" }),
               "after:absolute after:inset-0 after:content-['']",
               focusRingClass,
             )}

@@ -19,8 +19,6 @@ import {
   formatDurationMs,
   formatFixed,
   formatPct,
-  labFieldClass,
-  labPrimaryButtonClass,
 } from "@/components/dev/sim-lab/format";
 import { ErrorState } from "@/components/ui/EmptyState";
 import { StatCard } from "@/components/ui/StatCard";
@@ -28,6 +26,9 @@ import { panelClass } from "@/components/ui/styles";
 import type { SeasonLabSuccess } from "@/application/sim-lab";
 import type { SimLabPresetOption } from "@/components/dev/sim-lab/config";
 import type { LabLeaguePreset } from "@/simulation/lab/lab-league-preset";
+import { Button } from "@/components/ui/Button";
+import { NumberStepper } from "@/components/ui/NumberStepper";
+import { Select } from "@/components/ui/Select";
 
 function SeasonChart(props: {
   label: string;
@@ -115,32 +116,32 @@ export function SeasonLabPanel(props: {
         seasons here.
       </p>
       <div className={`${panelClass} grid gap-3 p-4 sm:grid-cols-3`}>
-        <label className="text-sm text-zinc-400">
-          Seed
-          <input
-            className={`${labFieldClass} mt-1`}
-            type="number"
+        <div className="text-sm text-zinc-400">
+          <span className="block">Seed</span>
+          <NumberStepper
+            className="mt-1"
+            aria-label="Seed"
             value={seed}
             disabled={pending}
-            onChange={(event) => setSeed(Number(event.target.value))}
+            onValueChange={setSeed}
           />
-        </label>
-        <label className="text-sm text-zinc-400">
-          Seasons (max {cap})
-          <input
-            className={`${labFieldClass} mt-1`}
-            type="number"
+        </div>
+        <div className="text-sm text-zinc-400">
+          <span className="block">Seasons (max {cap})</span>
+          <NumberStepper
+            className="mt-1"
+            aria-label="Seasons"
             min={1}
             max={cap}
             value={seasons}
             disabled={pending}
-            onChange={(event) => setSeasons(Number(event.target.value))}
+            onValueChange={setSeasons}
           />
-        </label>
+        </div>
         <label className="text-sm text-zinc-400">
           League
-          <select
-            className={`${labFieldClass} mt-1`}
+          <Select
+            wrapperClassName="mt-1 w-full"
             value={preset}
             disabled={pending}
             onChange={(event) =>
@@ -152,18 +153,13 @@ export function SeasonLabPanel(props: {
                 {option.label}
               </option>
             ))}
-          </select>
+          </Select>
         </label>
       </div>
 
-      <button
-        type="button"
-        className={labPrimaryButtonClass}
-        disabled={pending}
-        onClick={onRun}
-      >
+      <Button variant="primary" disabled={pending} onClick={onRun}>
         {pending ? "Simulating seasons…" : "Run multi-season career"}
-      </button>
+      </Button>
       <LabBusyBanner pending={pending} elapsedMs={elapsedMs} />
 
       {error ? <ErrorState message={error} /> : null}

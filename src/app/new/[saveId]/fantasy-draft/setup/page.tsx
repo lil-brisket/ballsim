@@ -12,6 +12,8 @@ import { OnboardingShell } from "@/components/game/OnboardingShell";
 import { FantasyDraftOrderEditor } from "@/components/fantasy-draft/FantasyDraftOrderEditor";
 import { ErrorState } from "@/components/ui/EmptyState";
 import { Section } from "@/components/ui/Section";
+import { buttonClass } from "@/components/ui/Button";
+import { Select } from "@/components/ui/Select";
 
 type SetupPageProps = {
   params: Promise<{ saveId: string }>;
@@ -52,45 +54,45 @@ export default async function FantasyDraftSetupPage({
           <input type="hidden" name="saveId" value={saveId} />
           <label className="block text-sm text-zinc-300">
             Draft type
-            <select
+            <Select
               name="draftType"
               defaultValue={draft.draftType}
-              className="mt-1 w-full rounded-md border border-zinc-700 bg-zinc-900 px-3 py-2"
+              wrapperClassName="mt-1 w-full"
             >
               <option value="snake">Snake</option>
               <option value="linear">Linear</option>
-            </select>
+            </Select>
           </label>
           <label className="block text-sm text-zinc-300">
             Order mode
-            <select
+            <Select
               name="orderMode"
               defaultValue={draft.orderMode}
-              className="mt-1 w-full rounded-md border border-zinc-700 bg-zinc-900 px-3 py-2"
+              wrapperClassName="mt-1 w-full"
             >
               <option value="random">Random (then review/edit)</option>
               <option value="manual">Manual (alphabetical start)</option>
-            </select>
+            </Select>
           </label>
           <label className="block text-sm text-zinc-300">
             Timer
-            <select
+            <Select
               name="timerSeconds"
               defaultValue={
                 draft.timerEnabled ? String(draft.timerSecondsPerPick) : "off"
               }
-              className="mt-1 w-full rounded-md border border-zinc-700 bg-zinc-900 px-3 py-2"
+              wrapperClassName="mt-1 w-full"
             >
               <option value="off">Off</option>
               <option value="30">30 seconds</option>
               <option value="60">60 seconds</option>
               <option value="90">90 seconds</option>
               <option value="120">120 seconds</option>
-            </select>
+            </Select>
           </label>
           <button
             type="submit"
-            className="rounded-md bg-zinc-800 px-4 py-2 text-sm text-zinc-100 hover:bg-zinc-700"
+            className={buttonClass({ variant: "secondary" })}
           >
             Apply settings
           </button>
@@ -103,7 +105,7 @@ export default async function FantasyDraftSetupPage({
             <input type="hidden" name="saveId" value={saveId} />
             <button
               type="submit"
-              className="rounded-md border border-team-ink/50 px-3 py-2 text-sm text-team-ink hover:bg-team/20"
+              className={buttonClass({ variant: "secondary" })}
             >
               Randomize Order
             </button>
@@ -125,7 +127,7 @@ export default async function FantasyDraftSetupPage({
         <button
           type="submit"
           disabled={draft.draftOrder.length === 0}
-          className="rounded-md bg-team px-4 py-2 text-sm font-medium text-on-team hover:brightness-110 disabled:opacity-50"
+          className={buttonClass({ variant: "primary" })}
         >
           Confirm Draft Order
         </button>

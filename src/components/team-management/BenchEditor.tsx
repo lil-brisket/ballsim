@@ -1,5 +1,6 @@
 "use client";
 
+import { Button } from "@/components/ui/Button";
 import { DataTable } from "@/components/ui/DataTable";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import type {
@@ -50,13 +51,13 @@ export function BenchEditor(props: {
                   <StatusBadge label={player.availabilityLabel} />
                 </td>
                 <td className="px-3 py-2">
-                  <button
+                  <Button
                     type="button"
+                    variant="quiet"
                     onClick={() => props.onMoveToInactive(playerId)}
-                    className="text-xs text-zinc-400 hover:text-team-ink"
                   >
                     Make inactive
-                  </button>
+                  </Button>
                 </td>
               </tr>
             );
@@ -87,13 +88,13 @@ export function BenchEditor(props: {
                   <span>
                     {player.firstName} {player.lastName} (OVR {player.overall})
                   </span>
-                  <button
+                  <Button
                     type="button"
+                    variant="quiet"
                     onClick={() => props.onMoveToBench(playerId)}
-                    className="text-xs text-zinc-400 hover:text-team-ink"
                   >
                     Move to bench
-                  </button>
+                  </Button>
                 </li>
               );
             })}

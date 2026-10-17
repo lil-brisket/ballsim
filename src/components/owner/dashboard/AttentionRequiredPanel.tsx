@@ -1,3 +1,4 @@
+import { buttonClass } from "@/components/ui/Button";
 import Link from "next/link";
 import { cn, focusRingClass } from "@/components/ui/styles";
 import type { OwnerDashboardActionItem } from "@/state/owner-dashboard";
@@ -58,7 +59,7 @@ export function AttentionRequiredPanel(props: {
             <input type="hidden" name="returnPath" value={props.returnPath} />
             <button
               type="submit"
-              className="rounded-md border border-emerald-700/60 bg-emerald-950/40 px-3 py-1.5 text-sm text-emerald-300 hover:border-emerald-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-500"
+              className={buttonClass({ variant: "secondary" })}
             >
               Let AI Handle
             </button>

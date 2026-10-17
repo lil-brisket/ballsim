@@ -2,6 +2,7 @@
 
 import { useEffect, useId, useRef } from "react";
 import { fantasyDraftPickAction } from "@/application/actions";
+import { buttonClass } from "@/components/ui/Button";
 
 export function DraftConfirmDialog(props: {
   saveId: string;
@@ -49,7 +50,7 @@ export function DraftConfirmDialog(props: {
           <button
             type="button"
             onClick={props.onCancel}
-            className="rounded-md border border-zinc-700 px-3 py-2 text-sm"
+            className={buttonClass({ variant: "secondary" })}
           >
             Cancel
           </button>
@@ -67,7 +68,7 @@ export function DraftConfirmDialog(props: {
               ref={confirmRef}
               type="submit"
               disabled={props.pending}
-              className="rounded-md bg-team px-3 py-2 text-sm font-medium text-on-team disabled:opacity-50"
+              className={buttonClass({ variant: "primary" })}
             >
               Draft Player
             </button>

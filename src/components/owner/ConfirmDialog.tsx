@@ -1,5 +1,6 @@
 "use client";
 
+import { Button } from "@/components/ui/Button";
 import { useState } from "react";
 import { Overlay } from "@/components/ui/Overlay";
 import { focusRingClass, cn, linkClass } from "@/components/ui/styles";
@@ -45,16 +46,9 @@ export function ConfirmDialog(props: {
             </h3>
             <p className="mt-2 text-sm text-zinc-400">{props.description}</p>
             <div className="mt-5 flex justify-end gap-2">
-              <button
-                type="button"
-                onClick={() => setOpen(false)}
-                className={cn(
-                  "rounded-md border border-zinc-700 px-3 py-1.5 text-sm text-zinc-200 hover:border-zinc-500",
-                  focusRingClass,
-                )}
-              >
+              <Button variant="secondary" onClick={() => setOpen(false)}>
                 Cancel
-              </button>
+              </Button>
               {props.children}
             </div>
           </div>

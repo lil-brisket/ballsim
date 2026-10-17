@@ -1,3 +1,4 @@
+import { buttonClass } from "@/components/ui/Button";
 import Link from "next/link";
 import { PlayerEntityLink } from "@/components/entity/PlayerEntityLink";
 import { TeamEntityLink } from "@/components/entity/TeamEntityLink";
@@ -8,7 +9,6 @@ import { TeamBadge } from "@/components/ui/TeamBadge";
 import {
   cn,
   focusRingClass,
-  touchTargetClass,
   touchTargetTextClass,
 } from "@/components/ui/styles";
 import { parseCalendarDate } from "@/domain/calendar-date";
@@ -265,9 +265,8 @@ export function MatchupBanner(props: {
         <Link
           href={`${calendarHref}?focus=next-game`}
           className={cn(
-            touchTargetClass,
-            "w-full rounded-xl border-2 border-team-ink bg-team px-8 py-3 font-display text-xl font-extrabold uppercase tracking-wide text-on-team shadow-team-glow hover:brightness-110 sm:w-auto",
-            focusRingClass,
+            buttonClass({ variant: "primary", size: "lg" }),
+            "w-full sm:w-auto",
           )}
         >
           Simulate to next game

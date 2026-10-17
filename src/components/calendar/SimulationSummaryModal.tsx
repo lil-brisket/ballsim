@@ -1,5 +1,6 @@
 "use client";
 
+import { buttonClass } from "@/components/ui/Button";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
@@ -316,7 +317,7 @@ export function SimulationSummaryModal(props: {
           <button
             type="button"
             onClick={dismiss}
-            className="inline-flex min-h-11 items-center justify-center rounded-md bg-team px-5 font-display text-lg font-extrabold uppercase tracking-wide text-on-team hover:brightness-110 touch-manipulation active:opacity-80"
+            className={buttonClass({ variant: "primary", size: "lg" })}
           >
             Continue
           </button>

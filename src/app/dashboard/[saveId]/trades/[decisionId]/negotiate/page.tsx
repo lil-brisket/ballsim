@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { buttonClass } from "@/components/ui/Button";
 import Link from "next/link";
 import { SectionHeading } from "@/components/ui/SectionHeading";
 import { notFound } from "next/navigation";
@@ -155,10 +156,7 @@ export default async function TradeNegotiatePage(props: PageProps) {
           </div>
         </fieldset>
 
-        <button
-          type="submit"
-          className="rounded-md bg-team px-3 py-1.5 font-medium text-on-team hover:brightness-110"
-        >
+        <button type="submit" className={buttonClass({ variant: "primary" })}>
           Send counteroffer
         </button>
       </form>

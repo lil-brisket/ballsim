@@ -11,6 +11,8 @@ import {
 } from "@/application/actions";
 import { getRequestSaveStore } from "@/application/request-save-store";
 import { ConfirmDialog } from "@/components/owner/ConfirmDialog";
+import { buttonClass } from "@/components/ui/Button";
+import { NumberStepper } from "@/components/ui/NumberStepper";
 import { DataTable } from "@/components/ui/DataTable";
 import { EmptyState, ErrorState } from "@/components/ui/EmptyState";
 import { MoneyDisplay } from "@/components/owner/MoneyDisplay";
@@ -58,7 +60,7 @@ export default async function FreeAgencyPage({
         actions={
           <Link
             href={calendarHref}
-            className="rounded-md border border-team-ink/50 bg-team/15 px-3 py-1.5 text-sm text-zinc-50 hover:border-team-ink"
+            className={buttonClass({ variant: "secondary" })}
           >
             Open Calendar
           </Link>
@@ -168,7 +170,7 @@ export default async function FreeAgencyPage({
                           />
                           <button
                             type="submit"
-                            className="rounded-md border border-rose-700 px-3 py-1.5 text-sm text-rose-300"
+                            className={buttonClass({ variant: "danger" })}
                           >
                             Confirm withdraw
                           </button>
@@ -234,19 +236,18 @@ export default async function FreeAgencyPage({
                             name="returnPath"
                             value={returnPath}
                           />
-                          <input
-                            type="number"
+                          <NumberStepper
                             name="salary"
                             defaultValue={2_000_000}
-                            className="w-28 rounded border border-zinc-700 bg-zinc-950 px-2 py-1 text-xs"
+                            step={50_000}
+                            min={0}
+                            inputClassName="w-28"
                             aria-label="Salary"
                           />
-                          <input
-                            type="number"
+                          <NumberStepper
                             name="years"
                             defaultValue={1}
                             min={1}
-                            className="w-14 rounded border border-zinc-700 bg-zinc-950 px-2 py-1 text-xs"
                             aria-label="Years"
                           />
                           <button
@@ -349,7 +350,7 @@ export default async function FreeAgencyPage({
               <input type="hidden" name="returnPath" value={returnPath} />
               <button
                 type="submit"
-                className="rounded-md border border-zinc-700 px-3 py-1.5 text-sm text-zinc-200 hover:border-team-ink"
+                className={buttonClass({ variant: "secondary" })}
               >
                 Finish free agency
               </button>

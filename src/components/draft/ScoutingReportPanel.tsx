@@ -1,3 +1,4 @@
+import { buttonClass } from "@/components/ui/Button";
 import type { ScoutingReportView } from "@/systems/scouting/scouting-reports";
 
 type Props = {
@@ -28,7 +29,7 @@ export function ScoutingReportPanel({
           <button
             type="button"
             onClick={onClose}
-            className="text-xs text-zinc-500 hover:text-zinc-300"
+            className={buttonClass({ variant: "quiet" })}
           >
             Close
           </button>

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
-import { cn, focusRingClass } from "@/components/ui/styles";
+import { buttonClass } from "@/components/ui/Button";
+import { NumberStepper } from "@/components/ui/NumberStepper";
 import {
   setMarketingBudgetAction,
   setTicketPriceAction,
@@ -73,23 +74,15 @@ export default async function MarketingPage({
           <form action={setTicketPriceAction} className="flex flex-wrap gap-3">
             <input type="hidden" name="saveId" value={saveId} />
             <input type="hidden" name="returnPath" value={returnPath} />
-            <input
-              type="number"
+            <NumberStepper
               name="ticketPrice"
               defaultValue={biz.ticketPrice}
               min={10}
               max={250}
-              className={cn(
-                "w-28 rounded-md border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-zinc-100",
-                focusRingClass,
-              )}
             />
             <button
               type="submit"
-              className={cn(
-                "rounded-md bg-team px-4 py-2 text-sm font-medium text-on-team hover:brightness-110",
-                focusRingClass,
-              )}
+              className={buttonClass({ variant: "primary" })}
             >
               Set price
             </button>
@@ -103,23 +96,16 @@ export default async function MarketingPage({
           >
             <input type="hidden" name="saveId" value={saveId} />
             <input type="hidden" name="returnPath" value={returnPath} />
-            <input
-              type="number"
+            <NumberStepper
               name="budget"
               defaultValue={biz.marketingBudget}
               min={0}
               step={100000}
-              className={cn(
-                "w-40 rounded-md border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-zinc-100",
-                focusRingClass,
-              )}
+              inputClassName="w-28"
             />
             <button
               type="submit"
-              className={cn(
-                "rounded-md bg-team px-4 py-2 text-sm font-medium text-on-team hover:brightness-110",
-                focusRingClass,
-              )}
+              className={buttonClass({ variant: "primary" })}
             >
               Set budget
             </button>

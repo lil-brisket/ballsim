@@ -1,3 +1,4 @@
+import { buttonClass } from "@/components/ui/Button";
 import Link from "next/link";
 import type { PhaseDashboardView } from "@/state/phase-dashboard";
 import { PhaseHeader } from "@/components/phase/PhaseHeader";
@@ -55,7 +56,7 @@ export function PhaseDashboard(props: {
             <Link
               key={link.href}
               href={link.href}
-              className="rounded-md border border-zinc-700 px-2 py-1 hover:border-zinc-500 hover:text-zinc-200"
+              className={buttonClass({ variant: "secondary" })}
             >
               {link.label}
             </Link>

@@ -1,14 +1,11 @@
 import { ProgressBar } from "@/components/ui";
-import { cn, focusRingClass, touchTargetClass } from "@/components/ui/styles";
+import { buttonClass } from "@/components/ui/Button";
+import { cn } from "@/components/ui/styles";
 
 export const PLAYBACK_SPEEDS = [1, 2, 4, 8] as const;
 export type PlaybackSpeed = (typeof PLAYBACK_SPEEDS)[number];
 
-const BUTTON_CLASS = cn(
-  touchTargetClass,
-  "rounded-lg border border-zinc-700 bg-zinc-900 px-3 text-sm font-medium text-zinc-100 hover:border-zinc-500 disabled:cursor-not-allowed disabled:opacity-40",
-  focusRingClass,
-);
+const BUTTON_CLASS = buttonClass({ variant: "secondary" });
 
 export function PlaybackControls(props: {
   playing: boolean;
@@ -26,10 +23,7 @@ export function PlaybackControls(props: {
       <div className="flex flex-wrap items-center gap-2">
         <button
           type="button"
-          className={cn(
-            BUTTON_CLASS,
-            "min-w-20 border-team-ink bg-team/15 text-team-ink",
-          )}
+          className={cn(buttonClass({ variant: "primary" }), "min-w-20")}
           onClick={props.onTogglePlay}
           disabled={atEnd && !props.playing}
         >

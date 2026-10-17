@@ -1,5 +1,6 @@
 "use client";
 
+import { Button } from "@/components/ui/Button";
 import {
   categoryById,
   categoryDelegationState,
@@ -72,17 +73,17 @@ export function DelegationCategorySection({
           </div>
           <p className="text-xs text-zinc-500">{category.description}</p>
         </div>
-        <button
-          type="button"
+        <Button
+          variant="secondary"
           onClick={(event) => {
             event.preventDefault();
             event.stopPropagation();
             onSelectAllCategory();
           }}
-          className="shrink-0 rounded border border-zinc-700 px-2 py-1 text-xs text-zinc-300 hover:border-zinc-500 hover:text-zinc-100"
+          className="shrink-0"
         >
           Select All
-        </button>
+        </Button>
       </summary>
 
       <div className="grid gap-3 sm:grid-cols-2">

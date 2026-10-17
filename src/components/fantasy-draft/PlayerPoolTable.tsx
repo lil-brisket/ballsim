@@ -7,6 +7,8 @@ import type {
   FantasyDraftPoolPlayerView,
   FantasyDraftView,
 } from "@/state/selectors";
+import { buttonClass } from "@/components/ui/Button";
+import { Select } from "@/components/ui/Select";
 
 export function PlayerPoolTable(props: {
   draft: FantasyDraftView;
@@ -98,13 +100,12 @@ export function PlayerPoolTable(props: {
           className="rounded-md border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm"
           aria-label="Search players"
         />
-        <select
+        <Select
           value={position}
           onChange={(e) => {
             setPosition(e.target.value);
             setPage(0);
           }}
-          className="rounded-md border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm"
           aria-label="Filter by position"
         >
           <option value="ALL">All positions</option>
@@ -113,8 +114,8 @@ export function PlayerPoolTable(props: {
               {pos}
             </option>
           ))}
-        </select>
-        <select
+        </Select>
+        <Select
           value={sort}
           onChange={(e) =>
             setSort(
@@ -122,7 +123,6 @@ export function PlayerPoolTable(props: {
                 "overall" | "potential" | "age" | "height" | "name",
             )
           }
-          className="rounded-md border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm"
           aria-label="Sort players"
         >
           <option value="overall">Overall</option>
@@ -130,7 +130,7 @@ export function PlayerPoolTable(props: {
           <option value="age">Age</option>
           <option value="height">Height</option>
           <option value="name">Name</option>
-        </select>
+        </Select>
         <label className="flex items-center gap-1.5 text-xs text-zinc-400">
           <input
             type="checkbox"
@@ -246,7 +246,7 @@ export function PlayerPoolTable(props: {
             type="button"
             disabled={page === 0}
             onClick={() => setPage((p) => Math.max(0, p - 1))}
-            className="rounded border border-zinc-700 px-2 py-1 disabled:opacity-30"
+            className={buttonClass({ variant: "secondary" })}
           >
             Prev
           </button>
@@ -257,7 +257,7 @@ export function PlayerPoolTable(props: {
             type="button"
             disabled={page >= pageCount - 1}
             onClick={() => setPage((p) => Math.min(pageCount - 1, p + 1))}
-            className="rounded border border-zinc-700 px-2 py-1 disabled:opacity-30"
+            className={buttonClass({ variant: "secondary" })}
           >
             Next
           </button>
