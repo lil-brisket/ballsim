@@ -39,7 +39,8 @@ const CLUTCH_CLOCK_SECONDS = 300;
 const CLUTCH_MARGIN = 5;
 const CLUTCH_MIN_PERIOD = 4;
 const REGULATION_PERIODS = 4;
-const START_PERIOD_CLOCK_SECONDS = 720;
+/** Clock shown before the first play (seconds in a regulation period). */
+export const START_PERIOD_CLOCK_SECONDS = 720;
 
 const KIND_BY_CODE: Record<number, WatchPlayKind> = {
   [PLAY_CODE.twoMade]: "two_made",
@@ -111,14 +112,15 @@ export function toWatchGameView(
   const home = toWatchTeam(state, game, 0);
   const away = toWatchTeam(state, game, 1);
   const players = toWatchPlayers(state, game);
-  const names = new Map<PlayerId, { full: string; short: string }>();
+  const names = new Map<PlayerId, Names>();
   for (const player of players) {
     names.set(player.playerId, {
       full: player.fullName,
       short: player.shortName,
+      last: player.lastName,
     });
   }
-  const nameOf = (id: PlayerId): { full: string; short: string } => {
+  const nameOf = (id: PlayerId): Names => {
     const known = names.get(id);
     if (known) {
       return known;
@@ -126,7 +128,7 @@ export function toWatchGameView(
     const live = state.world.players[id];
     const resolved = live
       ? formatNames(live.firstName, live.lastName)
-      : { full: id as string, short: id as string };
+      : idNames(id);
     names.set(id, resolved);
     return resolved;
   };
@@ -188,14 +190,20 @@ function toWatchTeam(state: GameState, game: Game, side: WatchSide): WatchTeam {
 function formatNames(
   firstName: string | null | undefined,
   lastName: string | null | undefined,
-): { full: string; short: string } {
+): Names {
   const first = firstName ?? "";
   const last = lastName ?? "";
   const initial = first.length > 0 ? `${first.charAt(0)}. ` : "";
+  const short = `${initial}${last}`.trim();
   return {
     full: `${first} ${last}`.trim(),
-    short: `${initial}${last}`.trim(),
+    short,
+    last: last.trim() || short,
   };
+}
+
+function idNames(id: PlayerId): Names {
+  return { full: id as string, short: id as string, last: id as string };
 }
 
 function toWatchPlayers(state: GameState, game: Game): WatchPlayer[] {
@@ -216,12 +224,13 @@ function toWatchPlayers(state: GameState, game: Game): WatchPlayer[] {
         ? formatNames(row.firstName, row.lastName)
         : live
           ? formatNames(live.firstName, live.lastName)
-          : { full: row.playerId as string, short: row.playerId as string };
+          : idNames(row.playerId);
     players.push({
       playerId: row.playerId,
       side,
       fullName: names.full,
       shortName: names.short,
+      lastName: names.last,
       started: row.started,
       finalMinutes: row.minutes,
     });
@@ -268,7 +277,7 @@ function toPostGameInjuries(
   return result;
 }
 
-type Names = { full: string; short: string };
+type Names = { full: string; short: string; last: string };
 
 function playText(
   kind: WatchPlayKind,
@@ -566,21 +575,76 @@ function emptyStats(): MutableStats {
 
 const STAT_KEYS = Object.keys(emptyStats()) as Array<keyof MutableStats>;
 
+/** `revealed` clamped to a whole play count in [0, plays.length]. */
+export function clampRevealed(view: WatchGameView, revealed: number): number {
+  return Math.min(Math.max(0, Math.floor(revealed)), view.plays.length);
+}
+
+/**
+ * On-court players per side ([home, away]) after the first `revealed` plays:
+ * the starters, then each substitution in order. A substitute takes the
+ * outgoing player's slot, so slot order is stable across substitutions.
+ */
+export function lineupAt(
+  view: WatchGameView,
+  revealed: number,
+): [PlayerId[], PlayerId[]] {
+  const count = clampRevealed(view, revealed);
+  const lineups: [PlayerId[], PlayerId[]] = [[], []];
+  const sideOf = new Map<PlayerId, WatchSide>();
+  for (const player of view.players) {
+    sideOf.set(player.playerId, player.side);
+    if (player.started) {
+      lineups[player.side].push(player.playerId);
+    }
+  }
+  for (let i = 0; i < count; i += 1) {
+    const play = view.plays[i]!;
+    if (play.kind !== "substitution") {
+      continue;
+    }
+    const outId = play.playerId;
+    const inId = play.player2Id;
+    const inOnCourt =
+      inId !== null && (lineups[0].includes(inId) || lineups[1].includes(inId));
+    let replaced = false;
+    for (const lineup of lineups) {
+      const slot = lineup.indexOf(outId);
+      if (slot < 0) {
+        continue;
+      }
+      if (inId !== null && !inOnCourt) {
+        lineup[slot] = inId;
+        replaced = true;
+      } else {
+        lineup.splice(slot, 1);
+      }
+    }
+    if (inId !== null && !inOnCourt && !replaced) {
+      const side = sideOf.get(inId);
+      if (side !== undefined) {
+        lineups[side].push(inId);
+      }
+    }
+  }
+  return lineups;
+}
+
 /** Box score after the first `revealed` plays. */
 export function buildLiveBoxScore(
   view: WatchGameView,
   revealed: number,
 ): LiveBoxScore {
   const total = view.plays.length;
-  const count = Math.min(Math.max(0, Math.floor(revealed)), total);
+  const count = clampRevealed(view, revealed);
   const isFinal = count === total;
 
   const stats = new Map<PlayerId, MutableStats>();
-  const onCourt = new Map<PlayerId, boolean>();
   for (const player of view.players) {
     stats.set(player.playerId, emptyStats());
-    onCourt.set(player.playerId, player.started);
   }
+  const lineups = lineupAt(view, count);
+  const onCourt = new Set<PlayerId>([...lineups[0], ...lineups[1]]);
   const statsOf = (id: PlayerId | null): MutableStats | undefined =>
     id === null ? undefined : stats.get(id);
 
@@ -658,10 +722,6 @@ export function buildLiveBoxScore(
         }
         break;
       case "substitution":
-        onCourt.set(play.playerId, false);
-        if (play.player2Id !== null) {
-          onCourt.set(play.player2Id, true);
-        }
         break;
     }
   }
@@ -691,7 +751,7 @@ export function buildLiveBoxScore(
           side,
           shortName: player.shortName,
           started: player.started,
-          onCourt: onCourt.get(player.playerId) ?? false,
+          onCourt: onCourt.has(player.playerId),
           ...s,
           fouledOut: s.fouls >= FOUL_OUT_FOULS,
         };

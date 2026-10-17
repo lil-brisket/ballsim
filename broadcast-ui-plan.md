@@ -16,7 +16,10 @@ team-color theming, one clear hero moment per screen, and motion.
 - Presentation only. No behavior changes in `src/systems`, `src/domain`,
   `src/persistence` or `src/application`.
 - Fully fictional. No real league marks, logos or licensed imagery. No on-court
-  2D/3D simulation graphics. Portraits remain presentation identity only.
+  2D/3D simulation graphics, except the Watch Game court replay: a hand-built
+  SVG presentation layer over the recorded play-by-play (see
+  `src/state/watch-court-frame.ts`). Portraits remain presentation identity
+  only.
 - Accessible: keep `focusRingClass`, 44px touch targets (`touchTargetClass`),
   and `prefers-reduced-motion` handling.
 - Keep existing tests passing. If a test asserts on changed text or markup,

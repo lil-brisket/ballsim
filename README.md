@@ -1,6 +1,6 @@
 # Ballsim
 
-Ballsim is a basketball franchise management game for the browser. You own a team in a fully fictional league: you set ticket prices and budgets, hire staff, sign free agents, make trades and draft picks, and watch the results play out across many seasons. Every game is simulated possession by possession from player ratings, coaching and fatigue, and is shown as box scores, play-by-play and standings, with no on-court graphics. The simulation uses a seeded RNG, so the same save and the same seed always produce the same league. All teams, players, cities and leagues are generated; nothing is based on real people or licensed assets.
+Ballsim is a basketball franchise management game for the browser. You own a team in a fully fictional league: you set ticket prices and budgets, hire staff, sign free agents, make trades and draft picks, and watch the results play out across many seasons. Every game is simulated possession by possession from player ratings, coaching and fatigue, and is shown as box scores, play-by-play and standings. Your own games can also be replayed on a simple SVG court drawn from the recorded play-by-play; it is a presentation layer, not a second simulation. The simulation uses a seeded RNG, so the same save and the same seed always produce the same league. All teams, players, cities and leagues are generated; nothing is based on real people or licensed assets.
 
 ## Screenshots
 
