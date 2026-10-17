@@ -7,9 +7,83 @@ import { useMemo, useState } from "react";
 import type { CalendarPageMediaHighlight } from "@/application/game-service";
 import { SectionHeading } from "@/components/ui/SectionHeading";
 import { ScoreNumeral } from "@/components/ui/ScoreNumeral";
+import { CountUp } from "@/components/ui/CountUp";
 import { focusRingClass } from "@/components/ui/styles";
 import { formatGameDate } from "@/presentation/game-date";
 import { parseGameResultHeadline } from "@/presentation/game-result-headline";
+
+function ResultReveal(props: {
+  game: { date: string; headline: string; gameId?: string };
+  saveId?: string;
+}) {
+  const parsed = parseGameResultHeadline(props.game.headline);
+  if (!parsed) {
+    return null;
+  }
+  const win = parsed.result === "W";
+  const loss = parsed.result === "L";
+  const tone = win ? "win" : loss ? "loss" : "default";
+  const stampClass = win
+    ? "border-win text-win"
+    : loss
+      ? "border-loss text-loss"
+      : "border-zinc-500 text-zinc-300";
+  const content = (
+    <div className="flex items-center justify-between gap-4">
+      <div className="min-w-0">
+        <p className="text-sm text-zinc-400">
+          {formatGameDate(props.game.date)}
+        </p>
+        <p className="truncate font-display text-xl font-bold uppercase tracking-wide text-zinc-50">
+          vs {parsed.opponent}
+        </p>
+        <div
+          className="mt-2 flex items-baseline gap-2"
+          data-testid="result-reveal-score"
+        >
+          <ScoreNumeral
+            value={<CountUp value={parsed.teamScore} />}
+            size="lg"
+            tone={tone}
+          />
+          <span aria-hidden className="font-display text-3xl text-zinc-500">
+            –
+          </span>
+          <ScoreNumeral
+            value={<CountUp value={parsed.opponentScore} />}
+            size="lg"
+            tone="muted"
+          />
+        </div>
+      </div>
+      <span
+        className={`result-stamp shrink-0 rounded-md border-4 px-3 py-1 font-display text-4xl font-extrabold uppercase tracking-widest ${stampClass}`}
+        aria-label={win ? "Win" : loss ? "Loss" : "Tie"}
+      >
+        {parsed.result}
+      </span>
+    </div>
+  );
+  return (
+    <section
+      aria-label="Latest result"
+      className={`rounded-xl border border-l-4 border-surface-line bg-surface-raised px-4 py-3 ${
+        win ? "border-l-win" : loss ? "border-l-loss" : "border-l-zinc-500"
+      }`}
+    >
+      {props.game.gameId && props.saveId ? (
+        <Link
+          href={`/dashboard/${props.saveId}/games/${props.game.gameId}`}
+          className={`block rounded hover:text-team-ink ${focusRingClass}`}
+        >
+          {content}
+        </Link>
+      ) : (
+        content
+      )}
+    </section>
+  );
+}
 
 export function SimulationSummaryModal(props: {
   open: boolean;
@@ -85,6 +159,12 @@ export function SimulationSummaryModal(props: {
 
   const attention = [...(props.attentionItems ?? []), ...attentionFromInjuries];
 
+  const allGames = props.teamGames ?? [];
+  const latestGame = allGames.length > 0 ? allGames[allGames.length - 1] : null;
+  const revealed =
+    latestGame != null && parseGameResultHeadline(latestGame.headline) != null;
+  const otherGames = revealed ? allGames.slice(0, -1) : allGames;
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <button
@@ -121,6 +201,10 @@ export function SimulationSummaryModal(props: {
         </div>
 
         <div className="max-h-[55dvh] min-h-0 flex-1 space-y-4 overflow-y-auto px-5 py-4">
+          {latestGame && parseGameResultHeadline(latestGame.headline) ? (
+            <ResultReveal game={latestGame} saveId={props.saveId} />
+          ) : null}
+
           {props.teamLabel || props.record ? (
             <section className="space-y-3 rounded-xl border border-team-ink/30 bg-team/15 px-4 py-3">
               <p className="text-sm font-semibold text-team-ink">
@@ -203,11 +287,13 @@ export function SimulationSummaryModal(props: {
             </section>
           ) : null}
 
-          {props.teamGames && props.teamGames.length > 0 ? (
+          {otherGames.length > 0 ? (
             <section className="space-y-2">
-              <p className="text-sm font-medium text-zinc-300">Box scores</p>
+              <p className="text-sm font-medium text-zinc-300">
+                {revealed ? "Earlier games" : "Box scores"}
+              </p>
               <ul className="space-y-1.5">
-                {props.teamGames.map((game) => {
+                {otherGames.map((game) => {
                   const parsed = parseGameResultHeadline(game.headline);
                   const tone =
                     parsed?.result === "W"

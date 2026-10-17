@@ -508,3 +508,47 @@ body {
     animation: none;
   }
 }
+
+/* ===== Phase 9: game moments ===== */
+@keyframes stamp-in {
+  0% {
+    opacity: 0;
+    transform: scale(1.8) rotate(-12deg);
+  }
+  70% {
+    opacity: 1;
+    transform: scale(0.94) rotate(-6deg);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) rotate(-6deg);
+  }
+}
+
+@keyframes slide-in-right {
+  from {
+    opacity: 0;
+    transform: translateX(1.5rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.result-stamp {
+  transform: rotate(-6deg);
+  animation: stamp-in 420ms cubic-bezier(0.2, 0.9, 0.3, 1.2) 500ms both;
+}
+
+.slide-in-right {
+  animation: slide-in-right 420ms ease-out 650ms both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .result-stamp,
+  .slide-in-right {
+    animation: none;
+  }
+}
+/* ===== end Phase 9 ===== */
