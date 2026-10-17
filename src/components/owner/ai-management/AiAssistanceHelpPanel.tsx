@@ -1,20 +1,24 @@
 "use client";
 
+/** Help copy for AI delegation; rendered inside an InfoTip popover. */
 export function AiAssistanceHelpPanel() {
   return (
-    <aside className="rounded-md border border-zinc-800 bg-zinc-950/50 px-3 py-3 text-sm text-zinc-400">
-      <p className="font-medium text-zinc-200">How AI assistance works</p>
-      <p className="mt-2 leading-relaxed">
-        Delegation controls who acts automatically during simulation. It does
-        not lock what you can do manually — you can always open any management
-        screen and make adjustments yourself.
-      </p>
-      <p className="mt-2 leading-relaxed">
-        Example: If you enable Injuries & Emergency Roster, the AI resolves
-        injury roster problems during simulation. You can still sign or release
-        players anytime. Simulation pauses only for meaningful owner decisions,
-        such as incoming trade offers.
-      </p>
-    </aside>
+    <>
+      <span className="block font-medium text-zinc-100">
+        How AI assistance works
+      </span>
+      <span className="mt-1 block">
+        Pick the areas the AI manages during simulation. Anything you leave off
+        stays under your control.
+      </span>
+      <span className="mt-2 block">
+        Delegation does not lock what you can do manually — you can always open
+        any management screen and make adjustments yourself.
+      </span>
+      <span className="mt-2 block">
+        Simulation pauses only for meaningful owner decisions, such as incoming
+        trade offers.
+      </span>
+    </>
   );
 }

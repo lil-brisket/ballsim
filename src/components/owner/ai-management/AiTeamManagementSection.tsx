@@ -1,6 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/Button";
+import { InfoTip } from "@/components/ui/InfoTip";
 import {
   clearAllVisiblePhases,
   countDelegatedVisiblePhases,
@@ -17,8 +18,6 @@ import type {
 } from "@/domain/ai-management-presets";
 import { AiAssistanceHelpPanel } from "@/components/owner/ai-management/AiAssistanceHelpPanel";
 import { DelegationCategorySection } from "@/components/owner/ai-management/DelegationCategorySection";
-import { DelegationSummary } from "@/components/owner/ai-management/DelegationSummary";
-import { SectionHeading } from "@/components/ui/SectionHeading";
 
 type AiTeamManagementSectionProps = {
   assistance: AiAssistancePhases;
@@ -43,17 +42,14 @@ export function AiTeamManagementSection({
   }
 
   return (
-    <div className="space-y-4">
-      <div className="space-y-2">
-        <SectionHeading as="h3" title="AI Team Management" />
-        <p className="text-sm text-zinc-300">
+    <div className="@container space-y-4">
+      <div className="flex items-center gap-2">
+        <span className="text-sm text-zinc-300">
           What would you like the AI to handle for you?
-        </p>
-        <p className="text-sm text-zinc-500">
-          Select the areas you want the AI to manage during simulation. When
-          enabled, the AI will fully handle that responsibility. Anything you
-          leave disabled remains under your control.
-        </p>
+        </span>
+        <InfoTip label="AI Team Management" align="start">
+          <AiAssistanceHelpPanel />
+        </InfoTip>
       </div>
 
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -80,26 +76,20 @@ export function AiTeamManagementSection({
         </div>
       </div>
 
-      <div className="lg:grid lg:grid-cols-[1fr_minmax(240px,320px)] lg:items-start lg:gap-6">
-        <div className="space-y-4">
-          {DELEGATION_CATEGORIES.map((category) => (
-            <DelegationCategorySection
-              key={category.id}
-              categoryId={category.id}
-              assistance={assistance}
-              onTogglePhase={togglePhase}
-              onSelectAllCategory={() =>
-                onAssistanceChange(
-                  selectAllCategoryPhases(assistance, category.id),
-                )
-              }
-            />
-          ))}
-        </div>
-        <div className="mt-4 space-y-3 lg:sticky lg:top-4 lg:mt-0">
-          <DelegationSummary assistance={assistance} />
-          <AiAssistanceHelpPanel />
-        </div>
+      <div className="grid gap-3 @3xl:grid-cols-2">
+        {DELEGATION_CATEGORIES.map((category) => (
+          <DelegationCategorySection
+            key={category.id}
+            categoryId={category.id}
+            assistance={assistance}
+            onTogglePhase={togglePhase}
+            onSelectAllCategory={() =>
+              onAssistanceChange(
+                selectAllCategoryPhases(assistance, category.id),
+              )
+            }
+          />
+        ))}
       </div>
     </div>
   );
