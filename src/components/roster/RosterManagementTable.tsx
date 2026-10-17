@@ -10,7 +10,6 @@ import { PlayerEntityLink } from "@/components/entity/PlayerEntityLink";
 import { ContractSummary } from "@/components/owner/ContractSummary";
 import { Button } from "@/components/ui/Button";
 import { Select } from "@/components/ui/Select";
-import { DataTable } from "@/components/ui/DataTable";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { PlayerActionMenu } from "@/components/roster/PlayerActionMenu";
 import { RosterCard } from "@/components/roster/RosterCard";
@@ -330,99 +329,134 @@ export function RosterManagementTable(props: {
         </ul>
       ) : (
         <div className="hidden overflow-x-auto md:block">
-          <DataTable
-            headers={[
-              "Player",
-              "Pos",
-              "OVR",
-              "Age",
-              "Role",
-              "Contract",
-              "Years",
-              "Status",
-              "Actions",
-            ]}
-          >
-            {filtered.map((player) => {
-              const expiring =
-                player.contractYearsRemaining != null &&
-                player.contractYearsRemaining <= 1;
-              const name = `${player.firstName} ${player.lastName}`;
-              return (
-                <tr
-                  key={player.playerId}
-                  data-tier={ratingTier(player.overall).id}
-                  className="border-t border-zinc-800"
+          <table className="min-w-full overflow-hidden rounded-xl border border-zinc-800 text-left text-sm">
+            <thead className="bg-zinc-900 text-zinc-400">
+              <tr>
+                <th scope="col" className="px-3 py-2 font-medium">
+                  Player
+                </th>
+                <th scope="col" className="px-3 py-2 font-medium">
+                  Pos
+                </th>
+                <th scope="col" className="px-3 py-2 text-right font-medium">
+                  OVR
+                </th>
+                <th
+                  scope="col"
+                  className="hidden px-3 py-2 text-right font-medium sm:table-cell"
                 >
-                  <td className="px-3 py-2">
-                    <span className="flex items-center gap-2">
-                      <PlayerPortrait
-                        playerId={player.playerId}
-                        portrait={player.portrait}
-                        firstName={player.firstName}
-                        lastName={player.lastName}
-                        size="sm"
+                  Age
+                </th>
+                <th
+                  scope="col"
+                  className="hidden px-3 py-2 font-medium md:table-cell"
+                >
+                  Role
+                </th>
+                <th
+                  scope="col"
+                  className="hidden px-3 py-2 font-medium lg:table-cell"
+                >
+                  Contract
+                </th>
+                <th
+                  scope="col"
+                  className="hidden px-3 py-2 text-right font-medium xl:table-cell"
+                >
+                  Years
+                </th>
+                <th scope="col" className="px-3 py-2 font-medium">
+                  Status
+                </th>
+                <th scope="col" className="px-3 py-2 font-medium">
+                  Actions
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {filtered.map((player) => {
+                const expiring =
+                  player.contractYearsRemaining != null &&
+                  player.contractYearsRemaining <= 1;
+                const name = `${player.firstName} ${player.lastName}`;
+                return (
+                  <tr
+                    key={player.playerId}
+                    data-tier={ratingTier(player.overall).id}
+                    className="border-t border-zinc-800"
+                  >
+                    <td className="px-3 py-2">
+                      <span className="flex items-center gap-2">
+                        <PlayerPortrait
+                          playerId={player.playerId}
+                          portrait={player.portrait}
+                          firstName={player.firstName}
+                          lastName={player.lastName}
+                          size="sm"
+                        />
+                        <PlayerEntityLink
+                          saveId={props.saveId}
+                          playerId={player.playerId}
+                        >
+                          {name}
+                        </PlayerEntityLink>
+                      </span>
+                      {player.onTradeBlock ? (
+                        <span className="ml-2 text-sm team-ink">Block</span>
+                      ) : null}
+                    </td>
+                    <td className="px-3 py-2 text-zinc-400">
+                      {player.position}
+                    </td>
+                    <td className="px-3 py-2 text-right font-display text-lg font-bold tabular-nums text-tier">
+                      {player.overall}
+                    </td>
+                    <td className="hidden px-3 py-2 text-right tabular-nums text-zinc-400 sm:table-cell">
+                      {player.age}
+                    </td>
+                    <td className="hidden px-3 py-2 text-zinc-400 md:table-cell">
+                      {player.roleDisplayLabel}
+                      {player.depthSlot ? (
+                        <span className="ml-1 text-sm text-zinc-600">
+                          ({player.depthSlot})
+                        </span>
+                      ) : null}
+                    </td>
+                    <td className="hidden px-3 py-2 lg:table-cell">
+                      <ContractSummary
+                        salary={player.contractSalary}
+                        endYear={player.contractEndYear}
+                        yearsRemaining={player.contractYearsRemaining}
                       />
-                      <PlayerEntityLink
+                      {expiring && player.contractEndYear != null ? (
+                        <span className="mt-0.5 block text-sm warning">
+                          {player.contractEndYear} expiring
+                        </span>
+                      ) : null}
+                    </td>
+                    <td className="hidden px-3 py-2 text-right tabular-nums text-zinc-400 xl:table-cell">
+                      {player.contractYearsRemaining ?? "—"}
+                    </td>
+                    <td className="px-3 py-2">
+                      <StatusBadge
+                        label={player.availabilityLabel}
+                        tone={player.canPlay ? "available" : player.injuryKind}
+                      />
+                    </td>
+                    <td className="px-3 py-2">
+                      <PlayerActionMenu
                         saveId={props.saveId}
                         playerId={player.playerId}
-                      >
-                        {name}
-                      </PlayerEntityLink>
-                    </span>
-                    {player.onTradeBlock ? (
-                      <span className="ml-2 text-sm team-ink">Block</span>
-                    ) : null}
-                  </td>
-                  <td className="px-3 py-2 text-zinc-400">{player.position}</td>
-                  <td className="px-3 py-2 font-display text-lg font-bold tabular-nums text-tier">
-                    {player.overall}
-                  </td>
-                  <td className="hidden px-3 py-2 text-zinc-400 sm:table-cell">
-                    {player.age}
-                  </td>
-                  <td className="hidden px-3 py-2 text-zinc-400 md:table-cell">
-                    {player.roleDisplayLabel}
-                    {player.depthSlot ? (
-                      <span className="ml-1 text-sm text-zinc-600">
-                        ({player.depthSlot})
-                      </span>
-                    ) : null}
-                  </td>
-                  <td className="hidden px-3 py-2 lg:table-cell">
-                    <ContractSummary
-                      salary={player.contractSalary}
-                      endYear={player.contractEndYear}
-                      yearsRemaining={player.contractYearsRemaining}
-                    />
-                    {expiring && player.contractEndYear != null ? (
-                      <span className="mt-0.5 block text-sm warning">
-                        {player.contractEndYear} expiring
-                      </span>
-                    ) : null}
-                  </td>
-                  <td className="hidden px-3 py-2 text-zinc-400 xl:table-cell">
-                    {player.contractYearsRemaining ?? "—"}
-                  </td>
-                  <td className="px-3 py-2">
-                    <StatusBadge
-                      label={player.availabilityLabel}
-                      tone={player.canPlay ? "available" : player.injuryKind}
-                    />
-                  </td>
-                  <td className="px-3 py-2">
-                    <PlayerActionMenu
-                      saveId={props.saveId}
-                      playerId={player.playerId}
-                      playerName={name}
-                      onTradeBlock={player.onTradeBlock}
-                      returnPath={props.returnPath}
-                    />
-                  </td>
-                </tr>
-              );
-            })}
-          </DataTable>
+                        playerName={name}
+                        onTradeBlock={player.onTradeBlock}
+                        returnPath={props.returnPath}
+                      />
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
         </div>
       )}
     </div>

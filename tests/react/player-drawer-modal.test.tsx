@@ -127,7 +127,9 @@ describe("PlayerDrawer modal", () => {
     expect(dialog.className).not.toMatch(/max-w-md/);
     expect(dialog.parentElement?.className).not.toMatch(/sm:justify-end/);
 
-    expect(screen.getAllByText("Alex Rivera").length).toBeGreaterThan(0);
+    expect(dialog.getAttribute("aria-label")).toBe("Alex Rivera");
+    expect(screen.queryByRole("heading", { name: "Alex Rivera" })).toBeNull();
+    expect(screen.queryByTestId("hero-watermark")).toBeNull();
     expect(screen.getByText("PG")).toBeTruthy();
     expect(screen.getByText("Floor General")).toBeTruthy();
     expect(screen.getByText(`6'7"`)).toBeTruthy();
@@ -272,6 +274,9 @@ describe("PlayerDrawer modal", () => {
     expect(screen.getByText("Season averages")).toBeTruthy();
     expect(screen.getByText("GP")).toBeTruthy();
     expect(screen.getByText("0")).toBeTruthy();
+    for (const label of ["PTS", "REB", "AST", "MIN", "STL", "BLK"]) {
+      expect(screen.getByText(label)).toBeTruthy();
+    }
     expect(screen.getAllByText("—").length).toBeGreaterThanOrEqual(3);
     expect(screen.queryByText("0.0")).toBeNull();
     unmount();
@@ -309,7 +314,7 @@ describe("PlayerDrawer modal", () => {
     unmount();
   });
 
-  it("renders seven category tiles and expands sub-attributes on click", () => {
+  it("lists seven categories with inline breakdowns and marks best and weakest", () => {
     const { unmount } = render(
       <PlayerDrawer
         open
@@ -328,6 +333,10 @@ describe("PlayerDrawer modal", () => {
     expect(screen.getByText("Ball Handling")).toBeTruthy();
     expect(screen.getByText("Passing")).toBeTruthy();
     expect(screen.queryByText("Finishing")).toBeNull();
+    // Breakdown renders inside its category row, not in a separate panel.
+    const breakdown = screen.getByText("Playmaking breakdown");
+    expect(breakdown.closest("li")).toBe(playmaking.closest("li"));
+    expect(within(playmaking).getByText("Best category")).toBeTruthy();
 
     const inside = within(list).getByRole("button", { name: /Inside Scoring/ });
     expect(inside.getAttribute("aria-expanded")).toBe("false");
@@ -412,7 +421,9 @@ describe("PlayerDrawer modal", () => {
       />,
     );
 
-    expect(screen.getAllByText("Jordan Cole").length).toBeGreaterThan(0);
+    expect(screen.getByRole("dialog").getAttribute("aria-label")).toBe(
+      "Jordan Cole",
+    );
     expect(screen.queryByText("Alex Rivera")).toBeNull();
     expect(screen.getByText("Metro Foxes")).toBeTruthy();
     expect(screen.getByText("11.1")).toBeTruthy();

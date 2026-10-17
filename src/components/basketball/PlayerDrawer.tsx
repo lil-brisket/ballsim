@@ -96,7 +96,7 @@ function PlayerCardBody(props: {
   );
 }
 
-const secondaryActionClass = buttonClass({ variant: "secondary" });
+const secondaryActionClass = buttonClass({ variant: "quiet" });
 
 export function PlayerDrawer(props: {
   open: boolean;
@@ -123,6 +123,8 @@ export function PlayerDrawer(props: {
       open={props.open}
       onOpenChange={props.onOpenChange}
       title={title}
+      aria-label={title}
+      header={<span aria-hidden />}
       size="xl"
       onBodyElement={(element) => {
         bodyRef.current = element;

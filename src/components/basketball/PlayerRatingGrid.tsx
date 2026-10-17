@@ -7,82 +7,123 @@ import type { PlayerAttributes } from "@/domain/entities/player";
 import { categoryRatings } from "@/presentation/player-rating-categories";
 import { ratingTier } from "@/presentation/rating-tier";
 
+type Emphasis = "best" | "worst" | null;
+
 /**
- * 2K-style grid of seven category ratings. Each tile is a toggle button;
- * the open category's sub-attributes show below the grid. The player's best
- * category starts open. Remount (key by player) to reset when the player
- * changes.
+ * Slim list of the seven category ratings. Colour is reserved for the best
+ * (tier colour) and weakest (loss colour) category so the eye lands on the
+ * extremes. In interactive mode each row toggles an inline breakdown of its
+ * sub-ratings, full width directly under the row; the best category starts
+ * open. Remount (key by player) to reset when the player changes.
  */
-export function PlayerRatingGrid(props: { attributes: PlayerAttributes }) {
+export function PlayerRatingGrid(props: {
+  attributes: PlayerAttributes;
+  /** false renders plain rows without sub-rating breakdowns. */
+  interactive?: boolean;
+}) {
+  const interactive = props.interactive ?? true;
   const categories = categoryRatings(props.attributes);
   const best = categories.reduce((a, b) => (b.rating > a.rating ? b : a));
+  const worst = categories.reduce((a, b) => (b.rating < a.rating ? b : a));
+  const spread = best.rating !== worst.rating;
   const [openKey, setOpenKey] = useState<string | null>(best.key);
   const baseId = useId();
-  const open = categories.find((c) => c.key === openKey) ?? null;
-  const panelId = `${baseId}-panel`;
 
   return (
-    <div className="space-y-3">
-      <ul
-        aria-label="Category ratings"
-        className="grid grid-cols-2 gap-2 sm:grid-cols-4"
-      >
-        {categories.map((category) => {
-          const expanded = category.key === openKey;
-          const width = Math.max(0, Math.min(100, category.rating));
-          return (
-            <li key={category.key} className="min-w-0">
+    <ul aria-label="Category ratings" className="divide-y divide-surface-line">
+      {categories.map((category) => {
+        const expanded = interactive && category.key === openKey;
+        const width = Math.max(0, Math.min(100, category.rating));
+        const emphasis: Emphasis = !spread
+          ? null
+          : category.key === best.key
+            ? "best"
+            : category.key === worst.key
+              ? "worst"
+              : null;
+        const panelId = `${baseId}-${category.key}`;
+        const row = (
+          <>
+            <span className="w-32 shrink-0 truncate text-left text-sm text-zinc-300 sm:w-36">
+              {category.label}
+            </span>
+            <span
+              className="h-1.5 min-w-0 flex-1 overflow-hidden rounded-full bg-surface-line"
+              aria-hidden
+            >
+              <span
+                className={cn(
+                  "block h-full rounded-full transition-[width] motion-reduce:transition-none",
+                  emphasis === "best" && "bg-tier",
+                  emphasis === "worst" && "bg-loss",
+                  emphasis === null && "bg-zinc-500",
+                )}
+                style={{ width: `${width}%` }}
+              />
+            </span>
+            <span
+              className={cn(
+                "w-10 shrink-0 text-right font-display text-2xl font-extrabold leading-none tabular-nums",
+                emphasis === "best" && "text-tier",
+                emphasis === "worst" && "text-loss",
+                emphasis === null && "text-zinc-100",
+              )}
+            >
+              {category.rating}
+            </span>
+            {emphasis ? (
+              <span className="sr-only">
+                {emphasis === "best" ? "Best category" : "Weakest category"}
+              </span>
+            ) : null}
+          </>
+        );
+        return (
+          <li
+            key={category.key}
+            data-tier={ratingTier(category.rating).id}
+            data-category={category.key}
+          >
+            {interactive ? (
               <button
                 type="button"
                 aria-expanded={expanded}
-                aria-controls={panelId}
-                data-tier={ratingTier(category.rating).id}
-                data-category={category.key}
+                aria-controls={expanded ? panelId : undefined}
                 onClick={() => setOpenKey(expanded ? null : category.key)}
                 className={cn(
-                  "flex w-full min-w-0 flex-col gap-1.5 rounded-lg border border-l-4 border-surface-line border-l-tier bg-surface-deep/80 px-3 py-2.5 text-left transition-colors hover:bg-zinc-900 motion-reduce:transition-none",
-                  expanded &&
-                    "bg-zinc-900 shadow-[0_0_18px_-6px_rgb(var(--tier-rgb)/0.7)]",
+                  "flex min-h-11 w-full items-center gap-3 rounded px-2 py-1.5 transition-colors hover:bg-surface-deep/80 motion-reduce:transition-none",
+                  expanded && "bg-surface-deep/80",
                   focusRingClass,
                 )}
               >
-                <span className="truncate text-sm text-zinc-400">
-                  {category.label}
-                </span>
-                <span className="font-display text-4xl font-extrabold leading-none tabular-nums text-tier">
-                  {category.rating}
-                </span>
-                <span
-                  className="h-1 overflow-hidden rounded-full bg-surface-line"
-                  aria-hidden
-                >
-                  <span
-                    className="block h-full rounded-full bg-tier transition-[width] motion-reduce:transition-none"
-                    style={{ width: `${width}%` }}
-                  />
-                </span>
+                {row}
               </button>
-            </li>
-          );
-        })}
-      </ul>
-
-      <div id={panelId} aria-live="polite">
-        {open ? (
-          <div className="rounded-lg border border-surface-line bg-surface-deep/60 p-3">
-            <p className="mb-2 text-sm font-medium text-zinc-300">
-              {open.label} breakdown
-            </p>
-            <RatingBars
-              aria-label={`${open.label} attributes`}
-              items={open.attributes.map((a) => ({
-                label: a.label,
-                rating: a.rating,
-              }))}
-            />
-          </div>
-        ) : null}
-      </div>
-    </div>
+            ) : (
+              <div className="flex min-h-11 items-center gap-3 px-2 py-1.5">
+                {row}
+              </div>
+            )}
+            {expanded ? (
+              <div
+                id={panelId}
+                className="mx-2 mb-3 mt-1 rounded-lg bg-surface-deep/60 p-3"
+              >
+                <p className="mb-2 text-sm font-medium text-zinc-300">
+                  {category.label} breakdown
+                </p>
+                <RatingBars
+                  aria-label={`${category.label} attributes`}
+                  className="sm:grid-cols-2 lg:grid-cols-2"
+                  items={category.attributes.map((a) => ({
+                    label: a.label,
+                    rating: a.rating,
+                  }))}
+                />
+              </div>
+            ) : null}
+          </li>
+        );
+      })}
+    </ul>
   );
 }

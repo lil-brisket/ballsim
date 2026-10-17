@@ -5,7 +5,8 @@
  * Pure presentation; never feeds gameplay.
  */
 
-export type RatingTierId = "elite" | "star" | "starter" | "role" | "bench";
+export type RatingTierId =
+  "legend" | "elite" | "star" | "starter" | "role" | "bench";
 
 export type RatingTier = {
   id: RatingTierId;
@@ -15,6 +16,8 @@ export type RatingTier = {
 };
 
 export const RATING_TIERS: readonly RatingTier[] = [
+  // Finer bands at the top so a 99 and a 94 do not look identical.
+  { id: "legend", label: "Legend", min: 95 },
   { id: "elite", label: "Elite", min: 90 },
   { id: "star", label: "Star", min: 80 },
   { id: "starter", label: "Starter", min: 70 },
