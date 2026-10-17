@@ -6,6 +6,7 @@
  */
 
 import { SectionHeading, TeamThemeScope } from "@/components/ui";
+import { CourtShowcase } from "./CourtShowcase";
 import { TeamShowcase } from "./TeamShowcase";
 
 const TEAMS = [
@@ -48,6 +49,19 @@ export default function BroadcastUiShowcasePage() {
         Every primitive under a very dark and a very light team colour. Toggle
         the OS reduced-motion setting to confirm animations stop.
       </p>
+
+      <TeamThemeScope
+        branding={TEAMS[0].branding}
+        as="section"
+        className="mt-10 max-w-xl space-y-3"
+      >
+        <SectionHeading
+          as="h2"
+          eyebrow="Court replay"
+          title="Dark home vs light away"
+        />
+        <CourtShowcase />
+      </TeamThemeScope>
 
       <div className="mt-10 grid gap-10 lg:grid-cols-2">
         {TEAMS.map((team) => (

@@ -1,0 +1,163 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { CourtView } from "@/components/game/watch/court/CourtView";
+import {
+  COURT_AWAY,
+  COURT_FIXTURE_VIEW,
+  COURT_HOME,
+} from "@/app/dev/broadcast-ui/court-fixture";
+import { asPlayerId } from "@/domain/ids";
+import { buildCourtFrame } from "@/state/watch-court-frame";
+import { buildLiveBoxScore } from "@/state/watch-game-selectors";
+
+const VIEW = COURT_FIXTURE_VIEW;
+
+function mockMatchMedia(reduce: boolean) {
+  Object.defineProperty(window, "matchMedia", {
+    writable: true,
+    configurable: true,
+    value: (query: string) => ({
+      matches: reduce,
+      media: query,
+      addEventListener: () => undefined,
+      removeEventListener: () => undefined,
+      addListener: () => undefined,
+      removeListener: () => undefined,
+      dispatchEvent: () => false,
+      onchange: null,
+    }),
+  });
+}
+
+function court(
+  revealed: number,
+  extra: Partial<Parameters<typeof CourtView>[0]> = {},
+) {
+  return (
+    <CourtView
+      frame={buildCourtFrame(VIEW, revealed)}
+      home={COURT_HOME}
+      away={COURT_AWAY}
+      live={buildLiveBoxScore(VIEW, revealed)}
+      {...extra}
+    />
+  );
+}
+
+const originalMatchMedia = window.matchMedia;
+const originalAnimate = Element.prototype.animate;
+
+beforeEach(() => {
+  mockMatchMedia(false);
+});
+
+afterEach(() => {
+  cleanup();
+  Object.defineProperty(window, "matchMedia", {
+    writable: true,
+    configurable: true,
+    value: originalMatchMedia,
+  });
+  Element.prototype.animate = originalAnimate;
+});
+
+describe("CourtView", () => {
+  it("renders ten tokens named with live points", () => {
+    render(court(1));
+    expect(screen.getAllByTestId("court-token")).toHaveLength(10);
+    expect(
+      screen.getByRole("button", {
+        name: /^Kai Lee, Harbor Harriers, 0 pts$/,
+      }),
+    ).toBeTruthy();
+    // Smith's three at play 0 and the assist-less handler label.
+    expect(
+      screen.getByRole("button", { name: /^Jalen Smith, .*, 3 pts/ }),
+    ).toBeTruthy();
+  });
+
+  it("marks the ball handler in the accessible name", () => {
+    // After the steal (play 3) Reed holds the ball.
+    render(court(4));
+    const handlers = screen
+      .getAllByTestId("court-token")
+      .filter((el) => /has the ball$/.test(el.getAttribute("aria-label")!));
+    expect(handlers).toHaveLength(1);
+    expect(handlers[0]!.getAttribute("aria-label")).toBe(
+      "Tyrese Reed, Summit Glaciers, 0 pts, has the ball",
+    );
+  });
+
+  it("calls onSelectPlayer and reflects the selected token", () => {
+    const onSelectPlayer = vi.fn();
+    const { rerender } = render(court(1, { onSelectPlayer }));
+    fireEvent.click(screen.getByRole("button", { name: /^Kai Lee/ }));
+    expect(onSelectPlayer).toHaveBeenCalledWith(asPlayerId("h2"));
+    expect(
+      screen
+        .getByRole("button", { name: /^Kai Lee/ })
+        .getAttribute("aria-pressed"),
+    ).toBe("false");
+    rerender(court(1, { onSelectPlayer, selectedPlayerId: asPlayerId("h2") }));
+    expect(
+      screen
+        .getByRole("button", { name: /^Kai Lee/ })
+        .getAttribute("aria-pressed"),
+    ).toBe("true");
+  });
+
+  it("animates the ball once per play change, but not under reduced motion", () => {
+    const animate = vi.fn(() => ({ cancel: vi.fn() }));
+    Element.prototype.animate = animate as never;
+    const { rerender } = render(court(1));
+    expect(animate).not.toHaveBeenCalled();
+    rerender(court(2));
+    expect(animate).toHaveBeenCalledTimes(1);
+    rerender(court(2));
+    expect(animate).toHaveBeenCalledTimes(1);
+    rerender(court(3));
+    expect(animate).toHaveBeenCalledTimes(2);
+
+    cleanup();
+    animate.mockClear();
+    mockMatchMedia(true);
+    const reduced = render(court(1));
+    reduced.rerender(court(2));
+    reduced.rerender(court(3));
+    expect(animate).not.toHaveBeenCalled();
+  });
+
+  it("shows a steal callout", () => {
+    render(court(4));
+    expect(screen.getByText("Steal · Reed")).toBeTruthy();
+  });
+
+  it("shows block and foul callouts", () => {
+    const { unmount } = render(court(2));
+    expect(screen.getByText("Block · Ortiz")).toBeTruthy();
+    unmount();
+    render(court(6));
+    expect(screen.getByText("Foul · Ortiz")).toBeTruthy();
+  });
+
+  it("toggles shot chart markers matching the revealed shots", () => {
+    const frame = buildCourtFrame(VIEW, 9);
+    expect(frame.shots.length).toBeGreaterThan(0);
+    render(court(9));
+    expect(screen.queryAllByTestId("court-shot-marker")).toHaveLength(0);
+    const toggle = screen.getByRole("button", { name: "Shot chart" });
+    expect(toggle.getAttribute("aria-pressed")).toBe("false");
+    fireEvent.click(toggle);
+    expect(toggle.getAttribute("aria-pressed")).toBe("true");
+    expect(screen.getAllByTestId("court-shot-marker")).toHaveLength(
+      frame.shots.length,
+    );
+  });
+
+  it("reports shot chart changes to a controlling parent", () => {
+    const onShowShotChartChange = vi.fn();
+    render(court(3, { showShotChart: false, onShowShotChartChange }));
+    fireEvent.click(screen.getByRole("button", { name: "Shot chart" }));
+    expect(onShowShotChartChange).toHaveBeenCalledWith(true);
+  });
+});
