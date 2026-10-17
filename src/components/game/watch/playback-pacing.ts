@@ -1,3 +1,5 @@
+import { TRANSITION_MS } from "@/components/game/watch/court/court-motion";
+import { opensAtNewEnd } from "@/state/watch-full-court";
 import type { WatchGameView, WatchPlayKind } from "@/state/watch-game-view";
 
 /**
@@ -29,7 +31,9 @@ export const PERIOD_BREAK_MS = 1500;
 
 /**
  * Milliseconds at 1x to wait before revealing play `revealed` (the next
- * one): the pacing of the play on screen, plus a break between periods.
+ * one): the pacing of the play on screen, plus the ball's trip up the floor
+ * when that play opened a possession at the other end, plus a break between
+ * periods.
  */
 export function playDelayMs(view: WatchGameView, revealed: number): number {
   if (revealed <= 0) {
@@ -42,5 +46,6 @@ export function playDelayMs(view: WatchGameView, revealed: number): number {
   const next = view.plays[revealed];
   const periodBreak =
     next && next.period !== shown.period ? PERIOD_BREAK_MS : 0;
-  return PLAY_PACING_MS[shown.kind] + periodBreak;
+  const trip = opensAtNewEnd(view, revealed - 1) ? TRANSITION_MS : 0;
+  return PLAY_PACING_MS[shown.kind] + trip + periodBreak;
 }

@@ -108,6 +108,8 @@ describe("courtCamera", () => {
     const compact = courtCamera("broadcast", "right", false, true);
     expect(compact.aspect).toBe(`50 / ${FULL_COURT_FEET.width}`);
     expect(compact.transform).toBe("translate(-46.8085%, 0%) scale(1)");
+    // Phones keep following for breaks and the final (tokens stay clickable).
+    expect(courtCamera("broadcast", "right", true, true)).toEqual(compact);
     expect(courtCamera("top-down", "right", false, true)).toEqual(
       courtCamera("top-down", "right"),
     );
@@ -121,6 +123,12 @@ describe("courtCamera", () => {
       /^translate\(0%, [\d.]+%\) scale\(0\.6383\)$/,
     );
     expect(courtCamera("broadcast", "left", true)).toEqual(wide);
+    // Tokens undo the zoom so they keep their size and 44px hit area.
+    expect(wide.tokenScale).toBeCloseTo(
+      FULL_COURT_FEET.length / FOLLOW_FEET,
+      3,
+    );
+    expect(courtCamera("broadcast", "left").tokenScale).toBe(1);
   });
 
   it("is flat and whole-floor in Top-down, whatever the end", () => {
@@ -132,6 +140,7 @@ describe("courtCamera", () => {
           stageWidth: "100%",
           transform: "translate(0%, 0%) scale(1)",
           tilt: 0,
+          tokenScale: 1,
           perspectiveOrigin: "50% 50%",
         });
       }

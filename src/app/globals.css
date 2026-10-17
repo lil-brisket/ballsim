@@ -193,30 +193,6 @@ body {
 }
 
 /* Court replay (Watch Game): hardwood floor, token glide, callout and rim flash. */
-.court-floor {
-  background-color: #16110c;
-  background-image:
-    repeating-linear-gradient(
-      90deg,
-      rgb(255 255 255 / 0.02) 0px,
-      rgb(255 255 255 / 0.02) 1px,
-      transparent 1px,
-      transparent 56px
-    ),
-    repeating-linear-gradient(
-      180deg,
-      rgb(255 255 255 / 0.012) 0px,
-      rgb(255 255 255 / 0.012) 1px,
-      transparent 1px,
-      transparent 7px
-    ),
-    linear-gradient(
-      180deg,
-      rgb(var(--team-primary-rgb) / 0.12) 0%,
-      rgb(var(--team-primary-rgb) / 0.04) 100%
-    );
-}
-
 /* Full-court floor: plank lines only; the palette paints the colour inline. */
 .court-wood {
   background-image:
@@ -267,16 +243,17 @@ body {
 }
 
 .court-tilted .court-billboard {
-  transform: translateZ(32px) rotateX(calc(-1 * var(--court-tilt)));
+  transform: translateZ(32px) rotateX(calc(-1 * var(--court-tilt)))
+    scale(var(--court-token-scale, 1));
 }
 
 .court-tilted .court-ball {
   translate: 0 0 40px;
 }
 
-.court-tilted .court-callout,
-.court-tilted .court-period-card {
-  transform: translateZ(48px) rotateX(calc(-1 * var(--court-tilt)));
+.court-tilted .court-callout {
+  transform: translateZ(48px) rotateX(calc(-1 * var(--court-tilt)))
+    scale(var(--court-token-scale, 1));
 }
 
 /* Reduced motion (also set from JS): the camera cuts and the tilt is static. */
@@ -314,6 +291,11 @@ body {
 
 .court-period-card {
   animation: court-card-in 300ms ease-out;
+}
+
+/* Centre-court logo brightens for the final. */
+.court-centre-logo {
+  transition: opacity calc(600ms / var(--court-speed, 1)) ease;
 }
 
 @keyframes court-token-enter {
@@ -370,7 +352,8 @@ body {
   .court-token,
   .court-switching .court-token,
   .court-camera-stage,
-  .court-tilted {
+  .court-tilted,
+  .court-centre-logo {
     transition: none;
   }
 
