@@ -16,8 +16,8 @@ function Chip(props: { children: React.ReactNode; accent?: boolean }) {
     <span
       className={
         props.accent
-          ? "inline-flex items-center rounded bg-team px-2 py-0.5 font-mono text-[0.7rem] font-bold uppercase tracking-[0.14em] text-on-team"
-          : "inline-flex items-center rounded border border-white/20 bg-black/30 px-2 py-0.5 font-mono text-[0.7rem] uppercase tracking-[0.12em] text-zinc-100"
+          ? "inline-flex items-center rounded bg-team px-2 py-0.5 text-sm font-bold uppercase tracking-wide text-on-team"
+          : "inline-flex items-center rounded border border-white/20 bg-black/30 px-2 py-0.5 text-sm uppercase tracking-wide text-zinc-100"
       }
     >
       {props.children}
@@ -26,8 +26,7 @@ function Chip(props: { children: React.ReactNode; accent?: boolean }) {
 }
 
 /**
- * NBA 2K-style banner: team-colour gradient with a faded team watermark, a
- * bottom-anchored portrait, the last name as the dominant headline and a
+ * Banner: team-colour gradient, a bottom-anchored portrait, the last name as the dominant headline and a
  * tier-coloured OVR hex badge. Themed by the player's team (neutral amber for
  * free agents), not by the controlled franchise.
  */
@@ -53,7 +52,6 @@ export function PlayerProfileHero(props: {
 }) {
   const teamLabel = props.teamName ?? "Free agent";
   const tier = ratingTier(props.overall);
-  const watermark = props.teamAbbreviation ?? "FA";
 
   if (props.variant === "compact") {
     return (
@@ -91,11 +89,11 @@ export function PlayerProfileHero(props: {
             </div>
           </div>
           <div className="flex shrink-0 flex-col items-end gap-1">
-            <span className="rounded border border-tier bg-surface-deep px-2 py-0.5 font-mono text-xs font-bold text-tier">
+            <span className="rounded border border-tier bg-surface-deep px-2 py-0.5 text-sm font-bold tabular-nums text-tier">
               OVR {props.overall}
             </span>
             {props.potential != null ? (
-              <span className="rounded-full border border-tier px-2 py-px font-mono text-[0.65rem] font-semibold uppercase tracking-[0.12em] text-tier">
+              <span className="rounded-full border border-tier px-2 py-px text-sm font-semibold tabular-nums text-tier">
                 POT {props.potential}
               </span>
             ) : null}
@@ -123,14 +121,6 @@ export function PlayerProfileHero(props: {
               "repeating-linear-gradient(115deg, rgb(255 255 255 / 0.05) 0 10px, transparent 10px 24px)",
           }}
         />
-        <span
-          aria-hidden
-          data-testid="hero-watermark"
-          className="font-display pointer-events-none absolute -bottom-4 right-0 -z-10 select-none text-[8rem] font-extrabold uppercase leading-none tracking-tight text-white/10 sm:text-[10rem]"
-        >
-          {watermark}
-        </span>
-
         <div className="grid grid-cols-[auto_minmax(0,1fr)] items-end gap-x-4 gap-y-3 px-4 pt-5 sm:grid-cols-[auto_minmax(0,1fr)_auto] sm:gap-x-6 sm:px-6 sm:pt-6">
           <span
             className="order-1 inline-flex shrink-0 overflow-hidden rounded-t-2xl"
@@ -173,7 +163,7 @@ export function PlayerProfileHero(props: {
                   align="center"
                 />
                 {props.potential != null ? (
-                  <span className="rounded-full border border-tier px-2 py-px font-mono text-[0.65rem] font-semibold uppercase tracking-[0.12em] text-tier">
+                  <span className="rounded-full border border-tier px-2 py-px text-sm font-semibold tabular-nums text-tier">
                     POT {props.potential}
                   </span>
                 ) : null}
@@ -210,7 +200,7 @@ export function PlayerProfileHero(props: {
                   decorative
                 />
               ) : props.teamAbbreviation ? (
-                <span className="inline-flex h-8 min-w-8 items-center justify-center rounded-md border border-white/30 px-1 font-mono text-[10px] font-semibold text-white">
+                <span className="inline-flex h-8 min-w-8 items-center justify-center rounded-md border border-white/30 px-1 text-sm font-semibold text-white">
                   {props.teamAbbreviation}
                 </span>
               ) : null}

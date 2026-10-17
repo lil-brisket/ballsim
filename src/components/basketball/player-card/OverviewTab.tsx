@@ -1,5 +1,5 @@
-import { AttributeRadar } from "@/components/basketball/player-card/AttributeRadar";
 import { RecentPerformanceChart } from "@/components/basketball/player-card/RecentPerformanceChart";
+import { SeasonAverageStrip } from "@/components/basketball/player-card/SeasonAverageStrip";
 import { StatTile } from "@/components/basketball/player-card/StatTile";
 import { MoneyDisplay } from "@/components/owner/MoneyDisplay";
 import { Section } from "@/components/ui/Section";
@@ -13,23 +13,17 @@ export function OverviewTab(props: { view: PlayerDrawerView }) {
   return (
     <>
       <Section title="Season averages" density="compact">
-        <div
-          role="group"
-          aria-label="Season averages"
-          className="grid grid-cols-2 gap-2 sm:grid-cols-4"
-        >
-          <StatTile label="GP" value={perf.games} />
-          <StatTile label="MPG" value={formatAverage(perf.mpg)} />
-          <StatTile label="PPG" value={formatAverage(perf.ppg)} />
-          <StatTile label="RPG" value={formatAverage(perf.rpg)} />
-          <StatTile label="APG" value={formatAverage(perf.apg)} />
-          <StatTile label="SPG" value={formatAverage(perf.spg)} />
-          <StatTile label="BPG" value={formatAverage(perf.bpg)} />
-        </div>
-      </Section>
-
-      <Section title="Attribute profile" density="compact">
-        <AttributeRadar attributes={view.ratings.attributes} size="sm" />
+        <SeasonAverageStrip
+          values={{
+            games: perf.games,
+            mpg: formatAverage(perf.mpg),
+            ppg: formatAverage(perf.ppg),
+            rpg: formatAverage(perf.rpg),
+            apg: formatAverage(perf.apg),
+            spg: formatAverage(perf.spg),
+            bpg: formatAverage(perf.bpg),
+          }}
+        />
       </Section>
 
       <Section title="Recent performance" density="compact">

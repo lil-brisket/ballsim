@@ -449,6 +449,11 @@ body {
  * ratingTier() in src/presentation/rating-tier.ts) and use text-tier /
  * border-tier / bg-tier. Bands are chosen to stay readable on arena surfaces.
  */
+[data-tier="legend"] {
+  --tier: #fb7185;
+  --tier-rgb: 251 113 133;
+}
+
 [data-tier="elite"] {
   --tier: #f5b800;
   --tier-rgb: 245 184 0;

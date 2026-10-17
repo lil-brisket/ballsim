@@ -31,16 +31,18 @@ export function PlayerAttributesPanel(props: { player: PlayerProfileView }) {
 
   return (
     <div className="space-y-6">
-      <AttributeRadar
-        attributes={player.attributes as PlayerAttributes}
-        size="md"
-      />
-      <Section title="Ratings" density="compact">
+      <div className="grid items-center gap-6 md:grid-cols-2">
+        <AttributeRadar
+          attributes={player.attributes as PlayerAttributes}
+          size="md"
+        />
+        {/* Sub-ratings are listed per category with development below. */}
         <PlayerRatingGrid
           key={player.playerId}
           attributes={player.attributes as PlayerAttributes}
+          interactive={false}
         />
-      </Section>
+      </div>
       <p className="text-sm text-zinc-400">Attribute detail and development</p>
       {RATING_CATEGORIES.map((category) => (
         <Section key={category.key} title={category.label} density="compact">

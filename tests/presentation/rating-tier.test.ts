@@ -3,7 +3,9 @@ import { ratingTier } from "@/presentation/rating-tier";
 
 describe("ratingTier", () => {
   it.each([
-    [99, "elite"],
+    [99, "legend"],
+    [95, "legend"],
+    [94, "elite"],
     [90, "elite"],
     [89, "star"],
     [80, "star"],

@@ -12,7 +12,6 @@ import {
 } from "recharts";
 import { Section } from "@/components/ui/Section";
 import type { PlayerDevelopmentBundle } from "@/state/player-profile-selectors";
-import { StatTile } from "./StatTile";
 import { EMPTY_VALUE } from "./format";
 import {
   formatChange,
@@ -124,16 +123,6 @@ export function DevelopmentTab(props: {
     <>
       <Section title="Development" density="compact">
         <div className="space-y-4">
-          <div
-            role="group"
-            aria-label="Current ratings"
-            className="grid grid-cols-3 gap-2"
-          >
-            <StatTile label="OVR" value={identity.overall} />
-            <StatTile label="POT (est.)" value={identity.potential} />
-            <StatTile label="Age" value={identity.age} />
-          </div>
-
           {hasHistory ? (
             <RatingHistoryChart rows={rows} potential={identity.potential} />
           ) : (

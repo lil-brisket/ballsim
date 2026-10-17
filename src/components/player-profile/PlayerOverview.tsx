@@ -1,6 +1,6 @@
 import { AttributeRadar } from "@/components/basketball/player-card/AttributeRadar";
 import { RecentPerformanceChart } from "@/components/basketball/player-card/RecentPerformanceChart";
-import { StatTile } from "@/components/basketball/player-card/StatTile";
+import { SeasonAverageStrip } from "@/components/basketball/player-card/SeasonAverageStrip";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Section } from "@/components/ui/Section";
 import type { PlayerAttributes } from "@/domain/entities/player";
@@ -52,21 +52,21 @@ export function PlayerOverview(props: {
         {!avg ? (
           <EmptyState message="No games played this season." />
         ) : (
-          <div
-            role="group"
-            aria-label="Season averages"
-            className="grid grid-cols-3 gap-2 sm:grid-cols-5 lg:grid-cols-9"
-          >
-            <StatTile label="GP" value={avg.games} />
-            <StatTile label="MPG" value={avg.mpg.toFixed(1)} />
-            <StatTile label="PPG" value={avg.ppg.toFixed(1)} />
-            <StatTile label="RPG" value={avg.rpg.toFixed(1)} />
-            <StatTile label="APG" value={avg.apg.toFixed(1)} />
-            <StatTile label="SPG" value={avg.spg.toFixed(1)} />
-            <StatTile label="BPG" value={avg.bpg.toFixed(1)} />
-            <StatTile label="FG%" value={pctLabel(avg.fgPct)} />
-            <StatTile label="3P%" value={pctLabel(avg.threePct)} />
-          </div>
+          <SeasonAverageStrip
+            values={{
+              games: avg.games,
+              mpg: avg.mpg.toFixed(1),
+              ppg: avg.ppg.toFixed(1),
+              rpg: avg.rpg.toFixed(1),
+              apg: avg.apg.toFixed(1),
+              spg: avg.spg.toFixed(1),
+              bpg: avg.bpg.toFixed(1),
+              extras: [
+                { label: "FG%", value: pctLabel(avg.fgPct) },
+                { label: "3P%", value: pctLabel(avg.threePct) },
+              ],
+            }}
+          />
         )}
       </Section>
 
