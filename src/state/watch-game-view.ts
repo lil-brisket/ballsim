@@ -19,6 +19,8 @@ export type WatchTeam = {
   name: string;
   abbreviation: string;
   branding: TeamBrandingView;
+  /** false when the team has no stored branding and `branding` is the neutral fallback. */
+  hasBranding: boolean;
 };
 
 export type WatchPlayer = {

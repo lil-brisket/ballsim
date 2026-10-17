@@ -305,6 +305,7 @@ describe("toWatchGameView text templates", () => {
     expect(view.plays[16]!.kind).toBe("substitution");
     expect(view.home.abbreviation).toBe("HOM");
     expect(view.away.abbreviation).toBe("AWY");
+    expect(view.home.hasBranding).toBe(true);
     expect(view.players[0]!.fullName).toBe("Home P1");
     expect(view.players[0]!.shortName).toBe("H. P1");
     expect(view.players.map((p) => p.side)).toEqual([

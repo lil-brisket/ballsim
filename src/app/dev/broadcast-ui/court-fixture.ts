@@ -28,6 +28,7 @@ export const COURT_HOME: WatchTeam = {
     accentColor: "#F5B800",
     logoId: "wolf",
   },
+  hasBranding: true,
 };
 
 export const COURT_AWAY: WatchTeam = {
@@ -42,6 +43,7 @@ export const COURT_AWAY: WatchTeam = {
     accentColor: "#C8102E",
     logoId: "eagle",
   },
+  hasBranding: true,
 };
 
 const ROSTER: Array<[string, WatchSide, string, string, boolean]> = [
