@@ -34,6 +34,10 @@ export type CourtPalette = {
   } | null;
   /** Opacity for the centre logo so it never hides tokens or the ball. */
   logoOpacity: number;
+  /** Courtside LED ribbon panel along the far sideline. */
+  ribbon: string;
+  /** LED text on the ribbon: a home colour when one reads at 4.5:1. */
+  ribbonInk: string;
 };
 
 /** WCAG 1.4.11 graphics contrast. */
@@ -49,6 +53,7 @@ const NEUTRAL_LINE = "#D4D4D8";
 const WHITE_OUTLINE = "#FFFFFF";
 const MID_OUTLINE = "#7C7C7C";
 const LOGO_OPACITY = 0.35;
+const RIBBON = "#0B0B0C";
 const ALPHA_STEP = 0.05;
 
 function toHex(channel: number): string {
@@ -95,6 +100,8 @@ function neutralPalette(): CourtPalette {
     wordmark: readableTextOnBackground(apron),
     logo: null,
     logoOpacity: LOGO_OPACITY,
+    ribbon: RIBBON,
+    ribbonInk: NEUTRAL_LINE,
   };
 }
 
@@ -144,6 +151,11 @@ export function buildCourtPalette(home: TeamBrandingView | null): CourtPalette {
     wordmark,
     logo: { ...home },
     logoOpacity: LOGO_OPACITY,
+    ribbon: RIBBON,
+    ribbonInk:
+      [home.primaryColor, home.secondaryColor, home.accentColor].find(
+        (color) => ratio(color, RIBBON) >= COURT_TEXT_MIN_CONTRAST,
+      ) ?? WHITE_LINE,
   };
 }
 

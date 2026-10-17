@@ -34,7 +34,8 @@ import type {
 } from "@/state/watch-game-view";
 
 const FOUL_OUT_FOULS = 6;
-const RUN_THRESHOLD = 8;
+/** Unanswered points that make a run (key moments and the arena ribbon). */
+export const RUN_THRESHOLD = 8;
 const CLUTCH_CLOCK_SECONDS = 300;
 const CLUTCH_MARGIN = 5;
 const CLUTCH_MIN_PERIOD = 4;
@@ -912,4 +913,27 @@ export function buildShotSummary(
     .map(({ playerId, side, line }) => ({ playerId, side, line }));
 
   return { home: teams[0], away: teams[1], players };
+}
+
+/**
+ * The unanswered scoring run in progress after `revealed` plays, once it
+ * reaches `RUN_THRESHOLD` (same rule as the "run" key moment); null otherwise.
+ */
+export function currentRun(
+  view: WatchGameView,
+  revealed: number,
+): { side: WatchSide; points: number } | null {
+  const count = clampRevealed(view, revealed);
+  let run: { side: WatchSide; points: number } | null = null;
+  for (let i = 0; i < count; i += 1) {
+    const play = view.plays[i]!;
+    if (play.points <= 0) {
+      continue;
+    }
+    run =
+      run && run.side === play.side
+        ? { side: run.side, points: run.points + play.points }
+        : { side: play.side, points: play.points };
+  }
+  return run && run.points >= RUN_THRESHOLD ? run : null;
 }
