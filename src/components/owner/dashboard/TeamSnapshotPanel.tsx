@@ -1,12 +1,11 @@
 import Link from "next/link";
 import type { OwnerDashboardTeam } from "@/state/owner-dashboard";
-import type { RecentFormView } from "@/state/recent-form-selectors";
 import { PlayerEntityLink } from "@/components/entity/PlayerEntityLink";
 import { Section } from "@/components/ui/Section";
 import { ArenaPanel } from "@/components/ui/ArenaPanel";
-import { TickerBar } from "@/components/ui/TickerBar";
+import { TickerBar, type TickerItem } from "@/components/ui/TickerBar";
 import { cn, touchTargetTextClass } from "@/components/ui/styles";
-import { groupRankLabel, leagueRankLabel } from "@/presentation/rank-label";
+import { groupRankLabel } from "@/presentation/rank-label";
 
 /**
  * Team snapshot strip for Front Office — lists and metrics, not a card grid.
@@ -14,15 +13,18 @@ import { groupRankLabel, leagueRankLabel } from "@/presentation/rank-label";
 export function TeamSnapshotPanel(props: {
   team: OwnerDashboardTeam;
   saveId: string;
-  recentForm: RecentFormView;
 }) {
-  const { team, saveId, recentForm } = props;
-  const standingLine =
-    team.conferenceRank !== null && team.conferenceName
-      ? groupRankLabel(team.conferenceName, team.conferenceRank)
-      : team.leagueRank == null
-        ? "Unranked"
-        : leagueRankLabel(team.leagueRank);
+  const { team, saveId } = props;
+  const items: TickerItem[] = [];
+  // Record, league rank and form already show in the game header and hero;
+  // conference position and strength add context.
+  if (team.conferenceRank !== null && team.conferenceName) {
+    items.push({
+      label: "Conference",
+      value: groupRankLabel(team.conferenceName, team.conferenceRank),
+    });
+  }
+  items.push({ label: "Strength", value: team.strength });
 
   return (
     <Section
@@ -40,22 +42,7 @@ export function TeamSnapshotPanel(props: {
       }
     >
       <ArenaPanel as="div" raised className="space-y-4">
-        <TickerBar
-          aria-label="Team snapshot"
-          items={[
-            {
-              label: "Record",
-              value: `${team.wins}–${team.losses}`,
-              tone: "team",
-            },
-            { label: "Rank", value: standingLine },
-            {
-              label: "Form (L5)",
-              value: `${recentForm.marks || "—"}${recentForm.streak ? ` ${recentForm.streak}` : ""}`,
-            },
-            { label: "Strength", value: team.strength },
-          ]}
-        />
+        <TickerBar aria-label="Team snapshot" items={items} />
 
         {team.rosterProblems.length > 0 ? (
           <div>

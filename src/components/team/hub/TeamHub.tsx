@@ -26,7 +26,11 @@ export function TeamHub(props: {
       <div className="grid gap-8 lg:grid-cols-2">
         <div className="space-y-8">
           <TeamOverview hub={hub} />
-          <TeamRecentHistory saveId={saveId} items={hub.recentHistory} />
+          <TeamRecentHistory
+            saveId={saveId}
+            items={hub.recentHistory}
+            team={{ abbreviation: hub.abbreviation, branding: hub.branding }}
+          />
         </div>
         <div className="space-y-8">
           <TeamRotationPreview saveId={saveId} hub={hub} />

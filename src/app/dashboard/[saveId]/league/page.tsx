@@ -2,10 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { loadLeagueHubView } from "@/application/game-service";
-import {
-  LeagueHeader,
-  MyTeamContextStrip,
-} from "@/components/league/LeagueHeader";
+import { LeagueHeader } from "@/components/league/LeagueHeader";
 import {
   LeagueSnapshotPanel,
   LeagueStandingsSnapshot,
@@ -40,32 +37,12 @@ export default async function LeagueHubPage({
   return (
     <div className="space-y-4">
       <LeagueHeader
+        saveId={saveId}
         leagueName={view.leagueName}
-        seasonYear={view.seasonYear}
-        seasonPhaseLabel={view.seasonPhaseLabel}
-        currentDate={view.currentDate}
-        userTeamLabel={`${view.userTeamCity} ${view.userTeamName}`}
+        myTeam={view.myTeam}
         playoffBanner={view.playoffBanner}
       />
       {error ? <ErrorState message={error} /> : null}
-
-      {view.myTeam ? (
-        <MyTeamContextStrip
-          saveId={saveId}
-          teamId={view.myTeam.teamId}
-          city={view.myTeam.city}
-          name={view.myTeam.name}
-          abbreviation={view.myTeam.abbreviation}
-          wins={view.myTeam.wins}
-          losses={view.myTeam.losses}
-          conferenceRank={view.myTeam.conferenceRank}
-          conferenceName={view.myTeam.conferenceName}
-          gamesBack={view.myTeam.gamesBack}
-          streakLabel={view.myTeam.streakLabel}
-          leagueLeader={view.myTeam.leagueLeader}
-          cutoffTeam={view.myTeam.cutoffTeam}
-        />
-      ) : null}
 
       {view.expansionActive ? (
         <p className="text-sm text-zinc-400">
@@ -83,7 +60,10 @@ export default async function LeagueHubPage({
       ) : null}
 
       {/* Tier 1 */}
-      <LeagueSnapshotPanel snapshot={view.snapshot} />
+      <LeagueSnapshotPanel
+        snapshot={view.snapshot}
+        cutoffTeam={view.myTeam?.cutoffTeam ?? null}
+      />
       <div className="grid gap-4 lg:grid-cols-2">
         <LeagueStandingsSnapshot
           saveId={saveId}

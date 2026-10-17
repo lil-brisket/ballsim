@@ -1,11 +1,15 @@
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Section } from "@/components/ui/Section";
-import { RecentHistoryItem } from "@/components/team/hub/RecentHistoryItem";
+import {
+  RecentHistoryItem,
+  type RecentHistoryItemProps,
+} from "@/components/team/hub/RecentHistoryItem";
 import type { TeamRecentHistoryItem } from "@/state/team-recent-history-selectors";
 
 export function TeamRecentHistory(props: {
   saveId: string;
   items: TeamRecentHistoryItem[];
+  team: RecentHistoryItemProps["team"];
 }) {
   return (
     <Section title="Recent History">
@@ -18,6 +22,7 @@ export function TeamRecentHistory(props: {
               key={item.id}
               saveId={props.saveId}
               item={item}
+              team={props.team}
             />
           ))}
         </ul>

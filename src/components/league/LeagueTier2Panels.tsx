@@ -1,8 +1,8 @@
 import Link from "next/link";
-import { LeagueGameRow } from "@/components/basketball/LeagueGameRow";
 import { PlayerEntityLink } from "@/components/entity/PlayerEntityLink";
 import { TeamEntityLink } from "@/components/entity/TeamEntityLink";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { ScoreBug } from "@/components/ui/ScoreBug";
 import { Section } from "@/components/ui/Section";
 import type {
   LeagueGameResultRow,
@@ -22,25 +22,36 @@ export function LeagueRecentResultsPanel(props: {
       {props.games.length === 0 ? (
         <EmptyState message="No completed games yet this season." />
       ) : (
-        <ul className="space-y-2">
+        <ul className="grid gap-2 sm:grid-cols-2">
           {props.games.map((game) => (
             <li key={game.gameId}>
-              <LeagueGameRow
-                saveId={props.saveId}
-                gameId={game.gameId}
+              <ScoreBug
+                teams={[
+                  {
+                    abbreviation: game.awayAbbreviation,
+                    branding: game.awayBranding,
+                    score: game.awayScore,
+                  },
+                  {
+                    abbreviation: game.homeAbbreviation,
+                    branding: game.homeBranding,
+                    score: game.homeScore,
+                  },
+                ]}
                 date={game.date}
-                homeTeamId={game.homeTeamId}
-                awayTeamId={game.awayTeamId}
-                homeAbbreviation={game.homeAbbreviation}
-                awayAbbreviation={game.awayAbbreviation}
-                homeBranding={game.homeBranding}
-                awayBranding={game.awayBranding}
-                homeScore={game.homeScore}
-                awayScore={game.awayScore}
-                status="final"
-                competitionType={game.competitionType}
-                canWatch={game.canWatch}
+                href={`/dashboard/${props.saveId}/games/${game.gameId}`}
               />
+              {game.canWatch ? (
+                <Link
+                  href={`/dashboard/${props.saveId}/games/${game.gameId}/watch`}
+                  className={cn(
+                    "inline-flex min-h-11 items-center px-1 text-sm text-team-ink underline-offset-4 hover:underline",
+                    focusRingClass,
+                  )}
+                >
+                  Watch
+                </Link>
+              ) : null}
             </li>
           ))}
         </ul>
