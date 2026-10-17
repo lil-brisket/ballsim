@@ -50,6 +50,9 @@ export function CourtShowcase() {
         home={COURT_HOME}
         away={COURT_AWAY}
         live={live}
+        players={COURT_FIXTURE_VIEW.players}
+        speed={1}
+        periodBreak={null}
         showShotChart={shotChart}
         onShowShotChartChange={setShotChart}
         selectedPlayerId={selected}

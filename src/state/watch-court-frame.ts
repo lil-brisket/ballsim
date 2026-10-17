@@ -117,6 +117,19 @@ export type CourtFrame = {
   lastPlay: CourtLastPlay | null;
   /** Field-goal attempts revealed so far (shot-chart layer). */
   shots: CourtShot[];
+  /**
+   * The run of substitutions ending at the latest revealed play (one
+   * checkpoint can swap several players); empty unless the latest play is a
+   * substitution.
+   */
+  substitutions: CourtSubstitution[];
+};
+
+export type CourtSubstitution = {
+  index: number;
+  side: WatchSide;
+  outId: PlayerId;
+  inId: PlayerId;
 };
 
 /**
@@ -797,6 +810,22 @@ export function buildCourtFrame(
     });
   }
 
+  const substitutions: CourtSubstitution[] = [];
+  for (let i = count - 1; i >= 0; i -= 1) {
+    const play = view.plays[i]!;
+    if (play.kind !== "substitution") {
+      break;
+    }
+    if (play.player2Id !== null) {
+      substitutions.unshift({
+        index: i,
+        side: play.side,
+        outId: play.playerId,
+        inId: play.player2Id,
+      });
+    }
+  }
+
   // The possession holding the next unrevealed play (or the current one).
   const nextGroup = groups.find((g) => g.end > count);
 
@@ -813,5 +842,6 @@ export function buildCourtFrame(
     ball,
     lastPlay,
     shots,
+    substitutions,
   };
 }

@@ -15,17 +15,16 @@ import {
 import { PlayByPlayFeed } from "@/components/game/watch/PlayByPlayFeed";
 import { Scoreboard } from "@/components/game/watch/Scoreboard";
 import { ShotSummaryPanel } from "@/components/game/watch/ShotSummaryPanel";
+import { playDelayMs } from "@/components/game/watch/playback-pacing";
 import { Panel, SectionHeading } from "@/components/ui";
 import type { PlayerId } from "@/domain/ids";
 import { buildCourtFrame, stepPossession } from "@/state/watch-court-frame";
 import {
   buildLiveBoxScore,
+  periodLabel,
   buildShotSummary,
 } from "@/state/watch-game-selectors";
 import type { WatchGameView } from "@/state/watch-game-view";
-
-/** Milliseconds per play at 1x. */
-export const BASE_PLAY_MS = 900;
 
 export function WatchGameClient(props: {
   view: WatchGameView;
@@ -43,15 +42,18 @@ export function WatchGameClient(props: {
   // Playback stops by itself once every play is revealed.
   const isPlaying = playing && revealed < total;
 
+  // One timeout per play: each reveal schedules the next with that play's
+  // pacing. Pausing, a speed change or unmount clears the pending step.
   useEffect(() => {
     if (!isPlaying) {
       return;
     }
-    const id = setInterval(() => {
-      setRevealed((current) => Math.min(total, current + 1));
-    }, BASE_PLAY_MS / speed);
-    return () => clearInterval(id);
-  }, [isPlaying, speed, total]);
+    const id = setTimeout(
+      () => setRevealed((current) => Math.min(total, current + 1)),
+      playDelayMs(view, revealed) / speed,
+    );
+    return () => clearTimeout(id);
+  }, [isPlaying, speed, total, view, revealed]);
 
   const live = useMemo(
     () => buildLiveBoxScore(view, revealed),
@@ -65,6 +67,13 @@ export function WatchGameClient(props: {
     () => buildCourtFrame(view, revealed),
     [view, revealed],
   );
+
+  const previousPlay = revealed > 0 ? view.plays[revealed - 1] : undefined;
+  const nextPlay = revealed < total ? view.plays[revealed] : undefined;
+  const periodBreak =
+    previousPlay && nextPlay && previousPlay.period !== nextPlay.period
+      ? `End of ${periodLabel(previousPlay.period)} · ${view.away.abbreviation} ${live.awayScore} – ${view.home.abbreviation} ${live.homeScore}`
+      : null;
 
   const jumpTo = (next: number) => {
     setRevealed(next);
@@ -109,6 +118,9 @@ export function WatchGameClient(props: {
             away={view.away}
             live={live}
             status={courtStatus}
+            speed={speed}
+            periodBreak={periodBreak}
+            players={view.players}
             selectedPlayerId={selectedPlayerId}
             onSelectPlayer={(id) =>
               setSelectedPlayerId((current) => (current === id ? null : id))
