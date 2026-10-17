@@ -13,11 +13,7 @@ export function Metric(props: {
   const dense = props.density === "compact";
   return (
     <div className={cn(props.className)}>
-      <p
-        className="text-sm text-zinc-400"
-      >
-        {props.label}
-      </p>
+      <p className="text-sm text-zinc-400">{props.label}</p>
       <div
         className={cn(
           "mt-0.5 text-zinc-50",

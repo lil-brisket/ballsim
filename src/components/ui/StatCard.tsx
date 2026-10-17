@@ -19,9 +19,7 @@ export function StatCard(props: {
       density={props.density ?? "comfortable"}
       className={props.className}
     >
-      <h2 className="text-sm font-medium text-zinc-400">
-        {props.label}
-      </h2>
+      <h2 className="text-sm font-medium text-zinc-400">{props.label}</h2>
       <div
         className={cn(
           "mt-2 text-zinc-50",

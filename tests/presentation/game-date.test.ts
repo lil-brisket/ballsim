@@ -7,9 +7,7 @@ import {
 describe("formatGameDate", () => {
   it("formats ISO days like a broadcast", () => {
     expect(formatGameDate("2026-10-08")).toBe("Oct 8");
-    expect(formatGameDate("2026-10-10", { weekday: true })).toBe(
-      "Sat, Oct 10",
-    );
+    expect(formatGameDate("2026-10-10", { weekday: true })).toBe("Sat, Oct 10");
     expect(formatGameDate("2026-10-08", { year: true })).toBe("Oct 8, 2026");
   });
 
@@ -26,9 +24,7 @@ describe("formatRelativeGameDay", () => {
   it("counts days from today", () => {
     expect(formatRelativeGameDay("2026-10-08", "2026-10-08")).toBe("Today");
     expect(formatRelativeGameDay("2026-10-09", "2026-10-08")).toBe("Tomorrow");
-    expect(formatRelativeGameDay("2026-10-11", "2026-10-08")).toBe(
-      "In 3 days",
-    );
+    expect(formatRelativeGameDay("2026-10-11", "2026-10-08")).toBe("In 3 days");
     expect(formatRelativeGameDay("2026-10-05", "2026-10-08")).toBe(
       "3 days ago",
     );
