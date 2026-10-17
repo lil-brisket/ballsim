@@ -1,8 +1,12 @@
 import { describe, expect, it, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 
+vi.mock("server-only", () => ({}));
+
 vi.mock("next/navigation", () => ({
   usePathname: () => "/dashboard/save_test",
+  useSearchParams: () => new URLSearchParams(),
+  useRouter: () => ({ push: () => {}, refresh: () => {} }),
 }));
 
 vi.mock("@/application/actions", () => ({
@@ -20,6 +24,7 @@ import {
   resolveNextActionPresentation,
 } from "@/components/game/NextActionPanel";
 import { ActionQueue } from "@/components/owner/dashboard/ActionQueue";
+import { GameShell } from "@/components/game/GameShell";
 import { SaveCard } from "@/components/game/SaveCard";
 import { MobileNavigationDrawer } from "@/components/game/MobileNavigationDrawer";
 import { listGameModeDefinitions } from "@/application/game-mode-catalog";
@@ -281,6 +286,23 @@ describe("game shell UI", () => {
     expect(
       screen.getByRole("link", { name: "Open Draft" }).getAttribute("href"),
     ).toBe("/dashboard/save_test/draft");
+    unmount();
+  });
+
+  it("GameShell renders the team spotlight as an aria-hidden layer", () => {
+    const { container, unmount } = render(
+      <GameShell
+        saveId="save_test"
+        saveName="Test Save"
+        dashboard={baseDashboard()}
+      >
+        <p>page</p>
+      </GameShell>,
+    );
+    const spotlight = container.querySelector(".shell-spotlight");
+    expect(spotlight).toBeTruthy();
+    expect(spotlight?.getAttribute("aria-hidden")).toBe("true");
+    expect(screen.getByText("page")).toBeTruthy();
     unmount();
   });
 

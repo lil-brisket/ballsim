@@ -24,9 +24,14 @@ export function GameShell(props: {
     <EntityDrawerProvider saveId={props.saveId}>
       <SimulationActivityProvider>
         <div
-          className="shell-backdrop flex min-h-full flex-1 flex-col"
+          className="shell-backdrop relative isolate flex min-h-full flex-1 flex-col"
           style={teamThemeStyle(branding)}
         >
+          <div
+            aria-hidden="true"
+            data-testid="shell-spotlight"
+            className="shell-spotlight"
+          />
           <div className="sticky top-0 z-40 border-b border-surface-line bg-surface-deep/90 pt-[env(safe-area-inset-top)] backdrop-blur lg:static lg:z-auto lg:border-0 lg:bg-transparent lg:pt-0 lg:backdrop-blur-none">
             <div className="mx-auto w-full max-w-7xl px-4 py-3 sm:px-6 lg:px-6 lg:pb-0 lg:pt-8">
               <GameHeader
