@@ -13,6 +13,7 @@ import {
   courtSpot,
   formationSpots,
   possessionGroups,
+  stepPossession,
 } from "@/state/watch-court-frame";
 import {
   buildLiveBoxScore,
@@ -60,6 +61,7 @@ function watchPlayer(
     fullName: `${first} ${last}`,
     shortName: `${first.charAt(0)}. ${last}`,
     lastName: last,
+    position: null,
     started,
     finalMinutes: 0,
   };
@@ -241,6 +243,14 @@ describe("buildCourtFrame (every play kind)", () => {
     expect(after.lastPlay!.path).toEqual([before.ball.at]);
   });
 
+  it("lists the substitutions ending at the latest play", () => {
+    expect(buildCourtFrame(KIND_VIEW, 11).substitutions).toEqual([]);
+    expect(buildCourtFrame(KIND_VIEW, 12).substitutions).toEqual([
+      { index: 11, side: 0, outId: pid("h3"), inId: pid("h6") },
+    ]);
+    expect(buildCourtFrame(KIND_VIEW, 13).substitutions).toEqual([]);
+  });
+
   it("reports the next possession's team and none at the final", () => {
     expect(buildCourtFrame(KIND_VIEW, 1).ballSide).toBe(1);
     expect(buildCourtFrame(KIND_VIEW, 9).ballSide).toBe(0);
@@ -263,6 +273,26 @@ describe("buildCourtFrame (every play kind)", () => {
     ]);
     expect(buildCourtFrame(KIND_VIEW, 12).possessionIndex).toBe(6);
     expect(buildCourtFrame(KIND_VIEW, 13).possessionIndex).toBe(7);
+  });
+});
+
+describe("stepPossession", () => {
+  it("moves to the next and previous possession ends", () => {
+    const forward: number[] = [];
+    for (let n = 0; n < KIND_PLAYS.length;) {
+      n = stepPossession(KIND_VIEW, n, 1);
+      forward.push(n);
+    }
+    // The substitution (index 11) rides along with the next possession.
+    expect(forward).toEqual([1, 3, 4, 5, 6, 10, 11, 14, 15]);
+    expect(stepPossession(KIND_VIEW, 2, 1)).toBe(3);
+    expect(stepPossession(KIND_VIEW, 12, -1)).toBe(11);
+    expect(stepPossession(KIND_VIEW, 11, -1)).toBe(10);
+    expect(stepPossession(KIND_VIEW, 1, -1)).toBe(0);
+    expect(stepPossession(KIND_VIEW, 0, -1)).toBe(0);
+    expect(stepPossession(KIND_VIEW, KIND_PLAYS.length, 1)).toBe(
+      KIND_PLAYS.length,
+    );
   });
 });
 
@@ -457,6 +487,38 @@ describe("buildCourtFrame (recorded real game)", () => {
         expect(mine).toHaveLength(team.total.fga);
         expect(mine.filter((s) => s.made)).toHaveLength(team.total.fgm);
         expect(mine.filter((s) => s.three)).toHaveLength(team.total.threePa);
+      }
+    }
+  });
+
+  it("steps possession by possession to the final frame", () => {
+    let n = 0;
+    let steps = 0;
+    while (n < total) {
+      const next = stepPossession(view, n, 1);
+      expect(next).toBeGreaterThan(n);
+      expect(stepPossession(view, next, -1)).toBeLessThan(next);
+      n = next;
+      steps += 1;
+    }
+    expect(steps).toBe(possessionGroups(view).length);
+    expect(buildCourtFrame(view, n)).toEqual(frames[total]);
+    expect(buildLiveBoxScore(view, n)).toMatchObject({
+      homeScore: view.finalScore.home,
+      awayScore: view.finalScore.away,
+      isFinal: true,
+    });
+  });
+
+  it("lists every player who checked in at the latest checkpoint", () => {
+    for (let n = 1; n <= total; n += 1) {
+      const subs = frames[n]!.substitutions;
+      const tail = view.plays[n - 1]!;
+      expect(subs.length > 0).toBe(tail.kind === "substitution");
+      const onCourt = new Set(frames[n]!.players.map((p) => p.playerId));
+      for (const sub of subs) {
+        expect(view.plays[sub.index]!.kind).toBe("substitution");
+        expect(onCourt.has(sub.inId)).toBe(true);
       }
     }
   });

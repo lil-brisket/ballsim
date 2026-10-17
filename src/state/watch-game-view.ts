@@ -6,6 +6,7 @@
  */
 import type { GameCompetitionType, GameScore } from "@/domain/entities/game";
 import type { GameId, PlayerId, TeamId } from "@/domain/ids";
+import type { PlayerPosition } from "@/domain/entities/player";
 import type { TeamBrandingView } from "@/state/team-branding-view";
 
 /** 0 = home, 1 = away (matches PlayByPlayLog.side). */
@@ -29,6 +30,8 @@ export type WatchPlayer = {
   shortName: string;
   /** "Smith" — court token label (falls back to shortName when unknown). */
   lastName: string;
+  /** Current roster position; null when the player record is gone. */
+  position: PlayerPosition | null;
   started: boolean;
   /** Final minutes from the box score (not derivable per play). */
   finalMinutes: number;

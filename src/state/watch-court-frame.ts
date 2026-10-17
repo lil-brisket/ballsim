@@ -117,6 +117,19 @@ export type CourtFrame = {
   lastPlay: CourtLastPlay | null;
   /** Field-goal attempts revealed so far (shot-chart layer). */
   shots: CourtShot[];
+  /**
+   * The run of substitutions ending at the latest revealed play (one
+   * checkpoint can swap several players); empty unless the latest play is a
+   * substitution.
+   */
+  substitutions: CourtSubstitution[];
+};
+
+export type CourtSubstitution = {
+  index: number;
+  side: WatchSide;
+  outId: PlayerId;
+  inId: PlayerId;
 };
 
 /**
@@ -347,6 +360,29 @@ export function possessionGroups(view: WatchGameView): CourtPossession[] {
   });
   groupCache.set(view, groups);
   return groups;
+}
+
+/**
+ * `revealed` at the end of the next (1) or previous (-1) feed-row
+ * possession. Next from the last possession goes to the end of the log;
+ * previous from the first goes back to tip-off.
+ */
+export function stepPossession(
+  view: WatchGameView,
+  revealed: number,
+  direction: 1 | -1,
+): number {
+  const count = clampRevealed(view, revealed);
+  const ends = possessionGroups(view).map((group) => group.end);
+  if (direction > 0) {
+    return ends.find((end) => end > count) ?? view.plays.length;
+  }
+  for (let i = ends.length - 1; i >= 0; i -= 1) {
+    if (ends[i]! < count) {
+      return ends[i]!;
+    }
+  }
+  return 0;
 }
 
 const labelCache = new WeakMap<WatchGameView, Map<PlayerId, string>>();
@@ -774,6 +810,22 @@ export function buildCourtFrame(
     });
   }
 
+  const substitutions: CourtSubstitution[] = [];
+  for (let i = count - 1; i >= 0; i -= 1) {
+    const play = view.plays[i]!;
+    if (play.kind !== "substitution") {
+      break;
+    }
+    if (play.player2Id !== null) {
+      substitutions.unshift({
+        index: i,
+        side: play.side,
+        outId: play.playerId,
+        inId: play.player2Id,
+      });
+    }
+  }
+
   // The possession holding the next unrevealed play (or the current one).
   const nextGroup = groups.find((g) => g.end > count);
 
@@ -790,5 +842,6 @@ export function buildCourtFrame(
     ball,
     lastPlay,
     shots,
+    substitutions,
   };
 }

@@ -231,6 +231,7 @@ function toWatchPlayers(state: GameState, game: Game): WatchPlayer[] {
       fullName: names.full,
       shortName: names.short,
       lastName: names.last,
+      position: live?.position ?? null,
       started: row.started,
       finalMinutes: row.minutes,
     });

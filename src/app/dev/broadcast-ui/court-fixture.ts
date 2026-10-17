@@ -66,6 +66,7 @@ const PLAYERS: WatchPlayer[] = ROSTER.map(
     fullName: `${first} ${last}`,
     shortName: `${first[0]}. ${last}`,
     lastName: last,
+    position: null,
     started,
     finalMinutes: started ? 30 : 12,
   }),

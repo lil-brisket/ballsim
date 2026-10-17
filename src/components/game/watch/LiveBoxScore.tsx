@@ -1,5 +1,6 @@
 import { DataTable, Section } from "@/components/ui";
 import { cn } from "@/components/ui/styles";
+import type { PlayerId } from "@/domain/ids";
 import type {
   LiveBoxScore as LiveBoxScoreModel,
   LiveBoxScoreRow,
@@ -75,6 +76,7 @@ function TeamTable(props: {
   box: LiveTeamBox;
   players: WatchPlayer[];
   isFinal: boolean;
+  selectedPlayerId: PlayerId | null;
 }) {
   const minutes = new Map(
     props.players.map((p) => [p.playerId, p.finalMinutes]),
@@ -101,9 +103,14 @@ function TeamTable(props: {
         {rows.map((row) => (
           <tr
             key={row.playerId}
+            data-selected={
+              row.playerId === props.selectedPlayerId ? "true" : undefined
+            }
             className={cn(
               "border-t border-zinc-800",
               row.fouledOut && "text-zinc-500",
+              row.playerId === props.selectedPlayerId &&
+                "bg-team/15 outline outline-1 -outline-offset-1 outline-team-ink",
             )}
           >
             <td className="whitespace-nowrap px-3 py-2 text-zinc-100">
@@ -117,6 +124,9 @@ function TeamTable(props: {
                 />
                 {row.onCourt ? <span className="sr-only">on court</span> : null}
                 <span>{row.shortName}</span>
+                {row.playerId === props.selectedPlayerId ? (
+                  <span className="sr-only">selected</span>
+                ) : null}
                 {row.fouledOut ? (
                   <span className="rounded border border-rose-700/50 px-1 text-xs text-rose-300">
                     FO
@@ -151,7 +161,10 @@ export function LiveBoxScore(props: {
   away: WatchTeam;
   home: WatchTeam;
   players: WatchPlayer[];
+  /** Row highlighted from the court (player card). */
+  selectedPlayerId?: PlayerId | null;
 }) {
+  const selectedPlayerId = props.selectedPlayerId ?? null;
   return (
     <div className="min-w-0 space-y-6">
       <TeamTable
@@ -159,12 +172,14 @@ export function LiveBoxScore(props: {
         box={props.live.away}
         players={props.players}
         isFinal={props.live.isFinal}
+        selectedPlayerId={selectedPlayerId}
       />
       <TeamTable
         team={props.home}
         box={props.live.home}
         players={props.players}
         isFinal={props.live.isFinal}
+        selectedPlayerId={selectedPlayerId}
       />
     </div>
   );
