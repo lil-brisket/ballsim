@@ -3,27 +3,9 @@ import { GameResultLink } from "@/components/owner/GameResultLink";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Section } from "@/components/ui/Section";
 import { TeamBadge } from "@/components/ui/TeamBadge";
+import { formatGameDate } from "@/presentation/game-date";
 import { cn, focusRingClass } from "@/components/ui/styles";
 import type { RecentFormGame } from "@/state/recent-form-selectors";
-
-function shortDate(isoDate: string): string {
-  const months = [
-    "Jan",
-    "Feb",
-    "Mar",
-    "Apr",
-    "May",
-    "Jun",
-    "Jul",
-    "Aug",
-    "Sep",
-    "Oct",
-    "Nov",
-    "Dec",
-  ];
-  const month = months[Number(isoDate.slice(5, 7)) - 1] ?? "";
-  return `${month} ${Number(isoDate.slice(8, 10))}`;
-}
 
 /** Horizontal ticker of W/L result chips, newest first. */
 export function RecentResultsPanel(props: {
@@ -52,8 +34,8 @@ export function RecentResultsPanel(props: {
                   focusRingClass,
                 )}
               >
-                <span className="flex items-center justify-between font-mono text-[0.65rem] uppercase tracking-[0.14em] text-zinc-400">
-                  <span>{shortDate(game.date)}</span>
+                <span className="flex items-center justify-between text-sm text-zinc-400">
+                  <span>{formatGameDate(game.date)}</span>
                   <span>{game.home ? "Home" : "Away"}</span>
                 </span>
                 <span className="flex items-center gap-2">
@@ -80,7 +62,7 @@ export function RecentResultsPanel(props: {
                 <Link
                   href={`/dashboard/${props.saveId}/games/${game.gameId}/watch`}
                   className={cn(
-                    "mt-1 inline-flex min-h-11 items-center px-1 text-xs text-team-ink hover:underline underline-offset-4",
+                    "mt-1 inline-flex min-h-11 items-center px-1 text-sm text-team-ink hover:underline underline-offset-4",
                     focusRingClass,
                   )}
                 >

@@ -23,7 +23,7 @@ const STATS_LABELS: Record<StandingsStatsMode, string> = {
 
 function pillClass(active: boolean): string {
   return cn(
-    "rounded-full border px-3 py-1 text-xs",
+    "rounded-full border px-3 py-1 text-sm",
     active
       ? "border-team-ink text-team-ink"
       : "border-zinc-700 text-zinc-400 hover:border-zinc-500",
@@ -54,9 +54,7 @@ export function StandingsControls(props: {
         className="flex flex-wrap items-center gap-2"
         aria-label="Standings view"
       >
-        <span className="font-mono text-[0.65rem] uppercase tracking-[0.16em] text-zinc-500">
-          View
-        </span>
+        <span className="text-sm text-zinc-400">View</span>
         {viewModes.map((mode) => {
           const active = props.view === mode;
           return (
@@ -81,9 +79,7 @@ export function StandingsControls(props: {
         className="flex flex-wrap items-center gap-2"
         aria-label="Standings stats"
       >
-        <span className="font-mono text-[0.65rem] uppercase tracking-[0.16em] text-zinc-500">
-          Stats
-        </span>
+        <span className="text-sm text-zinc-400">Stats</span>
         {STANDINGS_STATS_MODES.map((mode) => {
           const active = props.stats === mode;
           return (
@@ -113,7 +109,7 @@ export function StandingsControls(props: {
             stats: DEFAULT_STANDINGS_STATS,
           })}
           className={cn(
-            "text-xs text-zinc-500 hover:text-team-ink",
+            "text-sm text-zinc-400 hover:text-team-ink",
             focusRingClass,
           )}
           data-testid="standings-reset"

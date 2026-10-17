@@ -14,6 +14,7 @@ import {
 import { parseCalendarDate } from "@/domain/calendar-date";
 import type { OwnerDashboardTeam } from "@/state/owner-dashboard";
 import type { RecentFormView } from "@/state/recent-form-selectors";
+import { formatGameDate } from "@/presentation/game-date";
 import { rankNumberLabel } from "@/presentation/rank-label";
 
 function formatLongDate(isoDate: string): string {
@@ -32,21 +33,6 @@ function formatLongDate(isoDate: string): string {
   }
 }
 
-function formatGameDate(isoDate: string): string {
-  try {
-    const { year, month, day } = parseCalendarDate(isoDate);
-    const utc = new Date(Date.UTC(year, month - 1, day, 12, 0, 0));
-    return utc.toLocaleDateString("en-US", {
-      weekday: "short",
-      month: "short",
-      day: "numeric",
-      timeZone: "UTC",
-    });
-  } catch {
-    return isoDate;
-  }
-}
-
 /** Last-five results, oldest to newest, as W/L dots. */
 function FormDots(props: { form: RecentFormView }) {
   if (props.form.games.length === 0) {
@@ -55,9 +41,7 @@ function FormDots(props: { form: RecentFormView }) {
   const oldestFirst = [...props.form.games].reverse();
   return (
     <p className="flex items-center gap-1.5">
-      <span className="font-mono text-[0.6rem] uppercase tracking-[0.18em] text-zinc-400">
-        Form
-      </span>
+      <span className="text-sm text-zinc-400">Form</span>
       <span
         className="flex gap-1"
         role="img"
@@ -71,7 +55,7 @@ function FormDots(props: { form: RecentFormView }) {
             key={game.gameId}
             aria-hidden
             className={cn(
-              "inline-flex h-5 w-5 items-center justify-center rounded-full font-mono text-[0.6rem] font-bold text-zinc-950",
+              "inline-flex h-5 w-5 items-center justify-center rounded-full text-xs font-bold text-zinc-950",
               game.won ? "bg-win" : "bg-loss",
             )}
           >
@@ -80,7 +64,7 @@ function FormDots(props: { form: RecentFormView }) {
         ))}
       </span>
       {props.form.streak ? (
-        <span className="font-mono text-xs text-zinc-300">
+        <span className="text-sm tabular-nums text-zinc-300">
           {props.form.streak}
         </span>
       ) : null}
@@ -131,12 +115,12 @@ export function MatchupBanner(props: {
       aria-labelledby="front-office-title"
     >
       <div className="enter-up flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-        <p className="font-mono text-[0.65rem] uppercase tracking-[0.2em] text-team-ink">
+        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-team-ink">
           Front Office
           <span className="mx-2 text-zinc-600">·</span>
           {props.seasonYear} {props.seasonPhaseLabel}
         </p>
-        <p className="text-xs text-zinc-300">
+        <p className="text-sm text-zinc-300">
           {formatLongDate(props.currentDate)}
           <span className="mx-2 text-zinc-600">·</span>
           {props.saveName} · {props.leagueName}
@@ -193,8 +177,8 @@ export function MatchupBanner(props: {
                 decorative
               />
               <div className="min-w-0">
-                <p className="font-mono text-[0.65rem] uppercase tracking-[0.2em] text-zinc-400">
-                  Next game · {formatGameDate(nextGame.date)}
+                <p className="text-sm text-zinc-400">
+                  Next game · {formatGameDate(nextGame.date, { weekday: true })}
                 </p>
                 <TeamEntityLink
                   saveId={saveId}
@@ -239,7 +223,7 @@ export function MatchupBanner(props: {
       </div>
 
       {team.rosterProblems.length > 0 ? (
-        <div className="rounded-lg border border-loss/40 bg-loss/10 px-3 py-2 text-xs text-rose-100">
+        <div className="rounded-lg border border-loss/40 bg-loss/10 px-3 py-2 text-sm text-rose-100">
           <p className="font-medium">Availability</p>
           <ul className="mt-1 space-y-0.5">
             {team.rosterProblems.slice(0, 3).map((problem) => (
@@ -291,7 +275,7 @@ export function MatchupBanner(props: {
         >
           Review rotation
         </Link>
-        <p className="text-xs text-zinc-400 sm:ml-auto sm:max-w-xs sm:text-end">
+        <p className="text-sm text-zinc-400 sm:ml-auto sm:max-w-xs sm:text-end">
           Advances until the next team game or a blocking decision.
         </p>
       </div>

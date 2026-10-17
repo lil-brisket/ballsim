@@ -1,5 +1,6 @@
 import { buttonClass } from "@/components/ui/Button";
 import Link from "next/link";
+import { SectionHeading } from "@/components/ui/SectionHeading";
 import type { PhaseDashboardView } from "@/state/phase-dashboard";
 
 export function AdvancePhaseDialog(props: {
@@ -20,12 +21,10 @@ export function AdvancePhaseDialog(props: {
       className="rounded-xl border border-zinc-600 bg-zinc-900/70 px-4 py-4"
       aria-label="Advance phase"
     >
-      <p className="font-mono text-xs uppercase tracking-[0.16em] text-zinc-500">
-        Advance
-      </p>
-      <h3 className="mt-1 text-base font-medium text-zinc-50">
-        Advance to {preview.toPhaseName}
-      </h3>
+      <SectionHeading
+        eyebrow="Advance"
+        title={`Advance to ${preview.toPhaseName}`}
+      />
       <ul className="mt-2 list-inside list-disc space-y-1 text-sm text-zinc-400">
         {preview.consequences.map((line) => (
           <li key={line}>{line}</li>

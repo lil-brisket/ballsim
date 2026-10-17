@@ -5,8 +5,10 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import type { CalendarPageMediaHighlight } from "@/application/game-service";
+import { SectionHeading } from "@/components/ui/SectionHeading";
 import { ScoreNumeral } from "@/components/ui/ScoreNumeral";
 import { focusRingClass } from "@/components/ui/styles";
+import { formatGameDate } from "@/presentation/game-date";
 import { parseGameResultHeadline } from "@/presentation/game-result-headline";
 
 export function SimulationSummaryModal(props: {
@@ -67,7 +69,7 @@ export function SimulationSummaryModal(props: {
 
   const rangeLabel =
     props.fromDate && props.toDate
-      ? `${props.fromDate} → ${props.toDate}`
+      ? `${formatGameDate(props.fromDate)} → ${formatGameDate(props.toDate)}`
       : props.daysAdvanced === 1
         ? "1 day advanced"
         : `${props.daysAdvanced} days advanced`;
@@ -104,15 +106,12 @@ export function SimulationSummaryModal(props: {
               "radial-gradient(ellipse 90% 140% at 0% 0%, rgb(var(--team-primary-rgb) / 0.4), transparent 70%)",
           }}
         >
-          <p className="font-mono text-[0.65rem] uppercase tracking-[0.2em] text-team-ink">
-            Simulation Complete
-          </p>
-          <h3
+          <SectionHeading
+            as="h3"
             id="simulation-summary-title"
-            className="mt-1 font-display text-3xl font-extrabold uppercase leading-none tracking-wide text-zinc-50"
-          >
-            {rangeLabel}
-          </h3>
+            eyebrow="Simulation complete"
+            title={rangeLabel}
+          />
           {props.highlightCount > 0 ? (
             <p className="mt-1 text-sm text-zinc-300">
               {props.highlightCount} highlight
@@ -124,7 +123,7 @@ export function SimulationSummaryModal(props: {
         <div className="max-h-[55dvh] min-h-0 flex-1 space-y-4 overflow-y-auto px-5 py-4">
           {props.teamLabel || props.record ? (
             <section className="space-y-3 rounded-xl border border-team-ink/30 bg-team/15 px-4 py-3">
-              <p className="font-mono text-[0.65rem] uppercase tracking-[0.16em] text-team-ink">
+              <p className="text-sm font-semibold text-team-ink">
                 Your Team{props.teamLabel ? ` — ${props.teamLabel}` : ""}
               </p>
               {props.record ? (
@@ -153,7 +152,7 @@ export function SimulationSummaryModal(props: {
               ) : null}
               {typeof props.transactionCount === "number" &&
               props.transactionCount > 0 ? (
-                <p className="text-xs text-zinc-300">
+                <p className="text-sm text-zinc-300">
                   {props.transactionCount} transaction
                   {props.transactionCount === 1 ? "" : "s"}
                 </p>
@@ -165,17 +164,15 @@ export function SimulationSummaryModal(props: {
           (typeof props.transactionCount === "number" &&
             props.transactionCount > 0) ? (
             <section className="space-y-2">
-              <p className="font-mono text-[0.65rem] uppercase tracking-[0.16em] text-zinc-400">
-                League
-              </p>
+              <p className="text-sm font-medium text-zinc-300">League</p>
               <ul className="space-y-1.5">
                 {props.leagueEvents?.slice(0, 5).map((event) => (
                   <li
                     key={`${event.date}-${event.headline}`}
                     className="rounded-md border border-surface-line px-3 py-2 text-sm text-zinc-300"
                   >
-                    <span className="font-mono text-xs text-zinc-500">
-                      {event.date}
+                    <span className="text-sm text-zinc-400">
+                      {formatGameDate(event.date)}
                     </span>
                     <p>{event.headline}</p>
                   </li>
@@ -186,9 +183,7 @@ export function SimulationSummaryModal(props: {
 
           {attention.length > 0 ? (
             <section className="space-y-2">
-              <p className="font-mono text-[0.65rem] uppercase tracking-[0.16em] text-warning">
-                Attention
-              </p>
+              <p className="text-sm font-semibold text-warning">Attention</p>
               <ul className="space-y-1.5">
                 {attention.slice(0, 6).map((item) => (
                   <li
@@ -210,9 +205,7 @@ export function SimulationSummaryModal(props: {
 
           {props.teamGames && props.teamGames.length > 0 ? (
             <section className="space-y-2">
-              <p className="font-mono text-[0.65rem] uppercase tracking-[0.16em] text-zinc-400">
-                Box scores
-              </p>
+              <p className="text-sm font-medium text-zinc-300">Box scores</p>
               <ul className="space-y-1.5">
                 {props.teamGames.map((game) => {
                   const parsed = parseGameResultHeadline(game.headline);
@@ -248,8 +241,8 @@ export function SimulationSummaryModal(props: {
                       key={`${game.date}-${game.gameId ?? game.headline}`}
                       className={`rounded-lg border border-l-4 border-surface-line bg-surface-raised px-3 py-2 text-sm text-zinc-100 ${tone}`}
                     >
-                      <span className="font-mono text-xs text-zinc-400">
-                        {game.date}
+                      <span className="text-sm text-zinc-400">
+                        {formatGameDate(game.date)}
                       </span>
                       {game.gameId && props.saveId ? (
                         <Link
@@ -270,17 +263,15 @@ export function SimulationSummaryModal(props: {
 
           {props.teamEvents && props.teamEvents.length > 0 ? (
             <section className="space-y-2">
-              <p className="font-mono text-[0.65rem] uppercase tracking-[0.16em] text-zinc-400">
-                Team events
-              </p>
+              <p className="text-sm font-medium text-zinc-300">Team events</p>
               <ul className="space-y-1.5">
                 {props.teamEvents.map((event) => (
                   <li
                     key={`${event.date}-${event.headline}`}
                     className="rounded-md border border-surface-line px-3 py-2 text-sm text-zinc-100"
                   >
-                    <span className="font-mono text-xs text-team-ink">
-                      {event.date}
+                    <span className="text-sm text-team-ink">
+                      {formatGameDate(event.date)}
                     </span>
                     <p>{event.headline}</p>
                   </li>
@@ -291,12 +282,14 @@ export function SimulationSummaryModal(props: {
 
           {grouped.length > 0 ? (
             <div className="space-y-3 opacity-80">
-              <p className="text-xs uppercase tracking-wide text-zinc-600">
+              <p className="text-sm font-medium text-zinc-400">
                 Media highlights
               </p>
               {grouped.map(([date, items]) => (
                 <section key={date} className="space-y-1.5">
-                  <h4 className="font-mono text-xs text-zinc-500">{date}</h4>
+                  <h4 className="text-sm text-zinc-400">
+                    {formatGameDate(date)}
+                  </h4>
                   <ul className="space-y-1.5">
                     {items.slice(0, 3).map((item, index) => (
                       <li

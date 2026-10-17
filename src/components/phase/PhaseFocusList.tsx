@@ -1,3 +1,4 @@
+import { SectionHeading } from "@/components/ui/SectionHeading";
 import { buttonClass } from "@/components/ui/Button";
 import Link from "next/link";
 import type { PhaseFocus, PhaseTask } from "@/state/phase-dashboard";
@@ -8,9 +9,7 @@ export function PhaseFocusList(props: { focus: PhaseFocus[] }) {
   }
   return (
     <section aria-label="Phase focus" className="space-y-2">
-      <p className="font-mono text-xs uppercase tracking-[0.16em] text-zinc-500">
-        Focus
-      </p>
+      <SectionHeading title="Focus" />
       <ul className="space-y-2">
         {props.focus.map((item) => (
           <li
@@ -18,7 +17,7 @@ export function PhaseFocusList(props: { focus: PhaseFocus[] }) {
             className="rounded-lg border border-zinc-700 bg-zinc-900/40 px-3 py-2"
           >
             <p className="text-sm font-medium text-zinc-100">{item.title}</p>
-            <p className="mt-0.5 text-xs text-zinc-400">{item.explanation}</p>
+            <p className="mt-0.5 text-sm text-zinc-400">{item.explanation}</p>
           </li>
         ))}
       </ul>
@@ -38,9 +37,7 @@ export function PhaseTaskList(props: {
 
   return (
     <section aria-label="Phase tasks" className="space-y-2">
-      <p className="font-mono text-xs uppercase tracking-[0.16em] text-zinc-500">
-        Tasks
-      </p>
+      <SectionHeading title="Tasks" />
       <ul className="space-y-2">
         {props.tasks.map((task) => (
           <li
@@ -52,7 +49,7 @@ export function PhaseTaskList(props: {
                 <p className="text-sm font-medium text-zinc-50">
                   <PriorityMark priority={task.priority} /> {task.title}
                 </p>
-                <p className="mt-1 text-xs text-zinc-400">{task.explanation}</p>
+                <p className="mt-1 text-sm text-zinc-400">{task.explanation}</p>
               </div>
               <div className="flex flex-wrap gap-2">
                 <Link

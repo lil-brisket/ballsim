@@ -1,3 +1,4 @@
+import { SectionHeading } from "@/components/ui/SectionHeading";
 import { buttonClass } from "@/components/ui/Button";
 import Link from "next/link";
 import type { PhaseDashboardView } from "@/state/phase-dashboard";
@@ -48,9 +49,7 @@ export function PhaseDashboard(props: {
         dismissAction={props.dismissAction}
       />
       <section aria-label="Optional shortcuts">
-        <p className="font-mono text-xs uppercase tracking-[0.16em] text-zinc-500">
-          Optional
-        </p>
+        <SectionHeading title="Optional" />
         <p className="mt-2 flex flex-wrap gap-2 text-sm text-zinc-400">
           {props.view.optionalLinks.map((link) => (
             <Link

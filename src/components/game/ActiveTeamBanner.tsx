@@ -37,7 +37,7 @@ export function ActiveTeamBanner(props: {
             {props.city} {props.name}
           </p>
           {props.actionLabel ? (
-            <p className="text-xs text-team-ink">{props.actionLabel}</p>
+            <p className="text-sm text-team-ink">{props.actionLabel}</p>
           ) : null}
         </div>
       </ArenaPanel>

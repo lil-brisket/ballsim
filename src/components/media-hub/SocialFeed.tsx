@@ -47,10 +47,10 @@ export function SocialFeed(props: {
             className="rounded-xl border border-zinc-800 bg-zinc-900/30 p-3"
             aria-label={headline ?? "Story reactions"}
           >
-            <p className="mb-2 font-mono text-[0.65rem] uppercase tracking-[0.14em] text-zinc-500">
+            <p className="mb-2 text-sm font-medium text-zinc-300">
               Reactions
               {headline ? (
-                <span className="ml-2 normal-case tracking-normal text-zinc-400">
+                <span className="ml-2 font-normal text-zinc-400">
                   ·{" "}
                   {props.mediaHrefBase ? (
                     <Link

@@ -1,3 +1,4 @@
+import { formatGameDate } from "@/presentation/game-date";
 import type { PhaseDashboardView } from "@/state/phase-dashboard";
 
 export function PhaseHeader(props: {
@@ -6,21 +7,20 @@ export function PhaseHeader(props: {
   seasonYear: number;
 }) {
   const { view, currentDate, seasonYear } = props;
-  const stage = view.resolved.stage.replaceAll("_", " ").toUpperCase();
+  const stage = view.resolved.stage.replaceAll("_", " ");
 
   return (
     <section
       className="rounded-xl border border-zinc-700 bg-zinc-900/60 px-4 py-4"
       aria-label="Current phase"
     >
-      <p className="font-mono text-xs uppercase tracking-[0.16em] text-team-ink">
-        {stage} · {seasonYear} · {currentDate}
+      <p className="text-xs font-semibold uppercase tracking-[0.16em] text-team-ink">
+        {stage} · {seasonYear} ·{" "}
+        {formatGameDate(currentDate, { weekday: true })}
       </p>
       <div className="mt-3 grid gap-3 sm:grid-cols-3">
         <div>
-          <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-zinc-500">
-            Now
-          </p>
+          <p className="text-sm text-zinc-400">Now</p>
           <h2 className="mt-0.5 text-lg font-medium text-zinc-50">
             {view.nowLabel}
           </h2>
@@ -29,22 +29,18 @@ export function PhaseHeader(props: {
           </p>
         </div>
         <div>
-          <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-zinc-500">
-            Next
-          </p>
+          <p className="text-sm text-zinc-400">Next</p>
           <p className="mt-0.5 text-base text-zinc-200">
             {view.nextLabel ?? "—"}
           </p>
-          <p className="mt-1 text-xs text-zinc-500">
+          <p className="mt-1 text-sm text-zinc-500">
             {view.showAdvanceControl
               ? "Begins when you advance"
               : "Advances with the league calendar"}
           </p>
         </div>
         <div>
-          <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-zinc-500">
-            Later
-          </p>
+          <p className="text-sm text-zinc-400">Later</p>
           <p className="mt-0.5 text-base text-zinc-200">
             {view.laterLabel ?? "—"}
           </p>

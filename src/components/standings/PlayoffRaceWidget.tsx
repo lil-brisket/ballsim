@@ -1,5 +1,6 @@
 import { TeamEntityLink } from "@/components/entity/TeamEntityLink";
 import { TeamIdentityInline } from "@/components/team/TeamIdentityInline";
+import { SectionHeading } from "@/components/ui/SectionHeading";
 import { cn, panelClass } from "@/components/ui/styles";
 import type { PlayoffRaceView } from "@/state/standings-selectors";
 
@@ -56,7 +57,7 @@ function RaceRow(props: {
           label={`${team.abbreviation} win percentage`}
         />
       </div>
-      <span className="shrink-0 font-mono text-xs text-zinc-400">
+      <span className="shrink-0 font-mono text-sm text-zinc-400">
         {team.wins}–{team.losses}
       </span>
     </li>
@@ -77,9 +78,7 @@ export function PlayoffRaceWidget(props: {
       aria-label="Playoff race"
       data-testid="playoff-race"
     >
-      <h2 className="mb-2 font-mono text-[0.65rem] uppercase tracking-[0.16em] text-zinc-500">
-        Playoff Race
-      </h2>
+      <SectionHeading className="mb-2" title="Playoff Race" />
       <ol className="m-0 list-none p-0">
         {props.view.above.map((team) => (
           <RaceRow key={team.teamId} saveId={props.saveId} team={team} />
@@ -92,9 +91,7 @@ export function PlayoffRaceWidget(props: {
         aria-label="Playoff cutoff"
       >
         <span className="h-px flex-1 bg-team-ink/60" />
-        <span className="font-mono text-[0.65rem] uppercase tracking-[0.16em] text-team-ink">
-          Playoff
-        </span>
+        <span className="text-sm font-medium text-team-ink">Playoff</span>
         <span className="h-px flex-1 bg-team-ink/60" />
       </div>
       <ol className="m-0 list-none p-0">

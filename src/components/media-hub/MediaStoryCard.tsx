@@ -1,3 +1,4 @@
+import { formatGameDate } from "@/presentation/game-date";
 import { PlayerEntityLink } from "@/components/entity/PlayerEntityLink";
 import { TeamEntityLink } from "@/components/entity/TeamEntityLink";
 import { GameResultLink } from "@/components/owner/GameResultLink";
@@ -109,18 +110,14 @@ export function MediaStoryCard(props: MediaStoryCardProps) {
         <div className="min-w-0 space-y-1">
           <div className="flex flex-wrap items-center gap-2">
             {featured ? (
-              <span className="font-mono text-[0.65rem] uppercase tracking-[0.14em] text-team-ink">
+              <span className="text-sm font-medium text-team-ink">
                 Featured
               </span>
             ) : null}
             <StatusBadge label={importance} tone={importanceTone(importance)} />
-            <span className="text-[11px] uppercase tracking-wide text-zinc-500">
-              {storyType}
-            </span>
+            <span className="text-sm text-zinc-500">{storyType}</span>
             {unread ? (
-              <span className="text-[11px] font-medium text-team-ink">
-                Unread
-              </span>
+              <span className="text-sm font-medium text-team-ink">Unread</span>
             ) : null}
           </div>
           <h3
@@ -159,7 +156,7 @@ export function MediaStoryCard(props: MediaStoryCardProps) {
             <input type="hidden" name="returnPath" value={returnPath} />
             <button
               type="submit"
-              className="text-xs text-team-ink underline-offset-4 hover:underline"
+              className="text-sm text-team-ink underline-offset-4 hover:underline"
             >
               Mark read
             </button>
@@ -168,7 +165,7 @@ export function MediaStoryCard(props: MediaStoryCardProps) {
       </div>
 
       {(teams.length > 0 || players.length > 0) && (
-        <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-xs text-zinc-500">
+        <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-sm text-zinc-500">
           {teams.map((team) => (
             <TeamEntityLink
               key={team.id}
@@ -192,8 +189,8 @@ export function MediaStoryCard(props: MediaStoryCardProps) {
         </div>
       )}
 
-      <div className="mt-2 flex flex-wrap items-center gap-3 font-mono text-xs text-zinc-600">
-        <span>{occurredOn}</span>
+      <div className="mt-2 flex flex-wrap items-center gap-3 text-sm text-zinc-500">
+        <span>{formatGameDate(occurredOn)}</span>
         {reactionCount != null && reactionCount > 0 ? (
           <span>
             {reactionCount} reaction{reactionCount === 1 ? "" : "s"}

@@ -22,7 +22,6 @@ export function CoachingPageView(props: {
     <>
       <PageHeader
         title="Coaching"
-        subtitle="Team play style that feeds the simulation engine"
         actions={
           coaching.activePreset === "custom" ? (
             <StatusBadge label="Customized" tone="warning" />
@@ -64,7 +63,7 @@ export function CoachingPageView(props: {
           <input type="hidden" name="saveId" value={saveId} />
           <input type="hidden" name="teamId" value={coaching.teamId} />
           <input type="hidden" name="returnPath" value={returnPath} />
-          <label className="flex flex-col gap-1 text-xs text-zinc-500">
+          <label className="flex flex-col gap-1 text-sm text-zinc-500">
             Pace
             <Select
               name="pace"
@@ -76,7 +75,7 @@ export function CoachingPageView(props: {
               <option value="halfCourt">Half court</option>
             </Select>
           </label>
-          <label className="flex flex-col gap-1 text-xs text-zinc-500">
+          <label className="flex flex-col gap-1 text-sm text-zinc-500">
             Offensive emphasis
             <Select
               name="offensiveEmphasis"
@@ -88,7 +87,7 @@ export function CoachingPageView(props: {
               <option value="inside">Inside</option>
             </Select>
           </label>
-          <label className="flex flex-col gap-1 text-xs text-zinc-500">
+          <label className="flex flex-col gap-1 text-sm text-zinc-500">
             Defensive approach
             <Select
               name="defensiveApproach"
@@ -101,7 +100,7 @@ export function CoachingPageView(props: {
             </Select>
           </label>
           <div className="sm:col-span-3">
-            <p className="mb-2 text-xs text-zinc-500">
+            <p className="mb-2 text-sm text-zinc-500">
               Rotation style:{" "}
               <span className="text-zinc-300">{coaching.rotationStyle}</span>{" "}
               (owned by roster management; change via presets)

@@ -39,15 +39,15 @@ export function ResponsibilityCard({
           </span>
         ) : null}
       </div>
-      <p className="text-xs leading-relaxed text-zinc-400">
+      <p className="text-sm leading-relaxed text-zinc-400">
         {meta.description}
       </p>
       {delegated ? (
-        <span className="mt-1 text-[10px] font-semibold uppercase tracking-wider text-zinc-500/90">
+        <span className="mt-1 text-sm font-medium text-zinc-300">
           AI handles
         </span>
       ) : (
-        <span className="mt-1 text-[10px] font-semibold uppercase tracking-wider text-zinc-600">
+        <span className="mt-1 text-sm font-medium text-zinc-300">
           You handle
         </span>
       )}

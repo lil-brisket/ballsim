@@ -26,7 +26,7 @@ export function FacilitiesSummarySection(props: {
         </span>
       }
     >
-      <ul className="mt-3 grid grid-cols-2 gap-x-3 gap-y-1 text-xs text-zinc-400">
+      <ul className="mt-3 grid grid-cols-2 gap-x-3 gap-y-1 text-sm text-zinc-400">
         {summary.levels.map((row) => (
           <li key={row.category} className="flex justify-between gap-2">
             <span className="capitalize">{row.category}</span>
@@ -39,7 +39,7 @@ export function FacilitiesSummarySection(props: {
           </li>
         ))}
       </ul>
-      <p className="mt-3 text-xs text-zinc-500">
+      <p className="mt-3 text-sm text-zinc-500">
         Weekly facility OPEX <MoneyDisplay amount={summary.weeklyOpex} />
       </p>
     </ActionCard>

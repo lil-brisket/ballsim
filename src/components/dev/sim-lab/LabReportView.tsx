@@ -7,6 +7,7 @@ import type {
 } from "@/simulation/validation/types";
 import type { LabFailure, LabReport } from "@/simulation/lab/types";
 import { formatFixed, formatPct } from "@/components/dev/sim-lab/format";
+import { SectionHeading } from "@/components/ui/SectionHeading";
 
 function verdictTone(verdict: ValidationVerdict): string {
   if (verdict === "PASS") {
@@ -21,7 +22,7 @@ function verdictTone(verdict: ValidationVerdict): string {
 function FailureList(props: { title: string; items: LabFailure[] }) {
   return (
     <div className={panelClass + " p-4"}>
-      <h3 className="text-sm font-medium text-zinc-200">{props.title}</h3>
+      <SectionHeading as="h3" title={props.title} />
       {props.items.length === 0 ? (
         <p className="mt-2 text-sm text-zinc-500">None</p>
       ) : (
@@ -35,7 +36,7 @@ function FailureList(props: { title: string; items: LabFailure[] }) {
                 {item.rule} [{item.scope}]
               </p>
               <p className="mt-1 text-zinc-300">{item.detail}</p>
-              <p className="mt-1 font-mono text-xs text-zinc-500">
+              <p className="mt-1 font-mono text-sm text-zinc-500">
                 {item.reproCommand}
               </p>
             </li>
@@ -51,7 +52,7 @@ function StatCheckRow(props: { check: CheckResult }) {
     <li className="flex items-start justify-between gap-3 border-b border-zinc-800 py-2 last:border-b-0">
       <div>
         <p className="text-sm text-zinc-200">{props.check.name}</p>
-        <p className="mt-0.5 text-xs text-zinc-500">{props.check.message}</p>
+        <p className="mt-0.5 text-sm text-zinc-500">{props.check.message}</p>
       </div>
       <StatusBadge
         label={props.check.verdict}
@@ -117,16 +118,14 @@ export function LabReportView(props: {
         </div>
       ) : null}
 
-      <p className="font-mono text-xs text-zinc-500">
+      <p className="font-mono text-sm text-zinc-500">
         checksum={props.report.checksum} · nightly=
         {props.channelExitNightly === 0 ? "pass" : "fail"} ·{" "}
         {props.report.reproCommand}
       </p>
 
       <div className={panelClass + " p-4"}>
-        <h3 className="text-sm font-medium text-zinc-200">
-          Statistical checks
-        </h3>
+        <SectionHeading as="h3" title="Statistical checks" />
         {props.report.statChecks.length === 0 ? (
           <p className="mt-2 text-sm text-zinc-500">None (low game count)</p>
         ) : (

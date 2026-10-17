@@ -52,7 +52,7 @@ export function LeagueHeader(props: {
             <span className="mx-2 text-zinc-600">·</span>
             {props.seasonYear} · {props.seasonPhaseLabel}
           </p>
-          <p className="text-xs text-zinc-400">
+          <p className="text-sm text-zinc-400">
             Your team · {props.userTeamLabel}
           </p>
         </div>
@@ -118,7 +118,7 @@ export function MyTeamContextStrip(props: {
     >
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div className="min-w-0">
-          <p className="font-mono text-[0.65rem] uppercase tracking-[0.16em] text-team-ink">
+          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-team-ink">
             Your Team
           </p>
           <p

@@ -54,7 +54,7 @@ function MomentBody(props: { moment: KeyMoment }) {
       <span className="mt-1 block text-sm font-semibold text-zinc-100">
         {moment.title}
       </span>
-      <span className="block text-xs text-zinc-400">{moment.detail}</span>
+      <span className="block text-sm text-zinc-400">{moment.detail}</span>
     </>
   );
 }

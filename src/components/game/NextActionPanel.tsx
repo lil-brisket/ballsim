@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { formatGameDate } from "@/presentation/game-date";
+import { SectionHeading } from "@/components/ui/SectionHeading";
 import { cn, focusRingClass } from "@/components/ui/styles";
 import { TeamLogoMark } from "@/components/team/logos/TeamLogoMark";
 import type { DashboardSnapshot } from "@/state/selectors";
@@ -48,7 +50,7 @@ export function resolveNextActionPresentation(
   if (nextGame) {
     return {
       title: "Advance time",
-      description: `Next game ${nextGame.home ? "vs" : "@"} ${nextGame.opponentAbbreviation} on ${nextGame.date}. Use Advance day or Advance 7 days when ready.`,
+      description: `Next game ${nextGame.home ? "vs" : "@"} ${nextGame.opponentAbbreviation} on ${formatGameDate(nextGame.date, { weekday: true })}. Use Advance day or Advance 7 days when ready.`,
       opponentBranding: nextGame.opponentBranding,
     };
   }
@@ -67,10 +69,7 @@ export function NextActionPanel(props: { action: NextActionPresentation }) {
       className="rounded-xl border border-warning/40 bg-warning/10 px-4 py-4"
       aria-label="Suggested next action"
     >
-      <p className="font-mono text-xs uppercase tracking-[0.16em] text-warning">
-        Next
-      </p>
-      <h2 className="mt-1 text-lg font-medium text-zinc-50">{action.title}</h2>
+      <SectionHeading eyebrow="Next" title={action.title} />
       <p className="mt-1 flex flex-wrap items-center gap-2 text-sm text-zinc-300">
         {action.opponentBranding ? (
           <span

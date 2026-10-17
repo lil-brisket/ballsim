@@ -131,7 +131,7 @@ export function PlayerPoolTable(props: {
           <option value="height">Height</option>
           <option value="name">Name</option>
         </Select>
-        <label className="flex items-center gap-1.5 text-xs text-zinc-400">
+        <label className="flex items-center gap-1.5 text-sm text-zinc-400">
           <input
             type="checkbox"
             checked={availableOnly}
@@ -142,7 +142,7 @@ export function PlayerPoolTable(props: {
           />
           Available only
         </label>
-        <label className="flex items-center gap-1.5 text-xs text-zinc-400">
+        <label className="flex items-center gap-1.5 text-sm text-zinc-400">
           <input
             type="checkbox"
             checked={myQueueOnly}
@@ -196,7 +196,7 @@ export function PlayerPoolTable(props: {
                     </button>
                   </span>
                   {player.isDrafted ? (
-                    <div className="text-[10px] text-zinc-500">
+                    <div className="text-sm text-zinc-500">
                       {player.draftedByAbbreviation}
                       {player.pickNumber != null
                         ? ` · #${player.pickNumber}`
@@ -225,7 +225,7 @@ export function PlayerPoolTable(props: {
                           potential: player.potential,
                         })
                       }
-                      className="rounded bg-team px-2 py-1 text-xs text-on-team disabled:opacity-50"
+                      className="rounded bg-team px-2 py-1 text-sm text-on-team disabled:opacity-50"
                     >
                       Draft
                     </button>
@@ -237,7 +237,7 @@ export function PlayerPoolTable(props: {
         </table>
       </div>
 
-      <div className="mt-3 flex items-center justify-between text-xs text-zinc-500">
+      <div className="mt-3 flex items-center justify-between text-sm text-zinc-500">
         <span>
           Showing {pageRows.length} of {filtered.length} players
         </span>

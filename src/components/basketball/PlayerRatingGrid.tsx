@@ -46,7 +46,7 @@ export function PlayerRatingGrid(props: { attributes: PlayerAttributes }) {
                   focusRingClass,
                 )}
               >
-                <span className="truncate font-mono text-[0.65rem] uppercase tracking-[0.14em] text-zinc-400">
+                <span className="truncate text-sm text-zinc-400">
                   {category.label}
                 </span>
                 <span className="font-display text-4xl font-extrabold leading-none tabular-nums text-tier">
@@ -70,7 +70,7 @@ export function PlayerRatingGrid(props: { attributes: PlayerAttributes }) {
       <div id={panelId} aria-live="polite">
         {open ? (
           <div className="rounded-lg border border-surface-line bg-surface-deep/60 p-3">
-            <p className="mb-2 font-mono text-[0.65rem] uppercase tracking-[0.18em] text-zinc-500">
+            <p className="mb-2 text-sm font-medium text-zinc-300">
               {open.label} breakdown
             </p>
             <RatingBars

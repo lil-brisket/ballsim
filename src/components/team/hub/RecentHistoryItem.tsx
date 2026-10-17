@@ -1,4 +1,5 @@
 import { GameRow } from "@/components/basketball/GameRow";
+import { formatGameDate } from "@/presentation/game-date";
 import type { TeamRecentHistoryItem } from "@/state/team-recent-history-selectors";
 
 export function RecentHistoryItem(props: {
@@ -31,12 +32,12 @@ export function RecentHistoryItem(props: {
 
   return (
     <li className="rounded-lg border border-zinc-800 px-3 py-2 text-sm">
-      <p className="font-mono text-[0.65rem] uppercase text-zinc-500">
-        {item.occurredOn} · {item.categoryLabel}
+      <p className="text-sm text-zinc-500">
+        {formatGameDate(item.occurredOn)} · {item.categoryLabel}
       </p>
       <p className="mt-0.5 min-w-0 truncate text-zinc-200">{item.title}</p>
       {item.description ? (
-        <p className="mt-0.5 text-xs text-zinc-500">{item.description}</p>
+        <p className="mt-0.5 text-sm text-zinc-500">{item.description}</p>
       ) : null}
     </li>
   );

@@ -79,13 +79,13 @@ export function RadioCardGroup<T extends string>({
                 >
                   {option.title}
                 </span>
-                <span id={descId} className="mt-1 block text-xs text-zinc-400">
+                <span id={descId} className="mt-1 block text-sm text-zinc-400">
                   {option.description}
                 </span>
                 {option.meta ? (
                   <span
                     className={cn(
-                      "mt-2 block text-xs font-medium",
+                      "mt-2 block text-sm font-medium",
                       option.disabled ? "text-zinc-400" : "text-team-ink",
                     )}
                   >

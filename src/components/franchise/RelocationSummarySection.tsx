@@ -1,3 +1,4 @@
+import { SectionHeading } from "@/components/ui/SectionHeading";
 import { ActionCard } from "@/components/ui/ActionCard";
 import { Panel } from "@/components/ui/Panel";
 import { StatusBadge } from "@/components/ui/StatusBadge";
@@ -20,8 +21,8 @@ export function RelocationSummarySection(props: {
   const { summary } = props;
   const body = (
     <>
-      <p className="mt-3 text-xs text-zinc-400">{STATE_COPY[summary.state]}</p>
-      <ul className="mt-3 space-y-1 text-xs text-zinc-400">
+      <p className="mt-3 text-sm text-zinc-400">{STATE_COPY[summary.state]}</p>
+      <ul className="mt-3 space-y-1 text-sm text-zinc-400">
         <li className="flex justify-between gap-2">
           <span>Market size</span>
           <span className="text-zinc-200">{summary.marketSize}</span>
@@ -41,7 +42,7 @@ export function RelocationSummarySection(props: {
         ) : null}
       </ul>
       {summary.primaryDriver ? (
-        <p className="mt-3 text-xs text-zinc-500">{summary.primaryDriver}</p>
+        <p className="mt-3 text-sm text-zinc-500">{summary.primaryDriver}</p>
       ) : null}
     </>
   );
@@ -81,7 +82,7 @@ export function RelocationSummarySection(props: {
   return (
     <Panel>
       {badge}
-      <h3 className="mt-2 text-sm font-medium text-zinc-100">Relocation</h3>
+      <SectionHeading as="h3" title="Relocation" className="mt-2" />
       {body}
     </Panel>
   );

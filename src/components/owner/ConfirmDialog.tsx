@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/Button";
 import { useState } from "react";
 import { Overlay } from "@/components/ui/Overlay";
 import { focusRingClass, cn, linkClass } from "@/components/ui/styles";
+import { SectionHeading } from "@/components/ui/SectionHeading";
 
 /**
  * Presentation-only confirmation. Mutation must happen via form/server action
@@ -22,7 +23,7 @@ export function ConfirmDialog(props: {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className={cn(linkClass, "text-xs", focusRingClass)}
+        className={cn(linkClass, "text-sm", focusRingClass)}
       >
         {props.confirmLabel ?? "Confirm"}
       </button>
@@ -38,12 +39,11 @@ export function ConfirmDialog(props: {
             className="relative z-10 w-full max-w-md rounded-xl border border-zinc-700 bg-zinc-900 p-5 shadow-xl"
             onClick={(event) => event.stopPropagation()}
           >
-            <h3
+            <SectionHeading
+              as="h3"
               id="confirm-dialog-title"
-              className="text-lg font-medium text-zinc-50"
-            >
-              {props.title}
-            </h3>
+              title={props.title}
+            />
             <p className="mt-2 text-sm text-zinc-400">{props.description}</p>
             <div className="mt-5 flex justify-end gap-2">
               <Button variant="secondary" onClick={() => setOpen(false)}>

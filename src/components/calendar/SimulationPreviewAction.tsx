@@ -36,11 +36,11 @@ export function SimulationPreviewAction(props: {
         {busy ? "Simulating…" : "Simulate to date"}
       </button>
       {props.disabled ? (
-        <p className="text-xs text-warning">
+        <p className="text-sm text-warning">
           Time advance is blocked until pending decisions are resolved.
         </p>
       ) : (
-        <p className="text-xs text-zinc-500">
+        <p className="text-sm text-zinc-500">
           Simulates all games through this date, including yours. CPU games use
           a fast box-score path.
         </p>

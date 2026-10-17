@@ -1,5 +1,6 @@
 "use client";
 
+import { SectionHeading } from "@/components/ui/SectionHeading";
 import type { RotationView } from "@/state/team-management-selectors";
 
 export function RotationHealth(props: {
@@ -37,9 +38,7 @@ export function RotationHealth(props: {
 
   return (
     <section className="space-y-3">
-      <h2 className="text-sm font-semibold uppercase tracking-wide text-zinc-400">
-        Rotation Health
-      </h2>
+      <SectionHeading title="Rotation Health" />
       {props.rotation.feasibilityBanner ? (
         <div className="rounded-lg border border-rose-700 bg-rose-950/40 px-4 py-3 text-sm text-rose-200">
           {props.rotation.feasibilityBanner}
@@ -56,14 +55,14 @@ export function RotationHealth(props: {
       >
         <div className="flex flex-wrap items-baseline justify-between gap-2">
           <p className="text-sm font-medium text-zinc-100">{overviewLine}</p>
-          <p className="text-xs text-zinc-400">{availabilitySummary}</p>
+          <p className="text-sm text-zinc-400">{availabilitySummary}</p>
         </div>
-        <p className="mt-1 text-xs text-zinc-500">
+        <p className="mt-1 text-sm text-zinc-500">
           Draft minutes: {props.localTotalMinutes} / {props.rotation.target} ·{" "}
           {props.localMeaningfulCount} with minutes
         </p>
         {healthIssues.length > 0 ? (
-          <ul className="mt-2 space-y-1 text-xs">
+          <ul className="mt-2 space-y-1 text-sm">
             {healthIssues.map((issue) => (
               <li
                 key={`${issue.code}-${issue.message}`}
@@ -76,12 +75,12 @@ export function RotationHealth(props: {
             ))}
           </ul>
         ) : (
-          <p className="mt-2 text-xs text-emerald-400">
+          <p className="mt-2 text-sm text-emerald-400">
             Rotation looks healthy.
           </p>
         )}
         {health?.workloadWarnings && health.workloadWarnings.length > 0 ? (
-          <ul className="mt-2 space-y-1 text-xs text-orange-300">
+          <ul className="mt-2 space-y-1 text-sm text-orange-300">
             {health.workloadWarnings.map((warning) => (
               <li key={warning.playerId}>
                 ⚠️ {warning.playerName}: {warning.reason}

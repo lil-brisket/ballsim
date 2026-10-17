@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { formatGameDate } from "@/presentation/game-date";
 import { notFound } from "next/navigation";
 import { getRequestSaveStore } from "@/application/request-save-store";
 import { PageHeader } from "@/components/ui/PageHeader";
@@ -29,7 +30,7 @@ export default async function AllStarPage({ params }: PageProps) {
         title="All-Star"
         subtitle={
           hub.eventDate
-            ? `Event date ${hub.eventDate} · ${hub.status}`
+            ? `${formatGameDate(hub.eventDate, { weekday: true })} · ${hub.status}`
             : "All-Star event not scheduled"
         }
       />
@@ -72,7 +73,7 @@ function SelectionList(props: {
               {row.playerName}
             </PlayerEntityLink>
             {row.teamId && row.teamName ? (
-              <div className="text-xs text-zinc-500">
+              <div className="text-sm text-zinc-500">
                 <TeamEntityLink saveId={props.saveId} teamId={row.teamId}>
                   {row.teamName}
                 </TeamEntityLink>

@@ -1,5 +1,6 @@
 "use client";
 
+import { SectionHeading } from "@/components/ui/SectionHeading";
 import { buttonClass } from "@/components/ui/Button";
 import Link from "next/link";
 import { parseCalendarDate } from "@/domain/calendar-date";
@@ -63,12 +64,7 @@ export function SimulationPausedBanner(props: {
       className="space-y-4 rounded-xl border border-warning/50 border-l-4 border-l-warning bg-warning/10 px-4 py-4"
     >
       <div>
-        <p className="font-mono text-[0.65rem] uppercase tracking-[0.16em] text-warning">
-          Simulation Paused
-        </p>
-        <h2 className="mt-1 font-display text-2xl font-bold uppercase tracking-wide text-zinc-50">
-          {longDate}
-        </h2>
+        <SectionHeading eyebrow="Simulation paused" title={longDate} />
         {reasons.length > 1 ? (
           <p className="mt-1 text-sm text-zinc-200/90">
             {reasons.length} items need your attention
@@ -84,12 +80,12 @@ export function SimulationPausedBanner(props: {
           >
             <p className="text-sm font-medium text-zinc-50">{item.title}</p>
             {item.detail ? (
-              <p className="mt-0.5 text-xs text-zinc-200/80">{item.detail}</p>
+              <p className="mt-0.5 text-sm text-zinc-200/80">{item.detail}</p>
             ) : null}
             {item.href ? (
               <Link
                 href={item.href}
-                className="mt-2 inline-block text-xs font-medium text-team-ink hover:underline"
+                className="mt-2 inline-block text-sm font-medium text-team-ink hover:underline"
               >
                 {item.hrefLabel ?? "Review"} →
               </Link>

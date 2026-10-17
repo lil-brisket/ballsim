@@ -4,6 +4,7 @@ import { useState } from "react";
 import type { FantasyDraftView } from "@/state/selectors";
 import { cn, linkClass } from "@/components/ui/styles";
 import { buttonClass } from "@/components/ui/Button";
+import { SectionHeading } from "@/components/ui/SectionHeading";
 
 export function DraftHistoryPanel(props: { draft: FantasyDraftView }) {
   const [showAll, setShowAll] = useState(false);
@@ -12,18 +13,19 @@ export function DraftHistoryPanel(props: { draft: FantasyDraftView }) {
   return (
     <>
       <section className="rounded-xl border border-zinc-800 p-4">
-        <div className="mb-2 flex items-center justify-between gap-2">
-          <h2 className="text-sm font-semibold uppercase text-zinc-400">
-            Recent picks
-          </h2>
-          <button
-            type="button"
-            onClick={() => setShowAll(true)}
-            className={cn(linkClass, "text-xs")}
-          >
-            View all
-          </button>
-        </div>
+        <SectionHeading
+          title="Recent picks"
+          className="mb-2"
+          action={
+            <button
+              type="button"
+              onClick={() => setShowAll(true)}
+              className={cn(linkClass, "text-sm")}
+            >
+              View all
+            </button>
+          }
+        />
         <ul className="space-y-1 text-sm">
           {recent.length === 0 ? (
             <li className="text-zinc-500">No picks yet</li>
@@ -47,7 +49,7 @@ export function DraftHistoryPanel(props: { draft: FantasyDraftView }) {
             className="flex max-h-[85vh] w-full max-w-2xl flex-col rounded-xl border border-zinc-700 bg-zinc-900"
           >
             <div className="flex items-center justify-between border-b border-zinc-800 px-4 py-3">
-              <h3 className="font-semibold text-zinc-50">Draft history</h3>
+              <SectionHeading as="h3" title="Draft history" />
               <button
                 type="button"
                 onClick={() => setShowAll(false)}

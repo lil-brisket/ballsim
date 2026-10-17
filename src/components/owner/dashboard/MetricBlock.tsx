@@ -23,14 +23,12 @@ export function MetricBlock(props: {
       density="compact"
       className={props.emphasize ? "sm:col-span-2 lg:col-span-1" : undefined}
     >
-      <p className="font-mono text-[0.65rem] uppercase tracking-[0.16em] text-zinc-400">
-        {props.label}
-      </p>
+      <p className="text-sm text-zinc-400">{props.label}</p>
       <div className="mt-1.5 font-display text-3xl font-bold tabular-nums text-zinc-50">
         {props.value}
       </div>
       {props.context ? (
-        <p className={`mt-1 text-xs ${directionClass}`}>{props.context}</p>
+        <p className={`mt-1 text-sm ${directionClass}`}>{props.context}</p>
       ) : null}
     </ArenaPanel>
   );

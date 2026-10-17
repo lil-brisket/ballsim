@@ -6,6 +6,7 @@ import { ScheduleLabPanel } from "@/components/dev/sim-lab/ScheduleLabPanel";
 import { SeasonLabPanel } from "@/components/dev/sim-lab/SeasonLabPanel";
 import type { SimLabPageConfig } from "@/components/dev/sim-lab/config";
 import { Tabs } from "@/components/ui/Tabs";
+import { SectionHeading } from "@/components/ui/SectionHeading";
 
 type LabTab = "games" | "seasons" | "schedule";
 
@@ -20,9 +21,7 @@ export function SimLabWorkspace(props: { config: SimLabPageConfig }) {
 
   return (
     <main className="mx-auto min-h-screen w-full max-w-6xl px-6 py-8 text-zinc-100">
-      <h1 className="text-2xl font-semibold tracking-tight text-zinc-500">
-        Simulation Lab
-      </h1>
+      <SectionHeading as="h1" size="lg" title="Simulation Lab" />
       <p className="mt-2 max-w-3xl text-sm text-zinc-400">
         Dev-only QA for production simulateGame and advanceSimulation. Not
         linked from Owner Mode navigation. Multi-season and 82-game schedule

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { SectionHeading } from "@/components/ui/SectionHeading";
 
 export default function GlobalSettingsPage() {
   return (
@@ -10,9 +11,7 @@ export default function GlobalSettingsPage() {
         >
           ← Home
         </Link>
-        <h1 className="text-3xl font-semibold tracking-tight text-zinc-50">
-          Settings
-        </h1>
+        <SectionHeading as="h1" size="lg" title="Settings" />
         <p className="text-zinc-400">
           League and simulation settings are stored with each save. Open a
           franchise and use in-game Settings to review them.

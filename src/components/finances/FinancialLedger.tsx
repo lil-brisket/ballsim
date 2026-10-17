@@ -16,7 +16,7 @@ export function FinancialLedger(props: { entries: EventLogEntryView[] }) {
         >
           <div className="min-w-0">
             <p className="truncate">{entry.description}</p>
-            <p className="text-xs text-zinc-500">
+            <p className="text-sm text-zinc-500">
               {entry.type} · {entry.occurredOn}
             </p>
           </div>
@@ -43,7 +43,7 @@ export function FinancialTrend(props: { points: FinanceTrendPoint[] }) {
     <ul className="space-y-3">
       {props.points.map((p) => (
         <li key={p.monthKey}>
-          <div className="mb-1 flex justify-between text-xs text-zinc-400">
+          <div className="mb-1 flex justify-between text-sm text-zinc-400">
             <span>{p.monthKey}</span>
             <span>
               Net <MoneyDisplay amount={p.net} />
@@ -67,7 +67,7 @@ function Bar(props: {
 }) {
   const pct = Math.min(100, Math.round((props.value / props.max) * 100));
   return (
-    <div className="flex items-center gap-2 text-xs">
+    <div className="flex items-center gap-2 text-sm">
       <span className="w-8 text-zinc-500">{props.label}</span>
       <div className="h-1.5 flex-1 rounded bg-zinc-900">
         <div

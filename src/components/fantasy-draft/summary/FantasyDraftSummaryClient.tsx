@@ -5,6 +5,7 @@ import { continueAfterFantasyDraftAction } from "@/application/actions";
 import type { FantasyDraftSummaryView } from "@/state/selectors";
 import type { FantasyDraftTeamSummary } from "@/domain/entities/fantasy-draft";
 import { buttonClass } from "@/components/ui/Button";
+import { SectionHeading } from "@/components/ui/SectionHeading";
 import { Tabs } from "@/components/ui/Tabs";
 
 function Stars(props: { count: number }) {
@@ -52,9 +53,7 @@ function HighlightCard(props: {
   }
   return (
     <div className="rounded-lg border border-zinc-800 p-3 text-sm">
-      <div className="text-[10px] uppercase tracking-wide text-zinc-500">
-        {props.title}
-      </div>
+      <div className="text-sm text-zinc-400">{props.title}</div>
       <div className="mt-1 font-medium text-zinc-100">
         {props.pick.playerName} — Pick #{props.pick.pickNumber}
       </div>
@@ -75,13 +74,11 @@ function TeamSummaryPanel(props: {
   return (
     <div className="space-y-6">
       <header>
-        <h2 className="text-2xl font-semibold text-zinc-50">{teamName}</h2>
+        <SectionHeading title={teamName} size="lg" />
         <p className="mt-1 text-sm text-zinc-400">Fantasy Draft Complete</p>
         <div className="mt-3 flex flex-wrap items-end gap-4">
           <div>
-            <div className="text-[10px] uppercase text-zinc-500">
-              Draft Grade
-            </div>
+            <div className="text-sm text-zinc-400">Draft Grade</div>
             <div className="text-4xl font-bold text-team-ink">
               {summary.draftGrade}
             </div>
@@ -97,9 +94,7 @@ function TeamSummaryPanel(props: {
       </header>
 
       <section className="rounded-xl border border-zinc-800 p-4">
-        <h3 className="text-sm font-semibold uppercase text-zinc-400">
-          Draft Verdict
-        </h3>
+        <SectionHeading as="h3" title="Draft Verdict" />
         <p className="mt-2 text-sm leading-relaxed text-zinc-300">
           {summary.draftVerdict}
         </p>
@@ -113,9 +108,7 @@ function TeamSummaryPanel(props: {
 
       <div className="grid gap-4 sm:grid-cols-2">
         <section className="rounded-xl border border-zinc-800 p-4">
-          <h3 className="text-sm font-semibold uppercase text-zinc-400">
-            Strengths
-          </h3>
+          <SectionHeading as="h3" title="Strengths" />
           <ul className="mt-2 space-y-1 text-sm text-emerald-300/90">
             {summary.strengths.length === 0 ? (
               <li className="text-zinc-500">—</li>
@@ -125,9 +118,7 @@ function TeamSummaryPanel(props: {
           </ul>
         </section>
         <section className="rounded-xl border border-zinc-800 p-4">
-          <h3 className="text-sm font-semibold uppercase text-zinc-400">
-            Concerns
-          </h3>
+          <SectionHeading as="h3" title="Concerns" />
           <ul className="mt-2 space-y-1 text-sm text-zinc-400">
             {summary.concerns.length === 0 ? (
               <li className="text-zinc-500">—</li>
@@ -139,27 +130,21 @@ function TeamSummaryPanel(props: {
       </div>
 
       <section className="rounded-xl border border-zinc-800 p-4">
-        <h3 className="text-sm font-semibold uppercase text-zinc-400">
-          Team Outlook
-        </h3>
+        <SectionHeading as="h3" title="Team Outlook" />
         <p className="mt-2 text-sm text-zinc-300">
           {summary.teamOutlook.narrative}
         </p>
-        <p className="mt-1 text-xs text-zinc-500">
+        <p className="mt-1 text-sm text-zinc-500">
           Short term: {summary.teamOutlook.shortTerm} · Long term:{" "}
           {summary.teamOutlook.longTerm}
         </p>
         <div className="mt-4 space-y-2">
-          <h4 className="text-xs font-semibold uppercase text-zinc-500">
-            Roster Balance
-          </h4>
+          <h4 className="text-sm font-medium text-zinc-300">Roster Balance</h4>
           {summary.positionBalance.map((row) => (
             <div key={row.position} className="flex items-center gap-3 text-sm">
-              <span className="w-8 font-mono text-zinc-300">
-                {row.position}
-              </span>
+              <span className="w-8 text-zinc-300">{row.position}</span>
               <BalanceBar level={row.level} />
-              <span className="w-28 text-right text-xs text-zinc-400">
+              <span className="w-28 text-right text-sm text-zinc-400">
                 {row.level}
               </span>
             </div>
@@ -168,9 +153,7 @@ function TeamSummaryPanel(props: {
       </section>
 
       <section className="rounded-xl border border-zinc-800 p-4">
-        <h3 className="text-sm font-semibold uppercase text-zinc-400">
-          Draft Value
-        </h3>
+        <SectionHeading as="h3" title="Draft Value" />
         <p className="mt-2 text-sm text-zinc-300">
           {summary.strongValuePickCount} of {summary.playerCount} picks were
           rated as strong value selections.
@@ -186,9 +169,7 @@ function TeamSummaryPanel(props: {
       </section>
 
       <section className="rounded-xl border border-zinc-800 p-4">
-        <h3 className="mb-3 text-sm font-semibold uppercase text-zinc-400">
-          Draft Breakdown
-        </h3>
+        <SectionHeading as="h3" title="Draft Breakdown" className="mb-3" />
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm">
             <thead className="text-zinc-500">
@@ -220,9 +201,7 @@ function TeamSummaryPanel(props: {
       </section>
 
       <section className="rounded-xl border border-team-ink/50 bg-team/20 p-4">
-        <h3 className="text-sm font-semibold uppercase text-team-ink/80">
-          What&apos;s Next?
-        </h3>
+        <SectionHeading as="h3" title={"What's Next?"} />
         <ul className="mt-2 space-y-1 text-sm text-zinc-300">
           {summary.recommendedNextSteps.map((step, i) => (
             <li key={step}>
@@ -233,7 +212,7 @@ function TeamSummaryPanel(props: {
             </li>
           ))}
         </ul>
-        <div className="mt-3 flex flex-wrap gap-2 text-xs">
+        <div className="mt-3 flex flex-wrap gap-2 text-sm">
           <a
             href={`/dashboard/${props.saveId}/free-agency`}
             className="rounded border border-zinc-700 px-2 py-1 text-zinc-300 hover:border-zinc-500"
@@ -268,23 +247,21 @@ function LeagueRecapPanel(props: { view: FantasyDraftSummaryView }) {
 
   return (
     <section className="rounded-xl border border-zinc-800 p-5">
-      <h2 className="text-lg font-semibold text-zinc-50">League Draft Recap</h2>
+      <SectionHeading title="League Draft Recap" />
       <div className="mt-4 grid gap-3 sm:grid-cols-2">
         {awards.map(({ label, award }) => (
           <div
             key={label}
             className="rounded-lg border border-zinc-800 p-3 text-sm"
           >
-            <div className="text-[10px] uppercase tracking-wide text-zinc-500">
-              {label}
-            </div>
+            <div className="text-sm text-zinc-400">{label}</div>
             {award ? (
               <>
                 <div className="mt-1 font-medium text-zinc-100">
                   {award.teamName}
                   {award.playerName ? ` — ${award.playerName}` : ""}
                 </div>
-                <div className="text-xs text-zinc-500">{award.detail}</div>
+                <div className="text-sm text-zinc-500">{award.detail}</div>
               </>
             ) : (
               <div className="mt-1 text-zinc-500">—</div>

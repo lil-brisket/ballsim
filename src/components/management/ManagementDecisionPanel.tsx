@@ -1,3 +1,4 @@
+import { formatGameDate } from "@/presentation/game-date";
 import { buttonClass } from "@/components/ui/Button";
 import Link from "next/link";
 import type { ActionCenterItem } from "@/state/action-center-selectors";
@@ -56,21 +57,21 @@ export function ManagementDecisionPanel(props: {
                   </p>
                   <StatusBadge label={item.severity} tone={item.severity} />
                 </div>
-                <p className="mt-0.5 truncate text-xs text-zinc-500">
+                <p className="mt-0.5 truncate text-sm text-zinc-500">
                   {item.description}
                 </p>
                 {item.entity ? (
-                  <p className="mt-0.5 text-xs text-zinc-400">
+                  <p className="mt-0.5 text-sm text-zinc-400">
                     {item.entity.label}
                   </p>
                 ) : null}
                 {item.deadline && currentDate ? (
-                  <p className="mt-0.5 text-xs text-warning/90">
+                  <p className="mt-0.5 text-sm text-warning/90">
                     {formatDeadlineLabel(currentDate, item.deadline)}
                   </p>
                 ) : item.deadline ? (
-                  <p className="mt-0.5 text-xs text-warning/90">
-                    Due {item.deadline}
+                  <p className="mt-0.5 text-sm text-warning/90">
+                    Due {formatGameDate(item.deadline)}
                   </p>
                 ) : null}
               </div>
@@ -93,7 +94,7 @@ export function ManagementDecisionPanel(props: {
 
 function formatDeadlineLabel(currentDate: string, deadline: string): string {
   const days = calendarDaysBetween(currentDate, deadline);
-  if (days < 0) return `Overdue (${deadline})`;
+  if (days < 0) return `Overdue (${formatGameDate(deadline)})`;
   if (days === 0) return "Due today";
   if (days === 1) return "Due in 1 day";
   return `Due in ${days} days`;

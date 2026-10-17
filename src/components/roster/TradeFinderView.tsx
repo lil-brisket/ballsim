@@ -65,7 +65,7 @@ export function TradeFinderView(props: {
         Discover candidate trades for a roster player. Confirming a row executes
         that exact proposal — it does not re-search or swap a different player.
       </p>
-      <label className="flex flex-col gap-1 text-xs text-zinc-500">
+      <label className="flex flex-col gap-1 text-sm text-zinc-500">
         Outgoing player
         <Select
           value={outgoingPlayerId}
@@ -111,7 +111,7 @@ export function TradeFinderView(props: {
               >
                 <td className="px-3 py-2">
                   <span className="text-zinc-100">{row.counterpartyName}</span>
-                  <span className="ml-2 font-mono text-xs text-zinc-500">
+                  <span className="ml-2 text-sm text-zinc-500">
                     {row.counterpartyAbbreviation}
                   </span>
                 </td>
@@ -160,7 +160,7 @@ export function TradeFinderView(props: {
                     <Link
                       href={row.reviewHref}
                       className={cn(
-                        "text-xs text-zinc-500 hover:text-team-ink",
+                        "text-sm text-zinc-500 hover:text-team-ink",
                         focusRingClass,
                       )}
                     >

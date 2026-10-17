@@ -1,5 +1,6 @@
 "use client";
 
+import { formatGameDate } from "@/presentation/game-date";
 import { buttonClass } from "@/components/ui/Button";
 import {
   useEffect,
@@ -533,7 +534,7 @@ export function CalendarWorkspace(props: {
         ? null
         : {
             key: announcementKey,
-            text: `Simulating ${playback.phase} · ${playback.currentDate}`,
+            text: `Simulating ${playback.phase} · ${formatGameDate(playback.currentDate)}`,
           },
     );
   }
@@ -664,7 +665,7 @@ export function CalendarWorkspace(props: {
         >
           <p className="text-sm text-sky-100">
             Continue simulation through{" "}
-            <span className="font-mono font-medium">{resumeTarget}</span>
+            <span className="font-medium">{formatGameDate(resumeTarget)}</span>
           </p>
           <div className="flex flex-wrap gap-2">
             <button
@@ -672,7 +673,7 @@ export function CalendarWorkspace(props: {
               onClick={() => handleSimulate(resumeTarget)}
               className={buttonClass({ variant: "primary" })}
             >
-              Continue to {resumeTarget}
+              Continue to {formatGameDate(resumeTarget)}
             </button>
             <button
               type="button"

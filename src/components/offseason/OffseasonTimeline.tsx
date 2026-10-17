@@ -2,6 +2,7 @@ import Link from "next/link";
 import { cn, focusRingClass } from "@/components/ui/styles";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { formatGameDate } from "@/presentation/game-date";
 import type { OffseasonTimelineEvent } from "@/state/offseason-hub-selectors";
 
 const STATUS_TONE: Record<OffseasonTimelineEvent["status"], string> = {
@@ -26,8 +27,8 @@ export function OffseasonTimeline(props: {
           <>
             <div>
               <p className="font-medium text-zinc-100">{event.label}</p>
-              <p className="font-mono text-xs text-zinc-500">
-                {event.date ?? "Date pending"}
+              <p className="text-sm text-zinc-500">
+                {event.date ? formatGameDate(event.date) : "Date pending"}
               </p>
             </div>
             <StatusBadge

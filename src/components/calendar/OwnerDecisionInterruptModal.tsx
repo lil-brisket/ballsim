@@ -1,5 +1,6 @@
 "use client";
 
+import { SectionHeading } from "@/components/ui/SectionHeading";
 import { buttonClass } from "@/components/ui/Button";
 import { useEffect, useRef } from "react";
 import Link from "next/link";
@@ -98,15 +99,11 @@ export function OwnerDecisionInterruptModal(props: {
           />
         ) : (
           <div className="space-y-4 text-sm text-zinc-200">
-            <p className="font-mono text-[0.65rem] uppercase tracking-[0.16em] text-warning">
-              Simulation paused
-            </p>
-            <h2
+            <SectionHeading
               id="owner-interrupt-title"
-              className="text-2xl font-semibold text-zinc-50"
-            >
-              You&apos;re on the clock
-            </h2>
+              eyebrow="Simulation paused"
+              title="You're on the clock"
+            />
             <p className="text-zinc-300">
               {interrupt.teamName} must pick at overall #{interrupt.pickNumber}.
             </p>

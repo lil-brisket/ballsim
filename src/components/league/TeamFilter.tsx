@@ -77,7 +77,7 @@ export function TeamFilter(props: {
           type="button"
           onClick={() => setTeam("all")}
           className={cn(
-            "rounded-full border px-3 py-1 text-xs",
+            "rounded-full border px-3 py-1 text-sm",
             props.value === "all"
               ? "border-team-ink text-team-ink"
               : "border-zinc-700 text-zinc-400 hover:border-zinc-500",
@@ -90,7 +90,7 @@ export function TeamFilter(props: {
           type="button"
           onClick={() => setTeam("my")}
           className={cn(
-            "rounded-full border px-3 py-1 text-xs",
+            "rounded-full border px-3 py-1 text-sm",
             props.value === "my"
               ? "border-team-ink text-team-ink"
               : "border-zinc-700 text-zinc-400 hover:border-zinc-500",
@@ -103,7 +103,7 @@ export function TeamFilter(props: {
           type="button"
           onClick={() => setOpen((v) => !v)}
           className={cn(
-            "rounded-full border px-3 py-1 text-xs",
+            "rounded-full border px-3 py-1 text-sm",
             props.value !== "all" && props.value !== "my"
               ? "border-team-ink text-team-ink"
               : "border-zinc-700 text-zinc-400 hover:border-zinc-500",
@@ -137,14 +137,14 @@ export function TeamFilter(props: {
                   )}
                 >
                   <span>{team.label}</span>
-                  <span className="font-mono text-xs text-zinc-500">
+                  <span className="text-sm text-zinc-500">
                     {team.abbreviation}
                   </span>
                 </button>
               </li>
             ))}
             {filtered.length === 0 ? (
-              <li className="px-2 py-2 text-xs text-zinc-500">No matches</li>
+              <li className="px-2 py-2 text-sm text-zinc-500">No matches</li>
             ) : null}
           </ul>
         </div>

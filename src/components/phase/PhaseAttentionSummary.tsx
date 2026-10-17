@@ -12,9 +12,7 @@ export function PhaseAttentionSummaryPanel(props: {
         className="rounded-xl border border-emerald-800/40 bg-emerald-950/20 px-4 py-3"
         aria-label="Needs attention"
       >
-        <p className="font-mono text-xs uppercase tracking-[0.16em] text-emerald-500">
-          Needs attention
-        </p>
+        <p className="text-sm font-medium text-emerald-400">Needs attention</p>
         <p className="mt-1 text-sm text-zinc-300">
           No required or recommended actions for this franchise right now.
         </p>
@@ -27,7 +25,7 @@ export function PhaseAttentionSummaryPanel(props: {
       className="rounded-xl border border-warning/40 bg-warning/10 px-4 py-3"
       aria-label="Needs attention"
     >
-      <p className="font-mono text-xs uppercase tracking-[0.16em] text-warning">
+      <p className="text-sm font-medium text-warning">
         Needs attention — {counts.required + counts.recommended}
       </p>
       <ul className="mt-2 flex flex-wrap gap-3 text-sm">

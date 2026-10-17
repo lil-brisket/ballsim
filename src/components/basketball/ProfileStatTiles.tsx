@@ -25,9 +25,7 @@ export function ProfileStatTiles(props: {
     >
       {props.items.map((item) => (
         <div key={item.label} className={cn(panelClass, "min-w-0 px-3 py-3")}>
-          <dt className="font-mono text-[0.65rem] uppercase tracking-wide text-zinc-500">
-            {item.label}
-          </dt>
+          <dt className="text-sm text-zinc-400">{item.label}</dt>
           <dd className="mt-1 font-mono text-xl text-zinc-50">
             {displayValue(item.value)}
           </dd>

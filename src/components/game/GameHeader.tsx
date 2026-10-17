@@ -46,7 +46,7 @@ function NotificationsBell(props: { saveId: string; unreadCount: number }) {
         <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" />
       </svg>
       {props.unreadCount > 0 ? (
-        <span className="absolute -right-1.5 -top-1.5 inline-flex min-w-[1.15rem] items-center justify-center rounded-full bg-team-ink px-1 font-mono text-[0.65rem] font-semibold leading-4 text-zinc-950">
+        <span className="absolute -right-1.5 -top-1.5 inline-flex min-w-[1.15rem] items-center justify-center rounded-full bg-team-ink px-1 text-xs font-semibold tabular-nums leading-4 text-zinc-950">
           {props.unreadCount > 99 ? "99+" : props.unreadCount}
         </span>
       ) : null}
@@ -97,7 +97,7 @@ export function GameHeader(props: {
         <span className="text-zinc-700" aria-hidden>
           /
         </span>
-        <span className="font-mono text-[0.65rem] uppercase tracking-[0.16em] text-team-ink">
+        <span className="text-sm font-medium text-team-ink">
           {modeDef.name}
         </span>
       </div>

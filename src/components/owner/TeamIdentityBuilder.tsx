@@ -29,6 +29,7 @@ import {
   randomizeLogoId,
   randomizeTeamIdentityDraft,
 } from "@/systems/owner-franchise-branding";
+import { SectionHeading } from "@/components/ui/SectionHeading";
 
 export function TeamIdentityBuilder(props: {
   saveId: string;
@@ -174,9 +175,7 @@ export function TeamIdentityBuilder(props: {
 
       <div className="flex min-h-0 flex-col gap-5 overflow-y-auto rounded-lg border border-zinc-800 bg-zinc-900/50 px-4 py-4">
         <section className="space-y-3">
-          <h2 className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
-            Presets
-          </h2>
+          <SectionHeading title="Presets" />
           <div className="flex flex-wrap gap-2">
             {TEAM_BRANDING_PRESETS.map((preset) => (
               <Button
@@ -194,9 +193,7 @@ export function TeamIdentityBuilder(props: {
         </section>
 
         <section className="space-y-3">
-          <h2 className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
-            Name
-          </h2>
+          <SectionHeading title="Name" />
           <p className="text-sm text-zinc-400">
             City: <span className="text-zinc-200">{props.city}</span>
           </p>
@@ -210,9 +207,7 @@ export function TeamIdentityBuilder(props: {
         </section>
 
         <section className="space-y-3">
-          <h2 className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
-            Colours
-          </h2>
+          <SectionHeading title="Colours" />
           <div className="grid grid-cols-2 gap-2">
             {TEAM_COLOR_PALETTES.map((palette) => {
               const selected = palette.id === selectedPaletteId;
@@ -242,7 +237,7 @@ export function TeamIdentityBuilder(props: {
                       style={{ backgroundColor: palette.accentColor }}
                     />
                   </span>
-                  <span className="text-xs font-medium text-zinc-200">
+                  <span className="text-sm font-medium text-zinc-200">
                     {palette.label}
                   </span>
                 </button>
@@ -272,7 +267,7 @@ export function TeamIdentityBuilder(props: {
                   style={{ backgroundColor: accentColor }}
                 />
               </span>
-              <span className="text-xs font-medium text-zinc-200">Custom</span>
+              <span className="text-sm font-medium text-zinc-200">Custom</span>
             </button>
           </div>
           <TeamColorFields
@@ -283,7 +278,7 @@ export function TeamIdentityBuilder(props: {
           />
           {contrastWarnings.length > 0 ? (
             <ul
-              className="space-y-1 rounded-md border border-warning/40 bg-warning/10 px-3 py-2 text-xs text-zinc-200"
+              className="space-y-1 rounded-md border border-warning/40 bg-warning/10 px-3 py-2 text-sm text-zinc-200"
               role="status"
             >
               {contrastWarnings.map((warning) => (
@@ -295,9 +290,7 @@ export function TeamIdentityBuilder(props: {
 
         <section className="space-y-3">
           <div className="flex items-center justify-between gap-2">
-            <h2 className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
-              Logo
-            </h2>
+            <SectionHeading title="Logo" />
             <Button variant="secondary" onClick={onRandomizeLogo}>
               Randomize Logo
             </Button>
@@ -308,7 +301,7 @@ export function TeamIdentityBuilder(props: {
             );
             return (
               <div key={category.id} className="space-y-2">
-                <p className="text-[10px] font-semibold uppercase tracking-wide text-zinc-500">
+                <p className="text-sm font-medium text-zinc-300">
                   {category.label}
                 </p>
                 <div className="grid grid-cols-5 gap-2">
@@ -336,7 +329,7 @@ export function TeamIdentityBuilder(props: {
                           className="h-10 w-10"
                           title={logo.label}
                         />
-                        <span className="text-[10px] text-zinc-400">
+                        <span className="text-sm text-zinc-400">
                           {logo.label}
                         </span>
                       </button>

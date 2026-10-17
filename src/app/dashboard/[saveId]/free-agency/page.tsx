@@ -184,7 +184,7 @@ export default async function FreeAgencyPage({
           </Section>
 
           <Section title="Available Players">
-            <p className="mb-2 text-xs text-zinc-500">
+            <p className="mb-2 text-sm text-zinc-500">
               Overall ratings shown match the existing free-agency information
               model (true OVR).
             </p>
@@ -252,7 +252,7 @@ export default async function FreeAgencyPage({
                           />
                           <button
                             type="submit"
-                            className={cn(linkClass, "text-xs")}
+                            className={cn(linkClass, "text-sm")}
                           >
                             Sign
                           </button>
@@ -280,7 +280,7 @@ export default async function FreeAgencyPage({
                           <input type="hidden" name="years" value={1} />
                           <button
                             type="submit"
-                            className="text-xs text-zinc-400 hover:text-team-ink"
+                            className="text-sm text-zinc-400 hover:text-team-ink"
                           >
                             Offer
                           </button>
@@ -341,7 +341,7 @@ export default async function FreeAgencyPage({
             <summary className="cursor-pointer text-zinc-300">
               Finish free agency (legacy domain action)
             </summary>
-            <p className="mt-2 text-xs text-zinc-500">
+            <p className="mt-2 text-sm text-zinc-500">
               Prefers Calendar for progression. This pre-existing action
               advances the league phase and one simulation day.
             </p>

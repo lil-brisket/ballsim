@@ -3,6 +3,7 @@
 import { updateFantasyDraftSettingsAction } from "@/application/actions";
 import type { FantasyDraftView } from "@/state/selectors";
 import { buttonClass } from "@/components/ui/Button";
+import { SectionHeading } from "@/components/ui/SectionHeading";
 
 export function DraftSettingsPanel(props: {
   saveId: string;
@@ -10,9 +11,7 @@ export function DraftSettingsPanel(props: {
 }) {
   return (
     <section className="rounded-xl border border-zinc-800 p-4">
-      <h2 className="mb-2 text-sm font-semibold uppercase text-zinc-400">
-        Draft settings
-      </h2>
+      <SectionHeading title="Draft settings" className="mb-2" />
       <form action={updateFantasyDraftSettingsAction} className="text-sm">
         <input type="hidden" name="saveId" value={props.saveId} />
         <input

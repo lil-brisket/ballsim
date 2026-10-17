@@ -58,9 +58,7 @@ export function OverviewTab(props: { view: PlayerDrawerView }) {
             <StatTile label="Years" value={view.contract.yearsRemaining} />
             <div className="flex min-w-0 flex-col items-start justify-center gap-1 rounded-lg border border-surface-line border-b-team-ink bg-surface-deep/80 px-3 py-3">
               <StatusBadge label={view.contract.status} />
-              <span className="font-mono text-[0.65rem] uppercase tracking-[0.18em] text-zinc-400">
-                Status
-              </span>
+              <span className="text-sm text-zinc-400">Status</span>
             </div>
           </div>
         </Section>

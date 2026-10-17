@@ -63,7 +63,7 @@ export function FreeAgentRosterView(props: {
               <td className="px-3 py-2">
                 <Link
                   href={props.freeAgencyHubHref}
-                  className="text-xs text-team-ink underline-offset-4 hover:underline"
+                  className="text-sm text-team-ink underline-offset-4 hover:underline"
                 >
                   View in Free Agency →
                 </Link>
@@ -73,7 +73,7 @@ export function FreeAgentRosterView(props: {
         </DataTable>
       </div>
       {props.freeAgents.length > 40 ? (
-        <p className="text-xs text-zinc-600">
+        <p className="text-sm text-zinc-600">
           Showing top 40 by overall.{" "}
           <Link
             href={props.freeAgencyHubHref}

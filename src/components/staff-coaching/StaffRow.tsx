@@ -43,11 +43,7 @@ export function VacantStaffRow(props: {
   return (
     <tr className="border-t border-zinc-800">
       <td className={`${CELL} text-zinc-400`}>{props.entry.roleLabel}</td>
-      <td
-        className={`${CELL} font-medium uppercase tracking-wide text-team-ink`}
-      >
-        Vacant
-      </td>
+      <td className={`${CELL} font-medium text-team-ink`}>Vacant</td>
       <td className={`${CELL} text-zinc-600`}>—</td>
       <td className={`${CELL} text-zinc-600`}>—</td>
       <td className={`${CELL} text-zinc-600`}>—</td>
@@ -71,9 +67,7 @@ export function StaffMemberCard(props: {
   const { saveId, member } = props;
   return (
     <article className="rounded-lg border border-zinc-800 px-4 py-3">
-      <p className="font-mono text-[0.65rem] uppercase tracking-[0.16em] text-zinc-500">
-        {member.roleLabel}
-      </p>
+      <p className="text-sm text-zinc-400">{member.roleLabel}</p>
       <p className="mt-1 font-medium text-zinc-100">
         <StaffEntityLink saveId={saveId} staffId={member.staffId}>
           {member.firstName} {member.lastName}
@@ -115,12 +109,8 @@ export function VacantStaffCard(props: {
   const href = `/dashboard/${props.saveId}/staff-coaching/hiring-market?role=${props.entry.role}`;
   return (
     <article className="rounded-lg border border-dashed border-zinc-700 px-4 py-3">
-      <p className="font-mono text-[0.65rem] uppercase tracking-[0.16em] text-zinc-500">
-        {props.entry.roleLabel}
-      </p>
-      <p className="mt-1 font-medium uppercase tracking-wide text-team-ink">
-        Vacant
-      </p>
+      <p className="text-sm text-zinc-400">{props.entry.roleLabel}</p>
+      <p className="mt-1 font-medium text-team-ink">Vacant</p>
       <a
         href={href}
         className="mt-2 inline-block text-sm text-team-ink underline-offset-4 hover:underline"

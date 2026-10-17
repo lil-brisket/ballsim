@@ -39,7 +39,7 @@ export function TradeBlockRosterView(props: {
                   >
                     {player.firstName} {player.lastName}
                   </PlayerEntityLink>
-                  <p className="mt-0.5 font-mono text-xs text-zinc-500">
+                  <p className="mt-0.5 text-sm text-zinc-500">
                     {player.position} · {player.overall} OVR · {player.status}
                   </p>
                 </div>
@@ -81,9 +81,7 @@ export function TradeBlockRosterView(props: {
               >
                 <div>
                   <p className="text-sm text-zinc-100">{pick.label}</p>
-                  <p className="font-mono text-xs text-zinc-500">
-                    {pick.status}
-                  </p>
+                  <p className="text-sm text-zinc-500">{pick.status}</p>
                 </div>
               </li>
             ))}

@@ -18,6 +18,7 @@ import {
 } from "@/domain/entities/team-branding";
 import { validateTeamNickname } from "@/domain/team-nickname";
 import type { TeamListEntry } from "@/state/selectors";
+import { SectionHeading } from "@/components/ui/SectionHeading";
 
 type IdentityDraftMap = Record<string, ControlledFranchiseIdentityDraft>;
 
@@ -159,9 +160,7 @@ function FilterPillRow(props: {
 
   return (
     <div className="space-y-1.5">
-      <p className="text-[10px] font-medium uppercase tracking-wide text-zinc-500">
-        {props.label}
-      </p>
+      <p className="text-sm font-medium text-zinc-300">{props.label}</p>
       <div className="flex flex-wrap gap-2">
         <button
           type="button"
@@ -495,11 +494,11 @@ export function OwnerMultiTeamPick(props: {
               </span>
             ) : null}
             <span className="min-w-0 flex-1">
-              <span className="block text-xs text-zinc-400">{team.city}</span>
+              <span className="block text-sm text-zinc-400">{team.city}</span>
               <span className="block text-sm font-semibold text-zinc-100">
                 {displayNickname}
                 {isAnchor ? (
-                  <span className="ml-2 text-xs font-normal text-zinc-2000">
+                  <span className="ml-2 text-sm font-normal text-zinc-2000">
                     Initial
                   </span>
                 ) : null}
@@ -511,7 +510,7 @@ export function OwnerMultiTeamPick(props: {
               />
               {checked ? (
                 <span
-                  className={`mt-1 block text-xs ${
+                  className={`mt-1 block text-sm ${
                     identityComplete ? "text-emerald-400" : "text-zinc-2000"
                   }`}
                 >
@@ -526,7 +525,7 @@ export function OwnerMultiTeamPick(props: {
 
         {checked && participants ? (
           <div className="px-3 pb-3">
-            <label className="flex items-center gap-2 text-xs text-zinc-400">
+            <label className="flex items-center gap-2 text-sm text-zinc-400">
               <span>Managed by</span>
               <Select
                 aria-label={`Managed by for ${team.city} ${team.name}`}
@@ -571,11 +570,13 @@ export function OwnerMultiTeamPick(props: {
   return (
     <div className="space-y-4">
       <div>
-        <h2 className="text-lg font-medium text-zinc-100">
-          {controlledTeamCount === 1
-            ? "Customize your franchise"
-            : `Select ${controlledTeamCount} franchises`}
-        </h2>
+        <SectionHeading
+          title={
+            controlledTeamCount === 1
+              ? "Customize your franchise"
+              : `Select ${controlledTeamCount} franchises`
+          }
+        />
         <p className="mt-1 text-sm text-zinc-400">
           {participants ? (
             <>
@@ -595,7 +596,7 @@ export function OwnerMultiTeamPick(props: {
 
       {controlledTeamCount > 1 ? (
         <div className="space-y-2 rounded-lg border border-zinc-800 bg-zinc-950/40 px-3 py-3">
-          <h3 className="text-[10px] font-medium uppercase tracking-wide text-zinc-500">
+          <h3 className="text-sm font-medium text-zinc-300">
             Controlled Franchises
           </h3>
           <p className="text-sm text-zinc-300">
@@ -628,9 +629,7 @@ export function OwnerMultiTeamPick(props: {
       ) : (
         <>
           <div className="space-y-2">
-            <h3 className="text-[10px] font-medium uppercase tracking-wide text-zinc-500">
-              Selected
-            </h3>
+            <h3 className="text-sm font-medium text-zinc-300">Selected</h3>
             <ul className="space-y-2">
               {pinnedTeams.map(renderFranchiseCard)}
             </ul>
@@ -661,9 +660,7 @@ export function OwnerMultiTeamPick(props: {
           ) : null}
 
           <div className="space-y-2">
-            <h3 className="text-[10px] font-medium uppercase tracking-wide text-zinc-500">
-              Franchises
-            </h3>
+            <h3 className="text-sm font-medium text-zinc-300">Franchises</h3>
             {availableTeams.length === 0 ? (
               <p className="text-sm text-zinc-500">
                 {selectedIds.length >= controlledTeamCount

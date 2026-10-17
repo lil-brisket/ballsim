@@ -39,10 +39,7 @@ export function TeamIdentityPreview(props: {
           className="rounded-md border border-white/25 bg-black/25 px-2.5 py-1.5 text-center"
           aria-label="Scoreboard abbreviation"
         >
-          <p
-            className="font-mono text-[10px] uppercase tracking-[0.18em]"
-            style={{ color: mutedColor }}
-          >
+          <p className="text-sm" style={{ color: mutedColor }}>
             Scoreboard
           </p>
           <p
@@ -54,10 +51,7 @@ export function TeamIdentityPreview(props: {
         </div>
       </div>
       <div className="text-center">
-        <p
-          className="font-mono text-xs uppercase tracking-[0.2em]"
-          style={{ color: mutedColor }}
-        >
+        <p className="text-sm" style={{ color: mutedColor }}>
           {props.city}
         </p>
         <p
@@ -92,7 +86,7 @@ export function TeamIdentityPreview(props: {
             <button
               type="button"
               onClick={props.onSwapHomeAway}
-              className="self-center rounded-md border border-white/30 bg-black/20 px-2.5 py-1 text-[11px] font-medium uppercase tracking-wide text-white/90 hover:border-team-ink/70 hover:text-team-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-team-ink"
+              className="self-center rounded-md border border-white/30 bg-black/20 px-2.5 py-1 text-sm font-medium text-white/90 hover:border-team-ink/70 hover:text-team-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-team-ink"
             >
               Swap Home/Away
             </button>
@@ -111,9 +105,7 @@ function Swatch(props: { label: string; color: string }) {
         style={{ backgroundColor: props.color }}
         title={props.label}
       />
-      <span className="text-[9px] uppercase tracking-wide text-white/70">
-        {props.label}
-      </span>
+      <span className="text-sm text-white/70">{props.label}</span>
     </div>
   );
 }
@@ -149,9 +141,7 @@ function UniformStrip(props: {
           </span>
         </div>
       </div>
-      <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-white/85">
-        {props.label}
-      </span>
+      <span className="text-sm font-semibold text-white/85">{props.label}</span>
     </div>
   );
 }

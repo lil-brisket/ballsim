@@ -1,3 +1,4 @@
+import { formatGameDate } from "@/presentation/game-date";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import type { ImportanceLevel } from "@/domain/entities/event-source";
 import type { SocialAuthorType } from "@/domain/entities/social-post";
@@ -33,9 +34,7 @@ export function SocialPostCard(props: SocialPostCardProps) {
             <span className="text-sm font-medium text-zinc-100">
               {props.authorLabel}
             </span>
-            <span className="text-[11px] uppercase tracking-wide text-zinc-500">
-              {props.authorType}
-            </span>
+            <span className="text-sm text-zinc-500">{props.authorType}</span>
             <StatusBadge
               label={props.importance}
               tone={importanceTone(props.importance)}
@@ -44,7 +43,9 @@ export function SocialPostCard(props: SocialPostCardProps) {
           <p className="text-sm text-zinc-300">{props.content}</p>
         </div>
       </div>
-      <p className="mt-2 font-mono text-xs text-zinc-600">{props.occurredOn}</p>
+      <p className="mt-2 text-sm text-zinc-500">
+        {formatGameDate(props.occurredOn)}
+      </p>
     </article>
   );
 }

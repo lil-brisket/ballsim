@@ -78,7 +78,7 @@ export function RosterPage(props: { view: RosterPageView }) {
             <section aria-label="Roster table" className="space-y-3">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <SectionHeading as="h2" title="Roster" />
-                <p className="text-xs text-zinc-400">
+                <p className="text-sm text-zinc-400">
                   <Link
                     href={view.lineupHref}
                     className="text-team-ink hover:underline"

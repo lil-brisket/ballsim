@@ -2,6 +2,7 @@ import Link from "next/link";
 import { TeamEntityLink } from "@/components/entity/TeamEntityLink";
 import { GameResultLink } from "@/components/owner/GameResultLink";
 import { TeamLogoMark } from "@/components/team/logos/TeamLogoMark";
+import { formatGameDate } from "@/presentation/game-date";
 import type { TeamBrandingView } from "@/state/team-branding-view";
 import {
   cn,
@@ -93,9 +94,7 @@ export function LeagueGameRow(props: LeagueGameRowProps) {
         {props.homeAbbreviation}
       </TeamEntityLink>
       {props.competitionType === "playoffs" ? (
-        <span className="font-mono text-[0.65rem] uppercase text-team-ink/80">
-          Playoffs
-        </span>
+        <span className="text-sm text-team-ink/80">Playoffs</span>
       ) : null}
     </div>
   );
@@ -114,13 +113,13 @@ export function LeagueGameRow(props: LeagueGameRowProps) {
       {props.awayScore}–{props.homeScore}
     </GameResultLink>
   ) : props.status === "in_progress" ? (
-    <span className="text-xs font-medium text-emerald-400">Live</span>
+    <span className="text-sm font-medium text-emerald-400">Live</span>
   ) : props.status === "postponed" ? (
-    <span className="text-xs text-zinc-500">Postponed</span>
+    <span className="text-sm text-zinc-500">Postponed</span>
   ) : props.status === "cancelled" ? (
-    <span className="text-xs text-zinc-500">Cancelled</span>
+    <span className="text-sm text-zinc-500">Cancelled</span>
   ) : (
-    <span className="text-xs text-zinc-500">Scheduled</span>
+    <span className="text-sm text-zinc-500">Scheduled</span>
   );
 
   return (
@@ -131,8 +130,8 @@ export function LeagueGameRow(props: LeagueGameRowProps) {
       )}
     >
       <div className="flex min-w-0 items-center gap-3">
-        <span className="shrink-0 font-mono text-xs text-zinc-500">
-          {props.date}
+        <span className="shrink-0 text-sm text-zinc-500">
+          {formatGameDate(props.date)}
         </span>
         {matchup}
       </div>
@@ -142,7 +141,7 @@ export function LeagueGameRow(props: LeagueGameRowProps) {
             href={`/dashboard/${props.saveId}/games/${props.gameId}/watch`}
             className={cn(
               touchTargetTextClass,
-              "text-xs text-team-ink underline-offset-4 hover:underline",
+              "text-sm text-team-ink underline-offset-4 hover:underline",
               focusRingClass,
             )}
           >

@@ -2,6 +2,8 @@ import { buttonClass } from "@/components/ui/Button";
 import Link from "next/link";
 import type { ActionCenterView } from "@/state/action-center-selectors";
 import { ActionCard } from "@/components/ui/ActionCard";
+import { SectionHeading } from "@/components/ui/SectionHeading";
+import { formatGameDate } from "@/presentation/game-date";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { ArenaPanel } from "@/components/ui/ArenaPanel";
 import { cn, touchTargetTextClass } from "@/components/ui/styles";
@@ -27,12 +29,7 @@ export function ActionCenter(props: {
         className="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-xl border border-win/30 bg-win/10 px-4 py-3"
         aria-label="Action center"
       >
-        <p className="font-mono text-[0.65rem] uppercase tracking-[0.16em] text-win">
-          Action Center
-        </p>
-        <h2 className="font-display text-lg font-bold uppercase tracking-wide text-zinc-50">
-          You&apos;re in good shape
-        </h2>
+        <SectionHeading title="You're in good shape" />
         <p className="text-sm text-zinc-300">
           No urgent franchise decisions require your attention right now.
         </p>
@@ -54,20 +51,15 @@ export function ActionCenter(props: {
             aria-hidden
             className="inline-flex h-2.5 w-2.5 rounded-full bg-live team-pulse"
           />
-          <h2
+          <SectionHeading
             id="action-center-title"
-            className={cn(
-              "font-display font-bold uppercase tracking-wide text-zinc-50",
-              isActionsFocal ? "text-2xl" : "text-xl",
-            )}
-          >
-            {view.urgentCount > 0
-              ? `${view.urgentCount} action${view.urgentCount === 1 ? "" : "s"} need attention`
-              : "Action queue"}
-          </h2>
-          <p className="font-mono text-[0.65rem] uppercase tracking-[0.16em] text-zinc-400">
-            Action Center
-          </p>
+            eyebrow="Action Center"
+            title={
+              view.urgentCount > 0
+                ? `${view.urgentCount} action${view.urgentCount === 1 ? "" : "s"} need attention`
+                : "Action queue"
+            }
+          />
         </div>
         {props.aiCanHandle && props.letAiHandleAction ? (
           <form action={props.letAiHandleAction}>
@@ -109,14 +101,14 @@ export function ActionCenter(props: {
                 <div className="flex flex-wrap items-center gap-2">
                   <StatusBadge label={item.severity} tone={item.severity} />
                   {item.deadline ? (
-                    <span className="font-mono text-[0.65rem] text-zinc-500">
-                      Due {item.deadline}
+                    <span className="text-sm text-zinc-400">
+                      Due {formatGameDate(item.deadline)}
                     </span>
                   ) : null}
                 </div>
               }
               footer={
-                <span className="text-xs font-medium text-team-ink">
+                <span className="text-sm font-medium text-team-ink">
                   {item.hrefLabel} →
                 </span>
               }
@@ -128,7 +120,7 @@ export function ActionCenter(props: {
       </ul>
 
       {!isActionsFocal ? (
-        <p className="text-xs text-zinc-400">
+        <p className="text-sm text-zinc-400">
           Next Game is your primary focus while the queue is quiet.{" "}
           <Link
             href={`/dashboard/${props.saveId}/calendar`}

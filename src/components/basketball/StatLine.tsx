@@ -24,22 +24,8 @@ export function StatLine(props: {
     >
       {props.items.map((item) => (
         <div key={item.label} className="min-w-0">
-          <dt
-            className={cn(
-              "font-mono uppercase tracking-wide text-zinc-600",
-              dense ? "text-[0.6rem]" : "text-[0.65rem]",
-            )}
-          >
-            {item.label}
-          </dt>
-          <dd
-            className={cn(
-              "font-mono text-zinc-200",
-              dense ? "text-xs" : "text-sm",
-            )}
-          >
-            {item.value}
-          </dd>
+          <dt className="text-sm text-zinc-500">{item.label}</dt>
+          <dd className="font-mono text-sm text-zinc-200">{item.value}</dd>
         </div>
       ))}
     </dl>

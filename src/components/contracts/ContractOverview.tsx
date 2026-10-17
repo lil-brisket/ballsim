@@ -30,7 +30,7 @@ export function ContractOverview(props: {
           </li>
         </ul>
         <div>
-          <p className="mb-2 text-xs uppercase tracking-wide text-zinc-500">
+          <p className="mb-2 text-sm font-medium text-zinc-300">
             Largest annual salaries
           </p>
           {overview.largestContracts.length === 0 ? (

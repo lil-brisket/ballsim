@@ -5,6 +5,7 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { MoneyDisplay } from "@/components/owner/MoneyDisplay";
 import { Section } from "@/components/ui/Section";
 import { TeamLogoMark } from "@/components/team/logos/TeamLogoMark";
+import { formatGameDate } from "@/presentation/game-date";
 import { groupRankLabel, leagueRankLabel } from "@/presentation/rank-label";
 
 export function TeamDecisionPanel(props: {
@@ -38,22 +39,20 @@ export function TeamDecisionPanel(props: {
     >
       <div className="space-y-3 rounded-xl border border-zinc-800 bg-zinc-900/50 px-4 py-4">
         <div>
-          <p className="font-mono text-[0.65rem] uppercase tracking-[0.16em] text-zinc-500">
-            Performance
-          </p>
+          <p className="text-sm text-zinc-400">Performance</p>
           <p className="mt-1 text-lg text-zinc-50">{standingLine}</p>
         </div>
         <dl className="grid gap-2 text-sm sm:grid-cols-2">
           <div>
             <dt className="text-zinc-500">Strength</dt>
-            <dd className="font-mono text-zinc-200">{team.strength}</dd>
+            <dd className="tabular-nums text-zinc-200">{team.strength}</dd>
           </div>
           <div>
             <dt className="text-zinc-500">Payroll</dt>
             <dd className="text-zinc-200">
               <MoneyDisplay amount={team.payroll} />
               {payrollContext ? (
-                <span className="ml-2 text-xs text-zinc-500">
+                <span className="ml-2 text-sm text-zinc-500">
                   {payrollContext}
                 </span>
               ) : null}
@@ -64,7 +63,7 @@ export function TeamDecisionPanel(props: {
         {team.rosterProblems.length > 0 ? (
           <div className="rounded-lg border border-rose-900/40 bg-rose-950/20 px-3 py-2 text-sm text-rose-200">
             <p className="font-medium">Roster concerns</p>
-            <ul className="mt-1 space-y-0.5 text-xs text-rose-300/90">
+            <ul className="mt-1 space-y-0.5 text-sm text-rose-300/90">
               {team.rosterProblems.slice(0, 3).map((problem) => (
                 <li key={problem.playerId}>
                   {problem.name} — {problem.kind}
@@ -73,7 +72,7 @@ export function TeamDecisionPanel(props: {
             </ul>
             <Link
               href={`/dashboard/${saveId}/roster`}
-              className={cn(linkClass, "mt-2 inline-block text-xs")}
+              className={cn(linkClass, "mt-2 inline-block text-sm")}
             >
               Review Roster
             </Link>
@@ -81,9 +80,7 @@ export function TeamDecisionPanel(props: {
         ) : null}
 
         <div>
-          <p className="text-xs font-medium uppercase tracking-wide text-zinc-500">
-            Upcoming
-          </p>
+          <p className="text-sm font-medium text-zinc-300">Upcoming</p>
           {team.upcomingGames.length === 0 ? (
             <EmptyState message="No upcoming scheduled games." />
           ) : (
@@ -93,7 +90,9 @@ export function TeamDecisionPanel(props: {
                   key={game.gameId}
                   className="flex items-center justify-between rounded-lg border border-zinc-800 px-3 py-2 text-sm"
                 >
-                  <span className="font-mono text-zinc-500">{game.date}</span>
+                  <span className="text-zinc-400">
+                    {formatGameDate(game.date, { weekday: true })}
+                  </span>
                   <span className="inline-flex items-center gap-2 text-zinc-200">
                     <span>{game.home ? "vs" : "@"}</span>
                     {game.opponentBranding ? (
@@ -117,7 +116,7 @@ export function TeamDecisionPanel(props: {
             </ul>
           )}
           {nextGame ? (
-            <p className="mt-2 inline-flex items-center gap-2 text-xs text-zinc-500">
+            <p className="mt-2 inline-flex items-center gap-2 text-sm text-zinc-500">
               <span>Next:</span>
               <span>{nextGame.home ? "vs" : "@"}</span>
               {nextGame.opponentBranding ? (
@@ -135,7 +134,8 @@ export function TeamDecisionPanel(props: {
                 </span>
               ) : null}
               <span>
-                {nextGame.opponentAbbreviation} on {nextGame.date}
+                {nextGame.opponentAbbreviation} on{" "}
+                {formatGameDate(nextGame.date, { weekday: true })}
               </span>
             </p>
           ) : null}

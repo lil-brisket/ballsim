@@ -8,6 +8,8 @@ import {
   formatShortDate,
 } from "@/components/calendar/CalendarDayCell";
 import { CalendarAgendaList } from "@/components/calendar/CalendarAgendaList";
+import { SectionHeading } from "@/components/ui/SectionHeading";
+import { formatGameDate } from "@/presentation/game-date";
 import { cn } from "@/components/ui/styles";
 import type { TeamBrandingView } from "@/state/team-branding-view";
 
@@ -52,14 +54,12 @@ function CalendarMilestoneLegend(props: { grid: CalendarMonthGrid }) {
 
   return (
     <div className="rounded-lg border border-surface-line bg-surface-arena px-3 py-2">
-      <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-zinc-400">
-        League milestones
-      </p>
+      <p className="text-sm font-medium text-zinc-300">League milestones</p>
       <div className="mt-2 flex flex-wrap gap-2">
         {legend.map((milestone) => (
           <span
             key={milestone.key}
-            className="inline-flex items-center gap-1.5 text-xs text-zinc-300"
+            className="inline-flex items-center gap-1.5 text-sm text-zinc-300"
           >
             <span
               className={[
@@ -122,13 +122,11 @@ export function CalendarMonthView(props: {
     <div className="space-y-3">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="space-y-1">
-          <h2 className="font-display text-3xl font-extrabold uppercase leading-none tracking-wide text-zinc-50">
-            {title}
-          </h2>
-          <p className="text-xs text-zinc-400">
-            Current date{" "}
-            <span className="font-mono font-medium text-team-ink">
-              {props.currentDate}
+          <SectionHeading title={title} />
+          <p className="text-sm text-zinc-400">
+            Today is{" "}
+            <span className="font-medium text-team-ink">
+              {formatGameDate(props.currentDate, { weekday: true })}
             </span>
           </p>
         </div>
@@ -184,7 +182,7 @@ export function CalendarMonthView(props: {
           {WEEKDAYS.map((day) => (
             <div
               key={day}
-              className="px-1 py-1 text-center font-mono text-[10px] uppercase tracking-[0.14em] text-zinc-400 sm:text-xs"
+              className="px-1 py-1 text-center text-xs font-medium uppercase tracking-[0.14em] text-zinc-400"
             >
               {day}
             </div>

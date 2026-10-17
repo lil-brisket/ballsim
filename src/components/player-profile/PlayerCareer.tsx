@@ -3,6 +3,7 @@ import { CardTable } from "@/components/player-profile/CardTable";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Section } from "@/components/ui/Section";
 import { TeamLogoMark } from "@/components/team/logos/TeamLogoMark";
+import { formatGameDate } from "@/presentation/game-date";
 import type { PlayerProfileView } from "@/state/player-profile-selectors";
 
 const HIGH_LABELS: Record<string, string> = {
@@ -62,7 +63,7 @@ export function PlayerCareer(props: {
                   >
                     <span className="text-zinc-100">{award.displayName}</span>
                     <span className="ml-2 text-zinc-500">—</span>
-                    <span className="ml-2 font-mono text-team-ink">
+                    <span className="ml-2 tabular-nums text-team-ink">
                       {award.periodLabel ?? String(award.seasonYear)}
                     </span>
                     {award.teamName ? (
@@ -104,7 +105,7 @@ export function PlayerCareer(props: {
                 key={`${block.start}-${block.end}-${block.team}`}
                 className="rounded-lg border border-zinc-800 px-4 py-3 text-sm"
               >
-                <span className="font-mono text-team-ink">
+                <span className="tabular-nums text-team-ink">
                   {block.start === block.end
                     ? String(block.start)
                     : `${block.start}–${block.end}`}
@@ -127,7 +128,7 @@ export function PlayerCareer(props: {
                 key={best.kind}
                 className="rounded-lg border border-surface-line border-b-team-ink bg-surface-deep/80 px-4 py-3"
               >
-                <p className="text-xs text-zinc-500">{best.label}</p>
+                <p className="text-sm text-zinc-500">{best.label}</p>
                 <p className="mt-1 text-lg text-zinc-100">{best.valueLabel}</p>
                 <p className="text-sm text-zinc-400">{best.seasonYear}</p>
               </div>
@@ -167,8 +168,8 @@ export function PlayerCareer(props: {
                       </span>
                     ) : null}
                     <span>
-                      {high.opponentAbbreviation} · {high.date} ·{" "}
-                      {high.seasonYear}
+                      {high.opponentAbbreviation} · {formatGameDate(high.date)}{" "}
+                      · {high.seasonYear}
                     </span>
                   </span>
                 </td>
@@ -196,7 +197,7 @@ export function PlayerCareer(props: {
                 key={season.seasonId}
                 className="rounded-lg border border-zinc-800 px-4 py-3 text-sm"
               >
-                <span className="font-mono text-team-ink">
+                <span className="tabular-nums text-team-ink">
                   {season.seasonYear}
                 </span>
                 <span className="ml-3 text-zinc-100">

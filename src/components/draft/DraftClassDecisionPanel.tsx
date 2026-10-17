@@ -1,5 +1,6 @@
 "use client";
 
+import { SectionHeading } from "@/components/ui/SectionHeading";
 import { buttonClass } from "@/components/ui/Button";
 import { useState, useTransition } from "react";
 import { resolveDraftClassDecisionAction } from "@/application/actions";
@@ -34,9 +35,10 @@ export function DraftClassDecisionPanel(props: {
   return (
     <div className="space-y-4 rounded-lg border border-zinc-800 bg-zinc-950/60 p-4">
       <header className="space-y-1">
-        <h3 className="text-lg font-medium text-zinc-100">
-          Prepare the {props.draftYear} Draft Class
-        </h3>
+        <SectionHeading
+          as="h3"
+          title={`Prepare the ${props.draftYear} Draft Class`}
+        />
         <p className="text-sm text-zinc-400">
           The league can generate a fictional rookie class automatically, or you
           can import a custom class.
@@ -129,7 +131,7 @@ export function DraftClassDecisionPanel(props: {
         >
           Choose Community Class
         </button>
-        <p className="text-xs text-zinc-500">Community library coming soon.</p>
+        <p className="text-sm text-zinc-500">Community library coming soon.</p>
       </div>
     </div>
   );

@@ -78,7 +78,6 @@ export default async function PlayerDetailPage({
     <>
       <PageHeader
         title={`${player.firstName} ${player.lastName}`}
-        subtitle="Player profile"
         actions={
           <Link
             href={`/dashboard/${saveId}/roster`}

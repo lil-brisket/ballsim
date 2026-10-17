@@ -134,7 +134,7 @@ export function MoneyInputField({
       <label htmlFor={inputId} className="block font-medium text-zinc-200">
         {label} — {formatMoney(value)}
       </label>
-      <span className="block text-xs text-zinc-500">
+      <span className="block text-sm text-zinc-500">
         Range {formatMoney(min)}–{formatMoney(max)}. Default{" "}
         {formatMoney(defaultValue)}.
       </span>
@@ -151,7 +151,7 @@ export function MoneyInputField({
             onChange(Math.min(max, Math.max(min, dollars)));
           }}
         />
-        <span className="text-xs text-zinc-500">million dollars</span>
+        <span className="text-sm text-zinc-500">million dollars</span>
       </span>
     </div>
   );
@@ -181,7 +181,7 @@ export function InjuryFrequencyField({
           Injury frequency — {selectedLabel}
         </span>
       </div>
-      <p className="text-xs text-zinc-500">
+      <p className="text-sm text-zinc-500">
         Affects how frequently players become injured during simulation.
       </p>
       <div

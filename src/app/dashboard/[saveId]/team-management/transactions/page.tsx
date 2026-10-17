@@ -6,6 +6,7 @@ import { DataTable } from "@/components/ui/DataTable";
 import { EmptyState, ErrorState } from "@/components/ui/EmptyState";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { TeamHubSubNav } from "@/components/team/TeamHubSubNav";
+import { formatGameDate } from "@/presentation/game-date";
 
 export const metadata: Metadata = { title: "Transactions" };
 
@@ -90,10 +91,7 @@ export default async function TeamManagementTransactionsPage({
   return (
     <>
       <TeamHubSubNav saveId={saveId} active="transactions" />
-      <PageHeader
-        title="Transactions"
-        subtitle="Season-wide league transaction feed (structured events)"
-      />
+      <PageHeader title="Transactions" />
       <p className="mb-3 text-sm text-zinc-400">
         Prefer the league ledger?{" "}
         <Link
@@ -108,7 +106,7 @@ export default async function TeamManagementTransactionsPage({
       <div className="flex flex-wrap gap-2">
         <Link
           href={href({ scope: "team", page: "0" })}
-          className={`rounded-full border px-3 py-1 text-xs ${
+          className={`rounded-full border px-3 py-1 text-sm ${
             scope === "team"
               ? "border-team-ink text-team-ink"
               : "border-zinc-700 text-zinc-400"
@@ -118,7 +116,7 @@ export default async function TeamManagementTransactionsPage({
         </Link>
         <Link
           href={href({ scope: "league", page: "0" })}
-          className={`rounded-full border px-3 py-1 text-xs ${
+          className={`rounded-full border px-3 py-1 text-sm ${
             scope === "league"
               ? "border-team-ink text-team-ink"
               : "border-zinc-700 text-zinc-400"
@@ -133,7 +131,7 @@ export default async function TeamManagementTransactionsPage({
           <Link
             key={filterType}
             href={href({ type: filterType, page: "0" })}
-            className={`rounded-full border px-3 py-1 text-xs ${
+            className={`rounded-full border px-3 py-1 text-sm ${
               type === filterType
                 ? "border-team-ink text-team-ink"
                 : "border-zinc-700 text-zinc-400 hover:border-zinc-500"
@@ -144,7 +142,7 @@ export default async function TeamManagementTransactionsPage({
         ))}
       </div>
 
-      <div className="flex flex-wrap gap-2 text-xs">
+      <div className="flex flex-wrap gap-2 text-sm">
         {(
           [
             ["newest", "Newest first"],
@@ -174,8 +172,8 @@ export default async function TeamManagementTransactionsPage({
         <DataTable headers={["Date", "Type", "Details"]}>
           {transactions.rows.map((entry) => (
             <tr key={entry.id} className="border-t border-zinc-800">
-              <td className="px-3 py-2 font-mono text-zinc-500">
-                {entry.occurredOn}
+              <td className="px-3 py-2 text-zinc-500">
+                {formatGameDate(entry.occurredOn)}
               </td>
               <td className="px-3 py-2 text-zinc-400">{entry.type}</td>
               <td className="px-3 py-2 text-zinc-100">{entry.description}</td>

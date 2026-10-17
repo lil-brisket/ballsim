@@ -97,14 +97,11 @@ export default async function TransactionsHubPage({
 
   return (
     <div className="space-y-4">
-      <PageHeader
-        title="Transactions"
-        subtitle="Factual league transaction ledger — not media narrative"
-      />
+      <PageHeader title="Transactions" />
       {query.error ? <ErrorState message={query.error} /> : null}
 
       <Suspense
-        fallback={<p className="text-xs text-zinc-600">Loading filters…</p>}
+        fallback={<p className="text-sm text-zinc-500">Loading filters…</p>}
       >
         <TransactionFilters
           saveId={saveId}
@@ -141,7 +138,7 @@ export default async function TransactionsHubPage({
             groups={view.groups}
             activityMode={parsed.activityMode}
           />
-          <p className="text-xs text-zinc-600">
+          <p className="text-sm text-zinc-500">
             Showing {view.shown} of {view.total}
           </p>
           {view.hasMore ? (

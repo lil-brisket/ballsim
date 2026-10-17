@@ -108,9 +108,7 @@ export function LeagueStandingsSnapshot(props: {
                       {row.abbreviation}
                     </TeamEntityLink>
                     {row.isUserTeam && props.includesUserOutsideTop ? (
-                      <span className="ml-2 text-[0.65rem] text-team-ink">
-                        you
-                      </span>
+                      <span className="ml-2 text-xs text-team-ink">you</span>
                     ) : null}
                   </td>
                   <td className="py-1.5 pr-2 font-mono">{row.wins}</td>

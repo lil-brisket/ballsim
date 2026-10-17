@@ -1,5 +1,6 @@
 import { Metric } from "@/components/ui/Metric";
 import { MoneyDisplay } from "@/components/owner/MoneyDisplay";
+import { formatGameDate } from "@/presentation/game-date";
 import type { OffseasonHubView } from "@/state/offseason-hub-selectors";
 
 export function OffseasonHeaderStrip(props: { view: OffseasonHubView }) {
@@ -9,7 +10,11 @@ export function OffseasonHeaderStrip(props: { view: OffseasonHubView }) {
       className="flex flex-wrap gap-x-6 gap-y-3 rounded-xl border border-zinc-800 bg-zinc-900/40 px-4 py-3"
       aria-label="Offseason summary"
     >
-      <Metric label="Date" value={view.currentDate} mono density="compact" />
+      <Metric
+        label="Date"
+        value={formatGameDate(view.currentDate)}
+        density="compact"
+      />
       <Metric
         label="Season"
         value={String(view.seasonYear)}

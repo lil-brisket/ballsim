@@ -15,9 +15,9 @@ export function ProgressBar(props: {
   return (
     <div className={cn("w-full", props.className)}>
       {props.label ? (
-        <div className="mb-1 flex items-center justify-between gap-2 text-xs text-zinc-400">
+        <div className="mb-1 flex items-center justify-between gap-2 text-sm text-zinc-400">
           <span>{props.label}</span>
-          <span className="font-mono text-zinc-500">{Math.round(pct)}%</span>
+          <span className="tabular-nums text-zinc-400">{Math.round(pct)}%</span>
         </div>
       ) : null}
       <div

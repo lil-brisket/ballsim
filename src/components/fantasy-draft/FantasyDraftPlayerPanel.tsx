@@ -68,7 +68,7 @@ export function FantasyDraftPlayerPanel(props: {
               {detail.position} · Age {detail.age} · {detail.heightInches}&quot;
               / {detail.weightPounds} lbs
             </p>
-            <p className="mt-0.5 text-xs capitalize text-zinc-500">
+            <p className="mt-0.5 text-sm capitalize text-zinc-500">
               {detail.archetypeLabel} · {detail.nationality} · {detail.tier}
             </p>
           </div>
@@ -86,18 +86,18 @@ export function FantasyDraftPlayerPanel(props: {
         <div className="space-y-4 overflow-y-auto px-5 py-4">
           <div className="flex flex-wrap gap-3">
             <div className="rounded-lg border border-team-ink/50 bg-team/20 px-4 py-2 text-center">
-              <p className="text-[10px] uppercase text-zinc-500/80">Overall</p>
+              <p className="text-sm text-zinc-400">Overall</p>
               <p className="font-mono text-2xl text-team-ink">
                 {detail.overall}
               </p>
             </div>
             <div className="rounded-lg border border-zinc-800 px-4 py-2 text-center">
-              <p className="text-[10px] uppercase text-zinc-500">Potential</p>
+              <p className="text-sm text-zinc-400">Potential</p>
               <p className="font-mono text-xl text-zinc-100">
                 {detail.potential}
               </p>
             </div>
-            <div className="space-y-1 text-xs text-zinc-400">
+            <div className="space-y-1 text-sm text-zinc-400">
               <div>Dev: {detail.developmentStage}</div>
               <div>Injury: {detail.injuryKind}</div>
             </div>
@@ -114,10 +114,10 @@ export function FantasyDraftPlayerPanel(props: {
 
           {detail.strengths.length > 0 ? (
             <div>
-              <h4 className="mb-1 text-xs font-semibold uppercase text-zinc-500">
+              <h4 className="mb-1 text-sm font-medium text-zinc-300">
                 Strengths
               </h4>
-              <ul className="flex flex-wrap gap-1.5 text-xs text-emerald-300/90">
+              <ul className="flex flex-wrap gap-1.5 text-sm text-emerald-300/90">
                 {detail.strengths.map((s) => (
                   <li
                     key={s.label}
@@ -132,10 +132,10 @@ export function FantasyDraftPlayerPanel(props: {
 
           {detail.weaknesses.length > 0 ? (
             <div>
-              <h4 className="mb-1 text-xs font-semibold uppercase text-zinc-500">
+              <h4 className="mb-1 text-sm font-medium text-zinc-300">
                 Weaknesses
               </h4>
-              <ul className="flex flex-wrap gap-1.5 text-xs text-zinc-400">
+              <ul className="flex flex-wrap gap-1.5 text-sm text-zinc-400">
                 {detail.weaknesses.map((w) => (
                   <li
                     key={w.label}
@@ -149,7 +149,7 @@ export function FantasyDraftPlayerPanel(props: {
           ) : null}
 
           <div>
-            <h4 className="mb-2 text-xs font-semibold uppercase text-zinc-500">
+            <h4 className="mb-2 text-sm font-medium text-zinc-300">
               Key attributes
             </h4>
             <div className="grid grid-cols-2 gap-2">
@@ -179,7 +179,7 @@ export function FantasyDraftPlayerPanel(props: {
             </form>
           ) : null}
           {detail.inActiveQueue && !detail.isDrafted ? (
-            <span className="self-center text-xs text-zinc-500">In queue</span>
+            <span className="self-center text-sm text-zinc-500">In queue</span>
           ) : null}
           {canDraft && !detail.isDrafted ? (
             confirmPicks ? (

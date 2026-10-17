@@ -7,6 +7,7 @@ import { useMemo, useState } from "react";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Section } from "@/components/ui/Section";
 import { TeamLogoMark } from "@/components/team/logos/TeamLogoMark";
+import { formatGameDate } from "@/presentation/game-date";
 import type {
   PlayerGameLogRowView,
   PlayerProfileView,
@@ -109,7 +110,7 @@ export function PlayerGameLog(props: {
     >
       <div className="overflow-x-auto rounded-lg border border-zinc-800">
         <table className="min-w-full text-left text-sm">
-          <thead className="bg-zinc-900/60 font-mono text-[0.65rem] uppercase tracking-[0.14em] text-zinc-400">
+          <thead className="bg-zinc-900/60 text-sm text-zinc-400">
             <tr>
               {(
                 [
@@ -147,9 +148,9 @@ export function PlayerGameLog(props: {
                 <td className="px-3 py-2">
                   <Link
                     href={`/dashboard/${props.saveId}/games/${row.gameId}`}
-                    className="font-mono text-team-ink underline-offset-4 hover:underline"
+                    className="text-team-ink underline-offset-4 hover:underline"
                   >
-                    {row.date}
+                    {formatGameDate(row.date)}
                   </Link>
                 </td>
                 <td className="px-3 py-2 text-zinc-400">
@@ -213,7 +214,7 @@ export function PlayerGameLog(props: {
         </table>
       </div>
       {pageCount > 1 ? (
-        <div className="mt-3 flex items-center justify-between text-xs text-zinc-500">
+        <div className="mt-3 flex items-center justify-between text-sm text-zinc-500">
           <span>
             Page {page + 1} of {pageCount} ({filtered.length} games)
           </span>

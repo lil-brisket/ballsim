@@ -182,7 +182,7 @@ export function PlayerProfileHero(props: {
           </div>
 
           <div className="order-3 col-span-2 min-w-0 pb-4 sm:order-2 sm:col-span-1 sm:pb-5">
-            <p className="font-mono text-xs uppercase tracking-[0.24em] text-zinc-200">
+            <p className="text-sm font-semibold uppercase tracking-[0.24em] text-zinc-200">
               {props.firstName}
             </p>
             <h3 className="font-display break-words text-4xl font-extrabold uppercase leading-none tracking-wide text-white [text-shadow:0_2px_12px_rgb(0_0_0_/_0.5)] sm:text-6xl">

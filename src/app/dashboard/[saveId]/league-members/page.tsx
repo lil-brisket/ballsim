@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { formatGameDate } from "@/presentation/game-date";
 import { buttonClass as buttonClassFn } from "@/components/ui/Button";
 import { notFound } from "next/navigation";
 import { loadOwnerSaveView } from "@/application/game-service";
@@ -105,16 +106,13 @@ export default async function LeagueMembersPage({
 
   return (
     <>
-      <PageHeader
-        title="League Members"
-        subtitle="Players in this online league"
-      />
+      <PageHeader title="League Members" />
       {error ? <ErrorState message={error} /> : null}
 
       <Section title="Players">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm text-zinc-200">
-            <thead className="text-xs uppercase text-zinc-400">
+            <thead className="text-sm text-zinc-400">
               <tr>
                 <th className="py-2 pr-4">Player</th>
                 <th className="py-2 pr-4">Teams</th>
@@ -133,7 +131,7 @@ export default async function LeagueMembersPage({
                       </span>
                     ) : null}
                     {p.isActive ? (
-                      <span className="ml-2 text-xs text-zinc-400">(You)</span>
+                      <span className="ml-2 text-sm text-zinc-400">(You)</span>
                     ) : null}
                   </td>
                   <td className="py-2 pr-4 align-top">
@@ -197,10 +195,13 @@ export default async function LeagueMembersPage({
                     className="flex flex-wrap items-center gap-3 rounded-lg border border-surface-line px-3 py-2 text-sm text-zinc-200"
                   >
                     <span>{inviteStatus(invite, now)}</span>
-                    <span className="text-xs text-zinc-400">
+                    <span className="text-sm text-zinc-400">
                       {invite.uses}/{invite.maxUses} uses · created{" "}
-                      {invite.createdOn} · expires{" "}
-                      {invite.expiresAt.toISOString().slice(0, 10)}
+                      {formatGameDate(invite.createdOn, { year: true })} ·
+                      expires{" "}
+                      {formatGameDate(invite.expiresAt.toISOString(), {
+                        year: true,
+                      })}
                     </span>
                     {invite.usable ? (
                       <form action={revokeLeagueInviteAction}>

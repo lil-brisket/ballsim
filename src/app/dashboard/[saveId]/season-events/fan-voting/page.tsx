@@ -70,7 +70,7 @@ export default async function FanVotingPage({ params }: PageProps) {
                         {row.playerName}
                       </PlayerEntityLink>
                       {row.teamId && row.teamName ? (
-                        <div className="text-xs text-zinc-500">
+                        <div className="text-sm text-zinc-500">
                           <TeamEntityLink saveId={saveId} teamId={row.teamId}>
                             {row.teamName}
                           </TeamEntityLink>

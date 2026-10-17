@@ -47,7 +47,7 @@ export function CareerSeasonsTable(props: {
         <table className="w-full min-w-[36rem] text-sm">
           <caption className="sr-only">Career statistics by season</caption>
           <thead>
-            <tr className="border-b border-zinc-800 text-left font-mono text-[0.65rem] uppercase tracking-[0.14em] text-zinc-400">
+            <tr className="border-b border-zinc-800 text-left text-sm text-zinc-400">
               {columns.map((column) => {
                 const isActive = column.key === active.key;
                 return (
@@ -67,7 +67,7 @@ export function CareerSeasonsTable(props: {
                       type="button"
                       onClick={() => toggle(column.key)}
                       className={cn(
-                        "inline-flex min-h-9 items-center gap-1 rounded px-1.5 uppercase tracking-[0.14em] hover:text-zinc-100",
+                        "inline-flex min-h-9 items-center gap-1 rounded px-1.5 hover:text-zinc-100",
                         isActive && "text-team-ink",
                         focusRingClass,
                       )}
@@ -114,7 +114,7 @@ export function CareerSeasonsTable(props: {
         </table>
       </div>
       {hasCurrent ? (
-        <p className="text-xs text-zinc-400">* Season in progress</p>
+        <p className="text-sm text-zinc-400">* Season in progress</p>
       ) : null}
     </div>
   );

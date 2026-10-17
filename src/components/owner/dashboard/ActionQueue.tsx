@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { cn, focusRingClass } from "@/components/ui/styles";
 import type { OwnerDashboardActionItem } from "@/state/owner-dashboard";
+import { SectionHeading } from "@/components/ui/SectionHeading";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 
 export function ActionQueue(props: { items: OwnerDashboardActionItem[] }) {
@@ -10,12 +11,7 @@ export function ActionQueue(props: { items: OwnerDashboardActionItem[] }) {
         className="rounded-xl border border-emerald-800/40 bg-emerald-950/20 px-4 py-5"
         aria-label="What needs your attention"
       >
-        <p className="font-mono text-xs uppercase tracking-[0.16em] text-emerald-500">
-          What needs your attention
-        </p>
-        <h2 className="mt-1 text-lg font-medium text-zinc-50">
-          You&apos;re in good shape
-        </h2>
+        <SectionHeading title="You're in good shape" />
         <p className="mt-1 text-sm text-zinc-400">
           No urgent franchise decisions require your attention right now.
         </p>
@@ -25,12 +21,10 @@ export function ActionQueue(props: { items: OwnerDashboardActionItem[] }) {
 
   return (
     <section className="space-y-3" aria-label="What needs your attention">
-      <div>
-        <p className="font-mono text-xs uppercase tracking-[0.16em] text-warning">
-          What needs your attention
-        </p>
-        <h2 className="mt-1 text-lg font-medium text-zinc-50">Action queue</h2>
-      </div>
+      <SectionHeading
+        eyebrow="What needs your attention"
+        title="Action queue"
+      />
       <ul className="space-y-3">
         {props.items.map((item) => (
           <li
@@ -38,7 +32,7 @@ export function ActionQueue(props: { items: OwnerDashboardActionItem[] }) {
             className="rounded-xl border border-warning/40 bg-warning/10 px-4 py-4"
           >
             <div className="flex flex-wrap items-center gap-2">
-              <h3 className="text-base font-medium text-zinc-50">
+              <h3 className="text-sm font-semibold text-zinc-100">
                 {item.title}
               </h3>
               <StatusBadge label={item.severity} tone={item.severity} />
@@ -51,7 +45,7 @@ export function ActionQueue(props: { items: OwnerDashboardActionItem[] }) {
               {item.why}
             </p>
             {item.evidence.length > 0 ? (
-              <ul className="mt-2 space-y-0.5 text-xs text-zinc-500">
+              <ul className="mt-2 space-y-0.5 text-sm text-zinc-500">
                 {item.evidence.map((line, index) => (
                   <li key={`${index}-${line}`}>· {line}</li>
                 ))}

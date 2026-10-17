@@ -21,6 +21,8 @@ import type { LabLeaguePreset } from "@/simulation/lab/lab-league-preset";
 import { Button } from "@/components/ui/Button";
 import { NumberStepper } from "@/components/ui/NumberStepper";
 import { Select } from "@/components/ui/Select";
+import { formatGameDate } from "@/presentation/game-date";
+import { SectionHeading } from "@/components/ui/SectionHeading";
 
 type ScheduleUntil = "regular" | "playoffs";
 type CostKey =
@@ -199,42 +201,40 @@ export function ScheduleLabPanel(props: {
             />
           </div>
           <p className="text-sm text-zinc-400">
-            {schedule.startPhase} {schedule.startDate} → {schedule.endPhase}{" "}
-            {schedule.endDate}
+            {schedule.startPhase} {formatGameDate(schedule.startDate)} →{" "}
+            {schedule.endPhase} {formatGameDate(schedule.endDate)}
             {schedule.decisionsDeclined > 0
               ? ` · auto-declined ${schedule.decisionsDeclined} owner decisions`
               : null}
           </p>
-          <p className="font-mono text-xs text-zinc-500">
+          <p className="font-mono text-sm text-zinc-500">
             checksum={schedule.checksum} · {schedule.reproCommand}
           </p>
           {schedule.averageGameCost ? (
             <div className={`${panelClass} p-4`}>
-              <h3 className="text-sm font-medium text-zinc-200">
-                Average game cost
-              </h3>
+              <SectionHeading as="h3" title="Average game cost" />
               <dl className="mt-3 grid gap-2 text-sm sm:grid-cols-2">
                 <div className="flex justify-between gap-4">
                   <dt className="text-zinc-400">Possessions</dt>
-                  <dd className="font-mono">
+                  <dd className="tabular-nums">
                     {schedule.averageGameCost.possessions}
                   </dd>
                 </div>
                 <div className="flex justify-between gap-4">
                   <dt className="text-zinc-400">Events</dt>
-                  <dd className="font-mono">
+                  <dd className="tabular-nums">
                     {schedule.averageGameCost.events}
                   </dd>
                 </div>
                 <div className="flex justify-between gap-4">
                   <dt className="text-zinc-400">ms / possession</dt>
-                  <dd className="font-mono">
+                  <dd className="tabular-nums">
                     {formatFixed(schedule.averageGameCost.msPerPossession, 3)}
                   </dd>
                 </div>
                 <div className="flex justify-between gap-4">
                   <dt className="text-zinc-400">ms / event</dt>
-                  <dd className="font-mono">
+                  <dd className="tabular-nums">
                     {formatFixed(schedule.averageGameCost.msPerEvent, 3)}
                   </dd>
                 </div>
@@ -242,9 +242,7 @@ export function ScheduleLabPanel(props: {
             </div>
           ) : null}
           <div className={`${panelClass} p-4`}>
-            <h3 className="text-sm font-medium text-zinc-200">
-              Season cost model
-            </h3>
+            <SectionHeading as="h3" title="Season cost model" />
             <ul className="mt-3 space-y-2 text-sm">
               {COST_ROWS.map((row) => {
                 const ms = schedule.seasonCost[row.key];
@@ -253,7 +251,7 @@ export function ScheduleLabPanel(props: {
                   <li key={row.key}>
                     <div className="flex justify-between gap-3 text-zinc-300">
                       <span>{row.label}</span>
-                      <span className="font-mono text-zinc-400">
+                      <span className="tabular-nums text-zinc-400">
                         {formatDurationMs(ms)} ({formatFixed(pct, 1)}%)
                       </span>
                     </div>

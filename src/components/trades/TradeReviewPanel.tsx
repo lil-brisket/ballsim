@@ -1,5 +1,6 @@
 "use client";
 
+import { SectionHeading } from "@/components/ui/SectionHeading";
 import { buttonClass } from "@/components/ui/Button";
 import Link from "next/link";
 import type { ReactNode } from "react";
@@ -19,7 +20,7 @@ function AssetColumn(props: {
 }) {
   return (
     <div className="rounded-md border border-zinc-700 bg-zinc-950/50 px-4 py-3">
-      <h2 className="text-base font-medium text-zinc-50">{props.title}</h2>
+      <SectionHeading as="h3" title={props.title} />
       <ul className="mt-2 space-y-3">
         {props.assets.length === 0 ? (
           <li className="text-zinc-500">Nothing</li>
@@ -40,7 +41,7 @@ function AssetColumn(props: {
                 <p className="font-medium text-zinc-100">{asset.name}</p>
               )}
               {asset.detail ? (
-                <p className="text-xs text-zinc-400">{asset.detail}</p>
+                <p className="text-sm text-zinc-400">{asset.detail}</p>
               ) : null}
             </li>
           ))
@@ -75,15 +76,15 @@ export function TradeReviewPanel(props: {
   return (
     <div className="space-y-6 text-sm text-zinc-200">
       <div>
-        <p className="text-xs uppercase tracking-wide text-zinc-500">
-          Trade review
-        </p>
-        <h2
+        <SectionHeading
           id="owner-interrupt-title"
-          className="text-2xl font-semibold text-zinc-50"
-        >
-          {review.offeringTeamName} → {review.receivingTeamName}
-        </h2>
+          eyebrow="Trade review"
+          title={
+            <>
+              {review.offeringTeamName} → {review.receivingTeamName}
+            </>
+          }
+        />
       </div>
 
       {review.motivationLabel ? (
@@ -93,7 +94,7 @@ export function TradeReviewPanel(props: {
       ) : null}
 
       {review.bothSidesOwned ? (
-        <p className="text-xs text-zinc-200/90">
+        <p className="text-sm text-zinc-200/90">
           You control both franchises in this trade. Approving applies both
           sides — there is no hidden automatic approval.
         </p>
@@ -105,7 +106,7 @@ export function TradeReviewPanel(props: {
       </div>
 
       <section className="rounded-md border border-zinc-700 bg-zinc-950/50 px-4 py-3">
-        <h3 className="text-base font-medium text-zinc-50">Evaluation</h3>
+        <SectionHeading as="h3" title="Evaluation" />
         <p className="mt-1 text-zinc-300">
           {recommendationLabel(review.recommendation)} · Net value{" "}
           {review.netValue.toFixed(1)}
@@ -115,7 +116,7 @@ export function TradeReviewPanel(props: {
             <li key={reason}>{reason}</li>
           ))}
         </ul>
-        <div className="mt-3 grid grid-cols-3 gap-2 text-xs text-zinc-400">
+        <div className="mt-3 grid grid-cols-3 gap-2 text-sm text-zinc-400">
           <div>Roster fit {review.rosterFitPct}%</div>
           <div>Strategic fit {review.strategicFitPct}%</div>
           <div>Financial {review.financialPct}%</div>
@@ -123,8 +124,8 @@ export function TradeReviewPanel(props: {
       </section>
 
       <section className="rounded-md border border-zinc-700 bg-zinc-950/50 px-4 py-3">
-        <h3 className="text-base font-medium text-zinc-50">Roster impact</h3>
-        <table className="mt-2 w-full text-left text-xs">
+        <SectionHeading as="h3" title="Roster impact" />
+        <table className="mt-2 w-full text-left text-sm">
           <thead className="text-zinc-500">
             <tr>
               <th className="py-1">Position</th>
@@ -143,7 +144,7 @@ export function TradeReviewPanel(props: {
           </tbody>
         </table>
         {review.rosterImpact.some((row) => row.after > row.before) ? (
-          <p className="mt-2 text-xs text-emerald-300/90">
+          <p className="mt-2 text-sm text-emerald-300/90">
             Incoming depth may push a player into the rotation.
           </p>
         ) : null}

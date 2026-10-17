@@ -5,9 +5,7 @@ import type { PlayerProfileView } from "@/state/player-profile-selectors";
 function Fact(props: { label: string; children: React.ReactNode }) {
   return (
     <div className="flex min-w-0 flex-col gap-1">
-      <span className="font-mono text-[0.65rem] uppercase tracking-[0.14em] text-zinc-400">
-        {props.label}
-      </span>
+      <span className="text-sm text-zinc-400">{props.label}</span>
       <span className="text-sm text-zinc-100">{props.children}</span>
     </div>
   );

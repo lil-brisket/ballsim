@@ -145,7 +145,7 @@ export function DevelopmentTab(props: {
             </p>
           )}
 
-          <p className="text-xs text-zinc-500">
+          <p className="text-sm text-zinc-500">
             Ratings are actual values at the end of each season, plus today’s
             rating. Potential is a scouting estimate of the player’s ceiling,
             not a projection or a guarantee.
@@ -161,7 +161,7 @@ export function DevelopmentTab(props: {
           <div className="overflow-x-auto rounded-lg border border-zinc-800">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-zinc-800 text-left font-mono text-[0.65rem] uppercase tracking-[0.14em] text-zinc-400">
+                <tr className="border-b border-zinc-800 text-left text-sm text-zinc-400">
                   <th scope="col" className="px-3 py-2 font-normal">
                     Season
                   </th>

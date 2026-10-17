@@ -17,7 +17,7 @@ export function MobileListCard(props: {
       <div className="min-w-0">
         <div className="text-sm font-medium text-zinc-100">{props.title}</div>
         {props.subtitle ? (
-          <div className="mt-0.5 text-xs text-zinc-400">{props.subtitle}</div>
+          <div className="mt-0.5 text-sm text-zinc-400">{props.subtitle}</div>
         ) : null}
       </div>
       {props.meta ? (

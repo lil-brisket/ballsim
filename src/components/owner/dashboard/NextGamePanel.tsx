@@ -14,6 +14,7 @@ import {
   panelClass,
   touchTargetTextClass,
 } from "@/components/ui/styles";
+import { formatGameDate } from "@/presentation/game-date";
 import { parseCalendarDate } from "@/domain/calendar-date";
 
 function calendarDateHref(saveId: string, isoDate: string): string {
@@ -67,7 +68,9 @@ export function NextGamePanel(props: {
         ) : (
           <div className="space-y-4">
             <div>
-              <p className="font-mono text-xs text-zinc-500">{nextGame.date}</p>
+              <p className="text-sm text-zinc-400">
+                {formatGameDate(nextGame.date, { weekday: true })}
+              </p>
               <p
                 className={cn(
                   "mt-1 inline-flex items-center gap-2 text-zinc-50",
@@ -109,7 +112,7 @@ export function NextGamePanel(props: {
             </div>
 
             {props.team.rosterProblems.length > 0 ? (
-              <div className="rounded-lg border border-rose-900/40 bg-rose-950/20 px-3 py-2 text-xs text-rose-200">
+              <div className="rounded-lg border border-rose-900/40 bg-rose-950/20 px-3 py-2 text-sm text-rose-200">
                 <p className="font-medium">Availability</p>
                 <ul className="mt-1 space-y-0.5">
                   {props.team.rosterProblems.slice(0, 3).map((problem) => (

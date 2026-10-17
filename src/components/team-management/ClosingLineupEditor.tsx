@@ -1,5 +1,6 @@
 "use client";
 
+import { SectionHeading } from "@/components/ui/SectionHeading";
 import { Select } from "@/components/ui/Select";
 import type { EditableRotationRow } from "@/state/lineup-rotation-editor";
 
@@ -12,10 +13,8 @@ export function ClosingLineupEditor(props: {
 }) {
   return (
     <section className="space-y-3">
-      <h2 className="text-sm font-semibold uppercase tracking-wide text-zinc-400">
-        Closing Lineup
-      </h2>
-      <label className="text-xs text-zinc-400">
+      <SectionHeading title="Closing Lineup" />
+      <label className="text-sm text-zinc-400">
         Policy
         <Select
           value={props.closingPolicy}
@@ -30,7 +29,7 @@ export function ClosingLineupEditor(props: {
       </label>
       {props.closingPolicy === "custom" ? (
         <div className="rounded-lg border border-zinc-800 p-3 text-sm text-zinc-300">
-          <p className="mb-2 text-xs text-zinc-500">
+          <p className="mb-2 text-sm text-zinc-500">
             Select up to 5 closing players
           </p>
           <div className="flex flex-wrap gap-2">
@@ -41,7 +40,7 @@ export function ClosingLineupEditor(props: {
                   key={row.playerId}
                   type="button"
                   onClick={() => props.onTogglePlayer(row.playerId)}
-                  className={`rounded px-2 py-1 text-xs ${
+                  className={`rounded px-2 py-1 text-sm ${
                     selected
                       ? "bg-team text-on-team"
                       : "bg-zinc-800 text-zinc-300"

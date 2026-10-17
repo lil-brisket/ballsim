@@ -94,9 +94,7 @@ export default function BroadcastUiShowcasePage() {
                     decorative
                   />
                   <div>
-                    <p className="font-mono text-[0.65rem] uppercase tracking-[0.2em] text-team-ink">
-                      Home
-                    </p>
+                    <p className="text-sm text-team-ink">Home</p>
                     <p className="font-display text-3xl font-bold uppercase">
                       {theme.name}
                     </p>
@@ -111,9 +109,7 @@ export default function BroadcastUiShowcasePage() {
                 </div>
                 <div className="flex items-center gap-4">
                   <div className="text-end">
-                    <p className="font-mono text-[0.65rem] uppercase tracking-[0.2em] text-zinc-400">
-                      Away
-                    </p>
+                    <p className="text-sm text-zinc-400">Away</p>
                     <p className="font-display text-3xl font-bold uppercase">
                       {OPPONENT.name}
                     </p>

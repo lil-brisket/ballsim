@@ -2,6 +2,8 @@ import { PlayerPortrait } from "@/components/basketball/PlayerPortrait";
 import { PlayerEntityLink } from "@/components/entity/PlayerEntityLink";
 import { splitDisplayName } from "@/presentation/portrait-hash";
 import { TeamEntityLink } from "@/components/entity/TeamEntityLink";
+import { SectionHeading } from "@/components/ui/SectionHeading";
+import { formatGameDate } from "@/presentation/game-date";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import {
   transactionTypeLabel,
@@ -55,8 +57,8 @@ export function TransactionRow(props: {
     >
       <div className="flex flex-wrap items-center gap-2">
         <TransactionTypeBadge type={row.type} />
-        <span className="font-mono text-[0.65rem] text-zinc-600">
-          {row.occurredOn}
+        <span className="text-sm text-zinc-500">
+          {formatGameDate(row.occurredOn)}
         </span>
       </div>
 
@@ -67,7 +69,7 @@ export function TransactionRow(props: {
               key={side.team.id}
               className="rounded-md border border-zinc-800/80 bg-zinc-950/40 px-3 py-2"
             >
-              <p className="text-xs uppercase tracking-wide text-zinc-500">
+              <p className="text-sm text-zinc-400">
                 <TeamEntityLink
                   saveId={saveId}
                   teamId={side.team.id}
@@ -172,15 +174,14 @@ export function TransactionTimeline(props: {
   return (
     <div className="space-y-6">
       {props.activityMode === "myTeam" ? (
-        <p className="text-xs uppercase tracking-[0.14em] text-zinc-500">
-          Showing your franchise activity
-        </p>
+        <p className="text-sm text-zinc-400">Showing your franchise activity</p>
       ) : null}
       {props.groups.map((group) => (
         <section key={group.date} aria-label={group.date}>
-          <h2 className="mb-2 font-mono text-xs uppercase tracking-[0.14em] text-zinc-500">
-            {formatDateHeader(group.date)}
-          </h2>
+          <SectionHeading
+            className="mb-2"
+            title={formatGameDate(group.date, { year: true })}
+          />
           <ul className="space-y-2">
             {group.rows.map((row) => (
               <li key={row.id}>
@@ -196,21 +197,4 @@ export function TransactionTimeline(props: {
       ))}
     </div>
   );
-}
-
-function formatDateHeader(iso: string): string {
-  try {
-    const [y, m, d] = iso.split("-").map(Number);
-    const utc = new Date(Date.UTC(y!, m! - 1, d!, 12, 0, 0));
-    return utc
-      .toLocaleDateString("en-US", {
-        month: "short",
-        day: "numeric",
-        year: "numeric",
-        timeZone: "UTC",
-      })
-      .toUpperCase();
-  } catch {
-    return iso;
-  }
 }

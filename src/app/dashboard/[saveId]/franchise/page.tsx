@@ -9,6 +9,7 @@ import { EmptyState, ErrorState } from "@/components/ui/EmptyState";
 import { FranchiseHistorySummary } from "@/components/owner/FranchiseHistorySummary";
 import { MoneyDisplay } from "@/components/owner/MoneyDisplay";
 import { PageHeader } from "@/components/ui/PageHeader";
+import { SectionHeading } from "@/components/ui/SectionHeading";
 import { Section } from "@/components/ui/Section";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { ProgressBar } from "@/components/ui/ProgressBar";
@@ -56,11 +57,9 @@ export default async function FranchiseOverviewPage({
 
       <div className="flex flex-wrap items-baseline justify-between gap-3 border-b border-zinc-800 pb-3">
         <div>
-          <p className="font-mono text-[0.65rem] uppercase tracking-[0.16em] text-zinc-500">
-            Organization
-          </p>
-          <h2 className="text-lg font-medium text-zinc-50">{view.teamName}</h2>
-          <p className="text-xs text-zinc-500">
+          <p className="text-sm text-zinc-400">Organization</p>
+          <SectionHeading as="h2" title={view.teamName} />
+          <p className="text-sm text-zinc-500">
             Owner tenure:{" "}
             {view.ownerTenureYears > 0
               ? `${view.ownerTenureYears} season${view.ownerTenureYears === 1 ? "" : "s"}`
@@ -68,13 +67,11 @@ export default async function FranchiseOverviewPage({
           </p>
         </div>
         <div className="text-right">
-          <p className="text-[0.65rem] uppercase tracking-wide text-zinc-500">
-            Franchise value
-          </p>
+          <p className="text-sm text-zinc-400">Franchise value</p>
           <p className="text-lg font-medium text-zinc-100">
             <MoneyDisplay amount={view.franchiseValue} />
           </p>
-          <p className="text-xs capitalize text-zinc-500">
+          <p className="text-sm capitalize text-zinc-500">
             {view.valueExplanation.standing.replaceAll("_", " ")}
           </p>
         </div>
@@ -103,12 +100,12 @@ export default async function FranchiseOverviewPage({
         />
       </section>
       {view.snapshot.franchiseHealthSummary ? (
-        <p className="text-xs leading-relaxed text-zinc-500">
+        <p className="text-sm leading-relaxed text-zinc-500">
           {view.snapshot.franchiseHealthSummary}
         </p>
       ) : null}
       {positive || negative ? (
-        <p className="text-xs text-zinc-500">
+        <p className="text-sm text-zinc-500">
           {positive ? `Driven by ${positive}` : null}
           {positive && negative ? " · " : null}
           {negative ? `Pressed by ${negative}` : null}
@@ -156,7 +153,7 @@ export default async function FranchiseOverviewPage({
                     </p>
                     <StatusBadge label={obj.status} />
                   </div>
-                  <p className="mt-1 text-xs text-zinc-500">
+                  <p className="mt-1 text-sm text-zinc-500">
                     {obj.role.replaceAll("_", " ")}
                     {obj.horizonYears != null
                       ? ` · ${obj.horizonYears}y horizon`

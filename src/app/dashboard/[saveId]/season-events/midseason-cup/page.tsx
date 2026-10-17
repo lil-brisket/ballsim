@@ -45,7 +45,7 @@ export default async function MidseasonCupPage({ params }: PageProps) {
         />
       ) : (
         hub.rounds.map((round) => (
-          <Section key={round.round} title={round.label.toUpperCase()}>
+          <Section key={round.round} title={round.label}>
             <ul className="space-y-3">
               {round.series.map((series) => (
                 <li

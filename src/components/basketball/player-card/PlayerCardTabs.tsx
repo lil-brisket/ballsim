@@ -82,7 +82,7 @@ export function PlayerCardTabList(props: {
             onClick={() => props.onChange(tab.id)}
             onKeyDown={(event) => onKeyDown(event, index)}
             className={cn(
-              "min-h-11 shrink-0 flex-1 whitespace-nowrap border-b-2 px-3 font-mono text-xs uppercase tracking-[0.14em] transition-colors",
+              "min-h-11 shrink-0 flex-1 whitespace-nowrap border-b-2 px-3 text-sm font-medium transition-colors",
               selected
                 ? "border-team-ink text-team-ink"
                 : "border-transparent text-zinc-400 hover:text-zinc-100",

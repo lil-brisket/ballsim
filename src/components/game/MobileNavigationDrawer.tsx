@@ -120,7 +120,7 @@ export function MobileNavigationDrawer(props: {
                 <div className="min-w-0">
                   <h2
                     id={titleId}
-                    className="font-mono text-[0.65rem] uppercase tracking-[0.16em] text-team-ink"
+                    className="text-sm font-medium text-team-ink"
                   >
                     Menu
                   </h2>

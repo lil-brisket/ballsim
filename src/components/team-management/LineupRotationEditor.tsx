@@ -1,5 +1,6 @@
 "use client";
 
+import { SectionHeading } from "@/components/ui/SectionHeading";
 import { Button } from "@/components/ui/Button";
 import { useMemo, useRef, useState, useTransition } from "react";
 import {
@@ -235,15 +236,13 @@ export function LineupRotationEditor(props: {
         <div className="rounded-lg border border-warning/40 bg-warning/10 p-4">
           <div className="flex items-start justify-between gap-3">
             <div>
-              <h3 className="text-sm font-medium text-warning">
-                Optimize summary
-              </h3>
-              <ul className="mt-2 space-y-1 text-xs text-zinc-300">
+              <SectionHeading title="Optimize summary" as="h3" />
+              <ul className="mt-2 space-y-1 text-sm text-zinc-300">
                 {optimizeChangelog.map((line) => (
                   <li key={line}>{line}</li>
                 ))}
               </ul>
-              <p className="mt-2 text-[10px] text-zinc-500">
+              <p className="mt-2 text-sm text-zinc-500">
                 Undo restores local edits — Save Changes to persist.
               </p>
             </div>

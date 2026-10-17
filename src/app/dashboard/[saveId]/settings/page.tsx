@@ -134,12 +134,10 @@ function SettingRow(props: {
 }) {
   return (
     <div className="rounded-lg border border-zinc-800 px-4 py-3">
-      <dt className="text-xs uppercase tracking-wide text-zinc-600">
-        {props.label}
-      </dt>
+      <dt className="text-sm text-zinc-400">{props.label}</dt>
       <dd className="mt-1 text-zinc-100">{props.value}</dd>
       {props.description ? (
-        <p className="mt-1 text-xs text-zinc-500">{props.description}</p>
+        <p className="mt-1 text-sm text-zinc-500">{props.description}</p>
       ) : null}
     </div>
   );

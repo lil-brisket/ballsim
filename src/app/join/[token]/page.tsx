@@ -6,6 +6,7 @@ import { onlineLeagueContext } from "@/application/online/context";
 import { ErrorState } from "@/components/ui/EmptyState";
 import { cn, linkClass } from "@/components/ui/styles";
 import { buttonClass } from "@/components/ui/Button";
+import { SectionHeading } from "@/components/ui/SectionHeading";
 
 type PageProps = {
   params: Promise<{ token: string }>;
@@ -25,9 +26,7 @@ export default async function JoinLeaguePage({
 
   return (
     <main className="mx-auto flex max-w-xl flex-col gap-4 px-4 py-10">
-      <h1 className="font-display text-3xl font-bold uppercase text-zinc-50">
-        Join a league
-      </h1>
+      <SectionHeading as="h1" size="lg" title="Join a league" />
       {error ? <ErrorState message={error} /> : null}
 
       {!result.ok ? (

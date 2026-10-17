@@ -82,7 +82,7 @@ export function MediaTabNav(props: {
                 href={tabHref(saveId, "latest", filter.id)}
                 aria-current={active ? "page" : undefined}
                 className={cn(
-                  "shrink-0 rounded-full border px-3 py-1 text-xs",
+                  "shrink-0 rounded-full border px-3 py-1 text-sm",
                   focusRingClass,
                   active
                     ? "border-team-ink text-team-ink"

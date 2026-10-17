@@ -15,7 +15,7 @@ export function SortableTableControls<T extends string>(props: {
   return (
     <div className="flex flex-wrap gap-3">
       {props.onQueryChange ? (
-        <label className="flex flex-col gap-1 text-xs text-zinc-500">
+        <label className="flex flex-col gap-1 text-sm text-zinc-500">
           Filter
           <input
             type="search"
@@ -26,7 +26,7 @@ export function SortableTableControls<T extends string>(props: {
           />
         </label>
       ) : null}
-      <label className="flex flex-col gap-1 text-xs text-zinc-500">
+      <label className="flex flex-col gap-1 text-sm text-zinc-500">
         Sort by
         <Select
           value={props.sortKey}
@@ -39,7 +39,7 @@ export function SortableTableControls<T extends string>(props: {
           ))}
         </Select>
       </label>
-      <label className="flex flex-col gap-1 text-xs text-zinc-500">
+      <label className="flex flex-col gap-1 text-sm text-zinc-500">
         Direction
         <Select
           value={props.sortDir}

@@ -1,4 +1,6 @@
 import type { SimulationPhaseContext } from "@/systems/simulation/simulation-phase";
+import { formatGameDate } from "@/presentation/game-date";
+import { SectionHeading } from "@/components/ui/SectionHeading";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 
 /**
@@ -26,19 +28,19 @@ export function SimulationPhaseBanner(props: {
       className="rounded-xl border border-zinc-700 bg-zinc-900/70 px-4 py-4"
       aria-label="Simulation phase"
     >
-      <p className="font-mono text-xs uppercase tracking-[0.18em] text-team-ink">
-        Season {phase.seasonYear}
-      </p>
-      <div className="mt-1 flex flex-wrap items-baseline gap-2">
-        <h2 className="text-xl font-semibold uppercase tracking-wide text-zinc-50">
-          {phase.primaryLabel}
-        </h2>
-        {phase.subLabel ? (
-          <span className="text-sm text-zinc-400">{phase.subLabel}</span>
-        ) : null}
-      </div>
+      <SectionHeading
+        eyebrow={`Season ${phase.seasonYear}`}
+        title={phase.primaryLabel}
+        action={
+          phase.subLabel ? (
+            <span className="text-sm text-zinc-400">{phase.subLabel}</span>
+          ) : null
+        }
+      />
       <div className="mt-2 flex flex-wrap items-center gap-2 text-sm text-zinc-300">
-        <span className="font-mono text-zinc-400">{props.currentDate}</span>
+        <span className="text-zinc-400">
+          {formatGameDate(props.currentDate, { weekday: true })}
+        </span>
         <span>·</span>
         <span>{dayLabel}</span>
         {phase.nextPhaseLabel ? (
