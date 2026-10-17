@@ -28,6 +28,9 @@ import type {
 /** Away tokens switch to their secondary colour below this contrast ratio. */
 const MIN_TEAM_CONTRAST = 1.5;
 
+/** Shooter cut on a catch-and-shoot, at 1x. */
+const CUT_MS = 500;
+
 export type CourtStatus = "playing" | "paused" | "complete";
 
 // "Replay complete", not "Final": the scoreboard already says Final.
@@ -180,6 +183,9 @@ export function CourtView(props: {
     lastPlayRef.current = lastPlay;
     speedRef.current = speed;
   });
+  // Where each token was last drawn, so a shooter's cut starts from there.
+  const courtRef = useRef<HTMLDivElement>(null);
+  const drawnSpots = useRef(new Map<PlayerId, CourtPoint>());
   useLayoutEffect(() => {
     if (shownIndex.current === playIndex) {
       return;
@@ -193,16 +199,48 @@ export function CourtView(props: {
     if (prefersReducedMotion()) {
       return;
     }
+    const animations: Animation[] = [];
     const motion = ballMotion(play);
-    if (!motion) {
-      return;
+    if (motion) {
+      animations.push(
+        el.animate(motion.keyframes, {
+          duration: motion.duration / speedRef.current,
+          easing: "linear",
+        }),
+      );
     }
-    const animation = el.animate(motion.keyframes, {
-      duration: motion.duration / speedRef.current,
-      easing: "linear",
-    });
-    return () => animation.cancel();
+    // Catch-and-shoot: the shooter's token curls through the cut point.
+    const from = drawnSpots.current.get(play.playerId);
+    const token = courtRef.current?.querySelector<HTMLElement>(
+      `[data-player-id="${play.playerId}"]`,
+    );
+    if (play.cut && from && token && typeof token.animate === "function") {
+      const to = {
+        left: token.style.left,
+        top: token.style.top,
+      };
+      animations.push(
+        token.animate(
+          [
+            { left: pct(from.x), top: pct(from.y) },
+            { left: pct(play.cut.x), top: pct(play.cut.y), offset: 0.5 },
+            to,
+          ],
+          { duration: CUT_MS / speedRef.current, easing: "ease-in-out" },
+        ),
+      );
+    }
+    return () => {
+      for (const animation of animations) {
+        animation.cancel();
+      }
+    };
   }, [playIndex]);
+  useLayoutEffect(() => {
+    drawnSpots.current = new Map(
+      frame.players.map((player) => [player.playerId, player.spot]),
+    );
+  });
 
   const rosterById = new Map((props.players ?? []).map((p) => [p.playerId, p]));
   const incoming = new Map<PlayerId, CourtSubstitution>(
@@ -284,6 +322,7 @@ export function CourtView(props: {
         </Button>
       </div>
       <div
+        ref={courtRef}
         role="group"
         aria-label="Court"
         className="court-floor relative mx-auto aspect-[50/47] w-full max-w-xl overflow-x-clip rounded-lg"
@@ -470,6 +509,7 @@ function Token(props: {
       aria-label={name}
       aria-pressed={props.selected}
       data-testid="court-token"
+      data-player-id={player.playerId}
       data-role={player.role}
       onClick={() => props.onSelect?.(player.playerId)}
       className={cn(
