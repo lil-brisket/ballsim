@@ -39,6 +39,7 @@ function court(
       home={COURT_HOME}
       away={COURT_AWAY}
       live={buildLiveBoxScore(VIEW, revealed)}
+      players={VIEW.players}
       {...extra}
     />
   );
@@ -159,5 +160,69 @@ describe("CourtView", () => {
     render(court(3, { showShotChart: false, onShowShotChartChange }));
     fireEvent.click(screen.getByRole("button", { name: "Shot chart" }));
     expect(onShowShotChartChange).toHaveBeenCalledWith(true);
+  });
+
+  it("shows who has the ball, and hides it at the final frame", () => {
+    const { rerender } = render(court(1));
+    const frame = buildCourtFrame(VIEW, 1);
+    const abbreviation = frame.ballSide === 0 ? "HAR" : "SUM";
+    expect(screen.getByText(`${abbreviation} ball`)).toBeTruthy();
+    expect(screen.getByTestId("court-possession").textContent).toContain(
+      "Possession:",
+    );
+    rerender(court(VIEW.plays.length));
+    expect(screen.queryByTestId("court-possession")).toBeNull();
+  });
+
+  it("marks a substitution with an In chip, a named token and a fading ghost", () => {
+    const revealed = VIEW.plays.findIndex((p) => p.kind === "substitution") + 1;
+    render(court(revealed));
+    expect(screen.getByText("In")).toBeTruthy();
+    expect(screen.getByText("Out")).toBeTruthy();
+    const names = screen
+      .getAllByTestId("court-token")
+      .map((el) => el.getAttribute("aria-label")!);
+    expect(names.filter((n) => n.endsWith(", just checked in"))).toHaveLength(
+      1,
+    );
+    expect(
+      screen.getByRole("button", { name: /^Sam Park, .*, just checked in$/ }),
+    ).toBeTruthy();
+    expect(screen.getAllByTestId("court-sub-ghost")).toHaveLength(1);
+  });
+
+  it("shows no substitution ghost under reduced motion", () => {
+    mockMatchMedia(true);
+    const revealed = VIEW.plays.findIndex((p) => p.kind === "substitution") + 1;
+    render(court(revealed));
+    expect(screen.queryByTestId("court-sub-ghost")).toBeNull();
+    expect(screen.getByText("In")).toBeTruthy();
+  });
+
+  it("renders the period break card text", () => {
+    const { rerender } = render(court(3));
+    expect(screen.queryByTestId("court-period-card")).toBeNull();
+    rerender(court(3, { periodBreak: "End of Q1 · SUM 5 – HAR 6" }));
+    expect(screen.getByTestId("court-period-card").textContent).toBe(
+      "End of Q1 · SUM 5 – HAR 6",
+    );
+  });
+
+  it("divides the ball animation duration by the playback speed", () => {
+    const durations: number[] = [];
+    Element.prototype.animate = ((
+      _k: Keyframe[],
+      options: { duration: number },
+    ) => {
+      durations.push(options.duration);
+      return { cancel: vi.fn() };
+    }) as never;
+    const slow = render(court(1, { speed: 1 }));
+    slow.rerender(court(2, { speed: 1 }));
+    slow.unmount();
+    const fast = render(court(1, { speed: 4 }));
+    fast.rerender(court(2, { speed: 4 }));
+    expect(durations).toHaveLength(2);
+    expect(durations[1]).toBe(durations[0]! / 4);
   });
 });

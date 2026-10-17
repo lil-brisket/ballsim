@@ -1,6 +1,6 @@
 "use client";
 
-import { useLayoutEffect, useRef, useState } from "react";
+import { useLayoutEffect, useRef, useState, type CSSProperties } from "react";
 import { HalfCourtLines } from "@/components/game/court/HalfCourtLines";
 import { Button } from "@/components/ui/Button";
 import { prefersReducedMotion } from "@/components/ui/CountUp";
@@ -16,9 +16,11 @@ import {
   type CourtLastPlay,
   type CourtPlayer,
   type CourtPoint,
+  type CourtSubstitution,
 } from "@/state/watch-court-frame";
 import type {
   LiveBoxScore,
+  WatchPlayer,
   WatchSide,
   WatchTeam,
 } from "@/state/watch-game-view";
@@ -133,9 +135,16 @@ export function CourtView(props: {
   onSelectPlayer?: (id: PlayerId) => void;
   /** Playback state shown above the court; omitted on the dev page. */
   status?: CourtStatus;
+  /** Playback speed multiplier; motion durations are divided by it. */
+  speed?: number;
+  /** Period-end card text shown over the lower court; null or omitted hides it. */
+  periodBreak?: string | null;
+  /** Roster, used to name the outgoing player of a substitution. */
+  players?: WatchPlayer[];
   className?: string;
 }) {
   const { frame, home, away, live } = props;
+  const speed = props.speed && props.speed > 0 ? props.speed : 1;
   const [localShotChart, setLocalShotChart] = useState(false);
   const showShotChart = props.showShotChart ?? localShotChart;
 
@@ -164,9 +173,12 @@ export function CourtView(props: {
   // Ball flight: animate only when the latest play changes, never on mount.
   const ballRef = useRef<HTMLDivElement>(null);
   const lastPlayRef = useRef(lastPlay);
+  // Read at flight start, so a speed change never cancels a ball mid-air.
+  const speedRef = useRef(speed);
   const shownIndex = useRef(playIndex);
   useLayoutEffect(() => {
     lastPlayRef.current = lastPlay;
+    speedRef.current = speed;
   });
   useLayoutEffect(() => {
     if (shownIndex.current === playIndex) {
@@ -186,11 +198,23 @@ export function CourtView(props: {
       return;
     }
     const animation = el.animate(motion.keyframes, {
-      duration: motion.duration,
+      duration: motion.duration / speedRef.current,
       easing: "linear",
     });
     return () => animation.cancel();
   }, [playIndex]);
+
+  const rosterById = new Map((props.players ?? []).map((p) => [p.playerId, p]));
+  const incoming = new Map<PlayerId, CourtSubstitution>(
+    frame.substitutions.map((sub) => [sub.inId, sub]),
+  );
+  const ghosts = prefersReducedMotion()
+    ? []
+    : frame.substitutions.flatMap((sub) => {
+        const outgoing = rosterById.get(sub.outId);
+        const spot = frame.players.find((p) => p.playerId === sub.inId)?.spot;
+        return outgoing && spot ? [{ sub, outgoing, spot }] : [];
+      });
 
   const callout = lastPlay ? calloutText(lastPlay, labelOf) : null;
   const flashRim =
@@ -209,27 +233,48 @@ export function CourtView(props: {
   return (
     <div className={cn("space-y-2", props.className)}>
       <div className="flex items-center justify-between gap-3">
-        {props.status ? (
-          <p
-            className="inline-flex items-center gap-2 text-sm text-zinc-300"
-            data-testid="court-status"
-          >
-            <span
-              aria-hidden="true"
-              className={cn(
-                "h-2 w-2 rounded-full",
-                props.status === "playing"
-                  ? "team-pulse bg-team-ink"
-                  : props.status === "paused"
-                    ? "bg-zinc-500"
-                    : "bg-zinc-300",
-              )}
-            />
-            {STATUS_LABEL[props.status]}
-          </p>
-        ) : (
-          <span />
-        )}
+        <div className="flex min-w-0 flex-wrap items-center gap-x-4 gap-y-1">
+          {props.status ? (
+            <p
+              className="inline-flex items-center gap-2 text-sm text-zinc-300"
+              data-testid="court-status"
+            >
+              <span
+                aria-hidden="true"
+                className={cn(
+                  "h-2 w-2 rounded-full",
+                  props.status === "playing"
+                    ? "team-pulse bg-team-ink"
+                    : props.status === "paused"
+                      ? "bg-zinc-500"
+                      : "bg-zinc-300",
+                )}
+              />
+              {STATUS_LABEL[props.status]}
+            </p>
+          ) : null}
+          {frame.ballSide !== null ? (
+            <p
+              className="inline-flex items-center gap-1.5 text-sm text-zinc-300"
+              data-testid="court-possession"
+            >
+              <svg
+                aria-hidden="true"
+                viewBox="0 0 8 10"
+                className="h-2.5 w-2 fill-current"
+              >
+                <path d="M0 0 L8 5 L0 10 Z" />
+              </svg>
+              <span aria-hidden="true">
+                {teamOf(frame.ballSide).abbreviation} ball
+              </span>
+              <span className="sr-only">
+                Possession: {teamOf(frame.ballSide).city}{" "}
+                {teamOf(frame.ballSide).name}
+              </span>
+            </p>
+          ) : null}
+        </div>
         <Button
           variant="secondary"
           aria-pressed={showShotChart}
@@ -243,6 +288,7 @@ export function CourtView(props: {
         aria-label="Court"
         className="court-floor relative mx-auto aspect-[50/47] w-full max-w-xl overflow-x-clip rounded-lg"
         data-testid="court-view"
+        style={{ "--court-speed": speed } as CSSProperties}
       >
         <svg
           viewBox={`0 0 ${COURT_FEET.width} ${COURT_FEET.length}`}
@@ -312,8 +358,18 @@ export function CourtView(props: {
             team={teamOf(player.side)}
             color={colorOf(player.side)}
             points={points.get(player.playerId) ?? 0}
+            checkedIn={incoming.get(player.playerId)?.index ?? null}
             selected={props.selectedPlayerId === player.playerId}
             onSelect={props.onSelectPlayer}
+          />
+        ))}
+
+        {ghosts.map(({ sub, outgoing, spot }) => (
+          <Ghost
+            key={`ghost-${sub.index}`}
+            initial={initialOf(outgoing.lastName)}
+            color={colorOf(sub.side)}
+            spot={spot}
           />
         ))}
 
@@ -341,7 +397,45 @@ export function CourtView(props: {
             {callout}
           </div>
         ) : null}
+
+        {props.periodBreak ? (
+          <div
+            key={props.periodBreak}
+            className="court-period-card pointer-events-none absolute bottom-3 left-1/2 z-30 max-w-[90%] -translate-x-1/2 whitespace-nowrap rounded-md bg-black/80 px-3 py-1.5 text-sm font-medium text-zinc-50"
+            data-testid="court-period-card"
+          >
+            {props.periodBreak}
+          </div>
+        ) : null}
       </div>
+    </div>
+  );
+}
+
+const SUB_CHIP_CLASS =
+  "pointer-events-none absolute bottom-[calc(50%+1.1rem)] left-1/2 -translate-x-1/2 rounded bg-black/80 px-1 text-sm font-medium leading-tight sm:bottom-[calc(50%+1.3rem)]";
+
+/** Fading, non-interactive stand-in for the player who just left the floor. */
+function Ghost(props: { initial: string; color: string; spot: CourtPoint }) {
+  const ink = readableTextOnBackground(props.color);
+  return (
+    <div
+      aria-hidden="true"
+      data-testid="court-sub-ghost"
+      className="court-ghost pointer-events-none absolute z-[5] flex h-11 w-11 -translate-x-1/2 -translate-y-1/2 items-center justify-center"
+      style={{ left: pct(props.spot.x), top: pct(props.spot.y) }}
+    >
+      <span
+        className="flex h-7 w-7 items-center justify-center rounded-full border-2 font-display text-sm font-semibold leading-none sm:h-8 sm:w-8"
+        style={{
+          backgroundColor: props.color,
+          borderColor: ink,
+          color: ink,
+        }}
+      >
+        {props.initial}
+      </span>
+      <span className={cn(SUB_CHIP_CLASS, "text-zinc-300")}>Out</span>
     </div>
   );
 }
@@ -351,6 +445,8 @@ function Token(props: {
   team: WatchTeam;
   color: string;
   points: number;
+  /** Index of the substitution that brought this player in, if current. */
+  checkedIn: number | null;
   selected: boolean;
   onSelect?: (id: PlayerId) => void;
 }) {
@@ -367,7 +463,7 @@ function Token(props: {
         : "left-1/2 -translate-x-1/2";
   const name = `${player.fullName}, ${team.city} ${team.name}, ${props.points} pts${
     handler ? ", has the ball" : ""
-  }`;
+  }${props.checkedIn !== null ? ", just checked in" : ""}`;
   return (
     <button
       type="button"
@@ -383,8 +479,12 @@ function Token(props: {
       style={{ left: pct(player.spot.x), top: pct(player.spot.y) }}
     >
       <span
+        key={props.checkedIn ?? "steady"}
         aria-hidden="true"
-        className="relative flex h-7 w-7 items-center justify-center rounded-full border-2 font-display text-sm font-semibold leading-none sm:h-8 sm:w-8"
+        className={cn(
+          props.checkedIn !== null && "court-token-enter",
+          "relative flex h-7 w-7 items-center justify-center rounded-full border-2 font-display text-sm font-semibold leading-none sm:h-8 sm:w-8",
+        )}
         style={{
           backgroundColor: color,
           borderColor: ink,
@@ -402,6 +502,11 @@ function Token(props: {
           <span className="absolute -inset-1.5 rounded-full border-2 border-white bg-white/15" />
         ) : null}
       </span>
+      {props.checkedIn !== null ? (
+        <span aria-hidden="true" className={cn(SUB_CHIP_CLASS, "text-zinc-50")}>
+          In
+        </span>
+      ) : null}
       <span
         aria-hidden="true"
         className={cn(

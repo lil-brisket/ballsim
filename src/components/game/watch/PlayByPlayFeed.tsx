@@ -199,7 +199,7 @@ export function PlayByPlayFeed(props: {
       <div
         aria-live="polite"
         aria-relevant="additions"
-        className="max-h-[32rem] overflow-y-auto"
+        className="max-h-80 overflow-y-auto lg:max-h-[32rem]"
         data-testid="play-feed"
       >
         <ul className="space-y-1.5">{items}</ul>
