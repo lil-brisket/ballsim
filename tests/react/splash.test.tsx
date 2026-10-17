@@ -9,6 +9,8 @@ describe("Splash page", () => {
       screen.getByRole("link", { name: /enter game/i }).getAttribute("href"),
     ).toBe("/home");
     expect(screen.getByText("Franchise Simulation")).toBeTruthy();
+    expect(screen.queryByText("Basketball")).toBeNull();
+    expect(screen.getAllByRole("link")).toHaveLength(1);
     expect(screen.queryByText("Continue")).toBeNull();
     expect(screen.queryByText("New Game")).toBeNull();
     unmount();

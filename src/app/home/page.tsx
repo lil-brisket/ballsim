@@ -20,7 +20,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
   return (
     <main className="relative flex flex-1 flex-col overflow-hidden">
       <SplashBackground />
-      <div className="relative z-10 mx-auto flex w-full max-w-5xl flex-1 flex-col gap-10 px-6 py-12 sm:py-16">
+      <div className="relative z-10 mx-auto flex w-full max-w-4xl flex-1 flex-col gap-8 px-6 py-12 sm:py-16">
         <header className="space-y-6">
           <GameBrand className="justify-center sm:justify-start" />
           <SectionHeading
@@ -33,16 +33,22 @@ export default async function HomePage({ searchParams }: HomePageProps) {
 
         {error ? <ErrorState message={error} /> : null}
 
-        <section
-          className="grid gap-5 md:grid-cols-2 lg:grid-cols-3"
-          aria-label="Game modes"
-        >
-          {modes.map((mode) => (
-            <GameModeCard key={mode.id} mode={mode} />
-          ))}
+        <section className="space-y-4" aria-label="Game modes">
+          {modes
+            .filter((mode) => mode.available)
+            .map((mode) => (
+              <GameModeCard key={mode.id} mode={mode} />
+            ))}
+          <div className="grid gap-3 sm:grid-cols-2">
+            {modes
+              .filter((mode) => !mode.available)
+              .map((mode) => (
+                <GameModeCard key={mode.id} mode={mode} />
+              ))}
+          </div>
         </section>
 
-        <footer className="flex flex-wrap items-center justify-center gap-x-6 sm:justify-start">
+        <footer className="mt-auto flex flex-wrap items-center justify-center gap-x-6 border-t border-surface-line pt-4 sm:justify-between">
           <Link
             href="/settings"
             className="inline-flex min-h-11 items-center text-sm text-zinc-400 hover:text-team-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-team-ink"
