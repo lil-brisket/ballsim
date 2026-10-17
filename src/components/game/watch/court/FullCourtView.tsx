@@ -79,6 +79,8 @@ export function FullCourtView(props: {
   players?: WatchPlayer[];
   /** Frame the whole floor in Broadcast (period breaks, the final). */
   wide?: boolean;
+  /** Scoring run in progress, shown on the courtside ribbon. */
+  run?: { side: WatchSide; points: number } | null;
   /** The game is over: the centre logo brightens. */
   final?: boolean;
   className?: string;
@@ -184,6 +186,14 @@ export function FullCourtView(props: {
     );
   });
 
+  const onCourt = new Set(frame.players.map((p) => p.playerId));
+  const bench: [WatchPlayer[], WatchPlayer[]] = [[], []];
+  for (const player of props.players ?? []) {
+    if (!onCourt.has(player.playerId)) {
+      bench[player.side].push(player);
+    }
+  }
+
   const rosterById = new Map((props.players ?? []).map((p) => [p.playerId, p]));
   const incoming = new Map<PlayerId, CourtSubstitution>(
     frame.substitutions.map((sub) => [sub.inId, sub]),
@@ -285,6 +295,47 @@ export function FullCourtView(props: {
         >
           <span className="whitespace-nowrap">{home.city}</span>
         </span>
+
+        {/* Courtside LED ribbon on the far-sideline apron. Static: it only
+            changes when a play is revealed, never while paused. */}
+        <span
+          aria-hidden="true"
+          data-testid="court-ribbon"
+          className="pointer-events-none absolute inset-x-6 top-0 flex h-5 items-center justify-center overflow-hidden rounded-sm font-display text-sm font-semibold uppercase leading-5 tracking-widest"
+          style={{ backgroundColor: palette.ribbon, color: palette.ribbonInk }}
+        >
+          <span className="truncate px-2">
+            {props.run
+              ? `${teamOf(props.run.side).abbreviation} ${props.run.points}–0 run`
+              : `${home.city} ${home.name}`}
+          </span>
+        </span>
+
+        {/* Benches on the near-sideline apron, either side of the city. */}
+        {([0, 1] as const).map((side) =>
+          bench[side].length > 0 ? (
+            <span
+              key={side}
+              aria-hidden="true"
+              data-testid="court-bench"
+              data-side={side}
+              className={cn(
+                "pointer-events-none absolute bottom-0 hidden h-5 items-center gap-1.5 rounded-sm border px-1.5 text-sm font-medium leading-5 sm:flex",
+                side === 0 ? "left-[14%]" : "right-[14%]",
+              )}
+              style={{
+                color: palette.wordmark,
+                borderColor: `color-mix(in srgb, ${palette.wordmark} 35%, transparent)`,
+              }}
+            >
+              {bench[side].map((player) => (
+                <span key={player.playerId}>
+                  {initialOf(player.lastName || player.shortName)}
+                </span>
+              ))}
+            </span>
+          ) : null,
+        )}
 
         <div
           className={cn(

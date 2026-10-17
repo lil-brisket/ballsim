@@ -95,6 +95,32 @@ describe("FullCourtView", () => {
     expect(marks).toEqual(["Harriers", "Harriers", "Harbor"]);
   });
 
+  it("shows the home name on the courtside ribbon, or a run in progress", () => {
+    const { rerender } = render(court(1));
+    expect(screen.getByTestId("court-ribbon").textContent).toBe(
+      `${COURT_HOME.city} ${COURT_HOME.name}`,
+    );
+    rerender(court(1, { run: { side: 1, points: 8 } }));
+    expect(screen.getByTestId("court-ribbon").textContent).toBe(
+      `${COURT_AWAY.abbreviation} 8–0 run`,
+    );
+  });
+
+  it("seats the off-court players on their team's bench", () => {
+    const sub = VIEW.plays.findIndex((p) => p.kind === "substitution");
+    const { rerender } = render(court(1));
+    const bench = (side: number) =>
+      screen
+        .getAllByTestId("court-bench")
+        .find((el) => el.getAttribute("data-side") === String(side));
+    // Park (h6) and Hale (a6) start on their benches.
+    expect(bench(0)!.textContent).toBe("P");
+    expect(bench(1)!.textContent).toBe("H");
+    // After Park checks in for Lee, Lee sits.
+    rerender(court(sub + 1));
+    expect(bench(0)!.textContent).toBe("L");
+  });
+
   it("shows the centre logo with branding and omits it without", () => {
     const { unmount } = render(court(1));
     expect(screen.getByTestId("court-centre-logo")).toBeTruthy();

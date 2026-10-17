@@ -49,8 +49,11 @@ describe("buildCourtPalette", () => {
       );
     });
 
-    it("keeps apron text readable", () => {
+    it("keeps apron and ribbon text readable", () => {
       expect(ratio(palette.wordmark, palette.apron)).toBeGreaterThanOrEqual(
+        COURT_TEXT_MIN_CONTRAST,
+      );
+      expect(ratio(palette.ribbonInk, palette.ribbon)).toBeGreaterThanOrEqual(
         COURT_TEXT_MIN_CONTRAST,
       );
     });
@@ -88,6 +91,9 @@ describe("buildCourtPalette", () => {
     expect(palette.apron).toBe(palette.floor);
     expect(palette.lane).toMatch(HEX);
     expect(ratio(palette.wordmark, palette.apron)).toBeGreaterThanOrEqual(
+      COURT_TEXT_MIN_CONTRAST,
+    );
+    expect(ratio(palette.ribbonInk, palette.ribbon)).toBeGreaterThanOrEqual(
       COURT_TEXT_MIN_CONTRAST,
     );
   });

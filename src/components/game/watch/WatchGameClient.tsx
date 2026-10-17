@@ -20,6 +20,7 @@ import { stepPossession } from "@/state/watch-court-frame";
 import { buildFullCourtFrame } from "@/state/watch-full-court";
 import {
   buildLiveBoxScore,
+  currentRun,
   periodLabel,
   buildShotSummary,
 } from "@/state/watch-game-selectors";
@@ -124,6 +125,7 @@ export function WatchGameClient(props: {
           periodBreak={periodBreak ?? finalCard}
           wide={periodBreak !== null || live.isFinal}
           final={live.isFinal}
+          run={currentRun(view, revealed)}
           players={view.players}
           selectedPlayerId={selectedPlayerId}
           onSelectPlayer={(id) =>
