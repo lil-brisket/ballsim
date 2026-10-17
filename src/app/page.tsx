@@ -12,9 +12,6 @@ export default function SplashPage() {
         <div className="splash-enter-brand">
           <GameBrand size="splash" />
         </div>
-        <p className="splash-enter-tagline max-w-md text-lg text-zinc-300 sm:text-xl">
-          Build the franchise. Shape the league.
-        </p>
         <div className="splash-enter-action">
           <Link
             href="/home"
