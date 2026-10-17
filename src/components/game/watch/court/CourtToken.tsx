@@ -10,8 +10,13 @@ import { initialOf, pct } from "./court-motion";
 /** Tokens this close to a sideline (normalized x) anchor their label inward. */
 const EDGE_LABEL_X = 0.15;
 
-export const SUB_CHIP_CLASS =
-  "pointer-events-none absolute bottom-[calc(50%+1.1rem)] left-1/2 -translate-x-1/2 rounded bg-black/80 px-1 text-sm font-medium leading-tight sm:bottom-[calc(50%+1.3rem)]";
+const SUB_CHIP_BASE =
+  "pointer-events-none absolute left-1/2 -translate-x-1/2 rounded bg-black/80 px-1 text-sm font-medium leading-tight";
+
+export const SUB_CHIP_CLASS = `${SUB_CHIP_BASE} bottom-[calc(50%+1.1rem)] sm:bottom-[calc(50%+1.3rem)]`;
+
+/** Sub chip below the token, for tokens whose name label hangs above. */
+const SUB_CHIP_BELOW_CLASS = `${SUB_CHIP_BASE} top-[calc(50%+1.1rem)] sm:top-[calc(50%+1.3rem)]`;
 
 export function CourtToken(props: {
   player: CourtPlayer;
@@ -22,6 +27,12 @@ export function CourtToken(props: {
   checkedIn: number | null;
   selected: boolean;
   onSelect?: (id: PlayerId) => void;
+  /** Full-court edge colours: ring replaces the readable-ink border, halo sits outside it. */
+  outline?: { ring: string; halo: string | null };
+  /** Replaces the team-ink colour of the ball-handler ring and shooter glow. */
+  accent?: string;
+  /** Hang the name label above the token instead of below (near the near sideline). */
+  labelAbove?: boolean;
 }) {
   const { player, team, color } = props;
   const ink = readableTextOnBackground(color);
@@ -34,6 +45,13 @@ export function CourtToken(props: {
       : player.spot.x > 1 - EDGE_LABEL_X
         ? "right-2"
         : "left-1/2 -translate-x-1/2";
+  const glow = shooter
+    ? props.accent
+      ? `0 0 10px 2px color-mix(in srgb, ${props.accent} 60%, transparent)`
+      : "0 0 10px 2px rgb(var(--team-ink-rgb) / 0.6)"
+    : null;
+  const halo = props.outline?.halo ? `0 0 0 2px ${props.outline.halo}` : null;
+  const boxShadow = [halo, glow].filter(Boolean).join(", ") || undefined;
   const name = `${player.fullName}, ${team.city} ${team.name}, ${props.points} pts${
     handler ? ", has the ball" : ""
   }${props.checkedIn !== null ? ", just checked in" : ""}`;
@@ -61,30 +79,43 @@ export function CourtToken(props: {
         )}
         style={{
           backgroundColor: color,
-          borderColor: ink,
+          borderColor: props.outline?.ring ?? ink,
           color: ink,
-          boxShadow: shooter
-            ? "0 0 10px 2px rgb(var(--team-ink-rgb) / 0.6)"
-            : undefined,
+          boxShadow,
         }}
       >
         {initialOf(player.label)}
         {handler ? (
-          <span className="absolute -inset-1 rounded-full border-2 border-team-ink" />
+          <span
+            className={cn(
+              "absolute -inset-1 rounded-full border-2",
+              !props.accent && "border-team-ink",
+            )}
+            style={props.accent ? { borderColor: props.accent } : undefined}
+          />
         ) : null}
         {props.selected ? (
           <span className="absolute -inset-1.5 rounded-full border-2 border-white bg-white/15" />
         ) : null}
       </span>
       {props.checkedIn !== null ? (
-        <span aria-hidden="true" className={cn(SUB_CHIP_CLASS, "text-zinc-50")}>
+        <span
+          aria-hidden="true"
+          className={cn(
+            props.labelAbove ? SUB_CHIP_BELOW_CLASS : SUB_CHIP_CLASS,
+            "text-zinc-50",
+          )}
+        >
           In
         </span>
       ) : null}
       <span
         aria-hidden="true"
         className={cn(
-          "pointer-events-none absolute top-[calc(50%+1rem)] max-w-[4.5rem] truncate text-sm font-medium leading-tight text-zinc-50 sm:top-[calc(50%+1.25rem)] sm:max-w-24",
+          "pointer-events-none absolute max-w-[4.5rem] truncate text-sm font-medium leading-tight text-zinc-50 sm:max-w-24",
+          props.labelAbove
+            ? "bottom-[calc(50%+1rem)] sm:bottom-[calc(50%+1.25rem)]"
+            : "top-[calc(50%+1rem)] sm:top-[calc(50%+1.25rem)]",
           labelAlign,
         )}
         style={{ textShadow: "0 1px 2px rgb(0 0 0 / 0.9)" }}

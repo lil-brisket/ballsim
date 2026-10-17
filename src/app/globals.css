@@ -217,10 +217,34 @@ body {
     );
 }
 
+/* Full-court floor: plank lines only; the palette paints the colour inline. */
+.court-wood {
+  background-image:
+    repeating-linear-gradient(
+      90deg,
+      rgb(255 255 255 / 0.02) 0px,
+      rgb(255 255 255 / 0.02) 1px,
+      transparent 1px,
+      transparent 56px
+    ),
+    repeating-linear-gradient(
+      180deg,
+      rgb(255 255 255 / 0.012) 0px,
+      rgb(255 255 255 / 0.012) 1px,
+      transparent 1px,
+      transparent 7px
+    );
+}
+
 .court-token {
   transition:
     left calc(400ms / var(--court-speed, 1)) ease,
     top calc(400ms / var(--court-speed, 1)) ease;
+}
+
+/* A possession at the other end: tokens glide the length of the floor. */
+.court-switching .court-token {
+  transition-duration: calc(900ms / var(--court-speed, 1));
 }
 
 .court-callout {
@@ -298,7 +322,8 @@ body {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .court-token {
+  .court-token,
+  .court-switching .court-token {
     transition: none;
   }
 

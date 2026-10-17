@@ -7,6 +7,7 @@
 
 import { SectionHeading, TeamThemeScope } from "@/components/ui";
 import { CourtShowcase } from "./CourtShowcase";
+import { FullCourtShowcase } from "./FullCourtShowcase";
 import { TeamShowcase } from "./TeamShowcase";
 
 const TEAMS = [
@@ -61,6 +62,15 @@ export default function BroadcastUiShowcasePage() {
           title="Dark home vs light away"
         />
         <CourtShowcase />
+      </TeamThemeScope>
+
+      <TeamThemeScope
+        branding={TEAMS[0].branding}
+        as="section"
+        className="mt-10 max-w-4xl space-y-3"
+      >
+        <SectionHeading as="h2" eyebrow="Court replay" title="Full court" />
+        <FullCourtShowcase />
       </TeamThemeScope>
 
       <div className="mt-10 grid gap-10 lg:grid-cols-2">

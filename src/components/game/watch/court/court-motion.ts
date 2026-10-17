@@ -82,3 +82,39 @@ export function initialOf(label: string): string {
   const word = label.trim().split(/\s+/).pop() ?? "";
   return word.slice(0, 1).toUpperCase();
 }
+
+/** Fixed time for the ball's trip up the floor before a possession's first play, at 1x. */
+export const TRANSITION_MS = 500;
+
+/**
+ * `ballMotion` preceded by the ball's trip from the other end: straight legs
+ * through the `transition` waypoints (no lift) in `TRANSITION_MS`, then the
+ * play's own motion. Without a transition this is exactly `ballMotion`.
+ */
+export function fullCourtBallMotion(
+  play: CourtLastPlay,
+  transition: CourtPoint[] | null,
+): { keyframes: Keyframe[]; duration: number } | null {
+  const own = ballMotion(play);
+  if (!transition || transition.length < 2) {
+    return own;
+  }
+  const total = TRANSITION_MS + (own?.duration ?? 0);
+  const share = TRANSITION_MS / total;
+  // The last waypoint is the play's first point, which `own` already starts at.
+  const legs = own ? transition.slice(0, -1) : transition;
+  const lastLeg = transition.length - 1;
+  const keyframes: Keyframe[] = legs.map((point, i) => ({
+    left: pct(point.x),
+    top: pct(point.y),
+    transform: "translateY(0px) scale(1)",
+    offset: (i / lastLeg) * share,
+  }));
+  for (const frame of own?.keyframes ?? []) {
+    keyframes.push({
+      ...frame,
+      offset: share + (frame.offset ?? 0) * (1 - share),
+    });
+  }
+  return { keyframes, duration: total };
+}
