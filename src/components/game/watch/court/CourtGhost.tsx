@@ -17,7 +17,7 @@ export function CourtGhost(props: {
     <div
       aria-hidden="true"
       data-testid="court-sub-ghost"
-      className="court-ghost pointer-events-none absolute z-[5] flex h-11 w-11 -translate-x-1/2 -translate-y-1/2 items-center justify-center"
+      className="court-ghost court-billboard pointer-events-none absolute z-[5] flex h-11 w-11 -translate-x-1/2 -translate-y-1/2 items-center justify-center"
       style={{ left: pct(props.spot.x), top: pct(props.spot.y) }}
     >
       <span

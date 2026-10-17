@@ -1,5 +1,6 @@
 "use client";
 
+import type { ReactNode } from "react";
 import { Button } from "@/components/ui/Button";
 import { cn } from "@/components/ui/styles";
 import type { WatchTeam } from "@/state/watch-game-view";
@@ -19,10 +20,21 @@ export function CourtHeader(props: {
   ballTeam: WatchTeam | null;
   showShotChart: boolean;
   onToggleShotChart: () => void;
+  /** Extra controls shown before the shot chart toggle (camera view). */
+  controls?: ReactNode;
 }) {
   const { ballTeam } = props;
+  const shotChartButton = (
+    <Button
+      variant="secondary"
+      aria-pressed={props.showShotChart}
+      onClick={props.onToggleShotChart}
+    >
+      Shot chart
+    </Button>
+  );
   return (
-    <div className="flex items-center justify-between gap-3">
+    <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
       <div className="flex min-w-0 flex-wrap items-center gap-x-4 gap-y-1">
         {props.status ? (
           <p
@@ -62,13 +74,14 @@ export function CourtHeader(props: {
           </p>
         ) : null}
       </div>
-      <Button
-        variant="secondary"
-        aria-pressed={props.showShotChart}
-        onClick={props.onToggleShotChart}
-      >
-        Shot chart
-      </Button>
+      {props.controls ? (
+        <div className="flex flex-wrap items-center justify-end gap-2">
+          {props.controls}
+          {shotChartButton}
+        </div>
+      ) : (
+        shotChartButton
+      )}
     </div>
   );
 }

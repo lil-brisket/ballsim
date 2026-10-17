@@ -3,6 +3,7 @@
 import { useLayoutEffect, useRef, useState, type CSSProperties } from "react";
 import { FullCourtLines } from "@/components/game/court/FullCourtLines";
 import { prefersReducedMotion } from "@/components/ui/CountUp";
+import { Button } from "@/components/ui/Button";
 import { cn } from "@/components/ui/styles";
 import { TeamLogoMark } from "@/components/team/logos/TeamLogoMark";
 import type { PlayerId } from "@/domain/ids";
@@ -23,6 +24,7 @@ import { CourtGhost } from "./CourtGhost";
 import { CourtHeader, type CourtStatus } from "./CourtHeader";
 import { CourtCallout, CourtPeriodCard } from "./CourtOverlays";
 import { CourtToken } from "./CourtToken";
+import { courtCamera, type CourtCameraView } from "./court-camera";
 import {
   CUT_MS,
   calloutText,
@@ -30,12 +32,21 @@ import {
   initialOf,
   pct,
 } from "./court-motion";
+import { useCompactCourt, useCourtView } from "./court-view-preference";
 import { teamTokenColor } from "./team-token-colors";
 
 const LENGTH = FULL_COURT_FEET.length;
 const WIDTH = FULL_COURT_FEET.width;
 /** Tokens below this normalized y hang their label above, to stay on the floor. */
 const LABEL_ABOVE_Y = 0.85;
+
+/** Perspective for the tilted floor (the sideline camera's distance). */
+const CAMERA_PERSPECTIVE = "1800px";
+
+const VIEW_LABEL: Record<CourtCameraView, string> = {
+  broadcast: "Broadcast",
+  "top-down": "Top-down",
+};
 
 const WORDMARK_CLASS =
   "pointer-events-none absolute flex items-center justify-center font-display text-sm font-semibold uppercase tracking-wide";
@@ -63,12 +74,24 @@ export function FullCourtView(props: {
   periodBreak?: string | null;
   /** Roster, used to name the outgoing player of a substitution. */
   players?: WatchPlayer[];
+  /** Frame the whole floor in Broadcast (period breaks, the final). */
+  wide?: boolean;
   className?: string;
 }) {
   const { frame, home, away, live } = props;
   const speed = props.speed && props.speed > 0 ? props.speed : 1;
   const [localShotChart, setLocalShotChart] = useState(false);
   const showShotChart = props.showShotChart ?? localShotChart;
+
+  const [view, setView] = useCourtView();
+  const compact = useCompactCourt();
+  const camera = courtCamera(
+    view,
+    frame.attackingEnd,
+    props.wide ?? false,
+    compact,
+  );
+  const reducedMotion = prefersReducedMotion();
 
   const palette = buildCourtPalette(home.hasBranding ? home.branding : null);
   const colorOf = teamTokenColor(home, away);
@@ -193,6 +216,21 @@ export function FullCourtView(props: {
         ballTeam={frame.ballSide !== null ? teamOf(frame.ballSide) : null}
         showShotChart={showShotChart}
         onToggleShotChart={toggleShotChart}
+        controls={
+          <div role="group" aria-label="Camera" className="flex">
+            {(["broadcast", "top-down"] as const).map((option) => (
+              <Button
+                key={option}
+                variant="quiet"
+                aria-pressed={view === option}
+                className={cn(view === option && "bg-zinc-800 text-zinc-50")}
+                onClick={() => setView(option)}
+              >
+                {VIEW_LABEL[option]}
+              </Button>
+            ))}
+          </div>
+        }
       />
       <div
         role="group"
@@ -232,166 +270,200 @@ export function FullCourtView(props: {
         </span>
 
         <div
-          ref={courtRef}
           className={cn(
-            "court-wood relative aspect-[94/50] w-full overflow-x-clip",
-            frame.transition && "court-switching",
+            "relative w-full overflow-hidden",
+            camera.framing === "wide" && "court-camera-wide",
+            reducedMotion && "court-camera-static",
           )}
-          style={{ backgroundColor: palette.floor }}
+          style={{ aspectRatio: camera.aspect }}
+          data-testid="court-camera"
+          data-camera-view={view}
+          data-camera-framing={camera.framing}
         >
-          {/* Under the lines: the logo is faded paint, not a layer over the court. */}
-          {palette.logo ? (
-            <div
-              aria-hidden="true"
-              data-testid="court-centre-logo"
-              className="pointer-events-none absolute left-1/2 top-1/2 aspect-square -translate-x-1/2 -translate-y-1/2"
-              style={{
-                width: `calc(12 / ${LENGTH} * 100%)`,
-                opacity: palette.logoOpacity,
-              }}
-            >
-              <TeamLogoMark
-                branding={palette.logo}
-                decorative
-                className="h-full w-full"
-              />
-            </div>
-          ) : null}
-          <svg
-            viewBox={`0 0 ${LENGTH} ${WIDTH}`}
-            aria-hidden="true"
-            className="absolute inset-0 h-full w-full"
-          >
-            <rect
-              x="0"
-              y={WIDTH / 2 - COURT_FEET.laneWidth / 2}
-              width={COURT_FEET.laneLength}
-              height={COURT_FEET.laneWidth}
-              fill={palette.lane}
-            />
-            <rect
-              x={LENGTH - COURT_FEET.laneLength}
-              y={WIDTH / 2 - COURT_FEET.laneWidth / 2}
-              width={COURT_FEET.laneLength}
-              height={COURT_FEET.laneWidth}
-              fill={palette.lane}
-            />
-            <circle
-              cx={LENGTH / 2}
-              cy={WIDTH / 2}
-              r="6"
-              fill="none"
-              stroke={palette.ring}
-              strokeWidth="0.5"
-            />
-            <g style={{ color: palette.line }}>
-              <FullCourtLines centreCircle={false} />
-            </g>
-            {flashRim ? (
-              <circle
-                key={`flash-${playIndex}`}
-                className="court-rim-flash"
-                cx={rimX}
-                cy={WIDTH / 2}
-                r={COURT_FEET.rimRadius}
-                fill="none"
-                stroke={palette.line}
-                strokeWidth="0.5"
-                data-testid="court-rim-flash"
-              />
-            ) : null}
-            {showShotChart
-              ? frame.shots.map((shot) => {
-                  const cx = shot.at.x * LENGTH;
-                  const cy = shot.at.y * WIDTH;
-                  const color = colorOf(shot.side);
-                  return (
-                    <g key={shot.index} data-testid="court-shot-marker">
-                      {shot.made ? (
-                        <circle
-                          cx={cx}
-                          cy={cy}
-                          r="0.9"
-                          fill={color}
-                          stroke="#e4e4e7"
-                          strokeWidth="0.3"
-                        />
-                      ) : (
-                        <>
-                          <circle
-                            cx={cx}
-                            cy={cy}
-                            r="0.9"
-                            fill="none"
-                            stroke="#e4e4e7"
-                            strokeWidth="0.7"
-                          />
-                          <circle
-                            cx={cx}
-                            cy={cy}
-                            r="0.9"
-                            fill="none"
-                            stroke={color}
-                            strokeWidth="0.3"
-                          />
-                        </>
-                      )}
-                    </g>
-                  );
-                })
-              : null}
-          </svg>
-
-          {frame.players.map((player) => {
-            const color = colorOf(player.side);
-            return (
-              <CourtToken
-                key={player.playerId}
-                player={player}
-                team={teamOf(player.side)}
-                color={color}
-                points={points.get(player.playerId) ?? 0}
-                checkedIn={incoming.get(player.playerId)?.index ?? null}
-                selected={props.selectedPlayerId === player.playerId}
-                onSelect={props.onSelectPlayer}
-                outline={tokenOutline(color, palette)}
-                accent={palette.line}
-                labelAbove={player.spot.y > LABEL_ABOVE_Y}
-              />
-            );
-          })}
-
-          {ghosts.map(({ sub, outgoing, spot }) => (
-            <CourtGhost
-              key={`ghost-${sub.index}`}
-              initial={initialOf(outgoing.lastName)}
-              color={colorOf(sub.side)}
-              spot={spot}
-            />
-          ))}
-
           <div
-            ref={ballRef}
-            aria-hidden="true"
-            data-testid="court-ball"
-            className="pointer-events-none absolute z-20 -ml-1.5 -mt-1.5 h-3 w-3 rounded-full border border-black/50 bg-orange-500 shadow"
+            className="court-camera-stage"
             style={{
-              left: pct(frame.ball.at.x),
-              top: pct(frame.ball.at.y),
+              width: camera.stageWidth,
+              transform: camera.transform,
+              perspective: camera.tilt > 0 ? CAMERA_PERSPECTIVE : undefined,
+              perspectiveOrigin: camera.perspectiveOrigin,
             }}
-          />
+            data-testid="court-camera-stage"
+          >
+            <div
+              ref={courtRef}
+              className={cn(
+                "court-wood relative aspect-[94/50] w-full",
+                // Clipping flattens 3D children; the camera viewport crops instead.
+                camera.tilt === 0 && "overflow-x-clip",
+                frame.transition && "court-switching",
+                camera.tilt > 0 && "court-tilted",
+              )}
+              style={
+                {
+                  backgroundColor: palette.floor,
+                  "--court-tilt": `${camera.tilt}deg`,
+                } as CSSProperties
+              }
+            >
+              {/* Under the lines: the logo is faded paint, not a layer over the court. */}
+              {palette.logo ? (
+                <div
+                  aria-hidden="true"
+                  data-testid="court-centre-logo"
+                  className="pointer-events-none absolute left-1/2 top-1/2 aspect-square -translate-x-1/2 -translate-y-1/2"
+                  style={{
+                    width: `calc(12 / ${LENGTH} * 100%)`,
+                    opacity: palette.logoOpacity,
+                  }}
+                >
+                  <TeamLogoMark
+                    branding={palette.logo}
+                    decorative
+                    className="h-full w-full"
+                  />
+                </div>
+              ) : null}
+              <svg
+                viewBox={`0 0 ${LENGTH} ${WIDTH}`}
+                aria-hidden="true"
+                className="absolute inset-0 h-full w-full"
+              >
+                <rect
+                  x="0"
+                  y={WIDTH / 2 - COURT_FEET.laneWidth / 2}
+                  width={COURT_FEET.laneLength}
+                  height={COURT_FEET.laneWidth}
+                  fill={palette.lane}
+                />
+                <rect
+                  x={LENGTH - COURT_FEET.laneLength}
+                  y={WIDTH / 2 - COURT_FEET.laneWidth / 2}
+                  width={COURT_FEET.laneLength}
+                  height={COURT_FEET.laneWidth}
+                  fill={palette.lane}
+                />
+                <circle
+                  cx={LENGTH / 2}
+                  cy={WIDTH / 2}
+                  r="6"
+                  fill="none"
+                  stroke={palette.ring}
+                  strokeWidth="0.5"
+                />
+                <g style={{ color: palette.line }}>
+                  <FullCourtLines centreCircle={false} />
+                </g>
+                {flashRim ? (
+                  <circle
+                    key={`flash-${playIndex}`}
+                    className="court-rim-flash"
+                    cx={rimX}
+                    cy={WIDTH / 2}
+                    r={COURT_FEET.rimRadius}
+                    fill="none"
+                    stroke={palette.line}
+                    strokeWidth="0.5"
+                    data-testid="court-rim-flash"
+                  />
+                ) : null}
+                {showShotChart
+                  ? frame.shots.map((shot) => {
+                      const cx = shot.at.x * LENGTH;
+                      const cy = shot.at.y * WIDTH;
+                      const color = colorOf(shot.side);
+                      return (
+                        <g key={shot.index} data-testid="court-shot-marker">
+                          {shot.made ? (
+                            <circle
+                              cx={cx}
+                              cy={cy}
+                              r="0.9"
+                              fill={color}
+                              stroke="#e4e4e7"
+                              strokeWidth="0.3"
+                            />
+                          ) : (
+                            <>
+                              <circle
+                                cx={cx}
+                                cy={cy}
+                                r="0.9"
+                                fill="none"
+                                stroke="#e4e4e7"
+                                strokeWidth="0.7"
+                              />
+                              <circle
+                                cx={cx}
+                                cy={cy}
+                                r="0.9"
+                                fill="none"
+                                stroke={color}
+                                strokeWidth="0.3"
+                              />
+                            </>
+                          )}
+                        </g>
+                      );
+                    })
+                  : null}
+              </svg>
 
-          {callout && lastPlay ? (
-            <CourtCallout
-              key={lastPlay.index}
-              text={callout}
-              at={frame.ball.at}
-            />
-          ) : null}
+              {frame.players.map((player) => {
+                const color = colorOf(player.side);
+                return (
+                  <CourtToken
+                    key={player.playerId}
+                    player={player}
+                    team={teamOf(player.side)}
+                    color={color}
+                    points={points.get(player.playerId) ?? 0}
+                    checkedIn={incoming.get(player.playerId)?.index ?? null}
+                    selected={props.selectedPlayerId === player.playerId}
+                    onSelect={props.onSelectPlayer}
+                    outline={tokenOutline(color, palette)}
+                    accent={palette.line}
+                    labelAbove={player.spot.y > LABEL_ABOVE_Y}
+                  />
+                );
+              })}
 
-          {props.periodBreak ? (
-            <CourtPeriodCard key={props.periodBreak} text={props.periodBreak} />
-          ) : null}
+              {ghosts.map(({ sub, outgoing, spot }) => (
+                <CourtGhost
+                  key={`ghost-${sub.index}`}
+                  initial={initialOf(outgoing.lastName)}
+                  color={colorOf(sub.side)}
+                  spot={spot}
+                />
+              ))}
+
+              <div
+                ref={ballRef}
+                aria-hidden="true"
+                data-testid="court-ball"
+                className="court-ball pointer-events-none absolute z-20 -ml-1.5 -mt-1.5 h-3 w-3 rounded-full border border-black/50 bg-orange-500 shadow"
+                style={{
+                  left: pct(frame.ball.at.x),
+                  top: pct(frame.ball.at.y),
+                }}
+              />
+
+              {callout && lastPlay ? (
+                <CourtCallout
+                  key={lastPlay.index}
+                  text={callout}
+                  at={frame.ball.at}
+                />
+              ) : null}
+
+              {props.periodBreak ? (
+                <CourtPeriodCard
+                  key={props.periodBreak}
+                  text={props.periodBreak}
+                />
+              ) : null}
+            </div>
+          </div>
         </div>
       </div>
     </div>
