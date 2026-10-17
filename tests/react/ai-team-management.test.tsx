@@ -32,8 +32,12 @@ describe("AiTeamManagementSection", () => {
     const { unmount } = render(<Harness />);
 
     expect(
-      screen.getByRole("heading", { name: "AI Team Management" }),
+      screen.getByText("What would you like the AI to handle for you?"),
     ).toBeTruthy();
+    expect(screen.queryByText("How AI assistance works")).toBeNull();
+    fireEvent.click(
+      screen.getByRole("button", { name: "About AI Team Management" }),
+    );
     expect(screen.getByText("How AI assistance works")).toBeTruthy();
     expect(
       screen.getByRole("checkbox", {
@@ -109,7 +113,7 @@ describe("AiTeamManagementSection", () => {
       .getAllByText("Roster Management")
       .find((el) => el.tagName === "H3");
     expect(rosterHeading).toBeTruthy();
-    const rosterSection = rosterHeading!.closest("details");
+    const rosterSection = rosterHeading!.closest("section");
     expect(rosterSection).toBeTruthy();
     const selectAll = within(rosterSection as HTMLElement).getByRole("button", {
       name: "Select All",
@@ -126,6 +130,30 @@ describe("AiTeamManagementSection", () => {
         .getByRole("checkbox", { name: /Free Agency:/ })
         .getAttribute("aria-checked"),
     ).toBe("false");
+
+    unmount();
+  });
+
+  it("? toggles a responsibility description without toggling it", () => {
+    const { unmount } = render(<Harness />);
+
+    const description = MANAGEMENT_PHASE_METADATA.freeAgency.description;
+    const faCard = screen.getByRole("checkbox", { name: /Free Agency:/ });
+    const tip = within(faCard.parentElement!).getByRole("button", {
+      name: "About Free Agency",
+    });
+    expect(screen.queryByText(description)).toBeNull();
+
+    fireEvent.click(tip);
+    expect(screen.getByRole("tooltip").textContent).toBe(description);
+    expect(faCard.getAttribute("aria-checked")).toBe("false");
+
+    fireEvent.click(tip);
+    expect(screen.queryByText(description)).toBeNull();
+
+    fireEvent.click(tip);
+    fireEvent.keyDown(document, { key: "Escape" });
+    expect(screen.queryByRole("tooltip")).toBeNull();
 
     unmount();
   });

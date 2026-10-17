@@ -1,6 +1,6 @@
 "use client";
 
-import { Button } from "@/components/ui/Button";
+import { InfoTip } from "@/components/ui/InfoTip";
 import {
   categoryById,
   categoryDelegationState,
@@ -31,10 +31,7 @@ export function DelegationCategorySection({
     return null;
   }
 
-  const { delegated, total, state } = categoryDelegationState(
-    assistance,
-    categoryId,
-  );
+  const { delegated, total } = categoryDelegationState(assistance, categoryId);
   const phases = Object.values(MANAGEMENT_PHASE_METADATA)
     .filter(
       (meta) => meta.categoryId === categoryId && meta.delegationSupported,
@@ -45,48 +42,31 @@ export function DelegationCategorySection({
     return null;
   }
 
-  const stateLabel =
-    state === "all"
-      ? "All delegated"
-      : state === "partial"
-        ? "Partially delegated"
-        : "None delegated";
-
   return (
-    <details
-      open
-      className="group space-y-3 rounded-md border border-zinc-800 bg-zinc-950/40 p-3"
-    >
-      <summary className="flex cursor-pointer list-none items-start justify-between gap-3 [&::-webkit-details-marker]:hidden">
-        <div className="min-w-0 space-y-1">
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="text-base" aria-hidden="true">
-              {category.icon}
-            </span>
-            <h3 className="text-sm font-semibold text-zinc-100">
-              {category.title}
-            </h3>
-            <span className="rounded bg-zinc-800 px-1.5 py-0.5 text-xs text-zinc-400">
-              {delegated} / {total} AI
-            </span>
-            <span className="text-sm text-zinc-500">{stateLabel}</span>
-          </div>
-          <p className="text-sm text-zinc-500">{category.description}</p>
-        </div>
-        <Button
-          variant="secondary"
-          onClick={(event) => {
-            event.preventDefault();
-            event.stopPropagation();
-            onSelectAllCategory();
-          }}
-          className="shrink-0"
+    <section className="space-y-3 rounded-md border border-zinc-800 bg-zinc-950/40 p-3">
+      <div className="flex items-center gap-2">
+        <span className="text-base" aria-hidden="true">
+          {category.icon}
+        </span>
+        <h3 className="whitespace-nowrap text-sm font-semibold text-zinc-100">
+          {category.title}
+        </h3>
+        <InfoTip label={category.title} align="start">
+          {category.description}
+        </InfoTip>
+        <span className="whitespace-nowrap rounded bg-zinc-800 px-1.5 py-0.5 text-xs text-zinc-400">
+          {delegated}/{total} AI
+        </span>
+        <button
+          type="button"
+          onClick={onSelectAllCategory}
+          className="ml-auto shrink-0 whitespace-nowrap rounded px-2 py-1 text-xs font-medium text-zinc-400 hover:bg-zinc-800/60 hover:text-zinc-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-team-ink"
         >
           Select All
-        </Button>
-      </summary>
+        </button>
+      </div>
 
-      <div className="grid gap-3 sm:grid-cols-2">
+      <div className="grid gap-2 @xl:grid-cols-2">
         {phases.map((phase) => (
           <ResponsibilityCard
             key={phase}
@@ -96,6 +76,6 @@ export function DelegationCategorySection({
           />
         ))}
       </div>
-    </details>
+    </section>
   );
 }

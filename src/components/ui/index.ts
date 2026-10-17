@@ -4,6 +4,7 @@ export { DataTable } from "@/components/ui/DataTable";
 export { MobileListCard } from "@/components/ui/MobileListCard";
 export { Drawer, type DrawerSize } from "@/components/ui/Drawer";
 export { EmptyState, ErrorState } from "@/components/ui/EmptyState";
+export { InfoTip } from "@/components/ui/InfoTip";
 export { Metric } from "@/components/ui/Metric";
 export { Overlay } from "@/components/ui/Overlay";
 export { PageHeader } from "@/components/ui/PageHeader";
