@@ -73,8 +73,8 @@ function Bar(props: {
         <div
           className={
             props.tone === "emerald"
-              ? "h-1.5 rounded bg-emerald-700/70"
-              : "h-1.5 rounded bg-rose-700/70"
+              ? "h-1.5 rounded bg-win/70"
+              : "h-1.5 rounded bg-loss/70"
           }
           style={{ width: `${pct}%` }}
         />

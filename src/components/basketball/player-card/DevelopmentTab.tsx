@@ -19,6 +19,7 @@ import {
   ratingHistoryRows,
   type RatingHistoryRow,
 } from "./development-view";
+import { chartTheme } from "@/components/ui/chart-theme";
 
 function RatingHistoryChart(props: {
   rows: RatingHistoryRow[];
@@ -75,7 +76,7 @@ function RatingHistoryChart(props: {
               borderRadius: 8,
             }}
             labelStyle={{ color: "#a1a1aa" }}
-            itemStyle={{ color: "#fbbf24" }}
+            itemStyle={{ color: chartTheme.ink }}
             labelFormatter={(_, payload) => {
               const row = payload?.[0]?.payload as RatingHistoryRow | undefined;
               if (!row) return "";
@@ -100,9 +101,9 @@ function RatingHistoryChart(props: {
             type="linear"
             dataKey="overall"
             name="OVR"
-            stroke="#f59e0b"
+            stroke={chartTheme.ink}
             strokeWidth={2}
-            dot={{ fill: "#f59e0b", r: 3 }}
+            dot={{ fill: chartTheme.ink, r: 3 }}
             isAnimationActive={false}
           />
         </LineChart>

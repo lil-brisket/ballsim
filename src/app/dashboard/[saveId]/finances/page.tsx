@@ -8,6 +8,10 @@ import {
   FinancialLedger,
   FinancialTrend,
 } from "@/components/finances/FinancialLedger";
+import {
+  CashRunwayChart,
+  RevenueExpenseWaterfall,
+} from "@/components/finances/FinanceCharts";
 import { FinancialStatStrip } from "@/components/finances/FinancialStatStrip";
 import { ManagementDecisionPanel } from "@/components/management/ManagementDecisionPanel";
 import { ErrorState } from "@/components/ui/EmptyState";
@@ -46,6 +50,7 @@ export default async function FinancesPage({
   const month = pnl.currentMonth;
   const statement = finances.statement;
   const { cashRunway, lastGameDay, forecast } = business;
+  const opex = season.profitability.operatingExpenses;
   const base = `/dashboard/${saveId}`;
 
   return (
@@ -75,106 +80,56 @@ export default async function FinancesPage({
 
       <Section title="Financial Position">
         <FinancialStatStrip view={view} />
-        <ul className="mt-3 space-y-1.5 text-sm text-zinc-300">
-          <li className="flex justify-between">
-            <span className="text-zinc-500">Projected funds</span>
-            <MoneyDisplay amount={cashRunway.projectedCash} />
-          </li>
-          <li className="flex justify-between">
-            <span className="text-zinc-500">Business runway</span>
-            <span>
-              {cashRunway.runwayWeeks === null
-                ? "Positive through horizon"
-                : `${cashRunway.runwayWeeks} weeks`}
-            </span>
-          </li>
-          <li className="flex justify-between font-medium text-zinc-100">
-            <span>Season net income</span>
+        <div className="mt-4">
+          <RevenueExpenseWaterfall
+            revenue={season.profitability.revenue.total}
+            expenses={[
+              {
+                label: "Salaries",
+                amount: statement.expenses.playerSalaries,
+              },
+              { label: "Staff", amount: opex.staff },
+              { label: "Facilities", amount: opex.facilities },
+              { label: "Capital", amount: season.profitability.capital },
+              { label: "Ops", amount: opex.operations },
+              { label: "Marketing", amount: opex.marketing },
+            ]}
+          />
+        </div>
+        <p className="mt-2 flex flex-wrap items-baseline gap-x-4 text-sm text-zinc-100">
+          <span>
+            Season net income{" "}
             <MoneyDisplay amount={season.profitability.netIncome} />
-          </li>
-        </ul>
+          </span>
+          <span className="text-zinc-500">
+            Capital this month{" "}
+            <MoneyDisplay amount={month.investment.capital} />
+          </span>
+          <span className="text-zinc-500">
+            Current month net change:{" "}
+            <MoneyDisplay amount={month.liquidity.netBusinessFundsChange} />
+          </span>
+        </p>
+      </Section>
+
+      <Section title="Cash Runway">
+        <CashRunwayChart
+          cash={cashRunway.cash}
+          netWeeklyBurn={cashRunway.netWeeklyBurn}
+          runwayWeeks={cashRunway.runwayWeeks}
+        />
+        <p className="mt-2 text-sm text-zinc-300">
+          <span className="text-zinc-500">Projected funds</span>{" "}
+          <MoneyDisplay amount={cashRunway.projectedCash} />
+          <span className="ml-4 text-zinc-500">Business runway</span>{" "}
+          {cashRunway.runwayWeeks === null
+            ? "Positive through horizon"
+            : `${cashRunway.runwayWeeks} weeks`}
+        </p>
       </Section>
 
       <Section title="Cash Pressure">
         <CashPressureSection cashRunway={cashRunway} />
-      </Section>
-
-      <Section title="Profitability">
-        <p className="mb-3 text-sm text-zinc-100">
-          Net income <MoneyDisplay amount={season.profitability.netIncome} />
-          <span className="ml-2 text-sm font-normal text-zinc-500">
-            Capital this month{" "}
-            <MoneyDisplay amount={month.investment.capital} />
-          </span>
-        </p>
-        <div className="grid gap-4 sm:grid-cols-2">
-          <div>
-            <h3 className="mb-2 text-sm font-medium text-zinc-200">
-              Season revenue
-            </h3>
-            <ul className="space-y-1 text-sm text-zinc-300">
-              {(
-                [
-                  ["Tickets", season.profitability.revenue.tickets],
-                  ["Premium", season.profitability.revenue.premium],
-                  ["Merchandise", season.profitability.revenue.merchandise],
-                  ["Concessions", season.profitability.revenue.concessions],
-                  ["Sponsorships", season.profitability.revenue.sponsorships],
-                  ["Broadcast", season.profitability.revenue.broadcast],
-                  ["Playoffs", season.profitability.revenue.playoffs],
-                  ["Other", season.profitability.revenue.other],
-                ] as const
-              ).map(([label, amount]) => (
-                <li key={label} className="flex justify-between">
-                  <span>{label}</span>
-                  <MoneyDisplay amount={amount} />
-                </li>
-              ))}
-              <li className="flex justify-between border-t border-zinc-800 pt-1 font-medium text-zinc-100">
-                <span>Total</span>
-                <MoneyDisplay amount={season.profitability.revenue.total} />
-              </li>
-            </ul>
-          </div>
-          <div>
-            <h3 className="mb-2 text-sm font-medium text-zinc-200">
-              Season expenses
-            </h3>
-            <ul className="space-y-1 text-sm text-zinc-300">
-              {(
-                [
-                  [
-                    "Player salaries (derived)",
-                    statement.expenses.playerSalaries,
-                  ],
-                  ["Staff", season.profitability.operatingExpenses.staff],
-                  [
-                    "Facilities",
-                    season.profitability.operatingExpenses.facilities,
-                  ],
-                  ["Capital", season.profitability.capital],
-                  [
-                    "Operations",
-                    season.profitability.operatingExpenses.operations,
-                  ],
-                  [
-                    "Marketing",
-                    season.profitability.operatingExpenses.marketing,
-                  ],
-                ] as const
-              ).map(([label, amount]) => (
-                <li key={label} className="flex justify-between">
-                  <span>{label}</span>
-                  <MoneyDisplay amount={amount} />
-                </li>
-              ))}
-            </ul>
-          </div>
-        </div>
-        <p className="mt-3 text-sm text-zinc-500">
-          Current month net change:{" "}
-          <MoneyDisplay amount={month.liquidity.netBusinessFundsChange} />
-        </p>
       </Section>
 
       <Section title="Commitments">

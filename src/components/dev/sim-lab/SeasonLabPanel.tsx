@@ -29,6 +29,7 @@ import type { LabLeaguePreset } from "@/simulation/lab/lab-league-preset";
 import { Button } from "@/components/ui/Button";
 import { NumberStepper } from "@/components/ui/NumberStepper";
 import { Select } from "@/components/ui/Select";
+import { chartTheme } from "@/components/ui/chart-theme";
 
 function SeasonChart(props: {
   label: string;
@@ -63,14 +64,15 @@ function SeasonChart(props: {
                 borderRadius: 8,
               }}
               labelStyle={{ color: "#a1a1aa" }}
-              itemStyle={{ color: "#fbbf24" }}
+              itemStyle={{ color: chartTheme.ink }}
             />
             <Line
               type="monotone"
               dataKey={props.dataKey}
-              stroke="#d97706"
+              stroke={chartTheme.ink}
               strokeWidth={2}
-              dot={{ fill: "#d97706", r: 3 }}
+              dot={{ fill: chartTheme.ink, r: 3 }}
+              isAnimationActive={false}
             />
           </LineChart>
         </ResponsiveContainer>

@@ -10,6 +10,7 @@ import {
   YAxis,
 } from "recharts";
 import type { PlayerGameSeriesPoint } from "@/state/player-profile-selectors";
+import { chartTheme } from "@/components/ui/chart-theme";
 
 const RECENT_GAMES = 10;
 
@@ -70,7 +71,7 @@ export function RecentPerformanceChart(props: {
               borderRadius: 8,
             }}
             labelStyle={{ color: "#a1a1aa" }}
-            itemStyle={{ color: "#fbbf24" }}
+            itemStyle={{ color: chartTheme.ink }}
             labelFormatter={(_, payload) => {
               const item = payload?.[0]?.payload as
                 { label: string; opponent: string } | undefined;
@@ -81,9 +82,9 @@ export function RecentPerformanceChart(props: {
             type="monotone"
             dataKey="points"
             name="Points"
-            stroke="#f59e0b"
+            stroke={chartTheme.ink}
             strokeWidth={2}
-            dot={{ fill: "#f59e0b", r: 3 }}
+            dot={{ fill: chartTheme.ink, r: 3 }}
             isAnimationActive={false}
           />
         </LineChart>
