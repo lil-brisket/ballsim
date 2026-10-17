@@ -49,6 +49,7 @@ export function FullCourtShowcase() {
   const [shotChart, setShotChart] = useState(false);
   const [selected, setSelected] = useState<PlayerId | null>(null);
   const [pairIndex, setPairIndex] = useState(0);
+  const [wide, setWide] = useState(false);
   const pair = PAIRS[pairIndex]!;
   const frame = useMemo(
     () => buildFullCourtFrame(COURT_FIXTURE_VIEW, revealed),
@@ -92,6 +93,13 @@ export function FullCourtShowcase() {
             {option.label}
           </Button>
         ))}
+        <Button
+          variant="quiet"
+          aria-pressed={wide}
+          onClick={() => setWide((value) => !value)}
+        >
+          Wide shot
+        </Button>
       </div>
       <FullCourtView
         frame={frame}
@@ -101,6 +109,7 @@ export function FullCourtShowcase() {
         players={COURT_FIXTURE_VIEW.players}
         speed={1}
         periodBreak={null}
+        wide={wide}
         showShotChart={shotChart}
         onShowShotChartChange={setShotChart}
         selectedPlayerId={selected}
