@@ -2,9 +2,12 @@ import type {
   SimulationProgress,
   SimulationStopReason,
 } from "@/systems/simulation/types";
+import type { CalendarLeagueContextView } from "@/state/standings-selectors";
 
 export type SimulateToDateProgressEvent = {
   type: "progress";
+  /** Controlled team's standings after this day, for the live league strip. */
+  leagueContext?: CalendarLeagueContextView | null;
 } & SimulationProgress;
 
 export type SimulateToDateDoneEvent = {

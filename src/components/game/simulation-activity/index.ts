@@ -1,5 +1,6 @@
 export {
   SimulationActivityProvider,
+  SimulationLockRegion,
   SimulationPendingReporter,
   useSimulationActivity,
 } from "@/components/game/simulation-activity/SimulationActivity";

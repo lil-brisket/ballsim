@@ -24,7 +24,10 @@ import { SimulationSummaryModal } from "@/components/calendar/SimulationSummaryM
 import { SimulationPausedBanner } from "@/components/calendar/SimulationPausedBanner";
 import { SeasonLifecycleBanner } from "@/components/calendar/SeasonLifecycleBanner";
 import { SimulateToDateConfirm } from "@/components/calendar/SimulateToDateConfirm";
-import { streamSimulateToDate } from "@/components/calendar/stream-simulate-to-date";
+import {
+  requestStopSimulation,
+  streamSimulateToDate,
+} from "@/components/calendar/stream-simulate-to-date";
 import {
   readCalendarResumeTarget,
   remainingSimulateTarget,
@@ -45,8 +48,20 @@ import {
   buildPlaceholderMonthGrid,
   type CalendarMonthGrid,
 } from "@/systems/calendar";
+import type { CalendarLeagueContextView } from "@/state/standings-selectors";
 
-const PLAYBACK_MS_PER_DAY = 110;
+// Playback paces one day per frame, then speeds up as the server gets ahead
+// so the calendar never trails the simulation by more than a moment.
+const PLAYBACK_MS_PER_DAY = 70;
+const PLAYBACK_MIN_MS_PER_DAY = 16;
+const PLAYBACK_BACKLOG_STEP_MS = 8;
+
+function playbackDelayMs(backlog: number): number {
+  return Math.max(
+    PLAYBACK_MIN_MS_PER_DAY,
+    PLAYBACK_MS_PER_DAY - backlog * PLAYBACK_BACKLOG_STEP_MS,
+  );
+}
 
 function monthKey(isoDate: string): string {
   return isoDate.slice(0, 7);
@@ -115,6 +130,7 @@ type PlaybackFrame = {
   phase: string;
   seasonYear: number;
   teamResult?: { date: string; resultLabel: string } | null;
+  leagueContext?: CalendarLeagueContextView | null;
 };
 
 export function CalendarWorkspace(props: {
@@ -147,6 +163,14 @@ export function CalendarWorkspace(props: {
   const [resultOverlays, setResultOverlays] = useState<Record<string, string>>(
     {},
   );
+  // Standings streamed during playback. Kept until the refreshed view arrives
+  // so the strip does not flash back to the pre-simulation record.
+  const [liveLeagueContext, setLiveLeagueContext] = useState<{
+    source: CalendarPageView["leagueContext"];
+    context: CalendarLeagueContextView | null;
+  } | null>(null);
+  const [stopRequested, setStopRequested] = useState(false);
+  const stopRequestedRef = useRef(false);
   const queueRef = useRef<PlaybackFrame[]>([]);
   const drainingRef = useRef(false);
   const doneRef = useRef<Extract<
@@ -211,20 +235,27 @@ export function CalendarWorkspace(props: {
   });
 
   const liveCurrentDate = playback?.currentDate ?? props.view.currentDate;
+  const playbackDate = playback?.currentDate ?? null;
   const displayedGrid: CalendarMonthGrid = useMemo(() => {
-    const parsed = parseCalendarDate(liveCurrentDate);
+    // Outside playback the grid is whatever month the URL asked for, so
+    // Prev / Next can browse away from the current date.
+    if (playbackDate == null) {
+      return props.view.monthGrid;
+    }
+    const parsed = parseCalendarDate(playbackDate);
     if (
       parsed.year === props.view.monthGrid.year &&
       parsed.month === props.view.monthGrid.month
     ) {
       return props.view.monthGrid;
     }
-    return buildPlaceholderMonthGrid(
-      parsed.year,
-      parsed.month,
-      liveCurrentDate,
-    );
-  }, [liveCurrentDate, props.view.monthGrid]);
+    return buildPlaceholderMonthGrid(parsed.year, parsed.month, playbackDate);
+  }, [playbackDate, props.view.monthGrid]);
+  const leagueContext =
+    liveLeagueContext != null &&
+    liveLeagueContext.source === props.view.leagueContext
+      ? liveLeagueContext.context
+      : props.view.leagueContext;
 
   const navigationDisabled = simulationPending || playback != null;
 
@@ -303,12 +334,18 @@ export function CalendarWorkspace(props: {
     navigate({ year, month, date: next });
   }
 
-  function finishPlayback(
-    done: Extract<SimulateToDateStreamEvent, { type: "done" }>,
-  ) {
+  function resetPlayback() {
     setPlayback(null);
     setResultOverlays({});
     setSimulationPending(false);
+    setStopRequested(false);
+    stopRequestedRef.current = false;
+  }
+
+  function finishPlayback(
+    done: Extract<SimulateToDateStreamEvent, { type: "done" }>,
+  ) {
+    resetPlayback();
     const remaining = remainingSimulateTarget({
       requestedTargetDate: done.requestedTargetDate,
       currentDate: done.currentDate,
@@ -342,16 +379,33 @@ export function CalendarWorkspace(props: {
     drainingRef.current = true;
 
     const tick = () => {
-      const next = queueRef.current.shift();
+      // After Stop, the server has already finished the days still queued:
+      // show them all at once instead of replaying them.
+      const frames = stopRequestedRef.current
+        ? queueRef.current.splice(0)
+        : queueRef.current.splice(0, 1);
+      const next = frames.at(-1);
       if (next) {
         setPlayback(next);
-        if (next.teamResult?.resultLabel) {
-          setResultOverlays((current) => ({
-            ...current,
-            [next.teamResult!.date]: next.teamResult!.resultLabel,
-          }));
+        const results = frames.flatMap((frame) =>
+          frame.teamResult?.resultLabel ? [frame.teamResult] : [],
+        );
+        if (results.length > 0) {
+          setResultOverlays((current) => {
+            const merged = { ...current };
+            for (const result of results) {
+              merged[result.date] = result.resultLabel;
+            }
+            return merged;
+          });
         }
-        window.setTimeout(tick, PLAYBACK_MS_PER_DAY);
+        if (next.leagueContext !== undefined) {
+          setLiveLeagueContext({
+            source: props.view.leagueContext,
+            context: next.leagueContext,
+          });
+        }
+        window.setTimeout(tick, playbackDelayMs(queueRef.current.length));
         return;
       }
       drainingRef.current = false;
@@ -364,7 +418,11 @@ export function CalendarWorkspace(props: {
     tick();
   }
 
-  function enqueueProgress(progress: SimulationProgress) {
+  function enqueueProgress(
+    progress: SimulationProgress & {
+      leagueContext?: CalendarLeagueContextView | null;
+    },
+  ) {
     queueRef.current.push({
       currentDate: progress.currentDate,
       completedDate: progress.completedDate,
@@ -381,6 +439,7 @@ export function CalendarWorkspace(props: {
               resultLabel: progress.teamGame.resultLabel,
             }
           : null,
+      leagueContext: progress.leagueContext,
     });
     drainQueue();
   }
@@ -391,6 +450,8 @@ export function CalendarWorkspace(props: {
     setConfirmTargetDate(null);
     setMobileDetailOpen(false);
     setSimulationPending(true);
+    setStopRequested(false);
+    stopRequestedRef.current = false;
     setPlayback({
       currentDate: props.view.currentDate,
       completedDate: props.view.currentDate,
@@ -413,9 +474,7 @@ export function CalendarWorkspace(props: {
         if (event.type === "error") {
           queueRef.current = [];
           doneRef.current = null;
-          setPlayback(null);
-          setResultOverlays({});
-          setSimulationPending(false);
+          resetPlayback();
           setSimError(event.message);
           return;
         }
@@ -423,9 +482,7 @@ export function CalendarWorkspace(props: {
         drainQueue();
       });
     } catch (error) {
-      setPlayback(null);
-      setResultOverlays({});
-      setSimulationPending(false);
+      resetPlayback();
       setSimError(
         error instanceof Error ? error.message : "Simulation failed.",
       );
@@ -434,6 +491,17 @@ export function CalendarWorkspace(props: {
   useEffect(() => {
     handleSimulateRef.current = handleSimulate;
   });
+
+  function handleStopSimulation() {
+    if (stopRequestedRef.current) return;
+    stopRequestedRef.current = true;
+    setStopRequested(true);
+    void requestStopSimulation(props.saveId).catch(() => {
+      setSimError(
+        "Could not stop the simulation. It will run to the selected date.",
+      );
+    });
+  }
 
   /* eslint-disable react-hooks/set-state-in-effect -- interrupt sync and leftover auto-resume */
   useEffect(() => {
@@ -578,14 +646,34 @@ export function CalendarWorkspace(props: {
       aria-busy={playback != null || undefined}
     >
       {playback ? (
-        <p
-          className="sr-only"
-          role="status"
-          aria-live="polite"
-          aria-atomic="true"
-        >
-          {simAnnouncement?.text}
-        </p>
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-warning/40 bg-warning/10 px-4 py-3">
+          <p
+            className="sr-only"
+            role="status"
+            aria-live="polite"
+            aria-atomic="true"
+          >
+            {simAnnouncement?.text}
+          </p>
+          <div className="min-w-0 space-y-1" aria-hidden="true">
+            <p className="text-sm font-medium text-warning">
+              {stopRequested ? "Stopping simulation" : "Simulating"} ·{" "}
+              {formatGameDate(playback.currentDate)}
+            </p>
+            <p className="text-xs text-zinc-400">
+              Day {playback.daysAdvanced} of {playback.daysRequested} ·{" "}
+              {playback.gamesSimulated} games played
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={handleStopSimulation}
+            disabled={stopRequested}
+            className={buttonClass({ variant: "secondary" })}
+          >
+            {stopRequested ? "Stopping…" : "Stop simulation"}
+          </button>
+        </div>
       ) : simulationPending ? (
         <p
           role="status"
@@ -697,12 +785,12 @@ export function CalendarWorkspace(props: {
             {monthView}
             <div className="sticky top-4">{inspector}</div>
           </div>
-          <CalendarLeagueContextPanel context={props.view.leagueContext} />
+          <CalendarLeagueContextPanel context={leagueContext} />
         </>
       ) : (
         <>
           {monthView}
-          <CalendarLeagueContextPanel context={props.view.leagueContext} />
+          <CalendarLeagueContextPanel context={leagueContext} />
           <Drawer
             open={mobileDetailOpen && !playback}
             onOpenChange={setMobileDetailOpen}

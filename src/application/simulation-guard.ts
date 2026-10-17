@@ -22,6 +22,10 @@ export function isSimulationInFlight(error: unknown): boolean {
   return error instanceof SimulationInFlightError;
 }
 
+export function isSimulationRunning(saveId: string): boolean {
+  return inFlightBySaveId.has(saveId);
+}
+
 /**
  * Run fn exclusively for saveId within this process.
  * Concurrent callers receive SimulationInFlightError immediately.

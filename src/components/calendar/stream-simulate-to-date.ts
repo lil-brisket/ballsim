@@ -46,3 +46,13 @@ export async function streamSimulateToDate(
     }
   }
 }
+
+/** Ask the server to end the in-flight simulation after the current day. */
+export async function requestStopSimulation(saveId: string): Promise<void> {
+  const response = await fetch(`/api/saves/${saveId}/simulate-to-date/stop`, {
+    method: "POST",
+  });
+  if (!response.ok) {
+    throw new Error("Stop request failed.");
+  }
+}

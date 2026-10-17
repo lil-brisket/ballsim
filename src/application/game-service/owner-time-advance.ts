@@ -66,7 +66,9 @@ export type AdvanceOwnerTimeOptions = {
   /** Optional early-stop conditions for multi-day advances. */
   stopConditions?: SimulationStopCondition[];
   /** Stream per-day progress (calendar playback). */
-  onProgress?: (progress: SimulationProgress) => void;
+  onProgress?: (progress: SimulationProgress, state: GameState) => void;
+  /** Polled between days; true ends the advance early ("user_stopped"). */
+  shouldStop?: () => boolean;
   /** Caller already holds {@link runWithSimulationDedupe} for this save. */
   skipInProcessDedupe?: boolean;
 };
@@ -213,6 +215,7 @@ export async function advanceOwnerTime(
         gameFidelity: useBoxScore ? "box_score" : "possession",
         stopBeforeUserTeamGame,
         onProgress: options.onProgress,
+        shouldStop: options.shouldStop,
       });
 
       // Postflight: final phase reconciliation + full invariant validation.

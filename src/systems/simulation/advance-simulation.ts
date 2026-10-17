@@ -203,6 +203,12 @@ function createAdvanceSession(
         return false;
       }
 
+      if (dayIndex > 0 && options.shouldStop?.() === true) {
+        stopReason = "user_stopped";
+        finished = true;
+        return false;
+      }
+
       const dateAboutToSimulate = current.world.calendar.currentDate;
       if (
         options.stopBeforeUserTeamGame === true &&
@@ -260,7 +266,7 @@ function createAdvanceSession(
             dateAboutToSimulate,
           ),
         };
-        options.onProgress(progress);
+        options.onProgress(progress, current);
       }
 
       if (hasBlockingOwnerDecision(current.user)) {

@@ -114,13 +114,15 @@ function dayCellStateClass(input: {
     );
   }
 
+  // "Today" is always yellow: team colours can be too dark or too close to
+  // white to read as the live simulation cursor.
   if (simulating && cell.isToday) {
     classes.push(
-      "border-team-ink bg-team/30 ring-2 ring-team-ink ring-offset-2 ring-offset-surface-deep",
+      "border-warning bg-warning/20 ring-2 ring-warning ring-offset-2 ring-offset-surface-deep",
     );
   } else if (!simulating) {
     if (cell.isToday) {
-      classes.push("border-team-ink bg-team/25 ring-2 ring-team-ink");
+      classes.push("border-warning bg-warning/15 ring-2 ring-warning");
     }
     if (cell.isNextTeamGame && !cell.isToday) {
       classes.push("ring-2 ring-team-ink/80 team-pulse");
@@ -178,7 +180,7 @@ export function CalendarDayCell(props: {
             !cell.inMonth
               ? "text-zinc-600"
               : cell.isToday
-                ? "text-team-ink"
+                ? "text-warning"
                 : hasContent
                   ? "text-zinc-100"
                   : "text-zinc-500",

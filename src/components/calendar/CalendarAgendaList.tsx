@@ -46,7 +46,7 @@ export function CalendarAgendaList(props: {
                 touchTargetClass,
                 "w-full justify-between gap-3 rounded-lg border px-3 text-left",
                 cell.isToday
-                  ? "border-team-ink bg-team/15"
+                  ? "border-warning bg-warning/10"
                   : "border-zinc-800 bg-zinc-950/50",
                 cell.isNextTeamGame && !cell.isToday
                   ? "border-sky-700/50 ring-2 ring-sky-500/70"
@@ -62,16 +62,14 @@ export function CalendarAgendaList(props: {
                 <span
                   className={cn(
                     "block truncate text-sm",
-                    cell.isToday
-                      ? "font-medium text-team-ink"
-                      : "text-zinc-100",
+                    cell.isToday ? "font-medium text-warning" : "text-zinc-100",
                   )}
                 >
                   {summary}
                 </span>
               </span>
               {cell.isToday ? (
-                <span className="shrink-0 text-sm font-medium text-team-ink">
+                <span className="shrink-0 text-sm font-medium text-warning">
                   Today
                 </span>
               ) : null}

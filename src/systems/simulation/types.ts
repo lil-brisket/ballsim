@@ -27,7 +27,11 @@ export type AdvanceSimulationResult = {
 };
 
 export type SimulationStopReason =
-  "pending_owner_decision" | "draft_clock" | "phase_change" | "user_team_game";
+  | "pending_owner_decision"
+  | "draft_clock"
+  | "phase_change"
+  | "user_team_game"
+  | "user_stopped";
 
 export type OwnerInterruptStopReason = "pending_owner_decision" | "draft_clock";
 
@@ -77,8 +81,16 @@ export type AdvanceSimulationOptions = {
   allowOwnerManagedPhaseTransitions?: boolean;
   /** Optional hierarchical profiler for season cost breakdown. */
   profiler?: SimulationProfiler;
-  /** Optional progress callback (e.g. UI / CLI). */
-  onProgress?: (progress: SimulationProgress) => void;
+  /**
+   * Optional progress callback (e.g. UI / CLI). Receives the post-day state
+   * read-only so callers can project extra views (e.g. live standings).
+   */
+  onProgress?: (progress: SimulationProgress, state: GameState) => void;
+  /**
+   * Polled before each day after the first. Returning true ends the advance
+   * with stopReason "user_stopped"; completed days are kept. Never consumes RNG.
+   */
+  shouldStop?: () => boolean;
   /**
    * CPU vs CPU games can use statistical box scores during owner calendar jumps.
    * Owner-team games always use the possession engine. Default "possession".
