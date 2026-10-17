@@ -5,6 +5,11 @@ import {
   isSimulationInFlight,
   runWithSimulationDedupe,
 } from "@/application/simulation-guard";
+import {
+  clearSimulationStopRequest,
+  isSimulationStopRequested,
+} from "@/application/simulation-stop-requests";
+import { toCalendarLeagueContext } from "@/state/standings-selectors";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -37,10 +42,15 @@ export async function POST(
           advanceOwnerTime(saveId, {
             targetDate,
             skipInProcessDedupe: true,
-            onProgress: (progress) => {
-              send({ type: "progress", ...progress });
+            shouldStop: () => isSimulationStopRequested(saveId),
+            onProgress: (progress, state) => {
+              send({
+                type: "progress",
+                ...progress,
+                leagueContext: toCalendarLeagueContext(state),
+              });
             },
-          }),
+          }).finally(() => clearSimulationStopRequest(saveId)),
         );
         if (!result.ok) {
           send({ type: "error", ok: false, message: result.error });

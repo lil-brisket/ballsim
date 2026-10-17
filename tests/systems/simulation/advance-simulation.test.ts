@@ -211,4 +211,41 @@ describe("advanceSimulation", () => {
       );
     }
   });
+
+  it("stops between days when shouldStop turns true and keeps completed days", () => {
+    resetDomainEventSequenceForTests();
+    const state = createInitialGameState({
+      saveId: "adv_user_stop",
+      rngSeed: 12,
+      settings: CBL_GAME_SETTINGS,
+    });
+    const rng = createSeededRng(state.meta.rngState);
+    let current = bootstrapWorld(state, rng).state;
+    current = beginRegularSeasonFromPreseason(current).state;
+    const startDate = current.world.calendar.currentDate;
+
+    let polls = 0;
+    const progressStates: string[] = [];
+    const result = advanceSimulation(current, rng, {
+      days: 10,
+      gameFidelity: "box_score",
+      shouldStop: () => {
+        polls += 1;
+        return polls >= 3;
+      },
+      onProgress: (progress, dayState) => {
+        progressStates.push(dayState.world.calendar.currentDate);
+        expect(dayState.world.calendar.currentDate).toBe(progress.currentDate);
+      },
+    });
+
+    // Polled before days 2, 3 and 4; the third poll stops before day 4.
+    expect(polls).toBe(3);
+    expect(result.daysAdvanced).toBe(3);
+    expect(result.stopReason).toBe("user_stopped");
+    expect(result.status).toBe("paused");
+    expect(result.currentDate > startDate).toBe(true);
+    expect(progressStates).toHaveLength(3);
+    expect(progressStates.at(-1)).toBe(result.currentDate);
+  });
 });

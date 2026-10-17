@@ -101,3 +101,30 @@ export function SimulationPendingReporter() {
 
   return null;
 }
+
+/**
+ * Locks app chrome (header, navigation) while a calendar simulation runs so
+ * nothing outside the calendar can be pressed until it finishes or is stopped.
+ */
+export function SimulationLockRegion(props: {
+  children: ReactNode;
+  className?: string;
+}) {
+  const { simulationPending } = useSimulationActivity();
+  return (
+    <div
+      inert={simulationPending}
+      aria-disabled={simulationPending || undefined}
+      data-simulation-locked={simulationPending ? "true" : undefined}
+      className={[
+        props.className ?? "",
+        "transition-opacity",
+        simulationPending ? "opacity-50" : "",
+      ]
+        .filter(Boolean)
+        .join(" ")}
+    >
+      {props.children}
+    </div>
+  );
+}

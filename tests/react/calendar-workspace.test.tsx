@@ -9,6 +9,7 @@ const replace = vi.fn();
 const refresh = vi.fn();
 const streamMocks = vi.hoisted(() => ({
   streamSimulateToDate: vi.fn(),
+  requestStopSimulation: vi.fn(),
 }));
 const actionMocks = vi.hoisted(() => ({
   resolveCalendarTradeInterruptAction: vi.fn(),
@@ -234,7 +235,7 @@ describe("CalendarWorkspace redesign", () => {
       name: "2026-09-13, current simulation date",
     });
     expect(today.getAttribute("data-sim-cursor")).toBeNull();
-    expect(today.className).toContain("border-team-ink");
+    expect(today.className).toContain("border-warning");
     expect(today.className).not.toContain("ring-offset-2");
     const nextGame = screen.getByRole("button", {
       name: "2026-09-18, next team game, HOME vs Rivermen",
@@ -405,6 +406,155 @@ describe("CalendarWorkspace redesign", () => {
     fireEvent.click(screen.getByRole("button", { name: "Next" }));
     expect(push).toHaveBeenCalled();
     expect(push.mock.calls[0]?.[1]).toEqual({ scroll: false });
+    unmount();
+  });
+
+  it("shows the browsed month instead of snapping back to the current date's month", () => {
+    const base = makeView();
+    const novemberDay = {
+      ...base.monthGrid.weeks[0]![0]!,
+      date: "2026-11-04",
+      isToday: false,
+      isPast: false,
+      isFuture: true,
+    };
+    const { unmount } = render(
+      <SimulationActivityProvider>
+        <CalendarWorkspace
+          view={makeView({
+            year: 2026,
+            month: 11,
+            monthGrid: {
+              ...base.monthGrid,
+              year: 2026,
+              month: 11,
+              weeks: [[novemberDay]],
+            },
+          })}
+          saveId="save_cal"
+          showSimSummary={false}
+          daysAdvanced={0}
+          highlightCount={0}
+        />
+      </SimulationActivityProvider>,
+    );
+    expect(screen.getByText("November 2026")).toBeTruthy();
+    expect(screen.queryByText("September 2026")).toBeNull();
+    expect(screen.getByRole("button", { name: /^2026-11-04/ })).toBeTruthy();
+    unmount();
+  });
+
+  it("updates the league context strip from streamed standings", async () => {
+    streamMocks.streamSimulateToDate.mockImplementation(
+      async (_saveId, _target, onEvent) => {
+        onEvent({
+          type: "progress",
+          daysRequested: 5,
+          daysAdvanced: 1,
+          currentDate: "2026-09-14",
+          completedDate: "2026-09-13",
+          phase: "regular",
+          offseasonStage: "in_season",
+          seasonYear: 2026,
+          gamesSimulated: 6,
+          percentComplete: 20,
+          teamGame: null,
+          leagueContext: {
+            ...makeView().leagueContext!,
+            conferenceRank: 2,
+            wins: 43,
+            streakLabel: "W5",
+          },
+        });
+        await new Promise(() => undefined);
+      },
+    );
+    const { unmount } = render(
+      <SimulationActivityProvider>
+        <CalendarWorkspace
+          view={makeView()}
+          saveId="save_cal"
+          showSimSummary={false}
+          daysAdvanced={0}
+          highlightCount={0}
+        />
+      </SimulationActivityProvider>,
+    );
+    expect(screen.getByText("42–30")).toBeTruthy();
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: "2026-09-18, next team game, HOME vs Rivermen",
+      }),
+    );
+    fireEvent.click(screen.getByRole("button", { name: /Simulate to date/i }));
+    await waitFor(() => {
+      expect(screen.getByText("43–30")).toBeTruthy();
+      expect(screen.getByText("W5")).toBeTruthy();
+      expect(screen.getByText("#2")).toBeTruthy();
+    });
+    unmount();
+  });
+
+  it("Stop simulation asks the server to stop and fast-forwards queued days", async () => {
+    streamMocks.requestStopSimulation.mockReset();
+    streamMocks.requestStopSimulation.mockResolvedValue(undefined);
+    let finish: () => void = () => undefined;
+    let emit: (event: unknown) => void = () => undefined;
+    streamMocks.streamSimulateToDate.mockImplementation(
+      async (_saveId, _target, onEvent) => {
+        emit = onEvent;
+        await new Promise<void>((resolve) => {
+          finish = resolve;
+        });
+      },
+    );
+    const progress = (day: number) => ({
+      type: "progress",
+      daysRequested: 5,
+      daysAdvanced: day,
+      currentDate: `2026-09-${String(13 + day).padStart(2, "0")}`,
+      completedDate: `2026-09-${String(12 + day).padStart(2, "0")}`,
+      phase: "regular",
+      offseasonStage: "in_season",
+      seasonYear: 2026,
+      gamesSimulated: day * 6,
+      percentComplete: day * 20,
+      teamGame: null,
+    });
+    const { unmount } = render(
+      <SimulationActivityProvider>
+        <CalendarWorkspace
+          view={makeView()}
+          saveId="save_cal"
+          showSimSummary={false}
+          daysAdvanced={0}
+          highlightCount={0}
+        />
+      </SimulationActivityProvider>,
+    );
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: "2026-09-18, next team game, HOME vs Rivermen",
+      }),
+    );
+    fireEvent.click(screen.getByRole("button", { name: /Simulate to date/i }));
+    const stop = await screen.findByRole("button", { name: "Stop simulation" });
+    fireEvent.click(stop);
+    expect(streamMocks.requestStopSimulation).toHaveBeenCalledWith("save_cal");
+    expect(
+      screen
+        .getByRole("button", { name: "Stopping…" })
+        .hasAttribute("disabled"),
+    ).toBe(true);
+
+    // Days the server finished before it saw the stop land in one frame.
+    emit(progress(1));
+    emit(progress(2));
+    emit(progress(3));
+    await waitFor(() => {
+      expect(screen.getByText(/Day 3 of 5/)).toBeTruthy();
+    });
+    finish();
     unmount();
   });
 

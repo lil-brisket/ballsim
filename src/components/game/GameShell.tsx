@@ -5,7 +5,10 @@ import { DesktopNavigation } from "@/components/game/DesktopNavigation";
 import { MobileNavigationDrawer } from "@/components/game/MobileNavigationDrawer";
 import { RouteTransition } from "@/components/game/RouteTransition";
 import { EntityDrawerProvider } from "@/components/entity/EntityDrawerProvider";
-import { SimulationActivityProvider } from "@/components/game/simulation-activity";
+import {
+  SimulationActivityProvider,
+  SimulationLockRegion,
+} from "@/components/game/simulation-activity";
 import { teamThemeStyle } from "@/components/ui/TeamThemeScope";
 
 /**
@@ -33,7 +36,7 @@ export function GameShell(props: {
             className="shell-spotlight"
           />
           <div className="sticky top-0 z-40 border-b border-surface-line bg-surface-deep/90 pt-[env(safe-area-inset-top)] backdrop-blur lg:static lg:z-auto lg:border-0 lg:bg-transparent lg:pt-0 lg:backdrop-blur-none">
-            <div className="mx-auto w-full max-w-7xl px-4 py-3 sm:px-6 lg:px-6 lg:pb-0 lg:pt-8">
+            <SimulationLockRegion className="mx-auto w-full max-w-7xl px-4 py-3 sm:px-6 lg:px-6 lg:pb-0 lg:pt-8">
               <GameHeader
                 saveId={props.saveId}
                 saveName={props.saveName}
@@ -47,15 +50,17 @@ export function GameShell(props: {
                   />
                 }
               />
-            </div>
+            </SimulationLockRegion>
           </div>
 
           <div className="mx-auto flex w-full max-w-7xl flex-1 flex-col gap-6 px-4 py-6 sm:px-6 lg:py-8">
             <div className="flex flex-col gap-6 lg:flex-row lg:items-start">
-              <DesktopNavigation
-                saveId={props.saveId}
-                groups={props.navGroups}
-              />
+              <SimulationLockRegion className="contents">
+                <DesktopNavigation
+                  saveId={props.saveId}
+                  groups={props.navGroups}
+                />
+              </SimulationLockRegion>
               <RouteTransition className="flex min-w-0 flex-1 flex-col gap-8">
                 {props.children}
               </RouteTransition>
