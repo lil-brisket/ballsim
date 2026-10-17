@@ -151,6 +151,12 @@ export default async function NotificationsPage({
                 occurredOn={notification.occurredOn}
                 severity={notification.severity}
                 read={notification.read}
+                type={notification.type}
+                teamName={notification.teamName}
+                branding={
+                  ownedTeams.find((owned) => owned.id === notification.teamId)
+                    ?.branding ?? null
+                }
               />
             </li>
           ))}

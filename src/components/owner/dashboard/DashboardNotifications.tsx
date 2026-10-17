@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { NotificationView } from "@/state/selectors";
-import { EventCard } from "@/components/game/EventCard";
+import { NotificationItem } from "@/components/owner/NotificationItem";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Section } from "@/components/ui/Section";
 import {
@@ -30,15 +30,17 @@ export function DashboardNotifications(props: {
       ) : (
         <ul className="space-y-2">
           {props.notifications.map((notification) => (
-            <EventCard
-              key={notification.id}
-              title={notification.title}
-              description={notification.message}
-              date={notification.occurredOn}
-              type={notification.type}
-              severity={notification.severity}
-              read={notification.read}
-            />
+            <li key={notification.id}>
+              <NotificationItem
+                id={notification.id}
+                title={notification.title}
+                message={notification.message}
+                occurredOn={notification.occurredOn}
+                severity={notification.severity}
+                read={notification.read}
+                type={notification.type}
+              />
+            </li>
           ))}
         </ul>
       )}

@@ -5,6 +5,7 @@ import { Section } from "@/components/ui/Section";
 import { ArenaPanel } from "@/components/ui/ArenaPanel";
 import { ScoreNumeral } from "@/components/ui/ScoreNumeral";
 import { TeamBadge } from "@/components/ui/TeamBadge";
+import { TeamThemeScope } from "@/components/ui/TeamThemeScope";
 import { formatGameDate } from "@/presentation/game-date";
 
 type GameBoxScoreProps = {
@@ -36,7 +37,8 @@ function MatchupTeamBlock(props: {
 }) {
   const alignRight = props.align === "right";
   return (
-    <div
+    <TeamThemeScope
+      branding={props.branding}
       className={`flex items-center gap-4 ${
         alignRight ? "sm:flex-row-reverse sm:text-right" : ""
       }`}
@@ -62,7 +64,7 @@ function MatchupTeamBlock(props: {
           className="mt-1"
         />
       </div>
-    </div>
+    </TeamThemeScope>
   );
 }
 
@@ -85,6 +87,7 @@ export function GameBoxScore({ boxScore }: GameBoxScoreProps) {
       ? `Game ${boxScore.seasonGameNumber}`
       : null,
   ].filter(Boolean);
+  const overtimes = Math.max(0, boxScore.periods.length - 4);
 
   return (
     <div className="space-y-8">
@@ -97,9 +100,14 @@ export function GameBoxScore({ boxScore }: GameBoxScoreProps) {
       >
         <p
           id="game-final-title"
-          className="mb-4 text-center font-display text-lg font-bold uppercase tracking-[0.4em] text-team-ink"
+          className="mb-4 flex items-center justify-center gap-2 text-center font-display text-lg font-bold uppercase tracking-[0.4em] text-team-ink"
         >
-          Final
+          <span>Final</span>
+          {overtimes > 0 ? (
+            <span className="rounded border border-team-ink/50 bg-team/15 px-2 py-0.5 text-sm tracking-widest">
+              {overtimes > 1 ? `${overtimes}OT` : "OT"}
+            </span>
+          ) : null}
         </p>
         <div className="grid gap-6 sm:grid-cols-[1fr_auto_1fr] sm:items-center">
           <MatchupTeamBlock
@@ -132,47 +140,67 @@ export function GameBoxScore({ boxScore }: GameBoxScoreProps) {
           {boxScore.winnerName} wins by {boxScore.margin}
         </p>
         <p className="mt-1 text-sm text-zinc-300">{metaParts.join(" · ")}</p>
-      </ArenaPanel>
-
-      {boxScore.periods.length > 0 ? (
-        <Section title="Scoring by period">
-          <DataTable
-            headers={[
-              "Team",
-              ...boxScore.periods.map((_, index) => periodLabel(index)),
-              "Total",
-            ]}
-          >
-            {(
-              [
-                [away, "away"],
-                [home, "home"],
-              ] as const
-            ).map(([side, key]) => (
-              <tr key={key} className="border-t border-zinc-800">
-                <td className="px-3 py-2 font-display text-lg font-bold uppercase tracking-wide text-zinc-100">
-                  {side.abbreviation}
-                </td>
-                {boxScore.periods.map((period, index) => (
-                  <td
-                    key={periodLabel(index)}
-                    className="px-3 py-2 font-mono tabular-nums text-zinc-300"
-                  >
-                    {period[key]}
-                  </td>
+        {boxScore.periods.length > 0 ? (
+          <div className="mt-5 overflow-x-auto">
+            <table className="w-full text-sm">
+              <caption className="sr-only">Scoring by period</caption>
+              <thead>
+                <tr className="text-zinc-400">
+                  <th scope="col" className="px-2 py-1 text-left font-medium">
+                    Team
+                  </th>
+                  {boxScore.periods.map((_, index) => (
+                    <th
+                      key={periodLabel(index)}
+                      scope="col"
+                      className="px-2 py-1 text-right font-medium tabular-nums"
+                    >
+                      {periodLabel(index)}
+                    </th>
+                  ))}
+                  <th scope="col" className="px-2 py-1 text-right font-medium">
+                    Total
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {(
+                  [
+                    [away, "away"],
+                    [home, "home"],
+                  ] as const
+                ).map(([side, key]) => (
+                  <tr key={key} className="border-t border-surface-line">
+                    <th
+                      scope="row"
+                      className="px-2 py-1.5 text-left font-display text-lg font-bold uppercase tracking-wide text-zinc-100"
+                    >
+                      {side.abbreviation}
+                    </th>
+                    {boxScore.periods.map((period, index) => (
+                      <td
+                        key={periodLabel(index)}
+                        className="px-2 py-1.5 text-right font-mono tabular-nums text-zinc-300"
+                      >
+                        {period[key]}
+                      </td>
+                    ))}
+                    <td
+                      className={`px-2 py-1.5 text-right font-display text-xl font-extrabold tabular-nums ${
+                        boxScore.winner === key
+                          ? "text-team-ink"
+                          : "text-zinc-400"
+                      }`}
+                    >
+                      {side.score}
+                    </td>
+                  </tr>
                 ))}
-                <td
-                  className={`px-3 py-2 font-display text-xl font-extrabold tabular-nums ${
-                    boxScore.winner === key ? "text-team-ink" : "text-zinc-400"
-                  }`}
-                >
-                  {side.score}
-                </td>
-              </tr>
-            ))}
-          </DataTable>
-        </Section>
-      ) : null}
+              </tbody>
+            </table>
+          </div>
+        ) : null}
+      </ArenaPanel>
 
       <Section title="Top performers">
         <ul className="grid gap-3 sm:grid-cols-2">
@@ -230,10 +258,10 @@ export function GameBoxScore({ boxScore }: GameBoxScoreProps) {
           ).map(([label, awayValue, homeValue]) => (
             <tr key={label} className="border-t border-zinc-800">
               <td className="px-3 py-2 text-zinc-400">{label}</td>
-              <td className="px-3 py-2 text-right font-mono text-zinc-100">
+              <td className="px-3 py-2 text-right font-mono tabular-nums text-zinc-100">
                 {awayValue}
               </td>
-              <td className="px-3 py-2 text-right font-mono text-zinc-100">
+              <td className="px-3 py-2 text-right font-mono tabular-nums text-zinc-100">
                 {homeValue}
               </td>
             </tr>
@@ -262,40 +290,51 @@ function PlayerTable({
       <p className="text-sm text-zinc-500">No player statistics recorded.</p>
     );
   }
+  const stat = "px-3 py-2 text-right font-mono tabular-nums";
   return (
-    <DataTable headers={PLAYER_HEADERS}>
-      {players.map((player) => (
-        <tr key={player.playerId} className="border-t border-zinc-800">
-          <td className="px-3 py-2 text-zinc-100">{player.playerName}</td>
-          <td className="px-3 py-2 text-right font-mono text-zinc-300">
-            {player.minutes}
-          </td>
-          <td className="px-3 py-2 text-right font-mono text-zinc-100">
-            {player.points}
-          </td>
-          <td className="px-3 py-2 text-right font-mono text-zinc-300">
-            {player.fieldGoals}
-          </td>
-          <td className="px-3 py-2 text-right font-mono text-zinc-300">
-            {player.threePointers}
-          </td>
-          <td className="px-3 py-2 text-right font-mono text-zinc-300">
-            {player.freeThrows}
-          </td>
-          <td className="px-3 py-2 text-right font-mono text-zinc-300">
-            {player.rebounds}
-          </td>
-          <td className="px-3 py-2 text-right font-mono text-zinc-300">
-            {player.assists}
-          </td>
-          <td className="px-3 py-2 text-right font-mono text-zinc-300">
-            {player.turnovers}
-          </td>
-          <td className="px-3 py-2 text-right font-mono text-zinc-300">
-            {player.fouls}
-          </td>
-        </tr>
-      ))}
-    </DataTable>
+    <div className="overflow-x-auto rounded-xl border border-zinc-800">
+      <table className="min-w-full text-left text-sm">
+        <thead className="bg-zinc-900 text-zinc-400">
+          <tr>
+            {PLAYER_HEADERS.map((header, index) => (
+              <th
+                key={header}
+                scope="col"
+                className={
+                  index === 0
+                    ? "sticky left-0 z-10 bg-zinc-900 px-3 py-2 font-medium"
+                    : "px-3 py-2 text-right font-medium"
+                }
+              >
+                {header}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {players.map((player) => (
+            <tr key={player.playerId} className="border-t border-zinc-800">
+              <th
+                scope="row"
+                className="sticky left-0 z-10 whitespace-nowrap bg-surface-deep px-3 py-2 text-left font-normal text-zinc-100"
+              >
+                {player.playerName}
+              </th>
+              <td className={`${stat} text-zinc-300`}>{player.minutes}</td>
+              <td className={`${stat} text-zinc-100`}>{player.points}</td>
+              <td className={`${stat} text-zinc-300`}>{player.fieldGoals}</td>
+              <td className={`${stat} text-zinc-300`}>
+                {player.threePointers}
+              </td>
+              <td className={`${stat} text-zinc-300`}>{player.freeThrows}</td>
+              <td className={`${stat} text-zinc-300`}>{player.rebounds}</td>
+              <td className={`${stat} text-zinc-300`}>{player.assists}</td>
+              <td className={`${stat} text-zinc-300`}>{player.turnovers}</td>
+              <td className={`${stat} text-zinc-300`}>{player.fouls}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
   );
 }
