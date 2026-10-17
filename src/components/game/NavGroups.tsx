@@ -9,9 +9,16 @@ import type {
 import { OWNER_NAV_GROUPS } from "@/application/owner-nav-config";
 import { cn, focusRingClass, touchTargetClass } from "@/components/ui/styles";
 
+/**
+ * Sidebar icons on one 24px grid, drawn at a single 1.75 stroke by NavIcon.
+ * Home, team, league, awards and media paths are adapted from Lucide (ISC).
+ */
 export const NAV_ICONS: Record<string, React.ReactNode> = {
   home: (
-    <path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1v-9.5z" />
+    <>
+      <path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8" />
+      <path d="M3 10a2 2 0 0 1 .71-1.53l7-6a2 2 0 0 1 2.58 0l7 6A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+    </>
   ),
   calendar: (
     <>
@@ -25,7 +32,9 @@ export const NAV_ICONS: Record<string, React.ReactNode> = {
       <circle cx="12" cy="12" r="3" />
     </>
   ),
-  team: <circle cx="12" cy="12" r="8" />,
+  team: (
+    <path d="M20.38 3.46 16 2a4 4 0 0 1-8 0L3.62 3.46a2 2 0 0 0-1.34 2.23l.58 3.47a1 1 0 0 0 .99.84H6v10c0 1.1.9 2 2 2h8a2 2 0 0 0 2-2V10h2.15a1 1 0 0 0 .99-.84l.58-3.47a2 2 0 0 0-1.34-2.23z" />
+  ),
   roster: (
     <>
       <path d="M8 6h13M8 12h13M8 18h13" />
@@ -57,7 +66,13 @@ export const NAV_ICONS: Record<string, React.ReactNode> = {
       <path d="M5 20h14" />
     </>
   ),
-  league: <circle cx="12" cy="12" r="9" />,
+  league: (
+    <>
+      <circle cx="12" cy="12" r="10" />
+      <path d="M12 2v20M2 12h20" />
+      <path d="M4.93 4.93c3.9 3.9 3.9 10.24 0 14.14M19.07 4.93c-3.9 3.9-3.9 10.24 0 14.14" />
+    </>
+  ),
   standings: (
     <>
       <path d="M4 20V10M10 20V4M16 20v-7M20 20H2" />
@@ -82,7 +97,14 @@ export const NAV_ICONS: Record<string, React.ReactNode> = {
       <rect x="8" y="2" width="8" height="4" rx="1" />
     </>
   ),
-  awards: <path d="M8 4h8v4a4 4 0 0 1-8 0V4zM9 21h6M12 12v9" />,
+  transactions: <path d="m16 3 4 4-4 4M20 7H4M8 21l-4-4 4-4M4 17h16" />,
+  awards: (
+    <>
+      <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6M18 9h1.5a2.5 2.5 0 0 0 0-5H18M4 22h16" />
+      <path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22" />
+      <path d="M18 2H6v7a6 6 0 0 0 12 0V2z" />
+    </>
+  ),
   playoffs: (
     <>
       <path d="M6 4h12v4H6z" />
@@ -92,8 +114,8 @@ export const NAV_ICONS: Record<string, React.ReactNode> = {
   ),
   media: (
     <>
-      <path d="M4 6h16v12H4z" />
-      <path d="m8 10 4 3 4-3" />
+      <path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-2 2zm0 0a2 2 0 0 1-2-2v-9c0-1.1.9-2 2-2h2" />
+      <path d="M18 14h-8M15 18h-5M10 6h8v4h-8z" />
     </>
   ),
   finances: (
@@ -206,9 +228,12 @@ export function NavGroups(props: {
   const groups = props.groups ?? OWNER_NAV_GROUPS;
 
   return (
-    <div className="space-y-5">
-      {groups.map((group) => {
+    <div className="space-y-4">
+      {groups.map((group, index) => {
         const seasonal = group.id === "offseason";
+        // Single-item and unlabelled groups need no heading.
+        const showLabel =
+          group.label !== "" && (seasonal || group.items.length > 1);
         return (
           <div
             key={group.id}
@@ -218,7 +243,14 @@ export function NavGroups(props: {
                 "rounded-lg border border-dashed border-surface-line bg-surface-deep/40 py-2",
             )}
           >
-            {!props.collapsed ? (
+            {props.collapsed ? (
+              index > 0 ? (
+                <div
+                  className="mb-1 border-t border-surface-line"
+                  aria-hidden
+                />
+              ) : null
+            ) : showLabel ? (
               <p
                 className={cn(
                   "mb-1 px-3 text-sm font-medium",
@@ -228,9 +260,7 @@ export function NavGroups(props: {
                 {group.label}
                 {seasonal ? " · Seasonal" : ""}
               </p>
-            ) : (
-              <div className="mb-1 border-t border-surface-line" aria-hidden />
-            )}
+            ) : null}
             <ul className="space-y-0.5">
               {group.items.map((item) => {
                 const href = `${base}${item.href}`;
