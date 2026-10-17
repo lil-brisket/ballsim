@@ -2,6 +2,8 @@
 
 import { SectionHeading } from "@/components/ui/SectionHeading";
 import { Select } from "@/components/ui/Select";
+import { PlayerChip } from "@/components/team-management/PlayerChip";
+import type { PlayerPortraitAssignment } from "@/domain/entities/player-portrait";
 import type { EditableRotationRow } from "@/state/lineup-rotation-editor";
 
 export function ClosingLineupEditor(props: {
@@ -10,6 +12,7 @@ export function ClosingLineupEditor(props: {
   editableRows: EditableRotationRow[];
   onPolicyChange: (policy: string) => void;
   onTogglePlayer: (playerId: string) => void;
+  portraits?: Record<string, PlayerPortraitAssignment | null>;
 }) {
   return (
     <section className="space-y-3">
@@ -28,29 +31,27 @@ export function ClosingLineupEditor(props: {
         </Select>
       </label>
       {props.closingPolicy === "custom" ? (
-        <div className="rounded-lg border border-zinc-800 p-3 text-sm text-zinc-300">
-          <p className="mb-2 text-sm text-zinc-500">
-            Select up to 5 closing players
+        <div className="space-y-2 text-sm text-zinc-300">
+          <p className="text-sm text-zinc-400">
+            Select up to 5 closing players ({props.closingIds.length}/5)
           </p>
-          <div className="flex flex-wrap gap-2">
+          <ul className="flex flex-wrap gap-3">
             {props.editableRows.map((row) => {
               const selected = props.closingIds.includes(row.playerId);
               return (
-                <button
-                  key={row.playerId}
-                  type="button"
-                  onClick={() => props.onTogglePlayer(row.playerId)}
-                  className={`rounded px-2 py-1 text-sm ${
-                    selected
-                      ? "bg-team text-on-team"
-                      : "bg-zinc-800 text-zinc-300"
-                  }`}
-                >
-                  {row.lastName}
-                </button>
+                <li key={row.playerId}>
+                  <PlayerChip
+                    player={row}
+                    portrait={props.portraits?.[row.playerId]}
+                    slotLabel={row.position}
+                    pressed={selected}
+                    onClick={() => props.onTogglePlayer(row.playerId)}
+                    aria-label={`${row.firstName} ${row.lastName}, ${row.position}, overall ${row.overall ?? "unknown"}, ${row.availabilityLabel}`}
+                  />
+                </li>
               );
             })}
-          </div>
+          </ul>
         </div>
       ) : null}
     </section>

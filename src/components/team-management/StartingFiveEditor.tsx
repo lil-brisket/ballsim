@@ -1,89 +1,90 @@
 "use client";
 
+import { useState } from "react";
+import { LineupCourt } from "@/components/team-management/LineupCourt";
+import { PlayerChip } from "@/components/team-management/PlayerChip";
+import { PlayerPicker } from "@/components/team-management/PlayerPicker";
 import { SectionHeading } from "@/components/ui/SectionHeading";
 import { PLAYER_POSITIONS } from "@/domain/entities/player";
-import { Select } from "@/components/ui/Select";
+import type { PlayerPortraitAssignment } from "@/domain/entities/player-portrait";
 import type {
   PlayerCardLike,
   StarterDraft,
 } from "@/state/lineup-rotation-editor";
+
+/** Chip centre on the half court, as percentages of its width and height. */
+const SLOT_POSITION: Record<string, { left: number; top: number }> = {
+  PG: { left: 50, top: 17 },
+  SG: { left: 17, top: 41 },
+  SF: { left: 83, top: 41 },
+  PF: { left: 27, top: 79 },
+  C: { left: 73, top: 79 },
+};
 
 export function StartingFiveEditor(props: {
   starters: StarterDraft[];
   allPlayers: PlayerCardLike[];
   rowsById: Map<string, { targetMinutes: number }>;
   onChangeStarter: (slot: string, playerId: string) => void;
+  portraits?: Record<string, PlayerPortraitAssignment | null>;
 }) {
-  const usedElsewhere = (currentPlayerId: string) => {
+  const [pickerSlot, setPickerSlot] = useState<string | null>(null);
+
+  const currentFor = (slot: string) =>
+    props.starters.find((row) => row.slot === slot)?.playerId ?? "";
+
+  const eligibleFor = (slot: string) => {
+    const current = currentFor(slot);
     const used = new Set(
-      props.starters
-        .map((slot) => slot.playerId)
-        .filter((id) => id !== currentPlayerId),
+      props.starters.map((s) => s.playerId).filter((id) => id !== current),
     );
-    return used;
+    return props.allPlayers.filter(
+      (player) =>
+        player.playerId === current ||
+        (!used.has(player.playerId) &&
+          (player.available || player.role === "inactive")),
+    );
   };
 
   return (
     <section className="space-y-3">
       <SectionHeading title="Starting Five" />
-      <div className="mx-auto grid max-w-xl grid-cols-3 gap-3 text-center">
+      <LineupCourt>
         {PLAYER_POSITIONS.map((slot) => {
-          const current =
-            props.starters.find((row) => row.slot === slot)?.playerId ?? "";
-          const card = props.allPlayers.find((p) => p.playerId === current);
-          const used = usedElsewhere(current);
-          const options = props.allPlayers.filter(
-            (player) =>
-              player.playerId === current ||
-              (!used.has(player.playerId) &&
-                (player.available || player.role === "inactive")),
-          );
-          const mpg =
-            props.rowsById.get(current)?.targetMinutes ??
-            card?.plannedMinutes ??
-            0;
+          const current = currentFor(slot);
+          const card =
+            props.allPlayers.find((p) => p.playerId === current) ?? null;
+          const pos = SLOT_POSITION[slot] ?? { left: 50, top: 50 };
           return (
             <div
               key={slot}
-              className={`rounded-lg border border-zinc-700 p-3 ${
-                slot === "PG" || slot === "C"
-                  ? "col-start-2"
-                  : slot === "SG"
-                    ? "col-start-1"
-                    : slot === "SF"
-                      ? "col-start-3"
-                      : "col-start-2"
-              }`}
+              className="absolute -translate-x-1/2 -translate-y-1/2"
+              style={{ left: `${pos.left}%`, top: `${pos.top}%` }}
             >
-              <p className="mb-2 text-sm font-medium text-team-ink">{slot}</p>
-              <Select
-                value={current}
-                onChange={(event) =>
-                  props.onChangeStarter(slot, event.target.value)
-                }
-                wrapperClassName="w-full"
-              >
-                {options.map((player) => (
-                  <option
-                    key={player.playerId}
-                    value={player.playerId}
-                    disabled={!player.available && player.playerId !== current}
-                  >
-                    {player.firstName} {player.lastName}
-                    {!player.available ? ` (${player.availabilityLabel})` : ""}
-                  </option>
-                ))}
-              </Select>
-              {card ? (
-                <p className="mt-1 text-sm text-zinc-500">
-                  OVR {card.overall} · {card.position} · {mpg} MPG ·{" "}
-                  {card.availabilityLabel}
-                </p>
-              ) : null}
+              <PlayerChip
+                player={card}
+                portrait={card ? props.portraits?.[card.playerId] : null}
+                slotLabel={slot}
+                opensPicker
+                onClick={() => setPickerSlot(slot)}
+              />
             </div>
           );
         })}
-      </div>
+      </LineupCourt>
+      <PlayerPicker
+        open={pickerSlot !== null}
+        onOpenChange={(open) => {
+          if (!open) setPickerSlot(null);
+        }}
+        title={pickerSlot ? `Choose ${pickerSlot}` : "Choose starter"}
+        description="Pick who starts at this position."
+        players={pickerSlot ? eligibleFor(pickerSlot) : []}
+        currentPlayerId={pickerSlot ? currentFor(pickerSlot) : ""}
+        onSelect={(playerId) => {
+          if (pickerSlot) props.onChangeStarter(pickerSlot, playerId);
+        }}
+      />
     </section>
   );
 }

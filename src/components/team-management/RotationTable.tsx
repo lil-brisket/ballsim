@@ -4,6 +4,7 @@ import { SectionHeading } from "@/components/ui/SectionHeading";
 import { useMemo, useState } from "react";
 import { NumberStepper } from "@/components/ui/NumberStepper";
 import { Select } from "@/components/ui/Select";
+import { AvailabilityDot } from "@/components/team-management/availability-dot";
 import { DataTable } from "@/components/ui/DataTable";
 import { SortableTableControls } from "@/components/owner/SortableTableControls";
 import {
@@ -41,20 +42,20 @@ function rowTone(role: string, groupRole: string): string {
   return "";
 }
 
-function statusIndicator(status: string): { emoji: string; label: string } {
+function statusLabel(status: string): string {
   switch (status) {
     case "available":
-      return { emoji: "🟢", label: "Available" };
+      return "Available";
     case "questionable":
-      return { emoji: "🟡", label: "Questionable" };
+      return "Questionable";
     case "limited":
-      return { emoji: "🟠", label: "Limited" };
+      return "Limited";
     case "out":
-      return { emoji: "🔴", label: "Out" };
+      return "Out";
     case "suspended":
-      return { emoji: "🔴", label: "Suspended" };
+      return "Suspended";
     default:
-      return { emoji: "⚪", label: status };
+      return status;
   }
 }
 
@@ -82,7 +83,7 @@ function GroupTable(props: {
         ]}
       >
         {props.rows.map((row) => {
-          const status = statusIndicator(row.availabilityStatus);
+          const status = statusLabel(row.availabilityStatus);
           const inactive = row.groupRole === "inactive";
           return (
             <tr
@@ -130,18 +131,32 @@ function GroupTable(props: {
                 {inactive ? (
                   <span className="text-zinc-500">0</span>
                 ) : (
-                  <NumberStepper
-                    min={0}
-                    max={48}
-                    value={row.targetMinutes}
-                    aria-label={`Target minutes for ${row.firstName} ${row.lastName}`}
-                    onValueChange={(minutes) =>
-                      props.onUpdate(row.playerId, {
-                        targetMinutes: minutes,
-                        projectedMinutes: minutes,
-                      })
-                    }
-                  />
+                  <div className="flex items-center gap-3">
+                    <NumberStepper
+                      min={0}
+                      max={48}
+                      value={row.targetMinutes}
+                      aria-label={`Target minutes for ${row.firstName} ${row.lastName}`}
+                      onValueChange={(minutes) =>
+                        props.onUpdate(row.playerId, {
+                          targetMinutes: minutes,
+                          projectedMinutes: minutes,
+                        })
+                      }
+                    />
+                    <div
+                      aria-hidden="true"
+                      title={`${Math.round((row.targetMinutes / 48) * 100)}% of 48 minutes`}
+                      className="hidden h-1.5 w-16 overflow-hidden rounded-full bg-zinc-800 sm:block"
+                    >
+                      <div
+                        className="h-full rounded-full bg-team"
+                        style={{
+                          width: `${Math.min(100, (row.targetMinutes / 48) * 100)}%`,
+                        }}
+                      />
+                    </div>
+                  </div>
                 )}
               </td>
               <td className="px-3 py-2">
@@ -180,8 +195,12 @@ function GroupTable(props: {
                 )}
               </td>
               <td className="px-3 py-2 text-sm text-zinc-300">
-                <span title={row.availabilityLabel}>
-                  {status.emoji} {status.label}
+                <span
+                  title={row.availabilityLabel}
+                  className="inline-flex items-center gap-2"
+                >
+                  <AvailabilityDot status={row.availabilityStatus} />
+                  {status}
                 </span>
               </td>
             </tr>
