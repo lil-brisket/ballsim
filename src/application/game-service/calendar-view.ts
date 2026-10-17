@@ -9,7 +9,14 @@ import {
   getCalendarMonthGrid,
   buildCalendarDateInspectorView,
   getNextTeamGameDate,
+  getTeamGamesForDate,
 } from "@/systems/calendar";
+import { toGameBoxScoreView } from "@/state/selectors";
+import {
+  type CalendarGameStatsView,
+  toCalendarGameStatsView,
+} from "@/state/selectors/calendar-game-stats";
+import { canWatchGame } from "@/state/watch-game-selectors";
 import {
   type TeamBrandingView,
   toBrandingView,
@@ -58,6 +65,10 @@ export type CalendarPageView = {
   leagueContext:
     import("@/state/standings-selectors").CalendarLeagueContextView | null;
   nextTeamGameDate: string | null;
+  /** The owner's next game, so "Next Game" can offer to watch it. */
+  nextTeamGame: { date: string; gameId: string } | null;
+  /** Box-score summary when the selected date's team game is final. */
+  teamGameStats: CalendarGameStatsView | null;
   /** Branding by team id so calendar cells and the inspector can show opponent badges. */
   teamBranding: Record<string, TeamBrandingView>;
   timeDisabled: boolean;
@@ -176,6 +187,16 @@ export async function loadCalendarPageView(
   });
   const leagueContext = toCalendarLeagueContext(state);
   const nextTeamGameDate = getNextTeamGameDate(state, teamId);
+  const nextGame = nextTeamGameDate
+    ? (getTeamGamesForDate(state, teamId, nextTeamGameDate).find(
+        (game) => game.competitionType !== "development_league",
+      ) ?? null)
+    : null;
+  const selectedTeamGame = inspector.teamGame;
+  const selectedBoxScore =
+    selectedTeamGame?.status === "final"
+      ? toGameBoxScoreView(state, selectedTeamGame.gameId)
+      : null;
 
   const ownerDash = toOwnerDashboardView(state);
   const timeDisabledFlags = {
@@ -220,6 +241,19 @@ export async function loadCalendarPageView(
     inspector,
     leagueContext,
     nextTeamGameDate,
+    nextTeamGame:
+      nextGame && nextTeamGameDate
+        ? {
+            date: nextTeamGameDate,
+            gameId: nextGame.id,
+          }
+        : null,
+    teamGameStats: selectedBoxScore
+      ? toCalendarGameStatsView(
+          selectedBoxScore,
+          canWatchGame(state, selectedBoxScore.gameId),
+        )
+      : null,
     teamBranding: Object.fromEntries(
       Object.values(state.world.teams).flatMap((team) => {
         const branding = toBrandingView(team.branding);

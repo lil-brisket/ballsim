@@ -57,6 +57,8 @@ export type TeamCalendarGameView = {
   scoreLabel: string | null;
   resultLabel: string | null;
   startTimeLabel: string | null;
+  /** True when playing this game records a play-by-play log for Watch Game. */
+  watchable: boolean;
 };
 
 function seasonPhaseLabel(competitionType: Game["competitionType"]): string {
@@ -121,6 +123,7 @@ export function projectTeamGameView(
     scoreLabel,
     resultLabel,
     startTimeLabel: null,
+    watchable: game.competitionType !== "development_league",
   };
 }
 

@@ -48,6 +48,7 @@ function makeView(overrides: Partial<CalendarPageView> = {}): CalendarPageView {
     scoreLabel: null,
     resultLabel: null,
     startTimeLabel: null,
+    watchable: true,
   };
 
   return {
@@ -145,6 +146,8 @@ function makeView(overrides: Partial<CalendarPageView> = {}): CalendarPageView {
       streakLabel: "W4",
     },
     nextTeamGameDate: selectedDate,
+    nextTeamGame: { date: selectedDate, gameId: "g1" },
+    teamGameStats: null,
     teamBranding: {},
     timeDisabled: false,
     timeDisabledFlags: {
@@ -262,9 +265,9 @@ describe("CalendarWorkspace redesign", () => {
     );
     fireEvent.click(screen.getByRole("button", { name: /Next Game →/i }));
     expect(screen.getByRole("dialog")).toBeTruthy();
-    expect(
-      screen.getByRole("button", { name: /Simulate to date/i }),
-    ).toBeTruthy();
+    expect(screen.getByText(/Your next game is Sep 18/)).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Sim to day" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Watch game" })).toBeTruthy();
     expect(streamMocks.streamSimulateToDate).not.toHaveBeenCalled();
     expect(replace).not.toHaveBeenCalled();
     unmount();
@@ -377,9 +380,10 @@ describe("CalendarWorkspace redesign", () => {
       }),
     );
     expect(screen.getByRole("dialog")).toBeTruthy();
-    expect(screen.getByText(/Simulate through Sep 18/)).toBeTruthy();
+    expect(screen.getByText(/Your next game is Sep 18/)).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Watch game" })).toBeTruthy();
     expect(streamMocks.streamSimulateToDate).not.toHaveBeenCalled();
-    fireEvent.click(screen.getByRole("button", { name: /Simulate to date/i }));
+    fireEvent.click(screen.getByRole("button", { name: "Sim to day" }));
     await waitFor(() => {
       expect(streamMocks.streamSimulateToDate).toHaveBeenCalledWith(
         "save_cal",
@@ -486,7 +490,7 @@ describe("CalendarWorkspace redesign", () => {
         name: "2026-09-18, next team game, HOME vs Rivermen",
       }),
     );
-    fireEvent.click(screen.getByRole("button", { name: /Simulate to date/i }));
+    fireEvent.click(screen.getByRole("button", { name: "Sim to day" }));
     await waitFor(() => {
       expect(screen.getByText("43–30")).toBeTruthy();
       expect(screen.getByText("W5")).toBeTruthy();
@@ -537,7 +541,7 @@ describe("CalendarWorkspace redesign", () => {
         name: "2026-09-18, next team game, HOME vs Rivermen",
       }),
     );
-    fireEvent.click(screen.getByRole("button", { name: /Simulate to date/i }));
+    fireEvent.click(screen.getByRole("button", { name: "Sim to day" }));
     const stop = await screen.findByRole("button", { name: "Stop simulation" });
     fireEvent.click(stop);
     expect(streamMocks.requestStopSimulation).toHaveBeenCalledWith("save_cal");
@@ -596,7 +600,7 @@ describe("CalendarWorkspace redesign", () => {
         name: "2026-09-18, next team game, HOME vs Rivermen",
       }),
     );
-    fireEvent.click(screen.getByRole("button", { name: /Simulate to date/i }));
+    fireEvent.click(screen.getByRole("button", { name: "Sim to day" }));
     await waitFor(() => {
       const cursor = screen.getByRole("button", {
         name: /2026-09-18, simulating, current simulation date/,
@@ -653,7 +657,7 @@ describe("CalendarWorkspace redesign", () => {
         name: "2026-09-18, next team game, HOME vs Rivermen",
       }),
     );
-    fireEvent.click(screen.getByRole("button", { name: /Simulate to date/i }));
+    fireEvent.click(screen.getByRole("button", { name: "Sim to day" }));
     await waitFor(() => {
       const cursor = screen.getByRole("button", {
         name: /2026-09-13, simulating, current simulation date/,
@@ -704,7 +708,7 @@ describe("CalendarWorkspace redesign", () => {
         name: "2026-09-18, next team game, HOME vs Rivermen",
       }),
     );
-    fireEvent.click(screen.getByRole("button", { name: /Simulate to date/i }));
+    fireEvent.click(screen.getByRole("button", { name: "Sim to day" }));
     await waitFor(() => {
       expect(screen.getByText("October 2026")).toBeTruthy();
       expect(screen.getByText("Fri, Oct 2")).toBeTruthy();
@@ -782,6 +786,157 @@ describe("CalendarWorkspace redesign", () => {
     expect(
       screen.getByRole("button", { name: /Continue to Oct 1$/ }),
     ).toBeTruthy();
+    unmount();
+  });
+});
+
+function withDesktopMedia<T>(run: () => T): T {
+  const matchMedia = window.matchMedia;
+  Object.defineProperty(window, "matchMedia", {
+    writable: true,
+    configurable: true,
+    value: (query: string) => ({
+      matches: true,
+      media: query,
+      addEventListener: () => undefined,
+      removeEventListener: () => undefined,
+      addListener: () => undefined,
+      removeListener: () => undefined,
+      dispatchEvent: () => false,
+      onchange: null,
+    }),
+  });
+  try {
+    return run();
+  } finally {
+    Object.defineProperty(window, "matchMedia", {
+      writable: true,
+      configurable: true,
+      value: matchMedia,
+    });
+  }
+}
+
+describe("CalendarWorkspace watch and game stats", () => {
+  function renderDesktop(view: CalendarPageView) {
+    return withDesktopMedia(() =>
+      render(
+        <SimulationActivityProvider>
+          <CalendarWorkspace
+            view={view}
+            saveId="save_cal"
+            showSimSummary={false}
+            daysAdvanced={0}
+            highlightCount={0}
+          />
+        </SimulationActivityProvider>,
+      ),
+    );
+  }
+
+  it("Watch this game simulates to the day after and opens the Watch page", async () => {
+    push.mockClear();
+    streamMocks.streamSimulateToDate.mockReset();
+    streamMocks.streamSimulateToDate.mockImplementation(
+      async (_saveId, _target, onEvent) => {
+        onEvent({
+          type: "done",
+          ok: true,
+          daysAdvanced: 6,
+          highlightCount: 0,
+          fromDate: "2026-09-13",
+          toDate: "2026-09-19",
+          currentDate: "2026-09-19",
+          requestedTargetDate: "2026-09-19",
+        });
+      },
+    );
+    const { unmount } = renderDesktop(makeView());
+    fireEvent.click(screen.getByRole("button", { name: "Watch this game" }));
+    await waitFor(() => {
+      expect(streamMocks.streamSimulateToDate).toHaveBeenCalledWith(
+        "save_cal",
+        "2026-09-19",
+        expect.any(Function),
+      );
+      expect(push).toHaveBeenCalledWith("/dashboard/save_cal/games/g1/watch");
+    });
+    unmount();
+  });
+
+  it("Sim to this day targets the selected date", async () => {
+    streamMocks.streamSimulateToDate.mockReset();
+    streamMocks.streamSimulateToDate.mockResolvedValue(undefined);
+    const { unmount } = renderDesktop(makeView());
+    expect(screen.getByText("Sim stops before tip-off.")).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Sim to this day" }));
+    await waitFor(() => {
+      expect(streamMocks.streamSimulateToDate).toHaveBeenCalledWith(
+        "save_cal",
+        "2026-09-18",
+        expect.any(Function),
+      );
+    });
+    unmount();
+  });
+
+  it("renders the stats card for a final game with a replay link", () => {
+    const base = makeView();
+    const side = (id: string, abbreviation: string, score: number) => ({
+      teamId: id,
+      abbreviation,
+      score,
+      teamStats: {
+        points: score,
+        fieldGoals: "40/85",
+        threePointers: "10/30",
+        freeThrows: "20/25",
+        rebounds: 44,
+        assists: 22,
+        turnovers: 12,
+        fouls: 18,
+      },
+      topPerformers: [
+        {
+          playerId: `${id}_p1`,
+          playerName: `${abbreviation} Star`,
+          minutes: 34,
+          points: 31,
+          rebounds: 8,
+          assists: 5,
+        },
+      ],
+    });
+    const finalGame = {
+      ...base.inspector.teamGame!,
+      status: "final",
+      resultLabel: "W 110-102",
+    };
+    const { unmount } = renderDesktop(
+      makeView({
+        inspector: { ...base.inspector, teamGame: finalGame, action: "none" },
+        teamGameStats: {
+          gameId: "g1",
+          home: side("team_1", "PEO", 110),
+          away: side("team_2", "RIV", 102),
+          periods: [
+            { label: "Q1", home: 30, away: 25 },
+            { label: "Q2", home: 28, away: 27 },
+          ],
+          canWatch: true,
+        } as CalendarPageView["teamGameStats"],
+      }),
+    );
+    expect(screen.getByText("RIV Star")).toBeTruthy();
+    expect(screen.getAllByText(/31 PTS · 8 REB · 5 AST/)).toHaveLength(2);
+    const watch = screen.getByRole("link", { name: "Watch replay" });
+    expect(watch.getAttribute("href")).toBe(
+      "/dashboard/save_cal/games/g1/watch",
+    );
+    expect(
+      screen.getByRole("link", { name: "Full box score" }).getAttribute("href"),
+    ).toBe("/dashboard/save_cal/games/g1");
+    expect(screen.queryByRole("link", { name: "View game" })).toBeNull();
     unmount();
   });
 });
@@ -1047,7 +1202,7 @@ describe("CalendarWorkspace in-sim interrupt", () => {
       </SimulationActivityProvider>,
     );
     fireEvent.click(screen.getByRole("button", { name: /Next Game →/ }));
-    fireEvent.click(screen.getByRole("button", { name: /Simulate to date/i }));
+    fireEvent.click(screen.getByRole("button", { name: "Sim to day" }));
     await waitFor(() => {
       expect(replace).toHaveBeenCalled();
     });

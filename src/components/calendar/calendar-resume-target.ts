@@ -40,6 +40,65 @@ export function writeCalendarResumeTarget(
   }
 }
 
+const WATCH_STORAGE_PREFIX = "bball.calendarWatchTarget.";
+
+export type CalendarWatchTarget = { gameId: string; gameDate: string };
+
+function watchStorageKey(saveId: string): string {
+  return `${WATCH_STORAGE_PREFIX}${saveId}`;
+}
+
+export function readCalendarWatchTarget(
+  saveId: string,
+): CalendarWatchTarget | null {
+  if (typeof window === "undefined") {
+    return null;
+  }
+  try {
+    const raw = window.sessionStorage.getItem(watchStorageKey(saveId));
+    if (!raw) {
+      return null;
+    }
+    const parsed: unknown = JSON.parse(raw);
+    if (typeof parsed !== "object" || parsed === null) {
+      return null;
+    }
+    const { gameId, gameDate } = parsed as Record<string, unknown>;
+    if (
+      typeof gameId !== "string" ||
+      gameId.length === 0 ||
+      typeof gameDate !== "string" ||
+      !isIsoDate(gameDate)
+    ) {
+      return null;
+    }
+    return { gameId, gameDate };
+  } catch {
+    return null;
+  }
+}
+
+export function writeCalendarWatchTarget(
+  saveId: string,
+  target: CalendarWatchTarget | null,
+): void {
+  if (typeof window === "undefined") {
+    return;
+  }
+  try {
+    if (!target || !target.gameId || !isIsoDate(target.gameDate)) {
+      window.sessionStorage.removeItem(watchStorageKey(saveId));
+      return;
+    }
+    window.sessionStorage.setItem(
+      watchStorageKey(saveId),
+      JSON.stringify({ gameId: target.gameId, gameDate: target.gameDate }),
+    );
+  } catch {
+    // Ignore quota / private-mode failures.
+  }
+}
+
 export function remainingSimulateTarget(input: {
   requestedTargetDate?: string | null;
   currentDate: string;
