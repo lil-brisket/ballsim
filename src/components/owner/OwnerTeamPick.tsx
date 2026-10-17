@@ -1,3 +1,4 @@
+import { buttonClass } from "@/components/ui/Button";
 import { selectTeamAction } from "@/application/actions";
 import { TeamLogoMark } from "@/components/team/logos/TeamLogoMark";
 import type { TeamBrandingView } from "@/state/team-branding-view";
@@ -58,7 +59,7 @@ export function OwnerTeamPick(props: {
               <input type="hidden" name="teamId" value={team.id} />
               <button
                 type="submit"
-                className="rounded-md bg-team px-3 py-1.5 text-sm font-medium text-on-team hover:brightness-110 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-team-ink"
+                className={buttonClass({ variant: "secondary" })}
               >
                 Select
               </button>

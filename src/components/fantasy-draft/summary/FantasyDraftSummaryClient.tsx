@@ -4,6 +4,8 @@ import { useState } from "react";
 import { continueAfterFantasyDraftAction } from "@/application/actions";
 import type { FantasyDraftSummaryView } from "@/state/selectors";
 import type { FantasyDraftTeamSummary } from "@/domain/entities/fantasy-draft";
+import { buttonClass } from "@/components/ui/Button";
+import { Tabs } from "@/components/ui/Tabs";
 
 function Stars(props: { count: number }) {
   return (
@@ -320,28 +322,20 @@ export function FantasyDraftSummaryClient(props: {
       </header>
 
       {controlled.length > 0 ? (
-        <div className="flex flex-wrap gap-2">
-          {controlled.map((teamId) => {
+        <Tabs
+          aria-label="Controlled franchises"
+          activeKey={activeTeamId}
+          items={controlled.map((teamId) => {
             const meta = view.teamNames[teamId];
             const grade = view.teamSummaries[teamId]?.draftGrade ?? "—";
-            const active = teamId === activeTeamId;
-            return (
-              <button
-                key={teamId}
-                type="button"
-                onClick={() => setActiveTeamId(teamId)}
-                className={`rounded-lg border px-3 py-2 text-sm ${
-                  active
-                    ? "border-team-ink bg-team/20 text-zinc-100"
-                    : "border-zinc-800 text-zinc-400 hover:border-zinc-600"
-                }`}
-              >
-                {meta?.name ?? teamId}{" "}
-                <span className="font-semibold text-team-ink">{grade}</span>
-              </button>
-            );
+            return {
+              key: teamId,
+              label: meta?.name ?? teamId,
+              badge: <span className="text-team-ink">{grade}</span>,
+              onSelect: () => setActiveTeamId(teamId),
+            };
           })}
-        </div>
+        />
       ) : null}
 
       {summary && teamMeta ? (
@@ -358,10 +352,7 @@ export function FantasyDraftSummaryClient(props: {
 
       <form action={continueAfterFantasyDraftAction}>
         <input type="hidden" name="saveId" value={saveId} />
-        <button
-          type="submit"
-          className="rounded-md bg-team px-4 py-2 text-sm font-medium text-on-team hover:brightness-110"
-        >
+        <button type="submit" className={buttonClass({ variant: "primary" })}>
           Continue League
         </button>
       </form>

@@ -1,5 +1,6 @@
 "use client";
 
+import { Button } from "@/components/ui/Button";
 import {
   clearAllVisiblePhases,
   countDelegatedVisiblePhases,
@@ -61,24 +62,22 @@ export function AiTeamManagementSection({
           {delegatedCount} of {total} delegated
         </p>
         <div className="flex gap-2">
-          <button
-            type="button"
+          <Button
+            variant="secondary"
             onClick={() =>
               onAssistanceChange(selectAllVisiblePhases(assistance))
             }
-            className="rounded-md border border-team-ink/50 bg-team/20 px-3 py-1.5 text-xs font-medium text-team-ink hover:border-team-ink"
           >
             Select All
-          </button>
-          <button
-            type="button"
+          </Button>
+          <Button
+            variant="quiet"
             onClick={() =>
               onAssistanceChange(clearAllVisiblePhases(assistance))
             }
-            className="rounded-md border border-zinc-700 px-3 py-1.5 text-xs text-zinc-400 hover:border-zinc-500 hover:text-zinc-200"
           >
             Clear All
-          </button>
+          </Button>
         </div>
       </div>
 

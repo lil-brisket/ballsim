@@ -1,5 +1,7 @@
 "use client";
 
+import { Select } from "@/components/ui/Select";
+import { Button } from "@/components/ui/Button";
 import { useEffect, useState } from "react";
 import {
   CartesianGrid,
@@ -17,8 +19,6 @@ import type {
   PlayerGameSeriesPoint,
   PlayerStatsBundle,
 } from "@/state/player-profile-selectors";
-import { cn, focusRingClass } from "@/components/ui/styles";
-import { selectClass } from "./StatControls";
 import {
   METRICS,
   gameSeriesPoints,
@@ -130,8 +130,9 @@ export function PerformanceChart(props: {
     body = (
       <div role="alert" className="space-y-2 py-6 text-center">
         <p className="text-sm text-rose-200">Unable to load games.</p>
-        <button
+        <Button
           type="button"
+          variant="secondary"
           onClick={() =>
             setFailed((prev) => {
               const next = { ...prev };
@@ -139,13 +140,9 @@ export function PerformanceChart(props: {
               return next;
             })
           }
-          className={cn(
-            "rounded-md border border-zinc-700 px-3 py-1.5 text-sm text-zinc-200 hover:border-team-ink",
-            focusRingClass,
-          )}
         >
           Retry
-        </button>
+        </Button>
       </div>
     );
   } else if (rows.length === 0) {
@@ -305,18 +302,18 @@ export function PerformanceChart(props: {
         >
           Chart metric
         </label>
-        <select
+        <Select
           id={selectId}
           value={metric}
           onChange={(event) => setMetric(event.target.value as MetricKey)}
-          className={cn(selectClass, "w-40")}
+          wrapperClassName="w-40"
         >
           {METRICS.map((m) => (
             <option key={m.key} value={m.key}>
               {m.label}
             </option>
           ))}
-        </select>
+        </Select>
       </div>
       {body}
     </div>

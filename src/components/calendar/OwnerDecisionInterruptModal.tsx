@@ -1,10 +1,10 @@
 "use client";
 
+import { buttonClass } from "@/components/ui/Button";
 import { useEffect, useRef } from "react";
 import Link from "next/link";
 import { Overlay } from "@/components/ui/Overlay";
 import { TradeReviewPanel } from "@/components/trades/TradeReviewPanel";
-import { cn, focusRingClass, touchTargetClass } from "@/components/ui/styles";
 import type { CalendarInterrupt } from "@/state/calendar-interrupt";
 
 const FOCUSABLE =
@@ -118,11 +118,7 @@ export function OwnerDecisionInterruptModal(props: {
             <div className="flex flex-wrap gap-2">
               <Link
                 href={draftHref ?? interrupt.draftHref}
-                className={cn(
-                  touchTargetClass,
-                  focusRingClass,
-                  "rounded-md bg-team px-4 text-sm font-medium text-on-team hover:brightness-110",
-                )}
+                className={buttonClass({ variant: "primary" })}
               >
                 Make pick
               </Link>
@@ -147,10 +143,7 @@ function StopSimulationButton(props: {
       type="button"
       disabled={props.disabled}
       onClick={props.onClick}
-      className={cn(
-        touchTargetClass,
-        "rounded-md border border-zinc-600 px-3 text-sm text-zinc-200 hover:border-zinc-400 disabled:opacity-50",
-      )}
+      className={buttonClass({ variant: "secondary" })}
     >
       Stop simulation
     </button>

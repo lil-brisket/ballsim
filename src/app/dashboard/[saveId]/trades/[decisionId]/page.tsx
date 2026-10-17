@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { buttonClass } from "@/components/ui/Button";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import {
@@ -29,7 +30,7 @@ export default async function TradeReviewPage(props: PageProps) {
       <div className="flex justify-end">
         <Link
           href={returnPath}
-          className="rounded-md border border-zinc-600 px-3 py-1.5 text-zinc-200 hover:border-zinc-400"
+          className={buttonClass({ variant: "secondary" })}
         >
           Back to dashboard
         </Link>
@@ -40,16 +41,13 @@ export default async function TradeReviewPage(props: PageProps) {
           <input type="hidden" name="saveId" value={saveId} />
           <input type="hidden" name="decisionId" value={decisionId} />
           <input type="hidden" name="returnPath" value={returnPath} />
-          <button
-            type="submit"
-            className="rounded-md bg-emerald-700 px-3 py-1.5 font-medium text-zinc-50 hover:bg-emerald-600"
-          >
+          <button type="submit" className={buttonClass({ variant: "primary" })}>
             Accept
           </button>
         </form>
         <Link
           href={`/dashboard/${saveId}/trades/${decisionId}/negotiate`}
-          className="rounded-md border border-zinc-500 px-3 py-1.5 text-zinc-100 hover:border-zinc-300"
+          className={buttonClass({ variant: "secondary" })}
         >
           Negotiate
         </Link>
@@ -59,7 +57,7 @@ export default async function TradeReviewPage(props: PageProps) {
           <input type="hidden" name="returnPath" value={returnPath} />
           <button
             type="submit"
-            className="rounded-md border border-zinc-600 px-3 py-1.5 text-zinc-200 hover:border-zinc-400"
+            className={buttonClass({ variant: "secondary" })}
           >
             Decline
           </button>

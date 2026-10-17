@@ -3,6 +3,7 @@
 import { useState } from "react";
 import type { FantasyDraftView } from "@/state/selectors";
 import { cn, linkClass } from "@/components/ui/styles";
+import { buttonClass } from "@/components/ui/Button";
 
 export function DraftHistoryPanel(props: { draft: FantasyDraftView }) {
   const [showAll, setShowAll] = useState(false);
@@ -50,7 +51,7 @@ export function DraftHistoryPanel(props: { draft: FantasyDraftView }) {
               <button
                 type="button"
                 onClick={() => setShowAll(false)}
-                className="rounded border border-zinc-700 px-2 py-1 text-xs"
+                className={buttonClass({ variant: "secondary" })}
               >
                 Close
               </button>

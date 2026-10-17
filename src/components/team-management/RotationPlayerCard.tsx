@@ -1,5 +1,6 @@
 "use client";
 
+import { Button } from "@/components/ui/Button";
 import { useEffect, useId, useRef } from "react";
 
 export type RotationPlayerCardData = {
@@ -259,15 +260,15 @@ export function RotationPlayerCard(props: {
               {player.teamName ? ` · ${player.teamName}` : ""}
             </p>
           </div>
-          <button
+          <Button
             ref={closeRef}
             type="button"
+            variant="secondary"
             onClick={onClose}
-            className="rounded border border-zinc-700 px-2 py-1 text-xs text-zinc-300"
             aria-label="Close player card"
           >
             Close
-          </button>
+          </Button>
         </div>
 
         <div className="space-y-4 overflow-y-auto px-5 py-4">

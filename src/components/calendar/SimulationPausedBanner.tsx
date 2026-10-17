@@ -1,5 +1,6 @@
 "use client";
 
+import { buttonClass } from "@/components/ui/Button";
 import Link from "next/link";
 import { parseCalendarDate } from "@/domain/calendar-date";
 
@@ -102,14 +103,14 @@ export function SimulationPausedBanner(props: {
           <button
             type="button"
             onClick={props.onResolve}
-            className="rounded-md bg-team px-4 py-2 text-sm font-semibold text-on-team hover:brightness-110"
+            className={buttonClass({ variant: "primary" })}
           >
             {props.reason === "draft_clock" ? "Open Draft" : "Resolve Decision"}
           </button>
         ) : props.resolveHref ? (
           <Link
             href={props.resolveHref}
-            className="rounded-md bg-team px-4 py-2 text-sm font-semibold text-on-team hover:brightness-110"
+            className={buttonClass({ variant: "primary" })}
           >
             {reasons.length > 1 ? "Review Actions" : "Resolve Decision"}
           </Link>
@@ -117,7 +118,7 @@ export function SimulationPausedBanner(props: {
         {props.continueHref ? (
           <Link
             href={props.continueHref}
-            className="rounded-md border border-warning/40 px-4 py-2 text-sm text-warning hover:border-warning"
+            className={buttonClass({ variant: "secondary" })}
           >
             Continue Anyway
           </Link>

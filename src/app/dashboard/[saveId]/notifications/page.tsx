@@ -1,3 +1,4 @@
+import { buttonClass } from "@/components/ui/Button";
 import type { Metadata } from "next";
 import { linkClass } from "@/components/ui/styles";
 import { notFound } from "next/navigation";
@@ -53,7 +54,7 @@ export default async function NotificationsPage({
             <input type="hidden" name="returnPath" value={returnPath} />
             <button
               type="submit"
-              className="rounded-md border border-zinc-700 px-3 py-1.5 text-sm text-zinc-200 hover:border-team-ink"
+              className={buttonClass({ variant: "secondary" })}
             >
               Mark all read
             </button>

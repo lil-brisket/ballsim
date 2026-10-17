@@ -1,3 +1,5 @@
+import { buttonClass } from "@/components/ui/Button";
+import { Select } from "@/components/ui/Select";
 import {
   applyCoachingPresetAction,
   updateCoachingPhilosophyAction,
@@ -42,11 +44,10 @@ export function CoachingPageView(props: {
               <button
                 type="submit"
                 title={preset.description}
-                className={`rounded-full border px-3 py-1 text-xs ${
-                  coaching.activePreset === preset.id
-                    ? "border-team-ink text-team-ink"
-                    : "border-zinc-700 text-zinc-400 hover:border-zinc-500"
-                }`}
+                className={buttonClass({
+                  variant:
+                    coaching.activePreset === preset.id ? "secondary" : "quiet",
+                })}
               >
                 {preset.label}
               </button>
@@ -65,39 +66,39 @@ export function CoachingPageView(props: {
           <input type="hidden" name="returnPath" value={returnPath} />
           <label className="flex flex-col gap-1 text-xs text-zinc-500">
             Pace
-            <select
+            <Select
               name="pace"
               defaultValue={coaching.philosophy.pace}
-              className="rounded-md border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-zinc-100"
+              wrapperClassName="w-full"
             >
               <option value="fast">Fast</option>
               <option value="balanced">Balanced</option>
               <option value="halfCourt">Half court</option>
-            </select>
+            </Select>
           </label>
           <label className="flex flex-col gap-1 text-xs text-zinc-500">
             Offensive emphasis
-            <select
+            <Select
               name="offensiveEmphasis"
               defaultValue={coaching.philosophy.offensiveEmphasis}
-              className="rounded-md border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-zinc-100"
+              wrapperClassName="w-full"
             >
               <option value="threePointHeavy">Three-point heavy</option>
               <option value="balanced">Balanced</option>
               <option value="inside">Inside</option>
-            </select>
+            </Select>
           </label>
           <label className="flex flex-col gap-1 text-xs text-zinc-500">
             Defensive approach
-            <select
+            <Select
               name="defensiveApproach"
               defaultValue={coaching.philosophy.defensiveApproach}
-              className="rounded-md border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-zinc-100"
+              wrapperClassName="w-full"
             >
               <option value="aggressive">Aggressive</option>
               <option value="balanced">Balanced</option>
               <option value="conservative">Conservative</option>
-            </select>
+            </Select>
           </label>
           <div className="sm:col-span-3">
             <p className="mb-2 text-xs text-zinc-500">
@@ -107,7 +108,7 @@ export function CoachingPageView(props: {
             </p>
             <button
               type="submit"
-              className="rounded-md bg-team px-3 py-2 text-sm font-medium text-on-team hover:brightness-110"
+              className={buttonClass({ variant: "primary" })}
             >
               Save coaching
             </button>

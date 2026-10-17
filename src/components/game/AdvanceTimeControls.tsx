@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, type ReactNode } from "react";
-import { cn, focusRingClass, linkClass } from "@/components/ui/styles";
+import { buttonClass } from "@/components/ui/Button";
+import { linkClass } from "@/components/ui/styles";
 import { useFormStatus } from "react-dom";
 import {
   advanceDayAction,
@@ -26,10 +27,7 @@ function AdvanceButton(props: {
       type="submit"
       disabled={disabled}
       aria-busy={pending}
-      className={cn(
-        "rounded-md border border-zinc-700 px-4 py-2 text-sm text-zinc-200 hover:border-team-ink disabled:opacity-40",
-        focusRingClass,
-      )}
+      className={buttonClass({ variant: "secondary" })}
     >
       {pending ? props.pendingLabel : props.label}
     </button>
@@ -122,7 +120,7 @@ export function AdvanceTimeControls(props: {
             type="button"
             disabled={controlsDisabled}
             onClick={() => setDialogOpen(true)}
-            className="rounded-md border border-zinc-800 px-3 py-2 text-xs text-zinc-500 hover:border-zinc-600 hover:text-zinc-300 disabled:opacity-40"
+            className={buttonClass({ variant: "quiet" })}
           >
             {untilLabel}
           </button>
@@ -182,14 +180,14 @@ export function AdvanceTimeControls(props: {
               <button
                 type="button"
                 onClick={() => setDialogOpen(false)}
-                className="rounded-md border border-zinc-700 px-3 py-1.5 text-sm text-zinc-200 hover:border-zinc-500"
+                className={buttonClass({ variant: "secondary" })}
               >
                 Cancel
               </button>
               {props.goToHref ? (
                 <a
                   href={props.goToHref}
-                  className="rounded-md border border-warning/40 px-3 py-1.5 text-sm text-warning hover:bg-warning/20"
+                  className={buttonClass({ variant: "secondary" })}
                 >
                   Handle manually
                 </a>
@@ -206,7 +204,7 @@ export function AdvanceTimeControls(props: {
                   <button
                     type="submit"
                     disabled={controlsDisabled}
-                    className="rounded-md bg-emerald-700 px-3 py-1.5 text-sm font-medium text-zinc-50 hover:bg-emerald-600 disabled:opacity-40"
+                    className={buttonClass({ variant: "secondary" })}
                   >
                     Let AI Handle
                   </button>
@@ -224,7 +222,7 @@ export function AdvanceTimeControls(props: {
                   <button
                     type="submit"
                     disabled={controlsDisabled}
-                    className="rounded-md bg-team px-3 py-1.5 text-sm font-medium text-on-team hover:brightness-110 disabled:opacity-40"
+                    className={buttonClass({ variant: "primary" })}
                   >
                     Continue Anyway
                   </button>
@@ -241,7 +239,7 @@ export function AdvanceTimeControls(props: {
                   <button
                     type="submit"
                     disabled={controlsDisabled}
-                    className="rounded-md bg-team px-3 py-1.5 text-sm font-medium text-on-team hover:brightness-110 disabled:opacity-40"
+                    className={buttonClass({ variant: "primary" })}
                   >
                     Continue Anyway
                   </button>

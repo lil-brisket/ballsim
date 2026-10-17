@@ -1,5 +1,4 @@
 import { loadOwnerSave } from "@/application/game-service";
-import { TeamManagementNav } from "@/components/team-management/TeamManagementNav";
 import { OwnerTeamSwitcher } from "@/components/game/OwnerTeamSwitcher";
 import { TeamLabel } from "@/components/ui/TeamLabel";
 import { notFound } from "next/navigation";
@@ -41,7 +40,6 @@ export default async function TeamManagementLayout({
           />
         </Suspense>
       </div>
-      <TeamManagementNav saveId={saveId} />
       {children}
     </div>
   );

@@ -1,3 +1,4 @@
+import { buttonClass } from "@/components/ui/Button";
 import { deleteSaveAction, openSaveAction } from "@/application/actions";
 import { getGameModeDefinition } from "@/application/game-mode-catalog";
 import type { OwnerSavePreview } from "@/application/game-service";
@@ -7,7 +8,6 @@ import { ArenaPanel } from "@/components/ui/ArenaPanel";
 import { ScoreNumeral } from "@/components/ui/ScoreNumeral";
 import { TeamBadge } from "@/components/ui/TeamBadge";
 import { TeamThemeScope } from "@/components/ui/TeamThemeScope";
-import { focusRingClass, touchTargetClass } from "@/components/ui/styles";
 
 function formatLastPlayed(date: Date): string {
   return date.toLocaleString(undefined, {
@@ -25,10 +25,7 @@ function DeleteSave(props: { id: string; name: string }) {
     >
       <form action={deleteSaveAction}>
         <input type="hidden" name="saveId" value={props.id} />
-        <button
-          type="submit"
-          className="rounded-md bg-red-700 px-3 py-1.5 text-sm font-medium text-zinc-50 hover:bg-red-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-500"
-        >
+        <button type="submit" className={buttonClass({ variant: "danger" })}>
           Confirm delete
         </button>
       </form>
@@ -125,7 +122,7 @@ export function SaveCard(props: {
               <input type="hidden" name="saveId" value={preview.id} />
               <button
                 type="submit"
-                className={`${touchTargetClass} rounded-lg border-2 border-team-ink bg-team px-5 font-display text-lg font-extrabold uppercase tracking-wide text-on-team hover:brightness-110 ${focusRingClass}`}
+                className={buttonClass({ variant: "primary" })}
               >
                 Open
               </button>

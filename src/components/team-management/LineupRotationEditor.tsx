@@ -1,5 +1,6 @@
 "use client";
 
+import { Button } from "@/components/ui/Button";
 import { useMemo, useRef, useState, useTransition } from "react";
 import {
   previewOptimizeRotationAction,
@@ -246,13 +247,14 @@ export function LineupRotationEditor(props: {
                 Undo restores local edits — Save Changes to persist.
               </p>
             </div>
-            <button
+            <Button
               type="button"
+              variant="quiet"
               onClick={handleUndo}
-              className="shrink-0 rounded border border-zinc-600 px-2 py-1 text-xs text-zinc-300 hover:bg-zinc-800"
+              className="shrink-0"
             >
               Undo
-            </button>
+            </Button>
           </div>
         </div>
       ) : null}
@@ -345,12 +347,9 @@ export function LineupRotationEditor(props: {
             name="closingLineupJson"
             value={JSON.stringify(payload.closingLineupIds)}
           />
-          <button
-            type="submit"
-            className="rounded-md bg-team px-3 py-2 text-sm font-medium text-on-team hover:brightness-110"
-          >
+          <Button type="submit" variant="primary">
             Save Changes
-          </button>
+          </Button>
         </form>
       ) : null}
     </div>

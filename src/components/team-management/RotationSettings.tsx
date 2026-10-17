@@ -1,5 +1,8 @@
 "use client";
 
+import { Button } from "@/components/ui/Button";
+import { Select } from "@/components/ui/Select";
+
 const PRESETS = [
   { id: "auto", label: "Optimize" },
   { id: "balanced", label: "Balanced" },
@@ -25,34 +28,30 @@ export function RotationSettings(props: {
       <div className="flex flex-wrap items-end gap-3">
         <label className="text-xs text-zinc-400">
           Preset
-          <select
+          <Select
             value={props.preset}
             onChange={(event) => props.onPresetChange(event.target.value)}
-            className="ml-2 rounded border border-zinc-700 bg-zinc-900 px-2 py-1 text-sm text-zinc-100"
+            wrapperClassName="ml-2"
           >
             {PRESETS.map((item) => (
               <option key={item.id} value={item.id}>
                 {item.label}
               </option>
             ))}
-          </select>
+          </Select>
         </label>
-        <button
+        <Button
           type="button"
+          variant="secondary"
           onClick={props.onOptimize}
           disabled={props.optimizing}
-          className="rounded-md border border-team-ink/50 px-3 py-1.5 text-sm text-team-ink hover:bg-team/20 disabled:opacity-50"
         >
           {props.optimizing ? "Optimizing…" : "Optimize Rotation"}
-        </button>
+        </Button>
         {props.canUndo ? (
-          <button
-            type="button"
-            onClick={props.onUndo}
-            className="rounded-md border border-zinc-600 px-3 py-1.5 text-sm text-zinc-300 hover:bg-zinc-800"
-          >
+          <Button type="button" variant="quiet" onClick={props.onUndo}>
             Undo
-          </button>
+          </Button>
         ) : null}
       </div>
     </section>

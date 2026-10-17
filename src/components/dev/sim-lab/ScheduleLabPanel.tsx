@@ -10,8 +10,6 @@ import {
   formatDurationMs,
   formatFixed,
   formatPct,
-  labFieldClass,
-  labPrimaryButtonClass,
 } from "@/components/dev/sim-lab/format";
 import { ErrorState } from "@/components/ui/EmptyState";
 import { StatusBadge } from "@/components/ui/StatusBadge";
@@ -20,6 +18,9 @@ import { panelClass } from "@/components/ui/styles";
 import type { ScheduleLabSuccess } from "@/application/sim-lab";
 import type { SimLabPresetOption } from "@/components/dev/sim-lab/config";
 import type { LabLeaguePreset } from "@/simulation/lab/lab-league-preset";
+import { Button } from "@/components/ui/Button";
+import { NumberStepper } from "@/components/ui/NumberStepper";
+import { Select } from "@/components/ui/Select";
 
 type ScheduleUntil = "regular" | "playoffs";
 type CostKey =
@@ -82,20 +83,20 @@ export function ScheduleLabPanel(props: {
         minutes. Use Regular season only unless you also want playoffs.
       </p>
       <div className={`${panelClass} grid gap-3 p-4 sm:grid-cols-3`}>
-        <label className="text-sm text-zinc-400">
-          Seed
-          <input
-            className={`${labFieldClass} mt-1`}
-            type="number"
+        <div className="text-sm text-zinc-400">
+          <span className="block">Seed</span>
+          <NumberStepper
+            className="mt-1"
+            aria-label="Seed"
             value={seed}
             disabled={pending}
-            onChange={(event) => setSeed(Number(event.target.value))}
+            onValueChange={setSeed}
           />
-        </label>
+        </div>
         <label className="text-sm text-zinc-400">
           League / schedule length
-          <select
-            className={`${labFieldClass} mt-1`}
+          <Select
+            wrapperClassName="mt-1 w-full"
             value={preset}
             disabled={pending}
             onChange={(event) =>
@@ -107,12 +108,12 @@ export function ScheduleLabPanel(props: {
                 {option.label}
               </option>
             ))}
-          </select>
+          </Select>
         </label>
         <label className="text-sm text-zinc-400">
           Stop at
-          <select
-            className={`${labFieldClass} mt-1`}
+          <Select
+            wrapperClassName="mt-1 w-full"
             value={until}
             disabled={pending}
             onChange={(event) =>
@@ -123,18 +124,13 @@ export function ScheduleLabPanel(props: {
           >
             <option value="regular">Regular season complete</option>
             <option value="playoffs">Regular + playoffs</option>
-          </select>
+          </Select>
         </label>
       </div>
 
-      <button
-        type="button"
-        className={labPrimaryButtonClass}
-        disabled={pending}
-        onClick={onRun}
-      >
+      <Button variant="primary" disabled={pending} onClick={onRun}>
         {pending ? "Simulating schedule…" : "Run full schedule"}
-      </button>
+      </Button>
       <LabBusyBanner pending={pending} elapsedMs={elapsedMs} />
 
       {error ? <ErrorState message={error} /> : null}

@@ -1,3 +1,4 @@
+import { buttonClass } from "@/components/ui/Button";
 import type { PhaseTeamAttentionView } from "@/state/phase-dashboard";
 
 export function MultiTeamPhaseSwitcher(props: {
@@ -34,7 +35,7 @@ export function MultiTeamPhaseSwitcher(props: {
                 <input type="hidden" name="teamId" value={team.teamId} />
                 <button
                   type="submit"
-                  className="inline-flex items-center gap-2 rounded-md border border-zinc-700 bg-zinc-900/50 px-3 py-1.5 text-sm text-zinc-300 hover:border-zinc-500"
+                  className={buttonClass({ variant: "secondary" })}
                 >
                   {team.teamLabel}
                   <AttentionCounts team={team} />

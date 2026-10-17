@@ -1,5 +1,6 @@
 "use client";
 
+import { Button } from "@/components/ui/Button";
 import Link from "next/link";
 import { InjuryBadge } from "@/components/basketball/InjuryBadge";
 import { RosterRow } from "@/components/basketball/RosterRow";
@@ -96,16 +97,9 @@ export function TeamDrawer(props: {
         <div className="space-y-3" role="alert">
           <p className="text-sm text-rose-200">Unable to load team.</p>
           {props.onRetry ? (
-            <button
-              type="button"
-              onClick={props.onRetry}
-              className={cn(
-                "rounded-md border border-zinc-700 px-3 py-1.5 text-sm text-zinc-200 hover:border-team-ink",
-                focusRingClass,
-              )}
-            >
+            <Button type="button" variant="secondary" onClick={props.onRetry}>
               Try again
-            </button>
+            </Button>
           ) : null}
         </div>
       ) : null}

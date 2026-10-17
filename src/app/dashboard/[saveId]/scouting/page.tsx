@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { buttonClass } from "@/components/ui/Button";
 import { cn, linkClass } from "@/components/ui/styles";
 import { selectPlayerPortrait } from "@/state/player-portrait-selectors";
 import { notFound } from "next/navigation";
@@ -80,7 +81,7 @@ export default async function ScoutingPage({ params, searchParams }: Props) {
                 <input type="hidden" name="returnPath" value={returnPath} />
                 <button
                   type="submit"
-                  className="rounded-md border border-zinc-700 px-3 py-1.5 text-xs text-team-ink hover:bg-zinc-900"
+                  className={buttonClass({ variant: "secondary" })}
                 >
                   Scout domestic region
                 </button>
@@ -91,7 +92,7 @@ export default async function ScoutingPage({ params, searchParams }: Props) {
                 <input type="hidden" name="returnPath" value={returnPath} />
                 <button
                   type="submit"
-                  className="rounded-md border border-zinc-700 px-3 py-1.5 text-xs text-team-ink hover:bg-zinc-900"
+                  className={buttonClass({ variant: "secondary" })}
                 >
                   Scout international region
                 </button>

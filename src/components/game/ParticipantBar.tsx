@@ -10,15 +10,9 @@ import {
 } from "@/application/actions";
 import { buildOwnerReturnPath } from "@/components/game/OwnerTeamSwitcher";
 import type { DashboardSnapshot } from "@/state/selectors";
-import { cn, focusRingClass, touchTargetClass } from "@/components/ui/styles";
+import { buttonClass } from "@/components/ui/Button";
 
 type Participation = NonNullable<DashboardSnapshot["participation"]>;
-
-const buttonClass = cn(
-  touchTargetClass,
-  "rounded-lg border border-surface-line bg-surface-deep/60 px-3 text-sm text-zinc-200 hover:border-team-ink hover:text-team-ink disabled:opacity-50",
-  focusRingClass,
-);
 
 /**
  * Hotseat controls for a Local Shared League: who is playing, hand the device
@@ -81,7 +75,7 @@ export function ParticipantBar(props: {
         {online ? (
           <Link
             href={`/dashboard/${saveId}/league-members`}
-            className={cn(buttonClass, "inline-flex items-center")}
+            className={buttonClass({ variant: "secondary" })}
           >
             League members
           </Link>
@@ -96,7 +90,7 @@ export function ParticipantBar(props: {
             onClick={() =>
               submit(switchParticipantAction, { participantId: p.id })
             }
-            className={buttonClass}
+            className={buttonClass({ variant: "secondary" })}
           >
             Pass to {p.displayName}
             <span className="sr-only">
@@ -116,7 +110,7 @@ export function ParticipantBar(props: {
                 ready: active.isReady ? "false" : "true",
               })
             }
-            className={buttonClass}
+            className={buttonClass({ variant: "secondary" })}
           >
             {active.isReady ? "Not ready" : "I'm ready"}
           </button>
@@ -127,7 +121,7 @@ export function ParticipantBar(props: {
             type="button"
             disabled={pending}
             onClick={() => setConfirmingAll(true)}
-            className={buttonClass}
+            className={buttonClass({ variant: "secondary" })}
           >
             Advance for everyone
           </button>
@@ -147,7 +141,7 @@ export function ParticipantBar(props: {
             type="button"
             disabled={pending}
             onClick={() => submit(readyAllParticipantsAction, {})}
-            className={buttonClass}
+            className={buttonClass({ variant: "secondary" })}
           >
             Yes, mark everyone ready
           </button>
@@ -155,7 +149,7 @@ export function ParticipantBar(props: {
             type="button"
             disabled={pending}
             onClick={() => setConfirmingAll(false)}
-            className={buttonClass}
+            className={buttonClass({ variant: "secondary" })}
           >
             Cancel
           </button>

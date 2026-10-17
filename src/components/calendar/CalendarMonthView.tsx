@@ -1,5 +1,6 @@
 "use client";
 
+import { buttonClass } from "@/components/ui/Button";
 import type { CalendarMonthGrid } from "@/systems/calendar";
 import { collectLegendMilestones } from "@/systems/calendar/league-milestone-markers";
 import {
@@ -7,7 +8,7 @@ import {
   formatShortDate,
 } from "@/components/calendar/CalendarDayCell";
 import { CalendarAgendaList } from "@/components/calendar/CalendarAgendaList";
-import { cn, focusRingClass, touchTargetClass } from "@/components/ui/styles";
+import { cn } from "@/components/ui/styles";
 import type { TeamBrandingView } from "@/state/team-branding-view";
 
 const WEEKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"] as const;
@@ -102,11 +103,6 @@ export function CalendarMonthView(props: {
     disabled && !simulating ? "opacity-60" : "",
   );
   const layout = props.layout ?? "grid";
-  const navButtonClass = cn(
-    touchTargetClass,
-    "rounded-md border border-surface-line px-3 text-sm text-zinc-200 hover:border-team-ink disabled:pointer-events-none disabled:opacity-40",
-    focusRingClass,
-  );
 
   const liveDays = props.grid.weeks.flat().map((cell) => {
     const overlay = props.resultOverlays?.[cell.date];
@@ -141,7 +137,7 @@ export function CalendarMonthView(props: {
             type="button"
             disabled={disabled}
             onClick={() => props.onChangeMonth(prev.year, prev.month)}
-            className={navButtonClass}
+            className={buttonClass({ variant: "secondary" })}
           >
             Prev
           </button>
@@ -149,11 +145,7 @@ export function CalendarMonthView(props: {
             type="button"
             disabled={disabled}
             onClick={props.onJumpToday}
-            className={cn(
-              touchTargetClass,
-              "rounded-md border border-team-ink/60 bg-team/20 px-3 text-sm text-team-ink hover:border-team-ink disabled:pointer-events-none disabled:opacity-40",
-              focusRingClass,
-            )}
+            className={buttonClass({ variant: "secondary" })}
           >
             Today
           </button>
@@ -161,7 +153,7 @@ export function CalendarMonthView(props: {
             type="button"
             disabled={disabled}
             onClick={() => props.onChangeMonth(next.year, next.month)}
-            className={navButtonClass}
+            className={buttonClass({ variant: "secondary" })}
           >
             Next
           </button>
@@ -170,11 +162,7 @@ export function CalendarMonthView(props: {
               type="button"
               disabled={disabled}
               onClick={props.onJumpNextGame}
-              className={cn(
-                touchTargetClass,
-                "rounded-md bg-team px-3 text-sm font-semibold text-on-team hover:brightness-110 disabled:pointer-events-none disabled:opacity-40",
-                focusRingClass,
-              )}
+              className={buttonClass({ variant: "secondary" })}
             >
               Next Game → {formatShortDate(props.nextTeamGameDate)}
             </button>

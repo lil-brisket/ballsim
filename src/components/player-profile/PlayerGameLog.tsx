@@ -1,5 +1,7 @@
 "use client";
 
+import { Select } from "@/components/ui/Select";
+import { Button } from "@/components/ui/Button";
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -75,8 +77,8 @@ export function PlayerGameLog(props: {
       title="Game log"
       action={
         <div className="flex flex-wrap gap-2">
-          <select
-            className="rounded-md border border-zinc-700 bg-zinc-950 px-2 py-1 text-xs text-zinc-200"
+          <Select
+            aria-label="Season"
             value={seasonFilter}
             onChange={(event) => {
               setSeasonFilter(event.target.value);
@@ -89,9 +91,9 @@ export function PlayerGameLog(props: {
                 {year}
               </option>
             ))}
-          </select>
-          <select
-            className="rounded-md border border-zinc-700 bg-zinc-950 px-2 py-1 text-xs text-zinc-200"
+          </Select>
+          <Select
+            aria-label="Competition"
             value={competitionFilter}
             onChange={(event) => {
               setCompetitionFilter(event.target.value);
@@ -101,7 +103,7 @@ export function PlayerGameLog(props: {
             <option value="all">RS + Playoffs</option>
             <option value="regular_season">Regular season</option>
             <option value="playoffs">Playoffs</option>
-          </select>
+          </Select>
         </div>
       }
     >
@@ -216,22 +218,22 @@ export function PlayerGameLog(props: {
             Page {page + 1} of {pageCount} ({filtered.length} games)
           </span>
           <div className="flex gap-2">
-            <button
+            <Button
               type="button"
+              variant="secondary"
               disabled={page === 0}
-              className="rounded border border-zinc-700 px-2 py-1 disabled:opacity-40"
               onClick={() => setPage((p) => Math.max(0, p - 1))}
             >
               Previous
-            </button>
-            <button
+            </Button>
+            <Button
               type="button"
+              variant="secondary"
               disabled={page >= pageCount - 1}
-              className="rounded border border-zinc-700 px-2 py-1 disabled:opacity-40"
               onClick={() => setPage((p) => Math.min(pageCount - 1, p + 1))}
             >
               Next
-            </button>
+            </Button>
           </div>
         </div>
       ) : null}

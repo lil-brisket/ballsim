@@ -1,3 +1,4 @@
+import { buttonClass } from "@/components/ui/Button";
 import Link from "next/link";
 import type { OwnerDashboardTeam } from "@/state/owner-dashboard";
 import type { RecentFormView } from "@/state/recent-form-selectors";
@@ -11,7 +12,6 @@ import {
   focusRingClass,
   linkClass,
   panelClass,
-  touchTargetClass,
   touchTargetTextClass,
 } from "@/components/ui/styles";
 import { parseCalendarDate } from "@/domain/calendar-date";
@@ -139,9 +139,8 @@ export function NextGamePanel(props: {
                     : scheduleHref
                 }
                 className={cn(
-                  touchTargetClass,
-                  "w-full rounded-md border border-zinc-700 px-3 text-zinc-200 hover:border-team-ink sm:w-auto",
-                  focusRingClass,
+                  buttonClass({ variant: "secondary" }),
+                  "w-full sm:w-auto",
                 )}
               >
                 View game
@@ -149,9 +148,8 @@ export function NextGamePanel(props: {
               <Link
                 href={rotationHref}
                 className={cn(
-                  touchTargetClass,
-                  "w-full rounded-md border border-zinc-700 px-3 text-zinc-200 hover:border-team-ink sm:w-auto",
-                  focusRingClass,
+                  buttonClass({ variant: "secondary" }),
+                  "w-full sm:w-auto",
                 )}
               >
                 Review rotation
@@ -159,9 +157,8 @@ export function NextGamePanel(props: {
               <Link
                 href={calendarDateHref(props.saveId, nextGame.date)}
                 className={cn(
-                  touchTargetClass,
-                  "w-full rounded-md bg-team px-3 font-medium text-on-team hover:brightness-110 sm:w-auto",
-                  focusRingClass,
+                  buttonClass({ variant: "secondary" }),
+                  "w-full sm:w-auto",
                 )}
               >
                 Open on Calendar

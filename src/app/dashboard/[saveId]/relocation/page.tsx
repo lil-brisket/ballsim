@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { buttonClass } from "@/components/ui/Button";
 import { cn, linkClass } from "@/components/ui/styles";
 import { notFound } from "next/navigation";
 import {
@@ -238,7 +239,7 @@ export default async function RelocationPage({
                     />
                     <button
                       type="submit"
-                      className="rounded-md bg-team px-4 py-2 text-sm font-medium text-on-team hover:brightness-110"
+                      className={buttonClass({ variant: "secondary" })}
                     >
                       {relocation.stage === "none"
                         ? `Start → ${destination.city}`
@@ -252,7 +253,7 @@ export default async function RelocationPage({
               <input type="hidden" name="returnPath" value={returnPath} />
               <button
                 type="submit"
-                className="rounded-md bg-team px-4 py-2 text-sm font-medium text-on-team hover:brightness-110"
+                className={buttonClass({ variant: "primary" })}
               >
                 Advance stage
               </button>
@@ -262,7 +263,7 @@ export default async function RelocationPage({
               <input type="hidden" name="returnPath" value={returnPath} />
               <button
                 type="submit"
-                className="rounded-md border border-zinc-700 px-4 py-2 text-sm text-zinc-200 hover:border-red-500"
+                className={buttonClass({ variant: "danger" })}
               >
                 Cancel
               </button>

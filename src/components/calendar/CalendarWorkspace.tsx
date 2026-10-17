@@ -1,5 +1,6 @@
 "use client";
 
+import { buttonClass } from "@/components/ui/Button";
 import {
   useEffect,
   useMemo,
@@ -669,14 +670,14 @@ export function CalendarWorkspace(props: {
             <button
               type="button"
               onClick={() => handleSimulate(resumeTarget)}
-              className="rounded-md bg-team px-4 py-2 text-sm font-medium text-on-team hover:brightness-110"
+              className={buttonClass({ variant: "primary" })}
             >
               Continue to {resumeTarget}
             </button>
             <button
               type="button"
               onClick={clearResumeTarget}
-              className="rounded-md border border-zinc-700 px-3 py-2 text-sm text-zinc-200 hover:border-zinc-500"
+              className={buttonClass({ variant: "secondary" })}
             >
               Dismiss
             </button>

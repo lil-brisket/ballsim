@@ -1,4 +1,5 @@
 import { assignToDevelopmentLeagueAction } from "@/application/actions";
+import { buttonClass } from "@/components/ui/Button";
 import type { DraftDlRecommendation } from "@/systems/development-league/recommendations";
 
 export function PostDraftDevelopmentReview(props: {
@@ -58,7 +59,7 @@ export function PostDraftDevelopmentReview(props: {
                   />
                   <button
                     type="submit"
-                    className="rounded border border-team-ink bg-team/15 px-2 py-1 text-xs text-zinc-50"
+                    className={buttonClass({ variant: "secondary" })}
                   >
                     Assign to DL
                   </button>

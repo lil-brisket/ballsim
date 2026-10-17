@@ -1,7 +1,7 @@
 "use client";
 
+import { buttonClass } from "@/components/ui/Button";
 import { useSimulationActivity } from "@/components/game/simulation-activity";
-import { focusRingClass } from "@/components/ui/styles";
 
 export function SimulationPreviewAction(props: {
   saveId: string;
@@ -31,7 +31,7 @@ export function SimulationPreviewAction(props: {
             props.onSimulate(props.targetDate);
           }
         }}
-        className={`inline-flex min-h-11 w-full items-center justify-center rounded-md bg-team px-4 py-2 text-sm font-medium text-on-team hover:brightness-110 disabled:opacity-40 ${focusRingClass}`}
+        className={`${buttonClass({ variant: "primary" })} w-full`}
       >
         {busy ? "Simulating…" : "Simulate to date"}
       </button>

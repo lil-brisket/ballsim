@@ -1,51 +1,44 @@
-import Link from "next/link";
-import { cn, focusRingClass } from "@/components/ui/styles";
+import { Tabs } from "@/components/ui/Tabs";
 
 /**
- * Team Hub contextual destinations.
- * Roster and Lineups remain sibling routes (`/roster`, `/team-management/lineups`);
- * Contracts is nested at `/team/contracts` by Issue #56.
+ * The single sub-navigation row for team pages. Roster and Lineups remain
+ * sibling routes (`/roster`, `/team-management/lineups`); Contracts is nested
+ * at `/team/contracts` by Issue #56.
  */
 const LINKS = [
-  { key: "team" as const, suffix: "/team", label: "Team Hub" },
-  { key: "roster" as const, suffix: "/roster", label: "Roster" },
+  { key: "team", suffix: "/team", label: "Team Hub" },
+  { key: "roster", suffix: "/roster", label: "Roster" },
+  { key: "injuries", suffix: "/roster/injuries", label: "Injuries" },
   {
-    key: "lineupRotation" as const,
+    key: "lineupRotation",
     suffix: "/team-management/lineups",
     label: "Lineup & Rotation",
   },
-  { key: "contracts" as const, suffix: "/team/contracts", label: "Contracts" },
+  { key: "contracts", suffix: "/team/contracts", label: "Contracts" },
+  {
+    key: "transactions",
+    suffix: "/team-management/transactions",
+    label: "Transactions",
+  },
 ] as const;
+
+export type TeamHubSubNavKey = (typeof LINKS)[number]["key"];
 
 export function TeamHubSubNav(props: {
   saveId: string;
-  active: "team" | "roster" | "lineupRotation" | "contracts";
+  active: TeamHubSubNavKey;
 }) {
   const base = `/dashboard/${props.saveId}`;
   return (
-    <nav
+    <Tabs
       aria-label="Team management"
-      className="mb-6 flex flex-wrap gap-2 border-b border-zinc-800 pb-3"
-    >
-      {LINKS.map((link) => {
-        const active = link.key === props.active;
-        return (
-          <Link
-            key={link.suffix}
-            href={`${base}${link.suffix}`}
-            className={cn(
-              "rounded-md px-3 py-1.5 text-sm",
-              focusRingClass,
-              active
-                ? "bg-team/20 text-team-ink"
-                : "text-zinc-400 hover:text-zinc-200",
-            )}
-            aria-current={active ? "page" : undefined}
-          >
-            {link.label}
-          </Link>
-        );
-      })}
-    </nav>
+      className="mb-6"
+      activeKey={props.active}
+      items={LINKS.map((link) => ({
+        key: link.key,
+        label: link.label,
+        href: `${base}${link.suffix}`,
+      }))}
+    />
   );
 }

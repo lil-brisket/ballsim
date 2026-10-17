@@ -1,5 +1,4 @@
-import Link from "next/link";
-import { cn, focusRingClass } from "@/components/ui/styles";
+import { Tabs } from "@/components/ui/Tabs";
 
 export const PLAYER_PROFILE_TABS = [
   "overview",
@@ -44,30 +43,14 @@ export function PlayerProfileNav(props: {
   const base = `/dashboard/${props.saveId}/players/${props.playerId}`;
 
   return (
-    <nav
-      className="flex gap-1 overflow-x-auto border-b border-zinc-800"
+    <Tabs
       aria-label="Player profile sections"
-    >
-      {PLAYER_PROFILE_TABS.map((tab) => {
-        const href = tab === "overview" ? base : `${base}?tab=${tab}`;
-        const active = props.activeTab === tab;
-        return (
-          <Link
-            key={tab}
-            href={href}
-            aria-current={active ? "page" : undefined}
-            className={cn(
-              "inline-flex min-h-11 shrink-0 items-center whitespace-nowrap border-b-2 px-3 font-mono text-xs uppercase tracking-[0.14em] transition-colors",
-              active
-                ? "border-team-ink text-team-ink"
-                : "border-transparent text-zinc-400 hover:text-zinc-100",
-              focusRingClass,
-            )}
-          >
-            {TAB_LABELS[tab]}
-          </Link>
-        );
-      })}
-    </nav>
+      activeKey={props.activeTab}
+      items={PLAYER_PROFILE_TABS.map((tab) => ({
+        key: tab,
+        label: TAB_LABELS[tab],
+        href: tab === "overview" ? base : `${base}?tab=${tab}`,
+      }))}
+    />
   );
 }

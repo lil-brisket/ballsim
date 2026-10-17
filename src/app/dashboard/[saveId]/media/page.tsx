@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { buttonClass } from "@/components/ui/Button";
 import { notFound } from "next/navigation";
 import { markAllMediaReadAction } from "@/application/actions";
 import { loadMediaPageView } from "@/application/game-service";
@@ -67,7 +68,7 @@ export default async function MediaPage({
             <input type="hidden" name="returnPath" value={returnPath} />
             <button
               type="submit"
-              className="inline-flex items-center gap-2 rounded-md border border-zinc-700 px-3 py-1.5 text-sm text-zinc-200 hover:border-team-ink"
+              className={buttonClass({ variant: "secondary" })}
             >
               Mark all read
               <MediaUnreadBadge count={view.unreadCount} />

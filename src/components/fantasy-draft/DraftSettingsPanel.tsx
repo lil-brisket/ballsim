@@ -2,6 +2,7 @@
 
 import { updateFantasyDraftSettingsAction } from "@/application/actions";
 import type { FantasyDraftView } from "@/state/selectors";
+import { buttonClass } from "@/components/ui/Button";
 
 export function DraftSettingsPanel(props: {
   saveId: string;
@@ -19,10 +20,7 @@ export function DraftSettingsPanel(props: {
           name="confirmPicks"
           value={props.draft.settings.confirmPicks ? "false" : "true"}
         />
-        <button
-          type="submit"
-          className="rounded border border-zinc-700 px-3 py-1.5 text-xs text-zinc-300 hover:border-zinc-500"
-        >
+        <button type="submit" className={buttonClass({ variant: "secondary" })}>
           Confirm picks:{" "}
           <span className="font-semibold text-team-ink">
             {props.draft.settings.confirmPicks ? "ON" : "OFF"}

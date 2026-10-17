@@ -1,5 +1,6 @@
 "use client";
 
+import { Select } from "@/components/ui/Select";
 import type { PlayerSeasonStatsView } from "@/state/player-profile-selectors";
 import { cn, focusRingClass } from "@/components/ui/styles";
 import {
@@ -9,11 +10,6 @@ import {
   type StatScope,
   type StatSplit,
 } from "./stat-view";
-
-export const selectClass = cn(
-  "min-h-11 rounded-md border border-zinc-700 bg-zinc-950 px-2 text-sm text-zinc-100",
-  focusRingClass,
-);
 
 function Segmented<T extends string>(props: {
   label: string;
@@ -86,18 +82,17 @@ export function StatControls(props: {
           >
             Season
           </label>
-          <select
+          <Select
             id={seasonSelectId}
             value={props.seasonId ?? ""}
             onChange={(event) => props.onSeason(event.target.value)}
-            className={selectClass}
           >
             {newestFirst.map((season) => (
               <option key={season.seasonId} value={season.seasonId}>
                 {seasonOptionLabel(season)}
               </option>
             ))}
-          </select>
+          </Select>
         </div>
       ) : null}
       <Segmented

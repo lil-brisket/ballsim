@@ -1,5 +1,7 @@
 "use client";
 
+import { buttonClass } from "@/components/ui/Button";
+import { Select } from "@/components/ui/Select";
 import { useState } from "react";
 import {
   declineOwnerDecisionAction,
@@ -96,17 +98,17 @@ export function PlayerTradeBuilder(props: Props) {
 
         <label className="flex flex-col gap-1 text-zinc-300">
           Trade with
-          <select
+          <Select
             value={targetId}
             onChange={(e) => changeTarget(e.target.value)}
-            className="rounded-md border border-zinc-600 bg-zinc-900 px-2 py-1.5"
+            wrapperClassName="w-full"
           >
             {targets.map((t) => (
               <option key={t.id} value={t.id}>
                 {t.label}
               </option>
             ))}
-          </select>
+          </Select>
         </label>
 
         <div className="grid gap-4 md:grid-cols-2">
@@ -135,7 +137,7 @@ export function PlayerTradeBuilder(props: Props) {
         <button
           type="submit"
           disabled={!canSubmit}
-          className="rounded-md bg-team px-3 py-1.5 font-medium text-on-team hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50"
+          className={buttonClass({ variant: "primary" })}
         >
           Propose trade
         </button>

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { buttonClass } from "@/components/ui/Button";
 import { notFound } from "next/navigation";
 import { upgradeFacilityAction } from "@/application/actions";
 import { loadOwnerSaveView } from "@/application/game-service";
@@ -79,7 +80,7 @@ export default async function FacilitiesPage({
                     <input type="hidden" name="returnPath" value={returnPath} />
                     <button
                       type="submit"
-                      className="rounded-md bg-team px-3 py-1.5 text-sm font-medium text-on-team hover:brightness-110"
+                      className={buttonClass({ variant: "primary" })}
                     >
                       Upgrade (<MoneyDisplay amount={row.upgradeCost} />)
                     </button>

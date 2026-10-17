@@ -1,9 +1,9 @@
 "use client";
 
+import { Select } from "@/components/ui/Select";
 import { useId, useMemo, useState } from "react";
 import { Section } from "@/components/ui/Section";
 import { PlayerTrendChart } from "@/components/player-profile/PlayerTrendChart";
-import { cn } from "@/components/ui/styles";
 import { formatAttributeLabel } from "@/presentation/player-rating-categories";
 import type { PlayerProfileView } from "@/state/player-profile-selectors";
 
@@ -18,9 +18,6 @@ const NON_ATTRIBUTE_METRICS = new Set([
   "threePct",
   "ftPct",
 ]);
-
-const selectClass =
-  "min-h-11 rounded-md border border-zinc-700 bg-zinc-950 px-2 text-sm text-zinc-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-team-ink";
 
 const labelClass =
   "font-mono text-[0.65rem] uppercase tracking-[0.14em] text-zinc-400";
@@ -59,9 +56,9 @@ export function PlayerAttributeTrends(props: { player: PlayerProfileView }) {
             <label htmlFor={`${baseId}-metric`} className={labelClass}>
               Metric
             </label>
-            <select
+            <Select
               id={`${baseId}-metric`}
-              className={cn(selectClass, "w-56 max-w-full")}
+              wrapperClassName="w-56 max-w-full"
               value={metric}
               onChange={(event) => setMetric(event.target.value)}
             >
@@ -70,15 +67,14 @@ export function PlayerAttributeTrends(props: { player: PlayerProfileView }) {
                   {entry.label}
                 </option>
               ))}
-            </select>
+            </Select>
           </div>
           <div className="flex flex-col gap-1">
             <label htmlFor={`${baseId}-range`} className={labelClass}>
               Range
             </label>
-            <select
+            <Select
               id={`${baseId}-range`}
-              className={selectClass}
               value={range}
               onChange={(event) =>
                 setRange(event.target.value as "career" | "recent")
@@ -86,7 +82,7 @@ export function PlayerAttributeTrends(props: { player: PlayerProfileView }) {
             >
               <option value="career">Career</option>
               <option value="recent">Last 5 seasons</option>
-            </select>
+            </Select>
           </div>
         </div>
         <PlayerTrendChart

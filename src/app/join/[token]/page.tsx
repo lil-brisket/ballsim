@@ -4,23 +4,13 @@ import { joinLeagueAction } from "@/application/actions/online-league";
 import { previewLeagueInvite } from "@/application/game-service/online-league";
 import { onlineLeagueContext } from "@/application/online/context";
 import { ErrorState } from "@/components/ui/EmptyState";
-import {
-  cn,
-  focusRingClass,
-  linkClass,
-  touchTargetClass,
-} from "@/components/ui/styles";
+import { cn, linkClass } from "@/components/ui/styles";
+import { buttonClass } from "@/components/ui/Button";
 
 type PageProps = {
   params: Promise<{ token: string }>;
   searchParams: Promise<{ error?: string }>;
 };
-
-const buttonClass = cn(
-  touchTargetClass,
-  "rounded-lg border-2 border-team-ink bg-team px-5 font-display text-lg font-extrabold uppercase tracking-wide text-on-team hover:brightness-110",
-  focusRingClass,
-);
 
 export default async function JoinLeaguePage({
   params,
@@ -59,7 +49,10 @@ export default async function JoinLeaguePage({
 
           {!user ? (
             <div className="flex flex-wrap items-center gap-4">
-              <Link href={`/login?next=${next}`} className={buttonClass}>
+              <Link
+                href={`/login?next=${next}`}
+                className={buttonClass({ variant: "secondary", size: "lg" })}
+              >
                 Sign in to join
               </Link>
               <Link
@@ -72,7 +65,7 @@ export default async function JoinLeaguePage({
           ) : result.preview.alreadyMember ? (
             <Link
               href={`/dashboard/${result.preview.saveId}`}
-              className={buttonClass}
+              className={buttonClass({ variant: "secondary", size: "lg" })}
             >
               Go to league dashboard
             </Link>
@@ -101,7 +94,10 @@ export default async function JoinLeaguePage({
                   </label>
                 ))}
               </fieldset>
-              <button type="submit" className={buttonClass}>
+              <button
+                type="submit"
+                className={buttonClass({ variant: "primary", size: "lg" })}
+              >
                 Join league
               </button>
             </form>

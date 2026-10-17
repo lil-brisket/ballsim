@@ -5,6 +5,8 @@ import { loadOwnerSaveView } from "@/application/game-service";
 import { EmptyState, ErrorState } from "@/components/ui/EmptyState";
 import { MoneyDisplay } from "@/components/owner/MoneyDisplay";
 import { PageHeader } from "@/components/ui/PageHeader";
+import { buttonClass } from "@/components/ui/Button";
+import { NumberStepper } from "@/components/ui/NumberStepper";
 import { Section } from "@/components/ui/Section";
 
 export const metadata: Metadata = { title: "Sponsorships" };
@@ -65,26 +67,15 @@ export default async function SponsorshipsPage({
             defaultValue="City Trust Bank"
             className="rounded-md border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-zinc-100"
           />
-          <input
-            type="number"
+          <NumberStepper
             name="annualValue"
             defaultValue={2_500_000}
             min={100000}
             step={100000}
-            className="w-36 rounded-md border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-zinc-100"
+            inputClassName="w-28"
           />
-          <input
-            type="number"
-            name="years"
-            defaultValue={3}
-            min={1}
-            max={6}
-            className="w-20 rounded-md border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-zinc-100"
-          />
-          <button
-            type="submit"
-            className="rounded-md bg-team px-4 py-2 text-sm font-medium text-on-team hover:brightness-110"
-          >
+          <NumberStepper name="years" defaultValue={3} min={1} max={6} />
+          <button type="submit" className={buttonClass({ variant: "primary" })}>
             Sign
           </button>
         </form>

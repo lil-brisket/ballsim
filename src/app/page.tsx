@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { GameBrand } from "@/components/game/GameBrand";
 import { SplashBackground } from "@/components/game/SplashBackground";
+import { buttonClass } from "@/components/ui/Button";
+import { cn } from "@/components/ui/styles";
 
 export default function SplashPage() {
   return (
@@ -16,7 +18,10 @@ export default function SplashPage() {
         <div className="splash-enter-action">
           <Link
             href="/home"
-            className="inline-flex min-h-14 items-center justify-center rounded-xl border-2 border-team-ink bg-team px-12 py-3 font-display text-2xl font-extrabold uppercase tracking-[0.15em] text-on-team shadow-team-glow transition hover:brightness-110 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-team-ink"
+            className={cn(
+              buttonClass({ variant: "primary", size: "lg" }),
+              "min-h-14 px-12 text-2xl shadow-team-glow",
+            )}
           >
             Enter Game
           </Link>

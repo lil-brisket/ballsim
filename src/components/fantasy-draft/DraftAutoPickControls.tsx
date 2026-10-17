@@ -7,6 +7,8 @@ import {
   undoFantasyDraftPickAction,
 } from "@/application/actions";
 import type { FantasyDraftView } from "@/state/selectors";
+import { buttonClass } from "@/components/ui/Button";
+import { Select } from "@/components/ui/Select";
 
 const STRATEGIES = [
   { value: "queue_then_best_fit", label: "Queue → Best fit" },
@@ -26,10 +28,7 @@ export function DraftAutoPickControls(props: {
       {draft.paused ? (
         <form action={resumeFantasyDraftAction}>
           <input type="hidden" name="saveId" value={saveId} />
-          <button
-            type="submit"
-            className="rounded-md bg-team px-3 py-2 text-sm text-on-team"
-          >
+          <button type="submit" className={buttonClass({ variant: "primary" })}>
             Resume Draft
           </button>
         </form>
@@ -38,7 +37,7 @@ export function DraftAutoPickControls(props: {
           <input type="hidden" name="saveId" value={saveId} />
           <button
             type="submit"
-            className="rounded-md border border-zinc-700 px-3 py-2 text-sm"
+            className={buttonClass({ variant: "secondary" })}
           >
             Pause Draft
           </button>
@@ -48,30 +47,21 @@ export function DraftAutoPickControls(props: {
       <form action={toggleFantasyDraftAutoPickAllAction}>
         <input type="hidden" name="saveId" value={saveId} />
         <input type="hidden" name="enabled" value="true" />
-        <button
-          type="submit"
-          className="rounded-md border border-zinc-700 px-3 py-2 text-sm"
-        >
+        <button type="submit" className={buttonClass({ variant: "secondary" })}>
           Auto-pick all my teams
         </button>
       </form>
 
       <form action={advanceFantasyDraftUntilNextPickAction}>
         <input type="hidden" name="saveId" value={saveId} />
-        <button
-          type="submit"
-          className="rounded-md border border-zinc-700 px-3 py-2 text-sm"
-        >
+        <button type="submit" className={buttonClass({ variant: "secondary" })}>
           Auto-pick until my next pick
         </button>
       </form>
 
       <form action={undoFantasyDraftPickAction}>
         <input type="hidden" name="saveId" value={saveId} />
-        <button
-          type="submit"
-          className="rounded-md border border-zinc-700 px-3 py-2 text-sm text-zinc-400"
-        >
+        <button type="submit" className={buttonClass({ variant: "quiet" })}>
           Undo last pick
         </button>
       </form>
@@ -85,19 +75,18 @@ export function DraftAutoPickControls(props: {
         <label className="text-xs text-zinc-500" htmlFor="auto-strategy">
           Strategy
         </label>
-        <select
+        <Select
           id="auto-strategy"
           name="strategy"
           defaultValue={draft.autoPickStrategy}
           onChange={(e) => e.currentTarget.form?.requestSubmit()}
-          className="rounded-md border border-zinc-700 bg-zinc-900 px-2 py-1.5 text-sm"
         >
           {STRATEGIES.map((s) => (
             <option key={s.value} value={s.value}>
               {s.label}
             </option>
           ))}
-        </select>
+        </Select>
       </form>
     </div>
   );

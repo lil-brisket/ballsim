@@ -1,3 +1,4 @@
+import { buttonClass } from "@/components/ui/Button";
 import Link from "next/link";
 import { openSaveAction } from "@/application/actions";
 import type { ValidOwnerSavePreview } from "@/application/save-preview-helpers";
@@ -5,9 +6,6 @@ import { ErrorState } from "@/components/ui/EmptyState";
 import { ScoreNumeral } from "@/components/ui/ScoreNumeral";
 import { TeamBadge } from "@/components/ui/TeamBadge";
 import { TeamThemeScope } from "@/components/ui/TeamThemeScope";
-
-const focusRing =
-  "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-team-ink";
 
 const panelClass = "arena-panel flex flex-col gap-3 p-6";
 
@@ -41,7 +39,7 @@ export function OwnerEntryActions(props: {
           ) : (
             <Link
               href={newGameHref}
-              className={`mt-2 inline-flex min-h-11 w-fit items-center justify-center rounded-xl border-2 border-team-ink bg-team px-6 py-2.5 font-display text-xl font-extrabold uppercase tracking-wide text-on-team hover:brightness-110 ${focusRing}`}
+              className={`mt-2 w-fit ${buttonClass({ variant: "secondary", size: "lg" })}`}
             >
               Start New Game →
             </Link>
@@ -92,7 +90,7 @@ export function OwnerEntryActions(props: {
               </div>
               <button
                 type="submit"
-                className={`mt-auto inline-flex min-h-11 w-fit items-center justify-center rounded-xl border-2 border-team-ink bg-team px-6 py-2.5 font-display text-xl font-extrabold uppercase tracking-wide text-on-team hover:brightness-110 ${focusRing}`}
+                className={`mt-auto w-fit ${buttonClass({ variant: "primary", size: "lg" })}`}
               >
                 Continue →
               </button>
@@ -117,7 +115,7 @@ export function OwnerEntryActions(props: {
           {hasAnySaves ? (
             <Link
               href="/saves?mode=owner"
-              className={`mt-auto inline-flex min-h-11 w-fit items-center justify-center rounded-xl border border-surface-line px-5 py-2.5 font-display text-lg font-bold uppercase tracking-wide text-zinc-100 hover:border-team-ink hover:text-team-ink ${focusRing}`}
+              className={`mt-auto w-fit ${buttonClass({ variant: "secondary", size: "lg" })}`}
             >
               Load Save →
             </Link>
@@ -146,7 +144,7 @@ export function OwnerEntryActions(props: {
                 />
                 <Link
                   href="/saves?mode=owner"
-                  className={`inline-flex min-h-11 w-fit items-center justify-center rounded-xl border border-surface-line px-5 py-2.5 font-display text-lg font-bold uppercase tracking-wide text-zinc-100 hover:border-team-ink hover:text-team-ink ${focusRing}`}
+                  className={`w-fit ${buttonClass({ variant: "secondary", size: "lg" })}`}
                 >
                   Manage Saves →
                 </Link>
@@ -154,7 +152,7 @@ export function OwnerEntryActions(props: {
             ) : (
               <Link
                 href={newGameHref}
-                className={`mt-auto inline-flex min-h-11 w-fit items-center justify-center rounded-xl border border-surface-line px-5 py-2.5 font-display text-lg font-bold uppercase tracking-wide text-zinc-100 hover:border-team-ink hover:text-team-ink ${focusRing}`}
+                className={`mt-auto w-fit ${buttonClass({ variant: "secondary", size: "lg" })}`}
               >
                 New Game →
               </Link>

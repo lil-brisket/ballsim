@@ -1,5 +1,6 @@
 "use client";
 
+import { Button } from "@/components/ui/Button";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useFormStatus } from "react-dom";
 import { selectCityAction } from "@/application/actions";
@@ -20,13 +21,14 @@ function formatCoordinates(lat: number, lng: number): string {
 function SubmitButton(props: { label: string }) {
   const { pending } = useFormStatus();
   return (
-    <button
+    <Button
       type="submit"
+      variant="primary"
       disabled={pending}
-      className={`min-h-[44px] w-full rounded-md bg-team px-3 py-2 text-sm font-medium text-on-team hover:brightness-110 ${FOCUS_RING} disabled:cursor-not-allowed disabled:bg-zinc-700 disabled:text-zinc-400`}
+      className="w-full"
     >
       {pending ? "Founding franchise…" : props.label}
-    </button>
+    </Button>
   );
 }
 
@@ -144,13 +146,9 @@ export function CityMapPicker(props: {
               <p className="text-sm text-zinc-400">
                 No cities match your search.
               </p>
-              <button
-                type="button"
-                onClick={() => setQuery("")}
-                className={`min-h-[44px] rounded-md border border-zinc-700 px-3 py-2 text-sm text-zinc-200 hover:bg-zinc-800 ${FOCUS_RING}`}
-              >
+              <Button variant="secondary" onClick={() => setQuery("")}>
                 Clear search
-              </button>
+              </Button>
             </div>
           ) : (
             <ul

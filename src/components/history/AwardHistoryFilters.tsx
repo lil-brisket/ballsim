@@ -1,11 +1,9 @@
 "use client";
 
+import { Select } from "@/components/ui/Select";
 import { useRouter } from "next/navigation";
 import { historyHubHref } from "@/components/history/history-hub-links";
 import type { HistoryHubRoute } from "@/state/history-hub-selectors";
-
-const SELECT_CLASS =
-  "ml-2 rounded-md border border-zinc-700 bg-zinc-900 px-2 py-1 text-zinc-100";
 
 export function AwardHistoryFilters(props: {
   saveId: string;
@@ -32,8 +30,8 @@ export function AwardHistoryFilters(props: {
     <div className="flex flex-wrap gap-3">
       <label className="text-sm text-zinc-400">
         Season
-        <select
-          className={SELECT_CLASS}
+        <Select
+          wrapperClassName="ml-2"
           value={props.selectedSeason}
           onChange={(event) => navigate(event.target.value, props.awardFilter)}
         >
@@ -44,12 +42,12 @@ export function AwardHistoryFilters(props: {
               {year === props.currentSeasonYear ? " (current)" : ""}
             </option>
           ))}
-        </select>
+        </Select>
       </label>
       <label className="text-sm text-zinc-400">
         Award
-        <select
-          className={SELECT_CLASS}
+        <Select
+          wrapperClassName="ml-2"
           value={props.awardFilter}
           onChange={(event) =>
             navigate(props.selectedSeason, event.target.value)
@@ -61,7 +59,7 @@ export function AwardHistoryFilters(props: {
               {option.label}
             </option>
           ))}
-        </select>
+        </Select>
       </label>
     </div>
   );

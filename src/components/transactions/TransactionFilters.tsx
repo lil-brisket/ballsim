@@ -1,5 +1,7 @@
 "use client";
 
+import { Select } from "@/components/ui/Select";
+import { buttonClass } from "@/components/ui/Button";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -155,7 +157,7 @@ export function TransactionFilters(props: {
       <div className="flex flex-wrap items-end gap-3">
         <label className="flex min-w-[10rem] flex-1 flex-col gap-1 text-xs text-zinc-500">
           Transaction Type
-          <select
+          <Select
             aria-label="Transaction Type"
             value={props.group}
             onChange={(event) =>
@@ -164,7 +166,7 @@ export function TransactionFilters(props: {
                   event.target.value === "all" ? undefined : event.target.value,
               })
             }
-            className={selectClass}
+            wrapperClassName="w-full"
           >
             {TYPE_OPTIONS.map((option) => (
               <option
@@ -175,7 +177,7 @@ export function TransactionFilters(props: {
                 {option.label}
               </option>
             ))}
-          </select>
+          </Select>
         </label>
 
         <div
@@ -193,7 +195,7 @@ export function TransactionFilters(props: {
 
         <label className="flex min-w-[10rem] flex-1 flex-col gap-1 text-xs text-zinc-500">
           Time
-          <select
+          <Select
             aria-label="Time"
             value={props.range}
             onChange={(event) => {
@@ -212,19 +214,19 @@ export function TransactionFilters(props: {
                 end: undefined,
               });
             }}
-            className={selectClass}
+            wrapperClassName="w-full"
           >
             {DATE_OPTIONS.map((option) => (
               <option key={option.id} value={option.id}>
                 {option.label}
               </option>
             ))}
-          </select>
+          </Select>
         </label>
 
         <label className="flex min-w-[10rem] flex-1 flex-col gap-1 text-xs text-zinc-500">
           Sort By
-          <select
+          <Select
             aria-label="Sort By"
             value={props.sort}
             onChange={(event) =>
@@ -235,14 +237,14 @@ export function TransactionFilters(props: {
                     : event.target.value,
               })
             }
-            className={selectClass}
+            wrapperClassName="w-full"
           >
             {SORT_OPTIONS.map((option) => (
               <option key={option.id} value={option.id}>
                 {option.label}
               </option>
             ))}
-          </select>
+          </Select>
         </label>
       </div>
 
@@ -325,13 +327,7 @@ export function TransactionFilters(props: {
             className="w-full rounded-md border border-zinc-700 bg-zinc-900 px-3 py-1.5 text-sm text-zinc-100 placeholder:text-zinc-600"
           />
         </label>
-        <button
-          type="submit"
-          className={cn(
-            "rounded-md border border-zinc-700 px-3 py-1.5 text-sm text-zinc-200 hover:border-team-ink",
-            focusRingClass,
-          )}
-        >
+        <button type="submit" className={buttonClass({ variant: "secondary" })}>
           Search
         </button>
         {filtersActive ? (

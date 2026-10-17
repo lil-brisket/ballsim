@@ -2,13 +2,9 @@
 
 import { useState, useTransition } from "react";
 import { createLeagueInviteAction } from "@/application/actions/online-league";
-import { cn, focusRingClass, touchTargetClass } from "@/components/ui/styles";
-
-const buttonClass = cn(
-  touchTargetClass,
-  "rounded-lg border border-surface-line bg-surface-deep/60 px-3 text-sm text-zinc-200 hover:border-team-ink hover:text-team-ink disabled:opacity-50",
-  focusRingClass,
-);
+import { buttonClass } from "@/components/ui/Button";
+import { NumberStepper } from "@/components/ui/NumberStepper";
+import { cn, focusRingClass } from "@/components/ui/styles";
 
 const inputClass = cn(
   "min-h-11 w-24 rounded-lg border border-surface-line bg-surface-deep/60 px-3 text-sm text-zinc-100",
@@ -26,8 +22,8 @@ export function InviteCreator(props: {
   maxUses: number;
 }) {
   const { saveId, defaultDays, maxDays, maxUses } = props;
-  const [uses, setUses] = useState(String(maxUses));
-  const [days, setDays] = useState(String(defaultDays));
+  const [uses, setUses] = useState(maxUses);
+  const [days, setDays] = useState(defaultDays);
   const [link, setLink] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
@@ -40,8 +36,8 @@ export function InviteCreator(props: {
     setCopied(false);
     startTransition(async () => {
       const result = await createLeagueInviteAction(saveId, {
-        maxUses: Number(uses),
-        days: Number(days),
+        maxUses: uses,
+        days: days,
       });
       if (result.ok) {
         setLink(`${window.location.origin}/join/${result.token}`);
@@ -66,27 +62,27 @@ export function InviteCreator(props: {
       <form onSubmit={create} className="flex flex-wrap items-end gap-3">
         <label className="flex flex-col gap-1 text-xs text-zinc-400">
           Max uses (1–{maxUses})
-          <input
-            type="number"
+          <NumberStepper
             min={1}
             max={maxUses}
             value={uses}
-            onChange={(e) => setUses(e.target.value)}
-            className={inputClass}
+            onValueChange={setUses}
           />
         </label>
         <label className="flex flex-col gap-1 text-xs text-zinc-400">
           Days valid (1–{maxDays})
-          <input
-            type="number"
+          <NumberStepper
             min={1}
             max={maxDays}
             value={days}
-            onChange={(e) => setDays(e.target.value)}
-            className={inputClass}
+            onValueChange={setDays}
           />
         </label>
-        <button type="submit" disabled={pending} className={buttonClass}>
+        <button
+          type="submit"
+          disabled={pending}
+          className={buttonClass({ variant: "primary" })}
+        >
           Create invite link
         </button>
       </form>
@@ -110,7 +106,11 @@ export function InviteCreator(props: {
             className={cn(inputClass, "w-full font-mono text-xs")}
           />
           <div className="flex flex-wrap items-center gap-3">
-            <button type="button" onClick={copy} className={buttonClass}>
+            <button
+              type="button"
+              onClick={copy}
+              className={buttonClass({ variant: "secondary" })}
+            >
               {copied ? "Copied" : "Copy"}
             </button>
             <p className="text-xs text-zinc-300">

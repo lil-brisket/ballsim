@@ -1,6 +1,8 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { NumberStepper } from "@/components/ui/NumberStepper";
+import { Select } from "@/components/ui/Select";
 import { DataTable } from "@/components/ui/DataTable";
 import { SortableTableControls } from "@/components/owner/SortableTableControls";
 import {
@@ -109,39 +111,37 @@ function GroupTable(props: {
                 {inactive ? (
                   <span className="capitalize text-zinc-500">inactive</span>
                 ) : (
-                  <select
+                  <Select
                     value={row.role}
                     onChange={(event) =>
                       props.onUpdate(row.playerId, {
                         role: event.target.value,
                       })
                     }
-                    className="rounded border border-zinc-700 bg-zinc-900 px-1 py-0.5 text-xs text-zinc-100"
                   >
                     {ROLE_OPTIONS.map((role) => (
                       <option key={role} value={role}>
                         {role.replaceAll("_", " ")}
                       </option>
                     ))}
-                  </select>
+                  </Select>
                 )}
               </td>
               <td className="px-3 py-2">
                 {inactive ? (
                   <span className="text-zinc-500">0</span>
                 ) : (
-                  <input
-                    type="number"
+                  <NumberStepper
                     min={0}
                     max={48}
                     value={row.targetMinutes}
-                    onChange={(event) =>
+                    aria-label={`Target minutes for ${row.firstName} ${row.lastName}`}
+                    onValueChange={(minutes) =>
                       props.onUpdate(row.playerId, {
-                        targetMinutes: Number(event.target.value),
-                        projectedMinutes: Number(event.target.value),
+                        targetMinutes: minutes,
+                        projectedMinutes: minutes,
                       })
                     }
-                    className="w-14 rounded border border-zinc-700 bg-zinc-900 px-1 py-0.5 text-sm text-zinc-100"
                   />
                 )}
               </td>
@@ -149,17 +149,16 @@ function GroupTable(props: {
                 {inactive ? (
                   "—"
                 ) : (
-                  <input
-                    type="number"
+                  <NumberStepper
                     min={1}
                     max={5}
                     value={row.rotationPriority}
-                    onChange={(event) =>
+                    aria-label={`Rotation priority for ${row.firstName} ${row.lastName}`}
+                    onValueChange={(priority) =>
                       props.onUpdate(row.playerId, {
-                        rotationPriority: Number(event.target.value),
+                        rotationPriority: priority,
                       })
                     }
-                    className="w-10 rounded border border-zinc-700 bg-zinc-900 px-1 py-0.5 text-sm text-zinc-100"
                   />
                 )}
               </td>
@@ -167,19 +166,18 @@ function GroupTable(props: {
                 {inactive ? (
                   "—"
                 ) : (
-                  <select
+                  <Select
                     value={row.minutePriorityBias}
                     onChange={(event) =>
                       props.onUpdate(row.playerId, {
                         minutePriorityBias: Number(event.target.value),
                       })
                     }
-                    className="rounded border border-zinc-700 bg-zinc-900 px-1 py-0.5 text-xs text-zinc-100"
                   >
                     <option value={-1}>Less</option>
                     <option value={0}>Normal</option>
                     <option value={1}>More</option>
-                  </select>
+                  </Select>
                 )}
               </td>
               <td className="px-3 py-2 text-sm text-zinc-300">

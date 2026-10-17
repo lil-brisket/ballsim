@@ -1,9 +1,9 @@
 "use client";
 
+import { buttonClass } from "@/components/ui/Button";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import type { TradeReviewView } from "@/state/trade-review-view";
-import { cn, touchTargetClass } from "@/components/ui/styles";
 
 function recommendationLabel(
   recommendation: TradeReviewView["recommendation"],
@@ -162,10 +162,7 @@ export function TradeReviewPanel(props: {
               type="button"
               disabled={busy}
               onClick={props.onAccept}
-              className={cn(
-                touchTargetClass,
-                "rounded-md bg-emerald-700 px-3 text-sm font-medium text-zinc-50 hover:bg-emerald-600 disabled:opacity-50",
-              )}
+              className={buttonClass({ variant: "primary" })}
             >
               Accept
             </button>
@@ -175,20 +172,14 @@ export function TradeReviewPanel(props: {
               type="button"
               disabled={busy}
               onClick={props.onNegotiate}
-              className={cn(
-                touchTargetClass,
-                "rounded-md border border-zinc-500 px-3 text-sm text-zinc-100 hover:border-zinc-300 disabled:opacity-50",
-              )}
+              className={buttonClass({ variant: "secondary" })}
             >
               Negotiate
             </button>
           ) : props.negotiateHref ? (
             <Link
               href={props.negotiateHref}
-              className={cn(
-                touchTargetClass,
-                "rounded-md border border-zinc-500 px-3 text-sm text-zinc-100 hover:border-zinc-300",
-              )}
+              className={buttonClass({ variant: "secondary" })}
             >
               Negotiate
             </Link>
@@ -198,10 +189,7 @@ export function TradeReviewPanel(props: {
               type="button"
               disabled={busy}
               onClick={props.onDecline}
-              className={cn(
-                touchTargetClass,
-                "rounded-md border border-zinc-600 px-3 text-sm text-zinc-200 hover:border-zinc-400 disabled:opacity-50",
-              )}
+              className={buttonClass({ variant: "secondary" })}
             >
               Decline
             </button>
@@ -211,10 +199,7 @@ export function TradeReviewPanel(props: {
               type="button"
               disabled={busy}
               onClick={props.onLetAiDecide}
-              className={cn(
-                touchTargetClass,
-                "rounded-md bg-team px-3 text-sm font-medium text-on-team hover:brightness-110 disabled:opacity-50",
-              )}
+              className={buttonClass({ variant: "secondary" })}
             >
               Let AI decide
             </button>

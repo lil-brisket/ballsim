@@ -1,3 +1,4 @@
+import { buttonClass } from "@/components/ui/Button";
 import Link from "next/link";
 import type { PhaseDashboardView } from "@/state/phase-dashboard";
 
@@ -44,7 +45,7 @@ export function AdvancePhaseDialog(props: {
         {blocked ? (
           <Link
             href={props.view.attention.required[0]?.href ?? props.returnPath}
-            className="rounded-md border border-warning/40 bg-warning/10 px-3 py-1.5 text-sm text-warning hover:border-warning"
+            className={buttonClass({ variant: "secondary" })}
           >
             Review required actions
           </Link>
@@ -54,7 +55,7 @@ export function AdvancePhaseDialog(props: {
             <input type="hidden" name="returnPath" value={props.returnPath} />
             <button
               type="submit"
-              className="rounded-md border border-emerald-700/60 bg-emerald-950/40 px-3 py-1.5 text-sm text-emerald-200 hover:border-emerald-500"
+              className={buttonClass({ variant: "primary" })}
             >
               Advance to {preview.toPhaseName}
             </button>

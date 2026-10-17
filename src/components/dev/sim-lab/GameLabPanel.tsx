@@ -8,12 +8,12 @@ import {
   useLabRunElapsed,
 } from "@/components/dev/sim-lab/LabBusyBanner";
 import { LabReportView } from "@/components/dev/sim-lab/LabReportView";
-import {
-  labFieldClass,
-  labPrimaryButtonClass,
-} from "@/components/dev/sim-lab/format";
+import {} from "@/components/dev/sim-lab/format";
 import { ErrorState } from "@/components/ui/EmptyState";
 import { panelClass } from "@/components/ui/styles";
+import { Button } from "@/components/ui/Button";
+import { NumberStepper } from "@/components/ui/NumberStepper";
+import { Select } from "@/components/ui/Select";
 
 export function GameLabPanel(props: {
   scenarioIds: readonly string[];
@@ -52,32 +52,32 @@ export function GameLabPanel(props: {
       <div
         className={`${panelClass} grid gap-3 p-4 sm:grid-cols-2 lg:grid-cols-4`}
       >
-        <label className="text-sm text-zinc-400">
-          Seed
-          <input
-            className={`${labFieldClass} mt-1`}
-            type="number"
+        <div className="text-sm text-zinc-400">
+          <span className="block">Seed</span>
+          <NumberStepper
+            className="mt-1"
+            aria-label="Seed"
             value={seed}
             disabled={pending}
-            onChange={(event) => setSeed(Number(event.target.value))}
+            onValueChange={setSeed}
           />
-        </label>
-        <label className="text-sm text-zinc-400">
-          Games (max {props.maxGames})
-          <input
-            className={`${labFieldClass} mt-1`}
-            type="number"
+        </div>
+        <div className="text-sm text-zinc-400">
+          <span className="block">Games (max {props.maxGames})</span>
+          <NumberStepper
+            className="mt-1"
+            aria-label="Games"
             min={1}
             max={props.maxGames}
             value={games}
             disabled={pending}
-            onChange={(event) => setGames(Number(event.target.value))}
+            onValueChange={setGames}
           />
-        </label>
+        </div>
         <label className="text-sm text-zinc-400">
           Scenario
-          <select
-            className={`${labFieldClass} mt-1`}
+          <Select
+            wrapperClassName="mt-1 w-full"
             value={scenarioId}
             disabled={pending}
             onChange={(event) => setScenarioId(event.target.value)}
@@ -87,12 +87,12 @@ export function GameLabPanel(props: {
                 {id}
               </option>
             ))}
-          </select>
+          </Select>
         </label>
         <label className="text-sm text-zinc-400">
           Rotation
-          <select
-            className={`${labFieldClass} mt-1`}
+          <Select
+            wrapperClassName="mt-1 w-full"
             value={rotation}
             disabled={pending}
             onChange={(event) =>
@@ -101,18 +101,13 @@ export function GameLabPanel(props: {
           >
             <option value="on">on</option>
             <option value="off">off</option>
-          </select>
+          </Select>
         </label>
       </div>
 
-      <button
-        type="button"
-        className={labPrimaryButtonClass}
-        disabled={pending}
-        onClick={onRun}
-      >
+      <Button variant="primary" disabled={pending} onClick={onRun}>
         {pending ? "Running games…" : "Run game batch"}
-      </button>
+      </Button>
       <LabBusyBanner pending={pending} elapsedMs={elapsedMs} />
 
       {error ? <ErrorState message={error} /> : null}

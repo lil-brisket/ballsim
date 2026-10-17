@@ -7,6 +7,7 @@ import {
 } from "@/application/actions";
 import { AttributeBar } from "@/components/player-profile/AttributeBar";
 import type { FantasyDraftPlayerDetailView } from "@/state/selectors";
+import { buttonClass } from "@/components/ui/Button";
 
 export function FantasyDraftPlayerPanel(props: {
   saveId: string;
@@ -75,7 +76,7 @@ export function FantasyDraftPlayerPanel(props: {
             ref={closeRef}
             type="button"
             onClick={onClose}
-            className="rounded border border-zinc-700 px-2 py-1 text-xs text-zinc-300"
+            className={buttonClass({ variant: "secondary" })}
             aria-label="Close player card"
           >
             Close
@@ -171,7 +172,7 @@ export function FantasyDraftPlayerPanel(props: {
               <input type="hidden" name="playerId" value={detail.playerId} />
               <button
                 type="submit"
-                className="rounded-md border border-zinc-700 px-3 py-2 text-sm"
+                className={buttonClass({ variant: "secondary" })}
               >
                 Add to Queue
               </button>
@@ -194,7 +195,7 @@ export function FantasyDraftPlayerPanel(props: {
                     potential: detail.potential,
                   })
                 }
-                className="rounded-md bg-team px-3 py-2 text-sm font-medium text-on-team disabled:opacity-50"
+                className={buttonClass({ variant: "primary" })}
               >
                 Draft Player
               </button>
@@ -205,7 +206,7 @@ export function FantasyDraftPlayerPanel(props: {
                 <button
                   type="submit"
                   disabled={pending}
-                  className="rounded-md bg-team px-3 py-2 text-sm font-medium text-on-team disabled:opacity-50"
+                  className={buttonClass({ variant: "primary" })}
                 >
                   Draft Player
                 </button>

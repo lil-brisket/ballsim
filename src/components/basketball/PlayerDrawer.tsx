@@ -1,5 +1,6 @@
 "use client";
 
+import { Button, buttonClass } from "@/components/ui/Button";
 import Link from "next/link";
 import { useEffect, useId, useRef, useState } from "react";
 import { PlayerProfileHero } from "@/components/basketball/PlayerProfileHero";
@@ -13,7 +14,6 @@ import {
 } from "@/components/basketball/player-card/PlayerCardTabs";
 import { StatisticsTab } from "@/components/basketball/player-card/StatisticsTab";
 import { Drawer } from "@/components/ui/Drawer";
-import { cn, focusRingClass, touchTargetClass } from "@/components/ui/styles";
 import type { PlayerDrawerView } from "@/state/entity-drawer-selectors";
 
 function DrawerSkeleton() {
@@ -96,17 +96,7 @@ function PlayerCardBody(props: {
   );
 }
 
-const primaryActionClass = cn(
-  touchTargetClass,
-  "rounded-md bg-team px-4 text-sm font-medium text-on-team hover:brightness-110",
-  focusRingClass,
-);
-
-const secondaryActionClass = cn(
-  touchTargetClass,
-  "rounded-md border border-zinc-700 px-4 text-sm text-zinc-300 hover:border-zinc-500",
-  focusRingClass,
-);
+const secondaryActionClass = buttonClass({ variant: "secondary" });
 
 export function PlayerDrawer(props: {
   open: boolean;
@@ -142,7 +132,7 @@ export function PlayerDrawer(props: {
           <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
             <Link
               href={props.view.navigation.playerHref}
-              className={primaryActionClass}
+              className={buttonClass({ variant: "primary" })}
               onClick={() => props.onOpenChange(false)}
             >
               View full player
@@ -177,16 +167,9 @@ export function PlayerDrawer(props: {
         <div className="space-y-3" role="alert">
           <p className="text-sm text-rose-200">Unable to load player.</p>
           {props.onRetry ? (
-            <button
-              type="button"
-              onClick={props.onRetry}
-              className={cn(
-                "rounded-md border border-zinc-700 px-3 py-1.5 text-sm text-zinc-200 hover:border-team-ink",
-                focusRingClass,
-              )}
-            >
+            <Button type="button" variant="secondary" onClick={props.onRetry}>
               Try again
-            </button>
+            </Button>
           ) : null}
         </div>
       ) : null}

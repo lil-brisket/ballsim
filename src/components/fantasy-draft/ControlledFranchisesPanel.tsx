@@ -3,6 +3,7 @@ import {
   toggleFantasyDraftAutoPickAction,
 } from "@/application/actions";
 import type { FantasyDraftView } from "@/state/selectors";
+import { buttonClass } from "@/components/ui/Button";
 
 export function ControlledFranchisesPanel(props: {
   saveId: string;
@@ -56,7 +57,7 @@ export function ControlledFranchisesPanel(props: {
                   />
                   <button
                     type="submit"
-                    className="rounded border border-zinc-700 px-2 py-1 text-xs hover:border-zinc-500"
+                    className={buttonClass({ variant: "secondary" })}
                   >
                     Switch
                   </button>
@@ -72,7 +73,7 @@ export function ControlledFranchisesPanel(props: {
                 />
                 <button
                   type="submit"
-                  className="rounded border border-zinc-700 px-2 py-1 text-xs hover:border-zinc-500"
+                  className={buttonClass({ variant: "secondary" })}
                 >
                   {team.autoPick ? "Auto ON" : "Manual"}
                 </button>

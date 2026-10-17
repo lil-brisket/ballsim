@@ -1,14 +1,10 @@
+import { buttonClass } from "@/components/ui/Button";
 import Link from "next/link";
 import type { ActionCenterView } from "@/state/action-center-selectors";
 import { ActionCard } from "@/components/ui/ActionCard";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { ArenaPanel } from "@/components/ui/ArenaPanel";
-import {
-  cn,
-  focusRingClass,
-  touchTargetClass,
-  touchTargetTextClass,
-} from "@/components/ui/styles";
+import { cn, touchTargetTextClass } from "@/components/ui/styles";
 
 /**
  * Front Office Action Center.
@@ -79,11 +75,7 @@ export function ActionCenter(props: {
             <input type="hidden" name="returnPath" value={props.returnPath} />
             <button
               type="submit"
-              className={cn(
-                touchTargetClass,
-                "rounded-md border border-win/60 bg-win/10 px-3 text-sm text-win hover:border-win",
-                focusRingClass,
-              )}
+              className={buttonClass({ variant: "secondary" })}
             >
               Let AI Handle
             </button>

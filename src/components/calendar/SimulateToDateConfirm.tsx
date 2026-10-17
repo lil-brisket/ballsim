@@ -1,7 +1,7 @@
 "use client";
 
+import { buttonClass } from "@/components/ui/Button";
 import { Overlay } from "@/components/ui/Overlay";
-import { cn, focusRingClass } from "@/components/ui/styles";
 
 export function SimulateToDateConfirm(props: {
   date: string;
@@ -34,10 +34,7 @@ export function SimulateToDateConfirm(props: {
           <button
             type="button"
             onClick={props.onCancel}
-            className={cn(
-              "rounded-md border border-zinc-700 px-3 py-2 text-sm text-zinc-200 hover:border-zinc-500",
-              focusRingClass,
-            )}
+            className={buttonClass({ variant: "secondary" })}
           >
             Cancel
           </button>
@@ -49,10 +46,7 @@ export function SimulateToDateConfirm(props: {
                 props.onConfirm(props.date);
               }
             }}
-            className={cn(
-              "rounded-md bg-team px-4 py-2 text-sm font-medium text-on-team hover:brightness-110 disabled:opacity-40",
-              focusRingClass,
-            )}
+            className={buttonClass({ variant: "primary" })}
           >
             Simulate to date
           </button>

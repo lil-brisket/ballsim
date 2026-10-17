@@ -1,5 +1,6 @@
 "use client";
 
+import { Select } from "@/components/ui/Select";
 import type { EditableRotationRow } from "@/state/lineup-rotation-editor";
 
 export function ClosingLineupEditor(props: {
@@ -16,16 +17,16 @@ export function ClosingLineupEditor(props: {
       </h2>
       <label className="text-xs text-zinc-400">
         Policy
-        <select
+        <Select
           value={props.closingPolicy}
           onChange={(event) => props.onPolicyChange(event.target.value)}
-          className="ml-2 rounded border border-zinc-700 bg-zinc-900 px-2 py-1 text-sm text-zinc-100"
+          wrapperClassName="ml-2"
         >
           <option value="auto">Auto</option>
           <option value="best_five">Best Five</option>
           <option value="starters">Starters</option>
           <option value="custom">Custom</option>
-        </select>
+        </Select>
       </label>
       {props.closingPolicy === "custom" ? (
         <div className="rounded-lg border border-zinc-800 p-3 text-sm text-zinc-300">

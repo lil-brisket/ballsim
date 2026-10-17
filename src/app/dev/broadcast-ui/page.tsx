@@ -14,10 +14,8 @@ import {
   TeamBadge,
   TeamThemeScope,
   TickerBar,
-  focusRingClass,
-  touchTargetClass,
-  cn,
 } from "@/components/ui";
+import { Button } from "@/components/ui/Button";
 
 const THEMES = [
   {
@@ -83,18 +81,7 @@ export default function BroadcastUiShowcasePage() {
             <SectionHeading
               eyebrow={theme.label}
               title={theme.name}
-              action={
-                <button
-                  type="button"
-                  className={cn(
-                    touchTargetClass,
-                    focusRingClass,
-                    "rounded-lg bg-team px-4 font-display text-base font-bold uppercase tracking-wide text-on-team",
-                  )}
-                >
-                  Primary action
-                </button>
-              }
+              action={<Button variant="primary">Primary action</Button>}
             />
 
             <ArenaPanel hero glow density="comfortable" className="enter-up">

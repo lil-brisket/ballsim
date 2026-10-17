@@ -1,10 +1,11 @@
+import { buttonClass } from "@/components/ui/Button";
 import {
   acknowledgeNarrativeSituationAction,
   resolveNarrativeSituationAction,
 } from "@/application/actions";
 import type { OwnerDashboardSituationView } from "@/state/owner-dashboard";
 import { StatusBadge } from "@/components/ui/StatusBadge";
-import { cn, touchTargetClass } from "@/components/ui/styles";
+import { cn } from "@/components/ui/styles";
 
 export function FranchiseSituations(props: {
   saveId: string;
@@ -82,8 +83,8 @@ export function FranchiseSituations(props: {
                   <button
                     type="submit"
                     className={cn(
-                      touchTargetClass,
-                      "w-full rounded-md border border-warning/40 bg-warning/10 px-3 text-xs text-warning hover:border-warning sm:w-auto",
+                      buttonClass({ variant: "secondary" }),
+                      "w-full sm:w-auto",
                     )}
                   >
                     {action.label}
@@ -106,8 +107,8 @@ export function FranchiseSituations(props: {
                 <button
                   type="submit"
                   className={cn(
-                    touchTargetClass,
-                    "w-full rounded-md border border-zinc-700 px-3 text-xs text-zinc-300 hover:border-zinc-500 sm:w-auto",
+                    buttonClass({ variant: "quiet" }),
+                    "w-full sm:w-auto",
                   )}
                 >
                   Acknowledge
