@@ -13,6 +13,7 @@ import { SectionHeading } from "@/components/ui/SectionHeading";
 import { Section } from "@/components/ui/Section";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { ProgressBar } from "@/components/ui/ProgressBar";
+import { Gauge } from "@/components/ui/Gauge";
 import { StatCard } from "@/components/ui/StatCard";
 
 export const metadata: Metadata = { title: "Franchise" };
@@ -85,7 +86,13 @@ export default async function FranchiseOverviewPage({
         />
         <StatCard
           label="Fan sentiment"
-          value={String(view.snapshot.fanSentiment)}
+          value={
+            <Gauge
+              label="Fan sentiment"
+              hideLabel
+              value={view.snapshot.fanSentiment}
+            />
+          }
           density="compact"
         />
         <StatCard

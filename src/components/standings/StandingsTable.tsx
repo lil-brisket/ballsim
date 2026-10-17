@@ -5,6 +5,7 @@ import { TeamEntityLink } from "@/components/entity/TeamEntityLink";
 import { TeamIdentityInline } from "@/components/team/TeamIdentityInline";
 import { MobileListCard } from "@/components/ui/MobileListCard";
 import { SectionHeading } from "@/components/ui/SectionHeading";
+import { ResultSparkline } from "@/components/ui/Sparkline";
 import { cn } from "@/components/ui/styles";
 import {
   formatStreak,
@@ -137,6 +138,11 @@ function columnsFor(
           <span className="text-zinc-500">{formatStreak(row.streak)}</span>
         ),
       },
+      {
+        key: "l10",
+        label: "Last 10",
+        render: (row) => <ResultSparkline results={row.recentResults ?? []} />,
+      },
     );
   } else {
     cols.push(
@@ -217,7 +223,7 @@ export function StandingsTable(props: {
     ownedIds,
   );
   const minWidth =
-    props.page.stats === "advanced" ? "min-w-[48rem]" : "min-w-[36rem]";
+    props.page.stats === "advanced" ? "min-w-[48rem]" : "min-w-[42rem]";
   const showCutoffLine =
     props.group.kind === "overall" &&
     props.page.mode === "regular" &&
@@ -236,6 +242,7 @@ export function StandingsTable(props: {
             props.page.stats === "advanced"
               ? `PPG ${formatRate(row.ppg)} · NET ${formatRate(row.net)}`
               : `${row.wins}–${row.losses} · GB ${formatGb(displayedGb(row, props.group.kind))}`;
+          const recent = row.recentResults ?? [];
           return (
             <li key={row.teamId}>
               <MobileListCard
@@ -259,11 +266,18 @@ export function StandingsTable(props: {
                   </TeamEntityLink>
                 }
                 subtitle={
-                  row.isUserTeam
-                    ? `${statsLine} · you`
-                    : playoff
-                      ? `${statsLine} · ${playoff}`
-                      : statsLine
+                  <span className="inline-flex flex-wrap items-center gap-x-2">
+                    <span>
+                      {row.isUserTeam
+                        ? `${statsLine} · you`
+                        : playoff
+                          ? `${statsLine} · ${playoff}`
+                          : statsLine}
+                    </span>
+                    {props.page.stats === "standard" && recent.length > 0 ? (
+                      <ResultSparkline results={recent} />
+                    ) : null}
+                  </span>
                 }
                 action={
                   ownedIds.has(row.teamId) ? null : (

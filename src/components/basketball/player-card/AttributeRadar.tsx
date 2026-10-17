@@ -1,5 +1,6 @@
 import type { PlayerAttributes } from "@/domain/entities/player";
 import { categoryRatings } from "@/presentation/player-rating-categories";
+import { chartTheme } from "@/components/ui/chart-theme";
 
 const RINGS = [20, 40, 60, 80, 100] as const;
 const VIEW_W = 420;
@@ -84,8 +85,8 @@ export function AttributeRadar(props: {
       })}
       <polygon
         points={toPoints(shape)}
-        fill="rgb(245 158 11 / 0.28)"
-        stroke="#f59e0b"
+        fill={chartTheme.inkFill}
+        stroke={chartTheme.ink}
         strokeWidth={2}
         strokeLinejoin="round"
       />
@@ -95,7 +96,7 @@ export function AttributeRadar(props: {
           cx={p.x}
           cy={p.y}
           r={2.5}
-          fill="#fbbf24"
+          fill={chartTheme.ink}
         />
       ))}
       {categories.map((c, i) => {
@@ -113,7 +114,7 @@ export function AttributeRadar(props: {
             fill="#d4d4d8"
           >
             {c.label}{" "}
-            <tspan fontWeight={700} fill="#fbbf24">
+            <tspan fontWeight={700} fill={chartTheme.ink}>
               {Math.max(0, Math.min(100, c.rating))}
             </tspan>
           </text>

@@ -12,6 +12,7 @@ import { MoneyDisplay } from "@/components/owner/MoneyDisplay";
 import { formatGameDate } from "@/presentation/game-date";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { Section } from "@/components/ui/Section";
+import { Gauge } from "@/components/ui/Gauge";
 import { StatCard } from "@/components/ui/StatCard";
 
 export const metadata: Metadata = { title: "Business" };
@@ -45,7 +46,12 @@ export default async function MarketingPage({
       {error ? <ErrorState message={error} /> : null}
 
       <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard label="Fan sentiment" value={`${biz.fanSentiment}`} />
+        <StatCard
+          label="Fan sentiment"
+          value={
+            <Gauge label="Fan sentiment" hideLabel value={biz.fanSentiment} />
+          }
+        />
         <StatCard label="Awareness" value={`${biz.awareness}`} />
         <StatCard label="Media attention" value={`${biz.mediaAttention}`} />
         <StatCard label="Reputation" value={`${biz.reputation}`} />

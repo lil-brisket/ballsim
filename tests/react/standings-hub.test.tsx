@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { cleanup, render, screen } from "@testing-library/react";
 
 vi.mock("server-only", () => ({}));
 vi.mock("@/application/actions", () => ({
@@ -153,6 +153,26 @@ describe("StandingsTable", () => {
     expect(screen.getByTestId("standings-col-w")).toBeTruthy();
     expect(screen.getByTestId("standings-col-pct")).toBeTruthy();
     expect(screen.queryByTestId("standings-col-ppg")).toBeNull();
+  });
+
+  it("shows a last-10 strip for teams with results", () => {
+    cleanup();
+    render(
+      wrap(
+        <StandingsTable
+          saveId="s1"
+          page={page}
+          group={{
+            ...group,
+            rows: [row({ recentResults: ["W", "W", "L"] })],
+          }}
+        />,
+      ),
+    );
+    expect(screen.getAllByTestId("standings-col-l10").length).toBe(1);
+    expect(
+      screen.getAllByRole("img", { name: /Last 3 games: 2 wins/ }).length,
+    ).toBeGreaterThan(0);
   });
 
   it("renders advanced columns", () => {

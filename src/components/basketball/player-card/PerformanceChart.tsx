@@ -31,6 +31,7 @@ import {
   type StatScope,
   type StatSplit,
 } from "./stat-view";
+import { chartTheme } from "@/components/ui/chart-theme";
 
 type Row = {
   x: number;
@@ -196,7 +197,7 @@ export function PerformanceChart(props: {
                   borderRadius: 8,
                 }}
                 labelStyle={{ color: "#a1a1aa" }}
-                itemStyle={{ color: "#fbbf24" }}
+                itemStyle={{ color: chartTheme.ink }}
                 labelFormatter={(_, payload) => {
                   const item = payload?.[0]?.payload as Row | undefined;
                   if (!item) return "";
@@ -224,9 +225,9 @@ export function PerformanceChart(props: {
                   type="monotone"
                   dataKey="value"
                   name="Game"
-                  stroke="#f59e0b"
+                  stroke={chartTheme.ink}
                   strokeWidth={0}
-                  dot={{ fill: "#f59e0b", r: 3 }}
+                  dot={{ fill: chartTheme.ink, r: 3 }}
                   isAnimationActive={false}
                 />
               ) : null}
@@ -235,10 +236,10 @@ export function PerformanceChart(props: {
                   type="monotone"
                   dataKey="toDate"
                   name={isPct ? "Season-to-date %" : "Season avg to date"}
-                  stroke={isPct ? "#f59e0b" : "#38bdf8"}
+                  stroke={isPct ? chartTheme.ink : chartTheme.neutral}
                   strokeWidth={2}
                   strokeDasharray={isPct ? undefined : "5 3"}
-                  dot={isPct ? { fill: "#f59e0b", r: 3 } : false}
+                  dot={isPct ? { fill: chartTheme.ink, r: 3 } : false}
                   isAnimationActive={false}
                 />
               ) : (
@@ -246,9 +247,9 @@ export function PerformanceChart(props: {
                   type="monotone"
                   dataKey="value"
                   name={def.label}
-                  stroke="#f59e0b"
+                  stroke={chartTheme.ink}
                   strokeWidth={2}
-                  dot={{ fill: "#f59e0b", r: 3 }}
+                  dot={{ fill: chartTheme.ink, r: 3 }}
                   isAnimationActive={false}
                 />
               )}

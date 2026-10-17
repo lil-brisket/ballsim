@@ -9,6 +9,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
+import { chartTheme } from "@/components/ui/chart-theme";
 
 export type TrendChartProps = {
   metric: string;
@@ -61,15 +62,16 @@ export function PlayerTrendChart(props: TrendChartProps) {
                 borderRadius: 8,
               }}
               labelStyle={{ color: "#a1a1aa" }}
-              itemStyle={{ color: "#fbbf24" }}
+              itemStyle={{ color: chartTheme.ink }}
             />
             <Line
               type="monotone"
               dataKey="value"
               name={props.metricLabel}
-              stroke="#d97706"
+              stroke={chartTheme.ink}
               strokeWidth={2}
-              dot={{ fill: "#d97706", r: 3 }}
+              dot={{ fill: chartTheme.ink, r: 3 }}
+              isAnimationActive={false}
             />
           </LineChart>
         </ResponsiveContainer>

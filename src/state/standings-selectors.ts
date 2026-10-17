@@ -62,6 +62,8 @@ export type StandingsRowEnriched = {
   isUserTeam: boolean;
   playoffLabel: PlayoffPositionLabel;
   branding: TeamBrandingView | null;
+  /** Last (up to 10) final regular-season results, oldest first. */
+  recentResults?: ("W" | "L")[];
 };
 
 export type StandingsGroup = {
@@ -300,6 +302,33 @@ function rankGroup(drafts: Draft[]): {
   return { rankById, leader: sorted[0]?.standing };
 }
 
+/** Last `limit` final regular-season results per team, oldest first. */
+export function recentResultsByTeamId(
+  state: GameState,
+  limit = 10,
+): Map<string, ("W" | "L")[]> {
+  const finals = Object.values(state.competition.games)
+    .filter(
+      (g) => g.status === "final" && g.competitionType === "regular_season",
+    )
+    .sort((a, b) => a.date.localeCompare(b.date) || a.id.localeCompare(b.id));
+  const out = new Map<string, ("W" | "L")[]>();
+  const push = (teamId: string, won: boolean) => {
+    const list = out.get(teamId) ?? [];
+    list.push(won ? "W" : "L");
+    out.set(teamId, list);
+  };
+  for (const g of finals) {
+    const homeWon = g.score.home > g.score.away;
+    push(g.homeTeamId, homeWon);
+    push(g.awayTeamId, !homeWon);
+  }
+  for (const [id, list] of out) {
+    out.set(id, list.slice(-limit));
+  }
+  return out;
+}
+
 function buildEnrichedRows(state: GameState): StandingsRowEnriched[] {
   const owned = new Set(state.user.ownedTeamIds);
   const liveTeamCount = Object.keys(state.world.teams).length;
@@ -332,6 +361,7 @@ function buildEnrichedRows(state: GameState): StandingsRowEnriched[] {
     });
   }
 
+  const recentById = recentResultsByTeamId(state);
   const leagueRankById = leagueRankByTeamId(state);
   const leagueLeaderStanding = drafts.find(
     (row) => leagueRankById.get(row.standing.teamId) === 1,
@@ -417,6 +447,7 @@ function buildEnrichedRows(state: GameState): StandingsRowEnriched[] {
         cutoffVisible,
       ),
       branding: row.branding,
+      recentResults: recentById.get(row.teamId) ?? [],
     };
   });
 }
