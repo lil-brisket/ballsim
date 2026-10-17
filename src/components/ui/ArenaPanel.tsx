@@ -1,4 +1,6 @@
 import type { CSSProperties } from "react";
+import { TeamLogoMark } from "@/components/team/logos/TeamLogoMark";
+import type { TeamBrandingView } from "@/state/team-branding-view";
 import { cn, densityPadding, type Density } from "@/components/ui/styles";
 
 /**
@@ -17,6 +19,10 @@ export function ArenaPanel(props: {
   glow?: boolean;
   hero?: boolean;
   raised?: boolean;
+  /** Subtle hardwood texture. Hero surfaces only. */
+  texture?: boolean;
+  /** Faded team logo behind the content, clipped by the panel. */
+  watermark?: TeamBrandingView;
   className?: string;
   /** e.g. `{ "--i": 2 }` to stagger an `.enter-up` entrance. */
   style?: CSSProperties;
@@ -27,7 +33,12 @@ export function ArenaPanel(props: {
   const density = props.density ?? "default";
   return (
     <Tag
-      className={cn("arena-panel", densityPadding[density], props.className)}
+      className={cn(
+        "arena-panel",
+        props.texture && "surface-hardwood",
+        densityPadding[density],
+        props.className,
+      )}
       data-edge={props.edge && props.edge !== "none" ? props.edge : undefined}
       data-glow={props.glow ? "true" : undefined}
       data-hero={props.hero ? "true" : undefined}
@@ -35,6 +46,11 @@ export function ArenaPanel(props: {
       style={props.style}
       aria-labelledby={props["aria-labelledby"]}
     >
+      {props.watermark ? (
+        <div aria-hidden="true" className="panel-watermark">
+          <TeamLogoMark branding={props.watermark} decorative />
+        </div>
+      ) : null}
       {props.children}
     </Tag>
   );

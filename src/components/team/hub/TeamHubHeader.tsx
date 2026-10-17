@@ -1,9 +1,11 @@
+import { ArenaPanel } from "@/components/ui/ArenaPanel";
 import { SectionHeading } from "@/components/ui/SectionHeading";
 import type { TeamHubView } from "@/state/team-hub-selectors";
 
 /**
  * Team Hub title. Team identity, record and league rank live in the game
  * header, so this only adds what the header does not show: form and phase.
+ * Carries the faded team-logo watermark for the team pages.
  */
 export function TeamHubHeader(props: { hub: TeamHubView }) {
   const { hub } = props;
@@ -14,9 +16,17 @@ export function TeamHubHeader(props: { hub: TeamHubView }) {
       : hub.seasonPhase,
   ].filter(Boolean);
   return (
-    <header className="space-y-2">
+    <ArenaPanel
+      as="header"
+      hero
+      texture
+      edge="top"
+      watermark={hub.branding}
+      density="comfortable"
+      className="space-y-2"
+    >
       <SectionHeading as="h1" size="lg" title="Team Hub" />
-      <p className="text-sm text-zinc-400">{context.join(" · ")}</p>
-    </header>
+      <p className="text-sm text-zinc-300">{context.join(" · ")}</p>
+    </ArenaPanel>
   );
 }

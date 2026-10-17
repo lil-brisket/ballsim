@@ -84,6 +84,8 @@ export function MatchupBanner(props: {
     <ArenaPanel
       as="header"
       hero
+      texture
+      watermark={props.teamBranding}
       glow={props.isFocal}
       density="comfortable"
       className="space-y-6"
