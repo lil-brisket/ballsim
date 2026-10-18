@@ -19,7 +19,10 @@ import { validateTrade } from "@/systems/trades/trade-validation";
 import { evaluateTrade } from "@/systems/trades/asset-valuation/complete-trade-evaluation";
 import { evaluateTradeOffer } from "@/systems/trades/trade-evaluation";
 import { getTradeDesirability } from "@/systems/trades/asset-valuation/trade-desirability";
-import { shouldNotShopPlayer } from "@/systems/trades/asset-valuation/retention-priority";
+import {
+  proposalMovesRecentlyAcquiredCpuPlayer,
+  shouldNotShopPlayer,
+} from "@/systems/trades/asset-valuation/retention-priority";
 import { getBaseAssetValue } from "@/systems/trades/asset-valuation/base-asset-value";
 import { getTeamAssetValue } from "@/systems/trades/asset-valuation/team-asset-value";
 import {
@@ -168,6 +171,9 @@ function maybeRecordCpuCandidate(
   candidates: CpuTradeCandidate[],
 ): void {
   if (counterpartyFilter && !counterpartyFilter(counterpartyTeamId)) {
+    return;
+  }
+  if (proposalMovesRecentlyAcquiredCpuPlayer(state, proposal)) {
     return;
   }
   if (!validateTrade(state, proposal).valid) {

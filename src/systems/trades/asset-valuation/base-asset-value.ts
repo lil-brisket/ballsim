@@ -208,13 +208,7 @@ function collectPerformance(
   state: GameState,
   playerId: PlayerId,
 ): { games: number; seasonPts: number; recentPts: number } {
-  const rows: number[] = [];
-  for (const game of Object.values(state.competition.games)) {
-    if (game.status !== "final") continue;
-    const row = game.playerStats.find((stat) => stat.playerId === playerId);
-    if (!row) continue;
-    rows.push(row.points);
-  }
+  const rows = pointsByPlayer(state.competition.games).get(playerId) ?? [];
   const games = rows.length;
   const seasonPts = rows.reduce((a, b) => a + b, 0);
   const window = RECENT_PERFORMANCE_WEIGHT.rollingWindow;
@@ -222,6 +216,43 @@ function collectPerformance(
   const recentPts =
     recent.length > 0 ? recent.reduce((a, b) => a + b, 0) / recent.length : 0;
   return { games, seasonPts, recentPts };
+}
+
+const pointsIndexCache = new WeakMap<
+  GameState["competition"]["games"],
+  Map<PlayerId, number[]>
+>();
+
+/**
+ * Final-game points per player, in game order. Trade search values thousands
+ * of players per day, so index each immutable games map once instead of
+ * scanning every box score per player.
+ */
+function pointsByPlayer(
+  games: GameState["competition"]["games"],
+): Map<PlayerId, number[]> {
+  const cached = pointsIndexCache.get(games);
+  if (cached !== undefined) {
+    return cached;
+  }
+  const index = new Map<PlayerId, number[]>();
+  for (const game of Object.values(games)) {
+    if (game.status !== "final") continue;
+    const seen = new Set<PlayerId>();
+    for (const stat of game.playerStats) {
+      // First row per player, matching the previous `find`.
+      if (seen.has(stat.playerId)) continue;
+      seen.add(stat.playerId);
+      const rows = index.get(stat.playerId);
+      if (rows === undefined) {
+        index.set(stat.playerId, [stat.points]);
+      } else {
+        rows.push(stat.points);
+      }
+    }
+  }
+  pointsIndexCache.set(games, index);
+  return index;
 }
 
 function trajectoryValue(

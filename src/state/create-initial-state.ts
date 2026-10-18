@@ -230,6 +230,7 @@ export function createInitialGameState(
       },
       games: {},
       playByPlay: {},
+      aiTradeSearch: { byTeamId: {} },
       standings,
       playoffs: createEmptyPlayoffTournament(),
       developmentLeague: {
@@ -560,6 +561,7 @@ export function createFourTeamInitialGameState(
       },
       games: {},
       playByPlay: {},
+      aiTradeSearch: { byTeamId: {} },
       standings,
       playoffs: createEmptyPlayoffTournament(),
       developmentLeague: {

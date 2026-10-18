@@ -190,6 +190,7 @@ function createEightTeamPopulatedState(rngSeed: number): GameState {
       },
       games: {},
       playByPlay: {},
+      aiTradeSearch: { byTeamId: {} },
       standings,
       playoffs: createEmptyPlayoffTournament(),
       developmentLeague: {

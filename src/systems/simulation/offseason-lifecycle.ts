@@ -260,6 +260,7 @@ export function initializeNewSeason(state: GameState, rng?: Rng): SystemResult {
       },
       games: {},
       playByPlay: {},
+      aiTradeSearch: { byTeamId: {} },
       standings: { byTeamId: standingsByTeamId },
       playoffs: createEmptyPlayoffTournament(),
       developmentLeague: {

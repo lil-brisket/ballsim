@@ -29,6 +29,12 @@ export const CPU_TRADE_PACKAGE_VALUE_RATIO = 0.9;
 /** Cap acquire targets scored per CPU search. */
 export const CPU_TRADE_ACQUIRE_TARGET_CAP = 12;
 
+/**
+ * A CPU team whose trade inputs are unchanged re-runs its daily trade search
+ * at least this often, to pick up slow drift (recent scoring, standings).
+ */
+export const AI_TRADE_SEARCH_MAX_STALE_DAYS = 3;
+
 /** Round-1 pick baseline trade value (legacy + floor for slot curve). */
 export const DRAFT_PICK_VALUE_ROUND_1 = 80;
 

@@ -1,6 +1,8 @@
 import { calculatePlayerOverall } from "@/domain/player-overall-rating";
 import type { PlayerId, TeamId } from "@/domain/ids";
+import type { TradeProposal } from "@/domain/entities/trade-proposal";
 import type { GameState } from "@/state/game-state";
+import { isUserControlledTeam } from "@/state/owner-context";
 import { getTradeBlock } from "@/systems/trades/trade-block";
 import {
   RETENTION_PRIORITY_WEIGHTS,
@@ -103,8 +105,48 @@ export function wasRecentlyAcquired(
   state: GameState,
   playerId: PlayerId,
 ): boolean {
-  const today = state.world.calendar.currentDate;
-  const cutoff = addCalendarDays(today, -RECENTLY_ACQUIRED_DAYS);
+  const lastTraded = lastTradedDates(state).get(playerId);
+  if (lastTraded === undefined) {
+    return false;
+  }
+  const cutoff = addCalendarDays(
+    state.world.calendar.currentDate,
+    -RECENTLY_ACQUIRED_DAYS,
+  );
+  return lastTraded >= cutoff;
+}
+
+/**
+ * CPU-initiated trades may not move a player who changed teams by trade in
+ * the last RECENTLY_ACQUIRED_DAYS, on any CPU side. Without this, two CPU
+ * teams can swap the same pair of fringe players back and forth daily.
+ * User-controlled sides are exempt: the user may still be asked about, or
+ * trade, any of their players.
+ */
+export function proposalMovesRecentlyAcquiredCpuPlayer(
+  state: GameState,
+  proposal: TradeProposal,
+): boolean {
+  for (const side of [proposal.sideA, proposal.sideB]) {
+    if (isUserControlledTeam(state, side.teamId)) continue;
+    if (
+      side.playerIds.some((playerId) => wasRecentlyAcquired(state, playerId))
+    ) {
+      return true;
+    }
+  }
+  return false;
+}
+
+const lastTradedCache = new WeakMap<GameState, Map<PlayerId, string>>();
+
+/** Latest PlayerTraded date per player across the season and franchise logs. */
+function lastTradedDates(state: GameState): Map<PlayerId, string> {
+  const cached = lastTradedCache.get(state);
+  if (cached !== undefined) {
+    return cached;
+  }
+  const dates = new Map<PlayerId, string>();
   const logs = [
     state.competition.seasonEventLog,
     ...Object.values(state.user.ownedFranchises).map(
@@ -114,12 +156,14 @@ export function wasRecentlyAcquired(
   for (const log of logs) {
     for (const event of log) {
       if (event.type !== "PlayerTraded") continue;
-      if (event.occurredOn < cutoff) continue;
-      const payload = event.payload as { playerId?: string };
-      if (payload.playerId === playerId) {
-        return true;
+      const playerId = (event.payload as { playerId?: string }).playerId;
+      if (playerId === undefined) continue;
+      const previous = dates.get(playerId as PlayerId);
+      if (previous === undefined || event.occurredOn > previous) {
+        dates.set(playerId as PlayerId, event.occurredOn);
       }
     }
   }
-  return false;
+  lastTradedCache.set(state, dates);
+  return dates;
 }

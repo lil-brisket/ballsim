@@ -23,7 +23,10 @@ export {
   type EnqueueTradeOfferResult,
   type ResolveOwnerDecisionInput,
 } from "@/systems/owner-decisions/enqueue-trade-offer";
-export { tryEnqueueCpuToUserTradeOffer } from "@/systems/owner-decisions/find-cpu-user-trade-offer";
+export {
+  cpuOfferClosedReason,
+  tryEnqueueCpuToUserTradeOffer,
+} from "@/systems/owner-decisions/find-cpu-user-trade-offer";
 export {
   tryEnqueueAnyOwnedTeamTradeOffer,
   tryEnqueueOwnedTeamTradeOffer,

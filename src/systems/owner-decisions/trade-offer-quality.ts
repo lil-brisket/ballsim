@@ -8,6 +8,7 @@ import {
   USER_TRADE_INTERRUPT_MIN_ABS_NET,
   USER_TRADE_INTERRUPT_MIN_INCOMING_VALUE,
   USER_TRADE_INTERRUPT_MIN_PLAYER_OVERALL,
+  USER_TRADE_INTERRUPT_MIN_ROTATION_OVERALL,
 } from "@/systems/owner-decisions/owner-decision-config";
 import { calculatePlayerOverall } from "@/domain/player-overall-rating";
 import { projectDraftPick } from "@/systems/trades/asset-valuation/pick-projection";
@@ -84,6 +85,14 @@ export function isInterruptWorthyTradeOffer(
     return true;
   }
   if (hasMeaningfulPlayer) {
+    return true;
+  }
+  // A fair swap for a real rotation player is worth a look even when it is
+  // neither a star nor lopsided; junk swaps of fringe players still fail.
+  if (
+    bestPlayerOverall >= USER_TRADE_INTERRUPT_MIN_ROTATION_OVERALL &&
+    incomingObjective >= USER_TRADE_INTERRUPT_MIN_INCOMING_VALUE
+  ) {
     return true;
   }
   if (

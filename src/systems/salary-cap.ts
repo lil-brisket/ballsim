@@ -16,6 +16,38 @@ export function getTeamPayroll(
   year: number,
   state: GameState,
 ): number {
+  // Trade search calls this hundreds of thousands of times per day against
+  // the same immutable state, so memoize on the contracts/players identity.
+  let byPlayers = payrollCache.get(state.business.contracts);
+  if (byPlayers === undefined) {
+    byPlayers = new WeakMap();
+    payrollCache.set(state.business.contracts, byPlayers);
+  }
+  let byTeamYear = byPlayers.get(state.world.players);
+  if (byTeamYear === undefined) {
+    byTeamYear = new Map();
+    byPlayers.set(state.world.players, byTeamYear);
+  }
+  const key = `${teamId}:${year}`;
+  const cached = byTeamYear.get(key);
+  if (cached !== undefined) {
+    return cached;
+  }
+  const payroll = computeTeamPayroll(teamId, year, state);
+  byTeamYear.set(key, payroll);
+  return payroll;
+}
+
+const payrollCache = new WeakMap<
+  GameState["business"]["contracts"],
+  WeakMap<GameState["world"]["players"], Map<string, number>>
+>();
+
+function computeTeamPayroll(
+  teamId: TeamId,
+  year: number,
+  state: GameState,
+): number {
   let payroll = 0;
   for (const contract of Object.values(state.business.contracts)) {
     if (contract.teamId !== teamId) {

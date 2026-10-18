@@ -357,7 +357,7 @@ export function migrateV64ToV65(state: GameStateV64): GameStateV65 {
 
 export type GameStateV65 = Omit<GameState, "meta" | "competition"> & {
   meta: Omit<GameState["meta"], "schemaVersion"> & { schemaVersion: 65 };
-  competition: Omit<GameState["competition"], "playByPlay">;
+  competition: Omit<GameState["competition"], "playByPlay" | "aiTradeSearch">;
 };
 
 /**
