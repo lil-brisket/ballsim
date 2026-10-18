@@ -7,6 +7,7 @@ import {
   recommendRosterManagement,
   reconcileRosterManagement,
   validatePlannedMinutes,
+  validateRosterManagementShape,
 } from "@/systems/roster-management";
 import { getPlayerAvailability } from "@/systems/player-availability";
 import {
@@ -66,6 +67,17 @@ describe("roster-management", () => {
     expect(
       recommended.startingLineup.some((slot) => slot.playerId === playerId),
     ).toBe(false);
+    // Inactive players are kept out of the rotation array, so the
+    // recommendation passes the shape validator.
+    expect(recommended.inactive).toContain(playerId);
+    expect(recommended.rotation.some((e) => e.playerId === playerId)).toBe(
+      false,
+    );
+    expect(
+      validateRosterManagementShape(state, teamId, recommended).map(
+        (issue) => issue.code,
+      ),
+    ).toEqual([]);
   });
 
   it("reconcile drops traded players and adds newcomers", () => {

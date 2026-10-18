@@ -920,18 +920,8 @@ export function recommendRosterManagement(
     effectiveDepth,
   );
 
-  // Also include inactive injured players as emergency entries
-  for (const playerId of inactive) {
-    if (!rotation.some((e) => e.playerId === playerId)) {
-      const player = state.world.players[playerId];
-      rotation.push(
-        emptyInactiveEntry(
-          playerId,
-          player ? defaultPreferredPositions(player) : ["SF"],
-        ),
-      );
-    }
-  }
+  // Inactive players stay out of the rotation array (the same rule as
+  // mergeLineupIntoManagement and validateRosterManagementShape).
 
   const baseManagement: TeamRosterManagement = {
     startingLineup,
