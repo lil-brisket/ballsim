@@ -169,6 +169,8 @@ export {
 export {
   startPlayoffs,
   simulateNextPlayoffGame,
+  simulatePlayoffDay,
+  playoffSeriesIdsPlayingToday,
   simulatePlayoffs,
 } from "@/systems/playoff-simulation";
 export {

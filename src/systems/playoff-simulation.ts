@@ -20,7 +20,12 @@ import { recordSeriesGameResult } from "@/systems/playoff-series";
 import { simulateScheduledGame } from "@/systems/game-simulation";
 import { storePlayByPlayLogs } from "@/systems/play-by-play-store";
 import type { GameSimulationFidelity } from "@/systems/game-simulation";
-import { asGameId, asTeamId, type TeamId } from "@/domain/ids";
+import {
+  asGameId,
+  asTeamId,
+  type PlayoffSeriesId,
+  type TeamId,
+} from "@/domain/ids";
 import { createGame } from "@/domain/entities/game";
 
 /**
@@ -196,11 +201,8 @@ export function simulateNextPlayoffGame(
     return systemResult(state);
   }
 
-  const seriesLength = state.settings.playoffs.seriesLength;
-  const seriesList = playoffs.series.map((series) => ({ ...series }));
-  fillReadySeries(seriesList, playoffs);
-
-  const nextSeries = pickNextActiveSeries(seriesList);
+  const filled = withReadySeriesFilled(state);
+  const nextSeries = pickNextActiveSeries(filled.competition.playoffs.series);
   if (!nextSeries) {
     throw new Error("simulateNextPlayoffGame: no active series ready to play.");
   }
@@ -210,10 +212,104 @@ export function simulateNextPlayoffGame(
     games: state.competition.games,
   });
 
+  const played = playSeriesGame(filled, nextSeries.id, nextDate, rng, options);
+  return systemResult(played.state, [played.event]);
+}
+
+/**
+ * Calendar-driven playoff day: plays one game, dated today, in every series
+ * active at the start of the day. Series that become ready during the day
+ * start tomorrow. No-op when a playoff game is already dated today (the
+ * play-in ran this morning), so no team plays twice in a day.
+ */
+export function simulatePlayoffDay(
+  state: GameState,
+  rng: Rng,
+  options?: {
+    fidelity?: GameSimulationFidelity;
+    ownerTeamId?: TeamId;
+  },
+): SystemResult {
+  const seriesIds = playoffSeriesIdsPlayingToday(state);
+  if (seriesIds.length === 0) {
+    return systemResult(state);
+  }
+
+  const date = state.world.calendar.currentDate;
+  const events: DomainEvent[] = [];
+  let current = withReadySeriesFilled(state);
+  for (const seriesId of seriesIds) {
+    const played = playSeriesGame(current, seriesId, date, rng, options);
+    current = played.state;
+    events.push(played.event);
+  }
+  return systemResult(current, events);
+}
+
+/**
+ * Series ids that play on the calendar's current date, in round/slot order.
+ * Empty when playoffs are not in progress or a playoff game is already dated
+ * today.
+ */
+export function playoffSeriesIdsPlayingToday(
+  state: GameState,
+): PlayoffSeriesId[] {
+  const playoffs = state.competition.playoffs;
+  if (playoffs.status !== "in_progress") {
+    return [];
+  }
+  const date = state.world.calendar.currentDate;
+  const playedToday = Object.values(state.competition.games).some(
+    (game) => game.competitionType === "playoffs" && game.date === date,
+  );
+  if (playedToday) {
+    return [];
+  }
+  return sortActiveSeries(
+    withReadySeriesFilled(state).competition.playoffs.series,
+  ).map((series) => series.id);
+}
+
+function withReadySeriesFilled(state: GameState): GameState {
+  const playoffs = state.competition.playoffs;
+  const seriesList = playoffs.series.map((series) => ({ ...series }));
+  fillReadySeries(seriesList, playoffs);
+  return {
+    ...state,
+    competition: {
+      ...state.competition,
+      playoffs: { ...playoffs, series: seriesList },
+    },
+  };
+}
+
+/**
+ * Schedules, simulates and records one game of `seriesId` on `date`.
+ * Expects ready series already filled; fills newly ready series afterwards
+ * and sets the champion when the final completes.
+ */
+function playSeriesGame(
+  state: GameState,
+  seriesId: PlayoffSeriesId,
+  date: string,
+  rng: Rng,
+  options?: {
+    fidelity?: GameSimulationFidelity;
+    ownerTeamId?: TeamId;
+  },
+): { state: GameState; event: DomainEvent } {
+  const playoffs = state.competition.playoffs;
+  const seriesLength = state.settings.playoffs.seriesLength;
+  const seriesList = playoffs.series.map((series) => ({ ...series }));
+  const nextSeries = seriesList.find((series) => series.id === seriesId);
+  if (!nextSeries || nextSeries.status !== "active") {
+    throw new Error(`playSeriesGame: series ${seriesId} is not active.`);
+  }
+
   const scheduled = createNextPlayoffGame({
     series: nextSeries,
     seasonId: state.competition.season.id,
-    nextDate,
+    nextDate: date,
     seriesLength,
   });
 
@@ -279,10 +375,8 @@ export function simulateNextPlayoffGame(
       : playoffs.championTeamId,
   };
 
-  const events: DomainEvent[] = [event];
-
-  return systemResult(
-    storePlayByPlayLogs(
+  return {
+    state: storePlayByPlayLogs(
       {
         ...state,
         competition: {
@@ -293,8 +387,8 @@ export function simulateNextPlayoffGame(
       },
       playByPlay != null ? { [finalGame.id]: playByPlay } : {},
     ),
-    events,
-  );
+    event,
+  };
 }
 
 /**
@@ -331,10 +425,10 @@ export function simulatePlayoffs(state: GameState, rng: Rng): SystemResult {
   return systemResult(current, events);
 }
 
-function pickNextActiveSeries(
-  seriesList: PlayoffSeries[],
-): PlayoffSeries | null {
-  const active = seriesList
+function sortActiveSeries(
+  seriesList: readonly PlayoffSeries[],
+): PlayoffSeries[] {
+  return seriesList
     .filter((series) => series.status === "active")
     .sort((left, right) => {
       if (left.round !== right.round) {
@@ -342,7 +436,12 @@ function pickNextActiveSeries(
       }
       return left.slot - right.slot;
     });
-  return active[0] ?? null;
+}
+
+function pickNextActiveSeries(
+  seriesList: readonly PlayoffSeries[],
+): PlayoffSeries | null {
+  return sortActiveSeries(seriesList)[0] ?? null;
 }
 
 /**

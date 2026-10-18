@@ -101,7 +101,7 @@ export function advanceLeaguePhase(state: GameState, rng?: Rng): SystemResult {
 
   // Preseason → regular season
   if (fromPhaseId === "preseason.preparation") {
-    const begun = beginRegularSeasonFromPreseason(current);
+    const begun = beginRegularSeasonFromPreseason(current, rng);
     current = begun.state;
     events.push(...begun.events);
     events.push(

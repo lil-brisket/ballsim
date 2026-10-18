@@ -106,4 +106,10 @@ export type AdvanceSimulationOptions = {
    * except the first day of this advance (so today's game cannot be skipped).
    */
   stopBeforeUserTeamGame?: boolean;
+  /**
+   * When true, finish (status "completed") after the day the playoffs
+   * complete. Used by "sim to end of season", whose day count is only an
+   * upper bound because playoff games are not scheduled ahead.
+   */
+  stopWhenPlayoffsComplete?: boolean;
 };

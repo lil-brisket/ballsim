@@ -34,7 +34,7 @@ import {
 import { advanceSimulationAsync } from "@/systems/simulation/advance-simulation";
 import { processDerivedProjections } from "@/systems/media-hub";
 import type { GameState } from "@/state/game-state";
-import { resolveSeasonAnchors } from "@/systems/league-rules/league-calendar";
+import { endOfSeasonSimulationBound } from "@/systems/league-rules/league-calendar";
 import { findNextSimulationTarget } from "@/systems/calendar";
 import type {
   OwnerCommandResult,
@@ -214,6 +214,7 @@ export async function advanceOwnerTime(
         allowOwnerManagedPhaseTransitions: true,
         gameFidelity: useBoxScore ? "box_score" : "possession",
         stopBeforeUserTeamGame,
+        stopWhenPlayoffsComplete: options.targetMode === "end_of_season",
         onProgress: options.onProgress,
         shouldStop: options.shouldStop,
       });
@@ -301,12 +302,7 @@ function resolveAdvanceDays(
       }
       stopConditions.push("blocking_decision");
     } else if (options.targetMode === "end_of_season") {
-      const anchors = resolveSeasonAnchors(state);
-      targetDate =
-        anchors.playoffsEnd ??
-        anchors.regularSeasonEnd ??
-        anchors.seasonReviewStart ??
-        undefined;
+      targetDate = endOfSeasonSimulationBound(state) ?? undefined;
       if (!targetDate || targetDate <= currentDate) {
         return {
           ok: false,

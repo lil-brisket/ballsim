@@ -89,6 +89,35 @@ export function getNextPhaseInOrder(
   return getPhaseDefinition(phaseId).nextPhaseId;
 }
 
+/**
+ * Latest date a "sim to end of season" jump may need: the day after the last
+ * scheduled regular-season game, plus a play-in day and a full series per
+ * playoff round. Playoffs are not scheduled ahead, so this is an upper bound
+ * and callers stop once the tournament completes. Null when the season has
+ * nothing left to play.
+ */
+export function endOfSeasonSimulationBound(state: GameState): string | null {
+  const playoffs = state.competition.playoffs;
+  if (playoffs.status === "complete") {
+    return null;
+  }
+  const today = state.world.calendar.currentDate;
+  const { latest } = scheduleBounds(state);
+  if (latest == null && playoffs.status === "not_started") {
+    return null;
+  }
+  const regularSeasonDone =
+    latest == null || latest < today ? today : addCalendarDays(latest, 1);
+
+  const { playoffTeams, seriesLength } = state.settings.playoffs;
+  const liveTeamCount = Object.keys(state.world.teams).length;
+  if (playoffTeams <= 0 || playoffTeams > liveTeamCount) {
+    return regularSeasonDone > today ? regularSeasonDone : null;
+  }
+  const rounds = Math.ceil(Math.log2(playoffTeams));
+  return addCalendarDays(regularSeasonDone, 1 + rounds * seriesLength);
+}
+
 function scheduleBounds(state: GameState): {
   earliest: string | null;
   latest: string | null;

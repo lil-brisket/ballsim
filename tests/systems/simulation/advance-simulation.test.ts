@@ -5,7 +5,8 @@ import { CBL_GAME_SETTINGS } from "@/domain/game-settings";
 import { bootstrapWorld } from "@/systems/world-pipeline";
 import { advanceSimulation } from "@/systems/simulation/advance-simulation";
 import { beginRegularSeasonFromPreseason } from "@/systems/simulation/season-lifecycle";
-import { getIsoWeekId } from "@/domain/calendar-date";
+import { calendarDaysBetween, getIsoWeekId } from "@/domain/calendar-date";
+import { endOfSeasonSimulationBound } from "@/systems/league-rules/league-calendar";
 import { resetDomainEventSequenceForTests } from "@/domain/events/domain-event";
 
 describe("advanceSimulation", () => {
@@ -39,6 +40,53 @@ describe("advanceSimulation", () => {
     expect(openers.length).toBeGreaterThan(0);
     expect(openers.every((game) => game.status === "final")).toBe(true);
   });
+
+  it("runs to the end of the playoffs and stops there with stopWhenPlayoffsComplete", () => {
+    resetDomainEventSequenceForTests();
+    const state = createInitialGameState({
+      saveId: "adv_end_of_season",
+      rngSeed: 11,
+      settings: CBL_GAME_SETTINGS,
+    });
+    const rng = createSeededRng(state.meta.rngState);
+    let current = bootstrapWorld(state, rng).state;
+    current = beginRegularSeasonFromPreseason(current, rng).state;
+    current = advanceSimulation(current, rng, { days: 3 }).state;
+
+    const bound = endOfSeasonSimulationBound(current)!;
+    expect(bound).not.toBeNull();
+    const result = advanceSimulation(current, rng, {
+      days: calendarDaysBetween(current.world.calendar.currentDate, bound),
+      gameFidelity: "box_score",
+      skipOwnerGameplay: true,
+      stopWhenPlayoffsComplete: true,
+    });
+
+    expect(result.status).toBe("completed");
+    const playoffs = result.state.competition.playoffs;
+    expect(playoffs.status).toBe("complete");
+    expect(playoffs.championTeamId).toBeTruthy();
+    expect(result.state.world.calendar.currentDate <= bound).toBe(true);
+
+    // Stopped on the day after the final, which was played on its own date.
+    const playoffGames = Object.values(result.state.competition.games).filter(
+      (game) => game.competitionType === "playoffs",
+    );
+    const lastPlayoffDate = playoffGames
+      .map((game) => game.date)
+      .sort()
+      .at(-1)!;
+    expect(result.state.world.calendar.lastSimulatedDate).toBe(lastPlayoffDate);
+
+    // Playoff games are dated the day they are played, so home gates settle.
+    const playoffGameIds = new Set<string>(playoffGames.map((game) => game.id));
+    const settledPlayoffGates = result.events.filter(
+      (event) =>
+        event.type === "HomeGameDaySettled" &&
+        playoffGameIds.has(String(event.payload.gameId)),
+    );
+    expect(settledPlayoffGates.length).toBe(playoffGames.length);
+  }, 120_000);
 
   it("rejects re-simulating the same calendar date", () => {
     const state = createInitialGameState({
