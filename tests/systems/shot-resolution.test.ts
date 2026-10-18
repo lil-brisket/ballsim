@@ -10,6 +10,7 @@ import {
   blockProbability,
   calculateShotProbability,
   effectiveShootingAbility,
+  leadRegressionAdjustment,
   resolveShot,
   type ResolveShotInput,
 } from "@/systems/shot-resolution";
@@ -183,6 +184,36 @@ describe("calculateShotProbability", () => {
     const first = calculateShotProbability(baseInput());
     const second = calculateShotProbability(baseInput());
     expect(first).toBe(second);
+  });
+});
+
+describe("leadRegressionAdjustment", () => {
+  const { threshold, perPoint, max } = SHOT_RESOLUTION_CONFIG.leadRegression;
+
+  it("is zero up to the threshold either way", () => {
+    for (const margin of [0, 1, threshold, -threshold]) {
+      expect(leadRegressionAdjustment(margin)).toBeCloseTo(0, 12);
+    }
+  });
+
+  it("lowers the leader and raises the trailer symmetrically", () => {
+    const lead = threshold + 5;
+    expect(leadRegressionAdjustment(lead)).toBeCloseTo(-5 * perPoint, 12);
+    expect(leadRegressionAdjustment(-lead)).toBeCloseTo(5 * perPoint, 12);
+  });
+
+  it("caps the shift at max", () => {
+    expect(leadRegressionAdjustment(200)).toBeCloseTo(-max, 12);
+    expect(leadRegressionAdjustment(-200)).toBeCloseTo(max, 12);
+  });
+
+  it("feeds calculateShotProbability through scoreMargin", () => {
+    const level = calculateShotProbability(baseInput());
+    const leading = calculateShotProbability(
+      baseInput({ scoreMargin: threshold + 10 }),
+    );
+    expect(level - leading).toBeCloseTo(10 * perPoint, 10);
+    expect(calculateShotProbability(baseInput({ scoreMargin: 3 }))).toBe(level);
   });
 });
 

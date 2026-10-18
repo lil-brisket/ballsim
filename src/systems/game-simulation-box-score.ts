@@ -73,21 +73,23 @@ export type SimulateBoxScoreContext = {
  * Engine v10 (faster pace, fewer turnovers, more free throws) rescales the
  * whole model by 1.107 with intercept +7.7, fitted (OLS) on 7,200 Lab
  * possession team-games (seeds 101-220, RMSE 12.8); engine v12 lowers the
- * intercept 1.0 for defensive matchups. Home court is a separate
+ * intercept 1.0 for defensive matchups. Engine v13 (lead regression
+ * compresses expected margins) rescales the model by 0.830 with intercept
+ * +17.7, refit the same way (RMSE 11.6). Home court is a separate
  * additive term, {@link HOME_COURT_POINTS}.
  */
 const EXPECTED_POINTS_MODEL = {
-  intercept: -32.761,
+  intercept: -9.473,
   /** Top-8 mean of {@link effectiveScoringAbility}. */
-  shooting: 0.687,
+  shooting: 0.57,
   /** Mean effectiveScoringAbility of the three best scorers in the top 8. */
-  topScorers: 1.377,
+  topScorers: 1.143,
   /** Top-8 mean rebounding (second chances). */
-  rebounding: 0.309,
+  rebounding: 0.257,
   /** Opponent available-roster mean interiorDefense. */
-  opponentInteriorDefense: -0.321,
+  opponentInteriorDefense: -0.267,
   /** Opponent available-roster mean perimeterDefense. */
-  opponentPerimeterDefense: -0.305,
+  opponentPerimeterDefense: -0.253,
 } as const;
 
 /**
@@ -109,9 +111,15 @@ const TOP_SCORER_COUNT = 3;
  * Points the home team gains from the possession sim's home-court shot bonus
  * (`SHOT_RESOLUTION_CONFIG.homeCourtAdvantage`); away scoring is unchanged.
  */
-const HOME_COURT_POINTS = 2.6;
-/** Half-width of the uniform per-team score noise (possession-sim SD ~14). */
-const SCORE_NOISE = 24;
+const HOME_COURT_POINTS = 2.0;
+/**
+ * Half-widths of the uniform score noise: a shared draw added to both teams
+ * (game pace and flow) and an independent draw per team. Sized to the
+ * possession sim's fixed-matchup spread: team points SD ~11.7, margin SD
+ * ~12.9, score correlation ~0.4.
+ */
+const SHARED_SCORE_NOISE = 12;
+const SCORE_NOISE = 15;
 const SCORE_FLOOR = 60;
 const SCORE_CEILING = 140;
 const POSSESSIONS_MIN = 94;
@@ -328,11 +336,12 @@ function rollFinalScore(
   awayBase: number,
   rng: Rng,
 ): GameScore {
+  const shared = rng.nextInt(-SHARED_SCORE_NOISE, SHARED_SCORE_NOISE);
   let home = clampScore(
-    Math.round(homeBase) + rng.nextInt(-SCORE_NOISE, SCORE_NOISE),
+    Math.round(homeBase) + shared + rng.nextInt(-SCORE_NOISE, SCORE_NOISE),
   );
   let away = clampScore(
-    Math.round(awayBase) + rng.nextInt(-SCORE_NOISE, SCORE_NOISE),
+    Math.round(awayBase) + shared + rng.nextInt(-SCORE_NOISE, SCORE_NOISE),
   );
   if (home === away) {
     if (rng.chance(0.5)) {

@@ -762,6 +762,10 @@ function simulatePeriod(args: {
         eventSequenceStart: sim.eventSequenceStart,
         fatigue: averageOnCourtFatigue(sim, offensivePlayers),
         offenseIsHome: offensiveTeamId === sim.homeTeamId,
+        offenseScoreMargin:
+          offensiveTeamId === sim.homeTeamId
+            ? sim.homeScore - sim.awayScore
+            : sim.awayScore - sim.homeScore,
         defensivePressureMultiplier:
           tactical.defensiveModifiers.defensivePressureMultiplier,
         recordPlays: sim.playByPlay != null,

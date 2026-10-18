@@ -95,5 +95,14 @@
  * An elite defender now holds their man's FG% down instead of spreading the
  * effect over the whole offense. League scoring ~1 PPG lower; box score
  * points intercept -1.0.
+ *
+ * Version 13: lead regression (`SHOT_RESOLUTION_CONFIG.leadRegression`).
+ * Past an 8-point lead the leading team's shots lose 0.004 make probability
+ * per extra point (cap 0.05) and the trailing team's gain the same. No RNG
+ * change. In 12-team leagues the margin noise left after team strength
+ * falls ~16.3 -> ~12.4 (NBA ~12.5), 20+ point games ~33% -> ~19%, team win%
+ * spread unchanged. Box score draws one shared noise term for both teams
+ * (+-12) plus +-15 per team instead of +-24 per team, and rescales its
+ * points model (x0.830, +17.7; home 2.0).
  */
-export const ENGINE_VERSION = 12;
+export const ENGINE_VERSION = 13;

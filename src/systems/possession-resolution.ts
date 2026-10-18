@@ -86,6 +86,8 @@ export type ResolvePossessionInput = {
   fatigue?: number;
   /** True when the offensive team is the home team (home-court shot bonus). */
   offenseIsHome?: boolean;
+  /** Offense score minus defense score before this possession. */
+  offenseScoreMargin?: number;
   foulRules?: FoulRules;
   /**
    * Already-derived defensive pressure multiplier (coaching).
@@ -358,6 +360,7 @@ function resolveShotBranch(ctx: ExecutionContext): void {
       shotType: decision.shotType,
       fatigue: ctx.fatigue,
       homeCourt: ctx.input.offenseIsHome === true,
+      scoreMargin: ctx.input.offenseScoreMargin,
     },
     ctx.rng,
   );
@@ -448,6 +451,7 @@ function resolvePassBranch(ctx: ExecutionContext): void {
       shotType,
       fatigue: ctx.fatigue,
       homeCourt: ctx.input.offenseIsHome === true,
+      scoreMargin: ctx.input.offenseScoreMargin,
     },
     ctx.rng,
   );
@@ -547,6 +551,7 @@ function resolveFoulBranch(ctx: ExecutionContext): void {
         shotType,
         fatigue: ctx.fatigue,
         homeCourt: ctx.input.offenseIsHome === true,
+        scoreMargin: ctx.input.offenseScoreMargin,
       },
       ctx.rng,
     );

@@ -17,6 +17,8 @@ export type ResolveShotInput = {
   fatigue: number;
   /** True when the shooter's team is at home; adds `homeCourtAdvantage`. */
   homeCourt?: boolean;
+  /** Shooter's team score minus the opponent's; drives `leadRegression`. */
+  scoreMargin?: number;
 };
 
 export type ShotResolution = {
@@ -36,6 +38,7 @@ export type ShotResolution = {
  *   - (defenseRating / RATING_MAX) * defensiveImpact
  *   - fatigue * fatigueImpact
  *   + homeCourtAdvantage (home team only)
+ *   + leadRegressionAdjustment(scoreMargin)
  *   → clamp(minProbability, maxProbability)
  *
  * For v1, all two-point attempts use the mean of finishing and midRange.
@@ -62,7 +65,8 @@ export function calculateShotProbability(input: ResolveShotInput): number {
     shotTypeAdjustment -
     defensivePenalty -
     fatiguePenalty +
-    homeBonus;
+    homeBonus +
+    leadRegressionAdjustment(input.scoreMargin ?? 0);
 
   return clampProbability(unclamped);
 }
@@ -98,6 +102,16 @@ function resolveShotFactors(input: ResolveShotInput): {
     defenseRating: input.defender.attributes.perimeterDefense,
     shotTypeAdjustment: SHOT_RESOLUTION_CONFIG.threePointAdjustment,
   };
+}
+
+/**
+ * Make-probability shift from the score: negative for a team leading by more
+ * than the threshold, positive for one trailing by as much.
+ */
+export function leadRegressionAdjustment(scoreMargin: number): number {
+  const { threshold, perPoint, max } = SHOT_RESOLUTION_CONFIG.leadRegression;
+  const excess = Math.max(0, Math.abs(scoreMargin) - threshold);
+  return -Math.sign(scoreMargin) * Math.min(max, excess * perPoint);
 }
 
 /** Diminishing returns above the knee, so elite shooters stay believable. */
