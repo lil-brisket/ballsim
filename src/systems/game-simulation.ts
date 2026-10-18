@@ -914,10 +914,20 @@ export function requestPossessionSeconds(
     seconds = rng.nextInt(times.foulMin, times.foulMax);
   } else if (action === "free_throw") {
     seconds = rng.nextInt(times.freeThrowMin, times.freeThrowMax);
+  } else if (isContinuingPass(resolution)) {
+    seconds = rng.nextInt(times.passContinueMin, times.passContinueMax);
   } else {
     seconds = rng.nextInt(times.defaultMin, times.defaultMax);
   }
   return Math.max(1, seconds + possessionSecondsDelta);
+}
+
+/** Completed pass with no shot attempt: the offense keeps the ball. */
+function isContinuingPass(resolution: PossessionResolution): boolean {
+  return (
+    resolution.possession.outcome === "pass_completed" &&
+    !resolution.steps.some((step) => step.type === "shot")
+  );
 }
 
 function philosophyForTeam(

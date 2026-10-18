@@ -28,7 +28,7 @@
 export const PASS_RESOLUTION_CONFIG = {
   minPassSuccess: 0.45,
   maxPassSuccess: 0.97,
-  baselinePassSuccess: 0.72,
+  baselinePassSuccess: 0.76,
   passingImpact: 0.22,
   ballHandlingImpact: 0.1,
   defensivePressureImpact: 0.18,
@@ -53,8 +53,8 @@ export const PASS_RESOLUTION_CONFIG = {
  * errors) use `standaloneTurnoverBase` and credit a random on-court defender.
  */
 export const STEAL_CREDIT_CONFIG = {
-  passTurnoverBase: 0.6,
-  standaloneTurnoverBase: 0.3,
+  passTurnoverBase: 0.7,
+  standaloneTurnoverBase: 0.4,
   skillImpact: 0.6,
   minChance: 0.1,
   maxChance: 0.85,

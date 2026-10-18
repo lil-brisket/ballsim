@@ -69,5 +69,16 @@
  * three-point adjustment drops -0.08 -> -0.095 so pooled 3P% stays ~38% once
  * fouled three-point misses stop counting. Box score refits its 2P/3P
  * intercepts, points intercept and steal rate, and adds the home term.
+ *
+ * Version 10: a completed pass that does not end in a shot costs 3-7 seconds
+ * (`passContinueMin/Max`) instead of a full 8-18 second possession, lifting
+ * pace ~91 -> ~99 possessions per team. Turnovers fall ~19% -> ~14.5% of
+ * possessions (turnover action weight 6 -> 4.5, `baselinePassSuccess`
+ * 0.72 -> 0.76); steal credit bases rise 0.6/0.3 -> 0.7/0.4 so steals hold
+ * ~8. Fouls rise (foul weight 14 -> 16, shooting share 38 -> 48 of 100),
+ * FTA ~14 -> ~22. Team scoring ~95 -> ~113 PPG on the validation rosters.
+ * Box score rescales its points model (OLS on held-out Lab possession
+ * games), possessions 82-92 -> 94-104, and its turnover, steal, defensive
+ * rebound and free-throw share rates.
  */
-export const ENGINE_VERSION = 9;
+export const ENGINE_VERSION = 10;

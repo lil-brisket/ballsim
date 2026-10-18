@@ -131,6 +131,41 @@ describe("requestPossessionSeconds pace", () => {
       requestPossessionSeconds(resolution, config, createTestRng(7)),
     );
   });
+
+  it("charges a completed pass with no shot only the pass-continue window", () => {
+    const config = mergeGameSimulationConfig();
+    const times = config.possessionTimeSeconds;
+    const passResolution = (withShot: boolean): PossessionResolution => {
+      const base = stubResolution("shot");
+      return {
+        ...base,
+        possession: {
+          ...base.possession,
+          action: "pass",
+          outcome: "pass_completed",
+        },
+        steps: withShot
+          ? [{ type: "shot", result: { made: false, probability: 0.4 } }]
+          : [],
+      };
+    };
+    for (let seed = 1; seed <= 20; seed += 1) {
+      const continuing = requestPossessionSeconds(
+        passResolution(false),
+        config,
+        createTestRng(seed),
+      );
+      expect(continuing).toBeGreaterThanOrEqual(times.passContinueMin);
+      expect(continuing).toBeLessThanOrEqual(times.passContinueMax);
+      const withShot = requestPossessionSeconds(
+        passResolution(true),
+        config,
+        createTestRng(seed),
+      );
+      expect(withShot).toBeGreaterThanOrEqual(times.defaultMin);
+      expect(withShot).toBeLessThanOrEqual(times.defaultMax);
+    }
+  });
 });
 
 describe("coaching does not change player ability formulas", () => {
