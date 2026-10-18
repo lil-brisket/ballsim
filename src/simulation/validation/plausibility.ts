@@ -75,8 +75,8 @@ function checkMean(
 }
 
 /**
- * Home win rate under fair coin (no home-court advantage).
- * sigma = sqrt(0.25 / n); compare |p - 0.5| / sigma.
+ * Home win rate with home-court advantage (NBA ~54-58%). The edge shrinks
+ * on lopsided roster pairs, so PASS spans 50-62% and WARNING 46-66%.
  */
 function homeWinRateCheck(homeWins: number, games: number): CheckResult {
   if (games === 0) {
@@ -96,19 +96,17 @@ function homeWinRateCheck(homeWins: number, games: number): CheckResult {
       message: `home_win_rate=${(rate * 100).toFixed(1)}% (0% or 100%)`,
     };
   }
-  const sigma = Math.sqrt(0.25 / games);
-  const z = Math.abs(rate - 0.5) / sigma;
-  let verdict: ValidationVerdict = "PASS";
-  if (z > 6) {
-    verdict = "FAIL";
-  } else if (z > 3) {
+  let verdict: ValidationVerdict = "FAIL";
+  if (rate >= 0.5 && rate <= 0.62) {
+    verdict = "PASS";
+  } else if (rate >= 0.46 && rate <= 0.66) {
     verdict = "WARNING";
   }
   return {
     name: "home_win_rate",
     verdict,
     value: rate,
-    message: `home_win_rate=${(rate * 100).toFixed(1)}% (z=${z.toFixed(2)} vs 50%)`,
+    message: `home_win_rate=${(rate * 100).toFixed(1)}% [${verdict}; pass 50–62%]`,
   };
 }
 

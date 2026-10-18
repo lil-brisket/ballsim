@@ -59,5 +59,15 @@
  * real-pipeline possession games. Player generation adds an 86-90 quality
  * band (starter slots up to 90), giving ~3 players at 90+ per league with
  * top scorers near 30 PPG instead of 31-35 PPG at ~59% FG.
+ *
+ * Version 9: a missed shot that draws a shooting foul is no longer a
+ * field-goal attempt (only and-ones are), lifting FG% ~2 points. Steals are a
+ * rating-based chance on every turnover (`STEAL_CREDIT_CONFIG`, one RNG draw
+ * per turnover plus a defender pick on standalone turnovers) instead of every
+ * pass turnover against a steal >= 70 defender, ~4 -> ~8 per team. Home teams
+ * get a make-probability bonus (`homeCourtAdvantage`, ~+2.5 points). The
+ * three-point adjustment drops -0.08 -> -0.095 so pooled 3P% stays ~38% once
+ * fouled three-point misses stop counting. Box score refits its 2P/3P
+ * intercepts, points intercept and steal rate, and adds the home term.
  */
-export const ENGINE_VERSION = 8;
+export const ENGINE_VERSION = 9;

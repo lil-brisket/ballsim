@@ -69,10 +69,10 @@ export type SimulateBoxScoreContext = {
  * (real lineups, coaching and staff) on 12 bootstrapped 30-team leagues
  * (21,600 team-sides); 6 held-out leagues give bias -0.1 and per-game RMSE
  * 12.0, mostly game noise. Refit for engine v8 (shot curve, wider talent
- * tail). The possession sim has no home-court term, so neither does this.
+ * tail); engine v9 lowers the intercept 1.2 for the three-point adjustment. Home court is a separate additive term, {@link HOME_COURT_POINTS}.
  */
 const EXPECTED_POINTS_MODEL = {
-  intercept: -34.483,
+  intercept: -35.683,
   /** Top-8 mean of {@link effectiveScoringAbility}. */
   shooting: 0.621,
   /** Mean effectiveScoringAbility of the three best scorers in the top 8. */
@@ -100,6 +100,11 @@ function effectiveScoringAbility(player: Player): number {
   );
 }
 const TOP_SCORER_COUNT = 3;
+/**
+ * Points the home team gains from the possession sim's home-court shot bonus
+ * (`SHOT_RESOLUTION_CONFIG.homeCourtAdvantage`); away scoring is unchanged.
+ */
+const HOME_COURT_POINTS = 2.5;
 /** Half-width of the uniform per-team score noise (possession-sim SD ~13). */
 const SCORE_NOISE = 22;
 const SCORE_FLOOR = 60;
@@ -145,8 +150,8 @@ const BOX_SCORE_SHOT_CALIBRATION = {
   ftShareMax: 0.25,
   // Elite shooters are kept believable by the shared diminishing-returns
   // curve (effectiveShootingAbility), not a box-score-only knee.
-  twoPoint: { intercept: 0.0125, slope: 0.9772 },
-  threePoint: { intercept: 0.033, slope: 0.951 },
+  twoPoint: { intercept: 0.0425, slope: 0.9772 },
+  threePoint: { intercept: 0.054, slope: 0.951 },
   freeThrow: { intercept: -0.008, slope: 0.9984 },
 } as const;
 
@@ -189,7 +194,7 @@ export function simulateGameBoxScore(
   }
 
   const { home: homePoints, away: awayPoints } = rollFinalScore(
-    expectedTeamPoints(homeAvailable, awayAvailable),
+    expectedTeamPoints(homeAvailable, awayAvailable) + HOME_COURT_POINTS,
     expectedTeamPoints(awayAvailable, homeAvailable),
     rng,
   );
@@ -433,7 +438,7 @@ function buildTeamBoxScore(input: {
     ) + rng.nextInt(-2, 2);
   const drebTotal = Math.round(possessions * 0.38) + rng.nextInt(-3, 3);
   const tovTotal = Math.round(possessions * 0.203) + rng.nextInt(-2, 2);
-  const stlTotal = Math.round(possessions * 0.0563) + rng.nextInt(-2, 1);
+  const stlTotal = Math.round(possessions * 0.0995) + rng.nextInt(-2, 1);
   const foulTotal = rng.nextInt(16, 26);
 
   const ast = allocateByWeight(

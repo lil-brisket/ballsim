@@ -24,6 +24,7 @@ import {
   type FreeThrowResult,
 } from "@/systems/free-throw-resolution";
 import { resolvePass, type PassResolution } from "@/systems/pass-resolution";
+import { STEAL_CREDIT_CONFIG } from "@/systems/pass-resolution-config";
 import {
   resolveRebound,
   type ReboundResult,
@@ -75,6 +76,8 @@ export type ResolvePossessionInput = {
   decision: PossessionDecision;
   eventSequenceStart?: number;
   fatigue?: number;
+  /** True when the offensive team is the home team (home-court shot bonus). */
+  offenseIsHome?: boolean;
   foulRules?: FoulRules;
   /**
    * Already-derived defensive pressure multiplier (coaching).
@@ -333,6 +336,7 @@ function resolveShotBranch(ctx: ExecutionContext): void {
       defender,
       shotType: decision.shotType,
       fatigue: ctx.fatigue,
+      homeCourt: ctx.input.offenseIsHome === true,
     },
     ctx.rng,
   );
@@ -386,7 +390,12 @@ function resolvePassBranch(ctx: ExecutionContext): void {
   if (pass.outcome === "turnover") {
     addTurnover(ctx.stats, passer.id);
     pushEvent(ctx.stats, "turnover", passer.id, ctx.input.offensiveTeamId);
-    const stealerId = maybeCreditSteal(ctx, defender, passer);
+    const stealerId = maybeCreditSteal(
+      ctx,
+      defender,
+      passer,
+      STEAL_CREDIT_CONFIG.passTurnoverBase,
+    );
     pushPlay(
       ctx.stats,
       PLAY_CODE.turnover,
@@ -416,6 +425,7 @@ function resolvePassBranch(ctx: ExecutionContext): void {
       defender,
       shotType,
       fatigue: ctx.fatigue,
+      homeCourt: ctx.input.offenseIsHome === true,
     },
     ctx.rng,
   );
@@ -451,11 +461,18 @@ function resolveTurnoverBranch(ctx: ExecutionContext): void {
   addTouch(ctx.stats, player.id);
   addTurnover(ctx.stats, player.id);
   pushEvent(ctx.stats, "turnover", player.id, ctx.input.offensiveTeamId);
+  const defender = ctx.rng.pick(ctx.input.defensivePlayers);
+  const stealerId = maybeCreditSteal(
+    ctx,
+    defender,
+    player,
+    STEAL_CREDIT_CONFIG.standaloneTurnoverBase,
+  );
   pushPlay(
     ctx.stats,
     PLAY_CODE.turnover,
     player.id,
-    null,
+    stealerId,
     ctx.input.offensiveTeamId,
   );
   flipPossession(ctx);
@@ -502,6 +519,7 @@ function resolveFoulBranch(ctx: ExecutionContext): void {
         defender: fouler,
         shotType,
         fatigue: ctx.fatigue,
+        homeCourt: ctx.input.offenseIsHome === true,
       },
       ctx.rng,
     );
@@ -524,13 +542,15 @@ function resolveFoulBranch(ctx: ExecutionContext): void {
     // Shooting foul credits the fouled shooter whether or not FGA is recorded;
     // if FGA is also recorded below, dedup keeps a single touch.
     addTouch(ctx.stats, fouled.id);
-    addFieldGoal(ctx.stats, fouled.id, shotType, foulResult.basketCounts);
+    // Only an and-one is a field-goal attempt; a fouled miss is not (NBA
+    // scoring rules), so it adds no FGA and no shot row.
     if (foulResult.basketCounts) {
+      addFieldGoal(ctx.stats, fouled.id, shotType, true);
       addPoints(ctx.stats, fouled.id, fieldGoalPoints(shotType));
+      // The and-one has no shot GameEvent but counts as an FGA, so the play
+      // log records it (shot row first, then the foul).
+      pushShotPlay(ctx, shotType, true, fouled.id, null);
     }
-    // The fouled attempt has no shot GameEvent but counts as an FGA, so the
-    // play log records it (shot row first, then the foul).
-    pushShotPlay(ctx, shotType, foulResult.basketCounts, fouled.id, null);
     pushPlay(
       ctx.stats,
       PLAY_CODE.shootingFoul,
@@ -682,21 +702,34 @@ function catchAndShootType(receiver: Player): ShotType {
   return "two_point";
 }
 
-/** Returns the credited stealer's id, or null when no steal is credited. */
+/**
+ * Returns the credited stealer's id, or null when no steal is credited.
+ * Draws one RNG value; the chance grows with the defender's steal rating
+ * relative to the ball handler's handle.
+ */
 function maybeCreditSteal(
   ctx: ExecutionContext,
   defender: Player,
   ballHandler: Player,
+  baseChance: number,
 ): PlayerId | null {
-  if (
-    defender.attributes.steal >= 70 &&
-    defender.attributes.steal + 8 >= ballHandler.attributes.ballHandling
-  ) {
-    addSteal(ctx.stats, defender.id);
-    pushEvent(ctx.stats, "steal", defender.id, ctx.input.defensiveTeamId);
-    return defender.id;
+  const { skillImpact, minChance, maxChance } = STEAL_CREDIT_CONFIG;
+  const chance = Math.min(
+    maxChance,
+    Math.max(
+      minChance,
+      baseChance +
+        ((defender.attributes.steal - ballHandler.attributes.ballHandling) /
+          RATING_MAX) *
+          skillImpact,
+    ),
+  );
+  if (!ctx.rng.chance(chance)) {
+    return null;
   }
-  return null;
+  addSteal(ctx.stats, defender.id);
+  pushEvent(ctx.stats, "steal", defender.id, ctx.input.defensiveTeamId);
+  return defender.id;
 }
 
 /**

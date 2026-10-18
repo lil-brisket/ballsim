@@ -12,6 +12,7 @@ import {
   asTeamId,
 } from "@/domain/ids";
 import { FOUL_RESOLUTION_CONFIG } from "@/systems/foul-resolution-config";
+import { SHOT_RESOLUTION_CONFIG } from "@/systems/shot-resolution-config";
 import {
   applyPossessionResolution,
   resolvePossession,
@@ -40,8 +41,8 @@ function createStubRng(nextValues: number[]): Rng {
     nextInt(): number {
       throw new Error("Stub Rng.nextInt is unused.");
     },
-    pick<T>(): T {
-      throw new Error("Stub Rng.pick is unused.");
+    pick<T>(items: readonly T[]): T {
+      return items[Math.floor(next() * items.length)]!;
     },
     chance(probability: number): boolean {
       if (!Number.isFinite(probability) || probability < 0 || probability > 1) {
@@ -364,7 +365,7 @@ describe("resolvePossession pass and assist", () => {
         receiverId: asPlayerId("off_2"),
         defenderId: asPlayerId("def_1"),
       }),
-      createStubRng([0.99]),
+      createStubRng([0.99, 0.99]),
     );
 
     expect(result.possession.action).toBe("turnover");
@@ -384,7 +385,8 @@ describe("resolvePossession turnover", () => {
         action: "turnover",
         playerId: asPlayerId("off_1"),
       }),
-      createStubRng([]),
+      // Defender pick, then a steal roll that misses.
+      createStubRng([0, 0.99]),
     );
 
     expect(result.possession.outcome).toBe("turnover");
@@ -404,7 +406,7 @@ describe("resolvePossession touch credits", () => {
         receiverId: asPlayerId("off_2"),
         defenderId: asPlayerId("def_1"),
       }),
-      createStubRng([0.99]),
+      createStubRng([0.99, 0.99]),
     );
     expect(result.playerStats).toEqual([
       emptyDelta("off_1", { turnovers: 1, touches: 1 }),
@@ -446,7 +448,7 @@ describe("resolvePossession touch credits", () => {
     expect(passer?.touches).toBe(1);
   });
 
-  it("credits the fouled shooter once on a shooting foul with FGA", () => {
+  it("credits the fouled shooter once on a missed shooting foul, with no FGA", () => {
     const result = resolvePossession(
       baseInput({
         action: "foul",
@@ -461,7 +463,9 @@ describe("resolvePossession touch credits", () => {
     );
     const fouled = result.playerStats.find((row) => row.playerId === "off_1");
     expect(fouled?.touches).toBe(1);
-    expect(fouled?.fieldGoalsAttempted).toBe(1);
+    // A fouled miss is not a field-goal attempt; the free throws are.
+    expect(fouled?.fieldGoalsAttempted).toBe(0);
+    expect(fouled?.freeThrowsAttempted).toBe(2);
   });
 });
 
@@ -682,7 +686,7 @@ describe("resolvePossession event sequencing", () => {
         action: "turnover",
         playerId: asPlayerId("off_1"),
       }),
-      createStubRng([]),
+      createStubRng([0, 0.99]),
     );
 
     expect(result.events[0]?.sequence).toBe(0);
@@ -886,7 +890,8 @@ describe("resolvePossession stocks and three-point assists", () => {
           }),
         ],
       },
-      createStubRng([0.99]),
+      // Pass turnover, then a steal roll that hits.
+      createStubRng([0.99, 0]),
     );
 
     expect(result.events.map((e) => e.type)).toEqual(["turnover", "steal"]);
@@ -1039,5 +1044,75 @@ describe("applyPossessionResolution", () => {
     expect(
       updated.playerStats.find((s) => s.playerId === "off_1")?.points,
     ).toBe(2);
+  });
+});
+
+describe("resolvePossession steals, fouled misses and home court", () => {
+  it("does not credit a steal when the steal roll misses", () => {
+    const result = resolvePossession(
+      baseInput({
+        action: "pass",
+        passerId: asPlayerId("off_1"),
+        receiverId: asPlayerId("off_2"),
+        defenderId: asPlayerId("def_1"),
+      }),
+      createStubRng([0.99, 0.99]),
+    );
+    expect(result.events.map((e) => e.type)).toEqual(["turnover"]);
+  });
+
+  it("can credit a steal on a standalone turnover to a picked defender", () => {
+    const result = resolvePossession(
+      baseInput({ action: "turnover", playerId: asPlayerId("off_1") }),
+      // Pick def_2 (second of two), then a steal roll that hits.
+      createStubRng([0.75, 0]),
+    );
+    expect(result.events.map((e) => e.type)).toEqual(["turnover", "steal"]);
+    expect(result.playerStats).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ playerId: "def_2", steals: 1 }),
+      ]),
+    );
+  });
+
+  it("records an and-one as a made field-goal attempt", () => {
+    const result = resolvePossession(
+      baseInput({
+        action: "foul",
+        foul: createFoul({
+          foulingPlayerId: asPlayerId("def_1"),
+          fouledPlayerId: asPlayerId("off_1"),
+          foulType: "shooting",
+        }),
+        shotType: "two_point",
+      }),
+      createStubRng([0, 0]),
+    );
+    const fouled = result.playerStats.find((row) => row.playerId === "off_1");
+    expect(fouled?.fieldGoalsMade).toBe(1);
+    expect(fouled?.fieldGoalsAttempted).toBe(1);
+    expect(fouled?.freeThrowsAttempted).toBe(1);
+  });
+
+  it("raises the home offense's shot probability by homeCourtAdvantage", () => {
+    const decision: PossessionDecision = {
+      action: "shot",
+      shooterId: asPlayerId("off_1"),
+      defenderId: asPlayerId("def_1"),
+      shotType: "two_point",
+    };
+    const away = resolvePossession(baseInput(decision), createStubRng([0, 0]));
+    const home = resolvePossession(
+      baseInput(decision, { offenseIsHome: true }),
+      createStubRng([0, 0]),
+    );
+    const awayShot = away.steps[0]!;
+    const homeShot = home.steps[0]!;
+    if (awayShot.type !== "shot" || homeShot.type !== "shot") {
+      throw new Error("expected shot steps");
+    }
+    expect(
+      homeShot.result.probability - awayShot.result.probability,
+    ).toBeCloseTo(SHOT_RESOLUTION_CONFIG.homeCourtAdvantage, 10);
   });
 });

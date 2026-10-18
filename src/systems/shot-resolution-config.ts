@@ -20,9 +20,14 @@ export const SHOT_RESOLUTION_CONFIG = {
   maxProbability: 0.7,
   baselineProbability: -0.18,
   twoPointAdjustment: 0.06,
-  threePointAdjustment: -0.08,
+  threePointAdjustment: -0.095,
   defensiveImpact: 0.22,
   fatigueImpact: 0.12,
+  /**
+   * Make-probability bonus on the home team's field-goal attempts. Sized for
+   * an NBA-like home edge (~+2.5 points, ~56% home wins between equal teams).
+   */
+  homeCourtAdvantage: 0.016,
 } as const;
 
 /**
