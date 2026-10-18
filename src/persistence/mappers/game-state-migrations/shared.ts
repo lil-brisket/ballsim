@@ -12,7 +12,7 @@ import type { ContractV15 } from "@/persistence/mappers/game-state-migrations/v0
 /** Pre-v49 competition/user shapes — phase fields added only in migrateV48ToV49. */
 export type CompetitionSlicePreV49 = Omit<
   GameState["competition"],
-  "phase" | "seasonEvents"
+  "phase" | "seasonEvents" | "aiTradeSearch"
 >;
 
 export type UserSlicePreV49 = Omit<

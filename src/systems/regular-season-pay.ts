@@ -12,9 +12,27 @@ import type { GameState } from "@/state/game-state";
 export function regularSeasonDateSpan(
   state: GameState,
 ): { start: string; end: string } | null {
+  const games = state.competition.games;
+  if (!spanCache.has(games)) {
+    spanCache.set(games, computeRegularSeasonDateSpan(games));
+  }
+  const span = spanCache.get(games);
+  return span == null ? null : { ...span };
+}
+
+// Payroll math reads the span for every team on every trade evaluation;
+// memoize per immutable games map.
+const spanCache = new WeakMap<
+  GameState["competition"]["games"],
+  { start: string; end: string } | null
+>();
+
+function computeRegularSeasonDateSpan(
+  games: GameState["competition"]["games"],
+): { start: string; end: string } | null {
   let start: string | null = null;
   let end: string | null = null;
-  for (const game of Object.values(state.competition.games)) {
+  for (const game of Object.values(games)) {
     if (game.competitionType !== "regular_season") {
       continue;
     }

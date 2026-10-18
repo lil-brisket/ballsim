@@ -63,7 +63,7 @@ import type {
   FranchisePhaseState,
 } from "@/systems/phase-engine/phase-types";
 
-export const GAME_STATE_SCHEMA_VERSION = 67;
+export const GAME_STATE_SCHEMA_VERSION = 68;
 
 /** League personnel market for staff free agency (not a business-finance concept). */
 export type StaffMarketState = {
@@ -151,6 +151,23 @@ export type CompetitionSlice = {
    * Cleared on season rollover. Planned when the regular season initializes.
    */
   seasonEvents: SeasonEventsState;
+  /**
+   * CPU trade-search memory (schema v68+). A team re-runs its daily trade
+   * search only when its inputs changed or the last search is stale; stored
+   * in the save so batched and day-by-day advances play out the same.
+   */
+  aiTradeSearch: AiTradeSearchState;
+};
+
+export type AiTradeSearchRecord = {
+  /** Calendar date of the team's last full trade search. */
+  lastSearchDate: string;
+  /** Hash of the trade-relevant inputs that search saw. */
+  inputsKey: string;
+};
+
+export type AiTradeSearchState = {
+  byTeamId: Record<string, AiTradeSearchRecord>;
 };
 
 /** Max entries retained in competition.seasonEventLog. */

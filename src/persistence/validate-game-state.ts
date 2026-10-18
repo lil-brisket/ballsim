@@ -256,6 +256,7 @@ export function validateGameState(state: unknown): asserts state is GameState {
     "developmentLeague",
     "seasonEventLog",
     "seasonEvents",
+    "aiTradeSearch",
   ] as const) {
     if (!(key in competition)) {
       fail(`competition missing required field "${key}".`);
@@ -350,6 +351,21 @@ export function validateGameState(state: unknown): asserts state is GameState {
     competition.standings.byTeamId,
     "competition.standings.byTeamId",
   );
+
+  assertRecord(competition.aiTradeSearch, "competition.aiTradeSearch");
+  assertRecord(
+    competition.aiTradeSearch.byTeamId,
+    "competition.aiTradeSearch.byTeamId",
+  );
+  for (const [teamId, record] of Object.entries(
+    competition.aiTradeSearch.byTeamId,
+  )) {
+    const path = `competition.aiTradeSearch.byTeamId[${teamId}]`;
+    assertRecord(record, path);
+    assertNonEmptyString(record.lastSearchDate, `${path}.lastSearchDate`);
+    parseCalendarDate(record.lastSearchDate);
+    assertNonEmptyString(record.inputsKey, `${path}.inputsKey`);
+  }
 
   if (competition.playoffs === null || competition.playoffs === undefined) {
     fail("competition.playoffs is required.");

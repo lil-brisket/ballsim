@@ -1,3 +1,4 @@
+import { calendarDaysBetween } from "@/domain/calendar-date";
 import type { ContractInput } from "@/domain/entities/contract";
 import type { DraftClass } from "@/domain/entities/draft";
 import type { Player, PlayerPosition } from "@/domain/entities/player";
@@ -50,12 +51,19 @@ import {
   executeTrade,
   generateAiTradeProposal,
   getTradeBlock,
+  wasRecentlyAcquired,
 } from "@/systems/trades";
 import {
   getActiveOwnerDecision,
   tryEnqueueCpuToUserTradeOffer,
 } from "@/systems/owner-decisions";
 import { tryEnqueueAnyOwnedTeamTradeOffer } from "@/systems/owner-decisions/owned-team-trade-offer";
+import {
+  isTradeSearchDue,
+  teamTradeSearchKey,
+  tradeMarketKey,
+  withTradeSearchesRecorded,
+} from "@/systems/trades/ai-trade-search-gate";
 import { isUserControlledTeam } from "@/state/owner-context";
 import { selectProspectFromTeamScouting } from "@/systems/draft/mock-draft";
 import {
@@ -381,11 +389,32 @@ function runAiTrades(state: GameState): SystemResult {
 
   const calendar = getCalendarContext(state);
   let current = state;
-  const teamIds = (Object.keys(current.world.teams) as TeamId[])
-    .filter((teamId) => !isUserControlledTeam(current, teamId))
-    .sort((a, b) => (a < b ? -1 : a > b ? 1 : 0));
+  // Only the first executed trade (and first user offer) of a day counts, so
+  // rotate the starting team daily instead of always favouring low ids.
+  const teamIds = rotateByDate(
+    (Object.keys(current.world.teams) as TeamId[])
+      .filter((teamId) => !isUserControlledTeam(current, teamId))
+      .sort((a, b) => (a < b ? -1 : a > b ? 1 : 0)),
+    date,
+  );
 
   let queuedUserOffer = false;
+  // Gate against start-of-day inputs; record end-of-day inputs (below) so
+  // tomorrow's start state compares equal when nothing else changed.
+  const marketKey = tradeMarketKey(state);
+  const searched: TeamId[] = [];
+  const recordSearches = (next: GameState): GameState => {
+    const endMarketKey = tradeMarketKey(next);
+    return withTradeSearchesRecorded(
+      next,
+      new Map(
+        searched.map((teamId) => [
+          teamId,
+          teamTradeSearchKey(next, teamId, endMarketKey),
+        ]),
+      ),
+    );
+  };
 
   for (const teamId of teamIds) {
     const resolved = resolveFranchisePreferences(current, teamId);
@@ -412,6 +441,17 @@ function runAiTrades(state: GameState): SystemResult {
     ) {
       continue;
     }
+
+    if (
+      !isTradeSearchDue(
+        state,
+        teamId,
+        teamTradeSearchKey(state, teamId, marketKey),
+      )
+    ) {
+      continue;
+    }
+    searched.push(teamId);
 
     // Rebuilders sell more readily near the deadline; contenders list less surplus.
     if (
@@ -457,6 +497,8 @@ function runAiTrades(state: GameState): SystemResult {
     if (!executed.success) {
       continue;
     }
+    // No search record: the trade changed rosters, so every team's inputs
+    // differ tomorrow and all of them search again.
     current = withAppliedGameplayConsequence(executed.state, key);
     return systemResult(current, executed.events);
   }
@@ -465,11 +507,24 @@ function runAiTrades(state: GameState): SystemResult {
     const ownedOffer = tryEnqueueAnyOwnedTeamTradeOffer(current);
     if (ownedOffer.outcome === "queued") {
       current = ownedOffer.state;
-      return systemResult(current);
+      return systemResult(recordSearches(current));
     }
   }
 
-  return systemResult(withAppliedGameplayConsequence(current, key));
+  return systemResult(
+    recordSearches(withAppliedGameplayConsequence(current, key)),
+  );
+}
+
+const ROTATION_EPOCH = "2000-01-01";
+
+/** Deterministic daily rotation (no RNG): day N starts at index N mod length. */
+export function rotateByDate<T>(items: readonly T[], date: string): T[] {
+  if (items.length === 0) {
+    return [];
+  }
+  const offset = calendarDaysBetween(ROTATION_EPOCH, date) % items.length;
+  return [...items.slice(offset), ...items.slice(0, offset)];
 }
 
 function ensureSurplusOnBlock(
@@ -702,6 +757,8 @@ function findSurplusPlayer(
     .map((playerId) => state.world.players[playerId])
     .filter((player): player is Player => player !== undefined)
     .filter((player) => surplusPositions.includes(player.position))
+    // A player just acquired by trade is not re-listed (no ping-pong trades).
+    .filter((player) => !wasRecentlyAcquired(state, player.id))
     .sort((a, b) => {
       // Rebuild / cash-poor: prefer trading older / lower youth value first
       if (prefs) {

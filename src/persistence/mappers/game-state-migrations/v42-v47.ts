@@ -427,7 +427,7 @@ export type GameStateV44 = {
   };
   competition: Omit<
     GameState["competition"],
-    "seasonEventLog" | "phase" | "seasonEvents"
+    "seasonEventLog" | "phase" | "seasonEvents" | "aiTradeSearch"
   > & {
     seasonEventLog?: GameState["competition"]["seasonEventLog"];
   };

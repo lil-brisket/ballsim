@@ -253,6 +253,7 @@ describe("season lifecycle", () => {
         schedule: { seasonId, gameIds: [], gameIdsByDate: {} },
         games: {},
         playByPlay: {},
+        aiTradeSearch: { byTeamId: {} },
         standings,
         playoffs: createEmptyPlayoffTournament(),
         developmentLeague: {

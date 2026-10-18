@@ -194,6 +194,7 @@ function createEightTeamGameState(rngSeed: number): {
       },
       games: {},
       playByPlay: {},
+      aiTradeSearch: { byTeamId: {} },
       standings,
       playoffs: createEmptyPlayoffTournament(),
       developmentLeague: {
