@@ -141,6 +141,21 @@ export function canActivateDraft(state: GameState): {
   return { allowed: violations.length === 0, violations };
 }
 
+/**
+ * True when this season's draft class (`draftYearForSeason`) exists and is
+ * not complete. Only that class counts: last season's draft, finished or
+ * not, never stands in for it.
+ */
+export function hasUnfinishedDraftForYear(
+  state: GameState,
+  seasonYear: number,
+): boolean {
+  const draftYear = draftYearForSeason(seasonYear);
+  return Object.values(state.world.drafts).some(
+    (draft) => draft.seasonYear === draftYear && draft.status !== "complete",
+  );
+}
+
 export function isDraftCompleteForYear(
   state: GameState,
   seasonYear: number,
