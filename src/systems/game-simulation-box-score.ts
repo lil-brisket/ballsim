@@ -72,11 +72,12 @@ export type SimulateBoxScoreContext = {
  * tail); engine v9 lowers the intercept 1.2 for the three-point adjustment.
  * Engine v10 (faster pace, fewer turnovers, more free throws) rescales the
  * whole model by 1.107 with intercept +7.7, fitted (OLS) on 7,200 Lab
- * possession team-games (seeds 101-220, RMSE 12.8). Home court is a separate
+ * possession team-games (seeds 101-220, RMSE 12.8); engine v12 lowers the
+ * intercept 1.0 for defensive matchups. Home court is a separate
  * additive term, {@link HOME_COURT_POINTS}.
  */
 const EXPECTED_POINTS_MODEL = {
-  intercept: -31.761,
+  intercept: -32.761,
   /** Top-8 mean of {@link effectiveScoringAbility}. */
   shooting: 0.687,
   /** Mean effectiveScoringAbility of the three best scorers in the top 8. */
@@ -142,7 +143,7 @@ const ASSIST_TO_FGM_RATE = 0.605;
  * when shot or FT config changes (engine v8 lowered the three-point and FT
  * intercepts so Lab and league rates match the possession sim with the
  * shooting knee and the steeper star exponent; engine v10 lowers the
- * three-point intercept 0.009 for the higher scoring level).
+ * three-point intercept 0.014 for the higher scoring level and matchups).
  */
 const BOX_SCORE_SHOT_CALIBRATION = {
   threeShareBase: -0.0055,
@@ -156,7 +157,7 @@ const BOX_SCORE_SHOT_CALIBRATION = {
   // Elite shooters are kept believable by the shared diminishing-returns
   // curve (effectiveShootingAbility), not a box-score-only knee.
   twoPoint: { intercept: 0.0425, slope: 0.9772 },
-  threePoint: { intercept: 0.045, slope: 0.951 },
+  threePoint: { intercept: 0.04, slope: 0.951 },
   freeThrow: { intercept: -0.008, slope: 0.9984 },
 } as const;
 

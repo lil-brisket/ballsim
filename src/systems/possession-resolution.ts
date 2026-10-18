@@ -28,6 +28,7 @@ import {
   DIRECT_SHOT_ASSIST_CONFIG,
   STEAL_CREDIT_CONFIG,
 } from "@/systems/pass-resolution-config";
+import { pickMatchedDefender } from "@/systems/defensive-matchups";
 import {
   buildOffensiveUsageProfiles,
   pickWeightedPlayer,
@@ -482,7 +483,12 @@ function resolveTurnoverBranch(ctx: ExecutionContext): void {
   addTouch(ctx.stats, player.id);
   addTurnover(ctx.stats, player.id);
   pushEvent(ctx.stats, "turnover", player.id, ctx.input.offensiveTeamId);
-  const defender = ctx.rng.pick(ctx.input.defensivePlayers);
+  const defender = pickMatchedDefender(
+    player,
+    ctx.input.offensivePlayers,
+    ctx.input.defensivePlayers,
+    ctx.rng,
+  );
   const stealerId = maybeCreditSteal(
     ctx,
     defender,

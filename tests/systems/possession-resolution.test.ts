@@ -1125,16 +1125,16 @@ describe("resolvePossession steals, fouled misses and home court", () => {
     expect(result.events.map((e) => e.type)).toEqual(["turnover"]);
   });
 
-  it("can credit a steal on a standalone turnover to a picked defender", () => {
+  it("credits a standalone-turnover steal to the ball handler's matched defender", () => {
     const result = resolvePossession(
       baseInput({ action: "turnover", playerId: asPlayerId("off_1") }),
-      // Pick def_2 (second of two), then a steal roll that hits.
+      // No switch, so PG off_1 is guarded by PG def_1; then a steal roll that hits.
       createStubRng([0.75, 0]),
     );
     expect(result.events.map((e) => e.type)).toEqual(["turnover", "steal"]);
     expect(result.playerStats).toEqual(
       expect.arrayContaining([
-        expect.objectContaining({ playerId: "def_2", steals: 1 }),
+        expect.objectContaining({ playerId: "def_1", steals: 1 }),
       ]),
     );
   });

@@ -50,7 +50,8 @@ export const PASS_RESOLUTION_CONFIG = {
  *
  * Pass turnovers are mostly live balls and use `passTurnoverBase` with the
  * matched-up defender. Standalone turnovers (lost handles, travels, offensive
- * errors) use `standaloneTurnoverBase` and credit a random on-court defender.
+ * errors) use `standaloneTurnoverBase` and credit the ball handler's matched
+ * defender (`pickMatchedDefender`).
  */
 /**
  * Assists on made shots from the `shot` action, which stands in for ball

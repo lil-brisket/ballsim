@@ -86,5 +86,14 @@
  * teammate pick), preferring the passer of a completed pass that kept the
  * ball on the previous step. Assisted share of made field goals ~50% -> ~62%,
  * assists ~21 -> ~26 per team. Box score assist rate 0.51 -> 0.605.
+ *
+ * Version 12: defenders are matched by position slot (`pickMatchedDefender`)
+ * instead of picked uniformly: shot, pass, foul and standalone-turnover
+ * defenders guard their man, with a 20% switch to a random defender and, on
+ * two-point shots, a 25% rim-help contest by the best shot blocker. One RNG
+ * draw per pick, as before; shot type is now chosen before the shot defender.
+ * An elite defender now holds their man's FG% down instead of spreading the
+ * effect over the whole offense. League scoring ~1 PPG lower; box score
+ * points intercept -1.0.
  */
-export const ENGINE_VERSION = 11;
+export const ENGINE_VERSION = 12;
