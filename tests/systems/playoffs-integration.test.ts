@@ -16,8 +16,10 @@ import {
 } from "@/systems/playoff-config";
 import {
   simulateNextPlayoffGame,
+  simulatePlayoffDay,
   startPlayoffs,
 } from "@/systems/playoff-simulation";
+import { addCalendarDays } from "@/domain/calendar-date";
 import { simulateSeason } from "@/systems/season-simulation";
 import { updateStandings } from "@/systems/standings";
 import { createPhaseEBusinessDefaults } from "@/state/phase-e-defaults";
@@ -375,6 +377,130 @@ describe("playoffs season integration", () => {
     expect(Object.keys(current.competition.playByPlay)).toHaveLength(
       logsBeforePlayoffs + ownerGames.length,
     );
+  });
+
+  describe("simulatePlayoffDay", () => {
+    function playoffsStarted(): {
+      state: GameState;
+      rng: ReturnType<typeof createSeededRng>;
+    } {
+      resetDomainEventSequenceForTests();
+      const { state, rng } = createEightTeamGameState(TEST_RNG_SEED);
+      const playoffTeams = state.settings.playoffs.playoffTeams;
+      const regular = simulateSeason(
+        {
+          ...state,
+          settings: {
+            ...state.settings,
+            playoffs: { ...state.settings.playoffs, playoffTeams: 0 },
+          },
+        },
+        rng,
+      ).state;
+      const restored: GameState = {
+        ...regular,
+        settings: {
+          ...regular.settings,
+          playoffs: { ...regular.settings.playoffs, playoffTeams },
+        },
+      };
+      return { state: startPlayoffs(restored, rng).state, rng };
+    }
+
+    function nextDay(state: GameState): GameState {
+      return {
+        ...state,
+        world: {
+          ...state.world,
+          calendar: {
+            ...state.world.calendar,
+            currentDate: addCalendarDays(state.world.calendar.currentDate, 1),
+          },
+        },
+      };
+    }
+
+    it("plays one game per active series, dated today", () => {
+      const { state, rng } = playoffsStarted();
+      const today = state.world.calendar.currentDate;
+      const active = state.competition.playoffs.series.filter(
+        (series) => series.status === "active",
+      );
+      expect(active.length).toBeGreaterThan(1);
+
+      const result = simulatePlayoffDay(state, rng);
+      const completed = result.events.filter(
+        (event) => event.type === "GameCompleted",
+      );
+      expect(completed).toHaveLength(active.length);
+      for (const series of result.state.competition.playoffs.series) {
+        if (!active.some((a) => a.id === series.id)) continue;
+        expect(series.gameIds).toHaveLength(1);
+        const game = result.state.competition.games[series.gameIds[0]!]!;
+        expect(game.date).toBe(today);
+        expect(game.status).toBe("final");
+      }
+
+      // Same date again: nothing more to play today.
+      const again = simulatePlayoffDay(result.state, rng);
+      expect(again.events).toHaveLength(0);
+      expect(again.state).toBe(result.state);
+    });
+
+    it("finishes within a series length per round and never doubles up a team", () => {
+      const started = playoffsStarted();
+      let state = started.state;
+      const rng = started.rng;
+      const startDate = state.world.calendar.currentDate;
+      // Rounds are zero-based.
+      const rounds =
+        Math.max(
+          ...state.competition.playoffs.series.map((series) => series.round),
+        ) + 1;
+      const seriesLength = state.settings.playoffs.seriesLength;
+
+      let days = 0;
+      while (state.competition.playoffs.status !== "complete" && days < 100) {
+        state = nextDay(simulatePlayoffDay(state, rng).state);
+        days += 1;
+      }
+      expect(state.competition.playoffs.status).toBe("complete");
+      expect(days).toBeLessThanOrEqual(rounds * seriesLength);
+
+      const teamDates = new Set<string>();
+      for (const series of state.competition.playoffs.series) {
+        for (const gameId of series.gameIds) {
+          const game = state.competition.games[gameId]!;
+          expect(game.date >= startDate).toBe(true);
+          for (const teamId of [game.homeTeamId, game.awayTeamId]) {
+            const key = `${teamId}:${game.date}`;
+            expect(teamDates.has(key)).toBe(false);
+            teamDates.add(key);
+          }
+        }
+      }
+    });
+
+    it("waits a day when a playoff game is already dated today (play-in)", () => {
+      const { state, rng } = playoffsStarted();
+      const today = state.world.calendar.currentDate;
+      const someGame = Object.values(state.competition.games)[0]!;
+      const withPlayIn: GameState = {
+        ...state,
+        competition: {
+          ...state.competition,
+          games: {
+            ...state.competition.games,
+            [someGame.id]: {
+              ...someGame,
+              competitionType: "playoffs",
+              date: today,
+            },
+          },
+        },
+      };
+      expect(simulatePlayoffDay(withPlayIn, rng).events).toHaveLength(0);
+    });
   });
 
   it("runs 4-team seasons through playoffs to a champion", () => {

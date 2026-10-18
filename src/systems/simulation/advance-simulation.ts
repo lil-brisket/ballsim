@@ -48,6 +48,7 @@ import { mergeDraftPicksForSeason } from "@/domain/draft-picks/generate-draft-pi
 import { processDailyFanSentimentAfterGames } from "@/systems/fan-sentiment";
 import { applyMediaFromDomainEvents } from "@/systems/media";
 import { processLeaguePlayoffBonuses } from "@/systems/playoff-financial-bonuses";
+import { playoffSeriesIdsPlayingToday } from "@/systems/playoff-simulation";
 import { processHomeGameTicketRevenue } from "@/systems/ticket-revenue";
 import { applyPromotionDownstreamEffects } from "@/systems/game-day-promotions/apply-promotion-downstream-effects";
 import { processNarrativeLayer } from "@/systems/narrative";
@@ -292,6 +293,14 @@ function createAdvanceSession(
 
       if (dayResult.regularSeasonInitialized && options.stopOnPhaseChange) {
         stopReason = "phase_change";
+        finished = true;
+        return false;
+      }
+
+      if (
+        options.stopWhenPlayoffsComplete === true &&
+        current.competition.playoffs.status === "complete"
+      ) {
         finished = true;
         return false;
       }
@@ -591,23 +600,15 @@ function ownerHasScheduledGameOnDate(
   if (scheduled != null && scheduled.status === "scheduled") {
     return true;
   }
-  const playoffs = state.competition.playoffs;
-  if (playoffs.status !== "in_progress") {
+  if (date !== state.world.calendar.currentDate) {
     return false;
   }
-  const active = [...playoffs.series]
-    .filter((series) => series.status === "active")
-    .sort((left, right) => {
-      if (left.round !== right.round) {
-        return left.round - right.round;
-      }
-      return left.slot - right.slot;
-    });
-  const next = active[0];
-  if (next == null) {
-    return false;
-  }
-  return next.higherSeedTeamId === teamId || next.lowerSeedTeamId === teamId;
+  const playingToday = new Set(playoffSeriesIdsPlayingToday(state));
+  return state.competition.playoffs.series.some(
+    (series) =>
+      playingToday.has(series.id) &&
+      (series.higherSeedTeamId === teamId || series.lowerSeedTeamId === teamId),
+  );
 }
 
 function ownerTeamGameProgress(

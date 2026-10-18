@@ -21,6 +21,7 @@ import {
   canAdvancePhase,
   getActivePhaseId,
   previewAdvance,
+  setActivePhase,
   type LeaguePhaseId,
 } from "@/systems/phase-engine";
 import { canBeginRegularSeason } from "@/systems/league-rules";
@@ -170,7 +171,7 @@ export function syncPhaseForward(
         events: capped.events,
       };
     }
-    const begun = beginRegularSeasonFromPreseason(prepared);
+    const begun = beginRegularSeasonFromPreseason(prepared, rng);
     return {
       state: begun.state,
       events: [...capped.events, ...begun.events],
@@ -330,10 +331,15 @@ export function syncPhaseForward(
     events.push(...exitResult.events);
 
     if (fromPhaseId === "preseason.preparation") {
-      const begun = beginRegularSeasonFromPreseason(current);
+      const begun = beginRegularSeasonFromPreseason(current, rng);
       current = begun.state;
       events.push(...begun.events);
     } else {
+      // Move the pointer like advancePhase would; without this the hooks
+      // re-run every day while the phase never changes.
+      if (getActivePhaseId(current) === fromPhaseId) {
+        current = setActivePhase(current, nextPhaseId);
+      }
       const enterResult = processPhaseEnter(current, nextPhaseId, rng);
       current = enterResult.state;
       events.push(...enterResult.events);

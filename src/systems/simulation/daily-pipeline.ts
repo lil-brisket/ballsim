@@ -4,7 +4,7 @@ import { systemResult, type SystemResult } from "@/domain/system-result";
 import type { GameState } from "@/state/game-state";
 import type { Game } from "@/domain/entities/game";
 import { simulateGamesForDate } from "@/systems/game-simulation";
-import { simulateNextPlayoffGame } from "@/systems/playoff-simulation";
+import { simulatePlayoffDay } from "@/systems/playoff-simulation";
 import { updateStandings } from "@/systems/standings";
 import type { SimulationProfiler } from "@/systems/simulation/simulation-profiler";
 import {
@@ -109,7 +109,7 @@ export function runDailyPipeline(
     current.competition.playoffs.status === "in_progress"
   ) {
     const playoffStart = performance.now();
-    const playoffResult = simulateNextPlayoffGame(current, rng, {
+    const playoffResult = simulatePlayoffDay(current, rng, {
       fidelity: options?.fidelity,
       ownerTeamId: options?.ownerTeamId,
     });

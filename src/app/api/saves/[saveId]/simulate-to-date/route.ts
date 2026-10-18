@@ -32,10 +32,26 @@ export async function POST(
   }
 
   const encoder = new TextEncoder();
+  // A closed tab must not abort the run: the simulation keeps going and saves,
+  // and writes to the dead stream are dropped.
+  let clientGone = false;
   const stream = new ReadableStream({
     async start(controller) {
       const send = (event: SimulateToDateStreamEvent) => {
-        controller.enqueue(encoder.encode(`${JSON.stringify(event)}\n`));
+        if (clientGone) return;
+        try {
+          controller.enqueue(encoder.encode(`${JSON.stringify(event)}\n`));
+        } catch {
+          clientGone = true;
+        }
+      };
+      const close = () => {
+        if (clientGone) return;
+        try {
+          controller.close();
+        } catch {
+          clientGone = true;
+        }
       };
       try {
         const result = await runWithSimulationDedupe(saveId, () =>
@@ -54,7 +70,7 @@ export async function POST(
         );
         if (!result.ok) {
           send({ type: "error", ok: false, message: result.error });
-          controller.close();
+          close();
           return;
         }
         revalidatePath(`/dashboard/${saveId}`, "layout");
@@ -69,7 +85,7 @@ export async function POST(
           requestedTargetDate: targetDate,
           stopReason: result.simulation.stopReason,
         });
-        controller.close();
+        close();
       } catch (error) {
         const message = isSimulationInFlight(error)
           ? "Simulation already in progress for this save."
@@ -77,8 +93,11 @@ export async function POST(
             ? error.message
             : "Simulation failed.";
         send({ type: "error", ok: false, message });
-        controller.close();
+        close();
       }
+    },
+    cancel() {
+      clientGone = true;
     },
   });
 

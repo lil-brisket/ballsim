@@ -8,10 +8,7 @@ import { generateSchedule } from "@/systems/schedule-generation";
 import { generateDevelopmentLeagueSchedule } from "@/systems/development-league/schedule-generation";
 import { transitionPhase } from "@/systems/simulation/phase-machine";
 import { getActivePhaseId, setActivePhase } from "@/systems/phase-engine";
-import {
-  canBeginRegularSeason,
-  canBeginPlayoffs,
-} from "@/systems/league-rules";
+import { canBeginRegularSeason } from "@/systems/league-rules";
 import { snapshotTradeDeadline } from "@/systems/league-rules/snapshot-trade-deadline";
 import { enforceMaxRosterViaDevelopmentLeague } from "@/systems/development-league/enforce-roster-cap";
 import { derivePlannedRegularSeasonStartDate } from "@/systems/simulation/planned-season-dates";
@@ -75,6 +72,7 @@ function withRegularSeasonStartDate(
  */
 export function beginRegularSeasonFromPreseason(
   state: GameState,
+  rng?: Rng,
 ): SystemResult {
   if (getActivePhaseId(state) !== "preseason.preparation") {
     throw new Error(
@@ -91,11 +89,13 @@ export function beginRegularSeasonFromPreseason(
   current = capped.state;
   events.push(...capped.events);
 
-  const rng = createSeededRng(current.meta.rngState);
-  const staffed = runLeagueStaffAiManagement(current, rng);
+  // Draw from the caller's stream; a fresh one seeded from meta.rngState
+  // would replay numbers the caller already used this advance.
+  const stream = rng ?? createSeededRng(current.meta.rngState);
+  const staffed = runLeagueStaffAiManagement(current, stream);
   current = {
     ...staffed.state,
-    meta: { ...staffed.state.meta, rngState: rng.getState() },
+    meta: { ...staffed.state.meta, rngState: stream.getState() },
   };
   events.push(...staffed.events);
 
@@ -179,10 +179,6 @@ export function processSeasonLifecycle(
     current = yearly.state;
     events.push(...yearly.events);
 
-    const playoffGate = canBeginPlayoffs(current);
-    if (!playoffGate.allowed && current.settings.playoffs.playoffTeams > 0) {
-      // Standings/seeds may still be building — fall through only when complete check fails for empty
-    }
     const playoffTeams = current.settings.playoffs.playoffTeams;
     const liveTeamCount = Object.keys(current.world.teams).length;
 

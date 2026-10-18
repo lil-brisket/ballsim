@@ -22,6 +22,7 @@ import { bootstrapWorld } from "@/systems/world-pipeline";
 import { beginRegularSeasonFromPreseason } from "@/systems/simulation/season-lifecycle";
 import { resetDomainEventSequenceForTests } from "@/domain/events/domain-event";
 import { serializeGameState } from "@/persistence/mappers/game-state-mapper";
+import { endOfSeasonSimulationBound } from "@/systems/league-rules/league-calendar";
 
 async function seedPreseasonSave(id: string, seed: number) {
   resetDomainEventSequenceForTests();
@@ -93,6 +94,35 @@ describe("simulate-to-date", () => {
       expect(result.error).toMatch(/Already at/i);
     }
   });
+
+  it("simulates to the end of the season after games have been played", async () => {
+    const { store, state } = await seedRegularSave("sim_end_of_season", 34);
+    const started = await advanceOwnerTime(
+      "sim_end_of_season",
+      { targetDate: addCalendarDays(state.world.calendar.currentDate, 3) },
+      store,
+    );
+    expect(started.ok).toBe(true);
+    const midSeason = (await store.load("sim_end_of_season"))!.state;
+    const anyFinal = Object.values(midSeason.competition.games).some(
+      (game) => game.status === "final",
+    );
+    expect(anyFinal).toBe(true);
+    const bound = endOfSeasonSimulationBound(midSeason);
+    expect(bound).not.toBeNull();
+
+    const result = await advanceOwnerTime(
+      "sim_end_of_season",
+      { targetMode: "end_of_season", stopOnPhaseChange: false },
+      store,
+    );
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    const after = (await store.load("sim_end_of_season"))!.state;
+    // Owner decisions may pause the jump; the target itself must be valid.
+    expect(result.simulation.daysAdvanced).toBeGreaterThan(0);
+    expect(after.world.calendar.currentDate <= bound!).toBe(true);
+  }, 120_000);
 
   it("advances sequentially to a future date", async () => {
     const { store, state } = await seedRegularSave("sim_forward", 33);
