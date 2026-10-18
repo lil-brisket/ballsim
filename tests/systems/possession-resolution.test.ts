@@ -200,7 +200,8 @@ describe("resolvePossession made shots", () => {
         defenderId: asPlayerId("def_1"),
         shotType: "two_point",
       }),
-      createStubRng([0]),
+      // make, then no direct-shot assist
+      createStubRng([0, 0.99]),
     );
 
     expect(result.possession.action).toBe("shot");
@@ -222,6 +223,7 @@ describe("resolvePossession made shots", () => {
     });
     expect(result.steps).toHaveLength(1);
     expect(result.steps[0]?.type).toBe("shot");
+    expect(result.continuingPasserId).toBeNull();
   });
 
   it("credits three points on a made three-point shot", () => {
@@ -232,11 +234,72 @@ describe("resolvePossession made shots", () => {
         defenderId: asPlayerId("def_1"),
         shotType: "three_point",
       }),
-      createStubRng([0]),
+      createStubRng([0, 0.99]),
     );
 
     expect(result.pointsScored).toBe(3);
     expect(result.playerStats[0]?.points).toBe(3);
+  });
+});
+
+describe("resolvePossession direct-shot assists", () => {
+  const madeTwo: PossessionDecision = {
+    action: "shot",
+    shooterId: asPlayerId("off_1"),
+    defenderId: asPlayerId("def_1"),
+    shotType: "two_point",
+  };
+
+  it("credits the carried passer when the assist roll succeeds", () => {
+    const result = resolvePossession(
+      baseInput(madeTwo, { assistPasserId: asPlayerId("off_2") }),
+      // make, assist roll
+      createStubRng([0, 0]),
+    );
+
+    const passer = result.playerStats.find((row) => row.playerId === "off_2");
+    expect(passer?.assists).toBe(1);
+    expect(result.events.map((e) => e.type)).toEqual(["shot_made", "assist"]);
+  });
+
+  it("credits no assist when the roll fails", () => {
+    const result = resolvePossession(
+      baseInput(madeTwo, { assistPasserId: asPlayerId("off_2") }),
+      createStubRng([0, 0.99]),
+    );
+
+    expect(result.playerStats.every((row) => row.assists === 0)).toBe(true);
+    expect(result.events.map((e) => e.type)).toEqual(["shot_made"]);
+  });
+
+  it.each([
+    ["is the shooter", "off_1"],
+    ["is not on court", "off_9"],
+    ["is absent", null],
+  ])("picks another teammate when the carried passer %s", (_label, carried) => {
+    const result = resolvePossession(
+      baseInput(madeTwo, {
+        assistPasserId: carried == null ? null : asPlayerId(carried),
+      }),
+      // make, assist roll, weighted teammate pick (only off_2 is eligible)
+      createStubRng([0, 0, 0.5]),
+    );
+
+    const assister = result.playerStats.find((row) => row.assists > 0);
+    expect(assister?.playerId).toBe("off_2");
+    expect(
+      result.playerStats.find((row) => row.playerId === "off_1"),
+    ).toMatchObject({ assists: 0 });
+  });
+
+  it("draws nothing extra when the shooter has no teammate on court", () => {
+    const result = resolvePossession(
+      baseInput(madeTwo, { offensivePlayers: offensePlayers().slice(0, 1) }),
+      createStubRng([0]),
+    );
+
+    expect(result.pointsScored).toBe(2);
+    expect(result.playerStats.every((row) => row.assists === 0)).toBe(true);
   });
 });
 
@@ -349,6 +412,7 @@ describe("resolvePossession pass and assist", () => {
     expect(result.possession.outcome).toBe("pass_completed");
     expect(result.steps.map((s) => s.type)).toEqual(["pass"]);
     expect(result.events).toEqual([]);
+    expect(result.continuingPasserId).toBe("off_1");
     expect(result.pointsScored).toBe(0);
     expect(result.scoringTeamId).toBeNull();
     expect(result.nextPossession).toEqual({
@@ -1032,7 +1096,7 @@ describe("applyPossessionResolution", () => {
         defenderId: asPlayerId("def_1"),
         shotType: "two_point",
       }),
-      createStubRng([0]),
+      createStubRng([0, 0.99]),
     );
 
     const updated = applyPossessionResolution(game, resolution);
@@ -1101,10 +1165,13 @@ describe("resolvePossession steals, fouled misses and home court", () => {
       defenderId: asPlayerId("def_1"),
       shotType: "two_point",
     };
-    const away = resolvePossession(baseInput(decision), createStubRng([0, 0]));
+    const away = resolvePossession(
+      baseInput(decision),
+      createStubRng([0, 0.99]),
+    );
     const home = resolvePossession(
       baseInput(decision, { offenseIsHome: true }),
-      createStubRng([0, 0]),
+      createStubRng([0, 0.99]),
     );
     const awayShot = away.steps[0]!;
     const homeShot = home.steps[0]!;

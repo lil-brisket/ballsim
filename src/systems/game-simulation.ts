@@ -691,6 +691,7 @@ function simulatePeriod(args: {
   let offensiveTeamId = args.offensiveTeamId;
   let defensiveTeamId = args.defensiveTeamId;
   const teamFouls: TeamFoulCounters = { home: 0, away: 0 };
+  let assistPasserId: PlayerId | null = null;
   const scoreAtPeriodStart: GameScore = {
     home: sim.homeScore,
     away: sim.awayScore,
@@ -764,9 +765,11 @@ function simulatePeriod(args: {
         defensivePressureMultiplier:
           tactical.defensiveModifiers.defensivePressureMultiplier,
         recordPlays: sim.playByPlay != null,
+        assistPasserId,
       },
       args.rng,
     );
+    assistPasserId = resolution.continuingPasserId;
     args.timers.addResolution(performance.now() - resolutionStart);
 
     const statsStart = performance.now();

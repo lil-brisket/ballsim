@@ -91,6 +91,7 @@ describe("requestPossessionSeconds pace", () => {
       pointsScored: 0,
       scoringTeamId: null,
       defensiveTeamFoulsAfter: 0,
+      continuingPasserId: null,
       nextPossession: {
         offensiveTeamId: asTeamId("away"),
         defensiveTeamId: asTeamId("home"),

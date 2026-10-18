@@ -80,5 +80,11 @@
  * Box score rescales its points model (OLS on held-out Lab possession
  * games), possessions 82-92 -> 94-104, and its turnover, steal, defensive
  * rebound and free-throw share rates.
+ *
+ * Version 11: made shots from the `shot` action are assisted 30% of the time
+ * (`DIRECT_SHOT_ASSIST_CONFIG`, one RNG draw per made direct shot plus a
+ * teammate pick), preferring the passer of a completed pass that kept the
+ * ball on the previous step. Assisted share of made field goals ~50% -> ~62%,
+ * assists ~21 -> ~26 per team. Box score assist rate 0.51 -> 0.605.
  */
-export const ENGINE_VERSION = 10;
+export const ENGINE_VERSION = 11;

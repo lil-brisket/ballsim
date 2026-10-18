@@ -127,8 +127,8 @@ const BOX_SCORE_MINUTES_BY_AVAILABILITY: Readonly<
   recovery: 0.75,
 };
 
-/** Possession sim assists ~51% of made field goals on league rosters. */
-const ASSIST_TO_FGM_RATE = 0.51;
+/** Possession sim assists ~61% of made field goals on league rosters. */
+const ASSIST_TO_FGM_RATE = 0.605;
 
 /**
  * How a player's points split into 3PM / 2PM / FTM, and the map from the

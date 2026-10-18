@@ -52,6 +52,21 @@ export const PASS_RESOLUTION_CONFIG = {
  * matched-up defender. Standalone turnovers (lost handles, travels, offensive
  * errors) use `standaloneTurnoverBase` and credit a random on-court defender.
  */
+/**
+ * Assists on made shots from the `shot` action, which stands in for ball
+ * movement the possession loop does not step through. Same-step pass-and-shot
+ * assists are credited by the pass branch and are not affected.
+ *
+ * With `directShotChance` a made direct shot is assisted. The assister is the
+ * passer of the completed pass that kept the ball on the previous step when
+ * that passer is an on-court teammate other than the shooter, otherwise a
+ * teammate picked by pass weight. Tuned so ~60% of made field goals are
+ * assisted (NBA ~60-63%).
+ */
+export const DIRECT_SHOT_ASSIST_CONFIG = {
+  directShotChance: 0.3,
+} as const;
+
 export const STEAL_CREDIT_CONFIG = {
   passTurnoverBase: 0.7,
   standaloneTurnoverBase: 0.4,
