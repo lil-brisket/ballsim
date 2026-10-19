@@ -12,12 +12,15 @@ import {
 } from "@/components/game/watch/PlaybackControls";
 import { PlayByPlayFeed } from "@/components/game/watch/PlayByPlayFeed";
 import { Scoreboard } from "@/components/game/watch/Scoreboard";
+import { useGameClock } from "@/components/game/watch/useGameClock";
 import { ShotSummaryPanel } from "@/components/game/watch/ShotSummaryPanel";
 import { Tabs } from "@/components/ui";
 import {
   motionMs,
   openerShare,
   playDelayMs,
+  revealAfter,
+  tipShare,
 } from "@/components/game/watch/playback-pacing";
 import type { PlayerId } from "@/domain/ids";
 import { buildPlayChoreography } from "@/state/watch-court-choreo";
@@ -26,7 +29,9 @@ import { buildFullCourtFrame } from "@/state/watch-full-court";
 import {
   buildLiveBoxScore,
   currentRun,
+  formatGameClock,
   periodLabel,
+  teamFoulsAt,
   buildShotSummary,
 } from "@/state/watch-game-selectors";
 import type { WatchGameView } from "@/state/watch-game-view";
@@ -37,20 +42,27 @@ export function WatchGameClient(props: {
 }) {
   const { view } = props;
   const total = view.plays.length;
+  // `revealed` drives the court; `settled` (revealed, or one behind while a
+  // play's motion is still building to its event) drives the feed, score and
+  // stats, so they change when the shot drops or the whistle blows.
   const [revealed, setRevealed] = useState(0);
+  const [settled, setSettled] = useState(0);
   const [playing, setPlaying] = useState(false);
   const [speed, setSpeed] = useState<PlaybackSpeed>(1);
   // True when the latest reveal came from the playback timer (its play is
   // choreographed); a jump (restart, skip, possession step, feed) snaps.
   const [animated, setAnimated] = useState(false);
+  // Revealed count before the latest timer step; a run of substitutions is
+  // one step, and its walk starts from here.
+  const [stepFrom, setStepFrom] = useState(0);
   const [showShotChart, setShowShotChart] = useState(false);
   const [statsTab, setStatsTab] = useState<"feed" | "box" | "shots">("feed");
   const [selectedPlayerId, setSelectedPlayerId] = useState<PlayerId | null>(
     null,
   );
 
-  // Playback stops by itself once every play is revealed.
-  const isPlaying = playing && revealed < total;
+  // Playback stops by itself once every play is revealed and settled.
+  const isPlaying = playing && (revealed < total || settled < revealed);
 
   // One timeout per play: each reveal schedules the next with that play's
   // pacing. Pausing or a speed change keeps what is left of the step (at 1x)
@@ -60,18 +72,21 @@ export function WatchGameClient(props: {
     null,
   );
   useEffect(() => {
-    if (!isPlaying) {
+    if (!isPlaying || revealed >= total) {
       return;
     }
     const remainingMs =
       pending.current?.revealed === revealed
         ? pending.current.remainingMs
-        : playDelayMs(view, revealed);
+        : playDelayMs(view, revealed, speed);
     const startedAt = performance.now();
     const id = setTimeout(() => {
       pending.current = null;
       setAnimated(true);
-      setRevealed((current) => Math.min(total, current + 1));
+      setStepFrom(revealed);
+      setSettled(revealed);
+      // A run of substitutions is revealed whole, so the walk is one step.
+      setRevealed(revealAfter(view, revealed));
     }, remainingMs / speed);
     return () => {
       clearTimeout(id);
@@ -83,13 +98,10 @@ export function WatchGameClient(props: {
     };
   }, [isPlaying, speed, total, view, revealed]);
 
-  const live = useMemo(
-    () => buildLiveBoxScore(view, revealed),
-    [view, revealed],
-  );
+  const live = useMemo(() => buildLiveBoxScore(view, settled), [view, settled]);
   const shotSummary = useMemo(
-    () => buildShotSummary(view, revealed),
-    [view, revealed],
+    () => buildShotSummary(view, settled),
+    [view, settled],
   );
   const courtFrame = useMemo(
     () => buildFullCourtFrame(view, revealed),
@@ -100,15 +112,48 @@ export function WatchGameClient(props: {
       animated && revealed > 0
         ? buildPlayChoreography(view, revealed - 1, {
             openerShare: openerShare(view, revealed - 1),
+            tipShare: tipShare(view, revealed - 1),
+            subFrom: stepFrom,
           })
         : null,
-    [view, revealed, animated],
+    [view, revealed, animated, stepFrom],
   );
 
-  const previousPlay = revealed > 0 ? view.plays[revealed - 1] : undefined;
-  const nextPlay = revealed < total ? view.plays[revealed] : undefined;
+  // The revealed play settles at its event beat; pausing keeps what is left.
+  const settlePending = useRef<{
+    revealed: number;
+    remainingMs: number;
+  } | null>(null);
+  useEffect(() => {
+    if (!isPlaying || settled >= revealed) {
+      return;
+    }
+    const remainingMs =
+      settlePending.current?.revealed === revealed
+        ? settlePending.current.remainingMs
+        : (choreography?.eventAt ?? 0) * motionMs(view, revealed);
+    const startedAt = performance.now();
+    const id = setTimeout(() => {
+      settlePending.current = null;
+      setSettled(revealed);
+    }, remainingMs / speed);
+    return () => {
+      clearTimeout(id);
+      const elapsedMs = (performance.now() - startedAt) * speed;
+      settlePending.current = {
+        revealed,
+        remainingMs: Math.max(0, remainingMs - elapsedMs),
+      };
+    };
+  }, [isPlaying, speed, view, revealed, settled, choreography]);
+
+  const previousPlay = settled > 0 ? view.plays[settled - 1] : undefined;
+  const nextPlay = settled < total ? view.plays[settled] : undefined;
   const periodBreak =
-    previousPlay && nextPlay && previousPlay.period !== nextPlay.period
+    settled === revealed &&
+    previousPlay &&
+    nextPlay &&
+    previousPlay.period !== nextPlay.period
       ? `End of ${periodLabel(previousPlay.period)} · ${view.away.abbreviation} ${live.awayScore} – ${view.home.abbreviation} ${live.homeScore}`
       : null;
 
@@ -118,8 +163,10 @@ export function WatchGameClient(props: {
 
   const jumpTo = (next: number) => {
     pending.current = null;
+    settlePending.current = null;
     setAnimated(false);
     setRevealed(next);
+    setSettled(next);
     setPlaying(false);
   };
 
@@ -130,11 +177,34 @@ export function WatchGameClient(props: {
       : "paused";
 
   // Blank at the end: the scoreboard already says Final.
-  const clockText = live.isFinal
+  // While a play animates the clock ticks down through it; otherwise it shows
+  // the settled play's clock.
+  const playMotionMs = motionMs(view, revealed);
+  const runningSeconds = useGameClock({
+    view,
+    revealed,
+    animated,
+    playing: isPlaying,
+    motionMs: playMotionMs,
+    speed,
+  });
+  const runningClock =
+    runningSeconds === null || live.isFinal
+      ? null
+      : {
+          periodLabel: view.plays[revealed - 1]!.periodLabel,
+          clockLabel: formatGameClock(runningSeconds),
+        };
+  const teamFouls = useMemo(() => teamFoulsAt(view, settled), [view, settled]);
+  // The scrubber announces the settled clock, not every running tick.
+  const settledClockText = live.isFinal
     ? ""
-    : revealed === 0
+    : settled === 0
       ? "Tip-off"
       : `${live.periodLabel} ${live.clockLabel}`;
+  const clockText = runningClock
+    ? `${runningClock.periodLabel} ${runningClock.clockLabel}`
+    : settledClockText;
   const periodStarts = useMemo(
     () =>
       view.plays.flatMap((p, i) =>
@@ -257,6 +327,8 @@ export function WatchGameClient(props: {
           home: shotSummary.home.byPeriod.map((line) => line.points),
         }}
         currentPeriod={previousPlay?.period ?? 0}
+        teamFouls={teamFouls}
+        runningClock={runningClock}
       />
       <section aria-label="Court" className="min-w-0">
         <FullCourtView
@@ -267,11 +339,11 @@ export function WatchGameClient(props: {
           showShotChart={showShotChart}
           speed={speed}
           choreography={choreography}
-          motionMs={motionMs(view, revealed)}
+          motionMs={playMotionMs}
           playing={isPlaying}
           periodBreak={periodBreak ?? finalCard}
           final={live.isFinal}
-          run={currentRun(view, revealed)}
+          run={currentRun(view, settled)}
           players={view.players}
           selectedPlayerId={selectedPlayerId}
           onSelectPlayer={(id) =>
@@ -284,6 +356,7 @@ export function WatchGameClient(props: {
           revealed={revealed}
           total={total}
           clockText={clockText}
+          scrubClockText={settledClockText}
           status={courtStatus}
           periodStarts={periodStarts}
           moments={moments}
@@ -332,7 +405,7 @@ export function WatchGameClient(props: {
           ]}
         />
         {statsTab === "feed" ? (
-          <PlayByPlayFeed view={view} revealed={revealed} onJump={jumpTo} />
+          <PlayByPlayFeed view={view} revealed={settled} onJump={jumpTo} />
         ) : statsTab === "box" ? (
           <LiveBoxScore
             live={live}
@@ -345,7 +418,7 @@ export function WatchGameClient(props: {
           <ShotSummaryPanel
             view={view}
             summary={shotSummary}
-            revealed={revealed}
+            revealed={settled}
           />
         )}
       </section>

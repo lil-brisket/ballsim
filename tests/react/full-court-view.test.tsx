@@ -15,7 +15,7 @@ import { asPlayerId } from "@/domain/ids";
 import { buildCourtPalette, tokenOutline } from "@/state/court-palette";
 import { buildPlayChoreography } from "@/state/watch-court-choreo";
 import { buildLiveBoxScore } from "@/state/watch-game-selectors";
-import { buildFullCourtFrame } from "@/state/watch-full-court";
+import { buildFullCourtFrame, wideBenchPoint } from "@/state/watch-full-court";
 import type { WatchTeam } from "@/state/watch-game-view";
 
 const VIEW = COURT_FIXTURE_VIEW;
@@ -123,9 +123,13 @@ afterEach(() => {
 });
 
 describe("FullCourtView", () => {
-  it("renders ten tokens named like the half court", () => {
+  it("renders ten floor tokens named like the half court, and the bench", () => {
     render(court(1));
-    expect(screen.getAllByTestId("court-token")).toHaveLength(10);
+    const tokens = screen.getAllByTestId("court-token");
+    expect(tokens).toHaveLength(12);
+    expect(
+      tokens.filter((t) => t.getAttribute("data-role") !== "bench"),
+    ).toHaveLength(10);
     expect(
       screen.getByRole("button", {
         name: /^Kai Lee, Harbor Harriers, 0 pts$/,
@@ -213,8 +217,13 @@ describe("FullCourtView", () => {
     }
     const jalen = screen.getByRole("button", { name: /^Jalen Smith,/ });
     expect(jalen.firstElementChild!.textContent).toBe("3");
+    // The two bench players (one a side) wear rings too.
+    const floorDiscs = discs.filter(
+      (d) => d.parentElement!.getAttribute("data-role") !== "bench",
+    );
+    expect(discs.length - floorDiscs.length).toBe(2);
     const rings = (side: string) =>
-      discs
+      floorDiscs
         .filter((d) => d.getAttribute("data-ring") === side)
         .map((d) => d.closest("[data-mover]")!.getAttribute("data-mover"));
     expect(rings("solid")).toHaveLength(5);
@@ -480,11 +489,10 @@ describe("FullCourtView", () => {
     );
   });
 
-  it("marks a substitution with an In chip, a named token and a fading ghost", () => {
+  it("marks a checked-in player with an In chip and a named token", () => {
     const revealed = VIEW.plays.findIndex((p) => p.kind === "substitution") + 1;
     render(court(revealed));
     expect(screen.getByText("In")).toBeTruthy();
-    expect(screen.getByText("Out")).toBeTruthy();
     const names = screen
       .getAllByTestId("court-token")
       .map((el) => el.getAttribute("aria-label")!);
@@ -494,15 +502,116 @@ describe("FullCourtView", () => {
     expect(
       screen.getByRole("button", { name: /^Sam Park, .*, just checked in$/ }),
     ).toBeTruthy();
-    expect(screen.getAllByTestId("court-sub-ghost")).toHaveLength(1);
+    // The walk replaced the fading ghost of the player who left.
+    expect(screen.queryByTestId("court-sub-ghost")).toBeNull();
   });
 
-  it("shows no substitution ghost under reduced motion", () => {
+  it("keeps the In chip when motion is reduced", () => {
     mockMatchMedia(true);
     const revealed = VIEW.plays.findIndex((p) => p.kind === "substitution") + 1;
     render(court(revealed));
-    expect(screen.queryByTestId("court-sub-ghost")).toBeNull();
     expect(screen.getByText("In")).toBeTruthy();
+  });
+
+  describe("bench", () => {
+    const benchTokens = () =>
+      screen
+        .getAllByTestId("court-token")
+        .filter((t) => t.getAttribute("data-role") === "bench");
+    const SUB = VIEW.plays.findIndex((p) => p.kind === "substitution");
+
+    it("seats the players who are off the floor, named as bench", () => {
+      render(court(1));
+      expect(benchTokens().map((t) => t.getAttribute("aria-label"))).toEqual([
+        "Sam Park, Harbor Harriers, bench",
+        "Ben Hale, Summit Glaciers, bench",
+      ]);
+      // The jersey badge shows; the name waits for hover.
+      const sam = screen.getByRole("button", { name: /^Sam Park, .*, bench$/ });
+      expect(sam.firstElementChild!.textContent).toBe("33");
+      expect(
+        sam.querySelector(".court-token-label")!.getAttribute("data-label"),
+      ).toBe("hover");
+      expect(screen.getByText("HAR bench")).toBeTruthy();
+      expect(screen.getByText("SUM bench")).toBeTruthy();
+    });
+
+    it("moves a substituted pair between the floor and the bench", () => {
+      const { rerender } = render(court(SUB));
+      const kai = () =>
+        screen
+          .getByRole("button", { name: /^Kai Lee, / })
+          .getAttribute("aria-label");
+      expect(kai()).toMatch(/pts/);
+      expect(benchTokens()).toHaveLength(2);
+      rerender(court(SUB + 1));
+      expect(kai()).toBe("Kai Lee, Harbor Harriers, bench");
+      expect(
+        screen.getByRole("button", { name: /^Sam Park, .*, just checked in$/ }),
+      ).toBeTruthy();
+      expect(benchTokens()).toHaveLength(2);
+    });
+
+    it("keeps a player's DOM node when he moves between bench and floor", () => {
+      const { rerender } = render(court(SUB));
+      const node = document.querySelector('[data-mover="h6"]');
+      expect(node).not.toBeNull();
+      rerender(court(SUB + 1));
+      expect(document.querySelector('[data-mover="h6"]')).toBe(node);
+    });
+
+    it("opens the player card for a bench token", () => {
+      const onSelectPlayer = vi.fn();
+      render(court(1, { onSelectPlayer }));
+      fireEvent.click(screen.getByRole("button", { name: /^Ben Hale, / }));
+      expect(onSelectPlayer).toHaveBeenCalledWith(asPlayerId("a6"));
+    });
+
+    it("walks bench movers along the substitution choreography", () => {
+      const started = mockAnimate();
+      const { rerender } = render(court(SUB));
+      rerender(court(SUB + 1, motion(SUB)));
+      const sam = moverOf(started, "h6");
+      const kai = moverOf(started, "h2");
+      const from = buildFullCourtFrame(VIEW, SUB);
+      const to = buildFullCourtFrame(VIEW, SUB + 1);
+      expect(sam.keyframes[0]!.transform).toBe(
+        // The test floor is wide, so seats sit in one row.
+        courtTranslate(
+          wideBenchPoint(from.bench.find((b) => b.playerId === "h6")!.spot),
+        ),
+      );
+      expect(sam.keyframes.at(-1)!.transform).toBe(
+        courtTranslate(to.players.find((p) => p.playerId === "h6")!.spot),
+      );
+      expect(kai.keyframes.at(-1)!.transform).toBe(
+        courtTranslate(
+          wideBenchPoint(to.bench.find((b) => b.playerId === "h2")!.spot),
+        ),
+      );
+    });
+
+    it("flags a fouled-out bench player and nobody else", () => {
+      const live = buildLiveBoxScore(VIEW, 1);
+      const rows = (box: typeof live.home) =>
+        box.rows.map((r) =>
+          r.playerId === "h6" ? { ...r, fouledOut: true } : r,
+        );
+      render(
+        court(1, {
+          live: { ...live, home: { ...live.home, rows: rows(live.home) } },
+        }),
+      );
+      expect(screen.getAllByText("Fouled out")).toHaveLength(1);
+      expect(
+        screen.getByRole("button", {
+          name: /^Sam Park, .*, bench, fouled out$/,
+        }),
+      ).toBeTruthy();
+      expect(
+        screen.getByRole("button", { name: /^Ben Hale, .*, bench$/ }),
+      ).toBeTruthy();
+    });
   });
 
   it("renders the period break card text", () => {
@@ -536,6 +645,115 @@ describe("FullCourtView", () => {
     const delay = Number.parseInt(flash.style.animationDelay, 10);
     expect(delay).toBeGreaterThan(0);
     expect(delay).toBeLessThan(play.motionMs);
+  });
+
+  describe("impact markers", () => {
+    const BLOCK = 1;
+    const STEAL = 3;
+    const FOUL = 5;
+
+    /** Reveals play `index` with its choreography. */
+    function reveal(
+      index: number,
+      extra: { playing?: boolean; speed?: number } = {},
+    ) {
+      mockAnimate();
+      const play = motion(index, { playing: extra.playing });
+      const { speed } = extra;
+      const view = render(court(index, { speed }));
+      view.rerender(court(index + 1, { ...play, speed }));
+      return { play, view };
+    }
+
+    const owner = (el: HTMLElement) =>
+      el.closest('[data-testid="court-token"]')?.getAttribute("data-player-id");
+
+    it("rings the blocker and leaps him when the contact happens", () => {
+      const { play } = reveal(BLOCK);
+      const ring = screen.getByTestId("court-impact-ring");
+      expect(owner(ring)).toBe(VIEW.plays[BLOCK]!.player2Id);
+      expect(screen.getAllByTestId("court-impact-ring")).toHaveLength(1);
+      const delay = Number.parseInt(ring.style.animationDelay, 10);
+      expect(delay).toBe(Math.round(play.choreography.eventAt * play.motionMs));
+      expect(delay).toBeGreaterThan(0);
+      // Same moment as the callout, and the disc leaps on the same delay.
+      const callout = screen.getByTestId("court-callout");
+      expect(callout.style.animationDelay).toBe(ring.style.animationDelay);
+      const disc = ring.parentElement!;
+      expect(disc.className).toContain("court-leap");
+      expect(disc.style.animationDelay).toBe(ring.style.animationDelay);
+    });
+
+    it("rings the stealer at the steal", () => {
+      const { play } = reveal(STEAL);
+      const ring = screen.getByTestId("court-impact-ring");
+      expect(owner(ring)).toBe(VIEW.plays[STEAL]!.player2Id);
+      expect(Number.parseInt(ring.style.animationDelay, 10)).toBe(
+        Math.round(play.choreography.eventAt * play.motionMs),
+      );
+    });
+
+    it("scales the delay with the playback speed and holds it while paused", () => {
+      const { view } = reveal(BLOCK, { speed: 2 });
+      const fast = Number.parseInt(
+        screen.getByTestId("court-impact-ring").style.animationDelay,
+        10,
+      );
+      view.unmount();
+      reveal(BLOCK, { speed: 1 });
+      const slow = Number.parseInt(
+        screen.getByTestId("court-impact-ring").style.animationDelay,
+        10,
+      );
+      expect(Math.abs(fast - slow / 2)).toBeLessThanOrEqual(1);
+      cleanup();
+      reveal(BLOCK, { playing: false });
+      const ring = screen.getByTestId("court-impact-ring");
+      expect(ring.style.animationPlayState).toBe("paused");
+      expect(screen.getByTestId("court-callout").style.animationPlayState).toBe(
+        "paused",
+      );
+    });
+
+    it("makes the block and steal callouts bolder, in the acting team's colour", () => {
+      render(court(BLOCK + 1));
+      const block = screen.getByTestId("court-callout");
+      expect(block.getAttribute("data-emphasis")).toBe("strong");
+      expect(block.style.boxShadow).not.toBe("");
+      cleanup();
+      render(court(FOUL + 1));
+      const plain = screen.getByTestId("court-callout");
+      expect(plain.getAttribute("data-emphasis")).toBeNull();
+    });
+
+    it("rings nobody on a plain make, and drops the ring on the next play", () => {
+      render(court(1));
+      expect(screen.queryByTestId("court-impact-ring")).toBeNull();
+      cleanup();
+      const { view } = reveal(BLOCK);
+      expect(screen.getByTestId("court-impact-ring")).toBeTruthy();
+      view.rerender(court(BLOCK + 2));
+      expect(screen.queryByTestId("court-impact-ring")).toBeNull();
+    });
+
+    it("blows a whistle at the foul, aria-hidden, until the next reveal", () => {
+      const { play, view } = reveal(FOUL);
+      const whistle = screen.getByTestId("court-whistle");
+      expect(whistle.getAttribute("aria-hidden")).toBe("true");
+      expect(Number.parseInt(whistle.style.animationDelay, 10)).toBe(
+        Math.round(play.choreography.eventAt * play.motionMs),
+      );
+      view.rerender(court(FOUL + 2));
+      expect(screen.queryByTestId("court-whistle")).toBeNull();
+    });
+
+    it("shows no whistle on a shot or a steal", () => {
+      render(court(1));
+      expect(screen.queryByTestId("court-whistle")).toBeNull();
+      cleanup();
+      render(court(STEAL + 1));
+      expect(screen.queryByTestId("court-whistle")).toBeNull();
+    });
   });
 
   it("shows a possession arrow toward the attacked end, hidden at the final frame", () => {

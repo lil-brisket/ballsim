@@ -449,6 +449,8 @@ export function PlaybackControls(props: {
   revealed: number;
   total: number;
   clockText: string;
+  /** Clock in the scrubber's spoken value (defaults to `clockText`). */
+  scrubClockText?: string;
   status: PlaybackStatus;
   /** Revealed counts at which a new period begins. */
   periodStarts: number[];
@@ -510,7 +512,9 @@ export function PlaybackControls(props: {
           revealed={props.revealed}
           total={props.total}
           valueText={`${props.revealed} of ${props.total} plays${
-            props.clockText ? `, ${props.clockText}` : ""
+            (props.scrubClockText ?? props.clockText)
+              ? `, ${props.scrubClockText ?? props.clockText}`
+              : ""
           }`}
           periodStarts={props.periodStarts}
           moments={props.moments}

@@ -1,5 +1,10 @@
 import { StatusBadge, cn } from "@/components/ui";
 import { focusRingClass } from "@/components/ui/styles";
+import {
+  START_PERIOD_CLOCK_SECONDS,
+  formatGameClock,
+} from "@/state/watch-game-selectors";
+import { jumpBallText } from "@/state/watch-jump-ball";
 import type {
   KeyMoment,
   WatchGameView,
@@ -122,6 +127,9 @@ export function PlayByPlayFeed(props: {
   const rows = buildRows(visible);
   const teamOf = (side: WatchSide): WatchTeam =>
     side === 0 ? view.home : view.away;
+  // The tip is inferred, not logged: it shows once the first play has
+  // settled, as the oldest entry.
+  const tipText = visible.length > 0 ? jumpBallText(view) : null;
   const atEnd = visible.length > 0 && visible.length === view.plays.length;
   const moments = visibleKeyMoments(view.keyMoments, props.revealed, atEnd);
 
@@ -210,11 +218,14 @@ export function PlayByPlayFeed(props: {
             </span>
             <span className="block min-w-0 flex-1 space-y-1">
               {rowMoments.map((moment) => (
-                <MomentText key={moment.playIndex} moment={moment} />
+                <MomentText
+                  key={`moment-${moment.playIndex}`}
+                  moment={moment}
+                />
               ))}
               {row.plays.map((p) => (
                 <span
-                  key={p.index}
+                  key={`play-${p.index}`}
                   className="flex flex-wrap items-center gap-x-2 gap-y-1"
                 >
                   <span
@@ -259,6 +270,20 @@ export function PlayByPlayFeed(props: {
         />,
       );
     }
+  }
+
+  if (tipText) {
+    items.push(
+      <li
+        key="jump-ball"
+        className="flex items-baseline gap-3 px-3 py-1 text-sm text-zinc-500"
+      >
+        <span className="w-24 shrink-0 tabular-nums">
+          Q1 {formatGameClock(START_PERIOD_CLOCK_SECONDS)}
+        </span>
+        <span className="min-w-0 break-words">{tipText}</span>
+      </li>,
+    );
   }
 
   return (

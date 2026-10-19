@@ -7,6 +7,8 @@ function TeamBlock(props: {
   team: WatchTeam;
   score: number;
   fouls: number;
+  /** The other team has fouled enough this period that the next foul shoots. */
+  bonus: boolean;
   align: "start" | "end";
 }) {
   const end = props.align === "end";
@@ -28,8 +30,22 @@ function TeamBlock(props: {
         <p className="font-display text-2xl font-bold uppercase tracking-wide text-zinc-50">
           {props.team.abbreviation}
         </p>
-        <p className="truncate text-sm text-zinc-400">
-          {props.team.name} · Fouls {props.fouls}
+        <p className="truncate text-sm text-zinc-400">{props.team.name}</p>
+        <p
+          className={`flex items-center gap-2 text-sm text-zinc-400 ${
+            end ? "justify-end" : ""
+          }`}
+        >
+          <span>Fouls {props.fouls}</span>
+          {props.bonus ? (
+            <span
+              data-testid="scoreboard-bonus"
+              title="In the bonus: the next foul on this team's opponent sends it to the line"
+              className="rounded border border-team-ink px-1.5 font-bold tracking-wide text-team-ink"
+            >
+              BONUS
+            </span>
+          ) : null}
         </p>
       </div>
       <ScoreNumeral
@@ -140,8 +156,19 @@ export function Scoreboard(props: {
   byPeriod: { away: number[]; home: number[] };
   /** Period of the latest revealed play; 0 before tip-off. */
   currentPeriod: number;
+  /** Team fouls this period and the bonus, by side (home first); see teamFoulsAt. */
+  teamFouls: { fouls: [number, number]; bonus: [boolean, boolean] };
+  /**
+   * Clock shown while a play animates (the ticking clock); omitted shows the
+   * settled play's clock.
+   */
+  runningClock?: { periodLabel: string; clockLabel: string } | null;
 }) {
   const { live } = props;
+  const clock = props.runningClock ?? {
+    periodLabel: live.periodLabel,
+    clockLabel: live.clockLabel,
+  };
   return (
     <ArenaPanel
       as="header"
@@ -157,8 +184,8 @@ export function Scoreboard(props: {
           "Final"
         ) : (
           <>
-            <span>{live.periodLabel}</span>{" "}
-            <span className="tabular-nums">{live.clockLabel}</span>
+            <span>{clock.periodLabel}</span>{" "}
+            <span className="tabular-nums">{clock.clockLabel}</span>
           </>
         )}
       </p>
@@ -170,7 +197,8 @@ export function Scoreboard(props: {
         <TeamBlock
           team={props.away}
           score={live.awayScore}
-          fouls={live.away.periodFouls}
+          fouls={props.teamFouls.fouls[1]}
+          bonus={props.teamFouls.bonus[1]}
           align="start"
         />
         <div
@@ -182,7 +210,8 @@ export function Scoreboard(props: {
         <TeamBlock
           team={props.home}
           score={live.homeScore}
-          fouls={live.home.periodFouls}
+          fouls={props.teamFouls.fouls[0]}
+          bonus={props.teamFouls.bonus[0]}
           align="end"
         />
       </div>

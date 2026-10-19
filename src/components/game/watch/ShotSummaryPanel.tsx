@@ -79,7 +79,7 @@ function ShotChart(props: {
           {shots.map((shot) =>
             shot.made ? (
               <circle
-                key={shot.index}
+                key={`chart-shot-${shot.index}`}
                 data-testid="shot-made"
                 data-side={side}
                 aria-hidden="true"
@@ -92,7 +92,7 @@ function ShotChart(props: {
               />
             ) : (
               <circle
-                key={shot.index}
+                key={`chart-shot-${shot.index}`}
                 data-testid="shot-missed"
                 data-side={side}
                 aria-hidden="true"
