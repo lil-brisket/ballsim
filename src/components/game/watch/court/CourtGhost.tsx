@@ -21,7 +21,7 @@ export function CourtGhost(props: {
       style={{ left: pct(props.spot.x), top: pct(props.spot.y) }}
     >
       <span
-        className="flex h-7 w-7 items-center justify-center rounded-full border-2 font-display text-sm font-semibold leading-none sm:h-8 sm:w-8"
+        className="flex h-7 w-7 items-center justify-center rounded-full border-2 font-display text-sm font-semibold leading-none tracking-tight sm:h-8 sm:w-8"
         style={{
           backgroundColor: props.color,
           borderColor: ink,

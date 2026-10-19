@@ -242,8 +242,3 @@ export function calloutText(
   }
   return null;
 }
-
-export function initialOf(label: string): string {
-  const word = label.trim().split(/\s+/).pop() ?? "";
-  return word.slice(0, 1).toUpperCase();
-}

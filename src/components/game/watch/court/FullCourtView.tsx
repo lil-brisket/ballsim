@@ -4,6 +4,7 @@ import {
   useEffect,
   useId,
   useLayoutEffect,
+  useMemo,
   useRef,
   useState,
   type CSSProperties,
@@ -14,9 +15,22 @@ import { cn } from "@/components/ui/styles";
 import { TeamLogoMark } from "@/components/team/logos/TeamLogoMark";
 import type { PlayerId } from "@/domain/ids";
 import { buildCourtPalette, tokenOutline } from "@/state/court-palette";
+import {
+  courtMonograms,
+  layoutCourtLabels,
+  type LabelSide,
+} from "@/state/court-label-layout";
 import type { PlayChoreography } from "@/state/watch-court-choreo";
-import { COURT_FEET, type CourtSubstitution } from "@/state/watch-court-frame";
-import { FULL_COURT_FEET, type FullCourtFrame } from "@/state/watch-full-court";
+import {
+  COURT_FEET,
+  COURT_RIM,
+  type CourtSubstitution,
+} from "@/state/watch-court-frame";
+import {
+  FULL_COURT_FEET,
+  toFullCourt,
+  type FullCourtFrame,
+} from "@/state/watch-full-court";
 import type {
   LiveBoxScore,
   WatchPlayer,
@@ -32,7 +46,6 @@ import {
   ballLiftKeyframes,
   calloutText,
   courtTranslate,
-  initialOf,
   rimTime,
   trackKeyframes,
 } from "./court-motion";
@@ -40,8 +53,9 @@ import { teamTokenColor } from "./team-token-colors";
 
 const LENGTH = FULL_COURT_FEET.length;
 const WIDTH = FULL_COURT_FEET.width;
-/** Tokens below this normalized y hang their label above, to stay on the floor. */
-const LABEL_ABOVE_Y = 0.85;
+/** Floor size assumed until the first measurement (and in jsdom). */
+const DEFAULT_COURT_SIZE = { width: 800, height: 425 };
+const RIMS = [toFullCourt(COURT_RIM, "left"), toFullCourt(COURT_RIM, "right")];
 
 /** Centre logo opacity once the game is over. */
 const FINAL_LOGO_OPACITY = 0.7;
@@ -126,6 +140,27 @@ export function FullCourtView(props: {
     latest.current = { speed, playing, motionMs };
   });
 
+  // Floor size in pixels, for the label layout; only changes on resize.
+  const [courtSize, setCourtSize] = useState(DEFAULT_COURT_SIZE);
+  useEffect(() => {
+    const el = courtRef.current;
+    if (!el || typeof ResizeObserver === "undefined") {
+      return;
+    }
+    const observer = new ResizeObserver(([entry]) => {
+      const { width, height } = entry?.contentRect ?? { width: 0, height: 0 };
+      if (width > 0 && height > 0) {
+        setCourtSize((prev) =>
+          prev.width === width && prev.height === height
+            ? prev
+            : { width, height },
+        );
+      }
+    });
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
   useLayoutEffect(() => {
     const running = motion.current.animations;
     // A play revealed mid-motion starts from where each layer is drawn now.
@@ -205,6 +240,64 @@ export function FullCourtView(props: {
     },
     [],
   );
+
+  const monograms = useMemo(
+    () =>
+      courtMonograms(
+        props.players ??
+          frame.players.map((p) => ({
+            playerId: p.playerId,
+            fullName: p.fullName,
+            shortName: p.shortName,
+          })),
+      ),
+    [props.players, frame.players],
+  );
+
+  // Label budget: handler, shooter and selected names always show; the rest
+  // appear on hover or focus and are laid out clear of the shown ones.
+  const selectedId = props.selectedPlayerId ?? null;
+  const labelSides = useMemo(() => {
+    const sides = new Map<PlayerId, LabelSide>();
+    const byId = new Map(frame.players.map((p) => [p.playerId, p]));
+    const shownIds: PlayerId[] = [];
+    const add = (id: PlayerId | null | undefined) => {
+      if (id && byId.has(id) && !shownIds.includes(id)) {
+        shownIds.push(id);
+      }
+    };
+    add(selectedId);
+    add(frame.players.find((p) => p.role === "shooter")?.playerId);
+    add(frame.players.find((p) => p.role === "handler")?.playerId);
+    const request = (id: PlayerId) => {
+      const p = byId.get(id)!;
+      return { playerId: id, at: p.spot, text: p.label };
+    };
+    const tokens = frame.players.map((p) => p.spot);
+    const shown = layoutCourtLabels({
+      labels: shownIds.map(request),
+      tokens,
+      rims: RIMS,
+      court: courtSize,
+    });
+    for (const [id, placed] of shown) {
+      sides.set(id, placed.side);
+    }
+    const avoid = [...shown.values()].map((placed) => placed.box);
+    for (const p of frame.players) {
+      if (!shown.has(p.playerId)) {
+        const alone = layoutCourtLabels({
+          labels: [request(p.playerId)],
+          tokens,
+          rims: RIMS,
+          avoid,
+          court: courtSize,
+        });
+        sides.set(p.playerId, alone.get(p.playerId)!.side);
+      }
+    }
+    return { sides, shown: new Set(shownIds) };
+  }, [frame.players, courtSize, selectedId]);
 
   const rosterById = new Map((props.players ?? []).map((p) => [p.playerId, p]));
   const incoming = new Map<PlayerId, CourtSubstitution>(
@@ -486,7 +579,9 @@ export function FullCourtView(props: {
                     onSelect={props.onSelectPlayer}
                     outline={tokenOutline(color, palette)}
                     accent={palette.line}
-                    labelAbove={player.spot.y > LABEL_ABOVE_Y}
+                    labelSide={labelSides.sides.get(player.playerId) ?? "below"}
+                    labelShown={labelSides.shown.has(player.playerId)}
+                    monogram={monograms.get(player.playerId) ?? "?"}
                   />
                 </div>
               );
@@ -495,7 +590,7 @@ export function FullCourtView(props: {
             {ghosts.map(({ sub, outgoing, spot }) => (
               <CourtGhost
                 key={`ghost-${sub.index}`}
-                initial={initialOf(outgoing.lastName)}
+                initial={monograms.get(outgoing.playerId) ?? "?"}
                 color={colorOf(sub.side)}
                 spot={spot}
               />

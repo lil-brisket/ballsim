@@ -251,11 +251,15 @@ body {
   will-change: transform;
 }
 
-/* Whole floor on a phone: initials only, the 44px hit circle stays. */
-@media (max-width: 639px) {
-  .court-viewport .court-token-label {
-    display: none;
-  }
+/* Name labels outside the budget show only while their token is hovered or
+   keyboard-focused. */
+.court-token-label[data-label="hover"] {
+  display: none;
+}
+
+.court-token:hover .court-token-label[data-label="hover"],
+.court-token:focus-visible .court-token-label[data-label="hover"] {
+  display: block;
 }
 
 .court-callout {

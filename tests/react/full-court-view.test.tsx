@@ -136,6 +136,59 @@ describe("FullCourtView", () => {
     ).toBeTruthy();
   });
 
+  it("shows names only for the handler, shooter and selected player", () => {
+    const frame = buildFullCourtFrame(VIEW, 4);
+    const selected = frame.players.find((p) => p.role === "off-ball")!;
+    render(court(4, { selectedPlayerId: selected.playerId }));
+    const shown = screen
+      .getAllByTestId("court-token")
+      .filter(
+        (el) =>
+          el.querySelector(".court-token-label")!.getAttribute("data-label") ===
+          "shown",
+      )
+      .map((el) => el.getAttribute("data-player-id"));
+    const expected = frame.players
+      .filter((p) => p.role !== "off-ball" || p.playerId === selected.playerId)
+      .map((p) => p.playerId as string);
+    expect(shown.sort()).toEqual(expected.sort());
+    const hidden = screen
+      .getAllByTestId("court-token")
+      .filter((el) => !shown.includes(el.getAttribute("data-player-id")));
+    expect(hidden.length).toBeGreaterThan(0);
+    for (const el of hidden) {
+      expect(
+        el.querySelector(".court-token-label")!.getAttribute("data-label"),
+      ).toBe("hover");
+    }
+  });
+
+  it("shows unique two-letter monograms and double rings for the away team", () => {
+    render(court(1));
+    const discs = screen
+      .getAllByTestId("court-token")
+      .map((el) => el.firstElementChild as HTMLElement);
+    const texts = discs.map((d) => d.textContent);
+    for (const text of texts) {
+      expect(text).toMatch(/^[A-Z]{2}$/);
+    }
+    expect(new Set(texts).size).toBe(texts.length);
+    const jalen = screen.getByRole("button", { name: /^Jalen Smith,/ });
+    expect(jalen.firstElementChild!.textContent).toBe("JS");
+    const rings = (side: string) =>
+      discs
+        .filter((d) => d.getAttribute("data-ring") === side)
+        .map((d) => d.closest("[data-mover]")!.getAttribute("data-mover"));
+    expect(rings("solid")).toHaveLength(5);
+    expect(rings("double")).toHaveLength(5);
+    expect(jalen.firstElementChild!.getAttribute("data-ring")).toBe("solid");
+    expect(
+      screen
+        .getByRole("button", { name: /^Tyrese Reed,/ })
+        .firstElementChild!.getAttribute("data-ring"),
+    ).toBe("double");
+  });
+
   it("labels the group with the home floor and shows the home wordmarks", () => {
     render(court(1));
     expect(
