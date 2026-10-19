@@ -2,6 +2,7 @@ import type { LeaguePhaseId } from "@/systems/phase-engine/phase-types";
 import type { GameState } from "@/state/game-state";
 import {
   canActivateDraft,
+  hasUnfinishedDraftForYear,
   isDraftCompleteForYear,
 } from "@/systems/league-rules/draft-rules";
 import { readActivePhaseId } from "@/systems/league-rules/phase-ids";
@@ -33,19 +34,21 @@ export function canEnterPhase(
 
   if (toPhaseId === "offseason.free_agency") {
     const year = state.competition.season.year;
-    if (!isDraftCompleteForYear(state, year)) {
-      // Also accept any complete draft for current draft class year
-      const anyComplete = Object.values(state.world.drafts).some(
-        (d) => d.status === "complete",
-      );
-      if (!anyComplete) {
-        violations.push({
-          code: "DRAFT_NOT_COMPLETE",
-          message: "Free agency cannot open — draft is not complete.",
-          tier: "phase_lock",
-          action: "advance_phase",
-        });
-      }
+    // An unfinished draft this season always blocks. With no draft class
+    // this season, fall back to any complete draft.
+    const anyComplete = Object.values(state.world.drafts).some(
+      (d) => d.status === "complete",
+    );
+    if (
+      hasUnfinishedDraftForYear(state, year) ||
+      (!isDraftCompleteForYear(state, year) && !anyComplete)
+    ) {
+      violations.push({
+        code: "DRAFT_NOT_COMPLETE",
+        message: "Free agency cannot open — draft is not complete.",
+        tier: "phase_lock",
+        action: "advance_phase",
+      });
     }
     if (!isRfaQualificationComplete(state)) {
       violations.push({
@@ -151,13 +154,7 @@ export function canAdvanceFromPhase(
   }
 
   if (fromPhaseId === "offseason.draft") {
-    const draftComplete = Object.values(state.world.drafts).some(
-      (d) => d.status === "complete",
-    );
-    const activeIncomplete = Object.values(state.world.drafts).some(
-      (d) => d.status === "active" || d.status === "not_started",
-    );
-    if (!draftComplete && activeIncomplete) {
+    if (hasUnfinishedDraftForYear(state, state.competition.season.year)) {
       violations.push({
         code: "DRAFT_NOT_COMPLETE",
         message: "Cannot leave draft phase until the draft is complete.",

@@ -12,9 +12,13 @@ import type { TeamId } from "@/domain/ids";
 import { calculatePlayerOverall } from "@/domain/player-overall-rating";
 import { systemResult, type SystemResult } from "@/domain/system-result";
 import type { GameState } from "@/state/game-state";
-import { isUserControlledTeam } from "@/state/owner-context";
+import {
+  getOwnedFranchiseAssistance,
+  isUserControlledTeam,
+} from "@/state/owner-context";
 import { aiPayrollRoom } from "@/systems/ai-payroll-budget";
 import { getLeagueSalaryCap } from "@/systems/league-salary-cap";
+import { canAiExecute } from "@/systems/simulation/management-policy";
 import { getContractSigningYear, getTeamCapSpace } from "@/systems/salary-cap";
 import { salaryForPlayer, serviceYearsForSalary } from "@/systems/salary-scale";
 
@@ -47,6 +51,18 @@ function extendTeamStars(
 ): SystemResult {
   const team = state.world.teams[teamId];
   if (!team) return systemResult(state);
+  // An owner's stars are only extended when the owner delegated it.
+  const userControlled = isUserControlledTeam(state, teamId);
+  if (
+    userControlled &&
+    !canAiExecute(
+      state.settings,
+      "EXTEND_KEY_PLAYER",
+      getOwnedFranchiseAssistance(state, teamId),
+    )
+  ) {
+    return systemResult(state);
+  }
 
   let current = state;
   const events: DomainEvent[] = [];
@@ -83,7 +99,7 @@ function extendTeamStars(
     const endYear = contract.endYear + extraYears;
     const raise = market - (nextSalary ?? 0);
     // AI teams also stay within what they can afford (#93).
-    const space = isUserControlledTeam(current, teamId)
+    const space = userControlled
       ? getTeamCapSpace(teamId, year, current, cap)
       : aiPayrollRoom(current, teamId, year);
     if (raise > 0 && space < raise) continue;
