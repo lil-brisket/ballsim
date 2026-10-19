@@ -12,8 +12,8 @@ export const GAME_SIMULATION_CONFIG = {
   actionBaseWeights: {
     shot: 26,
     pass: 54,
-    turnover: 6,
-    foul: 14,
+    turnover: 4.5,
+    foul: 16,
   },
   /** Clamp for weight(action) = base * modifiers. */
   actionWeightMin: 1,
@@ -25,8 +25,8 @@ export const GAME_SIMULATION_CONFIG = {
   attributeModifierScale: 0.35,
   /** Foul subtype weights when foul action is chosen. */
   foulSubtypeWeights: {
-    defensiveNonShooting: 55,
-    defensiveShooting: 38,
+    defensiveNonShooting: 45,
+    defensiveShooting: 48,
     offensive: 7,
   },
   /** Default possession clock cost range (seconds) by outcome category. */
@@ -39,6 +39,12 @@ export const GAME_SIMULATION_CONFIG = {
     foulMax: 12,
     freeThrowMin: 6,
     freeThrowMax: 14,
+    /**
+     * A completed pass that does not end in a shot: the same team keeps the
+     * ball, so it costs only the seconds the pass itself took.
+     */
+    passContinueMin: 3,
+    passContinueMax: 7,
   },
 } as const;
 
@@ -70,6 +76,8 @@ export type GameSimulationConfig = {
     foulMax: number;
     freeThrowMin: number;
     freeThrowMax: number;
+    passContinueMin: number;
+    passContinueMax: number;
   };
 };
 

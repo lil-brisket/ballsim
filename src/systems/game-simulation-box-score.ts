@@ -69,20 +69,27 @@ export type SimulateBoxScoreContext = {
  * (real lineups, coaching and staff) on 12 bootstrapped 30-team leagues
  * (21,600 team-sides); 6 held-out leagues give bias -0.1 and per-game RMSE
  * 12.0, mostly game noise. Refit for engine v8 (shot curve, wider talent
- * tail); engine v9 lowers the intercept 1.2 for the three-point adjustment. Home court is a separate additive term, {@link HOME_COURT_POINTS}.
+ * tail); engine v9 lowers the intercept 1.2 for the three-point adjustment.
+ * Engine v10 (faster pace, fewer turnovers, more free throws) rescales the
+ * whole model by 1.107 with intercept +7.7, fitted (OLS) on 7,200 Lab
+ * possession team-games (seeds 101-220, RMSE 12.8); engine v12 lowers the
+ * intercept 1.0 for defensive matchups. Engine v13 (lead regression
+ * compresses expected margins) rescales the model by 0.830 with intercept
+ * +17.7, refit the same way (RMSE 11.6). Home court is a separate
+ * additive term, {@link HOME_COURT_POINTS}.
  */
 const EXPECTED_POINTS_MODEL = {
-  intercept: -35.683,
+  intercept: -9.473,
   /** Top-8 mean of {@link effectiveScoringAbility}. */
-  shooting: 0.621,
+  shooting: 0.57,
   /** Mean effectiveScoringAbility of the three best scorers in the top 8. */
-  topScorers: 1.244,
+  topScorers: 1.143,
   /** Top-8 mean rebounding (second chances). */
-  rebounding: 0.279,
+  rebounding: 0.257,
   /** Opponent available-roster mean interiorDefense. */
-  opponentInteriorDefense: -0.29,
+  opponentInteriorDefense: -0.267,
   /** Opponent available-roster mean perimeterDefense. */
-  opponentPerimeterDefense: -0.276,
+  opponentPerimeterDefense: -0.253,
 } as const;
 
 /**
@@ -104,13 +111,19 @@ const TOP_SCORER_COUNT = 3;
  * Points the home team gains from the possession sim's home-court shot bonus
  * (`SHOT_RESOLUTION_CONFIG.homeCourtAdvantage`); away scoring is unchanged.
  */
-const HOME_COURT_POINTS = 2.5;
-/** Half-width of the uniform per-team score noise (possession-sim SD ~13). */
-const SCORE_NOISE = 22;
+const HOME_COURT_POINTS = 2.0;
+/**
+ * Half-widths of the uniform score noise: a shared draw added to both teams
+ * (game pace and flow) and an independent draw per team. Sized to the
+ * possession sim's fixed-matchup spread: team points SD ~11.7, margin SD
+ * ~12.9, score correlation ~0.4.
+ */
+const SHARED_SCORE_NOISE = 12;
+const SCORE_NOISE = 15;
 const SCORE_FLOOR = 60;
 const SCORE_CEILING = 140;
-const POSSESSIONS_MIN = 82;
-const POSSESSIONS_MAX = 92;
+const POSSESSIONS_MIN = 94;
+const POSSESSIONS_MAX = 104;
 const REGULATION_TEAM_MINUTES = ROTATION_CONFIG.regulationPlayerMinutes;
 const PLAYING_ROTATION_SIZE = 10;
 /** Minutes multiplier for players who are not fully available. */
@@ -123,8 +136,8 @@ const BOX_SCORE_MINUTES_BY_AVAILABILITY: Readonly<
   recovery: 0.75,
 };
 
-/** Possession sim assists ~51% of made field goals on league rosters. */
-const ASSIST_TO_FGM_RATE = 0.51;
+/** Possession sim assists ~61% of made field goals on league rosters. */
+const ASSIST_TO_FGM_RATE = 0.605;
 
 /**
  * How a player's points split into 3PM / 2PM / FTM, and the map from the
@@ -137,21 +150,22 @@ const ASSIST_TO_FGM_RATE = 0.51;
  * shooters extra attempts, which a per-player fit alone would miss. Re-fit
  * when shot or FT config changes (engine v8 lowered the three-point and FT
  * intercepts so Lab and league rates match the possession sim with the
- * shooting knee and the steeper star exponent).
+ * shooting knee and the steeper star exponent; engine v10 lowers the
+ * three-point intercept 0.014 for the higher scoring level and matchups).
  */
 const BOX_SCORE_SHOT_CALIBRATION = {
   threeShareBase: -0.0055,
   threeShareSlope: 0.745,
   threeShareMin: 0,
   threeShareMax: 0.7,
-  ftShareBase: 0.093,
+  ftShareBase: 0.115,
   ftShareFinishingSlope: 0,
   ftShareMin: 0.04,
   ftShareMax: 0.25,
   // Elite shooters are kept believable by the shared diminishing-returns
   // curve (effectiveShootingAbility), not a box-score-only knee.
   twoPoint: { intercept: 0.0425, slope: 0.9772 },
-  threePoint: { intercept: 0.054, slope: 0.951 },
+  threePoint: { intercept: 0.04, slope: 0.951 },
   freeThrow: { intercept: -0.008, slope: 0.9984 },
 } as const;
 
@@ -322,11 +336,12 @@ function rollFinalScore(
   awayBase: number,
   rng: Rng,
 ): GameScore {
+  const shared = rng.nextInt(-SHARED_SCORE_NOISE, SHARED_SCORE_NOISE);
   let home = clampScore(
-    Math.round(homeBase) + rng.nextInt(-SCORE_NOISE, SCORE_NOISE),
+    Math.round(homeBase) + shared + rng.nextInt(-SCORE_NOISE, SCORE_NOISE),
   );
   let away = clampScore(
-    Math.round(awayBase) + rng.nextInt(-SCORE_NOISE, SCORE_NOISE),
+    Math.round(awayBase) + shared + rng.nextInt(-SCORE_NOISE, SCORE_NOISE),
   );
   if (home === away) {
     if (rng.chance(0.5)) {
@@ -436,9 +451,9 @@ function buildTeamBoxScore(input: {
       teamMisses *
         offensiveReboundRate(rotation, minutes, rankedTop(input.opponent)),
     ) + rng.nextInt(-2, 2);
-  const drebTotal = Math.round(possessions * 0.38) + rng.nextInt(-3, 3);
-  const tovTotal = Math.round(possessions * 0.203) + rng.nextInt(-2, 2);
-  const stlTotal = Math.round(possessions * 0.0995) + rng.nextInt(-2, 1);
+  const drebTotal = Math.round(possessions * 0.39) + rng.nextInt(-3, 3);
+  const tovTotal = Math.round(possessions * 0.146) + rng.nextInt(-2, 2);
+  const stlTotal = Math.round(possessions * 0.088) + rng.nextInt(-2, 1);
   const foulTotal = rng.nextInt(16, 26);
 
   const ast = allocateByWeight(

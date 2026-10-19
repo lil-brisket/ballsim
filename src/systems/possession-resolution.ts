@@ -24,7 +24,15 @@ import {
   type FreeThrowResult,
 } from "@/systems/free-throw-resolution";
 import { resolvePass, type PassResolution } from "@/systems/pass-resolution";
-import { STEAL_CREDIT_CONFIG } from "@/systems/pass-resolution-config";
+import {
+  DIRECT_SHOT_ASSIST_CONFIG,
+  STEAL_CREDIT_CONFIG,
+} from "@/systems/pass-resolution-config";
+import { pickMatchedDefender } from "@/systems/defensive-matchups";
+import {
+  buildOffensiveUsageProfiles,
+  pickWeightedPlayer,
+} from "@/systems/player-usage";
 import {
   resolveRebound,
   type ReboundResult,
@@ -78,12 +86,20 @@ export type ResolvePossessionInput = {
   fatigue?: number;
   /** True when the offensive team is the home team (home-court shot bonus). */
   offenseIsHome?: boolean;
+  /** Offense score minus defense score before this possession. */
+  offenseScoreMargin?: number;
   foulRules?: FoulRules;
   /**
    * Already-derived defensive pressure multiplier (coaching).
    * Applied to perimeterDefense before resolvePass; defaults to 1 (no-op).
    */
   defensivePressureMultiplier?: number;
+  /**
+   * Passer of a completed pass on the previous step that kept the ball
+   * (`continuingPasserId` of that resolution). Preferred assister when a
+   * made direct shot is assisted.
+   */
+  assistPasserId?: PlayerId | null;
   /**
    * When true, also returns play-by-play rows in `plays`. Recording draws no
    * random numbers, so results are identical either way.
@@ -114,6 +130,8 @@ export type PossessionResolution = {
   scoringTeamId: TeamId | null;
   defensiveTeamFoulsAfter: number;
   nextPossession: NextPossession;
+  /** Passer when a completed pass kept the ball with no shot; else null. */
+  continuingPasserId: PlayerId | null;
 };
 
 type ExecutionContext = {
@@ -215,6 +233,11 @@ export function resolvePossession(
     scoringTeamId,
     defensiveTeamFoulsAfter: ctx.defensiveTeamFoulsAfter,
     nextPossession: { ...ctx.nextPossession },
+    continuingPasserId:
+      ctx.possessionOutcome === "pass_completed" &&
+      !ctx.steps.some((step) => step.type === "shot")
+        ? ctx.resolved.passer!.id
+        : null,
   };
 }
 
@@ -337,6 +360,7 @@ function resolveShotBranch(ctx: ExecutionContext): void {
       shotType: decision.shotType,
       fatigue: ctx.fatigue,
       homeCourt: ctx.input.offenseIsHome === true,
+      scoreMargin: ctx.input.offenseScoreMargin,
     },
     ctx.rng,
   );
@@ -348,7 +372,8 @@ function resolveShotBranch(ctx: ExecutionContext): void {
     addFieldGoal(ctx.stats, shooter.id, decision.shotType, true);
     addPoints(ctx.stats, shooter.id, points);
     pushEvent(ctx.stats, "shot_made", shooter.id, ctx.input.offensiveTeamId);
-    pushShotPlay(ctx, decision.shotType, true, shooter.id, null);
+    const assisterId = maybeCreditDirectShotAssist(ctx, shooter);
+    pushShotPlay(ctx, decision.shotType, true, shooter.id, assisterId);
     ctx.possessionOutcome = "shot_made";
     flipPossession(ctx);
     return;
@@ -426,6 +451,7 @@ function resolvePassBranch(ctx: ExecutionContext): void {
       shotType,
       fatigue: ctx.fatigue,
       homeCourt: ctx.input.offenseIsHome === true,
+      scoreMargin: ctx.input.offenseScoreMargin,
     },
     ctx.rng,
   );
@@ -461,7 +487,12 @@ function resolveTurnoverBranch(ctx: ExecutionContext): void {
   addTouch(ctx.stats, player.id);
   addTurnover(ctx.stats, player.id);
   pushEvent(ctx.stats, "turnover", player.id, ctx.input.offensiveTeamId);
-  const defender = ctx.rng.pick(ctx.input.defensivePlayers);
+  const defender = pickMatchedDefender(
+    player,
+    ctx.input.offensivePlayers,
+    ctx.input.defensivePlayers,
+    ctx.rng,
+  );
   const stealerId = maybeCreditSteal(
     ctx,
     defender,
@@ -520,6 +551,7 @@ function resolveFoulBranch(ctx: ExecutionContext): void {
         shotType,
         fatigue: ctx.fatigue,
         homeCourt: ctx.input.offenseIsHome === true,
+        scoreMargin: ctx.input.offenseScoreMargin,
       },
       ctx.rng,
     );
@@ -700,6 +732,39 @@ function catchAndShootType(receiver: Player): ShotType {
     return "three_point";
   }
   return "two_point";
+}
+
+/**
+ * Credits an assist on a made direct shot (see DIRECT_SHOT_ASSIST_CONFIG).
+ * Draws one RNG value when the shooter has an on-court teammate, plus one
+ * teammate pick when no continuing passer is eligible.
+ */
+function maybeCreditDirectShotAssist(
+  ctx: ExecutionContext,
+  shooter: Player,
+): PlayerId | null {
+  const teammates = ctx.input.offensivePlayers;
+  if (teammates.length < 2) {
+    return null;
+  }
+  if (!ctx.rng.chance(DIRECT_SHOT_ASSIST_CONFIG.directShotChance)) {
+    return null;
+  }
+  const carriedId = ctx.input.assistPasserId;
+  const assisterId =
+    carriedId != null &&
+    carriedId !== shooter.id &&
+    teammates.some((player) => player.id === carriedId)
+      ? carriedId
+      : pickWeightedPlayer(
+          buildOffensiveUsageProfiles(teammates),
+          "passWeight",
+          ctx.rng,
+          shooter.id,
+        ).id;
+  addAssist(ctx.stats, assisterId);
+  pushEvent(ctx.stats, "assist", assisterId, ctx.input.offensiveTeamId);
+  return assisterId;
 }
 
 /**

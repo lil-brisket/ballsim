@@ -4,6 +4,7 @@ import type { TeamId } from "@/domain/ids";
 import type { Rng } from "@/domain/rng";
 import type { PossessionDecision } from "@/systems/possession-decision";
 import type { GameSimulationConfig } from "@/systems/game-simulation-config";
+import { pickMatchedDefender } from "@/systems/defensive-matchups";
 import type { ShotType } from "@/systems/shot-resolution-config";
 import {
   buildOffensiveUsageProfiles,
@@ -103,12 +104,19 @@ export function choosePossessionDecision(
   switch (action) {
     case "shot": {
       const shooter = pickWeightedPlayer(profiles, "shotWeight", rng);
-      const defender = rng.pick(input.defensivePlayers);
+      const shotType = chooseShotType(shooter, shotSelectionModifiers, rng);
+      const defender = pickMatchedDefender(
+        shooter,
+        input.offensivePlayers,
+        input.defensivePlayers,
+        rng,
+        shotType === "two_point",
+      );
       return {
         action: "shot",
         shooterId: shooter.id,
         defenderId: defender.id,
-        shotType: chooseShotType(shooter, shotSelectionModifiers, rng),
+        shotType,
       };
     }
     case "pass": {
@@ -119,7 +127,13 @@ export function choosePossessionDecision(
         rng,
         passer.id,
       );
-      const defender = rng.pick(input.defensivePlayers);
+      // The receiver's defender pressures the pass and contests the catch.
+      const defender = pickMatchedDefender(
+        receiver,
+        input.offensivePlayers,
+        input.defensivePlayers,
+        rng,
+      );
       return {
         action: "pass",
         passerId: passer.id,
@@ -239,7 +253,12 @@ function chooseFoulDecision(
   ).kind;
 
   if (subtype === "offensive") {
-    const fouled = rng.pick(input.defensivePlayers);
+    const fouled = pickMatchedDefender(
+      primaryOffense,
+      input.offensivePlayers,
+      input.defensivePlayers,
+      rng,
+    );
     return {
       action: "foul",
       foul: createFoul({
@@ -250,13 +269,19 @@ function chooseFoulDecision(
     };
   }
 
-  const fouler = rng.pick(input.defensivePlayers);
   // Shooting-foul victim is independent of primary; biased toward scoring threats.
-  // Non-shooting defensive foul keeps uniform offense pick.
+  // Non-shooting defensive foul keeps uniform offense pick. The fouled
+  // player's defender commits the foul.
   const fouled =
     subtype === "defensiveShooting"
       ? pickWeightedPlayer(profiles, "shotWeight", rng)
       : rng.pick(input.offensivePlayers);
+  const fouler = pickMatchedDefender(
+    fouled,
+    input.offensivePlayers,
+    input.defensivePlayers,
+    rng,
+  );
   if (subtype === "defensiveShooting") {
     return {
       action: "foul",

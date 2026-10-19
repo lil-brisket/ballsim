@@ -69,5 +69,40 @@
  * three-point adjustment drops -0.08 -> -0.095 so pooled 3P% stays ~38% once
  * fouled three-point misses stop counting. Box score refits its 2P/3P
  * intercepts, points intercept and steal rate, and adds the home term.
+ *
+ * Version 10: a completed pass that does not end in a shot costs 3-7 seconds
+ * (`passContinueMin/Max`) instead of a full 8-18 second possession, lifting
+ * pace ~91 -> ~99 possessions per team. Turnovers fall ~19% -> ~14.5% of
+ * possessions (turnover action weight 6 -> 4.5, `baselinePassSuccess`
+ * 0.72 -> 0.76); steal credit bases rise 0.6/0.3 -> 0.7/0.4 so steals hold
+ * ~8. Fouls rise (foul weight 14 -> 16, shooting share 38 -> 48 of 100),
+ * FTA ~14 -> ~22. Team scoring ~95 -> ~113 PPG on the validation rosters.
+ * Box score rescales its points model (OLS on held-out Lab possession
+ * games), possessions 82-92 -> 94-104, and its turnover, steal, defensive
+ * rebound and free-throw share rates.
+ *
+ * Version 11: made shots from the `shot` action are assisted 30% of the time
+ * (`DIRECT_SHOT_ASSIST_CONFIG`, one RNG draw per made direct shot plus a
+ * teammate pick), preferring the passer of a completed pass that kept the
+ * ball on the previous step. Assisted share of made field goals ~50% -> ~62%,
+ * assists ~21 -> ~26 per team. Box score assist rate 0.51 -> 0.605.
+ *
+ * Version 12: defenders are matched by position slot (`pickMatchedDefender`)
+ * instead of picked uniformly: shot, pass, foul and standalone-turnover
+ * defenders guard their man, with a 20% switch to a random defender and, on
+ * two-point shots, a 25% rim-help contest by the best shot blocker. One RNG
+ * draw per pick, as before; shot type is now chosen before the shot defender.
+ * An elite defender now holds their man's FG% down instead of spreading the
+ * effect over the whole offense. League scoring ~1 PPG lower; box score
+ * points intercept -1.0.
+ *
+ * Version 13: lead regression (`SHOT_RESOLUTION_CONFIG.leadRegression`).
+ * Past an 8-point lead the leading team's shots lose 0.004 make probability
+ * per extra point (cap 0.05) and the trailing team's gain the same. No RNG
+ * change. In 12-team leagues the margin noise left after team strength
+ * falls ~16.3 -> ~12.4 (NBA ~12.5), 20+ point games ~33% -> ~19%, team win%
+ * spread unchanged. Box score draws one shared noise term for both teams
+ * (+-12) plus +-15 per team instead of +-24 per team, and rescales its
+ * points model (x0.830, +17.7; home 2.0).
  */
-export const ENGINE_VERSION = 9;
+export const ENGINE_VERSION = 13;

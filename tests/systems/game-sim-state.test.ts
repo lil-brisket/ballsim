@@ -196,6 +196,8 @@ describe("golden game determinism", () => {
         foulMax: 8,
         freeThrowMin: 8,
         freeThrowMax: 8,
+        passContinueMin: 8,
+        passContinueMax: 8,
       },
     };
 

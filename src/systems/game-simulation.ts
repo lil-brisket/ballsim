@@ -691,6 +691,7 @@ function simulatePeriod(args: {
   let offensiveTeamId = args.offensiveTeamId;
   let defensiveTeamId = args.defensiveTeamId;
   const teamFouls: TeamFoulCounters = { home: 0, away: 0 };
+  let assistPasserId: PlayerId | null = null;
   const scoreAtPeriodStart: GameScore = {
     home: sim.homeScore,
     away: sim.awayScore,
@@ -761,12 +762,18 @@ function simulatePeriod(args: {
         eventSequenceStart: sim.eventSequenceStart,
         fatigue: averageOnCourtFatigue(sim, offensivePlayers),
         offenseIsHome: offensiveTeamId === sim.homeTeamId,
+        offenseScoreMargin:
+          offensiveTeamId === sim.homeTeamId
+            ? sim.homeScore - sim.awayScore
+            : sim.awayScore - sim.homeScore,
         defensivePressureMultiplier:
           tactical.defensiveModifiers.defensivePressureMultiplier,
         recordPlays: sim.playByPlay != null,
+        assistPasserId,
       },
       args.rng,
     );
+    assistPasserId = resolution.continuingPasserId;
     args.timers.addResolution(performance.now() - resolutionStart);
 
     const statsStart = performance.now();
@@ -914,10 +921,20 @@ export function requestPossessionSeconds(
     seconds = rng.nextInt(times.foulMin, times.foulMax);
   } else if (action === "free_throw") {
     seconds = rng.nextInt(times.freeThrowMin, times.freeThrowMax);
+  } else if (isContinuingPass(resolution)) {
+    seconds = rng.nextInt(times.passContinueMin, times.passContinueMax);
   } else {
     seconds = rng.nextInt(times.defaultMin, times.defaultMax);
   }
   return Math.max(1, seconds + possessionSecondsDelta);
+}
+
+/** Completed pass with no shot attempt: the offense keeps the ball. */
+function isContinuingPass(resolution: PossessionResolution): boolean {
+  return (
+    resolution.possession.outcome === "pass_completed" &&
+    !resolution.steps.some((step) => step.type === "shot")
+  );
 }
 
 function philosophyForTeam(

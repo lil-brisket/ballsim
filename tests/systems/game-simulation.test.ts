@@ -72,6 +72,8 @@ function shortConfig() {
       foulMax: 6,
       freeThrowMin: 6,
       freeThrowMax: 6,
+      passContinueMin: 6,
+      passContinueMax: 6,
     },
   };
 }
@@ -258,6 +260,8 @@ describe("simulateGame", () => {
             foulMax: 8,
             freeThrowMin: 8,
             freeThrowMax: 8,
+            passContinueMin: 8,
+            passContinueMax: 8,
           },
         },
         chooseDecision: (input) => {
@@ -304,6 +308,8 @@ describe("simulateGame", () => {
             foulMax: 6,
             freeThrowMin: 6,
             freeThrowMax: 6,
+            passContinueMin: 6,
+            passContinueMax: 6,
           },
         },
         chooseDecision: (input) => {
@@ -358,6 +364,8 @@ describe("simulateGame", () => {
             foulMax: 6,
             freeThrowMin: 6,
             freeThrowMax: 6,
+            passContinueMin: 6,
+            passContinueMax: 6,
           },
         },
         chooseDecision: (input) => {
@@ -410,6 +418,8 @@ describe("simulateGame", () => {
             foulMax: 6,
             freeThrowMin: 6,
             freeThrowMax: 6,
+            passContinueMin: 6,
+            passContinueMax: 6,
           },
         },
         chooseDecision: (input) => ({
@@ -455,6 +465,8 @@ describe("simulateGame", () => {
             foulMax: 6,
             freeThrowMin: 6,
             freeThrowMax: 6,
+            passContinueMin: 6,
+            passContinueMax: 6,
           },
         },
         chooseDecision: (input) => {
@@ -502,6 +514,8 @@ describe("simulateGame", () => {
             foulMax: 6,
             freeThrowMin: 6,
             freeThrowMax: 6,
+            passContinueMin: 6,
+            passContinueMax: 6,
           },
         },
         chooseDecision: (input) => {

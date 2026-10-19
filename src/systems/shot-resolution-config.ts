@@ -28,6 +28,14 @@ export const SHOT_RESOLUTION_CONFIG = {
    * an NBA-like home edge (~+2.5 points, ~56% home wins between equal teams).
    */
   homeCourtAdvantage: 0.016,
+  /**
+   * Game script: past `threshold` points of lead, the leading team's shots
+   * lose `perPoint` make probability per extra point of lead (capped at
+   * `max`) and the trailing team's gain the same. Stands in for leading teams
+   * easing off and trailing teams pressing; without it margins spread like
+   * independent possessions (noise SD ~16.5 vs NBA ~12.5).
+   */
+  leadRegression: { threshold: 8, perPoint: 0.004, max: 0.05 },
 } as const;
 
 /**

@@ -325,6 +325,8 @@ describe("possessionCounts", () => {
             foulMax: 6,
             freeThrowMin: 6,
             freeThrowMax: 6,
+            passContinueMin: 6,
+            passContinueMax: 6,
           },
         },
       },
