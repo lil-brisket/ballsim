@@ -37,3 +37,25 @@ export const PASS_RESOLUTION_CONFIG = {
   baselineAssist: 0.42,
   assistPassingImpact: 0.42,
 } as const;
+
+/**
+ * Chance a turnover is credited to a defender as a steal. NBA teams record
+ * roughly one steal per two turnovers.
+ *
+ *   stealChance = clamp(
+ *     base + ((defender.steal - ballHandler.ballHandling) / RATING_MAX) * skillImpact,
+ *     minChance,
+ *     maxChance,
+ *   )
+ *
+ * Pass turnovers are mostly live balls and use `passTurnoverBase` with the
+ * matched-up defender. Standalone turnovers (lost handles, travels, offensive
+ * errors) use `standaloneTurnoverBase` and credit a random on-court defender.
+ */
+export const STEAL_CREDIT_CONFIG = {
+  passTurnoverBase: 0.6,
+  standaloneTurnoverBase: 0.3,
+  skillImpact: 0.6,
+  minChance: 0.1,
+  maxChance: 0.85,
+} as const;

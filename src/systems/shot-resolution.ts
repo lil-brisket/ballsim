@@ -15,6 +15,8 @@ export type ResolveShotInput = {
   shotType: ShotType;
   /** 0 = rested, 1 = fully fatigued. */
   fatigue: number;
+  /** True when the shooter's team is at home; adds `homeCourtAdvantage`. */
+  homeCourt?: boolean;
 };
 
 export type ShotResolution = {
@@ -33,6 +35,7 @@ export type ShotResolution = {
  *   + shotTypeAdjustment
  *   - (defenseRating / RATING_MAX) * defensiveImpact
  *   - fatigue * fatigueImpact
+ *   + homeCourtAdvantage (home team only)
  *   → clamp(minProbability, maxProbability)
  *
  * For v1, all two-point attempts use the mean of finishing and midRange.
@@ -50,12 +53,16 @@ export function calculateShotProbability(input: ResolveShotInput): number {
     (defenseRating / RATING_MAX) * SHOT_RESOLUTION_CONFIG.defensiveImpact;
   const fatiguePenalty = input.fatigue * SHOT_RESOLUTION_CONFIG.fatigueImpact;
 
+  const homeBonus =
+    input.homeCourt === true ? SHOT_RESOLUTION_CONFIG.homeCourtAdvantage : 0;
+
   const unclamped =
     baseProbability +
     SHOT_RESOLUTION_CONFIG.baselineProbability +
     shotTypeAdjustment -
     defensivePenalty -
-    fatiguePenalty;
+    fatiguePenalty +
+    homeBonus;
 
   return clampProbability(unclamped);
 }
