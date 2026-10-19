@@ -1,5 +1,7 @@
-import { Panel, SectionHeading, StatusBadge, cn } from "@/components/ui";
+import { StatusBadge, cn } from "@/components/ui";
+import { focusRingClass } from "@/components/ui/styles";
 import type {
+  KeyMoment,
   WatchGameView,
   WatchHighlight,
   WatchPlay,
@@ -24,6 +26,16 @@ const HIGHLIGHT_TONE: Record<WatchHighlight, string> = {
   foul_out: "critical",
   and_one: "info",
 };
+
+export function visibleKeyMoments(
+  keyMoments: KeyMoment[],
+  revealed: number,
+  isFinal: boolean,
+): KeyMoment[] {
+  return keyMoments.filter((moment) =>
+    moment.playIndex === null ? isFinal : moment.playIndex < revealed,
+  );
+}
 
 type FeedRow =
   | { type: "group"; plays: WatchPlay[] }
@@ -87,9 +99,23 @@ function PeriodSeparator(props: { label: string }) {
   );
 }
 
+function MomentText(props: { moment: KeyMoment }) {
+  return (
+    <span className="block">
+      <span className="block text-sm font-semibold text-zinc-50">
+        {props.moment.title}
+      </span>
+      <span className="block text-sm text-zinc-400">{props.moment.detail}</span>
+    </span>
+  );
+}
+
+const MOMENT_CLASS = "border-team-ink/50 bg-team/15";
+
 export function PlayByPlayFeed(props: {
   view: WatchGameView;
   revealed: number;
+  onJump: (revealed: number) => void;
 }) {
   const { view } = props;
   const visible = view.plays.slice(0, props.revealed);
@@ -97,9 +123,22 @@ export function PlayByPlayFeed(props: {
   const teamOf = (side: WatchSide): WatchTeam =>
     side === 0 ? view.home : view.away;
   const atEnd = visible.length > 0 && visible.length === view.plays.length;
+  const moments = visibleKeyMoments(view.keyMoments, props.revealed, atEnd);
 
   // Newest first, with a separator wherever the period changes (and at the end).
   const items: React.ReactNode[] = [];
+  moments.forEach((moment, index) => {
+    if (moment.playIndex === null) {
+      items.push(
+        <li
+          key={`post-${index}`}
+          className={cn("rounded-lg border border-l-4 px-3 py-2", MOMENT_CLASS)}
+        >
+          <MomentText moment={moment} />
+        </li>,
+      );
+    }
+  });
   if (atEnd) {
     items.push(
       <PeriodSeparator
@@ -117,7 +156,7 @@ export function PlayByPlayFeed(props: {
           key={`sub-${play.index}`}
           className="flex items-baseline gap-3 px-3 py-1 text-sm text-zinc-500"
         >
-          <span className="w-24 shrink-0 font-mono tabular-nums">
+          <span className="w-24 shrink-0 tabular-nums">
             {play.periodLabel} {play.clockLabel}
           </span>
           <span className="min-w-0 break-words">{play.text}</span>
@@ -126,54 +165,88 @@ export function PlayByPlayFeed(props: {
     } else {
       const last = row.plays[row.plays.length - 1]!;
       const team = teamOf(play.side);
-      const scoring = row.plays.some((p) => p.points > 0);
+      const points = row.plays.reduce((sum, p) => sum + p.points, 0);
+      const scoring = points > 0;
+      const scoringSide =
+        row.plays.find((p) => p.points > 0)?.side ?? play.side;
+      const scoringTeam = teamOf(scoringSide);
+      const rowMoments = moments.filter(
+        (moment) =>
+          moment.playIndex !== null &&
+          row.plays.some((p) => p.index === moment.playIndex),
+      );
+      const awayScoring = scoring && scoringSide === 1;
+      const homeScoring = scoring && scoringSide === 0;
       items.push(
-        <li
-          key={`group-${play.index}`}
-          className={cn(
-            "flex items-start gap-3 rounded-lg border px-3 py-2",
-            scoring
-              ? "border-zinc-700 bg-zinc-900"
-              : "border-transparent bg-zinc-900/40",
-          )}
-        >
-          <div className="w-24 shrink-0 space-y-1">
-            <p className="font-mono text-xs tabular-nums text-zinc-400">
-              {play.periodLabel} {play.clockLabel}
-            </p>
-            <span
-              className="inline-block rounded border-l-4 bg-zinc-800 px-1.5 py-0.5 text-xs font-semibold uppercase text-zinc-200"
-              style={{ borderLeftColor: team.branding.primaryColor }}
-            >
-              {team.abbreviation}
-            </span>
-          </div>
-          <div className="min-w-0 flex-1 space-y-1">
-            {row.plays.map((p) => (
-              <div
-                key={p.index}
-                className="flex flex-wrap items-center gap-x-2 gap-y-1"
+        <li key={`group-${play.index}`}>
+          <button
+            type="button"
+            onClick={() => props.onJump(last.index + 1)}
+            className={cn(
+              "flex min-h-11 w-full items-start gap-3 rounded-lg border border-l-4 px-3 py-2 text-left hover:border-zinc-600",
+              rowMoments.length > 0
+                ? MOMENT_CLASS
+                : scoring
+                  ? "border-zinc-700 bg-zinc-900"
+                  : "border-transparent bg-zinc-900/40",
+              focusRingClass,
+            )}
+            style={{
+              borderLeftColor: scoring
+                ? scoringTeam.branding.primaryColor
+                : "transparent",
+            }}
+          >
+            <span className="block w-24 shrink-0 space-y-1">
+              <span className="block text-sm tabular-nums text-zinc-400">
+                {play.periodLabel} {play.clockLabel}
+              </span>
+              <span
+                className="inline-block rounded border-l-4 bg-zinc-800 px-1.5 py-0.5 text-xs font-semibold uppercase text-zinc-200"
+                style={{ borderLeftColor: team.branding.primaryColor }}
               >
-                <p
-                  className={cn(
-                    "min-w-0 break-words text-sm",
-                    p.points > 0 && "font-semibold text-zinc-50",
-                    isFoul(p) && "text-warning",
-                    p.points === 0 && !isFoul(p) && "text-zinc-300",
-                  )}
+                {team.abbreviation}
+              </span>
+            </span>
+            <span className="block min-w-0 flex-1 space-y-1">
+              {rowMoments.map((moment) => (
+                <MomentText key={moment.playIndex} moment={moment} />
+              ))}
+              {row.plays.map((p) => (
+                <span
+                  key={p.index}
+                  className="flex flex-wrap items-center gap-x-2 gap-y-1"
                 >
-                  {p.text}
-                </p>
-                <HighlightBadges highlights={p.highlights} />
-              </div>
-            ))}
-          </div>
-          <p className="shrink-0 font-mono text-sm tabular-nums text-zinc-300">
-            <span className="sr-only">Score </span>
-            {view.away.abbreviation} {last.awayScore}
-            {" – "}
-            {view.home.abbreviation} {last.homeScore}
-          </p>
+                  <span
+                    className={cn(
+                      "min-w-0 break-words text-sm",
+                      p.points > 0 && "font-semibold text-zinc-50",
+                      isFoul(p) && "text-warning",
+                      p.points === 0 && !isFoul(p) && "text-zinc-300",
+                    )}
+                  >
+                    {p.text}
+                  </span>
+                  <HighlightBadges highlights={p.highlights} />
+                </span>
+              ))}
+            </span>
+            <span className="block shrink-0 text-right text-sm tabular-nums text-zinc-400">
+              <span className="sr-only">Score </span>
+              <span className={cn(awayScoring && "font-semibold text-zinc-50")}>
+                {view.away.abbreviation} {last.awayScore}
+              </span>
+              {" – "}
+              <span className={cn(homeScoring && "font-semibold text-zinc-50")}>
+                {view.home.abbreviation} {last.homeScore}
+              </span>
+              {scoring ? (
+                <span className="ml-2 font-semibold text-zinc-50">
+                  +{points}
+                </span>
+              ) : null}
+            </span>
+          </button>
         </li>,
       );
     }
@@ -189,8 +262,7 @@ export function PlayByPlayFeed(props: {
   }
 
   return (
-    <Panel as="section" className="min-w-0 space-y-3">
-      <SectionHeading as="h2" title="Play-by-play" />
+    <div className="min-w-0 space-y-3">
       {visible.length === 0 ? (
         <p className="text-sm text-zinc-500">
           Press Play to start the broadcast.
@@ -204,6 +276,6 @@ export function PlayByPlayFeed(props: {
       >
         <ul className="space-y-1.5">{items}</ul>
       </div>
-    </Panel>
+    </div>
   );
 }

@@ -430,6 +430,16 @@ function feed() {
   return within(screen.getByTestId("play-feed"));
 }
 
+/** Switches the stats area to one of its tabs. */
+function openTab(name: "Play-by-play" | "Box score" | "Shot chart") {
+  fireEvent.click(
+    within(screen.getByRole("navigation", { name: "Game stats" })).getByRole(
+      "button",
+      { name },
+    ),
+  );
+}
+
 function statCells(playerName: string): string[] {
   const row = screen
     .getAllByRole("row")
@@ -611,13 +621,15 @@ describe("WatchGameClient", () => {
     expect(screen.getByText("Final", FINAL_IN_SCOREBOARD)).toBeTruthy();
     expect(screen.getByText("Away takes the lead")).toBeTruthy();
     expect(screen.getByText("T. Reed injured")).toBeTruthy();
+    openTab("Box score");
     expect(screen.getAllByText("MIN")).toHaveLength(2);
 
     chooseFromMenu("Restart");
     expect(screen.getByRole("group", { name: START_SCORE_LABEL })).toBeTruthy();
     expect(scoreboardFinal()).toBeNull();
-    expect(screen.queryByText("T. Reed injured")).toBeNull();
     expect(screen.queryByText("MIN")).toBeNull();
+    openTab("Play-by-play");
+    expect(screen.queryByText("T. Reed injured")).toBeNull();
     expectRevealed(0);
   });
 
@@ -671,6 +683,7 @@ describe("WatchGameClient", () => {
     it("leaves the by-quarter table out of the shot summary", () => {
       renderClient();
       chooseFromMenu("Skip to end");
+      openTab("Shot chart");
       expect(screen.queryByText("By quarter")).toBeNull();
       expect(
         screen.queryByRole("table", { name: "Shot summary by quarter" }),
@@ -683,6 +696,7 @@ describe("WatchGameClient", () => {
 
   it("updates the live box score as plays are revealed", () => {
     renderClient();
+    openTab("Box score");
     expect(statCells("J. Smith")[1]).toBe("0");
     fireEvent.click(screen.getByRole("button", { name: "Play" }));
     advance(1);
@@ -737,6 +751,103 @@ describe("WatchGameClient", () => {
     const sub = feed().getByText("B. Bench checks in for K. Lee");
     expect(sub.closest("li")).not.toBe(foul.closest("li"));
     expect(feed().getByText("End of Q1")).toBeTruthy();
+  });
+
+  describe("stats tabs", () => {
+    it("has one tab row, defaulting to Play-by-play", () => {
+      renderClient();
+      const nav = within(
+        screen.getByRole("navigation", { name: "Game stats" }),
+      );
+      expect(nav.getAllByRole("button").map((b) => b.textContent)).toEqual([
+        "Play-by-play",
+        "Box score",
+        "Shot chart",
+      ]);
+      expect(
+        nav
+          .getByRole("button", { name: "Play-by-play" })
+          .getAttribute("aria-pressed"),
+      ).toBe("true");
+      expect(screen.getByTestId("play-feed")).toBeTruthy();
+      expect(screen.queryByText("MIN")).toBeNull();
+    });
+
+    it("shows the box score and the shot summary on their tabs", () => {
+      renderClient();
+      chooseFromMenu("Skip to end");
+      openTab("Box score");
+      expect(screen.getAllByText("MIN")).toHaveLength(2);
+      expect(screen.queryByTestId("play-feed")).toBeNull();
+      openTab("Shot chart");
+      expect(screen.queryByText("MIN")).toBeNull();
+      expect(
+        screen.getByRole("heading", { name: "Shot summary" }),
+      ).toBeTruthy();
+      openTab("Play-by-play");
+      expect(screen.getByTestId("play-feed")).toBeTruthy();
+    });
+  });
+
+  describe("play-by-play feed rows", () => {
+    it("jumps to a past row's last play", () => {
+      renderClient();
+      chooseFromMenu("Skip to end");
+      // Possession 6 holds plays 5 and 6.
+      fireEvent.click(
+        feed().getByRole("button", { name: /Shooting foul on T\. Reed/ }),
+      );
+      expectRevealed(7);
+      expect(feed().queryByText("B. Bench checks in for K. Lee")).toBeNull();
+      expect(screen.getByRole("button", { name: "Play" })).toBeTruthy();
+    });
+
+    it("highlights key-moment rows and shows the post-game injury only at the end", () => {
+      renderClient();
+      expect(screen.queryByText("Away takes the lead")).toBeNull();
+      fireEvent.click(screen.getByRole("button", { name: "Play" }));
+      advance(10);
+      expect(screen.queryByText("Away takes the lead")).toBeNull();
+      advance(1);
+      const row = feed().getByRole("button", { name: /Away takes the lead/ });
+      expect(row.className).toContain("bg-team");
+      expect(within(row).getByText("AWY leads 8-6")).toBeTruthy();
+      expect(
+        within(row).getByText("M. Jones makes 3-pt shot (T. Reed assists)"),
+      ).toBeTruthy();
+      expect(screen.queryByText("T. Reed injured")).toBeNull();
+
+      chooseFromMenu("Skip to end");
+      const injury = feed().getByText("T. Reed injured");
+      expect(injury.closest("button")).toBeNull();
+      expect(feed().getAllByRole("listitem")[0]!.textContent).toContain(
+        "T. Reed injured",
+      );
+    });
+
+    it("shows the points scored and a body-size clock", () => {
+      renderClient();
+      chooseFromMenu("Skip to end");
+      const row = feed().getByRole("button", {
+        name: /M\. Jones makes 3-pt shot/,
+      });
+      expect(within(row).getByText("+3")).toBeTruthy();
+      expect(within(row).getByText("Score")).toBeTruthy();
+      const clock = within(row).getByText("Q2 8:20");
+      expect(clock.className).not.toContain("text-xs");
+      expect(clock.className).not.toContain("font-mono");
+      const miss = feed().getByRole("button", {
+        name: /M\. Jones misses 2-pt shot/,
+      });
+      expect(within(miss).queryByText(/^\+\d/)).toBeNull();
+    });
+
+    it("has no separate key moments panel", () => {
+      renderClient();
+      chooseFromMenu("Skip to end");
+      expect(screen.queryByText("No key moments yet.")).toBeNull();
+      expect(screen.queryByRole("heading", { name: "Key moments" })).toBeNull();
+    });
   });
 });
 
@@ -828,6 +939,7 @@ describe("WatchGameClient court", () => {
     fireEvent.click(screen.getByRole("button", { name: /^Jalen Smith,/ }));
     expect(card().getByText("Jalen Smith")).toBeTruthy();
     expect(card().getByText(/PG · Harbor Waves · On court/)).toBeTruthy();
+    openTab("Box score");
     const row = screen
       .getAllByRole("row")
       .find((candidate) => candidate.textContent?.includes("J. Smith"))!;

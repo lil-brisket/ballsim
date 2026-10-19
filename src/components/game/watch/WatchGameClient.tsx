@@ -3,7 +3,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { CourtPlayerCard } from "@/components/game/watch/court/CourtPlayerCard";
 import { FullCourtView } from "@/components/game/watch/court/FullCourtView";
-import { KeyMomentsList } from "@/components/game/watch/KeyMomentsList";
 import { LiveBoxScore } from "@/components/game/watch/LiveBoxScore";
 import {
   PlaybackControls,
@@ -14,6 +13,7 @@ import {
 import { PlayByPlayFeed } from "@/components/game/watch/PlayByPlayFeed";
 import { Scoreboard } from "@/components/game/watch/Scoreboard";
 import { ShotSummaryPanel } from "@/components/game/watch/ShotSummaryPanel";
+import { Tabs } from "@/components/ui";
 import {
   motionMs,
   openerShare,
@@ -44,6 +44,7 @@ export function WatchGameClient(props: {
   // choreographed); a jump (restart, skip, possession step, feed) snaps.
   const [animated, setAnimated] = useState(false);
   const [showShotChart, setShowShotChart] = useState(false);
+  const [statsTab, setStatsTab] = useState<"feed" | "box" | "shots">("feed");
   const [selectedPlayerId, setSelectedPlayerId] = useState<PlayerId | null>(
     null,
   );
@@ -308,23 +309,42 @@ export function WatchGameClient(props: {
           </div>
         ) : null}
       </section>
-      <div className="grid min-w-0 gap-6 lg:grid-cols-2">
-        <PlayByPlayFeed view={view} revealed={revealed} />
-        <KeyMomentsList
-          keyMoments={view.keyMoments}
-          revealed={revealed}
-          isFinal={live.isFinal}
-          onJump={(playIndex) => jumpTo(playIndex + 1)}
+      <section aria-label="Game stats" className="min-w-0 space-y-3">
+        <Tabs
+          aria-label="Game stats"
+          activeKey={statsTab}
+          items={[
+            {
+              key: "feed",
+              label: "Play-by-play",
+              onSelect: () => setStatsTab("feed"),
+            },
+            {
+              key: "box",
+              label: "Box score",
+              onSelect: () => setStatsTab("box"),
+            },
+            {
+              key: "shots",
+              label: "Shot chart",
+              onSelect: () => setStatsTab("shots"),
+            },
+          ]}
         />
-      </div>
-      <LiveBoxScore
-        live={live}
-        away={view.away}
-        home={view.home}
-        players={view.players}
-        selectedPlayerId={selectedPlayerId}
-      />
-      <ShotSummaryPanel view={view} summary={shotSummary} />
+        {statsTab === "feed" ? (
+          <PlayByPlayFeed view={view} revealed={revealed} onJump={jumpTo} />
+        ) : statsTab === "box" ? (
+          <LiveBoxScore
+            live={live}
+            away={view.away}
+            home={view.home}
+            players={view.players}
+            selectedPlayerId={selectedPlayerId}
+          />
+        ) : (
+          <ShotSummaryPanel view={view} summary={shotSummary} />
+        )}
+      </section>
     </div>
   );
 }
