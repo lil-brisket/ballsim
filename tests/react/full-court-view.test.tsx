@@ -144,33 +144,16 @@ describe("FullCourtView", () => {
     const marks = screen
       .getAllByTestId("court-wordmark")
       .map((el) => el.textContent);
-    expect(marks).toEqual(["Harriers", "Harriers", "Harbor"]);
+    expect(marks).toEqual(["Harriers", "Harriers"]);
   });
 
-  it("shows the home name on the courtside ribbon, or a run in progress", () => {
+  it("shows the ribbon only for a run in progress", () => {
     const { rerender } = render(court(1));
-    expect(screen.getByTestId("court-ribbon").textContent).toBe(
-      `${COURT_HOME.city} ${COURT_HOME.name}`,
-    );
+    expect(screen.queryByTestId("court-ribbon")).toBeNull();
     rerender(court(1, { run: { side: 1, points: 8 } }));
     expect(screen.getByTestId("court-ribbon").textContent).toBe(
       `${COURT_AWAY.abbreviation} 8–0 run`,
     );
-  });
-
-  it("seats the off-court players on their team's bench", () => {
-    const sub = VIEW.plays.findIndex((p) => p.kind === "substitution");
-    const { rerender } = render(court(1));
-    const bench = (side: number) =>
-      screen
-        .getAllByTestId("court-bench")
-        .find((el) => el.getAttribute("data-side") === String(side));
-    // Park (h6) and Hale (a6) start on their benches.
-    expect(bench(0)!.textContent).toBe("P");
-    expect(bench(1)!.textContent).toBe("H");
-    // After Park checks in for Lee, Lee sits.
-    rerender(court(sub + 1));
-    expect(bench(0)!.textContent).toBe("L");
   });
 
   it("shows the centre logo with branding and omits it without", () => {
@@ -316,18 +299,18 @@ describe("FullCourtView", () => {
     );
   });
 
-  it("adds a halo outline when a token cannot clear its lane with one ring", () => {
+  it("adds a halo outline when a token cannot clear the floor and lane with one ring", () => {
     const magenta: WatchTeam = {
       ...COURT_HOME,
       branding: { ...COURT_HOME.branding, primaryColor: "#FF00FF" },
     };
-    const white: WatchTeam = {
+    const dark: WatchTeam = {
       ...COURT_AWAY,
-      branding: { ...COURT_AWAY.branding, primaryColor: "#FFFFFF" },
+      branding: { ...COURT_AWAY.branding, primaryColor: "#0A0A0A" },
     };
     const palette = buildCourtPalette(magenta.branding);
-    const outline = tokenOutline("#FFFFFF", palette);
-    render(court(1, { home: magenta, away: white }));
+    const outline = tokenOutline("#0A0A0A", palette);
+    render(court(1, { home: magenta, away: dark }));
     const shadows = screen
       .getAllByTestId("court-token")
       .map((el) => (el.firstElementChild as HTMLElement).style.boxShadow);
@@ -458,6 +441,8 @@ describe("FullCourtView", () => {
     const arrow = screen.getByTestId("court-possession");
     expect(arrow.getAttribute("data-end")).toBe(frame.ballEnd);
     expect(arrow.textContent).toContain("Possession:");
+    // It sits on the scorer's table, not over the floor.
+    expect(arrow.closest(".court-viewport")).toBeNull();
     rerender(court(VIEW.plays.length));
     expect(screen.queryByTestId("court-possession")).toBeNull();
   });
@@ -469,6 +454,26 @@ describe("FullCourtView", () => {
     rerender(court(1, { final: true }));
     expect(logo().getAttribute("data-final")).toBe("true");
     expect(logo().style.opacity).toBe("0.7");
+  });
+
+  it("draws lines inside the lanes in the lane line colour", () => {
+    const { container } = render(court(1));
+    const palette = buildCourtPalette(COURT_HOME.branding);
+    const clipped = container.querySelector<SVGGElement>("svg g[clip-path]");
+    expect(clipped).not.toBeNull();
+    const probe = document.createElement("span");
+    probe.style.color = palette.laneLine;
+    expect(clipped!.style.color).toBe(probe.style.color);
+  });
+
+  it("draws lines inside the lanes in the lane line colour", () => {
+    const { container } = render(court(1));
+    const palette = buildCourtPalette(COURT_HOME.branding);
+    const clipped = container.querySelector<SVGGElement>("svg g[clip-path]");
+    expect(clipped).not.toBeNull();
+    const probe = document.createElement("span");
+    probe.style.color = palette.laneLine;
+    expect(clipped!.style.color).toBe(probe.style.color);
   });
 
   it("marks both lanes", () => {

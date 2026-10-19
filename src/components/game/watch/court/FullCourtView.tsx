@@ -2,6 +2,7 @@
 
 import {
   useEffect,
+  useId,
   useLayoutEffect,
   useRef,
   useState,
@@ -93,6 +94,7 @@ export function FullCourtView(props: {
   const [localShotChart, setLocalShotChart] = useState(false);
   const showShotChart = props.showShotChart ?? localShotChart;
 
+  const clipId = `court-lanes-${useId().replace(/[^A-Za-z0-9_-]/g, "")}`;
   const palette = buildCourtPalette(home.hasBranding ? home.branding : null);
   const colorOf = teamTokenColor(home, away);
   const teamOf = (side: WatchSide) => (side === 0 ? home : away);
@@ -204,14 +206,6 @@ export function FullCourtView(props: {
     [],
   );
 
-  const onCourt = new Set(frame.players.map((p) => p.playerId));
-  const bench: [WatchPlayer[], WatchPlayer[]] = [[], []];
-  for (const player of props.players ?? []) {
-    if (!onCourt.has(player.playerId)) {
-      bench[player.side].push(player);
-    }
-  }
-
   const rosterById = new Map((props.players ?? []).map((p) => [p.playerId, p]));
   const incoming = new Map<PlayerId, CourtSubstitution>(
     frame.substitutions.map((sub) => [sub.inId, sub]),
@@ -293,75 +287,46 @@ export function FullCourtView(props: {
         >
           <span className="rotate-90 whitespace-nowrap">{home.name}</span>
         </span>
-        <span
-          aria-hidden="true"
-          data-testid="court-wordmark"
-          className={cn(WORDMARK_CLASS, "inset-x-0 bottom-0 h-5")}
-          style={{ color: palette.wordmark }}
-        >
-          <span className="whitespace-nowrap">{home.city}</span>
-        </span>
 
-        {/* Courtside LED ribbon on the far-sideline apron. Static: it only
-            changes when a play is revealed, never while paused. */}
-        <span
-          aria-hidden="true"
-          data-testid="court-ribbon"
-          className="pointer-events-none absolute inset-x-6 top-0 flex h-5 items-center justify-center overflow-hidden rounded-sm font-display text-sm font-semibold uppercase leading-5 tracking-widest"
-          style={{ backgroundColor: palette.ribbon, color: palette.ribbonInk }}
-        >
-          <span className="truncate px-2">
-            {props.run
-              ? `${teamOf(props.run.side).abbreviation} ${props.run.points}–0 run`
-              : `${home.city} ${home.name}`}
-          </span>
-        </span>
-
-        {/* Benches on the near-sideline apron, either side of the city. */}
-        {([0, 1] as const).map((side) =>
-          bench[side].length > 0 ? (
-            <span
-              key={side}
-              aria-hidden="true"
-              data-testid="court-bench"
-              data-side={side}
-              className={cn(
-                "pointer-events-none absolute bottom-0 hidden h-5 items-center gap-1.5 rounded-sm border px-1.5 text-sm font-medium leading-5 sm:flex",
-                side === 0 ? "left-[14%]" : "right-[14%]",
-              )}
-              style={{
-                color: palette.wordmark,
-                borderColor: `color-mix(in srgb, ${palette.wordmark} 35%, transparent)`,
-              }}
-            >
-              {bench[side].map((player) => (
-                <span key={player.playerId}>
-                  {initialOf(player.lastName || player.shortName)}
-                </span>
-              ))}
+        {/* Possession marker on the scorer's table (near-sideline apron). Before
+            the floor so screen readers hear possession before the players. */}
+        {frame.ballSide !== null && frame.ballEnd !== null ? (
+          <p
+            data-testid="court-possession"
+            data-end={frame.ballEnd}
+            className="pointer-events-none absolute bottom-0 left-1/2 z-40 inline-flex h-5 -translate-x-1/2 items-center gap-1.5 rounded-sm bg-black/80 px-2 text-sm font-medium leading-5 text-zinc-50"
+          >
+            {frame.ballEnd === "left" ? arrow : null}
+            <span aria-hidden="true">
+              {teamOf(frame.ballSide).abbreviation}
             </span>
-          ) : null,
-        )}
+            {frame.ballEnd === "right" ? arrow : null}
+            <span className="sr-only">
+              Possession: {teamOf(frame.ballSide).city}{" "}
+              {teamOf(frame.ballSide).name}
+            </span>
+          </p>
+        ) : null}
+
+        {/* Courtside LED ribbon on the far-sideline apron, only for a run in
+            progress. Static: it changes only when a play is revealed. */}
+        {props.run ? (
+          <span
+            aria-hidden="true"
+            data-testid="court-ribbon"
+            className="pointer-events-none absolute inset-x-6 top-0 flex h-5 items-center justify-center overflow-hidden rounded-sm font-display text-sm font-semibold uppercase leading-5 tracking-widest"
+            style={{
+              backgroundColor: palette.ribbon,
+              color: palette.ribbonInk,
+            }}
+          >
+            <span className="truncate px-2">
+              {`${teamOf(props.run.side).abbreviation} ${props.run.points}–0 run`}
+            </span>
+          </span>
+        ) : null}
 
         <div className="court-viewport relative w-full">
-          {/* Before the floor so screen readers hear possession before the players. */}
-          {frame.ballSide !== null && frame.ballEnd !== null ? (
-            <p
-              data-testid="court-possession"
-              data-end={frame.ballEnd}
-              className="pointer-events-none absolute left-1/2 top-2 z-40 inline-flex -translate-x-1/2 items-center gap-1.5 rounded bg-black/70 px-2 py-0.5 text-sm font-medium text-zinc-50"
-            >
-              {frame.ballEnd === "left" ? arrow : null}
-              <span aria-hidden="true">
-                {teamOf(frame.ballSide).abbreviation}
-              </span>
-              {frame.ballEnd === "right" ? arrow : null}
-              <span className="sr-only">
-                Possession: {teamOf(frame.ballSide).city}{" "}
-                {teamOf(frame.ballSide).name}
-              </span>
-            </p>
-          ) : null}
           <div
             ref={courtRef}
             className="court-wood relative aspect-[94/50] w-full overflow-x-clip"
@@ -375,7 +340,7 @@ export function FullCourtView(props: {
                 data-final={props.final ? "true" : undefined}
                 className="court-centre-logo pointer-events-none absolute left-1/2 top-1/2 aspect-square -translate-x-1/2 -translate-y-1/2"
                 style={{
-                  width: `calc(12 / ${LENGTH} * 100%)`,
+                  width: `calc(8 / ${LENGTH} * 100%)`,
                   opacity: props.final
                     ? FINAL_LOGO_OPACITY
                     : palette.logoOpacity,
@@ -393,6 +358,22 @@ export function FullCourtView(props: {
               aria-hidden="true"
               className="absolute inset-0 h-full w-full"
             >
+              <defs>
+                <clipPath id={clipId}>
+                  <rect
+                    x="0"
+                    y={WIDTH / 2 - COURT_FEET.laneWidth / 2}
+                    width={COURT_FEET.laneLength}
+                    height={COURT_FEET.laneWidth}
+                  />
+                  <rect
+                    x={LENGTH - COURT_FEET.laneLength}
+                    y={WIDTH / 2 - COURT_FEET.laneWidth / 2}
+                    width={COURT_FEET.laneLength}
+                    height={COURT_FEET.laneWidth}
+                  />
+                </clipPath>
+              </defs>
               <rect
                 data-testid="court-lane"
                 x="0"
@@ -413,11 +394,18 @@ export function FullCourtView(props: {
                 cx={LENGTH / 2}
                 cy={WIDTH / 2}
                 r="6"
-                fill="none"
+                fill={palette.lane}
+                fillOpacity="0.35"
                 stroke={palette.ring}
                 strokeWidth="0.5"
               />
               <g style={{ color: palette.line }}>
+                <FullCourtLines centreCircle={false} />
+              </g>
+              <g
+                style={{ color: palette.laneLine }}
+                clipPath={`url(#${clipId})`}
+              >
                 <FullCourtLines centreCircle={false} />
               </g>
               {flashRim ? (
@@ -428,7 +416,7 @@ export function FullCourtView(props: {
                   cy={WIDTH / 2}
                   r={COURT_FEET.rimRadius}
                   fill="none"
-                  stroke={palette.line}
+                  stroke={palette.laneLine}
                   strokeWidth="0.5"
                   data-testid="court-rim-flash"
                   style={{
@@ -450,7 +438,7 @@ export function FullCourtView(props: {
                             cy={cy}
                             r="0.9"
                             fill={color}
-                            stroke="#e4e4e7"
+                            stroke={palette.line}
                             strokeWidth="0.3"
                           />
                         ) : (
@@ -460,7 +448,7 @@ export function FullCourtView(props: {
                               cy={cy}
                               r="0.9"
                               fill="none"
-                              stroke="#e4e4e7"
+                              stroke={palette.line}
                               strokeWidth="0.7"
                             />
                             <circle

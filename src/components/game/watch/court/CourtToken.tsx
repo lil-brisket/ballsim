@@ -116,13 +116,12 @@ export function CourtToken(props: {
       <span
         aria-hidden="true"
         className={cn(
-          "court-token-label pointer-events-none absolute max-w-[4.5rem] truncate text-sm font-medium leading-tight text-zinc-50 sm:max-w-24",
+          "court-token-label pointer-events-none absolute max-w-[4.5rem] truncate text-sm font-medium leading-tight text-zinc-50 sm:max-w-24 rounded bg-black/70 px-1",
           props.labelAbove
             ? "bottom-[calc(50%+1rem)] sm:bottom-[calc(50%+1.25rem)]"
             : "top-[calc(50%+1rem)] sm:top-[calc(50%+1.25rem)]",
           labelAlign,
         )}
-        style={{ textShadow: "0 1px 2px rgb(0 0 0 / 0.9)" }}
       >
         {player.label}
       </span>

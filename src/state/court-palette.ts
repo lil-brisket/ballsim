@@ -19,8 +19,10 @@ export type CourtPalette = {
   lane: string;
   /** Band outside the boundary lines. */
   apron: string;
-  /** Court lines, rims and the rim flash. */
+  /** Court lines on the bare wood. */
   line: string;
+  /** Court lines, rim and backboard inside the painted lanes. */
+  laneLine: string;
   /** Centre-circle ring. */
   ring: string;
   /** Baseline wordmark / apron text. */
@@ -45,11 +47,13 @@ export const COURT_LINE_MIN_CONTRAST = 3;
 /** WCAG AA text contrast. */
 export const COURT_TEXT_MIN_CONTRAST = 4.5;
 
-/** Dark stained wood. */
-const FLOOR = "#1A140E";
+/** Light maple hardwood, lit. Lines on it must be dark. */
+const FLOOR = "#D9B382";
+/** Dark stained wood the apron blends toward. */
+const APRON_BASE = "#2B2118";
 const WHITE_LINE = "#F4F4F5";
 const BLACK_LINE = "#0A0A0A";
-const NEUTRAL_LINE = "#D4D4D8";
+const NEUTRAL_LINE = "#1C1917";
 const WHITE_OUTLINE = "#FFFFFF";
 const MID_OUTLINE = "#7C7C7C";
 const LOGO_OPACITY = 0.35;
@@ -90,18 +94,19 @@ function alphaSteps(start: number): number[] {
 }
 
 function neutralPalette(): CourtPalette {
-  const apron = FLOOR;
+  const apron = APRON_BASE;
   return {
     floor: FLOOR,
-    lane: mix("#FFFFFF", FLOOR, 0.06),
+    lane: mix("#000000", FLOOR, 0.12),
     apron,
     line: NEUTRAL_LINE,
+    laneLine: NEUTRAL_LINE,
     ring: NEUTRAL_LINE,
     wordmark: readableTextOnBackground(apron),
     logo: null,
     logoOpacity: LOGO_OPACITY,
     ribbon: RIBBON,
-    ribbonInk: NEUTRAL_LINE,
+    ribbonInk: "#D4D4D8",
   };
 }
 
@@ -110,27 +115,20 @@ export function buildCourtPalette(home: TeamBrandingView | null): CourtPalette {
     return neutralPalette();
   }
 
-  const candidates = [WHITE_LINE, home.secondaryColor, BLACK_LINE];
-  let lane = FLOOR;
-  let line = WHITE_LINE;
-  for (const alpha of alphaSteps(0.45)) {
-    const tryLane = mix(home.primaryColor, FLOOR, alpha);
-    const pick = candidates.find(
-      (candidate) =>
-        ratio(candidate, FLOOR) >= COURT_LINE_MIN_CONTRAST &&
-        ratio(candidate, tryLane) >= COURT_LINE_MIN_CONTRAST,
-    );
-    if (pick !== undefined) {
-      lane = tryLane;
-      line = pick;
-      break;
-    }
-  }
+  const lane = home.primaryColor.toUpperCase();
+  const line =
+    [BLACK_LINE, home.secondaryColor].find(
+      (candidate) => ratio(candidate, FLOOR) >= COURT_LINE_MIN_CONTRAST,
+    ) ?? BLACK_LINE;
+  const laneLine =
+    [WHITE_LINE, home.secondaryColor, BLACK_LINE].find(
+      (candidate) => ratio(candidate, lane) >= COURT_LINE_MIN_CONTRAST,
+    ) ?? WHITE_LINE;
 
-  let apron = FLOOR;
-  let wordmark: string = readableTextOnBackground(FLOOR);
+  let apron = APRON_BASE;
+  let wordmark: string = readableTextOnBackground(APRON_BASE);
   for (const alpha of alphaSteps(0.7)) {
-    apron = mix(home.primaryColor, FLOOR, alpha);
+    apron = mix(home.primaryColor, APRON_BASE, alpha);
     wordmark = readableTextOnBackground(apron);
     if (ratio(wordmark, apron) >= COURT_TEXT_MIN_CONTRAST) {
       break;
@@ -147,6 +145,7 @@ export function buildCourtPalette(home: TeamBrandingView | null): CourtPalette {
     lane,
     apron,
     line,
+    laneLine,
     ring,
     wordmark,
     logo: { ...home },
@@ -163,38 +162,43 @@ export type TokenOutline = {
   /** Ring drawn on the token's edge; always 3:1 against the token fill. */
   ring: string;
   /**
-   * Thin opposite-colour halo outside the ring, only when the ring alone
-   * cannot also reach 3:1 against the lane (a white token on a mid-tone
-   * lane); null otherwise.
+   * Thin opposite-colour halo outside the ring, only when no single ring
+   * clears the token, the lane and the floor; null otherwise.
    */
   halo: string | null;
 };
 
 /**
- * Token edge colours that keep a player token visible against both its own
- * fill and the lane it may sit on (including a home token on its own key).
- * One ring when a single colour can do both; otherwise a ring for the token
- * plus an opposite halo for the lane (black and white are ~19:1 apart, so the
- * ring and halo always separate).
+ * Token edge colours that keep a player token visible against its own fill,
+ * the lane it may sit on and the bare floor (where tokens spend most time).
+ * One ring when a single colour can do all three; otherwise a ring for the
+ * token plus the palette line colour as a halo, which clears the floor. The
+ * halo separates the token from the wood; on a lane, whichever of ring and
+ * halo contrasts with the lane does that job.
  */
 export function tokenOutline(
   tokenColor: string,
   palette: CourtPalette,
 ): TokenOutline {
-  // Pure white clears saturated mid tones (magenta) that off-white misses;
-  // the mid grey covers a white token on a dark lane.
-  const candidates = [WHITE_OUTLINE, BLACK_LINE, palette.line, MID_OUTLINE];
-  const single = candidates.find(
+  const clears = (a: string, b: string) =>
+    ratio(a, b) >= COURT_LINE_MIN_CONTRAST;
+  // Pure white clears saturated mid tones that off-white misses.
+  const single = [WHITE_OUTLINE, BLACK_LINE, palette.line, MID_OUTLINE].find(
     (candidate) =>
-      ratio(candidate, tokenColor) >= COURT_LINE_MIN_CONTRAST &&
-      ratio(candidate, palette.lane) >= COURT_LINE_MIN_CONTRAST,
+      clears(candidate, tokenColor) &&
+      clears(candidate, palette.lane) &&
+      clears(candidate, palette.floor),
   );
   if (single !== undefined) {
     return { ring: single, halo: null };
   }
+  const halo = palette.line;
   const ring =
-    ratio(WHITE_OUTLINE, tokenColor) >= ratio(BLACK_LINE, tokenColor)
+    [WHITE_OUTLINE, BLACK_LINE, MID_OUTLINE].find(
+      (candidate) => clears(candidate, tokenColor) && clears(candidate, halo),
+    ) ??
+    (ratio(WHITE_OUTLINE, tokenColor) >= ratio(BLACK_LINE, tokenColor)
       ? WHITE_OUTLINE
-      : BLACK_LINE;
-  return { ring, halo: ring === WHITE_OUTLINE ? BLACK_LINE : WHITE_OUTLINE };
+      : BLACK_LINE);
+  return { ring, halo };
 }
