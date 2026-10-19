@@ -123,7 +123,6 @@ export function WatchGameClient(props: {
           status={courtStatus}
           speed={speed}
           periodBreak={periodBreak ?? finalCard}
-          wide={periodBreak !== null || live.isFinal}
           final={live.isFinal}
           run={currentRun(view, revealed)}
           players={view.players}

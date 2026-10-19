@@ -65,7 +65,7 @@ export function CourtToken(props: {
       data-role={player.role}
       onClick={() => props.onSelect?.(player.playerId)}
       className={cn(
-        "court-token court-billboard absolute z-10 flex h-11 w-11 -translate-x-1/2 -translate-y-1/2 touch-manipulation items-center justify-center rounded-full",
+        "court-token absolute z-10 flex h-11 w-11 -translate-x-1/2 -translate-y-1/2 touch-manipulation items-center justify-center rounded-full",
         focusRingClass,
       )}
       style={{ left: pct(player.spot.x), top: pct(player.spot.y) }}

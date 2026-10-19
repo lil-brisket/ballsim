@@ -624,7 +624,6 @@ describe("WatchGameClient", () => {
 describe("WatchGameClient court", () => {
   beforeEach(() => {
     vi.useFakeTimers();
-    window.localStorage.setItem("ballsim:courtView", "broadcast");
   });
   afterEach(() => {
     cleanup();
@@ -753,16 +752,13 @@ describe("WatchGameClient court", () => {
     const ball = screen.getByTestId("court-ball");
     return `${ball.style.left} ${ball.style.top}`;
   };
-  const framing = () =>
-    screen.getByTestId("court-camera").getAttribute("data-camera-framing");
 
-  it("ends on a Final card, a wide camera and a bright logo", () => {
+  it("ends on a Final card and a bright logo", () => {
     renderClient();
     fireEvent.click(button("Skip to end"));
     expect(screen.getByTestId("court-period-card").textContent).toBe(
       `Final · AWY ${VIEW.finalScore.away} – HOM ${VIEW.finalScore.home}`,
     );
-    expect(framing()).toBe("wide");
     expect(
       screen.getByTestId("court-centre-logo").getAttribute("data-final"),
     ).toBe("true");
@@ -778,33 +774,6 @@ describe("WatchGameClient court", () => {
     fireEvent.click(button("Restart"));
     fireEvent.click(button("Skip to end"));
     expect({ labels: tokenLabels(), ball: ballSpot() }).toEqual(stepped);
-  });
-
-  it("frames the whole floor during the end-of-Q1 break, then follows", () => {
-    renderClient();
-    fireEvent.click(button("Play"));
-    advance(7);
-    expect(framing()).toBe("follow");
-    advance(1);
-    expect(screen.getByTestId("court-period-card")).toBeTruthy();
-    expect(framing()).toBe("wide");
-    advance(1);
-    expect(framing()).toBe("follow");
-  });
-
-  it("switching camera view keeps the reveal position and playback", () => {
-    renderClient();
-    fireEvent.click(button("Play"));
-    advance(3);
-    fireEvent.click(button("Top-down"));
-    expect(
-      screen.getByTestId("court-camera").getAttribute("data-camera-view"),
-    ).toBe("top-down");
-    expect(screen.getByText(progressText(3))).toBeTruthy();
-    expect(button("Pause")).toBeTruthy();
-    fireEvent.click(button("Broadcast"));
-    expect(screen.getByText(progressText(3))).toBeTruthy();
-    expect(button("Pause")).toBeTruthy();
   });
 
   it("paints the home floor whatever theme scope the viewer is in", () => {
