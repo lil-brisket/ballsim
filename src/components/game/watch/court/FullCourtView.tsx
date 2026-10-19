@@ -16,6 +16,7 @@ import { TeamLogoMark } from "@/components/team/logos/TeamLogoMark";
 import type { PlayerId } from "@/domain/ids";
 import { buildCourtPalette, tokenOutline } from "@/state/court-palette";
 import {
+  ALL_LABELS_MIN_COURT_PX,
   courtMonograms,
   layoutCourtLabels,
   type LabelSide,
@@ -249,8 +250,9 @@ export function FullCourtView(props: {
     [props.players, frame.players],
   );
 
-  // Label budget: handler, shooter and selected names always show; the rest
-  // appear on hover or focus and are laid out clear of the shown ones.
+  // Label budget: handler, shooter and selected names always show; on a wide
+  // floor everyone else's shows where it fits, and the rest appear on hover
+  // or focus, laid out clear of the shown ones.
   const selectedId = props.selectedPlayerId ?? null;
   const labelSides = useMemo(() => {
     const sides = new Map<PlayerId, LabelSide>();
@@ -264,13 +266,24 @@ export function FullCourtView(props: {
     add(selectedId);
     add(frame.players.find((p) => p.role === "shooter")?.playerId);
     add(frame.players.find((p) => p.role === "handler")?.playerId);
-    const request = (id: PlayerId) => {
+    const request = (id: PlayerId, optional = false) => {
       const p = byId.get(id)!;
-      return { playerId: id, at: p.spot, text: p.label };
+      return { playerId: id, at: p.spot, text: p.label, optional };
     };
+    // On a wide enough floor everyone else's name shows too, wherever it
+    // fits cleanly; a name with no clean spot waits for hover or focus.
+    const everyone = courtSize.width >= ALL_LABELS_MIN_COURT_PX;
+    const optionalIds = everyone
+      ? frame.players
+          .map((p) => p.playerId)
+          .filter((id) => !shownIds.includes(id))
+      : [];
     const tokens = frame.players.map((p) => p.spot);
     const shown = layoutCourtLabels({
-      labels: shownIds.map(request),
+      labels: [
+        ...shownIds.map((id) => request(id)),
+        ...optionalIds.map((id) => request(id, true)),
+      ],
       tokens,
       rims: RIMS,
       court: courtSize,
@@ -291,7 +304,7 @@ export function FullCourtView(props: {
         sides.set(p.playerId, alone.get(p.playerId)!.side);
       }
     }
-    return { sides, shown: new Set(shownIds) };
+    return { sides, shown: new Set(shown.keys()) };
   }, [frame.players, courtSize, selectedId]);
 
   const rosterById = new Map((props.players ?? []).map((p) => [p.playerId, p]));

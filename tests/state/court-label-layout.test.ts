@@ -69,6 +69,73 @@ describe("layoutCourtLabels", () => {
     toFullCourt(COURT_RIM, "right"),
   ];
 
+  for (const width of [640, 800, 1150]) {
+    it(`never overlaps optional names at ${width}px and always places the budget`, () => {
+      const court = { width, height: (width * 50) / 94 };
+      const square = (x: number, y: number, size: number) => ({
+        left: x * court.width - size / 2,
+        top: y * court.height - size / 2,
+        right: x * court.width + size / 2,
+        bottom: y * court.height + size / 2,
+      });
+      let optionalShown = 0;
+      for (let n = 0; n <= VIEW.plays.length; n++) {
+        const frame = buildFullCourtFrame(VIEW, n);
+        const required = [
+          frame.players.find((p) => p.role === "shooter"),
+          frame.players.find((p) => p.role === "handler"),
+        ]
+          .filter((p) => p !== undefined)
+          .map((p) => p.playerId);
+        const labels = frame.players
+          .map((p) => ({
+            playerId: p.playerId,
+            at: p.spot,
+            text: p.label,
+            optional: !required.includes(p.playerId),
+          }))
+          .sort((a, b) => Number(a.optional) - Number(b.optional));
+        const placed = layoutCourtLabels({
+          labels,
+          tokens: frame.players.map((p) => p.spot),
+          rims,
+          court,
+        });
+        for (const id of required) {
+          expect(placed.has(id)).toBe(true);
+        }
+        const boxes = [...placed.entries()];
+        for (const [i, [, a]] of boxes.entries()) {
+          for (const [, b] of boxes.slice(i + 1)) {
+            expect(overlaps(a.box, b.box)).toBe(false);
+          }
+        }
+        for (const label of labels.filter((l) => l.optional)) {
+          const spot = placed.get(label.playerId);
+          if (!spot) {
+            continue;
+          }
+          optionalShown++;
+          // A shown optional name is fully clean: on the floor, off every
+          // other token and off the rims.
+          expect(spot.box.left).toBeGreaterThanOrEqual(-8);
+          expect(spot.box.right).toBeLessThanOrEqual(court.width + 8);
+          for (const p of frame.players) {
+            if (p.playerId !== label.playerId) {
+              expect(overlaps(spot.box, square(p.spot.x, p.spot.y, 32))).toBe(
+                false,
+              );
+            }
+          }
+          for (const rim of rims) {
+            expect(overlaps(spot.box, square(rim.x, rim.y, 24))).toBe(false);
+          }
+        }
+      }
+      expect(optionalShown).toBeGreaterThan(0);
+    });
+  }
+
   for (const width of [343, 1150]) {
     it(`keeps labels apart and on the court at ${width}px`, () => {
       const court = { width, height: (width * 50) / 94 };

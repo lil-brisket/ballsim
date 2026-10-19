@@ -136,31 +136,69 @@ describe("FullCourtView", () => {
     ).toBeTruthy();
   });
 
-  it("shows names only for the handler, shooter and selected player", () => {
+  /** Renders with the floor measured at `width` px (a stub ResizeObserver). */
+  function withCourtWidth(width: number, run: () => void) {
+    const original = globalThis.ResizeObserver;
+    globalThis.ResizeObserver = class {
+      constructor(private readonly callback: ResizeObserverCallback) {}
+      observe() {
+        this.callback(
+          [
+            {
+              contentRect: { width, height: (width * 50) / 94 },
+            } as ResizeObserverEntry,
+          ],
+          this as unknown as ResizeObserver,
+        );
+      }
+      unobserve() {}
+      disconnect() {}
+    } as unknown as typeof ResizeObserver;
+    try {
+      run();
+    } finally {
+      globalThis.ResizeObserver = original;
+    }
+  }
+
+  const labelState = () =>
+    new Map(
+      screen
+        .getAllByTestId("court-token")
+        .map((el) => [
+          el.getAttribute("data-player-id")!,
+          el.querySelector(".court-token-label")!.getAttribute("data-label"),
+        ]),
+    );
+
+  it("shows only the handler, shooter and selected names on a narrow floor", () => {
     const frame = buildFullCourtFrame(VIEW, 4);
     const selected = frame.players.find((p) => p.role === "off-ball")!;
-    render(court(4, { selectedPlayerId: selected.playerId }));
-    const shown = screen
-      .getAllByTestId("court-token")
-      .filter(
-        (el) =>
-          el.querySelector(".court-token-label")!.getAttribute("data-label") ===
-          "shown",
-      )
-      .map((el) => el.getAttribute("data-player-id"));
+    withCourtWidth(343, () => {
+      render(court(4, { selectedPlayerId: selected.playerId }));
+    });
     const expected = frame.players
       .filter((p) => p.role !== "off-ball" || p.playerId === selected.playerId)
       .map((p) => p.playerId as string);
-    expect(shown.sort()).toEqual(expected.sort());
-    const hidden = screen
-      .getAllByTestId("court-token")
-      .filter((el) => !shown.includes(el.getAttribute("data-player-id")));
-    expect(hidden.length).toBeGreaterThan(0);
-    for (const el of hidden) {
-      expect(
-        el.querySelector(".court-token-label")!.getAttribute("data-label"),
-      ).toBe("hover");
+    for (const [id, state] of labelState()) {
+      expect(state).toBe(expected.includes(id) ? "shown" : "hover");
     }
+  });
+
+  it("shows everyone's name that fits on a wide floor, the budget always", () => {
+    const frame = buildFullCourtFrame(VIEW, 4);
+    const selected = frame.players.find((p) => p.role === "off-ball")!;
+    withCourtWidth(1150, () => {
+      render(court(4, { selectedPlayerId: selected.playerId }));
+    });
+    const states = labelState();
+    for (const p of frame.players) {
+      if (p.role !== "off-ball" || p.playerId === selected.playerId) {
+        expect(states.get(p.playerId)).toBe("shown");
+      }
+    }
+    const shownCount = [...states.values()].filter((v) => v === "shown").length;
+    expect(shownCount).toBeGreaterThan(3);
   });
 
   it("shows unique two-letter monograms and double rings for the away team", () => {

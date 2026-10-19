@@ -21,6 +21,12 @@ export const TOKEN_RADIUS_PX = 16;
 export const LABEL_GAP_PX = 4;
 /** How far past the court rectangle a label may reach (px). */
 export const COURT_MARGIN_PX = 8;
+/**
+ * Floor width (px) from which every player's name shows, not just the
+ * handler, shooter and selected player. Below it a phone-sized floor is too
+ * crowded for ten labels.
+ */
+export const ALL_LABELS_MIN_COURT_PX = 640;
 
 const SIDES: readonly LabelSide[] = ["below", "above", "right", "left"];
 
@@ -172,10 +178,17 @@ function labelBox(side: LabelSide, cx: number, cy: number, width: number): Box {
  * clean when its box stays on the court (plus a margin) and overlaps no
  * earlier label, no other token, no rim and no `avoid` box; the first clean
  * side of below, above, right, left wins. When none is clean the side with
- * the least weighted overlap wins (labels and avoid boxes count 10x).
+ * the least weighted overlap wins (labels and avoid boxes count 10x), except
+ * for an `optional` label, which is left out of the result instead (the
+ * caller shows it on hover only), so optional labels never overlap anything.
  */
 export function layoutCourtLabels(input: {
-  labels: { playerId: PlayerId; at: { x: number; y: number }; text: string }[];
+  labels: {
+    playerId: PlayerId;
+    at: { x: number; y: number };
+    text: string;
+    optional?: boolean;
+  }[];
   tokens: { x: number; y: number }[];
   rims: { x: number; y: number }[];
   avoid?: Box[];
@@ -233,6 +246,9 @@ export function layoutCourtLabels(input: {
       }
     }
     const chosen = best!;
+    if (label.optional && chosen.cost > 0) {
+      continue;
+    }
     placed.push(chosen.box);
     result.set(label.playerId, { side: chosen.side, box: chosen.box });
   }
