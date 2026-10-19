@@ -40,11 +40,15 @@ describe("buildCourtPalette", () => {
   describe.each(FIXTURES)("%s", (name, branding) => {
     const palette = buildCourtPalette(branding);
 
-    it("keeps lines readable on floor and lane", () => {
+    it("paints the lane in the home primary", () => {
+      expect(palette.lane).toBe(branding.primaryColor.toUpperCase());
+    });
+
+    it("keeps lines readable on the floor and inside the lane", () => {
       expect(ratio(palette.line, palette.floor)).toBeGreaterThanOrEqual(
         COURT_LINE_MIN_CONTRAST,
       );
-      expect(ratio(palette.line, palette.lane)).toBeGreaterThanOrEqual(
+      expect(ratio(palette.laneLine, palette.lane)).toBeGreaterThanOrEqual(
         COURT_LINE_MIN_CONTRAST,
       );
     });
@@ -56,6 +60,12 @@ describe("buildCourtPalette", () => {
       expect(ratio(palette.ribbonInk, palette.ribbon)).toBeGreaterThanOrEqual(
         COURT_TEXT_MIN_CONTRAST,
       );
+    });
+
+    it("paints a light floor and a darker apron", () => {
+      expect(ratio("#0A0A0A", palette.floor)).toBeGreaterThanOrEqual(4.5);
+      expect(ratio("#FFFFFF", palette.floor)).toBeLessThan(3);
+      expect(palette.apron).not.toBe(palette.floor);
     });
 
     it("keeps the ring visible on the floor", () => {
@@ -77,8 +87,7 @@ describe("buildCourtPalette", () => {
       expect(buildCourtPalette(branding)).toEqual(palette);
     });
 
-    it(`blends ${name} toward the wood`, () => {
-      expect(palette.lane).not.toBe(branding.primaryColor.toUpperCase());
+    it(`blends the ${name} apron toward dark wood`, () => {
       expect(palette.apron).not.toBe(branding.primaryColor.toUpperCase());
     });
   });
@@ -86,10 +95,16 @@ describe("buildCourtPalette", () => {
   it("falls back to a neutral floor without branding", () => {
     const palette = buildCourtPalette(null);
     expect(palette.logo).toBeNull();
-    expect(palette.line).toBe("#D4D4D8");
+    expect(palette.line).toBe("#1C1917");
     expect(palette.ring).toBe(palette.line);
-    expect(palette.apron).toBe(palette.floor);
+    expect(palette.apron).not.toBe(palette.floor);
     expect(palette.lane).toMatch(HEX);
+    expect(ratio(palette.line, palette.floor)).toBeGreaterThanOrEqual(
+      COURT_LINE_MIN_CONTRAST,
+    );
+    expect(ratio(palette.laneLine, palette.lane)).toBeGreaterThanOrEqual(
+      COURT_LINE_MIN_CONTRAST,
+    );
     expect(ratio(palette.wordmark, palette.apron)).toBeGreaterThanOrEqual(
       COURT_TEXT_MIN_CONTRAST,
     );
@@ -109,10 +124,15 @@ describe("tokenOutline", () => {
   ];
 
   it("needs a halo only when no single ring works", () => {
-    const magenta = buildCourtPalette(brand("#FF00FF", "#FF00FF", "#FF77FF"));
-    expect(tokenOutline("#FFFFFF", magenta).halo).not.toBeNull();
-    expect(tokenOutline("#FF00FF", magenta)).toEqual({
-      ring: "#FFFFFF",
+    const navy = buildCourtPalette(brand("#0B1F3A", "#C4CED4", "#F5B800"));
+    // A dark token on a light floor: no one colour clears token and floor.
+    const dark = tokenOutline("#0A0A0A", navy);
+    expect(dark.halo).not.toBeNull();
+    expect(dark.ring).toBe("#FFFFFF");
+    // A white token on a yellow lane is outlined by the dark line alone.
+    const yellow = buildCourtPalette(brand("#FDE047", "#1D6B44", "#C8102E"));
+    expect(tokenOutline("#FFFFFF", yellow)).toEqual({
+      ring: "#0A0A0A",
       halo: null,
     });
   });
@@ -132,15 +152,18 @@ describe("tokenOutline", () => {
       expect(ratio(ring, token)).toBeGreaterThanOrEqual(
         COURT_LINE_MIN_CONTRAST,
       );
-      // The outermost edge separates the token from the lane.
-      expect(ratio(halo ?? ring, palette.lane)).toBeGreaterThanOrEqual(
+      // The outermost edge separates the token from the floor; on the lane
+      // either the ring or the halo does that job.
+      expect(
+        Math.max(ratio(ring, palette.lane), ratio(halo ?? ring, palette.lane)),
+      ).toBeGreaterThanOrEqual(COURT_LINE_MIN_CONTRAST);
+      expect(ratio(halo ?? ring, palette.floor)).toBeGreaterThanOrEqual(
         COURT_LINE_MIN_CONTRAST,
       );
       if (halo !== null) {
         expect(ratio(ring, halo)).toBeGreaterThanOrEqual(
           COURT_LINE_MIN_CONTRAST,
         );
-        expect(ratio(ring, palette.lane)).toBeLessThan(COURT_LINE_MIN_CONTRAST);
       }
     });
   });

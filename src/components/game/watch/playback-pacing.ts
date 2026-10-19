@@ -1,4 +1,3 @@
-import { TRANSITION_MS } from "@/components/game/watch/court/court-motion";
 import { opensAtNewEnd } from "@/state/watch-full-court";
 import type { WatchGameView, WatchPlayKind } from "@/state/watch-game-view";
 
@@ -23,6 +22,12 @@ export const PLAY_PACING_MS: Record<WatchPlayKind, number> = {
   substitution: 300,
 };
 
+/**
+ * Extra time at 1x for a play that opens a possession at the other end: the
+ * ball comes up the floor before the play's own action.
+ */
+export const TRANSITION_MS = 1800;
+
 /** Wait before the first play. */
 export const TIP_OFF_MS = 600;
 
@@ -36,16 +41,35 @@ export const PERIOD_BREAK_MS = 1500;
  * periods.
  */
 export function playDelayMs(view: WatchGameView, revealed: number): number {
-  if (revealed <= 0) {
+  if (revealed <= 0 || !view.plays[revealed - 1]) {
     return TIP_OFF_MS;
   }
-  const shown = view.plays[revealed - 1];
-  if (!shown) {
-    return TIP_OFF_MS;
-  }
+  const shown = view.plays[revealed - 1]!;
   const next = view.plays[revealed];
   const periodBreak =
     next && next.period !== shown.period ? PERIOD_BREAK_MS : 0;
+  return motionMs(view, revealed) + periodBreak;
+}
+
+/**
+ * Milliseconds at 1x the court spends moving through play `revealed - 1`:
+ * its delay without the period break (the period card owns that time); 0 at
+ * tip-off.
+ */
+export function motionMs(view: WatchGameView, revealed: number): number {
+  const shown = revealed > 0 ? view.plays[revealed - 1] : undefined;
+  if (!shown) {
+    return 0;
+  }
   const trip = opensAtNewEnd(view, revealed - 1) ? TRANSITION_MS : 0;
-  return PLAY_PACING_MS[shown.kind] + trip + periodBreak;
+  return PLAY_PACING_MS[shown.kind] + trip;
+}
+
+/** Share of play `index`'s motion spent bringing the ball up the floor. */
+export function openerShare(view: WatchGameView, index: number): number {
+  const play = view.plays[index];
+  if (!play) {
+    return 0;
+  }
+  return TRANSITION_MS / (TRANSITION_MS + PLAY_PACING_MS[play.kind]);
 }

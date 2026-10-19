@@ -1,10 +1,13 @@
+import { useMemo } from "react";
+import { HalfCourtLines } from "@/components/game/court/HalfCourtLines";
+import { teamTokenColor } from "@/components/game/watch/court/team-token-colors";
 import { DataTable, Section } from "@/components/ui";
-import { SectionHeading } from "@/components/ui/SectionHeading";
-import { periodLabel } from "@/state/watch-game-selectors";
+import { buildCourtFrame, type CourtShot } from "@/state/watch-court-frame";
 import type {
   ShotLine,
   ShotSummary,
   WatchGameView,
+  WatchSide,
   WatchTeam,
 } from "@/state/watch-game-view";
 
@@ -25,9 +28,6 @@ function TeamShotCard(props: { team: WatchTeam; line: ShotLine }) {
   ];
   return (
     <div className="min-w-0 space-y-2">
-      <h3 className="text-sm font-semibold text-zinc-100">
-        {props.team.abbreviation}
-      </h3>
       <DataTable
         headers={["Type", "M-A", "%"]}
         caption={`${props.team.abbreviation} shot types`}
@@ -54,102 +54,107 @@ function TeamShotCard(props: { team: WatchTeam; line: ShotLine }) {
   );
 }
 
+function ShotChart(props: {
+  team: WatchTeam;
+  side: WatchSide;
+  line: ShotLine;
+  shots: CourtShot[];
+  color: string;
+}) {
+  const { team, side, line, shots, color } = props;
+  return (
+    <div className="space-y-2">
+      <h3 className="text-sm font-semibold text-zinc-100">
+        {team.abbreviation}
+        <span className="sr-only"> {team.name}</span>
+      </h3>
+      <div className="grid items-start gap-4 sm:grid-cols-[minmax(0,18rem)_minmax(0,1fr)]">
+        <svg
+          viewBox="0 0 50 47"
+          role="img"
+          aria-label={`${team.abbreviation} shot chart: ${line.fgm} of ${line.fga} field goals made`}
+          className="aspect-[50/47] w-full max-w-[18rem] rounded-lg border border-zinc-800 bg-zinc-950 text-zinc-600"
+        >
+          <HalfCourtLines orientation="basket-top" />
+          {shots.map((shot) =>
+            shot.made ? (
+              <circle
+                key={shot.index}
+                data-testid="shot-made"
+                data-side={side}
+                aria-hidden="true"
+                cx={shot.at.x * 50}
+                cy={shot.at.y * 47}
+                r={0.9}
+                fill={color}
+                stroke="#f4f4f5"
+                strokeWidth={0.3}
+              />
+            ) : (
+              <circle
+                key={shot.index}
+                data-testid="shot-missed"
+                data-side={side}
+                aria-hidden="true"
+                cx={shot.at.x * 50}
+                cy={shot.at.y * 47}
+                r={0.9}
+                fill="none"
+                stroke={color}
+                strokeWidth={0.4}
+              />
+            ),
+          )}
+        </svg>
+        <TeamShotCard team={team} line={line} />
+      </div>
+    </div>
+  );
+}
+
 export function ShotSummaryPanel(props: {
   view: WatchGameView;
   summary: ShotSummary;
+  revealed: number;
 }) {
-  const { view, summary } = props;
-  const periods = summary.home.byPeriod.length;
-  const playerName = new Map(
-    view.players.map((p) => [p.playerId, p.shortName]),
+  const { view, summary, revealed } = props;
+  const shots = useMemo(
+    () => buildCourtFrame(view, revealed).shots,
+    [view, revealed],
   );
-  const top = summary.players
-    .filter((entry) => entry.line.points > 0)
-    .slice(0, 5);
+  const colorOf = teamTokenColor(view.home, view.away);
 
   return (
     <Section title="Shot summary">
-      <p className="text-sm text-zinc-500">
-        Shot locations aren&apos;t tracked by the simulation, so this is a
-        shot-type summary rather than a shot chart.
-      </p>
-      <div className="grid gap-6 sm:grid-cols-2">
-        <TeamShotCard team={view.away} line={summary.away.total} />
-        <TeamShotCard team={view.home} line={summary.home.total} />
-      </div>
-
-      <SectionHeading as="h3" title="By quarter" />
-      <DataTable
-        headers={[
-          "Period",
-          `${view.away.abbreviation} PTS`,
-          `${view.away.abbreviation} FG`,
-          `${view.away.abbreviation} 3PT`,
-          `${view.home.abbreviation} PTS`,
-          `${view.home.abbreviation} FG`,
-          `${view.home.abbreviation} 3PT`,
-        ]}
-        caption="Shot summary by quarter"
-      >
-        {Array.from({ length: periods }, (_, index) => {
-          const away = summary.away.byPeriod[index]!;
-          const home = summary.home.byPeriod[index]!;
-          return (
-            <tr key={index} className="border-t border-zinc-800">
-              <td className="px-3 py-2 text-zinc-300">
-                {periodLabel(index + 1)}
-              </td>
-              {[away, home].flatMap((line, side) => [
-                <td
-                  key={`${side}-pts`}
-                  className="px-3 py-2 font-mono font-bold tabular-nums text-zinc-100"
-                >
-                  {line.points}
-                </td>,
-                <td
-                  key={`${side}-fg`}
-                  className="px-3 py-2 font-mono tabular-nums text-zinc-300"
-                >
-                  {shotCell(line.fgm, line.fga)}
-                </td>,
-                <td
-                  key={`${side}-3p`}
-                  className="px-3 py-2 font-mono tabular-nums text-zinc-300"
-                >
-                  {shotCell(line.threePm, line.threePa)}
-                </td>,
-              ])}
-            </tr>
-          );
-        })}
-      </DataTable>
-
-      <SectionHeading as="h3" title="Top scorers" />
-      {top.length === 0 ? (
-        <p className="text-sm text-zinc-500">No points scored yet.</p>
+      {shots.length === 0 ? (
+        <p className="text-sm text-zinc-500">No shots yet.</p>
       ) : (
-        <ol className="space-y-1">
-          {top.map((entry) => (
-            <li
-              key={entry.playerId}
-              className="flex items-center justify-between gap-3 rounded-lg border border-zinc-800 px-3 py-2 text-sm"
-            >
-              <span className="min-w-0 truncate text-zinc-100">
-                {playerName.get(entry.playerId) ?? entry.playerId}{" "}
-                <span className="text-sm text-zinc-500">
-                  {entry.side === 0
-                    ? view.home.abbreviation
-                    : view.away.abbreviation}
-                </span>
-              </span>
-              <span className="shrink-0 font-mono text-sm tabular-nums text-zinc-300">
-                {entry.line.points} PTS · FG{" "}
-                {shotCell(entry.line.fgm, entry.line.fga)} · 3PT{" "}
-                {shotCell(entry.line.threePm, entry.line.threePa)}
-              </span>
-            </li>
-          ))}
-        </ol>
+        <>
+          <p className="text-sm text-zinc-500">
+            Shot spots are illustrative — the simulation records shot types, not
+            locations.
+          </p>
+          <p className="text-sm text-zinc-400">
+            <span aria-hidden="true">●</span> made{" "}
+            <span aria-hidden="true">○</span> missed
+          </p>
+          <div className="space-y-6">
+            <ShotChart
+              team={view.away}
+              side={1}
+              line={summary.away.total}
+              shots={shots.filter((s) => s.side === 1)}
+              color={colorOf(1)}
+            />
+            <ShotChart
+              team={view.home}
+              side={0}
+              line={summary.home.total}
+              shots={shots.filter((s) => s.side === 0)}
+              color={colorOf(0)}
+            />
+          </div>
+        </>
       )}
     </Section>
   );

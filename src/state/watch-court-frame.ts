@@ -165,7 +165,7 @@ const SLOT_COUNT = OFFENSE_BASE.length;
 const FORMATION_JITTER_FEET = 1.5;
 const DEFENSE_JITTER_FEET = 1;
 /** Defenders sit this fraction of the way from their man to the basket. */
-const DEFENSE_SHADE = 0.3;
+export const DEFENSE_SHADE = 0.3;
 /** A teammate this close to a player's new spot swaps into the old one. */
 const SWAP_RADIUS_FEET = 3;
 
@@ -748,6 +748,43 @@ function toLastPlay(
     points: play.points,
     path: path.map(normalize),
     cut: cut ? normalize(cut) : null,
+  };
+}
+
+/**
+ * Formation spots (no off-ball drift) and ball just before play `index`,
+ * after the earlier plays of its possession: the set-up the play starts
+ * from. Null for substitutions and out-of-range indices.
+ */
+export function courtBeforePlay(
+  view: WatchGameView,
+  index: number,
+): {
+  offenseSide: WatchSide;
+  spots: Map<PlayerId, CourtPoint>;
+  ball: CourtBall;
+} | null {
+  const groups = possessionGroups(view);
+  const group = groups[groupIndexOf(groups, index)];
+  if (!group) {
+    return null;
+  }
+  const { court } = runPossession(view, group, index);
+  const lineups = lineupAt(view, group.start);
+  const spots = new Map<PlayerId, CourtPoint>();
+  for (const side of [0, 1] as const) {
+    lineups[side].forEach((playerId, slot) => {
+      spots.set(playerId, normalize(court.spotAt(side, slot)));
+    });
+  }
+  const holderId = court.ball.holderId;
+  return {
+    offenseSide: court.offenseSide,
+    spots,
+    ball: {
+      at: normalize(court.ball.at),
+      holderId: holderId !== null && spots.has(holderId) ? holderId : null,
+    },
   };
 }
 

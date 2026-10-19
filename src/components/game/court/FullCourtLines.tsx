@@ -36,11 +36,20 @@ function EndMarkings(props: { left: boolean }) {
       />
       <path
         d={`M${x(C.freeThrowY)} ${MID_Y - r}a${r} ${r} 0 0 ${outward} 0 ${r * 2}`}
-        strokeDasharray="1 1"
+        strokeDasharray="1.2 0.9"
       />
       {/* Restricted area, backboard and rim */}
       <path
         d={`M${hoop} ${MID_Y - C.restrictedRadius}a${C.restrictedRadius} ${C.restrictedRadius} 0 0 ${inward} 0 ${C.restrictedRadius * 2}`}
+      />
+      <line
+        x1={n(x(C.backboardY) + 0.25)}
+        y1={MID_Y - 3 + 0.3}
+        x2={n(x(C.backboardY) + 0.25)}
+        y2={MID_Y + 3 + 0.3}
+        strokeWidth="0.5"
+        stroke="#000000"
+        strokeOpacity="0.35"
       />
       <line
         x1={x(C.backboardY)}
@@ -48,6 +57,13 @@ function EndMarkings(props: { left: boolean }) {
         x2={x(C.backboardY)}
         y2={MID_Y + 3}
         strokeWidth="0.5"
+      />
+      <circle
+        cx={n(hoop + 0.25)}
+        cy={n(MID_Y + 0.3)}
+        r={C.rimRadius + 0.01}
+        stroke="#000000"
+        strokeOpacity="0.35"
       />
       <circle cx={hoop} cy={MID_Y} r={C.rimRadius} />
       {/* Three-point line: 22 ft corners, 23.75 ft arc */}
@@ -71,10 +87,11 @@ export function FullCourtLines(props: {
 }) {
   return (
     <g
+      className="court-lines"
       fill="none"
       stroke="currentColor"
       strokeOpacity={props.strokeOpacity ?? 1}
-      strokeWidth="0.35"
+      strokeWidth="0.2"
     >
       <rect x="0.2" y="0.2" width={LENGTH - 0.4} height={WIDTH - 0.4} />
       <EndMarkings left />

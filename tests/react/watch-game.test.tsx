@@ -22,13 +22,14 @@ import {
   PERIOD_BREAK_MS,
   PLAY_PACING_MS,
   TIP_OFF_MS,
+  TRANSITION_MS,
   playDelayMs,
 } from "@/components/game/watch/playback-pacing";
-import { TRANSITION_MS } from "@/components/game/watch/court/court-motion";
 import { WatchGameClient } from "@/components/game/watch/WatchGameClient";
 import { WatchGameUnavailable } from "@/components/game/watch/WatchGameUnavailable";
 import { TeamThemeScope } from "@/components/ui";
 import { buildCourtPalette } from "@/state/court-palette";
+import { stepPossession } from "@/state/watch-court-frame";
 import { buildLiveBoxScore } from "@/state/watch-game-selectors";
 import type {
   WatchGameView,
@@ -386,10 +387,30 @@ function renderClient() {
   return render(<WatchGameClient view={VIEW} saveId="save_test" />);
 }
 
-/** Plays revealed so far, read from the progress text. */
+const FINAL_IN_SCOREBOARD = { selector: "#watch-scoreboard-status" };
+const scoreboardFinal = () => screen.queryByText("Final", FINAL_IN_SCOREBOARD);
+const slider = () => screen.getByRole("slider", { name: "Playback position" });
+
+/** Plays revealed so far, read from the scrubber. */
 function currentRevealed(): number {
-  const text = screen.getByText(/ \/ \d+ plays$/).textContent ?? "";
-  return Number(text.split(" / ")[0]);
+  return Number(slider().getAttribute("aria-valuenow"));
+}
+
+function expectRevealed(revealed: number) {
+  expect(currentRevealed()).toBe(revealed);
+}
+
+/** Opens the overflow menu and chooses one of its items. */
+function chooseFromMenu(name: string) {
+  fireEvent.click(
+    screen.getByRole("button", { name: "More playback options" }),
+  );
+  fireEvent.click(
+    within(screen.getByRole("menu")).getByRole(
+      name === "Shot chart" ? "menuitemcheckbox" : "menuitem",
+      { name },
+    ),
+  );
 }
 
 /**
@@ -405,12 +426,18 @@ function advance(plays: number, speed = 1) {
   }
 }
 
-function progressText(revealed: number) {
-  return `${revealed} / ${PLAYS.length} plays`;
-}
-
 function feed() {
   return within(screen.getByTestId("play-feed"));
+}
+
+/** Switches the stats area to one of its tabs. */
+function openTab(name: "Play-by-play" | "Box score" | "Shot chart") {
+  fireEvent.click(
+    within(screen.getByRole("navigation", { name: "Game stats" })).getByRole(
+      "button",
+      { name },
+    ),
+  );
 }
 
 function statCells(playerName: string): string[] {
@@ -437,9 +464,9 @@ describe("WatchGameClient", () => {
     expect(screen.getByRole("group", { name: START_SCORE_LABEL })).toBeTruthy();
     expect(screen.queryByLabelText(FINAL_SCORE_LABEL)).toBeNull();
     expect(screen.getByRole("button", { name: "Play" })).toBeTruthy();
-    expect(screen.getByText(progressText(0))).toBeTruthy();
+    expectRevealed(0);
     expect(feed().queryByText(/makes/)).toBeNull();
-    expect(screen.queryByText("Final")).toBeNull();
+    expect(scoreboardFinal()).toBeNull();
     expect(screen.queryByText("T. Reed injured")).toBeNull();
   });
 
@@ -447,16 +474,16 @@ describe("WatchGameClient", () => {
     renderClient();
     fireEvent.click(screen.getByRole("button", { name: "Play" }));
     advance(1);
-    expect(screen.getByText(progressText(1))).toBeTruthy();
+    expectRevealed(1);
     expect(
       feed().getByText("J. Smith makes 3-pt shot (K. Lee assists)"),
     ).toBeTruthy();
     advance(2);
-    expect(screen.getByText(progressText(3))).toBeTruthy();
+    expectRevealed(3);
 
     fireEvent.click(screen.getByRole("button", { name: "Pause" }));
     advance(5);
-    expect(screen.getByText(progressText(3))).toBeTruthy();
+    expectRevealed(3);
     expect(screen.getByRole("button", { name: "Play" })).toBeTruthy();
   });
 
@@ -472,11 +499,11 @@ describe("WatchGameClient", () => {
     fireEvent.click(screen.getByRole("button", { name: "Play" }));
     // Tip-off plus three plays, each a quarter of its 1x pacing.
     advance(4, 4);
-    expect(screen.getByText(progressText(4))).toBeTruthy();
+    expectRevealed(4);
     act(() => {
       vi.advanceTimersByTime(playDelayMs(VIEW, 4) / 4 - 1);
     });
-    expect(screen.getByText(progressText(4))).toBeTruthy();
+    expectRevealed(4);
   });
 
   it("paces each play by kind and pauses between periods", () => {
@@ -485,22 +512,22 @@ describe("WatchGameClient", () => {
     act(() => {
       vi.advanceTimersByTime(TIP_OFF_MS - 1);
     });
-    expect(screen.getByText(progressText(0))).toBeTruthy();
+    expectRevealed(0);
     act(() => {
       vi.advanceTimersByTime(1);
     });
-    expect(screen.getByText(progressText(1))).toBeTruthy();
+    expectRevealed(1);
 
     // Play 0 is a made three that opens the game: it holds for the full shot
     // pacing plus the ball's trip up the floor from centre court.
     act(() => {
       vi.advanceTimersByTime(PLAY_PACING_MS.three_made + TRANSITION_MS - 1);
     });
-    expect(screen.getByText(progressText(1))).toBeTruthy();
+    expectRevealed(1);
     act(() => {
       vi.advanceTimersByTime(1);
     });
-    expect(screen.getByText(progressText(2))).toBeTruthy();
+    expectRevealed(2);
 
     expect(playDelayMs(VIEW, 7)).toBe(PLAY_PACING_MS.ft_made);
     // The substitution at play 7 is also the last play of Q1.
@@ -516,6 +543,48 @@ describe("WatchGameClient", () => {
     );
   });
 
+  it("resumes a paused play with the time it had left", () => {
+    renderClient();
+    fireEvent.click(screen.getByRole("button", { name: "Play" }));
+    advance(1);
+    const delay = playDelayMs(VIEW, 1);
+    act(() => {
+      vi.advanceTimersByTime(delay / 2);
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Pause" }));
+    act(() => {
+      vi.advanceTimersByTime(delay * 4);
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Play" }));
+    act(() => {
+      vi.advanceTimersByTime(delay / 2 - 1);
+    });
+    expectRevealed(1);
+    act(() => {
+      vi.advanceTimersByTime(1);
+    });
+    expectRevealed(2);
+  });
+
+  it("keeps the time left of a play through a speed change", () => {
+    renderClient();
+    fireEvent.click(screen.getByRole("button", { name: "Play" }));
+    advance(1);
+    const delay = playDelayMs(VIEW, 1);
+    act(() => {
+      vi.advanceTimersByTime(delay / 2);
+    });
+    fireEvent.click(screen.getByRole("button", { name: "2x" }));
+    act(() => {
+      vi.advanceTimersByTime(delay / 4 - 1);
+    });
+    expectRevealed(1);
+    act(() => {
+      vi.advanceTimersByTime(1);
+    });
+    expectRevealed(2);
+  });
+
   it("clears the pending step on unmount", () => {
     const { unmount } = renderClient();
     fireEvent.click(screen.getByRole("button", { name: "Play" }));
@@ -527,13 +596,13 @@ describe("WatchGameClient", () => {
     renderClient();
     fireEvent.click(screen.getByRole("button", { name: "Play" }));
     advance(PLAYS.length - 1);
-    expect(screen.getByText(progressText(PLAYS.length - 1))).toBeTruthy();
-    expect(screen.queryByText("Final")).toBeNull();
+    expectRevealed(PLAYS.length - 1);
+    expect(scoreboardFinal()).toBeNull();
     expect(screen.queryByText("T. Reed injured")).toBeNull();
 
     advance(1);
-    expect(screen.getByText(progressText(PLAYS.length))).toBeTruthy();
-    expect(screen.getByText("Final")).toBeTruthy();
+    expectRevealed(PLAYS.length);
+    expect(screen.getByText("Final", FINAL_IN_SCOREBOARD)).toBeTruthy();
     expect(screen.getByRole("group", { name: FINAL_SCORE_LABEL })).toBeTruthy();
     expect(screen.getByText("T. Reed injured")).toBeTruthy();
     expect(
@@ -542,28 +611,98 @@ describe("WatchGameClient", () => {
     ).toBe(true);
 
     advance(5);
-    expect(screen.getByText(progressText(PLAYS.length))).toBeTruthy();
+    expectRevealed(PLAYS.length);
   });
 
   it("skips to the end and restarts to 0-0", () => {
     renderClient();
-    fireEvent.click(screen.getByRole("button", { name: "Skip to end" }));
+    chooseFromMenu("Skip to end");
     expect(screen.getByRole("group", { name: FINAL_SCORE_LABEL })).toBeTruthy();
-    expect(screen.getByText("Final")).toBeTruthy();
+    expect(screen.getByText("Final", FINAL_IN_SCOREBOARD)).toBeTruthy();
     expect(screen.getByText("Away takes the lead")).toBeTruthy();
     expect(screen.getByText("T. Reed injured")).toBeTruthy();
-    expect(screen.getAllByText("MIN")).toHaveLength(2);
+    openTab("Box score");
+    expect(screen.getAllByText("MIN")).toHaveLength(1);
 
-    fireEvent.click(screen.getByRole("button", { name: "Restart" }));
+    chooseFromMenu("Restart");
     expect(screen.getByRole("group", { name: START_SCORE_LABEL })).toBeTruthy();
-    expect(screen.queryByText("Final")).toBeNull();
-    expect(screen.queryByText("T. Reed injured")).toBeNull();
+    expect(scoreboardFinal()).toBeNull();
     expect(screen.queryByText("MIN")).toBeNull();
-    expect(screen.getByText(progressText(0))).toBeTruthy();
+    openTab("Play-by-play");
+    expect(screen.queryByText("T. Reed injured")).toBeNull();
+    expectRevealed(0);
+  });
+
+  describe("linescore", () => {
+    function linescore() {
+      return within(screen.getByRole("table", { name: "Points by quarter" }));
+    }
+    /** Text of each cell in a team's row, minus the screen-reader suffix. */
+    function lineCells(abbreviation: string): string[] {
+      const row = linescore()
+        .getAllByRole("row")
+        .find((r) => r.textContent?.startsWith(abbreviation));
+      expect(row).toBeDefined();
+      return within(row!)
+        .getAllByRole("cell")
+        .map((cell) => (cell.textContent ?? "").replace("not played", ""));
+    }
+
+    it("sums to the final score for each team", () => {
+      renderClient();
+      chooseFromMenu("Skip to end");
+      for (const [abbr, total] of [
+        ["AWY", VIEW.finalScore.away],
+        ["HOM", VIEW.finalScore.home],
+      ] as const) {
+        const cells = lineCells(abbr);
+        const periods = cells.slice(0, -1).map((c) => (c === "–" ? 0 : +c));
+        expect(cells.at(-1)).toBe(String(total));
+        expect(periods.reduce((a, b) => a + b, 0)).toBe(total);
+        expect(cells.slice(0, 2)).toEqual(
+          abbr === "AWY" ? ["5", "5"] : ["6", "2"],
+        );
+        expect(cells.slice(2)).toEqual(["–", "–", String(total)]);
+      }
+    });
+
+    it("shows dashes for unplayed periods mid-game and before tip-off", () => {
+      renderClient();
+      expect(lineCells("AWY")).toEqual(["–", "–", "–", "–", "0"]);
+      expect(lineCells("HOM")).toEqual(["–", "–", "–", "–", "0"]);
+
+      const firstPeriod = PLAYS.filter((p) => p.period === 1).length;
+      for (let i = 0; i < firstPeriod; i += 1) {
+        fireEvent.keyDown(document, { key: "." });
+      }
+      expectRevealed(firstPeriod);
+      expect(lineCells("AWY")).toEqual(["5", "–", "–", "–", "5"]);
+      expect(lineCells("HOM")).toEqual(["6", "–", "–", "–", "6"]);
+    });
+
+    it("leaves the by-quarter table out of the shot summary", () => {
+      renderClient();
+      chooseFromMenu("Skip to end");
+      openTab("Shot chart");
+      expect(screen.queryByText("By quarter")).toBeNull();
+      expect(
+        screen.queryByRole("table", { name: "Shot summary by quarter" }),
+      ).toBeNull();
+      expect(
+        screen.getAllByRole("table", { name: "Points by quarter" }),
+      ).toHaveLength(1);
+    });
   });
 
   it("updates the live box score as plays are revealed", () => {
     renderClient();
+    openTab("Box score");
+    // These players are on the home team; the box score opens on away.
+    fireEvent.click(
+      within(screen.getByRole("group", { name: "Team" })).getByRole("button", {
+        name: new RegExp(`^${VIEW.home.abbreviation}`),
+      }),
+    );
     expect(statCells("J. Smith")[1]).toBe("0");
     fireEvent.click(screen.getByRole("button", { name: "Play" }));
     advance(1);
@@ -582,20 +721,20 @@ describe("WatchGameClient", () => {
     renderClient();
     fireEvent.click(screen.getByRole("button", { name: "Play" }));
     advance(12);
-    expect(screen.getByText(progressText(12))).toBeTruthy();
+    expectRevealed(12);
     expect(feed().getByText("B. Bench turnover (T. Reed steals)")).toBeTruthy();
 
     fireEvent.click(
       screen.getByRole("button", { name: /Away takes the lead/ }),
     );
-    expect(screen.getByText(progressText(11))).toBeTruthy();
+    expectRevealed(11);
     expect(
       feed().getByText("M. Jones makes 3-pt shot (T. Reed assists)"),
     ).toBeTruthy();
     expect(feed().queryByText("B. Bench turnover (T. Reed steals)")).toBeNull();
     expect(screen.getByRole("button", { name: "Play" })).toBeTruthy();
     advance(3);
-    expect(screen.getByText(progressText(11))).toBeTruthy();
+    expectRevealed(11);
   });
 
   it("shows highlight badges once the plays are revealed", () => {
@@ -611,13 +750,110 @@ describe("WatchGameClient", () => {
 
   it("groups a possession into one row and shows substitutions on their own", () => {
     renderClient();
-    fireEvent.click(screen.getByRole("button", { name: "Skip to end" }));
+    chooseFromMenu("Skip to end");
     const foul = feed().getByText("Shooting foul on T. Reed (J. Smith fouled)");
     const freeThrow = feed().getByText("J. Smith makes free throw");
     expect(foul.closest("li")).toBe(freeThrow.closest("li"));
     const sub = feed().getByText("B. Bench checks in for K. Lee");
     expect(sub.closest("li")).not.toBe(foul.closest("li"));
     expect(feed().getByText("End of Q1")).toBeTruthy();
+  });
+
+  describe("stats tabs", () => {
+    it("has one tab row, defaulting to Play-by-play", () => {
+      renderClient();
+      const nav = within(
+        screen.getByRole("navigation", { name: "Game stats" }),
+      );
+      expect(nav.getAllByRole("button").map((b) => b.textContent)).toEqual([
+        "Play-by-play",
+        "Box score",
+        "Shot chart",
+      ]);
+      expect(
+        nav
+          .getByRole("button", { name: "Play-by-play" })
+          .getAttribute("aria-pressed"),
+      ).toBe("true");
+      expect(screen.getByTestId("play-feed")).toBeTruthy();
+      expect(screen.queryByText("MIN")).toBeNull();
+    });
+
+    it("shows the box score and the shot summary on their tabs", () => {
+      renderClient();
+      chooseFromMenu("Skip to end");
+      openTab("Box score");
+      expect(screen.getAllByText("MIN")).toHaveLength(1);
+      expect(screen.queryByTestId("play-feed")).toBeNull();
+      openTab("Shot chart");
+      expect(screen.queryByText("MIN")).toBeNull();
+      expect(
+        screen.getByRole("heading", { name: "Shot summary" }),
+      ).toBeTruthy();
+      openTab("Play-by-play");
+      expect(screen.getByTestId("play-feed")).toBeTruthy();
+    });
+  });
+
+  describe("play-by-play feed rows", () => {
+    it("jumps to a past row's last play", () => {
+      renderClient();
+      chooseFromMenu("Skip to end");
+      // Possession 6 holds plays 5 and 6.
+      fireEvent.click(
+        feed().getByRole("button", { name: /Shooting foul on T\. Reed/ }),
+      );
+      expectRevealed(7);
+      expect(feed().queryByText("B. Bench checks in for K. Lee")).toBeNull();
+      expect(screen.getByRole("button", { name: "Play" })).toBeTruthy();
+    });
+
+    it("highlights key-moment rows and shows the post-game injury only at the end", () => {
+      renderClient();
+      expect(screen.queryByText("Away takes the lead")).toBeNull();
+      fireEvent.click(screen.getByRole("button", { name: "Play" }));
+      advance(10);
+      expect(screen.queryByText("Away takes the lead")).toBeNull();
+      advance(1);
+      const row = feed().getByRole("button", { name: /Away takes the lead/ });
+      expect(row.className).toContain("bg-team");
+      expect(within(row).getByText("AWY leads 8-6")).toBeTruthy();
+      expect(
+        within(row).getByText("M. Jones makes 3-pt shot (T. Reed assists)"),
+      ).toBeTruthy();
+      expect(screen.queryByText("T. Reed injured")).toBeNull();
+
+      chooseFromMenu("Skip to end");
+      const injury = feed().getByText("T. Reed injured");
+      expect(injury.closest("button")).toBeNull();
+      expect(feed().getAllByRole("listitem")[0]!.textContent).toContain(
+        "T. Reed injured",
+      );
+    });
+
+    it("shows the points scored and a body-size clock", () => {
+      renderClient();
+      chooseFromMenu("Skip to end");
+      const row = feed().getByRole("button", {
+        name: /M\. Jones makes 3-pt shot/,
+      });
+      expect(within(row).getByText("+3")).toBeTruthy();
+      expect(within(row).getByText("Score")).toBeTruthy();
+      const clock = within(row).getByText("Q2 8:20");
+      expect(clock.className).not.toContain("text-xs");
+      expect(clock.className).not.toContain("font-mono");
+      const miss = feed().getByRole("button", {
+        name: /M\. Jones misses 2-pt shot/,
+      });
+      expect(within(miss).queryByText(/^\+\d/)).toBeNull();
+    });
+
+    it("has no separate key moments panel", () => {
+      renderClient();
+      chooseFromMenu("Skip to end");
+      expect(screen.queryByText("No key moments yet.")).toBeNull();
+      expect(screen.queryByRole("heading", { name: "Key moments" })).toBeNull();
+    });
   });
 });
 
@@ -647,25 +883,34 @@ describe("WatchGameClient court", () => {
     expect(button("Previous possession").disabled).toBe(true);
     fireEvent.click(button("Play"));
     advance(5);
-    expect(screen.getByText(progressText(5))).toBeTruthy();
+    expectRevealed(5);
 
     // Plays 5-6 are one possession (foul + free throw).
     fireEvent.click(button("Next possession"));
-    expect(screen.getByText(progressText(7))).toBeTruthy();
+    expectRevealed(7);
     expect(button("Play")).toBeTruthy();
     advance(3);
-    expect(screen.getByText(progressText(7))).toBeTruthy();
+    expectRevealed(7);
 
     // The substitution at play 7 comes along with the next possession.
     fireEvent.click(button("Next possession"));
-    expect(screen.getByText(progressText(10))).toBeTruthy();
+    expectRevealed(10);
     fireEvent.click(button("Previous possession"));
-    expect(screen.getByText(progressText(7))).toBeTruthy();
+    expectRevealed(7);
     fireEvent.click(button("Previous possession"));
-    expect(screen.getByText(progressText(5))).toBeTruthy();
+    expectRevealed(5);
 
-    fireEvent.click(button("Skip to end"));
+    chooseFromMenu("Skip to end");
     expect(button("Next possession").disabled).toBe(true);
+    fireEvent.click(
+      screen.getByRole("button", { name: "More playback options" }),
+    );
+    expect(
+      screen
+        .getByRole("menuitem", { name: "Skip to end" })
+        .getAttribute("aria-disabled"),
+    ).toBe("true");
+    fireEvent.keyDown(screen.getByRole("menu"), { key: "Escape" });
   });
 
   it("shows playing, paused and replay-complete states", () => {
@@ -676,19 +921,22 @@ describe("WatchGameClient court", () => {
     expect(status()).toBe("Live");
     fireEvent.click(button("Pause"));
     expect(status()).toBe("Paused");
-    fireEvent.click(button("Skip to end"));
+    chooseFromMenu("Skip to end");
     expect(status()).toBe("Replay complete");
     // The scoreboard keeps the only "Final".
     expect(screen.getAllByText("Final")).toHaveLength(1);
+    expect(slider().getAttribute("aria-valuetext")).toBe(
+      `${PLAYS.length} of ${PLAYS.length} plays`,
+    );
   });
 
   it("follows a key-moment jump", () => {
     renderClient();
-    fireEvent.click(button("Skip to end"));
+    chooseFromMenu("Skip to end");
     fireEvent.click(
       screen.getByRole("button", { name: /Away takes the lead/ }),
     );
-    expect(screen.getByText(progressText(11))).toBeTruthy();
+    expectRevealed(11);
     expect(tokenLabels()).toContain("Marcus Jones, Visitor Hawks, 6 pts");
   });
 
@@ -697,6 +945,7 @@ describe("WatchGameClient court", () => {
     fireEvent.click(screen.getByRole("button", { name: /^Jalen Smith,/ }));
     expect(card().getByText("Jalen Smith")).toBeTruthy();
     expect(card().getByText(/PG · Harbor Waves · On court/)).toBeTruthy();
+    openTab("Box score");
     const row = screen
       .getAllByRole("row")
       .find((candidate) => candidate.textContent?.includes("J. Smith"))!;
@@ -704,7 +953,7 @@ describe("WatchGameClient court", () => {
 
     for (const expected of [1, 2, 3, 4, 5, 7, 10, 11]) {
       fireEvent.click(button("Next possession"));
-      expect(screen.getByText(progressText(expected))).toBeTruthy();
+      expectRevealed(expected);
       const live = buildLiveBoxScore(VIEW, expected).home.rows.find(
         (r) => r.playerId === "h1",
       )!;
@@ -740,7 +989,7 @@ describe("WatchGameClient court", () => {
     advance(7);
     expect(screen.queryByTestId("court-period-card")).toBeNull();
     advance(1);
-    expect(screen.getByText(progressText(8))).toBeTruthy();
+    expectRevealed(8);
     expect(screen.getByTestId("court-period-card").textContent).toBe(
       "End of Q1 · AWY 5 – HOM 6",
     );
@@ -750,12 +999,12 @@ describe("WatchGameClient court", () => {
 
   const ballSpot = () => {
     const ball = screen.getByTestId("court-ball");
-    return `${ball.style.left} ${ball.style.top}`;
+    return ball.style.transform;
   };
 
   it("ends on a Final card and a bright logo", () => {
     renderClient();
-    fireEvent.click(button("Skip to end"));
+    chooseFromMenu("Skip to end");
     expect(screen.getByTestId("court-period-card").textContent).toBe(
       `Final · AWY ${VIEW.finalScore.away} – HOM ${VIEW.finalScore.home}`,
     );
@@ -765,14 +1014,45 @@ describe("WatchGameClient court", () => {
     expect(screen.queryByTestId("court-possession")).toBeNull();
   });
 
+  it("choreographs plays the timer reveals and snaps on a jump", () => {
+    const original = Element.prototype.animate;
+    const cancels: ReturnType<typeof vi.fn>[] = [];
+    const animate = vi.fn(() => {
+      const cancel = vi.fn();
+      cancels.push(cancel);
+      return {
+        cancel,
+        pause: vi.fn(),
+        play: vi.fn(),
+        updatePlaybackRate: vi.fn(),
+        playState: "running",
+      };
+    });
+    Element.prototype.animate = animate as never;
+    try {
+      renderClient();
+      fireEvent.click(button("Play"));
+      advance(2);
+      expect(animate).toHaveBeenCalled();
+      const count = animate.mock.calls.length;
+      fireEvent.click(button("Next possession"));
+      expect(animate).toHaveBeenCalledTimes(count);
+      expect(cancels.every((cancel) => cancel.mock.calls.length === 1)).toBe(
+        true,
+      );
+    } finally {
+      Element.prototype.animate = original;
+    }
+  });
+
   it("lands on the same court after restart and skip as after playing through", () => {
     renderClient();
     fireEvent.click(button("Play"));
     advance(PLAYS.length);
-    expect(screen.getByText(progressText(PLAYS.length))).toBeTruthy();
+    expectRevealed(PLAYS.length);
     const stepped = { labels: tokenLabels(), ball: ballSpot() };
-    fireEvent.click(button("Restart"));
-    fireEvent.click(button("Skip to end"));
+    chooseFromMenu("Restart");
+    chooseFromMenu("Skip to end");
     expect({ labels: tokenLabels(), ball: ballSpot() }).toEqual(stepped);
   });
 
@@ -803,16 +1083,191 @@ describe("WatchGameClient court", () => {
 
   it("reaches the same court by skipping as by stepping possessions", () => {
     renderClient();
-    fireEvent.click(button("Skip to end"));
+    chooseFromMenu("Skip to end");
     const skipped = tokenLabels();
-    fireEvent.click(button("Restart"));
+    chooseFromMenu("Restart");
     expect(tokenLabels()).not.toEqual(skipped);
     while (!button("Next possession").disabled) {
       fireEvent.click(button("Next possession"));
     }
-    expect(screen.getByText(progressText(PLAYS.length))).toBeTruthy();
+    expectRevealed(PLAYS.length);
     expect(tokenLabels()).toEqual(skipped);
     expect(skipped).toContain("Ben Bench, Harbor Waves, 2 pts");
+  });
+});
+
+describe("WatchGameClient transport", () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+  });
+  afterEach(() => {
+    cleanup();
+    vi.useRealTimers();
+  });
+
+  const button = (name: string) =>
+    screen.getByRole("button", { name }) as HTMLButtonElement;
+  const key = (target: Element, name: string) =>
+    fireEvent.keyDown(target, { key: name });
+
+  it("scrubs with the keyboard", () => {
+    renderClient();
+    const bar = slider();
+    expect(bar.getAttribute("aria-valuemin")).toBe("0");
+    expect(bar.getAttribute("aria-valuemax")).toBe(String(PLAYS.length));
+    expect(bar.getAttribute("aria-valuetext")).toBe("0 of 14 plays, Tip-off");
+    key(bar, "ArrowRight");
+    expectRevealed(1);
+    key(bar, "ArrowRight");
+    expectRevealed(2);
+    key(bar, "ArrowLeft");
+    expectRevealed(1);
+    key(bar, "PageUp");
+    expectRevealed(stepPossession(VIEW, 1, 1));
+    const here = currentRevealed();
+    key(bar, "PageDown");
+    expectRevealed(stepPossession(VIEW, here, -1));
+    key(bar, "End");
+    expectRevealed(PLAYS.length);
+    key(bar, "Home");
+    expectRevealed(0);
+    expect(screen.getByRole("button", { name: "Play" })).toBeTruthy();
+  });
+
+  it("seeks to where the pointer lands on the track", () => {
+    renderClient();
+    const bar = slider();
+    bar.getBoundingClientRect = () =>
+      ({
+        left: 0,
+        right: 200,
+        top: 0,
+        bottom: 44,
+        width: 200,
+        height: 44,
+        x: 0,
+        y: 0,
+        toJSON: () => ({}),
+      }) as DOMRect;
+    fireEvent.pointerDown(bar, { clientX: 100 });
+    expectRevealed(Math.round(0.5 * PLAYS.length));
+    fireEvent.pointerMove(bar, { clientX: 200 });
+    expectRevealed(PLAYS.length);
+    fireEvent.pointerUp(bar, { clientX: 200 });
+    fireEvent.pointerMove(bar, { clientX: 0 });
+    expectRevealed(PLAYS.length);
+  });
+
+  it("marks quarters and key moments, and jumps to a moment", () => {
+    renderClient();
+    expect(screen.getAllByTestId("playback-period-tick")).toHaveLength(1);
+    const moments = screen.getAllByTestId("playback-moment");
+    expect(moments).toHaveLength(1);
+    fireEvent.mouseEnter(moments[0]!);
+    expect(screen.getAllByText("Away takes the lead").length).toBeGreaterThan(
+      0,
+    );
+    fireEvent.click(moments[0]!);
+    expectRevealed(11);
+  });
+
+  it("has Space, arrow and comma/period shortcuts", () => {
+    renderClient();
+    key(document.body, " ");
+    expect(button("Pause")).toBeTruthy();
+    key(document.body, " ");
+    expect(button("Play")).toBeTruthy();
+
+    key(document.body, "ArrowRight");
+    expectRevealed(stepPossession(VIEW, 0, 1));
+    key(document.body, "ArrowRight");
+    expectRevealed(stepPossession(VIEW, stepPossession(VIEW, 0, 1), 1));
+    key(document.body, "ArrowLeft");
+    expectRevealed(stepPossession(VIEW, 0, 1));
+    key(document.body, ".");
+    expectRevealed(stepPossession(VIEW, 0, 1) + 1);
+    key(document.body, ",");
+    expectRevealed(stepPossession(VIEW, 0, 1));
+    key(document.body, "ArrowLeft");
+    key(document.body, ",");
+    expectRevealed(0);
+  });
+
+  it("ignores shortcuts while typing, with modifiers, or on a focused button", () => {
+    renderClient();
+    const input = document.createElement("input");
+    document.body.appendChild(input);
+    input.focus();
+    for (const name of [" ", "ArrowRight", "ArrowLeft", ".", ","]) {
+      key(input, name);
+    }
+    expectRevealed(0);
+    expect(button("Play")).toBeTruthy();
+    input.remove();
+
+    fireEvent.keyDown(document.body, { key: ".", ctrlKey: true });
+    expectRevealed(0);
+
+    // Space on a button activates that button only, not play as well.
+    key(button("Next possession"), " ");
+    expectRevealed(0);
+    expect(button("Play")).toBeTruthy();
+  });
+
+  it("has exactly one primary control", () => {
+    renderClient();
+    const group = screen.getByRole("group", { name: "Playback controls" });
+    expect(group.querySelectorAll('[data-variant="primary"]')).toHaveLength(1);
+    expect(
+      Array.from(group.querySelectorAll("button")).filter((el) =>
+        el.className.includes("bg-team font-semibold"),
+      ),
+    ).toHaveLength(1);
+  });
+
+  it("toggles the shot chart from the overflow menu and closes on Escape", () => {
+    renderClient();
+    expect(screen.queryAllByTestId("court-shot-marker")).toHaveLength(0);
+    const trigger = button("More playback options");
+    expect(trigger.getAttribute("aria-expanded")).toBe("false");
+    key(slider(), "End");
+
+    fireEvent.click(trigger);
+    expect(trigger.getAttribute("aria-expanded")).toBe("true");
+    const first = screen.getByRole("menuitemcheckbox", { name: "Shot chart" });
+    expect(first.getAttribute("aria-checked")).toBe("false");
+    expect(document.activeElement).toBe(first);
+    key(first, "ArrowDown");
+    expect(document.activeElement).toBe(
+      screen.getByRole("menuitem", { name: "Restart" }),
+    );
+    key(document.activeElement!, "ArrowUp");
+    expect(document.activeElement).toBe(first);
+
+    fireEvent.click(first);
+    expect(screen.queryByRole("menu")).toBeNull();
+    expect(screen.getAllByTestId("court-shot-marker").length).toBeGreaterThan(
+      0,
+    );
+
+    fireEvent.click(trigger);
+    expect(
+      screen
+        .getByRole("menuitemcheckbox", { name: "Shot chart" })
+        .getAttribute("aria-checked"),
+    ).toBe("true");
+    fireEvent.keyDown(document, { key: "Escape" });
+    expect(screen.queryByRole("menu")).toBeNull();
+    expect(document.activeElement).toBe(trigger);
+  });
+
+  it("lists the keyboard shortcuts in a popover", () => {
+    renderClient();
+    const trigger = button("Keyboard shortcuts");
+    fireEvent.click(trigger);
+    expect(screen.getByText("Play or pause")).toBeTruthy();
+    fireEvent.mouseDown(document.body);
+    expect(screen.queryByText("Play or pause")).toBeNull();
   });
 });
 
