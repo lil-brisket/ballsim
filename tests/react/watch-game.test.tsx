@@ -293,6 +293,7 @@ const VIEW: WatchGameView = {
       lastName: "Smith",
       position: "PG",
       started: true,
+      jerseyNumber: null,
       finalMinutes: 20,
     },
     {
@@ -303,6 +304,7 @@ const VIEW: WatchGameView = {
       lastName: "Lee",
       position: "SG",
       started: true,
+      jerseyNumber: null,
       finalMinutes: 12,
     },
     {
@@ -313,6 +315,7 @@ const VIEW: WatchGameView = {
       lastName: "Bench",
       position: "SF",
       started: false,
+      jerseyNumber: null,
       finalMinutes: 8,
     },
     {
@@ -323,6 +326,7 @@ const VIEW: WatchGameView = {
       lastName: "Jones",
       position: "PG",
       started: true,
+      jerseyNumber: null,
       finalMinutes: 22,
     },
     {
@@ -333,6 +337,7 @@ const VIEW: WatchGameView = {
       lastName: "Reed",
       position: "SF",
       started: true,
+      jerseyNumber: null,
       finalMinutes: 18,
     },
   ],

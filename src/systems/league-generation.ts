@@ -41,6 +41,7 @@ import {
   rosterQualityBandForSlot,
 } from "@/systems/roster-generation-config";
 import { generateTeamBranding } from "@/systems/team-branding-generation";
+import { reconcileJerseyNumbers } from "@/systems/jersey-numbers";
 
 const DEFAULT_LEAGUE_ID = "league_fictional";
 const DEFAULT_LEAGUE_AREA: LeagueArea = "north_america";
@@ -237,12 +238,20 @@ export function generateLeague(
     conferenceIds: ids.conferenceIds,
   });
 
+  // Generated teammates can share a preferred jersey number; resolve them.
+  const numbered = reconcileJerseyNumbers({
+    world: {
+      players: Object.fromEntries(players.map((p) => [p.id, p])),
+      teams: Object.fromEntries(teams.map((t) => [t.id, t])),
+    },
+  }).world.players;
+
   const result: GeneratedLeague = {
     league,
     conferences,
     divisions,
     teams,
-    players,
+    players: players.map((p) => numbered[p.id]!),
   };
   assertGenerationIntegrity(result);
   return result;

@@ -546,6 +546,8 @@ describe("GameState schema migration", () => {
         "injuryHistory",
         "nationality",
         "developmentLeague",
+        // v68 → v69 adds the jersey number.
+        "jerseyNumber",
       ].sort(),
     );
   });
@@ -1641,6 +1643,7 @@ describe("GameState schema migration", () => {
       teamId,
       firstName: "Opt",
       lastName: id,
+      jerseyNumber: 0,
       nationality: "USA",
       age: 25,
       heightInches: 78,

@@ -120,6 +120,7 @@ function watchPlayer(id: string, side: WatchSide): WatchPlayer {
     shortName: `P. ${id}`,
     lastName: id,
     position: null,
+    jerseyNumber: null,
     started: true,
     finalMinutes: 0,
   };

@@ -10,6 +10,7 @@ import {
 import { projectSaveEntities } from "@/persistence/mappers/save-projection-mapper";
 import { getPrisma } from "@/persistence/prisma";
 import { validateGameState } from "@/persistence/validate-game-state";
+import { reconcileJerseyNumbers } from "@/systems/jersey-numbers";
 import type {
   LoadedSaveGame,
   SaveGameStore,
@@ -22,7 +23,8 @@ import { SaveVersionConflictError } from "@/persistence/save-version-conflict";
  * Treats each save as a single database write (create or update).
  */
 function prepareStateJson(state: GameState): string {
-  const stateJson = serializeGameState(state);
+  // Every join path (draft, trades, signings…) is covered here.
+  const stateJson = serializeGameState(reconcileJerseyNumbers(state));
   const clone: unknown = JSON.parse(stateJson);
   validateGameState(clone);
   return stateJson;

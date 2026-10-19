@@ -1,3 +1,4 @@
+import { isJerseyNumber, preferredJerseyNumber } from "@/domain/jersey-number";
 import type { ContractId, PlayerId, TeamId } from "@/domain/ids";
 import {
   isPlayerArchetype,
@@ -158,6 +159,12 @@ export type Player = {
   teamId: TeamId | null;
   firstName: string;
   lastName: string;
+  /**
+   * Jersey number 0–99, unique among the franchise's non-retired players
+   * (see src/domain/jersey-number.ts). Presentation only; never read by the
+   * simulation.
+   */
+  jerseyNumber: number;
   nationality: PlayerNationality;
   age: number;
   heightInches: number;
@@ -204,6 +211,8 @@ export type PlayerInput = {
   teamId: TeamId | null;
   firstName: string;
   lastName: string;
+  /** Defaults to the player's preferred number (from his id). */
+  jerseyNumber?: number;
   nationality: PlayerNationality;
   age: number;
   heightInches: number;
@@ -392,6 +401,9 @@ export function createPlayer(input: PlayerInput): Player {
   assertOptionalId(input.teamId, "teamId");
   assertNonEmptyName(input.firstName, "firstName");
   assertNonEmptyName(input.lastName, "lastName");
+  if (input.jerseyNumber !== undefined && !isJerseyNumber(input.jerseyNumber)) {
+    throw new Error("Player jerseyNumber must be an integer from 0 to 99.");
+  }
   assertPlayerNationality(input.nationality);
   assertNonNegativeInteger(input.age, "age");
   assertPositiveFinite(input.heightInches, "heightInches");
@@ -436,6 +448,7 @@ export function createPlayer(input: PlayerInput): Player {
     teamId: input.teamId,
     firstName: input.firstName,
     lastName: input.lastName,
+    jerseyNumber: input.jerseyNumber ?? preferredJerseyNumber(input.id),
     nationality: input.nationality,
     age: input.age,
     heightInches: input.heightInches,

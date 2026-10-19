@@ -43,8 +43,8 @@ export function CourtToken(props: {
   labelSide: LabelSide;
   /** Label always visible (ball handler, shooter, selected); else on hover/focus. */
   labelShown: boolean;
-  /** Unique two-letter monogram shown on the disc. */
-  monogram: string;
+  /** Jersey number, or the unique two-letter monogram, shown on the disc. */
+  badge: string;
 }) {
   const { player, team, color } = props;
   const ink = readableTextOnBackground(color);
@@ -79,7 +79,7 @@ export function CourtToken(props: {
         aria-hidden="true"
         className={cn(
           props.checkedIn !== null && "court-token-enter",
-          "relative flex h-7 w-7 items-center justify-center rounded-full font-display text-sm font-semibold leading-none tracking-tight sm:h-8 sm:w-8",
+          "relative flex h-7 w-7 items-center justify-center rounded-full font-display text-sm font-semibold leading-none tabular-nums tracking-tight sm:h-8 sm:w-8",
           player.side === 1 ? "border-[3px] border-double" : "border-2",
         )}
         data-ring={player.side === 1 ? "double" : "solid"}
@@ -90,7 +90,7 @@ export function CourtToken(props: {
           boxShadow,
         }}
       >
-        {props.monogram}
+        {props.badge}
         {handler ? (
           <span
             className={cn(

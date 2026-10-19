@@ -62,6 +62,7 @@ function watchPlayer(
     shortName: `${first.charAt(0)}. ${last}`,
     lastName: last,
     position: null,
+    jerseyNumber: null,
     started,
     finalMinutes: 0,
   };

@@ -18,6 +18,7 @@ import { GAME_STATE_SCHEMA_VERSION, type GameState } from "@/state/game-state";
 import { createDefaultOwnedFranchiseState } from "@/state/owned-franchise-state";
 import { generateLeague } from "@/systems/league-generation";
 import { generateRosters } from "@/systems/roster-generation";
+import { reconcileJerseyNumbers } from "@/systems/jersey-numbers";
 import { simulateSeason } from "@/systems/season-simulation";
 import { createTestGameState } from "../factories/game-state";
 import { TEST_NOW_ISO, TEST_RNG_SEED } from "../helpers/determinism";
@@ -241,7 +242,9 @@ function createEightTeamPopulatedState(rngSeed: number): GameState {
 
   const rostered = generateRosters(base, rng).state;
   resetDomainEventSequenceForTests();
-  return simulateSeason(rostered, rng).state;
+  // Built from internal steps (no bootstrap or day loop), so resolve jersey
+  // numbers the way the game does before it is ever saved.
+  return reconcileJerseyNumbers(simulateSeason(rostered, rng).state);
 }
 
 function assertPopulatedFixture(state: GameState): void {
@@ -338,6 +341,38 @@ describe("MemorySaveGameStore", () => {
     expect(loaded!.state).toEqual(expected);
     expect(loaded!.state).not.toBe(expected);
     expect(() => validateGameState(loaded!.state)).not.toThrow();
+  });
+
+  it("resolves duplicate jersey numbers on save without mutating the input", async () => {
+    const store = createMemorySaveGameStore();
+    const state = createEightTeamPopulatedState(TEST_RNG_SEED);
+    const [teamId] = Object.keys(state.world.teams);
+    const roster =
+      state.world.teams[teamId as keyof typeof state.world.teams]!.roster;
+    const [first, second] = roster;
+    const players = { ...state.world.players };
+    players[second!] = {
+      ...players[second!]!,
+      jerseyNumber: players[first!]!.jerseyNumber,
+    };
+    const doubled = { ...state, world: { ...state.world, players } };
+
+    await store.create({
+      id: state.meta.saveId,
+      name: "Dupes",
+      state: doubled,
+    });
+    const loaded = (await store.load(state.meta.saveId))!.state;
+
+    // The longer-serving player (earlier in the roster) keeps his number.
+    expect(loaded.world.players[first!]!.jerseyNumber).toBe(
+      players[first!]!.jerseyNumber,
+    );
+    const numbers = roster.map((id) => loaded.world.players[id]!.jerseyNumber);
+    expect(new Set(numbers).size).toBe(numbers.length);
+    expect(doubled.world.players[second!]!.jerseyNumber).toBe(
+      players[first!]!.jerseyNumber,
+    );
   });
 
   it("does not mutate input on successful create or save", async () => {
