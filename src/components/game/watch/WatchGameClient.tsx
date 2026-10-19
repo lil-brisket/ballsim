@@ -342,7 +342,11 @@ export function WatchGameClient(props: {
             selectedPlayerId={selectedPlayerId}
           />
         ) : (
-          <ShotSummaryPanel view={view} summary={shotSummary} />
+          <ShotSummaryPanel
+            view={view}
+            summary={shotSummary}
+            revealed={revealed}
+          />
         )}
       </section>
     </div>
