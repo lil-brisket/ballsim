@@ -1,17 +1,20 @@
 "use client";
 
-import { useLayoutEffect, useRef, useState, type CSSProperties } from "react";
+import {
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type CSSProperties,
+} from "react";
 import { FullCourtLines } from "@/components/game/court/FullCourtLines";
 import { prefersReducedMotion } from "@/components/ui/CountUp";
 import { cn } from "@/components/ui/styles";
 import { TeamLogoMark } from "@/components/team/logos/TeamLogoMark";
 import type { PlayerId } from "@/domain/ids";
 import { buildCourtPalette, tokenOutline } from "@/state/court-palette";
-import {
-  COURT_FEET,
-  type CourtPoint,
-  type CourtSubstitution,
-} from "@/state/watch-court-frame";
+import type { PlayChoreography } from "@/state/watch-court-choreo";
+import { COURT_FEET, type CourtSubstitution } from "@/state/watch-court-frame";
 import { FULL_COURT_FEET, type FullCourtFrame } from "@/state/watch-full-court";
 import type {
   LiveBoxScore,
@@ -24,11 +27,13 @@ import { CourtHeader, type CourtStatus } from "./CourtHeader";
 import { CourtCallout, CourtPeriodCard } from "./CourtOverlays";
 import { CourtToken } from "./CourtToken";
 import {
-  CUT_MS,
+  ballFloorKeyframes,
+  ballLiftKeyframes,
   calloutText,
-  fullCourtBallMotion,
+  courtTranslate,
   initialOf,
-  pct,
+  rimTime,
+  trackKeyframes,
 } from "./court-motion";
 import { teamTokenColor } from "./team-token-colors";
 
@@ -47,7 +52,9 @@ const WORDMARK_CLASS =
  * Full-court replay: player tokens, ball and callouts on a
  * landscape 94 × 50 ft floor painted in the home team's colours, with the
  * home wordmarks on the apron and its logo at centre court. Baselines are the
- * left and right edges, so frame (x, y) maps straight to (left, top).
+ * left and right edges. Tokens and the ball sit on zero-size layers moved by
+ * `transform` (frame (x, y) is a fraction of the floor's size), and a play's
+ * choreography runs on those layers with the Web Animations API.
  */
 export function FullCourtView(props: {
   frame: FullCourtFrame;
@@ -62,6 +69,15 @@ export function FullCourtView(props: {
   status?: CourtStatus;
   /** Playback speed multiplier; motion durations are divided by it. */
   speed?: number;
+  /**
+   * Choreography of the latest play, run over `motionMs`; null or omitted
+   * snaps tokens and the ball to the frame (jumps, reduced motion).
+   */
+  choreography?: PlayChoreography | null;
+  /** Milliseconds at 1x the choreography takes (divided by `speed`). */
+  motionMs?: number;
+  /** Playback is running; running choreography pauses and resumes with it. */
+  playing?: boolean;
   /** Period-end card text shown over the lower court; null or omitted hides it. */
   periodBreak?: string | null;
   /** Roster, used to name the outgoing player of a substitution. */
@@ -92,76 +108,101 @@ export function FullCourtView(props: {
   const lastPlay = frame.lastPlay;
   const playIndex = lastPlay?.index ?? null;
 
-  // Ball flight: animate only when the latest play changes, never on mount.
-  const ballRef = useRef<HTMLDivElement>(null);
-  const lastPlayRef = useRef(lastPlay);
-  const transitionRef = useRef(frame.transition);
-  // Read at flight start, so a speed change never cancels a ball mid-air.
-  const speedRef = useRef(speed);
-  const shownIndex = useRef(playIndex);
-  useLayoutEffect(() => {
-    lastPlayRef.current = lastPlay;
-    transitionRef.current = frame.transition;
-    speedRef.current = speed;
-  });
-  // Where each token was last drawn, so a shooter's cut starts from there.
+  const playing = props.playing ?? true;
+  const choreography = props.choreography ?? null;
+  const motionMs = props.motionMs ?? 0;
+
+  // The latest play's animations, and the speed they were started at.
   const courtRef = useRef<HTMLDivElement>(null);
-  const drawnSpots = useRef(new Map<PlayerId, CourtPoint>());
+  const motion = useRef<{ animations: Animation[]; speed: number }>({
+    animations: [],
+    speed: 1,
+  });
+  // Read when a choreography starts, so speed or pause changes never restart it.
+  const latest = useRef({ speed, playing, motionMs });
   useLayoutEffect(() => {
-    if (shownIndex.current === playIndex) {
+    latest.current = { speed, playing, motionMs };
+  });
+
+  useLayoutEffect(() => {
+    const running = motion.current.animations;
+    // A play revealed mid-motion starts from where each layer is drawn now.
+    const drawn = new Map<Element, string>();
+    if (choreography) {
+      for (const animation of running) {
+        const target = (animation.effect as KeyframeEffect | null)?.target;
+        if (target && animation.playState !== "finished") {
+          drawn.set(target, getComputedStyle(target).transform);
+        }
+      }
+    }
+    for (const animation of running) {
+      animation.cancel();
+    }
+    const { speed: startSpeed, playing: startPlaying } = latest.current;
+    motion.current = { animations: [], speed: startSpeed };
+    const duration = latest.current.motionMs / startSpeed;
+    const court = courtRef.current;
+    if (!choreography || !court || duration <= 0 || prefersReducedMotion()) {
       return;
     }
-    shownIndex.current = playIndex;
-    const play = lastPlayRef.current;
-    const el = ballRef.current;
-    if (!play || !el || typeof el.animate !== "function") {
-      return;
-    }
-    if (prefersReducedMotion()) {
-      return;
-    }
-    const animations: Animation[] = [];
-    const motion = fullCourtBallMotion(play, transitionRef.current);
-    if (motion) {
-      animations.push(
-        el.animate(motion.keyframes, {
-          duration: motion.duration / speedRef.current,
-          easing: "linear",
-        }),
+    const start = (el: HTMLElement | null, keyframes: Keyframe[]) => {
+      if (!el || typeof el.animate !== "function") {
+        return;
+      }
+      const from = drawn.get(el);
+      if (from && from !== "none") {
+        keyframes[0] = { ...keyframes[0], transform: from };
+      }
+      const animation = el.animate(keyframes, { duration });
+      if (!startPlaying) {
+        animation.pause();
+      }
+      motion.current.animations.push(animation);
+    };
+    for (const track of choreography.tracks) {
+      start(
+        court.querySelector<HTMLElement>(`[data-mover="${track.playerId}"]`),
+        trackKeyframes(choreography.beats, track.points),
       );
     }
-    // Catch-and-shoot: the shooter's token curls through the cut point.
-    const from = drawnSpots.current.get(play.playerId);
-    const token = courtRef.current?.querySelector<HTMLElement>(
-      `[data-player-id="${play.playerId}"]`,
+    start(
+      court.querySelector<HTMLElement>('[data-mover="ball"]'),
+      ballFloorKeyframes(choreography),
     );
-    if (play.cut && from && token && typeof token.animate === "function") {
-      const to = {
-        left: token.style.left,
-        top: token.style.top,
-      };
-      animations.push(
-        token.animate(
-          [
-            { left: pct(from.x), top: pct(from.y) },
-            { left: pct(play.cut.x), top: pct(play.cut.y), offset: 0.5 },
-            to,
-          ],
-          { duration: CUT_MS / speedRef.current, easing: "ease-in-out" },
-        ),
-      );
+    start(
+      court.querySelector<HTMLElement>("[data-ball-lift]"),
+      ballLiftKeyframes(choreography),
+    );
+  }, [choreography]);
+
+  // Pause freezes the play mid-motion; Play carries on from there.
+  useEffect(() => {
+    for (const animation of motion.current.animations) {
+      if (!playing && animation.playState === "running") {
+        animation.pause();
+      } else if (playing && animation.playState === "paused") {
+        animation.play();
+      }
     }
-    return () => {
-      for (const animation of animations) {
+  }, [playing]);
+
+  // A speed change retimes the running play instead of restarting it.
+  useEffect(() => {
+    const current = motion.current;
+    for (const animation of current.animations) {
+      animation.updatePlaybackRate(speed / current.speed);
+    }
+  }, [speed]);
+
+  useEffect(
+    () => () => {
+      for (const animation of motion.current.animations) {
         animation.cancel();
       }
-    };
-  }, [playIndex]);
-  useLayoutEffect(() => {
-    drawnSpots.current = new Map(
-      frame.players.map((player) => [player.playerId, player.spot]),
-    );
-  });
+    },
+    [],
+  );
 
   const onCourt = new Set(frame.players.map((p) => p.playerId));
   const bench: [WatchPlayer[], WatchPlayer[]] = [[], []];
@@ -188,6 +229,9 @@ export function FullCourtView(props: {
     lastPlay !== null &&
     lastPlay.outcome === "made" &&
     (lastPlay.motion === "shot" || lastPlay.motion === "free_throw");
+  // The flash waits for the ball to reach the rim in the choreography.
+  const rim = choreography ? rimTime(choreography) : null;
+  const flashDelayMs = rim !== null ? (rim * motionMs) / speed : 0;
   const rimX =
     frame.attackingEnd === "left"
       ? COURT_FEET.hoopY
@@ -320,10 +364,7 @@ export function FullCourtView(props: {
           ) : null}
           <div
             ref={courtRef}
-            className={cn(
-              "court-wood relative aspect-[94/50] w-full overflow-x-clip",
-              frame.transition && "court-switching",
-            )}
+            className="court-wood relative aspect-[94/50] w-full overflow-x-clip"
             style={{ backgroundColor: palette.floor }}
           >
             {/* Under the lines: the logo is faded paint, not a layer over the court. */}
@@ -390,6 +431,10 @@ export function FullCourtView(props: {
                   stroke={palette.line}
                   strokeWidth="0.5"
                   data-testid="court-rim-flash"
+                  style={{
+                    animationDelay: `${Math.round(flashDelayMs)}ms`,
+                    animationPlayState: playing ? undefined : "paused",
+                  }}
                 />
               ) : null}
               {showShotChart
@@ -437,19 +482,25 @@ export function FullCourtView(props: {
             {frame.players.map((player) => {
               const color = colorOf(player.side);
               return (
-                <CourtToken
+                <div
                   key={player.playerId}
-                  player={player}
-                  team={teamOf(player.side)}
-                  color={color}
-                  points={points.get(player.playerId) ?? 0}
-                  checkedIn={incoming.get(player.playerId)?.index ?? null}
-                  selected={props.selectedPlayerId === player.playerId}
-                  onSelect={props.onSelectPlayer}
-                  outline={tokenOutline(color, palette)}
-                  accent={palette.line}
-                  labelAbove={player.spot.y > LABEL_ABOVE_Y}
-                />
+                  data-mover={player.playerId}
+                  className="court-mover z-10"
+                  style={{ transform: courtTranslate(player.spot) }}
+                >
+                  <CourtToken
+                    player={player}
+                    team={teamOf(player.side)}
+                    color={color}
+                    points={points.get(player.playerId) ?? 0}
+                    checkedIn={incoming.get(player.playerId)?.index ?? null}
+                    selected={props.selectedPlayerId === player.playerId}
+                    onSelect={props.onSelectPlayer}
+                    outline={tokenOutline(color, palette)}
+                    accent={palette.line}
+                    labelAbove={player.spot.y > LABEL_ABOVE_Y}
+                  />
+                </div>
               );
             })}
 
@@ -462,16 +513,21 @@ export function FullCourtView(props: {
               />
             ))}
 
+            {/* The ball's floor layer carries its shadow; the inner layer
+                lifts the ball for dribbles and arcs, so the gap between the
+                two reads as height. */}
             <div
-              ref={ballRef}
               aria-hidden="true"
               data-testid="court-ball"
-              className="court-ball pointer-events-none absolute z-20 -ml-1.5 -mt-1.5 h-3 w-3 rounded-full border border-black/50 bg-orange-500 shadow"
-              style={{
-                left: pct(frame.ball.at.x),
-                top: pct(frame.ball.at.y),
-              }}
-            />
+              data-mover="ball"
+              className="court-mover z-20"
+              style={{ transform: courtTranslate(frame.ball.at) }}
+            >
+              <span className="absolute -ml-1.5 -mt-1 h-3 w-3 rounded-full bg-black/40 blur-[1px]" />
+              <div data-ball-lift className="absolute">
+                <div className="-ml-1.5 -mt-1.5 h-3 w-3 rounded-full border border-black/50 bg-orange-500" />
+              </div>
+            </div>
 
             {callout && lastPlay ? (
               <CourtCallout

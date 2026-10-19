@@ -22,9 +22,9 @@ import {
   PERIOD_BREAK_MS,
   PLAY_PACING_MS,
   TIP_OFF_MS,
+  TRANSITION_MS,
   playDelayMs,
 } from "@/components/game/watch/playback-pacing";
-import { TRANSITION_MS } from "@/components/game/watch/court/court-motion";
 import { WatchGameClient } from "@/components/game/watch/WatchGameClient";
 import { WatchGameUnavailable } from "@/components/game/watch/WatchGameUnavailable";
 import { TeamThemeScope } from "@/components/ui";
@@ -516,6 +516,48 @@ describe("WatchGameClient", () => {
     );
   });
 
+  it("resumes a paused play with the time it had left", () => {
+    renderClient();
+    fireEvent.click(screen.getByRole("button", { name: "Play" }));
+    advance(1);
+    const delay = playDelayMs(VIEW, 1);
+    act(() => {
+      vi.advanceTimersByTime(delay / 2);
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Pause" }));
+    act(() => {
+      vi.advanceTimersByTime(delay * 4);
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Play" }));
+    act(() => {
+      vi.advanceTimersByTime(delay / 2 - 1);
+    });
+    expect(screen.getByText(progressText(1))).toBeTruthy();
+    act(() => {
+      vi.advanceTimersByTime(1);
+    });
+    expect(screen.getByText(progressText(2))).toBeTruthy();
+  });
+
+  it("keeps the time left of a play through a speed change", () => {
+    renderClient();
+    fireEvent.click(screen.getByRole("button", { name: "Play" }));
+    advance(1);
+    const delay = playDelayMs(VIEW, 1);
+    act(() => {
+      vi.advanceTimersByTime(delay / 2);
+    });
+    fireEvent.click(screen.getByRole("button", { name: "2x" }));
+    act(() => {
+      vi.advanceTimersByTime(delay / 4 - 1);
+    });
+    expect(screen.getByText(progressText(1))).toBeTruthy();
+    act(() => {
+      vi.advanceTimersByTime(1);
+    });
+    expect(screen.getByText(progressText(2))).toBeTruthy();
+  });
+
   it("clears the pending step on unmount", () => {
     const { unmount } = renderClient();
     fireEvent.click(screen.getByRole("button", { name: "Play" }));
@@ -750,7 +792,7 @@ describe("WatchGameClient court", () => {
 
   const ballSpot = () => {
     const ball = screen.getByTestId("court-ball");
-    return `${ball.style.left} ${ball.style.top}`;
+    return ball.style.transform;
   };
 
   it("ends on a Final card and a bright logo", () => {
@@ -763,6 +805,37 @@ describe("WatchGameClient court", () => {
       screen.getByTestId("court-centre-logo").getAttribute("data-final"),
     ).toBe("true");
     expect(screen.queryByTestId("court-possession")).toBeNull();
+  });
+
+  it("choreographs plays the timer reveals and snaps on a jump", () => {
+    const original = Element.prototype.animate;
+    const cancels: ReturnType<typeof vi.fn>[] = [];
+    const animate = vi.fn(() => {
+      const cancel = vi.fn();
+      cancels.push(cancel);
+      return {
+        cancel,
+        pause: vi.fn(),
+        play: vi.fn(),
+        updatePlaybackRate: vi.fn(),
+        playState: "running",
+      };
+    });
+    Element.prototype.animate = animate as never;
+    try {
+      renderClient();
+      fireEvent.click(button("Play"));
+      advance(2);
+      expect(animate).toHaveBeenCalled();
+      const count = animate.mock.calls.length;
+      fireEvent.click(button("Next possession"));
+      expect(animate).toHaveBeenCalledTimes(count);
+      expect(cancels.every((cancel) => cancel.mock.calls.length === 1)).toBe(
+        true,
+      );
+    } finally {
+      Element.prototype.animate = original;
+    }
   });
 
   it("lands on the same court after restart and skip as after playing through", () => {

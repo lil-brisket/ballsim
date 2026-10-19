@@ -1,57 +1,106 @@
 import type { PlayerId } from "@/domain/ids";
-import type { CourtLastPlay, CourtPoint } from "@/state/watch-court-frame";
-
-/** Shooter cut on a catch-and-shoot, at 1x. */
-export const CUT_MS = 500;
+import type { PlayChoreography } from "@/state/watch-court-choreo";
+import type { CourtLastPlay } from "@/state/watch-court-frame";
+import type { FullCourtPoint } from "@/state/watch-full-court";
 
 export const pct = (value: number): string =>
   `${Math.round(value * 10000) / 100}%`;
 
-function lerpPoint(a: CourtPoint, b: CourtPoint, t: number): CourtPoint {
-  return { x: a.x + (b.x - a.x) * t, y: a.y + (b.y - a.y) * t };
+const hundredths = (value: number) => Math.round(value * 10000) / 100;
+
+/**
+ * Transform that places a zero-size layer at a full-court point. The court
+ * floor is a size container, so 100cqw/100cqh is the floor's width/height
+ * and motion stays on the compositor (no left/top layout).
+ */
+export function courtTranslate(point: FullCourtPoint): string {
+  return `translate(${hundredths(point.x)}cqw, ${hundredths(point.y)}cqh)`;
+}
+
+/** Players run between beats with a soft start and stop. */
+const RUN_EASING = "ease-in-out";
+/** Passes leave the hand fast and arrive soft. */
+const PASS_EASING = "ease-out";
+
+/** Ball rest pose, a dribble (pushed into the floor) and the arc heights. */
+const BALL_REST = "translateY(0px) scale(1)";
+const BALL_DRIBBLE = "translateY(1px) scale(0.85)";
+const SHOT_LIFT_PX = 18;
+const DROP_LIFT_PX = 8;
+const ARC_STEPS = 6;
+
+/** Keyframes for one player's track through a choreography. */
+export function trackKeyframes(
+  beats: number[],
+  points: FullCourtPoint[],
+): Keyframe[] {
+  return points.map((point, k) => ({
+    transform: courtTranslate(point),
+    offset: beats[k],
+    easing: RUN_EASING,
+  }));
 }
 
 /**
- * Web Animations keyframes for the ball's latest play, or null when it did
- * not move. Shots and free throws arc over the final leg (a scale and lift
- * bump fakes height), rebounds drop from the rim, everything else is a
- * straight leg per waypoint pair.
+ * The ball over the floor. A carried ball eases exactly like its holder so
+ * the two never drift apart; passes and steals are quick and straight, shots
+ * and loose balls travel evenly.
  */
-export function ballMotion(
-  play: CourtLastPlay,
-): { keyframes: Keyframe[]; duration: number } | null {
-  const path = play.path;
-  if (path.length < 2) {
-    return null;
-  }
-  const legs = path.length - 1;
-  type Sample = { at: CourtPoint; lift: number; scale: number };
-  const samples: Sample[] = [{ at: path[0]!, lift: 0, scale: 1 }];
-  const arc = play.motion === "shot" || play.motion === "free_throw";
-  const drop = play.motion === "rebound";
-  for (let leg = 0; leg < legs; leg += 1) {
-    const from = path[leg]!;
-    const to = path[leg + 1]!;
-    const curved = arc && leg === legs - 1;
-    const steps = curved || drop ? 8 : 1;
-    for (let step = 1; step <= steps; step += 1) {
-      const t = step / steps;
-      const bump = Math.sin(Math.PI * t);
-      samples.push({
-        at: lerpPoint(from, to, t),
-        lift: curved ? 16 * bump : drop ? 14 * (1 - t) : 0,
-        scale: curved ? 1 + 0.9 * bump : drop ? 1 + 0.8 * (1 - t) : 1,
-      });
+export function ballFloorKeyframes(choreo: PlayChoreography): Keyframe[] {
+  return choreo.ball.map((ball, k) => {
+    const leg = choreo.legs[k];
+    return {
+      transform: courtTranslate(ball.at),
+      offset: choreo.beats[k],
+      easing:
+        leg === "carry"
+          ? RUN_EASING
+          : leg === "pass" || leg === "steal"
+            ? PASS_EASING
+            : "linear",
+    };
+  });
+}
+
+/**
+ * Height of the ball above the floor, on an inner layer: one dribble per
+ * carried leg, an arc for the shot, and a smaller one for a ball coming off
+ * the rim to a rebounder.
+ */
+export function ballLiftKeyframes(choreo: PlayChoreography): Keyframe[] {
+  const frames: Keyframe[] = [{ transform: BALL_REST, offset: 0 }];
+  choreo.legs.forEach((leg, k) => {
+    const from = choreo.beats[k]!;
+    const to = choreo.beats[k + 1]!;
+    const offRim =
+      leg === "loose" &&
+      choreo.ball[k]!.lift > 0 &&
+      choreo.ball[k + 1]!.holderId !== null;
+    if (leg === "carry") {
+      frames.push({ transform: BALL_DRIBBLE, offset: (from + to) / 2 });
+    } else if (leg === "shot" || offRim) {
+      const height = leg === "shot" ? SHOT_LIFT_PX : DROP_LIFT_PX;
+      for (let step = 1; step < ARC_STEPS; step += 1) {
+        const t = step / ARC_STEPS;
+        const bump = Math.sin(Math.PI * t);
+        const lift = Math.round(height * bump * 10) / 10;
+        const scale =
+          Math.round((1 + (0.6 * bump * height) / SHOT_LIFT_PX) * 100) / 100;
+        frames.push({
+          transform: `translateY(${-lift}px) scale(${scale})`,
+          offset: from + (to - from) * t,
+        });
+      }
     }
-  }
-  const keyframes: Keyframe[] = samples.map((sample, i) => ({
-    left: pct(sample.at.x),
-    top: pct(sample.at.y),
-    transform: `translateY(${-sample.lift}px) scale(${sample.scale})`,
-    offset: i / (samples.length - 1),
-  }));
-  const duration = arc ? 200 * (legs - 1) + 700 : drop ? 500 : 250 * legs + 150;
-  return { keyframes, duration };
+    frames.push({ transform: BALL_REST, offset: to });
+  });
+  return frames;
+}
+
+/** Play time (0..1) when a shot or free throw reaches the rim; null without one. */
+export function rimTime(choreo: PlayChoreography): number | null {
+  const shot = choreo.legs.indexOf("shot");
+  return shot >= 0 ? choreo.beats[shot + 1]! : null;
 }
 
 export function calloutText(
@@ -81,40 +130,4 @@ export function calloutText(
 export function initialOf(label: string): string {
   const word = label.trim().split(/\s+/).pop() ?? "";
   return word.slice(0, 1).toUpperCase();
-}
-
-/** Fixed time for the ball's trip up the floor before a possession's first play, at 1x. */
-export const TRANSITION_MS = 500;
-
-/**
- * `ballMotion` preceded by the ball's trip from the other end: straight legs
- * through the `transition` waypoints (no lift) in `TRANSITION_MS`, then the
- * play's own motion. Without a transition this is exactly `ballMotion`.
- */
-export function fullCourtBallMotion(
-  play: CourtLastPlay,
-  transition: CourtPoint[] | null,
-): { keyframes: Keyframe[]; duration: number } | null {
-  const own = ballMotion(play);
-  if (!transition || transition.length < 2) {
-    return own;
-  }
-  const total = TRANSITION_MS + (own?.duration ?? 0);
-  const share = TRANSITION_MS / total;
-  // The last waypoint is the play's first point, which `own` already starts at.
-  const legs = own ? transition.slice(0, -1) : transition;
-  const lastLeg = transition.length - 1;
-  const keyframes: Keyframe[] = legs.map((point, i) => ({
-    left: pct(point.x),
-    top: pct(point.y),
-    transform: "translateY(0px) scale(1)",
-    offset: (i / lastLeg) * share,
-  }));
-  for (const frame of own?.keyframes ?? []) {
-    keyframes.push({
-      ...frame,
-      offset: share + (frame.offset ?? 0) * (1 - share),
-    });
-  }
-  return { keyframes, duration: total };
 }

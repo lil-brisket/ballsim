@@ -63,7 +63,7 @@ function trackOf(c: PlayChoreography, id: PlayerId) {
 
 /** Index of the beat where the ball leaves the shooter's hand. */
 function releaseBeat(c: PlayChoreography): number {
-  return c.legs.lastIndexOf("shot");
+  return c.legs.indexOf("shot");
 }
 
 describe.each([41, 7])(
@@ -139,8 +139,12 @@ describe.each([41, 7])(
           continue;
         }
         const release = releaseBeat(c);
-        expect(release).toBe(c.beats.length - 2);
+        expect(c.legs.filter((leg) => leg === "shot")).toHaveLength(1);
         expect(c.ball[release]!.holderId).toBe(play.playerId);
+        // It reaches the rim (or the block) before the play ends, then sits.
+        expect(c.ball[release + 1]!.holderId).toBeNull();
+        expect(release + 1).toBeLessThan(c.beats.length - 1);
+        expect(c.ball[release + 1]!.at).toEqual(c.ball.at(-1)!.at);
         checked += 1;
       }
       expect(checked).toBeGreaterThan(50);

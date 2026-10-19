@@ -192,9 +192,11 @@ body {
   }
 }
 
-/* Court replay (Watch Game): hardwood floor, token glide, callout and rim flash. */
+/* Court replay (Watch Game): hardwood floor, motion layers, callout and rim flash. */
 /* Full-court floor: plank lines only; the palette paints the colour inline. */
 .court-wood {
+  /* Motion layers translate in cqw/cqh: fractions of the floor. */
+  container-type: size;
   background-image:
     repeating-linear-gradient(
       90deg,
@@ -212,15 +214,15 @@ body {
     );
 }
 
-.court-token {
-  transition:
-    left calc(400ms / var(--court-speed, 1)) ease,
-    top calc(400ms / var(--court-speed, 1)) ease;
-}
-
-/* A possession at the other end: tokens glide the length of the floor. */
-.court-switching .court-token {
-  transition-duration: calc(900ms / var(--court-speed, 1));
+/* Zero-size layer at the floor's top-left; a transform places it. */
+.court-mover {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+  will-change: transform;
 }
 
 /* Whole floor on a phone: initials only, the 44px hit circle stays. */
@@ -235,7 +237,9 @@ body {
     forwards;
 }
 
+/* Hidden until its (possibly delayed) flash runs. */
 .court-rim-flash {
+  opacity: 0;
   transform-box: fill-box;
   transform-origin: center;
   animation: court-rim-flash calc(0.6s / var(--court-speed, 1)) ease-out
@@ -310,8 +314,6 @@ body {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .court-token,
-  .court-switching .court-token,
   .court-centre-logo {
     transition: none;
   }

@@ -82,7 +82,7 @@ const SHOT_KINDS = new Set<WatchPlayKind>([
   "ft_missed",
 ]);
 
-/** Share of an opening play spent bringing the ball up the floor. */
+/** Default share of an opening play spent bringing the ball up the floor. */
 const OPENER_SHARE = 0.4;
 /** Action times (fraction of the action) for each script. */
 const SHOT_BEAT = 0.6;
@@ -90,6 +90,8 @@ const PASSES_BEFORE = 0.45;
 const CUT_BEAT = 0.3;
 const FT_CATCH_BEAT = 0.3;
 const FT_RELEASE_BEAT = 0.55;
+/** A shot or free throw reaches the rim here and sits for the rest. */
+const RIM_BEAT = 0.85;
 const BOX_OUT_BEAT = 0.3;
 const REBOUND_BEAT = 0.55;
 const HANDOFF_BEAT = 0.3;
@@ -170,6 +172,10 @@ class Script {
 export function buildPlayChoreography(
   view: WatchGameView,
   index: number,
+  options: {
+    /** Share of the play spent bringing the ball up on a new end (0..1). */
+    openerShare?: number;
+  } = {},
 ): PlayChoreography | null {
   const play = view.plays[index];
   if (!play || play.kind === "substitution") {
@@ -200,7 +206,9 @@ export function buildPlayChoreography(
 
   const transition = to.transition;
   const opener = opensAtNewEnd(view, index) && transition !== null;
-  const share = opener ? OPENER_SHARE : 0;
+  const share = opener
+    ? Math.min(0.8, Math.max(0.1, options.openerShare ?? OPENER_SHARE))
+    : 0;
   const at = (u: number) => share + u * (1 - share);
 
   // Where the action starts: the set-up after an opener, the previous frame
@@ -277,6 +285,7 @@ export function buildPlayChoreography(
     }
     script.key(shooterId, at(SHOT_BEAT), toSpot.get(shooterId) ?? hoop);
     script.hold(at(SHOT_BEAT), shooterId);
+    script.hold(at(RIM_BEAT), null, to.ball.at);
     actors.add(shooterId);
     if (onFloor(play.player2Id)) {
       actors.add(play.player2Id);
@@ -287,6 +296,7 @@ export function buildPlayChoreography(
     script.hold(at(FT_CATCH_BEAT), shooterId);
     script.key(shooterId, at(FT_RELEASE_BEAT), line);
     script.hold(at(FT_RELEASE_BEAT), shooterId);
+    script.hold(at(RIM_BEAT), null, to.ball.at);
     actors.add(shooterId);
   } else if (
     play.kind === "offensive_rebound" ||
@@ -366,7 +376,7 @@ function assemble(
     settle: number;
     actors: Set<PlayerId>;
     start: (id: PlayerId) => FullCourtPoint;
-    /** The last leg is a shot or free throw leaving the shooter's hand. */
+    /** The ball leaves a hand once, toward the rim: a shot or free throw. */
     shot: boolean;
     /** The logged stealer: the only way the ball changes hands across teams. */
     stealer: PlayerId | null;
@@ -493,7 +503,7 @@ function assemble(
             ? "steal"
             : "loose",
       );
-    } else if (a.holderId !== null && ctx.shot && k + 1 === last) {
+    } else if (a.holderId !== null && ctx.shot && !legs.includes("shot")) {
       legs.push("shot");
     } else {
       legs.push("loose");

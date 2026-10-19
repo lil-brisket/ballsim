@@ -5,7 +5,7 @@ import { readableTextOnBackground } from "@/domain/color-contrast";
 import type { PlayerId } from "@/domain/ids";
 import type { CourtPlayer } from "@/state/watch-court-frame";
 import type { WatchTeam } from "@/state/watch-game-view";
-import { initialOf, pct } from "./court-motion";
+import { initialOf } from "./court-motion";
 
 /** Tokens this close to a sideline (normalized x) anchor their label inward. */
 const EDGE_LABEL_X = 0.15;
@@ -65,10 +65,9 @@ export function CourtToken(props: {
       data-role={player.role}
       onClick={() => props.onSelect?.(player.playerId)}
       className={cn(
-        "court-token absolute z-10 flex h-11 w-11 -translate-x-1/2 -translate-y-1/2 touch-manipulation items-center justify-center rounded-full",
+        "court-token pointer-events-auto absolute left-0 top-0 flex h-11 w-11 -translate-x-1/2 -translate-y-1/2 touch-manipulation items-center justify-center rounded-full",
         focusRingClass,
       )}
-      style={{ left: pct(player.spot.x), top: pct(player.spot.y) }}
     >
       <span
         key={props.checkedIn ?? "steady"}
@@ -98,6 +97,11 @@ export function CourtToken(props: {
           <span className="absolute -inset-1.5 rounded-full border-2 border-white bg-white/15" />
         ) : null}
       </span>
+      {/* Floor shadow, painted under the disc. */}
+      <span
+        aria-hidden="true"
+        className="pointer-events-none absolute -z-10 h-7 w-7 translate-x-0.5 translate-y-1 rounded-full bg-black/35 blur-[2px] sm:h-8 sm:w-8"
+      />
       {props.checkedIn !== null ? (
         <span
           aria-hidden="true"

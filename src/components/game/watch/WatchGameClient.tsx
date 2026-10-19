@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { CourtPlayerCard } from "@/components/game/watch/court/CourtPlayerCard";
 import type { CourtStatus } from "@/components/game/watch/court/CourtHeader";
 import { FullCourtView } from "@/components/game/watch/court/FullCourtView";
@@ -13,9 +13,14 @@ import {
 import { PlayByPlayFeed } from "@/components/game/watch/PlayByPlayFeed";
 import { Scoreboard } from "@/components/game/watch/Scoreboard";
 import { ShotSummaryPanel } from "@/components/game/watch/ShotSummaryPanel";
-import { playDelayMs } from "@/components/game/watch/playback-pacing";
+import {
+  motionMs,
+  openerShare,
+  playDelayMs,
+} from "@/components/game/watch/playback-pacing";
 import { Panel, SectionHeading } from "@/components/ui";
 import type { PlayerId } from "@/domain/ids";
+import { buildPlayChoreography } from "@/state/watch-court-choreo";
 import { stepPossession } from "@/state/watch-court-frame";
 import { buildFullCourtFrame } from "@/state/watch-full-court";
 import {
@@ -35,6 +40,9 @@ export function WatchGameClient(props: {
   const [revealed, setRevealed] = useState(0);
   const [playing, setPlaying] = useState(false);
   const [speed, setSpeed] = useState<PlaybackSpeed>(1);
+  // True when the latest reveal came from the playback timer (its play is
+  // choreographed); a jump (restart, skip, possession step, feed) snaps.
+  const [animated, setAnimated] = useState(false);
   const [selectedPlayerId, setSelectedPlayerId] = useState<PlayerId | null>(
     null,
   );
@@ -43,16 +51,34 @@ export function WatchGameClient(props: {
   const isPlaying = playing && revealed < total;
 
   // One timeout per play: each reveal schedules the next with that play's
-  // pacing. Pausing, a speed change or unmount clears the pending step.
+  // pacing. Pausing or a speed change keeps what is left of the step (at 1x)
+  // so the timer stays in step with the court's paused animations; a new
+  // reveal or a jump starts the next step from its full pacing.
+  const pending = useRef<{ revealed: number; remainingMs: number } | null>(
+    null,
+  );
   useEffect(() => {
     if (!isPlaying) {
       return;
     }
-    const id = setTimeout(
-      () => setRevealed((current) => Math.min(total, current + 1)),
-      playDelayMs(view, revealed) / speed,
-    );
-    return () => clearTimeout(id);
+    const remainingMs =
+      pending.current?.revealed === revealed
+        ? pending.current.remainingMs
+        : playDelayMs(view, revealed);
+    const startedAt = performance.now();
+    const id = setTimeout(() => {
+      pending.current = null;
+      setAnimated(true);
+      setRevealed((current) => Math.min(total, current + 1));
+    }, remainingMs / speed);
+    return () => {
+      clearTimeout(id);
+      const elapsedMs = (performance.now() - startedAt) * speed;
+      pending.current = {
+        revealed,
+        remainingMs: Math.max(0, remainingMs - elapsedMs),
+      };
+    };
   }, [isPlaying, speed, total, view, revealed]);
 
   const live = useMemo(
@@ -67,6 +93,15 @@ export function WatchGameClient(props: {
     () => buildFullCourtFrame(view, revealed),
     [view, revealed],
   );
+  const choreography = useMemo(
+    () =>
+      animated && revealed > 0
+        ? buildPlayChoreography(view, revealed - 1, {
+            openerShare: openerShare(view, revealed - 1),
+          })
+        : null,
+    [view, revealed, animated],
+  );
 
   const previousPlay = revealed > 0 ? view.plays[revealed - 1] : undefined;
   const nextPlay = revealed < total ? view.plays[revealed] : undefined;
@@ -80,6 +115,8 @@ export function WatchGameClient(props: {
     : null;
 
   const jumpTo = (next: number) => {
+    pending.current = null;
+    setAnimated(false);
     setRevealed(next);
     setPlaying(false);
   };
@@ -122,6 +159,9 @@ export function WatchGameClient(props: {
           live={live}
           status={courtStatus}
           speed={speed}
+          choreography={choreography}
+          motionMs={motionMs(view, revealed)}
+          playing={isPlaying}
           periodBreak={periodBreak ?? finalCard}
           final={live.isFinal}
           run={currentRun(view, revealed)}
