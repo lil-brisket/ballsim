@@ -621,6 +621,66 @@ describe("WatchGameClient", () => {
     expectRevealed(0);
   });
 
+  describe("linescore", () => {
+    function linescore() {
+      return within(screen.getByRole("table", { name: "Points by quarter" }));
+    }
+    /** Text of each cell in a team's row, minus the screen-reader suffix. */
+    function lineCells(abbreviation: string): string[] {
+      const row = linescore()
+        .getAllByRole("row")
+        .find((r) => r.textContent?.startsWith(abbreviation));
+      expect(row).toBeDefined();
+      return within(row!)
+        .getAllByRole("cell")
+        .map((cell) => (cell.textContent ?? "").replace("not played", ""));
+    }
+
+    it("sums to the final score for each team", () => {
+      renderClient();
+      chooseFromMenu("Skip to end");
+      for (const [abbr, total] of [
+        ["AWY", VIEW.finalScore.away],
+        ["HOM", VIEW.finalScore.home],
+      ] as const) {
+        const cells = lineCells(abbr);
+        const periods = cells.slice(0, -1).map((c) => (c === "–" ? 0 : +c));
+        expect(cells.at(-1)).toBe(String(total));
+        expect(periods.reduce((a, b) => a + b, 0)).toBe(total);
+        expect(cells.slice(0, 2)).toEqual(
+          abbr === "AWY" ? ["5", "5"] : ["6", "2"],
+        );
+        expect(cells.slice(2)).toEqual(["–", "–", String(total)]);
+      }
+    });
+
+    it("shows dashes for unplayed periods mid-game and before tip-off", () => {
+      renderClient();
+      expect(lineCells("AWY")).toEqual(["–", "–", "–", "–", "0"]);
+      expect(lineCells("HOM")).toEqual(["–", "–", "–", "–", "0"]);
+
+      const firstPeriod = PLAYS.filter((p) => p.period === 1).length;
+      for (let i = 0; i < firstPeriod; i += 1) {
+        fireEvent.keyDown(document, { key: "." });
+      }
+      expectRevealed(firstPeriod);
+      expect(lineCells("AWY")).toEqual(["5", "–", "–", "–", "5"]);
+      expect(lineCells("HOM")).toEqual(["6", "–", "–", "–", "6"]);
+    });
+
+    it("leaves the by-quarter table out of the shot summary", () => {
+      renderClient();
+      chooseFromMenu("Skip to end");
+      expect(screen.queryByText("By quarter")).toBeNull();
+      expect(
+        screen.queryByRole("table", { name: "Shot summary by quarter" }),
+      ).toBeNull();
+      expect(
+        screen.getAllByRole("table", { name: "Points by quarter" }),
+      ).toHaveLength(1);
+    });
+  });
+
   it("updates the live box score as plays are revealed", () => {
     renderClient();
     expect(statCells("J. Smith")[1]).toBe("0");

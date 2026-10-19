@@ -247,7 +247,16 @@ export function WatchGameClient(props: {
 
   return (
     <div className="min-w-0 space-y-6">
-      <Scoreboard away={view.away} home={view.home} live={live} />
+      <Scoreboard
+        away={view.away}
+        home={view.home}
+        live={live}
+        byPeriod={{
+          away: shotSummary.away.byPeriod.map((line) => line.points),
+          home: shotSummary.home.byPeriod.map((line) => line.points),
+        }}
+        currentPeriod={previousPlay?.period ?? 0}
+      />
       <section aria-label="Court" className="min-w-0">
         <FullCourtView
           frame={courtFrame}

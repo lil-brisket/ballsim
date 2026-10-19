@@ -1,5 +1,6 @@
 import { ScoreNumeral, TeamBadge, TeamThemeScope } from "@/components/ui";
 import { ArenaPanel } from "@/components/ui/ArenaPanel";
+import { periodLabel } from "@/state/watch-game-selectors";
 import type { LiveBoxScore, WatchTeam } from "@/state/watch-game-view";
 
 function TeamBlock(props: {
@@ -42,10 +43,103 @@ function TeamBlock(props: {
   );
 }
 
+/** Regulation periods always show; overtime columns appear once reached. */
+const REGULATION_COLUMNS = 4;
+
+function Linescore(props: {
+  away: WatchTeam;
+  home: WatchTeam;
+  awayScore: number;
+  homeScore: number;
+  byPeriod: { away: number[]; home: number[] };
+  currentPeriod: number;
+}) {
+  const columns = Math.max(REGULATION_COLUMNS, props.currentPeriod);
+  const periods = Array.from({ length: columns }, (_, index) => index + 1);
+  const rows = [
+    {
+      team: props.away,
+      points: props.byPeriod.away,
+      total: props.awayScore,
+    },
+    {
+      team: props.home,
+      points: props.byPeriod.home,
+      total: props.homeScore,
+    },
+  ];
+  return (
+    <div className="mt-4 overflow-x-auto sm:flex sm:justify-center">
+      <table className="w-full text-sm sm:w-auto">
+        <caption className="sr-only">Points by quarter</caption>
+        <thead>
+          <tr className="text-zinc-400">
+            <th scope="col" className="px-3 py-1 text-left font-medium">
+              Team
+            </th>
+            {periods.map((period) => (
+              <th
+                key={period}
+                scope="col"
+                className={`px-3 py-1 text-right font-medium ${
+                  period === props.currentPeriod ? "text-team-ink" : ""
+                }`}
+              >
+                {periodLabel(period)}
+              </th>
+            ))}
+            <th scope="col" className="px-3 py-1 text-right font-medium">
+              T
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map(({ team, points, total }) => (
+            <tr key={team.teamId} className="border-t border-zinc-800">
+              <th
+                scope="row"
+                className="px-3 py-1 text-left font-semibold text-zinc-100"
+              >
+                {team.abbreviation}
+              </th>
+              {periods.map((period) => (
+                <td
+                  key={period}
+                  className={`px-3 py-1 text-right font-mono tabular-nums ${
+                    period === props.currentPeriod
+                      ? "font-bold text-zinc-50"
+                      : "text-zinc-300"
+                  }`}
+                >
+                  {period <= props.currentPeriod ? (
+                    (points[period - 1] ?? 0)
+                  ) : (
+                    <>
+                      <span aria-hidden>–</span>
+                      <span className="sr-only">not played</span>
+                    </>
+                  )}
+                </td>
+              ))}
+              <td className="px-3 py-1 text-right font-mono font-bold tabular-nums text-zinc-50">
+                {total}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
 export function Scoreboard(props: {
   away: WatchTeam;
   home: WatchTeam;
   live: LiveBoxScore;
+  /** Points per period as of the revealed play. */
+  byPeriod: { away: number[]; home: number[] };
+  /** Period of the latest revealed play; 0 before tip-off. */
+  currentPeriod: number;
 }) {
   const { live } = props;
   return (
@@ -92,6 +186,14 @@ export function Scoreboard(props: {
           align="end"
         />
       </div>
+      <Linescore
+        away={props.away}
+        home={props.home}
+        awayScore={live.awayScore}
+        homeScore={live.homeScore}
+        byPeriod={props.byPeriod}
+        currentPeriod={props.currentPeriod}
+      />
     </ArenaPanel>
   );
 }

@@ -1,6 +1,5 @@
 import { DataTable, Section } from "@/components/ui";
 import { SectionHeading } from "@/components/ui/SectionHeading";
-import { periodLabel } from "@/state/watch-game-selectors";
 import type {
   ShotLine,
   ShotSummary,
@@ -59,7 +58,6 @@ export function ShotSummaryPanel(props: {
   summary: ShotSummary;
 }) {
   const { view, summary } = props;
-  const periods = summary.home.byPeriod.length;
   const playerName = new Map(
     view.players.map((p) => [p.playerId, p.shortName]),
   );
@@ -77,52 +75,6 @@ export function ShotSummaryPanel(props: {
         <TeamShotCard team={view.away} line={summary.away.total} />
         <TeamShotCard team={view.home} line={summary.home.total} />
       </div>
-
-      <SectionHeading as="h3" title="By quarter" />
-      <DataTable
-        headers={[
-          "Period",
-          `${view.away.abbreviation} PTS`,
-          `${view.away.abbreviation} FG`,
-          `${view.away.abbreviation} 3PT`,
-          `${view.home.abbreviation} PTS`,
-          `${view.home.abbreviation} FG`,
-          `${view.home.abbreviation} 3PT`,
-        ]}
-        caption="Shot summary by quarter"
-      >
-        {Array.from({ length: periods }, (_, index) => {
-          const away = summary.away.byPeriod[index]!;
-          const home = summary.home.byPeriod[index]!;
-          return (
-            <tr key={index} className="border-t border-zinc-800">
-              <td className="px-3 py-2 text-zinc-300">
-                {periodLabel(index + 1)}
-              </td>
-              {[away, home].flatMap((line, side) => [
-                <td
-                  key={`${side}-pts`}
-                  className="px-3 py-2 font-mono font-bold tabular-nums text-zinc-100"
-                >
-                  {line.points}
-                </td>,
-                <td
-                  key={`${side}-fg`}
-                  className="px-3 py-2 font-mono tabular-nums text-zinc-300"
-                >
-                  {shotCell(line.fgm, line.fga)}
-                </td>,
-                <td
-                  key={`${side}-3p`}
-                  className="px-3 py-2 font-mono tabular-nums text-zinc-300"
-                >
-                  {shotCell(line.threePm, line.threePa)}
-                </td>,
-              ])}
-            </tr>
-          );
-        })}
-      </DataTable>
 
       <SectionHeading as="h3" title="Top scorers" />
       {top.length === 0 ? (
