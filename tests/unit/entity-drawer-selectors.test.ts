@@ -135,6 +135,27 @@ describe("toPlayerDrawerView", () => {
     expect(view!.navigation.playerHref).toContain(`/players/${playerId}`);
   });
 
+  it("exposes the domain player's jersey number", () => {
+    const base = withSeededRosters(
+      createTestGameState({ saveId: "save_drawer" }),
+    );
+    const playerId = getControlledTeam(base).roster[0]!;
+    const player = base.world.players[playerId]!;
+    const state = {
+      ...base,
+      world: {
+        ...base.world,
+        players: {
+          ...base.world.players,
+          [playerId]: { ...player, jerseyNumber: 42 },
+        },
+      },
+    };
+
+    const view = toPlayerDrawerView(state, asPlayerId(playerId), "save_drawer");
+    expect(view!.identity.jerseyNumber).toBe(42);
+  });
+
   it("returns potential, archetype label, size and raw attributes", () => {
     const base = createTestGameState({ saveId: "save_drawer" });
     const pid = asPlayerId("player_card_fields");

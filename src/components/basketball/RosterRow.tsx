@@ -13,6 +13,8 @@ export function RosterRow(props: {
   playerId: string;
   firstName: string;
   lastName: string;
+  /** Saved jersey number; shown as a muted "#23" before the name when given. */
+  jerseyNumber?: number;
   /** Persisted portrait from the view model; null/absent → initials plate. */
   portrait?: PlayerPortraitAssignment | null;
   position: string;
@@ -41,6 +43,11 @@ export function RosterRow(props: {
         size="sm"
       />
       <div className="min-w-0 flex-1">
+        {props.jerseyNumber != null ? (
+          <span className="mr-1.5 text-sm tabular-nums text-zinc-500">
+            #{props.jerseyNumber}
+          </span>
+        ) : null}
         <PlayerEntityLink
           saveId={props.saveId}
           playerId={props.playerId}

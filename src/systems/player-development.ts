@@ -96,6 +96,7 @@ export function developPlayer(
     teamId: player.teamId,
     firstName: player.firstName,
     lastName: player.lastName,
+    jerseyNumber: player.jerseyNumber,
     nationality: player.nationality,
     age: player.age,
     heightInches: player.heightInches,

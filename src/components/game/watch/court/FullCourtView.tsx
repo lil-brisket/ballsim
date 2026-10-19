@@ -250,6 +250,32 @@ export function FullCourtView(props: {
     [props.players, frame.players],
   );
 
+  // Jersey numbers on the tokens, team by team: a team shows numbers only
+  // when every player has one and none repeat (a replay of an old game can
+  // clash after later roster moves); otherwise it shows monograms.
+  const badges = useMemo(() => {
+    const roster = props.players ?? [];
+    const result = new Map<PlayerId, string>();
+    for (const side of [0, 1] as const) {
+      const members = roster.filter((p) => p.side === side);
+      const numbers = members.map((p) => p.jerseyNumber);
+      const useNumbers =
+        members.length > 0 &&
+        numbers.every((n) => n !== null) &&
+        new Set(numbers).size === numbers.length;
+      for (const p of members) {
+        result.set(
+          p.playerId,
+          useNumbers
+            ? String(p.jerseyNumber)
+            : (monograms.get(p.playerId) ?? "?"),
+        );
+      }
+    }
+    return result;
+  }, [props.players, monograms]);
+  const badgeOf = (id: PlayerId) => badges.get(id) ?? monograms.get(id) ?? "?";
+
   // Label budget: handler, shooter and selected names always show; on a wide
   // floor everyone else's shows where it fits, and the rest appear on hover
   // or focus, laid out clear of the shown ones.
@@ -576,7 +602,7 @@ export function FullCourtView(props: {
                     accent={palette.line}
                     labelSide={labelSides.sides.get(player.playerId) ?? "below"}
                     labelShown={labelSides.shown.has(player.playerId)}
-                    monogram={monograms.get(player.playerId) ?? "?"}
+                    badge={badgeOf(player.playerId)}
                   />
                 </div>
               );
@@ -585,7 +611,7 @@ export function FullCourtView(props: {
             {ghosts.map(({ sub, outgoing, spot }) => (
               <CourtGhost
                 key={`ghost-${sub.index}`}
-                initial={monograms.get(outgoing.playerId) ?? "?"}
+                initial={badgeOf(outgoing.playerId)}
                 color={colorOf(sub.side)}
                 spot={spot}
               />

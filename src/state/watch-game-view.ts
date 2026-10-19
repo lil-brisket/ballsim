@@ -34,6 +34,8 @@ export type WatchPlayer = {
   lastName: string;
   /** Current roster position; null when the player record is gone. */
   position: PlayerPosition | null;
+  /** Current jersey number; null when the player record is gone. */
+  jerseyNumber: number | null;
   started: boolean;
   /** Final minutes from the box score (not derivable per play). */
   finalMinutes: number;

@@ -1,3 +1,4 @@
+import { reconcileJerseyNumbers } from "@/systems/jersey-numbers";
 import type { GameState } from "@/state/game-state";
 import { GAME_STATE_SCHEMA_VERSION } from "@/state/game-state";
 import {
@@ -49,7 +50,8 @@ export function createMemorySaveGameStore(): MemorySaveGameStore {
   const rows = new Map<string, MemorySaveRow>();
 
   function prepareStateJson(state: GameState): string {
-    const stateJson = serializeGameState(state);
+    // Every join path (draft, trades, signings…) is covered here.
+    const stateJson = serializeGameState(reconcileJerseyNumbers(state));
     const clone: unknown = JSON.parse(stateJson);
     validateGameState(clone);
     return stateJson;

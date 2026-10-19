@@ -1,3 +1,4 @@
+import { reconcileJerseyNumbers } from "@/systems/jersey-numbers";
 import { z } from "zod";
 import { type GameState, GAME_STATE_SCHEMA_VERSION } from "@/state/game-state";
 import { reconcileTradeBlocks } from "@/systems/trades/trade-block";
@@ -153,7 +154,9 @@ import {
   migrateV66ToV67,
   type GameStateV66,
   migrateV67ToV68,
+  migrateV68ToV69,
   type GameStateV67,
+  type GameStateV68,
 } from "@/persistence/mappers/game-state-migrations/v66-v75";
 
 const gameStateEnvelopeSchema = z.object({
@@ -278,6 +281,7 @@ const MIGRATE_ONE_STEP: Record<number, (state: unknown) => unknown> = {
   65: (state) => migrateV65ToV66(state as GameStateV65),
   66: (state) => migrateV66ToV67(state as GameStateV66),
   67: (state) => migrateV67ToV68(state as GameStateV67),
+  68: (state) => migrateV68ToV69(state as GameStateV68),
 };
 
 /**
@@ -331,7 +335,9 @@ export function deserializeGameState(stateJson: string): GameState {
     version += 1;
   }
 
-  const withTradeBlocks = reconcileTradeBlocks(state as GameState);
+  const withTradeBlocks = reconcileJerseyNumbers(
+    reconcileTradeBlocks(state as GameState),
+  );
   validateGameState(withTradeBlocks);
   // Align phase pointer with date/state for saves created before calendar-driven sync.
   const reconciled = reconcilePhaseWithState(withTradeBlocks);

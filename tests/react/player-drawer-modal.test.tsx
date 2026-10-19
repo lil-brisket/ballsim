@@ -45,6 +45,7 @@ function playerView(
     identity: {
       firstName: "Alex",
       lastName: "Rivera",
+      jerseyNumber: 23,
       position: "PG",
       age: 24,
       overall: 78,
@@ -131,6 +132,7 @@ describe("PlayerDrawer modal", () => {
     expect(screen.queryByRole("heading", { name: "Alex Rivera" })).toBeNull();
     expect(screen.queryByTestId("hero-watermark")).toBeNull();
     expect(screen.getByText("PG")).toBeTruthy();
+    expect(screen.getByText("#23")).toBeTruthy();
     expect(screen.getByText("Floor General")).toBeTruthy();
     expect(screen.getByText(`6'7"`)).toBeTruthy();
     expect(screen.getByText("205 lbs")).toBeTruthy();
@@ -360,6 +362,7 @@ describe("PlayerDrawer modal", () => {
       identity: {
         firstName: "Jordan",
         lastName: "Cole",
+        jerseyNumber: 7,
         position: "C",
         age: 29,
         overall: 84,

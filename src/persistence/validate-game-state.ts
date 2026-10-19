@@ -1,3 +1,4 @@
+import { isJerseyNumber } from "@/domain/jersey-number";
 import {
   type GameMode,
   type GameState,
@@ -825,6 +826,11 @@ export function validateGameState(state: unknown): asserts state is GameState {
           `world.players[${playerId}].teamId "${playerValue.teamId}" is missing from world.teams.`,
         );
       }
+    }
+    if (!isJerseyNumber(playerValue.jerseyNumber)) {
+      fail(
+        `world.players[${playerId}].jerseyNumber must be an integer from 0 to 99.`,
+      );
     }
     if (playerValue.contractId != null) {
       assertNonEmptyString(

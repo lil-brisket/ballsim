@@ -201,18 +201,18 @@ describe("FullCourtView", () => {
     expect(shownCount).toBeGreaterThan(3);
   });
 
-  it("shows unique two-letter monograms and double rings for the away team", () => {
+  it("shows jersey numbers and double rings for the away team", () => {
     render(court(1));
     const discs = screen
       .getAllByTestId("court-token")
       .map((el) => el.firstElementChild as HTMLElement);
-    const texts = discs.map((d) => d.textContent);
-    for (const text of texts) {
-      expect(text).toMatch(/^[A-Z]{2}$/);
+    const byId = new Map(VIEW.players.map((p) => [p.playerId as string, p]));
+    for (const disc of discs) {
+      const id = disc.closest("[data-mover]")!.getAttribute("data-mover")!;
+      expect(disc.textContent).toBe(String(byId.get(id)!.jerseyNumber));
     }
-    expect(new Set(texts).size).toBe(texts.length);
     const jalen = screen.getByRole("button", { name: /^Jalen Smith,/ });
-    expect(jalen.firstElementChild!.textContent).toBe("JS");
+    expect(jalen.firstElementChild!.textContent).toBe("3");
     const rings = (side: string) =>
       discs
         .filter((d) => d.getAttribute("data-ring") === side)
@@ -225,6 +225,26 @@ describe("FullCourtView", () => {
         .getByRole("button", { name: /^Tyrese Reed,/ })
         .firstElementChild!.getAttribute("data-ring"),
     ).toBe("double");
+  });
+
+  it("falls back to monograms for a team whose numbers clash or are missing", () => {
+    const players = VIEW.players.map((p) =>
+      p.playerId === "h2" ? { ...p, jerseyNumber: 3 } : p,
+    );
+    render(court(1, { players }));
+    const text = (name: RegExp) =>
+      screen.getByRole("button", { name }).firstElementChild!.textContent;
+    // Home (Smith 3 and Lee 3) shows monograms; away keeps its numbers.
+    expect(text(/^Jalen Smith,/)).toBe("JS");
+    expect(text(/^Kai Lee,/)).toMatch(/^[A-Z]{2}$/);
+    expect(text(/^Tyrese Reed,/)).toBe("14");
+    cleanup();
+    const missing = VIEW.players.map((p) =>
+      p.side === 1 && p.playerId === "a1" ? { ...p, jerseyNumber: null } : p,
+    );
+    render(court(1, { players: missing }));
+    expect(text(/^Tyrese Reed,/)).toMatch(/^[A-Z]{2}$/);
+    expect(text(/^Jalen Smith,/)).toBe("3");
   });
 
   it("labels the group with the home floor and shows the home wordmarks", () => {

@@ -6,6 +6,7 @@ import { hasBlockingOwnerDecision } from "@/domain/entities/owner-decision";
 import { expireDatedTradeOffers } from "@/systems/owner-decisions/enqueue-trade-offer";
 import { shouldStopForDraftClock } from "@/systems/simulation/draft-clock-stop";
 import type { GameState } from "@/state/game-state";
+import { reconcileJerseyNumbers } from "@/systems/jersey-numbers";
 import { advanceCalendar } from "@/systems/calendar";
 import {
   getTeamGameForDate,
@@ -180,7 +181,9 @@ function createAdvanceSession(
       ? "paused"
       : "completed";
     return {
-      state: current,
+      // Signings, trades, the draft and roster fills may have doubled up a
+      // jersey number; newcomers take a free one.
+      state: reconcileJerseyNumbers(current),
       events: allEvents,
       previousDate,
       currentDate: current.world.calendar.currentDate,

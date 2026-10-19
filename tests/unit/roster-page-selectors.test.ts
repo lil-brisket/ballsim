@@ -37,6 +37,21 @@ describe("toRosterPageView", () => {
     );
   });
 
+  it("carries each player's jersey number from the domain player", () => {
+    let state = createTestGameState({ saveId: "roster_jersey_test" });
+    const rng = createSeededRng(state.meta.rngState);
+    state = bootstrapWorld(state, rng).state;
+
+    const view = toRosterPageView(state);
+
+    expect(view.roster.length).toBeGreaterThan(0);
+    for (const row of view.roster) {
+      expect(row.jerseyNumber).toBe(
+        state.world.players[row.playerId]!.jerseyNumber,
+      );
+    }
+  });
+
   it("splits trade block into players and picks", () => {
     let state = createTestGameState({ saveId: "roster_block_test" });
     const rng = createSeededRng(state.meta.rngState);

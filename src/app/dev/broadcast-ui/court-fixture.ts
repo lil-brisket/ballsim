@@ -61,6 +61,22 @@ const ROSTER: Array<[string, WatchSide, string, string, boolean]> = [
   ["a6", 1, "Ben", "Hale", false],
 ];
 
+/** Jersey numbers for the fixture rosters (unique per side). */
+const NUMBERS: Record<string, number> = {
+  h1: 3,
+  h2: 11,
+  h3: 23,
+  h4: 7,
+  h5: 0,
+  h6: 33,
+  a1: 2,
+  a2: 14,
+  a3: 21,
+  a4: 5,
+  a5: 30,
+  a6: 41,
+};
+
 const PLAYERS: WatchPlayer[] = ROSTER.map(
   ([id, side, first, last, started]) => ({
     playerId: asPlayerId(id),
@@ -69,6 +85,7 @@ const PLAYERS: WatchPlayer[] = ROSTER.map(
     shortName: `${first[0]}. ${last}`,
     lastName: last,
     position: null,
+    jerseyNumber: NUMBERS[id] ?? null,
     started,
     finalMinutes: started ? 30 : 12,
   }),

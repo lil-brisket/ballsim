@@ -5,6 +5,7 @@ import { mergeDraftPicksForSeason } from "@/domain/draft-picks/generate-draft-pi
 import { generateFantasyPlayerPool } from "@/systems/fantasy-draft/player-pool";
 import { generateFantasyPlayerPoolFromRosterPackage } from "@/systems/fantasy-draft/custom-roster-pool";
 import { generateRosters } from "@/systems/roster-generation";
+import { reconcileJerseyNumbers } from "@/systems/jersey-numbers";
 import { applyRosterPackage } from "@/systems/custom-content/apply-roster";
 import { generatePreseasonSchedule } from "@/systems/preseason-schedule-generation";
 import { generateSchedule } from "@/systems/schedule-generation";
@@ -52,7 +53,8 @@ export function bootstrapWorld(
   } else {
     afterPlayers = generateRosters(state, rng);
   }
-  let current = ensureDraftPicks(afterPlayers.state);
+  // Generated rosters can share preferred jersey numbers; resolve them now.
+  let current = reconcileJerseyNumbers(ensureDraftPicks(afterPlayers.state));
   const events = [...afterPlayers.events];
 
   // Materialize the regular-season schedule early so calendar projections

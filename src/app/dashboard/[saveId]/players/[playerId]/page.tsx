@@ -95,6 +95,7 @@ export default async function PlayerDetailPage({
           portrait={player.portrait}
           firstName={player.firstName}
           lastName={player.lastName}
+          jerseyNumber={player.jerseyNumber}
           position={player.position}
           age={player.age}
           overall={player.overall}
