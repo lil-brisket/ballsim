@@ -332,6 +332,10 @@ export function RosterManagementTable(props: {
           <table className="min-w-full overflow-hidden rounded-xl border border-zinc-800 text-left text-sm">
             <thead className="bg-zinc-900 text-zinc-400">
               <tr>
+                <th scope="col" className="px-3 py-2 text-right font-medium">
+                  <span aria-hidden>#</span>
+                  <span className="sr-only">Number</span>
+                </th>
                 <th scope="col" className="px-3 py-2 font-medium">
                   Player
                 </th>
@@ -385,6 +389,9 @@ export function RosterManagementTable(props: {
                     data-tier={ratingTier(player.overall).id}
                     className="border-t border-zinc-800"
                   >
+                    <td className="px-3 py-2 text-right font-mono text-sm tabular-nums text-zinc-400">
+                      {player.jerseyNumber}
+                    </td>
                     <td className="px-3 py-2">
                       <span className="flex items-center gap-2">
                         <PlayerPortrait

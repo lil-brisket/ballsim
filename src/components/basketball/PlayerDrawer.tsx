@@ -64,6 +64,7 @@ function PlayerCardBody(props: {
           portrait={view.portrait}
           firstName={view.identity.firstName}
           lastName={view.identity.lastName}
+          jerseyNumber={view.identity.jerseyNumber}
           position={view.identity.position}
           age={view.identity.age}
           overall={view.identity.overall}

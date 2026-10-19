@@ -55,6 +55,8 @@ export type RosterPlayerView = {
   portrait: PlayerPortraitAssignment | null;
   firstName: string;
   lastName: string;
+  /** Saved jersey number (0-99). */
+  jerseyNumber: number;
   position: string;
   age: number;
   overall: number;
@@ -83,6 +85,8 @@ export type PlayerDetailView = {
   portrait: PlayerPortraitAssignment | null;
   firstName: string;
   lastName: string;
+  /** Saved jersey number (0-99). */
+  jerseyNumber: number;
   position: string;
   age: number;
   heightInches: number;
@@ -226,6 +230,7 @@ export function toRosterView(state: GameState): RosterPlayerView[] {
       portrait: selectPlayerPortrait(state, player.id),
       firstName: player.firstName,
       lastName: player.lastName,
+      jerseyNumber: player.jerseyNumber,
       position: player.position,
       age: player.age,
       overall: calculatePlayerOverall(player.position, player.attributes),
@@ -350,6 +355,7 @@ function playerEntityToDetail(
     portrait: selectPlayerPortrait(state, player.id),
     firstName: player.firstName,
     lastName: player.lastName,
+    jerseyNumber: player.jerseyNumber,
     position: player.position,
     age: player.age,
     heightInches: player.heightInches,

@@ -26,6 +26,7 @@ export function TeamRosterPreview(props: { saveId: string; hub: TeamHubView }) {
             portrait={player.portrait}
             firstName={player.firstName}
             lastName={player.lastName}
+            jerseyNumber={player.jerseyNumber}
             position={player.position}
             overall={player.overall}
             age={player.age}
@@ -45,6 +46,7 @@ export function TeamRosterPreview(props: { saveId: string; hub: TeamHubView }) {
                 portrait={player.portrait}
                 firstName={player.firstName}
                 lastName={player.lastName}
+                jerseyNumber={player.jerseyNumber}
                 position={player.position}
                 overall={player.overall}
                 injuryStatus={player.injuryKind}

@@ -53,6 +53,8 @@ export type PlayerDrawerView = {
   identity: {
     firstName: string;
     lastName: string;
+    /** Saved jersey number (0-99). */
+    jerseyNumber: number;
     position: string;
     age: number;
     overall: number;
@@ -213,6 +215,7 @@ export function toPlayerDrawerView(
     identity: {
       firstName: player.firstName,
       lastName: player.lastName,
+      jerseyNumber: player.jerseyNumber,
       position: player.position,
       age: player.age,
       overall,

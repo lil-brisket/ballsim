@@ -25,6 +25,18 @@ function Chip(props: { children: React.ReactNode; accent?: boolean }) {
   );
 }
 
+function JerseyAndPosition(props: { jerseyNumber: number; position: string }) {
+  return (
+    <>
+      <span className="tabular-nums">#{props.jerseyNumber}</span>
+      <span aria-hidden className="mx-1">
+        ·
+      </span>
+      {props.position}
+    </>
+  );
+}
+
 /**
  * Banner: team-colour gradient, a bottom-anchored portrait, the last name as the dominant headline and a
  * tier-coloured OVR hex badge. Themed by the player's team (neutral amber for
@@ -34,6 +46,8 @@ export function PlayerProfileHero(props: {
   playerId: string;
   firstName: string;
   lastName: string;
+  /** Saved jersey number (0-99), shown as "#23" beside the position. */
+  jerseyNumber: number;
   /** Persisted portrait from the view model; null/absent → initials plate. */
   portrait?: PlayerPortraitAssignment | null;
   position: string;
@@ -80,7 +94,12 @@ export function PlayerProfileHero(props: {
               {props.firstName} {props.lastName}
             </p>
             <div className="mt-1 flex flex-wrap items-center gap-1.5">
-              <Chip accent>{props.position}</Chip>
+              <Chip accent>
+                <JerseyAndPosition
+                  jerseyNumber={props.jerseyNumber}
+                  position={props.position}
+                />
+              </Chip>
               <Chip>{props.teamAbbreviation ?? "FA"}</Chip>
               <Chip>Age {props.age}</Chip>
               {props.archetypeLabel ? (
@@ -179,7 +198,12 @@ export function PlayerProfileHero(props: {
               {props.lastName}
             </h3>
             <div className="mt-3 flex flex-wrap items-center gap-1.5">
-              <Chip accent>{props.position}</Chip>
+              <Chip accent>
+                <JerseyAndPosition
+                  jerseyNumber={props.jerseyNumber}
+                  position={props.position}
+                />
+              </Chip>
               {props.archetypeLabel ? (
                 <Chip>{props.archetypeLabel}</Chip>
               ) : null}
