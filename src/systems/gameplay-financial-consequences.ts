@@ -3,8 +3,9 @@ import type { TeamId } from "@/domain/ids";
 import { systemResult, type SystemResult } from "@/domain/system-result";
 import type { GameState } from "@/state/game-state";
 import {
-  getActiveOwnedFranchise,
   getActiveOwnerTeamId,
+  getOwnedFranchise,
+  getOwnedTeamIds,
   withOwnedFranchise,
 } from "@/state/owner-context";
 import {
@@ -61,13 +62,29 @@ export function withAppliedGameplayConsequence(
  *
  * Safe to call before and after objective evaluation: newly completed/failed
  * objectives are paid on the later pass; already-keyed posts are skipped.
+ *
+ * Runs for every owned franchise (online leagues own several), each keyed on
+ * its own franchise, not just the active owner team.
  */
 export function applyGameplayFinancialConsequences(
   state: GameState,
 ): SystemResult {
   const events: DomainEvent[] = [];
   let current = state;
-  const teamId = getActiveOwnerTeamId(current);
+  for (const teamId of getOwnedTeamIds(state)) {
+    const applied = applyTeamGameplayConsequences(current, teamId);
+    current = applied.state;
+    events.push(...applied.events);
+  }
+  return systemResult(current, events);
+}
+
+function applyTeamGameplayConsequences(
+  state: GameState,
+  teamId: TeamId,
+): SystemResult {
+  const events: DomainEvent[] = [];
+  let current = state;
   const seasonYear = current.competition.season.year;
   const date = current.world.calendar.currentDate;
 
@@ -81,7 +98,7 @@ export function applyGameplayFinancialConsequences(
       continue;
     }
     const key = `game_result:${teamId}:${game.id}`;
-    if (hasAppliedGameplayConsequence(current, key)) {
+    if (hasAppliedGameplayConsequence(current, key, teamId)) {
       continue;
     }
     const userScore = isHome ? game.score.home : game.score.away;
@@ -98,10 +115,10 @@ export function applyGameplayFinancialConsequences(
           expenseCategory: "operations",
         },
       );
-      current = withAppliedGameplayConsequence(impact.state, key);
+      current = withAppliedGameplayConsequence(impact.state, key, teamId);
       events.push(...impact.events);
     } else {
-      current = withAppliedGameplayConsequence(current, key);
+      current = withAppliedGameplayConsequence(current, key, teamId);
     }
   }
 
@@ -109,7 +126,7 @@ export function applyGameplayFinancialConsequences(
   // processLeaguePlayoffBonuses. Owner module only handles user loss fees
   // and objective cash consequences.
 
-  for (const objective of getActiveOwnedFranchise(current).objectives) {
+  for (const objective of getOwnedFranchise(current, teamId).objectives) {
     if (objective.consequenceApplied || objective.status === "active") {
       continue;
     }
@@ -117,7 +134,7 @@ export function applyGameplayFinancialConsequences(
     if (objective.status === "completed") {
       if (applyCash) {
         const rewardKey = `objective_reward:${objective.id}`;
-        if (!hasAppliedGameplayConsequence(current, rewardKey)) {
+        if (!hasAppliedGameplayConsequence(current, rewardKey, teamId)) {
           const impact = applyCashAndBooksImpact(
             current,
             teamId,
@@ -125,17 +142,21 @@ export function applyGameplayFinancialConsequences(
             seasonYear,
             { revenueCategory: "other" },
           );
-          current = withAppliedGameplayConsequence(impact.state, rewardKey);
+          current = withAppliedGameplayConsequence(
+            impact.state,
+            rewardKey,
+            teamId,
+          );
           events.push(...impact.events);
         }
       }
-      current = markObjectiveConsequenceApplied(current, objective.id);
+      current = markObjectiveConsequenceApplied(current, objective.id, teamId);
       continue;
     }
     if (objective.status === "failed") {
       if (applyCash) {
         const penaltyKey = `objective_penalty:${objective.id}`;
-        if (!hasAppliedGameplayConsequence(current, penaltyKey)) {
+        if (!hasAppliedGameplayConsequence(current, penaltyKey, teamId)) {
           const impact = applyCashAndBooksImpact(
             current,
             teamId,
@@ -143,11 +164,15 @@ export function applyGameplayFinancialConsequences(
             seasonYear,
             { expenseCategory: "operations" },
           );
-          current = withAppliedGameplayConsequence(impact.state, penaltyKey);
+          current = withAppliedGameplayConsequence(
+            impact.state,
+            penaltyKey,
+            teamId,
+          );
           events.push(...impact.events);
         }
       }
-      current = markObjectiveConsequenceApplied(current, objective.id);
+      current = markObjectiveConsequenceApplied(current, objective.id, teamId);
     }
   }
 
@@ -157,8 +182,8 @@ export function applyGameplayFinancialConsequences(
 function markObjectiveConsequenceApplied(
   state: GameState,
   objectiveId: string,
+  teamId: TeamId,
 ): GameState {
-  const teamId = getActiveOwnerTeamId(state);
   return withOwnedFranchise(state, teamId, (franchise) => ({
     ...franchise,
     objectives: franchise.objectives.map((objective) =>

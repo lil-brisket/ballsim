@@ -21,8 +21,10 @@ import { bootstrapWorld } from "@/systems/world-pipeline";
 import { testOwnerObjective as createOwnerObjective } from "../helpers/owner-objective";
 import {
   getActiveOwnedFranchise,
+  withAddedOwnedFranchise,
   withOwnedFranchise,
 } from "@/state/owner-context";
+import { createDefaultOwnedFranchiseState } from "@/state/owned-franchise-state";
 
 describe("gameplay financial consequences", () => {
   it("applies loss operations expense once per game key (no win ticket revenue)", () => {
@@ -113,6 +115,68 @@ describe("gameplay financial consequences", () => {
     const twice = applyGameplayFinancialConsequences(once.state);
     expect(twice.state.business.finances[teamId]!.businessFunds).toBe(
       once.state.business.finances[teamId]!.businessFunds,
+    );
+  });
+
+  it("charges a second owned franchise for its own loss, not only the active owner", () => {
+    let state = createInitialGameState({
+      saveId: "fin_multi_owner",
+      rngSeed: 3,
+      settings: CBL_GAME_SETTINGS,
+    });
+    state = bootstrapWorld(state, createSeededRng(state.meta.rngState)).state;
+    const activeTeamId = state.user.activeOwnerTeamId;
+    const [secondTeamId, opponentId] = (
+      Object.keys(state.world.teams) as string[]
+    )
+      .filter((id) => id !== activeTeamId)
+      .map((id) => asTeamId(id));
+    const date = state.world.calendar.currentDate;
+    state = withAddedOwnedFranchise(
+      state,
+      secondTeamId!,
+      createDefaultOwnedFranchiseState({
+        seasonYear: state.competition.season.year,
+        currentDate: date,
+        citySelectionConfirmed: true,
+        franchiseIdentityConfirmed: true,
+      }),
+    );
+    const gameId = asGameId("game_fin_multi_owner");
+    state = {
+      ...state,
+      competition: {
+        ...state.competition,
+        games: {
+          ...state.competition.games,
+          [gameId]: createGame({
+            competitionType: "regular_season",
+            homeTeamSnapshot: null,
+            awayTeamSnapshot: null,
+            id: gameId,
+            seasonId: asSeasonId(state.competition.season.id),
+            date,
+            homeTeamId: secondTeamId!,
+            awayTeamId: opponentId!,
+            status: "final",
+            score: { home: 88, away: 101 },
+            periodScores: [],
+            playerStats: [],
+            events: [],
+          }),
+        },
+      },
+    };
+
+    const before = state.business.finances[secondTeamId!]!.businessFunds;
+    const once = applyGameplayFinancialConsequences(state);
+    expect(once.state.user.activeOwnerTeamId).toBe(activeTeamId);
+    expect(once.state.business.finances[secondTeamId!]!.businessFunds).toBe(
+      before - GAMEPLAY_LOSS_EXPENSE,
+    );
+    const twice = applyGameplayFinancialConsequences(once.state);
+    expect(twice.state.business.finances[secondTeamId!]!.businessFunds).toBe(
+      before - GAMEPLAY_LOSS_EXPENSE,
     );
   });
 });
