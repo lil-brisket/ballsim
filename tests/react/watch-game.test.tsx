@@ -622,7 +622,7 @@ describe("WatchGameClient", () => {
     expect(screen.getByText("Away takes the lead")).toBeTruthy();
     expect(screen.getByText("T. Reed injured")).toBeTruthy();
     openTab("Box score");
-    expect(screen.getAllByText("MIN")).toHaveLength(2);
+    expect(screen.getAllByText("MIN")).toHaveLength(1);
 
     chooseFromMenu("Restart");
     expect(screen.getByRole("group", { name: START_SCORE_LABEL })).toBeTruthy();
@@ -697,6 +697,12 @@ describe("WatchGameClient", () => {
   it("updates the live box score as plays are revealed", () => {
     renderClient();
     openTab("Box score");
+    // These players are on the home team; the box score opens on away.
+    fireEvent.click(
+      within(screen.getByRole("group", { name: "Team" })).getByRole("button", {
+        name: new RegExp(`^${VIEW.home.abbreviation}`),
+      }),
+    );
     expect(statCells("J. Smith")[1]).toBe("0");
     fireEvent.click(screen.getByRole("button", { name: "Play" }));
     advance(1);
@@ -777,7 +783,7 @@ describe("WatchGameClient", () => {
       renderClient();
       chooseFromMenu("Skip to end");
       openTab("Box score");
-      expect(screen.getAllByText("MIN")).toHaveLength(2);
+      expect(screen.getAllByText("MIN")).toHaveLength(1);
       expect(screen.queryByTestId("play-feed")).toBeNull();
       openTab("Shot chart");
       expect(screen.queryByText("MIN")).toBeNull();
