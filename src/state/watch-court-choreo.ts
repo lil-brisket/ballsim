@@ -98,6 +98,32 @@ const HANDOFF_BEAT = 0.3;
 const STEAL_BEAT = 0.6;
 const WHISTLE_BEAT = 0.4;
 const MAX_SWINGS = 2;
+
+/**
+ * Transition beats as fractions of the bring-up. After a make a teammate
+ * inbounds to the handler; after a rebound or steal an outlet pass finds
+ * him; then he dribbles through midcourt into the set-up.
+ */
+const INBOUND_BEAT = 0.3;
+const INBOUND_CATCH_BEAT = 0.45;
+const INBOUND_CATCH_STEP = 0.3;
+const OUTLET_BEAT = 0.25;
+const OUTLET_STEP = 0.35;
+const MIDCOURT_AFTER_MAKE = 0.75;
+const MIDCOURT_BEAT = 0.65;
+/** The inbounder trails into the play this far along by the midcourt beat. */
+const INBOUNDER_TRAIL = 0.55;
+
+/**
+ * Running the floor (fraction of the bring-up -> share of the way to the
+ * set-up). Wings and the corner sprint their lanes ahead of the ball, the
+ * top man follows the ball, the big trails; everyone gets wide early.
+ * Defenders sprint back first and sag toward the rim before matching up.
+ */
+const LANE_PACE = [1.4, 2.4, 2.4, 2.4, 1.1] as const;
+const LANE_WIDEN = 3;
+const SPRINT_BACK = 2.6;
+const SAG_TO_RIM = 0.35;
 /** Box-outs step this fraction of the way to the rim. */
 const BOX_OUT_STEP = 0.25;
 
@@ -215,6 +241,8 @@ export function buildPlayChoreography(
   // otherwise.
   const start = (id: PlayerId): FullCourtPoint =>
     (opener ? setUp.get(id) : fromSpot.get(id)) ?? toSpot.get(id) ?? hoop;
+  const start0 = (id: PlayerId): FullCourtPoint =>
+    fromSpot.get(id) ?? toSpot.get(id) ?? hoop;
   const startHolder: PlayerId | null = opener
     ? before.ball.holderId
     : from.ball.holderId;
@@ -225,20 +253,56 @@ export function buildPlayChoreography(
   const actors = new Set<PlayerId>();
 
   if (opener && transition) {
-    // Bring it up: the handler carries the ball through the transition
-    // waypoints and arrives at the set-up as the action starts.
+    // Bring it up: the ball reaches the handler (inbound after a make, an
+    // outlet after a rebound or steal) and he dribbles through midcourt into
+    // the set-up as the action starts.
     const handler = onFloor(before.ball.holderId) ? before.ball.holderId : null;
-    const legs = transition.length - 1;
-    for (let j = 1; j <= legs; j += 1) {
-      const t = (share * j) / legs;
-      if (handler) {
-        script.key(handler, t, transition[j]!);
-        script.hold(t, handler);
+    const setUpAt = transition[transition.length - 1]!;
+    const midcourt =
+      transition.length >= 3 ? transition[transition.length - 2]! : null;
+    const inbound = transition.length >= 4 ? transition[1]! : null;
+    const fromHolder = from.ball.holderId;
+    const t = (f: number) => share * f;
+    if (handler && inbound && midcourt) {
+      const inbounder = offenseIds
+        .filter((id) => id !== handler)
+        .map((id) => ({ id, d: feetBetween(start0(id), inbound) }))
+        .sort((a, b) => a.d - b.d)[0]?.id;
+      const catchAt = lerp(inbound, midcourt, INBOUND_CATCH_STEP);
+      if (inbounder) {
+        script.key(inbounder, t(INBOUND_BEAT), inbound);
+        script.hold(t(INBOUND_BEAT), inbounder);
+        script.key(inbounder, t(INBOUND_CATCH_BEAT), inbound);
+        script.key(
+          inbounder,
+          t(MIDCOURT_AFTER_MAKE),
+          lerp(inbound, start(inbounder), INBOUNDER_TRAIL),
+        );
+        actors.add(inbounder);
       } else {
-        script.hold(t, null, transition[j]!);
+        script.hold(t(INBOUND_BEAT), null, inbound);
+      }
+      script.key(handler, t(INBOUND_CATCH_BEAT), catchAt);
+      script.hold(t(INBOUND_CATCH_BEAT), handler);
+      script.key(handler, t(MIDCOURT_AFTER_MAKE), midcourt);
+      script.hold(t(MIDCOURT_AFTER_MAKE), handler);
+    } else if (handler && midcourt) {
+      if (fromHolder !== handler) {
+        // Outlet: a teammate's pass, or a loose ball he picks up.
+        const outlet = lerp(start0(handler), midcourt, OUTLET_STEP);
+        script.key(handler, t(OUTLET_BEAT), outlet);
+        script.hold(t(OUTLET_BEAT), handler);
+      }
+      script.key(handler, t(MIDCOURT_BEAT), midcourt);
+      script.hold(t(MIDCOURT_BEAT), handler);
+    } else if (!handler) {
+      for (let j = 1; j < transition.length; j += 1) {
+        script.hold(t(j / (transition.length - 1)), null, transition[j]!);
       }
     }
     if (handler) {
+      script.key(handler, share, setUpAt);
+      script.hold(share, handler);
       actors.add(handler);
     }
     script.beat(share);
@@ -387,15 +451,56 @@ function assemble(
   const last = beats.length - 1;
   const fromSpot = new Map(from.players.map((p) => [p.playerId, p.spot]));
 
-  // Unkeyed motion: frame to set-up during the opener, then set-up to the
-  // end spot over the action (reached at `settle`).
+  // Unkeyed motion: run the floor to the set-up during the opener, then
+  // set-up to the end spot over the action (reached at `settle`).
+  const slotOf = new Map(to.players.map((p) => [p.playerId, p.slot % 5]));
   const base = (id: PlayerId, endSpot: FullCourtPoint, t: number) => {
     const fromAt = fromSpot.get(id) ?? endSpot;
+    const setUp = ctx.start(id);
     if (share > 0 && t <= share) {
-      return lerp(fromAt, ctx.start(id), t / share);
+      const f = t / share;
+      if (to.players.find((p) => p.playerId === id)?.side === offense) {
+        const pace = LANE_PACE[slotOf.get(id) ?? 0]!;
+        return {
+          x: fromAt.x + (setUp.x - fromAt.x) * (1 - (1 - f) ** pace),
+          y: fromAt.y + (setUp.y - fromAt.y) * (1 - (1 - f) ** LANE_WIDEN),
+        };
+      }
+      const back = lerp(fromAt, setUp, 1 - (1 - f) ** SPRINT_BACK);
+      return lerp(back, hoop, SAG_TO_RIM * Math.sin(Math.PI * f));
     }
     const u = share >= 1 ? 1 : (t - share) / (1 - share);
-    return lerp(ctx.start(id), endSpot, Math.min(1, u / settle));
+    return lerp(setUp, endSpot, Math.min(1, u / settle));
+  };
+
+  // A keyed player moves straight between his own keys (and the frame and
+  // set-up anchors) instead of snapping back to the unkeyed path.
+  const anchorsOf = (id: PlayerId, endSpot: FullCourtPoint) => {
+    const keys = script.keys.get(id);
+    if (!keys) {
+      return null;
+    }
+    const anchors = new Map<number, FullCourtPoint>([
+      [0, fromSpot.get(id) ?? endSpot],
+      [1, endSpot],
+    ]);
+    if (share > 0) {
+      anchors.set(roundTime(share), ctx.start(id));
+    }
+    for (const [t, at] of keys) {
+      anchors.set(t, at);
+    }
+    return [...anchors].sort((a, b) => a[0] - b[0]);
+  };
+  const between = (anchors: [number, FullCourtPoint][], t: number) => {
+    for (let i = 1; i < anchors.length; i += 1) {
+      const [t1, p1] = anchors[i]!;
+      if (t <= t1) {
+        const [t0, p0] = anchors[i - 1]!;
+        return lerp(p0, p1, t1 > t0 ? (t - t0) / (t1 - t0) : 1);
+      }
+    }
+    return anchors[anchors.length - 1]![1];
   };
 
   const positions = new Map<PlayerId, FullCourtPoint[]>();
@@ -414,6 +519,7 @@ function assemble(
     const endSpot = player.spot;
     const man =
       player.side !== offense ? manOf.get(player.slot % 5) : undefined;
+    const anchors = anchorsOf(player.playerId, endSpot);
     const points = beats.map((t, k) => {
       if (k === 0) {
         return fromSpot.get(player.playerId) ?? endSpot;
@@ -424,6 +530,9 @@ function assemble(
       const keyed = keyedAt(player.playerId, t);
       if (keyed) {
         return keyed;
+      }
+      if (anchors) {
+        return between(anchors, t);
       }
       // A defender trails his man by half a beat, shaded toward the rim.
       if (

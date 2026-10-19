@@ -9,7 +9,8 @@ import {
   feetBetween,
   type PlayChoreography,
 } from "@/state/watch-court-choreo";
-import { buildFullCourtFrame } from "@/state/watch-full-court";
+import { COURT_RIM } from "@/state/watch-court-frame";
+import { buildFullCourtFrame, toFullCourt } from "@/state/watch-full-court";
 import { toWatchGameView } from "@/state/watch-game-selectors";
 import type { WatchGameView } from "@/state/watch-game-view";
 import { simulateGamesForDate } from "@/systems/game-simulation";
@@ -251,6 +252,56 @@ describe.each([41, 7])(
         checked += 1;
       }
       expect(checked).toBeGreaterThan(100);
+    });
+
+    it("inbounds to the handler after a make, from a teammate", () => {
+      let checked = 0;
+      for (const c of played) {
+        const transition = frames[c.index + 1]!.transition;
+        if (!transition || transition.length < 4) {
+          continue;
+        }
+        const inbound = transition[1]!;
+        const k = c.ball.findIndex(
+          (ball) =>
+            ball.holderId !== null && feetBetween(ball.at, inbound) < 0.01,
+        );
+        expect(k).toBeGreaterThan(0);
+        expect(c.legs[k]).toBe("pass");
+        const handler = c.ball[k + 1]!.holderId;
+        expect(handler).not.toBe(c.ball[k]!.holderId);
+        checked += 1;
+      }
+      expect(checked).toBeGreaterThan(20);
+    });
+
+    it("gets the defense back toward the rim ahead of the offense", () => {
+      let defenseAhead = 0;
+      let checked = 0;
+      for (const c of played) {
+        const to = frames[c.index + 1]!;
+        if (!to.transition) {
+          continue;
+        }
+        // The beat nearest the middle of the bring-up.
+        const k = c.beats.findIndex((t) => t > 0.15);
+        const hoop = toFullCourt(COURT_RIM, to.attackingEnd);
+        const mean = (onOffense: boolean) => {
+          const ids = to.players
+            .filter((p) => p.onOffense === onOffense)
+            .map((p) => p.playerId);
+          const d = c.tracks
+            .filter((t) => ids.includes(t.playerId))
+            .map((t) => Math.abs(t.points[k]!.x - hoop.x));
+          return d.reduce((x, y) => x + y, 0) / d.length;
+        };
+        checked += 1;
+        if (mean(false) < mean(true)) {
+          defenseAhead += 1;
+        }
+      }
+      expect(checked).toBeGreaterThan(100);
+      expect(defenseAhead / checked).toBeGreaterThan(0.9);
     });
 
     it("is deterministic", () => {

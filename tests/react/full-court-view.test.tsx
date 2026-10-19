@@ -2,7 +2,10 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { FullCourtLines } from "@/components/game/court/FullCourtLines";
 import { FullCourtView } from "@/components/game/watch/court/FullCourtView";
-import { courtTranslate } from "@/components/game/watch/court/court-motion";
+import {
+  courtTranslate,
+  smoothTrack,
+} from "@/components/game/watch/court/court-motion";
 import {
   COURT_AWAY,
   COURT_FIXTURE_VIEW,
@@ -208,13 +211,16 @@ describe("FullCourtView", () => {
     rerender(court(3, play));
     expect(started).toHaveLength(play.choreography.tracks.length + 2);
     for (const track of play.choreography.tracks) {
-      const animation = moverOf(started, track.playerId);
-      expect(animation.keyframes.map((k) => k.transform)).toEqual(
-        track.points.map(courtTranslate),
-      );
-      expect(animation.keyframes.map((k) => k.offset)).toEqual(
-        play.choreography.beats,
-      );
+      const keyframes = moverOf(started, track.playerId).keyframes;
+      // Every beat is hit exactly; samples in between smooth the run.
+      play.choreography.beats.forEach((beat, k) => {
+        const frame = keyframes.find((f) => f.offset === beat);
+        expect(frame?.transform).toBe(courtTranslate(track.points[k]!));
+      });
+      const offsets = keyframes.map((f) => f.offset!);
+      expect(offsets[0]).toBe(0);
+      expect(offsets.at(-1)).toBe(1);
+      expect([...offsets].sort((a, b) => a - b)).toEqual(offsets);
     }
   });
 
@@ -468,6 +474,41 @@ describe("FullCourtView", () => {
   it("marks both lanes", () => {
     render(court(1));
     expect(screen.getAllByTestId("court-lane")).toHaveLength(2);
+  });
+});
+
+describe("smoothTrack", () => {
+  const beats = [0, 0.3, 0.6, 1];
+
+  it("passes exactly through every beat", () => {
+    const points = [
+      { x: 0.1, y: 0.2 },
+      { x: 0.4, y: 0.5 },
+      { x: 0.5, y: 0.5 },
+      { x: 0.9, y: 0.1 },
+    ];
+    const at = smoothTrack(beats, points);
+    beats.forEach((t, k) => {
+      expect(at(t).x).toBeCloseTo(points[k]!.x, 10);
+      expect(at(t).y).toBeCloseTo(points[k]!.y, 10);
+    });
+  });
+
+  it("never overshoots a beat and holds still where the player stops", () => {
+    const points = [
+      { x: 0.1, y: 0.5 },
+      { x: 0.6, y: 0.5 },
+      { x: 0.6, y: 0.5 },
+      { x: 0.2, y: 0.5 },
+    ];
+    const at = smoothTrack(beats, points);
+    for (let t = 0; t <= 1; t += 0.01) {
+      expect(at(t).x).toBeGreaterThanOrEqual(0.1 - 1e-9);
+      expect(at(t).x).toBeLessThanOrEqual(0.6 + 1e-9);
+    }
+    for (let t = 0.3; t <= 0.6; t += 0.05) {
+      expect(at(t).x).toBeCloseTo(0.6, 10);
+    }
   });
 });
 

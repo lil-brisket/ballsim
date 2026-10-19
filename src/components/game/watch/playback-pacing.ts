@@ -26,7 +26,7 @@ export const PLAY_PACING_MS: Record<WatchPlayKind, number> = {
  * Extra time at 1x for a play that opens a possession at the other end: the
  * ball comes up the floor before the play's own action.
  */
-export const TRANSITION_MS = 800;
+export const TRANSITION_MS = 1100;
 
 /** Wait before the first play. */
 export const TIP_OFF_MS = 600;
