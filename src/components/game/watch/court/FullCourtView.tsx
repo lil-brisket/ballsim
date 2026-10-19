@@ -38,7 +38,6 @@ import type {
   WatchTeam,
 } from "@/state/watch-game-view";
 import { CourtGhost } from "./CourtGhost";
-import { CourtHeader, type CourtStatus } from "./CourtHeader";
 import { CourtCallout, CourtPeriodCard } from "./CourtOverlays";
 import { CourtToken } from "./CourtToken";
 import {
@@ -77,11 +76,8 @@ export function FullCourtView(props: {
   away: WatchTeam;
   live: LiveBoxScore;
   showShotChart?: boolean;
-  onShowShotChartChange?: (value: boolean) => void;
   selectedPlayerId?: PlayerId | null;
   onSelectPlayer?: (id: PlayerId) => void;
-  /** Playback state shown above the court; omitted on the dev page. */
-  status?: CourtStatus;
   /** Playback speed multiplier; motion durations are divided by it. */
   speed?: number;
   /**
@@ -105,8 +101,7 @@ export function FullCourtView(props: {
 }) {
   const { frame, home, away, live } = props;
   const speed = props.speed && props.speed > 0 ? props.speed : 1;
-  const [localShotChart, setLocalShotChart] = useState(false);
-  const showShotChart = props.showShotChart ?? localShotChart;
+  const showShotChart = props.showShotChart ?? false;
 
   const clipId = `court-lanes-${useId().replace(/[^A-Za-z0-9_-]/g, "")}`;
   const palette = buildCourtPalette(home.hasBranding ? home.branding : null);
@@ -324,14 +319,6 @@ export function FullCourtView(props: {
       ? COURT_FEET.hoopY
       : LENGTH - COURT_FEET.hoopY;
 
-  const toggleShotChart = () => {
-    const next = !showShotChart;
-    if (props.showShotChart === undefined) {
-      setLocalShotChart(next);
-    }
-    props.onShowShotChartChange?.(next);
-  };
-
   const arrow = (
     <svg
       aria-hidden="true"
@@ -346,16 +333,11 @@ export function FullCourtView(props: {
   );
 
   return (
-    <div className={cn("space-y-2", props.className)}>
-      <CourtHeader
-        status={props.status}
-        showShotChart={showShotChart}
-        onToggleShotChart={toggleShotChart}
-      />
+    <div className={props.className}>
       <div
         role="group"
         aria-label={`Court, ${home.city} ${home.name} home floor`}
-        className="relative w-full rounded-lg px-6 py-5"
+        className="relative w-full rounded-t-lg px-6 py-5"
         style={
           {
             backgroundColor: palette.apron,

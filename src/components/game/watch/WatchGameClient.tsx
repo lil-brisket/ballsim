@@ -2,13 +2,14 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { CourtPlayerCard } from "@/components/game/watch/court/CourtPlayerCard";
-import type { CourtStatus } from "@/components/game/watch/court/CourtHeader";
 import { FullCourtView } from "@/components/game/watch/court/FullCourtView";
 import { KeyMomentsList } from "@/components/game/watch/KeyMomentsList";
 import { LiveBoxScore } from "@/components/game/watch/LiveBoxScore";
 import {
   PlaybackControls,
+  type PlaybackMoment,
   type PlaybackSpeed,
+  type PlaybackStatus,
 } from "@/components/game/watch/PlaybackControls";
 import { PlayByPlayFeed } from "@/components/game/watch/PlayByPlayFeed";
 import { Scoreboard } from "@/components/game/watch/Scoreboard";
@@ -18,7 +19,6 @@ import {
   openerShare,
   playDelayMs,
 } from "@/components/game/watch/playback-pacing";
-import { Panel, SectionHeading } from "@/components/ui";
 import type { PlayerId } from "@/domain/ids";
 import { buildPlayChoreography } from "@/state/watch-court-choreo";
 import { stepPossession } from "@/state/watch-court-frame";
@@ -43,6 +43,7 @@ export function WatchGameClient(props: {
   // True when the latest reveal came from the playback timer (its play is
   // choreographed); a jump (restart, skip, possession step, feed) snaps.
   const [animated, setAnimated] = useState(false);
+  const [showShotChart, setShowShotChart] = useState(false);
   const [selectedPlayerId, setSelectedPlayerId] = useState<PlayerId | null>(
     null,
   );
@@ -121,11 +122,120 @@ export function WatchGameClient(props: {
     setPlaying(false);
   };
 
-  const courtStatus: CourtStatus = live.isFinal
+  const courtStatus: PlaybackStatus = live.isFinal
     ? "complete"
     : isPlaying
       ? "playing"
       : "paused";
+
+  // Blank at the end: the scoreboard already says Final.
+  const clockText = live.isFinal
+    ? ""
+    : revealed === 0
+      ? "Tip-off"
+      : `${live.periodLabel} ${live.clockLabel}`;
+  const periodStarts = useMemo(
+    () =>
+      view.plays.flatMap((p, i) =>
+        i > 0 && p.period !== view.plays[i - 1]!.period ? [i] : [],
+      ),
+    [view],
+  );
+  const moments = useMemo<PlaybackMoment[]>(
+    () =>
+      view.keyMoments.flatMap((moment) =>
+        moment.playIndex === null
+          ? []
+          : [
+              {
+                revealed: moment.playIndex + 1,
+                title: moment.title,
+                detail: moment.detail,
+              },
+            ],
+      ),
+    [view],
+  );
+
+  // The buttons and the page shortcuts share these handlers.
+  const togglePlay = () => {
+    if (revealed >= total && !isPlaying) {
+      return;
+    }
+    setPlaying(!isPlaying);
+  };
+  const stepPlay = (direction: -1 | 1) =>
+    jumpTo(Math.min(total, Math.max(0, revealed + direction)));
+  const previousPossession = () => {
+    if (revealed > 0) {
+      jumpTo(stepPossession(view, revealed, -1));
+    }
+  };
+  const nextPossession = () => {
+    if (revealed < total) {
+      jumpTo(stepPossession(view, revealed, 1));
+    }
+  };
+  const shortcuts = useRef({
+    togglePlay,
+    stepPlay,
+    previousPossession,
+    nextPossession,
+  });
+  useEffect(() => {
+    shortcuts.current = {
+      togglePlay,
+      stepPlay,
+      previousPossession,
+      nextPossession,
+    };
+  });
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (
+        event.defaultPrevented ||
+        event.ctrlKey ||
+        event.metaKey ||
+        event.altKey
+      ) {
+        return;
+      }
+      const target = event.target instanceof Element ? event.target : null;
+      if (
+        target?.closest(
+          'input, textarea, select, [contenteditable]:not([contenteditable="false"]), [role="slider"], [role="menu"], [role="menuitem"], [role="menuitemcheckbox"]',
+        )
+      ) {
+        return;
+      }
+      const current = shortcuts.current;
+      switch (event.key) {
+        case " ":
+          if (target?.closest("button, a")) {
+            return;
+          }
+          current.togglePlay();
+          break;
+        case "ArrowLeft":
+          current.previousPossession();
+          break;
+        case "ArrowRight":
+          current.nextPossession();
+          break;
+        case ",":
+          current.stepPlay(-1);
+          break;
+        case ".":
+          current.stepPlay(1);
+          break;
+        default:
+          return;
+      }
+      event.preventDefault();
+    };
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+  }, []);
 
   const selectedPlayer =
     view.players.find((p) => p.playerId === selectedPlayerId) ?? null;
@@ -138,26 +248,13 @@ export function WatchGameClient(props: {
   return (
     <div className="min-w-0 space-y-6">
       <Scoreboard away={view.away} home={view.home} live={live} />
-      <PlaybackControls
-        playing={isPlaying}
-        speed={speed}
-        revealed={revealed}
-        total={total}
-        onTogglePlay={() => setPlaying(!isPlaying)}
-        onSpeedChange={setSpeed}
-        onSkipToEnd={() => jumpTo(total)}
-        onRestart={() => jumpTo(0)}
-        onPreviousPossession={() => jumpTo(stepPossession(view, revealed, -1))}
-        onNextPossession={() => jumpTo(stepPossession(view, revealed, 1))}
-      />
-      <Panel as="section" className="min-w-0 space-y-3">
-        <SectionHeading as="h2" title="Court" />
+      <section aria-label="Court" className="min-w-0">
         <FullCourtView
           frame={courtFrame}
           home={view.home}
           away={view.away}
           live={live}
-          status={courtStatus}
+          showShotChart={showShotChart}
           speed={speed}
           choreography={choreography}
           motionMs={motionMs(view, revealed)}
@@ -171,15 +268,37 @@ export function WatchGameClient(props: {
             setSelectedPlayerId((current) => (current === id ? null : id))
           }
         />
+        <PlaybackControls
+          playing={isPlaying}
+          speed={speed}
+          revealed={revealed}
+          total={total}
+          clockText={clockText}
+          status={courtStatus}
+          periodStarts={periodStarts}
+          moments={moments}
+          showShotChart={showShotChart}
+          onTogglePlay={togglePlay}
+          onSpeedChange={setSpeed}
+          onSeek={(next) => jumpTo(Math.min(total, Math.max(0, next)))}
+          onStep={stepPlay}
+          onPreviousPossession={previousPossession}
+          onNextPossession={nextPossession}
+          onRestart={() => jumpTo(0)}
+          onSkipToEnd={() => jumpTo(total)}
+          onToggleShotChart={() => setShowShotChart((value) => !value)}
+        />
         {selectedPlayer && selectedRow ? (
-          <CourtPlayerCard
-            player={selectedPlayer}
-            team={selectedPlayer.side === 0 ? view.home : view.away}
-            row={selectedRow}
-            onClose={() => setSelectedPlayerId(null)}
-          />
+          <div className="mt-3">
+            <CourtPlayerCard
+              player={selectedPlayer}
+              team={selectedPlayer.side === 0 ? view.home : view.away}
+              row={selectedRow}
+              onClose={() => setSelectedPlayerId(null)}
+            />
+          </div>
         ) : null}
-      </Panel>
+      </section>
       <div className="grid min-w-0 gap-6 lg:grid-cols-2">
         <PlayByPlayFeed view={view} revealed={revealed} />
         <KeyMomentsList

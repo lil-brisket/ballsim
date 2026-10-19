@@ -92,6 +92,13 @@ export function FullCourtShowcase() {
             {option.label}
           </Button>
         ))}
+        <Button
+          variant="quiet"
+          aria-pressed={shotChart}
+          onClick={() => setShotChart((value) => !value)}
+        >
+          Shot chart
+        </Button>
       </div>
       <FullCourtView
         frame={frame}
@@ -102,7 +109,6 @@ export function FullCourtShowcase() {
         speed={1}
         periodBreak={null}
         showShotChart={shotChart}
-        onShowShotChartChange={setShotChart}
         selectedPlayerId={selected}
         onSelectPlayer={setSelected}
       />

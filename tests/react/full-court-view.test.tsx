@@ -341,12 +341,12 @@ describe("FullCourtView", () => {
     }
   });
 
-  it("toggles shot chart markers matching the revealed shots", () => {
+  it("draws shot chart markers matching the revealed shots only when shown", () => {
     const frame = buildFullCourtFrame(VIEW, 9);
     expect(frame.shots.length).toBeGreaterThan(0);
-    render(court(9));
+    const { rerender } = render(court(9, { showShotChart: false }));
     expect(screen.queryAllByTestId("court-shot-marker")).toHaveLength(0);
-    fireEvent.click(screen.getByRole("button", { name: "Shot chart" }));
+    rerender(court(9, { showShotChart: true }));
     expect(screen.getAllByTestId("court-shot-marker")).toHaveLength(
       frame.shots.length,
     );
@@ -392,13 +392,6 @@ describe("FullCourtView", () => {
     expect(token().getAttribute("aria-pressed")).toBe("false");
     rerender(court(1, { onSelectPlayer, selectedPlayerId: asPlayerId("h2") }));
     expect(token().getAttribute("aria-pressed")).toBe("true");
-  });
-
-  it("reports shot chart changes to a controlling parent", () => {
-    const onShowShotChartChange = vi.fn();
-    render(court(3, { showShotChart: false, onShowShotChartChange }));
-    fireEvent.click(screen.getByRole("button", { name: "Shot chart" }));
-    expect(onShowShotChartChange).toHaveBeenCalledWith(true);
   });
 
   it("shows a steal callout", () => {
