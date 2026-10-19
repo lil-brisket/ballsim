@@ -15,6 +15,7 @@ import type { PlayerId } from "@/domain/ids";
 import type { GameState } from "@/state/game-state";
 import { canOpenGameBoxScore, resolveTeamIdentity } from "@/state/selectors";
 import type { TeamBrandingView } from "@/state/team-branding-view";
+import { FOUL_RESOLUTION_CONFIG } from "@/systems/foul-resolution-config";
 import type {
   KeyMoment,
   LiveBoxScore,
@@ -782,6 +783,40 @@ export function buildLiveBoxScore(
     isFinal,
     home: buildTeam(0),
     away: buildTeam(1),
+  };
+}
+
+/**
+ * Team fouls in the current period (the period of the latest of the first
+ * `revealed` plays; the first period before tip-off) and whether each team is
+ * in the bonus. Only shooting and personal fouls count, like the sim's team
+ * foul tally (`resolveFoul`); offensive fouls do not. The counts restart every
+ * period, overtime included.
+ *
+ * A team is in the bonus when the OTHER team has at least
+ * `bonusThreshold - 1` fouls this period: the next foul on it is the one that
+ * reaches the threshold and sends it to the line.
+ */
+export function teamFoulsAt(
+  view: WatchGameView,
+  revealed: number,
+): { fouls: [number, number]; bonus: [boolean, boolean] } {
+  const count = clampRevealed(view, revealed);
+  const currentPeriod = count > 0 ? view.plays[count - 1]!.period : 1;
+  const fouls: [number, number] = [0, 0];
+  for (let i = 0; i < count; i += 1) {
+    const play = view.plays[i]!;
+    if (
+      play.period === currentPeriod &&
+      (play.kind === "shooting_foul" || play.kind === "personal_foul")
+    ) {
+      fouls[play.side] += 1;
+    }
+  }
+  const bonusAt = FOUL_RESOLUTION_CONFIG.bonusThreshold - 1;
+  return {
+    fouls,
+    bonus: [fouls[1] >= bonusAt, fouls[0] >= bonusAt],
   };
 }
 

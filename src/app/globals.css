@@ -262,9 +262,11 @@ body {
   display: block;
 }
 
+/* Hidden until its (possibly delayed) fade runs. */
 .court-callout {
-  animation: court-callout-fade calc(1.1s / var(--court-speed, 1)) ease-out
-    forwards;
+  opacity: 0;
+  animation: court-callout-fade max(0.7s, calc(1.1s / var(--court-speed, 1)))
+    ease-out forwards;
 }
 
 /* Hidden until its (possibly delayed) flash runs. */
@@ -272,16 +274,8 @@ body {
   opacity: 0;
   transform-box: fill-box;
   transform-origin: center;
-  animation: court-rim-flash calc(0.6s / var(--court-speed, 1)) ease-out
-    forwards;
-}
-
-.court-token-enter {
-  animation: court-token-enter 500ms ease-out;
-}
-
-.court-ghost {
-  animation: court-ghost-fade 600ms ease-out forwards;
+  animation: court-rim-flash max(0.3s, calc(0.6s / var(--court-speed, 1)))
+    ease-out forwards;
 }
 
 .court-period-card {
@@ -293,24 +287,26 @@ body {
   transition: opacity calc(600ms / var(--court-speed, 1)) ease;
 }
 
-@keyframes court-token-enter {
-  from {
-    opacity: 0;
-    transform: scale(0.6);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
+/* A block or steal: the player's token leaps (scale pulse, ~250 ms at 1x) and a
+   ring flashes around it once the event happens. Both wait out their
+   animation-delay (set inline) and run at the playback speed. */
+.court-leap {
+  animation: court-leap max(0.18s, calc(0.25s / var(--court-speed, 1))) ease-out
+    both;
 }
 
-@keyframes court-ghost-fade {
-  from {
-    opacity: 0.85;
-  }
-  to {
-    opacity: 0;
-  }
+.court-impact-ring {
+  opacity: 0;
+  animation: court-impact-ring max(0.4s, calc(0.7s / var(--court-speed, 1)))
+    ease-out forwards;
+}
+
+/* Whistle at a foul: hidden until the whistle blows, then stays until the
+   next play is revealed. */
+.court-whistle {
+  opacity: 0;
+  animation: court-whistle-in calc(0.2s / var(--court-speed, 1)) ease-out
+    forwards;
 }
 
 @keyframes court-card-in {
@@ -332,6 +328,38 @@ body {
   }
 }
 
+@keyframes court-leap {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.25);
+  }
+}
+
+@keyframes court-impact-ring {
+  from {
+    opacity: 1;
+    transform: scale(0.8);
+  }
+  to {
+    opacity: 0;
+    transform: scale(1.8);
+  }
+}
+
+@keyframes court-whistle-in {
+  from {
+    opacity: 0;
+    transform: scale(0.6);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
 @keyframes court-rim-flash {
   from {
     opacity: 0.9;
@@ -350,14 +378,22 @@ body {
 
   .court-callout,
   .court-rim-flash,
-  .court-token-enter,
-  .court-ghost,
-  .court-period-card {
+  .court-period-card,
+  .court-leap,
+  .court-impact-ring,
+  .court-whistle {
     animation: none;
   }
 
-  .court-ghost {
-    display: none;
+  /* No leap or flash: the ring stays put as a static marker (and the whistle
+     is simply shown) until the next play is revealed. */
+  .court-impact-ring,
+  .court-whistle {
+    opacity: 1;
+  }
+
+  .court-callout {
+    opacity: 1;
   }
 
   .court-rim-flash {

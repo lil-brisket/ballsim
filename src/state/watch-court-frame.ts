@@ -91,6 +91,11 @@ export type CourtLastPlay = {
    * their previous spot to their shot spot); null for every other play.
    */
   cut: CourtPoint | null;
+  /**
+   * Steals only: the teammate the handler was passing to when the stealer
+   * stepped into the lane (the stealer ends on the line between them).
+   */
+  receiverId?: PlayerId;
 };
 
 export type CourtShot = {
@@ -150,6 +155,7 @@ export type CourtPossession = {
 
 type Feet = { x: number; y: number };
 
+const HOOP_X = COURT_FEET.hoopX;
 const HOOP: Feet = { x: COURT_FEET.hoopX, y: COURT_FEET.hoopY };
 const FREE_THROW_SPOT: Feet = { x: COURT_FEET.hoopX, y: COURT_FEET.freeThrowY };
 
@@ -175,6 +181,8 @@ const SALT_DEFENSE = 3;
 const SALT_REBOUND = 4;
 const SALT_DRIFT = 5;
 const SALT_CUT = 6;
+const SALT_BLOCK = 10;
+const SALT_STEAL = 11;
 
 /**
  * Richer movement (court replay phase 5). Set either to 0 to turn it off:
@@ -186,6 +194,76 @@ const DEFENSE_DRIFT_SCALE = 0.6;
 const SHOOTER_CUT_FEET = 4;
 const MIN_CUT_LENGTH_FEET = 3;
 const COURT_MARGIN_FEET = 0.5;
+const AND_ONE_GAP_FEET = 3;
+/** A blocker ends this far from the shooter, toward the rim. */
+const BLOCKER_GAP_FEET = 3.5;
+/** A blocked ball is swatted this far from the shot spot, away from the rim. */
+const SWAT_MIN_FEET = 8;
+const SWAT_RANGE_FEET = 6;
+/** A swat must end at least this much farther from the rim, and from the shooter. */
+const SWAT_MIN_GAIN_FEET = 1.5;
+const SWAT_MIN_TRAVEL_FEET = 6;
+/** A stealer cuts the handler's pass lane this far along it. */
+const STEAL_LANE_MIN = 0.45;
+const STEAL_LANE_RANGE = 0.2;
+
+/**
+ * Free-throw line-up (feet, half court). Lane spots sit just inside the lane
+ * lines on three rows: the defense takes the two nearest the rim plus the
+ * outer left one, the offense the two between. Everyone else waits behind
+ * the arc (offense on the wings, defense on top).
+ */
+const LANE_SPOT_X = 7.4;
+const LANE_ROWS = [8, 11.5, 15] as const;
+const FT_ARC_RADIUS_FEET = 26;
+const FT_ARC_OFFENSE_DEGREES = [25, 155, 45, 135] as const;
+const FT_ARC_DEFENSE_DEGREES = [65, 115, 80, 100] as const;
+const FT_LANE_DEFENSE: readonly Feet[] = [
+  { x: HOOP_X - LANE_SPOT_X, y: LANE_ROWS[0] },
+  { x: HOOP_X + LANE_SPOT_X, y: LANE_ROWS[0] },
+  { x: HOOP_X - LANE_SPOT_X, y: LANE_ROWS[2] },
+];
+const FT_LANE_OFFENSE: readonly Feet[] = [
+  { x: HOOP_X - LANE_SPOT_X, y: LANE_ROWS[1] },
+  { x: HOOP_X + LANE_SPOT_X, y: LANE_ROWS[1] },
+];
+
+/**
+ * Where everyone stands for a free throw. The shooter is at the line; the
+ * rest take lane spots, then arc spots, in descending slot order (the slots
+ * nearest the rim go to the lane). Deterministic.
+ */
+export function freeThrowLineup(
+  players: readonly { playerId: PlayerId; side: WatchSide; slot: number }[],
+  shooterId: PlayerId | null,
+  shooterSide: WatchSide,
+): Map<PlayerId, CourtPoint> {
+  const spots = new Map<PlayerId, CourtPoint>();
+  const arcAt = (degrees: number): Feet => {
+    const angle = (degrees * Math.PI) / 180;
+    return aroundHoop(FT_ARC_RADIUS_FEET, angle);
+  };
+  for (const side of [0, 1] as const) {
+    const offense = side === shooterSide;
+    const lane = offense ? FT_LANE_OFFENSE : FT_LANE_DEFENSE;
+    const arc = offense ? FT_ARC_OFFENSE_DEGREES : FT_ARC_DEFENSE_DEGREES;
+    const others = players
+      .filter((p) => p.side === side && p.playerId !== shooterId)
+      .sort((a, b) => (b.slot % SLOT_COUNT) - (a.slot % SLOT_COUNT));
+    const laneCount = lane.length;
+    others.forEach((player, i) => {
+      const spot =
+        i < laneCount
+          ? lane[i]!
+          : arcAt(arc[Math.min(i - laneCount, arc.length - 1)]!);
+      spots.set(player.playerId, normalize(spot));
+    });
+  }
+  if (shooterId !== null) {
+    spots.set(shooterId, normalize(FREE_THROW_SPOT));
+  }
+  return spots;
+}
 
 /** FNV-1a hash of `gameId:index:salt` (uint32). Presentation seed only. */
 export function courtSeed(gameId: string, index: number, salt = 0): number {
@@ -267,6 +345,72 @@ function cutPoint(from: Feet, to: Feet, seed: number): Feet | null {
     x: mid.x + (-(to.y - from.y) / length) * offset,
     y: mid.y + ((to.x - from.x) / length) * offset,
   });
+}
+
+/** Fouler's spot on an and-one: a few feet to one side of the shooter. */
+function besideShooter(shooter: Feet, seed: number): Feet {
+  const length = distance(shooter, HOOP);
+  const along =
+    length < 1e-6
+      ? { x: 1, y: 0 }
+      : { x: (shooter.x - HOOP.x) / length, y: (shooter.y - HOOP.y) / length };
+  const side = unitStream(seed)() < 0.5 ? -1 : 1;
+  return insideCourt({
+    x: shooter.x + -along.y * side * AND_ONE_GAP_FEET,
+    y: shooter.y + along.x * side * AND_ONE_GAP_FEET,
+  });
+}
+
+/** The blocker's spot: between the shooter and the rim, close to the shooter. */
+function blockerSpotFeet(spot: Feet): Feet {
+  const length = distance(spot, HOOP);
+  const share =
+    length < 1e-6
+      ? 0.12
+      : Math.min(0.8, Math.max(0.12, BLOCKER_GAP_FEET / length));
+  return lerp(spot, HOOP, share);
+}
+
+/**
+ * Where a blocked shot ends up: swatted 8-14 ft from the shot spot, outward
+ * from the rim toward the perimeter or a sideline, kept in bounds. Tries the
+ * seeded direction first, then its mirror and the sidelines, so a shot taken
+ * near a wall still travels away from the rim.
+ */
+function deflectionFeet(spot: Feet, seed: number): Feet {
+  const next = unitStream(seed);
+  const travel = SWAT_MIN_FEET + next() * SWAT_RANGE_FEET;
+  const side = next() < 0.5 ? -1 : 1;
+  const swing = 0.35 + next() * 0.9;
+  const outward =
+    distance(spot, HOOP) < 1e-6
+      ? Math.PI / 2
+      : Math.atan2(spot.y - HOOP.y, spot.x - HOOP.x);
+  const rimGap = distance(spot, HOOP);
+  let best: { point: Feet; gain: number } | null = null;
+  for (const turn of [
+    side * swing,
+    -side * swing,
+    side * (Math.PI / 2),
+    -side * (Math.PI / 2),
+    0,
+  ]) {
+    const point = insideCourt({
+      x: spot.x + Math.cos(outward + turn) * travel,
+      y: spot.y + Math.sin(outward + turn) * travel,
+    });
+    const gain = distance(point, HOOP) - rimGap;
+    if (
+      gain >= SWAT_MIN_GAIN_FEET &&
+      distance(point, spot) >= SWAT_MIN_TRAVEL_FEET
+    ) {
+      return point;
+    }
+    if (!best || gain > best.gain) {
+      best = { point, gain };
+    }
+  }
+  return best!.point;
 }
 
 function shotSpotFeet(kind: WatchPlayKind, seed: number): Feet {
@@ -472,6 +616,25 @@ function isFreeThrow(kind: WatchPlayKind): boolean {
   return kind === "ft_made" || kind === "ft_missed";
 }
 
+/**
+ * True for a shooting foul that directly follows a made field goal in the
+ * same possession: the foul on a made shot (an and-one). It shows no new
+ * action, just the whistle beside the shooter.
+ */
+export function isAndOne(view: WatchGameView, index: number): boolean {
+  const play = view.plays[index];
+  const previous = view.plays[index - 1];
+  return (
+    play !== undefined &&
+    previous !== undefined &&
+    play.kind === "shooting_foul" &&
+    isFieldGoal(previous.kind) &&
+    previous.points > 0 &&
+    previous.period === play.period &&
+    previous.poss === play.poss
+  );
+}
+
 /** First ball handler of a possession, from its opening play. */
 function openingHandler(play: WatchPlay): PlayerId {
   if (play.kind === "shooting_foul" || play.kind === "personal_foul") {
@@ -491,6 +654,7 @@ type StepResult = {
   outcome: CourtOutcome;
   path: Feet[];
   cut: Feet | null;
+  receiverId: PlayerId | null;
 };
 
 type PossessionCourt = {
@@ -591,6 +755,8 @@ function createPossessionCourt(
     set(slot, target);
   };
 
+  // Where the last play's blocked shot went; the next rebound picks it up there.
+  let deflected: Feet | null = null;
   const handler = openingHandler(view.plays[group.start]!);
   const court: PossessionCourt = {
     offenseSide,
@@ -609,6 +775,9 @@ function createPossessionCourt(
       let motion: CourtMotion = "substitution";
       let outcome: CourtOutcome = "none";
       let cut: Feet | null = null;
+      let receiverId: PlayerId | null = null;
+      const loose = deflected;
+      deflected = null;
 
       if (isFieldGoal(play.kind) || isFreeThrow(play.kind)) {
         motion = isFreeThrow(play.kind) ? "free_throw" : "shot";
@@ -634,8 +803,12 @@ function createPossessionCourt(
           add(HOOP);
         } else if (motion === "shot" && play.player2Id !== null) {
           outcome = "blocked";
-          moveTo(play.player2Id, lerp(spot, HOOP, 0.12));
-          add(lerp(spot, HOOP, 0.3));
+          moveTo(play.player2Id, blockerSpotFeet(spot));
+          deflected = deflectionFeet(
+            spot,
+            courtSeed(view.gameId, play.index, SALT_BLOCK),
+          );
+          add(deflected);
         } else {
           outcome = "missed";
           add(HOOP);
@@ -649,10 +822,12 @@ function createPossessionCourt(
         const next = unitStream(
           courtSeed(view.gameId, play.index, SALT_REBOUND),
         );
-        const spot = aroundHoop(
+        const underHoop = aroundHoop(
           3 + next() * 6,
           0.25 + next() * (Math.PI - 0.5),
         );
+        // A blocked shot is recovered where it was swatted.
+        const spot = loose ?? underHoop;
         moveTo(play.playerId, spot);
         add(spot);
         court.ball = { at: spot, holderId: play.playerId };
@@ -663,7 +838,30 @@ function createPossessionCourt(
         const stealer = play.player2Id;
         if (stealer !== null && handlerSpot) {
           outcome = "stolen";
-          const spot = lerp(handlerSpot, spotOf(stealer) ?? handlerSpot, 0.5);
+          const stealerSpot = spotOf(stealer) ?? handlerSpot;
+          // The handler throws to one of the two teammates nearest the
+          // stealer; the stealer steps into that lane and takes the ball.
+          const handlerSide = slotOf(play.playerId)?.side;
+          const mates =
+            handlerSide === undefined
+              ? []
+              : lineups[handlerSide]
+                  .filter((id) => id !== play.playerId)
+                  .flatMap((id) => {
+                    const at = spotOf(id);
+                    return at ? [{ id, at, d: distance(at, stealerSpot) }] : [];
+                  })
+                  .sort((a, b) => a.d - b.d)
+                  .slice(0, 2);
+          const next = unitStream(
+            courtSeed(view.gameId, play.index, SALT_STEAL),
+          );
+          const receiver = mates[Math.floor(next() * mates.length)];
+          const lane = STEAL_LANE_MIN + next() * STEAL_LANE_RANGE;
+          const spot = receiver
+            ? lerp(handlerSpot, receiver.at, lane)
+            : lerp(handlerSpot, stealerSpot, 0.5);
+          receiverId = receiver?.id ?? null;
           moveTo(stealer, spot);
           add(spot);
           court.ball = { at: spot, holderId: stealer };
@@ -677,7 +875,15 @@ function createPossessionCourt(
         motion = "foul";
         const fouled = spotOf(play.player2Id);
         if (fouled) {
-          moveTo(play.playerId, lerp(fouled, HOOP, 0.1));
+          moveTo(
+            play.playerId,
+            isAndOne(view, play.index)
+              ? besideShooter(
+                  fouled,
+                  courtSeed(view.gameId, play.index, SALT_CUT),
+                )
+              : lerp(fouled, HOOP, 0.1),
+          );
         }
         if (play.kind === "personal_foul") {
           // Non-shooting foul: the ball stays with the fouled player.
@@ -694,7 +900,7 @@ function createPossessionCourt(
         add(spotOf(play.playerId));
         court.ball = { at: end(), holderId: null };
       }
-      return { play, motion, outcome, path, cut };
+      return { play, motion, outcome, path, cut, receiverId };
     },
   };
   return court;
@@ -737,6 +943,7 @@ function toLastPlay(
   outcome: CourtOutcome,
   path: Feet[],
   cut: Feet | null = null,
+  receiverId: PlayerId | null = null,
 ): CourtLastPlay {
   return {
     index: play.index,
@@ -748,6 +955,7 @@ function toLastPlay(
     points: play.points,
     path: path.map(normalize),
     cut: cut ? normalize(cut) : null,
+    ...(receiverId ? { receiverId } : {}),
   };
 }
 
@@ -831,6 +1039,7 @@ export function buildCourtFrame(
         run.last.outcome,
         path,
         run.last.cut,
+        run.last.receiverId,
       );
     }
   }
@@ -863,9 +1072,15 @@ export function buildCourtFrame(
   const drift = new Map<string, Feet>();
   if (court && lastPlayIndex >= 0 && OFF_BALL_DRIFT_FEET > 0) {
     const touched = view.plays[lastPlayIndex]!;
+    // An and-one adds nothing to the made shot: the shot's drift carries on
+    // and its players stay put, so only the fouler moves.
+    const andOne = isAndOne(view, lastPlayIndex);
+    const shot = andOne ? view.plays[lastPlayIndex - 1]! : null;
     for (const id of [
       touched.playerId,
       touched.player2Id,
+      shot?.playerId ?? null,
+      shot?.player2Id ?? null,
       court.ball.holderId,
     ]) {
       const found = court.slotOf(id);
@@ -873,7 +1088,13 @@ export function buildCourtFrame(
         exempt.add(`${found.side}:${found.slot}`);
       }
     }
-    const next = unitStream(courtSeed(view.gameId, lastPlayIndex, SALT_DRIFT));
+    const next = unitStream(
+      courtSeed(
+        view.gameId,
+        andOne ? lastPlayIndex - 1 : lastPlayIndex,
+        SALT_DRIFT,
+      ),
+    );
     for (const side of [0, 1] as const) {
       const size =
         side === court.offenseSide
@@ -894,6 +1115,21 @@ export function buildCourtFrame(
       : null;
 
   const byId = new Map(view.players.map((p) => [p.playerId, p]));
+  // Free throws: both teams line up on the lane, the shooter at the line.
+  const lineup =
+    lastPlay?.motion === "free_throw"
+      ? freeThrowLineup(
+          [0, 1].flatMap((side) =>
+            lineups[side as WatchSide].map((playerId, slot) => ({
+              playerId,
+              side: side as WatchSide,
+              slot,
+            })),
+          ),
+          shooterId,
+          byId.get(lastPlay.playerId)?.side ?? offenseSide,
+        )
+      : null;
   const players: CourtPlayer[] = [];
   for (const side of [0, 1] as const) {
     lineups[side].forEach((playerId, slot) => {
@@ -911,6 +1147,7 @@ export function buildCourtFrame(
       const spot = offset
         ? insideCourt({ x: base.x + offset.x, y: base.y + offset.y })
         : base;
+      const lined = lineup?.get(playerId);
       players.push({
         playerId,
         side,
@@ -919,7 +1156,7 @@ export function buildCourtFrame(
         fullName: player.fullName,
         slot,
         onOffense: side === offenseSide,
-        spot: normalize(spot),
+        spot: lined ?? normalize(spot),
         role:
           playerId === shooterId
             ? "shooter"
@@ -980,4 +1217,35 @@ export function buildCourtFrame(
     shots,
     substitutions,
   };
+}
+
+/**
+ * First play of the run of consecutive substitutions containing `index`
+ * (`index` itself when that play is not a substitution).
+ */
+export function subRunStart(view: WatchGameView, index: number): number {
+  let start = index;
+  if (view.plays[start]?.kind !== "substitution") {
+    return start;
+  }
+  while (start > 0 && view.plays[start - 1]!.kind === "substitution") {
+    start -= 1;
+  }
+  return start;
+}
+
+/**
+ * Revealed count after the run of consecutive substitutions containing
+ * `index` (so the run is plays `subRunStart..subRunEnd - 1`); `index` itself
+ * when that play is not a substitution.
+ */
+export function subRunEnd(view: WatchGameView, index: number): number {
+  if (view.plays[index]?.kind !== "substitution") {
+    return index;
+  }
+  let end = index + 1;
+  while (view.plays[end]?.kind === "substitution") {
+    end += 1;
+  }
+  return end;
 }

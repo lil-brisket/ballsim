@@ -21,14 +21,20 @@ import { EntityDrawerProvider } from "@/components/entity/EntityDrawerProvider";
 import {
   PERIOD_BREAK_MS,
   PLAY_PACING_MS,
+  SUB_RUN_MS,
+  TIP_MS,
   TIP_OFF_MS,
   TRANSITION_MS,
+  actionMs,
+  motionMs,
+  openerShare,
   playDelayMs,
 } from "@/components/game/watch/playback-pacing";
 import { WatchGameClient } from "@/components/game/watch/WatchGameClient";
 import { WatchGameUnavailable } from "@/components/game/watch/WatchGameUnavailable";
 import { TeamThemeScope } from "@/components/ui";
 import { buildCourtPalette } from "@/state/court-palette";
+import { buildPlayChoreography } from "@/state/watch-court-choreo";
 import { stepPossession } from "@/state/watch-court-frame";
 import { buildLiveBoxScore } from "@/state/watch-game-selectors";
 import type {
@@ -419,16 +425,37 @@ function chooseFromMenu(name: string) {
 }
 
 /**
- * Advances fake time by each next play's own pacing, one play at a time
- * (each reveal schedules the following timeout after React re-renders).
+ * Advances fake time by the pacing of whatever is revealed now, one timer
+ * step at a time (each reveal schedules the following timeout after React
+ * re-renders). A run of substitutions is one step, as in the client.
  */
-function advance(plays: number, speed = 1) {
-  const from = currentRevealed();
+function advance(plays: number, speed = 1, view: WatchGameView = VIEW) {
   for (let k = 0; k < plays; k += 1) {
     act(() => {
-      vi.advanceTimersByTime(playDelayMs(VIEW, from + k) / speed);
+      vi.advanceTimersByTime(
+        playDelayMs(view, currentRevealed(), speed) / speed,
+      );
     });
   }
+}
+
+/** Fake ms (at 1x) from revealing play `revealed - 1` to its event beat. */
+function eventDelay(revealed: number): number {
+  const choreo =
+    revealed > 0
+      ? buildPlayChoreography(VIEW, revealed - 1, {
+          openerShare: openerShare(VIEW, revealed - 1),
+        })
+      : null;
+  return (choreo?.eventAt ?? 0) * motionMs(VIEW, revealed);
+}
+
+/** Runs the latest revealed play on to its event, when the stats settle. */
+function settleLatest(speed = 1) {
+  const revealed = currentRevealed();
+  act(() => {
+    vi.advanceTimersByTime(eventDelay(revealed) / speed);
+  });
 }
 
 function feed() {
@@ -475,11 +502,65 @@ describe("WatchGameClient", () => {
     expect(screen.queryByText("T. Reed injured")).toBeNull();
   });
 
+  it("holds the feed and score until the play's event happens on court", () => {
+    renderClient();
+    fireEvent.click(screen.getByRole("button", { name: "Play" }));
+    advance(1);
+    expectRevealed(1);
+    const text = "J. Smith makes 3-pt shot (K. Lee assists)";
+    expect(feed().queryByText(text)).toBeNull();
+    expect(screen.getByRole("group", { name: START_SCORE_LABEL })).toBeTruthy();
+    act(() => {
+      vi.advanceTimersByTime(eventDelay(1) - 1);
+    });
+    expect(feed().queryByText(text)).toBeNull();
+    act(() => {
+      vi.advanceTimersByTime(1);
+    });
+    expect(feed().getByText(text)).toBeTruthy();
+  });
+
+  it("adds the inferred jump ball to the feed once play 0 has settled", () => {
+    renderClient();
+    // Starters: Lee (SG) and Reed (SF) are the tallest of their lineups'
+    // positions, and home has the first possession.
+    const tip = "Jump ball: K. Lee vs T. Reed — HOM gains possession";
+    expect(feed().queryByText(tip)).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Play" }));
+    advance(1);
+    expectRevealed(1);
+    expect(feed().queryByText(tip)).toBeNull();
+    settleLatest();
+    expect(feed().getByText(tip)).toBeTruthy();
+    // It never touches the score.
+    expect(
+      screen.getByRole("group", { name: /Score: AWY 0, HOM 3/ }),
+    ).toBeTruthy();
+    // A jump shows it too, and going back to tip-off hides it again.
+    chooseFromMenu("Skip to end");
+    expect(feed().getByText(tip)).toBeTruthy();
+    chooseFromMenu("Restart");
+    expect(feed().queryByText(tip)).toBeNull();
+  });
+
+  it("settles a pending play at once on a jump", () => {
+    renderClient();
+    fireEvent.click(screen.getByRole("button", { name: "Play" }));
+    advance(1);
+    fireEvent.click(screen.getByRole("button", { name: "Pause" }));
+    fireEvent.keyDown(document, { key: "." });
+    expectRevealed(2);
+    expect(
+      feed().getByText("J. Smith makes 3-pt shot (K. Lee assists)"),
+    ).toBeTruthy();
+  });
+
   it("reveals plays at their own pacing at 1x and stops on Pause", () => {
     renderClient();
     fireEvent.click(screen.getByRole("button", { name: "Play" }));
     advance(1);
     expectRevealed(1);
+    settleLatest();
     expect(
       feed().getByText("J. Smith makes 3-pt shot (K. Lee assists)"),
     ).toBeTruthy();
@@ -524,9 +605,10 @@ describe("WatchGameClient", () => {
     expectRevealed(1);
 
     // Play 0 is a made three that opens the game: it holds for the full shot
-    // pacing plus the ball's trip up the floor from centre court.
+    // pacing plus the jump ball and the ball's trip up the floor from centre
+    // court.
     act(() => {
-      vi.advanceTimersByTime(PLAY_PACING_MS.three_made + TRANSITION_MS - 1);
+      vi.advanceTimersByTime(actionMs(VIEW, 0) + TIP_MS + TRANSITION_MS - 1);
     });
     expectRevealed(1);
     act(() => {
@@ -535,17 +617,15 @@ describe("WatchGameClient", () => {
     expectRevealed(2);
 
     expect(playDelayMs(VIEW, 7)).toBe(PLAY_PACING_MS.ft_made);
-    // The substitution at play 7 is also the last play of Q1.
-    expect(playDelayMs(VIEW, 8)).toBe(
-      PLAY_PACING_MS.substitution + PERIOD_BREAK_MS,
-    );
+    // The substitution at play 7 is also the last play of Q1; a lone
+    // substitution is a run of one.
+    expect(playDelayMs(VIEW, 8)).toBe(SUB_RUN_MS + PERIOD_BREAK_MS);
     const periodEnd = PLAYS.findIndex(
       (p, i) => PLAYS[i + 1] && PLAYS[i + 1]!.period !== p.period,
     );
     expect(periodEnd).toBeGreaterThanOrEqual(0);
-    expect(playDelayMs(VIEW, periodEnd + 1)).toBe(
-      PLAY_PACING_MS[PLAYS[periodEnd]!.kind] + PERIOD_BREAK_MS,
-    );
+    expect(PLAYS[periodEnd]!.kind).toBe("substitution");
+    expect(playDelayMs(VIEW, periodEnd + 1)).toBe(SUB_RUN_MS + PERIOD_BREAK_MS);
   });
 
   it("resumes a paused play with the time it had left", () => {
@@ -607,6 +687,7 @@ describe("WatchGameClient", () => {
 
     advance(1);
     expectRevealed(PLAYS.length);
+    settleLatest();
     expect(screen.getByText("Final", FINAL_IN_SCOREBOARD)).toBeTruthy();
     expect(screen.getByRole("group", { name: FINAL_SCORE_LABEL })).toBeTruthy();
     expect(screen.getByText("T. Reed injured")).toBeTruthy();
@@ -711,13 +792,16 @@ describe("WatchGameClient", () => {
     expect(statCells("J. Smith")[1]).toBe("0");
     fireEvent.click(screen.getByRole("button", { name: "Play" }));
     advance(1);
+    settleLatest();
     expect(statCells("J. Smith")[1]).toBe("3");
     expect(statCells("K. Lee")[3]).toBe("1");
     advance(6);
+    settleLatest();
     expect(statCells("J. Smith")[1]).toBe("4");
     // Substitution at play 7 puts B. Bench on the floor.
     expect(statCells("B. Bench")[0]).not.toContain("on court");
     advance(1);
+    settleLatest();
     expect(statCells("B. Bench")[0]).toContain("on court");
     expect(statCells("K. Lee")[0]).not.toContain("on court");
   });
@@ -727,6 +811,7 @@ describe("WatchGameClient", () => {
     fireEvent.click(screen.getByRole("button", { name: "Play" }));
     advance(12);
     expectRevealed(12);
+    settleLatest();
     expect(feed().getByText("B. Bench turnover (T. Reed steals)")).toBeTruthy();
 
     fireEvent.click(
@@ -747,9 +832,11 @@ describe("WatchGameClient", () => {
     expect(feed().queryByText("Lead change")).toBeNull();
     fireEvent.click(screen.getByRole("button", { name: "Play" }));
     advance(3);
+    settleLatest();
     expect(feed().getByText("Lead change")).toBeTruthy();
     expect(feed().queryByText("Tie")).toBeNull();
     advance(2);
+    settleLatest();
     expect(feed().getByText("Tie")).toBeTruthy();
   });
 
@@ -818,8 +905,10 @@ describe("WatchGameClient", () => {
       expect(screen.queryByText("Away takes the lead")).toBeNull();
       fireEvent.click(screen.getByRole("button", { name: "Play" }));
       advance(10);
+      settleLatest();
       expect(screen.queryByText("Away takes the lead")).toBeNull();
       advance(1);
+      settleLatest();
       const row = feed().getByRole("button", { name: /Away takes the lead/ });
       expect(row.className).toContain("bg-team");
       expect(within(row).getByText("AWY leads 8-6")).toBeTruthy();
@@ -995,6 +1084,7 @@ describe("WatchGameClient court", () => {
     expect(screen.queryByTestId("court-period-card")).toBeNull();
     advance(1);
     expectRevealed(8);
+    settleLatest();
     expect(screen.getByTestId("court-period-card").textContent).toBe(
       "End of Q1 · AWY 5 – HOM 6",
     );
@@ -1055,6 +1145,7 @@ describe("WatchGameClient court", () => {
     fireEvent.click(button("Play"));
     advance(PLAYS.length);
     expectRevealed(PLAYS.length);
+    settleLatest();
     const stepped = { labels: tokenLabels(), ball: ballSpot() };
     chooseFromMenu("Restart");
     chooseFromMenu("Skip to end");
@@ -1349,5 +1440,284 @@ describe("Watch entry-point links", () => {
     render(leagueRow(false));
     expect(screen.queryByRole("link", { name: "Watch" })).toBeNull();
     cleanup();
+  });
+});
+
+describe("WatchGameClient benches", () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+  });
+  afterEach(() => {
+    cleanup();
+    vi.useRealTimers();
+  });
+
+  const tokenLabels = () =>
+    screen
+      .getAllByTestId("court-token")
+      .map((token) => token.getAttribute("aria-label"));
+  const benchLabels = () => tokenLabels().filter((l) => l?.includes(", bench"));
+
+  /**
+   * Q1's substitution at play 7 grows into a run of five: the same swap and
+   * two out-and-back pairs, so the lineups after it match VIEW's.
+   */
+  const RUN_PLAYS: WatchPlay[] = [
+    ...PLAYS.slice(0, 8),
+    ...(
+      [
+        ["side0", "h3", "h4"],
+        ["side0", "h4", "h3"],
+        ["side1", "a1", "a3"],
+        ["side1", "a3", "a1"],
+      ] as const
+    ).map(([side, out, inn], i) =>
+      play(8 + i, {
+        period: 1,
+        clock: 300,
+        poss: 7,
+        kind: "substitution",
+        side: side === "side0" ? 0 : 1,
+        playerId: out,
+        player2Id: inn,
+        text: `${inn} checks in for ${out}`,
+        points: 0,
+        homeScore: 6,
+        awayScore: 5,
+      }),
+    ),
+    ...PLAYS.slice(8).map((p) => ({ ...p, index: p.index + 4 })),
+  ];
+  const extraPlayer = (id: string, side: WatchSide, name: string) => ({
+    ...VIEW.players[2]!,
+    playerId: id as never,
+    side,
+    fullName: `${name} Reserve`,
+    shortName: `${name[0]}. Reserve`,
+    lastName: "Reserve",
+  });
+  const RUN_VIEW: WatchGameView = {
+    ...VIEW,
+    players: [
+      ...VIEW.players,
+      extraPlayer("h4", 0, "Hal"),
+      extraPlayer("a3", 1, "Abe"),
+    ],
+    plays: RUN_PLAYS,
+  };
+
+  it("seats everyone off the floor on the bench strip", () => {
+    renderClient();
+    expect(benchLabels()).toEqual(["Ben Bench, Harbor Waves, bench"]);
+    expect(screen.getAllByText("HOM bench")).toHaveLength(1);
+    expect(screen.getAllByText("AWY bench")).toHaveLength(1);
+    expect(tokenLabels()).toHaveLength(VIEW.players.length);
+  });
+
+  it("swaps the bench with the floor after a substitution", () => {
+    renderClient();
+    chooseFromMenu("Skip to end");
+    expect(benchLabels()).toEqual(["Kyle Lee, Harbor Waves, bench"]);
+    expect(tokenLabels()).toContain("Ben Bench, Harbor Waves, 2 pts");
+    chooseFromMenu("Restart");
+    expect(benchLabels()).toEqual(["Ben Bench, Harbor Waves, bench"]);
+  });
+
+  it("opens the player card from a bench token", () => {
+    renderClient();
+    fireEvent.click(
+      screen.getByRole("button", { name: /^Ben Bench, .*, bench/ }),
+    );
+    const card = within(screen.getByTestId("court-player-card"));
+    expect(card.getByText("Ben Bench")).toBeTruthy();
+    expect(card.getByText(/On the bench/)).toBeTruthy();
+  });
+
+  it("reveals a run of substitutions as one step and walks it in one go", () => {
+    render(<WatchGameClient view={RUN_VIEW} saveId="save_test" />);
+    fireEvent.click(screen.getByRole("button", { name: "Play" }));
+    advance(7, 1, RUN_VIEW);
+    expectRevealed(7);
+    expect(benchLabels()).toContain("Ben Bench, Harbor Waves, bench");
+
+    // Seven plays are up; the next step takes all five substitutions.
+    const wait = playDelayMs(RUN_VIEW, 7);
+    act(() => {
+      vi.advanceTimersByTime(wait - 1);
+    });
+    expectRevealed(7);
+    act(() => {
+      vi.advanceTimersByTime(1);
+    });
+    expectRevealed(12);
+    expect(motionMs(RUN_VIEW, 12)).toBe(SUB_RUN_MS);
+    // The run's single step is the same length as a lone substitution's.
+    expect(playDelayMs(RUN_VIEW, 12)).toBe(SUB_RUN_MS + PERIOD_BREAK_MS);
+    expect(benchLabels()).toContain("Kyle Lee, Harbor Waves, bench");
+    expect(benchLabels()).not.toContain("Ben Bench, Harbor Waves, bench");
+
+    // Stepping by hand is still one play at a time.
+    fireEvent.click(screen.getByRole("button", { name: "Pause" }));
+    fireEvent.keyDown(document, { key: "," });
+    expectRevealed(11);
+    fireEvent.keyDown(document, { key: "." });
+    expectRevealed(12);
+  });
+});
+
+describe("WatchGameClient clock and team fouls", () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+  });
+  afterEach(() => {
+    cleanup();
+    vi.useRealTimers();
+  });
+
+  const status = () =>
+    document.querySelector("#watch-scoreboard-status")!.textContent ?? "";
+  /** Seconds on the scoreboard clock ("Q1 11:40" -> 700). */
+  const scoreboardSeconds = () => {
+    const match = /(\d+):(\d\d)$/.exec(status());
+    expect(match).not.toBeNull();
+    return Number(match![1]) * 60 + Number(match![2]);
+  };
+
+  /** Four away shooting fouls in Q1, then one home foul in Q2. */
+  const FOUL_VIEW: WatchGameView = {
+    ...VIEW,
+    plays: [
+      ...[1, 2, 3, 4].map((n) =>
+        play(n - 1, {
+          period: 1,
+          clock: 700 - n * 40,
+          poss: n,
+          kind: n % 2 ? "shooting_foul" : "personal_foul",
+          side: 1,
+          playerId: "a2",
+          player2Id: "h1",
+          text: `Foul ${n}`,
+          points: 0,
+          homeScore: 0,
+          awayScore: 0,
+        }),
+      ),
+      play(4, {
+        period: 2,
+        clock: 700,
+        poss: 5,
+        kind: "personal_foul",
+        side: 0,
+        playerId: "h1",
+        player2Id: "a1",
+        text: "Foul 5",
+        points: 0,
+        homeScore: 0,
+        awayScore: 0,
+      }),
+    ],
+    keyMoments: [],
+  };
+
+  const teamBlock = (abbreviation: string) =>
+    screen
+      .getByText(abbreviation, { selector: "p" })
+      .closest("div") as HTMLElement;
+
+  it("shows each team's fouls this period and the bonus one foul short of the threshold", () => {
+    render(<WatchGameClient view={FOUL_VIEW} saveId="save_test" />);
+    expect(within(teamBlock("AWY")).getByText("Fouls 0")).toBeTruthy();
+    expect(screen.queryByTestId("scoreboard-bonus")).toBeNull();
+    for (let n = 1; n <= 3; n += 1) {
+      fireEvent.keyDown(document, { key: "." });
+    }
+    expect(within(teamBlock("AWY")).getByText("Fouls 3")).toBeTruthy();
+    expect(within(teamBlock("HOM")).getByText("Fouls 0")).toBeTruthy();
+    // Away has 3 of 4: home is not in the bonus yet.
+    expect(screen.queryByTestId("scoreboard-bonus")).toBeNull();
+    fireEvent.keyDown(document, { key: "." });
+    expect(within(teamBlock("AWY")).getByText("Fouls 4")).toBeTruthy();
+    const chip = screen.getByTestId("scoreboard-bonus");
+    expect(chip.textContent).toBe("BONUS");
+    expect(teamBlock("HOM").contains(chip)).toBe(true);
+    expect(teamBlock("AWY").contains(chip)).toBe(false);
+  });
+
+  it("restarts the fouls and the bonus in the next period", () => {
+    render(<WatchGameClient view={FOUL_VIEW} saveId="save_test" />);
+    for (let n = 1; n <= 5; n += 1) {
+      fireEvent.keyDown(document, { key: "." });
+    }
+    expect(within(teamBlock("AWY")).getByText("Fouls 0")).toBeTruthy();
+    expect(within(teamBlock("HOM")).getByText("Fouls 1")).toBeTruthy();
+    expect(screen.queryByTestId("scoreboard-bonus")).toBeNull();
+  });
+
+  it("ticks the clock down through a play while playing, and freezes it on pause", () => {
+    renderClient();
+    expect(status()).toBe("Q1 12:00");
+    fireEvent.click(screen.getByRole("button", { name: "Play" }));
+    advance(1);
+    expectRevealed(1);
+    // Play 1 starts at 11:40 and runs to the next possession's 11:00.
+    expect(scoreboardSeconds()).toBe(700);
+    const motion = motionMs(VIEW, 1);
+    act(() => {
+      vi.advanceTimersByTime(motion / 2);
+    });
+    const half = scoreboardSeconds();
+    expect(half).toBeLessThan(700);
+    expect(half).toBeGreaterThanOrEqual(660);
+    act(() => {
+      vi.advanceTimersByTime(motion / 4);
+    });
+    const later = scoreboardSeconds();
+    expect(later).toBeLessThan(half);
+    expect(later).toBeGreaterThanOrEqual(660);
+    // The controls show the same clock.
+    expect(
+      screen.getAllByText(
+        `Q1 ${Math.floor(later / 60)}:${String(later % 60).padStart(2, "0")}`,
+      ).length,
+    ).toBeGreaterThan(0);
+
+    fireEvent.click(screen.getByRole("button", { name: "Pause" }));
+    const frozen = status();
+    act(() => {
+      vi.advanceTimersByTime(5000);
+    });
+    expect(status()).toBe(frozen);
+  });
+
+  it("ticks faster at higher speeds without changing the pacing", () => {
+    renderClient();
+    fireEvent.click(screen.getByRole("button", { name: "2x" }));
+    fireEvent.click(screen.getByRole("button", { name: "Play" }));
+    advance(1, 2);
+    expectRevealed(1);
+    act(() => {
+      vi.advanceTimersByTime(motionMs(VIEW, 1) / 4);
+    });
+    // A quarter of the play's time at 2x is half the play.
+    const seconds = scoreboardSeconds();
+    expect(seconds).toBeLessThanOrEqual(690);
+    expect(seconds).toBeGreaterThanOrEqual(660);
+  });
+
+  it("shows the static clock of the settled play after a jump", () => {
+    renderClient();
+    fireEvent.click(screen.getByRole("button", { name: "Play" }));
+    advance(1);
+    act(() => {
+      vi.advanceTimersByTime(motionMs(VIEW, 1) / 2);
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Pause" }));
+    fireEvent.keyDown(document, { key: "." });
+    expectRevealed(2);
+    expect(status()).toBe("Q1 11:00");
+    act(() => {
+      vi.advanceTimersByTime(3000);
+    });
+    expect(status()).toBe("Q1 11:00");
   });
 });

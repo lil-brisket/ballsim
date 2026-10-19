@@ -28,9 +28,16 @@ import {
   type CourtSubstitution,
 } from "@/state/watch-court-frame";
 import {
+  BENCH_LAYOUT,
   FULL_COURT_FEET,
+  BENCH_CAPTION_PX,
+  WIDE_BENCH_LAYOUT,
+  WIDE_BENCH_MIN_PX,
+  benchTopRowY,
+  wideBenchPoint,
   toFullCourt,
   type FullCourtFrame,
+  type FullCourtPoint,
 } from "@/state/watch-full-court";
 import type {
   LiveBoxScore,
@@ -38,14 +45,14 @@ import type {
   WatchSide,
   WatchTeam,
 } from "@/state/watch-game-view";
-import { CourtGhost } from "./CourtGhost";
-import { CourtCallout, CourtPeriodCard } from "./CourtOverlays";
+import { CourtCallout, CourtPeriodCard, CourtWhistle } from "./CourtOverlays";
 import { CourtToken } from "./CourtToken";
 import {
   ballFloorKeyframes,
   ballLiftKeyframes,
   calloutText,
   courtTranslate,
+  pct,
   rimTime,
   trackKeyframes,
 } from "./court-motion";
@@ -138,6 +145,14 @@ export function FullCourtView(props: {
 
   // Floor size in pixels, for the label layout; only changes on resize.
   const [courtSize, setCourtSize] = useState(DEFAULT_COURT_SIZE);
+  // A wide floor seats each bench in one row; the frame's seats (and any walk
+  // to or from them) are re-laid out point by point.
+  const wideBench = courtSize.width >= WIDE_BENCH_MIN_PX;
+  const placeOf = wideBench ? wideBenchPoint : (point: FullCourtPoint) => point;
+  const place = useRef(placeOf);
+  useLayoutEffect(() => {
+    place.current = placeOf;
+  });
   useEffect(() => {
     const el = courtRef.current;
     if (!el || typeof ResizeObserver === "undefined") {
@@ -196,7 +211,11 @@ export function FullCourtView(props: {
     for (const track of choreography.tracks) {
       start(
         court.querySelector<HTMLElement>(`[data-mover="${track.playerId}"]`),
-        trackKeyframes(choreography.beats, track.points),
+        trackKeyframes(
+          choreography.beats,
+          track.points.map((point) => place.current(point)),
+          choreography.deadBall,
+        ),
       );
     }
     start(
@@ -333,19 +352,65 @@ export function FullCourtView(props: {
     return { sides, shown: new Set(shown.keys()) };
   }, [frame.players, courtSize, selectedId]);
 
-  const rosterById = new Map((props.players ?? []).map((p) => [p.playerId, p]));
   const incoming = new Map<PlayerId, CourtSubstitution>(
     frame.substitutions.map((sub) => [sub.inId, sub]),
   );
-  const ghosts = prefersReducedMotion()
-    ? []
-    : frame.substitutions.flatMap((sub) => {
-        const outgoing = rosterById.get(sub.outId);
-        const spot = frame.players.find((p) => p.playerId === sub.inId)?.spot;
-        return outgoing && spot ? [{ sub, outgoing, spot }] : [];
-      });
+
+  // Floor and bench tokens share one keyed list in a stable (roster) order, so
+  // a player who checks in or out keeps his DOM node and the walk animation
+  // can move it between a bench seat and the floor.
+  const fouledOut = new Set(
+    [...live.home.rows, ...live.away.rows]
+      .filter((row) => row.fouledOut)
+      .map((row) => row.playerId),
+  );
+  const floorById = new Map(frame.players.map((p) => [p.playerId, p]));
+  const benchById = new Map(frame.bench.map((b) => [b.playerId, b]));
+  const rosterOrder = new Map(
+    (props.players ?? []).map((p, i) => [p.playerId, i]),
+  );
+  const tokens: Array<
+    | { kind: "floor"; id: PlayerId; spot: FullCourtPoint }
+    | { kind: "bench"; id: PlayerId; spot: FullCourtPoint }
+  > = [
+    ...frame.players.map((p) => ({
+      kind: "floor" as const,
+      id: p.playerId,
+      spot: p.spot,
+    })),
+    ...frame.bench.map((b) => ({
+      kind: "bench" as const,
+      id: b.playerId,
+      spot: b.spot,
+    })),
+  ];
+  if (rosterOrder.size > 0) {
+    tokens.sort(
+      (a, b) => (rosterOrder.get(a.id) ?? 0) - (rosterOrder.get(b.id) ?? 0),
+    );
+  }
+  const benchTopRow = benchTopRowY(frame.benchRows, wideBench);
+  const benchFirstX = wideBench
+    ? WIDE_BENCH_LAYOUT.firstX
+    : BENCH_LAYOUT.firstX;
 
   const callout = lastPlay ? calloutText(lastPlay, labelOf) : null;
+  // Callouts wait for the event (steal, block, whistle) in the choreography.
+  const calloutDelayMs = choreography
+    ? (choreography.eventAt * motionMs) / speed
+    : 0;
+  // A block or steal rings the player who made it, and a foul blows the whistle.
+  const impactId =
+    lastPlay &&
+    (lastPlay.outcome === "blocked" || lastPlay.outcome === "stolen")
+      ? lastPlay.player2Id
+      : null;
+  const impactSide = frame.players.find((p) => p.playerId === impactId)?.side;
+  const impact =
+    lastPlay && impactId
+      ? { key: lastPlay.index, delayMs: calloutDelayMs, paused: !playing }
+      : undefined;
+  const whistle = lastPlay?.motion === "foul";
   const flashRim =
     lastPlay !== null &&
     lastPlay.outcome === "made" &&
@@ -439,6 +504,19 @@ export function FullCourtView(props: {
             </span>
           </span>
         ) : null}
+
+        {/* Room above the floor for the benches, in floor heights so the bench
+            seats (y < 0 on the court layer) land inside it. */}
+        <div
+          aria-hidden="true"
+          data-testid="court-bench-band"
+          className="w-full"
+          // Down to the top row of seats in floor heights (padding % is of
+          // the width), plus a fixed strip for the captions above it.
+          style={{
+            paddingTop: `calc(${Math.round(((-benchTopRow * WIDTH) / LENGTH) * 10000) / 100}% + ${BENCH_CAPTION_PX}px)`,
+          }}
+        />
 
         <div className="court-viewport relative w-full">
           <div
@@ -545,7 +623,10 @@ export function FullCourtView(props: {
                     const cy = shot.at.y * WIDTH;
                     const color = colorOf(shot.side);
                     return (
-                      <g key={shot.index} data-testid="court-shot-marker">
+                      <g
+                        key={`court-shot-${shot.index}`}
+                        data-testid="court-shot-marker"
+                      >
                         {shot.made ? (
                           <circle
                             cx={cx}
@@ -581,41 +662,67 @@ export function FullCourtView(props: {
                 : null}
             </svg>
 
-            {frame.players.map((player) => {
+            {[0, 1].map((side) => (
+              <span
+                key={`bench-caption-${side}`}
+                aria-hidden="true"
+                data-testid="court-bench-caption"
+                className="pointer-events-none absolute whitespace-nowrap font-display text-sm font-semibold uppercase tracking-wide"
+                style={{
+                  left: pct(benchFirstX[side as WatchSide] - 0.02),
+                  // Its bottom sits clear of the top row's tokens.
+                  top: pct(benchTopRow),
+                  transform: "translateY(calc(-100% - 16px))",
+                  color: palette.wordmark,
+                }}
+              >
+                {teamOf(side as WatchSide).abbreviation} bench
+              </span>
+            ))}
+
+            {tokens.map((token) => {
+              const floor =
+                token.kind === "floor" ? floorById.get(token.id) : null;
+              const seated =
+                token.kind === "bench" ? benchById.get(token.id) : null;
+              const player = floor ?? seated;
+              if (!player) {
+                return null;
+              }
               const color = colorOf(player.side);
               return (
                 <div
-                  key={player.playerId}
-                  data-mover={player.playerId}
+                  key={token.id}
+                  data-mover={token.id}
                   className="court-mover z-10"
-                  style={{ transform: courtTranslate(player.spot) }}
+                  style={{ transform: courtTranslate(placeOf(token.spot)) }}
                 >
                   <CourtToken
                     player={player}
                     team={teamOf(player.side)}
                     color={color}
-                    points={points.get(player.playerId) ?? 0}
-                    checkedIn={incoming.get(player.playerId)?.index ?? null}
-                    selected={props.selectedPlayerId === player.playerId}
+                    points={points.get(token.id) ?? 0}
+                    checkedIn={
+                      floor ? (incoming.get(token.id)?.index ?? null) : null
+                    }
+                    selected={props.selectedPlayerId === token.id}
                     onSelect={props.onSelectPlayer}
                     outline={tokenOutline(color, palette)}
                     accent={palette.line}
-                    labelSide={labelSides.sides.get(player.playerId) ?? "below"}
-                    labelShown={labelSides.shown.has(player.playerId)}
-                    badge={badgeOf(player.playerId)}
+                    labelSide={
+                      floor
+                        ? (labelSides.sides.get(token.id) ?? "below")
+                        : "above"
+                    }
+                    labelShown={floor ? labelSides.shown.has(token.id) : false}
+                    badge={badgeOf(token.id)}
+                    bench={seated !== null}
+                    fouledOut={seated !== null && fouledOut.has(token.id)}
+                    impact={floor && token.id === impactId ? impact : undefined}
                   />
                 </div>
               );
             })}
-
-            {ghosts.map(({ sub, outgoing, spot }) => (
-              <CourtGhost
-                key={`ghost-${sub.index}`}
-                initial={badgeOf(outgoing.playerId)}
-                color={colorOf(sub.side)}
-                spot={spot}
-              />
-            ))}
 
             {/* The ball's floor layer carries its shadow; the inner layer
                 lifts the ball for dribbles and arcs, so the gap between the
@@ -635,9 +742,22 @@ export function FullCourtView(props: {
 
             {callout && lastPlay ? (
               <CourtCallout
-                key={lastPlay.index}
+                key={`callout-${lastPlay.index}`}
                 text={callout}
                 at={frame.ball.at}
+                delayMs={calloutDelayMs}
+                paused={!playing}
+                accent={
+                  impactSide !== undefined ? colorOf(impactSide) : undefined
+                }
+              />
+            ) : null}
+            {whistle && lastPlay ? (
+              <CourtWhistle
+                key={`whistle-${lastPlay.index}`}
+                at={frame.ball.at}
+                delayMs={calloutDelayMs}
+                paused={!playing}
               />
             ) : null}
           </div>

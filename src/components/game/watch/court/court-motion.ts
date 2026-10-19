@@ -17,8 +17,8 @@ export function courtTranslate(point: FullCourtPoint): string {
   return `translate(${hundredths(point.x)}cqw, ${hundredths(point.y)}cqh)`;
 }
 
-/** Passes leave the hand fast and arrive soft. */
-const PASS_EASING = "ease-out";
+/** Passes travel at an even speed, so a short pass never looks flicked. */
+const PASS_EASING = "linear";
 
 /** Ball rest pose, a dribble (pushed into the floor) and the arc heights. */
 const BALL_REST = "translateY(0px) scale(1)";
@@ -39,9 +39,10 @@ const SAMPLES_PER_PLAY = 30;
  * Monotone cubic (Fritsch-Carlson) tangents for one axis: smooth through
  * every beat without overshooting, and zero where the player stops or turns
  * back. The ends keep the one-sided speed so motion runs on into the next
- * play instead of stopping at every reveal.
+ * play instead of stopping at every reveal, unless `stop` (a dead ball) brings
+ * the last beat to rest.
  */
-function tangents(times: number[], values: number[]): number[] {
+function tangents(times: number[], values: number[], stop: boolean): number[] {
   const n = values.length;
   const slope = (k: number) =>
     (values[k + 1]! - values[k]!) / (times[k + 1]! - times[k]!);
@@ -50,7 +51,7 @@ function tangents(times: number[], values: number[]): number[] {
       return n > 1 ? slope(0) : 0;
     }
     if (k === n - 1) {
-      return slope(n - 2);
+      return stop || n < 2 ? 0 : slope(n - 2);
     }
     const a = slope(k - 1);
     const b = slope(k);
@@ -69,14 +70,17 @@ function tangents(times: number[], values: number[]): number[] {
 export function smoothTrack(
   beats: number[],
   points: FullCourtPoint[],
+  stop = false,
 ): (t: number) => FullCourtPoint {
   const mx = tangents(
     beats,
     points.map((p) => p.x),
+    stop,
   );
   const my = tangents(
     beats,
     points.map((p) => p.y),
+    stop,
   );
   return (t) => {
     let k = 0;
@@ -121,8 +125,9 @@ function legSamples(from: number, to: number): number[] {
 export function trackKeyframes(
   beats: number[],
   points: FullCourtPoint[],
+  stop = false,
 ): Keyframe[] {
-  const at = smoothTrack(beats, points);
+  const at = smoothTrack(beats, points, stop);
   const frames: Keyframe[] = [];
   beats.forEach((t, k) => {
     frames.push({ transform: courtTranslate(points[k]!), offset: t });
@@ -144,7 +149,7 @@ export function ballFloorKeyframes(choreo: PlayChoreography): Keyframe[] {
   const tracks = new Map(
     choreo.tracks.map((track) => [
       track.playerId,
-      smoothTrack(choreo.beats, track.points),
+      smoothTrack(choreo.beats, track.points, choreo.deadBall),
     ]),
   );
   const frames: Keyframe[] = [];
@@ -168,16 +173,31 @@ export function ballFloorKeyframes(choreo: PlayChoreography): Keyframe[] {
   return frames;
 }
 
+const liftPose = (px: number) =>
+  `translateY(${-px}px) scale(${
+    Math.round((1 + (0.6 * px) / SHOT_LIFT_PX) * 100) / 100
+  })`;
+
+/** Height in px of a ball held mid-air between two legs (a blocked shot); 0 otherwise. */
+const heldLiftPx = (ball: { lift: number }) =>
+  ball.lift > 0 && ball.lift < 1
+    ? Math.round(ball.lift * SHOT_LIFT_PX * 10) / 10
+    : 0;
+
 /**
  * Height of the ball above the floor, on an inner layer: steady dribbles
  * while carried, an arc for the shot, and a smaller one for a ball coming
- * off the rim to a rebounder.
+ * off the rim to a rebounder. A blocked shot rises only to the blocker's hand
+ * (a partial lift, the short "shot" leg), then drops from there to the floor
+ * on the "loose" leg that follows.
  */
 export function ballLiftKeyframes(choreo: PlayChoreography): Keyframe[] {
   const frames: Keyframe[] = [{ transform: BALL_REST, offset: 0 }];
   choreo.legs.forEach((leg, k) => {
     const from = choreo.beats[k]!;
     const to = choreo.beats[k + 1]!;
+    const risePx = leg === "shot" ? heldLiftPx(choreo.ball[k + 1]!) : 0;
+    const dropPx = leg === "loose" ? heldLiftPx(choreo.ball[k]!) : 0;
     const offRim =
       leg === "loose" &&
       choreo.ball[k]!.lift > 0 &&
@@ -194,6 +214,18 @@ export function ballLiftKeyframes(choreo: PlayChoreography): Keyframe[] {
           frames.push({ transform: BALL_REST, offset: from + step * (d + 1) });
         }
       }
+    } else if (risePx > 0 || dropPx > 0) {
+      for (let step = 1; step < ARC_STEPS; step += 1) {
+        const t = step / ARC_STEPS;
+        const px =
+          risePx > 0
+            ? risePx * Math.sin((Math.PI / 2) * t)
+            : dropPx * Math.cos((Math.PI / 2) * t);
+        frames.push({
+          transform: liftPose(Math.round(px * 10) / 10),
+          offset: from + (to - from) * t,
+        });
+      }
     } else if (leg === "shot" || offRim) {
       const height = leg === "shot" ? SHOT_LIFT_PX : DROP_LIFT_PX;
       for (let step = 1; step < ARC_STEPS; step += 1) {
@@ -208,7 +240,10 @@ export function ballLiftKeyframes(choreo: PlayChoreography): Keyframe[] {
         });
       }
     }
-    frames.push({ transform: BALL_REST, offset: to });
+    frames.push({
+      transform: risePx > 0 ? liftPose(risePx) : BALL_REST,
+      offset: to,
+    });
   });
   return frames;
 }
