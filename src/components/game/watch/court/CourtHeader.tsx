@@ -1,6 +1,5 @@
 "use client";
 
-import type { ReactNode } from "react";
 import { Button } from "@/components/ui/Button";
 import { cn } from "@/components/ui/styles";
 
@@ -13,23 +12,12 @@ const STATUS_LABEL: Record<CourtStatus, string> = {
   complete: "Replay complete",
 };
 
-/** Status pill, camera controls and shot chart toggle above the court. */
+/** Status pill and shot chart toggle above the court. */
 export function CourtHeader(props: {
   status?: CourtStatus;
   showShotChart: boolean;
   onToggleShotChart: () => void;
-  /** Extra controls shown before the shot chart toggle (camera view). */
-  controls?: ReactNode;
 }) {
-  const shotChartButton = (
-    <Button
-      variant="secondary"
-      aria-pressed={props.showShotChart}
-      onClick={props.onToggleShotChart}
-    >
-      Shot chart
-    </Button>
-  );
   return (
     <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
       <div className="flex min-w-0 flex-wrap items-center gap-x-4 gap-y-1">
@@ -53,14 +41,13 @@ export function CourtHeader(props: {
           </p>
         ) : null}
       </div>
-      {props.controls ? (
-        <div className="flex flex-wrap items-center justify-end gap-2">
-          {props.controls}
-          {shotChartButton}
-        </div>
-      ) : (
-        shotChartButton
-      )}
+      <Button
+        variant="secondary"
+        aria-pressed={props.showShotChart}
+        onClick={props.onToggleShotChart}
+      >
+        Shot chart
+      </Button>
     </div>
   );
 }

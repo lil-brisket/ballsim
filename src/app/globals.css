@@ -223,48 +223,9 @@ body {
   transition-duration: calc(900ms / var(--court-speed, 1));
 }
 
-/*
- * Broadcast camera. The stage pans and zooms; the floor tilts like a
- * sideline camera. Tokens, ghosts, callouts and the ball stand up off the
- * tilted floor (translateZ keeps them in front of it) and face the viewer.
- */
-.court-camera-stage {
-  transform-origin: 0 0;
-  transition:
-    transform calc(900ms / var(--court-speed, 1)) ease-in-out,
-    perspective-origin calc(900ms / var(--court-speed, 1)) ease-in-out;
-}
-
-.court-tilted {
-  transform-style: preserve-3d;
-  transform-origin: 50% 100%;
-  transform: rotateX(var(--court-tilt));
-  transition: transform calc(900ms / var(--court-speed, 1)) ease-in-out;
-}
-
-.court-tilted .court-billboard {
-  transform: translateZ(32px) rotateX(calc(-1 * var(--court-tilt)))
-    scale(var(--court-token-scale, 1));
-}
-
-.court-tilted .court-ball {
-  translate: 0 0 40px;
-}
-
-.court-tilted .court-callout {
-  transform: translateZ(48px) rotateX(calc(-1 * var(--court-tilt)))
-    scale(var(--court-token-scale, 1));
-}
-
-/* Reduced motion (also set from JS): the camera cuts and the tilt is static. */
-.court-camera-static .court-camera-stage,
-.court-camera-static .court-tilted {
-  transition: none;
-}
-
 /* Whole floor on a phone: initials only, the 44px hit circle stays. */
 @media (max-width: 639px) {
-  .court-camera-wide .court-token-label {
+  .court-viewport .court-token-label {
     display: none;
   }
 }
@@ -351,8 +312,6 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .court-token,
   .court-switching .court-token,
-  .court-camera-stage,
-  .court-tilted,
   .court-centre-logo {
     transition: none;
   }
