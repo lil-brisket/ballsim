@@ -3,11 +3,14 @@ import type {
   SimulationStopReason,
 } from "@/systems/simulation/types";
 import type { CalendarLeagueContextView } from "@/state/standings-selectors";
+import type { CalendarMonthGrid } from "@/systems/calendar";
 
 export type SimulateToDateProgressEvent = {
   type: "progress";
   /** Controlled team's standings after this day, for the live league strip. */
   leagueContext?: CalendarLeagueContextView | null;
+  /** Grid for currentDate's month, sent the first time the run enters it. */
+  monthGrid?: CalendarMonthGrid;
 } & SimulationProgress;
 
 export type SimulateToDateDoneEvent = {

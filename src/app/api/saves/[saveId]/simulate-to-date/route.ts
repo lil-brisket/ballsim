@@ -10,6 +10,11 @@ import {
   isSimulationStopRequested,
 } from "@/application/simulation-stop-requests";
 import { toCalendarLeagueContext } from "@/state/standings-selectors";
+import { parseCalendarDate } from "@/domain/calendar-date";
+import {
+  type CalendarMonthGrid,
+  getCalendarMonthGrid,
+} from "@/systems/calendar";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -35,6 +40,7 @@ export async function POST(
   // A closed tab must not abort the run: the simulation keeps going and saves,
   // and writes to the dead stream are dropped.
   let clientGone = false;
+  let sentGridMonth: string | null = null;
   const stream = new ReadableStream({
     async start(controller) {
       const send = (event: SimulateToDateStreamEvent) => {
@@ -60,10 +66,24 @@ export async function POST(
             skipInProcessDedupe: true,
             shouldStop: () => isSimulationStopRequested(saveId),
             onProgress: (progress, state) => {
+              // Send each month's grid once so the calendar keeps showing the
+              // schedule after playback leaves the month the page loaded with.
+              const month = progress.currentDate.slice(0, 7);
+              let monthGrid: CalendarMonthGrid | undefined;
+              if (month !== sentGridMonth) {
+                sentGridMonth = month;
+                const { year, month: monthNumber } = parseCalendarDate(
+                  progress.currentDate,
+                );
+                monthGrid = getCalendarMonthGrid(state, year, monthNumber, {
+                  saveId,
+                });
+              }
               send({
                 type: "progress",
                 ...progress,
                 leagueContext: toCalendarLeagueContext(state),
+                monthGrid,
               });
             },
           }).finally(() => clearSimulationStopRequest(saveId)),
