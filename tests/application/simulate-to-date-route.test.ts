@@ -5,6 +5,10 @@ vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
 vi.mock("@/state/standings-selectors", () => ({
   toCalendarLeagueContext: () => null,
 }));
+vi.mock("@/systems/calendar", () => ({
+  getCalendarMonthGrid: () => null,
+  buildCalendarDateInspectorView: () => null,
+}));
 
 const progressAfterDisconnect = vi.fn();
 let releaseAdvance: () => void = () => {};
@@ -19,7 +23,7 @@ vi.mock("@/application/game-service", () => ({
       await new Promise<void>((resolve) => {
         releaseAdvance = resolve;
       });
-      options.onProgress?.({ daysAdvanced: 1 }, {});
+      options.onProgress?.({ daysAdvanced: 1, currentDate: "2026-10-02" }, {});
       progressAfterDisconnect();
       return {
         ok: true,
