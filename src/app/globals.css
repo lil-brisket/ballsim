@@ -197,19 +197,23 @@ body {
 .court-wood {
   /* Motion layers translate in cqw/cqh: fractions of the floor. */
   container-type: size;
+  /* A dark edge and a drop shadow lift the floor off the apron. */
+  box-shadow:
+    0 0 0 2px rgb(0 0 0 / 0.25),
+    0 10px 30px rgb(0 0 0 / 0.45);
   background-image:
     /* vignette toward the baselines */
     linear-gradient(
       90deg,
-      rgb(0 0 0 / 0.16),
+      rgb(0 0 0 / 0.22),
       transparent 18%,
       transparent 82%,
-      rgb(0 0 0 / 0.16)
+      rgb(0 0 0 / 0.22)
     ),
     /* arena-light gloss near centre court */
     radial-gradient(
         ellipse 55% 65% at 50% 45%,
-        rgb(255 255 255 / 0.16),
+        rgb(255 255 255 / 0.2),
         transparent 70%
       ),
     /* grain variation along the length */
@@ -222,13 +226,13 @@ body {
     /* staggered butt joints */
     repeating-linear-gradient(
         90deg,
-        rgb(70 40 10 / 0.06) 0 1px,
+        rgb(70 40 10 / 0.045) 0 1px,
         transparent 1px 56px
       ),
     /* plank seams along the length */
     repeating-linear-gradient(
         180deg,
-        rgb(70 40 10 / 0.1) 0 1px,
+        rgb(70 40 10 / 0.07) 0 1px,
         transparent 1px 7px
       );
 }

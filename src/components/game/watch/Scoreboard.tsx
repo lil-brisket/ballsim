@@ -27,10 +27,12 @@ function TeamBlock(props: {
         className="hidden sm:inline-flex"
       />
       <div className={`min-w-0 ${end ? "items-end" : ""}`}>
-        <p className="font-display text-2xl font-bold uppercase tracking-wide text-zinc-50">
-          {props.team.abbreviation}
+        <p className="truncate font-display text-xl font-bold uppercase leading-tight tracking-wide text-zinc-50 sm:text-2xl lg:text-3xl">
+          {props.team.city}
         </p>
-        <p className="truncate text-sm text-zinc-400">{props.team.name}</p>
+        <p className="truncate font-display text-base font-semibold uppercase tracking-[0.2em] text-team-ink">
+          {props.team.name}
+        </p>
         <p
           className={`flex items-center gap-2 text-sm text-zinc-400 ${
             end ? "justify-end" : ""

@@ -68,7 +68,7 @@ const RIMS = [toFullCourt(COURT_RIM, "left"), toFullCourt(COURT_RIM, "right")];
 const FINAL_LOGO_OPACITY = 0.7;
 
 const WORDMARK_CLASS =
-  "pointer-events-none absolute flex items-center justify-center font-display text-sm font-semibold uppercase tracking-wide";
+  "pointer-events-none absolute flex items-center justify-center font-display text-base font-bold uppercase tracking-[0.35em]";
 
 /**
  * Full-court replay: player tokens, ball and callouts on a
@@ -445,28 +445,14 @@ export function FullCourtView(props: {
         style={
           {
             backgroundColor: palette.apron,
+            // Arena light from above: a touch lighter at the far sideline.
+            backgroundImage:
+              "linear-gradient(180deg, rgb(255 255 255 / 0.06), transparent 45%, rgb(0 0 0 / 0.18))",
             "--court-speed": speed,
           } as CSSProperties
         }
         data-testid="court-view"
       >
-        <span
-          aria-hidden="true"
-          data-testid="court-wordmark"
-          className={cn(WORDMARK_CLASS, "inset-y-0 left-0 w-6")}
-          style={{ color: palette.wordmark }}
-        >
-          <span className="-rotate-90 whitespace-nowrap">{home.name}</span>
-        </span>
-        <span
-          aria-hidden="true"
-          data-testid="court-wordmark"
-          className={cn(WORDMARK_CLASS, "inset-y-0 right-0 w-6")}
-          style={{ color: palette.wordmark }}
-        >
-          <span className="rotate-90 whitespace-nowrap">{home.name}</span>
-        </span>
-
         {/* Possession marker on the scorer's table (near-sideline apron). Before
             the floor so screen readers hear possession before the players. */}
         {frame.ballSide !== null && frame.ballEnd !== null ? (
@@ -519,6 +505,24 @@ export function FullCourtView(props: {
         />
 
         <div className="court-viewport relative w-full">
+          {/* Baseline wordmarks on the apron, centred on the floor's height so
+              they line up with the hoops. */}
+          <span
+            aria-hidden="true"
+            data-testid="court-wordmark"
+            className={cn(WORDMARK_CLASS, "inset-y-0 -left-6 w-6")}
+            style={{ color: palette.wordmark }}
+          >
+            <span className="-rotate-90 whitespace-nowrap">{home.name}</span>
+          </span>
+          <span
+            aria-hidden="true"
+            data-testid="court-wordmark"
+            className={cn(WORDMARK_CLASS, "inset-y-0 -right-6 w-6")}
+            style={{ color: palette.wordmark }}
+          >
+            <span className="rotate-90 whitespace-nowrap">{home.name}</span>
+          </span>
           <div
             ref={courtRef}
             className="court-wood relative aspect-[94/50] w-full overflow-x-clip"
@@ -565,23 +569,45 @@ export function FullCourtView(props: {
                     height={COURT_FEET.laneWidth}
                   />
                 </clipPath>
+                {/* Sheen on the lane paint, brightest at the baseline and
+                    fading out toward the free-throw line. */}
+                {(["left", "right"] as const).map((end) => (
+                  <linearGradient
+                    key={end}
+                    id={`${clipId}-${end}`}
+                    x1={end === "left" ? "0" : "1"}
+                    x2={end === "left" ? "1" : "0"}
+                    y1="0"
+                    y2="0"
+                  >
+                    <stop offset="0" stopColor="#FFFFFF" stopOpacity="0.12" />
+                    <stop offset="1" stopColor="#FFFFFF" stopOpacity="0" />
+                  </linearGradient>
+                ))}
               </defs>
-              <rect
-                data-testid="court-lane"
-                x="0"
-                y={WIDTH / 2 - COURT_FEET.laneWidth / 2}
-                width={COURT_FEET.laneLength}
-                height={COURT_FEET.laneWidth}
-                fill={palette.lane}
-              />
-              <rect
-                data-testid="court-lane"
-                x={LENGTH - COURT_FEET.laneLength}
-                y={WIDTH / 2 - COURT_FEET.laneWidth / 2}
-                width={COURT_FEET.laneLength}
-                height={COURT_FEET.laneWidth}
-                fill={palette.lane}
-              />
+              {(["left", "right"] as const).map((end) => {
+                const x = end === "left" ? 0 : LENGTH - COURT_FEET.laneLength;
+                const y = WIDTH / 2 - COURT_FEET.laneWidth / 2;
+                return (
+                  <g key={`lane-${end}`}>
+                    <rect
+                      data-testid="court-lane"
+                      x={x}
+                      y={y}
+                      width={COURT_FEET.laneLength}
+                      height={COURT_FEET.laneWidth}
+                      fill={palette.lane}
+                    />
+                    <rect
+                      x={x}
+                      y={y}
+                      width={COURT_FEET.laneLength}
+                      height={COURT_FEET.laneWidth}
+                      fill={`url(#${clipId}-${end})`}
+                    />
+                  </g>
+                );
+              })}
               <circle
                 cx={LENGTH / 2}
                 cy={WIDTH / 2}
@@ -589,7 +615,7 @@ export function FullCourtView(props: {
                 fill={palette.lane}
                 fillOpacity="0.35"
                 stroke={palette.ring}
-                strokeWidth="0.5"
+                strokeWidth="0.6"
               />
               <g style={{ color: palette.line }}>
                 <FullCourtLines centreCircle={false} />
@@ -667,7 +693,7 @@ export function FullCourtView(props: {
                 key={`bench-caption-${side}`}
                 aria-hidden="true"
                 data-testid="court-bench-caption"
-                className="pointer-events-none absolute whitespace-nowrap font-display text-sm font-semibold uppercase tracking-wide"
+                className="pointer-events-none absolute max-w-[46%] truncate whitespace-nowrap font-display text-sm font-semibold uppercase tracking-wide"
                 style={{
                   left: pct(benchFirstX[side as WatchSide] - 0.02),
                   // Its bottom sits clear of the top row's tokens.
@@ -676,7 +702,7 @@ export function FullCourtView(props: {
                   color: palette.wordmark,
                 }}
               >
-                {teamOf(side as WatchSide).abbreviation} bench
+                {teamOf(side as WatchSide).city} bench
               </span>
             ))}
 

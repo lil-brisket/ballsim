@@ -1509,8 +1509,8 @@ describe("WatchGameClient benches", () => {
   it("seats everyone off the floor on the bench strip", () => {
     renderClient();
     expect(benchLabels()).toEqual(["Ben Bench, Harbor Waves, bench"]);
-    expect(screen.getAllByText("HOM bench")).toHaveLength(1);
-    expect(screen.getAllByText("AWY bench")).toHaveLength(1);
+    expect(screen.getAllByText("Harbor bench")).toHaveLength(1);
+    expect(screen.getAllByText("Visitor bench")).toHaveLength(1);
     expect(tokenLabels()).toHaveLength(VIEW.players.length);
   });
 
@@ -1619,28 +1619,26 @@ describe("WatchGameClient clock and team fouls", () => {
     keyMoments: [],
   };
 
-  const teamBlock = (abbreviation: string) =>
-    screen
-      .getByText(abbreviation, { selector: "p" })
-      .closest("div") as HTMLElement;
+  const teamBlock = (city: string) =>
+    screen.getByText(city, { selector: "p" }).closest("div") as HTMLElement;
 
   it("shows each team's fouls this period and the bonus one foul short of the threshold", () => {
     render(<WatchGameClient view={FOUL_VIEW} saveId="save_test" />);
-    expect(within(teamBlock("AWY")).getByText("Fouls 0")).toBeTruthy();
+    expect(within(teamBlock("Visitor")).getByText("Fouls 0")).toBeTruthy();
     expect(screen.queryByTestId("scoreboard-bonus")).toBeNull();
     for (let n = 1; n <= 3; n += 1) {
       fireEvent.keyDown(document, { key: "." });
     }
-    expect(within(teamBlock("AWY")).getByText("Fouls 3")).toBeTruthy();
-    expect(within(teamBlock("HOM")).getByText("Fouls 0")).toBeTruthy();
+    expect(within(teamBlock("Visitor")).getByText("Fouls 3")).toBeTruthy();
+    expect(within(teamBlock("Harbor")).getByText("Fouls 0")).toBeTruthy();
     // Away has 3 of 4: home is not in the bonus yet.
     expect(screen.queryByTestId("scoreboard-bonus")).toBeNull();
     fireEvent.keyDown(document, { key: "." });
-    expect(within(teamBlock("AWY")).getByText("Fouls 4")).toBeTruthy();
+    expect(within(teamBlock("Visitor")).getByText("Fouls 4")).toBeTruthy();
     const chip = screen.getByTestId("scoreboard-bonus");
     expect(chip.textContent).toBe("BONUS");
-    expect(teamBlock("HOM").contains(chip)).toBe(true);
-    expect(teamBlock("AWY").contains(chip)).toBe(false);
+    expect(teamBlock("Harbor").contains(chip)).toBe(true);
+    expect(teamBlock("Visitor").contains(chip)).toBe(false);
   });
 
   it("restarts the fouls and the bonus in the next period", () => {
@@ -1648,8 +1646,8 @@ describe("WatchGameClient clock and team fouls", () => {
     for (let n = 1; n <= 5; n += 1) {
       fireEvent.keyDown(document, { key: "." });
     }
-    expect(within(teamBlock("AWY")).getByText("Fouls 0")).toBeTruthy();
-    expect(within(teamBlock("HOM")).getByText("Fouls 1")).toBeTruthy();
+    expect(within(teamBlock("Visitor")).getByText("Fouls 0")).toBeTruthy();
+    expect(within(teamBlock("Harbor")).getByText("Fouls 1")).toBeTruthy();
     expect(screen.queryByTestId("scoreboard-bonus")).toBeNull();
   });
 

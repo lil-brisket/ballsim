@@ -532,8 +532,8 @@ describe("FullCourtView", () => {
       expect(
         sam.querySelector(".court-token-label")!.getAttribute("data-label"),
       ).toBe("hover");
-      expect(screen.getByText("HAR bench")).toBeTruthy();
-      expect(screen.getByText("SUM bench")).toBeTruthy();
+      expect(screen.getByText(`${COURT_HOME.city} bench`)).toBeTruthy();
+      expect(screen.getByText(`${COURT_AWAY.city} bench`)).toBeTruthy();
     });
 
     it("moves a substituted pair between the floor and the bench", () => {
