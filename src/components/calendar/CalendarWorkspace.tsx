@@ -48,6 +48,7 @@ import { Drawer } from "@/components/ui/Drawer";
 import { addCalendarDays, parseCalendarDate } from "@/domain/calendar-date";
 import {
   buildPlaceholderMonthGrid,
+  type CalendarDateInspectorView,
   type CalendarMonthGrid,
 } from "@/systems/calendar";
 import type { CalendarLeagueContextView } from "@/state/standings-selectors";
@@ -133,6 +134,8 @@ type PlaybackFrame = {
   seasonYear: number;
   teamResult?: { date: string; resultLabel: string } | null;
   leagueContext?: CalendarLeagueContextView | null;
+  monthGrid?: CalendarMonthGrid;
+  inspector?: CalendarDateInspectorView;
 };
 
 export function CalendarWorkspace(props: {
@@ -174,6 +177,11 @@ export function CalendarWorkspace(props: {
   const [resultOverlays, setResultOverlays] = useState<Record<string, string>>(
     {},
   );
+  // Month grids streamed by the server, keyed by YYYY-MM, for months the run
+  // passes through other than the one this page loaded with.
+  const [playbackGrids, setPlaybackGrids] = useState<
+    Record<string, CalendarMonthGrid>
+  >({});
   // Standings streamed during playback. Kept until the refreshed view arrives
   // so the strip does not flash back to the pre-simulation record.
   const [liveLeagueContext, setLiveLeagueContext] = useState<{
@@ -253,6 +261,10 @@ export function CalendarWorkspace(props: {
     if (playbackDate == null) {
       return props.view.monthGrid;
     }
+    const streamed = playbackGrids[monthKey(playbackDate)];
+    if (streamed) {
+      return streamed;
+    }
     const parsed = parseCalendarDate(playbackDate);
     if (
       parsed.year === props.view.monthGrid.year &&
@@ -261,7 +273,7 @@ export function CalendarWorkspace(props: {
       return props.view.monthGrid;
     }
     return buildPlaceholderMonthGrid(parsed.year, parsed.month, playbackDate);
-  }, [playbackDate, props.view.monthGrid]);
+  }, [playbackDate, playbackGrids, props.view.monthGrid]);
   const leagueContext =
     liveLeagueContext != null &&
     liveLeagueContext.source === props.view.leagueContext
@@ -378,6 +390,7 @@ export function CalendarWorkspace(props: {
   function resetPlayback() {
     setPlayback(null);
     setResultOverlays({});
+    setPlaybackGrids({});
     setSimulationPending(false);
     setStopRequested(false);
     stopRequestedRef.current = false;
@@ -446,6 +459,19 @@ export function CalendarWorkspace(props: {
       const next = frames.at(-1);
       if (next) {
         setPlayback(next);
+        const grids = frames.flatMap((frame) =>
+          frame.monthGrid ? [frame.monthGrid] : [],
+        );
+        if (grids.length > 0) {
+          setPlaybackGrids((current) => {
+            const merged = { ...current };
+            for (const grid of grids) {
+              merged[`${grid.year}-${String(grid.month).padStart(2, "0")}`] =
+                grid;
+            }
+            return merged;
+          });
+        }
         const results = frames.flatMap((frame) =>
           frame.teamResult?.resultLabel ? [frame.teamResult] : [],
         );
@@ -485,6 +511,8 @@ export function CalendarWorkspace(props: {
   function enqueueProgress(
     progress: SimulationProgress & {
       leagueContext?: CalendarLeagueContextView | null;
+      monthGrid?: CalendarMonthGrid;
+      inspector?: CalendarDateInspectorView;
     },
   ) {
     queueRef.current.push({
@@ -504,6 +532,8 @@ export function CalendarWorkspace(props: {
             }
           : null,
       leagueContext: progress.leagueContext,
+      monthGrid: progress.monthGrid,
+      inspector: progress.inspector,
     });
     drainQueue();
   }
@@ -685,17 +715,20 @@ export function CalendarWorkspace(props: {
           },
     );
   }
+  // During playback the panel follows the simulation cursor; the page's
+  // inspector only describes the date selected before the run.
+  const liveInspector = playback?.inspector ?? null;
   const inspector = (
     <DateInspector
       saveId={props.saveId}
       returnPath={returnPath}
-      inspector={props.view.inspector}
+      inspector={liveInspector ?? props.view.inspector}
       timeDisabled={props.view.timeDisabled || busy}
       userTeamId={props.view.userTeamId}
       simulating={playback != null}
       onSimulate={handleSimulate}
       showSimulateAction={isDesktop}
-      teamGameStats={props.view.teamGameStats}
+      teamGameStats={liveInspector ? null : props.view.teamGameStats}
       currentDate={liveCurrentDate}
       onWatch={handleWatch}
       hideTitle={!isDesktop}
