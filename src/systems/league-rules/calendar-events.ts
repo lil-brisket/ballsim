@@ -1,7 +1,9 @@
+import { addCalendarDays } from "@/domain/calendar-date";
 import type { GameState } from "@/state/game-state";
 import {
   getExpectedPhaseWindow,
   resolveSeasonAnchors,
+  type SeasonAnchors,
 } from "@/systems/league-rules/league-calendar";
 import { readActivePhaseId } from "@/systems/league-rules/phase-ids";
 import { resolveHardLockTradeDeadlineDate } from "@/systems/league-rules/trade-rules";
@@ -48,6 +50,22 @@ function scheduleBounds(state: GameState): {
     if (latest === null || game.date > latest) latest = game.date;
   }
   return { earliest, latest };
+}
+
+function firstPlayoffGameDate(state: GameState): string | null {
+  let earliest: string | null = null;
+  for (const game of Object.values(state.competition.games)) {
+    if (game.competitionType !== "playoffs") continue;
+    if (earliest === null || game.date < earliest) earliest = game.date;
+  }
+  return earliest;
+}
+
+/** Round 1 plays the day after the last regular-season game. */
+function playoffsOpenDate(anchors: SeasonAnchors): string | null {
+  return anchors.regularSeasonEnd
+    ? addCalendarDays(anchors.regularSeasonEnd, 1)
+    : null;
 }
 
 /**
@@ -200,7 +218,7 @@ export function getLeagueMilestones(
     {
       key: "playoffsStart",
       label: "Playoffs",
-      date: anchors.regularSeasonEnd,
+      date: firstPlayoffGameDate(state) ?? playoffsOpenDate(anchors),
       reached: phaseId === "playoffs" || phaseId === "postseason.season_review",
       active: phaseId === "playoffs",
     },

@@ -60,6 +60,17 @@ describe("league milestone calendar markers", () => {
     ).toBe(true);
   });
 
+  it("starts the playoffs the day after the regular season and the offseason after them", () => {
+    const state = bootRegular("milestone_playoffs", 57);
+    const milestones = getLeagueMilestones(state);
+    const date = (key: string) => milestones.find((m) => m.key === key)?.date;
+
+    const regularSeasonEnd = date("regularSeasonEnd")!;
+    expect(date("playoffsStart")).toBe(addCalendarDays(regularSeasonEnd, 1));
+    expect(date("offseasonStart")! > date("playoffsStart")!).toBe(true);
+    expect(date("draftStart")! > date("offseasonStart")!).toBe(true);
+  });
+
   it("indexes milestone markers by date within a range", () => {
     const state = bootRegular("milestone_index", 52);
     const currentDate = state.world.calendar.currentDate;

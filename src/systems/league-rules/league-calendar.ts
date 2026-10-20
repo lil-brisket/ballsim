@@ -118,6 +118,24 @@ export function endOfSeasonSimulationBound(state: GameState): string | null {
   return addCalendarDays(regularSeasonDone, 1 + rounds * seriesLength);
 }
 
+/**
+ * Latest date the playoffs could finish: round 1 starts the day after the
+ * regular season ends and each round lasts at most a full series. Null when
+ * the playoffs are complete, not configured, or there is no season end yet.
+ */
+export function projectedPlayoffsEndDate(
+  state: GameState,
+  regularSeasonEnd: string | null,
+): string | null {
+  if (regularSeasonEnd === null) return null;
+  if (state.competition.playoffs.status === "complete") return null;
+  const { playoffTeams, seriesLength } = state.settings.playoffs;
+  const liveTeamCount = Object.keys(state.world.teams).length;
+  if (playoffTeams <= 0 || playoffTeams > liveTeamCount) return null;
+  const rounds = Math.ceil(Math.log2(playoffTeams));
+  return addCalendarDays(regularSeasonEnd, rounds * seriesLength);
+}
+
 function scheduleBounds(state: GameState): {
   earliest: string | null;
   latest: string | null;
@@ -166,8 +184,14 @@ export function resolveSeasonAnchors(state: GameState): SeasonAnchors {
       bounds.earliest ??
       plannedOpener);
 
+  // Scheduled end, not the last played game, so mid-season it does not drift
+  // with the current date.
+  const lastRegularFinal = lastFinalGameDate(state, "regular_season");
   const regularSeasonEnd =
-    lastFinalGameDate(state, "regular_season") ?? bounds.latest;
+    lastRegularFinal !== null &&
+    (bounds.latest === null || lastRegularFinal > bounds.latest)
+      ? lastRegularFinal
+      : bounds.latest;
 
   const playoffsEnd =
     lastFinalGameDate(state, "playoffs") ??
@@ -175,7 +199,12 @@ export function resolveSeasonAnchors(state: GameState): SeasonAnchors {
       ? regularSeasonEnd
       : null);
 
-  const seasonEndAnchor = playoffsEnd ?? regularSeasonEnd;
+  // Playoffs are not scheduled ahead; until the final is played, review and
+  // offseason anchor off the latest date the bracket could run to.
+  const seasonEndAnchor =
+    playoffsEnd ??
+    projectedPlayoffsEndDate(state, regularSeasonEnd) ??
+    regularSeasonEnd;
 
   const seasonReviewStart = seasonEndAnchor
     ? addCalendarDays(seasonEndAnchor, 1)
