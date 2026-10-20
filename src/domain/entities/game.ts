@@ -27,6 +27,19 @@ export const GAME_COMPETITION_TYPES: readonly GameCompetitionType[] = [
   "midseason_tournament",
 ];
 
+/**
+ * Unplayed Midseason Cup game left in a legacy save. The cup is retired, so
+ * nothing will ever play it; schedule views hide it until season rollover.
+ */
+export function isOrphanedCupGame(game: {
+  competitionType: GameCompetitionType;
+  status: GameStatus;
+}): boolean {
+  return (
+    game.competitionType === "midseason_tournament" && game.status !== "final"
+  );
+}
+
 export type GameScore = {
   home: number;
   away: number;

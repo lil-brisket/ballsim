@@ -1,12 +1,12 @@
 import type { PlayoffSeed } from "@/domain/entities/playoffs";
 import type { TeamStanding } from "@/domain/entities/standings";
-import type { TeamId } from "@/domain/ids";
+import type { ConferenceId, TeamId } from "@/domain/ids";
 import { compareStandings } from "@/systems/standings";
 
 /**
  * Qualifies the top N teams from final regular-season standings (league-wide)
- * and assigns seeds 1..N in standings order.
- * Conferences do not drive qualification or seeding.
+ * and assigns seeds 1..N in standings order. Used for the league-wide format;
+ * conference playoffs use {@link qualifyAndSeedByConference}.
  */
 export function qualifyAndSeed(
   standings: readonly TeamStanding[],
@@ -42,6 +42,58 @@ export function qualifyAndSeed(
   }
 
   return qualified;
+}
+
+/**
+ * Qualifies the top `spotsPerConference` teams of each conference.
+ * `seeds` carry the overall rank among all qualifiers (1 = best record), so
+ * higher-seed home court follows record both inside a conference and in the
+ * Finals. `groups` lists each conference's qualifiers in conference-seed
+ * order, in `conferenceIds` order.
+ */
+export function qualifyAndSeedByConference(
+  standings: readonly TeamStanding[],
+  teamConferenceById: ReadonlyMap<TeamId, ConferenceId>,
+  conferenceIds: readonly ConferenceId[],
+  spotsPerConference: number,
+): { seeds: PlayoffSeed[]; groups: TeamId[][] } {
+  if (!Number.isInteger(spotsPerConference) || spotsPerConference < 1) {
+    throw new Error(
+      `qualifyAndSeedByConference spotsPerConference must be a positive integer; got ${spotsPerConference}.`,
+    );
+  }
+
+  const ranked = [...standings].sort(compareStandings);
+  const seen = new Set<string>();
+  for (const row of ranked) {
+    if (seen.has(row.teamId)) {
+      throw new Error(
+        `qualifyAndSeedByConference found duplicate teamId ${row.teamId} in standings.`,
+      );
+    }
+    seen.add(row.teamId);
+  }
+
+  const groups = conferenceIds.map((conferenceId) => {
+    const conferenceRows = ranked.filter(
+      (row) => teamConferenceById.get(row.teamId as TeamId) === conferenceId,
+    );
+    if (conferenceRows.length < spotsPerConference) {
+      throw new Error(
+        `qualifyAndSeedByConference needs ${spotsPerConference} standing rows in ${conferenceId}; found ${conferenceRows.length}.`,
+      );
+    }
+    return conferenceRows
+      .slice(0, spotsPerConference)
+      .map((row) => row.teamId as TeamId);
+  });
+
+  const qualified = new Set<string>(groups.flat());
+  const seeds: PlayoffSeed[] = ranked
+    .filter((row) => qualified.has(row.teamId))
+    .map((row, index) => ({ teamId: row.teamId as TeamId, seed: index + 1 }));
+
+  return { seeds, groups };
 }
 
 /**

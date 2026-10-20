@@ -6,7 +6,6 @@ import { appendSeasonEventLog } from "@/state/game-state";
 import { processHolidays } from "@/systems/season-events/process-holidays";
 import { processFanVoting } from "@/systems/season-events/process-fan-voting";
 import { processAllStar } from "@/systems/season-events/process-all-star";
-import { processTournament } from "@/systems/season-events/process-tournament";
 import {
   ensureSeasonEventsState,
   withSeasonEvents,
@@ -23,8 +22,7 @@ import {
  * 4. Fan voting — close / finalize rankings
  * 5. All-Star — selection rules (after vote close)
  * 6. All-Star — exhibition game sim
- * 7. Tournament — qual / games
- * 8. Holiday completion
+ * 7. Holiday completion
  */
 export function processSeasonEvents(state: GameState, rng: Rng): SystemResult {
   let current = withSeasonEvents(state, ensureSeasonEventsState(state));
@@ -46,10 +44,6 @@ export function processSeasonEvents(state: GameState, rng: Rng): SystemResult {
   const allStar = processAllStar(current, rng, simulatedDate);
   current = allStar.state;
   events.push(...allStar.events);
-
-  const tournament = processTournament(current, rng, simulatedDate);
-  current = tournament.state;
-  events.push(...tournament.events);
 
   const holidayEnd = processHolidays(current, simulatedDate, "complete");
   current = holidayEnd.state;

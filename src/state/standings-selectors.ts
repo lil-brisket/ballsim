@@ -21,6 +21,7 @@ import {
   type TeamBrandingView,
 } from "@/state/team-branding-view";
 import { compareStandings } from "@/systems/standings";
+import { resolvePlayoffFormat } from "@/systems/playoff-format";
 import { leagueRankByTeamId } from "@/state/selectors/league-rank";
 import type { PlayoffRaceStatus } from "@/systems/simulation/calendar-context";
 import { getCalendarContext } from "@/systems/simulation/calendar-context";
@@ -85,10 +86,13 @@ export type StandingsPageView = {
   /** League-wide playoff field used for Overall cutoff / race / labels. */
   playoffTeamCount: number;
   /**
-   * Per-conference cutoff for League Hub snapshot only.
-   * Presentation-only — not used for qualification (`qualifyAndSeed` is league-wide).
+   * Per-conference playoff cutoff. In conference-playoff mode this is the
+   * number of qualifiers per conference; in league-wide mode it is a
+   * presentation-only estimate for the League Hub snapshot.
    */
   cutoffPerConference: number;
+  /** Qualifiers per conference in conference-playoff mode; null when league-wide. */
+  conferencePlayoffSpots: number | null;
   groups: StandingsGroup[];
   /** Flat league ranking (same rows, league order). */
   leagueRows: StandingsRowEnriched[];
@@ -135,6 +139,8 @@ export type PlayoffRaceEntry = {
 
 export type PlayoffRaceView = {
   applicable: boolean;
+  /** Conference the race is drawn for; null for a league-wide race. */
+  conferenceName: string | null;
   cutoffRank: number;
   playoffTeamCount: number;
   above: PlayoffRaceEntry[];
@@ -178,14 +184,24 @@ function scoringRates(standing: TeamStanding): {
   };
 }
 
+/** Per-conference qualifier count when playoffs are conference-based. */
+function conferenceSpots(state: GameState): number | null {
+  const format = resolvePlayoffFormat(state);
+  return format.kind === "conference" ? format.spotsPerConference : null;
+}
+
 /**
- * Playoff cutoff rank within a conference from league configuration.
+ * Playoff cutoff rank within a conference.
  *
- * Presentation-only. Not used for qualification — `qualifyAndSeed` ranks
- * league-wide by `settings.playoffs.playoffTeams`. Kept for League Hub
- * snapshot consumers that still draw a conference-style line.
+ * In conference-playoff mode this is the real qualification line (top k per
+ * conference, same as `qualifyAndSeedByConference`). Otherwise it is a
+ * presentation-only estimate for League Hub snapshot consumers.
  */
 export function playoffCutoffPerConference(state: GameState): number {
+  const spots = conferenceSpots(state);
+  if (spots != null) {
+    return spots;
+  }
   const fieldSize = state.competition.playoffs.fieldSize;
   const conferenceCount = Math.max(
     1,
@@ -227,7 +243,7 @@ export function isPlayoffCutoffVisible(
 function resolvePlayoffLabel(
   state: GameState,
   teamId: TeamId,
-  leagueRank: number,
+  rank: number,
   cutoff: number,
   cutoffVisible: boolean,
 ): PlayoffPositionLabel {
@@ -259,11 +275,11 @@ function resolvePlayoffLabel(
     return "na";
   }
 
-  if (leagueRank <= cutoff) {
+  if (rank <= cutoff) {
     return "playoff";
   }
 
-  if (leagueRank <= cutoff + BUBBLE_BAND) {
+  if (rank <= cutoff + BUBBLE_BAND) {
     return "bubble";
   }
 
@@ -334,6 +350,7 @@ function buildEnrichedRows(state: GameState): StandingsRowEnriched[] {
   const liveTeamCount = Object.keys(state.world.teams).length;
   const playoffTeamCount = resolvePlayoffTeamCount(state);
   const cutoffVisible = isPlayoffCutoffVisible(playoffTeamCount, liveTeamCount);
+  const spots = conferenceSpots(state);
 
   const drafts: Draft[] = [];
   for (const team of Object.values(state.world.teams)) {
@@ -442,8 +459,8 @@ function buildEnrichedRows(state: GameState): StandingsRowEnriched[] {
       playoffLabel: resolvePlayoffLabel(
         state,
         row.teamId as TeamId,
-        leagueRank,
-        playoffTeamCount,
+        spots != null ? conferenceRank : leagueRank,
+        spots ?? playoffTeamCount,
         cutoffVisible,
       ),
       branding: row.branding,
@@ -471,9 +488,12 @@ function projectGroups(
   playoffTeamCount: number,
 ): StandingsGroup[] {
   const liveTeamCount = rows.length;
-  const overallCutoff = isPlayoffCutoffVisible(playoffTeamCount, liveTeamCount)
-    ? playoffTeamCount
-    : null;
+  const cutoffVisible = isPlayoffCutoffVisible(playoffTeamCount, liveTeamCount);
+  const spots = conferenceSpots(state);
+  // Conference mode: the line belongs to each conference, not the league.
+  const overallCutoff =
+    cutoffVisible && spots == null ? playoffTeamCount : null;
+  const conferenceCutoff = cutoffVisible ? spots : null;
 
   if (view === "overall") {
     return [
@@ -501,7 +521,7 @@ function projectGroups(
         id: conferenceId,
         name: confRows[0]?.conferenceName ?? "Conference",
         kind: "conference" as const,
-        cutoffRank: null,
+        cutoffRank: conferenceCutoff,
         rows: confRows,
       };
     });
@@ -566,6 +586,7 @@ export function toStandingsPageView(
     divisionsEnabled: state.settings.league.divisionsEnabled,
     playoffTeamCount,
     cutoffPerConference,
+    conferencePlayoffSpots: conferenceSpots(state),
     groups,
     leagueRows,
     championTeamId: state.competition.playoffs.championTeamId ?? null,
@@ -577,7 +598,7 @@ export function toStandingsPageView(
 
 function toRaceEntry(
   row: StandingsRowEnriched,
-  cutoff: number,
+  inField: boolean,
 ): PlayoffRaceEntry {
   return {
     teamId: row.teamId,
@@ -588,7 +609,7 @@ function toRaceEntry(
     losses: row.losses,
     winPercentage: row.winPercentage,
     leagueRank: row.leagueRank,
-    inField: row.leagueRank <= cutoff,
+    inField,
     isUserTeam: row.isUserTeam,
     branding: row.branding,
   };
@@ -607,39 +628,56 @@ export function toPlayoffRaceView(state: GameState): PlayoffRaceView {
   if (!applicable) {
     return {
       applicable: false,
-      cutoffRank: playoffTeamCount,
+      conferenceName: null,
+      cutoffRank: page.conferencePlayoffSpots ?? playoffTeamCount,
       playoffTeamCount,
       above: [],
       below: [],
     };
   }
 
-  const cutoff = playoffTeamCount;
-  const inTeams = page.leagueRows.filter((r) => r.leagueRank <= cutoff);
-  const outTeams = page.leagueRows.filter((r) => r.leagueRank > cutoff);
+  // Conference mode: race within the active owner's conference, ranked by
+  // conference rank against the per-conference cutoff.
+  const spots = page.conferencePlayoffSpots;
+  const ownerId = getActiveOwnerTeamId(state);
+  const ownerRow = page.leagueRows.find((r) => r.teamId === ownerId);
+  const conferenceRows =
+    spots != null && ownerRow
+      ? page.leagueRows
+          .filter((r) => r.conferenceId === ownerRow.conferenceId)
+          .sort((a, b) => a.conferenceRank - b.conferenceRank)
+      : null;
+  const rows = conferenceRows ?? page.leagueRows;
+  const rankOf = (row: StandingsRowEnriched) =>
+    conferenceRows ? row.conferenceRank : row.leagueRank;
+  const cutoff = conferenceRows && spots != null ? spots : playoffTeamCount;
+
+  const inTeams = rows.filter((r) => rankOf(r) <= cutoff);
+  const outTeams = rows.filter((r) => rankOf(r) > cutoff);
   let above = inTeams.slice(-Math.min(PLAYOFF_RACE_WINDOW, inTeams.length));
   let below = outTeams.slice(0, Math.min(PLAYOFF_RACE_WINDOW, outTeams.length));
 
   const windowIds = new Set([...above, ...below].map((row) => row.teamId));
   const owned = new Set(page.ownedTeamIds);
-  for (const row of page.leagueRows) {
+  for (const row of rows) {
     if (!owned.has(row.teamId) || windowIds.has(row.teamId)) {
       continue;
     }
-    if (row.leagueRank <= cutoff) {
-      above = [...above, row].sort((a, b) => a.leagueRank - b.leagueRank);
+    if (rankOf(row) <= cutoff) {
+      above = [...above, row].sort((a, b) => rankOf(a) - rankOf(b));
     } else {
-      below = [...below, row].sort((a, b) => a.leagueRank - b.leagueRank);
+      below = [...below, row].sort((a, b) => rankOf(a) - rankOf(b));
     }
     windowIds.add(row.teamId);
   }
 
   return {
     applicable: true,
+    conferenceName: conferenceRows ? (ownerRow?.conferenceName ?? null) : null,
     cutoffRank: cutoff,
     playoffTeamCount,
-    above: above.map((row) => toRaceEntry(row, cutoff)),
-    below: below.map((row) => toRaceEntry(row, cutoff)),
+    above: above.map((row) => toRaceEntry(row, rankOf(row) <= cutoff)),
+    below: below.map((row) => toRaceEntry(row, rankOf(row) <= cutoff)),
   };
 }
 
@@ -664,10 +702,16 @@ export function toMyTeamStandingsContext(
     page.playoffTeamCount,
     page.leagueRows.length,
   );
-  const cutoffRow = cutoffVisible
-    ? (page.leagueRows.find((r) => r.leagueRank === page.playoffTeamCount) ??
-      null)
-    : null;
+  const spots = page.conferencePlayoffSpots;
+  const cutoffRow = !cutoffVisible
+    ? null
+    : spots != null
+      ? (page.leagueRows.find(
+          (r) =>
+            r.conferenceId === user.conferenceId && r.conferenceRank === spots,
+        ) ?? null)
+      : (page.leagueRows.find((r) => r.leagueRank === page.playoffTeamCount) ??
+        null);
 
   return {
     teamId: user.teamId,

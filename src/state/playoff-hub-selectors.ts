@@ -9,6 +9,11 @@ import {
   playoffRoundLabel,
   type PlayoffSeries,
 } from "@/domain/entities/playoffs";
+import {
+  analyzePlayoffBracket,
+  conferenceSeedByTeam,
+  type PlayoffBracketAnalysis,
+} from "@/state/playoff-conference-view";
 
 export type UserPlayoffStatus =
   "not_in_playoffs" | "in_playoffs" | "eliminated" | "advanced" | "champion";
@@ -19,8 +24,15 @@ export type PlayoffSeriesView = {
   roundLabel: string;
   slot: number;
   status: string;
+  /** Conference seed in conference brackets; overall seed otherwise. */
   higherSeed: number | null;
   lowerSeed: number | null;
+  /** Original overall regular-season seed. */
+  higherOverallSeed: number | null;
+  lowerOverallSeed: number | null;
+  /** Conference the series belongs to; null for cross-conference rounds. */
+  conferenceId: string | null;
+  conferenceName: string | null;
   higherSeedTeamId: string | null;
   lowerSeedTeamId: string | null;
   higherSeedTeamName: string | null;
@@ -37,6 +49,13 @@ export type PlayoffRoundView = {
   series: PlayoffSeriesView[];
 };
 
+/** One conference's sub-bracket (conference brackets only). */
+export type PlayoffConferenceSectionView = {
+  conferenceId: string;
+  conferenceName: string;
+  rounds: PlayoffRoundView[];
+};
+
 export type PlayoffHubView = {
   available: boolean;
   saveId: string;
@@ -49,7 +68,14 @@ export type PlayoffHubView = {
   userStatus: UserPlayoffStatus;
   championTeamId: string | null;
   championTeamName: string | null;
+  /** Every round in order (conference and cross-conference). */
   rounds: PlayoffRoundView[];
+  /** True when the bracket is split into conference sub-brackets. */
+  isConferenceBracket: boolean;
+  /** Conference sub-brackets, in qualification order (empty if league-wide). */
+  conferenceSections: PlayoffConferenceSectionView[];
+  /** Cross-conference rounds (Semifinals, Finals); empty if league-wide. */
+  crossConferenceRounds: PlayoffRoundView[];
 };
 
 function teamName(state: GameState, teamId: string | null): string | null {
@@ -97,30 +123,71 @@ export function resolveUserPlayoffStatus(
   return "in_playoffs";
 }
 
+/** Label for a conference-bracket round, counting back from the final. */
+export function conferenceBracketRoundLabel(
+  round: number,
+  conferenceSpecific: boolean,
+  bracket: Pick<PlayoffBracketAnalysis, "finalRound" | "crossConferenceRounds">,
+): string {
+  const fromFinal = bracket.finalRound - round;
+  if (!conferenceSpecific) {
+    return fromFinal === 0 ? "Finals" : "Semifinals";
+  }
+  const fromConferenceFinal = fromFinal - bracket.crossConferenceRounds;
+  if (fromConferenceFinal <= 0) {
+    return "Conference Finals";
+  }
+  if (fromConferenceFinal === 1 && round > 0) {
+    return "Conference Semifinals";
+  }
+  return "First Round";
+}
+
 function toSeriesView(
   state: GameState,
   series: PlayoffSeries,
   fieldSize: number,
+  bracket: PlayoffBracketAnalysis,
+  seedByTeam: Map<string, number>,
 ): PlayoffSeriesView {
+  const conferenceId = bracket.isConferenceBracket
+    ? (bracket.conferenceBySeriesId.get(series.id) ?? null)
+    : null;
   let roundLabel = `Round ${series.round + 1}`;
-  try {
-    roundLabel = playoffRoundLabel(series.round, fieldSize).replaceAll(
-      "_",
-      " ",
+  if (bracket.isConferenceBracket) {
+    roundLabel = conferenceBracketRoundLabel(
+      series.round,
+      conferenceId != null,
+      bracket,
     );
-  } catch {
-    // fieldSize may be invalid mid-migration — keep fallback label
+  } else {
+    try {
+      roundLabel = playoffRoundLabel(series.round, fieldSize).replaceAll(
+        "_",
+        " ",
+      );
+    } catch {
+      // fieldSize may be invalid mid-migration — keep fallback label
+    }
   }
   const higherId = series.higherSeedTeamId;
   const lowerId = series.lowerSeedTeamId;
+  const confSeed = (teamId: string | null, fallback: number | null) =>
+    teamId ? (seedByTeam.get(teamId) ?? fallback) : fallback;
   return {
     id: series.id,
     round: series.round,
     roundLabel,
     slot: series.slot,
     status: series.status,
-    higherSeed: series.higherSeed,
-    lowerSeed: series.lowerSeed,
+    higherSeed: confSeed(higherId, series.higherSeed),
+    lowerSeed: confSeed(lowerId, series.lowerSeed),
+    higherOverallSeed: series.higherSeed,
+    lowerOverallSeed: series.lowerSeed,
+    conferenceId,
+    conferenceName: conferenceId
+      ? (state.world.conferences[conferenceId]?.name ?? conferenceId)
+      : null,
     higherSeedTeamId: higherId,
     lowerSeedTeamId: lowerId,
     higherSeedTeamName: teamName(state, higherId),
@@ -132,6 +199,22 @@ function toSeriesView(
   };
 }
 
+function groupRounds(seriesViews: PlayoffSeriesView[]): PlayoffRoundView[] {
+  const roundMap = new Map<number, PlayoffSeriesView[]>();
+  for (const series of seriesViews) {
+    const list = roundMap.get(series.round) ?? [];
+    list.push(series);
+    roundMap.set(series.round, list);
+  }
+  return [...roundMap.entries()]
+    .sort((a, b) => a[0] - b[0])
+    .map(([round, series]) => ({
+      round,
+      label: series[0]?.roundLabel ?? `Round ${round + 1}`,
+      series,
+    }));
+}
+
 export function toPlayoffHubView(state: GameState): PlayoffHubView {
   const saveId = state.meta.saveId;
   const teamId = getActiveOwnerTeamId(state);
@@ -139,24 +222,47 @@ export function toPlayoffHubView(state: GameState): PlayoffHubView {
   const playoffs = state.competition.playoffs;
   const available = playoffs.status !== "not_started" && playoffs.fieldSize > 0;
 
+  const bracket = analyzePlayoffBracket(playoffs, state);
+  const seedByTeam = conferenceSeedByTeam(state);
   const seriesViews = playoffs.series
-    .map((s) => toSeriesView(state, s, playoffs.fieldSize))
+    .map((s) => toSeriesView(state, s, playoffs.fieldSize, bracket, seedByTeam))
     .sort((a, b) => a.round - b.round || a.slot - b.slot);
 
-  const roundMap = new Map<number, PlayoffSeriesView[]>();
-  for (const series of seriesViews) {
-    const list = roundMap.get(series.round) ?? [];
-    list.push(series);
-    roundMap.set(series.round, list);
-  }
+  const rounds = groupRounds(seriesViews);
 
-  const rounds: PlayoffRoundView[] = [...roundMap.entries()]
-    .sort((a, b) => a[0] - b[0])
-    .map(([round, series]) => ({
-      round,
-      label: series[0]?.roundLabel ?? `Round ${round + 1}`,
-      series,
-    }));
+  const conferenceSections: PlayoffConferenceSectionView[] = [];
+  let crossConferenceRounds: PlayoffRoundView[] = [];
+  if (bracket.isConferenceBracket) {
+    const conferenceIds: string[] = [];
+    for (const entry of playoffs.qualifiedTeams) {
+      const conferenceId = state.world.teams[entry.teamId]?.conferenceId;
+      if (conferenceId && !conferenceIds.includes(conferenceId)) {
+        conferenceIds.push(conferenceId);
+      }
+    }
+    const leagueOrder: string[] = [...state.world.league.conferenceIds];
+    const orderOf = (id: string) => {
+      const index = leagueOrder.indexOf(id);
+      return index < 0 ? leagueOrder.length : index;
+    };
+    conferenceIds.sort((x, y) => orderOf(x) - orderOf(y));
+    for (const conferenceId of conferenceIds) {
+      const rounds = groupRounds(
+        seriesViews.filter((s) => s.conferenceId === conferenceId),
+      );
+      // One qualifier per conference: no conference rounds to show.
+      if (rounds.length === 0) continue;
+      conferenceSections.push({
+        conferenceId,
+        conferenceName:
+          state.world.conferences[conferenceId]?.name ?? conferenceId,
+        rounds,
+      });
+    }
+    crossConferenceRounds = groupRounds(
+      seriesViews.filter((s) => s.conferenceId == null),
+    );
+  }
 
   const activeRound = seriesViews.find((s) => s.status === "active");
   const currentRoundLabel =
@@ -176,5 +282,8 @@ export function toPlayoffHubView(state: GameState): PlayoffHubView {
     championTeamId: playoffs.championTeamId ?? null,
     championTeamName: teamName(state, playoffs.championTeamId ?? null),
     rounds: available ? rounds : [],
+    isConferenceBracket: available && bracket.isConferenceBracket,
+    conferenceSections: available ? conferenceSections : [],
+    crossConferenceRounds: available ? crossConferenceRounds : [],
   };
 }

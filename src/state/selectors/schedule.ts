@@ -1,3 +1,4 @@
+import { isOrphanedCupGame } from "@/domain/entities/game";
 import {
   type TeamBrandingView,
   toBrandingView,
@@ -30,6 +31,9 @@ export function toScheduleView(state: GameState): ScheduleGameView[] {
   const rows: ScheduleGameView[] = [];
   for (const game of Object.values(state.competition.games)) {
     if (game.homeTeamId !== teamId && game.awayTeamId !== teamId) {
+      continue;
+    }
+    if (isOrphanedCupGame(game)) {
       continue;
     }
     const home = game.homeTeamId === teamId;

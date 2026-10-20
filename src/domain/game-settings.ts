@@ -301,7 +301,10 @@ export type GameSettings = {
     awardsDurationDays: number;
     /** Idle days inserted into RS schedule around midseason (0 = off). */
     scheduleBreakDays: number;
-    /** Tournament field size when enabled (0 = tournament disabled at plan time). */
+    /**
+     * @deprecated The Midseason Cup is retired and this value is ignored.
+     * Kept so settings stored in older saves still validate.
+     */
     tournamentFieldSize: number;
   };
 };

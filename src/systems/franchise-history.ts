@@ -7,11 +7,11 @@ import type {
   FranchiseSeasonRecord,
   PlayoffResultSnapshot,
 } from "@/domain/entities/franchise-history";
-import { playoffRoundLabel } from "@/domain/entities/playoffs";
 import type { DomainEvent } from "@/domain/events";
 import type { TeamId } from "@/domain/ids";
 import { systemResult, type SystemResult } from "@/domain/system-result";
 import type { GameState } from "@/state/game-state";
+import { analyzePlayoffBracket } from "@/state/playoff-conference-view";
 import { calculateFranchiseValue } from "@/state/franchise-value";
 import { getTeamPayroll } from "@/systems/salary-cap";
 import { getFinancialStatement } from "@/systems/team-finances";
@@ -172,38 +172,38 @@ const PLAYOFF_RESULT_DEPTH: Record<PlayoffResultSnapshot, number> = {
 };
 
 /**
- * Maps the round a team was eliminated in to a history snapshot.
- * Opening-round losses are always first_round; deeper rounds use
- * playoffRoundLabel (semifinal → conference_finals, final → finals).
+ * Maps the round a team was eliminated in to a history snapshot by counting
+ * back from the final round (`finalRound` = highest round index).
+ *
+ * - Final loss -> finals.
+ * - `crossConferenceRounds` (conference brackets only: 1 with two
+ *   conferences, 2 with four) are the rounds after the conference
+ *   champions are decided. With four conferences the semifinal loss is
+ *   recorded as conference_finals: that team won its conference but never
+ *   reached the Finals, and no deeper snapshot below finals exists.
+ * - League-wide brackets treat the semifinal as the conference finals.
+ * - Within a conference: the conference finals, then second_round for the
+ *   round before it; opening-round losses are always first_round.
  */
 export function eliminationSnapshotForRound(
   round: number,
-  fieldSize: number,
+  finalRound: number,
+  crossConferenceRounds = 0,
 ): PlayoffResultSnapshot {
-  if (fieldSize < 2 || (fieldSize & (fieldSize - 1)) !== 0) {
-    return round === 0 ? "first_round" : "second_round";
+  const fromFinal = finalRound - round;
+  if (fromFinal <= 0) {
+    return "finals";
   }
-  try {
-    const label = playoffRoundLabel(round, fieldSize);
-    if (label === "final") {
-      return "finals";
-    }
-    if (label === "semifinal") {
+  const openingRound = round === 0 ? "first_round" : "second_round";
+  if (crossConferenceRounds > 0) {
+    if (fromFinal <= crossConferenceRounds) {
       return "conference_finals";
     }
-    if (label === "quarterfinal") {
-      return round === 0 ? "first_round" : "second_round";
-    }
-  } catch {
-    // Non-power-of-two or incomplete tournament metadata — fall through.
+    return fromFinal === crossConferenceRounds + 1 && round > 0
+      ? "second_round"
+      : openingRound;
   }
-  if (round <= 0) {
-    return "first_round";
-  }
-  if (round === 1) {
-    return "second_round";
-  }
-  return "conference_finals";
+  return fromFinal === 1 ? "conference_finals" : openingRound;
 }
 
 function seriesParticipantTeamIds(series: {
@@ -245,7 +245,20 @@ export function derivePlayoffResults(
 ): Record<string, PlayoffResultSnapshot> {
   const results: Record<string, PlayoffResultSnapshot> = {};
   const playoffs = state.competition.playoffs;
+  const bracket = analyzePlayoffBracket(playoffs, state);
+  const crossRounds = bracket.isConferenceBracket
+    ? bracket.crossConferenceRounds
+    : 0;
+  // Power-of-two league-wide fields have a known final even when the series
+  // list is partial; other shapes (6/12 teams, conference brackets) carry the
+  // full series list, so the highest round is the final.
   const fieldSize = playoffs.fieldSize;
+  const finalRound =
+    !bracket.isConferenceBracket &&
+    fieldSize >= 2 &&
+    (fieldSize & (fieldSize - 1)) === 0
+      ? Math.log2(fieldSize) - 1
+      : bracket.finalRound;
 
   for (const seed of playoffs.qualifiedTeams) {
     results[seed.teamId] = "first_round";
@@ -255,7 +268,11 @@ export function derivePlayoffResults(
     if (series.status !== "complete" || series.winnerTeamId === undefined) {
       continue;
     }
-    const loserResult = eliminationSnapshotForRound(series.round, fieldSize);
+    const loserResult = eliminationSnapshotForRound(
+      series.round,
+      finalRound,
+      crossRounds,
+    );
     for (const teamId of seriesParticipantTeamIds(series)) {
       if (teamId === series.winnerTeamId) {
         continue;

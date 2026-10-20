@@ -165,6 +165,14 @@ export type Player = {
    * simulation.
    */
   jerseyNumber: number;
+  /**
+   * Franchise `jerseyNumber` is registered with. Like the NBA, a player keeps
+   * his number for as long as he stays with that franchise (Development
+   * League assignments included); a newcomer whose number is taken picks
+   * another. Maintained by reconcileJerseyNumbers; absent for free agents
+   * and for players not yet reconciled (older saves).
+   */
+  jerseyTeamId?: TeamId;
   nationality: PlayerNationality;
   age: number;
   heightInches: number;
@@ -213,6 +221,7 @@ export type PlayerInput = {
   lastName: string;
   /** Defaults to the player's preferred number (from his id). */
   jerseyNumber?: number;
+  jerseyTeamId?: TeamId;
   nationality: PlayerNationality;
   age: number;
   heightInches: number;
@@ -404,6 +413,9 @@ export function createPlayer(input: PlayerInput): Player {
   if (input.jerseyNumber !== undefined && !isJerseyNumber(input.jerseyNumber)) {
     throw new Error("Player jerseyNumber must be an integer from 0 to 99.");
   }
+  if (input.jerseyTeamId !== undefined) {
+    assertNonEmptyId(input.jerseyTeamId, "jerseyTeamId");
+  }
   assertPlayerNationality(input.nationality);
   assertNonNegativeInteger(input.age, "age");
   assertPositiveFinite(input.heightInches, "heightInches");
@@ -449,6 +461,9 @@ export function createPlayer(input: PlayerInput): Player {
     firstName: input.firstName,
     lastName: input.lastName,
     jerseyNumber: input.jerseyNumber ?? preferredJerseyNumber(input.id),
+    ...(input.jerseyTeamId !== undefined
+      ? { jerseyTeamId: input.jerseyTeamId }
+      : {}),
     nationality: input.nationality,
     age: input.age,
     heightInches: input.heightInches,

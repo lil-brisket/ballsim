@@ -54,6 +54,8 @@ function playerToInput(
     teamId: player.teamId,
     firstName: patch.firstName ?? player.firstName,
     lastName: patch.lastName ?? player.lastName,
+    jerseyNumber: player.jerseyNumber,
+    jerseyTeamId: player.jerseyTeamId,
     nationality: patch.nationality ?? player.nationality,
     age: patch.age ?? player.age,
     heightInches: patch.heightInches ?? player.heightInches,

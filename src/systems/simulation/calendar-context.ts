@@ -15,6 +15,8 @@ import { CALENDAR_CONTEXT_CONFIG } from "@/systems/simulation/calendar-context-c
 import { assessRelocation } from "@/state/relocation-assessment";
 import { TRADE_DEADLINE_SEASON_FRACTION } from "@/systems/league-rules/invariants";
 import { checkTradeWindow } from "@/systems/league-rules/trade-rules";
+import { resolvePlayoffFormat } from "@/systems/playoff-format";
+import { compareStandings } from "@/systems/standings";
 
 export type SeasonSegment =
   "none" | "early" | "mid" | "deadline_window" | "late";
@@ -330,27 +332,22 @@ function resolvePlayoffRace(state: GameState): PlayoffRaceStatus {
     return "not_applicable";
   }
 
+  // Conference playoffs: race within the team's conference for its top-k
+  // spots. League-wide playoffs: every team competes for `playoffTeams`.
+  const format = resolvePlayoffFormat(state);
   const conferenceId = state.world.teams[teamId]?.conferenceId;
+  const conferenceScoped = format.kind === "conference" && !!conferenceId;
   const ranked = Object.values(state.competition.standings.byTeamId)
-    .filter((row) => {
-      if (!conferenceId) {
-        return true;
-      }
-      return state.world.teams[row.teamId]?.conferenceId === conferenceId;
-    })
-    .sort((a, b) => {
-      if (b.wins !== a.wins) {
-        return b.wins - a.wins;
-      }
-      return a.losses - b.losses;
-    });
+    .filter((row) =>
+      conferenceScoped
+        ? state.world.teams[row.teamId]?.conferenceId === conferenceId
+        : true,
+    )
+    .sort(compareStandings);
 
   const conferencePlayoffSpots =
-    conferenceId && Object.keys(state.world.conferences).length > 1
-      ? Math.ceil(
-          playoffTeams /
-            Math.max(1, Object.keys(state.world.conferences).length),
-        )
+    format.kind === "conference" && conferenceScoped
+      ? format.spotsPerConference
       : playoffTeams;
 
   const rank =

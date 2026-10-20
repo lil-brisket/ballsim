@@ -155,7 +155,11 @@ export function definitionAppliesCashConsequence(
   );
 }
 
-/** Playoff seed for the controlled team, or null if not qualified. */
+/**
+ * Overall playoff seed (rank among all qualifiers) for the controlled team,
+ * or null if not qualified. Deliberately not the conference seed, so the
+ * "top-4 seed" objective keeps its difficulty in conference playoffs.
+ */
 export function getTeamPlayoffSeed(
   state: GameState,
   teamId: TeamId,

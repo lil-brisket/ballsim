@@ -71,6 +71,7 @@ function seasonPhaseLabel(competitionType: Game["competitionType"]): string {
       return "Development League";
     case "all_star":
       return "All-Star";
+    // Retired; only games played in legacy saves carry this type.
     case "midseason_tournament":
       return "Midseason Cup";
     default:

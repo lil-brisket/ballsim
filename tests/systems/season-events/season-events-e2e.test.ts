@@ -28,7 +28,6 @@ function bootRegularSeason(saveId: string, rngSeed = 11) {
       ...CBL_GAME_SETTINGS,
       seasonEvents: {
         ...CBL_GAME_SETTINGS.seasonEvents,
-        tournamentFieldSize: 4,
         votingDaysBeforeAnchor: 7,
         votingDaysAfterAnchor: 0,
         allStarDaysAfterVotingClose: 1,
@@ -43,12 +42,12 @@ function bootRegularSeason(saveId: string, rngSeed = 11) {
 }
 
 describe("season events full midseason lifecycle (M5)", () => {
-  it("runs voting → All-Star → tournament → RS continues once each", () => {
+  it("runs voting → All-Star → RS continues once each", () => {
     const { state: initial, rng } = bootRegularSeason("se_e2e");
     const window = deriveMidseasonEventWindow(initial);
     expect(window).not.toBeNull();
 
-    // Jump to day before voting opens, then simulate through tournament end.
+    // Jump to day before voting opens, then simulate past the All-Star game.
     let state: GameState = {
       ...initial,
       world: {
@@ -66,7 +65,7 @@ describe("season events full midseason lifecycle (M5)", () => {
     const daysNeeded =
       calendarDaysBetween(
         state.world.calendar.currentDate,
-        addCalendarDays(window!.tournamentEndDate, 2),
+        addCalendarDays(window!.allStarDate, 2),
       ) + 1;
 
     const seen = {
@@ -74,7 +73,6 @@ describe("season events full midseason lifecycle (M5)", () => {
       votingClosed: false,
       allStarAnnounced: false,
       allStarGame: false,
-      tournamentComplete: false,
     };
 
     let daysLeft = Math.min(daysNeeded, 45);
@@ -109,16 +107,7 @@ describe("season events full midseason lifecycle (M5)", () => {
           );
         }
       }
-      if (se.tournament?.status === "complete") {
-        seen.tournamentComplete = true;
-      }
-
-      if (
-        seen.votingClosed &&
-        seen.allStarAnnounced &&
-        seen.allStarGame &&
-        seen.tournamentComplete
-      ) {
+      if (seen.votingClosed && seen.allStarAnnounced && seen.allStarGame) {
         break;
       }
     }
@@ -127,7 +116,13 @@ describe("season events full midseason lifecycle (M5)", () => {
     expect(seen.votingClosed).toBe(true);
     expect(seen.allStarAnnounced).toBe(true);
     expect(seen.allStarGame).toBe(true);
-    expect(seen.tournamentComplete).toBe(true);
+    // The Midseason Cup is retired: no cup state or games.
+    expect(state.competition.seasonEvents.tournament).toBeNull();
+    expect(
+      Object.values(state.competition.games).some(
+        (game) => game.competitionType === "midseason_tournament",
+      ),
+    ).toBe(false);
 
     // Each event id activates at most once (completed or active, not duplicated).
     const eventStatuses = Object.values(

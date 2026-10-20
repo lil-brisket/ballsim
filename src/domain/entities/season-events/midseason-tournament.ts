@@ -5,6 +5,10 @@ import type {
   PlayoffTournamentStatus,
 } from "@/domain/entities/playoffs";
 
+/**
+ * Legacy: the Midseason Cup is retired and no longer planned or played.
+ * These types remain so older saves holding cup state still load.
+ */
 export type MidseasonTournamentFormat =
   "regional" | "conference" | "division" | "country" | "state";
 

@@ -83,9 +83,20 @@ function setPlayoffTeams(state: GameState, playoffTeams: number): GameState {
   };
 }
 
+/** Play-in forces the league-wide (non-conference) playoff format. */
+function leagueFormat(state: GameState): GameState {
+  return {
+    ...state,
+    settings: {
+      ...state.settings,
+      playoffs: { ...state.settings.playoffs, playInEnabled: true },
+    },
+  };
+}
+
 describe("toStandingsPageView", () => {
   it("projects overall, conference, and division for standard and advanced", () => {
-    const state = assignLadder(boot("views"));
+    const state = leagueFormat(assignLadder(boot("views")));
     const combos = [
       OVERALL,
       OVERALL_ADVANCED,
@@ -158,8 +169,38 @@ describe("toStandingsPageView", () => {
     expect(page.leagueRows[0]!.teamId).toBe(expectedFirst);
   });
 
+  it("uses per-conference cutoffs in conference playoff mode", () => {
+    const state = assignLadder(boot("conf-views"));
+    const k = state.settings.playoffs.playoffTeams / 2;
+    const overall = toStandingsPageView(state, OVERALL);
+    expect(overall.conferencePlayoffSpots).toBe(k);
+    expect(overall.groups[0]!.cutoffRank).toBeNull();
+    const conference = toStandingsPageView(state, CONFERENCE);
+    expect(conference.cutoffPerConference).toBe(k);
+    expect(conference.groups.every((g) => g.cutoffRank === k)).toBe(true);
+    const division = toStandingsPageView(state, DIVISION);
+    expect(division.groups.every((g) => g.cutoffRank === null)).toBe(true);
+  });
+
+  it("labels playoff by conference rank in conference playoff mode", () => {
+    const state = setPlayoffTeams(assignLadder(boot("conf-labels")), 4);
+    const page = toStandingsPageView(state, OVERALL);
+    for (const row of page.leagueRows) {
+      if (row.conferenceRank <= 2) {
+        expect(row.playoffLabel).toBe("playoff");
+      } else if (row.conferenceRank <= 6) {
+        expect(row.playoffLabel).toBe("bubble");
+      } else {
+        expect(row.playoffLabel).toBe("na");
+      }
+    }
+  });
+
   it("labels playoff from league rank and never play_in or eliminated in-season", () => {
-    const state = setPlayoffTeams(assignLadder(boot("labels")), 4);
+    const state = setPlayoffTeams(
+      leagueFormat(assignLadder(boot("labels"))),
+      4,
+    );
     const page = toStandingsPageView(state, OVERALL);
     for (const row of page.leagueRows) {
       expect(row.playoffLabel).not.toBe("play_in");
@@ -239,7 +280,7 @@ describe("toStandingsPageView", () => {
 
 describe("toPlayoffRaceView", () => {
   it("uses league rank and playoffTeams, matching overall standings", () => {
-    const state = assignLadder(boot("race"));
+    const state = leagueFormat(assignLadder(boot("race")));
     const overall = toStandingsPageView(state, OVERALL);
     const race = toPlayoffRaceView(state);
     expect(race.applicable).toBe(true);
@@ -256,15 +297,38 @@ describe("toPlayoffRaceView", () => {
   });
 
   it("moves the cutoff when playoffTeams changes", () => {
-    const state = setPlayoffTeams(assignLadder(boot("race2")), 4);
+    const state = setPlayoffTeams(leagueFormat(assignLadder(boot("race2"))), 4);
     const race = toPlayoffRaceView(state);
     expect(race.cutoffRank).toBe(4);
     expect(race.above.at(-1)?.leagueRank).toBe(4);
     expect(race.below[0]?.leagueRank).toBe(5);
   });
 
+  it("races within the owner conference against the per-conference cutoff", () => {
+    const state = assignLadder(boot("race-conf"));
+    const ownerId = state.user.activeOwnerTeamId;
+    const rows = toStandingsPageView(state, OVERALL).leagueRows;
+    const ownerRow = rows.find((r) => r.teamId === ownerId)!;
+    const k = state.settings.playoffs.playoffTeams / 2;
+    const race = toPlayoffRaceView(state);
+    expect(race.applicable).toBe(true);
+    expect(race.cutoffRank).toBe(k);
+    expect(race.conferenceName).toBe(ownerRow.conferenceName);
+    for (const entry of [...race.above, ...race.below]) {
+      const row = rows.find((r) => r.teamId === entry.teamId)!;
+      expect(row.conferenceId).toBe(ownerRow.conferenceId);
+      expect(entry.inField).toBe(row.conferenceRank <= k);
+    }
+    expect(race.above.every((e) => e.inField)).toBe(true);
+    expect(race.below.every((e) => !e.inField)).toBe(true);
+    const lastIn = rows.find(
+      (r) => r.conferenceId === ownerRow.conferenceId && r.conferenceRank === k,
+    )!;
+    expect(race.above.at(-1)?.teamId).toBe(lastIn.teamId);
+  });
+
   it("uses min(4, available) and shows every team in a small field", () => {
-    const state = setPlayoffTeams(assignLadder(boot("small")), 4);
+    const state = setPlayoffTeams(leagueFormat(assignLadder(boot("small"))), 4);
     const race = toPlayoffRaceView(state);
     expect(race.above.length).toBeLessThanOrEqual(4);
     expect(race.below.length).toBeLessThanOrEqual(4);
@@ -284,7 +348,7 @@ describe("toPlayoffRaceView", () => {
   });
 
   it("does not inject extras with no owned teams and does not duplicate cutoff user", () => {
-    const ladder = assignLadder(boot("owned"));
+    const ladder = leagueFormat(assignLadder(boot("owned")));
     const cutoffTeam = toStandingsPageView(ladder, OVERALL).leagueRows.find(
       (r) => r.leagueRank === 8,
     )!;

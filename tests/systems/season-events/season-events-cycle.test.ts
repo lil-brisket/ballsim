@@ -12,7 +12,6 @@ import {
 } from "@/systems/season-events";
 import { advanceSimulation } from "@/systems/simulation/advance-simulation";
 import { addCalendarDays } from "@/domain/calendar-date";
-import { qualifyAndStartTournament } from "@/systems/season-events/tournament-engine";
 import { asFanVoteCategoryId } from "@/domain/ids";
 import type { FanVoteCategory } from "@/domain/entities/season-events";
 
@@ -173,64 +172,16 @@ describe("season events midseason cycle", () => {
     ).toHaveLength(2);
   });
 
-  it("tournament games do not alter regular-season standings", () => {
-    const { state, rng } = bootRegularSeason("se_cup");
-    const tournament = state.competition.seasonEvents.tournament!;
-    expect(tournament).not.toBeNull();
-
-    // Seed some wins into standings so qualification works
-    let current = state;
-    const standings = { ...current.competition.standings.byTeamId };
-    let i = 0;
-    for (const teamId of Object.keys(standings).sort()) {
-      standings[teamId] = {
-        ...standings[teamId]!,
-        wins: 20 - i,
-        losses: i,
-      };
-      i += 1;
-    }
-    current = {
-      ...current,
-      competition: {
-        ...current.competition,
-        standings: { byTeamId: standings },
-      },
-    };
-
-    const beforeStandings = JSON.stringify(current.competition.standings);
-    const started = qualifyAndStartTournament(current, tournament);
-    current = started.state;
-    const after = current.competition.seasonEvents.tournament!;
-    expect(after.status).toBe("in_progress");
-    expect(after.gameIds.length).toBeGreaterThan(0);
-
-    // Simulate tournament day
-    current = {
-      ...current,
-      world: {
-        ...current.world,
-        calendar: {
-          ...current.world.calendar,
-          currentDate: after.startDate,
-          lastSimulatedDate: addCalendarDays(after.startDate, -1),
-        },
-      },
-    };
-    const day = processSeasonEvents(current, rng);
-    expect(JSON.stringify(day.state.competition.standings)).toBe(
-      beforeStandings,
-    );
-
-    const tournamentGames = Object.values(day.state.competition.games).filter(
-      (g) => g.competitionType === "midseason_tournament",
-    );
-    expect(tournamentGames.length).toBeGreaterThan(0);
+  it("never plans the retired Midseason Cup, even with a field size set", () => {
+    const { state } = bootRegularSeason("se_cup");
+    const seasonEvents = state.competition.seasonEvents;
+    expect(state.settings.seasonEvents.tournamentFieldSize).toBe(4);
+    expect(seasonEvents.tournament).toBeNull();
     expect(
-      tournamentGames.every(
-        (g) => !day.state.competition.schedule.gameIds.includes(g.id),
+      Object.values(seasonEvents.events).some(
+        (event) => event.type === "midseason_tournament",
       ),
-    ).toBe(true);
+    ).toBe(false);
   });
 
   it("full advance across voting window does not duplicate open events", () => {

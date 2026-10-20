@@ -28,7 +28,8 @@ describe("standings-selectors", () => {
     expect(page.cutoffPerConference).toBe(cutoff);
     expect(page.groups.length).toBeGreaterThan(0);
     for (const group of page.groups) {
-      expect(group.cutoffRank).toBeNull();
+      // Conference playoffs: each conference group carries the per-conference line.
+      expect(group.cutoffRank).toBe(cutoff);
       expect(group.kind).toBe("conference");
       expect(group.rows[0]?.gamesBackConference).toBe(0);
     }

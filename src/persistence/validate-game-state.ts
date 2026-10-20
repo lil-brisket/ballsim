@@ -832,6 +832,12 @@ export function validateGameState(state: unknown): asserts state is GameState {
         `world.players[${playerId}].jerseyNumber must be an integer from 0 to 99.`,
       );
     }
+    if (playerValue.jerseyTeamId !== undefined) {
+      assertNonEmptyString(
+        playerValue.jerseyTeamId,
+        `world.players[${playerId}].jerseyTeamId`,
+      );
+    }
     if (playerValue.contractId != null) {
       assertNonEmptyString(
         playerValue.contractId,

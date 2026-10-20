@@ -27,7 +27,10 @@ import {
 } from "@/application/narrative-action-adapter";
 import { asNarrativeSituationId } from "@/domain/ids";
 import { createNarrativeSituation } from "@/domain/entities/narrative-situation";
-import { acknowledgeSituation } from "@/systems/narrative/lifecycle";
+import {
+  acknowledgeSituation,
+  applyCandidateToSituations,
+} from "@/systems/narrative/lifecycle";
 import {
   getActiveOwnedFranchise,
   withOwnedFranchise,
@@ -301,6 +304,48 @@ describe("narrative lifecycle and actions", () => {
     const updated = getActiveOwnedFranchise(result.state).narrative
       .situations[0]!;
     expect(updated.status).not.toBe("resolved");
+  });
+
+  it("reopening a situation that expired earlier this month gets a unique id", () => {
+    const candidate: DetectorCandidate = {
+      detectorKey: "losing_slide",
+      kind: "situation",
+      category: "team",
+      stage: 1,
+      severity: "notable",
+      priorityHint: 50,
+      evidence: {},
+      templateContext: {},
+    };
+    const rendered = {
+      title: "Losing slide",
+      summary: "Losses mounting",
+      body: "The team keeps losing.",
+      severity: "notable" as const,
+    };
+    const first = applyCandidateToSituations(
+      [],
+      candidate,
+      rendered,
+      "2027-11-03",
+      "team_a",
+      "2027-11",
+    ).situations;
+    const expired = first.map((s) => ({ ...s, status: "expired" as const }));
+    const reopened = applyCandidateToSituations(
+      expired,
+      candidate,
+      rendered,
+      "2027-11-24",
+      "team_a",
+      "2027-11",
+    ).situations;
+
+    const ids = reopened.map((s) => s.id);
+    expect(ids).toHaveLength(2);
+    expect(new Set(ids).size).toBe(2);
+    expect(ids[0]).toBe("nar_losing_slide_team_a_2027-11_s1");
+    expect(ids[1]).toBe("nar_losing_slide_team_a_2027-11_s1_2027-11-24");
   });
 
   it("unknown actionId throws", () => {
