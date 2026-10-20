@@ -13,6 +13,7 @@ import { toCalendarLeagueContext } from "@/state/standings-selectors";
 import { parseCalendarDate } from "@/domain/calendar-date";
 import {
   type CalendarMonthGrid,
+  buildCalendarDateInspectorView,
   getCalendarMonthGrid,
 } from "@/systems/calendar";
 
@@ -84,6 +85,11 @@ export async function POST(
                 ...progress,
                 leagueContext: toCalendarLeagueContext(state),
                 monthGrid,
+                inspector: buildCalendarDateInspectorView(
+                  state,
+                  progress.currentDate,
+                  { saveId },
+                ),
               });
             },
           }).finally(() => clearSimulationStopRequest(saveId)),

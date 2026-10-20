@@ -3,7 +3,10 @@ import type {
   SimulationStopReason,
 } from "@/systems/simulation/types";
 import type { CalendarLeagueContextView } from "@/state/standings-selectors";
-import type { CalendarMonthGrid } from "@/systems/calendar";
+import type {
+  CalendarDateInspectorView,
+  CalendarMonthGrid,
+} from "@/systems/calendar";
 
 export type SimulateToDateProgressEvent = {
   type: "progress";
@@ -11,6 +14,8 @@ export type SimulateToDateProgressEvent = {
   leagueContext?: CalendarLeagueContextView | null;
   /** Grid for currentDate's month, sent the first time the run enters it. */
   monthGrid?: CalendarMonthGrid;
+  /** Date inspector for currentDate, so the side panel follows playback. */
+  inspector?: CalendarDateInspectorView;
 } & SimulationProgress;
 
 export type SimulateToDateDoneEvent = {

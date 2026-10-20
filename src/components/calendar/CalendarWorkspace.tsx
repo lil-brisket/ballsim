@@ -48,6 +48,7 @@ import { Drawer } from "@/components/ui/Drawer";
 import { addCalendarDays, parseCalendarDate } from "@/domain/calendar-date";
 import {
   buildPlaceholderMonthGrid,
+  type CalendarDateInspectorView,
   type CalendarMonthGrid,
 } from "@/systems/calendar";
 import type { CalendarLeagueContextView } from "@/state/standings-selectors";
@@ -134,6 +135,7 @@ type PlaybackFrame = {
   teamResult?: { date: string; resultLabel: string } | null;
   leagueContext?: CalendarLeagueContextView | null;
   monthGrid?: CalendarMonthGrid;
+  inspector?: CalendarDateInspectorView;
 };
 
 export function CalendarWorkspace(props: {
@@ -510,6 +512,7 @@ export function CalendarWorkspace(props: {
     progress: SimulationProgress & {
       leagueContext?: CalendarLeagueContextView | null;
       monthGrid?: CalendarMonthGrid;
+      inspector?: CalendarDateInspectorView;
     },
   ) {
     queueRef.current.push({
@@ -530,6 +533,7 @@ export function CalendarWorkspace(props: {
           : null,
       leagueContext: progress.leagueContext,
       monthGrid: progress.monthGrid,
+      inspector: progress.inspector,
     });
     drainQueue();
   }
@@ -711,17 +715,20 @@ export function CalendarWorkspace(props: {
           },
     );
   }
+  // During playback the panel follows the simulation cursor; the page's
+  // inspector only describes the date selected before the run.
+  const liveInspector = playback?.inspector ?? null;
   const inspector = (
     <DateInspector
       saveId={props.saveId}
       returnPath={returnPath}
-      inspector={props.view.inspector}
+      inspector={liveInspector ?? props.view.inspector}
       timeDisabled={props.view.timeDisabled || busy}
       userTeamId={props.view.userTeamId}
       simulating={playback != null}
       onSimulate={handleSimulate}
       showSimulateAction={isDesktop}
-      teamGameStats={props.view.teamGameStats}
+      teamGameStats={liveInspector ? null : props.view.teamGameStats}
       currentDate={liveCurrentDate}
       onWatch={handleWatch}
       hideTitle={!isDesktop}
