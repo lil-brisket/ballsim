@@ -14,14 +14,9 @@ const KIND_POSITIONS: Record<FanVoteCategoryKind, readonly PlayerPosition[]> = {
   open: ["PG", "SG", "SF", "PF", "C"],
 };
 
-function kindForPosition(position: PlayerPosition): FanVoteCategoryKind {
-  if (position === "PG" || position === "SG") return "guards";
-  if (position === "SF" || position === "PF") return "forwards";
-  return "centers";
-}
-
 /**
- * Build vote categories from league structure (conference × position group).
+ * Build vote categories from league structure: one all-positions ballot per
+ * conference (a single league-wide ballot without conferences).
  * Extensible — not hardcoded to East/West labels only.
  */
 export function buildFanVoteCategories(
@@ -35,35 +30,24 @@ export function buildFanVoteCategories(
   const addCategory = (
     conferenceId: ConferenceId | null,
     conferenceName: string | null,
-    kind: FanVoteCategoryKind,
   ): void => {
     const confKey = conferenceId ?? "league";
-    const id = asFanVoteCategoryId(`${confKey}_${kind}`);
-    const label =
-      conferenceName != null
-        ? `${conferenceName} — ${kindLabel(kind)}`
-        : kindLabel(kind);
+    const id = asFanVoteCategoryId(`${confKey}_open`);
     categories[id] = {
       id,
-      label,
-      kind,
+      label: conferenceName != null ? `${conferenceName} Conference` : "League",
+      kind: "open",
       conferenceId,
       candidates: {},
     };
   };
 
-  const kinds: FanVoteCategoryKind[] = ["guards", "forwards", "centers"];
-
   if (conferences.length >= 2) {
     for (const conference of conferences) {
-      for (const kind of kinds) {
-        addCategory(conference.id, conference.name, kind);
-      }
+      addCategory(conference.id, conference.name);
     }
   } else {
-    for (const kind of kinds) {
-      addCategory(null, null, kind);
-    }
+    addCategory(null, null);
   }
 
   // Seed candidates from rostered players.
@@ -72,9 +56,7 @@ export function buildFanVoteCategories(
     const team = state.world.teams[player.teamId];
     if (!team) continue;
 
-    const kind = kindForPosition(player.position);
     for (const category of Object.values(categories)) {
-      if (category.kind !== kind) continue;
       if (
         category.conferenceId != null &&
         team.conferenceId !== category.conferenceId
@@ -93,19 +75,6 @@ export function buildFanVoteCategories(
   }
 
   return categories;
-}
-
-function kindLabel(kind: FanVoteCategoryKind): string {
-  switch (kind) {
-    case "guards":
-      return "Guards";
-    case "forwards":
-      return "Forwards";
-    case "centers":
-      return "Centers";
-    case "open":
-      return "Players";
-  }
 }
 
 export function positionsForKind(

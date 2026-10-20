@@ -43,65 +43,67 @@ export default async function FanVotingPage({ params }: PageProps) {
         }
       />
 
-      {hub.categories.length === 0 ? (
+      {hub.conferences.length === 0 ? (
         <EmptyState
           title="No voting categories"
           message="Fan voting has not been planned for this season yet."
         />
       ) : (
-        hub.categories.map((category) => (
-          <Section key={category.id} title={category.label}>
-            <ol className="divide-y divide-zinc-800">
-              {category.leaders.map((row) => (
-                <li
-                  key={row.playerId}
-                  className="flex items-center justify-between gap-3 py-2 text-sm"
-                >
-                  <div className="flex min-w-0 items-center gap-3">
-                    <span className="w-6 shrink-0 font-semibold text-zinc-400">
-                      {row.rank}
-                    </span>
-                    <div className="min-w-0">
-                      <PlayerEntityLink
-                        saveId={saveId}
-                        playerId={row.playerId}
-                        className="font-medium text-zinc-100"
-                      >
-                        {row.playerName}
-                      </PlayerEntityLink>
-                      {row.teamId && row.teamName ? (
-                        <div className="text-sm text-zinc-500">
-                          <TeamEntityLink saveId={saveId} teamId={row.teamId}>
-                            {row.teamName}
-                          </TeamEntityLink>
-                        </div>
-                      ) : null}
+        <div className="grid gap-4 md:grid-cols-2">
+          {hub.conferences.map((conference) => (
+            <Section key={conference.id} title={conference.label}>
+              <ol className="divide-y divide-zinc-800">
+                {conference.leaders.map((row) => (
+                  <li
+                    key={row.playerId}
+                    className="flex items-center justify-between gap-3 py-2 text-sm"
+                  >
+                    <div className="flex min-w-0 items-center gap-3">
+                      <span className="w-6 shrink-0 font-semibold text-zinc-400">
+                        {row.rank}
+                      </span>
+                      <div className="min-w-0">
+                        <PlayerEntityLink
+                          saveId={saveId}
+                          playerId={row.playerId}
+                          className="font-medium text-zinc-100"
+                        >
+                          {row.playerName}
+                        </PlayerEntityLink>
+                        {row.teamId && row.teamName ? (
+                          <div className="text-sm text-zinc-500">
+                            <TeamEntityLink saveId={saveId} teamId={row.teamId}>
+                              {row.teamName}
+                            </TeamEntityLink>
+                          </div>
+                        ) : null}
+                      </div>
                     </div>
-                  </div>
-                  <div className="flex shrink-0 items-center gap-3 font-mono text-zinc-300">
-                    <span>{row.voteTotal.toLocaleString()}</span>
-                    <span
-                      className={
-                        row.movement === "up"
-                          ? "text-emerald-400"
-                          : row.movement === "down"
-                            ? "text-rose-400"
-                            : "text-zinc-500"
-                      }
-                      title={
-                        row.previousRank != null
-                          ? `Was #${row.previousRank}`
-                          : "New"
-                      }
-                    >
-                      {movementGlyph(row.movement)}
-                    </span>
-                  </div>
-                </li>
-              ))}
-            </ol>
-          </Section>
-        ))
+                    <div className="flex shrink-0 items-center gap-3 font-mono text-zinc-300">
+                      <span>{row.voteTotal.toLocaleString()}</span>
+                      <span
+                        className={
+                          row.movement === "up"
+                            ? "text-emerald-400"
+                            : row.movement === "down"
+                              ? "text-rose-400"
+                              : "text-zinc-500"
+                        }
+                        title={
+                          row.previousRank != null
+                            ? `Was #${row.previousRank}`
+                            : "New"
+                        }
+                      >
+                        {movementGlyph(row.movement)}
+                      </span>
+                    </div>
+                  </li>
+                ))}
+              </ol>
+            </Section>
+          ))}
+        </div>
       )}
     </div>
   );

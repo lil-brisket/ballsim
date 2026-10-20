@@ -7,7 +7,6 @@ import {
 } from "@/domain/entities/season-events";
 import { createEmptyFanVoteCampaign } from "@/domain/entities/season-events/fan-voting";
 import type { AllStarEventState } from "@/domain/entities/season-events/all-star";
-import type { MidseasonAwardsState } from "@/domain/entities/season-events/midseason-awards";
 import type { MidseasonTournamentState } from "@/domain/entities/season-events/midseason-tournament";
 import { asFanVoteCampaignId, asSeasonId, type SeasonId } from "@/domain/ids";
 import { systemResult, type SystemResult } from "@/domain/system-result";
@@ -62,14 +61,6 @@ export function planSeasonEvents(state: GameState): SystemResult {
     selectionsAnnouncedOn: null,
   };
 
-  const midseasonAwards: MidseasonAwardsState = {
-    seasonId,
-    cutoffDate: window.awardsCutoffDate,
-    announceDate: window.awardsAnnounceDate,
-    status: "scheduled",
-    resultIds: [],
-  };
-
   const tournamentFieldSize = Math.max(0, config.tournamentFieldSize);
   let tournament: MidseasonTournamentState | null = null;
   if (tournamentFieldSize >= 2) {
@@ -112,26 +103,6 @@ export function planSeasonEvents(state: GameState): SystemResult {
     shortLabel: "All-Star",
     startDate: window.allStarDate,
     endDate: window.allStarDate,
-    status: "scheduled",
-    sidecarKey: "main",
-  };
-
-  const awardsEventId = buildSeasonEventId(
-    seasonId,
-    "midseason_awards",
-    "main",
-  );
-  events[awardsEventId] = {
-    id: awardsEventId,
-    seasonId,
-    type: "midseason_awards",
-    title: "Midseason Awards",
-    shortLabel: "Midseason Awards",
-    startDate: window.awardsAnnounceDate,
-    endDate: addCalendarDays(
-      window.awardsAnnounceDate,
-      Math.max(0, config.awardsDurationDays - 1),
-    ),
     status: "scheduled",
     sidecarKey: "main",
   };
@@ -188,7 +159,7 @@ export function planSeasonEvents(state: GameState): SystemResult {
     events,
     fanVoting: { [campaignId]: campaign },
     allStar,
-    midseasonAwards,
+    midseasonAwards: null,
     tournament,
     holidays,
   };

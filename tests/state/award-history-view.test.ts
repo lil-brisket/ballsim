@@ -1,5 +1,4 @@
 import { describe, expect, it } from "vitest";
-import { asSeasonId } from "@/domain/ids";
 import type { GameState } from "@/state/game-state";
 import {
   toAwardHistoryView,
@@ -21,33 +20,6 @@ function slot(
     .find((s) => s.awardId === awardId);
 }
 
-function withMidseason(
-  state: GameState,
-  status: "scheduled" | "announced" | "cancelled",
-  currentDate: string,
-): GameState {
-  return {
-    ...state,
-    world: {
-      ...state.world,
-      calendar: { ...state.world.calendar, currentDate },
-    },
-    competition: {
-      ...state.competition,
-      seasonEvents: {
-        ...state.competition.seasonEvents,
-        midseasonAwards: {
-          seasonId: state.competition.season.id,
-          cutoffDate: "2026-01-15",
-          announceDate: "2026-01-20",
-          status,
-          resultIds: [],
-        },
-      },
-    },
-  };
-}
-
 describe("toAwardHistoryView", () => {
   it("only lists completed results and sorts seasons descending", () => {
     let state = createAwardsTestState({ seasonYear: 2028 });
@@ -67,9 +39,10 @@ describe("toAwardHistoryView", () => {
         teamId: teamA,
       }),
       awardResult({
-        awardId: "midseason_mvp",
+        awardId: "player_of_month",
         seasonYear: 2028,
         winnerId: "p1",
+        period: "2028-01",
       }),
     ]);
 
@@ -85,9 +58,10 @@ describe("toAwardHistoryView", () => {
     state = withAwards(state, [
       awardResult({ awardId: "mvp", seasonYear: 2027, winnerId: "p1" }),
       awardResult({
-        awardId: "midseason_mvp",
+        awardId: "player_of_month",
         seasonYear: 2028,
         winnerId: "p1",
+        period: "2028-01",
       }),
     ]);
     const view = toAwardHistoryView(state);
@@ -95,7 +69,7 @@ describe("toAwardHistoryView", () => {
     expect(view.seasons).toHaveLength(1);
   });
 
-  it("keeps midseason and full-season awards distinguishable", () => {
+  it("hides legacy midseason results", () => {
     let state = createAwardsTestState({ seasonYear: 2026, phase: "playoffs" });
     state = withAwards(state, [
       awardResult({ awardId: "mvp", seasonYear: 2026, winnerId: "p1" }),
@@ -104,13 +78,16 @@ describe("toAwardHistoryView", () => {
         seasonYear: 2026,
         winnerId: "p2",
       }),
+      awardResult({
+        awardId: "midseason_dpoy",
+        seasonYear: 2025,
+        winnerId: "p2",
+      }),
     ]);
-    const season = toAwardHistoryView(state).seasons[0]!;
-    expect(season.yearlyByAwardId.mvp?.winnerSubjectId).toBe("p1");
-    expect(season.yearlyByAwardId.midseason_mvp).toBeUndefined();
-    const midseason = season.winners.find((w) => w.awardId === "midseason_mvp");
-    expect(midseason?.result.period).toBe("midseason");
-    expect(midseason?.tier).toBe("midseason");
+    const view = toAwardHistoryView(state, { seasonYear: "all" });
+    expect(view.availableSeasons).toEqual([2026]);
+    expect(view.seasons[0]!.winners.map((w) => w.awardId)).toEqual(["mvp"]);
+    expect(slot(state, "midseason_mvp")).toBeUndefined();
   });
 
   it("filters to a single award without turning it into a column", () => {
@@ -158,23 +135,6 @@ describe("toCurrentSeasonAwardGroups", () => {
     expect(slot(state, "dpoy")?.status).toBe("not_applicable");
   });
 
-  it("derives midseason status from the scheduled event and cutoff", () => {
-    const base = createAwardsTestState({ phase: "regular" });
-    expect(slot(base, "midseason_mvp")?.status).toBe("not_applicable");
-    expect(
-      slot(withMidseason(base, "scheduled", "2025-12-01"), "midseason_mvp")
-        ?.status,
-    ).toBe("not_started");
-    expect(
-      slot(withMidseason(base, "scheduled", "2026-01-16"), "midseason_mvp")
-        ?.status,
-    ).toBe("pending");
-    expect(
-      slot(withMidseason(base, "cancelled", "2026-01-16"), "midseason_mvp")
-        ?.status,
-    ).toBe("not_applicable");
-  });
-
   it("shows a pending slot for the current month and won slots for decided months", () => {
     let state = createAwardsTestState({ phase: "regular" });
     state = withAwards(state, [
@@ -202,22 +162,10 @@ describe("toCurrentSeasonAwardGroups", () => {
     expect(ids.some((id) => id.includes("finals"))).toBe(false);
   });
 
-  it("ignores midseason state from a different season", () => {
-    const base = createAwardsTestState({ phase: "regular" });
-    const stale = withMidseason(base, "scheduled", "2026-01-16");
-    const other: GameState = {
-      ...stale,
-      competition: {
-        ...stale.competition,
-        seasonEvents: {
-          ...stale.competition.seasonEvents,
-          midseasonAwards: {
-            ...stale.competition.seasonEvents.midseasonAwards!,
-            seasonId: asSeasonId("season_2025"),
-          },
-        },
-      },
-    };
-    expect(slot(other, "midseason_mvp")?.status).toBe("not_applicable");
+  it("has no midseason group", () => {
+    const tiers = toCurrentSeasonAwardGroups(
+      createAwardsTestState({ phase: "regular" }),
+    ).map((g) => g.tier);
+    expect(tiers).toEqual(["major", "monthly"]);
   });
 });
