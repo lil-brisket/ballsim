@@ -115,6 +115,8 @@ export function projectCalendarEvents(
   }
 
   for (const award of Object.values(state.business.awards.results)) {
+    // Midseason awards are retired; legacy saves may still hold results.
+    if (award.period === "midseason") continue;
     const view = projectAward(state, award, currentDate, saveId);
     if (view) upsert(view);
   }
@@ -651,7 +653,8 @@ function projectSeasonEvent(
   currentDate: string,
   saveId: string,
 ): CalendarEventView | null {
-  if (event.status === "cancelled") {
+  // Midseason awards are retired; hide events left over in legacy saves.
+  if (event.status === "cancelled" || event.type === "midseason_awards") {
     return null;
   }
   const lifecycle =

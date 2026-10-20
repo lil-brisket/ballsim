@@ -70,23 +70,20 @@ export type AwardsHubView = {
   selectedSeasonYear: number;
   isBrowsingHistorical: boolean;
   seasons: number[];
-  midseasonAwards: AwardsHubRow[];
   majorAwards: AwardsHubRow[];
   monthlyAwards: AwardsHubRow[];
   currentSeasonGroups: CurrentSeasonAwardGroup[];
 };
 
-const TIER_GROUP_LABELS: Record<AwardTier, string> = {
+/** Midseason awards are retired, so that tier is never shown. */
+type DisplayedAwardTier = Exclude<AwardTier, "midseason">;
+
+const TIER_GROUP_LABELS: Record<DisplayedAwardTier, string> = {
   major: "Season awards",
-  midseason: "Midseason awards",
   monthly: "Monthly awards",
 };
 
-const TIER_GROUP_ORDER: readonly AwardTier[] = [
-  "major",
-  "midseason",
-  "monthly",
-];
+const TIER_GROUP_ORDER: readonly DisplayedAwardTier[] = ["major", "monthly"];
 
 function toHubRows(
   state: GameState,
@@ -138,23 +135,6 @@ function majorStatus(state: GameState): AwardAvailability {
   return "not_applicable";
 }
 
-function midseasonStatus(state: GameState): AwardAvailability {
-  const season = state.competition.season;
-  const midseason = state.competition.seasonEvents?.midseasonAwards;
-  if (
-    !midseason ||
-    midseason.seasonId !== season.id ||
-    midseason.status !== "scheduled"
-  ) {
-    return "not_applicable";
-  }
-  if (season.phase === "preseason") return "not_started";
-  if (season.phase !== "regular") return "not_applicable";
-  return state.world.calendar.currentDate < midseason.cutoffDate
-    ? "not_started"
-    : "pending";
-}
-
 /**
  * Current-season award slots with explicit availability. Only catalog awards
  * from AWARD_DEFINITIONS appear; nothing is invented (e.g. no Finals MVP).
@@ -175,18 +155,6 @@ export function toCurrentSeasonAwardGroups(
     .map((def) => {
       const winner = yearlyRow(def.id, null);
       return slotFor(def, null, winner ? "won" : majorStatus(state), winner);
-    });
-
-  const midseason = defs
-    .filter((def) => def.tier === "midseason")
-    .map((def) => {
-      const winner = yearlyRow(def.id, "midseason");
-      return slotFor(
-        def,
-        null,
-        winner ? "won" : midseasonStatus(state),
-        winner,
-      );
     });
 
   const monthly: CurrentSeasonAwardSlot[] = rows
@@ -226,9 +194,8 @@ export function toCurrentSeasonAwardGroups(
         MONTHLY_AWARD_IDS.indexOf(b.awardId),
   );
 
-  const byTier: Record<AwardTier, CurrentSeasonAwardSlot[]> = {
+  const byTier: Record<DisplayedAwardTier, CurrentSeasonAwardSlot[]> = {
     major,
-    midseason,
     monthly,
   };
   return TIER_GROUP_ORDER.map((tier) => ({
@@ -257,10 +224,7 @@ export function toAwardsHubView(
     selectedSeasonYear,
     isBrowsingHistorical,
     seasons: base.seasons,
-    midseasonAwards: rows.filter((r) => r.tier === "midseason"),
-    majorAwards: rows.filter(
-      (r) => r.cadence === "yearly" && r.tier !== "midseason",
-    ),
+    majorAwards: rows.filter((r) => r.cadence === "yearly"),
     monthlyAwards: rows.filter((r) => r.cadence === "monthly"),
     currentSeasonGroups: toCurrentSeasonAwardGroups(state),
   };

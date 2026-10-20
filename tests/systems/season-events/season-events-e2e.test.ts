@@ -43,7 +43,7 @@ function bootRegularSeason(saveId: string, rngSeed = 11) {
 }
 
 describe("season events full midseason lifecycle (M5)", () => {
-  it("runs voting → All-Star → awards → tournament → RS continues once each", () => {
+  it("runs voting → All-Star → tournament → RS continues once each", () => {
     const { state: initial, rng } = bootRegularSeason("se_e2e");
     const window = deriveMidseasonEventWindow(initial);
     expect(window).not.toBeNull();
@@ -74,7 +74,6 @@ describe("season events full midseason lifecycle (M5)", () => {
       votingClosed: false,
       allStarAnnounced: false,
       allStarGame: false,
-      awards: false,
       tournamentComplete: false,
     };
 
@@ -110,9 +109,6 @@ describe("season events full midseason lifecycle (M5)", () => {
           );
         }
       }
-      if (se.midseasonAwards?.status === "announced") {
-        seen.awards = true;
-      }
       if (se.tournament?.status === "complete") {
         seen.tournamentComplete = true;
       }
@@ -121,7 +117,6 @@ describe("season events full midseason lifecycle (M5)", () => {
         seen.votingClosed &&
         seen.allStarAnnounced &&
         seen.allStarGame &&
-        seen.awards &&
         seen.tournamentComplete
       ) {
         break;
@@ -132,7 +127,6 @@ describe("season events full midseason lifecycle (M5)", () => {
     expect(seen.votingClosed).toBe(true);
     expect(seen.allStarAnnounced).toBe(true);
     expect(seen.allStarGame).toBe(true);
-    expect(seen.awards).toBe(true);
     expect(seen.tournamentComplete).toBe(true);
 
     // Each event id activates at most once (completed or active, not duplicated).

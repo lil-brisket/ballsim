@@ -9,8 +9,6 @@ export type MidseasonEventWindow = {
   votingOpenDate: string;
   votingCloseDate: string;
   allStarDate: string;
-  awardsCutoffDate: string;
-  awardsAnnounceDate: string;
   tournamentStartDate: string;
   tournamentEndDate: string;
 };
@@ -87,8 +85,6 @@ export function deriveMidseasonEventWindow(
     votingCloseDate,
     Math.max(0, config.allStarDaysAfterVotingClose),
   );
-  const awardsCutoffDate = votingCloseDate;
-  const awardsAnnounceDate = awardsCutoffDate;
   const tournamentStartDate = addCalendarDays(allStarDate, 1);
   const tournamentEndDate = addCalendarDays(tournamentStartDate, 6);
 
@@ -97,8 +93,6 @@ export function deriveMidseasonEventWindow(
     votingOpenDate,
     votingCloseDate,
     allStarDate,
-    awardsCutoffDate,
-    awardsAnnounceDate,
     tournamentStartDate,
     tournamentEndDate,
   };

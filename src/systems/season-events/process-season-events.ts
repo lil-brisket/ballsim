@@ -6,7 +6,6 @@ import { appendSeasonEventLog } from "@/state/game-state";
 import { processHolidays } from "@/systems/season-events/process-holidays";
 import { processFanVoting } from "@/systems/season-events/process-fan-voting";
 import { processAllStar } from "@/systems/season-events/process-all-star";
-import { processMidseasonAwards } from "@/systems/season-events/process-midseason-awards";
 import { processTournament } from "@/systems/season-events/process-tournament";
 import {
   ensureSeasonEventsState,
@@ -23,10 +22,9 @@ import {
  * 3. (RS games already ran in daily pipeline)
  * 4. Fan voting — close / finalize rankings
  * 5. All-Star — selection rules (after vote close)
- * 6. Midseason awards — evaluate at cutoff
- * 7. All-Star — exhibition game sim
- * 8. Tournament — qual / games
- * 9. Holiday completion
+ * 6. All-Star — exhibition game sim
+ * 7. Tournament — qual / games
+ * 8. Holiday completion
  */
 export function processSeasonEvents(state: GameState, rng: Rng): SystemResult {
   let current = withSeasonEvents(state, ensureSeasonEventsState(state));
@@ -48,10 +46,6 @@ export function processSeasonEvents(state: GameState, rng: Rng): SystemResult {
   const allStar = processAllStar(current, rng, simulatedDate);
   current = allStar.state;
   events.push(...allStar.events);
-
-  const awards = processMidseasonAwards(current, simulatedDate);
-  current = awards.state;
-  events.push(...awards.events);
 
   const tournament = processTournament(current, rng, simulatedDate);
   current = tournament.state;

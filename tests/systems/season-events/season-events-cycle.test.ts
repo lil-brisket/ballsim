@@ -6,16 +6,15 @@ import type { GameState } from "@/state/game-state";
 import { bootstrapWorld } from "@/systems/world-pipeline";
 import { beginRegularSeasonFromPreseason } from "@/systems/simulation/season-lifecycle";
 import { generateRosters } from "@/systems/roster-generation";
-import { processSeasonEvents } from "@/systems/season-events";
-import { processMidseasonAwards } from "@/systems/season-events/process-midseason-awards";
+import {
+  finalizeAllStarSelections,
+  processSeasonEvents,
+} from "@/systems/season-events";
 import { advanceSimulation } from "@/systems/simulation/advance-simulation";
 import { addCalendarDays } from "@/domain/calendar-date";
-import { runMidseasonAwards } from "@/systems/awards/award-pipeline";
-import { getPrimaryLeagueFinalGames } from "@/systems/awards/award-stat-sources";
 import { qualifyAndStartTournament } from "@/systems/season-events/tournament-engine";
-import { createGame } from "@/domain/entities/game";
-import { asGameId } from "@/domain/ids";
-import { buildAwardResultId } from "@/domain/entities/awards";
+import { asFanVoteCategoryId } from "@/domain/ids";
+import type { FanVoteCategory } from "@/domain/entities/season-events";
 
 function bootRegularSeason(saveId: string) {
   let state = createInitialGameState({
@@ -69,118 +68,109 @@ describe("season events midseason cycle", () => {
       allStar.status === "selections_announced" ||
         allStar.status === "completed",
     ).toBe(true);
-    expect(allStar.selections.length).toBeGreaterThan(0);
     expect(
       result.events.some((e) => e.type === "AllStarSelectionsAnnounced"),
     ).toBe(true);
+
+    const conferenceIds = Object.keys(current.world.conferences);
+    expect(conferenceIds.length).toBeGreaterThanOrEqual(2);
+    for (const conferenceId of conferenceIds) {
+      const picks = allStar.selections.filter(
+        (s) => s.conferenceId === conferenceId,
+      );
+      expect(picks.filter((s) => s.role === "starter")).toHaveLength(5);
+      expect(picks.filter((s) => s.role === "reserve")).toHaveLength(7);
+    }
+    const perTeam = new Map<string, number>();
+    for (const s of allStar.selections) {
+      perTeam.set(s.teamId!, (perTeam.get(s.teamId!) ?? 0) + 1);
+    }
+    expect(Math.max(...perTeam.values())).toBeLessThanOrEqual(3);
   });
 
-  it("midseason awards use cutoff and exclude special games", () => {
-    const { state } = bootRegularSeason("se_awards");
-    const awards = state.competition.seasonEvents.midseasonAwards!;
-    const cutoff = awards.cutoffDate;
+  it("plans one all-positions ballot per conference and no midseason awards", () => {
+    const { state } = bootRegularSeason("se_ballots");
+    const seasonEvents = state.competition.seasonEvents;
+    expect(seasonEvents.midseasonAwards).toBeNull();
+    expect(
+      Object.values(seasonEvents.events).some(
+        (e) => e.type === "midseason_awards",
+      ),
+    ).toBe(false);
 
-    // Inject a fake all_star final game after cutoff with huge points
-    const teamIds = Object.keys(state.world.teams).sort();
-    const fakeGame = createGame({
-      id: asGameId("fake_allstar_stats"),
-      seasonId: state.competition.season.id,
-      date: cutoff,
-      homeTeamId: teamIds[0] as never,
-      awayTeamId: teamIds[1] as never,
-      competitionType: "all_star",
-      status: "final",
-      score: { home: 200, away: 100 },
-      periodScores: [],
-      events: [],
-      playerStats: [],
-      homeTeamSnapshot: null,
-      awayTeamSnapshot: null,
-    });
+    const campaign = Object.values(seasonEvents.fanVoting)[0]!;
+    const categories = Object.values(campaign.categories);
+    const conferences = Object.values(state.world.conferences);
+    expect(categories).toHaveLength(conferences.length);
+    for (const category of categories) {
+      expect(category.kind).toBe("open");
+      const conference = state.world.conferences[category.conferenceId!]!;
+      expect(category.label).toBe(`${conference.name} Conference`);
+    }
 
-    const withFake = {
+    const rostered = Object.values(state.world.players).filter(
+      (p) => !p.retired && p.teamId != null,
+    );
+    const seeded = categories.flatMap((c) => Object.keys(c.candidates));
+    expect(seeded.sort()).toEqual(rostered.map((p) => p.id).sort());
+  });
+
+  it("keeps 2 starters + 2 reserves per legacy position ballot", () => {
+    const { state } = bootRegularSeason("se_legacy_ballots");
+    const allStar = state.competition.seasonEvents.allStar!;
+    const conferenceId = Object.keys(state.world.conferences).sort()[0]!;
+    const players = Object.values(state.world.players)
+      .filter(
+        (p) =>
+          p.teamId != null &&
+          state.world.teams[p.teamId]?.conferenceId === conferenceId,
+      )
+      .sort((a, b) => a.id.localeCompare(b.id));
+    const legacy: FanVoteCategory = {
+      id: asFanVoteCategoryId(`${conferenceId}_guards`),
+      label: "Guards",
+      kind: "guards",
+      conferenceId,
+      candidates: Object.fromEntries(
+        players.map((p, index) => [
+          p.id,
+          {
+            playerId: p.id,
+            teamId: p.teamId,
+            voteTotal: 1_000 - index,
+            voteShare: 0,
+            rank: index + 1,
+            previousRank: null,
+          },
+        ]),
+      ),
+    };
+    const withLegacy: GameState = {
       ...state,
       competition: {
         ...state.competition,
-        games: {
-          ...state.competition.games,
-          [fakeGame.id]: fakeGame,
-        },
-      },
-    };
-
-    const rsGames = getPrimaryLeagueFinalGames(withFake, {
-      competitionTypes: ["regular_season"],
-      throughDate: cutoff,
-    });
-    expect(rsGames.every((g) => g.competitionType === "regular_season")).toBe(
-      true,
-    );
-    expect(rsGames.some((g) => g.id === fakeGame.id)).toBe(false);
-
-    const pipeline = runMidseasonAwards(withFake, cutoff);
-    const midseasonResults = Object.values(
-      pipeline.state.business.awards.results,
-    ).filter((r) => r.period === "midseason");
-    // May be empty early in season if few games played — still idempotent
-    const again = runMidseasonAwards(pipeline.state, cutoff);
-    expect(Object.keys(again.state.business.awards.results).length).toBe(
-      Object.keys(pipeline.state.business.awards.results).length,
-    );
-    void midseasonResults;
-  });
-
-  it("does not emit duplicate MidseasonAwardAnnounced ids for prior-year results", () => {
-    const { state } = bootRegularSeason("se_awards_ids");
-    const awards = state.competition.seasonEvents.midseasonAwards!;
-    const evaluated = runMidseasonAwards(state, awards.cutoffDate);
-    const midseasonResults = Object.values(
-      evaluated.state.business.awards.results,
-    ).filter((result) => result.period === "midseason");
-    const priorResults = Object.fromEntries(
-      midseasonResults.map((result) => {
-        const priorYear = result.seasonYear - 1;
-        const priorId = buildAwardResultId(
-          result.leagueId,
-          priorYear,
-          "midseason",
-          result.awardId,
-        );
-        return [priorId, { ...result, id: priorId, seasonYear: priorYear }];
-      }),
-    );
-    const seeded = {
-      ...evaluated.state,
-      world: {
-        ...evaluated.state.world,
-        calendar: {
-          ...evaluated.state.world.calendar,
-          currentDate: awards.announceDate,
-        },
-      },
-      business: {
-        ...evaluated.state.business,
-        awards: {
-          ...evaluated.state.business.awards,
-          results: {
-            ...evaluated.state.business.awards.results,
-            ...priorResults,
+        seasonEvents: {
+          ...state.competition.seasonEvents,
+          fanVoting: {
+            [allStar.campaignId]: {
+              ...state.competition.seasonEvents.fanVoting[allStar.campaignId]!,
+              categories: { [legacy.id]: legacy },
+            },
           },
         },
       },
-      competition: {
-        ...evaluated.state.competition,
-        seasonEvents: {
-          ...evaluated.state.competition.seasonEvents,
-          midseasonAwards: { ...awards, status: "scheduled" as const },
-        },
-      },
     };
-    const announced = processMidseasonAwards(seeded, awards.announceDate);
-    const ids = announced.events
-      .filter((event) => event.type === "MidseasonAwardAnnounced")
-      .map((event) => event.id);
-    expect(new Set(ids).size).toBe(ids.length);
+
+    const { allStar: selected } = finalizeAllStarSelections(
+      withLegacy,
+      allStar,
+    );
+    expect(
+      selected.selections.filter((s) => s.role === "starter"),
+    ).toHaveLength(2);
+    expect(
+      selected.selections.filter((s) => s.role === "reserve"),
+    ).toHaveLength(2);
   });
 
   it("tournament games do not alter regular-season standings", () => {

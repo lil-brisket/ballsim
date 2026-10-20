@@ -97,7 +97,10 @@ export function listAwardResults(
     cadence?: "monthly" | "yearly";
   },
 ): AwardResult[] {
-  let results = Object.values(state.business.awards?.results ?? {});
+  // Midseason awards are retired; legacy saves may still hold results.
+  let results = Object.values(state.business.awards?.results ?? {}).filter(
+    (r) => AWARD_DEFINITIONS[r.awardId]?.tier !== "midseason",
+  );
   if (filters?.seasonYear != null) {
     results = results.filter((r) => r.seasonYear === filters.seasonYear);
   }

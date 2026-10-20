@@ -6,6 +6,7 @@ import { createGame } from "@/domain/entities/game";
 import type {
   AllStarEventState,
   AllStarSelection,
+  FanVoteCategoryKind,
 } from "@/domain/entities/season-events";
 import { systemResult, type SystemResult } from "@/domain/system-result";
 import type { GameState } from "@/state/game-state";
@@ -14,17 +15,31 @@ import {
   withSeasonEvents,
 } from "@/systems/season-events/plan-season-events";
 
+export type AllStarCategoryQuota = {
+  starters: number;
+  reserves: number;
+};
+
 export type AllStarSelectionRules = {
-  startersPerCategory: number;
-  reservesPerCategory: number;
+  /** All-positions ballot (one per conference). */
+  open: AllStarCategoryQuota;
+  /** Position-group ballots from campaigns planned before the open ballot. */
+  positional: AllStarCategoryQuota;
   maxPerTeam: number;
 };
 
 export const DEFAULT_ALL_STAR_SELECTION_RULES: AllStarSelectionRules = {
-  startersPerCategory: 2,
-  reservesPerCategory: 2,
+  open: { starters: 5, reserves: 7 },
+  positional: { starters: 2, reserves: 2 },
   maxPerTeam: 3,
 };
+
+function quotaFor(
+  rules: AllStarSelectionRules,
+  kind: FanVoteCategoryKind,
+): AllStarCategoryQuota {
+  return kind === "open" ? rules.open : rules.positional;
+}
 
 /**
  * Apply selection rules to finalized fan-vote rankings.
@@ -45,6 +60,7 @@ export function finalizeAllStarSelections(
 
   for (const categoryId of Object.keys(campaign.categories).sort()) {
     const category = campaign.categories[categoryId]!;
+    const quota = quotaFor(rules, category.kind);
     const ranked = Object.values(category.candidates)
       .filter((c) => c.voteTotal > 0 || c.rank > 0)
       .sort((a, b) => {
@@ -63,7 +79,7 @@ export function finalizeAllStarSelections(
         continue;
       }
 
-      if (starters < rules.startersPerCategory) {
+      if (starters < quota.starters) {
         selections.push({
           playerId: candidate.playerId,
           teamId: candidate.teamId,
@@ -74,7 +90,7 @@ export function finalizeAllStarSelections(
         });
         starters += 1;
         if (teamId != null) teamCounts.set(teamKey, teamCount + 1);
-      } else if (reserves < rules.reservesPerCategory) {
+      } else if (reserves < quota.reserves) {
         selections.push({
           playerId: candidate.playerId,
           teamId: candidate.teamId,
@@ -87,10 +103,7 @@ export function finalizeAllStarSelections(
         if (teamId != null) teamCounts.set(teamKey, teamCount + 1);
       }
 
-      if (
-        starters >= rules.startersPerCategory &&
-        reserves >= rules.reservesPerCategory
-      ) {
+      if (starters >= quota.starters && reserves >= quota.reserves) {
         break;
       }
     }
