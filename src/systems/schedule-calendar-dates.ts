@@ -26,9 +26,12 @@ export type ScheduleCalendarConfig = {
   allStarBreakDays: number;
 };
 
-/** Major-league round → calendar spacing (~3.5 games per team per week). */
+/**
+ * Major-league round → calendar spacing (~3 games per team per week), so an
+ * 82-game season opening Oct 1 ends in mid-April.
+ */
 export const REGULAR_SEASON_SCHEDULE_CALENDAR: ScheduleCalendarConfig = {
-  targetGamesPerWeek: 3.5,
+  targetGamesPerWeek: 3.0,
   minRestDaysBetweenRounds: 1,
   backToBackRoundFraction: 0.08,
   allStarBreakDays: 0,

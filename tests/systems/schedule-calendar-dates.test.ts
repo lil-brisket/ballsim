@@ -15,8 +15,8 @@ const baseConfig: ScheduleCalendarConfig = {
 describe("schedule-calendar-dates", () => {
   it("computes span from roundCount and targetGamesPerWeek", () => {
     const span = computeRegularSeasonSpanDays(82, baseConfig);
-    // ceil(82 / 3.5 * 7) = 164
-    expect(span).toBe(164);
+    // ceil(82 / 3.0 * 7) = 192
+    expect(span).toBe(192);
   });
 
   it("uses roundCount (not gamesPerTeam) so odd leagues stay consistent", () => {

@@ -6,11 +6,16 @@ import type { GameState } from "@/state/game-state";
 import { bootstrapWorld } from "@/systems/world-pipeline";
 import {
   getExpectedPhaseWindow,
+  projectedPlayoffsEndDate,
   resolveOffseasonWindows,
   resolvePhaseResolution,
   resolveSeasonAnchors,
 } from "@/systems/league-rules/league-calendar";
 import { asOwnerDecisionId } from "@/domain/ids";
+import { addCalendarDays } from "@/domain/calendar-date";
+import { beginRegularSeasonFromPreseason } from "@/systems/simulation/season-lifecycle";
+import { advanceSimulation } from "@/systems/simulation/advance-simulation";
+import { SEASON_REVIEW_LENGTH_DAYS } from "@/systems/simulation/offseason-calendar-config";
 import type { LeaguePhaseId } from "@/systems/phase-engine/phase-types";
 
 function bootState(): GameState {
@@ -120,6 +125,59 @@ describe("league-calendar phase resolution", () => {
     expect(resolution.reason).toBe("blocking_decision");
     expect(resolution.blockedBy).toBe("owner_decision");
     expect(resolution.phaseId).toBe("offseason.draft");
+  });
+
+  it("anchors the offseason after the projected playoffs during the regular season", () => {
+    let state = beginRegularSeasonFromPreseason(bootState()).state;
+    state = advanceSimulation(state, createSeededRng(state.meta.rngState), {
+      days: 1,
+    }).state;
+    expect(state.competition.season.phase).toBe("regular");
+
+    const scheduledEnd = Object.values(state.competition.games)
+      .filter((g) => g.competitionType === "regular_season")
+      .map((g) => g.date)
+      .sort()
+      .at(-1)!;
+    const anchors = resolveSeasonAnchors(state);
+    // Scheduled end, not the last played game.
+    expect(anchors.regularSeasonEnd).toBe(scheduledEnd);
+    expect(anchors.regularSeasonEnd! > state.world.calendar.currentDate).toBe(
+      true,
+    );
+
+    const { playoffTeams, seriesLength } = state.settings.playoffs;
+    const playoffsEnd = addCalendarDays(
+      scheduledEnd,
+      Math.ceil(Math.log2(playoffTeams)) * seriesLength,
+    );
+    expect(projectedPlayoffsEndDate(state, scheduledEnd)).toBe(playoffsEnd);
+    expect(anchors.playoffsEnd).toBeNull();
+    expect(anchors.seasonReviewStart).toBe(addCalendarDays(playoffsEnd, 1));
+    expect(anchors.offseasonStart).toBe(
+      addCalendarDays(playoffsEnd, 1 + SEASON_REVIEW_LENGTH_DAYS),
+    );
+
+    const draft = getExpectedPhaseWindow(state, "offseason.draft");
+    expect(draft!.start > playoffsEnd).toBe(true);
+  });
+
+  it("drops the playoff projection once the playoffs are complete", () => {
+    const regular = beginRegularSeasonFromPreseason(bootState()).state;
+    const state: GameState = {
+      ...regular,
+      competition: {
+        ...regular.competition,
+        playoffs: { ...regular.competition.playoffs, status: "complete" },
+      },
+    };
+    const anchors = resolveSeasonAnchors(state);
+    expect(
+      projectedPlayoffsEndDate(state, anchors.regularSeasonEnd),
+    ).toBeNull();
+    expect(anchors.offseasonStart).toBe(
+      addCalendarDays(anchors.regularSeasonEnd!, 1 + SEASON_REVIEW_LENGTH_DAYS),
+    );
   });
 
   it("holds staff development until next year's canonical preseason", () => {

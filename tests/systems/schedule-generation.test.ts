@@ -291,9 +291,11 @@ describe("generateSchedule calendar spacing", () => {
     expect(first).toBe("2026-10-01");
 
     const span = calendarDaysBetween(first, last);
-    // ceil(82 / 3.5 * 7) = 164; allow a small band for config clamps / break
-    expect(span).toBeGreaterThanOrEqual(150);
-    expect(span).toBeLessThanOrEqual(180);
+    // ceil(82 / 3.0 * 7) = 192; allow a small band for config clamps / break
+    expect(span).toBeGreaterThanOrEqual(185);
+    expect(span).toBeLessThanOrEqual(200);
+    // October through April.
+    expect(last.startsWith("2027-04")).toBe(true);
     // Must not be the old 1-round-per-day compression (~81 days).
     expect(span).toBeGreaterThan(100);
   });
