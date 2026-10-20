@@ -6,11 +6,19 @@ import type {
 import type { Rng } from "@/domain/rng";
 import { systemResult, type SystemResult } from "@/domain/system-result";
 import type { GameState } from "@/state/game-state";
-import { generateBracket } from "@/systems/playoff-bracket";
+import {
+  generateBracket,
+  generateConferenceBracket,
+} from "@/systems/playoff-bracket";
+import {
+  resolvePlayoffFormat,
+  teamConferenceMap,
+} from "@/systems/playoff-format";
 import {
   applyPlayInResults,
   playInMatchups,
   qualifyAndSeed,
+  qualifyAndSeedByConference,
 } from "@/systems/playoff-qualification";
 import {
   createNextPlayoffGame,
@@ -33,6 +41,8 @@ import { createGame } from "@/domain/entities/game";
  * Does not mutate season.phase — callers use transitionPhase("playoffs").
  * Idempotent when playoffs are already in_progress or complete.
  *
+ * Conference leagues (see resolvePlayoffFormat) qualify per conference and
+ * play conference sub-brackets; otherwise the field is league-wide.
  * Play-in (when enabled): resolves both bubble games deterministically via RNG
  * in this call, then builds the N-team bracket. No fake bye series.
  */
@@ -51,11 +61,20 @@ export function startPlayoffs(state: GameState, rng?: Rng): SystemResult {
     );
   }
 
-  let qualified;
   let current = state;
   const events: DomainEvent[] = [];
+  const format = resolvePlayoffFormat(state);
+  let tournament: PlayoffTournament;
 
-  if (state.settings.playoffs.playInEnabled) {
+  if (format.kind === "conference") {
+    const { seeds, groups } = qualifyAndSeedByConference(
+      standings,
+      teamConferenceMap(state),
+      format.conferenceIds,
+      format.spotsPerConference,
+    );
+    tournament = generateConferenceBracket(groups, seeds);
+  } else if (state.settings.playoffs.playInEnabled) {
     if (!rng) {
       throw new Error("startPlayoffs with play-in requires an Rng.");
     }
@@ -63,17 +82,17 @@ export function startPlayoffs(state: GameState, rng?: Rng): SystemResult {
     const playIn = simulatePlayInGames(current, matchups, rng);
     current = playIn.state;
     events.push(...playIn.events);
-    qualified = applyPlayInResults(
-      standings,
-      playoffTeams,
-      playIn.gameAWinner,
-      playIn.gameBWinner,
+    tournament = generateBracket(
+      applyPlayInResults(
+        standings,
+        playoffTeams,
+        playIn.gameAWinner,
+        playIn.gameBWinner,
+      ),
     );
   } else {
-    qualified = qualifyAndSeed(standings, playoffTeams);
+    tournament = generateBracket(qualifyAndSeed(standings, playoffTeams));
   }
-
-  const tournament = generateBracket(qualified);
 
   return systemResult(
     {

@@ -26,7 +26,13 @@ import { createPhaseEBusinessDefaults } from "@/state/phase-e-defaults";
 import { createDefaultOwnedFranchiseState } from "@/state/owned-franchise-state";
 import { TEST_NOW_ISO, TEST_RNG_SEED } from "../helpers/determinism";
 
-function createEightTeamGameState(rngSeed: number): {
+function createEightTeamGameState(
+  rngSeed: number,
+  shape: { teamsPerDivision: number; playoffTeams: number } = {
+    teamsPerDivision: 2,
+    playoffTeams: 8,
+  },
+): {
   state: GameState;
   rng: ReturnType<typeof createSeededRng>;
 } {
@@ -37,7 +43,7 @@ function createEightTeamGameState(rngSeed: number): {
       leagueName: "Playoff Test League",
       conferenceCount: 2,
       divisionsPerConference: 2,
-      teamsPerDivision: 2,
+      teamsPerDivision: shape.teamsPerDivision,
       rosterSize: 10,
     },
     rng,
@@ -94,7 +100,7 @@ function createEightTeamGameState(rngSeed: number): {
     },
     settings: {
       league: {
-        teamCount: 8,
+        teamCount: 4 * shape.teamsPerDivision,
         conferenceCount: 2,
         divisionsEnabled: true,
         area: "north_america",
@@ -109,7 +115,7 @@ function createEightTeamGameState(rngSeed: number): {
         },
       },
       playoffs: {
-        playoffTeams: 8,
+        playoffTeams: shape.playoffTeams,
         seriesLength: 7,
         playInEnabled: false,
       },
@@ -270,6 +276,16 @@ describe("playoffs season integration", () => {
     expect(final.winnerTeamId).toBe(playoffs.championTeamId);
     expect(final.wins[final.winnerTeamId!]).toBe(SERIES_WINS_TO_CLINCH);
 
+    // Two conferences: four qualifiers each, kept apart until the Finals.
+    const conferenceOf = (teamId: string | null) =>
+      result.state.world.teams[teamId!]!.conferenceId;
+    for (const series of playoffs.series) {
+      const sameConference =
+        conferenceOf(series.higherSeedTeamId) ===
+        conferenceOf(series.lowerSeedTeamId);
+      expect(sameConference).toBe(series.round < 2);
+    }
+
     for (const series of playoffs.series) {
       expect(series.gameIds.length).toBeGreaterThanOrEqual(4);
       expect(series.gameIds.length).toBeLessThanOrEqual(7);
@@ -294,6 +310,49 @@ describe("playoffs season integration", () => {
     expect(rebuilt.competition.standings.byTeamId).toEqual(
       standingsBeforeRebuild,
     );
+  });
+
+  it("runs a 12-team conference bracket with byes to a champion", () => {
+    resetDomainEventSequenceForTests();
+    const { state, rng } = createEightTeamGameState(TEST_RNG_SEED, {
+      teamsPerDivision: 3,
+      playoffTeams: 12,
+    });
+    const result = simulateSeason(state, rng);
+    const playoffs = result.state.competition.playoffs;
+    const conferenceOf = (teamId: string) =>
+      result.state.world.teams[teamId]!.conferenceId;
+
+    expect(playoffs.status).toBe("complete");
+    expect(playoffs.series).toHaveLength(11);
+    expect(playoffs.series.every((s) => s.status === "complete")).toBe(true);
+
+    // Conference #1 and #2 seeds skip round 0 and enter in round 1.
+    const byes = playoffs.series.filter((s) => s.byeParticipant);
+    expect(byes).toHaveLength(4);
+    for (const series of byes) {
+      expect(series.round).toBe(1);
+      const byeTeam = series.byeParticipant!.teamId;
+      expect([series.higherSeedTeamId, series.lowerSeedTeamId]).toContain(
+        byeTeam,
+      );
+      expect(
+        playoffs.series.some(
+          (s) =>
+            s.round === 0 &&
+            (s.higherSeedTeamId === byeTeam || s.lowerSeedTeamId === byeTeam),
+        ),
+      ).toBe(false);
+    }
+
+    for (const series of playoffs.series) {
+      const sameConference =
+        conferenceOf(series.higherSeedTeamId!) ===
+        conferenceOf(series.lowerSeedTeamId!);
+      expect(sameConference).toBe(series.round < 3);
+    }
+    const final = playoffs.series.find((s) => s.round === 3 && s.slot === 0)!;
+    expect(final.winnerTeamId).toBe(playoffs.championTeamId);
   });
 
   it("is deterministic for the same 8-team seed", () => {

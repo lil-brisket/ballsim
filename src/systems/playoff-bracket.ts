@@ -63,6 +63,187 @@ export function generateBracket(
   return buildPowerOfTwoBracket(bySeed, seeds, fieldSize);
 }
 
+type BracketNode =
+  | { kind: "team"; seed: number }
+  | { kind: "match"; left: BracketNode; right: BracketNode };
+
+/**
+ * Builds a conference playoff bracket: each group is one conference's
+ * qualifiers in conference-seed order (all groups the same size). Each
+ * conference plays its own sub-bracket; conference champions meet pairwise
+ * (2 conferences → Finals, 4 → semifinals then Finals).
+ *
+ * Per-conference shapes: 1 (champion advances), 3 (#1 bye; #2v#3),
+ * 6 (#1/#2 byes; #3v#6, #4v#5), or a power of 2 (classic seed order).
+ * `seeds` hold overall seeds; they decide home court, not bracket position.
+ */
+export function generateConferenceBracket(
+  groups: readonly (readonly TeamId[])[],
+  seeds: readonly PlayoffSeed[],
+): PlayoffTournament {
+  const conferenceCount = groups.length;
+  if (conferenceCount !== 2 && conferenceCount !== 4) {
+    throw new Error(
+      `generateConferenceBracket supports 2 or 4 conferences; got ${conferenceCount}.`,
+    );
+  }
+  const spots = groups[0]!.length;
+  if (groups.some((group) => group.length !== spots)) {
+    throw new Error(
+      "generateConferenceBracket requires the same number of teams per conference.",
+    );
+  }
+  const fieldSize = spots * conferenceCount;
+  if (seeds.length !== fieldSize) {
+    throw new Error(
+      `generateConferenceBracket expected ${fieldSize} seeds; got ${seeds.length}.`,
+    );
+  }
+
+  const bySeed = mapSeeds(seeds, fieldSize);
+  const seedByTeam = new Map(seeds.map((entry) => [entry.teamId, entry.seed]));
+  const conferenceTrees = groups.map((group) =>
+    conferenceBracketTree(
+      group.map((teamId) => {
+        const seed = seedByTeam.get(teamId);
+        if (seed === undefined) {
+          throw new Error(
+            `generateConferenceBracket missing seed for ${teamId}.`,
+          );
+        }
+        return seed;
+      }),
+    ),
+  );
+
+  return emitBracketTree(pairUp(conferenceTrees), bySeed, seeds, fieldSize);
+}
+
+/** `conferenceSeeds[i]` is the overall seed of the conference's #(i+1). */
+function conferenceBracketTree(
+  conferenceSeeds: readonly number[],
+): BracketNode {
+  const team = (conferenceSeed: number): BracketNode => ({
+    kind: "team",
+    seed: conferenceSeeds[conferenceSeed - 1]!,
+  });
+  const match = (left: BracketNode, right: BracketNode): BracketNode => ({
+    kind: "match",
+    left,
+    right,
+  });
+
+  switch (conferenceSeeds.length) {
+    case 1:
+      return team(1);
+    case 3:
+      return match(team(1), match(team(2), team(3)));
+    case 6:
+      return match(
+        match(team(1), match(team(4), team(5))),
+        match(team(2), match(team(3), team(6))),
+      );
+    default:
+      if (!isPowerOfTwo(conferenceSeeds.length)) {
+        throw new Error(
+          `generateConferenceBracket unsupported per-conference size ${conferenceSeeds.length}; expected 1, 3, 6, or a power of 2.`,
+        );
+      }
+      return pairUp(bracketSeedOrder(conferenceSeeds.length).map(team));
+  }
+}
+
+/** Pairs adjacent nodes round by round until one root remains. */
+function pairUp(nodes: readonly BracketNode[]): BracketNode {
+  let level = [...nodes];
+  while (level.length > 1) {
+    const next: BracketNode[] = [];
+    for (let index = 0; index < level.length; index += 2) {
+      next.push({
+        kind: "match",
+        left: level[index]!,
+        right: level[index + 1]!,
+      });
+    }
+    level = next;
+  }
+  return level[0]!;
+}
+
+/**
+ * Emits one series per match. Round = deepest child round + 1 (teams are -1);
+ * slots run left to right within a round, so the root is the final at slot 0.
+ */
+function emitBracketTree(
+  root: BracketNode,
+  bySeed: Map<number, TeamId>,
+  seeds: readonly PlayoffSeed[],
+  fieldSize: number,
+): PlayoffTournament {
+  type Placed = { round: number; id: PlayoffSeriesId | null };
+  const slotsByRound = new Map<number, number>();
+  const series: PlayoffSeries[] = [];
+
+  const visit = (node: BracketNode): Placed => {
+    if (node.kind === "team") {
+      return { round: -1, id: null };
+    }
+    const left = visit(node.left);
+    const right = visit(node.right);
+    const round = Math.max(left.round, right.round) + 1;
+    const slot = slotsByRound.get(round) ?? 0;
+    slotsByRound.set(round, slot + 1);
+
+    if (node.left.kind === "team" && node.right.kind === "team") {
+      const opening = makeOpeningSeries(
+        slot,
+        node.left.seed,
+        node.right.seed,
+        bySeed,
+      );
+      series.push(opening);
+      return { round, id: opening.id };
+    }
+
+    const id = asPlayoffSeriesId(`playoff_r${round}_s${slot}`);
+    const bye =
+      node.left.kind === "team"
+        ? node.left
+        : node.right.kind === "team"
+          ? node.right
+          : null;
+    const feederSeriesIds = [left.id, right.id].filter(
+      (feeder): feeder is PlayoffSeriesId => feeder != null,
+    );
+    series.push({
+      id,
+      round,
+      slot,
+      higherSeed: null,
+      lowerSeed: null,
+      higherSeedTeamId: null,
+      lowerSeedTeamId: null,
+      feederSeriesIds,
+      ...(bye
+        ? { byeParticipant: { seed: bye.seed, teamId: bySeed.get(bye.seed)! } }
+        : {}),
+      wins: {},
+      gameIds: [],
+      status: "pending",
+    });
+    return { round, id };
+  };
+
+  if (root.kind === "team") {
+    throw new Error("generateConferenceBracket needs at least two teams.");
+  }
+  visit(root);
+  series.sort(
+    (left, right) => left.round - right.round || left.slot - right.slot,
+  );
+  return finalizeTournament(fieldSize, seeds, series, fieldSize - 1);
+}
+
 function mapSeeds(
   seeds: readonly PlayoffSeed[],
   fieldSize: number,

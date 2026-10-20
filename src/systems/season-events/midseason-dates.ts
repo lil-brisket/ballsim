@@ -9,8 +9,6 @@ export type MidseasonEventWindow = {
   votingOpenDate: string;
   votingCloseDate: string;
   allStarDate: string;
-  tournamentStartDate: string;
-  tournamentEndDate: string;
 };
 
 function seasonEventsConfig(
@@ -85,15 +83,11 @@ export function deriveMidseasonEventWindow(
     votingCloseDate,
     Math.max(0, config.allStarDaysAfterVotingClose),
   );
-  const tournamentStartDate = addCalendarDays(allStarDate, 1);
-  const tournamentEndDate = addCalendarDays(tournamentStartDate, 6);
 
   return {
     anchorDate,
     votingOpenDate,
     votingCloseDate,
     allStarDate,
-    tournamentStartDate,
-    tournamentEndDate,
   };
 }

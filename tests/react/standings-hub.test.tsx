@@ -216,6 +216,7 @@ describe("PlayoffRaceWidget", () => {
   it("renders the divider after the cutoff team entry", () => {
     const view: PlayoffRaceView = {
       applicable: true,
+      conferenceName: null,
       cutoffRank: 1,
       playoffTeamCount: 1,
       above: [

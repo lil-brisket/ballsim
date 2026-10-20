@@ -3,7 +3,7 @@
  * Distinct from Calendar (simulation/time control).
  */
 
-import type { GameStatus } from "@/domain/entities/game";
+import { isOrphanedCupGame, type GameStatus } from "@/domain/entities/game";
 import type { GameState } from "@/state/game-state";
 import { getGamesForSeason } from "@/state/game-access";
 import { getActiveOwnerTeamId } from "@/state/owner-context";
@@ -105,7 +105,7 @@ export function toLeagueScheduleView(
   const phase = state.competition.season.phase;
 
   let games = getGamesForSeason(state, seasonId).filter(
-    (g) => g.competitionType !== "development_league",
+    (g) => g.competitionType !== "development_league" && !isOrphanedCupGame(g),
   );
 
   if (filters.teamId) {

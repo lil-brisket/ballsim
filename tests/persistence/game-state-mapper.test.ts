@@ -548,8 +548,11 @@ describe("GameState schema migration", () => {
         "developmentLeague",
         // v68 → v69 adds the jersey number.
         "jerseyNumber",
+        // Load-time reconciliation registers it with his franchise.
+        "jerseyTeamId",
       ].sort(),
     );
+    expect(player.jerseyTeamId).toBe(teamId);
   });
 
   it("sets contractId to null when zero or multiple contracts match", () => {

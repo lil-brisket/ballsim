@@ -620,8 +620,6 @@ function seasonEventIcon(type: SeasonEvent["type"]): string {
   switch (type) {
     case "all_star":
       return "⭐";
-    case "midseason_tournament":
-      return "🏆";
     case "midseason_awards":
       return "🏅";
     case "holiday":
@@ -639,8 +637,6 @@ function seasonEventHref(saveId: string, event: SeasonEvent): string {
       return `/dashboard/${saveId}/season-events/fan-voting`;
     case "all_star":
       return `/dashboard/${saveId}/season-events/all-star`;
-    case "midseason_tournament":
-      return `/dashboard/${saveId}/season-events/midseason-cup`;
     case "midseason_awards":
       return `/dashboard/${saveId}/awards`;
     default:
@@ -653,8 +649,13 @@ function projectSeasonEvent(
   currentDate: string,
   saveId: string,
 ): CalendarEventView | null {
-  // Midseason awards are retired; hide events left over in legacy saves.
-  if (event.status === "cancelled" || event.type === "midseason_awards") {
+  // Midseason awards and the Midseason Cup are retired; hide events left
+  // over in legacy saves.
+  if (
+    event.status === "cancelled" ||
+    event.type === "midseason_awards" ||
+    event.type === "midseason_tournament"
+  ) {
     return null;
   }
   const lifecycle =
@@ -683,10 +684,7 @@ function projectSeasonEvent(
     category: "league",
     title: `${icon} ${event.shortLabel}`,
     description: event.title,
-    importance:
-      event.type === "all_star" || event.type === "midseason_tournament"
-        ? "critical"
-        : "high",
+    importance: event.type === "all_star" ? "critical" : "high",
     source,
     sourceKey,
     blocking: false,

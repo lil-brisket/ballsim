@@ -8,7 +8,10 @@ import { Section } from "@/components/ui/Section";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { Metric } from "@/components/ui/Metric";
 import { TeamEntityLink } from "@/components/entity/TeamEntityLink";
-import { toPlayoffHubView } from "@/state/playoff-hub-selectors";
+import {
+  toPlayoffHubView,
+  type PlayoffRoundView,
+} from "@/state/playoff-hub-selectors";
 
 export const metadata: Metadata = { title: "Playoffs" };
 
@@ -91,40 +94,100 @@ export default async function PlayoffsPage({
             ) : null}
           </div>
 
-          {/* Desktop / tablet: columns; mobile: stacked rounds */}
-          <div className="hidden gap-4 md:grid md:grid-cols-2 xl:grid-cols-4">
-            {hub.rounds.map((round) => (
-              <Section key={round.round} title={round.label}>
-                <ul className="space-y-2">
-                  {round.series.map((series) => (
-                    <SeriesCard
-                      key={series.id}
-                      saveId={saveId}
-                      series={series}
-                    />
-                  ))}
-                </ul>
-              </Section>
-            ))}
-          </div>
+          {hub.isConferenceBracket ? (
+            <>
+              {hub.conferenceSections.map((conference) => (
+                <Section
+                  key={conference.conferenceId}
+                  title={conference.conferenceName}
+                >
+                  <RoundGrid
+                    saveId={saveId}
+                    rounds={conference.rounds}
+                    className="xl:grid-cols-3"
+                  />
+                </Section>
+              ))}
+              {hub.crossConferenceRounds.map((round) => (
+                <Section key={round.round} title={round.label}>
+                  <ul className="space-y-2 md:max-w-sm">
+                    {round.series.map((series) => (
+                      <SeriesCard
+                        key={series.id}
+                        saveId={saveId}
+                        series={series}
+                      />
+                    ))}
+                  </ul>
+                </Section>
+              ))}
+            </>
+          ) : (
+            <>
+              {/* Desktop / tablet: columns; mobile: stacked rounds */}
+              <div className="hidden gap-4 md:grid md:grid-cols-2 xl:grid-cols-4">
+                {hub.rounds.map((round) => (
+                  <Section key={round.round} title={round.label}>
+                    <ul className="space-y-2">
+                      {round.series.map((series) => (
+                        <SeriesCard
+                          key={series.id}
+                          saveId={saveId}
+                          series={series}
+                        />
+                      ))}
+                    </ul>
+                  </Section>
+                ))}
+              </div>
 
-          <div className="space-y-4 md:hidden">
-            {hub.rounds.map((round) => (
-              <Section key={round.round} title={round.label}>
-                <ul className="space-y-2">
-                  {round.series.map((series) => (
-                    <SeriesCard
-                      key={series.id}
-                      saveId={saveId}
-                      series={series}
-                    />
-                  ))}
-                </ul>
-              </Section>
-            ))}
-          </div>
+              <div className="space-y-4 md:hidden">
+                {hub.rounds.map((round) => (
+                  <Section key={round.round} title={round.label}>
+                    <ul className="space-y-2">
+                      {round.series.map((series) => (
+                        <SeriesCard
+                          key={series.id}
+                          saveId={saveId}
+                          series={series}
+                        />
+                      ))}
+                    </ul>
+                  </Section>
+                ))}
+              </div>
+            </>
+          )}
         </>
       )}
+    </div>
+  );
+}
+
+/** A conference's rounds as columns (stacked on mobile). */
+function RoundGrid(props: {
+  saveId: string;
+  rounds: PlayoffRoundView[];
+  className?: string;
+}) {
+  return (
+    <div className={`grid gap-4 md:grid-cols-2 ${props.className ?? ""}`}>
+      {props.rounds.map((round) => (
+        <div key={round.round}>
+          <h3 className="mb-2 text-sm font-semibold uppercase tracking-wide text-zinc-400">
+            {round.label}
+          </h3>
+          <ul className="space-y-2">
+            {round.series.map((series) => (
+              <SeriesCard
+                key={series.id}
+                saveId={props.saveId}
+                series={series}
+              />
+            ))}
+          </ul>
+        </div>
+      ))}
     </div>
   );
 }

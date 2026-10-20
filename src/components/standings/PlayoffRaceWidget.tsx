@@ -78,7 +78,14 @@ export function PlayoffRaceWidget(props: {
       aria-label="Playoff race"
       data-testid="playoff-race"
     >
-      <SectionHeading className="mb-2" title="Playoff Race" />
+      <SectionHeading
+        className="mb-2"
+        title={
+          props.view.conferenceName
+            ? `Playoff Race · ${props.view.conferenceName}`
+            : "Playoff Race"
+        }
+      />
       <ol className="m-0 list-none p-0">
         {props.view.above.map((team) => (
           <RaceRow key={team.teamId} saveId={props.saveId} team={team} />

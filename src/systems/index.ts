@@ -155,8 +155,20 @@ export {
   getHomeTeamForGame,
   type HomeCourtSeriesParticipants,
 } from "@/systems/playoff-config";
-export { qualifyAndSeed } from "@/systems/playoff-qualification";
-export { bracketSeedOrder, generateBracket } from "@/systems/playoff-bracket";
+export {
+  qualifyAndSeed,
+  qualifyAndSeedByConference,
+} from "@/systems/playoff-qualification";
+export {
+  bracketSeedOrder,
+  generateBracket,
+  generateConferenceBracket,
+} from "@/systems/playoff-bracket";
+export {
+  resolvePlayoffFormat,
+  resolvePlayoffFormatFor,
+  type PlayoffFormat,
+} from "@/systems/playoff-format";
 export {
   recordSeriesGameResult,
   isSeriesComplete,

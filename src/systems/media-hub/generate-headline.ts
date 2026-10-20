@@ -337,19 +337,6 @@ export function generateHeadline(
         summary: "The league unveils this season's All-Star roster.",
       };
     }
-    case "MidseasonTournamentStarted": {
-      return {
-        headline: "Midseason Cup begins",
-        summary: "Tournament play opens with the qualified field.",
-      };
-    }
-    case "MidseasonTournamentCompleted": {
-      const champ = teamName(state, str(p, "championTeamId"));
-      return {
-        headline: `${champ} win the Midseason Cup`,
-        summary: `${champ} claim the Midseason Cup title.`,
-      };
-    }
     case "MidseasonAwardAnnounced": {
       const name = playerName(state, str(p, "winnerSubjectId"));
       return {

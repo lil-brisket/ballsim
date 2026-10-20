@@ -213,7 +213,8 @@ export function StandingsTable(props: {
   page: Pick<
     StandingsPageView,
     "mode" | "stats" | "playoffTeamCount" | "ownedTeamIds"
-  >;
+  > &
+    Partial<Pick<StandingsPageView, "conferencePlayoffSpots">>;
 }) {
   const ownedIds = new Set(props.page.ownedTeamIds);
   const columns = columnsFor(
@@ -224,8 +225,9 @@ export function StandingsTable(props: {
   );
   const minWidth =
     props.page.stats === "advanced" ? "min-w-[48rem]" : "min-w-[42rem]";
+  const conferenceSpots = props.page.conferencePlayoffSpots ?? null;
   const showCutoffLine =
-    props.group.kind === "overall" &&
+    (props.group.kind === "overall" || props.group.kind === "conference") &&
     props.page.mode === "regular" &&
     props.group.cutoffRank != null;
 
@@ -355,12 +357,16 @@ export function StandingsTable(props: {
       </div>
       {showCutoffLine && props.group.cutoffRank != null ? (
         <p className="mt-1 text-xs text-zinc-600">
-          {`Playoff cutoff at rank ${props.group.cutoffRank} (league-wide field of ${props.page.playoffTeamCount}).`}
+          {conferenceSpots != null
+            ? `Playoff cutoff at rank ${props.group.cutoffRank} in the conference.`
+            : `Playoff cutoff at rank ${props.group.cutoffRank} (league-wide field of ${props.page.playoffTeamCount}).`}
         </p>
       ) : null}
       {props.group.kind !== "overall" ? (
         <p className="mt-1 text-xs text-zinc-600">
-          {`Playoff qualification is league-wide (top ${props.page.playoffTeamCount}).`}
+          {conferenceSpots != null
+            ? `Top ${conferenceSpots} in each conference make the playoffs.`
+            : `Playoff qualification is league-wide (top ${props.page.playoffTeamCount}).`}
         </p>
       ) : null}
     </section>

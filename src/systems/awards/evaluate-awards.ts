@@ -17,6 +17,14 @@ import {
   isSixthManEligible,
   meetsMinGamesMinutes,
 } from "@/systems/awards/award-eligibility";
+import {
+  qualifyAndSeed,
+  qualifyAndSeedByConference,
+} from "@/systems/playoff-qualification";
+import {
+  resolvePlayoffFormat,
+  teamConferenceMap,
+} from "@/systems/playoff-format";
 import { getAwardDefinition } from "@/systems/awards/award-definitions";
 import {
   availabilityScore,
@@ -780,6 +788,32 @@ export function evaluateMostImproved(
   return toAwardResult(state, awardId, period, rankCandidates(scored));
 }
 
+/** Teams that actually qualify for the playoffs, matching `startPlayoffs`. */
+function qualifyingPlayoffTeamIds(state: GameState): Set<string> {
+  const standings = Object.values(state.competition.standings.byTeamId ?? {});
+  const format = resolvePlayoffFormat(state);
+  try {
+    const seeds =
+      format.kind === "conference"
+        ? qualifyAndSeedByConference(
+            standings,
+            teamConferenceMap(state),
+            format.conferenceIds,
+            format.spotsPerConference,
+          ).seeds
+        : qualifyAndSeed(standings, state.settings.playoffs.playoffTeams);
+    return new Set(seeds.map((seed) => seed.teamId));
+  } catch {
+    // Too few standing rows (or malformed data): keep the league-wide estimate.
+    return new Set(
+      [...standings]
+        .sort((a, b) => b.winPercentage - a.winPercentage)
+        .slice(0, state.settings.playoffs.playoffTeams)
+        .map((row) => row.teamId),
+    );
+  }
+}
+
 export function evaluateCoachOfYear(state: GameState): AwardResult | null {
   const games = getPrimaryLeagueFinalGames(state, {
     competitionTypes: ["regular_season"],
@@ -787,12 +821,7 @@ export function evaluateCoachOfYear(state: GameState): AwardResult | null {
   if (games.length === 0) return null;
   const teamRecords = aggregateTeamPeriodRecords(games);
   const teamRanks = rankTeamsByWinPct(teamRecords);
-  const playoffTeams = new Set(
-    Object.values(state.competition.standings.byTeamId ?? {})
-      .sort((a, b) => b.winPercentage - a.winPercentage)
-      .slice(0, state.settings.playoffs.playoffTeams)
-      .map((s) => s.teamId),
-  );
+  const playoffTeams = qualifyingPlayoffTeamIds(state);
 
   const coaches = Object.values(state.world.coaches).filter(
     (coach) => coach.teamId != null,

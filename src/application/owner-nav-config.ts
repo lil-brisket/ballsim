@@ -132,12 +132,6 @@ const ALL_STAR_NAV_ITEM: OwnerNavItem = {
   icon: "awards",
 };
 
-const MIDSEASON_CUP_NAV_ITEM: OwnerNavItem = {
-  href: "/season-events/midseason-cup",
-  label: "Midseason Cup",
-  icon: "playoffs",
-};
-
 const PROPOSE_TRADE_NAV_ITEM: OwnerNavItem = {
   href: "/trades/propose",
   label: "Propose Trade",
@@ -174,13 +168,6 @@ function midseasonNavExtras(state: GameState): OwnerNavItem[] {
       se.allStar.status === "voting")
   ) {
     extras.push(ALL_STAR_NAV_ITEM);
-  }
-  if (
-    se.tournament &&
-    se.tournament.status !== "not_started" &&
-    se.tournament.qualifiedTeams.length > 0
-  ) {
-    extras.push(MIDSEASON_CUP_NAV_ITEM);
   }
   return extras;
 }

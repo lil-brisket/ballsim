@@ -64,6 +64,8 @@ export type MultiYearSimOptions = {
    * new-year preseason boundary, including the final season.
    */
   onSeasonBoundary?: (state: GameState, seasonsCompleted: number) => void;
+  /** Invoked with the saved state at the start of every loop step. */
+  onStep?: (state: GameState) => void;
 };
 
 export type MultiYearSimDiagnostics = {
@@ -397,6 +399,7 @@ export async function runMultiYearSimulation(
     if (!before) {
       throw new Error("Save missing mid-sim");
     }
+    options.onStep?.(before.state);
     const beforeFp = lifecycleFingerprint(before.state);
     const beforeYear = before.state.competition.season.year;
     const beforePhase = before.state.competition.season.phase;

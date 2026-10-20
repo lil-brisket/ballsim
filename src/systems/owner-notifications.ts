@@ -375,26 +375,6 @@ function appendMidseasonEventNotifications(
       }
     }
 
-    if (event.type === "MidseasonTournamentCompleted") {
-      if (event.payload.championTeamId === teamId) {
-        append(
-          createOwnerNotification({
-            id: asOwnerNotificationId(
-              `notif_ms_cup_${teamId}_${event.occurredOn}`,
-            ),
-            type: "midseason_event",
-            title: "Midseason Cup champions",
-            message: "Your team won the Midseason Cup.",
-            occurredOn: date,
-            severity: "success",
-            read: false,
-            dedupeKey: `midseason_cup_champ:${teamId}:${event.occurredOn}`,
-            relatedTeamId: teamId,
-          }),
-        );
-      }
-    }
-
     if (event.type === "FanVoteLeaderChanged") {
       const playerId = String(event.payload.playerId ?? "");
       if (

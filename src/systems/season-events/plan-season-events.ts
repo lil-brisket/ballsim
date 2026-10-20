@@ -7,11 +7,9 @@ import {
 } from "@/domain/entities/season-events";
 import { createEmptyFanVoteCampaign } from "@/domain/entities/season-events/fan-voting";
 import type { AllStarEventState } from "@/domain/entities/season-events/all-star";
-import type { MidseasonTournamentState } from "@/domain/entities/season-events/midseason-tournament";
 import { asFanVoteCampaignId, asSeasonId, type SeasonId } from "@/domain/ids";
 import { systemResult, type SystemResult } from "@/domain/system-result";
 import type { GameState } from "@/state/game-state";
-import { DEFAULT_SEASON_EVENTS_SETTINGS } from "@/domain/game-settings";
 import { LEAGUE_HOLIDAY_DEFINITIONS } from "@/systems/season-events/holiday-definitions";
 import { deriveMidseasonEventWindow } from "@/systems/season-events/midseason-dates";
 import { buildFanVoteCategories } from "@/systems/season-events/fan-vote-categories";
@@ -36,7 +34,6 @@ export function planSeasonEvents(state: GameState): SystemResult {
     return systemResult(state);
   }
 
-  const config = state.settings.seasonEvents ?? DEFAULT_SEASON_EVENTS_SETTINGS;
   const campaignId = asFanVoteCampaignId(`fanvote_${seasonId}`);
   const categories = buildFanVoteCategories(state);
 
@@ -60,23 +57,6 @@ export function planSeasonEvents(state: GameState): SystemResult {
     gameIds: [],
     selectionsAnnouncedOn: null,
   };
-
-  const tournamentFieldSize = Math.max(0, config.tournamentFieldSize);
-  let tournament: MidseasonTournamentState | null = null;
-  if (tournamentFieldSize >= 2) {
-    tournament = {
-      seasonId,
-      format:
-        state.settings.league.conferenceCount > 1 ? "conference" : "regional",
-      status: "not_started",
-      startDate: window.tournamentStartDate,
-      endDate: window.tournamentEndDate,
-      fieldSize: tournamentFieldSize,
-      qualifiedTeams: [],
-      series: [],
-      gameIds: [],
-    };
-  }
 
   const events: Record<string, SeasonEvent> = {};
   const holidays: SeasonEventsState["holidays"] = {};
@@ -106,25 +86,6 @@ export function planSeasonEvents(state: GameState): SystemResult {
     status: "scheduled",
     sidecarKey: "main",
   };
-
-  if (tournament != null) {
-    const tournamentEventId = buildSeasonEventId(
-      seasonId,
-      "midseason_tournament",
-      "cup",
-    );
-    events[tournamentEventId] = {
-      id: tournamentEventId,
-      seasonId,
-      type: "midseason_tournament",
-      title: "Midseason Cup",
-      shortLabel: "Midseason Cup",
-      startDate: window.tournamentStartDate,
-      endDate: window.tournamentEndDate,
-      status: "scheduled",
-      sidecarKey: "cup",
-    };
-  }
 
   for (const def of LEAGUE_HOLIDAY_DEFINITIONS) {
     const startDate = addCalendarDays(window.anchorDate, def.offsetFromAnchor);
@@ -159,8 +120,10 @@ export function planSeasonEvents(state: GameState): SystemResult {
     events,
     fanVoting: { [campaignId]: campaign },
     allStar,
+    // Midseason awards and the Midseason Cup are retired; legacy saves may
+    // still hold them, but new seasons never plan either.
     midseasonAwards: null,
-    tournament,
+    tournament: null,
     holidays,
   };
 

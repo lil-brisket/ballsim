@@ -245,11 +245,17 @@ export function applyCandidateToSituations(
     };
   }
 
-  const id = situationIdFor(
-    storageKey,
-    teamId,
-    `${monthId}_s${candidate.stage}`,
-  );
+  // A situation that expired or resolved earlier this month at the same stage
+  // already holds the monthly id; reopening takes a date-qualified id.
+  const takenIds = new Set<string>(situations.map((situation) => situation.id));
+  let id = situationIdFor(storageKey, teamId, `${monthId}_s${candidate.stage}`);
+  for (let attempt = 1; takenIds.has(id); attempt += 1) {
+    id = situationIdFor(
+      storageKey,
+      teamId,
+      `${monthId}_s${candidate.stage}_${date}${attempt > 1 ? `_${attempt}` : ""}`,
+    );
+  }
   const expiresOn =
     candidate.expiresAfterDays !== undefined &&
     Number.isInteger(candidate.expiresAfterDays) &&

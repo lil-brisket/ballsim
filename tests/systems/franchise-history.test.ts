@@ -62,16 +62,48 @@ function withTournament(
 
 describe("eliminationSnapshotForRound", () => {
   it("maps 8-team rounds to history snapshots", () => {
-    expect(eliminationSnapshotForRound(0, 8)).toBe("first_round");
-    expect(eliminationSnapshotForRound(1, 8)).toBe("conference_finals");
-    expect(eliminationSnapshotForRound(2, 8)).toBe("finals");
+    // 8 teams: rounds 0..2, final round 2.
+    expect(eliminationSnapshotForRound(0, 2)).toBe("first_round");
+    expect(eliminationSnapshotForRound(1, 2)).toBe("conference_finals");
+    expect(eliminationSnapshotForRound(2, 2)).toBe("finals");
   });
 
   it("maps 16-team rounds to history snapshots", () => {
-    expect(eliminationSnapshotForRound(0, 16)).toBe("first_round");
-    expect(eliminationSnapshotForRound(1, 16)).toBe("second_round");
-    expect(eliminationSnapshotForRound(2, 16)).toBe("conference_finals");
-    expect(eliminationSnapshotForRound(3, 16)).toBe("finals");
+    // 16 teams: rounds 0..3, final round 3.
+    expect(eliminationSnapshotForRound(0, 3)).toBe("first_round");
+    expect(eliminationSnapshotForRound(1, 3)).toBe("second_round");
+    expect(eliminationSnapshotForRound(2, 3)).toBe("conference_finals");
+    expect(eliminationSnapshotForRound(3, 3)).toBe("finals");
+  });
+
+  it("counts back from the final for 12-team brackets", () => {
+    // 12 teams: rounds 0..3.
+    expect(eliminationSnapshotForRound(0, 3)).toBe("first_round");
+    expect(eliminationSnapshotForRound(1, 3)).toBe("second_round");
+    expect(eliminationSnapshotForRound(2, 3)).toBe("conference_finals");
+  });
+
+  it("maps two-conference brackets (the Finals is the only cross round)", () => {
+    // k=8: rounds 0..3 (round 3 = Finals).
+    expect(eliminationSnapshotForRound(0, 3, 1)).toBe("first_round");
+    expect(eliminationSnapshotForRound(1, 3, 1)).toBe("second_round");
+    expect(eliminationSnapshotForRound(2, 3, 1)).toBe("conference_finals");
+    expect(eliminationSnapshotForRound(3, 3, 1)).toBe("finals");
+    // k=2: round 0 is already the conference finals.
+    expect(eliminationSnapshotForRound(0, 1, 1)).toBe("conference_finals");
+    // k=4: round 0 is the first round, round 1 the conference finals.
+    expect(eliminationSnapshotForRound(0, 2, 1)).toBe("first_round");
+    expect(eliminationSnapshotForRound(1, 2, 1)).toBe("conference_finals");
+  });
+
+  it("maps four-conference brackets (a semifinal loss is conference_finals)", () => {
+    // k=4: rounds 0..3 (round 2 = Semifinals, round 3 = Finals).
+    expect(eliminationSnapshotForRound(0, 3, 2)).toBe("first_round");
+    expect(eliminationSnapshotForRound(1, 3, 2)).toBe("conference_finals");
+    expect(eliminationSnapshotForRound(2, 3, 2)).toBe("conference_finals");
+    expect(eliminationSnapshotForRound(3, 3, 2)).toBe("finals");
+    // k=8: rounds 0..4.
+    expect(eliminationSnapshotForRound(1, 4, 2)).toBe("second_round");
   });
 });
 
