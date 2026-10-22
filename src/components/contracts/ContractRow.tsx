@@ -2,6 +2,7 @@ import {
   declineTeamOptionAction,
   exerciseTeamOptionAction,
 } from "@/application/actions";
+import { ReleasePlayerDialog } from "@/components/contracts/ReleasePlayerDialog";
 import { PlayerEntityLink } from "@/components/entity/PlayerEntityLink";
 import { ConfirmDialog } from "@/components/owner/ConfirmDialog";
 import { MoneyDisplay } from "@/components/owner/MoneyDisplay";
@@ -85,48 +86,67 @@ export function ContractRow(props: {
         />
       </td>
       <td className="px-3 py-2">
-        {actionable ? (
-          <div className="flex flex-wrap gap-2">
-            <ConfirmDialog
-              title="Exercise team option"
-              description={`Exercise the pending team option for ${row.playerName}.`}
-              confirmLabel="Exercise"
-            >
-              <form action={exerciseTeamOptionAction}>
-                <input type="hidden" name="saveId" value={saveId} />
-                <input type="hidden" name="contractId" value={row.contractId} />
-                <input type="hidden" name="returnPath" value={returnPath} />
-                <button
-                  type="submit"
-                  className="rounded-md bg-team px-2.5 py-1 text-sm font-medium text-on-team"
-                >
-                  Exercise
-                </button>
-              </form>
-            </ConfirmDialog>
-            <ConfirmDialog
-              title="Decline team option"
-              description={`Decline the pending team option for ${row.playerName}.`}
-              confirmLabel="Decline"
-            >
-              <form action={declineTeamOptionAction}>
-                <input type="hidden" name="saveId" value={saveId} />
-                <input type="hidden" name="contractId" value={row.contractId} />
-                <input type="hidden" name="returnPath" value={returnPath} />
-                <button
-                  type="submit"
-                  className="rounded-md border border-rose-700 px-2.5 py-1 text-sm text-rose-300"
-                >
-                  Decline
-                </button>
-              </form>
-            </ConfirmDialog>
-          </div>
-        ) : row.hasPendingPlayerOption ? (
-          <span className="text-sm text-zinc-500">Player decision</span>
-        ) : (
-          <span className="text-sm text-zinc-600">—</span>
-        )}
+        <div className="flex flex-wrap items-center gap-2">
+          {actionable ? (
+            <>
+              <ConfirmDialog
+                title="Exercise team option"
+                description={`Exercise the pending team option for ${row.playerName}.`}
+                confirmLabel="Exercise"
+              >
+                <form action={exerciseTeamOptionAction}>
+                  <input type="hidden" name="saveId" value={saveId} />
+                  <input
+                    type="hidden"
+                    name="contractId"
+                    value={row.contractId}
+                  />
+                  <input type="hidden" name="returnPath" value={returnPath} />
+                  <button
+                    type="submit"
+                    className="rounded-md bg-team px-2.5 py-1 text-sm font-medium text-on-team"
+                  >
+                    Exercise
+                  </button>
+                </form>
+              </ConfirmDialog>
+              <ConfirmDialog
+                title="Decline team option"
+                description={`Decline the pending team option for ${row.playerName}.`}
+                confirmLabel="Decline"
+              >
+                <form action={declineTeamOptionAction}>
+                  <input type="hidden" name="saveId" value={saveId} />
+                  <input
+                    type="hidden"
+                    name="contractId"
+                    value={row.contractId}
+                  />
+                  <input type="hidden" name="returnPath" value={returnPath} />
+                  <button
+                    type="submit"
+                    className="rounded-md border border-rose-700 px-2.5 py-1 text-sm text-rose-300"
+                  >
+                    Decline
+                  </button>
+                </form>
+              </ConfirmDialog>
+            </>
+          ) : row.hasPendingPlayerOption ? (
+            <span className="text-sm text-zinc-500">Player decision</span>
+          ) : row.release === null ? (
+            <span className="text-sm text-zinc-600">—</span>
+          ) : null}
+          {row.release !== null ? (
+            <ReleasePlayerDialog
+              saveId={saveId}
+              playerId={row.playerId}
+              playerName={row.playerName}
+              returnPath={returnPath}
+              release={row.release}
+            />
+          ) : null}
+        </div>
       </td>
     </tr>
   );

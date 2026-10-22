@@ -62,6 +62,7 @@ describe("contract-hub-selectors", () => {
         availableAction: "none",
         isExpiring: false,
         isLargeCommitment: true,
+        release: null,
       },
       {
         contractId: "c2",
@@ -82,6 +83,7 @@ describe("contract-hub-selectors", () => {
         availableAction: "none",
         isExpiring: true,
         isLargeCommitment: false,
+        release: null,
       },
       {
         contractId: "c3",
@@ -102,6 +104,7 @@ describe("contract-hub-selectors", () => {
         availableAction: "exercise_team_option",
         isExpiring: false,
         isLargeCommitment: false,
+        release: null,
       },
     ];
 

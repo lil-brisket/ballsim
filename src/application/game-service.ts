@@ -96,6 +96,7 @@ export {
   withdrawOwnerFreeAgentOffer,
   exerciseOwnerTeamOption,
   declineOwnerTeamOption,
+  releaseOwnerPlayer,
 } from "@/application/game-service/free-agency-contracts";
 export {
   advanceLeaguePhaseCommand,

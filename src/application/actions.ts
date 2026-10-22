@@ -69,6 +69,7 @@ export {
   resolveNarrativeSituationAction,
   exerciseTeamOptionAction,
   declineTeamOptionAction,
+  releasePlayerAction,
 } from "@/application/actions/inbox-contracts";
 export {
   hireStaffAction,

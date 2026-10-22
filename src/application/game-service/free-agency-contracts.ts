@@ -27,6 +27,11 @@ import { advanceLeaguePhase } from "@/systems/simulation/offseason-lifecycle";
 import { advanceSimulation } from "@/systems/simulation/advance-simulation";
 import { isUserOnDraftClock } from "@/systems/draft";
 import { processDerivedProjections } from "@/systems/media-hub";
+import {
+  getPlayerReleaseBlockReason,
+  releasePlayerUnderContract,
+  type ReleaseMode,
+} from "@/systems/player-release";
 import type { GameState } from "@/state/game-state";
 import type { OwnerCommandResult } from "@/application/game-service/types";
 import {
@@ -320,6 +325,54 @@ async function applyOwnerContractOption(
       working,
       loaded.state.meta.rngState,
       saveStore,
+    );
+    return withDashboard(saved);
+  } catch (error) {
+    return fail(error instanceof Error ? error.message : String(error));
+  }
+}
+
+/** Waive or buy out one of the active owner team's players. */
+export async function releaseOwnerPlayer(
+  saveId: string,
+  input: { playerId: string; mode: ReleaseMode },
+  store?: SaveGameStore,
+): Promise<OwnerCommandResult> {
+  const saveStore = getStore(store);
+  const loaded = await saveStore.load(saveId);
+  if (!loaded) {
+    return fail("Save not found.");
+  }
+  if (input.mode !== "waive" && input.mode !== "buyout") {
+    return fail("Unknown release type.");
+  }
+  const state = loaded.state;
+  const playerId = asPlayerId(input.playerId);
+  const teamId = state.user.activeOwnerTeamId;
+  const ruleBlock = getActionBlockReason(state, {
+    kind: "player_release",
+    playerId,
+    teamId,
+  });
+  if (ruleBlock) {
+    return fail(ruleBlock);
+  }
+  const blocked = getPlayerReleaseBlockReason(state, { playerId, teamId });
+  if (blocked) {
+    return fail(blocked);
+  }
+  try {
+    const released = releasePlayerUnderContract(state, {
+      playerId,
+      teamId,
+      mode: input.mode,
+    });
+    const saved = await persistWorkingState(
+      saveId,
+      released.state,
+      state.meta.rngState,
+      saveStore,
+      released.events,
     );
     return withDashboard(saved);
   } catch (error) {

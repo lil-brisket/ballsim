@@ -21,6 +21,8 @@ function badgeTone(type: string): string {
     case "ContractSigned":
       return "success";
     case "PlayerReleased":
+    case "PlayerWaived":
+    case "PlayerBoughtOut":
       return "critical";
     default:
       return "neutral";

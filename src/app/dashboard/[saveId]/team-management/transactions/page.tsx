@@ -28,6 +28,8 @@ const FILTER_TYPES = [
   "PlayerTraded",
   "DraftPickTraded",
   "PlayerReleased",
+  "PlayerWaived",
+  "PlayerBoughtOut",
   "DraftPickMade",
   "StaffHired",
   "StaffFired",

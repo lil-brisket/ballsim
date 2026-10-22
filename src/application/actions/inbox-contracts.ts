@@ -8,6 +8,7 @@ import {
   resolveOwnerNarrativeSituation,
   exerciseOwnerTeamOption,
   declineOwnerTeamOption,
+  releaseOwnerPlayer,
 } from "@/application/game-service";
 import { redirect } from "next/navigation";
 import {
@@ -112,6 +113,19 @@ export async function declineTeamOptionAction(
   const contractId = String(formData.get("contractId") ?? "");
   const path = returnPath(formData, saveId);
   const result = await declineOwnerTeamOption(saveId, contractId);
+  if (!result.ok) {
+    redirectWithError(path, result.error);
+  }
+  revalidateOwner(saveId);
+  redirect(path);
+}
+
+export async function releasePlayerAction(formData: FormData): Promise<void> {
+  const saveId = String(formData.get("saveId") ?? "");
+  const playerId = String(formData.get("playerId") ?? "");
+  const mode = formData.get("mode") === "buyout" ? "buyout" : "waive";
+  const path = returnPath(formData, saveId);
+  const result = await releaseOwnerPlayer(saveId, { playerId, mode });
   if (!result.ok) {
     redirectWithError(path, result.error);
   }

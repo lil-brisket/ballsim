@@ -35,6 +35,11 @@ import { AI_FA_MIN_SALARY } from "@/systems/owner-objectives-config";
 import { DEFAULT_ROSTER_SIZE } from "@/systems/roster-generation-config";
 import { computeAwardReputationBonus } from "@/systems/awards/award-reputation";
 import { aiPayrollRoom } from "@/systems/ai-payroll-budget";
+import {
+  findCpuWaiverCandidate,
+  releasePlayerUnderContract,
+} from "@/systems/player-release";
+import { TRADE_ROSTER_RULES } from "@/systems/trades-config";
 import { getContractSigningYear } from "@/systems/salary-cap";
 import { getLeagueSalaryCap } from "@/systems/league-salary-cap";
 import {
@@ -277,6 +282,28 @@ function runAiFreeAgencyRound(
     ) {
       current = markDone(current, teamId);
       continue;
+    }
+
+    // A full roster missing a position waives a cheap spare to make room.
+    const rosterSize = current.world.teams[teamId]?.roster.length ?? 0;
+    if (
+      rosterSize >= TRADE_ROSTER_RULES.maxRosterSize &&
+      missingPositions(current, teamId).includes(candidate.position)
+    ) {
+      const waiveId = findCpuWaiverCandidate(
+        current,
+        teamId,
+        candidate.position,
+      );
+      if (waiveId !== null) {
+        const waived = releasePlayerUnderContract(current, {
+          playerId: waiveId,
+          teamId,
+          mode: "waive",
+        });
+        current = waived.state;
+        events.push(...waived.events);
+      }
     }
 
     attempted?.add(`${teamId}:${candidate.id}`);

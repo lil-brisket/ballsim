@@ -100,6 +100,8 @@ const ACTIVITY_TYPES = new Set([
   "FreeAgentSigned",
   "PlayerTraded",
   "PlayerReleased",
+  "PlayerWaived",
+  "PlayerBoughtOut",
   "CoachHired",
 ]);
 

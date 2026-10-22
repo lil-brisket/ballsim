@@ -13,6 +13,8 @@ export const TEAM_TRANSACTION_EVENT_TYPES: readonly DomainEventType[] = [
   "PlayerTraded",
   "DraftPickTraded",
   "PlayerReleased",
+  "PlayerWaived",
+  "PlayerBoughtOut",
   "DraftPickMade",
   "CoachHired",
   "StaffHired",

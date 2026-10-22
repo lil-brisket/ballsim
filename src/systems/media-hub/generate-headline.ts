@@ -115,10 +115,27 @@ export function generateHeadline(
     }
     case "PlayerReleased": {
       const name = playerName(state, str(p, "playerId"));
-      const team = teamName(state, str(p, "teamId"));
+      // Releases carry the old team as formerTeamId.
+      const team = teamName(state, str(p, "formerTeamId") ?? str(p, "teamId"));
       return {
         headline: `${team} release ${name}`,
-        summary: `${name} has been waived by ${team}.`,
+        summary: `${name} is a free agent after leaving ${team}.`,
+      };
+    }
+    case "PlayerWaived": {
+      const name = playerName(state, str(p, "playerId"));
+      const team = teamName(state, str(p, "teamId"));
+      return {
+        headline: `${team} waive ${name}`,
+        summary: `${team} release ${name} and keep paying the rest of his contract.`,
+      };
+    }
+    case "PlayerBoughtOut": {
+      const name = playerName(state, str(p, "playerId"));
+      const team = teamName(state, str(p, "teamId"));
+      return {
+        headline: `${name} agrees to a buyout with ${team}`,
+        summary: `${name} gives up part of his contract to become a free agent.`,
       };
     }
     case "DraftPickMade": {

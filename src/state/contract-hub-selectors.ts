@@ -22,6 +22,10 @@ import {
   type PlayerContractProfileView,
 } from "@/state/player-profile-selectors";
 import {
+  toPlayerReleaseView,
+  type PlayerReleaseView,
+} from "@/state/player-release-selectors";
+import {
   getContractStatus,
   type ContractStatus,
 } from "@/domain/entities/contract";
@@ -46,6 +50,8 @@ export type ContractHubRow = ContractRowView & {
   availableAction: ContractAvailableAction;
   isExpiring: boolean;
   isLargeCommitment: boolean;
+  /** Waive / buyout costs; null when the player cannot be released. */
+  release: PlayerReleaseView | null;
 };
 
 export type ContractHubOverview = {
@@ -165,6 +171,7 @@ export function toContractHubView(state: GameState): ContractHubView {
         row.salary !== null &&
         largeThreshold > 0 &&
         row.salary >= largeThreshold,
+      release: toPlayerReleaseView(state, row.playerId),
     };
   });
 
