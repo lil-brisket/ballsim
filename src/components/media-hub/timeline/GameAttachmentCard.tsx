@@ -134,19 +134,22 @@ function Performer(props: {
         portrait={props.context.portraits[player.playerId]}
         uniform={uniformOf(props.branding)}
       />
-      <Link
-        href={playerHref(props.context.saveId, player.playerId)}
-        className={cn(
-          "min-w-0 truncate font-medium",
-          linkClass,
-          focusRingClass,
-        )}
-      >
-        {player.firstName} {player.lastName}
-      </Link>
-      <span className="shrink-0 tabular-nums text-zinc-400">
-        {line.points} PTS · {line.rebounds} REB · {line.assists} AST
-      </span>
+      {/* Narrow cards stack the numbers under the name so it isn't cut. */}
+      <div className="flex min-w-0 flex-1 flex-col sm:flex-row sm:items-center sm:gap-2">
+        <Link
+          href={playerHref(props.context.saveId, player.playerId)}
+          className={cn(
+            "min-w-0 truncate font-medium",
+            linkClass,
+            focusRingClass,
+          )}
+        >
+          {player.firstName} {player.lastName}
+        </Link>
+        <span className="shrink-0 tabular-nums text-zinc-400">
+          {line.points} PTS · {line.rebounds} REB · {line.assists} AST
+        </span>
+      </div>
     </div>
   );
 }
@@ -213,19 +216,25 @@ export function GameAttachmentCard(props: {
               <caption className="sr-only">Score by quarter</caption>
               <thead>
                 <tr className="text-zinc-400">
-                  <th scope="col" className="py-1 pr-3 text-left font-medium">
+                  <th
+                    scope="col"
+                    className="py-1 pr-2 text-left font-medium sm:pr-3"
+                  >
                     Team
                   </th>
                   {a.periodScores.map((_, index) => (
                     <th
                       key={index}
                       scope="col"
-                      className="px-2 py-1 text-right font-medium"
+                      className="px-1 py-1 text-right font-medium sm:px-2"
                     >
                       {periodLabel(index)}
                     </th>
                   ))}
-                  <th scope="col" className="py-1 pl-2 text-right font-medium">
+                  <th
+                    scope="col"
+                    className="py-1 pl-1 text-right font-medium sm:pl-2"
+                  >
                     Total
                   </th>
                 </tr>
@@ -235,19 +244,23 @@ export function GameAttachmentCard(props: {
                   <tr key={side}>
                     <th
                       scope="row"
-                      className="py-1 pr-3 text-left font-medium text-zinc-200"
+                      className="py-1 pr-2 text-left font-medium text-zinc-200 sm:pr-3"
                     >
                       <span className="flex items-center gap-1.5">
-                        <TeamMark branding={branding} size="sm" />
+                        {/* The score header already pairs logo and team; at
+                            375px the line score needs the room. */}
+                        <span className="hidden sm:inline-flex">
+                          <TeamMark branding={branding} size="sm" />
+                        </span>
                         {team.abbreviation}
                       </span>
                     </th>
                     {a.periodScores.map((period, index) => (
-                      <td key={index} className="px-2 py-1 text-right">
+                      <td key={index} className="px-1 py-1 text-right sm:px-2">
                         {period[side]}
                       </td>
                     ))}
-                    <td className="py-1 pl-2 text-right font-semibold text-zinc-50">
+                    <td className="py-1 pl-1 text-right font-semibold text-zinc-50 sm:pl-2">
                       {a.score[side]}
                     </td>
                   </tr>

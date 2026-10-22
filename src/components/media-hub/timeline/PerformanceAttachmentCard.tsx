@@ -56,8 +56,9 @@ export function PerformanceAttachmentCard(props: {
   return (
     <TeamSurface branding={branding} band="left">
       <div className="space-y-3">
-        <TeamSurfaceSlab className="flex items-center justify-between gap-3 rounded-md">
-          <span className="flex min-w-0 items-center gap-2">
+        {/* Narrow cards put the matchup under the name so the name isn't cut. */}
+        <TeamSurfaceSlab className="flex flex-col items-start rounded-md pb-2 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
+          <span className="flex min-w-0 max-w-full items-center gap-2">
             <TeamMark branding={branding} size="sm" />
             <Link
               href={playerHref(context.saveId, player.playerId)}

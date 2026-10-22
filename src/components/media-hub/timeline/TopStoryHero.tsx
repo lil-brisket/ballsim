@@ -289,7 +289,9 @@ export function TopStoryHero(props: {
   const { branding, graphic, numbers, player } = postHeroGraphic(post, context);
 
   return (
-    <section aria-label="Top story">
+    // Container query: side by side only when the hero itself is wide; the
+    // Media Hub's 40rem column keeps the graphic on top of the headline.
+    <section aria-label="Top story" className="@container">
       <TeamThemeScope
         branding={branding}
         className="relative isolate overflow-hidden rounded-2xl border border-surface-line bg-surface-arena"
@@ -311,7 +313,7 @@ export function TopStoryHero(props: {
 
         <article
           aria-labelledby={headlineId}
-          className="flex flex-col-reverse gap-5 p-5 sm:p-6 md:grid md:grid-cols-[minmax(0,1fr)_auto] md:items-center"
+          className="flex flex-col-reverse gap-5 p-5 sm:p-6 @3xl:grid @3xl:grid-cols-[minmax(0,1fr)_auto] @3xl:items-center"
         >
           <div className="min-w-0 space-y-3">
             <p className="text-sm font-semibold uppercase tracking-wide text-team-ink">
@@ -363,7 +365,7 @@ export function TopStoryHero(props: {
               ) : null}
             </div>
           </div>
-          <div className="flex justify-center md:justify-end">{graphic}</div>
+          <div className="flex justify-center @3xl:justify-end">{graphic}</div>
         </article>
       </TeamThemeScope>
     </section>
