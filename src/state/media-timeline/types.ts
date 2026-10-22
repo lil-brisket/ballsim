@@ -93,6 +93,8 @@ export type TimelineSeriesState = {
   /** Wins after this game, keyed by team id. */
   wins: Record<string, number>;
   gameNumber: number;
+  /** Wins needed to take the series (4 in a best-of-7). */
+  winsToClinch: number;
 };
 
 export type GameAttachment = {

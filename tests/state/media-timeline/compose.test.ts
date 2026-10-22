@@ -132,6 +132,7 @@ const series = (a: string, b: string, wa: number, wb: number) => ({
   roundLabel: "Conference Finals",
   wins: { [a]: wa, [b]: wb },
   gameNumber: wa + wb,
+  winsToClinch: 4,
 });
 
 function playoff(
@@ -339,6 +340,19 @@ describe("composeTimeline", () => {
     const a = composeTimeline(base, POSTS).map((c) => c.text);
     const b = composeTimeline(other, POSTS).map((c) => c.text);
     expect(b).not.toEqual(a);
+  });
+
+  it("says a clinching playoff game wins the series", () => {
+    const clinch = game(teamA!, teamB!, 104, 99, {
+      competitionType: "playoffs",
+      series: series(teamA!, teamB!, 4, 1),
+    });
+    const cast = buildLeagueCast(base);
+    const texts = authorCandidates(base, cast, clinch).flatMap((author) =>
+      renderTemplateVariants(clinch, author).map((v) => v.text),
+    );
+    expect(texts.join(" | ")).not.toMatch(/lead the series 4–1/);
+    expect(texts.some((t) => /win the series 4–1/.test(t))).toBe(true);
   });
 
   it("never leaks placeholders and keeps the copy style, across every template", () => {

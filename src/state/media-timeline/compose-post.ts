@@ -111,11 +111,13 @@ function gameCaseTemplates(g: GameAttachment): TemplateSet {
     const sw = wins[W.teamId] ?? 0;
     const sl = wins[L.teamId] ?? 0;
     const line =
-      sw > sl
-        ? `${the(W)} lead the series ${sw}–${sl}`
-        : sw < sl
-          ? `${the(L)} lead the series ${sl}–${sw}`
-          : `The series is tied ${sw}–${sl}`;
+      sw >= g.series.winsToClinch
+        ? `${the(W)} win the series ${sw}–${sl}`
+        : sw > sl
+          ? `${the(W)} lead the series ${sw}–${sl}`
+          : sw < sl
+            ? `${the(L)} lead the series ${sl}–${sw}`
+            : `The series is tied ${sw}–${sl}`;
     const n = g.series.gameNumber;
     const round = g.series.roundLabel;
     return {

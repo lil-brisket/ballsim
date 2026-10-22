@@ -229,7 +229,12 @@ describe("playoffs", () => {
     const lastGame = posts.find((p) => p.id === "game:po_3");
     expect(lastGame?.attachment).toMatchObject({
       reasons: ["playoff"],
-      series: { seriesId: "s1", gameNumber: 4, wins: { [a!]: 4, [b!]: 0 } },
+      series: {
+        seriesId: "s1",
+        gameNumber: 4,
+        winsToClinch: 4,
+        wins: { [a!]: 4, [b!]: 0 },
+      },
     });
   });
 

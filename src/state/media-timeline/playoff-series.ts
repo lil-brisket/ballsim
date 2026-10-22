@@ -1,4 +1,5 @@
 import { playoffRoundLabel } from "@/domain/entities/playoffs";
+import { seriesWinsToClinch } from "@/domain/game-settings";
 import type { PlayoffSeries } from "@/domain/entities/playoffs";
 import type { GameState } from "@/state/game-state";
 import {
@@ -39,6 +40,7 @@ export function buildPlayoffSeriesIndex(state: GameState): PlayoffSeriesIndex {
     }
   };
 
+  const winsToClinch = seriesWinsToClinch(state.settings.playoffs.seriesLength);
   const byGameId = new Map<string, TimelineSeriesState>();
   for (const series of tournament.series) {
     const wins: Record<string, number> = {};
@@ -57,6 +59,7 @@ export function buildPlayoffSeriesIndex(state: GameState): PlayoffSeriesIndex {
         roundLabel: label,
         wins: { ...wins },
         gameNumber: index + 1,
+        winsToClinch,
       });
     });
   }
