@@ -11,6 +11,11 @@ import { TimelineReplies } from "./TimelineReplies";
 import { UnreadDot } from "./UnreadDot";
 import { VerifiedMark } from "./VerifiedMark";
 
+/** DOM id of a post in the feed, for "Open post" links (`#post-…`). */
+export function postAnchorId(postId: string): string {
+  return `post-${postId.replace(/[^A-Za-z0-9_-]/g, "-")}`;
+}
+
 export function TimelinePostShell(props: {
   post: TimelinePostView;
   context: TimelineDisplayContext;
@@ -23,6 +28,9 @@ export function TimelinePostShell(props: {
   const nameId = useId();
   return (
     <article
+      // Compact copies (dashboard, showcase) repeat feed posts; only the
+      // full post is the link target.
+      id={compact ? undefined : postAnchorId(post.id)}
       aria-labelledby={nameId}
       className={cn(
         "flex gap-3 border-b border-zinc-800 last:border-b-0",
