@@ -5,8 +5,10 @@ import {
   portraitPlateIndex,
 } from "@/presentation/portrait-hash";
 import { cn } from "@/components/ui/styles";
+import { contrastRatio } from "@/domain/color-contrast";
 import {
   PortraitFace,
+  uniformColors,
   type PortraitUniform,
 } from "@/components/basketball/PortraitFace";
 import {
@@ -74,7 +76,14 @@ const PLATE_FILLS = [
   "#0f172a",
 ] as const;
 
-const ACCENT = "#d97706";
+/** The team colour that stands out more on the dark plates; amber without a team. */
+function fallbackAccent(uniform: PortraitUniform | null | undefined): string {
+  if (!uniform) return uniformColors(null).trim;
+  const onPlate = (hex: string) => contrastRatio(hex, PLATE_FILLS[0]) ?? 0;
+  return onPlate(uniform.primaryColor) >= onPlate(uniform.secondaryColor)
+    ? uniform.primaryColor
+    : uniform.secondaryColor;
+}
 
 function initialsOf(firstName: string, lastName: string): string {
   const first = firstName.trim().charAt(0);
@@ -85,9 +94,10 @@ function initialsOf(firstName: string, lastName: string): string {
 function FallbackMark(props: {
   plateIndex: number;
   compositionIndex: number;
+  accentColor: string;
 }): ReactNode {
   const fill = PLATE_FILLS[props.plateIndex] ?? PLATE_FILLS[0];
-  const accent = accentShape(props.compositionIndex);
+  const accent = accentShape(props.compositionIndex, props.accentColor);
   return (
     <svg
       viewBox="0 0 64 64"
@@ -107,10 +117,10 @@ function FallbackMark(props: {
  * Accents live on the frame (corners, outer ring, edge bar) so the
  * center stays clear for initials. Same 6 compositions; different geometry.
  */
-function accentShape(compositionIndex: number): ReactNode {
+function accentShape(compositionIndex: number, color: string): ReactNode {
   switch (compositionIndex) {
     case 0:
-      return <circle cx="50" cy="50" r="7" fill={ACCENT} />;
+      return <circle cx="50" cy="50" r="7" fill={color} />;
     case 1:
       return (
         <rect
@@ -120,7 +130,7 @@ function accentShape(compositionIndex: number): ReactNode {
           height="56"
           rx="12"
           fill="none"
-          stroke={ACCENT}
+          stroke={color}
           strokeWidth="2.5"
         />
       );
@@ -131,13 +141,13 @@ function accentShape(compositionIndex: number): ReactNode {
           y1="22"
           x2="22"
           y2="6"
-          stroke={ACCENT}
+          stroke={color}
           strokeWidth="4"
           strokeLinecap="square"
         />
       );
     case 3:
-      return <polygon points="64,0 64,18 46,0" fill={ACCENT} />;
+      return <polygon points="64,0 64,18 46,0" fill={color} />;
     case 4:
       return (
         <circle
@@ -145,12 +155,12 @@ function accentShape(compositionIndex: number): ReactNode {
           cy="32"
           r="26"
           fill="none"
-          stroke={ACCENT}
+          stroke={color}
           strokeWidth="2.5"
         />
       );
     default:
-      return <rect x="0" y="0" width="6" height="64" fill={ACCENT} />;
+      return <rect x="0" y="0" width="6" height="64" fill={color} />;
   }
 }
 
@@ -209,6 +219,7 @@ export function PlayerPortrait(props: PlayerPortraitProps) {
           <FallbackMark
             plateIndex={plateIndex}
             compositionIndex={compositionIndex}
+            accentColor={fallbackAccent(props.uniform)}
           />
           <span
             className={cn(

@@ -232,4 +232,15 @@ describe("PlayerPortrait", () => {
     ).toEqual({ jersey: "#0B1F3A", trim: "#FFFFFF" });
     expect(uniformColors(null)).toEqual({ jersey: "#3f3f46", trim: "#d97706" });
   });
+
+  it("tints the initials plate with the team colour that shows on it", () => {
+    const { container } = render(
+      portrait({
+        uniform: { primaryColor: "#0B1F3A", secondaryColor: "#C4CED4" },
+      }),
+    );
+    const plate = container.querySelector("[data-portrait-plate]")!.innerHTML;
+    expect(plate).toContain("#C4CED4");
+    expect(plate).not.toContain("#d97706");
+  });
 });

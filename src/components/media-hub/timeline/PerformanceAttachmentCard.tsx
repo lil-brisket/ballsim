@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { PlayerPortrait } from "@/components/basketball/PlayerPortrait";
-import { TeamThemeScope } from "@/components/ui/TeamThemeScope";
-import { cn, focusRingClass, linkClass } from "@/components/ui/styles";
+import { cn, focusRingClass } from "@/components/ui/styles";
 import {
   playerHref,
   type TimelineDisplayContext,
@@ -10,7 +9,10 @@ import type {
   PerformanceAttachment,
   PerformanceReason,
 } from "@/state/media-timeline/types";
-import { attachmentSurfaceClass } from "./attachment-parts";
+import { teamBrandingFor } from "./attachment-parts";
+import { StatLine } from "./StatLine";
+import { TeamMark } from "./TeamMark";
+import { TeamSurface, TeamSurfaceSlab } from "./TeamSurface";
 
 /**
  * Context the stat strip can't show. Reasons that only restate a number on
@@ -32,98 +34,93 @@ function reasonLabel(reason: PerformanceReason): string | null {
   }
 }
 
-function BigStat(props: { label: string; value: number }) {
-  return (
-    <div className="flex flex-col-reverse">
-      <dt className="text-sm text-zinc-400">{props.label}</dt>
-      <dd className="font-display text-3xl font-extrabold tabular-nums text-zinc-50">
-        {props.value}
-      </dd>
-    </div>
-  );
-}
-
-function SmallStat(props: { label: string; value: string | number }) {
-  return (
-    <div className="flex items-baseline gap-1">
-      <dt className="text-sm text-zinc-400">{props.label}</dt>
-      <dd className="text-sm font-medium tabular-nums text-zinc-200">
-        {props.value}
-      </dd>
-    </div>
-  );
-}
-
-/** Player performance attachment: portrait, identity and a lower-third stat strip. */
+/** Player performance attachment as a lower third: name slab, portrait, stat strip. */
 export function PerformanceAttachmentCard(props: {
   attachment: PerformanceAttachment;
   context: TimelineDisplayContext;
 }) {
   const { attachment: a, context } = props;
   const { player, line } = a;
-  const branding = context.teams[a.team.teamId]?.branding ?? null;
-  const notable = a.reasons
-    .map(reasonLabel)
-    .filter((label): label is string => label !== null)
-    .join(" · ");
+  const branding = teamBrandingFor(context, a.team);
+  const opponentBranding = teamBrandingFor(context, a.opponent);
+  const uniform = branding
+    ? {
+        primaryColor: branding.primaryColor,
+        secondaryColor: branding.secondaryColor,
+      }
+    : null;
+  const chips = Array.from(
+    new Set(a.reasons.map(reasonLabel).filter((r): r is string => r !== null)),
+  );
 
   return (
-    <TeamThemeScope
-      branding={branding}
-      className={cn(attachmentSurfaceClass, "space-y-3")}
-    >
-      <div className="flex items-center gap-3">
-        <PlayerPortrait
-          playerId={player.playerId}
-          firstName={player.firstName}
-          lastName={player.lastName}
-          size="md"
-          portrait={context.portraits[player.playerId]}
-        />
-        <div className="min-w-0 text-sm">
-          <Link
-            href={playerHref(context.saveId, player.playerId)}
-            className={cn(
-              "block truncate font-display text-lg font-bold",
-              linkClass,
-              focusRingClass,
-            )}
-          >
-            {player.firstName} {player.lastName}
-          </Link>
-          <p className="text-zinc-400">
-            {a.team.abbreviation} vs {a.opponent.abbreviation} ·{" "}
-            <span
-              className={cn("font-medium", a.won ? "text-win" : "text-loss")}
+    <TeamSurface branding={branding} band="left">
+      <div className="space-y-3">
+        <TeamSurfaceSlab className="flex items-center justify-between gap-3 rounded-md">
+          <span className="flex min-w-0 items-center gap-2">
+            <TeamMark branding={branding} size="sm" />
+            <Link
+              href={playerHref(context.saveId, player.playerId)}
+              className={cn(
+                "inline-flex min-h-11 min-w-0 items-center truncate font-display text-lg font-bold text-on-team underline-offset-4 hover:underline",
+                focusRingClass,
+              )}
             >
-              {a.won ? "W" : "L"}
-            </span>
-          </p>
+              {player.firstName} {player.lastName}
+            </Link>
+          </span>
+          <span className="flex shrink-0 items-center gap-1.5 text-sm font-medium">
+            <span>vs</span>
+            <TeamMark branding={opponentBranding} size="sm" />
+            <span>{a.opponent.abbreviation}</span>
+            <span aria-hidden="true">·</span>
+            <span>{a.won ? "W" : "L"}</span>
+          </span>
+        </TeamSurfaceSlab>
+
+        <div className="flex items-center gap-4">
+          <PlayerPortrait
+            playerId={player.playerId}
+            firstName={player.firstName}
+            lastName={player.lastName}
+            size="md"
+            portrait={context.portraits[player.playerId]}
+            uniform={uniform}
+          />
+          <StatLine
+            primary={[
+              { label: "PTS", value: String(line.points) },
+              { label: "REB", value: String(line.rebounds) },
+              { label: "AST", value: String(line.assists) },
+            ]}
+            secondary={[
+              { label: "STL", value: String(line.steals) },
+              { label: "BLK", value: String(line.blocks) },
+              {
+                label: "FG",
+                value: `${line.fieldGoalsMade}–${line.fieldGoalsAttempted}`,
+              },
+              {
+                label: "3P",
+                value: `${line.threePointersMade}–${line.threePointersAttempted}`,
+              },
+              { label: "MIN", value: String(Math.round(line.minutes)) },
+            ]}
+          />
         </div>
+        {chips.length > 0 ? (
+          <ul className="flex flex-wrap gap-2">
+            {chips.map((chip) => (
+              <li
+                key={chip}
+                className="rounded-full bg-zinc-800 px-3 py-0.5 text-sm text-zinc-200"
+              >
+                {chip}
+              </li>
+            ))}
+          </ul>
+        ) : null}
       </div>
-
-      <div className="space-y-2 border-t-2 border-team pt-3">
-        <dl className="grid grid-cols-3 gap-3">
-          <BigStat label="PTS" value={line.points} />
-          <BigStat label="REB" value={line.rebounds} />
-          <BigStat label="AST" value={line.assists} />
-        </dl>
-        <dl className="flex flex-wrap gap-x-4 gap-y-1">
-          <SmallStat label="STL" value={line.steals} />
-          <SmallStat label="BLK" value={line.blocks} />
-          <SmallStat
-            label="FG"
-            value={`${line.fieldGoalsMade}–${line.fieldGoalsAttempted}`}
-          />
-          <SmallStat
-            label="3P"
-            value={`${line.threePointersMade}–${line.threePointersAttempted}`}
-          />
-          <SmallStat label="MIN" value={Math.round(line.minutes)} />
-        </dl>
-      </div>
-
-      {notable ? <p className="text-sm text-zinc-300">{notable}</p> : null}
-    </TeamThemeScope>
+    </TeamSurface>
   );
 }

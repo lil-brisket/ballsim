@@ -222,8 +222,8 @@ describe("GameAttachmentCard", () => {
 
   it("shows each top performer's pts, reb and ast and skips null sides", () => {
     renderGame(game());
-    expect(screen.getByText(/TOR · 38 pts · 11 reb · 7 ast/)).toBeTruthy();
-    expect(screen.getByText(/BOS · 29 pts · 5 reb · 12 ast/)).toBeTruthy();
+    expect(screen.getByText("38 PTS · 11 REB · 7 AST")).toBeTruthy();
+    expect(screen.getByText("29 PTS · 5 REB · 12 AST")).toBeTruthy();
     expect(
       screen.getByRole("link", { name: "Leo Drake" }).getAttribute("href"),
     ).toBe("/dashboard/s1/players/p1");
@@ -269,15 +269,12 @@ describe("GameAttachmentCard", () => {
     expect(container.querySelectorAll('[role="img"]').length).toBe(0);
   });
 
-  it("uses font-mono only inside the quarter table", () => {
+  it("uses no mono text", () => {
     const { container } = renderGame(game(), "/b");
     const mono = Array.from(container.querySelectorAll(".font-mono")).filter(
       (el) => !el.closest("[data-portrait-size]"),
     );
-    expect(mono.length).toBeGreaterThan(0);
-    for (const el of mono) {
-      expect(el.closest("table")).not.toBeNull();
-    }
+    expect(mono).toEqual([]);
   });
 });
 
@@ -327,7 +324,8 @@ describe("PerformanceAttachmentCard", () => {
     expect(
       screen.getByRole("link", { name: "Leo Drake" }).getAttribute("href"),
     ).toBe("/dashboard/s1/players/p1");
-    expect(screen.getByText(/TOR vs BOS/)).toBeTruthy();
+    expect(screen.getByText("vs")).toBeTruthy();
+    expect(screen.getByText("BOS")).toBeTruthy();
     expect(screen.getByText("W")).toBeTruthy();
     const portrait = container.querySelector("[data-portrait-size]")!;
     expect(portrait.getAttribute("aria-hidden")).toBe("true");

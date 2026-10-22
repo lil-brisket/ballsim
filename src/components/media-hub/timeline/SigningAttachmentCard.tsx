@@ -1,12 +1,9 @@
 import { PlayerPortrait } from "@/components/basketball/PlayerPortrait";
-import { TeamBadge } from "@/components/ui/TeamBadge";
+import { TeamLogoMark } from "@/components/team/logos/TeamLogoMark";
 import type { TimelineDisplayContext } from "@/state/media-timeline/post-view";
 import type { SigningAttachment } from "@/state/media-timeline/types";
-import {
-  PlayerNameLink,
-  attachmentSurfaceClass,
-  teamBrandingFor,
-} from "./attachment-parts";
+import { PlayerNameLink, teamBrandingFor } from "./attachment-parts";
+import { TeamSurface, TeamSurfaceSlab } from "./TeamSurface";
 
 export function SigningAttachmentCard(props: {
   attachment: SigningAttachment;
@@ -14,48 +11,50 @@ export function SigningAttachmentCard(props: {
 }) {
   const { attachment: signing, context } = props;
   const { player, team } = signing;
-  const hasIdentity = Boolean(team || player);
+  const branding = team ? teamBrandingFor(context, team) : null;
+  const uniform = branding
+    ? {
+        primaryColor: branding.primaryColor,
+        secondaryColor: branding.secondaryColor,
+      }
+    : null;
 
   return (
-    <div className={attachmentSurfaceClass}>
-      {hasIdentity ? (
-        <div className="flex items-center gap-3">
-          {team ? (
-            <TeamBadge
-              branding={teamBrandingFor(context, team)}
-              name={team.displayName}
-              size="md"
-              decorative
-            />
+    <TeamSurface branding={branding} band="left">
+      {team ? (
+        <TeamSurfaceSlab className="mb-4 flex items-center gap-2 rounded-md">
+          {branding ? (
+            <TeamLogoMark branding={branding} size="sm" decorative />
           ) : null}
-          {player ? (
-            <PlayerPortrait
-              playerId={player.playerId}
-              firstName={player.firstName}
-              lastName={player.lastName}
-              size="sm"
-              portrait={context.portraits[player.playerId] ?? null}
-            />
-          ) : null}
+          <span className="min-w-0 font-display text-lg font-bold">
+            {team.displayName}
+          </span>
+        </TeamSurfaceSlab>
+      ) : null}
+      {player ? (
+        <div className="flex items-center gap-4">
+          <PlayerPortrait
+            playerId={player.playerId}
+            firstName={player.firstName}
+            lastName={player.lastName}
+            size="md"
+            portrait={context.portraits[player.playerId] ?? null}
+            uniform={uniform}
+          />
           <div className="min-w-0">
-            {player ? (
-              <PlayerNameLink saveId={context.saveId} player={player} />
-            ) : null}
-            {team ? (
-              <p className="text-sm text-zinc-400">{team.displayName}</p>
+            <PlayerNameLink
+              saveId={context.saveId}
+              player={player}
+              className="font-display text-lg"
+            />
+            {signing.summary ? (
+              <p className="text-sm text-zinc-300">{signing.summary}</p>
             ) : null}
           </div>
         </div>
+      ) : signing.summary ? (
+        <p className="text-sm text-zinc-300">{signing.summary}</p>
       ) : null}
-      {signing.summary ? (
-        <p
-          className={
-            hasIdentity ? "mt-2 text-sm text-zinc-300" : "text-sm text-zinc-300"
-          }
-        >
-          {signing.summary}
-        </p>
-      ) : null}
-    </div>
+    </TeamSurface>
   );
 }
