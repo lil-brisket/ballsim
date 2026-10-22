@@ -20,6 +20,12 @@ import {
 import { toOwnerDashboardView } from "@/state/owner-dashboard";
 import { isInLeaguePhase } from "@/systems/phase-engine";
 import {
+  rfaTagForPlayer,
+  toOwnerRfaView,
+  type OwnerRfaView,
+  type RfaTag,
+} from "@/state/rfa-selectors";
+import {
   getContractSigningYear,
   getTeamCapSpace,
   getTeamPayroll,
@@ -52,6 +58,10 @@ export type FreeAgencyHubView = {
   openOffers: FreeAgencyOfferView[];
   recentSignings: FreeAgencyRecentSigning[];
   decisions: ActionCenterItem[];
+  /** Offer sheets to answer and sheets the owner has out. */
+  rfa: OwnerRfaView;
+  /** Restricted free agents in the market, by player id. */
+  rfaTags: Record<string, RfaTag>;
 };
 
 export function toFreeAgencyHubView(state: GameState): FreeAgencyHubView {
@@ -111,5 +121,13 @@ export function toFreeAgencyHubView(state: GameState): FreeAgencyHubView {
     openOffers,
     recentSignings,
     decisions,
+    rfa: toOwnerRfaView(state),
+    rfaTags: Object.fromEntries(
+      market
+        .map((p) => [p.playerId, rfaTagForPlayer(state, p.playerId)] as const)
+        .filter(
+          (entry): entry is readonly [string, RfaTag] => entry[1] !== null,
+        ),
+    ),
   };
 }

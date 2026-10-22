@@ -161,6 +161,15 @@ export const DOMAIN_EVENT_REGISTRY: Record<
     media: false,
     highlight: false,
   }),
+  RfaOfferSheetSigned: occurred("transaction", "high", {
+    notify: true,
+    notifyCat: "action_required",
+    social: { minPosts: 0, maxPosts: 2 },
+  }),
+  RfaOfferSheetMatched: occurred("transaction", "high", {
+    notify: true,
+    social: { minPosts: 0, maxPosts: 2 },
+  }),
   TradeOfferExpired: occurred("transaction", "low", {
     media: false,
     highlight: false,

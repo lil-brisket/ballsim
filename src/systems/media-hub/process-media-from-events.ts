@@ -60,6 +60,8 @@ function storyTypeForEvent(event: DomainEvent): MediaStoryType {
     case "FreeAgencyOfferWithdrawn":
     case "RfaQualifyingOfferIssued":
     case "RfaOfferSheetExpired":
+    case "RfaOfferSheetSigned":
+    case "RfaOfferSheetMatched":
     case "TradeOfferExpired":
       return "transaction";
     case "PlayerDeveloped":

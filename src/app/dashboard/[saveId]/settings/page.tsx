@@ -115,6 +115,10 @@ export default async function InGameSettingsPage({
           />
           <SettingRow label="Luxury tax" value="Coming soon" />
           <SettingRow
+            label="Restricted free agency"
+            value={settings.offseason.restrictedFreeAgency ? "On" : "Off"}
+          />
+          <SettingRow
             label="Revenue sharing"
             value={financialRules.revenueSharingEnabled ? "On" : "Off"}
           />

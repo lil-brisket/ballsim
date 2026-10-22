@@ -71,6 +71,7 @@ export {
   declineTeamOptionAction,
   releasePlayerAction,
   offerContractExtensionAction,
+  restrictedFreeAgencyAction,
 } from "@/application/actions/inbox-contracts";
 export {
   hireStaffAction,

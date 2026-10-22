@@ -50,6 +50,7 @@ export function checkFreeAgencySigning(
   const rfa = state.business.rfaStatuses?.[playerId];
   if (
     rfa !== undefined &&
+    rfa.seasonYear === state.competition.season.year &&
     rfa.hasQualifyingOffer &&
     (rfa.resolution === "pending_rfa" || rfa.resolution === "pending_match")
   ) {

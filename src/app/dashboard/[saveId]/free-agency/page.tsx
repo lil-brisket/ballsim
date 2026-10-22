@@ -24,6 +24,10 @@ import { PlayerPortrait } from "@/components/basketball/PlayerPortrait";
 import { PlayerEntityLink } from "@/components/entity/PlayerEntityLink";
 import { splitDisplayName } from "@/presentation/portrait-hash";
 import { ManagementDecisionPanel } from "@/components/management/ManagementDecisionPanel";
+import { IncomingOfferSheets } from "@/components/rfa/IncomingOfferSheets";
+import { OutgoingOfferSheets } from "@/components/rfa/OutgoingOfferSheets";
+import { RfaBadge } from "@/components/rfa/RfaBadge";
+import { RfaOfferSheetAction } from "@/components/rfa/RfaOfferSheetAction";
 import { toFreeAgencyHubView } from "@/state/free-agency-hub-selectors";
 
 export const metadata: Metadata = { title: "Free Agency" };
@@ -100,6 +104,16 @@ export default async function FreeAgencyPage({
         />
       ) : (
         <>
+          {hub.rfa.enabled && hub.rfa.incomingSheets.length > 0 ? (
+            <Section title="Offer sheets to answer">
+              <IncomingOfferSheets
+                sheets={hub.rfa.incomingSheets}
+                saveId={saveId}
+                returnPath={returnPath}
+              />
+            </Section>
+          ) : null}
+
           {hub.decisions.length > 0 ? (
             <ManagementDecisionPanel
               title="Free Agency Decisions"
@@ -183,6 +197,12 @@ export default async function FreeAgencyPage({
             )}
           </Section>
 
+          {hub.rfa.enabled && hub.rfa.outgoingSheets.length > 0 ? (
+            <Section title="Your offer sheets">
+              <OutgoingOfferSheets sheets={hub.rfa.outgoingSheets} />
+            </Section>
+          ) : null}
+
           <Section title="Available Players">
             <p className="mb-2 text-sm text-zinc-500">
               Overall ratings shown match the existing free-agency information
@@ -192,103 +212,132 @@ export default async function FreeAgencyPage({
               <EmptyState message="No free agents available." />
             ) : (
               <DataTable headers={["Player", "Pos", "Age", "OVR", "Actions"]}>
-                {hub.market.slice(0, 40).map((agent) => (
-                  <tr key={agent.playerId} className="border-t border-zinc-800">
-                    <td className="px-3 py-2 text-zinc-100">
-                      <span className="flex items-center gap-2">
-                        <PlayerPortrait
-                          playerId={agent.playerId}
-                          portrait={selectPlayerPortrait(
-                            loaded.state,
-                            agent.playerId,
-                          )}
-                          firstName={agent.firstName}
-                          lastName={agent.lastName}
-                          size="sm"
-                        />
-                        <PlayerEntityLink
-                          saveId={saveId}
-                          playerId={agent.playerId}
-                        >
-                          {agent.firstName} {agent.lastName}
-                        </PlayerEntityLink>
-                      </span>
-                    </td>
-                    <td className="px-3 py-2 text-zinc-400">
-                      {agent.position}
-                    </td>
-                    <td className="px-3 py-2 text-zinc-400">{agent.age}</td>
-                    <td className="px-3 py-2 text-zinc-200">{agent.overall}</td>
-                    <td className="px-3 py-2">
-                      <div className="flex flex-wrap gap-3">
-                        <form
-                          action={signFreeAgentAction}
-                          className="flex gap-2"
-                        >
-                          <input type="hidden" name="saveId" value={saveId} />
-                          <input
-                            type="hidden"
-                            name="playerId"
-                            value={agent.playerId}
+                {hub.market.slice(0, 40).map((agent) => {
+                  const rfaTag = hub.rfa.enabled
+                    ? (hub.rfaTags[agent.playerId] ?? null)
+                    : null;
+                  return (
+                    <tr
+                      key={agent.playerId}
+                      className="border-t border-zinc-800"
+                    >
+                      <td className="px-3 py-2 text-zinc-100">
+                        <span className="flex items-center gap-2">
+                          <PlayerPortrait
+                            playerId={agent.playerId}
+                            portrait={selectPlayerPortrait(
+                              loaded.state,
+                              agent.playerId,
+                            )}
+                            firstName={agent.firstName}
+                            lastName={agent.lastName}
+                            size="sm"
                           />
-                          <input
-                            type="hidden"
-                            name="returnPath"
-                            value={returnPath}
-                          />
-                          <NumberStepper
-                            name="salary"
-                            defaultValue={2_000_000}
-                            step={50_000}
-                            min={0}
-                            inputClassName="w-28"
-                            aria-label="Salary"
-                          />
-                          <NumberStepper
-                            name="years"
-                            defaultValue={1}
-                            min={1}
-                            aria-label="Years"
-                          />
-                          <button
-                            type="submit"
-                            className={cn(linkClass, "text-sm")}
+                          <PlayerEntityLink
+                            saveId={saveId}
+                            playerId={agent.playerId}
                           >
-                            Sign
-                          </button>
-                        </form>
-                        <form
-                          action={makeFreeAgentOfferAction}
-                          className="flex gap-2"
-                        >
-                          <input type="hidden" name="saveId" value={saveId} />
-                          <input
-                            type="hidden"
-                            name="playerId"
-                            value={agent.playerId}
+                            {agent.firstName} {agent.lastName}
+                          </PlayerEntityLink>
+                          {rfaTag ? <RfaBadge tag={rfaTag} /> : null}
+                        </span>
+                      </td>
+                      <td className="px-3 py-2 text-zinc-400">
+                        {agent.position}
+                      </td>
+                      <td className="px-3 py-2 text-zinc-400">{agent.age}</td>
+                      <td className="px-3 py-2 text-zinc-200">
+                        {agent.overall}
+                      </td>
+                      <td className="px-3 py-2">
+                        {rfaTag ? (
+                          <RfaOfferSheetAction
+                            saveId={saveId}
+                            playerId={agent.playerId}
+                            playerName={`${agent.firstName} ${agent.lastName}`}
+                            returnPath={returnPath}
+                            tag={rfaTag}
                           />
-                          <input
-                            type="hidden"
-                            name="returnPath"
-                            value={returnPath}
-                          />
-                          <input
-                            type="hidden"
-                            name="salary"
-                            value={2_000_000}
-                          />
-                          <input type="hidden" name="years" value={1} />
-                          <button
-                            type="submit"
-                            className="text-sm text-zinc-400 hover:text-team-ink"
-                          >
-                            Offer
-                          </button>
-                        </form>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
+                        ) : (
+                          <div className="flex flex-wrap gap-3">
+                            <form
+                              action={signFreeAgentAction}
+                              className="flex gap-2"
+                            >
+                              <input
+                                type="hidden"
+                                name="saveId"
+                                value={saveId}
+                              />
+                              <input
+                                type="hidden"
+                                name="playerId"
+                                value={agent.playerId}
+                              />
+                              <input
+                                type="hidden"
+                                name="returnPath"
+                                value={returnPath}
+                              />
+                              <NumberStepper
+                                name="salary"
+                                defaultValue={2_000_000}
+                                step={50_000}
+                                min={0}
+                                inputClassName="w-28"
+                                aria-label="Salary"
+                              />
+                              <NumberStepper
+                                name="years"
+                                defaultValue={1}
+                                min={1}
+                                aria-label="Years"
+                              />
+                              <button
+                                type="submit"
+                                className={cn(linkClass, "text-sm")}
+                              >
+                                Sign
+                              </button>
+                            </form>
+                            <form
+                              action={makeFreeAgentOfferAction}
+                              className="flex gap-2"
+                            >
+                              <input
+                                type="hidden"
+                                name="saveId"
+                                value={saveId}
+                              />
+                              <input
+                                type="hidden"
+                                name="playerId"
+                                value={agent.playerId}
+                              />
+                              <input
+                                type="hidden"
+                                name="returnPath"
+                                value={returnPath}
+                              />
+                              <input
+                                type="hidden"
+                                name="salary"
+                                value={2_000_000}
+                              />
+                              <input type="hidden" name="years" value={1} />
+                              <button
+                                type="submit"
+                                className="text-sm text-zinc-400 hover:text-team-ink"
+                              >
+                                Offer
+                              </button>
+                            </form>
+                          </div>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
               </DataTable>
             )}
           </Section>

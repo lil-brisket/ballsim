@@ -8,7 +8,9 @@ export type RfaResolution =
   | "unsigned_ufa"
   | "matched"
   | "signed_elsewhere"
-  | "declined_to_ufa";
+  | "declined_to_ufa"
+  /** No sheet came: he signed his one-season qualifying offer. */
+  | "accepted_qo";
 
 export const RFA_RESOLUTIONS: readonly RfaResolution[] = [
   "pending_rfa",
@@ -17,6 +19,7 @@ export const RFA_RESOLUTIONS: readonly RfaResolution[] = [
   "matched",
   "signed_elsewhere",
   "declined_to_ufa",
+  "accepted_qo",
 ] as const;
 
 /**

@@ -28,6 +28,14 @@ import { advanceSimulation } from "@/systems/simulation/advance-simulation";
 import { isUserOnDraftClock } from "@/systems/draft";
 import { processDerivedProjections } from "@/systems/media-hub";
 import {
+  declineRfaOfferSheet,
+  getOfferSheetBlockReason,
+  issueQualifyingOffer,
+  matchRfaOfferSheet,
+  offerSheetTerms,
+  submitRfaOfferSheet,
+} from "@/systems/rfa";
+import {
   getExtensionBlockReason,
   offerContractExtension,
 } from "@/systems/contract-extensions";
@@ -417,6 +425,91 @@ export async function offerOwnerContractExtension(
       teamId,
       terms,
     });
+    const saved = await persistWorkingState(
+      saveId,
+      result.state,
+      state.meta.rngState,
+      saveStore,
+      result.events,
+    );
+    return withDashboard(saved);
+  } catch (error) {
+    return fail(error instanceof Error ? error.message : String(error));
+  }
+}
+
+type RfaCommand =
+  | { kind: "issue_qo"; playerId: string }
+  | { kind: "match"; playerId: string }
+  | { kind: "decline"; playerId: string }
+  | { kind: "offer_sheet"; playerId: string; salary: number; years: number };
+
+/**
+ * Restricted free agency for the active owner team: issue a qualifying
+ * offer, match or decline a sheet for one of your players, or submit a
+ * sheet to another team's restricted free agent.
+ */
+export async function runOwnerRfaCommand(
+  saveId: string,
+  command: RfaCommand,
+  store?: SaveGameStore,
+): Promise<OwnerCommandResult> {
+  const saveStore = getStore(store);
+  const loaded = await saveStore.load(saveId);
+  if (!loaded) {
+    return fail("Save not found.");
+  }
+  const state = loaded.state;
+  const playerId = asPlayerId(command.playerId);
+  const teamId = state.user.activeOwnerTeamId;
+  const sheetInput =
+    command.kind === "offer_sheet"
+      ? {
+          playerId,
+          offeringTeamId: teamId,
+          salary: command.salary,
+          years: command.years,
+          contractId: `contract_owner_sheet_${playerId}_${state.world.calendar.currentDate.replaceAll("-", "")}`,
+        }
+      : null;
+  const ruleBlock = getActionBlockReason(
+    state,
+    command.kind === "issue_qo"
+      ? { kind: "issue_rfa_qualifying_offer", playerId, teamId }
+      : command.kind === "match"
+        ? { kind: "match_rfa_offer", playerId, teamId }
+        : command.kind === "decline"
+          ? { kind: "decline_rfa_match", playerId, teamId }
+          : {
+              kind: "submit_rfa_offer_sheet",
+              playerId,
+              offeringTeamId: teamId,
+              terms: offerSheetTerms(state, sheetInput!),
+            },
+  );
+  if (ruleBlock) {
+    return fail(ruleBlock);
+  }
+  try {
+    let result;
+    if (command.kind === "issue_qo") {
+      result = issueQualifyingOffer(state, playerId);
+    } else if (command.kind === "match") {
+      result = matchRfaOfferSheet(state, playerId, teamId);
+    } else if (command.kind === "decline") {
+      result = declineRfaOfferSheet(state, playerId, teamId);
+    } else {
+      const input = sheetInput!;
+      const blocked = getOfferSheetBlockReason(state, input);
+      if (blocked) {
+        return fail(blocked);
+      }
+      const sheet = submitRfaOfferSheet(state, input);
+      if (!sheet.signed) {
+        return fail("He turned down the offer sheet. Offer more money.");
+      }
+      result = sheet.result;
+    }
     const saved = await persistWorkingState(
       saveId,
       result.state,

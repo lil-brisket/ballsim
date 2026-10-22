@@ -2,6 +2,7 @@ import {
   createContract,
   getContractSalaryForYear,
   isContractActive,
+  type Contract,
   type ContractInput,
 } from "@/domain/entities/contract";
 import {
@@ -57,57 +58,67 @@ export type FreeAgencyWriteOptions = {
 
 /**
  * Default interest: baseline + bounded award reputation (expectations only).
- * Awards never modify OVR, potential, or attributes.
+ * Awards never modify OVR, potential, or attributes. Reads the team's open
+ * offer for the salary.
  */
 export const defaultEvaluatePlayerInterest: EvaluatePlayerInterest = (
   playerId,
   teamId,
   state,
 ) => {
+  const year = state.competition.season.year;
+  let offered: number | null = null;
+  for (const offer of Object.values(state.business.freeAgency.offers)) {
+    if (
+      offer.playerId === playerId &&
+      offer.teamId === teamId &&
+      isOpenOffer(offer.status)
+    ) {
+      offered = getContractSalaryForYear(offer.terms, year) ?? null;
+      break;
+    }
+  }
+  return evaluateInterestAtSalary(state, playerId, teamId, offered);
+};
+
+/**
+ * Interest in a team at an explicit first-year salary (null: no offer yet,
+ * money is neutral). Shared by free-agency offers and RFA offer sheets.
+ */
+export function evaluateInterestAtSalary(
+  state: GameState,
+  playerId: PlayerId,
+  teamId: TeamId,
+  offered: number | null,
+): PlayerInterest {
   const factors = emptyInterestFactors();
   const awardBonus = computeAwardReputationBonus(playerId, state);
   factors.reputation = awardBonus;
 
   const player = state.world.players[playerId];
-  if (player) {
+  if (player && offered != null) {
     const year = state.competition.season.year;
-    let offered: number | null = null;
-    for (const offer of Object.values(state.business.freeAgency.offers)) {
-      if (
-        offer.playerId === playerId &&
-        offer.teamId === teamId &&
-        isOpenOffer(offer.status)
-      ) {
-        offered = getContractSalaryForYear(offer.terms, year) ?? null;
-        break;
-      }
-    }
-    if (offered != null) {
-      const overall = calculatePlayerOverall(
-        player.position,
-        player.attributes,
-      );
-      const cap = getLeagueSalaryCap(state);
-      const market = salaryForPlayer({
-        overall,
+    const overall = calculatePlayerOverall(player.position, player.attributes);
+    const cap = getLeagueSalaryCap(state);
+    const market = salaryForPlayer({
+      overall,
+      age: player.age,
+      years: serviceYearsForSalary({
         age: player.age,
-        years: serviceYearsForSalary({
-          age: player.age,
-          seasonYear: year,
-          draftSeasonYear: player.developmentLeague?.draftSeasonYear ?? null,
-          seasonsPlayed:
-            state.business.playerHistory[player.id]?.seasons.length ?? 0,
-        }),
-        cap,
-        kind: "fa",
-      });
-      const acceptsVetMin =
-        overall < REPLACEMENT_LEVEL_OVERALL && offered >= vetMinSalary(cap);
-      const ratio = market > 0 ? offered / market : 1;
-      factors.money = acceptsVetMin
-        ? 0
-        : Math.round(Math.max(-40, Math.min(20, (ratio - 0.7) * 80 - 20)));
-    }
+        seasonYear: year,
+        draftSeasonYear: player.developmentLeague?.draftSeasonYear ?? null,
+        seasonsPlayed:
+          state.business.playerHistory[player.id]?.seasons.length ?? 0,
+      }),
+      cap,
+      kind: "fa",
+    });
+    const acceptsVetMin =
+      overall < REPLACEMENT_LEVEL_OVERALL && offered >= vetMinSalary(cap);
+    const ratio = market > 0 ? offered / market : 1;
+    factors.money = acceptsVetMin
+      ? 0
+      : Math.round(Math.max(-40, Math.min(20, (ratio - 0.7) * 80 - 20)));
   }
 
   const score =
@@ -121,7 +132,7 @@ export const defaultEvaluatePlayerInterest: EvaluatePlayerInterest = (
     interested: score >= FREE_AGENCY_INTEREST_CONFIG.interestThreshold,
     factors,
   };
-};
+}
 
 /**
  * Free agent iff the player exists, is not retired, and has no active contract
@@ -627,6 +638,88 @@ export function acceptOffer(
   next = appendSeasonEventLog(next, events);
 
   return systemResult(next, events);
+}
+
+/**
+ * Puts a new contract into effect without a free-agency offer (RFA match,
+ * offer sheet, qualifying offer): adds the contract, moves the player onto
+ * the contract's team, withdraws his other open offers and refreshes the
+ * team's payroll figure. Callers own the rules.
+ */
+export function assignSignedContract(
+  state: GameState,
+  contract: Contract,
+): GameState {
+  const today = state.world.calendar.currentDate;
+  let next: GameState = {
+    ...state,
+    business: {
+      ...state.business,
+      contracts: { ...state.business.contracts, [contract.id]: contract },
+    },
+  };
+  next = removePlayerFromAllRosters(next, contract.playerId);
+  const player = next.world.players[contract.playerId]!;
+  const team = next.world.teams[contract.teamId]!;
+  const offers: Record<string, FreeAgencyOffer> = {
+    ...next.business.freeAgency.offers,
+  };
+  for (const [id, offer] of Object.entries(offers)) {
+    if (offer.playerId === contract.playerId && isOpenOffer(offer.status)) {
+      offers[id] = { ...offer, status: "withdrawn", updatedOn: today };
+    }
+  }
+  next = {
+    ...next,
+    world: {
+      ...next.world,
+      players: {
+        ...next.world.players,
+        [contract.playerId]: {
+          ...player,
+          teamId: contract.teamId,
+          contractId: contract.id,
+        },
+      },
+      teams: {
+        ...next.world.teams,
+        [contract.teamId]: {
+          ...team,
+          roster: team.roster.includes(contract.playerId)
+            ? team.roster
+            : [...team.roster, contract.playerId],
+        },
+      },
+    },
+    business: {
+      ...next.business,
+      freeAgency: { ...next.business.freeAgency, offers },
+      tradeBlocks: stripPlayersFromAllTradeBlocks(next.business.tradeBlocks, [
+        contract.playerId,
+      ]),
+    },
+  };
+  const finance = next.business.finances[contract.teamId];
+  if (finance) {
+    next = {
+      ...next,
+      business: {
+        ...next.business,
+        finances: {
+          ...next.business.finances,
+          [contract.teamId]: {
+            ...finance,
+            payroll: getTeamPayroll(
+              contract.teamId,
+              next.competition.season.year,
+              next,
+            ),
+          },
+        },
+      },
+    };
+  }
+  return reconcileRosterManagement(next, contract.teamId);
 }
 
 function playerHasActiveContract(player: Player, state: GameState): boolean {

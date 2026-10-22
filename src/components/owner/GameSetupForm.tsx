@@ -707,6 +707,10 @@ export function GameSetupForm({
           />
           <ReviewRow label="Luxury tax" value="Coming soon" />
           <ReviewRow
+            label="Restricted free agency"
+            value={settings.offseason.restrictedFreeAgency ? "On" : "Off"}
+          />
+          <ReviewRow
             label="Revenue sharing"
             value={settings.financialRules.revenueSharingEnabled ? "On" : "Off"}
           />
@@ -894,6 +898,19 @@ export function GameSetupForm({
                     financialRules: {
                       ...settings.financialRules,
                       revenueSharingEnabled: checked,
+                    },
+                  })
+                }
+              />
+              <ToggleField
+                label="Restricted free agency"
+                checked={settings.offseason.restrictedFreeAgency}
+                onChange={(checked) =>
+                  updateSettings({
+                    ...settings,
+                    offseason: {
+                      ...settings.offseason,
+                      restrictedFreeAgency: checked,
                     },
                   })
                 }

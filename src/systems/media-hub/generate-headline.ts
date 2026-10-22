@@ -130,6 +130,24 @@ export function generateHeadline(
         summary: `${team} release ${name} and keep paying the rest of his contract.`,
       };
     }
+    case "RfaOfferSheetSigned": {
+      const name = playerName(state, str(p, "playerId"));
+      const offering = teamName(state, str(p, "offeringTeamId"));
+      const original = teamName(state, str(p, "originalTeamId"));
+      return {
+        headline: `${name} signs an offer sheet with ${offering}`,
+        summary: `${original} have three days to match or let him go.`,
+      };
+    }
+    case "RfaOfferSheetMatched": {
+      const name = playerName(state, str(p, "playerId"));
+      const team = teamName(state, str(p, "teamId"));
+      const offering = teamName(state, str(p, "offeringTeamId"));
+      return {
+        headline: `${team} match the offer sheet for ${name}`,
+        summary: `${name} stays with ${team} on the terms ${offering} offered.`,
+      };
+    }
     case "ContractExtensionRefused": {
       const name = playerName(state, str(p, "playerId"));
       const team = teamName(state, str(p, "teamId"));

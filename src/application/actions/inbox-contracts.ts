@@ -10,6 +10,7 @@ import {
   declineOwnerTeamOption,
   releaseOwnerPlayer,
   offerOwnerContractExtension,
+  runOwnerRfaCommand,
 } from "@/application/game-service";
 import { redirect } from "next/navigation";
 import {
@@ -147,6 +148,39 @@ export async function offerContractExtensionAction(
     years,
     salary,
   });
+  if (!result.ok) {
+    redirectWithError(path, result.error);
+  }
+  revalidateOwner(saveId);
+  redirect(path);
+}
+
+/**
+ * Restricted free agency form: `intent` is issue_qo, match, decline or
+ * offer_sheet (offer_sheet also reads `salary` and `years`).
+ */
+export async function restrictedFreeAgencyAction(
+  formData: FormData,
+): Promise<void> {
+  const saveId = String(formData.get("saveId") ?? "");
+  const playerId = String(formData.get("playerId") ?? "");
+  const intent = String(formData.get("intent") ?? "");
+  const path = returnPath(formData, saveId);
+  const command =
+    intent === "offer_sheet"
+      ? {
+          kind: "offer_sheet" as const,
+          playerId,
+          salary: Number(formData.get("salary")),
+          years: Number(formData.get("years")),
+        }
+      : intent === "match" || intent === "decline" || intent === "issue_qo"
+        ? { kind: intent as "match" | "decline" | "issue_qo", playerId }
+        : null;
+  if (command === null) {
+    redirectWithError(path, "Unknown restricted free agency action.");
+  }
+  const result = await runOwnerRfaCommand(saveId, command!);
   if (!result.ok) {
     redirectWithError(path, result.error);
   }
