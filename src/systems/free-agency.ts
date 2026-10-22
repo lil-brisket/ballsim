@@ -34,6 +34,7 @@ import {
   vetMinSalary,
 } from "@/systems/salary-scale";
 import { VET_MIN_EXCEPTION_ENABLED } from "@/systems/salary-cap-config";
+import { hasVeteranRights } from "@/systems/veteran-rights";
 import { calculatePlayerOverall } from "@/domain/player-overall-rating";
 import { reconcileRosterManagement } from "@/systems/roster-management";
 import { withClearedDevelopmentLeagueAssignment } from "@/systems/development-league/assignment";
@@ -446,7 +447,8 @@ export function acceptOffer(
   if (
     state.settings.financialRules.salaryCapEnabled &&
     firstYearSalary > capSpace &&
-    !usesMinException
+    !usesMinException &&
+    !hasVeteranRights(state, offer.playerId, offer.teamId)
   ) {
     return invalidateStaleOffer(
       state,

@@ -33,6 +33,10 @@ import {
   isUserControlledTeam,
 } from "@/state/owner-context";
 import { aiPayrollRoom } from "@/systems/ai-payroll-budget";
+import {
+  aiVeteranRightsRoom,
+  hasVeteranRights,
+} from "@/systems/veteran-rights";
 import { checkContractExtensionWindow } from "@/systems/league-rules/contract-rules";
 import { getLeagueSalaryCap } from "@/systems/league-salary-cap";
 import { canAiExecute } from "@/systems/simulation/management-policy";
@@ -408,6 +412,8 @@ function extensionCapBlock(
   salaryByYear: Record<string, number>,
 ): string | null {
   if (!state.settings.financialRules.salaryCapEnabled) return null;
+  // Veteran rights: a team may go over the cap to keep its own player.
+  if (hasVeteranRights(state, contract.playerId, teamId)) return null;
   const cap = getLeagueSalaryCap(state);
   const fromYear = getContractSigningYear(state);
   for (const [key, salary] of Object.entries(salaryByYear)) {
@@ -530,10 +536,16 @@ function extendTeamStars(
     const extraYears = remainingYears <= 1 ? MAX_ADDED_YEARS : 0;
     const endYear = contract.endYear + extraYears;
     const raise = market - (nextSalary ?? 0);
-    // AI teams also stay within what they can afford (#93).
+    // AI teams also stay within what they can afford (#93). Veteran rights
+    // lift the cap but not the budget (or, for most teams, the tax line).
+    const veteran = hasVeteranRights(current, playerId, teamId);
     const space = userControlled
-      ? getTeamCapSpace(teamId, year, current, cap)
-      : aiPayrollRoom(current, teamId, year);
+      ? veteran
+        ? Number.MAX_SAFE_INTEGER
+        : getTeamCapSpace(teamId, year, current, cap)
+      : veteran
+        ? aiVeteranRightsRoom(current, teamId, year)
+        : aiPayrollRoom(current, teamId, year);
     if (raise > 0 && space < raise) continue;
 
     // Same answer rules as an owner's offer: market pay is always enough.
