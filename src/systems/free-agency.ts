@@ -34,6 +34,20 @@ import {
   vetMinSalary,
 } from "@/systems/salary-scale";
 import { VET_MIN_EXCEPTION_ENABLED } from "@/systems/salary-cap-config";
+import {
+  readFreeAgentMotivations,
+  type FreeAgentMotivation,
+} from "@/systems/free-agency-motivations";
+import type { PlayerInterestFactor } from "@/domain/free-agency/player-interest";
+
+/** Where each motivation shows in PlayerInterest.factors. */
+const MOTIVATION_FACTOR: Record<FreeAgentMotivation, PlayerInterestFactor> = {
+  winning: "teamQuality",
+  playingTime: "playingTime",
+  market: "location",
+  loyalty: "personality",
+  coach: "coach",
+};
 import { hasVeteranRights } from "@/systems/veteran-rights";
 import { calculatePlayerOverall } from "@/domain/player-overall-rating";
 import { reconcileRosterManagement } from "@/systems/roster-management";
@@ -122,10 +136,18 @@ export function evaluateInterestAtSalary(
       : Math.round(Math.max(-40, Math.min(20, (ratio - 0.7) * 80 - 20)));
   }
 
+  // What he wants besides money: winning, minutes, market, loyalty, coach.
+  let motivations = 0;
+  for (const reading of readFreeAgentMotivations(state, playerId, teamId)) {
+    motivations += reading.points;
+    factors[MOTIVATION_FACTOR[reading.motivation]] = reading.points;
+  }
+
   const score =
     FREE_AGENCY_INTEREST_CONFIG.baselineScore +
     awardBonus +
-    factors.money * FREE_AGENCY_INTEREST_CONFIG.factorWeights.money;
+    factors.money * FREE_AGENCY_INTEREST_CONFIG.factorWeights.money +
+    motivations;
   return {
     playerId,
     teamId,

@@ -25,6 +25,7 @@ import { PlayerPortrait } from "@/components/basketball/PlayerPortrait";
 import { PlayerEntityLink } from "@/components/entity/PlayerEntityLink";
 import { splitDisplayName } from "@/presentation/portrait-hash";
 import { ManagementDecisionPanel } from "@/components/management/ManagementDecisionPanel";
+import { FreeAgentInterest } from "@/components/free-agency/FreeAgentInterest";
 import { IncomingOfferSheets } from "@/components/rfa/IncomingOfferSheets";
 import { OutgoingOfferSheets } from "@/components/rfa/OutgoingOfferSheets";
 import { RfaBadge } from "@/components/rfa/RfaBadge";
@@ -219,6 +220,7 @@ export default async function FreeAgencyPage({
                   const rfaTag = hub.rfa.enabled
                     ? (hub.rfaTags[agent.playerId] ?? null)
                     : null;
+                  const interest = hub.interest[agent.playerId] ?? null;
                   return (
                     <tr
                       key={agent.playerId}
@@ -244,6 +246,7 @@ export default async function FreeAgencyPage({
                           </PlayerEntityLink>
                           {rfaTag ? <RfaBadge tag={rfaTag} /> : null}
                         </span>
+                        {interest ? <FreeAgentInterest {...interest} /> : null}
                       </td>
                       <td className="px-3 py-2 text-zinc-400">
                         {agent.position}
@@ -284,7 +287,9 @@ export default async function FreeAgencyPage({
                               />
                               <NumberStepper
                                 name="salary"
-                                defaultValue={2_000_000}
+                                defaultValue={
+                                  interest?.salaryToSign ?? 2_000_000
+                                }
                                 step={50_000}
                                 min={0}
                                 inputClassName="w-28"
@@ -325,7 +330,7 @@ export default async function FreeAgencyPage({
                               <input
                                 type="hidden"
                                 name="salary"
-                                value={2_000_000}
+                                value={interest?.salaryToSign ?? 2_000_000}
                               />
                               <input type="hidden" name="years" value={1} />
                               <button

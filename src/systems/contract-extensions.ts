@@ -68,6 +68,8 @@ export const EXTENSION_REFUSALS_BEFORE_MARKET = 2;
 export const EXTENSION_COUNTER_RATIO = 0.85;
 /** Win% swing of the ask: a .250 team pays 5% more, a .750 team 5% less. */
 export const EXTENSION_WINNING_SWING = 0.2;
+/** Ask discount per loyalty point above 50 (loyalty 90: 4% less). */
+export const EXTENSION_LOYALTY_DISCOUNT_PER_POINT = 0.001;
 /** From this age a player wants at least two more seasons. */
 export const EXTENSION_SECURITY_AGE = 30;
 
@@ -111,8 +113,11 @@ export function playerExtensionAsk(
     cap: getLeagueSalaryCap(state),
     kind: "extension",
   });
-  // Players give a winning team a small discount and a losing one a premium.
-  const swing = (0.5 - teamWinPct(state, teamId)) * EXTENSION_WINNING_SWING;
+  // Players give a winning team a small discount and a losing one a
+  // premium; loyal players take a little less to stay.
+  const swing =
+    (0.5 - teamWinPct(state, teamId)) * EXTENSION_WINNING_SWING -
+    (player.personality.loyalty - 50) * EXTENSION_LOYALTY_DISCOUNT_PER_POINT;
   const salary = Math.max(
     vetMinSalary(getLeagueSalaryCap(state)),
     Math.round((base * (1 + swing)) / 1_000) * 1_000,

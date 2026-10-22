@@ -4,6 +4,10 @@
  */
 
 import {
+  toFreeAgentInterestView,
+  type FreeAgentInterestView,
+} from "@/state/free-agent-interest-selectors";
+import {
   toPayrollRulesView,
   type PayrollRulesView,
 } from "@/state/payroll-rules-selectors";
@@ -66,6 +70,8 @@ export type FreeAgencyHubView = {
   rfa: OwnerRfaView;
   /** Restricted free agents in the market, by player id. */
   rfaTags: Record<string, RfaTag>;
+  /** Interest panel per market player (first 40 rows), by player id. */
+  interest: Record<string, FreeAgentInterestView>;
   /** Tax line / floor, for "this signing crosses the tax line" warnings. */
   payrollRules: PayrollRulesView;
 };
@@ -129,6 +135,15 @@ export function toFreeAgencyHubView(state: GameState): FreeAgencyHubView {
     decisions,
     rfa: toOwnerRfaView(state),
     payrollRules: toPayrollRulesView(state),
+    interest: Object.fromEntries(
+      market
+        .slice(0, 40)
+        .map((p) => [p.playerId, toFreeAgentInterestView(state, p.playerId)])
+        .filter(
+          (entry): entry is [string, FreeAgentInterestView] =>
+            entry[1] !== null,
+        ),
+    ),
     rfaTags: Object.fromEntries(
       market
         .map((p) => [p.playerId, rfaTagForPlayer(state, p.playerId)] as const)
