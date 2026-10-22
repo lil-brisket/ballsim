@@ -5,7 +5,10 @@ import {
   portraitPlateIndex,
 } from "@/presentation/portrait-hash";
 import { cn } from "@/components/ui/styles";
-import { PortraitFace } from "@/components/basketball/PortraitFace";
+import {
+  PortraitFace,
+  type PortraitUniform,
+} from "@/components/basketball/PortraitFace";
 import {
   isValidPortraitAssignment,
   type PlayerPortraitAssignment,
@@ -15,7 +18,7 @@ export type PortraitState =
   /** Persisted procedural face, no raster overlay. */
   "assigned" | "missing" | "pending" | "ready" | "failed" | "invalid";
 
-export type PlayerPortraitSize = "xs" | "sm" | "md" | "lg" | "xl";
+export type PlayerPortraitSize = "xs" | "sm" | "ms" | "md" | "lg" | "xl";
 
 export type PlayerPortraitProps = {
   playerId: string;
@@ -28,12 +31,15 @@ export type PlayerPortraitProps = {
   state?: PortraitState;
   /** Only honored when state === "ready". */
   src?: string;
+  /** Team colours for the jersey; omit for the neutral default. */
+  uniform?: PortraitUniform | null;
   className?: string;
 };
 
 export const PORTRAIT_SIZE_PX: Record<PlayerPortraitSize, number> = {
   xs: 24,
   sm: 32,
+  ms: 40,
   md: 64,
   lg: 96,
   xl: 144,
@@ -42,6 +48,7 @@ export const PORTRAIT_SIZE_PX: Record<PlayerPortraitSize, number> = {
 const SIZE_CLASS: Record<PlayerPortraitSize, string> = {
   xs: "h-6 w-6",
   sm: "h-8 w-8",
+  ms: "h-10 w-10",
   md: "h-16 w-16",
   lg: "h-24 w-24",
   xl: "h-36 w-36",
@@ -50,6 +57,7 @@ const SIZE_CLASS: Record<PlayerPortraitSize, string> = {
 const INITIALS_CLASS: Record<PlayerPortraitSize, string> = {
   xs: "text-[8px]",
   sm: "text-[10px]",
+  ms: "text-xs",
   md: "text-lg",
   lg: "text-2xl",
   xl: "text-4xl",
@@ -192,9 +200,10 @@ export function PlayerPortrait(props: PlayerPortraitProps) {
       data-portrait-size={props.size}
       data-portrait-state={state}
       data-portrait-player-id={props.playerId}
+      data-portrait-uniform={props.uniform ? "team" : undefined}
     >
       {face !== null ? (
-        <PortraitFace traits={face.traits} />
+        <PortraitFace traits={face.traits} uniform={props.uniform} />
       ) : (
         <>
           <FallbackMark

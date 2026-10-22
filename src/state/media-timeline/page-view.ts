@@ -292,6 +292,7 @@ function welcomePost(state: GameState): TimelinePostView {
     unread: false,
     author: cast.league,
     text: `Welcome to the ${state.world.league.name}. Scores, standout performances, trades and awards will show up here as the season unfolds.`,
+    tags: [],
     replies: [],
     engagement,
     engagementDisplay: {

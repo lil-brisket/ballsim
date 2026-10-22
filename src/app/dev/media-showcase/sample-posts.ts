@@ -68,6 +68,15 @@ export const SHOWCASE_CONTEXT: TimelineDisplayContext = {
       },
       href: `/dashboard/${SAVE_ID}/teams/sum`,
     },
+    neo: {
+      branding: {
+        primaryColor: "#39FF14",
+        secondaryColor: "#0A0A0A",
+        accentColor: "#FFFFFF",
+        logoId: "lightning",
+      },
+      href: `/dashboard/${SAVE_ID}/teams/neo`,
+    },
     crg: {
       branding: {
         primaryColor: "#B4532A",
@@ -227,6 +236,7 @@ type PostSpec = {
   unread: boolean;
   author: TimelineAccount;
   text: string;
+  tags?: string[];
   replies?: ComposedReply[];
   engagement: Engagement;
   attachment: TimelineAttachment;
@@ -244,6 +254,7 @@ function post(spec: PostSpec): TimelinePostView {
     unread: spec.unread,
     author: spec.author,
     text: spec.text,
+    tags: spec.tags ?? [],
     replies,
     engagement: spec.engagement,
     engagementDisplay: {
@@ -382,7 +393,8 @@ export const SHOWCASE_POSTS: TimelinePostView[] = [
     relativeLabel: "Today",
     unread: true,
     author: HAR_ACCOUNT,
-    text: "FINAL: Harbor Lights 108, Summit Peaks 97. Teo Valdane led the way with 31.",
+    text: "FINAL: Harbor Lights 108, Summit Peaks 97. Teo Valdane led the way with 31. #Lights #HARvsSUM",
+    tags: ["Lights"],
     replies: [
       reply("showcase-game-win", 0, HAR_FAN, "Let's go Lights! 108–97."),
       reply("showcase-game-win", 1, SUM_FAN, "Tough one to swallow. 108–97."),
@@ -480,7 +492,8 @@ export const SHOWCASE_POSTS: TimelinePostView[] = [
     relativeLabel: "4d",
     unread: false,
     author: LEAGUE_ACCOUNT,
-    text: "Teo Valdane of the Harbor Lights is the Player of the Month for October.",
+    text: "Teo Valdane of the Harbor Lights is the Player of the Month for October. #Lights",
+    tags: ["Lights"],
     engagement: { replies: 33, reposts: 150, likes: 1900 },
     attachment: {
       type: "award",
@@ -692,7 +705,8 @@ export const SHOWCASE_POSTS: TimelinePostView[] = [
     relativeLabel: "Today",
     unread: true,
     author: HAR_FAN,
-    text: "9 straight wins for Harbor. Nobody wants to see us right now.",
+    text: "9 straight wins for Harbor. Nobody wants to see us right now. #Lights",
+    tags: ["Lights"],
     engagement: { replies: 3, reposts: 1, likes: 3 },
     attachment: {
       type: "streak",

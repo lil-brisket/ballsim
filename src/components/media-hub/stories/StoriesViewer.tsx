@@ -8,6 +8,7 @@ import {
   useRef,
   useState,
   useSyncExternalStore,
+  type CSSProperties,
   type ReactNode,
 } from "react";
 import { createPortal } from "react-dom";
@@ -16,6 +17,7 @@ import {
   releaseDrawerScrollLock,
 } from "@/components/ui/drawer-scroll-lock";
 import { cn, focusRingClass, touchTargetClass } from "@/components/ui/styles";
+import { DEFAULT_TEAM_THEME } from "@/presentation/team-theme";
 
 export type StoryViewerRing = {
   key: string;
@@ -203,6 +205,22 @@ function StoryGlyph(props: { storyKey: string }) {
 
 type Position = { ring: number; slide: number };
 
+/**
+ * The dialog portals to document.body, outside the element that sets the
+ * user team's `--team-*` vars. Copy them from the opener's nearest ancestor
+ * that carries them (inline style walk; works in browsers and jsdom).
+ */
+function inheritedTeamVars(opener: HTMLElement): CSSProperties | undefined {
+  const source = opener.closest<HTMLElement>('[style*="--team-primary"]');
+  if (!source) return undefined;
+  const vars: Record<string, string> = {};
+  for (const key of Object.keys(DEFAULT_TEAM_THEME)) {
+    const value = source.style.getPropertyValue(key).trim();
+    if (value) vars[key] = value;
+  }
+  return Object.keys(vars).length > 0 ? (vars as CSSProperties) : undefined;
+}
+
 const FILL_KEYFRAMES =
   "@keyframes ballsim-story-fill{from{width:0}to{width:100%}}";
 
@@ -212,6 +230,7 @@ function StoryDialog(props: {
   onPosition: (position: Position) => void;
   onClose: () => void;
   autoAdvance: boolean;
+  themeStyle?: CSSProperties;
 }) {
   const { rings, position, onPosition, onClose, autoAdvance } = props;
   const ring = rings[position.ring]!;
@@ -326,7 +345,10 @@ function StoryDialog(props: {
   const sideZone = "w-8 shrink-0 touch-manipulation focus:outline-none sm:w-10";
 
   return createPortal(
-    <div className="fixed inset-0 z-50 flex items-stretch justify-center p-0 sm:items-center sm:p-6">
+    <div
+      style={props.themeStyle}
+      className="fixed inset-0 z-50 flex items-stretch justify-center p-0 sm:items-center sm:p-6"
+    >
       <button
         type="button"
         aria-label="Close stories"
@@ -471,6 +493,7 @@ export function StoriesViewer(props: {
   );
   const [position, setPosition] = useState<Position | null>(null);
   const openerRef = useRef<HTMLElement | null>(null);
+  const [themeStyle, setThemeStyle] = useState<CSSProperties | undefined>();
 
   const currentRing = position ? rings[position.ring] : undefined;
   const currentKey = currentRing?.key;
@@ -506,6 +529,7 @@ export function StoriesViewer(props: {
                   data-story-state={isNew ? "new" : "seen"}
                   onClick={(event) => {
                     openerRef.current = event.currentTarget;
+                    setThemeStyle(inheritedTeamVars(event.currentTarget));
                     setPosition({ ring: index, slide: 0 });
                   }}
                   className={cn(
@@ -548,6 +572,7 @@ export function StoriesViewer(props: {
           onPosition={setPosition}
           onClose={close}
           autoAdvance={!reducedMotion}
+          themeStyle={themeStyle}
         />
       ) : null}
     </>

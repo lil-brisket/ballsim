@@ -4,35 +4,12 @@ import type {
   TimelineDisplayContext,
   TimelinePostView,
 } from "@/state/media-timeline/post-view";
-import { TimelineAvatar } from "./TimelineAvatar";
+import { AccountAvatar } from "./AccountAvatar";
 import { TimelineEngagement } from "./TimelineEngagement";
+import { PostText } from "./post-text";
 import { TimelineReplies } from "./TimelineReplies";
-
-function VerifiedMark() {
-  return (
-    <>
-      <svg
-        viewBox="0 0 24 24"
-        width={16}
-        height={16}
-        aria-hidden="true"
-        focusable={false}
-        className="shrink-0 text-team-ink"
-      >
-        <circle cx="12" cy="12" r="10" fill="currentColor" />
-        <path
-          d="M7.5 12.5l3 3 6-6.5"
-          fill="none"
-          stroke="var(--surface-arena)"
-          strokeWidth={2.2}
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-      </svg>
-      <span className="sr-only">Verified</span>
-    </>
-  );
-}
+import { UnreadDot } from "./UnreadDot";
+import { VerifiedMark } from "./VerifiedMark";
 
 export function TimelinePostShell(props: {
   post: TimelinePostView;
@@ -52,10 +29,10 @@ export function TimelinePostShell(props: {
         compact ? "py-3" : "py-4",
       )}
     >
-      <TimelineAvatar
+      <AccountAvatar
         account={post.author}
         context={context}
-        size={compact ? "sm" : "md"}
+        size={compact ? "reply" : "post"}
       />
       <div className="min-w-0 flex-1 space-y-2">
         <header className="flex flex-wrap items-center gap-x-1.5 text-sm">
@@ -74,17 +51,11 @@ export function TimelinePostShell(props: {
           >
             {post.relativeLabel}
           </time>
-          {post.unread ? (
-            <>
-              <span
-                aria-hidden="true"
-                className="ml-1 inline-block h-2 w-2 rounded-full bg-team"
-              />
-              <span className="sr-only">Unread</span>
-            </>
-          ) : null}
+          {post.unread ? <UnreadDot /> : null}
         </header>
-        <p className="text-sm text-zinc-100">{post.text}</p>
+        <p className="text-sm text-zinc-100">
+          <PostText text={post.text} tags={post.tags} saveId={context.saveId} />
+        </p>
         {props.children}
         <TimelineEngagement
           display={post.engagementDisplay}
