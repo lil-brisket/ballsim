@@ -252,9 +252,7 @@ function assertPopulatedFixture(state: GameState): void {
   expect(Object.keys(state.world.players).length).toBeGreaterThan(0);
 
   const sampleTeam = Object.values(state.world.teams)[0]!;
-  expect(sampleTeam.playStyle).toBeDefined();
   expect(sampleTeam.coachingPhilosophy).toBeDefined();
-  expect(sampleTeam.playStyle.pace).toBeTypeOf("number");
   expect(sampleTeam.coachingPhilosophy.pace).toBeTruthy();
 
   const samplePlayer = Object.values(state.world.players)[0]!;

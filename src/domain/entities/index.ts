@@ -8,14 +8,9 @@ export type {
   Team,
   TeamInput,
   TeamFinanceState,
-  TeamPlayStyle,
   TeamRosterManagement,
 } from "@/domain/entities/team";
-export {
-  createTeam,
-  TEAM_PLAY_STYLE_KEYS,
-  NEUTRAL_TEAM_PLAY_STYLE,
-} from "@/domain/entities/team";
+export { createTeam } from "@/domain/entities/team";
 export type {
   LineupSlot,
   RotationEntry,

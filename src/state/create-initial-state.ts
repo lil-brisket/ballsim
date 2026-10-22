@@ -1,7 +1,7 @@
 import { createEmptyPlayoffTournament } from "@/domain/entities/playoffs";
 import { createEmptySeasonEventsState } from "@/domain/entities/season-events";
 import { createEmptyTeamStanding } from "@/domain/entities/standings";
-import { createTeam, NEUTRAL_TEAM_PLAY_STYLE } from "@/domain/entities/team";
+import { createTeam } from "@/domain/entities/team";
 import { DEFAULT_COACHING_PHILOSOPHY } from "@/domain/coaching/coaching-philosophy";
 import { createSeededRng } from "@/domain/rng";
 import { DEFAULT_PARTICIPATION_STATE } from "@/domain/participation";
@@ -85,7 +85,6 @@ function bootstrapTeam(
     finances: {},
     arenaId: asArenaId(`arena_${id}`),
     reputation: 50,
-    playStyle: { ...NEUTRAL_TEAM_PLAY_STYLE },
     coachingPhilosophy: { ...DEFAULT_COACHING_PHILOSOPHY },
     branding,
   });
