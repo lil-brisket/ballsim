@@ -4,6 +4,10 @@
  * Composes existing contract/payroll selectors — does not recreate domain math.
  */
 
+import {
+  toPayrollRulesView,
+  type PayrollRulesView,
+} from "@/state/payroll-rules-selectors";
 import type { GameState } from "@/state/game-state";
 import type { ActionCenterItem } from "@/state/action-center-selectors";
 import {
@@ -89,6 +93,8 @@ export type ContractHubView = {
   overview: ContractHubOverview;
   rows: ContractHubRow[];
   decisions: ActionCenterItem[];
+  /** Tax line, floor and projected bill for the cap sheet. */
+  payrollRules: PayrollRulesView;
 };
 
 function presentationState(
@@ -277,5 +283,6 @@ export function toContractHubView(state: GameState): ContractHubView {
     },
     rows,
     decisions,
+    payrollRules: toPayrollRulesView(state),
   };
 }

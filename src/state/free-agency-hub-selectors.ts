@@ -3,6 +3,10 @@
  * Market / My Offers / Recent Signings. True OVR intentionally exposed (existing model).
  */
 
+import {
+  toPayrollRulesView,
+  type PayrollRulesView,
+} from "@/state/payroll-rules-selectors";
 import type { GameState } from "@/state/game-state";
 import { getActiveOwnerTeamId } from "@/state/owner-context";
 import {
@@ -62,6 +66,8 @@ export type FreeAgencyHubView = {
   rfa: OwnerRfaView;
   /** Restricted free agents in the market, by player id. */
   rfaTags: Record<string, RfaTag>;
+  /** Tax line / floor, for "this signing crosses the tax line" warnings. */
+  payrollRules: PayrollRulesView;
 };
 
 export function toFreeAgencyHubView(state: GameState): FreeAgencyHubView {
@@ -122,6 +128,7 @@ export function toFreeAgencyHubView(state: GameState): FreeAgencyHubView {
     recentSignings,
     decisions,
     rfa: toOwnerRfaView(state),
+    payrollRules: toPayrollRulesView(state),
     rfaTags: Object.fromEntries(
       market
         .map((p) => [p.playerId, rfaTagForPlayer(state, p.playerId)] as const)

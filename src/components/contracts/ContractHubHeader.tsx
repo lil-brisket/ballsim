@@ -1,3 +1,4 @@
+import { TaxLineNote } from "@/components/finances/PayrollRulesPanel";
 import { MoneyDisplay } from "@/components/owner/MoneyDisplay";
 import { SectionHeading } from "@/components/ui/SectionHeading";
 import { TickerBar } from "@/components/ui/TickerBar";
@@ -18,6 +19,7 @@ export function ContractHubHeader(props: { view: ContractHubView }) {
           title={view.teamName}
         />
         <p className="text-sm text-zinc-300">Season {view.seasonYear}</p>
+        <TaxLineNote rules={view.payrollRules} />
       </div>
       <TickerBar
         aria-label="Payroll and cap"

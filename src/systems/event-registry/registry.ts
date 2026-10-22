@@ -121,6 +121,10 @@ export const DOMAIN_EVENT_REGISTRY: Record<
   ContractExtensionRefused: occurred("transaction", "medium", {
     social: { minPosts: 0, maxPosts: 1 },
   }),
+  PayrollRulesAssessed: occurred("team", "medium", {
+    notify: true,
+    notifyCat: "important",
+  }),
   ContractFinalYear: occurred("team", "low", {
     media: false,
     highlight: false,

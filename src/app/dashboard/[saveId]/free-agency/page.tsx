@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { cn, linkClass } from "@/components/ui/styles";
 import { selectPlayerPortrait } from "@/state/player-portrait-selectors";
+import { TaxLineNote } from "@/components/finances/PayrollRulesPanel";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import {
@@ -97,6 +98,8 @@ export default async function FreeAgencyPage({
           density="compact"
         />
       </div>
+
+      <TaxLineNote rules={hub.payrollRules} />
 
       {!hub.active ? (
         <EmptyState

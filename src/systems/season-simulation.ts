@@ -1,3 +1,4 @@
+import { assessPayrollRules } from "@/systems/payroll-rules";
 import type { DomainEvent } from "@/domain/events";
 import type { SeasonId, TeamId } from "@/domain/ids";
 import type { Rng } from "@/domain/rng";
@@ -71,6 +72,10 @@ export function simulateSeason(
   if (playoffTeams <= 0 || playoffTeams > liveTeamCount) {
     return systemResult(current, events);
   }
+
+  const assessed = assessPayrollRules(current);
+  current = assessed.state;
+  events.push(...assessed.events);
 
   const started = startPlayoffs(current, rng);
   current = started.state;

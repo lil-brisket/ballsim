@@ -132,14 +132,19 @@ describe("GameSetupForm", () => {
     unmount();
   });
 
-  it("shows the luxury tax as coming soon and not editable", () => {
+  it("toggling the luxury tax updates the summary and switches to Custom", () => {
     const { unmount } = render(<GameSetupForm atSaveLimit={false} />);
     goToAdvanced();
     const luxury = screen.getByRole("checkbox", {
-      name: /Luxury tax/,
+      name: "Luxury tax",
     }) as HTMLInputElement;
-    expect(luxury.disabled).toBe(true);
-    expect(screen.getByText("Coming soon")).toBeTruthy();
+    expect(luxury.disabled).toBe(false);
+    expect(screen.getByText(/Luxury tax on/)).toBeTruthy();
+    fireEvent.click(luxury);
+
+    expect(luxury.checked).toBe(false);
+    expect(screen.getByText(/Luxury tax off/)).toBeTruthy();
+    expect(screen.getByText("Custom")).toBeTruthy();
     unmount();
   });
 

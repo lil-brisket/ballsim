@@ -4,6 +4,10 @@
  * Warnings only when business health is critical/tight or Action Center has financial items.
  */
 
+import {
+  toPayrollRulesView,
+  type PayrollRulesView,
+} from "@/state/payroll-rules-selectors";
 import type { GameState } from "@/state/game-state";
 import type { ActionCenterItem } from "@/state/action-center-selectors";
 import {
@@ -52,6 +56,8 @@ export type FinanceHubView = {
   decisions: ActionCenterItem[];
   ledger: EventLogEntryView[];
   trend: FinanceTrendPoint[];
+  /** Luxury tax / salary floor projection and last assessment. */
+  payrollRules: PayrollRulesView;
 };
 
 const FINANCE_EVENT_TYPES = new Set([
@@ -149,6 +155,7 @@ export function toFinanceHubView(state: GameState): FinanceHubView {
   }
 
   return {
+    payrollRules: toPayrollRulesView(state),
     saveId,
     teamName: team ? `${team.city} ${team.name}` : "Team",
     currentDate: owner.currentDate,

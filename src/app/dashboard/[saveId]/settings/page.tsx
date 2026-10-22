@@ -113,7 +113,30 @@ export default async function InGameSettingsPage({
             label="Staff Budget"
             value={formatMoney(financialRules.staffBudget)}
           />
-          <SettingRow label="Luxury tax" value="Coming soon" />
+          <SettingRow
+            label="Luxury tax"
+            value={
+              financialRules.luxuryTaxEnabled
+                ? `On — line at ${financialRules.luxuryTaxThresholdPercent}% over the cap`
+                : "Off"
+            }
+          />
+          <SettingRow
+            label="Salary floor"
+            value={
+              financialRules.salaryFloorEnabled
+                ? `On — ${financialRules.salaryFloorPercent}% of the cap`
+                : "Off"
+            }
+          />
+          <SettingRow
+            label="Veteran rights"
+            value={
+              financialRules.veteranRightsEnabled
+                ? `On — after ${financialRules.veteranRightsSeasons} seasons`
+                : "Off"
+            }
+          />
           <SettingRow
             label="Restricted free agency"
             value={settings.offseason.restrictedFreeAgency ? "On" : "Off"}

@@ -705,7 +705,18 @@ export function GameSetupForm({
             label="Staff Budget"
             value={formatMoney(settings.financialRules.staffBudget)}
           />
-          <ReviewRow label="Luxury tax" value="Coming soon" />
+          <ReviewRow
+            label="Luxury tax"
+            value={settings.financialRules.luxuryTaxEnabled ? "On" : "Off"}
+          />
+          <ReviewRow
+            label="Salary floor"
+            value={settings.financialRules.salaryFloorEnabled ? "On" : "Off"}
+          />
+          <ReviewRow
+            label="Veteran rights"
+            value={settings.financialRules.veteranRightsEnabled ? "On" : "Off"}
+          />
           <ReviewRow
             label="Restricted free agency"
             value={settings.offseason.restrictedFreeAgency ? "On" : "Off"}
@@ -752,7 +763,7 @@ export function GameSetupForm({
   }));
 
   const injurySummary = INJURY_FREQUENCY_LABELS[settings.injuryFrequency];
-  const financialSummary = `Cap ${capLabel}`;
+  const financialSummary = `Cap ${capLabel}, Luxury tax ${settings.financialRules.luxuryTaxEnabled ? "on" : "off"}`;
 
   const blockedButtons = blockedReason !== null;
 
@@ -876,15 +887,39 @@ export function GameSetupForm({
               />
               <ToggleField
                 label="Luxury tax"
-                note="Coming soon"
-                disabled
-                checked={false}
+                checked={settings.financialRules.luxuryTaxEnabled}
                 onChange={(checked) =>
                   updateSettings({
                     ...settings,
                     financialRules: {
                       ...settings.financialRules,
                       luxuryTaxEnabled: checked,
+                    },
+                  })
+                }
+              />
+              <ToggleField
+                label="Salary floor"
+                checked={settings.financialRules.salaryFloorEnabled}
+                onChange={(checked) =>
+                  updateSettings({
+                    ...settings,
+                    financialRules: {
+                      ...settings.financialRules,
+                      salaryFloorEnabled: checked,
+                    },
+                  })
+                }
+              />
+              <ToggleField
+                label="Veteran rights"
+                checked={settings.financialRules.veteranRightsEnabled}
+                onChange={(checked) =>
+                  updateSettings({
+                    ...settings,
+                    financialRules: {
+                      ...settings.financialRules,
+                      veteranRightsEnabled: checked,
                     },
                   })
                 }

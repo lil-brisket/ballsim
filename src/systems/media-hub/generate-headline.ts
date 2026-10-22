@@ -161,6 +161,21 @@ export function generateHeadline(
             summary: `Talks between ${name} and ${team} are on hold.`,
           };
     }
+    case "PayrollRulesAssessed": {
+      const team = teamName(state, str(p, "teamId"));
+      const tax = num(p, "taxBill") ?? 0;
+      const short = num(p, "floorShortfall") ?? 0;
+      const millions = (v: number) => `$${(v / 1_000_000).toFixed(1)}M`;
+      return tax > 0
+        ? {
+            headline: `${team} pay ${millions(tax)} in luxury tax`,
+            summary: `${team} finish the regular season over the tax line.`,
+          }
+        : {
+            headline: `${team} pay ${millions(short)} under the salary floor`,
+            summary: `${team} finish the regular season below the salary floor.`,
+          };
+    }
     case "ContractFinalYear": {
       const name = playerName(state, str(p, "playerId"));
       const team = teamName(state, str(p, "teamId"));

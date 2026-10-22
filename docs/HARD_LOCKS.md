@@ -112,6 +112,5 @@ Extensions: an owner may extend a player with two seasons or fewer left (`system
 
 ## Deferred
 
-- Luxury tax enforcement
 - Mid-draft pick trades
 - Multiple simultaneous RFA offer sheets
