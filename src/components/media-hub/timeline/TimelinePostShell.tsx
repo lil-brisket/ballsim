@@ -61,7 +61,7 @@ export function TimelinePostShell(props: {
           </time>
           {post.unread ? <UnreadDot /> : null}
         </header>
-        <p className="text-sm text-zinc-100">
+        <p className="text-base text-zinc-100">
           <PostText text={post.text} tags={post.tags} saveId={context.saveId} />
         </p>
         {props.children}

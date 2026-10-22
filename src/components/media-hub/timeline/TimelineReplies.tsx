@@ -19,7 +19,7 @@ export function TimelineReplies(props: {
       >
         {count === 1 ? "Show 1 reply" : `Show ${count} replies`}
       </summary>
-      <ul className="ml-1 space-y-3 border-l border-zinc-800 py-1 pl-4">
+      <ul className="ml-1 space-y-3 border-l border-zinc-800 py-1 pl-3">
         {props.replies.map((reply) => (
           <li key={reply.id} className="flex gap-2">
             <AccountAvatar

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Gauge } from "@/components/ui/Gauge";
-import { ScoreBug } from "@/components/ui/ScoreBug";
+import { NavIcon } from "@/components/game/NavGroups";
 import { SectionHeading } from "@/components/ui/SectionHeading";
 import { Tabs } from "@/components/ui/Tabs";
 import {
@@ -11,11 +11,13 @@ import {
 } from "@/components/ui/styles";
 import type {
   MediaFilterOption,
+  MediaScoreSide,
   MediaScoreView,
   MediaTimelinePageView,
   MediaTrendView,
 } from "@/state/media-timeline/page-view";
 import { MediaUnreadBadge } from "./MediaUnreadBadge";
+import { TeamMark } from "./timeline/TeamMark";
 
 function activeFilterKey(filters: readonly MediaFilterOption[]): string {
   return filters.find((option) => option.active)?.filter ?? "";
@@ -42,6 +44,16 @@ export function MediaFilterTabs(props: {
   );
 }
 
+const FILTER_ICONS: Record<MediaFilterOption["filter"], string> = {
+  "for-you": "home",
+  "your-team": "team",
+  league: "league",
+  scores: "schedule",
+  moves: "transactions",
+  injuries: "injuries",
+  awards: "awards",
+};
+
 /** At xl: the same filters as a vertical list in the left column. */
 export function MediaFilterList(props: {
   filters: readonly MediaFilterOption[];
@@ -55,14 +67,15 @@ export function MediaFilterList(props: {
               href={option.href}
               aria-current={option.active ? "page" : undefined}
               className={cn(
-                "flex min-h-11 items-center justify-between gap-2 rounded-lg px-3 text-sm font-semibold transition",
+                "flex min-h-11 items-center gap-2 rounded-r-lg border-l-2 px-3 text-sm font-semibold transition",
                 option.active
-                  ? "bg-zinc-800 text-zinc-50"
-                  : "text-zinc-400 hover:bg-zinc-900 hover:text-zinc-100",
+                  ? "border-team-ink bg-zinc-800/60 text-zinc-50"
+                  : "border-transparent text-zinc-400 hover:bg-zinc-900 hover:text-zinc-100",
                 focusRingClass,
               )}
             >
-              {option.label}
+              <NavIcon name={FILTER_ICONS[option.filter]} />
+              <span className="min-w-0 flex-1 truncate">{option.label}</span>
               {option.badge !== null ? (
                 <MediaUnreadBadge count={option.badge} />
               ) : null}
@@ -74,16 +87,54 @@ export function MediaFilterList(props: {
   );
 }
 
-function ScoreItem(props: { score: MediaScoreView }) {
-  const { score } = props;
+function ScoreLine(props: {
+  side: MediaScoreSide;
+  won: boolean;
+  ot?: boolean;
+}) {
+  const { side, won } = props;
   return (
-    <ScoreBug
-      teams={[score.away, score.home]}
-      date={score.date}
-      overtime={score.overtime}
-      href={score.href ?? undefined}
-    />
+    <span
+      className={cn(
+        "flex items-center gap-2 text-sm tabular-nums",
+        won ? "font-bold text-zinc-50" : "text-zinc-400",
+      )}
+    >
+      <TeamMark branding={side.branding} size="sm" />
+      <span className="uppercase">{side.abbreviation}</span>
+      {props.ot ? <span className="font-normal text-zinc-400">OT</span> : null}
+      <span className="ml-auto">{side.score}</span>
+    </span>
   );
+}
+
+function ScoreRow(props: { score: MediaScoreView }) {
+  const { score } = props;
+  const body = (
+    <>
+      <ScoreLine side={score.away} won={score.away.score > score.home.score} />
+      <ScoreLine
+        side={score.home}
+        won={score.home.score > score.away.score}
+        ot={score.overtime}
+      />
+    </>
+  );
+  const rowClass = cn(
+    "flex min-h-11 flex-col justify-center gap-1 border-l-2 px-3 py-2",
+    score.isUserGame ? "border-team-ink" : "border-transparent",
+  );
+  if (score.href) {
+    return (
+      <Link
+        href={score.href}
+        className={cn(rowClass, "hover:bg-zinc-900", focusRingClass)}
+      >
+        {body}
+      </Link>
+    );
+  }
+  return <div className={rowClass}>{body}</div>;
 }
 
 /** Below xl: the latest game day's results in one sideways-scrolling row. */
@@ -94,10 +145,10 @@ export function MediaScoresStrip(props: {
   if (props.scores.length === 0) return null;
   return (
     <section aria-label={`Scores, ${props.dateLabel ?? "latest"}`}>
-      <ul className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:px-0">
+      <ul className="-mx-4 flex snap-x overflow-x-auto divide-x divide-zinc-800 px-4 pb-1 sm:mx-0 sm:px-0">
         {props.scores.map((score) => (
-          <li key={score.gameId} className="shrink-0">
-            <ScoreItem score={score} />
+          <li key={score.gameId} className="w-40 shrink-0 snap-start">
+            <ScoreRow score={score} />
           </li>
         ))}
       </ul>
@@ -107,13 +158,13 @@ export function MediaScoresStrip(props: {
 
 function TrendingList(props: { trending: readonly MediaTrendView[] }) {
   return (
-    <ol className="space-y-1">
+    <ol className="divide-y divide-zinc-800">
       {props.trending.map((trend) => (
         <li key={trend.tag}>
           <Link
             href={trend.href}
             className={cn(
-              "flex items-center justify-between gap-3 text-sm",
+              "flex w-full items-center justify-between gap-3 text-sm",
               touchTargetTextClass,
               linkClass,
               focusRingClass,
@@ -140,11 +191,12 @@ export function MediaSideRail(props: { view: MediaTimelinePageView }) {
           <SectionHeading
             as="h2"
             title={`Scores · ${view.scoresDateLabel ?? "Latest"}`}
+            titleClassName="whitespace-nowrap truncate"
           />
-          <ul className="space-y-2">
+          <ul className="divide-y divide-zinc-800">
             {view.scores.map((score) => (
               <li key={score.gameId}>
-                <ScoreItem score={score} />
+                <ScoreRow score={score} />
               </li>
             ))}
           </ul>
@@ -152,7 +204,7 @@ export function MediaSideRail(props: { view: MediaTimelinePageView }) {
       ) : null}
       {view.trending.length > 0 ? (
         <section className="space-y-3">
-          <SectionHeading as="h2" title="Trending" />
+          <SectionHeading as="h2" title="Trending" titleClassName="truncate" />
           <TrendingList trending={view.trending} />
         </section>
       ) : null}
@@ -165,7 +217,7 @@ export function MediaSideRail(props: { view: MediaTimelinePageView }) {
 export function MediaBuzz(props: { buzz: MediaTimelinePageView["buzz"] }) {
   return (
     <section className="space-y-3">
-      <SectionHeading as="h2" title="Your buzz" />
+      <SectionHeading as="h2" title="Your buzz" titleClassName="truncate" />
       <Gauge label="Media attention" value={props.buzz.mediaAttention} />
       <Link
         href={props.buzz.href}
