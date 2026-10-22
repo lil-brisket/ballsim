@@ -102,7 +102,12 @@ const award: AwardAttachment = {
   winner: LEO,
   winnerCoachName: null,
   team: TOR,
-  perGame: { points: 28.46, rebounds: 7.2, assists: 9 },
+  stats: [
+    { label: "PPG", value: "28.5" },
+    { label: "RPG", value: "7.2" },
+    { label: "APG", value: "9.0" },
+  ],
+  improvement: null,
   teamRecord: { wins: 50, losses: 12 },
   runnerUp: { name: "Mia Voss", teamAbbreviation: "DEN" },
 };
@@ -133,7 +138,7 @@ describe("AwardAttachmentCard", () => {
           ...award,
           cadence: "yearly",
           period: null,
-          perGame: null,
+          stats: [],
           teamRecord: null,
           runnerUp: null,
         }}
@@ -154,13 +159,21 @@ describe("AwardAttachmentCard", () => {
           winner: null,
           winnerCoachName: "Gene Auriemma",
           team: DEN,
-          perGame: null,
+          stats: [
+            { label: "Record", value: "50–12" },
+            { label: "Wins vs last season", value: "+18", tone: "win" },
+          ],
+          improvement: 18,
         }}
         context={context}
       />,
     );
     expect(container.querySelector("[data-portrait-player-id]")).toBeNull();
     expect(screen.getByText("Gene Auriemma")).toBeTruthy();
+    // The record shows once, in the stats, not again as "Team record".
+    expect(screen.getAllByText("50–12")).toHaveLength(1);
+    expect(screen.queryByText(/Team record/)).toBeNull();
+    expect(screen.getByText("+18")).toBeTruthy();
     expect(screen.queryByRole("link")).toBeNull();
     expectNoMono(container);
   });

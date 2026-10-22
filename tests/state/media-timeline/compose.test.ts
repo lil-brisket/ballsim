@@ -12,6 +12,10 @@ import {
 } from "@/state/media-timeline/compose-post";
 import { composeReplies } from "@/state/media-timeline/compose-replies";
 import {
+  formatSeasonLabel,
+  teamTag,
+} from "@/state/media-timeline/compose-text";
+import {
   computeEngagement,
   engagementLabel,
   formatCount,
@@ -215,8 +219,15 @@ const POSTS: TimelinePost[] = [
       winner: winner as TimelinePlayerRef | null,
       winnerCoachName: coach,
       team: i === 3 ? null : ref(teamA!),
-      perGame:
-        i % 2 === 0 ? { points: 28.4, rebounds: 7.1, assists: 6.2 } : null,
+      stats:
+        i % 2 === 0
+          ? [
+              { label: "PPG", value: "28.4" },
+              { label: "RPG", value: "7.1" },
+              { label: "APG", value: "6.2" },
+            ]
+          : [],
+      improvement: null,
       teamRecord: i % 2 === 0 ? { wins: 50, losses: 12 } : null,
       runnerUp: i === 0 ? { name: "Lee Park", teamAbbreviation: "XYZ" } : null,
     }),
@@ -456,36 +467,23 @@ describe("composeTimeline", () => {
       const a = p.attachment;
       const texts = textsOf(p);
       if (a.type === "performance") {
-        const l = a.line;
-        const allowed = new Set(
-          [
-            l.points,
-            l.rebounds,
-            l.assists,
-            l.fieldGoalsMade,
-            l.fieldGoalsAttempted,
-            Math.round(l.minutes),
-          ].map(String),
-        );
+        // The card shows the stat line; the text names the points once.
         for (const t of texts) {
-          expect(t).toContain(String(l.points));
-          for (const n of numbersIn(t)) expect(allowed.has(n), t).toBe(true);
+          expect(numbersIn(t), t).toEqual([String(a.line.points)]);
         }
       } else if (a.type === "award") {
-        const allowed = new Set<string>([String(a.seasonYear)]);
-        if (a.perGame) {
-          for (const v of Object.values(a.perGame)) allowed.add(v.toFixed(1));
-        }
-        if (a.teamRecord) {
-          allowed.add(String(a.teamRecord.wins));
-          allowed.add(String(a.teamRecord.losses));
-        }
+        // The card shows the award's numbers and the record; the text cites
+        // none of them, and names the season as "2026–27".
+        const season = formatSeasonLabel(a.seasonYear);
         for (const t of texts) {
           expect(t).toContain(a.awardName);
-          for (const n of numbersIn(t)) expect(allowed.has(n), t).toBe(true);
+          expect(numbersIn(t.replaceAll(season, "")), t).toEqual([]);
         }
       } else if (a.type === "playoff") {
-        const allowed = new Set<string>([String(a.seasonYear), "7"]);
+        const allowed = new Set<string>([
+          ...formatSeasonLabel(a.seasonYear).split("–"),
+          "7",
+        ]);
         if (a.seriesScore) {
           allowed.add(String(a.seriesScore.winner));
           allowed.add(String(a.seriesScore.loser));
@@ -551,10 +549,11 @@ describe("copy polish", () => {
     ]);
     for (const p of POSTS.filter((x) => kinds.has(x.kind))) {
       for (const raw of textsOf(p)) {
-        // "the Washington Quasars" is fine; drop full names, then look for bare ones.
+        // "the Washington Quasars" is fine; drop full names and hashtags
+        // ("#Quasars"), then look for bare ones.
         const text = fullNames.reduce(
           (acc, full) => acc.replace(new RegExp(`the ${full}`, "gi"), ""),
-          raw,
+          raw.replace(/#\w+/g, ""),
         );
         for (const club of clubs) {
           expect(text, raw).not.toMatch(
@@ -614,6 +613,35 @@ describe("copy polish", () => {
     expect(all.some((t) => t.includes("an ankle injury"))).toBe(true);
     expect(all.some((t) => t.includes("lower back"))).toBe(true);
   });
+
+  it("tags teams by nickname, never by an abbreviation that reads as a word", () => {
+    const STOP_WORDS = new Set([
+      "new",
+      "can",
+      "are",
+      "out",
+      "for",
+      "war",
+      "man",
+      "sea",
+      "win",
+      "mad",
+    ]);
+    const word = { ...ref(teamA!), abbreviation: "NEW", name: "Red Wolves" };
+    expect(teamTag(word)).toBe("#RedWolves");
+    const nicknames = [viewer, teamA!, teamB!, teamC!].map(
+      (id) => `#${ref(id).name.replace(/[^A-Za-z0-9]/g, "")}`,
+    );
+    for (const p of POSTS) {
+      for (const text of textsOf(p)) {
+        for (const tag of text.match(/#\w+/g) ?? []) {
+          expect(STOP_WORDS.has(tag.slice(1).toLowerCase()), text).toBe(false);
+          // "#AWYvsHOM" matchup tags are the only abbreviation tags.
+          if (!/vs/.test(tag)) expect(nicknames, text).toContain(tag);
+        }
+      }
+    }
+  });
 });
 
 describe("composeReplies", () => {
@@ -644,6 +672,30 @@ describe("composeReplies", () => {
       const n = composeReplies(base, cast, { ...p, notability }, "x").length;
       expect(n).toBeGreaterThanOrEqual(1);
       expect(n).toBeLessThanOrEqual(3);
+    }
+  });
+
+  it("does not restate the card's stat line in replies", () => {
+    const cast = buildLeagueCast(base);
+    for (const p of POSTS) {
+      const a = p.attachment;
+      if (a.type !== "performance" && a.type !== "award") continue;
+      for (const author of authorCandidates(base, cast, p)) {
+        const replies = composeReplies(
+          base,
+          cast,
+          { ...p, notability: 99 },
+          author.key,
+        );
+        for (const { text } of replies) {
+          if (a.type === "performance") {
+            expect(text, text).not.toMatch(/rebounds|assists|-of-/);
+          } else {
+            const season = formatSeasonLabel(a.seasonYear);
+            expect(numbersIn(text.replaceAll(season, "")), text).toEqual([]);
+          }
+        }
+      }
     }
   });
 

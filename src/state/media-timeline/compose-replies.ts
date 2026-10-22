@@ -8,6 +8,7 @@ import type { GameState } from "@/state/game-state";
 import type { LeagueCast, TimelineAccount } from "./accounts";
 import {
   cleanBodyPart,
+  formatSeasonLabel,
   fullName,
   gameSides,
   joinParts,
@@ -126,15 +127,14 @@ function buildSpec(post: TimelinePost): Spec {
           { team: a.opponent, stance: a.won ? "down" : "up", detail: null },
         ],
         beatTeamId: a.team.teamId,
+        // The card shows the stat line; replies react to it.
         reporter: [
-          `${name} finished with ${a.line.points} points, ${a.line.rebounds} rebounds and ${a.line.assists} assists.`,
-          `${name} played ${Math.round(a.line.minutes)} minutes for the ${a.team.name}.`,
+          `${name} set the tone for the ${a.team.name} tonight.`,
+          `The ${a.team.name} leaned on ${name} all night.`,
         ],
         analyst: [
-          a.line.fieldGoalsAttempted > 0
-            ? `${a.line.fieldGoalsMade}-of-${a.line.fieldGoalsAttempted} from the field is the story behind ${a.line.points} points.`
-            : `${a.line.points} points is the number that stands out.`,
-          `${a.line.points} points against the ${a.opponent.name}.`,
+          `${a.line.points} points is the number that stands out.`,
+          `Hard to slow down ${name} on a night like this.`,
         ],
         players: [
           {
@@ -165,14 +165,13 @@ function buildSpec(post: TimelinePost): Spec {
             ]
           : [],
         beatTeamId: a.team?.teamId ?? null,
-        reporter: [`The ${a.awardName} for ${a.seasonYear} is official.`],
+        reporter: [
+          `The ${a.awardName} for ${formatSeasonLabel(a.seasonYear)} is official.`,
+        ],
+        // The award card already shows the numbers.
         analyst: [
-          a.perGame
-            ? `${a.perGame.points.toFixed(1)} points a night is hard to argue with.`
-            : `The ${a.awardName} is a deserving honor.`,
-          a.teamRecord
-            ? `A ${a.teamRecord.wins}–${a.teamRecord.losses} record helps the case.`
-            : `The ${a.awardName} race was worth following.`,
+          `The ${a.awardName} is a deserving honor.`,
+          `The ${a.awardName} race was worth following.`,
         ],
         players: a.winner
           ? [
@@ -200,13 +199,13 @@ function buildSpec(post: TimelinePost): Spec {
         beatTeamId: a.winner.teamId,
         reporter: [
           a.event === "champion"
-            ? `The ${a.winner.displayName} are the ${a.seasonYear} champions.`
-            : `The ${a.winner.name} are the story of the ${a.seasonYear} playoffs.`,
+            ? `The ${a.winner.displayName} are the ${formatSeasonLabel(a.seasonYear)} champions.`
+            : `The ${a.winner.name} are the story of the ${formatSeasonLabel(a.seasonYear)} playoffs.`,
         ],
         analyst: [
           s
             ? `A ${s.winner}–${s.loser} series tells you plenty about this matchup.`
-            : `${a.seasonYear} will be remembered for the ${a.winner.name}.`,
+            : `${formatSeasonLabel(a.seasonYear)} will be remembered for the ${a.winner.name}.`,
         ],
         players: [],
       };

@@ -1,5 +1,6 @@
 import type { Game, GamePlayerStats } from "@/domain/entities/game";
 import { combineNotability, type DetectorInput } from "./detector-input";
+import { teamTagLabel } from "./compose-text";
 import { toStatLine } from "./refs";
 import type { PerformanceReason, TimelinePost } from "./types";
 
@@ -151,7 +152,7 @@ function toPost(
       line: toStatLine(row),
       reasons: candidate.reasons,
     },
-    tags: [team.abbreviation],
+    tags: [teamTagLabel(team)],
     unread: false,
   };
 }

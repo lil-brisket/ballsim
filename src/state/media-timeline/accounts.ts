@@ -16,7 +16,8 @@ export type TimelineAccountKind =
   "league" | "team" | "reporter" | "analyst" | "fan" | "player";
 
 export type TimelineAvatar =
-  | { type: "logo"; teamId: string | null }
+  | { type: "league"; letters: string }
+  | { type: "logo"; teamId: string }
   | { type: "portrait"; playerId: string }
   | { type: "monogram"; initials: string; teamId: string | null };
 
@@ -166,7 +167,7 @@ function createCast(state: GameState): LeagueCast {
     teamId: null,
     playerId: null,
     beat: null,
-    avatar: { type: "logo", teamId: null },
+    avatar: { type: "league", letters: league.abbreviation },
   });
 
   const teamAccounts = new Map<string, TimelineAccount>();

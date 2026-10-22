@@ -2,11 +2,8 @@ import { TeamBadge } from "@/components/ui/TeamBadge";
 import { TeamThemeScope } from "@/components/ui/TeamThemeScope";
 import type { TimelineDisplayContext } from "@/state/media-timeline/post-view";
 import type { PlayoffAttachment } from "@/state/media-timeline/types";
-import {
-  attachmentSurfaceClass,
-  seasonLabel,
-  teamBrandingFor,
-} from "./attachment-parts";
+import { formatSeasonLabel } from "@/state/media-timeline/compose-text";
+import { attachmentSurfaceClass, teamBrandingFor } from "./attachment-parts";
 
 function scoreText(
   winnerAbbr: string,
@@ -35,7 +32,7 @@ export function PlayoffAttachmentCard(props: {
           />
           <div className="min-w-0">
             <p className="font-display text-lg font-bold text-zinc-50">
-              {seasonLabel(playoff.seasonYear)} champions
+              {formatSeasonLabel(playoff.seasonYear)} champions
             </p>
             <p className="text-sm text-zinc-400">{winner.displayName}</p>
           </div>
@@ -63,7 +60,7 @@ export function PlayoffAttachmentCard(props: {
             </p>
             <p className="mt-1 text-zinc-50">{winner.displayName}</p>
             <p className="text-sm text-zinc-400">
-              {seasonLabel(playoff.seasonYear)}
+              {formatSeasonLabel(playoff.seasonYear)}
             </p>
           </div>
         </div>

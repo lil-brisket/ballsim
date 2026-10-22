@@ -3,6 +3,7 @@ import type { InjurySeverity } from "@/domain/entities/injury";
 import type { MediaItem } from "@/domain/entities/media-item";
 import type { DomainEvent } from "@/domain/events";
 import type { OwnedFranchiseState } from "@/state/game-state";
+import { teamTagLabel } from "./compose-text";
 import type { DetectorInput } from "./detector-input";
 import type { TimelinePost, TimelinePostKind, TradeMovement } from "./types";
 
@@ -122,7 +123,7 @@ function basePost(
     teamIds,
     playerIds: [...(item.playerIds ?? [])],
     ...(item.gameId ? { gameId: item.gameId } : {}),
-    tags: teamIds.map((id) => input.refs.team(id).abbreviation),
+    tags: teamIds.map((id) => teamTagLabel(input.refs.team(id))),
     unread: false,
   };
 }
@@ -256,7 +257,7 @@ function tradePost(
     teamIds: sortedTeamIds,
     playerIds: [...playerIds].sort(),
     attachment: { type: "trade", teams, movements, otherPieces },
-    tags: teams.map((team) => team.abbreviation),
+    tags: teams.map((team) => teamTagLabel(team)),
     unread: false,
   };
 }

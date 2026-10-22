@@ -35,11 +35,6 @@ export function playerFullName(player: TimelinePlayerRef): string {
   return `${player.firstName} ${player.lastName}`.trim();
 }
 
-/** "2026–27" for a season that starts in `startYear`. */
-export function seasonLabel(startYear: number): string {
-  return `${startYear}–${String((startYear + 1) % 100).padStart(2, "0")}`;
-}
-
 export function PlayerNameLink(props: {
   saveId: string;
   player: TimelinePlayerRef;

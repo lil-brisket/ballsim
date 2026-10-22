@@ -1,4 +1,5 @@
 import type { Game } from "@/domain/entities/game";
+import { teamTagLabel } from "./compose-text";
 import type { DetectorInput } from "./detector-input";
 import type { StreakAttachment, TimelinePost } from "./types";
 
@@ -84,8 +85,8 @@ function toPost(
     },
     tags:
       event.kind === "streak_snapped"
-        ? [team.abbreviation, opponent.abbreviation]
-        : [team.abbreviation],
+        ? [teamTagLabel(team), teamTagLabel(opponent)]
+        : [teamTagLabel(team)],
     unread: false,
   };
 }

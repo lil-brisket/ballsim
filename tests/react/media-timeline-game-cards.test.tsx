@@ -337,18 +337,24 @@ describe("PerformanceAttachmentCard", () => {
   });
 
   it.each<[PerformanceReason[], string]>([
-    [["forty_points"], "44-point night"],
     [["twenty_twenty"], "20-20 game"],
     [["triple_double"], "Triple-double"],
-    [["blocks"], "3 blocks"],
-    [["steals"], "2 steals"],
-    [["assists"], "7 assists"],
     [["season_high"], "Season high"],
-    [["forty_points", "season_high"], "44-point night · Season high"],
+    [["forty_points", "season_high"], "Season high"],
   ])("describes %j as %s", (reasons, expected) => {
     renderPerf(perf(reasons));
     expect(screen.getByText(expected)).toBeTruthy();
   });
+
+  it.each<PerformanceReason>(["forty_points", "blocks", "steals", "assists"])(
+    "adds no note for %s, which the stat strip already shows",
+    (reason) => {
+      renderPerf(perf([reason]));
+      expect(
+        screen.queryByText(/-point night| blocks| steals| assists/),
+      ).toBeNull();
+    },
+  );
 
   it("uses no mono text", () => {
     const { container } = renderPerf(perf(["forty_points"]));

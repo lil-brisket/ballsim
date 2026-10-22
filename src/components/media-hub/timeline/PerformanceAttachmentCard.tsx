@@ -12,25 +12,23 @@ import type {
 } from "@/state/media-timeline/types";
 import { attachmentSurfaceClass } from "./attachment-parts";
 
-function reasonLabel(
-  reason: PerformanceReason,
-  line: PerformanceAttachment["line"],
-): string {
+/**
+ * Context the stat strip can't show. Reasons that only restate a number on
+ * the strip (40 points, blocks, steals, assists) get no note.
+ */
+function reasonLabel(reason: PerformanceReason): string | null {
   switch (reason) {
-    case "forty_points":
-      return `${line.points}-point night`;
     case "twenty_twenty":
       return "20-20 game";
     case "triple_double":
       return "Triple-double";
-    case "blocks":
-      return `${line.blocks} blocks`;
-    case "steals":
-      return `${line.steals} steals`;
-    case "assists":
-      return `${line.assists} assists`;
     case "season_high":
       return "Season high";
+    case "forty_points":
+    case "blocks":
+    case "steals":
+    case "assists":
+      return null;
   }
 }
 
@@ -64,7 +62,10 @@ export function PerformanceAttachmentCard(props: {
   const { attachment: a, context } = props;
   const { player, line } = a;
   const branding = context.teams[a.team.teamId]?.branding ?? null;
-  const notable = a.reasons.map((r) => reasonLabel(r, line)).join(" · ");
+  const notable = a.reasons
+    .map(reasonLabel)
+    .filter((label): label is string => label !== null)
+    .join(" · ");
 
   return (
     <TeamThemeScope

@@ -10,10 +10,24 @@ export function fullName(ref: TimelinePlayerRef): string {
   return `${ref.firstName} ${ref.lastName}`.trim();
 }
 
-/** "#TOR" */
+/**
+ * "RedWolves": the club nickname without spaces, used as the team's tag.
+ * Nicknames are unique per league; abbreviations are not safe as tags because
+ * many read as English words (NEW, CAN, WAR).
+ */
+export function teamTagLabel(team: { name: string }): string {
+  return team.name.replace(/[^A-Za-z0-9]/g, "");
+}
+
+/** "#RedWolves" */
 export function teamTag(team: TimelineTeamRef | null | undefined): string {
-  const clean = (team?.abbreviation ?? "").replace(/[^A-Za-z0-9]/g, "");
+  const clean = team ? teamTagLabel(team) : "";
   return clean ? `#${clean}` : "";
+}
+
+/** "2026–27" for the season that starts in `startYear`. */
+export function formatSeasonLabel(startYear: number): string {
+  return `${startYear}–${String((startYear + 1) % 100).padStart(2, "0")}`;
 }
 
 /** "#AWYvsHOM": away abbreviation, "vs", home abbreviation. */

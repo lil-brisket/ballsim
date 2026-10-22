@@ -64,7 +64,7 @@ describe("media showcase page", () => {
     expect(feed.getByText("HAR leads 3–2")).toBeTruthy();
     expect(feed.getAllByRole("link", { name: "Box score" }).length).toBe(2);
     // performance
-    expect(feed.getByText(/42-point night · Season high/)).toBeTruthy();
+    expect(feed.getAllByText("Season high").length).toBeGreaterThan(0);
     // award
     expect(feed.getByText("Most Valuable Player")).toBeTruthy();
     expect(feed.getByText("Dale Whitcombe")).toBeTruthy();

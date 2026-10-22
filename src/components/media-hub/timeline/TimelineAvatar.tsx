@@ -2,6 +2,7 @@ import { PlayerPortrait } from "@/components/basketball/PlayerPortrait";
 import { TeamLogoMark } from "@/components/team/logos/TeamLogoMark";
 import { cn } from "@/components/ui/styles";
 import { readableTextOnBackground } from "@/domain/color-contrast";
+import { LeagueMark } from "./LeagueMark";
 import type { TimelineAccount } from "@/state/media-timeline/accounts";
 import type { TimelineDisplayContext } from "@/state/media-timeline/post-view";
 
@@ -14,6 +15,11 @@ const TILE_SIZE: Record<TimelineAvatarSize, string> = {
 };
 
 const LOGO_SIZE = { sm: "sm", md: "md" } as const;
+/** Same boxes as TeamLogoMark sm and md. */
+const LEAGUE_SIZE: Record<TimelineAvatarSize, string> = {
+  sm: "h-6 w-6",
+  md: "h-8 w-8",
+};
 const PORTRAIT_SIZE = { sm: "xs", md: "sm" } as const;
 
 function initialsOf(text: string): string {
@@ -60,10 +66,12 @@ export function TimelineAvatar(props: {
   const avatar = account.avatar;
   let content;
 
-  if (avatar.type === "logo") {
-    const branding = avatar.teamId
-      ? (context.teams[avatar.teamId]?.branding ?? null)
-      : null;
+  if (avatar.type === "league") {
+    content = (
+      <LeagueMark letters={avatar.letters} className={LEAGUE_SIZE[size]} />
+    );
+  } else if (avatar.type === "logo") {
+    const branding = context.teams[avatar.teamId]?.branding ?? null;
     content = branding ? (
       <TeamLogoMark branding={branding} size={LOGO_SIZE[size]} decorative />
     ) : (

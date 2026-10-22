@@ -2,12 +2,12 @@ import { PlayerPortrait } from "@/components/basketball/PlayerPortrait";
 import { ScoreNumeral } from "@/components/ui/ScoreNumeral";
 import { TeamBadge } from "@/components/ui/TeamBadge";
 import { TeamThemeScope } from "@/components/ui/TeamThemeScope";
+import { formatSeasonLabel } from "@/state/media-timeline/compose-text";
 import type { TimelineDisplayContext } from "@/state/media-timeline/post-view";
 import type { AwardAttachment } from "@/state/media-timeline/types";
 import {
   PlayerNameLink,
   attachmentSurfaceClass,
-  seasonLabel,
   teamBrandingFor,
 } from "./attachment-parts";
 
@@ -26,11 +26,7 @@ export function awardPeriodLabel(award: AwardAttachment): string {
       );
     }
   }
-  return `${seasonLabel(award.seasonYear)} season`;
-}
-
-function oneDecimal(value: number): string {
-  return value.toFixed(1);
+  return `${formatSeasonLabel(award.seasonYear)} season`;
 }
 
 function Monogram(props: { name: string }) {
@@ -56,7 +52,7 @@ export function AwardAttachmentCard(props: {
 }) {
   const { attachment: award, context } = props;
   const branding = award.team ? teamBrandingFor(context, award.team) : null;
-  const { winner, perGame, teamRecord, runnerUp } = award;
+  const { winner, stats, teamRecord, runnerUp } = award;
 
   return (
     <TeamThemeScope branding={branding} className={attachmentSurfaceClass}>
@@ -92,38 +88,30 @@ export function AwardAttachmentCard(props: {
           ) : null}
           {award.team ? (
             <p className="text-sm text-zinc-400">
-              {award.team.abbreviation}
+              {award.team.displayName}
               {winner ? null : " head coach"}
             </p>
           ) : null}
         </div>
       </div>
 
-      {perGame ? (
+      {stats.length > 0 ? (
         <div className="mt-3 flex gap-6">
-          <ScoreNumeral
-            size="sm"
-            tone="team"
-            label="PPG"
-            labelBelow
-            value={oneDecimal(perGame.points)}
-          />
-          <ScoreNumeral
-            size="sm"
-            label="RPG"
-            labelBelow
-            value={oneDecimal(perGame.rebounds)}
-          />
-          <ScoreNumeral
-            size="sm"
-            label="APG"
-            labelBelow
-            value={oneDecimal(perGame.assists)}
-          />
+          {stats.map((stat) => (
+            <ScoreNumeral
+              key={stat.label}
+              size="sm"
+              tone={stat.tone ?? "default"}
+              label={stat.label}
+              labelBelow
+              value={stat.value}
+            />
+          ))}
         </div>
       ) : null}
 
-      {teamRecord ? (
+      {/* Coach awards carry the record in their stats. */}
+      {teamRecord && winner ? (
         <p className="mt-3 text-sm text-zinc-400">
           Team record{" "}
           <span className="font-semibold tabular-nums text-zinc-50">

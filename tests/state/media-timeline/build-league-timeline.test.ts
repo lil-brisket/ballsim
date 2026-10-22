@@ -93,11 +93,11 @@ describe("awards", () => {
     const attachment = mvpPost?.attachment as AwardAttachment;
     expect(attachment.winner?.playerId).toBe(winnerId);
     expect(attachment.awardName).toBe("Most Valuable Player");
-    expect(attachment.perGame).toEqual({
-      points: 28.4,
-      rebounds: 7.1,
-      assists: 6.2,
-    });
+    expect(attachment.stats).toEqual([
+      { label: "PPG", value: "28.4" },
+      { label: "RPG", value: "7.1" },
+      { label: "APG", value: "6.2" },
+    ]);
     expect(attachment.teamRecord).toEqual({ wins: 50, losses: 12 });
   });
 

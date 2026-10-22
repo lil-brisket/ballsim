@@ -166,7 +166,7 @@ function account(
 }
 
 const LEAGUE_ACCOUNT = account("league", "Premier Hoops League", "@PHLOffice", {
-  avatar: { type: "logo", teamId: null },
+  avatar: { type: "league", letters: "PHL" },
 });
 const HAR_ACCOUNT = account("team", "Harbor Lights", "@HarborLights", {
   teamId: "har",
@@ -493,7 +493,12 @@ export const SHOWCASE_POSTS: TimelinePostView[] = [
       winner: VALDANE,
       winnerCoachName: null,
       team: HAR,
-      perGame: { points: 28.4, rebounds: 8.1, assists: 6.3 },
+      stats: [
+        { label: "PPG", value: "28.4" },
+        { label: "RPG", value: "8.1" },
+        { label: "APG", value: "6.3" },
+      ],
+      improvement: null,
       teamRecord: { wins: 9, losses: 2 },
       runnerUp: { name: "Jonah Pryce", teamAbbreviation: "SUM" },
     },
@@ -528,7 +533,12 @@ export const SHOWCASE_POSTS: TimelinePostView[] = [
       winner: PRYCE,
       winnerCoachName: null,
       team: SUM,
-      perGame: { points: 30.2, rebounds: 7.4, assists: 5.9 },
+      stats: [
+        { label: "PPG", value: "30.2" },
+        { label: "RPG", value: "7.4" },
+        { label: "APG", value: "5.9" },
+      ],
+      improvement: null,
       teamRecord: { wins: 61, losses: 21 },
       runnerUp: { name: "Teo Valdane", teamAbbreviation: "HAR" },
     },
@@ -541,7 +551,7 @@ export const SHOWCASE_POSTS: TimelinePostView[] = [
     relativeLabel: "6d",
     unread: false,
     author: REPORTER,
-    text: "Dale Whitcombe wins Coach of the Year after guiding Harbor to 58 wins.",
+    text: "Dale Whitcombe wins Coach of the Year after a turnaround season in Harbor.",
     engagement: { replies: 12, reposts: 40, likes: 610 },
     attachment: {
       type: "award",
@@ -554,7 +564,12 @@ export const SHOWCASE_POSTS: TimelinePostView[] = [
       winner: null,
       winnerCoachName: "Dale Whitcombe",
       team: HAR,
-      perGame: null,
+      stats: [
+        { label: "Record", value: "58–24" },
+        { label: "Wins vs last season", value: "+17", tone: "win" },
+        { label: "League rank", value: "2nd" },
+      ],
+      improvement: 17,
       teamRecord: { wins: 58, losses: 24 },
       runnerUp: null,
     },
@@ -616,7 +631,7 @@ export const SHOWCASE_POSTS: TimelinePostView[] = [
     relativeLabel: "Jun 20",
     unread: true,
     author: LEAGUE_ACCOUNT,
-    text: "The Harbor Lights are the 2025 champions, beating Summit 4–2 in the Finals.",
+    text: "The Harbor Lights are the 2025–26 champions, beating Summit 4–2 in the Finals.",
     replies: [
       reply("showcase-playoff-champion", 0, HAR_FAN, "Let's go Lights! 4–2."),
       reply(

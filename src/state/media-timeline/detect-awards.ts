@@ -3,6 +3,12 @@ import type { AwardResult } from "@/domain/entities/awards";
 import { getAwardDefinition } from "@/systems/awards/award-definitions";
 import { awardCalendarDate } from "@/systems/calendar/project-calendar-events";
 import { lastArchivedGameDate } from "./archive-dates";
+import {
+  awardStatLine,
+  priorSeasonPointsPerGame,
+  priorSeasonWins,
+} from "./award-stat-lines";
+import { teamTagLabel } from "./compose-text";
 import type { DetectorInput } from "./detector-input";
 import type { AwardAttachment, TimelinePost } from "./types";
 
@@ -72,6 +78,22 @@ function toPost(
     ? runnerUpName(input, award, runnerUpCandidate.subjectId)
     : null;
 
+  const statLine = snapshot
+    ? awardStatLine({
+        awardId: award.awardId,
+        snapshot,
+        isPlayer,
+        priorPointsPerGame:
+          winner && award.awardId === "most_improved"
+            ? priorSeasonPointsPerGame(state, winner.playerId, award.seasonYear)
+            : null,
+        priorWins:
+          !isPlayer && award.winner.teamId
+            ? priorSeasonWins(state, award.winner.teamId, award.seasonYear)
+            : null,
+      })
+    : null;
+
   const notability =
     award.cadence === "yearly"
       ? (YEARLY_NOTABILITY[award.awardId] ?? 80)
@@ -96,14 +118,8 @@ function toPost(
     winner,
     winnerCoachName: coach ? `${coach.firstName} ${coach.lastName}` : null,
     team,
-    perGame:
-      isPlayer && snapshot
-        ? {
-            points: snapshot.perGame.points,
-            rebounds: snapshot.perGame.rebounds,
-            assists: snapshot.perGame.assists,
-          }
-        : null,
+    stats: statLine?.stats ?? [],
+    improvement: statLine?.improvement ?? null,
     teamRecord: snapshot
       ? { wins: snapshot.teamRecord.wins, losses: snapshot.teamRecord.losses }
       : null,
@@ -128,7 +144,7 @@ function toPost(
     teamIds: team ? [team.teamId] : [],
     playerIds: winner ? [winner.playerId] : [],
     attachment,
-    tags: [definition.displayName, ...(team ? [team.abbreviation] : [])],
+    tags: [definition.displayName, ...(team ? [teamTagLabel(team)] : [])],
     unread: false,
   };
 }
