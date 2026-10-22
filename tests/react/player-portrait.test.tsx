@@ -4,6 +4,7 @@ import {
   PlayerPortrait,
   PORTRAIT_SIZE_PX,
 } from "@/components/basketball/PlayerPortrait";
+import { uniformColors } from "@/components/basketball/PortraitFace";
 import type { PlayerPortraitAssignment } from "@/domain/entities/player-portrait";
 import { derivePortraitTraits } from "@/systems/portraits/assign-player-portraits";
 
@@ -201,5 +202,45 @@ describe("PlayerPortrait", () => {
     );
     expect(container.querySelector("img")).toBeNull();
     unmount();
+  });
+
+  it("dresses the face in team colours only when a uniform is given", () => {
+    const { container, rerender } = render(
+      portrait({ portrait: assignment() }),
+    );
+    const svg = () =>
+      container.querySelector("[data-portrait-face]")!.innerHTML;
+    expect(svg()).toContain("#3f3f46");
+    expect(container.querySelector("[data-portrait-uniform]")).toBeNull();
+    rerender(
+      portrait({
+        portrait: assignment(),
+        uniform: { primaryColor: "#0B1F3A", secondaryColor: "#C4CED4" },
+      }),
+    );
+    expect(svg()).toContain("#0B1F3A");
+    expect(svg()).toContain("#C4CED4");
+    expect(svg()).not.toContain("#d97706");
+  });
+
+  it("keeps the collar visible when the team colours are too close", () => {
+    expect(
+      uniformColors({ primaryColor: "#FFFFFF", secondaryColor: "#F4F4F5" }),
+    ).toEqual({ jersey: "#FFFFFF", trim: "#0A0A0A" });
+    expect(
+      uniformColors({ primaryColor: "#0B1F3A", secondaryColor: "#0F2340" }),
+    ).toEqual({ jersey: "#0B1F3A", trim: "#FFFFFF" });
+    expect(uniformColors(null)).toEqual({ jersey: "#3f3f46", trim: "#d97706" });
+  });
+
+  it("tints the initials plate with the team colour that shows on it", () => {
+    const { container } = render(
+      portrait({
+        uniform: { primaryColor: "#0B1F3A", secondaryColor: "#C4CED4" },
+      }),
+    );
+    const plate = container.querySelector("[data-portrait-plate]")!.innerHTML;
+    expect(plate).toContain("#C4CED4");
+    expect(plate).not.toContain("#d97706");
   });
 });

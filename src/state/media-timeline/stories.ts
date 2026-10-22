@@ -49,7 +49,7 @@ const STORIES: readonly StoryDefinition[] = [
   },
   {
     key: "top-performers",
-    label: "Top performers",
+    label: "Top players",
     days: 2,
     matches: (post) => post.kind === "performance",
   },
@@ -67,7 +67,7 @@ const STORIES: readonly StoryDefinition[] = [
   },
   {
     key: "trade-wire",
-    label: "Trade wire",
+    label: "Trades",
     days: 6,
     matches: (post) =>
       post.kind === "trade" ||
@@ -76,7 +76,7 @@ const STORIES: readonly StoryDefinition[] = [
   },
   {
     key: "injury-report",
-    label: "Injury report",
+    label: "Injuries",
     days: 6,
     matches: (post) => post.kind === "injury",
   },

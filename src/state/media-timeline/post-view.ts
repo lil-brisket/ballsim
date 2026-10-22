@@ -51,6 +51,8 @@ export type TimelinePostView = {
   unread: boolean;
   author: TimelineAccount;
   text: string;
+  /** Hashtags in the text that link to the tag filter. */
+  tags: string[];
   replies: ComposedReply[];
   engagement: Engagement;
   /** Formatted counts, e.g. { replies: "214", reposts: "1.2K", likes: "5.8K" }. */
@@ -123,6 +125,7 @@ export function toTimelinePostViews(
       unread: entry.post.unread,
       author: entry.author,
       text: entry.text,
+      tags: entry.post.tags,
       replies: entry.replies,
       engagement: entry.engagement,
       engagementDisplay: {

@@ -2,19 +2,26 @@ import { PlayerPortrait } from "@/components/basketball/PlayerPortrait";
 import { TeamLogoMark } from "@/components/team/logos/TeamLogoMark";
 import { cn } from "@/components/ui/styles";
 import { readableTextOnBackground } from "@/domain/color-contrast";
+import { LeagueMark } from "./LeagueMark";
 import type { TimelineAccount } from "@/state/media-timeline/accounts";
 import type { TimelineDisplayContext } from "@/state/media-timeline/post-view";
 
-export type TimelineAvatarSize = "sm" | "md";
+/** reply 32px, post 40px, large 64px (hero / story viewer). */
+export type AccountAvatarSize = "reply" | "post" | "large";
 
-/** Matches PlayerPortrait xs (24px) and sm (32px) so every avatar type lines up. */
-const TILE_SIZE: Record<TimelineAvatarSize, string> = {
-  sm: "h-6 w-6 text-xs",
-  md: "h-8 w-8 text-xs",
+/** Box size for tiles, the league mark and logos. */
+const BOX_CLASS: Record<AccountAvatarSize, string> = {
+  reply: "h-8 w-8",
+  post: "h-10 w-10",
+  large: "h-16 w-16",
 };
-
-const LOGO_SIZE = { sm: "sm", md: "md" } as const;
-const PORTRAIT_SIZE = { sm: "xs", md: "sm" } as const;
+const TILE_TEXT: Record<AccountAvatarSize, string> = {
+  reply: "text-xs",
+  post: "text-sm",
+  large: "text-xl",
+};
+/** PlayerPortrait sizes with the same pixel boxes. */
+const PORTRAIT_SIZE = { reply: "sm", post: "ms", large: "md" } as const;
 
 function initialsOf(text: string): string {
   const words = text.split(/[\s-]+/).filter(Boolean);
@@ -26,7 +33,7 @@ function initialsOf(text: string): string {
 }
 
 function Tile(props: {
-  size: TimelineAvatarSize;
+  size: AccountAvatarSize;
   initials: string;
   background?: string;
 }) {
@@ -40,7 +47,8 @@ function Tile(props: {
     <span
       className={cn(
         "inline-flex shrink-0 select-none items-center justify-center rounded-full font-semibold",
-        TILE_SIZE[props.size],
+        BOX_CLASS[props.size],
+        TILE_TEXT[props.size],
         !props.background && "bg-zinc-800 text-zinc-100",
       )}
       style={style}
@@ -51,26 +59,35 @@ function Tile(props: {
 }
 
 /** Decorative: the account name is always rendered beside it. */
-export function TimelineAvatar(props: {
+export function AccountAvatar(props: {
   account: TimelineAccount;
   context: TimelineDisplayContext;
-  size: TimelineAvatarSize;
+  size: AccountAvatarSize;
 }) {
   const { account, context, size } = props;
   const avatar = account.avatar;
   let content;
 
-  if (avatar.type === "logo") {
-    const branding = avatar.teamId
-      ? (context.teams[avatar.teamId]?.branding ?? null)
-      : null;
+  if (avatar.type === "league") {
+    content = (
+      <LeagueMark letters={avatar.letters} className={BOX_CLASS[size]} />
+    );
+  } else if (avatar.type === "logo") {
+    const branding = context.teams[avatar.teamId]?.branding ?? null;
     content = branding ? (
-      <TeamLogoMark branding={branding} size={LOGO_SIZE[size]} decorative />
+      <TeamLogoMark
+        branding={branding}
+        className={BOX_CLASS[size]}
+        decorative
+      />
     ) : (
       <Tile size={size} initials={initialsOf(account.displayName)} />
     );
   } else if (avatar.type === "portrait") {
     const [first = "", ...rest] = account.displayName.split(" ");
+    const teamBranding = account.teamId
+      ? (context.teams[account.teamId]?.branding ?? null)
+      : null;
     content = (
       <PlayerPortrait
         playerId={avatar.playerId}
@@ -78,6 +95,14 @@ export function TimelineAvatar(props: {
         lastName={rest.join(" ")}
         size={PORTRAIT_SIZE[size]}
         portrait={context.portraits[avatar.playerId] ?? null}
+        uniform={
+          teamBranding
+            ? {
+                primaryColor: teamBranding.primaryColor,
+                secondaryColor: teamBranding.secondaryColor,
+              }
+            : null
+        }
       />
     );
   } else {

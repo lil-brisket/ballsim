@@ -20,14 +20,17 @@ function byId(id: string): TimelinePostView {
 }
 
 describe("media showcase page", () => {
-  it("renders one article per sample post inside a feed, plus 3 compact", () => {
+  it("renders one article per sample post inside a feed, plus 3 heroes and 3 compact", () => {
     render(<MediaShowcasePage />);
     const feed = screen.getByRole("feed");
     expect(within(feed).getAllByRole("article")).toHaveLength(
       SHOWCASE_POSTS.length,
     );
+    expect(screen.getAllByRole("region", { name: "Top story" })).toHaveLength(
+      3,
+    );
     expect(screen.getAllByRole("article")).toHaveLength(
-      SHOWCASE_POSTS.length + 3,
+      SHOWCASE_POSTS.length + 3 + 3,
     );
     expect(screen.getByRole("link", { name: "Load more" })).toBeTruthy();
   });
@@ -64,7 +67,7 @@ describe("media showcase page", () => {
     expect(feed.getByText("HAR leads 3–2")).toBeTruthy();
     expect(feed.getAllByRole("link", { name: "Box score" }).length).toBe(2);
     // performance
-    expect(feed.getByText(/42-point night · Season high/)).toBeTruthy();
+    expect(feed.getAllByText("Season high").length).toBeGreaterThan(0);
     // award
     expect(feed.getByText("Most Valuable Player")).toBeTruthy();
     expect(feed.getByText("Dale Whitcombe")).toBeTruthy();

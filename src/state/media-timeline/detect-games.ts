@@ -1,5 +1,6 @@
 import type { Game, GamePlayerStats, GameScore } from "@/domain/entities/game";
 import { combineNotability, type DetectorInput } from "./detector-input";
+import { teamTagLabel } from "./compose-text";
 import { toStatLine } from "./refs";
 import { winPct } from "./season-context";
 import type {
@@ -114,7 +115,7 @@ function detectGame(input: DetectorInput, game: Game): TimelinePost | null {
       .map((p) => p.player.playerId),
     gameId: game.id,
     attachment,
-    tags: [home.abbreviation, away.abbreviation],
+    tags: [teamTagLabel(home), teamTagLabel(away)],
     unread: false,
   };
 }

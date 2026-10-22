@@ -142,6 +142,9 @@ describe("toMediaTimelinePageView", () => {
     );
     expect(view.scoresDateLabel).toBe("Nov 24");
     expect(view.scores[0]!.href).toMatch(/\/games\//);
+    expect(
+      view.scores.filter((s) => s.isUserGame).map((s) => s.gameId),
+    ).toEqual(["mine"]);
   });
 
   it("puts the unread count on For you", () => {

@@ -14,6 +14,8 @@ export function SectionHeading(props: {
   /** For headings that receive programmatic focus (e.g. form sections). */
   tabIndex?: number;
   className?: string;
+  /** Extra classes on the heading element itself (e.g. `truncate`). */
+  titleClassName?: string;
 }) {
   const Tag = props.as ?? "h2";
   const large = props.size === "lg";
@@ -36,6 +38,7 @@ export function SectionHeading(props: {
           className={cn(
             "font-display font-bold uppercase leading-tight tracking-wide text-zinc-50",
             large ? "text-3xl sm:text-4xl" : "text-xl sm:text-2xl",
+            props.titleClassName,
           )}
         >
           {props.title}

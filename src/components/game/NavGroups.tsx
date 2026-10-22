@@ -128,6 +128,7 @@ export const NAV_ICONS: Record<string, React.ReactNode> = {
       <path d="M3 21h18M5 21V8l7-4 7 4v13M9 21v-6h6v6" />
     </>
   ),
+  injuries: <path d="M9 3h6v6h6v6h-6v6H9v-6H3V9h6z" />,
   settings: (
     <>
       <circle cx="12" cy="12" r="3" />

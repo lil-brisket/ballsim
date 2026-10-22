@@ -4,34 +4,27 @@ import type {
   TimelineDisplayContext,
   TimelinePostView,
 } from "@/state/media-timeline/post-view";
-import { TimelineAvatar } from "./TimelineAvatar";
+import { AccountAvatar } from "./AccountAvatar";
 import { TimelineEngagement } from "./TimelineEngagement";
+import { PostText } from "./post-text";
 import { TimelineReplies } from "./TimelineReplies";
+import { UnreadDot } from "./UnreadDot";
+import { VerifiedMark } from "./VerifiedMark";
 
-function VerifiedMark() {
-  return (
-    <>
-      <svg
-        viewBox="0 0 24 24"
-        width={16}
-        height={16}
-        aria-hidden="true"
-        focusable={false}
-        className="shrink-0 text-team-ink"
-      >
-        <circle cx="12" cy="12" r="10" fill="currentColor" />
-        <path
-          d="M7.5 12.5l3 3 6-6.5"
-          fill="none"
-          stroke="var(--surface-arena)"
-          strokeWidth={2.2}
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-      </svg>
-      <span className="sr-only">Verified</span>
-    </>
-  );
+/** DOM id of a post in the feed, for "Open post" links (`#post-…`). */
+export function postAnchorId(postId: string): string {
+  return `post-${postId.replace(/[^A-Za-z0-9_-]/g, "-")}`;
+}
+
+/** Points that make a single-game performance a big moment. */
+const BIG_MOMENT_POINTS = 50;
+
+/** Champion posts and 50-point games get a slightly larger card. */
+export function isBigMoment(post: TimelinePostView): boolean {
+  const a = post.attachment;
+  if (a.type === "playoff") return a.event === "champion";
+  if (a.type === "performance") return a.line.points >= BIG_MOMENT_POINTS;
+  return false;
 }
 
 export function TimelinePostShell(props: {
@@ -44,18 +37,26 @@ export function TimelinePostShell(props: {
   const { post, context, compact = false } = props;
   // useId: the same post can render twice on a page (top story + feed).
   const nameId = useId();
+  const bigMoment = !compact && isBigMoment(post);
   return (
     <article
+      // Compact copies (dashboard, showcase) repeat feed posts; only the
+      // full post is the link target.
+      id={compact ? undefined : postAnchorId(post.id)}
       aria-labelledby={nameId}
+      // Styled in atmosphere.css: the fade runs once on mount and only when
+      // motion is allowed; big moments get a slightly larger card.
+      data-new-post={!compact && post.unread ? "" : undefined}
+      data-big-moment={bigMoment ? "" : undefined}
       className={cn(
         "flex gap-3 border-b border-zinc-800 last:border-b-0",
-        compact ? "py-3" : "py-4",
+        compact ? "py-3" : bigMoment ? "py-5" : "py-4",
       )}
     >
-      <TimelineAvatar
+      <AccountAvatar
         account={post.author}
         context={context}
-        size={compact ? "sm" : "md"}
+        size={compact ? "reply" : "post"}
       />
       <div className="min-w-0 flex-1 space-y-2">
         <header className="flex flex-wrap items-center gap-x-1.5 text-sm">
@@ -74,17 +75,16 @@ export function TimelinePostShell(props: {
           >
             {post.relativeLabel}
           </time>
-          {post.unread ? (
-            <>
-              <span
-                aria-hidden="true"
-                className="ml-1 inline-block h-2 w-2 rounded-full bg-team"
-              />
-              <span className="sr-only">Unread</span>
-            </>
-          ) : null}
+          {post.unread ? <UnreadDot /> : null}
         </header>
-        <p className="text-sm text-zinc-100">{post.text}</p>
+        <p
+          className={cn(
+            "text-zinc-100",
+            bigMoment ? "text-lg font-medium" : "text-base",
+          )}
+        >
+          <PostText text={post.text} tags={post.tags} saveId={context.saveId} />
+        </p>
         {props.children}
         <TimelineEngagement
           display={post.engagementDisplay}

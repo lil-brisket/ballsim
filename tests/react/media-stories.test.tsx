@@ -30,6 +30,8 @@ function rings(): StoryViewerRing[] {
       latestOn: "2026-10-20",
       slideCount: 3,
       slides: ["slide A1", "slide A2", "slide A3"],
+      media: null,
+      mediaKind: "logo",
     },
     {
       key: "awards",
@@ -37,13 +39,17 @@ function rings(): StoryViewerRing[] {
       latestOn: "2026-10-18",
       slideCount: 2,
       slides: ["slide B1", "slide B2"],
+      media: null,
+      mediaKind: "trophy",
     },
     {
       key: "trade-wire",
-      label: "Trade wire",
+      label: "Trades",
       latestOn: "2026-10-18",
       slideCount: 0,
       slides: [],
+      media: null,
+      mediaKind: "logo",
     },
   ];
 }
@@ -82,7 +88,7 @@ describe("StoriesViewer", () => {
     expect(
       screen.getByRole("button", { name: "Awards, 2 posts, new" }),
     ).toBeTruthy();
-    expect(screen.queryByRole("button", { name: /Trade wire/ })).toBeNull();
+    expect(screen.queryByRole("button", { name: /Trades/ })).toBeNull();
     expect(screen.getAllByRole("button")).toHaveLength(2);
   });
 
@@ -99,9 +105,9 @@ describe("StoriesViewer", () => {
     expect(position()).toBe("2 of 3");
     fireEvent.keyDown(document, { key: "ArrowLeft" });
     expect(position()).toBe("1 of 3");
-    fireEvent.click(screen.getByRole("button", { name: "Next" }));
+    fireEvent.click(screen.getByRole("button", { name: "Next story" }));
     expect(position()).toBe("2 of 3");
-    fireEvent.click(screen.getByRole("button", { name: "Previous" }));
+    fireEvent.click(screen.getByRole("button", { name: "Previous story" }));
     expect(position()).toBe("1 of 3");
   });
 

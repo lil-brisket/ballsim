@@ -1,12 +1,14 @@
 import Link from "next/link";
 import { PlayerPortrait } from "@/components/basketball/PlayerPortrait";
-import { ScoreBug } from "@/components/ui/ScoreBug";
+import { ScoreNumeral } from "@/components/ui/ScoreNumeral";
 import {
   cn,
   focusRingClass,
   linkClass,
   touchTargetTextClass,
 } from "@/components/ui/styles";
+import { readableTextOnBackground } from "@/domain/color-contrast";
+import { formatGameDate } from "@/presentation/game-date";
 import {
   playerHref,
   type TimelineDisplayContext,
@@ -16,7 +18,10 @@ import type {
   TimelinePerformer,
   TimelineTeamRef,
 } from "@/state/media-timeline/types";
-import { attachmentSurfaceClass } from "./attachment-parts";
+import type { TeamBrandingView } from "@/state/team-branding-view";
+import { teamBrandingFor } from "./attachment-parts";
+import { TeamMark } from "./TeamMark";
+import { TeamSurface } from "./TeamSurface";
 
 function periodLabel(index: number): string {
   if (index < 4) return `Q${index + 1}`;
@@ -51,44 +56,107 @@ function notableLabel(attachment: GameAttachment): string | null {
   return null;
 }
 
-function Performer(props: {
+function uniformOf(branding: TeamBrandingView | null) {
+  return branding
+    ? {
+        primaryColor: branding.primaryColor,
+        secondaryColor: branding.secondaryColor,
+      }
+    : null;
+}
+
+/** One half of the score header, filled with the team's primary colour. */
+function ScoreHalf(props: {
   team: TimelineTeamRef;
+  branding: TeamBrandingView | null;
+  score: number;
+  won: boolean;
+}) {
+  const { branding } = props;
+  return (
+    <div
+      className={cn(
+        "flex min-w-0 flex-1 flex-col items-center px-2 py-4 text-center",
+        !branding && "bg-zinc-800 text-zinc-50",
+      )}
+      style={
+        branding
+          ? {
+              backgroundColor: branding.primaryColor,
+              color: readableTextOnBackground(branding.primaryColor),
+            }
+          : undefined
+      }
+      data-score-half={props.won ? "winner" : "loser"}
+    >
+      <div
+        className={cn(
+          "flex flex-col items-center gap-1",
+          !props.won && "opacity-75",
+        )}
+      >
+        <TeamMark branding={branding} size="md" />
+        <span
+          className={cn(
+            "font-display text-lg uppercase tracking-wide",
+            props.won ? "font-extrabold" : "font-medium",
+          )}
+        >
+          {props.team.abbreviation}
+        </span>
+        <ScoreNumeral
+          value={props.score}
+          size="lg"
+          align="center"
+          className={cn(
+            "[&>span]:text-inherit",
+            !props.won && "[&>span]:font-medium",
+          )}
+        />
+      </div>
+    </div>
+  );
+}
+
+function Performer(props: {
   performer: TimelinePerformer;
+  branding: TeamBrandingView | null;
   context: TimelineDisplayContext;
 }) {
   const { player, line } = props.performer;
   return (
-    <div className="flex min-w-0 items-center gap-2">
+    <div className="flex min-w-0 items-center gap-2 text-sm">
       <PlayerPortrait
         playerId={player.playerId}
         firstName={player.firstName}
         lastName={player.lastName}
         size="sm"
         portrait={props.context.portraits[player.playerId]}
+        uniform={uniformOf(props.branding)}
       />
-      <div className="min-w-0 text-sm">
+      {/* Narrow cards stack the numbers under the name so it isn't cut. */}
+      <div className="flex min-w-0 flex-1 flex-col sm:flex-row sm:items-center sm:gap-2">
         <Link
           href={playerHref(props.context.saveId, player.playerId)}
           className={cn(
-            "block truncate font-medium",
+            "min-w-0 truncate font-medium",
             linkClass,
             focusRingClass,
           )}
         >
           {player.firstName} {player.lastName}
         </Link>
-        <p className="text-zinc-400">
-          {props.team.abbreviation} · {line.points} pts · {line.rebounds} reb ·{" "}
-          {line.assists} ast
-        </p>
+        <span className="shrink-0 tabular-nums text-zinc-400">
+          {line.points} PTS · {line.rebounds} REB · {line.assists} AST
+        </span>
       </div>
     </div>
   );
 }
 
 /**
- * Game attachment: final score bug, line score, series state, top performers
- * and a box score link, on a single bordered surface.
+ * Game attachment as a final-score graphic: split team-colour score header,
+ * line score, series state, top performers and a box score link.
  */
 export function GameAttachmentCard(props: {
   attachment: GameAttachment;
@@ -97,130 +165,148 @@ export function GameAttachmentCard(props: {
 }) {
   const { attachment: a, context, boxScoreHref } = props;
   const { away, home } = a;
-  const brandingOf = (team: TimelineTeamRef) =>
-    context.teams[team.teamId]?.branding ?? null;
+  const awayBranding = teamBrandingFor(context, away);
+  const homeBranding = teamBrandingFor(context, home);
+  const winnerBranding =
+    a.winnerTeamId === away.teamId ? awayBranding : homeBranding;
+  const tag = a.overtimePeriods > 0 ? "Final/OT" : "Final";
+  const shortDate = formatGameDate(a.date);
+  const label = `${tag}: ${away.abbreviation} ${a.score.away}, ${home.abbreviation} ${a.score.home}, ${shortDate}`;
   const rows = [
-    { team: away, side: "away" as const },
-    { team: home, side: "home" as const },
+    { team: away, side: "away" as const, branding: awayBranding },
+    { team: home, side: "home" as const, branding: homeBranding },
   ];
-  const performers = rows.flatMap(({ team, side }) => {
+  const performers = rows.flatMap(({ team, side, branding }) => {
     const performer = a.topPerformers[side];
-    return performer ? [{ team, performer }] : [];
+    return performer ? [{ team, performer, branding }] : [];
   });
   const note = notableLabel(a);
 
   return (
-    <div className={cn(attachmentSurfaceClass, "space-y-3")}>
-      <ScoreBug
-        className="!min-h-0 !border-0 !bg-transparent !p-0"
-        badgeSize="md"
-        date={a.date}
-        overtime={a.overtimePeriods > 0}
-        teams={[
-          {
-            abbreviation: away.abbreviation,
-            branding: brandingOf(away),
-            score: a.score.away,
-          },
-          {
-            abbreviation: home.abbreviation,
-            branding: brandingOf(home),
-            score: a.score.home,
-          },
-        ]}
-      />
-
-      {a.periodScores.length > 0 ? (
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm text-zinc-300">
-            <caption className="sr-only">Score by quarter</caption>
-            <thead>
-              <tr className="text-zinc-400">
-                <th scope="col" className="py-1 pr-3 text-left font-medium">
-                  Team
-                </th>
-                {a.periodScores.map((_, index) => (
-                  <th
-                    key={index}
-                    scope="col"
-                    className="px-2 py-1 text-right font-medium"
-                  >
-                    {periodLabel(index)}
-                  </th>
-                ))}
-                <th scope="col" className="py-1 pl-2 text-right font-medium">
-                  Total
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map(({ team, side }) => (
-                <tr key={side}>
-                  <th
-                    scope="row"
-                    className="py-1 pr-3 text-left font-medium text-zinc-200"
-                  >
-                    {team.abbreviation}
-                  </th>
-                  {a.periodScores.map((period, index) => (
-                    <td
-                      key={index}
-                      className="px-2 py-1 text-right font-mono tabular-nums"
-                    >
-                      {period[side]}
-                    </td>
-                  ))}
-                  <td className="py-1 pl-2 text-right font-mono font-semibold tabular-nums text-zinc-50">
-                    {a.score[side]}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      ) : null}
-
-      {a.series || note ? (
-        <p className="text-sm text-zinc-400">
-          {a.series ? (
-            <>
-              <span className="font-medium text-zinc-200">
-                {seriesLine(a.series, home, away)}
-              </span>
-              {` · ${a.series.roundLabel}`}
-            </>
-          ) : null}
-          {a.series && note ? " · " : null}
-          {note}
-        </p>
-      ) : null}
-
-      {performers.length > 0 ? (
-        <div className="grid gap-3 sm:grid-cols-2">
-          {performers.map(({ team, performer }) => (
-            <Performer
-              key={team.teamId}
-              team={team}
-              performer={performer}
-              context={context}
+    <TeamSurface branding={winnerBranding} band="top">
+      <div className="space-y-3">
+        <span className="sr-only">{label}</span>
+        <div aria-hidden="true" className="space-y-1">
+          <div className="flex items-stretch overflow-hidden rounded-md">
+            <ScoreHalf
+              team={away}
+              branding={awayBranding}
+              score={a.score.away}
+              won={a.score.away > a.score.home}
             />
-          ))}
+            <ScoreHalf
+              team={home}
+              branding={homeBranding}
+              score={a.score.home}
+              won={a.score.home > a.score.away}
+            />
+          </div>
+          <p className="text-center text-sm font-medium uppercase tracking-wide text-zinc-300">
+            {tag}
+            <span className="normal-case tracking-normal text-zinc-400">
+              {" "}
+              · {shortDate}
+            </span>
+          </p>
         </div>
-      ) : null}
 
-      {boxScoreHref ? (
-        <Link
-          href={boxScoreHref}
-          className={cn(
-            touchTargetTextClass,
-            "-mx-2 -mb-2 text-sm",
-            linkClass,
-            focusRingClass,
-          )}
-        >
-          Box score
-        </Link>
-      ) : null}
-    </div>
+        {a.periodScores.length > 0 ? (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm tabular-nums text-zinc-300">
+              <caption className="sr-only">Score by quarter</caption>
+              <thead>
+                <tr className="text-zinc-400">
+                  <th
+                    scope="col"
+                    className="py-1 pr-2 text-left font-medium sm:pr-3"
+                  >
+                    Team
+                  </th>
+                  {a.periodScores.map((_, index) => (
+                    <th
+                      key={index}
+                      scope="col"
+                      className="px-1 py-1 text-right font-medium sm:px-2"
+                    >
+                      {periodLabel(index)}
+                    </th>
+                  ))}
+                  <th
+                    scope="col"
+                    className="py-1 pl-1 text-right font-medium sm:pl-2"
+                  >
+                    Total
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-zinc-800">
+                {rows.map(({ team, side, branding }) => (
+                  <tr key={side}>
+                    <th
+                      scope="row"
+                      className="py-1 pr-2 text-left font-medium text-zinc-200 sm:pr-3"
+                    >
+                      <span className="flex items-center gap-1.5">
+                        {/* The score header already pairs logo and team; at
+                            375px the line score needs the room. */}
+                        <span className="hidden sm:inline-flex">
+                          <TeamMark branding={branding} size="sm" />
+                        </span>
+                        {team.abbreviation}
+                      </span>
+                    </th>
+                    {a.periodScores.map((period, index) => (
+                      <td key={index} className="px-1 py-1 text-right sm:px-2">
+                        {period[side]}
+                      </td>
+                    ))}
+                    <td className="py-1 pl-1 text-right font-semibold text-zinc-50 sm:pl-2">
+                      {a.score[side]}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : null}
+
+        {a.series ? (
+          <p className="text-sm text-zinc-400">
+            <span className="font-medium text-zinc-200">
+              {seriesLine(a.series, home, away)}
+            </span>
+            {` · ${a.series.roundLabel}`}
+          </p>
+        ) : null}
+        {note ? <p className="text-sm text-zinc-400">{note}</p> : null}
+
+        {performers.length > 0 ? (
+          <div className="space-y-2">
+            {performers.map(({ team, performer, branding }) => (
+              <Performer
+                key={team.teamId}
+                performer={performer}
+                branding={branding}
+                context={context}
+              />
+            ))}
+          </div>
+        ) : null}
+
+        {boxScoreHref ? (
+          <Link
+            href={boxScoreHref}
+            className={cn(
+              touchTargetTextClass,
+              "-mx-2 -mb-2 text-sm",
+              linkClass,
+              focusRingClass,
+            )}
+          >
+            Box score
+          </Link>
+        ) : null}
+      </div>
+    </TeamSurface>
   );
 }

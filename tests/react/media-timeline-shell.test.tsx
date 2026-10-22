@@ -5,7 +5,10 @@ import {
   TimelineFeed,
   TimelineLoadMore,
 } from "@/components/media-hub/timeline/TimelineFeed";
-import { TimelinePostShell } from "@/components/media-hub/timeline/TimelinePostShell";
+import {
+  TimelinePostShell,
+  isBigMoment,
+} from "@/components/media-hub/timeline/TimelinePostShell";
 import type { TimelineAccount } from "@/state/media-timeline/accounts";
 import type {
   TimelineDisplayContext,
@@ -155,6 +158,94 @@ describe("TimelinePostShell", () => {
     );
     expect(screen.getByText("Summary")).toBeTruthy();
     expect(container.querySelector(".font-mono")).toBeNull();
+  });
+});
+
+describe("feed atmosphere", () => {
+  const ref = {
+    teamId: "t1",
+    abbreviation: "HAR",
+    displayName: "Harbor Lights",
+    name: "Lights",
+    branding: null,
+  };
+  const line = {
+    minutes: 38,
+    points: 50,
+    rebounds: 9,
+    assists: 6,
+    steals: 1,
+    blocks: 0,
+    fieldGoalsMade: 18,
+    fieldGoalsAttempted: 30,
+    threePointersMade: 5,
+    threePointersAttempted: 11,
+  };
+  const performance = (points: number) =>
+    post({
+      kind: "performance",
+      attachment: {
+        type: "performance",
+        gameId: "g1",
+        player: {
+          playerId: "p9",
+          firstName: "Teo",
+          lastName: "Valdane",
+          teamId: "t1",
+        },
+        team: ref,
+        opponent: { ...ref, teamId: "t2" },
+        won: true,
+        line: { ...line, points },
+        reasons: [],
+      },
+    });
+  const playoff = (event: "champion" | "series_won") =>
+    post({
+      kind: "playoff",
+      attachment: {
+        type: "playoff",
+        event,
+        seasonYear: 2026,
+        seriesId: "s1",
+        roundLabel: "Finals",
+        winner: ref,
+        loser: null,
+        seriesScore: null,
+        sweep: false,
+        wentDistance: false,
+      },
+    });
+
+  it("calls champions and 50-point games big moments, nothing else", () => {
+    expect(isBigMoment(performance(50))).toBe(true);
+    expect(isBigMoment(performance(49))).toBe(false);
+    expect(isBigMoment(playoff("champion"))).toBe(true);
+    expect(isBigMoment(playoff("series_won"))).toBe(false);
+    expect(isBigMoment(post())).toBe(false);
+  });
+
+  it("marks big moments and new posts, but never compact copies", () => {
+    const { container, rerender } = render(
+      <TimelinePostShell
+        post={{ ...playoff("champion"), unread: true }}
+        context={context}
+      />,
+    );
+    const article = () => container.querySelector("article")!;
+    expect(article().hasAttribute("data-big-moment")).toBe(true);
+    expect(article().hasAttribute("data-new-post")).toBe(true);
+    rerender(
+      <TimelinePostShell
+        post={{ ...playoff("champion"), unread: true }}
+        context={context}
+        compact
+      />,
+    );
+    expect(article().hasAttribute("data-big-moment")).toBe(false);
+    expect(article().hasAttribute("data-new-post")).toBe(false);
+    rerender(<TimelinePostShell post={post()} context={context} />);
+    expect(article().hasAttribute("data-new-post")).toBe(false);
   });
 });
 

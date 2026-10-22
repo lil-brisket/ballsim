@@ -106,6 +106,8 @@ export type MediaScoreView = {
   home: MediaScoreSide;
   overtime: boolean;
   href: string | null;
+  /** The controlled team played in this game. */
+  isUserGame: boolean;
 };
 
 export type MediaTrendView = { tag: string; count: number; href: string };
@@ -270,6 +272,9 @@ function toScoreView(
     href: canOpenGameBoxScore(state, score.gameId)
       ? `/dashboard/${saveId}/games/${score.gameId}`
       : null,
+    isUserGame:
+      score.home.teamId === state.user.activeOwnerTeamId ||
+      score.away.teamId === state.user.activeOwnerTeamId,
   };
 }
 
@@ -292,6 +297,7 @@ function welcomePost(state: GameState): TimelinePostView {
     unread: false,
     author: cast.league,
     text: `Welcome to the ${state.world.league.name}. Scores, standout performances, trades and awards will show up here as the season unfolds.`,
+    tags: [],
     replies: [],
     engagement,
     engagementDisplay: {

@@ -1,5 +1,6 @@
 import type { PlayoffSeries } from "@/domain/entities/playoffs";
 import { lastArchivedGameDate } from "./archive-dates";
+import { teamTagLabel } from "./compose-text";
 import type { DetectorInput } from "./detector-input";
 import type { TimelinePost } from "./types";
 
@@ -66,7 +67,7 @@ function seriesPost(
       sweep,
       wentDistance,
     },
-    tags: [winner.abbreviation, loser.abbreviation],
+    tags: [teamTagLabel(winner), teamTagLabel(loser)],
     unread: false,
   };
 }
@@ -105,7 +106,7 @@ function previousChampionPost(input: DetectorInput): TimelinePost | null {
         sweep: false,
         wentDistance: false,
       },
-      tags: [winner.abbreviation],
+      tags: [teamTagLabel(winner)],
       unread: false,
     };
   }

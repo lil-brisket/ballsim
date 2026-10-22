@@ -25,3 +25,15 @@ export function TimelineLoadMore(props: { href: string | null }) {
     </Link>
   );
 }
+
+/** Broadcast-style day label between groups of posts in the feed. */
+export function TimelineDayDivider(props: { label: string }) {
+  return (
+    <div
+      role="separator"
+      className="border-b border-zinc-800 pb-2 pt-4 text-sm font-semibold text-zinc-300 first:pt-0"
+    >
+      {props.label}
+    </div>
+  );
+}

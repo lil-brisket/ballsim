@@ -13,6 +13,7 @@ import {
 } from "./accounts";
 import {
   cleanBodyPart,
+  formatSeasonLabel,
   fullName,
   sentenceCase,
   the,
@@ -343,46 +344,48 @@ function performanceTemplates(p: PerformanceAttachment): TemplateSet {
   const name = fullName(p.player);
   const { line: l, team: T, opponent: O } = p;
   const tag = teamTag(T);
-  const base = `${l.points} points, ${l.rebounds} rebounds and ${l.assists} assists`;
+  // The card carries the stat line; the text names the points once, as tone.
+  const pts = l.points;
   const result = p.won ? "in a win over" : "in a loss to";
   return {
     caseKey: "line",
     variants: [
       news(() =>
-        joinParts(`${name} put up ${base} ${result} the ${O.name}.`, tag),
+        joinParts(`${name} scored ${pts} ${result} the ${O.name}.`, tag),
       ),
       news(() =>
-        l.fieldGoalsAttempted > 0
-          ? joinParts(
-              `${name} shot ${l.fieldGoalsMade}-of-${l.fieldGoalsAttempted} and finished with ${l.points} points against the ${O.name}.`,
-            )
-          : null,
+        joinParts(`${name} poured in ${pts} against the ${O.name}.`, tag),
       ),
       news(() =>
         joinParts(
-          `${l.points} points, ${l.rebounds} rebounds and ${l.assists} assists: a big night for ${name}.`,
+          `${pts} for ${name}: a big night ${result} the ${O.name}.`,
           tag,
         ),
       ),
       news(() =>
         p.reasons.includes("triple_double")
-          ? joinParts(`${name} recorded a triple-double with ${base}.`, tag)
-          : null,
-      ),
-      news(() =>
-        p.reasons.includes("forty_points")
           ? joinParts(
-              `${name} scored ${l.points} points against the ${O.name}.`,
+              `${name} recorded a ${pts}-point triple-double ${result} the ${O.name}.`,
               tag,
             )
           : null,
       ),
-      hype(() =>
-        joinParts(`${name} was on another level tonight with ${base}.`, tag),
+      news(() =>
+        p.reasons.includes("forty_points")
+          ? joinParts(`Another ${pts}-piece from ${name}.`, tag)
+          : null,
       ),
-      down(() => joinParts(`${name} gave us ${base}. We keep working.`, tag)),
+      hype(() =>
+        joinParts(`${name} was on another level tonight. ${pts} points.`, tag),
+      ),
+      down(() =>
+        joinParts(`${name} gave us ${pts} tonight. We keep working.`, tag),
+      ),
       teamVoice(() =>
-        joinParts(`${name} finished with ${base} against the ${O.name}.`, tag),
+        joinParts(
+          `${name} led the way with ${pts} against the ${O.name}.`,
+          tag,
+        ),
       ),
     ],
   };
@@ -390,20 +393,39 @@ function performanceTemplates(p: PerformanceAttachment): TemplateSet {
 
 // ---------------------------------------------------------------- awards
 
+/** A number-free line on why this award was won; null when there is none. */
+function awardAngle(a: AwardAttachment): string | null {
+  const improved = a.improvement !== null && a.improvement > 0;
+  switch (a.awardId) {
+    case "roy":
+    case "rookie_of_month":
+      return "Top of the rookie class.";
+    case "dpoy":
+    case "defensive_player_of_month":
+      return "Honored for the work on the defensive end.";
+    case "sixth_man":
+      return "The best player off the bench this season.";
+    case "most_improved":
+      return improved ? "A big step up from last season." : null;
+    case "coach_of_year":
+      return improved ? "A turnaround season on the sideline." : null;
+    default:
+      return null;
+  }
+}
+
 function awardTemplates(a: AwardAttachment): TemplateSet {
   const player = a.winner ? fullName(a.winner) : null;
   const name = player ?? a.winnerCoachName;
   const month = monthName(a.period);
   const monthly = a.cadence === "monthly";
-  const when = monthly ? (month ?? "the month") : String(a.seasonYear);
+  const season = formatSeasonLabel(a.seasonYear);
+  const when = monthly ? (month ?? "the month") : season;
   const of = a.team ? ` of the ${a.team.displayName}` : "";
   const tag = teamTag(a.team);
-  const stat = a.perGame
-    ? `Averaged ${a.perGame.points.toFixed(1)} points, ${a.perGame.rebounds.toFixed(1)} rebounds and ${a.perGame.assists.toFixed(1)} assists.`
-    : null;
-  const record = a.teamRecord
-    ? `${a.team ? `The ${a.team.name} are` : "Their team is"} ${a.teamRecord.wins}–${a.teamRecord.losses}.`
-    : null;
+  // The card shows the award's numbers and the team record; the text gives
+  // the angle instead of repeating them.
+  const angle = awardAngle(a);
 
   if (!name) {
     return {
@@ -422,20 +444,21 @@ function awardTemplates(a: AwardAttachment): TemplateSet {
         anyone(() =>
           joinParts(
             `${name}${of} is the ${a.awardName} for ${when}.`,
-            record,
+            angle,
             tag,
           ),
         ),
         anyone(() =>
           joinParts(
             `The league has named ${name} its ${a.awardName} for ${when}.`,
+            angle,
             tag,
           ),
         ),
         anyone(() =>
           joinParts(
             `Congratulations to ${name}${of} on the ${a.awardName}.`,
-            record,
+            angle,
           ),
         ),
         anyone(() =>
@@ -455,18 +478,18 @@ function awardTemplates(a: AwardAttachment): TemplateSet {
       caseKey: "monthly_player",
       variants: [
         anyone(() =>
-          joinParts(`${name} is the ${a.awardName} for ${when}.`, stat, tag),
+          joinParts(`${name} is the ${a.awardName} for ${when}.`, angle, tag),
         ),
         anyone(() =>
           joinParts(
             `The ${a.awardName} for ${when} goes to ${name}${of}.`,
-            stat,
+            angle,
           ),
         ),
         anyone(() =>
           joinParts(
             `Congratulations to ${name}${of}, named ${a.awardName} for ${when}.`,
-            record,
+            angle,
             tag,
           ),
         ),
@@ -487,22 +510,22 @@ function awardTemplates(a: AwardAttachment): TemplateSet {
     variants: [
       anyone(() =>
         joinParts(
-          `${name}${of} has been named the ${a.seasonYear} ${a.awardName}.`,
-          stat,
+          `${name}${of} has been named the ${season} ${a.awardName}.`,
+          angle,
           tag,
         ),
       ),
       anyone(() =>
         joinParts(
-          `The league has honored ${name} with the ${a.awardName} for ${a.seasonYear}.`,
-          stat,
+          `The league has honored ${name} with the ${a.awardName} for ${season}.`,
+          angle,
           tag,
         ),
       ),
       anyone(() =>
         joinParts(
           `Congratulations to ${name}, this season's ${a.awardName} winner.`,
-          record,
+          angle,
           tag,
         ),
       ),
@@ -526,7 +549,7 @@ function playoffTemplates(p: PlayoffAttachment): TemplateSet {
   const s = p.seriesScore;
   const rp = p.roundLabel ? `the ${p.roundLabel}` : "the playoffs";
   const tag = teamTag(W);
-  const year = p.seasonYear;
+  const year = formatSeasonLabel(p.seasonYear);
 
   if (p.event === "champion") {
     return {

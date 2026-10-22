@@ -1,4 +1,8 @@
 import type { ReactNode } from "react";
+import {
+  contrastRatio,
+  readableTextOnBackground,
+} from "@/domain/color-contrast";
 import type { PortraitTraits } from "@/domain/entities/player-portrait";
 
 /**
@@ -47,6 +51,30 @@ const FEATURE = "#1a1210";
 const PLATE = "#27272a";
 const JERSEY = "#3f3f46";
 const ACCENT = "#d97706";
+
+/** Team colours for the jersey; without them the neutral default is drawn. */
+export type PortraitUniform = {
+  primaryColor: string;
+  secondaryColor: string;
+};
+
+/** Below this the collar would vanish into the jersey. */
+const MIN_TRIM_CONTRAST = 1.6;
+
+/** Jersey and collar colours: the team's, or the neutral default. */
+export function uniformColors(uniform: PortraitUniform | null | undefined): {
+  jersey: string;
+  trim: string;
+} {
+  if (!uniform) return { jersey: JERSEY, trim: ACCENT };
+  const jersey = uniform.primaryColor;
+  const ratio = contrastRatio(uniform.secondaryColor, jersey);
+  const trim =
+    ratio !== null && ratio >= MIN_TRIM_CONTRAST
+      ? uniform.secondaryColor
+      : readableTextOnBackground(jersey);
+  return { jersey, trim };
+}
 
 /** Cap that follows the top of the skull; shared by short styles. */
 const CAP_PATH =
@@ -417,8 +445,12 @@ function accessory(variant: number): ReactNode {
 
 const EAR_RX = [2.2, 2.8, 3.4] as const;
 
-export function PortraitFace(props: { traits: PortraitTraits }) {
+export function PortraitFace(props: {
+  traits: PortraitTraits;
+  uniform?: PortraitUniform | null;
+}) {
   const t = props.traits;
+  const { jersey, trim } = uniformColors(props.uniform);
   const skin = SKIN[t.skinTone] ?? SKIN[0];
   const shadow = SKIN_SHADOW[t.skinTone] ?? SKIN_SHADOW[0];
   const hair = HAIR[t.hairColor] ?? HAIR[0];
@@ -434,11 +466,11 @@ export function PortraitFace(props: { traits: PortraitTraits }) {
     >
       <rect width="64" height="64" fill={PLATE} />
       {backHair(t.hairStyle, hair)}
-      <path d="M4 64 C6 52 18 48 32 48 C46 48 58 52 60 64 Z" fill={JERSEY} />
+      <path d="M4 64 C6 52 18 48 32 48 C46 48 58 52 60 64 Z" fill={jersey} />
       <path
         d="M26 48.5 L32 55 L38 48.5"
         fill="none"
-        stroke={ACCENT}
+        stroke={trim}
         strokeWidth="2"
         strokeLinejoin="round"
       />

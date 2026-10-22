@@ -9,12 +9,13 @@ import {
   MediaSideRail,
 } from "@/components/media-hub/MediaHubRails";
 import { MediaStoriesStrip } from "@/components/media-hub/stories/MediaStoriesStrip";
-import { MediaUnreadBadge } from "@/components/media-hub/MediaUnreadBadge";
 import {
+  TimelineDayDivider,
   TimelineFeed,
   TimelineLoadMore,
 } from "@/components/media-hub/timeline/TimelineFeed";
 import { TimelinePost } from "@/components/media-hub/timeline/TimelinePost";
+import { TopStoryHero } from "@/components/media-hub/timeline/TopStoryHero";
 import { buttonClass } from "@/components/ui/Button";
 import { ErrorState } from "@/components/ui/EmptyState";
 import { PageHeader } from "@/components/ui/PageHeader";
@@ -47,7 +48,7 @@ export default async function MediaPage({
   }
 
   return (
-    <>
+    <div className="space-y-6">
       <PageHeader
         title="Media Hub"
         actions={
@@ -60,7 +61,6 @@ export default async function MediaPage({
                 className={buttonClass({ variant: "quiet" })}
               >
                 Mark all read
-                <MediaUnreadBadge count={view.unreadCount} />
               </button>
             </form>
           ) : null
@@ -81,6 +81,10 @@ export default async function MediaPage({
             rings={view.stories.rings}
             context={view.stories.context}
           />
+          {view.topStory ? (
+            <TopStoryHero post={view.topStory} context={view.context} />
+          ) : null}
+
           <div className="space-y-4 xl:hidden">
             <MediaScoresStrip
               scores={view.scores}
@@ -96,27 +100,32 @@ export default async function MediaPage({
             />
           ) : null}
 
-          {view.topStory ? (
-            <section
-              aria-label="Top story"
-              className="border-b border-zinc-800"
-            >
-              <SectionHeading as="h2" title="Top story" />
-              <TimelinePost post={view.topStory} context={view.context} />
-            </section>
-          ) : null}
-
           {view.emptyMessage ? (
             <p className="py-6 text-sm text-zinc-400">{view.emptyMessage}</p>
           ) : (
             <TimelineFeed>
-              {view.posts.map((post) => (
-                <TimelinePost
-                  key={post.id}
-                  post={post}
-                  context={view.context}
-                />
-              ))}
+              {view.posts.flatMap((post, index) => {
+                const previous = view.posts[index - 1];
+                const node = (
+                  <TimelinePost
+                    key={post.id}
+                    post={post}
+                    context={view.context}
+                  />
+                );
+                if (previous && previous.occurredOn === post.occurredOn) {
+                  return [node];
+                }
+                return [
+                  <TimelineDayDivider
+                    key={`day-${post.occurredOn}-${post.id}`}
+                    label={
+                      post.relativeLabel === "Today" ? "Today" : post.dateLabel
+                    }
+                  />,
+                  node,
+                ];
+              })}
             </TimelineFeed>
           )}
 
@@ -127,6 +136,6 @@ export default async function MediaPage({
           <MediaSideRail view={view} />
         </aside>
       </div>
-    </>
+    </div>
   );
 }

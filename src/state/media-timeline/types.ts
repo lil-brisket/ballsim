@@ -132,6 +132,13 @@ export type PerformanceAttachment = {
   reasons: PerformanceReason[];
 };
 
+/** One number on an award card ("SPG 2.1"); values are display-ready. */
+export type AwardStat = {
+  label: string;
+  value: string;
+  tone?: "win" | "loss";
+};
+
 export type AwardAttachment = {
   type: "award";
   awardResultId: string;
@@ -144,7 +151,10 @@ export type AwardAttachment = {
   winner: TimelinePlayerRef | null;
   winnerCoachName: string | null;
   team: TimelineTeamRef | null;
-  perGame: { points: number; rebounds: number; assists: number } | null;
+  /** The award's own numbers (see award-stat-lines.ts); empty when unknown. */
+  stats: AwardStat[];
+  /** Signed change on last season (MIP points per game, COY wins), when known. */
+  improvement: number | null;
   teamRecord: { wins: number; losses: number } | null;
   runnerUp: { name: string; teamAbbreviation: string | null } | null;
 };

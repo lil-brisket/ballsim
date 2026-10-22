@@ -1,7 +1,7 @@
 import { cn, focusRingClass } from "@/components/ui/styles";
 import type { ComposedReply } from "@/state/media-timeline/compose-replies";
 import type { TimelineDisplayContext } from "@/state/media-timeline/post-view";
-import { TimelineAvatar } from "./TimelineAvatar";
+import { AccountAvatar } from "./AccountAvatar";
 
 export function TimelineReplies(props: {
   replies: readonly ComposedReply[];
@@ -19,13 +19,13 @@ export function TimelineReplies(props: {
       >
         {count === 1 ? "Show 1 reply" : `Show ${count} replies`}
       </summary>
-      <ul className="ml-1 space-y-3 border-l border-zinc-800 py-1 pl-4">
+      <ul className="ml-1 space-y-3 border-l border-zinc-800 py-1 pl-3">
         {props.replies.map((reply) => (
           <li key={reply.id} className="flex gap-2">
-            <TimelineAvatar
+            <AccountAvatar
               account={reply.author}
               context={props.context}
-              size="sm"
+              size="reply"
             />
             <div className="min-w-0">
               <p className="text-sm">
