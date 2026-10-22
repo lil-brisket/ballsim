@@ -107,3 +107,41 @@
   width: 100%;
   height: 100%;
 }
+
+/*
+ * Media Hub feed. New-since-last-sim posts fade in once on mount; nothing
+ * moves under reduced motion. Big moments (a title, a 50-point game) get a
+ * thicker team band, more room and a soft team-ink glow on their card.
+ */
+@keyframes media-post-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  [data-new-post] {
+    animation: media-post-fade-in 420ms ease-out both;
+  }
+}
+
+[data-big-moment] [data-team-band="left"] {
+  width: 0.5rem;
+}
+
+[data-big-moment] [data-team-band="top"] {
+  height: 0.5rem;
+}
+
+[data-big-moment] :has(> [data-team-band]) {
+  box-shadow: 0 0 32px -12px rgb(var(--team-ink-rgb) / 0.55);
+}
+
+[data-big-moment] [data-team-band] + div {
+  padding: 1.25rem 1.25rem 1.25rem 1.5rem;
+}

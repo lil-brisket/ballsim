@@ -16,6 +16,17 @@ export function postAnchorId(postId: string): string {
   return `post-${postId.replace(/[^A-Za-z0-9_-]/g, "-")}`;
 }
 
+/** Points that make a single-game performance a big moment. */
+const BIG_MOMENT_POINTS = 50;
+
+/** Champion posts and 50-point games get a slightly larger card. */
+export function isBigMoment(post: TimelinePostView): boolean {
+  const a = post.attachment;
+  if (a.type === "playoff") return a.event === "champion";
+  if (a.type === "performance") return a.line.points >= BIG_MOMENT_POINTS;
+  return false;
+}
+
 export function TimelinePostShell(props: {
   post: TimelinePostView;
   context: TimelineDisplayContext;
@@ -26,15 +37,20 @@ export function TimelinePostShell(props: {
   const { post, context, compact = false } = props;
   // useId: the same post can render twice on a page (top story + feed).
   const nameId = useId();
+  const bigMoment = !compact && isBigMoment(post);
   return (
     <article
       // Compact copies (dashboard, showcase) repeat feed posts; only the
       // full post is the link target.
       id={compact ? undefined : postAnchorId(post.id)}
       aria-labelledby={nameId}
+      // Styled in atmosphere.css: the fade runs once on mount and only when
+      // motion is allowed; big moments get a slightly larger card.
+      data-new-post={!compact && post.unread ? "" : undefined}
+      data-big-moment={bigMoment ? "" : undefined}
       className={cn(
         "flex gap-3 border-b border-zinc-800 last:border-b-0",
-        compact ? "py-3" : "py-4",
+        compact ? "py-3" : bigMoment ? "py-5" : "py-4",
       )}
     >
       <AccountAvatar
@@ -61,7 +77,12 @@ export function TimelinePostShell(props: {
           </time>
           {post.unread ? <UnreadDot /> : null}
         </header>
-        <p className="text-base text-zinc-100">
+        <p
+          className={cn(
+            "text-zinc-100",
+            bigMoment ? "text-lg font-medium" : "text-base",
+          )}
+        >
           <PostText text={post.text} tags={post.tags} saveId={context.saveId} />
         </p>
         {props.children}
