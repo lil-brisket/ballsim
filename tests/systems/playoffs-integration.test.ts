@@ -220,6 +220,7 @@ function createEightTeamGameState(
         offers: {},
       },
       rfaStatuses: {},
+      deadMoney: {},
       tradeBlocks: {},
       ...createPhaseEBusinessDefaults(
         generated.teams.map((team) => team.id as TeamId),

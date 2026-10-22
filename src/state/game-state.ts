@@ -2,6 +2,7 @@ import type { Calendar } from "@/domain/entities/calendar";
 import type { Coach } from "@/domain/entities/coach";
 import type { Conference } from "@/domain/entities/conference";
 import type { Contract } from "@/domain/entities/contract";
+import type { DeadMoneyState } from "@/domain/entities/dead-money";
 import type { Division } from "@/domain/entities/division";
 import type { DraftPick } from "@/domain/entities/draft-pick";
 import type { DraftClass } from "@/domain/entities/draft";
@@ -63,7 +64,7 @@ import type {
   FranchisePhaseState,
 } from "@/systems/phase-engine/phase-types";
 
-export const GAME_STATE_SCHEMA_VERSION = 70;
+export const GAME_STATE_SCHEMA_VERSION = 71;
 
 /** League personnel market for staff free agency (not a business-finance concept). */
 export type StaffMarketState = {
@@ -180,6 +181,11 @@ export type FreeAgencyState = {
 
 export type BusinessSlice = {
   contracts: Record<string, Contract>;
+  /**
+   * Salary still owed to released players, by team id (schema v71+). Counts
+   * toward payroll and cap through getTeamPayroll; kept after its season.
+   */
+  deadMoney: DeadMoneyState;
   finances: Record<string, TeamFinances>;
   freeAgency: FreeAgencyState;
   /** Restricted free agency statuses for the current offseason cycle. */

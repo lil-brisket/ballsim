@@ -1,4 +1,5 @@
 import { isJerseyNumber } from "@/domain/jersey-number";
+import { isDeadMoneyReason } from "@/domain/entities/dead-money";
 import {
   type GameMode,
   type GameState,
@@ -433,6 +434,7 @@ export function validateGameState(state: unknown): asserts state is GameState {
   }
   assertRecord(business.freeAgency.offers, "business.freeAgency.offers");
   assertRecord(business.tradeBlocks, "business.tradeBlocks");
+  validateDeadMoney(business.deadMoney, world.teams, world.players);
 
   const staffContracts = (business as Record<string, unknown>).staffContracts;
   const sponsorships = (business as Record<string, unknown>).sponsorships;
@@ -1637,4 +1639,52 @@ export function validateGameState(state: unknown): asserts state is GameState {
     teamIds,
     gameIds,
   );
+}
+
+function validateDeadMoney(
+  value: unknown,
+  teams: Record<string, unknown>,
+  players: Record<string, unknown>,
+): void {
+  if (value == null) {
+    fail("business.deadMoney is required.");
+  }
+  assertRecord(value, "business.deadMoney");
+  for (const [teamId, entries] of Object.entries(value)) {
+    if (!(teamId in teams)) {
+      fail(`business.deadMoney team "${teamId}" is missing from world.teams.`);
+    }
+    if (!Array.isArray(entries)) {
+      fail(`business.deadMoney[${teamId}] must be an array.`);
+    }
+    entries.forEach((entry: unknown, index: number) => {
+      const path = `business.deadMoney[${teamId}][${index}]`;
+      assertRecord(entry, path);
+      if (entry.teamId !== teamId) {
+        fail(`${path}.teamId must equal "${teamId}".`);
+      }
+      if (typeof entry.playerId !== "string" || !(entry.playerId in players)) {
+        fail(`${path}.playerId must reference world.players.`);
+      }
+      if (!Number.isInteger(entry.seasonYear)) {
+        fail(`${path}.seasonYear must be an integer.`);
+      }
+      if (
+        typeof entry.amount !== "number" ||
+        !Number.isInteger(entry.amount) ||
+        entry.amount < 0
+      ) {
+        fail(`${path}.amount must be a non-negative integer.`);
+      }
+      if (!isDeadMoneyReason(entry.reason)) {
+        fail(`${path}.reason is invalid.`);
+      }
+      if (typeof entry.prepaid !== "boolean") {
+        fail(`${path}.prepaid must be a boolean.`);
+      }
+      if (typeof entry.createdOn !== "string" || entry.createdOn.length === 0) {
+        fail(`${path}.createdOn must be a date string.`);
+      }
+    });
+  }
 }

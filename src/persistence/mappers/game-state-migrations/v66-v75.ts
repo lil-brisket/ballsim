@@ -25,11 +25,17 @@ export type GameStateV68 = Omit<GameState, "meta" | "world"> & {
   };
 };
 
-export type GameStateV69 = Omit<GameState, "meta" | "world"> & {
+export type GameStateV70 = Omit<GameState, "meta" | "business"> & {
+  meta: Omit<GameState["meta"], "schemaVersion"> & { schemaVersion: 70 };
+  business: Omit<GameState["business"], "deadMoney">;
+};
+
+export type GameStateV69 = Omit<GameState, "meta" | "world" | "business"> & {
   meta: Omit<GameState["meta"], "schemaVersion"> & { schemaVersion: 69 };
   world: Omit<GameState["world"], "teams"> & {
     teams: Record<string, Team & { playStyle?: TeamPlayStyle }>;
   };
+  business: Omit<GameState["business"], "deadMoney">;
 };
 
 /**
@@ -102,7 +108,7 @@ export function migrateV68ToV69(state: GameStateV68): GameStateV69 {
  * Deterministic v69 → v70: drop Team.playStyle. It was generated and stored
  * but never read; Team.coachingPhilosophy carries team style.
  */
-export function migrateV69ToV70(state: GameStateV69): GameState {
+export function migrateV69ToV70(state: GameStateV69): GameStateV70 {
   const teams: Record<string, Team> = {};
   for (const [id, team] of Object.entries(state.world.teams)) {
     const { playStyle: _playStyle, ...rest } = team;
@@ -117,6 +123,24 @@ export function migrateV69ToV70(state: GameStateV69): GameState {
     world: {
       ...state.world,
       teams,
+    },
+  };
+}
+
+/**
+ * Deterministic v70 → v71: add business.deadMoney. No save could release a
+ * player under contract before v71, so every team starts with none.
+ */
+export function migrateV70ToV71(state: GameStateV70): GameState {
+  return {
+    ...state,
+    meta: {
+      ...state.meta,
+      schemaVersion: 71,
+    },
+    business: {
+      ...state.business,
+      deadMoney: {},
     },
   };
 }
