@@ -1,3 +1,4 @@
+import type { TimelineHighlights } from "@/state/media-timeline/highlights";
 import type {
   FranchiseStanding,
   FranchiseValueDriverKey,
@@ -27,16 +28,6 @@ import {
 import { getFinancialStatement } from "@/systems/team-finances";
 
 export type OwnerDashboardActionSeverity = "critical" | "warning" | "info";
-
-export type OwnerDashboardMediaHeadline = {
-  id: string;
-  headline: string;
-  summary: string;
-  occurredOn: string;
-  href: string;
-  importance: string;
-  unread: boolean;
-};
 
 export type OwnerDashboardNextEvent = {
   date: string;
@@ -261,7 +252,8 @@ export type OwnerDashboardView = {
   simulationPhase: SimulationPhaseContext;
   phaseResponsibility: PhaseResponsibility;
   /** Top franchise media feed items for dashboard League News. */
-  mediaHeadlines: OwnerDashboardMediaHeadline[];
+  /** Media Hub lead posts (top story first). */
+  mediaTimeline: TimelineHighlights;
   /** Next high-importance calendar target for the controlled franchise. */
   nextImportantEvent: OwnerDashboardNextEvent | null;
 };

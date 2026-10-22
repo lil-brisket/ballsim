@@ -15,7 +15,6 @@ import { type LastGameDayView, toStaffView } from "@/state/franchise-selectors";
 import { getActiveOwnedFranchise } from "@/state/owner-context";
 import { toRosterView } from "@/state/selectors";
 import { STARTER_ROLES } from "@/systems/staff-generation";
-import { isMediaUnread } from "@/domain/entities/media-item";
 import { findNextSimulationTarget } from "@/systems/calendar";
 import type {
   CanonicalDashboardData,
@@ -23,7 +22,6 @@ import type {
   OwnerDashboardTeam,
   OwnerDashboardInsight,
   OwnerDashboardRosterProblem,
-  OwnerDashboardMediaHeadline,
   OwnerDashboardNextEvent,
 } from "@/state/owner-dashboard/types";
 
@@ -338,44 +336,6 @@ export function findVacantStarterRoles(
 ): string[] {
   const filled = new Set(staff.roster.map((member) => member.role));
   return STARTER_ROLES.filter((role) => !filled.has(role));
-}
-
-const DASHBOARD_MEDIA_HEADLINES_LIMIT = 5;
-
-function resolveMediaHref(saveId: string, href: string): string {
-  if (href.startsWith(`/dashboard/${saveId}`)) {
-    return href;
-  }
-  if (href.startsWith("/media")) {
-    return `/dashboard/${saveId}/media`;
-  }
-  if (href.startsWith("/")) {
-    return `/dashboard/${saveId}${href}`;
-  }
-  return `/dashboard/${saveId}/media`;
-}
-
-export function buildMediaHeadlines(
-  state: GameState,
-  saveId: string,
-): OwnerDashboardMediaHeadline[] {
-  const franchise = getActiveOwnedFranchise(state);
-  const items = [...(franchise.mediaFeed?.items ?? [])].sort((a, b) => {
-    if (a.occurredOn !== b.occurredOn) {
-      return b.occurredOn.localeCompare(a.occurredOn);
-    }
-    return b.relevanceScore - a.relevanceScore;
-  });
-
-  return items.slice(0, DASHBOARD_MEDIA_HEADLINES_LIMIT).map((item) => ({
-    id: item.id,
-    headline: item.headline,
-    summary: item.summary,
-    occurredOn: item.occurredOn,
-    href: resolveMediaHref(saveId, item.href),
-    importance: item.importance,
-    unread: isMediaUnread(item, franchise.mediaReadState ?? {}),
-  }));
 }
 
 export function buildNextImportantEvent(

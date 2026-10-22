@@ -14,6 +14,7 @@ vi.mock("@/persistence/save-game-repository", () => ({
 
 import {
   advanceOwnerTime,
+  loadCalendarPageView,
   loadMediaPageView,
   markAllMediaRead,
 } from "@/application/game-service";
@@ -82,5 +83,22 @@ describe("Media Hub page view", () => {
         (item) => franchise.mediaReadState[item.id]?.readAt,
       ),
     ).toBe(true);
+  });
+
+  it("puts the top story in the calendar's simulation summary", async () => {
+    const store = await seedPlayedSave("media_summary");
+    const calendar = await loadCalendarPageView(
+      "media_summary",
+      { daysAdvanced: 6 },
+      store,
+    );
+    const media = await loadMediaPageView("media_summary", {}, store);
+    expect(calendar!.aroundTheLeague).toEqual({
+      authorName: media!.topStory!.author.displayName,
+      text: media!.topStory!.text,
+      href: "/dashboard/media_summary/media",
+    });
+    const quiet = await loadCalendarPageView("media_summary", {}, store);
+    expect(quiet!.aroundTheLeague).toBeNull();
   });
 });

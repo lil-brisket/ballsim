@@ -1,4 +1,5 @@
 import type { GameState } from "@/state/game-state";
+import { toTimelineHighlights } from "@/state/media-timeline/highlights";
 import { getCalendarContext } from "@/systems/simulation/calendar-context";
 import { resolveSimulationPhase } from "@/systems/simulation/simulation-phase";
 import { computePhaseResponsibility } from "@/systems/simulation/phase-responsibility";
@@ -49,7 +50,6 @@ import {
 } from "@/state/owner-dashboard/action-items";
 import {
   buildInsights,
-  buildMediaHeadlines,
   buildNextImportantEvent,
   meanValidTicketPrices,
   pctAbove,
@@ -71,7 +71,6 @@ import {
 
 export type {
   OwnerDashboardActionSeverity,
-  OwnerDashboardMediaHeadline,
   OwnerDashboardNextEvent,
   OwnerDashboardActionCategory,
   OwnerDashboardActionItem,
@@ -176,7 +175,7 @@ export function toOwnerDashboardView(state: GameState): OwnerDashboardView {
     });
   }
 
-  const mediaHeadlines = buildMediaHeadlines(state, canonical.saveId);
+  const mediaTimeline = toTimelineHighlights(state, canonical.saveId);
   const nextImportantEvent = buildNextImportantEvent(state);
 
   return {
@@ -210,7 +209,7 @@ export function toOwnerDashboardView(state: GameState): OwnerDashboardView {
     situations,
     simulationPhase,
     phaseResponsibility,
-    mediaHeadlines,
+    mediaTimeline,
     nextImportantEvent,
   };
 }

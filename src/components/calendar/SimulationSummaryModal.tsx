@@ -98,6 +98,8 @@ export function SimulationSummaryModal(props: {
   leagueEvents?: readonly { date: string; headline: string }[];
   injuryNotes?: readonly string[];
   transactionCount?: number;
+  /** Media Hub top story from the simulated days. */
+  aroundTheLeague?: { authorName: string; text: string; href: string } | null;
   fromDate?: string | null;
   toDate?: string | null;
   attentionItems?: readonly {
@@ -241,6 +243,23 @@ export function SimulationSummaryModal(props: {
                   {props.transactionCount === 1 ? "" : "s"}
                 </p>
               ) : null}
+            </section>
+          ) : null}
+
+          {props.aroundTheLeague ? (
+            <section className="space-y-2">
+              <p className="text-sm font-medium text-zinc-300">
+                Around the league
+              </p>
+              <Link
+                href={props.aroundTheLeague.href}
+                className={`block rounded-md border border-surface-line px-3 py-2 text-sm text-zinc-300 hover:border-zinc-600 ${focusRingClass}`}
+              >
+                <span className="font-semibold text-zinc-100">
+                  {props.aroundTheLeague.authorName}
+                </span>
+                <p className="line-clamp-2">{props.aroundTheLeague.text}</p>
+              </Link>
             </section>
           ) : null}
 

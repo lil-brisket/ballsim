@@ -30,6 +30,7 @@ import {
 import { createSeededRng } from "@/domain/rng";
 import { bootstrapWorld } from "@/systems/world-pipeline";
 import { validateGameState } from "@/persistence/validate-game-state";
+import type { GameState } from "@/state/game-state";
 import { parseCalendarDate, addCalendarDays } from "@/domain/calendar-date";
 import {
   needsRegularSeasonInitialization,
@@ -40,6 +41,7 @@ import { toOwnerDashboardView } from "@/state/owner-dashboard";
 import { getActiveOwnedFranchise } from "@/state/owner-context";
 import { getActiveOwnerDecision } from "@/systems/owner-decisions";
 import { buildSimulationSummary } from "@/systems/calendar/simulation-summary";
+import { toTimelineHighlights } from "@/state/media-timeline/highlights";
 import {
   getStore,
   persistWorkingState,
@@ -92,6 +94,14 @@ export type CalendarPageView = {
   resumeTo: string | null;
   simulationSummary:
     import("@/systems/calendar/simulation-summary").SimulationSummary | null;
+  /** Media Hub top story when it happened during the simulated days. */
+  aroundTheLeague: CalendarAroundTheLeague | null;
+};
+
+export type CalendarAroundTheLeague = {
+  authorName: string;
+  text: string;
+  href: string;
 };
 
 export type LoadCalendarPageViewOptions = {
@@ -229,6 +239,7 @@ export async function loadCalendarPageView(
         game.date === currentDate &&
         game.status === "scheduled",
     );
+  const fromDate = simulatedFromDate(options, currentDate);
 
   return {
     save: toSaveSummary(loaded),
@@ -289,24 +300,42 @@ export async function loadCalendarPageView(
         : { reason: null, message: null, resolveHref: null },
     interrupt: buildCalendarInterrupt(state, saveId),
     resumeTo: remainingResumeTo(currentDate, options.resumeTo),
-    simulationSummary: (() => {
-      const daysAdvanced = options.daysAdvanced;
-      if (
-        daysAdvanced == null ||
-        !Number.isInteger(daysAdvanced) ||
-        daysAdvanced < 1
-      ) {
-        return null;
-      }
-      const fromDate =
-        options.simulationFromDate &&
-        /^\d{4}-\d{2}-\d{2}$/.test(options.simulationFromDate)
-          ? options.simulationFromDate
-          : addCalendarDays(currentDate, -daysAdvanced);
-      return buildSimulationSummary(state, [], {
-        fromDate,
-        toDate: currentDate,
-      });
-    })(),
+    aroundTheLeague: fromDate ? aroundTheLeague(state, saveId, fromDate) : null,
+    simulationSummary: fromDate
+      ? buildSimulationSummary(state, [], { fromDate, toDate: currentDate })
+      : null,
+  };
+}
+
+/** Start of the range just simulated, or null when nothing was simulated. */
+function simulatedFromDate(
+  options: LoadCalendarPageViewOptions,
+  currentDate: string,
+): string | null {
+  const daysAdvanced = options.daysAdvanced;
+  if (
+    daysAdvanced == null ||
+    !Number.isInteger(daysAdvanced) ||
+    daysAdvanced < 1
+  ) {
+    return null;
+  }
+  return options.simulationFromDate &&
+    /^\d{4}-\d{2}-\d{2}$/.test(options.simulationFromDate)
+    ? options.simulationFromDate
+    : addCalendarDays(currentDate, -daysAdvanced);
+}
+
+function aroundTheLeague(
+  state: GameState,
+  saveId: string,
+  fromDate: string,
+): CalendarAroundTheLeague | null {
+  const top = toTimelineHighlights(state, saveId, 1).posts[0];
+  if (!top || top.occurredOn < fromDate) return null;
+  return {
+    authorName: top.author.displayName,
+    text: top.text,
+    href: `/dashboard/${saveId}/media`,
   };
 }

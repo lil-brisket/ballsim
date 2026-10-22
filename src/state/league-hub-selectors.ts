@@ -1,15 +1,15 @@
+import {
+  toTimelineHighlights,
+  type TimelineHighlights,
+} from "@/state/media-timeline/highlights";
 /**
  * League Hub view model — single-pass presentation selector.
  * Tier 1 (snapshot, standings, results) + Tier 2 previews (max 3 each).
  */
 
-import { isMediaUnread } from "@/domain/entities/media-item";
-import type { ImportanceLevel } from "@/domain/entities/event-source";
-import { IMPORTANCE_RANK } from "@/domain/entities/event-source";
 import type { GameState } from "@/state/game-state";
 import { getFinalGamesForSeason } from "@/state/game-access";
 import { getActiveOwnerTeamId, getActiveTeam } from "@/state/owner-context";
-import { getActiveOwnedFranchise } from "@/state/owner-context";
 import {
   toMyTeamStandingsContext,
   toStandingsPageView,
@@ -61,16 +61,6 @@ export type LeagueTransactionBrief = {
   teamIds: string[];
 };
 
-export type LeagueMediaBrief = {
-  id: string;
-  headline: string;
-  summary: string;
-  occurredOn: string;
-  importance: ImportanceLevel;
-  unread: boolean;
-  href: string;
-};
-
 export type LeagueHubSnapshot = {
   leaderAbbreviation: string;
   leaderRecord: string;
@@ -103,7 +93,8 @@ export type LeagueHubView = {
   recentResults: LeagueGameResultRow[];
   transactions: LeagueTransactionBrief[];
   injuries: LeagueInjuryRow[];
-  media: LeagueMediaBrief[];
+  /** Media Hub lead posts (top story first). */
+  media: TimelineHighlights;
   expansionActive: boolean;
   playoffBanner: string | null;
 };
@@ -289,35 +280,7 @@ export function toLeagueHubView(state: GameState): LeagueHubView {
 
   const injuries = toLeagueInjuryBriefing(state, LEAGUE_HUB_TIER2_LIMIT);
 
-  // Media briefing
-  const franchise = getActiveOwnedFranchise(state);
-  const readState = franchise.mediaReadState ?? {};
-  const mediaItems = [...(franchise.mediaFeed?.items ?? [])].sort((a, b) => {
-    const imp = IMPORTANCE_RANK[b.importance] - IMPORTANCE_RANK[a.importance];
-    if (imp !== 0) {
-      return imp;
-    }
-    if (b.relevanceScore !== a.relevanceScore) {
-      return b.relevanceScore - a.relevanceScore;
-    }
-    const d = b.occurredOn.localeCompare(a.occurredOn);
-    if (d !== 0) {
-      return d;
-    }
-    return b.id.localeCompare(a.id);
-  });
-
-  const media: LeagueMediaBrief[] = mediaItems
-    .slice(0, LEAGUE_HUB_TIER2_LIMIT)
-    .map((item) => ({
-      id: item.id,
-      headline: item.headline,
-      summary: item.summary,
-      occurredOn: item.occurredOn,
-      importance: item.importance,
-      unread: isMediaUnread(item, readState),
-      href: `/dashboard/${saveId}/media`,
-    }));
+  const media = toTimelineHighlights(state, saveId);
 
   const expansion = assessExpansion(state);
   const expansionActive =

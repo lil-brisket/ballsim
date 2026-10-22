@@ -1,24 +1,25 @@
 import Link from "next/link";
-import type { OwnerDashboardMediaHeadline } from "@/state/owner-dashboard";
-import { EmptyState } from "@/components/ui/EmptyState";
-import { formatGameDate } from "@/presentation/game-date";
-import { Section } from "@/components/ui/Section";
+import { TimelinePost } from "@/components/media-hub/timeline/TimelinePost";
 import { ArenaPanel } from "@/components/ui/ArenaPanel";
+import { EmptyState } from "@/components/ui/EmptyState";
+import { Section } from "@/components/ui/Section";
 import {
   cn,
   focusRingClass,
   touchTargetTextClass,
 } from "@/components/ui/styles";
+import type { TimelineHighlights } from "@/state/media-timeline/highlights";
 
 /**
- * Around the League — Phase 2 uses existing reliable media headlines only.
- * No standingsDelta backend work.
+ * Around the League: the Media Hub's lead posts (top story first) in the
+ * compact post shell. Used by the dashboard and the League hub.
  */
 export function AroundTheLeaguePanel(props: {
-  headlines: OwnerDashboardMediaHeadline[];
+  timeline: TimelineHighlights;
   saveId: string;
 }) {
   const mediaHref = `/dashboard/${props.saveId}/media`;
+  const { posts, context } = props.timeline;
 
   return (
     <Section
@@ -36,42 +37,15 @@ export function AroundTheLeaguePanel(props: {
         </Link>
       }
     >
-      {props.headlines.length === 0 ? (
+      {posts.length === 0 ? (
         <ArenaPanel as="div" density="default">
           <EmptyState message="No league stories yet. Advance the season to fill the briefing." />
         </ArenaPanel>
       ) : (
-        <ArenaPanel as="div" edge="left" density="compact" className="!p-0">
-          <ul className="divide-y divide-surface-line">
-            {props.headlines.slice(0, 5).map((item) => (
-              <li key={item.id}>
-                <Link
-                  href={item.href}
-                  className={cn(
-                    "block px-4 py-3 transition-colors hover:bg-white/5",
-                    focusRingClass,
-                  )}
-                >
-                  <div className="flex flex-wrap items-center gap-2">
-                    {item.unread ? (
-                      <span className="rounded bg-live px-1.5 py-0.5 text-xs font-bold uppercase tracking-wide text-zinc-950">
-                        New
-                      </span>
-                    ) : null}
-                    <p className="font-display text-lg font-bold uppercase leading-tight tracking-wide text-zinc-50">
-                      {item.headline}
-                    </p>
-                  </div>
-                  <p className="mt-1 line-clamp-1 text-sm text-zinc-300">
-                    {item.summary}
-                  </p>
-                  <p className="mt-1 text-sm text-zinc-500">
-                    {formatGameDate(item.occurredOn)} · {item.importance}
-                  </p>
-                </Link>
-              </li>
-            ))}
-          </ul>
+        <ArenaPanel as="div" edge="left" density="compact" className="!py-0">
+          {posts.map((post) => (
+            <TimelinePost key={post.id} post={post} context={context} compact />
+          ))}
         </ArenaPanel>
       )}
     </Section>
