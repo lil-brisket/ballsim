@@ -206,6 +206,14 @@ export function validateGameSettings(
 
   let freeAgencyAllowExtension =
     DEFAULT_OFFSEASON_SETTINGS.freeAgency.allowExtension;
+  let restrictedFreeAgency = DEFAULT_OFFSEASON_SETTINGS.restrictedFreeAgency;
+  if (offseason !== null && offseason.restrictedFreeAgency !== undefined) {
+    if (typeof offseason.restrictedFreeAgency !== "boolean") {
+      errors.push("offseason.restrictedFreeAgency must be a boolean.");
+    } else {
+      restrictedFreeAgency = offseason.restrictedFreeAgency;
+    }
+  }
   if (offseason !== null) {
     const freeAgency =
       offseason.freeAgency === undefined
@@ -425,6 +433,7 @@ export function validateGameSettings(
         durationDays: freeAgencyDurationDays,
         allowExtension: freeAgencyAllowExtension,
       },
+      restrictedFreeAgency,
     },
     seasonEvents: resolveSeasonEventsSettings(raw.seasonEvents, errors),
   };

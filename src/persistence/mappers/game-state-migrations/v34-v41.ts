@@ -265,7 +265,8 @@ export function migrateV36ToV37(state: GameStateV36): GameStateV37 {
     settings: {
       ...state.settings,
       ai,
-      offseason,
+      // Pre-v73 shape: restrictedFreeAgency arrives in the v72 -> v73 step.
+      offseason: offseason as GameState["settings"]["offseason"],
     },
     competition: {
       ...state.competition,

@@ -146,6 +146,8 @@ export function reconstructGameSettingsFromState(
     history: { ...DEFAULT_GAME_SETTINGS.history },
     offseason: {
       freeAgency: { ...DEFAULT_GAME_SETTINGS.offseason.freeAgency },
+      restrictedFreeAgency:
+        DEFAULT_GAME_SETTINGS.offseason.restrictedFreeAgency,
     },
     seasonEvents: {
       ...DEFAULT_GAME_SETTINGS.seasonEvents,

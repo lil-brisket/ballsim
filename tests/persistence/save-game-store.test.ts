@@ -137,6 +137,7 @@ function createEightTeamPopulatedState(rngSeed: number): GameState {
       history: { mode: "new" },
       offseason: {
         freeAgency: { durationDays: 30, allowExtension: true },
+        restrictedFreeAgency: true,
       },
       seasonEvents: {
         midseasonAnchor: { method: "schedule_fraction", fraction: 0.5 },

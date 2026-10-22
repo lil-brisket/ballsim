@@ -456,6 +456,8 @@ export function createFourTeamInitialGameState(
     },
     offseason: {
       freeAgency: { ...DEFAULT_GAME_SETTINGS.offseason.freeAgency },
+      restrictedFreeAgency:
+        DEFAULT_GAME_SETTINGS.offseason.restrictedFreeAgency,
     },
     seasonEvents: {
       ...DEFAULT_GAME_SETTINGS.seasonEvents,

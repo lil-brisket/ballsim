@@ -282,6 +282,12 @@ export type GameSettings = {
       durationDays: number;
       allowExtension: boolean;
     };
+    /**
+     * Restricted free agency (schema v73+): qualifying offers, offer sheets
+     * and match / decline for young players. Off: every expiring player is
+     * an unrestricted free agent.
+     */
+    restrictedFreeAgency: boolean;
   };
   /**
    * Midseason event calendar rules.
@@ -314,6 +320,7 @@ export const DEFAULT_OFFSEASON_SETTINGS: GameSettings["offseason"] = {
     durationDays: 30,
     allowExtension: true,
   },
+  restrictedFreeAgency: true,
 };
 
 export const DEFAULT_SEASON_EVENTS_SETTINGS: GameSettings["seasonEvents"] = {
@@ -390,6 +397,7 @@ export const DEFAULT_GAME_SETTINGS: GameSettings = {
       durationDays: DEFAULT_OFFSEASON_SETTINGS.freeAgency.durationDays,
       allowExtension: DEFAULT_OFFSEASON_SETTINGS.freeAgency.allowExtension,
     },
+    restrictedFreeAgency: DEFAULT_OFFSEASON_SETTINGS.restrictedFreeAgency,
   },
   seasonEvents: { ...DEFAULT_SEASON_EVENTS_SETTINGS },
 };
@@ -443,6 +451,7 @@ export const CBL_GAME_SETTINGS: GameSettings = {
       durationDays: DEFAULT_OFFSEASON_SETTINGS.freeAgency.durationDays,
       allowExtension: DEFAULT_OFFSEASON_SETTINGS.freeAgency.allowExtension,
     },
+    restrictedFreeAgency: DEFAULT_OFFSEASON_SETTINGS.restrictedFreeAgency,
   },
   seasonEvents: { ...DEFAULT_SEASON_EVENTS_SETTINGS },
 };
@@ -627,6 +636,7 @@ export function cloneGameSettings(settings: GameSettings): GameSettings {
     history: { ...settings.history },
     offseason: {
       freeAgency: { ...settings.offseason.freeAgency },
+      restrictedFreeAgency: settings.offseason.restrictedFreeAgency ?? true,
     },
     seasonEvents: {
       ...(settings.seasonEvents ?? DEFAULT_SEASON_EVENTS_SETTINGS),

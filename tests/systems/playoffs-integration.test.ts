@@ -157,6 +157,7 @@ function createEightTeamGameState(
       history: { mode: "new" },
       offseason: {
         freeAgency: { durationDays: 30, allowExtension: true },
+        restrictedFreeAgency: true,
       },
     },
     world: {

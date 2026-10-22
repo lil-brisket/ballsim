@@ -30,6 +30,13 @@ export type GameStateV70 = Omit<GameState, "meta" | "business"> & {
   business: Omit<GameState["business"], "deadMoney" | "extensionTalks">;
 };
 
+export type GameStateV72 = Omit<GameState, "meta" | "settings"> & {
+  meta: Omit<GameState["meta"], "schemaVersion"> & { schemaVersion: 72 };
+  settings: Omit<GameState["settings"], "offseason"> & {
+    offseason: Omit<GameState["settings"]["offseason"], "restrictedFreeAgency">;
+  };
+};
+
 export type GameStateV71 = Omit<GameState, "meta" | "business"> & {
   meta: Omit<GameState["meta"], "schemaVersion"> & { schemaVersion: 71 };
   business: Omit<GameState["business"], "extensionTalks">;
@@ -154,7 +161,7 @@ export function migrateV70ToV71(state: GameStateV70): GameStateV71 {
  * Deterministic v71 → v72: add business.extensionTalks. Owners could not
  * offer extensions before v72, so there are no talks to carry over.
  */
-export function migrateV71ToV72(state: GameStateV71): GameState {
+export function migrateV71ToV72(state: GameStateV71): GameStateV72 {
   return {
     ...state,
     meta: {
@@ -164,6 +171,28 @@ export function migrateV71ToV72(state: GameStateV71): GameState {
     business: {
       ...state.business,
       extensionTalks: {},
+    },
+  } as unknown as GameStateV72;
+}
+
+/**
+ * Deterministic v72 → v73: add settings.offseason.restrictedFreeAgency, on.
+ * RFA rules existed before but never ran (contracts ended before players
+ * were classified); v73 turns them on for every save.
+ */
+export function migrateV72ToV73(state: GameStateV72): GameState {
+  return {
+    ...state,
+    meta: {
+      ...state.meta,
+      schemaVersion: 73,
+    },
+    settings: {
+      ...state.settings,
+      offseason: {
+        ...state.settings.offseason,
+        restrictedFreeAgency: true,
+      },
     },
   };
 }
