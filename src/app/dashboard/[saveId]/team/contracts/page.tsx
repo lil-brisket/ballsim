@@ -4,6 +4,7 @@ import { loadContractHubView } from "@/application/game-service";
 import { ContractHubHeader } from "@/components/contracts/ContractHubHeader";
 import { ContractOverview } from "@/components/contracts/ContractOverview";
 import { ContractRow } from "@/components/contracts/ContractRow";
+import { ExpiringDeals } from "@/components/contracts/ExpiringDeals";
 import { ManagementDecisionPanel } from "@/components/management/ManagementDecisionPanel";
 import { DataTable } from "@/components/ui/DataTable";
 import { EmptyState, ErrorState } from "@/components/ui/EmptyState";
@@ -45,6 +46,8 @@ export default async function TeamContractsPage({
       />
 
       <ContractOverview saveId={saveId} overview={view.overview} />
+
+      <ExpiringDeals saveId={saveId} rows={view.rows} returnPath={returnPath} />
 
       <Section title="Contracts">
         {view.rows.length === 0 ? (

@@ -118,6 +118,15 @@ export const DOMAIN_EVENT_REGISTRY: Record<
     notify: true,
     social: { minPosts: 0, maxPosts: 1 },
   }),
+  ContractExtensionRefused: occurred("transaction", "medium", {
+    social: { minPosts: 0, maxPosts: 1 },
+  }),
+  ContractFinalYear: occurred("team", "low", {
+    media: false,
+    highlight: false,
+    notify: true,
+    notifyCat: "important",
+  }),
   DraftPickMade: occurred("league", "high", {
     notify: true,
     social: { minPosts: 0, maxPosts: 2 },

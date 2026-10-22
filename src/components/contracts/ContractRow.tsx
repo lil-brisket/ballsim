@@ -2,6 +2,7 @@ import {
   declineTeamOptionAction,
   exerciseTeamOptionAction,
 } from "@/application/actions";
+import { ExtendContractDialog } from "@/components/contracts/ExtendContractDialog";
 import { ReleasePlayerDialog } from "@/components/contracts/ReleasePlayerDialog";
 import { PlayerEntityLink } from "@/components/entity/PlayerEntityLink";
 import { ConfirmDialog } from "@/components/owner/ConfirmDialog";
@@ -134,8 +135,17 @@ export function ContractRow(props: {
             </>
           ) : row.hasPendingPlayerOption ? (
             <span className="text-sm text-zinc-500">Player decision</span>
-          ) : row.release === null ? (
+          ) : row.release === null && !row.extension ? (
             <span className="text-sm text-zinc-600">—</span>
+          ) : null}
+          {row.extension ? (
+            <ExtendContractDialog
+              saveId={saveId}
+              playerId={row.playerId}
+              playerName={row.playerName}
+              returnPath={returnPath}
+              extension={row.extension}
+            />
           ) : null}
           {row.release !== null ? (
             <ReleasePlayerDialog

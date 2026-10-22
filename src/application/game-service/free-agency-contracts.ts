@@ -28,6 +28,10 @@ import { advanceSimulation } from "@/systems/simulation/advance-simulation";
 import { isUserOnDraftClock } from "@/systems/draft";
 import { processDerivedProjections } from "@/systems/media-hub";
 import {
+  getExtensionBlockReason,
+  offerContractExtension,
+} from "@/systems/contract-extensions";
+import {
   getPlayerReleaseBlockReason,
   releasePlayerUnderContract,
   type ReleaseMode,
@@ -373,6 +377,52 @@ export async function releaseOwnerPlayer(
       state.meta.rngState,
       saveStore,
       released.events,
+    );
+    return withDashboard(saved);
+  } catch (error) {
+    return fail(error instanceof Error ? error.message : String(error));
+  }
+}
+
+/** Offer one of the active owner team's players an extension. */
+export async function offerOwnerContractExtension(
+  saveId: string,
+  input: { playerId: string; years: number; salary: number },
+  store?: SaveGameStore,
+): Promise<OwnerCommandResult> {
+  const saveStore = getStore(store);
+  const loaded = await saveStore.load(saveId);
+  if (!loaded) {
+    return fail("Save not found.");
+  }
+  const state = loaded.state;
+  const playerId = asPlayerId(input.playerId);
+  const teamId = state.user.activeOwnerTeamId;
+  const terms = { years: input.years, salary: input.salary };
+  const ruleBlock = getActionBlockReason(state, {
+    kind: "contract_extension",
+    playerId,
+    teamId,
+  });
+  if (ruleBlock) {
+    return fail(ruleBlock);
+  }
+  const blocked = getExtensionBlockReason(state, { playerId, teamId, terms });
+  if (blocked) {
+    return fail(blocked);
+  }
+  try {
+    const { result } = offerContractExtension(state, {
+      playerId,
+      teamId,
+      terms,
+    });
+    const saved = await persistWorkingState(
+      saveId,
+      result.state,
+      state.meta.rngState,
+      saveStore,
+      result.events,
     );
     return withDashboard(saved);
   } catch (error) {

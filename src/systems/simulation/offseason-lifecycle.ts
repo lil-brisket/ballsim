@@ -41,7 +41,10 @@ import { transitionPhase } from "@/systems/simulation/phase-machine";
 import { beginRegularSeasonFromPreseason } from "@/systems/simulation/season-lifecycle";
 import { canonicalPreseasonStartDate } from "@/systems/simulation/season-lifecycle-config";
 import { fillShortRosters } from "@/systems/roster-generation";
-import { processCpuContractExtensions } from "@/systems/contract-extensions";
+import {
+  announceFinalContractYears,
+  processCpuContractExtensions,
+} from "@/systems/contract-extensions";
 import { completeAiFreeAgency } from "@/systems/ai-team-decisions";
 import { enforceMaxRosterViaDevelopmentLeague } from "@/systems/development-league/enforce-roster-cap";
 import { expireSituation } from "@/systems/narrative/lifecycle";
@@ -310,7 +313,11 @@ export function initializeNewSeason(state: GameState, rng?: Rng): SystemResult {
     },
   };
   next = expireSeasonalSituations(next);
-  return systemResult(next, [...events, ...phaseResult.events]);
+  return systemResult(next, [
+    ...events,
+    ...phaseResult.events,
+    ...announceFinalContractYears(next),
+  ]);
 }
 
 function isNewSeasonAlreadyInitialized(state: GameState): boolean {

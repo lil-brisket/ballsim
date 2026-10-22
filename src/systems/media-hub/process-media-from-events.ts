@@ -54,6 +54,7 @@ function storyTypeForEvent(event: DomainEvent): MediaStoryType {
     case "PlayerReleased":
     case "PlayerWaived":
     case "PlayerBoughtOut":
+    case "ContractExtensionRefused":
     case "FreeAgentSigned":
     case "FreeAgencyOfferInvalidated":
     case "FreeAgencyOfferWithdrawn":

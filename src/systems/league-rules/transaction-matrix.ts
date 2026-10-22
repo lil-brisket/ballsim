@@ -112,12 +112,12 @@ export const TRANSACTION_LEGALITY_MATRIX: Readonly<
     playoffs_postseason: "blocked",
   },
   contract_extension: {
-    offseason_non_fa: "phase_defined",
-    offseason_fa: "phase_defined",
+    offseason_non_fa: "blocked",
+    offseason_fa: "blocked",
     offseason_roster_decisions: "allowed",
-    preseason: "phase_defined",
-    regular_pre_deadline: "phase_defined",
-    regular_deadline_closed: "phase_defined",
+    preseason: "allowed",
+    regular_pre_deadline: "allowed",
+    regular_deadline_closed: "allowed",
     playoffs_postseason: "blocked",
   },
   player_release: {

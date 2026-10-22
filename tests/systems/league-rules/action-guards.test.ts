@@ -1071,10 +1071,10 @@ const CASES: GuardCase[] = [
     code: "EXTENSION_WINDOW_CLOSED",
   },
   {
-    name: "extension closed outside roster decisions",
+    name: "extension closed during the draft",
     rule: "contract-extension",
     variant: "boundary",
-    setup: identity,
+    setup: (state) => setActivePhase(state, "offseason.draft"),
     action: (state) => {
       const { teamA } = teamPair(state);
       return {

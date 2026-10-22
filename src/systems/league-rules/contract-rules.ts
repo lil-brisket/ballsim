@@ -4,7 +4,8 @@ import { readActivePhaseId } from "@/systems/league-rules/phase-ids";
 import type { RuleViolation } from "@/systems/league-rules/types";
 
 /**
- * Extension / new-contract windows only — no negotiation system here.
+ * Extension / new-contract windows only. Negotiation lives in
+ * systems/contract-extensions.
  */
 export function checkContractExtensionWindow(
   state: GameState,
@@ -29,7 +30,11 @@ export function checkContractExtensionWindow(
       ],
     };
   }
-  if (phaseId === "offseason.roster_decisions") {
+  if (
+    phaseId === "offseason.roster_decisions" ||
+    phaseId === "preseason.preparation" ||
+    phaseId === "regular"
+  ) {
     return { allowed: true, violations: [] };
   }
   return {
@@ -37,7 +42,8 @@ export function checkContractExtensionWindow(
     violations: [
       {
         code: "EXTENSION_WINDOW_CLOSED",
-        message: "Contract extensions are only legal during roster decisions.",
+        message:
+          "Contract extensions are open in the preseason, the regular season and roster decisions.",
         tier: "phase_lock",
         action: "contract_extension",
       },

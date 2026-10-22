@@ -130,6 +130,27 @@ export function generateHeadline(
         summary: `${team} release ${name} and keep paying the rest of his contract.`,
       };
     }
+    case "ContractExtensionRefused": {
+      const name = playerName(state, str(p, "playerId"));
+      const team = teamName(state, str(p, "teamId"));
+      return p.testingMarket === true
+        ? {
+            headline: `${name} will test free agency`,
+            summary: `${name} turns down ${team} again and plans to hear other offers.`,
+          }
+        : {
+            headline: `${name} turns down ${team} extension`,
+            summary: `Talks between ${name} and ${team} are on hold.`,
+          };
+    }
+    case "ContractFinalYear": {
+      const name = playerName(state, str(p, "playerId"));
+      const team = teamName(state, str(p, "teamId"));
+      return {
+        headline: `${name} enters the final year of his deal`,
+        summary: `${team} can extend him before he reaches free agency.`,
+      };
+    }
     case "PlayerBoughtOut": {
       const name = playerName(state, str(p, "playerId"));
       const team = teamName(state, str(p, "teamId"));

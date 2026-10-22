@@ -70,6 +70,7 @@ export {
   exerciseTeamOptionAction,
   declineTeamOptionAction,
   releasePlayerAction,
+  offerContractExtensionAction,
 } from "@/application/actions/inbox-contracts";
 export {
   hireStaffAction,

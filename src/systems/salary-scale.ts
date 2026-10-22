@@ -5,7 +5,7 @@
 
 import { DEFAULT_SALARY_CAP } from "@/systems/salary-cap-config";
 
-export type SalaryKind = "fa" | "rookie" | "vet_min";
+export type SalaryKind = "fa" | "extension" | "rookie" | "vet_min";
 
 export type SalaryForPlayerInput = {
   overall: number;
@@ -38,6 +38,12 @@ export const VET_MIN_CAP_FRACTION = 0.012;
 
 /** Replacement-level overall at or below this may take a vet-min deal. */
 export const REPLACEMENT_LEVEL_OVERALL = 70;
+
+/**
+ * Players re-signing early with their own team take a little less than
+ * their open-market price.
+ */
+export const EXTENSION_SALARY_DISCOUNT = 0.95;
 
 /** Supermax fraction (10+ years, 95+ OVR). */
 export const SUPERMAX_CAP_FRACTION = 0.35;
@@ -103,6 +109,9 @@ export function salaryForPlayer(input: SalaryForPlayerInput): number {
     fraction = rookieCapFraction(input.overall);
   } else {
     fraction = faCapFraction(input.overall, input.age, years);
+    if (input.kind === "extension") {
+      fraction *= EXTENSION_SALARY_DISCOUNT;
+    }
   }
 
   return clamp(roundToThousand(cap * fraction), vetMin, maxSalary);

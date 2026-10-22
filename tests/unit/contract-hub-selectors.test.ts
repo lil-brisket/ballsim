@@ -63,6 +63,7 @@ describe("contract-hub-selectors", () => {
         isExpiring: false,
         isLargeCommitment: true,
         release: null,
+        extension: null,
       },
       {
         contractId: "c2",
@@ -84,6 +85,7 @@ describe("contract-hub-selectors", () => {
         isExpiring: true,
         isLargeCommitment: false,
         release: null,
+        extension: null,
       },
       {
         contractId: "c3",
@@ -105,6 +107,7 @@ describe("contract-hub-selectors", () => {
         isExpiring: false,
         isLargeCommitment: false,
         release: null,
+        extension: null,
       },
     ];
 
