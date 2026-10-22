@@ -161,6 +161,7 @@ function createEightTeamGameState(
         freeAgency: { durationDays: 30, allowExtension: true },
         restrictedFreeAgency: true,
       },
+      draftLottery: { enabled: true, oddsPreset: "flattened", picksDrawn: 4 },
     },
     world: {
       calendar: {

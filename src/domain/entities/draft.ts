@@ -1,3 +1,4 @@
+import type { DraftLotteryResult } from "@/domain/entities/draft-lottery";
 import type { DraftClassId, DraftPickId, PlayerId, TeamId } from "@/domain/ids";
 import {
   PLAYER_ATTRIBUTE_KEYS,
@@ -151,6 +152,8 @@ export type DraftClass = {
   leagueMockDraft?: LeagueMockDraft;
   /** Post-draft grades keyed by teamId. */
   teamGrades?: Record<string, TeamDraftGrade>;
+  /** Lottery draw behind the first-round order (schema v75+; null: none). */
+  lottery?: DraftLotteryResult | null;
 };
 
 export function draftClassIdFor(seasonYear: number): DraftClassId {

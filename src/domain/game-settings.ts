@@ -1,3 +1,4 @@
+import type { DraftLotteryOddsPreset } from "@/domain/entities/draft-lottery";
 /**
  * Canonical Owner Mode career configuration.
  * Settings describe how the league works; runtime state lives on other GameState slices.
@@ -288,6 +289,16 @@ export type GameSettings = {
   history: {
     mode: LeagueHistoryMode;
   };
+  /**
+   * Draft lottery for non-playoff teams (schema v75+). On for new leagues,
+   * off for leagues created before it existed.
+   */
+  draftLottery: {
+    enabled: boolean;
+    oddsPreset: DraftLotteryOddsPreset;
+    /** First-round picks decided by the draw. */
+    picksDrawn: number;
+  };
   offseason: {
     freeAgency: {
       /** Canonical free-agency length. Always 30; not user-configurable. */
@@ -336,6 +347,12 @@ export const DEFAULT_PAYROLL_RULE_SETTINGS = {
   veteranRightsEnabled: true,
   veteranRightsSeasons: 3,
 } as const satisfies Partial<GameSettings["financialRules"]>;
+
+export const DEFAULT_DRAFT_LOTTERY_SETTINGS: GameSettings["draftLottery"] = {
+  enabled: true,
+  oddsPreset: "flattened",
+  picksDrawn: 4,
+};
 
 export const DEFAULT_OFFSEASON_SETTINGS: GameSettings["offseason"] = {
   freeAgency: {
@@ -415,6 +432,7 @@ export const DEFAULT_GAME_SETTINGS: GameSettings = {
   history: {
     mode: "new",
   },
+  draftLottery: { ...DEFAULT_DRAFT_LOTTERY_SETTINGS },
   offseason: {
     freeAgency: {
       durationDays: DEFAULT_OFFSEASON_SETTINGS.freeAgency.durationDays,
@@ -470,6 +488,7 @@ export const CBL_GAME_SETTINGS: GameSettings = {
   history: {
     mode: "new",
   },
+  draftLottery: { ...DEFAULT_DRAFT_LOTTERY_SETTINGS },
   offseason: {
     freeAgency: {
       durationDays: DEFAULT_OFFSEASON_SETTINGS.freeAgency.durationDays,
@@ -658,6 +677,12 @@ export function cloneGameSettings(settings: GameSettings): GameSettings {
       randomizeUserPick: settings.draft.randomizeUserPick,
     },
     history: { ...settings.history },
+    draftLottery: {
+      ...(settings.draftLottery ?? {
+        ...DEFAULT_DRAFT_LOTTERY_SETTINGS,
+        enabled: false,
+      }),
+    },
     offseason: {
       freeAgency: { ...settings.offseason.freeAgency },
       restrictedFreeAgency: settings.offseason.restrictedFreeAgency ?? true,

@@ -1,4 +1,7 @@
-import { DEFAULT_PAYROLL_RULE_SETTINGS } from "@/domain/game-settings";
+import {
+  DEFAULT_DRAFT_LOTTERY_SETTINGS,
+  DEFAULT_PAYROLL_RULE_SETTINGS,
+} from "@/domain/game-settings";
 import type { Player } from "@/domain/entities/player";
 import type { Team } from "@/domain/entities/team";
 import type { PlayerId } from "@/domain/ids";
@@ -29,6 +32,11 @@ export type GameStateV68 = Omit<GameState, "meta" | "world"> & {
 export type GameStateV70 = Omit<GameState, "meta" | "business"> & {
   meta: Omit<GameState["meta"], "schemaVersion"> & { schemaVersion: 70 };
   business: Omit<GameState["business"], "deadMoney" | "extensionTalks">;
+};
+
+export type GameStateV74 = Omit<GameState, "meta" | "settings"> & {
+  meta: Omit<GameState["meta"], "schemaVersion"> & { schemaVersion: 74 };
+  settings: Omit<GameState["settings"], "draftLottery">;
 };
 
 export type GameStateV73 = Omit<GameState, "meta" | "settings" | "business"> & {
@@ -215,7 +223,7 @@ export function migrateV72ToV73(state: GameStateV72): GameStateV73 {
  * business.payrollAssessments. luxuryTaxEnabled keeps its stored value; it
  * now runs.
  */
-export function migrateV73ToV74(state: GameStateV73): GameState {
+export function migrateV73ToV74(state: GameStateV73): GameStateV74 {
   return {
     ...state,
     meta: {
@@ -232,6 +240,27 @@ export function migrateV73ToV74(state: GameStateV73): GameState {
     business: {
       ...state.business,
       payrollAssessments: {},
+    },
+  } as unknown as GameStateV74;
+}
+
+/**
+ * Deterministic v74 → v75: add settings.draftLottery, off. Existing leagues
+ * keep the reverse-standings order unless the owner turns the lottery on.
+ */
+export function migrateV74ToV75(state: GameStateV74): GameState {
+  return {
+    ...state,
+    meta: {
+      ...state.meta,
+      schemaVersion: 75,
+    },
+    settings: {
+      ...state.settings,
+      // A real v74 save has none; keep one if it is somehow present.
+      draftLottery: (
+        state.settings as Partial<Pick<GameState["settings"], "draftLottery">>
+      ).draftLottery ?? { ...DEFAULT_DRAFT_LOTTERY_SETTINGS, enabled: false },
     },
   };
 }

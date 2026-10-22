@@ -457,6 +457,7 @@ export function createFourTeamInitialGameState(
     history: {
       mode: "new",
     },
+    draftLottery: { ...DEFAULT_GAME_SETTINGS.draftLottery },
     offseason: {
       freeAgency: { ...DEFAULT_GAME_SETTINGS.offseason.freeAgency },
       restrictedFreeAgency:

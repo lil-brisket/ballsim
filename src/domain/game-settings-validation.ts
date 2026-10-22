@@ -1,8 +1,10 @@
+import { isDraftLotteryOddsPreset } from "@/domain/entities/draft-lottery";
 import {
   AI_ASSISTANCE_DOMAIN_KEYS,
   DEFAULT_AI_ASSISTANCE,
   DEFAULT_OFFSEASON_SETTINGS,
   DEFAULT_PAYROLL_RULE_SETTINGS,
+  DEFAULT_DRAFT_LOTTERY_SETTINGS,
   DEFAULT_SEASON_EVENTS_SETTINGS,
   DEFAULT_TRADE_DEADLINE_RULE,
   isAiAssistDomainMode,
@@ -431,6 +433,7 @@ export function validateGameSettings(
       mode:
         (history.mode as GameSettings["history"]["mode"] | undefined) ?? "new",
     },
+    draftLottery: resolveDraftLotterySettings(raw.draftLottery, errors),
     offseason: {
       freeAgency: {
         durationDays: freeAgencyDurationDays,
@@ -783,5 +786,52 @@ function resolvePayrollRuleSettings(
     salaryFloorPercent: number("salaryFloorPercent", 0, 95, false),
     veteranRightsEnabled: flag("veteranRightsEnabled"),
     veteranRightsSeasons: number("veteranRightsSeasons", 1, 10, true),
+  };
+}
+
+/**
+ * Draft lottery settings. A missing block means a league from before the
+ * lottery existed: off.
+ */
+function resolveDraftLotterySettings(
+  raw: unknown,
+  errors: string[],
+): GameSettings["draftLottery"] {
+  if (raw === undefined) {
+    return { ...DEFAULT_DRAFT_LOTTERY_SETTINGS, enabled: false };
+  }
+  if (raw === null || typeof raw !== "object" || Array.isArray(raw)) {
+    errors.push("draftLottery must be an object.");
+    return { ...DEFAULT_DRAFT_LOTTERY_SETTINGS, enabled: false };
+  }
+  const record = raw as Record<string, unknown>;
+  const enabled = record.enabled;
+  if (typeof enabled !== "boolean") {
+    errors.push("draftLottery.enabled must be a boolean.");
+  }
+  const oddsPreset =
+    record.oddsPreset ?? DEFAULT_DRAFT_LOTTERY_SETTINGS.oddsPreset;
+  if (!isDraftLotteryOddsPreset(oddsPreset)) {
+    errors.push("draftLottery.oddsPreset must be flattened or weighted.");
+  }
+  const picksDrawn =
+    record.picksDrawn ?? DEFAULT_DRAFT_LOTTERY_SETTINGS.picksDrawn;
+  if (
+    typeof picksDrawn !== "number" ||
+    !Number.isInteger(picksDrawn) ||
+    picksDrawn < 1 ||
+    picksDrawn > 14
+  ) {
+    errors.push("draftLottery.picksDrawn must be an integer from 1 to 14.");
+  }
+  return {
+    enabled: enabled === true,
+    oddsPreset: isDraftLotteryOddsPreset(oddsPreset)
+      ? oddsPreset
+      : DEFAULT_DRAFT_LOTTERY_SETTINGS.oddsPreset,
+    picksDrawn:
+      typeof picksDrawn === "number" && Number.isInteger(picksDrawn)
+        ? picksDrawn
+        : DEFAULT_DRAFT_LOTTERY_SETTINGS.picksDrawn,
   };
 }

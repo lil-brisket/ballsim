@@ -146,6 +146,7 @@ export function reconstructGameSettingsFromState(
     },
     draft: { ...DEFAULT_GAME_SETTINGS.draft },
     history: { ...DEFAULT_GAME_SETTINGS.history },
+    draftLottery: { ...DEFAULT_GAME_SETTINGS.draftLottery },
     offseason: {
       freeAgency: { ...DEFAULT_GAME_SETTINGS.offseason.freeAgency },
       restrictedFreeAgency:

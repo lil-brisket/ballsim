@@ -1,5 +1,6 @@
 import { isJerseyNumber } from "@/domain/jersey-number";
 import { isDeadMoneyReason } from "@/domain/entities/dead-money";
+import { isDraftLotteryOddsPreset } from "@/domain/entities/draft-lottery";
 import { isExtensionResponseKind } from "@/domain/entities/extension-talks";
 import {
   type GameMode,
@@ -1258,6 +1259,10 @@ export function validateGameState(state: unknown): asserts state is GameState {
     if (!isDraftLifecycleStatus(draftValue.status)) {
       fail(`world.drafts[${draftId}].status is invalid.`);
     }
+    validateDraftLottery(
+      (draftValue as Record<string, unknown>).lottery,
+      `world.drafts[${draftId}].lottery`,
+    );
     assertRecord(draftValue.prospects, `world.drafts[${draftId}].prospects`);
     if (!Array.isArray(draftValue.order)) {
       fail(`world.drafts[${draftId}].order must be an array.`);
@@ -1789,5 +1794,33 @@ function validatePayrollAssessments(
         }
       }
     }
+  }
+}
+
+function validateDraftLottery(value: unknown, path: string): void {
+  if (value === undefined || value === null) return;
+  assertRecord(value, path);
+  if (!isDraftLotteryOddsPreset(value.oddsPreset)) {
+    fail(`${path}.oddsPreset is invalid.`);
+  }
+  const pre = value.preLotteryOrder;
+  const final = value.finalOrder;
+  const odds = value.odds;
+  if (!Array.isArray(pre) || !Array.isArray(final) || !Array.isArray(odds)) {
+    fail(`${path} orders and odds must be arrays.`);
+  }
+  if (
+    pre.length !== final.length ||
+    pre.length !== odds.length ||
+    [...pre].sort().join() !== [...final].sort().join()
+  ) {
+    fail(`${path}.finalOrder must be the same teams as preLotteryOrder.`);
+  }
+  const total = (odds as unknown[]).reduce<number>(
+    (sum, p) => sum + (typeof p === "number" ? p : Number.NaN),
+    0,
+  );
+  if (!(Math.abs(total - 1) < 1e-6)) {
+    fail(`${path}.odds must sum to 1.`);
   }
 }

@@ -141,6 +141,7 @@ function createEightTeamPopulatedState(rngSeed: number): GameState {
         freeAgency: { durationDays: 30, allowExtension: true },
         restrictedFreeAgency: true,
       },
+      draftLottery: { enabled: true, oddsPreset: "flattened", picksDrawn: 4 },
       seasonEvents: {
         midseasonAnchor: { method: "schedule_fraction", fraction: 0.5 },
         votingDaysBeforeAnchor: 14,
