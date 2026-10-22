@@ -11,6 +11,7 @@ import {
   type TeamBrandingView,
 } from "@/state/team-branding-view";
 import { buildLeagueCast } from "./accounts";
+import { buildMediaStories, type MediaStoryRing } from "./stories";
 import {
   buildLeagueTimeline,
   parseTimelineFilter,
@@ -129,6 +130,8 @@ export type MediaTimelinePageView = {
   buzz: { mediaAttention: number; href: string };
   /** Current view without the page cursor, for form redirects. */
   returnPath: string;
+  /** Stories strip, first page of "For you" only (empty otherwise). */
+  stories: { rings: MediaStoryRing[]; context: TimelineDisplayContext };
 };
 
 export type MediaTimelinePageOptions = {
@@ -239,6 +242,9 @@ export function toMediaTimelinePageView(
       href: `/dashboard/${saveId}/business`,
     },
     returnPath: mediaPageHref(saveId, { filter, tag }),
+    stories: showTopStory
+      ? buildMediaStories(state, saveId)
+      : { rings: [], context: { saveId, teams: {}, portraits: {} } },
   };
 }
 

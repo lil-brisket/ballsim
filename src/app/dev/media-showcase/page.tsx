@@ -5,6 +5,7 @@
  * light team. Not linked from production navigation.
  */
 
+import { MediaStoriesStrip } from "@/components/media-hub/stories/MediaStoriesStrip";
 import {
   TimelineFeed,
   TimelineLoadMore,
@@ -28,6 +29,24 @@ export default function MediaShowcasePage() {
       </p>
 
       <div className="mx-auto mt-10 max-w-[640px]">
+        <MediaStoriesStrip
+          saveId={SHOWCASE_CONTEXT.saveId}
+          context={SHOWCASE_CONTEXT}
+          rings={[
+            {
+              key: "last-night",
+              label: "Last night",
+              latestOn: SHOWCASE_POSTS[0]!.occurredOn,
+              slides: SHOWCASE_POSTS.slice(0, 3),
+            },
+            {
+              key: "awards",
+              label: "Awards",
+              latestOn: SHOWCASE_POSTS[0]!.occurredOn,
+              slides: SHOWCASE_POSTS.slice(3, 5),
+            },
+          ]}
+        />
         <TimelineFeed>
           {SHOWCASE_POSTS.map((post) => (
             <TimelinePost

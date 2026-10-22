@@ -8,6 +8,7 @@ import {
   MediaScoresStrip,
   MediaSideRail,
 } from "@/components/media-hub/MediaHubRails";
+import { MediaStoriesStrip } from "@/components/media-hub/stories/MediaStoriesStrip";
 import { MediaUnreadBadge } from "@/components/media-hub/MediaUnreadBadge";
 import {
   TimelineFeed,
@@ -75,6 +76,11 @@ export default async function MediaPage({
         </aside>
 
         <div className="min-w-0 space-y-4">
+          <MediaStoriesStrip
+            saveId={saveId}
+            rings={view.stories.rings}
+            context={view.stories.context}
+          />
           <div className="space-y-4 xl:hidden">
             <MediaScoresStrip
               scores={view.scores}
