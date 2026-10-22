@@ -9,10 +9,6 @@ import { bootstrapWorld } from "@/systems/world-pipeline";
 import { createSeededRng } from "@/domain/rng";
 import { addCalendarDays } from "@/domain/calendar-date";
 import { beginRegularSeasonFromPreseason } from "@/systems/simulation/season-lifecycle";
-import {
-  mediaPresentationTier,
-  pickFeaturedStoryId,
-} from "@/components/media-hub/media-importance-tiers";
 
 describe("league-schedule-selectors", () => {
   it("returns today / upcoming / recent slices", () => {
@@ -88,32 +84,5 @@ describe("league-injury-selectors", () => {
 
     const rows = toLeagueInjuryBriefing(state, 3);
     expect(rows.length).toBeLessThanOrEqual(3);
-  });
-});
-
-describe("media-importance-tiers", () => {
-  it("maps importance to presentation tiers", () => {
-    expect(mediaPresentationTier("critical")).toBe("major");
-    expect(mediaPresentationTier("high")).toBe("major");
-    expect(mediaPresentationTier("medium")).toBe("normal");
-    expect(mediaPresentationTier("low")).toBe("background");
-  });
-
-  it("picks featured from major stories only", () => {
-    const id = pickFeaturedStoryId([
-      {
-        id: "a",
-        importance: "low",
-        relevanceScore: 99,
-        occurredOn: "2026-01-02",
-      },
-      {
-        id: "b",
-        importance: "high",
-        relevanceScore: 10,
-        occurredOn: "2026-01-01",
-      },
-    ]);
-    expect(id).toBe("b");
   });
 });

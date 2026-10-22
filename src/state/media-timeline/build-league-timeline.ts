@@ -42,6 +42,10 @@ export type BuildLeagueTimelineOptions = {
   /** Cursor from a previous page (`nextCursor`). */
   before?: string | null;
   limit?: number;
+  /** Only posts carrying this tag (team abbreviation or award name). */
+  tag?: string | null;
+  /** Leave one post out of the feed (the top story shown above it). */
+  excludePostId?: string | null;
 };
 
 type FullTimeline = {
@@ -70,8 +74,13 @@ export function buildLeagueTimeline(
   const full = getFullTimeline(state, viewerTeamId);
   const filter = options.filter ?? "for-you";
   const limit = Math.max(1, options.limit ?? TIMELINE_LIMITS.pageSize);
-  const filtered = full.posts.filter((post) =>
-    matchesFilter(post, filter, viewerTeamId),
+  const tag = options.tag ?? null;
+  const excluded = options.excludePostId ?? null;
+  const filtered = full.posts.filter(
+    (post) =>
+      post.id !== excluded &&
+      (tag === null || post.tags.includes(tag)) &&
+      matchesFilter(post, filter, viewerTeamId),
   );
   const start = cursorStart(filtered, options.before ?? null);
   const page = filtered.slice(start, start + limit);
@@ -87,6 +96,16 @@ export function buildLeagueTimeline(
     trending: full.trending,
     unreadCount: full.unreadCount,
   };
+}
+
+/** Ids of every unread post, for "Mark all read". */
+export function listUnreadTimelinePostIds(
+  state: GameState,
+  viewerTeamId: string = state.user.activeOwnerTeamId,
+): string[] {
+  return getFullTimeline(state, viewerTeamId)
+    .posts.filter((post) => post.unread)
+    .map((post) => post.id);
 }
 
 function getFullTimeline(state: GameState, viewerTeamId: string): FullTimeline {

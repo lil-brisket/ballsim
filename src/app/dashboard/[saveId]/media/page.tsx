@@ -1,17 +1,23 @@
 import type { Metadata } from "next";
-import { buttonClass } from "@/components/ui/Button";
 import { notFound } from "next/navigation";
 import { markAllMediaReadAction } from "@/application/actions";
 import { loadMediaPageView } from "@/application/game-service";
-import { FranchiseMediaAttention } from "@/components/media-hub/FranchiseMediaAttention";
-import { MediaFeed } from "@/components/media-hub/MediaFeed";
-import { MediaOverview } from "@/components/media-hub/MediaOverview";
-import { MediaTabNav } from "@/components/media-hub/MediaTabNav";
+import {
+  MediaFilterList,
+  MediaFilterTabs,
+  MediaScoresStrip,
+  MediaSideRail,
+} from "@/components/media-hub/MediaHubRails";
 import { MediaUnreadBadge } from "@/components/media-hub/MediaUnreadBadge";
-import { SocialFeed } from "@/components/media-hub/SocialFeed";
+import {
+  TimelineFeed,
+  TimelineLoadMore,
+} from "@/components/media-hub/timeline/TimelineFeed";
+import { TimelinePost } from "@/components/media-hub/timeline/TimelinePost";
+import { buttonClass } from "@/components/ui/Button";
 import { ErrorState } from "@/components/ui/EmptyState";
 import { PageHeader } from "@/components/ui/PageHeader";
-import { Section } from "@/components/ui/Section";
+import { SectionHeading } from "@/components/ui/SectionHeading";
 
 export const metadata: Metadata = { title: "Media Hub" };
 
@@ -19,94 +25,102 @@ type MediaPageProps = {
   params: Promise<{ saveId: string }>;
   searchParams: Promise<{
     error?: string;
-    tab?: string;
     filter?: string;
+    /** Pre-timeline links (`?tab=games`) map onto the new filters. */
+    tab?: string;
+    tag?: string;
+    before?: string;
   }>;
 };
 
-/**
- * League Media Hub — narrative stories, featured hierarchy, social reactions.
- */
+/** League timeline: scores, standout games, awards, moves and injuries. */
 export default async function MediaPage({
   params,
   searchParams,
 }: MediaPageProps) {
   const { saveId } = await params;
-  const { error, tab, filter } = await searchParams;
-  const view = await loadMediaPageView(saveId, { tab, filter });
+  const { error, filter, tab, tag, before } = await searchParams;
+  const view = await loadMediaPageView(saveId, { filter, tab, tag, before });
   if (!view) {
     notFound();
   }
-
-  const returnParams = new URLSearchParams();
-  if (view.tab !== "latest") {
-    returnParams.set("tab", view.tab);
-  }
-  if (view.tab === "latest" && view.latestFilter !== "all") {
-    returnParams.set("filter", view.latestFilter);
-  }
-  const returnQs = returnParams.toString();
-  const returnPath = returnQs
-    ? `/dashboard/${saveId}/media?${returnQs}`
-    : `/dashboard/${saveId}/media`;
-
-  const feedItems = view.items.map((item) => ({
-    ...item,
-    saveId,
-    returnPath,
-    reactionCount: item.reactionCount,
-  }));
 
   return (
     <>
       <PageHeader
         title="Media Hub"
         actions={
-          <form action={markAllMediaReadAction}>
-            <input type="hidden" name="saveId" value={saveId} />
-            <input type="hidden" name="returnPath" value={returnPath} />
-            <button
-              type="submit"
-              className={buttonClass({ variant: "secondary" })}
-            >
-              Mark all read
-              <MediaUnreadBadge count={view.unreadCount} />
-            </button>
-          </form>
+          view.unreadCount > 0 ? (
+            <form action={markAllMediaReadAction}>
+              <input type="hidden" name="saveId" value={saveId} />
+              <input type="hidden" name="returnPath" value={view.returnPath} />
+              <button
+                type="submit"
+                className={buttonClass({ variant: "quiet" })}
+              >
+                Mark all read
+                <MediaUnreadBadge count={view.unreadCount} />
+              </button>
+            </form>
+          ) : null
         }
       />
       {error ? <ErrorState message={error} /> : null}
 
-      <MediaOverview
-        view={view}
-        saveId={saveId}
-        returnPath={returnPath}
-        feedHref={`${returnPath}#your-feed`}
-      />
+      <div className="grid gap-6 xl:grid-cols-[12rem_minmax(0,40rem)_minmax(0,1fr)] xl:gap-8">
+        <aside className="hidden xl:block">
+          <div className="sticky top-4">
+            <MediaFilterList filters={view.filters} />
+          </div>
+        </aside>
 
-      <div id="your-feed" className="min-w-0 scroll-mt-4">
-        <Section title="Your Feed">
-          <MediaTabNav
-            saveId={saveId}
-            activeTab={view.tab}
-            latestFilter={view.latestFilter}
-            unreadCount={view.unreadCount}
-          />
-          {view.tab === "social" ? (
-            <SocialFeed
-              posts={view.socialPosts}
-              mediaHrefBase={`/dashboard/${saveId}/media`}
+        <div className="min-w-0 space-y-4">
+          <div className="space-y-4 xl:hidden">
+            <MediaScoresStrip
+              scores={view.scores}
+              dateLabel={view.scoresDateLabel}
             />
+            <MediaFilterTabs filters={view.filters} />
+          </div>
+
+          {view.tag ? (
+            <SectionHeading
+              as="h2"
+              title={`#${view.tag.replace(/\s+/g, "")}`}
+            />
+          ) : null}
+
+          {view.topStory ? (
+            <section
+              aria-label="Top story"
+              className="border-b border-zinc-800"
+            >
+              <SectionHeading as="h2" title="Top story" />
+              <TimelinePost post={view.topStory} context={view.context} />
+            </section>
+          ) : null}
+
+          {view.emptyMessage ? (
+            <p className="py-6 text-sm text-zinc-400">{view.emptyMessage}</p>
           ) : (
-            <MediaFeed
-              featuredStoryId={view.featuredStoryId}
-              items={feedItems}
-            />
+            <TimelineFeed>
+              {view.posts.map((post) => (
+                <TimelinePost
+                  key={post.id}
+                  post={post}
+                  context={view.context}
+                />
+              ))}
+            </TimelineFeed>
           )}
-        </Section>
-      </div>
 
-      <FranchiseMediaAttention attention={view.franchiseAttention} />
+          <TimelineLoadMore href={view.loadMoreHref} />
+        </div>
+
+        <aside className="hidden xl:block" aria-label="Around the league">
+          <MediaSideRail view={view} />
+        </aside>
+      </div>
     </>
   );
 }

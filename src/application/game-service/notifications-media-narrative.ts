@@ -1,6 +1,7 @@
 import "server-only";
 import type { SaveGameStore } from "@/persistence/save-game-store";
 import { getOwnedTeamIds, withOwnedFranchise } from "@/state/owner-context";
+import { listUnreadTimelinePostIds } from "@/state/media-timeline/build-league-timeline";
 import { asMediaItemId, asNarrativeSituationId } from "@/domain/ids";
 import {
   acknowledgeNarrativeSituationInState,
@@ -103,7 +104,11 @@ export async function markMediaRead(
   }
 }
 
-/** Mark all Media Hub items read for the active owned franchise. */
+/**
+ * Mark everything read for the active owned franchise: the unread timeline
+ * posts the Media Hub shows, plus the persisted media items the nav badge
+ * still counts.
+ */
 export async function markAllMediaRead(
   saveId: string,
   store?: SaveGameStore,
@@ -114,22 +119,26 @@ export async function markAllMediaRead(
     return fail("Save not found.");
   }
   const currentDate = loaded.state.world.calendar.currentDate;
+  const timelineIds = listUnreadTimelinePostIds(loaded.state);
   const working = withOwnedFranchise(
     loaded.state,
     loaded.state.user.activeOwnerTeamId,
     (franchise) => {
-      const items = franchise.mediaFeed?.items ?? [];
-      if (items.length === 0) {
+      const ids = [
+        ...timelineIds,
+        ...(franchise.mediaFeed?.items ?? []).map((item) => item.id),
+      ];
+      if (ids.length === 0) {
         return franchise;
       }
       const nextReadState = { ...(franchise.mediaReadState ?? {}) };
       let changed = false;
-      for (const item of items) {
-        const existing = nextReadState[item.id] ?? {};
+      for (const id of ids) {
+        const existing = nextReadState[id] ?? {};
         if (existing.readAt || existing.dismissedAt) {
           continue;
         }
-        nextReadState[item.id] = { ...existing, readAt: currentDate };
+        nextReadState[id] = { ...existing, readAt: currentDate };
         changed = true;
       }
       if (!changed) {
