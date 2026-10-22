@@ -437,6 +437,7 @@ export function validateGameState(state: unknown): asserts state is GameState {
   assertRecord(business.tradeBlocks, "business.tradeBlocks");
   validateDeadMoney(business.deadMoney, world.teams, world.players);
   validateExtensionTalks(business.extensionTalks, world.teams, world.players);
+  validatePayrollAssessments(business.payrollAssessments, world.teams);
 
   const staffContracts = (business as Record<string, unknown>).staffContracts;
   const sponsorships = (business as Record<string, unknown>).sponsorships;
@@ -1738,6 +1739,53 @@ function validateExtensionTalks(
       ]) {
         if (!Number.isInteger(response[key])) {
           fail(`${path}.lastResponse.${key} must be an integer.`);
+        }
+      }
+    }
+  }
+}
+
+function validatePayrollAssessments(
+  value: unknown,
+  teams: Record<string, unknown>,
+): void {
+  if (value == null) {
+    fail("business.payrollAssessments is required.");
+  }
+  assertRecord(value, "business.payrollAssessments");
+  for (const [year, byTeam] of Object.entries(value)) {
+    if (!/^\d{4}$/.test(year)) {
+      fail(`business.payrollAssessments key "${year}" must be a season year.`);
+    }
+    assertRecord(byTeam, `business.payrollAssessments[${year}]`);
+    for (const [teamId, row] of Object.entries(byTeam)) {
+      const path = `business.payrollAssessments[${year}][${teamId}]`;
+      assertRecord(row, path);
+      if (row.teamId !== teamId) {
+        fail(`${path}.teamId must equal its key.`);
+      }
+      // Teams can leave the league (relocation keeps ids), so ids are kept.
+      void teams;
+      if (row.seasonYear !== Number(year)) {
+        fail(`${path}.seasonYear must equal ${year}.`);
+      }
+      for (const key of ["payroll", "taxBill", "floorShortfall", "taxShare"]) {
+        const amount = row[key];
+        if (
+          typeof amount !== "number" ||
+          !Number.isInteger(amount) ||
+          amount < 0
+        ) {
+          fail(`${path}.${key} must be a non-negative integer.`);
+        }
+      }
+      for (const key of ["threshold", "floor"]) {
+        const amount = row[key];
+        if (
+          amount !== null &&
+          (typeof amount !== "number" || !Number.isInteger(amount))
+        ) {
+          fail(`${path}.${key} must be an integer or null.`);
         }
       }
     }

@@ -1,3 +1,4 @@
+import { DEFAULT_PAYROLL_RULE_SETTINGS } from "@/domain/game-settings";
 import { createEmptyPlayoffTournament } from "@/domain/entities/playoffs";
 import { createEmptySeasonEventsState } from "@/domain/entities/season-events";
 import { createEmptyTeamStanding } from "@/domain/entities/standings";
@@ -253,6 +254,7 @@ export function createInitialGameState(
       rfaStatuses: {},
       deadMoney: {},
       extensionTalks: {},
+      payrollAssessments: {},
       tradeBlocks: {},
       ...phaseE,
     },
@@ -442,6 +444,7 @@ export function createFourTeamInitialGameState(
       staffBudget: DEFAULT_GAME_SETTINGS.financialRules.staffBudget,
       luxuryTaxEnabled: true,
       revenueSharingEnabled: true,
+      ...DEFAULT_PAYROLL_RULE_SETTINGS,
     },
     draft: {
       mode: "standard",
@@ -588,6 +591,7 @@ export function createFourTeamInitialGameState(
       rfaStatuses: {},
       deadMoney: {},
       extensionTalks: {},
+      payrollAssessments: {},
       tradeBlocks: {},
       ...phaseE,
     },

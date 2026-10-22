@@ -271,6 +271,7 @@ describe("season lifecycle", () => {
         rfaStatuses: {},
         deadMoney: {},
         extensionTalks: {},
+        payrollAssessments: {},
         tradeBlocks: {},
         ...createPhaseEBusinessDefaults(
           generated.teams.map((team) => team.id as TeamId),

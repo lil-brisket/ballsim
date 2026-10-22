@@ -1,3 +1,4 @@
+import { DEFAULT_PAYROLL_RULE_SETTINGS } from "@/domain/game-settings";
 import { describe, expect, it } from "vitest";
 import { createEmptyPlayoffTournament } from "@/domain/entities/playoffs";
 import { createEmptySeasonEventsState } from "@/domain/entities/season-events";
@@ -125,6 +126,7 @@ function createEightTeamPopulatedState(rngSeed: number): GameState {
         staffBudget: 12_000_000,
         luxuryTaxEnabled: true,
         revenueSharingEnabled: true,
+        ...DEFAULT_PAYROLL_RULE_SETTINGS,
       },
       draft: {
         mode: "standard",
@@ -216,6 +218,7 @@ function createEightTeamPopulatedState(rngSeed: number): GameState {
       rfaStatuses: {},
       deadMoney: {},
       extensionTalks: {},
+      payrollAssessments: {},
       tradeBlocks: {},
       ...createPhaseEBusinessDefaults(
         generated.teams.map((t) => t.id as TeamId),

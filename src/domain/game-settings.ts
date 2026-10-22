@@ -259,9 +259,21 @@ export type GameSettings = {
      * Default {@link DEFAULT_STAFF_BUDGET} from staff-budget-config.
      */
     staffBudget: number;
-    /** Persisted only; luxury tax engine is not implemented yet. */
+    /** Luxury tax on payroll above the threshold (schema v74+ engine). */
     luxuryTaxEnabled: boolean;
     revenueSharingEnabled: boolean;
+    /** Tax line as a percent above the salary cap (10 = 110% of the cap). */
+    luxuryTaxThresholdPercent: number;
+    /** Tax per dollar in the first tier; each later tier adds 0.5. */
+    luxuryTaxBaseRate: number;
+    /** Teams below the floor pay the shortfall at the end of the regular season. */
+    salaryFloorEnabled: boolean;
+    /** Salary floor as a percent of the salary cap. */
+    salaryFloorPercent: number;
+    /** Teams may exceed the cap to re-sign their own long-serving players. */
+    veteranRightsEnabled: boolean;
+    /** Straight seasons with the team that earn veteran rights. */
+    veteranRightsSeasons: number;
   };
   draft: {
     mode: DraftMode;
@@ -314,6 +326,16 @@ export type GameSettings = {
     tournamentFieldSize: number;
   };
 };
+
+/** Payroll-rule defaults (schema v74+). */
+export const DEFAULT_PAYROLL_RULE_SETTINGS = {
+  luxuryTaxThresholdPercent: 10,
+  luxuryTaxBaseRate: 1.5,
+  salaryFloorEnabled: true,
+  salaryFloorPercent: 40,
+  veteranRightsEnabled: true,
+  veteranRightsSeasons: 3,
+} as const satisfies Partial<GameSettings["financialRules"]>;
 
 export const DEFAULT_OFFSEASON_SETTINGS: GameSettings["offseason"] = {
   freeAgency: {
@@ -380,6 +402,7 @@ export const DEFAULT_GAME_SETTINGS: GameSettings = {
     staffBudget: DEFAULT_STAFF_BUDGET,
     luxuryTaxEnabled: true,
     revenueSharingEnabled: true,
+    ...DEFAULT_PAYROLL_RULE_SETTINGS,
   },
   draft: {
     mode: "standard",
@@ -434,6 +457,7 @@ export const CBL_GAME_SETTINGS: GameSettings = {
     staffBudget: DEFAULT_STAFF_BUDGET,
     luxuryTaxEnabled: true,
     revenueSharingEnabled: true,
+    ...DEFAULT_PAYROLL_RULE_SETTINGS,
   },
   draft: {
     mode: "standard",

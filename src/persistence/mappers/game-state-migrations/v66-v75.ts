@@ -1,3 +1,4 @@
+import { DEFAULT_PAYROLL_RULE_SETTINGS } from "@/domain/game-settings";
 import type { Player } from "@/domain/entities/player";
 import type { Team } from "@/domain/entities/team";
 import type { PlayerId } from "@/domain/ids";
@@ -28,6 +29,17 @@ export type GameStateV68 = Omit<GameState, "meta" | "world"> & {
 export type GameStateV70 = Omit<GameState, "meta" | "business"> & {
   meta: Omit<GameState["meta"], "schemaVersion"> & { schemaVersion: 70 };
   business: Omit<GameState["business"], "deadMoney" | "extensionTalks">;
+};
+
+export type GameStateV73 = Omit<GameState, "meta" | "settings" | "business"> & {
+  meta: Omit<GameState["meta"], "schemaVersion"> & { schemaVersion: 73 };
+  settings: Omit<GameState["settings"], "financialRules"> & {
+    financialRules: Omit<
+      GameState["settings"]["financialRules"],
+      keyof typeof DEFAULT_PAYROLL_RULE_SETTINGS
+    >;
+  };
+  business: Omit<GameState["business"], "payrollAssessments">;
 };
 
 export type GameStateV72 = Omit<GameState, "meta" | "settings"> & {
@@ -180,7 +192,7 @@ export function migrateV71ToV72(state: GameStateV71): GameStateV72 {
  * RFA rules existed before but never ran (contracts ended before players
  * were classified); v73 turns them on for every save.
  */
-export function migrateV72ToV73(state: GameStateV72): GameState {
+export function migrateV72ToV73(state: GameStateV72): GameStateV73 {
   return {
     ...state,
     meta: {
@@ -193,6 +205,33 @@ export function migrateV72ToV73(state: GameStateV72): GameState {
         ...state.settings.offseason,
         restrictedFreeAgency: true,
       },
+    },
+  } as unknown as GameStateV73;
+}
+
+/**
+ * Deterministic v73 → v74: payroll rules. Adds the tax threshold and rate,
+ * the salary floor and veteran rights to settings (defaults), and an empty
+ * business.payrollAssessments. luxuryTaxEnabled keeps its stored value; it
+ * now runs.
+ */
+export function migrateV73ToV74(state: GameStateV73): GameState {
+  return {
+    ...state,
+    meta: {
+      ...state.meta,
+      schemaVersion: 74,
+    },
+    settings: {
+      ...state.settings,
+      financialRules: {
+        ...state.settings.financialRules,
+        ...DEFAULT_PAYROLL_RULE_SETTINGS,
+      },
+    },
+    business: {
+      ...state.business,
+      payrollAssessments: {},
     },
   };
 }

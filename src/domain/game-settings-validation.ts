@@ -2,6 +2,7 @@ import {
   AI_ASSISTANCE_DOMAIN_KEYS,
   DEFAULT_AI_ASSISTANCE,
   DEFAULT_OFFSEASON_SETTINGS,
+  DEFAULT_PAYROLL_RULE_SETTINGS,
   DEFAULT_SEASON_EVENTS_SETTINGS,
   DEFAULT_TRADE_DEADLINE_RULE,
   isAiAssistDomainMode,
@@ -244,6 +245,7 @@ export function validateGameSettings(
   if (typeof revenueSharingEnabled !== "boolean") {
     errors.push("financialRules.revenueSharingEnabled must be a boolean.");
   }
+  const payrollRules = resolvePayrollRuleSettings(financialRules, errors);
 
   const salaryCap =
     financialRules.salaryCap === undefined
@@ -412,6 +414,7 @@ export function validateGameSettings(
       staffBudget: staffBudget as number,
       luxuryTaxEnabled: luxuryTaxEnabled as boolean,
       revenueSharingEnabled: revenueSharingEnabled as boolean,
+      ...payrollRules,
     },
     draft: {
       mode:
@@ -722,4 +725,63 @@ function asRecord(
     return null;
   }
   return value as Record<string, unknown>;
+}
+
+/**
+ * Luxury tax, salary floor and veteran-rights settings. Missing values take
+ * the defaults (saves before v74).
+ */
+function resolvePayrollRuleSettings(
+  financialRules: Record<string, unknown>,
+  errors: string[],
+): typeof DEFAULT_PAYROLL_RULE_SETTINGS extends infer D
+  ? { [K in keyof D]: D[K] extends boolean ? boolean : number }
+  : never {
+  const number = (
+    key: keyof typeof DEFAULT_PAYROLL_RULE_SETTINGS,
+    min: number,
+    max: number,
+    integer: boolean,
+  ): number => {
+    const value = financialRules[key];
+    if (value === undefined)
+      return DEFAULT_PAYROLL_RULE_SETTINGS[key] as number;
+    if (
+      typeof value !== "number" ||
+      !Number.isFinite(value) ||
+      value < min ||
+      value > max ||
+      (integer && !Number.isInteger(value))
+    ) {
+      errors.push(
+        `financialRules.${key} must be ${integer ? "an integer" : "a number"} from ${min} to ${max}.`,
+      );
+      return DEFAULT_PAYROLL_RULE_SETTINGS[key] as number;
+    }
+    return value;
+  };
+  const flag = (
+    key: "salaryFloorEnabled" | "veteranRightsEnabled",
+  ): boolean => {
+    const value = financialRules[key];
+    if (value === undefined) return DEFAULT_PAYROLL_RULE_SETTINGS[key];
+    if (typeof value !== "boolean") {
+      errors.push(`financialRules.${key} must be a boolean.`);
+      return DEFAULT_PAYROLL_RULE_SETTINGS[key];
+    }
+    return value;
+  };
+  return {
+    luxuryTaxThresholdPercent: number(
+      "luxuryTaxThresholdPercent",
+      0,
+      100,
+      false,
+    ),
+    luxuryTaxBaseRate: number("luxuryTaxBaseRate", 0.1, 5, false),
+    salaryFloorEnabled: flag("salaryFloorEnabled"),
+    salaryFloorPercent: number("salaryFloorPercent", 0, 95, false),
+    veteranRightsEnabled: flag("veteranRightsEnabled"),
+    veteranRightsSeasons: number("veteranRightsSeasons", 1, 10, true),
+  };
 }
