@@ -167,6 +167,7 @@ function makeView(overrides: Partial<CalendarPageView> = {}): CalendarPageView {
     interrupt: null,
     resumeTo: null,
     simulationSummary: null,
+    aroundTheLeague: null,
     ...overrides,
   };
 }

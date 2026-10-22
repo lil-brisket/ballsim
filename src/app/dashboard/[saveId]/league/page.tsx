@@ -1,3 +1,4 @@
+import { AroundTheLeaguePanel } from "@/components/owner/dashboard/AroundTheLeaguePanel";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -9,7 +10,6 @@ import {
 } from "@/components/league/LeagueTier1Panels";
 import {
   LeagueInjuriesBriefing,
-  LeagueMediaBriefing,
   LeagueRecentResultsPanel,
   LeagueTransactionsBriefing,
 } from "@/components/league/LeagueTier2Panels";
@@ -79,7 +79,7 @@ export default async function LeagueHubPage({
         <LeagueTransactionsBriefing saveId={saveId} rows={view.transactions} />
         <LeagueInjuriesBriefing saveId={saveId} rows={view.injuries} />
       </div>
-      <LeagueMediaBriefing saveId={saveId} rows={view.media} />
+      <AroundTheLeaguePanel timeline={view.media} saveId={saveId} />
     </div>
   );
 }

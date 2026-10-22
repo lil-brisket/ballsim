@@ -215,7 +215,7 @@ export default async function DashboardPage({
       {/* Secondary tier: supporting context, quieter than the hero. */}
       <div className="grid gap-8 lg:grid-cols-2 lg:items-start">
         <TeamSnapshotPanel team={dash.team} saveId={saveId} />
-        <AroundTheLeaguePanel headlines={dash.mediaHeadlines} saveId={saveId} />
+        <AroundTheLeaguePanel timeline={dash.mediaTimeline} saveId={saveId} />
         <FranchiseHealthPanel health={dash.health} insights={dash.insights} />
         <OwnerPanel owner={dash.owner} />
         <div className="opacity-90 lg:col-span-2">

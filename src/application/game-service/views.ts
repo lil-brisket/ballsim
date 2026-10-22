@@ -113,7 +113,11 @@ import {
   type LeagueScheduleView,
   toLeagueScheduleView,
 } from "@/state/league-schedule-selectors";
-import { type MediaHubView, toMediaHubView } from "@/state/media-hub-selectors";
+import {
+  type MediaTimelinePageOptions,
+  type MediaTimelinePageView,
+  toMediaTimelinePageView,
+} from "@/state/media-timeline/page-view";
 import type {
   OwnerSaveView,
   CreateGameResult,
@@ -534,17 +538,17 @@ export async function loadLeagueScheduleView(
 }
 
 /**
- * Media Hub page model: tab-filtered stories, social posts, unread count,
- * and franchise attention stats for the active owned franchise.
+ * Media Hub page model: one page of the league timeline for the active owned
+ * franchise, plus scores, trending tags and buzz.
  */
 export async function loadMediaPageView(
   saveId: string,
-  options: { tab?: string; filter?: string } = {},
+  options: MediaTimelinePageOptions = {},
   store?: SaveGameStore,
-): Promise<MediaHubView | null> {
+): Promise<MediaTimelinePageView | null> {
   const loaded = await getStore(store).load(saveId);
   if (!loaded) {
     return null;
   }
-  return toMediaHubView(loaded.state, options);
+  return toMediaTimelinePageView(loaded.state, saveId, options);
 }

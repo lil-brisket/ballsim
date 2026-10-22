@@ -6,7 +6,6 @@ import { ScoreBug } from "@/components/ui/ScoreBug";
 import { Section } from "@/components/ui/Section";
 import type {
   LeagueGameResultRow,
-  LeagueMediaBrief,
   LeagueTransactionBrief,
 } from "@/state/league-hub-selectors";
 import type { LeagueInjuryRow } from "@/state/league-injury-selectors";
@@ -145,61 +144,6 @@ export function LeagueInjuriesBriefing(props: {
               <span className="text-sm text-zinc-500">
                 {row.severity} · {row.bodyPart}
               </span>
-            </li>
-          ))}
-        </ul>
-      )}
-    </Section>
-  );
-}
-
-export function LeagueMediaBriefing(props: {
-  saveId: string;
-  rows: LeagueMediaBrief[];
-}) {
-  const href = `/dashboard/${props.saveId}/media`;
-  return (
-    <Section
-      title="Around the League"
-      action={
-        <Link
-          href={href}
-          className={cn(
-            "text-sm text-team-ink underline-offset-4 hover:underline",
-            focusRingClass,
-          )}
-        >
-          Media Hub
-        </Link>
-      }
-    >
-      {props.rows.length === 0 ? (
-        <EmptyState message="No league stories yet." />
-      ) : (
-        <ul className="space-y-2">
-          {props.rows.map((item) => (
-            <li key={item.id}>
-              <Link
-                href={item.href}
-                className={cn(
-                  "block rounded-lg border border-zinc-800 bg-zinc-900/40 px-3 py-2 transition-colors hover:border-zinc-600",
-                  focusRingClass,
-                )}
-              >
-                <div className="flex flex-wrap items-center gap-2">
-                  <p className="text-sm font-medium text-zinc-100">
-                    {item.headline}
-                  </p>
-                  {item.unread ? (
-                    <span className="text-sm font-medium text-team-ink">
-                      New
-                    </span>
-                  ) : null}
-                </div>
-                <p className="mt-0.5 line-clamp-1 text-sm text-zinc-500">
-                  {formatGameDate(item.occurredOn)} · {item.importance}
-                </p>
-              </Link>
             </li>
           ))}
         </ul>

@@ -951,6 +951,7 @@ export function CalendarWorkspace(props: {
         leagueEvents={props.view.simulationSummary?.leagueEvents}
         injuryNotes={props.view.simulationSummary?.injuryNotes}
         transactionCount={props.view.simulationSummary?.transactionCount}
+        aroundTheLeague={props.view.aroundTheLeague}
         fromDate={props.fromDate}
         toDate={props.view.currentDate}
         saveId={props.saveId}

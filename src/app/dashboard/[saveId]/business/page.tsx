@@ -13,6 +13,7 @@ import { formatGameDate } from "@/presentation/game-date";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { Section } from "@/components/ui/Section";
 import { Gauge } from "@/components/ui/Gauge";
+import { InfoTip } from "@/components/ui/InfoTip";
 import { StatCard } from "@/components/ui/StatCard";
 
 export const metadata: Metadata = { title: "Business" };
@@ -53,7 +54,20 @@ export default async function MarketingPage({
           }
         />
         <StatCard label="Awareness" value={`${biz.awareness}`} />
-        <StatCard label="Media attention" value={`${biz.mediaAttention}`} />
+        <StatCard
+          label="Media attention"
+          value={
+            <span className="inline-flex items-center gap-2">
+              {biz.mediaAttention}
+              <InfoTip label="Media attention">
+                Big games, awards and moves raise media attention, and it drifts
+                back toward neutral each week. Higher attention slightly
+                increases monthly sponsorship cash; it doesn&apos;t guarantee a
+                return.
+              </InfoTip>
+            </span>
+          }
+        />
         <StatCard label="Reputation" value={`${biz.reputation}`} />
         <StatCard label="Market size" value={`${biz.marketSize}`} />
         <StatCard label="Arena capacity" value={`${biz.arenaCapacity}`} />

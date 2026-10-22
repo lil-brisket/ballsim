@@ -4,17 +4,14 @@
  */
 
 import { isContractActive } from "@/domain/entities/contract";
-import { isMediaUnread } from "@/domain/entities/media-item";
 import {
   getBlockingOwnerDecisions,
   getPendingDecisionsForTeam,
 } from "@/domain/entities/owner-decision";
 import { STARTER_STAFF_ROLES } from "@/domain/entities/staff-roles";
 import type { GameState } from "@/state/game-state";
-import {
-  getActiveOwnedFranchise,
-  getActiveOwnerTeamId,
-} from "@/state/owner-context";
+import { buildLeagueTimeline } from "@/state/media-timeline/build-league-timeline";
+import { getActiveOwnerTeamId } from "@/state/owner-context";
 import {
   isOffseasonPeriod,
   isRelocationAccessible,
@@ -44,7 +41,6 @@ export type OwnerNavBadgeMap = Partial<Record<OwnerNavBadgeKey, OwnerNavBadge>>;
 export function computeOwnerNavBadges(state: GameState): OwnerNavBadgeMap {
   const badges: OwnerNavBadgeMap = {};
   const teamId = getActiveOwnerTeamId(state);
-  const franchise = getActiveOwnedFranchise(state);
   const calendar = getCalendarContext(state);
   const briefing = getCalendarTodayBriefing(state);
 
@@ -93,11 +89,11 @@ export function computeOwnerNavBadges(state: GameState): OwnerNavBadgeMap {
     }
   }
 
-  const mediaFeed = franchise.mediaFeed?.items ?? [];
-  const readState = franchise.mediaReadState ?? {};
-  const unreadMedia = mediaFeed.filter((item) =>
-    isMediaUnread(item, readState),
-  ).length;
+  // Same unread set the Media Hub shows.
+  const unreadMedia = buildLeagueTimeline(state, {
+    viewerTeamId: teamId,
+    limit: 1,
+  }).unreadCount;
   if (unreadMedia > 0) {
     badges.media = {
       count: unreadMedia,

@@ -40,6 +40,43 @@ describe("SimulationSummaryModal result reveal", () => {
   });
 });
 
+describe("SimulationSummaryModal around the league", () => {
+  it("links the Media Hub top story", () => {
+    render(
+      <SimulationSummaryModal
+        open
+        daysAdvanced={3}
+        highlightCount={0}
+        returnPath="/dashboard/s/calendar"
+        recentHighlights={[]}
+        saveId="s"
+        aroundTheLeague={{
+          authorName: "Mason Pacific",
+          text: "The Cobras cruise past the Fury 120–94.",
+          href: "/dashboard/s/media",
+        }}
+      />,
+    );
+    const link = screen.getByRole("link", { name: /Mason Pacific/ });
+    expect(link.getAttribute("href")).toBe("/dashboard/s/media");
+    expect(link.textContent).toContain("120–94");
+  });
+
+  it("leaves the section out when there is no story", () => {
+    render(
+      <SimulationSummaryModal
+        open
+        daysAdvanced={3}
+        highlightCount={0}
+        returnPath="/dashboard/s/calendar"
+        recentHighlights={[]}
+        saveId="s"
+      />,
+    );
+    expect(screen.queryByText("Around the league")).toBeNull();
+  });
+});
+
 describe("NotificationItem", () => {
   it("renders title, message and short date", () => {
     render(
