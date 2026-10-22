@@ -250,6 +250,32 @@ function heroGraphic(
 }
 
 /**
+ * The per-kind graphic and numbers for a post, in the lead team's branding.
+ * Shared by the top-story hero and the story slides.
+ */
+export function postHeroGraphic(
+  post: TimelinePostView,
+  context: TimelineDisplayContext,
+): {
+  branding: TeamBrandingView | null;
+  graphic: ReactNode;
+  numbers: ReactNode;
+  player: TimelinePlayerRef | null;
+} {
+  const team = heroTeamOf(post.attachment);
+  const branding = team ? teamBrandingFor(context, team) : null;
+  const hero = heroGraphic(post.attachment, branding, context);
+  // League news has no lead team: the author's mark stands in.
+  const graphic =
+    post.attachment.type === "league" ? (
+      <AccountAvatar account={post.author} context={context} size="large" />
+    ) : (
+      hero.graphic
+    );
+  return { branding, graphic, numbers: hero.numbers, player: hero.player };
+}
+
+/**
  * The Media Hub's one hero: the top story as a broadcast graphic in the lead
  * team's colours. The post is not repeated in the feed below.
  */
@@ -259,18 +285,8 @@ export function TopStoryHero(props: {
 }) {
   const { post, context } = props;
   const headlineId = useId();
-  const team = heroTeamOf(post.attachment);
-  const branding = team ? teamBrandingFor(context, team) : null;
   const { headline, dek } = heroHeadline(post.text);
-  const hero = heroGraphic(post.attachment, branding, context);
-  const { numbers, player } = hero;
-  // League news has no lead team: the author's mark stands in.
-  const graphic =
-    post.attachment.type === "league" ? (
-      <AccountAvatar account={post.author} context={context} size="large" />
-    ) : (
-      hero.graphic
-    );
+  const { branding, graphic, numbers, player } = postHeroGraphic(post, context);
 
   return (
     <section aria-label="Top story">

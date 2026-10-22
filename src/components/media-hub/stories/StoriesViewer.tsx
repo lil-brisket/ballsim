@@ -25,13 +25,17 @@ export type StoryViewerRing = {
   latestOn: string;
   slideCount: number;
   slides: ReactNode[];
-  accentColor?: string | null;
+  /** The lead slide's face or logo, drawn inside the ring. */
+  media: ReactNode;
+  mediaKind: StoryRingMediaKind;
 };
+
+export type StoryRingMediaKind = "portrait" | "logo" | "trophy";
 
 export const STORY_AUTO_ADVANCE_MS = 5000;
 
 const FOCUSABLE =
-  'a[href], button:not([disabled]), textarea:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])';
+  'a[href], button:not([disabled]):not([tabindex="-1"]), textarea:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
 const REDUCED_MOTION_QUERY = "(prefers-reduced-motion: reduce)";
 
@@ -138,69 +142,6 @@ function getReducedMotion(): boolean {
   }
 }
 
-/* ---------- glyphs ---------- */
-
-function StoryGlyph(props: { storyKey: string }) {
-  const common = {
-    width: 24,
-    height: 24,
-    viewBox: "0 0 24 24",
-    fill: "none",
-    stroke: "currentColor",
-    strokeWidth: 1.8,
-    strokeLinecap: "round" as const,
-    strokeLinejoin: "round" as const,
-    "aria-hidden": true,
-    focusable: false,
-  };
-  switch (props.storyKey) {
-    case "last-night":
-      return (
-        <svg {...common}>
-          <path d="M20 14.5A8 8 0 0 1 9.5 4 8 8 0 1 0 20 14.5Z" />
-        </svg>
-      );
-    case "top-performers":
-      return (
-        <svg {...common}>
-          <path d="m12 3 2.7 5.5 6 .9-4.4 4.2 1 6-5.3-2.8-5.3 2.8 1-6L3.3 9.4l6-.9L12 3Z" />
-        </svg>
-      );
-    case "your-team":
-      return (
-        <svg {...common}>
-          <circle cx="12" cy="12" r="9" />
-          <path d="M3 12h18M12 3v18M5.6 5.6c3 2.4 3 10.4 0 12.8M18.4 5.6c-3 2.4-3 10.4 0 12.8" />
-        </svg>
-      );
-    case "awards":
-      return (
-        <svg {...common}>
-          <path d="M7 4h10v5a5 5 0 0 1-10 0V4ZM7 6H4v1a3 3 0 0 0 3 3M17 6h3v1a3 3 0 0 1-3 3M12 14v4M8 20h8" />
-        </svg>
-      );
-    case "trade-wire":
-      return (
-        <svg {...common}>
-          <path d="M4 8h15m0 0-3-3m3 3-3 3M20 16H5m0 0 3-3m-3 3 3 3" />
-        </svg>
-      );
-    case "injury-report":
-      return (
-        <svg {...common}>
-          <rect x="4" y="4" width="16" height="16" rx="3" />
-          <path d="M12 8v8M8 12h8" />
-        </svg>
-      );
-    default:
-      return (
-        <svg {...common}>
-          <circle cx="12" cy="12" r="8" />
-        </svg>
-      );
-  }
-}
-
 /* ---------- viewer ---------- */
 
 type Position = { ring: number; slide: number };
@@ -228,7 +169,7 @@ function StoryDialog(props: {
   rings: StoryViewerRing[];
   position: Position;
   onPosition: (position: Position) => void;
-  onClose: () => void;
+  onClose: (restoreFocus?: boolean) => void;
   autoAdvance: boolean;
   themeStyle?: CSSProperties;
 }) {
@@ -337,12 +278,10 @@ function StoryDialog(props: {
   }, [autoAdvance, paused, position.ring, position.slide]);
 
   const total = ring.slides.length;
-  const stepButton = cn(
-    touchTargetClass,
-    "rounded-md border border-zinc-700 px-3 text-sm text-zinc-200 hover:border-zinc-500 disabled:opacity-40",
+  const chevron = cn(
+    "hidden h-11 w-11 shrink-0 items-center justify-center rounded-full border border-zinc-600 bg-black/40 text-lg text-zinc-100 hover:border-zinc-400 touch-manipulation active:opacity-80 disabled:opacity-30 sm:inline-flex",
     focusRingClass,
   );
-  const sideZone = "w-8 shrink-0 touch-manipulation focus:outline-none sm:w-10";
 
   return createPortal(
     <div
@@ -353,8 +292,8 @@ function StoryDialog(props: {
         type="button"
         aria-label="Close stories"
         tabIndex={-1}
-        className="absolute inset-0 hidden bg-black/70 sm:block"
-        onClick={onClose}
+        className="absolute inset-0 bg-black/85 backdrop-blur-md"
+        onClick={() => onClose()}
       />
       <div
         ref={panelRef}
@@ -363,11 +302,69 @@ function StoryDialog(props: {
         aria-labelledby={titleId}
         onMouseEnter={() => setHovered(true)}
         onMouseLeave={() => setHovered(false)}
-        className="relative z-10 flex h-[100dvh] w-full max-w-none flex-col border-zinc-700 bg-zinc-900 shadow-xl sm:h-auto sm:max-h-[min(90dvh,52rem)] sm:max-w-[640px] sm:rounded-xl sm:border"
+        className="relative z-10 flex h-[100dvh] w-full items-center justify-center gap-4 sm:h-auto sm:w-auto"
       >
         <style>{FILL_KEYFRAMES}</style>
-        <div className="shrink-0 px-4 pt-[max(0.75rem,env(safe-area-inset-top))]">
-          <ol className="flex gap-1" aria-hidden="true">
+        <button
+          type="button"
+          onClick={previous}
+          disabled={isFirst}
+          aria-label="Previous story"
+          className={chevron}
+        >
+          <span aria-hidden="true">‹</span>
+        </button>
+
+        <div className="relative h-full w-full overflow-hidden bg-surface-arena sm:aspect-[9/16] sm:h-[min(90dvh,46rem)] sm:w-auto sm:max-w-[420px] sm:rounded-2xl sm:border sm:border-zinc-700">
+          <h2 id={titleId} className="sr-only">
+            {ring.label}
+          </h2>
+          <p
+            className="sr-only"
+            aria-live="polite"
+            data-testid="story-position"
+          >
+            {position.slide + 1} of {total}
+          </p>
+
+          <div
+            className="absolute inset-0"
+            data-testid="story-slide"
+            onFocus={() => setFocusInside(true)}
+            onBlur={(event) => {
+              if (!event.currentTarget.contains(event.relatedTarget)) {
+                setFocusInside(false);
+              }
+            }}
+            onClick={(event) => {
+              // "Open post" navigates within the page; get out of its way.
+              if ((event.target as HTMLElement).closest("a")) onClose(false);
+            }}
+          >
+            {ring.slides[position.slide]}
+          </div>
+
+          <button
+            type="button"
+            tabIndex={-1}
+            aria-hidden="true"
+            data-testid="story-tap-previous"
+            className="absolute bottom-28 left-0 top-16 z-10 w-1/3 touch-manipulation focus:outline-none"
+            onClick={previous}
+          />
+          <button
+            type="button"
+            tabIndex={-1}
+            aria-hidden="true"
+            data-testid="story-tap-next"
+            className="absolute bottom-28 right-0 top-16 z-10 w-1/3 touch-manipulation focus:outline-none"
+            onClick={next}
+          />
+
+          <ol
+            className="pointer-events-none absolute inset-x-0 top-0 z-30 flex gap-1 px-3 pt-[max(0.75rem,env(safe-area-inset-top))]"
+            aria-hidden="true"
+          >
             {ring.slides.map((_, index) => {
               const done = index < position.slide;
               const active = index === position.slide;
@@ -375,7 +372,7 @@ function StoryDialog(props: {
                 <li
                   key={index}
                   data-segment={done ? "done" : active ? "active" : "upcoming"}
-                  className="h-1 flex-1 overflow-hidden rounded-full bg-zinc-700"
+                  className="h-1 flex-1 overflow-hidden rounded-full bg-white/25"
                 >
                   {done || (active && !autoAdvance) ? (
                     <div className="h-full w-full bg-team-ink" />
@@ -393,80 +390,30 @@ function StoryDialog(props: {
               );
             })}
           </ol>
-          <div className="flex items-center gap-3 py-2">
-            <h2
-              id={titleId}
-              className="min-w-0 flex-1 truncate text-base font-semibold text-zinc-50"
-            >
-              {ring.label}
-            </h2>
-            <p
-              className="text-sm tabular-nums text-zinc-400"
-              aria-live="polite"
-              data-testid="story-position"
-            >
-              {position.slide + 1} of {total}
-            </p>
-            <button
-              ref={closeRef}
-              type="button"
-              onClick={onClose}
-              aria-label="Close"
-              className={cn(
-                touchTargetClass,
-                "rounded-md border border-zinc-700 px-2.5 text-sm text-zinc-300 hover:border-zinc-500 hover:text-zinc-100",
-                focusRingClass,
-              )}
-            >
-              ✕
-            </button>
-          </div>
-        </div>
 
-        <div className="flex min-h-0 flex-1">
           <button
+            ref={closeRef}
             type="button"
-            tabIndex={-1}
-            aria-hidden="true"
-            data-testid="story-tap-previous"
-            className={sideZone}
-            onClick={previous}
-          />
-          <div
-            className="min-h-0 min-w-0 flex-1 overflow-y-auto py-2"
-            data-testid="story-slide"
-            onFocus={() => setFocusInside(true)}
-            onBlur={(event) => {
-              if (!event.currentTarget.contains(event.relatedTarget)) {
-                setFocusInside(false);
-              }
-            }}
+            onClick={() => onClose()}
+            aria-label="Close"
+            className={cn(
+              touchTargetClass,
+              "absolute right-2 top-[max(1.5rem,calc(env(safe-area-inset-top)+0.75rem))] z-30 rounded-full bg-black/40 text-lg text-zinc-100 hover:bg-black/60",
+              focusRingClass,
+            )}
           >
-            {ring.slides[position.slide]}
-          </div>
-          <button
-            type="button"
-            tabIndex={-1}
-            aria-hidden="true"
-            data-testid="story-tap-next"
-            className={sideZone}
-            onClick={next}
-          />
-        </div>
-
-        <div className="safe-area-bottom flex shrink-0 items-center justify-between gap-3 border-t border-zinc-800 px-4 py-3">
-          <button
-            type="button"
-            onClick={previous}
-            disabled={isFirst}
-            className={stepButton}
-          >
-            Previous
-          </button>
-          <button type="button" onClick={next} className={stepButton}>
-            Next
+            <span aria-hidden="true">✕</span>
           </button>
         </div>
+
+        <button
+          type="button"
+          onClick={next}
+          aria-label="Next story"
+          className={chevron}
+        >
+          <span aria-hidden="true">›</span>
+        </button>
       </div>
     </div>,
     document.body,
@@ -504,9 +451,11 @@ export function StoriesViewer(props: {
     }
   }, [saveId, currentKey, currentLatest]);
 
-  const close = useCallback(() => {
+  const close = useCallback((restoreFocus = true) => {
     setPosition(null);
     // Dialog unmounts with this update; restore focus to the opener after.
+    // Skipped when following a link, which sets its own scroll and focus.
+    if (!restoreFocus) return;
     const opener = openerRef.current;
     window.setTimeout(() => opener?.focus(), 0);
   }, []);
@@ -538,17 +487,20 @@ export function StoriesViewer(props: {
                   )}
                 >
                   <span
+                    data-ring-state={isNew ? "new" : "seen"}
                     className={cn(
-                      "flex h-14 w-14 items-center justify-center rounded-full border-2 bg-zinc-900 text-zinc-100",
-                      isNew ? "border-team-ink" : "border-zinc-600",
+                      "flex h-[72px] w-[72px] items-center justify-center rounded-full p-[3px]",
+                      isNew
+                        ? "bg-[conic-gradient(from_200deg,var(--team-ink),var(--team-primary),var(--team-ink))]"
+                        : "ring-1 ring-zinc-600",
                     )}
-                    style={
-                      isNew && ring.accentColor
-                        ? { borderColor: ring.accentColor }
-                        : undefined
-                    }
                   >
-                    <StoryGlyph storyKey={ring.key} />
+                    <span
+                      data-ring-media={ring.mediaKind}
+                      className="flex h-full w-full items-center justify-center overflow-hidden rounded-full border-2 border-zinc-950 bg-zinc-900"
+                    >
+                      {ring.media}
+                    </span>
                   </span>
                   <span
                     aria-hidden="true"

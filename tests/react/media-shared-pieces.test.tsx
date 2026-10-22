@@ -332,6 +332,8 @@ describe("StoriesViewer theme", () => {
               latestOn: "2026-10-20",
               slideCount: 1,
               slides: ["slide"],
+              media: null,
+              mediaKind: "logo",
             },
           ]}
         />
