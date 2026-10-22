@@ -161,6 +161,21 @@ export function generateHeadline(
             summary: `Talks between ${name} and ${team} are on hold.`,
           };
     }
+    case "DraftLotteryHeld": {
+      const winner = teamName(state, str(p, "winnerTeamId"));
+      const odds = num(p, "winnerOdds");
+      const jumpTeam = str(p, "biggestJumpTeamId");
+      const jump = num(p, "biggestJump") ?? 0;
+      const oddsLabel =
+        odds != null ? ` (${(odds * 100).toFixed(1)}% odds)` : "";
+      return {
+        headline: `${winner} win the draft lottery`,
+        summary:
+          jumpTeam && jump > 0 && jumpTeam !== str(p, "winnerTeamId")
+            ? `${winner} land the first pick${oddsLabel}; ${teamName(state, jumpTeam)} jump ${jump} spots.`
+            : `${winner} land the first pick${oddsLabel}.`,
+      };
+    }
     case "PayrollRulesAssessed": {
       const team = teamName(state, str(p, "teamId"));
       const tax = num(p, "taxBill") ?? 0;

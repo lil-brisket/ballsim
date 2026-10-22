@@ -718,6 +718,10 @@ export function GameSetupForm({
             value={settings.financialRules.veteranRightsEnabled ? "On" : "Off"}
           />
           <ReviewRow
+            label="Draft lottery"
+            value={settings.draftLottery.enabled ? "On" : "Off"}
+          />
+          <ReviewRow
             label="Restricted free agency"
             value={settings.offseason.restrictedFreeAgency ? "On" : "Off"}
           />
@@ -933,6 +937,19 @@ export function GameSetupForm({
                     financialRules: {
                       ...settings.financialRules,
                       revenueSharingEnabled: checked,
+                    },
+                  })
+                }
+              />
+              <ToggleField
+                label="Draft lottery"
+                checked={settings.draftLottery.enabled}
+                onChange={(checked) =>
+                  updateSettings({
+                    ...settings,
+                    draftLottery: {
+                      ...settings.draftLottery,
+                      enabled: checked,
                     },
                   })
                 }

@@ -26,6 +26,9 @@ import { draftClassIdFor } from "@/domain/entities/draft";
 import { getActivePhaseId } from "@/systems/phase-engine/resolve-current-phase";
 import { getRequestSaveStore } from "@/application/request-save-store";
 import { toDraftHubView } from "@/state/draft-hub-selectors";
+import { toDraftLotteryView } from "@/state/draft-lottery-selectors";
+import Link from "next/link";
+import { buttonClass } from "@/components/ui/Button";
 import {
   calculateTeamDraftNeeds,
   draftYearForSeason,
@@ -62,6 +65,7 @@ export default async function DraftPage({
   const loaded = await getRequestSaveStore().load(saveId);
   const state = loaded?.state;
   const hub = state ? toDraftHubView(state) : null;
+  const hasLottery = state ? toDraftLotteryView(state) !== null : false;
   const teamId = state?.user.activeOwnerTeamId;
   const draftYear = state
     ? draftYearForSeason(state.competition.season.year)
@@ -139,6 +143,16 @@ export default async function DraftPage({
             ? `${board.status}${board.onClockOverall !== null ? ` · pick ${board.onClockOverall}` : ""}`
             : (hub?.inactiveReason ??
               "Draft board available during offseason draft stage")
+        }
+        actions={
+          hasLottery ? (
+            <Link
+              href={`/dashboard/${saveId}/draft/lottery`}
+              className={buttonClass({ variant: "secondary" })}
+            >
+              Lottery night
+            </Link>
+          ) : undefined
         }
       />
       {error ? <ErrorState message={error} /> : null}

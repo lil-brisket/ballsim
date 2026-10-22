@@ -144,11 +144,11 @@ Implemented from the GM loops plan ([docs/plans/gm-loops-plan.md](docs/plans/gm-
 - Release: waive (dead money on the original schedule) or buy out (a share of the remaining salary now, cap hit spread); dead money counts in `getTeamPayroll`
 - Contract extensions with a negotiation (ask, counter, refusal cooldown, testing the market), shared by owners and CPU teams
 - Restricted free agency: qualifying offers, offer sheets, match / decline, qualifying offers taken when no sheet comes
+- Draft lottery and Lottery night (in CBL leagues the worst team picks first ~35% of the time instead of always)
 - Luxury tax (tiered, shared by non-tax teams), salary floor and Veteran rights (over the cap to re-sign your own player after 3 straight seasons), assessed at the end of the regular season
 
 Planned in the GM loops plan ([docs/plans/gm-loops-plan.md](docs/plans/gm-loops-plan.md)), not yet implemented unless a later section says so:
 
-- Draft lottery and lottery night
 - Free-agent motivations beyond money
 - Player morale, team chemistry and development plans
 - Record book, Hall of Fame and retired numbers
@@ -194,10 +194,10 @@ Implemented trade foundation:
 Implemented draft foundation (v1):
 
 - Draft class under `world.drafts` with prospect snapshots (not in `world.players` until selected)
-- Deterministic reverse-standings draft order from pick assets (total order via `draftPickId`)
+- Deterministic draft order from pick assets (total order via `draftPickId`): a seeded lottery decides the top first-round picks among non-playoff teams (flattened odds for the three worst, top 4 drawn, own `draft-lottery:<year>` stream; on for new leagues, off for leagues created before v75), then reverse standings. The draw is stored on the draft class and shown on Lottery night; trade valuation projects lottery picks with the same odds
 - Team-specific scouting noise that never mutates prospect truth
 - Selection inserts the reserved prospect `playerId` into `world.players` with a 2-year rookie contract
-- Combine / undrafted FA / pick-trade-during-draft remain out of scope; the lottery is planned (GM loops plan)
+- Combine / undrafted FA / pick-trade-during-draft remain out of scope
 
 ## Player ability model
 

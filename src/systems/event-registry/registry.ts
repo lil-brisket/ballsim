@@ -121,6 +121,10 @@ export const DOMAIN_EVENT_REGISTRY: Record<
   ContractExtensionRefused: occurred("transaction", "medium", {
     social: { minPosts: 0, maxPosts: 1 },
   }),
+  DraftLotteryHeld: occurred("league", "high", {
+    notify: true,
+    social: { minPosts: 1, maxPosts: 2 },
+  }),
   PayrollRulesAssessed: occurred("team", "medium", {
     notify: true,
     notifyCat: "important",

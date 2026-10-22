@@ -138,6 +138,14 @@ export default async function InGameSettingsPage({
             }
           />
           <SettingRow
+            label="Draft lottery"
+            value={
+              settings.draftLottery.enabled
+                ? `On — top ${settings.draftLottery.picksDrawn} picks drawn`
+                : "Off"
+            }
+          />
+          <SettingRow
             label="Restricted free agency"
             value={settings.offseason.restrictedFreeAgency ? "On" : "Off"}
           />
