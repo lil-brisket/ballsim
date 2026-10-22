@@ -705,10 +705,7 @@ export function GameSetupForm({
             label="Staff Budget"
             value={formatMoney(settings.financialRules.staffBudget)}
           />
-          <ReviewRow
-            label="Luxury tax"
-            value={settings.financialRules.luxuryTaxEnabled ? "On" : "Off"}
-          />
+          <ReviewRow label="Luxury tax" value="Coming soon" />
           <ReviewRow
             label="Revenue sharing"
             value={settings.financialRules.revenueSharingEnabled ? "On" : "Off"}
@@ -751,7 +748,7 @@ export function GameSetupForm({
   }));
 
   const injurySummary = INJURY_FREQUENCY_LABELS[settings.injuryFrequency];
-  const financialSummary = `Cap ${capLabel}, Luxury tax ${settings.financialRules.luxuryTaxEnabled ? "on" : "off"}`;
+  const financialSummary = `Cap ${capLabel}`;
 
   const blockedButtons = blockedReason !== null;
 
@@ -875,7 +872,9 @@ export function GameSetupForm({
               />
               <ToggleField
                 label="Luxury tax"
-                checked={settings.financialRules.luxuryTaxEnabled}
+                note="Coming soon"
+                disabled
+                checked={false}
                 onChange={(checked) =>
                   updateSettings({
                     ...settings,

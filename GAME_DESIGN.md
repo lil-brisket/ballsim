@@ -1,4 +1,4 @@
-# Game Design
+# BallSim — Game Design
 
 Authoritative description of game mechanics and design constraints for this fictional basketball simulation/management game.
 
@@ -13,7 +13,7 @@ This is a fully fictional basketball simulation and management game.
 - Front-office player portraits are presentation identity only: a procedural SVG headshot whose traits are persisted per save when a player or prospect is created, kept for the whole career, and unique among active players. An optional original raster overlay can sit on top, and an initials plate is the fallback. They are not licensed photography, not NBA 2K assets, and not simulation graphics, and they never affect gameplay.
 - Games are simulated through data, statistics, events, and text.
 
-Working product title: **Basketball** (subject to rename).
+Product title: **BallSim**.
 
 ## Modes
 
@@ -37,7 +37,8 @@ Owner Mode surfaces (minimal vertical-slice UI exists for dashboard/roster/stand
 - Roster
 - Player Profile
 - Schedule
-- Watch Game (owner games with a recorded play-by-play log: a progressive text feed with play/pause/speed/skip, a score ticker, a live box score, a shot-type summary and a key-moments recap. It has no court rendering. Shot location is not modelled, so there is no shot chart.)
+- Watch Game (owner games with a recorded play-by-play log: a full-court SVG replay with player tokens, a progressive text feed with play/pause/speed/skip, a score ticker, a live box score, a shot-type summary with a per-team shot chart, and a key-moments recap. Shot spots on the court and chart are presentation only, derived from the game id and play index, never stored.)
+- Media Hub (league timeline of posts and stories built from domain events through the event registry, plus notifications)
 - Standings
 - Finances
 - Team
@@ -74,9 +75,7 @@ Owner Mode gameplay (Phase B):
 Still future work within that pipeline:
 
 - Deeper AI (lineups, staff)
-- Injuries
 - Offseason calendar deadlines
-- League events / news feed UI
 
 ## AI / decision layer (design intent)
 
@@ -101,7 +100,7 @@ Entities expected in the long-term model:
 - Game, Season, Schedule
 - Finances
 
-`Team.playStyle` holds six independent 1–99 play-style tendencies (`pace`, `threePointFrequency`, `insideFrequency`, `passing`, `defensiveAggression`, `offensiveFocus`). They are nested domain data only — simulation does not consume them yet. `offensiveFocus` stays abstract (not an offensive-system or player-role enum). All newly generated teams start neutral (`50`).
+`Team.playStyle` (six 1–99 tendencies) was removed in schema v70: it was generated and stored but never read. Team style comes from `Team.coachingPhilosophy`.
 
 `Team.coachingPhilosophy` holds three discrete strategic dimensions (`pace`, `offensiveEmphasis`, `defensiveApproach`). Defaults are all `"balanced"`. Simulation applies modest modifiers from coaching philosophy on top of existing attribute-driven probabilities (tempo seconds, shot-selection weights, foul action weight, pass defensive pressure). Coaching does not change player ability ratings or shot/pass/rebound outcome formulas.
 
@@ -111,7 +110,7 @@ Systems expected later (do not treat as present until implemented):
 - Season simulation — regular season + playoffs via `simulateSeason`; Owner Mode day loop uses `advanceSimulation`
 - Calendar / advance day — **implemented** (`src/systems/simulation/advance-simulation.ts` + `world-pipeline` wrapper)
 - Player development — **implemented** building block (`developPlayer`) and offseason season tick (`processSeasonPlayerDevelopment` ages + develops; facilities/trainers scale positive deltas only)
-- Injuries
+- Injuries — **implemented** (`src/systems/injury/`: exposure-based occurrence, catalog severities, daily recovery, availability and workload effects, injury history; development opportunity drops while injured)
 - Finances — period-keyed revenue/expense books on `business.finances` (`booksByYear`); financial statements derive totals and player salaries from contracts (`getTeamPayroll`); home game-day posts tickets, merchandise, and concessions (`other`); `HomeGameDaySettled` is the historical attendance record; weekly player payroll is cash-only (`PlayerPayrollPaid`, not posted to books); marketing/awareness and media/climate sponsorship modifiers are live
 - Standings — **implemented** (`src/systems/standings.ts` — `calculateStandings` / `updateStandings`). Standings page views (Overall / Conference / Division) are presentation-only; playoff qualification is league-wide (`settings.playoffs.playoffTeams` / `qualifyAndSeed`).
 - Schedule generation — **implemented** as building block `generateSeasonSchedule` + world adapter `generateSchedule` (`src/systems/schedule-generation.ts`); validates via `validateSeasonSchedule`
@@ -135,14 +134,21 @@ The original foundation phase deferred simulation. The following are now
 
 Still deferred:
 
-- Draft lottery (draft class / order / selection / scouting v1 is implemented; lottery rules are not)
-- Full NBA CBA trade exceptions
-- Free agency (pool/offers — foundation implemented; advanced negotiation TBD)
-- Injuries
+- Full CBA trade exceptions (aprons, sign-and-trade, two-way contracts)
 - Career Mode
 - Dynasty Mode
-- Narrative / news feed UI beyond recent results on the dashboard
 - Fan facility → sentiment (deferred)
+
+Planned in the GM loops plan ([docs/plans/gm-loops-plan.md](docs/plans/gm-loops-plan.md)), not yet implemented unless a later section says so:
+
+- Release / waive / buyout with dead money
+- User contract extensions
+- Restricted free agency (offer sheets, match / decline)
+- Luxury tax, salary floor and Veteran rights
+- Draft lottery and lottery night
+- Free-agent motivations beyond money
+- Player morale, team chemistry and development plans
+- Record book, Hall of Fame and retired numbers
 
 ## Owner Mode Phase 2 — multi-season trajectory intent
 
@@ -188,7 +194,7 @@ Implemented draft foundation (v1):
 - Deterministic reverse-standings draft order from pick assets (total order via `draftPickId`)
 - Team-specific scouting noise that never mutates prospect truth
 - Selection inserts the reserved prospect `playerId` into `world.players` with a 2-year rookie contract
-- Draft lottery / combine / undrafted FA / pick-trade-during-draft remain out of scope
+- Combine / undrafted FA / pick-trade-during-draft remain out of scope; the lottery is planned (GM loops plan)
 
 ## Player ability model
 

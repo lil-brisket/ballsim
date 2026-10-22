@@ -113,10 +113,7 @@ export default async function InGameSettingsPage({
             label="Staff Budget"
             value={formatMoney(financialRules.staffBudget)}
           />
-          <SettingRow
-            label="Luxury tax"
-            value={financialRules.luxuryTaxEnabled ? "On" : "Off"}
-          />
+          <SettingRow label="Luxury tax" value="Coming soon" />
           <SettingRow
             label="Revenue sharing"
             value={financialRules.revenueSharingEnabled ? "On" : "Off"}
