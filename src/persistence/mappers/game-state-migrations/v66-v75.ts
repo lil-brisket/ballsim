@@ -27,7 +27,12 @@ export type GameStateV68 = Omit<GameState, "meta" | "world"> & {
 
 export type GameStateV70 = Omit<GameState, "meta" | "business"> & {
   meta: Omit<GameState["meta"], "schemaVersion"> & { schemaVersion: 70 };
-  business: Omit<GameState["business"], "deadMoney">;
+  business: Omit<GameState["business"], "deadMoney" | "extensionTalks">;
+};
+
+export type GameStateV71 = Omit<GameState, "meta" | "business"> & {
+  meta: Omit<GameState["meta"], "schemaVersion"> & { schemaVersion: 71 };
+  business: Omit<GameState["business"], "extensionTalks">;
 };
 
 export type GameStateV69 = Omit<GameState, "meta" | "world" | "business"> & {
@@ -35,7 +40,7 @@ export type GameStateV69 = Omit<GameState, "meta" | "world" | "business"> & {
   world: Omit<GameState["world"], "teams"> & {
     teams: Record<string, Team & { playStyle?: TeamPlayStyle }>;
   };
-  business: Omit<GameState["business"], "deadMoney">;
+  business: Omit<GameState["business"], "deadMoney" | "extensionTalks">;
 };
 
 /**
@@ -131,7 +136,7 @@ export function migrateV69ToV70(state: GameStateV69): GameStateV70 {
  * Deterministic v70 → v71: add business.deadMoney. No save could release a
  * player under contract before v71, so every team starts with none.
  */
-export function migrateV70ToV71(state: GameStateV70): GameState {
+export function migrateV70ToV71(state: GameStateV70): GameStateV71 {
   return {
     ...state,
     meta: {
@@ -141,6 +146,24 @@ export function migrateV70ToV71(state: GameStateV70): GameState {
     business: {
       ...state.business,
       deadMoney: {},
+    },
+  };
+}
+
+/**
+ * Deterministic v71 → v72: add business.extensionTalks. Owners could not
+ * offer extensions before v72, so there are no talks to carry over.
+ */
+export function migrateV71ToV72(state: GameStateV71): GameState {
+  return {
+    ...state,
+    meta: {
+      ...state.meta,
+      schemaVersion: 72,
+    },
+    business: {
+      ...state.business,
+      extensionTalks: {},
     },
   };
 }

@@ -1,5 +1,6 @@
 import { isJerseyNumber } from "@/domain/jersey-number";
 import { isDeadMoneyReason } from "@/domain/entities/dead-money";
+import { isExtensionResponseKind } from "@/domain/entities/extension-talks";
 import {
   type GameMode,
   type GameState,
@@ -435,6 +436,7 @@ export function validateGameState(state: unknown): asserts state is GameState {
   assertRecord(business.freeAgency.offers, "business.freeAgency.offers");
   assertRecord(business.tradeBlocks, "business.tradeBlocks");
   validateDeadMoney(business.deadMoney, world.teams, world.players);
+  validateExtensionTalks(business.extensionTalks, world.teams, world.players);
 
   const staffContracts = (business as Record<string, unknown>).staffContracts;
   const sponsorships = (business as Record<string, unknown>).sponsorships;
@@ -1686,5 +1688,58 @@ function validateDeadMoney(
         fail(`${path}.createdOn must be a date string.`);
       }
     });
+  }
+}
+
+function validateExtensionTalks(
+  value: unknown,
+  teams: Record<string, unknown>,
+  players: Record<string, unknown>,
+): void {
+  if (value == null) {
+    fail("business.extensionTalks is required.");
+  }
+  assertRecord(value, "business.extensionTalks");
+  for (const [playerId, talks] of Object.entries(value)) {
+    const path = `business.extensionTalks[${playerId}]`;
+    assertRecord(talks, path);
+    if (talks.playerId !== playerId || !(playerId in players)) {
+      fail(`${path}.playerId must match its key and reference world.players.`);
+    }
+    if (typeof talks.teamId !== "string" || !(talks.teamId in teams)) {
+      fail(`${path}.teamId must reference world.teams.`);
+    }
+    if (typeof talks.contractId !== "string" || talks.contractId.length === 0) {
+      fail(`${path}.contractId must be a non-empty string.`);
+    }
+    if (!Number.isInteger(talks.refusals) || (talks.refusals as number) < 0) {
+      fail(`${path}.refusals must be a non-negative integer.`);
+    }
+    if (
+      talks.lastRefusedOn !== null &&
+      typeof talks.lastRefusedOn !== "string"
+    ) {
+      fail(`${path}.lastRefusedOn must be a date string or null.`);
+    }
+    if (typeof talks.testingMarket !== "boolean") {
+      fail(`${path}.testingMarket must be a boolean.`);
+    }
+    if (talks.lastResponse !== null) {
+      assertRecord(talks.lastResponse, `${path}.lastResponse`);
+      const response = talks.lastResponse;
+      if (!isExtensionResponseKind(response.kind)) {
+        fail(`${path}.lastResponse.kind is invalid.`);
+      }
+      for (const key of [
+        "offeredSalary",
+        "offeredYears",
+        "askSalary",
+        "askYears",
+      ]) {
+        if (!Number.isInteger(response[key])) {
+          fail(`${path}.lastResponse.${key} must be an integer.`);
+        }
+      }
+    }
   }
 }

@@ -3,6 +3,7 @@ import type { Coach } from "@/domain/entities/coach";
 import type { Conference } from "@/domain/entities/conference";
 import type { Contract } from "@/domain/entities/contract";
 import type { DeadMoneyState } from "@/domain/entities/dead-money";
+import type { ExtensionTalksState } from "@/domain/entities/extension-talks";
 import type { Division } from "@/domain/entities/division";
 import type { DraftPick } from "@/domain/entities/draft-pick";
 import type { DraftClass } from "@/domain/entities/draft";
@@ -64,7 +65,7 @@ import type {
   FranchisePhaseState,
 } from "@/systems/phase-engine/phase-types";
 
-export const GAME_STATE_SCHEMA_VERSION = 71;
+export const GAME_STATE_SCHEMA_VERSION = 72;
 
 /** League personnel market for staff free agency (not a business-finance concept). */
 export type StaffMarketState = {
@@ -186,6 +187,11 @@ export type BusinessSlice = {
    * toward payroll and cap through getTeamPayroll; kept after its season.
    */
   deadMoney: DeadMoneyState;
+  /**
+   * Owner extension negotiations by player id (schema v72+): last answer,
+   * refusals and whether he has decided to test free agency.
+   */
+  extensionTalks: ExtensionTalksState;
   finances: Record<string, TeamFinances>;
   freeAgency: FreeAgencyState;
   /** Restricted free agency statuses for the current offseason cycle. */

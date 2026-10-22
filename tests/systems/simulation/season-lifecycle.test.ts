@@ -270,6 +270,7 @@ describe("season lifecycle", () => {
         freeAgency: { offers: {} },
         rfaStatuses: {},
         deadMoney: {},
+        extensionTalks: {},
         tradeBlocks: {},
         ...createPhaseEBusinessDefaults(
           generated.teams.map((team) => team.id as TeamId),
