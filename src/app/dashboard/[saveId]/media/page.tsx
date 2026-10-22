@@ -15,6 +15,7 @@ import {
   TimelineLoadMore,
 } from "@/components/media-hub/timeline/TimelineFeed";
 import { TimelinePost } from "@/components/media-hub/timeline/TimelinePost";
+import { TopStoryHero } from "@/components/media-hub/timeline/TopStoryHero";
 import { buttonClass } from "@/components/ui/Button";
 import { ErrorState } from "@/components/ui/EmptyState";
 import { PageHeader } from "@/components/ui/PageHeader";
@@ -97,13 +98,7 @@ export default async function MediaPage({
           ) : null}
 
           {view.topStory ? (
-            <section
-              aria-label="Top story"
-              className="border-b border-zinc-800"
-            >
-              <SectionHeading as="h2" title="Top story" />
-              <TimelinePost post={view.topStory} context={view.context} />
-            </section>
+            <TopStoryHero post={view.topStory} context={view.context} />
           ) : null}
 
           {view.emptyMessage ? (

@@ -11,6 +11,7 @@ import {
   TimelineLoadMore,
 } from "@/components/media-hub/timeline/TimelineFeed";
 import { TimelinePost } from "@/components/media-hub/timeline/TimelinePost";
+import { TopStoryHero } from "@/components/media-hub/timeline/TopStoryHero";
 import {
   AccountAvatar,
   type AccountAvatarSize,
@@ -93,6 +94,19 @@ export default function MediaShowcasePage() {
       </p>
 
       <div className="mx-auto mt-10 max-w-[640px]">
+        <div className="mb-6 space-y-4">
+          {SHOWCASE_POSTS.filter((post) =>
+            ["game", "performance", "award"].includes(post.attachment.type),
+          )
+            .slice(0, 3)
+            .map((post) => (
+              <TopStoryHero
+                key={post.id}
+                post={post}
+                context={SHOWCASE_CONTEXT}
+              />
+            ))}
+        </div>
         <MediaStoriesStrip
           saveId={SHOWCASE_CONTEXT.saveId}
           context={SHOWCASE_CONTEXT}

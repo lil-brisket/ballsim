@@ -25,6 +25,28 @@
     );
 }
 
+/*
+ * Media Hub top story: the lead team's spotlight from the graphic's corner.
+ * Same alpha budget as .shell-spotlight so zinc-50 text keeps AA contrast.
+ */
+.media-hero-spotlight {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(
+      ellipse 70% 120% at 100% 0%,
+      rgb(var(--team-primary-rgb) / 0.28) 0%,
+      rgb(var(--team-primary-rgb) / 0.08) 50%,
+      transparent 80%
+    ),
+    linear-gradient(
+      90deg,
+      transparent 40%,
+      rgb(var(--team-ink-rgb) / 0.04) 100%
+    );
+}
+
 /* Hardwood texture for hero surfaces: faint plank seams plus grain. */
 .arena-panel.surface-hardwood {
   background-image:
