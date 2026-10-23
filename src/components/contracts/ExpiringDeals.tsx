@@ -19,7 +19,11 @@ export function ExpiringDeals(props: {
   returnPath: string;
 }) {
   const { saveId, returnPath } = props;
-  const rows = props.rows.filter((row) => row.extension !== null);
+  // Deals in their final season (or ending now). Two-season deals can be
+  // extended from the full table below.
+  const rows = props.rows.filter(
+    (row) => row.extension !== null && row.extension.seasonsLeft <= 1,
+  );
   if (rows.length === 0) return null;
 
   return (

@@ -13,6 +13,7 @@ describe("TeamChemistryPanel", () => {
           value: 48,
           label: "Shaky",
           continuity: 0.5,
+          continuityKnown: true,
           recentTrades: 2,
           note: "2 recent trades: the group needs time to gel.",
         }}
@@ -30,11 +31,30 @@ describe("TeamChemistryPanel", () => {
           value: 72,
           label: "Strong",
           continuity: 0.875,
+          continuityKnown: true,
           recentTrades: 0,
           note: null,
         }}
       />,
     );
     expect(screen.queryByText(/recent trade/)).toBeNull();
+  });
+
+  it("says first season together without history", () => {
+    render(
+      <TeamChemistryPanel
+        chemistry={{
+          value: 60,
+          label: "Steady",
+          continuity: 0.6,
+          continuityKnown: false,
+          recentTrades: 0,
+          note: null,
+        }}
+      />,
+    );
+    expect(screen.getByText("First season together.")).toBeTruthy();
+    expect(screen.queryByText(/of the core rotation/)).toBeNull();
+    expect(screen.getAllByText("Steady")).toHaveLength(1);
   });
 });

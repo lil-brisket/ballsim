@@ -85,6 +85,8 @@ export type TeamChemistryView = {
   label: string;
   /** Share of the core eight who were here last season (0-1). */
   continuity: number;
+  /** False in a new league (nobody has a last season yet). */
+  continuityKnown: boolean;
   /** Players traded in or out in the last 30 days. */
   recentTrades: number;
   /** One-line note when trades are costing chemistry, else null. */
@@ -201,6 +203,7 @@ function chemistryView(state: GameState, teamId: TeamId): TeamChemistryView {
           ? "Steady"
           : "Shaky",
     continuity: chemistry.continuity,
+    continuityKnown: chemistry.continuityKnown,
     recentTrades: chemistry.recentTrades,
     note:
       chemistry.recentTrades > 0

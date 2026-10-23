@@ -42,7 +42,7 @@ export default async function LotteryPage({ params }: LotteryPageProps) {
         <LotteryNight view={view} />
       ) : (
         <EmptyState
-          message={`No lottery for the ${nextYear} draft yet. It is drawn when draft preparation begins.`}
+          message={`No lottery for the ${nextYear} draft yet. It is drawn when the draft class is set, just before the draft.`}
         />
       )}
     </div>

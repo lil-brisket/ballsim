@@ -39,6 +39,8 @@ export type TeamChemistry = {
   leadership: number;
   /** Players traded in or out recently. */
   recentTrades: number;
+  /** False when none of the core has a past season (a new league). */
+  continuityKnown: boolean;
 };
 
 export function teamChemistry(state: GameState, teamId: TeamId): TeamChemistry {
@@ -64,6 +66,7 @@ function computeChemistry(state: GameState, teamId: TeamId): TeamChemistry {
     morale: 0.6,
     leadership: 0.6,
     recentTrades: 0,
+    continuityKnown: false,
   };
   if (!team) return neutral;
   const rotation = [...(team.rosterManagement?.rotation ?? [])]
@@ -84,11 +87,13 @@ function computeChemistry(state: GameState, teamId: TeamId): TeamChemistry {
   const lastYear =
     state.competition.season.phase === "offseason" ? year : year - 1;
   let continuity = 0;
+  let known = 0;
   let morale = 0;
   let leadership = 0;
   for (const playerId of core) {
     const seasons = state.business.playerHistory[playerId]?.seasons ?? [];
     const last = seasons.find((s) => s.seasonYear === lastYear);
+    if (seasons.length > 0) known += 1;
     continuity +=
       seasons.length === 0
         ? UNKNOWN_CONTINUITY
@@ -134,7 +139,14 @@ function computeChemistry(state: GameState, teamId: TeamId): TeamChemistry {
   const raw =
     0.45 * continuity + 0.3 * morale + 0.25 * leadership - tradePenalty;
   const value = Math.round(Math.max(0, Math.min(1, raw)) * 100);
-  return { value, continuity, morale, leadership, recentTrades };
+  return {
+    value,
+    continuity,
+    morale,
+    leadership,
+    recentTrades,
+    continuityKnown: known > 0,
+  };
 }
 
 /** −1..+1 around neutral chemistry. */

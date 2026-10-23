@@ -9,6 +9,7 @@ import type { Game } from "@/domain/entities/game";
 import type { PlayerId, TeamId } from "@/domain/ids";
 import type { GameState } from "@/state/game-state";
 import { getActiveOwnerTeamId } from "@/state/owner-context";
+import { formatGameDate } from "@/presentation/game-date";
 import {
   careerSummary,
   getRetireNumberBlockReason,
@@ -103,7 +104,7 @@ function tables(
           ),
           teamId: line.teamId,
           value: line[stat],
-          context: `${game.date} vs ${state.world.teams[opponent]?.abbreviation ?? "—"}`,
+          context: `${formatGameDate(game.date, { year: true })} vs ${state.world.teams[opponent]?.abbreviation ?? "—"}`,
         });
       }
     }
@@ -124,7 +125,7 @@ function tables(
             playerName: name(state, history.playerId),
             teamId: seasonTeam,
             value: Math.round((line[stat] / line.games) * 10) / 10,
-            context: `${record.seasonYear} season (per game)`,
+            context: String(record.seasonYear),
           });
         }
       }

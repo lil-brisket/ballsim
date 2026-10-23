@@ -62,10 +62,12 @@ export function PayrollRulesPanel(props: { rules: PayrollRulesView }) {
   return (
     <Section title="Payroll rules">
       <ul className="space-y-1.5 text-sm text-zinc-300">
-        <li className="flex justify-between gap-4">
-          <span>Payroll for {rules.seasonYear}</span>
-          <MoneyDisplay amount={rules.payroll} />
-        </li>
+        {rules.projectsNextSeason ? (
+          <li className="flex justify-between gap-4">
+            <span>Payroll for {rules.seasonYear}</span>
+            <MoneyDisplay amount={rules.payroll} />
+          </li>
+        ) : null}
         {taxOn && rules.threshold !== null ? (
           <li className="flex justify-between gap-4">
             <span>Tax line</span>

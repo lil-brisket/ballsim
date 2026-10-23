@@ -12,6 +12,8 @@ import { getContractSigningYear } from "@/systems/salary-cap";
 export type PayrollRulesView = {
   /** Season the projection covers (next season during the offseason). */
   seasonYear: number;
+  /** True in the offseason, when the projection is for next season. */
+  projectsNextSeason: boolean;
   payroll: number;
   luxuryTaxEnabled: boolean;
   /** Tax line, or null when the tax is off. */
@@ -37,6 +39,7 @@ export function toPayrollRulesView(state: GameState): PayrollRulesView {
   const latest = years[years.length - 1];
   return {
     seasonYear: year,
+    projectsNextSeason: year !== state.competition.season.year,
     payroll: projection.payroll,
     luxuryTaxEnabled: rules.luxuryTaxEnabled,
     threshold: projection.threshold,

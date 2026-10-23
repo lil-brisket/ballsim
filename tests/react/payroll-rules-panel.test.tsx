@@ -12,6 +12,7 @@ afterEach(cleanup);
 function rules(overrides: Partial<PayrollRulesView> = {}): PayrollRulesView {
   return {
     seasonYear: 2031,
+    projectsNextSeason: true,
     payroll: 100_000_000,
     luxuryTaxEnabled: true,
     threshold: 120_000_000,
@@ -137,5 +138,11 @@ describe("TaxLineNote", () => {
       />,
     );
     expect(off.container.textContent).toBe("");
+  });
+
+  it("leaves payroll to Commitments during the season", () => {
+    render(<PayrollRulesPanel rules={rules({ projectsNextSeason: false })} />);
+    expect(screen.queryByText(/Payroll for/)).toBeNull();
+    expect(screen.getByText(/Tax line/)).toBeTruthy();
   });
 });
