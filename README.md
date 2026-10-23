@@ -33,7 +33,7 @@ Ballsim is a basketball franchise management game for the browser. You own a tea
 
 ## Quick start
 
-Requires **Node 22** (see `.nvmrc`).
+Requires **Node 24** (see `.nvmrc`).
 
 ```bash
 npm install                 # also runs `prisma generate`

@@ -117,7 +117,7 @@ npm run sim:replay -- --run <runId> --game 0
 
 ## CI
 
-GitHub Actions (`.github/workflows/ci.yml`) on pushes to `master` and on every `pull_request`. Five jobs run in parallel on `ubuntu-latest`, each with Node **22** (matches `.nvmrc` and `engines.node >=22`; `@types/node` is `^22`) and `npm ci`. PR wall time is the slowest job.
+GitHub Actions (`.github/workflows/ci.yml`) on pushes to `master` and on every `pull_request`. Five jobs run in parallel on `ubuntu-latest`, each with Node **24** (matches `.nvmrc` and `engines.node >=24`; `@types/node` is `^24`) and `npm ci`. PR wall time is the slowest job.
 
 | Job          | Runs                                                                                                                                                         |
 | ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
