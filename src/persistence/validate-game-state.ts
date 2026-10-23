@@ -1,6 +1,7 @@
 import { isJerseyNumber } from "@/domain/jersey-number";
 import { isDeadMoneyReason } from "@/domain/entities/dead-money";
 import { isMoraleReason } from "@/domain/entities/player-morale";
+import { isDevelopmentFocus } from "@/domain/entities/development-plan";
 import { isDraftLotteryOddsPreset } from "@/domain/entities/draft-lottery";
 import { isExtensionResponseKind } from "@/domain/entities/extension-talks";
 import {
@@ -441,6 +442,7 @@ export function validateGameState(state: unknown): asserts state is GameState {
   validateExtensionTalks(business.extensionTalks, world.teams, world.players);
   validatePayrollAssessments(business.payrollAssessments, world.teams);
   validatePlayerMorale(business.playerMorale, world.players);
+  validateDevelopmentPlans(business.developmentPlans, world.players);
 
   const staffContracts = (business as Record<string, unknown>).staffContracts;
   const sponsorships = (business as Record<string, unknown>).sponsorships;
@@ -1860,6 +1862,28 @@ function validatePlayerMorale(
       if (season !== null && !Number.isInteger(season)) {
         fail(`${path}.${key} must be a season year or null.`);
       }
+    }
+  }
+}
+
+function validateDevelopmentPlans(
+  value: unknown,
+  players: Record<string, unknown>,
+): void {
+  if (value == null) {
+    fail("business.developmentPlans is required.");
+  }
+  assertRecord(value, "business.developmentPlans");
+  for (const [playerId, focus] of Object.entries(value)) {
+    if (!(playerId in players)) {
+      fail(
+        `business.developmentPlans[${playerId}] must reference world.players.`,
+      );
+    }
+    if (!isDevelopmentFocus(focus)) {
+      fail(
+        `business.developmentPlans[${playerId}] is not a development focus.`,
+      );
     }
   }
 }

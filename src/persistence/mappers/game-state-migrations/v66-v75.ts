@@ -34,9 +34,14 @@ export type GameStateV70 = Omit<GameState, "meta" | "business"> & {
   business: Omit<GameState["business"], "deadMoney" | "extensionTalks">;
 };
 
+export type GameStateV76 = Omit<GameState, "meta" | "business"> & {
+  meta: Omit<GameState["meta"], "schemaVersion"> & { schemaVersion: 76 };
+  business: Omit<GameState["business"], "developmentPlans">;
+};
+
 export type GameStateV75 = Omit<GameState, "meta" | "business"> & {
   meta: Omit<GameState["meta"], "schemaVersion"> & { schemaVersion: 75 };
-  business: Omit<GameState["business"], "playerMorale">;
+  business: Omit<GameState["business"], "playerMorale" | "developmentPlans">;
 };
 
 export type GameStateV74 = Omit<GameState, "meta" | "settings"> & {
@@ -274,7 +279,7 @@ export function migrateV74ToV75(state: GameStateV74): GameStateV75 {
  * Deterministic v75 → v76: add business.playerMorale. Everyone starts
  * content; moods move from the first in-season week.
  */
-export function migrateV75ToV76(state: GameStateV75): GameState {
+export function migrateV75ToV76(state: GameStateV75): GameStateV76 {
   return {
     ...state,
     meta: {
@@ -284,6 +289,25 @@ export function migrateV75ToV76(state: GameStateV75): GameState {
     business: {
       ...state.business,
       playerMorale: {},
+    },
+  };
+}
+
+/**
+ * Deterministic v76 → v77: add business.developmentPlans. No plans before
+ * v77: owner players develop balanced (exactly as before) until a focus is
+ * chosen.
+ */
+export function migrateV76ToV77(state: GameStateV76): GameState {
+  return {
+    ...state,
+    meta: {
+      ...state.meta,
+      schemaVersion: 77,
+    },
+    business: {
+      ...state.business,
+      developmentPlans: {},
     },
   };
 }
