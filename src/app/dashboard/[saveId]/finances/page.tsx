@@ -12,6 +12,7 @@ import {
   CashRunwayChart,
   RevenueExpenseWaterfall,
 } from "@/components/finances/FinanceCharts";
+import { PayrollRulesPanel } from "@/components/finances/PayrollRulesPanel";
 import { FinancialStatStrip } from "@/components/finances/FinancialStatStrip";
 import { ManagementDecisionPanel } from "@/components/management/ManagementDecisionPanel";
 import { ErrorState } from "@/components/ui/EmptyState";
@@ -167,6 +168,8 @@ export default async function FinancesPage({
           </li>
         </ul>
       </Section>
+
+      <PayrollRulesPanel rules={view.payrollRules} />
 
       <Section title="Trend">
         <FinancialTrend points={view.trend} />

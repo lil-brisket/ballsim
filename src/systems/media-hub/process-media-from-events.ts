@@ -52,16 +52,25 @@ function storyTypeForEvent(event: DomainEvent): MediaStoryType {
     case "PlayerTraded":
     case "DraftPickTraded":
     case "PlayerReleased":
+    case "PlayerWaived":
+    case "PlayerBoughtOut":
+    case "ContractExtensionRefused":
     case "FreeAgentSigned":
     case "FreeAgencyOfferInvalidated":
     case "FreeAgencyOfferWithdrawn":
     case "RfaQualifyingOfferIssued":
     case "RfaOfferSheetExpired":
+    case "RfaOfferSheetSigned":
+    case "RfaOfferSheetMatched":
     case "TradeOfferExpired":
       return "transaction";
     case "PlayerDeveloped":
     case "PlayerDeclined":
     case "PlayerRetired":
+    case "PlayerTradeRequested":
+    case "HallOfFameInducted":
+    case "JerseyNumberRetired":
+    case "PlayerMinutesComplaint":
     case "PlayerAssignedToDevelopmentLeague":
     case "PlayerRecalledFromDevelopmentLeague":
     case "PlayerGraduatedFromDevelopmentLeague":

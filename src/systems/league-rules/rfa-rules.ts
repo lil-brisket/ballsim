@@ -27,7 +27,11 @@ export function isPlayerActiveRfa(
   playerId: PlayerId,
 ): boolean {
   const status = getRfaStatus(state, playerId);
-  return status !== undefined && isActiveRfa(status);
+  return (
+    status !== undefined &&
+    status.seasonYear === state.competition.season.year &&
+    isActiveRfa(status)
+  );
 }
 
 export function yearsOfServiceFromContract(
@@ -97,7 +101,11 @@ export function checkSubmitRfaOfferSheet(
     });
   }
   const status = getRfaStatus(state, playerId);
-  if (!status || !isActiveRfa(status)) {
+  if (
+    !status ||
+    status.seasonYear !== state.competition.season.year ||
+    !isActiveRfa(status)
+  ) {
     violations.push({
       code: "RFA_NOT_ELIGIBLE",
       message: "Player is not an active restricted free agent.",

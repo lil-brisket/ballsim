@@ -1,4 +1,4 @@
-# Game Design
+# BallSim — Game Design
 
 Authoritative description of game mechanics and design constraints for this fictional basketball simulation/management game.
 
@@ -13,7 +13,7 @@ This is a fully fictional basketball simulation and management game.
 - Front-office player portraits are presentation identity only: a procedural SVG headshot whose traits are persisted per save when a player or prospect is created, kept for the whole career, and unique among active players. An optional original raster overlay can sit on top, and an initials plate is the fallback. They are not licensed photography, not NBA 2K assets, and not simulation graphics, and they never affect gameplay.
 - Games are simulated through data, statistics, events, and text.
 
-Working product title: **Basketball** (subject to rename).
+Product title: **BallSim**.
 
 ## Modes
 
@@ -37,7 +37,8 @@ Owner Mode surfaces (minimal vertical-slice UI exists for dashboard/roster/stand
 - Roster
 - Player Profile
 - Schedule
-- Watch Game (owner games with a recorded play-by-play log: a progressive text feed with play/pause/speed/skip, a score ticker, a live box score, a shot-type summary and a key-moments recap. It has no court rendering. Shot location is not modelled, so there is no shot chart.)
+- Watch Game (owner games with a recorded play-by-play log: a full-court SVG replay with player tokens, a progressive text feed with play/pause/speed/skip, a score ticker, a live box score, a shot-type summary with a per-team shot chart, and a key-moments recap. Shot spots on the court and chart are presentation only, derived from the game id and play index, never stored.)
+- Media Hub (league timeline of posts and stories built from domain events through the event registry, plus notifications)
 - Standings
 - Finances
 - Team
@@ -74,9 +75,7 @@ Owner Mode gameplay (Phase B):
 Still future work within that pipeline:
 
 - Deeper AI (lineups, staff)
-- Injuries
 - Offseason calendar deadlines
-- League events / news feed UI
 
 ## AI / decision layer (design intent)
 
@@ -101,7 +100,7 @@ Entities expected in the long-term model:
 - Game, Season, Schedule
 - Finances
 
-`Team.playStyle` holds six independent 1–99 play-style tendencies (`pace`, `threePointFrequency`, `insideFrequency`, `passing`, `defensiveAggression`, `offensiveFocus`). They are nested domain data only — simulation does not consume them yet. `offensiveFocus` stays abstract (not an offensive-system or player-role enum). All newly generated teams start neutral (`50`).
+`Team.playStyle` (six 1–99 tendencies) was removed in schema v70: it was generated and stored but never read. Team style comes from `Team.coachingPhilosophy`.
 
 `Team.coachingPhilosophy` holds three discrete strategic dimensions (`pace`, `offensiveEmphasis`, `defensiveApproach`). Defaults are all `"balanced"`. Simulation applies modest modifiers from coaching philosophy on top of existing attribute-driven probabilities (tempo seconds, shot-selection weights, foul action weight, pass defensive pressure). Coaching does not change player ability ratings or shot/pass/rebound outcome formulas.
 
@@ -111,7 +110,7 @@ Systems expected later (do not treat as present until implemented):
 - Season simulation — regular season + playoffs via `simulateSeason`; Owner Mode day loop uses `advanceSimulation`
 - Calendar / advance day — **implemented** (`src/systems/simulation/advance-simulation.ts` + `world-pipeline` wrapper)
 - Player development — **implemented** building block (`developPlayer`) and offseason season tick (`processSeasonPlayerDevelopment` ages + develops; facilities/trainers scale positive deltas only)
-- Injuries
+- Injuries — **implemented** (`src/systems/injury/`: exposure-based occurrence, catalog severities, daily recovery, availability and workload effects, injury history; development opportunity drops while injured)
 - Finances — period-keyed revenue/expense books on `business.finances` (`booksByYear`); financial statements derive totals and player salaries from contracts (`getTeamPayroll`); home game-day posts tickets, merchandise, and concessions (`other`); `HomeGameDaySettled` is the historical attendance record; weekly player payroll is cash-only (`PlayerPayrollPaid`, not posted to books); marketing/awareness and media/climate sponsorship modifiers are live
 - Standings — **implemented** (`src/systems/standings.ts` — `calculateStandings` / `updateStandings`). Standings page views (Overall / Conference / Division) are presentation-only; playoff qualification is league-wide (`settings.playoffs.playoffTeams` / `qualifyAndSeed`).
 - Schedule generation — **implemented** as building block `generateSeasonSchedule` + world adapter `generateSchedule` (`src/systems/schedule-generation.ts`); validates via `validateSeasonSchedule`
@@ -135,14 +134,23 @@ The original foundation phase deferred simulation. The following are now
 
 Still deferred:
 
-- Draft lottery (draft class / order / selection / scouting v1 is implemented; lottery rules are not)
-- Full NBA CBA trade exceptions
-- Free agency (pool/offers — foundation implemented; advanced negotiation TBD)
-- Injuries
+- Full CBA trade exceptions (aprons, sign-and-trade, two-way contracts)
 - Career Mode
 - Dynasty Mode
-- Narrative / news feed UI beyond recent results on the dashboard
 - Fan facility → sentiment (deferred)
+
+Implemented from the GM loops plan ([docs/plans/gm-loops-plan.md](docs/plans/gm-loops-plan.md)):
+
+- Release: waive (dead money on the original schedule) or buy out (a share of the remaining salary now, cap hit spread); dead money counts in `getTeamPayroll`
+- Contract extensions with a negotiation (ask, counter, refusal cooldown, testing the market), shared by owners and CPU teams
+- Restricted free agency: qualifying offers, offer sheets, match / decline, qualifying offers taken when no sheet comes
+- Player morale (0–100, weekly in season from role vs expectation, winning, underpaid stars and contract talks; composure and leadership slow swings): trade requests after four miserable weeks (CPU teams list the player), minutes complaints, less loyalty pull in free agency and higher extension asks; no in-game effect
+- Team chemistry (0–100, derived, never stored: continuity of the core eight, their morale, the best leader, recent trades). Small, bounded game effect: up to ±6% turnover weight in the possession engine and ±1 expected point in the box-score engine (perfect vs neutral chemistry: under +6 points of win%). The Sim Lab runs at neutral chemistry, so lab baselines are unchanged
+- Development plans: players 25 and younger work on one focus (shooting, playmaking, defense, rebounding, athleticism or balanced). The focus moves half of each positive non-focus gain into the focus attributes after the usual draws, so total growth is unchanged and balanced is today's output; owners choose on the Development page, CPU teams use a default by position
+- Legacy page: record book (single-game, per-game season and career leaders, league and franchise, from the game archive and player history), Hall of Fame (retired players with 6+ seasons, inducted 3 seasons after their last when career value plus awards and titles reaches the bar, when a new season starts) and retired numbers (an owner may retire the number of a retired player with 3+ seasons on the team; the franchise never issues it again)
+- Draft lottery and Lottery night (in CBL leagues the worst team picks first ~35% of the time instead of always)
+- Free agents weigh winning (by competitiveness), projected minutes, market, loyalty to their last team and the head coach on top of money; money stays the biggest factor. The Free Agency page shows what each player cares about, your team's score per factor and roughly what he would sign for
+- Luxury tax (tiered, shared by non-tax teams), salary floor and Veteran rights (over the cap to re-sign your own player after 3 straight seasons), assessed at the end of the regular season
 
 ## Owner Mode Phase 2 — multi-season trajectory intent
 
@@ -168,7 +176,7 @@ Validated by `npm run sanity:league` (`src/simulation/league-sanity/`) across ma
 
 | Relationship                                   | Intent                                                                           | Mechanism                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
 | ---------------------------------------------- | -------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Payroll → win%                                 | Weak-to-moderate positive (not near-deterministic)                               | **Unresolved.** `salaryForPlayer` prices players as a pure step function of overall, so payroll tracks talent almost 1:1 (r≈0.74). Tried and reverted: per-signing salary noise (averages out over ~15 contracts) and a per-team overpay factor (raised insolvency 23% → 37% without lowering r). Likely needs a mechanism that makes contracts go stale against talent — e.g. luxury tax or mid-contract decline                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
+| Payroll → win%                                 | Weak-to-moderate positive (not near-deterministic)                               | Moderate. Measured r≈0.50 (CBL 4×10, seed 42) before the GM loops work and r≈0.49 after it. The cap binds for most teams (mean payroll ~65% of the cap), so the luxury tax (10% over the cap, tiered from 1.5×, proceeds shared by non-tax teams) mainly bites on teams using Veteran rights to re-sign their own players over the cap. A salary floor (40% of the cap) charges the shortfall at the end of the regular season. `salaryForPlayer` still prices players as a step function of overall, so payroll tracks talent; the earlier r≈0.74 figure predates AI payroll budgets (#93). Tried and reverted earlier: per-signing salary noise and a per-team overpay factor                                                                                                                                                                                                             |
 | Win% → franchise value                         | Positive                                                                         | `calculatePerformanceValue` (win%, playoff rate, playoff depth) weighted up relative to the market term; `MARKET_REALIZATION_FLOOR` lowered so market value leans more on realized (winning-correlated) demand                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
 | Market size → attendance                       | Positive                                                                         | New leagues and expansion teams start with an arena sized to market (`startingArenaLevelForMarket`: level 1 below market 50, 2 below 65, else 3), so big markets have more seats to fill. Raising the demand weight alone did nothing because every team was selling out the same 12k-seat building. 40 sims × 5 seasons: r 0.12 → 0.38                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
 | Facilities → roster development (2-season lag) | Positive, with a real delay                                                      | `laggedFacilityDevelopmentMultiplier` uses the facility levels from `FACILITY_DEVELOPMENT_LAG_SEASONS` (2) seasons ago via franchise history, with a 1.0–1.7 multiplier. The league-wide signal was negative (r≈−0.19) because of #82, not because facilities and payroll compete for cash: uncapped roster fills funnelled the best free agents to a few teams, so roster strength tracked hoarding instead of development. With AI free agency and payroll budgets fixed (#82, #93), r≈0.31–0.41 (CBL, seed 42, 10×5 and 4×10), and AI teams run one facility project at a time. The direct effect is small, though: level 5 vs 1 development facilities add ~+0.1 overall per player per season (+0.26 at age ≤23, nothing at 30+), so the age-adjusted `facilities_player_development` chain only reaches r≈0.04. A stronger facility lever would need a league-wide development retune |
@@ -185,10 +193,10 @@ Implemented trade foundation:
 Implemented draft foundation (v1):
 
 - Draft class under `world.drafts` with prospect snapshots (not in `world.players` until selected)
-- Deterministic reverse-standings draft order from pick assets (total order via `draftPickId`)
+- Deterministic draft order from pick assets (total order via `draftPickId`): a seeded lottery decides the top first-round picks among non-playoff teams (flattened odds for the three worst, top 4 drawn, own `draft-lottery:<year>` stream; on for new leagues, off for leagues created before v75), then reverse standings. The draw is stored on the draft class and shown on Lottery night; trade valuation projects lottery picks with the same odds
 - Team-specific scouting noise that never mutates prospect truth
 - Selection inserts the reserved prospect `playerId` into `world.players` with a 2-year rookie contract
-- Draft lottery / combine / undrafted FA / pick-trade-during-draft remain out of scope
+- Combine / undrafted FA / pick-trade-during-draft remain out of scope
 
 ## Player ability model
 

@@ -1,3 +1,4 @@
+import { readFreeAgentMotivations } from "@/systems/free-agency-motivations";
 import { describe, expect, it } from "vitest";
 import { createContract } from "@/domain/entities/contract";
 import { isOpenOffer } from "@/domain/entities/free-agency-offer";
@@ -381,9 +382,16 @@ describe("free-agency interest", () => {
     const first = getPlayerInterest(state, playerId, teamId);
     const second = getPlayerInterest(state, playerId, teamId);
     expect(first).toEqual(second);
-    expect(first.score).toBe(FREE_AGENCY_INTEREST_CONFIG.baselineScore);
-    expect(first.interested).toBe(true);
-    expect(first.factors).toEqual(emptyInterestFactors());
+    // No offer yet: money is neutral; motivations (winning, minutes, ...)
+    // move the score around the baseline.
+    const motivations = readFreeAgentMotivations(state, playerId, teamId);
+    expect(first.score).toBeCloseTo(
+      FREE_AGENCY_INTEREST_CONFIG.baselineScore +
+        motivations.reduce((sum, r) => sum + r.points, 0),
+      6,
+    );
+    expect(first.factors.money).toBe(emptyInterestFactors().money);
+    expect(first.factors.reputation).toBe(0);
     expect(defaultEvaluatePlayerInterest(playerId, teamId, state)).toEqual(
       first,
     );

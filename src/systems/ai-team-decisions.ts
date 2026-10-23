@@ -35,6 +35,19 @@ import { AI_FA_MIN_SALARY } from "@/systems/owner-objectives-config";
 import { DEFAULT_ROSTER_SIZE } from "@/systems/roster-generation-config";
 import { computeAwardReputationBonus } from "@/systems/awards/award-reputation";
 import { aiPayrollRoom } from "@/systems/ai-payroll-budget";
+import {
+  findCpuWaiverCandidate,
+  releasePlayerUnderContract,
+} from "@/systems/player-release";
+import { TRADE_ROSTER_RULES } from "@/systems/trades-config";
+import {
+  decideCpuRfaMatches,
+  isOpenRestrictedFreeAgent,
+  pendingOutgoingSheets,
+  pendingQualifyingOffers,
+  submitRfaOfferSheet,
+} from "@/systems/rfa";
+import { isActiveRfa } from "@/domain/entities/rfa-status";
 import { getContractSigningYear } from "@/systems/salary-cap";
 import { getLeagueSalaryCap } from "@/systems/league-salary-cap";
 import {
@@ -90,6 +103,9 @@ export function runAiTeamDecisions(state: GameState, _rng: Rng): SystemResult {
 
   if (current.competition.season.phase === "offseason") {
     if (isFreeAgencyAiPhase(current)) {
+      const matches = decideCpuRfaMatches(current);
+      current = matches.state;
+      events.push(...matches.events);
       const fa = runAiFreeAgency(current);
       current = fa.state;
       events.push(...fa.events);
@@ -234,7 +250,10 @@ function runAiFreeAgencyRound(
     }
 
     // Cap space, limited by what the team can afford (#93).
-    const capSpace = aiPayrollRoom(current, teamId, seasonYear);
+    const capSpace =
+      aiPayrollRoom(current, teamId, seasonYear) -
+      pendingQualifyingOffers(current, teamId).salary -
+      pendingOutgoingSheets(current, teamId).salary;
     if (capSpace < AI_FA_MIN_SALARY) {
       current = markDone(current, teamId);
       continue;
@@ -279,7 +298,50 @@ function runAiFreeAgencyRound(
       continue;
     }
 
+    // A full roster missing a position waives a cheap spare to make room.
+    const rosterSize = current.world.teams[teamId]?.roster.length ?? 0;
+    if (
+      rosterSize >= TRADE_ROSTER_RULES.maxRosterSize &&
+      missingPositions(current, teamId).includes(candidate.position)
+    ) {
+      const waiveId = findCpuWaiverCandidate(
+        current,
+        teamId,
+        candidate.position,
+      );
+      if (waiveId !== null) {
+        const waived = releasePlayerUnderContract(current, {
+          playerId: waiveId,
+          teamId,
+          mode: "waive",
+        });
+        current = waived.state;
+        events.push(...waived.events);
+      }
+    }
+
     attempted?.add(`${teamId}:${candidate.id}`);
+    // Restricted free agents are reached through an offer sheet.
+    if (isOpenRestrictedFreeAgent(current, candidate.id)) {
+      try {
+        const sheet = submitRfaOfferSheet(current, {
+          playerId: candidate.id,
+          offeringTeamId: teamId,
+          salary: Math.max(
+            salary,
+            current.business.rfaStatuses[candidate.id]!.qualifyingOfferSalary,
+          ),
+          years: AI_OFFER_SHEET_YEARS,
+          contractId: `contract_ai_sheet_${candidate.id}_${date.replaceAll("-", "")}`,
+        });
+        current = sheet.result.state;
+        events.push(...sheet.result.events);
+      } catch {
+        // Cap / roster / rules: skip this player.
+      }
+      current = markDone(current, teamId);
+      continue;
+    }
     const offerId = asOfferId(`offer_ai_${teamId}_${candidate.id}_${date}`);
     const contractId = asContractId(
       `contract_ai_${candidate.id}_${date.replaceAll("-", "")}`,
@@ -558,7 +620,11 @@ function teamNeedsSigning(state: GameState, teamId: TeamId): boolean {
   if (!team) {
     return false;
   }
-  if (team.roster.length < DEFAULT_ROSTER_SIZE) {
+  // Its own restricted free agents come back on their qualifying offers.
+  const returning =
+    pendingQualifyingOffers(state, teamId).count +
+    pendingOutgoingSheets(state, teamId).count;
+  if (team.roster.length + returning < DEFAULT_ROSTER_SIZE) {
     return true;
   }
   return missingPositions(state, teamId).length > 0;
@@ -637,6 +703,28 @@ function freeAgentPreferenceScore(
   return score;
 }
 
+/** Seasons on CPU offer sheets: one, like CPU free-agent deals, so budgets can adjust. */
+const AI_OFFER_SHEET_YEARS = 1;
+
+/**
+ * True when the player is off the market for this team: a sheet waits on a
+ * match decision, or he is restricted to his own team.
+ */
+function isPendingRfaFor(
+  state: GameState,
+  playerId: PlayerId,
+  teamId: TeamId,
+): boolean {
+  const status = state.business.rfaStatuses?.[playerId];
+  if (!status || status.seasonYear !== state.competition.season.year) {
+    return false;
+  }
+  if (!isActiveRfa(status)) return false;
+  return (
+    status.resolution === "pending_match" || status.originalTeamId === teamId
+  );
+}
+
 function pickBestAffordableFreeAgent(
   state: GameState,
   teamId: TeamId,
@@ -651,7 +739,8 @@ function pickBestAffordableFreeAgent(
       (player): player is Player =>
         player !== undefined &&
         player.retired !== true &&
-        attempted?.has(`${teamId}:${player.id}`) !== true,
+        attempted?.has(`${teamId}:${player.id}`) !== true &&
+        !isPendingRfaFor(state, player.id, teamId),
     );
 
   const ranked = [...pool].sort((a, b) => {

@@ -110,6 +110,47 @@ export const DOMAIN_EVENT_REGISTRY: Record<
     social: { minPosts: 0, maxPosts: 1 },
   }),
   PlayerReleased: occurred("transaction", "medium", { notify: true }),
+  PlayerWaived: occurred("transaction", "medium", {
+    notify: true,
+    social: { minPosts: 0, maxPosts: 1 },
+  }),
+  PlayerBoughtOut: occurred("transaction", "medium", {
+    notify: true,
+    social: { minPosts: 0, maxPosts: 1 },
+  }),
+  ContractExtensionRefused: occurred("transaction", "medium", {
+    social: { minPosts: 0, maxPosts: 1 },
+  }),
+  HallOfFameInducted: occurred("league", "high", {
+    notify: true,
+    social: { minPosts: 1, maxPosts: 2 },
+  }),
+  JerseyNumberRetired: occurred("team", "high", {
+    notify: true,
+    social: { minPosts: 0, maxPosts: 2 },
+  }),
+  PlayerTradeRequested: occurred("transaction", "high", {
+    notify: true,
+    notifyCat: "important",
+    social: { minPosts: 1, maxPosts: 2 },
+  }),
+  PlayerMinutesComplaint: occurred("team", "medium", {
+    social: { minPosts: 0, maxPosts: 1 },
+  }),
+  DraftLotteryHeld: occurred("league", "high", {
+    notify: true,
+    social: { minPosts: 1, maxPosts: 2 },
+  }),
+  PayrollRulesAssessed: occurred("team", "medium", {
+    notify: true,
+    notifyCat: "important",
+  }),
+  ContractFinalYear: occurred("team", "low", {
+    media: false,
+    highlight: false,
+    notify: true,
+    notifyCat: "important",
+  }),
   DraftPickMade: occurred("league", "high", {
     notify: true,
     social: { minPosts: 0, maxPosts: 2 },
@@ -143,6 +184,15 @@ export const DOMAIN_EVENT_REGISTRY: Record<
   RfaOfferSheetExpired: occurred("transaction", "low", {
     media: false,
     highlight: false,
+  }),
+  RfaOfferSheetSigned: occurred("transaction", "high", {
+    notify: true,
+    notifyCat: "action_required",
+    social: { minPosts: 0, maxPosts: 2 },
+  }),
+  RfaOfferSheetMatched: occurred("transaction", "high", {
+    notify: true,
+    social: { minPosts: 0, maxPosts: 2 },
   }),
   TradeOfferExpired: occurred("transaction", "low", {
     media: false,

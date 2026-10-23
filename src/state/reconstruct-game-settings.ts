@@ -1,3 +1,4 @@
+import { DEFAULT_PAYROLL_RULE_SETTINGS } from "@/domain/game-settings";
 import {
   cloneGameSettings,
   DEFAULT_GAME_SETTINGS,
@@ -141,11 +142,15 @@ export function reconstructGameSettingsFromState(
       staffBudget: DEFAULT_GAME_SETTINGS.financialRules.staffBudget,
       luxuryTaxEnabled: true,
       revenueSharingEnabled: true,
+      ...DEFAULT_PAYROLL_RULE_SETTINGS,
     },
     draft: { ...DEFAULT_GAME_SETTINGS.draft },
     history: { ...DEFAULT_GAME_SETTINGS.history },
+    draftLottery: { ...DEFAULT_GAME_SETTINGS.draftLottery },
     offseason: {
       freeAgency: { ...DEFAULT_GAME_SETTINGS.offseason.freeAgency },
+      restrictedFreeAgency:
+        DEFAULT_GAME_SETTINGS.offseason.restrictedFreeAgency,
     },
     seasonEvents: {
       ...DEFAULT_GAME_SETTINGS.seasonEvents,

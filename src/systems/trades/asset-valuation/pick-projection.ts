@@ -10,6 +10,7 @@ import {
 } from "@/systems/trades-config";
 import type { PickProjection } from "@/systems/trades/asset-valuation/types";
 import { draftYearForSeason } from "@/systems/draft/draft-order";
+import { lotterySlotProbabilities } from "@/systems/draft/draft-lottery";
 
 /**
  * Project draft-pick slot from reverse standings of the originating team.
@@ -25,9 +26,11 @@ export function projectDraftPick(
   const originRank =
     ranked.findIndex((id) => id === pick.originalTeamId) + 1 || leagueSize;
   const roundOffset = pick.round === 1 ? 0 : leagueSize;
+  const projectedSlot =
+    pick.round === 1 ? expectedFirstRoundSlot(state, originRank) : originRank;
   const projectedOverallPick = Math.min(
     leagueSize * 2,
-    Math.max(1, originRank + roundOffset),
+    Math.max(1, Math.round(projectedSlot) + roundOffset),
   );
 
   const seasonProgress = computeSeasonProgress(state);
@@ -46,6 +49,33 @@ export function projectDraftPick(
     tier,
     seasonProgress,
   };
+}
+
+/**
+ * Expected first-round slot for the team ranked `rankWorstFirst`. With the
+ * lottery on, teams projected to miss the playoffs get the average slot
+ * under the lottery odds; everyone else picks by record.
+ */
+export function expectedFirstRoundSlot(
+  state: GameState,
+  rankWorstFirst: number,
+): number {
+  const lottery = state.settings.draftLottery;
+  const teamCount = Object.keys(state.world.teams).length;
+  const lotteryTeams = Math.max(
+    0,
+    teamCount - state.settings.playoffs.playoffTeams,
+  );
+  if (!lottery?.enabled || lotteryTeams < 2 || rankWorstFirst > lotteryTeams) {
+    return rankWorstFirst;
+  }
+  const matrix = lotterySlotProbabilities(
+    lotteryTeams,
+    lottery.oddsPreset,
+    lottery.picksDrawn,
+  );
+  const row = matrix[rankWorstFirst - 1]!;
+  return row.reduce((sum, p, slot) => sum + p * (slot + 1), 0);
 }
 
 export function pickValueFromProjection(

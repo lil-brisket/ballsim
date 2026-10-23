@@ -3,6 +3,14 @@
  * Market / My Offers / Recent Signings. True OVR intentionally exposed (existing model).
  */
 
+import {
+  toFreeAgentInterestView,
+  type FreeAgentInterestView,
+} from "@/state/free-agent-interest-selectors";
+import {
+  toPayrollRulesView,
+  type PayrollRulesView,
+} from "@/state/payroll-rules-selectors";
 import type { GameState } from "@/state/game-state";
 import { getActiveOwnerTeamId } from "@/state/owner-context";
 import {
@@ -19,6 +27,12 @@ import {
 } from "@/state/action-center-selectors";
 import { toOwnerDashboardView } from "@/state/owner-dashboard";
 import { isInLeaguePhase } from "@/systems/phase-engine";
+import {
+  rfaTagForPlayer,
+  toOwnerRfaView,
+  type OwnerRfaView,
+  type RfaTag,
+} from "@/state/rfa-selectors";
 import {
   getContractSigningYear,
   getTeamCapSpace,
@@ -52,6 +66,14 @@ export type FreeAgencyHubView = {
   openOffers: FreeAgencyOfferView[];
   recentSignings: FreeAgencyRecentSigning[];
   decisions: ActionCenterItem[];
+  /** Offer sheets to answer and sheets the owner has out. */
+  rfa: OwnerRfaView;
+  /** Restricted free agents in the market, by player id. */
+  rfaTags: Record<string, RfaTag>;
+  /** Interest panel per market player (first 40 rows), by player id. */
+  interest: Record<string, FreeAgentInterestView>;
+  /** Tax line / floor, for "this signing crosses the tax line" warnings. */
+  payrollRules: PayrollRulesView;
 };
 
 export function toFreeAgencyHubView(state: GameState): FreeAgencyHubView {
@@ -111,5 +133,23 @@ export function toFreeAgencyHubView(state: GameState): FreeAgencyHubView {
     openOffers,
     recentSignings,
     decisions,
+    rfa: toOwnerRfaView(state),
+    payrollRules: toPayrollRulesView(state),
+    interest: Object.fromEntries(
+      market
+        .slice(0, 40)
+        .map((p) => [p.playerId, toFreeAgentInterestView(state, p.playerId)])
+        .filter(
+          (entry): entry is [string, FreeAgentInterestView] =>
+            entry[1] !== null,
+        ),
+    ),
+    rfaTags: Object.fromEntries(
+      market
+        .map((p) => [p.playerId, rfaTagForPlayer(state, p.playerId)] as const)
+        .filter(
+          (entry): entry is readonly [string, RfaTag] => entry[1] !== null,
+        ),
+    ),
   };
 }

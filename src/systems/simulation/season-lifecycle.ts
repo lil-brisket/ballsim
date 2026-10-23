@@ -1,3 +1,4 @@
+import { assessPayrollRules } from "@/systems/payroll-rules";
 import type { DomainEvent } from "@/domain/events";
 import { createSeededRng, type Rng } from "@/domain/rng";
 import { systemResult, type SystemResult } from "@/domain/system-result";
@@ -178,6 +179,10 @@ export function processSeasonLifecycle(
     const yearly = runYearlyAwards(current);
     current = yearly.state;
     events.push(...yearly.events);
+    // Luxury tax and salary floor are assessed when the regular season ends.
+    const assessed = assessPayrollRules(current);
+    current = assessed.state;
+    events.push(...assessed.events);
 
     const playoffTeams = current.settings.playoffs.playoffTeams;
     const liveTeamCount = Object.keys(current.world.teams).length;

@@ -12,6 +12,8 @@ import { OffseasonHeaderStrip } from "@/components/offseason/OffseasonHeaderStri
 import { OffseasonTimeline } from "@/components/offseason/OffseasonTimeline";
 import { OffseasonStatusChecklist } from "@/components/offseason/OffseasonStatusChecklist";
 import { OffseasonQuickLinks } from "@/components/offseason/OffseasonQuickLinks";
+import { IncomingOfferSheets } from "@/components/rfa/IncomingOfferSheets";
+import { QualifyingOffers } from "@/components/rfa/QualifyingOffers";
 import { toOffseasonHubView } from "@/state/offseason-hub-selectors";
 
 export const metadata: Metadata = { title: "Offseason Hub" };
@@ -84,6 +86,26 @@ export default async function OffseasonCommandCenterPage({
         </p>
         <OffseasonTimeline events={view.timeline} />
       </Section>
+
+      {view.rfa.enabled && view.rfa.incomingSheets.length > 0 ? (
+        <Section title="Offer sheets to answer">
+          <IncomingOfferSheets
+            sheets={view.rfa.incomingSheets}
+            saveId={saveId}
+            returnPath={returnPath}
+          />
+        </Section>
+      ) : null}
+
+      {view.rfa.enabled && view.rfa.qualifyingOffers.length > 0 ? (
+        <Section title="Qualifying offers">
+          <QualifyingOffers
+            rows={view.rfa.qualifyingOffers}
+            saveId={saveId}
+            returnPath={returnPath}
+          />
+        </Section>
+      ) : null}
 
       <ActionCenter
         view={view.actionCenter}

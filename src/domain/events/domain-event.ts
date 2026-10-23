@@ -15,6 +15,16 @@ export type DomainEventType =
   | "PlayerTraded"
   | "DraftPickTraded"
   | "PlayerReleased"
+  | "PlayerWaived"
+  | "PlayerBoughtOut"
+  | "ContractExtensionRefused"
+  | "ContractFinalYear"
+  | "PayrollRulesAssessed"
+  | "DraftLotteryHeld"
+  | "PlayerTradeRequested"
+  | "PlayerMinutesComplaint"
+  | "HallOfFameInducted"
+  | "JerseyNumberRetired"
   | "DraftPickMade"
   | "FantasyDraftPickMade"
   | "FantasyDraftPickUndone"
@@ -32,6 +42,8 @@ export type DomainEventType =
   | "PlayerRetired"
   | "RfaQualifyingOfferIssued"
   | "RfaOfferSheetExpired"
+  | "RfaOfferSheetSigned"
+  | "RfaOfferSheetMatched"
   | "TradeOfferExpired"
   | "FreeAgencyOfferWithdrawn"
   | "StaffContractExpired"
@@ -70,6 +82,16 @@ export const DOMAIN_EVENT_TYPES: readonly DomainEventType[] = [
   "PlayerTraded",
   "DraftPickTraded",
   "PlayerReleased",
+  "PlayerWaived",
+  "PlayerBoughtOut",
+  "ContractExtensionRefused",
+  "ContractFinalYear",
+  "PayrollRulesAssessed",
+  "DraftLotteryHeld",
+  "PlayerTradeRequested",
+  "PlayerMinutesComplaint",
+  "HallOfFameInducted",
+  "JerseyNumberRetired",
   "DraftPickMade",
   "FantasyDraftPickMade",
   "FantasyDraftPickUndone",
@@ -87,6 +109,8 @@ export const DOMAIN_EVENT_TYPES: readonly DomainEventType[] = [
   "PlayerRetired",
   "RfaQualifyingOfferIssued",
   "RfaOfferSheetExpired",
+  "RfaOfferSheetSigned",
+  "RfaOfferSheetMatched",
   "TradeOfferExpired",
   "FreeAgencyOfferWithdrawn",
   "StaffContractExpired",

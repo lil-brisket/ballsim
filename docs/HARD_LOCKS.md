@@ -83,14 +83,14 @@ During `season_transition` (before contract expiration):
 
 ## Transaction legality matrix
 
-| Action                  | Offseason (non-FA) | Roster decisions | FA            | Preseason     | Regular (pre-deadline) | Regular (deadline+) | Playoffs/Post |
-| ----------------------- | ------------------ | ---------------- | ------------- | ------------- | ---------------------- | ------------------- | ------------- |
-| Player/pick trade       | Phase-defined      | Allowed          | Allowed       | Allowed       | Allowed                | **Blocked**         | **Blocked**   |
-| UFA signing             | Blocked            | Blocked          | Allowed       | Blocked       | Blocked                | Blocked             | Blocked       |
-| RFA QO                  | Blocked            | Allowed          | Blocked       | Blocked       | Blocked                | Blocked             | Blocked       |
-| RFA offer sheet / match | Blocked            | Blocked          | Allowed       | Blocked       | Blocked                | Blocked             | Blocked       |
-| Draft selection         | Blocked            | Blocked          | Blocked       | Blocked       | Blocked                | Blocked             | Blocked       |
-| Contract extension      | Phase-defined      | Allowed          | Phase-defined | Phase-defined | Phase-defined          | Phase-defined       | Blocked       |
+| Action                  | Offseason (non-FA) | Roster decisions | FA      | Preseason | Regular (pre-deadline) | Regular (deadline+) | Playoffs/Post |
+| ----------------------- | ------------------ | ---------------- | ------- | --------- | ---------------------- | ------------------- | ------------- |
+| Player/pick trade       | Phase-defined      | Allowed          | Allowed | Allowed   | Allowed                | **Blocked**         | **Blocked**   |
+| UFA signing             | Blocked            | Blocked          | Allowed | Blocked   | Blocked                | Blocked             | Blocked       |
+| RFA QO                  | Blocked            | Allowed          | Blocked | Blocked   | Blocked                | Blocked             | Blocked       |
+| RFA offer sheet / match | Blocked            | Blocked          | Allowed | Blocked   | Blocked                | Blocked             | Blocked       |
+| Draft selection         | Blocked            | Blocked          | Blocked | Blocked   | Blocked                | Blocked             | Blocked       |
+| Contract extension      | Blocked            | Allowed          | Blocked | Allowed   | Allowed                | Allowed             | Blocked       |
 
 Implementation: `src/systems/league-rules/`.
 
@@ -108,9 +108,9 @@ Lifecycle processors (`processPlayerRetirements`, `releaseExpiredContracts`, `ex
 6. Enter roster_decisions → (exit) contract expiration + RFA qualification
 7. Draft prep → draft → free agency → staff → new season
 
+Extensions: an owner may extend a player with two seasons or fewer left (`systems/contract-extensions.ts`); the CPU uses the same answer and cap rules during roster decisions.
+
 ## Deferred
 
-- Full contract extension negotiation system (windows only)
-- Luxury tax enforcement
 - Mid-draft pick trades
 - Multiple simultaneous RFA offer sheets

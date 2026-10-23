@@ -1,4 +1,9 @@
 import { isJerseyNumber } from "@/domain/jersey-number";
+import { isDeadMoneyReason } from "@/domain/entities/dead-money";
+import { isMoraleReason } from "@/domain/entities/player-morale";
+import { isDevelopmentFocus } from "@/domain/entities/development-plan";
+import { isDraftLotteryOddsPreset } from "@/domain/entities/draft-lottery";
+import { isExtensionResponseKind } from "@/domain/entities/extension-talks";
 import {
   type GameMode,
   type GameState,
@@ -433,6 +438,12 @@ export function validateGameState(state: unknown): asserts state is GameState {
   }
   assertRecord(business.freeAgency.offers, "business.freeAgency.offers");
   assertRecord(business.tradeBlocks, "business.tradeBlocks");
+  validateDeadMoney(business.deadMoney, world.teams, world.players);
+  validateExtensionTalks(business.extensionTalks, world.teams, world.players);
+  validatePayrollAssessments(business.payrollAssessments, world.teams);
+  validatePlayerMorale(business.playerMorale, world.players);
+  validateDevelopmentPlans(business.developmentPlans, world.players);
+  validateLegacy(business.hallOfFame, world.retiredNumbers, world.players);
 
   const staffContracts = (business as Record<string, unknown>).staffContracts;
   const sponsorships = (business as Record<string, unknown>).sponsorships;
@@ -1253,6 +1264,10 @@ export function validateGameState(state: unknown): asserts state is GameState {
     if (!isDraftLifecycleStatus(draftValue.status)) {
       fail(`world.drafts[${draftId}].status is invalid.`);
     }
+    validateDraftLottery(
+      (draftValue as Record<string, unknown>).lottery,
+      `world.drafts[${draftId}].lottery`,
+    );
     assertRecord(draftValue.prospects, `world.drafts[${draftId}].prospects`);
     if (!Array.isArray(draftValue.order)) {
       fail(`world.drafts[${draftId}].order must be an array.`);
@@ -1637,4 +1652,292 @@ export function validateGameState(state: unknown): asserts state is GameState {
     teamIds,
     gameIds,
   );
+}
+
+function validateDeadMoney(
+  value: unknown,
+  teams: Record<string, unknown>,
+  players: Record<string, unknown>,
+): void {
+  if (value == null) {
+    fail("business.deadMoney is required.");
+  }
+  assertRecord(value, "business.deadMoney");
+  for (const [teamId, entries] of Object.entries(value)) {
+    if (!(teamId in teams)) {
+      fail(`business.deadMoney team "${teamId}" is missing from world.teams.`);
+    }
+    if (!Array.isArray(entries)) {
+      fail(`business.deadMoney[${teamId}] must be an array.`);
+    }
+    entries.forEach((entry: unknown, index: number) => {
+      const path = `business.deadMoney[${teamId}][${index}]`;
+      assertRecord(entry, path);
+      if (entry.teamId !== teamId) {
+        fail(`${path}.teamId must equal "${teamId}".`);
+      }
+      if (typeof entry.playerId !== "string" || !(entry.playerId in players)) {
+        fail(`${path}.playerId must reference world.players.`);
+      }
+      if (!Number.isInteger(entry.seasonYear)) {
+        fail(`${path}.seasonYear must be an integer.`);
+      }
+      if (
+        typeof entry.amount !== "number" ||
+        !Number.isInteger(entry.amount) ||
+        entry.amount < 0
+      ) {
+        fail(`${path}.amount must be a non-negative integer.`);
+      }
+      if (!isDeadMoneyReason(entry.reason)) {
+        fail(`${path}.reason is invalid.`);
+      }
+      if (typeof entry.prepaid !== "boolean") {
+        fail(`${path}.prepaid must be a boolean.`);
+      }
+      if (typeof entry.createdOn !== "string" || entry.createdOn.length === 0) {
+        fail(`${path}.createdOn must be a date string.`);
+      }
+    });
+  }
+}
+
+function validateExtensionTalks(
+  value: unknown,
+  teams: Record<string, unknown>,
+  players: Record<string, unknown>,
+): void {
+  if (value == null) {
+    fail("business.extensionTalks is required.");
+  }
+  assertRecord(value, "business.extensionTalks");
+  for (const [playerId, talks] of Object.entries(value)) {
+    const path = `business.extensionTalks[${playerId}]`;
+    assertRecord(talks, path);
+    if (talks.playerId !== playerId || !(playerId in players)) {
+      fail(`${path}.playerId must match its key and reference world.players.`);
+    }
+    if (typeof talks.teamId !== "string" || !(talks.teamId in teams)) {
+      fail(`${path}.teamId must reference world.teams.`);
+    }
+    if (typeof talks.contractId !== "string" || talks.contractId.length === 0) {
+      fail(`${path}.contractId must be a non-empty string.`);
+    }
+    if (!Number.isInteger(talks.refusals) || (talks.refusals as number) < 0) {
+      fail(`${path}.refusals must be a non-negative integer.`);
+    }
+    if (
+      talks.lastRefusedOn !== null &&
+      typeof talks.lastRefusedOn !== "string"
+    ) {
+      fail(`${path}.lastRefusedOn must be a date string or null.`);
+    }
+    if (typeof talks.testingMarket !== "boolean") {
+      fail(`${path}.testingMarket must be a boolean.`);
+    }
+    if (talks.lastResponse !== null) {
+      assertRecord(talks.lastResponse, `${path}.lastResponse`);
+      const response = talks.lastResponse;
+      if (!isExtensionResponseKind(response.kind)) {
+        fail(`${path}.lastResponse.kind is invalid.`);
+      }
+      for (const key of [
+        "offeredSalary",
+        "offeredYears",
+        "askSalary",
+        "askYears",
+      ]) {
+        if (!Number.isInteger(response[key])) {
+          fail(`${path}.lastResponse.${key} must be an integer.`);
+        }
+      }
+    }
+  }
+}
+
+function validatePayrollAssessments(
+  value: unknown,
+  teams: Record<string, unknown>,
+): void {
+  if (value == null) {
+    fail("business.payrollAssessments is required.");
+  }
+  assertRecord(value, "business.payrollAssessments");
+  for (const [year, byTeam] of Object.entries(value)) {
+    if (!/^\d{4}$/.test(year)) {
+      fail(`business.payrollAssessments key "${year}" must be a season year.`);
+    }
+    assertRecord(byTeam, `business.payrollAssessments[${year}]`);
+    for (const [teamId, row] of Object.entries(byTeam)) {
+      const path = `business.payrollAssessments[${year}][${teamId}]`;
+      assertRecord(row, path);
+      if (row.teamId !== teamId) {
+        fail(`${path}.teamId must equal its key.`);
+      }
+      // Teams can leave the league (relocation keeps ids), so ids are kept.
+      void teams;
+      if (row.seasonYear !== Number(year)) {
+        fail(`${path}.seasonYear must equal ${year}.`);
+      }
+      for (const key of ["payroll", "taxBill", "floorShortfall", "taxShare"]) {
+        const amount = row[key];
+        if (
+          typeof amount !== "number" ||
+          !Number.isInteger(amount) ||
+          amount < 0
+        ) {
+          fail(`${path}.${key} must be a non-negative integer.`);
+        }
+      }
+      for (const key of ["threshold", "floor"]) {
+        const amount = row[key];
+        if (
+          amount !== null &&
+          (typeof amount !== "number" || !Number.isInteger(amount))
+        ) {
+          fail(`${path}.${key} must be an integer or null.`);
+        }
+      }
+    }
+  }
+}
+
+function validateDraftLottery(value: unknown, path: string): void {
+  if (value === undefined || value === null) return;
+  assertRecord(value, path);
+  if (!isDraftLotteryOddsPreset(value.oddsPreset)) {
+    fail(`${path}.oddsPreset is invalid.`);
+  }
+  const pre = value.preLotteryOrder;
+  const final = value.finalOrder;
+  const odds = value.odds;
+  if (!Array.isArray(pre) || !Array.isArray(final) || !Array.isArray(odds)) {
+    fail(`${path} orders and odds must be arrays.`);
+  }
+  if (
+    pre.length !== final.length ||
+    pre.length !== odds.length ||
+    [...pre].sort().join() !== [...final].sort().join()
+  ) {
+    fail(`${path}.finalOrder must be the same teams as preLotteryOrder.`);
+  }
+  const total = (odds as unknown[]).reduce<number>(
+    (sum, p) => sum + (typeof p === "number" ? p : Number.NaN),
+    0,
+  );
+  if (!(Math.abs(total - 1) < 1e-6)) {
+    fail(`${path}.odds must sum to 1.`);
+  }
+}
+
+function validatePlayerMorale(
+  value: unknown,
+  players: Record<string, unknown>,
+): void {
+  if (value == null) {
+    fail("business.playerMorale is required.");
+  }
+  assertRecord(value, "business.playerMorale");
+  for (const [playerId, mood] of Object.entries(value)) {
+    const path = `business.playerMorale[${playerId}]`;
+    if (!(playerId in players)) {
+      fail(`${path} must reference world.players.`);
+    }
+    assertRecord(mood, path);
+    if (
+      typeof mood.value !== "number" ||
+      !Number.isInteger(mood.value) ||
+      mood.value < 0 ||
+      mood.value > 100
+    ) {
+      fail(`${path}.value must be an integer from 0 to 100.`);
+    }
+    if (!isMoraleReason(mood.reason)) {
+      fail(`${path}.reason is invalid.`);
+    }
+    if (!Number.isInteger(mood.lowWeeks) || (mood.lowWeeks as number) < 0) {
+      fail(`${path}.lowWeeks must be a non-negative integer.`);
+    }
+    for (const key of ["tradeRequestSeason", "complaintSeason"]) {
+      const season = mood[key];
+      if (season !== null && !Number.isInteger(season)) {
+        fail(`${path}.${key} must be a season year or null.`);
+      }
+    }
+  }
+}
+
+function validateDevelopmentPlans(
+  value: unknown,
+  players: Record<string, unknown>,
+): void {
+  if (value == null) {
+    fail("business.developmentPlans is required.");
+  }
+  assertRecord(value, "business.developmentPlans");
+  for (const [playerId, focus] of Object.entries(value)) {
+    if (!(playerId in players)) {
+      fail(
+        `business.developmentPlans[${playerId}] must reference world.players.`,
+      );
+    }
+    if (!isDevelopmentFocus(focus)) {
+      fail(
+        `business.developmentPlans[${playerId}] is not a development focus.`,
+      );
+    }
+  }
+}
+
+function validateLegacy(
+  hallOfFame: unknown,
+  retiredNumbers: unknown,
+  players: Record<string, unknown>,
+): void {
+  if (hallOfFame == null) {
+    fail("business.hallOfFame is required.");
+  }
+  assertRecord(hallOfFame, "business.hallOfFame");
+  if (!Array.isArray(hallOfFame.inductees)) {
+    fail("business.hallOfFame.inductees must be an array.");
+  }
+  const seen = new Set<string>();
+  hallOfFame.inductees.forEach((value: unknown, index: number) => {
+    const path = `business.hallOfFame.inductees[${index}]`;
+    assertRecord(value, path);
+    if (typeof value.playerId !== "string" || !(value.playerId in players)) {
+      fail(`${path}.playerId must reference world.players.`);
+    }
+    if (seen.has(value.playerId)) {
+      fail(`${path}: player inducted twice.`);
+    }
+    seen.add(value.playerId);
+    if (!Number.isInteger(value.inductedSeasonYear)) {
+      fail(`${path}.inductedSeasonYear must be an integer.`);
+    }
+  });
+  if (retiredNumbers == null) {
+    fail("world.retiredNumbers is required.");
+  }
+  assertRecord(retiredNumbers, "world.retiredNumbers");
+  for (const [teamId, entries] of Object.entries(retiredNumbers)) {
+    if (!Array.isArray(entries)) {
+      fail(`world.retiredNumbers[${teamId}] must be an array.`);
+    }
+    const numbers = new Set<number>();
+    entries.forEach((entry: unknown, index: number) => {
+      const path = `world.retiredNumbers[${teamId}][${index}]`;
+      assertRecord(entry, path);
+      if (!isJerseyNumber(entry.number)) {
+        fail(`${path}.number must be a jersey number.`);
+      }
+      if (numbers.has(entry.number as number)) {
+        fail(`${path}: number retired twice.`);
+      }
+      numbers.add(entry.number as number);
+      if (typeof entry.playerId !== "string" || !(entry.playerId in players)) {
+        fail(`${path}.playerId must reference world.players.`);
+      }
+    });
+  }
 }

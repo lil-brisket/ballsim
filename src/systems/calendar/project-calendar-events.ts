@@ -522,6 +522,19 @@ function describeDomainEvent(
         playerIds: playerId ? [playerId] : undefined,
         href: `/dashboard/${saveId}/media?tab=transactions`,
       };
+    case "PlayerWaived":
+    case "PlayerBoughtOut":
+      return {
+        title: playerName
+          ? `${playerName} ${event.type === "PlayerWaived" ? "waived" : "bought out"}`
+          : event.type === "PlayerWaived"
+            ? "Player waived"
+            : "Player bought out",
+        description: teamName ?? undefined,
+        teamIds: teamId ? [teamId] : undefined,
+        playerIds: playerId ? [playerId] : undefined,
+        href: `/dashboard/${saveId}/media?tab=transactions`,
+      };
     case "PlayerReleased":
       return {
         title: playerName ? `${playerName} released` : "Player released",

@@ -31,7 +31,10 @@ export const TRANSACTION_FILTER_GROUPS = {
     "ContractSigned",
   ] as const satisfies readonly DomainEventType[],
   releases: ["PlayerReleased"] as const satisfies readonly DomainEventType[],
-  waivers: [] as const satisfies readonly DomainEventType[],
+  waivers: [
+    "PlayerWaived",
+    "PlayerBoughtOut",
+  ] as const satisfies readonly DomainEventType[],
   extensions: [] as const satisfies readonly DomainEventType[],
   draft: ["DraftPickMade"] as const satisfies readonly DomainEventType[],
   other: [
@@ -203,6 +206,10 @@ function describeSimple(state: GameState, event: DomainEvent): string {
     }
     case "PlayerReleased":
       return `Released ${player?.name ?? "player"}${team ? ` — ${team.name}` : ""}`;
+    case "PlayerWaived":
+      return `Waived ${player?.name ?? "player"}${team ? ` — ${team.name}` : ""}`;
+    case "PlayerBoughtOut":
+      return `Bought out ${player?.name ?? "player"}${team ? ` — ${team.name}` : ""}`;
     case "DraftPickMade":
       return `Drafted ${player?.name ?? "player"}${team ? ` — ${team.name}` : ""}`;
     case "CoachHired":
@@ -746,6 +753,10 @@ export function transactionTypeLabel(type: DomainEventType): string {
       return "Contract";
     case "PlayerReleased":
       return "Release";
+    case "PlayerWaived":
+      return "Waiver";
+    case "PlayerBoughtOut":
+      return "Buyout";
     case "DraftPickMade":
       return "Draft";
     case "CoachHired":

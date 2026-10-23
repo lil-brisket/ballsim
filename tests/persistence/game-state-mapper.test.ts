@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { createDefaultDevelopmentLeagueProfile } from "@/domain/entities/development-league";
-import { NEUTRAL_TEAM_PLAY_STYLE } from "@/domain/entities/team";
+import { NEUTRAL_TEAM_PLAY_STYLE } from "@/persistence/mappers/game-state-migrations/legacy-team-play-style";
 import { DEFAULT_COACHING_PHILOSOPHY } from "@/domain/coaching/coaching-philosophy";
 import { createInitialGameState } from "@/state/create-initial-state";
 import { CBL_GAME_SETTINGS } from "@/domain/game-settings";
@@ -658,7 +658,7 @@ describe("GameState schema migration", () => {
     expect(migratedTeam.finances).toEqual({});
     expect(migratedTeam.arenaId).toBe(`arena_${controlledTeamId}`);
     expect(migratedTeam.reputation).toBe(50);
-    expect(migratedTeam.playStyle).toEqual(NEUTRAL_TEAM_PLAY_STYLE);
+    expect("playStyle" in migratedTeam).toBe(false);
     expect(migratedTeam.coachingPhilosophy).toEqual(
       DEFAULT_COACHING_PHILOSOPHY,
     );
@@ -667,7 +667,7 @@ describe("GameState schema migration", () => {
     expect(migratedTeam.abbreviation).toBe(controlledTeam.abbreviation);
   });
 
-  it("migrates schemaVersion 10 teams by adding neutral playStyle only", () => {
+  it("migrates schemaVersion 10 teams to the current shape (coachingPhilosophy added, playStyle added then dropped)", () => {
     const modern = createInitialGameState({
       saveId: "save_v10_teams",
       rngSeed: 14,
@@ -683,11 +683,7 @@ describe("GameState schema migration", () => {
     const teamB = modern.world.teams[teamBId]!;
 
     const stripToV10 = (team: typeof teamA) => {
-      const {
-        playStyle: _playStyle,
-        coachingPhilosophy: _coachingPhilosophy,
-        ...rest
-      } = team;
+      const { coachingPhilosophy: _coachingPhilosophy, ...rest } = team;
       return rest;
     };
 
@@ -734,14 +730,13 @@ describe("GameState schema migration", () => {
     const migratedA = migrated.world.teams[teamAId]!;
     const migratedB = migrated.world.teams[teamBId]!;
 
-    expect(migratedA.playStyle).toEqual(NEUTRAL_TEAM_PLAY_STYLE);
-    expect(migratedB.playStyle).toEqual(NEUTRAL_TEAM_PLAY_STYLE);
-    expect(migratedA.playStyle).not.toBe(migratedB.playStyle);
+    expect("playStyle" in migratedA).toBe(false);
+    expect("playStyle" in migratedB).toBe(false);
     expect(migratedA.coachingPhilosophy).toEqual(DEFAULT_COACHING_PHILOSOPHY);
     expect(migratedB.coachingPhilosophy).toEqual(DEFAULT_COACHING_PHILOSOPHY);
 
-    const { playStyle: _a, coachingPhilosophy: _ca, ...fieldsA } = migratedA;
-    const { playStyle: _b, coachingPhilosophy: _cb, ...fieldsB } = migratedB;
+    const { coachingPhilosophy: _ca, ...fieldsA } = migratedA;
+    const { coachingPhilosophy: _cb, ...fieldsB } = migratedB;
     expect(fieldsA).toEqual(v10Teams[teamAId]);
     expect(fieldsB).toEqual(v10Teams[teamBId]);
   });
@@ -823,16 +818,19 @@ describe("GameState schema migration", () => {
     const migratedA = migrated.world.teams[teamAId]!;
     const migratedB = migrated.world.teams[teamBId]!;
 
-    expect(migratedA.playStyle).toEqual(customPlayStyleA);
-    expect(migratedB.playStyle).toEqual(customPlayStyleB);
+    // v70 drops the stored playStyle, whatever it held.
+    expect("playStyle" in migratedA).toBe(false);
+    expect("playStyle" in migratedB).toBe(false);
     expect(migratedA.coachingPhilosophy).toEqual(DEFAULT_COACHING_PHILOSOPHY);
     expect(migratedB.coachingPhilosophy).toEqual(DEFAULT_COACHING_PHILOSOPHY);
     expect(migratedA.coachingPhilosophy).not.toBe(migratedB.coachingPhilosophy);
 
     const { coachingPhilosophy: _ca, ...fieldsA } = migratedA;
     const { coachingPhilosophy: _cb, ...fieldsB } = migratedB;
-    expect(fieldsA).toEqual(v11Teams[teamAId]);
-    expect(fieldsB).toEqual(v11Teams[teamBId]);
+    const { playStyle: _pa, ...v11A } = v11Teams[teamAId]!;
+    const { playStyle: _pb, ...v11B } = v11Teams[teamBId]!;
+    expect(fieldsA).toEqual(v11A);
+    expect(fieldsB).toEqual(v11B);
   });
 
   it("serializes coachingPhilosophy on current teams", () => {

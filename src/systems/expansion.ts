@@ -6,7 +6,7 @@ import {
 } from "@/domain/entities/franchise-ops";
 import { createEmptyFranchiseHistory } from "@/domain/entities/franchise-history";
 import { createIdleRelocation } from "@/domain/entities/relocation";
-import { createTeam, NEUTRAL_TEAM_PLAY_STYLE } from "@/domain/entities/team";
+import { createTeam } from "@/domain/entities/team";
 import { DEFAULT_COACHING_PHILOSOPHY } from "@/domain/coaching/coaching-philosophy";
 import type { DomainEvent } from "@/domain/events";
 import { createDomainEvent } from "@/domain/events";
@@ -298,7 +298,6 @@ export function completeExpansion(state: GameState, rng: Rng): SystemResult {
       finances: {},
       arenaId: asArenaId(`arena_${teamId}`),
       reputation: 45,
-      playStyle: { ...NEUTRAL_TEAM_PLAY_STYLE },
       coachingPhilosophy: { ...DEFAULT_COACHING_PHILOSOPHY },
       branding,
     });

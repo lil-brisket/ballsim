@@ -33,7 +33,13 @@ import { releaseExpiredStaffContracts } from "@/systems/staff-contract-lifecycle
 import { refreshStaffFreeAgentPool } from "@/systems/staff-generation";
 import { processStaffRetirement } from "@/systems/staff-retirement";
 import { processPlayerRetirements } from "@/systems/player-retirement";
-import { finalizeRfaQualification } from "@/systems/rfa";
+import { processHallOfFameInductions } from "@/systems/legacy";
+import {
+  closeOfferSheetsAtFreeAgencyClose,
+  finalizeRfaQualification,
+  pruneRfaStatusesBeforeExpiry,
+  resolveQualifyingOffersAtFreeAgencyClose,
+} from "@/systems/rfa";
 import { withdrawOpenFreeAgencyOffers } from "@/systems/expire-transactions";
 import { runLeagueStaffAiManagement } from "@/systems/staff-ai-management";
 import { expireSponsorshipsAtSeason } from "@/systems/sponsorships";
@@ -41,7 +47,10 @@ import { transitionPhase } from "@/systems/simulation/phase-machine";
 import { beginRegularSeasonFromPreseason } from "@/systems/simulation/season-lifecycle";
 import { canonicalPreseasonStartDate } from "@/systems/simulation/season-lifecycle-config";
 import { fillShortRosters } from "@/systems/roster-generation";
-import { processCpuContractExtensions } from "@/systems/contract-extensions";
+import {
+  announceFinalContractYears,
+  processCpuContractExtensions,
+} from "@/systems/contract-extensions";
 import { completeAiFreeAgency } from "@/systems/ai-team-decisions";
 import { enforceMaxRosterViaDevelopmentLeague } from "@/systems/development-league/enforce-roster-cap";
 import { expireSituation } from "@/systems/narrative/lifecycle";
@@ -310,7 +319,14 @@ export function initializeNewSeason(state: GameState, rng?: Rng): SystemResult {
     },
   };
   next = expireSeasonalSituations(next);
-  return systemResult(next, [...events, ...phaseResult.events]);
+  const inductions = processHallOfFameInductions(next);
+  next = inductions.state;
+  return systemResult(next, [
+    ...events,
+    ...phaseResult.events,
+    ...announceFinalContractYears(next),
+    ...inductions.events,
+  ]);
 }
 
 function isNewSeasonAlreadyInitialized(state: GameState): boolean {
@@ -394,25 +410,37 @@ export function processPhaseExit(
   }
 
   if (fromPhaseId === "offseason.roster_decisions") {
+    // Classify before contracts end (no-op once entering the phase did it),
+    // then drop players who were extended during the phase.
+    const rfa = finalizeRfaQualification(current, {
+      autoIssueQoForAiTeams: true,
+    });
+    current = pruneRfaStatusesBeforeExpiry(rfa.state);
+    events.push(...rfa.events);
     const released = releaseExpiredContracts(current);
     current = released.state;
     events.push(...released.events);
     const staffReleased = releaseExpiredStaffContracts(current);
     current = staffReleased.state;
     events.push(...staffReleased.events);
-    const rfa = finalizeRfaQualification(current, {
-      autoIssueQoForAiTeams: true,
-    });
-    current = rfa.state;
-    events.push(...rfa.events);
   }
 
   if (fromPhaseId === "offseason.free_agency") {
-    // AI teams finish their remaining signings before the window closes, so
-    // short rosters are not left to the end-of-offseason fill.
+    // AI teams finish their remaining signings (and offer sheets) before the
+    // window closes, so short rosters are not left to the end-of-offseason
+    // fill.
     const completed = completeAiFreeAgency(current);
     current = completed.state;
     events.push(...completed.events);
+    // Open sheets resolve (CPU teams decide; an owner who did not answer has
+    // declined), then restricted free agents with no sheet take their
+    // qualifying offer.
+    const sheets = closeOfferSheetsAtFreeAgencyClose(current);
+    current = sheets.state;
+    events.push(...sheets.events);
+    const qualifying = resolveQualifyingOffersAtFreeAgencyClose(current);
+    current = qualifying.state;
+    events.push(...qualifying.events);
     const withdrawn = withdrawOpenFreeAgencyOffers(current);
     current = withdrawn.state;
     events.push(...withdrawn.events);
@@ -490,6 +518,13 @@ export function processPhaseEnter(
     const extensions = processCpuContractExtensions(current);
     current = extensions.state;
     events.push(...extensions.events);
+    // Classify restricted free agents while contracts still exist, so owners
+    // can issue qualifying offers during the phase.
+    const rfa = finalizeRfaQualification(current, {
+      autoIssueQoForAiTeams: true,
+    });
+    current = rfa.state;
+    events.push(...rfa.events);
   }
 
   if (toPhaseId === "offseason.free_agency") {
@@ -586,7 +621,16 @@ function runSeasonTransition(state: GameState, rng: Rng): SystemResult {
     "offseason.roster_decisions",
     "season_transition_complete",
   );
-  return systemResult(entered.state, [...finalized.events, ...entered.events]);
+  // Classify restricted free agents while expiring contracts still exist,
+  // so owners can issue qualifying offers during roster decisions.
+  const hooks = finalizeRfaQualification(entered.state, {
+    autoIssueQoForAiTeams: true,
+  });
+  return systemResult(hooks.state, [
+    ...finalized.events,
+    ...entered.events,
+    ...hooks.events,
+  ]);
 }
 
 /**

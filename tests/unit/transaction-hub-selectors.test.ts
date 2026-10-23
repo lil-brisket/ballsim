@@ -71,7 +71,10 @@ describe("transaction-hub-selectors", () => {
     expect(TRANSACTION_FILTER_GROUPS.draft).not.toContain("ContractSigned");
     expect(TRANSACTION_FILTER_GROUPS.other).not.toContain("DraftPickMade");
     expect(TRANSACTION_FILTER_GROUPS.other).toContain("CoachHired");
-    expect(TRANSACTION_FILTER_GROUPS.waivers).toEqual([]);
+    expect(TRANSACTION_FILTER_GROUPS.waivers).toEqual([
+      "PlayerWaived",
+      "PlayerBoughtOut",
+    ]);
     expect(TRANSACTION_FILTER_GROUPS.extensions).toEqual([]);
   });
 

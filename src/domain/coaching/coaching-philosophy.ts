@@ -1,6 +1,6 @@
 /**
  * Team coaching philosophy: discrete strategic tendencies.
- * Independent of Team.playStyle (1–99 numeric bag); simulation consumes this.
+ * The simulation reads this for team style (pace, shot mix, defense).
  */
 
 export type PacePhilosophy = "fast" | "balanced" | "halfCourt";

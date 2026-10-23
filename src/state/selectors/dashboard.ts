@@ -264,6 +264,10 @@ function describeDomainEvent(event: DomainEvent): string {
       return `Draft pick traded${payload.draftPickId ? `: ${String(payload.draftPickId)}` : ""}`;
     case "PlayerReleased":
       return `Player released${payload.playerId ? `: ${String(payload.playerId)}` : ""}`;
+    case "PlayerWaived":
+      return `Player waived${payload.playerId ? `: ${String(payload.playerId)}` : ""}`;
+    case "PlayerBoughtOut":
+      return `Player bought out${payload.playerId ? `: ${String(payload.playerId)}` : ""}`;
     case "DraftPickMade":
       return `Draft pick made${payload.playerId ? `: ${String(payload.playerId)}` : ""}`;
     case "RevenueRecorded":

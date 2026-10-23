@@ -1,4 +1,8 @@
 import { getContractSalaryForYear } from "@/domain/entities/contract";
+import {
+  deadMoneyForSeason,
+  prepaidDeadMoneyForSeason,
+} from "@/domain/entities/dead-money";
 import type { TeamId } from "@/domain/ids";
 import type { GameState } from "@/state/game-state";
 import { isPlayerDlAssigned } from "@/systems/development-league/franchise-membership";
@@ -6,10 +10,10 @@ import { getLeagueSalaryCap } from "@/systems/league-salary-cap";
 import { DEFAULT_SALARY_CAP } from "@/systems/salary-cap-config";
 
 /**
- * Team payroll for a season year, derived only from player contracts.
- * Excludes salaries of Development League–assigned players (contract obligation
- * remains; top-league payroll/cap calculation does not include them).
- * Does not read TeamFinances.payroll or staff contracts.
+ * Team payroll for a season year: player contracts plus dead money owed to
+ * released players. Excludes salaries of Development League–assigned players
+ * (contract obligation remains; top-league payroll/cap calculation does not
+ * include them). Does not read TeamFinances.payroll or staff contracts.
  */
 export function getTeamPayroll(
   teamId: TeamId,
@@ -23,10 +27,16 @@ export function getTeamPayroll(
     byPlayers = new WeakMap();
     payrollCache.set(state.business.contracts, byPlayers);
   }
-  let byTeamYear = byPlayers.get(state.world.players);
+  let byDeadMoney = byPlayers.get(state.world.players);
+  if (byDeadMoney === undefined) {
+    byDeadMoney = new WeakMap();
+    byPlayers.set(state.world.players, byDeadMoney);
+  }
+  const deadMoney = state.business.deadMoney ?? NO_DEAD_MONEY;
+  let byTeamYear = byDeadMoney.get(deadMoney);
   if (byTeamYear === undefined) {
     byTeamYear = new Map();
-    byPlayers.set(state.world.players, byTeamYear);
+    byDeadMoney.set(deadMoney, byTeamYear);
   }
   const key = `${teamId}:${year}`;
   const cached = byTeamYear.get(key);
@@ -38,9 +48,14 @@ export function getTeamPayroll(
   return payroll;
 }
 
+const NO_DEAD_MONEY: GameState["business"]["deadMoney"] = {};
+
 const payrollCache = new WeakMap<
   GameState["business"]["contracts"],
-  WeakMap<GameState["world"]["players"], Map<string, number>>
+  WeakMap<
+    GameState["world"]["players"],
+    WeakMap<GameState["business"]["deadMoney"], Map<string, number>>
+  >
 >();
 
 function computeTeamPayroll(
@@ -62,12 +77,33 @@ function computeTeamPayroll(
       payroll += salary;
     }
   }
-  return payroll;
+  return payroll + getTeamDeadMoney(teamId, year, state);
+}
+
+/** Dead money a team carries against the cap in a season. */
+export function getTeamDeadMoney(
+  teamId: TeamId,
+  year: number,
+  state: GameState,
+): number {
+  return deadMoneyForSeason(state.business.deadMoney?.[teamId], year);
 }
 
 /**
- * Full contractual salary obligation including DL-assigned players.
- * Use for franchise books / obligation views — not top-league cap.
+ * Dead money for a season whose cash already left (buyouts). Weekly payroll
+ * and the cash projection subtract it from {@link getTeamPayroll}.
+ */
+export function getTeamPrepaidDeadMoney(
+  teamId: TeamId,
+  year: number,
+  state: GameState,
+): number {
+  return prepaidDeadMoneyForSeason(state.business.deadMoney?.[teamId], year);
+}
+
+/**
+ * Full contractual salary obligation including DL-assigned players and dead
+ * money. Use for franchise books / obligation views — not top-league cap.
  */
 export function getTeamContractualSalaryObligation(
   teamId: TeamId,
@@ -84,7 +120,7 @@ export function getTeamContractualSalaryObligation(
       total += salary;
     }
   }
-  return total;
+  return total + getTeamDeadMoney(teamId, year, state);
 }
 
 /**

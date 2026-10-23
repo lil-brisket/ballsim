@@ -22,7 +22,7 @@ import {
   defaultDurabilityForAge,
 } from "@/domain/entities/player";
 import type { PlayerArchetype } from "@/domain/entities/player-archetype";
-import type { TeamPlayStyle } from "@/domain/entities/team";
+import type { TeamPlayStyle } from "@/persistence/mappers/game-state-migrations/legacy-team-play-style";
 import type { GameState } from "@/state/game-state";
 import type { PlayerNationality } from "@/domain/entities/player-nationality";
 import type {

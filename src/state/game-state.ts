@@ -2,6 +2,15 @@ import type { Calendar } from "@/domain/entities/calendar";
 import type { Coach } from "@/domain/entities/coach";
 import type { Conference } from "@/domain/entities/conference";
 import type { Contract } from "@/domain/entities/contract";
+import type { DeadMoneyState } from "@/domain/entities/dead-money";
+import type { ExtensionTalksState } from "@/domain/entities/extension-talks";
+import type { PayrollAssessmentState } from "@/domain/entities/payroll-assessment";
+import type { PlayerMoraleState } from "@/domain/entities/player-morale";
+import type { DevelopmentPlanState } from "@/domain/entities/development-plan";
+import type {
+  HallOfFameState,
+  RetiredNumbersState,
+} from "@/domain/entities/legacy";
 import type { Division } from "@/domain/entities/division";
 import type { DraftPick } from "@/domain/entities/draft-pick";
 import type { DraftClass } from "@/domain/entities/draft";
@@ -63,7 +72,7 @@ import type {
   FranchisePhaseState,
 } from "@/systems/phase-engine/phase-types";
 
-export const GAME_STATE_SCHEMA_VERSION = 69;
+export const GAME_STATE_SCHEMA_VERSION = 78;
 
 /** League personnel market for staff free agency (not a business-finance concept). */
 export type StaffMarketState = {
@@ -112,6 +121,11 @@ export type WorldSlice = {
    * Presentation identity only; assigned by ensurePlayerPortraits at persist time.
    */
   playerPortraits: Record<string, PlayerPortraitAssignment>;
+  /**
+   * Jersey numbers a franchise no longer issues, by team id (schema v78+).
+   * Kept on world because jersey-number reconciliation only sees world.
+   */
+  retiredNumbers: RetiredNumbersState;
 };
 
 export type CompetitionSlice = {
@@ -180,6 +194,27 @@ export type FreeAgencyState = {
 
 export type BusinessSlice = {
   contracts: Record<string, Contract>;
+  /**
+   * Salary still owed to released players, by team id (schema v71+). Counts
+   * toward payroll and cap through getTeamPayroll; kept after its season.
+   */
+  deadMoney: DeadMoneyState;
+  /**
+   * Owner extension negotiations by player id (schema v72+): last answer,
+   * refusals and whether he has decided to test free agency.
+   */
+  extensionTalks: ExtensionTalksState;
+  /**
+   * Luxury-tax and salary-floor results by season year (schema v74+).
+   * Written once when the regular season ends.
+   */
+  payrollAssessments: PayrollAssessmentState;
+  /** Player mood by player id (schema v76+); missing means content (60). */
+  playerMorale: PlayerMoraleState;
+  /** Owner-chosen development focus by player id (schema v77+). */
+  developmentPlans: DevelopmentPlanState;
+  /** Hall of Fame members, in induction order (schema v78+). */
+  hallOfFame: HallOfFameState;
   finances: Record<string, TeamFinances>;
   freeAgency: FreeAgencyState;
   /** Restricted free agency statuses for the current offseason cycle. */

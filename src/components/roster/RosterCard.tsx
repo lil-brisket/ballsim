@@ -1,3 +1,4 @@
+import { MoodChip } from "@/components/basketball/MoodChip";
 import { PlayerPortrait } from "@/components/basketball/PlayerPortrait";
 import { PlayerEntityLink } from "@/components/entity/PlayerEntityLink";
 import { ContractSummary } from "@/components/owner/ContractSummary";
@@ -92,6 +93,7 @@ export function RosterCard(props: {
             label={player.availabilityLabel}
             tone={player.canPlay ? "available" : player.injuryKind}
           />
+          <MoodChip mood={player.mood} />
           {player.onTradeBlock ? (
             <span className="rounded-full border border-team-ink/50 px-2 py-0.5 font-mono text-[0.6rem] uppercase tracking-wide text-team-ink">
               On block

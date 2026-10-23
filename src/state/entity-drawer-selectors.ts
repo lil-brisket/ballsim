@@ -1,4 +1,10 @@
 import { ARCHETYPE_LABELS } from "@/domain/entities/player-archetype";
+import { toEligibleContractExtensionView } from "@/state/contract-extension-selectors";
+import { toPlayerReleaseView } from "@/state/player-release-selectors";
+import {
+  toPlayerMoodView,
+  type PlayerMoodView,
+} from "@/state/player-mood-selectors";
 import type { PlayerAttributes } from "@/domain/entities/player";
 import type { PlayerPortraitAssignment } from "@/domain/entities/player-portrait";
 import { selectPlayerPortrait } from "@/state/player-portrait-selectors";
@@ -95,11 +101,17 @@ export type PlayerDrawerView = {
   };
   stats: PlayerStatsBundle;
   development: PlayerDevelopmentBundle;
+  /** Mood chip; null for players not on a roster. */
+  mood: PlayerMoodView | null;
   navigation: {
     playerHref: string;
     teamHref: string | null;
     contractHref: string | null;
     developmentHref: string | null;
+    /** Opens the extension sheet on Contracts; null when not eligible. */
+    extendHref: string | null;
+    /** Opens the release dialog on Contracts; null without a contract. */
+    releaseHref: string | null;
   };
 };
 
@@ -261,12 +273,22 @@ export function toPlayerDrawerView(
       }),
       trackingStartedSeasonYear: history?.trackingStartedSeasonYear ?? null,
     },
+    mood: player.teamId ? toPlayerMoodView(state, player.id) : null,
     navigation: {
       playerHref: `/dashboard/${saveId}/players/${playerId}`,
       teamHref,
       contractHref: onControlledRoster
         ? `/dashboard/${saveId}/team/contracts`
         : null,
+      extendHref:
+        onControlledRoster &&
+        toEligibleContractExtensionView(state, playerId) !== null
+          ? `/dashboard/${saveId}/team/contracts?action=extend&player=${playerId}`
+          : null,
+      releaseHref:
+        onControlledRoster && toPlayerReleaseView(state, playerId) !== null
+          ? `/dashboard/${saveId}/team/contracts?action=release&player=${playerId}`
+          : null,
       developmentHref: onControlledRoster
         ? `/dashboard/${saveId}/development`
         : null,

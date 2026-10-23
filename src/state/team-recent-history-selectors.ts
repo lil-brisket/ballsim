@@ -49,6 +49,8 @@ function categoryLabelForTransaction(type: DomainEventType): string {
     case "ContractSigned":
       return "Signing";
     case "PlayerReleased":
+    case "PlayerWaived":
+    case "PlayerBoughtOut":
       return "Release";
     case "DraftPickMade":
       return "Draft";

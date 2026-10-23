@@ -710,6 +710,22 @@ export function GameSetupForm({
             value={settings.financialRules.luxuryTaxEnabled ? "On" : "Off"}
           />
           <ReviewRow
+            label="Salary floor"
+            value={settings.financialRules.salaryFloorEnabled ? "On" : "Off"}
+          />
+          <ReviewRow
+            label="Veteran rights"
+            value={settings.financialRules.veteranRightsEnabled ? "On" : "Off"}
+          />
+          <ReviewRow
+            label="Draft lottery"
+            value={settings.draftLottery.enabled ? "On" : "Off"}
+          />
+          <ReviewRow
+            label="Restricted free agency"
+            value={settings.offseason.restrictedFreeAgency ? "On" : "Off"}
+          />
+          <ReviewRow
             label="Revenue sharing"
             value={settings.financialRules.revenueSharingEnabled ? "On" : "Off"}
           />
@@ -887,6 +903,32 @@ export function GameSetupForm({
                 }
               />
               <ToggleField
+                label="Salary floor"
+                checked={settings.financialRules.salaryFloorEnabled}
+                onChange={(checked) =>
+                  updateSettings({
+                    ...settings,
+                    financialRules: {
+                      ...settings.financialRules,
+                      salaryFloorEnabled: checked,
+                    },
+                  })
+                }
+              />
+              <ToggleField
+                label="Veteran rights"
+                checked={settings.financialRules.veteranRightsEnabled}
+                onChange={(checked) =>
+                  updateSettings({
+                    ...settings,
+                    financialRules: {
+                      ...settings.financialRules,
+                      veteranRightsEnabled: checked,
+                    },
+                  })
+                }
+              />
+              <ToggleField
                 label="Revenue sharing"
                 checked={settings.financialRules.revenueSharingEnabled}
                 onChange={(checked) =>
@@ -895,6 +937,32 @@ export function GameSetupForm({
                     financialRules: {
                       ...settings.financialRules,
                       revenueSharingEnabled: checked,
+                    },
+                  })
+                }
+              />
+              <ToggleField
+                label="Draft lottery"
+                checked={settings.draftLottery.enabled}
+                onChange={(checked) =>
+                  updateSettings({
+                    ...settings,
+                    draftLottery: {
+                      ...settings.draftLottery,
+                      enabled: checked,
+                    },
+                  })
+                }
+              />
+              <ToggleField
+                label="Restricted free agency"
+                checked={settings.offseason.restrictedFreeAgency}
+                onChange={(checked) =>
+                  updateSettings({
+                    ...settings,
+                    offseason: {
+                      ...settings.offseason,
+                      restrictedFreeAgency: checked,
                     },
                   })
                 }

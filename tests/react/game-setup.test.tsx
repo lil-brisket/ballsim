@@ -111,24 +111,40 @@ describe("GameSetupForm", () => {
     const { unmount } = render(<GameSetupForm atSaveLimit={false} />);
 
     expect(isRadioChecked("Standard")).toBe(true);
-    expect(screen.queryByRole("checkbox", { name: "Luxury tax" })).toBeNull();
+    expect(
+      screen.queryByRole("checkbox", { name: "Revenue sharing" }),
+    ).toBeNull();
     goToAdvanced();
 
     expect(
       screen.getByRole("heading", { name: "Advanced settings", level: 1 }),
     ).toBeTruthy();
-    expect(screen.getByText(/Current: Cap .*Luxury tax on/)).toBeTruthy();
-    const luxury = screen.getByRole("checkbox", {
-      name: "Luxury tax",
+    const sharing = screen.getByRole("checkbox", {
+      name: "Revenue sharing",
     }) as HTMLInputElement;
-    expect(luxury.checked).toBe(true);
-    fireEvent.click(luxury);
+    expect(sharing.checked).toBe(true);
+    fireEvent.click(sharing);
 
-    expect(luxury.checked).toBe(false);
-    expect(screen.getByText(/Current: Cap .*Luxury tax off/)).toBeTruthy();
+    expect(sharing.checked).toBe(false);
     expect(screen.getByText("Custom")).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: "Back" }));
     expect(isRadioChecked("Custom")).toBe(true);
+    unmount();
+  });
+
+  it("toggling the luxury tax updates the summary and switches to Custom", () => {
+    const { unmount } = render(<GameSetupForm atSaveLimit={false} />);
+    goToAdvanced();
+    const luxury = screen.getByRole("checkbox", {
+      name: "Luxury tax",
+    }) as HTMLInputElement;
+    expect(luxury.disabled).toBe(false);
+    expect(screen.getByText(/Luxury tax on/)).toBeTruthy();
+    fireEvent.click(luxury);
+
+    expect(luxury.checked).toBe(false);
+    expect(screen.getByText(/Luxury tax off/)).toBeTruthy();
+    expect(screen.getByText("Custom")).toBeTruthy();
     unmount();
   });
 
@@ -163,13 +179,16 @@ describe("GameSetupForm", () => {
     const { unmount } = render(<GameSetupForm atSaveLimit={false} />);
 
     goToAdvanced();
-    fireEvent.click(screen.getByRole("checkbox", { name: "Luxury tax" }));
+    fireEvent.click(screen.getByRole("checkbox", { name: "Revenue sharing" }));
     fireEvent.click(screen.getByRole("button", { name: "Back" }));
     goToAdvanced();
 
     expect(
-      (screen.getByRole("checkbox", { name: "Luxury tax" }) as HTMLInputElement)
-        .checked,
+      (
+        screen.getByRole("checkbox", {
+          name: "Revenue sharing",
+        }) as HTMLInputElement
+      ).checked,
     ).toBe(false);
     unmount();
   });

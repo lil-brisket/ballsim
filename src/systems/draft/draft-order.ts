@@ -11,11 +11,14 @@ import { DRAFT_PICK_ROUNDS } from "@/domain/entities/draft-pick";
  * Pure deterministic draft order from pick assets + reverse standings.
  * Total sort within each round:
  * wins ascending → originalTeamId ascending → draftPickId ascending.
- * Round 2 uses the same franchise order (not snake). No RNG.
+ * With a lottery, first-round slots of lottery teams follow the drawn
+ * order and come before every other team. Round 2 uses reverse standings
+ * (not snake). No RNG here; the draw is done beforehand.
  */
 export function generateDraftOrder(
   state: GameState,
   draftYear: number,
+  lotteryOrder: readonly TeamId[] | null = null,
 ): DraftOrderSlot[] {
   const picksForYear = Object.values(state.world.draftPicks).filter(
     (pick) => pick.seasonYear === draftYear,
@@ -29,9 +32,20 @@ export function generateDraftOrder(
   let overallPick = 1;
 
   for (const round of DRAFT_PICK_ROUNDS) {
+    const lotteryRank = new Map<string, number>(
+      round === 1 && lotteryOrder
+        ? lotteryOrder.map((teamId, index) => [String(teamId), index])
+        : [],
+    );
+    const rank = (pick: DraftPick) =>
+      lotteryRank.get(String(pick.originalTeamId)) ?? lotteryRank.size;
     const roundPicks = picksForYear
       .filter((pick) => pick.round === round)
-      .sort((left, right) => comparePicksForOrder(left, right, winsByTeam));
+      .sort(
+        (left, right) =>
+          rank(left) - rank(right) ||
+          comparePicksForOrder(left, right, winsByTeam),
+      );
 
     for (const pick of roundPicks) {
       slots.push(

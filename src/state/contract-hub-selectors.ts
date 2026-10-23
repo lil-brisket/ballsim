@@ -4,6 +4,10 @@
  * Composes existing contract/payroll selectors — does not recreate domain math.
  */
 
+import {
+  toPayrollRulesView,
+  type PayrollRulesView,
+} from "@/state/payroll-rules-selectors";
 import type { GameState } from "@/state/game-state";
 import type { ActionCenterItem } from "@/state/action-center-selectors";
 import {
@@ -21,6 +25,14 @@ import {
   toPlayerContractProfileView,
   type PlayerContractProfileView,
 } from "@/state/player-profile-selectors";
+import {
+  toEligibleContractExtensionView,
+  type ContractExtensionView,
+} from "@/state/contract-extension-selectors";
+import {
+  toPlayerReleaseView,
+  type PlayerReleaseView,
+} from "@/state/player-release-selectors";
 import {
   getContractStatus,
   type ContractStatus,
@@ -46,6 +58,13 @@ export type ContractHubRow = ContractRowView & {
   availableAction: ContractAvailableAction;
   isExpiring: boolean;
   isLargeCommitment: boolean;
+  /** Waive / buyout costs; null when the player cannot be released. */
+  release: PlayerReleaseView | null;
+  /**
+   * Extension sheet data; null when the player has no deal with the owner
+   * team or more than two seasons left on it.
+   */
+  extension: ContractExtensionView | null;
 };
 
 export type ContractHubOverview = {
@@ -73,6 +92,8 @@ export type ContractHubView = {
   overview: ContractHubOverview;
   rows: ContractHubRow[];
   decisions: ActionCenterItem[];
+  /** Tax line, floor and projected bill for the cap sheet. */
+  payrollRules: PayrollRulesView;
 };
 
 function presentationState(
@@ -165,6 +186,8 @@ export function toContractHubView(state: GameState): ContractHubView {
         row.salary !== null &&
         largeThreshold > 0 &&
         row.salary >= largeThreshold,
+      release: toPlayerReleaseView(state, row.playerId),
+      extension: toEligibleContractExtensionView(state, row.playerId),
     };
   });
 
@@ -247,5 +270,6 @@ export function toContractHubView(state: GameState): ContractHubView {
     },
     rows,
     decisions,
+    payrollRules: toPayrollRulesView(state),
   };
 }

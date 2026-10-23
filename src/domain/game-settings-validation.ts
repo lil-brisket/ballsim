@@ -1,7 +1,10 @@
+import { isDraftLotteryOddsPreset } from "@/domain/entities/draft-lottery";
 import {
   AI_ASSISTANCE_DOMAIN_KEYS,
   DEFAULT_AI_ASSISTANCE,
   DEFAULT_OFFSEASON_SETTINGS,
+  DEFAULT_PAYROLL_RULE_SETTINGS,
+  DEFAULT_DRAFT_LOTTERY_SETTINGS,
   DEFAULT_SEASON_EVENTS_SETTINGS,
   DEFAULT_TRADE_DEADLINE_RULE,
   isAiAssistDomainMode,
@@ -206,6 +209,14 @@ export function validateGameSettings(
 
   let freeAgencyAllowExtension =
     DEFAULT_OFFSEASON_SETTINGS.freeAgency.allowExtension;
+  let restrictedFreeAgency = DEFAULT_OFFSEASON_SETTINGS.restrictedFreeAgency;
+  if (offseason !== null && offseason.restrictedFreeAgency !== undefined) {
+    if (typeof offseason.restrictedFreeAgency !== "boolean") {
+      errors.push("offseason.restrictedFreeAgency must be a boolean.");
+    } else {
+      restrictedFreeAgency = offseason.restrictedFreeAgency;
+    }
+  }
   if (offseason !== null) {
     const freeAgency =
       offseason.freeAgency === undefined
@@ -236,6 +247,7 @@ export function validateGameSettings(
   if (typeof revenueSharingEnabled !== "boolean") {
     errors.push("financialRules.revenueSharingEnabled must be a boolean.");
   }
+  const payrollRules = resolvePayrollRuleSettings(financialRules, errors);
 
   const salaryCap =
     financialRules.salaryCap === undefined
@@ -404,6 +416,7 @@ export function validateGameSettings(
       staffBudget: staffBudget as number,
       luxuryTaxEnabled: luxuryTaxEnabled as boolean,
       revenueSharingEnabled: revenueSharingEnabled as boolean,
+      ...payrollRules,
     },
     draft: {
       mode:
@@ -420,11 +433,13 @@ export function validateGameSettings(
       mode:
         (history.mode as GameSettings["history"]["mode"] | undefined) ?? "new",
     },
+    draftLottery: resolveDraftLotterySettings(raw.draftLottery, errors),
     offseason: {
       freeAgency: {
         durationDays: freeAgencyDurationDays,
         allowExtension: freeAgencyAllowExtension,
       },
+      restrictedFreeAgency,
     },
     seasonEvents: resolveSeasonEventsSettings(raw.seasonEvents, errors),
   };
@@ -713,4 +728,110 @@ function asRecord(
     return null;
   }
   return value as Record<string, unknown>;
+}
+
+/**
+ * Luxury tax, salary floor and veteran-rights settings. Missing values take
+ * the defaults (saves before v74).
+ */
+function resolvePayrollRuleSettings(
+  financialRules: Record<string, unknown>,
+  errors: string[],
+): typeof DEFAULT_PAYROLL_RULE_SETTINGS extends infer D
+  ? { [K in keyof D]: D[K] extends boolean ? boolean : number }
+  : never {
+  const number = (
+    key: keyof typeof DEFAULT_PAYROLL_RULE_SETTINGS,
+    min: number,
+    max: number,
+    integer: boolean,
+  ): number => {
+    const value = financialRules[key];
+    if (value === undefined)
+      return DEFAULT_PAYROLL_RULE_SETTINGS[key] as number;
+    if (
+      typeof value !== "number" ||
+      !Number.isFinite(value) ||
+      value < min ||
+      value > max ||
+      (integer && !Number.isInteger(value))
+    ) {
+      errors.push(
+        `financialRules.${key} must be ${integer ? "an integer" : "a number"} from ${min} to ${max}.`,
+      );
+      return DEFAULT_PAYROLL_RULE_SETTINGS[key] as number;
+    }
+    return value;
+  };
+  const flag = (
+    key: "salaryFloorEnabled" | "veteranRightsEnabled",
+  ): boolean => {
+    const value = financialRules[key];
+    if (value === undefined) return DEFAULT_PAYROLL_RULE_SETTINGS[key];
+    if (typeof value !== "boolean") {
+      errors.push(`financialRules.${key} must be a boolean.`);
+      return DEFAULT_PAYROLL_RULE_SETTINGS[key];
+    }
+    return value;
+  };
+  return {
+    luxuryTaxThresholdPercent: number(
+      "luxuryTaxThresholdPercent",
+      0,
+      100,
+      false,
+    ),
+    luxuryTaxBaseRate: number("luxuryTaxBaseRate", 0.1, 5, false),
+    salaryFloorEnabled: flag("salaryFloorEnabled"),
+    salaryFloorPercent: number("salaryFloorPercent", 0, 95, false),
+    veteranRightsEnabled: flag("veteranRightsEnabled"),
+    veteranRightsSeasons: number("veteranRightsSeasons", 1, 10, true),
+  };
+}
+
+/**
+ * Draft lottery settings. A missing block means a league from before the
+ * lottery existed: off.
+ */
+function resolveDraftLotterySettings(
+  raw: unknown,
+  errors: string[],
+): GameSettings["draftLottery"] {
+  if (raw === undefined) {
+    return { ...DEFAULT_DRAFT_LOTTERY_SETTINGS, enabled: false };
+  }
+  if (raw === null || typeof raw !== "object" || Array.isArray(raw)) {
+    errors.push("draftLottery must be an object.");
+    return { ...DEFAULT_DRAFT_LOTTERY_SETTINGS, enabled: false };
+  }
+  const record = raw as Record<string, unknown>;
+  const enabled = record.enabled;
+  if (typeof enabled !== "boolean") {
+    errors.push("draftLottery.enabled must be a boolean.");
+  }
+  const oddsPreset =
+    record.oddsPreset ?? DEFAULT_DRAFT_LOTTERY_SETTINGS.oddsPreset;
+  if (!isDraftLotteryOddsPreset(oddsPreset)) {
+    errors.push("draftLottery.oddsPreset must be flattened or weighted.");
+  }
+  const picksDrawn =
+    record.picksDrawn ?? DEFAULT_DRAFT_LOTTERY_SETTINGS.picksDrawn;
+  if (
+    typeof picksDrawn !== "number" ||
+    !Number.isInteger(picksDrawn) ||
+    picksDrawn < 1 ||
+    picksDrawn > 14
+  ) {
+    errors.push("draftLottery.picksDrawn must be an integer from 1 to 14.");
+  }
+  return {
+    enabled: enabled === true,
+    oddsPreset: isDraftLotteryOddsPreset(oddsPreset)
+      ? oddsPreset
+      : DEFAULT_DRAFT_LOTTERY_SETTINGS.oddsPreset,
+    picksDrawn:
+      typeof picksDrawn === "number" && Number.isInteger(picksDrawn)
+        ? picksDrawn
+        : DEFAULT_DRAFT_LOTTERY_SETTINGS.picksDrawn,
+  };
 }

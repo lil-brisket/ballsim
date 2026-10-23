@@ -39,6 +39,8 @@ export type ChoosePossessionDecisionInput = {
   shotSelectionModifiers?: ShotSelectionModifiers;
   /** Defensive team's foul action-weight multiplier. Defaults to 1. */
   foulActionWeightMultiplier?: number;
+  /** Team chemistry: scales the turnover action weight (1 = neutral). */
+  turnoverWeightMultiplier?: number;
 };
 
 /**
@@ -91,6 +93,7 @@ export function choosePossessionDecision(
   const shotSelectionModifiers =
     input.shotSelectionModifiers ?? NEUTRAL_SHOT_SELECTION_MODIFIERS;
   const foulActionWeightMultiplier = input.foulActionWeightMultiplier ?? 1;
+  const turnoverWeightMultiplier = input.turnoverWeightMultiplier ?? 1;
 
   const profiles = buildOffensiveUsageProfiles(input.offensivePlayers);
   const primary = pickWeightedPlayer(profiles, "involvementWeight", rng);
@@ -98,6 +101,7 @@ export function choosePossessionDecision(
     primary,
     input.config,
     foulActionWeightMultiplier,
+    turnoverWeightMultiplier,
     rng,
   );
 
@@ -167,6 +171,7 @@ function pickWeightedAction(
   player: Player,
   config: GameSimulationConfig,
   foulActionWeightMultiplier: number,
+  turnoverWeightMultiplier: number,
   rng: Rng,
 ): ActionKind {
   const shootingRating =
@@ -199,7 +204,9 @@ function pickWeightedAction(
     {
       action: "turnover",
       weight: clampWeight(
-        config.actionBaseWeights.turnover * turnoverMod,
+        config.actionBaseWeights.turnover *
+          turnoverMod *
+          turnoverWeightMultiplier,
         config,
       ),
     },

@@ -115,10 +115,131 @@ export function generateHeadline(
     }
     case "PlayerReleased": {
       const name = playerName(state, str(p, "playerId"));
-      const team = teamName(state, str(p, "teamId"));
+      // Releases carry the old team as formerTeamId.
+      const team = teamName(state, str(p, "formerTeamId") ?? str(p, "teamId"));
       return {
         headline: `${team} release ${name}`,
-        summary: `${name} has been waived by ${team}.`,
+        summary: `${name} is a free agent after leaving ${team}.`,
+      };
+    }
+    case "PlayerWaived": {
+      const name = playerName(state, str(p, "playerId"));
+      const team = teamName(state, str(p, "teamId"));
+      return {
+        headline: `${team} waive ${name}`,
+        summary: `${team} release ${name} and keep paying the rest of his contract.`,
+      };
+    }
+    case "RfaOfferSheetSigned": {
+      const name = playerName(state, str(p, "playerId"));
+      const offering = teamName(state, str(p, "offeringTeamId"));
+      const original = teamName(state, str(p, "originalTeamId"));
+      return {
+        headline: `${name} signs an offer sheet with ${offering}`,
+        summary: `${original} have three days to match or let him go.`,
+      };
+    }
+    case "RfaOfferSheetMatched": {
+      const name = playerName(state, str(p, "playerId"));
+      const team = teamName(state, str(p, "teamId"));
+      const offering = teamName(state, str(p, "offeringTeamId"));
+      return {
+        headline: `${team} match the offer sheet for ${name}`,
+        summary: `${name} stays with ${team} on the terms ${offering} offered.`,
+      };
+    }
+    case "ContractExtensionRefused": {
+      const name = playerName(state, str(p, "playerId"));
+      const team = teamName(state, str(p, "teamId"));
+      return p.testingMarket === true
+        ? {
+            headline: `${name} will test free agency`,
+            summary: `${name} turns down ${team} again and plans to hear other offers.`,
+          }
+        : {
+            headline: `${name} turns down ${team} extension`,
+            summary: `Talks between ${name} and ${team} are on hold.`,
+          };
+    }
+    case "HallOfFameInducted": {
+      const name = playerName(state, str(p, "playerId"));
+      const summary = str(p, "summary");
+      return {
+        headline: `${name} enters the Hall of Fame`,
+        summary: summary
+          ? `${name} is inducted: ${summary}.`
+          : `${name} is inducted into the Hall of Fame.`,
+      };
+    }
+    case "JerseyNumberRetired": {
+      const name = playerName(state, str(p, "playerId"));
+      const team = teamName(state, str(p, "teamId"));
+      const number = num(p, "number");
+      return {
+        headline: `${team} retire No. ${number ?? ""} for ${name}`,
+        summary: `No one will wear ${name}'s number for ${team} again.`,
+      };
+    }
+    case "PlayerTradeRequested": {
+      const name = playerName(state, str(p, "playerId"));
+      const team = teamName(state, str(p, "teamId"));
+      return {
+        headline: `${name} asks ${team} for a trade`,
+        summary: `${name} has been unhappy for weeks and wants a move.`,
+      };
+    }
+    case "PlayerMinutesComplaint": {
+      const name = playerName(state, str(p, "playerId"));
+      const team = teamName(state, str(p, "teamId"));
+      return {
+        headline: `${name} wants a bigger role`,
+        summary: `${name} is frustrated with his minutes in ${team}.`,
+      };
+    }
+    case "DraftLotteryHeld": {
+      const winner = teamName(state, str(p, "winnerTeamId"));
+      const odds = num(p, "winnerOdds");
+      const jumpTeam = str(p, "biggestJumpTeamId");
+      const jump = num(p, "biggestJump") ?? 0;
+      const oddsLabel =
+        odds != null ? ` (${(odds * 100).toFixed(1)}% odds)` : "";
+      return {
+        headline: `${winner} win the draft lottery`,
+        summary:
+          jumpTeam && jump > 0 && jumpTeam !== str(p, "winnerTeamId")
+            ? `${winner} land the first pick${oddsLabel}; ${teamName(state, jumpTeam)} jump ${jump} spots.`
+            : `${winner} land the first pick${oddsLabel}.`,
+      };
+    }
+    case "PayrollRulesAssessed": {
+      const team = teamName(state, str(p, "teamId"));
+      const tax = num(p, "taxBill") ?? 0;
+      const short = num(p, "floorShortfall") ?? 0;
+      const millions = (v: number) => `$${(v / 1_000_000).toFixed(1)}M`;
+      return tax > 0
+        ? {
+            headline: `${team} pay ${millions(tax)} in luxury tax`,
+            summary: `${team} finish the regular season over the tax line.`,
+          }
+        : {
+            headline: `${team} pay ${millions(short)} under the salary floor`,
+            summary: `${team} finish the regular season below the salary floor.`,
+          };
+    }
+    case "ContractFinalYear": {
+      const name = playerName(state, str(p, "playerId"));
+      const team = teamName(state, str(p, "teamId"));
+      return {
+        headline: `${name} enters the final year of his deal`,
+        summary: `${team} can extend him before he reaches free agency.`,
+      };
+    }
+    case "PlayerBoughtOut": {
+      const name = playerName(state, str(p, "playerId"));
+      const team = teamName(state, str(p, "teamId"));
+      return {
+        headline: `${name} agrees to a buyout with ${team}`,
+        summary: `${name} gives up part of his contract to become a free agent.`,
       };
     }
     case "DraftPickMade": {

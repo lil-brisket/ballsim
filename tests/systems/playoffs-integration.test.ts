@@ -1,3 +1,4 @@
+import { DEFAULT_PAYROLL_RULE_SETTINGS } from "@/domain/game-settings";
 import { describe, expect, it } from "vitest";
 import { DEFAULT_SEASON_EVENTS_SETTINGS } from "@/domain/game-settings";
 import { createEmptyPlayoffTournament } from "@/domain/entities/playoffs";
@@ -145,6 +146,7 @@ function createEightTeamGameState(
         staffBudget: 12_000_000,
         luxuryTaxEnabled: true,
         revenueSharingEnabled: true,
+        ...DEFAULT_PAYROLL_RULE_SETTINGS,
       },
       draft: {
         mode: "standard",
@@ -157,7 +159,9 @@ function createEightTeamGameState(
       history: { mode: "new" },
       offseason: {
         freeAgency: { durationDays: 30, allowExtension: true },
+        restrictedFreeAgency: true,
       },
+      draftLottery: { enabled: true, oddsPreset: "flattened", picksDrawn: 4 },
     },
     world: {
       calendar: {
@@ -179,6 +183,7 @@ function createEightTeamGameState(
       fantasyDraft: null,
       scheduledEvents: {},
       playerPortraits: {},
+      retiredNumbers: {},
     },
     competition: {
       season: {
@@ -220,6 +225,12 @@ function createEightTeamGameState(
         offers: {},
       },
       rfaStatuses: {},
+      deadMoney: {},
+      extensionTalks: {},
+      payrollAssessments: {},
+      playerMorale: {},
+      developmentPlans: {},
+      hallOfFame: { inductees: [] },
       tradeBlocks: {},
       ...createPhaseEBusinessDefaults(
         generated.teams.map((team) => team.id as TeamId),

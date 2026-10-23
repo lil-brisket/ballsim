@@ -2,6 +2,8 @@
  * Team Hub composition — read-only projections from existing selectors.
  */
 
+import { teamChemistry } from "@/systems/team-chemistry";
+import type { TeamId } from "@/domain/ids";
 import type { GameState } from "@/state/game-state";
 import {
   getRecentForm,
@@ -72,6 +74,23 @@ export type TeamHubView = {
   rotation: TeamHubRotationSnapshot;
   corePlayers: RosterPlayerView[];
   injuredPlayers: RosterPlayerView[];
+  chemistry: TeamChemistryView;
+  /** Numbers the franchise no longer issues, low to high. */
+  retiredNumbers: { number: number; playerName: string }[];
+};
+
+export type TeamChemistryView = {
+  value: number;
+  /** "Strong" / "Steady" / "Shaky". */
+  label: string;
+  /** Share of the core eight who were here last season (0-1). */
+  continuity: number;
+  /** False in a new league (nobody has a last season yet). */
+  continuityKnown: boolean;
+  /** Players traded in or out in the last 30 days. */
+  recentTrades: number;
+  /** One-line note when trades are costing chemistry, else null. */
+  note: string | null;
 };
 
 function rotationSnapshot(rotation: RotationView): TeamHubRotationSnapshot {
@@ -165,5 +184,30 @@ export function toTeamHubView(state: GameState): TeamHubView {
     rotation: rotationSnapshot(rotation),
     corePlayers,
     injuredPlayers: injured.slice(0, 5),
+    chemistry: chemistryView(state, teamId),
+    retiredNumbers: (state.world.retiredNumbers?.[teamId] ?? []).map((r) => ({
+      number: r.number,
+      playerName: r.playerName,
+    })),
+  };
+}
+
+function chemistryView(state: GameState, teamId: TeamId): TeamChemistryView {
+  const chemistry = teamChemistry(state, teamId);
+  return {
+    value: chemistry.value,
+    label:
+      chemistry.value >= 70
+        ? "Strong"
+        : chemistry.value >= 50
+          ? "Steady"
+          : "Shaky",
+    continuity: chemistry.continuity,
+    continuityKnown: chemistry.continuityKnown,
+    recentTrades: chemistry.recentTrades,
+    note:
+      chemistry.recentTrades > 0
+        ? `${chemistry.recentTrades} recent trade${chemistry.recentTrades === 1 ? "" : "s"}: the group needs time to gel.`
+        : null,
   };
 }

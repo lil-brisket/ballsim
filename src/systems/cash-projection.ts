@@ -14,7 +14,7 @@ import {
   nationalMediaPerTeamPerSeason,
 } from "@/systems/league-economy";
 import { estimateMonthlySponsorshipPayout } from "@/systems/sponsorships";
-import { getTeamPayroll } from "@/systems/salary-cap";
+import { getTeamPayroll, getTeamPrepaidDeadMoney } from "@/systems/salary-cap";
 import { getTeamStaffPayroll } from "@/systems/staff-budget";
 import {
   regularSeasonShareOfWeek,
@@ -87,7 +87,7 @@ export function computeWeeklyOutflowBreakdown(
   const year = state.competition.season.year;
   // A full regular-season week; salaries are not paid in the offseason.
   const playerPayroll = Math.round(
-    getTeamPayroll(asTeamId(teamId), year, state) *
+    cashPayroll(asTeamId(teamId), year, state) *
       typicalRegularSeasonWeekShare(state),
   );
   const staff = Math.round(
@@ -155,7 +155,7 @@ export function projectBusinessFundsHorizon(
     state,
     teamId as TeamId,
   );
-  const annualPayroll = getTeamPayroll(
+  const annualPayroll = cashPayroll(
     asTeamId(teamId),
     state.competition.season.year,
     state,
@@ -246,4 +246,12 @@ export function projectCashHorizon(
     ...projection,
     projectedCash: projection.projectedBusinessFunds,
   };
+}
+
+/** Payroll still paid weekly in cash: buyout money already left at release. */
+function cashPayroll(teamId: TeamId, year: number, state: GameState): number {
+  return (
+    getTeamPayroll(teamId, year, state) -
+    getTeamPrepaidDeadMoney(teamId, year, state)
+  );
 }

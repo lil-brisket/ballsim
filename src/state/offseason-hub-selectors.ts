@@ -4,6 +4,7 @@
  * Does not recreate domain math or invent deadlines.
  */
 
+import { toOwnerRfaView, type OwnerRfaView } from "@/state/rfa-selectors";
 import type { GameState } from "@/state/game-state";
 import {
   buildActionCenterView,
@@ -67,6 +68,8 @@ export type OffseasonHubView = {
   status: OffseasonStatusItem[];
   quickLinks: OffseasonQuickLink[];
   relocationAvailable: boolean;
+  /** Qualifying offers to decide and offer sheets to answer. */
+  rfa: OwnerRfaView;
 };
 
 const OFFSEASON_TIMELINE_KEYS: readonly LeagueMilestoneKey[] = [
@@ -298,5 +301,6 @@ export function toOffseasonHubView(state: GameState): OffseasonHubView {
       ? quickLinks
       : [{ label: "Calendar", href: `${base}/calendar` }],
     relocationAvailable: isRelocationAccessible(state, teamId),
+    rfa: toOwnerRfaView(state),
   };
 }

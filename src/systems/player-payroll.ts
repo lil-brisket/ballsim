@@ -3,7 +3,7 @@ import { createDomainEvent, type DomainEvent } from "@/domain/events";
 import type { TeamId } from "@/domain/ids";
 import { systemResult, type SystemResult } from "@/domain/system-result";
 import type { GameState } from "@/state/game-state";
-import { getTeamPayroll } from "@/systems/salary-cap";
+import { getTeamPayroll, getTeamPrepaidDeadMoney } from "@/systems/salary-cap";
 import { regularSeasonShareOfWeek } from "@/systems/regular-season-pay";
 import { applyCashOnlyImpact } from "@/systems/team-finances";
 
@@ -34,7 +34,10 @@ export function processWeeklyPlayerPayroll(
 
   for (const team of Object.values(state.world.teams)) {
     const teamId = team.id as TeamId;
-    const annual = getTeamPayroll(teamId, year, current);
+    // Buyout money was paid at release; only the rest is drawn weekly.
+    const annual =
+      getTeamPayroll(teamId, year, current) -
+      getTeamPrepaidDeadMoney(teamId, year, current);
     const weekly = Math.round(annual * share);
     if (weekly <= 0) continue;
     const impact = applyCashOnlyImpact(current, teamId, -weekly);

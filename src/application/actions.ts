@@ -69,6 +69,9 @@ export {
   resolveNarrativeSituationAction,
   exerciseTeamOptionAction,
   declineTeamOptionAction,
+  releasePlayerAction,
+  offerContractExtensionAction,
+  restrictedFreeAgencyAction,
 } from "@/application/actions/inbox-contracts";
 export {
   hireStaffAction,
@@ -94,6 +97,8 @@ export {
 export {
   updateLineupAndRotationAction,
   previewOptimizeRotationAction,
+  setDevelopmentFocusAction,
+  retireJerseyNumberAction,
   updateCoachingPhilosophyAction,
   applyCoachingPresetAction,
 } from "@/application/actions/team-management";

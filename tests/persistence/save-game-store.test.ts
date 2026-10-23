@@ -1,3 +1,4 @@
+import { DEFAULT_PAYROLL_RULE_SETTINGS } from "@/domain/game-settings";
 import { describe, expect, it } from "vitest";
 import { createEmptyPlayoffTournament } from "@/domain/entities/playoffs";
 import { createEmptySeasonEventsState } from "@/domain/entities/season-events";
@@ -125,6 +126,7 @@ function createEightTeamPopulatedState(rngSeed: number): GameState {
         staffBudget: 12_000_000,
         luxuryTaxEnabled: true,
         revenueSharingEnabled: true,
+        ...DEFAULT_PAYROLL_RULE_SETTINGS,
       },
       draft: {
         mode: "standard",
@@ -137,7 +139,9 @@ function createEightTeamPopulatedState(rngSeed: number): GameState {
       history: { mode: "new" },
       offseason: {
         freeAgency: { durationDays: 30, allowExtension: true },
+        restrictedFreeAgency: true,
       },
+      draftLottery: { enabled: true, oddsPreset: "flattened", picksDrawn: 4 },
       seasonEvents: {
         midseasonAnchor: { method: "schedule_fraction", fraction: 0.5 },
         votingDaysBeforeAnchor: 14,
@@ -168,6 +172,7 @@ function createEightTeamPopulatedState(rngSeed: number): GameState {
       fantasyDraft: null,
       scheduledEvents: {},
       playerPortraits: {},
+      retiredNumbers: {},
     },
     competition: {
       season: {
@@ -213,6 +218,12 @@ function createEightTeamPopulatedState(rngSeed: number): GameState {
         offers: {},
       },
       rfaStatuses: {},
+      deadMoney: {},
+      extensionTalks: {},
+      payrollAssessments: {},
+      playerMorale: {},
+      developmentPlans: {},
+      hallOfFame: { inductees: [] },
       tradeBlocks: {},
       ...createPhaseEBusinessDefaults(
         generated.teams.map((t) => t.id as TeamId),
@@ -252,9 +263,7 @@ function assertPopulatedFixture(state: GameState): void {
   expect(Object.keys(state.world.players).length).toBeGreaterThan(0);
 
   const sampleTeam = Object.values(state.world.teams)[0]!;
-  expect(sampleTeam.playStyle).toBeDefined();
   expect(sampleTeam.coachingPhilosophy).toBeDefined();
-  expect(sampleTeam.playStyle.pace).toBeTypeOf("number");
   expect(sampleTeam.coachingPhilosophy.pace).toBeTruthy();
 
   const samplePlayer = Object.values(state.world.players)[0]!;

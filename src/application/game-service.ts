@@ -96,6 +96,9 @@ export {
   withdrawOwnerFreeAgentOffer,
   exerciseOwnerTeamOption,
   declineOwnerTeamOption,
+  releaseOwnerPlayer,
+  offerOwnerContractExtension,
+  runOwnerRfaCommand,
 } from "@/application/game-service/free-agency-contracts";
 export {
   advanceLeaguePhaseCommand,
@@ -158,6 +161,8 @@ export {
   optimizeOwnerRotation,
   applyOwnerLineupRecommendation,
   updateOwnerCoachingPhilosophy,
+  setOwnerDevelopmentFocus,
+  retireOwnerJerseyNumber,
   applyOwnerCoachingPreset,
 } from "@/application/game-service/team-management";
 export {

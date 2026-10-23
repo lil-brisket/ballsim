@@ -762,6 +762,8 @@ const TRANSACTION_TYPES: readonly DomainEventType[] = [
   "PlayerTraded",
   "DraftPickTraded",
   "PlayerReleased",
+  "PlayerWaived",
+  "PlayerBoughtOut",
   "DraftPickMade",
   "CoachHired",
   "StaffHired",
@@ -874,6 +876,10 @@ function describeTransactionEvent(
       return `Trade: draft pick (${fromTeam} → ${toTeam})`;
     case "PlayerReleased":
       return `Released ${playerName}${teamName ? ` — ${teamName}` : ""}`;
+    case "PlayerWaived":
+      return `Waived ${playerName}${teamName ? ` — ${teamName}` : ""}`;
+    case "PlayerBoughtOut":
+      return `Bought out ${playerName}${teamName ? ` — ${teamName}` : ""}`;
     case "DraftPickMade":
       return `Drafted ${playerName}${teamName ? ` — ${teamName}` : ""}`;
     case "CoachHired":

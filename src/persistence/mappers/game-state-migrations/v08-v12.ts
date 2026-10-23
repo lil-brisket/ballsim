@@ -7,7 +7,7 @@ import type {
 } from "@/domain/ids";
 import type { GameState } from "@/state/game-state";
 import type { Game } from "@/domain/entities/game";
-import { NEUTRAL_TEAM_PLAY_STYLE } from "@/domain/entities/team";
+import { NEUTRAL_TEAM_PLAY_STYLE } from "@/persistence/mappers/game-state-migrations/legacy-team-play-style";
 import { DEFAULT_COACHING_PHILOSOPHY } from "@/domain/coaching/coaching-philosophy";
 import { calculateStandings } from "@/systems/standings";
 import type {
@@ -378,7 +378,7 @@ export function migrateV11ToV12(state: GameStateV11): GameStateV12 {
         coachingPhilosophy: { ...DEFAULT_COACHING_PHILOSOPHY },
       },
     ]),
-  ) as GameState["world"]["teams"];
+  ) as unknown as GameState["world"]["teams"];
 
   return {
     meta: {

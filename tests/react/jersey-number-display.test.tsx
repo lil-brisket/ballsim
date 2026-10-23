@@ -46,6 +46,13 @@ function rosterPlayer(
     primaryPosition: "PG",
     rotationRole: "starter",
     isInactive: false,
+    mood: {
+      value: 60,
+      band: "content",
+      label: "Content",
+      reason: "Settled",
+      tradeRequested: false,
+    },
     onTradeBlock: false,
     canPlay: true,
     availabilityLabel: "Available",

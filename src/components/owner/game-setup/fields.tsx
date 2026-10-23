@@ -87,20 +87,29 @@ export function ToggleField({
   label,
   checked,
   onChange,
+  disabled = false,
+  note,
 }: {
   label: string;
   checked: boolean;
   onChange: (checked: boolean) => void;
+  disabled?: boolean;
+  /** Short status shown after the label, e.g. "Coming soon". */
+  note?: string;
 }) {
   return (
-    <label className="flex min-h-11 items-center gap-3 text-sm text-zinc-300">
+    <label
+      className={`flex min-h-11 items-center gap-3 text-sm ${disabled ? "text-zinc-500" : "text-zinc-300"}`}
+    >
       <input
         type="checkbox"
         checked={checked}
+        disabled={disabled}
         onChange={(event) => onChange(event.target.checked)}
         className="size-5 rounded border-zinc-600 bg-zinc-950 text-team-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-team-ink"
       />
       {label}
+      {note ? <span className="text-xs text-zinc-500">{note}</span> : null}
     </label>
   );
 }

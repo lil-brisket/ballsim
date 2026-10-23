@@ -4,6 +4,7 @@ import { loadContractHubView } from "@/application/game-service";
 import { ContractHubHeader } from "@/components/contracts/ContractHubHeader";
 import { ContractOverview } from "@/components/contracts/ContractOverview";
 import { ContractRow } from "@/components/contracts/ContractRow";
+import { ExpiringDeals } from "@/components/contracts/ExpiringDeals";
 import { ManagementDecisionPanel } from "@/components/management/ManagementDecisionPanel";
 import { DataTable } from "@/components/ui/DataTable";
 import { EmptyState, ErrorState } from "@/components/ui/EmptyState";
@@ -14,7 +15,7 @@ export const metadata: Metadata = { title: "Contracts" };
 
 type ContractsPageProps = {
   params: Promise<{ saveId: string }>;
-  searchParams: Promise<{ error?: string }>;
+  searchParams: Promise<{ error?: string; action?: string; player?: string }>;
 };
 
 export default async function TeamContractsPage({
@@ -22,7 +23,12 @@ export default async function TeamContractsPage({
   searchParams,
 }: ContractsPageProps) {
   const { saveId } = await params;
-  const { error } = await searchParams;
+  const { error, action, player } = await searchParams;
+  // Deep link from the player drawer: open that player's dialog.
+  const openDialog =
+    (action === "extend" || action === "release") && player
+      ? { action: action as "extend" | "release", playerId: player }
+      : null;
   const view = await loadContractHubView(saveId);
   if (!view) {
     notFound();
@@ -46,6 +52,8 @@ export default async function TeamContractsPage({
 
       <ContractOverview saveId={saveId} overview={view.overview} />
 
+      <ExpiringDeals saveId={saveId} rows={view.rows} returnPath={returnPath} />
+
       <Section title="Contracts">
         {view.rows.length === 0 ? (
           <EmptyState message="No contracts for this team." />
@@ -68,6 +76,11 @@ export default async function TeamContractsPage({
                   saveId={saveId}
                   row={row}
                   returnPath={returnPath}
+                  openAction={
+                    openDialog?.playerId === row.playerId
+                      ? openDialog.action
+                      : undefined
+                  }
                 />
               ))}
             </DataTable>
