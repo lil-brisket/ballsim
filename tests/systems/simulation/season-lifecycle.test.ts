@@ -272,6 +272,7 @@ describe("season lifecycle", () => {
         deadMoney: {},
         extensionTalks: {},
         payrollAssessments: {},
+        playerMorale: {},
         tradeBlocks: {},
         ...createPhaseEBusinessDefaults(
           generated.teams.map((team) => team.id as TeamId),

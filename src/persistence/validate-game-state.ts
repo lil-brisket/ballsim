@@ -1,5 +1,6 @@
 import { isJerseyNumber } from "@/domain/jersey-number";
 import { isDeadMoneyReason } from "@/domain/entities/dead-money";
+import { isMoraleReason } from "@/domain/entities/player-morale";
 import { isDraftLotteryOddsPreset } from "@/domain/entities/draft-lottery";
 import { isExtensionResponseKind } from "@/domain/entities/extension-talks";
 import {
@@ -439,6 +440,7 @@ export function validateGameState(state: unknown): asserts state is GameState {
   validateDeadMoney(business.deadMoney, world.teams, world.players);
   validateExtensionTalks(business.extensionTalks, world.teams, world.players);
   validatePayrollAssessments(business.payrollAssessments, world.teams);
+  validatePlayerMorale(business.playerMorale, world.players);
 
   const staffContracts = (business as Record<string, unknown>).staffContracts;
   const sponsorships = (business as Record<string, unknown>).sponsorships;
@@ -1822,5 +1824,42 @@ function validateDraftLottery(value: unknown, path: string): void {
   );
   if (!(Math.abs(total - 1) < 1e-6)) {
     fail(`${path}.odds must sum to 1.`);
+  }
+}
+
+function validatePlayerMorale(
+  value: unknown,
+  players: Record<string, unknown>,
+): void {
+  if (value == null) {
+    fail("business.playerMorale is required.");
+  }
+  assertRecord(value, "business.playerMorale");
+  for (const [playerId, mood] of Object.entries(value)) {
+    const path = `business.playerMorale[${playerId}]`;
+    if (!(playerId in players)) {
+      fail(`${path} must reference world.players.`);
+    }
+    assertRecord(mood, path);
+    if (
+      typeof mood.value !== "number" ||
+      !Number.isInteger(mood.value) ||
+      mood.value < 0 ||
+      mood.value > 100
+    ) {
+      fail(`${path}.value must be an integer from 0 to 100.`);
+    }
+    if (!isMoraleReason(mood.reason)) {
+      fail(`${path}.reason is invalid.`);
+    }
+    if (!Number.isInteger(mood.lowWeeks) || (mood.lowWeeks as number) < 0) {
+      fail(`${path}.lowWeeks must be a non-negative integer.`);
+    }
+    for (const key of ["tradeRequestSeason", "complaintSeason"]) {
+      const season = mood[key];
+      if (season !== null && !Number.isInteger(season)) {
+        fail(`${path}.${key} must be a season year or null.`);
+      }
+    }
   }
 }

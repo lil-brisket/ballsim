@@ -1,25 +1,25 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`golden old saves > v01.json.gz migrates to the current schema and validates 1`] = `"7462ea19cf49a3c5aa6af5a66477a10e34cc3d4e118c68ff642a48bee3ef01ba"`;
+exports[`golden old saves > v01.json.gz migrates to the current schema and validates 1`] = `"bb81e60c8630fca5910895376729d8248582711214acd6da3c496856a84ec014"`;
 
-exports[`golden old saves > v05.json.gz migrates to the current schema and validates 1`] = `"fd1ad983ba96f0426baeb38e85385323139455e604fd7101a28ae3426dd85e00"`;
+exports[`golden old saves > v05.json.gz migrates to the current schema and validates 1`] = `"c3188e4ee4ea87aec2d2ff704ee0e6663949c0ffcd7014c636d3f1db7c39979d"`;
 
-exports[`golden old saves > v11.json.gz migrates to the current schema and validates 1`] = `"795c5dd6ebb6f6be5a6d88fd1591f868616cfacf60f6df43cb346f1cda05977c"`;
+exports[`golden old saves > v11.json.gz migrates to the current schema and validates 1`] = `"a5b7cdf2521ce3652872dc52b411216f245eda3131f9f2a4d4dac7db1a5832e0"`;
 
-exports[`golden old saves > v17.json.gz migrates to the current schema and validates 1`] = `"b6e4e5f2fdbd083617b99f9366268f05119a9ccdba42c7f8166ce8f2b8e2b58b"`;
+exports[`golden old saves > v17.json.gz migrates to the current schema and validates 1`] = `"ac64cc4202ccd9ec5508816f43030a6da2703e075a5d6ed5e3c766f2d8aef9d5"`;
 
-exports[`golden old saves > v23.json.gz migrates to the current schema and validates 1`] = `"4bd791941a5368c5cd483ef2ac0b7c5e2a2069706ac59688b52add81e05d2e6d"`;
+exports[`golden old saves > v23.json.gz migrates to the current schema and validates 1`] = `"971cd45b677876088c6074e158ebb1ae830946e9ead8b978bfa5367b628998d1"`;
 
-exports[`golden old saves > v29.json.gz migrates to the current schema and validates 1`] = `"496b732ec0e1d779c9eda93189af13dd1bc3b97422f733e28f82f503dabc6a14"`;
+exports[`golden old saves > v29.json.gz migrates to the current schema and validates 1`] = `"83d62730c2968b77045e4ceff03826d10d7d9265151219b87eb92516fd2ba2fd"`;
 
-exports[`golden old saves > v35.json.gz migrates to the current schema and validates 1`] = `"492122012f6f6414a726595ff895fd9634878f9b1f13ffda494ee8a34a82f5a2"`;
+exports[`golden old saves > v35.json.gz migrates to the current schema and validates 1`] = `"50bedc76668228cd760354b805f1cbbc99d194b67befd25cd0492c375f28235d"`;
 
-exports[`golden old saves > v41.json.gz migrates to the current schema and validates 1`] = `"5eb55c71f8ea7e61955c4e567a44a91f18c9ab699aec85c7501c77752bddbe55"`;
+exports[`golden old saves > v41.json.gz migrates to the current schema and validates 1`] = `"2c36b5b6c1a75f0760b34a9d80f08ff7b4b66d569a4ec39f0d599fe72c72fc56"`;
 
-exports[`golden old saves > v47.json.gz migrates to the current schema and validates 1`] = `"131e8acce237bd4f38a9002bfcd7ea5ab69d2fffc61e2eacbbc3652edbff7a28"`;
+exports[`golden old saves > v47.json.gz migrates to the current schema and validates 1`] = `"aaaa11a277c7e1607e117b786973fccbd343a3421155087ecf58e5303c5c5d25"`;
 
-exports[`golden old saves > v53.json.gz migrates to the current schema and validates 1`] = `"591a6a6bde94f6681d99c7d8febfa420385a0666754e17887bd141b41de2d138"`;
+exports[`golden old saves > v53.json.gz migrates to the current schema and validates 1`] = `"201620d5a6296ef96cedd338860242b2725aa98a00c0228dbed025916ff176d1"`;
 
-exports[`golden old saves > v59.json.gz migrates to the current schema and validates 1`] = `"c323c28068ceef60e83a6343e32a27f4bf8f5f14a257f898dd207207b8a33eb7"`;
+exports[`golden old saves > v59.json.gz migrates to the current schema and validates 1`] = `"959b4e210905735eb48daefcb94645d252ec567d806a022b6ae6d34021a7352a"`;
 
-exports[`golden old saves > v65.json.gz migrates to the current schema and validates 1`] = `"e2e11ed755c57e9def33cddaeb0f62e2655fc281843c4a55f989dcb812209579"`;
+exports[`golden old saves > v65.json.gz migrates to the current schema and validates 1`] = `"7e66c72b29e2c1274071d2f71c115d59c4dfc1ff9409130490a2254f3ed0048b"`;

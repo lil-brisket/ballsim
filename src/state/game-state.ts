@@ -5,6 +5,7 @@ import type { Contract } from "@/domain/entities/contract";
 import type { DeadMoneyState } from "@/domain/entities/dead-money";
 import type { ExtensionTalksState } from "@/domain/entities/extension-talks";
 import type { PayrollAssessmentState } from "@/domain/entities/payroll-assessment";
+import type { PlayerMoraleState } from "@/domain/entities/player-morale";
 import type { Division } from "@/domain/entities/division";
 import type { DraftPick } from "@/domain/entities/draft-pick";
 import type { DraftClass } from "@/domain/entities/draft";
@@ -66,7 +67,7 @@ import type {
   FranchisePhaseState,
 } from "@/systems/phase-engine/phase-types";
 
-export const GAME_STATE_SCHEMA_VERSION = 75;
+export const GAME_STATE_SCHEMA_VERSION = 76;
 
 /** League personnel market for staff free agency (not a business-finance concept). */
 export type StaffMarketState = {
@@ -198,6 +199,8 @@ export type BusinessSlice = {
    * Written once when the regular season ends.
    */
   payrollAssessments: PayrollAssessmentState;
+  /** Player mood by player id (schema v76+); missing means content (60). */
+  playerMorale: PlayerMoraleState;
   finances: Record<string, TeamFinances>;
   freeAgency: FreeAgencyState;
   /** Restricted free agency statuses for the current offseason cycle. */

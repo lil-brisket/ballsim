@@ -34,6 +34,11 @@ export type GameStateV70 = Omit<GameState, "meta" | "business"> & {
   business: Omit<GameState["business"], "deadMoney" | "extensionTalks">;
 };
 
+export type GameStateV75 = Omit<GameState, "meta" | "business"> & {
+  meta: Omit<GameState["meta"], "schemaVersion"> & { schemaVersion: 75 };
+  business: Omit<GameState["business"], "playerMorale">;
+};
+
 export type GameStateV74 = Omit<GameState, "meta" | "settings"> & {
   meta: Omit<GameState["meta"], "schemaVersion"> & { schemaVersion: 74 };
   settings: Omit<GameState["settings"], "draftLottery">;
@@ -248,7 +253,7 @@ export function migrateV73ToV74(state: GameStateV73): GameStateV74 {
  * Deterministic v74 → v75: add settings.draftLottery, off. Existing leagues
  * keep the reverse-standings order unless the owner turns the lottery on.
  */
-export function migrateV74ToV75(state: GameStateV74): GameState {
+export function migrateV74ToV75(state: GameStateV74): GameStateV75 {
   return {
     ...state,
     meta: {
@@ -261,6 +266,24 @@ export function migrateV74ToV75(state: GameStateV74): GameState {
       draftLottery: (
         state.settings as Partial<Pick<GameState["settings"], "draftLottery">>
       ).draftLottery ?? { ...DEFAULT_DRAFT_LOTTERY_SETTINGS, enabled: false },
+    },
+  } as unknown as GameStateV75;
+}
+
+/**
+ * Deterministic v75 → v76: add business.playerMorale. Everyone starts
+ * content; moods move from the first in-season week.
+ */
+export function migrateV75ToV76(state: GameStateV75): GameState {
+  return {
+    ...state,
+    meta: {
+      ...state.meta,
+      schemaVersion: 76,
+    },
+    business: {
+      ...state.business,
+      playerMorale: {},
     },
   };
 }

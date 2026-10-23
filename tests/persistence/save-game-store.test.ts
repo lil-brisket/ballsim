@@ -220,6 +220,7 @@ function createEightTeamPopulatedState(rngSeed: number): GameState {
       deadMoney: {},
       extensionTalks: {},
       payrollAssessments: {},
+      playerMorale: {},
       tradeBlocks: {},
       ...createPhaseEBusinessDefaults(
         generated.teams.map((t) => t.id as TeamId),
