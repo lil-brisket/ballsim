@@ -12,7 +12,12 @@ import { calculatePlayerOverall } from "@/domain/player-overall-rating";
 import type { PlayerId, TeamId } from "@/domain/ids";
 import type { GameState } from "@/state/game-state";
 import { runAiTeamDecisions } from "@/systems/ai-team-decisions";
-import { DEFAULT_ROSTER_SIZE } from "@/systems/roster-generation-config";
+import {
+  DEFAULT_ROSTER_SIZE,
+  rosterPositionForSlot,
+} from "@/systems/roster-generation-config";
+import type { PlayerPosition } from "@/domain/entities/player";
+import { seasonRecord, withFranchiseHistory } from "../state/history-fixtures";
 import { fillShortRosters } from "@/systems/roster-generation";
 import {
   advanceLeaguePhase,
@@ -228,4 +233,79 @@ describe("offseason signings and the salary cap (#82)", () => {
       cap + 3 * vetMinSalary(cap),
     );
   });
+
+  it("fills in waiver order: the worst record gets the best free agent", () => {
+    const { state: initial, rng } = setup("fill_waiver_order", 35);
+    const [better, worse] = aiTeamIds(initial);
+    let state = releaseFromTeam(initial, better!, 1);
+    state = releaseFromTeam(state, worse!, 1);
+    const year = state.competition.season.year;
+    state = withFranchiseHistory(state, {
+      [better!]: [seasonRecord({ year: year - 1, wins: 30, losses: 10 })],
+      [worse!]: [seasonRecord({ year: year - 1, wins: 10, losses: 30 })],
+    });
+    const position = rosterPositionForSlot(
+      state.world.teams[better!]!.roster.length,
+    );
+    const starId = withBestFreeAgentAt(state, position);
+    state = starId.state;
+
+    const filled = fillShortRosters(state, rng).state;
+    expect(filled.world.players[starId.playerId]!.teamId).toBe(worse);
+  });
+
+  it("signs the best free agent left for the minimum when no team can pay him", () => {
+    const { state: initial, rng } = setup("fill_best_at_minimum", 36);
+    const ownerId = initial.user.activeOwnerTeamId;
+    let state = releaseFromTeam(initial, ownerId, 1);
+    const position = rosterPositionForSlot(
+      state.world.teams[ownerId]!.roster.length,
+    );
+    const star = withBestFreeAgentAt(state, position);
+    state = star.state;
+    const others = aiTeamIds(state);
+    // Only the owner is short, and an owner's fill pays the minimum.
+    expect(
+      others.every(
+        (id) => state.world.teams[id]!.roster.length === DEFAULT_ROSTER_SIZE,
+      ),
+    ).toBe(true);
+
+    const filled = fillShortRosters(state, rng).state;
+    const player = filled.world.players[star.playerId]!;
+    expect(player.teamId).toBe(ownerId);
+    const contract = filled.business.contracts[player.contractId!]!;
+    const year = getContractSigningYear(filled);
+    expect(getContractSalaryForYear(contract, year)).toBe(
+      vetMinSalary(getLeagueSalaryCap(filled)),
+    );
+    expect(
+      calculatePlayerOverall(player.position, player.attributes),
+    ).toBeGreaterThan(REPLACEMENT_LEVEL_OVERALL);
+  });
 });
+
+/** Turns the first free agent into the best (all-88) player at `position`. */
+function withBestFreeAgentAt(
+  state: GameState,
+  position: PlayerPosition,
+): { state: GameState; playerId: PlayerId } {
+  const playerId = listFreeAgents(state).playerIds[0]!;
+  const player = state.world.players[playerId]!;
+  const attributes = Object.fromEntries(
+    Object.keys(player.attributes).map((key) => [key, 88]),
+  ) as typeof player.attributes;
+  return {
+    state: {
+      ...state,
+      world: {
+        ...state.world,
+        players: {
+          ...state.world.players,
+          [playerId]: { ...player, position, attributes },
+        },
+      },
+    },
+    playerId,
+  };
+}

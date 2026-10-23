@@ -161,7 +161,7 @@ describe("league hard locks", () => {
   });
 
   describe("free agency phase lock", () => {
-    it("blocks FA signing outside free_agency phase", () => {
+    it("blocks FA signing outside free agency and the season", () => {
       let state = createInitialGameState({
         saveId: "hl_fa_phase",
         rngSeed: 5,
@@ -169,6 +169,7 @@ describe("league hard locks", () => {
       });
       const rng = createSeededRng(state.meta.rngState);
       state = bootstrapWorld(state, rng).state;
+      state = setActivePhase(state, "offseason.draft");
       expect(isFreeAgencyOpen(state)).toBe(false);
       const playerId = Object.keys(state.world.players)[0]!;
       const teamId = Object.keys(state.world.teams)[0]!;
@@ -184,7 +185,7 @@ describe("league hard locks", () => {
           playerId: playerId as never,
           teamId: teamId as never,
         }),
-      ).toMatch(/Free agency is not open/i);
+      ).toMatch(/during free agency and the regular season/i);
     });
   });
 

@@ -70,9 +70,9 @@ export const TRANSACTION_LEGALITY_MATRIX: Readonly<
     offseason_non_fa: "blocked",
     offseason_fa: "allowed",
     offseason_roster_decisions: "blocked",
-    preseason: "blocked",
-    regular_pre_deadline: "blocked",
-    regular_deadline_closed: "blocked",
+    preseason: "allowed",
+    regular_pre_deadline: "allowed",
+    regular_deadline_closed: "allowed",
     playoffs_postseason: "blocked",
   },
   submit_rfa_offer_sheet: {

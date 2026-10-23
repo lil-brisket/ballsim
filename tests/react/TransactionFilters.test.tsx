@@ -54,17 +54,17 @@ describe("TransactionFilters", () => {
     expect(screen.getByLabelText("Search")).toBeTruthy();
   });
 
-  it("disables waivers and extensions options", () => {
+  it("offers waivers and extensions options", () => {
     render(<TransactionFilters {...defaultProps} />);
     const typeSelect = screen.getByLabelText("Transaction Type");
     const waivers = within(typeSelect).getByRole("option", {
-      name: "Waivers (coming soon)",
+      name: "Waivers",
     }) as HTMLOptionElement;
     const extensions = within(typeSelect).getByRole("option", {
-      name: "Extensions (coming soon)",
+      name: "Extensions",
     }) as HTMLOptionElement;
-    expect(waivers.disabled).toBe(true);
-    expect(extensions.disabled).toBe(true);
+    expect(waivers.disabled).toBe(false);
+    expect(extensions.disabled).toBe(false);
   });
 
   it("reflects the current selections", () => {

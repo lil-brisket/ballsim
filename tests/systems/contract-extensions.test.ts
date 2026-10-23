@@ -11,11 +11,15 @@ import {
 } from "@/systems/ai-payroll-budget";
 import { bootstrapWorld } from "@/systems/world-pipeline";
 import {
+  CPU_RESIGN_OVERALL_FLOOR,
+  CPU_RESIGN_ROTATION_SIZE,
   playerExtensionAsk,
   processCpuContractExtensions,
 } from "@/systems/contract-extensions";
 import { getContractSigningYear, getTeamPayroll } from "@/systems/salary-cap";
 import { transitionPhase } from "@/systems/simulation/phase-machine";
+import { cpuContractYears } from "@/systems/free-agent-market";
+import { calculatePlayerOverall } from "@/domain/player-overall-rating";
 
 function bootstrapped(saveId: string): GameState {
   const initial = createInitialGameState({
@@ -182,13 +186,24 @@ describe("processCpuContractExtensions", () => {
     expect(extensionFor(result.events, starId)).toBeDefined();
   });
 
-  it("adds his asked seasons and leaves the signed ones alone", () => {
+  it("adds CPU-length seasons at his ask and leaves the signed ones alone", () => {
     const { state, starId, contractId } = ownerWithUnderpaidStar("full");
     const before = state.business.contracts[contractId]!;
+    const star = state.world.players[starId]!;
     const ask = playerExtensionAsk(state, starId, state.user.activeOwnerTeamId);
+    const years = Math.min(
+      ask.maxYears,
+      Math.max(
+        ask.minYears,
+        cpuContractYears(
+          star.age,
+          calculatePlayerOverall(star.position, star.attributes),
+        ),
+      ),
+    );
     const after =
       processCpuContractExtensions(state).state.business.contracts[contractId]!;
-    expect(after.endYear).toBe(before.endYear + ask.minYears);
+    expect(after.endYear).toBe(before.endYear + years);
     for (const [year, salary] of Object.entries(before.salaryByYear)) {
       expect(after.salaryByYear[year]).toBe(salary);
     }
@@ -240,4 +255,120 @@ describe("processCpuContractExtensions", () => {
     const extended = processCpuContractExtensions(enough.state);
     expect(extensionFor(extended.events, enough.starId)).toBeDefined();
   });
+
+  it("re-signs an expiring rotation player of a CPU team", () => {
+    const { state, playerId, contractId } = cpuWithExpiring({
+      rating: 75,
+      strongerTeammates: 0,
+    });
+    const result = processCpuContractExtensions(state);
+    expect(extensionFor(result.events, playerId)).toBeDefined();
+    const after = result.state.business.contracts[contractId]!;
+    expect(after.endYear).toBeGreaterThan(state.competition.season.year);
+  });
+
+  it("lets an expiring player outside the rotation walk", () => {
+    const { state, playerId, contractId } = cpuWithExpiring({
+      rating: 75,
+      strongerTeammates: CPU_RESIGN_ROTATION_SIZE,
+    });
+    const result = processCpuContractExtensions(state);
+    expect(extensionFor(result.events, playerId)).toBeUndefined();
+    expect(result.state.business.contracts[contractId]).toEqual(
+      state.business.contracts[contractId],
+    );
+  });
+
+  it("lets an expiring player below the re-sign floor walk", () => {
+    const { state, playerId } = cpuWithExpiring({
+      rating: CPU_RESIGN_OVERALL_FLOOR - 15,
+      strongerTeammates: 0,
+    });
+    const result = processCpuContractExtensions(state);
+    expect(extensionFor(result.events, playerId)).toBeUndefined();
+  });
+
+  it("re-signs only stars for an owner who delegated contracts", () => {
+    const base = ownerWithUnderpaidStar("full");
+    const ownerTeamId = base.state.user.activeOwnerTeamId;
+    const { state, playerId } = withExpiring(base.state, ownerTeamId, {
+      rating: 75,
+      strongerTeammates: 0,
+      exclude: base.starId,
+    });
+    const result = processCpuContractExtensions(state);
+    expect(extensionFor(result.events, playerId)).toBeUndefined();
+  });
 });
+
+/**
+ * Gives one of the team's contracted players flat `rating` attributes and a
+ * deal that ends this season, and `strongerTeammates` others all-90 ratings.
+ */
+function withExpiring(
+  base: GameState,
+  teamId: TeamId,
+  input: { rating: number; strongerTeammates: number; exclude?: PlayerId },
+): { state: GameState; playerId: PlayerId; contractId: string } {
+  const team = base.world.teams[teamId]!;
+  const contracted = team.roster.filter(
+    (id) => id !== input.exclude && base.world.players[id]?.contractId != null,
+  );
+  const playerId = contracted[0]!;
+  const flat = (rating: number, player: (typeof base.world.players)[string]) =>
+    Object.fromEntries(
+      Object.keys(player.attributes).map((key) => [key, rating]),
+    ) as typeof player.attributes;
+  const players = { ...base.world.players };
+  const target = players[playerId]!;
+  players[playerId] = {
+    ...target,
+    age: 26,
+    attributes: flat(input.rating, target),
+  };
+  for (const id of contracted.slice(1, 1 + input.strongerTeammates)) {
+    players[id] = { ...players[id]!, attributes: flat(90, players[id]!) };
+  }
+  const contractId = target.contractId!;
+  const contract = base.business.contracts[contractId]!;
+  const year = base.competition.season.year;
+  return {
+    state: {
+      ...base,
+      world: { ...base.world, players },
+      business: {
+        ...base.business,
+        contracts: {
+          ...base.business.contracts,
+          [contractId]: {
+            ...contract,
+            startYear: year - 1,
+            endYear: year,
+            salaryByYear: {
+              [String(year - 1)]: 1_000_000,
+              [String(year)]: 1_000_000,
+            },
+          },
+        },
+      },
+    },
+    playerId,
+    contractId,
+  };
+}
+
+/** Offseason CPU team with plenty of budget and one expiring player. */
+function cpuWithExpiring(input: {
+  rating: number;
+  strongerTeammates: number;
+}): { state: GameState; playerId: PlayerId; contractId: string } {
+  const {
+    state: rich,
+    teamId,
+    starId,
+  } = cpuWithStar({
+    revenue: 300_000_000,
+    cash: 0,
+  });
+  return withExpiring(rich, teamId, { ...input, exclude: starId });
+}

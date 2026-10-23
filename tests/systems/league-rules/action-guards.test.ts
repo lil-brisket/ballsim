@@ -624,10 +624,37 @@ const CASES: GuardCase[] = [
     allowed: true,
   },
   {
-    name: "free agency closed in preseason",
+    name: "free agents can be signed in preseason",
+    rule: "free-agency",
+    variant: "legal",
+    setup: identity,
+    action: (state) => {
+      const { teamA, teamB } = teamPair(state);
+      return faAction("sign_free_agent", firstPlayer(state, teamA), teamB);
+    },
+    allowed: true,
+  },
+  {
+    name: "no standing offers in preseason",
     rule: "free-agency",
     variant: "illegal",
     setup: identity,
+    action: (state) => {
+      const { teamA, teamB } = teamPair(state);
+      return faAction(
+        "make_free_agent_offer",
+        firstPlayer(state, teamA),
+        teamB,
+      );
+    },
+    allowed: false,
+    code: "FA_NOT_OPEN",
+  },
+  {
+    name: "free agency closed during the draft",
+    rule: "free-agency",
+    variant: "illegal",
+    setup: (state) => setActivePhase(state, "offseason.draft"),
     action: (state) => {
       const { teamA, teamB } = teamPair(state);
       return faAction("sign_free_agent", firstPlayer(state, teamA), teamB);

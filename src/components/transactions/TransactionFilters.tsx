@@ -29,8 +29,8 @@ const TYPE_OPTIONS: Array<{
   { id: "trades", label: "Trades" },
   { id: "signings", label: "Signings" },
   { id: "releases", label: "Releases" },
-  { id: "waivers", label: "Waivers (coming soon)", disabled: true },
-  { id: "extensions", label: "Extensions (coming soon)", disabled: true },
+  { id: "waivers", label: "Waivers" },
+  { id: "extensions", label: "Extensions" },
   { id: "draft", label: "Draft" },
   { id: "other", label: "Other" },
 ];

@@ -32,7 +32,7 @@ function withSeason(
 }
 
 describe("phase5 offseason lifecycle", () => {
-  it("before offseason: nav absent, hubs inactive, routes remain loadable", () => {
+  it("before offseason: nav absent, offseason hubs inactive, routes remain loadable", () => {
     let state = createTestGameState({ saveId: "lifecycle_before" });
     const rng = createSeededRng(state.meta.rngState);
     state = bootstrapWorld(state, rng).state;
@@ -42,11 +42,14 @@ describe("phase5 offseason lifecycle", () => {
     expect(nav.some((g) => g.id === "offseason")).toBe(false);
     const hrefs = nav.flatMap((g) => g.items.map((i) => i.href));
     expect(hrefs).not.toContain("/draft");
-    expect(hrefs).not.toContain("/free-agency");
+    // Free agents can be signed during the season, from the Team group.
+    const team = nav.find((g) => g.id === "team")!;
+    expect(team.items.map((i) => i.href)).toContain("/free-agency");
 
     expect(toOffseasonHubView(state).active).toBe(false);
     expect(toDraftHubView(state).active).toBe(false);
-    expect(toFreeAgencyHubView(state).active).toBe(false);
+    expect(toFreeAgencyHubView(state).active).toBe(true);
+    expect(toFreeAgencyHubView(state).inSeason).toBe(true);
     // Direct URL still yields a view (inactive), not a throw
     expect(toScoutingHubView(state).inactiveReason).toBeTruthy();
   });
@@ -73,7 +76,7 @@ describe("phase5 offseason lifecycle", () => {
     expect(hub.status.length).toBeGreaterThan(0);
   });
 
-  it("exit offseason: nav disappears and hubs go inactive", () => {
+  it("exit offseason: nav disappears, the offseason hub goes inactive and in-season signing opens", () => {
     let state = createTestGameState({ saveId: "lifecycle_exit" });
     const rng = createSeededRng(state.meta.rngState);
     state = bootstrapWorld(state, rng).state;
@@ -87,7 +90,7 @@ describe("phase5 offseason lifecycle", () => {
       ownerNavGroupsForState(state).some((g) => g.id === "offseason"),
     ).toBe(false);
     expect(toOffseasonHubView(state).active).toBe(false);
-    expect(toFreeAgencyHubView(state).active).toBe(false);
+    expect(toFreeAgencyHubView(state).inSeason).toBe(true);
   });
 
   it("playoffs phase injects Playoffs nav without offseason destinations", () => {

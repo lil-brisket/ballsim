@@ -27,6 +27,7 @@ import {
 } from "@/state/action-center-selectors";
 import { toOwnerDashboardView } from "@/state/owner-dashboard";
 import { isInLeaguePhase } from "@/systems/phase-engine";
+import { isInSeasonSigningOpen } from "@/systems/league-rules/free-agency-rules";
 import {
   rfaTagForPlayer,
   toOwnerRfaView,
@@ -51,6 +52,11 @@ export type FreeAgencyRecentSigning = {
 
 export type FreeAgencyHubView = {
   active: boolean;
+  /**
+   * Signing after the summer window (preseason, regular season): sign only,
+   * no standing offers, asks at their closing level.
+   */
+  inSeason: boolean;
   inactiveReason: string | null;
   saveId: string;
   currentDate: string;
@@ -82,7 +88,8 @@ export function toFreeAgencyHubView(state: GameState): FreeAgencyHubView {
   const team = state.world.teams[teamId];
   const signingYear = getContractSigningYear(state);
   const owner = toOwnerDashboardView(state);
-  const active = isInLeaguePhase(state, "offseason.free_agency");
+  const inSeason = isInSeasonSigningOpen(state);
+  const active = isInLeaguePhase(state, "offseason.free_agency") || inSeason;
 
   const market = toFreeAgentViews(state);
   const allOffers = toFreeAgencyOfferViews(state);
@@ -115,9 +122,10 @@ export function toFreeAgencyHubView(state: GameState): FreeAgencyHubView {
 
   return {
     active,
+    inSeason,
     inactiveReason: active
       ? null
-      : "Free agency is available during the offseason free_agency stage. Use the Calendar to advance.",
+      : "Free agents can be signed during offseason free agency and the regular season. Use the Calendar to advance.",
     saveId,
     currentDate: owner.currentDate,
     teamName: team ? `${team.city} ${team.name}` : "Team",

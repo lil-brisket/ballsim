@@ -2,6 +2,7 @@
  * Phase 5 cross-system flow invariants (selector-level).
  */
 
+import { setActivePhase } from "@/systems/phase-engine";
 import { describe, expect, it } from "vitest";
 import { createSeededRng } from "@/domain/rng";
 import { bootstrapWorld } from "@/systems/world-pipeline";
@@ -62,7 +63,11 @@ describe("phase5 cross-system flows", () => {
     state = withPhase(state, "regular");
 
     expect(toDraftHubView(state).active).toBe(false);
-    expect(toFreeAgencyHubView(state).active).toBe(false);
+    // In season the FA hub is open for direct signings only.
+    expect(toFreeAgencyHubView(state).inSeason).toBe(true);
+
+    const playoffs = setActivePhase(withPhase(state, "playoffs"), "playoffs");
+    expect(toFreeAgencyHubView(playoffs).active).toBe(false);
   });
 
   it("Flow 7 — playoffs hub unavailable before tournament starts", () => {

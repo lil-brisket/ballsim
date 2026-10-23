@@ -1,4 +1,9 @@
-import { asContractId, asPlayerId, asTeamId } from "@/domain/ids";
+import {
+  asContractId,
+  asPlayerId,
+  asTeamId,
+  type PlayerId,
+} from "@/domain/ids";
 import { type Player, type PlayerPosition } from "@/domain/entities/player";
 import { createContract, type Contract } from "@/domain/entities/contract";
 import type { Rng } from "@/domain/rng";
@@ -10,6 +15,10 @@ import {
   vetMinSalary,
 } from "@/systems/salary-scale";
 import { getLeagueSalaryCap } from "@/systems/league-salary-cap";
+import {
+  FREE_AGENT_CLOSING_ASK_SHARE,
+  freeAgentAsk,
+} from "@/systems/free-agent-market";
 import { calculatePlayerOverall } from "@/domain/player-overall-rating";
 import { generatePlayerWithRng } from "@/systems/player-generation";
 import {
@@ -160,15 +169,13 @@ export function generateRosters(state: GameState, rng: Rng): SystemResult {
 function takeFillFreeAgent(
   players: Record<string, Player>,
   position: PlayerPosition,
-  accept: (player: Player) => boolean = () => true,
 ): Player | null {
   const candidates = Object.values(players).filter(
     (player) =>
       player.retired !== true &&
       player.teamId === null &&
       player.contractId == null &&
-      player.position === position &&
-      accept(player),
+      player.position === position,
   );
   if (candidates.length === 0) {
     return null;
@@ -201,14 +208,17 @@ function nextFillPlayerId(
   return { playerId, nextSlot: slot + 1 };
 }
 
-function fillMarketSalary(player: Player, cap: number): number {
-  return salaryForPlayer({
-    overall: calculatePlayerOverall(player.position, player.attributes),
-    age: player.age,
-    years: Math.max(0, player.age - 19),
-    cap,
-    kind: "fa",
-  });
+/** A fill comes after free agency, so free agents ask their closing ask. */
+function fillMarketSalary(state: GameState, player: Player): number {
+  return freeAgentAsk(state, player, FREE_AGENT_CLOSING_ASK_SHARE);
+}
+
+/** Last completed season's win%, for waiver order (0.5 with no history). */
+function lastSeasonWinPct(state: GameState, teamId: string): number {
+  const seasons = state.business.franchiseHistory[teamId]?.seasons ?? [];
+  const last = seasons[seasons.length - 1];
+  if (!last || last.wins + last.losses === 0) return 0.5;
+  return last.wins / (last.wins + last.losses);
 }
 
 function isReplacementLevel(player: Player): boolean {
@@ -222,20 +232,28 @@ function isReplacementLevel(player: Player): boolean {
  * Adds players so every team reaches {@link DEFAULT_ROSTER_SIZE}.
  * Used after offseason attrition when the free-agent pool cannot fill holes.
  *
- * A fill respects the team's room (an AI team's affordable cap space; none
- * for an owner's team): the best free agent whose market salary fits signs at
- * market; otherwise a replacement-level player signs a one-year minimum deal
- * (the vet-min exception), so filling a roster never pushes a team over the
- * cap or its budget with market contracts.
+ * Each spot goes to the best free agent left at the position. A fill
+ * respects the team's room (an AI team's affordable cap space; none for an
+ * owner's team): he signs at market when that fits, otherwise for a one-year
+ * minimum (the vet-min exception: once free agency is over, an unsigned
+ * player takes the minimum), so filling a roster never pushes a team over the
+ * cap or its budget with market contracts. Teams fill one spot per round in
+ * waiver order (worst last-season record first), so no team gets first call
+ * on every leftover.
  */
 export function fillShortRosters(state: GameState, rng: Rng): SystemResult {
-  const teamIds = (
+  const shortTeamIds = (
     Object.keys(state.world.teams) as ReturnType<typeof asTeamId>[]
-  ).sort((a, b) => (a < b ? -1 : a > b ? 1 : 0));
-  const shortTeamIds = teamIds.filter(
-    (teamId) =>
-      (state.world.teams[teamId]?.roster.length ?? 0) < DEFAULT_ROSTER_SIZE,
-  );
+  )
+    .filter(
+      (teamId) =>
+        (state.world.teams[teamId]?.roster.length ?? 0) < DEFAULT_ROSTER_SIZE,
+    )
+    .sort(
+      (a, b) =>
+        lastSeasonWinPct(state, a) - lastSeasonWinPct(state, b) ||
+        (a < b ? -1 : a > b ? 1 : 0),
+    );
   if (shortTeamIds.length === 0) {
     return systemResult(state);
   }
@@ -254,87 +272,112 @@ export function fillShortRosters(state: GameState, rng: Rng): SystemResult {
     occupiedNames.add(`${existing.firstName} ${existing.lastName}`);
   }
 
+  type FillProgress = {
+    roster: PlayerId[];
+    slot: number;
+    startPayroll: number;
+    payroll: number;
+    startRoom: number;
+  };
+  const progress = new Map<string, FillProgress>();
   for (const teamId of shortTeamIds) {
     const team = teams[teamId]!;
-    const roster = [...team.roster];
-    let slot = roster.length;
     const startPayroll = getTeamPayroll(teamId, currentYear, state);
-    let payroll = startPayroll;
-    // AI teams stay within what they can afford (#93). An owner's roster is
-    // only topped up with one-year minimum deals: an automatic fill must not
-    // commit the owner to market contracts they never chose.
-    const startRoom = isUserControlledTeam(state, teamId)
-      ? 0
-      : aiPayrollRoom(state, teamId, currentYear);
-    while (roster.length < DEFAULT_ROSTER_SIZE) {
-      const position = rosterPositionForSlot(roster.length);
-      const capSpace = startRoom - (payroll - startPayroll);
-      const fits = (candidate: Player) =>
-        fillMarketSalary(candidate, cap) <= capSpace;
-      const existing =
-        takeFillFreeAgent(players, position, fits) ??
-        takeFillFreeAgent(players, position, isReplacementLevel);
-      let player: Player;
-      if (existing) {
-        const contractId = asContractId(
-          `contract_fill_${existing.id}_${currentYear}`,
-        );
-        player = {
-          ...existing,
+    progress.set(teamId, {
+      roster: [...team.roster],
+      slot: team.roster.length,
+      startPayroll,
+      payroll: startPayroll,
+      // AI teams stay within what they can afford (#93). An owner's roster is
+      // only topped up with one-year minimum deals: an automatic fill must not
+      // commit the owner to market contracts they never chose.
+      startRoom: isUserControlledTeam(state, teamId)
+        ? 0
+        : aiPayrollRoom(state, teamId, currentYear),
+    });
+  }
+
+  const fillOne = (teamId: string, fill: FillProgress): void => {
+    const team = teams[teamId]!;
+    const { roster } = fill;
+    const position = rosterPositionForSlot(roster.length);
+    const capSpace = fill.startRoom - (fill.payroll - fill.startPayroll);
+    const fits = (candidate: Player) =>
+      fillMarketSalary(state, candidate) <= capSpace;
+    const existing = takeFillFreeAgent(players, position);
+    let player: Player;
+    if (existing) {
+      const contractId = asContractId(
+        `contract_fill_${existing.id}_${currentYear}`,
+      );
+      player = {
+        ...existing,
+        teamId: team.id,
+        contractId,
+      };
+      players[existing.id] = player;
+      roster.push(existing.id);
+    } else {
+      const next = nextFillPlayerId(teamId, players, fill.slot);
+      fill.slot = next.nextSlot;
+      const playerId = next.playerId;
+      const contractId = asContractId(`contract_${playerId}`);
+      const generate = (rosterSlot: number) =>
+        generatePlayerWithRng(rng, {
+          id: playerId,
           teamId: team.id,
           contractId,
-        };
-        players[existing.id] = player;
-        roster.push(existing.id);
-      } else {
-        const next = nextFillPlayerId(teamId, players, slot);
-        slot = next.nextSlot;
-        const playerId = next.playerId;
-        const contractId = asContractId(`contract_${playerId}`);
-        const generate = (rosterSlot: number) =>
-          generatePlayerWithRng(rng, {
-            id: playerId,
-            teamId: team.id,
-            contractId,
-            position,
-            occupiedNames,
-            qualityBand: rosterQualityBandForSlot(rosterSlot),
-          });
-        player = generate(roster.length);
-        if (!fits(player) && !isReplacementLevel(player)) {
-          // No room for this player's market deal: take a bench-level one
-          // who will sign for the minimum instead.
-          player = generate(DEFAULT_ROSTER_SIZE - 1);
-        }
-        occupiedNames.add(`${player.firstName} ${player.lastName}`);
-        players[playerId] = player;
-        roster.push(playerId);
+          position,
+          occupiedNames,
+          qualityBand: rosterQualityBandForSlot(rosterSlot),
+        });
+      player = generate(roster.length);
+      if (!fits(player) && !isReplacementLevel(player)) {
+        // No room for this player's market deal: take a bench-level one
+        // who will sign for the minimum instead.
+        player = generate(DEFAULT_ROSTER_SIZE - 1);
       }
-
-      const contractId = player.contractId!;
-      const market = fillMarketSalary(player, cap);
-      const atMinimum = market > capSpace;
-      const salaryPerYear = atMinimum ? minSalary : market;
-      // Draw the length either way so the RNG stream does not depend on it.
-      const drawnYears = rng.nextInt(1, 4);
-      const yearsRemaining = atMinimum ? 1 : drawnYears;
-      payroll += salaryPerYear;
-      const startYear = currentYear;
-      const endYear = currentYear + yearsRemaining - 1;
-      const salaryByYear: Record<string, number> = {};
-      for (let year = startYear; year <= endYear; year += 1) {
-        salaryByYear[String(year)] = salaryPerYear;
-      }
-      contracts[contractId] = createContract({
-        id: contractId,
-        playerId: player.id,
-        teamId: team.id,
-        startYear,
-        endYear,
-        salaryByYear,
-      });
+      occupiedNames.add(`${player.firstName} ${player.lastName}`);
+      players[playerId] = player;
+      roster.push(playerId);
     }
-    teams[teamId] = { ...team, roster };
+
+    const contractId = player.contractId!;
+    const market = fillMarketSalary(state, player);
+    const atMinimum = market > capSpace;
+    const salaryPerYear = atMinimum ? minSalary : market;
+    // Draw the length either way so the RNG stream does not depend on it.
+    const drawnYears = rng.nextInt(1, 4);
+    const yearsRemaining = atMinimum ? 1 : drawnYears;
+    fill.payroll += salaryPerYear;
+    const startYear = currentYear;
+    const endYear = currentYear + yearsRemaining - 1;
+    const salaryByYear: Record<string, number> = {};
+    for (let year = startYear; year <= endYear; year += 1) {
+      salaryByYear[String(year)] = salaryPerYear;
+    }
+    contracts[contractId] = createContract({
+      id: contractId,
+      playerId: player.id,
+      teamId: team.id,
+      startYear,
+      endYear,
+      salaryByYear,
+    });
+  };
+
+  let filling = true;
+  while (filling) {
+    filling = false;
+    for (const teamId of shortTeamIds) {
+      const fill = progress.get(teamId)!;
+      if (fill.roster.length >= DEFAULT_ROSTER_SIZE) continue;
+      fillOne(teamId, fill);
+      filling = true;
+    }
+  }
+  for (const teamId of shortTeamIds) {
+    teams[teamId] = { ...teams[teamId]!, roster: progress.get(teamId)!.roster };
   }
 
   let next: GameState = {

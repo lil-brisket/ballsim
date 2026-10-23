@@ -14,8 +14,8 @@ import {
   MAX_ANNUAL_ATTRIBUTE_CHANGE,
   MAX_ANNUAL_OVERALL_GAIN,
   MAX_ANNUAL_OVERALL_LOSS,
+  developmentBandForAge,
   POTENTIAL_TAPER_GAP,
-  STAGE_CATEGORY_DELTAS,
   WORK_ETHIC_CENTER,
   WORK_ETHIC_SCALE,
 } from "@/systems/player-development-config";
@@ -49,27 +49,32 @@ export function developPlayer(
     player.position,
     player.attributes,
   );
+  const band = developmentBandForAge(player.age);
   const remainingPotential = Math.max(
     0,
     player.potential.overall - currentOverall,
   );
-  const taper =
-    remainingPotential <= 0
+  const taper = !band.tapered
+    ? 1
+    : remainingPotential <= 0
       ? 0
       : Math.min(1, remainingPotential / POTENTIAL_TAPER_GAP);
   const injuryFactor = developmentOpportunityFactor(player);
-  const workEthicModifier =
-    (1 +
-      (player.personality.workEthic - WORK_ETHIC_CENTER) / WORK_ETHIC_SCALE) *
-    trainerMultiplier *
-    injuryFactor;
+  // Work ethic, trainers and facilities speed growth; from the plateau on
+  // the curve is age-driven (only missed time still costs).
+  const workEthicModifier = band.tapered
+    ? (1 +
+        (player.personality.workEthic - WORK_ETHIC_CENTER) / WORK_ETHIC_SCALE) *
+      trainerMultiplier *
+      injuryFactor
+    : injuryFactor;
 
   const nextAttributes: PlayerAttributes = { ...player.attributes };
   const deltas: Partial<Record<keyof PlayerAttributes, number>> = {};
 
   for (const key of PLAYER_ATTRIBUTE_KEYS) {
     const category = ATTRIBUTE_DEVELOPMENT_CATEGORY[key];
-    const range = STAGE_CATEGORY_DELTAS[stage][category];
+    const range = band.deltas[category];
     let delta = rng.nextInt(range.min, range.max);
 
     if (delta > 0) {
@@ -108,26 +113,11 @@ export function developPlayer(
     currentOverall,
   );
 
+  // Every other field (injuries, Development League profile, retirement,
+  // jersey) carries over unchanged.
   return createPlayer({
-    id: player.id,
-    teamId: player.teamId,
-    firstName: player.firstName,
-    lastName: player.lastName,
-    jerseyNumber: player.jerseyNumber,
-    jerseyTeamId: player.jerseyTeamId,
-    nationality: player.nationality,
-    age: player.age,
-    heightInches: player.heightInches,
-    weightPounds: player.weightPounds,
-    position: player.position,
-    archetype: player.archetype,
+    ...player,
     attributes: nextAttributes,
-    potential: player.potential,
-    personality: player.personality,
-    contractId: player.contractId,
-    availability: player.availability,
-    injury: player.injury,
-    suspension: player.suspension,
     development: { stage },
   });
 }

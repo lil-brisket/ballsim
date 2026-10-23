@@ -4,7 +4,10 @@ import {
   checkContractExtensionWindow,
   checkPlayerReleaseWindow,
 } from "@/systems/league-rules/contract-rules";
-import { checkFreeAgencySigning } from "@/systems/league-rules/free-agency-rules";
+import {
+  checkFreeAgencyOffer,
+  checkFreeAgencySigning,
+} from "@/systems/league-rules/free-agency-rules";
 import {
   canActivateDraft,
   isDraftCompleteForYear,
@@ -57,10 +60,15 @@ export function canPerformAction(
       }
       break;
     }
-    case "sign_free_agent":
-    case "make_free_agent_offer": {
+    case "sign_free_agent": {
       violations.push(
         ...checkFreeAgencySigning(state, action.playerId).violations,
+      );
+      break;
+    }
+    case "make_free_agent_offer": {
+      violations.push(
+        ...checkFreeAgencyOffer(state, action.playerId).violations,
       );
       break;
     }

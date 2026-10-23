@@ -69,7 +69,9 @@ describe("free-agency-hub-selectors", () => {
     expect(hub.playerPayroll).toBe(finances.playerPayroll);
     expect(hub.capSpace).toBe(finances.capSpace);
     expect(hub.exposesTrueOverall).toBe(true);
-    expect(hub.inactiveReason).toBeTruthy();
+    // A new league starts in preseason, when free agents can be signed.
+    expect(hub.inSeason).toBe(true);
+    expect(hub.inactiveReason).toBeNull();
   });
 
   it("shows next season's payroll and cap space in the offseason (#82)", () => {

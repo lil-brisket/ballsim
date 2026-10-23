@@ -129,6 +129,57 @@ describe("developPlayer", () => {
     expect(mean(changes)).toBeGreaterThan(0.3);
   });
 
+  it("grows a young prospect with room by about two overall a year", () => {
+    const player = createYoungHighPotentialPlayer();
+    const before = overallOf(player);
+    const gain = mean(
+      sampleDeveloped(player, 450).map(
+        (developed) => overallOf(developed) - before,
+      ),
+    );
+    expect(gain).toBeGreaterThan(1.8);
+    expect(gain).toBeLessThanOrEqual(5);
+  });
+
+  it("grows less each year from 23, and little from 25", () => {
+    const gainAt = (age: number) => {
+      const player = createYoungHighPotentialPlayer({ age });
+      return mean(
+        sampleDeveloped(player, 900).map(
+          (developed) => overallOf(developed) - overallOf(player),
+        ),
+      );
+    };
+    expect(gainAt(21)).toBeGreaterThan(gainAt(23));
+    expect(gainAt(23)).toBeGreaterThan(gainAt(25));
+    expect(gainAt(25)).toBeGreaterThan(0);
+  });
+
+  it("holds a prime player below his ceiling on average", () => {
+    const player = createPrimeDevelopmentPlayer({ age: 28 });
+    const before = overallOf(player);
+    const change = mean(
+      sampleDeveloped(player, 950).map(
+        (developed) => overallOf(developed) - before,
+      ),
+    );
+    expect(Math.abs(change)).toBeLessThan(0.25);
+  });
+
+  it("declines faster with age after 30", () => {
+    const declineAt = (age: number) => {
+      const player = createVeteranPlayer({ age });
+      return mean(
+        sampleDeveloped(player, 1000).map(
+          (developed) => overallOf(developed) - overallOf(player),
+        ),
+      );
+    };
+    expect(declineAt(31)).toBeLessThan(-0.3);
+    expect(declineAt(33)).toBeLessThan(declineAt(31));
+    expect(declineAt(35)).toBeLessThan(declineAt(33));
+  });
+
   it("gives near-potential players substantially less upside than high-gap prospects", () => {
     const prospect = createYoungHighPotentialPlayer();
     const nearCeiling = createYoungNearPotentialPlayer();
