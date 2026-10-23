@@ -10,6 +10,7 @@ import {
   type OwnerNavBadgeKey,
 } from "@/state/owner-nav-badges";
 import { isOffseasonPeriod } from "@/state/owner-season-context";
+import { isInSeasonSigningOpen } from "@/systems/league-rules/free-agency-rules";
 import type { SeasonPhase } from "@/domain/entities/season";
 
 export type OwnerNavItem = {
@@ -120,6 +121,13 @@ const OFFSEASON_GROUP: OwnerNavGroup = {
   ],
 };
 
+/** In preseason and the regular season, free agents can still be signed. */
+const IN_SEASON_FREE_AGENTS_NAV_ITEM: OwnerNavItem = {
+  href: "/free-agency",
+  label: "Free Agents",
+  icon: "freeAgency",
+};
+
 const PLAYOFFS_NAV_ITEM: OwnerNavItem = {
   href: "/playoffs",
   label: "Playoffs",
@@ -189,6 +197,15 @@ export function ownerNavGroupsForState(state: GameState): OwnerNavGroup[] {
     if (group.id === "main" && isOffseasonPeriod(state)) {
       groups.push(withBadges(group, badges));
       groups.push(withBadges(OFFSEASON_GROUP, badges));
+      continue;
+    }
+    if (group.id === "team" && isInSeasonSigningOpen(state)) {
+      groups.push(
+        withBadges(
+          { ...group, items: [...group.items, IN_SEASON_FREE_AGENTS_NAV_ITEM] },
+          badges,
+        ),
+      );
       continue;
     }
     if (group.id === "league") {

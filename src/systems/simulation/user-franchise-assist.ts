@@ -47,10 +47,9 @@ import {
   isSalaryLowball,
   isVetMinExceptionSalary,
   REPLACEMENT_LEVEL_OVERALL,
-  salaryForPlayer,
-  serviceYearsForSalary,
   vetMinSalary,
 } from "@/systems/salary-scale";
+import { freeAgentAsk } from "@/systems/free-agent-market";
 import { hireStaff } from "@/systems/staff";
 import { findTeamStaffByRole } from "@/systems/staff-effects";
 import { draftClassIdFor } from "@/domain/entities/draft";
@@ -376,19 +375,7 @@ function trySignFreeAgent(
     candidate.attributes,
   );
   const cap = getLeagueSalaryCap(state);
-  const faMarket = salaryForPlayer({
-    overall,
-    age: candidate.age,
-    years: serviceYearsForSalary({
-      age: candidate.age,
-      seasonYear: state.competition.season.year,
-      draftSeasonYear: candidate.developmentLeague?.draftSeasonYear ?? null,
-      seasonsPlayed:
-        state.business.playerHistory[candidate.id]?.seasons.length ?? 0,
-    }),
-    cap,
-    kind: "fa",
-  });
+  const faMarket = freeAgentAsk(state, candidate);
   const useVetMin =
     allowMinException &&
     overall < REPLACEMENT_LEVEL_OVERALL &&
@@ -701,19 +688,7 @@ function pickBestAffordableFreeAgent(
     if (options.preferCheap && overall >= 80) {
       continue;
     }
-    const faMarket = salaryForPlayer({
-      overall,
-      age: player.age,
-      years: serviceYearsForSalary({
-        age: player.age,
-        seasonYear: state.competition.season.year,
-        draftSeasonYear: player.developmentLeague?.draftSeasonYear ?? null,
-        seasonsPlayed:
-          state.business.playerHistory[player.id]?.seasons.length ?? 0,
-      }),
-      cap,
-      kind: "fa",
-    });
+    const faMarket = freeAgentAsk(state, player);
     if (capSpace >= faMarket && faMarket >= AI_FA_MIN_SALARY) {
       return player;
     }

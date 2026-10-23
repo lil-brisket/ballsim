@@ -12,7 +12,10 @@ import {
 } from "@/domain/entities/free-agency-offer";
 import type { Player } from "@/domain/entities/player";
 import type { Team } from "@/domain/entities/team";
-import { createDomainEvent } from "@/domain/events/domain-event";
+import {
+  createDomainEvent,
+  type DomainEvent,
+} from "@/domain/events/domain-event";
 import {
   emptyInterestFactors,
   type EvaluatePlayerInterest,
@@ -21,6 +24,7 @@ import {
 import type { OfferId, PlayerId, TeamId } from "@/domain/ids";
 import { systemResult, type SystemResult } from "@/domain/system-result";
 import type { GameState } from "@/state/game-state";
+import { isUserControlledTeam } from "@/state/owner-context";
 import { appendSeasonEventLog } from "@/state/game-state";
 import { FREE_AGENCY_INTEREST_CONFIG } from "@/systems/free-agency-config";
 import { computeAwardReputationBonus } from "@/systems/awards/award-reputation";
@@ -29,10 +33,11 @@ import { getLeagueSalaryCap } from "@/systems/league-salary-cap";
 import {
   isVetMinExceptionSalary,
   REPLACEMENT_LEVEL_OVERALL,
-  salaryForPlayer,
-  serviceYearsForSalary,
   vetMinSalary,
 } from "@/systems/salary-scale";
+import { freeAgentAsk } from "@/systems/free-agent-market";
+import { recordOwnershipEvidence } from "@/systems/ownership-confidence-engine";
+import { scoreFreeAgentSigning } from "@/systems/ownership-alignment-signals";
 import { VET_MIN_EXCEPTION_ENABLED } from "@/systems/salary-cap-config";
 import {
   readFreeAgentMotivations,
@@ -73,15 +78,25 @@ export type FreeAgencyWriteOptions = {
 
 /**
  * Default interest: baseline + bounded award reputation (expectations only).
- * Awards never modify OVR, potential, or attributes. Reads the team's open
- * offer for the salary.
+ * Awards never modify OVR, potential, or attributes. Reads the first-season
+ * salary of the team's open offer (offseason deals start next season).
  */
 export const defaultEvaluatePlayerInterest: EvaluatePlayerInterest = (
   playerId,
   teamId,
   state,
-) => {
-  const year = state.competition.season.year;
+) => evaluateOpenOfferInterest(state, playerId, teamId);
+
+/**
+ * Interest in the team's open offer, with the ask at `askShare` of his
+ * market salary (default: today's share).
+ */
+export function evaluateOpenOfferInterest(
+  state: GameState,
+  playerId: PlayerId,
+  teamId: TeamId,
+  askShare?: number,
+): PlayerInterest {
   let offered: number | null = null;
   for (const offer of Object.values(state.business.freeAgency.offers)) {
     if (
@@ -89,22 +104,26 @@ export const defaultEvaluatePlayerInterest: EvaluatePlayerInterest = (
       offer.teamId === teamId &&
       isOpenOffer(offer.status)
     ) {
-      offered = getContractSalaryForYear(offer.terms, year) ?? null;
+      offered =
+        getContractSalaryForYear(offer.terms, offer.terms.startYear) ?? null;
       break;
     }
   }
-  return evaluateInterestAtSalary(state, playerId, teamId, offered);
-};
+  return evaluateInterestAtSalary(state, playerId, teamId, offered, askShare);
+}
 
 /**
  * Interest in a team at an explicit first-year salary (null: no offer yet,
  * money is neutral). Shared by free-agency offers and RFA offer sheets.
+ * Money is measured against his ask at `askShare` of his market salary
+ * (default: today's share; see {@link freeAgentAskShare}).
  */
 export function evaluateInterestAtSalary(
   state: GameState,
   playerId: PlayerId,
   teamId: TeamId,
   offered: number | null,
+  askShare?: number,
 ): PlayerInterest {
   const factors = emptyInterestFactors();
   const awardBonus = computeAwardReputationBonus(playerId, state);
@@ -112,22 +131,9 @@ export function evaluateInterestAtSalary(
 
   const player = state.world.players[playerId];
   if (player && offered != null) {
-    const year = state.competition.season.year;
     const overall = calculatePlayerOverall(player.position, player.attributes);
     const cap = getLeagueSalaryCap(state);
-    const market = salaryForPlayer({
-      overall,
-      age: player.age,
-      years: serviceYearsForSalary({
-        age: player.age,
-        seasonYear: year,
-        draftSeasonYear: player.developmentLeague?.draftSeasonYear ?? null,
-        seasonsPlayed:
-          state.business.playerHistory[player.id]?.seasons.length ?? 0,
-      }),
-      cap,
-      kind: "fa",
-    });
+    const market = freeAgentAsk(state, player, askShare);
     const acceptsVetMin =
       overall < REPLACEMENT_LEVEL_OVERALL && offered >= vetMinSalary(cap);
     const ratio = market > 0 ? offered / market : 1;
@@ -383,6 +389,71 @@ export function negotiateOffer(
       updatedOn: today,
     }),
   );
+}
+
+/**
+ * Free agents answer owners' standing offers, earliest first (CPU offers are
+ * answered when they are made). He
+ * signs when he is interested at today's ask (or at `askShare` of his market
+ * salary) and the deal still fits; an offer he is not interested in yet stays
+ * open while his ask falls, and one that no longer applies (he signed
+ * elsewhere, no cap room) is withdrawn as stale.
+ */
+export function answerStandingOffers(
+  state: GameState,
+  askShare?: number,
+): SystemResult {
+  const open = Object.values(state.business.freeAgency.offers)
+    .filter(
+      (offer) =>
+        isOpenOffer(offer.status) && isUserControlledTeam(state, offer.teamId),
+    )
+    .sort(
+      (a, b) =>
+        a.createdOn.localeCompare(b.createdOn) ||
+        (a.id < b.id ? -1 : a.id > b.id ? 1 : 0),
+    );
+  const evaluateInterest: EvaluatePlayerInterest = (playerId, teamId, next) =>
+    evaluateOpenOfferInterest(next, playerId, teamId, askShare);
+  let current = state;
+  const events: DomainEvent[] = [];
+  for (const offer of open) {
+    const live = current.business.freeAgency.offers[offer.id];
+    if (!live || !isOpenOffer(live.status)) continue;
+    const signable = validateOfferAcceptable(current, offer.id) === null;
+    if (
+      signable &&
+      !evaluateInterest(offer.playerId, offer.teamId, current).interested
+    ) {
+      continue;
+    }
+    try {
+      const before = current;
+      const answered = acceptOffer(current, offer.id, { evaluateInterest });
+      current = answered.state;
+      events.push(...answered.events);
+      if (
+        offer.teamId === before.user.activeOwnerTeamId &&
+        current.world.players[offer.playerId]?.teamId === offer.teamId
+      ) {
+        // Ownership weighs the signing as it would a direct one.
+        const firstSalary =
+          getContractSalaryForYear(offer.terms, offer.terms.startYear) ?? 0;
+        current = recordOwnershipEvidence(
+          current,
+          scoreFreeAgentSigning(
+            before,
+            offer.playerId,
+            firstSalary,
+            offer.terms.endYear - offer.terms.startYear + 1,
+          ),
+        );
+      }
+    } catch {
+      // Roster full or a hard lock: the offer stays open.
+    }
+  }
+  return systemResult(current, events);
 }
 
 /**

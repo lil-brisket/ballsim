@@ -15,7 +15,19 @@ import {
 import type { Rng } from "@/domain/rng";
 import { systemResult, type SystemResult } from "@/domain/system-result";
 import type { GameState } from "@/state/game-state";
-import { acceptOffer, listFreeAgents, makeOffer } from "@/systems/free-agency";
+import {
+  acceptOffer,
+  answerStandingOffers,
+  evaluateOpenOfferInterest,
+  listFreeAgents,
+  makeOffer,
+} from "@/systems/free-agency";
+import {
+  cpuContractYears,
+  FREE_AGENT_CLOSING_ASK_SHARE,
+  freeAgentAsk,
+  freeAgentAskShare,
+} from "@/systems/free-agent-market";
 import {
   hasAppliedGameplayConsequence,
   withAppliedGameplayConsequence,
@@ -49,12 +61,7 @@ import {
 } from "@/systems/rfa";
 import { isActiveRfa } from "@/domain/entities/rfa-status";
 import { getContractSigningYear } from "@/systems/salary-cap";
-import { getLeagueSalaryCap } from "@/systems/league-salary-cap";
-import {
-  isSalaryLowball,
-  salaryForPlayer,
-  serviceYearsForSalary,
-} from "@/systems/salary-scale";
+import { isSalaryLowball } from "@/systems/salary-scale";
 import { getCalendarContext } from "@/systems/simulation/calendar-context";
 import { checkTradeWindow } from "@/systems/league-rules/trade-rules";
 import { draftYearForSeason, makeDraftSelection } from "@/systems/draft";
@@ -106,6 +113,10 @@ export function runAiTeamDecisions(state: GameState, _rng: Rng): SystemResult {
       const matches = decideCpuRfaMatches(current);
       current = matches.state;
       events.push(...matches.events);
+      // Owners' standing offers get today's answer before CPU teams sign.
+      const answered = answerStandingOffers(current);
+      current = answered.state;
+      events.push(...answered.events);
       const fa = runAiFreeAgency(current);
       current = fa.state;
       events.push(...fa.events);
@@ -187,6 +198,7 @@ export function completeAiFreeAgency(state: GameState): SystemResult {
     const { result, signed } = runAiFreeAgencyRound(current, {
       consequenceKey: null,
       attempted,
+      closing: true,
     });
     current = result.state;
     events.push(...result.events);
@@ -201,12 +213,14 @@ export function completeAiFreeAgency(state: GameState): SystemResult {
  * One signing attempt per AI team. `consequenceKey` marks a team as done for
  * the day; null attempts without recording (phase-exit completion), where
  * `attempted` keeps a team from re-offering a player it already tried.
+ * `closing` prices free agents at their closing ask: the window is ending.
  */
 function runAiFreeAgencyRound(
   state: GameState,
   options: {
     consequenceKey: ((teamId: TeamId) => string) | null;
     attempted?: Set<string>;
+    closing?: boolean;
   },
 ): { result: SystemResult; signed: number } {
   const { consequenceKey, attempted } = options;
@@ -215,6 +229,9 @@ function runAiFreeAgencyRound(
   let signed = 0;
   const date = current.world.calendar.currentDate;
   const seasonYear = getContractSigningYear(current);
+  const askShare = options.closing
+    ? FREE_AGENT_CLOSING_ASK_SHARE
+    : freeAgentAskShare(current);
   const teamIds = (Object.keys(current.world.teams) as TeamId[])
     .filter((teamId) => !isUserControlledTeam(current, teamId))
     .sort((a, b) => (a < b ? -1 : a > b ? 1 : 0));
@@ -263,6 +280,7 @@ function runAiFreeAgencyRound(
       current,
       teamId,
       capSpace,
+      askShare,
       prefs,
       attempted,
     );
@@ -275,19 +293,7 @@ function runAiFreeAgencyRound(
       candidate.position,
       candidate.attributes,
     );
-    const market = salaryForPlayer({
-      overall,
-      age: candidate.age,
-      years: serviceYearsForSalary({
-        age: candidate.age,
-        seasonYear: current.competition.season.year,
-        draftSeasonYear: candidate.developmentLeague?.draftSeasonYear ?? null,
-        seasonsPlayed:
-          current.business.playerHistory[candidate.id]?.seasons.length ?? 0,
-      }),
-      cap: getLeagueSalaryCap(current),
-      kind: "fa",
-    });
+    const market = freeAgentAsk(current, candidate, askShare);
     const salary = Math.min(capSpace, market);
     if (
       salary > capSpace ||
@@ -346,13 +352,18 @@ function runAiFreeAgencyRound(
     const contractId = asContractId(
       `contract_ai_${candidate.id}_${date.replaceAll("-", "")}`,
     );
+    const endYear = seasonYear + cpuContractYears(candidate.age, overall) - 1;
+    const salaryByYear: Record<string, number> = {};
+    for (let year = seasonYear; year <= endYear; year += 1) {
+      salaryByYear[String(year)] = salary;
+    }
     const terms: ContractInput = {
       id: contractId,
       playerId: candidate.id,
       teamId,
       startYear: seasonYear,
-      endYear: seasonYear,
-      salaryByYear: { [String(seasonYear)]: salary },
+      endYear,
+      salaryByYear,
     };
 
     try {
@@ -362,16 +373,18 @@ function runAiFreeAgencyRound(
         teamId,
         terms,
       });
-      current = offered.state;
-      events.push(...offered.events);
-      const accepted = acceptOffer(current, offerId);
+      const accepted = acceptOffer(offered.state, offerId, {
+        evaluateInterest: (playerId, offerTeamId, next) =>
+          evaluateOpenOfferInterest(next, playerId, offerTeamId, askShare),
+      });
       current = accepted.state;
-      events.push(...accepted.events);
+      events.push(...offered.events, ...accepted.events);
       if (current.world.players[candidate.id]?.teamId === teamId) {
         signed += 1;
       }
     } catch {
-      // Cap/interest/roster failures: skip without throwing out of the day loop.
+      // Cap/interest/roster failures: skip without throwing out of the day
+      // loop, and leave no offer behind.
     }
     current = markDone(current, teamId);
   }
@@ -729,6 +742,7 @@ function pickBestAffordableFreeAgent(
   state: GameState,
   teamId: TeamId,
   capSpace: number,
+  askShare: number,
   prefs: EffectivePreferences | undefined,
   attempted?: ReadonlySet<string>,
 ): Player | undefined {
@@ -757,22 +771,8 @@ function pickBestAffordableFreeAgent(
     return a.id < b.id ? -1 : a.id > b.id ? 1 : 0;
   });
 
-  const cap = getLeagueSalaryCap(state);
   for (const player of ranked) {
-    const overall = calculatePlayerOverall(player.position, player.attributes);
-    const market = salaryForPlayer({
-      overall,
-      age: player.age,
-      years: serviceYearsForSalary({
-        age: player.age,
-        seasonYear: state.competition.season.year,
-        draftSeasonYear: player.developmentLeague?.draftSeasonYear ?? null,
-        seasonsPlayed:
-          state.business.playerHistory[player.id]?.seasons.length ?? 0,
-      }),
-      cap,
-      kind: "fa",
-    });
+    const market = freeAgentAsk(state, player, askShare);
     const salary = Math.min(capSpace, market);
     if (
       salary <= capSpace &&

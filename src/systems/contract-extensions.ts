@@ -23,6 +23,7 @@ import type {
   ExtensionTalks,
 } from "@/domain/entities/extension-talks";
 import { createDomainEvent, type DomainEvent } from "@/domain/events";
+import type { Player } from "@/domain/entities/player";
 import type { PlayerId, TeamId } from "@/domain/ids";
 import { calculatePlayerOverall } from "@/domain/player-overall-rating";
 import { systemResult, type SystemResult } from "@/domain/system-result";
@@ -33,6 +34,10 @@ import {
   isUserControlledTeam,
 } from "@/state/owner-context";
 import { aiPayrollBudget } from "@/systems/ai-payroll-budget";
+import {
+  CPU_CONTRACT_END_AGE,
+  cpuContractYears,
+} from "@/systems/free-agent-market";
 import { luxuryTaxThreshold } from "@/systems/payroll-rules";
 import { moraleFactor } from "@/systems/player-morale";
 import { aiWillPayTax, hasVeteranRights } from "@/systems/veteran-rights";
@@ -50,6 +55,10 @@ import {
 const EXTENSION_OVERALL_FLOOR = 80;
 /** The CPU extends a star with this many seasons or fewer left. */
 const CPU_EXTENSION_SEASONS_LEFT = 1;
+/** A CPU team re-signs expiring players among its best this many. */
+export const CPU_RESIGN_ROTATION_SIZE = 9;
+/** ...who are at least this good. */
+export const CPU_RESIGN_OVERALL_FLOOR = 65;
 
 /** An owner may extend a player with this many seasons or fewer left. */
 export const EXTENSION_ELIGIBLE_SEASONS_LEFT = 2;
@@ -469,15 +478,17 @@ function teamWinPct(state: GameState, teamId: TeamId): number {
 
 /**
  * CPU pass at the start of roster decisions: each team extends its stars
- * whose deals end this season or next, on the terms an owner would get (his
- * ask, for the fewest seasons he takes). Seasons already signed never change.
+ * whose deals end this season or next, and CPU teams re-sign the expiring
+ * players of their rotation, at his ask for a CPU-length deal (see
+ * {@link cpuContractYears}, within the seasons he takes). Seasons already
+ * signed never change.
  */
 export function processCpuContractExtensions(state: GameState): SystemResult {
   let current = state;
   const events: DomainEvent[] = [];
 
   for (const team of Object.values(current.world.teams)) {
-    const result = extendTeamStars(current, team.id);
+    const result = extendTeamCore(current, team.id);
     current = result.state;
     events.push(...result.events);
   }
@@ -485,7 +496,62 @@ export function processCpuContractExtensions(state: GameState): SystemResult {
   return systemResult(current, events);
 }
 
-function extendTeamStars(state: GameState, teamId: TeamId): SystemResult {
+type ExtensionCandidate = {
+  playerId: PlayerId;
+  overall: number;
+};
+
+/**
+ * Who a team tries to keep, best first: stars with a season or less left,
+ * and (CPU teams only) expiring rotation players.
+ */
+function extensionCandidates(
+  state: GameState,
+  teamId: TeamId,
+  userControlled: boolean,
+): ExtensionCandidate[] {
+  const team = state.world.teams[teamId];
+  if (!team) return [];
+  const ranked = team.roster
+    .map((playerId) => state.world.players[playerId])
+    .filter(
+      (player): player is Player =>
+        player !== undefined && player.retired !== true,
+    )
+    .map((player) => ({
+      player,
+      overall: calculatePlayerOverall(player.position, player.attributes),
+    }))
+    .sort(
+      (a, b) =>
+        b.overall - a.overall ||
+        (a.player.id < b.player.id ? -1 : a.player.id > b.player.id ? 1 : 0),
+    );
+
+  const candidates: ExtensionCandidate[] = [];
+  ranked.forEach(({ player, overall }, rank) => {
+    if (player.contractId == null) return;
+    const contract = state.business.contracts[player.contractId];
+    if (!contract || contract.teamId !== teamId) return;
+    const seasonsLeft = seasonsLeftOnContract(state, contract);
+    if (seasonsLeft < 0) return;
+    const star =
+      overall >= EXTENSION_OVERALL_FLOOR &&
+      seasonsLeft <= CPU_EXTENSION_SEASONS_LEFT;
+    const rotation =
+      !userControlled &&
+      seasonsLeft === 0 &&
+      rank < CPU_RESIGN_ROTATION_SIZE &&
+      overall >= CPU_RESIGN_OVERALL_FLOOR &&
+      player.age <= CPU_CONTRACT_END_AGE;
+    if (star || rotation) {
+      candidates.push({ playerId: player.id, overall });
+    }
+  });
+  return candidates;
+}
+
+function extendTeamCore(state: GameState, teamId: TeamId): SystemResult {
   const team = state.world.teams[teamId];
   if (!team) return systemResult(state);
   // An owner's stars are only extended when the owner delegated it.
@@ -504,20 +570,23 @@ function extendTeamStars(state: GameState, teamId: TeamId): SystemResult {
   let current = state;
   const events: DomainEvent[] = [];
 
-  for (const playerId of team.roster) {
+  for (const { playerId, overall } of extensionCandidates(
+    state,
+    teamId,
+    userControlled,
+  )) {
     const player = current.world.players[playerId];
-    if (!player || player.retired || player.contractId == null) continue;
-    const overall = calculatePlayerOverall(player.position, player.attributes);
-    if (overall < EXTENSION_OVERALL_FLOOR) continue;
-
+    if (!player || player.contractId == null) continue;
     const contract = current.business.contracts[player.contractId];
     if (!contract || contract.teamId !== teamId) continue;
-    const seasonsLeft = seasonsLeftOnContract(current, contract);
-    if (seasonsLeft < 0 || seasonsLeft > CPU_EXTENSION_SEASONS_LEFT) continue;
     if (activeTalks(current, playerId, contract)?.testingMarket) continue;
 
     const ask = playerExtensionAsk(current, playerId, teamId);
-    const terms: ExtensionTerms = { years: ask.minYears, salary: ask.salary };
+    const years = Math.min(
+      ask.maxYears,
+      Math.max(ask.minYears, cpuContractYears(player.age, overall)),
+    );
+    const terms: ExtensionTerms = { years, salary: ask.salary };
     const answer = evaluateExtensionOffer(current, playerId, teamId, terms);
     if (answer.kind !== "accept") continue;
 

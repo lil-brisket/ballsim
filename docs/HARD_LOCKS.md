@@ -10,15 +10,15 @@ Authoritative documentation for league hard locks, phase locks, and configurable
 
 ## Rule tiers
 
-| Tier               | Meaning                    | Examples                                                                                                            |
-| ------------------ | -------------------------- | ------------------------------------------------------------------------------------------------------------------- |
-| **Hard lock**      | Never configurable         | 2 draft rounds; 60% calendar-span trade deadline; 3-year pick horizon; one RFA offer sheet; retirement irreversible |
-| **Phase lock**     | Depends on `LeaguePhaseId` | UFA signing only in `offseason.free_agency`; draft selection only in `offseason.draft`                              |
-| **League setting** | `GameState.settings`       | Salary cap amount; games per team; playoff format                                                                   |
+| Tier               | Meaning                    | Examples                                                                                                                 |
+| ------------------ | -------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| **Hard lock**      | Never configurable         | 2 draft rounds; 60% calendar-span trade deadline; 3-year pick horizon; one RFA offer sheet; retirement irreversible      |
+| **Phase lock**     | Depends on `LeaguePhaseId` | UFA signing only in `offseason.free_agency`, preseason and the regular season; draft selection only in `offseason.draft` |
+| **League setting** | `GameState.settings`       | Salary cap amount; games per team; playoff format                                                                        |
 
 ### Cosmetic (not availability)
 
-`settings.offseason.freeAgency.durationDays` is a **UI estimate only**. League phase determines whether free agency is open.
+`settings.offseason.freeAgency.durationDays` is a **UI estimate** and the span over which free-agent asks fall (`free-agent-market.ts`). League phase determines whether free agency is open.
 
 ## Trade deadline (hard lock)
 
@@ -86,7 +86,7 @@ During `season_transition` (before contract expiration):
 | Action                  | Offseason (non-FA) | Roster decisions | FA      | Preseason | Regular (pre-deadline) | Regular (deadline+) | Playoffs/Post |
 | ----------------------- | ------------------ | ---------------- | ------- | --------- | ---------------------- | ------------------- | ------------- |
 | Player/pick trade       | Phase-defined      | Allowed          | Allowed | Allowed   | Allowed                | **Blocked**         | **Blocked**   |
-| UFA signing             | Blocked            | Blocked          | Allowed | Blocked   | Blocked                | Blocked             | Blocked       |
+| UFA signing             | Blocked            | Blocked          | Allowed | Allowed   | Allowed                | Allowed             | Blocked       |
 | RFA QO                  | Blocked            | Allowed          | Blocked | Blocked   | Blocked                | Blocked             | Blocked       |
 | RFA offer sheet / match | Blocked            | Blocked          | Allowed | Blocked   | Blocked                | Blocked             | Blocked       |
 | Draft selection         | Blocked            | Blocked          | Blocked | Blocked   | Blocked                | Blocked             | Blocked       |

@@ -75,7 +75,7 @@ describe("transaction-hub-selectors", () => {
       "PlayerWaived",
       "PlayerBoughtOut",
     ]);
-    expect(TRANSACTION_FILTER_GROUPS.extensions).toEqual([]);
+    expect(TRANSACTION_FILTER_GROUPS.extensions).toEqual(["ContractSigned"]);
   });
 
   it("groups multi-player same-day trades into two-sided rows", () => {
@@ -403,6 +403,31 @@ describe("transaction filter groups", () => {
     expect(otherRows.map((row) => row.type)).toEqual(["CoachHired"]);
     expect(waiverRows).toHaveLength(0);
     expect(extensionRows).toHaveLength(0);
+  });
+
+  it("shows extensions under Extensions, not other contract signings", () => {
+    let state = createTestGameState({ saveId: "txn_extensions" });
+    const myTeamId = getActiveOwnerTeamId(state);
+    state = withEvents(state, [
+      createDomainEvent({
+        type: "ContractSigned",
+        occurredOn: "2026-06-01",
+        payload: { playerId: "p_ext", teamId: myTeamId, reason: "extension" },
+      }),
+      signingEvent({
+        occurredOn: "2026-06-02",
+        playerId: "p_fa",
+        teamId: myTeamId,
+      }),
+    ]);
+    const extensionRows = flatten(
+      toTransactionHubView(state, filters({ group: "extensions" })),
+    );
+    const signingRows = flatten(
+      toTransactionHubView(state, filters({ group: "signings" })),
+    );
+    expect(extensionRows).toHaveLength(1);
+    expect(signingRows).toHaveLength(2);
   });
 });
 

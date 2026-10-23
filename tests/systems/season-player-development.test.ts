@@ -46,6 +46,66 @@ describe("season player development", () => {
     expect(improved + declined).toBeGreaterThan(0);
   });
 
+  it("keeps every player field through development (retired, DL profile, injuries)", () => {
+    let state = createInitialGameState({
+      saveId: "dev_fields",
+      rngSeed: 103,
+      settings: CBL_GAME_SETTINGS,
+    });
+    state = bootstrapWorld(state, createSeededRng(state.meta.rngState)).state;
+    const [activeId, retiredId] = Object.keys(state.world.players).sort();
+    const active = state.world.players[activeId!]!;
+    const retired = state.world.players[retiredId!]!;
+    const profile = {
+      ...active.developmentLeague,
+      seasonsUsed: 2,
+      draftSeasonYear: state.competition.season.year - 2,
+    };
+    const injuryHistory = [
+      {
+        injuryId: "inj_test",
+        kind: "ankle_sprain",
+        severity: "minor",
+        occurredOn: "2026-01-05",
+        recoveredOn: "2026-01-12",
+        daysOut: 7,
+      },
+    ] as unknown as typeof active.injuryHistory;
+    state = {
+      ...state,
+      world: {
+        ...state.world,
+        players: {
+          ...state.world.players,
+          [activeId!]: {
+            ...active,
+            developmentLeague: profile,
+            conditioning: 87,
+            physical: { ...active.physical, durability: 41 },
+            injuryHistory,
+          },
+          [retiredId!]: { ...retired, retired: true, teamId: null },
+        },
+      },
+    };
+
+    const next = processSeasonPlayerDevelopment(state, createSeededRng(7)).state
+      .world.players;
+    const developed = next[activeId!]!;
+    expect(developed.developmentLeague.seasonsUsed).toBe(2);
+    expect(developed.developmentLeague.draftSeasonYear).toBe(
+      profile.draftSeasonYear,
+    );
+    expect(developed.conditioning).toBe(87);
+    expect(developed.physical.durability).toBe(41);
+    expect(developed.injuryHistory).toHaveLength(1);
+
+    const stillRetired = next[retiredId!]!;
+    expect(stillRetired.retired).toBe(true);
+    expect(stillRetired.age).toBe(retired.age);
+    expect(stillRetired.attributes).toEqual(retired.attributes);
+  });
+
   it("elite facilities yield higher mean positive development than poor facilities", () => {
     const meanGain = (facilityLevel: number, seed: number): number => {
       let state = createInitialGameState({

@@ -35,7 +35,8 @@ export const TRANSACTION_FILTER_GROUPS = {
     "PlayerWaived",
     "PlayerBoughtOut",
   ] as const satisfies readonly DomainEventType[],
-  extensions: [] as const satisfies readonly DomainEventType[],
+  /** ContractSigned with reason "extension" (see eventMatchesGroup). */
+  extensions: ["ContractSigned"] as const satisfies readonly DomainEventType[],
   draft: ["DraftPickMade"] as const satisfies readonly DomainEventType[],
   other: [
     "CoachHired",
@@ -264,15 +265,25 @@ function dateRangeBounds(
   return {};
 }
 
+function isExtension(event: DomainEvent): boolean {
+  return (
+    event.type === "ContractSigned" &&
+    (event.payload as Record<string, unknown>).reason === "extension"
+  );
+}
+
 function eventMatchesGroup(
-  type: DomainEventType,
+  event: DomainEvent,
   group: TransactionFilterGroup,
 ): boolean {
   const types = TRANSACTION_FILTER_GROUPS[group];
   if (types == null) {
-    return TEAM_TRANSACTION_EVENT_TYPES.includes(type);
+    return TEAM_TRANSACTION_EVENT_TYPES.includes(event.type);
   }
-  return (types as readonly DomainEventType[]).includes(type);
+  if (group === "extensions") {
+    return isExtension(event);
+  }
+  return (types as readonly DomainEventType[]).includes(event.type);
 }
 
 function pickAssetLabel(payload: Record<string, unknown>): string {
@@ -652,7 +663,7 @@ export function toTransactionHubView(
   const myTeamId = getActiveOwnerTeamId(state);
 
   let events = [...state.competition.seasonEventLog].filter((event) =>
-    eventMatchesGroup(event.type, filters.group),
+    eventMatchesGroup(event, filters.group),
   );
 
   if (filters.range === "custom") {

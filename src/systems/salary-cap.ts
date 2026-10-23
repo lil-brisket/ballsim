@@ -1,4 +1,7 @@
-import { getContractSalaryForYear } from "@/domain/entities/contract";
+import {
+  getContractSalaryForYear,
+  type Contract,
+} from "@/domain/entities/contract";
 import {
   deadMoneyForSeason,
   prepaidDeadMoneyForSeason,
@@ -58,16 +61,41 @@ const payrollCache = new WeakMap<
   >
 >();
 
+/**
+ * Contracts grouped by team, once per contracts object. Finished contracts
+ * stay in the store (past seasons' statements are derived from them), so a
+ * long career holds thousands; payroll only needs the team's own.
+ */
+const contractsByTeamCache = new WeakMap<
+  GameState["business"]["contracts"],
+  Map<string, Contract[]>
+>();
+
+function teamContracts(state: GameState, teamId: TeamId): readonly Contract[] {
+  const contracts = state.business.contracts;
+  let byTeam = contractsByTeamCache.get(contracts);
+  if (byTeam === undefined) {
+    byTeam = new Map();
+    for (const contract of Object.values(contracts)) {
+      const list = byTeam.get(contract.teamId);
+      if (list) {
+        list.push(contract);
+      } else {
+        byTeam.set(contract.teamId, [contract]);
+      }
+    }
+    contractsByTeamCache.set(contracts, byTeam);
+  }
+  return byTeam.get(teamId) ?? [];
+}
+
 function computeTeamPayroll(
   teamId: TeamId,
   year: number,
   state: GameState,
 ): number {
   let payroll = 0;
-  for (const contract of Object.values(state.business.contracts)) {
-    if (contract.teamId !== teamId) {
-      continue;
-    }
+  for (const contract of teamContracts(state, teamId)) {
     const player = state.world.players[contract.playerId];
     if (player != null && isPlayerDlAssigned(player)) {
       continue;
@@ -111,10 +139,7 @@ export function getTeamContractualSalaryObligation(
   state: GameState,
 ): number {
   let total = 0;
-  for (const contract of Object.values(state.business.contracts)) {
-    if (contract.teamId !== teamId) {
-      continue;
-    }
+  for (const contract of teamContracts(state, teamId)) {
     const salary = getContractSalaryForYear(contract, year);
     if (salary !== undefined) {
       total += salary;

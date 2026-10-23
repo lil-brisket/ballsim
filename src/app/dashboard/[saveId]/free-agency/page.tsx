@@ -60,7 +60,9 @@ export default async function FreeAgencyPage({
         title="Free Agency"
         subtitle={
           hub.active
-            ? `${hub.teamName} · Cap space available`
+            ? hub.inSeason
+              ? `${hub.teamName} · In-season signings`
+              : `${hub.teamName} · Cap space available`
             : (hub.inactiveReason ?? "Offseason free agency")
         }
         actions={
@@ -308,38 +310,40 @@ export default async function FreeAgencyPage({
                                 Sign
                               </button>
                             </form>
-                            <form
-                              action={makeFreeAgentOfferAction}
-                              className="flex gap-2"
-                            >
-                              <input
-                                type="hidden"
-                                name="saveId"
-                                value={saveId}
-                              />
-                              <input
-                                type="hidden"
-                                name="playerId"
-                                value={agent.playerId}
-                              />
-                              <input
-                                type="hidden"
-                                name="returnPath"
-                                value={returnPath}
-                              />
-                              <input
-                                type="hidden"
-                                name="salary"
-                                value={interest?.salaryToSign ?? 2_000_000}
-                              />
-                              <input type="hidden" name="years" value={1} />
-                              <button
-                                type="submit"
-                                className="text-sm text-zinc-400 hover:text-team-ink"
+                            {hub.inSeason ? null : (
+                              <form
+                                action={makeFreeAgentOfferAction}
+                                className="flex gap-2"
                               >
-                                Offer
-                              </button>
-                            </form>
+                                <input
+                                  type="hidden"
+                                  name="saveId"
+                                  value={saveId}
+                                />
+                                <input
+                                  type="hidden"
+                                  name="playerId"
+                                  value={agent.playerId}
+                                />
+                                <input
+                                  type="hidden"
+                                  name="returnPath"
+                                  value={returnPath}
+                                />
+                                <input
+                                  type="hidden"
+                                  name="salary"
+                                  value={interest?.salaryToSign ?? 2_000_000}
+                                />
+                                <input type="hidden" name="years" value={1} />
+                                <button
+                                  type="submit"
+                                  className="text-sm text-zinc-400 hover:text-team-ink"
+                                >
+                                  Offer
+                                </button>
+                              </form>
+                            )}
                           </div>
                         )}
                       </td>
@@ -394,25 +398,27 @@ export default async function FreeAgencyPage({
             )}
           </Section>
 
-          <details className="rounded-lg border border-zinc-800 px-4 py-3 text-sm text-zinc-400">
-            <summary className="cursor-pointer text-zinc-300">
-              Finish free agency (legacy domain action)
-            </summary>
-            <p className="mt-2 text-sm text-zinc-500">
-              Prefers Calendar for progression. This pre-existing action
-              advances the league phase and one simulation day.
-            </p>
-            <form action={finishFreeAgencyAction} className="mt-3">
-              <input type="hidden" name="saveId" value={saveId} />
-              <input type="hidden" name="returnPath" value={returnPath} />
-              <button
-                type="submit"
-                className={buttonClass({ variant: "secondary" })}
-              >
-                Finish free agency
-              </button>
-            </form>
-          </details>
+          {hub.inSeason ? null : (
+            <details className="rounded-lg border border-zinc-800 px-4 py-3 text-sm text-zinc-400">
+              <summary className="cursor-pointer text-zinc-300">
+                Finish free agency (legacy domain action)
+              </summary>
+              <p className="mt-2 text-sm text-zinc-500">
+                Prefers Calendar for progression. This pre-existing action
+                advances the league phase and one simulation day.
+              </p>
+              <form action={finishFreeAgencyAction} className="mt-3">
+                <input type="hidden" name="saveId" value={saveId} />
+                <input type="hidden" name="returnPath" value={returnPath} />
+                <button
+                  type="submit"
+                  className={buttonClass({ variant: "secondary" })}
+                >
+                  Finish free agency
+                </button>
+              </form>
+            </details>
+          )}
         </>
       )}
     </div>

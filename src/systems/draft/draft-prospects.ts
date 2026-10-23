@@ -8,6 +8,8 @@ import type { Rng } from "@/domain/rng";
 import {
   DRAFT_EXTRA_PROSPECTS_PER_TEAM,
   DRAFT_LATE_STEAL_CHANCE,
+  DRAFT_LATE_STEAL_POT_MAX,
+  DRAFT_LATE_STEAL_POT_MIN,
   DRAFT_LATE_STEAL_QUALITY_MAX,
   DRAFT_LATE_STEAL_QUALITY_MIN,
   DRAFT_QUALITY_BY_PICK_BAND,
@@ -71,7 +73,9 @@ export function generateDraftProspects(
       age,
       quality,
       occupiedNames,
-      potentialGap: { min: band.potMin, max: band.potMax },
+      potentialGap: steal
+        ? { min: DRAFT_LATE_STEAL_POT_MIN, max: DRAFT_LATE_STEAL_POT_MAX }
+        : { min: band.potMin, max: band.potMax },
     });
     occupiedNames.add(`${player.firstName} ${player.lastName}`);
     generated.push({

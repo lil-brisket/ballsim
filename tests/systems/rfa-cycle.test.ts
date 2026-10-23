@@ -1,3 +1,4 @@
+import { CPU_RESIGN_ROTATION_SIZE } from "@/systems/contract-extensions";
 import { describe, expect, it } from "vitest";
 import { addCalendarDays } from "@/domain/calendar-date";
 import { CBL_GAME_SETTINGS } from "@/domain/game-settings";
@@ -43,7 +44,8 @@ type Fixture = {
  * Offseason after season Y with one young expiring player on the owner team
  * and one on a CPU team (both good enough to qualify), entering roster
  * decisions. Overall 72: below the CPU extension floor (80), above the
- * qualifying-offer bar.
+ * qualifying-offer bar. The CPU player sits outside his team's rotation
+ * (nine stronger teammates), so his team does not re-sign him first.
  */
 function fixture(settings = CBL_GAME_SETTINGS, seed = 51): Fixture {
   const initial = createInitialGameState({
@@ -103,6 +105,19 @@ function fixture(settings = CBL_GAME_SETTINGS, seed = 51): Fixture {
   };
   const ownerRfa = youngExpiring(ownerTeamId);
   const cpuRfa = youngExpiring(cpuTeamId);
+  const players = { ...state.world.players };
+  for (const id of state.world.teams[cpuTeamId]!.roster.filter(
+    (id) => id !== cpuRfa,
+  ).slice(0, CPU_RESIGN_ROTATION_SIZE)) {
+    const player = players[id]!;
+    players[id] = {
+      ...player,
+      attributes: Object.fromEntries(
+        Object.keys(player.attributes).map((key) => [key, 90]),
+      ) as typeof player.attributes,
+    };
+  }
+  state = { ...state, world: { ...state.world, players } };
   state = setActivePhase(state, "offseason.roster_decisions");
   state = processPhaseEnter(state, "offseason.roster_decisions").state;
   return { state, ownerTeamId, cpuTeamId, otherTeamId, ownerRfa, cpuRfa };

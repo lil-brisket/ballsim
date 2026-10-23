@@ -13,7 +13,29 @@ import { withClearedDevelopmentLeagueAssignment } from "@/systems/development-le
 import { stripPlayersFromAllTradeBlocks } from "@/systems/trades/trade-block";
 
 /**
- * Probabilistic player retirement during season_transition.
+ * Chance a free agent who sat out the whole season unsigned leaves the
+ * league (retires) at the season transition, at any age.
+ */
+export const UNSIGNED_SEASON_RETIREMENT_CHANCE = 0.5;
+
+/**
+ * No team now and no record for the season being finalized: he spent the
+ * season unsigned. Season records are appended before retirements run.
+ */
+function satOutSeasonUnsigned(state: GameState, playerId: string): boolean {
+  const player = state.world.players[playerId];
+  if (!player || player.teamId !== null || player.contractId !== null) {
+    return false;
+  }
+  const seasonId = state.competition.season.id;
+  return !(state.business.playerHistory[playerId]?.seasons ?? []).some(
+    (record) => record.seasonId === seasonId,
+  );
+}
+
+/**
+ * Probabilistic player retirement during season_transition: by age and
+ * ability, and for free agents who went the season unsigned.
  * Idempotent: skips players already marked retired.
  *
  * Contract fate (product decision):
@@ -38,10 +60,13 @@ export function processPlayerRetirements(
       continue;
     }
 
-    const chance = playerRetirementProbability(
+    const ageChance = playerRetirementProbability(
       player.age,
       calculatePlayerOverall(player.position, player.attributes),
     );
+    const chance = satOutSeasonUnsigned(current, playerId)
+      ? Math.max(ageChance, UNSIGNED_SEASON_RETIREMENT_CHANCE)
+      : ageChance;
     if (chance <= 0 || !rng.chance(chance)) {
       continue;
     }

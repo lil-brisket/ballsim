@@ -122,7 +122,9 @@ describe("owner nav config invariants", () => {
     const regularHrefs = regular.flatMap((g) => g.items.map((i) => i.href));
     expect(regularHrefs).not.toContain("/draft");
     expect(regularHrefs).not.toContain("/scouting");
-    expect(regularHrefs).not.toContain("/free-agency");
+    // In season, free agents are signed from the Team group.
+    const team = regular.find((g) => g.id === "team");
+    expect(team?.items.map((i) => i.href)).toContain("/free-agency");
 
     const offseason = ownerNavGroupsForState(baseState({ phase: "offseason" }));
     expect(offseason.some((g) => g.id === "offseason")).toBe(true);

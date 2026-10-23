@@ -63,8 +63,29 @@ export function combinedDevelopmentMultiplier(
 }
 
 /**
- * Offseason season tick: age every player +1, then develop once.
- * Facilities/trainers modify the distribution of positive deltas only.
+ * League-average facility × trainer multiplier (youth facilities aside).
+ * Development uses each team's multiplier relative to it, so better
+ * facilities and staff still develop players faster than rivals while
+ * league-wide upgrades over the years do not inflate ratings.
+ */
+export function leagueDevelopmentReference(state: GameState): number {
+  const teamIds = Object.keys(state.world.teams) as TeamId[];
+  if (teamIds.length === 0) return 1;
+  const total = teamIds.reduce(
+    (sum, teamId) =>
+      sum +
+      laggedFacilityDevelopmentMultiplier(state, teamId) *
+        trainerDevelopmentMultiplier(state, teamId),
+    0,
+  );
+  const mean = total / teamIds.length;
+  return mean > 0 ? mean : 1;
+}
+
+/**
+ * Offseason season tick: age every active player +1, then develop once.
+ * Facilities/trainers modify the distribution of positive deltas only,
+ * relative to the league average ({@link leagueDevelopmentReference}).
  * Fan facilities are intentionally not connected here.
  */
 export function processSeasonPlayerDevelopment(
@@ -74,9 +95,12 @@ export function processSeasonPlayerDevelopment(
   const events: DomainEvent[] = [];
   const nextPlayers: Record<string, Player> = { ...state.world.players };
   const playerIds = Object.keys(nextPlayers).sort();
+  const reference = leagueDevelopmentReference(state);
 
   for (const playerId of playerIds) {
     const player = nextPlayers[playerId]!;
+    // Retired players keep the age and ratings they retired with.
+    if (player.retired === true) continue;
     const aged = createPlayer({
       ...player,
       age: player.age + 1,
@@ -88,11 +112,8 @@ export function processSeasonPlayerDevelopment(
       aged.position,
       aged.attributes,
     );
-    const multiplier = combinedDevelopmentMultiplier(
-      state,
-      aged.teamId,
-      aged.age,
-    );
+    const multiplier =
+      combinedDevelopmentMultiplier(state, aged.teamId, aged.age) / reference;
     const developed = developPlayer(
       aged,
       rng,

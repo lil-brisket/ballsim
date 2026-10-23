@@ -16,7 +16,10 @@ import {
   draftYearForSeason,
 } from "@/systems/draft";
 import { advanceScoutAssignments } from "@/systems/scouting/scouting-progression";
-import { releaseExpiredContracts } from "@/systems/free-agency";
+import {
+  answerStandingOffers,
+  releaseExpiredContracts,
+} from "@/systems/free-agency";
 import { appendAllFranchiseSeasonRecords } from "@/systems/franchise-history";
 import {
   appendAllPlayerSeasonRecords,
@@ -41,6 +44,7 @@ import {
   resolveQualifyingOffersAtFreeAgencyClose,
 } from "@/systems/rfa";
 import { withdrawOpenFreeAgencyOffers } from "@/systems/expire-transactions";
+import { FREE_AGENT_CLOSING_ASK_SHARE } from "@/systems/free-agent-market";
 import { runLeagueStaffAiManagement } from "@/systems/staff-ai-management";
 import { expireSponsorshipsAtSeason } from "@/systems/sponsorships";
 import { transitionPhase } from "@/systems/simulation/phase-machine";
@@ -426,9 +430,16 @@ export function processPhaseExit(
   }
 
   if (fromPhaseId === "offseason.free_agency") {
-    // AI teams finish their remaining signings (and offer sheets) before the
+    // Owners' standing offers get a last answer at the closing ask, then AI
+    // teams finish their remaining signings (and offer sheets) before the
     // window closes, so short rosters are not left to the end-of-offseason
     // fill.
+    const answered = answerStandingOffers(
+      current,
+      FREE_AGENT_CLOSING_ASK_SHARE,
+    );
+    current = answered.state;
+    events.push(...answered.events);
     const completed = completeAiFreeAgency(current);
     current = completed.state;
     events.push(...completed.events);

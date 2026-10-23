@@ -18,10 +18,9 @@ import {
 import { getLeagueSalaryCap } from "@/systems/league-salary-cap";
 import {
   REPLACEMENT_LEVEL_OVERALL,
-  salaryForPlayer,
-  serviceYearsForSalary,
   vetMinSalary,
 } from "@/systems/salary-scale";
+import { freeAgentAsk } from "@/systems/free-agent-market";
 
 export const MOTIVATION_LABELS: Record<FreeAgentMotivation, string> = {
   winning: "winning",
@@ -74,20 +73,7 @@ function salaryToSign(
   const cfg = FREE_AGENCY_INTEREST_CONFIG;
   const overall = calculatePlayerOverall(player.position, player.attributes);
   const cap = getLeagueSalaryCap(state);
-  const year = state.competition.season.year;
-  const market = salaryForPlayer({
-    overall,
-    age: player.age,
-    years: serviceYearsForSalary({
-      age: player.age,
-      seasonYear: year,
-      draftSeasonYear: player.developmentLeague?.draftSeasonYear ?? null,
-      seasonsPlayed:
-        state.business.playerHistory[playerId]?.seasons.length ?? 0,
-    }),
-    cap,
-    kind: "fa",
-  });
+  const market = freeAgentAsk(state, player);
   const needed = cfg.interestThreshold - scoreWithoutMoney;
   if (overall < REPLACEMENT_LEVEL_OVERALL && needed <= 0) {
     return vetMinSalary(cap);
