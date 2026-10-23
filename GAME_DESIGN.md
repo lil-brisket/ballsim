@@ -142,7 +142,7 @@ Still deferred:
 Implemented from the GM loops plan ([docs/plans/gm-loops-plan.md](docs/plans/gm-loops-plan.md)):
 
 - Release: waive (dead money on the original schedule) or buy out (a share of the remaining salary now, cap hit spread); dead money counts in `getTeamPayroll`
-- Contract extensions with a negotiation (ask, counter, refusal cooldown, testing the market), shared by owners and CPU teams
+- Contract extensions with a negotiation (ask, counter, refusal cooldown, testing the market), shared by owners and CPU teams. When roster decisions begin, CPU teams extend their 80+ players with a season or less left, at the player's ask for the fewest seasons he takes, if their budget covers each added season at last season's payroll level
 - Restricted free agency: qualifying offers, offer sheets, match / decline, qualifying offers taken when no sheet comes
 - Player morale (0–100, weekly in season from role vs expectation, winning, underpaid stars and contract talks; composure and leadership slow swings): trade requests after four miserable weeks (CPU teams list the player), minutes complaints, less loyalty pull in free agency and higher extension asks; no in-game effect
 - Team chemistry (0–100, derived, never stored: continuity of the core eight, their morale, the best leader, recent trades). Small, bounded game effect: up to ±6% turnover weight in the possession engine and ±1 expected point in the box-score engine (perfect vs neutral chemistry: under +6 points of win%). The Sim Lab runs at neutral chemistry, so lab baselines are unchanged

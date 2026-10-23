@@ -7,9 +7,9 @@
  *   check, and emits `ContractSigned` with reason "extension".
  * - {@link offerContractExtension} is the owner path: eligibility, answer,
  *   negotiation memory (refusal cooldown, "testing the market").
- * - {@link processCpuContractExtensions} is the CPU pass during roster
- *   decisions: it rewrites underpaid stars to market through the same two
- *   functions.
+ * - {@link processCpuContractExtensions} is the CPU pass when roster
+ *   decisions begin: it extends stars near the end of their deals through
+ *   the same functions, on the terms an owner would get.
  */
 
 import { calendarDaysBetween, addCalendarDays } from "@/domain/calendar-date";
@@ -32,20 +32,14 @@ import {
   getOwnedFranchiseAssistance,
   isUserControlledTeam,
 } from "@/state/owner-context";
-import { aiPayrollRoom } from "@/systems/ai-payroll-budget";
+import { aiPayrollBudget } from "@/systems/ai-payroll-budget";
+import { luxuryTaxThreshold } from "@/systems/payroll-rules";
 import { moraleFactor } from "@/systems/player-morale";
-import {
-  aiVeteranRightsRoom,
-  hasVeteranRights,
-} from "@/systems/veteran-rights";
+import { aiWillPayTax, hasVeteranRights } from "@/systems/veteran-rights";
 import { checkContractExtensionWindow } from "@/systems/league-rules/contract-rules";
 import { getLeagueSalaryCap } from "@/systems/league-salary-cap";
 import { canAiExecute } from "@/systems/simulation/management-policy";
-import {
-  getContractSigningYear,
-  getTeamCapSpace,
-  getTeamPayroll,
-} from "@/systems/salary-cap";
+import { getContractSigningYear, getTeamPayroll } from "@/systems/salary-cap";
 import {
   salaryForPlayer,
   serviceYearsForSalary,
@@ -54,8 +48,8 @@ import {
 } from "@/systems/salary-scale";
 
 const EXTENSION_OVERALL_FLOOR = 80;
-const UNDERPAID_RATIO = 1.2;
-const MAX_ADDED_YEARS = 2;
+/** The CPU extends a star with this many seasons or fewer left. */
+const CPU_EXTENSION_SEASONS_LEFT = 1;
 
 /** An owner may extend a player with this many seasons or fewer left. */
 export const EXTENSION_ELIGIBLE_SEASONS_LEFT = 2;
@@ -473,16 +467,17 @@ function teamWinPct(state: GameState, teamId: TeamId): number {
   return 0.5;
 }
 
+/**
+ * CPU pass at the start of roster decisions: each team extends its stars
+ * whose deals end this season or next, on the terms an owner would get (his
+ * ask, for the fewest seasons he takes). Seasons already signed never change.
+ */
 export function processCpuContractExtensions(state: GameState): SystemResult {
-  // Runs in the offseason: rewrite from the season the extension first covers,
-  // not the completed one, and check cap space against that season.
-  const year = getContractSigningYear(state);
-  const cap = getLeagueSalaryCap(state);
   let current = state;
   const events: DomainEvent[] = [];
 
   for (const team of Object.values(current.world.teams)) {
-    const result = extendTeamStars(current, team.id, year, cap);
+    const result = extendTeamStars(current, team.id);
     current = result.state;
     events.push(...result.events);
   }
@@ -490,12 +485,7 @@ export function processCpuContractExtensions(state: GameState): SystemResult {
   return systemResult(current, events);
 }
 
-function extendTeamStars(
-  state: GameState,
-  teamId: TeamId,
-  year: number,
-  cap: number,
-): SystemResult {
+function extendTeamStars(state: GameState, teamId: TeamId): SystemResult {
   const team = state.world.teams[teamId];
   if (!team) return systemResult(state);
   // An owner's stars are only extended when the owner delegated it.
@@ -522,54 +512,23 @@ function extendTeamStars(
 
     const contract = current.business.contracts[player.contractId];
     if (!contract || contract.teamId !== teamId) continue;
+    const seasonsLeft = seasonsLeftOnContract(current, contract);
+    if (seasonsLeft < 0 || seasonsLeft > CPU_EXTENSION_SEASONS_LEFT) continue;
     if (activeTalks(current, playerId, contract)?.testingMarket) continue;
 
-    const nextSalary = getContractSalaryForYear(contract, year);
-    const currentSalary =
-      nextSalary ?? getContractSalaryForYear(contract, year - 1) ?? 0;
-    const market = salaryForPlayer({
-      overall,
-      age: player.age,
-      years: serviceYearsForSalary({
-        age: player.age,
-        seasonYear: current.competition.season.year,
-        draftSeasonYear: player.developmentLeague?.draftSeasonYear ?? null,
-        seasonsPlayed:
-          current.business.playerHistory[playerId]?.seasons.length ?? 0,
-      }),
-      cap,
-      kind: "fa",
-    });
-    if (market < currentSalary * UNDERPAID_RATIO) continue;
+    const ask = playerExtensionAsk(current, playerId, teamId);
+    const terms: ExtensionTerms = { years: ask.minYears, salary: ask.salary };
+    const answer = evaluateExtensionOffer(current, playerId, teamId, terms);
+    if (answer.kind !== "accept") continue;
 
-    const remainingYears = Math.max(0, contract.endYear - year + 1);
-    const extraYears = remainingYears <= 1 ? MAX_ADDED_YEARS : 0;
-    const endYear = contract.endYear + extraYears;
-    const raise = market - (nextSalary ?? 0);
-    // AI teams also stay within what they can afford (#93). Veteran rights
-    // lift the cap but not the budget (or, for most teams, the tax line).
-    const veteran = hasVeteranRights(current, playerId, teamId);
-    const space = userControlled
-      ? veteran
-        ? Number.MAX_SAFE_INTEGER
-        : getTeamCapSpace(teamId, year, current, cap)
-      : veteran
-        ? aiVeteranRightsRoom(current, teamId, year)
-        : aiPayrollRoom(current, teamId, year);
-    if (raise > 0 && space < raise) continue;
-
-    // Same answer rules as an owner's offer: market pay is always enough.
-    if (extraYears > 0) {
-      const answer = evaluateExtensionOffer(current, playerId, teamId, {
-        years: extraYears,
-        salary: market,
-      });
-      if (answer.kind === "refuse") continue;
-    }
-
-    const salaryByYear = { ...contract.salaryByYear };
-    for (let seasonYear = year; seasonYear <= endYear; seasonYear += 1) {
-      salaryByYear[String(seasonYear)] = market;
+    const salaryByYear = extendedSalaryByYear(current, contract, terms);
+    // AI teams also stay within what they can afford (#93). Owners who
+    // delegated get the cap check only, as before.
+    if (
+      !userControlled &&
+      !cpuCanAffordExtension(current, teamId, contract, salaryByYear)
+    ) {
+      continue;
     }
     try {
       const applied = applyContractExtension(current, {
@@ -580,11 +539,47 @@ function extendTeamStars(
       current = applied.state;
       events.push(...applied.events);
     } catch {
-      // Over the cap in a later season: leave the deal as it is.
+      // Over the cap in an added season: leave the deal as it is.
     }
   }
 
   return systemResult(current, events);
+}
+
+/**
+ * Whether a CPU team's budget covers every added season. Seasons ahead hold
+ * few signed deals yet (the roster is filled later), so each is projected at
+ * no less than last season's payroll, with his new salary in place of his old
+ * one. Above the tax line only for a team that will pay it.
+ */
+function cpuCanAffordExtension(
+  state: GameState,
+  teamId: TeamId,
+  contract: Contract,
+  salaryByYear: Record<string, number>,
+): boolean {
+  const lastYear = state.competition.season.year;
+  const lastPayroll =
+    getTeamPayroll(teamId, lastYear, state) -
+    (getContractSalaryForYear(contract, lastYear) ?? 0);
+  const budget = aiPayrollBudget(state, teamId);
+  const taxLine =
+    state.settings.financialRules.luxuryTaxEnabled &&
+    !aiWillPayTax(state, teamId)
+      ? luxuryTaxThreshold(state.settings, getLeagueSalaryCap(state))
+      : Number.POSITIVE_INFINITY;
+  const firstAdded = Math.max(
+    contract.endYear + 1,
+    getContractSigningYear(state),
+  );
+  for (let year = firstAdded; ; year += 1) {
+    const salary = salaryByYear[String(year)];
+    if (salary === undefined) return true;
+    const payroll =
+      Math.max(getTeamPayroll(teamId, year, state), lastPayroll) + salary;
+    if (budget !== null && payroll > budget) return false;
+    if (payroll > taxLine) return false;
+  }
 }
 
 /** How many of an owner's best players get a final-year notice. */
