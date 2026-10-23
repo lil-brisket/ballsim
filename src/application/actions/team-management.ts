@@ -4,6 +4,7 @@ import {
   updateOwnerLineupAndRotation,
   previewOwnerOptimizeRotation,
   updateOwnerCoachingPhilosophy,
+  setOwnerDevelopmentFocus,
   applyOwnerCoachingPreset,
 } from "@/application/game-service";
 import { redirect } from "next/navigation";
@@ -166,6 +167,22 @@ export async function applyCoachingPresetAction(
   const presetId = String(formData.get("presetId") ?? "balanced");
   const path = returnPath(formData, saveId);
   const result = await applyOwnerCoachingPreset(saveId, { teamId, presetId });
+  if (!result.ok) {
+    redirectWithError(path, result.error);
+  }
+  revalidateOwner(saveId);
+  redirect(path);
+}
+
+export async function setDevelopmentFocusAction(
+  formData: FormData,
+): Promise<void> {
+  const saveId = String(formData.get("saveId") ?? "");
+  const path = returnPath(formData, saveId);
+  const result = await setOwnerDevelopmentFocus(saveId, {
+    playerId: String(formData.get("playerId") ?? ""),
+    focus: String(formData.get("focus") ?? "balanced"),
+  });
   if (!result.ok) {
     redirectWithError(path, result.error);
   }

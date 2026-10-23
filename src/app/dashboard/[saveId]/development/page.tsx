@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { loadDevelopmentHubView } from "@/application/game-service";
 import { DevelopmentRow } from "@/components/development/DevelopmentRow";
+import { DevelopmentPlans } from "@/components/development/DevelopmentPlans";
 import { ManagementDecisionPanel } from "@/components/management/ManagementDecisionPanel";
 import { DataTable } from "@/components/ui/DataTable";
 import { EmptyState, ErrorState } from "@/components/ui/EmptyState";
@@ -124,6 +125,12 @@ export default async function DevelopmentHubPage({
           </ul>
         )}
       </Section>
+
+      <DevelopmentPlans
+        saveId={saveId}
+        returnPath={`/dashboard/${saveId}/development`}
+        plans={view.plans}
+      />
 
       <Section title="Roster development">
         {view.rows.length === 0 ? (

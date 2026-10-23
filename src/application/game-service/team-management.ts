@@ -21,6 +21,7 @@ import {
   applyCoachingPresetCommand,
 } from "@/systems/team-management-commands";
 import { asTeamId, asPlayerId } from "@/domain/ids";
+import { setDevelopmentFocus } from "@/systems/development-plans";
 import type { TeamRosterManagement } from "@/domain/entities/team-roster-management";
 import {
   type OptimizeChange,
@@ -544,6 +545,20 @@ export async function applyOwnerCoachingPreset(
           typeof applyCoachingPresetCommand
         >[1]["presetId"],
       }),
+    store,
+  );
+}
+
+/** Set a young player's development focus (owner team only). */
+export async function setOwnerDevelopmentFocus(
+  saveId: string,
+  input: { playerId: string; focus: string },
+  store?: SaveGameStore,
+): Promise<OwnerCommandResult> {
+  return runTeamManagementMutation(
+    saveId,
+    (state) =>
+      setDevelopmentFocus(state, asPlayerId(input.playerId), input.focus),
     store,
   );
 }

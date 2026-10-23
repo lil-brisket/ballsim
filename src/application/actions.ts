@@ -97,6 +97,7 @@ export {
 export {
   updateLineupAndRotationAction,
   previewOptimizeRotationAction,
+  setDevelopmentFocusAction,
   updateCoachingPhilosophyAction,
   applyCoachingPresetAction,
 } from "@/application/actions/team-management";

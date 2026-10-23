@@ -161,6 +161,7 @@ export {
   optimizeOwnerRotation,
   applyOwnerLineupRecommendation,
   updateOwnerCoachingPhilosophy,
+  setOwnerDevelopmentFocus,
   applyOwnerCoachingPreset,
 } from "@/application/game-service/team-management";
 export {

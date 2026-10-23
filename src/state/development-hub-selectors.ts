@@ -3,6 +3,10 @@
  * Composes roster + playerHistory; does not invent development focus or causal trainer links.
  */
 
+import {
+  toDevelopmentPlansView,
+  type DevelopmentPlansView,
+} from "@/state/development-plan-selectors";
 import { selectPlayerPortrait } from "@/state/player-portrait-selectors";
 import type { PlayerPortraitAssignment } from "@/domain/entities/player-portrait";
 import type { GameState } from "@/state/game-state";
@@ -55,6 +59,7 @@ export type DevelopmentHubView = {
   rows: DevelopmentHubRow[];
   staffContext: DevelopmentStaffContext;
   decisions: ActionCenterItem[];
+  plans: DevelopmentPlansView;
 };
 
 /**
@@ -138,6 +143,7 @@ export function toDevelopmentHubView(state: GameState): DevelopmentHubView {
   });
 
   return {
+    plans: toDevelopmentPlansView(state),
     saveId,
     teamName: team ? `${team.city} ${team.name}` : "Team",
     currentDate: owner.currentDate,
