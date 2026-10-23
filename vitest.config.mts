@@ -2,7 +2,7 @@ import { realpathSync } from "node:fs";
 import { defineConfig } from "vitest/config";
 import react from "@vitejs/plugin-react";
 
-// Vitest 4 on Windows fails every test file with "Cannot read properties of
+// Vitest 4 and 5 on Windows fail every test file with "Cannot read properties of
 // undefined (reading 'config')" when started from a cwd whose drive letter is
 // lowercase (issue #96). The npm test scripts go through scripts/vitest.mjs,
 // which fixes the casing. A direct `npx vitest` from such a cwd stops here
@@ -53,7 +53,6 @@ export default defineConfig({
     },
     projects: [
       {
-        extends: true,
         test: {
           name: "unit",
           environment: "node",
@@ -91,7 +90,6 @@ export default defineConfig({
         },
       },
       {
-        extends: true,
         test: {
           name: "integration",
           environment: "node",
@@ -114,7 +112,6 @@ export default defineConfig({
         },
       },
       {
-        extends: true,
         test: {
           name: "slow",
           environment: "node",
@@ -125,7 +122,6 @@ export default defineConfig({
         },
       },
       {
-        extends: true,
         test: {
           name: "regression",
           environment: "node",
@@ -143,7 +139,6 @@ export default defineConfig({
         },
       },
       {
-        extends: true,
         test: {
           name: "simulation",
           environment: "node",
@@ -159,7 +154,6 @@ export default defineConfig({
         },
       },
       {
-        extends: true,
         test: {
           name: "react",
           environment: "jsdom",
