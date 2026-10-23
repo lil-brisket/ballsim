@@ -36,13 +36,23 @@ Ballsim is a basketball franchise management game for the browser. You own a tea
 Requires **Node 24** (see `.nvmrc`).
 
 ```bash
-npm install                 # also runs `prisma generate`
-cp .env.example .env        # local SQLite: DATABASE_URL="file:./prisma/dev.db"
+git clone https://github.com/lil-brisket/ballsim.git && cd ballsim
+npm install                 # also runs `prisma generate` into src/generated/prisma
+cp .env.example .env        # PowerShell: Copy-Item .env.example .env
 npm run db:migrate          # creates prisma/dev.db and applies migrations
 npm run dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000).
+
+Everything runs locally. The only setting is `DATABASE_URL` in `.env`, which points at a local SQLite file (`file:./prisma/dev.db`). Saves are stored in that file; there are no accounts, external services or API keys.
+
+### Troubleshooting
+
+- **Module not found: `@/generated/prisma/client`.** Run `npm run db:generate`. The client is generated into the gitignored `src/generated/prisma`.
+- **`The table ... does not exist` or another schema error after pulling.** Run `npm run db:migrate` to apply new migrations.
+- **Start over with an empty database.** Stop the dev server, run `npx prisma migrate reset`, and confirm. This deletes every save.
+- **npm warns `EBADENGINE`.** You are not on Node 24. Switch, for example with `nvm use`, and reinstall.
 
 ## Your first season
 
@@ -69,11 +79,29 @@ The full list of scripts, test suites, Simulation Lab CLI flags and diagnostic t
 
 Stack: TypeScript, Next.js and React, Tailwind CSS, SQLite via Prisma (`@prisma/adapter-libsql`), Vitest.
 
+### Contributing
+
+1. Branch from `master` and open a pull request against it.
+2. Before pushing, run `npx tsc --noEmit`, `npm run lint`, `npm run format:check` and `npm test`. If you touch the simulation, economy or multi-season logic, also run `npm run test:simulation` and `npm run test:regression`.
+3. CI runs typecheck, lint, format, tests with coverage, the slow and simulation suites, and `next build` on every pull request ([`docs/testing.md`](./docs/testing.md#ci)).
+4. Changes to the simulation must stay deterministic for a fixed seed. If a change alters the output for a fixed seed on purpose, bump `ENGINE_VERSION` in [`src/simulation/lab/engine-version.ts`](./src/simulation/lab/engine-version.ts).
+5. Schema changes go through `npm run db:migrate` and are committed as additive Prisma migrations under `prisma/migrations/`.
+6. Keep all content fictional. Do not commit real player, team or league names.
+
+This project uses Next.js 16, whose APIs differ from older versions. Read the relevant guide in `node_modules/next/dist/docs/` before changing routing, data fetching or caching code.
+
+Coding agents (Claude Code, Windsurf and others) read [`AGENTS.md`](./AGENTS.md) and [`CLAUDE.md`](./CLAUDE.md). Project subagents are in `.claude/agents/`, and skills setup is in [`docs/agent-skills.md`](./docs/agent-skills.md).
+
 ## Docs
 
 - [`GAME_DESIGN.md`](./GAME_DESIGN.md): authoritative game design
 - [`ARCHITECTURE.md`](./ARCHITECTURE.md): authoritative technical architecture
 - [`CHANGELOG.md`](./CHANGELOG.md): notable persistence, tooling and dependency changes
 - [`docs/testing.md`](./docs/testing.md): Vitest layout, determinism, Simulation Lab, CI, command reference
+- [`docs/custom-content.md`](./docs/custom-content.md): JSON format for custom roster packages
 - [`docs/test-catalog.md`](./docs/test-catalog.md): what to run, with an index of Vitest projects, Lab CLI options and test files
 - [`docs/agent-skills.md`](./docs/agent-skills.md): where agent skills live and how to link them for Claude Code or Windsurf
+
+## License
+
+[MIT](./LICENSE)
