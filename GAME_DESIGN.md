@@ -144,13 +144,14 @@ Implemented from the GM loops plan ([docs/plans/gm-loops-plan.md](docs/plans/gm-
 - Release: waive (dead money on the original schedule) or buy out (a share of the remaining salary now, cap hit spread); dead money counts in `getTeamPayroll`
 - Contract extensions with a negotiation (ask, counter, refusal cooldown, testing the market), shared by owners and CPU teams
 - Restricted free agency: qualifying offers, offer sheets, match / decline, qualifying offers taken when no sheet comes
+- Player morale (0–100, weekly in season from role vs expectation, winning, underpaid stars and contract talks; composure and leadership slow swings): trade requests after four miserable weeks (CPU teams list the player), minutes complaints, less loyalty pull in free agency and higher extension asks; no in-game effect
 - Draft lottery and Lottery night (in CBL leagues the worst team picks first ~35% of the time instead of always)
 - Free agents weigh winning (by competitiveness), projected minutes, market, loyalty to their last team and the head coach on top of money; money stays the biggest factor. The Free Agency page shows what each player cares about, your team's score per factor and roughly what he would sign for
 - Luxury tax (tiered, shared by non-tax teams), salary floor and Veteran rights (over the cap to re-sign your own player after 3 straight seasons), assessed at the end of the regular season
 
 Planned in the GM loops plan ([docs/plans/gm-loops-plan.md](docs/plans/gm-loops-plan.md)), not yet implemented unless a later section says so:
 
-- Player morale, team chemistry and development plans
+- Team chemistry and development plans
 - Record book, Hall of Fame and retired numbers
 
 ## Owner Mode Phase 2 — multi-season trajectory intent

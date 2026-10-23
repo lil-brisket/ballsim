@@ -33,6 +33,7 @@ import {
   isUserControlledTeam,
 } from "@/state/owner-context";
 import { aiPayrollRoom } from "@/systems/ai-payroll-budget";
+import { moraleFactor } from "@/systems/player-morale";
 import {
   aiVeteranRightsRoom,
   hasVeteranRights,
@@ -70,6 +71,8 @@ export const EXTENSION_COUNTER_RATIO = 0.85;
 export const EXTENSION_WINNING_SWING = 0.2;
 /** Ask discount per loyalty point above 50 (loyalty 90: 4% less). */
 export const EXTENSION_LOYALTY_DISCOUNT_PER_POINT = 0.001;
+/** Most an unhappy player adds to his ask (morale 0). */
+export const EXTENSION_UNHAPPY_PREMIUM = 0.1;
 /** From this age a player wants at least two more seasons. */
 export const EXTENSION_SECURITY_AGE = 30;
 
@@ -115,9 +118,11 @@ export function playerExtensionAsk(
   });
   // Players give a winning team a small discount and a losing one a
   // premium; loyal players take a little less to stay.
+  // An unhappy player asks for up to 10% more.
   const swing =
     (0.5 - teamWinPct(state, teamId)) * EXTENSION_WINNING_SWING -
-    (player.personality.loyalty - 50) * EXTENSION_LOYALTY_DISCOUNT_PER_POINT;
+    (player.personality.loyalty - 50) * EXTENSION_LOYALTY_DISCOUNT_PER_POINT +
+    (1 - moraleFactor(state, playerId)) * EXTENSION_UNHAPPY_PREMIUM;
   const salary = Math.max(
     vetMinSalary(getLeagueSalaryCap(state)),
     Math.round((base * (1 + swing)) / 1_000) * 1_000,

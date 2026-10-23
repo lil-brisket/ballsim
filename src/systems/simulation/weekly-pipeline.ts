@@ -13,6 +13,7 @@ import { createSeededRng, type Rng } from "@/domain/rng";
 import { processWeeklyPlayerPayroll } from "@/systems/player-payroll";
 import { processWeeklyNationalMedia } from "@/systems/league-economy";
 import { processWeeklyStaffPayroll } from "@/systems/staff";
+import { processWeeklyMorale } from "@/systems/player-morale";
 
 export type WeeklyPipelineResult = SystemResult & {
   weeklyPipelineRan: boolean;
@@ -48,6 +49,10 @@ export function runWeeklyPipeline(
   const playerPayroll = processWeeklyPlayerPayroll(current);
   current = playerPayroll.state;
   events.push(...playerPayroll.events);
+
+  const morale = processWeeklyMorale(current);
+  current = morale.state;
+  events.push(...morale.events);
 
   const nationalMedia = processWeeklyNationalMedia(current);
   current = nationalMedia.state;

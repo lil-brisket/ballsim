@@ -22,6 +22,7 @@ import type { GameState } from "@/state/game-state";
 import { FREE_AGENCY_INTEREST_CONFIG } from "@/systems/free-agency-config";
 import { getTopLeagueRosterPlayerIds } from "@/systems/development-league/franchise-membership";
 import { findTeamStaffByRole } from "@/systems/staff-effects/find";
+import { moraleFactor } from "@/systems/player-morale";
 
 export type FreeAgentMotivation =
   "winning" | "playingTime" | "market" | "loyalty" | "coach";
@@ -87,9 +88,10 @@ export function readFreeAgentMotivations(
   const market = state.business.franchiseOps[teamId]?.marketSize ?? 50;
   push("market", market / 100, 1, cfg.market);
   const lastTeam = player.teamId ?? lastTeamOf(state, playerId);
+  // An unhappy player feels less pull to stay.
   push(
     "loyalty",
-    lastTeam === teamId ? 1 : 0,
+    lastTeam === teamId ? moraleFactor(state, playerId) : 0,
     p.loyalty / 50,
     cfg.loyalty,
     false,

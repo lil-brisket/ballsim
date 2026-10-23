@@ -4,6 +4,10 @@
  */
 
 import {
+  toPlayerMoodView,
+  type PlayerMoodView,
+} from "@/state/player-mood-selectors";
+import {
   PLAYER_POSITIONS,
   type Player,
   type PlayerPosition,
@@ -76,6 +80,7 @@ export type RosterPagePlayerView = RosterPlayerView & {
   canPlay: boolean;
   availabilityLabel: string;
   roleDisplayLabel: string;
+  mood: PlayerMoodView;
 };
 
 export type TradeBlockPlayerView = {
@@ -498,6 +503,7 @@ function enrichRosterPlayers(
         resolved.rotationRole,
         resolved.isInactive,
       ),
+      mood: toPlayerMoodView(state, playerId),
     };
   });
 }

@@ -63,6 +63,13 @@ function playerView(
     },
     availability: { status: "available" },
     ratings: { attributes: { ...BASE_ATTRIBUTES } },
+    mood: {
+      value: 60,
+      band: "content",
+      label: "Content",
+      reason: "Settled",
+      tradeRequested: false,
+    },
     contract: null,
     performance: {
       games: 10,

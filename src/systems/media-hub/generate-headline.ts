@@ -161,6 +161,22 @@ export function generateHeadline(
             summary: `Talks between ${name} and ${team} are on hold.`,
           };
     }
+    case "PlayerTradeRequested": {
+      const name = playerName(state, str(p, "playerId"));
+      const team = teamName(state, str(p, "teamId"));
+      return {
+        headline: `${name} asks ${team} for a trade`,
+        summary: `${name} has been unhappy for weeks and wants a move.`,
+      };
+    }
+    case "PlayerMinutesComplaint": {
+      const name = playerName(state, str(p, "playerId"));
+      const team = teamName(state, str(p, "teamId"));
+      return {
+        headline: `${name} wants a bigger role`,
+        summary: `${name} is frustrated with his minutes in ${team}.`,
+      };
+    }
     case "DraftLotteryHeld": {
       const winner = teamName(state, str(p, "winnerTeamId"));
       const odds = num(p, "winnerOdds");

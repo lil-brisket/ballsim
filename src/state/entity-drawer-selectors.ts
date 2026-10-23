@@ -1,4 +1,8 @@
 import { ARCHETYPE_LABELS } from "@/domain/entities/player-archetype";
+import {
+  toPlayerMoodView,
+  type PlayerMoodView,
+} from "@/state/player-mood-selectors";
 import type { PlayerAttributes } from "@/domain/entities/player";
 import type { PlayerPortraitAssignment } from "@/domain/entities/player-portrait";
 import { selectPlayerPortrait } from "@/state/player-portrait-selectors";
@@ -95,6 +99,8 @@ export type PlayerDrawerView = {
   };
   stats: PlayerStatsBundle;
   development: PlayerDevelopmentBundle;
+  /** Mood chip; null for players not on a roster. */
+  mood: PlayerMoodView | null;
   navigation: {
     playerHref: string;
     teamHref: string | null;
@@ -261,6 +267,7 @@ export function toPlayerDrawerView(
       }),
       trackingStartedSeasonYear: history?.trackingStartedSeasonYear ?? null,
     },
+    mood: player.teamId ? toPlayerMoodView(state, player.id) : null,
     navigation: {
       playerHref: `/dashboard/${saveId}/players/${playerId}`,
       teamHref,

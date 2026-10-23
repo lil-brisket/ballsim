@@ -21,6 +21,8 @@ export type DomainEventType =
   | "ContractFinalYear"
   | "PayrollRulesAssessed"
   | "DraftLotteryHeld"
+  | "PlayerTradeRequested"
+  | "PlayerMinutesComplaint"
   | "DraftPickMade"
   | "FantasyDraftPickMade"
   | "FantasyDraftPickUndone"
@@ -84,6 +86,8 @@ export const DOMAIN_EVENT_TYPES: readonly DomainEventType[] = [
   "ContractFinalYear",
   "PayrollRulesAssessed",
   "DraftLotteryHeld",
+  "PlayerTradeRequested",
+  "PlayerMinutesComplaint",
   "DraftPickMade",
   "FantasyDraftPickMade",
   "FantasyDraftPickUndone",

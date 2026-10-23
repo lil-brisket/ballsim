@@ -1,3 +1,4 @@
+import { MoodChip } from "@/components/basketball/MoodChip";
 import { RecentPerformanceChart } from "@/components/basketball/player-card/RecentPerformanceChart";
 import { SeasonAverageStrip } from "@/components/basketball/player-card/SeasonAverageStrip";
 import { StatTile } from "@/components/basketball/player-card/StatTile";
@@ -12,6 +13,15 @@ export function OverviewTab(props: { view: PlayerDrawerView }) {
   const perf = view.performance;
   return (
     <>
+      {view.mood ? (
+        <p className="flex flex-wrap items-center gap-2 text-sm text-zinc-300">
+          <MoodChip mood={view.mood} />
+          <span>
+            Mood: {view.mood.label} — {view.mood.reason}
+          </span>
+        </p>
+      ) : null}
+
       <Section title="Season averages" density="compact">
         <SeasonAverageStrip
           values={{

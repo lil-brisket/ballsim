@@ -1,5 +1,6 @@
 "use client";
 
+import { MoodChip } from "@/components/basketball/MoodChip";
 import { useMemo, useState } from "react";
 import type { PlayerPosition } from "@/domain/entities/player";
 import { PLAYER_POSITIONS } from "@/domain/entities/player";
@@ -291,6 +292,7 @@ export function RosterManagementTable(props: {
                       label={player.availabilityLabel}
                       tone={player.canPlay ? "available" : player.injuryKind}
                     />
+                    <MoodChip mood={player.mood} />
                     {player.onTradeBlock ? (
                       <span className="text-sm team-ink">Block</span>
                     ) : null}
@@ -445,10 +447,15 @@ export function RosterManagementTable(props: {
                       {player.contractYearsRemaining ?? "—"}
                     </td>
                     <td className="px-3 py-2">
-                      <StatusBadge
-                        label={player.availabilityLabel}
-                        tone={player.canPlay ? "available" : player.injuryKind}
-                      />
+                      <div className="flex flex-wrap items-center gap-1">
+                        <StatusBadge
+                          label={player.availabilityLabel}
+                          tone={
+                            player.canPlay ? "available" : player.injuryKind
+                          }
+                        />
+                        <MoodChip mood={player.mood} />
+                      </div>
                     </td>
                     <td className="px-3 py-2">
                       <PlayerActionMenu
