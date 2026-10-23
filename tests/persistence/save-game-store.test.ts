@@ -172,6 +172,7 @@ function createEightTeamPopulatedState(rngSeed: number): GameState {
       fantasyDraft: null,
       scheduledEvents: {},
       playerPortraits: {},
+      retiredNumbers: {},
     },
     competition: {
       season: {
@@ -222,6 +223,7 @@ function createEightTeamPopulatedState(rngSeed: number): GameState {
       payrollAssessments: {},
       playerMorale: {},
       developmentPlans: {},
+      hallOfFame: { inductees: [] },
       tradeBlocks: {},
       ...createPhaseEBusinessDefaults(
         generated.teams.map((t) => t.id as TeamId),

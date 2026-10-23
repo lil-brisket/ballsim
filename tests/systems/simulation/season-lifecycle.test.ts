@@ -233,6 +233,7 @@ describe("season lifecycle", () => {
         fantasyDraft: null,
         scheduledEvents: {},
         playerPortraits: {},
+        retiredNumbers: {},
       },
       competition: {
         season: {
@@ -274,6 +275,7 @@ describe("season lifecycle", () => {
         payrollAssessments: {},
         playerMorale: {},
         developmentPlans: {},
+        hallOfFame: { inductees: [] },
         tradeBlocks: {},
         ...createPhaseEBusinessDefaults(
           generated.teams.map((team) => team.id as TeamId),

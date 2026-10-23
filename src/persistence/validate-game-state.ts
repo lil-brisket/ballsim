@@ -443,6 +443,7 @@ export function validateGameState(state: unknown): asserts state is GameState {
   validatePayrollAssessments(business.payrollAssessments, world.teams);
   validatePlayerMorale(business.playerMorale, world.players);
   validateDevelopmentPlans(business.developmentPlans, world.players);
+  validateLegacy(business.hallOfFame, world.retiredNumbers, world.players);
 
   const staffContracts = (business as Record<string, unknown>).staffContracts;
   const sponsorships = (business as Record<string, unknown>).sponsorships;
@@ -1885,5 +1886,58 @@ function validateDevelopmentPlans(
         `business.developmentPlans[${playerId}] is not a development focus.`,
       );
     }
+  }
+}
+
+function validateLegacy(
+  hallOfFame: unknown,
+  retiredNumbers: unknown,
+  players: Record<string, unknown>,
+): void {
+  if (hallOfFame == null) {
+    fail("business.hallOfFame is required.");
+  }
+  assertRecord(hallOfFame, "business.hallOfFame");
+  if (!Array.isArray(hallOfFame.inductees)) {
+    fail("business.hallOfFame.inductees must be an array.");
+  }
+  const seen = new Set<string>();
+  hallOfFame.inductees.forEach((value: unknown, index: number) => {
+    const path = `business.hallOfFame.inductees[${index}]`;
+    assertRecord(value, path);
+    if (typeof value.playerId !== "string" || !(value.playerId in players)) {
+      fail(`${path}.playerId must reference world.players.`);
+    }
+    if (seen.has(value.playerId)) {
+      fail(`${path}: player inducted twice.`);
+    }
+    seen.add(value.playerId);
+    if (!Number.isInteger(value.inductedSeasonYear)) {
+      fail(`${path}.inductedSeasonYear must be an integer.`);
+    }
+  });
+  if (retiredNumbers == null) {
+    fail("world.retiredNumbers is required.");
+  }
+  assertRecord(retiredNumbers, "world.retiredNumbers");
+  for (const [teamId, entries] of Object.entries(retiredNumbers)) {
+    if (!Array.isArray(entries)) {
+      fail(`world.retiredNumbers[${teamId}] must be an array.`);
+    }
+    const numbers = new Set<number>();
+    entries.forEach((entry: unknown, index: number) => {
+      const path = `world.retiredNumbers[${teamId}][${index}]`;
+      assertRecord(entry, path);
+      if (!isJerseyNumber(entry.number)) {
+        fail(`${path}.number must be a jersey number.`);
+      }
+      if (numbers.has(entry.number as number)) {
+        fail(`${path}: number retired twice.`);
+      }
+      numbers.add(entry.number as number);
+      if (typeof entry.playerId !== "string" || !(entry.playerId in players)) {
+        fail(`${path}.playerId must reference world.players.`);
+      }
+    });
   }
 }

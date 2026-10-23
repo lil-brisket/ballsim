@@ -206,6 +206,7 @@ export function createInitialGameState(
       fantasyDraft: null,
       scheduledEvents: {},
       playerPortraits: {},
+      retiredNumbers: {},
     },
     competition: {
       season: {
@@ -257,6 +258,7 @@ export function createInitialGameState(
       payrollAssessments: {},
       playerMorale: {},
       developmentPlans: {},
+      hallOfFame: { inductees: [] },
       tradeBlocks: {},
       ...phaseE,
     },
@@ -546,6 +548,7 @@ export function createFourTeamInitialGameState(
       fantasyDraft: null,
       scheduledEvents: {},
       playerPortraits: {},
+      retiredNumbers: {},
     },
     competition: {
       season: {
@@ -597,6 +600,7 @@ export function createFourTeamInitialGameState(
       payrollAssessments: {},
       playerMorale: {},
       developmentPlans: {},
+      hallOfFame: { inductees: [] },
       tradeBlocks: {},
       ...phaseE,
     },

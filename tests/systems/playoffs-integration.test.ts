@@ -183,6 +183,7 @@ function createEightTeamGameState(
       fantasyDraft: null,
       scheduledEvents: {},
       playerPortraits: {},
+      retiredNumbers: {},
     },
     competition: {
       season: {
@@ -229,6 +230,7 @@ function createEightTeamGameState(
       payrollAssessments: {},
       playerMorale: {},
       developmentPlans: {},
+      hallOfFame: { inductees: [] },
       tradeBlocks: {},
       ...createPhaseEBusinessDefaults(
         generated.teams.map((team) => team.id as TeamId),

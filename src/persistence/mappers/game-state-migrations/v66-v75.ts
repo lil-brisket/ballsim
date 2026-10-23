@@ -34,9 +34,16 @@ export type GameStateV70 = Omit<GameState, "meta" | "business"> & {
   business: Omit<GameState["business"], "deadMoney" | "extensionTalks">;
 };
 
-export type GameStateV76 = Omit<GameState, "meta" | "business"> & {
+export type GameStateV77 = Omit<GameState, "meta" | "business" | "world"> & {
+  meta: Omit<GameState["meta"], "schemaVersion"> & { schemaVersion: 77 };
+  business: Omit<GameState["business"], "hallOfFame">;
+  world: Omit<GameState["world"], "retiredNumbers">;
+};
+
+export type GameStateV76 = Omit<GameState, "meta" | "business" | "world"> & {
   meta: Omit<GameState["meta"], "schemaVersion"> & { schemaVersion: 76 };
-  business: Omit<GameState["business"], "developmentPlans">;
+  business: Omit<GameState["business"], "developmentPlans" | "hallOfFame">;
+  world: Omit<GameState["world"], "retiredNumbers">;
 };
 
 export type GameStateV75 = Omit<GameState, "meta" | "business"> & {
@@ -298,7 +305,7 @@ export function migrateV75ToV76(state: GameStateV75): GameStateV76 {
  * v77: owner players develop balanced (exactly as before) until a focus is
  * chosen.
  */
-export function migrateV76ToV77(state: GameStateV76): GameState {
+export function migrateV76ToV77(state: GameStateV76): GameStateV77 {
   return {
     ...state,
     meta: {
@@ -308,6 +315,28 @@ export function migrateV76ToV77(state: GameStateV76): GameState {
     business: {
       ...state.business,
       developmentPlans: {},
+    },
+  } as unknown as GameStateV77;
+}
+
+/**
+ * Deterministic v77 → v78: add the Hall of Fame and retired numbers, both
+ * empty. Eligible players are inducted when the next season starts.
+ */
+export function migrateV77ToV78(state: GameStateV77): GameState {
+  return {
+    ...state,
+    meta: {
+      ...state.meta,
+      schemaVersion: 78,
+    },
+    business: {
+      ...state.business,
+      hallOfFame: { inductees: [] },
+    },
+    world: {
+      ...state.world,
+      retiredNumbers: {},
     },
   };
 }

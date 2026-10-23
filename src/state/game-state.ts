@@ -7,6 +7,10 @@ import type { ExtensionTalksState } from "@/domain/entities/extension-talks";
 import type { PayrollAssessmentState } from "@/domain/entities/payroll-assessment";
 import type { PlayerMoraleState } from "@/domain/entities/player-morale";
 import type { DevelopmentPlanState } from "@/domain/entities/development-plan";
+import type {
+  HallOfFameState,
+  RetiredNumbersState,
+} from "@/domain/entities/legacy";
 import type { Division } from "@/domain/entities/division";
 import type { DraftPick } from "@/domain/entities/draft-pick";
 import type { DraftClass } from "@/domain/entities/draft";
@@ -68,7 +72,7 @@ import type {
   FranchisePhaseState,
 } from "@/systems/phase-engine/phase-types";
 
-export const GAME_STATE_SCHEMA_VERSION = 77;
+export const GAME_STATE_SCHEMA_VERSION = 78;
 
 /** League personnel market for staff free agency (not a business-finance concept). */
 export type StaffMarketState = {
@@ -117,6 +121,11 @@ export type WorldSlice = {
    * Presentation identity only; assigned by ensurePlayerPortraits at persist time.
    */
   playerPortraits: Record<string, PlayerPortraitAssignment>;
+  /**
+   * Jersey numbers a franchise no longer issues, by team id (schema v78+).
+   * Kept on world because jersey-number reconciliation only sees world.
+   */
+  retiredNumbers: RetiredNumbersState;
 };
 
 export type CompetitionSlice = {
@@ -204,6 +213,8 @@ export type BusinessSlice = {
   playerMorale: PlayerMoraleState;
   /** Owner-chosen development focus by player id (schema v77+). */
   developmentPlans: DevelopmentPlanState;
+  /** Hall of Fame members, in induction order (schema v78+). */
+  hallOfFame: HallOfFameState;
   finances: Record<string, TeamFinances>;
   freeAgency: FreeAgencyState;
   /** Restricted free agency statuses for the current offseason cycle. */
