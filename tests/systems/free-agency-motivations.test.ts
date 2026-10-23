@@ -6,7 +6,11 @@ import { createInitialGameState } from "@/state/create-initial-state";
 import type { GameState } from "@/state/game-state";
 import { toFreeAgentInterestView } from "@/state/free-agent-interest-selectors";
 import { evaluateInterestAtSalary } from "@/systems/free-agency";
-import { readFreeAgentMotivations } from "@/systems/free-agency-motivations";
+import {
+  motivationWeights,
+  readFreeAgentMotivations,
+  topMotivations,
+} from "@/systems/free-agency-motivations";
 import { getLeagueSalaryCap } from "@/systems/league-salary-cap";
 import { bootstrapWorld } from "@/systems/world-pipeline";
 
@@ -156,5 +160,28 @@ describe("interest panel", () => {
           .interested,
       ).toBe(true);
     }
+  });
+});
+
+describe("personal priorities", () => {
+  it("make young players chase minutes and veterans chase winning", () => {
+    const state = league();
+    const [home] = teams(state);
+    const playerId = state.world.teams[home!]!.roster[0]!;
+    const base = state.world.players[playerId]!;
+    const young = motivationWeights({ ...base, age: 21 });
+    const veteran = motivationWeights({ ...base, age: 32 });
+    expect(young.playingTime).toBeGreaterThan(veteran.playingTime);
+    expect(veteran.winning).toBeGreaterThan(young.winning);
+  });
+
+  it("vary what players care about across a league", () => {
+    const state = league();
+    const labels = new Set(
+      Object.values(state.world.players)
+        .slice(0, 80)
+        .map((p) => topMotivations(state, p.id).join(",")),
+    );
+    expect(labels.size).toBeGreaterThan(2);
   });
 });

@@ -16,6 +16,7 @@
  * Same evaluation for every team, owner or CPU.
  */
 
+import type { Player } from "@/domain/entities/player";
 import type { PlayerId, TeamId } from "@/domain/ids";
 import { calculatePlayerOverall } from "@/domain/player-overall-rating";
 import type { GameState } from "@/state/game-state";
@@ -45,6 +46,26 @@ export type MotivationReading = {
   points: number;
 };
 
+/**
+ * How much each factor matters to this player (multiplies its points):
+ * competitive players and veterans chase winning; young players want minutes
+ * and a coach who develops them; loyal players stay; leaders like a stage.
+ */
+export function motivationWeights(
+  player: Player,
+): Record<FreeAgentMotivation, number> {
+  const p = player.personality;
+  const young = player.age <= 24;
+  const veteran = player.age >= 30;
+  return {
+    winning: (p.competitiveness / 50) * (veteran ? 1.3 : young ? 0.8 : 1),
+    playingTime: young ? 1.4 : player.age >= 31 ? 0.6 : 1,
+    market: p.leadership / 50,
+    loyalty: p.loyalty / 50,
+    coach: (p.workEthic / 50) * (player.age <= 25 ? 1.3 : 1),
+  };
+}
+
 /** Read every motivation for a player and team. Pure; deterministic. */
 export function readFreeAgentMotivations(
   state: GameState,
@@ -54,7 +75,6 @@ export function readFreeAgentMotivations(
   const player = state.world.players[playerId];
   if (!player) return [];
   const cfg = FREE_AGENCY_INTEREST_CONFIG.motivations;
-  const p = player.personality;
   const readings: MotivationReading[] = [];
   const push = (
     motivation: FreeAgentMotivation,
@@ -73,30 +93,26 @@ export function readFreeAgentMotivations(
     });
   };
 
-  push(
-    "winning",
-    teamWinning(state, teamId),
-    p.competitiveness / 50,
-    cfg.winning,
-  );
+  const weights = motivationWeights(player);
+  push("winning", teamWinning(state, teamId), weights.winning, cfg.winning);
   push(
     "playingTime",
     projectedRole(state, playerId, teamId),
-    1,
+    weights.playingTime,
     cfg.playingTime,
   );
   const market = state.business.franchiseOps[teamId]?.marketSize ?? 50;
-  push("market", market / 100, 1, cfg.market);
+  push("market", market / 100, weights.market, cfg.market);
   const lastTeam = player.teamId ?? lastTeamOf(state, playerId);
   // An unhappy player feels less pull to stay.
   push(
     "loyalty",
     lastTeam === teamId ? moraleFactor(state, playerId) : 0,
-    p.loyalty / 50,
+    weights.loyalty,
     cfg.loyalty,
     false,
   );
-  push("coach", coachQuality(state, teamId), 1, cfg.coach);
+  push("coach", coachQuality(state, teamId), weights.coach, cfg.coach);
   return readings;
 }
 
@@ -120,13 +136,13 @@ export function topMotivations(
   const player = state.world.players[playerId];
   if (!player) return [];
   const cfg = FREE_AGENCY_INTEREST_CONFIG.motivations;
-  const p = player.personality;
+  const weights = motivationWeights(player);
   const emphasis: Array<[FreeAgentMotivation, number]> = [
-    ["winning", (p.competitiveness / 50) * cfg.winning],
-    ["playingTime", cfg.playingTime],
-    ["loyalty", (p.loyalty / 50) * cfg.loyalty * 0.5],
-    ["coach", cfg.coach],
-    ["market", cfg.market],
+    ["winning", weights.winning * cfg.winning],
+    ["playingTime", weights.playingTime * cfg.playingTime],
+    ["loyalty", weights.loyalty * cfg.loyalty],
+    ["coach", weights.coach * cfg.coach],
+    ["market", weights.market * cfg.market],
   ];
   return emphasis
     .sort((a, b) => b[1] - a[1] || (a[0] < b[0] ? -1 : 1))
