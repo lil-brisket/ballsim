@@ -1,3 +1,7 @@
+import {
+  CHEMISTRY_NEUTRAL,
+  chemistryPointsDelta,
+} from "@/systems/team-chemistry";
 /**
  * Fast statistical box-score simulation for CPU vs CPU games.
  * Projects the same attributes as possession sim (shot/FT make rates, usage,
@@ -53,6 +57,9 @@ export type SimulateBoxScoreContext = {
   awayStartingLineup?: readonly Player[];
   config?: Partial<GameSimulationConfig>;
   profiler?: SimulationProfiler;
+  /** Team chemistry 0–100 (60 neutral). */
+  homeChemistry?: number;
+  awayChemistry?: number;
 };
 
 /**
@@ -208,8 +215,11 @@ export function simulateGameBoxScore(
   }
 
   const { home: homePoints, away: awayPoints } = rollFinalScore(
-    expectedTeamPoints(homeAvailable, awayAvailable) + HOME_COURT_POINTS,
-    expectedTeamPoints(awayAvailable, homeAvailable),
+    expectedTeamPoints(homeAvailable, awayAvailable) +
+      HOME_COURT_POINTS +
+      chemistryPointsDelta(context.homeChemistry ?? CHEMISTRY_NEUTRAL),
+    expectedTeamPoints(awayAvailable, homeAvailable) +
+      chemistryPointsDelta(context.awayChemistry ?? CHEMISTRY_NEUTRAL),
     rng,
   );
 

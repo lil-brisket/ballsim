@@ -2,6 +2,7 @@ import { ErrorState } from "@/components/ui/EmptyState";
 import { TeamHubSubNav } from "@/components/team/TeamHubSubNav";
 import { TeamHubHeader } from "@/components/team/hub/TeamHubHeader";
 import { TeamOverview } from "@/components/team/hub/TeamOverview";
+import { TeamChemistryPanel } from "@/components/team/hub/TeamChemistryPanel";
 import { TeamRecentHistory } from "@/components/team/hub/TeamRecentHistory";
 import { TeamRosterPreview } from "@/components/team/hub/TeamRosterPreview";
 import { TeamRotationPreview } from "@/components/team/hub/TeamRotationPreview";
@@ -26,6 +27,7 @@ export function TeamHub(props: {
       <div className="grid gap-8 lg:grid-cols-2">
         <div className="space-y-8">
           <TeamOverview hub={hub} />
+          <TeamChemistryPanel chemistry={hub.chemistry} />
           <TeamRecentHistory
             saveId={saveId}
             items={hub.recentHistory}

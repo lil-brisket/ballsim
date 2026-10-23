@@ -74,6 +74,11 @@ import { advanceInjuryRecoveryAfterGame } from "@/systems/injury/injury-recovery
 import { ROTATION_CONFIG } from "@/systems/rotation/rotation-config";
 import { assertTeamSecondsOnCourt } from "@/systems/rotation/rotation-invariants";
 import {
+  CHEMISTRY_NEUTRAL,
+  chemistryTurnoverMultiplier,
+  teamChemistry,
+} from "@/systems/team-chemistry";
+import {
   buildTeamStaffGameContext,
   type TeamStaffGameContext,
 } from "@/systems/staff-effects";
@@ -97,6 +102,9 @@ export type SimulateGameContext = {
   /** Precomputed once per game — do not look up staff in possession loops. */
   homeStaffContext?: TeamStaffGameContext;
   awayStaffContext?: TeamStaffGameContext;
+  /** Team chemistry 0–100 (60 neutral); precomputed once per game. */
+  homeChemistry?: number;
+  awayChemistry?: number;
   /**
    * Optional decision injector for tests. Production uses choosePossessionDecision.
    */
@@ -109,6 +117,7 @@ export type SimulateGameContext = {
       config: GameSimulationConfig;
       shotSelectionModifiers?: CoachingModifiers["shotSelection"];
       foulActionWeightMultiplier?: number;
+      turnoverWeightMultiplier?: number;
     },
     rng: Rng,
   ) => PossessionDecision;
@@ -527,6 +536,8 @@ export function simulateScheduledGame(
       awayTeam?.coachingPhilosophy ?? DEFAULT_COACHING_PHILOSOPHY,
     homeStaffContext: buildTeamStaffGameContext(state, game.homeTeamId),
     awayStaffContext: buildTeamStaffGameContext(state, game.awayTeamId),
+    homeChemistry: teamChemistry(state, game.homeTeamId).value,
+    awayChemistry: teamChemistry(state, game.awayTeamId).value,
     profiler: options?.profiler,
     gameState: state,
     // Owner games keep a watchable log; DL games live outside
@@ -738,6 +749,11 @@ function simulatePeriod(args: {
         shotSelectionModifiers: tactical.offensiveModifiers.shotSelection,
         foulActionWeightMultiplier:
           tactical.defensiveModifiers.foulActionWeightMultiplier,
+        turnoverWeightMultiplier: chemistryTurnoverMultiplier(
+          (offensiveTeamId === sim.homeTeamId
+            ? args.context.homeChemistry
+            : args.context.awayChemistry) ?? CHEMISTRY_NEUTRAL,
+        ),
       },
       args.rng,
     );

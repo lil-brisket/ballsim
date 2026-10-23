@@ -145,13 +145,14 @@ Implemented from the GM loops plan ([docs/plans/gm-loops-plan.md](docs/plans/gm-
 - Contract extensions with a negotiation (ask, counter, refusal cooldown, testing the market), shared by owners and CPU teams
 - Restricted free agency: qualifying offers, offer sheets, match / decline, qualifying offers taken when no sheet comes
 - Player morale (0–100, weekly in season from role vs expectation, winning, underpaid stars and contract talks; composure and leadership slow swings): trade requests after four miserable weeks (CPU teams list the player), minutes complaints, less loyalty pull in free agency and higher extension asks; no in-game effect
+- Team chemistry (0–100, derived, never stored: continuity of the core eight, their morale, the best leader, recent trades). Small, bounded game effect: up to ±6% turnover weight in the possession engine and ±1 expected point in the box-score engine (perfect vs neutral chemistry: under +6 points of win%). The Sim Lab runs at neutral chemistry, so lab baselines are unchanged
 - Draft lottery and Lottery night (in CBL leagues the worst team picks first ~35% of the time instead of always)
 - Free agents weigh winning (by competitiveness), projected minutes, market, loyalty to their last team and the head coach on top of money; money stays the biggest factor. The Free Agency page shows what each player cares about, your team's score per factor and roughly what he would sign for
 - Luxury tax (tiered, shared by non-tax teams), salary floor and Veteran rights (over the cap to re-sign your own player after 3 straight seasons), assessed at the end of the regular season
 
 Planned in the GM loops plan ([docs/plans/gm-loops-plan.md](docs/plans/gm-loops-plan.md)), not yet implemented unless a later section says so:
 
-- Team chemistry and development plans
+- Development plans
 - Record book, Hall of Fame and retired numbers
 
 ## Owner Mode Phase 2 — multi-season trajectory intent
