@@ -29,17 +29,21 @@
 - `@testing-library/dom` 10.4.1 → 10.4.2
 - `@testing-library/react` 16.3.2 → 16.3.3
 
-### Deferred (majors / 0.x / React minor)
+### Dependencies (majors)
+
+- Next.js 16.4.3 and `eslint-config-next` 16.4.3; npm audit advisories cleared (#172)
+- React / react-dom 19.3.1, fast-check 4, dotenv 18 (#173)
+- Vitest and `@vitest/coverage-v8` 5 (#174)
+- TypeScript 6.0, pinned `~6.0.3` (#176)
+- Node 24: `.nvmrc`, `engines.node >=24`, `@types/node ^24` and both CI workflows (#177)
+- ESLint 10 (#177). npm warns about the peer ranges of the React, jsx-a11y and import plugins; lint output is unchanged.
+
+### Deferred
 
 Do not apply these without a dedicated upgrade plan and test pass:
 
-| Package              | Current | Blocked target | Why                                        |
-| -------------------- | ------- | -------------- | ------------------------------------------ |
-| React / react-dom    | 19.2.8  | 19.3.0         | Called out as a coordinated framework bump |
-| `@types/node`        | 20.x    | 26.x           | Next.js 16 and CI stay on Node 20          |
-| `@libsql/client`     | 0.17.4  | 0.18.0         | 0.x minor can break the Prisma adapter     |
-| dotenv               | 17.x    | 18.x           | Major                                      |
-| ESLint               | 9.x     | 10.x           | Major; `eslint-config-next` still on 9     |
-| Vitest / coverage-v8 | 4.1.10  | 5.x            | Major runner change                        |
-| Prisma               | 7.10.0  | 8.0.0-rc       | Pre-release major                          |
-| TypeScript           | 5.x     | 7.x            | Major                                      |
+| Package          | Current | Blocked target | Why                                            |
+| ---------------- | ------- | -------------- | ---------------------------------------------- |
+| TypeScript       | 6.0.x   | 7.x            | typescript-eslint peer range is `<6.1.0`       |
+| Prisma           | 7.10.x  | 8.x            | Pre-release rewrite with no libsql adapter yet |
+| `@libsql/client` | 0.17.4  | 0.18.x         | `@prisma/adapter-libsql` 7.x requires `^0.17`  |
