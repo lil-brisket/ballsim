@@ -27,6 +27,19 @@ export function TeamHubHeader(props: { hub: TeamHubView }) {
     >
       <SectionHeading as="h1" size="lg" title="Team Hub" />
       <p className="text-sm text-zinc-300">{context.join(" · ")}</p>
+      {hub.retiredNumbers.length > 0 ? (
+        <ul className="flex flex-wrap gap-2" aria-label="Retired numbers">
+          {hub.retiredNumbers.map((entry) => (
+            <li
+              key={entry.number}
+              title={entry.playerName}
+              className="rounded-sm border border-team-ink/50 px-2 py-0.5 font-mono text-sm text-team-ink"
+            >
+              {entry.number}
+            </li>
+          ))}
+        </ul>
+      ) : null}
     </ArenaPanel>
   );
 }

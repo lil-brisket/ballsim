@@ -24,7 +24,8 @@ import type { Player } from "@/domain/entities/player";
 import type { PlayerId, TeamId } from "@/domain/ids";
 import type { GameState } from "@/state/game-state";
 
-type World = Pick<GameState["world"], "players" | "teams">;
+type World = Pick<GameState["world"], "players" | "teams"> &
+  Partial<Pick<GameState["world"], "retiredNumbers">>;
 
 /** A franchise's players: registered incumbents first, then newcomers. */
 function franchiseOrder(world: World, teamId: TeamId): Player[] {
@@ -57,7 +58,10 @@ export function teamJerseyNumbers(
   world: World,
   teamId: TeamId,
 ): Map<PlayerId, number> {
-  const taken = new Set<number>();
+  // Retired numbers are never issued again by that franchise.
+  const taken = new Set<number>(
+    (world.retiredNumbers?.[teamId] ?? []).map((entry) => entry.number),
+  );
   const numbers = new Map<PlayerId, number>();
   for (const player of franchiseOrder(world, teamId)) {
     const number = freeJerseyNumber(player.id, player.jerseyNumber, taken);

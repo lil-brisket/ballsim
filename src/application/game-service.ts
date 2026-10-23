@@ -162,6 +162,7 @@ export {
   applyOwnerLineupRecommendation,
   updateOwnerCoachingPhilosophy,
   setOwnerDevelopmentFocus,
+  retireOwnerJerseyNumber,
   applyOwnerCoachingPreset,
 } from "@/application/game-service/team-management";
 export {

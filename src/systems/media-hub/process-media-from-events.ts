@@ -68,6 +68,8 @@ function storyTypeForEvent(event: DomainEvent): MediaStoryType {
     case "PlayerDeclined":
     case "PlayerRetired":
     case "PlayerTradeRequested":
+    case "HallOfFameInducted":
+    case "JerseyNumberRetired":
     case "PlayerMinutesComplaint":
     case "PlayerAssignedToDevelopmentLeague":
     case "PlayerRecalledFromDevelopmentLeague":

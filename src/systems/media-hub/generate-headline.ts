@@ -161,6 +161,25 @@ export function generateHeadline(
             summary: `Talks between ${name} and ${team} are on hold.`,
           };
     }
+    case "HallOfFameInducted": {
+      const name = playerName(state, str(p, "playerId"));
+      const summary = str(p, "summary");
+      return {
+        headline: `${name} enters the Hall of Fame`,
+        summary: summary
+          ? `${name} is inducted: ${summary}.`
+          : `${name} is inducted into the Hall of Fame.`,
+      };
+    }
+    case "JerseyNumberRetired": {
+      const name = playerName(state, str(p, "playerId"));
+      const team = teamName(state, str(p, "teamId"));
+      const number = num(p, "number");
+      return {
+        headline: `${team} retire No. ${number ?? ""} for ${name}`,
+        summary: `No one will wear ${name}'s number for ${team} again.`,
+      };
+    }
     case "PlayerTradeRequested": {
       const name = playerName(state, str(p, "playerId"));
       const team = teamName(state, str(p, "teamId"));

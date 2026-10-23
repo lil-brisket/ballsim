@@ -75,6 +75,8 @@ export type TeamHubView = {
   corePlayers: RosterPlayerView[];
   injuredPlayers: RosterPlayerView[];
   chemistry: TeamChemistryView;
+  /** Numbers the franchise no longer issues, low to high. */
+  retiredNumbers: { number: number; playerName: string }[];
 };
 
 export type TeamChemistryView = {
@@ -181,6 +183,10 @@ export function toTeamHubView(state: GameState): TeamHubView {
     corePlayers,
     injuredPlayers: injured.slice(0, 5),
     chemistry: chemistryView(state, teamId),
+    retiredNumbers: (state.world.retiredNumbers?.[teamId] ?? []).map((r) => ({
+      number: r.number,
+      playerName: r.playerName,
+    })),
   };
 }
 

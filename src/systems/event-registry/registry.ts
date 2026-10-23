@@ -121,6 +121,14 @@ export const DOMAIN_EVENT_REGISTRY: Record<
   ContractExtensionRefused: occurred("transaction", "medium", {
     social: { minPosts: 0, maxPosts: 1 },
   }),
+  HallOfFameInducted: occurred("league", "high", {
+    notify: true,
+    social: { minPosts: 1, maxPosts: 2 },
+  }),
+  JerseyNumberRetired: occurred("team", "high", {
+    notify: true,
+    social: { minPosts: 0, maxPosts: 2 },
+  }),
   PlayerTradeRequested: occurred("transaction", "high", {
     notify: true,
     notifyCat: "important",

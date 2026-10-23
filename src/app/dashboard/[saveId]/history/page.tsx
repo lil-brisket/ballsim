@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getRequestSaveStore } from "@/application/request-save-store";
 import { ErrorState } from "@/components/ui/EmptyState";
@@ -26,6 +27,14 @@ export default async function HistoryPage({ params, searchParams }: PageProps) {
   return (
     <>
       {error ? <ErrorState message={error} /> : null}
+      <p className="mb-4 text-sm">
+        <Link
+          href={`/dashboard/${saveId}/history/legacy`}
+          className="text-team-ink underline-offset-4 hover:underline"
+        >
+          Legacy: record book, Hall of Fame and retired numbers
+        </Link>
+      </p>
       <HistoryHub view={toHistoryHubView(loaded.state, "history", query)} />
     </>
   );

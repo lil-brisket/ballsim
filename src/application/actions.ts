@@ -98,6 +98,7 @@ export {
   updateLineupAndRotationAction,
   previewOptimizeRotationAction,
   setDevelopmentFocusAction,
+  retireJerseyNumberAction,
   updateCoachingPhilosophyAction,
   applyCoachingPresetAction,
 } from "@/application/actions/team-management";

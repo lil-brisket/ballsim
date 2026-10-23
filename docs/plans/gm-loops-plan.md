@@ -90,3 +90,31 @@ from morale beyond chemistry, no real league terms, teams or players.
 8. Naming: in-game names: "Veteran rights" for the prior-team re-sign
    exception.
 9. Order as written.
+
+## Results (all phases done, 2026-10-22)
+
+Balance: `npm run sanity:league` equivalent, CBL, 4 sims × 10 seasons, seed 42.
+
+| After phase                  | payroll → win% r | insolvency | distress | payroll mean |
+| ---------------------------- | ---------------- | ---------- | -------- | ------------ |
+| Baseline (master)            | 0.497            | 3.96%      | 12.9%    | $65.3M       |
+| 2 Release / dead money       | 0.497            | 3.96%      | 12.9%    | $65.3M       |
+| 4 RFA                        | 0.510            | 3.54%      | 7.3%     | $64.8M       |
+| 5 Tax, floor, Veteran rights | 0.486            | 3.75%      | 8.3%     | $64.6M       |
+| 6 Draft lottery              | 0.588            | 4.17%      | 6.7%     | $64.6M       |
+| 7 FA motivations             | 0.465            | 2.92%      | 5.6%     | $64.9M       |
+| 8 Morale                     | 0.425            | 3.33%      | 6.3%     | $65.0M       |
+| 9 Chemistry                  | 0.402            | 3.75%      | 7.3%     | $64.8M       |
+| 10 Development plans         | 0.405            | 4.79%      | 9.0%     | $64.9M       |
+
+- Tanking payoff (CBL, 20 lotteries): the worst team picks first 35% of the
+  time (was 100%), mean slot 2.15 (was 1).
+- Star concentration with FA motivations: max OVR 82+ players on one team
+  2.72 (2.83 without), top four teams' share 54% either way.
+- RFA needed two balance fixes before it shipped: eligibility from career
+  service (once per career) and CPU commitments (pending sheets and
+  qualifying offers count against cap room, roster and budget).
+- 5c (mid-season exception) skipped: mean payroll is ~65% of the cap, so
+  cap-space signings are common.
+- No simulation or regression fixture changed in any phase; golden-save
+  digests were refreshed with each schema step (v70–v78).

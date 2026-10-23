@@ -22,6 +22,10 @@ import {
 } from "@/systems/team-management-commands";
 import { asTeamId, asPlayerId } from "@/domain/ids";
 import { setDevelopmentFocus } from "@/systems/development-plans";
+import {
+  getRetireNumberBlockReason,
+  retireJerseyNumber,
+} from "@/systems/legacy";
 import type { TeamRosterManagement } from "@/domain/entities/team-roster-management";
 import {
   type OptimizeChange,
@@ -561,4 +565,33 @@ export async function setOwnerDevelopmentFocus(
       setDevelopmentFocus(state, asPlayerId(input.playerId), input.focus),
     store,
   );
+}
+
+/** Retire a franchise legend's jersey number (active owner team). */
+export async function retireOwnerJerseyNumber(
+  saveId: string,
+  input: { playerId: string },
+  store?: SaveGameStore,
+): Promise<OwnerCommandResult> {
+  const saveStore = getStore(store);
+  const loaded = await saveStore.load(saveId);
+  if (!loaded) {
+    return fail("Save not found.");
+  }
+  const state = loaded.state;
+  const playerId = asPlayerId(input.playerId);
+  const teamId = state.user.activeOwnerTeamId;
+  const blocked = getRetireNumberBlockReason(state, playerId, teamId);
+  if (blocked) {
+    return fail(blocked);
+  }
+  const result = retireJerseyNumber(state, playerId, teamId);
+  const saved = await persistWorkingState(
+    saveId,
+    result.state,
+    state.meta.rngState,
+    saveStore,
+    result.events,
+  );
+  return withDashboard(saved);
 }

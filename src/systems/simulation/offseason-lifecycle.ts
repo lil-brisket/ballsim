@@ -33,6 +33,7 @@ import { releaseExpiredStaffContracts } from "@/systems/staff-contract-lifecycle
 import { refreshStaffFreeAgentPool } from "@/systems/staff-generation";
 import { processStaffRetirement } from "@/systems/staff-retirement";
 import { processPlayerRetirements } from "@/systems/player-retirement";
+import { processHallOfFameInductions } from "@/systems/legacy";
 import {
   closeOfferSheetsAtFreeAgencyClose,
   finalizeRfaQualification,
@@ -318,10 +319,13 @@ export function initializeNewSeason(state: GameState, rng?: Rng): SystemResult {
     },
   };
   next = expireSeasonalSituations(next);
+  const inductions = processHallOfFameInductions(next);
+  next = inductions.state;
   return systemResult(next, [
     ...events,
     ...phaseResult.events,
     ...announceFinalContractYears(next),
+    ...inductions.events,
   ]);
 }
 
