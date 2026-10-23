@@ -191,13 +191,32 @@ export function isRestrictedEligible(
   if (state.business.rfaStatuses?.[playerId]?.resolution === "accepted_qo") {
     return false;
   }
-  const service = serviceYearsForSalary({
-    age: player.age,
-    seasonYear: state.competition.season.year,
-    draftSeasonYear: player.developmentLeague?.draftSeasonYear ?? null,
-    seasonsPlayed: state.business.playerHistory[playerId]?.seasons.length ?? 0,
-  });
-  return service < RFA_MAX_YEARS_OF_SERVICE;
+  return careerServiceYears(state, playerId) < RFA_MAX_YEARS_OF_SERVICE;
+}
+
+/**
+ * Seasons of professional service. History is exact for players drafted in
+ * this league; for players who were already pros when the league began, it
+ * only covers this league, so their age (from 19) sets a floor.
+ */
+export function careerServiceYears(
+  state: GameState,
+  playerId: PlayerId,
+): number {
+  const player = state.world.players[playerId];
+  if (!player) return 0;
+  const history = state.business.playerHistory[playerId]?.seasons.length ?? 0;
+  if (draftedInLeague(state, playerId)) return history;
+  return Math.max(history, Math.max(0, player.age - 19));
+}
+
+function draftedInLeague(state: GameState, playerId: PlayerId): boolean {
+  for (const draft of Object.values(state.world.drafts)) {
+    if (draft.pickResults.some((pick) => pick.playerId === playerId)) {
+      return true;
+    }
+  }
+  return false;
 }
 
 function cpuWouldQualify(

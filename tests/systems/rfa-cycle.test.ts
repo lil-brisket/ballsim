@@ -12,6 +12,7 @@ import {
   decideCpuRfaMatches,
   expireRfaOfferSheets,
   getOfferSheetBlockReason,
+  careerServiceYears,
   isRestrictedEligible,
   issueQualifyingOffer,
   matchRfaOfferSheet,
@@ -21,6 +22,7 @@ import {
 } from "@/systems/rfa";
 import { getLeagueSalaryCap } from "@/systems/league-salary-cap";
 import {
+  processOffseasonLifecycle,
   processPhaseEnter,
   processPhaseExit,
 } from "@/systems/simulation/offseason-lifecycle";
@@ -314,5 +316,50 @@ describe("offer sheet commitments", () => {
         contractId: "contract_second_sheet",
       }),
     ).toMatch(/cap space/);
+  });
+});
+
+describe("career service", () => {
+  it("counts a veteran's age when history only covers this league", () => {
+    const f = fixture();
+    const veteran: GameState = {
+      ...f.state,
+      world: {
+        ...f.state.world,
+        players: {
+          ...f.state.world.players,
+          [f.cpuRfa]: { ...f.state.world.players[f.cpuRfa]!, age: 30 },
+        },
+      },
+    };
+    // One season of history in a new league does not make him a youngster.
+    expect(careerServiceYears(veteran, f.cpuRfa)).toBeGreaterThanOrEqual(11);
+    expect(isRestrictedEligible(veteran, f.cpuRfa)).toBe(false);
+  });
+});
+
+describe("season transition", () => {
+  it("classifies restricted free agents when roster decisions begin on the calendar", () => {
+    const f = fixture();
+    // Rewind: back in season transition with no classification yet.
+    let state: GameState = {
+      ...setActivePhase(f.state, "offseason.season_transition"),
+      business: { ...f.state.business, rfaStatuses: {} },
+    };
+    state = {
+      ...state,
+      competition: {
+        ...state.competition,
+        season: {
+          ...state.competition.season,
+          rfaQualificationComplete: false,
+        },
+      },
+    };
+    const next = processOffseasonLifecycle(state, createSeededRng(5)).state;
+    expect(next.competition.phase.activePhaseId).toBe(
+      "offseason.roster_decisions",
+    );
+    expect(next.business.rfaStatuses[f.ownerRfa]).toBeDefined();
   });
 });

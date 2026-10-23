@@ -621,7 +621,16 @@ function runSeasonTransition(state: GameState, rng: Rng): SystemResult {
     "offseason.roster_decisions",
     "season_transition_complete",
   );
-  return systemResult(entered.state, [...finalized.events, ...entered.events]);
+  // Classify restricted free agents while expiring contracts still exist,
+  // so owners can issue qualifying offers during roster decisions.
+  const hooks = finalizeRfaQualification(entered.state, {
+    autoIssueQoForAiTeams: true,
+  });
+  return systemResult(hooks.state, [
+    ...finalized.events,
+    ...entered.events,
+    ...hooks.events,
+  ]);
 }
 
 /**
