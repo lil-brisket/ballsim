@@ -53,6 +53,8 @@ export function ContractRow(props: {
   saveId: string;
   row: ContractHubRow;
   returnPath: string;
+  /** Dialog to open on mount (drawer deep link). */
+  openAction?: "extend" | "release";
 }) {
   const { saveId, row, returnPath } = props;
   const actionable = row.hasPendingTeamOption;
@@ -145,6 +147,7 @@ export function ContractRow(props: {
               playerName={row.playerName}
               returnPath={returnPath}
               extension={row.extension}
+              defaultOpen={props.openAction === "extend"}
             />
           ) : null}
           {row.release !== null ? (
@@ -154,6 +157,7 @@ export function ContractRow(props: {
               playerName={row.playerName}
               returnPath={returnPath}
               release={row.release}
+              defaultOpen={props.openAction === "release"}
             />
           ) : null}
         </div>

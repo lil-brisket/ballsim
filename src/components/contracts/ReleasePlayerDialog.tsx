@@ -24,9 +24,11 @@ export function ReleasePlayerDialog(props: {
   playerName: string;
   returnPath: string;
   release: PlayerReleaseView;
+  /** Open on mount (deep link from the player drawer). */
+  defaultOpen?: boolean;
 }) {
   const { release } = props;
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(props.defaultOpen ?? false);
   const [mode, setMode] = useState<Mode>("waive");
   const titleId = useId();
   const dialogRef = useRef<HTMLDivElement>(null);

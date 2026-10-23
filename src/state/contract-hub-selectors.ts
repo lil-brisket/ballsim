@@ -26,14 +26,13 @@ import {
   type PlayerContractProfileView,
 } from "@/state/player-profile-selectors";
 import {
-  toContractExtensionView,
+  toEligibleContractExtensionView,
   type ContractExtensionView,
 } from "@/state/contract-extension-selectors";
 import {
   toPlayerReleaseView,
   type PlayerReleaseView,
 } from "@/state/player-release-selectors";
-import { EXTENSION_ELIGIBLE_SEASONS_LEFT } from "@/systems/contract-extensions";
 import {
   getContractStatus,
   type ContractStatus,
@@ -147,18 +146,6 @@ export function getContractDetailProfile(
   return toPlayerContractProfileView(state, playerId as never);
 }
 
-function extensionFor(
-  state: GameState,
-  playerId: string,
-): ContractExtensionView | null {
-  const view = toContractExtensionView(state, playerId);
-  return view !== null &&
-    view.seasonsLeft >= 0 &&
-    view.seasonsLeft <= EXTENSION_ELIGIBLE_SEASONS_LEFT
-    ? view
-    : null;
-}
-
 export function toContractHubView(state: GameState): ContractHubView {
   const saveId = state.meta.saveId;
   const teamId = getActiveOwnerTeamId(state);
@@ -200,7 +187,7 @@ export function toContractHubView(state: GameState): ContractHubView {
         largeThreshold > 0 &&
         row.salary >= largeThreshold,
       release: toPlayerReleaseView(state, row.playerId),
-      extension: extensionFor(state, row.playerId),
+      extension: toEligibleContractExtensionView(state, row.playerId),
     };
   });
 

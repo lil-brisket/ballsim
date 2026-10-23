@@ -103,6 +103,8 @@ function playerView(
       teamHref: "/dashboard/save_test/team",
       contractHref: null,
       developmentHref: null,
+      extendHref: null,
+      releaseHref: null,
     },
     ...overrides,
   };
@@ -247,6 +249,8 @@ describe("PlayerDrawer modal", () => {
         teamHref: "/dashboard/save_test/team",
         contractHref: "/dashboard/save_test/team/contracts",
         developmentHref: "/dashboard/save_test/development",
+        extendHref: null,
+        releaseHref: null,
       },
     });
     const { unmount } = render(
@@ -262,6 +266,56 @@ describe("PlayerDrawer modal", () => {
     ).toBe("/dashboard/save_test/development");
     expect(screen.getByText("$12.5M")).toBeTruthy();
     expect(screen.getByText("active")).toBeTruthy();
+    unmount();
+  });
+
+  it("links Extend contract and Release to the contracts dialogs", () => {
+    const view = playerView({
+      navigation: {
+        playerHref: "/dashboard/save_test/players/player_1",
+        teamHref: "/dashboard/save_test/team",
+        contractHref: "/dashboard/save_test/team/contracts",
+        developmentHref: null,
+        extendHref:
+          "/dashboard/save_test/team/contracts?action=extend&player=player_1",
+        releaseHref:
+          "/dashboard/save_test/team/contracts?action=release&player=player_1",
+      },
+    });
+    const onOpenChange = vi.fn();
+    const { unmount } = render(
+      <PlayerDrawer
+        open
+        status="ready"
+        view={view}
+        onOpenChange={onOpenChange}
+      />,
+    );
+    expect(
+      screen
+        .getByRole("link", { name: "Extend contract" })
+        .getAttribute("href"),
+    ).toBe("/dashboard/save_test/team/contracts?action=extend&player=player_1");
+    const release = screen.getByRole("link", { name: "Release" });
+    expect(release.getAttribute("href")).toBe(
+      "/dashboard/save_test/team/contracts?action=release&player=player_1",
+    );
+    fireEvent.click(release);
+    expect(onOpenChange).toHaveBeenCalledWith(false);
+    unmount();
+  });
+
+  it("hides Extend contract and Release without hrefs", () => {
+    const { unmount } = render(
+      <PlayerDrawer
+        open
+        status="ready"
+        view={playerView()}
+        onOpenChange={vi.fn()}
+      />,
+    );
+    expect(screen.queryByRole("link", { name: "Extend contract" })).toBeNull();
+    expect(screen.queryByRole("link", { name: "Release" })).toBeNull();
     unmount();
   });
 
@@ -299,6 +353,8 @@ describe("PlayerDrawer modal", () => {
         teamHref: "/dashboard/save_test/team",
         contractHref: "/dashboard/save_test/team/contracts",
         developmentHref: "/dashboard/save_test/development",
+        extendHref: null,
+        releaseHref: null,
       },
     });
     const { unmount } = render(

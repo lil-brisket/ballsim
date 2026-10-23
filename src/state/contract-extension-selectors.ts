@@ -11,6 +11,7 @@ import type { GameState } from "@/state/game-state";
 import { getActiveOwnerTeamId } from "@/state/owner-context";
 import {
   activeTalks,
+  EXTENSION_ELIGIBLE_SEASONS_LEFT,
   EXTENSION_MAX_YEARS,
   getExtensionBlockReason,
   playerExtensionAsk,
@@ -51,6 +52,22 @@ export type ContractExtensionView = {
   /** Why an offer cannot be made now, or null. */
   blockedReason: string | null;
 };
+
+/**
+ * The extension view only when he can be offered one now-ish: two seasons
+ * or fewer left on a deal with the owner team. Null otherwise.
+ */
+export function toEligibleContractExtensionView(
+  state: GameState,
+  playerId: string,
+): ContractExtensionView | null {
+  const view = toContractExtensionView(state, playerId);
+  return view !== null &&
+    view.seasonsLeft >= 0 &&
+    view.seasonsLeft <= EXTENSION_ELIGIBLE_SEASONS_LEFT
+    ? view
+    : null;
+}
 
 /**
  * Null when the player has no contract with the active owner team.

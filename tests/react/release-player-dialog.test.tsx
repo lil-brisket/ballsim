@@ -116,3 +116,33 @@ describe("ReleasePlayerDialog", () => {
     ).toBe(true);
   });
 });
+
+describe("ReleasePlayerDialog deep link", () => {
+  it("opens on arrival when defaultOpen is set", () => {
+    render(
+      <ReleasePlayerDialog
+        saveId="s1"
+        playerId="p1"
+        playerName="Test Player"
+        returnPath="/x"
+        release={release}
+        defaultOpen
+      />,
+    );
+    expect(screen.getByRole("dialog")).toBeTruthy();
+    expect(screen.getByText("Release Test Player?")).toBeTruthy();
+  });
+
+  it("stays closed by default", () => {
+    render(
+      <ReleasePlayerDialog
+        saveId="s1"
+        playerId="p1"
+        playerName="Test Player"
+        returnPath="/x"
+        release={release}
+      />,
+    );
+    expect(screen.queryByRole("dialog")).toBeNull();
+  });
+});

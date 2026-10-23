@@ -33,9 +33,11 @@ export function ExtendContractDialog(props: {
   playerName: string;
   returnPath: string;
   extension: ContractExtensionView;
+  /** Open on mount (deep link from the player drawer). */
+  defaultOpen?: boolean;
 }) {
   const { extension } = props;
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(props.defaultOpen ?? false);
   const [years, setYears] = useState(() => defaultYears(extension));
   const [salary, setSalary] = useState(extension.askSalary);
   const titleId = useId();

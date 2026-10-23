@@ -149,6 +149,24 @@ export function PlayerDrawer(props: {
                 View contract
               </Link>
             ) : null}
+            {props.view.navigation.extendHref ? (
+              <Link
+                href={props.view.navigation.extendHref}
+                className={secondaryActionClass}
+                onClick={() => props.onOpenChange(false)}
+              >
+                Extend contract
+              </Link>
+            ) : null}
+            {props.view.navigation.releaseHref ? (
+              <Link
+                href={props.view.navigation.releaseHref}
+                className={secondaryActionClass}
+                onClick={() => props.onOpenChange(false)}
+              >
+                Release
+              </Link>
+            ) : null}
             {props.view.navigation.developmentHref ? (
               <Link
                 href={props.view.navigation.developmentHref}
