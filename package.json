@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "engines": {
-    "node": ">=22"
+    "node": ">=24"
   },
   "scripts": {
     "dev": "next dev",
@@ -57,7 +57,7 @@
     "@testing-library/react": "^16.3.2",
     "@types/d3-geo": "^3.1.1",
     "@types/geojson": "^7946.0.16",
-    "@types/node": "^22",
+    "@types/node": "^24",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "@types/topojson-client": "^3.1.5",
