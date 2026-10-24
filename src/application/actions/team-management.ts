@@ -2,7 +2,6 @@
 
 import {
   updateOwnerLineupAndRotation,
-  previewOwnerOptimizeRotation,
   updateOwnerCoachingPhilosophy,
   setOwnerDevelopmentFocus,
   retireOwnerJerseyNumber,
@@ -108,39 +107,6 @@ export async function updateLineupAndRotationAction(
  * Non-persisting optimize preview for the combined editor.
  * Returns JSON so the client can apply locally + undo before Save.
  */
-export async function previewOptimizeRotationAction(
-  formData: FormData,
-): Promise<
-  | {
-      ok: true;
-      management: import("@/domain/entities/team-roster-management").TeamRosterManagement;
-      changelog: import("@/systems/roster-management").OptimizeChange[];
-    }
-  | { ok: false; error: string }
-> {
-  const saveId = String(formData.get("saveId") ?? "");
-  const teamId = String(formData.get("teamId") ?? "");
-  const parsed = parseCombinedLineupRotationPayload(formData);
-  if (!parsed.ok) {
-    return parsed;
-  }
-  return previewOwnerOptimizeRotation(saveId, {
-    teamId,
-    startingLineup: parsed.startingLineup,
-    bench: parsed.bench,
-    inactive: parsed.inactive,
-    rotation: parsed.rotation,
-    rotationStyle: parsed.rotationStyle || undefined,
-    rotationPhilosophy: parsed.rotationPhilosophy || undefined,
-    rotationDepth: parsed.rotationDepthRaw
-      ? Number(parsed.rotationDepthRaw)
-      : undefined,
-    rotationPreset: parsed.rotationPreset || "auto",
-    closingLineupPolicy: parsed.closingLineupPolicy || undefined,
-    closingLineupIds: parsed.closingLineupIds,
-  });
-}
-
 export async function updateCoachingPhilosophyAction(
   formData: FormData,
 ): Promise<void> {

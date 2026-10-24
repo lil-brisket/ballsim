@@ -8,7 +8,6 @@ import {
   within,
 } from "@testing-library/react";
 import { StartingFiveEditor } from "@/components/team-management/StartingFiveEditor";
-import { ClosingLineupEditor } from "@/components/team-management/ClosingLineupEditor";
 import type { PlayerCardLike } from "@/state/lineup-rotation-editor";
 
 afterEach(cleanup);
@@ -107,30 +106,5 @@ describe("StartingFiveEditor court", () => {
     fireEvent.keyDown(document, { key: "Escape" });
     await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
     expect(document.activeElement).toBe(chip);
-  });
-});
-
-describe("ClosingLineupEditor chips", () => {
-  it("toggles players with pressed chips in custom mode", () => {
-    const onToggle = vi.fn();
-    render(
-      <ClosingLineupEditor
-        closingPolicy="custom"
-        closingIds={["p1"]}
-        editableRows={
-          players.slice(0, 2).map((p) => ({
-            ...p,
-            targetMinutes: 20,
-            groupRole: "starter",
-          })) as never
-        }
-        onPolicyChange={vi.fn()}
-        onTogglePlayer={onToggle}
-      />,
-    );
-    const alpha = screen.getByRole("button", { name: /Test Alpha/ });
-    expect(alpha.getAttribute("aria-pressed")).toBe("true");
-    fireEvent.click(screen.getByRole("button", { name: /Test Bravo/ }));
-    expect(onToggle).toHaveBeenCalledWith("p2");
   });
 });
