@@ -8,7 +8,7 @@ import {
 import type { RuleViolation } from "@/systems/league-rules/types";
 
 /** Draft year for next draft relative to competition season year. */
-function draftYearForSeason(seasonYear: number): number {
+export function draftYearForSeason(seasonYear: number): number {
   return seasonYear + 1;
 }
 
