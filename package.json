@@ -21,6 +21,7 @@
     "test:simulation": "node scripts/vitest.mjs run --project simulation",
     "test:all": "node scripts/vitest.mjs run",
     "sim": "tsx scripts/sim.ts",
+    "test:offseason-soak": "tsx scripts/offseason-soak.ts",
     "sim:compare": "tsx scripts/sim-compare-manifests.ts",
     "sim:replay": "tsx scripts/sim-replay.ts",
     "lab": "tsx scripts/open-sim-lab.ts",

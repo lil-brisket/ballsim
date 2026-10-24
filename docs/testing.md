@@ -272,6 +272,29 @@ League sanity example:
 npx tsx scripts/league-sanity-report.ts --sims 10 --seasons 5 --seed 42 --format json --out sanity.json
 ```
 
+## Offseason soak
+
+`npm run test:offseason-soak` plays many seeds through many full seasons with the real engine, one phase at a time, and checks the offseason invariants (`tests/offseason/invariants.ts`) at the start state and after every phase. It is not part of `npm test` and not in CI.
+
+```bash
+npm run test:offseason-soak                                  # 8 seeds x 12 seasons x both profiles
+npm run test:offseason-soak -- --seeds 2 --seasons 3        # quick pass
+npm run test:offseason-soak -- --seed 17 --profile busy --season 6 --phase free-agency   # replay one failure
+```
+
+Profiles:
+
+- `auto`: the user team is delegated to the engine (Full Management).
+- `busy`: the user team is manual, and every phase a seeded script fires extensions, releases, free-agent signings and trades, many of them deliberately illegal (wrong phase, retired player, player on another team, bad terms). A rejected action must leave the state it was given untouched; an applied one must not introduce invariant issues; a deliberately illegal one must not apply. Routine clicks (begin offseason, draft class, pick on the clock) still happen. The script draws from its own streams (`seed * 7919 + phaseIndex`), never from the engine RNG or `Math.random`.
+
+Flags: `--seeds N` (8), `--seasons M` (12), `--seed-start S` (1; seeds are S..S+N-1), `--profile auto|busy|both` (both), `--max-season-ms T` (120000; a slower season is reported as `slow`), `--max-phase-days D` (400; a phase that does not advance is `stuck`), `--fail-fast`, `--verify-determinism` (runs the first seed twice per profile and compares `stateForComparison` digests at the end of every season), `--probe-salary-bounds` (busy only: also offer free agents salaries below the league minimum or above the maximum; off by default because the owner signing path does not validate them yet). Replay: `--seed X --season Y --phase P` (all three; accepts `free-agency`, `free_agency` or `offseason.free_agency`) re-runs only that seed and profile, prints every phase start snapshot and user action outcome, and stops after phase P of season Y. `--profile` and `--probe-salary-bounds` apply in replay too.
+
+Each failure prints the seed, profile, season index and year, phase, the broken invariant codes and messages, a `snapshotOffseason` diff between the last good boundary and the failing state, the error and stack for engine exceptions, and a copy-paste replay command. The exit code is non-zero if anything failed.
+
+Run time (one CBL league, this development machine, other work running): about 20-60 s per season, growing over the first seasons (roughly 20-25 s for season 1, 35 s for season 2, 40-60 s for season 3). `--seeds 2 --seasons 3` on both profiles (12 seasons) took about 7 minutes. The default 8 seeds x 12 seasons x 2 profiles is 192 seasons, so plan on 2 to 3 hours or more; use `--seeds`, `--seasons` and `--profile` to scale it down. Boundary checks cost under 0.2 s per season; the time is the engine's.
+
+Run it before releases and after changing offseason, contract, free-agency, trade, draft or development code. When it reports a failure, run the printed replay command, fix the cause, then re-run the same seeds.
+
 ## Expectations for contributors
 
 - Add tests with new simulation / domain logic.

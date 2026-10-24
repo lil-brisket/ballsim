@@ -28,12 +28,18 @@ function codes(state: GameState, previous?: GameState): string[] {
 }
 
 describe("offseason fixtures", () => {
-  it.each(OFFSEASON_FIXTURE_PHASES)("parks a valid save at %s", (phase) => {
-    const fixture = buildOffseasonFixture({ seed: SEED, phase });
-    expect(getActivePhaseId(fixture.state)).toBe(phase);
-    expect(fixture.userTeamId).toBe(fixture.state.user.activeOwnerTeamId);
-    assertOffseasonInvariants(fixture.state, { label: `seed ${SEED}` });
-  });
+  it.each(OFFSEASON_FIXTURE_PHASES)(
+    "parks a valid save at %s",
+    (phase) => {
+      const fixture = buildOffseasonFixture({ seed: SEED, phase });
+      expect(getActivePhaseId(fixture.state)).toBe(phase);
+      expect(fixture.userTeamId).toBe(fixture.state.user.activeOwnerTeamId);
+      assertOffseasonInvariants(fixture.state, { label: `seed ${SEED}` });
+      // The later fixtures run a whole season to get there; under parallel
+      // load that is well past the 30s default.
+    },
+    120_000,
+  );
 
   it("hands out independent copies", () => {
     const a = buildOffseasonFixture({ seed: SEED, phase: "offseason.draft" });
