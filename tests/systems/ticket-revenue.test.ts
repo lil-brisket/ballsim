@@ -59,7 +59,7 @@ describe("ticket revenue", () => {
     const cashAfter = once.state.business.finances[teamId]!.businessFunds;
     expect(cashAfter).toBeGreaterThan(cashBefore);
 
-    const key = ticketRevenueConsequenceKey(teamId, gameId);
+    const key = ticketRevenueConsequenceKey(teamId, year, gameId);
     expect(hasAppliedGameplayConsequence(once.state, key)).toBe(true);
 
     const settled = once.events.filter((e) => e.type === "HomeGameDaySettled");
@@ -301,5 +301,62 @@ describe("ticket revenue", () => {
     expect(
       result.state.business.finances[teamId]!.attendanceByYear[year],
     ).toBeGreaterThan(0);
+  });
+  it("posts playoff ticket revenue again when a later season reuses the game id", () => {
+    // Playoff game ids are playoff_<series>_g<n> and repeat every season.
+    let state = createInitialGameState({
+      saveId: "tix_playoff_repeat",
+      rngSeed: 13,
+      settings: CBL_GAME_SETTINGS,
+    });
+    state = bootstrapWorld(state, createSeededRng(state.meta.rngState)).state;
+    const teamId = state.user.activeOwnerTeamId;
+    const otherTeamId = (Object.keys(state.world.teams) as string[]).find(
+      (id) => id !== teamId,
+    )!;
+    const gameId = asGameId("playoff_playoff_r1_s0_g1");
+    const withPlayoffGame = (base: typeof state): typeof state => ({
+      ...base,
+      competition: {
+        ...base.competition,
+        games: {
+          ...base.competition.games,
+          [gameId]: createGame({
+            competitionType: "playoffs",
+            homeTeamSnapshot: null,
+            awayTeamSnapshot: null,
+            id: gameId,
+            seasonId: asSeasonId(base.competition.season.id),
+            date: base.world.calendar.currentDate,
+            homeTeamId: teamId,
+            awayTeamId: asTeamId(otherTeamId),
+            status: "final",
+            score: { home: 101, away: 99 },
+            periodScores: [],
+            playerStats: [],
+            events: [],
+          }),
+        },
+      },
+    });
+
+    const first = processHomeGameTicketRevenue(withPlayoffGame(state)).state;
+    const cashAfterFirst = first.business.finances[teamId]!.businessFunds;
+
+    const nextYear = first.competition.season.year + 1;
+    const nextSeason = withPlayoffGame({
+      ...first,
+      competition: {
+        ...first.competition,
+        season: { ...first.competition.season, year: nextYear },
+      },
+    });
+    const second = processHomeGameTicketRevenue(nextSeason);
+    expect(
+      second.state.business.finances[teamId]!.businessFunds,
+    ).toBeGreaterThan(cashAfterFirst);
+    expect(
+      second.events.filter((e) => e.type === "HomeGameDaySettled"),
+    ).toHaveLength(1);
   });
 });

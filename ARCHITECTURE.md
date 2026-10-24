@@ -28,7 +28,7 @@ Prisma ORM 7 requires a driver adapter. On this Windows environment, `better-sql
 UI (Next.js app / components)
   -> Application (commands, GameService facades)
     -> Domain / Systems (GameState, entities, SystemResult, events, RNG)
-      -> Persistence (Prisma SaveGame stateJson + SaveTeam/SavePlayer projections)
+      -> Persistence (Prisma SaveGame snapshot + SaveTeam/SavePlayer projections)
 ```
 
 Rules:
@@ -271,16 +271,17 @@ UI and other listeners consume events through application-layer orchestration la
 
 `SaveGame` Prisma envelope:
 
-| Field           | Purpose                              |
-| --------------- | ------------------------------------ |
-| `id`            | Save identity                        |
-| `name`          | Display name                         |
-| `schemaVersion` | Serialized state schema version      |
-| `stateJson`     | Serialized authoritative `GameState` |
-| `createdAt`     | Created timestamp                    |
-| `updatedAt`     | Updated timestamp                    |
+| Field           | Purpose                                                                    |
+| --------------- | -------------------------------------------------------------------------- |
+| `id`            | Save identity                                                              |
+| `name`          | Display name                                                               |
+| `schemaVersion` | Serialized state schema version                                            |
+| `stateGzip`     | gzip of the serialized authoritative `GameState` (written by every save)   |
+| `stateJson`     | Legacy uncompressed snapshot; `""` once a save has been written compressed |
+| `createdAt`     | Created timestamp                                                          |
+| `updatedAt`     | Updated timestamp                                                          |
 
-`stateJson` is still the source of truth for simulation. Normalized child tables are **query projections** so listings (roster, team directory) do not need to parse the blob.
+The snapshot (`stateGzip`, or `stateJson` for a row not yet re-saved) is the source of truth for simulation. Saves are compressed because every owner action loads and saves the whole league: a season-4 CBL league is about 20 MB of JSON and about 2 MB gzipped (fastest level, ~35 ms). Normalized child tables are **query projections** so listings (roster, team directory) do not need to parse the blob.
 
 Listing indexes on `SaveGame`: `name` (filter/search) and `updatedAt` (`list()` is `orderBy: { updatedAt: "desc" }`). Child tables index `(saveGameId, …)` query paths (conference, team name, player team, player name, position). Composite primary keys already cover `saveGameId`. These migrations are additive (`CREATE INDEX` only) and do not rewrite existing `SaveGame` rows.
 
@@ -311,9 +312,9 @@ Simulation, validation, and `schemaVersion` migrations continue to operate on `G
 
 ### Dual-write and backfill
 
-`PrismaSaveGameStore` writes `stateJson` and projection rows in **one transaction** on `create` and `save`. Delete removes children then the envelope (cascade is also declared on the relations).
+`PrismaSaveGameStore` writes the compressed snapshot and projection rows in **one transaction** on `create` and `save`. Delete removes children then the envelope (cascade is also declared on the relations).
 
-Load still returns `deserializeGameState(stateJson)`. If a legacy row has blob data but empty `SaveTeam` / `SavePlayer` tables, load **backfills** projections from that deserialized state and does not bump `SaveGame.updatedAt`.
+Load returns `deserializeGameState` of the snapshot (gunzipped `stateGzip`, else `stateJson`). If a legacy row has blob data but empty `SaveTeam` / `SavePlayer` tables, load **backfills** projections from that deserialized state and does not bump `SaveGame.updatedAt`.
 
 `MemorySaveGameStore` stays blob-only; projection tables are a Prisma concern.
 
@@ -321,16 +322,26 @@ Load still returns `deserializeGameState(stateJson)`. If a legacy row has blob d
 
 ### Migration strategy
 
-1. Additive Prisma migrations only. Do not rewrite or drop `stateJson`.
+1. Additive Prisma migrations only. Do not drop `stateJson`: rows saved before `stateGzip` existed keep their snapshot there until their next save. Rolling the code back past `stateGzip` therefore needs a step that writes `stateJson` back from `stateGzip` for every row.
 2. Existing saves keep working: blob load path is unchanged; projections fill on next `save` or on first `load` backfill.
 3. Do not backfill by rewriting `stateJson` or bumping `GameState.schemaVersion` for this change — it is a persistence-shape change, not a game-state schema change.
 4. If a later slice adds more tables, follow the same dual-write + empty-table backfill pattern.
 5. Rollback is dropping the new tables; `SaveGame` rows remain valid.
 
-Application code depends on `SaveGameStore` (`list` / `create` / `load` / `save` / `delete`). Adapters:
+Application code depends on `SaveGameStore` (`list` / `create` / `load` / `loadHistory` / `save` / `delete`). Adapters:
 
-- `PrismaSaveGameStore` — production (`stateJson` + `SaveTeam` / `SavePlayer` in one transaction)
-- `MemorySaveGameStore` — tests (blob only)
+- `PrismaSaveGameStore` — production (compressed snapshot + history chunks + `SaveTeam` / `SavePlayer` in one transaction)
+- `MemorySaveGameStore` — tests (snapshot and history chunks in memory)
+
+### Finished-season history
+
+Every owner action loads and saves the whole league, so history that only grows would make every click slower over a career. `save` and `create` therefore split it off (`src/persistence/save-history.ts`):
+
+- **Kept in the snapshot:** the current and previous seasons' archived games, and draft classes that are not complete or are from the current season. The simulation never reads further back (a regression test runs a full offseason from the snapshot alone and gets the same league), and "last season" is on many screens.
+- **Moved to `SaveHistoryChunk`:** archived games of older seasons (one `games:<seasonId>` chunk per season) and older completed draft classes (`draft:<draftClassId>`), gzipped JSON. A finished season does not change, so a chunk is written once and never rewritten.
+- **Read back:** `load` returns the snapshot only. Views of finished seasons (player careers and game logs, box scores, the record book, past schedules and the league hub) use `loadSaveWithHistory`, which calls `loadHistory` and merges with `withSaveHistory`. The online-league store only serves history after a load of the same save in the request.
+
+The `GameState` shape is unchanged: `business.gameArchive` and `world.drafts` simply hold less at rest. Old saves split on their next save.
 
 Compatibility wrappers (`createSaveGame`, `getSaveGame`, `updateSaveGameState`, `deleteSaveGame`, etc.) delegate to the Prisma store.
 
@@ -339,16 +350,16 @@ Save deletion is by `SaveGame.id` only. There is no user/session ownership check
 Owner Mode new-save is rejected when the current `SaveGame` row count is `>= MAX_OWNER_SAVE_SLOTS` (10). This is a current-row check in `createNewOwnerSave` (`list` then `create`), not a lifetime creation counter and not an atomic database constraint. Concurrent creates could theoretically exceed the cap; that is accepted for the current single-user local SQLite model. Multiplayer or multi-process creation would need an atomic reservation/transaction.
 
 Save pipeline: `serializeGameState` (JSON.stringify) → parse clone → `validateGameState` → write blob + replace projection rows in one transaction.  
-Load pipeline: read `stateJson` → JSON.parse → migrate → `validateGameState` → return `GameState`; backfill empty projection tables from that state.
+Load pipeline: read the snapshot (gunzip `stateGzip`, else `stateJson`) → JSON.parse → migrate → `validateGameState` → return `GameState`; backfill empty projection tables from that state.
 
 `serializeGameState` and `deserializeGameState` must not call each other. Crash consistency beyond Prisma/SQLite’s existing guarantees is out of scope.
 
 Load/save flow:
 
 1. Application loads via `SaveGameStore`
-2. Mapper deserializes `stateJson` → migrate → validate → `GameState`
+2. Mapper deserializes the snapshot (gunzipped `stateGzip`, else `stateJson`) → migrate → validate → `GameState`
 3. Systems produce `SystemResult`
-4. Store validates a serialized clone, then writes `stateJson` and query projections in a single transaction
+4. Store validates a serialized clone, then writes it gzipped (`stateGzip`, with `stateJson` emptied) and the query projections in a single transaction
 
 ## Application ↔ UI communication
 

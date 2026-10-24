@@ -55,6 +55,66 @@ export function withAppliedGameplayConsequence(
   }));
 }
 
+/** Families keyed on the day they ran (checked only against today). */
+const DATE_SCOPED_KEY_PREFIXES = ["ai_trade:", "ai_fa:", "ai_continuity:"];
+
+/** Families keyed on the week the weekly pipeline completed. */
+const WEEK_SCOPED_KEY_PREFIXES = ["ai_franchise:", "ai_game_day_promo:"];
+
+const DATE_SUFFIX = /:(\d{4}-\d{2}-\d{2})$/;
+const WEEK_SUFFIX = /:(\d{4}-W\d{2})$/;
+
+/**
+ * Drops AI idempotency keys that can never be checked again: daily keys for
+ * days before `currentDate`, weekly keys for weeks before `completedWeekId`
+ * (a completed week never runs again). Without this the map grows by
+ * thousands of keys a season, and every new key copies all of them.
+ */
+export function pruneExpiredGameplayConsequenceKeys(
+  state: GameState,
+  currentDate: string,
+  completedWeekId: string,
+): GameState {
+  let current = state;
+  for (const teamId of getOwnedTeamIds(state)) {
+    const franchise = current.user.ownedFranchises[teamId];
+    if (!franchise) continue;
+    const keys = franchise.appliedGameplayConsequenceKeys;
+    let kept: Record<string, true> | null = null;
+    for (const key of Object.keys(keys)) {
+      if (!isExpiredConsequenceKey(key, currentDate, completedWeekId)) {
+        continue;
+      }
+      kept ??= { ...keys };
+      delete kept[key];
+    }
+    if (kept !== null) {
+      const pruned = kept;
+      current = withOwnedFranchise(current, teamId, (owned) => ({
+        ...owned,
+        appliedGameplayConsequenceKeys: pruned,
+      }));
+    }
+  }
+  return current;
+}
+
+function isExpiredConsequenceKey(
+  key: string,
+  currentDate: string,
+  completedWeekId: string,
+): boolean {
+  if (DATE_SCOPED_KEY_PREFIXES.some((prefix) => key.startsWith(prefix))) {
+    const date = DATE_SUFFIX.exec(key)?.[1];
+    return date !== undefined && date < currentDate;
+  }
+  if (WEEK_SCOPED_KEY_PREFIXES.some((prefix) => key.startsWith(prefix))) {
+    const week = WEEK_SUFFIX.exec(key)?.[1];
+    return week !== undefined && week < completedWeekId;
+  }
+  return false;
+}
+
 /**
  * Applies owner-team performance and objective financial consequences.
  * Uses deterministic keys in franchise.appliedGameplayConsequenceKeys for idempotency.
@@ -97,7 +157,7 @@ function applyTeamGameplayConsequences(
     if (!isHome && !isAway) {
       continue;
     }
-    const key = `game_result:${teamId}:${game.id}`;
+    const key = gameResultConsequenceKey(teamId, seasonYear, game.id);
     if (hasAppliedGameplayConsequence(current, key, teamId)) {
       continue;
     }
@@ -194,9 +254,11 @@ function markObjectiveConsequenceApplied(
   }));
 }
 
+/** Keyed by season too: playoff game ids repeat every season. */
 export function gameResultConsequenceKey(
   teamId: TeamId,
+  seasonYear: number,
   gameId: string,
 ): string {
-  return `game_result:${teamId}:${gameId}`;
+  return `game_result:${teamId}:${seasonYear}:${gameId}`;
 }

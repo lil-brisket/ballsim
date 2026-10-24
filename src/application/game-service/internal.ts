@@ -6,6 +6,7 @@ import type {
   SaveGameStore,
 } from "@/persistence/save-game-store";
 import type { CustomContentStore } from "@/persistence/custom-content-store";
+import { withSaveHistory } from "@/persistence/save-history";
 import { prismaCustomContentStore } from "@/persistence/custom-content-repository";
 import { toDashboardSnapshot } from "@/state/selectors";
 import { type GameState, appendEventLog } from "@/state/game-state";
@@ -37,6 +38,24 @@ export function toSaveSummary(loaded: LoadedSaveGame): SaveGameSummary {
 
 export function getStore(store?: SaveGameStore): SaveGameStore {
   return store ?? getRequestSaveStore();
+}
+
+/**
+ * The league with its finished-season history (see save-history.ts), for
+ * read-only views that show past seasons: player careers and game logs,
+ * box scores, the record book, past schedules. Everything else uses load.
+ */
+export async function loadSaveWithHistory(
+  saveId: string,
+  store?: SaveGameStore,
+): Promise<LoadedSaveGame | null> {
+  const saveStore = getStore(store);
+  const loaded = await saveStore.load(saveId);
+  if (!loaded) {
+    return null;
+  }
+  const history = await saveStore.loadHistory(saveId);
+  return { ...loaded, state: withSaveHistory(loaded.state, history) };
 }
 
 export function getCustomStore(store?: CustomContentStore): CustomContentStore {
@@ -94,7 +113,6 @@ export async function persistWorkingState(
   const withEvents = withPlayerPortraits(
     appendEventLog(working, newlyEmittedEvents),
   );
-  validateGameState(withEvents);
   const nowIso = new Date().toISOString();
   const nextState: GameState = {
     ...withEvents,
@@ -104,6 +122,7 @@ export async function persistWorkingState(
       updatedAt: nowIso,
     },
   };
+  // One validation: nextState differs from withEvents only in meta.
   validateGameState(nextState);
   return store.save({
     id: saveId,

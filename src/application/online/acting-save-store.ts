@@ -67,6 +67,14 @@ export function createActingSaveGameStore(
       }
       return acting;
     },
+    async loadHistory(id) {
+      // Membership is checked by load; history follows a load of the same
+      // save in this request, like online writes.
+      if (!loadedAt.has(id)) {
+        throw new Error("Save history must follow a load in the same request.");
+      }
+      return base.loadHistory(id);
+    },
     async save(input) {
       if (!isOnlineLeague(input.state)) {
         return base.save(input);

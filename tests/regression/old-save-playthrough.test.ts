@@ -36,6 +36,7 @@ const HISTORICAL_ISSUES: Record<string, readonly string[]> = {
   ],
   v71: [],
   v77: [],
+  v79: [],
 };
 
 const PLAYED = Object.keys(HISTORICAL_ISSUES);

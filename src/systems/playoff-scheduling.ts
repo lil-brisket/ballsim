@@ -44,7 +44,10 @@ export function createNextPlayoffGame(input: {
       ? series.lowerSeedTeamId
       : series.higherSeedTeamId;
 
-  const gameId = input.gameId ?? asGameId(`playoff_${series.id}_g${gameIndex}`);
+  // The season keeps ids unique across seasons: series ids repeat every year,
+  // and the archive and revenue keys are by game id.
+  const gameId =
+    input.gameId ?? asGameId(`playoff_${seasonId}_${series.id}_g${gameIndex}`);
 
   return createGame({
     id: gameId,

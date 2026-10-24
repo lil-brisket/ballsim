@@ -11,6 +11,7 @@ import { createInitialGameState } from "@/state/create-initial-state";
 import { CBL_GAME_SETTINGS } from "@/domain/game-settings";
 import {
   applyGameplayFinancialConsequences,
+  gameResultConsequenceKey,
   hasAppliedGameplayConsequence,
 } from "@/systems/gameplay-financial-consequences";
 import {
@@ -72,7 +73,7 @@ describe("gameplay financial consequences", () => {
     expect(
       hasAppliedGameplayConsequence(
         once.state,
-        `game_result:${teamId}:${gameId}`,
+        gameResultConsequenceKey(teamId, year, gameId),
       ),
     ).toBe(true);
     const books =
@@ -177,6 +178,62 @@ describe("gameplay financial consequences", () => {
     const twice = applyGameplayFinancialConsequences(once.state);
     expect(twice.state.business.finances[secondTeamId!]!.businessFunds).toBe(
       before - GAMEPLAY_LOSS_EXPENSE,
+    );
+  });
+  it("charges the loss fee again when a later season reuses the playoff game id", () => {
+    let state = createInitialGameState({
+      saveId: "fin_playoff_repeat",
+      rngSeed: 5,
+      settings: CBL_GAME_SETTINGS,
+    });
+    state = bootstrapWorld(state, createSeededRng(state.meta.rngState)).state;
+    const teamId = state.user.activeOwnerTeamId;
+    const otherTeamId = (Object.keys(state.world.teams) as string[]).find(
+      (id) => id !== teamId,
+    )!;
+    const gameId = asGameId("playoff_playoff_r1_s0_g2");
+    const withPlayoffLoss = (base: typeof state): typeof state => ({
+      ...base,
+      competition: {
+        ...base.competition,
+        games: {
+          ...base.competition.games,
+          [gameId]: createGame({
+            competitionType: "playoffs",
+            homeTeamSnapshot: null,
+            awayTeamSnapshot: null,
+            id: gameId,
+            seasonId: asSeasonId(base.competition.season.id),
+            date: base.world.calendar.currentDate,
+            homeTeamId: teamId,
+            awayTeamId: asTeamId(otherTeamId),
+            status: "final",
+            score: { home: 90, away: 100 },
+            periodScores: [],
+            playerStats: [],
+            events: [],
+          }),
+        },
+      },
+    });
+
+    const first = applyGameplayFinancialConsequences(
+      withPlayoffLoss(state),
+    ).state;
+    const cashAfterFirst = first.business.finances[teamId]!.businessFunds;
+    const nextSeason = withPlayoffLoss({
+      ...first,
+      competition: {
+        ...first.competition,
+        season: {
+          ...first.competition.season,
+          year: first.competition.season.year + 1,
+        },
+      },
+    });
+    const second = applyGameplayFinancialConsequences(nextSeason).state;
+    expect(second.business.finances[teamId]!.businessFunds).toBe(
+      cashAfterFirst - GAMEPLAY_LOSS_EXPENSE,
     );
   });
 });

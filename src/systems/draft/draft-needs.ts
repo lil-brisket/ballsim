@@ -8,6 +8,10 @@ import { PLAYER_POSITIONS } from "@/domain/entities/player";
 import { calculatePlayerOverall } from "@/domain/player-overall-rating";
 import type { TeamId } from "@/domain/ids";
 import type { GameState } from "@/state/game-state";
+import {
+  cachedForTeamRoster,
+  createTeamRosterCache,
+} from "@/systems/team-needs-cache";
 import { getContractStatus } from "@/domain/entities/contract";
 
 export type DraftNeedLevel =
@@ -37,7 +41,18 @@ const LEVEL_RANK: Record<DraftNeedLevel, number> = {
   none: 0,
 };
 
+const calculateTeamDraftNeedsCache = createTeamRosterCache<TeamDraftNeeds>();
+
 export function calculateTeamDraftNeeds(
+  state: GameState,
+  teamId: TeamId,
+): TeamDraftNeeds {
+  return cachedForTeamRoster(calculateTeamDraftNeedsCache, state, teamId, () =>
+    computeTeamDraftNeeds(state, teamId),
+  );
+}
+
+function computeTeamDraftNeeds(
   state: GameState,
   teamId: TeamId,
 ): TeamDraftNeeds {

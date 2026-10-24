@@ -1,6 +1,7 @@
 vi.mock("server-only", () => ({}));
 
 import { execFileSync } from "node:child_process";
+import { gunzipSync } from "node:zlib";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
@@ -21,6 +22,8 @@ import { SaveVersionConflictError } from "@/persistence/save-version-conflict";
 import { createPrismaSaveGameStore } from "@/persistence/save-game-repository";
 import { createPlayer } from "../factories/player";
 import { createTestGameState } from "../factories/game-state";
+import { splitColdHistory, withSaveHistory } from "@/persistence/save-history";
+import { leagueWithHistory } from "./save-history-fixture";
 import type { GameState } from "@/state/game-state";
 import type { Player } from "@/domain/entities/player";
 
@@ -198,6 +201,109 @@ describe("PrismaSaveGameStore normalized projections", () => {
         expect.objectContaining({ playerId: player.id, teamId }),
       ]),
     );
+  });
+
+  it("returns from save exactly what a fresh load reads back", async () => {
+    const base = createTestGameState({ saveId: "save_norm_roundtrip" });
+    const created = await store.create({
+      id: "save_norm_roundtrip",
+      name: "Round Trip",
+      state: base,
+    });
+    const player = createPlayer({
+      id: "player_roundtrip",
+      teamId: null,
+      firstName: "Ola",
+      contractId: null,
+    });
+    const saved = await store.save({
+      id: "save_norm_roundtrip",
+      state: withPlayers(base, player),
+      ifUpdatedAt: created.updatedAt,
+    });
+    const loaded = await store.load("save_norm_roundtrip");
+    expect(loaded).not.toBeNull();
+    expect(saved.updatedAt).toEqual(loaded!.updatedAt);
+    expect(saved.name).toBe("Round Trip");
+    expect(saved.state).toEqual(loaded!.state);
+    expect(saved.state.world.players[player.id]?.firstName).toBe("Ola");
+  });
+
+  it("stores new saves compressed", async () => {
+    const state = createTestGameState({ saveId: "save_gzip_new" });
+    await store.create({ id: "save_gzip_new", name: "Gzip", state });
+    const row = await prisma.saveGame.findUnique({
+      where: { id: "save_gzip_new" },
+    });
+    expect(row?.stateJson).toBe("");
+    expect(row?.stateGzip).not.toBeNull();
+    const json = gunzipSync(row!.stateGzip!).toString("utf8");
+    expect(JSON.parse(json).meta.saveId).toBe("save_gzip_new");
+    expect(row!.stateGzip!.length).toBeLessThan(json.length);
+  });
+
+  it("loads a save written before compression and compresses it on the next save", async () => {
+    const state = createTestGameState({ saveId: "save_gzip_legacy" });
+    await prisma.saveGame.create({
+      data: {
+        id: "save_gzip_legacy",
+        name: "Legacy",
+        schemaVersion: state.meta.schemaVersion,
+        stateJson: serializeGameState(state),
+      },
+    });
+    const loaded = await store.load("save_gzip_legacy");
+    expect(loaded?.state.meta.saveId).toBe("save_gzip_legacy");
+
+    await store.save({ id: "save_gzip_legacy", state: loaded!.state });
+    const row = await prisma.saveGame.findUnique({
+      where: { id: "save_gzip_legacy" },
+    });
+    expect(row?.stateJson).toBe("");
+    expect(row?.stateGzip).not.toBeNull();
+    const reloaded = await store.load("save_gzip_legacy");
+    expect(reloaded?.state).toEqual(loaded?.state);
+  });
+
+  it("keeps old seasons out of the snapshot and stores each history chunk once", async () => {
+    const state = leagueWithHistory("save_history_prisma");
+    const created = await store.create({
+      id: "save_history_prisma",
+      name: "History",
+      state,
+    });
+    expect(Object.keys(created.state.business.gameArchive).sort()).toEqual([
+      "g_current",
+      "g_prev",
+      "g_unknown",
+    ]);
+    const history = await store.loadHistory("save_history_prisma");
+    expect(Object.keys(history.games).sort()).toEqual(["g_old_1", "g_old_2"]);
+    expect(
+      withSaveHistory(created.state, history).business.gameArchive,
+    ).toEqual(state.business.gameArchive);
+
+    // A league saved with its history merged back writes no chunk twice.
+    await store.save({
+      id: "save_history_prisma",
+      state: withSaveHistory(created.state, history),
+    });
+    const chunkIds = (
+      await prisma.saveHistoryChunk.findMany({
+        where: { saveGameId: "save_history_prisma" },
+        select: { chunkId: true },
+      })
+    ).map((row) => row.chunkId);
+    expect(chunkIds.sort()).toEqual(
+      splitColdHistory(state).chunks.map((chunk) => chunk.chunkId),
+    );
+
+    await store.delete("save_history_prisma");
+    expect(
+      await prisma.saveHistoryChunk.count({
+        where: { saveGameId: "save_history_prisma" },
+      }),
+    ).toBe(0);
   });
 
   it("does not write projections when CAS save fails", async () => {

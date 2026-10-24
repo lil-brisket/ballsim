@@ -11,20 +11,38 @@ datasource db {
 }
 
 /// Persistence envelope for one save. Game mechanics live in GameState JSON, not Prisma relations.
-/// `stateJson` remains the authoritative snapshot. `teams` / `players` are query projections.
+/// The GameState snapshot is `stateGzip` (gzip of the JSON) when present,
+/// else the legacy `stateJson`. `teams` / `players` are query projections.
 model SaveGame {
-  id            String       @id
+  id            String             @id
   name          String
   schemaVersion Int
+  /// Legacy uncompressed snapshot; "" once the save is written compressed.
   stateJson     String
-  createdAt     DateTime     @default(now())
-  updatedAt     DateTime     @updatedAt
+  /// gzip of the GameState JSON. Authoritative when present.
+  stateGzip     Bytes?
+  createdAt     DateTime           @default(now())
+  updatedAt     DateTime           @updatedAt
   teams         SaveTeam[]
   players       SavePlayer[]
   invites       LeagueInvite[]
+  historyChunks SaveHistoryChunk[]
 
   @@index([name])
   @@index([updatedAt])
+}
+
+/// Finished-season history kept out of the per-action snapshot: one season's
+/// archived games (`games:<seasonId>`) or one completed draft class
+/// (`draft:<draftClassId>`), gzipped JSON. Written once, never rewritten.
+model SaveHistoryChunk {
+  saveGameId  String
+  chunkId     String
+  payloadGzip Bytes
+  createdAt   DateTime @default(now())
+  saveGame    SaveGame @relation(fields: [saveGameId], references: [id], onDelete: Cascade)
+
+  @@id([saveGameId, chunkId])
 }
 
 /// Online play account. Username is stored lowercase and is the login name.

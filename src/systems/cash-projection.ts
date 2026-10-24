@@ -1,7 +1,7 @@
 import {
   addCalendarDays,
-  getCalendarMonthId,
-  getIsoWeekId,
+  formatCalendarDate,
+  parseCalendarDate,
 } from "@/domain/calendar-date";
 import { FACILITY_CATEGORIES } from "@/domain/entities/franchise-ops";
 import { asTeamId, type TeamId } from "@/domain/ids";
@@ -182,13 +182,25 @@ export function projectBusinessFundsHorizon(
   let sponsorshipInflow = 0;
   let broadcastInflow = 0;
 
+  // Step one UTC date instead of parsing date strings every day: between
+  // consecutive days the ISO week changes exactly when the next day is a
+  // Monday, and the month when it is the 1st.
+  const start = parseCalendarDate(currentDate);
+  const cursor = new Date(
+    Date.UTC(start.year, start.month - 1, start.day, 12, 0, 0),
+  );
   while (date < horizonEndDate) {
-    const next = addCalendarDays(date, 1);
+    cursor.setUTCDate(cursor.getUTCDate() + 1);
+    const next = formatCalendarDate(
+      cursor.getUTCFullYear(),
+      cursor.getUTCMonth() + 1,
+      cursor.getUTCDate(),
+    );
     if (homeDateSet.has(date)) {
       funds += gameDayRevenue;
       gateInflow += gameDayRevenue;
     }
-    if (getIsoWeekId(next) !== getIsoWeekId(date)) {
+    if (cursor.getUTCDay() === 1) {
       // Payroll and national media follow the regular-season schedule.
       const share = regularSeasonShareOfWeek(state, date);
       const media = Math.round(nationalMedia * share);
@@ -202,7 +214,7 @@ export function projectBusinessFundsHorizon(
         runwayWeeks = weeksCharged;
       }
     }
-    if (getCalendarMonthId(next) !== getCalendarMonthId(date)) {
+    if (cursor.getUTCDate() === 1) {
       funds += monthlySponsorship + monthlyBroadcast;
       sponsorshipInflow += monthlySponsorship;
       broadcastInflow += monthlyBroadcast;

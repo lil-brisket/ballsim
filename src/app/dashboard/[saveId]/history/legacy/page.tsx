@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { getRequestSaveStore } from "@/application/request-save-store";
+import { loadSaveWithHistory } from "@/application/game-service";
 import { LegacyHonors, RecordBook } from "@/components/history/LegacyPanels";
 import { ErrorState } from "@/components/ui/EmptyState";
 import { PageHeader } from "@/components/ui/PageHeader";
@@ -17,7 +17,8 @@ type PageProps = {
 export default async function LegacyPage({ params, searchParams }: PageProps) {
   const { saveId } = await params;
   const { error } = await searchParams;
-  const loaded = await getRequestSaveStore().load(saveId);
+  // The record book reads every finished season's box scores.
+  const loaded = await loadSaveWithHistory(saveId);
   if (!loaded) {
     notFound();
   }

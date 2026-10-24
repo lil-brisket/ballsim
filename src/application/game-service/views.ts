@@ -125,6 +125,7 @@ import type {
 import {
   getStore,
   ensureAiTradeBlocks,
+  loadSaveWithHistory,
   toSaveSummary,
 } from "@/application/game-service/internal";
 
@@ -217,7 +218,7 @@ export async function loadOwnerPlayerView(
   playerId: string,
   store?: SaveGameStore,
 ): Promise<(CreateGameResult & { player: PlayerProfileView }) | null> {
-  const loaded = await getStore(store).load(saveId);
+  const loaded = await loadSaveWithHistory(saveId, store);
   if (!loaded) {
     return null;
   }
@@ -243,7 +244,7 @@ export async function loadPlayerDrawerView(
   playerId: string,
   store?: SaveGameStore,
 ): Promise<PlayerDrawerView | null> {
-  const loaded = await getStore(store).load(saveId);
+  const loaded = await loadSaveWithHistory(saveId, store);
   if (!loaded) {
     return null;
   }
@@ -257,7 +258,7 @@ export async function loadPlayerGameSeries(
   seasonId: string,
   store?: SaveGameStore,
 ): Promise<PlayerGameSeriesPoint[] | null> {
-  const loaded = await getStore(store).load(saveId);
+  const loaded = await loadSaveWithHistory(saveId, store);
   if (!loaded || !loaded.state.world.players[playerId]) {
     return null;
   }
@@ -301,7 +302,7 @@ export async function loadOwnerGameBoxScoreView(
 ): Promise<
   (CreateGameResult & { boxScore: GameBoxScoreView; canWatch: boolean }) | null
 > {
-  const loaded = await getStore(store).load(saveId);
+  const loaded = await loadSaveWithHistory(saveId, store);
   if (!loaded) {
     return null;
   }
@@ -350,7 +351,7 @@ export async function loadLeagueHubView(
   saveId: string,
   store?: SaveGameStore,
 ): Promise<LeagueHubView | null> {
-  const loaded = await getStore(store).load(saveId);
+  const loaded = await loadSaveWithHistory(saveId, store);
   if (!loaded) {
     return null;
   }
@@ -530,7 +531,7 @@ export async function loadLeagueScheduleView(
   filters: LeagueScheduleFilters = {},
   store?: SaveGameStore,
 ): Promise<LeagueScheduleView | null> {
-  const loaded = await getStore(store).load(saveId);
+  const loaded = await loadSaveWithHistory(saveId, store);
   if (!loaded) {
     return null;
   }

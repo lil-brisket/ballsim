@@ -5,6 +5,10 @@ import { calculatePlayerOverall } from "@/domain/player-overall-rating";
 import type { TeamId } from "@/domain/ids";
 import type { GameState } from "@/state/game-state";
 import {
+  cachedForTeamRoster,
+  createTeamRosterCache,
+} from "@/systems/team-needs-cache";
+import {
   calculateTeamDraftNeeds,
   needLevelScore,
   type DraftNeedLevel,
@@ -27,10 +31,18 @@ export type TeamTradeNeeds = {
 /**
  * Roster/trade needs — draft needs are one input, not the sole source of truth.
  */
+const calculateTradeNeedsCache = createTeamRosterCache<TeamTradeNeeds>();
+
 export function calculateTradeNeeds(
   state: GameState,
   teamId: TeamId,
 ): TeamTradeNeeds {
+  return cachedForTeamRoster(calculateTradeNeedsCache, state, teamId, () =>
+    computeTradeNeeds(state, teamId),
+  );
+}
+
+function computeTradeNeeds(state: GameState, teamId: TeamId): TeamTradeNeeds {
   const draftNeeds = calculateTeamDraftNeeds(state, teamId);
   const team = state.world.teams[teamId];
   if (!team) {

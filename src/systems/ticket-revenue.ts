@@ -31,11 +31,17 @@ import {
 } from "@/systems/game-day-promotions/settle-game-day-promotion";
 import { applyCashAndBooksImpact } from "@/systems/team-finances";
 
+/**
+ * Keyed by season too: playoff game ids (`playoff_<series>_g<n>`) repeat
+ * every season, so a key without the year blocked later seasons' revenue
+ * for the same series slot.
+ */
 export function ticketRevenueConsequenceKey(
   teamId: TeamId,
+  seasonYear: number,
   gameId: GameId,
 ): string {
-  return `tickets:${teamId}:${gameId}`;
+  return `tickets:${teamId}:${seasonYear}:${gameId}`;
 }
 
 function teamWinPct(state: GameState, teamId: TeamId): number {
@@ -130,7 +136,7 @@ export function processHomeGameTicketRevenue(
       continue;
     }
     const teamId = game.homeTeamId;
-    const key = ticketRevenueConsequenceKey(teamId, game.id);
+    const key = ticketRevenueConsequenceKey(teamId, year, game.id);
     if (hasAppliedGameplayConsequence(current, key)) {
       continue;
     }

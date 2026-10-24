@@ -63,6 +63,7 @@ const GOLDEN_PLAYED_SAVE_COMMITS: ReadonlyArray<{
   { version: 65, commit: "cb49c8d" },
   { version: 71, commit: "a5b766e" },
   { version: 77, commit: "9669a03" },
+  { version: 79, commit: "122c843" },
 ];
 
 const GOLDEN_NOW_ISO = "2026-08-13T12:00:00.000Z";

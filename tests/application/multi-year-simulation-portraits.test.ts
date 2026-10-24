@@ -72,8 +72,12 @@ describe("player portraits across multiple seasons", () => {
 
       const final = snapshot(result.finalState);
       snapshots.push(final);
-      // Two completed seasons → at least two generated draft classes.
-      expect(new Set(final.draftYears).size).toBeGreaterThanOrEqual(2);
+      // Two completed seasons → at least two generated draft classes, each
+      // covered while it was current (older classes leave the save
+      // snapshot for its history store).
+      expect(
+        new Set(snapshots.flatMap((entry) => entry.draftYears)).size,
+      ).toBeGreaterThanOrEqual(2);
 
       // Append-only: every assignment ever seen is preserved verbatim.
       for (const earlier of snapshots) {

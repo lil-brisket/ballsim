@@ -8,6 +8,7 @@ import {
 import { processWeeklyMarketing } from "@/systems/marketing";
 import { processWeeklyMediaDecay } from "@/systems/media";
 import { runAiFranchiseDecisions } from "@/systems/ai-franchise-decisions";
+import { pruneExpiredGameplayConsequenceKeys } from "@/systems/gameplay-financial-consequences";
 import { runAiGameDayPromotionDecisions } from "@/systems/game-day-promotions/ai-game-day-promotions";
 import { createSeededRng, type Rng } from "@/domain/rng";
 import { processWeeklyPlayerPayroll } from "@/systems/player-payroll";
@@ -94,6 +95,12 @@ export function runWeeklyPipeline(
   const aiPromos = runAiGameDayPromotionDecisions(current, stream);
   current = aiPromos.state;
   events.push(...aiPromos.events);
+
+  current = pruneExpiredGameplayConsequenceKeys(
+    current,
+    current.world.calendar.currentDate,
+    completedWeekId,
+  );
 
   if (rng) {
     current = {

@@ -1,5 +1,7 @@
 import { addCalendarDays } from "@/domain/calendar-date";
+import { draftClassIdFor } from "@/domain/entities/draft";
 import type { GameState } from "@/state/game-state";
+import { draftYearForSeason } from "@/systems/league-rules/draft-rules";
 import {
   getExpectedPhaseWindow,
   resolveSeasonAnchors,
@@ -112,7 +114,11 @@ export function getLeagueMilestones(
   const preseasonStartDate =
     preseasonWindow?.start ?? anchors.preseasonStart ?? plannedPreseasonStart;
 
-  const draft = Object.values(state.world.drafts)[0];
+  // This season's class: older classes stay in world.drafts, completed.
+  const draft =
+    state.world.drafts[
+      draftClassIdFor(draftYearForSeason(state.competition.season.year))
+    ];
   const draftComplete = draft?.status === "complete";
   const draftActive = draft?.status === "active";
 
