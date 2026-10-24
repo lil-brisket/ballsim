@@ -295,6 +295,31 @@ Run time (one CBL league, this development machine, other work running): about 2
 
 Run it before releases and after changing offseason, contract, free-agency, trade, draft or development code. When it reports a failure, run the printed replay command, fix the cause, then re-run the same seeds.
 
+## Offseason balance bands
+
+`npm run offseason:balance` measures offseason outcomes per season across seeds and checks them against tolerance bands in `tests/offseason/baselines.json`. It only measures and guards; it does not tune anything. A sim change that moves a metric outside its band fails with a message such as:
+
+```
+meanOverallChange[<=22] 2.31 is outside 2.23 +/- 0.40 (baseline tests/offseason/baselines.json). If this change is intentional, rerun with --write-baseline and commit the baseline on its own.
+```
+
+What is measured (definitions: `METRIC_SPECS` in `tests/offseason/balance-stats.ts`, collection in `tests/offseason/metrics.ts`): mean overall change by age bucket and the share of players at +3 or more, -3 or less and at the annual cap; 90+ players at preseason start (first, last, max); free agents left unsigned at preseason start; mean new-season salary of free-agency signings by overall tier; how often the best free agent signs with the highest-payroll team; star (80+) spread across teams; roster turnover; payroll to win % correlation, insolvency rate, cash after the offseason and mean payroll; rookie overall by pick group and the share of top-5 picks who are top-5 players on their team at the next preseason. Each seed is one delegated CBL league run by the real engine, one phase at a time.
+
+```bash
+npm run offseason:balance                                   # check: 4 seeds x 4 seasons, seeds 101-104
+npm run offseason:balance -- --seed-start 201               # a different seed set (should also pass)
+npm run offseason:balance -- --seeds 2 --seasons 20 --no-check   # 20-season inflation watch, informational
+npm run offseason:balance -- --json out.json                # raw per-season samples plus aggregates
+```
+
+Flags: `--seeds N` (4), `--seasons M` (4), `--seed-start S` (101), `--workers N` (default min(seeds, 4); one child process per seed), `--json <path>`, `--write-baseline`, `--no-check` (print the table and exit 0 even when metrics are outside their bands). Exit code is non-zero when any metric is outside its band or no longer measured; metrics that are not in the baseline yet are listed but do not fail.
+
+Tolerance rule: `max(3 * stdev across seeds, 0.10 * |baseline|, absolute floor)`, with the floor per metric unit (0.25 for overall-change means, 0.05 for shares, 1 for counts; see `METRIC_SPECS`). A metric that proved too noisy gets a larger floor and a `floorNote` there, which is copied to the baseline note.
+
+Accepting a deliberate change: run `npm run offseason:balance -- --write-baseline` (needs 3 or more seeds; use the defaults so the baseline stays comparable) and commit the new `baselines.json` on its own, with the reason in the message, so the shift in the numbers is reviewable apart from the code change.
+
+Run time: roughly 25 s for the first season of a league and more as it ages (up to a minute), seeds run in parallel, so the default 4 x 4 takes several minutes. The 20-season run (`--seasons 20 --seeds 2`) takes far longer and is for watching long-run inflation (90+ count, payroll, cash); it is informational, so use `--no-check`. The baseline only describes the 4-season window.
+
 ## Expectations for contributors
 
 - Add tests with new simulation / domain logic.
