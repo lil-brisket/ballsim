@@ -161,6 +161,30 @@ describe("generateBracket", () => {
 });
 
 describe("createNextPlayoffGame", () => {
+  it("gives the same series slot a different game id each season", () => {
+    // Series ids (playoff_r<round>_s<slot>) repeat every season; the game
+    // archive and revenue keys are by game id, so ids must not.
+    const tournament = generateBracket(
+      Array.from({ length: 8 }, (_, index) => ({
+        teamId: asTeamId(`team_${index + 1}`),
+        seed: index + 1,
+      })),
+    );
+    const series = tournament.series[0]!;
+    const first = createNextPlayoffGame({
+      series,
+      seasonId: asSeasonId("season_2026"),
+      nextDate: "2027-04-20",
+    });
+    const second = createNextPlayoffGame({
+      series,
+      seasonId: asSeasonId("season_2027"),
+      nextDate: "2028-04-20",
+    });
+    expect(first.id).not.toBe(second.id);
+    expect(first.id.startsWith("playoff_")).toBe(true);
+  });
+
   it("assigns home court from the 2-2-1-1-1 pattern independently of seed alone", () => {
     const tournament = generateBracket(
       Array.from({ length: 8 }, (_, index) => ({
