@@ -200,6 +200,32 @@ describe("PrismaSaveGameStore normalized projections", () => {
     );
   });
 
+  it("returns from save exactly what a fresh load reads back", async () => {
+    const base = createTestGameState({ saveId: "save_norm_roundtrip" });
+    const created = await store.create({
+      id: "save_norm_roundtrip",
+      name: "Round Trip",
+      state: base,
+    });
+    const player = createPlayer({
+      id: "player_roundtrip",
+      teamId: null,
+      firstName: "Ola",
+      contractId: null,
+    });
+    const saved = await store.save({
+      id: "save_norm_roundtrip",
+      state: withPlayers(base, player),
+      ifUpdatedAt: created.updatedAt,
+    });
+    const loaded = await store.load("save_norm_roundtrip");
+    expect(loaded).not.toBeNull();
+    expect(saved.updatedAt).toEqual(loaded!.updatedAt);
+    expect(saved.name).toBe("Round Trip");
+    expect(saved.state).toEqual(loaded!.state);
+    expect(saved.state.world.players[player.id]?.firstName).toBe("Ola");
+  });
+
   it("does not write projections when CAS save fails", async () => {
     const state = createTestGameState({ saveId: "save_norm_cas" });
     const created = await store.create({

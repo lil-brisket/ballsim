@@ -94,7 +94,6 @@ export async function persistWorkingState(
   const withEvents = withPlayerPortraits(
     appendEventLog(working, newlyEmittedEvents),
   );
-  validateGameState(withEvents);
   const nowIso = new Date().toISOString();
   const nextState: GameState = {
     ...withEvents,
@@ -104,6 +103,7 @@ export async function persistWorkingState(
       updatedAt: nowIso,
     },
   };
+  // One validation: nextState differs from withEvents only in meta.
   validateGameState(nextState);
   return store.save({
     id: saveId,

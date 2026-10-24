@@ -181,15 +181,24 @@ export function createPrismaSaveGameStore(
           });
         }
         await replaceSaveProjections(tx, input.id, input.state);
+        // Metadata only: the state just written is already in memory, and
+        // reading the whole snapshot back costs as much as writing it.
         const updated = await tx.saveGame.findUnique({
           where: { id: input.id },
+          select: {
+            id: true,
+            name: true,
+            schemaVersion: true,
+            createdAt: true,
+            updatedAt: true,
+          },
         });
         if (!updated) {
           throw new SaveVersionConflictError(input.id);
         }
         return updated;
       });
-      return toLoaded(row);
+      return toLoaded({ ...row, stateJson });
     },
 
     async delete(id: string): Promise<boolean> {
