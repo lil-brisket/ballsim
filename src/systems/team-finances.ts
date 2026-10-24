@@ -288,7 +288,12 @@ export function getNetIncome(
   return getFinancialStatement(state, teamId, year).netIncome;
 }
 
-function applyBusinessFundsDelta(
+/**
+ * Moves businessFunds and the month's cash journal by a signed amount, posting
+ * nothing to the books. Other mutators build on it; call it directly only for
+ * a cash movement that has no books entry.
+ */
+export function applyBusinessFundsDelta(
   state: GameState,
   teamId: TeamId,
   amount: number,

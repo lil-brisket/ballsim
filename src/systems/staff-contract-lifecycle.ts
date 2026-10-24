@@ -12,6 +12,7 @@ import type { GameState } from "@/state/game-state";
 import { appendSeasonEventLog } from "@/state/game-state";
 import { STAFF_BUYOUT_FRACTION } from "@/systems/staff-config";
 import { fireStaff } from "@/systems/staff";
+import { applyBusinessFundsDelta } from "@/systems/team-finances";
 import { isOpenStaffOffer } from "@/domain/entities/staff-offer";
 
 export function remainingStaffContractValue(
@@ -66,19 +67,9 @@ export function fireStaffWithBuyout(
   const events: DomainEvent[] = [];
 
   if (buyout > 0 && finances) {
-    current = {
-      ...current,
-      business: {
-        ...current.business,
-        finances: {
-          ...current.business.finances,
-          [teamId]: {
-            ...finances,
-            businessFunds: finances.businessFunds - buyout,
-          },
-        },
-      },
-    };
+    // Through the funds mutator, so the monthly cash journal reconciles. The
+    // buyout is deliberately not posted to the books (behavior unchanged).
+    current = applyBusinessFundsDelta(current, teamId, -buyout);
   }
 
   const fired = fireStaff(current, teamId, staffId);

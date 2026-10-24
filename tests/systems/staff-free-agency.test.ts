@@ -97,6 +97,24 @@ describe("staff contracts / free agency", () => {
     expect(() => fireStaffWithBuyout(state, teamId, hc.id)).toThrow(/buyout/i);
   });
 
+  it("keeps the monthly cash journal in step with a firing buyout", () => {
+    const state = boot();
+    const teamId = state.user.activeOwnerTeamId;
+    const hc = findTeamStaffByRole(state, teamId, "head_coach")!;
+    const buyout = calculateStaffBuyout(state, teamId, hc.id);
+    expect(buyout).toBeGreaterThan(0);
+
+    const before = state.business.finances[teamId]!;
+    const fired = fireStaffWithBuyout(state, teamId, hc.id).state;
+    const after = fired.business.finances[teamId]!;
+
+    expect(after.businessFunds).toBe(before.businessFunds - buyout);
+    const month = Object.values(after.businessFundsLedgerByMonth).at(-1)!;
+    expect(month.openBusinessFunds + month.netBusinessFundsChange).toBe(
+      after.businessFunds,
+    );
+  });
+
   it("releases expired staff contracts in offseason", () => {
     let state = boot();
     const teamId = state.user.activeOwnerTeamId;
