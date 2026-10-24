@@ -14,6 +14,7 @@ import {
   aiPayrollRoom,
 } from "@/systems/ai-payroll-budget";
 import { getTeamCapSpace, getTeamPayroll } from "@/systems/salary-cap";
+import { getTeamStaffPayroll } from "@/systems/staff-budget";
 import { transitionPhase } from "@/systems/simulation/phase-machine";
 import { bootstrapWorld } from "@/systems/world-pipeline";
 
@@ -96,9 +97,17 @@ describe("AI payroll budget (#93)", () => {
       staff: 3_000_000,
       cash: 30_000_000,
     });
-    // Playoff money is left out of the estimate.
+    // Playoff money is left out of the estimate. Staff costs come from the
+    // team's contracts: the 3M booked above (which would include one-time
+    // firing buyouts) is not what the budget subtracts.
+    const staff = getTeamStaffPayroll(
+      teamId,
+      state.competition.season.year,
+      state,
+    );
+    expect(staff).toBeGreaterThan(0);
     expect(aiPayrollBudget(state, teamId)).toBeCloseTo(
-      (70_000_000 - 3_000_000) * AI_PAYROLL_REVENUE_MARGIN +
+      (70_000_000 - staff) * AI_PAYROLL_REVENUE_MARGIN +
         (30_000_000 - AI_PAYROLL_CASH_RESERVE) * AI_PAYROLL_CASH_DRAW_RATE,
     );
   });
@@ -116,8 +125,13 @@ describe("AI payroll budget (#93)", () => {
       staff: 0,
       cash: AI_PAYROLL_CASH_RESERVE,
     });
+    const staff = getTeamStaffPayroll(
+      teamId,
+      state.competition.season.year,
+      state,
+    );
     expect(aiPayrollBudget(state, teamId)).toBeCloseTo(
-      60_000_000 * AI_PAYROLL_REVENUE_MARGIN,
+      (60_000_000 - staff) * AI_PAYROLL_REVENUE_MARGIN,
     );
   });
 
@@ -128,8 +142,13 @@ describe("AI payroll budget (#93)", () => {
       staff: 0,
       cash: -5_000_000,
     });
+    const staff = getTeamStaffPayroll(
+      teamId,
+      state.competition.season.year,
+      state,
+    );
     expect(aiPayrollBudget(state, teamId)).toBeCloseTo(
-      70_000_000 * AI_PAYROLL_REVENUE_MARGIN +
+      (70_000_000 - staff) * AI_PAYROLL_REVENUE_MARGIN +
         (-5_000_000 - AI_PAYROLL_CASH_RESERVE) * AI_PAYROLL_CASH_CLAWBACK_RATE,
     );
   });

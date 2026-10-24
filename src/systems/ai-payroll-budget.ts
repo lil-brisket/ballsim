@@ -7,6 +7,7 @@
 import type { TeamId } from "@/domain/ids";
 import type { GameState } from "@/state/game-state";
 import { getTeamCapSpace, getTeamPayroll } from "@/systems/salary-cap";
+import { getTeamStaffPayroll } from "@/systems/staff-budget";
 import { getFinancialStatement } from "@/systems/team-finances";
 
 /** Share of business funds above the reserve an AI team will draw down through one season's payroll. */
@@ -51,6 +52,11 @@ export function aiPayrollBudget(
     return null;
   }
   const statement = getFinancialStatement(state, teamId, referenceYear);
+  // Books can exist with expenses only (a firing buyout before any game is
+  // played); that is not a completed season to budget from.
+  if (statement.revenue.total <= 0) {
+    return null;
+  }
   // Revenue regresses toward the mean, and playoff money does not repeat:
   // plan on the weaker of the last two seasons, without playoffs.
   const recurring = (year: number): number | null => {
@@ -67,9 +73,11 @@ export function aiPayrollBudget(
   const expectedRevenue =
     priorRevenue === null ? lastRevenue : Math.min(lastRevenue, priorRevenue);
   // Capital (facility upgrades) is spent outside payroll decisions, so budget
-  // for it too.
+  // for it too. Staff is read from contracts: the booked staff expense also
+  // holds one-time firing buyouts, which do not repeat (and already lower
+  // cash, which the budget counts below).
   const operating =
-    statement.expenses.staff +
+    getTeamStaffPayroll(teamId, referenceYear, state) +
     statement.expenses.facilities +
     statement.expenses.capital +
     statement.expenses.operations +

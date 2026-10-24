@@ -19,6 +19,13 @@ import {
 } from "@/systems/staff-free-agency";
 import { createStaffContract } from "@/domain/entities/staff-contract";
 import { findTeamStaffByRole } from "@/systems/staff-effects";
+import { createEmptyTeamFinanceBooks } from "@/domain/entities/finances";
+import {
+  AI_PAYROLL_CASH_CLAWBACK_RATE,
+  AI_PAYROLL_CASH_DRAW_RATE,
+  AI_PAYROLL_CASH_RESERVE,
+  aiPayrollBudget,
+} from "@/systems/ai-payroll-budget";
 
 describe("staff contracts / free agency", () => {
   function boot() {
@@ -97,9 +104,10 @@ describe("staff contracts / free agency", () => {
     expect(() => fireStaffWithBuyout(state, teamId, hc.id)).toThrow(/buyout/i);
   });
 
-  it("keeps the monthly cash journal in step with a firing buyout", () => {
+  it("posts a firing buyout to the books and the monthly cash journal", () => {
     const state = boot();
     const teamId = state.user.activeOwnerTeamId;
+    const year = state.competition.season.year;
     const hc = findTeamStaffByRole(state, teamId, "head_coach")!;
     const buyout = calculateStaffBuyout(state, teamId, hc.id);
     expect(buyout).toBeGreaterThan(0);
@@ -109,9 +117,58 @@ describe("staff contracts / free agency", () => {
     const after = fired.business.finances[teamId]!;
 
     expect(after.businessFunds).toBe(before.businessFunds - buyout);
+    expect(after.booksByYear[String(year)]!.expenses.staff).toBe(
+      (before.booksByYear[String(year)]?.expenses.staff ?? 0) + buyout,
+    );
     const month = Object.values(after.businessFundsLedgerByMonth).at(-1)!;
     expect(month.openBusinessFunds + month.netBusinessFundsChange).toBe(
       after.businessFunds,
+    );
+  });
+
+  it("does not count a firing buyout as recurring cost in the AI payroll budget", () => {
+    const state = boot();
+    const teamId = state.user.activeOwnerTeamId;
+    const year = state.competition.season.year;
+    // Give the team a completed season of books to budget from.
+    const seeded: typeof state = {
+      ...state,
+      competition: {
+        ...state.competition,
+        season: { ...state.competition.season, phase: "offseason" },
+      },
+      business: {
+        ...state.business,
+        finances: {
+          ...state.business.finances,
+          [teamId]: {
+            ...state.business.finances[teamId]!,
+            booksByYear: {
+              ...state.business.finances[teamId]!.booksByYear,
+              [String(year)]: (() => {
+                const books = createEmptyTeamFinanceBooks();
+                books.revenue.tickets = 80_000_000;
+                return books;
+              })(),
+            },
+          },
+        },
+      },
+    };
+    const hc = findTeamStaffByRole(seeded, teamId, "head_coach")!;
+    const buyout = calculateStaffBuyout(seeded, teamId, hc.id);
+    const fired = fireStaffWithBuyout(seeded, teamId, hc.id).state;
+
+    const before = aiPayrollBudget(seeded, teamId)!;
+    const after = aiPayrollBudget(fired, teamId)!;
+    // The buyout leaves the budget only through cash (half of what is above
+    // the reserve, all of what is below it); the books must not charge it again.
+    const cashDrawRate =
+      fired.business.finances[teamId]!.businessFunds >= AI_PAYROLL_CASH_RESERVE
+        ? AI_PAYROLL_CASH_DRAW_RATE
+        : AI_PAYROLL_CASH_CLAWBACK_RATE;
+    expect(before - after).toBeLessThanOrEqual(
+      Math.round(buyout * cashDrawRate) + 1,
     );
   });
 

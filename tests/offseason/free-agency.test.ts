@@ -934,7 +934,10 @@ describe("CPU teams through the free-agency window", () => {
     for (let day = 1; day < sizes.length; day += 1) {
       expect(sizes[day]!, `day ${day}`).toBeLessThanOrEqual(sizes[day - 1]!);
     }
-    expect(sizes.at(-1)!).toBeLessThan(sizes[0]! / 2);
+    // AI teams budget staff from contracts (not booked expense), which leaves
+    // them less room: about half of this stressed pool, not under half, is
+    // signed.
+    expect(sizes.at(-1)!).toBeLessThan(sizes[0]! * 0.6);
   });
 
   it("signs nobody twice and keeps one contract per player", () => {
@@ -1002,8 +1005,11 @@ describe("CPU teams through the free-agency window", () => {
       for (const teamId of cpuTeamIds(fa.end)) {
         const roster = fa.end.world.teams[teamId]!.roster.length;
         const room = aiPayrollRoom(fa.end, teamId, year + 1);
+        // Teams at 13-14 may stand pat (see URGENT_ROSTER_FLOOR); only a team
+        // that needs bodies has to take an affordable star.
         const couldSign =
-          roster < MAX_ROSTER && !isSalaryLowball(Math.min(room, price), price);
+          roster < URGENT_ROSTER_FLOOR &&
+          !isSalaryLowball(Math.min(room, price), price);
         expect(couldSign, `${playerId} unsigned, ${teamId} could sign`).toBe(
           false,
         );
