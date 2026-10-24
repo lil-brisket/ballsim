@@ -128,6 +128,33 @@ export function vetMinSalary(cap: number): number {
   });
 }
 
+/** Largest annual salary a contract may carry for a given cap. */
+export function maxContractSalary(cap: number): number {
+  return Math.round((cap * SUPERMAX_CAP_FRACTION) / 1_000) * 1_000;
+}
+
+/**
+ * Why a player contract may not pay `salary` a year, or null when it may: a
+ * whole number of dollars, at least the veteran minimum, and at most the
+ * maximum contract.
+ *
+ * The maximum is a fraction of the salary cap, so a league with the cap
+ * switched off has no maximum; pass `enforceMaximum: false` there.
+ */
+export function salaryBoundsBlockReason(
+  cap: number,
+  salary: number,
+  options: { enforceMaximum?: boolean } = {},
+): string | null {
+  if (!Number.isInteger(salary) || salary < vetMinSalary(cap)) {
+    return "Salary is below the league minimum.";
+  }
+  if (options.enforceMaximum !== false && salary > maxContractSalary(cap)) {
+    return "Salary is above the league maximum.";
+  }
+  return null;
+}
+
 /**
  * NBA-style minimum exception: a vet-min deal may be signed even when
  * remaining cap space is insufficient.

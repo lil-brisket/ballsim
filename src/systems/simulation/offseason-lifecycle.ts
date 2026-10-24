@@ -559,6 +559,12 @@ function hasFranchiseHistoryForCurrentSeason(state: GameState): boolean {
 }
 
 function finalizeCompletedSeason(state: GameState, rng: Rng): SystemResult {
+  // Aging, development and the economy tick must run once per season. The
+  // history record written below marks the season as finalized, so a second
+  // call (the exit hook followed by the daily lifecycle) changes nothing.
+  if (hasFranchiseHistoryForCurrentSeason(state)) {
+    return systemResult(state);
+  }
   const events: DomainEvent[] = [];
   let current = state;
 

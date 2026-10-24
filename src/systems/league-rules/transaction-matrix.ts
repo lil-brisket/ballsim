@@ -130,7 +130,8 @@ export const TRANSACTION_LEGALITY_MATRIX: Readonly<
     playoffs_postseason: "phase_defined",
   },
   draft_selection: {
-    offseason_non_fa: "blocked",
+    // Allowed only in offseason.draft (see action-guards).
+    offseason_non_fa: "phase_defined",
     offseason_fa: "blocked",
     offseason_roster_decisions: "blocked",
     preseason: "blocked",

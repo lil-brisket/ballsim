@@ -73,6 +73,15 @@ Classify by what you import, not by folder renames.
 - Prefer factories over copying object literals across tests.
 - `createTestGameState` always sets `saveId`, `rngSeed`, and `nowIso`. Production `createInitialGameState` still uses `crypto.randomUUID` for some IDs; use `createPlayer` / `createTeam` when IDs must be stable.
 
+## Old saves
+
+`tests/fixtures/saves/` holds genuine old saves, each written by the code that shipped its schema version (`scripts/generate-golden-saves.ts` checks that commit out into a temporary worktree):
+
+- `vNN.json.gz` are freshly created leagues across the whole schema chain. `tests/persistence/golden-saves.test.ts` migrates and validates each and pins a digest of the result; `golden-saves-rules.test.ts` checks that later rules do not change an old league (the draft lottery stays off before v75, RFA is on, the luxury tax keeps its stored value).
+- `vNN-played.json.gz` (v65, v71, v77) are CBL leagues played by that version's engine through one season and stopped on the first day of free agency. `tests/regression/old-save-playthrough.test.ts` loads each, finishes the offseason, plays a full season and offseason, and checks the offseason invariants at every phase. Damage an old engine wrote is listed per fixture in `HISTORICAL_ISSUES` and must heal by the next Roster Decisions.
+
+When a change bumps `GAME_STATE_SCHEMA_VERSION`, add the new version's commit to `GOLDEN_PLAYED_SAVE_COMMITS` and run `npx tsx scripts/generate-golden-saves.ts --played <version>` once the bump is committed, in the same pull request as the migration, so the old-save playthrough covers it.
+
 ## Mocking
 
 Prefer:
@@ -271,6 +280,54 @@ League sanity example:
 ```bash
 npx tsx scripts/league-sanity-report.ts --sims 10 --seasons 5 --seed 42 --format json --out sanity.json
 ```
+
+## Offseason soak
+
+`npm run test:offseason-soak` plays many seeds through many full seasons with the real engine, one phase at a time, and checks the offseason invariants (`tests/offseason/invariants.ts`) at the start state and after every phase. It is not part of `npm test` and not in CI.
+
+```bash
+npm run test:offseason-soak                                  # 8 seeds x 12 seasons x both profiles
+npm run test:offseason-soak -- --seeds 2 --seasons 3        # quick pass
+npm run test:offseason-soak -- --seed 17 --profile busy --season 6 --phase free-agency   # replay one failure
+```
+
+Profiles:
+
+- `auto`: the user team is delegated to the engine (Full Management).
+- `busy`: the user team is manual, and every phase a seeded script fires extensions, releases, free-agent signings and trades, many of them deliberately illegal (wrong phase, retired player, player on another team, bad terms). A rejected action must leave the state it was given untouched; an applied one must not introduce invariant issues; a deliberately illegal one must not apply. Routine clicks (begin offseason, draft class, pick on the clock) still happen. The script draws from its own streams (`seed * 7919 + phaseIndex`), never from the engine RNG or `Math.random`.
+
+Flags: `--seeds N` (8), `--seasons M` (12), `--seed-start S` (1; seeds are S..S+N-1), `--profile auto|busy|both` (both), `--max-season-ms T` (120000; a slower season is reported as `slow`), `--max-phase-days D` (400; a phase that does not advance is `stuck`), `--fail-fast`, `--verify-determinism` (runs the first seed twice per profile and compares `stateForComparison` digests at the end of every season), `--probe-salary-bounds` (busy only: also offer free agents salaries below the league minimum or above the maximum; off by default because the owner signing path does not validate them yet). Replay: `--seed X --season Y --phase P` (all three; accepts `free-agency`, `free_agency` or `offseason.free_agency`) re-runs only that seed and profile, prints every phase start snapshot and user action outcome, and stops after phase P of season Y. `--profile` and `--probe-salary-bounds` apply in replay too.
+
+Each failure prints the seed, profile, season index and year, phase, the broken invariant codes and messages, a `snapshotOffseason` diff between the last good boundary and the failing state, the error and stack for engine exceptions, and a copy-paste replay command. The exit code is non-zero if anything failed.
+
+Run time (one CBL league, this development machine, other work running): about 20-60 s per season, growing over the first seasons (roughly 20-25 s for season 1, 35 s for season 2, 40-60 s for season 3). `--seeds 2 --seasons 3` on both profiles (12 seasons) took about 7 minutes. The default 8 seeds x 12 seasons x 2 profiles is 192 seasons, so plan on 2 to 3 hours or more; use `--seeds`, `--seasons` and `--profile` to scale it down. Boundary checks cost under 0.2 s per season; the time is the engine's.
+
+Run it before releases and after changing offseason, contract, free-agency, trade, draft or development code. When it reports a failure, run the printed replay command, fix the cause, then re-run the same seeds.
+
+## Offseason balance bands
+
+`npm run offseason:balance` measures offseason outcomes per season across seeds and checks them against tolerance bands in `tests/offseason/baselines.json`. It only measures and guards; it does not tune anything. A sim change that moves a metric outside its band fails with a message such as:
+
+```
+meanOverallChange[<=22] 2.31 is outside 2.23 +/- 0.40 (baseline tests/offseason/baselines.json). If this change is intentional, rerun with --write-baseline and commit the baseline on its own.
+```
+
+What is measured (definitions: `METRIC_SPECS` in `tests/offseason/balance-stats.ts`, collection in `tests/offseason/metrics.ts`): mean overall change by age bucket and the share of players at +3 or more, -3 or less and at the annual cap; 90+ players at preseason start (first, last, max); free agents left unsigned at preseason start; mean new-season salary of free-agency signings by overall tier; how often the best free agent signs with the highest-payroll team; star (80+) spread across teams; roster turnover; payroll to win % correlation, insolvency rate, cash after the offseason and mean payroll; rookie overall by pick group and the share of top-5 picks who are top-5 players on their team at the next preseason. Each seed is one delegated CBL league run by the real engine, one phase at a time.
+
+```bash
+npm run offseason:balance                                   # check: 4 seeds x 4 seasons, seeds 101-104
+npm run offseason:balance -- --seed-start 201               # a different seed set (should also pass)
+npm run offseason:balance -- --seeds 2 --seasons 20 --no-check   # 20-season inflation watch, informational
+npm run offseason:balance -- --json out.json                # raw per-season samples plus aggregates
+```
+
+Flags: `--seeds N` (4), `--seasons M` (4), `--seed-start S` (101), `--workers N` (default min(seeds, 4); one child process per seed), `--json <path>`, `--write-baseline`, `--no-check` (print the table and exit 0 even when metrics are outside their bands). Exit code is non-zero when any metric is outside its band or no longer measured; metrics that are not in the baseline yet are listed but do not fail.
+
+Tolerance rule: `max(3 * stdev across seeds, 0.10 * |baseline|, absolute floor)`, with the floor per metric unit (0.25 for overall-change means, 0.05 for shares, 1 for counts; see `METRIC_SPECS`). A metric that proved too noisy gets a larger floor and a `floorNote` there, which is copied to the baseline note.
+
+Accepting a deliberate change: run `npm run offseason:balance -- --write-baseline` (needs 3 or more seeds; use the defaults so the baseline stays comparable) and commit the new `baselines.json` on its own, with the reason in the message, so the shift in the numbers is reviewable apart from the code change.
+
+Run time: roughly 25 s for the first season of a league and more as it ages (up to a minute), seeds run in parallel, so the default 4 x 4 takes several minutes. The 20-season run (`--seasons 20 --seeds 2`) takes far longer and is for watching long-run inflation (90+ count, payroll, cash); it is informational, so use `--no-check`. The baseline only describes the 4-season window.
 
 ## Expectations for contributors
 

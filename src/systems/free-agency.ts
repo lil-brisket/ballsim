@@ -30,6 +30,7 @@ import { FREE_AGENCY_INTEREST_CONFIG } from "@/systems/free-agency-config";
 import { computeAwardReputationBonus } from "@/systems/awards/award-reputation";
 import { getTeamCapSpace, getTeamPayroll } from "@/systems/salary-cap";
 import { getLeagueSalaryCap } from "@/systems/league-salary-cap";
+import { salaryBoundsBlockReason } from "@/systems/salary-scale";
 import {
   isVetMinExceptionSalary,
   REPLACEMENT_LEVEL_OVERALL,
@@ -898,6 +899,16 @@ export function validateOfferAcceptable(
   }
   if (state.world.teams[offer.teamId] === undefined) {
     return `Team "${offer.teamId}" does not exist.`;
+  }
+  const cap = getLeagueSalaryCap(state);
+  const enforceMaximum = state.settings.financialRules.salaryCapEnabled;
+  for (const salary of Object.values(offer.terms.salaryByYear)) {
+    const boundsBlock = salaryBoundsBlockReason(cap, salary, {
+      enforceMaximum,
+    });
+    if (boundsBlock !== null) {
+      return boundsBlock;
+    }
   }
   return null;
 }

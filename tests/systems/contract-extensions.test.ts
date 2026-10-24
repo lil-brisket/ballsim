@@ -17,6 +17,7 @@ import {
   processCpuContractExtensions,
 } from "@/systems/contract-extensions";
 import { getContractSigningYear, getTeamPayroll } from "@/systems/salary-cap";
+import { getTeamStaffPayroll } from "@/systems/staff-budget";
 import { transitionPhase } from "@/systems/simulation/phase-machine";
 import { cpuContractYears } from "@/systems/free-agent-market";
 import { calculatePlayerOverall } from "@/domain/player-overall-rating";
@@ -243,15 +244,21 @@ describe("processCpuContractExtensions", () => {
     ).toBeLessThan(projected - 1_000_000);
     const budgetOf = (revenue: number) =>
       cpuWithStar({ revenue, cash: AI_PAYROLL_CASH_RESERVE });
+    // The budget subtracts the team's contracted staff payroll from revenue.
+    const staff = getTeamStaffPayroll(probe.teamId, lastYear, probe.state);
 
-    const short = budgetOf(projected / AI_PAYROLL_REVENUE_MARGIN - 1_000_000);
+    const short = budgetOf(
+      projected / AI_PAYROLL_REVENUE_MARGIN + staff - 1_000_000,
+    );
     const refused = processCpuContractExtensions(short.state);
     expect(extensionFor(refused.events, short.starId)).toBeUndefined();
     expect(refused.state.business.contracts[short.contractId]).toEqual(
       short.state.business.contracts[short.contractId],
     );
 
-    const enough = budgetOf(projected / AI_PAYROLL_REVENUE_MARGIN + 1_000_000);
+    const enough = budgetOf(
+      projected / AI_PAYROLL_REVENUE_MARGIN + staff + 1_000_000,
+    );
     const extended = processCpuContractExtensions(enough.state);
     expect(extensionFor(extended.events, enough.starId)).toBeDefined();
   });

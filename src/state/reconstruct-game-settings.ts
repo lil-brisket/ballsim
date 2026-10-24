@@ -146,7 +146,9 @@ export function reconstructGameSettingsFromState(
     },
     draft: { ...DEFAULT_GAME_SETTINGS.draft },
     history: { ...DEFAULT_GAME_SETTINGS.history },
-    draftLottery: { ...DEFAULT_GAME_SETTINGS.draftLottery },
+    // Leagues from before the lottery keep the reverse-standings order, as the
+    // v74 -> v75 migration gives every other existing save.
+    draftLottery: { ...DEFAULT_GAME_SETTINGS.draftLottery, enabled: false },
     offseason: {
       freeAgency: { ...DEFAULT_GAME_SETTINGS.offseason.freeAgency },
       restrictedFreeAgency:

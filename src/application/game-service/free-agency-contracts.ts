@@ -23,6 +23,8 @@ import {
 } from "@/application/time-advance-mutation";
 import { isInLeaguePhase } from "@/systems/phase-engine";
 import { getContractSigningYear } from "@/systems/salary-cap";
+import { getLeagueSalaryCap } from "@/systems/league-salary-cap";
+import { salaryBoundsBlockReason } from "@/systems/salary-scale";
 import { advanceLeaguePhase } from "@/systems/simulation/offseason-lifecycle";
 import { advanceSimulation } from "@/systems/simulation/advance-simulation";
 import { isUserOnDraftClock } from "@/systems/draft";
@@ -86,6 +88,13 @@ export async function signOwnerFreeAgent(
   const years = input.years ?? 1;
   if (!Number.isInteger(years) || years < 1) {
     return fail("Contract years must be an integer >= 1.");
+  }
+  const salaryBlock = salaryBoundsBlockReason(
+    getLeagueSalaryCap(state),
+    salary,
+  );
+  if (salaryBlock) {
+    return fail(salaryBlock);
   }
 
   const endYear = year + years - 1;
@@ -209,6 +218,13 @@ export async function makeOwnerFreeAgentOffer(
   const years = input.years ?? 1;
   if (!Number.isInteger(years) || years < 1) {
     return fail("Contract years must be an integer >= 1.");
+  }
+  const salaryBlock = salaryBoundsBlockReason(
+    getLeagueSalaryCap(state),
+    salary,
+  );
+  if (salaryBlock) {
+    return fail(salaryBlock);
   }
   const endYear = year + years - 1;
   const salaryByYear: Record<string, number> = {};
