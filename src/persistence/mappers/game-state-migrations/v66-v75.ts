@@ -340,3 +340,47 @@ export function migrateV77ToV78(state: GameStateV77): GameState {
     },
   };
 }
+
+/**
+ * Deterministic v78 → v79: record every drafted player's draft year on the
+ * player (`developmentLeague.draftSeasonYear`), taken from the draft classes'
+ * pick results, for players drafted before the field was set at the pick.
+ * "Drafted in this league" then no longer needs old draft classes, which
+ * leave the per-action save for history storage.
+ */
+export function migrateV78ToV79(state: GameState): GameState {
+  const draftYearByPlayer = new Map<string, number>();
+  for (const draftId of Object.keys(state.world.drafts).sort()) {
+    for (const pick of state.world.drafts[draftId]!.pickResults ?? []) {
+      const known = draftYearByPlayer.get(pick.playerId);
+      if (known === undefined || pick.seasonYear > known) {
+        draftYearByPlayer.set(pick.playerId, pick.seasonYear);
+      }
+    }
+  }
+  const players = { ...state.world.players };
+  for (const [playerId, draftSeasonYear] of draftYearByPlayer) {
+    const player = players[playerId];
+    if (
+      player === undefined ||
+      player.developmentLeague.draftSeasonYear != null
+    ) {
+      continue;
+    }
+    players[playerId] = {
+      ...player,
+      developmentLeague: { ...player.developmentLeague, draftSeasonYear },
+    };
+  }
+  return {
+    ...state,
+    meta: {
+      ...state.meta,
+      schemaVersion: 79,
+    },
+    world: {
+      ...state.world,
+      players,
+    },
+  };
+}

@@ -210,13 +210,14 @@ export function careerServiceYears(
   return Math.max(history, Math.max(0, player.age - 19));
 }
 
+/**
+ * Drafted players carry their draft year (set at the pick; backfilled for
+ * older saves by the v79 migration), so old draft classes are not needed.
+ */
 function draftedInLeague(state: GameState, playerId: PlayerId): boolean {
-  for (const draft of Object.values(state.world.drafts)) {
-    if (draft.pickResults.some((pick) => pick.playerId === playerId)) {
-      return true;
-    }
-  }
-  return false;
+  return (
+    state.world.players[playerId]?.developmentLeague.draftSeasonYear != null
+  );
 }
 
 function cpuWouldQualify(
