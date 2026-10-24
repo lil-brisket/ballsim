@@ -27,6 +27,7 @@ import { STARTER_STAFF_ROLES } from "@/domain/entities/staff-roles";
 import { draftClassIdFor } from "@/domain/entities/draft";
 import { draftYearForSeason } from "@/systems/draft";
 import { listFreeAgents } from "@/systems/free-agency";
+import { getActivePhaseId } from "@/systems/phase-engine";
 
 export type OffseasonTimelineStatus = "upcoming" | "active" | "completed";
 
@@ -292,7 +293,7 @@ export function toOffseasonHubView(state: GameState): OffseasonHubView {
     rosterCount: team?.roster.length ?? 0,
     playerPayroll: finances.playerPayroll,
     capSpace: finances.capSpace,
-    offseasonStageLabel: calendar.offseasonStage.replaceAll("_", " "),
+    offseasonStageLabel: offseasonStageLabel(state, calendar.offseasonStage),
     displayLabel: calendar.displayLabel,
     actionCenter,
     timeline: active ? timeline : [],
@@ -303,4 +304,16 @@ export function toOffseasonHubView(state: GameState): OffseasonHubView {
     relocationAvailable: isRelocationAccessible(state, teamId),
     rfa: toOwnerRfaView(state),
   };
+}
+
+/**
+ * The stage named after the active offseason phase. The legacy stored stage
+ * for Season Transition is still "season_finalization".
+ */
+function offseasonStageLabel(state: GameState, legacyStage: string): string {
+  const phaseId = getActivePhaseId(state);
+  const stage = phaseId.startsWith("offseason.")
+    ? phaseId.slice("offseason.".length)
+    : legacyStage;
+  return stage.replaceAll("_", " ");
 }
