@@ -1,5 +1,7 @@
 import "server-only";
 
+import { gunzipSync, gzipSync } from "node:zlib";
+
 import type { PrismaClient } from "@/generated/prisma/client";
 import type { GameState } from "@/state/game-state";
 import { GAME_STATE_SCHEMA_VERSION } from "@/state/game-state";
@@ -30,23 +32,55 @@ function prepareStateJson(state: GameState): string {
   return stateJson;
 }
 
-function toLoaded(row: {
-  id: string;
-  name: string;
-  schemaVersion: number;
-  createdAt: Date;
-  updatedAt: Date;
+/**
+ * Saves are stored gzipped: the JSON compresses about tenfold, and the
+ * fastest level costs ~35 ms for a 20 MB league. `stateJson` is left empty.
+ */
+function compressStateJson(stateJson: string): {
   stateJson: string;
-}): LoadedSaveGame {
+  stateGzip: Uint8Array<ArrayBuffer>;
+} {
+  const gz = gzipSync(stateJson, { level: 1 });
+  return { stateJson: "", stateGzip: new Uint8Array(gz) };
+}
+
+/** The stored snapshot: compressed when written by this version, else legacy JSON. */
+function storedStateJson(row: {
+  stateJson: string;
+  stateGzip: Uint8Array | null;
+}): string {
+  return row.stateGzip !== null
+    ? gunzipSync(row.stateGzip).toString("utf8")
+    : row.stateJson;
+}
+
+function toLoaded(
+  row: {
+    id: string;
+    name: string;
+    schemaVersion: number;
+    createdAt: Date;
+    updatedAt: Date;
+  },
+  stateJson: string,
+): LoadedSaveGame {
   return {
     id: row.id,
     name: row.name,
     schemaVersion: row.schemaVersion,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
-    state: deserializeGameState(row.stateJson),
+    state: deserializeGameState(stateJson),
   };
 }
+
+const SAVE_METADATA = {
+  id: true,
+  name: true,
+  schemaVersion: true,
+  createdAt: true,
+  updatedAt: true,
+} as const;
 
 type ProjectionClient = Pick<PrismaClient, "saveTeam" | "savePlayer">;
 
@@ -134,13 +168,14 @@ export function createPrismaSaveGameStore(
             id: input.id,
             name: input.name,
             schemaVersion: GAME_STATE_SCHEMA_VERSION,
-            stateJson,
+            ...compressStateJson(stateJson),
           },
+          select: SAVE_METADATA,
         });
         await replaceSaveProjections(tx, created.id, input.state);
         return created;
       });
-      return toLoaded(row);
+      return toLoaded(row, stateJson);
     },
 
     async load(id: string): Promise<LoadedSaveGame | null> {
@@ -148,7 +183,7 @@ export function createPrismaSaveGameStore(
       if (!row) {
         return null;
       }
-      const loaded = toLoaded(row);
+      const loaded = toLoaded(row, storedStateJson(row));
       await backfillProjectionsIfMissing(db(), id, loaded.state);
       return loaded;
     },
@@ -165,7 +200,7 @@ export function createPrismaSaveGameStore(
             where: { id: input.id, updatedAt: input.ifUpdatedAt },
             data: {
               schemaVersion: GAME_STATE_SCHEMA_VERSION,
-              stateJson,
+              ...compressStateJson(stateJson),
             },
           });
           if (result.count === 0) {
@@ -176,7 +211,7 @@ export function createPrismaSaveGameStore(
             where: { id: input.id },
             data: {
               schemaVersion: GAME_STATE_SCHEMA_VERSION,
-              stateJson,
+              ...compressStateJson(stateJson),
             },
           });
         }
@@ -185,20 +220,14 @@ export function createPrismaSaveGameStore(
         // reading the whole snapshot back costs as much as writing it.
         const updated = await tx.saveGame.findUnique({
           where: { id: input.id },
-          select: {
-            id: true,
-            name: true,
-            schemaVersion: true,
-            createdAt: true,
-            updatedAt: true,
-          },
+          select: SAVE_METADATA,
         });
         if (!updated) {
           throw new SaveVersionConflictError(input.id);
         }
         return updated;
       });
-      return toLoaded({ ...row, stateJson });
+      return toLoaded(row, stateJson);
     },
 
     async delete(id: string): Promise<boolean> {

@@ -1,6 +1,7 @@
 vi.mock("server-only", () => ({}));
 
 import { execFileSync } from "node:child_process";
+import { gunzipSync } from "node:zlib";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
@@ -224,6 +225,42 @@ describe("PrismaSaveGameStore normalized projections", () => {
     expect(saved.name).toBe("Round Trip");
     expect(saved.state).toEqual(loaded!.state);
     expect(saved.state.world.players[player.id]?.firstName).toBe("Ola");
+  });
+
+  it("stores new saves compressed", async () => {
+    const state = createTestGameState({ saveId: "save_gzip_new" });
+    await store.create({ id: "save_gzip_new", name: "Gzip", state });
+    const row = await prisma.saveGame.findUnique({
+      where: { id: "save_gzip_new" },
+    });
+    expect(row?.stateJson).toBe("");
+    expect(row?.stateGzip).not.toBeNull();
+    const json = gunzipSync(row!.stateGzip!).toString("utf8");
+    expect(JSON.parse(json).meta.saveId).toBe("save_gzip_new");
+    expect(row!.stateGzip!.length).toBeLessThan(json.length);
+  });
+
+  it("loads a save written before compression and compresses it on the next save", async () => {
+    const state = createTestGameState({ saveId: "save_gzip_legacy" });
+    await prisma.saveGame.create({
+      data: {
+        id: "save_gzip_legacy",
+        name: "Legacy",
+        schemaVersion: state.meta.schemaVersion,
+        stateJson: serializeGameState(state),
+      },
+    });
+    const loaded = await store.load("save_gzip_legacy");
+    expect(loaded?.state.meta.saveId).toBe("save_gzip_legacy");
+
+    await store.save({ id: "save_gzip_legacy", state: loaded!.state });
+    const row = await prisma.saveGame.findUnique({
+      where: { id: "save_gzip_legacy" },
+    });
+    expect(row?.stateJson).toBe("");
+    expect(row?.stateGzip).not.toBeNull();
+    const reloaded = await store.load("save_gzip_legacy");
+    expect(reloaded?.state).toEqual(loaded?.state);
   });
 
   it("does not write projections when CAS save fails", async () => {

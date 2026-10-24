@@ -11,14 +11,18 @@ datasource db {
 }
 
 /// Persistence envelope for one save. Game mechanics live in GameState JSON, not Prisma relations.
-/// `stateJson` remains the authoritative snapshot. `teams` / `players` are query projections.
+/// The GameState snapshot is `stateGzip` (gzip of the JSON) when present,
+/// else the legacy `stateJson`. `teams` / `players` are query projections.
 model SaveGame {
-  id            String       @id
+  id            String         @id
   name          String
   schemaVersion Int
+  /// Legacy uncompressed snapshot; "" once the save is written compressed.
   stateJson     String
-  createdAt     DateTime     @default(now())
-  updatedAt     DateTime     @updatedAt
+  /// gzip of the GameState JSON. Authoritative when present.
+  stateGzip     Bytes?
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
   teams         SaveTeam[]
   players       SavePlayer[]
   invites       LeagueInvite[]
