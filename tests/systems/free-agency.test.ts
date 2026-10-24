@@ -31,7 +31,12 @@ import {
 import { FREE_AGENCY_INTEREST_CONFIG } from "@/systems/free-agency-config";
 import { getTeamCapSpace } from "@/systems/salary-cap";
 import { getLeagueSalaryCap } from "@/systems/league-salary-cap";
-import { salaryForPlayer, vetMinSalary } from "@/systems/salary-scale";
+import {
+  maxContractSalary,
+  salaryBoundsBlockReason,
+  salaryForPlayer,
+  vetMinSalary,
+} from "@/systems/salary-scale";
 import { createPlayer, uniformPlayerAttributes } from "../factories/player";
 import { TEST_NOW_ISO, TEST_RNG_SEED } from "../helpers/determinism";
 
@@ -90,6 +95,53 @@ function contractTerms(input: {
     endYear,
     salaryByYear,
   });
+}
+
+/**
+ * Fills a team's payroll so exactly `room` of cap space is left in `year`.
+ * Offers are bounded by the league maximum contract, so a boundary test needs
+ * the team's cap space to be a salary a player could actually be paid.
+ */
+function withCapRoom(
+  state: GameState,
+  teamId: ReturnType<typeof asTeamId>,
+  year: number,
+  room: number,
+): GameState {
+  const fillerId = asPlayerId(`player_cap_filler_${teamId}`);
+  const salary = getTeamCapSpace(teamId, year, state) - room;
+  const contract = contractTerms({
+    contractId: `contract_cap_filler_${teamId}`,
+    playerId: fillerId,
+    teamId,
+    startYear: year,
+    salary,
+  });
+  return {
+    ...state,
+    world: {
+      ...state.world,
+      players: {
+        ...state.world.players,
+        [fillerId]: createPlayer({
+          id: fillerId,
+          teamId,
+          contractId: contract.id,
+        }),
+      },
+      teams: {
+        ...state.world.teams,
+        [teamId]: {
+          ...state.world.teams[teamId]!,
+          roster: [...state.world.teams[teamId]!.roster, fillerId],
+        },
+      },
+    },
+    business: {
+      ...state.business,
+      contracts: { ...state.business.contracts, [contract.id]: contract },
+    },
+  };
 }
 
 const uninterestedEvaluator: EvaluatePlayerInterest = (playerId, teamId) => ({
@@ -786,10 +838,13 @@ describe("free-agency accept", () => {
   });
 
   it("allows first-year salary equal to cap space for contract startYear", () => {
-    const { state, playerId } = withFreeAgent(baseState());
-    const teamId = state.user.activeOwnerTeamId;
-    const startYear = state.competition.season.year + 1;
+    const free = withFreeAgent(baseState());
+    const playerId = free.playerId;
+    const teamId = free.state.user.activeOwnerTeamId;
+    const startYear = free.state.competition.season.year + 1;
+    const state = withCapRoom(free.state, teamId, startYear, 5_000_000);
     const capSpace = getTeamCapSpace(teamId, startYear, state);
+    expect(capSpace).toBe(5_000_000);
     const offerId = asOfferId("offer_exact_cap");
     const offered = makeOffer(state, {
       id: offerId,
@@ -810,10 +865,13 @@ describe("free-agency accept", () => {
   });
 
   it("invalidates offer when first-year salary exceeds cap space for startYear", () => {
-    const { state, playerId } = withFreeAgent(baseState());
-    const teamId = state.user.activeOwnerTeamId;
-    const startYear = state.competition.season.year;
+    const free = withFreeAgent(baseState());
+    const playerId = free.playerId;
+    const teamId = free.state.user.activeOwnerTeamId;
+    const startYear = free.state.competition.season.year;
+    const state = withCapRoom(free.state, teamId, startYear, 5_000_000);
     const capSpace = getTeamCapSpace(teamId, startYear, state);
+    expect(capSpace).toBe(5_000_000);
     const offerId = asOfferId("offer_over_cap");
     const offered = makeOffer(state, {
       id: offerId,
@@ -1187,5 +1245,77 @@ describe("stale accepted offer after contract expiration", () => {
       otherContractId,
     );
     expect(() => validateGameState(staleResult.state)).not.toThrow();
+  });
+});
+
+describe("free-agency salary bounds", () => {
+  function offeredWithSalary(salary: number) {
+    const { state, playerId } = withFreeAgent(baseState());
+    const teamId = state.user.activeOwnerTeamId;
+    const startYear = state.competition.season.year + 1;
+    const offerId = asOfferId("offer_bounds");
+    const offered = makeOffer(state, {
+      id: offerId,
+      playerId,
+      teamId,
+      terms: contractTerms({
+        contractId: "contract_bounds",
+        playerId,
+        teamId,
+        startYear,
+        salary,
+      }),
+    }).state;
+    return { offered, offerId, playerId };
+  }
+
+  it("withdraws an offer below the league minimum instead of signing it", () => {
+    const cap = getLeagueSalaryCap(baseState());
+    const { offered, offerId, playerId } = offeredWithSalary(
+      vetMinSalary(cap) - 1_000,
+    );
+    const result = acceptOffer(offered, offerId);
+    expect(result.state.business.freeAgency.offers[offerId]!.status).toBe(
+      "withdrawn",
+    );
+    expect(result.state.world.players[playerId]!.contractId).toBeNull();
+  });
+
+  it("withdraws an offer above the league maximum instead of signing it", () => {
+    const cap = getLeagueSalaryCap(baseState());
+    const { offered, offerId, playerId } = offeredWithSalary(
+      maxContractSalary(cap) + 1_000,
+    );
+    const result = acceptOffer(offered, offerId);
+    expect(result.state.business.freeAgency.offers[offerId]!.status).toBe(
+      "withdrawn",
+    );
+    expect(result.state.world.players[playerId]!.contractId).toBeNull();
+  });
+
+  it("signs an offer at exactly the minimum and at exactly the maximum", () => {
+    const cap = getLeagueSalaryCap(baseState());
+    for (const salary of [vetMinSalary(cap), maxContractSalary(cap)]) {
+      const { offered, offerId, playerId } = offeredWithSalary(salary);
+      const result = acceptOffer(offered, offerId);
+      expect(result.state.business.freeAgency.offers[offerId]!.status).toBe(
+        "accepted",
+      );
+      expect(result.state.world.players[playerId]!.contractId).not.toBeNull();
+    }
+  });
+
+  it("describes the bounds the same way for every caller", () => {
+    const cap = getLeagueSalaryCap(baseState());
+    expect(salaryBoundsBlockReason(cap, vetMinSalary(cap))).toBeNull();
+    expect(salaryBoundsBlockReason(cap, vetMinSalary(cap) - 1)).toMatch(
+      /below the league minimum/,
+    );
+    expect(salaryBoundsBlockReason(cap, maxContractSalary(cap) + 1)).toMatch(
+      /above the league maximum/,
+    );
+    expect(salaryBoundsBlockReason(cap, 2_500_000.5)).toMatch(
+      /below the league minimum/,
+    );
   });
 });

@@ -48,7 +48,7 @@ import { getContractSigningYear, getTeamPayroll } from "@/systems/salary-cap";
 import {
   salaryForPlayer,
   serviceYearsForSalary,
-  SUPERMAX_CAP_FRACTION,
+  salaryBoundsBlockReason,
   vetMinSalary,
 } from "@/systems/salary-scale";
 
@@ -212,11 +212,8 @@ export function getExtensionBlockReason(
       return `Extensions run 1 to ${EXTENSION_MAX_YEARS} seasons.`;
     }
     const cap = getLeagueSalaryCap(state);
-    const max = Math.round((cap * SUPERMAX_CAP_FRACTION) / 1_000) * 1_000;
-    if (!Number.isInteger(salary) || salary < vetMinSalary(cap)) {
-      return "Salary is below the league minimum.";
-    }
-    if (salary > max) return "Salary is above the league maximum.";
+    const boundsBlock = salaryBoundsBlockReason(cap, salary);
+    if (boundsBlock) return boundsBlock;
     const capBlock = extensionCapBlock(
       state,
       input.teamId,
