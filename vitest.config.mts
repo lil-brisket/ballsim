@@ -43,6 +43,9 @@ export default defineConfig({
   test: {
     // Season/world pipeline tests take 3-8s under parallel load; 5s default flakes.
     testTimeout: 30_000,
+    // Offseason suites build a season-long fixture in beforeAll; under parallel
+    // load that takes 20-40s, and the 10s default fails the whole file.
+    hookTimeout: 120_000,
     reporters: ["default", "./scripts/vitest-txt-reporter.ts"],
     coverage: {
       provider: "v8",

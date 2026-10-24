@@ -106,19 +106,35 @@ export function snapshotOffseason(state: GameState): OffseasonSnapshot {
 }
 
 /**
- * The state with event ids replaced by their position and type. Domain event
- * ids embed a random UUID by design (cross-process uniqueness), so two runs
- * of the same seed and actions are equal only modulo those ids.
+ * The state with its wall-clock and random parts neutralised: event ids
+ * (random UUID by design) become their position and type, and every
+ * `generatedAt` timestamp (franchise reports) is blanked. Two runs of the
+ * same seed and actions are equal only modulo those fields.
  */
 export function stateForComparison(state: GameState): GameState {
+  const blank = (value: unknown): unknown => {
+    if (Array.isArray(value)) return value.map(blank);
+    if (value !== null && typeof value === "object") {
+      return Object.fromEntries(
+        Object.entries(value).map(([key, child]) => [
+          key,
+          key === "generatedAt" ? "" : blank(child),
+        ]),
+      );
+    }
+    return value;
+  };
+  const cleaned = blank(state) as GameState;
   return {
-    ...state,
+    ...cleaned,
     competition: {
-      ...state.competition,
-      seasonEventLog: state.competition.seasonEventLog.map((event, index) => ({
-        ...event,
-        id: `evt_${index}_${event.type}` as typeof event.id,
-      })),
+      ...cleaned.competition,
+      seasonEventLog: cleaned.competition.seasonEventLog.map(
+        (event, index) => ({
+          ...event,
+          id: `evt_${index}_${event.type}` as typeof event.id,
+        }),
+      ),
     },
   };
 }
