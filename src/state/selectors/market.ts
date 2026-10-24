@@ -22,7 +22,11 @@ import {
   getTeamStaffPayroll,
   getTeamStaffBudgetSpace,
 } from "@/systems/staff-budget";
-import { getTeamPayroll, getTeamCapSpace } from "@/systems/salary-cap";
+import {
+  getContractSigningYear,
+  getTeamCapSpace,
+  getTeamPayroll,
+} from "@/systems/salary-cap";
 import { getFinancialStatement } from "@/systems/team-finances";
 import { getControlledTeam } from "@/state/selectors/teams-roster";
 
@@ -324,7 +328,11 @@ export function toFinancesView(state: GameState): FinancesView {
   const finances = state.business.finances[team.id];
   const salaryCap = getLeagueSalaryCap(state);
   const staffBudget = getLeagueStaffBudget(state);
-  const playerPayroll = getTeamPayroll(team.id, year, state);
+  // Player payroll and cap space are for the season contracts are signed
+  // for: next season once the offseason starts, as free agency, extensions
+  // and the tax line already show. The statement stays on the season played.
+  const capYear = getContractSigningYear(state);
+  const playerPayroll = getTeamPayroll(team.id, capYear, state);
   const staffPayroll = getTeamStaffPayroll(team.id, year, state);
   return {
     businessFunds: finances?.businessFunds ?? 0,
@@ -333,7 +341,7 @@ export function toFinancesView(state: GameState): FinancesView {
     salaryCap,
     salaryCapEnabled: state.settings.financialRules.salaryCapEnabled,
     playerPayroll,
-    capSpace: getTeamCapSpace(team.id, year, state, salaryCap),
+    capSpace: getTeamCapSpace(team.id, capYear, state, salaryCap),
     staffBudget,
     staffPayroll,
     staffBudgetSpace: getTeamStaffBudgetSpace(
