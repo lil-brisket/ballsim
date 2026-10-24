@@ -65,6 +65,7 @@ export {
   loadLeagueScheduleView,
   loadMediaPageView,
 } from "@/application/game-service/views";
+export { loadSaveWithHistory } from "@/application/game-service/internal";
 export {
   type CalendarPageMediaHighlight,
   type CalendarPageView,

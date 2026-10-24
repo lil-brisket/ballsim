@@ -12,6 +12,11 @@ import type {
   SaveGameSummary,
 } from "@/persistence/save-game-store";
 import { SaveVersionConflictError } from "@/persistence/save-version-conflict";
+import {
+  mergeSaveHistory,
+  splitColdHistory,
+  type SaveHistory,
+} from "@/persistence/save-history";
 
 type MemorySaveRow = {
   id: string;
@@ -48,6 +53,24 @@ function sameUpdatedAt(a: Date, b: Date): boolean {
  */
 export function createMemorySaveGameStore(): MemorySaveGameStore {
   const rows = new Map<string, MemorySaveRow>();
+  /** Finished-season history by save, as JSON per chunk (immutable). */
+  const historyBySave = new Map<string, Map<string, string>>();
+
+  /** Splits off finished-season history, keeps new chunks, returns the rest. */
+  function storeHistory(saveId: string, state: GameState): GameState {
+    const { hot, chunks } = splitColdHistory(state);
+    let stored = historyBySave.get(saveId);
+    if (stored === undefined) {
+      stored = new Map();
+      historyBySave.set(saveId, stored);
+    }
+    for (const chunk of chunks) {
+      if (!stored.has(chunk.chunkId)) {
+        stored.set(chunk.chunkId, JSON.stringify(chunk.history));
+      }
+    }
+    return hot;
+  }
 
   function prepareStateJson(state: GameState): string {
     // Every join path (draft, trades, signings…) is covered here.
@@ -89,7 +112,7 @@ export function createMemorySaveGameStore(): MemorySaveGameStore {
       if (rows.has(input.id)) {
         throw new Error(`SaveGame "${input.id}" already exists.`);
       }
-      const stateJson = prepareStateJson(input.state);
+      const stateJson = prepareStateJson(storeHistory(input.id, input.state));
       const now = new Date();
       const row: MemorySaveRow = {
         id: input.id,
@@ -111,6 +134,18 @@ export function createMemorySaveGameStore(): MemorySaveGameStore {
       return toLoaded(row);
     },
 
+    async loadHistory(id: string): Promise<SaveHistory> {
+      const stored = historyBySave.get(id);
+      if (stored === undefined) {
+        return mergeSaveHistory([]);
+      }
+      return mergeSaveHistory(
+        [...stored.keys()]
+          .sort()
+          .map((chunkId) => JSON.parse(stored.get(chunkId)!) as SaveHistory),
+      );
+    },
+
     async save(input: {
       id: string;
       state: GameState;
@@ -126,7 +161,7 @@ export function createMemorySaveGameStore(): MemorySaveGameStore {
       ) {
         throw new SaveVersionConflictError(input.id);
       }
-      const stateJson = prepareStateJson(input.state);
+      const stateJson = prepareStateJson(storeHistory(input.id, input.state));
       const row: MemorySaveRow = {
         ...existing,
         schemaVersion: GAME_STATE_SCHEMA_VERSION,
@@ -138,6 +173,7 @@ export function createMemorySaveGameStore(): MemorySaveGameStore {
     },
 
     async delete(id: string): Promise<boolean> {
+      historyBySave.delete(id);
       return rows.delete(id);
     },
 

@@ -328,10 +328,20 @@ Load returns `deserializeGameState` of the snapshot (gunzipped `stateGzip`, else
 4. If a later slice adds more tables, follow the same dual-write + empty-table backfill pattern.
 5. Rollback is dropping the new tables; `SaveGame` rows remain valid.
 
-Application code depends on `SaveGameStore` (`list` / `create` / `load` / `save` / `delete`). Adapters:
+Application code depends on `SaveGameStore` (`list` / `create` / `load` / `loadHistory` / `save` / `delete`). Adapters:
 
-- `PrismaSaveGameStore` — production (`stateJson` + `SaveTeam` / `SavePlayer` in one transaction)
-- `MemorySaveGameStore` — tests (blob only)
+- `PrismaSaveGameStore` — production (compressed snapshot + history chunks + `SaveTeam` / `SavePlayer` in one transaction)
+- `MemorySaveGameStore` — tests (snapshot and history chunks in memory)
+
+### Finished-season history
+
+Every owner action loads and saves the whole league, so history that only grows would make every click slower over a career. `save` and `create` therefore split it off (`src/persistence/save-history.ts`):
+
+- **Kept in the snapshot:** the current and previous seasons' archived games, and draft classes that are not complete or are from the current season. The simulation never reads further back (a regression test runs a full offseason from the snapshot alone and gets the same league), and "last season" is on many screens.
+- **Moved to `SaveHistoryChunk`:** archived games of older seasons (one `games:<seasonId>` chunk per season) and older completed draft classes (`draft:<draftClassId>`), gzipped JSON. A finished season does not change, so a chunk is written once and never rewritten.
+- **Read back:** `load` returns the snapshot only. Views of finished seasons (player careers and game logs, box scores, the record book, past schedules and the league hub) use `loadSaveWithHistory`, which calls `loadHistory` and merges with `withSaveHistory`. The online-league store only serves history after a load of the same save in the request.
+
+The `GameState` shape is unchanged: `business.gameArchive` and `world.drafts` simply hold less at rest. Old saves split on their next save.
 
 Compatibility wrappers (`createSaveGame`, `getSaveGame`, `updateSaveGameState`, `deleteSaveGame`, etc.) delegate to the Prisma store.
 

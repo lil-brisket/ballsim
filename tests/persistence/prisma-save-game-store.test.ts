@@ -22,6 +22,8 @@ import { SaveVersionConflictError } from "@/persistence/save-version-conflict";
 import { createPrismaSaveGameStore } from "@/persistence/save-game-repository";
 import { createPlayer } from "../factories/player";
 import { createTestGameState } from "../factories/game-state";
+import { splitColdHistory, withSaveHistory } from "@/persistence/save-history";
+import { leagueWithHistory } from "./save-history-fixture";
 import type { GameState } from "@/state/game-state";
 import type { Player } from "@/domain/entities/player";
 
@@ -261,6 +263,47 @@ describe("PrismaSaveGameStore normalized projections", () => {
     expect(row?.stateGzip).not.toBeNull();
     const reloaded = await store.load("save_gzip_legacy");
     expect(reloaded?.state).toEqual(loaded?.state);
+  });
+
+  it("keeps old seasons out of the snapshot and stores each history chunk once", async () => {
+    const state = leagueWithHistory("save_history_prisma");
+    const created = await store.create({
+      id: "save_history_prisma",
+      name: "History",
+      state,
+    });
+    expect(Object.keys(created.state.business.gameArchive).sort()).toEqual([
+      "g_current",
+      "g_prev",
+      "g_unknown",
+    ]);
+    const history = await store.loadHistory("save_history_prisma");
+    expect(Object.keys(history.games).sort()).toEqual(["g_old_1", "g_old_2"]);
+    expect(
+      withSaveHistory(created.state, history).business.gameArchive,
+    ).toEqual(state.business.gameArchive);
+
+    // A league saved with its history merged back writes no chunk twice.
+    await store.save({
+      id: "save_history_prisma",
+      state: withSaveHistory(created.state, history),
+    });
+    const chunkIds = (
+      await prisma.saveHistoryChunk.findMany({
+        where: { saveGameId: "save_history_prisma" },
+        select: { chunkId: true },
+      })
+    ).map((row) => row.chunkId);
+    expect(chunkIds.sort()).toEqual(
+      splitColdHistory(state).chunks.map((chunk) => chunk.chunkId),
+    );
+
+    await store.delete("save_history_prisma");
+    expect(
+      await prisma.saveHistoryChunk.count({
+        where: { saveGameId: "save_history_prisma" },
+      }),
+    ).toBe(0);
   });
 
   it("does not write projections when CAS save fails", async () => {
