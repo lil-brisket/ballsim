@@ -41,6 +41,12 @@ export type OffseasonInvariantContext = {
   previous?: GameState;
   /** Also run the persistence validator. Default true. */
   deep?: boolean;
+  /**
+   * First month (YYYY-MM) of the cash journal to reconcile. An old save can
+   * carry gaps written by earlier versions; pass the month it was loaded in to
+   * check only what this version wrote.
+   */
+  cashLedgerFrom?: string;
 };
 
 /** Phases whose rosters must already be season-legal. */
@@ -319,7 +325,11 @@ function checkPayroll(state: GameState, issues: OffseasonInvariantIssue[]) {
  * Cash reconciles with the monthly funds journal: each month opens where
  * the previous one closed, and the latest month closes at the current cash.
  */
-function checkCash(state: GameState, issues: OffseasonInvariantIssue[]) {
+function checkCash(
+  state: GameState,
+  from: string | undefined,
+  issues: OffseasonInvariantIssue[],
+) {
   for (const teamId of sortedIds(state.business.finances)) {
     const finances = state.business.finances[teamId]!;
     if (!Number.isFinite(finances.businessFunds)) {
@@ -330,7 +340,9 @@ function checkCash(state: GameState, issues: OffseasonInvariantIssue[]) {
       continue;
     }
     const ledger = finances.businessFundsLedgerByMonth ?? {};
-    const months = Object.keys(ledger).sort();
+    const months = Object.keys(ledger)
+      .sort()
+      .filter((month) => from === undefined || month >= from);
     for (let index = 1; index < months.length; index += 1) {
       const prior = ledger[months[index - 1]!]!;
       const month = ledger[months[index]!]!;
@@ -492,7 +504,7 @@ export function collectOffseasonInvariantIssues(
   checkRosters(state, issues);
   checkContracts(state, issues);
   checkPayroll(state, issues);
-  checkCash(state, issues);
+  checkCash(state, context.cashLedgerFrom, issues);
   checkPlayers(state, context.previous, issues);
   checkDraftPicks(state, issues);
   if (context.deep !== false) {

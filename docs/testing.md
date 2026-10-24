@@ -73,6 +73,15 @@ Classify by what you import, not by folder renames.
 - Prefer factories over copying object literals across tests.
 - `createTestGameState` always sets `saveId`, `rngSeed`, and `nowIso`. Production `createInitialGameState` still uses `crypto.randomUUID` for some IDs; use `createPlayer` / `createTeam` when IDs must be stable.
 
+## Old saves
+
+`tests/fixtures/saves/` holds genuine old saves, each written by the code that shipped its schema version (`scripts/generate-golden-saves.ts` checks that commit out into a temporary worktree):
+
+- `vNN.json.gz` are freshly created leagues across the whole schema chain. `tests/persistence/golden-saves.test.ts` migrates and validates each and pins a digest of the result; `golden-saves-rules.test.ts` checks that later rules do not change an old league (the draft lottery stays off before v75, RFA is on, the luxury tax keeps its stored value).
+- `vNN-played.json.gz` (v65, v71, v77) are CBL leagues played by that version's engine through one season and stopped on the first day of free agency. `tests/regression/old-save-playthrough.test.ts` loads each, finishes the offseason, plays a full season and offseason, and checks the offseason invariants at every phase. Damage an old engine wrote is listed per fixture in `HISTORICAL_ISSUES` and must heal by the next Roster Decisions.
+
+When a change bumps `GAME_STATE_SCHEMA_VERSION`, add the new version's commit to `GOLDEN_PLAYED_SAVE_COMMITS` and run `npx tsx scripts/generate-golden-saves.ts --played <version>` once the bump is committed, in the same pull request as the migration, so the old-save playthrough covers it.
+
 ## Mocking
 
 Prefer:
