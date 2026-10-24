@@ -157,7 +157,7 @@ function applyTeamGameplayConsequences(
     if (!isHome && !isAway) {
       continue;
     }
-    const key = `game_result:${teamId}:${game.id}`;
+    const key = gameResultConsequenceKey(teamId, seasonYear, game.id);
     if (hasAppliedGameplayConsequence(current, key, teamId)) {
       continue;
     }
@@ -254,9 +254,11 @@ function markObjectiveConsequenceApplied(
   }));
 }
 
+/** Keyed by season too: playoff game ids repeat every season. */
 export function gameResultConsequenceKey(
   teamId: TeamId,
+  seasonYear: number,
   gameId: string,
 ): string {
-  return `game_result:${teamId}:${gameId}`;
+  return `game_result:${teamId}:${seasonYear}:${gameId}`;
 }
