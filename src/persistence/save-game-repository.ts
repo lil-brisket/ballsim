@@ -67,6 +67,7 @@ function toLoaded(
     schemaVersion: number;
     createdAt: Date;
     updatedAt: Date;
+    ownerUserId: string | null;
   },
   stateJson: string,
 ): LoadedSaveGame {
@@ -76,6 +77,7 @@ function toLoaded(
     schemaVersion: row.schemaVersion,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
+    ownerUserId: row.ownerUserId,
     state: deserializeGameState(stateJson),
   };
 }
@@ -86,6 +88,7 @@ const SAVE_METADATA = {
   schemaVersion: true,
   createdAt: true,
   updatedAt: true,
+  ownerUserId: true,
 } as const;
 
 type ProjectionClient = Pick<PrismaClient, "saveTeam" | "savePlayer">;
@@ -182,13 +185,7 @@ export function createPrismaSaveGameStore(
     async list(): Promise<SaveGameSummary[]> {
       const rows = await db().saveGame.findMany({
         orderBy: { updatedAt: "desc" },
-        select: {
-          id: true,
-          name: true,
-          schemaVersion: true,
-          createdAt: true,
-          updatedAt: true,
-        },
+        select: SAVE_METADATA,
       });
       return rows;
     },
@@ -197,6 +194,7 @@ export function createPrismaSaveGameStore(
       id: string;
       name: string;
       state: GameState;
+      ownerUserId?: string | null;
     }): Promise<LoadedSaveGame> {
       const { hot, chunks } = splitColdHistory(input.state);
       const stateJson = prepareStateJson(hot);
@@ -205,6 +203,7 @@ export function createPrismaSaveGameStore(
           data: {
             id: input.id,
             name: input.name,
+            ownerUserId: input.ownerUserId ?? null,
             schemaVersion: GAME_STATE_SCHEMA_VERSION,
             ...compressStateJson(stateJson),
           },

@@ -333,6 +333,14 @@ export async function listOwnerSavePreviews(
  * current save model is local/single-user. Do not introduce a parallel
  * authorization model here.
  */
+/** Whether the signed-in user may open and control this save. */
+export async function canAccessOwnerSave(
+  saveId: string,
+  store?: SaveGameStore,
+): Promise<boolean> {
+  return (await getStore(store).load(saveId)) !== null;
+}
+
 export async function deleteOwnerSave(
   saveId: string,
   store?: SaveGameStore,

@@ -33,6 +33,7 @@ export function toSaveSummary(loaded: LoadedSaveGame): SaveGameSummary {
     schemaVersion: loaded.schemaVersion,
     createdAt: loaded.createdAt,
     updatedAt: loaded.updatedAt,
+    ownerUserId: loaded.ownerUserId,
   };
 }
 

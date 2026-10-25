@@ -25,6 +25,7 @@ export {
 export {
   createNewOwnerSave,
   loadOwnerSave,
+  canAccessOwnerSave,
   listOwnerSaves,
   type OwnerSavePreview,
   listOwnerSavePreviews,

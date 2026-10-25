@@ -7,6 +7,11 @@ export type SaveGameSummary = {
   schemaVersion: number;
   createdAt: Date;
   updatedAt: Date;
+  /**
+   * Account that created the save; null for saves made signed out and for
+   * online leagues (membership governs those). Adapters always set it.
+   */
+  ownerUserId?: string | null;
 };
 
 export type LoadedSaveGame = SaveGameSummary & {
@@ -33,6 +38,7 @@ export type SaveGameStore = {
     id: string;
     name: string;
     state: GameState;
+    ownerUserId?: string | null;
   }): Promise<LoadedSaveGame>;
   /**
    * The league without its finished-season history (see save-history.ts):

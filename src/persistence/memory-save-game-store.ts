@@ -25,6 +25,7 @@ type MemorySaveRow = {
   stateJson: string;
   createdAt: Date;
   updatedAt: Date;
+  ownerUserId: string | null;
 };
 
 export type SeedPersistedBlobInput = {
@@ -32,6 +33,7 @@ export type SeedPersistedBlobInput = {
   name: string;
   schemaVersion: number;
   stateJson: string;
+  ownerUserId?: string | null;
 };
 
 /**
@@ -87,6 +89,7 @@ export function createMemorySaveGameStore(): MemorySaveGameStore {
       schemaVersion: row.schemaVersion,
       createdAt: row.createdAt,
       updatedAt: row.updatedAt,
+      ownerUserId: row.ownerUserId,
       state: deserializeGameState(row.stateJson),
     };
   }
@@ -101,6 +104,7 @@ export function createMemorySaveGameStore(): MemorySaveGameStore {
           schemaVersion: row.schemaVersion,
           createdAt: row.createdAt,
           updatedAt: row.updatedAt,
+          ownerUserId: row.ownerUserId,
         }));
     },
 
@@ -108,6 +112,7 @@ export function createMemorySaveGameStore(): MemorySaveGameStore {
       id: string;
       name: string;
       state: GameState;
+      ownerUserId?: string | null;
     }): Promise<LoadedSaveGame> {
       if (rows.has(input.id)) {
         throw new Error(`SaveGame "${input.id}" already exists.`);
@@ -121,6 +126,7 @@ export function createMemorySaveGameStore(): MemorySaveGameStore {
         stateJson,
         createdAt: now,
         updatedAt: now,
+        ownerUserId: input.ownerUserId ?? null,
       };
       rows.set(input.id, row);
       return toLoaded(row);
@@ -195,6 +201,7 @@ export function createMemorySaveGameStore(): MemorySaveGameStore {
         stateJson: input.stateJson,
         createdAt: now,
         updatedAt: now,
+        ownerUserId: input.ownerUserId ?? null,
       });
     },
   };
