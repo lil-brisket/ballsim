@@ -2,6 +2,7 @@ import {
   type CoachingPhilosophy,
   DEFAULT_COACHING_PHILOSOPHY,
 } from "@/domain/coaching/coaching-philosophy";
+import type { PlayerId } from "@/domain/ids";
 
 /**
  * Tunable coaching modifiers applied on top of existing sim probabilities.
@@ -28,6 +29,11 @@ export const COACHING_PHILOSOPHY_CONFIG = {
     balanced: 1,
     conservative: 0.9,
   },
+  /** Usage boost for the focal player while on the court. */
+  focalPlayerUsageMultiplier: {
+    shot: 1.4,
+    involvement: 1.25,
+  },
 } as const;
 
 export type CoachingModifiers = {
@@ -38,6 +44,11 @@ export type CoachingModifiers = {
   };
   readonly defensivePressureMultiplier: number;
   readonly foulActionWeightMultiplier: number;
+  readonly focalPlayer: {
+    readonly playerId: PlayerId;
+    readonly shotMultiplier: number;
+    readonly involvementMultiplier: number;
+  } | null;
 };
 
 /**
@@ -59,5 +70,14 @@ export function getCoachingModifiers(
       config.defensivePressureMultiplier[philosophy.defensiveApproach],
     foulActionWeightMultiplier:
       config.foulActionWeightMultiplier[philosophy.defensiveApproach],
+    focalPlayer:
+      philosophy.focalPlayerId == null
+        ? null
+        : {
+            playerId: philosophy.focalPlayerId,
+            shotMultiplier: config.focalPlayerUsageMultiplier.shot,
+            involvementMultiplier:
+              config.focalPlayerUsageMultiplier.involvement,
+          },
   };
 }

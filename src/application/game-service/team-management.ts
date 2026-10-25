@@ -515,6 +515,8 @@ export async function updateOwnerCoachingPhilosophy(
     pace: string;
     offensiveEmphasis: string;
     defensiveApproach: string;
+    /** Empty string or absent clears the focal player. */
+    focalPlayerId?: string;
   },
   store?: SaveGameStore,
 ): Promise<OwnerCommandResult> {
@@ -529,6 +531,9 @@ export async function updateOwnerCoachingPhilosophy(
             "threePointHeavy" | "balanced" | "inside",
           defensiveApproach: input.defensiveApproach as
             "aggressive" | "balanced" | "conservative",
+          focalPlayerId: input.focalPlayerId
+            ? asPlayerId(input.focalPlayerId)
+            : null,
         },
       }),
     store,

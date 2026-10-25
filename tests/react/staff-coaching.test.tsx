@@ -6,6 +6,7 @@ const fetchStaff = vi.fn();
 
 vi.mock("next/navigation", () => ({
   usePathname: () => "/dashboard/save_test/staff-coaching/staff",
+  useRouter: () => ({ push: vi.fn() }),
 }));
 
 vi.mock("@/application/actions", () => ({
@@ -17,11 +18,15 @@ vi.mock("@/application/actions", () => ({
   fetchStaffDrawerViewAction: (...args: unknown[]) => fetchStaff(...args),
   fetchPlayerDrawerViewAction: vi.fn(),
   fetchTeamDrawerViewAction: vi.fn(),
+  applyCoachingPresetAction: vi.fn(),
+  updateCoachingPhilosophyAction: vi.fn(),
 }));
 
 import { EntityDrawerProvider } from "@/components/entity/EntityDrawerProvider";
 import { StaffCoachingNav } from "@/components/staff-coaching/StaffCoachingNav";
 import { StaffPageView } from "@/components/staff-coaching/StaffPageView";
+import { CoachingPageView } from "@/components/staff-coaching/CoachingPageView";
+import type { CoachingView } from "@/state/team-management-selectors";
 import { HiringMarketPageView } from "@/components/staff-coaching/HiringMarketPageView";
 import type { StaffHubView } from "@/state/staff-hub-selectors";
 import type { StaffHiringMarketView } from "@/state/staff-hub-selectors";
@@ -169,12 +174,23 @@ describe("staff-coaching UI", () => {
     );
     expect(screen.getByText("Hiring Market")).toBeTruthy();
     expect(screen.getByText("Jane Scout")).toBeTruthy();
+    const [roleSelect, sortSelect] = screen.getAllByRole(
+      "combobox",
+    ) as HTMLSelectElement[];
+    expect(roleSelect!.value).toBe("scout");
     expect(
-      screen.getByRole("link", { name: "Scout" }).getAttribute("aria-current"),
-    ).toBe("page");
+      Array.from(roleSelect!.options).map((option) => option.textContent),
+    ).toEqual([
+      "All roles",
+      "Head Coach (0)",
+      "Scout (1)",
+      "Medical Staff (0)",
+    ]);
+    expect(sortSelect!.value).toBe("overall");
     expect(
-      screen.getByRole("link", { name: "Sort: overall" }).getAttribute("href"),
-    ).toContain("role=scout");
+      Array.from(sortSelect!.options).map((option) => option.textContent),
+    ).toEqual(["Best overall", "Highest potential", "Lowest salary"]);
+    expect(screen.getByText("1 available")).toBeTruthy();
     unmount();
   });
 
@@ -224,6 +240,87 @@ describe("staff-coaching UI", () => {
     await waitFor(() => {
       expect(screen.getByText("View full profile")).toBeTruthy();
     });
+    unmount();
+  });
+
+  it("renders coaching preset cards and the focal player control", () => {
+    const coaching: CoachingView = {
+      teamId: "team_1" as CoachingView["teamId"],
+      philosophy: {
+        pace: "fast",
+        offensiveEmphasis: "balanced",
+        defensiveApproach: "balanced",
+        focalPlayerId: "p2",
+      },
+      rotationStyle: "tight",
+      activePreset: "fastPace",
+      presets: [
+        {
+          id: "balanced",
+          label: "Balanced",
+          description: "Neutral approach.",
+          pace: "balanced",
+          offensiveEmphasis: "balanced",
+          defensiveApproach: "balanced",
+          rotationStyle: "balanced",
+        },
+        {
+          id: "fastPace",
+          label: "Fast Pace",
+          description: "Push the tempo.",
+          pace: "fast",
+          offensiveEmphasis: "threePointHeavy",
+          defensiveApproach: "balanced",
+          rotationStyle: "balanced",
+        },
+      ],
+      focalPlayerOptions: [
+        { playerId: "p1", name: "Ace Guard", position: "PG", overall: 80 },
+        { playerId: "p2", name: "Big Wing", position: "SF", overall: 78 },
+      ],
+    };
+    const { unmount } = render(
+      <CoachingPageView
+        saveId="save_test"
+        coaching={coaching}
+        returnPath="/dashboard/save_test/staff-coaching/coaching"
+      />,
+    );
+    expect(screen.getByText("Neutral approach.")).toBeTruthy();
+    expect(screen.getByText("Push the tempo.")).toBeTruthy();
+    expect(
+      screen.getByText(
+        "Fast pace · Three-point heavy · Balanced D · Balanced rotation",
+      ),
+    ).toBeTruthy();
+    expect(screen.getAllByText("Active")).toHaveLength(1);
+    expect(
+      screen.getByRole("button", { name: /Fast Pace/ }).className,
+    ).toContain("border-team-ink");
+
+    const focal = screen.getByLabelText(/Play through/) as HTMLSelectElement;
+    expect(focal.name).toBe("focalPlayerId");
+    expect(focal.value).toBe("p2");
+    expect(
+      Array.from(focal.options).map((option) => option.textContent),
+    ).toEqual([
+      "Nobody (spread the ball)",
+      "Ace Guard · PG · OVR 80",
+      "Big Wing · SF · OVR 78",
+    ]);
+    expect(
+      screen.getByText(/Big Wing gets about 40% more shot chances/),
+    ).toBeTruthy();
+    expect(
+      screen.getByText(
+        "Possessions run about 2s quicker: more shots for both teams.",
+      ),
+    ).toBeTruthy();
+
+    fireEvent.change(focal, { target: { value: "" } });
+    expect(
+      screen.getByText("Shots go to whoever the usage model favours."),
+    ).toBeTruthy();
     unmount();
   });
 });

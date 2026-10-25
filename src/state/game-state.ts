@@ -73,7 +73,7 @@ import type {
   FranchisePhaseState,
 } from "@/systems/phase-engine/phase-types";
 
-export const GAME_STATE_SCHEMA_VERSION = 81;
+export const GAME_STATE_SCHEMA_VERSION = 82;
 
 /** League personnel market for staff free agency (not a business-finance concept). */
 export type StaffMarketState = {

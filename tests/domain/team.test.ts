@@ -56,6 +56,7 @@ describe("createTeam", () => {
       pace: "fast",
       offensiveEmphasis: "threePointHeavy",
       defensiveApproach: "aggressive",
+      focalPlayerId: asPlayerId("player_focal"),
     };
     const team = createTeam(validInput({ coachingPhilosophy }));
     expect(team.coachingPhilosophy).toEqual(coachingPhilosophy);

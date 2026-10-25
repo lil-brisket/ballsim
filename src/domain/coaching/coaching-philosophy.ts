@@ -1,7 +1,10 @@
 /**
  * Team coaching philosophy: discrete strategic tendencies.
- * The simulation reads this for team style (pace, shot mix, defense).
+ * The simulation reads this for team style (pace, shot mix, defense) and
+ * for the optional focal player the offense runs through.
  */
+
+import type { PlayerId } from "@/domain/ids";
 
 export type PacePhilosophy = "fast" | "balanced" | "halfCourt";
 
@@ -13,6 +16,8 @@ export type CoachingPhilosophy = {
   pace: PacePhilosophy;
   offensiveEmphasis: OffensiveEmphasis;
   defensiveApproach: DefensiveApproach;
+  /** Player the offense runs through; ignored while not on the court. */
+  focalPlayerId: PlayerId | null;
 };
 
 export const PACE_PHILOSOPHIES: readonly PacePhilosophy[] = [
@@ -38,6 +43,7 @@ export const DEFAULT_COACHING_PHILOSOPHY: Readonly<CoachingPhilosophy> = {
   pace: "balanced",
   offensiveEmphasis: "balanced",
   defensiveApproach: "balanced",
+  focalPlayerId: null,
 } as const;
 
 export function isPacePhilosophy(value: string): value is PacePhilosophy {
@@ -65,6 +71,9 @@ export function isCoachingPhilosophy(
     typeof philosophy.offensiveEmphasis === "string" &&
     isOffensiveEmphasis(philosophy.offensiveEmphasis) &&
     typeof philosophy.defensiveApproach === "string" &&
-    isDefensiveApproach(philosophy.defensiveApproach)
+    isDefensiveApproach(philosophy.defensiveApproach) &&
+    (philosophy.focalPlayerId === null ||
+      (typeof philosophy.focalPlayerId === "string" &&
+        philosophy.focalPlayerId.length > 0))
   );
 }

@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { asPlayerId } from "@/domain/ids";
 import {
   DEFAULT_COACHING_PHILOSOPHY,
   DEFENSIVE_APPROACHES,
@@ -30,11 +31,12 @@ describe("coaching philosophy domain", () => {
     ]);
   });
 
-  it("defaults to all balanced", () => {
+  it("defaults to all balanced with no focal player", () => {
     expect(DEFAULT_COACHING_PHILOSOPHY).toEqual({
       pace: "balanced",
       offensiveEmphasis: "balanced",
       defensiveApproach: "balanced",
+      focalPlayerId: null,
     });
   });
 
@@ -53,6 +55,25 @@ describe("coaching philosophy domain", () => {
         defensiveApproach: "nope",
       }),
     ).toBe(false);
+    expect(
+      isCoachingPhilosophy({
+        pace: "fast",
+        offensiveEmphasis: "balanced",
+        defensiveApproach: "balanced",
+      }),
+    ).toBe(false);
+    expect(
+      isCoachingPhilosophy({
+        ...DEFAULT_COACHING_PHILOSOPHY,
+        focalPlayerId: "",
+      }),
+    ).toBe(false);
+    expect(
+      isCoachingPhilosophy({
+        ...DEFAULT_COACHING_PHILOSOPHY,
+        focalPlayerId: "player_star",
+      }),
+    ).toBe(true);
   });
 });
 
@@ -64,7 +85,23 @@ describe("getCoachingModifiers", () => {
       shotSelection: { threePoint: 1, finishing: 1 },
       defensivePressureMultiplier: 1,
       foulActionWeightMultiplier: 1,
+      focalPlayer: null,
     });
+  });
+
+  it("boosts the focal player's usage when one is set", () => {
+    const mods = getCoachingModifiers({
+      ...DEFAULT_COACHING_PHILOSOPHY,
+      focalPlayerId: asPlayerId("player_star"),
+    });
+    expect(mods.focalPlayer).toEqual({
+      playerId: "player_star",
+      shotMultiplier:
+        COACHING_PHILOSOPHY_CONFIG.focalPlayerUsageMultiplier.shot,
+      involvementMultiplier:
+        COACHING_PHILOSOPHY_CONFIG.focalPlayerUsageMultiplier.involvement,
+    });
+    expect(mods.focalPlayer!.shotMultiplier).toBeGreaterThan(1);
   });
 
   it("applies directional pace deltas", () => {
@@ -138,6 +175,7 @@ describe("getCoachingModifiers", () => {
       pace: "fast",
       offensiveEmphasis: "inside",
       defensiveApproach: "aggressive",
+      focalPlayerId: null,
     };
     const beforeDefault = { ...DEFAULT_COACHING_PHILOSOPHY };
     const beforeConfig = structuredClone(COACHING_PHILOSOPHY_CONFIG);
@@ -146,6 +184,7 @@ describe("getCoachingModifiers", () => {
       pace: "fast",
       offensiveEmphasis: "inside",
       defensiveApproach: "aggressive",
+      focalPlayerId: null,
     });
     expect(DEFAULT_COACHING_PHILOSOPHY).toEqual(beforeDefault);
     expect(COACHING_PHILOSOPHY_CONFIG).toEqual(beforeConfig);

@@ -10,6 +10,7 @@ import {
 import { ARCHETYPE_LABELS } from "@/domain/entities/player-archetype";
 import {
   PLAYER_POSITIONS,
+  type Player,
   type PlayerPosition,
 } from "@/domain/entities/player";
 import type { DomainEventType } from "@/domain/events";
@@ -167,10 +168,27 @@ export type CoachingView = {
     pace: string;
     offensiveEmphasis: string;
     defensiveApproach: string;
+    /** Null when unset or the player has left the roster. */
+    focalPlayerId: string | null;
   };
   rotationStyle: string;
   activePreset: CoachingPresetId | "custom";
-  presets: Array<{ id: CoachingPresetId; label: string; description: string }>;
+  presets: Array<{
+    id: CoachingPresetId;
+    label: string;
+    description: string;
+    pace: string;
+    offensiveEmphasis: string;
+    defensiveApproach: string;
+    rotationStyle: string;
+  }>;
+  /** Roster players eligible as the focal player, best overall first. */
+  focalPlayerOptions: Array<{
+    playerId: string;
+    name: string;
+    position: string;
+    overall: number;
+  }>;
 };
 
 export type InjuryEffectDeltaView = {
@@ -593,16 +611,38 @@ export function toCoachingView(state: GameState): CoachingView {
     team.coachingPhilosophy,
     team.rosterManagement.rotationStyle,
   );
+  const focalPlayerOptions = team.roster
+    .map((playerId) => state.world.players[playerId])
+    .filter((player): player is Player => player != null)
+    .map((player) => ({
+      playerId: player.id,
+      name: `${player.firstName} ${player.lastName}`,
+      position: player.position,
+      overall: calculatePlayerOverall(player.position, player.attributes),
+    }))
+    .sort(
+      (a, b) => b.overall - a.overall || a.playerId.localeCompare(b.playerId),
+    );
+  const focalPlayerId = team.coachingPhilosophy.focalPlayerId;
   return {
     teamId: team.id,
-    philosophy: { ...team.coachingPhilosophy },
+    philosophy: {
+      ...team.coachingPhilosophy,
+      focalPlayerId:
+        focalPlayerId != null && team.roster.includes(focalPlayerId)
+          ? focalPlayerId
+          : null,
+    },
     rotationStyle: team.rosterManagement.rotationStyle,
     activePreset,
     presets: COACHING_PRESETS.map((preset) => ({
       id: preset.id,
       label: preset.label,
       description: preset.description,
+      ...preset.philosophy,
+      rotationStyle: preset.rotationStyle,
     })),
+    focalPlayerOptions,
   };
 }
 

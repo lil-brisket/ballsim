@@ -1,5 +1,4 @@
 import { buttonClass } from "@/components/ui/Button";
-import Link from "next/link";
 import {
   acceptStaffOfferAction,
   makeStaffOfferAction,
@@ -11,9 +10,8 @@ import { MoneyDisplay } from "@/components/owner/MoneyDisplay";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { Section } from "@/components/ui/Section";
 import { StatusBadge } from "@/components/ui/StatusBadge";
+import { HiringMarketFilters } from "@/components/staff-coaching/HiringMarketFilters";
 import { StaffTermsDialog } from "@/components/staff-coaching/StaffTermsDialog";
-import { STAFF_ROLE_DISPLAY } from "@/domain/entities/staff-roles";
-import type { StaffRole } from "@/domain/entities/staff";
 import { STAFF_DEFAULT_CONTRACT_YEARS } from "@/systems/staff-config";
 import {
   applyStaffHiringMarketFilters,
@@ -21,24 +19,6 @@ import {
   type StaffHiringMarketView,
   type StaffOfferView,
 } from "@/state/staff-hub-selectors";
-
-function marketHref(saveId: string, role?: string, sort?: string): string {
-  const params = new URLSearchParams();
-  if (role) params.set("role", role);
-  if (sort) params.set("sort", sort);
-  const query = params.toString();
-  return `/dashboard/${saveId}/staff-coaching/hiring-market${
-    query ? `?${query}` : ""
-  }`;
-}
-
-function chipClass(active: boolean): string {
-  return `rounded-full border px-3 py-1 text-sm ${
-    active
-      ? "border-team-ink text-team-ink"
-      : "border-zinc-700 text-zinc-400 hover:border-zinc-500"
-  }`;
-}
 
 export function HiringMarketPageView(props: {
   view: StaffHiringMarketView;
@@ -58,38 +38,18 @@ export function HiringMarketPageView(props: {
       <PageHeader title="Hiring Market" />
       {error ? <ErrorState message={error} /> : null}
 
-      <div className="flex flex-wrap gap-2 text-sm">
-        <Link
-          href={marketHref(saveId, undefined, sort)}
-          className={chipClass(!role)}
-          aria-current={!role ? "page" : undefined}
-        >
-          All
-        </Link>
-        {view.roleFilters.map((roleId) => (
-          <Link
-            key={roleId}
-            href={marketHref(saveId, roleId, sort)}
-            className={chipClass(role === roleId)}
-            aria-current={role === roleId ? "page" : undefined}
-          >
-            {STAFF_ROLE_DISPLAY[roleId as StaffRole] ??
-              roleId.replaceAll("_", " ")}
-          </Link>
-        ))}
-      </div>
-      <div className="flex flex-wrap gap-2 text-sm">
-        {view.sortOptions.map((option) => (
-          <Link
-            key={option}
-            href={marketHref(saveId, role, option)}
-            className={chipClass((sort ?? "overall") === option)}
-            aria-current={(sort ?? "overall") === option ? "page" : undefined}
-          >
-            Sort: {option}
-          </Link>
-        ))}
-      </div>
+      <HiringMarketFilters
+        saveId={saveId}
+        roles={view.roleFilters.map((id) => ({
+          id,
+          count: view.freeAgents.filter((agent) => agent.role === id).length,
+        }))}
+        role={role ?? ""}
+        sort={sort ?? "overall"}
+        sortOptions={view.sortOptions}
+        totalCount={filtered.length}
+        shownCount={listed.length}
+      />
 
       {openOffers.length > 0 ? (
         <Section title="My Offers">
