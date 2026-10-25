@@ -592,7 +592,7 @@ function describeDomainEvent(
             ? "Facility upgrade started"
             : "Facility upgrade completed",
         teamIds: teamId ? [teamId] : undefined,
-        href: `/dashboard/${saveId}/facilities`,
+        href: `/dashboard/${saveId}/finances/facilities`,
       };
     case "SponsorshipSigned":
     case "SponsorshipExpired":

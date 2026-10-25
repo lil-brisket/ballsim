@@ -23,7 +23,9 @@ import {
   type FinancesView,
 } from "@/state/selectors";
 import {
+  toFacilitiesView,
   toFranchiseBusinessView,
+  type FacilityRowView,
   type FranchiseBusinessView,
 } from "@/state/franchise-selectors";
 import {
@@ -58,6 +60,8 @@ export type FinanceHubView = {
   trend: FinanceTrendPoint[];
   /** Luxury tax / salary floor projection and last assessment. */
   payrollRules: PayrollRulesView;
+  /** Facility levels and upgrade costs for the Arena & Facilities tab. */
+  facilities: FacilityRowView[];
 };
 
 const FINANCE_EVENT_TYPES = new Set([
@@ -168,5 +172,6 @@ export function toFinanceHubView(state: GameState): FinanceHubView {
     decisions,
     ledger,
     trend,
+    facilities: toFacilitiesView(state),
   };
 }

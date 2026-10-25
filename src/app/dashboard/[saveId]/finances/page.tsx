@@ -5,15 +5,11 @@ import { notFound } from "next/navigation";
 import { loadFinanceHubView } from "@/application/game-service";
 import { CashPressureSection } from "@/components/finances/CashPressureSection";
 import {
-  FinancialLedger,
-  FinancialTrend,
-} from "@/components/finances/FinancialLedger";
-import {
   CashRunwayChart,
   RevenueExpenseWaterfall,
 } from "@/components/finances/FinanceCharts";
-import { PayrollRulesPanel } from "@/components/finances/PayrollRulesPanel";
 import { FinancialStatStrip } from "@/components/finances/FinancialStatStrip";
+import { FinancesSubNav } from "@/components/finances/FinancesSubNav";
 import { ManagementDecisionPanel } from "@/components/management/ManagementDecisionPanel";
 import { ErrorState } from "@/components/ui/EmptyState";
 import { MoneyDisplay } from "@/components/owner/MoneyDisplay";
@@ -35,6 +31,10 @@ function HeaderLink(props: { href: string; label: string }) {
   );
 }
 
+/**
+ * Finances › Overview — position, runway and cash pressure. Payroll,
+ * activity and arena/facility upgrades live on their own tabs (Issue #189).
+ */
 export default async function FinancesPage({
   params,
   searchParams,
@@ -50,7 +50,7 @@ export default async function FinancesPage({
   const season = pnl.seasonToDate;
   const month = pnl.currentMonth;
   const statement = finances.statement;
-  const { cashRunway, lastGameDay, forecast } = business;
+  const { cashRunway } = business;
   const opex = season.profitability.operatingExpenses;
   const base = `/dashboard/${saveId}`;
 
@@ -63,11 +63,11 @@ export default async function FinancesPage({
           <>
             <HeaderLink href={`${base}/team/contracts`} label="Contracts" />
             <HeaderLink href={`${base}/business`} label="Marketing" />
-            <HeaderLink href={`${base}/facilities`} label="Facilities" />
             <HeaderLink href={`${base}/sponsorships`} label="Sponsorships" />
           </>
         }
       />
+      <FinancesSubNav saveId={saveId} active="overview" />
       {error ? <ErrorState message={error} /> : null}
 
       {view.warnings.length > 0 ? (
@@ -132,82 +132,6 @@ export default async function FinancesPage({
       <Section title="Cash Pressure">
         <CashPressureSection cashRunway={cashRunway} />
       </Section>
-
-      <Section title="Commitments">
-        <p className="mb-2 text-sm text-zinc-500">
-          Commitment limits — these do not draw from Business Funds.
-        </p>
-        <ul className="space-y-1.5 text-sm text-zinc-300">
-          <li className="flex justify-between">
-            <span>Player payroll</span>
-            <MoneyDisplay amount={finances.playerPayroll} />
-          </li>
-          <li className="flex justify-between">
-            <span>Salary cap</span>
-            {finances.salaryCapEnabled ? (
-              <MoneyDisplay amount={finances.salaryCap} />
-            ) : (
-              <span>Off</span>
-            )}
-          </li>
-          <li className="flex justify-between">
-            <span>Cap space</span>
-            {finances.salaryCapEnabled ? (
-              <MoneyDisplay amount={finances.capSpace} />
-            ) : (
-              <span>—</span>
-            )}
-          </li>
-          <li className="flex justify-between">
-            <span>Staff commitments</span>
-            <MoneyDisplay amount={finances.staffPayroll} />
-          </li>
-          <li className="flex justify-between">
-            <span>Staff budget remaining</span>
-            <MoneyDisplay amount={finances.staffBudgetSpace} />
-          </li>
-        </ul>
-      </Section>
-
-      <PayrollRulesPanel rules={view.payrollRules} />
-
-      <Section title="Trend">
-        <FinancialTrend points={view.trend} />
-      </Section>
-
-      <Section title="Financial Activity">
-        <FinancialLedger entries={view.ledger} />
-      </Section>
-
-      {lastGameDay ? (
-        <Section title="Last home game day">
-          <ul className="space-y-1 text-sm text-zinc-300">
-            <li className="flex justify-between">
-              <span>Attendance</span>
-              <span>{lastGameDay.attendance.toLocaleString()}</span>
-            </li>
-            <li className="flex justify-between">
-              <span>Fill rate</span>
-              <span>{lastGameDay.fillRatePct}%</span>
-            </li>
-            <li className="flex justify-between">
-              <span>Gate revenue</span>
-              <MoneyDisplay amount={lastGameDay.totalGameDayRevenue} />
-            </li>
-          </ul>
-        </Section>
-      ) : null}
-
-      {forecast ? (
-        <Section title="Next home game forecast">
-          <ul className="space-y-1 text-sm text-zinc-300">
-            <li className="flex justify-between">
-              <span>Projected revenue</span>
-              <MoneyDisplay amount={forecast.totalGameDayRevenue} />
-            </li>
-          </ul>
-        </Section>
-      ) : null}
     </div>
   );
 }

@@ -58,7 +58,7 @@ describe("Franchise hub UI", () => {
     expect(screen.getByText("arena")).toBeTruthy();
     expect(screen.getByText(/1 upgrade in progress/)).toBeTruthy();
     expect(screen.getByRole("link").getAttribute("href")).toBe(
-      "/dashboard/save_1/facilities",
+      "/dashboard/save_1/finances/facilities",
     );
     expect(container.querySelector("form")).toBeNull();
   });
