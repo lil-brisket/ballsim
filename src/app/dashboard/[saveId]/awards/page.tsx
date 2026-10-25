@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { loadSaveWithHistory } from "@/application/game-service";
 import { HistoryHub } from "@/components/history/HistoryHub";
+import { historyHubHref } from "@/components/history/history-hub-links";
 import {
+  misroutedHistoryHubTab,
   toHistoryHubView,
   type HistoryHubParams,
 } from "@/state/history-hub-selectors";
@@ -17,6 +19,10 @@ type PageProps = {
 export default async function AwardsPage({ params, searchParams }: PageProps) {
   const { saveId } = await params;
   const query = await searchParams;
+  const misrouted = misroutedHistoryHubTab("awards", query);
+  if (misrouted) {
+    redirect(historyHubHref(saveId, misrouted, query));
+  }
   // Long-retired players and old seasons live in the stored history.
   const loaded = await loadSaveWithHistory(saveId);
   if (!loaded) {

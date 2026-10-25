@@ -2,6 +2,7 @@ import { AwardHistoryPanel } from "@/components/history/AwardHistoryPanel";
 import { CurrentSeasonAwards } from "@/components/history/CurrentSeasonAwards";
 import { HistoryHubHeader } from "@/components/history/HistoryHubHeader";
 import { LeagueHistoryTable } from "@/components/history/LeagueHistoryTable";
+import { RetiredJerseysPanel } from "@/components/history/LegacyPanels";
 import { PlayerHistoryPanel } from "@/components/history/PlayerHistoryPanel";
 import { TeamRecordsPanel } from "@/components/history/TeamRecordsPanel";
 import type { HistoryHubView } from "@/state/history-hub-selectors";
@@ -48,6 +49,13 @@ export function HistoryHub(props: { view: HistoryHubView }) {
           route={view.route}
           index={view.playerIndex}
           selectedPlayer={view.selectedPlayer}
+        />
+      ) : null}
+      {view.retiredJerseys ? (
+        <RetiredJerseysPanel
+          saveId={view.saveId}
+          returnPath={`/dashboard/${view.saveId}/team/history?tab=jerseys`}
+          jerseys={view.retiredJerseys}
         />
       ) : null}
     </>

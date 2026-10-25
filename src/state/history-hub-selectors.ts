@@ -1,5 +1,6 @@
 /**
- * League History hub view model shared by /awards and /history.
+ * History hub view model shared by /awards (awards only), /history (league
+ * history) and /team/history (team records, player history, retired jerseys).
  * Composes the awards, league, team, and player history selectors and only
  * builds the data the active tab needs.
  */
@@ -21,6 +22,7 @@ import {
   type TeamHistoryView,
   type TeamRecordsRow,
 } from "@/state/franchise-selectors";
+import { toLegacyView, type LegacyView } from "@/state/legacy-selectors";
 import {
   toLeagueHistoryView,
   type LeagueHistoryView,
@@ -41,11 +43,22 @@ export const HISTORY_HUB_TABS = [
   "league",
   "teams",
   "players",
+  "jerseys",
 ] as const;
 
 export type HistoryHubTab = (typeof HISTORY_HUB_TABS)[number];
 
-export type HistoryHubRoute = "awards" | "history";
+export type HistoryHubRoute = "awards" | "history" | "team";
+
+/** Tabs each route shows, default first. */
+export const HISTORY_HUB_ROUTE_TABS: Record<
+  HistoryHubRoute,
+  readonly HistoryHubTab[]
+> = {
+  awards: ["current", "awards"],
+  history: ["league"],
+  team: ["teams", "players", "jerseys"],
+};
 
 export type HistoryHubParams = {
   tab?: string;
@@ -79,6 +92,8 @@ export type HistoryHubView = {
   ownerStory: OwnerStoryItem[] | null;
   playerIndex: PlayerHistoryIndexEntry[] | null;
   selectedPlayer: PlayerHistoryView | null;
+  /** Active owner team's retired numbers and legends who can join them. */
+  retiredJerseys: Pick<LegacyView, "retiredNumbers" | "legends"> | null;
 };
 
 function isHistoryHubTab(value: string | undefined): value is HistoryHubTab {
@@ -98,16 +113,37 @@ function parseSeason(
 }
 
 /**
- * Legacy deep links: /awards → Current Season (or Awards when ?season= names
- * a past year); /history → Team Records for the active owner team.
+ * The route that owns `params.tab` when it is not the current route, so old
+ * links such as /awards?tab=teams can redirect. Null when no redirect is due.
+ */
+export function misroutedHistoryHubTab(
+  route: HistoryHubRoute,
+  params: HistoryHubParams,
+): HistoryHubRoute | null {
+  if (!isHistoryHubTab(params.tab)) return null;
+  const tab = params.tab;
+  if (HISTORY_HUB_ROUTE_TABS[route].includes(tab)) return null;
+  const owner = (Object.keys(HISTORY_HUB_ROUTE_TABS) as HistoryHubRoute[]).find(
+    (candidate) => HISTORY_HUB_ROUTE_TABS[candidate].includes(tab),
+  );
+  return owner ?? null;
+}
+
+/**
+ * The tab named in `params` when the route shows it. Otherwise /awards opens
+ * Current Season (or Awards when ?season= names a past year or nothing has
+ * been won yet), and other routes open their first tab.
  */
 export function resolveHistoryHubTab(
   state: GameState,
   route: HistoryHubRoute,
   params: HistoryHubParams,
 ): HistoryHubTab {
-  if (isHistoryHubTab(params.tab)) return params.tab;
-  if (route === "history") return "teams";
+  const tabs = HISTORY_HUB_ROUTE_TABS[route];
+  if (isHistoryHubTab(params.tab) && tabs.includes(params.tab)) {
+    return params.tab;
+  }
+  if (route !== "awards") return tabs[0]!;
   const season = parseSeason(params.season);
   if (season !== undefined && season !== state.competition.season.year) {
     return "awards";
@@ -115,10 +151,10 @@ export function resolveHistoryHubTab(
   const currentHasWinners = toCurrentSeasonAwardGroups(state).some((group) =>
     group.slots.some((slot) => slot.status === "won"),
   );
-  if (route === "awards" && !currentHasWinners) {
-    return "awards";
-  }
-  return "current";
+  // Races give the tab something to show before the first award is decided.
+  return currentHasWinners || state.competition.season.phase === "regular"
+    ? "current"
+    : "awards";
 }
 
 function toOwnerStory(state: GameState): OwnerStoryItem[] {
@@ -162,11 +198,12 @@ export function toHistoryHubView(
     ownerStory: null,
     playerIndex: null,
     selectedPlayer: null,
+    retiredJerseys: null,
   };
 
   switch (tab) {
     case "current":
-      view.currentSeason = toCurrentSeasonAwardGroups(state);
+      view.currentSeason = toCurrentSeasonAwardGroups(state, { races: true });
       break;
     case "awards": {
       const awardId =
@@ -186,7 +223,7 @@ export function toHistoryHubView(
       view.teamRecords = toTeamRecordsView(state);
       const ownerTeamId = state.user.activeOwnerTeamId;
       const teamId =
-        params.team ?? (route === "history" ? ownerTeamId : undefined);
+        params.team ?? (route === "team" ? ownerTeamId : undefined);
       if (teamId && state.business.franchiseHistory[teamId]) {
         view.selectedTeam = toTeamHistoryView(state, teamId);
         if (teamId === ownerTeamId) {
@@ -202,6 +239,11 @@ export function toHistoryHubView(
         view.selectedPlayer = toPlayerHistoryView(state, params.player);
       }
       break;
+    case "jerseys": {
+      const { retiredNumbers, legends } = toLegacyView(state);
+      view.retiredJerseys = { retiredNumbers, legends };
+      break;
+    }
   }
 
   return view;

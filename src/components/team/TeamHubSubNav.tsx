@@ -15,6 +15,7 @@ const LINKS = [
     label: "Lineup & Rotation",
   },
   { key: "contracts", suffix: "/team/contracts", label: "Contracts" },
+  { key: "history", suffix: "/team/history", label: "History" },
   {
     key: "transactions",
     suffix: "/team-management/transactions",

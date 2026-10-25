@@ -330,7 +330,7 @@ export function toFranchiseHubView(state: GameState): FranchiseHubView {
           history.seasons.length > 0
             ? `${history.seasons.length} season${history.seasons.length === 1 ? "" : "s"} recorded`
             : "Franchise season archive",
-        href: `${base}/history`,
+        href: `${base}/team/history`,
         cta: "View History",
       },
     ],
