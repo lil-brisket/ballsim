@@ -6,13 +6,39 @@ import { Section } from "@/components/ui/Section";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { PlayerEntityLink } from "@/components/entity/PlayerEntityLink";
 import { TeamEntityLink } from "@/components/entity/TeamEntityLink";
-import { toFanVotingHubView } from "@/state/fan-voting-selectors";
+import { formatGameDate } from "@/presentation/game-date";
+import {
+  toFanVotingHubView,
+  type FanVotingHubView,
+} from "@/state/fan-voting-selectors";
 
 export const metadata: Metadata = { title: "Fan Voting" };
 
 type PageProps = {
   params: Promise<{ saveId: string }>;
 };
+
+function noVotesMessage(hub: FanVotingHubView): {
+  title: string;
+  message: string;
+} {
+  if (hub.status === "scheduled" && hub.openDate) {
+    return {
+      title: "Voting hasn't started",
+      message: `Fans can start voting on ${formatGameDate(hub.openDate, { weekday: true, year: true })}. Vote totals will show here once voting opens.`,
+    };
+  }
+  if (hub.status === "open") {
+    return {
+      title: "Voting is open",
+      message: "The first vote totals arrive after the next day of voting.",
+    };
+  }
+  return {
+    title: "No voting results",
+    message: "Fan voting has not been planned for this season yet.",
+  };
+}
 
 function movementGlyph(movement: string): string {
   if (movement === "up") return "▲";
@@ -37,17 +63,14 @@ export default async function FanVotingPage({ params }: PageProps) {
             ? `Voting closes in ${hub.daysRemaining} day${hub.daysRemaining === 1 ? "" : "s"}`
             : hub.status === "finalized" || hub.status === "closed"
               ? "Voting has closed"
-              : hub.status === "scheduled"
-                ? `Opens ${hub.openDate ?? ""}`
+              : hub.status === "scheduled" && hub.openDate
+                ? `Opens ${formatGameDate(hub.openDate, { year: true })}`
                 : "No active fan voting campaign"
         }
       />
 
       {hub.conferences.length === 0 ? (
-        <EmptyState
-          title="No voting categories"
-          message="Fan voting has not been planned for this season yet."
-        />
+        <EmptyState {...noVotesMessage(hub)} />
       ) : (
         <div className="grid gap-4 md:grid-cols-2">
           {hub.conferences.map((conference) => (

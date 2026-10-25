@@ -10,6 +10,7 @@ import { createInitialGameState } from "@/state/create-initial-state";
 import type { GameState } from "@/state/game-state";
 import {
   FAN_VOTE_LEADERS_PER_CONFERENCE,
+  FAN_VOTING_HUB_TITLE,
   toFanVotingHubView,
 } from "@/state/fan-voting-selectors";
 import { bootstrapWorld } from "@/systems/world-pipeline";
@@ -74,6 +75,36 @@ function voted(category: FanVoteCategory, offset = 0): FanVoteCategory {
 }
 
 describe("toFanVotingHubView", () => {
+  it("shows no columns before the first vote tick", () => {
+    const state = bootRegularSeason();
+    const campaign = campaignOf(state);
+    expect(campaign.status).toBe("scheduled");
+
+    const hub = toFanVotingHubView(state);
+    expect(hub.title).toBe(FAN_VOTING_HUB_TITLE);
+    expect(hub.status).toBe("scheduled");
+    expect(hub.openDate).toBe(campaign.openDate);
+    expect(hub.conferences).toEqual([]);
+  });
+
+  it("titles legacy midseason campaigns as Fan Voting", () => {
+    const state = bootRegularSeason();
+    const campaign = campaignOf(state);
+    const legacy: GameState = {
+      ...state,
+      competition: {
+        ...state.competition,
+        seasonEvents: {
+          ...state.competition.seasonEvents,
+          fanVoting: {
+            [campaign.id]: { ...campaign, title: "Midseason Fan Voting" },
+          },
+        },
+      },
+    };
+    expect(toFanVotingHubView(legacy).title).toBe("Fan Voting");
+  });
+
   it("lists one column per conference, top 12 by votes", () => {
     const state = bootRegularSeason();
     const categories = Object.values(campaignOf(state).categories).map((c) =>
