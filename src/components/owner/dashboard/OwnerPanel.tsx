@@ -1,13 +1,19 @@
 "use client";
 
 import { useState } from "react";
+import { resolveBoardDirectiveAction } from "@/application/actions";
+import { buttonClass } from "@/components/ui/Button";
+import { formatMoney } from "@/components/owner/MoneyDisplay";
 import type { OwnerDashboardOwner } from "@/state/owner-dashboard";
 import { ObjectiveCard } from "@/components/game/ObjectiveCard";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Section } from "@/components/ui/Section";
 
-export function OwnerPanel(props: { owner: OwnerDashboardOwner }) {
-  const { owner } = props;
+export function OwnerPanel(props: {
+  owner: OwnerDashboardOwner;
+  saveId: string;
+}) {
+  const { owner, saveId } = props;
   const ownership = owner.ownership;
   const [showWhy, setShowWhy] = useState(false);
 
@@ -49,6 +55,10 @@ export function OwnerPanel(props: { owner: OwnerDashboardOwner }) {
             </ul>
           ) : null}
         </div>
+
+        {ownership.board.stage !== "none" ? (
+          <BoardPressureCard board={ownership.board} saveId={saveId} />
+        ) : null}
 
         <div className="rounded-xl border border-zinc-800 bg-zinc-900/40 px-4 py-3">
           <p className="text-sm text-zinc-400">Ownership mood</p>
@@ -166,6 +176,48 @@ export function OwnerPanel(props: { owner: OwnerDashboardOwner }) {
         />
       </div>
     </Section>
+  );
+}
+
+function BoardPressureCard(props: {
+  board: OwnerDashboardOwner["ownership"]["board"];
+  saveId: string;
+}) {
+  const { board, saveId } = props;
+  return (
+    <div
+      className={`rounded-xl border px-4 py-3 ${
+        board.stage === "warning"
+          ? "border-warning/40 bg-warning/10"
+          : "border-rose-900/60 bg-rose-950/20"
+      }`}
+      role={board.decisionPending ? "alert" : undefined}
+    >
+      <p className="text-sm text-zinc-400">The board</p>
+      <p className="mt-1 text-sm font-medium text-zinc-100">{board.label}</p>
+      <p className="mt-1 text-sm text-zinc-300">{board.detail}</p>
+      {board.decisionPending ? (
+        <div className="mt-3 flex flex-wrap gap-2">
+          <form action={resolveBoardDirectiveAction}>
+            <input type="hidden" name="saveId" value={saveId} />
+            <input type="hidden" name="choice" value="accept_plan" />
+            <button type="submit" className={buttonClass()}>
+              Accept the turnaround plan
+            </button>
+          </form>
+          <form action={resolveBoardDirectiveAction}>
+            <input type="hidden" name="saveId" value={saveId} />
+            <input type="hidden" name="choice" value="settle" />
+            <button
+              type="submit"
+              className={buttonClass({ variant: "primary" })}
+            >
+              Settle with the board ({formatMoney(board.settlementCost)})
+            </button>
+          </form>
+        </div>
+      ) : null}
+    </div>
   );
 }
 

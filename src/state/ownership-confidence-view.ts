@@ -3,12 +3,50 @@ import { getActiveOwnedFranchise } from "@/state/owner-context";
  * Dashboard view model for ownership expectations + confidence.
  */
 
-import type { OwnershipMood } from "@/domain/entities/ownership-confidence";
+import type {
+  BoardPressureStage,
+  OwnershipMood,
+} from "@/domain/entities/ownership-confidence";
 import { ownershipMoodLabel } from "@/domain/entities/ownership-confidence";
 import type { OwnershipExpectations } from "@/domain/entities/ownership-expectations";
 import type { GameState } from "@/state/game-state";
 import { buildOwnershipExpectations } from "@/systems/ownership-expectations";
 import { evaluateStrategicPosture } from "@/systems/ownership-strategic-posture";
+import { BOARD_SETTLEMENT_COST } from "@/systems/board-pressure";
+
+export type BoardPressureView = {
+  stage: BoardPressureStage;
+  label: string;
+  detail: string;
+  /** The board's "wants changes" decision is waiting; time cannot advance. */
+  decisionPending: boolean;
+  settlementCost: number;
+};
+
+const BOARD_STAGE_COPY: Record<
+  BoardPressureStage,
+  { label: string; detail: string }
+> = {
+  none: {
+    label: "No pressure",
+    detail: "The board is not acting on ownership's mood.",
+  },
+  warning: {
+    label: "Formal warning",
+    detail:
+      "Another season that ends with ownership concerned or displeased will freeze discretionary spending.",
+  },
+  restricted: {
+    label: "Spending frozen",
+    detail:
+      "No facility upgrades, marketing increases or game-day promotions. A season that ends with ownership supportive or confident lifts the freeze; another bad one brings the board's demands.",
+  },
+  ultimatum: {
+    label: "The board wants changes",
+    detail:
+      "Accept the board's turnaround plan (the spending freeze stays and ownership remains concerned), or settle with the board's partners to lift the freeze.",
+  },
+};
 
 export type OwnershipConfidenceView = {
   philosophy: string;
@@ -27,6 +65,7 @@ export type OwnershipConfidenceView = {
   expectationVsReality: string;
   competitiveExpectation: string;
   expectations: OwnershipExpectations;
+  board: BoardPressureView;
 };
 
 const PHILOSOPHY_LABELS: Record<string, string> = {
@@ -78,5 +117,11 @@ export function toOwnershipConfidenceView(
     expectationVsReality: posture.gap.summary,
     competitiveExpectation: expectations.competitiveExpectation,
     expectations,
+    board: {
+      stage: confidence.boardPressure.stage,
+      ...BOARD_STAGE_COPY[confidence.boardPressure.stage],
+      decisionPending: confidence.boardPressure.stage === "ultimatum",
+      settlementCost: BOARD_SETTLEMENT_COST,
+    },
   };
 }

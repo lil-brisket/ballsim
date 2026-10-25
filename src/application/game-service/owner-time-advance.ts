@@ -1,4 +1,5 @@
 import "server-only";
+import { hasPendingBoardDirective } from "@/systems/board-pressure";
 import {
   advanceBlockedReason,
   getActiveParticipant,
@@ -126,6 +127,12 @@ export async function advanceOwnerTime(
             : "";
         return fail(
           `${teamLabel} needs your attention before time can advance. Resolve the pending owner decision first.${switchHint}`,
+        );
+      }
+
+      if (hasPendingBoardDirective(workingState)) {
+        return fail(
+          "The board wants changes. Answer the board on the dashboard before time can advance.",
         );
       }
 

@@ -28,6 +28,7 @@ import {
 import { generateAndCacheAnnualReports } from "@/systems/franchise-report";
 import { processSeasonalLeagueEconomy } from "@/systems/league-economy";
 import { appendOwnershipSeasonNote } from "@/systems/ownership-confidence-engine";
+import { reviewBoardPressure } from "@/systems/board-pressure";
 import { tickRelocationCooldowns } from "@/systems/relocation";
 import { processSeasonPlayerDevelopment } from "@/systems/season-player-development";
 import { processDevelopmentLeagueSeasonTransition } from "@/systems/development-league/season-transition";
@@ -585,6 +586,7 @@ function finalizeCompletedSeason(state: GameState, rng: Rng): SystemResult {
   events.push(...reports.events);
 
   current = appendOwnershipSeasonNote(current);
+  current = reviewBoardPressure(current);
 
   const dlTransition = processDevelopmentLeagueSeasonTransition(current);
   current = dlTransition.state;

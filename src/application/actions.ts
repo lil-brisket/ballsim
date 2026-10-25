@@ -81,6 +81,7 @@ export {
   negotiateStaffOfferAction,
   acceptStaffOfferAction,
   upgradeFacilityAction,
+  resolveBoardDirectiveAction,
   setTicketPriceAction,
   setMarketingBudgetAction,
   scheduleGameDayPromotionAction,

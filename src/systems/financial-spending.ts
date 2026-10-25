@@ -7,6 +7,7 @@ import {
   type BusinessHealthInput,
   type FinancialHealthInput,
 } from "@/systems/financial-health";
+import { isDiscretionarySpendingFrozen } from "@/systems/board-pressure";
 import { assertSufficientBusinessFunds } from "@/systems/team-finances";
 
 export function businessHealthInputFromState(
@@ -39,16 +40,22 @@ export function financialHealthInputFromState(
 }
 
 /**
- * Blocks capital spend when the franchise lacks sufficient business funds.
- * No longer uses insolvency / runway health gates.
+ * Blocks discretionary spend while the board has frozen it (see
+ * board-pressure.ts). Funds are checked by callers that know the cost;
+ * no insolvency / runway health gates.
  */
 export function assertCapitalSpendingAllowed(
   state: GameState,
   teamId: TeamId,
-  _action: string,
+  action: string,
 ): void {
   if (!isOwnedFranchise(state, teamId)) {
     return;
+  }
+  if (isDiscretionarySpendingFrozen(state, teamId)) {
+    throw new Error(
+      `${action} is frozen: the board has restricted discretionary spending.`,
+    );
   }
   // Cost is checked by the caller via assertSufficientBusinessFunds when known;
   // this remains as a soft gate for budget increases (cost = 0 incremental).

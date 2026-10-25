@@ -141,6 +141,7 @@ export {
   negotiateOwnerStaffOffer,
   acceptOwnerStaffOffer,
   upgradeOwnerFacility,
+  resolveOwnerBoardDirective,
   setOwnerTicketPrice,
   setOwnerMarketingBudget,
   signOwnerSponsorship,

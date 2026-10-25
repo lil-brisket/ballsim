@@ -384,3 +384,35 @@ export function migrateV78ToV79(state: GameState): GameState {
     },
   };
 }
+
+/**
+ * Deterministic v79 → v80: add the board's escalation stage to every owned
+ * franchise's ownership confidence, starting with no pressure.
+ */
+export function migrateV79ToV80(state: GameState): GameState {
+  const ownedFranchises = Object.fromEntries(
+    Object.entries(state.user.ownedFranchises).map(([teamId, franchise]) => [
+      teamId,
+      {
+        ...franchise,
+        ownershipConfidence: {
+          ...franchise.ownershipConfidence,
+          boardPressure: franchise.ownershipConfidence.boardPressure ?? {
+            stage: "none" as const,
+          },
+        },
+      },
+    ]),
+  );
+  return {
+    ...state,
+    meta: {
+      ...state.meta,
+      schemaVersion: 80,
+    },
+    user: {
+      ...state.user,
+      ownedFranchises,
+    },
+  };
+}

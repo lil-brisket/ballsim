@@ -13,7 +13,9 @@ import {
   selectOwnerDraftProspect,
   selectOwnerTeam,
   resolveOwnerDraftClassDecision,
+  resolveOwnerBoardDirective,
 } from "@/application/game-service";
+import { hasPendingBoardDirective } from "@/systems/board-pressure";
 import {
   cloneGameSettings,
   CBL_GAME_SETTINGS,
@@ -239,6 +241,19 @@ async function handleBlockedGates(
       if (!declined.ok) {
         throw new Error(declined.error);
       }
+    }
+    return "handled";
+  }
+
+  // An unattended owner takes the board's plan (free, keeps the freeze).
+  if (hasPendingBoardDirective(state)) {
+    const answered = await resolveOwnerBoardDirective(
+      saveId,
+      "accept_plan",
+      store,
+    );
+    if (!answered.ok) {
+      throw new Error(answered.error);
     }
     return "handled";
   }

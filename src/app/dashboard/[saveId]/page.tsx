@@ -217,7 +217,7 @@ export default async function DashboardPage({
         <TeamSnapshotPanel team={dash.team} saveId={saveId} />
         <AroundTheLeaguePanel timeline={dash.mediaTimeline} saveId={saveId} />
         <FranchiseHealthPanel health={dash.health} insights={dash.insights} />
-        <OwnerPanel owner={dash.owner} />
+        <OwnerPanel owner={dash.owner} saveId={saveId} />
         <div className="opacity-90 lg:col-span-2">
           <RecentActivity activity={dash.activity.slice(0, 5)} />
         </div>
