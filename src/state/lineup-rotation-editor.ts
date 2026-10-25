@@ -145,27 +145,6 @@ export function createEditorState(
   };
 }
 
-export function cloneEditorState(
-  state: LineupRotationEditorState,
-): LineupRotationEditorState {
-  return {
-    starters: state.starters.map((s) => ({ ...s })),
-    bench: [...state.bench],
-    inactive: [...state.inactive],
-    rows: state.rows.map((row) => ({
-      ...row,
-      preferredPositions: [...row.preferredPositions],
-      secondaryPositions: [...row.secondaryPositions],
-    })),
-    preset: state.preset,
-    closingPolicy: state.closingPolicy,
-    closingIds: [...state.closingIds],
-    rotationStyle: state.rotationStyle,
-    rotationPhilosophy: state.rotationPhilosophy,
-    rotationDepth: state.rotationDepth,
-  };
-}
-
 /** Detect duplicate player IDs across starter / bench / inactive groups. */
 export function findDuplicateAssignments(
   state: LineupRotationEditorState,
@@ -247,43 +226,6 @@ export function setStarterSlot(
   return { ...next, rows: syncRowGroups(next) };
 }
 
-export function moveBenchToInactive(
-  state: LineupRotationEditorState,
-  playerId: string,
-): LineupRotationEditorState {
-  if (!state.bench.includes(playerId)) {
-    return state;
-  }
-  const next: LineupRotationEditorState = {
-    ...state,
-    bench: state.bench.filter((id) => id !== playerId),
-    inactive: state.inactive.includes(playerId)
-      ? state.inactive
-      : [...state.inactive, playerId],
-    closingIds: state.closingIds.filter((id) => id !== playerId),
-    preset: "custom",
-  };
-  return { ...next, rows: syncRowGroups(next) };
-}
-
-export function moveInactiveToBench(
-  state: LineupRotationEditorState,
-  playerId: string,
-): LineupRotationEditorState {
-  if (!state.inactive.includes(playerId)) {
-    return state;
-  }
-  const next: LineupRotationEditorState = {
-    ...state,
-    inactive: state.inactive.filter((id) => id !== playerId),
-    bench: state.bench.includes(playerId)
-      ? state.bench
-      : [...state.bench, playerId],
-    preset: "custom",
-  };
-  return { ...next, rows: syncRowGroups(next) };
-}
-
 export function updateRotationRow(
   state: LineupRotationEditorState,
   playerId: string,
@@ -303,116 +245,6 @@ export function updateRotationRow(
       }
       return next;
     }),
-  };
-}
-
-export function applyOptimizedManagement(
-  state: LineupRotationEditorState,
-  management: {
-    startingLineup: Array<{ playerId: string; slot: string }>;
-    bench: string[];
-    inactive: string[];
-    rotation: Array<{
-      playerId: string;
-      targetMinutes: number;
-      rotationPriority: number;
-      rotationStatus: string;
-      role: string;
-      preferredPositions: string[];
-      secondaryPositions: string[];
-      minutePriorityBias: number;
-      overrideMedicalRecommendation?: boolean;
-    }>;
-    rotationPreset: string;
-    closingLineupPolicy: string;
-    closingLineupIds: string[];
-    rotationStyle?: string;
-    rotationPhilosophy?: string;
-    rotationDepth?: number;
-  },
-): LineupRotationEditorState {
-  const byId = new Map(management.rotation.map((e) => [e.playerId, e]));
-  const starterIds = new Set(management.startingLineup.map((s) => s.playerId));
-  const inactiveIds = new Set(management.inactive);
-  const rows = state.rows.map((row) => {
-    const entry = byId.get(row.playerId);
-    if (!entry) {
-      if (inactiveIds.has(row.playerId)) {
-        return {
-          ...row,
-          groupRole: "inactive",
-          targetMinutes: 0,
-          projectedMinutes: 0,
-          rotationStatus: "inactive",
-        };
-      }
-      return row;
-    }
-    return {
-      ...row,
-      targetMinutes: entry.targetMinutes,
-      projectedMinutes: entry.targetMinutes,
-      rotationPriority: entry.rotationPriority,
-      rotationStatus: entry.rotationStatus,
-      role: entry.role,
-      preferredPositions: [...entry.preferredPositions],
-      secondaryPositions: [...entry.secondaryPositions],
-      minutePriorityBias: entry.minutePriorityBias,
-      overrideMedicalRecommendation:
-        entry.overrideMedicalRecommendation === true,
-      groupRole: inactiveIds.has(row.playerId)
-        ? "inactive"
-        : starterIds.has(row.playerId)
-          ? "starter"
-          : "bench",
-    };
-  });
-
-  // Add rows for players present in optimized rotation but missing locally
-  for (const entry of management.rotation) {
-    if (rows.some((r) => r.playerId === entry.playerId)) {
-      continue;
-    }
-    const meta = state.rows.find((r) => r.playerId === entry.playerId);
-    rows.push({
-      playerId: entry.playerId,
-      targetMinutes: entry.targetMinutes,
-      rotationPriority: entry.rotationPriority,
-      rotationStatus: entry.rotationStatus,
-      role: entry.role,
-      preferredPositions: [...entry.preferredPositions],
-      secondaryPositions: [...entry.secondaryPositions],
-      minutePriorityBias: entry.minutePriorityBias,
-      overrideMedicalRecommendation:
-        entry.overrideMedicalRecommendation === true,
-      groupRole: starterIds.has(entry.playerId) ? "starter" : "bench",
-      firstName: meta?.firstName ?? entry.playerId,
-      lastName: meta?.lastName ?? "",
-      position: meta?.position ?? "SF",
-      overall: meta?.overall,
-      actualMinutes: 0,
-      projectedMinutes: entry.targetMinutes,
-      availabilityStatus: meta?.availabilityStatus ?? "available",
-      availabilityLabel: meta?.availabilityLabel ?? "Available",
-    });
-  }
-
-  return {
-    ...state,
-    starters: management.startingLineup.map((s) => ({
-      playerId: s.playerId,
-      slot: s.slot,
-    })),
-    bench: [...management.bench],
-    inactive: [...management.inactive],
-    rows,
-    preset: management.rotationPreset,
-    closingPolicy: management.closingLineupPolicy,
-    closingIds: management.closingLineupIds.map(String),
-    rotationStyle: management.rotationStyle ?? state.rotationStyle,
-    rotationPhilosophy:
-      management.rotationPhilosophy ?? state.rotationPhilosophy,
-    rotationDepth: management.rotationDepth ?? state.rotationDepth,
   };
 }
 
@@ -471,54 +303,4 @@ export function collectPlayerCards(
     });
   }
   return map;
-}
-
-export function buildOptimizeChangelog(
-  before: EditableRotationRow[],
-  after: EditableRotationRow[],
-): string[] {
-  const beforeById = new Map(before.map((row) => [row.playerId, row]));
-  const lines: string[] = [];
-  for (const row of after) {
-    const prev = beforeById.get(row.playerId);
-    if (prev == null) continue;
-    const parts: string[] = [];
-    if (prev.targetMinutes !== row.targetMinutes) {
-      parts.push(`${prev.targetMinutes} → ${row.targetMinutes} MPG`);
-    }
-    if (prev.role !== row.role) {
-      parts.push(`role ${prev.role} → ${row.role}`);
-    }
-    if (prev.rotationPriority !== row.rotationPriority) {
-      parts.push(`pri ${prev.rotationPriority} → ${row.rotationPriority}`);
-    }
-    if (parts.length > 0) {
-      lines.push(`${row.firstName} ${row.lastName}: ${parts.join(", ")}`);
-    }
-  }
-  return lines;
-}
-
-export const CORE_ROTATION_ROLES = new Set([
-  "starter",
-  "sixth_man",
-  "rotation",
-]);
-
-export const DEPTH_ROTATION_ROLES = new Set([
-  "bench",
-  "deep_bench",
-  "emergency",
-]);
-
-export function rotationGroupLabel(
-  row: EditableRotationRow,
-): "core" | "depth" | "inactive" {
-  if (row.groupRole === "inactive") {
-    return "inactive";
-  }
-  if (CORE_ROTATION_ROLES.has(row.role)) {
-    return "core";
-  }
-  return "depth";
 }

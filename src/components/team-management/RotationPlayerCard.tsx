@@ -22,8 +22,6 @@ export type RotationPlayerCardData = {
   targetMinutes: number;
   projectedMinutes?: number;
   actualMinutes: number;
-  priority: number;
-  minutePriorityBias: number;
   seasonStats?: {
     mpg: number;
     ppg: number;
@@ -76,12 +74,6 @@ function statusLabel(status: string): string {
     default:
       return status;
   }
-}
-
-function playBiasLabel(bias: number): string {
-  if (bias < 0) return "Play Less";
-  if (bias > 0) return "Play More";
-  return "Normal";
 }
 
 function formatGamesRemaining(
@@ -337,21 +329,9 @@ export function RotationPlayerCard(props: {
                 </dd>
               </div>
               <div className="rounded border border-zinc-800 px-3 py-2">
-                <dt className="text-sm text-zinc-400">Priority</dt>
-                <dd className="tabular-nums text-zinc-100">
-                  {player.priority}
-                </dd>
-              </div>
-              <div className="rounded border border-zinc-800 px-3 py-2">
                 <dt className="text-sm text-zinc-400">Role</dt>
                 <dd className="capitalize text-zinc-100">
                   {player.role.replaceAll("_", " ")}
-                </dd>
-              </div>
-              <div className="rounded border border-zinc-800 px-3 py-2">
-                <dt className="text-sm text-zinc-400">Play / Usage</dt>
-                <dd className="text-zinc-100">
-                  {playBiasLabel(player.minutePriorityBias)}
                 </dd>
               </div>
             </dl>

@@ -4,11 +4,8 @@ import type {
   RotationView,
 } from "@/state/team-management-selectors";
 import {
-  cloneEditorState,
   createEditorState,
   findDuplicateAssignments,
-  moveBenchToInactive,
-  moveInactiveToBench,
   setStarterSlot,
   toSavePayload,
   updateRotationRow,
@@ -237,40 +234,13 @@ describe("lineup-rotation-editor", () => {
     expect(p6?.role).toBe("starter");
   });
 
-  it("no player occupies multiple groups after moves", () => {
-    const { lineup, rotation } = fixture();
-    let state = createEditorState(lineup, rotation);
-    state = moveBenchToInactive(state, "p7");
-    state = moveInactiveToBench(state, "p8");
-    expect(findDuplicateAssignments(state)).toEqual([]);
-    expect(state.inactive).toContain("p7");
-    expect(state.bench).toContain("p8");
-    expect(state.inactive).not.toContain("p8");
-  });
-
   it("inactive players cannot have minutes in local state", () => {
     const { lineup, rotation } = fixture();
     let state = createEditorState(lineup, rotation);
-    state = moveBenchToInactive(state, "p6");
-    const row = state.rows.find((r) => r.playerId === "p6");
-    expect(row?.targetMinutes).toBe(0);
-    state = updateRotationRow(state, "p6", { targetMinutes: 20 });
-    expect(state.rows.find((r) => r.playerId === "p6")?.targetMinutes).toBe(0);
+    state = updateRotationRow(state, "p8", { targetMinutes: 20 });
+    expect(state.rows.find((r) => r.playerId === "p8")?.targetMinutes).toBe(0);
     const payload = toSavePayload(state);
-    expect(payload.rotation.some((e) => e.playerId === "p6")).toBe(false);
-    expect(payload.inactive).toContain("p6");
-  });
-
-  it("undo snapshot only changes local state representation", () => {
-    const { lineup, rotation } = fixture();
-    const initial = createEditorState(lineup, rotation);
-    const snapshot = cloneEditorState(initial);
-    const edited = setStarterSlot(initial, "SG", "p6");
-    expect(edited.starters.find((s) => s.slot === "SG")?.playerId).toBe("p6");
-    const restored = cloneEditorState(snapshot);
-    expect(restored.starters.find((s) => s.slot === "SG")?.playerId).toBe("p2");
-    expect(JSON.stringify(toSavePayload(restored))).toBe(
-      JSON.stringify(toSavePayload(initial)),
-    );
+    expect(payload.rotation.some((e) => e.playerId === "p8")).toBe(false);
+    expect(payload.inactive).toContain("p8");
   });
 });
