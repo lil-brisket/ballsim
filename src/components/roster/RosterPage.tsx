@@ -117,8 +117,14 @@ export function RosterPage(props: { view: RosterPageView }) {
 
       {tab === "trade-finder" ? (
         <TradeFinderView
+          // Reset selection and offers once a trade changes what we own.
+          key={[
+            ...view.roster.map((player) => player.playerId),
+            ...view.tradeFinder.picks.map((pick) => pick.id),
+          ].join(",")}
           saveId={view.saveId}
           roster={view.roster}
+          picks={view.tradeFinder.picks}
           suggestedOutgoingPlayerId={view.tradeFinder.suggestedOutgoingPlayerId}
         />
       ) : null}

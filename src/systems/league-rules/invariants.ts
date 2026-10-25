@@ -7,7 +7,7 @@
 export const DRAFT_ROUNDS = 2 as const;
 
 /** Max future seasons ahead a draft pick may be traded (inclusive). */
-export const DRAFT_PICK_TRADE_HORIZON_YEARS = 3;
+export const DRAFT_PICK_TRADE_HORIZON_YEARS = 2;
 
 /**
  * Trade deadline = this fraction of regular-season calendar span

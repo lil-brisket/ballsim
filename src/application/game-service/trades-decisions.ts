@@ -8,8 +8,12 @@ import {
   isPlayerTradeOffer,
   proposePlayerTrade,
 } from "@/systems/player-trades";
-import type { SaveGameStore } from "@/persistence/save-game-store";
+import type {
+  LoadedSaveGame,
+  SaveGameStore,
+} from "@/persistence/save-game-store";
 import {
+  asDraftPickId,
   asPlayerId,
   asOwnerDecisionId,
   type TeamId,
@@ -19,6 +23,7 @@ import {
   addToTradeBlock,
   removeFromTradeBlock,
   findTrades,
+  findTradeOffers,
   evaluateTradeOffer,
   executeTrade,
   validateTrade,
@@ -29,6 +34,13 @@ import {
   toTradeFinderRowViews,
 } from "@/state/roster-page-selectors";
 import { toDashboardSnapshot } from "@/state/selectors";
+import {
+  type TradeOfferView,
+  toTradeOfferViews,
+} from "@/state/trade-offer-selectors";
+import { canTradeDraftPick } from "@/systems/league-rules";
+import { TRADE_OFFER_MAX_ASSETS_PER_SIDE } from "@/systems/trades-config";
+import type { TradeAssetRef } from "@/systems/trades/asset-valuation/types";
 import {
   type TradeProposal,
   proposalSendsPlayer,
@@ -168,21 +180,158 @@ export async function executeOwnerTrade(
     return fail("Outgoing player is not on your roster.");
   }
 
-  const rng = createSeededRng(loaded.state.meta.rngState);
-  // Finder discovery only — never persist these surplus listings.
-  const working = ensureAiTradeBlocks(loaded.state);
-
   let proposal = input.proposal;
   if (proposal !== undefined) {
     if (!proposalSendsPlayer(proposal, teamId, playerId)) {
       return fail("Trade proposal does not send the selected player.");
     }
   } else {
-    proposal = findAcceptedProposalForPlayer(working, teamId, playerId);
+    proposal = findAcceptedProposalForPlayer(
+      ensureAiTradeBlocks(loaded.state),
+      teamId,
+      playerId,
+    );
     if (proposal === undefined) {
       return fail("No acceptable trade candidate found for that player.");
     }
   }
+
+  return commitOwnerTrade(saveId, loaded, proposal, saveStore);
+}
+
+export type OwnerTradeAssetInput = {
+  kind: "player" | "draftPick";
+  id: string;
+};
+
+/**
+ * Trade Finder: the owner puts up 1–3 players/picks; every eligible CPU team
+ * answers with its best acceptable package and an interest score.
+ * Read-only — AI trade-block prep runs on a working copy and is not saved.
+ */
+export async function findOwnerTradeOffers(
+  saveId: string,
+  assets: readonly OwnerTradeAssetInput[],
+  store?: SaveGameStore,
+): Promise<OwnerCommandResult<{ offers: TradeOfferView[] }>> {
+  const loaded = await getStore(store).load(saveId);
+  if (!loaded) {
+    return fail("Save not found.");
+  }
+
+  const state = loaded.state;
+  const teamId = state.user.activeOwnerTeamId;
+  const parsed = parseOwnerTradeAssets(state, teamId, assets);
+  if (!parsed.ok) {
+    return fail(parsed.error);
+  }
+
+  const working = ensureAiTradeBlocks(state);
+  const counterparties = (Object.keys(working.world.teams) as TeamId[]).filter(
+    (id) => id !== teamId && !isOtherParticipantTeam(working, id),
+  );
+  const offers = findTradeOffers(
+    working,
+    teamId,
+    parsed.assets,
+    counterparties,
+  );
+
+  return {
+    ok: true,
+    save: toSaveSummary(loaded),
+    dashboard: toDashboardSnapshot(state),
+    offers: toTradeOfferViews(working, offers),
+  };
+}
+
+/**
+ * Execute a Trade Finder offer exactly as shown. Re-checks the per-side
+ * asset cap here; ownership, validity and acceptance in commitOwnerTrade.
+ */
+export async function executeOwnerTradeOffer(
+  saveId: string,
+  proposal: TradeProposal,
+  store?: SaveGameStore,
+): Promise<OwnerCommandResult> {
+  const saveStore = getStore(store);
+  const loaded = await saveStore.load(saveId);
+  if (!loaded) {
+    return fail("Save not found.");
+  }
+
+  if (proposal.sideA.teamId !== loaded.state.user.activeOwnerTeamId) {
+    return fail("Trade offer must send assets from your team.");
+  }
+  for (const side of [proposal.sideA, proposal.sideB]) {
+    const count = side.playerIds.length + side.draftPickIds.length;
+    if (count === 0 || count > TRADE_OFFER_MAX_ASSETS_PER_SIDE) {
+      return fail(
+        `Each side of a trade needs 1–${TRADE_OFFER_MAX_ASSETS_PER_SIDE} players or picks.`,
+      );
+    }
+  }
+
+  return commitOwnerTrade(saveId, loaded, proposal, saveStore);
+}
+
+function parseOwnerTradeAssets(
+  state: GameState,
+  teamId: TeamId,
+  assets: readonly OwnerTradeAssetInput[],
+): { ok: true; assets: TradeAssetRef[] } | { ok: false; error: string } {
+  if (assets.length === 0 || assets.length > TRADE_OFFER_MAX_ASSETS_PER_SIDE) {
+    return {
+      ok: false,
+      error: `Put up 1–${TRADE_OFFER_MAX_ASSETS_PER_SIDE} players or picks.`,
+    };
+  }
+  const seen = new Set<string>();
+  const parsed: TradeAssetRef[] = [];
+  for (const asset of assets) {
+    const key = `${asset.kind}:${asset.id}`;
+    if (seen.has(key)) {
+      return { ok: false, error: "The same asset was put up twice." };
+    }
+    seen.add(key);
+    if (asset.kind === "player") {
+      const playerId = asPlayerId(asset.id);
+      if (!state.world.teams[teamId]?.roster.includes(playerId)) {
+        return { ok: false, error: "Player is not on your roster." };
+      }
+      parsed.push({ kind: "player", playerId });
+      continue;
+    }
+    const draftPickId = asDraftPickId(asset.id);
+    if (state.world.draftPicks[draftPickId]?.ownerTeamId !== teamId) {
+      return { ok: false, error: "You do not own that draft pick." };
+    }
+    const check = canTradeDraftPick(state, draftPickId);
+    if (!check.allowed) {
+      return {
+        ok: false,
+        error: check.violations[0]?.message ?? "Pick cannot be traded.",
+      };
+    }
+    parsed.push({ kind: "draftPick", draftPickId });
+  }
+  return { ok: true, assets: parsed };
+}
+
+/**
+ * Shared owner→CPU commit: counterparty acceptance, execution (which
+ * re-validates ownership and league rules), ownership evidence, persist.
+ */
+async function commitOwnerTrade(
+  saveId: string,
+  loaded: LoadedSaveGame,
+  proposal: TradeProposal,
+  saveStore: SaveGameStore,
+): Promise<OwnerCommandResult> {
+  const teamId = loaded.state.user.activeOwnerTeamId;
+  const rng = createSeededRng(loaded.state.meta.rngState);
+  // Finder discovery only — never persist these surplus listings.
+  const working = ensureAiTradeBlocks(loaded.state);
 
   const counterpartId =
     proposal.sideA.teamId === teamId

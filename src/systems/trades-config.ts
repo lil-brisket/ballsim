@@ -17,6 +17,31 @@ export const TRADE_SALARY_MATCHING_PERCENT = 0.25;
 /** Trade Finder returns at most this many valid candidates. */
 export const TRADE_FINDER_MAX_CANDIDATES = 50;
 
+/** Trade Finder offers: max assets (players + picks) on each side. */
+export const TRADE_OFFER_MAX_ASSETS_PER_SIDE = 3;
+
+/** Trade Finder offers: most-movable players a counterparty considers. */
+export const TRADE_OFFER_POOL_PLAYERS = 6;
+
+/** Trade Finder offers: earliest tradable picks a counterparty considers. */
+export const TRADE_OFFER_POOL_PICKS = 4;
+
+/** Trade Finder offers: full AI evaluations per counterparty, best first. */
+export const TRADE_OFFER_MAX_EVALUATIONS_PER_TEAM = 40;
+
+/**
+ * Trade Finder package weights, best asset first: a counterparty never gives
+ * more weighted value than it receives, so quantity cannot buy quality.
+ */
+export const TRADE_OFFER_PACKAGE_WEIGHTS = [1, 0.6, 0.35] as const;
+
+/** Trade Finder interest bar (0–100, 50 = values your package at market). */
+export const TRADE_OFFER_INTEREST = {
+  valueRatioScale: 150,
+  rosterFitScale: 80,
+  strategicFitScale: 80,
+} as const;
+
 /** CPU acquire packages: max outgoing assets assembled for one target. */
 export const CPU_TRADE_PACKAGE_MAX_ASSETS = 6;
 

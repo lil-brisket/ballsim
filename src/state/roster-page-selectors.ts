@@ -39,6 +39,10 @@ import { DEFAULT_ROSTER_SIZE } from "@/systems/roster-generation-config";
 import { getTradeBlock } from "@/systems/trades/trade-block";
 import { isInLeaguePhase } from "@/systems/phase-engine";
 import type { TradeFinderCandidate } from "@/systems/trades/trade-finder";
+import {
+  toTradablePickViews,
+  type TradeAssetView,
+} from "@/state/trade-offer-selectors";
 
 export type { PositionFit };
 
@@ -135,6 +139,8 @@ export type RosterPageView = {
   tradeBlock: TradeBlockView;
   tradeFinder: {
     suggestedOutgoingPlayerId: string | null;
+    /** Owned picks that can be put up now (within the trade horizon). */
+    picks: Extract<TradeAssetView, { kind: "draftPick" }>[];
   };
   lineupHref: string;
   rotationsHref: string;
@@ -673,6 +679,7 @@ export function toRosterPageView(state: GameState): RosterPageView {
         teamId,
         rosterNeeds,
       ),
+      picks: toTradablePickViews(state, teamId),
     },
     lineupHref: `/dashboard/${saveId}/team-management/lineups`,
     rotationsHref: `/dashboard/${saveId}/team-management/lineups`,

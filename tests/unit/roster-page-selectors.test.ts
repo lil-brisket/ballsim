@@ -9,7 +9,8 @@ import {
   toTradeFinderRowViews,
 } from "@/state/roster-page-selectors";
 import { addToTradeBlock, findTrades } from "@/systems/trades";
-import { asPlayerId, asTeamId } from "@/domain/ids";
+import { asPlayerId, asTeamId, type DraftPickId } from "@/domain/ids";
+import { DRAFT_PICK_TRADE_HORIZON_YEARS } from "@/systems/league-rules";
 
 describe("toRosterPageView", () => {
   it("composes roster management view without candidates on the page model", () => {
@@ -26,7 +27,19 @@ describe("toRosterPageView", () => {
     expect(view.depthChart.PG).toBeDefined();
     expect(view.tradeFinder).toEqual({
       suggestedOutgoingPlayerId: expect.any(String),
+      picks: expect.any(Array),
     });
+    const maxPickYear =
+      state.competition.season.year + DRAFT_PICK_TRADE_HORIZON_YEARS;
+    expect(view.tradeFinder.picks.length).toBeGreaterThan(0);
+    for (const pick of view.tradeFinder.picks) {
+      expect(state.world.draftPicks[pick.id as DraftPickId]).toMatchObject({
+        ownerTeamId: view.team.teamId,
+      });
+      expect(
+        state.world.draftPicks[pick.id as DraftPickId]!.seasonYear,
+      ).toBeLessThanOrEqual(maxPickYear);
+    }
     expect(view.tradeFinder).not.toHaveProperty("candidates");
     expect(view.summary.rosterCount).toBe(view.roster.length);
     expect(

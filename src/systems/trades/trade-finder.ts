@@ -7,6 +7,7 @@ import {
   getTradeBlock,
   type TradeBlockAssetRef,
 } from "@/systems/trades/trade-block";
+import { canTradeDraftPick } from "@/systems/league-rules";
 import { validateTrade } from "@/systems/trades/trade-validation";
 
 export type TradeFinderAsset =
@@ -130,13 +131,20 @@ function collectMoveCandidates(
   }
 }
 
+/**
+ * Picks the team can trade right now: available and within the trade
+ * horizon. Generated picks can extend past the horizon.
+ */
 export function ownedAvailablePickIds(
   state: GameState,
   teamId: TeamId,
 ): DraftPickId[] {
   return Object.values(state.world.draftPicks)
     .filter(
-      (pick) => pick.ownerTeamId === teamId && pick.status === "available",
+      (pick) =>
+        pick.ownerTeamId === teamId &&
+        pick.status === "available" &&
+        canTradeDraftPick(state, pick.id).allowed,
     )
     .map((pick) => pick.id)
     .sort((a, b) => (a < b ? -1 : a > b ? 1 : 0));

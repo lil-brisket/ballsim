@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { canTradeDraftPick } from "@/systems/league-rules";
 import { notFound } from "next/navigation";
 import { getRequestSaveStore } from "@/application/request-save-store";
 import { SectionHeading } from "@/components/ui/SectionHeading";
@@ -29,7 +30,9 @@ function assetsFor(state: GameState, teamId: string) {
       age: p.age,
     }));
   const picks = Object.values(state.world.draftPicks)
-    .filter((k) => k.ownerTeamId === teamId && k.status === "available")
+    .filter(
+      (k) => k.ownerTeamId === teamId && canTradeDraftPick(state, k.id).allowed,
+    )
     .sort((a, b) => a.seasonYear - b.seasonYear || a.round - b.round)
     .map((k) => ({
       id: k.id as string,
