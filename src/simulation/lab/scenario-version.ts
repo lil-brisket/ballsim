@@ -6,6 +6,12 @@ import {
 export const DEFAULT_SCENARIO_VERSION = 1;
 
 export const OWNER_CAREER_SCENARIO_ID = "owner-career";
+/**
+ * Version 2: the owner runs on full management (as the Sim Lab page always
+ * did), so it re-signs, signs free agents and manages its rotation instead
+ * of letting the roster run down.
+ */
+export const OWNER_CAREER_SCENARIO_VERSION = 2;
 export const SCHEDULE_SCENARIO_ID = "schedule";
 
 export const LAB_SCENARIO_VERSIONS: Record<LabScenarioId, number> = {
@@ -25,7 +31,7 @@ export function scenarioVersionFor(scenarioId: string): number {
     return LAB_SCENARIO_VERSIONS[scenarioId];
   }
   if (scenarioId === OWNER_CAREER_SCENARIO_ID) {
-    return DEFAULT_SCENARIO_VERSION;
+    return OWNER_CAREER_SCENARIO_VERSION;
   }
   if (scenarioId === SCHEDULE_SCENARIO_ID) {
     return DEFAULT_SCENARIO_VERSION;

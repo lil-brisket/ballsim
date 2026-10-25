@@ -26,7 +26,7 @@ describe("listLabScenarios", () => {
     ).toBe("schedule");
     const text = formatLabScenarioList(listings);
     expect(text).toContain("normal  v1  game");
-    expect(text).toContain("owner-career  v1  owner-career");
+    expect(text).toContain("owner-career  v2  owner-career");
     expect(text).toContain("schedule  v1  schedule");
   });
 });
