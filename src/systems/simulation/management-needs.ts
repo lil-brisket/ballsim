@@ -11,6 +11,7 @@ import { draftYearForSeason } from "@/systems/draft";
 import { isUserOnDraftClock } from "@/systems/draft/draft-clock";
 import { GAME_SIMULATION_CONFIG } from "@/systems/game-simulation-config";
 import { DEFAULT_ROSTER_SIZE } from "@/systems/roster-generation-config";
+import { TRADE_ROSTER_RULES } from "@/systems/trades-config";
 import { findTeamStaffByRole } from "@/systems/staff-effects";
 import { STARTER_ROLES } from "@/systems/staff-generation";
 import type { ManagementActionId } from "@/systems/simulation/management-actions";
@@ -67,17 +68,18 @@ function detectRosterNeeds(state: GameState, teamId: TeamId): ManagementNeed[] {
   const healthyCount = countHealthyPlayers(state, team.roster);
   const injuredCount = team.roster.length - healthyCount;
 
-  if (team.roster.length < DEFAULT_ROSTER_SIZE) {
+  const minimum = TRADE_ROSTER_RULES.minRosterSize;
+  if (team.roster.length < minimum) {
     needs.push({
       id: "roster_below_min",
       actionId: "MAINTAIN_MIN_ROSTER",
       severity: "critical",
       title: "Roster below minimum",
-      detail: `Roster has ${team.roster.length}/${DEFAULT_ROSTER_SIZE} players.`,
+      detail: `Roster has ${team.roster.length} players (minimum ${minimum}).`,
       needKey: `roster_below_min:${team.roster.length}`,
       metadata: {
         rosterSize: team.roster.length,
-        minimum: DEFAULT_ROSTER_SIZE,
+        minimum,
       },
     });
   }

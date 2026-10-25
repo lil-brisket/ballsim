@@ -289,10 +289,10 @@ describe("trade validation — invalid trades", () => {
   });
 
   it("rejects invalid roster size", () => {
-    const state = createTradeFixture({ rosterSize: 8 });
+    const state = createTradeFixture({ rosterSize: 13 });
     const { teamA, teamB } = teamIds(state);
-    // Team A sends 0 players, receives 2 → size 10 OK for A
-    // Team B sends 2, receives 0 → size 6 < min 8
+    // Team A sends 0 players, receives 2 → size 15 OK for A
+    // Team B sends 2, receives 0 → size 11 < min 12
     const proposal = {
       sideA: {
         teamId: teamA,
@@ -314,7 +314,7 @@ describe("trade validation — invalid trades", () => {
   });
 
   it("picks do not affect roster size", () => {
-    const state = createTradeFixture({ rosterSize: 10 });
+    const state = createTradeFixture({ rosterSize: 13 });
     const { teamA, teamB } = teamIds(state);
     const proposal = {
       sideA: {
@@ -398,7 +398,7 @@ describe("trade salary rules", () => {
   it("rejects over-cap matching violation via validateTrade", () => {
     // Put team A over the cap with high salaries; receive more than 125% of outgoing.
     const state = createTradeFixture({
-      rosterSize: 10,
+      rosterSize: 13,
       salary: 11_000_000, // payroll 110M > 100M cap
     });
     const { teamA, teamB } = teamIds(state);

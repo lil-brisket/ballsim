@@ -105,7 +105,7 @@ describe("processPlayerRetirements: unsigned free agents", () => {
     const signedYoungRetired = Object.values(result.world.players).filter(
       (player) =>
         player.retired === true &&
-        !unsignedIds.includes(player.id) &&
+        state.world.players[player.id]!.teamId !== null &&
         state.world.players[player.id]!.age < PLAYER_RETIREMENT_MIN_AGE,
     );
     expect(signedYoungRetired).toHaveLength(0);

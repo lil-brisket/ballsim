@@ -3,6 +3,7 @@ import {
   asPlayerId,
   asTeamId,
   type PlayerId,
+  type TeamId,
 } from "@/domain/ids";
 import { type Player, type PlayerPosition } from "@/domain/entities/player";
 import { createContract, type Contract } from "@/domain/entities/contract";
@@ -24,7 +25,7 @@ import { generatePlayerWithRng } from "@/systems/player-generation";
 import {
   DEFAULT_ROSTER_SIZE,
   OPENING_FREE_AGENT_QUALITY,
-  OPENING_FREE_AGENTS_PER_TEAM,
+  OPENING_FREE_AGENT_COUNT,
   rosterPositionForSlot,
   rosterQualityBandForSlot,
 } from "@/systems/roster-generation-config";
@@ -32,6 +33,7 @@ import { recommendRosterManagement } from "@/systems/roster-management";
 import { getContractSigningYear, getTeamPayroll } from "@/systems/salary-cap";
 import { aiPayrollRoom } from "@/systems/ai-payroll-budget";
 import { isUserControlledTeam } from "@/state/owner-context";
+import { TRADE_ROSTER_RULES } from "@/systems/trades-config";
 
 /**
  * Fills empty team rosters with fictional players and starter contracts, and
@@ -115,8 +117,7 @@ export function generateRosters(state: GameState, rng: Rng): SystemResult {
   const freeAgentRng = createSeededRng(
     deriveSeed(rng.getState(), "opening-free-agents"),
   );
-  const openingFreeAgents = teamIds.length * OPENING_FREE_AGENTS_PER_TEAM;
-  for (let index = 0; index < openingFreeAgents; index += 1) {
+  for (let index = 0; index < OPENING_FREE_AGENT_COUNT; index += 1) {
     const playerId = asPlayerId(`player_fa_${index}`);
     const player = generatePlayerWithRng(freeAgentRng, {
       id: playerId,
@@ -252,7 +253,8 @@ function isReplacementLevel(player: Player): boolean {
 }
 
 /**
- * Adds players so every team reaches {@link DEFAULT_ROSTER_SIZE}.
+ * Adds players so every AI team reaches {@link DEFAULT_ROSTER_SIZE} and every
+ * owner's team reaches the league minimum (the owner chooses the rest).
  * Used after offseason attrition when the free-agent pool cannot fill holes.
  *
  * Each spot goes to the best free agent left at the position. A fill
@@ -265,12 +267,16 @@ function isReplacementLevel(player: Player): boolean {
  * on every leftover.
  */
 export function fillShortRosters(state: GameState, rng: Rng): SystemResult {
+  const fillTarget = (teamId: TeamId) =>
+    isUserControlledTeam(state, teamId)
+      ? TRADE_ROSTER_RULES.minRosterSize
+      : DEFAULT_ROSTER_SIZE;
   const shortTeamIds = (
     Object.keys(state.world.teams) as ReturnType<typeof asTeamId>[]
   )
     .filter(
       (teamId) =>
-        (state.world.teams[teamId]?.roster.length ?? 0) < DEFAULT_ROSTER_SIZE,
+        (state.world.teams[teamId]?.roster.length ?? 0) < fillTarget(teamId),
     )
     .sort(
       (a, b) =>
@@ -394,7 +400,7 @@ export function fillShortRosters(state: GameState, rng: Rng): SystemResult {
     filling = false;
     for (const teamId of shortTeamIds) {
       const fill = progress.get(teamId)!;
-      if (fill.roster.length >= DEFAULT_ROSTER_SIZE) continue;
+      if (fill.roster.length >= fillTarget(teamId)) continue;
       fillOne(teamId, fill);
       filling = true;
     }

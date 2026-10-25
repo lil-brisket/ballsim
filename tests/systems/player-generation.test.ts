@@ -41,6 +41,7 @@ import {
 import { fillShortRosters, generateRosters } from "@/systems/roster-generation";
 import {
   DEFAULT_ROSTER_SIZE,
+  OPENING_FREE_AGENT_COUNT,
   rosterPositionForSlot,
   rosterQualityBandForSlot,
 } from "@/systems/roster-generation-config";
@@ -644,7 +645,13 @@ describe("generateRosters with player generation engine", () => {
     const teamCount = Object.keys(state.world.teams).length;
     const players = Object.values(result.state.world.players);
 
-    expect(players).toHaveLength(teamCount * DEFAULT_ROSTER_SIZE);
+    // Rostered players plus the unsigned opening free agents.
+    expect(players).toHaveLength(
+      teamCount * DEFAULT_ROSTER_SIZE + OPENING_FREE_AGENT_COUNT,
+    );
+    expect(players.filter((player) => player.teamId === null)).toHaveLength(
+      OPENING_FREE_AGENT_COUNT,
+    );
 
     for (const teamId of Object.keys(state.world.teams)) {
       const roster = result.state.world.teams[teamId]!.roster;

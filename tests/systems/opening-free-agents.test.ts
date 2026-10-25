@@ -4,7 +4,7 @@ import { listFreeAgents } from "@/systems/free-agency";
 import { generateRosters } from "@/systems/roster-generation";
 import {
   DEFAULT_ROSTER_SIZE,
-  OPENING_FREE_AGENTS_PER_TEAM,
+  OPENING_FREE_AGENT_COUNT,
 } from "@/systems/roster-generation-config";
 import { createTestGameState } from "../factories/game-state";
 
@@ -21,10 +21,9 @@ describe("opening free agents", () => {
 
   it("opens the league with unsigned free agents at every position", () => {
     const { state } = generate(11);
-    const teamCount = Object.keys(state.world.teams).length;
     const pool = listFreeAgents(state).playerIds;
 
-    expect(pool).toHaveLength(teamCount * OPENING_FREE_AGENTS_PER_TEAM);
+    expect(pool).toHaveLength(OPENING_FREE_AGENT_COUNT);
     const positions = new Set(
       pool.map((id) => state.world.players[id]!.position),
     );

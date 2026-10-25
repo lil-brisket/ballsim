@@ -8,7 +8,10 @@ import { TRADE_ROSTER_RULES } from "@/systems/trades-config";
 
 describe("Lab rating clamp", () => {
   it("keeps clamped attributes inside RATING_MIN/MAX", () => {
-    const { homePlayers } = generateValidationRosters(createSeededRng(3), 8);
+    const { homePlayers } = generateValidationRosters(
+      createSeededRng(3),
+      TRADE_ROSTER_RULES.minRosterSize,
+    );
     const player = homePlayers[0]!;
     const clamped = clonePlayerWithAttributeClamps(
       player,

@@ -289,7 +289,7 @@ describe("trade finder", () => {
   });
 
   it("filters invalid proposals", () => {
-    const state = createTradeFixture({ rosterSize: 8 });
+    const state = createTradeFixture({ rosterSize: 13 });
     const { teamA, teamB } = teamIds(state);
     // Put two players on B's block; offering a pick for both players would
     // still be generated as 1-for-1 only, so instead ensure finder only

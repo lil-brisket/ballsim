@@ -5,10 +5,10 @@ import type { QualityBand } from "@/systems/player-generation-config";
 export const DEFAULT_ROSTER_SIZE = 15;
 
 /**
- * Unsigned players a generated league opens with, per team, so the first
- * season has a free-agent market before any contract has expired.
+ * Unsigned players a generated league opens with, so the first season has a
+ * free-agent market before any contract has expired.
  */
-export const OPENING_FREE_AGENTS_PER_TEAM = 2;
+export const OPENING_FREE_AGENT_COUNT = 30;
 
 /** Opening free agents are fringe players: bench quality with a little upside. */
 export const OPENING_FREE_AGENT_QUALITY = { min: 40, max: 64 } as const;
