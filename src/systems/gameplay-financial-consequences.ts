@@ -61,14 +61,22 @@ const DATE_SCOPED_KEY_PREFIXES = ["ai_trade:", "ai_fa:", "ai_continuity:"];
 /** Families keyed on the week the weekly pipeline completed. */
 const WEEK_SCOPED_KEY_PREFIXES = ["ai_franchise:", "ai_game_day_promo:"];
 
+/**
+ * Families keyed on a season year that are only checked in that season:
+ * a game's ticket revenue posts in its own season. (Older ticket keys
+ * without a year stay.)
+ */
+const SEASON_SCOPED_KEY_PATTERNS = [/^tickets:[^:]*:(\d{4}):/];
+
 const DATE_SUFFIX = /:(\d{4}-\d{2}-\d{2})$/;
 const WEEK_SUFFIX = /:(\d{4}-W\d{2})$/;
 
 /**
- * Drops AI idempotency keys that can never be checked again: daily keys for
+ * Drops idempotency keys that can never be checked again: daily keys for
  * days before `currentDate`, weekly keys for weeks before `completedWeekId`
- * (a completed week never runs again). Without this the map grows by
- * thousands of keys a season, and every new key copies all of them.
+ * (a completed week never runs again), and season keys for seasons before
+ * the current one. Without this the map grows by thousands of keys a
+ * season, and every new key copies all of them.
  */
 export function pruneExpiredGameplayConsequenceKeys(
   state: GameState,
@@ -76,13 +84,16 @@ export function pruneExpiredGameplayConsequenceKeys(
   completedWeekId: string,
 ): GameState {
   let current = state;
+  const seasonYear = state.competition.season.year;
   for (const teamId of getOwnedTeamIds(state)) {
     const franchise = current.user.ownedFranchises[teamId];
     if (!franchise) continue;
     const keys = franchise.appliedGameplayConsequenceKeys;
     let kept: Record<string, true> | null = null;
     for (const key of Object.keys(keys)) {
-      if (!isExpiredConsequenceKey(key, currentDate, completedWeekId)) {
+      if (
+        !isExpiredConsequenceKey(key, currentDate, completedWeekId, seasonYear)
+      ) {
         continue;
       }
       kept ??= { ...keys };
@@ -103,7 +114,14 @@ function isExpiredConsequenceKey(
   key: string,
   currentDate: string,
   completedWeekId: string,
+  seasonYear: number,
 ): boolean {
+  for (const pattern of SEASON_SCOPED_KEY_PATTERNS) {
+    const year = pattern.exec(key)?.[1];
+    if (year !== undefined) {
+      return Number(year) < seasonYear;
+    }
+  }
   if (DATE_SCOPED_KEY_PREFIXES.some((prefix) => key.startsWith(prefix))) {
     const date = DATE_SUFFIX.exec(key)?.[1];
     return date !== undefined && date < currentDate;
