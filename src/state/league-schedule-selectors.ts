@@ -43,6 +43,8 @@ export type LeagueScheduleView = {
   today: LeagueScheduleGameRow[];
   upcoming: LeagueScheduleGameRow[];
   recent: LeagueScheduleGameRow[];
+  /** Seven days centred on the focus date, counted after filters. */
+  week: LeagueScheduleWeekDay[];
   teams: Array<{
     teamId: string;
     label: string;
@@ -50,6 +52,13 @@ export type LeagueScheduleView = {
   }>;
   seasonPhase: string;
   emptyReason: string | null;
+};
+
+export type LeagueScheduleWeekDay = {
+  date: string;
+  games: number;
+  /** The controlled team plays on this date. */
+  myTeamPlays: boolean;
 };
 
 export type LeagueScheduleFilters = {
@@ -140,6 +149,20 @@ export function toLeagueScheduleView(
   const cappedRecent =
     filters.status === "final" ? recent : recent.slice(0, 12);
 
+  const week: LeagueScheduleWeekDay[] = [-3, -2, -1, 0, 1, 2, 3].map(
+    (offset) => {
+      const date = addCalendarDays(focusDate, offset);
+      const onDate = rows.filter((r) => r.date === date);
+      return {
+        date,
+        games: onDate.length,
+        myTeamPlays: onDate.some(
+          (r) => r.homeTeamId === myTeamId || r.awayTeamId === myTeamId,
+        ),
+      };
+    },
+  );
+
   const teams = Object.values(state.world.teams)
     .map((t) => ({
       teamId: t.id,
@@ -166,6 +189,7 @@ export function toLeagueScheduleView(
     today,
     upcoming,
     recent: cappedRecent,
+    week,
     teams,
     seasonPhase: phase,
     emptyReason,

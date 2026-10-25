@@ -24,6 +24,28 @@ describe("league-schedule-selectors", () => {
     expect(view.teams.length).toBeGreaterThan(0);
   });
 
+  it("builds a seven-day strip centred on the focus date", () => {
+    let state = createTestGameState({ saveId: "sched_week" });
+    const rng = createSeededRng(state.meta.rngState);
+    state = bootstrapWorld(state, rng).state;
+    state = beginRegularSeasonFromPreseason(state).state;
+
+    const myTeamId = state.user.activeOwnerTeamId;
+    const myGame = Object.values(state.competition.games).find(
+      (g) => g.homeTeamId === myTeamId || g.awayTeamId === myTeamId,
+    )!;
+    const view = toLeagueScheduleView(state, { focusDate: myGame.date });
+
+    expect(view.week.map((day) => day.date)).toEqual(
+      [-3, -2, -1, 0, 1, 2, 3].map((offset) =>
+        addCalendarDays(myGame.date, offset),
+      ),
+    );
+    const focus = view.week[3]!;
+    expect(focus.games).toBe(view.today.length);
+    expect(focus.myTeamPlays).toBe(true);
+  });
+
   it("filters by team", () => {
     let state = createTestGameState({ saveId: "sched_team" });
     const rng = createSeededRng(state.meta.rngState);

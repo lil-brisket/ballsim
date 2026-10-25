@@ -4,6 +4,8 @@ import { Suspense } from "react";
 import { notFound } from "next/navigation";
 import { loadLeagueScheduleView } from "@/application/game-service";
 import { LeagueGameRow } from "@/components/basketball/LeagueGameRow";
+import { ScheduleGameCard } from "@/components/league/ScheduleGameCard";
+import { ScheduleWeekStrip } from "@/components/league/ScheduleWeekStrip";
 import { TeamFilter } from "@/components/league/TeamFilter";
 import {
   parseTeamFilterParam,
@@ -11,13 +13,16 @@ import {
 } from "@/components/league/team-filter-utils";
 import { EmptyState, ErrorState } from "@/components/ui/EmptyState";
 import { PageHeader } from "@/components/ui/PageHeader";
-import { SectionHeading } from "@/components/ui/SectionHeading";
-import { formatGameDate } from "@/presentation/game-date";
+import {
+  formatGameDate,
+  formatRelativeGameDay,
+} from "@/presentation/game-date";
 import {
   shiftFocusDate,
   groupLeagueScheduleRowsByDate,
+  type LeagueScheduleGameRow,
 } from "@/state/league-schedule-selectors";
-import { cn, focusRingClass } from "@/components/ui/styles";
+import { cn, focusRingClass, panelClass } from "@/components/ui/styles";
 
 export const metadata: Metadata = { title: "Schedule" };
 
@@ -30,6 +35,61 @@ type SchedulePageProps = {
     status?: string;
   }>;
 };
+
+/** Panel whose body scrolls on its own so the page itself stays put. */
+function SchedulePanel(props: {
+  title: string;
+  meta?: string;
+  children: React.ReactNode;
+  className?: string;
+}) {
+  return (
+    <section
+      className={cn(panelClass, "flex min-h-0 flex-col", props.className)}
+    >
+      <header className="flex items-baseline justify-between gap-3 border-b border-zinc-800 px-4 py-2.5">
+        <h2 className="font-display text-sm font-semibold uppercase tracking-wide text-zinc-200">
+          {props.title}
+        </h2>
+        {props.meta ? (
+          <span className="text-sm text-zinc-500">{props.meta}</span>
+        ) : null}
+      </header>
+      <div className="min-h-0 flex-1 overflow-y-auto p-3">{props.children}</div>
+    </section>
+  );
+}
+
+function GameList(props: { saveId: string; games: LeagueScheduleGameRow[] }) {
+  return (
+    <ul className="space-y-1.5">
+      {props.games.map((game) => (
+        <li key={game.gameId}>
+          <LeagueGameRow
+            saveId={props.saveId}
+            gameId={game.gameId}
+            date={game.date}
+            homeTeamId={game.homeTeamId}
+            awayTeamId={game.awayTeamId}
+            homeAbbreviation={game.homeAbbreviation}
+            awayAbbreviation={game.awayAbbreviation}
+            homeBranding={game.homeBranding}
+            awayBranding={game.awayBranding}
+            homeScore={game.homeScore}
+            awayScore={game.awayScore}
+            status={game.status}
+            competitionType={game.competitionType}
+            canWatch={game.canWatch}
+          />
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+function countLabel(count: number): string {
+  return `${count} ${count === 1 ? "game" : "games"}`;
+}
 
 export default async function SchedulePage({
   params,
@@ -94,228 +154,160 @@ export default async function SchedulePage({
     return qs ? `${base}?${qs}` : base;
   }
 
-  const prevDate = shiftFocusDate(focusDate, -1);
-  const nextDate = shiftFocusDate(focusDate, 1);
+  const isToday = focusDate === currentDate;
+  const hasSide = view.upcoming.length > 0 || view.recent.length > 0;
 
   return (
-    <div className="space-y-4">
-      <PageHeader title="Schedule" />
+    <div className="flex flex-col gap-4">
+      <PageHeader
+        title="Schedule"
+        subtitle={
+          <span>
+            {formatGameDate(focusDate, { weekday: true, year: true })}
+            <span className="text-zinc-500">
+              {" · "}
+              {formatRelativeGameDay(focusDate, currentDate)}
+            </span>
+          </span>
+        }
+        actions={
+          isToday ? null : (
+            <Link
+              href={href({ date: undefined })}
+              className={cn(
+                "rounded-md border border-zinc-700 px-3 py-1.5 text-sm text-zinc-300 hover:border-team-ink hover:text-team-ink",
+                focusRingClass,
+              )}
+            >
+              Back to today
+            </Link>
+          )
+        }
+      />
       {query.error ? <ErrorState message={query.error} /> : null}
 
-      <div className="flex flex-wrap items-center gap-3">
-        <Link
-          href={href({ date: prevDate })}
-          className={cn(
-            "rounded-md border border-zinc-700 px-2 py-1 text-sm text-zinc-300 hover:border-team-ink",
-            focusRingClass,
-          )}
-        >
-          ← Prev
-        </Link>
-        <Link
-          href={href({ date: undefined })}
-          className={cn(
-            "rounded-md border px-3 py-1 text-sm",
-            focusDate === view.currentDate
-              ? "border-team-ink text-team-ink"
-              : "border-zinc-700 text-zinc-300 hover:border-team-ink",
-            focusRingClass,
-          )}
-        >
-          Today
-        </Link>
-        <Link
-          href={href({ date: nextDate })}
-          className={cn(
-            "rounded-md border border-zinc-700 px-2 py-1 text-sm text-zinc-300 hover:border-team-ink",
-            focusRingClass,
-          )}
-        >
-          Next →
-        </Link>
-        <span className="text-sm text-zinc-400">
-          {formatGameDate(focusDate, { weekday: true })}
-        </span>
-      </div>
+      <ScheduleWeekStrip
+        week={view.week}
+        focusDate={focusDate}
+        currentDate={currentDate}
+        hrefFor={(date) => href({ date })}
+        prevHref={href({ date: shiftFocusDate(focusDate, -1) })}
+        nextHref={href({ date: shiftFocusDate(focusDate, 1) })}
+      />
 
-      <Suspense
-        fallback={<p className="text-sm text-zinc-500">Loading filters…</p>}
-      >
-        <TeamFilter
-          teams={view.teams}
-          myTeamId={view.myTeamId}
-          value={teamValue}
-        />
-      </Suspense>
-
-      <div className="flex flex-wrap gap-2" aria-label="Status filter">
-        {(
-          [
-            ["all", "All"],
-            ["upcoming", "Upcoming"],
-            ["final", "Final"],
-          ] as const
-        ).map(([id, label]) => (
-          <Link
-            key={id}
-            href={href({
-              status: id === "all" ? undefined : id,
-            })}
-            className={cn(
-              "rounded-full border px-3 py-1 text-sm",
-              statusFilter === id
-                ? "border-team-ink text-team-ink"
-                : "border-zinc-700 text-zinc-400",
-              focusRingClass,
-            )}
-          >
-            {label}
-          </Link>
-        ))}
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <Suspense
+          fallback={<p className="text-sm text-zinc-500">Loading filters…</p>}
+        >
+          <TeamFilter
+            teams={view.teams}
+            myTeamId={view.myTeamId}
+            value={teamValue}
+          />
+        </Suspense>
+        <div
+          className="inline-flex rounded-full border border-zinc-700 p-0.5"
+          aria-label="Status filter"
+        >
+          {(
+            [
+              ["all", "All"],
+              ["upcoming", "Upcoming"],
+              ["final", "Final"],
+            ] as const
+          ).map(([id, label]) => (
+            <Link
+              key={id}
+              href={href({
+                status: id === "all" ? undefined : id,
+              })}
+              aria-current={statusFilter === id ? "true" : undefined}
+              className={cn(
+                "rounded-full px-3 py-1 text-sm",
+                statusFilter === id
+                  ? "bg-team-ink/15 text-team-ink"
+                  : "text-zinc-400 hover:text-zinc-200",
+                focusRingClass,
+              )}
+            >
+              {label}
+            </Link>
+          ))}
+        </div>
       </div>
 
       {view.emptyReason ? (
         <EmptyState message={view.emptyReason} />
       ) : (
-        <>
-          <section>
-            <SectionHeading
-              className="mb-2"
-              title={
-                focusDate === view.currentDate
-                  ? `${formatGameDate(focusDate, { weekday: true })} — Today`
-                  : formatGameDate(focusDate, { weekday: true })
-              }
-            />
+        <div
+          className={cn(
+            "grid gap-4 lg:h-[calc(100dvh-27rem)] lg:min-h-80",
+            hasSide && "lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]",
+          )}
+        >
+          <SchedulePanel
+            title={
+              isToday ? "Today" : formatGameDate(focusDate, { weekday: true })
+            }
+            meta={
+              view.today.length === 0
+                ? undefined
+                : countLabel(view.today.length)
+            }
+          >
             {view.today.length === 0 ? (
-              <p className="text-sm text-zinc-600">No games on this date.</p>
+              <p className="py-6 text-center text-sm text-zinc-500">
+                No games on this date.
+              </p>
             ) : (
-              <ul className="space-y-2">
+              <div className="grid gap-2 sm:grid-cols-2">
                 {view.today.map((game) => (
-                  <li key={game.gameId} className="space-y-1">
-                    <LeagueGameRow
-                      saveId={saveId}
-                      gameId={game.gameId}
-                      date={game.date}
-                      homeTeamId={game.homeTeamId}
-                      awayTeamId={game.awayTeamId}
-                      homeAbbreviation={game.homeAbbreviation}
-                      awayAbbreviation={game.awayAbbreviation}
-                      homeBranding={game.homeBranding}
-                      awayBranding={game.awayBranding}
-                      homeScore={game.homeScore}
-                      awayScore={game.awayScore}
-                      status={game.status}
-                      competitionType={game.competitionType}
-                      canWatch={game.canWatch}
-                    />
-                    {game.canManageEvent ? (
-                      <Link
-                        href={`/dashboard/${saveId}/schedule/${game.gameId}/event`}
-                        className="ml-3 text-sm text-team-ink underline-offset-4 hover:underline"
-                      >
-                        Manage event
-                      </Link>
-                    ) : null}
-                  </li>
+                  <ScheduleGameCard
+                    key={game.gameId}
+                    saveId={saveId}
+                    game={game}
+                    myTeamId={view.myTeamId}
+                  />
                 ))}
-              </ul>
+              </div>
             )}
-          </section>
+          </SchedulePanel>
 
-          {view.upcoming.length > 0 ? (
-            <section>
-              <SectionHeading className="mb-2" title="Upcoming" />
-              <ul className="space-y-2">
-                {view.upcoming.map((game) => (
-                  <li key={game.gameId}>
-                    <LeagueGameRow
-                      saveId={saveId}
-                      gameId={game.gameId}
-                      date={game.date}
-                      homeTeamId={game.homeTeamId}
-                      awayTeamId={game.awayTeamId}
-                      homeAbbreviation={game.homeAbbreviation}
-                      awayAbbreviation={game.awayAbbreviation}
-                      homeBranding={game.homeBranding}
-                      awayBranding={game.awayBranding}
-                      homeScore={game.homeScore}
-                      awayScore={game.awayScore}
-                      status={game.status}
-                      competitionType={game.competitionType}
-                      canWatch={game.canWatch}
-                    />
-                  </li>
-                ))}
-              </ul>
-            </section>
-          ) : null}
-
-          {view.recent.length > 0 ? (
-            <section>
-              <SectionHeading
-                className="mb-2"
-                title={statusFilter === "final" ? "Results" : "Recent Results"}
-              />
-              {statusFilter === "final" ? (
-                <div className="space-y-4">
-                  {groupLeagueScheduleRowsByDate(view.recent).map((group) => (
-                    <div key={group.date} className="space-y-2">
-                      <h3 className="text-sm font-medium text-zinc-300">
-                        {formatGameDate(group.date, { weekday: true })}
-                      </h3>
-                      <ul className="space-y-2">
-                        {group.games.map((game) => (
-                          <li key={game.gameId}>
-                            <LeagueGameRow
-                              saveId={saveId}
-                              gameId={game.gameId}
-                              date={game.date}
-                              homeTeamId={game.homeTeamId}
-                              awayTeamId={game.awayTeamId}
-                              homeAbbreviation={game.homeAbbreviation}
-                              awayAbbreviation={game.awayAbbreviation}
-                              homeBranding={game.homeBranding}
-                              awayBranding={game.awayBranding}
-                              homeScore={game.homeScore}
-                              awayScore={game.awayScore}
-                              status={game.status}
-                              competitionType={game.competitionType}
-                              canWatch={game.canWatch}
-                            />
-                          </li>
-                        ))}
-                      </ul>
+          {hasSide ? (
+            <div className="flex min-h-0 flex-col gap-4">
+              {view.upcoming.length > 0 ? (
+                <SchedulePanel title="Upcoming" className="lg:flex-1">
+                  <GameList saveId={saveId} games={view.upcoming} />
+                </SchedulePanel>
+              ) : null}
+              {view.recent.length > 0 ? (
+                <SchedulePanel
+                  title={
+                    statusFilter === "final" ? "Results" : "Recent Results"
+                  }
+                  className="lg:flex-1"
+                >
+                  {statusFilter === "final" ? (
+                    <div className="space-y-3">
+                      {groupLeagueScheduleRowsByDate(view.recent).map(
+                        (group) => (
+                          <div key={group.date} className="space-y-1.5">
+                            <h3 className="text-xs font-medium uppercase tracking-wide text-zinc-500">
+                              {formatGameDate(group.date, { weekday: true })}
+                            </h3>
+                            <GameList saveId={saveId} games={group.games} />
+                          </div>
+                        ),
+                      )}
                     </div>
-                  ))}
-                </div>
-              ) : (
-                <ul className="space-y-2">
-                  {view.recent.map((game) => (
-                    <li key={game.gameId}>
-                      <LeagueGameRow
-                        saveId={saveId}
-                        gameId={game.gameId}
-                        date={game.date}
-                        homeTeamId={game.homeTeamId}
-                        awayTeamId={game.awayTeamId}
-                        homeAbbreviation={game.homeAbbreviation}
-                        awayAbbreviation={game.awayAbbreviation}
-                        homeBranding={game.homeBranding}
-                        awayBranding={game.awayBranding}
-                        homeScore={game.homeScore}
-                        awayScore={game.awayScore}
-                        status={game.status}
-                        competitionType={game.competitionType}
-                        canWatch={game.canWatch}
-                      />
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </section>
+                  ) : (
+                    <GameList saveId={saveId} games={view.recent} />
+                  )}
+                </SchedulePanel>
+              ) : null}
+            </div>
           ) : null}
-        </>
+        </div>
       )}
     </div>
   );
