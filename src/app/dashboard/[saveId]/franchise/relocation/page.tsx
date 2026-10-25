@@ -7,6 +7,7 @@ import {
 } from "@/application/actions";
 import { loadOwnerSaveView } from "@/application/game-service";
 import { FranchiseSubNav } from "@/components/franchise/FranchiseSubNav";
+import { MarketComparison } from "@/components/franchise/MarketComparison";
 import { ErrorState } from "@/components/ui/EmptyState";
 import { MoneyDisplay } from "@/components/owner/MoneyDisplay";
 import { PageHeader } from "@/components/ui/PageHeader";
@@ -14,6 +15,7 @@ import { Section } from "@/components/ui/Section";
 import { StatCard } from "@/components/ui/StatCard";
 import Link from "next/link";
 import { getRequestSaveStore } from "@/application/request-save-store";
+import { getActiveTeam } from "@/state/owner-context";
 import { isRelocationAccessible } from "@/state/owner-season-context";
 
 export const metadata: Metadata = { title: "Relocation" };
@@ -39,6 +41,7 @@ export default async function FranchiseRelocationPage({
   }
 
   const accessible = isRelocationAccessible(loaded.state);
+  const currentCity = getActiveTeam(loaded.state).city;
   const view = await loadOwnerSaveView(saveId);
   if (!view) {
     notFound();
@@ -129,6 +132,17 @@ export default async function FranchiseRelocationPage({
             Roster
           </Link>
         </div>
+      </Section>
+
+      <Section title="Market comparison">
+        <MarketComparison
+          currentCity={currentCity}
+          marketSize={assessment.marketConstraint.marketSize}
+          attendanceRealization={
+            assessment.marketConstraint.attendanceRealization
+          }
+          destinations={assessment.destinationOpportunity}
+        />
       </Section>
 
       <Section title="Destination opportunity">

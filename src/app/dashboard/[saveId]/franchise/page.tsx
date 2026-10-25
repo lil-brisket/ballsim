@@ -4,6 +4,10 @@ import { loadFranchiseHubView } from "@/application/game-service";
 import { FacilitiesSummarySection } from "@/components/franchise/FacilitiesSummarySection";
 import { FinanceSnapshotCard } from "@/components/franchise/FinanceSnapshotCard";
 import { FranchiseSubNav } from "@/components/franchise/FranchiseSubNav";
+import {
+  FranchiseTrends,
+  toFranchiseTrends,
+} from "@/components/franchise/FranchiseTrends";
 import { RelocationSummarySection } from "@/components/franchise/RelocationSummarySection";
 import { ManagementDecisionPanel } from "@/components/management/ManagementDecisionPanel";
 import { EmptyState, ErrorState } from "@/components/ui/EmptyState";
@@ -108,6 +112,15 @@ export default async function FranchiseOverviewPage({
           {negative ? `Pressed by ${negative}` : null}
         </p>
       ) : null}
+
+      <Section title="Trends">
+        <FranchiseTrends
+          trends={toFranchiseTrends(view.history.seasons, {
+            franchiseValue: view.snapshot.franchiseValue,
+            fanSentiment: view.snapshot.fanSentiment,
+          })}
+        />
+      </Section>
 
       <Section title="Management">
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">

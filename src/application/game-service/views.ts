@@ -93,6 +93,10 @@ import {
   toFranchiseHubView,
 } from "@/state/franchise-hub-selectors";
 import {
+  type FranchiseOwnershipView,
+  toFranchiseOwnershipView,
+} from "@/state/franchise-ownership-selectors";
+import {
   type TransactionFilterGroup,
   type TransactionDateRangeKey,
   type TransactionSortKey,
@@ -454,6 +458,20 @@ export async function loadFranchiseHubView(
     return null;
   }
   return toFranchiseHubView(loaded.state);
+}
+
+/**
+ * Franchise Ownership tab — ownership mood, season notes and objective record.
+ */
+export async function loadFranchiseOwnershipView(
+  saveId: string,
+  store?: SaveGameStore,
+): Promise<FranchiseOwnershipView | null> {
+  const loaded = await getStore(store).load(saveId);
+  if (!loaded) {
+    return null;
+  }
+  return toFranchiseOwnershipView(loaded.state);
 }
 
 /**

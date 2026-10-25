@@ -6,6 +6,7 @@ import { Tabs } from "@/components/ui/Tabs";
  */
 const LINKS = [
   { key: "overview", suffix: "/franchise", label: "Overview" },
+  { key: "ownership", suffix: "/franchise/ownership", label: "Ownership" },
   { key: "history", suffix: "/franchise/history", label: "History" },
   { key: "relocation", suffix: "/franchise/relocation", label: "Relocation" },
 ] as const;

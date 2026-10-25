@@ -8,6 +8,7 @@ import {
 } from "@/components/franchise/FranchiseLedgerTable";
 import { FranchiseSubNav } from "@/components/franchise/FranchiseSubNav";
 import { FranchiseHistorySummary } from "@/components/owner/FranchiseHistorySummary";
+import { MoneyDisplay } from "@/components/owner/MoneyDisplay";
 import { EmptyState, ErrorState } from "@/components/ui/EmptyState";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { Section } from "@/components/ui/Section";
@@ -61,21 +62,39 @@ export default async function FranchiseHistoryPage({
           <Section title="Business Ledger">
             <FranchiseLedgerTable seasons={history.seasons} />
           </Section>
-          <Section title="Identity">
+          <Section title="Relocations & Rebrands">
             {identityChanges.length === 0 ? (
               <p className="text-sm text-zinc-400">
                 The franchise has always played as {team.city} {team.name}.
               </p>
             ) : (
-              <ul className="space-y-2 text-sm text-zinc-300">
+              <ul className="space-y-3">
                 {identityChanges.map((change) => (
-                  <li key={change.seasonYear}>
-                    <span className="text-zinc-500">{change.seasonYear}</span>{" "}
-                    {change.from} → {change.to}
+                  <li
+                    key={change.seasonYear}
+                    className="rounded-lg border border-zinc-800 px-4 py-3"
+                  >
+                    <p className="text-sm text-zinc-500">
+                      {change.seasonYear} ·{" "}
+                      {change.kind === "relocation" ? "Relocation" : "Rebrand"}
+                    </p>
+                    <p className="mt-1 font-medium text-zinc-100">
+                      {change.from} → {change.to}
+                    </p>
+                    <p className="mt-1 text-sm text-zinc-400">
+                      Value <MoneyDisplay amount={change.valueBefore} /> →{" "}
+                      <MoneyDisplay amount={change.valueAfter} /> · Fan
+                      sentiment {change.sentimentBefore} →{" "}
+                      {change.sentimentAfter}
+                    </p>
                   </li>
                 ))}
               </ul>
             )}
+            <p className="mt-3 text-sm text-zinc-500">
+              Before/after figures are season-end values either side of the
+              change.
+            </p>
           </Section>
         </>
       )}

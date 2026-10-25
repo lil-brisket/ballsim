@@ -3,25 +3,50 @@ import type { FranchiseSeasonRecord } from "@/domain/entities/franchise-history"
 
 export type FranchiseIdentityChange = {
   seasonYear: number;
+  /** A city move (relocation) rather than a rename in the same city. */
+  kind: "relocation" | "rebrand";
   from: string;
   to: string;
+  /** Value and fan sentiment at the end of the season before the change. */
+  valueBefore: number;
+  valueAfter: number;
+  sentimentBefore: number;
+  sentimentAfter: number;
 };
 
 function identity(season: FranchiseSeasonRecord): string {
   return `${season.city} ${season.name}`;
 }
 
-/** Seasons (chronological input) where the franchise ended under a new city or name. */
+/**
+ * Seasons (chronological input) where the franchise ended under a new city
+ * or name, with value and fan sentiment either side of the change.
+ */
 export function toFranchiseIdentityChanges(
   seasons: readonly FranchiseSeasonRecord[],
 ): FranchiseIdentityChange[] {
   const changes: FranchiseIdentityChange[] = [];
   for (let i = 1; i < seasons.length; i += 1) {
-    const from = identity(seasons[i - 1]);
-    const to = identity(seasons[i]);
-    if (from !== to) {
-      changes.push({ seasonYear: seasons[i].seasonYear, from, to });
+    const before = seasons[i - 1];
+    const after = seasons[i];
+    const from = identity(before);
+    const to = identity(after);
+    if (from === to) {
+      continue;
     }
+    changes.push({
+      seasonYear: after.seasonYear,
+      kind:
+        after.relocated || before.city !== after.city
+          ? "relocation"
+          : "rebrand",
+      from,
+      to,
+      valueBefore: before.franchiseValue,
+      valueAfter: after.franchiseValue,
+      sentimentBefore: before.fanSentiment,
+      sentimentAfter: after.fanSentiment,
+    });
   }
   return changes;
 }
