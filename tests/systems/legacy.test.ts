@@ -17,6 +17,7 @@ import {
   processHallOfFameInductions,
   retireJerseyNumber,
 } from "@/systems/legacy";
+import { createRetiredPlayerRecord } from "@/systems/player-retirement";
 import { bootstrapWorld } from "@/systems/world-pipeline";
 import { createTestGameState } from "../factories/game-state";
 
@@ -66,7 +67,7 @@ function retiredGreat(
   })) as unknown as PlayerSeasonRecord[];
   const player = state.world.players[playerId]!;
   const team = state.world.teams[teamId]!;
-  return {
+  const retired: GameState = {
     ...state,
     world: {
       ...state.world,
@@ -96,6 +97,17 @@ function retiredGreat(
           trackingStartedSeasonYear: records[0]!.seasonYear,
           seasons: records,
         },
+      },
+    },
+  };
+  // Retirement archives the player, as processPlayerRetirements does.
+  return {
+    ...retired,
+    world: {
+      ...retired.world,
+      retiredPlayers: {
+        ...retired.world.retiredPlayers,
+        [playerId]: createRetiredPlayerRecord(retired, player, lastSeasonYear),
       },
     },
   };

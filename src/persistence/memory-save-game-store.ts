@@ -14,7 +14,7 @@ import type {
 import { SaveVersionConflictError } from "@/persistence/save-version-conflict";
 import {
   mergeSaveHistory,
-  splitColdHistory,
+  splitForStorage,
   type SaveHistory,
 } from "@/persistence/save-history";
 
@@ -25,6 +25,7 @@ type MemorySaveRow = {
   stateJson: string;
   createdAt: Date;
   updatedAt: Date;
+  ownerUserId: string | null;
 };
 
 export type SeedPersistedBlobInput = {
@@ -32,6 +33,7 @@ export type SeedPersistedBlobInput = {
   name: string;
   schemaVersion: number;
   stateJson: string;
+  ownerUserId?: string | null;
 };
 
 /**
@@ -51,14 +53,23 @@ function sameUpdatedAt(a: Date, b: Date): boolean {
  * In-memory SaveGameStore for tests. Replaces the whole blob in one
  * assignment. Does not leak stateJson outside LoadedSaveGame.state.
  */
-export function createMemorySaveGameStore(): MemorySaveGameStore {
+export function createMemorySaveGameStore(
+  options: {
+    /** false keeps retired players' rows in the snapshot (determinism checks). */
+    archivePlayers?: boolean;
+  } = {},
+): MemorySaveGameStore {
   const rows = new Map<string, MemorySaveRow>();
   /** Finished-season history by save, as JSON per chunk (immutable). */
   const historyBySave = new Map<string, Map<string, string>>();
 
-  /** Splits off finished-season history, keeps new chunks, returns the rest. */
-  function storeHistory(saveId: string, state: GameState): GameState {
-    const { hot, chunks } = splitColdHistory(state);
+  /** Splits off finished-season history, keeps new chunks, returns the snapshot JSON. */
+  function storeHistory(saveId: string, state: GameState): string {
+    const { stateJson, chunks } = splitForStorage(
+      state,
+      prepareStateJson,
+      options,
+    );
     let stored = historyBySave.get(saveId);
     if (stored === undefined) {
       stored = new Map();
@@ -69,7 +80,7 @@ export function createMemorySaveGameStore(): MemorySaveGameStore {
         stored.set(chunk.chunkId, JSON.stringify(chunk.history));
       }
     }
-    return hot;
+    return stateJson;
   }
 
   function prepareStateJson(state: GameState): string {
@@ -87,6 +98,7 @@ export function createMemorySaveGameStore(): MemorySaveGameStore {
       schemaVersion: row.schemaVersion,
       createdAt: row.createdAt,
       updatedAt: row.updatedAt,
+      ownerUserId: row.ownerUserId,
       state: deserializeGameState(row.stateJson),
     };
   }
@@ -101,6 +113,7 @@ export function createMemorySaveGameStore(): MemorySaveGameStore {
           schemaVersion: row.schemaVersion,
           createdAt: row.createdAt,
           updatedAt: row.updatedAt,
+          ownerUserId: row.ownerUserId,
         }));
     },
 
@@ -108,11 +121,12 @@ export function createMemorySaveGameStore(): MemorySaveGameStore {
       id: string;
       name: string;
       state: GameState;
+      ownerUserId?: string | null;
     }): Promise<LoadedSaveGame> {
       if (rows.has(input.id)) {
         throw new Error(`SaveGame "${input.id}" already exists.`);
       }
-      const stateJson = prepareStateJson(storeHistory(input.id, input.state));
+      const stateJson = storeHistory(input.id, input.state);
       const now = new Date();
       const row: MemorySaveRow = {
         id: input.id,
@@ -121,6 +135,7 @@ export function createMemorySaveGameStore(): MemorySaveGameStore {
         stateJson,
         createdAt: now,
         updatedAt: now,
+        ownerUserId: input.ownerUserId ?? null,
       };
       rows.set(input.id, row);
       return toLoaded(row);
@@ -161,7 +176,7 @@ export function createMemorySaveGameStore(): MemorySaveGameStore {
       ) {
         throw new SaveVersionConflictError(input.id);
       }
-      const stateJson = prepareStateJson(storeHistory(input.id, input.state));
+      const stateJson = storeHistory(input.id, input.state);
       const row: MemorySaveRow = {
         ...existing,
         schemaVersion: GAME_STATE_SCHEMA_VERSION,
@@ -195,6 +210,7 @@ export function createMemorySaveGameStore(): MemorySaveGameStore {
         stateJson: input.stateJson,
         createdAt: now,
         updatedAt: now,
+        ownerUserId: input.ownerUserId ?? null,
       });
     },
   };

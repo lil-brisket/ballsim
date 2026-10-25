@@ -234,6 +234,7 @@ describe("season lifecycle", () => {
         scheduledEvents: {},
         playerPortraits: {},
         retiredNumbers: {},
+        retiredPlayers: {},
       },
       competition: {
         season: {

@@ -99,6 +99,31 @@ export type OwnershipSeasonNote = {
   mandateSummary: string;
 };
 
+/**
+ * How far the board has escalated over seasons that ended badly:
+ * a formal warning, then frozen discretionary spending, then a blocking
+ * "the board wants changes" decision. Good seasons step it back down.
+ */
+export type BoardPressureStage =
+  "none" | "warning" | "restricted" | "ultimatum";
+
+export const BOARD_PRESSURE_STAGES: readonly BoardPressureStage[] = [
+  "none",
+  "warning",
+  "restricted",
+  "ultimatum",
+] as const;
+
+export function isBoardPressureStage(
+  value: string,
+): value is BoardPressureStage {
+  return (BOARD_PRESSURE_STAGES as readonly string[]).includes(value);
+}
+
+export type BoardPressureState = {
+  stage: BoardPressureStage;
+};
+
 /** Max recent evidence retained for UI and confidence aggregation. */
 export const OWNERSHIP_EVIDENCE_RING_MAX = 12;
 
@@ -122,6 +147,7 @@ export type OwnershipConfidenceState = {
   lastConfidenceChangeOn: string;
   lastPostureCheckOn?: string;
   seasonNotes: OwnershipSeasonNote[];
+  boardPressure: BoardPressureState;
 };
 
 export function createDefaultOwnershipConfidence(
@@ -136,6 +162,7 @@ export function createDefaultOwnershipConfidence(
     recentHurting: [],
     lastConfidenceChangeOn: occurredOn,
     seasonNotes: [],
+    boardPressure: { stage: "none" },
   };
 }
 

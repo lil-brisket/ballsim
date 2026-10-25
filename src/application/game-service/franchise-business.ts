@@ -1,4 +1,8 @@
 import "server-only";
+import {
+  type BoardDirectiveChoice,
+  resolveBoardDirective,
+} from "@/systems/board-pressure";
 import type { SaveGameStore } from "@/persistence/save-game-store";
 import { toDashboardSnapshot } from "@/state/selectors";
 import { hireStaff } from "@/systems/staff";
@@ -188,6 +192,18 @@ export async function upgradeOwnerFacility(
         events: result.events,
       };
     },
+    store,
+  );
+}
+
+export async function resolveOwnerBoardDirective(
+  saveId: string,
+  choice: BoardDirectiveChoice,
+  store?: SaveGameStore,
+): Promise<OwnerCommandResult> {
+  return runOwnerFranchiseCommand(
+    saveId,
+    (state) => resolveBoardDirective(state, choice),
     store,
   );
 }

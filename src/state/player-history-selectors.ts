@@ -16,6 +16,7 @@ import {
   getPlayerAwardCareerTotals,
   type PlayerAwardCareerTotalView,
 } from "@/state/award-selectors";
+import { getPlayerIdentity } from "@/state/player-identity";
 
 export type PlayerHistoryIndexEntry = {
   playerId: string;
@@ -61,7 +62,7 @@ function resolvePlayerIdentity(
   lastName: string | null;
   retired: boolean;
 } {
-  const player = state.world.players[playerId];
+  const player = getPlayerIdentity(state, playerId);
   if (!player) {
     return {
       displayName: playerId,
@@ -71,10 +72,10 @@ function resolvePlayerIdentity(
     };
   }
   return {
-    displayName: `${player.firstName} ${player.lastName}`,
+    displayName: player.displayName,
     firstName: player.firstName,
     lastName: player.lastName,
-    retired: player.retired === true,
+    retired: player.retired,
   };
 }
 

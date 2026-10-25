@@ -90,7 +90,15 @@ function createCast(state: GameState): LeagueCast {
 
   const playerNames = new Set<string>();
   const playerNameCounts = new Map<string, number>();
-  for (const player of Object.values(state.world.players)) {
+  // Archived retired players count too, so handles do not change when a
+  // retired player's row leaves the save.
+  const people = [
+    ...Object.values(state.world.players),
+    ...Object.values(state.world.retiredPlayers).filter(
+      (record) => state.world.players[record.id] === undefined,
+    ),
+  ];
+  for (const player of people) {
     const full = `${player.firstName} ${player.lastName}`.toLowerCase();
     playerNames.add(full);
     playerNameCounts.set(full, (playerNameCounts.get(full) ?? 0) + 1);

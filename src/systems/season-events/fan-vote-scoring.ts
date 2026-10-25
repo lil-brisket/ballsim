@@ -1,5 +1,6 @@
 import { calculatePlayerOverall } from "@/domain/player-overall-rating";
 import type { FanVoteCategory } from "@/domain/entities/season-events";
+import type { Game } from "@/domain/entities/game";
 import type { GameState } from "@/state/game-state";
 import type { Rng } from "@/domain/rng";
 import type { PlayerId } from "@/domain/ids";
@@ -21,6 +22,9 @@ export function computeDailyVoteIncrements(
 ): Map<PlayerId, number> {
   const weights = new Map<PlayerId, number>();
   let weightSum = 0;
+  // Every candidate reads the same season games: gather them once per call,
+  // not twice per candidate (that scan dominated long saves).
+  let form: SeasonForm | null = null;
 
   for (const playerId of Object.keys(category.candidates).sort()) {
     const candidate = category.candidates[playerId]!;
@@ -35,8 +39,9 @@ export function computeDailyVoteIncrements(
     const overall = clamp01(
       calculatePlayerOverall(player.position, player.attributes) / 99,
     );
-    const performance = performanceFactor(state, asPlayerId(playerId));
-    const recent = recentFormFactor(state, asPlayerId(playerId));
+    form ??= seasonForm(state);
+    const performance = performanceFactor(form, asPlayerId(playerId));
+    const recent = recentFormFactor(form, asPlayerId(playerId));
     const popularity = clamp01((player.personality?.leadership ?? 50) / 100);
     const teamVisibility = clamp01((ops?.fanSentiment ?? 50) / 100);
     const market = clamp01((ops?.marketSize ?? 50) / 100);
@@ -83,13 +88,28 @@ export function computeDailyVoteIncrements(
   return increments;
 }
 
-function performanceFactor(state: GameState, playerId: PlayerId): number {
+type SeasonForm = {
+  /** This season's final regular-season games. */
+  games: Game[];
+  /** The league's five most recent of them. */
+  latest: Game[];
+};
+
+function seasonForm(state: GameState): SeasonForm {
   const games = getPrimaryLeagueFinalGames(state, {
     competitionTypes: ["regular_season"],
   });
+  const latest = games
+    .slice()
+    .sort((a, b) => b.date.localeCompare(a.date))
+    .slice(0, 5);
+  return { games, latest };
+}
+
+function performanceFactor(form: SeasonForm, playerId: PlayerId): number {
   let points = 0;
   let count = 0;
-  for (const game of games) {
+  for (const game of form.games) {
     const row = game.playerStats.find((s) => s.playerId === playerId);
     if (!row) continue;
     points += row.points;
@@ -100,13 +120,8 @@ function performanceFactor(state: GameState, playerId: PlayerId): number {
   return clamp01(ppg / 30);
 }
 
-function recentFormFactor(state: GameState, playerId: PlayerId): number {
-  const games = getPrimaryLeagueFinalGames(state, {
-    competitionTypes: ["regular_season"],
-  })
-    .slice()
-    .sort((a, b) => b.date.localeCompare(a.date))
-    .slice(0, 5);
+function recentFormFactor(form: SeasonForm, playerId: PlayerId): number {
+  const games = form.latest;
   if (games.length === 0) return 0.25;
   let points = 0;
   let counted = 0;

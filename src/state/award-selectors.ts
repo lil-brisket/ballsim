@@ -2,6 +2,7 @@ import type { AwardDefinitionId, AwardResult } from "@/domain/entities/awards";
 import type { PlayerId } from "@/domain/ids";
 import type { GameState } from "@/state/game-state";
 import { AWARD_DEFINITIONS } from "@/systems/awards/award-definitions";
+import { getPlayerIdentity } from "@/state/player-identity";
 
 const MONTH_NAMES = [
   "January",
@@ -70,10 +71,10 @@ function subjectName(state: GameState, result: AwardResult): string {
       ? `${coach.firstName} ${coach.lastName}`
       : result.winner.subjectId;
   }
-  const player = state.world.players[result.winner.subjectId];
-  return player
-    ? `${player.firstName} ${player.lastName}`
-    : result.winner.subjectId;
+  return (
+    getPlayerIdentity(state, result.winner.subjectId)?.displayName ??
+    result.winner.subjectId
+  );
 }
 
 function subjectHref(saveId: string, result: AwardResult): string | null {
@@ -200,9 +201,9 @@ export function toLeagueAwardsView(
           result.winner.subjectType === "player" ||
           def.subjectType === "player"
         ) {
-          const player = state.world.players[c.subjectId];
+          const player = getPlayerIdentity(state, c.subjectId);
           if (player) {
-            name = `${player.firstName} ${player.lastName}`;
+            name = player.displayName;
             href = `/dashboard/${saveId}/players/${c.subjectId}`;
           }
         } else {

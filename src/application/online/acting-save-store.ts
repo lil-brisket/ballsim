@@ -11,7 +11,11 @@
  *   cannot silently overwrite each other; the loser gets a conflict error.
  * - delete(): only the host may delete an online league.
  *
- * Single-player and local shared saves pass through unchanged.
+ * Single-player and local shared saves belong to the account that created
+ * them: a save with an owner is invisible to everyone else, and only its
+ * owner may write or delete it. Saves made signed out have no owner and stay
+ * open to anyone on this server, unless `requireSignIn` is set (hosted
+ * deployments), which hides ownerless saves and refuses to create them.
  */
 
 import type {
@@ -28,15 +32,35 @@ import {
 
 export type ResolveUserId = () => Promise<string | null>;
 
+export type ActingSaveStoreOptions = {
+  /** Hide ownerless single-player saves and refuse to create them. */
+  requireSignIn?: boolean;
+};
+
 export function createActingSaveGameStore(
   base: SaveGameStore,
   resolveUserId: ResolveUserId,
+  options: ActingSaveStoreOptions = {},
 ): SaveGameStore {
   const loadedAt = new Map<string, Date>();
+  const requireSignIn = options.requireSignIn ?? false;
+
+  /** Single-player and local shared saves: owner, or ownerless when allowed. */
+  function ownsSave(
+    ownerUserId: string | null | undefined,
+    userId: string | null,
+  ) {
+    if (ownerUserId) {
+      return ownerUserId === userId;
+    }
+    return !requireSignIn;
+  }
 
   async function actAs(loaded: LoadedSaveGame): Promise<LoadedSaveGame | null> {
     if (!isOnlineLeague(loaded.state)) {
-      return loaded;
+      return ownsSave(loaded.ownerUserId, await resolveUserId())
+        ? loaded
+        : null;
     }
     const userId = await resolveUserId();
     const acting = userId ? withActingUser(loaded.state, userId) : null;
@@ -45,10 +69,23 @@ export function createActingSaveGameStore(
 
   return {
     async list() {
-      return base.list();
+      // Online leagues have no owner; load hides the ones you are not in.
+      const userId = await resolveUserId();
+      return (await base.list()).filter(
+        (summary) =>
+          !summary.ownerUserId || ownsSave(summary.ownerUserId, userId),
+      );
     },
     async create(input) {
-      const created = await base.create(input);
+      const userId = await resolveUserId();
+      const online = isOnlineLeague(input.state);
+      if (!online && requireSignIn && !userId) {
+        throw new Error("Sign in to create a save.");
+      }
+      const created = await base.create({
+        ...input,
+        ownerUserId: online ? null : userId,
+      });
       loadedAt.set(created.id, created.updatedAt);
       const acting = await actAs(created);
       if (!acting) {
@@ -77,6 +114,14 @@ export function createActingSaveGameStore(
     },
     async save(input) {
       if (!isOnlineLeague(input.state)) {
+        // Ownership was checked when this request loaded the save; a write
+        // without that load checks the stored row.
+        if (!loadedAt.has(input.id)) {
+          const stored = await base.load(input.id);
+          if (stored && !ownsSave(stored.ownerUserId, await resolveUserId())) {
+            throw new Error("This save belongs to another account.");
+          }
+        }
         return base.save(input);
       }
       const userId = await resolveUserId();
@@ -97,6 +142,13 @@ export function createActingSaveGameStore(
     },
     async delete(id) {
       const loaded = await base.load(id);
+      if (
+        loaded &&
+        !isOnlineLeague(loaded.state) &&
+        !ownsSave(loaded.ownerUserId, await resolveUserId())
+      ) {
+        throw new Error("This save belongs to another account.");
+      }
       if (loaded && isOnlineLeague(loaded.state)) {
         const userId = await resolveUserId();
         const participant = userId

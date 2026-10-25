@@ -13,7 +13,9 @@ import {
   selectOwnerDraftProspect,
   selectOwnerTeam,
   resolveOwnerDraftClassDecision,
+  resolveOwnerBoardDirective,
 } from "@/application/game-service";
+import { hasPendingBoardDirective } from "@/systems/board-pressure";
 import {
   cloneGameSettings,
   CBL_GAME_SETTINGS,
@@ -41,6 +43,8 @@ export type AdvanceMode =
 
 export type MultiYearSimOptions = {
   seasons: number;
+  /** false keeps retired players' rows in the saved snapshot. Default true. */
+  archiveRetiredPlayers?: boolean;
   /** Preferred: new preset API. */
   managementPreset?: AiManagementPreset;
   /** @deprecated Prefer managementPreset. Mapped via legacyManagementModeToPreset. */
@@ -243,6 +247,19 @@ async function handleBlockedGates(
     return "handled";
   }
 
+  // An unattended owner takes the board's plan (free, keeps the freeze).
+  if (hasPendingBoardDirective(state)) {
+    const answered = await resolveOwnerBoardDirective(
+      saveId,
+      "accept_plan",
+      store,
+    );
+    if (!answered.ok) {
+      throw new Error(answered.error);
+    }
+    return "handled";
+  }
+
   if (!calendarPrimary && state.competition.season.phase === "postseason") {
     const began = await beginOffseason(saveId, store);
     if (!began.ok) {
@@ -333,7 +350,9 @@ async function handleBlockedGates(
 export async function runMultiYearSimulation(
   options: MultiYearSimOptions,
 ): Promise<MultiYearSimResult> {
-  const store = createMemorySaveGameStore();
+  const store = createMemorySaveGameStore({
+    archivePlayers: options.archiveRetiredPlayers,
+  });
   const seed = options.seed ?? TEST_RNG_SEED;
   const settings = cloneGameSettings(options.settingsBase ?? CBL_GAME_SETTINGS);
   const managementPreset: AiManagementPreset =

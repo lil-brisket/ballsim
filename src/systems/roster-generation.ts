@@ -218,14 +218,22 @@ function takeFillFreeAgent(
   return candidates[0] ?? null;
 }
 
+/**
+ * First free fill id. Retired players count as taken even after their row
+ * leaves the save (their archive record stays), so an id is never reused.
+ */
 function nextFillPlayerId(
   teamId: string,
   players: Record<string, Player>,
+  retiredPlayers: GameState["world"]["retiredPlayers"],
   startSlot: number,
 ): { playerId: ReturnType<typeof asPlayerId>; nextSlot: number } {
   let slot = startSlot;
   let playerId = asPlayerId(`player_${teamId}_fill_${slot}`);
-  while (players[playerId] !== undefined) {
+  while (
+    players[playerId] !== undefined ||
+    retiredPlayers[playerId] !== undefined
+  ) {
     slot += 1;
     playerId = asPlayerId(`player_${teamId}_fill_${slot}`);
   }
@@ -347,7 +355,12 @@ export function fillShortRosters(state: GameState, rng: Rng): SystemResult {
       players[existing.id] = player;
       roster.push(existing.id);
     } else {
-      const next = nextFillPlayerId(teamId, players, fill.slot);
+      const next = nextFillPlayerId(
+        teamId,
+        players,
+        state.world.retiredPlayers,
+        fill.slot,
+      );
       fill.slot = next.nextSlot;
       const playerId = next.playerId;
       const contractId = asContractId(`contract_${playerId}`);

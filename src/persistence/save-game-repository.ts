@@ -13,7 +13,7 @@ import { projectSaveEntities } from "@/persistence/mappers/save-projection-mappe
 import { getPrisma } from "@/persistence/prisma";
 import {
   mergeSaveHistory,
-  splitColdHistory,
+  splitForStorage,
   type SaveHistory,
   type SaveHistoryChunk,
 } from "@/persistence/save-history";
@@ -67,6 +67,7 @@ function toLoaded(
     schemaVersion: number;
     createdAt: Date;
     updatedAt: Date;
+    ownerUserId: string | null;
   },
   stateJson: string,
 ): LoadedSaveGame {
@@ -76,6 +77,7 @@ function toLoaded(
     schemaVersion: row.schemaVersion,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
+    ownerUserId: row.ownerUserId,
     state: deserializeGameState(stateJson),
   };
 }
@@ -86,6 +88,7 @@ const SAVE_METADATA = {
   schemaVersion: true,
   createdAt: true,
   updatedAt: true,
+  ownerUserId: true,
 } as const;
 
 type ProjectionClient = Pick<PrismaClient, "saveTeam" | "savePlayer">;
@@ -182,13 +185,7 @@ export function createPrismaSaveGameStore(
     async list(): Promise<SaveGameSummary[]> {
       const rows = await db().saveGame.findMany({
         orderBy: { updatedAt: "desc" },
-        select: {
-          id: true,
-          name: true,
-          schemaVersion: true,
-          createdAt: true,
-          updatedAt: true,
-        },
+        select: SAVE_METADATA,
       });
       return rows;
     },
@@ -197,14 +194,18 @@ export function createPrismaSaveGameStore(
       id: string;
       name: string;
       state: GameState;
+      ownerUserId?: string | null;
     }): Promise<LoadedSaveGame> {
-      const { hot, chunks } = splitColdHistory(input.state);
-      const stateJson = prepareStateJson(hot);
+      const { stateJson, chunks } = splitForStorage(
+        input.state,
+        prepareStateJson,
+      );
       const row = await db().$transaction(async (tx) => {
         const created = await tx.saveGame.create({
           data: {
             id: input.id,
             name: input.name,
+            ownerUserId: input.ownerUserId ?? null,
             schemaVersion: GAME_STATE_SCHEMA_VERSION,
             ...compressStateJson(stateJson),
           },
@@ -248,8 +249,10 @@ export function createPrismaSaveGameStore(
       state: GameState;
       ifUpdatedAt?: Date;
     }): Promise<LoadedSaveGame> {
-      const { hot, chunks } = splitColdHistory(input.state);
-      const stateJson = prepareStateJson(hot);
+      const { stateJson, chunks } = splitForStorage(
+        input.state,
+        prepareStateJson,
+      );
       const row = await db().$transaction(async (tx) => {
         if (input.ifUpdatedAt != null) {
           const result = await tx.saveGame.updateMany({

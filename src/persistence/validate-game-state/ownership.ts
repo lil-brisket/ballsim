@@ -2,6 +2,8 @@ import {
   type OwnershipConfidenceState,
   isOwnershipMood,
   OWNERSHIP_MOODS,
+  BOARD_PRESSURE_STAGES,
+  isBoardPressureStage,
   OWNERSHIP_EVIDENCE_RING_MAX,
   OWNERSHIP_SEASON_NOTES_MAX,
   type AlignmentEvidence,
@@ -117,6 +119,13 @@ export function validateOwnershipConfidence(
   }
   for (const [index, note] of confidence.seasonNotes.entries()) {
     validateOwnershipSeasonNote(note, `${path}.seasonNotes[${index}]`);
+  }
+  const stage = (confidence.boardPressure as { stage?: unknown } | undefined)
+    ?.stage;
+  if (typeof stage !== "string" || !isBoardPressureStage(stage)) {
+    fail(
+      `${path}.boardPressure.stage must be one of ${BOARD_PRESSURE_STAGES.join(", ")}.`,
+    );
   }
 }
 

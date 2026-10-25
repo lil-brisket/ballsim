@@ -8,6 +8,7 @@ import {
   negotiateOwnerStaffOffer,
   acceptOwnerStaffOffer,
   upgradeOwnerFacility,
+  resolveOwnerBoardDirective,
   setOwnerTicketPrice,
   setOwnerMarketingBudget,
   scheduleOwnerGameDayPromotion,
@@ -23,6 +24,7 @@ import {
 } from "@/application/game-service";
 import { redirect } from "next/navigation";
 import type { FacilityCategory } from "@/domain/entities/franchise-ops";
+import { isBoardDirectiveChoice } from "@/systems/board-pressure";
 import {
   returnPath,
   redirectWithError,
@@ -295,6 +297,23 @@ export async function completeExpansionAction(
   const saveId = String(formData.get("saveId") ?? "");
   const path = returnPath(formData, saveId);
   const result = await completeOwnerExpansion(saveId);
+  if (!result.ok) {
+    redirectWithError(path, result.error);
+  }
+  revalidateOwner(saveId);
+  redirect(path);
+}
+
+export async function resolveBoardDirectiveAction(
+  formData: FormData,
+): Promise<void> {
+  const saveId = String(formData.get("saveId") ?? "");
+  const choice = String(formData.get("choice") ?? "");
+  const path = returnPath(formData, saveId);
+  if (!isBoardDirectiveChoice(choice)) {
+    redirectWithError(path, "Choose how to answer the board.");
+  }
+  const result = await resolveOwnerBoardDirective(saveId, choice);
   if (!result.ok) {
     redirectWithError(path, result.error);
   }

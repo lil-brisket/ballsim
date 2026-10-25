@@ -111,6 +111,27 @@ jobs:
       - name: Simulation Lab (rotation-on, 100 games)
         run: npm run test:simulation
 
+  regression:
+    runs-on: ubuntu-latest
+    # ~5 min locally; runs beside the other jobs so golden-fixture breaks
+    # show up on the PR instead of the next nightly run.
+    timeout-minutes: 25
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Regression suites
+        run: npm run test:regression
+
   build:
     runs-on: ubuntu-latest
     timeout-minutes: 15

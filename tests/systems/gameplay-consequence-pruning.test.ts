@@ -48,6 +48,27 @@ describe("pruneExpiredGameplayConsequenceKeys", () => {
     ]);
   });
 
+  it("drops ticket keys from seasons before the current one", () => {
+    const base = withKeys([
+      "tickets:team_a:2026:game_season_2026_4",
+      "tickets:team_a:2027:playoff_season_2027_playoff_r1_s0_g1",
+      "tickets:team_a:2028:game_season_2028_1",
+    ]);
+    const state: GameState = {
+      ...base,
+      competition: {
+        ...base.competition,
+        season: { ...base.competition.season, year: 2028 },
+      },
+    };
+    const pruned = pruneExpiredGameplayConsequenceKeys(
+      state,
+      "2028-11-01",
+      "2028-W44",
+    );
+    expect(keysOf(pruned)).toEqual(["tickets:team_a:2028:game_season_2028_1"]);
+  });
+
   it("keeps keys that can be checked again in a later season", () => {
     const keys = [
       "ai_draft:pick_team_a_2027_r1",

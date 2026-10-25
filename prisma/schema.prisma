@@ -21,6 +21,9 @@ model SaveGame {
   stateJson     String
   /// gzip of the GameState JSON. Authoritative when present.
   stateGzip     Bytes?
+  /// Account that created the save. Null for saves made signed out and for
+  /// online leagues, whose access follows league membership instead.
+  ownerUserId   String?
   createdAt     DateTime           @default(now())
   updatedAt     DateTime           @updatedAt
   teams         SaveTeam[]
@@ -30,6 +33,7 @@ model SaveGame {
 
   @@index([name])
   @@index([updatedAt])
+  @@index([ownerUserId])
 }
 
 /// Finished-season history kept out of the per-action snapshot: one season's

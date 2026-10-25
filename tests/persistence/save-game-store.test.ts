@@ -173,6 +173,7 @@ function createEightTeamPopulatedState(rngSeed: number): GameState {
       scheduledEvents: {},
       playerPortraits: {},
       retiredNumbers: {},
+      retiredPlayers: {},
     },
     competition: {
       season: {

@@ -223,8 +223,7 @@ export function toLegacyView(state: GameState): LegacyView {
     }),
   );
   const legends: FranchiseLegendRow[] = [];
-  for (const player of Object.values(state.world.players)) {
-    if (player.retired !== true) continue;
+  for (const player of Object.values(state.world.retiredPlayers)) {
     const career = careerSummary(state, player.id as PlayerId);
     const seasons = career.seasonsByTeam[teamId] ?? 0;
     if (seasons < RETIRE_NUMBER_MIN_SEASONS) continue;

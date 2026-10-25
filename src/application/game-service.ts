@@ -25,12 +25,18 @@ export {
 export {
   createNewOwnerSave,
   loadOwnerSave,
+  canAccessOwnerSave,
   listOwnerSaves,
   type OwnerSavePreview,
   listOwnerSavePreviews,
   deleteOwnerSave,
   saveOwnerGame,
 } from "@/application/game-service/save-lifecycle";
+export {
+  exportOwnerSave,
+  importOwnerSave,
+  MAX_SAVE_IMPORT_BYTES,
+} from "@/application/game-service/save-transfer";
 export {
   upsertCustomContentPackage,
   listCustomContentPackages,
@@ -135,6 +141,7 @@ export {
   negotiateOwnerStaffOffer,
   acceptOwnerStaffOffer,
   upgradeOwnerFacility,
+  resolveOwnerBoardDirective,
   setOwnerTicketPrice,
   setOwnerMarketingBudget,
   signOwnerSponsorship,

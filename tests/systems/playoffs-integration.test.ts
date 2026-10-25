@@ -184,6 +184,7 @@ function createEightTeamGameState(
       scheduledEvents: {},
       playerPortraits: {},
       retiredNumbers: {},
+      retiredPlayers: {},
     },
     competition: {
       season: {
