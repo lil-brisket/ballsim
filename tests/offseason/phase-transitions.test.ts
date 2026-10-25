@@ -671,7 +671,7 @@ describe("entering a phase", () => {
     expect(reason).toMatch(/draft is not complete/);
   });
 
-  it("opens the regular season only with rosters of 8 to 15", () => {
+  it("opens the regular season only with rosters of 12 to 15", () => {
     const ready = step("preseason.preparation", 1).before;
     expect(canEnterPhase(ready, "regular").allowed).toBe(true);
     const teamId = Object.keys(ready.world.teams).sort()[0] as TeamId;
@@ -692,18 +692,18 @@ describe("entering a phase", () => {
         },
       },
     });
-    for (const size of [8, 15]) {
+    for (const size of [12, 15]) {
       expect(
         canEnterPhase(withRoster(size), "regular").allowed,
         `${size}`,
       ).toBe(true);
     }
-    for (const size of [7, 16, 0]) {
+    for (const size of [11, 16, 0]) {
       const result = canEnterPhase(withRoster(size), "regular");
       expect(result.allowed, `${size}`).toBe(false);
       expect(result.blockReason, `${size}`).toContain(teamId);
     }
-    const short = previewAdvance(withRoster(7));
+    const short = previewAdvance(withRoster(11));
     expect(short.canAdvance).toBe(false);
     expect(short.blockReason).toMatch(/roster/i);
   });
