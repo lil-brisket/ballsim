@@ -17,7 +17,7 @@ export function FacilitiesSummarySection(props: {
 
   return (
     <ActionCard
-      href={`/dashboard/${saveId}/facilities`}
+      href={`/dashboard/${saveId}/finances/facilities`}
       title="Renovation"
       description={`Arena capacity ${summary.arenaCapacity.toLocaleString()} · ${upgradeLabel}`}
       footer={

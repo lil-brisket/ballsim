@@ -147,7 +147,7 @@ export function buildCalendarActionItems(
       evidence: data.facilities
         .slice(0, 2)
         .map((f) => `${f.category}: L${f.level}`),
-      href: `/dashboard/${saveId}/facilities`,
+      href: `/dashboard/${saveId}/finances/facilities`,
       hrefLabel: "Manage Facilities",
     });
   }

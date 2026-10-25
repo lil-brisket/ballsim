@@ -202,7 +202,7 @@ export function buildActionItems(
           (f) =>
             `${f.category} (level ${f.level}${f.upgradeCost !== null ? ` · ${formatCompactMoney(f.upgradeCost)}` : ""})`,
         ),
-      href: `/dashboard/${saveId}/facilities`,
+      href: `/dashboard/${saveId}/finances/facilities`,
       hrefLabel: "Manage Facilities",
     });
   }

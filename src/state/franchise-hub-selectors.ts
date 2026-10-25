@@ -300,7 +300,7 @@ export function toFranchiseHubView(state: GameState): FranchiseHubView {
         description: arena
           ? `Arena level ${arena.level} · ${facilities.length} categories`
           : `${facilities.length} facility categories`,
-        href: `${base}/facilities`,
+        href: `${base}/finances/facilities`,
         cta: "Manage Facilities",
       },
       {
