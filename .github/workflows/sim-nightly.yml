@@ -8,7 +8,7 @@ on:
 jobs:
   nightly:
     runs-on: ubuntu-latest
-    timeout-minutes: 90
+    timeout-minutes: 120
     env:
       DATABASE_URL: file:./prisma/ci.db
     steps:
@@ -39,6 +39,10 @@ jobs:
       - name: 10-season owner career
         run: npm run sim -- --seed=42 --mode owner-career --seasons 10 --channel nightly --format json --out lab-nightly-career.json
 
+      # Long-save health: per-season snapshot size and wall time per day.
+      - name: 30-season save growth
+        run: npx tsx scripts/save-growth.ts --seasons=30 --seed=42 --out=save-growth.json
+
       - name: Upload Lab artifacts
         uses: actions/upload-artifact@v7
         if: always()
@@ -47,4 +51,5 @@ jobs:
           path: |
             lab-nightly-10k.json
             lab-nightly-career.json
+            save-growth.json
           if-no-files-found: warn
