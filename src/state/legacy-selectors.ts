@@ -69,7 +69,13 @@ function finalGames(state: GameState): Game[] {
       games.push(game);
     }
   }
-  return games;
+  // Chronological, so tied records list the earliest game first whether or
+  // not the history was loaded back from cold storage.
+  return games.sort(
+    (a, b) =>
+      (a.date < b.date ? -1 : a.date > b.date ? 1 : 0) ||
+      (a.id < b.id ? -1 : a.id > b.id ? 1 : 0),
+  );
 }
 
 function name(state: GameState, playerId: string, fallback?: string | null) {
@@ -79,7 +85,11 @@ function name(state: GameState, playerId: string, fallback?: string | null) {
 
 function top(entries: RecordEntry[]): RecordEntry[] {
   return entries
-    .sort((a, b) => b.value - a.value || (a.playerId < b.playerId ? -1 : 1))
+    .sort(
+      (a, b) =>
+        b.value - a.value ||
+        (a.playerId < b.playerId ? -1 : a.playerId > b.playerId ? 1 : 0),
+    )
     .slice(0, TOP);
 }
 

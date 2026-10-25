@@ -930,7 +930,12 @@ export function recommendRosterManagement(
     rotation,
     rotationStyle: resolved.style,
     rotationPhilosophy: resolved.philosophy,
-    rotationDepth: effectiveDepth,
+    // Store the wanted depth, not the clamped one: later calls read it back,
+    // and one thin roster would otherwise shrink the rotation for good.
+    rotationDepth: Math.min(
+      resolved.depth,
+      ROTATION_CONFIG.targetRotationPlayerCount,
+    ),
     rotationPreset: resolved.preset,
     closingLineupPolicy: team.rosterManagement.closingLineupPolicy,
     closingLineupIds: [...team.rosterManagement.closingLineupIds],

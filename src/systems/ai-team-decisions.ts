@@ -15,6 +15,7 @@ import {
 import type { Rng } from "@/domain/rng";
 import { systemResult, type SystemResult } from "@/domain/system-result";
 import type { GameState } from "@/state/game-state";
+import { ROTATION_CONFIG } from "@/systems/rotation/rotation-config";
 import {
   acceptOffer,
   answerStandingOffers,
@@ -86,6 +87,7 @@ import {
 } from "@/systems/trades/ai-trade-search-gate";
 import { isUserControlledTeam } from "@/state/owner-context";
 import { selectProspectFromTeamScouting } from "@/systems/draft/mock-draft";
+import { depthForPhilosophy } from "@/domain/entities/team-roster-management";
 import {
   recommendRosterManagement,
   reconcileRosterManagement,
@@ -170,9 +172,52 @@ function maintainAiRosterManagement(state: GameState): GameState {
     if (management.lastConfiguredBy === "user") {
       continue;
     }
-    current = reconcileRosterManagement(current, teamId);
+    // Reconciling parks newcomers at 0 minutes, so after roster churn the
+    // rotation shrinks toward the five starters; rebuild it once it does.
+    // CPU teams always plan to their philosophy's depth, which also repairs
+    // depths that older saves clamped down to a thin offseason roster.
+    const depth = depthForPhilosophy(management.rotationPhilosophy);
+    current = rotationBelowDepth(current, teamId, depth)
+      ? withTeamRosterManagement(
+          current,
+          teamId,
+          recommendRosterManagement(current, teamId, {
+            rotationDepth: depth,
+            configuredBy: "ai",
+          }),
+        )
+      : reconcileRosterManagement(current, teamId);
   }
   return current;
+}
+
+/**
+ * True when fewer available players have minutes than `depth` calls for,
+ * while available players sit at 0 minutes.
+ */
+function rotationBelowDepth(
+  state: GameState,
+  teamId: TeamId,
+  depth: number,
+): boolean {
+  const team = state.world.teams[teamId];
+  if (team == null) {
+    return false;
+  }
+  const management = team.rosterManagement;
+  const minutesById = new Map(
+    management.rotation.map((entry) => [entry.playerId, entry.targetMinutes]),
+  );
+  const available = team.roster.filter(
+    (playerId) => state.world.players[playerId]?.availability === "available",
+  );
+  const playing = available.filter(
+    (playerId) => (minutesById.get(playerId) ?? 0) > 0,
+  ).length;
+  return (
+    playing < available.length &&
+    playing < Math.min(depth, ROTATION_CONFIG.targetRotationPlayerCount)
+  );
 }
 
 function runAiFreeAgency(state: GameState): SystemResult {

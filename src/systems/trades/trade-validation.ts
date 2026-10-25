@@ -16,7 +16,7 @@ import {
   createRosterRulesConfig,
   validateRosterSize,
 } from "@/systems/roster-rules";
-import { getTeamPayroll } from "@/systems/salary-cap";
+import { getContractSigningYear, getTeamPayroll } from "@/systems/salary-cap";
 import { getLeagueSalaryCap } from "@/systems/league-salary-cap";
 import { TRADE_ROSTER_RULES } from "@/systems/trades-config";
 import { checkPlayerTradeEligibility } from "@/systems/trades/trade-eligibility";
@@ -166,10 +166,12 @@ export function validateTrade(
   // Salary (skipped when salary cap is disabled in game settings)
   if (state.settings.financialRules.salaryCapEnabled) {
     const salaryCap = getLeagueSalaryCap(state);
+    // Offseason trades build next season's payroll, so match on it.
+    const payrollYear = getContractSigningYear(state);
     const salaryA = applyTradeSalaryRule({
-      currentPayroll: getTeamPayroll(sideA.teamId, seasonYear, state),
-      outgoingSalary: sumPlayerSalaries(state, sideA.playerIds, seasonYear),
-      incomingSalary: sumPlayerSalaries(state, sideB.playerIds, seasonYear),
+      currentPayroll: getTeamPayroll(sideA.teamId, payrollYear, state),
+      outgoingSalary: sumPlayerSalaries(state, sideA.playerIds, payrollYear),
+      incomingSalary: sumPlayerSalaries(state, sideB.playerIds, payrollYear),
       salaryCap,
     });
     if (!salaryA.valid) {
@@ -180,9 +182,9 @@ export function validateTrade(
     }
 
     const salaryB = applyTradeSalaryRule({
-      currentPayroll: getTeamPayroll(sideB.teamId, seasonYear, state),
-      outgoingSalary: sumPlayerSalaries(state, sideB.playerIds, seasonYear),
-      incomingSalary: sumPlayerSalaries(state, sideA.playerIds, seasonYear),
+      currentPayroll: getTeamPayroll(sideB.teamId, payrollYear, state),
+      outgoingSalary: sumPlayerSalaries(state, sideB.playerIds, payrollYear),
+      incomingSalary: sumPlayerSalaries(state, sideA.playerIds, payrollYear),
       salaryCap,
     });
     if (!salaryB.valid) {

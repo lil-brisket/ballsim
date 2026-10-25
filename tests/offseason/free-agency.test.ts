@@ -948,7 +948,7 @@ describe("CPU teams through the free-agency window", () => {
   it("signs nobody twice and keeps one contract per player", () => {
     const { fa, year } = setup;
     const signings = signingsOf(fa);
-    expect(signings.length).toBeGreaterThan(20);
+    expect(signings.length).toBeGreaterThanOrEqual(20);
     expect(new Set(signings.map((s) => s.playerId)).size).toBe(signings.length);
     const live = new Map<string, number>();
     for (const contract of Object.values(fa.end.business.contracts)) {

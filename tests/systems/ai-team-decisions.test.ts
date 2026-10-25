@@ -186,6 +186,50 @@ describe("AI team decisions", () => {
     }
   });
 
+  it("rebuilds a CPU rotation that has shrunk to its starters", () => {
+    let state = createInitialGameState({
+      saveId: "ai_rotation_depth",
+      rngSeed: 25,
+      settings: CBL_GAME_SETTINGS,
+    });
+    const rng = createSeededRng(state.meta.rngState);
+    state = bootstrapWorld(state, rng).state;
+    const teamId = aiTeamIds(state)[0]!;
+    const team = state.world.teams[teamId]!;
+    const starterIds = new Set(
+      team.rosterManagement.startingLineup.map((slot) => slot.playerId),
+    );
+    // A plan stuck at depth 5 (older saves): only the starters play.
+    state = {
+      ...state,
+      world: {
+        ...state.world,
+        teams: {
+          ...state.world.teams,
+          [teamId]: {
+            ...team,
+            rosterManagement: {
+              ...team.rosterManagement,
+              rotationDepth: 5,
+              rotation: team.rosterManagement.rotation.map((entry) =>
+                starterIds.has(entry.playerId)
+                  ? { ...entry, targetMinutes: 48 }
+                  : { ...entry, targetMinutes: 0 },
+              ),
+            },
+          },
+        },
+      },
+    };
+
+    const after = runAiTeamDecisions(state, rng).state.world.teams[teamId]!;
+    expect(after.rosterManagement.rotationDepth).toBe(12);
+    expect(
+      after.rosterManagement.rotation.filter((entry) => entry.targetMinutes > 0)
+        .length,
+    ).toBeGreaterThan(5);
+  });
+
   it("is deterministic for the same RNG state", () => {
     let state = createInitialGameState({
       saveId: "ai_det",

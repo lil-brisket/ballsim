@@ -206,6 +206,39 @@ describe("roster-management", () => {
     expect(new Set(lineup.players.map((player) => player.id)).size).toBe(5);
   });
 
+  it("keeps the wanted rotation depth after a briefly thin roster", () => {
+    const state = bootstrappedState();
+    const teamId = state.user.activeOwnerTeamId;
+    const team = state.world.teams[teamId]!;
+    const thin = {
+      ...state,
+      world: {
+        ...state.world,
+        teams: {
+          ...state.world.teams,
+          [teamId]: { ...team, roster: team.roster.slice(0, 6) },
+        },
+      },
+    };
+    const thinPlan = recommendRosterManagement(thin, teamId);
+    expect(thinPlan.rotationDepth).toBe(12);
+
+    const refilled = {
+      ...state,
+      world: {
+        ...state.world,
+        teams: {
+          ...state.world.teams,
+          [teamId]: { ...team, rosterManagement: thinPlan },
+        },
+      },
+    };
+    const plan = recommendRosterManagement(refilled, teamId);
+    expect(
+      plan.rotation.filter((entry) => entry.targetMinutes > 0),
+    ).toHaveLength(12);
+  });
+
   it("does not silently normalize planned minutes", () => {
     const state = bootstrappedState();
     const teamId = state.user.activeOwnerTeamId;
