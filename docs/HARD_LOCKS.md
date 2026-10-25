@@ -54,7 +54,7 @@ Season: 2026-10-01 → 2027-04-01 (182 days) → offset 109 → deadline **2027-
 | `originalTeamId`            | Immutable original franchise                                          |
 | `status: available \| used` | Consumption — used picks retain ownership history but are untradeable |
 
-Horizon: `pick.seasonYear <= competition.season.year + 3` (inclusive).
+Trade horizon: `pick.seasonYear <= competition.season.year + 2` (inclusive), i.e. the next two drafts. Picks are generated three seasons ahead, so the furthest generated year exists but is not tradable yet.
 
 Drafts are exactly **2 rounds**.
 

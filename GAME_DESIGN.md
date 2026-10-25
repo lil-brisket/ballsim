@@ -195,9 +195,9 @@ Validated by `npm run sanity:league` (`src/simulation/league-sanity/`) across ma
 Implemented trade foundation:
 
 - Two-team `TradeProposal` (`sideA` / `sideB`) with shared `validateTrade` / `executeTrade`
-- Trade Block and Trade Finder (candidates only). Finder acquire can package owned picks for off-block targets; CPU `assembleAcquirePackage` buys OVR ≥ 78
+- Trade Block and Trade Finder. The owner puts up 1–3 players/picks; each interested CPU team answers with its best acceptable package (max 3 assets, weighted so quantity cannot buy quality) and a 0–100 interest score. Finder acquire can package owned picks for off-block targets; CPU `assembleAcquirePackage` buys OVR ≥ 78
 - Live accept uses `getBaseAssetValue` (slot curve + star premiums) then `evaluateTrade` / `makeTradeDecision`. `calculateDraftPickValue` is the leftover round-only 80/50 helper
-- Draft pick ownership (`world.draftPicks`) with a rolling three-season horizon
+- Draft pick ownership (`world.draftPicks`) with a rolling three-season horizon; picks trade at most two drafts ahead
 
 Implemented draft foundation (v1):
 

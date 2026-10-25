@@ -10,7 +10,9 @@ import {
   executeOwnerTrade,
   proposeTradeToParticipant,
   setOwnerPlayerTradeBlock,
-  listOwnerTradeCandidates,
+  findOwnerTradeOffers,
+  executeOwnerTradeOffer,
+  type OwnerTradeAssetInput,
 } from "@/application/game-service";
 import { redirect } from "next/navigation";
 import {
@@ -186,20 +188,40 @@ export async function toggleTradeBlockAction(
   redirect(path);
 }
 
-/** Client-callable Trade Finder search (no redirect). Lazy — not used on roster page load. */
-export async function listTradeCandidatesAction(
+/** Client-callable Trade Finder offer search (no redirect). Lazy — not run on roster page load. */
+export async function findTradeOffersAction(
   saveId: string,
-  outgoingPlayerId: string,
+  assets: OwnerTradeAssetInput[],
 ): Promise<
   | {
       ok: true;
-      candidates: import("@/state/roster-page-selectors").TradeFinderRowView[];
+      offers: import("@/state/trade-offer-selectors").TradeOfferView[];
     }
   | { ok: false; error: string }
 > {
-  const result = await listOwnerTradeCandidates(saveId, outgoingPlayerId);
+  const result = await findOwnerTradeOffers(saveId, assets);
   if (!result.ok) {
     return { ok: false, error: result.error };
   }
-  return { ok: true, candidates: result.candidates };
+  return { ok: true, offers: result.offers };
+}
+
+/** Execute one Trade Finder offer exactly as shown. */
+export async function executeTradeOfferAction(
+  formData: FormData,
+): Promise<void> {
+  const saveId = String(formData.get("saveId") ?? "");
+  const path = returnPath(formData, saveId);
+  const proposal = parseTradeProposal(
+    String(formData.get("proposalJson") ?? ""),
+  );
+  if (proposal === null) {
+    redirectWithError(path, "Invalid trade proposal.");
+  }
+  const result = await executeOwnerTradeOffer(saveId, proposal);
+  if (!result.ok) {
+    redirectWithError(path, result.error);
+  }
+  revalidateOwner(saveId);
+  redirect(path);
 }

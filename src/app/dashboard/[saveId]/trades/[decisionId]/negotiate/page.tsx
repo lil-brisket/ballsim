@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { canTradeDraftPick } from "@/systems/league-rules";
 import { buttonClass } from "@/components/ui/Button";
 import Link from "next/link";
 import { SectionHeading } from "@/components/ui/SectionHeading";
@@ -45,7 +46,9 @@ export default async function TradeNegotiatePage(props: PageProps) {
     .map((id) => state.world.players[id])
     .filter((p) => p !== undefined);
   const userPicks = Object.values(state.world.draftPicks).filter(
-    (pick) => pick.ownerTeamId === userTeamId && pick.status === "available",
+    (pick) =>
+      pick.ownerTeamId === userTeamId &&
+      canTradeDraftPick(state, pick.id).allowed,
   );
 
   const returnPath = resumeTo

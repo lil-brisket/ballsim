@@ -41,7 +41,8 @@ export {
   executeTradeAction,
   proposePlayerTradeAction,
   toggleTradeBlockAction,
-  listTradeCandidatesAction,
+  findTradeOffersAction,
+  executeTradeOfferAction,
 } from "@/application/actions/decisions-trades";
 export {
   signFreeAgentAction,

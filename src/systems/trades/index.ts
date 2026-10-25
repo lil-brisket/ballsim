@@ -37,6 +37,10 @@ export {
   type TradeFinderCandidate,
 } from "@/systems/trades/trade-finder";
 export {
+  findTradeOffers,
+  type TradeOffer,
+} from "@/systems/trades/trade-offer-finder";
+export {
   evaluateTradeOffer,
   evaluateTrade,
   type TradeOfferEvaluation,
