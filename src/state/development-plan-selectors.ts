@@ -18,6 +18,7 @@ import { changeFromHistory } from "@/state/player-overall-change";
 import { selectPlayerPortrait } from "@/state/player-portrait-selectors";
 import { formatAttributeLabel } from "@/presentation/player-rating-categories";
 import { isPlayerDlAssigned } from "@/systems/development-league/franchise-membership";
+import { campSlotsForTeam } from "@/systems/development-plans";
 
 export const DEVELOPMENT_FOCUS_LABELS: Record<DevelopmentFocus, string> = {
   balanced: "No camp",
@@ -56,6 +57,9 @@ export type DevelopmentPlanRow = {
 };
 
 export type DevelopmentPlansView = {
+  /** Camp spots the trainer provides, and how many are booked. */
+  slots: number;
+  booked: number;
   camps: TrainingCampInfo[];
   rows: DevelopmentPlanRow[];
 };
@@ -107,7 +111,12 @@ export function toDevelopmentPlansView(state: GameState): DevelopmentPlansView {
     skills: DEVELOPMENT_FOCUS_ATTRIBUTES[focus].map(formatAttributeLabel),
     attendees: rows.filter((row) => row.focus === focus).length,
   }));
-  return { camps, rows };
+  return {
+    slots: campSlotsForTeam(state, getActiveOwnerTeamId(state)),
+    booked: rows.filter((row) => row.focus !== "balanced").length,
+    camps,
+    rows,
+  };
 }
 
 /** Owner roster skill ratings (camp areas), best overall first. */

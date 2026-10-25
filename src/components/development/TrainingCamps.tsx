@@ -3,7 +3,8 @@ import { PlayerEntityLink } from "@/components/entity/PlayerEntityLink";
 import { Button } from "@/components/ui/Button";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Section } from "@/components/ui/Section";
-import { cn, focusRingClass } from "@/components/ui/styles";
+import { Select } from "@/components/ui/Select";
+import { cn } from "@/components/ui/styles";
 import { DEVELOPMENT_FOCUSES } from "@/domain/entities/development-plan";
 import {
   DEVELOPMENT_FOCUS_LABELS,
@@ -22,10 +23,24 @@ export function TrainingCamps(props: {
   const { saveId, returnPath, plans } = props;
   return (
     <Section title="Training camps">
-      <p className="mb-3 text-sm text-zinc-400">
-        Camps run at the end of the season. A camp channels a player&apos;s
-        growth into its skills and shields them from decline; it reshapes
-        development, it does not add any.
+      <p className="mb-1 text-sm text-zinc-400">
+        Camps run at the end of the season and add growth to the camp&apos;s
+        skills, for players of any age. A camp never lowers a rating, and no
+        player grows past their potential.
+      </p>
+      <p className="mb-3 text-sm text-zinc-300">
+        Camp spots:{" "}
+        <span
+          className={cn(
+            "tabular-nums",
+            plans.booked >= plans.slots ? "text-warning" : "text-zinc-100",
+          )}
+        >
+          {plans.booked} / {plans.slots}
+        </span>{" "}
+        <span className="text-zinc-500">
+          (set by your trainer; a better trainer runs more)
+        </span>
       </p>
       <ul className="mb-4 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
         {plans.camps.map((camp) => (
@@ -77,21 +92,17 @@ export function TrainingCamps(props: {
                   <label className="sr-only" htmlFor={`camp-${row.playerId}`}>
                     Camp for {row.playerName}
                   </label>
-                  <select
+                  <Select
                     id={`camp-${row.playerId}`}
                     name={`camp:${row.playerId}`}
                     defaultValue={row.focus}
-                    className={cn(
-                      "min-h-9 rounded-md border border-zinc-700 bg-zinc-950 px-2 text-sm text-zinc-100",
-                      focusRingClass,
-                    )}
                   >
                     {DEVELOPMENT_FOCUSES.map((focus) => (
                       <option key={focus} value={focus}>
                         {DEVELOPMENT_FOCUS_LABELS[focus]}
                       </option>
                     ))}
-                  </select>
+                  </Select>
                 </div>
               </li>
             ))}

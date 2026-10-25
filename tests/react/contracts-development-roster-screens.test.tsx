@@ -306,6 +306,9 @@ describe("development screen", () => {
       ),
     );
     expect(camps.container.textContent).toContain("Training camps");
+    expect(camps.container.textContent).toContain(
+      `${view.plans.booked} / ${view.plans.slots}`,
+    );
     for (const camp of view.plans.camps) {
       expect(camps.container.textContent).toContain(camp.label);
     }
